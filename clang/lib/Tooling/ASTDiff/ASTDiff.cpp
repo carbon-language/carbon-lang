@@ -27,6 +27,56 @@ using namespace clang;
 namespace clang {
 namespace diff {
 
+/// Maps nodes of the left tree to ones on the right, and vice versa.
+class Mapping {
+public:
+  Mapping() = default;
+  Mapping(Mapping &&Other) = default;
+  Mapping &operator=(Mapping &&Other) = default;
+  Mapping(int Size1, int Size2) {
+    // Maximum possible size after patching one tree.
+    int Size = Size1 + Size2;
+    SrcToDst = llvm::make_unique<SmallVector<NodeId, 2>[]>(Size);
+    DstToSrc = llvm::make_unique<SmallVector<NodeId, 2>[]>(Size);
+  }
+
+  void link(NodeId Src, NodeId Dst) {
+    SrcToDst[Src].push_back(Dst);
+    DstToSrc[Dst].push_back(Src);
+  }
+
+  NodeId getDst(NodeId Src) const {
+    if (hasSrc(Src))
+      return SrcToDst[Src][0];
+    return NodeId();
+  }
+  NodeId getSrc(NodeId Dst) const {
+    if (hasDst(Dst))
+      return DstToSrc[Dst][0];
+    return NodeId();
+  }
+  const SmallVector<NodeId, 2> &getAllDsts(NodeId Src) const {
+    return SrcToDst[Src];
+  }
+  const SmallVector<NodeId, 2> &getAllSrcs(NodeId Dst) const {
+    return DstToSrc[Dst];
+  }
+  bool hasSrc(NodeId Src) const { return !SrcToDst[Src].empty(); }
+  bool hasDst(NodeId Dst) const { return !DstToSrc[Dst].empty(); }
+  bool hasSrcDst(NodeId Src, NodeId Dst) const {
+    for (NodeId DstId : SrcToDst[Src])
+      if (DstId == Dst)
+        return true;
+    for (NodeId SrcId : DstToSrc[Dst])
+      if (SrcId == Src)
+        return true;
+    return false;
+  }
+
+private:
+  std::unique_ptr<SmallVector<NodeId, 2>[]> SrcToDst, DstToSrc;
+};
+
 class ASTDiff::Impl {
 public:
   SyntaxTreeImpl &T1, &T2;
@@ -80,6 +130,64 @@ private:
   const ComparisonOptions &Options;
 
   friend class ZhangShashaMatcher;
+};
+
+/// Represents the AST of a TranslationUnit.
+class SyntaxTreeImpl {
+public:
+  /// Constructs a tree from the entire translation unit.
+  SyntaxTreeImpl(SyntaxTree *Parent, const ASTContext &AST);
+  /// Constructs a tree from an AST node.
+  SyntaxTreeImpl(SyntaxTree *Parent, Decl *N, const ASTContext &AST);
+  SyntaxTreeImpl(SyntaxTree *Parent, Stmt *N, const ASTContext &AST);
+  template <class T>
+  SyntaxTreeImpl(
+      SyntaxTree *Parent,
+      typename std::enable_if<std::is_base_of<Stmt, T>::value, T>::type *Node,
+      const ASTContext &AST)
+      : SyntaxTreeImpl(Parent, dyn_cast<Stmt>(Node), AST) {}
+  template <class T>
+  SyntaxTreeImpl(
+      SyntaxTree *Parent,
+      typename std::enable_if<std::is_base_of<Decl, T>::value, T>::type *Node,
+      const ASTContext &AST)
+      : SyntaxTreeImpl(Parent, dyn_cast<Decl>(Node), AST) {}
+
+  SyntaxTree *Parent;
+  const ASTContext &AST;
+  std::vector<NodeId> Leaves;
+  // Maps preorder indices to postorder ones.
+  std::vector<int> PostorderIds;
+
+  int getSize() const { return Nodes.size(); }
+  NodeId root() const { return 0; }
+
+  const Node &getNode(NodeId Id) const { return Nodes[Id]; }
+  Node &getMutableNode(NodeId Id) { return Nodes[Id]; }
+  bool isValidNodeId(NodeId Id) const { return Id >= 0 && Id < getSize(); }
+  void addNode(Node &N) { Nodes.push_back(N); }
+  int getNumberOfDescendants(NodeId Id) const;
+  bool isInSubtree(NodeId Id, NodeId SubtreeRoot) const;
+
+  std::string getNodeValueImpl(NodeId Id) const;
+  std::string getNodeValueImpl(const DynTypedNode &DTN) const;
+  /// Prints the node as "<type>[: <value>](<postorder-id)"
+  void printNode(NodeId Id) const { printNode(llvm::outs(), Id); }
+  void printNode(raw_ostream &OS, NodeId Id) const;
+
+  void printTree() const;
+  void printTree(NodeId Root) const;
+  void printTree(raw_ostream &OS, NodeId Root) const;
+
+  void printAsJsonImpl(raw_ostream &OS) const;
+  void printNodeAsJson(raw_ostream &OS, NodeId Id) const;
+
+private:
+  /// Nodes in preorder.
+  std::vector<Node> Nodes;
+
+  void initTree();
+  void setLeftMostDescendants();
 };
 
 template <class T>
@@ -402,6 +510,9 @@ public:
   NodeId getPostorderOffset() const {
     return Tree.PostorderIds[getIdInRoot(SNodeId(1))];
   }
+  std::string getNodeValue(SNodeId Id) const {
+    return Tree.getNodeValueImpl(getIdInRoot(Id));
+  }
 
 private:
   /// Returns the number of leafs in the subtree.
@@ -527,12 +638,9 @@ private:
   static constexpr double InsertionCost = 1;
 
   double getUpdateCost(SNodeId Id1, SNodeId Id2) {
-    const DynTypedNode &DTN1 = S1.getNode(Id1).ASTNode,
-                       &DTN2 = S2.getNode(Id2).ASTNode;
-    if (!DiffImpl.Options.isMatchingAllowed(DTN1, DTN2))
+    if (!DiffImpl.isMatchingPossible(S1.getIdInRoot(Id1), S2.getIdInRoot(Id2)))
       return std::numeric_limits<double>::max();
-    return DiffImpl.Options.getNodeDistance(*DiffImpl.T1.Parent, DTN1,
-                                            *DiffImpl.T2.Parent, DTN2);
+    return S1.getNodeValue(Id1) != S2.getNodeValue(Id2);
   }
 
   void computeTreeDist() {
@@ -624,8 +732,7 @@ bool ASTDiff::Impl::isomorphic(NodeId Id1, NodeId Id2) const {
   const Node &N2 = T2.getNode(Id2);
   if (N1.Children.size() != N2.Children.size() ||
       !isMatchingPossible(Id1, Id2) ||
-      Options.getNodeDistance(*T1.Parent, N1.ASTNode, *T2.Parent, N2.ASTNode) !=
-          0)
+      T1.getNodeValueImpl(Id1) != T2.getNodeValueImpl(Id2))
     return false;
   for (size_t Id = 0, E = N1.Children.size(); Id < E; ++Id)
     if (!isomorphic(N1.Children[Id], N2.Children[Id]))
@@ -899,6 +1006,8 @@ void ASTDiff::printChange(raw_ostream &OS, const Change &Chg) const {
 void ASTDiff::printMatch(raw_ostream &OS, const Match &M) const {
   DiffImpl->printMatchImpl(OS, M);
 }
+
+SyntaxTree::~SyntaxTree() = default;
 
 void SyntaxTree::printAsJson(raw_ostream &OS) { TreeImpl->printAsJsonImpl(OS); }
 
