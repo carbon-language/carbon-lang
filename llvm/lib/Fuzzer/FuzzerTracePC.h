@@ -86,7 +86,8 @@ class TracePC {
 
   void ResetMaps() {
     ValueProfileMap.Reset();
-    memset(Counters(), 0, GetNumPCs());
+    if (NumModules)
+      memset(Counters(), 0, GetNumPCs());
     ClearExtraCounters();
     ClearInlineCounters();
   }
