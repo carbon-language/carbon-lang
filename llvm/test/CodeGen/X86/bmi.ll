@@ -612,8 +612,8 @@ entry:
 define i64 @bzhi64_constant_mask(i64 %x) {
 ; BMI1-LABEL: bzhi64_constant_mask:
 ; BMI1:       # BB#0: # %entry
-; BMI1-NEXT:    movabsq $4611686018427387903, %rax # imm = 0x3FFFFFFFFFFFFFFF
-; BMI1-NEXT:    andq %rdi, %rax
+; BMI1-NEXT:    movl $15872, %eax # imm = 0x3E00
+; BMI1-NEXT:    bextrq %rax, %rdi, %rax
 ; BMI1-NEXT:    retq
 ;
 ; BMI2-LABEL: bzhi64_constant_mask:
@@ -629,8 +629,8 @@ entry:
 define i64 @bzhi64_constant_mask_load(i64* %x) {
 ; BMI1-LABEL: bzhi64_constant_mask_load:
 ; BMI1:       # BB#0: # %entry
-; BMI1-NEXT:    movabsq $4611686018427387903, %rax # imm = 0x3FFFFFFFFFFFFFFF
-; BMI1-NEXT:    andq (%rdi), %rax
+; BMI1-NEXT:    movl $15872, %eax # imm = 0x3E00
+; BMI1-NEXT:    bextrq %rax, (%rdi), %rax
 ; BMI1-NEXT:    retq
 ;
 ; BMI2-LABEL: bzhi64_constant_mask_load:
