@@ -4,6 +4,8 @@
 ; RUN: opt %loadPolly -S -polly-codegen-ppcg \
 ; RUN: -polly-invariant-load-hoisting < %s | FileCheck %s -check-prefix=HOST-IR
 
+; REQUIRES: pollyacc
+
 ; Entry: Contains (%loaded.ptr.preload.s2a = alloca double*) which is
 ;   |    invariant load hoisted `%loaded.ptr`
 ;   v
