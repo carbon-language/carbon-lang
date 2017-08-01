@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=amdgcn-amd-amdhsa -mattr=-promote-alloca -amdgpu-sroa=0 -verify-machineinstrs < %s | FileCheck -enable-var-scope -check-prefix=GCN %s
+; RUN: llc -mtriple=amdgcn-amd-amdhsa -mattr=-promote-alloca -amdgpu-function-calls -amdgpu-sroa=0 -verify-machineinstrs < %s | FileCheck -enable-var-scope -check-prefix=GCN %s
 
 ; Test that non-entry function frame indices are expanded properly to
 ; give an index relative to the scratch wave offset register
@@ -160,6 +160,35 @@ define void @func_other_fi_user_non_inline_imm_offset_i32_vcc_live() #0 {
   %ptrtoint = ptrtoint i32* %gep1 to i32
   %mul = mul i32 %ptrtoint, 9
   store volatile i32 %mul, i32 addrspace(3)* undef
+  ret void
+}
+
+declare void @func(<4 x float>* nocapture) #0
+
+; undef flag not preserved in eliminateFrameIndex when handling the
+; stores in the middle block.
+
+; GCN-LABEL: {{^}}undefined_stack_store_reg:
+; GCN: s_and_saveexec_b64
+; GCN: buffer_store_dword v0, off, s[0:3], s5 offset:
+; GCN: buffer_store_dword v0, off, s[0:3], s5 offset:
+; GCN: buffer_store_dword v0, off, s[0:3], s5 offset:
+; GCN: buffer_store_dword v{{[0-9]+}}, off, s[0:3], s5 offset:
+define void @undefined_stack_store_reg(float %arg, i32 %arg1) #0 {
+bb:
+  %tmp = alloca <4 x float>, align 16
+  %tmp2 = insertelement <4 x float> undef, float %arg, i32 0
+  store <4 x float> %tmp2, <4 x float>* undef
+  %tmp3 = icmp eq i32 %arg1, 0
+  br i1 %tmp3, label %bb4, label %bb5
+
+bb4:
+  call void @func(<4 x float>* nonnull undef)
+  store <4 x float> %tmp2, <4 x float>* %tmp, align 16
+  call void @func(<4 x float>* nonnull %tmp)
+  br label %bb5
+
+bb5:
   ret void
 }
 
