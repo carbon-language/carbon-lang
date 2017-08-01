@@ -99,8 +99,7 @@ LLDDwarfObj<ELFT>::findAux(const InputSectionBase &Sec, uint64_t Pos,
   if (DR.Section->Flags & ELF::SHF_ALLOC)
     Val += cast<InputSection>(DR.Section)->getOffsetInFile();
 
-  RelocAddrEntry Ret{SecIndex, Val};
-  return Ret;
+  return RelocAddrEntry{SecIndex, Val};
 }
 
 template <class ELFT>
