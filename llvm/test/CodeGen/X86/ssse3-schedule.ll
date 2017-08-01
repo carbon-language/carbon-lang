@@ -294,16 +294,8 @@ define <8 x i16> @test_phaddsw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; ATOM-LABEL: test_phaddsw:
 ; ATOM:       # BB#0:
-; ATOM-NEXT:    phaddsw %xmm1, %xmm0
-; ATOM-NEXT:    phaddsw (%rdi), %xmm0
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
+; ATOM-NEXT:    phaddsw %xmm1, %xmm0 # sched: [7:3.50]
+; ATOM-NEXT:    phaddsw (%rdi), %xmm0 # sched: [8:4.00]
 ; ATOM-NEXT:    retq # sched: [79:39.50]
 ;
 ; SLM-LABEL: test_phaddsw:
@@ -449,16 +441,8 @@ define <8 x i16> @test_phsubsw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; ATOM-LABEL: test_phsubsw:
 ; ATOM:       # BB#0:
-; ATOM-NEXT:    phsubsw %xmm1, %xmm0
-; ATOM-NEXT:    phsubsw (%rdi), %xmm0
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
+; ATOM-NEXT:    phsubsw %xmm1, %xmm0 # sched: [7:3.50]
+; ATOM-NEXT:    phsubsw (%rdi), %xmm0 # sched: [8:4.00]
 ; ATOM-NEXT:    retq # sched: [79:39.50]
 ;
 ; SLM-LABEL: test_phsubsw:
@@ -703,12 +687,8 @@ define <16 x i8> @test_psignb(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> *%a2) {
 ;
 ; ATOM-LABEL: test_psignb:
 ; ATOM:       # BB#0:
-; ATOM-NEXT:    psignb %xmm1, %xmm0
-; ATOM-NEXT:    psignb (%rdi), %xmm0
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
+; ATOM-NEXT:    psignb %xmm1, %xmm0 # sched: [1:0.50]
+; ATOM-NEXT:    psignb (%rdi), %xmm0 # sched: [1:1.00]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
@@ -760,12 +740,8 @@ define <4 x i32> @test_psignd(<4 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) {
 ;
 ; ATOM-LABEL: test_psignd:
 ; ATOM:       # BB#0:
-; ATOM-NEXT:    psignd %xmm1, %xmm0
-; ATOM-NEXT:    psignd (%rdi), %xmm0
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
+; ATOM-NEXT:    psignd %xmm1, %xmm0 # sched: [1:0.50]
+; ATOM-NEXT:    psignd (%rdi), %xmm0 # sched: [1:1.00]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
@@ -817,12 +793,8 @@ define <8 x i16> @test_psignw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; ATOM-LABEL: test_psignw:
 ; ATOM:       # BB#0:
-; ATOM-NEXT:    psignw %xmm1, %xmm0
-; ATOM-NEXT:    psignw (%rdi), %xmm0
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
+; ATOM-NEXT:    psignw %xmm1, %xmm0 # sched: [1:0.50]
+; ATOM-NEXT:    psignw (%rdi), %xmm0 # sched: [1:1.00]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
