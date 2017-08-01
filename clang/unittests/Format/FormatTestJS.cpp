@@ -988,6 +988,9 @@ TEST_F(FormatTestJS, ArrowFunctions) {
                "    .doSomethingElse(\n"
                "        // break\n"
                "    );");
+  verifyFormat("const f = (x: string|null): string|null => {\n"
+               "  return x;\n"
+               "}\n");
 }
 
 TEST_F(FormatTestJS, ReturnStatements) {

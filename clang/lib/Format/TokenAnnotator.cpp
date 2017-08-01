@@ -533,6 +533,7 @@ private:
             Contexts.back().ContextKind == tok::l_square || // array type
             (Contexts.size() == 1 &&
              Line.MustBeDeclaration)) { // method/property declaration
+          Contexts.back().IsExpression = false;
           Tok->Type = TT_JsTypeColon;
           break;
         }
