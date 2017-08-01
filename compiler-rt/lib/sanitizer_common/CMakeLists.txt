@@ -10,6 +10,7 @@ set(SANITIZER_SOURCES_NOTERMINATION
   sanitizer_file.cc
   sanitizer_flags.cc
   sanitizer_flag_parser.cc
+  sanitizer_fuchsia.cc
   sanitizer_libc.cc
   sanitizer_libignore.cc
   sanitizer_linux.cc
@@ -101,6 +102,7 @@ set(SANITIZER_HEADERS
   sanitizer_flag_parser.h
   sanitizer_flags.h
   sanitizer_flags.inc
+  sanitizer_fuchsia.h
   sanitizer_interface_internal.h
   sanitizer_internal_defs.h
   sanitizer_lfstack.h
