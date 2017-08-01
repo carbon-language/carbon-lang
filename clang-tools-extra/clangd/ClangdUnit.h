@@ -104,6 +104,10 @@ private:
 // Provides thread-safe access to ParsedAST.
 class ParsedASTWrapper {
 public:
+  // MSVC does not allow to use types without default constructor in
+  // std::promise<> template arguments.
+  ParsedASTWrapper() = default;
+
   ParsedASTWrapper(ParsedASTWrapper &&Wrapper);
   ParsedASTWrapper(llvm::Optional<ParsedAST> AST);
 
