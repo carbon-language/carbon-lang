@@ -36,10 +36,6 @@ static int const SimplifyMaxDisjuncts = 4;
 STATISTIC(ScopsProcessed, "Number of SCoPs processed");
 STATISTIC(ScopsModified, "Number of SCoPs simplified");
 
-STATISTIC(PairUnequalAccRels, "Number of Load-Store pairs NOT removed because "
-                              "of different access relations");
-STATISTIC(InBetweenStore, "Number of Load-Store pairs NOT removed because "
-                          "there is another store between them");
 STATISTIC(TotalOverwritesRemoved, "Number of removed overwritten writes");
 STATISTIC(TotalWritesCoalesced, "Number of writes coalesced with another");
 STATISTIC(TotalRedundantWritesRemoved,
@@ -167,76 +163,6 @@ private:
            RedundantWritesRemoved > 0 || EmptyPartialAccessesRemoved > 0 ||
            DeadAccessesRemoved > 0 || DeadInstructionsRemoved > 0 ||
            StmtsRemoved > 0;
-  }
-
-  MemoryAccess *getReadAccessForValue(ScopStmt *Stmt, llvm::Value *Val) {
-    if (!isa<Instruction>(Val))
-      return nullptr;
-
-    for (auto *MA : *Stmt) {
-      if (!MA->isRead())
-        continue;
-      if (MA->getAccessValue() != Val)
-        continue;
-
-      return MA;
-    }
-
-    return nullptr;
-  }
-
-  /// Return a write access that occurs between @p From and @p To.
-  ///
-  /// In region statements the order is ignored because we cannot predict it.
-  ///
-  /// @param Stmt    Statement of both writes.
-  /// @param From    Start looking after this access.
-  /// @param To      Stop looking at this access, with the access itself.
-  /// @param Targets Look for an access that may wrote to one of these elements.
-  ///
-  /// @return A write access between @p From and @p To that writes to at least
-  ///         one element in @p Targets.
-  MemoryAccess *hasWriteBetween(ScopStmt *Stmt, MemoryAccess *From,
-                                MemoryAccess *To, isl::map Targets) {
-    auto TargetsSpace = Targets.get_space();
-
-    bool Started = Stmt->isRegionStmt();
-    auto Accesses = getAccessesInOrder(*Stmt);
-    for (auto *Acc : Accesses) {
-      if (Acc->isLatestScalarKind())
-        continue;
-
-      if (Stmt->isBlockStmt() && From == Acc) {
-        assert(!Started);
-        Started = true;
-        continue;
-      }
-      if (Stmt->isBlockStmt() && To == Acc) {
-        assert(Started);
-        return nullptr;
-      }
-      if (!Started)
-        continue;
-
-      if (!Acc->isWrite())
-        continue;
-
-      isl::map AccRel = Acc->getAccessRelation();
-      auto AccRelSpace = AccRel.get_space();
-
-      // Spaces being different means that they access different arrays.
-      if (!TargetsSpace.has_equal_tuples(AccRelSpace))
-        continue;
-
-      AccRel = AccRel.intersect_domain(give(Acc->getStatement()->getDomain()));
-      AccRel = AccRel.intersect_params(give(S->getContext()));
-      auto CommonElt = Targets.intersect(AccRel);
-      if (!CommonElt.is_empty())
-        return Acc;
-    }
-    assert(Stmt->isRegionStmt() &&
-           "To must be encountered in block statements");
-    return nullptr;
   }
 
   /// Remove writes that are overwritten unconditionally later in the same
@@ -484,75 +410,96 @@ private:
   /// Remove writes that just write the same value already stored in the
   /// element.
   void removeRedundantWrites() {
-    // Delay actual removal to not invalidate iterators.
-    SmallVector<MemoryAccess *, 8> StoresToRemove;
-
     for (auto &Stmt : *S) {
-      for (auto *WA : Stmt) {
-        if (!WA->isMustWrite())
-          continue;
-        if (!WA->isLatestArrayKind())
-          continue;
-        if (!isa<StoreInst>(WA->getAccessInstruction()) &&
-            !WA->isOriginalScalarKind())
-          continue;
+      SmallDenseMap<Value *, isl::set> ValueSets;
+      auto makeValueSet = [&ValueSets, this](Value *V) -> isl::set {
+        assert(V);
+        isl::set &Result = ValueSets[V];
+        if (Result.is_null()) {
+          isl_ctx *Ctx = S->getIslCtx();
+          std::string Name =
+              getIslCompatibleName("Val", V, ValueSets.size() - 1,
+                                   std::string(), UseInstructionNames);
+          isl::id Id = give(isl_id_alloc(Ctx, Name.c_str(), V));
+          Result = isl::set::universe(
+              isl::space(Ctx, 0, 0).set_tuple_id(isl::dim::set, Id));
+        }
+        return Result;
+      };
 
-        llvm::Value *ReadingValue = WA->tryGetValueStored();
+      isl::set Domain = give(Stmt.getDomain());
+      Domain = Domain.intersect_params(give(S->getContext()));
 
-        if (!ReadingValue)
-          continue;
+      // List of element reads that still have the same value while iterating
+      // through the MemoryAccesses.
+      // { [Domain[] -> Element[]] -> Val[] }
+      isl::union_map Known = isl::union_map::empty(give(S->getParamSpace()));
 
-        auto RA = getReadAccessForValue(&Stmt, ReadingValue);
-        if (!RA)
-          continue;
-        if (!RA->isLatestArrayKind())
-          continue;
+      SmallVector<MemoryAccess *, 32> Accesses(getAccessesInOrder(Stmt));
+      for (MemoryAccess *MA : Accesses) {
+        // Is the memory access in a defined order relative to the other
+        // accesses? In region statements, only the first and the last accesses
+        // have defined order. Execution of those in the middle may depend on
+        // runtime conditions an therefore cannot be modified.
+        bool IsOrdered =
+            Stmt.isBlockStmt() || MA->isOriginalScalarKind() ||
+            (!S->getBoxedLoops().size() && MA->getAccessInstruction() &&
+             Stmt.getEntryBlock() == MA->getAccessInstruction()->getParent());
 
-        auto WARel = WA->getLatestAccessRelation();
-        WARel = WARel.intersect_domain(give(WA->getStatement()->getDomain()));
-        WARel = WARel.intersect_params(give(S->getContext()));
-        auto RARel = RA->getLatestAccessRelation();
-        RARel = RARel.intersect_domain(give(RA->getStatement()->getDomain()));
-        RARel = RARel.intersect_params(give(S->getContext()));
+        isl::map AccRel = MA->getAccessRelation();
+        AccRel = AccRel.intersect_domain(Domain);
+        isl::set AccRelWrapped = AccRel.wrap();
 
-        if (!RARel.is_equal(WARel)) {
-          PairUnequalAccRels++;
-          DEBUG(dbgs() << "Not cleaning up " << WA
-                       << " because of unequal access relations:\n");
-          DEBUG(dbgs() << "      RA: " << RARel << "\n");
-          DEBUG(dbgs() << "      WA: " << WARel << "\n");
-          continue;
+        // Determine whether a write is redundant (stores only values that are
+        // already present in the written array elements) and remove it if this
+        // is the case.
+        if (IsOrdered && MA->isMustWrite() &&
+            (isa<StoreInst>(MA->getAccessInstruction()) ||
+             MA->isOriginalScalarKind())) {
+          Value *StoredVal = MA->tryGetValueStored();
+          if (!StoredVal)
+            StoredVal = MA->getAccessValue();
+
+          if (StoredVal) {
+            // Lookup in the set of known values.
+            isl::map AccRelStoredVal = isl::map::from_domain_and_range(
+                AccRelWrapped, makeValueSet(StoredVal));
+            if (isl::union_map(AccRelStoredVal).is_subset(Known)) {
+              DEBUG(dbgs() << "Cleanup of " << MA << ":\n");
+              DEBUG(dbgs() << "      Scalar: " << *StoredVal << "\n");
+              DEBUG(dbgs() << "      AccRel: " << AccRel << "\n");
+
+              Stmt.removeSingleMemoryAccess(MA);
+
+              RedundantWritesRemoved++;
+              TotalRedundantWritesRemoved++;
+            }
+          }
         }
 
-        if (auto *Conflicting = hasWriteBetween(&Stmt, RA, WA, WARel)) {
-          (void)Conflicting;
-          InBetweenStore++;
-          DEBUG(dbgs() << "Not cleaning up " << WA
-                       << " because there is another store to the same element "
-                          "between\n");
-          DEBUG(Conflicting->print(dbgs()));
-          continue;
-        }
+        // Update the know values set.
+        if (MA->isRead()) {
+          // Loaded values are the currently known values of the array element
+          // it was loaded from.
+          Value *LoadedVal = MA->getAccessValue();
+          if (LoadedVal && IsOrdered) {
+            isl::map AccRelVal = isl::map::from_domain_and_range(
+                AccRelWrapped, makeValueSet(LoadedVal));
 
-        StoresToRemove.push_back(WA);
+            Known = Known.add_map(AccRelVal);
+          }
+        } else if (MA->isWrite()) {
+          // Remove (possibly) overwritten values from the known elements set.
+          // We remove all elements of the accessed array to avoid too complex
+          // isl sets.
+          isl::set AccRelUniv = isl::set::universe(AccRelWrapped.get_space());
+          Known = Known.subtract_domain(AccRelUniv);
+
+          // At this point, we could add the written value of must-writes.
+          // However, writing same values is already handled by
+          // coalesceWrites().
+        }
       }
-    }
-
-    for (auto *WA : StoresToRemove) {
-      auto Stmt = WA->getStatement();
-      auto AccRel = WA->getAccessRelation();
-      auto AccVal = WA->getAccessValue();
-
-      DEBUG(dbgs() << "Cleanup of " << WA << ":\n");
-      DEBUG(dbgs() << "      Scalar: " << *AccVal << "\n");
-      DEBUG(dbgs() << "      AccRel: " << AccRel << "\n");
-      (void)AccVal;
-      (void)AccRel;
-
-      Stmt->removeSingleMemoryAccess(WA);
-
-      RedundantWritesRemoved++;
-      TotalRedundantWritesRemoved++;
     }
   }
 
