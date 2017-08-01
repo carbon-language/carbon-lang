@@ -280,9 +280,8 @@ private:
     if (Assessment != FD_CanForwardTree)
       return false;
 
-    ForwardingDecision Execution =
-        canForwardTree(Stmt, RA->getAccessValue(), Stmt, InLoop, true);
-    assert(Execution == FD_DidForward);
+    assert(canForwardTree(Stmt, RA->getAccessValue(), Stmt, InLoop, true) ==
+           FD_DidForward);
 
     Stmt->removeSingleMemoryAccess(RA);
     return true;
