@@ -345,6 +345,60 @@ define <16 x i8> @test_lddqu(i8* %a0) {
 }
 declare <16 x i8> @llvm.x86.sse3.ldu.dq(i8*) nounwind readonly
 
+define void @test_monitor(i8* %a0, i32 %a1, i32 %a2) {
+; GENERIC-LABEL: test_monitor:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    leaq (%rdi), %rax # sched: [1:0.50]
+; GENERIC-NEXT:    movl %esi, %ecx # sched: [1:0.33]
+; GENERIC-NEXT:    monitor # sched: [100:0.33]
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_monitor:
+; ATOM:       # BB#0:
+; ATOM-NEXT:    leaq (%rdi), %rax # sched: [1:1.00]
+; ATOM-NEXT:    movl %esi, %ecx # sched: [1:0.50]
+; ATOM-NEXT:    monitor # sched: [45:22.50]
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_monitor:
+; SLM:       # BB#0:
+; SLM-NEXT:    leaq (%rdi), %rax # sched: [1:1.00]
+; SLM-NEXT:    movl %esi, %ecx # sched: [1:0.50]
+; SLM-NEXT:    monitor # sched: [100:1.00]
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_monitor:
+; SANDY:       # BB#0:
+; SANDY-NEXT:    leaq (%rdi), %rax # sched: [1:0.50]
+; SANDY-NEXT:    movl %esi, %ecx # sched: [1:0.33]
+; SANDY-NEXT:    monitor # sched: [100:0.33]
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_monitor:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    leaq (%rdi), %rax # sched: [1:0.50]
+; HASWELL-NEXT:    movl %esi, %ecx # sched: [1:0.25]
+; HASWELL-NEXT:    monitor # sched: [100:0.25]
+; HASWELL-NEXT:    retq # sched: [1:1.00]
+;
+; BTVER2-LABEL: test_monitor:
+; BTVER2:       # BB#0:
+; BTVER2-NEXT:    leaq (%rdi), %rax # sched: [1:0.50]
+; BTVER2-NEXT:    movl %esi, %ecx # sched: [1:0.17]
+; BTVER2-NEXT:    monitor # sched: [100:0.17]
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_monitor:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    leaq (%rdi), %rax # sched: [1:0.25]
+; ZNVER1-NEXT:    movl %esi, %ecx # sched: [1:0.25]
+; ZNVER1-NEXT:    monitor # sched: [100:?]
+; ZNVER1-NEXT:    retq # sched: [5:0.50]
+  tail call void @llvm.x86.sse3.monitor(i8* %a0, i32 %a1, i32 %a2)
+  ret void
+}
+declare void @llvm.x86.sse3.monitor(i8*, i32, i32)
+
 define <2 x double> @test_movddup(<2 x double> %a0, <2 x double> *%a1) {
 ; GENERIC-LABEL: test_movddup:
 ; GENERIC:       # BB#0:
@@ -515,3 +569,57 @@ define <4 x float> @test_movsldup(<4 x float> %a0, <4 x float> *%a1) {
   %4 = fadd <4 x float> %1, %3
   ret <4 x float> %4
 }
+
+define void @test_mwait(i32 %a0, i32 %a1) {
+; GENERIC-LABEL: test_mwait:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    movl %edi, %ecx # sched: [1:0.33]
+; GENERIC-NEXT:    movl %esi, %eax # sched: [1:0.33]
+; GENERIC-NEXT:    mwait # sched: [100:0.33]
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_mwait:
+; ATOM:       # BB#0:
+; ATOM-NEXT:    movl %edi, %ecx # sched: [1:0.50]
+; ATOM-NEXT:    movl %esi, %eax # sched: [1:0.50]
+; ATOM-NEXT:    mwait # sched: [46:23.00]
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_mwait:
+; SLM:       # BB#0:
+; SLM-NEXT:    movl %edi, %ecx # sched: [1:0.50]
+; SLM-NEXT:    movl %esi, %eax # sched: [1:0.50]
+; SLM-NEXT:    mwait # sched: [100:1.00]
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_mwait:
+; SANDY:       # BB#0:
+; SANDY-NEXT:    movl %edi, %ecx # sched: [1:0.33]
+; SANDY-NEXT:    movl %esi, %eax # sched: [1:0.33]
+; SANDY-NEXT:    mwait # sched: [100:0.33]
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_mwait:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    movl %edi, %ecx # sched: [1:0.25]
+; HASWELL-NEXT:    movl %esi, %eax # sched: [1:0.25]
+; HASWELL-NEXT:    mwait # sched: [100:0.25]
+; HASWELL-NEXT:    retq # sched: [1:1.00]
+;
+; BTVER2-LABEL: test_mwait:
+; BTVER2:       # BB#0:
+; BTVER2-NEXT:    movl %edi, %ecx # sched: [1:0.17]
+; BTVER2-NEXT:    movl %esi, %eax # sched: [1:0.17]
+; BTVER2-NEXT:    mwait # sched: [100:0.17]
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_mwait:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    movl %edi, %ecx # sched: [1:0.25]
+; ZNVER1-NEXT:    movl %esi, %eax # sched: [1:0.25]
+; ZNVER1-NEXT:    mwait # sched: [100:?]
+; ZNVER1-NEXT:    retq # sched: [5:0.50]
+  tail call void @llvm.x86.sse3.mwait(i32 %a0, i32 %a1)
+  ret void
+}
+declare void @llvm.x86.sse3.mwait(i32, i32)
