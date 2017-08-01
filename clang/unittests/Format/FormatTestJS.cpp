@@ -263,6 +263,7 @@ TEST_F(FormatTestJS, ReservedWordsParenthesized) {
   // All of these are statements using the keyword, not function calls.
   verifyFormat("throw (x + y);\n"
                "await (await x).y;\n"
+               "typeof (x) === 'string';\n"
                "void (0);\n"
                "delete (x.y);\n"
                "return (x);\n");
