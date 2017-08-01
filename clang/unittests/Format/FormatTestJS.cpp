@@ -841,6 +841,15 @@ TEST_F(FormatTestJS, FunctionLiterals) {
 
 }
 
+TEST_F(FormatTestJS, DontWrapEmptyLiterals) {
+  verifyFormat("(aaaaaaaaaaaaaaaaaaaaa.getData as jasmine.Spy)\n"
+               "    .and.returnValue(Observable.of([]));");
+  verifyFormat("(aaaaaaaaaaaaaaaaaaaaa.getData as jasmine.Spy)\n"
+               "    .and.returnValue(Observable.of({}));");
+  verifyFormat("(aaaaaaaaaaaaaaaaaaaaa.getData as jasmine.Spy)\n"
+               "    .and.returnValue(Observable.of(()));");
+}
+
 TEST_F(FormatTestJS, InliningFunctionLiterals) {
   FormatStyle Style = getGoogleStyle(FormatStyle::LK_JavaScript);
   Style.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_Inline;
