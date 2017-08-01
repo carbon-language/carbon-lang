@@ -12569,7 +12569,6 @@ void DAGCombiner::getStoreMergeCandidates(
   if (IsLoadSrc)
     LBasePtr = BaseIndexOffset::match(
         cast<LoadSDNode>(St->getValue())->getBasePtr(), DAG);
-
   auto CandidateMatch = [&](StoreSDNode *Other, BaseIndexOffset &Ptr,
                             int64_t &Offset) -> bool {
     if (Other->isVolatile() || Other->isIndexed())
@@ -12583,6 +12582,9 @@ void DAGCombiner::getStoreMergeCandidates(
       // The Load's Base Ptr must also match
       if (LoadSDNode *OtherLd = dyn_cast<LoadSDNode>(Other->getValue())) {
         auto LPtr = BaseIndexOffset::match(OtherLd->getBasePtr(), DAG);
+        // We do not handle extended loads
+        if (OtherLd->getExtensionType() != ISD::NON_EXTLOAD)
+          return false;
         if (!(LBasePtr.equalBaseIndex(LPtr, DAG)))
           return false;
       } else
@@ -12936,10 +12938,6 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode *St) {
 
       // The memory operands must not be volatile.
       if (Ld->isVolatile() || Ld->isIndexed())
-        break;
-
-      // We do not accept ext loads.
-      if (Ld->getExtensionType() != ISD::NON_EXTLOAD)
         break;
 
       // The stored memory type must be the same.
