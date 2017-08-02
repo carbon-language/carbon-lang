@@ -1636,11 +1636,12 @@ InlineCost llvm::getInlineCost(
 
   // Never inline functions with conflicting attributes (unless callee has
   // always-inline attribute).
-  if (!functionsHaveCompatibleAttributes(CS.getCaller(), Callee, CalleeTTI))
+  Function *Caller = CS.getCaller();
+  if (!functionsHaveCompatibleAttributes(Caller, Callee, CalleeTTI))
     return llvm::InlineCost::getNever();
 
   // Don't inline this call if the caller has the optnone attribute.
-  if (CS.getCaller()->hasFnAttribute(Attribute::OptimizeNone))
+  if (Caller->hasFnAttribute(Attribute::OptimizeNone))
     return llvm::InlineCost::getNever();
 
   // Don't inline functions which can be interposed at link-time.  Don't inline
