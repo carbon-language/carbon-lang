@@ -781,11 +781,9 @@ bool StoreExpression::equals(const Expression &Other) const {
 
 // Determine if the edge From->To is a backedge
 bool NewGVN::isBackedge(BasicBlock *From, BasicBlock *To) const {
-  if (From == To)
-    return true;
-  auto *FromDTN = DT->getNode(From);
-  auto *ToDTN = DT->getNode(To);
-  return RPOOrdering.lookup(FromDTN) >= RPOOrdering.lookup(ToDTN);
+  return From == To ||
+         RPOOrdering.lookup(DT->getNode(From)) >=
+             RPOOrdering.lookup(DT->getNode(To));
 }
 
 #ifndef NDEBUG
