@@ -128,6 +128,7 @@ private:
 
 struct ScopStandardAnalysisResults {
   DominatorTree &DT;
+  ScopInfo &SI;
   ScalarEvolution &SE;
   LoopInfo &LI;
   RegionInfo &RI;
@@ -161,13 +162,14 @@ public:
     if (Scops.empty())
       return PA;
 
-    ScopAnalysisManager &SAM =
-        AM.getResult<ScopAnalysisManagerFunctionProxy>(F).getManager();
-
     ScopStandardAnalysisResults AR = {AM.getResult<DominatorTreeAnalysis>(F),
+                                      AM.getResult<ScopInfoAnalysis>(F),
                                       AM.getResult<ScalarEvolutionAnalysis>(F),
                                       AM.getResult<LoopAnalysis>(F),
                                       AM.getResult<RegionInfoAnalysis>(F)};
+
+    ScopAnalysisManager &SAM =
+        AM.getResult<ScopAnalysisManagerFunctionProxy>(F).getManager();
 
     SmallPriorityWorklist<Scop *, 4> Worklist;
     SPMUpdater Updater{Worklist, SAM};
@@ -186,6 +188,12 @@ public:
 
     PA.preserveSet<AllAnalysesOn<Scop>>();
     PA.preserve<ScopAnalysisManagerFunctionProxy>();
+    PA.preserve<DominatorTreeAnalysis>();
+    PA.preserve<ScopAnalysis>();
+    PA.preserve<ScopInfoAnalysis>();
+    PA.preserve<ScalarEvolutionAnalysis>();
+    PA.preserve<LoopAnalysis>();
+    PA.preserve<RegionInfoAnalysis>();
     return PA;
   }
 

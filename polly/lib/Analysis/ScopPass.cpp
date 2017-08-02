@@ -76,12 +76,10 @@ bool ScopAnalysisManagerFunctionProxy::Result::invalidate(
   // First, check whether our ScopInfo is about to be invalidated
   auto PAC = PA.getChecker<ScopAnalysisManagerFunctionProxy>();
   if (!(PAC.preserved() || PAC.preservedSet<AllAnalysesOn<Function>>() ||
-        Inv.invalidate<ScopAnalysis>(F, PA) ||
+        Inv.invalidate<ScopInfoAnalysis>(F, PA) ||
         Inv.invalidate<ScalarEvolutionAnalysis>(F, PA) ||
         Inv.invalidate<LoopAnalysis>(F, PA) ||
-        Inv.invalidate<AAManager>(F, PA) ||
-        Inv.invalidate<DominatorTreeAnalysis>(F, PA) ||
-        Inv.invalidate<AssumptionAnalysis>(F, PA))) {
+        Inv.invalidate<DominatorTreeAnalysis>(F, PA))) {
 
     // As everything depends on ScopInfo, we must drop all existing results
     for (auto &S : *SI)
