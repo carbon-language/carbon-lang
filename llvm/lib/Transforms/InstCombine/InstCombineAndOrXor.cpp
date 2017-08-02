@@ -2439,21 +2439,6 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   }
 
   if (ConstantInt *RHSC = dyn_cast<ConstantInt>(Op1)) {
-    // fold (xor(zext(cmp)), 1) and (xor(sext(cmp)), -1) to ext(!cmp).
-    if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
-      if (CmpInst *CI = dyn_cast<CmpInst>(Op0C->getOperand(0))) {
-        if (CI->hasOneUse() && Op0C->hasOneUse()) {
-          Instruction::CastOps Opcode = Op0C->getOpcode();
-          if ((Opcode == Instruction::ZExt || Opcode == Instruction::SExt) &&
-              (RHSC == ConstantExpr::getCast(Opcode, Builder.getTrue(),
-                                             Op0C->getDestTy()))) {
-            CI->setPredicate(CI->getInversePredicate());
-            return CastInst::Create(Opcode, CI, Op0C->getType());
-          }
-        }
-      }
-    }
-
     if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0)) {
       // ~(c-X) == X-c-1 == X+(-c-1)
       if (Op0I->getOpcode() == Instruction::Sub && RHSC->isMinusOne())
