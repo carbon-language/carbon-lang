@@ -1763,6 +1763,18 @@ public:
   /// using profile information.
   void removeConditionalTailCalls();
 
+  // Convert COUNT_NO_PROFILE to 0
+  void removeTagsFromProfile();
+
+  /// If our profile data comes from sample addresses instead of LBR entries,
+  /// collect sample count for all addresses in this function address space,
+  /// aggregating them per basic block and assigning an execution count to each
+  /// basic block based on the number of samples recorded at those addresses.
+  /// The last step is to infer edge counts based on BB execution count. Note
+  /// this is the opposite of the LBR way, where we infer BB execution count
+  /// based on edge counts.
+  void readSampleData();
+
   /// Computes a function hotness score: the sum of the products of BB frequency
   /// and size.
   uint64_t getFunctionScore();
@@ -2038,9 +2050,11 @@ template <> struct GraphTraits<bolt::BinaryFunction *> :
 
   typedef bolt::BinaryBasicBlock * nodes_iterator;
   static nodes_iterator nodes_begin(bolt::BinaryFunction *F) {
+    llvm_unreachable("Not implemented");
     return &(*F->begin());
   }
   static nodes_iterator nodes_end(bolt::BinaryFunction *F) {
+    llvm_unreachable("Not implemented");
     return &(*F->end());
   }
   static size_t size(bolt::BinaryFunction *F) {
@@ -2056,9 +2070,11 @@ template <> struct GraphTraits<const bolt::BinaryFunction *> :
 
   typedef const bolt::BinaryBasicBlock * nodes_iterator;
   static nodes_iterator nodes_begin(const bolt::BinaryFunction *F) {
+    llvm_unreachable("Not implemented");
     return &(*F->begin());
   }
   static nodes_iterator nodes_end(const bolt::BinaryFunction *F) {
+    llvm_unreachable("Not implemented");
     return &(*F->end());
   }
   static size_t size(const bolt::BinaryFunction *F) {

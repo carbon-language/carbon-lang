@@ -373,6 +373,16 @@ void BinaryBasicBlock::addTailCallInstruction(const MCSymbol *Target) {
   Instructions.emplace_back(std::move(NewInst));
 }
 
+uint32_t BinaryBasicBlock::getNumCalls() const {
+  uint32_t N{0};
+  auto &BC = Function->getBinaryContext();
+  for (auto &Instr : Instructions) {
+    if (BC.MIA->isCall(Instr))
+      ++N;
+  }
+  return N;
+}
+
 uint32_t BinaryBasicBlock::getNumPseudos() const {
 #ifndef NDEBUG
   auto &BC = Function->getBinaryContext();

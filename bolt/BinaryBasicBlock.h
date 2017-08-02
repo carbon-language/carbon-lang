@@ -349,6 +349,17 @@ public:
     return BranchInfo[Condition == true ? 0 : 1];
   };
 
+  BinaryBranchInfo &getBranchInfo(const BinaryBasicBlock &Succ) {
+    auto BI = branch_info_begin();
+    for (auto BB : successors()) {
+      if (&Succ == BB)
+        return *BI;
+      ++BI;
+    }
+    llvm_unreachable("Invalid successor");
+    return *BI;
+  }
+
   /// Try to compute the taken and misprediction frequencies for the given
   /// successor.  The result is an error if no information can be found.
   ErrorOr<std::pair<double, double>>
@@ -367,6 +378,9 @@ public:
   /// Add an instruction with tail call control transfer to \p Target
   /// to the end of this basic block.
   void addTailCallInstruction(const MCSymbol *Target);
+
+  /// Return the number of call instructions in this basic block.
+  uint32_t getNumCalls() const;
 
   /// Get landing pad with given label. Returns nullptr if no such
   /// landing pad is found.

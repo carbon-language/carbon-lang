@@ -13,8 +13,9 @@ add_llvm_library(LLVMBOLTPasses
   IndirectCallPromotion.cpp
   Inliner.cpp
   LivenessAnalysis.cpp
-  PLTCall.cpp
+  MCF.cpp
   PettisAndHansen.cpp
+  PLTCall.cpp
   RegAnalysis.cpp
   ReorderAlgorithm.cpp
   ReorderFunctions.cpp

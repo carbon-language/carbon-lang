@@ -13,6 +13,7 @@
 #include "BinaryBasicBlock.h"
 #include "BinaryFunction.h"
 #include "DataReader.h"
+#include "Passes/MCF.h"
 #include "Passes/ReorderAlgorithm.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
@@ -125,6 +126,27 @@ PrintOnly("print-only",
 static cl::opt<bool>
 SplitEH("split-eh",
   cl::desc("split C++ exception handling code (experimental)"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+cl::opt<MCFCostFunction>
+DoMCF("mcf",
+  cl::desc("solve a min cost flow problem on the CFG to fix edge counts "
+           "(default=disable)"),
+  cl::init(MCF_DISABLE),
+  cl::values(
+    clEnumValN(MCF_DISABLE, "none",
+               "disable MCF"),
+    clEnumValN(MCF_LINEAR, "linear",
+               "cost function is inversely proportional to edge count"),
+    clEnumValN(MCF_QUADRATIC, "quadratic",
+               "cost function is inversely proportional to edge count squared"),
+    clEnumValN(MCF_LOG, "log",
+               "cost function is inversely proportional to log of edge count"),
+    clEnumValN(MCF_BLAMEFTS, "blamefts",
+               "tune cost to blame fall-through edges for surplus flow"),
+    clEnumValEnd),
   cl::ZeroOrMore,
   cl::Hidden,
   cl::cat(BoltOptCategory));
@@ -1839,10 +1861,15 @@ bool BinaryFunction::buildCFG() {
   addLandingPads(0, BasicBlocks.size());
 
   // Infer frequency for non-taken branches
-  if (hasValidProfile())
+  if (hasValidProfile() && opts::DoMCF != MCF_DISABLE) {
+    // Convert COUNT_NO_PROFILE to 0
+    removeTagsFromProfile();
+    solveMCF(*this, opts::DoMCF);
+  } else if (hasValidProfile()) {
     inferFallThroughCounts();
-  else
+  } else {
     clearProfile();
+  }
 
   // Assign CFI information to each BB entry.
   annotateCFIState();
@@ -1875,6 +1902,14 @@ bool BinaryFunction::buildCFG() {
   // Eliminate inconsistencies between branch instructions and CFG.
   postProcessBranches();
 
+  // If our profiling data comes from samples instead of LBR entries,
+  // now is the time to read this data and attach it to BBs. At this point,
+  // conditional tail calls are converted into a branch and a new basic block,
+  // making it slightly different than the original binary where profiled data
+  // was collected. However, this shouldn't matter for plain sampling events.
+  if (!BC.DR.hasLBR())
+    readSampleData();
+
   // Clean-up memory taken by instructions and labels.
   //
   // NB: don't clear Labels list as we may need them if we mark the function
@@ -1898,6 +1933,71 @@ bool BinaryFunction::buildCFG() {
   assert(validateCFG() && "Invalid CFG detected after disassembly");
 
   return true;
+}
+
+void BinaryFunction::removeTagsFromProfile() {
+  for (auto *BB : BasicBlocks) {
+    if (BB->ExecutionCount == BinaryBasicBlock::COUNT_NO_PROFILE)
+      BB->ExecutionCount = 0;
+    for (auto &BI : BB->branch_info()) {
+      if (BI.Count != BinaryBasicBlock::COUNT_NO_PROFILE &&
+          BI.MispredictedCount != BinaryBasicBlock::COUNT_NO_PROFILE)
+        continue;
+      BI.Count = 0;
+      BI.MispredictedCount = 0;
+    }
+  }
+}
+
+void BinaryFunction::readSampleData() {
+  auto SampleDataOrErr = BC.DR.getFuncSampleData(getNames());
+
+  if (!SampleDataOrErr)
+    return;
+
+  // Non-LBR mode territory
+  // First step is to assign BB execution count based on samples from perf
+  ProfileMatchRatio = 1.0f;
+  removeTagsFromProfile();
+  bool NormalizeByInsnCount =
+      BC.DR.usesEvent("cycles") || BC.DR.usesEvent("instructions");
+  bool NormalizeByCalls = BC.DR.usesEvent("branches");
+  static bool NagUser{true};
+  if (NagUser) {
+    outs() << "BOLT-INFO: operating with non-LBR profiling data.\n";
+    if (NormalizeByInsnCount) {
+      outs() << "BOLT-INFO: normalizing samples by instruction count.\n";
+    } else if (NormalizeByCalls) {
+      outs() << "BOLT-INFO: normalizing samples by branches.\n";
+    }
+    NagUser = false;
+  }
+  uint64_t LastOffset = getSize();
+  uint64_t TotalEntryCount{0};
+  for (auto I = BasicBlockOffsets.rbegin(), E = BasicBlockOffsets.rend();
+       I != E; ++I) {
+    uint64_t CurOffset = I->first;
+    // Always work with samples multiplied by 1000 to avoid losing them if we
+    // later need to normalize numbers
+    uint64_t NumSamples =
+        SampleDataOrErr->getSamples(CurOffset, LastOffset) * 1000;
+    if (NormalizeByInsnCount && I->second->getNumNonPseudos())
+      NumSamples /= I->second->getNumNonPseudos();
+    else if (NormalizeByCalls) {
+      uint32_t NumCalls = I->second->getNumCalls();
+      NumSamples /= NumCalls + 1;
+    }
+    I->second->setExecutionCount(NumSamples);
+    if (I->second->isEntryPoint())
+      TotalEntryCount += NumSamples;
+    LastOffset = CurOffset;
+  }
+  ExecutionCount = TotalEntryCount;
+
+  estimateEdgeCounts(BC, *this);
+
+  if (opts::DoMCF != MCF_DISABLE)
+    solveMCF(*this, opts::DoMCF);
 }
 
 void BinaryFunction::addEntryPoint(uint64_t Address) {
@@ -1987,6 +2087,12 @@ bool BinaryFunction::fetchProfileForOtherEntryPoints() {
 }
 
 void BinaryFunction::matchProfileData() {
+  // This functionality is available for LBR-mode only
+  // TODO: Implement evaluateProfileData() for samples, checking whether
+  // sample addresses match instruction addresses in the function
+  if (!BC.DR.hasLBR())
+    return;
+
   if (BranchData) {
     ProfileMatchRatio = evaluateProfileData(*BranchData);
     if (ProfileMatchRatio == 1.0f) {

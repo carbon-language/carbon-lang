@@ -18,6 +18,7 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/ErrorOr.h"
@@ -163,6 +164,47 @@ struct FuncBranchData {
   void appendFrom(const FuncBranchData &FBD, uint64_t Offset);
 };
 
+/// Similar to BranchInfo, but instead of recording from-to address (an edge),
+/// it records the address of a perf event and the number of times samples hit
+/// this address.
+struct SampleInfo {
+  Location Address; // FIXME: Change this name to Loc
+  int64_t Occurrences; // FIXME: Variable name is horrible
+
+  SampleInfo(Location Address, int64_t Occurrences)
+      : Address(std::move(Address)), Occurrences(Occurrences) {}
+
+  bool operator==(const SampleInfo &RHS) const {
+    return Address == RHS.Address;
+  }
+
+  bool operator<(const SampleInfo &RHS) const {
+    if (Address < RHS.Address)
+      return true;
+
+    return false;
+  }
+
+  void print(raw_ostream &OS) const;
+
+  void mergeWith(const SampleInfo &SI);
+};
+
+/// Helper class to store samples recorded in the address space of a given
+/// function, analogous to FuncBranchData but for samples instead of branches.
+struct FuncSampleData {
+  typedef std::vector<SampleInfo> ContainerTy;
+
+  StringRef Name;
+  ContainerTy Data;
+
+  FuncSampleData(StringRef Name, ContainerTy Data)
+      : Name(Name), Data(std::move(Data)) {}
+
+  /// Get the number of samples recorded in [Start, End)
+  uint64_t getSamples(uint64_t Start, uint64_t End) const;
+};
+
 //===----------------------------------------------------------------------===//
 //
 /// DataReader Class
@@ -222,9 +264,29 @@ public:
   /// offset d.
   std::error_code parse();
 
+  /// When no_lbr is the first line of the file, activate No LBR mode. In this
+  /// mode we read the addresses where samples were recorded directly instead of
+  /// LBR entries. The line format is almost the same, except for a missing <to>
+  /// triple and a missing mispredictions field:
+  ///
+  /// no_lbr
+  /// <is symbol?> <closest elf symbol or DSO name> <relative address> <count>
+  /// ...
+  ///
+  /// Example:
+  ///
+  /// no_lbr                           # First line of fdata file
+  ///  1 BZ2_compressBlock 466c 3
+  ///  1 BZ2_hbMakeCodeLengths 29c 1
+  ///
+  std::error_code parseInNoLBRMode();
+
   /// Return branch data matching one of the names in \p FuncNames.
   FuncBranchData *
   getFuncBranchData(const std::vector<std::string> &FuncNames);
+
+  FuncSampleData *
+  getFuncSampleData(const std::vector<std::string> &FuncNames);
 
   /// Return a vector of all FuncBranchData matching the list of names.
   /// Internally use fuzzy matching to match special names like LTO-generated
@@ -232,11 +294,15 @@ public:
   std::vector<FuncBranchData *>
   getFuncBranchDataRegex(const std::vector<std::string> &FuncNames);
 
-  using FuncsMapType = StringMap<FuncBranchData>;
+  using FuncsToBranchesMapTy = StringMap<FuncBranchData>;
+  using FuncsToSamplesMapTy = StringMap<FuncSampleData>;
 
-  FuncsMapType &getAllFuncsData() { return FuncsMap; }
+  FuncsToBranchesMapTy &getAllFuncsBranchData() { return FuncsToBranches; }
+  FuncsToSamplesMapTy &getAllFuncsSampleData() { return FuncsToSamples; }
 
-  const FuncsMapType &getAllFuncsData() const { return FuncsMap; }
+  const FuncsToBranchesMapTy &getAllFuncsData() const {
+    return FuncsToBranches;
+  }
 
   /// Return true if profile contains an entry for a local function
   /// that has a non-empty associated file name.
@@ -244,6 +310,24 @@ public:
 
   /// Dumps the entire data structures parsed. Used for debugging.
   void dump() const;
+
+  /// Return false only if we are running with profiling data that lacks LBR.
+  bool hasLBR() const { return !NoLBRMode; }
+
+  /// Return true if event named \p Name was used to collect this profile data.
+  bool usesEvent(StringRef Name) const {
+    for (auto I = EventNames.begin(), E = EventNames.end(); I != E; ++I) {
+      StringRef Event = I->getKey();
+      if (Event.find(Name) != StringRef::npos)
+        return true;
+    }
+    return false;
+  }
+
+  /// Return all event names used to collect this profile
+  const StringSet<> &getEventNames() const {
+    return EventNames;
+  }
 
 private:
 
@@ -255,6 +339,8 @@ private:
   ErrorOr<Location> parseLocation(char EndChar, bool EndNl=false);
   ErrorOr<BranchHistory> parseBranchHistory();
   ErrorOr<BranchInfo> parseBranchInfo();
+  ErrorOr<SampleInfo> parseSampleInfo();
+  ErrorOr<bool> maybeParseNoLBRFlag();
   bool hasData();
 
   /// Build suffix map once the profile data is parsed.
@@ -266,7 +352,10 @@ private:
   StringRef ParsingBuf;
   unsigned Line;
   unsigned Col;
-  FuncsMapType FuncsMap;
+  FuncsToBranchesMapTy FuncsToBranches;
+  FuncsToSamplesMapTy FuncsToSamples;
+  bool NoLBRMode;
+  StringSet<> EventNames;
   static const char FieldSeparator = ' ';
 
   /// Map of common LTO names to possible matching profiles.

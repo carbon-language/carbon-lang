@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "../DataReader.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -91,7 +92,9 @@ int main(int argc, char **argv) {
   ToolName = argv[0];
 
   // All merged data.
-  DataReader::FuncsMapType MergedFunctionsData;
+  DataReader::FuncsToBranchesMapTy MergedFunctionsBranchData;
+  DataReader::FuncsToSamplesMapTy MergedFunctionsSampleData;
+  StringSet<> EventNames;
 
   // Merged functions data has to replace strings refs with strings from the
   // pool.
@@ -140,9 +143,20 @@ int main(int argc, char **argv) {
     AllStrings.emplace_back(ToNamePtr);   // keep the reference
   };
 
+  auto CopySampleInfo = [&](const SampleInfo &SI,
+                            std::vector<SampleInfo> &SIData) {
+    auto NamePtr = MergedStringPool.intern(SI.Address.Name);
+    BranchHistories Histories;
+    SIData.emplace_back(SampleInfo(Location(SI.Address.IsSymbol,
+                                            *NamePtr,
+                                            SI.Address.Offset),
+                                   SI.Occurrences));
+    AllStrings.emplace_back(NamePtr); // keep the reference
+  };
+
   // Simply replace string references in BranchInfo with internal storage
   // references.
-  auto replaceStringRefs = [&] (BranchInfo &BI) {
+  auto replaceBIStringRefs = [&] (BranchInfo &BI) {
     auto FromNamePtr = MergedStringPool.intern(BI.From.Name);
     BI.From.Name = *FromNamePtr;
     AllStrings.emplace_back(FromNamePtr); // keep the reference
@@ -163,6 +177,12 @@ int main(int argc, char **argv) {
     }
   };
 
+  auto replaceSIStringRefs = [&] (SampleInfo &SI) {
+    auto NamePtr = MergedStringPool.intern(SI.Address.Name);
+    SI.Address.Name = *NamePtr;
+    AllStrings.emplace_back(NamePtr); // keep the reference
+  };
+
   for (auto &InputDataFilename : opts::InputDataFilenames) {
     if (!sys::fs::exists(InputDataFilename))
       report_error(InputDataFilename, errc::no_such_file_or_directory);
@@ -175,9 +195,17 @@ int main(int argc, char **argv) {
     if (std::error_code EC = ReaderOrErr.getError())
       report_error(InputDataFilename, EC);
 
-    for (auto &FI : ReaderOrErr.get()->getAllFuncsData()) {
-      auto MI = MergedFunctionsData.find(FI.second.Name);
-      if (MI != MergedFunctionsData.end()) {
+    if ((ReaderOrErr.get()->hasLBR() && MergedFunctionsSampleData.size() > 0) ||
+        (!ReaderOrErr.get()->hasLBR() &&
+         MergedFunctionsBranchData.size() > 0)) {
+      errs() << "Cannot merge LBR profile with non-LBR "
+                "profile\n";
+      return EXIT_FAILURE;
+    }
+
+    for (auto &FI : ReaderOrErr.get()->getAllFuncsBranchData()) {
+      auto MI = MergedFunctionsBranchData.find(FI.second.Name);
+      if (MI != MergedFunctionsBranchData.end()) {
         MI->second.ExecutionCount += FI.second.ExecutionCount;
         std::vector<BranchInfo> TmpBI;
         for (auto &BI : FI.second.Data) {
@@ -186,7 +214,7 @@ int main(int argc, char **argv) {
                                      MI->second.Data.end(),
                                      BI);
           if (TI != MI->second.Data.end() && *TI == BI) {
-            replaceStringRefs(BI);
+            replaceBIStringRefs(BI);
             TI->mergeWith(BI);
           } else {
             CopyBranchInfo(BI, TmpBI);
@@ -208,7 +236,7 @@ int main(int argc, char **argv) {
         auto NamePtr = MergedStringPool.intern(FI.second.Name);
         AllStrings.emplace_back(NamePtr); // keep the ref
         bool Success;
-        std::tie(MI, Success) = MergedFunctionsData.insert(
+        std::tie(MI, Success) = MergedFunctionsBranchData.insert(
             std::make_pair(*NamePtr,
                            FuncBranchData(*NamePtr,
                                           FuncBranchData::ContainerTy())));
@@ -218,7 +246,7 @@ int main(int argc, char **argv) {
         BranchInfo *PrevBI = nullptr;
         for (auto &BI : FI.second.Data) {
           if (PrevBI && *PrevBI == BI) {
-            replaceStringRefs(BI);
+            replaceBIStringRefs(BI);
             PrevBI->mergeWith(BI);
           } else {
             CopyBranchInfo(BI, MI->second.Data);
@@ -227,24 +255,98 @@ int main(int argc, char **argv) {
         }
       }
     }
-  }
 
-  if (!opts::SuppressMergedDataOutput) {
-    // Print all the data in the original format
-    for (const auto &FDI : MergedFunctionsData) {
-      for (const auto &BD : FDI.second.Data) {
-        BD.print(outs());
+    for (auto NameIter = ReaderOrErr.get()->getEventNames().begin(),
+              End = ReaderOrErr.get()->getEventNames().end();
+         NameIter != End; ++NameIter) {
+      auto NamePtr = MergedStringPool.intern(NameIter->getKey());
+      EventNames.insert(*NamePtr);
+    }
+
+    for (auto &FI : ReaderOrErr.get()->getAllFuncsSampleData()) {
+      auto MI = MergedFunctionsSampleData.find(FI.second.Name);
+      if (MI != MergedFunctionsSampleData.end()) {
+        std::vector<SampleInfo> TmpSI;
+        for (auto &SI : FI.second.Data) {
+          // Find and merge a corresponding entry or copy data.
+          auto TI = std::lower_bound(MI->second.Data.begin(),
+                                     MI->second.Data.end(),
+                                     SI);
+          if (TI != MI->second.Data.end() && *TI == SI) {
+            replaceSIStringRefs(SI);
+            TI->mergeWith(SI);
+          } else {
+            CopySampleInfo(SI, TmpSI);
+          }
+        }
+        // Merge in the temp vector making sure it doesn't contain duplicates.
+        std::sort(TmpSI.begin(), TmpSI.end());
+        SampleInfo *PrevSI = nullptr;
+        for (auto &SI : TmpSI) {
+          if (PrevSI && *PrevSI == SI) {
+            PrevSI->mergeWith(SI);
+          } else {
+            MI->second.Data.emplace_back(SI);
+            PrevSI = &MI->second.Data.back();
+          }
+        }
+        std::sort(MI->second.Data.begin(), MI->second.Data.end());
+      } else {
+        auto NamePtr = MergedStringPool.intern(FI.second.Name);
+        AllStrings.emplace_back(NamePtr); // keep the ref
+        bool Success;
+        std::tie(MI, Success) = MergedFunctionsSampleData.insert(
+            std::make_pair(*NamePtr,
+                           FuncSampleData(*NamePtr,
+                                          FuncSampleData::ContainerTy())));
+        // Copy with string conversion while eliminating duplicates.
+        std::sort(FI.second.Data.begin(), FI.second.Data.end());
+        SampleInfo *PrevSI = nullptr;
+        for (auto &SI : FI.second.Data) {
+          if (PrevSI && *PrevSI == SI) {
+            replaceSIStringRefs(SI);
+            PrevSI->mergeWith(SI);
+          } else {
+            CopySampleInfo(SI, MI->second.Data);
+            PrevSI = &MI->second.Data.back();
+          }
+        }
       }
     }
   }
 
-  errs() << "Data for " << MergedFunctionsData.size()
+  if (!opts::SuppressMergedDataOutput) {
+    // Print all the data in the original format
+    // Print mode
+    if (MergedFunctionsSampleData.size() > 0) {
+      outs() << "no_lbr";
+      for (auto NameIter = EventNames.begin(), End = EventNames.end();
+           NameIter != End; ++NameIter) {
+        outs() << " " << NameIter->getKey();
+      }
+      outs() << "\n";
+    }
+    for (const auto &FDI : MergedFunctionsBranchData) {
+      for (const auto &BD : FDI.second.Data) {
+        BD.print(outs());
+      }
+    }
+    for (const auto &FDI : MergedFunctionsSampleData) {
+      for (const auto &SD : FDI.second.Data) {
+        SD.print(outs());
+      }
+    }
+  }
+
+  errs() << "Data for "
+         << (MergedFunctionsBranchData.size() +
+             MergedFunctionsSampleData.size())
          << " unique objects successfully merged.\n";
 
   if (opts::PrintFunctionList != opts::ST_NONE) {
     // List of function names with execution count.
     std::vector<std::pair<uint64_t, StringRef>>
-      FunctionList(MergedFunctionsData.size());
+      FunctionList(MergedFunctionsBranchData.size());
     using CountFuncType =
       std::function<std::pair<uint64_t,StringRef>(
           const StringMapEntry<FuncBranchData>&)>;
@@ -264,8 +366,8 @@ int main(int argc, char **argv) {
     CountFuncType CountFunc = (opts::PrintFunctionList == opts::ST_EXEC_COUNT)
        ? ExecCountFunc
        : BranchCountFunc;
-    std::transform(MergedFunctionsData.begin(),
-                   MergedFunctionsData.end(),
+    std::transform(MergedFunctionsBranchData.begin(),
+                   MergedFunctionsBranchData.end(),
                    FunctionList.begin(),
                    CountFunc);
     std::stable_sort(FunctionList.rbegin(), FunctionList.rend());

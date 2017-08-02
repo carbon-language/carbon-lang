@@ -31,9 +31,10 @@ private:
   std::set<uint64_t> &LargeFunctions;
   std::vector<std::pair<const bool,
                         std::unique_ptr<BinaryFunctionPass>>> Passes;
-  static const char TimerGroupName[];
 
  public:
+  static const char TimerGroupName[];
+
   BinaryFunctionPassManager(BinaryContext &BC,
                             std::map<uint64_t, BinaryFunction> &BFs,
                             std::set<uint64_t> &LargeFunctions)

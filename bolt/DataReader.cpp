@@ -78,6 +78,36 @@ void FuncBranchData::appendFrom(const FuncBranchData &FBD, uint64_t Offset) {
   }
 }
 
+void SampleInfo::mergeWith(const SampleInfo &SI) {
+  Occurrences += SI.Occurrences;
+}
+
+void SampleInfo::print(raw_ostream &OS) const {
+  OS << Address.IsSymbol << " " << Address.Name << " "
+     << Twine::utohexstr(Address.Offset) << " "
+     << Occurrences << "\n";
+}
+
+uint64_t
+FuncSampleData::getSamples(uint64_t Start, uint64_t End) const {
+  assert(std::is_sorted(Data.begin(), Data.end()));
+  struct Compare {
+    bool operator()(const SampleInfo &SI, const uint64_t Val) const {
+      return SI.Address.Offset < Val;
+    }
+    bool operator()(const uint64_t Val, const SampleInfo &SI) const {
+      return Val < SI.Address.Offset;
+    }
+  };
+  uint64_t Result{0};
+  for (auto I = std::lower_bound(Data.begin(), Data.end(), Start, Compare()),
+            E = std::lower_bound(Data.begin(), Data.end(), End, Compare());
+       I != E; ++I) {
+    Result += I->Occurrences;
+  }
+  return Result;
+}
+
 void BranchInfo::mergeWith(const BranchInfo &BI) {
 
   // Merge branch and misprediction counts.
@@ -406,6 +436,48 @@ ErrorOr<BranchInfo> DataReader::parseBranchInfo() {
                     std::move(Histories));
 }
 
+ErrorOr<SampleInfo> DataReader::parseSampleInfo() {
+  auto Res = parseLocation(FieldSeparator);
+  if (std::error_code EC = Res.getError())
+    return EC;
+  Location Address = Res.get();
+
+  auto BRes = parseNumberField(FieldSeparator, /* EndNl = */ true);
+  if (std::error_code EC = BRes.getError())
+    return EC;
+  int64_t Occurrences = BRes.get();
+
+  if (!checkAndConsumeNewLine()) {
+    reportError("expected end of line");
+    return make_error_code(llvm::errc::io_error);
+  }
+
+  return SampleInfo(std::move(Address), Occurrences);
+}
+
+ErrorOr<bool> DataReader::maybeParseNoLBRFlag() {
+  if (ParsingBuf.size() < 6 || ParsingBuf.substr(0, 6) != "no_lbr")
+    return false;
+  ParsingBuf = ParsingBuf.drop_front(6);
+  Col += 6;
+
+  if (ParsingBuf.size() > 0 && ParsingBuf[0] == ' ')
+    ParsingBuf = ParsingBuf.drop_front(1);
+
+  while (ParsingBuf.size() > 0 && ParsingBuf[0] != '\n') {
+    auto EventName = parseString(' ', true);
+    if (!EventName)
+      return make_error_code(llvm::errc::io_error);
+    EventNames.insert(EventName.get());
+  }
+
+  if (!checkAndConsumeNewLine()) {
+    reportError("malformed no_lbr line");
+    return make_error_code(llvm::errc::io_error);
+  }
+  return true;
+}
+
 bool DataReader::hasData() {
   if (ParsingBuf.size() == 0)
     return false;
@@ -415,12 +487,48 @@ bool DataReader::hasData() {
   return false;
 }
 
+std::error_code DataReader::parseInNoLBRMode() {
+  auto GetOrCreateFuncEntry = [&](StringRef Name) {
+    auto I = FuncsToSamples.find(Name);
+    if (I == FuncsToSamples.end()) {
+      bool success;
+      std::tie(I, success) = FuncsToSamples.insert(std::make_pair(
+          Name, FuncSampleData(Name, FuncSampleData::ContainerTy())));
+
+      assert(success && "unexpected result of insert");
+    }
+    return I;
+  };
+
+  while (hasData()) {
+    auto Res = parseSampleInfo();
+    if (std::error_code EC = Res.getError())
+      return EC;
+
+    SampleInfo SI = Res.get();
+
+    // Ignore samples not involving known locations
+    if (!SI.Address.IsSymbol)
+      continue;
+
+    auto I = GetOrCreateFuncEntry(SI.Address.Name);
+    I->getValue().Data.emplace_back(std::move(SI));
+  }
+
+  for (auto &FuncSamples : FuncsToSamples) {
+    std::stable_sort(FuncSamples.second.Data.begin(),
+                     FuncSamples.second.Data.end());
+  }
+
+  return std::error_code();
+}
+
 std::error_code DataReader::parse() {
   auto GetOrCreateFuncEntry = [&](StringRef Name) {
-    auto I = FuncsMap.find(Name);
-    if (I == FuncsMap.end()) {
+    auto I = FuncsToBranches.find(Name);
+    if (I == FuncsToBranches.end()) {
       bool success;
-      std::tie(I, success) = FuncsMap.insert(
+      std::tie(I, success) = FuncsToBranches.insert(
           std::make_pair(Name, FuncBranchData(Name,
                                               FuncBranchData::ContainerTy(),
                                               FuncBranchData::ContainerTy())));
@@ -431,6 +539,13 @@ std::error_code DataReader::parse() {
 
   Col = 0;
   Line = 1;
+  auto FlagOrErr = maybeParseNoLBRFlag();
+  if (!FlagOrErr)
+    return FlagOrErr.getError();
+  NoLBRMode = *FlagOrErr;
+  if (NoLBRMode)
+    return parseInNoLBRMode();
+
   while (hasData()) {
     auto Res = parseBranchInfo();
     if (std::error_code EC = Res.getError())
@@ -462,7 +577,7 @@ std::error_code DataReader::parse() {
     }
   }
 
-  for (auto &FuncBranches : FuncsMap) {
+  for (auto &FuncBranches : FuncsToBranches) {
     std::stable_sort(FuncBranches.second.Data.begin(),
                      FuncBranches.second.Data.end());
   }
@@ -471,7 +586,7 @@ std::error_code DataReader::parse() {
 }
 
 void DataReader::buildLTONameMap() {
-  for (auto &FuncData : FuncsMap) {
+  for (auto &FuncData : FuncsToBranches) {
     const auto FuncName = FuncData.getKey();
     const auto CommonName = getLTOCommonName(FuncName);
     if (CommonName)
@@ -479,16 +594,29 @@ void DataReader::buildLTONameMap() {
   }
 }
 
-FuncBranchData *
-DataReader::getFuncBranchData(const std::vector<std::string> &FuncNames)  {
+namespace {
+template <typename MapTy>
+decltype(MapTy::MapEntryTy::second) *
+fetchMapEntry(MapTy &Map, const std::vector<std::string> &FuncNames) {
   // Do a reverse order iteration since the name in profile has a higher chance
   // of matching a name at the end of the list.
   for (auto FI = FuncNames.rbegin(), FE = FuncNames.rend(); FI != FE; ++FI) {
-    auto I = FuncsMap.find(normalizeName(*FI));
-    if (I != FuncsMap.end())
+    auto I = Map.find(normalizeName(*FI));
+    if (I != Map.end())
       return &I->getValue();
   }
   return nullptr;
+}
+}
+
+FuncBranchData *
+DataReader::getFuncBranchData(const std::vector<std::string> &FuncNames) {
+  return fetchMapEntry<FuncsToBranchesMapTy>(FuncsToBranches, FuncNames);
+}
+
+FuncSampleData *
+DataReader::getFuncSampleData(const std::vector<std::string> &FuncNames) {
+  return fetchMapEntry<FuncsToSamplesMapTy>(FuncsToSamples, FuncNames);
 }
 
 std::vector<FuncBranchData *>
@@ -507,8 +635,8 @@ DataReader::getFuncBranchDataRegex(const std::vector<std::string> &FuncNames) {
         AllData.insert(AllData.end(), CommonData.begin(), CommonData.end());
       }
     } else {
-      auto I = FuncsMap.find(Name);
-      if (I != FuncsMap.end()) {
+      auto I = FuncsToBranches.find(Name);
+      if (I != FuncsToBranches.end()) {
         return {&I->getValue()};
       }
     }
@@ -517,7 +645,7 @@ DataReader::getFuncBranchDataRegex(const std::vector<std::string> &FuncNames) {
 }
 
 bool DataReader::hasLocalsWithFileName() const {
-  for (const auto &Func : FuncsMap) {
+  for (const auto &Func : FuncsToBranches) {
     const auto &FuncName = Func.getKey();
     if (FuncName.count('/') == 2 && FuncName[0] != '/')
       return true;
@@ -526,7 +654,7 @@ bool DataReader::hasLocalsWithFileName() const {
 }
 
 void DataReader::dump() const {
-  for (const auto &Func : FuncsMap) {
+  for (const auto &Func : FuncsToBranches) {
     Diag << Func.getKey() << " branches:\n";
     for (const auto &BI : Func.getValue().Data) {
       Diag << BI.From.Name << " " << BI.From.Offset << " " << BI.To.Name << " "
@@ -550,6 +678,18 @@ void DataReader::dump() const {
                        << CI.second.Name << " " << CI.second.Offset << "\n";
         }
       }
+    }
+  }
+
+  for (auto I = EventNames.begin(), E = EventNames.end(); I != E; ++I) {
+    StringRef Event = I->getKey();
+    Diag << "Data was collected with event: " << Event << "\n";
+  }
+  for (const auto &Func : FuncsToSamples) {
+    Diag << Func.getKey() << " samples:\n";
+    for (const auto &SI : Func.getValue().Data) {
+      Diag << SI.Address.Name << " " << SI.Address.Offset << " "
+           << SI.Occurrences << "\n";
     }
   }
 }
