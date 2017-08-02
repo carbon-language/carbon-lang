@@ -38,7 +38,7 @@ protected:
 
   BumpPtrAllocator Allocator;
 };
-}
+} // namespace
 
 TEST_F(MSFBuilderTest, ValidateSuperBlockAccept) {
   // Test that a known good super block passes validation.

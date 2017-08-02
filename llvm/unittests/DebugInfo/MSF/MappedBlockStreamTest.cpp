@@ -1,4 +1,4 @@
-//===- llvm/unittest/DebugInfo/PDB/MappedBlockStreamTest.cpp --------------===//
+//===- llvm/unittest/DebugInfo/MSF/MappedBlockStreamTest.cpp --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -82,7 +82,6 @@ TEST(MappedBlockStreamTest, NumBlocks) {
                                            F.Allocator);
   EXPECT_EQ(F.block_size(), S->getBlockSize());
   EXPECT_EQ(F.layout().Blocks.size(), S->getNumBlocks());
-
 }
 
 // Tests that a read which is entirely contained within a single block works
@@ -334,7 +333,7 @@ TEST(MappedBlockStreamTest, TestWriteThenRead) {
   uint8_t byteArray1[] = {'0', '0'};
   ArrayRef<uint8_t> byteArrayRef0(byteArray0);
   ArrayRef<uint8_t> byteArrayRef1(byteArray1);
-  ArrayRef<uint8_t> byteArray[] = { byteArrayRef0, byteArrayRef1 };
+  ArrayRef<uint8_t> byteArray[] = {byteArrayRef0, byteArrayRef1};
   uint32_t intArr0[] = {890723408, 29082234};
   uint32_t intArr1[] = {890723408, 29082234};
   ArrayRef<uint32_t> intArray[] = {intArr0, intArr1};
