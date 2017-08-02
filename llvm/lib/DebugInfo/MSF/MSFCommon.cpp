@@ -59,3 +59,18 @@ Error llvm::msf::validateSuperBlock(const SuperBlock &SB) {
 
   return Error::success();
 }
+
+MSFStreamLayout llvm::msf::getFpmStreamLayout(const MSFLayout &Msf) {
+  MSFStreamLayout FL;
+  uint32_t NumFpmIntervals = getNumFpmIntervals(Msf);
+  support::ulittle32_t FpmBlock = Msf.SB->FreeBlockMapBlock;
+  assert(FpmBlock == 1 || FpmBlock == 2);
+  while (NumFpmIntervals > 0) {
+    FL.Blocks.push_back(FpmBlock);
+    FpmBlock += msf::getFpmIntervalLength(Msf);
+    --NumFpmIntervals;
+  }
+  FL.Length = getFullFpmByteSize(Msf);
+
+  return FL;
+}

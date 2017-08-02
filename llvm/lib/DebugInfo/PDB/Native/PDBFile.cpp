@@ -238,6 +238,10 @@ MSFStreamLayout PDBFile::getStreamLayout(uint32_t StreamIdx) const {
   return Result;
 }
 
+msf::MSFStreamLayout PDBFile::getFpmStreamLayout() const {
+  return msf::getFpmStreamLayout(ContainerLayout);
+}
+
 Expected<GlobalsStream &> PDBFile::getPDBGlobalsStream() {
   if (!Globals) {
     auto DbiS = getPDBDbiStream();

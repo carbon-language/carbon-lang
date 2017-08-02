@@ -59,6 +59,23 @@ struct MSFLayout {
   std::vector<ArrayRef<support::ulittle32_t>> StreamMap;
 };
 
+/// \brief Describes the layout of a stream in an MSF layout.  A "stream" here
+/// is defined as any logical unit of data which may be arranged inside the MSF
+/// file as a sequence of (possibly discontiguous) blocks.  When we want to read
+/// from a particular MSF Stream, we fill out a stream layout structure and the
+/// reader uses it to determine which blocks in the underlying MSF file contain
+/// the data, so that it can be pieced together in the right order.
+class MSFStreamLayout {
+public:
+  uint32_t Length;
+  std::vector<support::ulittle32_t> Blocks;
+};
+
+/// \brief Determine the layout of the FPM stream, given the MSF layout.  An FPM
+/// stream spans 1 or more blocks, each at equally spaced intervals throughout
+/// the file.
+MSFStreamLayout getFpmStreamLayout(const MSFLayout &Msf);
+
 inline bool isValidBlockSize(uint32_t Size) {
   switch (Size) {
   case 512:

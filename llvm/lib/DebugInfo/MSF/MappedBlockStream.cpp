@@ -11,7 +11,6 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/DebugInfo/MSF/MSFCommon.h"
-#include "llvm/DebugInfo/MSF/MSFStreamLayout.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/MathExtras.h"
@@ -35,19 +34,6 @@ public:
 };
 
 } // end anonymous namespace
-
-static void initializeFpmStreamLayout(const MSFLayout &Layout,
-                                      MSFStreamLayout &FpmLayout) {
-  uint32_t NumFpmIntervals = msf::getNumFpmIntervals(Layout);
-  support::ulittle32_t FpmBlock = Layout.SB->FreeBlockMapBlock;
-  assert(FpmBlock == 1 || FpmBlock == 2);
-  while (NumFpmIntervals > 0) {
-    FpmLayout.Blocks.push_back(FpmBlock);
-    FpmBlock += msf::getFpmIntervalLength(Layout);
-    --NumFpmIntervals;
-  }
-  FpmLayout.Length = msf::getFullFpmByteSize(Layout);
-}
 
 using Interval = std::pair<uint32_t, uint32_t>;
 
@@ -95,8 +81,7 @@ std::unique_ptr<MappedBlockStream>
 MappedBlockStream::createFpmStream(const MSFLayout &Layout,
                                    BinaryStreamRef MsfData,
                                    BumpPtrAllocator &Allocator) {
-  MSFStreamLayout SL;
-  initializeFpmStreamLayout(Layout, SL);
+  MSFStreamLayout SL(getFpmStreamLayout(Layout));
   return createStream(Layout.SB->BlockSize, SL, MsfData, Allocator);
 }
 
@@ -363,8 +348,7 @@ std::unique_ptr<WritableMappedBlockStream>
 WritableMappedBlockStream::createFpmStream(const MSFLayout &Layout,
                                            WritableBinaryStreamRef MsfData,
                                            BumpPtrAllocator &Allocator) {
-  MSFStreamLayout SL;
-  initializeFpmStreamLayout(Layout, SL);
+  MSFStreamLayout SL(getFpmStreamLayout(Layout));
   return createStream(Layout.SB->BlockSize, SL, MsfData, Allocator);
 }
 
