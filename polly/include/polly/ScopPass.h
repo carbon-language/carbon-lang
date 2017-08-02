@@ -77,6 +77,21 @@ private:
   ScopInfo *SI;
 };
 
+// A partial specialization of the require analysis template pass to handle
+// extra parameters
+template <typename AnalysisT>
+struct RequireAnalysisPass<AnalysisT, Scop, ScopAnalysisManager,
+                           ScopStandardAnalysisResults &, SPMUpdater &>
+    : PassInfoMixin<
+          RequireAnalysisPass<AnalysisT, Scop, ScopAnalysisManager,
+                              ScopStandardAnalysisResults &, SPMUpdater &>> {
+  PreservedAnalyses run(Scop &L, ScopAnalysisManager &AM,
+                        ScopStandardAnalysisResults &AR, SPMUpdater &) {
+    (void)AM.template getResult<AnalysisT>(L, AR);
+    return PreservedAnalyses::all();
+  }
+};
+
 template <>
 InnerAnalysisManagerProxy<ScopAnalysisManager, Function>::Result
 InnerAnalysisManagerProxy<ScopAnalysisManager, Function>::run(
@@ -95,6 +110,40 @@ extern template class OuterAnalysisManagerProxy<FunctionAnalysisManager, Scop,
 } // namespace llvm
 
 namespace polly {
+
+template <typename AnalysisManagerT, typename IRUnitT, typename... ExtraArgTs>
+class OwningInnerAnalysisManagerProxy
+    : public InnerAnalysisManagerProxy<AnalysisManagerT, IRUnitT> {
+public:
+  OwningInnerAnalysisManagerProxy()
+      : InnerAnalysisManagerProxy<AnalysisManagerT, IRUnitT>(InnerAM) {}
+  using Result = typename InnerAnalysisManagerProxy<AnalysisManagerT, IRUnitT,
+                                                    ExtraArgTs...>::Result;
+  Result run(IRUnitT &IR, AnalysisManager<IRUnitT, ExtraArgTs...> &AM,
+             ExtraArgTs...) {
+    return Result(InnerAM);
+  }
+
+  AnalysisManagerT &getManager() { return InnerAM; }
+
+private:
+  friend AnalysisInfoMixin<
+      OwningInnerAnalysisManagerProxy<AnalysisManagerT, IRUnitT>>;
+
+  static AnalysisKey Key;
+
+  AnalysisManagerT InnerAM;
+};
+
+template <>
+OwningInnerAnalysisManagerProxy<ScopAnalysisManager, Function>::Result
+OwningInnerAnalysisManagerProxy<ScopAnalysisManager, Function>::run(
+    Function &F, FunctionAnalysisManager &FAM);
+extern template class OwningInnerAnalysisManagerProxy<ScopAnalysisManager,
+                                                      Function>;
+
+using OwningScopAnalysisManagerFunctionProxy =
+    OwningInnerAnalysisManagerProxy<ScopAnalysisManager, Function>;
 using ScopPassManager =
     PassManager<Scop, ScopAnalysisManager, ScopStandardAnalysisResults &,
                 SPMUpdater &>;

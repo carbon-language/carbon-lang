@@ -41,6 +41,8 @@ void ScopPass::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
 }
 
+template class OwningInnerAnalysisManagerProxy<ScopAnalysisManager, Function>;
+
 namespace llvm {
 
 template class PassManager<Scop, ScopAnalysisManager,
@@ -129,6 +131,12 @@ bool ScopAnalysisManagerFunctionProxy::Result::invalidate(
   return false; // This proxy is still valid
 }
 
+template <>
+OwningScopAnalysisManagerFunctionProxy::Result
+OwningScopAnalysisManagerFunctionProxy::run(Function &F,
+                                            FunctionAnalysisManager &FAM) {
+  return Result(InnerAM, FAM.getResult<ScopInfoAnalysis>(F));
+}
 template <>
 ScopAnalysisManagerFunctionProxy::Result
 ScopAnalysisManagerFunctionProxy::run(Function &F,
