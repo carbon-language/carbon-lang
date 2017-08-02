@@ -587,9 +587,9 @@ define i64 @test46(i64 %A) {
 
 define i64 @test47(i8 %A) {
 ; CHECK-LABEL: @test47(
-; CHECK-NEXT:    [[B:%.*]] = sext i8 %A to i64
-; CHECK-NEXT:    [[C:%.*]] = and i64 [[B]], 4294967253
-; CHECK-NEXT:    [[E:%.*]] = or i64 [[C]], 42
+; CHECK-NEXT:    [[TMP1:%.*]] = or i8 [[A:%.*]], 42
+; CHECK-NEXT:    [[C:%.*]] = sext i8 [[TMP1]] to i64
+; CHECK-NEXT:    [[E:%.*]] = and i64 [[C]], 4294967295
 ; CHECK-NEXT:    ret i64 [[E]]
 ;
   %B = sext i8 %A to i32
