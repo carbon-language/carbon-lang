@@ -1068,7 +1068,7 @@ public:
   void setAccessRelation(isl::map AccessRelation);
 
   /// Set the updated access relation read from JSCOP file.
-  void setNewAccessRelation(__isl_take isl_map *NewAccessRelation);
+  void setNewAccessRelation(isl::map NewAccessRelation);
 
   /// Return whether the MemoryyAccess is a partial access. That is, the access
   /// is not executed in some instances of the parent statement's domain.
