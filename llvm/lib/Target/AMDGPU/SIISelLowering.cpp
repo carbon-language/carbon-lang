@@ -1345,6 +1345,12 @@ SDValue SITargetLowering::LowerFormalArguments(
   bool IsKernel = AMDGPU::isKernel(CallConv);
   bool IsEntryFunc = AMDGPU::isEntryFunctionCC(CallConv);
 
+  if (!IsEntryFunc) {
+    // 4 bytes are reserved at offset 0 for the emergency stack slot. Skip over
+    // this when allocating argument fixed offsets.
+    CCInfo.AllocateStack(4, 4);
+  }
+
   if (IsShader) {
     processShaderInputArgs(Splits, CallConv, Ins, Skipped, FType, Info);
 
@@ -1818,7 +1824,9 @@ SDValue SITargetLowering::LowerCall(CallLoweringInfo &CLI,
 
   // Stack pointer relative accesses are done by changing the offset SGPR. This
   // is just the VGPR offset component.
-  SDValue StackPtr = DAG.getConstant(0, DL, MVT::i32);
+
+  // The first 4 bytes are reserved for the callee's emergency stack slot.
+  SDValue StackPtr = DAG.getConstant(4, DL, MVT::i32);
 
   SmallVector<SDValue, 8> MemOpChains;
   MVT PtrVT = MVT::i32;

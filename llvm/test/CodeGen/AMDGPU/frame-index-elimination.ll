@@ -72,9 +72,10 @@ define void @func_load_private_arg_i32_ptr(i32* %ptr) #0 {
 ; GCN-LABEL: {{^}}void_func_byval_struct_i8_i32_ptr:
 ; GCN: s_waitcnt
 ; GCN-NEXT: s_mov_b32 s5, s32
-; GCN-NEXT: s_sub_u32 [[SUB:s[0-9]+]], s5, s4
-; GCN-NEXT: v_lshr_b32_e64 v0, [[SUB]], 6
-; GCN-NEXT: v_add_i32_e32 v0, vcc, 4, v0
+; GCN-NEXT: s_sub_u32 [[SUB_OFFSET:s[0-9]+]], s5, s4
+; GCN-NEXT: v_lshr_b32_e64 [[SHIFT:v[0-9]+]], [[SUB_OFFSET]], 6
+; GCN-NEXT: v_add_i32_e64 [[ADD:v[0-9]+]], {{s\[[0-9]+:[0-9]+\]}}, 4, [[SHIFT]]
+; GCN-NEXT: v_add_i32_e32 v0, vcc, 4, [[ADD]]
 ; GCN-NOT: v_mov
 ; GCN: ds_write_b32 v0, v0
 define void @void_func_byval_struct_i8_i32_ptr({ i8, i32 }* byval %arg0) #0 {
@@ -101,11 +102,12 @@ define void @void_func_byval_struct_i8_i32_ptr_value({ i8, i32 }* byval %arg0) #
 }
 
 ; GCN-LABEL: {{^}}void_func_byval_struct_i8_i32_ptr_nonentry_block:
-; GCN: s_sub_u32 s6, s5, s4
-; GCN: v_lshr_b32_e64 v1, s6, 6
+; GCN: s_sub_u32 [[SUB_OFFSET:s[0-9]+]], s5, s4
+; GCN: v_lshr_b32_e64 [[SHIFT:v[0-9]+]], [[SUB_OFFSET]], 6
+; GCN: v_add_i32_e64 [[ADD:v[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 4, [[SHIFT]]
 ; GCN: s_and_saveexec_b64
 
-; GCN: v_add_i32_e32 v0, vcc, 4, v1
+; GCN: v_add_i32_e32 v0, vcc, 4, [[ADD]]
 ; GCN: buffer_load_dword v1, v1, s[0:3], s4 offen offset:4
 ; GCN: ds_write_b32
 define void @void_func_byval_struct_i8_i32_ptr_nonentry_block({ i8, i32 }* byval %arg0, i32 %arg2) #0 {
