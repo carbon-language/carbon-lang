@@ -5259,6 +5259,9 @@ ScopInfo::ScopInfo(const DataLayout &DL, ScopDetection &SD, ScalarEvolution &SE,
     std::unique_ptr<Scop> S = SB.getScop();
     if (!S)
       continue;
+    ScopDetection::LoopStats Stats =
+        ScopDetection::countBeneficialLoops(&S->getRegion(), SE, LI, 0);
+    updateLoopCountStatistic(Stats);
     bool Inserted = RegionToScopMap.insert({R, std::move(S)}).second;
     assert(Inserted && "Building Scop for the same region twice!");
     (void)Inserted;
