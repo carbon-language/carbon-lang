@@ -1522,3 +1522,17 @@ define i8 @pr33078_4(i3 %x) {
   %D = trunc i16 %C to i8
   ret i8 %D
 }
+
+; (sext (xor (cmp), -1)) -> (sext (!cmp))
+define i64 @test94(i32 %a) {
+; CHECK-LABEL: @test94(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ne i32 [[A:%.*]], -2
+; CHECK-NEXT:    [[TMP2:%.*]] = sext i1 [[TMP1]] to i64
+; CHECK-NEXT:    ret i64 [[TMP2]]
+;
+  %1 = icmp eq i32 %a, -2
+  %2 = sext i1 %1 to i8
+  %3 = xor i8 %2, -1
+  %4 = sext i8 %3 to i64
+  ret i64 %4
+}
