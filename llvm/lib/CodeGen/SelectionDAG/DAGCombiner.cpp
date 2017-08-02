@@ -1947,6 +1947,15 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
         return DAG.getNode(ISD::ZERO_EXTEND, DL, VT, Not);
       }
     }
+
+    // Undo the add -> or combine to merge constant offsets from a frame index.
+    if (N0.getOpcode() == ISD::OR &&
+        isa<FrameIndexSDNode>(N0.getOperand(0)) &&
+        isa<ConstantSDNode>(N0.getOperand(1)) &&
+        DAG.haveNoCommonBitsSet(N0.getOperand(0), N0.getOperand(1))) {
+      SDValue Add0 = DAG.getNode(ISD::ADD, DL, VT, N1, N0.getOperand(1));
+      return DAG.getNode(ISD::ADD, DL, VT, N0.getOperand(0), Add0);
+    }
   }
 
   if (SDValue NewSel = foldBinOpIntoSelect(N))
