@@ -234,7 +234,6 @@ void BlockGenerator::copyInstScalar(ScopStmt &Stmt, Instruction *Inst,
     NewInst->replaceUsesOfWith(OldOperand, NewOperand);
   }
 
-
   Builder.Insert(NewInst);
   BBMap[Inst] = NewInst;
 
@@ -244,7 +243,7 @@ void BlockGenerator::copyInstScalar(ScopStmt &Stmt, Instruction *Inst,
   // which will not be listed in llvm.dbg.cu of the Module since the Module
   // doesn't contain one. This fails the verification of the Module and the
   // subsequent generation of the ASM string.
-  if( NewInst->getModule() != Inst->getModule() )
+  if (NewInst->getModule() != Inst->getModule())
     NewInst->setDebugLoc(llvm::DebugLoc());
 
   if (!NewInst->getType()->isVoidTy())
