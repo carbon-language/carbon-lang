@@ -150,8 +150,7 @@ Error PDBFile::parseFileHeaders() {
       MappedBlockStream::createFpmStream(ContainerLayout, *Buffer, Allocator);
   BinaryStreamReader FpmReader(*FpmStream);
   ArrayRef<uint8_t> FpmBytes;
-  if (auto EC = FpmReader.readBytes(FpmBytes,
-                                    msf::getFullFpmByteSize(ContainerLayout)))
+  if (auto EC = FpmReader.readBytes(FpmBytes, FpmReader.bytesRemaining()))
     return EC;
   uint32_t BlocksRemaining = getBlockCount();
   uint32_t BI = 0;

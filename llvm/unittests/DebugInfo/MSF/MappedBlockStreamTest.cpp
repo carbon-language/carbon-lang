@@ -16,6 +16,7 @@
 #include "llvm/Support/BinaryStreamWriter.h"
 #include "llvm/Testing/Support/Error.h"
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include <unordered_map>
@@ -493,6 +494,60 @@ TEST(MappedBlockStreamTest, DataLivesAfterStreamDestruction) {
   }
 
   EXPECT_EQ(Str[0], Str[1]);
+}
+} // namespace
+
+MATCHER_P3(BlockIsFilledWith, Layout, BlockIndex, Byte, "succeeded") {
+  uint64_t Offset = msf::blockToOffset(BlockIndex, Layout.SB->BlockSize);
+  ArrayRef<uint8_t> BufferRef = makeArrayRef(arg);
+  BufferRef = BufferRef.slice(Offset, Layout.SB->BlockSize);
+  return llvm::all_of(BufferRef, [this](uint8_t B) { return B == Byte; });
+}
+
+namespace {
+TEST(MappedBlockStreamTest, CreateFpmStream) {
+  BumpPtrAllocator Allocator;
+  SuperBlock SB;
+  MSFLayout L;
+  L.SB = &SB;
+
+  SB.FreeBlockMapBlock = 1;
+  SB.BlockSize = 4096;
+
+  constexpr uint32_t NumFileBlocks = 4096 * 4;
+
+  std::vector<uint8_t> MsfBuffer(NumFileBlocks * SB.BlockSize);
+  MutableBinaryByteStream MsfStream(MsfBuffer, llvm::support::little);
+
+  SB.NumBlocks = NumFileBlocks;
+  auto FpmStream =
+      WritableMappedBlockStream::createFpmStream(L, MsfStream, Allocator);
+  // 4096 * 4 / 8 = 2048 bytes of FPM data is needed to describe 4096 * 4
+  // blocks.  This translates to 1 FPM block.
+  EXPECT_EQ(2048u, FpmStream->getLength());
+  EXPECT_EQ(1u, FpmStream->getStreamLayout().Blocks.size());
+  EXPECT_EQ(1u, FpmStream->getStreamLayout().Blocks[0]);
+  // All blocks from FPM1 should be 1 initialized, and all blocks from FPM2
+  // should be 0 initialized (since we requested the main FPM, not the alt FPM)
+  for (int I = 0; I < 4; ++I) {
+    EXPECT_THAT(MsfBuffer, BlockIsFilledWith(L, 1 + I * SB.BlockSize, 0xFF));
+    EXPECT_THAT(MsfBuffer, BlockIsFilledWith(L, 2 + I * SB.BlockSize, 0));
+  }
+
+  ::memset(MsfBuffer.data(), 0, MsfBuffer.size());
+  FpmStream =
+      WritableMappedBlockStream::createFpmStream(L, MsfStream, Allocator, true);
+  // 4096 * 4 / 8 = 2048 bytes of FPM data is needed to describe 4096 * 4
+  // blocks.  This translates to 1 FPM block.
+  EXPECT_EQ(2048u, FpmStream->getLength());
+  EXPECT_EQ(1u, FpmStream->getStreamLayout().Blocks.size());
+  EXPECT_EQ(2u, FpmStream->getStreamLayout().Blocks[0]);
+  // All blocks from FPM2 should be 1 initialized, and all blocks from FPM1
+  // should be 0 initialized (since we requested the alt FPM, not the main FPM)
+  for (int I = 0; I < 4; ++I) {
+    EXPECT_THAT(MsfBuffer, BlockIsFilledWith(L, 1 + I * SB.BlockSize, 0));
+    EXPECT_THAT(MsfBuffer, BlockIsFilledWith(L, 2 + I * SB.BlockSize, 0xFF));
+  }
 }
 
 } // end anonymous namespace

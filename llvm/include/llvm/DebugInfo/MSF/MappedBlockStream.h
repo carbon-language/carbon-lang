@@ -122,7 +122,7 @@ public:
 
   static std::unique_ptr<WritableMappedBlockStream>
   createFpmStream(const MSFLayout &Layout, WritableBinaryStreamRef MsfData,
-                  BumpPtrAllocator &Allocator);
+                  BumpPtrAllocator &Allocator, bool AltFpm = false);
 
   support::endianness getEndian() const override {
     return support::little;
