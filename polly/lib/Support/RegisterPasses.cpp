@@ -464,7 +464,7 @@ static void buildDefaultPollyPipeline(FunctionPassManager &PM,
     case OPTIMIZER_NONE:
       break; /* Do nothing */
     case OPTIMIZER_ISL:
-      assert("ISL optimizer is not implemented");
+      llvm_unreachable("ISL optimizer is not implemented");
       break;
     }
 
@@ -482,7 +482,7 @@ static void buildDefaultPollyPipeline(FunctionPassManager &PM,
   }
 #ifdef GPU_CODEGEN
   else
-    assert("Hybrid Target with GPU support is not implemented");
+    llvm_unreachable("Hybrid Target with GPU support is not implemented");
 #endif
 
   PM.addPass(CodePreparationPass());
