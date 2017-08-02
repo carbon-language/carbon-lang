@@ -135,6 +135,11 @@ extern "C" void LLVMInitializeAMDGPUTarget() {
   RegisterTargetMachine<GCNTargetMachine> Y(getTheGCNTarget());
 
   PassRegistry *PR = PassRegistry::getPassRegistry();
+  initializeR600ClauseMergePassPass(*PR);
+  initializeR600ControlFlowFinalizerPass(*PR);
+  initializeR600PacketizerPass(*PR);
+  initializeR600ExpandSpecialInstrsPassPass(*PR);
+  initializeR600VectorRegMergerPass(*PR);
   initializeSILowerI1CopiesPass(*PR);
   initializeSIFixSGPRCopiesPass(*PR);
   initializeSIFixVGPRCopiesPass(*PR);
