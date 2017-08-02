@@ -63,6 +63,7 @@ set(LLVM_TOOLCHAIN_TOOLS
   llvm-dsymutil
   llvm-lib
   llvm-nm
+  llvm-objcopy
   llvm-objdump
   llvm-profdata
   llvm-ranlib
