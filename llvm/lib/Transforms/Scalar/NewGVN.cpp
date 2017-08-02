@@ -1824,7 +1824,6 @@ const Expression *NewGVN::performSymbolicCmpEvaluation(Instruction *I) const {
 // Return true if V is a value that will always be available (IE can
 // be placed anywhere) in the function.  We don't do globals here
 // because they are often worse to put in place.
-// TODO: Separate cost from availability
 static bool alwaysAvailable(Value *V) {
   return isa<Constant>(V) || isa<Argument>(V);
 }
