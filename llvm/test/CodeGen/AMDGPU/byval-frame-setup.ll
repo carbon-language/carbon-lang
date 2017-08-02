@@ -30,10 +30,11 @@ entry:
 
 ; GCN-LABEL: {{^}}void_func_byval_struct_non_leaf:
 ; GCN: s_mov_b32 s5, s32
-; GCN: buffer_store_dword v32
+; GCN-DAG: buffer_store_dword v32
+; GCN-DAG: buffer_store_dword v33
 ; GCN: v_writelane_b32
 
-; GCN-DAG: s_add_u32 s32, s32, 0xa00{{$}}
+; GCN-DAG: s_add_u32 s32, s32, 0xb00{{$}}
 
 ; GCN-DAG: buffer_load_dword [[LOAD0:v[0-9]+]], off, s[0:3], s5 offset:4{{$}}
 ; GCN: v_add_i32_e32 [[ADD0:v[0-9]+]], vcc, 1, [[LOAD0]]
@@ -48,7 +49,8 @@ entry:
 
 ; GCN: v_readlane_b32
 ; GCN: buffer_load_dword v32,
-; GCN: s_sub_u32 s32, s32, 0xa00{{$}}
+; GCN: buffer_load_dword v33,
+; GCN: s_sub_u32 s32, s32, 0xb00{{$}}
 ; GCN: s_setpc_b64
 define void  @void_func_byval_struct_non_leaf(%struct.ByValStruct* byval noalias nocapture align 4 %arg0, %struct.ByValStruct* byval noalias nocapture align 4 %arg1) #1 {
 entry:
@@ -67,7 +69,7 @@ entry:
 
 ; GCN-LABEL: {{^}}call_void_func_byval_struct_func:
 ; GCN: s_mov_b32 s5, s32
-; GCN: s_add_u32 s32, s32, 0xa00{{$}}
+; GCN: s_add_u32 s32, s32, 0xc00{{$}}
 ; GCN: v_writelane_b32
 
 ; GCN-DAG: s_add_u32 s32, s32, 0x800{{$}}
@@ -103,7 +105,7 @@ entry:
 
 ; GCN: v_readlane_b32
 
-; GCN: s_sub_u32 s32, s32, 0xa00{{$}}
+; GCN: s_sub_u32 s32, s32, 0xc00{{$}}
 ; GCN-NEXT: s_waitcnt
 ; GCN-NEXT: s_setpc_b64
 define void @call_void_func_byval_struct_func() #0 {

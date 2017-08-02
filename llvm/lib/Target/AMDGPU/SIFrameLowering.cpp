@@ -454,6 +454,15 @@ void SIFrameLowering::emitPrologue(MachineFunction &MF,
       .addImm(NumBytes * ST.getWavefrontSize())
       .setMIFlag(MachineInstr::FrameSetup);
   }
+
+  for (const SIMachineFunctionInfo::SGPRSpillVGPRCSR &Reg
+         : FuncInfo->getSGPRSpillVGPRs()) {
+    if (!Reg.FI.hasValue())
+      continue;
+    TII->storeRegToStackSlot(MBB, MBBI, Reg.VGPR, true,
+                             Reg.FI.getValue(), &AMDGPU::VGPR_32RegClass,
+                             &TII->getRegisterInfo());
+  }
 }
 
 void SIFrameLowering::emitEpilogue(MachineFunction &MF,
@@ -462,6 +471,19 @@ void SIFrameLowering::emitEpilogue(MachineFunction &MF,
   if (FuncInfo->isEntryFunction())
     return;
 
+  const SISubtarget &ST = MF.getSubtarget<SISubtarget>();
+  const SIInstrInfo *TII = ST.getInstrInfo();
+  MachineBasicBlock::iterator MBBI = MBB.getFirstTerminator();
+
+  for (const SIMachineFunctionInfo::SGPRSpillVGPRCSR &Reg
+         : FuncInfo->getSGPRSpillVGPRs()) {
+    if (!Reg.FI.hasValue())
+      continue;
+    TII->loadRegFromStackSlot(MBB, MBBI, Reg.VGPR,
+                              Reg.FI.getValue(), &AMDGPU::VGPR_32RegClass,
+                              &TII->getRegisterInfo());
+  }
+
   unsigned StackPtrReg = FuncInfo->getStackPtrOffsetReg();
   if (StackPtrReg == AMDGPU::NoRegister)
     return;
@@ -469,9 +491,6 @@ void SIFrameLowering::emitEpilogue(MachineFunction &MF,
   const MachineFrameInfo &MFI = MF.getFrameInfo();
   uint32_t NumBytes = MFI.getStackSize();
 
-  const SISubtarget &ST = MF.getSubtarget<SISubtarget>();
-  const SIInstrInfo *TII = ST.getInstrInfo();
-  MachineBasicBlock::iterator MBBI = MBB.getFirstTerminator();
   DebugLoc DL;
 
   // FIXME: Clarify distinction between no set SP and SP. For callee functions,
