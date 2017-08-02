@@ -141,12 +141,13 @@ static void runNewPMPasses(Config &Conf, Module &Mod, TargetMachine *TM,
   AAManager AA;
 
   // Parse a custom AA pipeline if asked to.
-  assert(PB.parseAAPipeline(AA, "default"));
+  if (!PB.parseAAPipeline(AA, "default"))
+    report_fatal_error("Error parsing default AA pipeline");
 
-  LoopAnalysisManager LAM;
-  FunctionAnalysisManager FAM;
-  CGSCCAnalysisManager CGAM;
-  ModuleAnalysisManager MAM;
+  LoopAnalysisManager LAM(Conf.DebugPassManager);
+  FunctionAnalysisManager FAM(Conf.DebugPassManager);
+  CGSCCAnalysisManager CGAM(Conf.DebugPassManager);
+  ModuleAnalysisManager MAM(Conf.DebugPassManager);
 
   // Register the AA manager first so that our version is the one used.
   FAM.registerPass([&] { return std::move(AA); });
@@ -158,7 +159,7 @@ static void runNewPMPasses(Config &Conf, Module &Mod, TargetMachine *TM,
   PB.registerLoopAnalyses(LAM);
   PB.crossRegisterProxies(LAM, FAM, CGAM, MAM);
 
-  ModulePassManager MPM;
+  ModulePassManager MPM(Conf.DebugPassManager);
   // FIXME (davide): verify the input.
 
   PassBuilder::OptimizationLevel OL;
@@ -181,9 +182,9 @@ static void runNewPMPasses(Config &Conf, Module &Mod, TargetMachine *TM,
   }
 
   if (IsThinLTO)
-    MPM = PB.buildThinLTODefaultPipeline(OL, false /* DebugLogging */);
+    MPM = PB.buildThinLTODefaultPipeline(OL, Conf.DebugPassManager);
   else
-    MPM = PB.buildLTODefaultPipeline(OL, false /* DebugLogging */);
+    MPM = PB.buildLTODefaultPipeline(OL, Conf.DebugPassManager);
   MPM.run(Mod, MAM);
 
   // FIXME (davide): verify the output.
