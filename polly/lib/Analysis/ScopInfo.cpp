@@ -1162,8 +1162,8 @@ bool MemoryAccess::isStrideOne(isl::map Schedule) const {
   return isStrideX(Schedule, 1);
 }
 
-void MemoryAccess::setAccessRelation(__isl_take isl_map *NewAccess) {
-  AccessRelation = isl::manage(NewAccess);
+void MemoryAccess::setAccessRelation(isl::map NewAccess) {
+  AccessRelation = NewAccess;
 }
 
 void MemoryAccess::setNewAccessRelation(__isl_take isl_map *NewAccess) {
@@ -3673,8 +3673,8 @@ void Scop::foldSizeConstantsToRight() {
 
     for (auto &Access : AccessFunctions)
       if (Access->getScopArrayInfo() == Array)
-        Access->setAccessRelation(isl_map_apply_range(
-            Access->getAccessRelation().release(), isl_map_copy(Transform)));
+        Access->setAccessRelation(Access->getAccessRelation().apply_range(
+            isl::manage(isl_map_copy(Transform))));
 
     isl_map_free(Transform);
 
@@ -4188,9 +4188,9 @@ static void replaceBasePtrArrays(Scop *S, const ScopArrayInfo *Old,
       if (Access->getLatestScopArrayInfo() != Old)
         continue;
 
-      isl_id *Id = New->getBasePtrId().release();
-      isl_map *Map = Access->getAccessRelation().release();
-      Map = isl_map_set_tuple_id(Map, isl_dim_out, Id);
+      isl::id Id = New->getBasePtrId();
+      isl::map Map = Access->getAccessRelation();
+      Map = Map.set_tuple_id(isl::dim::out, Id);
       Access->setAccessRelation(Map);
     }
 }
