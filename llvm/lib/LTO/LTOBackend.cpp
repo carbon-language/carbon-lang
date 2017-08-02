@@ -131,9 +131,13 @@ createTargetMachine(Config &Conf, const Target *TheTarget, Module &M) {
       Conf.CodeModel, Conf.CGOptLevel));
 }
 
-static void runNewPMPasses(Module &Mod, TargetMachine *TM, unsigned OptLevel,
-                           bool IsThinLTO) {
-  PassBuilder PB(TM);
+static void runNewPMPasses(Config &Conf, Module &Mod, TargetMachine *TM,
+                           unsigned OptLevel, bool IsThinLTO) {
+  Optional<PGOOptions> PGOOpt;
+  if (!Conf.SampleProfile.empty())
+    PGOOpt = PGOOptions("", "", Conf.SampleProfile, false, true);
+
+  PassBuilder PB(TM, PGOOpt);
   AAManager AA;
 
   // Parse a custom AA pipeline if asked to.
@@ -262,7 +266,7 @@ bool opt(Config &Conf, TargetMachine *TM, unsigned Task, Module &Mod,
     runNewPMCustomPasses(Mod, TM, Conf.OptPipeline, Conf.AAPipeline,
                          Conf.DisableVerify);
   else if (Conf.UseNewPM)
-    runNewPMPasses(Mod, TM, Conf.OptLevel, IsThinLTO);
+    runNewPMPasses(Conf, Mod, TM, Conf.OptLevel, IsThinLTO);
   else
     runOldPMPasses(Conf, Mod, TM, IsThinLTO, ExportSummary, ImportSummary);
   return !Conf.PostOptModuleHook || Conf.PostOptModuleHook(Task, Mod);
