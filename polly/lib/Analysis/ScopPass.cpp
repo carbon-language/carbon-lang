@@ -148,4 +148,4 @@ OwningScopAnalysisManagerFunctionProxy::run(Function &F,
                                             FunctionAnalysisManager &FAM) {
   return Result(InnerAM, FAM.getResult<ScopInfoAnalysis>(F));
 }
-}
+} // namespace polly
