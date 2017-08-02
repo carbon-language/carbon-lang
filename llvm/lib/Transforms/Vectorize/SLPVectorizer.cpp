@@ -4352,15 +4352,18 @@ bool SLPVectorizerPass::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R,
   return Changed;
 }
 
-bool SLPVectorizerPass::tryToVectorize(BinaryOperator *V, BoUpSLP &R) {
-  if (!V)
+bool SLPVectorizerPass::tryToVectorize(Instruction *I, BoUpSLP &R) {
+  if (!I)
     return false;
 
-  Value *P = V->getParent();
+  if (!isa<BinaryOperator>(I))
+    return false;
+
+  Value *P = I->getParent();
 
   // Vectorize in current basic block only.
-  auto *Op0 = dyn_cast<Instruction>(V->getOperand(0));
-  auto *Op1 = dyn_cast<Instruction>(V->getOperand(1));
+  auto *Op0 = dyn_cast<Instruction>(I->getOperand(0));
+  auto *Op1 = dyn_cast<Instruction>(I->getOperand(1));
   if (!Op0 || !Op1 || Op0->getParent() != P || Op1->getParent() != P)
     return false;
 
@@ -5015,7 +5018,7 @@ static Value *getReductionValue(const DominatorTree *DT, PHINode *P,
 static bool tryToVectorizeHorReductionOrInstOperands(
     PHINode *P, Instruction *Root, BasicBlock *BB, BoUpSLP &R,
     TargetTransformInfo *TTI,
-    const function_ref<bool(BinaryOperator *, BoUpSLP &)> Vectorize) {
+    const function_ref<bool(Instruction *, BoUpSLP &)> Vectorize) {
   if (!ShouldVectorizeHor)
     return false;
 
@@ -5071,7 +5074,7 @@ static bool tryToVectorizeHorReductionOrInstOperands(
     // Set P to nullptr to avoid re-analysis of phi node in
     // matchAssociativeReduction function unless this is the root node.
     P = nullptr;
-    if (Vectorize(dyn_cast<BinaryOperator>(Inst), R)) {
+    if (Vectorize(Inst, R)) {
       Res = true;
       continue;
     }
@@ -5101,10 +5104,11 @@ bool SLPVectorizerPass::vectorizeRootInstruction(PHINode *P, Value *V,
   if (!isa<BinaryOperator>(I))
     P = nullptr;
   // Try to match and vectorize a horizontal reduction.
-  return tryToVectorizeHorReductionOrInstOperands(
-      P, I, BB, R, TTI, [this](BinaryOperator *BI, BoUpSLP &R) -> bool {
-        return tryToVectorize(BI, R);
-      });
+  auto &&ExtraVectorization = [this](Instruction *I, BoUpSLP &R) -> bool {
+    return tryToVectorize(I, R);
+  };
+  return tryToVectorizeHorReductionOrInstOperands(P, I, BB, R, TTI,
+                                                  ExtraVectorization);
 }
 
 bool SLPVectorizerPass::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
