@@ -138,6 +138,7 @@ bool SIOptimizeExecMaskingPreRA::runOnMachineFunction(MachineFunction &MF) {
 
     DEBUG(dbgs() << "Redundant EXEC = S_OR_B64 found: " << *Lead << '\n');
 
+    auto SaveExec = getOrExecSource(*Lead, *TII, MRI);
     unsigned SaveExecReg = getOrNonExecReg(*Lead, *TII);
     LIS->RemoveMachineInstrFromMaps(*Lead);
     Lead->eraseFromParent();
@@ -150,7 +151,6 @@ bool SIOptimizeExecMaskingPreRA::runOnMachineFunction(MachineFunction &MF) {
 
     // If the only use of saved exec in the removed instruction is S_AND_B64
     // fold the copy now.
-    auto SaveExec = getOrExecSource(*Lead, *TII, MRI);
     if (!SaveExec || !SaveExec->isFullCopy())
       continue;
 
