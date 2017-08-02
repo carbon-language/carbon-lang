@@ -135,6 +135,11 @@ void AMDGPUMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
   // do that with a single pseudo source operation.
   if (Opcode == AMDGPU::S_SETPC_B64_return)
     Opcode = AMDGPU::S_SETPC_B64;
+  else if (Opcode == AMDGPU::SI_CALL) {
+    // SI_CALL is just S_SWAPPC_B64 with an additional operand to track the
+    // called function.
+    Opcode = AMDGPU::S_SWAPPC_B64;
+  }
 
   int MCOpcode = ST.getInstrInfo()->pseudoToMCOpcode(Opcode);
   if (MCOpcode == -1) {

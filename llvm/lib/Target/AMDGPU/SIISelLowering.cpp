@@ -2650,14 +2650,27 @@ MachineBasicBlock *SITargetLowering::EmitInstrWithCustomInserter(
         .addReg(Info->getStackPtrOffsetReg(), RegState::Implicit);
     return BB;
   }
-  case AMDGPU::SI_CALL: {
+  case AMDGPU::SI_CALL_ISEL: {
     const SIInstrInfo *TII = getSubtarget()->getInstrInfo();
     const DebugLoc &DL = MI.getDebugLoc();
     unsigned ReturnAddrReg = TII->getRegisterInfo().getReturnAddressReg(*MF);
+
+    MachineRegisterInfo &MRI = MF->getRegInfo();
+    unsigned GlobalAddrReg = MI.getOperand(0).getReg();
+    MachineInstr *PCRel = MRI.getVRegDef(GlobalAddrReg);
+    assert(PCRel->getOpcode() == AMDGPU::SI_PC_ADD_REL_OFFSET);
+
+    const GlobalValue *G = PCRel->getOperand(1).getGlobal();
+
     MachineInstrBuilder MIB =
-      BuildMI(*BB, MI, DL, TII->get(AMDGPU::S_SWAPPC_B64), ReturnAddrReg);
-    for (unsigned I = 0, E = MI.getNumOperands(); I != E; ++I)
+      BuildMI(*BB, MI, DL, TII->get(AMDGPU::SI_CALL), ReturnAddrReg)
+      .add(MI.getOperand(0))
+      .addGlobalAddress(G);
+
+    for (unsigned I = 1, E = MI.getNumOperands(); I != E; ++I)
       MIB.add(MI.getOperand(I));
+
+
     MIB.setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
 
     MI.eraseFromParent();

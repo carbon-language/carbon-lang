@@ -486,7 +486,10 @@ public:
 class GCNPassConfig final : public AMDGPUPassConfig {
 public:
   GCNPassConfig(LLVMTargetMachine &TM, PassManagerBase &PM)
-    : AMDGPUPassConfig(TM, PM) {}
+    : AMDGPUPassConfig(TM, PM) {
+    // It is necessary to know the register usage of the entire call graph.
+    setRequiresCodeGenSCCOrder(EnableAMDGPUFunctionCalls);
+  }
 
   GCNTargetMachine &getGCNTargetMachine() const {
     return getTM<GCNTargetMachine>();

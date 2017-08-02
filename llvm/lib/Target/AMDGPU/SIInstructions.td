@@ -327,15 +327,27 @@ def SI_RETURN : SPseudoInstSI <
   let SchedRW = [WriteBranch];
 }
 
-// Return for returning function calls.
-def SI_CALL : SPseudoInstSI <
-  (outs), (ins SSrc_b64:$src0), [(AMDGPUcall i64:$src0)],
-  "; call $src0"> {
+// Return for returning function calls without output register.
+//
+// This version is only needed so we can fill in the output regiter in
+// the custom inserter.
+def SI_CALL_ISEL : SPseudoInstSI <
+  (outs), (ins SSrc_b64:$src0), [(AMDGPUcall i64:$src0)]> {
   let Size = 4;
   let isCall = 1;
   let SchedRW = [WriteBranch];
   let usesCustomInserter = 1;
 }
+
+// Wrapper around s_swappc_b64 with extra $callee parameter to track
+// the called function after regalloc.
+def SI_CALL : SPseudoInstSI <
+  (outs SReg_64:$dst), (ins SSrc_b64:$src0, unknown:$callee)> {
+  let Size = 4;
+  let isCall = 1;
+  let SchedRW = [WriteBranch];
+}
+
 
 def ADJCALLSTACKUP : SPseudoInstSI<
   (outs), (ins i32imm:$amt0, i32imm:$amt1),
