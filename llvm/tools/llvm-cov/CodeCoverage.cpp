@@ -288,6 +288,8 @@ CodeCoverageTool::createSourceFileView(StringRef SourceFile,
   auto View = SourceCoverageView::create(SourceFile, SourceBuffer.get(),
                                          ViewOpts, std::move(FileCoverage));
   attachExpansionSubViews(*View, Expansions, Coverage);
+  if (!ViewOpts.ShowFunctionInstantiations)
+    return View;
 
   for (const auto *Function : Coverage.getInstantiations(SourceFile)) {
     std::unique_ptr<SourceCoverageView> SubView{nullptr};
@@ -696,7 +698,7 @@ int CodeCoverageTool::show(int argc, const char **argv,
 
   cl::opt<bool> ShowInstantiations("show-instantiations", cl::Optional,
                                    cl::desc("Show function instantiations"),
-                                   cl::cat(ViewCategory));
+                                   cl::init(true), cl::cat(ViewCategory));
 
   cl::opt<std::string> ShowOutputDirectory(
       "output-dir", cl::init(""),
