@@ -3582,6 +3582,49 @@ SDValue AMDGPUTargetLowering::CreateLiveInRegister(SelectionDAG &DAG,
   return DAG.getCopyFromReg(DAG.getEntryNode(), SL, VReg, VT);
 }
 
+SDValue AMDGPUTargetLowering::loadStackInputValue(SelectionDAG &DAG,
+                                                  EVT VT,
+                                                  const SDLoc &SL,
+                                                  int64_t Offset) const {
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineFrameInfo &MFI = MF.getFrameInfo();
+
+  int FI = MFI.CreateFixedObject(VT.getStoreSize(), Offset, true);
+  auto SrcPtrInfo = MachinePointerInfo::getStack(MF, Offset);
+  SDValue Ptr = DAG.getFrameIndex(FI, MVT::i32);
+
+  return DAG.getLoad(VT, SL, DAG.getEntryNode(), Ptr, SrcPtrInfo, 4,
+                     MachineMemOperand::MODereferenceable |
+                     MachineMemOperand::MOInvariant);
+}
+
+SDValue AMDGPUTargetLowering::storeStackInputValue(SelectionDAG &DAG,
+                                                   const SDLoc &SL,
+                                                   SDValue Chain,
+                                                   SDValue StackPtr,
+                                                   SDValue ArgVal,
+                                                   int64_t Offset) const {
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachinePointerInfo DstInfo = MachinePointerInfo::getStack(MF, Offset);
+  SDValue PtrOffset = DAG.getConstant(Offset, SL, MVT::i32);
+  SDValue Ptr = DAG.getNode(ISD::ADD, SL, MVT::i32, StackPtr, PtrOffset);
+
+  SDValue Store = DAG.getStore(Chain, SL, ArgVal, Ptr, DstInfo, 4,
+                               MachineMemOperand::MODereferenceable);
+  return Store;
+}
+
+SDValue AMDGPUTargetLowering::loadInputValue(SelectionDAG &DAG,
+                                             const TargetRegisterClass *RC,
+                                             EVT VT, const SDLoc &SL,
+                                             const ArgDescriptor &Arg) const {
+  assert(Arg && "Attempting to load missing argument");
+
+  if (Arg.isRegister())
+    return CreateLiveInRegister(DAG, RC, Arg.getRegister(), VT, SL);
+  return loadStackInputValue(DAG, VT, SL, Arg.getStackOffset());
+}
+
 uint32_t AMDGPUTargetLowering::getImplicitParameterOffset(
     const AMDGPUMachineFunction *MFI, const ImplicitParameter Param) const {
   unsigned Alignment = Subtarget->getAlignmentForImplicitArgPtr();

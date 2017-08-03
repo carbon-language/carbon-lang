@@ -41,7 +41,7 @@ unsigned AMDGPUCallLowering::lowerParameterPtr(MachineIRBuilder &MIRBuilder,
                                                unsigned Offset) const {
 
   MachineFunction &MF = MIRBuilder.getMF();
-  const SIRegisterInfo *TRI = MF.getSubtarget<SISubtarget>().getRegisterInfo();
+  const SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
   MachineRegisterInfo &MRI = MF.getRegInfo();
   const Function &F = *MF.getFunction();
   const DataLayout &DL = F.getParent()->getDataLayout();
@@ -49,7 +49,7 @@ unsigned AMDGPUCallLowering::lowerParameterPtr(MachineIRBuilder &MIRBuilder,
   LLT PtrType = getLLTForType(*PtrTy, DL);
   unsigned DstReg = MRI.createGenericVirtualRegister(PtrType);
   unsigned KernArgSegmentPtr =
-      TRI->getPreloadedValue(MF, SIRegisterInfo::KERNARG_SEGMENT_PTR);
+    MFI->getPreloadedReg(AMDGPUFunctionArgInfo::KERNARG_SEGMENT_PTR);
   unsigned KernArgSegmentVReg = MRI.getLiveInVirtReg(KernArgSegmentPtr);
 
   unsigned OffsetReg = MRI.createGenericVirtualRegister(LLT::scalar(64));
