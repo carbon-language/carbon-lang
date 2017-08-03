@@ -950,6 +950,8 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
 
   Opts.Backchain = Args.hasArg(OPT_mbackchain);
 
+  Opts.UInitCstDataInROData = Args.hasArg(OPT_muninit_const_in_rodata);
+
   Opts.EmitCheckPathComponentsToStrip = getLastArgIntValue(
       Args, OPT_fsanitize_undefined_strip_path_components_EQ, 0, Diags);
 

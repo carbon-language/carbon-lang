@@ -2057,6 +2057,14 @@ def membedded_data : Flag<["-"], "membedded-data">, Group<m_Group>,
 def mno_embedded_data : Flag<["-"], "mno-embedded-data">, Group<m_Group>,
   HelpText<"Do not place constants in the .rodata section instead of the "
            ".sdata if they meet the -G <size> threshold (MIPS)">;
+def muninit_const_in_rodata : Flag<["-"], "muninit-const-in-rodata">,
+  Group<m_Group>, Flags<[DriverOption,CC1Option]>, HelpText<"Place "
+  "uninitialized constants in the read-only data section instead of"
+  " the common section (MIPS)">;
+def mno_uninit_const_in_rodata : Flag<["-"], "mno-uninit-const-in-rodata">,
+  Group<m_Group>, HelpText<"Do not place uninitialized constants in the "
+                           "read-only data section instead of the common"
+                           " section (MIPS)">;
 def mnan_EQ : Joined<["-"], "mnan=">, Group<m_Group>;
 def mabicalls : Flag<["-"], "mabicalls">, Group<m_Group>,
   HelpText<"Enable SVR4-style position-independent code (Mips only)">;

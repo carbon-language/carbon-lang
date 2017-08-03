@@ -6656,6 +6656,20 @@ public:
   void setTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
                            CodeGen::CodeGenModule &CGM,
                            ForDefinition_t IsForDefinition) const override {
+
+    if (const VarDecl *VD = dyn_cast_or_null<VarDecl>(D)) {
+      if (CGM.getCodeGenOpts().UInitCstDataInROData &&
+          VD->getType().isConstQualified() && !VD->hasInit()) {
+        llvm::GlobalVariable *GVar = dyn_cast_or_null<llvm::GlobalVariable>(GV);
+        if (GVar && !GVar->hasSection()) {
+          GVar->setLinkage(llvm::GlobalValue::ExternalLinkage);
+          GVar->setSection("rodata");
+        }
+      }
+
+      return;
+    }
+
     const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D);
     if (!FD) return;
     llvm::Function *Fn = cast<llvm::Function>(GV);

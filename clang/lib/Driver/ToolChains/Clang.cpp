@@ -1515,6 +1515,14 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
         CmdArgs.push_back("-membedded-data=0");
       }
       EmbeddedData->claim();
+
+      if (Arg *A = Args.getLastArg(options::OPT_muninit_const_in_rodata,
+                                   options::OPT_mno_uninit_const_in_rodata)) {
+        if (A->getOption().matches(options::OPT_muninit_const_in_rodata)) {
+          CmdArgs.push_back("-muninit-const-in-rodata");
+          A->claim();
+        }
+      }
     }
 
   } else if ((!ABICalls || (!NoABICalls && ABICalls)) && WantGPOpt)
