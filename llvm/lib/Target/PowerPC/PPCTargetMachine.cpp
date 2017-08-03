@@ -209,10 +209,11 @@ static Reloc::Model getEffectiveRelocModel(const Triple &TT,
 }
 
 static CodeModel::Model getEffectiveCodeModel(const Triple &TT,
-                                              Optional<CodeModel::Model> CM) {
+                                              Optional<CodeModel::Model> CM,
+                                              bool JIT) {
   if (CM)
     return *CM;
-  if (!TT.isOSDarwin() &&
+  if (!TT.isOSDarwin() && !JIT &&
       (TT.getArch() == Triple::ppc64 || TT.getArch() == Triple::ppc64le))
     return CodeModel::Medium;
   return CodeModel::Small;
@@ -231,7 +232,7 @@ PPCTargetMachine::PPCTargetMachine(const Target &T, const Triple &TT,
     : LLVMTargetMachine(T, getDataLayoutString(TT), TT, CPU,
                         computeFSAdditions(FS, OL, TT), Options,
                         getEffectiveRelocModel(TT, RM),
-                        getEffectiveCodeModel(TT, CM), OL),
+                        getEffectiveCodeModel(TT, CM, JIT), OL),
       TLOF(createTLOF(getTargetTriple())),
       TargetABI(computeTargetABI(TT, Options)) {
   initAsmInfo();
