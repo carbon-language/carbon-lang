@@ -266,15 +266,22 @@ static Reloc::Model getEffectiveRelocModel(Optional<Reloc::Model> RM) {
   return Reloc::PIC_;
 }
 
+static CodeModel::Model getEffectiveCodeModel(Optional<CodeModel::Model> CM) {
+  if (CM)
+    return *CM;
+  return CodeModel::Small;
+}
+
 AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, const Triple &TT,
                                          StringRef CPU, StringRef FS,
                                          TargetOptions Options,
                                          Optional<Reloc::Model> RM,
-                                         CodeModel::Model CM,
+                                         Optional<CodeModel::Model> CM,
                                          CodeGenOpt::Level OptLevel)
-  : LLVMTargetMachine(T, computeDataLayout(TT), TT, getGPUOrDefault(TT, CPU),
-                      FS, Options, getEffectiveRelocModel(RM), CM, OptLevel),
-    TLOF(createTLOF(getTargetTriple())) {
+    : LLVMTargetMachine(T, computeDataLayout(TT), TT, getGPUOrDefault(TT, CPU),
+                        FS, Options, getEffectiveRelocModel(RM),
+                        getEffectiveCodeModel(CM), OptLevel),
+      TLOF(createTLOF(getTargetTriple())) {
   AS = AMDGPU::getAMDGPUAS(TT);
   initAsmInfo();
 }
@@ -378,8 +385,9 @@ R600TargetMachine::R600TargetMachine(const Target &T, const Triple &TT,
                                      StringRef CPU, StringRef FS,
                                      TargetOptions Options,
                                      Optional<Reloc::Model> RM,
-                                     CodeModel::Model CM, CodeGenOpt::Level OL)
-  : AMDGPUTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL) {
+                                     Optional<CodeModel::Model> CM,
+                                     CodeGenOpt::Level OL, bool JIT)
+    : AMDGPUTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL) {
   setRequiresStructuredCFG(true);
 }
 
@@ -411,8 +419,9 @@ GCNTargetMachine::GCNTargetMachine(const Target &T, const Triple &TT,
                                    StringRef CPU, StringRef FS,
                                    TargetOptions Options,
                                    Optional<Reloc::Model> RM,
-                                   CodeModel::Model CM, CodeGenOpt::Level OL)
-  : AMDGPUTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL) {}
+                                   Optional<CodeModel::Model> CM,
+                                   CodeGenOpt::Level OL, bool JIT)
+    : AMDGPUTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL) {}
 
 const SISubtarget *GCNTargetMachine::getSubtargetImpl(const Function &F) const {
   StringRef GPU = getGPUName(F);

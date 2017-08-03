@@ -2476,7 +2476,6 @@ SDValue PPCTargetLowering::getPICJumpTableRelocBase(SDValue Table,
     return TargetLowering::getPICJumpTableRelocBase(Table, DAG);
 
   switch (getTargetMachine().getCodeModel()) {
-  case CodeModel::Default:
   case CodeModel::Small:
   case CodeModel::Medium:
     return TargetLowering::getPICJumpTableRelocBase(Table, DAG);
@@ -2494,7 +2493,6 @@ PPCTargetLowering::getPICJumpTableRelocBaseExpr(const MachineFunction *MF,
     return TargetLowering::getPICJumpTableRelocBaseExpr(MF, JTI, Ctx);
 
   switch (getTargetMachine().getCodeModel()) {
-  case CodeModel::Default:
   case CodeModel::Small:
   case CodeModel::Medium:
     return TargetLowering::getPICJumpTableRelocBaseExpr(MF, JTI, Ctx);
