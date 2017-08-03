@@ -965,8 +965,6 @@ TEST_F(ScalarEvolutionsTest, SCEVExitLimitForgetLoop) {
       FunctionType::get(Type::getVoidTy(Context), {T_pint64}, false);
   Function *F = cast<Function>(NIM.getOrInsertFunction("foo", FTy));
 
-  Argument *Arg = &*F->arg_begin();
-
   BasicBlock *Top = BasicBlock::Create(Context, "top", F);
   BasicBlock *LPh = BasicBlock::Create(Context, "L.ph", F);
   BasicBlock *L = BasicBlock::Create(Context, "L", F);
