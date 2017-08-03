@@ -3088,6 +3088,9 @@ public:
 
     int has_permutable = has_any_permutable_node(Schedule);
 
+    Schedule =
+        isl_schedule_align_params(Schedule, S->getFullParamSpace().release());
+
     if (!has_permutable || has_permutable < 0) {
       Schedule = isl_schedule_free(Schedule);
     } else {
