@@ -1,6 +1,8 @@
 ; RUN: opt %loadPolly -S -polly-codegen-ppcg \
 ; RUN: -polly-ignore-parameter-bounds \
 ; RUN: -polly-invariant-load-hoisting < %s| FileCheck %s -check-prefix=HOST-IR
+;
+; REQUIRES: pollyacc
 
 ; When we have `-polly-ignore-parameter-bounds`, `Scop::Context` does not contain
 ; all the parameters present in the program.
