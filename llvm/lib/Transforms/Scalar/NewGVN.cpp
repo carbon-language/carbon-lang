@@ -471,8 +471,8 @@ class NewGVN {
   DenseSet<const Instruction *> PHINodeUses;
   // Map a temporary instruction we created to a parent block.
   DenseMap<const Value *, BasicBlock *> TempToBlock;
-  // Map between the temporary phis we created and the real instructions they
-  // are known equivalent to.
+  // Map between the already in-program instructions and the temporary phis we
+  // created that they are known equivalent to.
   DenseMap<const Value *, PHINode *> RealToTemp;
   // In order to know when we should re-process instructions that have
   // phi-of-ops, we track the set of expressions that they needed as
@@ -486,10 +486,14 @@ class NewGVN {
   DenseMap<const Expression *, SmallPtrSet<Instruction *, 2>>
       ExpressionToPhiOfOps;
   // Map from basic block to the temporary operations we created
-  DenseMap<const BasicBlock *, SmallVector<PHINode *, 8>> PHIOfOpsPHIs;
+  DenseMap<const BasicBlock *, SmallPtrSet<PHINode *, 2>> PHIOfOpsPHIs;
   // Map from temporary operation to MemoryAccess.
   DenseMap<const Instruction *, MemoryUseOrDef *> TempToMemory;
   // Set of all temporary instructions we created.
+  // Note: This will include instructions that were just created during value
+  // numbering.  The way to test if something is using them is to check
+  // RealToTemp.
+
   DenseSet<Instruction *> AllTempInstructions;
 
   // Mapping from predicate info we used to the instructions we used it with.
@@ -634,6 +638,7 @@ private:
   const Expression *makePossiblePhiOfOps(Instruction *,
                                          SmallPtrSetImpl<Value *> &);
   void addPhiOfOps(PHINode *Op, BasicBlock *BB, Instruction *ExistingValue);
+  void removePhiOfOps(Instruction *I, PHINode *PHITemp);
 
   // Value number an Instruction or MemoryPhi.
   void valueNumberMemoryPhi(MemoryPhi *);
@@ -2414,11 +2419,22 @@ void NewGVN::processOutgoingEdges(TerminatorInst *TI, BasicBlock *B) {
   }
 }
 
+// Remove the PHI of Ops PHI for I
+void NewGVN::removePhiOfOps(Instruction *I, PHINode *PHITemp) {
+  InstrDFS.erase(PHITemp);
+  // It's still a temp instruction. We keep it in the array so it gets erased.
+  // However, it's no longer used by I, or in the block/
+  PHIOfOpsPHIs[getBlockForValue(PHITemp)].erase(PHITemp);
+  TempToBlock.erase(PHITemp);
+  RealToTemp.erase(I);
+}
+
+// Add PHI Op in BB as a PHI of operations version of ExistingValue.
 void NewGVN::addPhiOfOps(PHINode *Op, BasicBlock *BB,
                          Instruction *ExistingValue) {
   InstrDFS[Op] = InstrToDFSNum(ExistingValue);
   AllTempInstructions.insert(Op);
-  PHIOfOpsPHIs[BB].push_back(Op);
+  PHIOfOpsPHIs[BB].insert(Op);
   TempToBlock[Op] = BB;
   RealToTemp[ExistingValue] = Op;
 }
@@ -2783,8 +2799,13 @@ void NewGVN::valueNumberInstruction(Instruction *I) {
       if (Symbolized && !isa<ConstantExpression>(Symbolized) &&
           !isa<VariableExpression>(Symbolized) && PHINodeUses.count(I)) {
         auto *PHIE = makePossiblePhiOfOps(I, Visited);
-        if (PHIE)
+        // If we created a phi of ops, use it.
+        // If we couldn't create one, make sure we don't leave one lying around
+        if (PHIE) {
           Symbolized = PHIE;
+        } else if (auto *Op = RealToTemp.lookup(I)) {
+          removePhiOfOps(I, Op);
+        }
       }
 
     } else {
@@ -3626,7 +3647,7 @@ bool NewGVN::eliminateInstructions(Function &F) {
       CC->swap(MembersLeft);
     } else {
       // If this is a singleton, we can skip it.
-      if (CC->size() != 1 || RealToTemp.lookup(Leader)) {
+      if (CC->size() != 1 || RealToTemp.count(Leader)) {
         // This is a stack because equality replacement/etc may place
         // constants in the middle of the member list, and we want to use
         // those constant values in preference to the current leader, over
