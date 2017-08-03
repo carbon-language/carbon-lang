@@ -1,6 +1,6 @@
-; RUN: llc -mtriple=amdgcn-amd-amdhsa -amdgpu-function-calls -verify-machineinstrs < %s | FileCheck -check-prefixes=GCN,HSA,HSA-NOENV %s
-; RUN: llc -mtriple=amdgcn-amd-amdhsa-opencl -amdgpu-function-calls -verify-machineinstrs < %s | FileCheck -check-prefixes=GCN,HSA,HSA-OPENCL %s
-; RUN: llc -mtriple=amdgcn-mesa-mesa3d -amdgpu-function-calls -verify-machineinstrs < %s | FileCheck -check-prefixes=GCN,MESA %s
+; RUN: llc -mtriple=amdgcn-amd-amdhsa -verify-machineinstrs < %s | FileCheck -check-prefixes=GCN,HSA,HSA-NOENV %s
+; RUN: llc -mtriple=amdgcn-amd-amdhsa-opencl -verify-machineinstrs < %s | FileCheck -check-prefixes=GCN,HSA,HSA-OPENCL %s
+; RUN: llc -mtriple=amdgcn-mesa-mesa3d -verify-machineinstrs < %s | FileCheck -check-prefixes=GCN,MESA %s
 
 ; GCN-LABEL: {{^}}kernel_implicitarg_ptr_empty:
 ; GCN: enable_sgpr_kernarg_segment_ptr = 1

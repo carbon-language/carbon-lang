@@ -290,11 +290,6 @@ AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, const Triple &TT,
 
 AMDGPUTargetMachine::~AMDGPUTargetMachine() = default;
 
-bool AMDGPUTargetMachine::enableFunctionCalls() const {
-  return EnableAMDGPUFunctionCalls &&
-         getTargetTriple().getArch() == Triple::amdgcn;
-}
-
 StringRef AMDGPUTargetMachine::getGPUName(const Function &F) const {
   Attribute GPUAttr = F.getFnAttribute("target-cpu");
   return GPUAttr.hasAttribute(Attribute::None) ?
@@ -503,8 +498,10 @@ class GCNPassConfig final : public AMDGPUPassConfig {
 public:
   GCNPassConfig(LLVMTargetMachine &TM, PassManagerBase &PM)
     : AMDGPUPassConfig(TM, PM) {
-    // It is necessary to know the register usage of the entire call graph.
-    setRequiresCodeGenSCCOrder(EnableAMDGPUFunctionCalls);
+    // It is necessary to know the register usage of the entire call graph.  We
+    // allow calls without EnableAMDGPUFunctionCalls if they are marked
+    // noinline, so this is always required.
+    setRequiresCodeGenSCCOrder(true);
   }
 
   GCNTargetMachine &getGCNTargetMachine() const {
@@ -571,15 +568,18 @@ void AMDGPUPassConfig::addIRPasses() {
 
   addPass(createAMDGPULowerIntrinsicsPass());
 
-  // Function calls are not supported, so make sure we inline everything.
-  addPass(createAMDGPUAlwaysInlinePass());
-  addPass(createAlwaysInlinerLegacyPass());
-  // We need to add the barrier noop pass, otherwise adding the function
-  // inlining pass will cause all of the PassConfigs passes to be run
-  // one function at a time, which means if we have a nodule with two
-  // functions, then we will generate code for the first function
-  // without ever running any passes on the second.
-  addPass(createBarrierNoopPass());
+  if (TM.getTargetTriple().getArch() == Triple::r600 ||
+      !EnableAMDGPUFunctionCalls) {
+    // Function calls are not supported, so make sure we inline everything.
+    addPass(createAMDGPUAlwaysInlinePass());
+    addPass(createAlwaysInlinerLegacyPass());
+    // We need to add the barrier noop pass, otherwise adding the function
+    // inlining pass will cause all of the PassConfigs passes to be run
+    // one function at a time, which means if we have a nodule with two
+    // functions, then we will generate code for the first function
+    // without ever running any passes on the second.
+    addPass(createBarrierNoopPass());
+  }
 
   if (TM.getTargetTriple().getArch() == Triple::amdgcn) {
     // TODO: May want to move later or split into an early and late one.

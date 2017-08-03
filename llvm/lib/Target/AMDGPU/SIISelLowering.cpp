@@ -1962,11 +1962,6 @@ void SITargetLowering::passSpecialInputs(
 // The wave scratch offset register is used as the global base pointer.
 SDValue SITargetLowering::LowerCall(CallLoweringInfo &CLI,
                                     SmallVectorImpl<SDValue> &InVals) const {
-  const AMDGPUTargetMachine &TM =
-    static_cast<const AMDGPUTargetMachine &>(getTargetMachine());
-  if (!TM.enableFunctionCalls())
-    return AMDGPUTargetLowering::LowerCall(CLI, InVals);
-
   SelectionDAG &DAG = CLI.DAG;
   const SDLoc &DL = CLI.DL;
   SmallVector<ISD::OutputArg, 32> &Outs = CLI.Outs;
