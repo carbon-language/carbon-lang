@@ -3,6 +3,8 @@
 // RUN:            -membedded-data=1 -muninit-const-in-rodata -o - %s | \
 // RUN:   FileCheck %s
 
+// REQUIRES: mips-registered-target
+
 // Test that -muninit-const-in-rodata places constant uninitialized structures
 // in the .rodata section rather than the commeon section.
 
