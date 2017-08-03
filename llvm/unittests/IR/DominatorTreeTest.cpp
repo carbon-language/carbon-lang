@@ -454,7 +454,7 @@ TEST(DominatorTree, DeletingEdgesIntroducesUnreachables) {
 // PDT. We also verify this property.
 //
 // TODO: Can we change the PDT definition such that C remains part of the
-//       CFG, at best without loosing the dominance relation D postdom B.
+//       CFG?
 TEST(DominatorTree, DeletingEdgesIntroducesInfiniteLoop) {
   StringRef ModuleString =
       "define void @f() {\n"
