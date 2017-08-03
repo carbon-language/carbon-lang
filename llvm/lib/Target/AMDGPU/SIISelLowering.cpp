@@ -1195,6 +1195,9 @@ static void allocateSpecialInputSGPRs(CCState &CCInfo,
 
   if (Info.hasWorkGroupIDZ())
     ArgInfo.WorkGroupIDZ = allocateSGPR32Input(CCInfo);
+
+  if (Info.hasImplicitArgPtr())
+    ArgInfo.ImplicitArgPtr = allocateSGPR64Input(CCInfo);
 }
 
 // Allocate special inputs passed in user SGPRs.
@@ -1914,7 +1917,8 @@ void SITargetLowering::passSpecialInputs(
     AMDGPUFunctionArgInfo::WORKGROUP_ID_Z,
     AMDGPUFunctionArgInfo::WORKITEM_ID_X,
     AMDGPUFunctionArgInfo::WORKITEM_ID_Y,
-    AMDGPUFunctionArgInfo::WORKITEM_ID_Z
+    AMDGPUFunctionArgInfo::WORKITEM_ID_Z,
+    AMDGPUFunctionArgInfo::IMPLICIT_ARG_PTR
   };
 
   for (auto InputID : InputRegs) {
@@ -1933,7 +1937,17 @@ void SITargetLowering::passSpecialInputs(
 
     // All special arguments are ints for now.
     EVT ArgVT = TRI->getSpillSize(*ArgRC) == 8 ? MVT::i64 : MVT::i32;
-    SDValue InputReg = loadInputValue(DAG, ArgRC, ArgVT, DL, *IncomingArg);
+    SDValue InputReg;
+
+    if (IncomingArg) {
+      InputReg = loadInputValue(DAG, ArgRC, ArgVT, DL, *IncomingArg);
+    } else {
+      // The implicit arg ptr is special because it doesn't have a corresponding
+      // input for kernels, and is computed from the kernarg segment pointer.
+      assert(InputID == AMDGPUFunctionArgInfo::IMPLICIT_ARG_PTR);
+      InputReg = getImplicitArgPtr(DAG, DL);
+    }
+
     if (OutgoingArg->isRegister()) {
       RegsToPass.emplace_back(OutgoingArg->getRegister(), InputReg);
     } else {
@@ -3662,7 +3676,8 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::amdgcn_implicitarg_ptr: {
     if (MFI->isEntryFunction())
       return getImplicitArgPtr(DAG, DL);
-    report_fatal_error("amdgcn.implicitarg.ptr not implemented for functions");
+    return getPreloadedValue(DAG, *MFI, VT,
+                             AMDGPUFunctionArgInfo::IMPLICIT_ARG_PTR);
   }
   case Intrinsic::amdgcn_kernarg_segment_ptr: {
     return getPreloadedValue(DAG, *MFI, VT,

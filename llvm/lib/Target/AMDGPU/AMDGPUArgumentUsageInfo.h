@@ -90,12 +90,13 @@ struct AMDGPUFunctionArgInfo {
     WORKGROUP_ID_Z      = 12,
     PRIVATE_SEGMENT_WAVE_BYTE_OFFSET = 14,
     IMPLICIT_BUFFER_PTR = 15,
+    IMPLICIT_ARG_PTR = 16,
 
     // VGPRS:
-    FIRST_VGPR_VALUE    = 16,
-    WORKITEM_ID_X       = FIRST_VGPR_VALUE,
-    WORKITEM_ID_Y       = 17,
-    WORKITEM_ID_Z       = 18
+    WORKITEM_ID_X       = 17,
+    WORKITEM_ID_Y       = 18,
+    WORKITEM_ID_Z       = 19,
+    FIRST_VGPR_VALUE    = WORKITEM_ID_X
   };
 
   // Kernel input registers setup for the HSA ABI in allocation order.
@@ -119,6 +120,10 @@ struct AMDGPUFunctionArgInfo {
   ArgDescriptor WorkGroupIDZ;
   ArgDescriptor WorkGroupInfo;
   ArgDescriptor PrivateSegmentWaveByteOffset;
+
+  // Pointer with offset from kernargsegmentptr to where special ABI arguments
+  // are passed to callable functions.
+  ArgDescriptor ImplicitArgPtr;
 
   // Input registers for non-HSA ABI
   ArgDescriptor ImplicitBufferPtr = 0;

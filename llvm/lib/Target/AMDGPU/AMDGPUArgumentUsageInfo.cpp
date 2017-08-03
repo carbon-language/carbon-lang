@@ -65,6 +65,7 @@ void AMDGPUArgumentUsageInfo::print(raw_ostream &OS, const Module *M) const {
        << "  PrivateSegmentWaveByteOffset: "
           << FI.second.PrivateSegmentWaveByteOffset
        << "  ImplicitBufferPtr: " << FI.second.ImplicitBufferPtr
+       << "  ImplicitArgPtr: " << FI.second.ImplicitArgPtr
        << "  WorkItemIDX " << FI.second.WorkItemIDX
        << "  WorkItemIDY " << FI.second.WorkItemIDY
        << "  WorkItemIDZ " << FI.second.WorkItemIDZ
@@ -100,6 +101,9 @@ AMDGPUFunctionArgInfo::getPreloadedValue(
       &AMDGPU::SGPR_32RegClass);
   case AMDGPUFunctionArgInfo::KERNARG_SEGMENT_PTR:
     return std::make_pair(KernargSegmentPtr ? &KernargSegmentPtr : nullptr,
+                          &AMDGPU::SGPR_64RegClass);
+  case AMDGPUFunctionArgInfo::IMPLICIT_ARG_PTR:
+    return std::make_pair(ImplicitArgPtr ? &ImplicitArgPtr : nullptr,
                           &AMDGPU::SGPR_64RegClass);
   case AMDGPUFunctionArgInfo::DISPATCH_ID:
     return std::make_pair(DispatchID ? &DispatchID : nullptr,
