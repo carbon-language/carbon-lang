@@ -2,6 +2,8 @@
 ; RUN: -polly-invariant-load-hoisting -polly-ignore-parameter-bounds < %s | \
 ; RUN: FileCheck %s
 
+; REQUIRES: pollyacc
+
 ; CHECK: polly_launchKernel
 
 ; Verify that this program compiles. At some point, this compilation crashed
