@@ -60,4 +60,3 @@ inline LLVMCodeModel wrap(CodeModel::Model Model) {
 } // end llvm namespace
 
 #endif
-
