@@ -1,6 +1,8 @@
 ; RUN: not llc -march=amdgcn < %s 2>&1 | FileCheck %s
 
-; CHECK: LLVM ERROR: indirect calls not handled
+; FIXME: Error is misleading because it's not an indirect call.
+
+; CHECK: error: <unknown>:0:0: in function crash_call_constexpr_cast void (): unsupported indirect call to function foo
 
 ; Make sure that AMDGPUPromoteAlloca doesn't crash if the called
 ; function is a constantexpr cast of a function.

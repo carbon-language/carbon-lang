@@ -1001,8 +1001,9 @@ CCAssignFn *AMDGPUTargetLowering::CCAssignFnForReturn(CallingConv::ID CC,
   return AMDGPUCallLowering::CCAssignFnForReturn(CC, IsVarArg);
 }
 
-SDValue AMDGPUTargetLowering::LowerCall(CallLoweringInfo &CLI,
-                                        SmallVectorImpl<SDValue> &InVals) const {
+SDValue AMDGPUTargetLowering::lowerUnhandledCall(CallLoweringInfo &CLI,
+                                                 SmallVectorImpl<SDValue> &InVals,
+                                                 StringRef Reason) const {
   SDValue Callee = CLI.Callee;
   SelectionDAG &DAG = CLI.DAG;
 
@@ -1016,7 +1017,7 @@ SDValue AMDGPUTargetLowering::LowerCall(CallLoweringInfo &CLI,
     FuncName = G->getGlobal()->getName();
 
   DiagnosticInfoUnsupported NoCalls(
-      Fn, "unsupported call to function " + FuncName, CLI.DL.getDebugLoc());
+    Fn, Reason + FuncName, CLI.DL.getDebugLoc());
   DAG.getContext()->diagnose(NoCalls);
 
   if (!CLI.IsTailCall) {
@@ -1025,6 +1026,11 @@ SDValue AMDGPUTargetLowering::LowerCall(CallLoweringInfo &CLI,
   }
 
   return DAG.getEntryNode();
+}
+
+SDValue AMDGPUTargetLowering::LowerCall(CallLoweringInfo &CLI,
+                                        SmallVectorImpl<SDValue> &InVals) const {
+  return lowerUnhandledCall(CLI, InVals, "unsupported call to function ");
 }
 
 SDValue AMDGPUTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,

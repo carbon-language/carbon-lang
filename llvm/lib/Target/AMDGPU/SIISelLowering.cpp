@@ -1888,8 +1888,7 @@ void SITargetLowering::passSpecialInputs(
     return;
 
   const Function *CalleeFunc = CLI.CS.getCalledFunction();
-  if (!CalleeFunc)
-    report_fatal_error("indirect calls not handled");
+  assert(CalleeFunc);
 
   SelectionDAG &DAG = CLI.DAG;
   const SDLoc &DL = CLI.DL;
@@ -1976,12 +1975,23 @@ SDValue SITargetLowering::LowerCall(CallLoweringInfo &CLI,
   bool IsThisReturn = false;
   MachineFunction &MF = DAG.getMachineFunction();
 
+  if (IsVarArg) {
+    return lowerUnhandledCall(CLI, InVals,
+                              "unsupported call to variadic function ");
+  }
+
+  if (!CLI.CS.getCalledFunction()) {
+    return lowerUnhandledCall(CLI, InVals,
+                              "unsupported indirect call to function ");
+  }
+
+  if (IsTailCall && MF.getTarget().Options.GuaranteedTailCallOpt) {
+    return lowerUnhandledCall(CLI, InVals,
+                              "unsupported required tail call to function ");
+  }
+
   // TODO: Implement tail calls.
   IsTailCall = false;
-
-  if (IsVarArg || MF.getTarget().Options.GuaranteedTailCallOpt) {
-    report_fatal_error("varargs and tail calls not implemented");
-  }
 
   if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Callee)) {
     // FIXME: Remove this hack for function pointer types.

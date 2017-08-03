@@ -171,6 +171,10 @@ public:
                       const SmallVectorImpl<ISD::OutputArg> &Outs,
                       const SmallVectorImpl<SDValue> &OutVals, const SDLoc &DL,
                       SelectionDAG &DAG) const override;
+
+  SDValue lowerUnhandledCall(CallLoweringInfo &CLI,
+                             SmallVectorImpl<SDValue> &InVals,
+                             StringRef Reason) const;
   SDValue LowerCall(CallLoweringInfo &CLI,
                     SmallVectorImpl<SDValue> &InVals) const override;
 
