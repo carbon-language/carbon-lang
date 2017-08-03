@@ -21,6 +21,7 @@ add_llvm_target(AMDGPUCodeGen
   AMDGPUAlwaysInlinePass.cpp
   AMDGPUAnnotateKernelFeatures.cpp
   AMDGPUAnnotateUniformValues.cpp
+  AMDGPUArgumentUsageInfo.cpp
   AMDGPUAsmPrinter.cpp
   AMDGPUCallLowering.cpp
   AMDGPUCodeGenPrepare.cpp
