@@ -141,7 +141,7 @@ public:
 
   std::function<void(std::error_code)> ErrorCheck;
 
-  const DataReader &DR;
+  DataReader &DR;
 
   /// Sum of execution count of all functions
   uint64_t SumExecutionCount{0};
@@ -163,7 +163,7 @@ public:
                 std::unique_ptr<const MCInstrAnalysis> MIA,
                 std::unique_ptr<const MCRegisterInfo> MRI,
                 std::unique_ptr<MCDisassembler> DisAsm,
-                const DataReader &DR) :
+                DataReader &DR) :
       Ctx(std::move(Ctx)),
       DwCtx(std::move(DwCtx)),
       TheTriple(std::move(TheTriple)),

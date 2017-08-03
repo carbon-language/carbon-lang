@@ -56,6 +56,28 @@ FuncBranchData::getBranchRange(uint64_t From) const {
   return iterator_range<ContainerTy::const_iterator>(Range.first, Range.second);
 }
 
+void FuncBranchData::appendFrom(const FuncBranchData &FBD, uint64_t Offset) {
+  Data.insert(Data.end(), FBD.Data.begin(), FBD.Data.end());
+  for (auto I = Data.begin(), E = Data.end(); I != E; ++I) {
+    if (I->From.Name == FBD.Name) {
+      I->From.Name = this->Name;
+      I->From.Offset += Offset;
+    }
+    if (I->To.Name == FBD.Name) {
+      I->To.Name = this->Name;
+      I->To.Offset += Offset;
+    }
+  }
+  std::stable_sort(Data.begin(), Data.end());
+  ExecutionCount += FBD.ExecutionCount;
+  for (auto I = FBD.EntryData.begin(), E = FBD.EntryData.end(); I != E; ++I) {
+    assert(I->To.Name == FBD.Name);
+    auto NewElmt = EntryData.insert(EntryData.end(), *I);
+    NewElmt->To.Name = this->Name;
+    NewElmt->To.Offset += Offset;
+  }
+}
+
 void BranchInfo::mergeWith(const BranchInfo &BI) {
 
   // Merge branch and misprediction counts.
@@ -160,7 +182,8 @@ void BranchInfo::print(raw_ostream &OS) const {
 ErrorOr<const BranchInfo &> FuncBranchData::getBranch(uint64_t From,
                                                       uint64_t To) const {
   for (const auto &I : Data) {
-    if (I.From.Offset == From && I.To.Offset == To)
+    if (I.From.Offset == From && I.To.Offset == To &&
+        I.From.Name == I.To.Name)
       return I;
   }
   return make_error_code(llvm::errc::invalid_argument);
@@ -422,8 +445,10 @@ std::error_code DataReader::parse() {
     auto I = GetOrCreateFuncEntry(BI.From.Name);
     I->getValue().Data.emplace_back(std::move(BI));
 
-    // Add entry data for branches from another function.
-    if (BI.To.IsSymbol && !BI.From.Name.equals(BI.To.Name)) {
+    // Add entry data for branches to another function or branches
+    // to entry points (including recursive calls)
+    if (BI.To.IsSymbol &&
+        (!BI.From.Name.equals(BI.To.Name) || BI.To.Offset == 0)) {
       I = GetOrCreateFuncEntry(BI.To.Name);
       I->getValue().EntryData.emplace_back(std::move(BI));
     }
@@ -446,7 +471,7 @@ std::error_code DataReader::parse() {
 }
 
 void DataReader::buildLTONameMap() {
-  for (const auto &FuncData : FuncsMap) {
+  for (auto &FuncData : FuncsMap) {
     const auto FuncName = FuncData.getKey();
     const auto CommonName = getLTOCommonName(FuncName);
     if (CommonName)
@@ -454,22 +479,21 @@ void DataReader::buildLTONameMap() {
   }
 }
 
-const FuncBranchData *
-DataReader::getFuncBranchData(const std::vector<std::string> &FuncNames) const {
+FuncBranchData *
+DataReader::getFuncBranchData(const std::vector<std::string> &FuncNames)  {
   // Do a reverse order iteration since the name in profile has a higher chance
   // of matching a name at the end of the list.
   for (auto FI = FuncNames.rbegin(), FE = FuncNames.rend(); FI != FE; ++FI) {
-    const auto I = FuncsMap.find(normalizeName(*FI));
+    auto I = FuncsMap.find(normalizeName(*FI));
     if (I != FuncsMap.end())
       return &I->getValue();
   }
   return nullptr;
 }
 
-std::vector<const FuncBranchData *>
-DataReader::getFuncBranchDataRegex(const std::vector<std::string> &FuncNames)
-    const {
-  std::vector<const FuncBranchData *> AllData;
+std::vector<FuncBranchData *>
+DataReader::getFuncBranchDataRegex(const std::vector<std::string> &FuncNames) {
+  std::vector<FuncBranchData *> AllData;
   // Do a reverse order iteration since the name in profile has a higher chance
   // of matching a name at the end of the list.
   for (auto FI = FuncNames.rbegin(), FE = FuncNames.rend(); FI != FE; ++FI) {
@@ -477,13 +501,13 @@ DataReader::getFuncBranchDataRegex(const std::vector<std::string> &FuncNames)
     Name = normalizeName(Name);
     const auto LTOCommonName = getLTOCommonName(Name);
     if (LTOCommonName) {
-      const auto I = LTOCommonNameMap.find(*LTOCommonName);
+      auto I = LTOCommonNameMap.find(*LTOCommonName);
       if (I != LTOCommonNameMap.end()) {
-        const auto &CommonData = I->getValue();
+        auto &CommonData = I->getValue();
         AllData.insert(AllData.end(), CommonData.begin(), CommonData.end());
       }
     } else {
-      const auto I = FuncsMap.find(Name);
+      auto I = FuncsMap.find(Name);
       if (I != FuncsMap.end()) {
         return {&I->getValue()};
       }

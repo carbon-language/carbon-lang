@@ -146,7 +146,7 @@ public:
 /// events.
 class RewriteInstance {
 public:
-  RewriteInstance(llvm::object::ELFObjectFileBase *File, const DataReader &DR,
+  RewriteInstance(llvm::object::ELFObjectFileBase *File, DataReader &DR,
                   const int Argc, const char *const *Argv);
   ~RewriteInstance();
 

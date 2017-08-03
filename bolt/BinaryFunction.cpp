@@ -1949,11 +1949,49 @@ void BinaryFunction::addEntryPoint(uint64_t Address) {
   }
 }
 
+bool BinaryFunction::fetchProfileForOtherEntryPoints() {
+  if (!BranchData)
+    return false;
+
+  // Check if we are missing profiling data for secondary entry points
+  bool First{true};
+  bool Updated{false};
+  for (auto BB : BasicBlocks) {
+    if (First) {
+      First = false;
+      continue;
+    }
+    if (BB->isEntryPoint()) {
+      uint64_t EntryAddress = BB->getOffset() + getAddress();
+      // Look for branch data associated with this entry point
+      std::vector<std::string> Names;
+      std::multimap<uint64_t, std::string>::iterator I, E;
+      for (std::tie(I, E) = BC.GlobalAddresses.equal_range(EntryAddress);
+           I != E; ++I) {
+        Names.push_back(I->second);
+      }
+      if (!Names.empty()) {
+        if (FuncBranchData *Data = BC.DR.getFuncBranchData(Names)) {
+          BranchData->appendFrom(*Data, BB->getOffset());
+          Data->Used = true;
+          Updated = true;
+        }
+      }
+    }
+  }
+  return Updated;
+}
+
 void BinaryFunction::matchProfileData() {
   if (BranchData) {
     ProfileMatchRatio = evaluateProfileData(*BranchData);
-    if (ProfileMatchRatio == 1.0f)
+    if (ProfileMatchRatio == 1.0f) {
+      if (fetchProfileForOtherEntryPoints()) {
+        ProfileMatchRatio = evaluateProfileData(*BranchData);
+        ExecutionCount = BranchData->ExecutionCount;
+      }
       return;
+    }
   }
 
   // Check if the function name can fluctuate between several compilations
@@ -1971,7 +2009,7 @@ void BinaryFunction::matchProfileData() {
 
   // Check for a profile that matches with 100% confidence.
   const auto AllBranchData = BC.DR.getFuncBranchDataRegex(getNames());
-  for (const auto *NewBranchData : AllBranchData) {
+  for (auto *NewBranchData : AllBranchData) {
     // Prevent functions from sharing the same profile.
     if (NewBranchData->Used)
       continue;
@@ -2097,8 +2135,12 @@ float BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
                  if (II == Instructions.end())
                    return true;
                  const auto &Instr = II->second;
+                 // Check for calls, tail calls, rets and indirect branches.
+                 // When matching profiling info, we did not reach the stage
+                 // when we identify tail calls, so they are still represented
+                 // by regular branch instructions and we need isBranch() here.
                  if (BC.MIA->isCall(Instr) ||
-                     BC.MIA->isIndirectBranch(Instr) ||
+                     BC.MIA->isBranch(Instr) ||
                      BC.MIA->isReturn(Instr))
                    return false;
                  // Check for "rep ret"
@@ -2153,27 +2195,33 @@ void BinaryFunction::inferFallThroughCounts() {
   for (auto CurBB : BasicBlocks) {
     CurBB->ExecutionCount = 0;
   }
-  BasicBlocks.front()->setExecutionCount(ExecutionCount);
 
   for (auto CurBB : BasicBlocks) {
     auto SuccCount = CurBB->branch_info_begin();
     for (auto Succ : CurBB->successors()) {
-      // Do not update execution count of the entry block (when we have tail
-      // calls). We already accounted for those when computing the func count.
-      if (Succ == BasicBlocks.front()) {
-        ++SuccCount;
-        continue;
-      }
       if (SuccCount->Count != BinaryBasicBlock::COUNT_NO_PROFILE)
         Succ->setExecutionCount(Succ->getExecutionCount() + SuccCount->Count);
       ++SuccCount;
     }
   }
 
-  // Update execution counts of landing pad blocks.
+  // Set entry BBs to zero, we'll update their execution count next with entry
+  // data (we maintain a separate data structure for branches to function entry
+  // points)
+  for (auto BB : BasicBlocks) {
+    if (BB->isEntryPoint())
+      BB->ExecutionCount = 0;
+  }
+
+  // Update execution counts of landing pad blocks and entry BBs
+  // There is a slight skew introduced here as branches originated from RETs
+  // may be accounted for in the execution count of an entry block if the last
+  // instruction in a predecessor fall-through block is a call. This situation
+  // should rarely happen because there are few multiple-entry functions.
   for (const auto &I : BranchData->EntryData) {
     BinaryBasicBlock *BB = getBasicBlockAtOffset(I.To.Offset);
-    if (BB && LandingPads.find(BB->getLabel()) != LandingPads.end()) {
+    if (BB && (BB->isEntryPoint() ||
+               LandingPads.find(BB->getLabel()) != LandingPads.end())) {
       BB->setExecutionCount(BB->getExecutionCount() + I.Branches);
     }
   }

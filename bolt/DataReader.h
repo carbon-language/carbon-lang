@@ -138,7 +138,7 @@ struct FuncBranchData {
   int64_t ExecutionCount{0};
 
   /// Indicate if the data was used.
-  mutable bool Used{false};
+  bool Used{false};
 
   FuncBranchData(StringRef Name, ContainerTy Data)
       : Name(Name), Data(std::move(Data)) {}
@@ -157,6 +157,10 @@ struct FuncBranchData {
   /// Find all the branches originating at From.
   iterator_range<ContainerTy::const_iterator> getBranchRange(
     uint64_t From) const;
+
+  /// Append the branch data of another function located \p Offset bytes away
+  /// from the entry of this function.
+  void appendFrom(const FuncBranchData &FBD, uint64_t Offset);
 };
 
 //===----------------------------------------------------------------------===//
@@ -219,14 +223,14 @@ public:
   std::error_code parse();
 
   /// Return branch data matching one of the names in \p FuncNames.
-  const FuncBranchData *
-  getFuncBranchData(const std::vector<std::string> &FuncNames) const;
+  FuncBranchData *
+  getFuncBranchData(const std::vector<std::string> &FuncNames);
 
   /// Return a vector of all FuncBranchData matching the list of names.
   /// Internally use fuzzy matching to match special names like LTO-generated
   /// function names.
-  std::vector<const FuncBranchData *>
-  getFuncBranchDataRegex(const std::vector<std::string> &FuncNames) const;
+  std::vector<FuncBranchData *>
+  getFuncBranchDataRegex(const std::vector<std::string> &FuncNames);
 
   using FuncsMapType = StringMap<FuncBranchData>;
 
@@ -266,7 +270,7 @@ private:
   static const char FieldSeparator = ' ';
 
   /// Map of common LTO names to possible matching profiles.
-  StringMap<std::vector<const FuncBranchData *>> LTOCommonNameMap;
+  StringMap<std::vector<FuncBranchData *>> LTOCommonNameMap;
 };
 
 }

@@ -512,7 +512,7 @@ namespace {
 /// Create BinaryContext for a given architecture \p ArchName and
 /// triple \p TripleName.
 std::unique_ptr<BinaryContext>
-createBinaryContext(ELFObjectFileBase *File, const DataReader &DR,
+createBinaryContext(ELFObjectFileBase *File, DataReader &DR,
                     std::unique_ptr<DWARFContext> DwCtx) {
   std::string ArchName;
   std::string TripleName;
@@ -630,7 +630,7 @@ createBinaryContext(ELFObjectFileBase *File, const DataReader &DR,
 
 } // namespace
 
-RewriteInstance::RewriteInstance(ELFObjectFileBase *File, const DataReader &DR,
+RewriteInstance::RewriteInstance(ELFObjectFileBase *File, DataReader &DR,
                                  const int Argc, const char *const *Argv)
     : InputFile(File), Argc(Argc), Argv(Argv),
       BC(createBinaryContext(
@@ -1677,7 +1677,7 @@ void RewriteInstance::readProfileData() {
 
   for (auto &BFI : BinaryFunctions) {
     auto &Function = BFI.second;
-    const auto *FuncData = BC->DR.getFuncBranchData(Function.getNames());
+    auto *FuncData = BC->DR.getFuncBranchData(Function.getNames());
     if (!FuncData)
       continue;
     Function.BranchData = FuncData;

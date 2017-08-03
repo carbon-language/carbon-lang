@@ -313,7 +313,7 @@ private:
   uint64_t ExecutionCount{COUNT_NO_PROFILE};
 
   /// Profile data for branches.
-  const FuncBranchData *BranchData{nullptr};
+  FuncBranchData *BranchData{nullptr};
 
   /// Profile match ratio for BranchData.
   float ProfileMatchRatio{0.0f};
@@ -1712,6 +1712,11 @@ public:
   /// Return true upon successful processing, or false if the control flow
   /// cannot be statically evaluated for any given indirect branch.
   bool postProcessIndirectBranches();
+
+  /// In functions with multiple entry points, the profile collection records
+  /// data for other entry points in a different function entry. This function
+  /// attempts to fetch extra profile data for each secondary entry point.
+  bool fetchProfileForOtherEntryPoints();
 
   /// Find the best matching profile for a function after the creation of basic
   /// blocks.
