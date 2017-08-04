@@ -526,7 +526,6 @@ template <class ELFT> static void addCopyRelSymbol(SharedSymbol *SS) {
   // dynamic symbol for each one. This causes the copy relocation to correctly
   // interpose any aliases.
   for (SharedSymbol *Sym : getSymbolsAt<ELFT>(SS)) {
-    Sym->NeedsCopy = true;
     Sym->CopyRelSec = Sec;
     Sym->CopyRelSecOff = Off;
     Sym->symbol()->IsUsedInRegularObj = true;
@@ -579,7 +578,7 @@ static RelExpr adjustExpr(SymbolBody &Body, RelExpr Expr, uint32_t Type,
   if (Body.isObject()) {
     // Produce a copy relocation.
     auto *B = cast<SharedSymbol>(&Body);
-    if (!B->NeedsCopy) {
+    if (!B->CopyRelSec) {
       if (Config->ZNocopyreloc)
         error("unresolvable relocation " + toString(Type) +
               " against symbol '" + toString(*B) +
