@@ -127,7 +127,6 @@ public:
   AnalysisManagerT &getManager() { return InnerAM; }
 
 private:
-
   AnalysisManagerT InnerAM;
 };
 
