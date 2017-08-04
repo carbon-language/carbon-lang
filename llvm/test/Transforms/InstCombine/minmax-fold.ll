@@ -139,10 +139,10 @@ define i64 @t9(i32 %a) {
 
 define float @t10(i32 %x) {
 ; CHECK-LABEL: @t10(
-; CHECK-NEXT:    [[F_X:%.*]] = sitofp i32 [[X:%.*]] to float
-; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i32 [[X]], 255
-; CHECK-NEXT:    [[R:%.*]] = select i1 [[CMP]], float [[F_X]], float 2.550000e+02
-; CHECK-NEXT:    ret float [[R]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt i32 [[X:%.*]], 255
+; CHECK-NEXT:    [[R1:%.*]] = select i1 [[TMP1]], i32 [[X]], i32 255
+; CHECK-NEXT:    [[TMP2:%.*]] = sitofp i32 [[R1]] to float
+; CHECK-NEXT:    ret float [[TMP2]]
 ;
   %f_x = sitofp i32 %x to float
   %cmp = icmp sgt i32 %x, 255

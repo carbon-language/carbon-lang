@@ -6,9 +6,7 @@ define float @test1(i32 %scale) {
 ; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt i32 [[SCALE:%.*]], 1
 ; CHECK-NEXT:    [[TMP2:%.*]] = select i1 [[TMP1]], i32 [[SCALE]], i32 1
 ; CHECK-NEXT:    [[TMP3:%.*]] = sitofp i32 [[TMP2]] to float
-; CHECK-NEXT:    [[TMP4:%.*]] = icmp sgt i32 [[TMP2]], 0
-; CHECK-NEXT:    [[SEL:%.*]] = select i1 [[TMP4]], float [[TMP3]], float 0.000000e+00
-; CHECK-NEXT:    ret float [[SEL]]
+; CHECK-NEXT:    ret float [[TMP3]]
 ;
   %1 = icmp sgt i32 1, %scale
   %2 = select i1 %1, i32 1, i32 %scale
