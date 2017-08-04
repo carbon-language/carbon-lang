@@ -1079,7 +1079,6 @@ static void allocateSpecialEntryInputVGPRs(CCState &CCInfo,
   if (Info.hasWorkItemIDX()) {
     unsigned Reg = AMDGPU::VGPR0;
     MF.addLiveIn(Reg, &AMDGPU::VGPR_32RegClass);
-    assert(Reg == AMDGPU::VGPR0);
 
     CCInfo.AllocateReg(Reg);
     Info.setWorkItemIDX(ArgDescriptor::createRegister(Reg));
@@ -1089,7 +1088,6 @@ static void allocateSpecialEntryInputVGPRs(CCState &CCInfo,
     unsigned Reg = AMDGPU::VGPR1;
     MF.addLiveIn(Reg, &AMDGPU::VGPR_32RegClass);
 
-    assert(Reg == AMDGPU::VGPR1);
     CCInfo.AllocateReg(Reg);
     Info.setWorkItemIDY(ArgDescriptor::createRegister(Reg));
   }
@@ -1098,7 +1096,6 @@ static void allocateSpecialEntryInputVGPRs(CCState &CCInfo,
     unsigned Reg = AMDGPU::VGPR2;
     MF.addLiveIn(Reg, &AMDGPU::VGPR_32RegClass);
 
-    assert(Reg == AMDGPU::VGPR2);
     CCInfo.AllocateReg(Reg);
     Info.setWorkItemIDZ(ArgDescriptor::createRegister(Reg));
   }
