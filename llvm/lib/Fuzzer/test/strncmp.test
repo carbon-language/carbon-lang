@@ -1,0 +1,4 @@
+RUN: %cpp_compiler %S/StrncmpTest.cpp -o %t-LLVMFuzzer-StrncmpTest
+RUN: not %t-LLVMFuzzer-StrncmpTest              -seed=2 -runs=2000000   2>&1 | FileCheck %s
+CHECK: BINGO
+
