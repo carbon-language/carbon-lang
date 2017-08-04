@@ -435,7 +435,7 @@ static void finalizeShtGroup(OutputSection *OS,
   // provides signature of the section group.
   ObjFile<ELFT> *Obj = Sections[0]->getFile<ELFT>();
   ArrayRef<SymbolBody *> Symbols = Obj->getSymbols();
-  OS->Info = InX::SymTab->getSymbolIndex(Symbols[Sections[0]->Info - 1]);
+  OS->Info = InX::SymTab->getSymbolIndex(Symbols[Sections[0]->Info]);
 }
 
 template <class ELFT> void OutputSection::finalize() {
