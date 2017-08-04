@@ -740,6 +740,13 @@ def int_amdgcn_alignbyte : Intrinsic<[llvm_i32_ty],
   [IntrNoMem, IntrSpeculatable]
 >;
 
+
+// Copies the source value to the destination value, with the guarantee that
+// the source value is computed as if the entire program were executed in WQM.
+def int_amdgcn_wqm : Intrinsic<[llvm_any_ty],
+  [LLVMMatchType<0>], [IntrNoMem, IntrSpeculatable]
+>;
+
 //===----------------------------------------------------------------------===//
 // CI+ Intrinsics
 //===----------------------------------------------------------------------===//

@@ -136,6 +136,7 @@ private:
   DenseMap<const MachineInstr *, InstrInfo> Instructions;
   DenseMap<MachineBasicBlock *, BlockInfo> Blocks;
   SmallVector<MachineInstr *, 1> LiveMaskQueries;
+  SmallVector<MachineInstr *, 4> LowerToCopyInstrs;
 
   void printInfo();
 
@@ -162,6 +163,7 @@ private:
   void processBlock(MachineBasicBlock &MBB, unsigned LiveMaskReg, bool isEntry);
 
   void lowerLiveMaskQueries(unsigned LiveMaskReg);
+  void lowerCopyInstrs();
 
 public:
   static char ID;
@@ -294,6 +296,11 @@ char SIWholeQuadMode::scanInstructions(MachineFunction &MF,
         markUsesWQM(MI, Worklist);
         GlobalFlags |= StateWQM;
         continue;
+      } else if (Opcode == AMDGPU::WQM) {
+        // The WQM intrinsic requires its output to have all the helper lanes
+        // correct, so we need it to be in WQM.
+        Flags = StateWQM;
+        LowerToCopyInstrs.push_back(&MI);
       } else if (TII->isDisableWQM(MI)) {
         Flags = StateExact;
       } else {
@@ -666,6 +673,11 @@ void SIWholeQuadMode::lowerLiveMaskQueries(unsigned LiveMaskReg) {
   }
 }
 
+void SIWholeQuadMode::lowerCopyInstrs() {
+  for (MachineInstr *MI : LowerToCopyInstrs)
+    MI->setDesc(TII->get(AMDGPU::COPY));
+}
+
 bool SIWholeQuadMode::runOnMachineFunction(MachineFunction &MF) {
   if (MF.getFunction()->getCallingConv() != CallingConv::AMDGPU_PS)
     return false;
@@ -673,6 +685,7 @@ bool SIWholeQuadMode::runOnMachineFunction(MachineFunction &MF) {
   Instructions.clear();
   Blocks.clear();
   LiveMaskQueries.clear();
+  LowerToCopyInstrs.clear();
 
   const SISubtarget &ST = MF.getSubtarget<SISubtarget>();
 
@@ -708,6 +721,7 @@ bool SIWholeQuadMode::runOnMachineFunction(MachineFunction &MF) {
           .addReg(AMDGPU::EXEC);
 
       lowerLiveMaskQueries(LiveMaskReg);
+      lowerCopyInstrs();
       // EntryMI may become invalid here
       return true;
     }
@@ -716,6 +730,7 @@ bool SIWholeQuadMode::runOnMachineFunction(MachineFunction &MF) {
   DEBUG(printInfo());
 
   lowerLiveMaskQueries(LiveMaskReg);
+  lowerCopyInstrs();
 
   // Handle the general case
   for (auto BII : Blocks)

@@ -116,6 +116,11 @@ def V_CNDMASK_B64_PSEUDO : VOP3Common <(outs VReg_64:$vdst),
 // pass to enable folding of inline immediates.
 def V_MOV_B64_PSEUDO : VPseudoInstSI <(outs VReg_64:$vdst),
                                       (ins VSrc_b64:$src0)>;
+
+// Pseudoinstruction for @llvm.amdgcn.wqm. It is turned into a copy
+// after the WQM pass processes them.
+def WQM : PseudoInstSI <(outs unknown:$vdst), (ins unknown:$src0)>;
+
 } // End let hasSideEffects = 0, mayLoad = 0, mayStore = 0, Uses = [EXEC]
 
 let usesCustomInserter = 1, SALU = 1 in {

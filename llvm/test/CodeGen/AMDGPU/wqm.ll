@@ -74,6 +74,40 @@ main_body:
   ret <4 x float> %dtex
 }
 
+; Check that WQM is triggered by the wqm intrinsic.
+;
+;CHECK-LABEL: {{^}}test5:
+;CHECK: s_wqm_b64 exec, exec
+;CHECK: buffer_load_dword
+;CHECK: buffer_load_dword
+;CHECK: v_add_f32_e32
+define amdgpu_ps float @test5(i32 inreg %idx0, i32 inreg %idx1) {
+main_body:
+  %src0 = call float @llvm.amdgcn.buffer.load.f32(<4 x i32> undef, i32 %idx0, i32 0, i1 0, i1 0)
+  %src1 = call float @llvm.amdgcn.buffer.load.f32(<4 x i32> undef, i32 %idx1, i32 0, i1 0, i1 0)
+  %out = fadd float %src0, %src1
+  %out.0 = call float @llvm.amdgcn.wqm.f32(float %out)
+  ret float %out.0
+}
+
+; Check that the wqm intrinsic works correctly for integers.
+;
+;CHECK-LABEL: {{^}}test6:
+;CHECK: s_wqm_b64 exec, exec
+;CHECK: buffer_load_dword
+;CHECK: buffer_load_dword
+;CHECK: v_add_f32_e32
+define amdgpu_ps float @test6(i32 inreg %idx0, i32 inreg %idx1) {
+main_body:
+  %src0 = call float @llvm.amdgcn.buffer.load.f32(<4 x i32> undef, i32 %idx0, i32 0, i1 0, i1 0)
+  %src1 = call float @llvm.amdgcn.buffer.load.f32(<4 x i32> undef, i32 %idx1, i32 0, i1 0, i1 0)
+  %out = fadd float %src0, %src1
+  %out.0 = bitcast float %out to i32
+  %out.1 = call i32 @llvm.amdgcn.wqm.i32(i32 %out.0)
+  %out.2 = bitcast i32 %out.1 to float
+  ret float %out.2
+}
+
 ; Check a case of one branch of an if-else requiring WQM, the other requiring
 ; exact.
 ;
@@ -494,6 +528,8 @@ declare <4 x float> @llvm.amdgcn.image.sample.v4f32.f32.v8i32(float, <8 x i32>, 
 declare <4 x float> @llvm.amdgcn.image.sample.v4f32.v2f32.v8i32(<2 x float>, <8 x i32>, <4 x i32>, i32, i1, i1, i1, i1, i1) #3
 declare <4 x float> @llvm.amdgcn.image.sample.v4f32.v4f32.v8i32(<4 x float>, <8 x i32>, <4 x i32>, i32, i1, i1, i1, i1, i1) #3
 declare void @llvm.AMDGPU.kill(float) #1
+declare float @llvm.amdgcn.wqm.f32(float) #3
+declare i32 @llvm.amdgcn.wqm.i32(i32) #3
 
 attributes #1 = { nounwind }
 attributes #2 = { nounwind readonly }
