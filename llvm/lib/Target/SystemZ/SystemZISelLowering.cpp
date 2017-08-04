@@ -3348,28 +3348,28 @@ SDValue SystemZTargetLowering::lowerATOMIC_FENCE(SDValue Op,
   return DAG.getNode(SystemZISD::MEMBARRIER, DL, MVT::Other, Op.getOperand(0));
 }
 
-// Op is an atomic load.  Lower it into a serialization followed
-// by a normal volatile load.
+// Op is an atomic load.  Lower it into a normal volatile load.
 SDValue SystemZTargetLowering::lowerATOMIC_LOAD(SDValue Op,
                                                 SelectionDAG &DAG) const {
   auto *Node = cast<AtomicSDNode>(Op.getNode());
-  SDValue Chain = SDValue(DAG.getMachineNode(SystemZ::Serialize, SDLoc(Op),
-                                             MVT::Other, Node->getChain()), 0);
   return DAG.getExtLoad(ISD::EXTLOAD, SDLoc(Op), Op.getValueType(),
-                        Chain, Node->getBasePtr(),
+                        Node->getChain(), Node->getBasePtr(),
                         Node->getMemoryVT(), Node->getMemOperand());
 }
 
-// Op is an atomic store.  Lower it into a normal volatile store followed
-// by a serialization.
+// Op is an atomic store.  Lower it into a normal volatile store.
 SDValue SystemZTargetLowering::lowerATOMIC_STORE(SDValue Op,
                                                  SelectionDAG &DAG) const {
   auto *Node = cast<AtomicSDNode>(Op.getNode());
   SDValue Chain = DAG.getTruncStore(Node->getChain(), SDLoc(Op), Node->getVal(),
                                     Node->getBasePtr(), Node->getMemoryVT(),
                                     Node->getMemOperand());
-  return SDValue(DAG.getMachineNode(SystemZ::Serialize, SDLoc(Op), MVT::Other,
-                                    Chain), 0);
+  // We have to enforce sequential consistency by performing a
+  // serialization operation after the store.
+  if (Node->getOrdering() == AtomicOrdering::SequentiallyConsistent)
+    Chain = SDValue(DAG.getMachineNode(SystemZ::Serialize, SDLoc(Op),
+                                       MVT::Other, Chain), 0);
+  return Chain;
 }
 
 // Op is an 8-, 16-bit or 32-bit ATOMIC_LOAD_* operation.  Lower the first
