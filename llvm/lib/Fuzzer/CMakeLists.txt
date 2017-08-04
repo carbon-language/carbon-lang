@@ -22,6 +22,7 @@ endif()
 # Compile libFuzzer if the compilation is specifically requested, OR
 # if the platform is known to be working.
 set(LIBFUZZER_ENABLE ${LIBFUZZER_ENABLED_CHECK} CACHE BOOL "Build libFuzzer and its tests")
+set(LIBFUZZER_ENABLE_TESTS OFF CACHE BOOL "Build libFuzzer and its tests")
 
 if (LIBFUZZER_ENABLE)
   add_library(LLVMFuzzerNoMainObjects OBJECT
@@ -65,7 +66,7 @@ if (MSVC)
   add_custom_command(TARGET check-fuzzer
     COMMAND cmake -E echo "check-fuzzer is disalbed on Windows")
 else()
-  if (LLVM_INCLUDE_TESTS AND LIBFUZZER_ENABLE)
+  if (LLVM_INCLUDE_TESTS AND LIBFUZZER_ENABLE_TESTS)
     add_subdirectory(test)
   endif()
 endif()

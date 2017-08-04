@@ -628,8 +628,7 @@ LibFuzzer is built as a part of LLVM project by default on macos and Linux.
 Users of other operating systems can explicitly request compilation using
 ``-DLIBFUZZER_ENABLE=YES`` flag.
 Tests are run using ``check-fuzzer`` target from the build directory
-(note that tests will take a long time to run if the compiler was compiled
-without optimizations):
+which was configured with ``-DLIBFUZZER_ENABLE_TESTS=ON`` flag.
 
 .. code-block:: console
 
