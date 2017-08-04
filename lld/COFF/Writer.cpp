@@ -103,7 +103,6 @@ public:
     P[PDBAbsPath.size()] = '\0';
   }
 
-private:
   SmallString<128> PDBAbsPath;
   mutable codeview::DebugInfo *DI = nullptr;
 };
