@@ -457,6 +457,7 @@ struct LoopStructure {
 
   Value *IndVarNext;
   Value *IndVarStart;
+  Value *IndVarStep;
   Value *LoopExitAt;
   bool IndVarIncreasing;
   bool IsSignedPredicate;
@@ -464,8 +465,8 @@ struct LoopStructure {
   LoopStructure()
       : Tag(""), Header(nullptr), Latch(nullptr), LatchBr(nullptr),
         LatchExit(nullptr), LatchBrExitIdx(-1), IndVarNext(nullptr),
-        IndVarStart(nullptr), LoopExitAt(nullptr), IndVarIncreasing(false),
-        IsSignedPredicate(true) {}
+        IndVarStart(nullptr), IndVarStep(nullptr), LoopExitAt(nullptr),
+        IndVarIncreasing(false), IsSignedPredicate(true) {}
 
   template <typename M> LoopStructure map(M Map) const {
     LoopStructure Result;
@@ -477,6 +478,7 @@ struct LoopStructure {
     Result.LatchBrExitIdx = LatchBrExitIdx;
     Result.IndVarNext = Map(IndVarNext);
     Result.IndVarStart = Map(IndVarStart);
+    Result.IndVarStep = Map(IndVarStep);
     Result.LoopExitAt = Map(LoopExitAt);
     Result.IndVarIncreasing = IndVarIncreasing;
     Result.IsSignedPredicate = IsSignedPredicate;
@@ -660,12 +662,42 @@ static bool CanBeMax(ScalarEvolution &SE, const SCEV *S, bool Signed) {
          SE.getUnsignedRange(S).contains(Max);
 }
 
+static bool SumCanReachMax(ScalarEvolution &SE, const SCEV *S1, const SCEV *S2,
+                           bool Signed) {
+  // S1 < INT_MAX - S2 ===> S1 + S2 < INT_MAX.
+  assert(SE.isKnownNonNegative(S2) &&
+         "We expected the 2nd arg to be non-negative!");
+  const SCEV *Max = SE.getConstant(
+      Signed ? APInt::getSignedMaxValue(
+                   cast<IntegerType>(S1->getType())->getBitWidth())
+             : APInt::getMaxValue(
+                   cast<IntegerType>(S1->getType())->getBitWidth()));
+  const SCEV *CapForS1 = SE.getMinusSCEV(Max, S2);
+  return !SE.isKnownPredicate(Signed ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
+                              S1, CapForS1);
+}
+
 static bool CanBeMin(ScalarEvolution &SE, const SCEV *S, bool Signed) {
   APInt Min = Signed ?
       APInt::getSignedMinValue(cast<IntegerType>(S->getType())->getBitWidth()) :
       APInt::getMinValue(cast<IntegerType>(S->getType())->getBitWidth());
   return SE.getSignedRange(S).contains(Min) &&
          SE.getUnsignedRange(S).contains(Min);
+}
+
+static bool SumCanReachMin(ScalarEvolution &SE, const SCEV *S1, const SCEV *S2,
+                           bool Signed) {
+  // S1 > INT_MIN - S2 ===> S1 + S2 > INT_MIN.
+  assert(SE.isKnownNonPositive(S2) &&
+         "We expected the 2nd arg to be non-positive!");
+  const SCEV *Max = SE.getConstant(
+      Signed ? APInt::getSignedMinValue(
+                   cast<IntegerType>(S1->getType())->getBitWidth())
+             : APInt::getMinValue(
+                   cast<IntegerType>(S1->getType())->getBitWidth()));
+  const SCEV *CapForS1 = SE.getMinusSCEV(Max, S2);
+  return !SE.isKnownPredicate(Signed ? ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT,
+                              S1, CapForS1);
 }
 
 Optional<LoopStructure>
@@ -772,7 +804,11 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE,
     return AR->getNoWrapFlags(SCEV::FlagNSW) != SCEV::FlagAnyWrap;
   };
 
-  auto IsInductionVar = [&](const SCEVAddRecExpr *AR, bool &IsIncreasing) {
+  // Here we check whether the suggested AddRec is an induction variable that
+  // can be handled (i.e. with known constant step), and if yes, calculate its
+  // step and identify whether it is increasing or decreasing.
+  auto IsInductionVar = [&](const SCEVAddRecExpr *AR, bool &IsIncreasing,
+                            ConstantInt *&StepCI) {
     if (!AR->isAffine())
       return false;
 
@@ -784,12 +820,10 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE,
 
     if (const SCEVConstant *StepExpr =
             dyn_cast<SCEVConstant>(AR->getStepRecurrence(SE))) {
-      ConstantInt *StepCI = StepExpr->getValue();
+      StepCI = StepExpr->getValue();
       assert(!StepCI->isZero() && "Zero step?");
-      if (StepCI->isOne() || StepCI->isMinusOne()) {
-        IsIncreasing = StepCI->isOne();
-        return true;
-      }
+      IsIncreasing = !StepCI->isNegative();
+      return true;
     }
 
     return false;
@@ -801,7 +835,8 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE,
   const SCEVAddRecExpr *IndVarNext = cast<SCEVAddRecExpr>(LeftSCEV);
   bool IsIncreasing = false;
   bool IsSignedPredicate = true;
-  if (!IsInductionVar(IndVarNext, IsIncreasing)) {
+  ConstantInt *StepCI;
+  if (!IsInductionVar(IndVarNext, IsIncreasing, StepCI)) {
     FailureReason = "LHS in icmp not induction variable";
     return None;
   }
@@ -809,34 +844,37 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE,
   const SCEV *StartNext = IndVarNext->getStart();
   const SCEV *Addend = SE.getNegativeSCEV(IndVarNext->getStepRecurrence(SE));
   const SCEV *IndVarStart = SE.getAddExpr(StartNext, Addend);
+  const SCEV *Step = SE.getSCEV(StepCI);
 
   ConstantInt *One = ConstantInt::get(IndVarTy, 1);
   if (IsIncreasing) {
     bool DecreasedRightValueByOne = false;
-    // Try to turn eq/ne predicates to those we can work with.
-    if (Pred == ICmpInst::ICMP_NE && LatchBrExitIdx == 1)
-      // while (++i != len) {         while (++i < len) {
-      //   ...                 --->     ...
-      // }                            }
-      // If both parts are known non-negative, it is profitable to use unsigned
-      // comparison in increasing loop. This allows us to make the comparison
-      // check against "RightSCEV + 1" more optimistic.
-      if (SE.isKnownNonNegative(IndVarStart) &&
-          SE.isKnownNonNegative(RightSCEV))
-        Pred = ICmpInst::ICMP_ULT;
-      else
-        Pred = ICmpInst::ICMP_SLT;
-    else if (Pred == ICmpInst::ICMP_EQ && LatchBrExitIdx == 0 &&
-             !CanBeMin(SE, RightSCEV, /* IsSignedPredicate */ true)) {
-      // while (true) {               while (true) {
-      //   if (++i == len)     --->     if (++i > len - 1)
-      //     break;                       break;
-      //   ...                          ...
-      // }                            }
-      // TODO: Insert ICMP_UGT if both are non-negative?
-      Pred = ICmpInst::ICMP_SGT;
-      RightSCEV = SE.getMinusSCEV(RightSCEV, SE.getOne(RightSCEV->getType()));
-      DecreasedRightValueByOne = true;
+    if (StepCI->isOne()) {
+      // Try to turn eq/ne predicates to those we can work with.
+      if (Pred == ICmpInst::ICMP_NE && LatchBrExitIdx == 1)
+        // while (++i != len) {         while (++i < len) {
+        //   ...                 --->     ...
+        // }                            }
+        // If both parts are known non-negative, it is profitable to use
+        // unsigned comparison in increasing loop. This allows us to make the
+        // comparison check against "RightSCEV + 1" more optimistic.
+        if (SE.isKnownNonNegative(IndVarStart) &&
+            SE.isKnownNonNegative(RightSCEV))
+          Pred = ICmpInst::ICMP_ULT;
+        else
+          Pred = ICmpInst::ICMP_SLT;
+      else if (Pred == ICmpInst::ICMP_EQ && LatchBrExitIdx == 0 &&
+               !CanBeMin(SE, RightSCEV, /* IsSignedPredicate */ true)) {
+        // while (true) {               while (true) {
+        //   if (++i == len)     --->     if (++i > len - 1)
+        //     break;                       break;
+        //   ...                          ...
+        // }                            }
+        // TODO: Insert ICMP_UGT if both are non-negative?
+        Pred = ICmpInst::ICMP_SGT;
+        RightSCEV = SE.getMinusSCEV(RightSCEV, SE.getOne(RightSCEV->getType()));
+        DecreasedRightValueByOne = true;
+      }
     }
 
     bool LTPred = (Pred == ICmpInst::ICMP_SLT || Pred == ICmpInst::ICMP_ULT);
@@ -857,7 +895,9 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE,
         IsSignedPredicate ? CmpInst::ICMP_SLT : CmpInst::ICMP_ULT;
 
     if (LatchBrExitIdx == 0) {
-      if (CanBeMax(SE, RightSCEV, IsSignedPredicate)) {
+      const SCEV *StepMinusOne = SE.getMinusSCEV(Step,
+                                                 SE.getOne(Step->getType()));
+      if (SumCanReachMax(SE, RightSCEV, StepMinusOne, IsSignedPredicate)) {
         // TODO: this restriction is easily removable -- we just have to
         // remember that the icmp was an slt and not an sle.
         FailureReason = "limit may overflow when coercing le to lt";
@@ -866,7 +906,7 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE,
 
       if (!SE.isLoopEntryGuardedByCond(
               &L, BoundPred, IndVarStart,
-              SE.getAddExpr(RightSCEV, SE.getOne(RightSCEV->getType())))) {
+              SE.getAddExpr(RightSCEV, Step))) {
         FailureReason = "Induction variable start not bounded by upper limit";
         return None;
       }
@@ -887,26 +927,28 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE,
     }
   } else {
     bool IncreasedRightValueByOne = false;
-    // Try to turn eq/ne predicates to those we can work with.
-    if (Pred == ICmpInst::ICMP_NE && LatchBrExitIdx == 1)
-      // while (--i != len) {         while (--i > len) {
-      //   ...                 --->     ...
-      // }                            }
-      // We intentionally don't turn the predicate into UGT even if we know that
-      // both operands are non-negative, because it will only pessimize our
-      // check against "RightSCEV - 1".
-      Pred = ICmpInst::ICMP_SGT;
-    else if (Pred == ICmpInst::ICMP_EQ && LatchBrExitIdx == 0 &&
-             !CanBeMax(SE, RightSCEV, /* IsSignedPredicate */ true)) {
-      // while (true) {               while (true) {
-      //   if (--i == len)     --->     if (--i < len + 1)
-      //     break;                       break;
-      //   ...                          ...
-      // }                            }
-      // TODO: Insert ICMP_ULT if both are non-negative?
-      Pred = ICmpInst::ICMP_SLT;
-      RightSCEV = SE.getAddExpr(RightSCEV, SE.getOne(RightSCEV->getType()));
-      IncreasedRightValueByOne = true;
+    if (StepCI->isMinusOne()) {
+      // Try to turn eq/ne predicates to those we can work with.
+      if (Pred == ICmpInst::ICMP_NE && LatchBrExitIdx == 1)
+        // while (--i != len) {         while (--i > len) {
+        //   ...                 --->     ...
+        // }                            }
+        // We intentionally don't turn the predicate into UGT even if we know
+        // that both operands are non-negative, because it will only pessimize
+        // our check against "RightSCEV - 1".
+        Pred = ICmpInst::ICMP_SGT;
+      else if (Pred == ICmpInst::ICMP_EQ && LatchBrExitIdx == 0 &&
+               !CanBeMax(SE, RightSCEV, /* IsSignedPredicate */ true)) {
+        // while (true) {               while (true) {
+        //   if (--i == len)     --->     if (--i < len + 1)
+        //     break;                       break;
+        //   ...                          ...
+        // }                            }
+        // TODO: Insert ICMP_ULT if both are non-negative?
+        Pred = ICmpInst::ICMP_SLT;
+        RightSCEV = SE.getAddExpr(RightSCEV, SE.getOne(RightSCEV->getType()));
+        IncreasedRightValueByOne = true;
+      }
     }
 
     bool LTPred = (Pred == ICmpInst::ICMP_SLT || Pred == ICmpInst::ICMP_ULT);
@@ -928,7 +970,8 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE,
         IsSignedPredicate ? CmpInst::ICMP_SGT : CmpInst::ICMP_UGT;
 
     if (LatchBrExitIdx == 0) {
-      if (CanBeMin(SE, RightSCEV, IsSignedPredicate)) {
+      const SCEV *StepPlusOne = SE.getAddExpr(Step, SE.getOne(Step->getType()));
+      if (SumCanReachMin(SE, RightSCEV, StepPlusOne, IsSignedPredicate)) {
         // TODO: this restriction is easily removable -- we just have to
         // remember that the icmp was an sgt and not an sge.
         FailureReason = "limit may overflow when coercing ge to gt";
@@ -979,6 +1022,7 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE,
   Result.LatchExit = LatchExit;
   Result.LatchBrExitIdx = LatchBrExitIdx;
   Result.IndVarStart = IndVarStartV;
+  Result.IndVarStep = StepCI;
   Result.IndVarNext = LeftValue;
   Result.IndVarIncreasing = IsIncreasing;
   Result.LoopExitAt = RightValue;
@@ -1529,8 +1573,6 @@ InductiveRangeCheck::computeSafeIterationSpace(
   // this inductive range check is a range check on the "C + D * I" ("C" is
   // getOffset() and "D" is getScale()).  We rewrite the value being range
   // checked to "M + N * IndVar" where "N" = "D * B^(-1)" and "M" = "C - NA".
-  // Currently we support this only for "B" = "D" = { 1 or -1 }, but the code
-  // can be generalized as needed.
   //
   // The actual inequalities we solve are of the form
   //
@@ -1567,11 +1609,9 @@ InductiveRangeCheck::computeSafeIterationSpace(
     return None;
 
   ConstantInt *ConstD = D->getValue();
-  if (!(ConstD->isMinusOne() || ConstD->isOne()))
-    return None;
+  assert(!ConstD->isZero() && "Recurrence with zero step?");
 
   const SCEV *M = SE.getMinusSCEV(C, A);
-
   const SCEV *Begin = SE.getNegativeSCEV(M);
   const SCEV *UpperLimit = nullptr;
 
@@ -1659,11 +1699,8 @@ bool InductiveRangeCheckElimination::runOnLoop(Loop *L, LPPassManager &LPM) {
     return false;
   }
   LoopStructure LS = MaybeLoopStructure.getValue();
-  bool Increasing = LS.IndVarIncreasing;
-  const SCEV *MinusOne =
-      SE.getConstant(LS.IndVarNext->getType(), Increasing ? -1 : 1, true);
   const SCEVAddRecExpr *IndVar =
-      cast<SCEVAddRecExpr>(SE.getAddExpr(SE.getSCEV(LS.IndVarNext), MinusOne));
+      cast<SCEVAddRecExpr>(SE.getMinusSCEV(SE.getSCEV(LS.IndVarNext), SE.getSCEV(LS.IndVarStep)));
 
   Optional<InductiveRangeCheck::Range> SafeIterRange;
   Instruction *ExprInsertPt = Preheader->getTerminator();
