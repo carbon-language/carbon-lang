@@ -117,11 +117,25 @@ def V_CNDMASK_B64_PSEUDO : VOP3Common <(outs VReg_64:$vdst),
 def V_MOV_B64_PSEUDO : VPseudoInstSI <(outs VReg_64:$vdst),
                                       (ins VSrc_b64:$src0)>;
 
-// Pseudoinstruction for @llvm.amdgcn.wqm. It is turned into a copy
-// after the WQM pass processes them.
+// Pseudoinstruction for @llvm.amdgcn.wqm. It is turned into a copy after the
+// WQM pass processes it.
 def WQM : PseudoInstSI <(outs unknown:$vdst), (ins unknown:$src0)>;
 
+// Pseudoinstruction for @llvm.amdgcn.wwm. It is turned into a copy post-RA, so
+// that the @earlyclobber is respected. The @earlyclobber is to make sure that
+// the instruction that defines $src0 (which is run in WWM) doesn't
+// accidentally clobber inactive channels of $vdst.
+let Constraints = "@earlyclobber $vdst" in {
+def WWM : PseudoInstSI <(outs unknown:$vdst), (ins unknown:$src0)>;
+}
+
 } // End let hasSideEffects = 0, mayLoad = 0, mayStore = 0, Uses = [EXEC]
+
+def EXIT_WWM : SPseudoInstSI <(outs SReg_64:$sdst), (ins SReg_64:$src0)> {
+  let hasSideEffects = 0;
+  let mayLoad = 0;
+  let mayStore = 0;
+}
 
 let usesCustomInserter = 1, SALU = 1 in {
 def GET_GROUPSTATICSIZE : PseudoInstSI <(outs SReg_32:$sdst), (ins),

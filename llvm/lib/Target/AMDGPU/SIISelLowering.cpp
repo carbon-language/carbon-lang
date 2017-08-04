@@ -3947,6 +3947,11 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     return SDValue(DAG.getMachineNode(AMDGPU::WQM, DL, Src.getValueType(), Src),
                    0);
   }
+  case Intrinsic::amdgcn_wwm: {
+    SDValue Src = Op.getOperand(1);
+    return SDValue(DAG.getMachineNode(AMDGPU::WWM, DL, Src.getValueType(), Src),
+                   0);
+  }
   default:
     return Op;
   }

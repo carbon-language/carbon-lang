@@ -568,7 +568,8 @@ bool SIFixSGPRCopies::runOnMachineFunction(MachineFunction &MF) {
       default:
         continue;
       case AMDGPU::COPY:
-      case AMDGPU::WQM: {
+      case AMDGPU::WQM:
+      case AMDGPU::WWM: {
         // If the destination register is a physical register there isn't really
         // much we can do to fix this.
         if (!TargetRegisterInfo::isVirtualRegister(MI.getOperand(0).getReg()))

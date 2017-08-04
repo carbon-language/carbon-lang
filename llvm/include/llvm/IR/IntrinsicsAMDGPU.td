@@ -747,6 +747,15 @@ def int_amdgcn_wqm : Intrinsic<[llvm_any_ty],
   [LLVMMatchType<0>], [IntrNoMem, IntrSpeculatable]
 >;
 
+// Copies the active channels of the source value to the destination value,
+// with the guarantee that the source value is computed as if the entire
+// program were executed in Whole Wavefront Mode, i.e. with all channels
+// enabled, with a few exceptions: - Phi nodes with require WWM return an
+// undefined value.
+def int_amdgcn_wwm : Intrinsic<[llvm_any_ty],
+  [LLVMMatchType<0>], [IntrNoMem, IntrSpeculatable]
+>;
+
 //===----------------------------------------------------------------------===//
 // CI+ Intrinsics
 //===----------------------------------------------------------------------===//
