@@ -47,20 +47,23 @@ include_directories(..)
 set(LIBFUZZER_TEST_COMPILER ${LLVM_RUNTIME_OUTPUT_INTDIR}/clang)
 set(LIBFUZZER_TEST_CXX_COMPILER ${LLVM_RUNTIME_OUTPUT_INTDIR}/clang++)
 
-# LIT-based libFuzzer tests.
-configure_lit_site_cfg(
-  ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
-  ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
-  )
+if ((TARGET asan) AND (TARGET clang))
+  # LIT-based libFuzzer tests.
+  configure_lit_site_cfg(
+    ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
+    ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
+    )
 
-# libFuzzer unit tests.
-configure_lit_site_cfg(
-  ${CMAKE_CURRENT_SOURCE_DIR}/unit/lit.site.cfg.in
-  ${CMAKE_CURRENT_BINARY_DIR}/unit/lit.site.cfg
-  )
+  # libFuzzer unit tests.
+  configure_lit_site_cfg(
+    ${CMAKE_CURRENT_SOURCE_DIR}/unit/lit.site.cfg.in
+    ${CMAKE_CURRENT_BINARY_DIR}/unit/lit.site.cfg
+    )
 
-add_lit_testsuite(check-fuzzer "Running Fuzzer tests"
+  add_lit_testsuite(check-fuzzer "Running Fuzzer tests"
     ${CMAKE_CURRENT_BINARY_DIR}
     DEPENDS LLVMFuzzer-Unittest)
 
-add_dependencies(check-fuzzer LLVMFuzzer asan clang llvm-symbolizer FileCheck sancov not)
+  add_dependencies(check-fuzzer LLVMFuzzer asan clang llvm-symbolizer FileCheck sancov not)
+endif()
+
