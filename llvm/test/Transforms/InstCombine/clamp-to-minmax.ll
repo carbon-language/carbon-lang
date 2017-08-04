@@ -143,6 +143,7 @@ define float @clamp_float_fast_unordered_nonstrict_minmax(float %x) {
 ; Some more checks with fast
 
 ; (X > 1.0) ? min(x, 255.0) : 1.0
+; That did not match because select was in inverse order.
 define float @clamp_test_1(float %x) {
 ; CHECK-LABEL: @clamp_test_1(
 ; CHECK-NEXT:    [[INNER_CMP_INV:%.*]] = fcmp fast oge float [[X:%.*]], 2.550000e+02
@@ -497,4 +498,110 @@ define float @clamp_float_unordered_nonstrict_minmax2(float %x) {
   %cmp1 = fcmp uge float %x, 255.0                  ;             true
   %r = select i1 %cmp1, float 255.0, float %max     ;             255.0
   ret float %r
+}
+
+;; Check casts behavior
+define float @ui32_clamp_and_cast_to_float(i32 %x) {
+; CHECK-LABEL: @ui32_clamp_and_cast_to_float(
+; CHECK-NEXT:    [[F_X:%.*]] = uitofp i32 [[X:%.*]] to float
+; CHECK-NEXT:    [[UP_CMP:%.*]] = icmp ugt i32 [[X]], 255
+; CHECK-NEXT:    [[LO_CMP:%.*]] = icmp eq i32 [[X]], 0
+; CHECK-NEXT:    [[MIN:%.*]] = select i1 [[UP_CMP]], float 2.550000e+02, float [[F_X]]
+; CHECK-NEXT:    [[R:%.*]] = select i1 [[LO_CMP]], float 1.000000e+00, float [[MIN]]
+; CHECK-NEXT:    ret float [[R]]
+;
+  %f_x = uitofp i32 %x to float
+  %up_cmp = icmp ugt i32 %x, 255
+  %lo_cmp = icmp ult i32 %x, 1
+  %min = select i1 %up_cmp, float 255.0, float %f_x
+  %r = select i1 %lo_cmp, float 1.0, float %min
+  ret float %r
+}
+
+define float @ui64_clamp_and_cast_to_float(i64 %x) {
+; CHECK-LABEL: @ui64_clamp_and_cast_to_float(
+; CHECK-NEXT:    [[LO_CMP:%.*]] = icmp eq i64 [[X:%.*]], 0
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ult i64 [[X]], 255
+; CHECK-NEXT:    [[MIN1:%.*]] = select i1 [[TMP1]], i64 [[X]], i64 255
+; CHECK-NEXT:    [[TMP2:%.*]] = uitofp i64 [[MIN1]] to float
+; CHECK-NEXT:    [[R:%.*]] = select i1 [[LO_CMP]], float 1.000000e+00, float [[TMP2]]
+; CHECK-NEXT:    ret float [[R]]
+;
+  %f_x = uitofp i64 %x to float
+  %up_cmp = icmp ugt i64 %x, 255
+  %lo_cmp = icmp ult i64 %x, 1
+  %min = select i1 %up_cmp, float 255.0, float %f_x
+  %r = select i1 %lo_cmp, float 1.0, float %min
+  ret float %r
+}
+
+define float @mixed_clamp_to_float_1(i32 %x) {
+; CHECK-LABEL: @mixed_clamp_to_float_1(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp slt i32 [[X:%.*]], 255
+; CHECK-NEXT:    [[SI_MIN:%.*]] = select i1 [[TMP1]], i32 [[X]], i32 255
+; CHECK-NEXT:    [[F_MIN:%.*]] = sitofp i32 [[SI_MIN]] to float
+; CHECK-NEXT:    [[LO_CMP:%.*]] = icmp slt i32 [[X]], 1
+; CHECK-NEXT:    [[R:%.*]] = select i1 [[LO_CMP]], float 1.000000e+00, float [[F_MIN]]
+; CHECK-NEXT:    ret float [[R]]
+;
+  %si_min_cmp = icmp sgt i32 %x, 255
+  %si_min = select i1 %si_min_cmp, i32 255, i32 %x
+  %f_min = sitofp i32 %si_min to float
+  %f_x = sitofp i32 %x to float
+  %lo_cmp = fcmp ult float %f_x, 1.0
+  %r = select i1 %lo_cmp, float 1.0, float %f_min
+  ret float %r
+}
+
+define i32 @mixed_clamp_to_i32_1(float %x) {
+; CHECK-LABEL: @mixed_clamp_to_i32_1(
+; CHECK-NEXT:    [[FLOAT_MIN_CMP:%.*]] = fcmp ogt float [[X:%.*]], 2.550000e+02
+; CHECK-NEXT:    [[FLOAT_MIN:%.*]] = select i1 [[FLOAT_MIN_CMP]], float 2.550000e+02, float [[X]]
+; CHECK-NEXT:    [[I32_MIN:%.*]] = fptosi float [[FLOAT_MIN]] to i32
+; CHECK-NEXT:    [[I32_X:%.*]] = fptosi float [[X]] to i32
+; CHECK-NEXT:    [[LO_CMP:%.*]] = icmp eq i32 [[I32_X]], 0
+; CHECK-NEXT:    [[R:%.*]] = select i1 [[LO_CMP]], i32 1, i32 [[I32_MIN]]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %float_min_cmp = fcmp ogt float %x, 255.0
+  %float_min = select i1 %float_min_cmp, float 255.0, float %x
+  %i32_min = fptosi float %float_min to i32
+  %i32_x = fptosi float %x to i32
+  %lo_cmp = icmp ult i32 %i32_x, 1
+  %r = select i1 %lo_cmp, i32 1, i32 %i32_min
+  ret i32 %r
+}
+
+define float @mixed_clamp_to_float_2(i32 %x) {
+; CHECK-LABEL: @mixed_clamp_to_float_2(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp slt i32 [[X:%.*]], 255
+; CHECK-NEXT:    [[SI_MIN:%.*]] = select i1 [[TMP1]], i32 [[X]], i32 255
+; CHECK-NEXT:    [[F_MIN:%.*]] = sitofp i32 [[SI_MIN]] to float
+; CHECK-NEXT:    [[LO_CMP:%.*]] = icmp slt i32 [[X]], 1
+; CHECK-NEXT:    [[R:%.*]] = select i1 [[LO_CMP]], float 1.000000e+00, float [[F_MIN]]
+; CHECK-NEXT:    ret float [[R]]
+;
+  %si_min_cmp = icmp sgt i32 %x, 255
+  %si_min = select i1 %si_min_cmp, i32 255, i32 %x
+  %f_min = sitofp i32 %si_min to float
+  %lo_cmp = icmp slt i32 %x, 1
+  %r = select i1 %lo_cmp, float 1.0, float %f_min
+  ret float %r
+}
+
+define i32 @mixed_clamp_to_i32_2(float %x) {
+; CHECK-LABEL: @mixed_clamp_to_i32_2(
+; CHECK-NEXT:    [[FLOAT_MIN_CMP:%.*]] = fcmp ogt float [[X:%.*]], 2.550000e+02
+; CHECK-NEXT:    [[FLOAT_MIN:%.*]] = select i1 [[FLOAT_MIN_CMP]], float 2.550000e+02, float [[X]]
+; CHECK-NEXT:    [[I32_MIN:%.*]] = fptosi float [[FLOAT_MIN]] to i32
+; CHECK-NEXT:    [[LO_CMP:%.*]] = fcmp olt float [[X]], 1.000000e+00
+; CHECK-NEXT:    [[R:%.*]] = select i1 [[LO_CMP]], i32 1, i32 [[I32_MIN]]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %float_min_cmp = fcmp ogt float %x, 255.0
+  %float_min = select i1 %float_min_cmp, float 255.0, float %x
+  %i32_min = fptosi float %float_min to i32
+  %lo_cmp = fcmp olt float %x, 1.0
+  %r = select i1 %lo_cmp, i32 1, i32 %i32_min
+  ret i32 %r
 }
