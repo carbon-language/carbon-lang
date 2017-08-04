@@ -145,6 +145,11 @@ Error DumpOutputStyle::dump() {
       return EC;
   }
 
+  if (opts::dump::DumpSectionHeaders) {
+    if (auto EC = dumpSectionHeaders())
+      return EC;
+  }
+
   if (opts::dump::DumpSectionContribs) {
     if (auto EC = dumpSectionContribs())
       return EC;
@@ -974,7 +979,9 @@ Error DumpOutputStyle::dumpSymbolsFromGSI(const GSIHashTable &Table,
 }
 
 static std::string formatSectionCharacteristics(uint32_t IndentLevel,
-                                                uint32_t C) {
+                                                uint32_t C,
+                                                uint32_t FlagsPerLine,
+                                                StringRef Separator) {
   using SC = COFF::SectionCharacteristics;
   std::vector<std::string> Opts;
   if (C == COFF::SC_Invalid)
@@ -1036,7 +1043,7 @@ static std::string formatSectionCharacteristics(uint32_t IndentLevel,
   PUSH_FLAG(SC, IMAGE_SCN_MEM_EXECUTE, C, "IMAGE_SCN_MEM_EXECUTE");
   PUSH_FLAG(SC, IMAGE_SCN_MEM_READ, C, "IMAGE_SCN_MEM_READ");
   PUSH_FLAG(SC, IMAGE_SCN_MEM_WRITE, C, "IMAGE_SCN_MEM_WRITE");
-  return typesetItemList(Opts, IndentLevel, 3, " | ");
+  return typesetItemList(Opts, IndentLevel, FlagsPerLine, Separator);
 }
 
 static std::string formatSegMapDescriptorFlag(uint32_t IndentLevel,
@@ -1053,6 +1060,79 @@ static std::string formatSegMapDescriptorFlag(uint32_t IndentLevel,
   PUSH_FLAG(OMFSegDescFlags, IsAbsoluteAddress, Flags, "absolute addr");
   PUSH_FLAG(OMFSegDescFlags, IsGroup, Flags, "group");
   return typesetItemList(Opts, IndentLevel, 4, " | ");
+}
+
+Error DumpOutputStyle::dumpSectionHeaders() {
+  dumpSectionHeaders("Section Headers", DbgHeaderType::SectionHdr);
+  dumpSectionHeaders("Original Section Headers", DbgHeaderType::SectionHdrOrig);
+  return Error::success();
+}
+
+void DumpOutputStyle::dumpSectionHeaders(StringRef Label, DbgHeaderType Type) {
+  printHeader(P, Label);
+  ExitOnError Err("Error dumping publics stream: ");
+
+  AutoIndent Indent(P);
+  if (!File.hasPDBDbiStream()) {
+    P.formatLine(
+        "Section headers require a DBI Stream, which could not be loaded");
+    return;
+  }
+
+  auto &Dbi = Err(File.getPDBDbiStream());
+  uint32_t SI = Dbi.getDebugStreamIndex(Type);
+
+  if (SI == kInvalidStreamIndex) {
+    P.formatLine(
+        "PDB does not contain the requested image section header type");
+    return;
+  }
+
+  auto Stream = MappedBlockStream::createIndexedStream(
+      File.getMsfLayout(), File.getMsfBuffer(), SI, File.getAllocator());
+  if (!Stream) {
+    P.formatLine("Could not load the required stream data");
+    return;
+  }
+  ArrayRef<object::coff_section> Headers;
+  if (Stream->getLength() % sizeof(object::coff_section) != 0) {
+    P.formatLine(
+        "Section header array size is not a multiple of section header size");
+    return;
+  }
+  uint32_t NumHeaders = Stream->getLength() / sizeof(object::coff_section);
+  BinaryStreamReader Reader(*Stream);
+  cantFail(Reader.readArray(Headers, NumHeaders));
+  if (Headers.empty()) {
+    P.formatLine("No section headers");
+    return;
+  }
+
+  uint32_t I = 1;
+  for (const auto &Header : Headers) {
+    P.NewLine();
+    P.formatLine("SECTION HEADER #{0}", I);
+    P.formatLine("{0,8} name", Header.Name);
+    P.formatLine("{0,8:X-} virtual size", uint32_t(Header.VirtualSize));
+    P.formatLine("{0,8:X-} virtual address", uint32_t(Header.VirtualAddress));
+    P.formatLine("{0,8:X-} size of raw data", uint32_t(Header.SizeOfRawData));
+    P.formatLine("{0,8:X-} file pointer to raw data",
+                 uint32_t(Header.PointerToRawData));
+    P.formatLine("{0,8:X-} file pointer to relocation table",
+                 uint32_t(Header.PointerToRelocations));
+    P.formatLine("{0,8:X-} file pointer to line numbers",
+                 uint32_t(Header.PointerToLinenumbers));
+    P.formatLine("{0,8:X-} number of relocations",
+                 uint32_t(Header.NumberOfRelocations));
+    P.formatLine("{0,8:X-} number of line numbers",
+                 uint32_t(Header.NumberOfLinenumbers));
+    P.formatLine("{0,8:X-} flags", uint32_t(Header.Characteristics));
+    AutoIndent IndentMore(P, 9);
+    P.formatLine("{0}", formatSectionCharacteristics(
+                            P.getIndentLevel(), Header.Characteristics, 1, ""));
+    ++I;
+  }
+  return;
 }
 
 Error DumpOutputStyle::dumpSectionContribs() {
@@ -1078,7 +1158,7 @@ Error DumpOutputStyle::dumpSectionContribs() {
           fmtle(SC.DataCrc), fmtle(SC.RelocCrc));
       P.formatLine("      {0}",
                    formatSectionCharacteristics(P.getIndentLevel() + 6,
-                                                SC.Characteristics));
+                                                SC.Characteristics, 3, " | "));
     }
     void visit(const SectionContrib2 &SC) override {
       P.formatLine("SC2 | mod = {2}, {0}, size = {1}, data crc = {3}, reloc "
@@ -1087,9 +1167,9 @@ Error DumpOutputStyle::dumpSectionContribs() {
                    fmtle(SC.Base.Size), fmtle(SC.Base.Imod),
                    fmtle(SC.Base.DataCrc), fmtle(SC.Base.RelocCrc),
                    fmtle(SC.ISectCoff));
-      P.formatLine("      {0}",
-                   formatSectionCharacteristics(P.getIndentLevel() + 6,
-                                                SC.Base.Characteristics));
+      P.formatLine("      {0}", formatSectionCharacteristics(
+                                    P.getIndentLevel() + 6,
+                                    SC.Base.Characteristics, 3, " | "));
     }
 
   private:
@@ -1117,7 +1197,7 @@ Error DumpOutputStyle::dumpSectionMap() {
   uint32_t I = 0;
   for (auto &M : Dbi.getSectionMap()) {
     P.formatLine(
-        "Section {0:4} | ovl = {0}, group = {1}, frame = {2}, name = {3}", I,
+        "Section {0:4} | ovl = {1}, group = {2}, frame = {3}, name = {4}", I,
         fmtle(M.Ovl), fmtle(M.Group), fmtle(M.Frame), fmtle(M.SecName));
     P.formatLine("               class = {0}, offset = {1}, size = {2}",
                  fmtle(M.ClassName), fmtle(M.Offset), fmtle(M.SecByteLength));

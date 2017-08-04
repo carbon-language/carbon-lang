@@ -534,19 +534,19 @@ ALL-NEXT:         IMAGE_SCN_CNT_UNINITIALIZED_DATA | IMAGE_SCN_ALIGN_4BYTES | IM
 ALL-NEXT:         IMAGE_SCN_MEM_WRITE
 ALL:                              Section Map
 ALL-NEXT: ============================================================
-ALL-NEXT:   Section 0000 | ovl = 0, group = 0, frame = 0, name = 1
+ALL-NEXT:   Section 0000 | ovl = 0, group = 0, frame = 1, name = 65535
 ALL-NEXT:                  class = 65535, offset = 0, size = 4122
 ALL-NEXT:                  flags = read | execute | 32 bit addr | selector
-ALL-NEXT:   Section 0001 | ovl = 1, group = 0, frame = 0, name = 2
+ALL-NEXT:   Section 0001 | ovl = 0, group = 0, frame = 2, name = 65535
 ALL-NEXT:                  class = 65535, offset = 0, size = 690
 ALL-NEXT:                  flags = read | 32 bit addr | selector
-ALL-NEXT:   Section 0002 | ovl = 2, group = 0, frame = 0, name = 3
+ALL-NEXT:   Section 0002 | ovl = 0, group = 0, frame = 3, name = 65535
 ALL-NEXT:                  class = 65535, offset = 0, size = 4
 ALL-NEXT:                  flags = read | write | 32 bit addr | selector
-ALL-NEXT:   Section 0003 | ovl = 3, group = 0, frame = 0, name = 4
+ALL-NEXT:   Section 0003 | ovl = 0, group = 0, frame = 4, name = 65535
 ALL-NEXT:                  class = 65535, offset = 0, size = 8
 ALL-NEXT:                  flags = read | 32 bit addr | selector
-ALL-NEXT:   Section 0004 | ovl = 4, group = 0, frame = 0, name = 0
+ALL-NEXT:   Section 0004 | ovl = 0, group = 0, frame = 0, name = 65535
 ALL-NEXT:                  class = 65535, offset = 0, size = 4294967295
 ALL-NEXT:                  flags = 32 bit addr | absolute addr
 
