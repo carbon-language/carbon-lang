@@ -1099,6 +1099,28 @@ bool SIInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
     MI.eraseFromParent();
     break;
   }
+  case AMDGPU::V_SET_INACTIVE_B32: {
+    BuildMI(MBB, MI, DL, get(AMDGPU::S_NOT_B64), AMDGPU::EXEC)
+      .addReg(AMDGPU::EXEC);
+    BuildMI(MBB, MI, DL, get(AMDGPU::V_MOV_B32_e32), MI.getOperand(0).getReg())
+      .add(MI.getOperand(2));
+    BuildMI(MBB, MI, DL, get(AMDGPU::S_NOT_B64), AMDGPU::EXEC)
+      .addReg(AMDGPU::EXEC);
+    MI.eraseFromParent();
+    break;
+  }
+  case AMDGPU::V_SET_INACTIVE_B64: {
+    BuildMI(MBB, MI, DL, get(AMDGPU::S_NOT_B64), AMDGPU::EXEC)
+      .addReg(AMDGPU::EXEC);
+    MachineInstr *Copy = BuildMI(MBB, MI, DL, get(AMDGPU::V_MOV_B64_PSEUDO),
+                                 MI.getOperand(0).getReg())
+      .add(MI.getOperand(2));
+    expandPostRAPseudo(*Copy);
+    BuildMI(MBB, MI, DL, get(AMDGPU::S_NOT_B64), AMDGPU::EXEC)
+      .addReg(AMDGPU::EXEC);
+    MI.eraseFromParent();
+    break;
+  }
   case AMDGPU::V_MOVRELD_B32_V1:
   case AMDGPU::V_MOVRELD_B32_V2:
   case AMDGPU::V_MOVRELD_B32_V4:

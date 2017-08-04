@@ -137,6 +137,20 @@ def EXIT_WWM : SPseudoInstSI <(outs SReg_64:$sdst), (ins SReg_64:$src0)> {
   let mayStore = 0;
 }
 
+// Invert the exec mask and overwrite the inactive lanes of dst with inactive,
+// restoring it after we're done.
+def V_SET_INACTIVE_B32 : VPseudoInstSI <(outs VGPR_32:$vdst),
+  (ins VGPR_32: $src, VSrc_b32:$inactive),
+  [(set i32:$vdst, (int_amdgcn_set_inactive i32:$src, i32:$inactive))]> {
+  let Constraints = "$src = $vdst";
+}
+
+def V_SET_INACTIVE_B64 : VPseudoInstSI <(outs VReg_64:$vdst),
+  (ins VReg_64: $src, VSrc_b64:$inactive),
+  [(set i64:$vdst, (int_amdgcn_set_inactive i64:$src, i64:$inactive))]> {
+  let Constraints = "$src = $vdst";
+}
+
 let usesCustomInserter = 1, SALU = 1 in {
 def GET_GROUPSTATICSIZE : PseudoInstSI <(outs SReg_32:$sdst), (ins),
   [(set SReg_32:$sdst, (int_amdgcn_groupstaticsize))]>;

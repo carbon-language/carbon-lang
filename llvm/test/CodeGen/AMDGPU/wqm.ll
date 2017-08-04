@@ -256,6 +256,47 @@ endif:
   ret float %out.1
 }
 
+; Check that @llvm.amdgcn.set.inactive disables WWM.
+;
+;CHECK-LABEL: {{^}}test_set_inactive1:
+;CHECK: buffer_load_dword
+;CHECK: s_not_b64 exec, exec
+;CHECK: v_mov_b32_e32
+;CHECK: s_not_b64 exec, exec
+;CHECK: s_or_saveexec_b64 s{{\[[0-9]+:[0-9]+\]}}, -1
+;CHECK: v_add_i32_e32
+define amdgpu_ps void @test_set_inactive1(i32 inreg %idx) {
+main_body:
+  %src = call float @llvm.amdgcn.buffer.load.f32(<4 x i32> undef, i32 %idx, i32 0, i1 0, i1 0)
+  %src.0 = bitcast float %src to i32
+  %src.1 = call i32 @llvm.amdgcn.set.inactive.i32(i32 %src.0, i32 0)
+  %out = add i32 %src.1, %src.1
+  %out.0 = call i32 @llvm.amdgcn.wwm.i32(i32 %out)
+  %out.1 = bitcast i32 %out.0 to float
+  call void @llvm.amdgcn.buffer.store.f32(float %out.1, <4 x i32> undef, i32 %idx, i32 0, i1 0, i1 0)
+  ret void
+}
+
+; Check that enabling WQM anywhere enables WQM for the set.inactive source.
+;
+;CHECK-LABEL: {{^}}test_set_inactive2:
+;CHECK: s_wqm_b64 exec, exec
+;CHECK: buffer_load_dword
+;CHECK: buffer_load_dword
+define amdgpu_ps void @test_set_inactive2(i32 inreg %idx0, i32 inreg %idx1) {
+main_body:
+  %src1 = call float @llvm.amdgcn.buffer.load.f32(<4 x i32> undef, i32 %idx1, i32 0, i1 0, i1 0)
+  %src1.0 = bitcast float %src1 to i32
+  %src1.1 = call i32 @llvm.amdgcn.set.inactive.i32(i32 %src1.0, i32 undef)
+  %src0 = call float @llvm.amdgcn.buffer.load.f32(<4 x i32> undef, i32 %idx0, i32 0, i1 0, i1 0)
+  %src0.0 = bitcast float %src0 to i32
+  %src0.1 = call i32 @llvm.amdgcn.wqm.i32(i32 %src0.0)
+  %out = add i32 %src0.1, %src1.1
+  %out.0 = bitcast i32 %out to float
+  call void @llvm.amdgcn.buffer.store.f32(float %out.0, <4 x i32> undef, i32 %idx1, i32 0, i1 0, i1 0)
+  ret void
+}
+
 ; Check a case of one branch of an if-else requiring WQM, the other requiring
 ; exact.
 ;
@@ -513,7 +554,7 @@ main_body:
 ; CHECK: s_wqm_b64 exec, exec
 ; CHECK: v_add_f32_e32 v0,
 ; CHECK: s_and_b64 exec, exec, [[ORIG]]
-define amdgpu_ps float @test_prolog_1(float %a, float %b) #4 {
+define amdgpu_ps float @test_prolog_1(float %a, float %b) #5 {
 main_body:
   %s = fadd float %a, %b
   ret float %s
@@ -680,10 +721,12 @@ declare float @llvm.amdgcn.wqm.f32(float) #3
 declare i32 @llvm.amdgcn.wqm.i32(i32) #3
 declare float @llvm.amdgcn.wwm.f32(float) #3
 declare i32 @llvm.amdgcn.wwm.i32(i32) #3
+declare i32 @llvm.amdgcn.set.inactive.i32(i32, i32) #4
 declare i32 @llvm.amdgcn.mbcnt.lo(i32, i32) #3
 declare i32 @llvm.amdgcn.mbcnt.hi(i32, i32) #3
 
 attributes #1 = { nounwind }
 attributes #2 = { nounwind readonly }
 attributes #3 = { nounwind readnone }
-attributes #4 = { "amdgpu-ps-wqm-outputs" }
+attributes #4 = { nounwind readnone convergent }
+attributes #5 = { "amdgpu-ps-wqm-outputs" }

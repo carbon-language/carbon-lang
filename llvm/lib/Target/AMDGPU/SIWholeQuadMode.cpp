@@ -303,6 +303,7 @@ char SIWholeQuadMode::scanInstructions(MachineFunction &MF,
                                        std::vector<WorkItem> &Worklist) {
   char GlobalFlags = 0;
   bool WQMOutputs = MF.getFunction()->hasFnAttribute("amdgpu-ps-wqm-outputs");
+  SmallVector<MachineInstr *, 4> SetInactiveInstrs;
 
   // We need to visit the basic blocks in reverse post-order so that we visit
   // defs before uses, in particular so that we don't accidentally mark an
@@ -341,6 +342,23 @@ char SIWholeQuadMode::scanInstructions(MachineFunction &MF,
         GlobalFlags |= StateWWM;
         LowerToCopyInstrs.push_back(&MI);
         continue;
+      } else if (Opcode == AMDGPU::V_SET_INACTIVE_B32 ||
+                 Opcode == AMDGPU::V_SET_INACTIVE_B64) {
+        III.Disabled = StateWWM;
+        MachineOperand &Inactive = MI.getOperand(2);
+        if (Inactive.isReg()) {
+          if (Inactive.isUndef()) {
+            LowerToCopyInstrs.push_back(&MI);
+          } else {
+            unsigned Reg = Inactive.getReg();
+            if (TargetRegisterInfo::isVirtualRegister(Reg)) {
+              for (MachineInstr &DefMI : MRI->def_instructions(Reg))
+                markInstruction(DefMI, StateWWM, Worklist);
+            }
+          }
+        }
+        SetInactiveInstrs.push_back(&MI);
+        continue;
       } else if (TII->isDisableWQM(MI)) {
         BBI.Needs |= StateExact;
         if (!(BBI.InNeeds & StateExact)) {
@@ -378,6 +396,14 @@ char SIWholeQuadMode::scanInstructions(MachineFunction &MF,
       markInstruction(MI, Flags, Worklist);
       GlobalFlags |= Flags;
     }
+  }
+
+  // Mark sure that any SET_INACTIVE instructions are computed in WQM if WQM is
+  // ever used anywhere in the function. This implements the corresponding
+  // semantics of @llvm.amdgcn.set.inactive.
+  if (GlobalFlags & StateWQM) {
+    for (MachineInstr *MI : SetInactiveInstrs)
+      markInstruction(*MI, StateWQM, Worklist);
   }
 
   return GlobalFlags;
@@ -799,8 +825,11 @@ void SIWholeQuadMode::lowerLiveMaskQueries(unsigned LiveMaskReg) {
 }
 
 void SIWholeQuadMode::lowerCopyInstrs() {
-  for (MachineInstr *MI : LowerToCopyInstrs)
+  for (MachineInstr *MI : LowerToCopyInstrs) {
+    for (unsigned i = MI->getNumExplicitOperands() - 1; i > 1; i--)
+      MI->RemoveOperand(i);
     MI->setDesc(TII->get(AMDGPU::COPY));
+  }
 }
 
 bool SIWholeQuadMode::runOnMachineFunction(MachineFunction &MF) {
