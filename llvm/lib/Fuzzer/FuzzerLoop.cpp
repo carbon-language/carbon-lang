@@ -122,7 +122,6 @@ Fuzzer::Fuzzer(UserCallback CB, InputCorpus &Corpus, MutationDispatcher &MD,
     EF->__sanitizer_install_malloc_and_free_hooks(MallocHook, FreeHook);
   TPC.SetUseCounters(Options.UseCounters);
   TPC.SetUseValueProfile(Options.UseValueProfile);
-  TPC.SetPrintNewPCs(Options.PrintNewCovPcs);
 
   if (Options.Verbosity)
     TPC.PrintModuleInfo();
@@ -438,6 +437,7 @@ bool Fuzzer::RunOne(const uint8_t *Data, size_t Size, bool MayDeleteFile,
   PrintPulseAndReportSlowInput(Data, Size);
   size_t NumNewFeatures = Corpus.NumFeatureUpdates() - NumUpdatesBefore;
   if (NumNewFeatures) {
+    TPC.UpdateObservedPCs();
     Corpus.AddToCorpus({Data, Data + Size}, NumNewFeatures, MayDeleteFile,
                        UniqFeatureSetTmp);
     return true;
@@ -546,7 +546,6 @@ void Fuzzer::ReportNewCoverage(InputInfo *II, const Unit &U) {
                                          "NEW   ");
   WriteToOutputCorpus(U);
   NumberOfNewUnitsAdded++;
-  TPC.PrintNewPCs();
   CheckExitOnSrcPosOrItem();  // Check only after the unit is saved to corpus.
   LastCorpusUpdateRun = TotalNumberOfRuns;
   LastCorpusUpdateTime = system_clock::now();
@@ -626,7 +625,7 @@ void Fuzzer::MutateAndTestOne() {
 }
 
 void Fuzzer::Loop() {
-  TPC.InitializePrintNewPCs();
+  TPC.SetPrintNewPCs(Options.PrintNewCovPcs);
   system_clock::time_point LastCorpusReload = system_clock::now();
   if (Options.DoCrossOver)
     MD.SetCorpus(&Corpus);
