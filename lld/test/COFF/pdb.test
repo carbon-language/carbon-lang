@@ -192,7 +192,7 @@ RAW:                            Section Headers
 RAW-NEXT: ============================================================
 RAW:        SECTION HEADER #1
 RAW-NEXT:     .pdata name
-RAW-NEXT:          C virtual size
+RAW-NEXT:            virtual size
 RAW-NEXT:       1000 virtual address
 RAW-NEXT:        200 size of raw data
 RAW-NEXT:        400 file pointer to raw data
@@ -205,7 +205,7 @@ RAW-NEXT:            IMAGE_SCN_CNT_INITIALIZED_DATA
 RAW-NEXT:            IMAGE_SCN_MEM_READ
 RAW:        SECTION HEADER #2
 RAW-NEXT:      .text name
-RAW-NEXT:         16 virtual size
+RAW-NEXT:            virtual size
 RAW-NEXT:       2000 virtual address
 RAW-NEXT:        200 size of raw data
 RAW-NEXT:        600 file pointer to raw data
@@ -219,7 +219,7 @@ RAW-NEXT:            IMAGE_SCN_MEM_EXECUTE
 RAW-NEXT:            IMAGE_SCN_MEM_READ
 RAW:        SECTION HEADER #3
 RAW-NEXT:     .xdata name
-RAW-NEXT:          8 virtual size
+RAW-NEXT:            virtual size
 RAW-NEXT:       3000 virtual address
 RAW-NEXT:        200 size of raw data
 RAW-NEXT:        800 file pointer to raw data
@@ -232,7 +232,7 @@ RAW-NEXT:            IMAGE_SCN_CNT_INITIALIZED_DATA
 RAW-NEXT:            IMAGE_SCN_MEM_READ
 RAW:        SECTION HEADER #4
 RAW-NEXT:     .rdata name
-RAW-NEXT:         77 virtual size
+RAW-NEXT:            virtual size
 RAW-NEXT:       4000 virtual address
 RAW-NEXT:        200 size of raw data
 RAW-NEXT:        A00 file pointer to raw data
