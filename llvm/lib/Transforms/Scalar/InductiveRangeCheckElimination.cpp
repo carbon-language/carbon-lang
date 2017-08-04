@@ -459,11 +459,13 @@ struct LoopStructure {
   Value *IndVarStart;
   Value *LoopExitAt;
   bool IndVarIncreasing;
+  bool IsSignedPredicate;
 
   LoopStructure()
       : Tag(""), Header(nullptr), Latch(nullptr), LatchBr(nullptr),
         LatchExit(nullptr), LatchBrExitIdx(-1), IndVarNext(nullptr),
-        IndVarStart(nullptr), LoopExitAt(nullptr), IndVarIncreasing(false) {}
+        IndVarStart(nullptr), LoopExitAt(nullptr), IndVarIncreasing(false),
+        IsSignedPredicate(true) {}
 
   template <typename M> LoopStructure map(M Map) const {
     LoopStructure Result;
@@ -477,6 +479,7 @@ struct LoopStructure {
     Result.IndVarStart = Map(IndVarStart);
     Result.LoopExitAt = Map(LoopExitAt);
     Result.IndVarIncreasing = IndVarIncreasing;
+    Result.IsSignedPredicate = IsSignedPredicate;
     return Result;
   }
 
@@ -542,7 +545,7 @@ class LoopConstrainer {
   // intersection of `Range' and the iteration space of the original loop.
   // Return None if unable to compute the set of subranges.
   //
-  Optional<SubRanges> calculateSubRanges() const;
+  Optional<SubRanges> calculateSubRanges(bool IsSignedPredicate) const;
 
   // Clone `OriginalLoop' and return the result in CLResult.  The IR after
   // running `cloneLoop' is well formed except for the PHI nodes in CLResult --
@@ -649,22 +652,25 @@ void LoopConstrainer::replacePHIBlock(PHINode *PN, BasicBlock *Block,
       PN->setIncomingBlock(i, ReplaceBy);
 }
 
-static bool CanBeSMax(ScalarEvolution &SE, const SCEV *S) {
-  APInt SMax =
-      APInt::getSignedMaxValue(cast<IntegerType>(S->getType())->getBitWidth());
-  return SE.getSignedRange(S).contains(SMax) &&
-         SE.getUnsignedRange(S).contains(SMax);
+static bool CanBeMax(ScalarEvolution &SE, const SCEV *S, bool Signed) {
+  APInt Max = Signed ?
+      APInt::getSignedMaxValue(cast<IntegerType>(S->getType())->getBitWidth()) :
+      APInt::getMaxValue(cast<IntegerType>(S->getType())->getBitWidth());
+  return SE.getSignedRange(S).contains(Max) &&
+         SE.getUnsignedRange(S).contains(Max);
 }
 
-static bool CanBeSMin(ScalarEvolution &SE, const SCEV *S) {
-  APInt SMin =
-      APInt::getSignedMinValue(cast<IntegerType>(S->getType())->getBitWidth());
-  return SE.getSignedRange(S).contains(SMin) &&
-         SE.getUnsignedRange(S).contains(SMin);
+static bool CanBeMin(ScalarEvolution &SE, const SCEV *S, bool Signed) {
+  APInt Min = Signed ?
+      APInt::getSignedMinValue(cast<IntegerType>(S->getType())->getBitWidth()) :
+      APInt::getMinValue(cast<IntegerType>(S->getType())->getBitWidth());
+  return SE.getSignedRange(S).contains(Min) &&
+         SE.getUnsignedRange(S).contains(Min);
 }
 
 Optional<LoopStructure>
-LoopStructure::parseLoopStructure(ScalarEvolution &SE, BranchProbabilityInfo &BPI,
+LoopStructure::parseLoopStructure(ScalarEvolution &SE,
+                                  BranchProbabilityInfo &BPI,
                                   Loop &L, const char *&FailureReason) {
   if (!L.isLoopSimplifyForm()) {
     FailureReason = "loop not in LoopSimplify form";
@@ -794,6 +800,7 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE, BranchProbabilityInfo &BP
 
   const SCEVAddRecExpr *IndVarNext = cast<SCEVAddRecExpr>(LeftSCEV);
   bool IsIncreasing = false;
+  bool IsSignedPredicate = true;
   if (!IsInductionVar(IndVarNext, IsIncreasing)) {
     FailureReason = "LHS in icmp not induction variable";
     return None;
@@ -804,7 +811,6 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE, BranchProbabilityInfo &BP
   const SCEV *IndVarStart = SE.getAddExpr(StartNext, Addend);
 
   ConstantInt *One = ConstantInt::get(IndVarTy, 1);
-  // TODO: generalize the predicates here to also match their unsigned variants.
   if (IsIncreasing) {
     bool DecreasedRightValueByOne = false;
     // Try to turn eq/ne predicates to those we can work with.
@@ -812,38 +818,54 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE, BranchProbabilityInfo &BP
       // while (++i != len) {         while (++i < len) {
       //   ...                 --->     ...
       // }                            }
-      Pred = ICmpInst::ICMP_SLT;
+      // If both parts are known non-negative, it is profitable to use unsigned
+      // comparison in increasing loop. This allows us to make the comparison
+      // check against "RightSCEV + 1" more optimistic.
+      if (SE.isKnownNonNegative(IndVarStart) &&
+          SE.isKnownNonNegative(RightSCEV))
+        Pred = ICmpInst::ICMP_ULT;
+      else
+        Pred = ICmpInst::ICMP_SLT;
     else if (Pred == ICmpInst::ICMP_EQ && LatchBrExitIdx == 0 &&
-             !CanBeSMin(SE, RightSCEV)) {
+             !CanBeMin(SE, RightSCEV, /* IsSignedPredicate */ true)) {
       // while (true) {               while (true) {
       //   if (++i == len)     --->     if (++i > len - 1)
       //     break;                       break;
       //   ...                          ...
       // }                            }
+      // TODO: Insert ICMP_UGT if both are non-negative?
       Pred = ICmpInst::ICMP_SGT;
       RightSCEV = SE.getMinusSCEV(RightSCEV, SE.getOne(RightSCEV->getType()));
       DecreasedRightValueByOne = true;
     }
 
+    bool LTPred = (Pred == ICmpInst::ICMP_SLT || Pred == ICmpInst::ICMP_ULT);
+    bool GTPred = (Pred == ICmpInst::ICMP_SGT || Pred == ICmpInst::ICMP_UGT);
     bool FoundExpectedPred =
-        (Pred == ICmpInst::ICMP_SLT && LatchBrExitIdx == 1) ||
-        (Pred == ICmpInst::ICMP_SGT && LatchBrExitIdx == 0);
+        (LTPred && LatchBrExitIdx == 1) || (GTPred && LatchBrExitIdx == 0);
 
     if (!FoundExpectedPred) {
       FailureReason = "expected icmp slt semantically, found something else";
       return None;
     }
 
+    IsSignedPredicate =
+        Pred == ICmpInst::ICMP_SLT || Pred == ICmpInst::ICMP_SGT;
+    // The predicate that we need to check that the induction variable lies
+    // within bounds.
+    ICmpInst::Predicate BoundPred =
+        IsSignedPredicate ? CmpInst::ICMP_SLT : CmpInst::ICMP_ULT;
+
     if (LatchBrExitIdx == 0) {
-      if (CanBeSMax(SE, RightSCEV)) {
+      if (CanBeMax(SE, RightSCEV, IsSignedPredicate)) {
         // TODO: this restriction is easily removable -- we just have to
         // remember that the icmp was an slt and not an sle.
-        FailureReason = "limit may overflow when coercing sle to slt";
+        FailureReason = "limit may overflow when coercing le to lt";
         return None;
       }
 
       if (!SE.isLoopEntryGuardedByCond(
-              &L, CmpInst::ICMP_SLT, IndVarStart,
+              &L, BoundPred, IndVarStart,
               SE.getAddExpr(RightSCEV, SE.getOne(RightSCEV->getType())))) {
         FailureReason = "Induction variable start not bounded by upper limit";
         return None;
@@ -856,8 +878,7 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE, BranchProbabilityInfo &BP
         RightValue = B.CreateAdd(RightValue, One);
       }
     } else {
-      if (!SE.isLoopEntryGuardedByCond(&L, CmpInst::ICMP_SLT, IndVarStart,
-                                       RightSCEV)) {
+      if (!SE.isLoopEntryGuardedByCond(&L, BoundPred, IndVarStart, RightSCEV)) {
         FailureReason = "Induction variable start not bounded by upper limit";
         return None;
       }
@@ -871,38 +892,51 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE, BranchProbabilityInfo &BP
       // while (--i != len) {         while (--i > len) {
       //   ...                 --->     ...
       // }                            }
+      // We intentionally don't turn the predicate into UGT even if we know that
+      // both operands are non-negative, because it will only pessimize our
+      // check against "RightSCEV - 1".
       Pred = ICmpInst::ICMP_SGT;
     else if (Pred == ICmpInst::ICMP_EQ && LatchBrExitIdx == 0 &&
-             !CanBeSMax(SE, RightSCEV)) {
+             !CanBeMax(SE, RightSCEV, /* IsSignedPredicate */ true)) {
       // while (true) {               while (true) {
       //   if (--i == len)     --->     if (--i < len + 1)
       //     break;                       break;
       //   ...                          ...
       // }                            }
+      // TODO: Insert ICMP_ULT if both are non-negative?
       Pred = ICmpInst::ICMP_SLT;
       RightSCEV = SE.getAddExpr(RightSCEV, SE.getOne(RightSCEV->getType()));
       IncreasedRightValueByOne = true;
     }
 
+    bool LTPred = (Pred == ICmpInst::ICMP_SLT || Pred == ICmpInst::ICMP_ULT);
+    bool GTPred = (Pred == ICmpInst::ICMP_SGT || Pred == ICmpInst::ICMP_UGT);
+
     bool FoundExpectedPred =
-        (Pred == ICmpInst::ICMP_SGT && LatchBrExitIdx == 1) ||
-        (Pred == ICmpInst::ICMP_SLT && LatchBrExitIdx == 0);
+        (GTPred && LatchBrExitIdx == 1) || (LTPred && LatchBrExitIdx == 0);
 
     if (!FoundExpectedPred) {
       FailureReason = "expected icmp sgt semantically, found something else";
       return None;
     }
 
+    IsSignedPredicate =
+        Pred == ICmpInst::ICMP_SLT || Pred == ICmpInst::ICMP_SGT;
+    // The predicate that we need to check that the induction variable lies
+    // within bounds.
+    ICmpInst::Predicate BoundPred =
+        IsSignedPredicate ? CmpInst::ICMP_SGT : CmpInst::ICMP_UGT;
+
     if (LatchBrExitIdx == 0) {
-      if (CanBeSMin(SE, RightSCEV)) {
+      if (CanBeMin(SE, RightSCEV, IsSignedPredicate)) {
         // TODO: this restriction is easily removable -- we just have to
         // remember that the icmp was an sgt and not an sge.
-        FailureReason = "limit may overflow when coercing sge to sgt";
+        FailureReason = "limit may overflow when coercing ge to gt";
         return None;
       }
 
       if (!SE.isLoopEntryGuardedByCond(
-              &L, CmpInst::ICMP_SGT, IndVarStart,
+              &L, BoundPred, IndVarStart,
               SE.getMinusSCEV(RightSCEV, SE.getOne(RightSCEV->getType())))) {
         FailureReason = "Induction variable start not bounded by lower limit";
         return None;
@@ -915,8 +949,7 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE, BranchProbabilityInfo &BP
         RightValue = B.CreateSub(RightValue, One);
       }
     } else {
-      if (!SE.isLoopEntryGuardedByCond(&L, CmpInst::ICMP_SGT, IndVarStart,
-                                       RightSCEV)) {
+      if (!SE.isLoopEntryGuardedByCond(&L, BoundPred, IndVarStart, RightSCEV)) {
         FailureReason = "Induction variable start not bounded by lower limit";
         return None;
       }
@@ -924,7 +957,6 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE, BranchProbabilityInfo &BP
              "Right value can be increased only for LatchBrExitIdx == 0!");
     }
   }
-
   BasicBlock *LatchExit = LatchBr->getSuccessor(LatchBrExitIdx);
 
   assert(SE.getLoopDisposition(LatchCount, &L) ==
@@ -950,6 +982,7 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE, BranchProbabilityInfo &BP
   Result.IndVarNext = LeftValue;
   Result.IndVarIncreasing = IsIncreasing;
   Result.LoopExitAt = RightValue;
+  Result.IsSignedPredicate = IsSignedPredicate;
 
   FailureReason = nullptr;
 
@@ -957,7 +990,7 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE, BranchProbabilityInfo &BP
 }
 
 Optional<LoopConstrainer::SubRanges>
-LoopConstrainer::calculateSubRanges() const {
+LoopConstrainer::calculateSubRanges(bool IsSignedPredicate) const {
   IntegerType *Ty = cast<IntegerType>(LatchTakenCount->getType());
 
   if (Range.getType() != Ty)
@@ -1007,19 +1040,25 @@ LoopConstrainer::calculateSubRanges() const {
     GreatestSeen = Start;
   }
 
-  auto Clamp = [this, Smallest, Greatest](const SCEV *S) {
-    return SE.getSMaxExpr(Smallest, SE.getSMinExpr(Greatest, S));
+  auto Clamp = [this, Smallest, Greatest, IsSignedPredicate](const SCEV *S) {
+    return IsSignedPredicate
+               ? SE.getSMaxExpr(Smallest, SE.getSMinExpr(Greatest, S))
+               : SE.getUMaxExpr(Smallest, SE.getUMinExpr(Greatest, S));
   };
 
-  // In some cases we can prove that we don't need a pre or post loop
+  // In some cases we can prove that we don't need a pre or post loop.
+  ICmpInst::Predicate PredLE =
+      IsSignedPredicate ? ICmpInst::ICMP_SLE : ICmpInst::ICMP_ULE;
+  ICmpInst::Predicate PredLT =
+      IsSignedPredicate ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT;
 
   bool ProvablyNoPreloop =
-      SE.isKnownPredicate(ICmpInst::ICMP_SLE, Range.getBegin(), Smallest);
+      SE.isKnownPredicate(PredLE, Range.getBegin(), Smallest);
   if (!ProvablyNoPreloop)
     Result.LowLimit = Clamp(Range.getBegin());
 
   bool ProvablyNoPostLoop =
-      SE.isKnownPredicate(ICmpInst::ICMP_SLT, GreatestSeen, Range.getEnd());
+      SE.isKnownPredicate(PredLT, GreatestSeen, Range.getEnd());
   if (!ProvablyNoPostLoop)
     Result.HighLimit = Clamp(Range.getEnd());
 
@@ -1166,22 +1205,35 @@ LoopConstrainer::RewrittenRangeInfo LoopConstrainer::changeIterationSpaceEnd(
 
   BranchInst *PreheaderJump = cast<BranchInst>(Preheader->getTerminator());
   bool Increasing = LS.IndVarIncreasing;
+  bool IsSignedPredicate = LS.IsSignedPredicate;
 
   IRBuilder<> B(PreheaderJump);
 
   // EnterLoopCond - is it okay to start executing this `LS'?
-  Value *EnterLoopCond = Increasing
-                             ? B.CreateICmpSLT(LS.IndVarStart, ExitSubloopAt)
-                             : B.CreateICmpSGT(LS.IndVarStart, ExitSubloopAt);
+  Value *EnterLoopCond = nullptr;
+  if (Increasing)
+    EnterLoopCond = IsSignedPredicate
+                        ? B.CreateICmpSLT(LS.IndVarStart, ExitSubloopAt)
+                        : B.CreateICmpULT(LS.IndVarStart, ExitSubloopAt);
+  else
+    EnterLoopCond = IsSignedPredicate
+                        ? B.CreateICmpSGT(LS.IndVarStart, ExitSubloopAt)
+                        : B.CreateICmpUGT(LS.IndVarStart, ExitSubloopAt);
 
   B.CreateCondBr(EnterLoopCond, LS.Header, RRI.PseudoExit);
   PreheaderJump->eraseFromParent();
 
   LS.LatchBr->setSuccessor(LS.LatchBrExitIdx, RRI.ExitSelector);
   B.SetInsertPoint(LS.LatchBr);
-  Value *TakeBackedgeLoopCond =
-      Increasing ? B.CreateICmpSLT(LS.IndVarNext, ExitSubloopAt)
-                 : B.CreateICmpSGT(LS.IndVarNext, ExitSubloopAt);
+  Value *TakeBackedgeLoopCond = nullptr;
+  if (Increasing)
+    TakeBackedgeLoopCond = IsSignedPredicate
+                        ? B.CreateICmpSLT(LS.IndVarNext, ExitSubloopAt)
+                        : B.CreateICmpULT(LS.IndVarNext, ExitSubloopAt);
+  else
+    TakeBackedgeLoopCond = IsSignedPredicate
+                        ? B.CreateICmpSGT(LS.IndVarNext, ExitSubloopAt)
+                        : B.CreateICmpUGT(LS.IndVarNext, ExitSubloopAt);
   Value *CondForBranch = LS.LatchBrExitIdx == 1
                              ? TakeBackedgeLoopCond
                              : B.CreateNot(TakeBackedgeLoopCond);
@@ -1193,9 +1245,15 @@ LoopConstrainer::RewrittenRangeInfo LoopConstrainer::changeIterationSpaceEnd(
   // IterationsLeft - are there any more iterations left, given the original
   // upper bound on the induction variable?  If not, we branch to the "real"
   // exit.
-  Value *IterationsLeft = Increasing
-                              ? B.CreateICmpSLT(LS.IndVarNext, LS.LoopExitAt)
-                              : B.CreateICmpSGT(LS.IndVarNext, LS.LoopExitAt);
+  Value *IterationsLeft = nullptr;
+  if (Increasing)
+    IterationsLeft = IsSignedPredicate
+                         ? B.CreateICmpSLT(LS.IndVarNext, LS.LoopExitAt)
+                         : B.CreateICmpULT(LS.IndVarNext, LS.LoopExitAt);
+  else
+    IterationsLeft = IsSignedPredicate
+                         ? B.CreateICmpSGT(LS.IndVarNext, LS.LoopExitAt)
+                         : B.CreateICmpUGT(LS.IndVarNext, LS.LoopExitAt);
   B.CreateCondBr(IterationsLeft, RRI.PseudoExit, LS.LatchExit);
 
   BranchInst *BranchToContinuation =
@@ -1312,7 +1370,8 @@ bool LoopConstrainer::run() {
   OriginalPreheader = Preheader;
   MainLoopPreheader = Preheader;
 
-  Optional<SubRanges> MaybeSR = calculateSubRanges();
+  bool IsSignedPredicate = MainLoopStructure.IsSignedPredicate;
+  Optional<SubRanges> MaybeSR = calculateSubRanges(IsSignedPredicate);
   if (!MaybeSR.hasValue()) {
     DEBUG(dbgs() << "irce: could not compute subranges\n");
     return false;
@@ -1346,7 +1405,7 @@ bool LoopConstrainer::run() {
     if (Increasing)
       ExitPreLoopAtSCEV = *SR.LowLimit;
     else {
-      if (CanBeSMin(SE, *SR.HighLimit)) {
+      if (CanBeMin(SE, *SR.HighLimit, IsSignedPredicate)) {
         DEBUG(dbgs() << "irce: could not prove no-overflow when computing "
                      << "preloop exit limit.  HighLimit = " << *(*SR.HighLimit)
                      << "\n");
@@ -1365,7 +1424,7 @@ bool LoopConstrainer::run() {
     if (Increasing)
       ExitMainLoopAtSCEV = *SR.HighLimit;
     else {
-      if (CanBeSMin(SE, *SR.LowLimit)) {
+      if (CanBeMin(SE, *SR.LowLimit, IsSignedPredicate)) {
         DEBUG(dbgs() << "irce: could not prove no-overflow when computing "
                      << "mainloop exit limit.  LowLimit = " << *(*SR.LowLimit)
                      << "\n");
