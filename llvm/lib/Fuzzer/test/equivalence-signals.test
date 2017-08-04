@@ -1,4 +1,3 @@
-REQUIRES: posix
 # Run EquivalenceATest against itself with a small timeout
 # to stress the signal handling and ensure that shmem doesn't mind
 # the signals.

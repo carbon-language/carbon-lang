@@ -1,5 +1,3 @@
-REQUIRES: posix
-
 RUN: %cpp_compiler %S/FullCoverageSetTest.cpp -o %t-LLVMFuzzer-FullCoverageSetTest
 
 RUN: rm -rf  %tmp/T1 %tmp/T2
