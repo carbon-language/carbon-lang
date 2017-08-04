@@ -339,12 +339,12 @@ private:
   /// is referenced by UnitLineTable.
   DWARFUnitLineTable UnitLineTable{nullptr, nullptr};
 
-  /// Offset of this function's address ranges in the .debug_ranges section of
-  /// the output binary.
-  uint32_t AddressRangesOffset{-1U};
-
   /// Last computed hash value.
   mutable uint64_t Hash{0};
+
+  /// For PLT functions it contains a symbol associated with a function
+  /// reference. It is nullptr for non-PLT functions.
+  const MCSymbol *PLTSymbol{nullptr};
 
   /// Function order for streaming into the destination binary.
   uint32_t Index{-1U};
@@ -1165,6 +1165,23 @@ public:
     return FunctionColdEndLabel;
   }
 
+  /// Return true if this is a function representing a PLT entry.
+  bool isPLTFunction() const {
+    return PLTSymbol != nullptr;
+  }
+
+  /// Return PLT function reference symbol for PLT functions and nullptr for
+  /// non-PLT functions.
+  const MCSymbol *getPLTSymbol() const {
+    return PLTSymbol;
+  }
+
+  /// Set function PLT reference symbol for PLT functions.
+  void setPLTSymbol(const MCSymbol *Symbol) {
+    assert(Size == 0 && "function size should be 0 for PLT functions");
+    PLTSymbol = Symbol;
+  }
+
   /// Register relocation type \p RelType at a given \p Address in the function
   /// against \p Symbol.
   /// Assert if the \p Address is not inside this function.
@@ -1613,9 +1630,6 @@ public:
     LSDASymbol = Symbol;
     return *this;
   }
-
-  /// Returns the offset of the function's address ranges in .debug_ranges.
-  uint32_t getAddressRangesOffset() const { return AddressRangesOffset; }
 
   /// Return the profile information about the number of times
   /// the function was executed.

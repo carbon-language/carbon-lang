@@ -961,6 +961,7 @@ void RewriteInstance::discoverFileObjects() {
         AlternativeName = uniquifyName(AltPrefix);
     }
 
+    // Register names even if it's not a function, e.g. for an entry point.
     BC->registerNameAtAddress(UniqueName, Address);
     if (!AlternativeName.empty())
       BC->registerNameAtAddress(AlternativeName, Address);
@@ -1047,8 +1048,6 @@ void RewriteInstance::discoverFileObjects() {
       continue;
     }
 
-    // TODO: populate address map with PLT entries for better readability.
-
     // Checkout for conflicts with function data from FDEs.
     bool IsSimple = true;
     auto FDEI = CFIRdWrt->getFDEs().lower_bound(Address);
@@ -1110,50 +1109,32 @@ void RewriteInstance::discoverFileObjects() {
     PreviousFunction = BF;
   }
 
+  // Process PLT section.
+  disassemblePLT();
+
   // See if we missed any functions marked by FDE.
   for (const auto &FDEI : CFIRdWrt->getFDEs()) {
     const auto Address = FDEI.first;
     const auto *FDE = FDEI.second;
-    auto *BF = getBinaryFunctionContainingAddress(Address);
+    const auto *BF = getBinaryFunctionAtAddress(Address);
     if (!BF) {
-      if (opts::Verbosity >= 1) {
+      if (const auto *PartialBF = getBinaryFunctionContainingAddress(Address)) {
         errs() << "BOLT-WARNING: FDE [0x" << Twine::utohexstr(Address) << ", 0x"
                << Twine::utohexstr(Address + FDE->getAddressRange())
-               << ") has no corresponding symbol table entry\n";
-      }
-      auto Section = BC->getSectionForAddress(Address);
-      assert(Section && "cannot get section for address from FDE");
-      StringRef SectionName;
-      Section->getName(SectionName);
-      // PLT has a special FDE.
-      if (SectionName == ".plt") {
-        // Set the size to 0 to prevent PLT from being disassembled.
-        createBinaryFunction("__BOLT_PLT_PSEUDO" , *Section, Address, 0, false);
-      } else if (SectionName == ".plt.got") {
-        createBinaryFunction("__BOLT_PLT_GOT_PSEUDO" , *Section, Address, 0,
-                             false);
+               << ") conflicts with function " << *PartialBF << '\n';
       } else {
+        if (opts::Verbosity >= 1) {
+          errs() << "BOLT-WARNING: FDE [0x" << Twine::utohexstr(Address)
+                 << ", 0x" << Twine::utohexstr(Address + FDE->getAddressRange())
+                 << ") has no corresponding symbol table entry\n";
+        }
+        auto Section = BC->getSectionForAddress(Address);
+        assert(Section && "cannot get section for address from FDE");
         std::string FunctionName =
           "__BOLT_FDE_FUNCat" + Twine::utohexstr(Address).str();
-        BC->registerNameAtAddress(FunctionName, Address);
         createBinaryFunction(FunctionName, *Section, Address,
                              FDE->getAddressRange(), true);
       }
-    } else if (BF->getAddress() != Address) {
-      errs() << "BOLT-WARNING: FDE [0x" << Twine::utohexstr(Address) << ", 0x"
-             << Twine::utohexstr(Address + FDE->getAddressRange())
-             << ") conflicts with function " << *BF << '\n';
-    }
-  }
-
-  if (PLTGOTSection.getObject()) {
-    // Check if we need to create a function for .plt.got. Some linkers
-    // (depending on the version) would mark it with FDE while others wouldn't.
-    if (!getBinaryFunctionContainingAddress(PLTGOTSection.getAddress(), true)) {
-      DEBUG(dbgs() << "BOLT-DEBUG: creating .plt.got pseudo function at 0x"
-                   << Twine::utohexstr(PLTGOTSection.getAddress()) << '\n');
-      createBinaryFunction("__BOLT_PLT_GOT_PSEUDO" , PLTGOTSection,
-                           PLTGOTSection.getAddress(), 0, false);
     }
   }
 
@@ -1176,6 +1157,81 @@ void RewriteInstance::discoverFileObjects() {
   for (const auto &Section : InputFile->sections()) {
     if (Section.relocation_begin() != Section.relocation_end()) {
       readRelocations(Section);
+    }
+  }
+}
+
+void RewriteInstance::disassemblePLT() {
+  if (!PLTSection.getObject())
+    return;
+
+  const auto PLTAddress = PLTSection.getAddress();
+  StringRef PLTContents;
+  PLTSection.getContents(PLTContents);
+  ArrayRef<uint8_t> PLTData(
+      reinterpret_cast<const uint8_t *>(PLTContents.data()),
+      PLTSection.getSize());
+
+  // Pseudo function for the start of PLT. The table could have a matching
+  // FDE that we want to match to pseudo function.
+  createBinaryFunction("__BOLT_PLT_PSEUDO" , PLTSection, PLTAddress, 0, false);
+  for (uint64_t Offset = 0; Offset < PLTSection.getSize(); Offset += 0x10) {
+    uint64_t InstrSize;
+    MCInst Instruction;
+    const uint64_t InstrAddr = PLTAddress + Offset;
+    if (!BC->DisAsm->getInstruction(Instruction,
+                                    InstrSize,
+                                    PLTData.slice(Offset),
+                                    InstrAddr,
+                                    nulls(),
+                                    nulls())) {
+      errs() << "BOLT-ERROR: unable to disassemble instruction in .plt "
+             << "at offset 0x" << Twine::utohexstr(Offset) << '\n';
+      exit(1);
+    }
+
+    if (!BC->MIA->isIndirectBranch(Instruction))
+      continue;
+
+    uint64_t TargetAddress;
+    if (!BC->MIA->evaluateMemOperandTarget(Instruction,
+                                           TargetAddress,
+                                           InstrAddr,
+                                           InstrSize)) {
+      errs() << "BOLT-ERROR: error evaluating PLT instruction at offset 0x"
+             << Twine::utohexstr(InstrAddr) << '\n';
+      exit(1);
+    }
+
+    // To get the name we have to read a relocation against the address.
+    for (const auto &Rel : RelaPLTSection.relocations()) {
+      if (Rel.getType() != ELF::R_X86_64_JUMP_SLOT)
+        continue;
+      if (Rel.getOffset() == TargetAddress) {
+        const auto SymbolIter = Rel.getSymbol();
+        assert(SymbolIter != InputFile->symbol_end() &&
+               "non-null symbol expected");
+        const auto SymbolName = *(*SymbolIter).getName();
+        std::string Name = SymbolName.str() + "@PLT";
+        auto *BF = createBinaryFunction(Name,
+                                        PLTSection,
+                                        InstrAddr,
+                                        0,
+                                        /*IsSimple=*/false);
+        auto TargetSymbol = BC->registerNameAtAddress(SymbolName.str() + "@GOT",
+                                                      TargetAddress);
+        BF->setPLTSymbol(TargetSymbol);
+        break;
+      }
+    }
+  }
+
+  if (PLTGOTSection.getObject()) {
+    // Check if we need to create a function for .plt.got. Some linkers
+    // (depending on the version) would mark it with FDE while others wouldn't.
+    if (!getBinaryFunctionAtAddress(PLTGOTSection.getAddress())) {
+      createBinaryFunction("__BOLT_PLT_GOT_PSEUDO" , PLTGOTSection,
+                           PLTGOTSection.getAddress(), 0, false);
     }
   }
 }
@@ -1320,6 +1376,7 @@ BinaryFunction *RewriteInstance::createBinaryFunction(
       Address, BinaryFunction(Name, Section, Address, Size, *BC, IsSimple));
   assert(Result.second == true && "unexpected duplicate function");
   auto *BF = &Result.first->second;
+  BC->registerNameAtAddress(Name, Address);
   BC->SymbolToFunctionMap[BF->getSymbol()] = BF;
   return BF;
 }
@@ -1349,8 +1406,14 @@ void RewriteInstance::readSpecialSections() {
       HasTextRelocations = true;
     } else if (SectionName == ".gdb_index") {
       GdbIndexSection = Section;
+    } else if (SectionName == ".plt") {
+      PLTSection = Section;
+    } else if (SectionName == ".got.plt") {
+      GOTPLTSection = Section;
     } else if (SectionName == ".plt.got") {
       PLTGOTSection = Section;
+    } else if (SectionName == ".rela.plt") {
+      RelaPLTSection = Section;
     }
 
     // Ignore zero-size allocatable sections as they present no interest to us.
@@ -1732,7 +1795,6 @@ void RewriteInstance::disassembleFunctions() {
              << "disassembled. Unable to continue in relocation mode.\n";
       abort();
     }
-
 
     if (opts::PrintAll || opts::PrintDisasm)
       Function.print(outs(), "after disassembly", true);
@@ -3144,7 +3206,9 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
       const auto *Function = getBinaryFunctionAtAddress(Symbol.st_value);
       // Some section symbols may be mistakenly associated with the first
       // function emitted in the section. Dismiss if it is a section symbol.
-      if (Function && NewSymbol.getType() != ELF::STT_SECTION) {
+      if (Function &&
+          !Function->getPLTSymbol() &&
+          NewSymbol.getType() != ELF::STT_SECTION) {
         NewSymbol.st_value = Function->getOutputAddress();
         NewSymbol.st_size = Function->getOutputSize();
         NewSymbol.st_shndx = NewTextSectionIndex;
@@ -3275,15 +3339,6 @@ template <typename ELFT>
 void RewriteInstance::patchELFRelaPLT(ELFObjectFile<ELFT> *File) {
   auto &OS = Out->os();
 
-  SectionRef RelaPLTSection;
-  for (const auto &Section : File->sections()) {
-    StringRef SectionName;
-    Section.getName(SectionName);
-    if (SectionName == ".rela.plt") {
-      RelaPLTSection = Section;
-      break;
-    }
-  }
   if (!RelaPLTSection.getObject()) {
     errs() << "BOLT-INFO: no .rela.plt section found\n";
     return;
@@ -3362,6 +3417,8 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
   }
   assert(DynamicPhdr && "missing dynamic in ELF binary");
 
+  bool ZNowSet = false;
+
   // Go through all dynamic entries and patch functions addresses with
   // new ones.
   ErrorOr<const Elf_Dyn *> DTB = Obj->dynamic_table_begin(DynamicPhdr);
@@ -3376,10 +3433,24 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
       break;
     case ELF::DT_INIT:
     case ELF::DT_FINI:
-      if (auto NewAddress = getNewFunctionAddress(DE->getPtr())) {
-        DEBUG(dbgs() << "BOLT-DEBUG: patching dynamic entry of type "
-                     << DE->getTag() << '\n');
-        NewDE.d_un.d_ptr = NewAddress;
+      if (opts::Relocs) {
+        if (auto NewAddress = getNewFunctionAddress(DE->getPtr())) {
+          DEBUG(dbgs() << "BOLT-DEBUG: patching dynamic entry of type "
+                       << DE->getTag() << '\n');
+          NewDE.d_un.d_ptr = NewAddress;
+        }
+      }
+      break;
+    case ELF::DT_FLAGS:
+      if (BC->RequiresZNow) {
+        NewDE.d_un.d_val |= ELF::DF_BIND_NOW;
+        ZNowSet = true;
+      }
+      break;
+    case ELF::DT_FLAGS_1:
+      if (BC->RequiresZNow) {
+        NewDE.d_un.d_val |= ELF::DF_1_NOW;
+        ZNowSet = true;
       }
       break;
     }
@@ -3387,6 +3458,13 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
       OS.pwrite(reinterpret_cast<const char *>(&NewDE), sizeof(NewDE),
                 DynamicOffset + (DE - *DTB) * sizeof(*DE));
     }
+  }
+
+  if (BC->RequiresZNow && !ZNowSet) {
+    errs() << "BOLT-ERROR: output binary requires immediate relocation "
+              "processing which depends on DT_FLAGS or DT_FLAGS_1 presence in "
+              ".dynamic. Please re-link the binary with -znow.\n";
+    exit(1);
   }
 }
 
@@ -3573,10 +3651,10 @@ void RewriteInstance::rewriteFile() {
   // Copy non-allocatable sections once allocatable part is finished.
   rewriteNoteSections();
 
-  if (opts::Relocs) {
-    // Patch dynamic section/segment.
-    patchELFDynamic();
+  // Patch dynamic section/segment.
+  patchELFDynamic();
 
+  if (opts::Relocs) {
     patchELFRelaPLT();
 
     patchELFGOT();

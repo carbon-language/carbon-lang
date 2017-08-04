@@ -4289,19 +4289,14 @@ DynoStats BinaryFunction::getDynoStats() const {
       if (BC.MIA->getMemoryOperandNo(Instr) != -1) {
         Stats[DynoStats::INDIRECT_CALLS] += CallFreq;
       } else if (const auto *CallSymbol = BC.MIA->getTargetSymbol(Instr)) {
-        if (BC.getFunctionForSymbol(CallSymbol))
-          continue;
-        auto GSI = BC.GlobalSymbols.find(CallSymbol->getName());
-        if (GSI == BC.GlobalSymbols.end())
-          continue;
-        auto Section = BC.getSectionForAddress(GSI->second);
-        if (!Section)
-          continue;
-        StringRef SectionName;
-        Section->getName(SectionName);
-        if (SectionName == ".plt") {
+        const auto *BF = BC.getFunctionForSymbol(CallSymbol);
+        if (BF && BF->isPLTFunction())
           Stats[DynoStats::PLT_CALLS] += CallFreq;
-        }
+
+          // We don't process PLT functions and hence have to adjust
+          // relevant dynostats here.
+          Stats[DynoStats::LOADS] += CallFreq;
+          Stats[DynoStats::INDIRECT_CALLS] += CallFreq;
       }
     }
 

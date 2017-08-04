@@ -14,6 +14,7 @@
 #include "Passes/FrameOptimizer.h"
 #include "Passes/IndirectCallPromotion.h"
 #include "Passes/Inliner.h"
+#include "Passes/PLTCall.h"
 #include "Passes/ReorderFunctions.h"
 #include "Passes/StokeInfo.h"
 #include "llvm/Support/Timer.h"
@@ -31,6 +32,7 @@ extern cl::opt<unsigned> Verbosity;
 extern cl::opt<bool> PrintAll;
 extern cl::opt<bool> PrintDynoStats;
 extern cl::opt<bool> DumpDotAll;
+extern cl::opt<bolt::PLTCall::OptType> PLT;
 
 static cl::opt<bool>
 DynoStatsAll("dyno-stats-all",
@@ -127,6 +129,13 @@ PrintInline("print-inline",
 static cl::opt<bool>
 PrintOptimizeBodyless("print-optimize-bodyless",
   cl::desc("print functions after bodyless optimization"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintPLT("print-plt",
+  cl::desc("print functions after PLT optimization"),
   cl::ZeroOrMore,
   cl::Hidden,
   cl::cat(BoltOptCategory));
@@ -330,6 +339,8 @@ void BinaryFunctionPassManager::runAllPasses(
 
   Manager.registerPass(llvm::make_unique<IdenticalCodeFolding>(PrintICF),
                        opts::ICF);
+
+  Manager.registerPass(llvm::make_unique<PLTCall>(PrintPLT));
 
   Manager.registerPass(llvm::make_unique<ReorderBasicBlocks>(PrintReordered));
 

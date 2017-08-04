@@ -530,7 +530,8 @@ const uint8_t DWARF_CFI_PRIMARY_OPCODE_MASK = 0xc0;
 bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
   uint64_t Address = Function.getAddress();
   auto I = FDEs.find(Address);
-  if (I == FDEs.end())
+  // Ignore zero-length FDE ranges.
+  if (I == FDEs.end() || !I->second->getAddressRange())
     return true;
 
   const FDE &CurFDE = *I->second;

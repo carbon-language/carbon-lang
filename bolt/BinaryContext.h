@@ -149,6 +149,9 @@ public:
   /// Number of functions with profile information
   uint64_t NumProfiledFuncs{0};
 
+  /// True if the binary requires immediate relocation processing.
+  bool RequiresZNow{false};
+
   BinaryContext(std::unique_ptr<MCContext> Ctx,
                 std::unique_ptr<DWARFContext> DwCtx,
                 std::unique_ptr<Triple> TheTriple,
@@ -206,6 +209,16 @@ public:
 
   /// Register a symbol with \p Name at a given \p Address.
   MCSymbol *registerNameAtAddress(const std::string &Name, uint64_t Address) {
+    // Check if the Name was already registered.
+    const auto GSI = GlobalSymbols.find(Name);
+    if (GSI != GlobalSymbols.end()) {
+      assert(GSI->second == Address && "addresses do not match");
+      auto *Symbol = Ctx->lookupSymbol(Name);
+      assert(Symbol && "symbol should be registered with MCContext");
+
+      return Symbol;
+    }
+
     // Add the name to global symbols map.
     GlobalSymbols[Name] = Address;
 
