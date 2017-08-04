@@ -682,8 +682,8 @@ Instruction *InstCombiner::visitLShr(BinaryOperator &I) {
 
     if (match(Op0, m_OneUse(m_ZExt(m_Value(X)))) &&
         (!Ty->isIntegerTy() || shouldChangeType(Ty, X->getType()))) {
-      unsigned SrcTyBitWidth = X->getType()->getScalarSizeInBits();
-      assert(ShAmt < SrcTyBitWidth && "Big shift not simplified to zero?");
+      assert(ShAmt < X->getType()->getScalarSizeInBits() &&
+             "Big shift not simplified to zero?");
       // lshr (zext iM X to iN), C --> zext (lshr X, C) to iN
       Value *NewLShr = Builder.CreateLShr(X, ShAmt);
       return new ZExtInst(NewLShr, Ty);
