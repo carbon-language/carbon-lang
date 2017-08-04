@@ -54,6 +54,7 @@
 #include "SIInstrInfo.h"
 #include "SIMachineFunctionInfo.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/CodeGen/LiveInterval.h"
@@ -108,6 +109,7 @@ static raw_ostream &operator<<(raw_ostream &OS, const PrintState &PS) {
 
 struct InstrInfo {
   char Needs = 0;
+  char Disabled = 0;
   char OutNeeds = 0;
 };
 
@@ -142,7 +144,8 @@ private:
 
   void markInstruction(MachineInstr &MI, char Flag,
                        std::vector<WorkItem> &Worklist);
-  void markUsesWQM(const MachineInstr &MI, std::vector<WorkItem> &Worklist);
+  void markInstructionUses(const MachineInstr &MI, char Flag,
+                           std::vector<WorkItem> &Worklist);
   char scanInstructions(MachineFunction &MF, std::vector<WorkItem> &Worklist);
   void propagateInstruction(MachineInstr &MI, std::vector<WorkItem> &Worklist);
   void propagateBlock(MachineBasicBlock &MBB, std::vector<WorkItem> &Worklist);
@@ -220,22 +223,27 @@ void SIWholeQuadMode::markInstruction(MachineInstr &MI, char Flag,
                                       std::vector<WorkItem> &Worklist) {
   InstrInfo &II = Instructions[&MI];
 
-  assert(Flag == StateWQM || Flag == StateExact);
+  assert(Flag == StateWQM);
 
-  // Ignore if the instruction is already marked. The typical case is that we
-  // mark an instruction WQM multiple times, but for atomics it can happen that
-  // Flag is StateWQM, but Needs is already set to StateExact. In this case,
-  // letting the atomic run in StateExact is correct as per the relevant specs.
-  if (II.Needs)
+  // Remove any disabled states from the flag. The user that required it gets
+  // an undefined value in the helper lanes. For example, this can happen if
+  // the result of an atomic is used by instruction that requires WQM, where
+  // ignoring the request for WQM is correct as per the relevant specs.
+  Flag &= ~II.Disabled;
+
+  // Ignore if the flag is already encompassed by the existing needs, or we
+  // just disabled everything.
+  if ((II.Needs & Flag) == Flag)
     return;
 
-  II.Needs = Flag;
+  II.Needs |= Flag;
   Worklist.push_back(&MI);
 }
 
-/// Mark all instructions defining the uses in \p MI as WQM.
-void SIWholeQuadMode::markUsesWQM(const MachineInstr &MI,
-                                  std::vector<WorkItem> &Worklist) {
+/// Mark all instructions defining the uses in \p MI with \p Flag.
+void SIWholeQuadMode::markInstructionUses(const MachineInstr &MI, char Flag,
+                                          std::vector<WorkItem> &Worklist) {
+  assert(Flag == StateWQM);
   for (const MachineOperand &Use : MI.uses()) {
     if (!Use.isReg() || !Use.isUse())
       continue;
@@ -260,7 +268,7 @@ void SIWholeQuadMode::markUsesWQM(const MachineInstr &MI,
         if (Value->isPHIDef())
           continue;
 
-        markInstruction(*LIS->getInstructionFromIndex(Value->def), StateWQM,
+        markInstruction(*LIS->getInstructionFromIndex(Value->def), Flag,
                         Worklist);
       }
 
@@ -268,7 +276,7 @@ void SIWholeQuadMode::markUsesWQM(const MachineInstr &MI,
     }
 
     for (MachineInstr &DefMI : MRI->def_instructions(Use.getReg()))
-      markInstruction(DefMI, StateWQM, Worklist);
+      markInstruction(DefMI, Flag, Worklist);
   }
 }
 
@@ -279,11 +287,18 @@ char SIWholeQuadMode::scanInstructions(MachineFunction &MF,
   char GlobalFlags = 0;
   bool WQMOutputs = MF.getFunction()->hasFnAttribute("amdgpu-ps-wqm-outputs");
 
-  for (auto BI = MF.begin(), BE = MF.end(); BI != BE; ++BI) {
-    MachineBasicBlock &MBB = *BI;
+  // We need to visit the basic blocks in reverse post-order so that we visit
+  // defs before uses, in particular so that we don't accidentally mark an
+  // instruction as needing e.g. WQM before visiting it and realizing it needs
+  // WQM disabled.
+  ReversePostOrderTraversal<MachineFunction *> RPOT(&MF);
+  for (auto BI = RPOT.begin(), BE = RPOT.end(); BI != BE; ++BI) {
+    MachineBasicBlock &MBB = **BI;
+    BlockInfo &BBI = Blocks[&MBB];
 
     for (auto II = MBB.begin(), IE = MBB.end(); II != IE; ++II) {
       MachineInstr &MI = *II;
+      InstrInfo &III = Instructions[&MI];
       unsigned Opcode = MI.getOpcode();
       char Flags = 0;
 
@@ -293,7 +308,7 @@ char SIWholeQuadMode::scanInstructions(MachineFunction &MF,
         // Sampling instructions don't need to produce results for all pixels
         // in a quad, they just require all inputs of a quad to have been
         // computed for derivatives.
-        markUsesWQM(MI, Worklist);
+        markInstructionUses(MI, StateWQM, Worklist);
         GlobalFlags |= StateWQM;
         continue;
       } else if (Opcode == AMDGPU::WQM) {
@@ -302,7 +317,14 @@ char SIWholeQuadMode::scanInstructions(MachineFunction &MF,
         Flags = StateWQM;
         LowerToCopyInstrs.push_back(&MI);
       } else if (TII->isDisableWQM(MI)) {
-        Flags = StateExact;
+        BBI.Needs |= StateExact;
+        if (!(BBI.InNeeds & StateExact)) {
+          BBI.InNeeds |= StateExact;
+          Worklist.push_back(&MBB);
+        }
+        GlobalFlags |= StateExact;
+        III.Disabled = StateWQM;
+        continue;
       } else {
         if (Opcode == AMDGPU::SI_PS_LIVE) {
           LiveMaskQueries.push_back(&MI);
@@ -344,17 +366,19 @@ void SIWholeQuadMode::propagateInstruction(MachineInstr &MI,
 
   // Control flow-type instructions and stores to temporary memory that are
   // followed by WQM computations must themselves be in WQM.
-  if ((II.OutNeeds & StateWQM) && !II.Needs &&
+  if ((II.OutNeeds & StateWQM) && !(II.Disabled & StateWQM) &&
       (MI.isTerminator() || (TII->usesVM_CNT(MI) && MI.mayStore()))) {
     Instructions[&MI].Needs = StateWQM;
     II.Needs = StateWQM;
   }
 
   // Propagate to block level
-  BI.Needs |= II.Needs;
-  if ((BI.InNeeds | II.Needs) != BI.InNeeds) {
-    BI.InNeeds |= II.Needs;
-    Worklist.push_back(MBB);
+  if (II.Needs & StateWQM) {
+    BI.Needs |= StateWQM;
+    if (!(BI.InNeeds & StateWQM)) {
+      BI.InNeeds |= StateWQM;
+      Worklist.push_back(MBB);
+    }
   }
 
   // Propagate backwards within block
@@ -370,10 +394,10 @@ void SIWholeQuadMode::propagateInstruction(MachineInstr &MI,
   }
 
   // Propagate WQM flag to instruction inputs
-  assert(II.Needs != (StateWQM | StateExact));
+  assert(!(II.Needs & StateExact));
 
-  if (II.Needs == StateWQM)
-    markUsesWQM(MI, Worklist);
+  if (II.Needs != 0)
+    markInstructionUses(MI, II.Needs, Worklist);
 }
 
 void SIWholeQuadMode::propagateBlock(MachineBasicBlock &MBB,
@@ -594,7 +618,7 @@ void SIWholeQuadMode::processBlock(MachineBasicBlock &MBB, unsigned LiveMaskReg,
   MachineBasicBlock::iterator First = IE;
   for (;;) {
     MachineBasicBlock::iterator Next = II;
-    char Needs = 0;
+    char Needs = StateExact | StateWQM;
     char OutNeeds = 0;
 
     if (First == IE)
@@ -606,12 +630,15 @@ void SIWholeQuadMode::processBlock(MachineBasicBlock &MBB, unsigned LiveMaskReg,
       if (requiresCorrectState(MI)) {
         auto III = Instructions.find(&MI);
         if (III != Instructions.end()) {
-          Needs = III->second.Needs;
+          if (III->second.Needs & StateWQM)
+            Needs = StateWQM;
+          else
+            Needs &= ~III->second.Disabled;
           OutNeeds = III->second.OutNeeds;
         }
       }
 
-      if (MI.isTerminator() && !Needs && OutNeeds == StateExact)
+      if (MI.isTerminator() && OutNeeds == StateExact)
         Needs = StateExact;
 
       if (MI.getOpcode() == AMDGPU::SI_ELSE && BI.OutNeeds == StateExact)
@@ -624,35 +651,39 @@ void SIWholeQuadMode::processBlock(MachineBasicBlock &MBB, unsigned LiveMaskReg,
         Needs = StateWQM;
       else if (BI.OutNeeds == StateExact)
         Needs = StateExact;
+      else
+        Needs = StateWQM | StateExact;
     }
 
-    if (Needs) {
-      if (Needs != State) {
-        MachineBasicBlock::iterator Before =
-            prepareInsertion(MBB, First, II, Needs == StateWQM,
-                             Needs == StateExact || WQMFromExec);
+    if (!(Needs & State)) {
+      MachineBasicBlock::iterator Before =
+          prepareInsertion(MBB, First, II, Needs == StateWQM,
+                           Needs == StateExact || WQMFromExec);
 
-        if (Needs == StateExact) {
-          if (!WQMFromExec && (OutNeeds & StateWQM))
-            SavedWQMReg = MRI->createVirtualRegister(&AMDGPU::SReg_64RegClass);
+      if (Needs == StateExact) {
+        if (!WQMFromExec && (OutNeeds & StateWQM))
+          SavedWQMReg = MRI->createVirtualRegister(&AMDGPU::SReg_64RegClass);
 
-          toExact(MBB, Before, SavedWQMReg, LiveMaskReg);
-        } else {
-          assert(WQMFromExec == (SavedWQMReg == 0));
+        toExact(MBB, Before, SavedWQMReg, LiveMaskReg);
+        State = StateExact;
+      } else {
+        assert(Needs == StateWQM);
+        assert(WQMFromExec == (SavedWQMReg == 0));
 
-          toWQM(MBB, Before, SavedWQMReg);
+        toWQM(MBB, Before, SavedWQMReg);
 
-          if (SavedWQMReg) {
-            LIS->createAndComputeVirtRegInterval(SavedWQMReg);
-            SavedWQMReg = 0;
-          }
+        if (SavedWQMReg) {
+          LIS->createAndComputeVirtRegInterval(SavedWQMReg);
+          SavedWQMReg = 0;
         }
-
-        State = Needs;
+        State = StateWQM;
       }
 
       First = IE;
     }
+
+    if (Needs != (StateExact | StateWQM))
+      First = IE;
 
     if (II == IE)
       break;
