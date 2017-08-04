@@ -1608,8 +1608,7 @@ InductiveRangeCheck::computeSafeIterationSpace(
   if (D != B)
     return None;
 
-  ConstantInt *ConstD = D->getValue();
-  assert(!ConstD->isZero() && "Recurrence with zero step?");
+  assert(!D->getValue()->isZero() && "Recurrence with zero step?");
 
   const SCEV *M = SE.getMinusSCEV(C, A);
   const SCEV *Begin = SE.getNegativeSCEV(M);
