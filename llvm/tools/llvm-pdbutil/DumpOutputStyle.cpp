@@ -1068,45 +1068,53 @@ Error DumpOutputStyle::dumpSectionHeaders() {
   return Error::success();
 }
 
+static Expected<std::pair<std::unique_ptr<MappedBlockStream>,
+                          ArrayRef<llvm::object::coff_section>>>
+loadSectionHeaders(PDBFile &File, DbgHeaderType Type) {
+  if (!File.hasPDBDbiStream())
+    return make_error<StringError>(
+        "Section headers require a DBI Stream, which could not be loaded",
+        inconvertibleErrorCode());
+
+  auto &Dbi = cantFail(File.getPDBDbiStream());
+  uint32_t SI = Dbi.getDebugStreamIndex(Type);
+
+  if (SI == kInvalidStreamIndex)
+    return make_error<StringError>(
+        "PDB does not contain the requested image section header type",
+        inconvertibleErrorCode());
+
+  auto Stream = MappedBlockStream::createIndexedStream(
+      File.getMsfLayout(), File.getMsfBuffer(), SI, File.getAllocator());
+  if (!Stream)
+    return make_error<StringError>("Could not load the required stream data",
+                                   inconvertibleErrorCode());
+
+  ArrayRef<object::coff_section> Headers;
+  if (Stream->getLength() % sizeof(object::coff_section) != 0)
+    return make_error<StringError>(
+        "Section header array size is not a multiple of section header size",
+        inconvertibleErrorCode());
+
+  uint32_t NumHeaders = Stream->getLength() / sizeof(object::coff_section);
+  BinaryStreamReader Reader(*Stream);
+  cantFail(Reader.readArray(Headers, NumHeaders));
+  return std::make_pair(std::move(Stream), Headers);
+}
+
 void DumpOutputStyle::dumpSectionHeaders(StringRef Label, DbgHeaderType Type) {
   printHeader(P, Label);
   ExitOnError Err("Error dumping publics stream: ");
 
   AutoIndent Indent(P);
-  if (!File.hasPDBDbiStream()) {
-    P.formatLine(
-        "Section headers require a DBI Stream, which could not be loaded");
-    return;
-  }
-
-  auto &Dbi = Err(File.getPDBDbiStream());
-  uint32_t SI = Dbi.getDebugStreamIndex(Type);
-
-  if (SI == kInvalidStreamIndex) {
-    P.formatLine(
-        "PDB does not contain the requested image section header type");
-    return;
-  }
-
-  auto Stream = MappedBlockStream::createIndexedStream(
-      File.getMsfLayout(), File.getMsfBuffer(), SI, File.getAllocator());
-  if (!Stream) {
-    P.formatLine("Could not load the required stream data");
-    return;
-  }
+  std::unique_ptr<MappedBlockStream> Stream;
   ArrayRef<object::coff_section> Headers;
-  if (Stream->getLength() % sizeof(object::coff_section) != 0) {
-    P.formatLine(
-        "Section header array size is not a multiple of section header size");
+  auto ExpectedHeaders = loadSectionHeaders(File, Type);
+  if (!ExpectedHeaders) {
+    P.printLine(toString(ExpectedHeaders.takeError()));
     return;
   }
-  uint32_t NumHeaders = Stream->getLength() / sizeof(object::coff_section);
-  BinaryStreamReader Reader(*Stream);
-  cantFail(Reader.readArray(Headers, NumHeaders));
-  if (Headers.empty()) {
-    P.formatLine("No section headers");
-    return;
-  }
+  std::tie(Stream, Headers) = std::move(*ExpectedHeaders);
 
   uint32_t I = 1;
   for (const auto &Header : Headers) {
@@ -1135,6 +1143,20 @@ void DumpOutputStyle::dumpSectionHeaders(StringRef Label, DbgHeaderType Type) {
   return;
 }
 
+std::vector<std::string> getSectionNames(PDBFile &File) {
+  auto ExpectedHeaders = loadSectionHeaders(File, DbgHeaderType::SectionHdr);
+  if (!ExpectedHeaders)
+    return {};
+
+  std::unique_ptr<MappedBlockStream> Stream;
+  ArrayRef<object::coff_section> Headers;
+  std::tie(Stream, Headers) = std::move(*ExpectedHeaders);
+  std::vector<std::string> Names;
+  for (const auto &H : Headers)
+    Names.push_back(H.Name);
+  return Names;
+}
+
 Error DumpOutputStyle::dumpSectionContribs() {
   printHeader(P, "Section Contributions");
   ExitOnError Err("Error dumping publics stream: ");
@@ -1150,23 +1172,33 @@ Error DumpOutputStyle::dumpSectionContribs() {
 
   class Visitor : public ISectionContribVisitor {
   public:
-    Visitor(LinePrinter &P) : P(P) {}
+    Visitor(LinePrinter &P, ArrayRef<std::string> Names) : P(P), Names(Names) {
+      auto Max = std::max_element(
+          Names.begin(), Names.end(),
+          [](StringRef S1, StringRef S2) { return S1.size() < S2.size(); });
+      MaxNameLen = (Max == Names.end() ? 0 : Max->size());
+    }
     void visit(const SectionContrib &SC) override {
-      P.formatLine(
-          "SC  | mod = {2}, {0}, size = {1}, data crc = {3}, reloc crc = {4}",
-          formatSegmentOffset(SC.ISect, SC.Off), fmtle(SC.Size), fmtle(SC.Imod),
-          fmtle(SC.DataCrc), fmtle(SC.RelocCrc));
+      assert(SC.ISect > 0);
+      StringRef SectionName = Names[SC.ISect - 1];
+      std::string NameInsert = formatv("[{0}]", SectionName).str();
+      P.formatLine("SC{5}  | mod = {2}, {0}, size = {1}, data crc = {3}, reloc "
+                   "crc = {4}",
+                   formatSegmentOffset(SC.ISect, SC.Off), fmtle(SC.Size),
+                   fmtle(SC.Imod), fmtle(SC.DataCrc), fmtle(SC.RelocCrc),
+                   fmt_align(NameInsert, AlignStyle::Left, MaxNameLen + 2));
+      AutoIndent Indent(P, MaxNameLen + 2);
       P.formatLine("      {0}",
                    formatSectionCharacteristics(P.getIndentLevel() + 6,
                                                 SC.Characteristics, 3, " | "));
     }
     void visit(const SectionContrib2 &SC) override {
-      P.formatLine("SC2 | mod = {2}, {0}, size = {1}, data crc = {3}, reloc "
-                   "crc = {4}, coff section = {5}",
-                   formatSegmentOffset(SC.Base.ISect, SC.Base.Off),
-                   fmtle(SC.Base.Size), fmtle(SC.Base.Imod),
-                   fmtle(SC.Base.DataCrc), fmtle(SC.Base.RelocCrc),
-                   fmtle(SC.ISectCoff));
+      P.formatLine(
+          "SC2[{6}] | mod = {2}, {0}, size = {1}, data crc = {3}, reloc "
+          "crc = {4}, coff section = {5}",
+          formatSegmentOffset(SC.Base.ISect, SC.Base.Off), fmtle(SC.Base.Size),
+          fmtle(SC.Base.Imod), fmtle(SC.Base.DataCrc), fmtle(SC.Base.RelocCrc),
+          fmtle(SC.ISectCoff));
       P.formatLine("      {0}", formatSectionCharacteristics(
                                     P.getIndentLevel() + 6,
                                     SC.Base.Characteristics, 3, " | "));
@@ -1174,9 +1206,12 @@ Error DumpOutputStyle::dumpSectionContribs() {
 
   private:
     LinePrinter &P;
+    uint32_t MaxNameLen;
+    ArrayRef<std::string> Names;
   };
 
-  Visitor V(P);
+  std::vector<std::string> Names = getSectionNames(File);
+  Visitor V(P, makeArrayRef(Names));
   Dbi.visitSectionContributions(V);
   return Error::success();
 }
