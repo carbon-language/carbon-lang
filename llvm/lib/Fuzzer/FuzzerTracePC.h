@@ -133,6 +133,13 @@ class TracePC {
   }
   uintptr_t GetMaxStackOffset() const { return InitialStack - LowestStack; }
 
+  template<class CallBack>
+  void ForEachObservedPC(CallBack CB) {
+    if (ObservedPCs)
+      for (auto PC : *ObservedPCs)
+        CB(PC);
+  }
+
 private:
   bool UseCounters = false;
   bool UseValueProfile = false;
