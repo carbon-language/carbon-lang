@@ -20,7 +20,7 @@ TEST(ScheduleOptimizer, getPartialTilePrefixes) {
   isl_ctx *ctx = isl_ctx_alloc();
 
   {
-    // Verify that for loop with 3 iterations starting at 0 that is
+    // Verify that for a loop with 3 iterations starting at 0 that is
     // pre-vectorized (strip-mined with a factor of 2), we correctly identify
     // that only the first two iterations are full vector iterations.
     isl::map Schedule(
@@ -32,7 +32,7 @@ TEST(ScheduleOptimizer, getPartialTilePrefixes) {
   }
 
   {
-    // Verify that for loop with 3 iterations starting at 1 that is
+    // Verify that for a loop with 3 iterations starting at 1 that is
     // pre-vectorized (strip-mined with a factor of 2), we correctly identify
     // that only the last two iterations are full vector iterations.
     isl::map Schedule(
@@ -44,7 +44,7 @@ TEST(ScheduleOptimizer, getPartialTilePrefixes) {
   }
 
   {
-    // Verify that for loop with 6 iterations starting at 1 that is
+    // Verify that for a loop with 6 iterations starting at 1 that is
     // pre-vectorized (strip-mined with a factor of 2), we correctly identify
     // that all but the first and the last iteration are full vector iterations.
     isl::map Schedule(
