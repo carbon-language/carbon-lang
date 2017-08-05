@@ -1699,17 +1699,8 @@ void LazyCallGraph::updateGraphPtrs() {
     }
   }
 
-  // Process all SCCs updating the graph pointers.
-  {
-    SmallVector<RefSCC *, 16> Worklist(LeafRefSCCs.begin(), LeafRefSCCs.end());
-
-    while (!Worklist.empty()) {
-      RefSCC &C = *Worklist.pop_back_val();
-      C.G = this;
-      for (RefSCC &ParentC : C.parents())
-        Worklist.push_back(&ParentC);
-    }
-  }
+  for (auto *RC : PostOrderRefSCCs)
+    RC->G = this;
 }
 
 template <typename RootsT, typename GetBeginT, typename GetEndT,
