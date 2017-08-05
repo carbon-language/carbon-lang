@@ -1148,12 +1148,13 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             // Assign proper opcode for tail calls, so that they could be
             // treated as calls.
             if (!IsCall) {
-              if (!MIA->convertJmpToTailCall(Instruction) &&
-                  opts::Verbosity >= 2) {
+              if (!MIA->convertJmpToTailCall(Instruction)) {
                 assert(IsCondBranch && "unknown tail call instruction");
-                errs() << "BOLT-WARNING: conditional tail call detected in "
-                       << "function " << *this << " at 0x"
-                       << Twine::utohexstr(AbsoluteInstrAddr) << ".\n";
+                if (opts::Verbosity >= 2) {
+                  errs() << "BOLT-WARNING: conditional tail call detected in "
+                         << "function " << *this << " at 0x"
+                         << Twine::utohexstr(AbsoluteInstrAddr) << ".\n";
+                }
               }
               // TODO: A better way to do this would be using annotations for
               // MCInst objects.
@@ -3141,7 +3142,6 @@ void BinaryFunction::postProcessBranches() {
         // falls-through into the next function - hence the block will have only
         // one valid successor. Such behaviour is undefined and thus we remove
         // the conditional branch while leaving a valid successor.
-        assert(BB == BasicBlocksLayout.back() && "last basic block expected");
         BB->eraseInstruction(std::next(LastInstrRI.base()));
         DEBUG(dbgs() << "BOLT-DEBUG: erasing conditional branch in "
                      << BB->getName() << " in function " << *this << '\n');
