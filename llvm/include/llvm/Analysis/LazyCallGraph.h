@@ -256,11 +256,16 @@ public:
     Edge &operator[](int i) { return Edges[i]; }
     Edge &operator[](Node &N) {
       assert(EdgeIndexMap.find(&N) != EdgeIndexMap.end() && "No such edge!");
-      return Edges[EdgeIndexMap.find(&N)->second];
+      auto &E = Edges[EdgeIndexMap.find(&N)->second];
+      assert(E && "Dead or null edge!");
+      return E;
     }
     Edge *lookup(Node &N) {
       auto EI = EdgeIndexMap.find(&N);
-      return EI != EdgeIndexMap.end() ? &Edges[EI->second] : nullptr;
+      if (EI == EdgeIndexMap.end())
+        return nullptr;
+      auto &E = Edges[EI->second];
+      return E ? &E : nullptr;
     }
 
     call_iterator call_begin() {
@@ -330,6 +335,17 @@ public:
 
     /// Tests whether the node has been populated with edges.
     bool isPopulated() const { return Edges.hasValue(); }
+
+    /// Tests whether this is actually a dead node and no longer valid.
+    ///
+    /// Users rarely interact with nodes in this state and other methods are
+    /// invalid. This is used to model a node in an edge list where the
+    /// function has been completely removed.
+    bool isDead() const {
+      assert(!G == !F &&
+             "Both graph and function pointers should be null or non-null.");
+      return !G;
+    }
 
     // We allow accessing the edges by dereferencing or using the arrow
     // operator, essentially wrapping the internal optional.
@@ -1185,7 +1201,9 @@ private:
 inline LazyCallGraph::Edge::Edge() : Value() {}
 inline LazyCallGraph::Edge::Edge(Node &N, Kind K) : Value(&N, K) {}
 
-inline LazyCallGraph::Edge::operator bool() const { return Value.getPointer(); }
+inline LazyCallGraph::Edge::operator bool() const {
+  return Value.getPointer() && !Value.getPointer()->isDead();
+}
 
 inline LazyCallGraph::Edge::Kind LazyCallGraph::Edge::getKind() const {
   assert(*this && "Queried a null edge!");

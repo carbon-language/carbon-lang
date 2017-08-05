@@ -1644,14 +1644,6 @@ void LazyCallGraph::removeDeadFunction(Function &F) {
   assert(C.size() == 1 && "Dead functions must be in a singular SCC");
   assert(RC.size() == 1 && "Dead functions must be in a singular RefSCC");
 
-  // Clean up any remaining reference edges. Note that we walk an unordered set
-  // here but are just removing and so the order doesn't matter.
-  for (RefSCC &ParentRC : RC.parents())
-    for (SCC &ParentC : ParentRC)
-      for (Node &ParentN : ParentC)
-        if (ParentN.isPopulated())
-          ParentN->removeEdgeInternal(N);
-
   // Now remove this RefSCC from any parents sets and the leaf list.
   for (Edge &E : *N)
     if (RefSCC *TargetRC = lookupRefSCC(E.getNode()))
@@ -1673,6 +1665,7 @@ void LazyCallGraph::removeDeadFunction(Function &F) {
   // components.
   N.clear();
   N.G = nullptr;
+  N.F = nullptr;
   C.clear();
   RC.clear();
   RC.G = nullptr;
