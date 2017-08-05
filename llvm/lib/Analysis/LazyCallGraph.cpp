@@ -1077,9 +1077,8 @@ LazyCallGraph::RefSCC::insertIncomingRefEdge(Node &SourceN, Node &TargetN) {
 void LazyCallGraph::RefSCC::removeOutgoingEdge(Node &SourceN, Node &TargetN) {
   assert(G->lookupRefSCC(SourceN) == this &&
          "The source must be a member of this RefSCC.");
-
-  RefSCC &TargetRC = *G->lookupRefSCC(TargetN);
-  assert(&TargetRC != this && "The target must not be a member of this RefSCC");
+  assert(G->lookupRefSCC(TargetN) != this &&
+         "The target must not be a member of this RefSCC");
 
 #ifndef NDEBUG
   // In a debug build, verify the RefSCC is valid to start with and when this
