@@ -1684,20 +1684,10 @@ LazyCallGraph::Node &LazyCallGraph::insertInto(Function &F, Node *&MappedN) {
 }
 
 void LazyCallGraph::updateGraphPtrs() {
-  // Process all nodes updating the graph pointers.
-  {
-    SmallVector<Node *, 16> Worklist;
-    for (Edge &E : EntryEdges)
-      Worklist.push_back(&E.getNode());
-
-    while (!Worklist.empty()) {
-      Node &N = *Worklist.pop_back_val();
-      N.G = this;
-      if (N)
-        for (Edge &E : *N)
-          Worklist.push_back(&E.getNode());
-    }
-  }
+  // Walk the node map to update their graph pointers. While this iterates in
+  // an unstable order, the order has no effect so it remains correct.
+  for (auto &FunctionNodePair : NodeMap)
+    FunctionNodePair.second->G = this;
 
   for (auto *RC : PostOrderRefSCCs)
     RC->G = this;
