@@ -5,7 +5,7 @@ define void @fastiselcall() {
 entry:
   %call = call i32 @targetfn(i32 42)
   ret void
-; CHECK-LABEL: test5:
+; CHECK-LABEL: fastiselcall:
 ; Local value area is still there:
 ; CHECK: movl $42, {{%[a-z]+}}
 ; Fast-ISel's arg mov is not here:
