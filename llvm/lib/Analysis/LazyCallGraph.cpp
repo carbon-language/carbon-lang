@@ -957,22 +957,20 @@ LazyCallGraph::RefSCC::insertIncomingRefEdge(Node &SourceN, Node &TargetN) {
   // RefSCCs (and their edges) are visited here.
   auto ComputeSourceConnectedSet = [&](SmallPtrSetImpl<RefSCC *> &Set) {
     Set.insert(&SourceC);
-    SmallVector<RefSCC *, 4> Worklist;
-    Worklist.push_back(&SourceC);
-    do {
-      RefSCC &RC = *Worklist.pop_back_val();
-      for (RefSCC &ParentRC : RC.parents()) {
-        // Skip any RefSCCs outside the range of source to target in the
-        // postorder sequence.
-        int ParentIdx = G->getRefSCCIndex(ParentRC);
-        assert(ParentIdx > SourceIdx && "Parent cannot precede source in postorder!");
-        if (ParentIdx > TargetIdx)
-          continue;
-        if (Set.insert(&ParentRC).second)
-          // First edge connecting to this parent, add it to our worklist.
-          Worklist.push_back(&ParentRC);
-      }
-    } while (!Worklist.empty());
+    auto IsConnected = [&](RefSCC &RC) {
+      for (SCC &C : RC)
+        for (Node &N : C)
+          for (Edge &E : *N)
+            if (Set.count(G->lookupRefSCC(E.getNode())))
+              return true;
+
+      return false;
+    };
+
+    for (RefSCC *C : make_range(G->PostOrderRefSCCs.begin() + SourceIdx + 1,
+                                G->PostOrderRefSCCs.begin() + TargetIdx + 1))
+      if (IsConnected(*C))
+        Set.insert(C);
   };
 
   // Use a normal worklist to find which SCCs the target connects to. We still
