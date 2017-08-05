@@ -544,7 +544,6 @@ public:
     friend class LazyCallGraph::Node;
 
     LazyCallGraph *G;
-    SmallPtrSet<RefSCC *, 1> Parents;
 
     /// A postorder list of the inner SCCs.
     SmallVector<SCC *, 4> SCCs;
@@ -557,7 +556,6 @@ public:
     RefSCC(LazyCallGraph &G);
 
     void clear() {
-      Parents.clear();
       SCCs.clear();
       SCCIndices.clear();
     }
@@ -622,13 +620,6 @@ public:
 
     iterator find(SCC &C) const {
       return SCCs.begin() + SCCIndices.find(&C)->second;
-    }
-
-    parent_iterator parent_begin() const { return Parents.begin(); }
-    parent_iterator parent_end() const { return Parents.end(); }
-
-    iterator_range<parent_iterator> parents() const {
-      return make_range(parent_begin(), parent_end());
     }
 
     /// Test if this RefSCC is a parent of \a RC.
@@ -1142,11 +1133,6 @@ private:
   /// RefSCCs.
   DenseMap<RefSCC *, int> RefSCCIndices;
 
-  /// The leaf RefSCCs of the graph.
-  ///
-  /// These are all of the RefSCCs which have no children.
-  SmallVector<RefSCC *, 4> LeafRefSCCs;
-
   /// Defined functions that are also known library functions which the
   /// optimizer can reason about and therefore might introduce calls to out of
   /// thin air.
@@ -1192,12 +1178,6 @@ private:
 
   /// Build the SCCs for a RefSCC out of a list of nodes.
   void buildSCCs(RefSCC &RC, node_stack_range Nodes);
-
-  /// Connect a RefSCC into the larger graph.
-  ///
-  /// This walks the edges to connect the RefSCC to its children's parent set,
-  /// and updates the root leaf list.
-  void connectRefSCC(RefSCC &RC);
 
   /// Get the index of a RefSCC within the postorder traversal.
   ///
