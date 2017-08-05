@@ -212,7 +212,7 @@ void LazyCallGraph::SCC::verify() {
     assert(N->LowLink == -1 &&
            "Must set low link to -1 when adding a node to an SCC!");
     for (Edge &E : **N)
-      assert(E.getNode() && "Can't have an unpopulated node!");
+      assert(E.getNode().isPopulated() && "Can't have an unpopulated node!");
   }
 }
 #endif
@@ -1649,7 +1649,7 @@ void LazyCallGraph::removeDeadFunction(Function &F) {
   for (RefSCC &ParentRC : RC.parents())
     for (SCC &ParentC : ParentRC)
       for (Node &ParentN : ParentC)
-        if (ParentN)
+        if (ParentN.isPopulated())
           ParentN->removeEdgeInternal(N);
 
   // Now remove this RefSCC from any parents sets and the leaf list.
