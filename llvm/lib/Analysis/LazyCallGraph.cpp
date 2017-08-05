@@ -334,17 +334,44 @@ void LazyCallGraph::RefSCC::verify() {
 }
 #endif
 
-bool LazyCallGraph::RefSCC::isDescendantOf(const RefSCC &C) const {
-  // Walk up the parents of this SCC and verify that we eventually find C.
-  SmallVector<const RefSCC *, 4> AncestorWorklist;
-  AncestorWorklist.push_back(this);
+bool LazyCallGraph::RefSCC::isParentOf(const RefSCC &RC) const {
+  if (&RC == this)
+    return false;
+
+  // Search all edges to see if this is a parent.
+  for (SCC &C : *this)
+    for (Node &N : C)
+      for (Edge &E : *N)
+        if (G->lookupRefSCC(E.getNode()) == &RC)
+          return true;
+
+  return false;
+}
+
+bool LazyCallGraph::RefSCC::isAncestorOf(const RefSCC &RC) const {
+  if (&RC == this)
+    return false;
+
+  // For each descendant of this RefSCC, see if one of its children is the
+  // argument. If not, add that descendant to the worklist and continue
+  // searching.
+  SmallVector<const RefSCC *, 4> Worklist;
+  SmallPtrSet<const RefSCC *, 4> Visited;
+  Worklist.push_back(this);
+  Visited.insert(this);
   do {
-    const RefSCC *AncestorC = AncestorWorklist.pop_back_val();
-    if (AncestorC->isChildOf(C))
-      return true;
-    for (const RefSCC *ParentC : AncestorC->Parents)
-      AncestorWorklist.push_back(ParentC);
-  } while (!AncestorWorklist.empty());
+    const RefSCC &DescendantRC = *Worklist.pop_back_val();
+    for (SCC &C : DescendantRC)
+      for (Node &N : C)
+        for (Edge &E : *N) {
+          auto *ChildRC = G->lookupRefSCC(E.getNode());
+          if (ChildRC == &RC)
+            return true;
+          if (!ChildRC || !Visited.insert(ChildRC).second)
+            continue;
+          Worklist.push_back(ChildRC);
+        }
+  } while (!Worklist.empty());
 
   return false;
 }

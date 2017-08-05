@@ -631,19 +631,33 @@ public:
       return make_range(parent_begin(), parent_end());
     }
 
-    /// Test if this RefSCC is a parent of \a C.
-    bool isParentOf(const RefSCC &C) const { return C.isChildOf(*this); }
+    /// Test if this RefSCC is a parent of \a RC.
+    ///
+    /// CAUTION: This method walks every edge in the \c RefSCC, it can be very
+    /// expensive.
+    bool isParentOf(const RefSCC &RC) const;
 
-    /// Test if this RefSCC is an ancestor of \a C.
-    bool isAncestorOf(const RefSCC &C) const { return C.isDescendantOf(*this); }
+    /// Test if this RefSCC is an ancestor of \a RC.
+    ///
+    /// CAUTION: This method walks the directed graph of edges as far as
+    /// necessary to find a possible path to the argument. In the worst case
+    /// this may walk the entire graph and can be extremely expensive.
+    bool isAncestorOf(const RefSCC &RC) const;
 
-    /// Test if this RefSCC is a child of \a C.
-    bool isChildOf(const RefSCC &C) const {
-      return Parents.count(const_cast<RefSCC *>(&C));
+    /// Test if this RefSCC is a child of \a RC.
+    ///
+    /// CAUTION: This method walks every edge in the argument \c RefSCC, it can
+    /// be very expensive.
+    bool isChildOf(const RefSCC &RC) const { return RC.isParentOf(*this); }
+
+    /// Test if this RefSCC is a descendant of \a RC.
+    ///
+    /// CAUTION: This method walks the directed graph of edges as far as
+    /// necessary to find a possible path from the argument. In the worst case
+    /// this may walk the entire graph and can be extremely expensive.
+    bool isDescendantOf(const RefSCC &RC) const {
+      return RC.isAncestorOf(*this);
     }
-
-    /// Test if this RefSCC is a descendant of \a C.
-    bool isDescendantOf(const RefSCC &C) const;
 
     /// Provide a short name by printing this RefSCC to a std::string.
     ///
