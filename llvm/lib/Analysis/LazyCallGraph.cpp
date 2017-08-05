@@ -1672,8 +1672,10 @@ void LazyCallGraph::removeDeadFunction(Function &F) {
   // Finally clear out all the data structures from the node down through the
   // components.
   N.clear();
+  N.G = nullptr;
   C.clear();
   RC.clear();
+  RC.G = nullptr;
 
   // Nothing to delete as all the objects are allocated in stable bump pointer
   // allocators.
