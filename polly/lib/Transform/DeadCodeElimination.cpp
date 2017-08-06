@@ -132,7 +132,7 @@ bool DeadCodeElim::eliminateDeadCode(Scop &S, int PreciseSteps) {
   if (PreciseSteps == -1)
     Live = Live.affine_hull();
 
-  isl::union_set OriginalDomain = isl::manage(S.getDomains());
+  isl::union_set OriginalDomain = S.getDomains();
   int Steps = 0;
   while (true) {
     Steps++;

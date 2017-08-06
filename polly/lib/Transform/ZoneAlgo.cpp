@@ -252,7 +252,7 @@ static std::string printInstruction(Instruction *Instr,
 ZoneAlgorithm::ZoneAlgorithm(const char *PassName, Scop *S, LoopInfo *LI)
     : PassName(PassName), IslCtx(S->getSharedIslCtx()), S(S), LI(LI),
       Schedule(give(S->getSchedule())) {
-  auto Domains = give(S->getDomains());
+  auto Domains = S->getDomains();
 
   Schedule =
       give(isl_union_map_intersect_domain(Schedule.take(), Domains.take()));

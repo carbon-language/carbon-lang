@@ -2200,7 +2200,7 @@ isl::id Scop::getIdForParam(const SCEV *Parameter) const {
 }
 
 isl::set Scop::addNonEmptyDomainConstraints(isl::set C) const {
-  isl_set *DomainContext = isl_union_set_params(getDomains());
+  isl_set *DomainContext = isl_union_set_params(getDomains().release());
   return isl::manage(isl_set_intersect_params(C.release(), DomainContext));
 }
 
@@ -2435,7 +2435,7 @@ simplifyAssumptionContext(__isl_take isl_set *AssumptionContext,
   // domains, thus we cannot use the remaining domain to simplify the
   // assumptions.
   if (!S.hasErrorBlock()) {
-    isl_set *DomainParameters = isl_union_set_params(S.getDomains());
+    isl_set *DomainParameters = isl_union_set_params(S.getDomains().release());
     AssumptionContext =
         isl_set_gist_params(AssumptionContext, DomainParameters);
   }
@@ -2558,7 +2558,7 @@ static bool calculateMinMaxAccess(Scop::AliasGroupTy AliasGroup, Scop &S,
 
   MinMaxAccesses.reserve(AliasGroup.size());
 
-  isl::union_set Domains = give(S.getDomains());
+  isl::union_set Domains = S.getDomains();
   isl::union_map Accesses = isl::union_map::empty(S.getParamSpace());
 
   for (MemoryAccess *MA : AliasGroup)
@@ -4347,7 +4347,7 @@ bool Scop::hasFeasibleRuntimeContext() const {
     return false;
   }
 
-  auto *DomainContext = isl_union_set_params(getDomains());
+  auto *DomainContext = isl_union_set_params(getDomains().release());
   IsFeasible = !isl_set_is_subset(DomainContext, NegativeContext);
   IsFeasible &= !isl_set_is_subset(Context, NegativeContext);
   isl_set_free(NegativeContext);
@@ -4666,14 +4666,14 @@ __isl_give PWACtx Scop::getPwAff(const SCEV *E, BasicBlock *BB,
   return Affinator.getPwAff(SE->getZero(E->getType()), BB);
 }
 
-__isl_give isl_union_set *Scop::getDomains() const {
+isl::union_set Scop::getDomains() const {
   isl_space *EmptySpace = isl_space_params_alloc(getIslCtx(), 0);
   isl_union_set *Domain = isl_union_set_empty(EmptySpace);
 
   for (const ScopStmt &Stmt : *this)
     Domain = isl_union_set_add_set(Domain, Stmt.getDomain().release());
 
-  return Domain;
+  return isl::manage(Domain);
 }
 
 __isl_give isl_pw_aff *Scop::getPwAffOnly(const SCEV *E, BasicBlock *BB) {
@@ -4749,11 +4749,11 @@ __isl_give isl_union_map *Scop::getSchedule() const {
 
 __isl_give isl_schedule *Scop::getScheduleTree() const {
   return isl_schedule_intersect_domain(isl_schedule_copy(Schedule),
-                                       getDomains());
+                                       getDomains().release());
 }
 
 void Scop::setSchedule(__isl_take isl_union_map *NewSchedule) {
-  auto *S = isl_schedule_from_domain(getDomains());
+  auto *S = isl_schedule_from_domain(getDomains().release());
   S = isl_schedule_insert_partial_schedule(
       S, isl_multi_union_pw_aff_from_union_map(NewSchedule));
   isl_schedule_free(Schedule);

@@ -2885,7 +2885,7 @@ public:
   __isl_give isl_set *getDomainConditions(BasicBlock *BB) const;
 
   /// Get a union set containing the iteration domains of all statements.
-  __isl_give isl_union_set *getDomains() const;
+  isl::union_set getDomains() const;
 
   /// Get a union map of all may-writes performed in the SCoP.
   isl::union_map getMayWrites();

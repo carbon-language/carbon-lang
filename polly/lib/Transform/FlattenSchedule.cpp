@@ -63,7 +63,7 @@ public:
     OldSchedule = give(S.getSchedule());
     DEBUG(printSchedule(dbgs(), OldSchedule, 2));
 
-    auto Domains = give(S.getDomains());
+    auto Domains = S.getDomains();
     auto RestrictedOldSchedule = OldSchedule.intersect_domain(Domains);
     DEBUG(dbgs() << "Old schedule with domains:\n");
     DEBUG(printSchedule(dbgs(), RestrictedOldSchedule, 2));

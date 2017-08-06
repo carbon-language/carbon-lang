@@ -1370,7 +1370,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
         Dependences::TYPE_RAW | Dependences::TYPE_WAR | Dependences::TYPE_WAW;
   }
 
-  isl::union_set Domain = give(S.getDomains());
+  isl::union_set Domain = S.getDomains();
 
   if (!Domain)
     return false;
