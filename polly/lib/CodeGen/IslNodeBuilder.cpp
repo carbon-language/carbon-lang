@@ -786,7 +786,7 @@ IslNodeBuilder::createNewAccesses(ScopStmt *Stmt,
 
   auto *Build = IslAstInfo::getBuild(Node);
   assert(Build && "Could not obtain isl_ast_build from user node");
-  Stmt->setAstBuild(Build);
+  Stmt->setAstBuild(isl::manage(isl_ast_build_copy(Build)));
 
   for (auto *MA : *Stmt) {
     if (!MA->hasNewAccessRelation()) {

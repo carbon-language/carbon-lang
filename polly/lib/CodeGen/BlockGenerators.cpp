@@ -574,7 +574,7 @@ void BlockGenerator::generateScalarLoads(
 
 Value *BlockGenerator::buildContainsCondition(ScopStmt &Stmt,
                                               const isl::set &Subdomain) {
-  isl::ast_build AstBuild = give(isl_ast_build_copy(Stmt.getAstBuild()));
+  isl::ast_build AstBuild = Stmt.getAstBuild();
   isl::set Domain = Stmt.getDomain();
 
   isl::union_map USchedule = AstBuild.get_schedule();
