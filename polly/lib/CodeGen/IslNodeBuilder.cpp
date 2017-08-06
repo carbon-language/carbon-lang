@@ -815,9 +815,9 @@ IslNodeBuilder::createNewAccesses(ScopStmt *Stmt,
       auto SchedDom = isl_set_from_union_set(
           isl_union_map_domain(isl_union_map_copy(Schedule)));
       auto AccDom = isl_map_domain(MA->getAccessRelation().release());
-      Dom = isl_set_intersect_params(Dom, Stmt->getParent()->getContext());
+      Dom = isl_set_intersect_params(Dom, Stmt->getParent()->getContext().release());
       SchedDom =
-          isl_set_intersect_params(SchedDom, Stmt->getParent()->getContext());
+          isl_set_intersect_params(SchedDom, Stmt->getParent()->getContext().release());
       assert(isl_set_is_subset(SchedDom, AccDom) &&
              "Access relation not defined on full schedule domain");
       assert(isl_set_is_subset(Dom, AccDom) &&
@@ -1184,7 +1184,7 @@ Value *IslNodeBuilder::preloadInvariantLoad(const MemoryAccess &MA,
                                             isl_set *Domain) {
 
   isl_set *AccessRange = isl_map_range(MA.getAddressFunction().release());
-  AccessRange = isl_set_gist_params(AccessRange, S.getContext());
+  AccessRange = isl_set_gist_params(AccessRange, S.getContext().release());
 
   if (!materializeParameters(AccessRange)) {
     isl_set_free(AccessRange);

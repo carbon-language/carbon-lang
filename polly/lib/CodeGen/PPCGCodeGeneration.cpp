@@ -762,7 +762,7 @@ void GPUNodeBuilder::finalize() {
 void GPUNodeBuilder::allocateDeviceArrays() {
   assert(!ManagedMemory && "Managed memory will directly send host pointers "
                            "to the kernel. There is no need for device arrays");
-  isl_ast_build *Build = isl_ast_build_from_context(S.getContext());
+  isl_ast_build *Build = isl_ast_build_from_context(S.getContext().release());
 
   for (int i = 0; i < Prog->n_array; ++i) {
     gpu_array_info *Array = &Prog->array[i];
@@ -1071,7 +1071,7 @@ static bool isPrefix(std::string String, std::string Prefix) {
 
 Value *GPUNodeBuilder::getArraySize(gpu_array_info *Array) {
   isl::ast_build Build =
-      isl::ast_build::from_context(isl::manage(S.getContext()));
+      isl::ast_build::from_context(S.getContext());
   Value *ArraySize = ConstantInt::get(Builder.getInt64Ty(), Array->size);
 
   if (!gpu_array_is_scalar(Array)) {
@@ -1100,7 +1100,7 @@ Value *GPUNodeBuilder::getArrayOffset(gpu_array_info *Array) {
     return nullptr;
 
   isl::ast_build Build =
-      isl::ast_build::from_context(isl::manage(S.getContext()));
+      isl::ast_build::from_context(S.getContext());
 
   isl::set Min = isl::manage(isl_set_copy(Array->extent)).lexmin();
 
@@ -1517,8 +1517,7 @@ void GPUNodeBuilder::clearLoops(Function *F) {
 
 std::tuple<Value *, Value *> GPUNodeBuilder::getGridSizes(ppcg_kernel *Kernel) {
   std::vector<Value *> Sizes;
-  isl::ast_build Context =
-      isl::ast_build::from_context(isl::manage(S.getContext()));
+  isl::ast_build Context = isl::ast_build::from_context(S.getContext());
 
   isl::multi_pw_aff GridSizePwAffs =
       isl::manage(isl_multi_pw_aff_copy(Kernel->grid_size));
@@ -2631,10 +2630,10 @@ public:
     PPCGScop->start = 0;
     PPCGScop->end = 0;
 
-    PPCGScop->context = S->getContext();
+    PPCGScop->context = S->getContext().release();
     PPCGScop->domain = S->getDomains();
     // TODO: investigate this further. PPCG calls collect_call_domains.
-    PPCGScop->call = isl_union_set_from_set(S->getContext());
+    PPCGScop->call = isl_union_set_from_set(S->getContext().release());
     PPCGScop->tagged_reads = getTaggedReads();
     PPCGScop->reads = S->getReads().release();
     PPCGScop->live_in = nullptr;
@@ -2845,7 +2844,7 @@ public:
         isl_aff *One = isl_aff_zero_on_domain(LS);
         One = isl_aff_add_constant_si(One, 1);
         Bound = isl_pw_aff_add(Bound, isl_pw_aff_alloc(Dom, One));
-        Bound = isl_pw_aff_gist(Bound, S->getContext());
+        Bound = isl_pw_aff_gist(Bound, S->getContext().release());
         Bounds.push_back(Bound);
       }
     }
@@ -3375,7 +3374,7 @@ public:
     // TODO: Handle LICM
     auto SplitBlock = StartBlock->getSinglePredecessor();
     Builder.SetInsertPoint(SplitBlock->getTerminator());
-    NodeBuilder.addParameters(S->getContext());
+    NodeBuilder.addParameters(S->getContext().release());
 
     isl_ast_build *Build = isl_ast_build_alloc(S->getIslCtx());
     isl_ast_expr *Condition = IslAst::buildRunCondition(*S, Build);

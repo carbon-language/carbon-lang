@@ -2505,7 +2505,7 @@ public:
   /// Get the constraint on parameter of this Scop.
   ///
   /// @return The constraint on parameter of this Scop.
-  __isl_give isl_set *getContext() const;
+  isl::set getContext() const;
 
   /// Return space of isl context parameters.
   ///

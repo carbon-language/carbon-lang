@@ -273,7 +273,7 @@ void JSONImporter::printScop(raw_ostream &OS, Scop &S) const {
 typedef Dependences::StatementToIslMapTy StatementToIslMapTy;
 
 bool JSONImporter::importContext(Scop &S, Json::Value &JScop) {
-  isl_set *OldContext = S.getContext();
+  isl_set *OldContext = S.getContext().release();
 
   // Check if key 'context' is present.
   if (!JScop.isMember("context")) {
@@ -561,9 +561,9 @@ bool JSONImporter::importAccesses(Scop &S, Json::Value &JScop,
       }
 
       NewAccessDomain =
-          isl_set_intersect_params(NewAccessDomain, S.getContext());
+          isl_set_intersect_params(NewAccessDomain, S.getContext().release());
       CurrentAccessDomain =
-          isl_set_intersect_params(CurrentAccessDomain, S.getContext());
+          isl_set_intersect_params(CurrentAccessDomain, S.getContext().release());
 
       if (MA->isRead() &&
           isl_set_is_subset(CurrentAccessDomain, NewAccessDomain) ==

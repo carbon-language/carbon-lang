@@ -1025,7 +1025,7 @@ MemoryAccess::MemoryAccess(ScopStmt *Stmt, AccessType AccType, isl::map AccRel)
 }
 
 void MemoryAccess::realignParams() {
-  isl::set Ctx = isl::manage(Statement->getParent()->getContext());
+  isl::set Ctx = Statement->getParent()->getContext();
   InvalidDomain = InvalidDomain.gist_params(Ctx);
   AccessRelation = AccessRelation.gist_params(Ctx);
 }
@@ -1179,7 +1179,7 @@ void MemoryAccess::setNewAccessRelation(isl::map NewAccess) {
     // Check whether there is an access for every statement instance.
     isl::set StmtDomain = getStatement()->getDomain();
     StmtDomain = StmtDomain.intersect_params(
-        isl::manage(getStatement()->getParent()->getContext()));
+        getStatement()->getParent()->getContext());
     isl::set NewDomain = NewAccess.domain();
     assert(StmtDomain.is_subset(NewDomain) &&
            "Partial READ accesses not supported");
@@ -1312,7 +1312,7 @@ void ScopStmt::realignParams() {
   for (MemoryAccess *MA : *this)
     MA->realignParams();
 
-  isl::set Ctx = isl::manage(Parent.getContext());
+  isl::set Ctx = Parent.getContext();
   InvalidDomain = InvalidDomain.gist_params(Ctx);
   Domain = Domain.gist_params(Ctx);
 }
@@ -2423,7 +2423,7 @@ void Scop::realignParams() {
   for (ScopStmt &Stmt : *this)
     Stmt.realignParams();
   // Simplify the schedule according to the context too.
-  Schedule = isl_schedule_gist_domain_params(Schedule, getContext());
+  Schedule = isl_schedule_gist_domain_params(Schedule, getContext().release());
 }
 
 static __isl_give isl_set *
@@ -2441,7 +2441,7 @@ simplifyAssumptionContext(__isl_take isl_set *AssumptionContext,
         isl_set_gist_params(AssumptionContext, DomainParameters);
   }
 
-  AssumptionContext = isl_set_gist_params(AssumptionContext, S.getContext());
+  AssumptionContext = isl_set_gist_params(AssumptionContext, S.getContext().release());
   return AssumptionContext;
 }
 
@@ -3938,7 +3938,7 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, InvariantAccessesTy &InvMAs) {
     } else {
       MACtx = isl_set_copy(DomainCtx);
       MACtx = isl_set_subtract(MACtx, isl_set_union(MAInvalidCtx, NHCtx));
-      MACtx = isl_set_gist_params(MACtx, getContext());
+      MACtx = isl_set_gist_params(MACtx, getContext().release());
     }
 
     bool Consolidated = false;
@@ -4244,7 +4244,7 @@ const ScopArrayInfo *Scop::getScopArrayInfo(Value *BasePtr, MemoryKind Kind) {
   return SAI;
 }
 
-std::string Scop::getContextStr() const { return stringFromIslObj(Context); }
+std::string Scop::getContextStr() const { return getContext().to_str(); }
 
 std::string Scop::getAssumedContextStr() const {
   assert(AssumedContext && "Assumed context not yet built");
@@ -4278,7 +4278,7 @@ std::pair<std::string, std::string> Scop::getEntryExitStr() const {
   return std::make_pair(EntryName, ExitName);
 }
 
-__isl_give isl_set *Scop::getContext() const { return isl_set_copy(Context); }
+isl::set Scop::getContext() const { return isl::manage(isl_set_copy(Context)); }
 __isl_give isl_space *Scop::getParamSpace() const {
   return isl_set_get_space(Context);
 }
@@ -4466,7 +4466,7 @@ bool Scop::trackAssumption(AssumptionKind Kind, __isl_keep isl_set *Set,
 void Scop::addAssumption(AssumptionKind Kind, __isl_take isl_set *Set,
                          DebugLoc Loc, AssumptionSign Sign, BasicBlock *BB) {
   // Simplify the assumptions/restrictions first.
-  Set = isl_set_gist_params(Set, getContext());
+  Set = isl_set_gist_params(Set, getContext().release());
 
   if (!trackAssumption(Kind, Set, Loc, Sign, BB)) {
     isl_set_free(Set);

@@ -609,7 +609,7 @@ void BlockGenerator::generateConditionalExecution(
   // If the condition is a tautology, don't generate a condition around the
   // code.
   bool IsPartialWrite =
-      !StmtDom.intersect_params(give(Stmt.getParent()->getContext()))
+      !StmtDom.intersect_params(Stmt.getParent()->getContext())
            .is_subset(Subdomain);
   if (!IsPartialWrite) {
     GenThenFunc();
