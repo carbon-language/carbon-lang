@@ -1057,7 +1057,7 @@ bool IslNodeBuilder::materializeParameters(isl_set *Set) {
 
 bool IslNodeBuilder::materializeParameters() {
   for (const SCEV *Param : S.parameters()) {
-    isl_id *Id = S.getIdForParam(Param);
+    isl_id *Id = S.getIdForParam(Param).release();
     if (!materializeValue(Id))
       return false;
   }
@@ -1344,7 +1344,7 @@ bool IslNodeBuilder::preloadInvariantEquivClass(
   }
 
   if (SE.isSCEVable(AccInstTy)) {
-    isl_id *ParamId = S.getIdForParam(SE.getSCEV(AccInst));
+    isl_id *ParamId = S.getIdForParam(SE.getSCEV(AccInst)).release();
     if (ParamId)
       IDToValue[ParamId] = PreloadVal;
     isl_id_free(ParamId);

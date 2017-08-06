@@ -2193,10 +2193,10 @@ void Scop::addParams(const ParameterSetTy &NewParameters) {
   }
 }
 
-__isl_give isl_id *Scop::getIdForParam(const SCEV *Parameter) const {
+isl::id Scop::getIdForParam(const SCEV *Parameter) const {
   // Normalize the SCEV to get the representing element for an invariant load.
   Parameter = getRepresentingInvariantLoadSCEV(Parameter);
-  return isl_id_copy(ParameterIds.lookup(Parameter));
+  return isl::manage(isl_id_copy(ParameterIds.lookup(Parameter)));
 }
 
 __isl_give isl_set *
@@ -3903,7 +3903,7 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, InvariantAccessesTy &InvMAs) {
         if (!Values.count(AccInst))
           continue;
 
-        if (isl_id *ParamId = getIdForParam(Parameter)) {
+        if (isl_id *ParamId = getIdForParam(Parameter).release()) {
           int Dim = isl_set_find_dim_by_id(DomainCtx, isl_dim_param, ParamId);
           if (Dim >= 0)
             DomainCtx = isl_set_eliminate(DomainCtx, isl_dim_param, Dim, 1);
@@ -4292,7 +4292,7 @@ isl::space Scop::getFullParamSpace() const {
 
   unsigned PDim = 0;
   for (const SCEV *Parameter : Parameters) {
-    isl::id Id = isl::manage(getIdForParam(Parameter));
+    isl::id Id = getIdForParam(Parameter);
     Space = Space.set_dim_id(isl::dim::param, PDim++, Id);
   }
 

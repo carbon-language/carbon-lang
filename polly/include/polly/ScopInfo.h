@@ -2419,7 +2419,7 @@ public:
   /// @param Parameter A SCEV that was recognized as a Parameter.
   ///
   /// @return The corresponding isl_id or NULL otherwise.
-  __isl_give isl_id *getIdForParam(const SCEV *Parameter) const;
+  isl::id getIdForParam(const SCEV *Parameter) const;
 
   /// Get the maximum region of this static control part.
   ///

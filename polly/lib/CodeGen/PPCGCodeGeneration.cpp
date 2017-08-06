@@ -2597,7 +2597,7 @@ public:
     auto *Zero = isl_ast_expr_from_val(isl_val_zero(S->getIslCtx()));
 
     for (const SCEV *P : S->parameters()) {
-      isl_id *Id = S->getIdForParam(P);
+      isl_id *Id = S->getIdForParam(P).release();
       Names = isl_id_to_ast_expr_set(Names, Id, isl_ast_expr_copy(Zero));
     }
 
