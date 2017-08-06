@@ -174,64 +174,6 @@ Instruction *InstCombiner::OptAndOp(BinaryOperator *Op,
       }
     }
     break;
-
-  case Instruction::Shl: {
-    // We know that the AND will not produce any of the bits shifted in, so if
-    // the anded constant includes them, clear them now!
-    //
-    uint32_t BitWidth = AndRHS->getType()->getBitWidth();
-    uint32_t OpRHSVal = OpRHS->getLimitedValue(BitWidth);
-    APInt ShlMask(APInt::getHighBitsSet(BitWidth, BitWidth-OpRHSVal));
-    ConstantInt *CI = Builder.getInt(AndRHS->getValue() & ShlMask);
-
-    if (CI->getValue() == ShlMask)
-      // Masking out bits that the shift already masks.
-      return replaceInstUsesWith(TheAnd, Op);   // No need for the and.
-
-    if (CI != AndRHS) {                  // Reducing bits set in and.
-      TheAnd.setOperand(1, CI);
-      return &TheAnd;
-    }
-    break;
-  }
-  case Instruction::LShr: {
-    // We know that the AND will not produce any of the bits shifted in, so if
-    // the anded constant includes them, clear them now!  This only applies to
-    // unsigned shifts, because a signed shr may bring in set bits!
-    //
-    uint32_t BitWidth = AndRHS->getType()->getBitWidth();
-    uint32_t OpRHSVal = OpRHS->getLimitedValue(BitWidth);
-    APInt ShrMask(APInt::getLowBitsSet(BitWidth, BitWidth - OpRHSVal));
-    ConstantInt *CI = Builder.getInt(AndRHS->getValue() & ShrMask);
-
-    if (CI->getValue() == ShrMask)
-      // Masking out bits that the shift already masks.
-      return replaceInstUsesWith(TheAnd, Op);
-
-    if (CI != AndRHS) {
-      TheAnd.setOperand(1, CI);  // Reduce bits set in and cst.
-      return &TheAnd;
-    }
-    break;
-  }
-  case Instruction::AShr:
-    // Signed shr.
-    // See if this is shifting in some sign extension, then masking it out
-    // with an and.
-    if (Op->hasOneUse()) {
-      uint32_t BitWidth = AndRHS->getType()->getBitWidth();
-      uint32_t OpRHSVal = OpRHS->getLimitedValue(BitWidth);
-      APInt ShrMask(APInt::getLowBitsSet(BitWidth, BitWidth - OpRHSVal));
-      Constant *C = Builder.getInt(AndRHS->getValue() & ShrMask);
-      if (C == AndRHS) {          // Masking out bits shifted in.
-        // (Val ashr C1) & C2 -> (Val lshr C1) & C2
-        // Make the argument unsigned.
-        Value *ShVal = Op->getOperand(0);
-        ShVal = Builder.CreateLShr(ShVal, OpRHS, Op->getName());
-        return BinaryOperator::CreateAnd(ShVal, AndRHS, TheAnd.getName());
-      }
-    }
-    break;
   }
   return nullptr;
 }
