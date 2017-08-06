@@ -1717,22 +1717,21 @@ ScopStmt::ScopStmt(Scop &parent, BasicBlock &bb, Loop *SurroundingLoop,
                                   UseInstructionNames);
 }
 
-ScopStmt::ScopStmt(Scop &parent, __isl_take isl_map *SourceRel,
-                   __isl_take isl_map *TargetRel, __isl_take isl_set *NewDomain)
-    : Parent(parent), InvalidDomain(nullptr), Domain(isl::manage(NewDomain)),
-      BB(nullptr), R(nullptr), Build(nullptr) {
+ScopStmt::ScopStmt(Scop &parent, isl::map SourceRel, isl::map TargetRel,
+                   isl::set NewDomain)
+    : Parent(parent), InvalidDomain(nullptr), Domain(NewDomain), BB(nullptr),
+      R(nullptr), Build(nullptr) {
   BaseName = getIslCompatibleName("CopyStmt_", "",
                                   std::to_string(parent.getCopyStmtsNum()));
-  auto *Id = isl_id_alloc(getIslCtx(), getBaseName(), this);
-  Domain = Domain.set_tuple_id(isl::manage(isl_id_copy(Id)));
-  TargetRel = isl_map_set_tuple_id(TargetRel, isl_dim_in, Id);
-  auto *Access = new MemoryAccess(this, MemoryAccess::AccessType::MUST_WRITE,
-                                  isl::manage(TargetRel));
+  isl::id Id = isl::id::alloc(getIslCtx(), getBaseName(), this);
+  Domain = Domain.set_tuple_id(Id);
+  TargetRel = TargetRel.set_tuple_id(isl::dim::in, Id);
+  auto *Access =
+      new MemoryAccess(this, MemoryAccess::AccessType::MUST_WRITE, TargetRel);
   parent.addAccessFunction(Access);
   addAccess(Access);
-  SourceRel = isl_map_set_tuple_id(SourceRel, isl_dim_in, isl_id_copy(Id));
-  Access = new MemoryAccess(this, MemoryAccess::AccessType::READ,
-                            isl::manage(SourceRel));
+  SourceRel = SourceRel.set_tuple_id(isl::dim::in, Id);
+  Access = new MemoryAccess(this, MemoryAccess::AccessType::READ, SourceRel);
   parent.addAccessFunction(Access);
   addAccess(Access);
 }
@@ -4865,18 +4864,15 @@ void Scop::addScopStmt(Region *R, Loop *SurroundingLoop) {
     StmtMap[BB].push_back(Stmt);
 }
 
-ScopStmt *Scop::addScopStmt(__isl_take isl_map *SourceRel,
-                            __isl_take isl_map *TargetRel,
-                            __isl_take isl_set *Domain) {
+ScopStmt *Scop::addScopStmt(isl::map SourceRel, isl::map TargetRel,
+                            isl::set Domain) {
 #ifndef NDEBUG
-  isl_set *SourceDomain = isl_map_domain(isl_map_copy(SourceRel));
-  isl_set *TargetDomain = isl_map_domain(isl_map_copy(TargetRel));
-  assert(isl_set_is_subset(Domain, TargetDomain) &&
+  isl::set SourceDomain = SourceRel.domain();
+  isl::set TargetDomain = TargetRel.domain();
+  assert(Domain.is_subset(TargetDomain) &&
          "Target access not defined for complete statement domain");
-  assert(isl_set_is_subset(Domain, SourceDomain) &&
+  assert(Domain.is_subset(SourceDomain) &&
          "Source access not defined for complete statement domain");
-  isl_set_free(SourceDomain);
-  isl_set_free(TargetDomain);
 #endif
   Stmts.emplace_back(*this, SourceRel, TargetRel, Domain);
   CopyStmtsNum++;

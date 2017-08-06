@@ -1183,8 +1183,8 @@ public:
   /// @param TargetRel  The target location.
   /// @param Domain     The original domain under which the copy statement would
   ///                   be executed.
-  ScopStmt(Scop &parent, __isl_take isl_map *SourceRel,
-           __isl_take isl_map *TargetRel, __isl_take isl_set *Domain);
+  ScopStmt(Scop &parent, isl::map SourceRel, isl::map TargetRel,
+           isl::set Domain);
 
   /// Initialize members after all MemoryAccesses have been added.
   void init(LoopInfo &LI);
@@ -2354,9 +2354,8 @@ public:
   /// @param TargetRel  The target location.
   /// @param Domain     The original domain under which the copy statement would
   ///                   be executed.
-  ScopStmt *addScopStmt(__isl_take isl_map *SourceRel,
-                        __isl_take isl_map *TargetRel,
-                        __isl_take isl_set *Domain);
+  ScopStmt *addScopStmt(isl::map SourceRel, isl::map TargetRel,
+                        isl::set Domain);
 
   /// Add the access function to all MemoryAccess objects of the Scop
   ///        created in this pass.

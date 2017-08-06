@@ -1048,8 +1048,7 @@ optimizeDataLayoutMatrMulPattern(isl::schedule_node Node, isl::map MapOldIndVar,
   // originating statement is executed.
   auto DomainId = Domain.get_tuple_id();
   auto *NewStmt = Stmt->getParent()->addScopStmt(
-      OldAcc.release(), MMI.B->getLatestAccessRelation().release(),
-      Domain.copy());
+      OldAcc, MMI.B->getLatestAccessRelation(), Domain);
   ExtMap = ExtMap.set_tuple_id(isl::dim::out, isl::manage(DomainId.copy()));
   ExtMap = ExtMap.intersect_range(isl::manage(Domain.copy()));
   ExtMap = ExtMap.set_tuple_id(isl::dim::out, NewStmt->getDomainId());
@@ -1072,8 +1071,7 @@ optimizeDataLayoutMatrMulPattern(isl::schedule_node Node, isl::map MapOldIndVar,
   ExtMap = ExtMap.reverse();
   ExtMap = ExtMap.fix_si(isl::dim::out, MMI.j, 0);
   NewStmt = Stmt->getParent()->addScopStmt(
-      OldAcc.release(), MMI.A->getLatestAccessRelation().release(),
-      Domain.copy());
+      OldAcc, MMI.A->getLatestAccessRelation(), Domain);
 
   // Restrict the domains of the copy statements to only execute when also its
   // originating statement is executed.
