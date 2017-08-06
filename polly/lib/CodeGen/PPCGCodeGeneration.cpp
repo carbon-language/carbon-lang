@@ -2298,6 +2298,7 @@ std::string GPUNodeBuilder::createKernelASM() {
 }
 
 bool GPUNodeBuilder::requiresCUDALibDevice() {
+  bool RequiresLibDevice = false;
   for (Function &F : GPUModule->functions()) {
     if (!F.isDeclaration())
       continue;
@@ -2305,11 +2306,11 @@ bool GPUNodeBuilder::requiresCUDALibDevice() {
     std::string CUDALibDeviceFunc = getCUDALibDeviceFuntion(&F);
     if (CUDALibDeviceFunc.length() != 0) {
       F.setName(CUDALibDeviceFunc);
-      return true;
+      RequiresLibDevice = true;
     }
   }
 
-  return false;
+  return RequiresLibDevice;
 }
 
 void GPUNodeBuilder::addCUDALibDevice() {
