@@ -441,13 +441,10 @@ private:
   /// @returns A tuple with grid sizes for X and Y dimension
   std::tuple<Value *, Value *> getGridSizes(ppcg_kernel *Kernel);
 
-  /// Creates a array that can be sent to the kernel on the device using a
-  /// host pointer. This is required for managed memory, when we directly send
-  /// host pointers to the device.
+  /// Get the managed array pointer for sending host pointers to the device.
   /// \note
   /// This is to be used only with managed memory
-  Value *getOrCreateManagedDeviceArray(gpu_array_info *Array,
-                                       ScopArrayInfo *ArrayInfo);
+  Value *getManagedDeviceArray(gpu_array_info *Array, ScopArrayInfo *ArrayInfo);
 
   /// Compute the sizes of the thread blocks for a given kernel.
   ///
@@ -652,6 +649,9 @@ private:
   /// Create code that allocates memory to store arrays on device.
   void allocateDeviceArrays();
 
+  /// Create code to prepare the managed device pointers.
+  void prepareManagedDeviceArrays();
+
   /// Free all allocated device arrays.
   void freeDeviceArrays();
 
@@ -747,6 +747,8 @@ void GPUNodeBuilder::initializeAfterRTH() {
 
   if (!ManagedMemory)
     allocateDeviceArrays();
+  else
+    prepareManagedDeviceArrays();
 }
 
 void GPUNodeBuilder::finalize() {
@@ -781,6 +783,32 @@ void GPUNodeBuilder::allocateDeviceArrays() {
   }
 
   isl_ast_build_free(Build);
+}
+
+void GPUNodeBuilder::prepareManagedDeviceArrays() {
+  assert(ManagedMemory &&
+         "Device array most only be prepared in managed-memory mode");
+  for (int i = 0; i < Prog->n_array; ++i) {
+    gpu_array_info *Array = &Prog->array[i];
+    ScopArrayInfo *ScopArray = (ScopArrayInfo *)Array->user;
+    Value *HostPtr;
+
+    if (gpu_array_is_scalar(Array))
+      HostPtr = BlockGen.getOrCreateAlloca(ScopArray);
+    else
+      HostPtr = ScopArray->getBasePtr();
+    HostPtr = getLatestValue(HostPtr);
+
+    Value *Offset = getArrayOffset(Array);
+    if (Offset) {
+      HostPtr = Builder.CreatePointerCast(
+          HostPtr, ScopArray->getElementType()->getPointerTo());
+      HostPtr = Builder.CreateGEP(HostPtr, Offset);
+    }
+
+    HostPtr = Builder.CreatePointerCast(HostPtr, Builder.getInt8PtrTy());
+    DeviceAllocations[ScopArray] = HostPtr;
+  }
 }
 
 void GPUNodeBuilder::addCUDAAnnotations(Module *M, Value *BlockDimX,
@@ -1102,35 +1130,16 @@ Value *GPUNodeBuilder::getArrayOffset(gpu_array_info *Array) {
   return ExprBuilder.create(Result.release());
 }
 
-Value *GPUNodeBuilder::getOrCreateManagedDeviceArray(gpu_array_info *Array,
-                                                     ScopArrayInfo *ArrayInfo) {
-
+Value *GPUNodeBuilder::getManagedDeviceArray(gpu_array_info *Array,
+                                             ScopArrayInfo *ArrayInfo) {
   assert(ManagedMemory && "Only used when you wish to get a host "
                           "pointer for sending data to the kernel, "
                           "with managed memory");
   std::map<ScopArrayInfo *, Value *>::iterator it;
-  if ((it = DeviceAllocations.find(ArrayInfo)) != DeviceAllocations.end()) {
-    return it->second;
-  } else {
-    Value *HostPtr;
-
-    if (gpu_array_is_scalar(Array))
-      HostPtr = BlockGen.getOrCreateAlloca(ArrayInfo);
-    else
-      HostPtr = ArrayInfo->getBasePtr();
-    HostPtr = getLatestValue(HostPtr);
-
-    Value *Offset = getArrayOffset(Array);
-    if (Offset) {
-      HostPtr = Builder.CreatePointerCast(
-          HostPtr, ArrayInfo->getElementType()->getPointerTo());
-      HostPtr = Builder.CreateGEP(HostPtr, Offset);
-    }
-
-    HostPtr = Builder.CreatePointerCast(HostPtr, Builder.getInt8PtrTy());
-    DeviceAllocations[ArrayInfo] = HostPtr;
-    return HostPtr;
-  }
+  it = DeviceAllocations.find(ArrayInfo);
+  assert(it != DeviceAllocations.end() &&
+         "Device array expected to be available");
+  return it->second;
 }
 
 void GPUNodeBuilder::createDataTransfer(__isl_take isl_ast_node *TransferStmt,
@@ -1577,8 +1586,8 @@ GPUNodeBuilder::createLaunchParameters(ppcg_kernel *Kernel, Function *F,
 
     Value *DevArray = nullptr;
     if (ManagedMemory) {
-      DevArray = getOrCreateManagedDeviceArray(
-          &Prog->array[i], const_cast<ScopArrayInfo *>(SAI));
+      DevArray = getManagedDeviceArray(&Prog->array[i],
+                                       const_cast<ScopArrayInfo *>(SAI));
     } else {
       DevArray = DeviceAllocations[const_cast<ScopArrayInfo *>(SAI)];
       DevArray = createCallGetDevicePtr(DevArray);
