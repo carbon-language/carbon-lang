@@ -2430,11 +2430,21 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
           Constant *NewC = ConstantInt::get(I.getType(), -(*C) - 1);
           return BinaryOperator::CreateAdd(V, NewC);
         }
+        if (RHSC->isSignMask()) {
+          // (C - X) ^ signmask -> (C + signmask - X)
+          Constant *NewC = ConstantInt::get(I.getType(), *C + *RHSC);
+          return BinaryOperator::CreateSub(NewC, V);
+        }
       } else if (match(Op0, m_Add(m_Value(V), m_APInt(C)))) {
         // ~(X-c) --> (-c-1)-X
         if (RHSC->isAllOnesValue()) {
           Constant *NewC = ConstantInt::get(I.getType(), -(*C) - 1);
           return BinaryOperator::CreateSub(NewC, V);
+        }
+        if (RHSC->isSignMask()) {
+          // (X + C) ^ signmask -> (X + C + signmask)
+          Constant *NewC = ConstantInt::get(I.getType(), *C + *RHSC);
+          return BinaryOperator::CreateAdd(V, NewC);
         }
       }
     }
@@ -2442,23 +2452,8 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
 
   if (ConstantInt *RHSC = dyn_cast<ConstantInt>(Op1)) {
     if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0)) {
-      if (Op0I->getOpcode() == Instruction::Sub)
-        if (ConstantInt *Op0I0C = dyn_cast<ConstantInt>(Op0I->getOperand(0))) {
-          // (C - X) ^ signmask -> (C + signmask - X)
-          if (RHSC->getValue().isSignMask()) {
-            Constant *C = Builder.getInt(RHSC->getValue() + Op0I0C->getValue());
-            return BinaryOperator::CreateSub(C, Op0I->getOperand(1));
-          }
-        }
-
       if (ConstantInt *Op0CI = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
-        if (Op0I->getOpcode() == Instruction::Add) {
-          // (X + C) ^ signmask -> (X + C + signmask)
-          if (RHSC->getValue().isSignMask()) {
-            Constant *C = Builder.getInt(RHSC->getValue() + Op0CI->getValue());
-            return BinaryOperator::CreateAdd(Op0I->getOperand(0), C);
-          }
-        } else if (Op0I->getOpcode() == Instruction::Or) {
+        if (Op0I->getOpcode() == Instruction::Or) {
           // (X|C1)^C2 -> X^(C1|C2) iff X&~C1 == 0
           if (MaskedValueIsZero(Op0I->getOperand(0), Op0CI->getValue(),
                                 0, &I)) {
