@@ -367,7 +367,7 @@ bool JSONImporter::importSchedule(Scop &S, Json::Value &JScop,
       return false;
     }
 
-    isl_space *Space = Stmt.getDomainSpace();
+    isl_space *Space = Stmt.getDomainSpace().release();
 
     // Copy the old tuple id. This is necessary to retain the user pointer,
     // that stores the reference to the ScopStmt this schedule belongs to.

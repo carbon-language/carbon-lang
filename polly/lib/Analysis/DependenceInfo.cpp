@@ -133,7 +133,7 @@ static void collectInfo(Scop &S, isl_union_map *&Read,
 
   for (ScopStmt &Stmt : S) {
     for (MemoryAccess *MA : Stmt) {
-      isl_set *domcp = Stmt.getDomain();
+      isl_set *domcp = Stmt.getDomain().release();
       isl_map *accdom = MA->getAccessRelation().release();
 
       accdom = isl_map_intersect_domain(accdom, domcp);

@@ -372,7 +372,7 @@ void IslNodeBuilder::createUserVector(__isl_take isl_ast_node *User,
   ScopStmt *Stmt = (ScopStmt *)isl_id_get_user(Id);
   std::vector<LoopToScevMapT> VLTS(IVS.size());
 
-  isl_union_set *Domain = isl_union_set_from_set(Stmt->getDomain());
+  isl_union_set *Domain = isl_union_set_from_set(Stmt->getDomain().release());
   Schedule = isl_union_map_intersect_domain(Schedule, Domain);
   isl_map *S = isl_map_from_union_map(Schedule);
 
@@ -702,7 +702,7 @@ static bool hasPartialAccesses(__isl_take isl_ast_node *Node) {
 
                ScopStmt *Stmt =
                    static_cast<ScopStmt *>(isl_id_get_user(Id.keep()));
-               isl::set StmtDom = give(Stmt->getDomain());
+               isl::set StmtDom = Stmt->getDomain();
                for (auto *MA : *Stmt) {
                  if (MA->isLatestPartialAccess())
                    return isl_bool_error;
@@ -811,7 +811,7 @@ IslNodeBuilder::createNewAccesses(ScopStmt *Stmt,
 
 #ifndef NDEBUG
     if (MA->isRead()) {
-      auto Dom = Stmt->getDomain();
+      auto Dom = Stmt->getDomain().release();
       auto SchedDom = isl_set_from_union_set(
           isl_union_map_domain(isl_union_map_copy(Schedule)));
       auto AccDom = isl_map_domain(MA->getAccessRelation().release());

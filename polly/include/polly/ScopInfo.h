@@ -1315,17 +1315,17 @@ public:
   /// Get the iteration domain of this ScopStmt.
   ///
   /// @return The iteration domain of this ScopStmt.
-  __isl_give isl_set *getDomain() const;
+  isl::set getDomain() const;
 
   /// Get the space of the iteration domain
   ///
   /// @return The space of the iteration domain
-  __isl_give isl_space *getDomainSpace() const;
+  isl::space getDomainSpace() const;
 
   /// Get the id of the iteration domain space
   ///
   /// @return The id of the iteration domain space
-  __isl_give isl_id *getDomainId() const;
+  isl::id getDomainId() const;
 
   /// Get an isl string representing this domain.
   std::string getDomainStr() const;

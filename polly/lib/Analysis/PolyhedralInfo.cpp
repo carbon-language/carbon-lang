@@ -138,8 +138,8 @@ __isl_give isl_union_map *PolyhedralInfo::getScheduleForLoop(const Scop *S,
 
       ScheduleMap = isl_map_project_out(ScheduleMap, isl_dim_out, CurrDim + 1,
                                         MaxDim - CurrDim - 1);
-      ScheduleMap =
-          isl_map_set_tuple_id(ScheduleMap, isl_dim_in, SS.getDomainId());
+      ScheduleMap = isl_map_set_tuple_id(ScheduleMap, isl_dim_in,
+                                         SS.getDomainId().release());
       Schedule =
           isl_union_map_union(Schedule, isl_union_map_from_map(ScheduleMap));
     }

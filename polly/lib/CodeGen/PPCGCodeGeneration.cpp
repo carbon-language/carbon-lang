@@ -287,7 +287,7 @@ static __isl_give isl_id_to_ast_expr *pollyBuildAstExprForStmt(
 
   for (MemoryAccess *Acc : *Stmt) {
     isl::map AddrFunc = Acc->getAddressFunction();
-    AddrFunc = AddrFunc.intersect_domain(isl::manage(Stmt->getDomain()));
+    AddrFunc = AddrFunc.intersect_domain(Stmt->getDomain());
 
     isl::id RefId = Acc->getId();
     isl::pw_multi_aff PMA = isl::pw_multi_aff::from_map(AddrFunc);
@@ -2542,7 +2542,8 @@ public:
       for (auto &Acc : Stmt)
         if (Acc->getType() == AccessTy) {
           isl_map *Relation = Acc->getAccessRelation().release();
-          Relation = isl_map_intersect_domain(Relation, Stmt.getDomain());
+          Relation =
+              isl_map_intersect_domain(Relation, Stmt.getDomain().release());
 
           isl_space *Space = isl_map_get_space(Relation);
           Space = isl_space_range(Space);
@@ -2717,7 +2718,7 @@ public:
     for (auto &Stmt : *S) {
       gpu_stmt *GPUStmt = &Stmts[i];
 
-      GPUStmt->id = Stmt.getDomainId();
+      GPUStmt->id = Stmt.getDomainId().release();
 
       // We use the pet stmt pointer to keep track of the Polly statements.
       GPUStmt->stmt = (pet_stmt *)&Stmt;
@@ -3239,7 +3240,7 @@ public:
   ///          by @p Stmt.
   __isl_give isl_ast_expr *approxDynamicInst(ScopStmt &Stmt,
                                              __isl_keep isl_ast_build *Build) {
-    auto Iterations = approxPointsInSet(Stmt.getDomain(), Build);
+    auto Iterations = approxPointsInSet(Stmt.getDomain().release(), Build);
 
     long InstCount = 0;
 

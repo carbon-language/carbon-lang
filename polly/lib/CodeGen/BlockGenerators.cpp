@@ -553,7 +553,7 @@ void BlockGenerator::generateScalarLoads(
       continue;
 
 #ifndef NDEBUG
-    auto *StmtDom = Stmt.getDomain();
+    auto *StmtDom = Stmt.getDomain().release();
     auto *AccDom = isl_map_domain(MA->getAccessRelation().release());
     assert(isl_set_is_subset(StmtDom, AccDom) &&
            "Scalar must be loaded in all statement instances");
@@ -575,7 +575,7 @@ void BlockGenerator::generateScalarLoads(
 Value *BlockGenerator::buildContainsCondition(ScopStmt &Stmt,
                                               const isl::set &Subdomain) {
   isl::ast_build AstBuild = give(isl_ast_build_copy(Stmt.getAstBuild()));
-  isl::set Domain = give(Stmt.getDomain());
+  isl::set Domain = Stmt.getDomain();
 
   isl::union_map USchedule = AstBuild.get_schedule();
   USchedule = USchedule.intersect_domain(Domain);
@@ -599,7 +599,7 @@ Value *BlockGenerator::buildContainsCondition(ScopStmt &Stmt,
 void BlockGenerator::generateConditionalExecution(
     ScopStmt &Stmt, const isl::set &Subdomain, StringRef Subject,
     const std::function<void()> &GenThenFunc) {
-  isl::set StmtDom = give(Stmt.getDomain());
+  isl::set StmtDom = Stmt.getDomain();
 
   // Don't call GenThenFunc if it is never executed. An ast index expression
   // might not be defined in this case.
