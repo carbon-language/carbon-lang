@@ -2199,10 +2199,9 @@ isl::id Scop::getIdForParam(const SCEV *Parameter) const {
   return isl::manage(isl_id_copy(ParameterIds.lookup(Parameter)));
 }
 
-__isl_give isl_set *
-Scop::addNonEmptyDomainConstraints(__isl_take isl_set *C) const {
+isl::set Scop::addNonEmptyDomainConstraints(isl::set C) const {
   isl_set *DomainContext = isl_union_set_params(getDomains());
-  return isl_set_intersect_params(C, DomainContext);
+  return isl::manage(isl_set_intersect_params(C.release(), DomainContext));
 }
 
 bool Scop::isDominatedBy(const DominatorTree &DT, BasicBlock *BB) const {
@@ -4338,7 +4337,8 @@ bool Scop::isProfitable(bool ScalarsAreUnprofitable) const {
 bool Scop::hasFeasibleRuntimeContext() const {
   auto *PositiveContext = getAssumedContext();
   auto *NegativeContext = getInvalidContext();
-  PositiveContext = addNonEmptyDomainConstraints(PositiveContext);
+  PositiveContext =
+      addNonEmptyDomainConstraints(isl::manage(PositiveContext)).release();
   bool IsFeasible = !(isl_set_is_empty(PositiveContext) ||
                       isl_set_is_subset(PositiveContext, NegativeContext));
   isl_set_free(PositiveContext);
