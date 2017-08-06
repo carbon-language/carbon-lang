@@ -2525,7 +2525,7 @@ public:
   /// Get the assumed context for this Scop.
   ///
   /// @return The assumed context of this Scop.
-  __isl_give isl_set *getAssumedContext() const;
+  isl::set getAssumedContext() const;
 
   /// Return true if the optimized SCoP can be executed.
   ///

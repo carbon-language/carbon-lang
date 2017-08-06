@@ -4301,9 +4301,9 @@ isl::space Scop::getFullParamSpace() const {
   return Space;
 }
 
-__isl_give isl_set *Scop::getAssumedContext() const {
+isl::set Scop::getAssumedContext() const {
   assert(AssumedContext && "Assumed context not yet built");
-  return isl_set_copy(AssumedContext);
+  return isl::manage(isl_set_copy(AssumedContext));
 }
 
 bool Scop::isProfitable(bool ScalarsAreUnprofitable) const {
@@ -4335,7 +4335,7 @@ bool Scop::isProfitable(bool ScalarsAreUnprofitable) const {
 }
 
 bool Scop::hasFeasibleRuntimeContext() const {
-  auto *PositiveContext = getAssumedContext();
+  auto *PositiveContext = getAssumedContext().release();
   auto *NegativeContext = getInvalidContext();
   PositiveContext =
       addNonEmptyDomainConstraints(isl::manage(PositiveContext)).release();
