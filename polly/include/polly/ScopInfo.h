@@ -310,7 +310,7 @@ public:
     return DimensionSizes[Dim];
   }
 
-  /// Return the size of dimension @p dim as isl_pw_aff.
+  /// Return the size of dimension @p dim as isl::pw_aff.
   //
   //  Scalars do not have array dimensions and the first dimension of
   //  a (possibly multi-dimensional) array also does not carry any size
@@ -371,7 +371,7 @@ public:
 
   /// Print a readable representation to @p OS.
   ///
-  /// @param SizeAsPwAff Print the size as isl_pw_aff
+  /// @param SizeAsPwAff Print the size as isl::pw_aff
   void print(raw_ostream &OS, bool SizeAsPwAff = false) const;
 
   /// Access the ScopArrayInfo associated with an access function.
@@ -428,7 +428,7 @@ private:
   /// The sizes of each dimension as SCEV*.
   SmallVector<const SCEV *, 4> DimensionSizes;
 
-  /// The sizes of each dimension as isl_pw_aff.
+  /// The sizes of each dimension as isl::pw_aff.
   SmallVector<isl::pw_aff, 4> DimensionSizesPw;
 
   /// The type of this scop array info object.
@@ -854,10 +854,10 @@ public:
   /// valued base pointer in case invariant load hoisting is enabled.
   Value *getOriginalBaseAddr() const { return BaseAddr; }
 
-  /// Get the detection-time base array isl_id for this access.
+  /// Get the detection-time base array isl::id for this access.
   isl::id getOriginalArrayId() const;
 
-  /// Get the base array isl_id for this access, modifiable through
+  /// Get the base array isl::id for this access, modifiable through
   /// setNewAccessRelation().
   isl::id getLatestArrayId() const;
 
