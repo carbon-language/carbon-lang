@@ -946,7 +946,7 @@ void MemoryAccess::buildAccessRelation(const ScopArrayInfo *SAI) {
 
   // Initialize the invalid domain which describes all iterations for which the
   // access relation is not modeled correctly.
-  isl::set StmtInvalidDomain = isl::manage(getStatement()->getInvalidDomain());
+  isl::set StmtInvalidDomain = getStatement()->getInvalidDomain();
   InvalidDomain = isl::set::empty(StmtInvalidDomain.get_space());
 
   isl::ctx Ctx = Id.get_ctx();
@@ -1316,9 +1316,9 @@ void ScopStmt::realignParams() {
   for (MemoryAccess *MA : *this)
     MA->realignParams();
 
-  auto *Ctx = Parent.getContext();
-  InvalidDomain = isl_set_gist_params(InvalidDomain, isl_set_copy(Ctx));
-  Domain = isl_set_gist_params(Domain, Ctx);
+  isl::set Ctx = isl::manage(Parent.getContext());
+  InvalidDomain = InvalidDomain.gist_params(Ctx);
+  Domain = isl_set_gist_params(Domain, Ctx.get());
 }
 
 /// Add @p BSet to the set @p User if @p BSet is bounded.
@@ -1895,10 +1895,7 @@ std::string ScopStmt::getScheduleStr() const {
   return Str;
 }
 
-void ScopStmt::setInvalidDomain(__isl_take isl_set *ID) {
-  isl_set_free(InvalidDomain);
-  InvalidDomain = ID;
-}
+void ScopStmt::setInvalidDomain(isl::set ID) { InvalidDomain = ID; }
 
 BasicBlock *ScopStmt::getEntryBlock() const {
   if (isBlockStmt())
@@ -1926,10 +1923,7 @@ __isl_give isl_id *ScopStmt::getDomainId() const {
   return isl_set_get_tuple_id(Domain);
 }
 
-ScopStmt::~ScopStmt() {
-  isl_set_free(Domain);
-  isl_set_free(InvalidDomain);
-}
+ScopStmt::~ScopStmt() { isl_set_free(Domain); }
 
 void ScopStmt::printInstructions(raw_ostream &OS) const {
   OS << "Instructions {\n";
@@ -3890,13 +3884,13 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, InvariantAccessesTy &InvMAs) {
   if (InvMAs.empty())
     return;
 
-  auto *StmtInvalidCtx = Stmt.getInvalidContext();
-  bool StmtInvalidCtxIsEmpty = isl_set_is_empty(StmtInvalidCtx);
+  isl::set StmtInvalidCtx = Stmt.getInvalidContext();
+  bool StmtInvalidCtxIsEmpty = StmtInvalidCtx.is_empty();
 
   // Get the context under which the statement is executed but remove the error
   // context under which this statement is reached.
   isl_set *DomainCtx = isl_set_params(Stmt.getDomain());
-  DomainCtx = isl_set_subtract(DomainCtx, StmtInvalidCtx);
+  DomainCtx = isl_set_subtract(DomainCtx, StmtInvalidCtx.copy());
 
   if (isl_set_n_basic_set(DomainCtx) >= MaxDisjunctsInDomain) {
     auto *AccInst = InvMAs.front().MA->getAccessInstruction();

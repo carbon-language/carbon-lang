@@ -1201,7 +1201,7 @@ private:
   /// The invalid domain for a statement describes all parameter combinations
   /// under which the statement looks to be executed but is in fact not because
   /// some assumption/restriction makes the statement/scop invalid.
-  isl_set *InvalidDomain;
+  isl::set InvalidDomain;
 
   /// The iteration domain describes the set of iterations for which this
   /// statement is executed.
@@ -1343,17 +1343,13 @@ public:
   std::string getScheduleStr() const;
 
   /// Get the invalid domain for this statement.
-  __isl_give isl_set *getInvalidDomain() const {
-    return isl_set_copy(InvalidDomain);
-  }
+  isl::set getInvalidDomain() const { return InvalidDomain; }
 
   /// Get the invalid context for this statement.
-  __isl_give isl_set *getInvalidContext() const {
-    return isl_set_params(getInvalidDomain());
-  }
+  isl::set getInvalidContext() const { return getInvalidDomain().params(); }
 
   /// Set the invalid context for this statement to @p ID.
-  void setInvalidDomain(__isl_take isl_set *ID);
+  void setInvalidDomain(isl::set ID);
 
   /// Get the BasicBlock represented by this ScopStmt (if any).
   ///
