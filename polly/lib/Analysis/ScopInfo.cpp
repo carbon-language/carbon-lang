@@ -3050,13 +3050,12 @@ bool Scop::buildDomainsWithBranchConstraints(
   return true;
 }
 
-__isl_give isl_set *
-Scop::getPredecessorDomainConstraints(BasicBlock *BB,
-                                      __isl_keep isl_set *Domain,
-                                      DominatorTree &DT, LoopInfo &LI) {
+isl::set Scop::getPredecessorDomainConstraints(BasicBlock *BB, isl::set Domain,
+                                               DominatorTree &DT,
+                                               LoopInfo &LI) {
   // If @p BB is the ScopEntry we are done
   if (R.getEntry() == BB)
-    return isl_set_universe(isl_set_get_space(Domain));
+    return isl::set::universe(Domain.get_space());
 
   // The region info of this function.
   auto &RI = *R.getRegionInfo();
@@ -3065,7 +3064,7 @@ Scop::getPredecessorDomainConstraints(BasicBlock *BB,
 
   // A domain to collect all predecessor domains, thus all conditions under
   // which the block is executed. To this end we start with the empty domain.
-  isl_set *PredDom = isl_set_empty(isl_set_get_space(Domain));
+  isl::set PredDom = isl::set::empty(Domain.get_space());
 
   // Set of regions of which the entry block domain has been propagated to BB.
   // all predecessors inside any of the regions can be skipped.
@@ -3101,7 +3100,7 @@ Scop::getPredecessorDomainConstraints(BasicBlock *BB,
 
     PredBBDom = adjustDomainDimensions(*this, PredBBDom, PredBBLoop, BBLoop);
 
-    PredDom = isl_set_union(PredDom, PredBBDom);
+    PredDom = PredDom.unite(isl::manage(PredBBDom));
   }
 
   return PredDom;
@@ -3138,8 +3137,7 @@ bool Scop::propagateDomainConstraints(
     assert(Domain);
 
     // Under the union of all predecessor conditions we can reach this block.
-    isl::set PredDom =
-        isl::manage(getPredecessorDomainConstraints(BB, Domain.get(), DT, LI));
+    isl::set PredDom = getPredecessorDomainConstraints(BB, Domain, DT, LI);
     Domain = Domain.intersect(PredDom).coalesce();
     Domain = Domain.align_params(isl::manage(getParamSpace()));
 
