@@ -4698,15 +4698,6 @@ Scop::getAccessesOfType(std::function<bool(MemoryAccess &)> Predicate) {
   }
 
   return isl_union_map_coalesce(Accesses);
-
-  for (auto X : this->getInvariantAccesses())
-    for (auto A : X.InvariantAccesses) {
-      if (!Predicate(*A))
-        continue;
-      Accesses =
-          isl_union_map_add_map(Accesses, A->getAccessRelation().release());
-    }
-  return isl_union_map_coalesce(Accesses);
 }
 
 __isl_give isl_union_map *Scop::getMustWrites() {
