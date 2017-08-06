@@ -126,14 +126,6 @@ Instruction *InstCombiner::OptAndOp(BinaryOperator *Op,
 
   switch (Op->getOpcode()) {
   default: break;
-  case Instruction::Xor:
-    if (Op->hasOneUse()) {
-      // (X ^ C1) & C2 --> (X & C2) ^ (C1&C2)
-      Value *And = Builder.CreateAnd(X, AndRHS);
-      And->takeName(Op);
-      return BinaryOperator::CreateXor(And, Together);
-    }
-    break;
   case Instruction::Or:
     if (Op->hasOneUse()){
       ConstantInt *TogetherCI = dyn_cast<ConstantInt>(Together);
@@ -1280,6 +1272,15 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
       return new ZExtInst(IsZero, I.getType());
     }
 
+    const APInt *XorC;
+    if (match(Op0, m_OneUse(m_Xor(m_Value(X), m_APInt(XorC))))) {
+      // (X ^ C1) & C2 --> (X & C2) ^ (C1&C2)
+      Constant *NewC = ConstantInt::get(I.getType(), *C & *XorC);
+      Value *And = Builder.CreateAnd(X, Op1);
+      And->takeName(Op0);
+      return BinaryOperator::CreateXor(And, NewC);
+    }
+
     // If the mask is only needed on one incoming arm, push the 'and' op up.
     if (match(Op0, m_OneUse(m_Xor(m_Value(X), m_Value(Y)))) ||
         match(Op0, m_OneUse(m_Or(m_Value(X), m_Value(Y))))) {
@@ -1298,6 +1299,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         return BinaryOperator::Create(BinOp, NewLHS, Y);
       }
     }
+
   }
 
   if (ConstantInt *AndRHS = dyn_cast<ConstantInt>(Op1)) {
