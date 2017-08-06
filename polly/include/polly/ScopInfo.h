@@ -1222,7 +1222,7 @@ private:
   ///
   /// A pair of statement and iteration vector (S, (5,3)) is called statement
   /// instance.
-  isl_set *Domain;
+  isl::set Domain;
 
   /// The memory accesses of this statement.
   ///
@@ -1598,7 +1598,7 @@ public:
   /// Restrict the domain of the statement.
   ///
   /// @param NewDomain The new statement domain.
-  void restrictDomain(__isl_take isl_set *NewDomain);
+  void restrictDomain(isl::set NewDomain);
 
   /// Get the loop for a dimension.
   ///
