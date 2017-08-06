@@ -3886,8 +3886,6 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, InvariantAccessesTy &InvMAs) {
     auto *AccInst = InvMAs.front().MA->getAccessInstruction();
     invalidate(COMPLEXITY, AccInst->getDebugLoc(), AccInst->getParent());
     isl_set_free(DomainCtx);
-    for (auto &InvMA : InvMAs)
-      isl_set_free(InvMA.NonHoistableCtx);
     return;
   }
 
@@ -3919,7 +3917,7 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, InvariantAccessesTy &InvMAs) {
 
   for (auto &InvMA : InvMAs) {
     auto *MA = InvMA.MA;
-    auto *NHCtx = InvMA.NonHoistableCtx;
+    auto *NHCtx = InvMA.NonHoistableCtx.copy();
 
     // Check for another invariant access that accesses the same location as
     // MA and if found consolidate them. Otherwise create a new equivalence
@@ -4116,7 +4114,7 @@ void Scop::hoistInvariantLoads() {
 
     for (MemoryAccess *Access : Stmt)
       if (isl::set NHCtx = getNonHoistableCtx(Access, Writes))
-        InvariantAccesses.push_back({Access, NHCtx.release()});
+        InvariantAccesses.push_back({Access, NHCtx});
 
     // Transfer the memory access from the statement to the SCoP.
     for (auto InvMA : InvariantAccesses)
