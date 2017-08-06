@@ -479,7 +479,7 @@ void MemoryAccess::wrapConstantDimensions() {
 
     // Compute: index % size
     // Modulo must apply in the divide of the previous iteration, if any.
-    isl::aff Modulo = Var.mod_val(DimSizeVal);
+    isl::aff Modulo = Var.mod(DimSizeVal);
     Modulo = Modulo.pullback(DivModAff);
 
     // Compute: floor(index / size)
