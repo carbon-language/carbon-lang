@@ -1318,7 +1318,7 @@ void ScopStmt::realignParams() {
 
   isl::set Ctx = isl::manage(Parent.getContext());
   InvalidDomain = InvalidDomain.gist_params(Ctx);
-  Domain = isl_set_gist_params(Domain, Ctx.get());
+  Domain = isl_set_gist_params(Domain, Ctx.copy());
 }
 
 /// Add @p BSet to the set @p User if @p BSet is bounded.
