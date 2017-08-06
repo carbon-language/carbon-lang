@@ -3878,13 +3878,12 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, InvariantAccessesTy &InvMAs) {
 
   // Get the context under which the statement is executed but remove the error
   // context under which this statement is reached.
-  isl_set *DomainCtx = isl_set_params(Stmt.getDomain().release());
-  DomainCtx = isl_set_subtract(DomainCtx, StmtInvalidCtx.copy());
+  isl::set DomainCtx = Stmt.getDomain().params();
+  DomainCtx = DomainCtx.subtract(StmtInvalidCtx);
 
-  if (isl_set_n_basic_set(DomainCtx) >= MaxDisjunctsInDomain) {
+  if (isl_set_n_basic_set(DomainCtx.get()) >= MaxDisjunctsInDomain) {
     auto *AccInst = InvMAs.front().MA->getAccessInstruction();
     invalidate(COMPLEXITY, AccInst->getDebugLoc(), AccInst->getParent());
-    isl_set_free(DomainCtx);
     return;
   }
 
@@ -3904,11 +3903,10 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, InvariantAccessesTy &InvMAs) {
         if (!Values.count(AccInst))
           continue;
 
-        if (isl_id *ParamId = getIdForParam(Parameter).release()) {
-          int Dim = isl_set_find_dim_by_id(DomainCtx, isl_dim_param, ParamId);
+        if (isl::id ParamId = getIdForParam(Parameter)) {
+          int Dim = DomainCtx.find_dim_by_id(isl::dim::param, ParamId);
           if (Dim >= 0)
-            DomainCtx = isl_set_eliminate(DomainCtx, isl_dim_param, Dim, 1);
-          isl_id_free(ParamId);
+            DomainCtx = DomainCtx.eliminate(isl::dim::param, Dim, 1);
         }
       }
     }
@@ -3916,7 +3914,7 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, InvariantAccessesTy &InvMAs) {
 
   for (auto &InvMA : InvMAs) {
     auto *MA = InvMA.MA;
-    auto *NHCtx = InvMA.NonHoistableCtx.copy();
+    isl::set NHCtx = InvMA.NonHoistableCtx;
 
     // Check for another invariant access that accesses the same location as
     // MA and if found consolidate them. Otherwise create a new equivalence
@@ -3925,21 +3923,19 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, InvariantAccessesTy &InvMAs) {
     Type *Ty = LInst->getType();
     const SCEV *PointerSCEV = SE->getSCEV(LInst->getPointerOperand());
 
-    auto *MAInvalidCtx = MA->getInvalidContext().release();
-    bool NonHoistableCtxIsEmpty = isl_set_is_empty(NHCtx);
-    bool MAInvalidCtxIsEmpty = isl_set_is_empty(MAInvalidCtx);
+    isl::set MAInvalidCtx = MA->getInvalidContext();
+    bool NonHoistableCtxIsEmpty = NHCtx.is_empty();
+    bool MAInvalidCtxIsEmpty = MAInvalidCtx.is_empty();
 
-    isl_set *MACtx;
+    isl::set MACtx;
     // Check if we know that this pointer can be speculatively accessed.
     if (canAlwaysBeHoisted(MA, StmtInvalidCtxIsEmpty, MAInvalidCtxIsEmpty,
                            NonHoistableCtxIsEmpty)) {
-      MACtx = isl_set_universe(isl_set_get_space(DomainCtx));
-      isl_set_free(MAInvalidCtx);
-      isl_set_free(NHCtx);
+      MACtx = isl::set::universe(DomainCtx.get_space());
     } else {
-      MACtx = isl_set_copy(DomainCtx);
-      MACtx = isl_set_subtract(MACtx, isl_set_union(MAInvalidCtx, NHCtx));
-      MACtx = isl_set_gist_params(MACtx, getContext().release());
+      MACtx = DomainCtx;
+      MACtx = MACtx.subtract(MAInvalidCtx.unite(NHCtx));
+      MACtx = MACtx.gist_params(getContext());
     }
 
     bool Consolidated = false;
@@ -3956,11 +3952,9 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, InvariantAccessesTy &InvMAs) {
       if (!MAs.empty()) {
         auto *LastMA = MAs.front();
 
-        auto *AR = isl_map_range(MA->getAccessRelation().release());
-        auto *LastAR = isl_map_range(LastMA->getAccessRelation().release());
-        bool SameAR = isl_set_is_equal(AR, LastAR);
-        isl_set_free(AR);
-        isl_set_free(LastAR);
+        isl::set AR = MA->getAccessRelation().range();
+        isl::set LastAR = LastMA->getAccessRelation().range();
+        bool SameAR = AR.is_equal(LastAR);
 
         if (!SameAR)
           continue;
@@ -3972,12 +3966,12 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, InvariantAccessesTy &InvMAs) {
       Consolidated = true;
 
       // Unify the execution context of the class and this statement.
-      isl_set *&IAClassDomainCtx = IAClass.ExecutionContext;
+      isl::set IAClassDomainCtx = isl::manage(IAClass.ExecutionContext);
       if (IAClassDomainCtx)
-        IAClassDomainCtx =
-            isl_set_coalesce(isl_set_union(IAClassDomainCtx, MACtx));
+        IAClassDomainCtx = IAClassDomainCtx.unite(MACtx).coalesce();
       else
         IAClassDomainCtx = MACtx;
+      IAClass.ExecutionContext = IAClassDomainCtx.release();
       break;
     }
 
@@ -3986,11 +3980,9 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, InvariantAccessesTy &InvMAs) {
 
     // If we did not consolidate MA, thus did not find an equivalence class
     // for it, we create a new one.
-    InvariantEquivClasses.emplace_back(
-        InvariantEquivClassTy{PointerSCEV, MemoryAccessList{MA}, MACtx, Ty});
+    InvariantEquivClasses.emplace_back(InvariantEquivClassTy{
+        PointerSCEV, MemoryAccessList{MA}, MACtx.release(), Ty});
   }
-
-  isl_set_free(DomainCtx);
 }
 
 /// Check if an access range is too complex.
