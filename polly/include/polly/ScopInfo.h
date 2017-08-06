@@ -2872,17 +2872,17 @@ public:
   ///
   /// This function is like @see Scop::getPwAff() but strips away the invalid
   /// domain part associated with the piecewise affine function.
-  __isl_give isl_pw_aff *getPwAffOnly(const SCEV *E, BasicBlock *BB = nullptr);
+  isl::pw_aff getPwAffOnly(const SCEV *E, BasicBlock *BB = nullptr);
 
   /// Return the domain of @p Stmt.
   ///
   /// @param Stmt The statement for which the conditions should be returned.
-  __isl_give isl_set *getDomainConditions(const ScopStmt *Stmt) const;
+  isl::set getDomainConditions(const ScopStmt *Stmt) const;
 
   /// Return the domain of @p BB.
   ///
   /// @param BB The block for which the conditions should be returned.
-  __isl_give isl_set *getDomainConditions(BasicBlock *BB) const;
+  isl::set getDomainConditions(BasicBlock *BB) const;
 
   /// Get a union set containing the iteration domains of all statements.
   isl::union_set getDomains() const;
@@ -2906,10 +2906,10 @@ public:
   ///
   /// @return The schedule of all the statements in the SCoP, if the schedule of
   /// the Scop does not contain extension nodes, and nullptr, otherwise.
-  __isl_give isl_union_map *getSchedule() const;
+  isl::union_map getSchedule() const;
 
   /// Get a schedule tree describing the schedule of all statements.
-  __isl_give isl_schedule *getScheduleTree() const;
+  isl::schedule getScheduleTree() const;
 
   /// Update the current schedule
   ///

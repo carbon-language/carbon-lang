@@ -2653,7 +2653,7 @@ public:
     PPCGScop->dep_order = nullptr;
     PPCGScop->tagged_dep_order = nullptr;
 
-    PPCGScop->schedule = S->getScheduleTree();
+    PPCGScop->schedule = S->getScheduleTree().release();
     // If we have something non-trivial to kill, add it to the schedule
     if (KillsInfo.KillsSchedule.get())
       PPCGScop->schedule = isl_schedule_sequence(

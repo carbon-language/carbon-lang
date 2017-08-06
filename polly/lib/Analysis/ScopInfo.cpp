@@ -382,7 +382,7 @@ bool ScopArrayInfo::updateSizes(ArrayRef<const SCEV *> NewSizes,
       DimensionSizesPw.push_back(nullptr);
       continue;
     }
-    isl::pw_aff Size = isl::manage(S.getPwAffOnly(Expr));
+    isl::pw_aff Size = S.getPwAffOnly(Expr);
     DimensionSizesPw.push_back(Size);
   }
   return true;
@@ -1228,7 +1228,7 @@ isl::map ScopStmt::getSchedule() const {
     return isl::manage(isl_map_from_aff(isl_aff_zero_on_domain(
         isl_local_space_from_space(getDomainSpace().release()))));
   }
-  auto *Schedule = getParent()->getSchedule();
+  auto *Schedule = getParent()->getSchedule().release();
   if (!Schedule) {
     isl_set_free(Domain);
     return nullptr;
@@ -1688,7 +1688,7 @@ buildConditionSets(Scop &S, BasicBlock *BB, TerminatorInst *TI, Loop *L,
 void ScopStmt::buildDomain() {
   isl::id Id = isl::id::alloc(getIslCtx(), getBaseName(), this);
 
-  Domain = isl::manage(getParent()->getDomainConditions(this));
+  Domain = getParent()->getDomainConditions(this);
   Domain = Domain.set_tuple_id(Id);
 }
 
@@ -2681,14 +2681,14 @@ static inline __isl_give isl_set *addDomainDimId(__isl_take isl_set *Domain,
   return isl_set_set_dim_id(Domain, isl_dim_set, Dim, DimId);
 }
 
-__isl_give isl_set *Scop::getDomainConditions(const ScopStmt *Stmt) const {
+isl::set Scop::getDomainConditions(const ScopStmt *Stmt) const {
   return getDomainConditions(Stmt->getEntryBlock());
 }
 
-__isl_give isl_set *Scop::getDomainConditions(BasicBlock *BB) const {
+isl::set Scop::getDomainConditions(BasicBlock *BB) const {
   auto DIt = DomainMap.find(BB);
   if (DIt != DomainMap.end())
-    return DIt->getSecond().copy();
+    return DIt->getSecond();
 
   auto &RI = *R.getRegionInfo();
   auto *BBR = RI.getRegionFor(BB);
@@ -3096,7 +3096,7 @@ isl::set Scop::getPredecessorDomainConstraints(BasicBlock *BB, isl::set Domain,
       PropagatedRegions.insert(PredR);
     }
 
-    auto *PredBBDom = getDomainConditions(PredBB);
+    auto *PredBBDom = getDomainConditions(PredBB).release();
     Loop *PredBBLoop = getFirstNonBoxedLoopFor(PredBB, LI, getBoxedLoops());
 
     PredBBDom = adjustDomainDimensions(*this, PredBBDom, PredBBLoop, BBLoop);
@@ -4499,7 +4499,7 @@ void Scop::addRecordedAssumptions() {
     }
 
     // If the domain was deleted the assumptions are void.
-    isl_set *Dom = getDomainConditions(AS.BB);
+    isl_set *Dom = getDomainConditions(AS.BB).release();
     if (!Dom) {
       isl_set_free(AS.Set);
       continue;
@@ -4676,10 +4676,10 @@ isl::union_set Scop::getDomains() const {
   return isl::manage(Domain);
 }
 
-__isl_give isl_pw_aff *Scop::getPwAffOnly(const SCEV *E, BasicBlock *BB) {
+isl::pw_aff Scop::getPwAffOnly(const SCEV *E, BasicBlock *BB) {
   PWACtx PWAC = getPwAff(E, BB);
   isl_set_free(PWAC.second);
-  return PWAC.first;
+  return isl::manage(PWAC.first);
 }
 
 isl::union_map
@@ -4736,20 +4736,20 @@ bool Scop::containsExtensionNode(__isl_keep isl_schedule *Schedule) {
                                                      nullptr) == isl_stat_error;
 }
 
-__isl_give isl_union_map *Scop::getSchedule() const {
-  auto *Tree = getScheduleTree();
+isl::union_map Scop::getSchedule() const {
+  auto *Tree = getScheduleTree().release();
   if (containsExtensionNode(Tree)) {
     isl_schedule_free(Tree);
     return nullptr;
   }
   auto *S = isl_schedule_get_map(Tree);
   isl_schedule_free(Tree);
-  return S;
+  return isl::manage(S);
 }
 
-__isl_give isl_schedule *Scop::getScheduleTree() const {
-  return isl_schedule_intersect_domain(isl_schedule_copy(Schedule),
-                                       getDomains().release());
+isl::schedule Scop::getScheduleTree() const {
+  return isl::manage(isl_schedule_intersect_domain(isl_schedule_copy(Schedule),
+                                                   getDomains().release()));
 }
 
 void Scop::setSchedule(__isl_take isl_union_map *NewSchedule) {

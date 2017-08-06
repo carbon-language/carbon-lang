@@ -251,7 +251,7 @@ static std::string printInstruction(Instruction *Instr,
 
 ZoneAlgorithm::ZoneAlgorithm(const char *PassName, Scop *S, LoopInfo *LI)
     : PassName(PassName), IslCtx(S->getSharedIslCtx()), S(S), LI(LI),
-      Schedule(give(S->getSchedule())) {
+      Schedule(S->getSchedule()) {
   auto Domains = S->getDomains();
 
   Schedule =

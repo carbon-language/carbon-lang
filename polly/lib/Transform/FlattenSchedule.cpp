@@ -60,7 +60,7 @@ public:
     IslCtx = S.getSharedIslCtx();
 
     DEBUG(dbgs() << "Going to flatten old schedule:\n");
-    OldSchedule = give(S.getSchedule());
+    OldSchedule = S.getSchedule();
     DEBUG(printSchedule(dbgs(), OldSchedule, 2));
 
     auto Domains = S.getDomains();
@@ -87,7 +87,7 @@ public:
     OS << "}\n\n";
 
     OS << "Schedule after flattening {\n";
-    printSchedule(OS, give(S.getSchedule()), 4);
+    printSchedule(OS, S.getSchedule(), 4);
     OS << "}\n";
   }
 

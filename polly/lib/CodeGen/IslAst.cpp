@@ -412,7 +412,7 @@ void IslAst::init(const Dependences &D) {
   // We can not perform the dependence analysis and, consequently,
   // the parallel code generation in case the schedule tree contains
   // extension nodes.
-  auto *ScheduleTree = S.getScheduleTree();
+  auto *ScheduleTree = S.getScheduleTree().release();
   PerformParallelTest =
       PerformParallelTest && !S.containsExtensionNode(ScheduleTree);
   isl_schedule_free(ScheduleTree);
@@ -453,7 +453,7 @@ void IslAst::init(const Dependences &D) {
 
   RunCondition = buildRunCondition(S, Build);
 
-  Root = isl_ast_build_node_from_schedule(Build, S.getScheduleTree());
+  Root = isl_ast_build_node_from_schedule(Build, S.getScheduleTree().release());
 
   isl_ast_build_free(Build);
 }
@@ -654,7 +654,7 @@ void IslAstInfo::print(raw_ostream &OS) {
   P = isl_ast_node_print(RootNode, P, Options);
   AstStr = isl_printer_get_str(P);
 
-  auto *Schedule = S.getScheduleTree();
+  auto *Schedule = S.getScheduleTree().release();
 
   DEBUG({
     dbgs() << S.getContextStr() << "\n";

@@ -420,7 +420,7 @@ void Dependences::calculateDependences(Scop &S) {
         dbgs() << "ReductionTagMap: " << ReductionTagMap << '\n';
         dbgs() << "TaggedStmtDomain: " << TaggedStmtDomain << '\n';);
 
-  Schedule = S.getScheduleTree();
+  Schedule = S.getScheduleTree().release();
 
   if (!HasReductions) {
     isl_union_map_free(ReductionTagMap);
