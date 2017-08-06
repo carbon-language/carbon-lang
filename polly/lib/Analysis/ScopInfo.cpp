@@ -4336,7 +4336,7 @@ bool Scop::isProfitable(bool ScalarsAreUnprofitable) const {
 
 bool Scop::hasFeasibleRuntimeContext() const {
   auto *PositiveContext = getAssumedContext().release();
-  auto *NegativeContext = getInvalidContext();
+  auto *NegativeContext = getInvalidContext().release();
   PositiveContext =
       addNonEmptyDomainConstraints(isl::manage(PositiveContext)).release();
   bool IsFeasible = !(isl_set_is_empty(PositiveContext) ||
@@ -4529,8 +4529,8 @@ void Scop::invalidate(AssumptionKind Kind, DebugLoc Loc, BasicBlock *BB) {
                 AS_ASSUMPTION, BB);
 }
 
-__isl_give isl_set *Scop::getInvalidContext() const {
-  return isl_set_copy(InvalidContext);
+isl::set Scop::getInvalidContext() const {
+  return isl::manage(isl_set_copy(InvalidContext));
 }
 
 void Scop::printContext(raw_ostream &OS) const {

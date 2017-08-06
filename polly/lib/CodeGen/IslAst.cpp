@@ -351,7 +351,8 @@ IslAst::buildRunCondition(Scop &S, __isl_keep isl_ast_build *Build) {
     RunCondition = PosCond;
   } else {
     auto *ZeroV = isl_val_zero(isl_ast_build_get_ctx(Build));
-    auto *NegCond = isl_ast_build_expr_from_set(Build, S.getInvalidContext());
+    auto *NegCond =
+        isl_ast_build_expr_from_set(Build, S.getInvalidContext().release());
     auto *NotNegCond = isl_ast_expr_eq(isl_ast_expr_from_val(ZeroV), NegCond);
     RunCondition = isl_ast_expr_and(PosCond, NotNegCond);
   }

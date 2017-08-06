@@ -2619,7 +2619,7 @@ public:
   /// Get the invalid context for this Scop.
   ///
   /// @return The invalid context of this Scop.
-  __isl_give isl_set *getInvalidContext() const;
+  isl::set getInvalidContext() const;
 
   /// Return true if and only if the InvalidContext is trivial (=empty).
   bool hasTrivialInvalidContext() const {
