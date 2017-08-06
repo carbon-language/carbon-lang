@@ -238,7 +238,7 @@ public:
   /// @param DL             The data layout of the module.
   /// @param S              The scop this array object belongs to.
   /// @param BaseName       The optional name of this memory reference.
-  ScopArrayInfo(Value *BasePtr, Type *ElementType, isl_ctx *IslCtx,
+  ScopArrayInfo(Value *BasePtr, Type *ElementType, isl::ctx IslCtx,
                 ArrayRef<const SCEV *> DimensionSizes, MemoryKind Kind,
                 const DataLayout &DL, Scop *S, const char *BaseName = nullptr);
 
