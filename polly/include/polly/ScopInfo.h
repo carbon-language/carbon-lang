@@ -2322,7 +2322,7 @@ private:
   ///                  of a given type.
   ///
   /// @returns The set of memory accesses in the scop that match the predicate.
-  __isl_give isl_union_map *
+  isl::union_map
   getAccessesOfType(std::function<bool(MemoryAccess &)> Predicate);
 
   /// @name Helper functions for printing the Scop.
@@ -2888,19 +2888,19 @@ public:
   __isl_give isl_union_set *getDomains() const;
 
   /// Get a union map of all may-writes performed in the SCoP.
-  __isl_give isl_union_map *getMayWrites();
+  isl::union_map getMayWrites();
 
   /// Get a union map of all must-writes performed in the SCoP.
-  __isl_give isl_union_map *getMustWrites();
+  isl::union_map getMustWrites();
 
   /// Get a union map of all writes performed in the SCoP.
-  __isl_give isl_union_map *getWrites();
+  isl::union_map getWrites();
 
   /// Get a union map of all reads performed in the SCoP.
-  __isl_give isl_union_map *getReads();
+  isl::union_map getReads();
 
   /// Get a union map of all memory accesses performed in the SCoP.
-  __isl_give isl_union_map *getAccesses();
+  isl::union_map getAccesses();
 
   /// Get the schedule of all the statements in the SCoP.
   ///

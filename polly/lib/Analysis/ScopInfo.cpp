@@ -290,7 +290,7 @@ isl::space ScopArrayInfo::getSpace() const {
 }
 
 bool ScopArrayInfo::isReadOnly() {
-  isl::union_set WriteSet = give(S.getWrites()).range();
+  isl::union_set WriteSet = S.getWrites().range();
   isl::space Space = getSpace();
   WriteSet = WriteSet.extract_set(Space);
 
@@ -3538,7 +3538,7 @@ Scop::Scop(Region &R, ScalarEvolution &ScalarEvolution, LoopInfo &LI,
 }
 
 void Scop::foldSizeConstantsToRight() {
-  isl_union_set *Accessed = isl_union_map_range(getAccesses());
+  isl_union_set *Accessed = isl_union_map_range(getAccesses().release());
 
   for (auto Array : arrays()) {
     if (Array->getNumberOfDimensions() <= 1)
@@ -4106,7 +4106,7 @@ void Scop::hoistInvariantLoads() {
   if (!PollyInvariantLoadHoisting)
     return;
 
-  isl::union_map Writes = give(getWrites());
+  isl::union_map Writes = getWrites();
   for (ScopStmt &Stmt : *this) {
     InvariantAccessesTy InvariantAccesses;
 
@@ -4681,42 +4681,42 @@ __isl_give isl_pw_aff *Scop::getPwAffOnly(const SCEV *E, BasicBlock *BB) {
   return PWAC.first;
 }
 
-__isl_give isl_union_map *
+isl::union_map
 Scop::getAccessesOfType(std::function<bool(MemoryAccess &)> Predicate) {
-  isl_union_map *Accesses = isl_union_map_empty(getParamSpace());
+  isl::union_map Accesses = isl::union_map::empty(isl::manage(getParamSpace()));
 
   for (ScopStmt &Stmt : *this) {
     for (MemoryAccess *MA : Stmt) {
       if (!Predicate(*MA))
         continue;
 
-      isl_set *Domain = Stmt.getDomain().release();
-      isl_map *AccessDomain = MA->getAccessRelation().release();
-      AccessDomain = isl_map_intersect_domain(AccessDomain, Domain);
-      Accesses = isl_union_map_add_map(Accesses, AccessDomain);
+      isl::set Domain = Stmt.getDomain();
+      isl::map AccessDomain = MA->getAccessRelation();
+      AccessDomain = AccessDomain.intersect_domain(Domain);
+      Accesses = Accesses.add_map(AccessDomain);
     }
   }
 
-  return isl_union_map_coalesce(Accesses);
+  return Accesses.coalesce();
 }
 
-__isl_give isl_union_map *Scop::getMustWrites() {
+isl::union_map Scop::getMustWrites() {
   return getAccessesOfType([](MemoryAccess &MA) { return MA.isMustWrite(); });
 }
 
-__isl_give isl_union_map *Scop::getMayWrites() {
+isl::union_map Scop::getMayWrites() {
   return getAccessesOfType([](MemoryAccess &MA) { return MA.isMayWrite(); });
 }
 
-__isl_give isl_union_map *Scop::getWrites() {
+isl::union_map Scop::getWrites() {
   return getAccessesOfType([](MemoryAccess &MA) { return MA.isWrite(); });
 }
 
-__isl_give isl_union_map *Scop::getReads() {
+isl::union_map Scop::getReads() {
   return getAccessesOfType([](MemoryAccess &MA) { return MA.isRead(); });
 }
 
-__isl_give isl_union_map *Scop::getAccesses() {
+isl::union_map Scop::getAccesses() {
   return getAccessesOfType([](MemoryAccess &MA) { return true; });
 }
 

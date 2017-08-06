@@ -2636,12 +2636,12 @@ public:
     // TODO: investigate this further. PPCG calls collect_call_domains.
     PPCGScop->call = isl_union_set_from_set(S->getContext());
     PPCGScop->tagged_reads = getTaggedReads();
-    PPCGScop->reads = S->getReads();
+    PPCGScop->reads = S->getReads().release();
     PPCGScop->live_in = nullptr;
     PPCGScop->tagged_may_writes = getTaggedMayWrites();
-    PPCGScop->may_writes = S->getWrites();
+    PPCGScop->may_writes = S->getWrites().release();
     PPCGScop->tagged_must_writes = getTaggedMustWrites();
-    PPCGScop->must_writes = S->getMustWrites();
+    PPCGScop->must_writes = S->getMustWrites().release();
     PPCGScop->live_out = nullptr;
     PPCGScop->tagged_must_kills = KillsInfo.TaggedMustKills.take();
     PPCGScop->must_kills = KillsInfo.MustKills.take();
@@ -2742,7 +2742,7 @@ public:
   /// @returns An isl_set describing the extent of the array.
   __isl_give isl_set *getExtent(ScopArrayInfo *Array) {
     unsigned NumDims = Array->getNumberOfDimensions();
-    isl_union_map *Accesses = S->getAccesses();
+    isl_union_map *Accesses = S->getAccesses().release();
     Accesses = isl_union_map_intersect_domain(Accesses, S->getDomains());
     Accesses = isl_union_map_detect_equalities(Accesses);
     isl_union_set *AccessUSet = isl_union_map_range(Accesses);
