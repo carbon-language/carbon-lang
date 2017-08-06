@@ -117,7 +117,7 @@ static void collectInfo(Scop &S, isl_union_map *&Read,
                         isl_union_map *&ReductionTagMap,
                         isl_union_set *&TaggedStmtDomain,
                         Dependences::AnalysisLevel Level) {
-  isl_space *Space = S.getParamSpace();
+  isl_space *Space = S.getParamSpace().release();
   Read = isl_union_map_empty(isl_space_copy(Space));
   MustWrite = isl_union_map_empty(isl_space_copy(Space));
   MayWrite = isl_union_map_empty(isl_space_copy(Space));
@@ -735,7 +735,7 @@ bool Dependences::isValidSchedule(Scop &S,
     return true;
 
   isl_union_map *Dependences = getDependences(TYPE_RAW | TYPE_WAW | TYPE_WAR);
-  isl_space *Space = S.getParamSpace();
+  isl_space *Space = S.getParamSpace().release();
   isl_union_map *Schedule = isl_union_map_empty(Space);
 
   isl_space *ScheduleSpace = nullptr;

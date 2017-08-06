@@ -183,7 +183,7 @@ static bool isScalarUsesContainedInScop(const Scop &S,
 /// @returns live range reordering information that can be used to setup
 /// PPCG.
 static MustKillsInfo computeMustKillsInfo(const Scop &S) {
-  const isl::space ParamSpace(isl::manage(S.getParamSpace()));
+  const isl::space ParamSpace = S.getParamSpace();
   MustKillsInfo Info;
 
   // 1. Collect all ScopArrayInfo that satisfy *any* of the criteria:
@@ -1070,8 +1070,7 @@ static bool isPrefix(std::string String, std::string Prefix) {
 }
 
 Value *GPUNodeBuilder::getArraySize(gpu_array_info *Array) {
-  isl::ast_build Build =
-      isl::ast_build::from_context(S.getContext());
+  isl::ast_build Build = isl::ast_build::from_context(S.getContext());
   Value *ArraySize = ConstantInt::get(Builder.getInt64Ty(), Array->size);
 
   if (!gpu_array_is_scalar(Array)) {
@@ -1099,8 +1098,7 @@ Value *GPUNodeBuilder::getArrayOffset(gpu_array_info *Array) {
   if (gpu_array_is_scalar(Array))
     return nullptr;
 
-  isl::ast_build Build =
-      isl::ast_build::from_context(S.getContext());
+  isl::ast_build Build = isl::ast_build::from_context(S.getContext());
 
   isl::set Min = isl::manage(isl_set_copy(Array->extent)).lexmin();
 
@@ -1443,7 +1441,7 @@ GPUNodeBuilder::getReferencesInKernel(ppcg_kernel *Kernel) {
   for (auto &SAI : S.arrays())
     SubtreeValues.remove(SAI->getBasePtr());
 
-  isl_space *Space = S.getParamSpace();
+  isl_space *Space = S.getParamSpace().release();
   for (long i = 0; i < isl_space_dim(Space, isl_dim_param); i++) {
     isl_id *Id = isl_space_get_dim_id(Space, isl_dim_param, i);
     assert(IDToValue.count(Id));
@@ -2535,7 +2533,7 @@ public:
   ///
   /// @return The relation describing all tagged memory accesses.
   isl_union_map *getTaggedAccesses(enum MemoryAccess::AccessType AccessTy) {
-    isl_union_map *Accesses = isl_union_map_empty(S->getParamSpace());
+    isl_union_map *Accesses = isl_union_map_empty(S->getParamSpace().release());
 
     for (auto &Stmt : *S)
       for (auto &Acc : Stmt)
@@ -2864,7 +2862,7 @@ public:
     /// `-polly-ignore-parameter-bounds` enabled, the Scop::Context does not
     /// contain all parameter dimensions.
     /// So, use the helper `alignPwAffs` to align all the `isl_pw_aff` together.
-    isl_space *SeedAlignSpace = S->getParamSpace();
+    isl_space *SeedAlignSpace = S->getParamSpace().release();
     SeedAlignSpace = isl_space_add_dims(SeedAlignSpace, isl_dim_set, 1);
 
     isl_space *AlignSpace = nullptr;
@@ -2935,7 +2933,7 @@ public:
   ///
   /// @returns An identity map between the arrays in the scop.
   isl_union_map *getArrayIdentity() {
-    isl_union_map *Maps = isl_union_map_empty(S->getParamSpace());
+    isl_union_map *Maps = isl_union_map_empty(S->getParamSpace().release());
 
     for (auto &Array : S->arrays()) {
       isl_space *Space = Array->getSpace().release();

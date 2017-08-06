@@ -2511,7 +2511,7 @@ public:
   ///
   /// Returns the set of context parameters that are currently constrained. In
   /// case the full set of parameters is needed, see @getFullParamSpace.
-  __isl_give isl_space *getParamSpace() const;
+  isl::space getParamSpace() const;
 
   /// Return the full space of parameters.
   ///

@@ -1178,8 +1178,8 @@ void MemoryAccess::setNewAccessRelation(isl::map NewAccess) {
   if (isRead()) {
     // Check whether there is an access for every statement instance.
     isl::set StmtDomain = getStatement()->getDomain();
-    StmtDomain = StmtDomain.intersect_params(
-        getStatement()->getParent()->getContext());
+    StmtDomain =
+        StmtDomain.intersect_params(getStatement()->getParent()->getContext());
     isl::set NewDomain = NewAccess.domain();
     assert(StmtDomain.is_subset(NewDomain) &&
            "Partial READ accesses not supported");
@@ -2288,7 +2288,7 @@ void Scop::addUserContext() {
 
   isl_set *UserContext =
       isl_set_read_from_str(getIslCtx(), UserContextStr.c_str());
-  isl_space *Space = getParamSpace();
+  isl_space *Space = getParamSpace().release();
   if (isl_space_dim(Space, isl_dim_param) !=
       isl_set_dim(UserContext, isl_dim_param)) {
     auto SpaceStr = isl_space_to_str(Space);
@@ -2441,7 +2441,8 @@ simplifyAssumptionContext(__isl_take isl_set *AssumptionContext,
         isl_set_gist_params(AssumptionContext, DomainParameters);
   }
 
-  AssumptionContext = isl_set_gist_params(AssumptionContext, S.getContext().release());
+  AssumptionContext =
+      isl_set_gist_params(AssumptionContext, S.getContext().release());
   return AssumptionContext;
 }
 
@@ -2475,7 +2476,8 @@ void Scop::simplifyContexts() {
   //   otherwise we would access out of bound data. Now, knowing that code is
   //   only executed for the case m >= 0, it is sufficient to assume p >= 0.
   AssumedContext = simplifyAssumptionContext(AssumedContext, *this);
-  InvalidContext = isl_set_align_params(InvalidContext, getParamSpace());
+  InvalidContext =
+      isl_set_align_params(InvalidContext, getParamSpace().release());
 }
 
 /// Add the minimal/maximal access in @p Set to @p User.
@@ -2558,7 +2560,7 @@ static bool calculateMinMaxAccess(Scop::AliasGroupTy AliasGroup, Scop &S,
   MinMaxAccesses.reserve(AliasGroup.size());
 
   isl::union_set Domains = give(S.getDomains());
-  isl::union_map Accesses = isl::union_map::empty(give(S.getParamSpace()));
+  isl::union_map Accesses = isl::union_map::empty(S.getParamSpace());
 
   for (MemoryAccess *MA : AliasGroup)
     Accesses = Accesses.add_map(give(MA->getAccessRelation().release()));
@@ -3139,7 +3141,7 @@ bool Scop::propagateDomainConstraints(
     // Under the union of all predecessor conditions we can reach this block.
     isl::set PredDom = getPredecessorDomainConstraints(BB, Domain, DT, LI);
     Domain = Domain.intersect(PredDom).coalesce();
-    Domain = Domain.align_params(isl::manage(getParamSpace()));
+    Domain = Domain.align_params(getParamSpace());
 
     Loop *BBLoop = getRegionNodeLoop(RN, LI);
     if (BBLoop && BBLoop->getHeader() == BB && contains(BBLoop))
@@ -4279,9 +4281,7 @@ std::pair<std::string, std::string> Scop::getEntryExitStr() const {
 }
 
 isl::set Scop::getContext() const { return isl::manage(isl_set_copy(Context)); }
-__isl_give isl_space *Scop::getParamSpace() const {
-  return isl_set_get_space(Context);
-}
+isl::space Scop::getParamSpace() const { return getContext().get_space(); }
 
 isl::space Scop::getFullParamSpace() const {
   std::vector<isl::id> FortranIDs;
@@ -4525,7 +4525,8 @@ void Scop::addRecordedAssumptions() {
 }
 
 void Scop::invalidate(AssumptionKind Kind, DebugLoc Loc, BasicBlock *BB) {
-  addAssumption(Kind, isl_set_empty(getParamSpace()), Loc, AS_ASSUMPTION, BB);
+  addAssumption(Kind, isl_set_empty(getParamSpace().release()), Loc,
+                AS_ASSUMPTION, BB);
 }
 
 __isl_give isl_set *Scop::getInvalidContext() const {
@@ -4683,7 +4684,7 @@ __isl_give isl_pw_aff *Scop::getPwAffOnly(const SCEV *E, BasicBlock *BB) {
 
 isl::union_map
 Scop::getAccessesOfType(std::function<bool(MemoryAccess &)> Predicate) {
-  isl::union_map Accesses = isl::union_map::empty(isl::manage(getParamSpace()));
+  isl::union_map Accesses = isl::union_map::empty(getParamSpace());
 
   for (ScopStmt &Stmt : *this) {
     for (MemoryAccess *MA : Stmt) {
