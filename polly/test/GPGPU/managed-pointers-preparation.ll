@@ -7,6 +7,8 @@
 ; RUN: -S -polly-acc-codegen-managed-memory -disable-output \
 ; RUN: -polly-acc-dump-code < %s | FileCheck %s -check-prefix=CODE
 
+; REQUIRES: pollyacc
+
 ; CHECK: @polly_launchKernel
 ; CHECK: @polly_launchKernel
 ; CHECK: @polly_launchKernel
