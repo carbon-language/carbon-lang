@@ -1334,7 +1334,7 @@ public:
   ///
   /// @return The schedule function of this ScopStmt, if it does not contain
   /// extension nodes, and nullptr, otherwise.
-  __isl_give isl_map *getSchedule() const;
+  isl::map getSchedule() const;
 
   /// Get an isl string representing this schedule.
   ///

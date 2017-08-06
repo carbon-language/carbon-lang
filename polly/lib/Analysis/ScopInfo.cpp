@@ -1221,12 +1221,12 @@ bool MemoryAccess::isLatestPartialAccess() const {
 
 //===----------------------------------------------------------------------===//
 
-__isl_give isl_map *ScopStmt::getSchedule() const {
+isl::map ScopStmt::getSchedule() const {
   isl_set *Domain = getDomain().release();
   if (isl_set_is_empty(Domain)) {
     isl_set_free(Domain);
-    return isl_map_from_aff(isl_aff_zero_on_domain(
-        isl_local_space_from_space(getDomainSpace().release())));
+    return isl::manage(isl_map_from_aff(isl_aff_zero_on_domain(
+        isl_local_space_from_space(getDomainSpace().release()))));
   }
   auto *Schedule = getParent()->getSchedule();
   if (!Schedule) {
@@ -1238,14 +1238,14 @@ __isl_give isl_map *ScopStmt::getSchedule() const {
   if (isl_union_map_is_empty(Schedule)) {
     isl_set_free(Domain);
     isl_union_map_free(Schedule);
-    return isl_map_from_aff(isl_aff_zero_on_domain(
-        isl_local_space_from_space(getDomainSpace().release())));
+    return isl::manage(isl_map_from_aff(isl_aff_zero_on_domain(
+        isl_local_space_from_space(getDomainSpace().release()))));
   }
   auto *M = isl_map_from_union_map(Schedule);
   M = isl_map_coalesce(M);
   M = isl_map_gist_domain(M, Domain);
   M = isl_map_coalesce(M);
-  return M;
+  return isl::manage(M);
 }
 
 void ScopStmt::restrictDomain(isl::set NewDomain) {
@@ -1881,7 +1881,7 @@ void ScopStmt::checkForReductions() {
 std::string ScopStmt::getDomainStr() const { return Domain.to_str(); }
 
 std::string ScopStmt::getScheduleStr() const {
-  auto *S = getSchedule();
+  auto *S = getSchedule().release();
   if (!S)
     return "";
   auto Str = stringFromIslObj(S);

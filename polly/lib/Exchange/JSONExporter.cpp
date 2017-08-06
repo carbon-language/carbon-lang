@@ -396,7 +396,8 @@ bool JSONImporter::importSchedule(Scop &S, Json::Value &JScop,
     if (NewSchedule.find(&Stmt) != NewSchedule.end())
       ScheduleMap = isl_union_map_add_map(ScheduleMap, NewSchedule[&Stmt]);
     else
-      ScheduleMap = isl_union_map_add_map(ScheduleMap, Stmt.getSchedule());
+      ScheduleMap =
+          isl_union_map_add_map(ScheduleMap, Stmt.getSchedule().release());
   }
 
   S.setSchedule(ScheduleMap);

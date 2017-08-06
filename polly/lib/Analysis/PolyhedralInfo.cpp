@@ -131,7 +131,7 @@ __isl_give isl_union_map *PolyhedralInfo::getScheduleForLoop(const Scop *S,
 
       unsigned int MaxDim = SS.getNumIterators();
       DEBUG(dbgs() << "Maximum depth of Stmt:\t" << MaxDim << "\n");
-      auto *ScheduleMap = SS.getSchedule();
+      isl_map *ScheduleMap = SS.getSchedule().release();
       assert(
           ScheduleMap &&
           "Schedules that contain extension nodes require special handling.");
