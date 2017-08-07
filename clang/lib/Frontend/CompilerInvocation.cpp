@@ -2321,7 +2321,14 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
     for (unsigned i = 0; i < A->getNumValues(); ++i) {
       llvm::Triple TT(A->getValue(i));
 
-      if (TT.getArch() == llvm::Triple::UnknownArch)
+      if (TT.getArch() == llvm::Triple::UnknownArch ||
+          !(TT.getArch() == llvm::Triple::ppc ||
+            TT.getArch() == llvm::Triple::ppc64 ||
+            TT.getArch() == llvm::Triple::ppc64le ||
+            TT.getArch() == llvm::Triple::nvptx ||
+            TT.getArch() == llvm::Triple::nvptx64 ||
+            TT.getArch() == llvm::Triple::x86 ||
+            TT.getArch() == llvm::Triple::x86_64))
         Diags.Report(clang::diag::err_drv_invalid_omp_target) << A->getValue(i);
       else
         Opts.OMPTargetTriples.push_back(TT);
