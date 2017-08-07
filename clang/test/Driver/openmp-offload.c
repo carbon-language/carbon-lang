@@ -601,7 +601,7 @@
 /// ###########################################################################
 
 /// Check -Xopenmp-target=powerpc64le-ibm-linux-gnu -march=pwr7 is passed when compiling for the device.
-// RUN:   %clang -### -fopenmp=libomp -fopenmp-targets=powerpc64le-ibm-linux-gnu -Xopenmp-target=powerpc64le-ibm-linux-gnu -mcpu=pwr7 %s 2>&1 \
+// RUN:   %clang -### -no-canonical-prefixes -fopenmp=libomp -fopenmp-targets=powerpc64le-ibm-linux-gnu -Xopenmp-target=powerpc64le-ibm-linux-gnu -mcpu=pwr7 %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHK-FOPENMP-EQ-TARGET %s
 
 // CHK-FOPENMP-EQ-TARGET: clang{{.*}} "-target-cpu" "pwr7"
@@ -609,7 +609,7 @@
 /// ###########################################################################
 
 /// Check -Xopenmp-target -march=pwr7 is passed when compiling for the device.
-// RUN:   %clang -### -fopenmp=libomp -fopenmp-targets=powerpc64le-ibm-linux-gnu -Xopenmp-target -mcpu=pwr7 %s 2>&1 \
+// RUN:   %clang -### -no-canonical-prefixes -fopenmp=libomp -fopenmp-targets=powerpc64le-ibm-linux-gnu -Xopenmp-target -mcpu=pwr7 %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHK-FOPENMP-TARGET %s
 
 // CHK-FOPENMP-TARGET: clang{{.*}} "-target-cpu" "pwr7"
@@ -617,7 +617,7 @@
 /// ###########################################################################
 
 /// Check -Xopenmp-target triggers error when multiple triples are used.
-// RUN:   %clang -### -fopenmp=libomp -fopenmp-targets=powerpc64le-ibm-linux-gnu,powerpc64le-unknown-linux-gnu -Xopenmp-target -mcpu=pwr8 %s 2>&1 \
+// RUN:   %clang -### -no-canonical-prefixes -fopenmp=libomp -fopenmp-targets=powerpc64le-ibm-linux-gnu,powerpc64le-unknown-linux-gnu -Xopenmp-target -mcpu=pwr8 %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHK-FOPENMP-TARGET-AMBIGUOUS-ERROR %s
 
 // CHK-FOPENMP-TARGET-AMBIGUOUS-ERROR: clang{{.*}} error: cannot deduce implicit triple value for -Xopenmp-target, specify triple using -Xopenmp-target=<triple>
@@ -625,7 +625,7 @@
 /// ###########################################################################
 
 /// Check -Xopenmp-target triggers error when an option requiring arguments is passed to it.
-// RUN:   %clang -### -fopenmp=libomp -fopenmp-targets=powerpc64le-ibm-linux-gnu -Xopenmp-target -Xopenmp-target -mcpu=pwr8 %s 2>&1 \
+// RUN:   %clang -### -no-canonical-prefixes -fopenmp=libomp -fopenmp-targets=powerpc64le-ibm-linux-gnu -Xopenmp-target -Xopenmp-target -mcpu=pwr8 %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHK-FOPENMP-TARGET-NESTED-ERROR %s
 
 // CHK-FOPENMP-TARGET-NESTED-ERROR: clang{{.*}} error: invalid -Xopenmp-target argument: '-Xopenmp-target -Xopenmp-target', options requiring arguments are unsupported
