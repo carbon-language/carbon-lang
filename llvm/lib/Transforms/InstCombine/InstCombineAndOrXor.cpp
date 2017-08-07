@@ -120,9 +120,6 @@ Instruction *InstCombiner::OptAndOp(BinaryOperator *Op,
                                     ConstantInt *AndRHS,
                                     BinaryOperator &TheAnd) {
   Value *X = Op->getOperand(0);
-  Constant *Together = nullptr;
-  if (!Op->isShift())
-    Together = ConstantExpr::getAnd(AndRHS, OpRHS);
 
   switch (Op->getOpcode()) {
   default: break;
