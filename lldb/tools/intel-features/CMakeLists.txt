@@ -45,6 +45,10 @@ if (NOT LLDB_DISABLE_PYTHON AND LLDB_BUILD_INTEL_PT)
   add_subdirectory(scripts)
 endif()
 
+if (NOT CLI_WRAPPER_PREPROCESSORS)
+  return()
+endif()
+
 set_source_files_properties(cli-wrapper.cpp PROPERTIES
                             COMPILE_FLAGS ${CLI_WRAPPER_PREPROCESSORS})
 
