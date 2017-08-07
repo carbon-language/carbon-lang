@@ -799,8 +799,7 @@ void GCNPassConfig::addFastRegAlloc(FunctionPass *RegAllocPass) {
 }
 
 void GCNPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
-  if (getOptLevel() > CodeGenOpt::None)
-    insertPass(&MachineSchedulerID, &SIOptimizeExecMaskingPreRAID);
+  insertPass(&MachineSchedulerID, &SIOptimizeExecMaskingPreRAID);
 
   // This must be run immediately after phi elimination and before
   // TwoAddressInstructions, otherwise the processing of the tied operand of
