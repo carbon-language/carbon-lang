@@ -207,13 +207,9 @@ void ReassociatePass::canonicalizeOperands(Instruction *I) {
 
   Value *LHS = I->getOperand(0);
   Value *RHS = I->getOperand(1);
-  unsigned LHSRank = getRank(LHS);
-  unsigned RHSRank = getRank(RHS);
-
-  if (isa<Constant>(RHS))
+  if (LHS == RHS || isa<Constant>(RHS))
     return;
-
-  if (isa<Constant>(LHS) || RHSRank < LHSRank)
+  if (isa<Constant>(LHS) || getRank(RHS) < getRank(LHS))
     cast<BinaryOperator>(I)->swapOperands();
 }
 
