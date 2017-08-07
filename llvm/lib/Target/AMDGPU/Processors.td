@@ -10,6 +10,12 @@
 class Proc<string Name, ProcessorItineraries itin, list<SubtargetFeature> Features>
 : Processor<Name, itin, Features>;
 
+// The code produced for "generic" is only useful for tests and cannot
+// reasonably be expected to execute on any particular target.
+def : ProcessorModel<"generic", NoSchedModel, [
+  FeatureGCN
+]>;
+
 //===----------------------------------------------------------------------===//
 // R600
 //===----------------------------------------------------------------------===//
