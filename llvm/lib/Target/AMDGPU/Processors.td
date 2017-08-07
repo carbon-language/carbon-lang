@@ -89,10 +89,6 @@ def : Proc<"cayman",     R600_VLIW4_Itin,
 def : ProcessorModel<"gfx600",     SIFullSpeedModel,
   [FeatureISAVersion6_0_0]>;
 
-def : ProcessorModel<"SI",         SIFullSpeedModel,
-  [FeatureISAVersion6_0_0]
->;
-
 def : ProcessorModel<"tahiti",     SIFullSpeedModel,
   [FeatureISAVersion6_0_0]
 >;
