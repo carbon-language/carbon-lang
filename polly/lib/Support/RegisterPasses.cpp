@@ -227,7 +227,7 @@ static cl::list<std::string> DumpAfterFile(
 static cl::opt<bool>
     EnableDeLICM("polly-enable-delicm",
                  cl::desc("Eliminate scalar loop carried dependences"),
-                 cl::Hidden, cl::init(false), cl::cat(PollyCategory));
+                 cl::Hidden, cl::init(true), cl::cat(PollyCategory));
 
 static cl::opt<bool>
     EnableSimplify("polly-enable-simplify",
