@@ -212,8 +212,18 @@ void NVPTX::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
       static_cast<const toolchains::CudaToolChain &>(getToolChain());
   assert(TC.getTriple().isNVPTX() && "Wrong platform");
 
+  StringRef GPUArchName;
+  // If this is an OpenMP action we need to extract the device architecture
+  // from the -march=arch option. This option may come from -Xopenmp-target
+  // flag or the default value.
+  if (JA.isDeviceOffloading(Action::OFK_OpenMP)) {
+    GPUArchName = Args.getLastArgValue(options::OPT_march_EQ);
+    assert(!GPUArchName.empty() && "Must have an architecture passed in.");
+  } else
+    GPUArchName = JA.getOffloadingArch();
+
   // Obtain architecture from the action.
-  CudaArch gpu_arch = StringToCudaArch(JA.getOffloadingArch());
+  CudaArch gpu_arch = StringToCudaArch(GPUArchName);
   assert(gpu_arch != CudaArch::UNKNOWN &&
          "Device action expected to have an architecture.");
 
@@ -405,7 +415,7 @@ CudaToolChain::TranslateArgs(const llvm::opt::DerivedArgList &Args,
 
   // For OpenMP device offloading, append derived arguments. Make sure
   // flags are not duplicated.
-  // TODO: Append the compute capability.
+  // Also append the compute capability.
   if (DeviceOffloadKind == Action::OFK_OpenMP) {
     for (Arg *A : Args){
       bool IsDuplicate = false;
@@ -418,6 +428,13 @@ CudaToolChain::TranslateArgs(const llvm::opt::DerivedArgList &Args,
       if (!IsDuplicate)
         DAL->append(A);
     }
+
+    StringRef Arch = DAL->getLastArgValue(options::OPT_march_EQ);
+    if (Arch.empty())
+      // Default compute capability for CUDA toolchain is sm_20.
+      DAL->AddJoinedArg(nullptr,
+          Opts.getOption(options::OPT_march_EQ), "sm_20");
+
     return DAL;
   }
 
