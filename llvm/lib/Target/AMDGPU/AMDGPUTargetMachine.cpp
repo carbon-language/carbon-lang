@@ -147,7 +147,6 @@ extern "C" void LLVMInitializeAMDGPUTarget() {
   initializeSIFoldOperandsPass(*PR);
   initializeSIPeepholeSDWAPass(*PR);
   initializeSIShrinkInstructionsPass(*PR);
-  initializeSIFixControlFlowLiveIntervalsPass(*PR);
   initializeSIOptimizeExecMaskingPreRAPass(*PR);
   initializeSILoadStoreOptimizerPass(*PR);
   initializeAMDGPUAlwaysInlinePass(*PR);
@@ -802,10 +801,6 @@ void GCNPassConfig::addFastRegAlloc(FunctionPass *RegAllocPass) {
 void GCNPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
   if (getOptLevel() > CodeGenOpt::None)
     insertPass(&MachineSchedulerID, &SIOptimizeExecMaskingPreRAID);
-
-  // This needs to be run directly before register allocation because earlier
-  // passes might recompute live intervals.
-  insertPass(&MachineSchedulerID, &SIFixControlFlowLiveIntervalsID);
 
   // This must be run immediately after phi elimination and before
   // TwoAddressInstructions, otherwise the processing of the tied operand of
