@@ -15,8 +15,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifdef BUILD_INTEL_MPX
 #include "intel-mpx/cli-wrapper-mpxtable.h"
+#endif
+
+#ifdef BUILD_INTEL_PT
 #include "intel-pt/cli-wrapper-pt.h"
+#endif
+
 #include "lldb/API/SBDebugger.h"
 
 namespace lldb {
