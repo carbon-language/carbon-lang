@@ -669,3 +669,11 @@
 // CHK-TWOCUBIN: clang-offload-bundler" "-type=o" "{{.*}}inputs={{.*}}tmp1.o" "-outputs={{.*}}.o,{{.*}}tmp1-openmp-nvptx64-nvidia-cuda.cubin" "-unbundle"
 // CHK-TWOCUBIN-NEXT: clang-offload-bundler" "-type=o" "{{.*}}inputs={{.*}}tmp2.o" "-outputs={{.*}}.o,{{.*}}tmp2-openmp-nvptx64-nvidia-cuda.cubin" "-unbundle"
 // CHK-TWOCUBIN-NEXT: nvlink" "-o" "{{.*}}-openmp-nvptx64-nvidia-cuda" {{.*}} "openmp-offload.c.tmp1-openmp-nvptx64-nvidia-cuda.cubin" "openmp-offload.c.tmp2-openmp-nvptx64-nvidia-cuda.cubin"
+
+/// ###########################################################################
+
+/// Check PTXAS is passed -c flag when offloading to an NVIDIA device using OpenMP.
+// RUN:   %clang -### -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda -no-canonical-prefixes %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHK-PTXAS-DEFAULT %s
+
+// CHK-PTXAS-DEFAULT: ptxas{{.*}}" "-c"
