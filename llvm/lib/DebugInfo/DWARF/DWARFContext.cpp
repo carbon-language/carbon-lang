@@ -136,8 +136,8 @@ dumpDWARFv5StringOffsetsSection(raw_ostream &OS, StringRef SectionName,
       uint64_t StringOffset =
           StrOffsetExt.getRelocatedValue(EntrySize, &Offset);
       if (Format == DWARF32) {
-        OS << format("%8.8" PRIx64 " ", StringOffset);
         uint32_t StringOffset32 = (uint32_t)StringOffset;
+        OS << format("%8.8x ", StringOffset32);
         const char *S = StrData.getCStr(&StringOffset32);
         if (S)
           OS << format("\"%s\"", S);
