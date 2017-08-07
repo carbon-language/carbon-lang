@@ -2308,6 +2308,13 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
     }
   }
 
+  // Set the flag to prevent the implementation from emitting device exception
+  // handling code for those requiring so.
+  if (Opts.OpenMPIsDevice && T.isNVPTX()) {
+    Opts.Exceptions = 0;
+    Opts.CXXExceptions = 0;
+  }
+
   // Get the OpenMP target triples if any.
   if (Arg *A = Args.getLastArg(options::OPT_fopenmp_targets_EQ)) {
 
