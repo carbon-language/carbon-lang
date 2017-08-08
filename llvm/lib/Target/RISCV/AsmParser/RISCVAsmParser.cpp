@@ -213,7 +213,6 @@ public:
 
 #define GET_REGISTER_MATCHER
 #define GET_MATCHER_IMPLEMENTATION
-#define GET_SUBTARGET_FEATURE_NAME
 #include "RISCVGenAsmMatcher.inc"
 
 bool RISCVAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
