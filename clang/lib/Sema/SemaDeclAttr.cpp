@@ -1304,14 +1304,28 @@ static void handlePackedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     TD->addAttr(::new (S.Context) PackedAttr(Attr.getRange(), S.Context,
                                         Attr.getAttributeSpellingListIndex()));
   else if (FieldDecl *FD = dyn_cast<FieldDecl>(D)) {
-    // Report warning about changed offset in the newer compiler versions.
-    if (!FD->getType()->isDependentType() &&
-        !FD->getType()->isIncompleteType() && FD->isBitField() &&
-        S.Context.getTypeAlign(FD->getType()) <= 8)
-      S.Diag(Attr.getLoc(), diag::warn_attribute_packed_for_bitfield);
+    bool BitfieldByteAligned = (!FD->getType()->isDependentType() &&
+                                !FD->getType()->isIncompleteType() &&
+                                FD->isBitField() &&
+                                S.Context.getTypeAlign(FD->getType()) <= 8);
 
-    FD->addAttr(::new (S.Context) PackedAttr(
-        Attr.getRange(), S.Context, Attr.getAttributeSpellingListIndex()));
+    if (S.getASTContext().getTargetInfo().getTriple().isPS4()) {
+      if (BitfieldByteAligned)
+        // The PS4 target needs to maintain ABI backwards compatibility.
+        S.Diag(Attr.getLoc(), diag::warn_attribute_ignored_for_field_of_type)
+          << Attr.getName() << FD->getType();
+      else
+        FD->addAttr(::new (S.Context) PackedAttr(
+                    Attr.getRange(), S.Context, Attr.getAttributeSpellingListIndex()));
+    } else {
+      // Report warning about changed offset in the newer compiler versions.
+      if (BitfieldByteAligned)
+        S.Diag(Attr.getLoc(), diag::warn_attribute_packed_for_bitfield);
+
+      FD->addAttr(::new (S.Context) PackedAttr(
+                  Attr.getRange(), S.Context, Attr.getAttributeSpellingListIndex()));
+    }
+
   } else
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
 }

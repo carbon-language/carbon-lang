@@ -3202,6 +3202,9 @@ def warn_int_to_void_pointer_cast : Warning<
   "cast to %1 from smaller integer type %0">,
   InGroup<IntToVoidPointerCast>;
 
+def warn_attribute_ignored_for_field_of_type : Warning<
+  "%0 attribute ignored for field of type %1">,
+  InGroup<IgnoredAttributes>;
 def warn_no_underlying_type_specified_for_enum_bitfield : Warning<
   "enums in the Microsoft ABI are signed integers by default; consider giving "
   "the enum %0 an unsigned underlying type to make this code portable">,
