@@ -46,8 +46,8 @@ uintptr_t *TracePC::PCs() const {
 }
 
 size_t TracePC::GetTotalPCCoverage() {
-  if (ObservedPCs)
-    return ObservedPCs->size();
+  if (ObservedPCs.size())
+    return ObservedPCs.size();
   size_t Res = 0;
   for (size_t i = 1, N = GetNumPCs(); i < N; i++)
     if (PCs()[i])
@@ -139,13 +139,10 @@ void TracePC::HandleCallerCallee(uintptr_t Caller, uintptr_t Callee) {
 void TracePC::UpdateObservedPCs() {
   if (NumPCsInPCTables) {
     auto Observe = [&](uintptr_t PC) {
-      bool Inserted = ObservedPCs->insert(PC).second;
+      bool Inserted = ObservedPCs.insert(PC).second;
       if (Inserted && DoPrintNewPCs)
         PrintPC("\tNEW_PC: %p %F %L\n", "\tNEW_PC: %p\n", PC + 1);
     };
-
-    if (!ObservedPCs)
-      ObservedPCs = new std::set<uintptr_t>;
 
     if (NumInline8bitCounters == NumPCsInPCTables) {
       for (size_t i = 0; i < NumModulesWithInline8bitCounters; i++) {
@@ -235,7 +232,7 @@ void TracePC::PrintCoverage() {
     for (auto Ptr = M.Start; Ptr < M.Stop; Ptr++) {
       auto PC = *Ptr;
       auto VisualizePC = GetNextInstructionPc(PC);
-      bool IsObserved = ObservedPCs->count(PC);
+      bool IsObserved = ObservedPCs.count(PC);
       std::string FileStr = DescribePC("%s", VisualizePC);
       if (!IsInterestingCoverageFile(FileStr)) continue;
       std::string FunctionStr = DescribePC("%F", VisualizePC);
