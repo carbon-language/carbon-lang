@@ -1325,6 +1325,32 @@ public:
   virtual void emitDoacrossOrdered(CodeGenFunction &CGF,
                                    const OMPDependClause *C);
 
+  /// Translates the native parameter of outlined function if this is required
+  /// for target.
+  /// \param FD Field decl from captured record for the paramater.
+  /// \param NativeParam Parameter itself.
+  virtual const VarDecl *translateParameter(const FieldDecl *FD,
+                                            const VarDecl *NativeParam) const {
+    return NativeParam;
+  }
+
+  typedef llvm::function_ref<void(CodeGenFunction &, const VarDecl *, Address)>
+      MappingFnType;
+  /// Maps the native argument to the address of the corresponding
+  /// target-specific argument.
+  /// \param FD Field decl from captured record for the paramater.
+  /// \param NativeParam Parameter itself.
+  /// \param TargetParam Corresponding target-specific parameter.
+  /// \param MapFn Function that maps the native parameter to the address of the
+  /// target-specific.
+  virtual void mapParameterAddress(CodeGenFunction &CGF, const FieldDecl *FD,
+                                   const VarDecl *NativeParam,
+                                   const VarDecl *TargetParam,
+                                   const MappingFnType) const {
+    assert(NativeParam == TargetParam &&
+           "native and target args must be the same");
+  }
+
   /// Emits call of the outlined function with the provided arguments,
   /// translating these arguments to correct target-specific arguments.
   virtual void
