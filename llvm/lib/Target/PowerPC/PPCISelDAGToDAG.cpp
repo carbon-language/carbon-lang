@@ -2814,7 +2814,6 @@ SDValue PPCDAGToDAGISel::getCompoundZeroComparisonInGPR(SDValue LHS, SDLoc dl,
 
   // Produce the value that needs to be either zero or sign extended.
   switch (CmpTy) {
-  default: llvm_unreachable("Unknown Zero-comparison type.");
   case ZeroCompare::GEZExt:
   case ZeroCompare::GESExt:
     ToExtend = SDValue(CurDAG->getMachineNode(Is32Bit ? PPC::NOR : PPC::NOR8,
@@ -2850,7 +2849,6 @@ SDValue PPCDAGToDAGISel::getCompoundZeroComparisonInGPR(SDValue LHS, SDLoc dl,
   assert(Is32Bit && "Should have handled the 32-bit sequences above.");
   // For 32-bit sequences, the extensions differ between GE/LE cases.
   switch (CmpTy) {
-  default: llvm_unreachable("Unknown Zero-comparison type.");
   case ZeroCompare::GEZExt: {
     SDValue ShiftOps[] =
       { ToExtend, getI32Imm(1, dl), getI32Imm(31, dl), getI32Imm(31, dl) };
@@ -2867,6 +2865,11 @@ SDValue PPCDAGToDAGISel::getCompoundZeroComparisonInGPR(SDValue LHS, SDLoc dl,
     return SDValue(CurDAG->getMachineNode(PPC::ADDI, dl, MVT::i32, ToExtend,
                                           getI32Imm(-1, dl)), 0);
   }
+
+  // Some compilers warn if there's a default label in the switch above, others
+  // warn if there isn't a return statement here or in a default label. Appease
+  // both (even though this is unreachable).
+  return SDValue();
 }
 
 /// Produces a zero-extended result of comparing two 32-bit values according to
