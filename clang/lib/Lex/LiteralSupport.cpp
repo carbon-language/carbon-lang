@@ -659,7 +659,7 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
         }
       }
       // "i", "if", and "il" are user-defined suffixes in C++1y.
-      if (*s == 'i' && PP.getLangOpts().CPlusPlus14)
+      if (*s == 'i' && !PP.getLangOpts().GNUMode)
         break;
       // fall through.
     case 'j':
