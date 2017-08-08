@@ -524,7 +524,7 @@ void Driver::CreateOffloadingDeviceToolChains(Compilation &C,
     auto &CudaTC = ToolChains[CudaTriple.str() + "/" + HostTriple.str()];
     if (!CudaTC) {
       CudaTC = llvm::make_unique<toolchains::CudaToolChain>(
-          *this, CudaTriple, *HostTC, C.getInputArgs(), Action::OFK_Cuda);
+          *this, CudaTriple, *HostTC, C.getInputArgs());
     }
     C.addOffloadDeviceToolChain(CudaTC.get(), Action::OFK_Cuda);
   }
@@ -582,7 +582,7 @@ void Driver::CreateOffloadingDeviceToolChains(Compilation &C,
                   ToolChains[TT.str() + "/" + HostTC->getTriple().str()];
               if (!CudaTC)
                 CudaTC = llvm::make_unique<toolchains::CudaToolChain>(
-                    *this, TT, *HostTC, C.getInputArgs(), Action::OFK_OpenMP);
+                    *this, TT, *HostTC, C.getInputArgs());
               TC = CudaTC.get();
             } else
               TC = &getToolChain(C.getInputArgs(), TT);
