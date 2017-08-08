@@ -1,4 +1,4 @@
-//===-- ClangFuzzer.cpp - Fuzz Clang --------------------------------------===//
+//===-- ExampleClangProtoFuzzer.cpp - Fuzz Clang --------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -9,16 +9,20 @@
 ///
 /// \file
 /// \brief This file implements a function that runs Clang on a single
-///  input. This function is then linked into the Fuzzer library.
+///  input and uses libprotobuf-mutator to find new inputs. This function is
+///  then linked into the Fuzzer library.
 ///
 //===----------------------------------------------------------------------===//
 
+#include "cxx_proto.pb.h"
 #include "handle-cxx/handle_cxx.h"
+#include "proto-to-cxx/proto_to_cxx.h"
+
+#include "src/libfuzzer/libfuzzer_macro.h"
 
 using namespace clang_fuzzer;
 
-extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size) {
-  std::string s((const char *)data, size);
-  HandleCXX(s, {"-O2"});
-  return 0;
+DEFINE_BINARY_PROTO_FUZZER(const Function& input) {
+  auto S = FunctionToString(input);
+  HandleCXX(S, {"-O2"});
 }
