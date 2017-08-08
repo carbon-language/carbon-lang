@@ -1,4 +1,4 @@
-//===-- AMDGPUKernelCodeT.h - Print AMDGPU assembly code ---------*- C++ -*-===//
+//===- AMDGPUKernelCodeT.h - Print AMDGPU assembly code ---------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,39 +6,33 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-/// \file AMDKernelCodeT.h
-//===----------------------------------------------------------------------===//
 
-#ifndef AMDKERNELCODET_H
-#define AMDKERNELCODET_H
+#ifndef LLVM_LIB_TARGET_AMDGPU_AMDKERNELCODET_H
+#define LLVM_LIB_TARGET_AMDGPU_AMDKERNELCODET_H
 
-#include "llvm/MC/SubtargetFeature.h"
-
-#include <cstddef>
 #include <cstdint>
 
-#include "llvm/Support/Debug.h"
 //---------------------------------------------------------------------------//
 // AMD Kernel Code, and its dependencies                                     //
 //---------------------------------------------------------------------------//
 
-typedef uint8_t hsa_powertwo8_t;
-typedef uint32_t hsa_ext_code_kind_t;
-typedef uint8_t hsa_ext_brig_profile8_t;
-typedef uint8_t hsa_ext_brig_machine_model8_t;
-typedef uint64_t hsa_ext_control_directive_present64_t;
-typedef uint16_t hsa_ext_exception_kind16_t;
-typedef uint32_t hsa_ext_code_kind32_t;
+using hsa_powertwo8_t = uint8_t;
+using hsa_ext_code_kind_t = uint32_t;
+using hsa_ext_brig_profile8_t = uint8_t;
+using hsa_ext_brig_machine_model8_t = uint8_t;
+using hsa_ext_control_directive_present64_t = uint64_t;
+using hsa_ext_exception_kind16_t = uint16_t;
+using hsa_ext_code_kind32_t = uint32_t;
 
-typedef struct hsa_dim3_s {
+using hsa_dim3_t = struct {
   uint32_t x;
   uint32_t y;
   uint32_t z;
-} hsa_dim3_t;
+};
 
 /// The version of the amd_*_code_t struct. Minor versions must be
 /// backward compatible.
-typedef uint32_t amd_code_version32_t;
+using amd_code_version32_t = uint32_t;
 enum amd_code_version_t {
   AMD_CODE_VERSION_MAJOR = 0,
   AMD_CODE_VERSION_MINOR = 1
@@ -64,7 +58,7 @@ enum amd_element_byte_size_t {
 
 /// Shader program settings for CS. Contains COMPUTE_PGM_RSRC1 and
 /// COMPUTE_PGM_RSRC2 registers.
-typedef uint64_t amd_compute_pgm_resource_register64_t;
+using amd_compute_pgm_resource_register64_t = uint64_t;
 
 /// Every amd_*_code_t has the following properties, which are composed of
 /// a number of bit fields. Every bit field has a mask (AMD_CODE_PROPERTY_*),
@@ -74,9 +68,8 @@ typedef uint64_t amd_compute_pgm_resource_register64_t;
 /// (Note that bit fields cannot be used as their layout is
 /// implementation defined in the C standard and so cannot be used to
 /// specify an ABI)
-typedef uint32_t amd_code_property32_t;
+using amd_code_property32_t = uint32_t;
 enum amd_code_property_mask_t {
-
   /// Enable the setup of the SGPR user data registers
   /// (AMD_CODE_PROPERTY_ENABLE_SGPR_*), see documentation of amd_kernel_code_t
   /// for initial register state.
@@ -207,7 +200,7 @@ enum amd_code_property_mask_t {
 /// directives. See the definition of the control directives in HSA Programmer's
 /// Reference Manual which also defines how the values specified as finalizer
 /// arguments have to agree with the control directives in the HSAIL code.
-typedef struct hsa_ext_control_directives_s {
+using hsa_ext_control_directives_t = struct {
   /// This is a bit set indicating which control directives have been
   /// specified. If the value is 0 then there are no control directives specified
   /// and the rest of the fields can be ignored. The bits are accessed using the
@@ -312,7 +305,7 @@ typedef struct hsa_ext_control_directives_s {
 
   /// Reserved. Must be 0.
   uint8_t reserved[75];
-} hsa_ext_control_directives_t;
+};
 
 /// AMD Kernel Code Object (amd_kernel_code_t). GPU CP uses the AMD Kernel
 /// Code Object to set up the hardware to execute the kernel dispatch.
@@ -522,9 +515,8 @@ typedef struct hsa_ext_control_directives_s {
 /// dispatch packet kernArgPtr to a kernarg segment address before using this V#.
 /// Alternatively scalar loads can be used if the kernarg offset is uniform, as
 /// the kernarg segment is constant for the duration of the kernel execution.
-///
 
-typedef struct amd_kernel_code_s {
+using amd_kernel_code_t = struct {
   uint32_t amd_kernel_code_version_major;
   uint32_t amd_kernel_code_version_minor;
   uint16_t amd_machine_kind;
@@ -653,6 +645,6 @@ typedef struct amd_kernel_code_s {
   uint8_t reserved3[12];
   uint64_t runtime_loader_kernel_symbol;
   uint64_t control_directives[16];
-} amd_kernel_code_t;
+};
 
-#endif // AMDKERNELCODET_H
+#endif // LLVM_LIB_TARGET_AMDGPU_AMDKERNELCODET_H
