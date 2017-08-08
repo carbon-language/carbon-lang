@@ -15114,11 +15114,14 @@ static SDValue simplifyShuffleOperands(ShuffleVectorSDNode *SVN, SDValue N0,
 
 static SDValue simplifyShuffleMask(ShuffleVectorSDNode *SVN, SDValue N0,
                                    SDValue N1, SelectionDAG &DAG) {
-  // TODO - handle cases other than BUILD_VECTOR.
-  auto *BV0 = dyn_cast<BuildVectorSDNode>(N0);
-  auto *BV1 = dyn_cast<BuildVectorSDNode>(N1);
-  if (!BV0 && !BV1)
-    return SDValue();
+  auto isUndefElt = [](SDValue V, int Idx) {
+    // TODO - handle more cases as required.
+    if (V.getOpcode() == ISD::BUILD_VECTOR)
+      return V.getOperand(Idx).isUndef();
+    if (auto *SVN = dyn_cast<ShuffleVectorSDNode>(V))
+      return SVN->getMaskElt(Idx) < 0;
+    return false;
+  };
 
   EVT VT = SVN->getValueType(0);
   unsigned NumElts = VT.getVectorNumElements();
@@ -15127,12 +15130,8 @@ static SDValue simplifyShuffleMask(ShuffleVectorSDNode *SVN, SDValue N0,
   SmallVector<int, 8> NewMask;
   for (unsigned i = 0; i != NumElts; ++i) {
     int Idx = SVN->getMaskElt(i);
-    if (BV0 && 0 <= Idx && Idx < (int)NumElts &&
-        BV0->getOperand(Idx).isUndef()) {
-      Changed = true;
-      Idx = -1;
-    } else if (BV1 && Idx > (int)NumElts &&
-               BV1->getOperand(Idx - NumElts).isUndef()) {
+    if ((0 <= Idx && Idx < (int)NumElts && isUndefElt(N0, Idx)) ||
+        ((int)NumElts < Idx && isUndefElt(N1, Idx - NumElts))) {
       Changed = true;
       Idx = -1;
     }
