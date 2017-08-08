@@ -26,7 +26,7 @@ TEST(Decl, CleansUpAPValues) {
   // This is a regression test for a memory leak in APValues for structs that
   // allocate memory. This test only fails if run under valgrind with full leak
   // checking enabled.
-  std::vector<std::string> Args(1, "-std=gnu++11");
+  std::vector<std::string> Args(1, "-std=c++11");
   Args.push_back("-fno-ms-extensions");
   ASSERT_TRUE(runToolOnCodeWithArgs(
       Factory->create(),
