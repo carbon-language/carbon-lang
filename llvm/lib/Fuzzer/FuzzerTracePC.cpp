@@ -20,9 +20,7 @@
 #include "FuzzerIO.h"
 #include "FuzzerUtil.h"
 #include "FuzzerValueBitMap.h"
-#include <map>
 #include <set>
-#include <sstream>
 
 // The coverage counters and PCs.
 // These are declared as global variables named "__sancov_*" to simplify
