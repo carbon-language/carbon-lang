@@ -666,4 +666,4 @@
 // RUN:   %clang -### -no-canonical-prefixes -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda %t1.o %t2.o 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHK-TWOCUBIN %s
 
-// CHK-TWOCUBIN: nvlink" "-o" "{{.*}}openmp-offload-{{.*}}.out" {{.*}} "openmp-offload-{{.*}}.cubin" "openmp-offload-{{.*}}.cubin"
+// CHK-TWOCUBIN: nvlink"{{.*}}"openmp-offload-{{.*}}.cubin" "openmp-offload-{{.*}}.cubin"
