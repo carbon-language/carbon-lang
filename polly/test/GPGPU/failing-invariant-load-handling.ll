@@ -1,6 +1,8 @@
 ; RUN: opt %loadPolly < %s -analyze -polly-scops -polly-process-unprofitable -polly-invariant-load-hoisting | FileCheck %s -check-prefix=SCOPS
 ; RUN: opt %loadPolly -S < %s -polly-codegen-ppcg -polly-process-unprofitable -polly-invariant-load-hoisting | FileCheck %s -check-prefix=CODEGEN
 
+; REQUIRES: pollyacc
+
 target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-a:0:32-n8:16:32-S64"
 
 %S = type { i32, i32, [12 x %L] }
