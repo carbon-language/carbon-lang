@@ -2074,5 +2074,27 @@ TEST_F(FormatTestJS, NestedLiterals) {
                "};", FourSpaces);
 }
 
+TEST_F(FormatTestJS, BackslashesInComments) {
+  verifyFormat("// hello \\\n"
+               "if (x) foo();\n",
+               "// hello \\\n"
+               "     if ( x) \n"
+               "   foo();\n");
+  verifyFormat("/* ignore \\\n"
+               " */\n"
+               "if (x) foo();\n",
+               "/* ignore \\\n"
+               " */\n"
+               " if (  x) foo();\n");
+  verifyFormat("// st \\ art\\\n"
+               "// comment"
+               "// continue \\\n"
+               "formatMe();\n",
+               "// st \\ art\\\n"
+               "// comment"
+               "// continue \\\n"
+               "formatMe( );\n");
+}
+
 } // end namespace tooling
 } // end namespace clang
