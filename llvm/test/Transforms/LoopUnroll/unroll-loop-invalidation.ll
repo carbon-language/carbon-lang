@@ -8,7 +8,7 @@
 ; CHECK: Starting llvm::Function pass manager run.
 ; CHECK: Running pass: FunctionToLoopPassAdaptor
 ; CHECK: Running analysis: LoopAnalysis
-; CHECK: Running analysis: InnerAnalysisManagerProxy<{{.*}}LoopAnalysisManager
+; CHECK: Running analysis: InnerAnalysisManagerProxy<
 ; CHECK: Starting Loop pass manager run.
 ; CHECK: Running pass: RequireAnalysisPass<{{.*}}LoopAccessAnalysis
 ; CHECK: Running analysis: LoopAccessAnalysis on inner1.header
