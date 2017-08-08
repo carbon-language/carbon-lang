@@ -463,23 +463,24 @@ namespace {
     SDValue getMergeStoreChains(SmallVectorImpl<MemOpLink> &StoreNodes,
                                 unsigned NumStores);
 
-    /// This is a helper function for MergeConsecutiveStores. When the source
-    /// elements of the consecutive stores are all constants or all extracted
-    /// vector elements, try to merge them into one larger store.
-    /// \return True if a merged store was created.
+    /// This is a helper function for MergeConsecutiveStores. When the
+    /// source elements of the consecutive stores are all constants or
+    /// all extracted vector elements, try to merge them into one
+    /// larger store.  \return True if a merged store was created.
     bool MergeStoresOfConstantsOrVecElts(SmallVectorImpl<MemOpLink> &StoreNodes,
                                          EVT MemVT, unsigned NumStores,
                                          bool IsConstantSrc, bool UseVector,
                                          bool UseTrunc);
 
-    /// This is a helper function for MergeConsecutiveStores.
-    /// Stores that may be merged are placed in StoreNodes.
+    /// This is a helper function for MergeConsecutiveStores. Stores
+    /// that potentially may be merged with St are placed in
+    /// StoreNodes.
     void getStoreMergeCandidates(StoreSDNode *St,
                                  SmallVectorImpl<MemOpLink> &StoreNodes);
 
     /// Helper function for MergeConsecutiveStores. Checks if
-    /// Candidate stores have indirect dependency through their
-    /// operands. \return True if safe to merge
+    /// candidate stores have indirect dependency through their
+    /// operands. \return True if safe to merge.
     bool checkMergeStoreCandidatesForDependencies(
         SmallVectorImpl<MemOpLink> &StoreNodes, unsigned NumStores);
 
