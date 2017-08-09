@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+// UNSUPPORTED: c++98, c++03
+
 #include "../src/cxa_demangle.cpp"
 
 using namespace __cxxabiv1;
