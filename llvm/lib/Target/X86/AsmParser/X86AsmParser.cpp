@@ -2098,8 +2098,8 @@ bool X86AsmParser::HandleAVX512Operand(OperandVector &Operands,
             if (!getLexer().is(AsmToken::RCurly))
               return Error(getLexer().getLoc(), "Expected } at this point");
             Operands.push_back(X86Operand::CreateToken("{", StartLoc));
-            Operands.push_back(std::move(X86Operand::CreateReg(RegNo, StartLoc,
-                                                               StartLoc)));
+            Operands.push_back(
+                X86Operand::CreateReg(RegNo, StartLoc, StartLoc));
             Operands.push_back(X86Operand::CreateToken("}", consumeToken()));
           } else
             return Error(getLexer().getLoc(),
