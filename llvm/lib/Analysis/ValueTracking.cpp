@@ -4556,6 +4556,10 @@ static Optional<bool> isImpliedCondAndOr(const BinaryOperator *LHS,
 Optional<bool> llvm::isImpliedCondition(const Value *LHS, const Value *RHS,
                                         const DataLayout &DL, bool LHSIsTrue,
                                         unsigned Depth) {
+  // Bail out when we hit the limit.
+  if (Depth == MaxDepth)
+    return None;
+
   // A mismatch occurs when we compare a scalar cmp to a vector cmp, for
   // example.
   if (LHS->getType() != RHS->getType())
