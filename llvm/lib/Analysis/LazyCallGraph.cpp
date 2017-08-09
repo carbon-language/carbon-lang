@@ -1157,6 +1157,11 @@ LazyCallGraph::RefSCC::removeInternalRefEdge(Node &SourceN,
     Worklist.append(C->Nodes.begin(), C->Nodes.end());
   }
 
+  // Track the number of nodes in this RefSCC so that we can quickly recognize
+  // an important special case of the edge removal not breaking the cycle of
+  // this RefSCC.
+  const int NumRefSCCNodes = Worklist.size();
+
   auto MarkNodeForSCCNumber = [&PostOrderMapping](Node &N, int Number) {
     N.DFSNumber = N.LowLink = -1;
     PostOrderMapping[&N] = Number;
@@ -1238,31 +1243,43 @@ LazyCallGraph::RefSCC::removeInternalRefEdge(Node &SourceN,
       int RootDFSNumber = N->DFSNumber;
       // Find the range of the node stack by walking down until we pass the
       // root DFS number.
-      auto RefSCCNodes = make_range(
-          PendingRefSCCStack.rbegin(),
-          find_if(reverse(PendingRefSCCStack), [RootDFSNumber](const Node *N) {
-            return N->DFSNumber < RootDFSNumber;
-          }));
+      auto RefSCCNodes =
+          make_range(find_if(reverse(PendingRefSCCStack),
+                             [RootDFSNumber](const Node *N) {
+                               return N->DFSNumber < RootDFSNumber;
+                             })
+                         .base(),
+                     PendingRefSCCStack.end());
+
+      // If we find a cycle containing all nodes originally in this RefSCC then
+      // the removal hasn't changed the structure at all. This is an important
+      // special case and we can directly exit the entire routine more
+      // efficiently as soon as we discover it.
+      if (std::distance(RefSCCNodes.begin(), RefSCCNodes.end()) ==
+          NumRefSCCNodes) {
+        // Mark the DFS as over in the nodes.
+        for (Node *N : RefSCCNodes)
+          N->DFSNumber = N->LowLink = -1;
+        // Return the empty result immediately.
+        return Result;
+      }
 
       // Mark the postorder number for these nodes and clear them off the
       // stack. We'll use the postorder number to pull them into RefSCCs at the
-      // end. FIXME: Fuse with the loop above.
+      // end.
       int RefSCCNumber = PostOrderNumber++;
       for (Node *N : RefSCCNodes)
         MarkNodeForSCCNumber(*N, RefSCCNumber);
 
-      PendingRefSCCStack.erase(RefSCCNodes.end().base(),
-                               PendingRefSCCStack.end());
+      PendingRefSCCStack.erase(RefSCCNodes.begin(), PendingRefSCCStack.end());
     } while (!DFSStack.empty());
 
     assert(DFSStack.empty() && "Didn't flush the entire DFS stack!");
     assert(PendingRefSCCStack.empty() && "Didn't flush all pending nodes!");
   } while (!Worklist.empty());
 
-  // If we only ever needed one post-order number, we reformed a ref-cycle for
-  // every node so the RefSCC remains unchanged.
-  if (PostOrderNumber == 1)
-    return Result;
+  assert(PostOrderNumber > 1 &&
+         "Should never finish the DFS when the existing RefSCC remains valid!");
 
   // Otherwise we create a collection of new RefSCC nodes and build
   // a radix-sort style map from postorder number to these new RefSCCs. We then
