@@ -153,7 +153,6 @@ Error GSIStreamBuilder::finalizeMsfLayout() {
   if (!Idx)
     return Idx.takeError();
   PSH->StreamIndex = *Idx;
-
   Idx = Msf.addStream(calculateGlobalsHashStreamSize());
   if (!Idx)
     return Idx.takeError();
@@ -253,32 +252,22 @@ Error GSIStreamBuilder::commitSymbolRecordStream(
 
 Error GSIStreamBuilder::commitPublicsHashStream(
     WritableBinaryStreamRef Stream) {
-  // Skip the publics stream header so that we can write the GSH header first.
-  // Then seek back to the beginning and update the publics stream header with
-  // the byte offset after the GSH header.
   BinaryStreamWriter Writer(Stream);
-  Writer.setOffset(sizeof(PublicsStreamHeader));
-
-  if (auto EC = PSH->commit(Writer))
-    return EC;
-  uint32_t OffsetAfterGSIHashes = Writer.getOffset();
-
-  Writer.setOffset(0);
+  PublicsStreamHeader Header;
 
   // FIXME: Fill these in. They are for incremental linking.
-  PublicsStreamHeader Header;
-  Header.AddrMap = PSH->Records.size() * 4;
-
   Header.NumThunks = 0;
   Header.SizeOfThunk = 0;
   Header.ISectThunkTable = 0;
   Header.OffThunkTable = 0;
   Header.NumSections = 0;
-  Header.SymHash = OffsetAfterGSIHashes;
+  Header.SymHash = PSH->calculateSerializedLength();
+  Header.AddrMap = PSH->Records.size() * 4;
   if (auto EC = Writer.writeObject(Header))
     return EC;
 
-  Writer.setOffset(OffsetAfterGSIHashes);
+  if (auto EC = PSH->commit(Writer))
+    return EC;
 
   std::vector<ulittle32_t> AddrMap = computeAddrMap(PSH->Records);
   if (auto EC = Writer.writeArray(makeArrayRef(AddrMap)))
