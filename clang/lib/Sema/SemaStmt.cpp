@@ -753,6 +753,12 @@ static void checkEnumTypesInSwitchStmt(Sema &S, const Expr *Cond,
   if (!CondEnumType || !CaseEnumType)
     return;
 
+  // Ignore anonymous enums.
+  if (!CondEnumType->getDecl()->getIdentifier())
+    return;
+  if (!CaseEnumType->getDecl()->getIdentifier())
+    return;
+
   if (S.Context.hasSameUnqualifiedType(CondType, CaseType))
     return;
 

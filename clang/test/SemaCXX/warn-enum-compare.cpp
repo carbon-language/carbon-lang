@@ -226,4 +226,11 @@ void test () {
     case BarF: break;
     case FooA: break; // expected-warning {{comparison of two values with different enumeration types ('Bar' and 'Foo')}}
   }
+
+  switch(x) {
+    case AnonAA: break; // expected-warning {{case value not in enumerated type 'Foo'}}
+    case FooA: break;
+    case FooB: break;
+    case FooC: break;
+  }
 }
