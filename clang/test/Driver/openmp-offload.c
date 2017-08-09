@@ -687,3 +687,11 @@
 // RUN:   | FileCheck -check-prefix=CHK-TWOCUBIN-DARWIN %s
 
 // CHK-TWOCUBIN-DARWIN: nvlink"{{.*}}"openmp-offload-{{.*}}.cubin" "openmp-offload-{{.*}}.cubin"
+
+/// ###########################################################################
+
+/// Check PTXAS is passed -c flag when offloading to an NVIDIA device using OpenMP.
+// RUN:   %clang -### -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda -no-canonical-prefixes %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHK-PTXAS-DEFAULT %s
+
+// CHK-PTXAS-DEFAULT: ptxas{{.*}}" "-c"
