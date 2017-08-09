@@ -19,6 +19,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/Optional.h"
 
 namespace clang {
 enum : unsigned {
@@ -54,8 +55,50 @@ enum LVComputationKind {
   LVForLinkageOnly =
       LVForValue | IgnoreExplicitVisibilityBit | IgnoreAllVisibilityBit
 };
+} // namespace clang
 
+namespace llvm {
+template <> struct DenseMapInfo<clang::LVComputationKind> {
+  static inline clang::LVComputationKind getEmptyKey() {
+    return static_cast<clang::LVComputationKind>(-1);
+  }
+  static inline clang::LVComputationKind getTombstoneKey() {
+    return static_cast<clang::LVComputationKind>(-2);
+  }
+  static unsigned getHashValue(const clang::LVComputationKind &Val) {
+    return Val;
+  }
+  static bool isEqual(const clang::LVComputationKind &LHS,
+                      const clang::LVComputationKind &RHS) {
+    return LHS == RHS;
+  }
+};
+} // namespace llvm
+
+namespace clang {
 class LinkageComputer {
+  // We have a cache for repeated linkage/visibility computations. This saves us
+  // from exponential behavior in heavily templated code, such as:
+  //
+  // template <typename T, typename V> struct {};
+  // using A = int;
+  // using B = Foo<A, A>;
+  // using C = Foo<B, B>;
+  // using D = Foo<C, C>;
+  using QueryType = std::pair<const NamedDecl *, LVComputationKind>;
+  llvm::SmallDenseMap<QueryType, LinkageInfo, 8> CachedLinkageInfo;
+  llvm::Optional<LinkageInfo> lookup(const NamedDecl *ND,
+                                     LVComputationKind Kind) const {
+    auto Iter = CachedLinkageInfo.find(std::make_pair(ND, Kind));
+    if (Iter == CachedLinkageInfo.end())
+      return None;
+    return Iter->second;
+  }
+
+  void cache(const NamedDecl *ND, LVComputationKind Kind, LinkageInfo Info) {
+    CachedLinkageInfo[std::make_pair(ND, Kind)] = Info;
+  }
+
   LinkageInfo getLVForTemplateArgumentList(ArrayRef<TemplateArgument> Args,
                                            LVComputationKind computation);
 

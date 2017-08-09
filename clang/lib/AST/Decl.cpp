@@ -192,7 +192,7 @@ LinkageInfo LinkageComputer::getLVForType(const Type &T,
                                           LVComputationKind computation) {
   if (computation == LVForLinkageOnly)
     return LinkageInfo(T.getLinkage(), DefaultVisibility, true);
-  return T.getLinkageAndVisibility();
+  return getTypeLinkageAndVisibility(&T);
 }
 
 /// \brief Get the most restrictive linkage for the types in the given
@@ -224,7 +224,7 @@ LinkageInfo LinkageComputer::getLVForTemplateParameterList(
       for (unsigned i = 0, n = NTTP->getNumExpansionTypes(); i != n; ++i) {
         QualType type = NTTP->getExpansionType(i);
         if (!type->isDependentType())
-          LV.merge(type->getLinkageAndVisibility());
+          LV.merge(getTypeLinkageAndVisibility(type));
       }
       continue;
     }
@@ -291,7 +291,7 @@ LinkageComputer::getLVForTemplateArgumentList(ArrayRef<TemplateArgument> Args,
       continue;
 
     case TemplateArgument::NullPtr:
-      LV.merge(Arg.getNullPtrType()->getLinkageAndVisibility());
+      LV.merge(getTypeLinkageAndVisibility(Arg.getNullPtrType()));
       continue;
 
     case TemplateArgument::Template:
@@ -610,7 +610,7 @@ LinkageComputer::getLVForNamespaceScopeDecl(const NamedDecl *D,
          PrevVar = PrevVar->getPreviousDecl()) {
       if (PrevVar->getStorageClass() == SC_PrivateExtern &&
           Var->getStorageClass() == SC_None)
-        return PrevVar->getLinkageAndVisibility();
+        return getDeclLinkageAndVisibility(PrevVar);
       // Explicitly declared static.
       if (PrevVar->getStorageClass() == SC_Static)
         return getInternalLinkageFor(Var);
@@ -1358,11 +1358,15 @@ LinkageInfo LinkageComputer::getLVForDecl(const NamedDecl *D,
   if (computation == LVForLinkageOnly && D->hasCachedLinkage())
     return LinkageInfo(D->getCachedLinkage(), DefaultVisibility, false);
 
+  if (llvm::Optional<LinkageInfo> LI = lookup(D, computation))
+    return *LI;
+
   LinkageInfo LV = computeLVForDecl(D, computation);
   if (D->hasCachedLinkage())
     assert(D->getCachedLinkage() == LV.getLinkage());
 
   D->setCachedLinkage(LV.getLinkage());
+  cache(D, computation, LV);
 
 #ifndef NDEBUG
   // In C (because of gnu inline) and in c++ with microsoft extensions an
