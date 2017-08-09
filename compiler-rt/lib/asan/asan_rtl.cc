@@ -451,13 +451,8 @@ static void AsanInitInternal() {
   InitTlsSize();
 
   // Create main thread.
-  AsanThread *main_thread = AsanThread::Create(
-      /* start_routine */ nullptr, /* arg */ nullptr, /* parent_tid */ 0,
-      /* stack */ nullptr, /* detached */ true);
+  AsanThread *main_thread = CreateMainThread();
   CHECK_EQ(0, main_thread->tid());
-  SetCurrentThread(main_thread);
-  main_thread->ThreadStart(internal_getpid(),
-                           /* signal_thread_is_registered */ nullptr);
   force_interface_symbols();  // no-op.
   SanitizerInitializeUnwinder();
 
