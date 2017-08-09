@@ -292,7 +292,10 @@ void NVPTX::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString(A));
 
   // In OpenMP we need to generate relocatable code.
-  if (JA.isOffloading(Action::OFK_OpenMP))
+  if (JA.isOffloading(Action::OFK_OpenMP) &&
+      Args.hasFlag(options::OPT_fopenmp_relocatable_target,
+                   options::OPT_fnoopenmp_relocatable_target,
+                   /*Default=*/ true))
     CmdArgs.push_back("-c");
 
   const char *Exec;
