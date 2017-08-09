@@ -1140,12 +1140,12 @@ LazyCallGraph::RefSCC::removeInternalRefEdge(Node &SourceN,
     return Result;
 
   // We build somewhat synthetic new RefSCCs by providing a postorder mapping
-  // for each inner SCC. We also store these associated with *nodes* rather
-  // than SCCs because this saves a round-trip through the node->SCC map and in
-  // the common case, SCCs are small. We will verify that we always give the
-  // same number to every node in the SCC such that these are equivalent.
+  // for each inner SCC. We store these inside the low-link field of the nodes
+  // rather than associated with SCCs because this saves a round-trip through
+  // the node->SCC map and in the common case, SCCs are small. We will verify
+  // that we always give the same number to every node in the SCC such that
+  // these are equivalent.
   int PostOrderNumber = 0;
-  SmallDenseMap<Node *, int> PostOrderMapping;
 
   // Reset all the other nodes to prepare for a DFS over them, and add them to
   // our worklist.
@@ -1161,11 +1161,6 @@ LazyCallGraph::RefSCC::removeInternalRefEdge(Node &SourceN,
   // an important special case of the edge removal not breaking the cycle of
   // this RefSCC.
   const int NumRefSCCNodes = Worklist.size();
-
-  auto MarkNodeForSCCNumber = [&PostOrderMapping](Node &N, int Number) {
-    N.DFSNumber = N.LowLink = -1;
-    PostOrderMapping[&N] = Number;
-  };
 
   SmallVector<std::pair<Node *, EdgeSequence::iterator>, 4> DFSStack;
   SmallVector<Node *, 4> PendingRefSCCStack;
@@ -1240,16 +1235,25 @@ LazyCallGraph::RefSCC::removeInternalRefEdge(Node &SourceN,
       }
 
       // Otherwise, form a new RefSCC from the top of the pending node stack.
+      int RefSCCNumber = PostOrderNumber++;
       int RootDFSNumber = N->DFSNumber;
+
       // Find the range of the node stack by walking down until we pass the
-      // root DFS number.
-      auto RefSCCNodes =
-          make_range(find_if(reverse(PendingRefSCCStack),
-                             [RootDFSNumber](const Node *N) {
-                               return N->DFSNumber < RootDFSNumber;
-                             })
-                         .base(),
-                     PendingRefSCCStack.end());
+      // root DFS number. Update the DFS numbers and low link numbers in the
+      // process to avoid re-walking this list where possible.
+      auto StackRI = find_if(reverse(PendingRefSCCStack), [&](Node *N) {
+        if (N->DFSNumber < RootDFSNumber)
+          // We've found the bottom.
+          return true;
+
+        // Update this node and keep scanning.
+        N->DFSNumber = -1;
+        // Save the post-order number in the lowlink field so that we can use
+        // it to map SCCs into new RefSCCs after we finish the DFS.
+        N->LowLink = RefSCCNumber;
+        return false;
+      });
+      auto RefSCCNodes = make_range(StackRI.base(), PendingRefSCCStack.end());
 
       // If we find a cycle containing all nodes originally in this RefSCC then
       // the removal hasn't changed the structure at all. This is an important
@@ -1257,20 +1261,15 @@ LazyCallGraph::RefSCC::removeInternalRefEdge(Node &SourceN,
       // efficiently as soon as we discover it.
       if (std::distance(RefSCCNodes.begin(), RefSCCNodes.end()) ==
           NumRefSCCNodes) {
-        // Mark the DFS as over in the nodes.
+        // Clear out the low link field as we won't need it.
         for (Node *N : RefSCCNodes)
-          N->DFSNumber = N->LowLink = -1;
+          N->LowLink = -1;
         // Return the empty result immediately.
         return Result;
       }
 
-      // Mark the postorder number for these nodes and clear them off the
-      // stack. We'll use the postorder number to pull them into RefSCCs at the
-      // end.
-      int RefSCCNumber = PostOrderNumber++;
-      for (Node *N : RefSCCNodes)
-        MarkNodeForSCCNumber(*N, RefSCCNumber);
-
+      // We've already marked the nodes internally with the RefSCC number so
+      // just clear them off the stack and continue.
       PendingRefSCCStack.erase(RefSCCNodes.begin(), PendingRefSCCStack.end());
     } while (!DFSStack.empty());
 
@@ -1303,15 +1302,15 @@ LazyCallGraph::RefSCC::removeInternalRefEdge(Node &SourceN,
     G->RefSCCIndices[G->PostOrderRefSCCs[i]] = i;
 
   for (SCC *C : SCCs) {
-    auto PostOrderI = PostOrderMapping.find(&*C->begin());
-    assert(PostOrderI != PostOrderMapping.end() &&
-           "Cannot have missing mappings for nodes!");
-    int SCCNumber = PostOrderI->second;
-#ifndef NDEBUG
-    for (Node &N : *C)
-      assert(PostOrderMapping.find(&N)->second == SCCNumber &&
+    // We store the SCC number in the node's low-link field above.
+    int SCCNumber = C->begin()->LowLink;
+    // Clear out all of the SCC's node's low-link fields now that we're done
+    // using them as side-storage.
+    for (Node &N : *C) {
+      assert(N.LowLink == SCCNumber &&
              "Cannot have different numbers for nodes in the same SCC!");
-#endif
+      N.LowLink = -1;
+    }
 
     RefSCC &RC = *Result[SCCNumber];
     int SCCIndex = RC.SCCs.size();
