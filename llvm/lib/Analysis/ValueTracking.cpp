@@ -4531,9 +4531,7 @@ static Optional<bool> isImpliedCondAndOr(const BinaryOperator *LHS,
           LHS->getOpcode() == Instruction::Or) &&
          "Expected LHS to be 'and' or 'or'.");
 
-  // The remaining tests are all recursive, so bail out if we hit the limit.
-  if (Depth == MaxDepth)
-    return None;
+  assert(Depth <= MaxDepth && "Hit recursion limit");
 
   // If the result of an 'or' is false, then we know both legs of the 'or' are
   // false.  Similarly, if the result of an 'and' is true, then we know both
