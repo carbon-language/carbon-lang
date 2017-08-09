@@ -353,16 +353,15 @@ bool ZoneAlgorithm::isCompatibleStmt(ScopStmt *Stmt) {
     }
 
     // Do not allow more than one store to the same location.
-    if (!isl_union_map_is_disjoint(Stores.keep(), AccRel.keep())) {
+    if (!isl_union_map_is_disjoint(Stores.keep(), AccRel.keep()) &&
+        !onlySameValueWrites(Stmt)) {
       OptimizationRemarkMissed R(PassName, "StoreAfterStore",
                                  MA->getAccessInstruction());
-      if (!onlySameValueWrites(Stmt)) {
-        R << "store after store of same element in same statement";
-        R << " (previous stores: " << Stores;
-        R << ", storing: " << AccRel << ")";
-        S->getFunction().getContext().diagnose(R);
-        return false;
-      }
+      R << "store after store of same element in same statement";
+      R << " (previous stores: " << Stores;
+      R << ", storing: " << AccRel << ")";
+      S->getFunction().getContext().diagnose(R);
+      return false;
     }
 
     Stores = give(isl_union_map_union(Stores.take(), AccRel.take()));
