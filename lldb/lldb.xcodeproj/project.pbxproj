@@ -875,6 +875,7 @@
 		9A19A6B01163BBB300E0D453 /* SBValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A19A6AD1163BB9800E0D453 /* SBValue.cpp */; };
 		9A1E595C1EB2B141002206A5 /* SBTrace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A1E59521EB2B0B9002206A5 /* SBTrace.cpp */; };
 		9A1E595D1EB2B141002206A5 /* SBTraceOptions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A1E59531EB2B0B9002206A5 /* SBTraceOptions.cpp */; };
+		9A2057031F3A605200F6C293 /* VASprintfTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A3D43C41F3150D200EB767C /* VASprintfTest.cpp */; };
 		9A22A161135E30370024DDC3 /* EmulateInstructionARM.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A22A15D135E30370024DDC3 /* EmulateInstructionARM.cpp */; };
 		9A22A163135E30370024DDC3 /* EmulationStateARM.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A22A15F135E30370024DDC3 /* EmulationStateARM.cpp */; };
 		9A357583116CFDEE00E8ED2F /* SBValueList.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A357582116CFDEE00E8ED2F /* SBValueList.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -7092,6 +7093,7 @@
 				AFEC5FD81D94F9380076A480 /* Testx86AssemblyInspectionEngine.cpp in Sources */,
 				23CB15401D66DA9300EDDDE1 /* TestClangASTContext.cpp in Sources */,
 				23CB15411D66DA9300EDDDE1 /* StringExtractorTest.cpp in Sources */,
+				9A2057031F3A605200F6C293 /* VASprintfTest.cpp in Sources */,
 				23CB15421D66DA9300EDDDE1 /* TaskPoolTest.cpp in Sources */,
 				23CB15431D66DA9300EDDDE1 /* BroadcasterTest.cpp in Sources */,
 				9A3D43EE1F3237F900EB767C /* StreamCallbackTest.cpp in Sources */,
