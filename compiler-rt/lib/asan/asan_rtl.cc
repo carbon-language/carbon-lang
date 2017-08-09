@@ -528,6 +528,7 @@ void NOINLINE __asan_handle_no_return() {
     top = curr_thread->stack_top();
     bottom = ((uptr)&local_stack - PageSize) & ~(PageSize - 1);
   } else {
+    CHECK(!SANITIZER_FUCHSIA);
     // If we haven't seen this thread, try asking the OS for stack bounds.
     uptr tls_addr, tls_size, stack_size;
     GetThreadStackAndTls(/*main=*/false, &bottom, &stack_size, &tls_addr,

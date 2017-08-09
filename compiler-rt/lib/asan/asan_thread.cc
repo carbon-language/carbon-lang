@@ -239,6 +239,10 @@ void AsanThread::Init() {
           &local);
 }
 
+// Fuchsia doesn't use ThreadStart.
+// asan_fuchsia.c defines CreateMainThread and SetThreadStackAndTls.
+#if !SANITIZER_FUCHSIA
+
 thread_return_t AsanThread::ThreadStart(
     tid_t os_id, atomic_uintptr_t *signal_thread_is_registered) {
   Init();
@@ -282,6 +286,8 @@ void AsanThread::SetThreadStackAndTls() {
   int local;
   CHECK(AddrIsInStack((uptr)&local));
 }
+
+#endif  // !SANITIZER_FUCHSIA
 
 void AsanThread::ClearShadowForThreadStackAndTLS() {
   PoisonShadow(stack_bottom_, stack_top_ - stack_bottom_, 0);

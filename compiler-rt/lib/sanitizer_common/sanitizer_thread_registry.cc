@@ -204,7 +204,8 @@ void ThreadRegistry::SetThreadName(u32 tid, const char *name) {
   CHECK_LT(tid, n_contexts_);
   ThreadContextBase *tctx = threads_[tid];
   CHECK_NE(tctx, 0);
-  CHECK_EQ(ThreadStatusRunning, tctx->status);
+  CHECK_EQ(SANITIZER_FUCHSIA ? ThreadStatusCreated : ThreadStatusRunning,
+           tctx->status);
   tctx->SetName(name);
 }
 
