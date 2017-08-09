@@ -216,10 +216,10 @@ private:
   const unsigned HasArray : 1;
 
 public:
-  Node(Kind K, bool HasRHS = false, bool HasFunction = false,
-       bool HasArray = false)
-      : K(K), HasRHSComponent(HasRHS), HasFunction(HasFunction),
-        HasArray(HasArray) {}
+  Node(Kind K_, bool HasRHS_ = false, bool HasFunction_ = false,
+       bool HasArray_ = false)
+      : K(K_), HasRHSComponent(HasRHS_), HasFunction(HasFunction_),
+        HasArray(HasArray_) {}
 
   bool hasRHSComponent() const { return HasRHSComponent; }
   bool hasArray() const { return HasArray; }
@@ -252,8 +252,8 @@ class NodeArray {
 
 public:
   NodeArray() : NumElements(0) {}
-  NodeArray(Node **Elements, size_t NumElements)
-      : Elements(Elements), NumElements(NumElements) {}
+  NodeArray(Node **Elements_, size_t NumElements_)
+      : Elements(Elements_), NumElements(NumElements_) {}
 
   bool empty() const { return NumElements == 0; }
   size_t size() const { return NumElements; }
@@ -272,8 +272,8 @@ class DotSuffix final : public Node {
   const StringView Suffix;
 
 public:
-  DotSuffix(Node *Prefix, StringView Suffix)
-      : Node(KDotSuffix), Prefix(Prefix), Suffix(Suffix) {}
+  DotSuffix(Node *Prefix_, StringView Suffix_)
+      : Node(KDotSuffix), Prefix(Prefix_), Suffix(Suffix_) {}
 
   void printLeft(OutputStream &s) const override {
     Prefix->print(s);
@@ -288,8 +288,8 @@ class VendorExtQualType final : public Node {
   const Node *Ty;
 
 public:
-  VendorExtQualType(Node *Ext, Node *Ty)
-      : Node(KVendorExtQualType), Ext(Ext), Ty(Ty) {}
+  VendorExtQualType(Node *Ext_, Node *Ty_)
+      : Node(KVendorExtQualType), Ext(Ext_), Ty(Ty_) {}
 
   void printLeft(OutputStream &S) const override {
     Ext->print(S);
@@ -326,15 +326,15 @@ protected:
   }
 
 public:
-  QualType(Node *Child, Qualifiers Quals)
-      : Node(KQualType, Child->hasRHSComponent(), Child->hasFunction(),
-             Child->hasArray()),
-        Quals(Quals), Child(Child) {}
+  QualType(Node *Child_, Qualifiers Quals_)
+      : Node(KQualType, Child_->hasRHSComponent(), Child_->hasFunction(),
+             Child_->hasArray()),
+        Quals(Quals_), Child(Child_) {}
 
-  QualType(Node::Kind ChildKind, Node *Child, Qualifiers Quals)
-      : Node(ChildKind, Child->hasRHSComponent(), Child->hasFunction(),
-             Child->hasArray()),
-        Quals(Quals), Child(Child) {}
+  QualType(Node::Kind ChildKind_, Node *Child_, Qualifiers Quals_)
+      : Node(ChildKind_, Child_->hasRHSComponent(), Child_->hasFunction(),
+             Child_->hasArray()),
+        Quals(Quals_), Child(Child_) {}
 
   void printLeft(OutputStream &S) const override {
     Child->printLeft(S);
@@ -348,7 +348,7 @@ class ConversionOperatorType final : public Node {
   const Node *Ty;
 
 public:
-  ConversionOperatorType(Node *Ty) : Node(KConversionOperatorType), Ty(Ty) {}
+  ConversionOperatorType(Node *Ty_) : Node(KConversionOperatorType), Ty(Ty_) {}
 
   void printLeft(OutputStream &S) const override {
     S += "operator ";
@@ -361,8 +361,8 @@ class PostfixQualifiedType final : public Node {
   const StringView Postfix;
 
 public:
-  PostfixQualifiedType(Node *Ty, StringView Postfix)
-      : Node(KPostfixQualifiedType), Ty(Ty), Postfix(Postfix) {}
+  PostfixQualifiedType(Node *Ty_, StringView Postfix_)
+      : Node(KPostfixQualifiedType), Ty(Ty_), Postfix(Postfix_) {}
 
   void printLeft(OutputStream &s) const override {
     Ty->printLeft(s);
@@ -376,7 +376,7 @@ class NameType final : public Node {
   const StringView Name;
 
 public:
-  NameType(StringView Name) : Node(KNameType), Name(Name) {}
+  NameType(StringView Name_) : Node(KNameType), Name(Name_) {}
 
   StringView getName() const { return Name; }
   StringView getBaseName() const override { return Name; }
@@ -391,8 +391,8 @@ class ObjCProtoName : public Node {
   friend class PointerType;
 
 public:
-  ObjCProtoName(Node *Ty, Node *Protocol)
-      : Node(KObjCProtoName), Ty(Ty), Protocol(Protocol) {}
+  ObjCProtoName(Node *Ty_, Node *Protocol_)
+      : Node(KObjCProtoName), Ty(Ty_), Protocol(Protocol_) {}
 
   bool isObjCObject() const {
     return Ty->K == KNameType &&
@@ -411,8 +411,8 @@ class PointerType final : public Node {
   const Node *Pointee;
 
 public:
-  PointerType(Node *Pointee)
-      : Node(KPointerType, Pointee->hasRHSComponent()), Pointee(Pointee) {}
+  PointerType(Node *Pointee_)
+      : Node(KPointerType, Pointee_->hasRHSComponent()), Pointee(Pointee_) {}
 
   void printLeft(OutputStream &s) const override {
     // We rewrite objc_object<SomeProtocol>* into id<SomeProtocol>.
@@ -446,9 +446,9 @@ class LValueReferenceType final : public Node {
   const Node *Pointee;
 
 public:
-  LValueReferenceType(Node *Pointee)
-      : Node(KLValueReferenceType, Pointee->hasRHSComponent()),
-        Pointee(Pointee) {}
+  LValueReferenceType(Node *Pointee_)
+      : Node(KLValueReferenceType, Pointee_->hasRHSComponent()),
+        Pointee(Pointee_) {}
 
   void printLeft(OutputStream &s) const override {
     Pointee->printLeft(s);
@@ -470,9 +470,9 @@ class RValueReferenceType final : public Node {
   const Node *Pointee;
 
 public:
-  RValueReferenceType(Node *Pointee)
-      : Node(KRValueReferenceType, Pointee->hasRHSComponent()),
-        Pointee(Pointee) {}
+  RValueReferenceType(Node *Pointee_)
+      : Node(KRValueReferenceType, Pointee_->hasRHSComponent()),
+        Pointee(Pointee_) {}
 
   void printLeft(OutputStream &s) const override {
     Pointee->printLeft(s);
@@ -496,9 +496,9 @@ class PointerToMemberType final : public Node {
   const Node *MemberType;
 
 public:
-  PointerToMemberType(Node *ClassType, Node *MemberType)
-      : Node(KPointerToMemberType, MemberType->hasRHSComponent()),
-        ClassType(ClassType), MemberType(MemberType) {}
+  PointerToMemberType(Node *ClassType_, Node *MemberType_)
+      : Node(KPointerToMemberType, MemberType_->hasRHSComponent()),
+        ClassType(ClassType_), MemberType(MemberType_) {}
 
   void printLeft(OutputStream &s) const override {
     MemberType->printLeft(s);
@@ -558,11 +558,11 @@ class ArrayType final : public Node {
   NodeOrString Dimension;
 
 public:
-  ArrayType(Node *Base, NodeOrString Dimension)
-      : Node(KArrayType, true, false, true), Base(Base), Dimension(Dimension) {}
+  ArrayType(Node *Base_, NodeOrString Dimension_)
+      : Node(KArrayType, true, false, true), Base(Base_), Dimension(Dimension_) {}
 
   // Incomplete array type.
-  ArrayType(Node *Base) : Node(KArrayType, true, false, true), Base(Base) {}
+  ArrayType(Node *Base_) : Node(KArrayType, true, false, true), Base(Base_) {}
 
   void printLeft(OutputStream &S) const override { Base->printLeft(S); }
 
@@ -584,8 +584,8 @@ class FunctionType final : public Node {
   NodeArray Params;
 
 public:
-  FunctionType(Node *Ret, NodeArray Params)
-      : Node(KFunctionType, true, true), Ret(Ret), Params(Params) {}
+  FunctionType(Node *Ret_, NodeArray Params_)
+      : Node(KFunctionType, true, true), Ret(Ret_), Params(Params_) {}
 
   // Handle C++'s ... quirky decl grammer by using the left & right
   // distinction. Consider:
@@ -613,9 +613,9 @@ class TopLevelFunctionDecl final : public Node {
   NodeArray Params;
 
 public:
-  TopLevelFunctionDecl(Node *Ret, Node *Name, NodeArray Params)
-      : Node(KTopLevelFunctionDecl, true, true), Ret(Ret), Name(Name),
-        Params(Params) {}
+  TopLevelFunctionDecl(Node *Ret_, Node *Name_, NodeArray Params_)
+      : Node(KTopLevelFunctionDecl, true, true), Ret(Ret_), Name(Name_),
+        Params(Params_) {}
 
   void printLeft(OutputStream &S) const override {
     if (Ret) {
@@ -648,8 +648,8 @@ class FunctionRefQualType : public Node {
   friend class FunctionQualType;
 
 public:
-  FunctionRefQualType(Node *Fn, FunctionRefQual Quals)
-      : Node(KFunctionRefQualType, true, true), Fn(Fn), Quals(Quals) {}
+  FunctionRefQualType(Node *Fn_, FunctionRefQual Quals_)
+      : Node(KFunctionRefQualType, true, true), Fn(Fn_), Quals(Quals_) {}
 
   void printQuals(OutputStream &S) const {
     if (Quals == FrefQualLValue)
@@ -668,8 +668,8 @@ public:
 
 class FunctionQualType final : public QualType {
 public:
-  FunctionQualType(Node *Child, Qualifiers Quals)
-      : QualType(KFunctionQualType, Child, Quals) {}
+  FunctionQualType(Node *Child_, Qualifiers Quals_)
+      : QualType(KFunctionQualType, Child_, Quals_) {}
 
   void printLeft(OutputStream &S) const override { Child->printLeft(S); }
 
@@ -690,7 +690,7 @@ class LiteralOperator : public Node {
   const Node *OpName;
 
 public:
-  LiteralOperator(Node *OpName) : Node(KLiteralOperator), OpName(OpName) {}
+  LiteralOperator(Node *OpName_) : Node(KLiteralOperator), OpName(OpName_) {}
 
   void printLeft(OutputStream &S) const override {
     S += "operator\"\" ";
@@ -703,8 +703,8 @@ class SpecialName final : public Node {
   const Node *Child;
 
 public:
-  SpecialName(StringView Special, Node *Child)
-      : Node(KSpecialName), Special(Special), Child(Child) {}
+  SpecialName(StringView Special_, Node *Child_)
+      : Node(KSpecialName), Special(Special_), Child(Child_) {}
 
   void printLeft(OutputStream &S) const override {
     S += Special;
@@ -717,9 +717,9 @@ class CtorVtableSpecialName final : public Node {
   const Node *SecondType;
 
 public:
-  CtorVtableSpecialName(Node *FirstType, Node *SecondType)
-      : Node(KCtorVtableSpecialName), FirstType(FirstType),
-        SecondType(SecondType) {}
+  CtorVtableSpecialName(Node *FirstType_, Node *SecondType_)
+      : Node(KCtorVtableSpecialName), FirstType(FirstType_),
+        SecondType(SecondType_) {}
 
   void printLeft(OutputStream &S) const override {
     S += "construction vtable for ";
@@ -737,8 +737,8 @@ class QualifiedName final : public Node {
   mutable OutputStream::StreamStringView Cache;
 
 public:
-  QualifiedName(Node *Qualifier, Node *Name)
-      : Node(KQualifiedName), Qualifier(Qualifier), Name(Name) {}
+  QualifiedName(Node *Qualifier_, Node *Name_)
+      : Node(KQualifiedName), Qualifier(Qualifier_), Name(Name_) {}
 
   StringView getBaseName() const override { return Name->getBaseName(); }
 
@@ -770,11 +770,11 @@ class VectorType final : public Node {
   const bool IsPixel;
 
 public:
-  VectorType(NodeOrString Dimension)
-      : Node(KVectorType), BaseType(nullptr), Dimension(Dimension),
+  VectorType(NodeOrString Dimension_)
+      : Node(KVectorType), BaseType(nullptr), Dimension(Dimension_),
         IsPixel(true) {}
-  VectorType(Node *BaseType, NodeOrString Dimension)
-      : Node(KVectorType), BaseType(BaseType), Dimension(Dimension),
+  VectorType(Node *BaseType_, NodeOrString Dimension_)
+      : Node(KVectorType), BaseType(BaseType_), Dimension(Dimension_),
         IsPixel(false) {}
 
   void printLeft(OutputStream &S) const override {
@@ -800,7 +800,7 @@ class TemplateParams final : public Node {
   mutable OutputStream::StreamStringView Cache;
 
 public:
-  TemplateParams(NodeArray Params) : Node(KTemplateParams), Params(Params) {}
+  TemplateParams(NodeArray Params_) : Node(KTemplateParams), Params(Params_) {}
 
   void printLeft(OutputStream &S) const override {
     if (!Cache.empty()) {
@@ -826,8 +826,8 @@ class NameWithTemplateArgs final : public Node {
   Node *TemplateArgs;
 
 public:
-  NameWithTemplateArgs(Node *Name, Node *TemplateArgs)
-      : Node(KNameWithTemplateArgs), Name(Name), TemplateArgs(TemplateArgs) {}
+  NameWithTemplateArgs(Node *Name_, Node *TemplateArgs_)
+      : Node(KNameWithTemplateArgs), Name(Name_), TemplateArgs(TemplateArgs_) {}
 
   StringView getBaseName() const override { return Name->getBaseName(); }
 
@@ -841,7 +841,7 @@ class GlobalQualifiedName final : public Node {
   Node *Child;
 
 public:
-  GlobalQualifiedName(Node *Child) : Node(KGlobalQualifiedName), Child(Child) {}
+  GlobalQualifiedName(Node *Child_) : Node(KGlobalQualifiedName), Child(Child_) {}
 
   StringView getBaseName() const override { return Child->getBaseName(); }
 
@@ -855,7 +855,7 @@ class StdQualifiedName final : public Node {
   Node *Child;
 
 public:
-  StdQualifiedName(Node *Child) : Node(KStdQualifiedName), Child(Child) {}
+  StdQualifiedName(Node *Child_) : Node(KStdQualifiedName), Child(Child_) {}
 
   StringView getBaseName() const override { return Child->getBaseName(); }
 
@@ -878,8 +878,8 @@ class ExpandedSpecialSubstitution final : public Node {
   SpecialSubKind SSK;
 
 public:
-  ExpandedSpecialSubstitution(SpecialSubKind SSK)
-      : Node(KExpandedSpecialSubstitution), SSK(SSK) {}
+  ExpandedSpecialSubstitution(SpecialSubKind SSK_)
+      : Node(KExpandedSpecialSubstitution), SSK(SSK_) {}
 
   StringView getBaseName() const override {
     switch (SSK) {
@@ -927,8 +927,8 @@ class SpecialSubstitution final : public Node {
 public:
   SpecialSubKind SSK;
 
-  SpecialSubstitution(SpecialSubKind SSK)
-      : Node(KSpecialSubstitution), SSK(SSK) {}
+  SpecialSubstitution(SpecialSubKind SSK_)
+      : Node(KSpecialSubstitution), SSK(SSK_) {}
 
   StringView getBaseName() const override {
     switch (SSK) {
@@ -977,8 +977,8 @@ class CtorDtorName final : public Node {
   const bool IsDtor;
 
 public:
-  CtorDtorName(Node *Basename, bool IsDtor)
-      : Node(KCtorDtorName), Basename(Basename), IsDtor(IsDtor) {}
+  CtorDtorName(Node *Basename_, bool IsDtor_)
+      : Node(KCtorDtorName), Basename(Basename_), IsDtor(IsDtor_) {}
 
   void printLeft(OutputStream &S) const override {
     if (IsDtor)
@@ -991,7 +991,7 @@ class DtorName : public Node {
   const Node *Base;
 
 public:
-  DtorName(Node *Base) : Node(KDtorName), Base(Base) {}
+  DtorName(Node *Base_) : Node(KDtorName), Base(Base_) {}
 
   void printLeft(OutputStream &S) const override {
     S += "~";
@@ -1003,7 +1003,7 @@ class UnnamedTypeName : public Node {
   const StringView Count;
 
 public:
-  UnnamedTypeName(StringView Count) : Node(KUnnamedTypeName), Count(Count) {}
+  UnnamedTypeName(StringView Count_) : Node(KUnnamedTypeName), Count(Count_) {}
 
   void printLeft(OutputStream &S) const override {
     S += "'unnamed";
@@ -1017,8 +1017,8 @@ class LambdaTypeName : public Node {
   StringView Count;
 
 public:
-  LambdaTypeName(NodeArray Params, StringView Count)
-      : Node(KLambdaTypeName), Params(Params), Count(Count) {}
+  LambdaTypeName(NodeArray Params_, StringView Count_)
+      : Node(KLambdaTypeName), Params(Params_), Count(Count_) {}
 
   void printLeft(OutputStream &S) const override {
     S += "\'lambda";
@@ -1041,8 +1041,8 @@ class BinaryExpr : public Expr {
   const Node *RHS;
 
 public:
-  BinaryExpr(Node *LHS, StringView InfixOperator, Node *RHS)
-      : LHS(LHS), InfixOperator(InfixOperator), RHS(RHS) {}
+  BinaryExpr(Node *LHS_, StringView InfixOperator_, Node *RHS_)
+      : LHS(LHS_), InfixOperator(InfixOperator_), RHS(RHS_) {}
 
   void printLeft(OutputStream &S) const override {
     // might be a template argument expression, then we need to disambiguate
@@ -1068,7 +1068,7 @@ class ArraySubscriptExpr : public Expr {
   const Node *Op2;
 
 public:
-  ArraySubscriptExpr(Node *Op1, Node *Op2) : Op1(Op1), Op2(Op2) {}
+  ArraySubscriptExpr(Node *Op1_, Node *Op2_) : Op1(Op1_), Op2(Op2_) {}
 
   void printLeft(OutputStream &S) const override {
     S += "(";
@@ -1084,8 +1084,8 @@ class PostfixExpr : public Expr {
   const StringView Operand;
 
 public:
-  PostfixExpr(Node *Child, StringView Operand)
-      : Child(Child), Operand(Operand) {}
+  PostfixExpr(Node *Child_, StringView Operand_)
+      : Child(Child_), Operand(Operand_) {}
 
   void printLeft(OutputStream &S) const override {
     S += "(";
@@ -1101,8 +1101,8 @@ class ConditionalExpr : public Expr {
   const Node *Else;
 
 public:
-  ConditionalExpr(Node *Cond, Node *Then, Node *Else)
-      : Cond(Cond), Then(Then), Else(Else) {}
+  ConditionalExpr(Node *Cond_, Node *Then_, Node *Else_)
+      : Cond(Cond_), Then(Then_), Else(Else_) {}
 
   void printLeft(OutputStream &S) const override {
     S += "(";
@@ -1121,8 +1121,8 @@ class MemberExpr : public Expr {
   const Node *RHS;
 
 public:
-  MemberExpr(Node *LHS, StringView Kind, Node *RHS)
-      : LHS(LHS), Kind(Kind), RHS(RHS) {}
+  MemberExpr(Node *LHS_, StringView Kind_, Node *RHS_)
+      : LHS(LHS_), Kind(Kind_), RHS(RHS_) {}
 
   void printLeft(OutputStream &S) const override {
     LHS->print(S);
@@ -1137,8 +1137,8 @@ class EnclosingExpr : public Expr {
   const StringView Postfix;
 
 public:
-  EnclosingExpr(StringView Prefix, Node *Infix, StringView Postfix)
-      : Prefix(Prefix), Infix(Infix), Postfix(Postfix) {}
+  EnclosingExpr(StringView Prefix_, Node *Infix_, StringView Postfix_)
+      : Prefix(Prefix_), Infix(Infix_), Postfix(Postfix_) {}
 
   void printLeft(OutputStream &S) const override {
     S += Prefix;
@@ -1154,8 +1154,8 @@ class CastExpr : public Expr {
   const Node *From;
 
 public:
-  CastExpr(StringView CastKind, Node *To, Node *From)
-      : CastKind(CastKind), To(To), From(From) {}
+  CastExpr(StringView CastKind_, Node *To_, Node *From_)
+      : CastKind(CastKind_), To(To_), From(From_) {}
 
   void printLeft(OutputStream &S) const override {
     S += CastKind;
@@ -1171,7 +1171,7 @@ class SizeofParamPackExpr : public Expr {
   NodeArray Args;
 
 public:
-  SizeofParamPackExpr(NodeArray Args) : Args(Args) {}
+  SizeofParamPackExpr(NodeArray Args_) : Args(Args_) {}
 
   void printLeft(OutputStream &S) const override {
     S += "sizeof...(";
@@ -1185,7 +1185,7 @@ class CallExpr : public Expr {
   NodeArray Args;
 
 public:
-  CallExpr(Node *Callee, NodeArray Args) : Callee(Callee), Args(Args) {}
+  CallExpr(Node *Callee_, NodeArray Args_) : Callee(Callee_), Args(Args_) {}
 
   void printLeft(OutputStream &S) const override {
     Callee->print(S);
@@ -1203,10 +1203,10 @@ class NewExpr : public Expr {
   bool IsGlobal; // ::operator new ?
   bool IsArray;  // new[] ?
 public:
-  NewExpr(NodeArray ExprList, Node *Type, NodeArray InitList, bool IsGlobal,
-          bool IsArray)
-      : ExprList(ExprList), Type(Type), InitList(InitList), IsGlobal(IsGlobal),
-        IsArray(IsArray) {}
+  NewExpr(NodeArray ExprList_, Node *Type_, NodeArray InitList_, bool IsGlobal_,
+          bool IsArray_)
+      : ExprList(ExprList_), Type(Type_), InitList(InitList_), IsGlobal(IsGlobal_),
+        IsArray(IsArray_) {}
 
   void printLeft(OutputStream &S) const override {
     if (IsGlobal)
@@ -1234,8 +1234,8 @@ class DeleteExpr : public Expr {
   bool IsArray;
 
 public:
-  DeleteExpr(Node *Op, bool IsGlobal, bool IsArray)
-      : Op(Op), IsGlobal(IsGlobal), IsArray(IsArray) {}
+  DeleteExpr(Node *Op_, bool IsGlobal_, bool IsArray_)
+      : Op(Op_), IsGlobal(IsGlobal_), IsArray(IsArray_) {}
 
   void printLeft(OutputStream &S) const override {
     if (IsGlobal)
@@ -1252,7 +1252,7 @@ class PrefixExpr : public Expr {
   Node *Child;
 
 public:
-  PrefixExpr(StringView Prefix, Node *Child) : Prefix(Prefix), Child(Child) {}
+  PrefixExpr(StringView Prefix_, Node *Child_) : Prefix(Prefix_), Child(Child_) {}
 
   void printLeft(OutputStream &S) const override {
     S += Prefix;
@@ -1266,7 +1266,7 @@ class FunctionParam : public Expr {
   StringView Number;
 
 public:
-  FunctionParam(StringView Number) : Number(Number) {}
+  FunctionParam(StringView Number_) : Number(Number_) {}
 
   void printLeft(OutputStream &S) const override {
     S += "fp";
@@ -1278,7 +1278,7 @@ class ExprList : public Expr {
   NodeArray SubExprs;
 
 public:
-  ExprList(NodeArray SubExprs) : SubExprs(SubExprs) {}
+  ExprList(NodeArray SubExprs_) : SubExprs(SubExprs_) {}
 
   void printLeft(OutputStream &S) const override {
     S += "(";
@@ -1292,8 +1292,8 @@ class ConversionExpr : public Expr {
   NodeArray Types;
 
 public:
-  ConversionExpr(NodeArray Expressions, NodeArray Types)
-      : Expressions(Expressions), Types(Types) {}
+  ConversionExpr(NodeArray Expressions_, NodeArray Types_)
+      : Expressions(Expressions_), Types(Types_) {}
 
   void printLeft(OutputStream &S) const override {
     S += "(";
@@ -1308,7 +1308,7 @@ class ThrowExpr : public Expr {
   const Node *Op;
 
 public:
-  ThrowExpr(Node *Op) : Op(Op) {}
+  ThrowExpr(Node *Op_) : Op(Op_) {}
 
   void printLeft(OutputStream &S) const override {
     S += "throw ";
@@ -1320,7 +1320,7 @@ class BoolExpr : public Expr {
   bool Value;
 
 public:
-  BoolExpr(bool Value) : Value(Value) {}
+  BoolExpr(bool Value_) : Value(Value_) {}
 
   void printLeft(OutputStream &S) const override {
     S += Value ? StringView("true") : StringView("false");
@@ -1333,7 +1333,7 @@ class IntegerCastExpr : public Expr {
   StringView Integer;
 
 public:
-  IntegerCastExpr(Node *Ty, StringView Integer) : Ty(Ty), Integer(Integer) {}
+  IntegerCastExpr(Node *Ty_, StringView Integer_) : Ty(Ty_), Integer(Integer_) {}
 
   void printLeft(OutputStream &S) const override {
     S += "(";
@@ -1348,7 +1348,7 @@ class IntegerExpr : public Expr {
   StringView Value;
 
 public:
-  IntegerExpr(StringView Type, StringView Value) : Type(Type), Value(Value) {}
+  IntegerExpr(StringView Type_, StringView Value_) : Type(Type_), Value(Value_) {}
 
   void printLeft(OutputStream &S) const override {
     if (Type.size() > 3) {
@@ -1374,7 +1374,7 @@ template <class Float> class FloatExpr : public Expr {
   const StringView Contents;
 
 public:
-  FloatExpr(StringView Contents) : Contents(Contents) {}
+  FloatExpr(StringView Contents_) : Contents(Contents_) {}
 
   void printLeft(OutputStream &s) const override {
     const char *first = Contents.begin();
