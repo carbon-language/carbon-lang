@@ -438,6 +438,9 @@ CudaToolChain::CudaToolChain(const Driver &D, const llvm::Triple &Triple,
       CudaInstallation(D, HostTC.getTriple(), Args), OK(OK) {
   if (CudaInstallation.isValid())
     getProgramPaths().push_back(CudaInstallation.getBinPath());
+  // Lookup binaries into the driver directory, this is used to
+  // discover the clang-offload-bundler executable.
+  getProgramPaths().push_back(getDriver().Dir);
 }
 
 void CudaToolChain::addClangTargetOptions(
