@@ -1657,8 +1657,8 @@ static bool isAMCompletelyFolded(const TargetTransformInfo &TTI,
   if (LU.Kind == LSRUse::Address && TTI.LSRWithInstrQueries()) {
     for (const LSRFixup &Fixup : LU.Fixups)
       if (!isAMCompletelyFolded(TTI, LSRUse::Address, LU.AccessTy, F.BaseGV,
-                                F.BaseOffset, F.HasBaseReg, F.Scale,
-                                Fixup.UserInst))
+                                (F.BaseOffset + Fixup.Offset), F.HasBaseReg,
+                                F.Scale, Fixup.UserInst))
         return false;
     return true;
   }
