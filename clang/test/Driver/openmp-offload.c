@@ -699,7 +699,7 @@
 /// ###########################################################################
 
 /// PTXAS is passed -c flag by default when offloading to an NVIDIA device using OpenMP - disable it.
-// RUN:   %clang -### -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda -fnoopenmp-relocatable-target -save-temps -no-canonical-prefixes %s 2>&1 \
+// RUN:   %clang -### -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda -fnoopenmp-relocatable-target -no-canonical-prefixes %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHK-PTXAS-NORELO %s
 
 // CHK-PTXAS-NORELO-NOT: ptxas{{.*}}" "-c"
@@ -708,7 +708,17 @@
 
 /// PTXAS is passed -c flag by default when offloading to an NVIDIA device using OpenMP
 /// Check that the flag is passed when -fopenmp-relocatable-target is used.
-// RUN:   %clang -### -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda -fopenmp-relocatable-target -save-temps -no-canonical-prefixes %s 2>&1 \
+// RUN:   %clang -### -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda -fopenmp-relocatable-target -no-canonical-prefixes %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHK-PTXAS-RELO %s
 
 // CHK-PTXAS-RELO: ptxas{{.*}}" "-c"
+
+/// ###########################################################################
+
+/// Check PTXAS is passed the compute capability passed to the driver.
+// RUN:   %clang -### -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda --fopenmp-ptx=+ptx52 -save-temps -no-canonical-prefixes %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHK-PTXAS-VERSION %s
+
+// CHK-PTXAS-VERSION: clang{{.*}}.bc" {{.*}}"-target-feature" "+ptx52"
+// CHK-PTXAS-VERSION-NEXT: clang{{.*}}.bc" {{.*}}"-target-feature" "+ptx52"
+// CHK-PTXAS-VERSION-NEXT: clang{{.*}}.bc" {{.*}}"-target-feature" "+ptx52"
