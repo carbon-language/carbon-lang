@@ -66,9 +66,9 @@ private:
   Error commitGlobalsHashStream(WritableBinaryStreamRef Stream);
 
   uint32_t RecordStreamIdx = kInvalidStreamIndex;
+  msf::MSFBuilder &Msf;
   std::unique_ptr<GSIHashStreamBuilder> PSH;
   std::unique_ptr<GSIHashStreamBuilder> GSH;
-  msf::MSFBuilder &Msf;
 };
 } // namespace pdb
 } // namespace llvm
