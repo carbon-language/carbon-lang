@@ -127,6 +127,10 @@ DEBUG_COUNTER(PHIOfOpsCounter, "newgvn-phi",
 static cl::opt<bool> EnableStoreRefinement("enable-store-refinement",
                                            cl::init(false), cl::Hidden);
 
+/// Currently, the generation "phi of ops" can result in correctness issues.
+static cl::opt<bool> EnablePhiOfOps("enable-phi-of-ops", cl::init(false),
+                                    cl::Hidden);
+
 //===----------------------------------------------------------------------===//
 //                                GVN Pass
 //===----------------------------------------------------------------------===//
@@ -2442,6 +2446,8 @@ void NewGVN::addPhiOfOps(PHINode *Op, BasicBlock *BB,
 }
 
 static bool okayForPHIOfOps(const Instruction *I) {
+  if (!EnablePhiOfOps)
+    return false;
   return isa<BinaryOperator>(I) || isa<SelectInst>(I) || isa<CmpInst>(I) ||
          isa<LoadInst>(I);
 }
