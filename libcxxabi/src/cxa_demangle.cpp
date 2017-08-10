@@ -48,7 +48,7 @@ class StringView {
 public:
   template <size_t N>
   StringView(const char (&Str)[N]) : First(Str), Last(Str + N - 1) {}
-  StringView(const char *First, const char *Last) : First(First), Last(Last) {}
+  StringView(const char *First_, const char *Last_) : First(First_), Last(Last_) {}
   StringView() : First(nullptr), Last(nullptr) {}
 
   StringView substr(size_t From, size_t To) {
@@ -132,8 +132,8 @@ public:
   public:
     StreamStringView() : First(0), Last(0) {}
 
-    StreamStringView(StreamPosition First, StreamPosition Last)
-        : First(First), Last(Last) {}
+    StreamStringView(StreamPosition First_, StreamPosition Last_)
+        : First(First_), Last(Last_) {}
 
     bool empty() const { return First == Last; }
   };
