@@ -12621,8 +12621,8 @@ void DAGCombiner::getStoreMergeCandidates(
       // Must match type.
       if (Other->getMemoryVT() != MemVT)
         return false;
-      if (!(Val.getOpcode() == ISD::EXTRACT_VECTOR_ELT ||
-            Val.getOpcode() == ISD::EXTRACT_SUBVECTOR))
+      if (Val.getOpcode() != ISD::EXTRACT_VECTOR_ELT &&
+          Val.getOpcode() != ISD::EXTRACT_SUBVECTOR)
         return false;
     }
     Ptr = BaseIndexOffset::match(Other->getBasePtr(), DAG);
