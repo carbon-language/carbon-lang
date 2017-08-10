@@ -72,6 +72,12 @@ template <class ELFT, class RelT>
 static void resolveReloc(InputSectionBase &Sec, RelT &Rel,
                          std::function<void(ResolvedReloc)> Fn) {
   SymbolBody &B = Sec.getFile<ELFT>()->getRelocTargetSym(Rel);
+
+  if (auto *Sym = dyn_cast<DefinedCommon>(&B)) {
+    Sym->Live = true;
+    return;
+  }
+
   if (auto *D = dyn_cast<DefinedRegular>(&B)) {
     if (!D->Section)
       return;
@@ -79,10 +85,12 @@ static void resolveReloc(InputSectionBase &Sec, RelT &Rel,
     if (D->isSection())
       Offset += getAddend<ELFT>(Sec, Rel);
     Fn({cast<InputSectionBase>(D->Section), Offset});
-  } else if (auto *U = dyn_cast<Undefined>(&B)) {
+    return;
+  }
+
+  if (auto *U = dyn_cast<Undefined>(&B))
     for (InputSectionBase *Sec : CNamedSections.lookup(U->getName()))
       Fn({Sec, 0});
-  }
 }
 
 // Calls Fn for each section that Sec refers to via relocations.
@@ -218,10 +226,14 @@ template <class ELFT> void elf::markLive() {
       Q.push_back(S);
   };
 
-  auto MarkSymbol = [&](const SymbolBody *Sym) {
-    if (auto *D = dyn_cast_or_null<DefinedRegular>(Sym))
+  auto MarkSymbol = [&](SymbolBody *Sym) {
+    if (auto *D = dyn_cast_or_null<DefinedRegular>(Sym)) {
       if (auto *IS = cast_or_null<InputSectionBase>(D->Section))
         Enqueue({IS, D->Value});
+      return;
+    }
+    if (auto *S = dyn_cast_or_null<DefinedCommon>(Sym))
+      S->Live = true;
   };
 
   // Add GC root symbols.
@@ -235,7 +247,7 @@ template <class ELFT> void elf::markLive() {
 
   // Preserve externally-visible symbols if the symbols defined by this
   // file can interrupt other ELF file's symbols at runtime.
-  for (const Symbol *S : Symtab->getSymbols())
+  for (Symbol *S : Symtab->getSymbols())
     if (S->includeInDynsym())
       MarkSymbol(S->body());
 

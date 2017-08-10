@@ -451,7 +451,11 @@ static bool includeInSymtab(const SymbolBody &B) {
     if (auto *S = dyn_cast<MergeInputSection>(Sec))
       if (!S->getSectionPiece(D->Value)->Live)
         return false;
+    return true;
   }
+
+  if (auto *Sym = dyn_cast<DefinedCommon>(&B))
+    return Sym->Live;
   return true;
 }
 
