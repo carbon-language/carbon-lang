@@ -2309,6 +2309,30 @@ TEST_F(FormatTest, EscapedNewlines) {
   EXPECT_EQ("template <class T> f();", format("\\\ntemplate <class T> f();"));
   EXPECT_EQ("/* \\  \\  \\\n */", format("\\\n/* \\  \\  \\\n */"));
   EXPECT_EQ("<a\n\\\\\n>", format("<a\n\\\\\n>"));
+
+  FormatStyle DontAlign = getLLVMStyle();
+  DontAlign.AlignEscapedNewlines = FormatStyle::ENAS_DontAlign;
+  DontAlign.MaxEmptyLinesToKeep = 3;
+  // FIXME: can't use verifyFormat here because the newline before
+  // "public:" is not inserted the first time it's reformatted
+  EXPECT_EQ("#define A \\\n"
+            "  class Foo { \\\n"
+            "    void bar(); \\\n"
+            "\\\n"
+            "\\\n"
+            "\\\n"
+            "  public: \\\n"
+            "    void baz(); \\\n"
+            "  };",
+            format("#define A \\\n"
+                   "  class Foo { \\\n"
+                   "    void bar(); \\\n"
+                   "\\\n"
+                   "\\\n"
+                   "\\\n"
+                   "  public: \\\n"
+                   "    void baz(); \\\n"
+                   "  };", DontAlign));
 }
 
 TEST_F(FormatTest, CalculateSpaceOnConsecutiveLinesInMacro) {
