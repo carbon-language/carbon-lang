@@ -214,6 +214,10 @@ Error Tokenizer::consumeToken(const Kind TokenKind) {
   case Kind::Invalid:
     assert(false && "Cannot consume an invalid token.");
   }
+
+  // This silences the compilers which cannot notice that the execution
+  // never reaches here.
+  assert(false);
 }
 
 bool Tokenizer::willNowRead(StringRef FollowingChars) const {
