@@ -587,22 +587,20 @@ static void getThinLTOOldAndNewSuffix(std::string &OldSuffix,
   assert(options::thinlto_object_suffix_replace.empty() ||
          options::thinlto_object_suffix_replace.find(";") != StringRef::npos);
   StringRef SuffixReplace = options::thinlto_object_suffix_replace;
-  std::pair<StringRef, StringRef> Split = SuffixReplace.split(";");
-  OldSuffix = Split.first.str();
-  NewSuffix = Split.second.str();
+  std::tie(OldSuffix, NewSuffix) = SuffixReplace.split(';');
 }
 
 /// Given the original \p Path to an output file, replace any filename
 /// suffix matching \p OldSuffix with \p NewSuffix.
-static std::string getThinLTOObjectFileName(const std::string Path,
-                                            const std::string &OldSuffix,
-                                            const std::string &NewSuffix) {
+static std::string getThinLTOObjectFileName(StringRef Path, StringRef OldSuffix,
+                                            StringRef NewSuffix) {
   if (OldSuffix.empty() && NewSuffix.empty())
     return Path;
   StringRef NewPath = Path;
   NewPath.consume_back(OldSuffix);
-  std::string NewNewPath = NewPath.str() + NewSuffix;
-  return NewPath.str() + NewSuffix;
+  std::string NewNewPath = NewPath;
+  NewNewPath += NewSuffix;
+  return NewNewPath;
 }
 
 static bool isAlpha(char C) {
@@ -687,19 +685,19 @@ static void addModule(LTO &Lto, claimed_file &F, const void *View,
         std::string("Failed to link module ") + F.name);
 }
 
-static void recordFile(std::string Filename, bool TempOutFile) {
+static void recordFile(const std::string &Filename, bool TempOutFile) {
   if (add_input_file(Filename.c_str()) != LDPS_OK)
     message(LDPL_FATAL,
             "Unable to add .o file to the link. File left behind in: %s",
             Filename.c_str());
   if (TempOutFile)
-    Cleanup.push_back(Filename.c_str());
+    Cleanup.push_back(Filename);
 }
 
 /// Return the desired output filename given a base input name, a flag
 /// indicating whether a temp file should be generated, and an optional task id.
 /// The new filename generated is returned in \p NewFilename.
-static int getOutputFileName(SmallString<128> InFilename, bool TempOutFile,
+static int getOutputFileName(StringRef InFilename, bool TempOutFile,
                              SmallString<128> &NewFilename, int TaskID) {
   int FD = -1;
   if (TempOutFile) {
@@ -741,9 +739,7 @@ static void getThinLTOOldAndNewPrefix(std::string &OldPrefix,
                                       std::string &NewPrefix) {
   StringRef PrefixReplace = options::thinlto_prefix_replace;
   assert(PrefixReplace.empty() || PrefixReplace.find(";") != StringRef::npos);
-  std::pair<StringRef, StringRef> Split = PrefixReplace.split(";");
-  OldPrefix = Split.first.str();
-  NewPrefix = Split.second.str();
+  std::tie(OldPrefix, NewPrefix) = PrefixReplace.split(';');
 }
 
 static std::unique_ptr<LTO> createLTO() {
