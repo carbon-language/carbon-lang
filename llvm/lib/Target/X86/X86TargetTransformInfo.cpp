@@ -893,6 +893,15 @@ int X86TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
                                                   // + 2*por + vinsertf128
     { TTI::SK_PermuteSingleSrc, MVT::v32i8,  8 }, // vextractf128 + 4*pshufb
                                                   // + 2*por + vinsertf128
+
+    { TTI::SK_PermuteTwoSrc,    MVT::v4f64,   4 }, // 2*vperm2f128 + 2*vshufpd
+    { TTI::SK_PermuteTwoSrc,    MVT::v8f32,   4 }, // 2*vperm2f128 + 2*vshufps
+    { TTI::SK_PermuteTwoSrc,    MVT::v4i64,   4 }, // 2*vperm2f128 + 2*vshufpd
+    { TTI::SK_PermuteTwoSrc,    MVT::v8i32,   4 }, // 2*vperm2f128 + 2*vshufps
+    { TTI::SK_PermuteTwoSrc,    MVT::v16i16, 15 }, // 2*vextractf128 + 8*pshufb
+                                                   // + 4*por + vinsertf128
+    { TTI::SK_PermuteTwoSrc,    MVT::v32i8,  15 }, // 2*vextractf128 + 8*pshufb
+                                                   // + 4*por + vinsertf128
   };
 
   if (ST->hasAVX())
