@@ -7381,8 +7381,6 @@ class AMDGPUABIInfo final : public DefaultABIInfo {
 private:
   static const unsigned MaxNumRegsForArgsRet = 16;
 
-  bool shouldReturnTypeInRegister(QualType Ty,
-                                  ASTContext &Context) const;
   unsigned numRegsForType(QualType Ty) const;
 
   bool isHomogeneousAggregateBaseType(QualType Ty) const override;
@@ -7410,13 +7408,6 @@ bool AMDGPUABIInfo::isHomogeneousAggregateSmallEnough(
 
   // Homogeneous Aggregates may occupy at most 16 registers.
   return Members * NumRegs <= MaxNumRegsForArgsRet;
-}
-
-/// Check whether the type is small enough to consider passing directly in
-/// registers.
-bool AMDGPUABIInfo::shouldReturnTypeInRegister(QualType Ty,
-                                               ASTContext &Ctx) const {
-  return ((Ctx.getTypeSize(Ty) + 31) / 32) <= MaxNumRegsForArgsRet;
 }
 
 /// Estimate number of registers the type will use when passed in registers.
