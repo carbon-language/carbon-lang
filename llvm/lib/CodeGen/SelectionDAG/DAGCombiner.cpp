@@ -12552,8 +12552,15 @@ bool DAGCombiner::MergeStoresOfConstantsOrVecElts(
   }
 
   // Replace all merged stores with the new store.
-  for (unsigned i = 0; i < NumStores; ++i)
+  for (unsigned i = 0; i < NumStores; ++i) {
+    SDValue Val = StoreNodes[i].MemNode->getOperand(1);
+    SDValue Addr = StoreNodes[i].MemNode->getOperand(2);
     CombineTo(StoreNodes[i].MemNode, NewStore);
+    if (Val.getNode()->use_empty())
+      recursivelyDeleteUnusedNodes(Val.getNode());
+    if (Addr.getNode()->use_empty())
+      recursivelyDeleteUnusedNodes(Addr.getNode());
+  }
 
   AddToWorklist(NewChain.getNode());
   return true;
@@ -13186,9 +13193,12 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode *St) {
     // corresponding value if its no longer used.
     for (unsigned i = 0; i < NumElem; ++i) {
       SDValue Val = StoreNodes[i].MemNode->getOperand(1);
+      SDValue Addr = StoreNodes[i].MemNode->getOperand(2);
       CombineTo(StoreNodes[i].MemNode, NewStore);
       if (Val.getNode()->use_empty())
         recursivelyDeleteUnusedNodes(Val.getNode());
+      if (Addr.getNode()->use_empty())
+        recursivelyDeleteUnusedNodes(Addr.getNode());
     }
 
     RV = true;
