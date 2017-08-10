@@ -227,11 +227,23 @@ void mips::getMIPSTargetFeatures(const Driver &D, const llvm::Triple &Triple,
          O.matches(options::OPT_fno_PIE) || O.matches(options::OPT_fno_pie));
   }
 
-  if (IsN64 && NonPIC)
+  bool UseAbiCalls = false;
+
+  Arg *ABICallsArg =
+      Args.getLastArg(options::OPT_mabicalls, options::OPT_mno_abicalls);
+  UseAbiCalls =
+      !ABICallsArg ||
+      (ABICallsArg && ABICallsArg->getOption().matches(options::OPT_mabicalls));
+
+  if (UseAbiCalls && IsN64 && NonPIC) {
+    D.Diag(diag::warn_drv_unsupported_abicalls);
+    UseAbiCalls = false;
+  }
+
+  if (!UseAbiCalls)
     Features.push_back("+noabicalls");
   else
-    AddTargetFeature(Args, Features, options::OPT_mno_abicalls,
-                     options::OPT_mabicalls, "noabicalls");
+    Features.push_back("-noabicalls");
 
   mips::FloatABI FloatABI = mips::getMipsFloatABI(D, Args);
   if (FloatABI == mips::FloatABI::Soft) {
