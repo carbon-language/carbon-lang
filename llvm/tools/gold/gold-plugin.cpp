@@ -699,11 +699,12 @@ static void recordFile(std::string Filename, bool TempOutFile) {
 /// Return the desired output filename given a base input name, a flag
 /// indicating whether a temp file should be generated, and an optional task id.
 /// The new filename generated is returned in \p NewFilename.
-static void getOutputFileName(SmallString<128> InFilename, bool TempOutFile,
-                              SmallString<128> &NewFilename, int TaskID) {
+static int getOutputFileName(SmallString<128> InFilename, bool TempOutFile,
+                             SmallString<128> &NewFilename, int TaskID) {
+  int FD = -1;
   if (TempOutFile) {
     std::error_code EC =
-        sys::fs::createTemporaryFile("lto-llvm", "o", NewFilename);
+        sys::fs::createTemporaryFile("lto-llvm", "o", FD, NewFilename);
     if (EC)
       message(LDPL_FATAL, "Could not create temporary file: %s",
               EC.message().c_str());
@@ -711,7 +712,13 @@ static void getOutputFileName(SmallString<128> InFilename, bool TempOutFile,
     NewFilename = InFilename;
     if (TaskID > 0)
       NewFilename += utostr(TaskID);
+    std::error_code EC =
+        sys::fs::openFileForWrite(NewFilename, FD, sys::fs::F_None);
+    if (EC)
+      message(LDPL_FATAL, "Could not open file %s: %s", NewFilename.c_str(),
+              EC.message().c_str());
   }
+  return FD;
 }
 
 static CodeGenOpt::Level getCGOptLevel() {
@@ -899,14 +906,8 @@ static ld_plugin_status allSymbolsReadHook() {
   auto AddStream =
       [&](size_t Task) -> std::unique_ptr<lto::NativeObjectStream> {
     IsTemporary[Task] = !SaveTemps;
-    getOutputFileName(Filename, /*TempOutFile=*/!SaveTemps, Filenames[Task],
-                      Task);
-    int FD;
-    std::error_code EC =
-        sys::fs::openFileForWrite(Filenames[Task], FD, sys::fs::F_None);
-    if (EC)
-      message(LDPL_FATAL, "Could not open file %s: %s", Filenames[Task].c_str(),
-              EC.message().c_str());
+    int FD = getOutputFileName(Filename, /*TempOutFile=*/!SaveTemps,
+                               Filenames[Task], Task);
     return llvm::make_unique<lto::NativeObjectStream>(
         llvm::make_unique<llvm::raw_fd_ostream>(FD, true));
   };
