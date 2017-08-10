@@ -388,7 +388,8 @@ importAccesses(Scop &S, Json::Value &JScop, const DataLayout &DL,
       return false;
     }
 
-    // Check whether the number of indices equals the number of memory accesses
+    // Check whether the number of indices equals the number of memory
+    // accesses
     if (Stmt.size() != statements[StatementIdx]["accesses"].size()) {
       errs() << "The number of memory accesses in the JSop file and the number "
                 "of memory accesses differ for index "
@@ -430,8 +431,8 @@ importAccesses(Scop &S, Json::Value &JScop, const DataLayout &DL,
 
       // If the NewAccessMap has zero dimensions, it is the scalar access; it
       // must be the same as before.
-      // If it has at least one dimension, it's an array access; search for its
-      // ScopArrayInfo.
+      // If it has at least one dimension, it's an array access; search for
+      // its ScopArrayInfo.
       if (isl_map_dim(NewAccessMap, isl_dim_out) >= 1) {
         NewOutId = isl_map_get_tuple_id(NewAccessMap, isl_dim_out);
         auto *SAI = S.getArrayInfoByName(isl_id_get_name(NewOutId));
@@ -781,7 +782,10 @@ bool JSONImporter::runOnScop(Scop &S) {
   const Dependences &D =
       getAnalysis<DependenceInfo>().getDependences(Dependences::AL_Statement);
   const DataLayout &DL = S.getFunction().getParent()->getDataLayout();
-  importScop(S, D, DL, &NewAccessStrings);
+
+  if (!importScop(S, D, DL, &NewAccessStrings))
+    report_fatal_error("Tried to import a malformed jscop file.");
+
   return false;
 }
 
@@ -800,7 +804,8 @@ PreservedAnalyses JSONImportPass::run(Scop &S, ScopAnalysisManager &SAM,
           Dependences::AL_Statement);
   const DataLayout &DL = S.getFunction().getParent()->getDataLayout();
 
-  importScop(S, D, DL);
+  if (!importScop(S, D, DL))
+    report_fatal_error("Tried to import a malformed jscop file.");
 
   // This invalidates all analyses on Scop.
   PreservedAnalyses PA;
