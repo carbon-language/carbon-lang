@@ -336,11 +336,15 @@
 // CHECK-IMG-SINGLEFLOAT-FPXX: "-target-feature" "+fpxx"
 
 // -mlong-call
-// RUN: %clang -target mips-img-linux-gnu -### -c %s -mlong-calls 2>&1 \
+// RUN: %clang -target mips-img-linux-gnu -### -c %s \
+// RUN:        -mno-abicalls -mlong-calls 2>&1 \
 // RUN:   | FileCheck --check-prefix=LONG-CALLS-ON %s
-// RUN: %clang -target mips-img-linux-gnu -### -c %s -mno-long-calls 2>&1 \
+// RUN: %clang -target mips-img-linux-gnu -### -c %s \
+// RUN:        -mno-abicalls -mno-long-calls 2>&1 \
 // RUN:   | FileCheck --check-prefix=LONG-CALLS-OFF %s
 // RUN: %clang -target mips-img-linux-gnu -### -c %s 2>&1 \
+// RUN:   | FileCheck --check-prefix=LONG-CALLS-DEF %s
+// RUN: %clang -target mips-img-linux-gnu -### -c %s -mlong-calls 2>&1 \
 // RUN:   | FileCheck --check-prefix=LONG-CALLS-DEF %s
 // LONG-CALLS-ON: "-target-feature" "+long-calls"
 // LONG-CALLS-OFF: "-target-feature" "-long-calls"

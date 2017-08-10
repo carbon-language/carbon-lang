@@ -292,6 +292,10 @@ def warn_drv_unsupported_gpopt : Warning<
   "ignoring '-mgpopt' option as it cannot be used with %select{|the implicit"
   " usage of }0-mabicalls">,
   InGroup<UnsupportedGPOpt>;
+def warn_drv_unsupported_longcalls : Warning<
+  "ignoring '-mlong-calls' option as it is not currently supported with "
+  "%select{|the implicit usage of }0-mabicalls">,
+  InGroup<OptionIgnored>;
 def warn_drv_unsupported_abicalls : Warning<
   "ignoring '-mabicalls' option as it cannot be used with "
   "non position-independent code and the N64 ABI">,

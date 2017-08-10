@@ -245,6 +245,16 @@ void mips::getMIPSTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   else
     Features.push_back("-noabicalls");
 
+  if (Arg *A = Args.getLastArg(options::OPT_mlong_calls,
+                               options::OPT_mno_long_calls)) {
+    if (A->getOption().matches(options::OPT_mno_long_calls))
+      Features.push_back("-long-calls");
+    else if (!UseAbiCalls)
+      Features.push_back("+long-calls");
+    else
+      D.Diag(diag::warn_drv_unsupported_longcalls) << (ABICallsArg ? 0 : 1);
+  }
+
   mips::FloatABI FloatABI = mips::getMipsFloatABI(D, Args);
   if (FloatABI == mips::FloatABI::Soft) {
     // FIXME: Note, this is a hack. We need to pass the selected float
@@ -309,8 +319,6 @@ void mips::getMIPSTargetFeatures(const Driver &D, const llvm::Triple &Triple,
 
   AddTargetFeature(Args, Features, options::OPT_mno_odd_spreg,
                    options::OPT_modd_spreg, "nooddspreg");
-  AddTargetFeature(Args, Features, options::OPT_mlong_calls,
-                   options::OPT_mno_long_calls, "long-calls");
   AddTargetFeature(Args, Features, options::OPT_mmt, options::OPT_mno_mt, "mt");
 }
 
