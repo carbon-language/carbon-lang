@@ -2,6 +2,9 @@
 /// Perform several driver tests for OpenMP offloading
 ///
 
+// Until this test is stabilized on all local configurations.
+// UNSUPPORTED: linux
+
 // REQUIRES: clang-driver
 // REQUIRES: x86-registered-target
 // REQUIRES: powerpc-registered-target
