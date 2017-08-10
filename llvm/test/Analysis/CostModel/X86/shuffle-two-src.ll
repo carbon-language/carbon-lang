@@ -166,7 +166,7 @@ define void @test_vXi32(<4 x i32> %src128, <8 x i32> %src256, <16 x i32> %src512
 ; CHECK-LABEL: 'test_vXi16'
 define void @test_vXi16(<8 x i16> %src128, <16 x i16> %src256, <32 x i16> %src512, <64 x i16> %src1024, <8 x i16> %src128_1, <16 x i16> %src256_1, <32 x i16> %src512_1, <64 x i16> %src1024_1) {
 
-  ; SSE2: cost of 16 {{.*}} %V128 = shufflevector
+  ; SSE2: cost of 8 {{.*}} %V128 = shufflevector
   ; SSSE3: cost of 3 {{.*}} %V128 = shufflevector
   ; SSE42: cost of 3 {{.*}} %V128 = shufflevector
   ; AVX1: cost of 3 {{.*}} %V128 = shufflevector
@@ -176,7 +176,7 @@ define void @test_vXi16(<8 x i16> %src128, <16 x i16> %src256, <32 x i16> %src51
   ; AVX512VBMI: cost of 1 {{.*}} %V128 = shufflevector
   %V128 = shufflevector <8 x i16> %src128, <8 x i16> %src128_1, <8 x i32> <i32 7, i32 6, i32 6, i32 8, i32 9, i32 2, i32 1, i32 0>
 
-  ; SSE2: cost of 32 {{.*}} %V256 = shufflevector
+  ; SSE2: cost of 48 {{.*}} %V256 = shufflevector
   ; SSSE3: cost of 18 {{.*}} %V256 = shufflevector
   ; SSE42: cost of 18 {{.*}} %V256 = shufflevector
   ; AVX1: cost of 15 {{.*}} %V256 = shufflevector
@@ -186,7 +186,7 @@ define void @test_vXi16(<8 x i16> %src128, <16 x i16> %src256, <32 x i16> %src51
   ; AVX512VBMI: cost of 1 {{.*}} %V256 = shufflevector
   %V256 = shufflevector <16 x i16> %src256, <16 x i16> %src256_1, <16 x i32> <i32 15, i32 14, i32 13, i32 20, i32 21, i32 10, i32 9, i32 8, i32 7, i32 6, i32 5, i32 4, i32 3, i32 2, i32 1, i32 0>
 
-  ; SSE2: cost of 64 {{.*}} %V512 = shufflevector
+  ; SSE2: cost of 224 {{.*}} %V512 = shufflevector
   ; SSSE3: cost of 84 {{.*}} %V512 = shufflevector
   ; SSE42: cost of 84 {{.*}} %V512 = shufflevector
   ; AVX1: cost of 90 {{.*}} %V512 = shufflevector
@@ -196,7 +196,7 @@ define void @test_vXi16(<8 x i16> %src128, <16 x i16> %src256, <32 x i16> %src51
   ; AVX512VBMI: cost of 1 {{.*}} %V512 = shufflevector
   %V512 = shufflevector <32 x i16> %src512, <32 x i16> %src512_1, <32 x i32> <i32 31, i32 30, i32 45, i32 28, i32 27, i32 26, i32 25, i32 24, i32 23, i32 22, i32 21, i32 20, i32 19, i32 18, i32 17, i32 16, i32 15, i32 14, i32 13, i32 38, i32 11, i32 11, i32 9, i32 8, i32 7, i32 11, i32 5, i32 4, i32 3, i32 2, i32 1, i32 0>
 
-  ; SSE2: cost of 128 {{.*}} %V1024 = shufflevector
+  ; SSE2: cost of 960 {{.*}} %V1024 = shufflevector
   ; SSSE3: cost of 360 {{.*}} %V1024 = shufflevector
   ; SSE42: cost of 360 {{.*}} %V1024 = shufflevector
   ; AVX1: cost of 420 {{.*}} %V1024 = shufflevector
@@ -212,7 +212,7 @@ define void @test_vXi16(<8 x i16> %src128, <16 x i16> %src256, <32 x i16> %src51
 ; CHECK-LABEL: 'test_vXi8'
 define void @test_vXi8(<16 x i8> %src128, <32 x i8> %src256, <64 x i8> %src512, <16 x i8> %src128_1, <32 x i8> %src256_1, <64 x i8> %src512_1) {
 
-  ; SSE2: cost of 32 {{.*}} %V128 = shufflevector
+  ; SSE2: cost of 13 {{.*}} %V128 = shufflevector
   ; SSSE3: cost of 3 {{.*}} %V128 = shufflevector
   ; SSE42: cost of 3 {{.*}} %V128 = shufflevector
   ; AVX1: cost of 3 {{.*}} %V128 = shufflevector
@@ -222,7 +222,7 @@ define void @test_vXi8(<16 x i8> %src128, <32 x i8> %src256, <64 x i8> %src512, 
   ; AVX512VBMI: cost of 1 {{.*}} %V128 = shufflevector
   %V128 = shufflevector <16 x i8> %src128, <16 x i8> %src128_1, <16 x i32> <i32 29, i32 14, i32 28, i32 12, i32 11, i32 10, i32 11, i32 8, i32 7, i32 6, i32 5, i32 4, i32 3, i32 2, i32 1, i32 0>
 
-  ; SSE2: cost of 64 {{.*}} %V256 = shufflevector
+  ; SSE2: cost of 78 {{.*}} %V256 = shufflevector
   ; SSSE3: cost of 18 {{.*}} %V256 = shufflevector
   ; SSE42: cost of 18 {{.*}} %V256 = shufflevector
   ; AVX1: cost of 15 {{.*}} %V256 = shufflevector
@@ -232,7 +232,7 @@ define void @test_vXi8(<16 x i8> %src128, <32 x i8> %src256, <64 x i8> %src512, 
   ; AVX512VBMI: cost of 1 {{.*}} %V256 = shufflevector
   %V256 = shufflevector <32 x i8> %src256, <32 x i8> %src256_1, <32 x i32> <i32 31, i32 30, i32 45, i32 28, i32 27, i32 26, i32 25, i32 24, i32 23, i32 22, i32 21, i32 20, i32 19, i32 18, i32 17, i32 16, i32 15, i32 14, i32 13, i32 12, i32 11, i32 10, i32 8, i32 8, i32 7, i32 6, i32 8, i32 4, i32 3, i32 2, i32 1, i32 0>
 
-  ; SSE2: cost of 128 {{.*}} %V512 = shufflevector
+  ; SSE2: cost of 364 {{.*}} %V512 = shufflevector
   ; SSSE3: cost of 84 {{.*}} %V512 = shufflevector
   ; SSE42: cost of 84 {{.*}} %V512 = shufflevector
   ; AVX1: cost of 90 {{.*}} %V512 = shufflevector
