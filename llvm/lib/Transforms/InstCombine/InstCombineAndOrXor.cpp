@@ -1494,8 +1494,9 @@ static Value *getSelectCondition(Value *A, Value *B,
   // If both operands are constants, see if the constants are inverse bitmasks.
   Constant *AC, *BC;
   if (match(A, m_Constant(AC)) && match(B, m_Constant(BC)) &&
-      areInverseVectorBitmasks(AC, BC))
-    return ConstantExpr::getTrunc(AC, CmpInst::makeCmpResultType(Ty));
+      areInverseVectorBitmasks(AC, BC)) {
+    return Builder.CreateZExtOrTrunc(AC, CmpInst::makeCmpResultType(Ty));
+  }
 
   // If both operands are xor'd with constants using the same sexted boolean
   // operand, see if the constants are inverse bitmasks.
