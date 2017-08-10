@@ -215,9 +215,7 @@ Error Tokenizer::consumeToken(const Kind TokenKind) {
     assert(false && "Cannot consume an invalid token.");
   }
 
-  // This silences the compilers which cannot notice that the execution
-  // never reaches here.
-  assert(false);
+  llvm_unreachable("Unknown RCToken::Kind");
 }
 
 bool Tokenizer::willNowRead(StringRef FollowingChars) const {
