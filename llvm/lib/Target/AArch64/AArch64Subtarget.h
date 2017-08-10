@@ -58,6 +58,7 @@ protected:
 
   bool HasV8_1aOps = false;
   bool HasV8_2aOps = false;
+  bool HasV8_3aOps = false;
 
   bool HasFPARMv8 = false;
   bool HasNEON = false;
@@ -185,6 +186,7 @@ public:
 
   bool hasV8_1aOps() const { return HasV8_1aOps; }
   bool hasV8_2aOps() const { return HasV8_2aOps; }
+  bool hasV8_3aOps() const { return HasV8_3aOps; }
 
   bool hasZeroCycleRegMove() const { return HasZeroCycleRegMove; }
 

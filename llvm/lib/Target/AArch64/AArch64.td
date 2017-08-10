@@ -146,6 +146,9 @@ def HasV8_1aOps : SubtargetFeature<"v8.1a", "HasV8_1aOps", "true",
 def HasV8_2aOps : SubtargetFeature<"v8.2a", "HasV8_2aOps", "true",
   "Support ARM v8.2a instructions", [HasV8_1aOps, FeatureRAS]>;
 
+def HasV8_3aOps : SubtargetFeature<"v8.3a", "HasV8_3aOps", "true",
+  "Support ARM v8.3a instructions", [HasV8_2aOps]>;
+
 //===----------------------------------------------------------------------===//
 // Register File Description
 //===----------------------------------------------------------------------===//
