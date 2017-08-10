@@ -48,7 +48,6 @@ extern cl::OptionCategory BoltRelocCategory;
 
 extern bool shouldProcess(const BinaryFunction &);
 
-extern cl::opt<bool> PrintDynoStats;
 extern cl::opt<bool> Relocs;
 extern cl::opt<bool> UpdateDebugSections;
 extern cl::opt<IndirectCallPromotionType> IndirectCallPromotion;
@@ -102,6 +101,11 @@ JumpTables("jump-tables",
       clEnumValEnd),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
+
+cl::opt<bool>
+PrintDynoStats("dyno-stats",
+  cl::desc("print execution info based on profile"),
+  cl::cat(BoltCategory));
 
 static cl::opt<bool>
 PrintJumpTables("print-jump-tables",
@@ -4376,9 +4380,10 @@ void DynoStats::print(raw_ostream &OS, const DynoStats *Other) const {
     OS << format("%'20lld : ", Stat * opts::DynoStatsScale) << Name;
     if (Other) {
       if (Stat != OtherStat) {
+       OtherStat = std::max(OtherStat, uint64_t(1)); // to prevent divide by 0
        OS << format(" (%+.1f%%)",
                     ( (float) Stat - (float) OtherStat ) * 100.0 /
-                      (float) (OtherStat + 1) );
+                      (float) (OtherStat) );
       } else {
         OS << " (=)";
       }

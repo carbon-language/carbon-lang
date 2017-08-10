@@ -31,9 +31,9 @@ namespace bolt {
 /// An optimization/analysis pass that runs on functions.
 class BinaryFunctionPass {
 protected:
-  const cl::opt<bool> &PrintPass;
+  bool PrintPass;
 
-  explicit BinaryFunctionPass(const cl::opt<bool> &PrintPass)
+  explicit BinaryFunctionPass(const bool PrintPass)
     : PrintPass(PrintPass) { }
 
   /// Control whether a specific function should be skipped during
@@ -56,6 +56,43 @@ public:
   virtual void runOnFunctions(BinaryContext &BC,
                               std::map<uint64_t, BinaryFunction> &BFs,
                               std::set<uint64_t> &LargeFunctions) = 0;
+};
+
+/// A pass to print program-wide dynostats.
+class DynoStatsPrintPass : public BinaryFunctionPass {
+protected:
+  DynoStats PrevDynoStats;
+  std::string Title;
+
+public:
+  DynoStatsPrintPass(const DynoStats &PrevDynoStats, const char *Title)
+    : BinaryFunctionPass(false)
+    , PrevDynoStats(PrevDynoStats)
+    , Title(Title) {
+  }
+
+  const char *getName() const {
+    return "print dyno-stats after optimizations";
+  }
+
+  bool shouldPrint(const BinaryFunction &BF) const override {
+    return false;
+  }
+
+  void runOnFunctions(BinaryContext &BC,
+                      std::map<uint64_t, BinaryFunction> &BFs,
+                      std::set<uint64_t> &LargeFunctions) override {
+    const auto NewDynoStats = getDynoStats(BFs);
+    const auto Changed = (NewDynoStats != PrevDynoStats);
+    outs() << "BOLT-INFO: program-wide dynostats "
+           << Title << (Changed ? "" : " (no change)") << ":\n\n"
+           << PrevDynoStats;
+    if (Changed) {
+      outs() << '\n';
+      NewDynoStats.print(outs(), &PrevDynoStats);
+    }
+    outs() << '\n';
+  }
 };
 
 /// Detects functions that simply do a tail call when they are called and

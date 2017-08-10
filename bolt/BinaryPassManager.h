@@ -16,8 +16,6 @@
 
 #include "BinaryFunction.h"
 #include "Passes/BinaryPasses.h"
-#include "llvm/Support/Options.h"
-#include "llvm/Support/CommandLine.h"
 #include <map>
 #include <memory>
 #include <vector>
@@ -28,11 +26,10 @@ namespace bolt {
 /// Simple class for managing analyses and optimizations on BinaryFunctions.
 class BinaryFunctionPassManager {
 private:
-  static cl::opt<bool> AlwaysOn;
   BinaryContext &BC;
   std::map<uint64_t, BinaryFunction> &BFs;
   std::set<uint64_t> &LargeFunctions;
-  std::vector<std::pair<const cl::opt<bool> &,
+  std::vector<std::pair<const bool,
                         std::unique_ptr<BinaryFunctionPass>>> Passes;
   static const char TimerGroupName[];
 
@@ -45,13 +42,13 @@ private:
   /// Adds a pass to this manager based on the value of its corresponding
   /// command-line option.
   void registerPass(std::unique_ptr<BinaryFunctionPass> Pass,
-                    const cl::opt<bool> &Opt) {
-    Passes.emplace_back(Opt, std::move(Pass));
+                    const bool Run) {
+    Passes.emplace_back(Run, std::move(Pass));
   }
 
   /// Adds an unconditionally run pass to this manager.
   void registerPass(std::unique_ptr<BinaryFunctionPass> Pass) {
-    Passes.emplace_back(AlwaysOn, std::move(Pass));
+    Passes.emplace_back(true, std::move(Pass));
   }
 
   /// Run all registered passes in the order they were added.

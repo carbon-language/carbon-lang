@@ -25,22 +25,30 @@ using namespace llvm;
 namespace opts {
 
 extern cl::OptionCategory BoltOptCategory;
+extern cl::OptionCategory BoltCategory;
 
 extern cl::opt<unsigned> Verbosity;
 extern cl::opt<bool> PrintAll;
+extern cl::opt<bool> PrintDynoStats;
 extern cl::opt<bool> DumpDotAll;
-extern cl::opt<bool> DynoStatsAll;
 
 static cl::opt<bool>
-ICF("icf",
-  cl::desc("fold functions with identical code"),
+DynoStatsAll("dyno-stats-all",
+  cl::desc("print dyno stats after each stage"),
   cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
+  cl::Hidden,
+  cl::cat(BoltCategory));
 
 static cl::opt<bool>
 EliminateUnreachable("eliminate-unreachable",
   cl::desc("eliminate unreachable code"),
   cl::init(true),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+ICF("icf",
+  cl::desc("fold functions with identical code"),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -225,12 +233,6 @@ using namespace opts;
 const char BinaryFunctionPassManager::TimerGroupName[] =
     "Binary Function Pass Manager";
 
-cl::opt<bool> BinaryFunctionPassManager::AlwaysOn(
-  "always-run-pass",
-  cl::desc("Used for passes that are always enabled"),
-  cl::init(true),
-  cl::ReallyHidden);
-
 void BinaryFunctionPassManager::runPasses() {
   for (const auto &OptPassPair : Passes) {
     if (!OptPassPair.first)
@@ -296,6 +298,8 @@ void BinaryFunctionPassManager::runAllPasses(
 ) {
   BinaryFunctionPassManager Manager(BC, Functions, LargeFunctions);
 
+  const auto InitialDynoStats = getDynoStats(Functions);
+
   // Here we manage dependencies/order manually, since passes are run in the
   // order they're registered.
 
@@ -347,6 +351,12 @@ void BinaryFunctionPassManager::runAllPasses(
   Manager.registerPass(
     llvm::make_unique<ReorderFunctions>(PrintReorderedFunctions));
 
+  // Print final dyno stats right while CFG and instruction analysis are intact.
+  Manager.registerPass(
+    llvm::make_unique<DynoStatsPrintPass>(
+      InitialDynoStats, "after all optimizations before SCTC and FOP"),
+    opts::PrintDynoStats | opts::DynoStatsAll);
+
   // This pass introduces conditional jumps into external functions.
   // Between extending CFG to support this and isolating this pass we chose
   // the latter. Thus this pass will do double jump removal and unreachable
@@ -375,8 +385,9 @@ void BinaryFunctionPassManager::runAllPasses(
 
   Manager.registerPass(llvm::make_unique<AllocCombinerPass>(PrintFOP));
 
-  // *except for this pass.  This pass turns tail calls into jumps which
-  // makes them invisible to function reordering.
+  // This pass turns tail calls into jumps which makes them invisible to
+  // function reordering. It's unsafe to use any CFG or instruction analysis
+  // after this point.
   Manager.registerPass(
     llvm::make_unique<InstructionLowering>(PrintAfterLowering));
 

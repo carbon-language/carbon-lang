@@ -136,13 +136,6 @@ DumpEHFrame("dump-eh-frame",
   cl::Hidden,
   cl::cat(BoltCategory));
 
-cl::opt<bool>
-DynoStatsAll("dyno-stats-all",
-  cl::desc("print dyno stats after each stage"),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltCategory));
-
 static cl::opt<bool>
 FixDebugInfoLargeFunctions("fix-debuginfo-large-functions",
   cl::init(true),
@@ -220,11 +213,6 @@ PrintDisasm("print-disasm",
   cl::desc("print function after disassembly"),
   cl::ZeroOrMore,
   cl::Hidden,
-  cl::cat(BoltCategory));
-
-cl::opt<bool>
-PrintDynoStats("dyno-stats",
-  cl::desc("print execution info based on profile"),
   cl::cat(BoltCategory));
 
 static cl::opt<bool>
@@ -1922,15 +1910,7 @@ void RewriteInstance::disassembleFunctions() {
 }
 
 void RewriteInstance::runOptimizationPasses() {
-  callWithDynoStats(
-    [this] {
-      BinaryFunctionPassManager::runAllPasses(*BC,
-                                              BinaryFunctions,
-                                              LargeFunctions);
-    },
-    BinaryFunctions,
-    "optimizations",
-    opts::PrintDynoStats || opts::DynoStatsAll);
+  BinaryFunctionPassManager::runAllPasses(*BC, BinaryFunctions, LargeFunctions);
 }
 
 // Helper function to emit the contents of a function via a MCStreamer object.
