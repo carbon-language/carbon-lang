@@ -727,13 +727,13 @@ void PDBLinker::addObjectsToPDB() {
   }
 }
 
-static void addLinkerModuleSymbols(StringRef Path,
-                                   pdb::DbiModuleDescriptorBuilder &Mod,
-                                   BumpPtrAllocator &Allocator) {
-  codeview::SymbolSerializer Serializer(Allocator, CodeViewContainer::Pdb);
-  codeview::ObjNameSym ONS(SymbolRecordKind::ObjNameSym);
-  codeview::Compile3Sym CS(SymbolRecordKind::Compile3Sym);
-  codeview::EnvBlockSym EBS(SymbolRecordKind::EnvBlockSym);
+static void addCommonLinkerModuleSymbols(StringRef Path,
+                                         pdb::DbiModuleDescriptorBuilder &Mod,
+                                         BumpPtrAllocator &Allocator) {
+  SymbolSerializer Serializer(Allocator, CodeViewContainer::Pdb);
+  ObjNameSym ONS(SymbolRecordKind::ObjNameSym);
+  Compile3Sym CS(SymbolRecordKind::Compile3Sym);
+  EnvBlockSym EBS(SymbolRecordKind::EnvBlockSym);
 
   ONS.Name = "* Linker *";
   ONS.Signature = 0;
@@ -769,6 +769,27 @@ static void addLinkerModuleSymbols(StringRef Path,
       CS, Allocator, CodeViewContainer::Pdb));
   Mod.addSymbol(codeview::SymbolSerializer::writeOneSymbol(
       EBS, Allocator, CodeViewContainer::Pdb));
+}
+
+static void addLinkerModuleSectionSymbol(pdb::DbiModuleDescriptorBuilder &Mod,
+                                         OutputSection &OS,
+                                         BumpPtrAllocator &Allocator) {
+  SectionSym Sym(SymbolRecordKind::SectionSym);
+  Sym.Alignment = 0;
+  // We store log_2(Align), not the alignment itself.
+  auto Max = std::max_element(OS.getChunks().begin(), OS.getChunks().end(),
+                              [](const Chunk *C, const Chunk *D) {
+                                return C->getAlign() < D->getAlign();
+                              });
+  if (Max != OS.getChunks().end())
+    Sym.Alignment = Log2_32((*Max)->getAlign());
+  Sym.Characteristics = OS.getCharacteristics();
+  Sym.Length = OS.getVirtualSize();
+  Sym.Name = OS.getName();
+  Sym.Rva = OS.getRVA();
+  Sym.SectionNumber = OS.SectionIndex;
+  Mod.addSymbol(codeview::SymbolSerializer::writeOneSymbol(
+      Sym, Allocator, CodeViewContainer::Pdb));
 }
 
 // Creates a PDB file.
@@ -843,12 +864,14 @@ void PDBLinker::addSections(ArrayRef<OutputSection *> OutputSections,
   uint32_t PdbFilePathNI = DbiBuilder.addECName(NativePath);
   auto &LinkerModule = ExitOnErr(DbiBuilder.addModuleInfo("* Linker *"));
   LinkerModule.setPdbFilePathNI(PdbFilePathNI);
-  addLinkerModuleSymbols(NativePath, LinkerModule, Alloc);
+  addCommonLinkerModuleSymbols(NativePath, LinkerModule, Alloc);
 
   // Add section contributions. They must be ordered by ascending RVA.
-  for (OutputSection *OS : OutputSections)
+  for (OutputSection *OS : OutputSections) {
+    addLinkerModuleSectionSymbol(LinkerModule, *OS, Alloc);
     for (Chunk *C : OS->getChunks())
       addSectionContrib(LinkerModule, OS, C);
+  }
 
   // Add Section Map stream.
   ArrayRef<object::coff_section> Sections = {
