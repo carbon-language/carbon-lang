@@ -2,9 +2,6 @@
 /// Perform several driver tests for OpenMP offloading
 ///
 
-// Until this test is stabilized on all local configurations.
-// UNSUPPORTED: linux
-
 // REQUIRES: clang-driver
 // REQUIRES: x86-registered-target
 // REQUIRES: powerpc-registered-target
@@ -632,21 +629,3 @@
 // RUN:   | FileCheck -check-prefix=CHK-FOPENMP-TARGET-NESTED-ERROR %s
 
 // CHK-FOPENMP-TARGET-NESTED-ERROR: clang{{.*}} error: invalid -Xopenmp-target argument: '-Xopenmp-target -Xopenmp-target', options requiring arguments are unsupported
-
-/// ###########################################################################
-
-/// Check -Xopenmp-target uses one of the archs provided when several archs are used.
-// RUN:   %clang -### -no-canonical-prefixes -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_35 -Xopenmp-target -march=sm_60 %s 2>&1 \
-// RUN:   | FileCheck -check-prefix=CHK-FOPENMP-TARGET-ARCHS %s
-
-// CHK-FOPENMP-TARGET-ARCHS: ptxas{{.*}}" "--gpu-name" "sm_60"
-// CHK-FOPENMP-TARGET-ARCHS: nvlink{{.*}}" "-arch" "sm_60"
-
-/// ###########################################################################
-
-/// Check -Xopenmp-target -march=sm_35 works as expected when two triples are present.
-// RUN:   %clang -### -no-canonical-prefixes -fopenmp=libomp -fopenmp-targets=powerpc64le-ibm-linux-gnu,nvptx64-nvidia-cuda -Xopenmp-target=nvptx64-nvidia-cuda -march=sm_35 %s 2>&1 \
-// RUN:   | FileCheck -check-prefix=CHK-FOPENMP-TARGET-COMPILATION %s
-
-// CHK-FOPENMP-TARGET-COMPILATION: ptxas{{.*}}" "--gpu-name" "sm_35"
-// CHK-FOPENMP-TARGET-COMPILATION: nvlink{{.*}}" "-arch" "sm_35"
