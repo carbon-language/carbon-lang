@@ -573,11 +573,10 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     addLegalFPImmediate(APFloat(-0.0)); // FLD0/FCHS
     addLegalFPImmediate(APFloat(-1.0)); // FLD1/FCHS
 
-    if (!TM.Options.UnsafeFPMath) {
-      setOperationAction(ISD::FSIN   , MVT::f64, Expand);
-      setOperationAction(ISD::FCOS   , MVT::f64, Expand);
-      setOperationAction(ISD::FSINCOS, MVT::f64, Expand);
-    }
+    // Always expand sin/cos functions even though x87 has an instruction.
+    setOperationAction(ISD::FSIN   , MVT::f64, Expand);
+    setOperationAction(ISD::FCOS   , MVT::f64, Expand);
+    setOperationAction(ISD::FSINCOS, MVT::f64, Expand);
   } else if (UseX87) {
     // f32 and f64 in x87.
     // Set up the FP register classes.
@@ -588,11 +587,10 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::UNDEF,     VT, Expand);
       setOperationAction(ISD::FCOPYSIGN, VT, Expand);
 
-      if (!TM.Options.UnsafeFPMath) {
-        setOperationAction(ISD::FSIN   , VT, Expand);
-        setOperationAction(ISD::FCOS   , VT, Expand);
-        setOperationAction(ISD::FSINCOS, VT, Expand);
-      }
+      // Always expand sin/cos functions even though x87 has an instruction.
+      setOperationAction(ISD::FSIN   , VT, Expand);
+      setOperationAction(ISD::FCOS   , VT, Expand);
+      setOperationAction(ISD::FSINCOS, VT, Expand);
     }
     addLegalFPImmediate(APFloat(+0.0)); // FLD0
     addLegalFPImmediate(APFloat(+1.0)); // FLD1
@@ -636,11 +634,10 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       addLegalFPImmediate(TmpFlt2);  // FLD1/FCHS
     }
 
-    if (!TM.Options.UnsafeFPMath) {
-      setOperationAction(ISD::FSIN   , MVT::f80, Expand);
-      setOperationAction(ISD::FCOS   , MVT::f80, Expand);
-      setOperationAction(ISD::FSINCOS, MVT::f80, Expand);
-    }
+    // Always expand sin/cos functions even though x87 has an instruction.
+    setOperationAction(ISD::FSIN   , MVT::f80, Expand);
+    setOperationAction(ISD::FCOS   , MVT::f80, Expand);
+    setOperationAction(ISD::FSINCOS, MVT::f80, Expand);
 
     setOperationAction(ISD::FFLOOR, MVT::f80, Expand);
     setOperationAction(ISD::FCEIL,  MVT::f80, Expand);
