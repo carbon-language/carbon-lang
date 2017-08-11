@@ -1303,7 +1303,6 @@ BasicBlock::iterator AMDGPULibCalls::getEntryIns(CallInst * UI) {
   BasicBlock * BB = &Func->getEntryBlock();
   assert(BB && "Entry block not found!");
   BasicBlock::iterator ItNew = BB->begin();
-  assert(&*ItNew && "Entry instruction not found!");
   return ItNew;
 }
 
