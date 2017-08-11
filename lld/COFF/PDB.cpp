@@ -739,11 +739,22 @@ static void addCommonLinkerModuleSymbols(StringRef Path,
   ONS.Signature = 0;
 
   CS.Machine = Config->is64() ? CPUType::X64 : CPUType::Intel80386;
+  // Interestingly, if we set the string to 0.0.0.0, then when trying to view
+  // local variables WinDbg emits an error that private symbols are not present.
+  // By setting this to a valid MSVC linker version string, local variables are
+  // displayed properly.   As such, even though it is not representative of
+  // LLVM's version information, we need this for compatibility.
   CS.Flags = CompileSym3Flags::None;
-  CS.VersionBackendBuild = 0;
-  CS.VersionBackendMajor = 0;
-  CS.VersionBackendMinor = 0;
+  CS.VersionBackendBuild = 25019;
+  CS.VersionBackendMajor = 14;
+  CS.VersionBackendMinor = 10;
   CS.VersionBackendQFE = 0;
+
+  // MSVC also sets the frontend to 0.0.0.0 since this is specifically for the
+  // linker module (which is by definition a backend), so we don't need to do
+  // anything here.  Also, it seems we can use "LLVM Linker" for the linker name
+  // without any problems.  Only the backend version has to be hardcoded to a
+  // magic number.
   CS.VersionFrontendBuild = 0;
   CS.VersionFrontendMajor = 0;
   CS.VersionFrontendMinor = 0;
@@ -758,7 +769,9 @@ static void addCommonLinkerModuleSymbols(StringRef Path,
   sys::fs::current_path(cwd);
   EBS.Fields.push_back(cwd);
   EBS.Fields.push_back("exe");
-  EBS.Fields.push_back(Config->Argv[0]);
+  SmallString<64> exe = Config->Argv[0];
+  llvm::sys::fs::make_absolute(exe);
+  EBS.Fields.push_back(exe);
   EBS.Fields.push_back("pdb");
   EBS.Fields.push_back(Path);
   EBS.Fields.push_back("cmd");
@@ -775,14 +788,7 @@ static void addLinkerModuleSectionSymbol(pdb::DbiModuleDescriptorBuilder &Mod,
                                          OutputSection &OS,
                                          BumpPtrAllocator &Allocator) {
   SectionSym Sym(SymbolRecordKind::SectionSym);
-  Sym.Alignment = 0;
-  // We store log_2(Align), not the alignment itself.
-  auto Max = std::max_element(OS.getChunks().begin(), OS.getChunks().end(),
-                              [](const Chunk *C, const Chunk *D) {
-                                return C->getAlign() < D->getAlign();
-                              });
-  if (Max != OS.getChunks().end())
-    Sym.Alignment = Log2_32((*Max)->getAlign());
+  Sym.Alignment = 12; // 2^12 = 4KB
   Sym.Characteristics = OS.getCharacteristics();
   Sym.Length = OS.getVirtualSize();
   Sym.Name = OS.getName();
