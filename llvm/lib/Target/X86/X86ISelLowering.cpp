@@ -27034,6 +27034,12 @@ unsigned X86TargetLowering::ComputeNumSignBitsForTargetNode(
   return 1;
 }
 
+SDValue X86TargetLowering::unwrapAddress(SDValue N) const {
+  if (N->getOpcode() == X86ISD::Wrapper || N->getOpcode() == X86ISD::WrapperRIP)
+    return N->getOperand(0);
+  return N;
+}
+
 /// Returns true (and the GlobalValue and the offset) if the node is a
 /// GlobalAddress + offset.
 bool X86TargetLowering::isGAPlusOffset(SDNode *N,

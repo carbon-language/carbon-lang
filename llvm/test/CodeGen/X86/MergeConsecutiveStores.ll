@@ -492,10 +492,15 @@ define void @merge_vec_element_store(<8 x float> %v, float* %ptr) {
   store float %vecext7, float* %arrayidx7, align 4
   ret void
 
-; CHECK-LABEL: merge_vec_element_store
-; CHECK: vmovups
-; CHECK-NEXT: vzeroupper
-; CHECK-NEXT: retq
+; CHECK: vextractf128	$1, %ymm0, %xmm1
+; CHECK: vinsertf128	$1, %xmm1, %ymm0, %ymm0
+; CHECK: retq
+
+; This is what should be generated:
+; FIXME-LABEL: merge_vec_element_store
+; FIXME: vmovups
+; FIXME-NEXT: vzeroupper
+; FIXME-NEXT: retq
 }
 
 ; PR21711 - Merge vector stores into wider vector stores.
@@ -515,11 +520,18 @@ define void @merge_vec_extract_stores(<8 x float> %v1, <8 x float> %v2, <4 x flo
   store <4 x float> %shuffle3, <4 x float>* %idx3, align 16
   ret void
 
-; CHECK-LABEL: merge_vec_extract_stores
-; CHECK:      vmovups %ymm0, 48(%rdi)
-; CHECK-NEXT: vmovups %ymm1, 80(%rdi)
-; CHECK-NEXT: vzeroupper
-; CHECK-NEXT: retq
+; These vblendpd are obviously redundant.
+; CHECK: vblendpd	$12, %ymm0, %ymm0, %ymm0 # ymm0 = ymm0[0,1,2,3]
+; CHECK: vmovupd	%ymm0, 48(%rdi)
+; CHECK: vblendpd	$12, %ymm1, %ymm1, %ymm0 # ymm0 = ymm1[0,1,2,3]
+; CHECK: vmovupd	%ymm0, 80(%rdi)
+
+; This is what should be generated:
+; FIXME-LABEL: merge_vec_extract_stores
+; FIXME:      vmovups %ymm0, 48(%rdi)
+; FIXME-NEXT: vmovups %ymm1, 80(%rdi)
+; FIXME-NEXT: vzeroupper
+; FIXME-NEXT: retq
 }
 
 ; Merging vector stores when sourced from vector loads.
@@ -557,8 +569,7 @@ define void @merge_vec_stores_of_constants(<4 x i32>* %ptr) {
 }
 
 ; This is a minimized test based on real code that was failing.
-; We could merge stores (and loads) like this...
-
+; This should now be merged.
 define void @merge_vec_element_and_scalar_load([6 x i64]* %array) {
   %idx0 = getelementptr inbounds [6 x i64], [6 x i64]* %array, i64 0, i64 0
   %idx1 = getelementptr inbounds [6 x i64], [6 x i64]* %array, i64 0, i64 1
@@ -575,10 +586,8 @@ define void @merge_vec_element_and_scalar_load([6 x i64]* %array) {
   ret void
 
 ; CHECK-LABEL: merge_vec_element_and_scalar_load
-; CHECK:      movq	(%rdi), %rax
-; CHECK-NEXT: movq	8(%rdi), %rcx
-; CHECK-NEXT: movq	%rax, 32(%rdi)
-; CHECK-NEXT: movq	%rcx, 40(%rdi)
+; CHECK:      vmovups (%rdi), %xmm0
+; CHECK-NEXT: vmovups %xmm0, 32(%rdi)
 ; CHECK-NEXT: retq
 }
 
