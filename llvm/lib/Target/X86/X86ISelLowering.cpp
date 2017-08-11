@@ -19908,23 +19908,6 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget &Subtarget
                                 DAG.getIntPtrConstant(0, dl));
       return DAG.getBitcast(Op.getValueType(), Res);
     }
-    case BRCST_SUBVEC_TO_VEC: {
-      SDValue Src = Op.getOperand(1);
-      SDValue Passthru = Op.getOperand(2);
-      SDValue Mask = Op.getOperand(3);
-      EVT resVT = Passthru.getValueType();
-      SDValue subVec = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, resVT,
-                                       DAG.getUNDEF(resVT), Src,
-                                       DAG.getIntPtrConstant(0, dl));
-      SDValue immVal;
-      if (Src.getSimpleValueType().is256BitVector() && resVT.is512BitVector())
-        immVal = DAG.getConstant(0x44, dl, MVT::i8);
-      else
-        immVal = DAG.getConstant(0, dl, MVT::i8);
-      return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT,
-                                              subVec, subVec, immVal),
-                                  Mask, Passthru, Subtarget, DAG);
-    }
     case BRCST32x2_TO_VEC: {
       SDValue Src = Op.getOperand(1);
       SDValue PassThru = Op.getOperand(2);
