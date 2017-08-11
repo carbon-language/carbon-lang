@@ -58,7 +58,7 @@ template <class ELFT> static std::vector<Defined *> getSymbols() {
           V.push_back(DR);
       } else if (auto *DC = dyn_cast<DefinedCommon>(B)) {
         if (InX::Common)
-          V.push_back(cast<DefinedCommon>(B));
+          V.push_back(DC);
       }
     }
   }
