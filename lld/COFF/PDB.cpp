@@ -17,6 +17,7 @@
 #include "llvm/DebugInfo/CodeView/CVDebugRecord.h"
 #include "llvm/DebugInfo/CodeView/DebugSubsectionRecord.h"
 #include "llvm/DebugInfo/CodeView/LazyRandomTypeCollection.h"
+#include "llvm/DebugInfo/CodeView/RecordName.h"
 #include "llvm/DebugInfo/CodeView/SymbolDeserializer.h"
 #include "llvm/DebugInfo/CodeView/SymbolSerializer.h"
 #include "llvm/DebugInfo/CodeView/TypeDeserializer.h"
@@ -460,7 +461,78 @@ static void scopeStackClose(SmallVectorImpl<SymbolScope> &Stack,
   S.OpeningRecord->PtrEnd = CurOffset;
 }
 
+static bool symbolGoesInModuleStream(const CVSymbol &Sym) {
+  switch (Sym.kind()) {
+  case SymbolKind::S_GDATA32:
+  case SymbolKind::S_CONSTANT:
+  case SymbolKind::S_UDT:
+  // We really should not be seeing S_PROCREF and S_LPROCREF in the first place
+  // since they are synthesized by the linker in response to S_GPROC32 and
+  // S_LPROC32, but if we do see them, don't put them in the module stream I
+  // guess.
+  case SymbolKind::S_PROCREF:
+  case SymbolKind::S_LPROCREF:
+    return false;
+  // S_GDATA32 does not go in the module stream, but S_LDATA32 does.
+  case SymbolKind::S_LDATA32:
+  default:
+    return true;
+  }
+}
+
+static bool symbolGoesInGlobalsStream(const CVSymbol &Sym) {
+  switch (Sym.kind()) {
+  case SymbolKind::S_CONSTANT:
+  case SymbolKind::S_UDT:
+  case SymbolKind::S_GDATA32:
+  // S_LDATA32 goes in both the module stream and the globals stream.
+  case SymbolKind::S_LDATA32:
+  case SymbolKind::S_GPROC32:
+  case SymbolKind::S_LPROC32:
+  // We really should not be seeing S_PROCREF and S_LPROCREF in the first place
+  // since they are synthesized by the linker in response to S_GPROC32 and
+  // S_LPROC32, but if we do see them, copy them straight through.
+  case SymbolKind::S_PROCREF:
+  case SymbolKind::S_LPROCREF:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static void addGlobalSymbol(pdb::GSIStreamBuilder &Builder, ObjFile &File,
+                            const CVSymbol &Sym) {
+  switch (Sym.kind()) {
+  case SymbolKind::S_CONSTANT:
+  case SymbolKind::S_UDT:
+  case SymbolKind::S_GDATA32:
+  case SymbolKind::S_LDATA32:
+  case SymbolKind::S_PROCREF:
+  case SymbolKind::S_LPROCREF:
+    Builder.addGlobalSymbol(Sym);
+    break;
+  case SymbolKind::S_GPROC32:
+  case SymbolKind::S_LPROC32: {
+    SymbolRecordKind K = SymbolRecordKind::ProcRefSym;
+    if (Sym.kind() == SymbolKind::S_LPROC32)
+      K = SymbolRecordKind::LocalProcRef;
+    ProcRefSym PS(K);
+    PS.Module = static_cast<uint16_t>(File.ModuleDBI->getModuleIndex());
+    // For some reason, MSVC seems to add one to this value.
+    ++PS.Module;
+    PS.Name = getSymbolName(Sym);
+    PS.SumName = 0;
+    PS.SymOffset = File.ModuleDBI->getNextSymbolOffset();
+    Builder.addGlobalSymbol(PS);
+    break;
+  }
+  default:
+    llvm_unreachable("Invalid symbol kind!");
+  }
+}
+
 static void mergeSymbolRecords(BumpPtrAllocator &Alloc, ObjFile *File,
+                               pdb::GSIStreamBuilder &GsiBuilder,
                                const CVIndexMap &IndexMap,
                                const TypeTableBuilder &IDTable,
                                BinaryStreamRef SymData) {
@@ -500,8 +572,15 @@ static void mergeSymbolRecords(BumpPtrAllocator &Alloc, ObjFile *File,
     else if (symbolEndsScope(NewKind))
       scopeStackClose(Scopes, File->ModuleDBI->getNextSymbolOffset(), File);
 
+    // Add the symbol to the globals stream if necessary.  Do this before adding
+    // the symbol to the module since we may need to get the next symbol offset,
+    // and writing to the module's symbol stream will update that offset.
+    if (symbolGoesInGlobalsStream(NewSym))
+      addGlobalSymbol(GsiBuilder, *File, NewSym);
+
     // Add the symbol to the module.
-    File->ModuleDBI->addSymbol(NewSym);
+    if (symbolGoesInModuleStream(NewSym))
+      File->ModuleDBI->addSymbol(NewSym);
   }
 }
 
@@ -567,7 +646,8 @@ void PDBLinker::addObjFile(ObjFile *File) {
         File->ModuleDBI->addDebugSubsection(SS);
         break;
       case DebugSubsectionKind::Symbols:
-        mergeSymbolRecords(Alloc, File, IndexMap, IDTable, SS.getRecordData());
+        mergeSymbolRecords(Alloc, File, Builder.getGsiBuilder(), IndexMap,
+                           IDTable, SS.getRecordData());
         break;
       default:
         // FIXME: Process the rest of the subsections.
@@ -626,9 +706,10 @@ void PDBLinker::addObjectsToPDB() {
   // Construct IPI stream contents.
   addTypeInfo(Builder.getIpiBuilder(), IDTable);
 
-  // Compute the public symbols.
+  // Compute the public and global symbols.
+  auto &GsiBuilder = Builder.getGsiBuilder();
   std::vector<PublicSym32> Publics;
-  Symtab->forEachSymbol([&Publics](Symbol *S) {
+  Symtab->forEachSymbol([&Publics, &GsiBuilder](Symbol *S) {
     // Only emit defined, live symbols that have a chunk.
     auto *Def = dyn_cast<Defined>(S->body());
     if (Def && Def->isLive() && Def->getChunk())
@@ -641,7 +722,6 @@ void PDBLinker::addObjectsToPDB() {
               [](const PublicSym32 &L, const PublicSym32 &R) {
                 return L.Name < R.Name;
               });
-    auto &GsiBuilder = Builder.getGsiBuilder();
     for (const PublicSym32 &Pub : Publics)
       GsiBuilder.addPublicSymbol(Pub);
   }
