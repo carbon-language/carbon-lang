@@ -35504,13 +35504,18 @@ static SDValue combineInsertSubvector(SDNode *N, SelectionDAG &DAG,
   if (DCI.isBeforeLegalizeOps())
     return SDValue();
 
+  MVT OpVT = N->getSimpleValueType(0);
+
+  // Early out for mask vectors.
+  if (OpVT.getVectorElementType() == MVT::i1)
+    return SDValue();
+
   SDLoc dl(N);
   SDValue Vec = N->getOperand(0);
   SDValue SubVec = N->getOperand(1);
   SDValue Idx = N->getOperand(2);
 
   unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
-  MVT OpVT = N->getSimpleValueType(0);
   MVT SubVecVT = SubVec.getSimpleValueType();
 
   // If this is an insert of an extract, combine to a shuffle. Don't do this
