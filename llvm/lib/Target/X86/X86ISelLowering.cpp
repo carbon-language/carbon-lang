@@ -35514,7 +35514,7 @@ static SDValue combineInsertSubvector(SDNode *N, SelectionDAG &DAG,
   MVT SubVecVT = SubVec.getSimpleValueType();
 
   // If this is an insert of an extract, combine to a shuffle. Don't do this
-  // if the insert or extract can be represented with a subvector operation.
+  // if the insert or extract can be represented with a subregister operation.
   if (SubVec.getOpcode() == ISD::EXTRACT_SUBVECTOR &&
       SubVec.getOperand(0).getSimpleValueType() == OpVT &&
       (IdxVal != 0 || !Vec.isUndef())) {
