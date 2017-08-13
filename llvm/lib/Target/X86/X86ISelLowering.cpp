@@ -4579,7 +4579,13 @@ bool X86TargetLowering::isExtractSubvectorCheap(EVT ResVT, EVT SrcVT,
   if (!isOperationLegalOrCustom(ISD::EXTRACT_SUBVECTOR, ResVT))
     return false;
 
-  return (Index == 0 || Index == ResVT.getVectorNumElements());
+  // Mask vectors support all subregister combinations and operations that
+  // extract half of vector.
+  if (ResVT.getVectorElementType() == MVT::i1)
+    return Index = 0 || ((ResVT.getSizeInBits() == SrcVT.getSizeInBits() * 2) &&
+                         (Index == ResVT.getVectorNumElements()));
+
+  return (Index % ResVT.getVectorNumElements()) == 0;
 }
 
 bool X86TargetLowering::isCheapToSpeculateCttz() const {
