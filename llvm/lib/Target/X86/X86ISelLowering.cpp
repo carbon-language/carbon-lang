@@ -35468,19 +35468,26 @@ static SDValue combineLockSub(SDNode *N, SelectionDAG &DAG,
                                  {Chain, LHS, RHS}, VT, MMO);
 }
 
-// TEST (AND a, b) ,(AND a, b) -> TEST a, b
-static SDValue combineTestM(SDNode *N, SelectionDAG &DAG) {
+static SDValue combineTestM(SDNode *N, SelectionDAG &DAG,
+                            const X86Subtarget &Subtarget) {
   SDValue Op0 = N->getOperand(0);
   SDValue Op1 = N->getOperand(1);
 
-  if (Op0 != Op1 || Op1->getOpcode() != ISD::AND)
-    return SDValue();
-
-  EVT VT = N->getValueType(0);
+  MVT VT = N->getSimpleValueType(0);
   SDLoc DL(N);
 
-  return DAG.getNode(X86ISD::TESTM, DL, VT,
-                     Op0->getOperand(0), Op0->getOperand(1));
+  // TEST (AND a, b) ,(AND a, b) -> TEST a, b
+  if (Op0 == Op1 && Op1->getOpcode() == ISD::AND)
+    return DAG.getNode(X86ISD::TESTM, DL, VT, Op0->getOperand(0),
+                       Op0->getOperand(1));
+
+  // TEST op0, BUILD_VECTOR(all_zero) -> BUILD_VECTOR(all_zero)
+  // TEST BUILD_VECTOR(all_zero), op1 -> BUILD_VECTOR(all_zero)
+  if (ISD::isBuildVectorAllZeros(Op0.getNode()) ||
+      ISD::isBuildVectorAllZeros(Op1.getNode()))
+    return getZeroVector(VT, Subtarget, DAG, DL);
+
+  return SDValue();
 }
 
 static SDValue combineVectorCompare(SDNode *N, SelectionDAG &DAG,
@@ -35702,7 +35709,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::MGATHER:
   case ISD::MSCATTER:       return combineGatherScatter(N, DAG);
   case X86ISD::LSUB:        return combineLockSub(N, DAG, Subtarget);
-  case X86ISD::TESTM:       return combineTestM(N, DAG);
+  case X86ISD::TESTM:       return combineTestM(N, DAG, Subtarget);
   case X86ISD::PCMPEQ:
   case X86ISD::PCMPGT:      return combineVectorCompare(N, DAG, Subtarget);
   }
