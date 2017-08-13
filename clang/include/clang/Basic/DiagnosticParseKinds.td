@@ -752,13 +752,13 @@ def err_alias_declaration_pack_expansion : Error<
 def ext_multi_using_declaration : ExtWarn<
   "use of multiple declarators in a single using declaration is "
   "a C++17 extension">, InGroup<CXX17>;
-def warn_cxx1z_compat_multi_using_declaration : Warning<
+def warn_cxx17_compat_multi_using_declaration : Warning<
   "use of multiple declarators in a single using declaration is "
   "incompatible with C++ standards before C++17">,
   InGroup<CXXPre1zCompat>, DefaultIgnore;
 def ext_using_declaration_pack : ExtWarn<
   "pack expansion of using declaration is a C++17 extension">, InGroup<CXX17>;
-def warn_cxx1z_compat_using_declaration_pack : Warning<
+def warn_cxx17_compat_using_declaration_pack : Warning<
   "pack expansion using declaration is incompatible with C++ standards "
   "before C++17">, InGroup<CXXPre1zCompat>, DefaultIgnore;
 
@@ -819,7 +819,7 @@ def err_expected_star_this_capture : Error<
 def warn_cxx14_compat_constexpr_on_lambda : Warning<
   "constexpr on lambda expressions is incompatible with C++ standards before C++17">,
   InGroup<CXXPre1zCompat>, DefaultIgnore;
-def ext_constexpr_on_lambda_cxx1z : ExtWarn<
+def ext_constexpr_on_lambda_cxx17 : ExtWarn<
   "'constexpr' on lambda expressions is a C++17 extension">, InGroup<CXX17>;
 
 // Availability attribute
