@@ -24,6 +24,20 @@ entry:
   ret i32 %0
 }
 
+define i32 @test_x86_tbm_bextri_u32_z(i32 %a, i32 %b) nounwind readonly {
+; CHECK-LABEL: test_x86_tbm_bextri_u32_z:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    bextr $2814, %edi, %eax # imm = 0xAFE
+; CHECK-NEXT:    testl %eax, %eax
+; CHECK-NEXT:    cmovel %esi, %eax
+; CHECK-NEXT:    retq
+entry:
+  %0 = tail call i32 @llvm.x86.tbm.bextri.u32(i32 %a, i32 2814)
+  %1 = icmp eq i32 %0, 0
+  %2 = select i1 %1, i32 %b, i32 %0
+  ret i32 %2
+}
+
 define i64 @test_x86_tbm_bextri_u64(i64 %a) nounwind readnone {
 ; CHECK-LABEL: test_x86_tbm_bextri_u64:
 ; CHECK:       # BB#0: # %entry
@@ -45,4 +59,18 @@ entry:
   %tmp1 = load i64, i64* %a, align 8
   %0 = tail call i64 @llvm.x86.tbm.bextri.u64(i64 %tmp1, i64 2814)
   ret i64 %0
+}
+
+define i64 @test_x86_tbm_bextri_u64_z(i64 %a, i64 %b) nounwind readnone {
+; CHECK-LABEL: test_x86_tbm_bextri_u64_z:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    bextr $2814, %rdi, %rax # imm = 0xAFE
+; CHECK-NEXT:    testq %rax, %rax
+; CHECK-NEXT:    cmoveq %rsi, %rax
+; CHECK-NEXT:    retq
+entry:
+  %0 = tail call i64 @llvm.x86.tbm.bextri.u64(i64 %a, i64 2814)
+  %1 = icmp eq i64 %0, 0
+  %2 = select i1 %1, i64 %b, i64 %0
+  ret i64 %2
 }
