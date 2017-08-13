@@ -224,6 +224,8 @@ def CXX1zCompat : DiagGroup<"c++1z-compat", [DeprecatedRegister,
                                              DeprecatedIncrementBool,
                                              CXX1zCompatMangling]>;
 
+def CXX2aCompat : DiagGroup<"c++2a-compat">;
+
 def ExitTimeDestructors : DiagGroup<"exit-time-destructors">;
 def FlexibleArrayExtensions : DiagGroup<"flexible-array-extensions">;
 def FourByteMultiChar : DiagGroup<"four-char-constants">;
