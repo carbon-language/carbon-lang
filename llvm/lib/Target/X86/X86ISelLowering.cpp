@@ -26915,21 +26915,6 @@ void X86TargetLowering::computeKnownBitsForTargetNode(const SDValue Op,
   Known.resetAll();
   switch (Opc) {
   default: break;
-  case X86ISD::ADD:
-  case X86ISD::SUB:
-  case X86ISD::ADC:
-  case X86ISD::SBB:
-  case X86ISD::SMUL:
-  case X86ISD::UMUL:
-  case X86ISD::INC:
-  case X86ISD::DEC:
-  case X86ISD::OR:
-  case X86ISD::XOR:
-  case X86ISD::AND:
-    // These nodes' second result is a boolean.
-    if (Op.getResNo() == 0)
-      break;
-    LLVM_FALLTHROUGH;
   case X86ISD::SETCC:
     Known.Zero.setBitsFrom(1);
     break;
