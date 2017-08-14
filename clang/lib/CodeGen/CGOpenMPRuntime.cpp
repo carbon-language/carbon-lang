@@ -3790,7 +3790,6 @@ emitProxyTaskFunction(CodeGenModule &CGM, SourceLocation Loc,
                              ".omp_task_entry.", &CGM.getModule());
   CGM.SetInternalFunctionAttributes(/*D=*/nullptr, TaskEntry, TaskEntryFnInfo);
   CodeGenFunction CGF(CGM);
-  CGF.disableDebugInfo();
   CGF.StartFunction(GlobalDecl(), KmpInt32Ty, TaskEntry, TaskEntryFnInfo, Args);
 
   // TaskFunction(gtid, tt->task_data.part_id, &tt->privates, task_privates_map,
