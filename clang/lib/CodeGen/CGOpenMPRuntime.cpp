@@ -19,6 +19,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/StmtOpenMP.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/BitmaskEnum.h"
 #include "llvm/Bitcode/BitcodeReader.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -420,7 +421,7 @@ public:
 /// \brief Values for bit flags used in the ident_t to describe the fields.
 /// All enumeric elements are named and described in accordance with the code
 /// from http://llvm.org/svn/llvm-project/openmp/trunk/runtime/src/kmp.h
-enum OpenMPLocationFlags {
+enum OpenMPLocationFlags : unsigned {
   /// \brief Use trampoline for internal microtask.
   OMP_IDENT_IMD = 0x01,
   /// \brief Use c-style ident structure.
@@ -436,7 +437,14 @@ enum OpenMPLocationFlags {
   /// \brief Implicit barrier in 'sections' directive.
   OMP_IDENT_BARRIER_IMPL_SECTIONS = 0xC0,
   /// \brief Implicit barrier in 'single' directive.
-  OMP_IDENT_BARRIER_IMPL_SINGLE = 0x140
+  OMP_IDENT_BARRIER_IMPL_SINGLE = 0x140,
+  /// Call of __kmp_for_static_init for static loop.
+  OMP_IDENT_WORK_LOOP = 0x200,
+  /// Call of __kmp_for_static_init for sections.
+  OMP_IDENT_WORK_SECTIONS = 0x400,
+  /// Call of __kmp_for_static_init for distribute.
+  OMP_IDENT_WORK_DISTRIBUTE = 0x800,
+  LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/OMP_IDENT_WORK_DISTRIBUTE)
 };
 
 /// \brief Describes ident structure that describes a source location.
@@ -2956,79 +2964,85 @@ static void emitForStaticInitCall(
     CodeGenFunction &CGF, llvm::Value *UpdateLocation, llvm::Value *ThreadId,
     llvm::Constant *ForStaticInitFunction, OpenMPSchedType Schedule,
     OpenMPScheduleClauseModifier M1, OpenMPScheduleClauseModifier M2,
-    unsigned IVSize, bool Ordered, Address IL, Address LB, Address UB,
-    Address ST, llvm::Value *Chunk) {
+    const CGOpenMPRuntime::StaticRTInput &Values) {
   if (!CGF.HaveInsertPoint())
-     return;
+    return;
 
-   assert(!Ordered);
-   assert(Schedule == OMP_sch_static || Schedule == OMP_sch_static_chunked ||
-          Schedule == OMP_sch_static_balanced_chunked ||
-          Schedule == OMP_ord_static || Schedule == OMP_ord_static_chunked ||
-          Schedule == OMP_dist_sch_static ||
-          Schedule == OMP_dist_sch_static_chunked);
+  assert(!Values.Ordered);
+  assert(Schedule == OMP_sch_static || Schedule == OMP_sch_static_chunked ||
+         Schedule == OMP_sch_static_balanced_chunked ||
+         Schedule == OMP_ord_static || Schedule == OMP_ord_static_chunked ||
+         Schedule == OMP_dist_sch_static ||
+         Schedule == OMP_dist_sch_static_chunked);
 
-   // Call __kmpc_for_static_init(
-   //          ident_t *loc, kmp_int32 tid, kmp_int32 schedtype,
-   //          kmp_int32 *p_lastiter, kmp_int[32|64] *p_lower,
-   //          kmp_int[32|64] *p_upper, kmp_int[32|64] *p_stride,
-   //          kmp_int[32|64] incr, kmp_int[32|64] chunk);
-   if (Chunk == nullptr) {
-     assert((Schedule == OMP_sch_static || Schedule == OMP_ord_static ||
-             Schedule == OMP_dist_sch_static) &&
-            "expected static non-chunked schedule");
-     // If the Chunk was not specified in the clause - use default value 1.
-       Chunk = CGF.Builder.getIntN(IVSize, 1);
-   } else {
-     assert((Schedule == OMP_sch_static_chunked ||
-             Schedule == OMP_sch_static_balanced_chunked ||
-             Schedule == OMP_ord_static_chunked ||
-             Schedule == OMP_dist_sch_static_chunked) &&
-            "expected static chunked schedule");
-   }
-   llvm::Value *Args[] = {
-       UpdateLocation, ThreadId, CGF.Builder.getInt32(addMonoNonMonoModifier(
-                                     Schedule, M1, M2)), // Schedule type
-       IL.getPointer(),                                  // &isLastIter
-       LB.getPointer(),                                  // &LB
-       UB.getPointer(),                                  // &UB
-       ST.getPointer(),                                  // &Stride
-       CGF.Builder.getIntN(IVSize, 1),                   // Incr
-       Chunk                                             // Chunk
-   };
-   CGF.EmitRuntimeCall(ForStaticInitFunction, Args);
+  // Call __kmpc_for_static_init(
+  //          ident_t *loc, kmp_int32 tid, kmp_int32 schedtype,
+  //          kmp_int32 *p_lastiter, kmp_int[32|64] *p_lower,
+  //          kmp_int[32|64] *p_upper, kmp_int[32|64] *p_stride,
+  //          kmp_int[32|64] incr, kmp_int[32|64] chunk);
+  llvm::Value *Chunk = Values.Chunk;
+  if (Chunk == nullptr) {
+    assert((Schedule == OMP_sch_static || Schedule == OMP_ord_static ||
+            Schedule == OMP_dist_sch_static) &&
+           "expected static non-chunked schedule");
+    // If the Chunk was not specified in the clause - use default value 1.
+    Chunk = CGF.Builder.getIntN(Values.IVSize, 1);
+  } else {
+    assert((Schedule == OMP_sch_static_chunked ||
+            Schedule == OMP_sch_static_balanced_chunked ||
+            Schedule == OMP_ord_static_chunked ||
+            Schedule == OMP_dist_sch_static_chunked) &&
+           "expected static chunked schedule");
+  }
+  llvm::Value *Args[] = {
+      UpdateLocation,
+      ThreadId,
+      CGF.Builder.getInt32(addMonoNonMonoModifier(Schedule, M1,
+                                                  M2)), // Schedule type
+      Values.IL.getPointer(),                           // &isLastIter
+      Values.LB.getPointer(),                           // &LB
+      Values.UB.getPointer(),                           // &UB
+      Values.ST.getPointer(),                           // &Stride
+      CGF.Builder.getIntN(Values.IVSize, 1),            // Incr
+      Chunk                                             // Chunk
+  };
+  CGF.EmitRuntimeCall(ForStaticInitFunction, Args);
 }
 
 void CGOpenMPRuntime::emitForStaticInit(CodeGenFunction &CGF,
                                         SourceLocation Loc,
+                                        OpenMPDirectiveKind DKind,
                                         const OpenMPScheduleTy &ScheduleKind,
-                                        unsigned IVSize, bool IVSigned,
-                                        bool Ordered, Address IL, Address LB,
-                                        Address UB, Address ST,
-                                        llvm::Value *Chunk) {
-  OpenMPSchedType ScheduleNum =
-      getRuntimeSchedule(ScheduleKind.Schedule, Chunk != nullptr, Ordered);
-  auto *UpdatedLocation = emitUpdateLocation(CGF, Loc);
+                                        const StaticRTInput &Values) {
+  OpenMPSchedType ScheduleNum = getRuntimeSchedule(
+      ScheduleKind.Schedule, Values.Chunk != nullptr, Values.Ordered);
+  assert(isOpenMPWorksharingDirective(DKind) &&
+         "Expected loop-based or sections-based directive.");
+  auto *UpdatedLocation = emitUpdateLocation(CGF, Loc,
+                                             isOpenMPLoopDirective(DKind)
+                                                 ? OMP_IDENT_WORK_LOOP
+                                                 : OMP_IDENT_WORK_SECTIONS);
   auto *ThreadId = getThreadID(CGF, Loc);
-  auto *StaticInitFunction = createForStaticInitFunction(IVSize, IVSigned);
+  auto *StaticInitFunction =
+      createForStaticInitFunction(Values.IVSize, Values.IVSigned);
   emitForStaticInitCall(CGF, UpdatedLocation, ThreadId, StaticInitFunction,
-                        ScheduleNum, ScheduleKind.M1, ScheduleKind.M2, IVSize,
-                        Ordered, IL, LB, UB, ST, Chunk);
+                        ScheduleNum, ScheduleKind.M1, ScheduleKind.M2, Values);
 }
 
 void CGOpenMPRuntime::emitDistributeStaticInit(
     CodeGenFunction &CGF, SourceLocation Loc,
-    OpenMPDistScheduleClauseKind SchedKind, unsigned IVSize, bool IVSigned,
-    bool Ordered, Address IL, Address LB, Address UB, Address ST,
-    llvm::Value *Chunk) {
-  OpenMPSchedType ScheduleNum = getRuntimeSchedule(SchedKind, Chunk != nullptr);
-  auto *UpdatedLocation = emitUpdateLocation(CGF, Loc);
+    OpenMPDistScheduleClauseKind SchedKind,
+    const CGOpenMPRuntime::StaticRTInput &Values) {
+  OpenMPSchedType ScheduleNum =
+      getRuntimeSchedule(SchedKind, Values.Chunk != nullptr);
+  auto *UpdatedLocation =
+      emitUpdateLocation(CGF, Loc, OMP_IDENT_WORK_DISTRIBUTE);
   auto *ThreadId = getThreadID(CGF, Loc);
-  auto *StaticInitFunction = createForStaticInitFunction(IVSize, IVSigned);
+  auto *StaticInitFunction =
+      createForStaticInitFunction(Values.IVSize, Values.IVSigned);
   emitForStaticInitCall(CGF, UpdatedLocation, ThreadId, StaticInitFunction,
                         ScheduleNum, OMPC_SCHEDULE_MODIFIER_unknown,
-                        OMPC_SCHEDULE_MODIFIER_unknown, IVSize, Ordered, IL, LB,
-                        UB, ST, Chunk);
+                        OMPC_SCHEDULE_MODIFIER_unknown, Values);
 }
 
 void CGOpenMPRuntime::emitForStaticFinish(CodeGenFunction &CGF,
