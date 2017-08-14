@@ -459,6 +459,8 @@ private:
         updateParameterCount(Left, CurrentToken);
         if (CurrentToken->isOneOf(tok::colon, tok::l_brace, tok::less)) {
           FormatToken *Previous = CurrentToken->getPreviousNonComment();
+          if (Previous->is(TT_JsTypeOptionalQuestion))
+            Previous = Previous->getPreviousNonComment();
           if (((CurrentToken->is(tok::colon) &&
                 (!Contexts.back().ColonIsDictLiteral || !Style.isCpp())) ||
                Style.Language == FormatStyle::LK_Proto ||
@@ -1601,7 +1603,7 @@ private:
       if (Current->is(TT_ConditionalExpr))
         return prec::Conditional;
       if (NextNonComment && Current->is(TT_SelectorName) &&
-          (NextNonComment->is(TT_DictLiteral) ||
+          (NextNonComment->isOneOf(TT_DictLiteral, TT_JsTypeColon) ||
            ((Style.Language == FormatStyle::LK_Proto ||
              Style.Language == FormatStyle::LK_TextProto) &&
             NextNonComment->is(tok::less))))

@@ -1561,6 +1561,10 @@ TEST_F(FormatTestJS, TypeAliases) {
                "  y: number\n"
                "};\n"
                "class C {}");
+  verifyFormat("export type X = {\n"
+               "  a: string,\n"
+               "  b?: string,\n"
+               "};\n");
 }
 
 TEST_F(FormatTestJS, TypeInterfaceLineWrapping) {
