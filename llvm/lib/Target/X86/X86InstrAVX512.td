@@ -653,9 +653,6 @@ multiclass vextract_for_size<int Opcode,
                              SDNodeXForm EXTRACT_get_vextract_imm> {
 
   let hasSideEffects = 0, ExeDomain = To.ExeDomain in {
-    // use AVX512_maskable_in_asm (AVX512_maskable can't be used due to
-    // vextract_extract), we interesting only in patterns without mask,
-    // intrinsics pattern match generated bellow.
     defm rr : AVX512_maskable<Opcode, MRMDestReg, To, (outs To.RC:$dst),
                 (ins From.RC:$src1, u8imm:$idx),
                 "vextract" # To.EltTypeName # "x" # To.NumElts,
