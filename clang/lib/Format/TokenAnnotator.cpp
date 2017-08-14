@@ -2367,13 +2367,20 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
         Left.isOneOf(Keywords.kw_function, Keywords.kw_yield,
                      Keywords.kw_extends, Keywords.kw_implements))
       return true;
-    // JS methods can use some keywords as names (e.g. `delete()`).
-    if (Right.is(tok::l_paren) && Line.MustBeDeclaration &&
-        Left.Tok.getIdentifierInfo())
-      return false;
-    if (Right.is(tok::l_paren) &&
-        Left.isOneOf(tok::kw_throw, Keywords.kw_await, Keywords.kw_typeof, tok::kw_void))
-      return true;
+    if (Right.is(tok::l_paren)) {
+      // JS methods can use some keywords as names (e.g. `delete()`).
+      if (Line.MustBeDeclaration && Left.Tok.getIdentifierInfo())
+        return false;
+      // Valid JS method names can include keywords, e.g. `foo.delete()` or
+      // `bar.instanceof()`. Recognize call positions by preceding period.
+      if (Left.Previous && Left.Previous->is(tok::period) &&
+          Left.Tok.getIdentifierInfo())
+        return false;
+      // Additional unary JavaScript operators that need a space after.
+      if (Left.isOneOf(tok::kw_throw, Keywords.kw_await, Keywords.kw_typeof,
+                       tok::kw_void))
+        return true;
+    }
     if ((Left.isOneOf(Keywords.kw_let, Keywords.kw_var, Keywords.kw_in,
                       tok::kw_const) ||
          // "of" is only a keyword if it appears after another identifier
