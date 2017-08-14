@@ -4766,32 +4766,24 @@ void Scop::setScheduleTree(__isl_take isl_schedule *NewSchedule) {
   Schedule = NewSchedule;
 }
 
-bool Scop::restrictDomains(__isl_take isl_union_set *Domain) {
+bool Scop::restrictDomains(isl::union_set Domain) {
   bool Changed = false;
   for (ScopStmt &Stmt : *this) {
-    isl_union_set *StmtDomain =
-        isl_union_set_from_set(Stmt.getDomain().release());
-    isl_union_set *NewStmtDomain = isl_union_set_intersect(
-        isl_union_set_copy(StmtDomain), isl_union_set_copy(Domain));
+    isl::union_set StmtDomain = isl::union_set(Stmt.getDomain());
+    isl::union_set NewStmtDomain = StmtDomain.intersect(Domain);
 
-    if (isl_union_set_is_subset(StmtDomain, NewStmtDomain)) {
-      isl_union_set_free(StmtDomain);
-      isl_union_set_free(NewStmtDomain);
+    if (StmtDomain.is_subset(NewStmtDomain))
       continue;
-    }
 
     Changed = true;
 
-    isl_union_set_free(StmtDomain);
-    NewStmtDomain = isl_union_set_coalesce(NewStmtDomain);
+    NewStmtDomain = NewStmtDomain.coalesce();
 
-    if (isl_union_set_is_empty(NewStmtDomain)) {
+    if (NewStmtDomain.is_empty())
       Stmt.restrictDomain(isl::set::empty(Stmt.getDomainSpace()));
-      isl_union_set_free(NewStmtDomain);
-    } else
-      Stmt.restrictDomain(isl::manage(isl_set_from_union_set(NewStmtDomain)));
+    else
+      Stmt.restrictDomain(isl::set(NewStmtDomain));
   }
-  isl_union_set_free(Domain);
   return Changed;
 }
 
