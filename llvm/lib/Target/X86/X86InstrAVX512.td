@@ -954,7 +954,7 @@ multiclass avx512_int_broadcast_reg<bits<8> opc, X86VectorVTInfo _,
 multiclass avx512_int_broadcastbw_reg<bits<8> opc, string Name, 
                                     X86VectorVTInfo _, SDPatternOperator OpNode,
                                     RegisterClass SrcRC, SubRegIndex Subreg> {
-  let ExeDomain = _.ExeDomain in
+  let hasSideEffects = 0, ExeDomain = _.ExeDomain in
   defm r : AVX512_maskable_custom<opc, MRMSrcReg,
                         (outs _.RC:$dst), (ins GR32:$src),
                         !con((ins _.RC:$src0, _.KRCWM:$mask), (ins GR32:$src)),
