@@ -779,9 +779,6 @@ void TargetPassConfig::addMachinePasses() {
   // Print the instruction selected machine code...
   printAndVerify("After Instruction Selection");
 
-  if (TM->Options.EnableIPRA)
-    addPass(createRegUsageInfoPropPass());
-
   // Expand pseudo-instructions emitted by ISel.
   addPass(&ExpandISelPseudosID);
 
@@ -793,6 +790,9 @@ void TargetPassConfig::addMachinePasses() {
     // to one another and simplify frame index references where possible.
     addPass(&LocalStackSlotAllocationID, false);
   }
+
+  if (TM->Options.EnableIPRA)
+    addPass(createRegUsageInfoPropPass());
 
   // Run pre-ra passes.
   addPreRegAlloc();
