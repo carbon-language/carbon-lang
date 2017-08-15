@@ -559,8 +559,8 @@ Instruction *InstCombiner::visitShl(BinaryOperator &I) {
         return new ZExtInst(Builder.CreateShl(X, ShAmt), Ty);
     }
 
-    // (X >>u C) << C --> X & (-1 << C)
-    if (match(Op0, m_LShr(m_Value(X), m_Specific(Op1)))) {
+    // (X >> C) << C --> X & (-1 << C)
+    if (match(Op0, m_Shr(m_Value(X), m_Specific(Op1)))) {
       APInt Mask(APInt::getHighBitsSet(BitWidth, BitWidth - ShAmt));
       return BinaryOperator::CreateAnd(X, ConstantInt::get(Ty, Mask));
     }
