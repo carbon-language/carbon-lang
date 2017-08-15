@@ -11,6 +11,7 @@
 #define LLVM_DEBUGINFO_DWARF_DWARFOBJECT_H
 
 #include "llvm/DebugInfo/DWARF/DWARFSection.h"
+#include "llvm/Object/ObjectFile.h"
 
 namespace llvm {
 // This is responsible for low level access to the object file. It
