@@ -1135,10 +1135,12 @@ template <class ELFT> void DynamicSection<ELFT>::finalizeContents() {
     add({DT_FINI_ARRAYSZ, Out::FiniArray, Entry::SecSize});
   }
 
-  if (SymbolBody *B = Symtab->findInCurrentDSO(Config->Init))
-    add({DT_INIT, B});
-  if (SymbolBody *B = Symtab->findInCurrentDSO(Config->Fini))
-    add({DT_FINI, B});
+  if (SymbolBody *B = Symtab->find(Config->Init))
+    if (B->isInCurrentDSO())
+      add({DT_INIT, B});
+  if (SymbolBody *B = Symtab->find(Config->Fini))
+    if (B->isInCurrentDSO())
+      add({DT_FINI, B});
 
   bool HasVerNeed = In<ELFT>::VerNeed->getNeedNum() != 0;
   if (HasVerNeed || In<ELFT>::VerDef)
