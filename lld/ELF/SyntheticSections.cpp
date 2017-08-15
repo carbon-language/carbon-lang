@@ -1708,10 +1708,6 @@ unsigned PltSection::getPltRelocOff() const {
   return (HeaderSize == 0) ? InX::Plt->getSize() : 0;
 }
 
-GdbIndexSection::GdbIndexSection(std::vector<GdbIndexChunk> &&Chunks)
-    : SyntheticSection(0, SHT_PROGBITS, 1, ".gdb_index"),
-      StringPool(llvm::StringTableBuilder::ELF), Chunks(std::move(Chunks)) {}
-
 // The hash function used for .gdb_index version 5 or above.
 static uint32_t gdbHash(StringRef Str) {
   uint32_t R = 0;
@@ -1793,7 +1789,7 @@ void GdbIndexSection::buildIndex() {
 
       bool IsNew;
       GdbSymbol *Sym;
-      std::tie(IsNew, Sym) = SymbolTable.add(Hash, Offset);
+      std::tie(IsNew, Sym) = HashTab.add(Hash, Offset);
       if (IsNew) {
         Sym->CuVectorIndex = CuVectors.size();
         CuVectors.resize(CuVectors.size() + 1);
@@ -1840,44 +1836,37 @@ static size_t getAddressAreaSize(ArrayRef<GdbIndexChunk> Arr) {
   return Ret;
 }
 
-void GdbIndexSection::finalizeContents() {
-  if (Finalized)
-    return;
-  Finalized = true;
-
+GdbIndexSection::GdbIndexSection(std::vector<GdbIndexChunk> &&C)
+    : SyntheticSection(0, SHT_PROGBITS, 1, ".gdb_index"),
+      StringPool(llvm::StringTableBuilder::ELF), Chunks(std::move(C)) {
   buildIndex();
-
-  SymbolTable.finalizeContents();
+  HashTab.finalizeContents();
 
   // GdbIndex header consist from version fields
   // and 5 more fields with different kinds of offsets.
   CuTypesOffset = CuListOffset + getCuSize(Chunks) * CompilationUnitSize;
   SymTabOffset = CuTypesOffset + getAddressAreaSize(Chunks) * AddressEntrySize;
-
-  ConstantPoolOffset =
-      SymTabOffset + SymbolTable.getCapacity() * SymTabEntrySize;
+  ConstantPoolOffset = SymTabOffset + HashTab.getCapacity() * SymTabEntrySize;
 
   for (std::set<uint32_t> &CuVec : CuVectors) {
     CuVectorsOffset.push_back(CuVectorsSize);
     CuVectorsSize += OffsetTypeSize * (CuVec.size() + 1);
   }
   StringPoolOffset = ConstantPoolOffset + CuVectorsSize;
-
   StringPool.finalizeInOrder();
 }
 
 size_t GdbIndexSection::getSize() const {
-  const_cast<GdbIndexSection *>(this)->finalizeContents();
   return StringPoolOffset + StringPool.getSize();
 }
 
 void GdbIndexSection::writeTo(uint8_t *Buf) {
-  write32le(Buf, 7);                       // Write version.
-  write32le(Buf + 4, CuListOffset);        // CU list offset.
-  write32le(Buf + 8, CuTypesOffset);       // Types CU list offset.
-  write32le(Buf + 12, CuTypesOffset);      // Address area offset.
-  write32le(Buf + 16, SymTabOffset);       // Symbol table offset.
-  write32le(Buf + 20, ConstantPoolOffset); // Constant pool offset.
+  write32le(Buf, 7);                       // Write version
+  write32le(Buf + 4, CuListOffset);        // CU list offset
+  write32le(Buf + 8, CuTypesOffset);       // Types CU list offset
+  write32le(Buf + 12, CuTypesOffset);      // Address area offset
+  write32le(Buf + 16, SymTabOffset);       // Symbol table offset
+  write32le(Buf + 20, ConstantPoolOffset); // Constant pool offset
   Buf += 24;
 
   // Write the CU list.
@@ -1902,8 +1891,8 @@ void GdbIndexSection::writeTo(uint8_t *Buf) {
   }
 
   // Write the symbol table.
-  for (size_t I = 0; I < SymbolTable.getCapacity(); ++I) {
-    GdbSymbol *Sym = SymbolTable.getSymbol(I);
+  for (size_t I = 0; I < HashTab.getCapacity(); ++I) {
+    GdbSymbol *Sym = HashTab.getSymbol(I);
     if (Sym) {
       size_t NameOffset =
           Sym->NameOffset + StringPoolOffset - ConstantPoolOffset;
