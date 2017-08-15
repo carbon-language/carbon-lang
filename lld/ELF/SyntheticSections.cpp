@@ -1712,10 +1712,8 @@ GdbIndexSection::GdbIndexSection(std::vector<GdbIndexChunk> &&Chunks)
     : SyntheticSection(0, SHT_PROGBITS, 1, ".gdb_index"),
       StringPool(llvm::StringTableBuilder::ELF), Chunks(std::move(Chunks)) {}
 
-// Iterative hash function for symbol's name is described in .gdb_index format
-// specification. Note that we use one for version 5 to 7 here, it is different
-// for version 4.
-static uint32_t hash(StringRef Str) {
+// The hash function used for .gdb_index version 5 or above.
+static uint32_t gdbHash(StringRef Str) {
   uint32_t R = 0;
   for (uint8_t C : Str)
     R = R * 67 + tolower(C) - 113;
@@ -1790,7 +1788,7 @@ void GdbIndexSection::buildIndex() {
 
     // Populate constant pool area.
     for (NameTypeEntry &NameType : D.NamesAndTypes) {
-      uint32_t Hash = hash(NameType.Name);
+      uint32_t Hash = gdbHash(NameType.Name);
       size_t Offset = StringPool.add(NameType.Name);
 
       bool IsNew;
