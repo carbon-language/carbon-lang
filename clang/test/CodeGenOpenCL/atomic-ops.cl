@@ -1,8 +1,8 @@
-// RUN: %clang_cc1 %s -cl-std=CL2.0 -emit-llvm -O0 -o - -triple=amdgcn-amd-amdhsa-opencl | FileCheck %s
+// RUN: %clang_cc1 %s -cl-std=CL2.0 -emit-llvm -O0 -o - -triple=amdgcn-amd-amdhsa-opencl | opt -instnamer -S | FileCheck %s
 
 // Also test serialization of atomic operations here, to avoid duplicating the test.
 // RUN: %clang_cc1 %s -cl-std=CL2.0 -emit-pch -O0 -o %t -triple=amdgcn-amd-amdhsa-opencl
-// RUN: %clang_cc1 %s -cl-std=CL2.0 -include-pch %t -O0 -triple=amdgcn-amd-amdhsa-opencl -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -cl-std=CL2.0 -include-pch %t -O0 -triple=amdgcn-amd-amdhsa-opencl -emit-llvm -o - | opt -instnamer -S | FileCheck %s
 
 #ifndef ALREADY_INCLUDED
 #define ALREADY_INCLUDED
@@ -87,10 +87,10 @@ void fi5(atomic_int *i, int scope) {
   // CHECK: load atomic i32, i32 addrspace(4)* %{{.*}} syncscope("agent") seq_cst
   // CHECK: br label %atomic.scope.continue
   // CHECK: opencl_allsvmdevices:
-  // CHECK: load atomic i32, i32 addrspace(4)* %{{.*}} seq_cst, align 4
+  // CHECK: load atomic i32, i32 addrspace(4)* %{{.*}} seq_cst
   // CHECK: br label %atomic.scope.continue
   // CHECK: opencl_subgroup:
-  // CHECK: %5 = load atomic i32, i32 addrspace(4)* %0 syncscope("subgroup") seq_cst, align 4
+  // CHECK: load atomic i32, i32 addrspace(4)* %{{.*}} syncscope("subgroup") seq_cst
   // CHECK: br label %atomic.scope.continue
   // CHECK: atomic.scope.continue:
   int x = __opencl_atomic_load(i, memory_order_seq_cst, scope);
@@ -116,7 +116,7 @@ void fi6(atomic_int *i, int order, int scope) {
   // CHECK-NEXT: i32 4, label %[[ACQ_SUB:.*]]
   // CHECK-NEXT: ]
   // CHECK: seqcst:
-  // CHECK: switch i32 %2, label %[[SEQ_ALL:.*]] [
+  // CHECK: switch i32 %{{.*}}, label %[[SEQ_ALL:.*]] [
   // CHECK-NEXT: i32 1, label %[[SEQ_WG:.*]]
   // CHECK-NEXT: i32 2, label %[[SEQ_DEV:.*]]
   // CHECK-NEXT: i32 4, label %[[SEQ_SUB:.*]]
