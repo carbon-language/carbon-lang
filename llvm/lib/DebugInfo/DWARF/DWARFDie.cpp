@@ -77,7 +77,7 @@ static void dumpRanges(const DWARFObject &Obj, raw_ostream &OS,
 
     // Print section index if name is not unique.
     if (!SectionNames[R.SectionIndex].IsNameUnique)
-      OS << format(" [%u]", R.SectionIndex);
+      OS << format(" [%" PRIu64 "]", R.SectionIndex);
   }
 }
 
