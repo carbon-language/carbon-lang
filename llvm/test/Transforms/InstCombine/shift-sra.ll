@@ -163,13 +163,12 @@ define <2 x i32> @ashr_overshift_splat_vec(<2 x i32> %x) {
   ret <2 x i32> %sh2
 }
 
-; TODO: Prefer a narrow shift for better for bit-tracking.
 ; ashr (sext X), C --> sext (ashr X, C')
 
 define i32 @hoist_ashr_ahead_of_sext_1(i8 %x) {
 ; CHECK-LABEL: @hoist_ashr_ahead_of_sext_1(
-; CHECK-NEXT:    [[SEXT:%.*]] = sext i8 %x to i32
-; CHECK-NEXT:    [[R:%.*]] = ashr i32 [[SEXT]], 3
+; CHECK-NEXT:    [[TMP1:%.*]] = ashr i8 %x, 3
+; CHECK-NEXT:    [[R:%.*]] = sext i8 [[TMP1]] to i32
 ; CHECK-NEXT:    ret i32 [[R]]
 ;
   %sext = sext i8 %x to i32
@@ -177,13 +176,12 @@ define i32 @hoist_ashr_ahead_of_sext_1(i8 %x) {
   ret i32 %r
 }
 
-; TODO: Prefer a narrow shift for better for bit-tracking.
 ; ashr (sext X), C --> sext (ashr X, C')
 
 define <2 x i32> @hoist_ashr_ahead_of_sext_1_splat(<2 x i8> %x) {
 ; CHECK-LABEL: @hoist_ashr_ahead_of_sext_1_splat(
-; CHECK-NEXT:    [[SEXT:%.*]] = sext <2 x i8> %x to <2 x i32>
-; CHECK-NEXT:    [[R:%.*]] = ashr <2 x i32> [[SEXT]], <i32 3, i32 3>
+; CHECK-NEXT:    [[TMP1:%.*]] = ashr <2 x i8> %x, <i8 3, i8 3>
+; CHECK-NEXT:    [[R:%.*]] = sext <2 x i8> [[TMP1]] to <2 x i32>
 ; CHECK-NEXT:    ret <2 x i32> [[R]]
 ;
   %sext = sext <2 x i8> %x to <2 x i32>
@@ -191,13 +189,12 @@ define <2 x i32> @hoist_ashr_ahead_of_sext_1_splat(<2 x i8> %x) {
   ret <2 x i32> %r
 }
 
-; TODO: Prefer a narrow shift for better for bit-tracking.
 ; ashr (sext X), C --> sext (ashr X, C') -- the shift amount must be clamped
 
 define i32 @hoist_ashr_ahead_of_sext_2(i8 %x) {
 ; CHECK-LABEL: @hoist_ashr_ahead_of_sext_2(
-; CHECK-NEXT:    [[SEXT:%.*]] = sext i8 %x to i32
-; CHECK-NEXT:    [[R:%.*]] = ashr i32 [[SEXT]], 8
+; CHECK-NEXT:    [[TMP1:%.*]] = ashr i8 %x, 7
+; CHECK-NEXT:    [[R:%.*]] = sext i8 [[TMP1]] to i32
 ; CHECK-NEXT:    ret i32 [[R]]
 ;
   %sext = sext i8 %x to i32
@@ -205,13 +202,12 @@ define i32 @hoist_ashr_ahead_of_sext_2(i8 %x) {
   ret i32 %r
 }
 
-; TODO: Prefer a narrow shift for better for bit-tracking.
 ; ashr (sext X), C --> sext (ashr X, C') -- the shift amount must be clamped
 
 define <2 x i32> @hoist_ashr_ahead_of_sext_2_splat(<2 x i8> %x) {
 ; CHECK-LABEL: @hoist_ashr_ahead_of_sext_2_splat(
-; CHECK-NEXT:    [[SEXT:%.*]] = sext <2 x i8> %x to <2 x i32>
-; CHECK-NEXT:    [[R:%.*]] = ashr <2 x i32> [[SEXT]], <i32 8, i32 8>
+; CHECK-NEXT:    [[TMP1:%.*]] = ashr <2 x i8> %x, <i8 7, i8 7>
+; CHECK-NEXT:    [[R:%.*]] = sext <2 x i8> [[TMP1]] to <2 x i32>
 ; CHECK-NEXT:    ret <2 x i32> [[R]]
 ;
   %sext = sext <2 x i8> %x to <2 x i32>
