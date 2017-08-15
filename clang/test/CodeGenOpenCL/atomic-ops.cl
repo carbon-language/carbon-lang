@@ -1,11 +1,32 @@
-// RUN: %clang_cc1 %s -cl-std=CL2.0 -emit-llvm -finclude-default-header -O0 -o - -triple=amdgcn-amd-amdhsa-opencl | FileCheck %s
+// RUN: %clang_cc1 %s -cl-std=CL2.0 -emit-llvm -O0 -o - -triple=amdgcn-amd-amdhsa-opencl | FileCheck %s
 
 // Also test serialization of atomic operations here, to avoid duplicating the test.
-// RUN: %clang_cc1 %s -cl-std=CL2.0 -finclude-default-header -emit-pch -O0 -o %t -triple=amdgcn-amd-amdhsa-opencl
-// RUN: %clang_cc1 %s -cl-std=CL2.0 -finclude-default-header -include-pch %t -O0 -triple=amdgcn-amd-amdhsa-opencl -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -cl-std=CL2.0 -emit-pch -O0 -o %t -triple=amdgcn-amd-amdhsa-opencl
+// RUN: %clang_cc1 %s -cl-std=CL2.0 -include-pch %t -O0 -triple=amdgcn-amd-amdhsa-opencl -emit-llvm -o - | FileCheck %s
 
 #ifndef ALREADY_INCLUDED
 #define ALREADY_INCLUDED
+
+typedef __INTPTR_TYPE__ intptr_t;
+typedef int int8 __attribute__((ext_vector_type(8)));
+
+typedef enum memory_order {
+  memory_order_relaxed = __ATOMIC_RELAXED,
+  memory_order_acquire = __ATOMIC_ACQUIRE,
+  memory_order_release = __ATOMIC_RELEASE,
+  memory_order_acq_rel = __ATOMIC_ACQ_REL,
+  memory_order_seq_cst = __ATOMIC_SEQ_CST
+} memory_order;
+
+typedef enum memory_scope {
+  memory_scope_work_item = __OPENCL_MEMORY_SCOPE_WORK_ITEM,
+  memory_scope_work_group = __OPENCL_MEMORY_SCOPE_WORK_GROUP,
+  memory_scope_device = __OPENCL_MEMORY_SCOPE_DEVICE,
+  memory_scope_all_svm_devices = __OPENCL_MEMORY_SCOPE_ALL_SVM_DEVICES,
+#if defined(cl_intel_subgroups) || defined(cl_khr_subgroups)
+  memory_scope_sub_group = __OPENCL_MEMORY_SCOPE_SUB_GROUP
+#endif
+} memory_scope;
 
 atomic_int j;
 

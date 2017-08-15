@@ -1,10 +1,31 @@
-// RUN: %clang_cc1 %s -cl-std=CL2.0 -finclude-default-header -verify -fsyntax-only -triple=spir64
-// RUN: %clang_cc1 %s -cl-std=CL2.0 -finclude-default-header -verify -fsyntax-only -triple=amdgcn-amdhsa-amd-opencl
+// RUN: %clang_cc1 %s -cl-std=CL2.0 -verify -fsyntax-only -triple=spir64
+// RUN: %clang_cc1 %s -cl-std=CL2.0 -verify -fsyntax-only -triple=amdgcn-amdhsa-amd-opencl
 
 // Basic parsing/Sema tests for __opencl_atomic_*
 
 #pragma OPENCL EXTENSION cl_khr_int64_base_atomics : enable
 #pragma OPENCL EXTENSION cl_khr_int64_extended_atomics : enable
+
+typedef __INTPTR_TYPE__ intptr_t;
+typedef int int8 __attribute__((ext_vector_type(8)));
+
+typedef enum memory_order {
+  memory_order_relaxed = __ATOMIC_RELAXED,
+  memory_order_acquire = __ATOMIC_ACQUIRE,
+  memory_order_release = __ATOMIC_RELEASE,
+  memory_order_acq_rel = __ATOMIC_ACQ_REL,
+  memory_order_seq_cst = __ATOMIC_SEQ_CST
+} memory_order;
+
+typedef enum memory_scope {
+  memory_scope_work_item = __OPENCL_MEMORY_SCOPE_WORK_ITEM,
+  memory_scope_work_group = __OPENCL_MEMORY_SCOPE_WORK_GROUP,
+  memory_scope_device = __OPENCL_MEMORY_SCOPE_DEVICE,
+  memory_scope_all_svm_devices = __OPENCL_MEMORY_SCOPE_ALL_SVM_DEVICES,
+#if defined(cl_intel_subgroups) || defined(cl_khr_subgroups)
+  memory_scope_sub_group = __OPENCL_MEMORY_SCOPE_SUB_GROUP
+#endif
+} memory_scope;
 
 struct S { char c[3]; };
 
@@ -170,5 +191,5 @@ void synchscope_checks(atomic_int *Ap, int scope) {
 
 void nullPointerWarning(atomic_int *Ap, int *p, int val) {
   // The 'expected' pointer shouldn't be NULL.
-  (void)__opencl_atomic_compare_exchange_strong(Ap, NULL, val, memory_order_relaxed, memory_order_relaxed, memory_scope_work_group); // expected-warning {{null passed to a callee that requires a non-null argument}}
+  (void)__opencl_atomic_compare_exchange_strong(Ap, (void *)0, val, memory_order_relaxed, memory_order_relaxed, memory_scope_work_group); // expected-warning {{null passed to a callee that requires a non-null argument}}
 }
