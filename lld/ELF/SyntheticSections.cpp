@@ -1826,16 +1826,16 @@ template <class ELFT> GdbIndexSection *elf::createGdbIndex() {
   return make<GdbIndexSection>(std::move(Chunks));
 }
 
-static size_t getCuSize(std::vector<GdbIndexChunk> &C) {
+static size_t getCuSize(ArrayRef<GdbIndexChunk> Arr) {
   size_t Ret = 0;
-  for (GdbIndexChunk &D : C)
+  for (const GdbIndexChunk &D : Arr)
     Ret += D.CompilationUnits.size();
   return Ret;
 }
 
-static size_t getAddressAreaSize(std::vector<GdbIndexChunk> &C) {
+static size_t getAddressAreaSize(ArrayRef<GdbIndexChunk> Arr) {
   size_t Ret = 0;
-  for (GdbIndexChunk &D : C)
+  for (const GdbIndexChunk &D : Arr)
     Ret += D.AddressArea.size();
   return Ret;
 }
