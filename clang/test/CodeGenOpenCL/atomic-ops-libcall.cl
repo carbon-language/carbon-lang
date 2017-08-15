@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 < %s -cl-std=CL2.0 -finclude-default-header -triple spir64 -emit-llvm | FileCheck -check-prefix=SPIR %s
 // RUN: %clang_cc1 < %s -cl-std=CL2.0 -finclude-default-header -triple armv5e-none-linux-gnueabi -emit-llvm | FileCheck -check-prefix=ARM %s
 
-void f(atomic_int *i, atomic_uint *ui, int cmp) {
+void f(atomic_int *i, atomic_uint *ui, int cmp, int order, int scope) {
   int x;
   // SPIR: {{%[^ ]*}} = call i32 @__opencl_atomic_load_4(i8 addrspace(4)* {{%[0-9]+}}, i32 5, i32 1)
   // ARM: {{%[^ ]*}} = call i32 @__opencl_atomic_load_4(i8* {{%[0-9]+}}, i32 5, i32 1)
@@ -34,4 +34,7 @@ void f(atomic_int *i, atomic_uint *ui, int cmp) {
   // SPIR: {{%[^ ]*}} = call zeroext i1 @__opencl_atomic_compare_exchange_4(i8 addrspace(4)* {{%[0-9]+}}, i8 addrspace(4)* {{%[0-9]+}}, i32 {{%[0-9]+}}, i32 5, i32 5, i32 4)
   x = __opencl_atomic_compare_exchange_weak(i, &cmp, 1, memory_order_seq_cst, memory_order_seq_cst, memory_scope_sub_group);
 #endif
+  // SPIR: {{%[^ ]*}} = call zeroext i1 @__opencl_atomic_compare_exchange_4(i8 addrspace(4)* {{%[0-9]+}}, i8 addrspace(4)* {{%[0-9]+}}, i32 {{%[0-9]+}}, i32 %{{.*}}, i32 %{{.*}}, i32 %{{.*}})
+  // ARM: {{%[^ ]*}} = call zeroext i1 @__opencl_atomic_compare_exchange_4(i8* {{%[0-9]+}}, i8* {{%[0-9]+}}, i32 {{%[0-9]+}}, i32 %{{.*}}, i32 %{{.*}}, i32 %{{.*}})
+  x = __opencl_atomic_compare_exchange_weak(i, &cmp, 1, order, order, scope);
 }

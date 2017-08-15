@@ -14,7 +14,6 @@ int i32;
 int8 i64;
 
 atomic_int gn;
-
 void f(atomic_int *i, const atomic_int *ci,
        atomic_intptr_t *p, atomic_float *d,
        int *I, const int *CI,
@@ -81,6 +80,13 @@ void f(atomic_int *i, const atomic_int *ci,
 }
 
 void memory_checks(atomic_int *Ap, int *p, int val) {
+  // non-integer memory order argument is casted to integer type.
+  (void)__opencl_atomic_load(Ap, 1.0f, memory_scope_work_group);
+  float forder;
+  (void)__opencl_atomic_load(Ap, forder, memory_scope_work_group);
+  struct S s;
+  (void)__opencl_atomic_load(Ap, s, memory_scope_work_group); // expected-error {{passing 'struct S' to parameter of incompatible type 'int'}}
+
   (void)__opencl_atomic_load(Ap, memory_order_relaxed, memory_scope_work_group);
   (void)__opencl_atomic_load(Ap, memory_order_acquire, memory_scope_work_group);
   (void)__opencl_atomic_load(Ap, memory_order_consume, memory_scope_work_group); // expected-error {{use of undeclared identifier 'memory_order_consume'}}
@@ -151,8 +157,15 @@ void synchscope_checks(atomic_int *Ap, int scope) {
   (void)__opencl_atomic_load(Ap, memory_order_relaxed, memory_scope_device);
   (void)__opencl_atomic_load(Ap, memory_order_relaxed, memory_scope_all_svm_devices);
   (void)__opencl_atomic_load(Ap, memory_order_relaxed, memory_scope_sub_group);
-  (void)__opencl_atomic_load(Ap, memory_order_relaxed, scope); // expected-error{{non-constant synchronization scope argument to atomic operation is not supported}}
+  (void)__opencl_atomic_load(Ap, memory_order_relaxed, scope);
   (void)__opencl_atomic_load(Ap, memory_order_relaxed, 10);    //expected-error{{synchronization scope argument to atomic operation is invalid}}
+
+  // non-integer memory scope is casted to integer type.
+  float fscope;
+  (void)__opencl_atomic_load(Ap, memory_order_relaxed, 1.0f);
+  (void)__opencl_atomic_load(Ap, memory_order_relaxed, fscope);
+  struct S s;
+  (void)__opencl_atomic_load(Ap, memory_order_relaxed, s); //expected-error{{passing 'struct S' to parameter of incompatible type 'int'}}
 }
 
 void nullPointerWarning(atomic_int *Ap, int *p, int val) {
