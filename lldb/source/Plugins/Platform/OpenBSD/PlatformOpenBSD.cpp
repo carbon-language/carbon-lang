@@ -133,7 +133,7 @@ PlatformOpenBSD::PlatformOpenBSD(bool is_host)
 PlatformOpenBSD::~PlatformOpenBSD() = default;
 
 bool PlatformOpenBSD::GetSupportedArchitectureAtIndex(uint32_t idx,
-						      ArchSpec &arch) {
+                                                      ArchSpec &arch) {
   if (IsHost()) {
     ArchSpec hostArch = HostInfo::GetArchitecture(HostInfo::eArchKindDefault);
     if (hostArch.GetTriple().isOSOpenBSD()) {
