@@ -3626,6 +3626,12 @@ void IndexBitcodeWriter::writeCombinedGlobalValueSummary() {
         CallValueId = getValueId(GUID);
         if (!CallValueId)
           continue;
+        // The mapping from OriginalId to GUID may return a GUID
+        // that corresponds to a static varible. Filter it out here.
+        auto *GVSum = Index.getGlobalValueSummary(GUID, false);
+        if (GVSum &&
+            GVSum->getSummaryKind() == GlobalValueSummary::GlobalVarKind)
+          continue;
       }
       NameVals.push_back(*CallValueId);
       if (HasProfileData)
