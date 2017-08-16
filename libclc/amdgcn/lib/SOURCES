@@ -1,4 +1,6 @@
 math/ldexp.cl
+mem_fence/fence.cl
+mem_fence/waitcnt.ll
 synchronization/barrier_impl.ll
 workitem/get_global_offset.cl
 workitem/get_group_id.cl
