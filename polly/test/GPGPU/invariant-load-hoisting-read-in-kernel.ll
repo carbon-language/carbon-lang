@@ -2,6 +2,8 @@
 ; RUN: -polly-codegen-ppcg -polly-scops \
 ; RUN: -polly-invariant-load-hoisting < %s | FileCheck %s
 
+; REQUIRES: pollyacc
+
 ; Verify that invariant loads used in a kernel statement are correctly forwarded
 ; as subtree value to the GPU kernel.
 
