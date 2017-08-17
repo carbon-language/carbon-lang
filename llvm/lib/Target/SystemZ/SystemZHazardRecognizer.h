@@ -45,7 +45,9 @@ namespace llvm {
 /// SystemZHazardRecognizer maintains the state for one MBB during scheduling.
 class SystemZHazardRecognizer : public ScheduleHazardRecognizer {
 
+#ifndef NDEBUG
   const SystemZInstrInfo *TII;
+#endif
   const TargetSchedModel *SchedModel;
 
   /// Keep track of the number of decoder slots used in the current
