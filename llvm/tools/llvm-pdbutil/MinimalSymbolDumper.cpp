@@ -29,6 +29,7 @@ static StringRef getSymbolKindName(SymbolKind K) {
 #define SYMBOL_RECORD(EnumName, value, name)                                   \
   case EnumName:                                                               \
     return #EnumName;
+#define CV_SYMBOL(EnumName, value) SYMBOL_RECORD(EnumName, value, EnumName)
 #include "llvm/DebugInfo/CodeView/CodeViewSymbols.def"
   default:
     llvm_unreachable("Unknown symbol kind!");
@@ -385,6 +386,10 @@ Error MinimalSymbolDumper::visitSymbolBegin(codeview::CVSymbol &Record,
 }
 
 Error MinimalSymbolDumper::visitSymbolEnd(CVSymbol &Record) {
+  if (RecordBytes) {
+    AutoIndent Indent(P, 7);
+    P.formatBinary("bytes", Record.content(), 0);
+  }
   P.Unindent();
   return Error::success();
 }
