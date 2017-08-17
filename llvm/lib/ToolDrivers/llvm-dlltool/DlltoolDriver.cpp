@@ -64,7 +64,7 @@ Optional<MemoryBufferRef> openFile(StringRef Path) {
   ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> MB = MemoryBuffer::getFile(Path);
 
   if (std::error_code EC = MB.getError()) {
-    llvm::errs() << "fail openFile: " << EC.message() << "\n";
+    llvm::errs() << "cannot open file " << Path << ": " << EC.message() << "\n";
     return None;
   }
 
