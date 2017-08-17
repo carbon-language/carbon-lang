@@ -5520,13 +5520,13 @@ multiclass ssse3_palignr<string asm, ValueType VT, RegisterClass RC,
 }
 
 let Predicates = [HasAVX, NoVLX_Or_NoBWI] in
-  defm VPALIGNR : ssse3_palignr<"vpalignr", v16i8, VR128, memopv2i64,
+  defm VPALIGNR : ssse3_palignr<"vpalignr", v16i8, VR128, loadv2i64,
                                 i128mem, 0>, VEX_4V, VEX_WIG;
 let Predicates = [HasAVX2, NoVLX_Or_NoBWI] in
   defm VPALIGNRY : ssse3_palignr<"vpalignr", v32i8, VR256, loadv4i64,
                                  i256mem, 0>, VEX_4V, VEX_L, VEX_WIG;
 let Constraints = "$src1 = $dst", Predicates = [UseSSSE3] in
-  defm PALIGNR : ssse3_palignr<"palignr", v16i8, VR128, loadv2i64,
+  defm PALIGNR : ssse3_palignr<"palignr", v16i8, VR128, memopv2i64,
                                i128mem>;
 
 //===---------------------------------------------------------------------===//
