@@ -83,7 +83,6 @@ uint32_t LazyRandomTypeCollection::getOffsetOfType(TypeIndex Index) {
 }
 
 CVType LazyRandomTypeCollection::getType(TypeIndex Index) {
-  uint32_t I = Index.getIndex();
   auto EC = ensureTypeExists(Index);
   error(std::move(EC));
   assert(contains(Index));
