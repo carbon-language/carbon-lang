@@ -25,7 +25,7 @@ using namespace llvm::codeview;
 using namespace llvm::pdb;
 
 static std::string getSymbolKindName(SymbolKind K) {
-  switch (K) {
+  switch (uint32_t(K)) {
 #define SYMBOL_RECORD(EnumName, value, name)                                   \
   case EnumName:                                                               \
     return #EnumName;
