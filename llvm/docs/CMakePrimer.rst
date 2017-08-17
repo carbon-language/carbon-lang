@@ -333,10 +333,13 @@ When defining a CMake command handling arguments is very useful. The examples
 in this section will all use the CMake ``function`` block, but this all applies
 to the ``macro`` block as well.
 
-CMake commands can have named arguments, but all commands are implicitly
-variable argument. If the command has named arguments they are required and must
-be specified at every call site. Below is a trivial example of providing a
-wrapper function for CMake's built in function ``add_dependencies``.
+CMake commands can have named arguments that are requried at every call site. In
+addition, all commands will implicitly accept a variable number of extra
+arguments (In C parlance, all commands are varargs functions). When a command is
+invoked with extra arguments (beyond the named ones) CMake will store the extra
+arguments in a list named ``ARGV``, and the count of the extra arguments in
+``ARGN``. Below is a trivial example of providing a wrapper function for CMake's
+built in function ``add_dependencies``.
 
 .. code-block:: cmake
 
@@ -346,8 +349,7 @@ wrapper function for CMake's built in function ``add_dependencies``.
 
 This example defines a new macro named ``add_deps`` which takes a required first
 argument, and just calls another function passing through the first argument and
-all trailing arguments. When variable arguments are present CMake defines them
-in a list named ``ARGV``, and the count of the arguments is defined in ``ARGN``.
+all trailing arguments.
 
 CMake provides a module ``CMakeParseArguments`` which provides an implementation
 of advanced argument parsing. We use this all over LLVM, and it is recommended
