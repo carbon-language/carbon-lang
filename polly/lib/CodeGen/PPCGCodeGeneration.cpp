@@ -2762,9 +2762,11 @@ public:
   /// @returns An isl_set describing the extent of the array.
   isl::set getExtent(ScopArrayInfo *Array) {
     unsigned NumDims = Array->getNumberOfDimensions();
-    isl::union_map Accesses = S->getAccesses();
-    Accesses = Accesses.intersect_domain(S->getDomains());
-    Accesses = Accesses.detect_equalities();
+
+    if (Array->getNumberOfDimensions() == 0)
+      return isl::set::universe(Array->getSpace());
+
+    isl::union_map Accesses = S->getAccesses(Array);
     isl::union_set AccessUSet = Accesses.range();
     AccessUSet = AccessUSet.coalesce();
     AccessUSet = AccessUSet.detect_equalities();
@@ -2772,9 +2774,6 @@ public:
 
     if (AccessUSet.is_empty())
       return isl::set::empty(Array->getSpace());
-
-    if (Array->getNumberOfDimensions() == 0)
-      return isl::set::universe(Array->getSpace());
 
     isl::set AccessSet = AccessUSet.extract_set(Array->getSpace());
 
