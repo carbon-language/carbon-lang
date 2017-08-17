@@ -167,10 +167,9 @@ Other Types
 
 Variables that are cached or specified on the command line can have types
 associated with them. The variable's type is used by CMake's UI tool to display
-the right input field. The variable's type generally doesn't impact evaluation.
-One of the few examples is PATH variables, which CMake does have some special
-handling for. You can read more about the special handling in `CMake's set
-documentation
+the right input field. A variable's type generally doesn't impact evaluation,
+however CMake does have special handling for some variables such as PATH.
+You can read more about the special handling in `CMake's set documentation
 <https://cmake.org/cmake/help/v3.5/command/set.html#set-cache-entry>`_.
 
 Scope
@@ -203,7 +202,7 @@ Control Flow
 ============
 
 CMake features the same basic control flow constructs you would expect in any
-scripting language, but there are a few quarks because, as with everything in
+scripting language, but there are a few quirks because, as with everything in
 CMake, control flow constructs are commands.
 
 If, ElseIf, Else
