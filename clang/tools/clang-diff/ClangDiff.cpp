@@ -129,7 +129,7 @@ static void printNodeAttributes(raw_ostream &OS, diff::SyntaxTree &Tree,
   auto Offsets = Tree.getSourceRangeOffsets(N);
   OS << R"(,"begin":)" << Offsets.first;
   OS << R"(,"end":)" << Offsets.second;
-  std::string Value = Tree.getNodeValue(N);
+  std::string Value = Tree.getNodeValue(N.ASTNode);
   if (!Value.empty()) {
     OS << R"(,"value":")";
     printJsonString(OS, Value);
@@ -151,52 +151,6 @@ static void printNodeAsJson(raw_ostream &OS, diff::SyntaxTree &Tree,
     }
   }
   OS << "]}";
-}
-
-static void printNode(raw_ostream &OS, diff::SyntaxTree &Tree,
-                      diff::NodeId Id) {
-  if (Id.isInvalid()) {
-    OS << "None";
-    return;
-  }
-  OS << Tree.getNode(Id).getTypeLabel();
-  std::string Value = Tree.getNodeValue(Id);
-  if (!Value.empty())
-    OS << ": " << Value;
-  OS << "(" << Id << ")";
-}
-
-static void printDstChange(raw_ostream &OS, diff::ASTDiff &Diff,
-                           diff::SyntaxTree &SrcTree, diff::SyntaxTree &DstTree,
-                           diff::NodeId Dst) {
-  const diff::Node &DstNode = DstTree.getNode(Dst);
-  diff::NodeId Src = Diff.getMapped(DstTree, Dst);
-  switch (DstNode.ChangeKind) {
-  case diff::None:
-    break;
-  case diff::Delete:
-    llvm_unreachable("The destination tree can't have deletions.");
-  case diff::Update:
-    OS << "Update ";
-    printNode(OS, SrcTree, Src);
-    OS << " to " << DstTree.getNodeValue(Dst) << "\n";
-    break;
-  case diff::Insert:
-  case diff::Move:
-  case diff::UpdateMove:
-    if (DstNode.ChangeKind == diff::Insert)
-      OS << "Insert";
-    else if (DstNode.ChangeKind == diff::Move)
-      OS << "Move";
-    else if (DstNode.ChangeKind == diff::UpdateMove)
-      OS << "Update and Move";
-    OS << " ";
-    printNode(OS, DstTree, Dst);
-    OS << " into ";
-    printNode(OS, DstTree, DstNode.Parent);
-    OS << " at " << DstTree.findPositionInParent(Dst) << "\n";
-    break;
-  }
 }
 
 int main(int argc, const char **argv) {
@@ -245,26 +199,11 @@ int main(int argc, const char **argv) {
     Options.MaxSize = MaxSize;
   diff::SyntaxTree SrcTree(Src->getASTContext());
   diff::SyntaxTree DstTree(Dst->getASTContext());
-  diff::ASTDiff Diff(SrcTree, DstTree, Options);
-
-  for (diff::NodeId Dst : DstTree) {
-    diff::NodeId Src = Diff.getMapped(DstTree, Dst);
-    if (Src.isValid()) {
-      llvm::outs() << "Match ";
-      printNode(llvm::outs(), SrcTree, Src);
-      llvm::outs() << " to ";
-      printNode(llvm::outs(), DstTree, Dst);
-      llvm::outs() << "\n";
-    }
-    printDstChange(llvm::outs(), Diff, SrcTree, DstTree, Dst);
-  }
-  for (diff::NodeId Src : SrcTree) {
-    if (Diff.getMapped(SrcTree, Src).isInvalid()) {
-      llvm::outs() << "Delete ";
-      printNode(llvm::outs(), SrcTree, Src);
-      llvm::outs() << "\n";
-    }
-  }
+  diff::ASTDiff DiffTool(SrcTree, DstTree, Options);
+  for (const auto &Match : DiffTool.getMatches())
+    DiffTool.printMatch(llvm::outs(), Match);
+  for (const auto &Change : DiffTool.getChanges())
+    DiffTool.printChange(llvm::outs(), Change);
 
   return 0;
 }

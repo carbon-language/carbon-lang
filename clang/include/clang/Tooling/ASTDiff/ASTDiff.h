@@ -25,22 +25,37 @@
 namespace clang {
 namespace diff {
 
+/// This represents a match between two nodes in the source and destination
+/// trees, meaning that they are likely to be related.
+struct Match {
+  NodeId Src, Dst;
+};
+
 enum ChangeKind {
-  None,
-  Delete,    // (Src): delete node Src.
-  Update,    // (Src, Dst): update the value of node Src to match Dst.
-  Insert,    // (Src, Dst, Pos): insert Src as child of Dst at offset Pos.
-  Move,      // (Src, Dst, Pos): move Src to be a child of Dst at offset Pos.
-  UpdateMove // Same as Move plus Update.
+  Delete, // (Src): delete node Src.
+  Update, // (Src, Dst): update the value of node Src to match Dst.
+  Insert, // (Src, Dst, Pos): insert Src as child of Dst at offset Pos.
+  Move    // (Src, Dst, Pos): move Src to be a child of Dst at offset Pos.
+};
+
+struct Change {
+  ChangeKind Kind;
+  NodeId Src, Dst;
+  size_t Position;
+
+  Change(ChangeKind Kind, NodeId Src, NodeId Dst, size_t Position)
+      : Kind(Kind), Src(Src), Dst(Dst), Position(Position) {}
+  Change(ChangeKind Kind, NodeId Src) : Kind(Kind), Src(Src) {}
+  Change(ChangeKind Kind, NodeId Src, NodeId Dst)
+      : Kind(Kind), Src(Src), Dst(Dst) {}
 };
 
 /// Represents a Clang AST node, alongside some additional information.
 struct Node {
   NodeId Parent, LeftMostDescendant, RightMostDescendant;
-  int Depth, Height, Shift = 0;
+  int Depth, Height;
   ast_type_traits::DynTypedNode ASTNode;
   SmallVector<NodeId, 4> Children;
-  ChangeKind ChangeKind = None;
 
   ast_type_traits::ASTNodeKind getType() const;
   StringRef getTypeLabel() const;
@@ -52,8 +67,15 @@ public:
   ASTDiff(SyntaxTree &Src, SyntaxTree &Dst, const ComparisonOptions &Options);
   ~ASTDiff();
 
-  // Returns the ID of the node that is mapped to the given node in SourceTree.
-  NodeId getMapped(const SyntaxTree &SourceTree, NodeId Id) const;
+  // Returns a list of matches.
+  std::vector<Match> getMatches();
+  /// Returns an edit script.
+  std::vector<Change> getChanges();
+
+  // Prints an edit action.
+  void printChange(raw_ostream &OS, const Change &Chg) const;
+  // Prints a match between two nodes.
+  void printMatch(raw_ostream &OS, const Match &M) const;
 
   class Impl;
 
@@ -77,14 +99,8 @@ public:
   const ASTContext &getASTContext() const;
   StringRef getFilename() const;
 
-  int getSize() const;
-  NodeId getRootId() const;
-  using PreorderIterator = NodeId;
-  PreorderIterator begin() const;
-  PreorderIterator end() const;
-
   const Node &getNode(NodeId Id) const;
-  int findPositionInParent(NodeId Id) const;
+  NodeId getRootId() const;
 
   // Returns the starting and ending offset of the node in its source file.
   std::pair<unsigned, unsigned> getSourceRangeOffsets(const Node &N) const;
@@ -92,8 +108,7 @@ public:
   /// Serialize the node attributes to a string representation. This should
   /// uniquely distinguish nodes of the same kind. Note that this function just
   /// returns a representation of the node value, not considering descendants.
-  std::string getNodeValue(NodeId Id) const;
-  std::string getNodeValue(const Node &Node) const;
+  std::string getNodeValue(const DynTypedNode &DTN) const;
 
   class Impl;
   std::unique_ptr<Impl> TreeImpl;
@@ -116,8 +131,8 @@ struct ComparisonOptions {
   bool EnableMatchingWithUnmatchableParents = false;
 
   /// Returns false if the nodes should never be matched.
-  bool isMatchingAllowed(const Node &N1, const Node &N2) const {
-    return N1.getType().isSame(N2.getType());
+  bool isMatchingAllowed(const DynTypedNode &N1, const DynTypedNode &N2) const {
+    return N1.getNodeKind().isSame(N2.getNodeKind());
   }
 };
 
