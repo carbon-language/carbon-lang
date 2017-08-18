@@ -443,11 +443,12 @@ recovery.
 
 .. note::
 
-   Ideally, the error handling approach described in this section would be
-   used throughout LLVM. However, this is not yet the case. For
-   non-programmatic errors where the ``Error`` scheme cannot easily be
-   applied, ``report_fatal_error`` should be used to call any installed error
-   handler and then terminate the program.
+   While it would be ideal to use this error handling scheme throughout
+   LLVM, there are places where this hasn't been practical to apply. In
+   situations where you absolutely must emit a non-programmatic error and
+   the ``Error`` model isn't workable you can call ``report_fatal_error``,
+   which will call installed error handlers, print a message, and exit the
+   program.
 
 Recoverable errors are modeled using LLVM's ``Error`` scheme. This scheme
 represents errors using function return values, similar to classic C integer
