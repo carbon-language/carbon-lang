@@ -3140,7 +3140,8 @@ public:
       DEBUG(dbgs() << getUniqueScopName(S)
                    << " does not have permutable bands. Bailing out\n";);
     } else {
-      Schedule = map_to_device(PPCGGen, Schedule);
+      const bool CreateTransferToFromDevice = !PollyManagedMemory;
+      Schedule = map_to_device(PPCGGen, Schedule, CreateTransferToFromDevice);
       PPCGGen->tree = generate_code(PPCGGen, isl_schedule_copy(Schedule));
     }
 
