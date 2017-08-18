@@ -176,6 +176,9 @@ public:
   void printTree(NodeId Root) const;
   void printTree(raw_ostream &OS, NodeId Root) const;
 
+  void printAsJsonImpl(raw_ostream &OS) const;
+  void printNodeAsJson(raw_ostream &OS, NodeId Id) const;
+
 private:
   /// Nodes in preorder.
   std::vector<Node> Nodes;
@@ -435,6 +438,28 @@ void SyntaxTree::Impl::printNode(raw_ostream &OS, NodeId Id) const {
   OS << "(" << PostorderIds[Id] << ")";
 }
 
+void SyntaxTree::Impl::printNodeAsJson(raw_ostream &OS, NodeId Id) const {
+  auto N = getNode(Id);
+  OS << R"({"type":")" << N.getTypeLabel() << R"(")";
+  if (getNodeValue(Id) != "")
+    OS << R"(,"value":")" << getNodeValue(Id) << R"(")";
+  OS << R"(,"children":[)";
+  if (N.Children.size() > 0) {
+    printNodeAsJson(OS, N.Children[0]);
+    for (size_t I = 1, E = N.Children.size(); I < E; ++I) {
+      OS << ",";
+      printNodeAsJson(OS, N.Children[I]);
+    }
+  }
+  OS << "]}";
+}
+
+void SyntaxTree::Impl::printAsJsonImpl(raw_ostream &OS) const {
+  OS << R"({"root":)";
+  printNodeAsJson(OS, getRootId());
+  OS << "}\n";
+}
+
 /// Identifies a node in a subtree by its postorder offset, starting at 1.
 struct SNodeId {
   int Id = 0;
@@ -648,12 +673,6 @@ private:
     }
   }
 };
-
-ast_type_traits::ASTNodeKind Node::getType() const {
-  return ASTNode.getNodeKind();
-}
-
-StringRef Node::getTypeLabel() const { return getType().asStringRef(); }
 
 namespace {
 // Compares nodes by their depth.
@@ -980,28 +999,7 @@ void ASTDiff::printMatch(raw_ostream &OS, const Match &M) const {
 
 SyntaxTree::~SyntaxTree() = default;
 
-const ASTContext &SyntaxTree::getASTContext() const { return TreeImpl->AST; }
-
-const Node &SyntaxTree::getNode(NodeId Id) const {
-  return TreeImpl->getNode(Id);
-}
-
-NodeId SyntaxTree::getRootId() const { return TreeImpl->getRootId(); }
-
-std::pair<unsigned, unsigned> SyntaxTree::getSourceRangeOffsets(const Node &N) const {
-  const SourceManager &SrcMgr = TreeImpl->AST.getSourceManager();
-  SourceRange Range = N.ASTNode.getSourceRange();
-  SourceLocation BeginLoc = Range.getBegin();
-  SourceLocation EndLoc = Lexer::getLocForEndOfToken(
-      Range.getEnd(), /*Offset=*/0, SrcMgr, TreeImpl->AST.getLangOpts());
-  if (auto *ThisExpr = N.ASTNode.get<CXXThisExpr>()) {
-    if (ThisExpr->isImplicit())
-      EndLoc = BeginLoc;
-  }
-  unsigned Begin = SrcMgr.getFileOffset(SrcMgr.getExpansionLoc(BeginLoc));
-  unsigned End = SrcMgr.getFileOffset(SrcMgr.getExpansionLoc(EndLoc));
-  return {Begin, End};
-}
+void SyntaxTree::printAsJson(raw_ostream &OS) { TreeImpl->printAsJsonImpl(OS); }
 
 std::string SyntaxTree::getNodeValue(const DynTypedNode &DTN) const {
   return TreeImpl->getNodeValue(DTN);
