@@ -182,9 +182,6 @@ static DecodeStatus DecodeXSeqPairsClassRegisterClass(MCInst &Inst,
 template<int Bits>
 static DecodeStatus DecodeSImm(llvm::MCInst &Inst, uint64_t Imm,
                                uint64_t Address, const void *Decoder);
-static DecodeStatus DecodeAuthLoadWriteback(llvm::MCInst &Inst, uint32_t insn,
-                                            uint64_t Address,
-                                            const void *Decoder);
 
 static bool Check(DecodeStatus &Out, DecodeStatus In) {
   switch (In) {
