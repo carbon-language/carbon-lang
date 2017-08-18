@@ -1232,6 +1232,11 @@ builds), ``llvm_unreachable`` becomes a hint to compilers to skip generating
 code for this branch. If the compiler does not support this, it will fall back
 to the "abort" implementation.
 
+Neither assertions or ``llvm_unreachable`` will abort the program on a release
+build. If the error condition can be triggered by user input, then the
+recoverable error mechanism described in :doc:`ProgrammersManual` or
+``report_fatal_error`` should be used instead.
+
 Another issue is that values used only by assertions will produce an "unused
 value" warning when assertions are disabled.  For example, this code will warn:
 

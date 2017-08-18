@@ -441,6 +441,14 @@ the program where they can be handled appropriately. Handling the error may be
 as simple as reporting the issue to the user, or it may involve attempts at
 recovery.
 
+.. note::
+
+   Ideally, the error handling approach described in this section would be
+   used throughout LLVM. However, this is not yet the case. For
+   non-programmatic errors where the ``Error`` scheme cannot easily be
+   applied, ``report_fatal_error`` should be used to call any installed error
+   handler and then terminate the program.
+
 Recoverable errors are modeled using LLVM's ``Error`` scheme. This scheme
 represents errors using function return values, similar to classic C integer
 error codes, or C++'s ``std::error_code``. However, the ``Error`` class is
