@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "ResourceScriptToken.h"
-#include "ResourceScriptParser.h"
 
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
@@ -132,13 +131,6 @@ int main(int argc_, const char *argv_[]) {
 
       outs() << "\n";
     }
-  }
-
-  rc::RCParser Parser{std::move(Tokens)};
-  while (!Parser.isEof()) {
-    auto Resource = ExitOnErr(Parser.parseSingleResource());
-    if (BeVerbose)
-      Resource->log(outs());
   }
 
   return 0;
