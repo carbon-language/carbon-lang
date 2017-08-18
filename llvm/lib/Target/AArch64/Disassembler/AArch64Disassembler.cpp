@@ -1609,24 +1609,3 @@ static DecodeStatus DecodeSImm(llvm::MCInst &Inst, uint64_t Imm,
   return Success;
 }
 
-static DecodeStatus DecodeAuthLoadWriteback(llvm::MCInst &Inst, uint32_t insn,
-                                            uint64_t Address,
-                                            const void *Decoder) {
-  unsigned Rt = fieldFromInstruction(insn, 0, 5);
-  unsigned Rn = fieldFromInstruction(insn, 5, 5);
-  unsigned Imm9 = fieldFromInstruction(insn, 12, 9);
-  unsigned S = fieldFromInstruction(insn, 22, 1);
-
-  unsigned Imm = Imm9 | (S << 9);
-
-  // Address writeback
-  DecodeGPR64spRegisterClass(Inst, Rn, Address, Decoder);
-  // Destination
-  DecodeGPR64RegisterClass(Inst, Rt, Address, Decoder);
-  // Address
-  DecodeGPR64spRegisterClass(Inst, Rn, Address, Decoder);
-  // Offset
-  DecodeSImm<10>(Inst, Imm, Address, Decoder);
-
-  return Success;
-}
