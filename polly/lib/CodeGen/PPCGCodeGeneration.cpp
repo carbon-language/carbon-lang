@@ -3434,6 +3434,9 @@ public:
     DL = &S->getRegion().getEntry()->getModule()->getDataLayout();
     RI = &getAnalysis<RegionInfoPass>().getRegionInfo();
 
+    DEBUG(dbgs() << "PPCGCodeGen running on : " << getUniqueScopName(S)
+                 << " | loop depth: " << S->getMaxLoopDepth() << "\n");
+
     // We currently do not support functions other than intrinsics inside
     // kernels, as code generation will need to offload function calls to the
     // kernel. This may lead to a kernel trying to call a function on the host.
