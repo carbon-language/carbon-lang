@@ -57,8 +57,8 @@ struct Node {
   ast_type_traits::DynTypedNode ASTNode;
   SmallVector<NodeId, 4> Children;
 
-  ast_type_traits::ASTNodeKind getType() const { return ASTNode.getNodeKind(); }
-  const StringRef getTypeLabel() const { return getType().asStringRef(); }
+  ast_type_traits::ASTNodeKind getType() const;
+  StringRef getTypeLabel() const;
   bool isLeaf() const { return Children.empty(); }
 };
 
@@ -96,14 +96,19 @@ public:
   SyntaxTree(SyntaxTree &&Other) = default;
   ~SyntaxTree();
 
+  const ASTContext &getASTContext() const;
+  StringRef getFilename() const;
+
   const Node &getNode(NodeId Id) const;
+  NodeId getRootId() const;
+
+  // Returns the starting and ending offset of the node in its source file.
+  std::pair<unsigned, unsigned> getSourceRangeOffsets(const Node &N) const;
 
   /// Serialize the node attributes to a string representation. This should
   /// uniquely distinguish nodes of the same kind. Note that this function just
   /// returns a representation of the node value, not considering descendants.
   std::string getNodeValue(const DynTypedNode &DTN) const;
-
-  void printAsJson(raw_ostream &OS);
 
   class Impl;
   std::unique_ptr<Impl> TreeImpl;
