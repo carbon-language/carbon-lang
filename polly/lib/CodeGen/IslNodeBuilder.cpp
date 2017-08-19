@@ -1560,8 +1560,12 @@ Value *IslNodeBuilder::createRTC(isl_ast_expr *Condition) {
     RuntimeDebugBuilder::createCPUPrinter(
         Builder,
         "F: " + F->getName().str() + " R: " + S.getRegion().getNameStr() +
-            " __RTC: ",
-        RTC, " Overflow: ", OverflowHappened, "\n");
+            "RTC: ",
+        RTC, " Overflow: ", OverflowHappened,
+        "\n"
+        "  (0 failed, -1 succeeded)\n"
+        "  (if one or both are 0 falling back to original code, if both are -1 "
+        "executing Polly code)\n");
   }
 
   RTC = Builder.CreateAnd(RTC, OverflowHappened, "polly.rtc.result");
