@@ -97,18 +97,19 @@ private:
   /// Collect all CMOV-group-candidates in \p CurrLoop and update \p
   /// CmovInstGroups accordingly.
   ///
-  /// \param CurrLoop Loop being processed.
+  /// \param Blocks List of blocks to process.
   /// \param CmovInstGroups List of consecutive CMOV instructions in CurrLoop.
   /// \returns true iff it found any CMOV-group-candidate.
-  bool collectCmovCandidates(MachineLoop *CurrLoop, CmovGroups &CmovInstGroups);
+  bool collectCmovCandidates(ArrayRef<MachineBasicBlock *> Blocks,
+                             CmovGroups &CmovInstGroups);
 
   /// Check if it is profitable to transform each CMOV-group-candidates into
   /// branch. Remove all groups that are not profitable from \p CmovInstGroups.
   ///
-  /// \param CurrLoop Loop being processed.
+  /// \param Blocks List of blocks to process.
   /// \param CmovInstGroups List of consecutive CMOV instructions in CurrLoop.
   /// \returns true iff any CMOV-group-candidate remain.
-  bool checkForProfitableCmovCandidates(MachineLoop *CurrLoop,
+  bool checkForProfitableCmovCandidates(ArrayRef<MachineBasicBlock *> Blocks,
                                         CmovGroups &CmovInstGroups);
 
   /// Convert the given list of consecutive CMOV instructions into a branch.
@@ -162,21 +163,28 @@ bool X86CmovConverterPass::runOnMachineFunction(MachineFunction &MF) {
   //
   // Note: For more details, see each function description.
   //===--------------------------------------------------------------------===//
-  for (MachineBasicBlock &MBB : MF) {
-    MachineLoop *CurrLoop = MLI.getLoopFor(&MBB);
 
+  // Build up the loops in pre-order.
+  SmallVector<MachineLoop *, 4> Loops(MLI.begin(), MLI.end());
+  // Note that we need to check size on each iteration as we accumulate child
+  // loops.
+  for (int i = 0; i < (int)Loops.size(); ++i)
+    for (MachineLoop *Child : Loops[i]->getSubLoops())
+      Loops.push_back(Child);
+
+  for (MachineLoop *CurrLoop : Loops) {
     // Optimize only inner most loops.
-    if (!CurrLoop || CurrLoop->getHeader() != &MBB ||
-        !CurrLoop->getSubLoops().empty())
+    if (!CurrLoop->getSubLoops().empty())
       continue;
 
     // List of consecutive CMOV instructions to be processed.
     CmovGroups CmovInstGroups;
 
-    if (!collectCmovCandidates(CurrLoop, CmovInstGroups))
+    if (!collectCmovCandidates(CurrLoop->getBlocks(), CmovInstGroups))
       continue;
 
-    if (!checkForProfitableCmovCandidates(CurrLoop, CmovInstGroups))
+    if (!checkForProfitableCmovCandidates(CurrLoop->getBlocks(),
+                                          CmovInstGroups))
       continue;
 
     Changed = true;
@@ -186,8 +194,8 @@ bool X86CmovConverterPass::runOnMachineFunction(MachineFunction &MF) {
   return Changed;
 }
 
-bool X86CmovConverterPass::collectCmovCandidates(MachineLoop *CurrLoop,
-                                                 CmovGroups &CmovInstGroups) {
+bool X86CmovConverterPass::collectCmovCandidates(
+    ArrayRef<MachineBasicBlock *> Blocks, CmovGroups &CmovInstGroups) {
   //===--------------------------------------------------------------------===//
   // Collect all CMOV-group-candidates and add them into CmovInstGroups.
   //
@@ -209,7 +217,7 @@ bool X86CmovConverterPass::collectCmovCandidates(MachineLoop *CurrLoop,
 
   // Current processed CMOV-Group.
   CmovGroup Group;
-  for (auto *MBB : CurrLoop->getBlocks()) {
+  for (auto *MBB : Blocks) {
     Group.clear();
     // Condition code of first CMOV instruction current processed range and its
     // opposite condition code.
@@ -283,7 +291,7 @@ static unsigned getDepthOfOptCmov(unsigned TrueOpDepth, unsigned FalseOpDepth) {
 }
 
 bool X86CmovConverterPass::checkForProfitableCmovCandidates(
-    MachineLoop *CurrLoop, CmovGroups &CmovInstGroups) {
+    ArrayRef<MachineBasicBlock *> Blocks, CmovGroups &CmovInstGroups) {
   struct DepthInfo {
     /// Depth of original loop.
     unsigned Depth;
@@ -333,7 +341,7 @@ bool X86CmovConverterPass::checkForProfitableCmovCandidates(
   //===--------------------------------------------------------------------===//
   for (unsigned I = 0; I < LoopIterations; ++I) {
     DepthInfo &MaxDepth = LoopDepth[I];
-    for (auto *MBB : CurrLoop->getBlocks()) {
+    for (auto *MBB : Blocks) {
       // Clear physical registers Def map.
       RegDefMaps[PhyRegType].clear();
       for (MachineInstr &MI : *MBB) {
