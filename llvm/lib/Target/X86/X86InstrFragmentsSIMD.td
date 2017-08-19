@@ -682,22 +682,11 @@ def extloadv2f32 : PatFrag<(ops node:$ptr), (v2f64 (extloadvf32 node:$ptr))>;
 def extloadv4f32 : PatFrag<(ops node:$ptr), (v4f64 (extloadvf32 node:$ptr))>;
 def extloadv8f32 : PatFrag<(ops node:$ptr), (v8f64 (extloadvf32 node:$ptr))>;
 
-// Like 'store', but always requires 128-bit vector alignment.
+// Like 'store', but always requires vector size alignment.
 def alignedstore : PatFrag<(ops node:$val, node:$ptr),
                            (store node:$val, node:$ptr), [{
-  return cast<StoreSDNode>(N)->getAlignment() >= 16;
-}]>;
-
-// Like 'store', but always requires 256-bit vector alignment.
-def alignedstore256 : PatFrag<(ops node:$val, node:$ptr),
-                              (store node:$val, node:$ptr), [{
-  return cast<StoreSDNode>(N)->getAlignment() >= 32;
-}]>;
-
-// Like 'store', but always requires 512-bit vector alignment.
-def alignedstore512 : PatFrag<(ops node:$val, node:$ptr),
-                              (store node:$val, node:$ptr), [{
-  return cast<StoreSDNode>(N)->getAlignment() >= 64;
+  StoreSDNode *St = cast<StoreSDNode>(N);
+  return St->getAlignment() >= St->getMemoryVT().getStoreSize();
 }]>;
 
 // Like 'load', but always requires 128-bit vector alignment.
