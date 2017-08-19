@@ -31,7 +31,7 @@ class Base {
 // CHECK: CXXRecordDecl: X;class X;(
 class X : Base {
   int m;
-  // CHECK: CXXMethodDecl: foo(const char *(int))(
+  // CHECK: CXXMethodDecl: foo(const char *(int)
   // CHECK: ParmVarDecl: i(int)(
   const char *foo(int i) {
     if (i == 0)
