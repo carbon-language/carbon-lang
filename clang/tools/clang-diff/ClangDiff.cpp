@@ -106,7 +106,7 @@ getAST(const std::unique_ptr<CompilationDatabase> &CommonCompilations,
 static char hexdigit(int N) { return N &= 0xf, N + (N < 10 ? '0' : 'a' - 10); }
 
 static void printJsonString(raw_ostream &OS, const StringRef Str) {
-  for (char C : Str) {
+  for (signed char C : Str) {
     switch (C) {
     case '"':
       OS << R"(\")";
