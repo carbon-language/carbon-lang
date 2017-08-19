@@ -2815,6 +2815,9 @@ public:
       Access->ref_id = Acc->getId().release();
       Access->next = Accesses;
       Access->n_index = Acc->getScopArrayInfo()->getNumberOfDimensions();
+      // TODO: Also mark one-element accesses to arrays as fixed-element.
+      Access->fixed_element =
+          Acc->isLatestScalarKind() ? isl_bool_true : isl_bool_false;
       Accesses = Access;
     }
 
@@ -3029,6 +3032,7 @@ public:
       i++;
 
       collect_references(PPCGProg, &PPCGArray);
+      PPCGArray.only_fixed_element = only_fixed_element_accessed(&PPCGArray);
     }
   }
 
@@ -3070,13 +3074,6 @@ public:
     PPCGProg->to_outer = getArrayIdentity();
     // TODO: verify that this assignment is correct.
     PPCGProg->any_to_outer = nullptr;
-
-    // this needs to be set when live range reordering is enabled.
-    // NOTE: I believe that is conservatively correct. I'm not sure
-    //       what the semantics of this is.
-    // Quoting PPCG/gpu.h: "Order dependences on non-scalars."
-    PPCGProg->array_order =
-        isl_union_map_empty(isl_set_get_space(PPCGScop->context));
     PPCGProg->n_stmts = std::distance(S->begin(), S->end());
     PPCGProg->stmts = getStatements();
 
@@ -3098,6 +3095,9 @@ public:
                                        PPCGProg->n_array);
 
     createArrays(PPCGProg, ValidSAIs);
+
+    PPCGProg->array_order = nullptr;
+    collect_order_dependences(PPCGProg);
 
     PPCGProg->may_persist = compute_may_persist(PPCGProg);
     return PPCGProg;
