@@ -42,10 +42,16 @@ class X {
 };
 }
 
-// CHECK: Move DeclStmt{{.*}} into CompoundStmt
+// CHECK: Move CompoundStmt{{.*}} into CompoundStmt
 void m() { { int x = 0 + 0 + 0; } }
 // CHECK: Update and Move IntegerLiteral: 7{{.*}} into BinaryOperator: +({{.*}}) at 1
 int um = 1 + 7;
+
+namespace {
+// match with parents of different type
+// CHECK: Match FunctionDecl: f1{{.*}} to FunctionDecl: f1
+void f1() {{ (void) __func__;;; }}
+}
 
 // CHECK: Delete AccessSpecDecl: public
 // CHECK: Delete CXXMethodDecl

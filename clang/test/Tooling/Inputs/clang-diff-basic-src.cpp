@@ -28,4 +28,6 @@ public:
 }
 
 void m() { int x = 0 + 0 + 0; }
-int um = 1 + 2 + 3;
+int um = 1 * 2 + 3;
+
+void f1() {{ (void) __func__;;; }}
