@@ -2469,10 +2469,8 @@ void BoUpSLP::reorderInputsAccordingToOpcode(unsigned Opcode,
     // Peel the first iteration out of the loop since there's nothing
     // interesting to do anyway and it simplifies the checks in the loop.
     auto *I = cast<Instruction>(VL[0]);
-    Value *VLeft;
-    Value *VRight;
-    VLeft = I->getOperand(0);
-    VRight = I->getOperand(1);
+    Value *VLeft = I->getOperand(0);
+    Value *VRight = I->getOperand(1);
     if (!isa<Instruction>(VRight) && isa<Instruction>(VLeft))
       // Favor having instruction to the right. FIXME: why?
       std::swap(VLeft, VRight);
