@@ -209,6 +209,7 @@ static std::string getChangeKindAbbr(diff::ChangeKind Kind) {
   case diff::UpdateMove:
     return "u m";
   }
+  llvm_unreachable("Invalid enumeration value.");
 }
 
 static unsigned printHtmlForNode(raw_ostream &OS, const diff::ASTDiff &Diff,
