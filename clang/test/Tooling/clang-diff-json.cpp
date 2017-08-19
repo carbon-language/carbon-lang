@@ -22,6 +22,6 @@ class A {
 // CHECK: "type": "VarDecl",
 char nl = '\n';
 
-// CHECK: "value": "abc \n\t\u0000\u001f\u0123 \ub370\ubc15"
-char s[] = "abc \n\t\0\x1f\u0123 데박";
+// CHECK: "value": "abc \n\t\u0000\u001f"
+char s[] = "abc \n\t\0\x1f";
 
