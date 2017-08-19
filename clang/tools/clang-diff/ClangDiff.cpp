@@ -25,8 +25,13 @@ static cl::OptionCategory ClangDiffCategory("clang-diff options");
 
 static cl::opt<bool>
     ASTDump("ast-dump",
-            cl::desc("Print the internal representation of the AST as JSON."),
+            cl::desc("Print the internal representation of the AST."),
             cl::init(false), cl::cat(ClangDiffCategory));
+
+static cl::opt<bool> ASTDumpJson(
+    "ast-dump-json",
+    cl::desc("Print the internal representation of the AST as JSON."),
+    cl::init(false), cl::cat(ClangDiffCategory));
 
 static cl::opt<std::string> SourcePath(cl::Positional, cl::desc("<source>"),
                                        cl::Required,
@@ -166,6 +171,15 @@ static void printNode(raw_ostream &OS, diff::SyntaxTree &Tree,
   OS << "(" << Id << ")";
 }
 
+static void printTree(raw_ostream &OS, diff::SyntaxTree &Tree) {
+  for (diff::NodeId Id : Tree) {
+    for (int I = 0; I < Tree.getNode(Id).Depth; ++I)
+      OS << " ";
+    printNode(OS, Tree, Id);
+    OS << "\n";
+  }
+}
+
 static void printDstChange(raw_ostream &OS, diff::ASTDiff &Diff,
                            diff::SyntaxTree &SrcTree, diff::SyntaxTree &DstTree,
                            diff::NodeId Dst) {
@@ -213,7 +227,7 @@ int main(int argc, const char **argv) {
 
   addExtraArgs(CommonCompilations);
 
-  if (ASTDump) {
+  if (ASTDump || ASTDumpJson) {
     if (!DestinationPath.empty()) {
       llvm::errs() << "Error: Please specify exactly one filename.\n";
       return 1;
@@ -222,6 +236,10 @@ int main(int argc, const char **argv) {
     if (!AST)
       return 1;
     diff::SyntaxTree Tree(AST->getASTContext());
+    if (ASTDump) {
+      printTree(llvm::outs(), Tree);
+      return 0;
+    }
     llvm::outs() << R"({"filename":")";
     printJsonString(llvm::outs(), SourcePath);
     llvm::outs() << R"(","root":)";
