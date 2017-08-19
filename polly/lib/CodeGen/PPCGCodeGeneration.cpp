@@ -1591,7 +1591,15 @@ GPUNodeBuilder::createLaunchParameters(ppcg_kernel *Kernel, Function *F,
   const int NumArgs = F->arg_size();
   std::vector<int> ArgSizes(NumArgs);
 
-  Type *ArrayTy = ArrayType::get(Builder.getInt8PtrTy(), 2 * NumArgs);
+  // If we are using the OpenCL Runtime, we need to add the kernel argument
+  // sizes to the end of the launch-parameter list, so OpenCL can determine
+  // how big the respective kernel arguments are.
+  // Here we need to reserve adequate space for that.
+  Type *ArrayTy;
+  if (Runtime == GPURuntime::OpenCL)
+    ArrayTy = ArrayType::get(Builder.getInt8PtrTy(), 2 * NumArgs);
+  else
+    ArrayTy = ArrayType::get(Builder.getInt8PtrTy(), NumArgs);
 
   BasicBlock *EntryBlock =
       &Builder.GetInsertBlock()->getParent()->getEntryBlock();
@@ -1608,7 +1616,8 @@ GPUNodeBuilder::createLaunchParameters(ppcg_kernel *Kernel, Function *F,
     isl_id *Id = isl_space_get_tuple_id(Prog->array[i].space, isl_dim_set);
     const ScopArrayInfo *SAI = ScopArrayInfo::getFromId(isl::manage(Id));
 
-    ArgSizes[Index] = SAI->getElemSizeInBytes();
+    if (Runtime == GPURuntime::OpenCL)
+      ArgSizes[Index] = SAI->getElemSizeInBytes();
 
     Value *DevArray = nullptr;
     if (PollyManagedMemory) {
@@ -1663,7 +1672,8 @@ GPUNodeBuilder::createLaunchParameters(ppcg_kernel *Kernel, Function *F,
     Value *Val = IDToValue[Id];
     isl_id_free(Id);
 
-    ArgSizes[Index] = computeSizeInBytes(Val->getType());
+    if (Runtime == GPURuntime::OpenCL)
+      ArgSizes[Index] = computeSizeInBytes(Val->getType());
 
     Instruction *Param =
         new AllocaInst(Val->getType(), AddressSpace,
@@ -1683,7 +1693,8 @@ GPUNodeBuilder::createLaunchParameters(ppcg_kernel *Kernel, Function *F,
       Val = ValueMap[Val];
     isl_id_free(Id);
 
-    ArgSizes[Index] = computeSizeInBytes(Val->getType());
+    if (Runtime == GPURuntime::OpenCL)
+      ArgSizes[Index] = computeSizeInBytes(Val->getType());
 
     Instruction *Param =
         new AllocaInst(Val->getType(), AddressSpace,
@@ -1695,7 +1706,8 @@ GPUNodeBuilder::createLaunchParameters(ppcg_kernel *Kernel, Function *F,
   }
 
   for (auto Val : SubtreeValues) {
-    ArgSizes[Index] = computeSizeInBytes(Val->getType());
+    if (Runtime == GPURuntime::OpenCL)
+      ArgSizes[Index] = computeSizeInBytes(Val->getType());
 
     Instruction *Param =
         new AllocaInst(Val->getType(), AddressSpace,
@@ -1706,15 +1718,17 @@ GPUNodeBuilder::createLaunchParameters(ppcg_kernel *Kernel, Function *F,
     Index++;
   }
 
-  for (int i = 0; i < NumArgs; i++) {
-    Value *Val = ConstantInt::get(Builder.getInt32Ty(), ArgSizes[i]);
-    Instruction *Param =
-        new AllocaInst(Builder.getInt32Ty(), AddressSpace,
-                       Launch + "_param_size_" + std::to_string(i),
-                       EntryBlock->getTerminator());
-    Builder.CreateStore(Val, Param);
-    insertStoreParameter(Parameters, Param, Index);
-    Index++;
+  if (Runtime == GPURuntime::OpenCL) {
+    for (int i = 0; i < NumArgs; i++) {
+      Value *Val = ConstantInt::get(Builder.getInt32Ty(), ArgSizes[i]);
+      Instruction *Param =
+          new AllocaInst(Builder.getInt32Ty(), AddressSpace,
+                         Launch + "_param_size_" + std::to_string(i),
+                         EntryBlock->getTerminator());
+      Builder.CreateStore(Val, Param);
+      insertStoreParameter(Parameters, Param, Index);
+      Index++;
+    }
   }
 
   auto Location = EntryBlock->getTerminator();
