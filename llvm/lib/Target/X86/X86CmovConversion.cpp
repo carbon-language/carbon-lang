@@ -72,6 +72,11 @@ static cl::opt<unsigned>
                        cl::desc("Minimum gain per loop (in cycles) threshold."),
                        cl::init(4), cl::Hidden);
 
+static cl::opt<bool> ForceMemOperand(
+    "x86-cmov-converter-force-mem-operand",
+    cl::desc("Convert cmovs to branches whenever they have memory operands."),
+    cl::init(true), cl::Hidden);
+
 /// Converts X86 cmov instructions into branches when profitable.
 class X86CmovConverterPass : public MachineFunctionPass {
 public:
@@ -86,8 +91,9 @@ private:
   /// Pass identification, replacement for typeid.
   static char ID;
 
-  const MachineRegisterInfo *MRI;
+  MachineRegisterInfo *MRI;
   const TargetInstrInfo *TII;
+  const TargetRegisterInfo *TRI;
   TargetSchedModel TSchedModel;
 
   /// List of consecutive CMOV instructions.
@@ -101,7 +107,8 @@ private:
   /// \param CmovInstGroups List of consecutive CMOV instructions in CurrLoop.
   /// \returns true iff it found any CMOV-group-candidate.
   bool collectCmovCandidates(ArrayRef<MachineBasicBlock *> Blocks,
-                             CmovGroups &CmovInstGroups);
+                             CmovGroups &CmovInstGroups,
+                             bool IncludeLoads = false);
 
   /// Check if it is profitable to transform each CMOV-group-candidates into
   /// branch. Remove all groups that are not profitable from \p CmovInstGroups.
@@ -139,10 +146,36 @@ bool X86CmovConverterPass::runOnMachineFunction(MachineFunction &MF) {
   const TargetSubtargetInfo &STI = MF.getSubtarget();
   MRI = &MF.getRegInfo();
   TII = STI.getInstrInfo();
+  TRI = STI.getRegisterInfo();
   TSchedModel.init(STI.getSchedModel(), &STI, TII);
 
+  // Before we handle the more subtle cases of register-register CMOVs inside
+  // of potentially hot loops, we want to quickly remove all CMOVs with
+  // a memory operand. The CMOV will risk a stall waiting for the load to
+  // complete that speculative execution behind a branch is better suited to
+  // handle on modern x86 chips.
+  if (ForceMemOperand) {
+    CmovGroups AllCmovGroups;
+    SmallVector<MachineBasicBlock *, 4> Blocks;
+    for (auto &MBB : MF)
+      Blocks.push_back(&MBB);
+    if (collectCmovCandidates(Blocks, AllCmovGroups, /*IncludeLoads*/ true)) {
+      for (auto &Group : AllCmovGroups) {
+        // Skip any group that doesn't do at least one memory operand cmov.
+        if (!llvm::any_of(Group, [&](MachineInstr *I) { return I->mayLoad(); }))
+          continue;
+
+        // For CMOV groups which we can rewrite and which contain a memory load,
+        // always rewrite them. On x86, a CMOV will dramatically amplify any
+        // memory latency by blocking speculative execution.
+        Changed = true;
+        convertCmovInstsToBranches(Group);
+      }
+    }
+  }
+
   //===--------------------------------------------------------------------===//
-  // Algorithm
+  // Register-operand Conversion Algorithm
   // ---------
   //   For each inner most loop
   //     collectCmovCandidates() {
@@ -191,11 +224,13 @@ bool X86CmovConverterPass::runOnMachineFunction(MachineFunction &MF) {
     for (auto &Group : CmovInstGroups)
       convertCmovInstsToBranches(Group);
   }
+
   return Changed;
 }
 
 bool X86CmovConverterPass::collectCmovCandidates(
-    ArrayRef<MachineBasicBlock *> Blocks, CmovGroups &CmovInstGroups) {
+    ArrayRef<MachineBasicBlock *> Blocks, CmovGroups &CmovInstGroups,
+    bool IncludeLoads) {
   //===--------------------------------------------------------------------===//
   // Collect all CMOV-group-candidates and add them into CmovInstGroups.
   //
@@ -221,7 +256,7 @@ bool X86CmovConverterPass::collectCmovCandidates(
     Group.clear();
     // Condition code of first CMOV instruction current processed range and its
     // opposite condition code.
-    X86::CondCode FirstCC, FirstOppCC;
+    X86::CondCode FirstCC, FirstOppCC, MemOpCC;
     // Indicator of a non CMOVrr instruction in the current processed range.
     bool FoundNonCMOVInst = false;
     // Indicator for current processed CMOV-group if it should be skipped.
@@ -230,11 +265,13 @@ bool X86CmovConverterPass::collectCmovCandidates(
     for (auto &I : *MBB) {
       X86::CondCode CC = X86::getCondFromCMovOpc(I.getOpcode());
       // Check if we found a X86::CMOVrr instruction.
-      if (CC != X86::COND_INVALID && !I.mayLoad()) {
+      if (CC != X86::COND_INVALID && (IncludeLoads || !I.mayLoad())) {
         if (Group.empty()) {
           // We found first CMOV in the range, reset flags.
           FirstCC = CC;
           FirstOppCC = X86::GetOppositeBranchCondition(CC);
+          // Clear out the prior group's memory operand CC.
+          MemOpCC = X86::COND_INVALID;
           FoundNonCMOVInst = false;
           SkipGroup = false;
         }
@@ -244,6 +281,14 @@ bool X86CmovConverterPass::collectCmovCandidates(
         if (FoundNonCMOVInst || (CC != FirstCC && CC != FirstOppCC))
           // Mark the SKipGroup indicator to skip current processed CMOV-Group.
           SkipGroup = true;
+        if (I.mayLoad()) {
+          if (MemOpCC == X86::COND_INVALID)
+            // The first memory operand CMOV.
+            MemOpCC = CC;
+          else if (CC != MemOpCC)
+            // Can't handle mixed conditions with memory operands.
+            SkipGroup = true;
+        }
         continue;
       }
       // If Group is empty, keep looking for first CMOV in the range.
@@ -540,8 +585,18 @@ void X86CmovConverterPass::convertCmovInstsToBranches(
   MachineInstr &MI = *Group.front();
   MachineInstr *LastCMOV = Group.back();
   DebugLoc DL = MI.getDebugLoc();
+
   X86::CondCode CC = X86::CondCode(X86::getCondFromCMovOpc(MI.getOpcode()));
   X86::CondCode OppCC = X86::GetOppositeBranchCondition(CC);
+  // Potentially swap the condition codes so that any memory operand to a CMOV
+  // is in the *false* position instead of the *true* position. We can invert
+  // any non-memory operand CMOV instructions to cope with this and we ensure
+  // memory operand CMOVs are only included with a single condition code.
+  if (llvm::any_of(Group, [&](MachineInstr *I) {
+        return I->mayLoad() && X86::getCondFromCMovOpc(I->getOpcode()) == CC;
+      }))
+    std::swap(CC, OppCC);
+
   MachineBasicBlock *MBB = MI.getParent();
   MachineFunction::iterator It = ++MBB->getIterator();
   MachineFunction *F = MBB->getParent();
@@ -578,7 +633,103 @@ void X86CmovConverterPass::convertCmovInstsToBranches(
   MachineBasicBlock::iterator MIItBegin = MachineBasicBlock::iterator(MI);
   MachineBasicBlock::iterator MIItEnd =
       std::next(MachineBasicBlock::iterator(LastCMOV));
+  MachineBasicBlock::iterator FalseInsertionPoint = FalseMBB->begin();
   MachineBasicBlock::iterator SinkInsertionPoint = SinkMBB->begin();
+
+  // First we need to insert an explicit load on the false path for any memory
+  // operand. We also need to potentially do register rewriting here, but it is
+  // simpler as the memory operands are always on the false path so we can
+  // simply take that input, whatever it is.
+  DenseMap<unsigned, unsigned> FalseBBRegRewriteTable;
+  for (MachineBasicBlock::iterator MIIt = MIItBegin; MIIt != MIItEnd;) {
+    auto &MI = *MIIt++;
+    // Skip any CMOVs in this group which don't load from memory.
+    if (!MI.mayLoad()) {
+      // Remember the false-side register input.
+      FalseBBRegRewriteTable[MI.getOperand(0).getReg()] =
+          MI.getOperand(X86::getCondFromCMovOpc(MI.getOpcode()) == CC ? 1 : 2)
+              .getReg();
+      continue;
+    }
+
+    // The condition must be the *opposite* of the one we've decided to branch
+    // on as the branch will go *around* the load and the load should happen
+    // when the CMOV condition is false.
+    assert(X86::getCondFromCMovOpc(MI.getOpcode()) == OppCC &&
+           "Can only handle memory-operand cmov instructions with a condition "
+           "opposite to the selected branch direction.");
+
+    // The goal is to rewrite the cmov from:
+    //
+    //   MBB:
+    //     %A = CMOVcc %B (tied), (mem)
+    //
+    // to
+    //
+    //   MBB:
+    //     %A = CMOVcc %B (tied), %C
+    //   FalseMBB:
+    //     %C = MOV (mem)
+    //
+    // Which will allow the next loop to rewrite the CMOV in terms of a PHI:
+    //
+    //   MBB:
+    //     JMP!cc SinkMBB
+    //   FalseMBB:
+    //     %C = MOV (mem)
+    //   SinkMBB:
+    //     %A = PHI [ %C, FalseMBB ], [ %B, MBB]
+
+    // Get a fresh register to use as the destination of the MOV.
+    const TargetRegisterClass *RC = MRI->getRegClass(MI.getOperand(0).getReg());
+    unsigned TmpReg = MRI->createVirtualRegister(RC);
+
+    SmallVector<MachineInstr *, 4> NewMIs;
+    bool Unfolded = TII->unfoldMemoryOperand(*MBB->getParent(), MI, TmpReg,
+                                             /*UnfoldLoad*/ true,
+                                             /*UnfoldStore*/ false, NewMIs);
+    (void)Unfolded;
+    assert(Unfolded && "Should never fail to unfold a loading cmov!");
+
+    // Move the new CMOV to just before the old one and reset any impacted
+    // iterator.
+    auto *NewCMOV = NewMIs.pop_back_val();
+    assert(X86::getCondFromCMovOpc(NewCMOV->getOpcode()) == OppCC &&
+           "Last new instruction isn't the expected CMOV!");
+    DEBUG(dbgs() << "\tRewritten cmov: "; NewCMOV->dump());
+    MBB->insert(MachineBasicBlock::iterator(MI), NewCMOV);
+    if (&*MIItBegin == &MI)
+      MIItBegin = MachineBasicBlock::iterator(NewCMOV);
+
+    // Sink whatever instructions were needed to produce the unfolded operand
+    // into the false block.
+    for (auto *NewMI : NewMIs) {
+      DEBUG(dbgs() << "\tRewritten load instr: "; NewMI->dump());
+      FalseMBB->insert(FalseInsertionPoint, NewMI);
+      // Re-map any operands that are from other cmovs to the inputs for this block.
+      for (auto &MOp : NewMI->uses()) {
+        if (!MOp.isReg())
+          continue;
+        auto It = FalseBBRegRewriteTable.find(MOp.getReg());
+        if (It == FalseBBRegRewriteTable.end())
+          continue;
+
+        MOp.setReg(It->second);
+        // This might have been a kill when it referenced the cmov result, but
+        // it won't necessarily be once rewritten.
+        // FIXME: We could potentially improve this by tracking whether the
+        // operand to the cmov was also a kill, and then skipping the PHI node
+        // construction below.
+        MOp.setIsKill(false);
+      }
+    }
+    MBB->erase(MachineBasicBlock::iterator(MI),
+               std::next(MachineBasicBlock::iterator(MI)));
+
+    // Add this PHI to the rewrite table.
+    FalseBBRegRewriteTable[NewCMOV->getOperand(0).getReg()] = TmpReg;
+  }
+
   // As we are creating the PHIs, we have to be careful if there is more than
   // one.  Later CMOVs may reference the results of earlier CMOVs, but later
   // PHIs have to reference the individual true/false inputs from earlier PHIs.
