@@ -229,6 +229,12 @@ isl_stat addReferencesFromStmt(const ScopStmt *Stmt, void *UserPtr,
   }
 
   for (auto &Access : *Stmt) {
+    if (References.ParamSpace) {
+      isl::space ParamSpace = Access->getLatestAccessRelation().get_space();
+      (*References.ParamSpace) =
+          References.ParamSpace->align_params(ParamSpace);
+    }
+
     if (Access->isLatestArrayKind()) {
       auto *BasePtr = Access->getScopArrayInfo()->getBasePtr();
       if (Instruction *OpInst = dyn_cast<Instruction>(BasePtr))
@@ -297,7 +303,7 @@ void IslNodeBuilder::getReferencesInSubtree(__isl_keep isl_ast_node *For,
 
   SetVector<const SCEV *> SCEVs;
   struct SubtreeReferences References = {
-      LI, SE, S, ValueMap, Values, SCEVs, getBlockGenerator()};
+      LI, SE, S, ValueMap, Values, SCEVs, getBlockGenerator(), nullptr};
 
   for (const auto &I : IDToValue)
     Values.insert(I.second);
