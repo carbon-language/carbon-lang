@@ -29,7 +29,7 @@ protected:
 
 RISCVELFObjectWriter::RISCVELFObjectWriter(uint8_t OSABI, bool Is64Bit)
     : MCELFObjectTargetWriter(Is64Bit, OSABI, ELF::EM_RISCV,
-                              /*HasRelocationAddend*/ false) {}
+                              /*HasRelocationAddend*/ true) {}
 
 RISCVELFObjectWriter::~RISCVELFObjectWriter() {}
 
