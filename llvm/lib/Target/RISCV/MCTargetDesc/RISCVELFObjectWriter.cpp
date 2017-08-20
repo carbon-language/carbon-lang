@@ -37,7 +37,7 @@ unsigned RISCVELFObjectWriter::getRelocType(MCContext &Ctx,
                                             const MCValue &Target,
                                             const MCFixup &Fixup,
                                             bool IsPCRel) const {
-  llvm_unreachable("invalid fixup kind!");
+  report_fatal_error("invalid fixup kind!");
 }
 
 MCObjectWriter *llvm::createRISCVELFObjectWriter(raw_pwrite_stream &OS,
