@@ -158,12 +158,23 @@ private:
   void setLeftMostDescendants();
 };
 
+static bool isSpecializedNodeExcluded(const Decl *D) { return D->isImplicit(); }
+static bool isSpecializedNodeExcluded(const Stmt *S) { return false; }
+
 template <class T>
 static bool isNodeExcluded(const SourceManager &SrcMgr, T *N) {
   if (!N)
     return true;
   SourceLocation SLoc = N->getLocStart();
-  return SLoc.isValid() && SrcMgr.isInSystemHeader(SLoc);
+  if (SLoc.isValid()) {
+    // Ignore everything from other files.
+    if (!SrcMgr.isInMainFile(SLoc))
+      return true;
+    // Ignore macros.
+    if (SLoc != SrcMgr.getSpellingLoc(SLoc))
+      return true;
+  }
+  return isSpecializedNodeExcluded(N);
 }
 
 namespace {
@@ -180,6 +191,8 @@ struct NodeCountVisitor : public RecursiveASTVisitor<NodeCountVisitor> {
     return true;
   }
   bool TraverseStmt(Stmt *S) {
+    if (S)
+      S = S->IgnoreImplicit();
     if (isNodeExcluded(Tree.AST.getSourceManager(), S))
       return true;
     ++Count;
@@ -242,6 +255,8 @@ struct PreorderVisitor : public RecursiveASTVisitor<PreorderVisitor> {
     return true;
   }
   bool TraverseStmt(Stmt *S) {
+    if (S)
+      S = S->IgnoreImplicit();
     if (isNodeExcluded(Tree.AST.getSourceManager(), S))
       return true;
     auto SavedState = PreTraverse(S);
