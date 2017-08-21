@@ -18,6 +18,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/OptimizationDiagnosticInfo.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -751,29 +752,44 @@ Value *LibCallSimplifier::optimizeMemCmp(CallInst *CI, IRBuilder<> &B) {
   }
 
   // memcmp(S1,S2,N/8)==0 -> (*(intN_t*)S1 != *(intN_t*)S2)==0
+  // TODO: The case where both inputs are constants does not need to be limited
+  // to legal integers or equality comparison. See block below this.
   if (DL.isLegalInteger(Len * 8) && isOnlyUsedInZeroEqualityComparison(CI)) {
-
     IntegerType *IntType = IntegerType::get(CI->getContext(), Len * 8);
     unsigned PrefAlignment = DL.getPrefTypeAlignment(IntType);
 
-    if (getKnownAlignment(LHS, DL, CI) >= PrefAlignment &&
-        getKnownAlignment(RHS, DL, CI) >= PrefAlignment) {
+    // First, see if we can fold either argument to a constant.
+    Value *LHSV = nullptr;
+    if (auto *LHSC = dyn_cast<Constant>(LHS)) {
+      LHSC = ConstantExpr::getBitCast(LHSC, IntType->getPointerTo());
+      LHSV = ConstantFoldLoadFromConstPtr(LHSC, IntType, DL);
+    }
+    Value *RHSV = nullptr;
+    if (auto *RHSC = dyn_cast<Constant>(RHS)) {
+      RHSC = ConstantExpr::getBitCast(RHSC, IntType->getPointerTo());
+      RHSV = ConstantFoldLoadFromConstPtr(RHSC, IntType, DL);
+    }
 
+    // Don't generate unaligned loads. If either source is constant data,
+    // alignment doesn't matter for that source because there is no load.
+    if (!LHSV && getKnownAlignment(LHS, DL, CI) >= PrefAlignment) {
       Type *LHSPtrTy =
           IntType->getPointerTo(LHS->getType()->getPointerAddressSpace());
+      LHSV = B.CreateLoad(B.CreateBitCast(LHS, LHSPtrTy), "lhsv");
+    }
+
+    if (!RHSV && getKnownAlignment(RHS, DL, CI) >= PrefAlignment) {
       Type *RHSPtrTy =
           IntType->getPointerTo(RHS->getType()->getPointerAddressSpace());
-
-      Value *LHSV =
-          B.CreateLoad(B.CreateBitCast(LHS, LHSPtrTy, "lhsc"), "lhsv");
-      Value *RHSV =
-          B.CreateLoad(B.CreateBitCast(RHS, RHSPtrTy, "rhsc"), "rhsv");
-
-      return B.CreateZExt(B.CreateICmpNE(LHSV, RHSV), CI->getType(), "memcmp");
+      RHSV = B.CreateLoad(B.CreateBitCast(RHS, RHSPtrTy), "rhsv");
     }
+
+    if (LHSV && RHSV)
+      return B.CreateZExt(B.CreateICmpNE(LHSV, RHSV), CI->getType(), "memcmp");
   }
 
-  // Constant folding: memcmp(x, y, l) -> cnst (all arguments are constant)
+  // Constant folding: memcmp(x, y, Len) -> constant (all arguments are const).
+  // TODO: This is limited to i8 arrays.
   StringRef LHSStr, RHSStr;
   if (getConstantStringInfo(LHS, LHSStr) &&
       getConstantStringInfo(RHS, RHSStr)) {
