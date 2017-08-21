@@ -208,12 +208,22 @@ replaceGlobalArray(Module &M, const DataLayout &DL, GlobalVariable &Array,
   const bool OnlyVisibleInsideModule = Array.hasPrivateLinkage() ||
                                        Array.hasInternalLinkage() ||
                                        IgnoreLinkageForGlobals;
-  if (!OnlyVisibleInsideModule)
+  if (!OnlyVisibleInsideModule) {
+    DEBUG(dbgs() << "Not rewriting " << Array
+                 << " to managed memory "
+                    "because it could be visible externally. To force rewrite, "
+                    "use -polly-acc-rewrite-ignore-linkage-for-globals.\n");
     return;
+  }
 
   if (!Array.hasInitializer() ||
-      !isa<ConstantAggregateZero>(Array.getInitializer()))
+      !isa<ConstantAggregateZero>(Array.getInitializer())) {
+    DEBUG(dbgs() << "Not rewriting " << Array
+                 << " to managed memory "
+                    "because it has an initializer which is "
+                    "not a zeroinitializer.\n");
     return;
+  }
 
   // At this point, we have committed to replacing this array.
   ReplacedGlobals.insert(&Array);
