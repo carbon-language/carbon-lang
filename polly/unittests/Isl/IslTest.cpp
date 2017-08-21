@@ -783,6 +783,14 @@ TEST(DeLICM, computeArrayUnused) {
               computeArrayUnused(UMAP("{ Write[] -> [0] }"),
                                  UMAP("{ Write[] -> Elt[] }"), UMAP("{}"),
                                  ReadEltInSameInst, false, true));
+
+    // read, write, write
+    EXPECT_EQ(
+        UMAP("{ Elt[] -> [i] : 0 < i <= 20 }"),
+        computeArrayUnused(
+            UMAP("{ Read[] -> [0]; WriteA[] -> [10];  WriteB[] -> [20] }"),
+            UMAP("{ WriteA[] -> Elt[]; WriteB[] -> Elt[] }"),
+            UMAP("{ Read[] -> Elt[] }"), ReadEltInSameInst, false, true));
   }
 
   // Read and write in same statement
