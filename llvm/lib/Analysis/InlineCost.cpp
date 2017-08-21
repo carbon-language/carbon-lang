@@ -1700,7 +1700,7 @@ InlineCost llvm::getInlineCost(
     return llvm::InlineCost::getNever();
 
   DEBUG(llvm::dbgs() << "      Analyzing call of " << Callee->getName()
-                     << "...\n");
+                     << "... (caller:" << Caller->getName() << ")\n");
 
   CallAnalyzer CA(CalleeTTI, GetAssumptionCache, GetBFI, PSI, *Callee, CS,
                   Params);
