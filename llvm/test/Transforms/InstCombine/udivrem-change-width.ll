@@ -253,3 +253,25 @@ define i32 @urem_illegal_type_c(i9 %a) {
   ret i32 %urem
 }
 
+define i32 @udiv_c_i32(i8 %a) {
+; CHECK-LABEL: @udiv_c_i32(
+; CHECK-NEXT:    [[ZA:%.*]] = zext i8 %a to i32
+; CHECK-NEXT:    [[UDIV:%.*]] = udiv i32 10, [[ZA]]
+; CHECK-NEXT:    ret i32 [[UDIV]]
+;
+  %za = zext i8 %a to i32
+  %udiv = udiv i32 10, %za
+  ret i32 %udiv
+}
+
+define i32 @urem_c_i32(i8 %a) {
+; CHECK-LABEL: @urem_c_i32(
+; CHECK-NEXT:    [[ZA:%.*]] = zext i8 %a to i32
+; CHECK-NEXT:    [[UREM:%.*]] = urem i32 10, [[ZA]]
+; CHECK-NEXT:    ret i32 [[UREM]]
+;
+  %za = zext i8 %a to i32
+  %urem = urem i32 10, %za
+  ret i32 %urem
+}
+
