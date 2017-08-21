@@ -15,49 +15,16 @@
 ;
 
 define <4 x double> @test_broadcast_2f64_4f64(<2 x double> *%p) nounwind {
-; X32-AVX-LABEL: test_broadcast_2f64_4f64:
-; X32-AVX:       # BB#0:
-; X32-AVX-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-AVX-NEXT:    vbroadcastf128 {{.*#+}} ymm0 = mem[0,1,0,1]
-; X32-AVX-NEXT:    retl
+; X32-LABEL: test_broadcast_2f64_4f64:
+; X32:       # BB#0:
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-NEXT:    vbroadcastf128 {{.*#+}} ymm0 = mem[0,1,0,1]
+; X32-NEXT:    retl
 ;
-; X32-AVX512F-LABEL: test_broadcast_2f64_4f64:
-; X32-AVX512F:       # BB#0:
-; X32-AVX512F-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-AVX512F-NEXT:    vbroadcastf128 {{.*#+}} ymm0 = mem[0,1,0,1]
-; X32-AVX512F-NEXT:    retl
-;
-; X32-AVX512BW-LABEL: test_broadcast_2f64_4f64:
-; X32-AVX512BW:       # BB#0:
-; X32-AVX512BW-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-AVX512BW-NEXT:    vbroadcastf128 {{.*#+}} ymm0 = mem[0,1,0,1]
-; X32-AVX512BW-NEXT:    retl
-;
-; X32-AVX512DQ-LABEL: test_broadcast_2f64_4f64:
-; X32-AVX512DQ:       # BB#0:
-; X32-AVX512DQ-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-AVX512DQ-NEXT:    vbroadcastf64x2 {{.*#+}} ymm0 = mem[0,1,0,1]
-; X32-AVX512DQ-NEXT:    retl
-;
-; X64-AVX-LABEL: test_broadcast_2f64_4f64:
-; X64-AVX:       # BB#0:
-; X64-AVX-NEXT:    vbroadcastf128 {{.*#+}} ymm0 = mem[0,1,0,1]
-; X64-AVX-NEXT:    retq
-;
-; X64-AVX512F-LABEL: test_broadcast_2f64_4f64:
-; X64-AVX512F:       # BB#0:
-; X64-AVX512F-NEXT:    vbroadcastf128 {{.*#+}} ymm0 = mem[0,1,0,1]
-; X64-AVX512F-NEXT:    retq
-;
-; X64-AVX512BW-LABEL: test_broadcast_2f64_4f64:
-; X64-AVX512BW:       # BB#0:
-; X64-AVX512BW-NEXT:    vbroadcastf128 {{.*#+}} ymm0 = mem[0,1,0,1]
-; X64-AVX512BW-NEXT:    retq
-;
-; X64-AVX512DQ-LABEL: test_broadcast_2f64_4f64:
-; X64-AVX512DQ:       # BB#0:
-; X64-AVX512DQ-NEXT:    vbroadcastf64x2 {{.*#+}} ymm0 = mem[0,1,0,1]
-; X64-AVX512DQ-NEXT:    retq
+; X64-LABEL: test_broadcast_2f64_4f64:
+; X64:       # BB#0:
+; X64-NEXT:    vbroadcastf128 {{.*#+}} ymm0 = mem[0,1,0,1]
+; X64-NEXT:    retq
  %1 = load <2 x double>, <2 x double> *%p
  %2 = shufflevector <2 x double> %1, <2 x double> undef, <4 x i32> <i32 0, i32 1, i32 0, i32 1>
  ret <4 x double> %2
@@ -150,43 +117,21 @@ define <4 x i64> @test_broadcast_2i64_4i64(<2 x i64> *%p) nounwind {
 ; X32-AVX-NEXT:    vbroadcastf128 {{.*#+}} ymm0 = mem[0,1,0,1]
 ; X32-AVX-NEXT:    retl
 ;
-; X32-AVX512F-LABEL: test_broadcast_2i64_4i64:
-; X32-AVX512F:       # BB#0:
-; X32-AVX512F-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-AVX512F-NEXT:    vbroadcasti128 {{.*#+}} ymm0 = mem[0,1,0,1]
-; X32-AVX512F-NEXT:    retl
-;
-; X32-AVX512BW-LABEL: test_broadcast_2i64_4i64:
-; X32-AVX512BW:       # BB#0:
-; X32-AVX512BW-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-AVX512BW-NEXT:    vbroadcasti128 {{.*#+}} ymm0 = mem[0,1,0,1]
-; X32-AVX512BW-NEXT:    retl
-;
-; X32-AVX512DQ-LABEL: test_broadcast_2i64_4i64:
-; X32-AVX512DQ:       # BB#0:
-; X32-AVX512DQ-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-AVX512DQ-NEXT:    vbroadcasti64x2 {{.*#+}} ymm0 = mem[0,1,0,1]
-; X32-AVX512DQ-NEXT:    retl
+; X32-AVX512-LABEL: test_broadcast_2i64_4i64:
+; X32-AVX512:       # BB#0:
+; X32-AVX512-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-AVX512-NEXT:    vbroadcasti128 {{.*#+}} ymm0 = mem[0,1,0,1]
+; X32-AVX512-NEXT:    retl
 ;
 ; X64-AVX-LABEL: test_broadcast_2i64_4i64:
 ; X64-AVX:       # BB#0:
 ; X64-AVX-NEXT:    vbroadcastf128 {{.*#+}} ymm0 = mem[0,1,0,1]
 ; X64-AVX-NEXT:    retq
 ;
-; X64-AVX512F-LABEL: test_broadcast_2i64_4i64:
-; X64-AVX512F:       # BB#0:
-; X64-AVX512F-NEXT:    vbroadcasti128 {{.*#+}} ymm0 = mem[0,1,0,1]
-; X64-AVX512F-NEXT:    retq
-;
-; X64-AVX512BW-LABEL: test_broadcast_2i64_4i64:
-; X64-AVX512BW:       # BB#0:
-; X64-AVX512BW-NEXT:    vbroadcasti128 {{.*#+}} ymm0 = mem[0,1,0,1]
-; X64-AVX512BW-NEXT:    retq
-;
-; X64-AVX512DQ-LABEL: test_broadcast_2i64_4i64:
-; X64-AVX512DQ:       # BB#0:
-; X64-AVX512DQ-NEXT:    vbroadcasti64x2 {{.*#+}} ymm0 = mem[0,1,0,1]
-; X64-AVX512DQ-NEXT:    retq
+; X64-AVX512-LABEL: test_broadcast_2i64_4i64:
+; X64-AVX512:       # BB#0:
+; X64-AVX512-NEXT:    vbroadcasti128 {{.*#+}} ymm0 = mem[0,1,0,1]
+; X64-AVX512-NEXT:    retq
  %1 = load <2 x i64>, <2 x i64> *%p
  %2 = shufflevector <2 x i64> %1, <2 x i64> undef, <4 x i32> <i32 0, i32 1, i32 0, i32 1>
  ret <4 x i64> %2
