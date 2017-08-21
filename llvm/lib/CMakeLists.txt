@@ -2,7 +2,6 @@
 # CMakeLists.txt
 
 add_subdirectory(IR)
-add_subdirectory(FuzzMutate)
 add_subdirectory(IRReader)
 add_subdirectory(CodeGen)
 add_subdirectory(BinaryFormat)
