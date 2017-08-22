@@ -18,13 +18,10 @@
 #ifndef POLLY_SCOPINFO_H
 #define POLLY_SCOPINFO_H
 
+#include "isl-noexceptions.h"
 #include "polly/ScopDetection.h"
 #include "polly/Support/SCEVAffinator.h"
 #include "polly/Support/ScopHelper.h"
-#include "isl/aff.h"
-#include "isl/ctx.h"
-#include "isl/set.h"
-#include "isl-noexceptions.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
@@ -44,6 +41,9 @@
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Casting.h"
+#include "isl/aff.h"
+#include "isl/ctx.h"
+#include "isl/set.h"
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
