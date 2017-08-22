@@ -145,29 +145,23 @@ static uintptr_t readEncodedPointer(const uint8_t** data, uint8_t encoding)
 #if defined(__arm__) && !defined(__USING_SJLJ_EXCEPTIONS__) &&                 \
     !defined(__ARM_DWARF_EH__)
 #define USING_ARM_EHABI 1
-_Unwind_Reason_Code __gnu_unwind_frame(_Unwind_Exception *,
+_Unwind_Reason_Code __gnu_unwind_frame(struct _Unwind_Exception *,
                                        struct _Unwind_Context *);
 #endif
 
-#if USING_ARM_EHABI
-static inline _Unwind_Reason_Code
-continueUnwind(_Unwind_Exception *exceptionObject,
-               struct _Unwind_Context *context) {
-  /*
-   * On ARM EHABI the personality routine is responsible for actually
-   * unwinding a single stack frame before returning (ARM EHABI Sec. 6.1).
-   */
-  if (__gnu_unwind_frame(exceptionObject, context) != _URC_OK)
-    return _URC_FAILURE;
-  return _URC_CONTINUE_UNWIND;
-}
-#else
 static inline _Unwind_Reason_Code
 continueUnwind(struct _Unwind_Exception *exceptionObject,
                struct _Unwind_Context *context) {
-  return _URC_CONTINUE_UNWIND;
-}
+#if USING_ARM_EHABI
+    /*
+     * On ARM EHABI the personality routine is responsible for actually
+     * unwinding a single stack frame before returning (ARM EHABI Sec. 6.1).
+     */
+    if (__gnu_unwind_frame(exceptionObject, context) != _URC_OK)
+        return _URC_FAILURE;
 #endif
+    return _URC_CONTINUE_UNWIND;
+}
 
 /*
  * The C compiler makes references to __gcc_personality_v0 in
@@ -182,20 +176,18 @@ continueUnwind(struct _Unwind_Exception *exceptionObject,
  * different name */
 COMPILER_RT_ABI _Unwind_Reason_Code
 __gcc_personality_sj0(int version, _Unwind_Action actions,
-                      uint64_t exceptionClass,
-                      struct _Unwind_Exception *exceptionObject,
-                      struct _Unwind_Context *context)
+         uint64_t exceptionClass, struct _Unwind_Exception* exceptionObject,
+         struct _Unwind_Context *context)
 #elif USING_ARM_EHABI
 /* The ARM EHABI personality routine has a different signature. */
-COMPILER_RT_ABI _Unwind_Reason_Code
-__gcc_personality_v0(_Unwind_State state, _Unwind_Exception *exceptionObject,
-                     struct _Unwind_Context *context)
+COMPILER_RT_ABI _Unwind_Reason_Code __gcc_personality_v0(
+         _Unwind_State state, struct _Unwind_Exception *exceptionObject,
+         struct _Unwind_Context *context)
 #else
 COMPILER_RT_ABI _Unwind_Reason_Code
 __gcc_personality_v0(int version, _Unwind_Action actions,
-                     uint64_t exceptionClass,
-                     struct _Unwind_Exception *exceptionObject,
-                     struct _Unwind_Context *context)
+         uint64_t exceptionClass, struct _Unwind_Exception* exceptionObject,
+         struct _Unwind_Context *context)
 #endif
 {
     /* Since C does not have catch clauses, there is nothing to do during */
