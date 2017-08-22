@@ -2,6 +2,7 @@
 
 ; REQUIRES: asserts
 
+; CHECK-DAG: 10 polly-detect     - Number of loops (in- or out of scops, in any function processed by Polly)
 ; CHECK-DAG:  4 polly-detect     - Maximal number of loops in scops (profitable scops only)
 ; CHECK-DAG:  4 polly-detect     - Maximal number of loops in scops
 ; CHECK-DAG: 10 polly-detect     - Number of loops in scops (profitable scops only)
