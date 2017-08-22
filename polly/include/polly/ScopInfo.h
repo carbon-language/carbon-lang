@@ -18,7 +18,6 @@
 #ifndef POLLY_SCOPINFO_H
 #define POLLY_SCOPINFO_H
 
-#include "isl-noexceptions.h"
 #include "polly/ScopDetection.h"
 #include "polly/Support/SCEVAffinator.h"
 #include "polly/Support/ScopHelper.h"
@@ -43,6 +42,7 @@
 #include "llvm/Support/Casting.h"
 #include "isl/aff.h"
 #include "isl/ctx.h"
+#include "isl/isl-noexceptions.h"
 #include "isl/set.h"
 #include <algorithm>
 #include <cassert>
