@@ -482,6 +482,7 @@ void IslNodeBuilder::createForVector(__isl_take isl_ast_node *For,
   isl_ast_expr_free(Iterator);
 }
 
+namespace {
 /// Restore the initial ordering of dimensions of the band node
 ///
 /// In case the band node represents all the dimensions of the iteration
@@ -490,7 +491,6 @@ void IslNodeBuilder::createForVector(__isl_take isl_ast_node *For,
 ///
 /// @param Node The band node to be modified.
 /// @return The modified schedule node.
-namespace {
 bool IsLoopVectorizerDisabled(isl::ast_node Node) {
   assert(isl_ast_node_get_type(Node.keep()) == isl_ast_node_for);
   auto Body = Node.for_get_body();
