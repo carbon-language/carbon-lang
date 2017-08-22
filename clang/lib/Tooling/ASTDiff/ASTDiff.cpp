@@ -372,7 +372,10 @@ int SyntaxTree::Impl::findPositionInParent(NodeId Id, bool Shifted) const {
 std::string
 SyntaxTree::Impl::getRelativeName(const NamedDecl *ND,
                                   const DeclContext *Context) const {
+  std::string Val = ND->getQualifiedNameAsString();
   std::string ContextPrefix;
+  if (!Context)
+    return Val;
   if (auto *Namespace = dyn_cast<NamespaceDecl>(Context))
     ContextPrefix = Namespace->getQualifiedNameAsString();
   else if (auto *Record = dyn_cast<RecordDecl>(Context))
@@ -380,7 +383,6 @@ SyntaxTree::Impl::getRelativeName(const NamedDecl *ND,
   else if (AST.getLangOpts().CPlusPlus11)
     if (auto *Tag = dyn_cast<TagDecl>(Context))
       ContextPrefix = Tag->getQualifiedNameAsString();
-  std::string Val = ND->getQualifiedNameAsString();
   // Strip the qualifier, if Val refers to somthing in the current scope.
   // But leave one leading ':' in place, so that we know that this is a
   // relative path.
@@ -404,7 +406,7 @@ static const DeclContext *getEnclosingDeclContext(ASTContext &AST,
       return D->getDeclContext();
     S = P.get<Stmt>();
   }
-  llvm_unreachable("Could not find Decl ancestor.");
+  return nullptr;
 }
 
 std::string SyntaxTree::Impl::getNodeValue(NodeId Id) const {
