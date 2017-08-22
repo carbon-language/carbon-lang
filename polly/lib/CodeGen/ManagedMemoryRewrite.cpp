@@ -311,7 +311,8 @@ static void rewriteAllocaAsManagedMemory(AllocaInst *Alloca,
   Builder.SetInsertPoint(Alloca);
 
   Value *MallocManagedFn = getOrCreatePollyMallocManaged(*Alloca->getModule());
-  const int Size = DL.getTypeAllocSize(Alloca->getType()->getElementType());
+  const uint64_t Size =
+      DL.getTypeAllocSize(Alloca->getType()->getElementType());
   Value *SizeVal = Builder.getInt64(Size);
   Value *RawManagedMem = Builder.CreateCall(MallocManagedFn, {SizeVal});
   Value *Bitcasted = Builder.CreateBitCast(RawManagedMem, Alloca->getType());
