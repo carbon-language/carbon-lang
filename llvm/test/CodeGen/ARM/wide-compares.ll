@@ -36,7 +36,11 @@ entry:
   ; CHECK-ARM: sbcs {{[^,]+}}, r1, r3
   ; CHECK-THUMB2: subs {{[^,]+}}, r0, r2
   ; CHECK-THUMB2: sbcs.w {{[^,]+}}, r1, r3
-  ; CHECK: bge [[BB2:\.[0-9A-Za-z_]+]]
+  ; CHECK-ARM: movwge r12, #1
+  ; CHECK-ARM: cmp r12, #0
+  ; CHECK-THUMB2: movge.w r12, #1
+  ; CHECK-THUMB: cmp.w r12, #0
+  ; CHECK: bne [[BB2:\.[0-9A-Za-z_]+]]
   br i1 %cmp, label %bb1, label %bb2
 bb1:
   call void @f()
