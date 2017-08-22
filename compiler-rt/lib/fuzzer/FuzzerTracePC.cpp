@@ -343,8 +343,10 @@ void TracePC::ClearInlineCounters() {
   }
 }
 
+ATTRIBUTE_NO_SANITIZE_ALL
 void TracePC::RecordInitialStack() {
-  InitialStack = __sancov_lowest_stack;
+  int stack;
+  __sancov_lowest_stack = InitialStack = reinterpret_cast<uintptr_t>(&stack);
 }
 
 uintptr_t TracePC::GetMaxStackOffset() const {
