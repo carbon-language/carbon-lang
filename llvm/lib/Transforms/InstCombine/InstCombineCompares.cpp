@@ -2524,8 +2524,7 @@ Instruction *InstCombiner::foldICmpInstWithConstant(ICmpInst &Cmp) {
   if (!match(Cmp.getOperand(1), m_APInt(C)))
     return nullptr;
 
-  BinaryOperator *BO;
-  if (match(Cmp.getOperand(0), m_BinOp(BO))) {
+  if (auto *BO = dyn_cast<BinaryOperator>(Cmp.getOperand(0))) {
     switch (BO->getOpcode()) {
     case Instruction::Xor:
       if (Instruction *I = foldICmpXorConstant(Cmp, BO, C))
