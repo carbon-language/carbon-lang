@@ -4902,7 +4902,6 @@ bool AArch64TargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const {
 
   StringRef FPType;
   bool IsLegal = false;
-  const StringRef Msg = "Is legal ";
 
   if (VT == MVT::f64) {
     FPType = "f64";
@@ -4916,14 +4915,14 @@ bool AArch64TargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const {
   }
 
   if (IsLegal) {
-    DEBUG(dbgs() << Msg << FPType << " imm value: yes\n");
+    DEBUG(dbgs() << "Is legal " << FPType << " imm value: yes\n");
     return true;
   }
 
   if (!FPType.empty())
-    DEBUG(dbgs() << Msg << FPType << " imm value: no\n");
+    DEBUG(dbgs() << "Is legal " << FPType << " imm value: no\n");
   else
-    DEBUG(dbgs() << Msg << "fp imm: no, unsupported fp type\n");
+    DEBUG(dbgs() << "Is legal " << "fp imm: no, unsupported fp type\n");
 
   return false;
 }
