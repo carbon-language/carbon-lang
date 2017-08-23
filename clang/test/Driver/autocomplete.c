@@ -93,3 +93,5 @@
 // WARNING-NEXT: -Wmax-unsigned-zero
 // RUN: %clang --autocomplete=-Wno-invalid-pp- | FileCheck %s -check-prefix=NOWARNING
 // NOWARNING: -Wno-invalid-pp-token
+// RUN: %clang --autocomplete=-analyzer-checker, | FileCheck %s -check-prefix=ANALYZER
+// ANALYZER: unix.Malloc
