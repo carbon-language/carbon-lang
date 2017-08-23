@@ -1130,8 +1130,7 @@ Instruction *InstCombiner::foldAllocaCmp(ICmpInst &ICI,
 }
 
 /// Fold "icmp pred (X+CI), X".
-Instruction *InstCombiner::foldICmpAddOpConst(Instruction &ICI,
-                                              Value *X, ConstantInt *CI,
+Instruction *InstCombiner::foldICmpAddOpConst(Value *X, ConstantInt *CI,
                                               ICmpInst::Predicate Pred) {
   // From this point on, we know that (X+C <= X) --> (X+C < X) because C != 0,
   // so the values can never be equal.  Similarly for all other "or equals"
@@ -4675,11 +4674,11 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     Value *X; ConstantInt *Cst;
     // icmp X+Cst, X
     if (match(Op0, m_Add(m_Value(X), m_ConstantInt(Cst))) && Op1 == X)
-      return foldICmpAddOpConst(I, X, Cst, I.getPredicate());
+      return foldICmpAddOpConst(X, Cst, I.getPredicate());
 
     // icmp X, X+Cst
     if (match(Op1, m_Add(m_Value(X), m_ConstantInt(Cst))) && Op0 == X)
-      return foldICmpAddOpConst(I, X, Cst, I.getSwappedPredicate());
+      return foldICmpAddOpConst(X, Cst, I.getSwappedPredicate());
   }
   return Changed ? &I : nullptr;
 }
