@@ -2803,23 +2803,6 @@ TEST_F(FormatTestComments, NonTrailingBlockComments) {
                    "    A = B;",
                    getLLVMStyleWithColumns(40)));
 }
-
-TEST_F(FormatTestComments, NoCrush_Bug34236) {
-  // This is a test case from a crasher reported in:
-  // https://bugs.llvm.org/show_bug.cgi?id=34236
-  EXPECT_EQ(
-      R"(
-/*                                                                */ /*
-                                                                      *       a
-                                                                      * b c
-                                                                      * d*/)",
-      format(
-          R"(
-/*                                                                */ /*
- *       a b
- *       c     d*/)",
-          getLLVMStyleWithColumns(80)));
-}
 } // end namespace
 } // end namespace format
 } // end namespace clang
