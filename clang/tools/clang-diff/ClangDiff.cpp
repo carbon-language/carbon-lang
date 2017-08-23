@@ -140,9 +140,9 @@ highlightStack = []
 function clearHighlight() {
   while (highlightStack.length) {
     var [l, r] = highlightStack.pop()
-    document.getElementById(l).style.backgroundColor = 'white'
+    document.getElementById(l).style.backgroundColor = 'inherit'
     if (r[1] != '-')
-      document.getElementById(r).style.backgroundColor = 'white'
+      document.getElementById(r).style.backgroundColor = 'inherit'
   }
 }
 function highlight(event) {
