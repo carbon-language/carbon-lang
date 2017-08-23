@@ -1461,7 +1461,7 @@ Instruction *InstCombiner::foldICmpWithConstant(ICmpInst &Cmp) {
 
 /// Fold icmp (trunc X, Y), C.
 Instruction *InstCombiner::foldICmpTruncConstant(ICmpInst &Cmp,
-                                                 Instruction *Trunc,
+                                                 TruncInst *Trunc,
                                                  const APInt *C) {
   ICmpInst::Predicate Pred = Cmp.getPredicate();
   Value *X = Trunc->getOperand(0);
@@ -2470,7 +2470,7 @@ bool InstCombiner::matchThreeWayIntCompare(SelectInst *SI, Value *&LHS,
 }
 
 Instruction *InstCombiner::foldICmpSelectConstant(ICmpInst &Cmp,
-                                                  Instruction *Select,
+                                                  SelectInst *Select,
                                                   ConstantInt *C) {
 
   assert(C && "Cmp RHS should be a constant int!");
@@ -2482,8 +2482,8 @@ Instruction *InstCombiner::foldICmpSelectConstant(ICmpInst &Cmp,
   Value *OrigLHS, *OrigRHS;
   ConstantInt *C1LessThan, *C2Equal, *C3GreaterThan;
   if (Cmp.hasOneUse() &&
-      matchThreeWayIntCompare(cast<SelectInst>(Select), OrigLHS, OrigRHS,
-                                 C1LessThan, C2Equal, C3GreaterThan)) {
+      matchThreeWayIntCompare(Select, OrigLHS, OrigRHS, C1LessThan, C2Equal,
+                              C3GreaterThan)) {
     assert(C1LessThan && C2Equal && C3GreaterThan);
 
     bool TrueWhenLessThan =
@@ -2577,26 +2577,19 @@ Instruction *InstCombiner::foldICmpInstWithConstant(ICmpInst &Cmp) {
   }
 
   // Match against CmpInst LHS being instructions other than binary operators.
-  Instruction *LHSI;
-  if (match(Cmp.getOperand(0), m_Instruction(LHSI))) {
-    switch (LHSI->getOpcode()) {
-    case Instruction::Select:
-      {
-      // For now, we only support constant integers while folding the
-      // ICMP(SELECT)) pattern. We can extend this to support vector of integers
-      // similar to the cases handled by binary ops above.
-      if (ConstantInt *ConstRHS = dyn_cast<ConstantInt>(Cmp.getOperand(1)))
-        if (Instruction *I = foldICmpSelectConstant(Cmp, LHSI, ConstRHS))
-          return I;
-      break;
-      }
-    case Instruction::Trunc:
-      if (Instruction *I = foldICmpTruncConstant(Cmp, LHSI, C))
+
+  if (auto *SI = dyn_cast<SelectInst>(Cmp.getOperand(0))) {
+    // For now, we only support constant integers while folding the
+    // ICMP(SELECT)) pattern. We can extend this to support vector of integers
+    // similar to the cases handled by binary ops above.
+    if (ConstantInt *ConstRHS = dyn_cast<ConstantInt>(Cmp.getOperand(1)))
+      if (Instruction *I = foldICmpSelectConstant(Cmp, SI, ConstRHS))
         return I;
-      break;
-    default:
-      break;
-    }
+  }
+
+  if (auto *TI = dyn_cast<TruncInst>(Cmp.getOperand(0))) {
+    if (Instruction *I = foldICmpTruncConstant(Cmp, TI, C))
+      return I;
   }
 
   if (Instruction *I = foldICmpIntrinsicWithConstant(Cmp, C))

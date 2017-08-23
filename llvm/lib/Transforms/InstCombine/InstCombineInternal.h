@@ -687,9 +687,9 @@ private:
   Instruction *foldICmpBinOp(ICmpInst &Cmp);
   Instruction *foldICmpEquality(ICmpInst &Cmp);
 
-  Instruction *foldICmpSelectConstant(ICmpInst &Cmp, Instruction *Select,
+  Instruction *foldICmpSelectConstant(ICmpInst &Cmp, SelectInst *Select,
                                       ConstantInt *C);
-  Instruction *foldICmpTruncConstant(ICmpInst &Cmp, Instruction *Trunc,
+  Instruction *foldICmpTruncConstant(ICmpInst &Cmp, TruncInst *Trunc,
                                      const APInt *C);
   Instruction *foldICmpAndConstant(ICmpInst &Cmp, BinaryOperator *And,
                                    const APInt *C);
