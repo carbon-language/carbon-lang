@@ -3869,7 +3869,7 @@ bool isAParameter(llvm::Value *maybeParam, const Function &F) {
       return true;
 
   return false;
-};
+}
 
 bool Scop::canAlwaysBeHoisted(MemoryAccess *MA, bool StmtInvalidCtxIsEmpty,
                               bool MAInvalidCtxIsEmpty,
