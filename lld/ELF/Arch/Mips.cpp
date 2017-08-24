@@ -143,13 +143,6 @@ void MIPS<ELFT>::writeGotPlt(uint8_t *Buf, const SymbolBody &) const {
 }
 
 template <endianness E, uint8_t BSIZE, uint8_t SHIFT>
-static int64_t getPcRelocAddend(const uint8_t *Loc) {
-  uint32_t Instr = read32<E>(Loc);
-  uint32_t Mask = 0xffffffff >> (32 - BSIZE);
-  return SignExtend64<BSIZE + SHIFT>((Instr & Mask) << SHIFT);
-}
-
-template <endianness E, uint8_t BSIZE, uint8_t SHIFT>
 static void applyMipsPcReloc(uint8_t *Loc, uint32_t Type, uint64_t V) {
   uint32_t Mask = 0xffffffff >> (32 - BSIZE);
   uint32_t Instr = read32<E>(Loc);
@@ -265,7 +258,7 @@ int64_t MIPS<ELFT>::getImplicitAddend(const uint8_t *Buf, uint32_t Type) const {
     // FIXME (simon): If the relocation target symbol is not a PLT entry
     // we should use another expression for calculation:
     // ((A << 2) | (P & 0xf0000000)) >> 2
-    return SignExtend64<28>((read32<E>(Buf) & 0x3ffffff) << 2);
+    return SignExtend64<28>(read32<E>(Buf) << 2);
   case R_MIPS_GPREL16:
   case R_MIPS_LO16:
   case R_MIPS_PCLO16:
@@ -275,15 +268,15 @@ int64_t MIPS<ELFT>::getImplicitAddend(const uint8_t *Buf, uint32_t Type) const {
   case R_MIPS_TLS_TPREL_LO16:
     return SignExtend64<16>(read32<E>(Buf));
   case R_MIPS_PC16:
-    return getPcRelocAddend<E, 16, 2>(Buf);
+    return SignExtend64<18>(read32<E>(Buf) << 2);
   case R_MIPS_PC19_S2:
-    return getPcRelocAddend<E, 19, 2>(Buf);
+    return SignExtend64<21>(read32<E>(Buf) << 2);
   case R_MIPS_PC21_S2:
-    return getPcRelocAddend<E, 21, 2>(Buf);
+    return SignExtend64<23>(read32<E>(Buf) << 2);
   case R_MIPS_PC26_S2:
-    return getPcRelocAddend<E, 26, 2>(Buf);
+    return SignExtend64<28>(read32<E>(Buf) << 2);
   case R_MIPS_PC32:
-    return getPcRelocAddend<E, 32, 0>(Buf);
+    return SignExtend64<32>(read32<E>(Buf));
   }
 }
 
