@@ -344,13 +344,11 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FSUB,        MVT::f16,  Promote);
     setOperationAction(ISD::FMUL,        MVT::f16,  Promote);
     setOperationAction(ISD::FDIV,        MVT::f16,  Promote);
-    setOperationAction(ISD::FREM,        MVT::f16,  Promote);
     setOperationAction(ISD::FMA,         MVT::f16,  Promote);
     setOperationAction(ISD::FNEG,        MVT::f16,  Promote);
     setOperationAction(ISD::FABS,        MVT::f16,  Promote);
     setOperationAction(ISD::FCEIL,       MVT::f16,  Promote);
     setOperationAction(ISD::FSQRT,       MVT::f16,  Promote);
-    setOperationAction(ISD::FCOS,        MVT::f16,  Promote);
     setOperationAction(ISD::FFLOOR,      MVT::f16,  Promote);
     setOperationAction(ISD::FNEARBYINT,  MVT::f16,  Promote);
     setOperationAction(ISD::FRINT,       MVT::f16,  Promote);
