@@ -21,6 +21,7 @@
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
@@ -94,6 +95,10 @@ bool RegUsageInfoPropagationPass::runOnMachineFunction(MachineFunction &MF) {
   DEBUG(dbgs() << " ++++++++++++++++++++ " << getPassName()
                << " ++++++++++++++++++++  \n");
   DEBUG(dbgs() << "MachineFunction : " << MF.getName() << "\n");
+
+  const MachineFrameInfo &MFI = MF.getFrameInfo();
+  if (!MFI.hasCalls() && !MFI.hasTailCall())
+    return false;
 
   bool Changed = false;
 
