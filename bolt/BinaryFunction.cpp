@@ -775,13 +775,13 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   Labels[0] = Ctx->createTempSymbol("BB0", false);
   addEntryPointAtOffset(0);
 
-  auto handleRIPOperand =
+  auto handlePCRelOperand =
       [&](MCInst &Instruction, uint64_t Address, uint64_t Size) {
     uint64_t TargetAddress{0};
     MCSymbol *TargetSymbol{nullptr};
     if (!MIA->evaluateMemOperandTarget(Instruction, TargetAddress, Address,
                                        Size)) {
-      errs() << "BOLT-ERROR: rip-relative operand can't be evaluated:\n";
+      errs() << "BOLT-ERROR: PC-relative operand can't be evaluated:\n";
       BC.InstPrinter->printInst(&Instruction, errs(), "", *BC.STI);
       errs() << '\n';
       Instruction.dump_pretty(errs(), BC.InstPrinter.get());
@@ -790,7 +790,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     }
     if (TargetAddress == 0) {
       if (opts::Verbosity >= 1) {
-        outs() << "BOLT-INFO: rip-relative operand is zero in function "
+        outs() << "BOLT-INFO: PC-relative operand is zero in function "
                << *this << ".\n";
       }
     }
@@ -816,8 +816,11 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     if (!TargetSymbol)
       TargetSymbol = BC.getOrCreateGlobalSymbol(TargetAddress, "DATAat");
     MIA->replaceMemOperandDisp(
-        Instruction, MCOperand::createExpr(MCSymbolRefExpr::create(
-                         TargetSymbol, MCSymbolRefExpr::VK_None, *BC.Ctx)));
+        Instruction, MCOperand::createExpr(BC.MIA->getTargetExprFor(
+                         Instruction,
+                         MCSymbolRefExpr::create(
+                             TargetSymbol, MCSymbolRefExpr::VK_None, *BC.Ctx),
+                         *BC.Ctx)));
     return true;
   };
 
@@ -954,7 +957,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             // Assign proper opcode for tail calls, so that they could be
             // treated as calls.
             if (!IsCall) {
-              if (!MIA->convertJmpToTailCall(Instruction)) {
+              if (!MIA->convertJmpToTailCall(Instruction, BC.Ctx.get())) {
                 assert(IsCondBranch && "unknown tail call instruction");
                 if (opts::Verbosity >= 2) {
                   errs() << "BOLT-WARNING: conditional tail call detected in "
@@ -1007,12 +1010,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           // Add taken branch info.
           TakenBranches.emplace_back(Offset, TargetAddress - getAddress());
         }
-        Instruction.clear();
-        Instruction.addOperand(
-            MCOperand::createExpr(
-              MCSymbolRefExpr::create(TargetSymbol,
-                                      MCSymbolRefExpr::VK_None,
-                                      *Ctx)));
+        BC.MIA->replaceBranchTarget(Instruction, TargetSymbol, &*Ctx);
 
         // Record call offset for profile matching.
         if (IsCall) {
@@ -1036,7 +1034,8 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             llvm_unreachable("unexpected result");
           case IndirectBranchType::POSSIBLE_TAIL_CALL:
             {
-              auto Result = MIA->convertJmpToTailCall(Instruction);
+              auto Result =
+                MIA->convertJmpToTailCall(Instruction, BC.Ctx.get());
               (void)Result;
               assert(Result);
             }
@@ -1053,8 +1052,8 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           };
         }
         // Indirect call. We only need to fix it if the operand is RIP-relative
-        if (IsSimple && MIA->hasRIPOperand(Instruction)) {
-          if (!handleRIPOperand(Instruction, AbsoluteInstrAddr, Size)) {
+        if (IsSimple && MIA->hasPCRelOperand(Instruction)) {
+          if (!handlePCRelOperand(Instruction, AbsoluteInstrAddr, Size)) {
             errs() << "BOLT-ERROR: cannot handle RIP operand at 0x"
                    << Twine::utohexstr(AbsoluteInstrAddr)
                    << ". Skipping function " << *this << ".\n";
@@ -1065,8 +1064,8 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         }
       }
     } else {
-      if (MIA->hasRIPOperand(Instruction)) {
-        if (!handleRIPOperand(Instruction, AbsoluteInstrAddr, Size)) {
+      if (MIA->hasPCRelOperand(Instruction)) {
+        if (!handlePCRelOperand(Instruction, AbsoluteInstrAddr, Size)) {
           errs() << "BOLT-ERROR: cannot handle RIP operand at 0x"
                  << Twine::utohexstr(AbsoluteInstrAddr)
                  << ". Skipping function " << *this << ".\n";
@@ -1152,7 +1151,7 @@ bool BinaryFunction::postProcessIndirectBranches() {
       // If there's an indirect branch in a single-block function -
       // it must be a tail call.
       if (layout_size() == 1) {
-        BC.MIA->convertJmpToTailCall(Instr);
+        BC.MIA->convertJmpToTailCall(Instr, BC.Ctx.get());
         return true;
       }
 
@@ -1231,7 +1230,7 @@ bool BinaryFunction::postProcessIndirectBranches() {
         }
         return false;
       }
-      BC.MIA->convertJmpToTailCall(Instr);
+      BC.MIA->convertJmpToTailCall(Instr, BC.Ctx.get());
     }
   }
   return true;

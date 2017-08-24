@@ -65,7 +65,7 @@ void StokeInfo::checkInstr(const BinaryContext &BC, const BinaryFunction &BF,
       // check if this function modify stack or heap
       // TODO: more accurate analysis
       auto IsPush = BC.MIA->isPush(It);
-      auto IsRipAddr = BC.MIA->hasRIPOperand(It);
+      auto IsRipAddr = BC.MIA->hasPCRelOperand(It);
       if (IsPush) {
         FuncInfo.StackOut = true;
       }

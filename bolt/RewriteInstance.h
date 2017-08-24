@@ -104,6 +104,8 @@ private:
                            bool IsCode,
                            bool IsReadOnly);
 
+  bool AllowStubs;
+
 public:
   /// [start memory address] -> [segment info] mapping.
   std::map<uint64_t, SegmentInfo> SegmentMapInfo;
@@ -114,7 +116,7 @@ public:
   /// Information about non-allocatable sections.
   std::map<std::string, SectionInfo> NoteSectionInfo;
 
-  ExecutableFileMemoryManager() {}
+  ExecutableFileMemoryManager(bool AllowStubs) : AllowStubs(AllowStubs) {}
 
   ~ExecutableFileMemoryManager();
 
@@ -136,8 +138,7 @@ public:
                              unsigned Alignment, unsigned SectionID,
                              StringRef SectionName) override;
 
-  // Tell EE that we guarantee we don't need stubs.
-  bool allowStubAllocation() const override { return false; }
+  bool allowStubAllocation() const override { return AllowStubs; }
 
   bool finalizeMemory(std::string *ErrMsg = nullptr) override;
 };

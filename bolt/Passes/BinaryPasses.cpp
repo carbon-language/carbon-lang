@@ -1005,12 +1005,12 @@ bool SimplifyRODataLoads::simplifyRODataLoads(
       // Try to statically evaluate the target memory address;
       uint64_t TargetAddress;
 
-      if (MIA->hasRIPOperand(Inst)) {
-        // Try to find the symbol that corresponds to the RIP-relative operand.
+      if (MIA->hasPCRelOperand(Inst)) {
+        // Try to find the symbol that corresponds to the PC-relative operand.
         auto DispOpI = MIA->getMemOperandDisp(Inst);
-        assert(DispOpI != Inst.end() && "expected RIP-relative displacement");
+        assert(DispOpI != Inst.end() && "expected PC-relative displacement");
         assert(DispOpI->isExpr() &&
-              "found RIP-relative with non-symbolic displacement");
+              "found PC-relative with non-symbolic displacement");
 
         // Get displacement symbol.
         const MCSymbolRefExpr *DisplExpr;

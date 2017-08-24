@@ -675,7 +675,10 @@ void RewriteInstance::aggregateData() {
 
 void RewriteInstance::discoverStorage() {
 
-  EFMM.reset(new ExecutableFileMemoryManager());
+  // Tell EE that we guarantee we don't need stubs for x86, but not for aarch64
+  EFMM.reset(new ExecutableFileMemoryManager(
+      /*AllowStubs*/ (BC->TheTriple->getArch() == llvm::Triple::aarch64 &&
+                      opts::Relocs)));
 
   auto ELF64LEFile = dyn_cast<ELF64LEObjectFile>(InputFile);
   if (!ELF64LEFile) {
@@ -1224,7 +1227,8 @@ void RewriteInstance::discoverFileObjects() {
   }
 
   // Process PLT section.
-  disassemblePLT();
+  if (BC->TheTriple->getArch() == Triple::x86_64)
+    disassemblePLT();
 
   // See if we missed any functions marked by FDE.
   for (const auto &FDEI : CFIRdWrt->getFDEs()) {
