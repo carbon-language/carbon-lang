@@ -42,7 +42,7 @@ public:
     SelectionStack.pop_back();
     if (Result.Children.empty())
       return None;
-    return Result;
+    return std::move(Result);
   }
 
   bool TraverseDecl(Decl *D) {
