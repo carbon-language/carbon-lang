@@ -259,6 +259,10 @@ int64_t MIPS<ELFT>::getImplicitAddend(const uint8_t *Buf, uint32_t Type) const {
     // we should use another expression for calculation:
     // ((A << 2) | (P & 0xf0000000)) >> 2
     return SignExtend64<28>(read32<E>(Buf) << 2);
+  case R_MIPS_GOT16:
+  case R_MIPS_HI16:
+  case R_MIPS_PCHI16:
+    return SignExtend64<16>(read32<E>(Buf)) << 16;
   case R_MIPS_GPREL16:
   case R_MIPS_LO16:
   case R_MIPS_PCLO16:
