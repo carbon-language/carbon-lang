@@ -1932,15 +1932,48 @@ static bool hasNoSignedComparisonUses(SDNode *N) {
   return true;
 }
 
+/// Get the appropriate X86 opcode for an in-memory arithmetic operation that
+/// also sets flags.
+///
+/// FIXME: This is essentially re-implemneting a subset of the patterns for
+/// these instructions. Instead, we should compute this from the patterns
+/// somehow.
+///
+/// FIXME: Currently we only support integer operations.
+///
+/// If there is no X86 opcode, returns none.
+static Optional<unsigned> getFusedLdStWithFlagsOpcode(EVT LdVT, unsigned Opc) {
+  auto SelectSize = [&](unsigned Opc64, unsigned Opc32, unsigned Opc16,
+                        unsigned Opc8) -> Optional<unsigned> {
+    switch (LdVT.getSimpleVT().SimpleTy) {
+    case MVT::i64:
+      return Opc64;
+    case MVT::i32:
+      return Opc32;
+    case MVT::i16:
+      return Opc16;
+    case MVT::i8:
+      return Opc8;
+    default:
+      return None;
+    }
+  };
+  switch (Opc) {
+  default:
+    return None;
+  case X86ISD::DEC:
+    return SelectSize(X86::DEC64m, X86::DEC32m, X86::DEC16m, X86::DEC8m);
+  case X86ISD::INC:
+    return SelectSize(X86::INC64m, X86::INC32m, X86::INC16m, X86::INC8m);
+  }
+}
+
 /// Check whether or not the chain ending in StoreNode is suitable for doing
-/// the {load; increment or decrement; store} to modify transformation.
-static bool isLoadIncOrDecStore(StoreSDNode *StoreNode, unsigned Opc,
-                                SDValue StoredVal, SelectionDAG *CurDAG,
-                                LoadSDNode* &LoadNode, SDValue &InputChain) {
-
-  // is the value stored the result of a DEC or INC?
-  if (!(Opc == X86ISD::DEC || Opc == X86ISD::INC)) return false;
-
+/// the {load; op; store} to modify transformation.
+static bool isFusableLoadOpStorePattern(StoreSDNode *StoreNode,
+                                        SDValue StoredVal, SelectionDAG *CurDAG,
+                                        LoadSDNode *&LoadNode,
+                                        SDValue &InputChain) {
   // is the stored value result 0 of the load?
   if (StoredVal.getResNo() != 0) return false;
 
@@ -1957,11 +1990,6 @@ static bool isLoadIncOrDecStore(StoreSDNode *StoreNode, unsigned Opc,
 
   // Return LoadNode by reference.
   LoadNode = cast<LoadSDNode>(Load);
-  // is the size of the value one that we can handle? (i.e. 64, 32, 16, or 8)
-  EVT LdVT = LoadNode->getMemoryVT();
-  if (LdVT != MVT::i64 && LdVT != MVT::i32 && LdVT != MVT::i16 &&
-      LdVT != MVT::i8)
-    return false;
 
   // Is store the only read of the loaded value?
   if (!Load.hasOneUse())
@@ -2019,24 +2047,6 @@ static bool isLoadIncOrDecStore(StoreSDNode *StoreNode, unsigned Opc,
   return true;
 }
 
-/// Get the appropriate X86 opcode for an in-memory increment or decrement.
-/// Opc should be X86ISD::DEC or X86ISD::INC.
-static unsigned getFusedLdStOpcode(EVT &LdVT, unsigned Opc) {
-  if (Opc == X86ISD::DEC) {
-    if (LdVT == MVT::i64) return X86::DEC64m;
-    if (LdVT == MVT::i32) return X86::DEC32m;
-    if (LdVT == MVT::i16) return X86::DEC16m;
-    if (LdVT == MVT::i8)  return X86::DEC8m;
-  } else {
-    assert(Opc == X86ISD::INC && "unrecognized opcode");
-    if (LdVT == MVT::i64) return X86::INC64m;
-    if (LdVT == MVT::i32) return X86::INC32m;
-    if (LdVT == MVT::i16) return X86::INC16m;
-    if (LdVT == MVT::i8)  return X86::INC8m;
-  }
-  llvm_unreachable("unrecognized size for LdVT");
-}
-
 // Change a chain of {load; incr or dec; store} of the same value into
 // a simple increment or decrement through memory of that value, if the
 // uses of the modified value and its address are suitable.
@@ -2061,10 +2071,17 @@ bool X86DAGToDAGISel::foldLoadStoreIntoMemOperand(SDNode *Node) {
   SDValue StoredVal = StoreNode->getOperand(1);
   unsigned Opc = StoredVal->getOpcode();
 
+  EVT MemVT = StoreNode->getMemoryVT();
+  if (!MemVT.isSimple())
+    return false;
+  Optional<unsigned> NewOpc = getFusedLdStWithFlagsOpcode(MemVT, Opc);
+  if (!NewOpc)
+    return false;
+
   LoadSDNode *LoadNode = nullptr;
   SDValue InputChain;
-  if (!isLoadIncOrDecStore(StoreNode, Opc, StoredVal, CurDAG, LoadNode,
-                           InputChain))
+  if (!isFusableLoadOpStorePattern(StoreNode, StoredVal, CurDAG, LoadNode,
+                                   InputChain))
     return false;
 
   SDValue Base, Scale, Index, Disp, Segment;
@@ -2076,10 +2093,8 @@ bool X86DAGToDAGISel::foldLoadStoreIntoMemOperand(SDNode *Node) {
   MemOp[0] = StoreNode->getMemOperand();
   MemOp[1] = LoadNode->getMemOperand();
   const SDValue Ops[] = {Base, Scale, Index, Disp, Segment, InputChain};
-  EVT LdVT = LoadNode->getMemoryVT();
-  unsigned newOpc = getFusedLdStOpcode(LdVT, Opc);
   MachineSDNode *Result =
-      CurDAG->getMachineNode(newOpc, SDLoc(Node), MVT::i32, MVT::Other, Ops);
+      CurDAG->getMachineNode(*NewOpc, SDLoc(Node), MVT::i32, MVT::Other, Ops);
   Result->setMemRefs(MemOp, MemOp + 2);
 
   ReplaceUses(SDValue(StoreNode, 0), SDValue(Result, 1));
