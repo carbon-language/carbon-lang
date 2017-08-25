@@ -420,6 +420,8 @@ namespace {
         return Subtarget->hasAVX512();
       }
     }
+
+    bool foldLoadStoreIntoMemOperand(SDNode *Node);
   };
 }
 
@@ -2035,6 +2037,57 @@ static unsigned getFusedLdStOpcode(EVT &LdVT, unsigned Opc) {
   llvm_unreachable("unrecognized size for LdVT");
 }
 
+// Change a chain of {load; incr or dec; store} of the same value into
+// a simple increment or decrement through memory of that value, if the
+// uses of the modified value and its address are suitable.
+// The DEC64m tablegen pattern is currently not able to match the case where
+// the EFLAGS on the original DEC are used. (This also applies to
+// {INC,DEC}X{64,32,16,8}.)
+// We'll need to improve tablegen to allow flags to be transferred from a
+// node in the pattern to the result node.  probably with a new keyword
+// for example, we have this
+// def DEC64m : RI<0xFF, MRM1m, (outs), (ins i64mem:$dst), "dec{q}\t$dst",
+//  [(store (add (loadi64 addr:$dst), -1), addr:$dst),
+//   (implicit EFLAGS)]>;
+// but maybe need something like this
+// def DEC64m : RI<0xFF, MRM1m, (outs), (ins i64mem:$dst), "dec{q}\t$dst",
+//  [(store (add (loadi64 addr:$dst), -1), addr:$dst),
+//   (transferrable EFLAGS)]>;
+//
+// FIXME: This should handle a wide range of operations which support RMW
+// memory operands, not just inc and dec.
+bool X86DAGToDAGISel::foldLoadStoreIntoMemOperand(SDNode *Node) {
+  StoreSDNode *StoreNode = cast<StoreSDNode>(Node);
+  SDValue StoredVal = StoreNode->getOperand(1);
+  unsigned Opc = StoredVal->getOpcode();
+
+  LoadSDNode *LoadNode = nullptr;
+  SDValue InputChain;
+  if (!isLoadIncOrDecStore(StoreNode, Opc, StoredVal, CurDAG, LoadNode,
+                           InputChain))
+    return false;
+
+  SDValue Base, Scale, Index, Disp, Segment;
+  if (!selectAddr(LoadNode, LoadNode->getBasePtr(), Base, Scale, Index, Disp,
+                  Segment))
+    return false;
+
+  MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(2);
+  MemOp[0] = StoreNode->getMemOperand();
+  MemOp[1] = LoadNode->getMemOperand();
+  const SDValue Ops[] = {Base, Scale, Index, Disp, Segment, InputChain};
+  EVT LdVT = LoadNode->getMemoryVT();
+  unsigned newOpc = getFusedLdStOpcode(LdVT, Opc);
+  MachineSDNode *Result =
+      CurDAG->getMachineNode(newOpc, SDLoc(Node), MVT::i32, MVT::Other, Ops);
+  Result->setMemRefs(MemOp, MemOp + 2);
+
+  ReplaceUses(SDValue(StoreNode, 0), SDValue(Result, 1));
+  ReplaceUses(SDValue(StoredVal.getNode(), 1), SDValue(Result, 0));
+  CurDAG->RemoveDeadNode(Node);
+  return true;
+}
+
 void X86DAGToDAGISel::Select(SDNode *Node) {
   MVT NVT = Node->getSimpleValueType(0);
   unsigned Opc, MOpc;
@@ -2697,55 +2750,10 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
     }
     break;
   }
-  case ISD::STORE: {
-    // Change a chain of {load; incr or dec; store} of the same value into
-    // a simple increment or decrement through memory of that value, if the
-    // uses of the modified value and its address are suitable.
-    // The DEC64m tablegen pattern is currently not able to match the case where
-    // the EFLAGS on the original DEC are used. (This also applies to
-    // {INC,DEC}X{64,32,16,8}.)
-    // We'll need to improve tablegen to allow flags to be transferred from a
-    // node in the pattern to the result node.  probably with a new keyword
-    // for example, we have this
-    // def DEC64m : RI<0xFF, MRM1m, (outs), (ins i64mem:$dst), "dec{q}\t$dst",
-    //  [(store (add (loadi64 addr:$dst), -1), addr:$dst),
-    //   (implicit EFLAGS)]>;
-    // but maybe need something like this
-    // def DEC64m : RI<0xFF, MRM1m, (outs), (ins i64mem:$dst), "dec{q}\t$dst",
-    //  [(store (add (loadi64 addr:$dst), -1), addr:$dst),
-    //   (transferrable EFLAGS)]>;
-
-    StoreSDNode *StoreNode = cast<StoreSDNode>(Node);
-    SDValue StoredVal = StoreNode->getOperand(1);
-    unsigned Opc = StoredVal->getOpcode();
-
-    LoadSDNode *LoadNode = nullptr;
-    SDValue InputChain;
-    if (!isLoadIncOrDecStore(StoreNode, Opc, StoredVal, CurDAG,
-                             LoadNode, InputChain))
-      break;
-
-    SDValue Base, Scale, Index, Disp, Segment;
-    if (!selectAddr(LoadNode, LoadNode->getBasePtr(),
-                    Base, Scale, Index, Disp, Segment))
-      break;
-
-    MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(2);
-    MemOp[0] = StoreNode->getMemOperand();
-    MemOp[1] = LoadNode->getMemOperand();
-    const SDValue Ops[] = { Base, Scale, Index, Disp, Segment, InputChain };
-    EVT LdVT = LoadNode->getMemoryVT();
-    unsigned newOpc = getFusedLdStOpcode(LdVT, Opc);
-    MachineSDNode *Result = CurDAG->getMachineNode(newOpc,
-                                                   SDLoc(Node),
-                                                   MVT::i32, MVT::Other, Ops);
-    Result->setMemRefs(MemOp, MemOp + 2);
-
-    ReplaceUses(SDValue(StoreNode, 0), SDValue(Result, 1));
-    ReplaceUses(SDValue(StoredVal.getNode(), 1), SDValue(Result, 0));
-    CurDAG->RemoveDeadNode(Node);
-    return;
-  }
+  case ISD::STORE:
+    if (foldLoadStoreIntoMemOperand(Node))
+      return;
+    break;
   }
 
   SelectCode(Node);
