@@ -4088,6 +4088,13 @@ def err_pointer_to_member_call_drops_quals : Error<
 def err_pointer_to_member_oper_value_classify: Error<
   "pointer-to-member function type %0 can only be called on an "
   "%select{rvalue|lvalue}1">;
+def ext_pointer_to_const_ref_member_on_rvalue : Extension<
+  "invoking a pointer to a 'const &' member function on an rvalue is a C++2a extension">,
+  InGroup<CXX2a>, SFINAEFailure;
+def warn_cxx17_compat_pointer_to_const_ref_member_on_rvalue : Warning<
+  "invoking a pointer to a 'const &' member function on an rvalue is "
+  "incompatible with C++ standards before C++2a">,
+  InGroup<CXXPre2aCompatPedantic>, DefaultIgnore;
 def ext_ms_deref_template_argument: ExtWarn<
   "non-type template argument containing a dereference operation is a "
   "Microsoft extension">, InGroup<MicrosoftTemplate>;
