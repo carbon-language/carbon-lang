@@ -166,9 +166,9 @@ def NoexceptType : DiagGroup<"noexcept-type", [CXX17CompatMangling]>;
 def CXXPre14Compat : DiagGroup<"c++98-c++11-compat">;
 def CXXPre14CompatPedantic : DiagGroup<"c++98-c++11-compat-pedantic",
                                        [CXXPre14Compat]>;
-def CXXPre1zCompat : DiagGroup<"c++98-c++11-c++14-compat">;
-def CXXPre1zCompatPedantic : DiagGroup<"c++98-c++11-c++14-compat-pedantic",
-                                       [CXXPre1zCompat]>;
+def CXXPre17Compat : DiagGroup<"c++98-c++11-c++14-compat">;
+def CXXPre17CompatPedantic : DiagGroup<"c++98-c++11-c++14-compat-pedantic",
+                                       [CXXPre17Compat]>;
 def CXXPre2aCompat : DiagGroup<"c++98-c++11-c++14-c++17-compat">;
 def CXXPre2aCompatPedantic : DiagGroup<"c++98-c++11-c++14-c++17-compat-pedantic",
                                        [CXXPre2aCompat]>;
@@ -184,14 +184,14 @@ def CXX98Compat : DiagGroup<"c++98-compat",
                             [CXX98CompatLocalTypeTemplateArgs,
                              CXX98CompatUnnamedTypeTemplateArgs,
                              CXXPre14Compat,
-                             CXXPre1zCompat,
+                             CXXPre17Compat,
                              CXXPre2aCompat]>;
 // Warnings for C++11 features which are Extensions in C++98 mode.
 def CXX98CompatPedantic : DiagGroup<"c++98-compat-pedantic",
                                     [CXX98Compat,
                                      CXX98CompatBindToTemporaryCopy,
                                      CXXPre14CompatPedantic,
-                                     CXXPre1zCompatPedantic,
+                                     CXXPre17CompatPedantic,
                                      CXXPre2aCompatPedantic]>;
 
 def CXX11Narrowing : DiagGroup<"c++11-narrowing">;
@@ -217,20 +217,20 @@ def CXX11Compat : DiagGroup<"c++11-compat",
                              CXX11CompatReservedUserDefinedLiteral,
                              CXX11CompatDeprecatedWritableStr,
                              CXXPre14Compat,
-                             CXXPre1zCompat,
+                             CXXPre17Compat,
                              CXXPre2aCompat]>;
 def : DiagGroup<"c++0x-compat", [CXX11Compat]>;
 def CXX11CompatPedantic : DiagGroup<"c++11-compat-pedantic",
                                     [CXX11Compat,
                                      CXXPre14CompatPedantic,
-                                     CXXPre1zCompatPedantic,
+                                     CXXPre17CompatPedantic,
                                      CXXPre2aCompatPedantic]>;
 
-def CXX14Compat : DiagGroup<"c++14-compat", [CXXPre1zCompat,
+def CXX14Compat : DiagGroup<"c++14-compat", [CXXPre17Compat,
                                              CXXPre2aCompat]>;
 def CXX14CompatPedantic : DiagGroup<"c++14-compat-pedantic",
                                     [CXX14Compat,
-                                     CXXPre1zCompatPedantic,
+                                     CXXPre17CompatPedantic,
                                      CXXPre2aCompatPedantic]>;
 
 def CXX17Compat : DiagGroup<"c++17-compat", [DeprecatedRegister,
@@ -798,7 +798,7 @@ def CXX11 : DiagGroup<"c++11-extensions", [CXX11ExtraSemi, CXX11InlineNamespace,
 // earlier C++ versions.
 def CXX14 : DiagGroup<"c++14-extensions", [CXX14BinaryLiteral]>;
 
-// A warning group for warnings about using C++1z features as extensions in
+// A warning group for warnings about using C++17 features as extensions in
 // earlier C++ versions.
 def CXX17 : DiagGroup<"c++17-extensions">;
 
