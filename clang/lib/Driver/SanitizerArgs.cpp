@@ -290,11 +290,10 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
       if (Add & Fuzzer)
         Add |= FuzzerNoLink;
 
-      // Enable coverage and stack depth tracking if the fuzzing flag is set.
+      // Enable coverage if the fuzzing flag is set.
       if (Add & FuzzerNoLink)
         CoverageFeatures |= CoverageTracePCGuard | CoverageIndirCall |
-                            CoverageTraceCmp | CoveragePCTable |
-                            CoverageStackDepth;
+                            CoverageTraceCmp | CoveragePCTable;
 
       Kinds |= Add;
     } else if (Arg->getOption().matches(options::OPT_fno_sanitize_EQ)) {
