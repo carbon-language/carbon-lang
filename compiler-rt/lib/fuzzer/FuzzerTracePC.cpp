@@ -270,7 +270,7 @@ void TracePC::PrintCoverage() {
 
 void TracePC::DumpCoverage() {
   if (EF->__sanitizer_dump_coverage) {
-    std::vector<uintptr_t> PCsCopy(GetNumPCs());
+    fuzzer::vector<uintptr_t> PCsCopy(GetNumPCs());
     for (size_t i = 0; i < GetNumPCs(); i++)
       PCsCopy[i] = PCs()[i] ? GetPreviousInstructionPc(PCs()[i]) : 0;
     EF->__sanitizer_dump_coverage(PCsCopy.data(), PCsCopy.size());

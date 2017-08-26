@@ -18,6 +18,8 @@
 #include <cstring>
 #include <string>
 #include <vector>
+#include <set>
+#include <memory>
 
 // Platform detection.
 #ifdef __linux__
@@ -102,8 +104,19 @@ struct ExternalFunctions;
 // Global interface to functions that may or may not be available.
 extern ExternalFunctions *EF;
 
-typedef std::vector<uint8_t> Unit;
-typedef std::vector<Unit> UnitVector;
+// We are using a custom allocator to give a different symbol name to STL
+// containers in order to avoid ODR violations.
+template<typename T>
+class fuzzer_allocator: public std::allocator<T> {};
+
+template<typename T>
+using vector = std::vector<T, fuzzer_allocator<T>>;
+
+template<typename T>
+using set = std::set<T, std::less<T>, fuzzer_allocator<T>>;
+
+typedef fuzzer::vector<uint8_t> Unit;
+typedef fuzzer::vector<Unit> UnitVector;
 typedef int (*UserCallback)(const uint8_t *Data, size_t Size);
 
 int FuzzerDriver(int *argc, char ***argv, UserCallback Callback);

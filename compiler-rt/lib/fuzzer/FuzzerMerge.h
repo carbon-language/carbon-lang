@@ -52,11 +52,11 @@ namespace fuzzer {
 struct MergeFileInfo {
   std::string Name;
   size_t Size = 0;
-  std::vector<uint32_t> Features;
+  fuzzer::vector<uint32_t> Features;
 };
 
 struct Merger {
-  std::vector<MergeFileInfo> Files;
+  fuzzer::vector<MergeFileInfo> Files;
   size_t NumFilesInFirstCorpus = 0;
   size_t FirstNotProcessedFile = 0;
   std::string LastFailure;
@@ -67,8 +67,8 @@ struct Merger {
   void PrintSummary(std::ostream &OS);
   std::set<uint32_t> ParseSummary(std::istream &IS);
   size_t Merge(const std::set<uint32_t> &InitialFeatures,
-               std::vector<std::string> *NewFiles);
-  size_t Merge(std::vector<std::string> *NewFiles) {
+               fuzzer::vector<std::string> *NewFiles);
+  size_t Merge(fuzzer::vector<std::string> *NewFiles) {
     return Merge(std::set<uint32_t>{}, NewFiles);
   }
   size_t ApproximateMemoryConsumption() const;
