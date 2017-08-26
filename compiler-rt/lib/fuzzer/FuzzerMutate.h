@@ -96,7 +96,7 @@ private:
   size_t AddWordFromDictionary(Dictionary &D, uint8_t *Data, size_t Size,
                                size_t MaxSize);
   size_t MutateImpl(uint8_t *Data, size_t Size, size_t MaxSize,
-                    const fuzzer::vector<Mutator> &Mutators);
+                    const std::vector<Mutator> &Mutators);
 
   size_t InsertPartOf(const uint8_t *From, size_t FromSize, uint8_t *To,
                       size_t ToSize, size_t MaxToSize);
@@ -128,21 +128,21 @@ private:
   // entries that led to successfull discoveries in the past mutations.
   Dictionary PersistentAutoDictionary;
 
-  fuzzer::vector<Mutator> CurrentMutatorSequence;
-  fuzzer::vector<DictionaryEntry *> CurrentDictionaryEntrySequence;
+  std::vector<Mutator> CurrentMutatorSequence;
+  std::vector<DictionaryEntry *> CurrentDictionaryEntrySequence;
 
   static const size_t kCmpDictionaryEntriesDequeSize = 16;
   DictionaryEntry CmpDictionaryEntriesDeque[kCmpDictionaryEntriesDequeSize];
   size_t CmpDictionaryEntriesDequeIdx = 0;
 
   const InputCorpus *Corpus = nullptr;
-  fuzzer::vector<uint8_t> MutateInPlaceHere;
+  std::vector<uint8_t> MutateInPlaceHere;
   // CustomCrossOver needs its own buffer as a custom implementation may call
   // LLVMFuzzerMutate, which in turn may resize MutateInPlaceHere.
-  fuzzer::vector<uint8_t> CustomCrossOverInPlaceHere;
+  std::vector<uint8_t> CustomCrossOverInPlaceHere;
 
-  fuzzer::vector<Mutator> Mutators;
-  fuzzer::vector<Mutator> DefaultMutators;
+  std::vector<Mutator> Mutators;
+  std::vector<Mutator> DefaultMutators;
 };
 
 }  // namespace fuzzer

@@ -526,7 +526,7 @@ TEST(FuzzerDictionary, ParseOneDictionaryEntry) {
 }
 
 TEST(FuzzerDictionary, ParseDictionaryFile) {
-  fuzzer::vector<Unit> Units;
+  std::vector<Unit> Units;
   EXPECT_FALSE(ParseDictionaryFile("zzz\n", &Units));
   EXPECT_FALSE(ParseDictionaryFile("", &Units));
   EXPECT_TRUE(ParseDictionaryFile("\n", &Units));
@@ -538,11 +538,11 @@ TEST(FuzzerDictionary, ParseDictionaryFile) {
   EXPECT_TRUE(ParseDictionaryFile("  #zzzz\n", &Units));
   EXPECT_EQ(Units.size(), 0U);
   EXPECT_TRUE(ParseDictionaryFile("  #zzzz\naaa=\"aa\"", &Units));
-  EXPECT_EQ(Units, fuzzer::vector<Unit>({Unit({'a', 'a'})}));
+  EXPECT_EQ(Units, std::vector<Unit>({Unit({'a', 'a'})}));
   EXPECT_TRUE(
       ParseDictionaryFile("  #zzzz\naaa=\"aa\"\n\nabc=\"abc\"", &Units));
   EXPECT_EQ(Units,
-            fuzzer::vector<Unit>({Unit({'a', 'a'}), Unit({'a', 'b', 'c'})}));
+            std::vector<Unit>({Unit({'a', 'a'}), Unit({'a', 'b', 'c'})}));
 }
 
 TEST(FuzzerUtil, Base64) {
@@ -566,7 +566,7 @@ TEST(Corpus, Distribution) {
   for (size_t i = 0; i < N; i++)
     C->AddToCorpus(Unit{ static_cast<uint8_t>(i) }, 1, false, {});
 
-  fuzzer::vector<size_t> Hist(N);
+  std::vector<size_t> Hist(N);
   for (size_t i = 0; i < N * TriesPerUnit; i++) {
     Hist[C->ChooseUnitIdxToMutate(Rand)]++;
   }
@@ -596,21 +596,21 @@ TEST(Merge, Bad) {
   }
 }
 
-void EQ(const fuzzer::vector<uint32_t> &A, const fuzzer::vector<uint32_t> &B) {
+void EQ(const std::vector<uint32_t> &A, const std::vector<uint32_t> &B) {
   EXPECT_EQ(A, B);
 }
 
-void EQ(const fuzzer::vector<std::string> &A, const fuzzer::vector<std::string> &B) {
+void EQ(const std::vector<std::string> &A, const std::vector<std::string> &B) {
   std::set<std::string> a(A.begin(), A.end());
   std::set<std::string> b(B.begin(), B.end());
   EXPECT_EQ(a, b);
 }
 
 static void Merge(const std::string &Input,
-                  const fuzzer::vector<std::string> Result,
+                  const std::vector<std::string> Result,
                   size_t NumNewFeatures) {
   Merger M;
-  fuzzer::vector<std::string> NewFiles;
+  std::vector<std::string> NewFiles;
   EXPECT_TRUE(M.Parse(Input, true));
   std::stringstream SS;
   M.PrintSummary(SS);
@@ -658,7 +658,7 @@ TEST(Merge, Good) {
   EQ(M.Files[1].Features, {4, 5, 6});
 
 
-  fuzzer::vector<std::string> NewFiles;
+  std::vector<std::string> NewFiles;
 
   EXPECT_TRUE(M.Parse("3\n2\nAA\nBB\nC\n"
                         "STARTED 0 1000\nDONE 0 1 2 3\n"
@@ -739,7 +739,7 @@ TEST(Fuzzer, ForEachNonZeroByte) {
     0, 0, 0, 0, 0, 0, 0, 8,
     9, 9, 9, 9, 9, 9, 9, 9,
   };
-  typedef fuzzer::vector<std::pair<size_t, uint8_t> > Vec;
+  typedef std::vector<std::pair<size_t, uint8_t> > Vec;
   Vec Res, Expected;
   auto CB = [&](size_t FirstFeature, size_t Idx, uint8_t V) {
     Res.push_back({FirstFeature + Idx, V});

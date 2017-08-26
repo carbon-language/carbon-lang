@@ -350,7 +350,7 @@ void Fuzzer::CheckExitOnSrcPosOrItem() {
 
 void Fuzzer::RereadOutputCorpus(size_t MaxSize) {
   if (Options.OutputCorpus.empty() || !Options.ReloadIntervalSec) return;
-  fuzzer::vector<Unit> AdditionalCorpus;
+  std::vector<Unit> AdditionalCorpus;
   ReadDirToVectorOfUnits(Options.OutputCorpus.c_str(), &AdditionalCorpus,
                          &EpochOfLastReadOfOutputCorpus, MaxSize,
                          /*ExitOnError*/ false);

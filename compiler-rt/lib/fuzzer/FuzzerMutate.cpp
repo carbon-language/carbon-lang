@@ -466,7 +466,7 @@ void MutationDispatcher::RecordSuccessfulMutationSequence() {
 }
 
 void MutationDispatcher::PrintRecommendedDictionary() {
-  fuzzer::vector<DictionaryEntry> V;
+  std::vector<DictionaryEntry> V;
   for (auto &DE : PersistentAutoDictionary)
     if (!ManualDictionary.ContainsWord(DE.GetW()))
       V.push_back(DE);
@@ -506,7 +506,7 @@ size_t MutationDispatcher::DefaultMutate(uint8_t *Data, size_t Size,
 // Mutates Data in place, returns new size.
 size_t MutationDispatcher::MutateImpl(uint8_t *Data, size_t Size,
                                       size_t MaxSize,
-                                      const fuzzer::vector<Mutator> &Mutators) {
+                                      const std::vector<Mutator> &Mutators) {
   assert(MaxSize > 0);
   // Some mutations may fail (e.g. can't insert more bytes if Size == MaxSize),
   // in which case they will return 0.

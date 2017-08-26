@@ -68,10 +68,10 @@ void WriteToFile(const Unit &U, const std::string &Path) {
   fclose(Out);
 }
 
-void ReadDirToVectorOfUnits(const char *Path, fuzzer::vector<Unit> *V,
+void ReadDirToVectorOfUnits(const char *Path, std::vector<Unit> *V,
                             long *Epoch, size_t MaxSize, bool ExitOnError) {
   long E = Epoch ? *Epoch : 0;
-  fuzzer::vector<std::string> Files;
+  std::vector<std::string> Files;
   ListFilesInDirRecursive(Path, Epoch, &Files, /*TopDir*/true);
   size_t NumLoaded = 0;
   for (size_t i = 0; i < Files.size(); i++) {
