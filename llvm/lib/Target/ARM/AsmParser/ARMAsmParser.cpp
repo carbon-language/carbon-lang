@@ -3339,25 +3339,7 @@ ARMAsmParser::parseITCondCode(OperandVector &Operands) {
   const AsmToken &Tok = Parser.getTok();
   if (!Tok.is(AsmToken::Identifier))
     return MatchOperand_NoMatch;
-  unsigned CC = StringSwitch<unsigned>(Tok.getString().lower())
-    .Case("eq", ARMCC::EQ)
-    .Case("ne", ARMCC::NE)
-    .Case("hs", ARMCC::HS)
-    .Case("cs", ARMCC::HS)
-    .Case("lo", ARMCC::LO)
-    .Case("cc", ARMCC::LO)
-    .Case("mi", ARMCC::MI)
-    .Case("pl", ARMCC::PL)
-    .Case("vs", ARMCC::VS)
-    .Case("vc", ARMCC::VC)
-    .Case("hi", ARMCC::HI)
-    .Case("ls", ARMCC::LS)
-    .Case("ge", ARMCC::GE)
-    .Case("lt", ARMCC::LT)
-    .Case("gt", ARMCC::GT)
-    .Case("le", ARMCC::LE)
-    .Case("al", ARMCC::AL)
-    .Default(~0U);
+  unsigned CC = ARMCondCodeFromString(Tok.getString());
   if (CC == ~0U)
     return MatchOperand_NoMatch;
   Parser.Lex(); // Eat the token.
@@ -5340,25 +5322,7 @@ StringRef ARMAsmParser::splitMnemonic(StringRef Mnemonic,
       Mnemonic != "muls" && Mnemonic != "smlals" && Mnemonic != "smulls" &&
       Mnemonic != "umlals" && Mnemonic != "umulls" && Mnemonic != "lsls" &&
       Mnemonic != "sbcs" && Mnemonic != "rscs") {
-    unsigned CC = StringSwitch<unsigned>(Mnemonic.substr(Mnemonic.size()-2))
-      .Case("eq", ARMCC::EQ)
-      .Case("ne", ARMCC::NE)
-      .Case("hs", ARMCC::HS)
-      .Case("cs", ARMCC::HS)
-      .Case("lo", ARMCC::LO)
-      .Case("cc", ARMCC::LO)
-      .Case("mi", ARMCC::MI)
-      .Case("pl", ARMCC::PL)
-      .Case("vs", ARMCC::VS)
-      .Case("vc", ARMCC::VC)
-      .Case("hi", ARMCC::HI)
-      .Case("ls", ARMCC::LS)
-      .Case("ge", ARMCC::GE)
-      .Case("lt", ARMCC::LT)
-      .Case("gt", ARMCC::GT)
-      .Case("le", ARMCC::LE)
-      .Case("al", ARMCC::AL)
-      .Default(~0U);
+    unsigned CC = ARMCondCodeFromString(Mnemonic.substr(Mnemonic.size()-2));
     if (CC != ~0U) {
       Mnemonic = Mnemonic.slice(0, Mnemonic.size() - 2);
       PredicationCode = CC;
