@@ -401,18 +401,13 @@ define <2 x float> @haddps_v2f32(<4 x float> %v0) {
 define <4 x float> @PR34111(<4 x float> %a) {
 ; SSE3-LABEL: PR34111:
 ; SSE3:       # BB#0:
-; SSE3-NEXT:    movaps %xmm0, %xmm1
-; SSE3-NEXT:    shufps {{.*#+}} xmm1 = xmm1[0,2,2,3]
-; SSE3-NEXT:    shufps {{.*#+}} xmm0 = xmm0[1,3,2,3]
-; SSE3-NEXT:    addps %xmm1, %xmm0
+; SSE3-NEXT:    haddps %xmm0, %xmm0
 ; SSE3-NEXT:    movddup {{.*#+}} xmm0 = xmm0[0,0]
 ; SSE3-NEXT:    retq
 ;
 ; AVX-LABEL: PR34111:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vpermilps {{.*#+}} xmm1 = xmm0[0,2,2,3]
-; AVX-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[1,3,2,3]
-; AVX-NEXT:    vaddps %xmm0, %xmm1, %xmm0
+; AVX-NEXT:    vhaddps %xmm0, %xmm0, %xmm0
 ; AVX-NEXT:    vmovddup {{.*#+}} xmm0 = xmm0[0,0]
 ; AVX-NEXT:    retq
   %a02 = shufflevector <4 x float> %a, <4 x float> undef, <2 x i32> <i32 0, i32 2>
