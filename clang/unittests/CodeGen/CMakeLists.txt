@@ -12,5 +12,6 @@ target_link_libraries(ClangCodeGenTests
   clangBasic
   clangCodeGen
   clangFrontend
+  clangLex
   clangParse
   )
