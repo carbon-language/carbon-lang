@@ -102,15 +102,15 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
   bool hasNonInstance = false;
   bool isField = false;
   BaseSet Classes;
-  for (const NamedDecl *const D : R) {   
-    if (D->isCXXInstanceMember()) {
-      // Look through any using decls.
-      const NamedDecl *const UnderlyingDecl = D->getUnderlyingDecl();
-      isField |= isa<FieldDecl>(UnderlyingDecl) ||
-                 isa<MSPropertyDecl>(UnderlyingDecl) ||
-                 isa<IndirectFieldDecl>(UnderlyingDecl);
+  for (NamedDecl *D : R) {
+    // Look through any using decls.
+    D = D->getUnderlyingDecl();
 
-      const CXXRecordDecl *R = cast<CXXRecordDecl>(D->getDeclContext());
+    if (D->isCXXInstanceMember()) {
+      isField |= isa<FieldDecl>(D) || isa<MSPropertyDecl>(D) ||
+                 isa<IndirectFieldDecl>(D);
+
+      CXXRecordDecl *R = cast<CXXRecordDecl>(D->getDeclContext());
       Classes.insert(R->getCanonicalDecl());
     } else
       hasNonInstance = true;
