@@ -93,6 +93,10 @@ static cl::opt<bool> SchedPredsCloser("sched-preds-closer",
 static cl::opt<bool> SchedRetvalOptimization("sched-retval-optimization",
   cl::Hidden, cl::ZeroOrMore, cl::init(true));
 
+static cl::opt<bool> EnableCheckBankConflict("hexagon-check-bank-conflict",
+  cl::Hidden, cl::ZeroOrMore, cl::init(true),
+  cl::desc("Enable checking for cache bank conflicts"));
+
 
 void HexagonSubtarget::initializeEnvironment() {
   UseMemOps = false;
@@ -247,6 +251,52 @@ void HexagonSubtarget::CallMutation::apply(ScheduleDAGInstrs *DAG) {
   }
 }
 
+void HexagonSubtarget::BankConflictMutation::apply(ScheduleDAGInstrs *DAG) {
+  if (!EnableCheckBankConflict)
+    return;
+
+  const auto &HII = static_cast<const HexagonInstrInfo&>(*DAG->TII);
+
+  // Create artificial edges between loads that could likely cause a bank
+  // conflict. Since such loads would normally not have any dependency
+  // between them, we cannot rely on existing edges.
+  for (unsigned i = 0, e = DAG->SUnits.size(); i != e; ++i) {
+    SUnit &S0 = DAG->SUnits[i];
+    MachineInstr &L0 = *S0.getInstr();
+    if (!L0.mayLoad() || L0.mayStore() ||
+        HII.getAddrMode(L0) != HexagonII::BaseImmOffset)
+      continue;
+    int Offset0;
+    unsigned Size0;
+    unsigned Base0 = HII.getBaseAndOffset(L0, Offset0, Size0);
+    // Is the access size is longer than the L1 cache line, skip the check.
+    if (Base0 == 0 || Size0 >= 32)
+      continue;
+    // Scan only up to 32 instructions ahead (to avoid n^2 complexity).
+    for (unsigned j = i+1, m = std::min(i+32, e); j != m; ++j) {
+      SUnit &S1 = DAG->SUnits[j];
+      MachineInstr &L1 = *S1.getInstr();
+      if (!L1.mayLoad() || L1.mayStore() ||
+          HII.getAddrMode(L1) != HexagonII::BaseImmOffset)
+        continue;
+      int Offset1;
+      unsigned Size1;
+      unsigned Base1 = HII.getBaseAndOffset(L1, Offset1, Size1);
+      if (Base1 == 0 || Size1 >= 32 || Base0 != Base1)
+        continue;
+      // Check bits 3 and 4 of the offset: if they differ, a bank conflict
+      // is unlikely.
+      if (((Offset0 ^ Offset1) & 0x18) != 0)
+        continue;
+      // Bits 3 and 4 are the same, add an artificial edge and set extra
+      // latency.
+      SDep A(&S0, SDep::Artificial);
+      A.setLatency(1);
+      S1.addPred(A, true);
+    }
+  }
+}
+
 
 HexagonSubtarget::HexagonSubtarget(const Triple &TT, StringRef CPU,
                                    StringRef FS, const TargetMachine &TM)
@@ -330,6 +380,7 @@ void HexagonSubtarget::getPostRAMutations(
     std::vector<std::unique_ptr<ScheduleDAGMutation>> &Mutations) const {
   Mutations.push_back(llvm::make_unique<UsrOverflowMutation>());
   Mutations.push_back(llvm::make_unique<HVXMemLatencyMutation>());
+  Mutations.push_back(llvm::make_unique<BankConflictMutation>());
 }
 
 void HexagonSubtarget::getSMSMutations(

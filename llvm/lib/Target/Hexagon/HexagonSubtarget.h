@@ -68,6 +68,9 @@ public:
     bool shouldTFRICallBind(const HexagonInstrInfo &HII,
           const SUnit &Inst1, const SUnit &Inst2) const;
   };
+  struct BankConflictMutation : public ScheduleDAGMutation {
+    void apply(ScheduleDAGInstrs *DAG) override;
+  };
 
 private:
   std::string CPUString;
