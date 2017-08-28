@@ -1120,7 +1120,9 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) {
   for (CodeGenSubRegIndex &SRI : SubRegIndices) {
     SRI.computeConcatTransitiveClosure();
     if (!SRI.ConcatenationOf.empty())
-      ConcatIdx.insert(std::make_pair(SRI.ConcatenationOf, &SRI));
+      ConcatIdx.insert(std::make_pair(
+          SmallVector<CodeGenSubRegIndex*,8>(SRI.ConcatenationOf.begin(),
+                                             SRI.ConcatenationOf.end()), &SRI));
   }
 
   // Infer even more sub-registers by combining leading super-registers.
