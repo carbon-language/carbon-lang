@@ -64,7 +64,9 @@ let SchedModel = ExynosM1Model in {
 //===----------------------------------------------------------------------===//
 // Predicates.
 
-def M1ShiftLeftFastPred : SchedPredicate<[{TII->isExynosShiftLeftFast(*MI)}]>;
+def M1BranchLinkFastPred : SchedPredicate<[{MI->getOpcode() == AArch64::BLR &&
+                                            MI->getOperand(0).getReg() != AArch64::LR}]>;
+def M1ShiftLeftFastPred  : SchedPredicate<[{TII->isExynosShiftLeftFast(*MI)}]>;
 
 //===----------------------------------------------------------------------===//
 // Coarse scheduling model.
@@ -79,6 +81,11 @@ def M1WriteC1 : SchedWriteRes<[M1UnitC]>   { let Latency = 1; }
 def M1WriteC2 : SchedWriteRes<[M1UnitC]>   { let Latency = 2; }
 
 def M1WriteB1 : SchedWriteRes<[M1UnitB]> { let Latency = 1; }
+def M1WriteBX : SchedWriteVariant<[SchedVar<M1BranchLinkFastPred, [M1WriteA1,
+                                                                   M1WriteC1]>,
+                                   SchedVar<NoSchedPred,          [M1WriteA1,
+                                                                   M1WriteA1,
+                                                                   M1WriteC1]>]>;
 
 def M1WriteL5 : SchedWriteRes<[M1UnitL]> { let Latency = 5; }
 def M1WriteLX : SchedWriteVariant<[SchedVar<ScaledIdxPred, [M1WriteL5,
@@ -96,8 +103,7 @@ def M1ReadAdrBase : SchedReadVariant<[SchedVar<ScaledIdxPred, [ReadDefault]>,
                                       SchedVar<NoSchedPred,   [ReadDefault]>]>;
 
 // Branch instructions.
-// NOTE: Unconditional direct branches actually take neither cycles nor units.
-def : WriteRes<WriteBr,    [M1UnitB]> { let Latency = 1; }
+def : WriteRes<WriteBr,    []>        { let Latency = 0; }
 def : WriteRes<WriteBrReg, [M1UnitC]> { let Latency = 1; }
 
 // Arithmetic and logical integer instructions.
@@ -118,16 +124,15 @@ def : WriteRes<WriteID64, [M1UnitC,
                                        let ResourceCycles = [1, 21]; }
 // TODO: Long multiplication take 5 cycles and also the ALU.
 def : WriteRes<WriteIM32, [M1UnitC]> { let Latency = 3; }
-// TODO: 64-bit multiplication has a throughput of 1/2.
-def : WriteRes<WriteIM64, [M1UnitC]> { let Latency = 4; }
+def : WriteRes<WriteIM64, [M1UnitC]> { let Latency = 4;
+                                       let ResourceCycles = [2]; }
 
 // Miscellaneous instructions.
 def : WriteRes<WriteExtr, [M1UnitALU,
                            M1UnitALU]> { let Latency = 2; }
 
 // Addressing modes.
-// TODO: The latency for the post or pre register is 1 cycle.
-def : WriteRes<WriteAdr, []> { let Latency = 0; }
+def : WriteRes<WriteAdr, []> { let Latency = 1; }
 def : SchedAlias<ReadAdrBase, M1ReadAdrBase>;
 
 // Load instructions.
@@ -169,15 +174,15 @@ def : WriteRes<WriteHint,    []> { let Latency = 1; }
 def : WriteRes<WriteSys,     []> { let Latency = 1; }
 
 //===----------------------------------------------------------------------===//
-// Generic fast forwarding.
+// Fast forwarding.
 
 // TODO: Add FP register forwarding rules.
 def : ReadAdvance<ReadI,       0>;
 def : ReadAdvance<ReadISReg,   0>;
 def : ReadAdvance<ReadIEReg,   0>;
 def : ReadAdvance<ReadIM,      0>;
-// TODO: The forwarding for WriteIM64 saves actually 3 cycles.
-def : ReadAdvance<ReadIMA,     2, [WriteIM32, WriteIM64]>;
+// TODO: The forwarding for WriteIM32 saves actually 2 cycles.
+def : ReadAdvance<ReadIMA,     3, [WriteIM32, WriteIM64]>;
 def : ReadAdvance<ReadID,      0>;
 def : ReadAdvance<ReadExtrHi,  0>;
 def : ReadAdvance<ReadAdrBase, 0>;
@@ -346,9 +351,7 @@ def M1WriteVSTI    : SchedWriteRes<[M1UnitNALU,
 // Branch instructions
 def : InstRW<[M1WriteB1], (instrs Bcc)>;
 def : InstRW<[M1WriteA1], (instrs BL)>;
-// NOTE: Indirect branch and link with LR adds an ALU uop.
-def : InstRW<[M1WriteA1,
-              M1WriteC1], (instrs BLR)>;
+def : InstRW<[M1WriteBX], (instrs BLR)>;
 def : InstRW<[M1WriteC1], (instregex "^CBN?Z[WX]")>;
 def : InstRW<[M1WriteC1,
               M1WriteA2], (instregex "^TBN?Z[WX]")>;
@@ -362,6 +365,10 @@ def : InstRW<[M1WriteAX], (instregex ".+r[sx](64)?$")>;
 // Miscellaneous instructions.
 
 // Load instructions.
+def : InstRW<[WriteLD,
+              WriteLDHi,
+              WriteAdr,
+              M1WriteA1], (instregex "^LDP(SW|W|X)(post|pre)")>;
 
 // Store instructions.
 
@@ -392,8 +399,22 @@ def : InstRW<[M1WriteS4],     (instregex "^FMOV[WX][DS](High)?r")>;
 def : InstRW<[M1WriteNEONI],  (instregex "^FMOV[DS][WX](High)?r")>;
 
 // FP load instructions.
+def : InstRW<[WriteVLD,
+              WriteAdr,
+              M1WriteA1], (instregex "^LDP[DS](post|pre)")>;
+def : InstRW<[WriteVLD,
+              WriteVLD,
+              WriteAdr,
+              M1WriteA1], (instregex "^LDPQ(post|pre)")>;
 
 // FP store instructions.
+def : InstRW<[WriteVST,
+              WriteAdr,
+              M1WriteA1], (instregex "^STP[DS](post|pre)")>;
+def : InstRW<[WriteVST,
+              WriteVST,
+              WriteAdr,
+              M1WriteA1], (instregex "^STPQ(post|pre)")>;
 
 // ASIMD instructions.
 def : InstRW<[M1WriteNMISC3], (instregex "^[SU]ABAL?v")>;
