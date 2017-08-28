@@ -23,6 +23,32 @@
 ; PGOOD-NEXT:    Accelerator: 1 1 VIRTKEY CONTROL
 ; PGOOD-NEXT:    Accelerator: 2 2 VIRTKEY CONTROL
 ; PGOOD-NEXT:    Accelerator: 3 3 ASCII VIRTKEY NOINVERT ALT SHIFT CONTROL
+; PGOOD-NEXT:  Menu (LLVMTest):
+; PGOOD-NEXT:    Option: Language: 4, Sublanguage: 1
+; PGOOD-NEXT:    Menu list starts
+; PGOOD-NEXT:    Popup ("&OneMenu"):
+; PGOOD-NEXT:    Menu list starts
+; PGOOD-NEXT:    Popup ("Menu&1"):
+; PGOOD-NEXT:    Menu list starts
+; PGOOD-NEXT:    MenuItem ("Item&1"), ID = 301 CHECKED MENUBREAK
+; PGOOD-NEXT:    MenuItem ("Item&2"), ID = 302 CHECKED MENUBARBREAK
+; PGOOD-NEXT:    MenuItem ("Item&3"), ID = 303 HELP INACTIVE MENUBREAK
+; PGOOD-NEXT:    MenuItem ("Item&4"), ID = 304 GRAYED
+; PGOOD-NEXT:    Menu list ends
+; PGOOD-NEXT:    Popup ("Menu&2"):
+; PGOOD-NEXT:    Menu list starts
+; PGOOD-NEXT:    MenuItem ("&A"), ID = 401
+; PGOOD-NEXT:    MenuItem ("&B"), ID = 402
+; PGOOD-NEXT:    Menu list ends
+; PGOOD-NEXT:    Menu list ends
+; PGOOD-NEXT:    Popup ("&Items"):
+; PGOOD-NEXT:    Menu list starts
+; PGOOD-NEXT:    MenuItem ("&Row"), ID = 500
+; PGOOD-NEXT:    MenuItem ("&Column"), ID = 501 CHECKED
+; PGOOD-NEXT:    Menu separator
+; PGOOD-NEXT:    MenuItem ("&Word"), ID = 502
+; PGOOD-NEXT:    Menu list ends
+; PGOOD-NEXT:    Menu list ends
 
 
 ; RUN: not llvm-rc /V %p/Inputs/parser-stringtable-no-string.rc 2>&1 | FileCheck %s --check-prefix PSTRINGTABLE1
@@ -98,3 +124,23 @@
 ; RUN: not llvm-rc /V %p/Inputs/parser-accelerators-no-comma-2.rc 2>&1 | FileCheck %s --check-prefix PACCELERATORS4
 
 ; PACCELERATORS4:  llvm-rc: Error parsing file: expected ',', got 10
+
+
+; RUN: not llvm-rc /V %p/Inputs/parser-menu-bad-id.rc 2>&1 | FileCheck %s --check-prefix PMENU1
+
+; PMENU1:  llvm-rc: Error parsing file: expected integer, got A
+
+
+; RUN: not llvm-rc /V %p/Inputs/parser-menu-bad-flag.rc 2>&1 | FileCheck %s --check-prefix PMENU2
+
+; PMENU2:  llvm-rc: Error parsing file: expected CHECKED/GRAYED/HELP/INACTIVE/MENUBARBREAK/MENUBREAK, got ERRONEOUS
+
+
+; RUN: not llvm-rc /V %p/Inputs/parser-menu-missing-block.rc 2>&1 | FileCheck %s --check-prefix PMENU3
+
+; PMENU3:  llvm-rc: Error parsing file: expected '{', got POPUP
+
+
+; RUN: not llvm-rc /V %p/Inputs/parser-menu-misspelled-separator.rc 2>&1 | FileCheck %s --check-prefix PMENU4
+
+; PMENU4:  llvm-rc: Error parsing file: expected SEPARATOR or string, got NOTSEPARATOR

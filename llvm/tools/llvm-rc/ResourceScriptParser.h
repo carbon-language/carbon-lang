@@ -130,7 +130,11 @@ private:
   ParseType parseCursorResource();
   ParseType parseIconResource();
   ParseType parseHTMLResource();
+  ParseType parseMenuResource();
   ParseType parseStringTableResource();
+
+  // Helper MENU parser.
+  Expected<MenuDefinitionList> parseMenuItemsList();
 
   // Optional statement parsers.
   ParseOptionType parseLanguageStmt();

@@ -71,6 +71,8 @@ RCParser::ParseType RCParser::parseSingleResource() {
     Result = parseIconResource();
   else if (TypeToken->equalsLower("HTML"))
     Result = parseHTMLResource();
+  else if (TypeToken->equalsLower("MENU"))
+    Result = parseMenuResource();
   else
     return getExpectedError("resource type", /* IsAlreadyRead = */ true);
 
@@ -283,6 +285,71 @@ RCParser::ParseType RCParser::parseIconResource() {
 RCParser::ParseType RCParser::parseHTMLResource() {
   ASSIGN_OR_RETURN(Arg, readString());
   return make_unique<HTMLResource>(*Arg);
+}
+
+RCParser::ParseType RCParser::parseMenuResource() {
+  ASSIGN_OR_RETURN(OptStatements, parseOptionalStatements());
+  ASSIGN_OR_RETURN(Items, parseMenuItemsList());
+  return make_unique<MenuResource>(std::move(*OptStatements),
+                                   std::move(*Items));
+}
+
+Expected<MenuDefinitionList> RCParser::parseMenuItemsList() {
+  RETURN_IF_ERROR(consumeType(Kind::BlockBegin));
+
+  MenuDefinitionList List;
+
+  // Read a set of items. Each item is of one of three kinds:
+  //   MENUITEM SEPARATOR
+  //   MENUITEM caption:String, result:Int [, menu flags]...
+  //   POPUP caption:String [, menu flags]... { items... }
+  while (!consumeOptionalType(Kind::BlockEnd)) {
+    ASSIGN_OR_RETURN(ItemTypeResult, readIdentifier());
+
+    bool IsMenuItem = ItemTypeResult->equals_lower("MENUITEM");
+    bool IsPopup = ItemTypeResult->equals_lower("POPUP");
+    if (!IsMenuItem && !IsPopup)
+      return getExpectedError("MENUITEM, POPUP, END or '}'", true);
+
+    if (IsMenuItem && isNextTokenKind(Kind::Identifier)) {
+      // Now, expecting SEPARATOR.
+      ASSIGN_OR_RETURN(SeparatorResult, readIdentifier());
+      if (SeparatorResult->equals_lower("SEPARATOR")) {
+        List.addDefinition(make_unique<MenuSeparator>());
+        continue;
+      }
+
+      return getExpectedError("SEPARATOR or string", true);
+    }
+
+    // Not a separator. Read the caption.
+    ASSIGN_OR_RETURN(CaptionResult, readString());
+
+    // If MENUITEM, expect also a comma and an integer.
+    uint32_t MenuResult = -1;
+
+    if (IsMenuItem) {
+      RETURN_IF_ERROR(consumeType(Kind::Comma));
+      ASSIGN_OR_RETURN(IntResult, readInt());
+      MenuResult = *IntResult;
+    }
+
+    ASSIGN_OR_RETURN(FlagsResult, parseFlags(MenuDefinition::OptionsStr));
+
+    if (IsPopup) {
+      // If POPUP, read submenu items recursively.
+      ASSIGN_OR_RETURN(SubMenuResult, parseMenuItemsList());
+      List.addDefinition(make_unique<PopupItem>(*CaptionResult, *FlagsResult,
+                                                std::move(*SubMenuResult)));
+      continue;
+    }
+
+    assert(IsMenuItem);
+    List.addDefinition(
+        make_unique<MenuItem>(*CaptionResult, MenuResult, *FlagsResult));
+  }
+
+  return std::move(List);
 }
 
 RCParser::ParseType RCParser::parseStringTableResource() {

@@ -166,6 +166,92 @@ public:
   raw_ostream &log(raw_ostream &) const override;
 };
 
+// -- MENU resource and its helper classes --
+// This resource describes the contents of an application menu
+// (usually located in the upper part of the dialog.)
+//
+// Ref: msdn.microsoft.com/en-us/library/windows/desktop/aa381025(v=vs.85).aspx
+
+// Description of a single submenu item.
+class MenuDefinition {
+public:
+  enum Options {
+    CHECKED = (1 << 0),
+    GRAYED = (1 << 1),
+    HELP = (1 << 2),
+    INACTIVE = (1 << 3),
+    MENUBARBREAK = (1 << 4),
+    MENUBREAK = (1 << 5)
+  };
+
+  static constexpr size_t NumFlags = 6;
+  static StringRef OptionsStr[NumFlags];
+  static raw_ostream &logFlags(raw_ostream &, uint8_t Flags);
+  virtual raw_ostream &log(raw_ostream &OS) const {
+    return OS << "Base menu definition\n";
+  }
+  virtual ~MenuDefinition() {}
+};
+
+// Recursive description of a whole submenu.
+class MenuDefinitionList : public MenuDefinition {
+  std::vector<std::unique_ptr<MenuDefinition>> Definitions;
+
+public:
+  void addDefinition(std::unique_ptr<MenuDefinition> Def) {
+    Definitions.push_back(std::move(Def));
+  }
+  raw_ostream &log(raw_ostream &) const override;
+};
+
+// Separator in MENU definition (MENUITEM SEPARATOR).
+//
+// Ref: msdn.microsoft.com/en-us/library/windows/desktop/aa381024(v=vs.85).aspx
+class MenuSeparator : public MenuDefinition {
+public:
+  raw_ostream &log(raw_ostream &) const override;
+};
+
+// MENUITEM statement definition.
+//
+// Ref: msdn.microsoft.com/en-us/library/windows/desktop/aa381024(v=vs.85).aspx
+class MenuItem : public MenuDefinition {
+  StringRef Name;
+  uint32_t Id;
+  uint8_t Flags;
+
+public:
+  MenuItem(StringRef Caption, uint32_t ItemId, uint8_t ItemFlags)
+      : Name(Caption), Id(ItemId), Flags(ItemFlags) {}
+  raw_ostream &log(raw_ostream &) const override;
+};
+
+// POPUP statement definition.
+//
+// Ref: msdn.microsoft.com/en-us/library/windows/desktop/aa381030(v=vs.85).aspx
+class PopupItem : public MenuDefinition {
+  StringRef Name;
+  uint8_t Flags;
+  MenuDefinitionList SubItems;
+
+public:
+  PopupItem(StringRef Caption, uint8_t ItemFlags,
+            MenuDefinitionList &&SubItemsList)
+      : Name(Caption), Flags(ItemFlags), SubItems(std::move(SubItemsList)) {}
+  raw_ostream &log(raw_ostream &) const override;
+};
+
+// Menu resource definition.
+class MenuResource : public RCResource {
+  OptionalStmtList OptStatements;
+  MenuDefinitionList Elements;
+
+public:
+  MenuResource(OptionalStmtList &&OptStmts, MenuDefinitionList &&Items)
+      : OptStatements(std::move(OptStmts)), Elements(std::move(Items)) {}
+  raw_ostream &log(raw_ostream &) const override;
+};
+
 // STRINGTABLE resource. Contains a list of strings, each having its unique ID.
 //
 // Ref: msdn.microsoft.com/en-us/library/windows/desktop/aa381050(v=vs.85).aspx

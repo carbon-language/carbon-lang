@@ -65,6 +65,46 @@ raw_ostream &HTMLResource::log(raw_ostream &OS) const {
   return OS << "HTML (" << ResName << "): " << HTMLLoc << "\n";
 }
 
+StringRef MenuDefinition::OptionsStr[MenuDefinition::NumFlags] = {
+    "CHECKED", "GRAYED", "HELP", "INACTIVE", "MENUBARBREAK", "MENUBREAK"};
+
+raw_ostream &MenuDefinition::logFlags(raw_ostream &OS, uint8_t Flags) {
+  for (size_t i = 0; i < NumFlags; ++i)
+    if (Flags & (1U << i))
+      OS << " " << OptionsStr[i];
+  return OS;
+}
+
+raw_ostream &MenuDefinitionList::log(raw_ostream &OS) const {
+  OS << "  Menu list starts\n";
+  for (auto &Item : Definitions)
+    Item->log(OS);
+  return OS << "  Menu list ends\n";
+}
+
+raw_ostream &MenuItem::log(raw_ostream &OS) const {
+  OS << "  MenuItem (" << Name << "), ID = " << Id;
+  logFlags(OS, Flags);
+  return OS << "\n";
+}
+
+raw_ostream &MenuSeparator::log(raw_ostream &OS) const {
+  return OS << "  Menu separator\n";
+}
+
+raw_ostream &PopupItem::log(raw_ostream &OS) const {
+  OS << "  Popup (" << Name << ")";
+  logFlags(OS, Flags);
+  OS << ":\n";
+  return SubItems.log(OS);
+}
+
+raw_ostream &MenuResource::log(raw_ostream &OS) const {
+  OS << "Menu (" << ResName << "):\n";
+  OptStatements.log(OS);
+  return Elements.log(OS);
+}
+
 raw_ostream &StringTableResource::log(raw_ostream &OS) const {
   OS << "StringTable:\n";
   OptStatements.log(OS);
