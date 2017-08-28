@@ -548,7 +548,8 @@ private:
 
   /// Binary blobs reprsenting action, type, and type index tables for this
   /// function' LSDA (exception handling).
-  ArrayRef<uint8_t> LSDAActionAndTypeTables;
+  ArrayRef<uint8_t> LSDAActionTable;
+  std::vector<uint64_t> LSDATypeTable;
   ArrayRef<uint8_t> LSDATypeIndexTable;
 
   /// Marking for the beginning of language-specific data area for the function.

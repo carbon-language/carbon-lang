@@ -559,7 +559,7 @@ createBinaryContext(ELFObjectFileBase *File, DataReader &DR,
   std::unique_ptr<MCContext> Ctx =
     llvm::make_unique<MCContext>(AsmInfo.get(), MRI.get(), MOFI.get());
   MOFI->InitMCObjectFileInfo(*TheTriple, Reloc::Default,
-                             CodeModel::Default, *Ctx);
+                             CodeModel::Small, *Ctx);
 
   std::unique_ptr<MCDisassembler> DisAsm(
     TheTarget->createMCDisassembler(*STI, *Ctx));

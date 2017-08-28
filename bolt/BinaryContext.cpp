@@ -387,6 +387,21 @@ ErrorOr<SectionRef> BinaryContext::getSectionForAddress(uint64_t Address) const{
   return std::make_error_code(std::errc::bad_address);
 }
 
+ErrorOr<uint64_t>
+BinaryContext::extractPointerAtAddress(uint64_t Address) const {
+  auto Section = getSectionForAddress(Address);
+  if (!Section)
+    return Section.getError();
+
+  StringRef SectionContents;
+  Section->getContents(SectionContents);
+  DataExtractor DE(SectionContents,
+                   AsmInfo->isLittleEndian(),
+                   AsmInfo->getPointerSize());
+  uint32_t SectionOffset = Address - Section->getAddress();
+  return DE.getAddress(&SectionOffset);
+}
+
 void BinaryContext::addSectionRelocation(SectionRef Section, uint64_t Offset,
                                          MCSymbol *Symbol, uint64_t Type,
                                          uint64_t Addend) {

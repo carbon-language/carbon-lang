@@ -53,6 +53,28 @@ PrintExceptions("print-exceptions",
 namespace llvm {
 namespace bolt {
 
+namespace {
+
+unsigned getEncodingSize(unsigned Encoding, BinaryContext &BC) {
+  switch (Encoding & 0x0f) {
+  default: llvm_unreachable("unknown encoding");
+  case dwarf::DW_EH_PE_absptr:
+  case dwarf::DW_EH_PE_signed:
+    return BC.AsmInfo->getPointerSize();
+  case dwarf::DW_EH_PE_udata2:
+  case dwarf::DW_EH_PE_sdata2:
+    return 2;
+  case dwarf::DW_EH_PE_udata4:
+  case dwarf::DW_EH_PE_sdata4:
+    return 4;
+  case dwarf::DW_EH_PE_udata8:
+  case dwarf::DW_EH_PE_sdata8:
+    return 8;
+  }
+}
+
+} // anonymous namespace
+
 // Read and dump the .gcc_exception_table section entry.
 //
 // .gcc_except_table section contains a set of Language-Specific Data Areas -
@@ -88,18 +110,19 @@ namespace bolt {
 // these tables is encoded in LSDA header. Sizes for both of the tables are not
 // included anywhere.
 //
-// For the purpose of rewriting exception handling tables, we can reuse action,
-// types, and type index tables in their original binary format.
-// This is only possible when type references are encoded as absolute addresses.
-// We still have to parse all the tables to determine their sizes. Then we have
+// We have to parse all of the tables to determine their sizes. Then we have
 // to parse the call site table and associate discovered information with
 // actual call instructions and landing pad blocks.
+//
+// For the purpose of rewriting exception handling tables, we can reuse action,
+// and type index tables in their original binary format.
+//
+// Type table could be encoded using position-independent references, and thus
+// may require relocation.
 //
 // Ideally we should be able to re-write LSDA in-place, without the need to
 // allocate a new space for it. Sadly there's no guarantee that the new call
 // site table will be the same size as GCC uses uleb encodings for PC offsets.
-//
-// For split function re-writing we would need to split LSDA too.
 //
 // Note: some functions have LSDA entries with 0 call site entries.
 void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
@@ -112,29 +135,37 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
   assert(getLSDAAddress() < LSDASectionAddress + LSDASectionData.size() &&
          "wrong LSDA address");
 
+  // Given an address in memory corresponding to some entity in mapped
+  // LSDA section return address of this entity in a binary file.
+  auto getFileAddress = [&](const uint8_t *InMemAddress) {
+    return InMemAddress - LSDASectionData.data() + LSDASectionAddress;
+  };
   const uint8_t *Ptr =
       LSDASectionData.data() + getLSDAAddress() - LSDASectionAddress;
 
   uint8_t LPStartEncoding = *Ptr++;
   uintptr_t LPStart = 0;
   if (LPStartEncoding != DW_EH_PE_omit) {
-    LPStart = readEncodedPointer(Ptr, LPStartEncoding);
+    LPStart = readEncodedPointer(Ptr, LPStartEncoding, getFileAddress(Ptr));
   }
 
   assert(LPStart == 0 && "support for split functions not implemented");
 
-  uint8_t TTypeEncoding = *Ptr++;
+  const auto TTypeEncoding = *Ptr++;
+  size_t TTypeEncodingSize = 0;
   uintptr_t TTypeEnd = 0;
   if (TTypeEncoding != DW_EH_PE_omit) {
     TTypeEnd = readULEB128(Ptr);
+    TTypeEncodingSize = getEncodingSize(TTypeEncoding, BC);
   }
 
   if (opts::PrintExceptions) {
     outs() << "[LSDA at 0x" << Twine::utohexstr(getLSDAAddress())
            << " for function " << *this << "]:\n";
-    outs() << "LPStart Encoding = " << (unsigned)LPStartEncoding << '\n';
+    outs() << "LPStart Encoding = 0x"
+           << Twine::utohexstr(LPStartEncoding) << '\n';
     outs() << "LPStart = 0x" << Twine::utohexstr(LPStart) << '\n';
-    outs() << "TType Encoding = " << (unsigned)TTypeEncoding << '\n';
+    outs() << "TType Encoding = 0x" << Twine::utohexstr(TTypeEncoding) << '\n';
     outs() << "TType End = " << TTypeEnd << '\n';
   }
 
@@ -144,9 +175,12 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
   // Offset past the last decoded index.
   intptr_t MaxTypeIndexTableOffset = 0;
 
+  // Max positive index used in type table.
+  unsigned MaxTypeIndex = 0;
+
   // The actual type info table starts at the same location, but grows in
   // opposite direction. TTypeEncoding is used to encode stored values.
-  auto TypeTableStart = reinterpret_cast<const uint32_t *>(Ptr + TTypeEnd);
+  const auto TypeTableStart = Ptr + TTypeEnd;
 
   uint8_t       CallSiteEncoding = *Ptr++;
   uint32_t      CallSiteTableLength = readULEB128(Ptr);
@@ -164,9 +198,12 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
   HasEHRanges = CallSitePtr < CallSiteTableEnd;
   uint64_t RangeBase = getAddress();
   while (CallSitePtr < CallSiteTableEnd) {
-    uintptr_t Start = readEncodedPointer(CallSitePtr, CallSiteEncoding);
-    uintptr_t Length = readEncodedPointer(CallSitePtr, CallSiteEncoding);
-    uintptr_t LandingPad = readEncodedPointer(CallSitePtr, CallSiteEncoding);
+    uintptr_t Start = readEncodedPointer(CallSitePtr, CallSiteEncoding,
+                                         getFileAddress(CallSitePtr));
+    uintptr_t Length = readEncodedPointer(CallSitePtr, CallSiteEncoding,
+                                          getFileAddress(CallSitePtr));
+    uintptr_t LandingPad = readEncodedPointer(CallSitePtr, CallSiteEncoding,
+                                              getFileAddress(CallSitePtr));
     uintptr_t ActionEntry = readULEB128(CallSitePtr);
 
     if (opts::PrintExceptions) {
@@ -220,12 +257,23 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
     if (ActionEntry != 0) {
       auto printType = [&] (int Index, raw_ostream &OS) {
         assert(Index > 0 && "only positive indices are valid");
-        assert(TTypeEncoding == DW_EH_PE_udata4 &&
-               "only udata4 supported for TTypeEncoding");
-        auto TypeAddress = *(TypeTableStart - Index);
+        const uint8_t *TTEntry = TypeTableStart - Index * TTypeEncodingSize;
+        const auto TTEntryAddress = getFileAddress(TTEntry);
+        auto TypeAddress = readEncodedPointer(TTEntry,
+                                              TTypeEncoding,
+                                              TTEntryAddress);
+        if ((TTypeEncoding & DW_EH_PE_pcrel) &&
+            (TypeAddress == TTEntryAddress)) {
+          TypeAddress = 0;
+        }
         if (TypeAddress == 0) {
           OS << "<all>";
           return;
+        }
+        if (TTypeEncoding & DW_EH_PE_indirect) {
+          auto PointerOrErr = BC.extractPointerAtAddress(TypeAddress);
+          assert(PointerOrErr && "failed to decode indirect address");
+          TypeAddress = *PointerOrErr;
         }
         auto NI = BC.GlobalAddresses.find(TypeAddress);
         if (NI != BC.GlobalAddresses.end()) {
@@ -251,6 +299,8 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
             outs() << "cleanup";
         } else if (ActionType > 0) {
           // It's an index into a type table.
+          MaxTypeIndex = std::max(MaxTypeIndex,
+                                  static_cast<unsigned>(ActionType));
           if (opts::PrintExceptions) {
             outs() << "catch type ";
             printType(ActionType, outs());
@@ -265,6 +315,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
           // encoded using uleb128 thus we cannot directly dereference them.
           auto TypeIndexTablePtr = TypeIndexTableStart - ActionType - 1;
           while (auto Index = readULEB128(TypeIndexTablePtr)) {
+            MaxTypeIndex = std::max(MaxTypeIndex, static_cast<unsigned>(Index));
             if (opts::PrintExceptions) {
               outs() << TSep;
               printType(Index, outs());
@@ -293,9 +344,27 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
 
   if (TTypeEnd) {
     // TypeIndexTableStart is a <uint8_t *> alias for TypeTableStart.
-    LSDAActionAndTypeTables =
-      ArrayRef<uint8_t>(ActionTableStart,
-                        TypeIndexTableStart - ActionTableStart);
+    LSDAActionTable =
+      ArrayRef<uint8_t>(ActionTableStart, TypeIndexTableStart -
+                        MaxTypeIndex * TTypeEncodingSize - ActionTableStart);
+    for (unsigned Index = 1; Index <= MaxTypeIndex; ++Index) {
+      const uint8_t *TTEntry = TypeTableStart - Index * TTypeEncodingSize;
+      const auto TTEntryAddress = getFileAddress(TTEntry);
+      auto TypeAddress = readEncodedPointer(TTEntry,
+                                            TTypeEncoding,
+                                            TTEntryAddress);
+      if ((TTypeEncoding & DW_EH_PE_pcrel) &&
+          (TypeAddress == TTEntryAddress)) {
+        TypeAddress = 0;
+      }
+      if (TypeAddress &&
+          (TTypeEncoding & DW_EH_PE_indirect)) {
+        auto PointerOrErr = BC.extractPointerAtAddress(TypeAddress);
+        assert(PointerOrErr && "failed to decode indirect address");
+        TypeAddress = *PointerOrErr;
+      }
+      LSDATypeTable.emplace_back(TypeAddress);
+    }
     LSDATypeIndexTable =
       ArrayRef<uint8_t>(TypeIndexTableStart, MaxTypeIndexTableOffset);
   }
@@ -446,8 +515,8 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer, bool EmitColdPart) {
 
   Streamer->SwitchSection(BC.MOFI->getLSDASection());
 
-  // When we read we make sure only the following encoding is supported.
-  constexpr unsigned TTypeEncoding = dwarf::DW_EH_PE_udata4;
+  const auto TTypeEncoding = BC.MOFI->getTTypeEncoding();
+  const auto TTypeEncodingSize = getEncodingSize(TTypeEncoding, BC);
 
   // Type tables have to be aligned at 4 bytes.
   Streamer->EmitValueToAlignment(4);
@@ -470,7 +539,8 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer, bool EmitColdPart) {
     sizeof(int8_t) +                            // Call site format
     CallSiteTableLengthSize +                   // Call site table length size
     CallSiteTableLength +                       // Call site table length
-    LSDAActionAndTypeTables.size();             // Actions + Types size
+    LSDAActionTable.size() +                    // Actions table size
+    LSDATypeTable.size() * TTypeEncodingSize;   // Types table size
   unsigned TTypeBaseOffsetSize = getULEB128Size(TTypeBaseOffset);
   unsigned TotalSize =
     sizeof(int8_t) +                            // LPStart format
@@ -514,11 +584,42 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer, bool EmitColdPart) {
 
   // Write out action, type, and type index tables at the end.
   //
-  // There's no need to change the original format we saw on input
-  // unless we are doing a function splitting in which case we can
-  // perhaps split and optimize the tables.
-  for (auto const &Byte : LSDAActionAndTypeTables) {
+  // For action and type index tables there's no need to change the original
+  // table format unless we are doing function splitting, in which case we can
+  // split and optimize the tables.
+  //
+  // For type table we (re-)encode the table using TTypeEncoding matching
+  // the current assembler mode.
+  for (auto const &Byte : LSDAActionTable) {
     Streamer->EmitIntValue(Byte, 1);
+  }
+  assert(!(TTypeEncoding & dwarf::DW_EH_PE_indirect) &&
+         "indirect type info encoding is not supported yet");
+  for (int Index = LSDATypeTable.size() - 1; Index >= 0; --Index) {
+    // Note: the address could be an indirect one.
+    const auto TypeAddress = LSDATypeTable[Index];
+    switch (TTypeEncoding & 0x70) {
+    default:
+      llvm_unreachable("unsupported TTypeEncoding");
+    case 0:
+      Streamer->EmitIntValue(TypeAddress, TTypeEncodingSize);
+      break;
+    case dwarf::DW_EH_PE_pcrel: {
+      if (TypeAddress) {
+        const auto *TypeSymbol = BC.getOrCreateGlobalSymbol(TypeAddress, "TI");
+        auto *DotSymbol = BC.Ctx->createTempSymbol();
+        Streamer->EmitLabel(DotSymbol);
+        const auto *SubDotExpr = MCBinaryExpr::createSub(
+            MCSymbolRefExpr::create(TypeSymbol, *BC.Ctx),
+            MCSymbolRefExpr::create(DotSymbol, *BC.Ctx),
+            *BC.Ctx);
+        Streamer->EmitValue(SubDotExpr, TTypeEncodingSize);
+      } else {
+        Streamer->EmitIntValue(0, TTypeEncodingSize);
+      }
+      break;
+    }
+    }
   }
   for (auto const &Byte : LSDATypeIndexTable) {
     Streamer->EmitIntValue(Byte, 1);

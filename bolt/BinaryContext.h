@@ -207,6 +207,11 @@ public:
   /// Return (allocatable) section containing the given \p Address.
   ErrorOr<SectionRef> getSectionForAddress(uint64_t Address) const;
 
+  /// Given \p Address in the binary, extract and return a pointer value at that
+  /// address. The address has to be a valid statically allocated address for
+  /// the binary.
+  ErrorOr<uint64_t> extractPointerAtAddress(uint64_t Address) const;
+
   /// Register a symbol with \p Name at a given \p Address.
   MCSymbol *registerNameAtAddress(const std::string &Name, uint64_t Address) {
     // Check if the Name was already registered.
