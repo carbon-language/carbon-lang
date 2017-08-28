@@ -249,7 +249,14 @@ protected:
 #endif
 };
 
-} // namespace
+class HexagonCallMutation : public ScheduleDAGMutation {
+public:
+  void apply(ScheduleDAGInstrs *DAG) override;
+private:
+  bool shouldTFRICallBind(const HexagonInstrInfo &HII,
+                          const SUnit &Inst1, const SUnit &Inst2) const;
+};
 
+} // namespace
 
 #endif

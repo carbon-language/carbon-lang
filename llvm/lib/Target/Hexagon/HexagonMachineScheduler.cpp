@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "HexagonInstrInfo.h"
 #include "HexagonMachineScheduler.h"
 #include "HexagonSubtarget.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
@@ -50,16 +51,6 @@ static cl::opt<bool> CheckEarlyAvail("check-early-avail", cl::Hidden,
 using namespace llvm;
 
 #define DEBUG_TYPE "machine-scheduler"
-
-namespace {
-class HexagonCallMutation : public ScheduleDAGMutation {
-public:
-  void apply(ScheduleDAGInstrs *DAG) override;
-private:
-  bool shouldTFRICallBind(const HexagonInstrInfo &HII,
-                          const SUnit &Inst1, const SUnit &Inst2) const;
-};
-} // end anonymous namespace
 
 // Check if a call and subsequent A2_tfrpi instructions should maintain
 // scheduling affinity. We are looking for the TFRI to be consumed in
@@ -336,9 +327,6 @@ void ConvergingVLIWScheduler::initialize(ScheduleDAGMI *dag) {
 
   assert((!llvm::ForceTopDown || !llvm::ForceBottomUp) &&
          "-misched-topdown incompatible with -misched-bottomup");
-
-  DAG->addMutation(make_unique<HexagonSubtarget::HexagonDAGMutation>());
-  DAG->addMutation(make_unique<HexagonCallMutation>());
 }
 
 void ConvergingVLIWScheduler::releaseTopNode(SUnit *SU) {
