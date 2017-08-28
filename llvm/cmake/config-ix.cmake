@@ -13,7 +13,6 @@ include(TestBigEndian)
 
 include(CheckCompilerVersion)
 include(HandleLLVMStdlib)
-include(HandleLLVMOptions)
 
 if( UNIX AND NOT (BEOS OR HAIKU) )
   # Used by check_symbol_exists:
