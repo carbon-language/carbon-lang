@@ -13,6 +13,16 @@
 ; PGOOD-NEXT:  StringTable:
 ; PGOOD-NEXT:  HTML (500): "index.html"
 ; PGOOD-NEXT:  Cursor (Name): "hello.ico"
+; PGOOD-NEXT:  Accelerators (12):
+; PGOOD-NEXT:    Option: Version: 5000
+; PGOOD-NEXT:    Option: Language: 0, Sublanguage: 2
+; PGOOD-NEXT:    Accelerator: "^C" 10
+; PGOOD-NEXT:    Accelerator: 14 11
+; PGOOD-NEXT:    Accelerator: 5 12 VIRTKEY
+; PGOOD-NEXT:    Accelerator: 0 0 ASCII
+; PGOOD-NEXT:    Accelerator: 1 1 VIRTKEY CONTROL
+; PGOOD-NEXT:    Accelerator: 2 2 VIRTKEY CONTROL
+; PGOOD-NEXT:    Accelerator: 3 3 ASCII VIRTKEY NOINVERT ALT SHIFT CONTROL
 
 
 ; RUN: not llvm-rc /V %p/Inputs/parser-stringtable-no-string.rc 2>&1 | FileCheck %s --check-prefix PSTRINGTABLE1
@@ -68,3 +78,23 @@
 ; RUN: not llvm-rc /V %p/Inputs/parser-html-extra-comma.rc 2>&1 | FileCheck %s --check-prefix PHTML2
 
 ; PHTML2:  llvm-rc: Error parsing file: expected string, got ,
+
+
+; RUN: not llvm-rc /V %p/Inputs/parser-accelerators-bad-flag.rc 2>&1 | FileCheck %s --check-prefix PACCELERATORS1
+
+; PACCELERATORS1:  llvm-rc: Error parsing file: expected ASCII/VIRTKEY/NOINVERT/ALT/SHIFT/CONTROL, got HELLO
+
+
+; RUN: not llvm-rc /V %p/Inputs/parser-accelerators-bad-int-or-string.rc 2>&1 | FileCheck %s --check-prefix PACCELERATORS2
+
+; PACCELERATORS2:  llvm-rc: Error parsing file: expected int or string, got NotIntOrString
+
+
+; RUN: not llvm-rc /V %p/Inputs/parser-accelerators-no-comma.rc 2>&1 | FileCheck %s --check-prefix PACCELERATORS3
+
+; PACCELERATORS3:  llvm-rc: Error parsing file: expected int or string, got CONTROL
+
+
+; RUN: not llvm-rc /V %p/Inputs/parser-accelerators-no-comma-2.rc 2>&1 | FileCheck %s --check-prefix PACCELERATORS4
+
+; PACCELERATORS4:  llvm-rc: Error parsing file: expected ',', got 10

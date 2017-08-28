@@ -36,6 +36,23 @@ raw_ostream &LanguageResource::log(raw_ostream &OS) const {
   return OS << "Language: " << Lang << ", Sublanguage: " << SubLang << "\n";
 }
 
+StringRef AcceleratorsResource::Accelerator::OptionsStr
+    [AcceleratorsResource::Accelerator::NumFlags] = {
+        "ASCII", "VIRTKEY", "NOINVERT", "ALT", "SHIFT", "CONTROL"};
+
+raw_ostream &AcceleratorsResource::log(raw_ostream &OS) const {
+  OS << "Accelerators (" << ResName << "): \n";
+  OptStatements.log(OS);
+  for (const auto &Acc : Accelerators) {
+    OS << "  Accelerator: " << Acc.Event << " " << Acc.Id;
+    for (size_t i = 0; i < Accelerator::NumFlags; ++i)
+      if (Acc.Flags & (1U << i))
+        OS << " " << Accelerator::OptionsStr[i];
+    OS << "\n";
+  }
+  return OS;
+}
+
 raw_ostream &CursorResource::log(raw_ostream &OS) const {
   return OS << "Cursor (" << ResName << "): " << CursorLoc << "\n";
 }
