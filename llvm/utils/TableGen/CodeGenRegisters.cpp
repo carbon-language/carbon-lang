@@ -122,12 +122,11 @@ LaneBitmask CodeGenSubRegIndex::computeLaneMask() const {
 
 void CodeGenSubRegIndex::setConcatenationOf(
     ArrayRef<CodeGenSubRegIndex*> Parts) {
-  if (ConcatenationOf.empty()) {
+  if (ConcatenationOf.empty())
     ConcatenationOf.assign(Parts.begin(), Parts.end());
-  } else {
+  else
     assert(std::equal(Parts.begin(), Parts.end(),
                       ConcatenationOf.begin()) && "parts consistent");
-  }
 }
 
 void CodeGenSubRegIndex::computeConcatTransitiveClosure() {
@@ -492,16 +491,15 @@ void CodeGenRegister::computeSecondarySubRegs(CodeGenRegBank &RegBank) {
       SmallVector<CodeGenSubRegIndex*, 8> Parts;
       // We know that the first component is (SubRegIdx,SubReg). However we
       // may still need to split it into smaller subregister parts.
-      assert(Cand->ExplicitSubRegs[0] == SubReg);
-      assert(getSubRegIndex(SubReg) == SubRegIdx);
+      assert(Cand->ExplicitSubRegs[0] == SubReg && "LeadingSuperRegs correct");
+      assert(getSubRegIndex(SubReg) == SubRegIdx && "LeadingSuperRegs correct");
       for (CodeGenRegister *SubReg : Cand->ExplicitSubRegs) {
         if (CodeGenSubRegIndex *SubRegIdx = getSubRegIndex(SubReg)) {
           if (SubRegIdx->ConcatenationOf.empty()) {
             Parts.push_back(SubRegIdx);
-          } else {
+          } else
             for (CodeGenSubRegIndex *SubIdx : SubRegIdx->ConcatenationOf)
               Parts.push_back(SubIdx);
-          }
         } else {
           // Sub-register doesn't exist.
           Parts.clear();
