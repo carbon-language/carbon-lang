@@ -111,7 +111,7 @@ TEST_F(RefactoringActionRulesTest, ReturnError) {
   Expected<AtomicChanges> (*Func)(selection::SourceSelectionRange) =
       [](selection::SourceSelectionRange) -> Expected<AtomicChanges> {
     return llvm::make_error<llvm::StringError>(
-        "Error", std::make_error_code(std::errc::bad_message));
+        "Error", llvm::make_error_code(llvm::errc::invalid_argument));
   };
   auto Rule = createRefactoringRule(
       Func, requiredSelection(
@@ -139,7 +139,7 @@ TEST_F(RefactoringActionRulesTest, ReturnInitiationDiagnostic) {
     Expected<Optional<int>>
     evaluateSelection(selection::SourceSelectionRange Selection) const {
       return llvm::make_error<llvm::StringError>(
-          "bad selection", std::make_error_code(std::errc::bad_message));
+          "bad selection", llvm::make_error_code(llvm::errc::invalid_argument));
     }
   };
   auto Rule = createRefactoringRule(
