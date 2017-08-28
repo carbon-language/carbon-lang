@@ -204,8 +204,8 @@ private:
   GlobalVariable *CreateFunctionLocalArrayInSection(size_t NumElements,
                                                     Function &F, Type *Ty,
                                                     const char *Section);
+  GlobalVariable *CreatePCArray(Function &F, ArrayRef<BasicBlock *> AllBlocks);
   void CreateFunctionLocalArrays(Function &F, ArrayRef<BasicBlock *> AllBlocks);
-  void CreatePCArray(Function &F, ArrayRef<BasicBlock *> AllBlocks);
   void InjectCoverageAtBlock(Function &F, BasicBlock &BB, size_t Idx);
   Function *CreateInitCallsForSections(Module &M, const char *InitFunctionName,
                                        Type *Ty, const char *Section);
@@ -541,8 +541,9 @@ GlobalVariable *SanitizerCoverageModule::CreateFunctionLocalArrayInSection(
   return Array;
 }
 
-void SanitizerCoverageModule::CreatePCArray(Function &F,
-                                            ArrayRef<BasicBlock *> AllBlocks) {
+GlobalVariable *
+SanitizerCoverageModule::CreatePCArray(Function &F,
+                                       ArrayRef<BasicBlock *> AllBlocks) {
   size_t N = AllBlocks.size();
   assert(N);
   SmallVector<Constant *, 32> PCs;
@@ -559,15 +560,17 @@ void SanitizerCoverageModule::CreatePCArray(Function &F,
           ConstantInt::get(IntptrTy, 0), IntptrPtrTy));
     }
   }
-  FunctionPCsArray = CreateFunctionLocalArrayInSection(N * 2, F, IntptrPtrTy,
-                                                       SanCovPCsSectionName);
-  FunctionPCsArray->setInitializer(
+  auto *PCArray = CreateFunctionLocalArrayInSection(N * 2, F, IntptrPtrTy,
+                                                    SanCovPCsSectionName);
+  PCArray->setInitializer(
       ConstantArray::get(ArrayType::get(IntptrPtrTy, N * 2), PCs));
-  FunctionPCsArray->setConstant(true);
+  PCArray->setConstant(true);
 
   // We don't reference the PCs array in any of our runtime functions, so we
   // need to prevent it from being dead stripped.
-  appendToUsed(*F.getParent(), {FunctionPCsArray});
+  appendToUsed(*F.getParent(), {PCArray});
+
+  return PCArray;
 }
 
 void SanitizerCoverageModule::CreateFunctionLocalArrays(
@@ -579,7 +582,7 @@ void SanitizerCoverageModule::CreateFunctionLocalArrays(
     Function8bitCounterArray = CreateFunctionLocalArrayInSection(
         AllBlocks.size(), F, Int8Ty, SanCovCountersSectionName);
   if (Options.PCTable)
-    CreatePCArray(F, AllBlocks);
+    FunctionPCsArray = CreatePCArray(F, AllBlocks);
 }
 
 bool SanitizerCoverageModule::InjectCoverage(Function &F,
