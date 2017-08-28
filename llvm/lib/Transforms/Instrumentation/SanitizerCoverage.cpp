@@ -49,13 +49,13 @@ static const char *const SanCovTraceCmp1 = "__sanitizer_cov_trace_cmp1";
 static const char *const SanCovTraceCmp2 = "__sanitizer_cov_trace_cmp2";
 static const char *const SanCovTraceCmp4 = "__sanitizer_cov_trace_cmp4";
 static const char *const SanCovTraceCmp8 = "__sanitizer_cov_trace_cmp8";
-static const char *const SanCovTraceConstCmp1 = 
+static const char *const SanCovTraceConstCmp1 =
     "__sanitizer_cov_trace_const_cmp1";
-static const char *const SanCovTraceConstCmp2 = 
+static const char *const SanCovTraceConstCmp2 =
     "__sanitizer_cov_trace_const_cmp2";
-static const char *const SanCovTraceConstCmp4 = 
+static const char *const SanCovTraceConstCmp4 =
     "__sanitizer_cov_trace_const_cmp4";
-static const char *const SanCovTraceConstCmp8 = 
+static const char *const SanCovTraceConstCmp8 =
     "__sanitizer_cov_trace_const_cmp8";
 static const char *const SanCovTraceDiv4 = "__sanitizer_cov_trace_div4";
 static const char *const SanCovTraceDiv8 = "__sanitizer_cov_trace_div8";
@@ -709,12 +709,12 @@ void SanitizerCoverageModule::InjectTraceForCmp(
       // If only one is const, then make it the first callback argument.
       if (FirstIsConst || SecondIsConst) {
         CallbackFunc = SanCovTraceConstCmpFunction[CallbackIdx];
-        if (SecondIsConst) 
+        if (SecondIsConst)
           std::swap(A0, A1);
       }
 
       auto Ty = Type::getIntNTy(*C, TypeSize);
-      IRB.CreateCall(CallbackFunc, {IRB.CreateIntCast(A0, Ty, true), 
+      IRB.CreateCall(CallbackFunc, {IRB.CreateIntCast(A0, Ty, true),
               IRB.CreateIntCast(A1, Ty, true)});
     }
   }
