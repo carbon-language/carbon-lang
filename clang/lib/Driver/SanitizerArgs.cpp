@@ -291,9 +291,13 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
         Add |= FuzzerNoLink;
 
       // Enable coverage if the fuzzing flag is set.
-      if (Add & FuzzerNoLink)
+      if (Add & FuzzerNoLink) {
         CoverageFeatures |= CoverageTracePCGuard | CoverageIndirCall |
                             CoverageTraceCmp | CoveragePCTable;
+        // Due to TLS differences, stack depth tracking is disabled on Mac.
+        if (!TC.getTriple().isOSDarwin())
+          CoverageFeatures |= CoverageStackDepth;
+      }
 
       Kinds |= Add;
     } else if (Arg->getOption().matches(options::OPT_fno_sanitize_EQ)) {

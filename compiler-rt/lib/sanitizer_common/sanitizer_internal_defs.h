@@ -35,6 +35,14 @@
 # define SANITIZER_WEAK_ATTRIBUTE  __attribute__((weak))
 #endif
 
+// Mac handles TLS differently
+#if SANITIZER_MAC
+# define SANITIZER_TLS_INITIAL_EXEC_ATTRIBUTE
+#else
+# define SANITIZER_TLS_INITIAL_EXEC_ATTRIBUTE \
+    __attribute((tls_model("initial-exec"))) thread_local
+#endif
+
 //--------------------------- WEAK FUNCTIONS ---------------------------------//
 // When working with weak functions, to simplify the code and make it more
 // portable, when possible define a default implementation using this macro:
