@@ -36,11 +36,11 @@
 #endif
 
 // Mac handles TLS differently
-#if SANITIZER_MAC || SANITIZER_WINDOWS
+#if SANITIZER_MAC
 # define SANITIZER_TLS_INITIAL_EXEC_ATTRIBUTE
 #else
 # define SANITIZER_TLS_INITIAL_EXEC_ATTRIBUTE \
-    __attribute((tls_model("initial-exec"))) thread_local
+    __attribute__((tls_model("initial-exec"))) thread_local
 #endif
 
 //--------------------------- WEAK FUNCTIONS ---------------------------------//
