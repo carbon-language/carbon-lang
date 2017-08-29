@@ -11253,6 +11253,13 @@ TEST_F(FormatTest, UTF8CharacterLiteralCpp11) {
   EXPECT_EQ("auto c = u8'a';", format("auto c = u8'a';"));
 }
 
+TEST_F(FormatTest, DoNotFormatLikelyXml) {
+  EXPECT_EQ("<!-- ;> -->",
+            format("<!-- ;> -->", getGoogleStyle()));
+  EXPECT_EQ(" <!-- >; -->",
+            format(" <!-- >; -->", getGoogleStyle()));
+}
+
 } // end namespace
 } // end namespace format
 } // end namespace clang
