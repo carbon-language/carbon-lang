@@ -315,8 +315,8 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
       if (Add & FuzzerNoLink) {
         CoverageFeatures |= CoverageTracePCGuard | CoverageIndirCall |
                             CoverageTraceCmp | CoveragePCTable;
-        // Due to TLS differences, stack depth tracking is disabled on Mac.
-        if (!TC.getTriple().isOSDarwin())
+        // Due to TLS differences, stack depth tracking is disabled on Mac/Win.
+        if (!TC.getTriple().isOSDarwin() && !TC.getTriple().isOSWindows())
           CoverageFeatures |= CoverageStackDepth;
       }
 
