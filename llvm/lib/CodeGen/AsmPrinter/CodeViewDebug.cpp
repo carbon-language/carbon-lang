@@ -964,7 +964,8 @@ void CodeViewDebug::calculateRanges(
     bool Supported =
         DbgVariableLocation::extractFromMachineInstruction(Location, *DVInst);
     // If not Supported, don't even look at Location because it's invalid.
-    if (!Supported) continue;
+    if (!Supported)
+      continue;
 
     // Because we cannot express DW_OP_deref in CodeView directly,
     // we use a trick: we encode the type as a reference to the
@@ -990,7 +991,8 @@ void CodeViewDebug::calculateRanges(
     }
 
     // If we don't know how to handle this range, skip past it.
-    if (!Supported || Location.Register == 0 || (Location.Offset && !Location.InMemory))
+    if (!Supported || Location.Register == 0 ||
+        (Location.Offset && !Location.InMemory))
       continue;
 
     // Handle the two cases we can handle: indirect in memory and in register.
