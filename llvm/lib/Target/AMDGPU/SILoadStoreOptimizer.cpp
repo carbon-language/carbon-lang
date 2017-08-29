@@ -264,10 +264,11 @@ bool SILoadStoreOptimizer::findMatchingDSInst(CombineInfo &CI) {
       // 2. It is safe to move MBBI down past the instruction that I will
       //    be merged into.
 
-      if (MBBI->hasUnmodeledSideEffects())
+      if (MBBI->hasUnmodeledSideEffects()) {
         // We can't re-order this instruction with respect to other memory
-        // opeations, so we fail both conditions mentioned above.
+        // operations, so we fail both conditions mentioned above.
         return false;
+      }
 
       if (MBBI->mayLoadOrStore() &&
         !memAccessesCanBeReordered(*CI.I, *MBBI, TII, AA)) {
