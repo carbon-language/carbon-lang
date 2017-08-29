@@ -94,7 +94,7 @@ functions.
 
 You may also build Scudo like this: 
 
-.. code::
+.. code:: none
 
   cd $LLVM/projects/compiler-rt/lib
   clang++ -fPIC -std=c++11 -msse4.2 -O2 -I. scudo/*.cpp \
@@ -103,7 +103,7 @@ You may also build Scudo like this:
 
 and then use it with existing binaries as follows:
 
-.. code::
+.. code:: none
 
   LD_PRELOAD=`pwd`/scudo-allocator.so ./a.out
 
@@ -124,16 +124,16 @@ can be assigned in the same string, separated by colons.
 
 For example, using the environment variable:
 
-.. code::
+.. code:: none
 
-  SCUDO_OPTIONS="DeleteSizeMismatch=1:QuarantineSizeMb=16" ./a.out
+  SCUDO_OPTIONS="DeleteSizeMismatch=1:QuarantineSizeKb=64" ./a.out
 
 Or using the function:
 
-.. code::
+.. code:: cpp
 
   extern "C" const char *__scudo_default_options() {
-    return "DeleteSizeMismatch=1:QuarantineSizeMb=16";
+    return "DeleteSizeMismatch=1:QuarantineSizeKb=64";
   }
 
 
@@ -142,11 +142,14 @@ The following options are available:
 +-----------------------------+----------------+----------------+------------------------------------------------+
 | Option                      | 64-bit default | 32-bit default | Description                                    |
 +-----------------------------+----------------+----------------+------------------------------------------------+
-| QuarantineSizeMb            | 64             | 16             | The size (in Mb) of quarantine used to delay   |
+| QuarantineSizeKb            | 256            | 64             | The size (in Kb) of quarantine used to delay   |
 |                             |                |                | the actual deallocation of chunks. Lower value |
 |                             |                |                | may reduce memory usage but decrease the       |
 |                             |                |                | effectiveness of the mitigation; a negative    |
-|                             |                |                | value will fallback to a default of 64Mb.      |
+|                             |                |                | value will fallback to the defaults.           |
++-----------------------------+----------------+----------------+------------------------------------------------+
+| QuarantineChunksUpToSize    | 2048           | 512            | Size (in bytes) up to which chunks can be      |
+|                             |                |                | quarantined.                                   |
 +-----------------------------+----------------+----------------+------------------------------------------------+
 | ThreadLocalQuarantineSizeKb | 1024           | 256            | The size (in Kb) of per-thread cache use to    |
 |                             |                |                | offload the global quarantine. Lower value may |
