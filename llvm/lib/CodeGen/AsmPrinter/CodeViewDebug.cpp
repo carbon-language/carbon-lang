@@ -988,7 +988,7 @@ void CodeViewDebug::calculateRanges(
     }
 
     // If we don't know how to handle this range, skip past it.
-    if (!Supported || (Location.Offset && !Location.InMemory))
+    if (!Supported || Location.Register == 0 || (Location.Offset && !Location.InMemory))
       continue;
 
     // Handle the two cases we can handle: indirect in memory and in register.
