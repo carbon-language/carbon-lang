@@ -25,7 +25,6 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InlineAsm.h"
-#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/MDBuilder.h"
@@ -201,15 +200,13 @@ private:
                          ArrayRef<GetElementPtrInst *> GepTraceTargets);
   void InjectTraceForSwitch(Function &F,
                             ArrayRef<Instruction *> SwitchTraceTargets);
-  bool InjectCoverage(Function &F, ArrayRef<BasicBlock *> AllBlocks,
-                      bool IsLeafFunc = true);
+  bool InjectCoverage(Function &F, ArrayRef<BasicBlock *> AllBlocks);
   GlobalVariable *CreateFunctionLocalArrayInSection(size_t NumElements,
                                                     Function &F, Type *Ty,
                                                     const char *Section);
   GlobalVariable *CreatePCArray(Function &F, ArrayRef<BasicBlock *> AllBlocks);
   void CreateFunctionLocalArrays(Function &F, ArrayRef<BasicBlock *> AllBlocks);
-  void InjectCoverageAtBlock(Function &F, BasicBlock &BB, size_t Idx,
-                             bool IsLeafFunc = true);
+  void InjectCoverageAtBlock(Function &F, BasicBlock &BB, size_t Idx);
   Function *CreateInitCallsForSections(Module &M, const char *InitFunctionName,
                                        Type *Ty, const char *Section);
   std::pair<GlobalVariable *, GlobalVariable *>
@@ -494,7 +491,6 @@ bool SanitizerCoverageModule::runOnFunction(Function &F) {
       &getAnalysis<DominatorTreeWrapperPass>(F).getDomTree();
   const PostDominatorTree *PDT =
       &getAnalysis<PostDominatorTreeWrapperPass>(F).getPostDomTree();
-  bool IsLeafFunc = true;
 
   for (auto &BB : F) {
     if (shouldInstrumentBlock(F, &BB, DT, PDT, Options))
@@ -519,14 +515,10 @@ bool SanitizerCoverageModule::runOnFunction(Function &F) {
       if (Options.TraceGep)
         if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(&Inst))
           GepTraceTargets.push_back(GEP);
-      if (Options.StackDepth)
-        if (isa<InvokeInst>(Inst) ||
-            (isa<CallInst>(Inst) && !isa<IntrinsicInst>(Inst)))
-          IsLeafFunc = false;
-    }
+   }
   }
 
-  InjectCoverage(F, BlocksToInstrument, IsLeafFunc);
+  InjectCoverage(F, BlocksToInstrument);
   InjectCoverageForIndirectCalls(F, IndirCalls);
   InjectTraceForCmp(F, CmpTraceTargets);
   InjectTraceForSwitch(F, SwitchTraceTargets);
@@ -601,12 +593,11 @@ void SanitizerCoverageModule::CreateFunctionLocalArrays(
 }
 
 bool SanitizerCoverageModule::InjectCoverage(Function &F,
-                                             ArrayRef<BasicBlock *> AllBlocks,
-                                             bool IsLeafFunc) {
+                                             ArrayRef<BasicBlock *> AllBlocks) {
   if (AllBlocks.empty()) return false;
   CreateFunctionLocalArrays(F, AllBlocks);
   for (size_t i = 0, N = AllBlocks.size(); i < N; i++)
-    InjectCoverageAtBlock(F, *AllBlocks[i], i, IsLeafFunc);
+    InjectCoverageAtBlock(F, *AllBlocks[i], i);
   return true;
 }
 
@@ -740,8 +731,7 @@ void SanitizerCoverageModule::InjectTraceForCmp(
 }
 
 void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
-                                                    size_t Idx,
-                                                    bool IsLeafFunc) {
+                                                    size_t Idx) {
   BasicBlock::iterator IP = BB.getFirstInsertionPt();
   bool IsEntryBB = &BB == &F.getEntryBlock();
   DebugLoc EntryLoc;
@@ -780,7 +770,7 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
     SetNoSanitizeMetadata(Load);
     SetNoSanitizeMetadata(Store);
   }
-  if (Options.StackDepth && IsEntryBB && !IsLeafFunc) {
+  if (Options.StackDepth && IsEntryBB) {
     // Check stack depth.  If it's the deepest so far, record it.
     Function *GetFrameAddr =
         Intrinsic::getDeclaration(F.getParent(), Intrinsic::frameaddress);
@@ -791,9 +781,7 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
     auto IsStackLower = IRB.CreateICmpULT(FrameAddrInt, LowestStack);
     auto ThenTerm = SplitBlockAndInsertIfThen(IsStackLower, &*IP, false);
     IRBuilder<> ThenIRB(ThenTerm);
-    auto Store = ThenIRB.CreateStore(FrameAddrInt, SanCovLowestStack);
-    SetNoSanitizeMetadata(LowestStack);
-    SetNoSanitizeMetadata(Store);
+    ThenIRB.CreateStore(FrameAddrInt, SanCovLowestStack);
   }
 }
 
