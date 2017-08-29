@@ -1971,6 +1971,7 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
 void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          const InputInfo &Output, const InputInfoList &Inputs,
                          const ArgList &Args, const char *LinkingOutput) const {
+  const llvm::Triple &RawTriple = getToolChain().getTriple();
   const llvm::Triple &Triple = getToolChain().getEffectiveTriple();
   const std::string &TripleStr = Triple.getTriple();
 
@@ -1992,12 +1993,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
           Inputs.size() == 1) &&
          "Unable to handle multiple inputs.");
 
-  bool IsWindowsGNU = getToolChain().getTriple().isWindowsGNUEnvironment();
-  bool IsWindowsCygnus =
-      getToolChain().getTriple().isWindowsCygwinEnvironment();
-  bool IsWindowsMSVC = getToolChain().getTriple().isWindowsMSVCEnvironment();
-  bool IsPS4CPU = getToolChain().getTriple().isPS4CPU();
-  bool IsIAMCU = getToolChain().getTriple().isOSIAMCU();
+  bool IsWindowsGNU = RawTriple.isWindowsGNUEnvironment();
+  bool IsWindowsCygnus = RawTriple.isWindowsCygwinEnvironment();
+  bool IsWindowsMSVC = RawTriple.isWindowsMSVCEnvironment();
+  bool IsPS4CPU = RawTriple.isPS4CPU();
+  bool IsIAMCU = RawTriple.isOSIAMCU();
 
   // Adjust IsWindowsXYZ for CUDA compilations.  Even when compiling in device
   // mode (i.e., getToolchain().getTriple() is NVPTX, not Windows), we need to
@@ -2147,8 +2147,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       // The Darwin and PS4 linkers currently use the legacy LTO API, which
       // does not support LTO unit features (CFI, whole program vtable opt)
       // under ThinLTO.
-      if (!(getToolChain().getTriple().isOSDarwin() ||
-            getToolChain().getTriple().isPS4()) ||
+      if (!(RawTriple.isOSDarwin() || RawTriple.isPS4()) ||
           D.getLTOMode() == LTOK_Full)
         CmdArgs.push_back("-flto-unit");
     }
@@ -2227,7 +2226,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
         CmdArgs.push_back("-analyzer-disable-checker=unix.Vfork");
       }
 
-      if (getToolChain().getTriple().getVendor() == llvm::Triple::Apple)
+      if (RawTriple.getVendor() == llvm::Triple::Apple)
         CmdArgs.push_back("-analyzer-checker=osx");
 
       CmdArgs.push_back("-analyzer-checker=deadcode");
@@ -2357,7 +2356,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                                options::OPT_freg_struct_return)) {
     if (getToolChain().getArch() != llvm::Triple::x86) {
       D.Diag(diag::err_drv_unsupported_opt_for_target)
-          << A->getSpelling() << getToolChain().getTriple().str();
+          << A->getSpelling() << RawTriple.str();
     } else if (A->getOption().matches(options::OPT_fpcc_struct_return)) {
       CmdArgs.push_back("-fpcc-struct-return");
     } else {
@@ -2369,7 +2368,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasFlag(options::OPT_mrtd, options::OPT_mno_rtd, false))
     CmdArgs.push_back("-fdefault-calling-conv=stdcall");
 
-  if (shouldUseFramePointer(Args, getToolChain().getTriple()))
+  if (shouldUseFramePointer(Args, RawTriple))
     CmdArgs.push_back("-mdisable-fp-elim");
   if (!Args.hasFlag(options::OPT_fzero_initialized_in_bss,
                     options::OPT_fno_zero_initialized_in_bss))
@@ -2590,13 +2589,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Enable -mconstructor-aliases except on darwin, where we have to work around
   // a linker bug (see <rdar://problem/7651567>), and CUDA device code, where
   // aliases aren't supported.
-  if (!getToolChain().getTriple().isOSDarwin() &&
-      !getToolChain().getTriple().isNVPTX())
+  if (!RawTriple.isOSDarwin() && !RawTriple.isNVPTX())
     CmdArgs.push_back("-mconstructor-aliases");
 
   // Darwin's kernel doesn't support guard variables; just die if we
   // try to use them.
-  if (KernelOrKext && getToolChain().getTriple().isOSDarwin())
+  if (KernelOrKext && RawTriple.isOSDarwin())
     CmdArgs.push_back("-fforbid-guard-variables");
 
   if (Args.hasFlag(options::OPT_mms_bitfields, options::OPT_mno_ms_bitfields,
@@ -2740,14 +2738,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue());
   }
 
-  if (!shouldUseLeafFramePointer(Args, getToolChain().getTriple()))
+  if (!shouldUseLeafFramePointer(Args, RawTriple))
     CmdArgs.push_back("-momit-leaf-frame-pointer");
 
   // Explicitly error on some things we know we don't support and can't just
   // ignore.
   if (!Args.hasArg(options::OPT_fallow_unsupported)) {
     Arg *Unsupported;
-    if (types::isCXX(InputType) && getToolChain().getTriple().isOSDarwin() &&
+    if (types::isCXX(InputType) && RawTriple.isOSDarwin() &&
         getToolChain().getArch() == llvm::Triple::x86) {
       if ((Unsupported = Args.getLastArg(options::OPT_fapple_kext)) ||
           (Unsupported = Args.getLastArg(options::OPT_mkernel)))
@@ -2863,7 +2861,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // -gsplit-dwarf should turn on -g and enable the backend dwarf
   // splitting and extraction.
   // FIXME: Currently only works on Linux.
-  if (getToolChain().getTriple().isOSLinux()) {
+  if (RawTriple.isOSLinux()) {
     if (!splitDwarfInlining)
       CmdArgs.push_back("-fno-split-dwarf-inlining");
     if (SplitDwarfArg) {
@@ -2937,7 +2935,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     ABICompatArg->render(Args, CmdArgs);
 
   // Add runtime flag for PS4 when PGO or Coverage are enabled.
-  if (getToolChain().getTriple().isPS4CPU())
+  if (RawTriple.isPS4CPU())
     PS4cpu::addProfileRTArgs(getToolChain(), Args, CmdArgs);
 
   // Pass options for controlling the default header search paths.
@@ -3763,7 +3761,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
         A->getOption().matches(options::OPT_fno_signed_char)) {
       CmdArgs.push_back("-fno-signed-char");
     }
-  } else if (!isSignedCharDefault(getToolChain().getTriple())) {
+  } else if (!isSignedCharDefault(RawTriple)) {
     CmdArgs.push_back("-fno-signed-char");
   }
 
@@ -3771,12 +3769,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasFlag(
           options::OPT_fuse_cxa_atexit, options::OPT_fno_use_cxa_atexit,
           !IsWindowsCygnus && !IsWindowsGNU &&
-              getToolChain().getTriple().getOS() != llvm::Triple::Solaris &&
+              RawTriple.getOS() != llvm::Triple::Solaris &&
               getToolChain().getArch() != llvm::Triple::hexagon &&
               getToolChain().getArch() != llvm::Triple::xcore &&
-              ((getToolChain().getTriple().getVendor() !=
-                llvm::Triple::MipsTechnologies) ||
-               getToolChain().getTriple().hasEnvironment())) ||
+              ((RawTriple.getVendor() != llvm::Triple::MipsTechnologies) ||
+               RawTriple.hasEnvironment())) ||
       KernelOrKext)
     CmdArgs.push_back("-fno-use-cxa-atexit");
 
@@ -3834,7 +3831,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // -fno-declspec is default, except for PS4.
   if (Args.hasFlag(options::OPT_fdeclspec, options::OPT_fno_declspec,
-                   getToolChain().getTriple().isPS4()))
+                   RawTriple.isPS4()))
     CmdArgs.push_back("-fdeclspec");
   else if (Args.hasArg(options::OPT_fno_declspec))
     CmdArgs.push_back("-fno-declspec"); // Explicitly disabling __declspec.
@@ -3896,9 +3893,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // When ObjectiveC legacy runtime is in effect on MacOSX,
   // turn on the option to do Array/Dictionary subscripting
   // by default.
-  if (getToolChain().getArch() == llvm::Triple::x86 &&
-      getToolChain().getTriple().isMacOSX() &&
-      !getToolChain().getTriple().isMacOSXVersionLT(10, 7) &&
+  if (getToolChain().getArch() == llvm::Triple::x86 && RawTriple.isMacOSX() &&
+      !RawTriple.isMacOSXVersionLT(10, 7) &&
       objcRuntime.getKind() == ObjCRuntime::FragileMacOSX &&
       objcRuntime.isNeXTFamily())
     CmdArgs.push_back("-fobjc-subscripting-legacy-runtime");
@@ -4047,7 +4043,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       MaxTypeAlignStr += A->getValue();
       CmdArgs.push_back(Args.MakeArgString(MaxTypeAlignStr));
     }
-  } else if (getToolChain().getTriple().isOSDarwin()) {
+  } else if (RawTriple.isOSDarwin()) {
     if (!SkipMaxTypeAlign) {
       std::string MaxTypeAlignStr = "-fmax-type-align=16";
       CmdArgs.push_back(Args.MakeArgString(MaxTypeAlignStr));
@@ -4055,8 +4051,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   // -fcommon is the default unless compiling kernel code or the target says so
-  bool NoCommonDefault =
-      KernelOrKext || isNoCommonDefault(getToolChain().getTriple());
+  bool NoCommonDefault = KernelOrKext || isNoCommonDefault(RawTriple);
   if (!Args.hasFlag(options::OPT_fcommon, options::OPT_fno_common,
                     !NoCommonDefault))
     CmdArgs.push_back("-fno-common");
@@ -4302,7 +4297,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 //
 // FIXME: Now that PR4941 has been fixed this can be enabled.
 #if 0
-  if (getToolChain().getTriple().isOSDarwin() &&
+  if (RawTriple.isOSDarwin() &&
       (getToolChain().getArch() == llvm::Triple::arm ||
        getToolChain().getArch() == llvm::Triple::thumb)) {
     if (!Args.hasArg(options::OPT_fbuiltin_strcat))
@@ -4473,7 +4468,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Add the split debug info name to the command lines here so we
   // can propagate it to the backend.
-  bool SplitDwarf = SplitDwarfArg && getToolChain().getTriple().isOSLinux() &&
+  bool SplitDwarf = SplitDwarfArg && RawTriple.isOSLinux() &&
                     (isa<AssembleJobAction>(JA) || isa<CompileJobAction>(JA) ||
                      isa<BackendJobAction>(JA));
   const char *SplitDwarfOut;
