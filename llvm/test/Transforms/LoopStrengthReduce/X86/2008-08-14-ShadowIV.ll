@@ -106,7 +106,7 @@ bb:		; preds = %bb, %bb.nph
 	%tmp3 = uitofp i8 %i.03 to double		; <double>:1 [#uses=1]
 	tail call void @foo( double %tmp3 ) nounwind
 	%indvar.next = add nsw nuw i8 %i.03, 1		; <i32> [#uses=2]
-        %tmp = sext i8 %indvar.next to i32
+	%tmp = sext i8 %indvar.next to i32
 	%exitcond = icmp eq i32 %tmp, 32767		; <i1> [#uses=1]
 	br i1 %exitcond, label %return, label %bb
 
