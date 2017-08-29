@@ -2381,7 +2381,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       OFastEnabled ? options::OPT_Ofast : options::OPT_fstrict_aliasing;
   // We turn strict aliasing off by default if we're in CL mode, since MSVC
   // doesn't do any TBAA.
-  bool TBAAOnByDefault = !getToolChain().getDriver().IsCLMode();
+  bool TBAAOnByDefault = !D.IsCLMode();
   if (!Args.hasFlag(options::OPT_fstrict_aliasing, StrictAliasingAliasOption,
                     options::OPT_fno_strict_aliasing, TBAAOnByDefault))
     CmdArgs.push_back("-relaxed-aliasing");
@@ -2551,7 +2551,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (!FpContract.empty())
     CmdArgs.push_back(Args.MakeArgString("-ffp-contract="+FpContract));
 
-  ParseMRecip(getToolChain().getDriver(), Args, CmdArgs);
+  ParseMRecip(D, Args, CmdArgs);
 
   // -ffast-math enables the __FAST_MATH__ preprocessor macro, but check for the
   // individual features enabled by -ffast-math instead of the option itself as
@@ -2729,7 +2729,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Add clang-cl arguments.
   types::ID InputType = Input.getType();
-  if (getToolChain().getDriver().IsCLMode())
+  if (D.IsCLMode())
     AddClangCLArgs(Args, InputType, CmdArgs, &DebugInfoKind, &EmitCodeView);
 
   // Pass the linker version in use.
@@ -3300,7 +3300,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    options::OPT_fno_openmp, false) &&
       (JA.isDeviceOffloading(Action::OFK_None) ||
        JA.isDeviceOffloading(Action::OFK_OpenMP))) {
-    switch (getToolChain().getDriver().getOpenMPRuntime(Args)) {
+    switch (D.getOpenMPRuntime(Args)) {
     case Driver::OMPRT_OMP:
     case Driver::OMPRT_IOMP5:
       // Clang can generate useful OpenMP code for these two runtime libraries.
@@ -3666,7 +3666,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // -fbuiltin-module-map can be used to load the clang
   // builtin headers modulemap file.
   if (Args.hasArg(options::OPT_fbuiltin_module_map)) {
-    SmallString<128> BuiltinModuleMap(getToolChain().getDriver().ResourceDir);
+    SmallString<128> BuiltinModuleMap(D.ResourceDir);
     llvm::sys::path::append(BuiltinModuleMap, "include");
     llvm::sys::path::append(BuiltinModuleMap, "module.modulemap");
     if (llvm::sys::fs::exists(BuiltinModuleMap)) {
@@ -3795,8 +3795,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                                  options::OPT_fno_ms_extensions, true))))
     CmdArgs.push_back("-fms-compatibility");
 
-  VersionTuple MSVT =
-      getToolChain().computeMSVCVersion(&getToolChain().getDriver(), Args);
+  VersionTuple MSVT = getToolChain().computeMSVCVersion(&D, Args);
   if (!MSVT.empty())
     CmdArgs.push_back(
         Args.MakeArgString("-fms-compatibility-version=" + MSVT.getAsString()));
@@ -4166,8 +4165,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     if (O.matches(options::OPT_fdiagnostics_color_EQ)) {
       StringRef Value(A->getValue());
       if (Value != "always" && Value != "never" && Value != "auto")
-        getToolChain().getDriver().Diag(diag::err_drv_clang_unsupported)
-              << ("-fdiagnostics-color=" + Value).str();
+        D.Diag(diag::err_drv_clang_unsupported)
+            << ("-fdiagnostics-color=" + Value).str();
     }
     A->claim();
   }
@@ -4440,7 +4439,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddAllArgs(CmdArgs, options::OPT_undef);
 
-  const char *Exec = getToolChain().getDriver().getClangProgramPath();
+  const char *Exec = D.getClangProgramPath();
 
   // Optionally embed the -cc1 level arguments into the debug info, for build
   // analysis.
