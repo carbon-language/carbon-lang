@@ -133,6 +133,18 @@
 // CHECK-ASAN-ANDROID-NOT: "-lpthread"
 //
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -target i686-linux-android -fuse-ld=ld -fsanitize=address \
+// RUN:     --sysroot=%S/Inputs/basic_android_tree/sysroot \
+// RUN:   | FileCheck --check-prefix=CHECK-ASAN-ANDROID-X86 %s
+//
+// CHECK-ASAN-ANDROID-X86: "{{(.*[^.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
+// CHECK-ASAN-ANDROID-X86-NOT: "-lc"
+// CHECK-ASAN-ANDROID-X86: "-pie"
+// CHECK-ASAN-ANDROID-X86-NOT: "-lpthread"
+// CHECK-ASAN-ANDROID-X86: libclang_rt.asan-i686-android.so"
+// CHECK-ASAN-ANDROID-X86-NOT: "-lpthread"
+//
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     -target arm-linux-androideabi -fsanitize=address \
 // RUN:     --sysroot=%S/Inputs/basic_android_tree/sysroot \
 // RUN:     -shared-libasan \
