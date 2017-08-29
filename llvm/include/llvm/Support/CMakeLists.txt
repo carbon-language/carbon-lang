@@ -46,7 +46,7 @@ if((DEFINED llvm_vc) AND LLVM_APPEND_VC_REV)
       RESULT_VARIABLE files_not_equal
       OUTPUT_QUIET
       ERROR_QUIET)
-  # Remove ${version_inc} if it's empty -- toggling LLMV_APPEND_VC_REV
+  # Remove ${version_inc} if it's empty -- toggling LLVM_APPEND_VC_REV
   # from OFF to ON.
   if(NOT files_not_equal)
     file(REMOVE "${version_inc}")
