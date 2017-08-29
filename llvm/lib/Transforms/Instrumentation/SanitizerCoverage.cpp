@@ -566,23 +566,30 @@ SanitizerCoverageModule::CreatePCArray(Function &F,
       ConstantArray::get(ArrayType::get(IntptrPtrTy, N * 2), PCs));
   PCArray->setConstant(true);
 
-  // We don't reference the PCs array in any of our runtime functions, so we
-  // need to prevent it from being dead stripped.
-  appendToUsed(*F.getParent(), {PCArray});
-
   return PCArray;
 }
 
 void SanitizerCoverageModule::CreateFunctionLocalArrays(
     Function &F, ArrayRef<BasicBlock *> AllBlocks) {
-  if (Options.TracePCGuard)
+  SmallVector<GlobalValue *, 3> LocalArrays;
+  if (Options.TracePCGuard) {
     FunctionGuardArray = CreateFunctionLocalArrayInSection(
         AllBlocks.size(), F, Int32Ty, SanCovGuardsSectionName);
-  if (Options.Inline8bitCounters)
+    LocalArrays.push_back(FunctionGuardArray);
+  }
+  if (Options.Inline8bitCounters) {
     Function8bitCounterArray = CreateFunctionLocalArrayInSection(
         AllBlocks.size(), F, Int8Ty, SanCovCountersSectionName);
-  if (Options.PCTable)
+    LocalArrays.push_back(Function8bitCounterArray);
+  }
+  if (Options.PCTable) {
     FunctionPCsArray = CreatePCArray(F, AllBlocks);
+    LocalArrays.push_back(FunctionPCsArray);
+  }
+
+  // We don't reference these arrays directly in any of our runtime functions,
+  // so we need to prevent them from being dead stripped.
+  appendToUsed(*F.getParent(), LocalArrays);
 }
 
 bool SanitizerCoverageModule::InjectCoverage(Function &F,
