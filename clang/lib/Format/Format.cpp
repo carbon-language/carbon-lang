@@ -1539,7 +1539,7 @@ bool isMpegTS(StringRef Code) {
   return Code.size() > 188 && Code[0] == 0x47 && Code[188] == 0x47;
 }
 
-bool likelyXml(StringRef Code) {
+bool isLikelyXml(StringRef Code) {
   return Code.ltrim().startswith("<");
 }
 
@@ -1549,9 +1549,10 @@ tooling::Replacements sortIncludes(const FormatStyle &Style, StringRef Code,
   tooling::Replacements Replaces;
   if (!Style.SortIncludes)
     return Replaces;
-  if (likelyXml(Code) ||
-      (Style.Language == FormatStyle::LanguageKind::LK_JavaScript &&
-       isMpegTS(Code)))
+  if (isLikelyXml(Code))
+    return Replaces;
+  if (Style.Language == FormatStyle::LanguageKind::LK_JavaScript &&
+      isMpegTS(Code))
     return Replaces;
   if (Style.Language == FormatStyle::LanguageKind::LK_JavaScript)
     return sortJavaScriptImports(Style, Code, Ranges, FileName);
@@ -1899,8 +1900,9 @@ tooling::Replacements reformat(const FormatStyle &Style, StringRef Code,
   FormatStyle Expanded = expandPresets(Style);
   if (Expanded.DisableFormat)
     return tooling::Replacements();
-  if (likelyXml(Code) ||
-      (Expanded.Language == FormatStyle::LK_JavaScript && isMpegTS(Code)))
+  if (isLikelyXml(Code))
+    return tooling::Replacements();
+  if (Expanded.Language == FormatStyle::LK_JavaScript && isMpegTS(Code))
     return tooling::Replacements();
 
   typedef std::function<tooling::Replacements(const Environment &)>
