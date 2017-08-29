@@ -50,6 +50,7 @@ bool DbgVariableLocation::extractFromMachineInstruction(
           break;
         case dwarf::DW_OP_plus:
           Offset += Value;
+          break;
         default:
           continue;
         }
