@@ -792,7 +792,7 @@ endif()
 # Plugin support
 # FIXME: Make this configurable.
 if(WIN32 OR CYGWIN)
-  if(BUILD_SHARED_LIBS)
+  if(BUILD_SHARED_LIBS OR LLVM_BUILD_LLVM_DYLIB)
     set(LLVM_ENABLE_PLUGINS ON)
   else()
     set(LLVM_ENABLE_PLUGINS OFF)
