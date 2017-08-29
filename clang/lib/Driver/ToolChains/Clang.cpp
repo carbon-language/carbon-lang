@@ -1968,6 +1968,31 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
   }
 }
 
+static void RenderOpenCLOptions(const ArgList &Args, ArgStringList &CmdArgs) {
+  const unsigned ForwardedArguments[] = {
+      options::OPT_cl_opt_disable,
+      options::OPT_cl_strict_aliasing,
+      options::OPT_cl_single_precision_constant,
+      options::OPT_cl_finite_math_only,
+      options::OPT_cl_kernel_arg_info,
+      options::OPT_cl_unsafe_math_optimizations,
+      options::OPT_cl_fast_relaxed_math,
+      options::OPT_cl_mad_enable,
+      options::OPT_cl_no_signed_zeros,
+      options::OPT_cl_denorms_are_zero,
+      options::OPT_cl_fp32_correctly_rounded_divide_sqrt,
+  };
+
+  if (Arg *A = Args.getLastArg(options::OPT_cl_std_EQ)) {
+    std::string CLStdStr = std::string("-cl-std=") + A->getValue();
+    CmdArgs.push_back(Args.MakeArgString(CLStdStr));
+  }
+
+  for (const auto &Arg : ForwardedArguments)
+    if (const auto *A = Args.getLastArg(Arg))
+      CmdArgs.push_back(Args.MakeArgString(A->getOption().getPrefixedName()));
+}
+
 void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          const InputInfo &Output, const InputInfoList &Inputs,
                          const ArgList &Args, const char *LinkingOutput) const {
@@ -3476,44 +3501,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   // Forward -cl options to -cc1
-  if (Args.getLastArg(options::OPT_cl_opt_disable)) {
-    CmdArgs.push_back("-cl-opt-disable");
-  }
-  if (Args.getLastArg(options::OPT_cl_strict_aliasing)) {
-    CmdArgs.push_back("-cl-strict-aliasing");
-  }
-  if (Args.getLastArg(options::OPT_cl_single_precision_constant)) {
-    CmdArgs.push_back("-cl-single-precision-constant");
-  }
-  if (Args.getLastArg(options::OPT_cl_finite_math_only)) {
-    CmdArgs.push_back("-cl-finite-math-only");
-  }
-  if (Args.getLastArg(options::OPT_cl_kernel_arg_info)) {
-    CmdArgs.push_back("-cl-kernel-arg-info");
-  }
-  if (Args.getLastArg(options::OPT_cl_unsafe_math_optimizations)) {
-    CmdArgs.push_back("-cl-unsafe-math-optimizations");
-  }
-  if (Args.getLastArg(options::OPT_cl_fast_relaxed_math)) {
-    CmdArgs.push_back("-cl-fast-relaxed-math");
-  }
-  if (Args.getLastArg(options::OPT_cl_mad_enable)) {
-    CmdArgs.push_back("-cl-mad-enable");
-  }
-  if (Args.getLastArg(options::OPT_cl_no_signed_zeros)) {
-    CmdArgs.push_back("-cl-no-signed-zeros");
-  }
-  if (Arg *A = Args.getLastArg(options::OPT_cl_std_EQ)) {
-    std::string CLStdStr = "-cl-std=";
-    CLStdStr += A->getValue();
-    CmdArgs.push_back(Args.MakeArgString(CLStdStr));
-  }
-  if (Args.getLastArg(options::OPT_cl_denorms_are_zero)) {
-    CmdArgs.push_back("-cl-denorms-are-zero");
-  }
-  if (Args.getLastArg(options::OPT_cl_fp32_correctly_rounded_divide_sqrt)) {
-    CmdArgs.push_back("-cl-fp32-correctly-rounded-divide-sqrt");
-  }
+  RenderOpenCLOptions(Args, CmdArgs);
 
   // Forward -f options with positive and negative forms; we translate
   // these by hand.
