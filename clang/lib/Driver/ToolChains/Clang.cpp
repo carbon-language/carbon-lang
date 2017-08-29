@@ -1968,6 +1968,60 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
   }
 }
 
+static void RenderSSPOptions(const ToolChain &TC, const ArgList &Args,
+                             ArgStringList &CmdArgs, bool KernelOrKext,
+                             bool IsHosted) {
+  const llvm::Triple &EffectiveTriple = TC.getEffectiveTriple();
+
+  // NVPTX doesn't support stack protectors; from the compiler's perspective, it
+  // doesn't even have a stack!
+  if (EffectiveTriple.isNVPTX())
+    return;
+
+  // -stack-protector=0 is default.
+  unsigned StackProtectorLevel = 0;
+  unsigned DefaultStackProtectorLevel =
+      TC.GetDefaultStackProtectorLevel(KernelOrKext);
+
+  if (Arg *A = Args.getLastArg(options::OPT_fno_stack_protector,
+                               options::OPT_fstack_protector_all,
+                               options::OPT_fstack_protector_strong,
+                               options::OPT_fstack_protector)) {
+    if (A->getOption().matches(options::OPT_fstack_protector))
+      StackProtectorLevel =
+          std::max<unsigned>(LangOptions::SSPOn, DefaultStackProtectorLevel);
+    else if (A->getOption().matches(options::OPT_fstack_protector_strong))
+      StackProtectorLevel = LangOptions::SSPStrong;
+    else if (A->getOption().matches(options::OPT_fstack_protector_all))
+      StackProtectorLevel = LangOptions::SSPReq;
+  } else {
+    // Only use a default stack protector on Darwin in case -ffreestanding is
+    // not specified.
+    if (EffectiveTriple.isOSDarwin() && !IsHosted)
+      StackProtectorLevel = 0;
+    else
+      StackProtectorLevel = DefaultStackProtectorLevel;
+  }
+
+  if (StackProtectorLevel) {
+    CmdArgs.push_back("-stack-protector");
+    CmdArgs.push_back(Args.MakeArgString(Twine(StackProtectorLevel)));
+  }
+
+  // --param ssp-buffer-size=
+  for (const Arg *A : Args.filtered(options::OPT__param)) {
+    StringRef Str(A->getValue());
+    if (Str.startswith("ssp-buffer-size=")) {
+      if (StackProtectorLevel) {
+        CmdArgs.push_back("-stack-protector-buffer-size");
+        // FIXME: Verify the argument is a valid integer.
+        CmdArgs.push_back(Args.MakeArgString(Str.drop_front(16)));
+      }
+      A->claim();
+    }
+  }
+}
+
 static void RenderOpenCLOptions(const ArgList &Args, ArgStringList &CmdArgs) {
   const unsigned ForwardedArguments[] = {
       options::OPT_cl_opt_disable,
@@ -3294,12 +3348,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_ftlsmodel_EQ);
 
   // -fhosted is default.
-  bool IsHosted = true;
-  if (Args.hasFlag(options::OPT_ffreestanding, options::OPT_fhosted, false) ||
-      KernelOrKext) {
+  bool IsHosted =
+      !Args.hasFlag(options::OPT_ffreestanding, options::OPT_fhosted, false) &&
+      !KernelOrKext;
+  if (!IsHosted)
     CmdArgs.push_back("-ffreestanding");
-    IsHosted = false;
-  }
 
   // Forward -f (flag) options which we can pass directly.
   Args.AddLastArg(CmdArgs, options::OPT_femit_all_decls);
@@ -3406,49 +3459,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddLastArg(CmdArgs, options::OPT_pthread);
 
-  // -stack-protector=0 is default.
-  unsigned StackProtectorLevel = 0;
-  // NVPTX doesn't support stack protectors; from the compiler's perspective, it
-  // doesn't even have a stack!
-  if (!Triple.isNVPTX()) {
-    if (Arg *A = Args.getLastArg(options::OPT_fno_stack_protector,
-                                 options::OPT_fstack_protector_all,
-                                 options::OPT_fstack_protector_strong,
-                                 options::OPT_fstack_protector)) {
-      if (A->getOption().matches(options::OPT_fstack_protector)) {
-        StackProtectorLevel = std::max<unsigned>(
-            LangOptions::SSPOn,
-            getToolChain().GetDefaultStackProtectorLevel(KernelOrKext));
-      } else if (A->getOption().matches(options::OPT_fstack_protector_strong))
-        StackProtectorLevel = LangOptions::SSPStrong;
-      else if (A->getOption().matches(options::OPT_fstack_protector_all))
-        StackProtectorLevel = LangOptions::SSPReq;
-    } else {
-      StackProtectorLevel =
-          getToolChain().GetDefaultStackProtectorLevel(KernelOrKext);
-      // Only use a default stack protector on Darwin in case -ffreestanding
-      // is not specified.
-      if (Triple.isOSDarwin() && !IsHosted)
-        StackProtectorLevel = 0;
-    }
-  }
-  if (StackProtectorLevel) {
-    CmdArgs.push_back("-stack-protector");
-    CmdArgs.push_back(Args.MakeArgString(Twine(StackProtectorLevel)));
-  }
-
-  // --param ssp-buffer-size=
-  for (const Arg *A : Args.filtered(options::OPT__param)) {
-    StringRef Str(A->getValue());
-    if (Str.startswith("ssp-buffer-size=")) {
-      if (StackProtectorLevel) {
-        CmdArgs.push_back("-stack-protector-buffer-size");
-        // FIXME: Verify the argument is a valid integer.
-        CmdArgs.push_back(Args.MakeArgString(Str.drop_front(16)));
-      }
-      A->claim();
-    }
-  }
+  RenderSSPOptions(getToolChain(), Args, CmdArgs, KernelOrKext, IsHosted);
 
   // Translate -mstackrealign
   if (Args.hasFlag(options::OPT_mstackrealign, options::OPT_mno_stackrealign,
