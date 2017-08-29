@@ -95,3 +95,5 @@
 // NOWARNING: -Wno-invalid-pp-token
 // RUN: %clang --autocomplete=-analyzer-checker, | FileCheck %s -check-prefix=ANALYZER
 // ANALYZER: unix.Malloc
+// RUN: %clang --autocomplete=-std=, | FileCheck %s -check-prefix=STDVAL
+// STDVAL: c99

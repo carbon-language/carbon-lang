@@ -308,11 +308,11 @@ void EmitOptParser(RecordKeeper &Records, raw_ostream &OS) {
     if (isa<UnsetInit>(R.getValueInit("ValuesCode")))
       continue;
     OS << "{\n";
+    OS << "bool ValuesWereAdded;\n";
     OS << R.getValueAsString("ValuesCode");
     OS << "\n";
     for (const std::string &Pref : R.getValueAsListOfStrings("Prefixes")) {
-      OS << "bool ValuesWereAdded = ";
-      OS << "Opt.addValues(";
+      OS << "ValuesWereAdded = Opt.addValues(";
       std::string S = (Pref + R.getValueAsString("Name")).str();
       write_cstring(OS, S);
       OS << ", Values);\n";
