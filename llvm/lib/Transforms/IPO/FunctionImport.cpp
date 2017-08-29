@@ -726,6 +726,7 @@ Expected<bool> FunctionImporter::importFunctions(
         GlobalsToImport.insert(&GV);
       }
     }
+#ifndef NDEBUG
     for (GlobalAlias &GA : SrcModule->aliases()) {
       if (!GA.hasName())
         continue;
@@ -735,6 +736,7 @@ Expected<bool> FunctionImporter::importFunctions(
                    << " " << GA.getName() << " from "
                    << SrcModule->getSourceFileName() << "\n");
     }
+#endif
 
     // Upgrade debug info after we're done materializing all the globals and we
     // have loaded all the required metadata!
