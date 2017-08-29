@@ -94,7 +94,7 @@ functions.
 
 You may also build Scudo like this: 
 
-.. code:: none
+.. code::
 
   cd $LLVM/projects/compiler-rt/lib
   clang++ -fPIC -std=c++11 -msse4.2 -O2 -I. scudo/*.cpp \
@@ -103,7 +103,7 @@ You may also build Scudo like this:
 
 and then use it with existing binaries as follows:
 
-.. code:: none
+.. code::
 
   LD_PRELOAD=`pwd`/scudo-allocator.so ./a.out
 
@@ -124,7 +124,7 @@ can be assigned in the same string, separated by colons.
 
 For example, using the environment variable:
 
-.. code:: none
+.. code::
 
   SCUDO_OPTIONS="DeleteSizeMismatch=1:QuarantineSizeKb=64" ./a.out
 
