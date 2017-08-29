@@ -329,7 +329,7 @@ Expected<Control> RCParser::parseControl() {
   //  [class]       id, x, y, width, height [, style] [, exstyle] [, helpID]
   // Note that control ids must be integers.
   ASSIGN_OR_RETURN(ClassResult, readIdentifier());
-  StringRef ClassUpper = ClassResult->upper();
+  std::string ClassUpper = ClassResult->upper();
   if (Control::SupportedCtls.find(ClassUpper) == Control::SupportedCtls.end())
     return getExpectedError("control type, END or '}'", true);
 
