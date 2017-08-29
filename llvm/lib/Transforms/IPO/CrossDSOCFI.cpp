@@ -16,6 +16,7 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/EquivalenceClasses.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
@@ -115,6 +116,11 @@ void CrossDSOCFI::buildCFICheck(Module &M) {
   // linker knows about the symbol; this pass replaces the function body.
   F->deleteBody();
   F->setAlignment(4096);
+
+  Triple T(M.getTargetTriple());
+  if (T.isARM() || T.isThumb())
+    F->addFnAttr("target-features", "+thumb-mode");
+
   auto args = F->arg_begin();
   Value &CallSiteTypeId = *(args++);
   CallSiteTypeId.setName("CallSiteTypeId");
