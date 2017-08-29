@@ -1324,6 +1324,32 @@ TEST_F(FormatTest, FormatsEnumTypes) {
   verifyFormat("enum X : std::uint32_t { A, B };");
 }
 
+TEST_F(FormatTest, FormatsTypedefEnum) {
+  FormatStyle Style = getLLVMStyle();
+  Style.ColumnLimit = 40;
+  verifyFormat("typedef enum {} EmptyEnum;");
+  verifyFormat("typedef enum { A, B, C } ShortEnum;");
+  verifyFormat("typedef enum {\n"
+               "  ZERO = 0,\n"             
+               "  ONE = 1,\n"
+               "  TWO = 2,\n"
+               "  THREE = 3\n"
+               "} LongEnum;",
+               Style);
+  Style.BreakBeforeBraces = FormatStyle::BS_Custom;
+  Style.BraceWrapping.AfterEnum = true;
+  verifyFormat("typedef enum {} EmptyEnum;");
+  verifyFormat("typedef enum { A, B, C } ShortEnum;");
+  verifyFormat("typedef enum\n"
+               "{\n"
+               "  ZERO = 0,\n"             
+               "  ONE = 1,\n"
+               "  TWO = 2,\n"
+               "  THREE = 3\n"
+               "} LongEnum;",
+               Style);
+}
+
 TEST_F(FormatTest, FormatsNSEnums) {
   verifyGoogleFormat("typedef NS_ENUM(NSInteger, SomeName) { AAA, BBB }");
   verifyGoogleFormat("typedef NS_ENUM(NSInteger, MyType) {\n"
