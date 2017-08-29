@@ -35687,7 +35687,7 @@ static SDValue combineExtractSubvector(SDNode *N, SelectionDAG &DAG,
   if (ISD::isBuildVectorAllOnes(InVec.getNode())) {
     if (OpVT.getScalarType() == MVT::i1)
       return DAG.getConstant(1, SDLoc(N), OpVT);
-    return getZeroVector(OpVT, Subtarget, DAG, SDLoc(N));
+    return getOnesVector(OpVT, DAG, SDLoc(N));
   }
 
   if (InVec.getOpcode() == ISD::BUILD_VECTOR)
