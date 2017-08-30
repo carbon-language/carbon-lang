@@ -535,10 +535,10 @@ void selectProp(I *i) {
 i.prop = 21;
 }
 
-typedef unsigned int size_t;
+
 @interface NSMutableArray
-- (id)objectAtIndexedSubscript:(size_t)index;
-- (void)setObject:(id)object atIndexedSubscript:(size_t)index;
+- (id)objectAtIndexedSubscript:(unsigned int)index;
+- (void)setObject:(id)object atIndexedSubscript:(unsigned int)index;
 @end
 
 void selectSubscript(NSMutableArray *array, I *i) {
