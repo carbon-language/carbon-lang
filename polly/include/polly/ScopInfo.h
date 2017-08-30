@@ -1192,7 +1192,7 @@ class ScopStmt {
 public:
   /// Create the ScopStmt from a BasicBlock.
   ScopStmt(Scop &parent, BasicBlock &bb, Loop *SurroundingLoop,
-           std::vector<Instruction *> Instructions);
+           std::vector<Instruction *> Instructions, int Count);
 
   /// Create an overapproximating ScopStmt for the region @p R.
   ScopStmt(Scop &parent, Region &R, Loop *SurroundingLoop);
@@ -2203,8 +2203,9 @@ private:
   /// @param BB              The basic block we build the statement for.
   /// @param SurroundingLoop The loop the created statement is contained in.
   /// @param Instructions    The instructions in the statement.
+  /// @param Count           The index of the created statement in @p BB.
   void addScopStmt(BasicBlock *BB, Loop *SurroundingLoop,
-                   std::vector<Instruction *> Instructions);
+                   std::vector<Instruction *> Instructions, int Count);
 
   /// Create a new SCoP statement for @p R.
   ///

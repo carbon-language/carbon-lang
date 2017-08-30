@@ -229,8 +229,8 @@ class ScopBuilder {
   /// access any memory and thus have no effect.
   void buildStmts(Region &SR);
 
-  /// Build the access functions for the basic block @p BB in or represented by
-  /// @p Stmt.
+  /// Build the access functions for the statement @p Stmt in or represented by
+  /// @p BB.
   ///
   /// @param Stmt               Statement to add MemoryAccesses to.
   /// @param BB                 A basic block in @p R.

@@ -658,16 +658,24 @@ void ScopBuilder::buildStmts(Region &SR) {
     if (I->isSubRegion())
       buildStmts(*I->getNodeAs<Region>());
     else {
+      int Count = 0;
       std::vector<Instruction *> Instructions;
       for (Instruction &Inst : *I->getNodeAs<BasicBlock>()) {
         Loop *L = LI.getLoopFor(Inst.getParent());
         if (!isa<TerminatorInst>(&Inst) && !isIgnoredIntrinsic(&Inst) &&
             !canSynthesize(&Inst, *scop, &SE, L))
           Instructions.push_back(&Inst);
+        if (Inst.getMetadata("polly_split_after")) {
+          Loop *SurroundingLoop = LI.getLoopFor(I->getNodeAs<BasicBlock>());
+          scop->addScopStmt(I->getNodeAs<BasicBlock>(), SurroundingLoop,
+                            Instructions, Count);
+          Count++;
+          Instructions.clear();
+        }
       }
       Loop *SurroundingLoop = LI.getLoopFor(I->getNodeAs<BasicBlock>());
       scop->addScopStmt(I->getNodeAs<BasicBlock>(), SurroundingLoop,
-                        Instructions);
+                        Instructions, Count);
     }
 }
 
@@ -684,7 +692,19 @@ void ScopBuilder::buildAccessFunctions(ScopStmt *Stmt, BasicBlock &BB,
   if (isErrorBlock(BB, scop->getRegion(), LI, DT) && !IsExitBlock)
     return;
 
+  int Count = 0;
+  bool Split = false;
   for (Instruction &Inst : BB) {
+    if (Split) {
+      Split = false;
+      Count++;
+    }
+    if (Inst.getMetadata("polly_split_after"))
+      Split = true;
+
+    if (Stmt && Stmt->isBlockStmt() && Stmt != scop->getStmtListFor(&BB)[Count])
+      continue;
+
     PHINode *PHI = dyn_cast<PHINode>(&Inst);
     if (PHI)
       buildPHIAccesses(Stmt, PHI, NonAffineSubRegion, IsExitBlock);

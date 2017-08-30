@@ -1764,11 +1764,14 @@ ScopStmt::ScopStmt(Scop &parent, Region &R, Loop *SurroundingLoop)
 }
 
 ScopStmt::ScopStmt(Scop &parent, BasicBlock &bb, Loop *SurroundingLoop,
-                   std::vector<Instruction *> Instructions)
+                   std::vector<Instruction *> Instructions, int Count)
     : Parent(parent), InvalidDomain(nullptr), Domain(nullptr), BB(&bb),
       Build(nullptr), SurroundingLoop(SurroundingLoop),
       Instructions(Instructions) {
-  BaseName = getIslCompatibleName("Stmt", &bb, parent.getNextStmtIdx(), "",
+  std::string S = "";
+  if (Count != 0)
+    S += std::to_string(Count);
+  BaseName = getIslCompatibleName("Stmt", &bb, parent.getNextStmtIdx(), S,
                                   UseInstructionNames);
 }
 
@@ -4880,9 +4883,9 @@ static isl::multi_union_pw_aff mapToDimension(isl::union_set USet, int N) {
 }
 
 void Scop::addScopStmt(BasicBlock *BB, Loop *SurroundingLoop,
-                       std::vector<Instruction *> Instructions) {
+                       std::vector<Instruction *> Instructions, int Count) {
   assert(BB && "Unexpected nullptr!");
-  Stmts.emplace_back(*this, *BB, SurroundingLoop, Instructions);
+  Stmts.emplace_back(*this, *BB, SurroundingLoop, Instructions, Count);
   auto *Stmt = &Stmts.back();
   StmtMap[BB].push_back(Stmt);
   for (Instruction *Inst : Instructions) {
@@ -5049,8 +5052,6 @@ ArrayRef<ScopStmt *> Scop::getStmtListFor(BasicBlock *BB) const {
   auto StmtMapIt = StmtMap.find(BB);
   if (StmtMapIt == StmtMap.end())
     return {};
-  assert(StmtMapIt->second.size() == 1 &&
-         "Each statement corresponds to exactly one BB.");
   return StmtMapIt->second;
 }
 
