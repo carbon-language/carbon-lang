@@ -1715,13 +1715,6 @@ buildConditionSets(Scop &S, BasicBlock *BB, TerminatorInst *TI, Loop *L,
                             ConditionSets);
 }
 
-void ScopStmt::buildDomain() {
-  isl::id Id = isl::id::alloc(getIslCtx(), getBaseName(), this);
-
-  Domain = getParent()->getDomainConditions(this);
-  Domain = Domain.set_tuple_id(Id);
-}
-
 void ScopStmt::collectSurroundingLoops() {
   for (unsigned u = 0, e = Domain.dim(isl::dim::set); u < e; u++) {
     isl::id DimId = Domain.get_dim_id(isl::dim::set, u);

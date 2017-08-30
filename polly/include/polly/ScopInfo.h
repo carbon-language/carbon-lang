@@ -1309,9 +1309,7 @@ private:
   /// Vector for Instructions in this statement.
   std::vector<Instruction *> Instructions;
 
-  /// Build the statement.
   //@{
-  void buildDomain();
 
   /// Fill NestLoops with loops surrounding this statement.
   void collectSurroundingLoops();

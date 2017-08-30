@@ -335,6 +335,9 @@ class ScopBuilder {
   /// @see MemoryKind
   void addPHIReadAccess(ScopStmt *PHIStmt, PHINode *PHI);
 
+  /// Build the domain of @p Stmt.
+  void buildDomain(ScopStmt &Stmt);
+
   /// Build the access relation of all memory accesses of @p Stmt.
   void buildAccessRelations(ScopStmt &Stmt);
 

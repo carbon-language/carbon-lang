@@ -911,6 +911,13 @@ void ScopBuilder::addPHIReadAccess(ScopStmt *PHIStmt, PHINode *PHI) {
                   MemoryKind::PHI);
 }
 
+void ScopBuilder::buildDomain(ScopStmt &Stmt) {
+  isl::id Id = isl::id::alloc(scop->getIslCtx(), Stmt.getBaseName(), &Stmt);
+
+  Stmt.Domain = scop->getDomainConditions(&Stmt);
+  Stmt.Domain = Stmt.Domain.set_tuple_id(Id);
+}
+
 void ScopBuilder::buildAccessRelations(ScopStmt &Stmt) {
   for (MemoryAccess *Access : Stmt.MemAccs) {
     Type *ElementType = Access->getElementType();
@@ -1069,7 +1076,7 @@ void ScopBuilder::buildScop(Region &R, AssumptionCache &AC,
 
   // The ScopStmts now have enough information to initialize themselves.
   for (ScopStmt &Stmt : *scop) {
-    Stmt.buildDomain();
+    buildDomain(Stmt);
     Stmt.collectSurroundingLoops();
     buildAccessRelations(Stmt);
 
