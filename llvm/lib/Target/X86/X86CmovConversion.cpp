@@ -9,7 +9,7 @@
 /// \file
 /// This file implements a pass that converts X86 cmov instructions into
 /// branches when profitable. This pass is conservative. It transforms if and
-/// only if it can gaurantee a gain with high confidence.
+/// only if it can guarantee a gain with high confidence.
 ///
 /// Thus, the optimization applies under the following conditions:
 ///   1. Consider as candidates only CMOVs in innermost loops (assume that
@@ -27,7 +27,7 @@
 ///         depth cost by some threshold.
 ///      b. CMOV is considered profitable if the cost of its condition is higher
 ///         than the average cost of its true-value and false-value by 25% of
-///         branch-misprediction-penalty. This assures no degredation even with
+///         branch-misprediction-penalty. This assures no degradation even with
 ///         25% branch misprediction.
 ///
 /// Note: This pass is assumed to run on SSA machine code.
