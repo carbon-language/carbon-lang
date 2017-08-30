@@ -911,6 +911,27 @@ void ScopBuilder::addPHIReadAccess(ScopStmt *PHIStmt, PHINode *PHI) {
                   MemoryKind::PHI);
 }
 
+void ScopBuilder::buildAccessRelations(ScopStmt &Stmt) {
+  for (MemoryAccess *Access : Stmt.MemAccs) {
+    Type *ElementType = Access->getElementType();
+
+    MemoryKind Ty;
+    if (Access->isPHIKind())
+      Ty = MemoryKind::PHI;
+    else if (Access->isExitPHIKind())
+      Ty = MemoryKind::ExitPHI;
+    else if (Access->isValueKind())
+      Ty = MemoryKind::Value;
+    else
+      Ty = MemoryKind::Array;
+
+    auto *SAI = scop->getOrCreateScopArrayInfo(Access->getOriginalBaseAddr(),
+                                               ElementType, Access->Sizes, Ty);
+    Access->buildAccessRelation(SAI);
+    scop->addAccessData(Access);
+  }
+}
+
 #ifndef NDEBUG
 static void verifyUse(Scop *S, Use &Op, LoopInfo &LI) {
   auto PhysUse = VirtualUse::create(S, Op, &LI, false);
@@ -1050,7 +1071,7 @@ void ScopBuilder::buildScop(Region &R, AssumptionCache &AC,
   for (ScopStmt &Stmt : *scop) {
     Stmt.buildDomain();
     Stmt.collectSurroundingLoops();
-    Stmt.buildAccessRelations();
+    buildAccessRelations(Stmt);
 
     if (DetectReductions)
       Stmt.checkForReductions();

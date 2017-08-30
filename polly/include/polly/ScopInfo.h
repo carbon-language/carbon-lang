@@ -477,6 +477,7 @@ private:
 class MemoryAccess {
   friend class Scop;
   friend class ScopStmt;
+  friend class ScopBuilder;
 
 public:
   /// The access type of a memory access
@@ -1314,9 +1315,6 @@ private:
 
   /// Fill NestLoops with loops surrounding this statement.
   void collectSurroundingLoops();
-
-  /// Build the access relation of all memory accesses.
-  void buildAccessRelations();
 
   /// Detect and mark reductions in the ScopStmt
   void checkForReductions();

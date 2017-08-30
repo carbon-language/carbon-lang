@@ -1308,28 +1308,6 @@ void ScopStmt::restrictDomain(isl::set NewDomain) {
   Domain = NewDomain;
 }
 
-void ScopStmt::buildAccessRelations() {
-  Scop &S = *getParent();
-  for (MemoryAccess *Access : MemAccs) {
-    Type *ElementType = Access->getElementType();
-
-    MemoryKind Ty;
-    if (Access->isPHIKind())
-      Ty = MemoryKind::PHI;
-    else if (Access->isExitPHIKind())
-      Ty = MemoryKind::ExitPHI;
-    else if (Access->isValueKind())
-      Ty = MemoryKind::Value;
-    else
-      Ty = MemoryKind::Array;
-
-    auto *SAI = S.getOrCreateScopArrayInfo(Access->getOriginalBaseAddr(),
-                                           ElementType, Access->Sizes, Ty);
-    Access->buildAccessRelation(SAI);
-    S.addAccessData(Access);
-  }
-}
-
 void ScopStmt::addAccess(MemoryAccess *Access, bool Prepend) {
   Instruction *AccessInst = Access->getAccessInstruction();
 
