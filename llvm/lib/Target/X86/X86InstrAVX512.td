@@ -840,6 +840,64 @@ def : Pat<(v8i16 (extract_subvector (v32i16 VR512:$src), (iPTR 0))),
 def : Pat<(v16i8 (extract_subvector (v64i8 VR512:$src), (iPTR 0))),
           (v16i8 (EXTRACT_SUBREG (v64i8 VR512:$src), sub_xmm))>;
 
+// A 128-bit extract from bits [255:128] of a 512-bit vector should use a
+// smaller extract to enable EVEX->VEX.
+let Predicates = [NoVLX] in {
+def : Pat<(v2i64 (extract_subvector (v8i64 VR512:$src), (iPTR 2))),
+          (v2i64 (VEXTRACTI128rr
+                  (v4i64 (EXTRACT_SUBREG (v8i64 VR512:$src), sub_ymm)),
+                  (iPTR 1)))>;
+def : Pat<(v2f64 (extract_subvector (v8f64 VR512:$src), (iPTR 2))),
+          (v2f64 (VEXTRACTF128rr
+                  (v4f64 (EXTRACT_SUBREG (v8f64 VR512:$src), sub_ymm)),
+                  (iPTR 1)))>;
+def : Pat<(v4i32 (extract_subvector (v16i32 VR512:$src), (iPTR 4))),
+          (v4i32 (VEXTRACTI128rr
+                  (v8i32 (EXTRACT_SUBREG (v16i32 VR512:$src), sub_ymm)),
+                  (iPTR 1)))>;
+def : Pat<(v4f32 (extract_subvector (v16f32 VR512:$src), (iPTR 4))),
+          (v4f32 (VEXTRACTF128rr
+                  (v8f32 (EXTRACT_SUBREG (v16f32 VR512:$src), sub_ymm)),
+                  (iPTR 1)))>;
+def : Pat<(v8i16 (extract_subvector (v32i16 VR512:$src), (iPTR 8))),
+          (v8i16 (VEXTRACTI128rr
+                  (v16i16 (EXTRACT_SUBREG (v32i16 VR512:$src), sub_ymm)),
+                  (iPTR 1)))>;
+def : Pat<(v16i8 (extract_subvector (v64i8 VR512:$src), (iPTR 16))),
+          (v16i8 (VEXTRACTI128rr
+                  (v32i8 (EXTRACT_SUBREG (v64i8 VR512:$src), sub_ymm)),
+                  (iPTR 1)))>;
+}
+
+// A 128-bit extract from bits [255:128] of a 512-bit vector should use a
+// smaller extract to enable EVEX->VEX.
+let Predicates = [HasVLX] in {
+def : Pat<(v2i64 (extract_subvector (v8i64 VR512:$src), (iPTR 2))),
+          (v2i64 (VEXTRACTI32x4Z256rr
+                  (v4i64 (EXTRACT_SUBREG (v8i64 VR512:$src), sub_ymm)),
+                  (iPTR 1)))>;
+def : Pat<(v2f64 (extract_subvector (v8f64 VR512:$src), (iPTR 2))),
+          (v2f64 (VEXTRACTF32x4Z256rr
+                  (v4f64 (EXTRACT_SUBREG (v8f64 VR512:$src), sub_ymm)),
+                  (iPTR 1)))>;
+def : Pat<(v4i32 (extract_subvector (v16i32 VR512:$src), (iPTR 4))),
+          (v4i32 (VEXTRACTI32x4Z256rr
+                  (v8i32 (EXTRACT_SUBREG (v16i32 VR512:$src), sub_ymm)),
+                  (iPTR 1)))>;
+def : Pat<(v4f32 (extract_subvector (v16f32 VR512:$src), (iPTR 4))),
+          (v4f32 (VEXTRACTF32x4Z256rr
+                  (v8f32 (EXTRACT_SUBREG (v16f32 VR512:$src), sub_ymm)),
+                  (iPTR 1)))>;
+def : Pat<(v8i16 (extract_subvector (v32i16 VR512:$src), (iPTR 8))),
+          (v8i16 (VEXTRACTI32x4Z256rr
+                  (v16i16 (EXTRACT_SUBREG (v32i16 VR512:$src), sub_ymm)),
+                  (iPTR 1)))>;
+def : Pat<(v16i8 (extract_subvector (v64i8 VR512:$src), (iPTR 16))),
+          (v16i8 (VEXTRACTI32x4Z256rr
+                  (v32i8 (EXTRACT_SUBREG (v64i8 VR512:$src), sub_ymm)),
+                  (iPTR 1)))>;
+}
+
 // A 256-bit subvector extract from the first 256-bit vector position
 // is a subregister copy that needs no instruction.
 def : Pat<(v4i64 (extract_subvector (v8i64 VR512:$src), (iPTR 0))),
