@@ -4574,6 +4574,7 @@ void Scop::addRecordedAssumptions() {
 }
 
 void Scop::invalidate(AssumptionKind Kind, DebugLoc Loc, BasicBlock *BB) {
+  DEBUG(dbgs() << "Invalidate SCoP because of reason " << Kind << "\n");
   addAssumption(Kind, isl_set_empty(getParamSpace().release()), Loc,
                 AS_ASSUMPTION, BB);
 }

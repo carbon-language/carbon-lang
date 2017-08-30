@@ -1017,8 +1017,10 @@ void ScopBuilder::buildScop(Region &R, AssumptionCache &AC,
   /// A map from basic blocks to their invalid domains.
   DenseMap<BasicBlock *, isl::set> InvalidDomainMap;
 
-  if (!scop->buildDomains(&R, DT, LI, InvalidDomainMap))
+  if (!scop->buildDomains(&R, DT, LI, InvalidDomainMap)) {
+    DEBUG(dbgs() << "Bailing-out because buildDomains encountered problems\n");
     return;
+  }
 
   scop->addUserAssumptions(AC, DT, LI, InvalidDomainMap);
 
@@ -1034,21 +1036,26 @@ void ScopBuilder::buildScop(Region &R, AssumptionCache &AC,
   // Exit early in case there are no executable statements left in this scop.
   scop->removeStmtNotInDomainMap();
   scop->simplifySCoP(false);
-  if (scop->isEmpty())
+  if (scop->isEmpty()) {
+    DEBUG(dbgs() << "Bailing-out because SCoP is empty\n");
     return;
+  }
 
   // The ScopStmts now have enough information to initialize themselves.
   for (ScopStmt &Stmt : *scop)
     Stmt.init(LI);
 
   // Check early for a feasible runtime context.
-  if (!scop->hasFeasibleRuntimeContext())
+  if (!scop->hasFeasibleRuntimeContext()) {
+    DEBUG(dbgs() << "Bailing-out because of unfeasible context (early)\n");
     return;
+  }
 
   // Check early for profitability. Afterwards it cannot change anymore,
   // only the runtime context could become infeasible.
   if (!scop->isProfitable(UnprofitableScalarAccs)) {
     scop->invalidate(PROFITABLE, DebugLoc());
+    DEBUG(dbgs() << "Bailing-out because SCoP is not considered profitable\n");
     return;
   }
 
@@ -1065,8 +1072,10 @@ void ScopBuilder::buildScop(Region &R, AssumptionCache &AC,
   scop->addRecordedAssumptions();
 
   scop->simplifyContexts();
-  if (!scop->buildAliasChecks(AA))
+  if (!scop->buildAliasChecks(AA)) {
+    DEBUG(dbgs() << "Bailing-out because could not build alias checks\n");
     return;
+  }
 
   scop->hoistInvariantLoads();
   scop->canonicalizeDynamicBasePtrs();
@@ -1075,8 +1084,10 @@ void ScopBuilder::buildScop(Region &R, AssumptionCache &AC,
 
   // Check late for a feasible runtime context because profitability did not
   // change.
-  if (!scop->hasFeasibleRuntimeContext())
+  if (!scop->hasFeasibleRuntimeContext()) {
+    DEBUG(dbgs() << "Bailing-out because of unfeasible context (late)\n");
     return;
+  }
 
 #ifndef NDEBUG
   verifyUses(scop.get(), LI, DT);
@@ -1103,6 +1114,7 @@ ScopBuilder::ScopBuilder(Region *R, AssumptionCache &AC, AliasAnalysis &AA,
   if (!scop->hasFeasibleRuntimeContext()) {
     InfeasibleScops++;
     Msg = "SCoP ends here but was dismissed.";
+    DEBUG(dbgs() << "SCoP detected but dismissed\n");
     scop.reset();
   } else {
     Msg = "SCoP ends here.";
