@@ -528,6 +528,7 @@ def SNBFeatures : ProcessorFeatures<[], [
   FeatureSlow3OpsLEA,
   FeatureFastScalarFSQRT,
   FeatureFastSHLDRotate,
+  FeatureSlowIncDec,
   FeatureMacroFusion
 ]>;
 
@@ -560,8 +561,7 @@ def HSWFeatures : ProcessorFeatures<IVBFeatures.Value, [
   FeatureERMSB,
   FeatureFMA,
   FeatureLZCNT,
-  FeatureMOVBE,
-  FeatureSlowIncDec
+  FeatureMOVBE
 ]>;
 
 class HaswellProc<string Name> : ProcModel<Name, HaswellModel,
