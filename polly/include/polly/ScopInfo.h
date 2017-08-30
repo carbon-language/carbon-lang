@@ -1189,6 +1189,8 @@ using InvariantEquivClassesTy = SmallVector<InvariantEquivClassTy, 8>;
 /// accesses.
 /// At the moment every statement represents a single basic block of LLVM-IR.
 class ScopStmt {
+  friend class ScopBuilder;
+
 public:
   /// Create the ScopStmt from a BasicBlock.
   ScopStmt(Scop &parent, BasicBlock &bb, Loop *SurroundingLoop,
@@ -1210,9 +1212,6 @@ public:
   ScopStmt(const ScopStmt &) = delete;
   const ScopStmt &operator=(const ScopStmt &) = delete;
   ~ScopStmt();
-
-  /// Initialize members after all MemoryAccesses have been added.
-  void init(LoopInfo &LI);
 
 private:
   /// Polyhedral description

@@ -203,11 +203,6 @@ static cl::opt<std::string> UserContextStr(
     cl::desc("Provide additional constraints on the context parameters"),
     cl::init(""), cl::cat(PollyCategory));
 
-static cl::opt<bool> DetectReductions("polly-detect-reductions",
-                                      cl::desc("Detect and exploit reductions"),
-                                      cl::Hidden, cl::ZeroOrMore,
-                                      cl::init(true), cl::cat(PollyCategory));
-
 static cl::opt<bool>
     IslOnErrorAbort("polly-on-isl-error-abort",
                     cl::desc("Abort if an isl error is encountered"),
@@ -1795,17 +1790,6 @@ ScopStmt::ScopStmt(Scop &parent, isl::map SourceRel, isl::map TargetRel,
 }
 
 ScopStmt::~ScopStmt() = default;
-
-void ScopStmt::init(LoopInfo &LI) {
-  assert(!Domain && "init must be called only once");
-
-  buildDomain();
-  collectSurroundingLoops();
-  buildAccessRelations();
-
-  if (DetectReductions)
-    checkForReductions();
-}
 
 /// Collect loads which might form a reduction chain with @p StoreMA.
 ///

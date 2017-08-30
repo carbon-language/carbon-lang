@@ -89,6 +89,11 @@ static cl::opt<bool> DetectFortranArrays(
     cl::desc("Detect Fortran arrays and use this for code generation"),
     cl::Hidden, cl::init(false), cl::cat(PollyCategory));
 
+static cl::opt<bool> DetectReductions("polly-detect-reductions",
+                                      cl::desc("Detect and exploit reductions"),
+                                      cl::Hidden, cl::ZeroOrMore,
+                                      cl::init(true), cl::cat(PollyCategory));
+
 void ScopBuilder::buildPHIAccesses(ScopStmt *PHIStmt, PHINode *PHI,
                                    Region *NonAffineSubRegion,
                                    bool IsExitBlock) {
@@ -1042,8 +1047,14 @@ void ScopBuilder::buildScop(Region &R, AssumptionCache &AC,
   }
 
   // The ScopStmts now have enough information to initialize themselves.
-  for (ScopStmt &Stmt : *scop)
-    Stmt.init(LI);
+  for (ScopStmt &Stmt : *scop) {
+    Stmt.buildDomain();
+    Stmt.collectSurroundingLoops();
+    Stmt.buildAccessRelations();
+
+    if (DetectReductions)
+      Stmt.checkForReductions();
+  }
 
   // Check early for a feasible runtime context.
   if (!scop->hasFeasibleRuntimeContext()) {
