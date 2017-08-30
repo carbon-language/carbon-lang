@@ -825,6 +825,12 @@ def : ClampPat<V_MAX_F32_e64, f32>;
 def : ClampPat<V_MAX_F64, f64>;
 def : ClampPat<V_MAX_F16_e64, f16>;
 
+def : Pat <
+  (v2f16 (AMDGPUclamp (VOP3PMods v2f16:$src0, i32:$src0_modifiers))),
+  (V_PK_MAX_F16 $src0_modifiers, $src0,
+                $src0_modifiers, $src0, DSTCLAMP.ENABLE)
+>;
+
 /********** ================================ **********/
 /********** Floating point absolute/negative **********/
 /********** ================================ **********/
