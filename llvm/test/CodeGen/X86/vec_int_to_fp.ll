@@ -1678,8 +1678,8 @@ define <4 x float> @uitofp_2i64_to_4f32(<2 x i64> %a) {
 ; VEX-NEXT:    vaddss %xmm0, %xmm0, %xmm0
 ; VEX-NEXT:  .LBB39_6:
 ; VEX-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[2,3]
-; VEX-NEXT:    vxorps %xmm1, %xmm1, %xmm1
 ; VEX-NEXT:    testq %rax, %rax
+; VEX-NEXT:    vxorps %xmm1, %xmm1, %xmm1
 ; VEX-NEXT:    js .LBB39_8
 ; VEX-NEXT:  # BB#7:
 ; VEX-NEXT:    vcvtsi2ssq %rax, %xmm2, %xmm1
@@ -1914,8 +1914,8 @@ define <4 x float> @uitofp_4i64_to_4f32_undef(<2 x i64> %a) {
 ; VEX-NEXT:    vaddss %xmm0, %xmm0, %xmm0
 ; VEX-NEXT:  .LBB41_6:
 ; VEX-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[2,3]
-; VEX-NEXT:    vxorps %xmm1, %xmm1, %xmm1
 ; VEX-NEXT:    testq %rax, %rax
+; VEX-NEXT:    vxorps %xmm1, %xmm1, %xmm1
 ; VEX-NEXT:    js .LBB41_8
 ; VEX-NEXT:  # BB#7:
 ; VEX-NEXT:    vcvtsi2ssq %rax, %xmm2, %xmm1
