@@ -19916,9 +19916,11 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget &Subtarget
       MVT ScalarVT = VT.getScalarType() == MVT::i32 ? MVT::i64 : MVT::f64;
       MVT BitcastVT = MVT::getVectorVT(ScalarVT, Src.getValueSizeInBits()/64);
       Src = DAG.getBitcast(BitcastVT, Src);
+      MVT ResVT = MVT::getVectorVT(ScalarVT, VT.getSizeInBits()/64);
+      SDValue Res = DAG.getNode(IntrData->Opc0, dl, ResVT, Src);
+      Res = DAG.getBitcast(VT, Res);
 
-      return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Src),
-                                  Mask, PassThru, Subtarget, DAG);
+      return getVectorMaskingNode(Res, Mask, PassThru, Subtarget, DAG);
     }
     default:
       break;
