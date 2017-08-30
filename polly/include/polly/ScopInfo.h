@@ -1311,9 +1311,6 @@ private:
 
   //@{
 
-  /// Fill NestLoops with loops surrounding this statement.
-  void collectSurroundingLoops();
-
   /// Detect and mark reductions in the ScopStmt
   void checkForReductions();
 

@@ -918,6 +918,14 @@ void ScopBuilder::buildDomain(ScopStmt &Stmt) {
   Stmt.Domain = Stmt.Domain.set_tuple_id(Id);
 }
 
+void ScopBuilder::collectSurroundingLoops(ScopStmt &Stmt) {
+  isl::set Domain = Stmt.getDomain();
+  for (unsigned u = 0, e = Domain.dim(isl::dim::set); u < e; u++) {
+    isl::id DimId = Domain.get_dim_id(isl::dim::set, u);
+    Stmt.NestLoops.push_back(static_cast<Loop *>(DimId.get_user()));
+  }
+}
+
 void ScopBuilder::buildAccessRelations(ScopStmt &Stmt) {
   for (MemoryAccess *Access : Stmt.MemAccs) {
     Type *ElementType = Access->getElementType();
@@ -1077,7 +1085,7 @@ void ScopBuilder::buildScop(Region &R, AssumptionCache &AC,
   // The ScopStmts now have enough information to initialize themselves.
   for (ScopStmt &Stmt : *scop) {
     buildDomain(Stmt);
-    Stmt.collectSurroundingLoops();
+    collectSurroundingLoops(Stmt);
     buildAccessRelations(Stmt);
 
     if (DetectReductions)

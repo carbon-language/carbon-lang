@@ -1715,13 +1715,6 @@ buildConditionSets(Scop &S, BasicBlock *BB, TerminatorInst *TI, Loop *L,
                             ConditionSets);
 }
 
-void ScopStmt::collectSurroundingLoops() {
-  for (unsigned u = 0, e = Domain.dim(isl::dim::set); u < e; u++) {
-    isl::id DimId = Domain.get_dim_id(isl::dim::set, u);
-    NestLoops.push_back(static_cast<Loop *>(DimId.get_user()));
-  }
-}
-
 ScopStmt::ScopStmt(Scop &parent, Region &R, Loop *SurroundingLoop)
     : Parent(parent), InvalidDomain(nullptr), Domain(nullptr), R(&R),
       Build(nullptr), SurroundingLoop(SurroundingLoop) {

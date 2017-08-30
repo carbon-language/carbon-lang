@@ -338,6 +338,9 @@ class ScopBuilder {
   /// Build the domain of @p Stmt.
   void buildDomain(ScopStmt &Stmt);
 
+  /// Fill NestLoops with loops surrounding @p Stmt.
+  void collectSurroundingLoops(ScopStmt &Stmt);
+
   /// Build the access relation of all memory accesses of @p Stmt.
   void buildAccessRelations(ScopStmt &Stmt);
 
