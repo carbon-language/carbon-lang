@@ -3649,11 +3649,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (HaveAnyModules) {
     // -fprebuilt-module-path specifies where to load the prebuilt module files.
-    for (const Arg *A : Args.filtered(options::OPT_fprebuilt_module_path)) {
+    for (const Arg *A : Args.filtered(options::OPT_fprebuilt_module_path))
       CmdArgs.push_back(Args.MakeArgString(
           std::string("-fprebuilt-module-path=") + A->getValue()));
-      A->claim();
-    }
   }
 
   // -fmodule-name specifies the module that is currently being built (or
@@ -3676,10 +3674,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  // The -fmodule-file=<name>=<file> form specifies the mapping of module
-  // names to precompiled module files (the module is loaded only if used).
-  // The -fmodule-file=<file> form can be used to unconditionally load
-  // precompiled module files (whether used or not).
+  // -fmodule-file can be used to specify files containing precompiled modules.
   if (HaveAnyModules)
     Args.AddAllArgs(CmdArgs, options::OPT_fmodule_file);
   else
