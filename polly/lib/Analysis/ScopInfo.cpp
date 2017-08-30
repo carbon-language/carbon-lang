@@ -174,14 +174,6 @@ static cl::opt<bool> PollyRemarksMinimal(
     cl::desc("Do not emit remarks about assumptions that are known"),
     cl::Hidden, cl::ZeroOrMore, cl::init(false), cl::cat(PollyCategory));
 
-// Multiplicative reductions can be disabled separately as these kind of
-// operations can overflow easily. Additive reductions and bit operations
-// are in contrast pretty stable.
-static cl::opt<bool> DisableMultiplicativeReductions(
-    "polly-disable-multiplicative-reductions",
-    cl::desc("Disable multiplicative reductions"), cl::Hidden, cl::ZeroOrMore,
-    cl::init(false), cl::cat(PollyCategory));
-
 static cl::opt<int> RunTimeChecksMaxAccessDisjuncts(
     "polly-rtc-max-array-disjuncts",
     cl::desc("The maximal number of disjunts allowed in memory accesses to "
@@ -670,37 +662,6 @@ MemoryAccess::getReductionOperatorStr(MemoryAccess::ReductionType RT) {
     return "&";
   }
   llvm_unreachable("Unknown reduction type");
-}
-
-/// Return the reduction type for a given binary operator.
-static MemoryAccess::ReductionType getReductionType(const BinaryOperator *BinOp,
-                                                    const Instruction *Load) {
-  if (!BinOp)
-    return MemoryAccess::RT_NONE;
-  switch (BinOp->getOpcode()) {
-  case Instruction::FAdd:
-    if (!BinOp->hasUnsafeAlgebra())
-      return MemoryAccess::RT_NONE;
-  // Fall through
-  case Instruction::Add:
-    return MemoryAccess::RT_ADD;
-  case Instruction::Or:
-    return MemoryAccess::RT_BOR;
-  case Instruction::Xor:
-    return MemoryAccess::RT_BXOR;
-  case Instruction::And:
-    return MemoryAccess::RT_BAND;
-  case Instruction::FMul:
-    if (!BinOp->hasUnsafeAlgebra())
-      return MemoryAccess::RT_NONE;
-  // Fall through
-  case Instruction::Mul:
-    if (DisableMultiplicativeReductions)
-      return MemoryAccess::RT_NONE;
-    return MemoryAccess::RT_MUL;
-  default:
-    return MemoryAccess::RT_NONE;
-  }
 }
 
 const ScopArrayInfo *MemoryAccess::getOriginalScopArrayInfo() const {
@@ -1754,130 +1715,6 @@ ScopStmt::ScopStmt(Scop &parent, isl::map SourceRel, isl::map TargetRel,
 }
 
 ScopStmt::~ScopStmt() = default;
-
-/// Collect loads which might form a reduction chain with @p StoreMA.
-///
-/// Check if the stored value for @p StoreMA is a binary operator with one or
-/// two loads as operands. If the binary operand is commutative & associative,
-/// used only once (by @p StoreMA) and its load operands are also used only
-/// once, we have found a possible reduction chain. It starts at an operand
-/// load and includes the binary operator and @p StoreMA.
-///
-/// Note: We allow only one use to ensure the load and binary operator cannot
-///       escape this block or into any other store except @p StoreMA.
-void ScopStmt::collectCandiateReductionLoads(
-    MemoryAccess *StoreMA, SmallVectorImpl<MemoryAccess *> &Loads) {
-  auto *Store = dyn_cast<StoreInst>(StoreMA->getAccessInstruction());
-  if (!Store)
-    return;
-
-  // Skip if there is not one binary operator between the load and the store
-  auto *BinOp = dyn_cast<BinaryOperator>(Store->getValueOperand());
-  if (!BinOp)
-    return;
-
-  // Skip if the binary operators has multiple uses
-  if (BinOp->getNumUses() != 1)
-    return;
-
-  // Skip if the opcode of the binary operator is not commutative/associative
-  if (!BinOp->isCommutative() || !BinOp->isAssociative())
-    return;
-
-  // Skip if the binary operator is outside the current SCoP
-  if (BinOp->getParent() != Store->getParent())
-    return;
-
-  // Skip if it is a multiplicative reduction and we disabled them
-  if (DisableMultiplicativeReductions &&
-      (BinOp->getOpcode() == Instruction::Mul ||
-       BinOp->getOpcode() == Instruction::FMul))
-    return;
-
-  // Check the binary operator operands for a candidate load
-  auto *PossibleLoad0 = dyn_cast<LoadInst>(BinOp->getOperand(0));
-  auto *PossibleLoad1 = dyn_cast<LoadInst>(BinOp->getOperand(1));
-  if (!PossibleLoad0 && !PossibleLoad1)
-    return;
-
-  // A load is only a candidate if it cannot escape (thus has only this use)
-  if (PossibleLoad0 && PossibleLoad0->getNumUses() == 1)
-    if (PossibleLoad0->getParent() == Store->getParent())
-      Loads.push_back(&getArrayAccessFor(PossibleLoad0));
-  if (PossibleLoad1 && PossibleLoad1->getNumUses() == 1)
-    if (PossibleLoad1->getParent() == Store->getParent())
-      Loads.push_back(&getArrayAccessFor(PossibleLoad1));
-}
-
-/// Check for reductions in this ScopStmt.
-///
-/// Iterate over all store memory accesses and check for valid binary reduction
-/// like chains. For all candidates we check if they have the same base address
-/// and there are no other accesses which overlap with them. The base address
-/// check rules out impossible reductions candidates early. The overlap check,
-/// together with the "only one user" check in collectCandiateReductionLoads,
-/// guarantees that none of the intermediate results will escape during
-/// execution of the loop nest. We basically check here that no other memory
-/// access can access the same memory as the potential reduction.
-void ScopStmt::checkForReductions() {
-  SmallVector<MemoryAccess *, 2> Loads;
-  SmallVector<std::pair<MemoryAccess *, MemoryAccess *>, 4> Candidates;
-
-  // First collect candidate load-store reduction chains by iterating over all
-  // stores and collecting possible reduction loads.
-  for (MemoryAccess *StoreMA : MemAccs) {
-    if (StoreMA->isRead())
-      continue;
-
-    Loads.clear();
-    collectCandiateReductionLoads(StoreMA, Loads);
-    for (MemoryAccess *LoadMA : Loads)
-      Candidates.push_back(std::make_pair(LoadMA, StoreMA));
-  }
-
-  // Then check each possible candidate pair.
-  for (const auto &CandidatePair : Candidates) {
-    bool Valid = true;
-    isl::map LoadAccs = CandidatePair.first->getAccessRelation();
-    isl::map StoreAccs = CandidatePair.second->getAccessRelation();
-
-    // Skip those with obviously unequal base addresses.
-    if (!LoadAccs.has_equal_space(StoreAccs)) {
-      continue;
-    }
-
-    // And check if the remaining for overlap with other memory accesses.
-    isl::map AllAccsRel = LoadAccs.unite(StoreAccs);
-    AllAccsRel = AllAccsRel.intersect_domain(getDomain());
-    isl::set AllAccs = AllAccsRel.range();
-
-    for (MemoryAccess *MA : MemAccs) {
-      if (MA == CandidatePair.first || MA == CandidatePair.second)
-        continue;
-
-      isl::map AccRel = MA->getAccessRelation().intersect_domain(getDomain());
-      isl::set Accs = AccRel.range();
-
-      if (AllAccs.has_equal_space(Accs)) {
-        isl::set OverlapAccs = Accs.intersect(AllAccs);
-        Valid = Valid && OverlapAccs.is_empty();
-      }
-    }
-
-    if (!Valid)
-      continue;
-
-    const LoadInst *Load =
-        dyn_cast<const LoadInst>(CandidatePair.first->getAccessInstruction());
-    MemoryAccess::ReductionType RT =
-        getReductionType(dyn_cast<BinaryOperator>(Load->user_back()), Load);
-
-    // If no overlapping access was found we mark the load and store as
-    // reduction like.
-    CandidatePair.first->markAsReductionLike(RT);
-    CandidatePair.second->markAsReductionLike(RT);
-  }
-}
 
 std::string ScopStmt::getDomainStr() const { return Domain.to_str(); }
 

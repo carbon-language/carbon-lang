@@ -94,6 +94,14 @@ static cl::opt<bool> DetectReductions("polly-detect-reductions",
                                       cl::Hidden, cl::ZeroOrMore,
                                       cl::init(true), cl::cat(PollyCategory));
 
+// Multiplicative reductions can be disabled separately as these kind of
+// operations can overflow easily. Additive reductions and bit operations
+// are in contrast pretty stable.
+static cl::opt<bool> DisableMultiplicativeReductions(
+    "polly-disable-multiplicative-reductions",
+    cl::desc("Disable multiplicative reductions"), cl::Hidden, cl::ZeroOrMore,
+    cl::init(false), cl::cat(PollyCategory));
+
 void ScopBuilder::buildPHIAccesses(ScopStmt *PHIStmt, PHINode *PHI,
                                    Region *NonAffineSubRegion,
                                    bool IsExitBlock) {
@@ -926,6 +934,144 @@ void ScopBuilder::collectSurroundingLoops(ScopStmt &Stmt) {
   }
 }
 
+/// Return the reduction type for a given binary operator.
+static MemoryAccess::ReductionType getReductionType(const BinaryOperator *BinOp,
+                                                    const Instruction *Load) {
+  if (!BinOp)
+    return MemoryAccess::RT_NONE;
+  switch (BinOp->getOpcode()) {
+  case Instruction::FAdd:
+    if (!BinOp->hasUnsafeAlgebra())
+      return MemoryAccess::RT_NONE;
+    // Fall through
+  case Instruction::Add:
+    return MemoryAccess::RT_ADD;
+  case Instruction::Or:
+    return MemoryAccess::RT_BOR;
+  case Instruction::Xor:
+    return MemoryAccess::RT_BXOR;
+  case Instruction::And:
+    return MemoryAccess::RT_BAND;
+  case Instruction::FMul:
+    if (!BinOp->hasUnsafeAlgebra())
+      return MemoryAccess::RT_NONE;
+    // Fall through
+  case Instruction::Mul:
+    if (DisableMultiplicativeReductions)
+      return MemoryAccess::RT_NONE;
+    return MemoryAccess::RT_MUL;
+  default:
+    return MemoryAccess::RT_NONE;
+  }
+}
+
+void ScopBuilder::checkForReductions(ScopStmt &Stmt) {
+  SmallVector<MemoryAccess *, 2> Loads;
+  SmallVector<std::pair<MemoryAccess *, MemoryAccess *>, 4> Candidates;
+
+  // First collect candidate load-store reduction chains by iterating over all
+  // stores and collecting possible reduction loads.
+  for (MemoryAccess *StoreMA : Stmt) {
+    if (StoreMA->isRead())
+      continue;
+
+    Loads.clear();
+    collectCandiateReductionLoads(StoreMA, Loads);
+    for (MemoryAccess *LoadMA : Loads)
+      Candidates.push_back(std::make_pair(LoadMA, StoreMA));
+  }
+
+  // Then check each possible candidate pair.
+  for (const auto &CandidatePair : Candidates) {
+    bool Valid = true;
+    isl::map LoadAccs = CandidatePair.first->getAccessRelation();
+    isl::map StoreAccs = CandidatePair.second->getAccessRelation();
+
+    // Skip those with obviously unequal base addresses.
+    if (!LoadAccs.has_equal_space(StoreAccs)) {
+      continue;
+    }
+
+    // And check if the remaining for overlap with other memory accesses.
+    isl::map AllAccsRel = LoadAccs.unite(StoreAccs);
+    AllAccsRel = AllAccsRel.intersect_domain(Stmt.getDomain());
+    isl::set AllAccs = AllAccsRel.range();
+
+    for (MemoryAccess *MA : Stmt) {
+      if (MA == CandidatePair.first || MA == CandidatePair.second)
+        continue;
+
+      isl::map AccRel =
+          MA->getAccessRelation().intersect_domain(Stmt.getDomain());
+      isl::set Accs = AccRel.range();
+
+      if (AllAccs.has_equal_space(Accs)) {
+        isl::set OverlapAccs = Accs.intersect(AllAccs);
+        Valid = Valid && OverlapAccs.is_empty();
+      }
+    }
+
+    if (!Valid)
+      continue;
+
+    const LoadInst *Load =
+        dyn_cast<const LoadInst>(CandidatePair.first->getAccessInstruction());
+    MemoryAccess::ReductionType RT =
+        getReductionType(dyn_cast<BinaryOperator>(Load->user_back()), Load);
+
+    // If no overlapping access was found we mark the load and store as
+    // reduction like.
+    CandidatePair.first->markAsReductionLike(RT);
+    CandidatePair.second->markAsReductionLike(RT);
+  }
+}
+
+void ScopBuilder::collectCandiateReductionLoads(
+    MemoryAccess *StoreMA, SmallVectorImpl<MemoryAccess *> &Loads) {
+  ScopStmt *Stmt = StoreMA->getStatement();
+
+  auto *Store = dyn_cast<StoreInst>(StoreMA->getAccessInstruction());
+  if (!Store)
+    return;
+
+  // Skip if there is not one binary operator between the load and the store
+  auto *BinOp = dyn_cast<BinaryOperator>(Store->getValueOperand());
+  if (!BinOp)
+    return;
+
+  // Skip if the binary operators has multiple uses
+  if (BinOp->getNumUses() != 1)
+    return;
+
+  // Skip if the opcode of the binary operator is not commutative/associative
+  if (!BinOp->isCommutative() || !BinOp->isAssociative())
+    return;
+
+  // Skip if the binary operator is outside the current SCoP
+  if (BinOp->getParent() != Store->getParent())
+    return;
+
+  // Skip if it is a multiplicative reduction and we disabled them
+  if (DisableMultiplicativeReductions &&
+      (BinOp->getOpcode() == Instruction::Mul ||
+       BinOp->getOpcode() == Instruction::FMul))
+    return;
+
+  // Check the binary operator operands for a candidate load
+  auto *PossibleLoad0 = dyn_cast<LoadInst>(BinOp->getOperand(0));
+  auto *PossibleLoad1 = dyn_cast<LoadInst>(BinOp->getOperand(1));
+  if (!PossibleLoad0 && !PossibleLoad1)
+    return;
+
+  // A load is only a candidate if it cannot escape (thus has only this use)
+  if (PossibleLoad0 && PossibleLoad0->getNumUses() == 1)
+    if (PossibleLoad0->getParent() == Store->getParent())
+      Loads.push_back(&Stmt->getArrayAccessFor(PossibleLoad0));
+  if (PossibleLoad1 && PossibleLoad1->getNumUses() == 1)
+    if (PossibleLoad1->getParent() == Store->getParent())
+      Loads.push_back(&Stmt->getArrayAccessFor(PossibleLoad1));
+}
+
 void ScopBuilder::buildAccessRelations(ScopStmt &Stmt) {
   for (MemoryAccess *Access : Stmt.MemAccs) {
     Type *ElementType = Access->getElementType();
@@ -1089,7 +1235,7 @@ void ScopBuilder::buildScop(Region &R, AssumptionCache &AC,
     buildAccessRelations(Stmt);
 
     if (DetectReductions)
-      Stmt.checkForReductions();
+      checkForReductions(Stmt);
   }
 
   // Check early for a feasible runtime context.

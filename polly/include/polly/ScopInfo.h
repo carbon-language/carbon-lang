@@ -1309,16 +1309,6 @@ private:
   /// Vector for Instructions in this statement.
   std::vector<Instruction *> Instructions;
 
-  //@{
-
-  /// Detect and mark reductions in the ScopStmt
-  void checkForReductions();
-
-  /// Collect loads which might form a reduction chain with @p StoreMA
-  void collectCandiateReductionLoads(MemoryAccess *StoreMA,
-                                     SmallVectorImpl<MemoryAccess *> &Loads);
-  //@}
-
   /// Remove @p MA from dictionaries pointing to them.
   void removeAccessData(MemoryAccess *MA);
 
