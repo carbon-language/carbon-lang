@@ -65,12 +65,6 @@ void ArchiveFile::parse() {
   // Parse a MemoryBufferRef as an archive file.
   File = check(Archive::create(MB), toString(this));
 
-  // MSVC link.exe supports nested static libraries unlike Unix linkers.
-  // To support that, we'll add inner libraries to the symbol table.
-  for (MemoryBufferRef MB : getArchiveMembers(File.get()))
-    if (identify_magic(MB.getBuffer()) == file_magic::archive)
-      make<ArchiveFile>(MB)->parse();
-
   // Read the symbol table to construct Lazy objects.
   for (const Archive::Symbol &Sym : File->symbols())
     Symtab->addLazy(this, Sym);
