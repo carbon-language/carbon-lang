@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/IPO/CrossDSOCFI.h"
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/EquivalenceClasses.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/IR/Constant.h"
@@ -82,7 +82,7 @@ ConstantInt *CrossDSOCFI::extractNumericTypeId(MDNode *MD) {
 void CrossDSOCFI::buildCFICheck(Module &M) {
   // FIXME: verify that __cfi_check ends up near the end of the code section,
   // but before the jump slots created in LowerTypeTests.
-  llvm::DenseSet<uint64_t> TypeIds;
+  SetVector<uint64_t> TypeIds;
   SmallVector<MDNode *, 2> Types;
   for (GlobalObject &GO : M.global_objects()) {
     Types.clear();
