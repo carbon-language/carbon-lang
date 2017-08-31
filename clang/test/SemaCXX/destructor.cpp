@@ -409,7 +409,6 @@ void nowarn1() {
     simple_ptr<SystemB> sb(new SystemB());
     use(*sb);
   }
-
 }
 
 void warn1() {
