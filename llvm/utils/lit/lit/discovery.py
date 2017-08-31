@@ -57,9 +57,6 @@ def getTestSuite(item, litConfig, cache):
             cache[path] = res = search1(path)
         return res
 
-    # Canonicalize the path.
-    item = os.path.realpath(item)
-
     # Skip files and virtual components.
     components = []
     while not os.path.isdir(item):
