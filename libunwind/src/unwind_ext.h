@@ -23,7 +23,7 @@ extern "C" {
 // implemented elsewhere.
 
 extern struct _Unwind_FunctionContext *
-__Unwind_SjLj_GetTopOfFunctionStack(void);
+__Unwind_SjLj_GetTopOfFunctionStack();
 
 extern void
 __Unwind_SjLj_SetTopOfFunctionStack(struct _Unwind_FunctionContext *fc);

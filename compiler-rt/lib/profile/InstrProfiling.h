@@ -63,8 +63,8 @@ const char *__llvm_profile_begin_names(void);
 const char *__llvm_profile_end_names(void);
 uint64_t *__llvm_profile_begin_counters(void);
 uint64_t *__llvm_profile_end_counters(void);
-ValueProfNode *__llvm_profile_begin_vnodes(void);
-ValueProfNode *__llvm_profile_end_vnodes(void);
+ValueProfNode *__llvm_profile_begin_vnodes();
+ValueProfNode *__llvm_profile_end_vnodes();
 
 /*!
  * \brief Clear profile counters to zero.
@@ -164,7 +164,7 @@ void __llvm_profile_initialize_file(void);
  * merge mode is turned on for instrumented programs with shared libs).
  * Side-effect: this API call will invoke malloc with dynamic memory allocation.
  */
-const char *__llvm_profile_get_path_prefix(void);
+const char *__llvm_profile_get_path_prefix();
 
 /*! \brief Get the magic token for the file format. */
 uint64_t __llvm_profile_get_magic(void);
