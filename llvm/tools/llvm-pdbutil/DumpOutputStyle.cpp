@@ -716,18 +716,18 @@ Error DumpOutputStyle::dumpUdtStats() {
   }
 
   LongestNamespace += StringRef(" namespace ''").size();
-  uint32_t LongestTypeLeafKind = getLongestTypeLeafName(UdtTargetStats);
-  uint32_t FieldWidth = std::max(LongestNamespace, LongestTypeLeafKind);
+  size_t LongestTypeLeafKind = getLongestTypeLeafName(UdtTargetStats);
+  size_t FieldWidth = std::max(LongestNamespace, LongestTypeLeafKind);
 
   // Compute the max number of digits for count and size fields, including comma
   // separators.
   StringRef CountHeader("Count");
   StringRef SizeHeader("Size");
-  uint32_t CD = NumDigits(UdtStats.Totals.Count);
+  size_t CD = NumDigits(UdtStats.Totals.Count);
   CD += (CD - 1) / 3;
   CD = std::max(CD, CountHeader.size());
 
-  uint32_t SD = NumDigits(UdtStats.Totals.Size);
+  size_t SD = NumDigits(UdtStats.Totals.Size);
   SD += (SD - 1) / 3;
   SD = std::max(SD, SizeHeader.size());
 
