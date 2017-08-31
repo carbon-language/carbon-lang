@@ -40,5 +40,5 @@ Sections:
         Kind:            GLOBAL
         Index:           0x00000002
 
-# CHECK: 00000002 D bar
+# CHECK: 00000400 D bar
 # CHECK: 00000004 T foo
