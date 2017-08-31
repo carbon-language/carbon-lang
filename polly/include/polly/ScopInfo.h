@@ -2202,8 +2202,11 @@ private:
   /// A new statement for @p R will be created and added to the statement vector
   /// and map.
   ///
-  /// @param R               The region we build the statement for.
-  /// @param SurroundingLoop The loop the created statement is contained in.
+  /// @param R                      The region we build the statement for.
+  /// @param SurroundingLoop        The loop the created statement is contained
+  ///                               in.
+  /// @param EntryBlockInstructions The (interesting) instructions in the
+  ///                               entry block of the region statement.
   void addScopStmt(Region *R, Loop *SurroundingLoop,
                    std::vector<Instruction *> EntryBlockInstructions);
 
