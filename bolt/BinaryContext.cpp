@@ -28,6 +28,7 @@ namespace opts {
 extern cl::OptionCategory BoltCategory;
 
 extern cl::opt<bool> Relocs;
+extern cl::opt<BinaryFunction::ReorderType> ReorderFunctions;
 
 static cl::opt<bool>
 PrintDebugInfo("print-debug-info",
@@ -184,6 +185,28 @@ unsigned BinaryContext::addDebugFilenameToUnit(const uint32_t DestCUID,
     LineTable->Prologue.IncludeDirectories[FileNames[FileIndex - 1].DirIdx - 1] :
     "";
   return Ctx->getDwarfFile(Dir, FileNames[FileIndex - 1].Name, 0, DestCUID);
+}
+
+std::vector<BinaryFunction *> BinaryContext::getSortedFunctions(
+    std::map<uint64_t, BinaryFunction> &BinaryFunctions) {
+  std::vector<BinaryFunction *> SortedFunctions(BinaryFunctions.size());
+  std::transform(BinaryFunctions.begin(), BinaryFunctions.end(),
+                 SortedFunctions.begin(),
+                 [](std::pair<const uint64_t, BinaryFunction> &BFI) {
+                   return &BFI.second;
+                 });
+
+  if (opts::ReorderFunctions != BinaryFunction::RT_NONE) {
+    std::stable_sort(SortedFunctions.begin(), SortedFunctions.end(),
+                     [](const BinaryFunction *A, const BinaryFunction *B) {
+                       if (A->hasValidIndex() && B->hasValidIndex()) {
+                         return A->getIndex() < B->getIndex();
+                       } else {
+                         return A->hasValidIndex();
+                       }
+                     });
+  }
+  return SortedFunctions;
 }
 
 void BinaryContext::preprocessDebugInfo(

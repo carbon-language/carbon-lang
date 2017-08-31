@@ -333,6 +333,10 @@ public:
   /// return the successor.
   BinaryBasicBlock *getSuccessor(const MCSymbol *Label = nullptr) const;
 
+  /// Return the related branch info as well as the successor.
+  BinaryBasicBlock *getSuccessor(const MCSymbol *Label,
+                                 BinaryBranchInfo &BI) const;
+
   /// If the basic block ends with a conditional branch (possibly followed by
   /// an unconditional branch) and thus has 2 successors, return a successor
   /// corresponding to a jump condition which could be true or false.
@@ -635,6 +639,12 @@ public:
   /// Erase non-pseudo instruction at a given iterator \p II.
   iterator eraseInstruction(iterator II) {
     return Instructions.erase(II);
+  }
+
+  /// Erase all instructions
+  void clear() {
+    Instructions.clear();
+    NumPseudos = 0;
   }
 
   /// Retrieve iterator for \p Inst or return end iterator if instruction is not

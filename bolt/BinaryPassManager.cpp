@@ -14,6 +14,7 @@
 #include "Passes/FrameOptimizer.h"
 #include "Passes/IndirectCallPromotion.h"
 #include "Passes/Inliner.h"
+#include "Passes/LongJmp.h"
 #include "Passes/PLTCall.h"
 #include "Passes/ReorderFunctions.h"
 #include "Passes/StokeInfo.h"
@@ -102,6 +103,13 @@ PrintFOP("print-fop",
 static cl::opt<bool>
 PrintFinalized("print-finalized",
   cl::desc("print function after CFG is finalized"),
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintLongJmp("print-longjmp",
+  cl::desc("print functions after longjmp pass"),
+  cl::ZeroOrMore,
   cl::Hidden,
   cl::cat(BoltOptCategory));
 
@@ -395,6 +403,12 @@ void BinaryFunctionPassManager::runAllPasses(
   Manager.registerPass(llvm::make_unique<FrameOptimizerPass>(PrintFOP));
 
   Manager.registerPass(llvm::make_unique<AllocCombinerPass>(PrintFOP));
+
+  // Thighten branches according to offset differences between branch and
+  // targets. No extra instructions after this pass, otherwise we may have
+  // relocations out of range and crash during linking.
+  if (BC.TheTriple->getArch() == llvm::Triple::aarch64)
+    Manager.registerPass(llvm::make_unique<LongJmpPass>(PrintLongJmp));
 
   // This pass turns tail calls into jumps which makes them invisible to
   // function reordering. It's unsafe to use any CFG or instruction analysis

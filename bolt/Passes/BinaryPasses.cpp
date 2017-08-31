@@ -233,7 +233,7 @@ void OptimizeBodylessFunctions::optimizeCalls(BinaryFunction &BF,
                    << ": replacing call to " << OriginalTarget->getName()
                    << " by call to " << Target->getName()
                    << " while folding " << CallSites << " call sites\n");
-      BC.MIA->replaceCallTargetOperand(Inst, Target, BC.Ctx.get());
+      BC.MIA->replaceBranchTarget(Inst, Target, BC.Ctx.get());
 
       NumOptimizedCallSites += CallSites;
       if (BB->hasProfile()) {

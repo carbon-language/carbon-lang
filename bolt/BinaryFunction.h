@@ -711,7 +711,7 @@ private:
     assert(InstructionOffsets.size() == Instructions.size() &&
            "There must be one instruction at every offset.");
     Instructions.emplace_back(std::forward<MCInst>(Instruction));
-    InstructionOffsets[Offset] = Instructions.size() - 1; 
+    InstructionOffsets[Offset] = Instructions.size() - 1;
   }
 
   /// Return instruction at a given offset in the function. Valid before
@@ -1858,6 +1858,18 @@ public:
         if (BB->getKnownExecutionCount() != 0) {
           Estimate += BC.computeCodeSize(BB->begin(), BB->end());
         }
+      }
+    }
+    return Estimate;
+  }
+
+  size_t estimateColdSize() const {
+    if (!isSplit())
+      return estimateSize();
+    size_t Estimate = 0;
+    for (const auto *BB : BasicBlocksLayout) {
+      if (BB->isCold()) {
+        Estimate += BC.computeCodeSize(BB->begin(), BB->end());
       }
     }
     return Estimate;

@@ -3969,7 +3969,7 @@ DynoStats BinaryFunction::getDynoStats() const {
           BC.MIA->getAnnotationWithDefault<uint64_t>(Instr, "CTCTakenCount");
       }
       Stats[DynoStats::FUNCTION_CALLS] += CallFreq;
-      if (BC.MIA->getMemoryOperandNo(Instr) != -1) {
+      if (BC.MIA->isIndirectCall(Instr)) {
         Stats[DynoStats::INDIRECT_CALLS] += CallFreq;
       } else if (const auto *CallSymbol = BC.MIA->getTargetSymbol(Instr)) {
         const auto *BF = BC.getFunctionForSymbol(CallSymbol);

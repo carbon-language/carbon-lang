@@ -76,7 +76,6 @@ extern cl::OptionCategory BoltOutputCategory;
 extern cl::OptionCategory AggregatorCategory;
 
 extern cl::opt<JumpTableSupportLevel> JumpTables;
-extern cl::opt<BinaryFunction::ReorderType> ReorderFunctions;
 
 static cl::opt<bool>
 PrintCacheMetrics("print-cache-metrics",
@@ -781,6 +780,7 @@ void RewriteInstance::discoverStorage() {
 
   NewTextSegmentAddress = NextAvailableAddress;
   NewTextSegmentOffset = NextAvailableOffset;
+  BC->LayoutStartAddress = NextAvailableAddress;
 }
 
 Optional<std::string>
@@ -2265,24 +2265,8 @@ void RewriteInstance::emitFunctions() {
     Streamer->EmitLabel(BC->Ctx->getOrCreateSymbol("__hot_start"));
 
   // Sort functions for the output.
-  std::vector<BinaryFunction *> SortedFunctions(BinaryFunctions.size());
-  std::transform(BinaryFunctions.begin(),
-                 BinaryFunctions.end(),
-                 SortedFunctions.begin(),
-                 [](std::pair<const uint64_t, BinaryFunction> &BFI) {
-                   return &BFI.second;
-                 });
-
-  if (opts::ReorderFunctions != BinaryFunction::RT_NONE) {
-    std::stable_sort(SortedFunctions.begin(), SortedFunctions.end(),
-                     [](const BinaryFunction *A, const BinaryFunction *B) {
-                       if (A->hasValidIndex() && B->hasValidIndex()) {
-                         return A->getIndex() < B->getIndex();
-                       } else {
-                         return A->hasValidIndex();
-                       }
-                     });
-  }
+  std::vector<BinaryFunction *> SortedFunctions =
+      BinaryContext::getSortedFunctions(BinaryFunctions);
 
   DEBUG(
     if (!opts::Relocs) {

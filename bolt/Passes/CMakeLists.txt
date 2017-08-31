@@ -13,6 +13,7 @@ add_llvm_library(LLVMBOLTPasses
   IndirectCallPromotion.cpp
   Inliner.cpp
   LivenessAnalysis.cpp
+  LongJmp.cpp
   MCF.cpp
   PettisAndHansen.cpp
   PLTCall.cpp

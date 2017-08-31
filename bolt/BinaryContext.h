@@ -149,6 +149,11 @@ public:
   /// Number of functions with profile information
   uint64_t NumProfiledFuncs{0};
 
+  /// Track next available address for new allocatable sections. RewriteInstance
+  /// sets this prior to running BOLT passes, so layout passes are aware of the
+  /// final addresses functions will have.
+  uint64_t LayoutStartAddress{0};
+
   /// True if the binary requires immediate relocation processing.
   bool RequiresZNow{false};
 
@@ -271,6 +276,10 @@ public:
   unsigned addDebugFilenameToUnit(const uint32_t DestCUID,
                                   const uint32_t SrcCUID,
                                   unsigned FileIndex);
+
+  /// Return functions in output layout order
+  static std::vector<BinaryFunction *>
+  getSortedFunctions(std::map<uint64_t, BinaryFunction> &BinaryFunctions);
 
   /// Compute the native code size for a range of instructions.
   /// Note: this can be imprecise wrt the final binary since happening prior to

@@ -138,6 +138,21 @@ BinaryBasicBlock *BinaryBasicBlock::getSuccessor(const MCSymbol *Label) const {
   return nullptr;
 }
 
+BinaryBasicBlock *
+BinaryBasicBlock::getSuccessor(const MCSymbol *Label,
+                               BinaryBranchInfo &BI) const {
+  auto BIIter = branch_info_begin();
+  for (BinaryBasicBlock *BB : successors()) {
+    if (BB->getLabel() == Label) {
+      BI = *BIIter;
+      return BB;
+    }
+    ++BIIter;
+  }
+
+  return nullptr;
+}
+
 BinaryBasicBlock *BinaryBasicBlock::getLandingPad(const MCSymbol *Label) const {
   for (BinaryBasicBlock *BB : landing_pads()) {
     if (BB->getLabel() == Label)
