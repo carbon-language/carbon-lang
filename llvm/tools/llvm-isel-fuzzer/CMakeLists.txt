@@ -1,6 +1,4 @@
 if( LLVM_USE_SANITIZE_COVERAGE )
-  include_directories(BEFORE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../lib/Fuzzer)
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=fuzzer")
   set(LLVM_LINK_COMPONENTS
