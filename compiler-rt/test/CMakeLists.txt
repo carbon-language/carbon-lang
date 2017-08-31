@@ -71,6 +71,10 @@ if(COMPILER_RT_CAN_EXECUTE_TESTS)
     endforeach()
 
     compiler_rt_test_runtime(profile)
+
+    if(COMPILER_RT_HAS_UBSAN AND COMPILER_RT_HAS_UBSAN_MINIMAL)
+      add_dependencies(check-ubsan check-ubsan-minimal)
+    endif()
   endif()
   if(COMPILER_RT_BUILD_XRAY)
     compiler_rt_test_runtime(xray)
