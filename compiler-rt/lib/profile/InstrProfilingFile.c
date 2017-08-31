@@ -86,7 +86,7 @@ COMPILER_RT_WEAK lprofFilename lprofCurFilename = {0, 0, 0, {0}, {0},
                                                    0, 0, 0, PNS_unknown};
 
 int getpid(void);
-static int getCurFilenameLength();
+static int getCurFilenameLength(void);
 static const char *getCurFilename(char *FilenameBuf);
 static unsigned doMerging() { return lprofCurFilename.MergePoolSize; }
 

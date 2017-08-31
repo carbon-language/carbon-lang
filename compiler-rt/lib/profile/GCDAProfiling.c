@@ -92,7 +92,7 @@ static int fd = -1;
 /*
  * A list of functions to write out the data.
  */
-typedef void (*writeout_fn)();
+typedef void (*writeout_fn)(void);
 
 struct writeout_fn_node {
   writeout_fn fn;
@@ -105,7 +105,7 @@ static struct writeout_fn_node *writeout_fn_tail = NULL;
 /*
  *  A list of flush functions that our __gcov_flush() function should call.
  */
-typedef void (*flush_fn)();
+typedef void (*flush_fn)(void);
 
 struct flush_fn_node {
   flush_fn fn;

@@ -54,9 +54,9 @@ void *lprofPtrFetchAdd(void **Mem, long ByteIncr);
 /* Temporarily suspend SIGKILL. Return value of 1 means a restore is needed.
  * Other return values mean no restore is needed.
  */
-int lprofSuspendSigKill();
+int lprofSuspendSigKill(void);
 
 /* Restore previously suspended SIGKILL. */
-void lprofRestoreSigKill();
+void lprofRestoreSigKill(void);
 
 #endif /* PROFILE_INSTRPROFILINGUTIL_H */
