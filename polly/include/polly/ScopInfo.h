@@ -1198,15 +1198,7 @@ public:
            std::vector<Instruction *> Instructions, int Count);
 
   /// Create an overapproximating ScopStmt for the region @p R.
-  ///
-  /// @param EntryBlockInstructions The list of instructions that belong to the
-  ///                               entry block of the region statement.
-  ///                               Instructions are only tracked for entry
-  ///                               blocks for now. We currently do not allow
-  ///                               to modify the instructions of blocks later
-  ///                               in the region statement.
-  ScopStmt(Scop &parent, Region &R, Loop *SurroundingLoop,
-           std::vector<Instruction *> EntryBlockInstructions);
+  ScopStmt(Scop &parent, Region &R, Loop *SurroundingLoop);
 
   /// Create a copy statement.
   ///
@@ -2204,8 +2196,7 @@ private:
   ///
   /// @param R               The region we build the statement for.
   /// @param SurroundingLoop The loop the created statement is contained in.
-  void addScopStmt(Region *R, Loop *SurroundingLoop,
-                   std::vector<Instruction *> EntryBlockInstructions);
+  void addScopStmt(Region *R, Loop *SurroundingLoop);
 
   /// Update access dimensionalities.
   ///
