@@ -368,6 +368,10 @@ void BinaryFunctionPassManager::runAllPasses(
       InitialDynoStats, "after all optimizations before SCTC and FOP"),
     opts::PrintDynoStats | opts::DynoStatsAll);
 
+  // Add the StokeInfo pass, which extract functions for stoke optimization and
+  // get the liveness information for them
+  Manager.registerPass(llvm::make_unique<StokeInfo>(PrintStoke), opts::Stoke);
+
   // This pass introduces conditional jumps into external functions.
   // Between extending CFG to support this and isolating this pass we chose
   // the latter. Thus this pass will do double jump removal and unreachable
@@ -380,10 +384,6 @@ void BinaryFunctionPassManager::runAllPasses(
   Manager.registerPass(
     llvm::make_unique<SimplifyConditionalTailCalls>(PrintSCTC),
     opts::SimplifyConditionalTailCalls);
-
-  // Add the StokeInfo pass, which extract functions for stoke optimization and
-  // get the liveness information for them
-  Manager.registerPass(llvm::make_unique<StokeInfo>(PrintStoke), opts::Stoke);
 
   // This pass should always run last.*
   Manager.registerPass(llvm::make_unique<FinalizeFunctions>(PrintFinalized));

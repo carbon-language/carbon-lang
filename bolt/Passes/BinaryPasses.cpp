@@ -487,6 +487,10 @@ uint64_t fixDoubleJumps(BinaryContext &BC,
     if (!BC.MIA->isUnconditionalBranch(*Inst) && !IsTailCall)
       continue;
 
+    // If we operate after SCTC make sure it's not a conditional tail call.
+    if (IsTailCall && BC.MIA->isConditionalBranch(*Inst))
+      continue;
+
     const auto *SuccSym = BC.MIA->getTargetSymbol(*Inst);
     auto *Succ = BB.getSuccessor();
 
@@ -517,11 +521,11 @@ uint64_t fixDoubleJumps(BinaryContext &BC,
 
 }
 
-bool
-SimplifyConditionalTailCalls::shouldRewriteBranch(const BinaryBasicBlock *PredBB,
-                                                  const MCInst &CondBranch,
-                                                  const BinaryBasicBlock *BB,
-                                                  const bool DirectionFlag) {
+bool SimplifyConditionalTailCalls::shouldRewriteBranch(
+    const BinaryBasicBlock *PredBB,
+    const MCInst &CondBranch,
+    const BinaryBasicBlock *BB,
+    const bool DirectionFlag) {
   const bool IsForward = BinaryFunction::isForwardBranch(PredBB, BB);
 
   if (IsForward)
@@ -564,8 +568,9 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
   uint64_t NumLocalCTCs = 0;
   uint64_t LocalCTCTakenCount = 0;
   uint64_t LocalCTCExecCount = 0;
-  std::vector<std::tuple<BinaryBasicBlock *, BinaryBasicBlock *, const BinaryBasicBlock *>>
-    NeedsUncondBranch;
+  std::vector<std::tuple<BinaryBasicBlock *,
+                         BinaryBasicBlock *,
+                         const BinaryBasicBlock *>> NeedsUncondBranch;
 
   // Will block be deleted by UCE?
   auto isValid = [](const BinaryBasicBlock *BB) {
@@ -733,7 +738,6 @@ void SimplifyConditionalTailCalls::runOnFunctions(
     if (!shouldOptimize(Function))
       continue;
 
-    // Fix tail calls to reduce branch mispredictions.
     if (fixTailCalls(BC, Function)) {
       Modified.insert(&Function);
     }
