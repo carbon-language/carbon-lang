@@ -2191,6 +2191,165 @@ static void RenderARCMigrateToolOptions(const Driver &D, const ArgList &Args,
   }
 }
 
+static void RenderModulesOptions(Compilation &C, const Driver &D,
+                                 const ArgList &Args, const InputInfo &Input,
+                                 const InputInfo &Output,
+                                 ArgStringList &CmdArgs, bool &HaveModules) {
+  // -fmodules enables the use of precompiled modules (off by default).
+  // Users can pass -fno-cxx-modules to turn off modules support for
+  // C++/Objective-C++ programs.
+  bool HaveClangModules = false;
+  if (Args.hasFlag(options::OPT_fmodules, options::OPT_fno_modules, false)) {
+    bool AllowedInCXX = Args.hasFlag(options::OPT_fcxx_modules,
+                                     options::OPT_fno_cxx_modules, true);
+    if (AllowedInCXX || !types::isCXX(Input.getType())) {
+      CmdArgs.push_back("-fmodules");
+      HaveClangModules = true;
+    }
+  }
+
+  HaveModules = HaveClangModules;
+  if (Args.hasArg(options::OPT_fmodules_ts)) {
+    CmdArgs.push_back("-fmodules-ts");
+    HaveModules = true;
+  }
+
+  // -fmodule-maps enables implicit reading of module map files. By default,
+  // this is enabled if we are using Clang's flavor of precompiled modules.
+  if (Args.hasFlag(options::OPT_fimplicit_module_maps,
+                   options::OPT_fno_implicit_module_maps, HaveClangModules))
+    CmdArgs.push_back("-fimplicit-module-maps");
+
+  // -fmodules-decluse checks that modules used are declared so (off by default)
+  if (Args.hasFlag(options::OPT_fmodules_decluse,
+                   options::OPT_fno_modules_decluse, false))
+    CmdArgs.push_back("-fmodules-decluse");
+
+  // -fmodules-strict-decluse is like -fmodule-decluse, but also checks that
+  // all #included headers are part of modules.
+  if (Args.hasFlag(options::OPT_fmodules_strict_decluse,
+                   options::OPT_fno_modules_strict_decluse, false))
+    CmdArgs.push_back("-fmodules-strict-decluse");
+
+  // -fno-implicit-modules turns off implicitly compiling modules on demand.
+  if (!Args.hasFlag(options::OPT_fimplicit_modules,
+                    options::OPT_fno_implicit_modules, HaveClangModules)) {
+    if (HaveModules)
+      CmdArgs.push_back("-fno-implicit-modules");
+  } else if (HaveModules) {
+    // -fmodule-cache-path specifies where our implicitly-built module files
+    // should be written.
+    SmallString<128> Path;
+    if (Arg *A = Args.getLastArg(options::OPT_fmodules_cache_path))
+      Path = A->getValue();
+
+    if (C.isForDiagnostics()) {
+      // When generating crash reports, we want to emit the modules along with
+      // the reproduction sources, so we ignore any provided module path.
+      Path = Output.getFilename();
+      llvm::sys::path::replace_extension(Path, ".cache");
+      llvm::sys::path::append(Path, "modules");
+    } else if (Path.empty()) {
+      // No module path was provided: use the default.
+      llvm::sys::path::system_temp_directory(/*erasedOnReboot=*/false, Path);
+      llvm::sys::path::append(Path, "org.llvm.clang.");
+      appendUserToPath(Path);
+      llvm::sys::path::append(Path, "ModuleCache");
+    }
+
+    const char Arg[] = "-fmodules-cache-path=";
+    Path.insert(Path.begin(), Arg, Arg + strlen(Arg));
+    CmdArgs.push_back(Args.MakeArgString(Path));
+  }
+
+  if (HaveModules) {
+    // -fprebuilt-module-path specifies where to load the prebuilt module files.
+    for (const Arg *A : Args.filtered(options::OPT_fprebuilt_module_path)) {
+      CmdArgs.push_back(Args.MakeArgString(
+          std::string("-fprebuilt-module-path=") + A->getValue()));
+      A->claim();
+    }
+  }
+
+  // -fmodule-name specifies the module that is currently being built (or
+  // used for header checking by -fmodule-maps).
+  Args.AddLastArg(CmdArgs, options::OPT_fmodule_name_EQ);
+
+  // -fmodule-map-file can be used to specify files containing module
+  // definitions.
+  Args.AddAllArgs(CmdArgs, options::OPT_fmodule_map_file);
+
+  // -fbuiltin-module-map can be used to load the clang
+  // builtin headers modulemap file.
+  if (Args.hasArg(options::OPT_fbuiltin_module_map)) {
+    SmallString<128> BuiltinModuleMap(D.ResourceDir);
+    llvm::sys::path::append(BuiltinModuleMap, "include");
+    llvm::sys::path::append(BuiltinModuleMap, "module.modulemap");
+    if (llvm::sys::fs::exists(BuiltinModuleMap))
+      CmdArgs.push_back(
+          Args.MakeArgString("-fmodule-map-file=" + BuiltinModuleMap));
+  }
+
+  // The -fmodule-file=<name>=<file> form specifies the mapping of module
+  // names to precompiled module files (the module is loaded only if used).
+  // The -fmodule-file=<file> form can be used to unconditionally load
+  // precompiled module files (whether used or not).
+  if (HaveModules)
+    Args.AddAllArgs(CmdArgs, options::OPT_fmodule_file);
+  else
+    Args.ClaimAllArgs(options::OPT_fmodule_file);
+
+  // When building modules and generating crashdumps, we need to dump a module
+  // dependency VFS alongside the output.
+  if (HaveClangModules && C.isForDiagnostics()) {
+    SmallString<128> VFSDir(Output.getFilename());
+    llvm::sys::path::replace_extension(VFSDir, ".cache");
+    // Add the cache directory as a temp so the crash diagnostics pick it up.
+    C.addTempFile(Args.MakeArgString(VFSDir));
+
+    llvm::sys::path::append(VFSDir, "vfs");
+    CmdArgs.push_back("-module-dependency-dir");
+    CmdArgs.push_back(Args.MakeArgString(VFSDir));
+  }
+
+  if (HaveClangModules)
+    Args.AddLastArg(CmdArgs, options::OPT_fmodules_user_build_path);
+
+  // Pass through all -fmodules-ignore-macro arguments.
+  Args.AddAllArgs(CmdArgs, options::OPT_fmodules_ignore_macro);
+  Args.AddLastArg(CmdArgs, options::OPT_fmodules_prune_interval);
+  Args.AddLastArg(CmdArgs, options::OPT_fmodules_prune_after);
+
+  Args.AddLastArg(CmdArgs, options::OPT_fbuild_session_timestamp);
+
+  if (Arg *A = Args.getLastArg(options::OPT_fbuild_session_file)) {
+    if (Args.hasArg(options::OPT_fbuild_session_timestamp))
+      D.Diag(diag::err_drv_argument_not_allowed_with)
+          << A->getAsString(Args) << "-fbuild-session-timestamp";
+
+    llvm::sys::fs::file_status Status;
+    if (llvm::sys::fs::status(A->getValue(), Status))
+      D.Diag(diag::err_drv_no_such_file) << A->getValue();
+    CmdArgs.push_back(
+        Args.MakeArgString("-fbuild-session-timestamp=" +
+                           Twine((uint64_t)Status.getLastModificationTime()
+                                     .time_since_epoch()
+                                     .count())));
+  }
+
+  if (Args.getLastArg(options::OPT_fmodules_validate_once_per_build_session)) {
+    if (!Args.getLastArg(options::OPT_fbuild_session_timestamp,
+                         options::OPT_fbuild_session_file))
+      D.Diag(diag::err_drv_modules_validate_once_requires_timestamp);
+
+    Args.AddLastArg(CmdArgs,
+                    options::OPT_fmodules_validate_once_per_build_session);
+  }
+
+  Args.AddLastArg(CmdArgs, options::OPT_fmodules_validate_system_headers);
+  Args.AddLastArg(CmdArgs, options::OPT_fmodules_disable_diagnostic_validation);
+}
+
 void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          const InputInfo &Output, const InputInfoList &Inputs,
                          const ArgList &Args, const char *LinkingOutput) const {
@@ -3584,162 +3743,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fcoroutines-ts");
   }
 
-  // -fmodules enables the use of precompiled modules (off by default).
-  // Users can pass -fno-cxx-modules to turn off modules support for
-  // C++/Objective-C++ programs.
-  bool HaveClangModules = false;
-  if (Args.hasFlag(options::OPT_fmodules, options::OPT_fno_modules, false)) {
-    bool AllowedInCXX = Args.hasFlag(options::OPT_fcxx_modules,
-                                     options::OPT_fno_cxx_modules, true);
-    if (AllowedInCXX || !types::isCXX(InputType)) {
-      CmdArgs.push_back("-fmodules");
-      HaveClangModules = true;
-    }
-  }
-
-  bool HaveAnyModules = HaveClangModules;
-  if (Args.hasArg(options::OPT_fmodules_ts)) {
-    CmdArgs.push_back("-fmodules-ts");
-    HaveAnyModules = true;
-  }
-
-  // -fmodule-maps enables implicit reading of module map files. By default,
-  // this is enabled if we are using Clang's flavor of precompiled modules.
-  if (Args.hasFlag(options::OPT_fimplicit_module_maps,
-                   options::OPT_fno_implicit_module_maps, HaveClangModules)) {
-    CmdArgs.push_back("-fimplicit-module-maps");
-  }
-
-  // -fmodules-decluse checks that modules used are declared so (off by
-  // default).
-  if (Args.hasFlag(options::OPT_fmodules_decluse,
-                   options::OPT_fno_modules_decluse, false)) {
-    CmdArgs.push_back("-fmodules-decluse");
-  }
-
-  // -fmodules-strict-decluse is like -fmodule-decluse, but also checks that
-  // all #included headers are part of modules.
-  if (Args.hasFlag(options::OPT_fmodules_strict_decluse,
-                   options::OPT_fno_modules_strict_decluse, false)) {
-    CmdArgs.push_back("-fmodules-strict-decluse");
-  }
-
-  // -fno-implicit-modules turns off implicitly compiling modules on demand.
-  if (!Args.hasFlag(options::OPT_fimplicit_modules,
-                    options::OPT_fno_implicit_modules, HaveClangModules)) {
-    if (HaveAnyModules)
-      CmdArgs.push_back("-fno-implicit-modules");
-  } else if (HaveAnyModules) {
-    // -fmodule-cache-path specifies where our implicitly-built module files
-    // should be written.
-    SmallString<128> Path;
-    if (Arg *A = Args.getLastArg(options::OPT_fmodules_cache_path))
-      Path = A->getValue();
-    if (C.isForDiagnostics()) {
-      // When generating crash reports, we want to emit the modules along with
-      // the reproduction sources, so we ignore any provided module path.
-      Path = Output.getFilename();
-      llvm::sys::path::replace_extension(Path, ".cache");
-      llvm::sys::path::append(Path, "modules");
-    } else if (Path.empty()) {
-      // No module path was provided: use the default.
-      llvm::sys::path::system_temp_directory(/*erasedOnReboot=*/false, Path);
-      llvm::sys::path::append(Path, "org.llvm.clang.");
-      appendUserToPath(Path);
-      llvm::sys::path::append(Path, "ModuleCache");
-    }
-    const char Arg[] = "-fmodules-cache-path=";
-    Path.insert(Path.begin(), Arg, Arg + strlen(Arg));
-    CmdArgs.push_back(Args.MakeArgString(Path));
-  }
-
-  if (HaveAnyModules) {
-    // -fprebuilt-module-path specifies where to load the prebuilt module files.
-    for (const Arg *A : Args.filtered(options::OPT_fprebuilt_module_path)) {
-      CmdArgs.push_back(Args.MakeArgString(
-          std::string("-fprebuilt-module-path=") + A->getValue()));
-      A->claim();
-    }
-  }
-
-  // -fmodule-name specifies the module that is currently being built (or
-  // used for header checking by -fmodule-maps).
-  Args.AddLastArg(CmdArgs, options::OPT_fmodule_name_EQ);
-
-  // -fmodule-map-file can be used to specify files containing module
-  // definitions.
-  Args.AddAllArgs(CmdArgs, options::OPT_fmodule_map_file);
-
-  // -fbuiltin-module-map can be used to load the clang
-  // builtin headers modulemap file.
-  if (Args.hasArg(options::OPT_fbuiltin_module_map)) {
-    SmallString<128> BuiltinModuleMap(D.ResourceDir);
-    llvm::sys::path::append(BuiltinModuleMap, "include");
-    llvm::sys::path::append(BuiltinModuleMap, "module.modulemap");
-    if (llvm::sys::fs::exists(BuiltinModuleMap)) {
-      CmdArgs.push_back(Args.MakeArgString("-fmodule-map-file=" +
-                                           BuiltinModuleMap));
-    }
-  }
-
-  // The -fmodule-file=<name>=<file> form specifies the mapping of module
-  // names to precompiled module files (the module is loaded only if used).
-  // The -fmodule-file=<file> form can be used to unconditionally load
-  // precompiled module files (whether used or not).
-  if (HaveAnyModules)
-    Args.AddAllArgs(CmdArgs, options::OPT_fmodule_file);
-  else
-    Args.ClaimAllArgs(options::OPT_fmodule_file);
-
-  // When building modules and generating crashdumps, we need to dump a module
-  // dependency VFS alongside the output.
-  if (HaveClangModules && C.isForDiagnostics()) {
-    SmallString<128> VFSDir(Output.getFilename());
-    llvm::sys::path::replace_extension(VFSDir, ".cache");
-    // Add the cache directory as a temp so the crash diagnostics pick it up.
-    C.addTempFile(Args.MakeArgString(VFSDir));
-
-    llvm::sys::path::append(VFSDir, "vfs");
-    CmdArgs.push_back("-module-dependency-dir");
-    CmdArgs.push_back(Args.MakeArgString(VFSDir));
-  }
-
-  if (HaveClangModules)
-    Args.AddLastArg(CmdArgs, options::OPT_fmodules_user_build_path);
-
-  // Pass through all -fmodules-ignore-macro arguments.
-  Args.AddAllArgs(CmdArgs, options::OPT_fmodules_ignore_macro);
-  Args.AddLastArg(CmdArgs, options::OPT_fmodules_prune_interval);
-  Args.AddLastArg(CmdArgs, options::OPT_fmodules_prune_after);
-
-  Args.AddLastArg(CmdArgs, options::OPT_fbuild_session_timestamp);
-
-  if (Arg *A = Args.getLastArg(options::OPT_fbuild_session_file)) {
-    if (Args.hasArg(options::OPT_fbuild_session_timestamp))
-      D.Diag(diag::err_drv_argument_not_allowed_with)
-          << A->getAsString(Args) << "-fbuild-session-timestamp";
-
-    llvm::sys::fs::file_status Status;
-    if (llvm::sys::fs::status(A->getValue(), Status))
-      D.Diag(diag::err_drv_no_such_file) << A->getValue();
-    CmdArgs.push_back(
-        Args.MakeArgString("-fbuild-session-timestamp=" +
-                           Twine((uint64_t)Status.getLastModificationTime()
-                                     .time_since_epoch()
-                                     .count())));
-  }
-
-  if (Args.getLastArg(options::OPT_fmodules_validate_once_per_build_session)) {
-    if (!Args.getLastArg(options::OPT_fbuild_session_timestamp,
-                         options::OPT_fbuild_session_file))
-      D.Diag(diag::err_drv_modules_validate_once_requires_timestamp);
-
-    Args.AddLastArg(CmdArgs,
-                    options::OPT_fmodules_validate_once_per_build_session);
-  }
-
-  Args.AddLastArg(CmdArgs, options::OPT_fmodules_validate_system_headers);
-  Args.AddLastArg(CmdArgs, options::OPT_fmodules_disable_diagnostic_validation);
+  bool HaveModules = false;
+  RenderModulesOptions(C, D, Args, Input, Output, CmdArgs, HaveModules);
 
   // -faccess-control is default.
   if (Args.hasFlag(options::OPT_fno_access_control,
@@ -4327,7 +4332,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // nice to enable this when doing a crashdump for modules as well.
   if (Args.hasFlag(options::OPT_frewrite_includes,
                    options::OPT_fno_rewrite_includes, false) ||
-      (C.isForDiagnostics() && (RewriteImports || !HaveAnyModules)))
+      (C.isForDiagnostics() && (RewriteImports || !HaveModules)))
     CmdArgs.push_back("-frewrite-includes");
 
   // Only allow -traditional or -traditional-cpp outside in preprocessing modes.
