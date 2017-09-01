@@ -20,10 +20,7 @@
 using namespace llvm;
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size);
-extern "C" LLVM_ATTRIBUTE_WEAK int LLVMFuzzerInitialize(int *argc,
-                                                        char ***argv) {
-  return 0;
-}
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv);
 
 int main(int argc, char *argv[]) {
   errs() << "*** This tool was not linked to libFuzzer.\n"
