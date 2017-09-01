@@ -2350,6 +2350,85 @@ static void RenderModulesOptions(Compilation &C, const Driver &D,
   Args.AddLastArg(CmdArgs, options::OPT_fmodules_disable_diagnostic_validation);
 }
 
+static void RenderObjCOptions(const ToolChain &TC, const Driver &D,
+                              const llvm::Triple &T, const ArgList &Args,
+                              ObjCRuntime &Runtime, bool InferCovariantReturns,
+                              const InputInfo &Input, ArgStringList &CmdArgs) {
+  const llvm::Triple::ArchType Arch = TC.getArch();
+
+  // -fobjc-dispatch-method is only relevant with the nonfragile-abi, and legacy
+  // is the default. Except for deployment target of 10.5, next runtime is
+  // always legacy dispatch and -fno-objc-legacy-dispatch gets ignored silently.
+  if (Runtime.isNonFragile()) {
+    if (!Args.hasFlag(options::OPT_fobjc_legacy_dispatch,
+                      options::OPT_fno_objc_legacy_dispatch,
+                      Runtime.isLegacyDispatchDefaultForArch(Arch))) {
+      if (TC.UseObjCMixedDispatch())
+        CmdArgs.push_back("-fobjc-dispatch-method=mixed");
+      else
+        CmdArgs.push_back("-fobjc-dispatch-method=non-legacy");
+    }
+  }
+
+  // When ObjectiveC legacy runtime is in effect on MacOSX, turn on the option
+  // to do Array/Dictionary subscripting by default.
+  if (Arch == llvm::Triple::x86 && T.isMacOSX() &&
+      !T.isMacOSXVersionLT(10, 7) &&
+      Runtime.getKind() == ObjCRuntime::FragileMacOSX && Runtime.isNeXTFamily())
+    CmdArgs.push_back("-fobjc-subscripting-legacy-runtime");
+
+  // Allow -fno-objc-arr to trump -fobjc-arr/-fobjc-arc.
+  // NOTE: This logic is duplicated in ToolChains.cpp.
+  if (isObjCAutoRefCount(Args)) {
+    TC.CheckObjCARC();
+
+    CmdArgs.push_back("-fobjc-arc");
+
+    // FIXME: It seems like this entire block, and several around it should be
+    // wrapped in isObjC, but for now we just use it here as this is where it
+    // was being used previously.
+    if (types::isCXX(Input.getType()) && types::isObjC(Input.getType())) {
+      if (TC.GetCXXStdlibType(Args) == ToolChain::CST_Libcxx)
+        CmdArgs.push_back("-fobjc-arc-cxxlib=libc++");
+      else
+        CmdArgs.push_back("-fobjc-arc-cxxlib=libstdc++");
+    }
+
+    // Allow the user to enable full exceptions code emission.
+    // We default off for Objective-C, on for Objective-C++.
+    if (Args.hasFlag(options::OPT_fobjc_arc_exceptions,
+                     options::OPT_fno_objc_arc_exceptions,
+                     /*default=*/types::isCXX(Input.getType())))
+      CmdArgs.push_back("-fobjc-arc-exceptions");
+  }
+
+  // Silence warning for full exception code emission options when explicitly
+  // set to use no ARC.
+  if (Args.hasArg(options::OPT_fno_objc_arc)) {
+    Args.ClaimAllArgs(options::OPT_fobjc_arc_exceptions);
+    Args.ClaimAllArgs(options::OPT_fno_objc_arc_exceptions);
+  }
+
+  // -fobjc-infer-related-result-type is the default, except in the Objective-C
+  // rewriter.
+  if (InferCovariantReturns)
+    CmdArgs.push_back("-fno-objc-infer-related-result-type");
+
+  // Pass down -fobjc-weak or -fno-objc-weak if present.
+  if (types::isObjC(Input.getType())) {
+    auto WeakArg =
+        Args.getLastArg(options::OPT_fobjc_weak, options::OPT_fno_objc_weak);
+    if (!WeakArg) {
+      // nothing to do
+    } else if (!Runtime.allowsWeak()) {
+      if (WeakArg->getOption().matches(options::OPT_fobjc_weak))
+        D.Diag(diag::err_objc_weak_unsupported);
+    } else {
+      WeakArg->render(Args, CmdArgs);
+    }
+  }
+}
+
 void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          const InputInfo &Output, const InputInfoList &Inputs,
                          const ArgList &Args, const char *LinkingOutput) const {
@@ -3737,6 +3816,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-fblocks-runtime-optional");
   }
 
+  // -fencode-extended-block-signature=1 is default.
+  if (getToolChain().IsEncodeExtendedBlockSignatureDefault())
+    CmdArgs.push_back("-fencode-extended-block-signature");
+
   if (Args.hasFlag(options::OPT_fcoroutines_ts, options::OPT_fno_coroutines_ts,
                    false) &&
       types::isCXX(InputType)) {
@@ -3886,89 +3969,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_fexperimental_new_pass_manager,
                   options::OPT_fno_experimental_new_pass_manager);
 
-  ObjCRuntime objcRuntime = AddObjCRuntimeArgs(Args, CmdArgs, rewriteKind);
-
-  // -fobjc-dispatch-method is only relevant with the nonfragile-abi, and
-  // legacy is the default. Except for deployment target of 10.5,
-  // next runtime is always legacy dispatch and -fno-objc-legacy-dispatch
-  // gets ignored silently.
-  if (objcRuntime.isNonFragile()) {
-    if (!Args.hasFlag(options::OPT_fobjc_legacy_dispatch,
-                      options::OPT_fno_objc_legacy_dispatch,
-                      objcRuntime.isLegacyDispatchDefaultForArch(
-                          getToolChain().getArch()))) {
-      if (getToolChain().UseObjCMixedDispatch())
-        CmdArgs.push_back("-fobjc-dispatch-method=mixed");
-      else
-        CmdArgs.push_back("-fobjc-dispatch-method=non-legacy");
-    }
-  }
-
-  // When ObjectiveC legacy runtime is in effect on MacOSX,
-  // turn on the option to do Array/Dictionary subscripting
-  // by default.
-  if (getToolChain().getArch() == llvm::Triple::x86 && RawTriple.isMacOSX() &&
-      !RawTriple.isMacOSXVersionLT(10, 7) &&
-      objcRuntime.getKind() == ObjCRuntime::FragileMacOSX &&
-      objcRuntime.isNeXTFamily())
-    CmdArgs.push_back("-fobjc-subscripting-legacy-runtime");
-
-  // -fencode-extended-block-signature=1 is default.
-  if (getToolChain().IsEncodeExtendedBlockSignatureDefault()) {
-    CmdArgs.push_back("-fencode-extended-block-signature");
-  }
-
-  // Allow -fno-objc-arr to trump -fobjc-arr/-fobjc-arc.
-  // NOTE: This logic is duplicated in ToolChains.cpp.
-  bool ARC = isObjCAutoRefCount(Args);
-  if (ARC) {
-    getToolChain().CheckObjCARC();
-
-    CmdArgs.push_back("-fobjc-arc");
-
-    // FIXME: It seems like this entire block, and several around it should be
-    // wrapped in isObjC, but for now we just use it here as this is where it
-    // was being used previously.
-    if (types::isCXX(InputType) && types::isObjC(InputType)) {
-      if (getToolChain().GetCXXStdlibType(Args) == ToolChain::CST_Libcxx)
-        CmdArgs.push_back("-fobjc-arc-cxxlib=libc++");
-      else
-        CmdArgs.push_back("-fobjc-arc-cxxlib=libstdc++");
-    }
-
-    // Allow the user to enable full exceptions code emission.
-    // We define off for Objective-CC, on for Objective-C++.
-    if (Args.hasFlag(options::OPT_fobjc_arc_exceptions,
-                     options::OPT_fno_objc_arc_exceptions,
-                     /*default*/ types::isCXX(InputType)))
-      CmdArgs.push_back("-fobjc-arc-exceptions");
-  }
-
-  // Silence warning for full exception code emission options when explicitly
-  // set to use no ARC.
-  if (Args.hasArg(options::OPT_fno_objc_arc)) {
-    Args.ClaimAllArgs(options::OPT_fobjc_arc_exceptions);
-    Args.ClaimAllArgs(options::OPT_fno_objc_arc_exceptions);
-  }
-
-  // -fobjc-infer-related-result-type is the default, except in the Objective-C
-  // rewriter.
-  if (rewriteKind != RK_None)
-    CmdArgs.push_back("-fno-objc-infer-related-result-type");
-
-  // Pass down -fobjc-weak or -fno-objc-weak if present.
-  if (types::isObjC(InputType)) {
-    auto WeakArg = Args.getLastArg(options::OPT_fobjc_weak,
-                                   options::OPT_fno_objc_weak);
-    if (!WeakArg) {
-      // nothing to do
-    } else if (!objcRuntime.allowsWeak()) {
-      if (WeakArg->getOption().matches(options::OPT_fobjc_weak))
-        D.Diag(diag::err_objc_weak_unsupported);
-    } else {
-      WeakArg->render(Args, CmdArgs);
-    }
-  }
+  ObjCRuntime Runtime = AddObjCRuntimeArgs(Args, CmdArgs, rewriteKind);
+  RenderObjCOptions(getToolChain(), D, RawTriple, Args, Runtime,
+                    rewriteKind != RK_None, Input, CmdArgs);
 
   if (Args.hasFlag(options::OPT_fapplication_extension,
                    options::OPT_fno_application_extension, false))
@@ -3976,7 +3979,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Handle GCC-style exception args.
   if (!C.getDriver().IsCLMode())
-    addExceptionArgs(Args, InputType, getToolChain(), KernelOrKext, objcRuntime,
+    addExceptionArgs(Args, InputType, getToolChain(), KernelOrKext, Runtime,
                      CmdArgs);
 
   if (Args.hasArg(options::OPT_fsjlj_exceptions) ||
