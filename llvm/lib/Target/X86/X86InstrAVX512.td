@@ -265,23 +265,6 @@ multiclass AVX512_maskable_common<bits<8> O, Format F, X86VectorVTInfo _,
                          MaskingConstraint, itin, IsCommutable,
                          IsKCommutable>;
 
-// Similar to AVX512_maskable_common, but with scalar types.
-multiclass AVX512_maskable_fp_common<bits<8> O, Format F, X86VectorVTInfo _,
-                                  dag Outs,
-                                  dag Ins, dag MaskingIns, dag ZeroMaskingIns,
-                                  string OpcodeStr,
-                                  string AttSrcAsm, string IntelSrcAsm,
-                                  SDNode Select = vselect,
-                                  string MaskingConstraint = "",
-                                  InstrItinClass itin = NoItinerary,
-                                  bit IsCommutable = 0,
-                                  bit IsKCommutable = 0> :
-  AVX512_maskable_custom<O, F, Outs, Ins, MaskingIns, ZeroMaskingIns, OpcodeStr,
-                         AttSrcAsm, IntelSrcAsm,
-                         [], [], [],
-                         MaskingConstraint, itin, IsCommutable,
-                         IsKCommutable>;
-
 // This multiclass generates the unconditional/non-masking, the masking and
 // the zero-masking variant of the vector instruction.  In the masking case, the
 // perserved vector elements come from a new dummy input operand tied to $dst.
