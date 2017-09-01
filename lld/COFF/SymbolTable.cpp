@@ -269,29 +269,30 @@ Symbol *SymbolTable::addCommon(InputFile *F, StringRef N, uint64_t Size,
   return S;
 }
 
-Symbol *SymbolTable::addImportData(StringRef N, ImportFile *F) {
+DefinedImportData *SymbolTable::addImportData(StringRef N, ImportFile *F) {
   Symbol *S;
   bool WasInserted;
   std::tie(S, WasInserted) = insert(N);
   S->IsUsedInRegularObj = true;
   if (WasInserted || isa<Undefined>(S->body()) || isa<Lazy>(S->body())) {
     replaceBody<DefinedImportData>(S, N, F);
-    return S;
+    return cast<DefinedImportData>(S->body());
   }
 
   reportDuplicate(S, F);
   return nullptr;
 }
 
-Symbol *SymbolTable::addImportThunk(StringRef Name, DefinedImportData *ID,
-                                    uint16_t Machine) {
+DefinedImportThunk *SymbolTable::addImportThunk(StringRef Name,
+                                               DefinedImportData *ID,
+                                               uint16_t Machine) {
   Symbol *S;
   bool WasInserted;
   std::tie(S, WasInserted) = insert(Name);
   S->IsUsedInRegularObj = true;
   if (WasInserted || isa<Undefined>(S->body()) || isa<Lazy>(S->body())) {
     replaceBody<DefinedImportThunk>(S, Name, ID, Machine);
-    return S;
+    return cast<DefinedImportThunk>(S->body());
   }
 
   reportDuplicate(S, ID->File);

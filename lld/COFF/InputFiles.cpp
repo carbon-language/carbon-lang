@@ -355,19 +355,16 @@ void ImportFile::parse() {
   this->Hdr = Hdr;
   ExternalName = ExtName;
 
-  if (Symbol *S = Symtab->addImportData(ImpName, this))
-    ImpSym = cast<DefinedImportData>(S->body());
+  ImpSym = Symtab->addImportData(ImpName, this);
 
   if (Hdr->getType() == llvm::COFF::IMPORT_CONST)
-    if (Symbol *S = Symtab->addImportData(Name, this))
-      ConstSym = cast<DefinedImportData>(S->body());
+    static_cast<void>(Symtab->addImportData(Name, this));
 
   // If type is function, we need to create a thunk which jump to an
   // address pointed by the __imp_ symbol. (This allows you to call
   // DLL functions just like regular non-DLL functions.)
   if (Hdr->getType() == llvm::COFF::IMPORT_CODE)
-    if (Symbol *S = Symtab->addImportThunk(Name, ImpSym, Hdr->Machine))
-      ThunkSym = cast<DefinedImportThunk>(S->body());
+    ThunkSym = Symtab->addImportThunk(Name, ImpSym, Hdr->Machine);
 }
 
 void BitcodeFile::parse() {
