@@ -299,8 +299,8 @@ static bool decomposeBitTestICmp(Value *LHS, Value *RHS, CmpInst::Predicate &Pre
   if (!llvm::decomposeBitTestICmp(LHS, RHS, Pred, X, Mask))
     return false;
 
-  Y = ConstantInt::get(LHS->getType(), Mask);
-  Z = ConstantInt::get(RHS->getType(), 0);
+  Y = ConstantInt::get(X->getType(), Mask);
+  Z = ConstantInt::get(X->getType(), 0);
   return true;
 }
 
