@@ -2350,6 +2350,56 @@ static void RenderARCMigrateToolOptions(const Driver &D, const ArgList &Args,
   }
 }
 
+static void RenderBuiltinOptions(const ToolChain &TC, const llvm::Triple &T,
+                                 const ArgList &Args, ArgStringList &CmdArgs) {
+  // -fbuiltin is default unless -mkernel is used.
+  bool UseBuiltins =
+      Args.hasFlag(options::OPT_fbuiltin, options::OPT_fno_builtin,
+                   !Args.hasArg(options::OPT_mkernel));
+  if (!UseBuiltins)
+    CmdArgs.push_back("-fno-builtin");
+
+  // -ffreestanding implies -fno-builtin.
+  if (Args.hasArg(options::OPT_ffreestanding))
+    UseBuiltins = false;
+
+  // Process the -fno-builtin-* options.
+  for (const auto &Arg : Args) {
+    const Option &O = Arg->getOption();
+    if (!O.matches(options::OPT_fno_builtin_))
+      continue;
+
+    Arg->claim();
+
+    // If -fno-builtin is specified, then there's no need to pass the option to
+    // the frontend.
+    if (!UseBuiltins)
+      continue;
+
+    StringRef FuncName = Arg->getValue();
+    CmdArgs.push_back(Args.MakeArgString("-fno-builtin-" + FuncName));
+  }
+
+  // le32-specific flags:
+  //  -fno-math-builtin: clang should not convert math builtins to intrinsics
+  //                     by default.
+  if (TC.getArch() == llvm::Triple::le32)
+    CmdArgs.push_back("-fno-math-builtin");
+
+#if 0
+  // Default to -fno-builtin-str{cat,cpy} on Darwin for ARM.
+  //
+  // FIXME: Now that PR4941 has been fixed this can be enabled.
+  if (T.isOSDarwin() && (TC.getArch() == llvm::Triple::arm ||
+                         TC.getArch() == llvm::Triple::thumb)) {
+    if (!Args.hasArg(options::OPT_fbuiltin_strcat))
+      CmdArgs.push_back("-fno-builtin-strcat");
+    if (!Args.hasArg(options::OPT_fbuiltin_strcpy))
+      CmdArgs.push_back("-fno-builtin-strcpy");
+  }
+#endif
+}
+
 static void RenderModulesOptions(Compilation &C, const Driver &D,
                                  const ArgList &Args, const InputInfo &Input,
                                  const InputInfo &Output,
@@ -3893,32 +3943,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    options::OPT_fno_debug_info_for_profiling, false))
     CmdArgs.push_back("-fdebug-info-for-profiling");
 
-  // -fbuiltin is default unless -mkernel is used.
-  bool UseBuiltins =
-      Args.hasFlag(options::OPT_fbuiltin, options::OPT_fno_builtin,
-                   !Args.hasArg(options::OPT_mkernel));
-  if (!UseBuiltins)
-    CmdArgs.push_back("-fno-builtin");
-
-  // -ffreestanding implies -fno-builtin.
-  if (Args.hasArg(options::OPT_ffreestanding))
-    UseBuiltins = false;
-
-  // Process the -fno-builtin-* options.
-  for (const auto &Arg : Args) {
-    const Option &O = Arg->getOption();
-    if (!O.matches(options::OPT_fno_builtin_))
-      continue;
-
-    Arg->claim();
-    // If -fno-builtin is specified, then there's no need to pass the option to
-    // the frontend.
-    if (!UseBuiltins)
-      continue;
-
-    StringRef FuncName = Arg->getValue();
-    CmdArgs.push_back(Args.MakeArgString("-fno-builtin-" + FuncName));
-  }
+  RenderBuiltinOptions(getToolChain(), RawTriple, Args, CmdArgs);
 
   if (!Args.hasFlag(options::OPT_fassume_sane_operator_new,
                     options::OPT_fno_assume_sane_operator_new))
@@ -4281,13 +4306,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    options::OPT_fno_apple_pragma_pack, false))
     CmdArgs.push_back("-fapple-pragma-pack");
 
-  // le32-specific flags:
-  //  -fno-math-builtin: clang should not convert math builtins to intrinsics
-  //                     by default.
-  if (getToolChain().getArch() == llvm::Triple::le32) {
-    CmdArgs.push_back("-fno-math-builtin");
-  }
-
   if (Args.hasFlag(options::OPT_fsave_optimization_record,
                    options::OPT_fno_save_optimization_record, false)) {
     CmdArgs.push_back("-opt-record-file");
@@ -4324,20 +4342,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back(Args.MakeArgString(F));
     }
   }
-
-// Default to -fno-builtin-str{cat,cpy} on Darwin for ARM.
-//
-// FIXME: Now that PR4941 has been fixed this can be enabled.
-#if 0
-  if (RawTriple.isOSDarwin() &&
-      (getToolChain().getArch() == llvm::Triple::arm ||
-       getToolChain().getArch() == llvm::Triple::thumb)) {
-    if (!Args.hasArg(options::OPT_fbuiltin_strcat))
-      CmdArgs.push_back("-fno-builtin-strcat");
-    if (!Args.hasArg(options::OPT_fbuiltin_strcpy))
-      CmdArgs.push_back("-fno-builtin-strcpy");
-  }
-#endif
 
   bool RewriteImports = Args.hasFlag(options::OPT_frewrite_imports,
                                      options::OPT_fno_rewrite_imports, false);
