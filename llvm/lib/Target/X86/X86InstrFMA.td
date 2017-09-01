@@ -244,12 +244,12 @@ multiclass fma3s<bits<8> opc132, bits<8> opc213, bits<8> opc231,
   // operand, not the second.
   let Predicates = [HasFMA] in {
     def : Pat<(IntF32 VR128:$src1, VR128:$src2, VR128:$src3),
-              (COPY_TO_REGCLASS(!cast<Instruction>(NAME#"213SSr_Int")
-               $src1, $src2, $src3), VR128)>;
+              (!cast<Instruction>(NAME#"213SSr_Int")
+               VR128:$src1, VR128:$src2, VR128:$src3)>;
 
     def : Pat<(IntF64 VR128:$src1, VR128:$src2, VR128:$src3),
-              (COPY_TO_REGCLASS(!cast<Instruction>(NAME#"213SDr_Int")
-               $src1, $src2, $src3), VR128)>;
+              (!cast<Instruction>(NAME#"213SDr_Int")
+               VR128:$src1, VR128:$src2, VR128:$src3)>;
   }
 }
 
