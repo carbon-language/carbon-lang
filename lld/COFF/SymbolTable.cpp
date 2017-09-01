@@ -274,11 +274,13 @@ Symbol *SymbolTable::addImportData(StringRef N, ImportFile *F) {
   bool WasInserted;
   std::tie(S, WasInserted) = insert(N);
   S->IsUsedInRegularObj = true;
-  if (WasInserted || isa<Undefined>(S->body()) || isa<Lazy>(S->body()))
+  if (WasInserted || isa<Undefined>(S->body()) || isa<Lazy>(S->body())) {
     replaceBody<DefinedImportData>(S, N, F);
-  else if (!isa<DefinedCOFF>(S->body()))
-    reportDuplicate(S, nullptr);
-  return S;
+    return S;
+  }
+
+  reportDuplicate(S, F);
+  return nullptr;
 }
 
 Symbol *SymbolTable::addImportThunk(StringRef Name, DefinedImportData *ID,
@@ -287,11 +289,13 @@ Symbol *SymbolTable::addImportThunk(StringRef Name, DefinedImportData *ID,
   bool WasInserted;
   std::tie(S, WasInserted) = insert(Name);
   S->IsUsedInRegularObj = true;
-  if (WasInserted || isa<Undefined>(S->body()) || isa<Lazy>(S->body()))
+  if (WasInserted || isa<Undefined>(S->body()) || isa<Lazy>(S->body())) {
     replaceBody<DefinedImportThunk>(S, Name, ID, Machine);
-  else if (!isa<DefinedCOFF>(S->body()))
-    reportDuplicate(S, nullptr);
-  return S;
+    return S;
+  }
+
+  reportDuplicate(S, ID->File);
+  return nullptr;
 }
 
 std::vector<Chunk *> SymbolTable::getChunks() {
