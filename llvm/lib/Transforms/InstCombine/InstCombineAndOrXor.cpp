@@ -312,10 +312,9 @@ static unsigned getMaskedTypeForICmpPair(Value *&A, Value *&B, Value *&C,
                                          ICmpInst *RHS,
                                          ICmpInst::Predicate &PredL,
                                          ICmpInst::Predicate &PredR) {
-  if (LHS->getOperand(0)->getType() != RHS->getOperand(0)->getType())
-    return 0;
   // vectors are not (yet?) supported. Don't support pointers either.
-  if (!LHS->getOperand(0)->getType()->isIntegerTy())
+  if (!LHS->getOperand(0)->getType()->isIntegerTy() ||
+      !RHS->getOperand(0)->getType()->isIntegerTy())
     return 0;
 
   // Here comes the tricky part:
