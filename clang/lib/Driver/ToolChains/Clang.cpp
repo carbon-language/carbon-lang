@@ -2429,6 +2429,121 @@ static void RenderObjCOptions(const ToolChain &TC, const Driver &D,
   }
 }
 
+static void RenderDiagnosticsOptions(const Driver &D, const ArgList &Args,
+                                     ArgStringList &CmdArgs) {
+  bool CaretDefault = true;
+  bool ColumnDefault = true;
+
+  if (const Arg *A = Args.getLastArg(options::OPT__SLASH_diagnostics_classic,
+                                     options::OPT__SLASH_diagnostics_column,
+                                     options::OPT__SLASH_diagnostics_caret)) {
+    switch (A->getOption().getID()) {
+    case options::OPT__SLASH_diagnostics_caret:
+      CaretDefault = true;
+      ColumnDefault = true;
+      break;
+    case options::OPT__SLASH_diagnostics_column:
+      CaretDefault = false;
+      ColumnDefault = true;
+      break;
+    case options::OPT__SLASH_diagnostics_classic:
+      CaretDefault = false;
+      ColumnDefault = false;
+      break;
+    }
+  }
+
+  // -fcaret-diagnostics is default.
+  if (!Args.hasFlag(options::OPT_fcaret_diagnostics,
+                    options::OPT_fno_caret_diagnostics, CaretDefault))
+    CmdArgs.push_back("-fno-caret-diagnostics");
+
+  // -fdiagnostics-fixit-info is default, only pass non-default.
+  if (!Args.hasFlag(options::OPT_fdiagnostics_fixit_info,
+                    options::OPT_fno_diagnostics_fixit_info))
+    CmdArgs.push_back("-fno-diagnostics-fixit-info");
+
+  // Enable -fdiagnostics-show-option by default.
+  if (Args.hasFlag(options::OPT_fdiagnostics_show_option,
+                   options::OPT_fno_diagnostics_show_option))
+    CmdArgs.push_back("-fdiagnostics-show-option");
+
+  if (const Arg *A =
+          Args.getLastArg(options::OPT_fdiagnostics_show_category_EQ)) {
+    CmdArgs.push_back("-fdiagnostics-show-category");
+    CmdArgs.push_back(A->getValue());
+  }
+
+  if (Args.hasFlag(options::OPT_fdiagnostics_show_hotness,
+                   options::OPT_fno_diagnostics_show_hotness, false))
+    CmdArgs.push_back("-fdiagnostics-show-hotness");
+
+  if (const Arg *A =
+          Args.getLastArg(options::OPT_fdiagnostics_hotness_threshold_EQ)) {
+    std::string Opt =
+        std::string("-fdiagnostics-hotness-threshold=") + A->getValue();
+    CmdArgs.push_back(Args.MakeArgString(Opt));
+  }
+
+  if (const Arg *A = Args.getLastArg(options::OPT_fdiagnostics_format_EQ)) {
+    CmdArgs.push_back("-fdiagnostics-format");
+    CmdArgs.push_back(A->getValue());
+  }
+
+  if (const Arg *A = Args.getLastArg(
+          options::OPT_fdiagnostics_show_note_include_stack,
+          options::OPT_fno_diagnostics_show_note_include_stack)) {
+    const Option &O = A->getOption();
+    if (O.matches(options::OPT_fdiagnostics_show_note_include_stack))
+      CmdArgs.push_back("-fdiagnostics-show-note-include-stack");
+    else
+      CmdArgs.push_back("-fno-diagnostics-show-note-include-stack");
+  }
+
+  // Color diagnostics are parsed by the driver directly from argv and later
+  // re-parsed to construct this job; claim any possible color diagnostic here
+  // to avoid warn_drv_unused_argument and diagnose bad
+  // OPT_fdiagnostics_color_EQ values.
+  for (const Arg *A : Args) {
+    const Option &O = A->getOption();
+    if (!O.matches(options::OPT_fcolor_diagnostics) &&
+        !O.matches(options::OPT_fdiagnostics_color) &&
+        !O.matches(options::OPT_fno_color_diagnostics) &&
+        !O.matches(options::OPT_fno_diagnostics_color) &&
+        !O.matches(options::OPT_fdiagnostics_color_EQ))
+      continue;
+
+    if (O.matches(options::OPT_fdiagnostics_color_EQ)) {
+      StringRef Value(A->getValue());
+      if (Value != "always" && Value != "never" && Value != "auto")
+        D.Diag(diag::err_drv_clang_unsupported)
+            << ("-fdiagnostics-color=" + Value).str();
+    }
+    A->claim();
+  }
+
+  if (D.getDiags().getDiagnosticOptions().ShowColors)
+    CmdArgs.push_back("-fcolor-diagnostics");
+
+  if (Args.hasArg(options::OPT_fansi_escape_codes))
+    CmdArgs.push_back("-fansi-escape-codes");
+
+  if (!Args.hasFlag(options::OPT_fshow_source_location,
+                    options::OPT_fno_show_source_location))
+    CmdArgs.push_back("-fno-show-source-location");
+
+  if (Args.hasArg(options::OPT_fdiagnostics_absolute_paths))
+    CmdArgs.push_back("-fdiagnostics-absolute-paths");
+
+  if (!Args.hasFlag(options::OPT_fshow_column, options::OPT_fno_show_column,
+                    ColumnDefault))
+    CmdArgs.push_back("-fno-show-column");
+
+  if (!Args.hasFlag(options::OPT_fspell_checking,
+                    options::OPT_fno_spell_checking))
+    CmdArgs.push_back("-fno-spell-checking");
+}
+
 void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          const InputInfo &Output, const InputInfoList &Inputs,
                          const ArgList &Args, const char *LinkingOutput) const {
@@ -4101,113 +4216,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                                           << value;
   }
 
-  bool CaretDefault = true;
-  bool ColumnDefault = true;
-  if (Arg *DiagArg = Args.getLastArg(options::OPT__SLASH_diagnostics_classic,
-                                     options::OPT__SLASH_diagnostics_column,
-                                     options::OPT__SLASH_diagnostics_caret)) {
-    switch (DiagArg->getOption().getID()) {
-    case options::OPT__SLASH_diagnostics_caret:
-      CaretDefault = true;
-      ColumnDefault = true;
-      break;
-    case options::OPT__SLASH_diagnostics_column:
-      CaretDefault = false;
-      ColumnDefault = true;
-      break;
-    case options::OPT__SLASH_diagnostics_classic:
-      CaretDefault = false;
-      ColumnDefault = false;
-      break;
-    }
-  }
-
-  // -fcaret-diagnostics is default.
-  if (!Args.hasFlag(options::OPT_fcaret_diagnostics,
-                    options::OPT_fno_caret_diagnostics, CaretDefault))
-    CmdArgs.push_back("-fno-caret-diagnostics");
-
-  // -fdiagnostics-fixit-info is default, only pass non-default.
-  if (!Args.hasFlag(options::OPT_fdiagnostics_fixit_info,
-                    options::OPT_fno_diagnostics_fixit_info))
-    CmdArgs.push_back("-fno-diagnostics-fixit-info");
-
-  // Enable -fdiagnostics-show-option by default.
-  if (Args.hasFlag(options::OPT_fdiagnostics_show_option,
-                   options::OPT_fno_diagnostics_show_option))
-    CmdArgs.push_back("-fdiagnostics-show-option");
-
-  if (const Arg *A =
-          Args.getLastArg(options::OPT_fdiagnostics_show_category_EQ)) {
-    CmdArgs.push_back("-fdiagnostics-show-category");
-    CmdArgs.push_back(A->getValue());
-  }
-
-  if (Args.hasFlag(options::OPT_fdiagnostics_show_hotness,
-                   options::OPT_fno_diagnostics_show_hotness, false))
-    CmdArgs.push_back("-fdiagnostics-show-hotness");
-
-  if (const Arg *A =
-          Args.getLastArg(options::OPT_fdiagnostics_hotness_threshold_EQ)) {
-    std::string Opt = std::string("-fdiagnostics-hotness-threshold=") + A->getValue();
-    CmdArgs.push_back(Args.MakeArgString(Opt));
-  }
-
-  if (const Arg *A = Args.getLastArg(options::OPT_fdiagnostics_format_EQ)) {
-    CmdArgs.push_back("-fdiagnostics-format");
-    CmdArgs.push_back(A->getValue());
-  }
-
-  if (Arg *A = Args.getLastArg(
-          options::OPT_fdiagnostics_show_note_include_stack,
-          options::OPT_fno_diagnostics_show_note_include_stack)) {
-    if (A->getOption().matches(
-            options::OPT_fdiagnostics_show_note_include_stack))
-      CmdArgs.push_back("-fdiagnostics-show-note-include-stack");
-    else
-      CmdArgs.push_back("-fno-diagnostics-show-note-include-stack");
-  }
-
-  // Color diagnostics are parsed by the driver directly from argv
-  // and later re-parsed to construct this job; claim any possible
-  // color diagnostic here to avoid warn_drv_unused_argument and
-  // diagnose bad OPT_fdiagnostics_color_EQ values.
-  for (Arg *A : Args) {
-    const Option &O = A->getOption();
-    if (!O.matches(options::OPT_fcolor_diagnostics) &&
-        !O.matches(options::OPT_fdiagnostics_color) &&
-        !O.matches(options::OPT_fno_color_diagnostics) &&
-        !O.matches(options::OPT_fno_diagnostics_color) &&
-        !O.matches(options::OPT_fdiagnostics_color_EQ))
-      continue;
-    if (O.matches(options::OPT_fdiagnostics_color_EQ)) {
-      StringRef Value(A->getValue());
-      if (Value != "always" && Value != "never" && Value != "auto")
-        D.Diag(diag::err_drv_clang_unsupported)
-            << ("-fdiagnostics-color=" + Value).str();
-    }
-    A->claim();
-  }
-  if (D.getDiags().getDiagnosticOptions().ShowColors)
-    CmdArgs.push_back("-fcolor-diagnostics");
-
-  if (Args.hasArg(options::OPT_fansi_escape_codes))
-    CmdArgs.push_back("-fansi-escape-codes");
-
-  if (!Args.hasFlag(options::OPT_fshow_source_location,
-                    options::OPT_fno_show_source_location))
-    CmdArgs.push_back("-fno-show-source-location");
-
-  if (Args.hasArg(options::OPT_fdiagnostics_absolute_paths))
-    CmdArgs.push_back("-fdiagnostics-absolute-paths");
-
-  if (!Args.hasFlag(options::OPT_fshow_column, options::OPT_fno_show_column,
-                    ColumnDefault))
-    CmdArgs.push_back("-fno-show-column");
-
-  if (!Args.hasFlag(options::OPT_fspell_checking,
-                    options::OPT_fno_spell_checking))
-    CmdArgs.push_back("-fno-spell-checking");
+  RenderDiagnosticsOptions(D, Args, CmdArgs);
 
   // -fno-asm-blocks is default.
   if (Args.hasFlag(options::OPT_fasm_blocks, options::OPT_fno_asm_blocks,
