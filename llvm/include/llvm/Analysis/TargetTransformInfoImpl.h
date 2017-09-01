@@ -674,7 +674,7 @@ public:
     int64_t Scale = 0;
 
     auto GTI = gep_type_begin(PointeeType, Operands);
-    Type *TargetType;
+    Type *TargetType = nullptr;
     for (auto I = Operands.begin(); I != Operands.end(); ++I, ++GTI) {
       TargetType = GTI.getIndexedType();
       // We assume that the cost of Scalar GEP with constant index and the
