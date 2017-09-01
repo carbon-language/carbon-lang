@@ -788,7 +788,7 @@ uint64_t WasmObjectFile::getSymbolValueImpl(DataRefImpl Symb) const {
   case WasmSymbol::SymbolType::FUNCTION_EXPORT:
     return Exports[Sym.ElementIndex].Index;
   case WasmSymbol::SymbolType::GLOBAL_EXPORT: {
-    uint32_t GlobalIndex = Exports[Sym.ElementIndex].Index;
+    uint32_t GlobalIndex = Exports[Sym.ElementIndex].Index - NumImportedGlobals;
     assert(GlobalIndex < Globals.size());
     const wasm::WasmGlobal& Global = Globals[GlobalIndex];
     return Global.InitExpr.Value.Int32;
