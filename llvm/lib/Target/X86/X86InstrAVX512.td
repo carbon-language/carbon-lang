@@ -329,12 +329,8 @@ multiclass AVX512_maskable_scalar<bits<8> O, Format F, X86VectorVTInfo _,
                            dag RHS,
                            InstrItinClass itin = NoItinerary,
                            bit IsCommutable = 0> :
-   AVX512_maskable_common<O, F, _, Outs, Ins,
-                          !con((ins _.RC:$src0, _.KRCWM:$mask), Ins),
-                          !con((ins _.KRCWM:$mask), Ins),
-                          OpcodeStr, AttSrcAsm, IntelSrcAsm, RHS,
-                          (X86selects _.KRCWM:$mask, RHS, _.RC:$src0),
-                          X86selects, "$src0 = $dst", itin, IsCommutable>;
+   AVX512_maskable<O, F, _, Outs, Ins, OpcodeStr, AttSrcAsm, IntelSrcAsm,
+                   RHS, itin, IsCommutable, 0, X86selects>;
 
 // Similar to AVX512_maskable but in this case one of the source operands
 // ($src1) is already tied to $dst so we just use that for the preserved
@@ -344,28 +340,24 @@ multiclass AVX512_maskable_3src<bits<8> O, Format F, X86VectorVTInfo _,
                                 dag Outs, dag NonTiedIns, string OpcodeStr,
                                 string AttSrcAsm, string IntelSrcAsm,
                                 dag RHS, bit IsCommutable = 0,
-                                bit IsKCommutable = 0> :
+                                bit IsKCommutable = 0,
+                                SDNode Select = vselect> :
    AVX512_maskable_common<O, F, _, Outs,
                           !con((ins _.RC:$src1), NonTiedIns),
                           !con((ins _.RC:$src1, _.KRCWM:$mask), NonTiedIns),
                           !con((ins _.RC:$src1, _.KRCWM:$mask), NonTiedIns),
                           OpcodeStr, AttSrcAsm, IntelSrcAsm, RHS,
-                          (vselect _.KRCWM:$mask, RHS, _.RC:$src1),
-                          vselect, "", NoItinerary, IsCommutable, IsKCommutable>;
+                          (Select _.KRCWM:$mask, RHS, _.RC:$src1),
+                          Select, "", NoItinerary, IsCommutable, IsKCommutable>;
 
 multiclass AVX512_maskable_3src_scalar<bits<8> O, Format F, X86VectorVTInfo _,
                                      dag Outs, dag NonTiedIns, string OpcodeStr,
                                      string AttSrcAsm, string IntelSrcAsm,
                                      dag RHS, bit IsCommutable = 0,
                                      bit IsKCommutable = 0> :
-   AVX512_maskable_common<O, F, _, Outs,
-                          !con((ins _.RC:$src1), NonTiedIns),
-                          !con((ins _.RC:$src1, _.KRCWM:$mask), NonTiedIns),
-                          !con((ins _.RC:$src1, _.KRCWM:$mask), NonTiedIns),
-                          OpcodeStr, AttSrcAsm, IntelSrcAsm, RHS,
-                          (X86selects _.KRCWM:$mask, RHS, _.RC:$src1),
-                          X86selects, "", NoItinerary, IsCommutable,
-                          IsKCommutable>;
+   AVX512_maskable_3src<O, F, _, Outs, NonTiedIns, OpcodeStr, AttSrcAsm,
+                        IntelSrcAsm, RHS, IsCommutable, IsKCommutable,
+                        X86selects>;
 
 multiclass AVX512_maskable_in_asm<bits<8> O, Format F, X86VectorVTInfo _,
                                   dag Outs, dag Ins,
