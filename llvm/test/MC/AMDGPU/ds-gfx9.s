@@ -32,3 +32,11 @@ ds_write_b8_d16_hi v8, v2
 ds_write_b16_d16_hi v8, v2
 // VI-ERR: error: instruction not supported on this GPU
 // GFX9: ds_write_b16_d16_hi v8, v2      ; encoding: [0x00,0x00,0xaa,0xd8,0x08,0x02,0x00,0x00]
+
+ds_write_addtid_b32 v8, v2
+// VI-ERR: error: instruction not supported on this GPU
+// GFX9: ds_write_addtid_b32 v8, v2      ; encoding: [0x00,0x00,0x3a,0xd8,0x08,0x02,0x00,0x00]
+
+ds_read_addtid_b32 v8, v2
+// VI-ERR: error: instruction not supported on this GPU
+// GFX9: ds_read_addtid_b32 v8, v2       ; encoding: [0x00,0x00,0x6c,0xd9,0x02,0x00,0x00,0x08]

@@ -291,6 +291,10 @@ def DS_WRITE_B8_D16_HI  : DS_1A1D_NORET<"ds_write_b8_d16_hi">;
 def DS_WRITE_B16_D16_HI : DS_1A1D_NORET<"ds_write_b16_d16_hi">;
 }
 
+let SubtargetPredicate = HasDSAddTid in {
+def DS_WRITE_ADDTID_B32 : DS_1A1D_NORET<"ds_write_addtid_b32">;
+}
+
 }
 
 def DS_MSKOR_B32      : DS_1A2D_NORET<"ds_mskor_b32">;
@@ -470,6 +474,10 @@ def DS_READ_I8_D16     : DS_1A_RET<"ds_read_i8_d16">;
 def DS_READ_I8_D16_HI  : DS_1A_RET<"ds_read_i8_d16_hi">;
 def DS_READ_U16_D16    : DS_1A_RET<"ds_read_u16_d16">;
 def DS_READ_U16_D16_HI : DS_1A_RET<"ds_read_u16_d16_hi">;
+}
+
+let SubtargetPredicate = HasDSAddTid in {
+def DS_READ_ADDTID_B32 : DS_1A_RET<"ds_read_addtid_b32">;
 }
 }
 
@@ -849,6 +857,7 @@ def DS_GWS_SEMA_V_vi      : DS_Real_vi<0x9a, DS_GWS_SEMA_V>;
 def DS_GWS_SEMA_BR_vi     : DS_Real_vi<0x9b, DS_GWS_SEMA_BR>;
 def DS_GWS_SEMA_P_vi      : DS_Real_vi<0x9c, DS_GWS_SEMA_P>;
 def DS_GWS_BARRIER_vi     : DS_Real_vi<0x9d, DS_GWS_BARRIER>;
+def DS_WRITE_ADDTID_B32_vi : DS_Real_vi<0x1d, DS_WRITE_ADDTID_B32>;
 def DS_WRITE_B8_vi        : DS_Real_vi<0x1e, DS_WRITE_B8>;
 def DS_WRITE_B16_vi       : DS_Real_vi<0x1f, DS_WRITE_B16>;
 def DS_ADD_RTN_U32_vi     : DS_Real_vi<0x20, DS_ADD_RTN_U32>;
@@ -880,6 +889,7 @@ def DS_READ_I8_vi         : DS_Real_vi<0x39, DS_READ_I8>;
 def DS_READ_U8_vi         : DS_Real_vi<0x3a, DS_READ_U8>;
 def DS_READ_I16_vi        : DS_Real_vi<0x3b, DS_READ_I16>;
 def DS_READ_U16_vi        : DS_Real_vi<0x3c, DS_READ_U16>;
+def DS_READ_ADDTID_B32_vi : DS_Real_vi<0xb6, DS_READ_ADDTID_B32>;
 def DS_CONSUME_vi         : DS_Real_vi<0xbd, DS_CONSUME>;
 def DS_APPEND_vi          : DS_Real_vi<0xbe, DS_APPEND>;
 def DS_ORDERED_COUNT_vi   : DS_Real_vi<0xbf, DS_ORDERED_COUNT>;

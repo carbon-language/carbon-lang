@@ -695,6 +695,9 @@ def HasFlatScratchInsts : Predicate<"Subtarget->hasFlatScratchInsts()">,
 def HasD16LoadStore : Predicate<"Subtarget->hasD16LoadStore()">,
   AssemblerPredicate<"FeatureGFX9Insts">;
 
+def HasDSAddTid : Predicate<"Subtarget->getGeneration() >= AMDGPUSubtarget::GFX9">,
+  AssemblerPredicate<"FeatureGFX9Insts">;
+
 def HasAddNoCarryInsts : Predicate<"Subtarget->hasAddNoCarryInsts()">,
   AssemblerPredicate<"FeatureAddNoCarryInsts">;
 
