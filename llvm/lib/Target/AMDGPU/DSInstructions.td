@@ -285,6 +285,12 @@ def DS_WRITE_B16      : DS_1A1D_NORET<"ds_write_b16">;
 def DS_WRITE_B32      : DS_1A1D_NORET<"ds_write_b32">;
 def DS_WRITE2_B32     : DS_1A2D_Off8_NORET<"ds_write2_b32">;
 def DS_WRITE2ST64_B32 : DS_1A2D_Off8_NORET<"ds_write2st64_b32">;
+
+let SubtargetPredicate = HasD16LoadStore in {
+def DS_WRITE_B8_D16_HI  : DS_1A1D_NORET<"ds_write_b8_d16_hi">;
+def DS_WRITE_B16_D16_HI : DS_1A1D_NORET<"ds_write_b16_d16_hi">;
+}
+
 }
 
 def DS_MSKOR_B32      : DS_1A2D_NORET<"ds_mskor_b32">;
@@ -456,6 +462,15 @@ def DS_READ2ST64_B32 : DS_1A_Off8_RET<"ds_read2st64_b32", VReg_64>;
 
 def DS_READ2_B64     : DS_1A_Off8_RET<"ds_read2_b64", VReg_128>;
 def DS_READ2ST64_B64 : DS_1A_Off8_RET<"ds_read2st64_b64", VReg_128>;
+
+let SubtargetPredicate = HasD16LoadStore in {
+def DS_READ_U8_D16     : DS_1A_RET<"ds_read_u8_d16">;
+def DS_READ_U8_D16_HI  : DS_1A_RET<"ds_read_u8_d16_hi">;
+def DS_READ_I8_D16     : DS_1A_RET<"ds_read_i8_d16">;
+def DS_READ_I8_D16_HI  : DS_1A_RET<"ds_read_i8_d16_hi">;
+def DS_READ_U16_D16    : DS_1A_RET<"ds_read_u16_d16">;
+def DS_READ_U16_D16_HI : DS_1A_RET<"ds_read_u16_d16_hi">;
+}
 }
 
 def DS_CONSUME       : DS_0A_RET<"ds_consume">;
@@ -892,6 +907,16 @@ def DS_CMPST_B64_vi       : DS_Real_vi<0x50, DS_CMPST_B64>;
 def DS_CMPST_F64_vi       : DS_Real_vi<0x51, DS_CMPST_F64>;
 def DS_MIN_F64_vi         : DS_Real_vi<0x52, DS_MIN_F64>;
 def DS_MAX_F64_vi         : DS_Real_vi<0x53, DS_MAX_F64>;
+
+def DS_WRITE_B8_D16_HI_vi  : DS_Real_vi<0x54, DS_WRITE_B8_D16_HI>;
+def DS_WRITE_B16_D16_HI_vi : DS_Real_vi<0x55, DS_WRITE_B16_D16_HI>;
+
+def DS_READ_U8_D16_vi     : DS_Real_vi<0x56, DS_READ_U8_D16>;
+def DS_READ_U8_D16_HI_vi  : DS_Real_vi<0x57, DS_READ_U8_D16_HI>;
+def DS_READ_I8_D16_vi     : DS_Real_vi<0x58, DS_READ_I8_D16>;
+def DS_READ_I8_D16_HI_vi  : DS_Real_vi<0x59, DS_READ_I8_D16_HI>;
+def DS_READ_U16_D16_vi    : DS_Real_vi<0x5a, DS_READ_U16_D16>;
+def DS_READ_U16_D16_HI_vi : DS_Real_vi<0x5b, DS_READ_U16_D16_HI>;
 
 def DS_ADD_RTN_U64_vi     : DS_Real_vi<0x60, DS_ADD_RTN_U64>;
 def DS_SUB_RTN_U64_vi     : DS_Real_vi<0x61, DS_SUB_RTN_U64>;
