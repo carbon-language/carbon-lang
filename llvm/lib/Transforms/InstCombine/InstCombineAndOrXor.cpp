@@ -947,7 +947,6 @@ Value *InstCombiner::foldAndOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
     if (isa<ConstantAggregateZero>(LHS->getOperand(1)) &&
         isa<ConstantAggregateZero>(RHS->getOperand(1)))
       return Builder.CreateFCmpORD(LHS->getOperand(0), RHS->getOperand(0));
-    return nullptr;
   }
 
   return nullptr;
@@ -997,8 +996,6 @@ Value *InstCombiner::foldOrOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
     if (isa<ConstantAggregateZero>(LHS->getOperand(1)) &&
         isa<ConstantAggregateZero>(RHS->getOperand(1)))
       return Builder.CreateFCmpUNO(LHS->getOperand(0), RHS->getOperand(0));
-
-    return nullptr;
   }
 
   return nullptr;
