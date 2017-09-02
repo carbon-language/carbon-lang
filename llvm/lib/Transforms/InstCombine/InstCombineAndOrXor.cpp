@@ -953,6 +953,57 @@ Value *InstCombiner::foldAndOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
   return nullptr;
 }
 
+/// Optimize (fcmp)|(fcmp).  NOTE: Unlike the rest of instcombine, this returns
+/// a Value which should already be inserted into the function.
+Value *InstCombiner::foldOrOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
+  Value *Op0LHS = LHS->getOperand(0), *Op0RHS = LHS->getOperand(1);
+  Value *Op1LHS = RHS->getOperand(0), *Op1RHS = RHS->getOperand(1);
+  FCmpInst::Predicate Op0CC = LHS->getPredicate(), Op1CC = RHS->getPredicate();
+
+  if (Op0LHS == Op1RHS && Op0RHS == Op1LHS) {
+    // Swap RHS operands to match LHS.
+    Op1CC = FCmpInst::getSwappedPredicate(Op1CC);
+    std::swap(Op1LHS, Op1RHS);
+  }
+
+  // Simplify (fcmp cc0 x, y) | (fcmp cc1 x, y).
+  // This is a similar transformation to the one in FoldAndOfFCmps.
+  //
+  // Since (R & CC0) and (R & CC1) are either R or 0, we actually have this:
+  //    bool(R & CC0) || bool(R & CC1)
+  //  = bool((R & CC0) | (R & CC1))
+  //  = bool(R & (CC0 | CC1)) <= by reversed distribution (contribution? ;)
+  if (Op0LHS == Op1LHS && Op0RHS == Op1RHS)
+    return getFCmpValue(getFCmpCode(Op0CC) | getFCmpCode(Op1CC), Op0LHS, Op0RHS,
+                        Builder);
+
+  if (LHS->getPredicate() == FCmpInst::FCMP_UNO &&
+      RHS->getPredicate() == FCmpInst::FCMP_UNO &&
+      LHS->getOperand(0)->getType() == RHS->getOperand(0)->getType()) {
+    if (ConstantFP *LHSC = dyn_cast<ConstantFP>(LHS->getOperand(1)))
+      if (ConstantFP *RHSC = dyn_cast<ConstantFP>(RHS->getOperand(1))) {
+        // If either of the constants are nans, then the whole thing returns
+        // true.
+        if (LHSC->getValueAPF().isNaN() || RHSC->getValueAPF().isNaN())
+          return Builder.getTrue();
+
+        // Otherwise, no need to compare the two constants, compare the
+        // rest.
+        return Builder.CreateFCmpUNO(LHS->getOperand(0), RHS->getOperand(0));
+      }
+
+    // Handle vector zeros.  This occurs because the canonical form of
+    // "fcmp uno x,x" is "fcmp uno x, 0".
+    if (isa<ConstantAggregateZero>(LHS->getOperand(1)) &&
+        isa<ConstantAggregateZero>(RHS->getOperand(1)))
+      return Builder.CreateFCmpUNO(LHS->getOperand(0), RHS->getOperand(0));
+
+    return nullptr;
+  }
+
+  return nullptr;
+}
+
 /// Match De Morgan's Laws:
 /// (~A & ~B) == (~(A | B))
 /// (~A | ~B) == (~(A & B))
@@ -1756,57 +1807,6 @@ Value *InstCombiner::foldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS,
     }
     break;
   }
-  return nullptr;
-}
-
-/// Optimize (fcmp)|(fcmp).  NOTE: Unlike the rest of instcombine, this returns
-/// a Value which should already be inserted into the function.
-Value *InstCombiner::foldOrOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
-  Value *Op0LHS = LHS->getOperand(0), *Op0RHS = LHS->getOperand(1);
-  Value *Op1LHS = RHS->getOperand(0), *Op1RHS = RHS->getOperand(1);
-  FCmpInst::Predicate Op0CC = LHS->getPredicate(), Op1CC = RHS->getPredicate();
-
-  if (Op0LHS == Op1RHS && Op0RHS == Op1LHS) {
-    // Swap RHS operands to match LHS.
-    Op1CC = FCmpInst::getSwappedPredicate(Op1CC);
-    std::swap(Op1LHS, Op1RHS);
-  }
-
-  // Simplify (fcmp cc0 x, y) | (fcmp cc1 x, y).
-  // This is a similar transformation to the one in FoldAndOfFCmps.
-  //
-  // Since (R & CC0) and (R & CC1) are either R or 0, we actually have this:
-  //    bool(R & CC0) || bool(R & CC1)
-  //  = bool((R & CC0) | (R & CC1))
-  //  = bool(R & (CC0 | CC1)) <= by reversed distribution (contribution? ;)
-  if (Op0LHS == Op1LHS && Op0RHS == Op1RHS)
-    return getFCmpValue(getFCmpCode(Op0CC) | getFCmpCode(Op1CC), Op0LHS, Op0RHS,
-                        Builder);
-
-  if (LHS->getPredicate() == FCmpInst::FCMP_UNO &&
-      RHS->getPredicate() == FCmpInst::FCMP_UNO &&
-      LHS->getOperand(0)->getType() == RHS->getOperand(0)->getType()) {
-    if (ConstantFP *LHSC = dyn_cast<ConstantFP>(LHS->getOperand(1)))
-      if (ConstantFP *RHSC = dyn_cast<ConstantFP>(RHS->getOperand(1))) {
-        // If either of the constants are nans, then the whole thing returns
-        // true.
-        if (LHSC->getValueAPF().isNaN() || RHSC->getValueAPF().isNaN())
-          return Builder.getTrue();
-
-        // Otherwise, no need to compare the two constants, compare the
-        // rest.
-        return Builder.CreateFCmpUNO(LHS->getOperand(0), RHS->getOperand(0));
-      }
-
-    // Handle vector zeros.  This occurs because the canonical form of
-    // "fcmp uno x,x" is "fcmp uno x, 0".
-    if (isa<ConstantAggregateZero>(LHS->getOperand(1)) &&
-        isa<ConstantAggregateZero>(RHS->getOperand(1)))
-      return Builder.CreateFCmpUNO(LHS->getOperand(0), RHS->getOperand(0));
-
-    return nullptr;
-  }
-
   return nullptr;
 }
 
