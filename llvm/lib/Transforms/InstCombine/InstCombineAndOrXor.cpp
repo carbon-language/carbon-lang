@@ -904,14 +904,14 @@ Value *InstCombiner::foldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS,
 /// Optimize (fcmp)&(fcmp).  NOTE: Unlike the rest of instcombine, this returns
 /// a Value which should already be inserted into the function.
 Value *InstCombiner::foldAndOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
-  Value *Op0LHS = LHS->getOperand(0), *Op0RHS = LHS->getOperand(1);
-  Value *Op1LHS = RHS->getOperand(0), *Op1RHS = RHS->getOperand(1);
-  FCmpInst::Predicate Op0CC = LHS->getPredicate(), Op1CC = RHS->getPredicate();
+  Value *LHS0 = LHS->getOperand(0), *LHS1 = LHS->getOperand(1);
+  Value *RHS0 = RHS->getOperand(0), *RHS1 = RHS->getOperand(1);
+  FCmpInst::Predicate PredL = LHS->getPredicate(), PredR = RHS->getPredicate();
 
-  if (Op0LHS == Op1RHS && Op0RHS == Op1LHS) {
+  if (LHS0 == RHS1 && RHS0 == LHS1) {
     // Swap RHS operands to match LHS.
-    Op1CC = FCmpInst::getSwappedPredicate(Op1CC);
-    std::swap(Op1LHS, Op1RHS);
+    PredR = FCmpInst::getSwappedPredicate(PredR);
+    std::swap(RHS0, RHS1);
   }
 
   // Simplify (fcmp cc0 x, y) & (fcmp cc1 x, y).
@@ -923,30 +923,29 @@ Value *InstCombiner::foldAndOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
   //    bool(R & CC0) && bool(R & CC1)
   //  = bool((R & CC0) & (R & CC1))
   //  = bool(R & (CC0 & CC1)) <= by re-association, commutation, and idempotency
-  if (Op0LHS == Op1LHS && Op0RHS == Op1RHS)
-    return getFCmpValue(getFCmpCode(Op0CC) & getFCmpCode(Op1CC), Op0LHS, Op0RHS,
+  if (LHS0 == RHS0 && LHS1 == RHS1)
+    return getFCmpValue(getFCmpCode(PredL) & getFCmpCode(PredR), LHS0, LHS1,
                         Builder);
 
-  if (LHS->getPredicate() == FCmpInst::FCMP_ORD &&
-      RHS->getPredicate() == FCmpInst::FCMP_ORD) {
-    if (LHS->getOperand(0)->getType() != RHS->getOperand(0)->getType())
+  if (PredL == FCmpInst::FCMP_ORD && PredR == FCmpInst::FCMP_ORD) {
+    if (LHS0->getType() != RHS0->getType())
       return nullptr;
 
     // (fcmp ord x, c) & (fcmp ord y, c)  -> (fcmp ord x, y)
-    if (ConstantFP *LHSC = dyn_cast<ConstantFP>(LHS->getOperand(1)))
-      if (ConstantFP *RHSC = dyn_cast<ConstantFP>(RHS->getOperand(1))) {
+    if (auto *LHSC = dyn_cast<ConstantFP>(LHS1))
+      if (auto *RHSC = dyn_cast<ConstantFP>(RHS1)) {
         // If either of the constants are nans, then the whole thing returns
         // false.
         if (LHSC->getValueAPF().isNaN() || RHSC->getValueAPF().isNaN())
           return Builder.getFalse();
-        return Builder.CreateFCmpORD(LHS->getOperand(0), RHS->getOperand(0));
+        return Builder.CreateFCmpORD(LHS0, RHS0);
       }
 
     // Handle vector zeros.  This occurs because the canonical form of
     // "fcmp ord x,x" is "fcmp ord x, 0".
-    if (isa<ConstantAggregateZero>(LHS->getOperand(1)) &&
-        isa<ConstantAggregateZero>(RHS->getOperand(1)))
-      return Builder.CreateFCmpORD(LHS->getOperand(0), RHS->getOperand(0));
+    if (isa<ConstantAggregateZero>(LHS1) &&
+        isa<ConstantAggregateZero>(RHS1))
+      return Builder.CreateFCmpORD(LHS0, RHS0);
   }
 
   return nullptr;
@@ -955,14 +954,14 @@ Value *InstCombiner::foldAndOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
 /// Optimize (fcmp)|(fcmp).  NOTE: Unlike the rest of instcombine, this returns
 /// a Value which should already be inserted into the function.
 Value *InstCombiner::foldOrOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
-  Value *Op0LHS = LHS->getOperand(0), *Op0RHS = LHS->getOperand(1);
-  Value *Op1LHS = RHS->getOperand(0), *Op1RHS = RHS->getOperand(1);
-  FCmpInst::Predicate Op0CC = LHS->getPredicate(), Op1CC = RHS->getPredicate();
+  Value *LHS0 = LHS->getOperand(0), *LHS1 = LHS->getOperand(1);
+  Value *RHS0 = RHS->getOperand(0), *RHS1 = RHS->getOperand(1);
+  FCmpInst::Predicate PredL = LHS->getPredicate(), PredR = RHS->getPredicate();
 
-  if (Op0LHS == Op1RHS && Op0RHS == Op1LHS) {
+  if (LHS0 == RHS1 && RHS0 == LHS1) {
     // Swap RHS operands to match LHS.
-    Op1CC = FCmpInst::getSwappedPredicate(Op1CC);
-    std::swap(Op1LHS, Op1RHS);
+    PredR = FCmpInst::getSwappedPredicate(PredR);
+    std::swap(RHS0, RHS1);
   }
 
   // Simplify (fcmp cc0 x, y) | (fcmp cc1 x, y).
@@ -972,15 +971,16 @@ Value *InstCombiner::foldOrOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
   //    bool(R & CC0) || bool(R & CC1)
   //  = bool((R & CC0) | (R & CC1))
   //  = bool(R & (CC0 | CC1)) <= by reversed distribution (contribution? ;)
-  if (Op0LHS == Op1LHS && Op0RHS == Op1RHS)
-    return getFCmpValue(getFCmpCode(Op0CC) | getFCmpCode(Op1CC), Op0LHS, Op0RHS,
+  if (LHS0 == RHS0 && LHS1 == RHS1)
+    return getFCmpValue(getFCmpCode(PredL) | getFCmpCode(PredR), LHS0, LHS1,
                         Builder);
 
-  if (LHS->getPredicate() == FCmpInst::FCMP_UNO &&
-      RHS->getPredicate() == FCmpInst::FCMP_UNO &&
-      LHS->getOperand(0)->getType() == RHS->getOperand(0)->getType()) {
-    if (ConstantFP *LHSC = dyn_cast<ConstantFP>(LHS->getOperand(1)))
-      if (ConstantFP *RHSC = dyn_cast<ConstantFP>(RHS->getOperand(1))) {
+  if (PredL == FCmpInst::FCMP_UNO && PredR == FCmpInst::FCMP_UNO) {
+    if (LHS0->getType() != RHS0->getType())
+      return nullptr;
+
+    if (auto *LHSC = dyn_cast<ConstantFP>(LHS1))
+      if (auto *RHSC = dyn_cast<ConstantFP>(RHS1)) {
         // If either of the constants are nans, then the whole thing returns
         // true.
         if (LHSC->getValueAPF().isNaN() || RHSC->getValueAPF().isNaN())
@@ -988,14 +988,14 @@ Value *InstCombiner::foldOrOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
 
         // Otherwise, no need to compare the two constants, compare the
         // rest.
-        return Builder.CreateFCmpUNO(LHS->getOperand(0), RHS->getOperand(0));
+        return Builder.CreateFCmpUNO(LHS0, RHS0);
       }
 
     // Handle vector zeros.  This occurs because the canonical form of
     // "fcmp uno x,x" is "fcmp uno x, 0".
-    if (isa<ConstantAggregateZero>(LHS->getOperand(1)) &&
-        isa<ConstantAggregateZero>(RHS->getOperand(1)))
-      return Builder.CreateFCmpUNO(LHS->getOperand(0), RHS->getOperand(0));
+    if (isa<ConstantAggregateZero>(LHS1) &&
+        isa<ConstantAggregateZero>(RHS1))
+      return Builder.CreateFCmpUNO(LHS0, RHS0);
   }
 
   return nullptr;
