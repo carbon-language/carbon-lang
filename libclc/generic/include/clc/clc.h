@@ -8,6 +8,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #endif
 
+#ifdef cl_khr_fp16
+#pragma OPENCL EXTENSION cl_khr_fp16 : enable
+#endif
+
 /* Function Attributes */
 #include <clc/clcfunc.h>
 
