@@ -237,6 +237,9 @@
 
 /* 6.11.13 Image Read and Write Functions */
 
+/* 6.12.12 Miscellaneous Vector Functions */
+#include <clc/misc/shuffle.h>
+
 #include <clc/image/image_defines.h>
 #include <clc/image/image.h>
 
