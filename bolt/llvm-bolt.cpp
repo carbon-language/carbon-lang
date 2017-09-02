@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "DataAggregator.h"
 #include "DataReader.h"
 #include "RewriteInstance.h"
 #include "llvm/Object/Binary.h"
@@ -35,10 +36,19 @@ namespace opts {
 cl::OptionCategory BoltCategory("BOLT generic options");
 cl::OptionCategory BoltOptCategory("BOLT optimization options");
 cl::OptionCategory BoltRelocCategory("BOLT options in relocation mode");
+cl::OptionCategory BoltOutputCategory("Output options");
+cl::OptionCategory AggregatorCategory("Data aggregation options");
 
 static cl::OptionCategory *BoltCategories[] = {&BoltCategory,
                                                &BoltOptCategory,
-                                               &BoltRelocCategory};
+                                               &BoltRelocCategory,
+                                               &BoltOutputCategory};
+
+static cl::OptionCategory *Perf2BoltCategories[] = {&AggregatorCategory,
+                                                    &BoltOutputCategory};
+
+extern cl::opt<std::string> OutputFilename;
+extern cl::opt<bool> AggregateOnly;
 
 static cl::opt<bool>
 DumpData("dump-data",
@@ -58,6 +68,18 @@ InputFilename(
   cl::desc("<executable>"),
   cl::Required,
   cl::cat(BoltCategory));
+
+static cl::opt<std::string>
+PerfData("perfdata",
+  cl::desc("<data file>"),
+  cl::Optional,
+  cl::cat(AggregatorCategory));
+
+static cl::alias
+PerfDataA("p",
+  cl::desc("Alias for -perfdata"),
+  cl::aliasopt(PerfData),
+  cl::cat(AggregatorCategory));
 
 } // namespace opts
 
@@ -81,6 +103,40 @@ static void printBoltRevision() {
   errs() << "BOLT revision " << BoltRevision << "\n";
 }
 
+void perf2boltMode(int argc, char **argv) {
+  cl::HideUnrelatedOptions(makeArrayRef(opts::Perf2BoltCategories));
+  cl::ParseCommandLineOptions(
+      argc, argv,
+      "perf2bolt - BOLT data aggregator\n"
+      "\nEXAMPLE: perf2bolt -p=perf.data executable -o data.fdata\n");
+  if (opts::PerfData.empty()) {
+    errs() << ToolName << ": expected -perfdata=<filename> option.\n";
+    exit(1);
+  }
+  if (!opts::InputDataFilename.empty()) {
+    errs() << ToolName << ": unknown -data option.\n";
+    exit(1);
+  }
+  if (!sys::fs::exists(opts::PerfData))
+    report_error(opts::PerfData, errc::no_such_file_or_directory);
+  if (!DataAggregator::checkPerfDataMagic(opts::PerfData)) {
+    errs() << ToolName << ": '" << opts::PerfData
+           << "': expected valid perf.data file.\n";
+    exit(1);
+  }
+  opts::AggregateOnly = true;
+}
+
+void boltMode(int argc, char **argv) {
+  cl::HideUnrelatedOptions(makeArrayRef(opts::BoltCategories));
+  // Register the target printer for --version.
+  cl::AddExtraVersionPrinter(printBoltRevision);
+  cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);
+
+  cl::ParseCommandLineOptions(argc, argv,
+                              "BOLT - Binary Optimization and Layout Tool\n");
+}
+
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
@@ -97,28 +153,42 @@ int main(int argc, char **argv) {
   llvm::InitializeAllTargets();
   llvm::InitializeAllAsmPrinters();
 
-  cl::HideUnrelatedOptions(makeArrayRef(opts::BoltCategories));
-
-  // Register the target printer for --version.
-  cl::AddExtraVersionPrinter(printBoltRevision);
-  cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);
-
-  cl::ParseCommandLineOptions(argc, argv,
-                              "BOLT - Binary Optimization and Layout Tool\n");
-
   ToolName = argv[0];
+
+  if (llvm::sys::path::filename(ToolName) == "perf2bolt")
+    perf2boltMode(argc, argv);
+  else
+    boltMode(argc, argv);
+
 
   if (!sys::fs::exists(opts::InputFilename))
     report_error(opts::InputFilename, errc::no_such_file_or_directory);
 
   std::unique_ptr<bolt::DataReader> DR(new DataReader(errs()));
-  if (!opts::InputDataFilename.empty()) {
+  std::unique_ptr<bolt::DataAggregator> DA(
+      new DataAggregator(errs(), opts::InputFilename));
+
+  if (opts::AggregateOnly) {
+    DA->setOutputFDataName(opts::OutputFilename);
+    if (opts::PerfData.empty()) {
+      errs() << ToolName << ": missing required -perfdata option.\n";
+      exit(1);
+    }
+  }
+  if (!opts::PerfData.empty()) {
+    if (!opts::AggregateOnly) {
+      errs() << ToolName
+             << ": reading perf data directly is unsupported, please use "
+                "-aggregate-only or perf2bolt\n";
+      exit(1);
+    }
+    DA->start(opts::PerfData);
+  } else if (!opts::InputDataFilename.empty()) {
     if (!sys::fs::exists(opts::InputDataFilename))
       report_error(opts::InputDataFilename, errc::no_such_file_or_directory);
 
-    // Attempt to read input bolt data
     auto ReaderOrErr =
-      bolt::DataReader::readPerfData(opts::InputDataFilename, errs());
+        bolt::DataReader::readPerfData(opts::InputDataFilename, errs());
     if (std::error_code EC = ReaderOrErr.getError())
       report_error(opts::InputDataFilename, EC);
     DR.reset(ReaderOrErr.get().release());
@@ -135,7 +205,7 @@ int main(int argc, char **argv) {
   Binary &Binary = *BinaryOrErr.get().getBinary();
 
   if (auto *e = dyn_cast<ELFObjectFileBase>(&Binary)) {
-    RewriteInstance RI(e, *DR.get(), argc, argv);
+    RewriteInstance RI(e, *DR.get(), *DA.get(), argc, argv);
     RI.run();
   } else {
     report_error(opts::InputFilename, object_error::invalid_file_type);

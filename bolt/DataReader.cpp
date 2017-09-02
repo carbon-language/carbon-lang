@@ -108,6 +108,52 @@ FuncSampleData::getSamples(uint64_t Start, uint64_t End) const {
   return Result;
 }
 
+void FuncBranchData::bumpBranchCount(uint64_t OffsetFrom, uint64_t OffsetTo,
+                                     bool Mispred) {
+  auto Iter = IntraIndex[OffsetFrom].find(OffsetTo);
+  if (Iter == IntraIndex[OffsetFrom].end()) {
+    Data.emplace_back(Location(true, Name, OffsetFrom),
+                      Location(true, Name, OffsetTo), Mispred, 1,
+                      BranchHistories());
+    IntraIndex[OffsetFrom][OffsetTo] = Data.size() - 1;
+    return;
+  }
+  auto &BI = Data[Iter->second];
+  ++BI.Branches;
+  if (Mispred)
+    ++BI.Mispreds;
+}
+
+void FuncBranchData::bumpCallCount(uint64_t OffsetFrom, const Location &To,
+                                   bool Mispred) {
+  auto Iter = InterIndex[OffsetFrom].find(To);
+  if (Iter == InterIndex[OffsetFrom].end()) {
+    Data.emplace_back(Location(true, Name, OffsetFrom), To, Mispred, 1,
+                      BranchHistories());
+    InterIndex[OffsetFrom][To] = Data.size() - 1;
+    return;
+  }
+  auto &BI = Data[Iter->second];
+  ++BI.Branches;
+  if (Mispred)
+    ++BI.Mispreds;
+}
+
+void FuncBranchData::bumpEntryCount(const Location &From, uint64_t OffsetTo,
+                                    bool Mispred) {
+  auto Iter = EntryIndex[OffsetTo].find(From);
+  if (Iter == EntryIndex[OffsetTo].end()) {
+    EntryData.emplace_back(From, Location(true, Name, OffsetTo), Mispred, 1,
+                           BranchHistories());
+    EntryIndex[OffsetTo][From] = EntryData.size() - 1;
+    return;
+  }
+  auto &BI = EntryData[Iter->second];
+  ++BI.Branches;
+  if (Mispred)
+    ++BI.Mispreds;
+}
+
 void BranchInfo::mergeWith(const BranchInfo &BI) {
 
   // Merge branch and misprediction counts.
@@ -245,6 +291,7 @@ DataReader::readPerfData(StringRef Path, raw_ostream &Diag) {
       MemoryBuffer::getFileOrSTDIN(Path);
   if (std::error_code EC = MB.getError()) {
     Diag << "Cannot open " << Path << ": " << EC.message() << "\n";
+    return EC;
   }
   auto DR = make_unique<DataReader>(std::move(MB.get()), Diag);
   DR->parse();

@@ -35,6 +35,7 @@ namespace bolt {
 
 class BinaryContext;
 class CFIReaderWriter;
+class DataAggregator;
 class DataReader;
 
 /// Section information for mapping and re-writing.
@@ -147,7 +148,7 @@ public:
 class RewriteInstance {
 public:
   RewriteInstance(llvm::object::ELFObjectFileBase *File, DataReader &DR,
-                  const int Argc, const char *const *Argv);
+                  DataAggregator &DA, const int Argc, const char *const *Argv);
   ~RewriteInstance();
 
   /// Reset all state except for split hints. Used to run a second pass with
@@ -269,6 +270,9 @@ private:
   /// Emit a single function.
   void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
                     bool EmitColdPart);
+
+  /// Perform a perf.data aggregation job instead of a binary rewriting one
+  void aggregateData();
 
   /// Detect addresses and offsets available in the binary for allocating
   /// new sections.
@@ -422,6 +426,9 @@ private:
   /// Command line args used to process binary.
   const int Argc;
   const char *const *Argv;
+
+  /// Holds our data aggregator in case user supplied a raw perf data file
+  DataAggregator &DA;
 
   std::unique_ptr<BinaryContext> BC;
   std::unique_ptr<CFIReaderWriter> CFIRdWrt;

@@ -1747,6 +1747,15 @@ public:
     return BranchData;
   }
 
+  FuncBranchData *getBranchData() {
+    return BranchData;
+  }
+
+  /// Updates profile data associated with this function
+  void setBranchData(FuncBranchData *Data) {
+    BranchData = Data;
+  }
+
   /// Walks the list of basic blocks filling in missing information about
   /// edge frequency for fall-throughs.
   ///
@@ -1894,6 +1903,10 @@ public:
   DWARFUnitLineTable getDWARFUnitLineTable() const {
     return UnitLineTable;
   }
+
+  /// Scan from - to offsets for conditional jumps
+  Optional<SmallVector<std::pair<uint64_t, uint64_t>, 16>>
+  getFallthroughsInTrace(uint64_t From, uint64_t To) const;
 
   /// Returns an estimate of the function's hot part after splitting.
   /// This is a very rough estimate, as with C++ exceptions there are

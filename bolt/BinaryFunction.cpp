@@ -4475,6 +4475,52 @@ DynoStats BinaryFunction::getDynoStats() const {
   return Stats;
 }
 
+Optional<SmallVector<std::pair<uint64_t, uint64_t>, 16>>
+BinaryFunction::getFallthroughsInTrace(uint64_t From, uint64_t To) const {
+  SmallVector<std::pair<uint64_t, uint64_t>, 16> Res;
+
+  if (CurrentState != State::Disassembled)
+    return NoneType();
+
+  // Get iterators and validate trace start/end
+  auto FromIter = Instructions.find(From);
+  if (FromIter == Instructions.end())
+    return NoneType();
+
+  auto ToIter = Instructions.find(To);
+  if (ToIter == Instructions.end())
+    return NoneType();
+
+  // Trace needs to go forward
+  if (FromIter->first > ToIter->first)
+    return NoneType();
+
+  // Trace needs to finish in a branch
+  if (!BC.MIA->isBranch(ToIter->second) && !BC.MIA->isCall(ToIter->second) &&
+      !BC.MIA->isReturn(ToIter->second))
+    return NoneType();
+
+  // Analyze intermediate instructions
+  for (; FromIter != ToIter; ++FromIter) {
+    // This operates under an assumption that we collect all branches in LBR
+    // No unconditional branches in the middle of the trace
+    if (BC.MIA->isUnconditionalBranch(FromIter->second) ||
+        BC.MIA->isReturn(FromIter->second) ||
+        BC.MIA->isCall(FromIter->second))
+      return NoneType();
+
+    if (!BC.MIA->isConditionalBranch(FromIter->second))
+      continue;
+
+    const uint64_t Src = FromIter->first;
+    auto Next = std::next(FromIter);
+    const uint64_t Dst = Next->first;
+    Res.push_back(std::make_pair(Src, Dst));
+  }
+
+  return Res;
+}
+
 void DynoStats::print(raw_ostream &OS, const DynoStats *Other) const {
   auto printStatWithDelta = [&](const std::string &Name, uint64_t Stat,
                                 uint64_t OtherStat) {

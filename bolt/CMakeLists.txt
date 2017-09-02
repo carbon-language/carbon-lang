@@ -65,9 +65,12 @@ add_llvm_tool(llvm-bolt
   BinaryFunction.cpp
   BinaryPassManager.cpp
   CalcCacheMetrics.cpp
+  DataAggregator.cpp
   DataReader.cpp
   DebugData.cpp
   DWARFRewriter.cpp
   Exceptions.cpp
   RewriteInstance.cpp
   )
+
+add_llvm_tool_symlink(perf2bolt llvm-bolt)

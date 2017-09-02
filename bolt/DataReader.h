@@ -15,6 +15,7 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_DATA_READER_H
 #define LLVM_TOOLS_LLVM_BOLT_DATA_READER_H
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
@@ -141,6 +142,8 @@ struct FuncBranchData {
   /// Indicate if the data was used.
   bool Used{false};
 
+  FuncBranchData() {}
+
   FuncBranchData(StringRef Name, ContainerTy Data)
       : Name(Name), Data(std::move(Data)) {}
 
@@ -162,6 +165,15 @@ struct FuncBranchData {
   /// Append the branch data of another function located \p Offset bytes away
   /// from the entry of this function.
   void appendFrom(const FuncBranchData &FBD, uint64_t Offset);
+
+  /// Aggregation helpers
+  DenseMap<uint64_t, DenseMap<uint64_t, size_t>> IntraIndex;
+  DenseMap<uint64_t, DenseMap<Location, size_t>> InterIndex;
+  DenseMap<uint64_t, DenseMap<Location, size_t>> EntryIndex;
+
+  void bumpBranchCount(uint64_t OffsetFrom, uint64_t OffsetTo, bool Mispred);
+  void bumpCallCount(uint64_t OffsetFrom, const Location &To, bool Mispred);
+  void bumpEntryCount(const Location &From, uint64_t OffsetTo, bool Mispred);
 };
 
 /// Similar to BranchInfo, but instead of recording from-to address (an edge),
@@ -329,7 +341,7 @@ public:
     return EventNames;
   }
 
-private:
+protected:
 
   void reportError(StringRef ErrorMsg);
   bool expectAndConsumeFS();
@@ -363,6 +375,28 @@ private:
 };
 
 }
+
+/// DenseMapInfo allows us to use the DenseMap LLVM data structure to store
+/// Locations
+template<> struct DenseMapInfo<bolt::Location> {
+  static inline bolt::Location getEmptyKey() {
+    return bolt::Location(true, StringRef(), static_cast<uint64_t>(-1LL));
+  }
+  static inline bolt::Location getTombstoneKey() {
+    return bolt::Location(true, StringRef(), static_cast<uint64_t>(-2LL));;
+  }
+  static unsigned getHashValue(const bolt::Location &L) {
+    return (unsigned(DenseMapInfo<StringRef>::getHashValue(L.Name)) >> 4) ^
+           (unsigned(L.Offset));
+  }
+  static bool isEqual(const bolt::Location &LHS,
+                      const bolt::Location &RHS) {
+    return LHS.IsSymbol == RHS.IsSymbol && LHS.Name == RHS.Name &&
+           LHS.Offset == RHS.Offset;
+  }
+};
+
+
 }
 
 #endif

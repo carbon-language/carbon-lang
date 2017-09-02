@@ -15,6 +15,7 @@
 #include "BinaryFunction.h"
 #include "BinaryPassManager.h"
 #include "CalcCacheMetrics.h"
+#include "DataAggregator.h"
 #include "DataReader.h"
 #include "Exceptions.h"
 #include "RewriteInstance.h"
@@ -71,6 +72,8 @@ namespace opts {
 
 extern cl::OptionCategory BoltCategory;
 extern cl::OptionCategory BoltOptCategory;
+extern cl::OptionCategory BoltOutputCategory;
+extern cl::OptionCategory AggregatorCategory;
 
 extern cl::opt<JumpTableSupportLevel> JumpTables;
 extern cl::opt<BinaryFunction::ReorderType> ReorderFunctions;
@@ -82,11 +85,11 @@ CalcCacheMetrics("calc-cache-metrics",
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
-static cl::opt<std::string>
+cl::opt<std::string>
 OutputFilename("o",
   cl::desc("<output file>"),
   cl::Required,
-  cl::cat(BoltCategory));
+  cl::cat(BoltOutputCategory));
 
 static cl::opt<unsigned>
 AlignFunctions("align-functions",
@@ -315,6 +318,12 @@ AddBoltInfo("add-bolt-info",
            "processed binaries"),
   cl::init(true),
   cl::cat(BoltCategory));
+
+cl::opt<bool>
+AggregateOnly("aggregate-only",
+  cl::desc("exit after writing aggregated data file"),
+  cl::Hidden,
+  cl::cat(AggregatorCategory));
 
 // Check against lists of functions from options if we should
 // optimize the function with a given name.
@@ -619,8 +628,9 @@ createBinaryContext(ELFObjectFileBase *File, DataReader &DR,
 } // namespace
 
 RewriteInstance::RewriteInstance(ELFObjectFileBase *File, DataReader &DR,
-                                 const int Argc, const char *const *Argv)
-    : InputFile(File), Argc(Argc), Argv(Argv),
+                                 DataAggregator &DA, const int Argc,
+                                 const char *const *Argv)
+    : InputFile(File), Argc(Argc), Argv(Argv), DA(DA),
       BC(createBinaryContext(
           File, DR,
           std::unique_ptr<DWARFContext>(
@@ -644,6 +654,17 @@ void RewriteInstance::reset() {
   RangesSectionsWriter.reset();
   LocationListWriter.reset();
   TotalScore = 0;
+}
+
+void RewriteInstance::aggregateData() {
+  DA.aggregate(*BC.get(), BinaryFunctions);
+
+  if (!opts::AggregateOnly)
+    return;
+
+  if (std::error_code EC = DA.writeAggregatedFile()) {
+    check_error(EC, "cannot create output data file");
+  }
 }
 
 void RewriteInstance::discoverStorage() {
@@ -766,6 +787,11 @@ void RewriteInstance::run() {
     readDebugInfo();
     readProfileData();
     disassembleFunctions();
+    if (DA.started()) {
+      aggregateData();
+      if (opts::AggregateOnly)
+        return;
+    }
     for (uint64_t Address : NonSimpleFunctions) {
       auto FI = BinaryFunctions.find(Address);
       assert(FI != BinaryFunctions.end() && "bad non-simple function address");
@@ -782,6 +808,8 @@ void RewriteInstance::run() {
 
   unsigned PassNumber = 1;
   executeRewritePass({});
+  if (opts::AggregateOnly)
+    return;
 
   if (opts::SplitFunctions == BinaryFunction::ST_LARGE &&
       checkLargeFunctions()) {
@@ -1860,6 +1888,9 @@ void RewriteInstance::disassembleFunctions() {
     }
     BC->InterproceduralReferences.clear();
 
+    if (opts::AggregateOnly)
+      continue;
+
     // Fill in CFI information for this function
     if (Function.isSimple()) {
       if (!CFIRdWrt->fillCFIInfoFor(Function)) {
@@ -1894,6 +1925,9 @@ void RewriteInstance::disassembleFunctions() {
     BC->SumExecutionCount += Function.getKnownExecutionCount();
 
   } // Iterate over all functions
+
+  if (opts::AggregateOnly)
+    return;
 
   uint64_t NumSimpleFunctions{0};
   uint64_t NumStaleProfileFunctions{0};
