@@ -124,6 +124,7 @@ math/tan.cl
 math/tanh.cl
 math/tgamma.cl
 misc/shuffle.cl
+misc/shuffle2.cl
 relational/all.cl
 relational/any.cl
 relational/bitselect.cl
@@ -140,7 +141,6 @@ relational/isnormal.cl
 relational/isnotequal.cl
 relational/isordered.cl
 relational/isunordered.cl
-relational/shuffle2.cl
 relational/signbit.cl
 shared/clamp.cl
 shared/max.cl

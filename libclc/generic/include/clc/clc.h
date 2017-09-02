@@ -239,6 +239,7 @@
 
 /* 6.12.12 Miscellaneous Vector Functions */
 #include <clc/misc/shuffle.h>
+#include <clc/misc/shuffle2.h>
 
 #include <clc/image/image_defines.h>
 #include <clc/image/image.h>
