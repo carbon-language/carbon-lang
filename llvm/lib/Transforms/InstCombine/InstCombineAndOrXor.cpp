@@ -941,12 +941,9 @@ Value *InstCombiner::foldLogicOfFCmps(FCmpInst *LHS, FCmpInst *RHS, bool IsAnd) 
     auto *LHSC = dyn_cast<ConstantFP>(LHS1);
     auto *RHSC = dyn_cast<ConstantFP>(RHS1);
     if (LHSC && RHSC) {
-      // If either of the constants are nans, then the whole thing returns
-      // true or false.
-      if (LHSC->getValueAPF().isNaN() || RHSC->getValueAPF().isNaN())
-        return IsAnd ? Builder.getFalse() : Builder.getTrue();
-
-      // Otherwise, no need to compare the two constants. Compare the rest:
+      assert(!LHSC->getValueAPF().isNaN() && !RHSC->getValueAPF().isNaN() &&
+             "Failed to simplify fcmp ord/uno with NAN operand");
+      // Ignore the constants because they can't be NANs:
       // (fcmp ord x, c) & (fcmp ord y, c)  -> (fcmp ord x, y)
       // (fcmp uno x, c) & (fcmp uno y, c)  -> (fcmp uno x, y)
       return Builder.CreateFCmp(PredL, LHS0, RHS0);
