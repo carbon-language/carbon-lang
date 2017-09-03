@@ -2125,6 +2125,11 @@ static void RenderFloatingPointOptions(const ToolChain &TC, const Driver &D,
   // Handle __FINITE_MATH_ONLY__ similarly.
   if (!HonorINFs && !HonorNaNs)
     CmdArgs.push_back("-ffinite-math-only");
+
+  if (const Arg *A = Args.getLastArg(options::OPT_mfpmath_EQ)) {
+    CmdArgs.push_back("-mfpmath");
+    CmdArgs.push_back(A->getValue());
+  }
 }
 
 static void RenderAnalyzerOptions(const ArgList &Args, ArgStringList &CmdArgs,
@@ -3204,11 +3209,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (!CPU.empty()) {
     CmdArgs.push_back("-target-cpu");
     CmdArgs.push_back(Args.MakeArgString(CPU));
-  }
-
-  if (const Arg *A = Args.getLastArg(options::OPT_mfpmath_EQ)) {
-    CmdArgs.push_back("-mfpmath");
-    CmdArgs.push_back(A->getValue());
   }
 
   // Add the target features
