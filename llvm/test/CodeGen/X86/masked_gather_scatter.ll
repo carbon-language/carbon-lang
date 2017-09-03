@@ -1047,8 +1047,8 @@ define void @test20(<2 x float>%a1, <2 x float*> %ptr, <2 x i1> %mask) {
 ; KNL_64-NEXT:    # kill: %XMM1<def> %XMM1<kill> %ZMM1<def>
 ; KNL_64-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<def>
 ; KNL_64-NEXT:    vinsertps {{.*#+}} xmm2 = xmm2[0,2],zero,zero
-; KNL_64-NEXT:    vpxor %xmm3, %xmm3, %xmm3
-; KNL_64-NEXT:    vpblendd {{.*#+}} ymm2 = ymm2[0,1,2,3],ymm3[4,5,6,7]
+; KNL_64-NEXT:    vxorps %xmm3, %xmm3, %xmm3
+; KNL_64-NEXT:    vblendps {{.*#+}} ymm2 = ymm2[0,1,2,3],ymm3[4,5,6,7]
 ; KNL_64-NEXT:    vpslld $31, %ymm2, %ymm2
 ; KNL_64-NEXT:    vptestmd %zmm2, %zmm2, %k1
 ; KNL_64-NEXT:    vscatterqps %ymm0, (,%zmm1) {%k1}
@@ -1059,8 +1059,8 @@ define void @test20(<2 x float>%a1, <2 x float*> %ptr, <2 x i1> %mask) {
 ; KNL_32:       # BB#0:
 ; KNL_32-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<def>
 ; KNL_32-NEXT:    vinsertps {{.*#+}} xmm2 = xmm2[0,2],zero,zero
-; KNL_32-NEXT:    vpxor %xmm3, %xmm3, %xmm3
-; KNL_32-NEXT:    vpblendd {{.*#+}} ymm2 = ymm2[0,1,2,3],ymm3[4,5,6,7]
+; KNL_32-NEXT:    vxorps %xmm3, %xmm3, %xmm3
+; KNL_32-NEXT:    vblendps {{.*#+}} ymm2 = ymm2[0,1,2,3],ymm3[4,5,6,7]
 ; KNL_32-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[0,2,2,3]
 ; KNL_32-NEXT:    vpmovsxdq %ymm1, %zmm1
 ; KNL_32-NEXT:    vpslld $31, %ymm2, %ymm2
@@ -1154,8 +1154,8 @@ define <2 x float> @test22(float* %base, <2 x i32> %ind, <2 x i1> %mask, <2 x fl
 ; KNL_64:       # BB#0:
 ; KNL_64-NEXT:    # kill: %XMM2<def> %XMM2<kill> %YMM2<def>
 ; KNL_64-NEXT:    vinsertps {{.*#+}} xmm1 = xmm1[0,2],zero,zero
-; KNL_64-NEXT:    vpxor %xmm3, %xmm3, %xmm3
-; KNL_64-NEXT:    vpblendd {{.*#+}} ymm1 = ymm1[0,1,2,3],ymm3[4,5,6,7]
+; KNL_64-NEXT:    vxorps %xmm3, %xmm3, %xmm3
+; KNL_64-NEXT:    vblendps {{.*#+}} ymm1 = ymm1[0,1,2,3],ymm3[4,5,6,7]
 ; KNL_64-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
 ; KNL_64-NEXT:    vpmovsxdq %ymm0, %zmm0
 ; KNL_64-NEXT:    vpslld $31, %ymm1, %ymm1
@@ -1169,8 +1169,8 @@ define <2 x float> @test22(float* %base, <2 x i32> %ind, <2 x i1> %mask, <2 x fl
 ; KNL_32:       # BB#0:
 ; KNL_32-NEXT:    # kill: %XMM2<def> %XMM2<kill> %YMM2<def>
 ; KNL_32-NEXT:    vinsertps {{.*#+}} xmm1 = xmm1[0,2],zero,zero
-; KNL_32-NEXT:    vpxor %xmm3, %xmm3, %xmm3
-; KNL_32-NEXT:    vpblendd {{.*#+}} ymm1 = ymm1[0,1,2,3],ymm3[4,5,6,7]
+; KNL_32-NEXT:    vxorps %xmm3, %xmm3, %xmm3
+; KNL_32-NEXT:    vblendps {{.*#+}} ymm1 = ymm1[0,1,2,3],ymm3[4,5,6,7]
 ; KNL_32-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
 ; KNL_32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; KNL_32-NEXT:    vpmovsxdq %ymm0, %zmm0
@@ -1215,8 +1215,8 @@ define <2 x float> @test22a(float* %base, <2 x i64> %ind, <2 x i1> %mask, <2 x f
 ; KNL_64-NEXT:    # kill: %XMM2<def> %XMM2<kill> %YMM2<def>
 ; KNL_64-NEXT:    # kill: %XMM0<def> %XMM0<kill> %ZMM0<def>
 ; KNL_64-NEXT:    vinsertps {{.*#+}} xmm1 = xmm1[0,2],zero,zero
-; KNL_64-NEXT:    vpxor %xmm3, %xmm3, %xmm3
-; KNL_64-NEXT:    vpblendd {{.*#+}} ymm1 = ymm1[0,1,2,3],ymm3[4,5,6,7]
+; KNL_64-NEXT:    vxorps %xmm3, %xmm3, %xmm3
+; KNL_64-NEXT:    vblendps {{.*#+}} ymm1 = ymm1[0,1,2,3],ymm3[4,5,6,7]
 ; KNL_64-NEXT:    vpslld $31, %ymm1, %ymm1
 ; KNL_64-NEXT:    vptestmd %zmm1, %zmm1, %k1
 ; KNL_64-NEXT:    vgatherqps (%rdi,%zmm0,4), %ymm2 {%k1}
@@ -1229,8 +1229,8 @@ define <2 x float> @test22a(float* %base, <2 x i64> %ind, <2 x i1> %mask, <2 x f
 ; KNL_32-NEXT:    # kill: %XMM2<def> %XMM2<kill> %YMM2<def>
 ; KNL_32-NEXT:    # kill: %XMM0<def> %XMM0<kill> %ZMM0<def>
 ; KNL_32-NEXT:    vinsertps {{.*#+}} xmm1 = xmm1[0,2],zero,zero
-; KNL_32-NEXT:    vpxor %xmm3, %xmm3, %xmm3
-; KNL_32-NEXT:    vpblendd {{.*#+}} ymm1 = ymm1[0,1,2,3],ymm3[4,5,6,7]
+; KNL_32-NEXT:    vxorps %xmm3, %xmm3, %xmm3
+; KNL_32-NEXT:    vblendps {{.*#+}} ymm1 = ymm1[0,1,2,3],ymm3[4,5,6,7]
 ; KNL_32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; KNL_32-NEXT:    vpslld $31, %ymm1, %ymm1
 ; KNL_32-NEXT:    vptestmd %zmm1, %zmm1, %k1
