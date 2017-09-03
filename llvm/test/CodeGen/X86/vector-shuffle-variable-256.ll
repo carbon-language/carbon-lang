@@ -159,7 +159,7 @@ define <4 x i64> @var_shuffle_v4i64_v4i64_xx00_i64(<4 x i64> %x, i64 %i0, i64 %i
 ; AVX1-NEXT:    vmovq {{.*#+}} xmm1 = mem[0],zero
 ; AVX1-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm1[0],xmm0[0]
 ; AVX1-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; AVX1-NEXT:    vblendps {{.*#+}} ymm0 = ymm0[0,1,2,3],ymm1[4,5,6,7]
 ; AVX1-NEXT:    movq %rbp, %rsp
 ; AVX1-NEXT:    popq %rbp
 ; AVX1-NEXT:    retq
@@ -177,7 +177,7 @@ define <4 x i64> @var_shuffle_v4i64_v4i64_xx00_i64(<4 x i64> %x, i64 %i0, i64 %i
 ; AVX2-NEXT:    vmovq {{.*#+}} xmm1 = mem[0],zero
 ; AVX2-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm1[0],xmm0[0]
 ; AVX2-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; AVX2-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
+; AVX2-NEXT:    vpblendd {{.*#+}} ymm0 = ymm0[0,1,2,3],ymm1[4,5,6,7]
 ; AVX2-NEXT:    movq %rbp, %rsp
 ; AVX2-NEXT:    popq %rbp
 ; AVX2-NEXT:    retq
