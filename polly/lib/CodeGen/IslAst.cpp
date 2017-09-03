@@ -347,7 +347,7 @@ static __isl_give isl_ast_node *AtEachDomain(__isl_take isl_ast_node *Node,
 }
 
 // Build alias check condition given a pair of minimal/maximal access.
-static isl::ast_expr buildCondition(isl::ast_build Build,
+static isl::ast_expr buildCondition(Scop &S, isl::ast_build Build,
                                     const Scop::MinMaxAccessTy *It0,
                                     const Scop::MinMaxAccessTy *It1) {
 
@@ -359,21 +359,49 @@ static isl::ast_expr buildCondition(isl::ast_build Build,
   isl::id Left = AFirst.get_tuple_id(isl::dim::set);
   isl::id Right = BFirst.get_tuple_id(isl::dim::set);
 
+  isl::ast_expr True =
+      isl::ast_expr::from_val(isl::val::int_from_ui(Build.get_ctx(), 1));
+  isl::ast_expr False =
+      isl::ast_expr::from_val(isl::val::int_from_ui(Build.get_ctx(), 0));
+
   const ScopArrayInfo *BaseLeft =
       ScopArrayInfo::getFromId(Left)->getBasePtrOriginSAI();
   const ScopArrayInfo *BaseRight =
       ScopArrayInfo::getFromId(Right)->getBasePtrOriginSAI();
   if (BaseLeft && BaseLeft == BaseRight)
-    return isl::ast_expr::from_val(isl::val::int_from_ui(Build.get_ctx(), 1));
+    return True;
+
+  isl::set Params = S.getContext();
 
   isl::ast_expr NonAliasGroup, MinExpr, MaxExpr;
-  MinExpr = Build.access_from(AFirst).address_of();
-  MaxExpr = Build.access_from(BSecond).address_of();
-  NonAliasGroup = MaxExpr.le(MinExpr);
-  MinExpr = Build.access_from(BFirst).address_of();
-  MaxExpr = Build.access_from(ASecond).address_of();
-  NonAliasGroup = isl::manage(
-      isl_ast_expr_or(NonAliasGroup.release(), MaxExpr.le(MinExpr).release()));
+
+  // In the following, we first check if any accesses will be empty under
+  // the execution context of the scop and do not code generate them if this
+  // is the case as isl will fail to derive valid AST expressions for such
+  // accesses.
+
+  if (!AFirst.intersect_params(Params).domain().is_empty() &&
+      !BSecond.intersect_params(Params).domain().is_empty()) {
+    MinExpr = Build.access_from(AFirst).address_of();
+    MaxExpr = Build.access_from(BSecond).address_of();
+    NonAliasGroup = MaxExpr.le(MinExpr);
+  }
+
+  if (!BFirst.intersect_params(Params).domain().is_empty() &&
+      !ASecond.intersect_params(Params).domain().is_empty()) {
+    MinExpr = Build.access_from(BFirst).address_of();
+    MaxExpr = Build.access_from(ASecond).address_of();
+
+    isl::ast_expr Result = MaxExpr.le(MinExpr);
+    if (!NonAliasGroup.is_null())
+      NonAliasGroup = isl::manage(
+          isl_ast_expr_or(NonAliasGroup.release(), Result.release()));
+    else
+      NonAliasGroup = Result;
+  }
+
+  if (NonAliasGroup.is_null())
+    NonAliasGroup = True;
 
   return NonAliasGroup;
 }
@@ -410,14 +438,16 @@ IslAst::buildRunCondition(Scop &S, __isl_keep isl_ast_build *Build) {
          ++RWAccIt0) {
       for (auto RWAccIt1 = RWAccIt0 + 1; RWAccIt1 != RWAccEnd; ++RWAccIt1)
         RunCondition = isl_ast_expr_and(
-            RunCondition, buildCondition(isl::manage(isl_ast_build_copy(Build)),
-                                         RWAccIt0, RWAccIt1)
-                              .release());
+            RunCondition,
+            buildCondition(S, isl::manage(isl_ast_build_copy(Build)), RWAccIt0,
+                           RWAccIt1)
+                .release());
       for (const Scop::MinMaxAccessTy &ROAccIt : MinMaxReadOnly)
         RunCondition = isl_ast_expr_and(
-            RunCondition, buildCondition(isl::manage(isl_ast_build_copy(Build)),
-                                         RWAccIt0, &ROAccIt)
-                              .release());
+            RunCondition,
+            buildCondition(S, isl::manage(isl_ast_build_copy(Build)), RWAccIt0,
+                           &ROAccIt)
+                .release());
     }
   }
 
