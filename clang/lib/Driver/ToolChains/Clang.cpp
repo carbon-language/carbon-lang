@@ -1360,6 +1360,77 @@ void Clang::AddARMTargetArgs(const llvm::Triple &Triple, const ArgList &Args,
     CmdArgs.push_back("-no-implicit-float");
 }
 
+void Clang::RenderTargetOptions(const llvm::Triple &EffectiveTriple,
+                                const ArgList &Args, bool KernelOrKext,
+                                ArgStringList &CmdArgs) const {
+  const ToolChain &TC = getToolChain();
+
+  // Add the target features
+  getTargetFeatures(TC, EffectiveTriple, Args, CmdArgs, false);
+
+  // Add target specific flags.
+  switch (TC.getArch()) {
+  default:
+    break;
+
+  case llvm::Triple::arm:
+  case llvm::Triple::armeb:
+  case llvm::Triple::thumb:
+  case llvm::Triple::thumbeb:
+    // Use the effective triple, which takes into account the deployment target.
+    AddARMTargetArgs(EffectiveTriple, Args, CmdArgs, KernelOrKext);
+    CmdArgs.push_back("-fallow-half-arguments-and-returns");
+    break;
+
+  case llvm::Triple::aarch64:
+  case llvm::Triple::aarch64_be:
+    AddAArch64TargetArgs(Args, CmdArgs);
+    CmdArgs.push_back("-fallow-half-arguments-and-returns");
+    break;
+
+  case llvm::Triple::mips:
+  case llvm::Triple::mipsel:
+  case llvm::Triple::mips64:
+  case llvm::Triple::mips64el:
+    AddMIPSTargetArgs(Args, CmdArgs);
+    break;
+
+  case llvm::Triple::ppc:
+  case llvm::Triple::ppc64:
+  case llvm::Triple::ppc64le:
+    AddPPCTargetArgs(Args, CmdArgs);
+    break;
+
+  case llvm::Triple::sparc:
+  case llvm::Triple::sparcel:
+  case llvm::Triple::sparcv9:
+    AddSparcTargetArgs(Args, CmdArgs);
+    break;
+
+  case llvm::Triple::systemz:
+    AddSystemZTargetArgs(Args, CmdArgs);
+    break;
+
+  case llvm::Triple::x86:
+  case llvm::Triple::x86_64:
+    AddX86TargetArgs(Args, CmdArgs);
+    break;
+
+  case llvm::Triple::lanai:
+    AddLanaiTargetArgs(Args, CmdArgs);
+    break;
+
+  case llvm::Triple::hexagon:
+    AddHexagonTargetArgs(Args, CmdArgs);
+    break;
+
+  case llvm::Triple::wasm32:
+  case llvm::Triple::wasm64:
+    AddWebAssemblyTargetArgs(Args, CmdArgs);
+    break;
+  }
+}
+
 void Clang::AddAArch64TargetArgs(const ArgList &Args,
                                  ArgStringList &CmdArgs) const {
   const llvm::Triple &Triple = getToolChain().getEffectiveTriple();
@@ -3374,68 +3445,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString(CPU));
   }
 
-  // Add the target features
-  getTargetFeatures(getToolChain(), Triple, Args, CmdArgs, false);
-
-  // Add target specific flags.
-  switch (getToolChain().getArch()) {
-  default:
-    break;
-
-  case llvm::Triple::arm:
-  case llvm::Triple::armeb:
-  case llvm::Triple::thumb:
-  case llvm::Triple::thumbeb:
-    // Use the effective triple, which takes into account the deployment target.
-    AddARMTargetArgs(Triple, Args, CmdArgs, KernelOrKext);
-    break;
-
-  case llvm::Triple::aarch64:
-  case llvm::Triple::aarch64_be:
-    AddAArch64TargetArgs(Args, CmdArgs);
-    break;
-
-  case llvm::Triple::mips:
-  case llvm::Triple::mipsel:
-  case llvm::Triple::mips64:
-  case llvm::Triple::mips64el:
-    AddMIPSTargetArgs(Args, CmdArgs);
-    break;
-
-  case llvm::Triple::ppc:
-  case llvm::Triple::ppc64:
-  case llvm::Triple::ppc64le:
-    AddPPCTargetArgs(Args, CmdArgs);
-    break;
-
-  case llvm::Triple::sparc:
-  case llvm::Triple::sparcel:
-  case llvm::Triple::sparcv9:
-    AddSparcTargetArgs(Args, CmdArgs);
-    break;
-
-  case llvm::Triple::systemz:
-    AddSystemZTargetArgs(Args, CmdArgs);
-    break;
-
-  case llvm::Triple::x86:
-  case llvm::Triple::x86_64:
-    AddX86TargetArgs(Args, CmdArgs);
-    break;
-
-  case llvm::Triple::lanai:
-    AddLanaiTargetArgs(Args, CmdArgs);
-    break;
-
-  case llvm::Triple::hexagon:
-    AddHexagonTargetArgs(Args, CmdArgs);
-    break;
-
-  case llvm::Triple::wasm32:
-  case llvm::Triple::wasm64:
-    AddWebAssemblyTargetArgs(Args, CmdArgs);
-    break;
-  }
+  RenderTargetOptions(Triple, Args, KernelOrKext, CmdArgs);
 
   // These two are potentially updated by AddClangCLArgs.
   codegenoptions::DebugInfoKind DebugInfoKind = codegenoptions::NoDebugInfo;
@@ -3928,20 +3938,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back(Args.MakeArgString("-mstack-probe-size=" + Size));
     else
       CmdArgs.push_back("-mstack-probe-size=0");
-  }
-
-  switch (getToolChain().getArch()) {
-  case llvm::Triple::aarch64:
-  case llvm::Triple::aarch64_be:
-  case llvm::Triple::arm:
-  case llvm::Triple::armeb:
-  case llvm::Triple::thumb:
-  case llvm::Triple::thumbeb:
-    CmdArgs.push_back("-fallow-half-arguments-and-returns");
-    break;
-
-  default:
-    break;
   }
 
   if (Arg *A = Args.getLastArg(options::OPT_mrestrict_it,
