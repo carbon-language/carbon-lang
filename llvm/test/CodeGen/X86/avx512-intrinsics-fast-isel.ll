@@ -1134,13 +1134,11 @@ define <8 x double> @test_mm512_zextpd128_pd512(<2 x double> %a0) nounwind {
 ; X32-LABEL: test_mm512_zextpd128_pd512:
 ; X32:       # BB#0:
 ; X32-NEXT:    vmovaps %xmm0, %xmm0
-; X32-NEXT:    vmovaps %ymm0, %ymm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: test_mm512_zextpd128_pd512:
 ; X64:       # BB#0:
 ; X64-NEXT:    vmovaps %xmm0, %xmm0
-; X64-NEXT:    vmovaps %ymm0, %ymm0
 ; X64-NEXT:    retq
   %res = shufflevector <2 x double> %a0, <2 x double> zeroinitializer, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 2, i32 3, i32 2, i32 3>
   ret <8 x double> %res
@@ -1196,13 +1194,11 @@ define <8 x i64> @test_mm512_zextsi128_si512(<2 x i64> %a0) nounwind {
 ; X32-LABEL: test_mm512_zextsi128_si512:
 ; X32:       # BB#0:
 ; X32-NEXT:    vmovaps %xmm0, %xmm0
-; X32-NEXT:    vmovaps %ymm0, %ymm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: test_mm512_zextsi128_si512:
 ; X64:       # BB#0:
 ; X64-NEXT:    vmovaps %xmm0, %xmm0
-; X64-NEXT:    vmovaps %ymm0, %ymm0
 ; X64-NEXT:    retq
   %res = shufflevector <2 x i64> %a0, <2 x i64> zeroinitializer, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 2, i32 3, i32 2, i32 3>
   ret <8 x i64> %res

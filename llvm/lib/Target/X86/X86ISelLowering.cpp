@@ -35656,10 +35656,21 @@ static SDValue combineInsertSubvector(SDNode *N, SelectionDAG &DAG,
   unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
   MVT SubVecVT = SubVec.getSimpleValueType();
 
-  // Inserting zeros into zeros is a nop.
-  if (ISD::isBuildVectorAllZeros(Vec.getNode()) &&
-      ISD::isBuildVectorAllZeros(SubVec.getNode()))
-    return Vec;
+  if (ISD::isBuildVectorAllZeros(Vec.getNode())) {
+    // Inserting zeros into zeros is a nop.
+    if (ISD::isBuildVectorAllZeros(SubVec.getNode()))
+      return Vec;
+
+    // If we're inserting into a zero vector and then into a larger zero vector,
+    // just insert into the larger zero vector directly.
+    if (SubVec.getOpcode() == ISD::INSERT_SUBVECTOR &&
+        ISD::isBuildVectorAllZeros(SubVec.getOperand(0).getNode())) {
+      unsigned Idx2Val = cast<ConstantSDNode>(Idx)->getZExtValue();
+      return DAG.getNode(ISD::INSERT_SUBVECTOR, dl, OpVT, Vec,
+                         SubVec.getOperand(1),
+                         DAG.getIntPtrConstant(IdxVal + Idx2Val, dl));
+    }
+  }
 
   // If this is an insert of an extract, combine to a shuffle. Don't do this
   // if the insert or extract can be represented with a subregister operation.
