@@ -318,9 +318,9 @@ void MIPS<ELFT>::relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const {
     // The R_MIPS_GOT16 relocation's value in "relocatable" linking mode
     // is updated addend (not a GOT index). In that case write high 16 bits
     // to store a correct addend value.
-    if (Config->Relocatable)
+    if (Config->Relocatable) {
       writeRelocation<E, 16, 16>(Loc, Val + 0x8000);
-    else {
+    } else {
       checkInt<16>(Loc, Val, Type);
       writeRelocation<E, 16, 0>(Loc, Val);
     }
