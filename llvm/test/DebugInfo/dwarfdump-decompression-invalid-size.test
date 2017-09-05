@@ -1,3 +1,5 @@
+REQUIRES: zlib
+
 // dwarfdump-decompression-invalid-size.elf-x86-64 is prepared using following
 // source code and invocation:
 // test.cpp:
