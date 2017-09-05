@@ -212,18 +212,6 @@ protected:
       return RemoteSymOrErr.takeError();
   }
 
-  template <typename Func, typename... ArgTs>
-  using CallBResult = decltype(foldRemoteERror(
-                                 std::declval<RPCEndpoint>()
-                                   .template callB<Func>(
-                                     std::declval<const ArgTs&>()...)));
-
-  /// API checked callB function.
-  template <typename Func, typename... ArgTs>
-  CallBResult<Func> callB(const ArgTs &... Args) {
-    return foldRemoteError(Remote.template callB<Func>(Args...));
-  }
-
   RPCEndpoint &Remote;
   std::function<void(Error)> ReportError;
 
