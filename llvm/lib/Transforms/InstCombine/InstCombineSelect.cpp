@@ -101,7 +101,7 @@ static unsigned getSelectFoldableOperands(BinaryOperator *I) {
 
 /// For the same transformation as the previous function, return the identity
 /// constant that goes into the select.
-static Constant *getSelectFoldableConstant(BinaryOperator *I) {
+static APInt getSelectFoldableConstant(BinaryOperator *I) {
   switch (I->getOpcode()) {
   default: llvm_unreachable("This cannot happen!");
   case Instruction::Add:
@@ -111,11 +111,11 @@ static Constant *getSelectFoldableConstant(BinaryOperator *I) {
   case Instruction::Shl:
   case Instruction::LShr:
   case Instruction::AShr:
-    return Constant::getNullValue(I->getType());
+    return APInt::getNullValue(I->getType()->getScalarSizeInBits());
   case Instruction::And:
-    return Constant::getAllOnesValue(I->getType());
+    return APInt::getAllOnesValue(I->getType()->getScalarSizeInBits());
   case Instruction::Mul:
-    return ConstantInt::get(I->getType(), 1);
+    return APInt(I->getType()->getScalarSizeInBits(), 1);
   }
 }
 
@@ -219,16 +219,11 @@ Instruction *InstCombiner::foldSelectOpOp(SelectInst &SI, Instruction *TI,
   return BinaryOperator::Create(BO->getOpcode(), Op0, Op1);
 }
 
-static bool isSelect01(Constant *C1, Constant *C2) {
-  const APInt *C1I, *C2I;
-  if (!match(C1, m_APInt(C1I)))
+static bool isSelect01(const APInt &C1I, const APInt &C2I) {
+  if (!C1I.isNullValue() && !C2I.isNullValue()) // One side must be zero.
     return false;
-  if (!match(C2, m_APInt(C2I)))
-    return false;
-  if (!C1I->isNullValue() && !C2I->isNullValue()) // One side must be zero.
-    return false;
-  return C1I->isOneValue() || C1I->isAllOnesValue() ||
-         C2I->isOneValue() || C2I->isAllOnesValue();
+  return C1I.isOneValue() || C1I.isAllOnesValue() ||
+         C2I.isOneValue() || C2I.isAllOnesValue();
 }
 
 /// Try to fold the select into one of the operands to allow further
@@ -248,11 +243,14 @@ Instruction *InstCombiner::foldSelectIntoOp(SelectInst &SI, Value *TrueVal,
         }
 
         if (OpToFold) {
-          Constant *C = getSelectFoldableConstant(TVI);
+          APInt CI = getSelectFoldableConstant(TVI);
           Value *OOp = TVI->getOperand(2-OpToFold);
           // Avoid creating select between 2 constants unless it's selecting
           // between 0, 1 and -1.
-          if (!isa<Constant>(OOp) || isSelect01(C, cast<Constant>(OOp))) {
+          const APInt *OOpC;
+          bool OOpIsAPInt = match(OOp, m_APInt(OOpC));
+          if (!isa<Constant>(OOp) || (OOpIsAPInt && isSelect01(CI, *OOpC))) {
+            Value *C = ConstantInt::get(OOp->getType(), CI);
             Value *NewSel = Builder.CreateSelect(SI.getCondition(), OOp, C);
             NewSel->takeName(TVI);
             BinaryOperator *BO = BinaryOperator::Create(TVI->getOpcode(),
@@ -276,11 +274,14 @@ Instruction *InstCombiner::foldSelectIntoOp(SelectInst &SI, Value *TrueVal,
         }
 
         if (OpToFold) {
-          Constant *C = getSelectFoldableConstant(FVI);
+          APInt CI = getSelectFoldableConstant(FVI);
           Value *OOp = FVI->getOperand(2-OpToFold);
           // Avoid creating select between 2 constants unless it's selecting
           // between 0, 1 and -1.
-          if (!isa<Constant>(OOp) || isSelect01(C, cast<Constant>(OOp))) {
+          const APInt *OOpC;
+          bool OOpIsAPInt = match(OOp, m_APInt(OOpC));
+          if (!isa<Constant>(OOp) || (OOpIsAPInt && isSelect01(CI, *OOpC))) {
+            Value *C = ConstantInt::get(OOp->getType(), CI);
             Value *NewSel = Builder.CreateSelect(SI.getCondition(), C, OOp);
             NewSel->takeName(FVI);
             BinaryOperator *BO = BinaryOperator::Create(FVI->getOpcode(),
