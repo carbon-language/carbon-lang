@@ -920,6 +920,8 @@ extern int __kmp_hws_abs_flag; // absolute or per-item number requested
   (((blocktime) + (KMP_BLOCKTIME_MULTIPLIER / (monitor_wakeups)) - 1) /        \
    (KMP_BLOCKTIME_MULTIPLIER / (monitor_wakeups)))
 #else
+#define KMP_BLOCKTIME(team, tid)                                               \
+  (get__bt_set(team, tid) ? get__blocktime(team, tid) : __kmp_dflt_blocktime)
 #if KMP_OS_UNIX && (KMP_ARCH_X86 || KMP_ARCH_X86_64)
 // HW TSC is used to reduce overhead (clock tick instead of nanosecond).
 extern kmp_uint64 __kmp_ticks_per_msec;
@@ -929,14 +931,16 @@ extern kmp_uint64 __kmp_ticks_per_msec;
 #define KMP_NOW() __kmp_hardware_timestamp()
 #endif
 #define KMP_NOW_MSEC() (KMP_NOW() / __kmp_ticks_per_msec)
-#define KMP_BLOCKTIME_INTERVAL() (__kmp_dflt_blocktime * __kmp_ticks_per_msec)
+#define KMP_BLOCKTIME_INTERVAL(team, tid)                                      \
+  (KMP_BLOCKTIME(team, tid) * __kmp_ticks_per_msec)
 #define KMP_BLOCKING(goal, count) ((goal) > KMP_NOW())
 #else
 // System time is retrieved sporadically while blocking.
 extern kmp_uint64 __kmp_now_nsec();
 #define KMP_NOW() __kmp_now_nsec()
 #define KMP_NOW_MSEC() (KMP_NOW() / KMP_USEC_PER_SEC)
-#define KMP_BLOCKTIME_INTERVAL() (__kmp_dflt_blocktime * KMP_USEC_PER_SEC)
+#define KMP_BLOCKTIME_INTERVAL(team, tid)                                      \
+  (KMP_BLOCKTIME(team, tid) * KMP_USEC_PER_SEC)
 #define KMP_BLOCKING(goal, count) ((count) % 1000 != 0 || (goal) > KMP_NOW())
 #endif
 #define KMP_YIELD_NOW()                                                        \
