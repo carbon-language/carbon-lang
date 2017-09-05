@@ -11,8 +11,9 @@
 //
 //===---------------------------------------------------------------------===//
 
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/ReverseIteration.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseMapInfo.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;
@@ -57,6 +58,8 @@ TEST(ReverseIterationTest, DenseMapTest1) {
 // Define a pointer-like int.
 struct PtrLikeInt { int value; };
 
+namespace llvm {
+
 template<> struct DenseMapInfo<PtrLikeInt *> {
   static PtrLikeInt *getEmptyKey() {
     static PtrLikeInt EmptyKey;
@@ -76,6 +79,8 @@ template<> struct DenseMapInfo<PtrLikeInt *> {
     return LHS == RHS;
   }
 };
+
+} // end namespace llvm
 
 TEST(ReverseIterationTest, DenseMapTest2) {
   static_assert(detail::IsPointerLike<PtrLikeInt *>::value,
