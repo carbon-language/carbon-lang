@@ -47,28 +47,28 @@ using namespace llvm::AMDGPU;
 
 namespace {
 
-class SIMemoryLegalizer final : public MachineFunctionPass {
-private:
-  struct MemOpInfo final {
-    SyncScope::ID SSID = SyncScope::System;
-    AtomicOrdering Ordering = AtomicOrdering::SequentiallyConsistent;
-    AtomicOrdering FailureOrdering = AtomicOrdering::SequentiallyConsistent;
+struct SIMemOpInfo final {
+  SyncScope::ID SSID = SyncScope::System;
+  AtomicOrdering Ordering = AtomicOrdering::SequentiallyConsistent;
+  AtomicOrdering FailureOrdering = AtomicOrdering::SequentiallyConsistent;
 
-    MemOpInfo() = default;
+  SIMemOpInfo() = default;
 
-    MemOpInfo(SyncScope::ID SSID,
+  SIMemOpInfo(SyncScope::ID SSID,
               AtomicOrdering Ordering,
               AtomicOrdering FailureOrdering)
-        : SSID(SSID),
-          Ordering(Ordering),
-          FailureOrdering(FailureOrdering) {}
+      : SSID(SSID),
+        Ordering(Ordering),
+        FailureOrdering(FailureOrdering) {}
 
-    MemOpInfo(const MachineMemOperand *MMO)
-        : SSID(MMO->getSyncScopeID()),
-          Ordering(MMO->getOrdering()),
-          FailureOrdering(MMO->getFailureOrdering()) {}
-  };
+  SIMemOpInfo(const MachineMemOperand *MMO)
+      : SSID(MMO->getSyncScopeID()),
+        Ordering(MMO->getOrdering()),
+        FailureOrdering(MMO->getFailureOrdering()) {}
+};
 
+class SIMemoryLegalizer final : public MachineFunctionPass {
+private:
   /// \brief LLVM context.
   LLVMContext *CTX = nullptr;
 
@@ -109,39 +109,43 @@ private:
   void reportUnknownSynchScope(const MachineBasicBlock::iterator &MI);
 
   /// \returns Load info if \p MI is a load operation, "None" otherwise.
-  Optional<MemOpInfo> getLoadInfo(const MachineBasicBlock::iterator &MI) const;
+  Optional<SIMemOpInfo> getLoadInfo(
+      const MachineBasicBlock::iterator &MI) const;
   /// \returns Store info if \p MI is a store operation, "None" otherwise.
-  Optional<MemOpInfo> getStoreInfo(const MachineBasicBlock::iterator &MI) const;
+  Optional<SIMemOpInfo> getStoreInfo(
+      const MachineBasicBlock::iterator &MI) const;
   /// \returns Atomic fence info if \p MI is an atomic fence operation,
   /// "None" otherwise.
-  Optional<MemOpInfo> getAtomicFenceInfo(
+  Optional<SIMemOpInfo> getAtomicFenceInfo(
       const MachineBasicBlock::iterator &MI) const;
   /// \returns Atomic cmpxchg info if \p MI is an atomic cmpxchg operation,
   /// "None" otherwise.
-  Optional<MemOpInfo> getAtomicCmpxchgInfo(
+  Optional<SIMemOpInfo> getAtomicCmpxchgInfo(
       const MachineBasicBlock::iterator &MI) const;
   /// \returns Atomic rmw info if \p MI is an atomic rmw operation,
   /// "None" otherwise.
-  Optional<MemOpInfo> getAtomicRmwInfo(
+  Optional<SIMemOpInfo> getAtomicRmwInfo(
       const MachineBasicBlock::iterator &MI) const;
 
   /// \brief Expands load operation \p MI. Returns true if instructions are
   /// added/deleted or \p MI is modified, false otherwise.
-  bool expandLoad(const MemOpInfo &MOI, MachineBasicBlock::iterator &MI);
+  bool expandLoad(const SIMemOpInfo &MOI,
+                  MachineBasicBlock::iterator &MI);
   /// \brief Expands store operation \p MI. Returns true if instructions are
   /// added/deleted or \p MI is modified, false otherwise.
-  bool expandStore(const MemOpInfo &MOI, MachineBasicBlock::iterator &MI);
+  bool expandStore(const SIMemOpInfo &MOI,
+                   MachineBasicBlock::iterator &MI);
   /// \brief Expands atomic fence operation \p MI. Returns true if
   /// instructions are added/deleted or \p MI is modified, false otherwise.
-  bool expandAtomicFence(const MemOpInfo &MOI,
+  bool expandAtomicFence(const SIMemOpInfo &MOI,
                          MachineBasicBlock::iterator &MI);
   /// \brief Expands atomic cmpxchg operation \p MI. Returns true if
   /// instructions are added/deleted or \p MI is modified, false otherwise.
-  bool expandAtomicCmpxchg(const MemOpInfo &MOI,
+  bool expandAtomicCmpxchg(const SIMemOpInfo &MOI,
                            MachineBasicBlock::iterator &MI);
   /// \brief Expands atomic rmw operation \p MI. Returns true if
   /// instructions are added/deleted or \p MI is modified, false otherwise.
-  bool expandAtomicRmw(const MemOpInfo &MOI,
+  bool expandAtomicRmw(const SIMemOpInfo &MOI,
                        MachineBasicBlock::iterator &MI);
 
 public:
@@ -226,39 +230,39 @@ void SIMemoryLegalizer::reportUnknownSynchScope(
   CTX->diagnose(Diag);
 }
 
-Optional<SIMemoryLegalizer::MemOpInfo> SIMemoryLegalizer::getLoadInfo(
+Optional<SIMemOpInfo> SIMemoryLegalizer::getLoadInfo(
     const MachineBasicBlock::iterator &MI) const {
   assert(MI->getDesc().TSFlags & SIInstrFlags::maybeAtomic);
 
   if (!(MI->mayLoad() && !MI->mayStore()))
     return None;
   if (!MI->hasOneMemOperand())
-    return MemOpInfo();
+    return SIMemOpInfo();
 
   const MachineMemOperand *MMO = *MI->memoperands_begin();
   if (!MMO->isAtomic())
     return None;
 
-  return MemOpInfo(MMO);
+  return SIMemOpInfo(MMO);
 }
 
-Optional<SIMemoryLegalizer::MemOpInfo> SIMemoryLegalizer::getStoreInfo(
+Optional<SIMemOpInfo> SIMemoryLegalizer::getStoreInfo(
     const MachineBasicBlock::iterator &MI) const {
   assert(MI->getDesc().TSFlags & SIInstrFlags::maybeAtomic);
 
   if (!(!MI->mayLoad() && MI->mayStore()))
     return None;
   if (!MI->hasOneMemOperand())
-    return MemOpInfo();
+    return SIMemOpInfo();
 
   const MachineMemOperand *MMO = *MI->memoperands_begin();
   if (!MMO->isAtomic())
     return None;
 
-  return MemOpInfo(MMO);
+  return SIMemOpInfo(MMO);
 }
 
-Optional<SIMemoryLegalizer::MemOpInfo> SIMemoryLegalizer::getAtomicFenceInfo(
+Optional<SIMemOpInfo> SIMemoryLegalizer::getAtomicFenceInfo(
     const MachineBasicBlock::iterator &MI) const {
   assert(MI->getDesc().TSFlags & SIInstrFlags::maybeAtomic);
 
@@ -269,17 +273,17 @@ Optional<SIMemoryLegalizer::MemOpInfo> SIMemoryLegalizer::getAtomicFenceInfo(
       static_cast<SyncScope::ID>(MI->getOperand(1).getImm());
   AtomicOrdering Ordering =
       static_cast<AtomicOrdering>(MI->getOperand(0).getImm());
-  return MemOpInfo(SSID, Ordering, AtomicOrdering::NotAtomic);
+  return SIMemOpInfo(SSID, Ordering, AtomicOrdering::NotAtomic);
 }
 
-Optional<SIMemoryLegalizer::MemOpInfo> SIMemoryLegalizer::getAtomicCmpxchgInfo(
+Optional<SIMemOpInfo> SIMemoryLegalizer::getAtomicCmpxchgInfo(
     const MachineBasicBlock::iterator &MI) const {
   assert(MI->getDesc().TSFlags & SIInstrFlags::maybeAtomic);
 
   if (!(MI->mayLoad() && MI->mayStore()))
     return None;
   if (!MI->hasOneMemOperand())
-    return MemOpInfo();
+    return SIMemOpInfo();
 
   const MachineMemOperand *MMO = *MI->memoperands_begin();
   if (!MMO->isAtomic())
@@ -287,17 +291,17 @@ Optional<SIMemoryLegalizer::MemOpInfo> SIMemoryLegalizer::getAtomicCmpxchgInfo(
   if (MMO->getFailureOrdering() == AtomicOrdering::NotAtomic)
     return None;
 
-  return MemOpInfo(MMO);
+  return SIMemOpInfo(MMO);
 }
 
-Optional<SIMemoryLegalizer::MemOpInfo> SIMemoryLegalizer::getAtomicRmwInfo(
+Optional<SIMemOpInfo> SIMemoryLegalizer::getAtomicRmwInfo(
     const MachineBasicBlock::iterator &MI) const {
   assert(MI->getDesc().TSFlags & SIInstrFlags::maybeAtomic);
 
   if (!(MI->mayLoad() && MI->mayStore()))
     return None;
   if (!MI->hasOneMemOperand())
-    return MemOpInfo();
+    return SIMemOpInfo();
 
   const MachineMemOperand *MMO = *MI->memoperands_begin();
   if (!MMO->isAtomic())
@@ -305,10 +309,10 @@ Optional<SIMemoryLegalizer::MemOpInfo> SIMemoryLegalizer::getAtomicRmwInfo(
   if (MMO->getFailureOrdering() != AtomicOrdering::NotAtomic)
     return None;
 
-  return MemOpInfo(MMO);
+  return SIMemOpInfo(MMO);
 }
 
-bool SIMemoryLegalizer::expandLoad(const MemOpInfo &MOI,
+bool SIMemoryLegalizer::expandLoad(const SIMemOpInfo &MOI,
                                    MachineBasicBlock::iterator &MI) {
   assert(MI->mayLoad() && !MI->mayStore());
 
@@ -339,7 +343,7 @@ bool SIMemoryLegalizer::expandLoad(const MemOpInfo &MOI,
   }
 }
 
-bool SIMemoryLegalizer::expandStore(const MemOpInfo &MOI,
+bool SIMemoryLegalizer::expandStore(const SIMemOpInfo &MOI,
                                     MachineBasicBlock::iterator &MI) {
   assert(!MI->mayLoad() && MI->mayStore());
 
@@ -361,7 +365,7 @@ bool SIMemoryLegalizer::expandStore(const MemOpInfo &MOI,
   }
 }
 
-bool SIMemoryLegalizer::expandAtomicFence(const MemOpInfo &MOI,
+bool SIMemoryLegalizer::expandAtomicFence(const SIMemOpInfo &MOI,
                                           MachineBasicBlock::iterator &MI) {
   assert(MI->getOpcode() == AMDGPU::ATOMIC_FENCE);
 
@@ -392,7 +396,7 @@ bool SIMemoryLegalizer::expandAtomicFence(const MemOpInfo &MOI,
   }
 }
 
-bool SIMemoryLegalizer::expandAtomicCmpxchg(const MemOpInfo &MOI,
+bool SIMemoryLegalizer::expandAtomicCmpxchg(const SIMemOpInfo &MOI,
                                             MachineBasicBlock::iterator &MI) {
   assert(MI->mayLoad() && MI->mayStore());
 
@@ -426,7 +430,7 @@ bool SIMemoryLegalizer::expandAtomicCmpxchg(const MemOpInfo &MOI,
   }
 }
 
-bool SIMemoryLegalizer::expandAtomicRmw(const MemOpInfo &MOI,
+bool SIMemoryLegalizer::expandAtomicRmw(const SIMemOpInfo &MOI,
                                         MachineBasicBlock::iterator &MI) {
   assert(MI->mayLoad() && MI->mayStore());
 
