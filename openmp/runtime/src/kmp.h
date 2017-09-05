@@ -3036,7 +3036,7 @@ extern int __kmp_get_global_thread_id_reg(void);
 extern void __kmp_exit_thread(int exit_status);
 extern void __kmp_abort(char const *format, ...);
 extern void __kmp_abort_thread(void);
-extern void __kmp_abort_process(void);
+KMP_NORETURN extern void __kmp_abort_process(void);
 extern void __kmp_warn(char const *format, ...);
 
 extern void __kmp_set_num_threads(int new_nth, int gtid);
