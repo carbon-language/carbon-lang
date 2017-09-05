@@ -33,6 +33,8 @@ static cl::opt<bool>
 VerifyARMPseudo("verify-arm-pseudo-expand", cl::Hidden,
                 cl::desc("Verify machine code after expanding ARM pseudos"));
 
+#define ARM_EXPAND_PSEUDO_NAME "ARM pseudo instruction expansion pass"
+
 namespace {
   class ARMExpandPseudo : public MachineFunctionPass {
   public:
@@ -52,7 +54,7 @@ namespace {
     }
 
     StringRef getPassName() const override {
-      return "ARM pseudo instruction expansion pass";
+      return ARM_EXPAND_PSEUDO_NAME;
     }
 
   private:
@@ -80,6 +82,9 @@ namespace {
   };
   char ARMExpandPseudo::ID = 0;
 }
+
+INITIALIZE_PASS(ARMExpandPseudo, DEBUG_TYPE, ARM_EXPAND_PSEUDO_NAME, false,
+                false)
 
 /// TransferImpOps - Transfer implicit operands on the pseudo instruction to
 /// the instructions created from the expansion.
