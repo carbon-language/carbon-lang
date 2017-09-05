@@ -860,6 +860,30 @@ void CodeViewDebug::emitDebugInfoForFunction(const Function *GV,
       emitInlinedCallSite(FI, InlinedAt, I->second);
     }
 
+    for (auto Annot : FI.Annotations) {
+      MCSymbol *Label = Annot.first;
+      MDTuple *Strs = cast<MDTuple>(Annot.second);
+      MCSymbol *AnnotBegin = MMI->getContext().createTempSymbol(),
+               *AnnotEnd = MMI->getContext().createTempSymbol();
+      OS.AddComment("Record length");
+      OS.emitAbsoluteSymbolDiff(AnnotEnd, AnnotBegin, 2);
+      OS.EmitLabel(AnnotBegin);
+      OS.AddComment("Record kind: S_ANNOTATION");
+      OS.EmitIntValue(SymbolKind::S_ANNOTATION, 2);
+      OS.EmitCOFFSecRel32(Label, /*Offset=*/0);
+      // FIXME: Make sure we don't overflow the max record size.
+      OS.EmitCOFFSectionIndex(Label);
+      OS.EmitIntValue(Strs->getNumOperands(), 2);
+      for (Metadata *MD : Strs->operands()) {
+        // MDStrings are null terminated, so we can do EmitBytes and get the
+        // nice .asciz directive.
+        StringRef Str = cast<MDString>(MD)->getString();
+        assert(Str.data()[Str.size()] == '\0' && "non-nullterminated MDString");
+        OS.EmitBytes(StringRef(Str.data(), Str.size() + 1));
+      }
+      OS.EmitLabel(AnnotEnd);
+    }
+
     if (SP != nullptr)
       emitDebugInfoForUDTs(LocalUDTs);
 
@@ -2194,6 +2218,8 @@ void CodeViewDebug::endFunctionImpl(const MachineFunction *MF) {
     CurFn = nullptr;
     return;
   }
+
+  CurFn->Annotations = MF->getCodeViewAnnotations();
 
   CurFn->End = Asm->getFunctionEnd();
 
