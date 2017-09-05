@@ -357,7 +357,7 @@ static std::string createDefaultXml() {
        << "  </dependency>\n";
   }
   OS << "</assembly>\n";
-  return Ret;
+  return OS.str();
 }
 
 static Expected<std::unique_ptr<MemoryBuffer>>
