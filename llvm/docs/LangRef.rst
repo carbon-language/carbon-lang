@@ -13627,7 +13627,7 @@ optimizations that want to look for these annotations. These have no
 other defined use; they are ignored by code generation and optimization.
 
 '``llvm.codeview.annotation``' Intrinsic
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Syntax:
 """""""
