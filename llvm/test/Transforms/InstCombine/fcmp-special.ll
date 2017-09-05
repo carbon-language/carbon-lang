@@ -144,3 +144,33 @@ define <2 x i1> @uno_vec_with_nan(<2 x double> %x) {
   ret <2 x i1> %f
 }
 
+; TODO: This could be handled in InstSimplify.
+
+define i1 @nnan_ops_to_fcmp_ord(float %x, float %y) {
+; CHECK-LABEL: @nnan_ops_to_fcmp_ord(
+; CHECK-NEXT:    [[MUL:%.*]] = fmul nnan float %x, %y
+; CHECK-NEXT:    [[DIV:%.*]] = fdiv nnan float %x, %y
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp ord float [[MUL]], [[DIV]]
+; CHECK-NEXT:    ret i1 [[CMP]]
+;
+  %mul = fmul nnan float %x, %y
+  %div = fdiv nnan float %x, %y
+  %cmp = fcmp ord float %mul, %div
+  ret i1 %cmp
+}
+
+; TODO: This could be handled in InstSimplify.
+
+define i1 @nnan_ops_to_fcmp_uno(float %x, float %y) {
+; CHECK-LABEL: @nnan_ops_to_fcmp_uno(
+; CHECK-NEXT:    [[MUL:%.*]] = fmul nnan float %x, %y
+; CHECK-NEXT:    [[DIV:%.*]] = fdiv nnan float %x, %y
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp uno float [[MUL]], [[DIV]]
+; CHECK-NEXT:    ret i1 [[CMP]]
+;
+  %mul = fmul nnan float %x, %y
+  %div = fdiv nnan float %x, %y
+  %cmp = fcmp uno float %mul, %div
+  ret i1 %cmp
+}
+
