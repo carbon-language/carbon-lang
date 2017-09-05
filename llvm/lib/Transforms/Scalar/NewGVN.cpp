@@ -713,7 +713,9 @@ private:
   void replaceInstruction(Instruction *, Value *);
   void markInstructionForDeletion(Instruction *);
   void deleteInstructionsInBlock(BasicBlock *);
-  Value *findPHIOfOpsLeader(const Expression *E, const BasicBlock *BB) const;
+  Value *findPHIOfOpsLeader(const Expression *, const Instruction *,
+                            const BasicBlock *) const;
+
   // New instruction creation.
   void handleNewInstruction(Instruction *){};
 
@@ -2551,8 +2553,8 @@ Value *NewGVN::findLeaderForInst(Instruction *TransInst,
     TempToMemory.erase(TransInst);
   if (!E)
     return nullptr;
-  auto *FoundVal = findPHIOfOpsLeader(E, PredBB);
-  if (!FoundVal || FoundVal == OrigInst) {
+  auto *FoundVal = findPHIOfOpsLeader(E, OrigInst, PredBB);
+  if (!FoundVal) {
     ExpressionToPhiOfOps[E].insert(OrigInst);
     DEBUG(dbgs() << "Cannot find phi of ops operand for " << *TransInst
                  << " in block " << getBlockName(PredBB) << "\n");
@@ -3622,6 +3624,7 @@ CongruenceClass *NewGVN::getClassForExpression(const Expression *E) const {
 // Given a value and a basic block we are trying to see if it is available in,
 // see if the value has a leader available in that block.
 Value *NewGVN::findPHIOfOpsLeader(const Expression *E,
+                                  const Instruction *OrigInst,
                                   const BasicBlock *BB) const {
   // It would already be constant if we could make it constant
   if (auto *CE = dyn_cast<ConstantExpression>(E))
@@ -3640,6 +3643,8 @@ Value *NewGVN::findPHIOfOpsLeader(const Expression *E,
 
   for (auto Member : *CC) {
     auto *MemberInst = dyn_cast<Instruction>(Member);
+    if (MemberInst == OrigInst)
+      continue;
     // Anything that isn't an instruction is always available.
     if (!MemberInst)
       return Member;
