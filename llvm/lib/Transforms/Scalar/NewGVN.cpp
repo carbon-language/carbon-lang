@@ -850,6 +850,17 @@ void NewGVN::deleteExpression(const Expression *E) const {
   const_cast<BasicExpression *>(BE)->deallocateOperands(ArgRecycler);
   ExpressionAllocator.Deallocate(E);
 }
+
+// Return true if V is really PN, even accounting for predicateinfo copies.
+static bool isCopyOfSelf(const Value *V, const PHINode *PN) {
+  if (V == PN)
+    return V;
+  if (auto *II = dyn_cast<IntrinsicInst>(V))
+    if (II->getIntrinsicID() == Intrinsic::ssa_copy && II->getOperand(0) == PN)
+      return true;
+  return false;
+}
+
 PHIExpression *NewGVN::createPHIExpression(Instruction *I, bool &HasBackedge,
                                            bool &OriginalOpsConstant) const {
   BasicBlock *PHIBlock = getBlockForValue(I);
@@ -879,7 +890,7 @@ PHIExpression *NewGVN::createPHIExpression(Instruction *I, bool &HasBackedge,
 
   // Filter out unreachable phi operands.
   auto Filtered = make_filter_range(PHIOperands, [&](const Use *U) {
-    if (*U == PN)
+    if (isCopyOfSelf(*U, PN))
       return false;
     if (!ReachableEdges.count({PN->getIncomingBlock(*U), PHIBlock}))
       return false;
