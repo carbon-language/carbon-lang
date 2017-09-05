@@ -1139,6 +1139,21 @@ void CodeViewDebug::beginFunctionImpl(const MachineFunction *MF) {
 }
 
 static bool shouldEmitUdt(const DIType *T) {
+  if (!T)
+    return false;
+
+  // MSVC does not emit UDTs for typedefs that are scoped to classes.
+  if (T->getTag() == dwarf::DW_TAG_typedef) {
+    if (DIScope *Scope = T->getScope().resolve()) {
+      switch (Scope->getTag()) {
+      case dwarf::DW_TAG_structure_type:
+      case dwarf::DW_TAG_class_type:
+      case dwarf::DW_TAG_union_type:
+        return false;
+      }
+    }
+  }
+
   while (true) {
     if (!T || T->isForwardDecl())
       return false;
