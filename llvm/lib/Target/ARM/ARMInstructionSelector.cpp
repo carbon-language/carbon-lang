@@ -488,13 +488,8 @@ bool ARMInstructionSelector::insertComparison(CmpConstants Helper, InsertInfo I,
 
 bool ARMInstructionSelector::selectGlobal(MachineInstrBuilder &MIB,
                                           MachineRegisterInfo &MRI) const {
-  if (TII.getSubtarget().isRWPI()) {
-    DEBUG(dbgs() << "RWPI not supported yet\n");
-    return false;
-  }
-
-  if (STI.isROPI() && !STI.isTargetELF()) {
-    DEBUG(dbgs() << "ROPI only supported for ELF\n");
+  if ((STI.isROPI() || STI.isRWPI()) && !STI.isTargetELF()) {
+    DEBUG(dbgs() << "ROPI and RWPI only supported for ELF\n");
     return false;
   }
 
@@ -510,7 +505,29 @@ bool ARMInstructionSelector::selectGlobal(MachineInstrBuilder &MIB,
   auto ObjectFormat = TII.getSubtarget().getTargetTriple().getObjectFormat();
   bool UseMovt = TII.getSubtarget().useMovt(MF);
 
+  unsigned Size = TM.getPointerSize();
   unsigned Alignment = 4;
+
+  auto addOpsForConstantPoolLoad = [&MF, Alignment,
+                                    Size](MachineInstrBuilder &MIB,
+                                          const GlobalValue *GV, bool IsSBREL) {
+    assert(MIB->getOpcode() == ARM::LDRi12 && "Unsupported instruction");
+    auto ConstPool = MF.getConstantPool();
+    auto CPIndex =
+        // For SB relative entries we need a target-specific constant pool.
+        // Otherwise, just use a regular constant pool entry.
+        IsSBREL
+            ? ConstPool->getConstantPoolIndex(
+                  ARMConstantPoolConstant::Create(GV, ARMCP::SBREL), Alignment)
+            : ConstPool->getConstantPoolIndex(GV, Alignment);
+    MIB.addConstantPoolIndex(CPIndex, /*Offset*/ 0, /*TargetFlags*/ 0)
+        .addMemOperand(
+            MF.getMachineMemOperand(MachinePointerInfo::getConstantPool(MF),
+                                    MachineMemOperand::MOLoad, Size, Alignment))
+        .addImm(0)
+        .add(predOps(ARMCC::AL));
+  };
+
   if (TM.isPositionIndependent()) {
     bool Indirect = TII.getSubtarget().isGVIndirectSymbol(GV);
     // FIXME: Taking advantage of MOVT for ELF is pretty involved, so we don't
@@ -538,6 +555,32 @@ bool ARMInstructionSelector::selectGlobal(MachineInstrBuilder &MIB,
     MIB->setDesc(TII.get(Opc));
     return constrainSelectedInstRegOperands(*MIB, TII, TRI, RBI);
   }
+  if (STI.isRWPI() && !isReadOnly) {
+    auto Offset = MRI.createVirtualRegister(&ARM::GPRRegClass);
+    MachineInstrBuilder OffsetMIB;
+    if (UseMovt) {
+      OffsetMIB = BuildMI(MBB, *MIB, MIB->getDebugLoc(),
+                          TII.get(ARM::MOVi32imm), Offset);
+      OffsetMIB.addGlobalAddress(GV, /*Offset*/ 0, ARMII::MO_SBREL);
+    } else {
+      // Load the offset from the constant pool.
+      OffsetMIB =
+          BuildMI(MBB, *MIB, MIB->getDebugLoc(), TII.get(ARM::LDRi12), Offset);
+      addOpsForConstantPoolLoad(OffsetMIB, GV, /*IsSBREL*/ true);
+    }
+    if (!constrainSelectedInstRegOperands(*OffsetMIB, TII, TRI, RBI))
+      return false;
+
+    // Add the offset to the SB register.
+    MIB->setDesc(TII.get(ARM::ADDrr));
+    MIB->RemoveOperand(1);
+    MIB.addReg(ARM::R9) // FIXME: don't hardcode R9
+        .addReg(Offset)
+        .add(predOps(ARMCC::AL))
+        .add(condCodeOp());
+
+    return constrainSelectedInstRegOperands(*MIB, TII, TRI, RBI);
+  }
 
   if (ObjectFormat == Triple::ELF) {
     if (UseMovt) {
@@ -546,14 +589,7 @@ bool ARMInstructionSelector::selectGlobal(MachineInstrBuilder &MIB,
       // Load the global's address from the constant pool.
       MIB->setDesc(TII.get(ARM::LDRi12));
       MIB->RemoveOperand(1);
-      MIB.addConstantPoolIndex(
-             MF.getConstantPool()->getConstantPoolIndex(GV, Alignment),
-             /* Offset */ 0, /* TargetFlags */ 0)
-          .addMemOperand(MF.getMachineMemOperand(
-              MachinePointerInfo::getConstantPool(MF),
-              MachineMemOperand::MOLoad, TM.getPointerSize(), Alignment))
-          .addImm(0)
-          .add(predOps(ARMCC::AL));
+      addOpsForConstantPoolLoad(MIB, GV, /*IsSBREL*/ false);
     }
   } else if (ObjectFormat == Triple::MachO) {
     if (UseMovt)
