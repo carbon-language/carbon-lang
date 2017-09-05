@@ -502,8 +502,7 @@ bool ARMInstructionSelector::selectGlobal(MachineInstrBuilder &MIB,
   auto &MBB = *MIB->getParent();
   auto &MF = *MBB.getParent();
 
-  auto ObjectFormat = TII.getSubtarget().getTargetTriple().getObjectFormat();
-  bool UseMovt = TII.getSubtarget().useMovt(MF);
+  bool UseMovt = STI.useMovt(MF);
 
   unsigned Size = TM.getPointerSize();
   unsigned Alignment = 4;
@@ -529,16 +528,16 @@ bool ARMInstructionSelector::selectGlobal(MachineInstrBuilder &MIB,
   };
 
   if (TM.isPositionIndependent()) {
-    bool Indirect = TII.getSubtarget().isGVIndirectSymbol(GV);
+    bool Indirect = STI.isGVIndirectSymbol(GV);
     // FIXME: Taking advantage of MOVT for ELF is pretty involved, so we don't
     // support it yet. See PR28229.
     unsigned Opc =
-        UseMovt && !TII.getSubtarget().isTargetELF()
+        UseMovt && !STI.isTargetELF()
             ? (Indirect ? ARM::MOV_ga_pcrel_ldr : ARM::MOV_ga_pcrel)
             : (Indirect ? ARM::LDRLIT_ga_pcrel_ldr : ARM::LDRLIT_ga_pcrel);
     MIB->setDesc(TII.get(Opc));
 
-    if (TII.getSubtarget().isTargetDarwin())
+    if (STI.isTargetDarwin())
       MIB->getOperand(1).setTargetFlags(ARMII::MO_NONLAZY);
 
     if (Indirect)
@@ -546,7 +545,7 @@ bool ARMInstructionSelector::selectGlobal(MachineInstrBuilder &MIB,
           MachinePointerInfo::getGOT(MF), MachineMemOperand::MOLoad,
           TM.getPointerSize(), Alignment));
 
-    return true;
+    return constrainSelectedInstRegOperands(*MIB, TII, TRI, RBI);
   }
 
   bool isReadOnly = STI.getTargetLowering()->isReadOnly(GV);
@@ -582,7 +581,7 @@ bool ARMInstructionSelector::selectGlobal(MachineInstrBuilder &MIB,
     return constrainSelectedInstRegOperands(*MIB, TII, TRI, RBI);
   }
 
-  if (ObjectFormat == Triple::ELF) {
+  if (STI.isTargetELF()) {
     if (UseMovt) {
       MIB->setDesc(TII.get(ARM::MOVi32imm));
     } else {
@@ -591,7 +590,7 @@ bool ARMInstructionSelector::selectGlobal(MachineInstrBuilder &MIB,
       MIB->RemoveOperand(1);
       addOpsForConstantPoolLoad(MIB, GV, /*IsSBREL*/ false);
     }
-  } else if (ObjectFormat == Triple::MachO) {
+  } else if (STI.isTargetMachO()) {
     if (UseMovt)
       MIB->setDesc(TII.get(ARM::MOVi32imm));
     else
@@ -749,12 +748,12 @@ bool ARMInstructionSelector::select(MachineInstr &I) const {
     return selectCmp(Helper, MIB, MRI);
   }
   case G_FCMP: {
-    assert(TII.getSubtarget().hasVFP2() && "Can't select fcmp without VFP");
+    assert(STI.hasVFP2() && "Can't select fcmp without VFP");
 
     unsigned OpReg = I.getOperand(2).getReg();
     unsigned Size = MRI.getType(OpReg).getSizeInBits();
 
-    if (Size == 64 && TII.getSubtarget().isFPOnlySP()) {
+    if (Size == 64 && STI.isFPOnlySP()) {
       DEBUG(dbgs() << "Subtarget only supports single precision");
       return false;
     }
@@ -815,7 +814,7 @@ bool ARMInstructionSelector::select(MachineInstr &I) const {
     LLT ValTy = MRI.getType(Reg);
     const auto ValSize = ValTy.getSizeInBits();
 
-    assert((ValSize != 64 || TII.getSubtarget().hasVFP2()) &&
+    assert((ValSize != 64 || STI.hasVFP2()) &&
            "Don't know how to load/store 64-bit value without VFP");
 
     const auto NewOpc = selectLoadStoreOpCode(I.getOpcode(), RegBank, ValSize);
