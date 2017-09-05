@@ -80,11 +80,11 @@ ELFDumper<ELFT>::getUniquedSectionName(const Elf_Shdr *Sec) {
   if (!NameOrErr)
     return NameOrErr;
   StringRef Name = *NameOrErr;
-  std::string Ret = Name;
+  std::string &Ret = SectionNames[SecIndex];
+  Ret = Name;
   while (!UsedSectionNames.insert(Ret).second)
     Ret = (Name + to_string(++Suffix)).str();
-  SectionNames[SecIndex] = Ret;
-  return SectionNames[SecIndex];
+  return Ret;
 }
 
 template <class ELFT> ErrorOr<ELFYAML::Object *> ELFDumper<ELFT>::dump() {
