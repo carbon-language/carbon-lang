@@ -2302,11 +2302,6 @@ static void RenderSSPOptions(const ToolChain &TC, const ArgList &Args,
     else if (A->getOption().matches(options::OPT_fstack_protector_all))
       StackProtectorLevel = LangOptions::SSPReq;
   } else {
-    // Only use a default stack protector on Darwin in case -ffreestanding is
-    // not specified.
-    if (EffectiveTriple.isOSDarwin() && !IsHosted)
-      StackProtectorLevel = 0;
-    else
       StackProtectorLevel = DefaultStackProtectorLevel;
   }
 
