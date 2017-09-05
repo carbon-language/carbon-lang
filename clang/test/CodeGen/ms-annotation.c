@@ -12,11 +12,11 @@ void test1(void) {
 }
 
 // CHECK-LABEL: define void @test1()
-// CHECK: call void @llvm.label.annotation(metadata ![[A1:[0-9]+]])
-// CHECK: call void @llvm.label.annotation(metadata ![[A2:[0-9]+]])
-// CHECK: call void @llvm.label.annotation(metadata ![[A3:[0-9]+]])
-// CHECK: call void @llvm.label.annotation(metadata ![[A4:[0-9]+]])
-// CHECK: call void @llvm.label.annotation(metadata ![[A5:[0-9]+]])
+// CHECK: call void @llvm.codeview.annotation(metadata ![[A1:[0-9]+]])
+// CHECK: call void @llvm.codeview.annotation(metadata ![[A2:[0-9]+]])
+// CHECK: call void @llvm.codeview.annotation(metadata ![[A3:[0-9]+]])
+// CHECK: call void @llvm.codeview.annotation(metadata ![[A4:[0-9]+]])
+// CHECK: call void @llvm.codeview.annotation(metadata ![[A5:[0-9]+]])
 // CHECK: ret void
 
 // CHECK: ![[A1]] = !{!"a1"}

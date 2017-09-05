@@ -1971,7 +1971,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     }
 
     // Build and MDTuple of MDStrings and emit the intrinsic call.
-    llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::label_annotation, {});
+    llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::codeview_annotation, {});
     MDTuple *StrTuple = MDTuple::get(getLLVMContext(), Strings);
     Builder.CreateCall(F, MetadataAsValue::get(getLLVMContext(), StrTuple));
     return RValue::getIgnored();
