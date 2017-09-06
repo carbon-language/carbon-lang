@@ -1,5 +1,6 @@
 ; RUN: opt %loadPolly -polly-delicm -analyze< %s | FileCheck %s
 ; RUN: opt %loadPolly -polly-delicm -disable-output -stats < %s 2>&1 | FileCheck %s --check-prefix=STATS
+; REQUIRES: asserts
 ;
 ;    void func(double *A) {
 ;      for (int j = 0; j < 2; j += 1) { /* outer */
