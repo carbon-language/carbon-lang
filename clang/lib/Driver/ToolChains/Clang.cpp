@@ -2455,19 +2455,6 @@ static void RenderBuiltinOptions(const ToolChain &TC, const llvm::Triple &T,
   //                     by default.
   if (TC.getArch() == llvm::Triple::le32)
     CmdArgs.push_back("-fno-math-builtin");
-
-#if 0
-  // Default to -fno-builtin-str{cat,cpy} on Darwin for ARM.
-  //
-  // FIXME: Now that PR4941 has been fixed this can be enabled.
-  if (T.isOSDarwin() && (TC.getArch() == llvm::Triple::arm ||
-                         TC.getArch() == llvm::Triple::thumb)) {
-    if (!Args.hasArg(options::OPT_fbuiltin_strcat))
-      CmdArgs.push_back("-fno-builtin-strcat");
-    if (!Args.hasArg(options::OPT_fbuiltin_strcpy))
-      CmdArgs.push_back("-fno-builtin-strcpy");
-  }
-#endif
 }
 
 static void RenderModulesOptions(Compilation &C, const Driver &D,
