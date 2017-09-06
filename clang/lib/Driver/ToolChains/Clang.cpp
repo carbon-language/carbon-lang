@@ -2276,8 +2276,7 @@ static void RenderAnalyzerOptions(const ArgList &Args, ArgStringList &CmdArgs,
 }
 
 static void RenderSSPOptions(const ToolChain &TC, const ArgList &Args,
-                             ArgStringList &CmdArgs, bool KernelOrKext,
-                             bool IsHosted) {
+                             ArgStringList &CmdArgs, bool KernelOrKext) {
   const llvm::Triple &EffectiveTriple = TC.getEffectiveTriple();
 
   // NVPTX doesn't support stack protectors; from the compiler's perspective, it
@@ -3803,10 +3802,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_ftlsmodel_EQ);
 
   // -fhosted is default.
-  bool IsHosted =
-      !Args.hasFlag(options::OPT_ffreestanding, options::OPT_fhosted, false) &&
-      !KernelOrKext;
-  if (!IsHosted)
+  if (Args.hasFlag(options::OPT_ffreestanding, options::OPT_fhosted, false) ||
+      KernelOrKext)
     CmdArgs.push_back("-ffreestanding");
 
   // Forward -f (flag) options which we can pass directly.
@@ -3914,7 +3911,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddLastArg(CmdArgs, options::OPT_pthread);
 
-  RenderSSPOptions(getToolChain(), Args, CmdArgs, KernelOrKext, IsHosted);
+  RenderSSPOptions(getToolChain(), Args, CmdArgs, KernelOrKext);
 
   // Translate -mstackrealign
   if (Args.hasFlag(options::OPT_mstackrealign, options::OPT_mno_stackrealign,
