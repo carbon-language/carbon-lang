@@ -862,22 +862,6 @@ let Predicates = [HasAVX, NoVLX] in {
             (VMOVUPSYmr addr:$dst, VR256:$src)>;
   def : Pat<(store (v32i8 VR256:$src), addr:$dst),
             (VMOVUPSYmr addr:$dst, VR256:$src)>;
-
-  // Special patterns for storing subvector extracts of lower 128-bits
-  // Its cheaper to just use VMOVAPS/VMOVUPS instead of VEXTRACTF128mr
-  def : Pat<(alignedstore (v2f64 (extract_subvector
-                                  (v4f64 VR256:$src), (iPTR 0))), addr:$dst),
-            (VMOVAPDmr addr:$dst, (v2f64 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
-  def : Pat<(alignedstore (v4f32 (extract_subvector
-                                  (v8f32 VR256:$src), (iPTR 0))), addr:$dst),
-            (VMOVAPSmr addr:$dst, (v4f32 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
-
-  def : Pat<(store (v2f64 (extract_subvector
-                           (v4f64 VR256:$src), (iPTR 0))), addr:$dst),
-            (VMOVUPDmr addr:$dst, (v2f64 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
-  def : Pat<(store (v4f32 (extract_subvector
-                           (v8f32 VR256:$src), (iPTR 0))), addr:$dst),
-            (VMOVUPSmr addr:$dst, (v4f32 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
 }
 
 // Use movaps / movups for SSE integer load / store (one byte shorter).
@@ -3754,79 +3738,6 @@ let Predicates = [HasAVX, NoVLX] in {
             (VMOVDQUmr addr:$dst, VR128:$src)>;
   def : Pat<(store (v16i8 VR128:$src), addr:$dst),
             (VMOVDQUmr addr:$dst, VR128:$src)>;
-
-  // Special patterns for storing subvector extracts of lower 128-bits
-  // Its cheaper to just use VMOVDQA/VMOVDQU instead of VEXTRACTF128mr
-  def : Pat<(alignedstore (v2i64 (extract_subvector
-                                  (v4i64 VR256:$src), (iPTR 0))), addr:$dst),
-            (VMOVDQAmr addr:$dst, (v2i64 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
-  def : Pat<(alignedstore (v4i32 (extract_subvector
-                                  (v8i32 VR256:$src), (iPTR 0))), addr:$dst),
-            (VMOVDQAmr addr:$dst, (v4i32 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
-  def : Pat<(alignedstore (v8i16 (extract_subvector
-                                  (v16i16 VR256:$src), (iPTR 0))), addr:$dst),
-            (VMOVDQAmr addr:$dst, (v8i16 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
-  def : Pat<(alignedstore (v16i8 (extract_subvector
-                                  (v32i8 VR256:$src), (iPTR 0))), addr:$dst),
-            (VMOVDQAmr addr:$dst, (v16i8 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
-
-  def : Pat<(store (v2i64 (extract_subvector
-                           (v4i64 VR256:$src), (iPTR 0))), addr:$dst),
-            (VMOVDQUmr addr:$dst, (v2i64 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
-  def : Pat<(store (v4i32 (extract_subvector
-                           (v8i32 VR256:$src), (iPTR 0))), addr:$dst),
-            (VMOVDQUmr addr:$dst, (v4i32 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
-  def : Pat<(store (v8i16 (extract_subvector
-                           (v16i16 VR256:$src), (iPTR 0))), addr:$dst),
-            (VMOVDQUmr addr:$dst, (v8i16 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
-  def : Pat<(store (v16i8 (extract_subvector
-                           (v32i8 VR256:$src), (iPTR 0))), addr:$dst),
-            (VMOVDQUmr addr:$dst, (v16i8 (EXTRACT_SUBREG VR256:$src,sub_xmm)))>;
-
-  // If we're inserting into an all zeros vector, just use a plain move which
-  // will zero the upper bits.
-  // TODO: Is there a safe way to detect whether the producing instruction
-  // already zeroed the upper bits?
-  def : Pat<(v4f64 (insert_subvector (bitconvert (v8i32 immAllZerosV)),
-                                     (v2f64 VR128:$src), (iPTR 0))),
-            (SUBREG_TO_REG (i64 0), (VMOVAPDrr VR128:$src), sub_xmm)>;
-  def : Pat<(v8f32 (insert_subvector (bitconvert (v8i32 immAllZerosV)),
-                                     (v4f32 VR128:$src), (iPTR 0))),
-            (SUBREG_TO_REG (i64 0), (VMOVAPSrr VR128:$src), sub_xmm)>;
-  def : Pat<(v4i64 (insert_subvector (bitconvert (v8i32 immAllZerosV)),
-                                     (v2i64 VR128:$src), (iPTR 0))),
-            (SUBREG_TO_REG (i64 0), (VMOVDQArr VR128:$src), sub_xmm)>;
-  def : Pat<(v8i32 (insert_subvector (bitconvert (v8i32 immAllZerosV)),
-                                     (v4i32 VR128:$src), (iPTR 0))),
-            (SUBREG_TO_REG (i64 0), (VMOVDQArr VR128:$src), sub_xmm)>;
-  def : Pat<(v16i16 (insert_subvector (bitconvert (v8i32 immAllZerosV)),
-                                      (v8i16 VR128:$src), (iPTR 0))),
-            (SUBREG_TO_REG (i64 0), (VMOVDQArr VR128:$src), sub_xmm)>;
-  def : Pat<(v32i8 (insert_subvector (bitconvert (v8i32 immAllZerosV)),
-                                     (v16i8 VR128:$src), (iPTR 0))),
-            (SUBREG_TO_REG (i64 0), (VMOVDQArr VR128:$src), sub_xmm)>;
-
-  def : Pat<(v4f64 (insert_subvector (bitconvert (v8i32 immAllZerosV)),
-                                     (loadv2f64 addr:$src), (iPTR 0))),
-            (SUBREG_TO_REG (i64 0), (VMOVAPDrm addr:$src), sub_xmm)>;
-  def : Pat<(v8f32 (insert_subvector (bitconvert (v8i32 immAllZerosV)),
-                                     (loadv4f32 addr:$src), (iPTR 0))),
-            (SUBREG_TO_REG (i64 0), (VMOVAPSrm addr:$src), sub_xmm)>;
-  def : Pat<(v4i64 (insert_subvector (bitconvert (v8i32 immAllZerosV)),
-                                     (loadv2i64 addr:$src), (iPTR 0))),
-            (SUBREG_TO_REG (i64 0), (VMOVDQArm addr:$src), sub_xmm)>;
-  def : Pat<(v8i32 (insert_subvector (bitconvert (v8i32 immAllZerosV)),
-                                     (bc_v4i32 (loadv2i64 addr:$src)),
-                                     (iPTR 0))),
-            (SUBREG_TO_REG (i64 0), (VMOVDQArm addr:$src), sub_xmm)>;
-  def : Pat<(v16i16 (insert_subvector (bitconvert (v8i32 immAllZerosV)),
-                                      (bc_v8i16 (loadv2i64 addr:$src)),
-                                      (iPTR 0))),
-            (SUBREG_TO_REG (i64 0), (VMOVDQArm addr:$src), sub_xmm)>;
-  def : Pat<(v32i8 (insert_subvector (bitconvert (v8i32 immAllZerosV)),
-                                     (bc_v16i8 (loadv2i64 addr:$src)),
-                                     (iPTR 0))),
-            (SUBREG_TO_REG (i64 0), (VMOVDQArm addr:$src), sub_xmm)>;
 }
 
 //===---------------------------------------------------------------------===//
