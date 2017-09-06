@@ -315,6 +315,8 @@ public:
 
 // ---- Methods on Stmts ----
 
+  Stmt::child_range getStmtChildren(Stmt *S) { return S->children(); }
+
 private:
   template<typename T, typename U>
   struct has_same_member_pointer_type : std::false_type {};
@@ -2084,7 +2086,7 @@ DEF_TRAVERSE_DECL(ParmVarDecl, {
       TRY_TO(WalkUpFrom##STMT(S));                                             \
     { CODE; }                                                                  \
     if (ShouldVisitChildren) {                                                 \
-      for (Stmt *SubStmt : S->children()) {                                    \
+      for (Stmt * SubStmt : getDerived().getStmtChildren(S)) {                 \
         TRY_TO_TRAVERSE_OR_ENQUEUE_STMT(SubStmt);                              \
       }                                                                        \
     }                                                                          \
