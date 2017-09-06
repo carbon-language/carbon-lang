@@ -995,8 +995,6 @@ static void read_sigaction(const __sanitizer_sigaction *act) {
 INTERCEPTOR(int, sigaction, int signo, const __sanitizer_sigaction *act,
             __sanitizer_sigaction *oldact) {
   ENSURE_MSAN_INITED();
-  // FIXME: check that *act is unpoisoned.
-  // That requires intercepting all of sigemptyset, sigfillset, etc.
   if (act) read_sigaction(act);
   int res;
   if (flags()->wrap_signals) {
