@@ -3059,11 +3059,19 @@ void CGOpenMPRuntime::emitDistributeStaticInit(
 }
 
 void CGOpenMPRuntime::emitForStaticFinish(CodeGenFunction &CGF,
-                                          SourceLocation Loc) {
+                                          SourceLocation Loc,
+                                          OpenMPDirectiveKind DKind) {
   if (!CGF.HaveInsertPoint())
     return;
   // Call __kmpc_for_static_fini(ident_t *loc, kmp_int32 tid);
-  llvm::Value *Args[] = {emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc)};
+  llvm::Value *Args[] = {
+      emitUpdateLocation(CGF, Loc,
+                         isOpenMPDistributeDirective(DKind)
+                             ? OMP_IDENT_WORK_DISTRIBUTE
+                             : isOpenMPLoopDirective(DKind)
+                                   ? OMP_IDENT_WORK_LOOP
+                                   : OMP_IDENT_WORK_SECTIONS),
+      getThreadID(CGF, Loc)};
   CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_for_static_fini),
                       Args);
 }
