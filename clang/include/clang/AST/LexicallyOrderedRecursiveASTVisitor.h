@@ -111,6 +111,8 @@ public:
     return true;
   }
 
+  bool shouldTraverseTemplateArgumentsBeforeDecl() const { return true; }
+
 private:
   bool TraverseAdditionalLexicallyNestedDeclarations() {
     // FIXME: Ideally the gathered declarations and the declarations in the

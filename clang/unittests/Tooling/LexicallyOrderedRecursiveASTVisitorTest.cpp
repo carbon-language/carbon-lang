@@ -21,8 +21,9 @@ class LexicallyOrderedDeclVisitor
     : public LexicallyOrderedRecursiveASTVisitor<LexicallyOrderedDeclVisitor> {
 public:
   LexicallyOrderedDeclVisitor(DummyMatchVisitor &Matcher,
-                              const SourceManager &SM)
-      : LexicallyOrderedRecursiveASTVisitor(SM), Matcher(Matcher) {}
+                              const SourceManager &SM, bool EmitIndices)
+      : LexicallyOrderedRecursiveASTVisitor(SM), Matcher(Matcher),
+        EmitIndices(EmitIndices) {}
 
   bool TraverseDecl(Decl *D) {
     TraversalStack.push_back(D);
@@ -35,15 +36,20 @@ public:
 
 private:
   DummyMatchVisitor &Matcher;
+  bool EmitIndices;
+  unsigned Index = 0;
   llvm::SmallVector<Decl *, 8> TraversalStack;
 };
 
 class DummyMatchVisitor : public ExpectedLocationVisitor<DummyMatchVisitor> {
+  bool EmitIndices;
+
 public:
+  DummyMatchVisitor(bool EmitIndices = false) : EmitIndices(EmitIndices) {}
   bool VisitTranslationUnitDecl(TranslationUnitDecl *TU) {
     const ASTContext &Context = TU->getASTContext();
     const SourceManager &SM = Context.getSourceManager();
-    LexicallyOrderedDeclVisitor SubVisitor(*this, SM);
+    LexicallyOrderedDeclVisitor SubVisitor(*this, SM, EmitIndices);
     SubVisitor.TraverseDecl(TU);
     return false;
   }
@@ -64,9 +70,11 @@ bool LexicallyOrderedDeclVisitor::VisitNamedDecl(const NamedDecl *D) {
       OS << ND->getNameAsString();
     else
       OS << "???";
-    if (isa<DeclContext>(D))
+    if (isa<DeclContext>(D) or isa<TemplateDecl>(D))
       OS << "/";
   }
+  if (EmitIndices)
+    OS << "@" << Index++;
   Matcher.match(OS.str(), D);
   return true;
 }
@@ -136,6 +144,20 @@ MACRO_F(2)
   Visitor.ExpectMatch("/I/nestedFunction1/", 7, 20);
   Visitor.ExpectMatch("/nestedFunction2/", 7, 20);
   EXPECT_TRUE(Visitor.runOver(Source, DummyMatchVisitor::Lang_OBJC));
+}
+
+TEST(LexicallyOrderedRecursiveASTVisitor, VisitTemplateDecl) {
+  StringRef Source = R"(
+template <class T> T f();
+template <class U, class = void> class Class {};
+)";
+  DummyMatchVisitor Visitor(/*EmitIndices=*/true);
+  Visitor.ExpectMatch("/f/T@1", 2, 11);
+  Visitor.ExpectMatch("/f/f/@2", 2, 20);
+  Visitor.ExpectMatch("/Class/U@4", 3, 11);
+  Visitor.ExpectMatch("/Class/@5", 3, 20);
+  Visitor.ExpectMatch("/Class/Class/@6", 3, 34);
+  EXPECT_TRUE(Visitor.runOver(Source));
 }
 
 } // end anonymous namespace
