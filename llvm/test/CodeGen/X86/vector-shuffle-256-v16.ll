@@ -4063,25 +4063,18 @@ define <16 x i16> @PR34369(<16 x i16> %vec) {
 ;
 ; AVX2-LABEL: PR34369:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; AVX2-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1],xmm1[2],xmm0[3,4,5,6,7]
-; AVX2-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[6,7,0,1,0,1,6,7,10,11,10,11,4,5,4,5]
-; AVX2-NEXT:    vpshufb {{.*#+}} xmm1 = xmm1[14,15,0,1,12,13,0,1,2,3,4,5,8,9,8,9]
-; AVX2-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
-; AVX2-NEXT:    vpand {{.*}}(%rip), %ymm0, %ymm0
+; AVX2-NEXT:    vperm2i128 {{.*#+}} ymm1 = ymm0[2,3,0,1]
+; AVX2-NEXT:    vmovdqa {{.*#+}} ymm2 = <255,255,u,u,0,0,255,255,u,u,255,255,u,u,u,u,255,255,255,255,255,255,u,u,255,255,u,u,u,u,255,255>
+; AVX2-NEXT:    vpblendvb %ymm2, %ymm0, %ymm1, %ymm0
+; AVX2-NEXT:    vpshufb {{.*#+}} ymm0 = ymm0[6,7,0,1,0,1],zero,zero,ymm0[10,11],zero,zero,zero,zero,ymm0[4,5,30,31,16,17],zero,zero,ymm0[16,17,18,19,20,21,24,25,24,25]
 ; AVX2-NEXT:    retq
 ;
 ; AVX512VL-LABEL: PR34369:
 ; AVX512VL:       # BB#0:
-; AVX512VL-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; AVX512VL-NEXT:    vpshufb {{.*#+}} xmm2 = xmm1[8,9,10,11,4,5,10,11,8,9,10,11,4,5,4,5]
-; AVX512VL-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[6,7,0,1,0,1,6,7,10,11,4,5,4,5,6,7]
-; AVX512VL-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1,2],xmm2[3],xmm0[4,5,6],xmm2[7]
-; AVX512VL-NEXT:    vpshufb {{.*#+}} xmm1 = xmm1[14,15,0,1,12,13,0,1,2,3,4,5,8,9,8,9]
-; AVX512VL-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
+; AVX512VL-NEXT:    vmovdqa {{.*#+}} ymm1 = [3,0,0,13,5,2,2,10,15,8,14,8,9,10,12,12]
 ; AVX512VL-NEXT:    movw $-1129, %ax # imm = 0xFB97
 ; AVX512VL-NEXT:    kmovd %eax, %k1
-; AVX512VL-NEXT:    vmovdqu16 %ymm0, %ymm0 {%k1} {z}
+; AVX512VL-NEXT:    vpermw %ymm0, %ymm1, %ymm0 {%k1} {z}
 ; AVX512VL-NEXT:    retq
   %shuf = shufflevector <16 x i16> %vec, <16 x i16> undef, <16 x i32> <i32 3, i32 0, i32 0, i32 13, i32 5, i32 2, i32 2, i32 10, i32 15, i32 8, i32 14, i32 8, i32 9, i32 10, i32 12, i32 12>
   %res = select <16 x i1> <i1 1, i1 1, i1 1, i1 0, i1 1, i1 0, i1 0, i1 1, i1 1, i1 1, i1 0, i1 1, i1 1, i1 1, i1 1, i1 1>, <16 x i16> %shuf, <16 x i16> zeroinitializer
