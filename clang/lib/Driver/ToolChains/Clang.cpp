@@ -2302,7 +2302,7 @@ static void RenderSSPOptions(const ToolChain &TC, const ArgList &Args,
     else if (A->getOption().matches(options::OPT_fstack_protector_all))
       StackProtectorLevel = LangOptions::SSPReq;
   } else {
-      StackProtectorLevel = DefaultStackProtectorLevel;
+    StackProtectorLevel = DefaultStackProtectorLevel;
   }
 
   if (StackProtectorLevel) {
