@@ -24,6 +24,7 @@
 #include "Target.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/Support/Casting.h"
@@ -113,6 +114,9 @@ private:
 
   // True if a script being read is in a subdirectory specified by -sysroot.
   bool IsUnderSysroot;
+
+  // A set to detect an INCLUDE() cycle.
+  StringSet<> Seen;
 };
 } // namespace
 
@@ -317,6 +321,11 @@ void ScriptParser::readGroup() {
 
 void ScriptParser::readInclude() {
   StringRef Tok = unquote(next());
+
+  if (!Seen.insert(Tok).second) {
+    setError("there is a cycle in linker script INCLUDEs");
+    return;
+  }
 
   // https://sourceware.org/binutils/docs/ld/File-Commands.html:
   // The file will be searched for in the current directory, and in any
