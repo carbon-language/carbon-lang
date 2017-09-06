@@ -36,6 +36,8 @@ class ELFDumper {
   DenseSet<StringRef> UsedSectionNames;
   std::vector<std::string> SectionNames;
   Expected<StringRef> getUniquedSectionName(const Elf_Shdr *Sec);
+  Expected<StringRef> getSymbolName(const Elf_Sym *Sym, StringRef StrTable,
+                                    const Elf_Shdr *SymTab);
 
   const object::ELFFile<ELFT> &Obj;
   ArrayRef<Elf_Word> ShndxTable;
@@ -85,6 +87,23 @@ ELFDumper<ELFT>::getUniquedSectionName(const Elf_Shdr *Sec) {
   while (!UsedSectionNames.insert(Ret).second)
     Ret = (Name + to_string(++Suffix)).str();
   return Ret;
+}
+
+template <class ELFT>
+Expected<StringRef> ELFDumper<ELFT>::getSymbolName(const Elf_Sym *Sym,
+                                                   StringRef StrTable,
+                                                   const Elf_Shdr *SymTab) {
+  Expected<StringRef> SymbolNameOrErr = Sym->getName(StrTable);
+  if (!SymbolNameOrErr)
+    return SymbolNameOrErr;
+  StringRef Name = *SymbolNameOrErr;
+  if (Name.empty() && Sym->getType() == ELF::STT_SECTION) {
+    auto ShdrOrErr = Obj.getSection(Sym, SymTab, ShndxTable);
+    if (!ShdrOrErr)
+      return ShdrOrErr.takeError();
+    return getUniquedSectionName(*ShdrOrErr);
+  }
+  return Name;
 }
 
 template <class ELFT> ErrorOr<ELFYAML::Object *> ELFDumper<ELFT>::dump() {
@@ -217,7 +236,7 @@ ELFDumper<ELFT>::dumpSymbol(const Elf_Sym *Sym, const Elf_Shdr *SymTab,
   S.Size = Sym->st_size;
   S.Other = Sym->st_other;
 
-  Expected<StringRef> SymbolNameOrErr = Sym->getName(StrTable);
+  Expected<StringRef> SymbolNameOrErr = getSymbolName(Sym, StrTable, SymTab);
   if (!SymbolNameOrErr)
     return errorToErrorCode(SymbolNameOrErr.takeError());
   S.Name = SymbolNameOrErr.get();
@@ -259,7 +278,7 @@ std::error_code ELFDumper<ELFT>::dumpRelocation(const RelT *Rel,
   StringRef StrTab = *StrTabOrErr;
 
   if (Sym) {
-    Expected<StringRef> NameOrErr = Sym->getName(StrTab);
+    Expected<StringRef> NameOrErr = getSymbolName(Sym, StrTab, SymTab);
     if (!NameOrErr)
       return errorToErrorCode(NameOrErr.takeError());
     R.Symbol = NameOrErr.get();
@@ -425,7 +444,7 @@ ErrorOr<ELFYAML::Group *> ELFDumper<ELFT>::dumpGroup(const Elf_Shdr *Shdr) {
   auto sectionContents = Obj.getSectionContents(Shdr);
   if (!sectionContents)
     return errorToErrorCode(sectionContents.takeError());
-  Expected<StringRef> symbolName = symbol->getName(StrTab);
+  Expected<StringRef> symbolName = getSymbolName(symbol, StrTab, Symtab);
   if (!symbolName)
     return errorToErrorCode(symbolName.takeError());
   S->Info = *symbolName;
