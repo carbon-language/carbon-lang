@@ -111,6 +111,7 @@ private:
   std::pair<std::vector<SymbolVersion>, std::vector<SymbolVersion>>
   readSymbols();
 
+  // True if a script being read is in a subdirectory specified by -sysroot.
   bool IsUnderSysroot;
 };
 } // namespace
