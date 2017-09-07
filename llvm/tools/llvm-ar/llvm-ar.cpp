@@ -54,8 +54,7 @@ static StringRef ToolName;
 // Show the error message and exit.
 LLVM_ATTRIBUTE_NORETURN static void fail(Twine Error) {
   errs() << ToolName << ": " << Error << ".\n";
-  // FIXME: Other ar implementations will print the command line help in here.
-  // Unfortunately cl::PrintHelpMessage() exits with 0, so we can't call it.
+  cl::PrintHelpMessage();
   exit(1);
 }
 
