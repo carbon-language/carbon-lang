@@ -52,13 +52,15 @@ private:
   SyncScope::ID SSID = SyncScope::System;
   AtomicOrdering Ordering = AtomicOrdering::NotAtomic;
   AtomicOrdering FailureOrdering = AtomicOrdering::NotAtomic;
+  bool IsNonTemporal = false;
 
   SIMemOpInfo(SyncScope::ID SSID, AtomicOrdering Ordering)
       : SSID(SSID), Ordering(Ordering) {}
 
   SIMemOpInfo(SyncScope::ID SSID, AtomicOrdering Ordering,
-              AtomicOrdering FailureOrdering)
-      : SSID(SSID), Ordering(Ordering), FailureOrdering(FailureOrdering) {}
+              AtomicOrdering FailureOrdering, bool IsNonTemporal = false)
+      : SSID(SSID), Ordering(Ordering), FailureOrdering(FailureOrdering),
+        IsNonTemporal(IsNonTemporal) {}
 
   /// \returns Info constructed from \p MI, which has at least machine memory
   /// operand.
@@ -80,6 +82,11 @@ public:
   /// create this SIMemOpInfo.
   AtomicOrdering getFailureOrdering() const {
     return FailureOrdering;
+  }
+  /// \returns True if memory access of the machine instruction used to
+  /// create this SIMemOpInfo is non-temporal, false otherwise.
+  bool isNonTemporal() const {
+    return IsNonTemporal;
   }
 
   /// \returns True if ordering constraint of the machine instruction used to
@@ -130,6 +137,34 @@ private:
   /// \brief List of atomic pseudo instructions.
   std::list<MachineBasicBlock::iterator> AtomicPseudoMIs;
 
+  /// \brief Sets named bit (BitName) to "true" if present in \p MI. Returns
+  /// true if \p MI is modified, false otherwise.
+  template <uint16_t BitName>
+  bool enableNamedBit(const MachineBasicBlock::iterator &MI) const {
+    int BitIdx = AMDGPU::getNamedOperandIdx(MI->getOpcode(), BitName);
+    if (BitIdx == -1)
+      return false;
+
+    MachineOperand &Bit = MI->getOperand(BitIdx);
+    if (Bit.getImm() != 0)
+      return false;
+
+    Bit.setImm(1);
+    return true;
+  }
+
+  /// \brief Sets GLC bit to "true" if present in \p MI. Returns true if \p MI
+  /// is modified, false otherwise.
+  bool enableGLCBit(const MachineBasicBlock::iterator &MI) const {
+    return enableNamedBit<AMDGPU::OpName::glc>(MI);
+  }
+
+  /// \brief Sets SLC bit to "true" if present in \p MI. Returns true if \p MI
+  /// is modified, false otherwise.
+  bool enableSLCBit(const MachineBasicBlock::iterator &MI) const {
+    return enableNamedBit<AMDGPU::OpName::slc>(MI);
+  }
+
   /// \brief Inserts "buffer_wbinvl1_vol" instruction \p Before or after \p MI.
   /// Always returns true.
   bool insertBufferWbinvl1Vol(MachineBasicBlock::iterator &MI,
@@ -138,10 +173,6 @@ private:
   /// Always returns true.
   bool insertWaitcntVmcnt0(MachineBasicBlock::iterator &MI,
                            bool Before = true) const;
-
-  /// \brief Sets GLC bit if present in \p MI. Returns true if \p MI is
-  /// modified, false otherwise.
-  bool setGLC(const MachineBasicBlock::iterator &MI) const;
 
   /// \brief Removes all processed atomic pseudo instructions from the current
   /// function. Returns true if current function is modified, false otherwise.
@@ -199,6 +230,7 @@ Optional<SIMemOpInfo> SIMemOpInfo::constructFromMIWithMMO(
   SyncScope::ID SSID = SyncScope::SingleThread;
   AtomicOrdering Ordering = AtomicOrdering::NotAtomic;
   AtomicOrdering FailureOrdering = AtomicOrdering::NotAtomic;
+  bool IsNonTemporal = true;
 
   // Validator should check whether or not MMOs cover the entire set of
   // locations accessed by the memory instruction.
@@ -217,9 +249,12 @@ Optional<SIMemOpInfo> SIMemOpInfo::constructFromMIWithMMO(
     FailureOrdering =
         isStrongerThan(FailureOrdering, MMO->getFailureOrdering()) ?
             FailureOrdering : MMO->getFailureOrdering();
+
+    if (!(MMO->getFlags() & MachineMemOperand::MONonTemporal))
+      IsNonTemporal = false;
   }
 
-  return SIMemOpInfo(SSID, Ordering, FailureOrdering);
+  return SIMemOpInfo(SSID, Ordering, FailureOrdering, IsNonTemporal);
 }
 
 /* static */
@@ -343,19 +378,6 @@ bool SIMemoryLegalizer::insertWaitcntVmcnt0(MachineBasicBlock::iterator &MI,
   return true;
 }
 
-bool SIMemoryLegalizer::setGLC(const MachineBasicBlock::iterator &MI) const {
-  int GLCIdx = AMDGPU::getNamedOperandIdx(MI->getOpcode(), AMDGPU::OpName::glc);
-  if (GLCIdx == -1)
-    return false;
-
-  MachineOperand &GLC = MI->getOperand(GLCIdx);
-  if (GLC.getImm() == 1)
-    return false;
-
-  GLC.setImm(1);
-  return true;
-}
-
 bool SIMemoryLegalizer::removeAtomicPseudoMIs() {
   if (AtomicPseudoMIs.empty())
     return false;
@@ -378,7 +400,7 @@ bool SIMemoryLegalizer::expandLoad(const SIMemOpInfo &MOI,
         MOI.getSSID() == MMI->getAgentSSID()) {
       if (MOI.getOrdering() == AtomicOrdering::Acquire ||
           MOI.getOrdering() == AtomicOrdering::SequentiallyConsistent)
-        Changed |= setGLC(MI);
+        Changed |= enableGLCBit(MI);
 
       if (MOI.getOrdering() == AtomicOrdering::SequentiallyConsistent)
         Changed |= insertWaitcntVmcnt0(MI);
@@ -399,6 +421,13 @@ bool SIMemoryLegalizer::expandLoad(const SIMemOpInfo &MOI,
     }
 
     llvm_unreachable("Unsupported synchronization scope");
+  }
+
+  // Atomic instructions do not have the nontemporal attribute.
+  if (MOI.isNonTemporal()) {
+    Changed |= enableGLCBit(MI);
+    Changed |= enableSLCBit(MI);
+    return Changed;
   }
 
   return Changed;
@@ -427,6 +456,13 @@ bool SIMemoryLegalizer::expandStore(const SIMemOpInfo &MOI,
     }
 
     llvm_unreachable("Unsupported synchronization scope");
+  }
+
+  // Atomic instructions do not have the nontemporal attribute.
+  if (MOI.isNonTemporal()) {
+    Changed |= enableGLCBit(MI);
+    Changed |= enableSLCBit(MI);
+    return Changed;
   }
 
   return Changed;
@@ -499,7 +535,7 @@ bool SIMemoryLegalizer::expandAtomicCmpxchg(const SIMemOpInfo &MOI,
     if (MOI.getSSID() == SyncScope::SingleThread ||
         MOI.getSSID() == MMI->getWorkgroupSSID() ||
         MOI.getSSID() == MMI->getWavefrontSSID()) {
-      Changed |= setGLC(MI);
+      Changed |= enableGLCBit(MI);
       return Changed;
     }
 
@@ -536,7 +572,7 @@ bool SIMemoryLegalizer::expandAtomicRmw(const SIMemOpInfo &MOI,
     if (MOI.getSSID() == SyncScope::SingleThread ||
         MOI.getSSID() == MMI->getWorkgroupSSID() ||
         MOI.getSSID() == MMI->getWavefrontSSID()) {
-      Changed |= setGLC(MI);
+      Changed |= enableGLCBit(MI);
       return Changed;
     }
 
