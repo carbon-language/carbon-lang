@@ -1,3 +1,8 @@
+# The redirects used in the commands to FileCheck against stderr cannot be used
+# with a windows test.
+#
+# UNSUPPORTED: windows
+
 #RUN: (llvm-xray stack %s 2>&1 || echo "Checking Command Failed") | FileCheck %s
 ---
 header:
