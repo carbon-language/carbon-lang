@@ -770,7 +770,7 @@ void LinkerScript::allocateHeaders(std::vector<PhdrEntry *> &Phdrs) {
 
   Out::ElfHeader->PtLoad = nullptr;
   Out::ProgramHeaders->PtLoad = nullptr;
-  FirstPTLoad->First = findFirstSection(FirstPTLoad);
+  FirstPTLoad->FirstSec = findFirstSection(FirstPTLoad);
 
   llvm::erase_if(Phdrs,
                  [](const PhdrEntry *E) { return E->p_type == PT_PHDR; });
