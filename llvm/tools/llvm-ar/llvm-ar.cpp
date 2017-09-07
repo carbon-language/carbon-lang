@@ -54,6 +54,8 @@ static StringRef ToolName;
 // Show the error message and exit.
 LLVM_ATTRIBUTE_NORETURN static void fail(Twine Error) {
   errs() << ToolName << ": " << Error << ".\n";
+  // FIXME: Other ar implementations will print the command line help in here.
+  // Unfortunately cl::PrintHelpMessage() exits with 0, so we can't call it.
   exit(1);
 }
 
@@ -164,26 +166,18 @@ static std::string ArchiveName;
 // on the command line.
 static std::vector<StringRef> Members;
 
-// Show the error message, the help message and exit.
-LLVM_ATTRIBUTE_NORETURN static void
-show_help(const std::string &msg) {
-  errs() << ToolName << ": " << msg << "\n\n";
-  cl::PrintHelpMessage();
-  exit(1);
-}
-
 // Extract the member filename from the command line for the [relpos] argument
 // associated with a, b, and i modifiers
 static void getRelPos() {
   if(RestOfArgs.size() == 0)
-    show_help("Expected [relpos] for a, b, or i modifier");
+    fail("Expected [relpos] for a, b, or i modifier");
   RelPos = RestOfArgs[0];
   RestOfArgs.erase(RestOfArgs.begin());
 }
 
 static void getOptions() {
   if(RestOfArgs.size() == 0)
-    show_help("Expected options");
+    fail("Expected options");
   Options = RestOfArgs[0];
   RestOfArgs.erase(RestOfArgs.begin());
 }
@@ -191,7 +185,7 @@ static void getOptions() {
 // Get the archive file name from the command line
 static void getArchive() {
   if(RestOfArgs.size() == 0)
-    show_help("An archive name must be specified");
+    fail("An archive name must be specified");
   ArchiveName = RestOfArgs[0];
   RestOfArgs.erase(RestOfArgs.begin());
 }
@@ -275,7 +269,7 @@ static ArchiveOperation parseCommandLine() {
       Thin = true;
       break;
     default:
-      cl::PrintHelpMessage();
+      fail(std::string("unknown option ") + Options[i]);
     }
   }
 
@@ -290,26 +284,26 @@ static ArchiveOperation parseCommandLine() {
     NumOperations = 1;
     Operation = CreateSymTab;
     if (!Members.empty())
-      show_help("The s operation takes only an archive as argument");
+      fail("The s operation takes only an archive as argument");
   }
 
   // Perform various checks on the operation/modifier specification
   // to make sure we are dealing with a legal request.
   if (NumOperations == 0)
-    show_help("You must specify at least one of the operations");
+    fail("You must specify at least one of the operations");
   if (NumOperations > 1)
-    show_help("Only one operation may be specified");
+    fail("Only one operation may be specified");
   if (NumPositional > 1)
-    show_help("You may only specify one of a, b, and i modifiers");
+    fail("You may only specify one of a, b, and i modifiers");
   if (AddAfter || AddBefore) {
     if (Operation != Move && Operation != ReplaceOrInsert)
-      show_help("The 'a', 'b' and 'i' modifiers can only be specified with "
-            "the 'm' or 'r' operations");
+      fail("The 'a', 'b' and 'i' modifiers can only be specified with "
+           "the 'm' or 'r' operations");
   }
   if (OriginalDates && Operation != Extract)
-    show_help("The 'o' modifier is only applicable to the 'x' operation");
+    fail("The 'o' modifier is only applicable to the 'x' operation");
   if (OnlyUpdate && Operation != ReplaceOrInsert)
-    show_help("The 'u' modifier is only applicable to the 'r' operation");
+    fail("The 'u' modifier is only applicable to the 'r' operation");
 
   // Return the parsed operation to the caller
   return Operation;
