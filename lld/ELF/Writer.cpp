@@ -1205,9 +1205,8 @@ static void removeUnusedSyntheticSections() {
     for (auto I = OS->Commands.begin(), E = OS->Commands.end(); I != E; ++I) {
       BaseCommand *B = *I;
       if (auto *ISD = dyn_cast<InputSectionDescription>(B)) {
-        auto P = std::find(ISD->Sections.begin(), ISD->Sections.end(), SS);
-        if (P != ISD->Sections.end())
-          ISD->Sections.erase(P);
+        llvm::erase_if(ISD->Sections,
+                       [=](InputSection *IS) { return IS == SS; });
         if (ISD->Sections.empty())
           Empty = I;
       }
