@@ -1226,12 +1226,6 @@ static void removeUnusedSyntheticSections() {
 // with the same name defined in other ELF executable or DSO.
 static bool computeIsPreemptible(const SymbolBody &B) {
   assert(!B.isLocal());
-  // Shared symbols resolve to the definition in the DSO. The exceptions are
-  // symbols with copy relocations (which resolve to .bss) or preempt plt
-  // entries (which resolve to that plt entry).
-  if (auto *SS = dyn_cast<SharedSymbol>(&B))
-    return !SS->CopyRelSec && !SS->NeedsPltAddr;
-
   // Only symbols that appear in dynsym can be preempted.
   if (!B.symbol()->includeInDynsym())
     return false;
@@ -1246,7 +1240,7 @@ static bool computeIsPreemptible(const SymbolBody &B) {
   // executables are automatically exported so that the runtime linker
   // can try to resolve them. In that case, they are preemptible. So, we
   // return true for an undefined symbols in all cases.
-  if (B.isUndefined())
+  if (B.isUndefined() || B.isShared())
     return true;
 
   // If we have a dynamic list it specifies which local symbols are preemptible.
