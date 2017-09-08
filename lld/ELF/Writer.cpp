@@ -1244,7 +1244,7 @@ static bool computeIsPreemptible(const SymbolBody &B) {
     return true;
 
   // If we have a dynamic list it specifies which local symbols are preemptible.
-  if (!Config->DynamicList.empty())
+  if (Config->HasDynamicList)
     return false;
 
   if (!Config->Shared)
