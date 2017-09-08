@@ -1216,14 +1216,9 @@ static void removeUnusedSyntheticSections() {
 
     // If there are no other sections in the output section, remove it from the
     // output.
-    if (OS->Commands.empty()) {
-      // Also remove script commands matching the output section.
-      llvm::erase_if(Script->Opt.Commands, [&](BaseCommand *Cmd) {
-        if (auto *Sec = dyn_cast<OutputSection>(Cmd))
-          return Sec == OS;
-        return false;
-      });
-    }
+    if (OS->Commands.empty())
+      llvm::erase_if(Script->Opt.Commands,
+                     [&](BaseCommand *Cmd) { return Cmd == OS; });
   }
 }
 
