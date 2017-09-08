@@ -1252,7 +1252,7 @@ static bool computeIsPreemptible(const SymbolBody &B) {
 
   // -Bsymbolic means that definitions are not preempted.
   if (Config->Bsymbolic || (Config->BsymbolicFunctions && B.isFunc()))
-    return !B.isDefined();
+    return false;
   return true;
 }
 
