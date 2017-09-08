@@ -1240,7 +1240,7 @@ static bool computeIsPreemptible(const SymbolBody &B) {
   // executables are automatically exported so that the runtime linker
   // can try to resolve them. In that case, they are preemptible. So, we
   // return true for an undefined symbols in all cases.
-  if (B.isUndefined() || B.isShared())
+  if (!B.isInCurrentDSO())
     return true;
 
   // If we have a dynamic list it specifies which local symbols are preemptible.
