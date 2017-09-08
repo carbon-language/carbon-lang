@@ -4711,8 +4711,9 @@ class HorizontalReduction {
       case RK_UMax:
         return 3;
       case RK_None:
-        llvm_unreachable("Reduction kind is not set");
+        break;
       }
+      llvm_unreachable("Reduction kind is not set");
     }
 
     /// Expected number of uses for reduction operations/reduced values.
@@ -4728,8 +4729,9 @@ class HorizontalReduction {
       case RK_UMax:
         return 2;
       case RK_None:
-        llvm_unreachable("Reduction kind is not set");
+        break;
       }
+      llvm_unreachable("Reduction kind is not set");
     }
 
     /// Checks if instruction is associative and can be vectorized.
