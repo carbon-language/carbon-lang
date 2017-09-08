@@ -1014,3 +1014,1426 @@ b:
   tail call void @b()
   ret void
 }
+
+define void @and64_imm32_br() nounwind {
+; CHECK-LABEL: and64_imm32_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    andq $16777215, {{.*}}(%rip) # encoding: [0x48,0x81,0x25,A,A,A,A,0xff,0xff,0xff,0x00]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g64-8, kind: reloc_riprel_4byte
+; CHECK-NEXT:    # imm = 0xFFFFFF
+; CHECK-NEXT:    je .LBB31_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB31_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB31_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i64, i64* @g64
+  ; And 0x00FFFFFF, a positive immediate requiring 24-bits.
+  %and = and i64 %load1, 16777215
+  store i64 %and, i64* @g64
+  %cond = icmp eq i64 %and, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @and64_sext_imm32_br() nounwind {
+; CHECK-LABEL: and64_sext_imm32_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    andq $-2147483648, {{.*}}(%rip) # encoding: [0x48,0x81,0x25,A,A,A,A,0x00,0x00,0x00,0x80]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g64-8, kind: reloc_riprel_4byte
+; CHECK-NEXT:    # imm = 0x80000000
+; CHECK-NEXT:    je .LBB32_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB32_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB32_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i64, i64* @g64
+  ; And -0x80000000, which requires sign-extended 32 bits.
+  %and = and i64 %load1, -2147483648
+  store i64 %and, i64* @g64
+  %cond = icmp eq i64 %and, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @and64_imm8_br() nounwind {
+; CHECK-LABEL: and64_imm8_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    andq $15, {{.*}}(%rip) # encoding: [0x48,0x83,0x25,A,A,A,A,0x0f]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g64-5, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB33_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB33_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB33_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i64, i64* @g64
+  %and = and i64 %load1, 15
+  store i64 %and, i64* @g64
+  %cond = icmp eq i64 %and, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @and64_imm8_neg_br() nounwind {
+; CHECK-LABEL: and64_imm8_neg_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    andq $-4, {{.*}}(%rip) # encoding: [0x48,0x83,0x25,A,A,A,A,0xfc]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g64-5, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB34_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB34_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB34_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i64, i64* @g64
+  %and = and i64 %load1, -4
+  store i64 %and, i64* @g64
+  %cond = icmp eq i64 %and, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @and32_imm_br() nounwind {
+; CHECK-LABEL: and32_imm_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    movl $-2147483648, %eax # encoding: [0xb8,0x00,0x00,0x00,0x80]
+; CHECK-NEXT:    # imm = 0x80000000
+; CHECK-NEXT:    andl {{.*}}(%rip), %eax # encoding: [0x23,0x05,A,A,A,A]
+; CHECK-NEXT:    # fixup A - offset: 2, value: g32-4, kind: reloc_riprel_4byte
+; CHECK-NEXT:    movl %eax, {{.*}}(%rip) # encoding: [0x89,0x05,A,A,A,A]
+; CHECK-NEXT:    # fixup A - offset: 2, value: g32-4, kind: reloc_riprel_4byte
+; CHECK-NEXT:    jne .LBB35_2 # encoding: [0x75,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB35_2-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB35_2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i32, i32* @g32
+  ; And 0x80000000, a positive number requiring 32 bits of immediate.
+  %and = and i32 %load1, 2147483648
+  store i32 %and, i32* @g32
+  %cond = icmp eq i32 %and, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @and32_imm8_br() nounwind {
+; CHECK-LABEL: and32_imm8_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    andl $15, {{.*}}(%rip) # encoding: [0x83,0x25,A,A,A,A,0x0f]
+; CHECK-NEXT:    # fixup A - offset: 2, value: g32-5, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB36_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB36_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB36_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i32, i32* @g32
+  %and = and i32 %load1, 15
+  store i32 %and, i32* @g32
+  %cond = icmp eq i32 %and, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @and32_imm8_neg_br() nounwind {
+; CHECK-LABEL: and32_imm8_neg_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    andl $-4, {{.*}}(%rip) # encoding: [0x83,0x25,A,A,A,A,0xfc]
+; CHECK-NEXT:    # fixup A - offset: 2, value: g32-5, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB37_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB37_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB37_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i32, i32* @g32
+  %and = and i32 %load1, -4
+  store i32 %and, i32* @g32
+  %cond = icmp eq i32 %and, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @and16_imm_br() nounwind {
+; CHECK-LABEL: and16_imm_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    movzwl {{.*}}(%rip), %eax # encoding: [0x0f,0xb7,0x05,A,A,A,A]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g16-4, kind: reloc_riprel_4byte
+; CHECK-NEXT:    andl $32768, %eax # encoding: [0x25,0x00,0x80,0x00,0x00]
+; CHECK-NEXT:    # imm = 0x8000
+; CHECK-NEXT:    movw %ax, {{.*}}(%rip) # encoding: [0x66,0x89,0x05,A,A,A,A]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g16-4, kind: reloc_riprel_4byte
+; CHECK-NEXT:    testw %ax, %ax # encoding: [0x66,0x85,0xc0]
+; CHECK-NEXT:    jne .LBB38_2 # encoding: [0x75,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB38_2-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB38_2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i16, i16* @g16
+  %and = and i16 %load1, 32768
+  store i16 %and, i16* @g16
+  %cond = icmp eq i16 %and, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @and16_imm8_br() nounwind {
+; CHECK-LABEL: and16_imm8_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    andw $15, {{.*}}(%rip) # encoding: [0x66,0x83,0x25,A,A,A,A,0x0f]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g16-5, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB39_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB39_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB39_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i16, i16* @g16
+  %and = and i16 %load1, 15
+  store i16 %and, i16* @g16
+  %cond = icmp eq i16 %and, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @and16_imm8_neg_br() nounwind {
+; CHECK-LABEL: and16_imm8_neg_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    andw $-4, {{.*}}(%rip) # encoding: [0x66,0x83,0x25,A,A,A,A,0xfc]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g16-5, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB40_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB40_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB40_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i16, i16* @g16
+  %and = and i16 %load1, -4
+  store i16 %and, i16* @g16
+  %cond = icmp eq i16 %and, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @and8_imm_br() nounwind {
+; CHECK-LABEL: and8_imm_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    andb $-4, {{.*}}(%rip) # encoding: [0x80,0x25,A,A,A,A,0xfc]
+; CHECK-NEXT:    # fixup A - offset: 2, value: g8-5, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB41_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB41_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB41_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i8, i8* @g8
+  %and = and i8 %load1, -4
+  store i8 %and, i8* @g8
+  %cond = icmp eq i8 %and, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @and64_reg_br(i64 %arg) nounwind {
+; CHECK-LABEL: and64_reg_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    andq %rdi, {{.*}}(%rip) # encoding: [0x48,0x21,0x3d,A,A,A,A]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g64-4, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB42_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB42_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB42_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i64, i64* @g64
+  %and = and i64 %load1, %arg
+  store i64 %and, i64* @g64
+  %cond = icmp eq i64 %and, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @and32_reg_br(i32 %arg) nounwind {
+; CHECK-LABEL: and32_reg_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    andl %edi, {{.*}}(%rip) # encoding: [0x21,0x3d,A,A,A,A]
+; CHECK-NEXT:    # fixup A - offset: 2, value: g32-4, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB43_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB43_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB43_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i32, i32* @g32
+  %and = and i32 %load1, %arg
+  store i32 %and, i32* @g32
+  %cond = icmp eq i32 %and, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @and16_reg_br(i16 %arg) nounwind {
+; CHECK-LABEL: and16_reg_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    andw %di, {{.*}}(%rip) # encoding: [0x66,0x21,0x3d,A,A,A,A]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g16-4, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB44_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB44_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB44_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i16, i16* @g16
+  %and = and i16 %load1, %arg
+  store i16 %and, i16* @g16
+  %cond = icmp eq i16 %and, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @and8_reg_br(i8 %arg) nounwind {
+; CHECK-LABEL: and8_reg_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    andb %dil, {{.*}}(%rip) # encoding: [0x40,0x20,0x3d,A,A,A,A]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g8-4, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB45_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB45_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB45_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i8, i8* @g8
+  %and = and i8 %load1, %arg
+  store i8 %and, i8* @g8
+  %cond = icmp eq i8 %and, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @or64_imm32_br() nounwind {
+; CHECK-LABEL: or64_imm32_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    orq $16777215, {{.*}}(%rip) # encoding: [0x48,0x81,0x0d,A,A,A,A,0xff,0xff,0xff,0x00]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g64-8, kind: reloc_riprel_4byte
+; CHECK-NEXT:    # imm = 0xFFFFFF
+; CHECK-NEXT:    je .LBB46_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB46_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB46_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i64, i64* @g64
+  ; Or 0x00FFFFFF, a positive immediate requiring 24-bits.
+  %or = or i64 %load1, 16777215
+  store i64 %or, i64* @g64
+  %cond = icmp eq i64 %or, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @or64_sext_imm32_br() nounwind {
+; CHECK-LABEL: or64_sext_imm32_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    orq $-2147483648, {{.*}}(%rip) # encoding: [0x48,0x81,0x0d,A,A,A,A,0x00,0x00,0x00,0x80]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g64-8, kind: reloc_riprel_4byte
+; CHECK-NEXT:    # imm = 0x80000000
+; CHECK-NEXT:    je .LBB47_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB47_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB47_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i64, i64* @g64
+  ; Or -0x80000000, which requires sign-extended 32 bits.
+  %or = or i64 %load1, -2147483648
+  store i64 %or, i64* @g64
+  %cond = icmp eq i64 %or, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @or64_imm8_br() nounwind {
+; CHECK-LABEL: or64_imm8_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    orq $15, {{.*}}(%rip) # encoding: [0x48,0x83,0x0d,A,A,A,A,0x0f]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g64-5, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB48_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB48_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB48_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i64, i64* @g64
+  %or = or i64 %load1, 15
+  store i64 %or, i64* @g64
+  %cond = icmp eq i64 %or, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @or64_imm8_neg_br() nounwind {
+; CHECK-LABEL: or64_imm8_neg_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    orq $-4, {{.*}}(%rip) # encoding: [0x48,0x83,0x0d,A,A,A,A,0xfc]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g64-5, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB49_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB49_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB49_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i64, i64* @g64
+  %or = or i64 %load1, -4
+  store i64 %or, i64* @g64
+  %cond = icmp eq i64 %or, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @or32_imm_br() nounwind {
+; CHECK-LABEL: or32_imm_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    orl $-2147483648, {{.*}}(%rip) # encoding: [0x81,0x0d,A,A,A,A,0x00,0x00,0x00,0x80]
+; CHECK-NEXT:    # fixup A - offset: 2, value: g32-8, kind: reloc_riprel_4byte
+; CHECK-NEXT:    # imm = 0x80000000
+; CHECK-NEXT:    je .LBB50_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB50_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB50_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i32, i32* @g32
+  ; Or 0x80000000, a positive number requiring 32 bits of immediate.
+  %or = or i32 %load1, 2147483648
+  store i32 %or, i32* @g32
+  %cond = icmp eq i32 %or, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @or32_imm8_br() nounwind {
+; CHECK-LABEL: or32_imm8_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    orl $15, {{.*}}(%rip) # encoding: [0x83,0x0d,A,A,A,A,0x0f]
+; CHECK-NEXT:    # fixup A - offset: 2, value: g32-5, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB51_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB51_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB51_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i32, i32* @g32
+  %or = or i32 %load1, 15
+  store i32 %or, i32* @g32
+  %cond = icmp eq i32 %or, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @or32_imm8_neg_br() nounwind {
+; CHECK-LABEL: or32_imm8_neg_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    orl $-4, {{.*}}(%rip) # encoding: [0x83,0x0d,A,A,A,A,0xfc]
+; CHECK-NEXT:    # fixup A - offset: 2, value: g32-5, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB52_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB52_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB52_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i32, i32* @g32
+  %or = or i32 %load1, -4
+  store i32 %or, i32* @g32
+  %cond = icmp eq i32 %or, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @or16_imm_br() nounwind {
+; CHECK-LABEL: or16_imm_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    orw $-32768, {{.*}}(%rip) # encoding: [0x66,0x81,0x0d,A,A,A,A,0x00,0x80]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g16-6, kind: reloc_riprel_4byte
+; CHECK-NEXT:    # imm = 0x8000
+; CHECK-NEXT:    je .LBB53_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB53_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB53_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i16, i16* @g16
+  %or = or i16 %load1, 32768
+  store i16 %or, i16* @g16
+  %cond = icmp eq i16 %or, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @or16_imm8_br() nounwind {
+; CHECK-LABEL: or16_imm8_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    orw $15, {{.*}}(%rip) # encoding: [0x66,0x83,0x0d,A,A,A,A,0x0f]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g16-5, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB54_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB54_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB54_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i16, i16* @g16
+  %or = or i16 %load1, 15
+  store i16 %or, i16* @g16
+  %cond = icmp eq i16 %or, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @or16_imm8_neg_br() nounwind {
+; CHECK-LABEL: or16_imm8_neg_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    orw $-4, {{.*}}(%rip) # encoding: [0x66,0x83,0x0d,A,A,A,A,0xfc]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g16-5, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB55_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB55_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB55_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i16, i16* @g16
+  %or = or i16 %load1, -4
+  store i16 %or, i16* @g16
+  %cond = icmp eq i16 %or, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @or8_imm_br() nounwind {
+; CHECK-LABEL: or8_imm_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    orb $-4, {{.*}}(%rip) # encoding: [0x80,0x0d,A,A,A,A,0xfc]
+; CHECK-NEXT:    # fixup A - offset: 2, value: g8-5, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB56_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB56_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB56_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i8, i8* @g8
+  %or = or i8 %load1, -4
+  store i8 %or, i8* @g8
+  %cond = icmp eq i8 %or, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @or64_reg_br(i64 %arg) nounwind {
+; CHECK-LABEL: or64_reg_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    orq %rdi, {{.*}}(%rip) # encoding: [0x48,0x09,0x3d,A,A,A,A]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g64-4, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB57_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB57_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB57_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i64, i64* @g64
+  %or = or i64 %load1, %arg
+  store i64 %or, i64* @g64
+  %cond = icmp eq i64 %or, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @or32_reg_br(i32 %arg) nounwind {
+; CHECK-LABEL: or32_reg_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    orl %edi, {{.*}}(%rip) # encoding: [0x09,0x3d,A,A,A,A]
+; CHECK-NEXT:    # fixup A - offset: 2, value: g32-4, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB58_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB58_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB58_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i32, i32* @g32
+  %or = or i32 %load1, %arg
+  store i32 %or, i32* @g32
+  %cond = icmp eq i32 %or, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @or16_reg_br(i16 %arg) nounwind {
+; CHECK-LABEL: or16_reg_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    orw %di, {{.*}}(%rip) # encoding: [0x66,0x09,0x3d,A,A,A,A]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g16-4, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB59_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB59_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB59_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i16, i16* @g16
+  %or = or i16 %load1, %arg
+  store i16 %or, i16* @g16
+  %cond = icmp eq i16 %or, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @or8_reg_br(i8 %arg) nounwind {
+; CHECK-LABEL: or8_reg_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    orb %dil, {{.*}}(%rip) # encoding: [0x40,0x08,0x3d,A,A,A,A]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g8-4, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB60_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB60_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB60_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i8, i8* @g8
+  %or = or i8 %load1, %arg
+  store i8 %or, i8* @g8
+  %cond = icmp eq i8 %or, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @xor64_imm32_br() nounwind {
+; CHECK-LABEL: xor64_imm32_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    xorq $16777215, {{.*}}(%rip) # encoding: [0x48,0x81,0x35,A,A,A,A,0xff,0xff,0xff,0x00]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g64-8, kind: reloc_riprel_4byte
+; CHECK-NEXT:    # imm = 0xFFFFFF
+; CHECK-NEXT:    je .LBB61_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB61_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB61_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i64, i64* @g64
+  ; Xor 0x00FFFFFF, a positive immediate requiring 24-bits.
+  %xor = xor i64 %load1, 16777215
+  store i64 %xor, i64* @g64
+  %cond = icmp eq i64 %xor, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @xor64_sext_imm32_br() nounwind {
+; CHECK-LABEL: xor64_sext_imm32_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    xorq $-2147483648, {{.*}}(%rip) # encoding: [0x48,0x81,0x35,A,A,A,A,0x00,0x00,0x00,0x80]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g64-8, kind: reloc_riprel_4byte
+; CHECK-NEXT:    # imm = 0x80000000
+; CHECK-NEXT:    je .LBB62_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB62_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB62_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i64, i64* @g64
+  ; Xor -0x80000000, which requires sign-extended 32 bits.
+  %xor = xor i64 %load1, -2147483648
+  store i64 %xor, i64* @g64
+  %cond = icmp eq i64 %xor, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @xor64_imm8_br() nounwind {
+; CHECK-LABEL: xor64_imm8_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    xorq $15, {{.*}}(%rip) # encoding: [0x48,0x83,0x35,A,A,A,A,0x0f]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g64-5, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB63_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB63_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB63_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i64, i64* @g64
+  %xor = xor i64 %load1, 15
+  store i64 %xor, i64* @g64
+  %cond = icmp eq i64 %xor, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @xor64_imm8_neg_br() nounwind {
+; CHECK-LABEL: xor64_imm8_neg_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    xorq $-4, {{.*}}(%rip) # encoding: [0x48,0x83,0x35,A,A,A,A,0xfc]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g64-5, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB64_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB64_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB64_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i64, i64* @g64
+  %xor = xor i64 %load1, -4
+  store i64 %xor, i64* @g64
+  %cond = icmp eq i64 %xor, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @xor32_imm_br() nounwind {
+; CHECK-LABEL: xor32_imm_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    xorl $-2147483648, {{.*}}(%rip) # encoding: [0x81,0x35,A,A,A,A,0x00,0x00,0x00,0x80]
+; CHECK-NEXT:    # fixup A - offset: 2, value: g32-8, kind: reloc_riprel_4byte
+; CHECK-NEXT:    # imm = 0x80000000
+; CHECK-NEXT:    je .LBB65_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB65_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB65_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i32, i32* @g32
+  ; Xor 0x80000000, a positive number requiring 32 bits of immediate.
+  %xor = xor i32 %load1, 2147483648
+  store i32 %xor, i32* @g32
+  %cond = icmp eq i32 %xor, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @xor32_imm8_br() nounwind {
+; CHECK-LABEL: xor32_imm8_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    xorl $15, {{.*}}(%rip) # encoding: [0x83,0x35,A,A,A,A,0x0f]
+; CHECK-NEXT:    # fixup A - offset: 2, value: g32-5, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB66_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB66_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB66_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i32, i32* @g32
+  %xor = xor i32 %load1, 15
+  store i32 %xor, i32* @g32
+  %cond = icmp eq i32 %xor, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @xor32_imm8_neg_br() nounwind {
+; CHECK-LABEL: xor32_imm8_neg_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    xorl $-4, {{.*}}(%rip) # encoding: [0x83,0x35,A,A,A,A,0xfc]
+; CHECK-NEXT:    # fixup A - offset: 2, value: g32-5, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB67_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB67_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB67_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i32, i32* @g32
+  %xor = xor i32 %load1, -4
+  store i32 %xor, i32* @g32
+  %cond = icmp eq i32 %xor, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @xor16_imm_br() nounwind {
+; CHECK-LABEL: xor16_imm_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    xorw $-32768, {{.*}}(%rip) # encoding: [0x66,0x81,0x35,A,A,A,A,0x00,0x80]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g16-6, kind: reloc_riprel_4byte
+; CHECK-NEXT:    # imm = 0x8000
+; CHECK-NEXT:    je .LBB68_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB68_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB68_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i16, i16* @g16
+  %xor = xor i16 %load1, 32768
+  store i16 %xor, i16* @g16
+  %cond = icmp eq i16 %xor, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @xor16_imm8_br() nounwind {
+; CHECK-LABEL: xor16_imm8_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    xorw $15, {{.*}}(%rip) # encoding: [0x66,0x83,0x35,A,A,A,A,0x0f]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g16-5, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB69_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB69_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB69_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i16, i16* @g16
+  %xor = xor i16 %load1, 15
+  store i16 %xor, i16* @g16
+  %cond = icmp eq i16 %xor, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @xor16_imm8_neg_br() nounwind {
+; CHECK-LABEL: xor16_imm8_neg_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    xorw $-4, {{.*}}(%rip) # encoding: [0x66,0x83,0x35,A,A,A,A,0xfc]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g16-5, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB70_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB70_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB70_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i16, i16* @g16
+  %xor = xor i16 %load1, -4
+  store i16 %xor, i16* @g16
+  %cond = icmp eq i16 %xor, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @xor8_imm_br() nounwind {
+; CHECK-LABEL: xor8_imm_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    xorb $-4, {{.*}}(%rip) # encoding: [0x80,0x35,A,A,A,A,0xfc]
+; CHECK-NEXT:    # fixup A - offset: 2, value: g8-5, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB71_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB71_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB71_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i8, i8* @g8
+  %xor = xor i8 %load1, -4
+  store i8 %xor, i8* @g8
+  %cond = icmp eq i8 %xor, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @xor64_reg_br(i64 %arg) nounwind {
+; CHECK-LABEL: xor64_reg_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    xorq %rdi, {{.*}}(%rip) # encoding: [0x48,0x31,0x3d,A,A,A,A]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g64-4, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB72_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB72_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB72_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i64, i64* @g64
+  %xor = xor i64 %load1, %arg
+  store i64 %xor, i64* @g64
+  %cond = icmp eq i64 %xor, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @xor32_reg_br(i32 %arg) nounwind {
+; CHECK-LABEL: xor32_reg_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    xorl %edi, {{.*}}(%rip) # encoding: [0x31,0x3d,A,A,A,A]
+; CHECK-NEXT:    # fixup A - offset: 2, value: g32-4, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB73_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB73_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB73_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i32, i32* @g32
+  %xor = xor i32 %load1, %arg
+  store i32 %xor, i32* @g32
+  %cond = icmp eq i32 %xor, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @xor16_reg_br(i16 %arg) nounwind {
+; CHECK-LABEL: xor16_reg_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    xorw %di, {{.*}}(%rip) # encoding: [0x66,0x31,0x3d,A,A,A,A]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g16-4, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB74_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB74_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB74_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i16, i16* @g16
+  %xor = xor i16 %load1, %arg
+  store i16 %xor, i16* @g16
+  %cond = icmp eq i16 %xor, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}
+
+define void @xor8_reg_br(i8 %arg) nounwind {
+; CHECK-LABEL: xor8_reg_br:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    xorb %dil, {{.*}}(%rip) # encoding: [0x40,0x30,0x3d,A,A,A,A]
+; CHECK-NEXT:    # fixup A - offset: 3, value: g8-4, kind: reloc_riprel_4byte
+; CHECK-NEXT:    je .LBB75_1 # encoding: [0x74,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: .LBB75_1-1, kind: FK_PCRel_1
+; CHECK-NEXT:  # BB#2: # %b
+; CHECK-NEXT:    jmp b # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: b-1, kind: FK_PCRel_1
+; CHECK-NEXT:  .LBB75_1: # %a
+; CHECK-NEXT:    jmp a # TAILCALL
+; CHECK-NEXT:    # encoding: [0xeb,A]
+; CHECK-NEXT:    # fixup A - offset: 1, value: a-1, kind: FK_PCRel_1
+entry:
+  %load1 = load i8, i8* @g8
+  %xor = xor i8 %load1, %arg
+  store i8 %xor, i8* @g8
+  %cond = icmp eq i8 %xor, 0
+  br i1 %cond, label %a, label %b
+
+a:
+  tail call void @a()
+  ret void
+
+b:
+  tail call void @b()
+  ret void
+}

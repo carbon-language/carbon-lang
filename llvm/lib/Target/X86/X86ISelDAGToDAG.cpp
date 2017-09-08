@@ -2117,6 +2117,9 @@ bool X86DAGToDAGISel::foldLoadStoreIntoMemOperand(SDNode *Node) {
   case X86ISD::DEC:
   case X86ISD::ADD:
   case X86ISD::SUB:
+  case X86ISD::AND:
+  case X86ISD::OR:
+  case X86ISD::XOR:
     break;
   }
 
@@ -2161,7 +2164,10 @@ bool X86DAGToDAGISel::foldLoadStoreIntoMemOperand(SDNode *Node) {
     break;
   }
   case X86ISD::ADD:
-  case X86ISD::SUB: {
+  case X86ISD::SUB:
+  case X86ISD::AND:
+  case X86ISD::OR:
+  case X86ISD::XOR: {
     auto SelectRegOpcode = [SelectOpcode](unsigned Opc) {
       switch (Opc) {
       case X86ISD::ADD:
@@ -2170,6 +2176,14 @@ bool X86DAGToDAGISel::foldLoadStoreIntoMemOperand(SDNode *Node) {
       case X86ISD::SUB:
         return SelectOpcode(X86::SUB64mr, X86::SUB32mr, X86::SUB16mr,
                             X86::SUB8mr);
+      case X86ISD::AND:
+        return SelectOpcode(X86::AND64mr, X86::AND32mr, X86::AND16mr,
+                            X86::AND8mr);
+      case X86ISD::OR:
+        return SelectOpcode(X86::OR64mr, X86::OR32mr, X86::OR16mr, X86::OR8mr);
+      case X86ISD::XOR:
+        return SelectOpcode(X86::XOR64mr, X86::XOR32mr, X86::XOR16mr,
+                            X86::XOR8mr);
       default:
         llvm_unreachable("Invalid opcode!");
       }
@@ -2180,6 +2194,12 @@ bool X86DAGToDAGISel::foldLoadStoreIntoMemOperand(SDNode *Node) {
         return SelectOpcode(X86::ADD64mi8, X86::ADD32mi8, X86::ADD16mi8);
       case X86ISD::SUB:
         return SelectOpcode(X86::SUB64mi8, X86::SUB32mi8, X86::SUB16mi8);
+      case X86ISD::AND:
+        return SelectOpcode(X86::AND64mi8, X86::AND32mi8, X86::AND16mi8);
+      case X86ISD::OR:
+        return SelectOpcode(X86::OR64mi8, X86::OR32mi8, X86::OR16mi8);
+      case X86ISD::XOR:
+        return SelectOpcode(X86::XOR64mi8, X86::XOR32mi8, X86::XOR16mi8);
       default:
         llvm_unreachable("Invalid opcode!");
       }
@@ -2192,6 +2212,15 @@ bool X86DAGToDAGISel::foldLoadStoreIntoMemOperand(SDNode *Node) {
       case X86ISD::SUB:
         return SelectOpcode(X86::SUB64mi32, X86::SUB32mi, X86::SUB16mi,
                             X86::SUB8mi);
+      case X86ISD::AND:
+        return SelectOpcode(X86::AND64mi32, X86::AND32mi, X86::AND16mi,
+                            X86::AND8mi);
+      case X86ISD::OR:
+        return SelectOpcode(X86::OR64mi32, X86::OR32mi, X86::OR16mi,
+                            X86::OR8mi);
+      case X86ISD::XOR:
+        return SelectOpcode(X86::XOR64mi32, X86::XOR32mi, X86::XOR16mi,
+                            X86::XOR8mi);
       default:
         llvm_unreachable("Invalid opcode!");
       }
@@ -2208,7 +2237,8 @@ bool X86DAGToDAGISel::foldLoadStoreIntoMemOperand(SDNode *Node) {
       // Check if we can shrink the operand enough to fit in an immediate (or
       // fit into a smaller immediate) by negating it and switching the
       // operation.
-      if (((MemVT != MVT::i8 && OperandV.getMinSignedBits() > 8 &&
+      if ((Opc == X86ISD::ADD || Opc == X86ISD::SUB) &&
+          ((MemVT != MVT::i8 && OperandV.getMinSignedBits() > 8 &&
             (-OperandV).getMinSignedBits() <= 8) ||
            (MemVT == MVT::i64 && OperandV.getMinSignedBits() > 32 &&
             (-OperandV).getMinSignedBits() <= 32)) &&
