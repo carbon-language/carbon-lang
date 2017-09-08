@@ -299,9 +299,9 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
     Add(InX::BuildId);
   }
 
-  InX::Common = createCommonSection<ELFT>();
-  if (InX::Common)
-    Add(InX::Common);
+  auto Commons = createCommonSections();
+  for (InputSection *S : Commons)
+    Add(S);
 
   InX::Bss = make<BssSection>(".bss");
   Add(InX::Bss);
