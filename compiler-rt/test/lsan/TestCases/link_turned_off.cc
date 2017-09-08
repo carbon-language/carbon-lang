@@ -3,15 +3,13 @@
 // RUN: %clangxx_lsan %s -o %t
 // RUN: %env_lsan_opts=$LSAN_BASE %run %t
 // RUN: %env_lsan_opts=$LSAN_BASE not %run %t foo 2>&1 | FileCheck %s
-//
-// UNSUPPORTED: darwin
 
 #include <sanitizer/lsan_interface.h>
 
 int argc_copy;
 
 extern "C" {
-int __lsan_is_turned_off() {
+int __attribute__((used)) __lsan_is_turned_off() {
   return (argc_copy == 1);
 }
 }
