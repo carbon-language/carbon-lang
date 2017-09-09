@@ -2326,7 +2326,7 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
     SDValue VSelect = CurDAG->getNode(
         ISD::VSELECT, SDLoc(Node), Node->getValueType(0), Node->getOperand(0),
         Node->getOperand(1), Node->getOperand(2));
-    ReplaceUses(SDValue(Node, 0), VSelect);
+    ReplaceNode(Node, VSelect.getNode());
     SelectCode(VSelect.getNode());
     // We already called ReplaceUses.
     return;
