@@ -71,17 +71,17 @@ int main() {
   return DoSEGV();
 }
 
-// CHECK0-NOT: ASAN:DEADLYSIGNAL
+// CHECK0-NOT: AddressSanitizer:DEADLYSIGNAL
 // CHECK0-NOT: AddressSanitizer: SEGV on unknown address
 // CHECK0: User sigaction installed
 // CHECK0-NEXT: User sigaction called
 
 // CHECK1: User sigaction installed
 // CHECK1-NEXT: User sigaction called
-// CHECK1-NEXT: ASAN:DEADLYSIGNAL
+// CHECK1-NEXT: AddressSanitizer:DEADLYSIGNAL
 // CHECK1: AddressSanitizer: SEGV on unknown address
 
 // CHECK2-NOT: User sigaction called
 // CHECK2: User sigaction installed
-// CHECK2-NEXT: ASAN:DEADLYSIGNAL
+// CHECK2-NEXT: AddressSanitizer:DEADLYSIGNAL
 // CHECK2: AddressSanitizer: SEGV on unknown address
