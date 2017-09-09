@@ -21,6 +21,7 @@
 // UNSUPPORTED: lsan
 // UNSUPPORTED: msan
 // UNSUPPORTED: tsan
+// UNSUPPORTED: ubsan
 
 #include <signal.h>
 #include <stdio.h>
