@@ -72,7 +72,9 @@ static bool ShouldUpgradeX86Intrinsic(Function *F, StringRef Name) {
   // like to use this information to remove upgrade code for some older
   // intrinsics. It is currently undecided how we will determine that future
   // point.
-  if (Name.startswith("sse2.pcmpeq.") || // Added in 3.1
+  if (Name.startswith("avx512.mask.broadcastf32x2") || // Added in 6.0
+      Name.startswith("avx512.mask.broadcasti32x2") || // Added in 6.0
+      Name.startswith("sse2.pcmpeq.") || // Added in 3.1
       Name.startswith("sse2.pcmpgt.") || // Added in 3.1
       Name.startswith("avx2.pcmpeq.") || // Added in 3.1
       Name.startswith("avx2.pcmpgt.") || // Added in 3.1
@@ -803,6 +805,20 @@ static Value *upgradeIntMinMax(IRBuilder<> &Builder, CallInst &CI,
   return Res;
 }
 
+static Value *upgradeBroadcastf32x2(IRBuilder<> &Builder, CallInst &CI) {
+  Value *Op0 = CI.getArgOperand(0);
+  Value *RetArg = CI.getReturnedArgOperand();
+
+  llvm::VectorType *Ty = RetArg->getType();
+  unsigned NumElts = Ty->getVectorNumElements();
+  uint32_t Indices[NumElts];
+  for(unsigned i = 0; i < NumElts; ++i)
+    Indices[i] = i % 2;
+
+  Value *Res = Builder.CreateShuffleVector(Op0,UndefValue::get(Ty),Indices);
+  return EmitX86Select(Builder, CI.getArgOperand(2), Res, CI.getArgOperand(1));
+}
+
 static Value *upgradeMaskedCompare(IRBuilder<> &Builder, CallInst &CI,
                                    unsigned CC, bool Signed) {
   Value *Op0 = CI.getArgOperand(0);
@@ -1059,6 +1075,9 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
                          Name.startswith("avx2.pmaxs") ||
                          Name.startswith("avx512.mask.pmaxs"))) {
       Rep = upgradeIntMinMax(Builder, *CI, ICmpInst::ICMP_SGT);
+    } else if (IsX86 && (Name.startswith("avx512.mask.broadcastf32x2") ||
+                         Name.startswith("avx512.mask.broadcasti32x2"))) {
+        Rep =upgradeBroadcastf32x2(Builder, *CI);
     } else if (IsX86 && (Name == "sse2.pmaxu.b" ||
                          Name == "sse41.pmaxuw" ||
                          Name == "sse41.pmaxud" ||
