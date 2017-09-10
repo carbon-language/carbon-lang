@@ -28403,9 +28403,8 @@ static bool combineX86ShufflesRecursively(ArrayRef<SDValue> SrcOps,
   }
 
   // Finally, try to combine into a single shuffle instruction.
-  SDValue Res = combineX86ShuffleChain(Ops, Root, Mask, Depth, HasVariableMask, DAG,
-                                       DCI, Subtarget);
-  if (Res) {
+  if (SDValue Res = combineX86ShuffleChain(
+          Ops, Root, Mask, Depth, HasVariableMask, DAG, DCI, Subtarget)) {
     DCI.CombineTo(Root.getNode(), Res, /*AddTo*/ true);
     return true;
   }
