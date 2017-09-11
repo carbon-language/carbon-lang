@@ -16,8 +16,6 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/StringSwitch.h"
-#include "llvm/ADT/Triple.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/Option.h"
@@ -32,8 +30,6 @@
 using namespace lld;
 using namespace llvm;
 
-namespace lld {
-namespace mingw {
 namespace {
 
 // Create OptTable
@@ -118,7 +114,7 @@ opt::InputArgList COFFLdOptTable::parse(ArrayRef<const char *> Argv) {
 
 // Convert Unix-ish command line arguments to Windows-ish ones and
 // then call coff::link.
-bool link(ArrayRef<const char *> ArgsArr, raw_ostream &Diag) {
+bool mingw::link(ArrayRef<const char *> ArgsArr, raw_ostream &Diag) {
   COFFLdOptTable Parser;
   opt::InputArgList Args = Parser.parse(ArgsArr.slice(1));
 
@@ -194,6 +190,3 @@ bool link(ArrayRef<const char *> ArgsArr, raw_ostream &Diag) {
     Vec.push_back(S.c_str());
   return coff::link(Vec);
 }
-
-} // namespace mingw
-} // namespace lld
