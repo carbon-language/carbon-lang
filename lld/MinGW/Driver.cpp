@@ -30,8 +30,6 @@
 using namespace lld;
 using namespace llvm;
 
-namespace {
-
 // Create OptTable
 enum {
   OPT_INVALID = 0,
@@ -41,7 +39,7 @@ enum {
 };
 
 // Create prefix string literals used in Options.td
-#define PREFIX(NAME, VALUE) const char *const NAME[] = VALUE;
+#define PREFIX(NAME, VALUE) static const char *const NAME[] = VALUE;
 #include "Options.inc"
 #undef PREFIX
 
@@ -54,12 +52,12 @@ static const opt::OptTable::Info InfoTable[] = {
 #undef OPTION
 };
 
+namespace {
 class COFFLdOptTable : public opt::OptTable {
 public:
   COFFLdOptTable() : OptTable(InfoTable, false) {}
   opt::InputArgList parse(ArrayRef<const char *> Argv);
 };
-
 } // namespace
 
 LLVM_ATTRIBUTE_NORETURN static void error(const Twine &Msg) {
