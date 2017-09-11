@@ -30,6 +30,11 @@
 using namespace lld;
 using namespace llvm;
 
+LLVM_ATTRIBUTE_NORETURN static void error(const Twine &Msg) {
+  errs() << Msg << "\n";
+  exit(1);
+}
+
 // Create OptTable
 enum {
   OPT_INVALID = 0,
@@ -60,9 +65,20 @@ public:
 };
 } // namespace
 
-LLVM_ATTRIBUTE_NORETURN static void error(const Twine &Msg) {
-  errs() << Msg << "\n";
-  exit(1);
+opt::InputArgList MinGWOptTable::parse(ArrayRef<const char *> Argv) {
+  unsigned MissingIndex;
+  unsigned MissingCount;
+
+  SmallVector<const char *, 256> Vec(Argv.data(), Argv.data() + Argv.size());
+  opt::InputArgList Args = this->ParseArgs(Vec, MissingIndex, MissingCount);
+
+  if (MissingCount)
+    error(StringRef(Args.getArgString(MissingIndex)) + ": missing argument");
+  for (auto *Arg : Args.filtered(OPT_UNKNOWN))
+    error("unknown argument: " + Arg->getSpelling());
+  if (!Args.hasArgNoClaim(OPT_INPUT) && !Args.hasArgNoClaim(OPT_l))
+    error("no input files");
+  return Args;
 }
 
 // Find a file by concatenating given paths.
@@ -92,22 +108,6 @@ searchLibrary(StringRef Name, ArrayRef<StringRef> SearchPaths, bool BStatic) {
       return *S;
   }
   error("unable to find library -l" + Name);
-}
-
-opt::InputArgList MinGWOptTable::parse(ArrayRef<const char *> Argv) {
-  unsigned MissingIndex;
-  unsigned MissingCount;
-
-  SmallVector<const char *, 256> Vec(Argv.data(), Argv.data() + Argv.size());
-  opt::InputArgList Args = this->ParseArgs(Vec, MissingIndex, MissingCount);
-
-  if (MissingCount)
-    error(StringRef(Args.getArgString(MissingIndex)) + ": missing argument");
-  for (auto *Arg : Args.filtered(OPT_UNKNOWN))
-    error("unknown argument: " + Arg->getSpelling());
-  if (!Args.hasArgNoClaim(OPT_INPUT) && !Args.hasArgNoClaim(OPT_l))
-    error("no input files");
-  return Args;
 }
 
 // Convert Unix-ish command line arguments to Windows-ish ones and
