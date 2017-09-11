@@ -14,6 +14,7 @@
 #include "lld/Driver/Driver.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
@@ -124,7 +125,7 @@ bool link(ArrayRef<const char *> ArgsArr, raw_ostream &Diag) {
   std::vector<std::string> LinkArgs;
   auto Add = [&](const Twine &S) { LinkArgs.push_back(S.str()); };
 
-  Add(ArgsArr[0]);
+  Add("lld-link");
 
   if (auto *A = Args.getLastArg(OPT_entry))
     Add("-entry:" + StringRef(A->getValue()));
@@ -174,6 +175,15 @@ bool link(ArrayRef<const char *> ArgsArr, raw_ostream &Diag) {
     else
       Add(searchLibrary(A->getValue(), SearchPaths, Args.hasArg(OPT_Bstatic)));
   }
+
+  if (Args.hasArg(OPT_verbose))
+    Add("-verbose");
+
+  if (Args.hasArg(OPT_verbose) || Args.hasArg(OPT__HASH_HASH_HASH))
+    outs() << llvm::join(LinkArgs, " ") << "\n";
+
+  if (Args.hasArg(OPT__HASH_HASH_HASH))
+    return true;
 
   // Repack vector of strings to vector of const char pointers for coff::link.
   std::vector<const char *> Vec;
