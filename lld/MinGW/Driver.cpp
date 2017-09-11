@@ -131,7 +131,7 @@ bool link(ArrayRef<const char *> ArgsArr, raw_ostream &Diag) {
     Add("-entry:" + StringRef(A->getValue()));
   if (auto *A = Args.getLastArg(OPT_subs))
     Add("-subsystem:" + StringRef(A->getValue()));
-  if (auto *A = Args.getLastArg(OPT_outlib))
+  if (auto *A = Args.getLastArg(OPT_out_implib))
     Add("-implib:" + StringRef(A->getValue()));
   if (auto *A = Args.getLastArg(OPT_stack))
     Add("-stack:" + StringRef(A->getValue()));
