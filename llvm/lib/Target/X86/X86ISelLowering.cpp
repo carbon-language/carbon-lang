@@ -27091,6 +27091,18 @@ unsigned X86TargetLowering::ComputeNumSignBitsForTargetNode(
     return Tmp;
   }
 
+  case X86ISD::PACKSS: {
+    // PACKSS is just a truncation if the sign bits extend to the packed size.
+    // TODO: Add DemandedElts support.
+    unsigned SrcBits = Op.getOperand(0).getScalarValueSizeInBits();
+    unsigned Tmp0 = DAG.ComputeNumSignBits(Op.getOperand(0), Depth + 1);
+    unsigned Tmp1 = DAG.ComputeNumSignBits(Op.getOperand(1), Depth + 1);
+    unsigned Tmp = std::min(Tmp0, Tmp1);
+    if (Tmp > (SrcBits - VTBits))
+      return Tmp - (SrcBits - VTBits);
+    return 1;
+  }
+
   case X86ISD::VSHLI: {
     SDValue Src = Op.getOperand(0);
     unsigned Tmp = DAG.ComputeNumSignBits(Src, Depth + 1);
