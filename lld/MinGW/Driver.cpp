@@ -53,9 +53,9 @@ static const opt::OptTable::Info InfoTable[] = {
 };
 
 namespace {
-class COFFLdOptTable : public opt::OptTable {
+class MinGWOptTable : public opt::OptTable {
 public:
-  COFFLdOptTable() : OptTable(InfoTable, false) {}
+  MinGWOptTable() : OptTable(InfoTable, false) {}
   opt::InputArgList parse(ArrayRef<const char *> Argv);
 };
 } // namespace
@@ -94,7 +94,7 @@ searchLibrary(StringRef Name, ArrayRef<StringRef> SearchPaths, bool BStatic) {
   error("unable to find library -l" + Name);
 }
 
-opt::InputArgList COFFLdOptTable::parse(ArrayRef<const char *> Argv) {
+opt::InputArgList MinGWOptTable::parse(ArrayRef<const char *> Argv) {
   unsigned MissingIndex;
   unsigned MissingCount;
 
@@ -113,7 +113,7 @@ opt::InputArgList COFFLdOptTable::parse(ArrayRef<const char *> Argv) {
 // Convert Unix-ish command line arguments to Windows-ish ones and
 // then call coff::link.
 bool mingw::link(ArrayRef<const char *> ArgsArr, raw_ostream &Diag) {
-  COFFLdOptTable Parser;
+  MinGWOptTable Parser;
   opt::InputArgList Args = Parser.parse(ArgsArr.slice(1));
 
   std::vector<std::string> LinkArgs;
