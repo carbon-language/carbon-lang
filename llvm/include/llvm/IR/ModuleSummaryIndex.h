@@ -487,6 +487,16 @@ struct TypeTestResolution {
   /// range [1,256], this number will be 8. This helps generate the most compact
   /// instruction sequences.
   unsigned SizeM1BitWidth = 0;
+
+  // The following fields are only used if the target does not support the use
+  // of absolute symbols to store constants. Their meanings are the same as the
+  // corresponding fields in LowerTypeTestsModule::TypeIdLowering in
+  // LowerTypeTests.cpp.
+
+  uint64_t AlignLog2 = 0;
+  uint64_t SizeM1 = 0;
+  uint8_t BitMask = 0;
+  uint64_t InlineBits = 0;
 };
 
 struct WholeProgramDevirtResolution {

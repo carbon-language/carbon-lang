@@ -30,6 +30,10 @@ template <> struct MappingTraits<TypeTestResolution> {
   static void mapping(IO &io, TypeTestResolution &res) {
     io.mapOptional("Kind", res.TheKind);
     io.mapOptional("SizeM1BitWidth", res.SizeM1BitWidth);
+    io.mapOptional("AlignLog2", res.AlignLog2);
+    io.mapOptional("SizeM1", res.SizeM1);
+    io.mapOptional("BitMask", res.BitMask);
+    io.mapOptional("InlineBits", res.InlineBits);
   }
 };
 

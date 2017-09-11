@@ -217,6 +217,11 @@ static void computeCacheKey(
     AddUnsigned(S.TTRes.TheKind);
     AddUnsigned(S.TTRes.SizeM1BitWidth);
 
+    AddUint64(S.TTRes.AlignLog2);
+    AddUint64(S.TTRes.SizeM1);
+    AddUint64(S.TTRes.BitMask);
+    AddUint64(S.TTRes.InlineBits);
+
     AddUint64(S.WPDRes.size());
     for (auto &WPD : S.WPDRes) {
       AddUnsigned(WPD.first);
