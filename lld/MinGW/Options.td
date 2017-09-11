@@ -31,6 +31,7 @@ def minor_image_version: Separate<["--"], "minor-image-version">;
 def enable_auto_image_base: Flag<["--"], "enable-auto-image-base">;
 def full_shutdown: Flag<["--"], "full-shutdown">;
 def O: Joined<["-"], "O">, HelpText<"Optimize output file size">;
+def sysroot: J<"sysroot">, HelpText<"Sysroot">;
 def v: Flag<["-"], "v">, HelpText<"Display the version number">;
 def version: F<"version">, HelpText<"Display the version number and exit">;
 
