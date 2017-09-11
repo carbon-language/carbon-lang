@@ -160,6 +160,9 @@ bool link(ArrayRef<const char *> ArgsArr, raw_ostream &Diag) {
       error("unknown parameter: -m" + S);
   }
 
+  for (auto *A : Args.filtered(OPT_mllvm))
+    Add("-mllvm:" + StringRef(A->getValue()));
+
   if (Args.getLastArgValue(OPT_m) == "i386pe")
     Add("-alternatename:__image_base__=___ImageBase");
   else
