@@ -51,6 +51,8 @@ template <> struct MappingTraits<WholeProgramDevirtResolution::ByArg> {
   static void mapping(IO &io, WholeProgramDevirtResolution::ByArg &res) {
     io.mapOptional("Kind", res.TheKind);
     io.mapOptional("Info", res.Info);
+    io.mapOptional("Byte", res.Byte);
+    io.mapOptional("Bit", res.Bit);
   }
 };
 

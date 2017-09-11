@@ -230,6 +230,8 @@ static void computeCacheKey(
           AddUint64(Arg);
         AddUnsigned(ByArg.second.TheKind);
         AddUint64(ByArg.second.Info);
+        AddUnsigned(ByArg.second.Byte);
+        AddUnsigned(ByArg.second.Bit);
       }
     }
   };

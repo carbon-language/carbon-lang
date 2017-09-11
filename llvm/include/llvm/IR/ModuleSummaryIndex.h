@@ -510,6 +510,12 @@ struct WholeProgramDevirtResolution {
     /// - UniqueRetVal: the return value associated with the unique vtable (0 or
     ///   1).
     uint64_t Info = 0;
+
+    // The following fields are only used if the target does not support the use
+    // of absolute symbols to store constants.
+
+    uint32_t Byte = 0;
+    uint32_t Bit = 0;
   };
 
   /// Resolutions for calls with all constant integer arguments (excluding the

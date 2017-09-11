@@ -16,6 +16,8 @@
 ; SUMMARY-NEXT:           24,12:
 ; SUMMARY-NEXT:             Kind:            UniformRetVal
 ; SUMMARY-NEXT:             Info:            36
+; SUMMARY-NEXT:             Byte:            0
+; SUMMARY-NEXT:             Bit:             0
 
 ; CHECK: @vt4a = constant i32 (i8*, i32, i32)* @vf4a
 @vt4a = constant i32 (i8*, i32, i32)* @vf4a, !type !0
