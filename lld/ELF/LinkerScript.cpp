@@ -141,7 +141,7 @@ void LinkerScript::assignSymbol(SymbolAssignment *Cmd, bool InSec) {
     Sym->Value = V.getValue();
   } else {
     Sym->Section = V.Sec;
-    Sym->Value = alignTo(V.Val, V.Alignment);
+    Sym->Value = V.getValue() - V.getSecAddr();
   }
 }
 

@@ -81,6 +81,20 @@
 # RUN: ld.lld -o %t5 --script %t.script %t
 # RUN: llvm-objdump -section-headers %t5 | FileCheck %s -check-prefix=ZERO
 
+
+# RUN: echo "SECTIONS {                              \
+# RUN:  . = 0xff8;                                   \
+# RUN:  .aaa : { *(.aaa) foo = ALIGN(., 0x100); bar = .; } \
+# RUN:  .bbb : { *(.bbb); } \
+# RUN:  .ccc : { *(.ccc); } \
+# RUN:  .text : { *(.text); } \
+# RUN: }" > %t.script
+# RUN: ld.lld -o %t1 --script %t.script %t
+# RUN: llvm-objdump -t %t1 | FileCheck --check-prefix=OFFSET %s
+
+# OFFSET: 0000000000001000         .aaa            00000000 foo
+# OFFSET: 0000000000001000         .aaa            00000000 bar
+
 .global _start
 _start:
  nop
