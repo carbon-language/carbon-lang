@@ -165,6 +165,210 @@ define <4 x i32> @test_extracti128(<8 x i32> %a0, <8 x i32> %a1, <4 x i32> *%a2)
   ret <4 x i32> %4
 }
 
+define <2 x double> @test_gatherdpd(<2 x double> %a0, i8* %a1, <4 x i32> %a2, <2 x double> %a3) {
+; GENERIC-LABEL: test_gatherdpd:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vgatherdpd %xmm2, (%rdi,%xmm1,2), %xmm0
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_gatherdpd:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vgatherdpd %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [1:?]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_gatherdpd:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vgatherdpd %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [1:?]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_gatherdpd:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vgatherdpd %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [100:?]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call <2 x double> @llvm.x86.avx2.gather.d.pd(<2 x double> %a0, i8* %a1, <4 x i32> %a2, <2 x double> %a3, i8 2)
+  ret <2 x double> %1
+}
+declare <2 x double> @llvm.x86.avx2.gather.d.pd(<2 x double>, i8*, <4 x i32>, <2 x double>, i8) nounwind readonly
+
+define <4 x double> @test_gatherdpd_ymm(<4 x double> %a0, i8* %a1, <4 x i32> %a2, <4 x double> %a3) {
+; GENERIC-LABEL: test_gatherdpd_ymm:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vgatherdpd %ymm2, (%rdi,%xmm1,8), %ymm0
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_gatherdpd_ymm:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vgatherdpd %ymm2, (%rdi,%xmm1,8), %ymm0 # sched: [1:?]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_gatherdpd_ymm:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vgatherdpd %ymm2, (%rdi,%xmm1,8), %ymm0 # sched: [1:?]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_gatherdpd_ymm:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vgatherdpd %ymm2, (%rdi,%xmm1,8), %ymm0 # sched: [100:?]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call <4 x double> @llvm.x86.avx2.gather.d.pd.256(<4 x double> %a0, i8* %a1, <4 x i32> %a2, <4 x double> %a3, i8 8)
+  ret <4 x double> %1
+}
+declare <4 x double> @llvm.x86.avx2.gather.d.pd.256(<4 x double>, i8*, <4 x i32>, <4 x double>, i8) nounwind readonly
+
+define <4 x float> @test_gatherdps(<4 x float> %a0, i8* %a1, <4 x i32> %a2, <4 x float> %a3) {
+; GENERIC-LABEL: test_gatherdps:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vgatherdps %xmm2, (%rdi,%xmm1,2), %xmm0
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_gatherdps:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vgatherdps %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [1:?]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_gatherdps:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vgatherdps %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [1:?]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_gatherdps:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vgatherdps %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [100:?]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call <4 x float> @llvm.x86.avx2.gather.d.ps(<4 x float> %a0, i8* %a1, <4 x i32> %a2, <4 x float> %a3, i8 2)
+  ret <4 x float> %1
+}
+declare <4 x float> @llvm.x86.avx2.gather.d.ps(<4 x float>, i8*, <4 x i32>, <4 x float>, i8) nounwind readonly
+
+define <8 x float> @test_gatherdps_ymm(<8 x float> %a0, i8* %a1, <8 x i32> %a2, <8 x float> %a3) {
+; GENERIC-LABEL: test_gatherdps_ymm:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vgatherdps %ymm2, (%rdi,%ymm1,4), %ymm0
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_gatherdps_ymm:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vgatherdps %ymm2, (%rdi,%ymm1,4), %ymm0 # sched: [1:?]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_gatherdps_ymm:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vgatherdps %ymm2, (%rdi,%ymm1,4), %ymm0 # sched: [1:?]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_gatherdps_ymm:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vgatherdps %ymm2, (%rdi,%ymm1,4), %ymm0 # sched: [100:?]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call <8 x float> @llvm.x86.avx2.gather.d.ps.256(<8 x float> %a0, i8* %a1, <8 x i32> %a2, <8 x float> %a3, i8 4)
+  ret <8 x float> %1
+}
+declare <8 x float> @llvm.x86.avx2.gather.d.ps.256(<8 x float>, i8*, <8 x i32>, <8 x float>, i8) nounwind readonly
+
+define <2 x double> @test_gatherqpd(<2 x double> %a0, i8* %a1, <2 x i64> %a2, <2 x double> %a3) {
+; GENERIC-LABEL: test_gatherqpd:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vgatherqpd %xmm2, (%rdi,%xmm1,2), %xmm0
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_gatherqpd:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vgatherqpd %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [1:?]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_gatherqpd:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vgatherqpd %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [1:?]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_gatherqpd:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vgatherqpd %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [100:?]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call <2 x double> @llvm.x86.avx2.gather.q.pd(<2 x double> %a0, i8* %a1, <2 x i64> %a2, <2 x double> %a3, i8 2)
+  ret <2 x double> %1
+}
+declare <2 x double> @llvm.x86.avx2.gather.q.pd(<2 x double>, i8*, <2 x i64>, <2 x double>, i8) nounwind readonly
+
+define <4 x double> @test_gatherqpd_ymm(<4 x double> %a0, i8* %a1, <4 x i64> %a2, <4 x double> %a3) {
+; GENERIC-LABEL: test_gatherqpd_ymm:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vgatherqpd %ymm2, (%rdi,%ymm1,8), %ymm0
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_gatherqpd_ymm:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vgatherqpd %ymm2, (%rdi,%ymm1,8), %ymm0 # sched: [1:?]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_gatherqpd_ymm:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vgatherqpd %ymm2, (%rdi,%ymm1,8), %ymm0 # sched: [1:?]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_gatherqpd_ymm:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vgatherqpd %ymm2, (%rdi,%ymm1,8), %ymm0 # sched: [100:?]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call <4 x double> @llvm.x86.avx2.gather.q.pd.256(<4 x double> %a0, i8* %a1, <4 x i64> %a2, <4 x double> %a3, i8 8)
+  ret <4 x double> %1
+}
+declare <4 x double> @llvm.x86.avx2.gather.q.pd.256(<4 x double>, i8*, <4 x i64>, <4 x double>, i8) nounwind readonly
+
+define <4 x float> @test_gatherqps(<4 x float> %a0, i8* %a1, <2 x i64> %a2, <4 x float> %a3) {
+; GENERIC-LABEL: test_gatherqps:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vgatherqps %xmm2, (%rdi,%xmm1,2), %xmm0
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_gatherqps:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vgatherqps %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [1:?]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_gatherqps:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vgatherqps %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [1:?]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_gatherqps:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vgatherqps %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [100:?]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call <4 x float> @llvm.x86.avx2.gather.q.ps(<4 x float> %a0, i8* %a1, <2 x i64> %a2, <4 x float> %a3, i8 2)
+  ret <4 x float> %1
+}
+declare <4 x float> @llvm.x86.avx2.gather.q.ps(<4 x float>, i8*, <2 x i64>, <4 x float>, i8) nounwind readonly
+
+define <4 x float> @test_gatherqps_ymm(<4 x float> %a0, i8* %a1, <4 x i64> %a2, <4 x float> %a3) {
+; GENERIC-LABEL: test_gatherqps_ymm:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vgatherqps %xmm2, (%rdi,%ymm1,4), %xmm0
+; GENERIC-NEXT:    vzeroupper
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_gatherqps_ymm:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vgatherqps %xmm2, (%rdi,%ymm1,4), %xmm0 # sched: [1:?]
+; HASWELL-NEXT:    vzeroupper # sched: [4:1.00]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_gatherqps_ymm:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vgatherqps %xmm2, (%rdi,%ymm1,4), %xmm0 # sched: [1:?]
+; SKYLAKE-NEXT:    vzeroupper # sched: [4:1.00]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_gatherqps_ymm:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vgatherqps %xmm2, (%rdi,%ymm1,4), %xmm0 # sched: [100:?]
+; ZNVER1-NEXT:    vzeroupper # sched: [100:?]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call <4 x float> @llvm.x86.avx2.gather.q.ps.256(<4 x float> %a0, i8* %a1, <4 x i64> %a2, <4 x float> %a3, i8 4)
+  ret <4 x float> %1
+}
+declare <4 x float> @llvm.x86.avx2.gather.q.ps.256(<4 x float>, i8*, <4 x i64>, <4 x float>, i8) nounwind readonly
+
 define <8 x i32> @test_inserti128(<8 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) {
 ; GENERIC-LABEL: test_inserti128:
 ; GENERIC:       # BB#0:
@@ -201,6 +405,31 @@ define <8 x i32> @test_inserti128(<8 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) 
   %6 = add <8 x i32> %2, %5
   ret <8 x i32> %6
 }
+
+define <4 x i64> @test_movntdqa(i8* %a0) {
+; GENERIC-LABEL: test_movntdqa:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vmovntdqa (%rdi), %ymm0 # sched: [4:0.50]
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_movntdqa:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vmovntdqa (%rdi), %ymm0 # sched: [1:0.50]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_movntdqa:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vmovntdqa (%rdi), %ymm0 # sched: [1:0.50]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_movntdqa:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vmovntdqa (%rdi), %ymm0 # sched: [8:0.50]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call <4 x i64> @llvm.x86.avx2.movntdqa(i8* %a0)
+  ret <4 x i64> %1
+}
+declare <4 x i64> @llvm.x86.avx2.movntdqa(i8*) nounwind readonly
 
 define <16 x i16> @test_mpsadbw(<32 x i8> %a0, <32 x i8> %a1, <32 x i8> *%a2) {
 ; GENERIC-LABEL: test_mpsadbw:
@@ -1740,6 +1969,210 @@ define <4 x i64> @test_permq(<4 x i64> %a0, <4 x i64> *%a1) {
   ret <4 x i64> %4
 }
 
+define <4 x i32> @test_pgatherdd(<4 x i32> %a0, i8* %a1, <4 x i32> %a2, <4 x i32> %a3) {
+; GENERIC-LABEL: test_pgatherdd:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpgatherdd %xmm2, (%rdi,%xmm1,2), %xmm0
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_pgatherdd:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpgatherdd %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [1:?]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_pgatherdd:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpgatherdd %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [1:?]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_pgatherdd:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpgatherdd %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [100:?]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call <4 x i32> @llvm.x86.avx2.gather.d.d(<4 x i32> %a0, i8* %a1, <4 x i32> %a2, <4 x i32> %a3, i8 2)
+  ret <4 x i32> %1
+}
+declare <4 x i32> @llvm.x86.avx2.gather.d.d(<4 x i32>, i8*, <4 x i32>, <4 x i32>, i8) nounwind readonly
+
+define <8 x i32> @test_pgatherdd_ymm(<8 x i32> %a0, i8* %a1, <8 x i32> %a2, <8 x i32> %a3) {
+; GENERIC-LABEL: test_pgatherdd_ymm:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpgatherdd %ymm2, (%rdi,%ymm1,2), %ymm0
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_pgatherdd_ymm:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpgatherdd %ymm2, (%rdi,%ymm1,2), %ymm0 # sched: [1:?]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_pgatherdd_ymm:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpgatherdd %ymm2, (%rdi,%ymm1,2), %ymm0 # sched: [1:?]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_pgatherdd_ymm:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpgatherdd %ymm2, (%rdi,%ymm1,2), %ymm0 # sched: [100:?]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call <8 x i32> @llvm.x86.avx2.gather.d.d.256(<8 x i32> %a0, i8* %a1, <8 x i32> %a2, <8 x i32> %a3, i8 2)
+  ret <8 x i32> %1
+}
+declare <8 x i32> @llvm.x86.avx2.gather.d.d.256(<8 x i32>, i8*, <8 x i32>, <8 x i32>, i8) nounwind readonly
+
+define <2 x i64> @test_pgatherdq(<2 x i64> %a0, i8* %a1, <4 x i32> %a2, <2 x i64> %a3) {
+; GENERIC-LABEL: test_pgatherdq:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpgatherdq %xmm2, (%rdi,%xmm1,2), %xmm0
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_pgatherdq:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpgatherdq %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [1:?]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_pgatherdq:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpgatherdq %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [1:?]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_pgatherdq:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpgatherdq %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [100:?]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call <2 x i64> @llvm.x86.avx2.gather.d.q(<2 x i64> %a0, i8* %a1, <4 x i32> %a2, <2 x i64> %a3, i8 2)
+  ret <2 x i64> %1
+}
+declare <2 x i64> @llvm.x86.avx2.gather.d.q(<2 x i64>, i8*, <4 x i32>, <2 x i64>, i8) nounwind readonly
+
+define <4 x i64> @test_pgatherdq_ymm(<4 x i64> %a0, i8* %a1, <4 x i32> %a2, <4 x i64> %a3) {
+; GENERIC-LABEL: test_pgatherdq_ymm:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpgatherdq %ymm2, (%rdi,%xmm1,2), %ymm0
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_pgatherdq_ymm:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpgatherdq %ymm2, (%rdi,%xmm1,2), %ymm0 # sched: [1:?]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_pgatherdq_ymm:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpgatherdq %ymm2, (%rdi,%xmm1,2), %ymm0 # sched: [1:?]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_pgatherdq_ymm:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpgatherdq %ymm2, (%rdi,%xmm1,2), %ymm0 # sched: [100:?]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call <4 x i64> @llvm.x86.avx2.gather.d.q.256(<4 x i64> %a0, i8* %a1, <4 x i32> %a2, <4 x i64> %a3, i8 2)
+  ret <4 x i64> %1
+}
+declare <4 x i64> @llvm.x86.avx2.gather.d.q.256(<4 x i64>, i8*, <4 x i32>, <4 x i64>, i8) nounwind readonly
+
+define <4 x i32> @test_pgatherqd(<4 x i32> %a0, i8* %a1, <2 x i64> %a2, <4 x i32> %a3) {
+; GENERIC-LABEL: test_pgatherqd:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpgatherqd %xmm2, (%rdi,%xmm1,2), %xmm0
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_pgatherqd:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpgatherqd %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [1:?]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_pgatherqd:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpgatherqd %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [1:?]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_pgatherqd:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpgatherqd %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [100:?]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call <4 x i32> @llvm.x86.avx2.gather.q.d(<4 x i32> %a0, i8* %a1, <2 x i64> %a2, <4 x i32> %a3, i8 2)
+  ret <4 x i32> %1
+}
+declare <4 x i32> @llvm.x86.avx2.gather.q.d(<4 x i32>, i8*, <2 x i64>, <4 x i32>, i8) nounwind readonly
+
+define <4 x i32> @test_pgatherqd_ymm(<4 x i32> %a0, i8* %a1, <4 x i64> %a2, <4 x i32> %a3) {
+; GENERIC-LABEL: test_pgatherqd_ymm:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpgatherqd %xmm2, (%rdi,%ymm1,2), %xmm0
+; GENERIC-NEXT:    vzeroupper
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_pgatherqd_ymm:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpgatherqd %xmm2, (%rdi,%ymm1,2), %xmm0 # sched: [1:?]
+; HASWELL-NEXT:    vzeroupper # sched: [4:1.00]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_pgatherqd_ymm:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpgatherqd %xmm2, (%rdi,%ymm1,2), %xmm0 # sched: [1:?]
+; SKYLAKE-NEXT:    vzeroupper # sched: [4:1.00]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_pgatherqd_ymm:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpgatherqd %xmm2, (%rdi,%ymm1,2), %xmm0 # sched: [100:?]
+; ZNVER1-NEXT:    vzeroupper # sched: [100:?]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call <4 x i32> @llvm.x86.avx2.gather.q.d.256(<4 x i32> %a0, i8* %a1, <4 x i64> %a2, <4 x i32> %a3, i8 2)
+  ret <4 x i32> %1
+}
+declare <4 x i32> @llvm.x86.avx2.gather.q.d.256(<4 x i32>, i8*, <4 x i64>, <4 x i32>, i8) nounwind readonly
+
+define <2 x i64> @test_pgatherqq(<2 x i64> %a0, i8 *%a1, <2 x i64> %a2, <2 x i64> %a3) {
+; GENERIC-LABEL: test_pgatherqq:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpgatherqq %xmm2, (%rdi,%xmm1,2), %xmm0
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_pgatherqq:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpgatherqq %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [1:?]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_pgatherqq:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpgatherqq %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [1:?]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_pgatherqq:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpgatherqq %xmm2, (%rdi,%xmm1,2), %xmm0 # sched: [100:?]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call <2 x i64> @llvm.x86.avx2.gather.q.q(<2 x i64> %a0, i8* %a1, <2 x i64> %a2, <2 x i64> %a3, i8 2)
+  ret <2 x i64> %1
+}
+declare <2 x i64> @llvm.x86.avx2.gather.q.q(<2 x i64>, i8*, <2 x i64>, <2 x i64>, i8) nounwind readonly
+
+define <4 x i64> @test_pgatherqq_ymm(<4 x i64> %a0, i8 *%a1, <4 x i64> %a2, <4 x i64> %a3) {
+; GENERIC-LABEL: test_pgatherqq_ymm:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpgatherqq %ymm2, (%rdi,%ymm1,2), %ymm0
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_pgatherqq_ymm:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpgatherqq %ymm2, (%rdi,%ymm1,2), %ymm0 # sched: [1:?]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_pgatherqq_ymm:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpgatherqq %ymm2, (%rdi,%ymm1,2), %ymm0 # sched: [1:?]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_pgatherqq_ymm:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpgatherqq %ymm2, (%rdi,%ymm1,2), %ymm0 # sched: [100:?]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call <4 x i64> @llvm.x86.avx2.gather.q.q.256(<4 x i64> %a0, i8* %a1, <4 x i64> %a2, <4 x i64> %a3, i8 2)
+  ret <4 x i64> %1
+}
+declare <4 x i64> @llvm.x86.avx2.gather.q.q.256(<4 x i64>, i8*, <4 x i64>, <4 x i64>, i8) nounwind readonly
+
 define <8 x i32> @test_phaddd(<8 x i32> %a0, <8 x i32> %a1, <8 x i32> *%a2) {
 ; GENERIC-LABEL: test_phaddd:
 ; GENERIC:       # BB#0:
@@ -1989,6 +2422,146 @@ define <8 x i32> @test_pmaddwd(<16 x i16> %a0, <16 x i16> %a1, <16 x i16> *%a2) 
   ret <8 x i32> %4
 }
 declare <8 x i32> @llvm.x86.avx2.pmadd.wd(<16 x i16>, <16 x i16>) nounwind readnone
+
+define <4 x i32> @test_pmaskmovd(i8* %a0, <4 x i32> %a1, <4 x i32> %a2) {
+; GENERIC-LABEL: test_pmaskmovd:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpmaskmovd (%rdi), %xmm0, %xmm2
+; GENERIC-NEXT:    vpmaskmovd %xmm1, %xmm0, (%rdi)
+; GENERIC-NEXT:    vmovdqa %xmm2, %xmm0 # sched: [1:0.50]
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_pmaskmovd:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpmaskmovd (%rdi), %xmm0, %xmm2 # sched: [2:2.00]
+; HASWELL-NEXT:    vpmaskmovd %xmm1, %xmm0, (%rdi) # sched: [4:1.00]
+; HASWELL-NEXT:    vmovdqa %xmm2, %xmm0 # sched: [1:0.25]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_pmaskmovd:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpmaskmovd (%rdi), %xmm0, %xmm2 # sched: [2:2.00]
+; SKYLAKE-NEXT:    vpmaskmovd %xmm1, %xmm0, (%rdi) # sched: [4:1.00]
+; SKYLAKE-NEXT:    vmovdqa %xmm2, %xmm0 # sched: [1:0.25]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_pmaskmovd:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpmaskmovd (%rdi), %xmm0, %xmm2 # sched: [100:?]
+; ZNVER1-NEXT:    vpmaskmovd %xmm1, %xmm0, (%rdi) # sched: [100:?]
+; ZNVER1-NEXT:    vmovdqa %xmm2, %xmm0 # sched: [1:0.25]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call <4 x i32> @llvm.x86.avx2.maskload.d(i8* %a0, <4 x i32> %a1)
+  call void @llvm.x86.avx2.maskstore.d(i8* %a0, <4 x i32> %a1, <4 x i32> %a2)
+  ret <4 x i32> %1
+}
+declare <4 x i32> @llvm.x86.avx2.maskload.d(i8*, <4 x i32>) nounwind readonly
+declare void @llvm.x86.avx2.maskstore.d(i8*, <4 x i32>, <4 x i32>) nounwind
+
+define <8 x i32> @test_pmaskmovd_ymm(i8* %a0, <8 x i32> %a1, <8 x i32> %a2) {
+; GENERIC-LABEL: test_pmaskmovd_ymm:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpmaskmovd (%rdi), %ymm0, %ymm2
+; GENERIC-NEXT:    vpmaskmovd %ymm1, %ymm0, (%rdi)
+; GENERIC-NEXT:    vmovdqa %ymm2, %ymm0 # sched: [1:0.50]
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_pmaskmovd_ymm:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpmaskmovd (%rdi), %ymm0, %ymm2 # sched: [2:2.00]
+; HASWELL-NEXT:    vpmaskmovd %ymm1, %ymm0, (%rdi) # sched: [4:1.00]
+; HASWELL-NEXT:    vmovdqa %ymm2, %ymm0 # sched: [1:0.25]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_pmaskmovd_ymm:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpmaskmovd (%rdi), %ymm0, %ymm2 # sched: [2:2.00]
+; SKYLAKE-NEXT:    vpmaskmovd %ymm1, %ymm0, (%rdi) # sched: [4:1.00]
+; SKYLAKE-NEXT:    vmovdqa %ymm2, %ymm0 # sched: [1:0.25]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_pmaskmovd_ymm:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpmaskmovd (%rdi), %ymm0, %ymm2 # sched: [100:?]
+; ZNVER1-NEXT:    vpmaskmovd %ymm1, %ymm0, (%rdi) # sched: [100:?]
+; ZNVER1-NEXT:    vmovdqa %ymm2, %ymm0 # sched: [2:0.25]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call <8 x i32> @llvm.x86.avx2.maskload.d.256(i8* %a0, <8 x i32> %a1)
+  call void @llvm.x86.avx2.maskstore.d.256(i8* %a0, <8 x i32> %a1, <8 x i32> %a2)
+  ret <8 x i32> %1
+}
+declare <8 x i32> @llvm.x86.avx2.maskload.d.256(i8*, <8 x i32>) nounwind readonly
+declare void @llvm.x86.avx2.maskstore.d.256(i8*, <8 x i32>, <8 x i32>) nounwind
+
+define <2 x i64> @test_pmaskmovq(i8* %a0, <2 x i64> %a1, <2 x i64> %a2) {
+; GENERIC-LABEL: test_pmaskmovq:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpmaskmovq (%rdi), %xmm0, %xmm2
+; GENERIC-NEXT:    vpmaskmovq %xmm1, %xmm0, (%rdi)
+; GENERIC-NEXT:    vmovdqa %xmm2, %xmm0 # sched: [1:0.50]
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_pmaskmovq:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpmaskmovq (%rdi), %xmm0, %xmm2 # sched: [2:2.00]
+; HASWELL-NEXT:    vpmaskmovq %xmm1, %xmm0, (%rdi) # sched: [4:1.00]
+; HASWELL-NEXT:    vmovdqa %xmm2, %xmm0 # sched: [1:0.25]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_pmaskmovq:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpmaskmovq (%rdi), %xmm0, %xmm2 # sched: [2:2.00]
+; SKYLAKE-NEXT:    vpmaskmovq %xmm1, %xmm0, (%rdi) # sched: [4:1.00]
+; SKYLAKE-NEXT:    vmovdqa %xmm2, %xmm0 # sched: [1:0.25]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_pmaskmovq:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpmaskmovq (%rdi), %xmm0, %xmm2 # sched: [8:1.00]
+; ZNVER1-NEXT:    vpmaskmovq %xmm1, %xmm0, (%rdi) # sched: [100:?]
+; ZNVER1-NEXT:    vmovdqa %xmm2, %xmm0 # sched: [1:0.25]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call <2 x i64> @llvm.x86.avx2.maskload.q(i8* %a0, <2 x i64> %a1)
+  call void @llvm.x86.avx2.maskstore.q(i8* %a0, <2 x i64> %a1, <2 x i64> %a2)
+  ret <2 x i64> %1
+}
+declare <2 x i64> @llvm.x86.avx2.maskload.q(i8*, <2 x i64>) nounwind readonly
+declare void @llvm.x86.avx2.maskstore.q(i8*, <2 x i64>, <2 x i64>) nounwind
+
+define <4 x i64> @test_pmaskmovq_ymm(i8* %a0, <4 x i64> %a1, <4 x i64> %a2) {
+; GENERIC-LABEL: test_pmaskmovq_ymm:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpmaskmovq (%rdi), %ymm0, %ymm2
+; GENERIC-NEXT:    vpmaskmovq %ymm1, %ymm0, (%rdi)
+; GENERIC-NEXT:    vmovdqa %ymm2, %ymm0 # sched: [1:0.50]
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_pmaskmovq_ymm:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpmaskmovq (%rdi), %ymm0, %ymm2 # sched: [2:2.00]
+; HASWELL-NEXT:    vpmaskmovq %ymm1, %ymm0, (%rdi) # sched: [4:1.00]
+; HASWELL-NEXT:    vmovdqa %ymm2, %ymm0 # sched: [1:0.25]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_pmaskmovq_ymm:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpmaskmovq (%rdi), %ymm0, %ymm2 # sched: [2:2.00]
+; SKYLAKE-NEXT:    vpmaskmovq %ymm1, %ymm0, (%rdi) # sched: [4:1.00]
+; SKYLAKE-NEXT:    vmovdqa %ymm2, %ymm0 # sched: [1:0.25]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_pmaskmovq_ymm:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpmaskmovq (%rdi), %ymm0, %ymm2 # sched: [9:1.50]
+; ZNVER1-NEXT:    vpmaskmovq %ymm1, %ymm0, (%rdi) # sched: [100:?]
+; ZNVER1-NEXT:    vmovdqa %ymm2, %ymm0 # sched: [2:0.25]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call <4 x i64> @llvm.x86.avx2.maskload.q.256(i8* %a0, <4 x i64> %a1)
+  call void @llvm.x86.avx2.maskstore.q.256(i8* %a0, <4 x i64> %a1, <4 x i64> %a2)
+  ret <4 x i64> %1
+}
+declare <4 x i64> @llvm.x86.avx2.maskload.q.256(i8*, <4 x i64>) nounwind readonly
+declare void @llvm.x86.avx2.maskstore.q.256(i8*, <4 x i64>, <4 x i64>) nounwind
 
 define <32 x i8> @test_pmaxsb(<32 x i8> %a0, <32 x i8> %a1, <32 x i8> *%a2) {
 ; GENERIC-LABEL: test_pmaxsb:
@@ -2361,6 +2934,35 @@ define <16 x i16> @test_pminuw(<16 x i16> %a0, <16 x i16> %a1, <16 x i16> *%a2) 
   ret <16 x i16> %3
 }
 declare <16 x i16> @llvm.x86.avx2.pminu.w(<16 x i16>, <16 x i16>) nounwind readnone
+
+define i32 @test_pmovmskb(<32 x i8> %a0) {
+; GENERIC-LABEL: test_pmovmskb:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpmovmskb %ymm0, %eax # sched: [1:1.00]
+; GENERIC-NEXT:    vzeroupper
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_pmovmskb:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpmovmskb %ymm0, %eax # sched: [3:1.00]
+; HASWELL-NEXT:    vzeroupper # sched: [4:1.00]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_pmovmskb:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpmovmskb %ymm0, %eax # sched: [3:1.00]
+; SKYLAKE-NEXT:    vzeroupper # sched: [4:1.00]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_pmovmskb:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpmovmskb %ymm0, %eax # sched: [2:1.00]
+; ZNVER1-NEXT:    vzeroupper # sched: [100:?]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call i32 @llvm.x86.avx2.pmovmskb(<32 x i8> %a0)
+  ret i32 %1
+}
+declare i32 @llvm.x86.avx2.pmovmskb(<32 x i8>) nounwind readnone
 
 define <8 x i32> @test_pmovsxbd(<16 x i8> %a0, <16 x i8> *%a1) {
 ; GENERIC-LABEL: test_pmovsxbd:
@@ -3343,6 +3945,30 @@ define <8 x i32> @test_pslld(<8 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) {
 }
 declare <8 x i32> @llvm.x86.avx2.psll.d(<8 x i32>, <4 x i32>) nounwind readnone
 
+define <32 x i8> @test_pslldq(<32 x i8> %a0) {
+; GENERIC-LABEL: test_pslldq:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpslldq {{.*#+}} ymm0 = zero,zero,zero,ymm0[0,1,2,3,4,5,6,7,8,9,10,11,12],zero,zero,zero,ymm0[16,17,18,19,20,21,22,23,24,25,26,27,28] sched: [1:1.00]
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_pslldq:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpslldq {{.*#+}} ymm0 = zero,zero,zero,ymm0[0,1,2,3,4,5,6,7,8,9,10,11,12],zero,zero,zero,ymm0[16,17,18,19,20,21,22,23,24,25,26,27,28] sched: [1:1.00]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_pslldq:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpslldq {{.*#+}} ymm0 = zero,zero,zero,ymm0[0,1,2,3,4,5,6,7,8,9,10,11,12],zero,zero,zero,ymm0[16,17,18,19,20,21,22,23,24,25,26,27,28] sched: [1:1.00]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_pslldq:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpslldq {{.*#+}} ymm0 = zero,zero,zero,ymm0[0,1,2,3,4,5,6,7,8,9,10,11,12],zero,zero,zero,ymm0[16,17,18,19,20,21,22,23,24,25,26,27,28] sched: [2:1.00]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = shufflevector <32 x i8> zeroinitializer, <32 x i8> %a0, <32 x i32> <i32 13, i32 14, i32 15, i32 32, i32 33, i32 34, i32 35, i32 36, i32 37, i32 38, i32 39, i32 40, i32 41, i32 42, i32 43, i32 44, i32 29, i32 30, i32 31, i32 48, i32 49, i32 50, i32 51, i32 52, i32 53, i32 54, i32 55, i32 56, i32 57, i32 58, i32 59, i32 60>
+  ret <32 x i8> %1
+}
+
 define <4 x i64> @test_psllq(<4 x i64> %a0, <2 x i64> %a1, <2 x i64> *%a2) {
 ; GENERIC-LABEL: test_psllq:
 ; GENERIC:       # BB#0:
@@ -3708,6 +4334,30 @@ define <8 x i32> @test_psrld(<8 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) {
   ret <8 x i32> %4
 }
 declare <8 x i32> @llvm.x86.avx2.psrl.d(<8 x i32>, <4 x i32>) nounwind readnone
+
+define <32 x i8> @test_psrldq(<32 x i8> %a0) {
+; GENERIC-LABEL: test_psrldq:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpsrldq {{.*#+}} ymm0 = ymm0[3,4,5,6,7,8,9,10,11,12,13,14,15],zero,zero,zero,ymm0[19,20,21,22,23,24,25,26,27,28,29,30,31],zero,zero,zero sched: [1:1.00]
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_psrldq:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpsrldq {{.*#+}} ymm0 = ymm0[3,4,5,6,7,8,9,10,11,12,13,14,15],zero,zero,zero,ymm0[19,20,21,22,23,24,25,26,27,28,29,30,31],zero,zero,zero sched: [1:1.00]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_psrldq:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpsrldq {{.*#+}} ymm0 = ymm0[3,4,5,6,7,8,9,10,11,12,13,14,15],zero,zero,zero,ymm0[19,20,21,22,23,24,25,26,27,28,29,30,31],zero,zero,zero sched: [1:1.00]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_psrldq:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpsrldq {{.*#+}} ymm0 = ymm0[3,4,5,6,7,8,9,10,11,12,13,14,15],zero,zero,zero,ymm0[19,20,21,22,23,24,25,26,27,28,29,30,31],zero,zero,zero sched: [2:1.00]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = shufflevector <32 x i8> %a0, <32 x i8> zeroinitializer, <32 x i32> <i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 32, i32 33, i32 34, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 48, i32 49, i32 50>
+  ret <32 x i8> %1
+}
 
 define <4 x i64> @test_psrlq(<4 x i64> %a0, <2 x i64> %a1, <2 x i64> *%a2) {
 ; GENERIC-LABEL: test_psrlq:
@@ -4178,6 +4828,7 @@ define <32 x i8> @test_punpckhbw(<32 x i8> %a0, <32 x i8> %a1, <32 x i8> *%a2) {
   %3 = shufflevector <32 x i8> %1, <32 x i8> %2, <32 x i32> <i32 8, i32 40, i32 9, i32 41, i32 10, i32 42, i32 11, i32 43, i32 12, i32 44, i32 13, i32 45, i32 14, i32 46, i32 15, i32 47, i32 24, i32 56, i32 25, i32 57, i32 26, i32 58, i32 27, i32 59, i32 28, i32 60, i32 29, i32 61, i32 30, i32 62, i32 31, i32 63>
   ret <32 x i8> %3
 }
+
 define <8 x i32> @test_punpckhdq(<8 x i32> %a0, <8 x i32> %a1, <8 x i32> *%a2) {
 ; GENERIC-LABEL: test_punpckhdq:
 ; GENERIC:       # BB#0:
