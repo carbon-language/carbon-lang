@@ -1976,18 +1976,6 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
   }
 
   bool MadeChange = getChild(0)->ApplyTypeConstraints(TP, NotRegisters);
-
-
-  // If either the output or input of the xform does not have exact
-  // type info. We assume they must be the same. Otherwise, it is perfectly
-  // legal to transform from one type to a completely different type.
-#if 0
-  if (!hasTypeSet() || !getChild(0)->hasTypeSet()) {
-    bool MadeChange = UpdateNodeType(getChild(0)->getExtType(), TP);
-    MadeChange |= getChild(0)->UpdateNodeType(getExtType(), TP);
-    return MadeChange;
-  }
-#endif
   return MadeChange;
 }
 
