@@ -52,16 +52,6 @@
 
 using namespace llvm;
 
-enum DefaultOnOff { Default, Enable, Disable };
-
-static cl::opt<DefaultOnOff>
-DwarfPubSections("generate-dwarf-pub-sections", cl::Hidden,
-                 cl::desc("Generate DWARF pubnames and pubtypes sections"),
-                 cl::values(clEnumVal(Default, "Default for platform"),
-                            clEnumVal(Enable, "Enabled"),
-                            clEnumVal(Disable, "Disabled")),
-                 cl::init(Default));
-
 DwarfCompileUnit::DwarfCompileUnit(unsigned UID, const DICompileUnit *Node,
                                    AsmPrinter *A, DwarfDebug *DW,
                                    DwarfFile *DWU)
@@ -771,10 +761,7 @@ bool DwarfCompileUnit::hasDwarfPubSections() const {
   if (CUNode->getGnuPubnames())
     return true;
 
-  if (DwarfPubSections == Default)
-    return DD->tuneForGDB() && !includeMinimalInlineScopes();
-
-  return DwarfPubSections == Enable;
+  return DD->tuneForGDB() && !includeMinimalInlineScopes();
 }
 
 /// addGlobalName - Add a new global name to the compile unit.
