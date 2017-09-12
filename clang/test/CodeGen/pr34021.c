@@ -1,3 +1,4 @@
+// REQUIRES: x86-registered-target
 // RUN: %clang_cc1 -fms-extensions %s -triple=i686-unknown-unknown -emit-llvm -o - | FileCheck %s --check-prefix=X86
 // RUN: %clang_cc1 -fms-extensions %s -triple=x86_64-unknown-unknown -emit-llvm -o - | FileCheck %s --check-prefix=X64
 
