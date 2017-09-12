@@ -9,6 +9,10 @@ endif()
 add_lld_library(lldMinGW
   Driver.cpp
 
+  LINK_COMPONENTS
+  Support
+  Option
+
   LINK_LIBS
   lldCOFF
   ${LLVM_PTHREAD_LIB}
