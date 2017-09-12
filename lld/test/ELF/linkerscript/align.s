@@ -84,16 +84,24 @@
 
 # RUN: echo "SECTIONS {                              \
 # RUN:  . = 0xff8;                                   \
-# RUN:  .aaa : { *(.aaa) foo = ALIGN(., 0x100); bar = .; } \
-# RUN:  .bbb : { *(.bbb); } \
-# RUN:  .ccc : { *(.ccc); } \
-# RUN:  .text : { *(.text); } \
+# RUN:  .aaa : {                                     \
+# RUN:           *(.aaa)                             \
+# RUN:           foo = ALIGN(., 0x100);              \
+# RUN:           bar = .;                            \
+# RUN:           zed1 = ALIGN(., 0x100) + 1;         \
+# RUN:           zed2 = ALIGN(., 0x100) - 1;         \
+# RUN:         }                                     \
+# RUN:  .bbb : { *(.bbb); }                          \
+# RUN:  .ccc : { *(.ccc); }                          \
+# RUN:  .text : { *(.text); }                        \
 # RUN: }" > %t.script
 # RUN: ld.lld -o %t1 --script %t.script %t
 # RUN: llvm-objdump -t %t1 | FileCheck --check-prefix=OFFSET %s
 
 # OFFSET: 0000000000001000         .aaa            00000000 foo
 # OFFSET: 0000000000001000         .aaa            00000000 bar
+# OFFSET: 0000000000001001         .aaa            00000000 zed1
+# OFFSET: 0000000000000fff         .aaa            00000000 zed2
 
 .global _start
 _start:
