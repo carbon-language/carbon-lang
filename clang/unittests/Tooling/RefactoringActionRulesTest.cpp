@@ -11,6 +11,7 @@
 #include "RewriterTestContext.h"
 #include "clang/Tooling/Refactoring.h"
 #include "clang/Tooling/Refactoring/RefactoringActionRules.h"
+#include "clang/Tooling/Refactoring/Rename/SymbolName.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/Support/Errc.h"
 #include "gtest/gtest.h"
@@ -173,6 +174,51 @@ TEST_F(RefactoringActionRulesTest, ReturnInitiationDiagnostic) {
     Message = Error.getMessage();
   });
   EXPECT_EQ(Message, "bad selection");
+}
+
+Optional<SymbolOccurrences> findOccurrences(RefactoringActionRule &Rule,
+                                            RefactoringRuleContext &Context) {
+  class Consumer final : public RefactoringResultConsumer {
+    void handleError(llvm::Error) override {}
+    void handle(SymbolOccurrences Occurrences) override {
+      Result = std::move(Occurrences);
+    }
+
+  public:
+    Optional<SymbolOccurrences> Result;
+  };
+
+  Consumer C;
+  Rule.invoke(C, Context);
+  return std::move(C.Result);
+}
+
+TEST_F(RefactoringActionRulesTest, ReturnSymbolOccurrences) {
+  auto Rule = createRefactoringRule(
+      [](selection::SourceSelectionRange Selection)
+          -> Expected<SymbolOccurrences> {
+        SymbolOccurrences Occurrences;
+        Occurrences.push_back(SymbolOccurrence(
+            SymbolName("test"), SymbolOccurrence::MatchingSymbol,
+            Selection.getRange().getBegin()));
+        return Occurrences;
+      },
+      requiredSelection(
+          selection::identity<selection::SourceSelectionRange>()));
+
+  RefactoringRuleContext RefContext(Context.Sources);
+  SourceLocation Cursor =
+      Context.Sources.getLocForStartOfFile(Context.Sources.getMainFileID());
+  RefContext.setSelectionRange({Cursor, Cursor});
+  Optional<SymbolOccurrences> Result = findOccurrences(*Rule, RefContext);
+
+  ASSERT_FALSE(!Result);
+  SymbolOccurrences Occurrences = std::move(*Result);
+  EXPECT_EQ(Occurrences.size(), 1u);
+  EXPECT_EQ(Occurrences[0].getKind(), SymbolOccurrence::MatchingSymbol);
+  EXPECT_EQ(Occurrences[0].getNameRanges().size(), 1u);
+  EXPECT_EQ(Occurrences[0].getNameRanges()[0],
+            SourceRange(Cursor, Cursor.getLocWithOffset(strlen("test"))));
 }
 
 } // end anonymous namespace
