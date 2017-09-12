@@ -713,7 +713,7 @@ bool EEVT::TypeSet::EnforceSameSize(EEVT::TypeSet &VTOperand,
 //===----------------------------------------------------------------------===//
 // Helpers for working with extended types.
 
-/// Dependent variable map for CodeGenDAGPattern variant generation
+/// Dependent variable map for CodeGenDAGPattern variant generation.
 typedef std::map<std::string, int> DepVarMap;
 
 static void FindDepVarsOf(TreePatternNode *N, DepVarMap &DepMap) {
@@ -726,7 +726,7 @@ static void FindDepVarsOf(TreePatternNode *N, DepVarMap &DepMap) {
   }
 }
   
-/// Find dependent variables within child patterns
+/// Find dependent variables within child patterns.
 static void FindDepVars(TreePatternNode *N, MultipleUseVarSet &DepVars) {
   DepVarMap depcounts;
   FindDepVarsOf(N, depcounts);
@@ -737,7 +737,8 @@ static void FindDepVars(TreePatternNode *N, MultipleUseVarSet &DepVars) {
 }
 
 #ifndef NDEBUG
-/// Dump the dependent variable set:
+/// Dump the dependent variable set.
+LLVM_DUMP_METHOD
 static void DumpDepVars(MultipleUseVarSet &DepVars) {
   if (DepVars.empty()) {
     DEBUG(errs() << "<empty set>");
@@ -3261,8 +3262,6 @@ void CodeGenDAGPatterns::AddPatternToMatch(TreePattern *Pattern,
 
   PatternsToMatch.push_back(std::move(PTM));
 }
-
-
 
 void CodeGenDAGPatterns::InferInstructionFlags() {
   ArrayRef<const CodeGenInstruction*> Instructions =
