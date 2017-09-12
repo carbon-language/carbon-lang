@@ -42,6 +42,9 @@ createReplacements(const std::unique_ptr<RefactoringActionRule> &Rule,
     void handle(AtomicChanges SourceReplacements) override {
       Result = std::move(SourceReplacements);
     }
+    void handle(SymbolOccurrences Occurrences) override {
+      RefactoringResultConsumer::handle(std::move(Occurrences));
+    }
 
   public:
     Optional<Expected<AtomicChanges>> Result;
@@ -183,6 +186,9 @@ Optional<SymbolOccurrences> findOccurrences(RefactoringActionRule &Rule,
     void handle(SymbolOccurrences Occurrences) override {
       Result = std::move(Occurrences);
     }
+    void handle(AtomicChanges Changes) override {
+      RefactoringResultConsumer::handle(std::move(Changes));
+    }
 
   public:
     Optional<SymbolOccurrences> Result;
@@ -201,7 +207,7 @@ TEST_F(RefactoringActionRulesTest, ReturnSymbolOccurrences) {
         Occurrences.push_back(SymbolOccurrence(
             SymbolName("test"), SymbolOccurrence::MatchingSymbol,
             Selection.getRange().getBegin()));
-        return Occurrences;
+        return std::move(Occurrences);
       },
       requiredSelection(
           selection::identity<selection::SourceSelectionRange>()));
