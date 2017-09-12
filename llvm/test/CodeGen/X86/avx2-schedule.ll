@@ -4,6 +4,36 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -print-schedule -mcpu=skylake | FileCheck %s --check-prefix=CHECK --check-prefix=SKYLAKE
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -print-schedule -mcpu=znver1 | FileCheck %s --check-prefix=CHECK --check-prefix=ZNVER1
 
+define <8 x i32> @test_broadcasti128(<8 x i32> %a0, <4 x i32> *%a1) {
+; GENERIC-LABEL: test_broadcasti128:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vbroadcasti128 {{.*#+}} ymm1 = mem[0,1,0,1] sched: [4:0.50]
+; GENERIC-NEXT:    vpaddd %ymm0, %ymm1, %ymm0 # sched: [3:1.00]
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_broadcasti128:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vbroadcasti128 {{.*#+}} ymm1 = mem[0,1,0,1] sched: [1:0.50]
+; HASWELL-NEXT:    vpaddd %ymm0, %ymm1, %ymm0 # sched: [1:0.50]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_broadcasti128:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vbroadcasti128 {{.*#+}} ymm1 = mem[0,1,0,1] sched: [1:0.50]
+; SKYLAKE-NEXT:    vpaddd %ymm0, %ymm1, %ymm0 # sched: [1:0.50]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_broadcasti128:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vbroadcasti128 {{.*#+}} ymm1 = mem[0,1,0,1] sched: [8:0.50]
+; ZNVER1-NEXT:    vpaddd %ymm0, %ymm1, %ymm0 # sched: [1:0.25]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = load <4 x i32>, <4 x i32> *%a1, align 16
+  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 0, i32 1, i32 2, i32 3>
+  %3 = add <8 x i32> %2, %a0
+  ret <8 x i32> %3
+}
+
 define <4 x double> @test_broadcastsd_ymm(<2 x double> %a0) {
 ; GENERIC-LABEL: test_broadcastsd_ymm:
 ; GENERIC:       # BB#0:
@@ -470,6 +500,286 @@ define <4 x i64> @test_pandn(<4 x i64> %a0, <4 x i64> %a1, <4 x i64> *%a2) {
   %5 = and <4 x i64> %3, %4
   %6 = add <4 x i64> %2, %5
   ret <4 x i64> %6
+}
+
+define <16 x i8> @test_pbroadcastb(<16 x i8> %a0, <16 x i8> *%a1) {
+; GENERIC-LABEL: test_pbroadcastb:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpbroadcastb %xmm0, %xmm0 # sched: [1:1.00]
+; GENERIC-NEXT:    vpbroadcastb (%rdi), %xmm1 # sched: [4:0.50]
+; GENERIC-NEXT:    vpaddb %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_pbroadcastb:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpbroadcastb %xmm0, %xmm0 # sched: [3:1.00]
+; HASWELL-NEXT:    vpbroadcastb (%rdi), %xmm1 # sched: [4:1.00]
+; HASWELL-NEXT:    vpaddb %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_pbroadcastb:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpbroadcastb %xmm0, %xmm0 # sched: [3:1.00]
+; SKYLAKE-NEXT:    vpbroadcastb (%rdi), %xmm1 # sched: [4:1.00]
+; SKYLAKE-NEXT:    vpaddb %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_pbroadcastb:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpbroadcastb (%rdi), %xmm1 # sched: [8:1.00]
+; ZNVER1-NEXT:    vpbroadcastb %xmm0, %xmm0 # sched: [1:0.25]
+; ZNVER1-NEXT:    vpaddb %xmm1, %xmm0, %xmm0 # sched: [1:0.25]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = shufflevector <16 x i8> %a0, <16 x i8> undef, <16 x i32> zeroinitializer
+  %2 = load <16 x i8>, <16 x i8> *%a1, align 16
+  %3 = shufflevector <16 x i8> %2, <16 x i8> undef, <16 x i32> zeroinitializer
+  %4 = add <16 x i8> %1, %3
+  ret <16 x i8> %4
+}
+
+define <32 x i8> @test_pbroadcastb_ymm(<32 x i8> %a0, <32 x i8> *%a1) {
+; GENERIC-LABEL: test_pbroadcastb_ymm:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpbroadcastb %xmm0, %ymm0 # sched: [1:1.00]
+; GENERIC-NEXT:    vpbroadcastb (%rdi), %ymm1 # sched: [4:0.50]
+; GENERIC-NEXT:    vpaddb %ymm1, %ymm0, %ymm0 # sched: [3:1.00]
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_pbroadcastb_ymm:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpbroadcastb %xmm0, %ymm0 # sched: [3:1.00]
+; HASWELL-NEXT:    vpbroadcastb (%rdi), %ymm1 # sched: [4:1.00]
+; HASWELL-NEXT:    vpaddb %ymm1, %ymm0, %ymm0 # sched: [1:0.50]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_pbroadcastb_ymm:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpbroadcastb %xmm0, %ymm0 # sched: [3:1.00]
+; SKYLAKE-NEXT:    vpbroadcastb (%rdi), %ymm1 # sched: [4:1.00]
+; SKYLAKE-NEXT:    vpaddb %ymm1, %ymm0, %ymm0 # sched: [1:0.50]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_pbroadcastb_ymm:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpbroadcastb (%rdi), %ymm1 # sched: [8:2.00]
+; ZNVER1-NEXT:    vpbroadcastb %xmm0, %ymm0 # sched: [2:0.25]
+; ZNVER1-NEXT:    vpaddb %ymm1, %ymm0, %ymm0 # sched: [1:0.25]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = shufflevector <32 x i8> %a0, <32 x i8> undef, <32 x i32> zeroinitializer
+  %2 = load <32 x i8>, <32 x i8> *%a1, align 32
+  %3 = shufflevector <32 x i8> %2, <32 x i8> undef, <32 x i32> zeroinitializer
+  %4 = add <32 x i8> %1, %3
+  ret <32 x i8> %4
+}
+
+define <4 x i32> @test_pbroadcastd(<4 x i32> %a0, <4 x i32> *%a1) {
+; GENERIC-LABEL: test_pbroadcastd:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpbroadcastd %xmm0, %xmm0 # sched: [1:1.00]
+; GENERIC-NEXT:    vpbroadcastd (%rdi), %xmm1 # sched: [4:0.50]
+; GENERIC-NEXT:    vpaddd %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_pbroadcastd:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpbroadcastd %xmm0, %xmm0 # sched: [1:1.00]
+; HASWELL-NEXT:    vpbroadcastd (%rdi), %xmm1 # sched: [1:0.50]
+; HASWELL-NEXT:    vpaddd %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_pbroadcastd:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpbroadcastd %xmm0, %xmm0 # sched: [1:1.00]
+; SKYLAKE-NEXT:    vpbroadcastd (%rdi), %xmm1 # sched: [1:0.50]
+; SKYLAKE-NEXT:    vpaddd %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_pbroadcastd:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpbroadcastd (%rdi), %xmm1 # sched: [8:0.50]
+; ZNVER1-NEXT:    vpbroadcastd %xmm0, %xmm0 # sched: [1:0.25]
+; ZNVER1-NEXT:    vpaddd %xmm1, %xmm0, %xmm0 # sched: [1:0.25]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = shufflevector <4 x i32> %a0, <4 x i32> undef, <4 x i32> zeroinitializer
+  %2 = load <4 x i32>, <4 x i32> *%a1, align 16
+  %3 = shufflevector <4 x i32> %2, <4 x i32> undef, <4 x i32> zeroinitializer
+  %4 = add <4 x i32> %1, %3
+  ret <4 x i32> %4
+}
+
+define <8 x i32> @test_pbroadcastd_ymm(<8 x i32> %a0, <8 x i32> *%a1) {
+; GENERIC-LABEL: test_pbroadcastd_ymm:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpbroadcastd %xmm0, %ymm0 # sched: [1:1.00]
+; GENERIC-NEXT:    vpbroadcastd (%rdi), %ymm1 # sched: [4:0.50]
+; GENERIC-NEXT:    vpaddd %ymm1, %ymm0, %ymm0 # sched: [3:1.00]
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_pbroadcastd_ymm:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpbroadcastd %xmm0, %ymm0 # sched: [3:1.00]
+; HASWELL-NEXT:    vpbroadcastd (%rdi), %ymm1 # sched: [1:0.50]
+; HASWELL-NEXT:    vpaddd %ymm1, %ymm0, %ymm0 # sched: [1:0.50]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_pbroadcastd_ymm:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpbroadcastd %xmm0, %ymm0 # sched: [3:1.00]
+; SKYLAKE-NEXT:    vpbroadcastd (%rdi), %ymm1 # sched: [1:0.50]
+; SKYLAKE-NEXT:    vpaddd %ymm1, %ymm0, %ymm0 # sched: [1:0.50]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_pbroadcastd_ymm:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpbroadcastd (%rdi), %ymm1 # sched: [8:0.50]
+; ZNVER1-NEXT:    vpbroadcastd %xmm0, %ymm0 # sched: [2:0.25]
+; ZNVER1-NEXT:    vpaddd %ymm1, %ymm0, %ymm0 # sched: [1:0.25]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = shufflevector <8 x i32> %a0, <8 x i32> undef, <8 x i32> zeroinitializer
+  %2 = load <8 x i32>, <8 x i32> *%a1, align 32
+  %3 = shufflevector <8 x i32> %2, <8 x i32> undef, <8 x i32> zeroinitializer
+  %4 = add <8 x i32> %1, %3
+  ret <8 x i32> %4
+}
+
+define <2 x i64> @test_pbroadcastq(<2 x i64> %a0, <2 x i64> *%a1) {
+; GENERIC-LABEL: test_pbroadcastq:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpbroadcastq %xmm0, %xmm0 # sched: [1:1.00]
+; GENERIC-NEXT:    vpbroadcastq (%rdi), %xmm1 # sched: [4:0.50]
+; GENERIC-NEXT:    vpaddq %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_pbroadcastq:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpbroadcastq %xmm0, %xmm0 # sched: [1:1.00]
+; HASWELL-NEXT:    vpbroadcastq (%rdi), %xmm1 # sched: [1:0.50]
+; HASWELL-NEXT:    vpaddq %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_pbroadcastq:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpbroadcastq %xmm0, %xmm0 # sched: [1:1.00]
+; SKYLAKE-NEXT:    vpbroadcastq (%rdi), %xmm1 # sched: [1:0.50]
+; SKYLAKE-NEXT:    vpaddq %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_pbroadcastq:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpbroadcastq (%rdi), %xmm1 # sched: [8:0.50]
+; ZNVER1-NEXT:    vpbroadcastq %xmm0, %xmm0 # sched: [1:0.25]
+; ZNVER1-NEXT:    vpaddq %xmm1, %xmm0, %xmm0 # sched: [1:0.25]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = shufflevector <2 x i64> %a0, <2 x i64> undef, <2 x i32> zeroinitializer
+  %2 = load <2 x i64>, <2 x i64> *%a1, align 16
+  %3 = shufflevector <2 x i64> %2, <2 x i64> undef, <2 x i32> zeroinitializer
+  %4 = add <2 x i64> %1, %3
+  ret <2 x i64> %4
+}
+
+define <4 x i64> @test_pbroadcastq_ymm(<4 x i64> %a0, <4 x i64> *%a1) {
+; GENERIC-LABEL: test_pbroadcastq_ymm:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpbroadcastq %xmm0, %ymm0 # sched: [1:1.00]
+; GENERIC-NEXT:    vpbroadcastq (%rdi), %ymm1 # sched: [4:0.50]
+; GENERIC-NEXT:    vpaddq %ymm1, %ymm0, %ymm0 # sched: [3:1.00]
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_pbroadcastq_ymm:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpbroadcastq %xmm0, %ymm0 # sched: [3:1.00]
+; HASWELL-NEXT:    vpbroadcastq (%rdi), %ymm1 # sched: [1:0.50]
+; HASWELL-NEXT:    vpaddq %ymm1, %ymm0, %ymm0 # sched: [1:0.50]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_pbroadcastq_ymm:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpbroadcastq %xmm0, %ymm0 # sched: [3:1.00]
+; SKYLAKE-NEXT:    vpbroadcastq (%rdi), %ymm1 # sched: [1:0.50]
+; SKYLAKE-NEXT:    vpaddq %ymm1, %ymm0, %ymm0 # sched: [1:0.50]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_pbroadcastq_ymm:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpbroadcastq (%rdi), %ymm1 # sched: [8:0.50]
+; ZNVER1-NEXT:    vpbroadcastq %xmm0, %ymm0 # sched: [2:0.25]
+; ZNVER1-NEXT:    vpaddq %ymm1, %ymm0, %ymm0 # sched: [1:0.25]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = shufflevector <4 x i64> %a0, <4 x i64> undef, <4 x i32> zeroinitializer
+  %2 = load <4 x i64>, <4 x i64> *%a1, align 32
+  %3 = shufflevector <4 x i64> %2, <4 x i64> undef, <4 x i32> zeroinitializer
+  %4 = add <4 x i64> %1, %3
+  ret <4 x i64> %4
+}
+
+define <8 x i16> @test_pbroadcastw(<8 x i16> %a0, <8 x i16> *%a1) {
+; GENERIC-LABEL: test_pbroadcastw:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpbroadcastw %xmm0, %xmm0 # sched: [1:1.00]
+; GENERIC-NEXT:    vpbroadcastw (%rdi), %xmm1 # sched: [4:0.50]
+; GENERIC-NEXT:    vpaddw %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_pbroadcastw:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpbroadcastw %xmm0, %xmm0 # sched: [3:1.00]
+; HASWELL-NEXT:    vpbroadcastw (%rdi), %xmm1 # sched: [4:1.00]
+; HASWELL-NEXT:    vpaddw %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_pbroadcastw:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpbroadcastw %xmm0, %xmm0 # sched: [3:1.00]
+; SKYLAKE-NEXT:    vpbroadcastw (%rdi), %xmm1 # sched: [4:1.00]
+; SKYLAKE-NEXT:    vpaddw %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_pbroadcastw:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpbroadcastw (%rdi), %xmm1 # sched: [8:1.00]
+; ZNVER1-NEXT:    vpbroadcastw %xmm0, %xmm0 # sched: [1:0.25]
+; ZNVER1-NEXT:    vpaddw %xmm1, %xmm0, %xmm0 # sched: [1:0.25]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = shufflevector <8 x i16> %a0, <8 x i16> undef, <8 x i32> zeroinitializer
+  %2 = load <8 x i16>, <8 x i16> *%a1, align 16
+  %3 = shufflevector <8 x i16> %2, <8 x i16> undef, <8 x i32> zeroinitializer
+  %4 = add <8 x i16> %1, %3
+  ret <8 x i16> %4
+}
+
+define <16 x i16> @test_pbroadcastw_ymm(<16 x i16> %a0, <16 x i16> *%a1) {
+; GENERIC-LABEL: test_pbroadcastw_ymm:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    vpbroadcastw %xmm0, %ymm0 # sched: [1:1.00]
+; GENERIC-NEXT:    vpbroadcastw (%rdi), %ymm1 # sched: [4:0.50]
+; GENERIC-NEXT:    vpaddw %ymm1, %ymm0, %ymm0 # sched: [3:1.00]
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_pbroadcastw_ymm:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vpbroadcastw %xmm0, %ymm0 # sched: [3:1.00]
+; HASWELL-NEXT:    vpbroadcastw (%rdi), %ymm1 # sched: [4:1.00]
+; HASWELL-NEXT:    vpaddw %ymm1, %ymm0, %ymm0 # sched: [1:0.50]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_pbroadcastw_ymm:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vpbroadcastw %xmm0, %ymm0 # sched: [3:1.00]
+; SKYLAKE-NEXT:    vpbroadcastw (%rdi), %ymm1 # sched: [4:1.00]
+; SKYLAKE-NEXT:    vpaddw %ymm1, %ymm0, %ymm0 # sched: [1:0.50]
+; SKYLAKE-NEXT:    retq # sched: [2:1.00]
+;
+; ZNVER1-LABEL: test_pbroadcastw_ymm:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpbroadcastw (%rdi), %ymm1 # sched: [8:2.00]
+; ZNVER1-NEXT:    vpbroadcastw %xmm0, %ymm0 # sched: [2:0.25]
+; ZNVER1-NEXT:    vpaddw %ymm1, %ymm0, %ymm0 # sched: [1:0.25]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = shufflevector <16 x i16> %a0, <16 x i16> undef, <16 x i32> zeroinitializer
+  %2 = load <16 x i16>, <16 x i16> *%a1, align 32
+  %3 = shufflevector <16 x i16> %2, <16 x i16> undef, <16 x i32> zeroinitializer
+  %4 = add <16 x i16> %1, %3
+  ret <16 x i16> %4
 }
 
 define <4 x i64> @test_perm2i128(<4 x i64> %a0, <4 x i64> %a1, <4 x i64> *%a2) {
