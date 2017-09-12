@@ -1224,12 +1224,8 @@ static bool computeIsPreemptible(const SymbolBody &B) {
   if (B.symbol()->Visibility != STV_DEFAULT)
     return false;
 
-  // Undefined symbols in non-DSOs are usually just an error, so it
-  // doesn't matter whether we return true or false here. However, if
-  // -unresolved-symbols=ignore-all is specified, undefined symbols in
-  // executables are automatically exported so that the runtime linker
-  // can try to resolve them. In that case, they are preemptible. So, we
-  // return true for an undefined symbols in all cases.
+  // At this point copy relocations have not been created yet, so any
+  // symbol that is not defined locally is preemptible.
   if (!B.isInCurrentDSO())
     return true;
 
