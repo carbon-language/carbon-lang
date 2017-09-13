@@ -178,7 +178,7 @@ bool mingw::link(ArrayRef<const char *> ArgsArr, raw_ostream &Diag) {
   StringRef Prefix = "";
   bool Static = false;
   for (auto *A : Args) {
-    switch (A->getOption().getID()) {
+    switch (A->getOption().getUnaliasedOption().getID()) {
     case OPT_INPUT:
       if (StringRef(A->getValue()).endswith(".def"))
         Add("-def:" + StringRef(A->getValue()));
