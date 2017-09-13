@@ -120,6 +120,7 @@ bool mingw::link(ArrayRef<const char *> ArgsArr, raw_ostream &Diag) {
   auto Add = [&](const Twine &S) { LinkArgs.push_back(S.str()); };
 
   Add("lld-link");
+  Add("-lldmingw");
 
   if (auto *A = Args.getLastArg(OPT_entry)) {
     StringRef S = A->getValue();
