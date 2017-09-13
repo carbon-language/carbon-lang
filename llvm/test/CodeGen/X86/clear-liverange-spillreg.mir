@@ -1,4 +1,6 @@
 #RUN: llc -o - %s -mtriple=s390x-ibm-linux -run-pass=greedy
+#PR34502. Check HoistSpill works properly after the live range of spilled
+#virtual register is cleared.
 --- |
   ; ModuleID = 'hoistspills_crash.ll'
   source_filename = "bugpoint-output-07170c2.bc"
