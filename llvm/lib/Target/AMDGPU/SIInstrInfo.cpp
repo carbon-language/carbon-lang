@@ -818,6 +818,10 @@ void SIInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   MachineFrameInfo &FrameInfo = MF->getFrameInfo();
   DebugLoc DL = MBB.findDebugLoc(MI);
 
+  assert(SrcReg != MFI->getStackPtrOffsetReg() &&
+         SrcReg != MFI->getFrameOffsetReg() &&
+         SrcReg != MFI->getScratchWaveOffsetReg());
+
   unsigned Size = FrameInfo.getObjectSize(FrameIndex);
   unsigned Align = FrameInfo.getObjectAlignment(FrameIndex);
   MachinePointerInfo PtrInfo
