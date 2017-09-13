@@ -313,6 +313,10 @@ const char *DescribeSignalOrException(int signo);
 // Signal reporting.
 void StartReportDeadlySignal();
 bool IsStackOverflow(int code, const SignalContext &sig);
+// FIXME: Hide after moving more signal handling code into common.
+void MaybeReportNonExecRegion(uptr pc);
+void MaybeDumpInstructionBytes(uptr pc);
+void MaybeDumpRegisters(void *context);
 // Alternative signal stack (POSIX-only).
 void SetAlternateSignalStack();
 void UnsetAlternateSignalStack();
