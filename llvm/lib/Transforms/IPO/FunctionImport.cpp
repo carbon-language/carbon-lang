@@ -488,17 +488,14 @@ void llvm::computeDeadSymbols(
   while (!Worklist.empty()) {
     auto VI = Worklist.pop_back_val();
     for (auto &Summary : VI.getSummaryList()) {
-      for (auto Ref : Summary->refs())
+      GlobalValueSummary *Base = Summary.get();
+      if (auto *AS = dyn_cast<AliasSummary>(Base))
+        Base = &AS->getAliasee();
+      for (auto Ref : Base->refs())
         visit(Ref);
-      if (auto *FS = dyn_cast<FunctionSummary>(Summary.get()))
+      if (auto *FS = dyn_cast<FunctionSummary>(Base))
         for (auto Call : FS->calls())
           visit(Call.first);
-      if (auto *AS = dyn_cast<AliasSummary>(Summary.get())) {
-        auto AliaseeGUID = AS->getAliasee().getOriginalName();
-        ValueInfo AliaseeVI = Index.getValueInfo(AliaseeGUID);
-        if (AliaseeVI)
-          visit(AliaseeVI);
-      }
     }
   }
   Index.setWithGlobalValueDeadStripping();
