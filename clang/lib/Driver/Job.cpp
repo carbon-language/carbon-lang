@@ -14,6 +14,7 @@
 #include "clang/Driver/Tool.h"
 #include "clang/Driver/ToolChain.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
@@ -307,7 +308,7 @@ void Command::setEnvironment(llvm::ArrayRef<const char *> NewEnvironment) {
   Environment.push_back(nullptr);
 }
 
-int Command::Execute(ArrayRef<Optional<StringRef>> Redirects,
+int Command::Execute(ArrayRef<llvm::Optional<StringRef>> Redirects,
                      std::string *ErrMsg, bool *ExecutionFailed) const {
   SmallVector<const char*, 128> Argv;
 
@@ -378,7 +379,7 @@ static bool ShouldFallback(int ExitCode) {
   return ExitCode != 0;
 }
 
-int FallbackCommand::Execute(ArrayRef<Optional<StringRef>> Redirects,
+int FallbackCommand::Execute(ArrayRef<llvm::Optional<StringRef>> Redirects,
                              std::string *ErrMsg, bool *ExecutionFailed) const {
   int PrimaryStatus = Command::Execute(Redirects, ErrMsg, ExecutionFailed);
   if (!ShouldFallback(PrimaryStatus))
@@ -410,7 +411,7 @@ void ForceSuccessCommand::Print(raw_ostream &OS, const char *Terminator,
   OS << " || (exit 0)" << Terminator;
 }
 
-int ForceSuccessCommand::Execute(ArrayRef<Optional<StringRef>> Redirects,
+int ForceSuccessCommand::Execute(ArrayRef<llvm::Optional<StringRef>> Redirects,
                                  std::string *ErrMsg,
                                  bool *ExecutionFailed) const {
   int Status = Command::Execute(Redirects, ErrMsg, ExecutionFailed);
