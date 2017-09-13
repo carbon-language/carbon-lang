@@ -1529,6 +1529,13 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
                  << "; type name = " << TypeName
                  << '\n');
 
+    if (Rel.getType() == ELF::R_X86_64_TLSGD ||
+        Rel.getType() == ELF::R_X86_64_TLSLD ||
+        Rel.getType() == ELF::R_X86_64_DTPOFF32) {
+      DEBUG(dbgs() << "skipping relocation\n");
+      continue;
+    }
+
     // Extract value.
     uint32_t RelocationOffset =
         Rel.getOffset() - RelocatedSection.getAddress();
