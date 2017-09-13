@@ -174,8 +174,8 @@ bool mingw::link(ArrayRef<const char *> ArgsArr, raw_ostream &Diag) {
     SearchPaths.push_back(A->getValue());
 
   StringRef Prefix = "";
-  for (auto *A : Args.filtered(OPT_INPUT, OPT_l, OPT_whole_archive,
-                               OPT_no_whole_archive)) {
+  bool Static = false;
+  for (auto *A : Args) {
     switch (A->getOption().getID()) {
     case OPT_INPUT:
       if (StringRef(A->getValue()).endswith(".def"))
@@ -184,14 +184,19 @@ bool mingw::link(ArrayRef<const char *> ArgsArr, raw_ostream &Diag) {
         Add(Prefix + StringRef(A->getValue()));
       break;
     case OPT_l:
-      Add(Prefix +
-          searchLibrary(A->getValue(), SearchPaths, Args.hasArg(OPT_Bstatic)));
+      Add(Prefix + searchLibrary(A->getValue(), SearchPaths, Static));
       break;
     case OPT_whole_archive:
       Prefix = "-wholearchive:";
       break;
     case OPT_no_whole_archive:
       Prefix = "";
+      break;
+    case OPT_Bstatic:
+      Static = true;
+      break;
+    case OPT_Bdynamic:
+      Static = false;
       break;
     }
   }
