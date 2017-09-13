@@ -260,6 +260,14 @@ bool IsStackOverflow(int code, const SignalContext &sig) {
   return IsStackAccess && (code == si_SEGV_MAPERR || code == si_SEGV_ACCERR);
 }
 
+void StartReportDeadlySignal() {
+  // Write the first message using fd=2, just in case.
+  // It may actually fail to write in case stderr is closed.
+  internal_write(2, SanitizerToolName, internal_strlen(SanitizerToolName));
+  static const char kDeadlySignal[] = ":DEADLYSIGNAL\n";
+  internal_write(2, kDeadlySignal, sizeof(kDeadlySignal) - 1);
+}
+
 #endif  // SANITIZER_GO
 
 bool IsAccessibleMemoryRange(uptr beg, uptr size) {
