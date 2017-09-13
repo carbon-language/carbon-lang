@@ -350,7 +350,7 @@ bool Symbol::includeInDynsym() const {
     return Config->Shared;
   if (!body()->isInCurrentDSO())
     return true;
-  return ExportDynamic || body()->isShared();
+  return ExportDynamic;
 }
 
 // Print out a log message for --trace-symbol.
