@@ -177,7 +177,10 @@ bool mingw::link(ArrayRef<const char *> ArgsArr, raw_ostream &Diag) {
                                OPT_no_whole_archive)) {
     switch (A->getOption().getID()) {
     case OPT_INPUT:
-      Add(Prefix + StringRef(A->getValue()));
+      if (StringRef(A->getValue()).endswith(".def"))
+        Add("-def:" + StringRef(A->getValue()));
+      else
+        Add(Prefix + StringRef(A->getValue()));
       break;
     case OPT_l:
       Add(Prefix +
