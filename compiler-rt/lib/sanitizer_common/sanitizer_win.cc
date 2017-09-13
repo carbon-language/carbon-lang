@@ -966,12 +966,16 @@ SignalContext SignalContext::Create(void *siginfo, void *context) {
   case 8: write_flag = SignalContext::UNKNOWN; break;
   }
   bool is_memory_access = write_flag != SignalContext::UNKNOWN;
-  return SignalContext(context, access_addr, pc, sp, bp, is_memory_access,
-                       write_flag);
+  return SignalContext(siginfo, context, access_addr, pc, sp, bp,
+                       is_memory_access, write_flag);
 }
 
 void SignalContext::DumpAllRegisters(void *context) {
   // FIXME: Implement this.
+}
+
+int SignalContext::GetType() const {
+  return static_cast<const EXCEPTION_RECORD *>(siginfo)->ExceptionCode;
 }
 
 uptr ReadBinaryName(/*out*/char *buf, uptr buf_len) {

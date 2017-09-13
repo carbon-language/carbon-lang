@@ -57,14 +57,14 @@ struct ErrorDeadlySignal : ErrorBase {
   // VS2013 doesn't implement unrestricted unions, so we need a trivial default
   // constructor
   ErrorDeadlySignal() = default;
-  ErrorDeadlySignal(u32 tid, const SignalContext &sig, int signo_)
+  ErrorDeadlySignal(u32 tid, const SignalContext &sig)
       : ErrorBase(tid),
         addr(sig.addr),
         pc(sig.pc),
         bp(sig.bp),
         sp(sig.sp),
         context(sig.context),
-        signo(signo_),
+        signo(sig.GetType()),
         write_flag(sig.write_flag),
         is_memory_access(sig.is_memory_access) {
     scariness.Clear();
