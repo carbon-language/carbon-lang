@@ -47,3 +47,6 @@ VERBOSE: -verbose
 
 RUN: ld.lld -### -shared -m i386pe -e _DllMainCRTStartup@12 foo.o | FileCheck -check-prefix I386-ENTRY %s
 I386-ENTRY: -entry:DllMainCRTStartup@12
+
+RUN: ld.lld -### -m i386pep foo.o --whole-archive bar.a --no-whole-archive baz.a | FileCheck -check-prefix WHOLE-ARCHIVE %s
+WHOLE-ARCHIVE: foo.o -wholearchive:bar.a baz.a
