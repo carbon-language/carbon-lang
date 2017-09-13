@@ -6,6 +6,8 @@
 ; need adjustment (in that case _ZL3foov should not be imported/promoted,
 ; and _ZL3barv can be internalized/removed).
 
+; REQUIRES: x86-registered-target
+
 ; Do setup work for all below tests: generate bitcode and combined index
 ; RUN: opt -module-summary %s -o %t.bc
 ; RUN: opt -module-summary %p/Inputs/thinlto_samplepgo_icp2a.ll -o %t2a.bc
