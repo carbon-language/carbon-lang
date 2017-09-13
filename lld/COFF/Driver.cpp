@@ -744,8 +744,8 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
     }
   }
 
-  if (!Args.hasArgNoClaim(OPT_INPUT)) {
-    if (Args.hasArgNoClaim(OPT_deffile))
+  if (!Args.hasArg(OPT_INPUT)) {
+    if (Args.hasArg(OPT_deffile))
       Config->NoEntry = true;
     else
       fatal("no input files");
@@ -1067,7 +1067,7 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   }
 
   // Handle generation of import library from a def file.
-  if (!Args.hasArgNoClaim(OPT_INPUT)) {
+  if (!Args.hasArg(OPT_INPUT)) {
     fixupExports();
     createImportLibrary(/*AsLib=*/true);
     exit(0);
