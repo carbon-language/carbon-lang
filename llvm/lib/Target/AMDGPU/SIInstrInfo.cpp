@@ -2150,9 +2150,8 @@ static int64_t getFoldableImm(const MachineOperand* MO) {
   const MachineFunction *MF = MO->getParent()->getParent()->getParent();
   const MachineRegisterInfo &MRI = MF->getRegInfo();
   auto Def = MRI.getUniqueVRegDef(MO->getReg());
-  if (Def && (Def->getOpcode() == AMDGPU::S_MOV_B32 ||
-              Def->getOpcode() == AMDGPU::V_MOV_B32_e32) &&
-     Def->getOperand(1).isImm())
+  if (Def && Def->getOpcode() == AMDGPU::V_MOV_B32_e32 &&
+      Def->getOperand(1).isImm())
     return Def->getOperand(1).getImm();
   return AMDGPU::NoRegister;
 }
@@ -2194,7 +2193,9 @@ MachineInstr *SIInstrInfo::convertToThreeAddress(MachineFunction::iterator &MBB,
   const MachineOperand *Clamp = getNamedOperand(MI, AMDGPU::OpName::clamp);
   const MachineOperand *Omod = getNamedOperand(MI, AMDGPU::OpName::omod);
 
-  if (!Src0Mods && !Src1Mods && !Clamp && !Omod) {
+  if (!Src0Mods && !Src1Mods && !Clamp && !Omod &&
+      // If we have an SGPR input, we will violate the constant bus restriction.
+      !RI.isSGPRReg(MBB->getParent()->getRegInfo(), Src0->getReg())) {
     if (auto Imm = getFoldableImm(Src2)) {
       return BuildMI(*MBB, MI, MI.getDebugLoc(),
                      get(IsF16 ? AMDGPU::V_MADAK_F16 : AMDGPU::V_MADAK_F32))
