@@ -37,7 +37,7 @@ void AsanOnDeadlySignal(int signo, void *siginfo, void *context) {
   ScopedDeadlySignal signal_scope(GetCurrentThread());
   StartReportDeadlySignal();
   SignalContext sig(siginfo, context);
-  if (IsStackOverflow(sig))
+  if (sig.IsStackOverflow())
     ReportStackOverflow(sig);
   else
     ReportDeadlySignal(sig);

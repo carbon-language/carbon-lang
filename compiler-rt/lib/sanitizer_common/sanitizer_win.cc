@@ -915,6 +915,10 @@ bool IsAccessibleMemoryRange(uptr beg, uptr size) {
   return true;
 }
 
+bool SignalContext::IsStackOverflow() const {
+  return GetType() == EXCEPTION_STACK_OVERFLOW;
+}
+
 void SignalContext::InitPcSpBp() {
   EXCEPTION_RECORD *exception_record = (EXCEPTION_RECORD *)siginfo;
   CONTEXT *context_record = (CONTEXT *)context;

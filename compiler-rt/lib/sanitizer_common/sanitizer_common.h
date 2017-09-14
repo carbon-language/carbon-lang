@@ -311,7 +311,6 @@ HandleSignalMode GetHandleSignalMode(int signum);
 void InstallDeadlySignalHandlers(SignalHandlerType handler);
 // Signal reporting.
 void StartReportDeadlySignal();
-bool IsStackOverflow(const SignalContext &sig);
 // FIXME: Hide after moving more signal handling code into common.
 void MaybeReportNonExecRegion(uptr pc);
 void MaybeDumpInstructionBytes(uptr pc);
@@ -826,6 +825,9 @@ struct SignalContext {
 
   // String description of the signal.
   const char *Describe() const;
+
+  // Returns true if signal is stack overflow.
+  bool IsStackOverflow() const;
 
  private:
   // Platform specific initialization.
