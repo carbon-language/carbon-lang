@@ -26,8 +26,11 @@ RUN: ld.lld -### foo.o -m i386pep -shared | FileCheck -check-prefix=SHARED %s
 SHARED:      -out:a.dll
 SHARED-SAME: -dll
 
-RUN: ld.lld -### foo.o -m i386pep -shared foo.def | FileCheck -check-prefix=DEF %s
-DEF: -def:foo.def
+RUN: ld.lld -### foo.o -m i386pep -shared foo.def | FileCheck -check-prefix=DEF1 %s
+DEF1: -def:foo.def
+
+RUN: ld.lld -### foo.o -m i386pep -shared FOO.DEF | FileCheck -check-prefix=DEF2 %s
+DEF2: -def:FOO.DEF
 
 RUN: ld.lld -### foo.o -m i386pep -o bar.exe | FileCheck -check-prefix=OUT %s
 OUT: -out:bar.exe
