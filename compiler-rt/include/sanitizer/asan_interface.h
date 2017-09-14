@@ -148,10 +148,6 @@ extern "C" {
   // before things like _exit and execl to avoid false positives on stack.
   void __asan_handle_no_return(void);
 
-  // Required to allow ASAN versions of libc++abi to build against older
-  // versions of compiler-rt that do not provide this interface.
-# define SANITIZER_ASAN_INTERFACE_HAS_HANDLE_NO_RETURN
-
 #ifdef __cplusplus
 }  // extern "C"
 #endif
