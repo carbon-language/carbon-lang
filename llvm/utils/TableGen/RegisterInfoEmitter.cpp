@@ -1236,6 +1236,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
        << " = {\n";
     for (unsigned M = 0; M < NumModes; ++M) {
       unsigned EV = 0;
+      (void)EV;
       OS << "  // Mode = " << M << " (";
       if (M == 0)
         OS << "Default";
