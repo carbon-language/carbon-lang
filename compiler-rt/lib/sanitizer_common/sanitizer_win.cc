@@ -938,10 +938,6 @@ bool SignalContext::IsMemoryAccess() const {
   return GetWriteFlag() != SignalContext::UNKNOWN;
 }
 
-int SignalContext::GetType() const {
-  return static_cast<const siginfo_t *>(siginfo)->si_signo;
-}
-
 SignalContext::WriteFlag SignalContext::GetWriteFlag() const {
   EXCEPTION_RECORD *exception_record = (EXCEPTION_RECORD *)siginfo;
   // The contents of this array are documented at
