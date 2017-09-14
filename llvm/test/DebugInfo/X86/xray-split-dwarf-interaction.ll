@@ -1,12 +1,12 @@
 ; RUN: %llc_dwarf -split-dwarf-file=input.dwo -O3 \
 ; RUN:     -function-sections -data-sections \
 ; RUN:     -relocation-model=pic -filetype=asm \
-; RUN:     -generate-type-units -debug-compile -o - %s | \
+; RUN:     -generate-type-units -o - %s | \
 ; RUN:     FileCheck %s --check-prefix=CHECK-ASM
 ; RUN: %llc_dwarf -split-dwarf-file=input.dwo -O3 \
 ; RUN:     -function-sections -data-sections \
 ; RUN:     -relocation-model=pic -filetype=obj \
-; RUN:     -generate-type-units -debug-compile -o - %s | \
+; RUN:     -generate-type-units -o - %s | \
 ; RUN:     llvm-readelf -sections | \
 ; RUN:     FileCheck %s --check-prefix=CHECK-ELF
 ; Created from `clang++ -fxray-instrument -gsplit-dwarf -fdebug-types-section
