@@ -36,7 +36,7 @@ namespace __asan {
 void AsanOnDeadlySignal(int signo, void *siginfo, void *context) {
   ScopedDeadlySignal signal_scope(GetCurrentThread());
   StartReportDeadlySignal();
-  SignalContext sig = SignalContext::Create(siginfo, context);
+  SignalContext sig(siginfo, context);
   if (IsStackOverflow(sig))
     ReportStackOverflow(sig);
   else
