@@ -883,7 +883,7 @@ def uimm16_altrelaxed : Operand<i32> {
 // Like uimm5 but reports a less confusing error for 32-63 when
 // an instruction alias permits that.
 def uimm5_report_uimm6 : Operand<i32> {
-  let PrintMethod = "printUImm<5>";
+  let PrintMethod = "printUImm<6>";
   let ParserMatchClass = ConstantUImm5ReportUImm6AsmOperandClass;
 }
 
