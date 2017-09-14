@@ -1886,11 +1886,9 @@ unsigned SIInstrInfo::getAddressSpaceForPseudoSourceKind(
   case PseudoSourceValue::ExternalSymbolCallEntry:
   case PseudoSourceValue::TargetCustom:
     return AMDGPUASI.CONSTANT_ADDRESS;
-  default:
-      return AMDGPUASI.FLAT_ADDRESS;
   }
+  return AMDGPUASI.FLAT_ADDRESS;
 }
-
 
 static void removeModOperands(MachineInstr &MI) {
   unsigned Opc = MI.getOpcode();
