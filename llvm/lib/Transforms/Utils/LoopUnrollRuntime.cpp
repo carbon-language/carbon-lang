@@ -782,11 +782,15 @@ bool llvm::UnrollRuntimeLoopRemainder(Loop *L, unsigned Count,
      // Add the incoming values from the remainder code to the end of the phi
      // node.
      for (unsigned i =0; i < oldNumOperands; i++){
-       Value *newVal = VMap[Phi->getIncomingValue(i)];
+       Value *newVal = VMap.lookup(Phi->getIncomingValue(i));
        // newVal can be a constant or derived from values outside the loop, and
-       // hence need not have a VMap value.
-       if (!newVal)
+       // hence need not have a VMap value. Also, since lookup already generated
+       // a default "null" VMap entry for this value, we need to populate that
+       // VMap entry correctly, with the mapped entry being itself.
+       if (!newVal) {
          newVal = Phi->getIncomingValue(i);
+         VMap[Phi->getIncomingValue(i)] = Phi->getIncomingValue(i);
+       }
        Phi->addIncoming(newVal,
                            cast<BasicBlock>(VMap[Phi->getIncomingBlock(i)]));
      }
