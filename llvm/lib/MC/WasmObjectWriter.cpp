@@ -163,7 +163,8 @@ struct WasmRelocationEntry {
 
   void print(raw_ostream &Out) const {
     Out << "Off=" << Offset << ", Sym=" << *Symbol << ", Addend=" << Addend
-        << ", Type=" << Type << ", FixupSection=" << FixupSection;
+        << ", Type=" << Type
+        << ", FixupSection=" << FixupSection->getSectionName();
   }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
@@ -495,6 +496,39 @@ WasmObjectWriter::getProvisionalValue(const WasmRelocationEntry &RelEntry) {
   return Value;
 }
 
+static void addData(SmallVectorImpl<char> &DataBytes,
+                    MCSectionWasm &DataSection, uint32_t &DataAlignment) {
+  DataBytes.resize(alignTo(DataBytes.size(), DataSection.getAlignment()));
+  DataAlignment = std::max(DataAlignment, DataSection.getAlignment());
+  DEBUG(errs() << "addData: " << DataSection.getSectionName() << "\n");
+
+  for (const MCFragment &Frag : DataSection) {
+    if (Frag.hasInstructions())
+      report_fatal_error("only data supported in data sections");
+
+    if (auto *Align = dyn_cast<MCAlignFragment>(&Frag)) {
+      if (Align->getValueSize() != 1)
+        report_fatal_error("only byte values supported for alignment");
+      // If nops are requested, use zeros, as this is the data section.
+      uint8_t Value = Align->hasEmitNops() ? 0 : Align->getValue();
+      uint64_t Size = std::min<uint64_t>(alignTo(DataBytes.size(),
+                                                 Align->getAlignment()),
+                                         DataBytes.size() +
+                                             Align->getMaxBytesToEmit());
+      DataBytes.resize(Size, Value);
+    } else if (auto *Fill = dyn_cast<MCFillFragment>(&Frag)) {
+      DataBytes.insert(DataBytes.end(), Fill->getSize(), Fill->getValue());
+    } else {
+      const auto &DataFrag = cast<MCDataFragment>(Frag);
+      const SmallVectorImpl<char> &Contents = DataFrag.getContents();
+
+      DataBytes.insert(DataBytes.end(), Contents.begin(), Contents.end());
+    }
+  }
+
+  DEBUG(dbgs() << "addData -> " << DataBytes.size() << "\n");
+}
+
 uint32_t WasmObjectWriter::getRelocationIndexValue(
     const WasmRelocationEntry &RelEntry) {
   switch (RelEntry.Type) {
@@ -773,9 +807,7 @@ void WasmObjectWriter::writeCodeSection(const MCAssembler &Asm,
       report_fatal_error(".size expression must be evaluatable");
 
     encodeULEB128(Size, getStream());
-
     FuncSection.setSectionOffset(getStream().tell() - Section.ContentsOffset);
-
     Asm.writeSectionData(&FuncSection, Layout);
   }
 
@@ -1016,7 +1048,7 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
   // In the special .global_variables section, we've encoded global
   // variables used by the function. Translate them into the Globals
   // list.
-  MCSectionWasm *GlobalVars = Ctx.getWasmSection(".global_variables", 0, 0);
+  MCSectionWasm *GlobalVars = Ctx.getWasmSection(".global_variables", wasm::WASM_SEC_DATA);
   if (!GlobalVars->getFragmentList().empty()) {
     if (GlobalVars->getFragmentList().size() != 1)
       report_fatal_error("only one .global_variables fragment supported");
@@ -1072,7 +1104,7 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
 
   // In the special .stack_pointer section, we've encoded the stack pointer
   // index.
-  MCSectionWasm *StackPtr = Ctx.getWasmSection(".stack_pointer", 0, 0);
+  MCSectionWasm *StackPtr = Ctx.getWasmSection(".stack_pointer", wasm::WASM_SEC_DATA);
   if (!StackPtr->getFragmentList().empty()) {
     if (StackPtr->getFragmentList().size() != 1)
       report_fatal_error("only one .stack_pointer fragment supported");
@@ -1087,6 +1119,21 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
       report_fatal_error("only one entry supported in .stack_pointer");
     HasStackPointer = true;
     StackPointerGlobal = NumGlobalImports + *(const int32_t *)Contents.data();
+  }
+
+  for (MCSection &Sec : Asm) {
+    auto &Section = static_cast<MCSectionWasm &>(Sec);
+    if (Section.getType() != wasm::WASM_SEC_DATA)
+      continue;
+
+    DataSize = alignTo(DataSize, Section.getAlignment());
+    DataSegments.emplace_back();
+    WasmDataSegment &Segment = DataSegments.back();
+    Segment.Offset = DataSize;
+    Segment.Section = &Section;
+    addData(Segment.Data, Section, DataAlignment);
+    DataSize += Segment.Data.size();
+    Section.setMemoryOffset(Segment.Offset);
   }
 
   // Handle regular defined and undefined symbols.
@@ -1151,9 +1198,6 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
       if (!WS.isDefined(/*SetUsed=*/false))
         continue;
 
-      if (WS.getOffset() != 0)
-        report_fatal_error("data sections must contain one variable each: " +
-                           WS.getName());
       if (!WS.getSize())
         report_fatal_error("data symbols must have a size set with .size: " +
                            WS.getName());
@@ -1162,58 +1206,20 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
       if (!WS.getSize()->evaluateAsAbsolute(Size, Layout))
         report_fatal_error(".size expression must be evaluatable");
 
-      auto &DataSection = static_cast<MCSectionWasm &>(WS.getSection());
-
-      if (uint64_t(Size) != Layout.getSectionFileSize(&DataSection))
-        report_fatal_error("data sections must contain at most one variable");
-
-      DataAlignment = std::max(DataAlignment, DataSection.getAlignment());
-
-      DataSegments.emplace_back();
-      WasmDataSegment &Segment = DataSegments.back();
-
-      DataSize = alignTo(DataSize, DataSection.getAlignment());
-      Segment.Offset = DataSize;
-      Segment.Section = &DataSection;
-
       // For each global, prepare a corresponding wasm global holding its
       // address.  For externals these will also be named exports.
       Index = NumGlobalImports + Globals.size();
+      auto &DataSection = static_cast<MCSectionWasm &>(WS.getSection());
 
       WasmGlobal Global;
       Global.Type = PtrType;
       Global.IsMutable = false;
       Global.HasImport = false;
-      Global.InitialValue = DataSize;
+      Global.InitialValue = DataSection.getMemoryOffset() + Layout.getSymbolOffset(WS);
       Global.ImportIndex = 0;
       SymbolIndices[&WS] = Index;
       DEBUG(dbgs() << "  -> global index: " << Index << "\n");
       Globals.push_back(Global);
-
-      for (const MCFragment &Frag : DataSection) {
-        if (Frag.hasInstructions())
-          report_fatal_error("only data supported in data sections");
-
-        if (auto *Align = dyn_cast<MCAlignFragment>(&Frag)) {
-          if (Align->getValueSize() != 1)
-            report_fatal_error("only byte values supported for alignment");
-          // If nops are requested, use zeros, as this is the data section.
-          uint8_t Value = Align->hasEmitNops() ? 0 : Align->getValue();
-          uint64_t Size = std::min<uint64_t>(
-              alignTo(Segment.Data.size(), Align->getAlignment()),
-              Segment.Data.size() + Align->getMaxBytesToEmit());
-          Segment.Data.resize(Size, Value);
-        } else if (auto *Fill = dyn_cast<MCFillFragment>(&Frag)) {
-          Segment.Data.insert(Segment.Data.end(), Fill->getSize(), Fill->getValue());
-        } else {
-          const auto &DataFrag = cast<MCDataFragment>(Frag);
-          const SmallVectorImpl<char> &Contents = DataFrag.getContents();
-
-          Segment.Data.insert(Segment.Data.end(), Contents.begin(),
-                              Contents.end());
-        }
-      }
-      DataSize += Segment.Data.size();
     }
 
     // If the symbol is visible outside this translation unit, export it.
