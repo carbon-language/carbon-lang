@@ -920,7 +920,8 @@ bool GVN::AnalyzeLoadAvailability(LoadInst *LI, MemDepResult DepInfo,
       Instruction *I = DepInfo.getInst();
       dbgs() << " is clobbered by " << *I << '\n';
     );
-    if (ORE->allowExtraAnalysis(DEBUG_TYPE))
+
+    if (ORE->allowExtraAnalysis())
       reportMayClobberedLoad(LI, DepInfo, DT, ORE);
 
     return false;

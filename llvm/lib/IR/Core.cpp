@@ -85,15 +85,15 @@ LLVMContextRef LLVMGetGlobalContext() { return wrap(&*GlobalContext); }
 void LLVMContextSetDiagnosticHandler(LLVMContextRef C,
                                      LLVMDiagnosticHandler Handler,
                                      void *DiagnosticContext) {
-  unwrap(C)->setDiagnosticHandlerCallBack(
-      LLVM_EXTENSION reinterpret_cast<DiagnosticHandler::DiagnosticHandlerTy>(
+  unwrap(C)->setDiagnosticHandler(
+      LLVM_EXTENSION reinterpret_cast<LLVMContext::DiagnosticHandlerTy>(
           Handler),
       DiagnosticContext);
 }
 
 LLVMDiagnosticHandler LLVMContextGetDiagnosticHandler(LLVMContextRef C) {
   return LLVM_EXTENSION reinterpret_cast<LLVMDiagnosticHandler>(
-      unwrap(C)->getDiagnosticHandlerCallBack());
+      unwrap(C)->getDiagnosticHandler());
 }
 
 void *LLVMContextGetDiagnosticContext(LLVMContextRef C) {

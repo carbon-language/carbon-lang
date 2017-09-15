@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/IR/DiagnosticInfo.h"
-#include "LLVMContextImpl.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/ADT/iterator_range.h"
@@ -41,6 +40,61 @@
 #include <string>
 
 using namespace llvm;
+
+namespace {
+
+/// \brief Regular expression corresponding to the value given in one of the
+/// -pass-remarks* command line flags. Passes whose name matches this regexp
+/// will emit a diagnostic via ORE->emit(...);
+struct PassRemarksOpt {
+  std::shared_ptr<Regex> Pattern;
+
+  void operator=(const std::string &Val) {
+    if (!Val.empty()) {
+      Pattern = std::make_shared<Regex>(Val);
+      std::string RegexError;
+      if (!Pattern->isValid(RegexError))
+        report_fatal_error("Invalid regular expression '" + Val +
+                               "' in -pass-remarks: " + RegexError,
+                           false);
+    }
+  }
+};
+
+} // end anonymous namespace
+
+static PassRemarksOpt PassRemarksOptLoc;
+static PassRemarksOpt PassRemarksMissedOptLoc;
+static PassRemarksOpt PassRemarksAnalysisOptLoc;
+
+// -pass-remarks
+//    Command line flag to enable optimization remarks
+static cl::opt<PassRemarksOpt, true, cl::parser<std::string>>
+PassRemarks("pass-remarks", cl::value_desc("pattern"),
+            cl::desc("Enable optimization remarks from passes whose name match "
+                     "the given regular expression"),
+            cl::Hidden, cl::location(PassRemarksOptLoc), cl::ValueRequired,
+            cl::ZeroOrMore);
+
+// -pass-remarks-missed
+//    Command line flag to enable missed optimization remarks
+static cl::opt<PassRemarksOpt, true, cl::parser<std::string>> PassRemarksMissed(
+    "pass-remarks-missed", cl::value_desc("pattern"),
+    cl::desc("Enable missed optimization remarks from passes whose name match "
+             "the given regular expression"),
+    cl::Hidden, cl::location(PassRemarksMissedOptLoc), cl::ValueRequired,
+    cl::ZeroOrMore);
+
+// -pass-remarks-analysis
+//    Command line flag to enable optimization analysis remarks
+static cl::opt<PassRemarksOpt, true, cl::parser<std::string>>
+PassRemarksAnalysis(
+    "pass-remarks-analysis", cl::value_desc("pattern"),
+    cl::desc(
+        "Enable optimization analysis remarks from passes whose name match "
+        "the given regular expression"),
+    cl::Hidden, cl::location(PassRemarksAnalysisOptLoc), cl::ValueRequired,
+    cl::ZeroOrMore);
 
 int llvm::getNextAvailablePluginDiagnosticKind() {
   static std::atomic<int> PluginKindID(DK_FirstPluginKind);
@@ -229,10 +283,9 @@ OptimizationRemark::OptimizationRemark(const char *PassName,
                                    RemarkName, *Func, Func->getSubprogram(),
                                    &getFirstFunctionBlock(Func)) {}
 
-bool OptimizationRemark::isEnabled() const {
-  const Function &Fn = getFunction();
-  LLVMContext &Ctx = Fn.getContext();
-  return Ctx.getDiagHandlerPtr()->isPassedOptRemarkEnabled(getPassName());
+bool OptimizationRemark::isEnabled(StringRef PassName) {
+  return PassRemarksOptLoc.Pattern &&
+         PassRemarksOptLoc.Pattern->match(PassName);
 }
 
 OptimizationRemarkMissed::OptimizationRemarkMissed(
@@ -250,10 +303,9 @@ OptimizationRemarkMissed::OptimizationRemarkMissed(const char *PassName,
                                    *Inst->getParent()->getParent(),
                                    Inst->getDebugLoc(), Inst->getParent()) {}
 
-bool OptimizationRemarkMissed::isEnabled() const {
-  const Function &Fn = getFunction();
-  LLVMContext &Ctx = Fn.getContext();
-  return Ctx.getDiagHandlerPtr()->isMissedOptRemarkEnabled(getPassName());
+bool OptimizationRemarkMissed::isEnabled(StringRef PassName) {
+  return PassRemarksMissedOptLoc.Pattern &&
+         PassRemarksMissedOptLoc.Pattern->match(PassName);
 }
 
 OptimizationRemarkAnalysis::OptimizationRemarkAnalysis(
@@ -278,11 +330,9 @@ OptimizationRemarkAnalysis::OptimizationRemarkAnalysis(
                                    *cast<BasicBlock>(CodeRegion)->getParent(),
                                    Loc, CodeRegion) {}
 
-bool OptimizationRemarkAnalysis::isEnabled() const {
-  const Function &Fn = getFunction();
-  LLVMContext &Ctx = Fn.getContext();
-  return Ctx.getDiagHandlerPtr()->isAnalysisRemarkEnabled(getPassName()) ||
-         shouldAlwaysPrint();
+bool OptimizationRemarkAnalysis::isEnabled(StringRef PassName) {
+  return PassRemarksAnalysisOptLoc.Pattern &&
+         PassRemarksAnalysisOptLoc.Pattern->match(PassName);
 }
 
 void DiagnosticInfoMIRParser::print(DiagnosticPrinter &DP) const {

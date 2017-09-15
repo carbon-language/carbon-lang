@@ -604,8 +604,10 @@ public:
     return DI->getKind() == DK_OptimizationRemark;
   }
 
+  static bool isEnabled(StringRef PassName);
+
   /// \see DiagnosticInfoOptimizationBase::isEnabled.
-  bool isEnabled() const override;
+  bool isEnabled() const override { return isEnabled(getPassName()); }
 
 private:
   /// This is deprecated now and only used by the function API below.
@@ -645,8 +647,10 @@ public:
     return DI->getKind() == DK_OptimizationRemarkMissed;
   }
 
+  static bool isEnabled(StringRef PassName);
+
   /// \see DiagnosticInfoOptimizationBase::isEnabled.
-  bool isEnabled() const override;
+  bool isEnabled() const override { return isEnabled(getPassName()); }
 
 private:
   /// This is deprecated now and only used by the function API below.
@@ -697,8 +701,12 @@ public:
     return DI->getKind() == DK_OptimizationRemarkAnalysis;
   }
 
+  static bool isEnabled(StringRef PassName);
+
   /// \see DiagnosticInfoOptimizationBase::isEnabled.
-  bool isEnabled() const override;
+  bool isEnabled() const override {
+    return shouldAlwaysPrint() || isEnabled(getPassName());
+  }
 
   static const char *AlwaysPrint;
 
