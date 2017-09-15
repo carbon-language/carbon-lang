@@ -5024,8 +5024,8 @@ static SDValue extractSubVector(SDValue Vec, unsigned IdxVal, SelectionDAG &DAG,
 
   // If the input is a buildvector just emit a smaller one.
   if (Vec.getOpcode() == ISD::BUILD_VECTOR)
-    return DAG.getBuildVector(
-        ResultVT, dl, makeArrayRef(Vec->op_begin() + IdxVal, ElemsPerChunk));
+    return DAG.getBuildVector(ResultVT, dl,
+                              Vec->ops().slice(IdxVal, ElemsPerChunk));
 
   SDValue VecIdx = DAG.getIntPtrConstant(IdxVal, dl);
   return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, ResultVT, Vec, VecIdx);
@@ -35801,9 +35801,9 @@ static SDValue combineExtractSubvector(SDNode *N, SelectionDAG &DAG,
   }
 
   if (InVec.getOpcode() == ISD::BUILD_VECTOR)
-    return DAG.getBuildVector(OpVT, SDLoc(N),
-                              makeArrayRef(InVec.getNode()->op_begin() + IdxVal,
-                                           OpVT.getVectorNumElements()));
+    return DAG.getBuildVector(
+        OpVT, SDLoc(N),
+        InVec.getNode()->ops().slice(IdxVal, OpVT.getVectorNumElements()));
 
   return SDValue();
 }
