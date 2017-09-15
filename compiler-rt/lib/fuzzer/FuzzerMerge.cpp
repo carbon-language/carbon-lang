@@ -241,10 +241,9 @@ void Fuzzer::CrashResistantMergeInternalStep(const std::string &CFPath) {
     // So it makes no sense to record all features for all files, instead we
     // only record features that were not seen before.
     Set<size_t> UniqFeatures;
-    TPC.CollectFeatures([&](size_t Feature) -> bool {
+    TPC.CollectFeatures([&](size_t Feature) {
       if (AllFeatures.insert(Feature).second)
         UniqFeatures.insert(Feature);
-      return true;
     });
     // Show stats.
     if (!(TotalNumberOfRuns & (TotalNumberOfRuns - 1)))
