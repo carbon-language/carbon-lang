@@ -477,13 +477,22 @@ static void WriteI32(raw_pwrite_stream &Stream, uint32_t X, uint64_t Offset) {
   Stream.pwrite((char *)Buffer, sizeof(Buffer), Offset);
 }
 
+static const MCSymbolWasm* ResolveSymbol(const MCSymbolWasm& Symbol) {
+  if (Symbol.isVariable()) {
+    const MCExpr *Expr = Symbol.getVariableValue();
+    auto *Inner = cast<MCSymbolRefExpr>(Expr);
+    return cast<MCSymbolWasm>(&Inner->getSymbol());
+  }
+  return &Symbol;
+}
+
 // Compute a value to write into the code at the location covered
 // by RelEntry. This value isn't used by the static linker, since
 // we have addends; it just serves to make the code more readable
 // and to make standalone wasm modules directly usable.
 uint32_t
 WasmObjectWriter::getProvisionalValue(const WasmRelocationEntry &RelEntry) {
-  const MCSymbolWasm *Sym = RelEntry.Symbol;
+  const MCSymbolWasm *Sym = ResolveSymbol(*RelEntry.Symbol);
 
   // For undefined symbols, use a hopefully invalid value.
   if (!Sym->isDefined(/*SetUsed=*/false))
@@ -934,16 +943,9 @@ uint32_t WasmObjectWriter::registerFunctionType(const MCSymbolWasm& Symbol) {
   assert(Symbol.isFunction());
 
   WasmFunctionType F;
-  if (Symbol.isVariable()) {
-    const MCExpr *Expr = Symbol.getVariableValue();
-    auto *Inner = cast<MCSymbolRefExpr>(Expr);
-    const auto *ResolvedSym = cast<MCSymbolWasm>(&Inner->getSymbol());
-    F.Returns = ResolvedSym->getReturns();
-    F.Params = ResolvedSym->getParams();
-  } else {
-    F.Returns = Symbol.getReturns();
-    F.Params = Symbol.getParams();
-  }
+  const MCSymbolWasm* ResolvedSym = ResolveSymbol(Symbol);
+  F.Returns = ResolvedSym->getReturns();
+  F.Params = ResolvedSym->getParams();
 
   auto Pair =
       FunctionTypeIndices.insert(std::make_pair(F, FunctionTypes.size()));
@@ -1255,11 +1257,9 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
       continue;
     assert(S.isDefined(/*SetUsed=*/false));
 
-    const auto &WS = static_cast<const MCSymbolWasm &>(S);
     // Find the target symbol of this weak alias and export that index
-    const MCExpr *Expr = WS.getVariableValue();
-    auto *Inner = cast<MCSymbolRefExpr>(Expr);
-    const auto *ResolvedSym = cast<MCSymbolWasm>(&Inner->getSymbol());
+    const auto &WS = static_cast<const MCSymbolWasm &>(S);
+    const MCSymbolWasm *ResolvedSym = ResolveSymbol(WS);
     DEBUG(dbgs() << WS.getName() << ": weak alias of '" << *ResolvedSym << "'\n");
     assert(SymbolIndices.count(ResolvedSym) > 0);
     uint32_t Index = SymbolIndices.find(ResolvedSym)->second;
