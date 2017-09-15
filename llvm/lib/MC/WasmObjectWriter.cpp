@@ -262,19 +262,19 @@ private:
     encodeSLEB128(int32_t(Ty), getStream());
   }
 
-  void writeTypeSection(const SmallVector<WasmFunctionType, 4> &FunctionTypes);
-  void writeImportSection(const SmallVector<WasmImport, 4> &Imports);
-  void writeFunctionSection(const SmallVector<WasmFunction, 4> &Functions);
+  void writeTypeSection(ArrayRef<WasmFunctionType> FunctionTypes);
+  void writeImportSection(ArrayRef<WasmImport> Imports);
+  void writeFunctionSection(ArrayRef<WasmFunction> Functions);
   void writeTableSection(uint32_t NumElements);
   void writeMemorySection(uint32_t DataSize);
   void writeGlobalSection();
-  void writeExportSection(const SmallVector<WasmExport, 4> &Exports);
-  void writeElemSection(const SmallVector<uint32_t, 4> &TableElems);
+  void writeExportSection(ArrayRef<WasmExport> Exports);
+  void writeElemSection(ArrayRef<uint32_t> TableElems);
   void writeCodeSection(const MCAssembler &Asm, const MCAsmLayout &Layout,
-                        const SmallVector<WasmFunction, 4> &Functions);
-  void writeDataSection(const SmallVector<WasmDataSegment, 4> &Segments);
-  void writeNameSection(const SmallVector<WasmFunction, 4> &Functions,
-                        const SmallVector<WasmImport, 4> &Imports,
+                        ArrayRef<WasmFunction> Functions);
+  void writeDataSection(ArrayRef<WasmDataSegment> Segments);
+  void writeNameSection(ArrayRef<WasmFunction> Functions,
+                        ArrayRef<WasmImport> Imports,
                         uint32_t NumFuncImports);
   void writeCodeRelocSection();
   void writeDataRelocSection();
@@ -602,7 +602,7 @@ void WasmObjectWriter::writeRelocations(
 }
 
 void WasmObjectWriter::writeTypeSection(
-    const SmallVector<WasmFunctionType, 4> &FunctionTypes) {
+    ArrayRef<WasmFunctionType> FunctionTypes) {
   if (FunctionTypes.empty())
     return;
 
@@ -624,9 +624,7 @@ void WasmObjectWriter::writeTypeSection(
   endSection(Section);
 }
 
-
-void WasmObjectWriter::writeImportSection(
-    const SmallVector<WasmImport, 4> &Imports) {
+void WasmObjectWriter::writeImportSection(ArrayRef<WasmImport> Imports) {
   if (Imports.empty())
     return;
 
@@ -656,8 +654,7 @@ void WasmObjectWriter::writeImportSection(
   endSection(Section);
 }
 
-void WasmObjectWriter::writeFunctionSection(
-    const SmallVector<WasmFunction, 4> &Functions) {
+void WasmObjectWriter::writeFunctionSection(ArrayRef<WasmFunction> Functions) {
   if (Functions.empty())
     return;
 
@@ -731,8 +728,7 @@ void WasmObjectWriter::writeGlobalSection() {
   endSection(Section);
 }
 
-void WasmObjectWriter::writeExportSection(
-    const SmallVector<WasmExport, 4> &Exports) {
+void WasmObjectWriter::writeExportSection(ArrayRef<WasmExport> Exports) {
   if (Exports.empty())
     return;
 
@@ -749,8 +745,7 @@ void WasmObjectWriter::writeExportSection(
   endSection(Section);
 }
 
-void WasmObjectWriter::writeElemSection(
-    const SmallVector<uint32_t, 4> &TableElems) {
+void WasmObjectWriter::writeElemSection(ArrayRef<uint32_t> TableElems) {
   if (TableElems.empty())
     return;
 
@@ -772,9 +767,9 @@ void WasmObjectWriter::writeElemSection(
   endSection(Section);
 }
 
-void WasmObjectWriter::writeCodeSection(
-    const MCAssembler &Asm, const MCAsmLayout &Layout,
-    const SmallVector<WasmFunction, 4> &Functions) {
+void WasmObjectWriter::writeCodeSection(const MCAssembler &Asm,
+                                        const MCAsmLayout &Layout,
+                                        ArrayRef<WasmFunction> Functions) {
   if (Functions.empty())
     return;
 
@@ -803,8 +798,7 @@ void WasmObjectWriter::writeCodeSection(
   endSection(Section);
 }
 
-void WasmObjectWriter::writeDataSection(
-    const SmallVector<WasmDataSegment, 4> &Segments) {
+void WasmObjectWriter::writeDataSection(ArrayRef<WasmDataSegment> Segments) {
   if (Segments.empty())
     return;
 
@@ -830,8 +824,8 @@ void WasmObjectWriter::writeDataSection(
 }
 
 void WasmObjectWriter::writeNameSection(
-    const SmallVector<WasmFunction, 4> &Functions,
-    const SmallVector<WasmImport, 4> &Imports,
+    ArrayRef<WasmFunction> Functions,
+    ArrayRef<WasmImport> Imports,
     unsigned NumFuncImports) {
   uint32_t TotalFunctions = NumFuncImports + Functions.size();
   if (TotalFunctions == 0)
