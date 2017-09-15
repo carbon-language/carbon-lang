@@ -67,8 +67,8 @@ public:
   bool invalidate(Function &F, const PreservedAnalyses &PA,
                   FunctionAnalysisManager::Invalidator &Inv);
 
-  /// \brief Output the remark via the diagnostic handler and to the
-  /// optimization record file.
+  /// \brief Output the remark to the optimization record file.  Also send it to
+  /// the diagnostic handler if remarks are requested for the pass.
   void emit(DiagnosticInfoOptimizationBase &OptDiag);
 
   /// \brief Whether we allow for extra compile-time budget to perform more
