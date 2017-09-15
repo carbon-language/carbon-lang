@@ -278,7 +278,7 @@ namespace {
     /// value, either directly, or via a register.
     void setImmediate(MachineOperand &MO, int64_t Val);
 
-    /// \brief Fix the data flow of the induction varible.
+    /// \brief Fix the data flow of the induction variable.
     /// The desired flow is: phi ---> bump -+-> comparison-in-latch.
     ///                                     |
     ///                                     +-> back to phi
