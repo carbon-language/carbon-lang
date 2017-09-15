@@ -297,16 +297,6 @@ private:
 
 WasmObjectWriter::~WasmObjectWriter() {}
 
-// Return the padding size to write a 32-bit value into a 5-byte ULEB128.
-static unsigned PaddingFor5ByteULEB128(uint32_t X) {
-  return X == 0 ? 4 : (4u - (31u - countLeadingZeros(X)) / 7u);
-}
-
-// Return the padding size to write a 32-bit value into a 5-byte SLEB128.
-static unsigned PaddingFor5ByteSLEB128(int32_t X) {
-  return 5 - getSLEB128Size(X);
-}
-
 // Write out a section header and a patchable section size field.
 void WasmObjectWriter::startSection(SectionBookkeeping &Section,
                                     unsigned SectionId,
@@ -341,12 +331,11 @@ void WasmObjectWriter::endSection(SectionBookkeeping &Section) {
     report_fatal_error("section size does not fit in a uint32_t");
 
   DEBUG(dbgs() << "endSection size=" << Size << "\n");
-  unsigned Padding = PaddingFor5ByteULEB128(Size);
 
   // Write the final section size to the payload_len field, which follows
   // the section id byte.
   uint8_t Buffer[16];
-  unsigned SizeLen = encodeULEB128(Size, Buffer, Padding);
+  unsigned SizeLen = encodeULEB128(Size, Buffer, 5);
   assert(SizeLen == 5);
   getStream().pwrite((char *)Buffer, SizeLen, Section.SizeOffset);
 }
@@ -453,8 +442,7 @@ void WasmObjectWriter::recordRelocation(MCAssembler &Asm,
 static void
 WritePatchableLEB(raw_pwrite_stream &Stream, uint32_t X, uint64_t Offset) {
   uint8_t Buffer[5];
-  unsigned Padding = PaddingFor5ByteULEB128(X);
-  unsigned SizeLen = encodeULEB128(X, Buffer, Padding);
+  unsigned SizeLen = encodeULEB128(X, Buffer, 5);
   assert(SizeLen == 5);
   Stream.pwrite((char *)Buffer, SizeLen, Offset);
 }
@@ -464,8 +452,7 @@ WritePatchableLEB(raw_pwrite_stream &Stream, uint32_t X, uint64_t Offset) {
 static void
 WritePatchableSLEB(raw_pwrite_stream &Stream, int32_t X, uint64_t Offset) {
   uint8_t Buffer[5];
-  unsigned Padding = PaddingFor5ByteSLEB128(X);
-  unsigned SizeLen = encodeSLEB128(X, Buffer, Padding);
+  unsigned SizeLen = encodeSLEB128(X, Buffer, 5);
   assert(SizeLen == 5);
   Stream.pwrite((char *)Buffer, SizeLen, Offset);
 }
