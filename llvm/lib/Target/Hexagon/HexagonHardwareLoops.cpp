@@ -1238,7 +1238,7 @@ bool HexagonHardwareLoops::convertToHardwareLoop(MachineLoop *L,
     // if the immediate fits in the instructions.  Otherwise, we need to
     // create a new virtual register.
     int64_t CountImm = TripCount->getImm();
-    if (!TII->isValidOffset(LOOP_i, CountImm)) {
+    if (!TII->isValidOffset(LOOP_i, CountImm, TRI)) {
       unsigned CountReg = MRI->createVirtualRegister(&Hexagon::IntRegsRegClass);
       BuildMI(*Preheader, InsertPos, DL, TII->get(Hexagon::A2_tfrsi), CountReg)
         .addImm(CountImm);
