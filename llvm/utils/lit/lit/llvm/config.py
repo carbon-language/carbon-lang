@@ -32,14 +32,6 @@ class LLVMConfig(object):
                                            ['cmp.exe', 'grep.exe', 'sed.exe'])
             self.with_environment('PATH', path, append_path=True)
 
-        if use_lit_shell:
-            # 0 is external, "" is default, and everything else is internal.
-            self.use_lit_shell = (use_lit_shell != "0")
-        else:
-            # Otherwise we default to internal on Windows and external elsewhere, as
-            # bash on Windows is usually very slow.
-            self.use_lit_shell = (sys.platform in ['win32'])
-
         self.use_lit_shell = litsh
         if not self.litsh:
             features.add('shell')
