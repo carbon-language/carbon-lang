@@ -5,11 +5,6 @@ import sys
 
 import lit.util
 
-# Choose between lit's internal shell pipeline runner and a real shell.  If
-# LIT_USE_INTERNAL_SHELL is in the environment, we use that as an override.
-litshenv = os.environ.get("LIT_USE_INTERNAL_SHELL")
-litsh = lit.util.pythonize_bool(litshenv) if litshenv else (sys.platform == 'win32')
-
 def binary_feature(on, feature, off_prefix):
     return feature if on else off_prefix + feature
 
@@ -21,6 +16,7 @@ class LLVMConfig(object):
 
         features = config.available_features
 
+        self.use_lit_shell = False
         # Tweak PATH for Win32 to decide to use bash.exe or not.
         if sys.platform == 'win32':
             # For tests that require Windows to run.
@@ -31,8 +27,14 @@ class LLVMConfig(object):
                                            config.environment['PATH'],
                                            ['cmp.exe', 'grep.exe', 'sed.exe'])
             self.with_environment('PATH', path, append_path=True)
+            self.use_lit_shell = True
 
-        self.use_lit_shell = litsh
+        # Choose between lit's internal shell pipeline runner and a real shell.  If
+        # LIT_USE_INTERNAL_SHELL is in the environment, we use that as an override.
+        lit_shell_env = os.environ.get("LIT_USE_INTERNAL_SHELL")
+        if lit_shell_env:
+            self.use_lit_shell = lit.util.pythonize_bool(lit_shell_env)
+
         if not self.use_lit_shell:
             features.add('shell')
 
