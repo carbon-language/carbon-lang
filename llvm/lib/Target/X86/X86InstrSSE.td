@@ -7670,12 +7670,28 @@ def VPERM2F128rm : AVXAIi8<0x06, MRMSrcMem, (outs VR256:$dst),
           Sched<[WriteFShuffleLd, ReadAfterLd]>;
 }
 
+// Immediate transform to help with commuting.
+def Perm2XCommuteImm : SDNodeXForm<imm, [{
+  return getI8Imm(N->getZExtValue() ^ 0x22, SDLoc(N));
+}]>;
+
+let Predicates = [HasAVX] in {
+// Pattern with load in other operand.
+def : Pat<(v4f64 (X86VPerm2x128 (loadv4f64 addr:$src2),
+                                VR256:$src1, (i8 imm:$imm))),
+          (VPERM2F128rm VR256:$src1, addr:$src2, (Perm2XCommuteImm imm:$imm))>;
+}
+
 let Predicates = [HasAVX1Only] in {
 def : Pat<(v4i64 (X86VPerm2x128 VR256:$src1, VR256:$src2, (i8 imm:$imm))),
           (VPERM2F128rr VR256:$src1, VR256:$src2, imm:$imm)>;
 def : Pat<(v4i64 (X86VPerm2x128 VR256:$src1,
                   (loadv4i64 addr:$src2), (i8 imm:$imm))),
           (VPERM2F128rm VR256:$src1, addr:$src2, imm:$imm)>;
+// Pattern with load in other operand.
+def : Pat<(v4i64 (X86VPerm2x128 (loadv4i64 addr:$src2),
+                                VR256:$src1, (i8 imm:$imm))),
+          (VPERM2F128rm VR256:$src1, addr:$src2, (Perm2XCommuteImm imm:$imm))>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -8082,6 +8098,11 @@ def VPERM2I128rm : AVX2AIi8<0x46, MRMSrcMem, (outs VR256:$dst),
           [(set VR256:$dst, (X86VPerm2x128 VR256:$src1, (loadv4i64 addr:$src2),
                              (i8 imm:$src3)))]>,
           Sched<[WriteShuffle256Ld, ReadAfterLd]>, VEX_4V, VEX_L;
+
+let Predicates = [HasAVX2] in
+def : Pat<(v4i64 (X86VPerm2x128 (loadv4i64 addr:$src2),
+                                VR256:$src1, (i8 imm:$imm))),
+          (VPERM2I128rm VR256:$src1, addr:$src2, (Perm2XCommuteImm imm:$imm))>;
 
 
 //===----------------------------------------------------------------------===//
