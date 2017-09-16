@@ -8,6 +8,22 @@ import subprocess
 import sys
 import threading
 
+
+def pythonize_bool(value):
+    if value is None:
+        return False
+    if type(value) is bool:
+        return value
+    if isinstance(value, (int, long)):
+        return value != 0
+    if isinstance(value, basestring):
+        if value.lower() in ('1', 'true', 'on', 'yes'):
+            return True
+        if value.lower() in ('', '0', 'false', 'off', 'no'):
+            return False
+    raise ValueError('"{}" is not a valid boolean'.format(value))
+
+
 def to_bytes(s):
     """Return the parameter as type 'bytes', possibly encoding it.
 
