@@ -1,6 +1,7 @@
 import errno
 import itertools
 import math
+import numbers
 import os
 import platform
 import signal
@@ -14,7 +15,7 @@ def pythonize_bool(value):
         return False
     if type(value) is bool:
         return value
-    if isinstance(value, (int, long)):
+    if isinstance(value, numbers.Number):
         return value != 0
     if isinstance(value, basestring):
         if value.lower() in ('1', 'true', 'on', 'yes'):
