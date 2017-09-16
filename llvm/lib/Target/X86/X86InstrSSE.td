@@ -7315,6 +7315,27 @@ def PCLMULQDQrm : PCLMULIi8<0x44, MRMSrcMem, (outs VR128:$dst),
            Sched<[WriteCLMulLd, ReadAfterLd]>;
 } // Constraints = "$src1 = $dst"
 
+// Immediate transform to help with commuting.
+def PCLMULCommuteImm : SDNodeXForm<imm, [{
+  uint8_t Imm = N->getZExtValue();
+  return getI8Imm((uint8_t)((Imm >> 4) | (Imm << 4)), SDLoc(N));
+}]>;
+
+// We can commute a load in the first operand by swapping the sources and
+// rotating the immediate.
+let Predicates = [HasAVX, HasPCLMUL] in {
+  def : Pat<(int_x86_pclmulqdq (loadv2i64 addr:$src2), VR128:$src1,
+                                (i8 imm:$src3)),
+            (VPCLMULQDQrm VR128:$src1, addr:$src2,
+                          (PCLMULCommuteImm imm:$src3))>;
+}
+
+let Predicates = [NoAVX, HasPCLMUL] in {
+  def : Pat<(int_x86_pclmulqdq (loadv2i64 addr:$src2), VR128:$src1,
+                                (i8 imm:$src3)),
+            (PCLMULQDQrm VR128:$src1, addr:$src2,
+                          (PCLMULCommuteImm imm:$src3))>;
+}
 
 multiclass pclmul_alias<string asm, int immop> {
   def : InstAlias<!strconcat("pclmul", asm, "dq {$src, $dst|$dst, $src}"),
