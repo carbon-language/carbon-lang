@@ -11,13 +11,20 @@ import threading
 
 
 def pythonize_bool(value):
+    def is_string(value):
+        try:
+            # Python 2 and Python 3 are different here.
+            return isinstance(value, basestring)
+        except NameError:
+            return isinstance(value, str)
+
     if value is None:
         return False
     if type(value) is bool:
         return value
     if isinstance(value, numbers.Number):
         return value != 0
-    if isinstance(value, basestring):
+    if is_string(value):
         if value.lower() in ('1', 'true', 'on', 'yes'):
             return True
         if value.lower() in ('', '0', 'false', 'off', 'no'):
