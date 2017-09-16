@@ -67,6 +67,6 @@ struct DiagnosticHandler {
             isAnalysisRemarkEnabled(PassName));
   }
 };
-}
+} // namespace llvm
 
 #endif // LLVM_IR_DIAGNOSTICHANDLER_H
