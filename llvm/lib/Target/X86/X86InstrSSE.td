@@ -6489,8 +6489,8 @@ let Constraints = "$src1 = $dst" in {
 /// SS41I_binop_rmi_int - SSE 4.1 binary operator with 8-bit immediate
 multiclass SS41I_binop_rmi_int<bits<8> opc, string OpcodeStr,
                  Intrinsic IntId, RegisterClass RC, PatFrag memop_frag,
-                 X86MemOperand x86memop, bit Is2Addr = 1,
-                 OpndItins itins = DEFAULT_ITINS> {
+                 X86MemOperand x86memop, bit Is2Addr,
+                 OpndItins itins> {
   let isCommutable = 1 in
   def rri : SS4AIi8<opc, MRMSrcReg, (outs RC:$dst),
         (ins RC:$src1, RC:$src2, u8imm:$src3),
@@ -6517,8 +6517,8 @@ multiclass SS41I_binop_rmi_int<bits<8> opc, string OpcodeStr,
 /// SS41I_binop_rmi - SSE 4.1 binary operator with 8-bit immediate
 multiclass SS41I_binop_rmi<bits<8> opc, string OpcodeStr, SDNode OpNode,
                            ValueType OpVT, RegisterClass RC, PatFrag memop_frag,
-                           X86MemOperand x86memop, bit Is2Addr = 1,
-                           OpndItins itins = DEFAULT_ITINS> {
+                           X86MemOperand x86memop, bit Is2Addr,
+                           OpndItins itins> {
   let isCommutable = 1 in
   def rri : SS4AIi8<opc, MRMSrcReg, (outs RC:$dst),
         (ins RC:$src1, RC:$src2, u8imm:$src3),
@@ -6771,7 +6771,7 @@ let Predicates = [UseSSE41], AddedComplexity = 15 in {
 let Uses = [XMM0], Constraints = "$src1 = $dst" in {
   multiclass SS41I_ternary_int<bits<8> opc, string OpcodeStr, PatFrag mem_frag,
                                X86MemOperand x86memop, Intrinsic IntId,
-                               OpndItins itins = DEFAULT_ITINS> {
+                               OpndItins itins> {
     def rr0 : SS48I<opc, MRMSrcReg, (outs VR128:$dst),
                     (ins VR128:$src1, VR128:$src2),
                     !strconcat(OpcodeStr,
