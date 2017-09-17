@@ -4755,13 +4755,6 @@ let Predicates = [HasAVX, NoVLX] in {
             (VMOVDDUPrm addr:$src)>, Requires<[HasAVX]>;
 }
 
-let Predicates = [HasAVX, NoVLX] in
-def : Pat<(v2f64 (X86VBroadcast (loadf64 addr:$src))),
-          (VMOVDDUPrm addr:$src)>;
-let Predicates = [HasAVX1Only] in
-def : Pat<(v2i64 (X86VBroadcast (loadi64 addr:$src))),
-          (VMOVDDUPrm addr:$src)>;
-
 let Predicates = [UseSSE3] in {
   // No need for aligned memory as this only loads 64-bits.
   def : Pat<(X86Movddup (loadv2f64 addr:$src)),
@@ -7982,6 +7975,8 @@ let Predicates = [HasAVX, NoVLX] in {
   // 128bit broadcasts:
   def : Pat<(v2f64 (X86VBroadcast f64:$src)),
             (VMOVDDUPrr (COPY_TO_REGCLASS FR64:$src, VR128))>;
+  def : Pat<(v2f64 (X86VBroadcast (loadf64 addr:$src))),
+            (VMOVDDUPrm addr:$src)>;
 }
 
 let Predicates = [HasAVX1Only] in {
@@ -8009,6 +8004,8 @@ let Predicates = [HasAVX1Only] in {
 
   def : Pat<(v2i64 (X86VBroadcast i64:$src)),
             (VPSHUFDri (COPY_TO_REGCLASS GR64:$src, VR128), 0x44)>;
+  def : Pat<(v2i64 (X86VBroadcast (loadi64 addr:$src))),
+            (VMOVDDUPrm addr:$src)>;
 }
 
 //===----------------------------------------------------------------------===//
