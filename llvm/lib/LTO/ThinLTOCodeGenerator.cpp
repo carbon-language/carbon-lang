@@ -535,9 +535,7 @@ static void initTMBuilder(TargetMachineBuilder &TMBuilder,
 } // end anonymous namespace
 
 void ThinLTOCodeGenerator::addModule(StringRef Identifier, StringRef Data) {
-  std::string Id =
-      (Twine(Identifier) + "_" + std::to_string(Modules.size())).str();
-  ThinLTOBuffer Buffer(Data, std::move(Id));
+  ThinLTOBuffer Buffer(Data, Identifier);
   LLVMContext Context;
   StringRef TripleStr;
   ErrorOr<std::string> TripleOrErr = expectedToErrorOrAndEmitErrors(
