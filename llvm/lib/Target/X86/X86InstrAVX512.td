@@ -4291,11 +4291,7 @@ let Predicates = [HasAVX512] in {
 
   def : Pat<(v2f64 (X86Movlpd VR128X:$src1, VR128X:$src2)),
             (VMOVSDZrr VR128X:$src1, (COPY_TO_REGCLASS VR128X:$src2, FR64X))>;
-  def : Pat<(v2i64 (X86Movlpd VR128X:$src1, VR128X:$src2)),
-            (VMOVSDZrr VR128X:$src1, (COPY_TO_REGCLASS VR128X:$src2, FR64X))>;
   def : Pat<(v4f32 (X86Movlps VR128X:$src1, VR128X:$src2)),
-            (VMOVSDZrr VR128X:$src1, (COPY_TO_REGCLASS VR128X:$src2, FR64X))>;
-  def : Pat<(v4i32 (X86Movlps VR128X:$src1, VR128X:$src2)),
             (VMOVSDZrr VR128X:$src1, (COPY_TO_REGCLASS VR128X:$src2, FR64X))>;
 }
 
@@ -6116,12 +6112,8 @@ let Predicates = [HasAVX512] in {
   // VMOVLPS patterns
   def : Pat<(v4f32 (X86Movlps VR128X:$src1, (load addr:$src2))),
           (VMOVLPSZ128rm VR128X:$src1, addr:$src2)>;
-  def : Pat<(v4i32 (X86Movlps VR128X:$src1, (load addr:$src2))),
-          (VMOVLPSZ128rm VR128X:$src1, addr:$src2)>;
   // VMOVLPD patterns
   def : Pat<(v2f64 (X86Movlpd VR128X:$src1, (load addr:$src2))),
-          (VMOVLPDZ128rm VR128X:$src1, addr:$src2)>;
-  def : Pat<(v2i64 (X86Movlpd VR128X:$src1, (load addr:$src2))),
           (VMOVLPDZ128rm VR128X:$src1, addr:$src2)>;
   def : Pat<(v2f64 (X86Movsd VR128X:$src1,
                            (v2f64 (scalar_to_vector (loadf64 addr:$src2))))),
@@ -6168,14 +6160,8 @@ let Predicates = [HasAVX512] in {
   def : Pat<(store (v4f32 (X86Movlps (load addr:$src1), VR128X:$src2)),
                    addr:$src1),
             (VMOVLPSZ128mr addr:$src1, VR128X:$src2)>;
-  def : Pat<(store (v4i32 (X86Movlps
-                   (bc_v4i32 (loadv2i64 addr:$src1)), VR128X:$src2)), addr:$src1),
-            (VMOVLPSZ128mr addr:$src1, VR128X:$src2)>;
   // VMOVLPD patterns
   def : Pat<(store (v2f64 (X86Movlpd (load addr:$src1), VR128X:$src2)),
-                   addr:$src1),
-            (VMOVLPDZ128mr addr:$src1, VR128X:$src2)>;
-  def : Pat<(store (v2i64 (X86Movlpd (load addr:$src1), VR128X:$src2)),
                    addr:$src1),
             (VMOVLPDZ128mr addr:$src1, VR128X:$src2)>;
 }
