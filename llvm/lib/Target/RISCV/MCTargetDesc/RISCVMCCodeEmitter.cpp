@@ -59,6 +59,9 @@ public:
   unsigned getImmOpValueAsr1(const MCInst &MI, unsigned OpNo,
                              SmallVectorImpl<MCFixup> &Fixups,
                              const MCSubtargetInfo &STI) const;
+  unsigned getImmOpValue(const MCInst &MI, unsigned OpNo,
+                         SmallVectorImpl<MCFixup> &Fixups,
+                         const MCSubtargetInfo &STI) const;
 };
 } // end anonymous namespace
 
@@ -105,6 +108,23 @@ RISCVMCCodeEmitter::getImmOpValueAsr1(const MCInst &MI, unsigned OpNo,
   }
 
   llvm_unreachable("Unhandled expression!");
+
+  return 0;
+}
+
+unsigned RISCVMCCodeEmitter::getImmOpValue(const MCInst &MI, unsigned OpNo,
+                                           SmallVectorImpl<MCFixup> &Fixups,
+                                           const MCSubtargetInfo &STI) const {
+
+  const MCOperand &MO = MI.getOperand(OpNo);
+
+  // If the destination is an immediate, there is nothing to do
+  if (MO.isImm())
+    return MO.getImm();
+
+  llvm_unreachable("Unhandled expression!");
+
+  return 0;
 }
 
 #include "RISCVGenMCCodeEmitter.inc"

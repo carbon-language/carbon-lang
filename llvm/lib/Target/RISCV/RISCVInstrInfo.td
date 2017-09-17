@@ -36,34 +36,42 @@ def FenceArg : AsmOperandClass {
 def fencearg : Operand<i32> {
   let ParserMatchClass = FenceArg;
   let PrintMethod = "printFenceArg";
+  let DecoderMethod = "decodeUImmOperand<4>";
 }
 
 def uimm5 : Operand<i32> {
   let ParserMatchClass = UImmAsmOperand<5>;
+  let DecoderMethod = "decodeUImmOperand<5>";
 }
 
 def simm12 : Operand<i32> {
   let ParserMatchClass = SImmAsmOperand<12>;
+  let DecoderMethod = "decodeSImmOperand<12>";
 }
 
 def uimm12 : Operand<i32> {
   let ParserMatchClass = UImmAsmOperand<12>;
+  let DecoderMethod = "decodeUImmOperand<12>";
 }
 
 // A 13-bit signed immediate where the least significant bit is zero.
 def simm13_lsb0 : Operand<i32> {
   let ParserMatchClass = SImmAsmOperand<13, "Lsb0">;
   let EncoderMethod = "getImmOpValueAsr1";
+  let DecoderMethod = "decodeSImmOperandAndLsl1<13>";
 }
 
 def uimm20 : Operand<i32> {
   let ParserMatchClass = UImmAsmOperand<20>;
+  let EncoderMethod = "getImmOpValue";
+  let DecoderMethod = "decodeUImmOperand<20>";
 }
 
 // A 21-bit signed immediate where the least significant bit is zero.
 def simm21_lsb0 : Operand<i32> {
   let ParserMatchClass = SImmAsmOperand<21, "Lsb0">;
   let EncoderMethod = "getImmOpValueAsr1";
+  let DecoderMethod = "decodeSImmOperandAndLsl1<21>";
 }
 
 // As noted in RISCVRegisterInfo.td, the hope is that support for
