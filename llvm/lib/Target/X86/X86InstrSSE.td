@@ -4753,12 +4753,6 @@ defm MOVDDUP : sse3_replicate_dfp<"movddup">;
 let Predicates = [HasAVX, NoVLX] in {
   def : Pat<(X86Movddup (loadv2f64 addr:$src)),
             (VMOVDDUPrm addr:$src)>, Requires<[HasAVX]>;
-
-  // 256-bit version
-  def : Pat<(X86Movddup (loadv4i64 addr:$src)),
-            (VMOVDDUPYrm addr:$src)>;
-  def : Pat<(X86Movddup (v4i64 VR256:$src)),
-            (VMOVDDUPYrr VR256:$src)>;
 }
 
 let Predicates = [HasAVX, NoVLX] in
