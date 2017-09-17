@@ -1136,30 +1136,6 @@ let Constraints = "$src1 = $dst", AddedComplexity = 20 in {
                         IIC_SSE_MOV_LH>, Sched<[WriteFShuffle]>;
 }
 
-let Predicates = [UseAVX] in {
-  // MOVLHPS patterns
-  def : Pat<(v4i32 (X86Movlhps VR128:$src1, VR128:$src2)),
-            (VMOVLHPSrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v2i64 (X86Movlhps VR128:$src1, VR128:$src2)),
-            (VMOVLHPSrr (v2i64 VR128:$src1), VR128:$src2)>;
-
-  // MOVHLPS patterns
-  def : Pat<(v4i32 (X86Movhlps VR128:$src1, VR128:$src2)),
-            (VMOVHLPSrr VR128:$src1, VR128:$src2)>;
-}
-
-let Predicates = [UseSSE1] in {
-  // MOVLHPS patterns
-  def : Pat<(v4i32 (X86Movlhps VR128:$src1, VR128:$src2)),
-            (MOVLHPSrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v2i64 (X86Movlhps VR128:$src1, VR128:$src2)),
-            (MOVLHPSrr (v2i64 VR128:$src1), VR128:$src2)>;
-
-  // MOVHLPS patterns
-  def : Pat<(v4i32 (X86Movhlps VR128:$src1, VR128:$src2)),
-            (MOVHLPSrr VR128:$src1, VR128:$src2)>;
-}
-
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Conversion Instructions
 //===----------------------------------------------------------------------===//

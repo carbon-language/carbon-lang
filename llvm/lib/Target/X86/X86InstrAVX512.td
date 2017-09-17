@@ -6055,18 +6055,6 @@ def VMOVHLPSZrr : AVX512PSI<0x12, MRMSrcReg, (outs VR128X:$dst),
           [(set VR128X:$dst, (v4f32 (X86Movhlps VR128X:$src1, VR128X:$src2)))],
           IIC_SSE_MOV_LH>, EVEX_4V;
 
-let Predicates = [HasAVX512] in {
-  // MOVLHPS patterns
-  def : Pat<(v4i32 (X86Movlhps VR128X:$src1, VR128X:$src2)),
-            (VMOVLHPSZrr VR128X:$src1, VR128X:$src2)>;
-  def : Pat<(v2i64 (X86Movlhps VR128X:$src1, VR128X:$src2)),
-            (VMOVLHPSZrr (v2i64 VR128X:$src1), VR128X:$src2)>;
-
-  // MOVHLPS patterns
-  def : Pat<(v4i32 (X86Movhlps VR128X:$src1, VR128X:$src2)),
-            (VMOVHLPSZrr VR128X:$src1, VR128X:$src2)>;
-}
-
 //===----------------------------------------------------------------------===//
 // VMOVHPS/PD VMOVLPS Instructions
 // All patterns was taken from SSS implementation.
