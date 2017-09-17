@@ -112,7 +112,7 @@ define <4 x float> @shuffle_v4f32_0145(<4 x float> %a, <4 x float> %b) {
 define <4 x float> @shuffle_v4f32_0101(<4 x float> %a, <4 x float> %b) {
 ; SSE1-LABEL: shuffle_v4f32_0101:
 ; SSE1:       # BB#0:
-; SSE1-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,1,0,1]
+; SSE1-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0,0]
 ; SSE1-NEXT:    retq
   %shuffle = shufflevector <4 x float> %a, <4 x float> %b, <4 x i32> <i32 0, i32 1, i32 0, i32 1>
   ret <4 x float> %shuffle
@@ -121,7 +121,7 @@ define <4 x float> @shuffle_v4f32_0101(<4 x float> %a, <4 x float> %b) {
 define <4 x float> @shuffle_v4f32_2323(<4 x float> %a, <4 x float> %b) {
 ; SSE1-LABEL: shuffle_v4f32_2323:
 ; SSE1:       # BB#0:
-; SSE1-NEXT:    shufps {{.*#+}} xmm0 = xmm0[2,3,2,3]
+; SSE1-NEXT:    movhlps {{.*#+}} xmm0 = xmm0[1,1]
 ; SSE1-NEXT:    retq
   %shuffle = shufflevector <4 x float> %a, <4 x float> %b, <4 x i32> <i32 2, i32 3, i32 2, i32 3>
   ret <4 x float> %shuffle

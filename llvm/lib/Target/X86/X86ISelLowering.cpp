@@ -10725,6 +10725,15 @@ static SDValue lowerV4F32VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
                          getV4X86ShuffleImm8ForMask(Mask, DL, DAG));
     }
 
+    // Use MOVLHPS/MOVHLPS to simulate unary shuffles. These are only valid
+    // in SSE1 because otherwise they are widened to v2f64 and never get here.
+    if (!Subtarget.hasSSE2()) {
+      if (isShuffleEquivalent(V1, V2, Mask, {0, 1, 0, 1}))
+        return DAG.getNode(X86ISD::MOVLHPS, DL, MVT::v4f32, V1, V1);
+      if (isShuffleEquivalent(V1, V2, Mask, {2, 3, 2, 3}))
+        return DAG.getNode(X86ISD::MOVHLPS, DL, MVT::v4f32, V1, V1);
+    }
+
     // Otherwise, use a straight shuffle of a single input vector. We pass the
     // input vector to both operands to simulate this with a SHUFPS.
     return DAG.getNode(X86ISD::SHUFP, DL, MVT::v4f32, V1, V1,
@@ -10757,11 +10766,14 @@ static SDValue lowerV4F32VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
         return BlendPerm;
   }
 
-  // Use low/high mov instructions.
-  if (isShuffleEquivalent(V1, V2, Mask, {0, 1, 4, 5}))
-    return DAG.getNode(X86ISD::MOVLHPS, DL, MVT::v4f32, V1, V2);
-  if (isShuffleEquivalent(V1, V2, Mask, {2, 3, 6, 7}))
-    return DAG.getNode(X86ISD::MOVHLPS, DL, MVT::v4f32, V2, V1);
+  // Use low/high mov instructions. These are only valid in SSE1 because
+  // otherwise they are widened to v2f64 and never get here.
+  if (!Subtarget.hasSSE2()) {
+    if (isShuffleEquivalent(V1, V2, Mask, {0, 1, 4, 5}))
+      return DAG.getNode(X86ISD::MOVLHPS, DL, MVT::v4f32, V1, V2);
+    if (isShuffleEquivalent(V1, V2, Mask, {2, 3, 6, 7}))
+      return DAG.getNode(X86ISD::MOVHLPS, DL, MVT::v4f32, V2, V1);
+  }
 
   // Use dedicated unpack instructions for masks that match their pattern.
   if (SDValue V =
