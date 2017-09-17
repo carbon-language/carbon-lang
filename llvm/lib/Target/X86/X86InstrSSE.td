@@ -1034,7 +1034,7 @@ let Predicates = [UseAVX] in {
                  (bc_v4f32 (v2i64 (scalar_to_vector (loadi64 addr:$src2))))),
             (VMOVHPSrm VR128:$src1, addr:$src2)>;
   def : Pat<(X86Movlhps VR128:$src1,
-                 (bc_v4i32 (v2i64 (X86vzload addr:$src2)))),
+                 (bc_v4f32 (v2i64 (X86vzload addr:$src2)))),
             (VMOVHPSrm VR128:$src1, addr:$src2)>;
 
   // FIXME: Instead of X86Unpckl, there should be a X86Movlhpd here, the problem

@@ -6088,7 +6088,7 @@ let Predicates = [HasAVX512] in {
                (bc_v4f32 (v2i64 (scalar_to_vector (loadi64 addr:$src2))))),
           (VMOVHPSZ128rm VR128X:$src1, addr:$src2)>;
   def : Pat<(X86Movlhps VR128X:$src1,
-               (bc_v4i32 (v2i64 (X86vzload addr:$src2)))),
+               (bc_v4f32 (v2i64 (X86vzload addr:$src2)))),
           (VMOVHPSZ128rm VR128X:$src1, addr:$src2)>;
   // VMOVHPD patterns
   def : Pat<(v2f64 (X86Unpckl VR128X:$src1,
