@@ -97,7 +97,7 @@ class LLVMConfig(object):
             # For paths, we should be able to take a list of them and process all
             # of them.
             paths_to_add = value
-            if isinstance(paths_to_add, basestring):
+            if lit.util.is_string(paths_to_add):
                 paths_to_add = [paths_to_add]
 
             def norm(x):
