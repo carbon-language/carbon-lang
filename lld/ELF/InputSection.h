@@ -261,15 +261,18 @@ private:
   llvm::DenseSet<uint64_t> LiveOffsets;
 };
 
-struct EhSectionPiece : public SectionPiece {
+struct EhSectionPiece {
   EhSectionPiece(size_t Off, InputSectionBase *ID, uint32_t Size,
                  unsigned FirstRelocation)
-      : SectionPiece(Off, false), ID(ID), Size(Size),
+      : InputOff(Off), ID(ID), Size(Size),
         FirstRelocation(FirstRelocation) {}
-  InputSectionBase *ID;
-  uint32_t Size;
 
   ArrayRef<uint8_t> data() { return {ID->Data.data() + this->InputOff, Size}; }
+
+  size_t InputOff;
+  ssize_t OutputOff = -1;
+  InputSectionBase *ID;
+  uint32_t Size;
   unsigned FirstRelocation;
 };
 
