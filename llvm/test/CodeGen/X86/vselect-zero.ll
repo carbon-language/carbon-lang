@@ -7,26 +7,18 @@
 ; PR28925
 
 define <4 x i32> @test1(<4 x i1> %cond, <4 x i32> %x) {
-; SSE2-LABEL: test1:
-; SSE2:       # BB#0:
-; SSE2-NEXT:    pslld $31, %xmm0
-; SSE2-NEXT:    psrad $31, %xmm0
-; SSE2-NEXT:    pandn %xmm1, %xmm0
-; SSE2-NEXT:    retq
-;
-; SSE42-LABEL: test1:
-; SSE42:       # BB#0:
-; SSE42-NEXT:    pslld $31, %xmm0
-; SSE42-NEXT:    xorps %xmm2, %xmm2
-; SSE42-NEXT:    blendvps %xmm0, %xmm2, %xmm1
-; SSE42-NEXT:    movaps %xmm1, %xmm0
-; SSE42-NEXT:    retq
+; SSE-LABEL: test1:
+; SSE:       # BB#0:
+; SSE-NEXT:    pslld $31, %xmm0
+; SSE-NEXT:    psrad $31, %xmm0
+; SSE-NEXT:    pandn %xmm1, %xmm0
+; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test1:
 ; AVX:       # BB#0:
 ; AVX-NEXT:    vpslld $31, %xmm0, %xmm0
-; AVX-NEXT:    vxorps %xmm2, %xmm2, %xmm2
-; AVX-NEXT:    vblendvps %xmm0, %xmm2, %xmm1, %xmm0
+; AVX-NEXT:    vpsrad $31, %xmm0, %xmm0
+; AVX-NEXT:    vpandn %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %r = select <4 x i1> %cond, <4 x i32> zeroinitializer, <4 x i32> %x
   ret <4 x i32> %r

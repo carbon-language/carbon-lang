@@ -30090,6 +30090,7 @@ static SDValue combineExtractVectorElt_SSE(SDNode *N, SelectionDAG &DAG,
 
 /// If a vector select has an operand that is -1 or 0, try to simplify the
 /// select to a bitwise logic operation.
+/// TODO: Move to DAGCombiner, possibly using TargetLowering::hasAndNot()?
 static SDValue
 combineVSelectWithAllOnesOrZeros(SDNode *N, SelectionDAG &DAG,
                                  TargetLowering::DAGCombinerInfo &DCI,
@@ -30153,6 +30154,10 @@ combineVSelectWithAllOnesOrZeros(SDNode *N, SelectionDAG &DAG,
     }
   }
 
+  // Cond value must be 'sign splat' to be converted to a logical op.
+  if (DAG.ComputeNumSignBits(Cond) != CondVT.getScalarSizeInBits())
+    return SDValue();
+
   // vselect Cond, 111..., 000... -> Cond
   if (TValIsAllOnes && FValIsAllZeros)
     return DAG.getBitcast(VT, Cond);
@@ -30172,6 +30177,15 @@ combineVSelectWithAllOnesOrZeros(SDNode *N, SelectionDAG &DAG,
     SDValue CastLHS = DAG.getBitcast(CondVT, LHS);
     SDValue And = DAG.getNode(ISD::AND, DL, CondVT, Cond, CastLHS);
     return DAG.getBitcast(VT, And);
+  }
+
+  // vselect Cond, 000..., X -> andn Cond, X
+  if (TValIsAllZeros) {
+    MVT AndNVT = MVT::getVectorVT(MVT::i64, CondVT.getSizeInBits() / 64);
+    SDValue CastCond = DAG.getBitcast(AndNVT, Cond);
+    SDValue CastRHS = DAG.getBitcast(AndNVT, RHS);
+    SDValue AndN = DAG.getNode(X86ISD::ANDNP, DL, AndNVT, CastCond, CastRHS);
+    return DAG.getBitcast(VT, AndN);
   }
 
   return SDValue();
