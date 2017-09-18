@@ -696,6 +696,7 @@ void ShrinkWrapping::computeSaveLocations() {
   SavePos = std::vector<SmallPtrSet<MCInst *, 4>>(BC.MRI->getNumRegs());
   auto &RI = Info.getReachingInsnsBackwards();
   auto &DA = Info.getDominatorAnalysis();
+  auto &SPT = Info.getStackPointerTracking();
 
   DEBUG(dbgs() << "Checking save/restore possibilities\n");
   for (auto &BB : BF) {
@@ -708,6 +709,12 @@ void ShrinkWrapping::computeSaveLocations() {
     // Use reaching instructions to detect if we are inside a loop - if we
     // are, do not consider this BB as valid placement for saves.
     if (RI.isInLoop(BB))
+      continue;
+
+    const auto SPFP = *SPT.getStateBefore(*First);
+    // If we don't know stack state at this point, bail
+    if ((SPFP.first == SPT.SUPERPOSITION || SPFP.first == SPT.EMPTY) &&
+        (SPFP.second == SPT.SUPERPOSITION || SPFP.second == SPT.EMPTY))
       continue;
 
     for (unsigned I = 0, E = BC.MRI->getNumRegs(); I != E; ++I) {
@@ -1144,8 +1151,14 @@ void ShrinkWrapping::moveSaveRestores() {
     auto FIELoad = CSA.LoadFIEByReg[I];
     assert(FIESave && FIELoad);
     auto &SPT = Info.getStackPointerTracking();
-    auto SaveOffset = SPT.getStateBefore(*BestPosSave)->first;
+    const auto SPFP = *SPT.getStateBefore(*BestPosSave);
+    auto SaveOffset = SPFP.first;
     auto SaveSize = FIESave->Size;
+
+    // If we don't know stack state at this point, bail
+    if ((SPFP.first == SPT.SUPERPOSITION || SPFP.first == SPT.EMPTY) &&
+        (SPFP.second == SPT.SUPERPOSITION || SPFP.second == SPT.EMPTY))
+      continue;
 
     // Operation mode: if true, will insert push/pops instead of loads/restores
     bool UsePushPops = validatePushPopsMode(I, BestPosSave, SaveOffset);

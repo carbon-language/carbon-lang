@@ -123,8 +123,11 @@ protected:
       else
         FP = std::make_pair(0, 0);
       int64_t Output;
-      if (!MIA->evaluateSimple(Point, Output, SP, FP))
+      if (!MIA->evaluateSimple(Point, Output, SP, FP)) {
+        if (SPVal == EMPTY && FPVal == EMPTY)
+          return SPVal;
         return SUPERPOSITION;
+      }
 
       return static_cast<int>(Output);
     }
@@ -155,8 +158,11 @@ protected:
       else
         SP = std::make_pair(0, 0);
       int64_t Output;
-      if (!MIA->evaluateSimple(Point, Output, SP, FP))
+      if (!MIA->evaluateSimple(Point, Output, SP, FP)) {
+        if (SPVal == EMPTY && FPVal == EMPTY)
+          return FPVal;
         return SUPERPOSITION;
+      }
 
       if (!HasFramePointer) {
         if (MIA->escapesVariable(Point, *this->BC.MRI, false)) {
