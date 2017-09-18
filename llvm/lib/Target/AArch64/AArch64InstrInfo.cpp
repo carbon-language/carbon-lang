@@ -798,7 +798,8 @@ bool AArch64InstrInfo::isExynosShiftLeftFast(const MachineInstr &MI) const {
     Imm = MI.getOperand(3).getImm();
     Shift = AArch64_AM::getArithShiftValue(Imm);
     return (Shift == 0 ||
-            (Shift <= 3 && AArch64_AM::getExtendType(Imm) == AArch64_AM::UXTX));
+            (Shift <= 3 &&
+             AArch64_AM::getArithExtendType(Imm) == AArch64_AM::UXTX));
   }
 }
 
