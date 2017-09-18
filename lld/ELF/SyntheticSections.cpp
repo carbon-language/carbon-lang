@@ -465,7 +465,7 @@ void EhFrameSection<ELFT>::addSectionAux(EhInputSection *Sec,
   DenseMap<size_t, CieRecord *> OffsetToCie;
   for (EhSectionPiece &Piece : Sec->Pieces) {
     // The empty record is the end marker.
-    if (Piece.size() == 4)
+    if (Piece.Size == 4)
       return;
 
     size_t Offset = Piece.InputOff;
@@ -534,11 +534,11 @@ template <class ELFT> void EhFrameSection<ELFT>::finalizeContents() {
   size_t Off = 0;
   for (CieRecord *Cie : Cies) {
     Cie->Piece->OutputOff = Off;
-    Off += alignTo(Cie->Piece->size(), Config->Wordsize);
+    Off += alignTo(Cie->Piece->Size, Config->Wordsize);
 
     for (EhSectionPiece *Fde : Cie->FdePieces) {
       Fde->OutputOff = Off;
-      Off += alignTo(Fde->size(), Config->Wordsize);
+      Off += alignTo(Fde->Size, Config->Wordsize);
     }
   }
 

@@ -268,7 +268,6 @@ struct EhSectionPiece : public SectionPiece {
         FirstRelocation(FirstRelocation) {}
   InputSectionBase *ID;
   uint32_t Size;
-  uint32_t size() const { return Size; }
 
   ArrayRef<uint8_t> data() { return {ID->Data.data() + this->InputOff, Size}; }
   unsigned FirstRelocation;
