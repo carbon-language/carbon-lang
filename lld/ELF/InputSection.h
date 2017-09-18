@@ -262,16 +262,15 @@ private:
 };
 
 struct EhSectionPiece {
-  EhSectionPiece(size_t Off, InputSectionBase *ID, uint32_t Size,
+  EhSectionPiece(size_t Off, InputSectionBase *Sec, uint32_t Size,
                  unsigned FirstRelocation)
-      : InputOff(Off), ID(ID), Size(Size),
-        FirstRelocation(FirstRelocation) {}
+      : InputOff(Off), Sec(Sec), Size(Size), FirstRelocation(FirstRelocation) {}
 
-  ArrayRef<uint8_t> data() { return {ID->Data.data() + this->InputOff, Size}; }
+  ArrayRef<uint8_t> data() { return {Sec->Data.data() + this->InputOff, Size}; }
 
   size_t InputOff;
   ssize_t OutputOff = -1;
-  InputSectionBase *ID;
+  InputSectionBase *Sec;
   uint32_t Size;
   unsigned FirstRelocation;
 };

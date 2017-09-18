@@ -405,7 +405,7 @@ template <class ELFT>
 template <class RelTy>
 CieRecord *EhFrameSection<ELFT>::addCie(EhSectionPiece &Piece,
                                         ArrayRef<RelTy> Rels) {
-  auto *Sec = cast<EhInputSection>(Piece.ID);
+  auto *Sec = cast<EhInputSection>(Piece.Sec);
   const endianness E = ELFT::TargetEndianness;
   if (read32<E>(Piece.data().data() + 4) != 0)
     fatal(toString(Sec) + ": CIE expected at beginning of .eh_frame");
@@ -433,7 +433,7 @@ template <class ELFT>
 template <class RelTy>
 bool EhFrameSection<ELFT>::isFdeLive(EhSectionPiece &Piece,
                                      ArrayRef<RelTy> Rels) {
-  auto *Sec = cast<EhInputSection>(Piece.ID);
+  auto *Sec = cast<EhInputSection>(Piece.Sec);
   unsigned FirstRelI = Piece.FirstRelocation;
 
   // An FDE should point to some function because FDEs are to describe
