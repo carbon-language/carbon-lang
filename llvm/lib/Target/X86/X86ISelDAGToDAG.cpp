@@ -2966,18 +2966,6 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
         SDValue ShiftedImm = CurDAG->getTargetConstant(Mask >> 8, dl, MVT::i8);
         SDValue Reg = N0.getOperand(0);
 
-        // Put the value in an ABCD register.
-        const TargetRegisterClass *TRC;
-        switch (N0.getSimpleValueType().SimpleTy) {
-        case MVT::i64: TRC = &X86::GR64_ABCDRegClass; break;
-        case MVT::i32: TRC = &X86::GR32_ABCDRegClass; break;
-        case MVT::i16: TRC = &X86::GR16_ABCDRegClass; break;
-        default: llvm_unreachable("Unsupported TEST operand type!");
-        }
-        SDValue RC = CurDAG->getTargetConstant(TRC->getID(), dl, MVT::i32);
-        Reg = SDValue(CurDAG->getMachineNode(X86::COPY_TO_REGCLASS, dl,
-                                             Reg.getValueType(), Reg, RC), 0);
-
         // Extract the h-register.
         SDValue Subreg = CurDAG->getTargetExtractSubreg(X86::sub_8bit_hi, dl,
                                                         MVT::i8, Reg);
