@@ -40,7 +40,7 @@ define void @test2(<2 x double>* %r, <2 x double>* %A, double %B) nounwind  {
 ; X64-LABEL: test2:
 ; X64:       # BB#0:
 ; X64-NEXT:    movaps (%rsi), %xmm1
-; X64-NEXT:    unpcklpd {{.*#+}} xmm1 = xmm1[0],xmm0[0]
+; X64-NEXT:    movlhps {{.*#+}} xmm1 = xmm1[0],xmm0[0]
 ; X64-NEXT:    movaps %xmm1, (%rdi)
 ; X64-NEXT:    retq
 	%tmp3 = load <2 x double>, <2 x double>* %A, align 16
@@ -206,7 +206,7 @@ define <4 x float> @test9(i32 %dummy, float %a, float %b, float %c, float %d) no
 ; X64:       # BB#0:
 ; X64-NEXT:    unpcklps {{.*#+}} xmm2 = xmm2[0],xmm3[0],xmm2[1],xmm3[1]
 ; X64-NEXT:    unpcklps {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
-; X64-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm2[0]
+; X64-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm2[0]
 ; X64-NEXT:    retq
 	%tmp = insertelement <4 x float> undef, float %a, i32 0		; <<4 x float>> [#uses=1]
 	%tmp11 = insertelement <4 x float> %tmp, float %b, i32 1		; <<4 x float>> [#uses=1]
@@ -225,7 +225,7 @@ define <4 x float> @test10(float %a, float %b, float %c, float %d) nounwind {
 ; X64:       # BB#0:
 ; X64-NEXT:    unpcklps {{.*#+}} xmm2 = xmm2[0],xmm3[0],xmm2[1],xmm3[1]
 ; X64-NEXT:    unpcklps {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
-; X64-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm2[0]
+; X64-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm2[0]
 ; X64-NEXT:    retq
 	%tmp = insertelement <4 x float> undef, float %a, i32 0		; <<4 x float>> [#uses=1]
 	%tmp11 = insertelement <4 x float> %tmp, float %b, i32 1		; <<4 x float>> [#uses=1]
@@ -242,7 +242,7 @@ define <2 x double> @test11(double %a, double %b) nounwind {
 ;
 ; X64-LABEL: test11:
 ; X64:       # BB#0:
-; X64-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; X64-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; X64-NEXT:    retq
 	%tmp = insertelement <2 x double> undef, double %a, i32 0		; <<2 x double>> [#uses=1]
 	%tmp7 = insertelement <2 x double> %tmp, double %b, i32 1		; <<2 x double>> [#uses=1]
@@ -315,7 +315,7 @@ define <4 x float> @test14(<4 x float>* %x, <4 x float>* %y) nounwind {
 ; X86-NEXT:    movaps %xmm2, %xmm0
 ; X86-NEXT:    addps %xmm1, %xmm0
 ; X86-NEXT:    subps %xmm1, %xmm2
-; X86-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm2[0]
+; X86-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm2[0]
 ; X86-NEXT:    retl
 ;
 ; X64-LABEL: test14:
@@ -325,7 +325,7 @@ define <4 x float> @test14(<4 x float>* %x, <4 x float>* %y) nounwind {
 ; X64-NEXT:    movaps %xmm2, %xmm0
 ; X64-NEXT:    addps %xmm1, %xmm0
 ; X64-NEXT:    subps %xmm1, %xmm2
-; X64-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm2[0]
+; X64-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm2[0]
 ; X64-NEXT:    retq
   %tmp = load <4 x float>, <4 x float>* %y             ; <<4 x float>> [#uses=2]
   %tmp5 = load <4 x float>, <4 x float>* %x            ; <<4 x float>> [#uses=2]

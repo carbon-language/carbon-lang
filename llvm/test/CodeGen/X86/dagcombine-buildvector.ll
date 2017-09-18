@@ -8,7 +8,7 @@ define void @test(<2 x double>* %dst, <4 x double> %src) nounwind {
 ; CHECK-LABEL: test:
 ; CHECK:       # BB#0: # %entry
 ; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; CHECK-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; CHECK-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; CHECK-NEXT:    movaps %xmm0, (%eax)
 ; CHECK-NEXT:    retl
 entry:

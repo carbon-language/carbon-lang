@@ -2375,7 +2375,7 @@ define <4 x i32> @fptosi_2f80_to_4i32(<2 x x86_fp80> %a) nounwind {
 ; SSE-NEXT:    fldcw -{{[0-9]+}}(%rsp)
 ; SSE-NEXT:    movsd {{.*#+}} xmm1 = mem[0],zero
 ; SSE-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
-; SSE-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; SSE-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; SSE-NEXT:    xorps %xmm1, %xmm1
 ; SSE-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,2],xmm1[2,3]
 ; SSE-NEXT:    retq
@@ -2388,7 +2388,7 @@ define <4 x i32> @fptosi_2f80_to_4i32(<2 x x86_fp80> %a) nounwind {
 ; AVX-NEXT:    fisttpll -{{[0-9]+}}(%rsp)
 ; AVX-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; AVX-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm1[0],xmm0[0]
+; AVX-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm1[0],xmm0[0]
 ; AVX-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0,2],zero,zero
 ; AVX-NEXT:    retq
   %cvt = fptosi <2 x x86_fp80> %a to <2 x i32>

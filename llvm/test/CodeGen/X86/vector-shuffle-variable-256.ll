@@ -104,10 +104,10 @@ define <4 x i64> @var_shuffle_v4i64_v4i64_xxxx_i64(<4 x i64> %x, i64 %i0, i64 %i
 ; ALL-NEXT:    vmovaps %ymm0, (%rsp)
 ; ALL-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; ALL-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; ALL-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm1[0],xmm0[0]
+; ALL-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm1[0],xmm0[0]
 ; ALL-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
 ; ALL-NEXT:    vmovsd {{.*#+}} xmm2 = mem[0],zero
-; ALL-NEXT:    vunpcklpd {{.*#+}} xmm1 = xmm2[0],xmm1[0]
+; ALL-NEXT:    vmovlhps {{.*#+}} xmm1 = xmm2[0],xmm1[0]
 ; ALL-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
 ; ALL-NEXT:    movq %rbp, %rsp
 ; ALL-NEXT:    popq %rbp
@@ -135,7 +135,7 @@ define <4 x i64> @var_shuffle_v4i64_v4i64_xx00_i64(<4 x i64> %x, i64 %i0, i64 %i
 ; ALL-NEXT:    vmovaps %ymm0, (%rsp)
 ; ALL-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; ALL-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; ALL-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm1[0],xmm0[0]
+; ALL-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm1[0],xmm0[0]
 ; ALL-NEXT:    vmovaps %xmm0, %xmm0
 ; ALL-NEXT:    movq %rbp, %rsp
 ; ALL-NEXT:    popq %rbp
@@ -161,10 +161,10 @@ define <4 x i64> @var_shuffle_v4i64_v2i64_xxxx_i64(<2 x i64> %x, i64 %i0, i64 %i
 ; ALL-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
 ; ALL-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; ALL-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; ALL-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm1[0],xmm0[0]
+; ALL-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm1[0],xmm0[0]
 ; ALL-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
 ; ALL-NEXT:    vmovsd {{.*#+}} xmm2 = mem[0],zero
-; ALL-NEXT:    vunpcklpd {{.*#+}} xmm1 = xmm2[0],xmm1[0]
+; ALL-NEXT:    vmovlhps {{.*#+}} xmm1 = xmm2[0],xmm1[0]
 ; ALL-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
 ; ALL-NEXT:    retq
   %x0 = extractelement <2 x i64> %x, i64 %i0
@@ -610,10 +610,10 @@ define <4 x i64> @mem_shuffle_v4i64_v4i64_xxxx_i64(<4 x i64> %x, i64* %i) nounwi
 ; ALL-NEXT:    vmovaps %ymm0, (%rsp)
 ; ALL-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; ALL-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; ALL-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm1[0],xmm0[0]
+; ALL-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm1[0],xmm0[0]
 ; ALL-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
 ; ALL-NEXT:    vmovsd {{.*#+}} xmm2 = mem[0],zero
-; ALL-NEXT:    vunpcklpd {{.*#+}} xmm1 = xmm2[0],xmm1[0]
+; ALL-NEXT:    vmovlhps {{.*#+}} xmm1 = xmm2[0],xmm1[0]
 ; ALL-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
 ; ALL-NEXT:    movq %rbp, %rsp
 ; ALL-NEXT:    popq %rbp
@@ -651,10 +651,10 @@ define <4 x i64> @mem_shuffle_v4i64_v2i64_xxxx_i64(<2 x i64> %x, i64* %i) nounwi
 ; ALL-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
 ; ALL-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; ALL-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; ALL-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm1[0],xmm0[0]
+; ALL-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm1[0],xmm0[0]
 ; ALL-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
 ; ALL-NEXT:    vmovsd {{.*#+}} xmm2 = mem[0],zero
-; ALL-NEXT:    vunpcklpd {{.*#+}} xmm1 = xmm2[0],xmm1[0]
+; ALL-NEXT:    vmovlhps {{.*#+}} xmm1 = xmm2[0],xmm1[0]
 ; ALL-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
 ; ALL-NEXT:    retq
   %p0  = getelementptr inbounds i64, i64* %i, i32 0

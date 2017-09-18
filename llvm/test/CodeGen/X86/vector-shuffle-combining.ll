@@ -1277,12 +1277,12 @@ define <4 x float> @combine_test2(<4 x float> %a, <4 x float> %b) {
 define <4 x float> @combine_test3(<4 x float> %a, <4 x float> %b) {
 ; SSE-LABEL: combine_test3:
 ; SSE:       # BB#0:
-; SSE-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; SSE-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_test3:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; AVX-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; AVX-NEXT:    retq
   %1 = shufflevector <4 x float> %a, <4 x float> %b, <4 x i32> <i32 0, i32 5, i32 1, i32 7>
   %2 = shufflevector <4 x float> %1, <4 x float> %b, <4 x i32> <i32 0, i32 2, i32 4, i32 1>
@@ -1381,12 +1381,12 @@ define <4 x i32> @combine_test7(<4 x i32> %a, <4 x i32> %b) {
 define <4 x i32> @combine_test8(<4 x i32> %a, <4 x i32> %b) {
 ; SSE-LABEL: combine_test8:
 ; SSE:       # BB#0:
-; SSE-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; SSE-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_test8:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; AVX-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; AVX-NEXT:    retq
   %1 = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 0, i32 5, i32 1, i32 7>
   %2 = shufflevector <4 x i32> %1, <4 x i32> %b, <4 x i32> <i32 0, i32 2, i32 4, i32 1>
@@ -1480,12 +1480,12 @@ define <4 x float> @combine_test12(<4 x float> %a, <4 x float> %b) {
 define <4 x float> @combine_test13(<4 x float> %a, <4 x float> %b) {
 ; SSE-LABEL: combine_test13:
 ; SSE:       # BB#0:
-; SSE-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; SSE-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_test13:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; AVX-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; AVX-NEXT:    retq
   %1 = shufflevector <4 x float> %a, <4 x float> %b, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
   %2 = shufflevector <4 x float> %1, <4 x float> %a, <4 x i32> <i32 4, i32 5, i32 2, i32 3>
@@ -1578,12 +1578,12 @@ define <4 x i32> @combine_test17(<4 x i32> %a, <4 x i32> %b) {
 define <4 x i32> @combine_test18(<4 x i32> %a, <4 x i32> %b) {
 ; SSE-LABEL: combine_test18:
 ; SSE:       # BB#0:
-; SSE-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; SSE-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_test18:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; AVX-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; AVX-NEXT:    retq
   %1 = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
   %2 = shufflevector <4 x i32> %1, <4 x i32> %a, <4 x i32> <i32 4, i32 5, i32 2, i32 3>
@@ -1641,7 +1641,7 @@ define <4 x i32> @combine_test21(<8 x i32> %a, <4 x i32>* %ptr) {
 ; SSE-LABEL: combine_test21:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    movaps %xmm0, %xmm2
-; SSE-NEXT:    unpcklpd {{.*#+}} xmm2 = xmm2[0],xmm1[0]
+; SSE-NEXT:    movlhps {{.*#+}} xmm2 = xmm2[0],xmm1[0]
 ; SSE-NEXT:    unpckhpd {{.*#+}} xmm0 = xmm0[1],xmm1[1]
 ; SSE-NEXT:    movaps %xmm2, (%rdi)
 ; SSE-NEXT:    retq
@@ -1649,7 +1649,7 @@ define <4 x i32> @combine_test21(<8 x i32> %a, <4 x i32>* %ptr) {
 ; AVX-LABEL: combine_test21:
 ; AVX:       # BB#0:
 ; AVX-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; AVX-NEXT:    vunpcklpd {{.*#+}} xmm2 = xmm0[0],xmm1[0]
+; AVX-NEXT:    vmovlhps {{.*#+}} xmm2 = xmm0[0],xmm1[0]
 ; AVX-NEXT:    vunpckhpd {{.*#+}} xmm0 = xmm0[1],xmm1[1]
 ; AVX-NEXT:    vmovaps %xmm2, (%rdi)
 ; AVX-NEXT:    vzeroupper
@@ -2168,12 +2168,12 @@ define <4 x float> @combine_undef_input_test1(<4 x float> %a, <4 x float> %b) {
 define <4 x float> @combine_undef_input_test2(<4 x float> %a, <4 x float> %b) {
 ; SSE-LABEL: combine_undef_input_test2:
 ; SSE:       # BB#0:
-; SSE-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; SSE-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_undef_input_test2:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; AVX-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; AVX-NEXT:    retq
   %1 = shufflevector <4 x float> %a, <4 x float> undef, <4 x i32> <i32 6, i32 0, i32 1, i32 7>
   %2 = shufflevector <4 x float> %1, <4 x float> %b, <4 x i32> <i32 1, i32 2, i32 4, i32 5>
@@ -2183,12 +2183,12 @@ define <4 x float> @combine_undef_input_test2(<4 x float> %a, <4 x float> %b) {
 define <4 x float> @combine_undef_input_test3(<4 x float> %a, <4 x float> %b) {
 ; SSE-LABEL: combine_undef_input_test3:
 ; SSE:       # BB#0:
-; SSE-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; SSE-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_undef_input_test3:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; AVX-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; AVX-NEXT:    retq
   %1 = shufflevector <4 x float> %a, <4 x float> undef, <4 x i32> <i32 0, i32 5, i32 1, i32 7>
   %2 = shufflevector <4 x float> %1, <4 x float> %b, <4 x i32> <i32 0, i32 2, i32 4, i32 1>
@@ -2352,12 +2352,12 @@ define <4 x float> @combine_undef_input_test11(<4 x float> %a, <4 x float> %b) {
 define <4 x float> @combine_undef_input_test12(<4 x float> %a, <4 x float> %b) {
 ; SSE-LABEL: combine_undef_input_test12:
 ; SSE:       # BB#0:
-; SSE-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; SSE-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_undef_input_test12:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; AVX-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; AVX-NEXT:    retq
   %1 = shufflevector <4 x float> %a, <4 x float> undef, <4 x i32> <i32 6, i32 0, i32 1, i32 7>
   %2 = shufflevector <4 x float> %b, <4 x float> %1, <4 x i32> <i32 5, i32 6, i32 0, i32 1>
@@ -2367,12 +2367,12 @@ define <4 x float> @combine_undef_input_test12(<4 x float> %a, <4 x float> %b) {
 define <4 x float> @combine_undef_input_test13(<4 x float> %a, <4 x float> %b) {
 ; SSE-LABEL: combine_undef_input_test13:
 ; SSE:       # BB#0:
-; SSE-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; SSE-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_undef_input_test13:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; AVX-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; AVX-NEXT:    retq
   %1 = shufflevector <4 x float> %a, <4 x float> undef, <4 x i32> <i32 0, i32 5, i32 1, i32 7>
   %2 = shufflevector <4 x float> %b, <4 x float> %1, <4 x i32> <i32 4, i32 5, i32 0, i32 5>

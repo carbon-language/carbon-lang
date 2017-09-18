@@ -258,7 +258,7 @@ define <2 x double> @clamp_sitofp_2i64_2f64(<2 x i64> %a) nounwind {
 ; X64-SSE-NEXT:    movq %xmm1, %rax
 ; X64-SSE-NEXT:    xorps %xmm1, %xmm1
 ; X64-SSE-NEXT:    cvtsi2sdq %rax, %xmm1
-; X64-SSE-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; X64-SSE-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; X64-SSE-NEXT:    retq
 ;
 ; X64-AVX-LABEL: clamp_sitofp_2i64_2f64:
@@ -273,7 +273,7 @@ define <2 x double> @clamp_sitofp_2i64_2f64(<2 x i64> %a) nounwind {
 ; X64-AVX-NEXT:    vcvtsi2sdq %rax, %xmm3, %xmm1
 ; X64-AVX-NEXT:    vmovq %xmm0, %rax
 ; X64-AVX-NEXT:    vcvtsi2sdq %rax, %xmm3, %xmm0
-; X64-AVX-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; X64-AVX-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; X64-AVX-NEXT:    retq
   %clo = icmp slt <2 x i64> %a, <i64 -255, i64 -255>
   %lo = select <2 x i1> %clo, <2 x i64> <i64 -255, i64 -255>, <2 x i64> %a

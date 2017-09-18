@@ -1906,7 +1906,7 @@ define <2 x i64> @test_4xi64_to_2xi64_perm_mask0(<4 x i64> %vec) {
 ; CHECK-LABEL: test_4xi64_to_2xi64_perm_mask0:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; CHECK-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm1[0],xmm0[0]
+; CHECK-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm1[0],xmm0[0]
 ; CHECK-NEXT:    vzeroupper
 ; CHECK-NEXT:    retq
   %res = shufflevector <4 x i64> %vec, <4 x i64> undef, <2 x i32> <i32 2, i32 0>
@@ -2313,7 +2313,7 @@ define <2 x i64> @test_8xi64_to_2xi64_perm_mask0(<8 x i64> %vec) {
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    vextractf128 $1, %ymm0, %xmm1
 ; CHECK-NEXT:    vpermilps {{.*#+}} xmm1 = xmm1[2,3,0,1]
-; CHECK-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm1[0],xmm0[0]
+; CHECK-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm1[0],xmm0[0]
 ; CHECK-NEXT:    vzeroupper
 ; CHECK-NEXT:    retq
   %res = shufflevector <8 x i64> %vec, <8 x i64> undef, <2 x i32> <i32 3, i32 0>
@@ -2684,7 +2684,7 @@ define <2 x i64> @test_8xi64_to_2xi64_perm_mem_mask0(<8 x i64>* %vp) {
 ; CHECK-NEXT:    vmovaps (%rdi), %zmm0
 ; CHECK-NEXT:    vextractf32x4 $2, %zmm0, %xmm1
 ; CHECK-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[2,3,0,1]
-; CHECK-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm1[0],xmm0[0]
+; CHECK-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm1[0],xmm0[0]
 ; CHECK-NEXT:    vzeroupper
 ; CHECK-NEXT:    retq
   %vec = load <8 x i64>, <8 x i64>* %vp
@@ -3703,7 +3703,7 @@ define <2 x double> @test_4xdouble_to_2xdouble_perm_mask0(<4 x double> %vec) {
 ; CHECK-LABEL: test_4xdouble_to_2xdouble_perm_mask0:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; CHECK-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm1[0],xmm0[0]
+; CHECK-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm1[0],xmm0[0]
 ; CHECK-NEXT:    vzeroupper
 ; CHECK-NEXT:    retq
   %res = shufflevector <4 x double> %vec, <4 x double> undef, <2 x i32> <i32 2, i32 0>
