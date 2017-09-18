@@ -10,6 +10,7 @@ set(UBSAN_SOURCES
 
 set(UBSAN_STANDALONE_SOURCES
   ubsan_diag_standalone.cc
+  ubsan_init_standalone.cc
   )
 
 set(UBSAN_CXXABI_SOURCES
@@ -63,7 +64,6 @@ if(APPLE)
       OS ${SANITIZER_COMMON_SUPPORTED_OS}
       ARCHS ${UBSAN_SUPPORTED_ARCH}
       SOURCES ${UBSAN_STANDALONE_SOURCES}
-              ubsan_init_standalone.cc
       CFLAGS ${UBSAN_STANDALONE_CFLAGS})
 
     add_weak_symbols("ubsan" WEAK_SYMBOL_LINK_FLAGS)
@@ -133,15 +133,7 @@ else()
     # Initializer of standalone UBSan runtime.
     add_compiler_rt_object_libraries(RTUbsan_standalone
       ARCHS ${UBSAN_SUPPORTED_ARCH}
-      SOURCES ${UBSAN_STANDALONE_SOURCES}
-              ubsan_init_standalone
-      CFLAGS ${UBSAN_STANDALONE_CFLAGS})
-    # This can't not be linked into share lib
-    add_compiler_rt_object_libraries(RTUbsan_standalone_preinit
-      ARCHS ${UBSAN_SUPPORTED_ARCH}
-      SOURCES ${UBSAN_STANDALONE_SOURCES}
-              ubsan_init_standalone_preinit.cc
-      CFLAGS ${UBSAN_STANDALONE_CFLAGS})
+      SOURCES ${UBSAN_STANDALONE_SOURCES} CFLAGS ${UBSAN_STANDALONE_CFLAGS})
 
     # Standalone UBSan runtimes.
     add_compiler_rt_runtime(clang_rt.ubsan_standalone
@@ -150,7 +142,7 @@ else()
       OBJECT_LIBS RTSanitizerCommon
               RTSanitizerCommonLibc
               RTUbsan
-              RTUbsan_standalone_preinit
+              RTUbsan_standalone
       CFLAGS ${UBSAN_CFLAGS}
       PARENT_TARGET ubsan)
 
@@ -168,7 +160,6 @@ else()
         OBJECT_LIBS RTSanitizerCommon
                 RTSanitizerCommonLibc
                 RTUbsan
-                RTUbsan_standalone
         CFLAGS ${UBSAN_CFLAGS}
         LINK_FLAGS ${SANITIZER_COMMON_LINK_FLAGS}
         LINK_LIBS ${UBSAN_DYNAMIC_LIBS}
