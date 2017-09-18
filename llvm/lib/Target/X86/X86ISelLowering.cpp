@@ -12141,16 +12141,11 @@ static SDValue lowerVectorShuffleAsLanePermuteAndBlend(const SDLoc &DL, MVT VT,
                                 : Mask[i] % LaneSize +
                                       (i / LaneSize) * LaneSize + Size);
 
-  // Flip the vector, and blend the results which should now be in-lane. The
-  // VPERM2X128 mask uses the low 2 bits for the low source and bits 4 and
-  // 5 for the high source. The value 3 selects the high half of source 2 and
-  // the value 2 selects the low half of source 2. We only use source 2 to
-  // allow folding it into a memory operand.
-  unsigned PERMMask = 3 | 2 << 4;
+  // Flip the vector, and blend the results which should now be in-lane.
   MVT PVT = VT.isFloatingPoint() ? MVT::v4f64 : MVT::v4i64;
-  SDValue Flipped = DAG.getNode(X86ISD::VPERM2X128, DL, PVT, DAG.getUNDEF(VT),
-                                DAG.getBitcast(PVT, V1),
-                                DAG.getConstant(PERMMask, DL, MVT::i8));
+  SDValue Flipped = DAG.getBitcast(PVT, V1);
+  Flipped = DAG.getVectorShuffle(PVT, DL, Flipped, DAG.getUNDEF(PVT),
+                                 { 2, 3, 0, 1 });
   Flipped = DAG.getBitcast(VT, Flipped);
   return DAG.getVectorShuffle(VT, DL, V1, Flipped, FlippedBlendMask);
 }
@@ -27672,8 +27667,11 @@ static SDValue combineX86ShuffleChain(ArrayRef<SDValue> Inputs, SDValue Root,
   // TODO - handle 128/256-bit lane shuffles of 512-bit vectors.
 
   // Handle 128-bit lane shuffles of 256-bit vectors.
+  // If we have AVX2, prefer to use VPERMQ/VPERMPD for unary shuffles unless
+  // we need to use the zeroing feature.
   // TODO - this should support binary shuffles.
   if (UnaryShuffle && RootVT.is256BitVector() && NumBaseMaskElts == 2 &&
+      !(Subtarget.hasAVX2() && BaseMask[0] >= -1 && BaseMask[1] >= -1) &&
       !isSequentialOrUndefOrZeroInRange(BaseMask, 0, 2, 0)) {
     if (Depth == 1 && Root.getOpcode() == X86ISD::VPERM2X128)
       return SDValue(); // Nothing to do!
