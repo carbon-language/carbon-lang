@@ -160,6 +160,7 @@ else()
         OBJECT_LIBS RTSanitizerCommon
                 RTSanitizerCommonLibc
                 RTUbsan
+                RTUbsan_standalone
         CFLAGS ${UBSAN_CFLAGS}
         LINK_FLAGS ${SANITIZER_COMMON_LINK_FLAGS}
         LINK_LIBS ${UBSAN_DYNAMIC_LIBS}
