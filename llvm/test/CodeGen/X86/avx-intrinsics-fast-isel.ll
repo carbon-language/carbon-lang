@@ -2399,8 +2399,8 @@ define <4 x i64> @test_mm256_set1_epi16(i16 %a0) nounwind {
 define <4 x i64> @test_mm256_set1_epi32(i32 %a0) nounwind {
 ; X32-LABEL: test_mm256_set1_epi32:
 ; X32:       # BB#0:
-; X32-NEXT:    vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; X32-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,0,0]
+; X32-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; X32-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,0,0,0]
 ; X32-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
 ; X32-NEXT:    retl
 ;

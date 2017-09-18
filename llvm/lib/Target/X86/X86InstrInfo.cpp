@@ -9405,6 +9405,14 @@ static const uint16_t ReplaceableInstrs[][3] = {
   { X86::VEXTRACTF32x4Z256mr,X86::VEXTRACTF32x4Z256mr,X86::VEXTRACTI32x4Z256mr },
   { X86::VEXTRACTF64x2Z256rr,X86::VEXTRACTF64x2Z256rr,X86::VEXTRACTI64x2Z256rr },
   { X86::VEXTRACTF64x2Z256mr,X86::VEXTRACTF64x2Z256mr,X86::VEXTRACTI64x2Z256mr },
+  { X86::VPERMILPSmi,        X86::VPERMILPSmi,        X86::VPSHUFDmi },
+  { X86::VPERMILPSri,        X86::VPERMILPSri,        X86::VPSHUFDri },
+  { X86::VPERMILPSZ128mi,    X86::VPERMILPSZ128mi,    X86::VPSHUFDZ128mi },
+  { X86::VPERMILPSZ128ri,    X86::VPERMILPSZ128ri,    X86::VPSHUFDZ128ri },
+  { X86::VPERMILPSZ256mi,    X86::VPERMILPSZ256mi,    X86::VPSHUFDZ256mi },
+  { X86::VPERMILPSZ256ri,    X86::VPERMILPSZ256ri,    X86::VPSHUFDZ256ri },
+  { X86::VPERMILPSZmi,       X86::VPERMILPSZmi,       X86::VPSHUFDZmi },
+  { X86::VPERMILPSZri,       X86::VPERMILPSZri,       X86::VPSHUFDZri },
 };
 
 static const uint16_t ReplaceableInstrsAVX2[][3] = {
@@ -9430,6 +9438,8 @@ static const uint16_t ReplaceableInstrsAVX2[][3] = {
   { X86::VBLENDPSrmi,     X86::VBLENDPSrmi,     X86::VPBLENDDrmi },
   { X86::VBLENDPSYrri,    X86::VBLENDPSYrri,    X86::VPBLENDDYrri },
   { X86::VBLENDPSYrmi,    X86::VBLENDPSYrmi,    X86::VPBLENDDYrmi },
+  { X86::VPERMILPSYmi,    X86::VPERMILPSYmi,    X86::VPSHUFDYmi },
+  { X86::VPERMILPSYri,    X86::VPERMILPSYri,    X86::VPSHUFDYri },
 };
 
 static const uint16_t ReplaceableInstrsAVX2InsertExtract[][3] = {

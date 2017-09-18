@@ -586,12 +586,12 @@ define <8 x double> @test_mm512_maskz_permutex_pd(i8 %a0, <8 x double> %a1) {
 define <8 x i64> @test_mm512_shuffle_epi32(<8 x i64> %a0) {
 ; X32-LABEL: test_mm512_shuffle_epi32:
 ; X32:       # BB#0:
-; X32-NEXT:    vpshufd {{.*#+}} zmm0 = zmm0[1,0,0,0,5,4,4,4,9,8,8,8,13,12,12,12]
+; X32-NEXT:    vpermilps {{.*#+}} zmm0 = zmm0[1,0,0,0,5,4,4,4,9,8,8,8,13,12,12,12]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: test_mm512_shuffle_epi32:
 ; X64:       # BB#0:
-; X64-NEXT:    vpshufd {{.*#+}} zmm0 = zmm0[1,0,0,0,5,4,4,4,9,8,8,8,13,12,12,12]
+; X64-NEXT:    vpermilps {{.*#+}} zmm0 = zmm0[1,0,0,0,5,4,4,4,9,8,8,8,13,12,12,12]
 ; X64-NEXT:    retq
   %arg0 = bitcast <8 x i64> %a0 to <16 x i32>
   %res0 = shufflevector <16 x i32> %arg0, <16 x i32> undef, <16 x i32> <i32 1, i32 0, i32 0, i32 0, i32 5, i32 4, i32 4, i32 4, i32 9, i32 8, i32 8, i32 8, i32 13, i32 12, i32 12, i32 12>

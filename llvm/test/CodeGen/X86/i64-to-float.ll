@@ -207,8 +207,8 @@ define <2 x double> @clamp_sitofp_2i64_2f64(<2 x i64> %a) nounwind {
 ; X32-AVX-NEXT:    vblendvpd %xmm2, %xmm1, %xmm0, %xmm0
 ; X32-AVX-NEXT:    vmovq {{.*#+}} xmm1 = xmm0[0],zero
 ; X32-AVX-NEXT:    vmovq %xmm1, {{[0-9]+}}(%esp)
-; X32-AVX-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
-; X32-AVX-NEXT:    vmovq %xmm0, {{[0-9]+}}(%esp)
+; X32-AVX-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[2,3,0,1]
+; X32-AVX-NEXT:    vmovlpd %xmm0, {{[0-9]+}}(%esp)
 ; X32-AVX-NEXT:    fildll {{[0-9]+}}(%esp)
 ; X32-AVX-NEXT:    fstpl {{[0-9]+}}(%esp)
 ; X32-AVX-NEXT:    fildll {{[0-9]+}}(%esp)
