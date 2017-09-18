@@ -2864,13 +2864,13 @@ define <2 x double> @test_movsd_reg(<2 x double> %a0, <2 x double> %a1) {
 ; GENERIC-LABEL: test_movsd_reg:
 ; GENERIC:       # BB#0:
 ; GENERIC-NEXT:    unpcklpd {{.*#+}} xmm1 = xmm1[0],xmm0[0] sched: [1:1.00]
-; GENERIC-NEXT:    movapd %xmm1, %xmm0 # sched: [1:1.00]
+; GENERIC-NEXT:    movaps %xmm1, %xmm0 # sched: [1:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; ATOM-LABEL: test_movsd_reg:
 ; ATOM:       # BB#0:
 ; ATOM-NEXT:    unpcklpd {{.*#+}} xmm1 = xmm1[0],xmm0[0] sched: [1:1.00]
-; ATOM-NEXT:    movapd %xmm1, %xmm0 # sched: [1:0.50]
+; ATOM-NEXT:    movaps %xmm1, %xmm0 # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
@@ -2880,7 +2880,7 @@ define <2 x double> @test_movsd_reg(<2 x double> %a0, <2 x double> %a1) {
 ; SLM-LABEL: test_movsd_reg:
 ; SLM:       # BB#0:
 ; SLM-NEXT:    unpcklpd {{.*#+}} xmm1 = xmm1[0],xmm0[0] sched: [1:1.00]
-; SLM-NEXT:    movapd %xmm1, %xmm0 # sched: [1:1.00]
+; SLM-NEXT:    movaps %xmm1, %xmm0 # sched: [1:1.00]
 ; SLM-NEXT:    retq # sched: [4:1.00]
 ;
 ; SANDY-LABEL: test_movsd_reg:

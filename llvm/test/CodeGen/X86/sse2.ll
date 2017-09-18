@@ -39,9 +39,9 @@ define void @test2(<2 x double>* %r, <2 x double>* %A, double %B) nounwind  {
 ;
 ; X64-LABEL: test2:
 ; X64:       # BB#0:
-; X64-NEXT:    movapd (%rsi), %xmm1
+; X64-NEXT:    movaps (%rsi), %xmm1
 ; X64-NEXT:    unpcklpd {{.*#+}} xmm1 = xmm1[0],xmm0[0]
-; X64-NEXT:    movapd %xmm1, (%rdi)
+; X64-NEXT:    movaps %xmm1, (%rdi)
 ; X64-NEXT:    retq
 	%tmp3 = load <2 x double>, <2 x double>* %A, align 16
 	%tmp7 = insertelement <2 x double> undef, double %B, i32 0
@@ -340,13 +340,13 @@ define <4 x float> @test15(<4 x float>* %x, <4 x float>* %y) nounwind {
 ; X86:       # BB#0: # %entry
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %ecx
-; X86-NEXT:    movapd (%ecx), %xmm0
+; X86-NEXT:    movaps (%ecx), %xmm0
 ; X86-NEXT:    unpckhpd {{.*#+}} xmm0 = xmm0[1],mem[1]
 ; X86-NEXT:    retl
 ;
 ; X64-LABEL: test15:
 ; X64:       # BB#0: # %entry
-; X64-NEXT:    movapd (%rdi), %xmm0
+; X64-NEXT:    movaps (%rdi), %xmm0
 ; X64-NEXT:    unpckhpd {{.*#+}} xmm0 = xmm0[1],mem[1]
 ; X64-NEXT:    retq
 entry:
@@ -362,13 +362,13 @@ define  <2 x double> @test16(<4 x double> * nocapture %srcA, <2 x double>* nocap
 ; X86-LABEL: test16:
 ; X86:       # BB#0:
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X86-NEXT:    movapd 96(%eax), %xmm0
+; X86-NEXT:    movaps 96(%eax), %xmm0
 ; X86-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],mem[0]
 ; X86-NEXT:    retl
 ;
 ; X64-LABEL: test16:
 ; X64:       # BB#0:
-; X64-NEXT:    movapd 96(%rdi), %xmm0
+; X64-NEXT:    movaps 96(%rdi), %xmm0
 ; X64-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],mem[0]
 ; X64-NEXT:    retq
   %i5 = getelementptr inbounds <4 x double>, <4 x double>* %srcA, i32 3

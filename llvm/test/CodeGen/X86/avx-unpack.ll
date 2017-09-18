@@ -120,7 +120,7 @@ define <4 x i64> @unpackhipd1(<4 x i64> %src1, <4 x i64> %src2) nounwind uwtable
 define <4 x i64> @unpackhipd2(<4 x i64>* %src1, <4 x i64>* %src2) nounwind uwtable readnone ssp {
 ; CHECK-LABEL: unpackhipd2:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    vmovapd (%rdi), %ymm0
+; CHECK-NEXT:    vmovaps (%rdi), %ymm0
 ; CHECK-NEXT:    vunpckhpd {{.*#+}} ymm0 = ymm0[1],mem[1],ymm0[3],mem[3]
 ; CHECK-NEXT:    retq
   %a = load <4 x i64>, <4 x i64>* %src1
@@ -162,7 +162,7 @@ define <4 x i64> @unpacklopd1(<4 x i64> %src1, <4 x i64> %src2) nounwind uwtable
 define <4 x i64> @unpacklopd2(<4 x i64>* %src1, <4 x i64>* %src2) nounwind uwtable readnone ssp {
 ; CHECK-LABEL: unpacklopd2:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    vmovapd (%rdi), %ymm0
+; CHECK-NEXT:    vmovaps (%rdi), %ymm0
 ; CHECK-NEXT:    vunpcklpd {{.*#+}} ymm0 = ymm0[0],mem[0],ymm0[2],mem[2]
 ; CHECK-NEXT:    retq
   %a = load <4 x i64>, <4 x i64>* %src1
