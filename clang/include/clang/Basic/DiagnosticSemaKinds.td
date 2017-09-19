@@ -5888,6 +5888,8 @@ def err_typecheck_assign_const : Error<
   "cannot assign to %select{non-|}1static data member %2 "
   "with const-qualified type %3|"
   "cannot assign to non-static data member within const member function %1|"
+  "cannot assign to %select{variable %2|non-static data member %2|lvalue}1 "
+  "with %select{|nested }3const-qualified data member %4|"
   "read-only variable is not assignable}0">;
 
 def note_typecheck_assign_const : Note<
@@ -5895,7 +5897,8 @@ def note_typecheck_assign_const : Note<
   "function %1 which returns const-qualified type %2 declared here|"
   "variable %1 declared const here|"
   "%select{non-|}1static data member %2 declared const here|"
-  "member function %q1 is declared const here}0">;
+  "member function %q1 is declared const here|"
+  "%select{|nested }1data member %2 declared const here}0">;
 
 def warn_mixed_sign_comparison : Warning<
   "comparison of integers of different signs: %0 and %1">,

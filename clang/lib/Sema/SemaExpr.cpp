@@ -10260,22 +10260,23 @@ static bool IsTypeModifiable(QualType Ty, bool IsDereference) {
   return !Ty.isConstQualified();
 }
 
+// Update err_typecheck_assign_const and note_typecheck_assign_const
+// when this enum is changed.
+enum {
+  ConstFunction,
+  ConstVariable,
+  ConstMember,
+  ConstMethod,
+  NestedConstMember,
+  ConstUnknown,  // Keep as last element
+};
+
 /// Emit the "read-only variable not assignable" error and print notes to give
 /// more information about why the variable is not assignable, such as pointing
 /// to the declaration of a const variable, showing that a method is const, or
 /// that the function is returning a const reference.
 static void DiagnoseConstAssignment(Sema &S, const Expr *E,
                                     SourceLocation Loc) {
-  // Update err_typecheck_assign_const and note_typecheck_assign_const
-  // when this enum is changed.
-  enum {
-    ConstFunction,
-    ConstVariable,
-    ConstMember,
-    ConstMethod,
-    ConstUnknown,  // Keep as last element
-  };
-
   SourceRange ExprRange = E->getSourceRange();
 
   // Only emit one error on the first const found.  All other consts will emit
@@ -10385,6 +10386,66 @@ static void DiagnoseConstAssignment(Sema &S, const Expr *E,
   S.Diag(Loc, diag::err_typecheck_assign_const) << ExprRange << ConstUnknown;
 }
 
+enum OriginalExprKind {
+  OEK_Variable,
+  OEK_Member,
+  OEK_LValue
+};
+
+static void DiagnoseRecursiveConstFields(Sema &S, const ValueDecl *VD,
+                                         const RecordType *Ty,
+                                         SourceLocation Loc, SourceRange Range,
+                                         OriginalExprKind OEK,
+                                         bool &DiagnosticEmitted,
+                                         bool IsNested = false) {
+  // We walk the record hierarchy breadth-first to ensure that we print
+  // diagnostics in field nesting order.
+  // First, check every field for constness.
+  for (const FieldDecl *Field : Ty->getDecl()->fields()) {
+    if (Field->getType().isConstQualified()) {
+      if (!DiagnosticEmitted) {
+        S.Diag(Loc, diag::err_typecheck_assign_const)
+            << Range << NestedConstMember << OEK << VD
+            << IsNested << Field;
+        DiagnosticEmitted = true;
+      }
+      S.Diag(Field->getLocation(), diag::note_typecheck_assign_const)
+          << NestedConstMember << IsNested << Field
+          << Field->getType() << Field->getSourceRange();
+    }
+  }
+  // Then, recurse.
+  for (const FieldDecl *Field : Ty->getDecl()->fields()) {
+    QualType FTy = Field->getType();
+    if (const RecordType *FieldRecTy = FTy->getAs<RecordType>())
+      DiagnoseRecursiveConstFields(S, VD, FieldRecTy, Loc, Range,
+                                   OEK, DiagnosticEmitted, true);
+  }
+}
+
+/// Emit an error for the case where a record we are trying to assign to has a
+/// const-qualified field somewhere in its hierarchy.
+static void DiagnoseRecursiveConstFields(Sema &S, const Expr *E,
+                                         SourceLocation Loc) {
+  QualType Ty = E->getType();
+  assert(Ty->isRecordType() && "lvalue was not record?");
+  SourceRange Range = E->getSourceRange();
+  const RecordType *RTy = Ty.getCanonicalType()->getAs<RecordType>();
+  bool DiagEmitted = false;
+
+  if (const MemberExpr *ME = dyn_cast<MemberExpr>(E))
+    DiagnoseRecursiveConstFields(S, ME->getMemberDecl(), RTy, Loc,
+            Range, OEK_Member, DiagEmitted);
+  else if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
+    DiagnoseRecursiveConstFields(S, DRE->getDecl(), RTy, Loc,
+            Range, OEK_Variable, DiagEmitted);
+  else
+    DiagnoseRecursiveConstFields(S, nullptr, RTy, Loc,
+            Range, OEK_LValue, DiagEmitted);
+  if (!DiagEmitted)
+    DiagnoseConstAssignment(S, E, Loc);
+}
+
 /// CheckForModifiableLvalue - Verify that E is a modifiable lvalue.  If not,
 /// emit an error and return true.  If so, return false.
 static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
@@ -10459,6 +10520,9 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
     break;
   case Expr::MLV_ConstAddrSpace:
     DiagnoseConstAssignment(S, E, Loc);
+    return true;
+  case Expr::MLV_ConstQualifiedField:
+    DiagnoseRecursiveConstFields(S, E, Loc);
     return true;
   case Expr::MLV_ArrayType:
   case Expr::MLV_ArrayTemporary:
