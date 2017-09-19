@@ -75,6 +75,22 @@ static ArrayRef<uint8_t> getSectionContents(ObjFile<ELFT> *File,
   return check(File->getObj().getSectionContents(Hdr));
 }
 
+// Return true if a section with given section flags is live (will never be
+// GCed) by default. If a section can be GCed, this function returns false.
+static bool isLiveByDefault(uint64_t Flags, uint32_t Type) {
+  // If GC is enabled, all memory-mapped sections are subject of GC.
+  if (!Config->GcSections)
+    return true;
+  if (Flags & SHF_ALLOC)
+    return false;
+
+  // Besides that, relocation sections can also be GCed because their
+  // relocation target sections may be GCed. This doesn't really matter
+  // in most cases because the linker usually consumes relocation
+  // sections instead of emitting them, but -emit-reloc needs this.
+  return Type != SHT_REL && Type != SHT_RELA;
+}
+
 InputSectionBase::InputSectionBase(InputFile *File, uint64_t Flags,
                                    uint32_t Type, uint64_t Entsize,
                                    uint32_t Link, uint32_t Info,
@@ -83,7 +99,7 @@ InputSectionBase::InputSectionBase(InputFile *File, uint64_t Flags,
     : SectionBase(SectionKind, Name, Flags, Entsize, Alignment, Type, Info,
                   Link),
       File(File), Data(Data), Repl(this) {
-  Live = !Config->GcSections || !(Flags & SHF_ALLOC);
+  Live = isLiveByDefault(Flags, Type);
   Assigned = false;
   NumRelocations = 0;
   AreRelocsRela = false;
