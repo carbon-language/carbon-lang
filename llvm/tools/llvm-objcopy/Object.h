@@ -72,7 +72,6 @@ public:
   uint64_t VAddr;
 
   uint64_t OriginalOffset;
-  Segment *ParentSegment;
 
   Segment(llvm::ArrayRef<uint8_t> Data) : Contents(Data) {}
   void finalize();
