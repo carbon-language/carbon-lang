@@ -10,6 +10,6 @@ FileHeader:
 Symbols:
   Global:
     - Name:     test
-      Index:    0xff05
+      Index:    SHN_HEXAGON_SCOMMON
 
-# CHECK: Symbol 'test' has unsupported value greater than or equal to SHN_LORESERVE: 65285
+# CHECK: Symbol 'test' has unsupported value greater than or equal to SHN_LORESERVE: 65280
