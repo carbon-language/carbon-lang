@@ -585,7 +585,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
       continue;
 
     auto *Instr = BB->getFirstNonPseudoInstr();
-    if (!MIA->isTailCall(*Instr))
+    if (!MIA->isTailCall(*Instr) || BC.MIA->isConditionalBranch(*Instr))
       continue;
 
     auto *CalleeSymbol = MIA->getTargetSymbol(*Instr);
