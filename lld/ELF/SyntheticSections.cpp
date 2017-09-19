@@ -503,14 +503,12 @@ void EhFrameSection<ELFT>::addSection(InputSectionBase *C) {
   if (Sec->Pieces.empty())
     return;
 
-  if (Sec->NumRelocations) {
-    if (Sec->AreRelocsRela)
-      addSectionAux(Sec, Sec->template relas<ELFT>());
-    else
-      addSectionAux(Sec, Sec->template rels<ELFT>());
-    return;
-  }
-  addSectionAux(Sec, makeArrayRef<Elf_Rela>(nullptr, nullptr));
+  if (Sec->NumRelocations == 0)
+    addSectionAux(Sec, makeArrayRef<Elf_Rela>(nullptr, nullptr));
+  else if (Sec->AreRelocsRela)
+    addSectionAux(Sec, Sec->template relas<ELFT>());
+  else
+    addSectionAux(Sec, Sec->template rels<ELFT>());
 }
 
 template <class ELFT>
