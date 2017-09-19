@@ -85,10 +85,6 @@ class LoopBase {
 public:
   /// This creates an empty loop.
   LoopBase() : ParentLoop(nullptr) {}
-  ~LoopBase() {
-    for (size_t i = 0, e = SubLoops.size(); i != e; ++i)
-      delete SubLoops[i];
-  }
 
   /// Return the nesting level of this loop.  An outer-most loop has depth 1,
   /// for consistency with loop depth values used for basic blocks, where depth
@@ -343,6 +339,20 @@ protected:
     Blocks.push_back(BB);
     DenseBlockSet.insert(BB);
   }
+
+  // Since loop passes like SCEV are allowed to key analysis results off of
+  // `Loop` pointers, we cannot re-use pointers within a loop pass manager.
+  // This means loop passes should not be `delete` ing `Loop` objects directly
+  // (and risk a later `Loop` allocation re-using the address of a previous one)
+  // but should be using LoopInfo::markAsRemoved, which keeps around the `Loop`
+  // pointer till the end of the lifetime of the `LoopInfo` object.
+  //
+  // To make it easier to follow this rule, we mark the destructor as
+  // non-public.
+  ~LoopBase() {
+    for (auto *SubLoop : SubLoops)
+      delete SubLoop;
+  }
 };
 
 template<class BlockT, class LoopT>
@@ -500,7 +510,9 @@ public:
 
 private:
   friend class LoopInfoBase<BasicBlock, Loop>;
+  friend class LoopBase<BasicBlock, Loop>;
   explicit Loop(BasicBlock *BB) : LoopBase<BasicBlock, Loop>(BB) {}
+  ~Loop() = default;
 };
 
 //===----------------------------------------------------------------------===//
@@ -702,7 +714,7 @@ public:
   /// the loop forest and parent loops for each block so that \c L is no longer
   /// referenced, but does not actually delete \c L immediately. The pointer
   /// will remain valid until this LoopInfo's memory is released.
-  void markAsRemoved(Loop *L);
+  void markAsErased(Loop *L);
 
   /// Returns true if replacing From with To everywhere is guaranteed to
   /// preserve LCSSA form.

@@ -622,8 +622,8 @@ bool LoopInfo::invalidate(Function &F, const PreservedAnalyses &PA,
            PAC.preservedSet<CFGAnalyses>());
 }
 
-void LoopInfo::markAsRemoved(Loop *Unloop) {
-  assert(!Unloop->isInvalid() && "Loop has already been removed");
+void LoopInfo::markAsErased(Loop *Unloop) {
+  assert(!Unloop->isInvalid() && "Loop has already been erased!");
   Unloop->invalidate();
   RemovedLoops.push_back(Unloop);
 
