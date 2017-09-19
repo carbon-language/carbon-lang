@@ -5501,6 +5501,12 @@ def err_offsetof_field_of_virtual_base : Error<
 def warn_sub_ptr_zero_size_types : Warning<
   "subtraction of pointers to type %0 of zero size has undefined behavior">,
   InGroup<PointerArith>;
+def warn_pointer_arith_null_ptr : Warning<
+  "performing pointer arithmetic on a null pointer has undefined behavior%select{| if the offset is nonzero}0">,
+  InGroup<NullPointerArithmetic>, DefaultIgnore;
+def warn_gnu_null_ptr_arith : Warning<
+  "arithmetic on a null pointer treated as a cast from integer to pointer is a GNU extension">,
+  InGroup<NullPointerArithmetic>, DefaultIgnore;
 
 def warn_floatingpoint_eq : Warning<
   "comparing floating point with == or != is unsafe">,

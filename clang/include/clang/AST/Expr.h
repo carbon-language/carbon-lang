@@ -3126,6 +3126,12 @@ public:
     return isShiftAssignOp(getOpcode());
   }
 
+  // Return true if a binary operator using the specified opcode and operands
+  // would match the 'p = (i8*)nullptr + n' idiom for casting a pointer-sized
+  // integer to a pointer.
+  static bool isNullPointerArithmeticExtension(ASTContext &Ctx, Opcode Opc,
+                                               Expr *LHS, Expr *RHS);
+
   static bool classof(const Stmt *S) {
     return S->getStmtClass() >= firstBinaryOperatorConstant &&
            S->getStmtClass() <= lastBinaryOperatorConstant;
