@@ -43,16 +43,15 @@ static inline bool isScalar(MVT VT) {
   return !VT.isVector();
 }
 
-template <typename Predicate>
-static bool berase_if(MachineValueTypeSet &S, Predicate P) {
+template <typename T, typename Predicate>
+static bool berase_if(std::set<T> &S, Predicate P) {
   bool Erased = false;
-  // It is ok to iterate over MachineValueTypeSet and remove elements from it
-  // at the same time.
-  for (MVT T : S) {
-    if (!P(T))
-      continue;
-    Erased = true;
-    S.erase(T);
+  for (auto I = S.begin(); I != S.end(); ) {
+    if (P(*I)) {
+      Erased = true;
+      I = S.erase(I);
+    } else
+      ++I;
   }
   return Erased;
 }
@@ -126,7 +125,7 @@ bool TypeSetByHwMode::constrain(const TypeSetByHwMode &VTS) {
       unsigned M = I.first;
       if (M == DefaultMode || hasMode(M))
         continue;
-      Map.insert({M, Map.at(DefaultMode)});
+      Map[M] = Map[DefaultMode];
       Changed = true;
     }
   }
@@ -184,9 +183,7 @@ std::string TypeSetByHwMode::getAsString() const {
 }
 
 std::string TypeSetByHwMode::getAsString(const SetType &S) {
-  std::vector<MVT> Types;
-  for (MVT T : S)
-    Types.push_back(T);
+  std::vector<MVT> Types(S.begin(), S.end());
   array_pod_sort(Types.begin(), Types.end());
 
   std::stringstream str;
@@ -204,12 +201,6 @@ bool TypeSetByHwMode::operator==(const TypeSetByHwMode &VTS) const {
   bool HaveDefault = hasDefault();
   if (HaveDefault != VTS.hasDefault())
     return false;
-
-  if (isSimple()) {
-    if (VTS.isSimple())
-      return *begin() == *VTS.begin();
-    return false;
-  }
 
   std::set<unsigned> Modes;
   for (auto &I : *this)
@@ -262,31 +253,18 @@ bool TypeSetByHwMode::intersect(SetType &Out, const SetType &In) {
   // For example
   // { iPTR } * { i32 }     -> { i32 }
   // { iPTR } * { i32 i64 } -> { iPTR }
-  // and
-  // { iPTR i32 } * { i32 }          -> { i32 }
-  // { iPTR i32 } * { i32 i64 }      -> { i32 i64 }
-  // { iPTR i32 } * { i32 i64 i128 } -> { iPTR i32 }
 
-  // Compute the difference between the two sets in such a way that the
-  // iPTR is in the set that is being subtracted. This is to see if there
-  // are any extra scalars in the set without iPTR that are not in the
-  // set containing iPTR. Then the iPTR could be considered a "wildcard"
-  // matching these scalars. If there is only one such scalar, it would
-  // replace the iPTR, if there are more, the iPTR would be retained.
   SetType Diff;
   if (InP) {
-    Diff = Out;
-    berase_if(Diff, [&In](MVT T) { return In.count(T); });
-    // Pre-remove these elements and rely only on InP/OutP to determine
-    // whether a change has been made.
+    std::copy_if(Out.begin(), Out.end(), std::inserter(Diff, Diff.end()),
+                [&In](MVT T) { return !In.count(T); });
     berase_if(Out, [&Diff](MVT T) { return Diff.count(T); });
   } else {
-    Diff = In;
-    berase_if(Diff, [&Out](MVT T) { return Out.count(T); });
+    std::copy_if(In.begin(), In.end(), std::inserter(Diff, Diff.end()),
+                [&Out](MVT T) { return !Out.count(T); });
     Out.erase(MVT::iPTR);
   }
 
-  // The actual intersection.
   bool Changed = berase_if(Out, Int);
   unsigned NumD = Diff.size();
   if (NumD == 0)
@@ -298,9 +276,8 @@ bool TypeSetByHwMode::intersect(SetType &Out, const SetType &In) {
     // being replaced).
     Changed |= OutP;
   } else {
-    // Multiple elements from Out are now replaced with iPTR.
     Out.insert(MVT::iPTR);
-    Changed |= !OutP;
+    Changed |= InP;
   }
   return Changed;
 }
@@ -781,12 +758,13 @@ void TypeInfer::expandOverloads(TypeSetByHwMode &VTS) {
 void TypeInfer::expandOverloads(TypeSetByHwMode::SetType &Out,
                                 const TypeSetByHwMode::SetType &Legal) {
   std::set<MVT> Ovs;
-  for (MVT T : Out) {
-    if (!T.isOverloaded())
+  for (auto I = Out.begin(); I != Out.end(); ) {
+    if (I->isOverloaded()) {
+      Ovs.insert(*I);
+      I = Out.erase(I);
       continue;
-    Ovs.insert(T);
-    // MachineValueTypeSet allows iteration and erasing.
-    Out.erase(T);
+    }
+    ++I;
   }
 
   for (MVT Ov : Ovs) {
@@ -827,15 +805,13 @@ void TypeInfer::expandOverloads(TypeSetByHwMode::SetType &Out,
 }
 
 TypeSetByHwMode TypeInfer::getLegalTypes() {
-  if (!LegalTypesCached) {
-    // Stuff all types from all modes into the default mode.
-    const TypeSetByHwMode &LTS = TP.getDAGPatterns().getLegalTypes();
-    for (const auto &I : LTS)
-      LegalCache.insert(I.second);
-    LegalTypesCached = true;
-  }
   TypeSetByHwMode VTS;
-  VTS.getOrCreate(DefaultMode) = LegalCache;
+  TypeSetByHwMode::SetType &DS = VTS.getOrCreate(DefaultMode);
+  const TypeSetByHwMode &LTS = TP.getDAGPatterns().getLegalTypes();
+
+  // Stuff all types from all modes into the default mode.
+  for (const auto &I : LTS)
+    DS.insert(I.second.begin(), I.second.end());
   return VTS;
 }
 
