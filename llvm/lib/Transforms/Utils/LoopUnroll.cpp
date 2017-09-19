@@ -476,23 +476,30 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount, bool Force,
               << " peeled loop by " << NV("PeelCount", PeelCount)
               << " iterations");
   } else {
-    OptimizationRemark Diag(DEBUG_TYPE, "PartialUnrolled", L->getStartLoc(),
-                            L->getHeader());
-    Diag << "unrolled loop by a factor of " << NV("UnrollCount", Count);
+    auto DiagBuilder = [&]() {
+      OptimizationRemark Diag(DEBUG_TYPE, "PartialUnrolled", L->getStartLoc(),
+                              L->getHeader());
+      return Diag << "unrolled loop by a factor of "
+                  << NV("UnrollCount", Count);
+    };
 
     DEBUG(dbgs() << "UNROLLING loop %" << Header->getName()
           << " by " << Count);
     if (TripMultiple == 0 || BreakoutTrip != TripMultiple) {
       DEBUG(dbgs() << " with a breakout at trip " << BreakoutTrip);
-      ORE->emit(Diag << " with a breakout at trip "
-                     << NV("BreakoutTrip", BreakoutTrip));
+      ORE->emit([&]() {
+        return DiagBuilder() << " with a breakout at trip "
+                             << NV("BreakoutTrip", BreakoutTrip);
+      });
     } else if (TripMultiple != 1) {
       DEBUG(dbgs() << " with " << TripMultiple << " trips per branch");
-      ORE->emit(Diag << " with " << NV("TripMultiple", TripMultiple)
-                     << " trips per branch");
+      ORE->emit([&]() {
+        return DiagBuilder() << " with " << NV("TripMultiple", TripMultiple)
+                             << " trips per branch";
+      });
     } else if (RuntimeTripCount) {
       DEBUG(dbgs() << " with run-time trip count");
-      ORE->emit(Diag << " with run-time trip count");
+      ORE->emit([&]() { return DiagBuilder() << " with run-time trip count"; });
     }
     DEBUG(dbgs() << "!\n");
   }
