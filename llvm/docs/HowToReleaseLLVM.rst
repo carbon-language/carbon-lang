@@ -263,18 +263,18 @@ You can use any of the following methods to request that a revision from trunk
 be merged into a release branch:
 
 #. Use the ``utils/release/merge-request.sh`` script which will automatically
-file a bug_ requesting that the patch be merged. e.g. To request revision
-12345 be merged into the branch for the 5.0.1 release:
-``llvm.src/utils/release/merge-request.sh -stable-version 5.0 -r 12345 -user bugzilla@example.com``
+   file a bug_ requesting that the patch be merged. e.g. To request revision
+   12345 be merged into the branch for the 5.0.1 release:
+   ``llvm.src/utils/release/merge-request.sh -stable-version 5.0 -r 12345 -user bugzilla@example.com``
 
 #. Manually file a bug_ with the subject: "Merge r12345 into the X.Y branch",
-enter the commit(s) that you want merged in the "Fixed by Commit(s)" and mark
-it as a blocker of the current release bug.  Release bugs are given aliases
-in the form of release-x.y.z, so to mark a bug as a blocker for the 5.0.1
-release, just enter release-5.0.1 in the "Blocks" field.
+   enter the commit(s) that you want merged in the "Fixed by Commit(s)" and mark
+   it as a blocker of the current release bug.  Release bugs are given aliases
+   in the form of release-x.y.z, so to mark a bug as a blocker for the 5.0.1
+   release, just enter release-5.0.1 in the "Blocks" field.
 
 #. Reply to the commit email on llvm-commits for the revision to merge and cc
-the release manager.
+   the release manager.
 
 .. _bug: https://bugs.llvm.org/
 
