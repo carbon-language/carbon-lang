@@ -60,7 +60,6 @@ static void sectionMapping(IO &IO, WasmYAML::LinkingSection &Section) {
   IO.mapRequired("DataSize", Section.DataSize);
   IO.mapRequired("DataAlignment", Section.DataAlignment);
   IO.mapOptional("SymbolInfo", Section.SymbolInfos);
-  IO.mapOptional("SegmentNames", Section.SegmentNames);
 }
 
 static void sectionMapping(IO &IO, WasmYAML::CustomSection &Section) {

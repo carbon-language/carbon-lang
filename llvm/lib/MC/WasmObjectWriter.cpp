@@ -102,7 +102,6 @@ struct WasmFunctionTypeDenseMapInfo {
 // wasm data segment.
 struct WasmDataSegment {
   MCSectionWasm *Section;
-  StringRef Name;
   uint32_t Offset;
   SmallVector<char, 4> Data;
 };
@@ -280,8 +279,7 @@ private:
                         uint32_t NumFuncImports);
   void writeCodeRelocSection();
   void writeDataRelocSection();
-  void writeLinkingMetaDataSection(ArrayRef<WasmDataSegment> Segments,
-                                   uint32_t DataSize, uint32_t DataAlignment,
+  void writeLinkingMetaDataSection(uint32_t DataSize, uint32_t DataAlignment,
                                    ArrayRef<StringRef> WeakSymbols,
                                    bool HasStackPointer,
                                    uint32_t StackPointerGlobal);
@@ -913,8 +911,7 @@ void WasmObjectWriter::writeDataRelocSection() {
 }
 
 void WasmObjectWriter::writeLinkingMetaDataSection(
-    ArrayRef<WasmDataSegment> Segments, uint32_t DataSize,
-    uint32_t DataAlignment, ArrayRef<StringRef> WeakSymbols,
+    uint32_t DataSize, uint32_t DataAlignment, ArrayRef<StringRef> WeakSymbols,
     bool HasStackPointer, uint32_t StackPointerGlobal) {
   SectionBookkeeping Section;
   startSection(Section, wasm::WASM_SEC_CUSTOM, "linking");
@@ -943,14 +940,6 @@ void WasmObjectWriter::writeLinkingMetaDataSection(
 
     startSection(SubSection, wasm::WASM_DATA_ALIGNMENT);
     encodeULEB128(DataAlignment, getStream());
-    endSection(SubSection);
-  }
-
-  if (Segments.size()) {
-    startSection(SubSection, wasm::WASM_SEGMENT_NAMES);
-    encodeULEB128(Segments.size(), getStream());
-    for (const WasmDataSegment &Segment : Segments)
-      writeString(Segment.Name);
     endSection(SubSection);
   }
 
@@ -1140,7 +1129,6 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
     DataSize = alignTo(DataSize, Section.getAlignment());
     DataSegments.emplace_back();
     WasmDataSegment &Segment = DataSegments.back();
-    Segment.Name = Section.getSectionName();
     Segment.Offset = DataSize;
     Segment.Section = &Section;
     addData(Segment.Data, Section, DataAlignment);
@@ -1300,8 +1288,7 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
   writeNameSection(Functions, Imports, NumFuncImports);
   writeCodeRelocSection();
   writeDataRelocSection();
-  writeLinkingMetaDataSection(DataSegments, DataSize, DataAlignment,
-                              WeakSymbols, HasStackPointer, StackPointerGlobal);
+  writeLinkingMetaDataSection(DataSize, DataAlignment, WeakSymbols, HasStackPointer, StackPointerGlobal);
 
   // TODO: Translate the .comment section to the output.
   // TODO: Translate debug sections to the output.

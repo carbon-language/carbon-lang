@@ -97,7 +97,6 @@ struct WasmDataSegment {
   uint32_t MemoryIndex;
   WasmInitExpr Offset;
   ArrayRef<uint8_t> Content;
-  StringRef Name;
 };
 
 struct WasmElemSegment {
@@ -185,7 +184,6 @@ enum : unsigned {
   WASM_SYMBOL_INFO    = 0x2,
   WASM_DATA_SIZE      = 0x3,
   WASM_DATA_ALIGNMENT = 0x4,
-  WASM_SEGMENT_NAMES  = 0x5,
 };
 
 enum : unsigned {
