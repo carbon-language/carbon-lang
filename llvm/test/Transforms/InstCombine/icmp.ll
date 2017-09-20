@@ -1138,6 +1138,17 @@ define i1 @test67(i32 %x) {
   ret i1 %cmp
 }
 
+define i1 @test67inverse(i32 %x) {
+; CHECK-LABEL: @test67inverse(
+; CHECK-NEXT:    [[AND:%.*]] = and i32 [[X:%.*]], 96
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ult i32 [[AND]], 32
+; CHECK-NEXT:    ret i1 [[CMP]]
+;
+  %and = and i32 %x, 127
+  %cmp = icmp sle i32 %and, 31
+  ret i1 %cmp
+}
+
 ; The test above relies on 3 different folds.
 ; This test only checks the last of those (icmp ugt -> icmp ne).
 
@@ -1161,6 +1172,17 @@ define <2 x i1> @test67vec2(<2 x i32> %x) {
 ;
   %and = and <2 x i32> %x, <i32 127, i32 127>
   %cmp = icmp ugt <2 x i32> %and, <i32 31, i32 31>
+  ret <2 x i1> %cmp
+}
+
+define <2 x i1> @test67vecinverse(<2 x i32> %x) {
+; CHECK-LABEL: @test67vecinverse(
+; CHECK-NEXT:    [[AND:%.*]] = and <2 x i32> [[X:%.*]], <i32 96, i32 96>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ult <2 x i32> [[AND]], <i32 32, i32 32>
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %and = and <2 x i32> %x, <i32 96, i32 96>
+  %cmp = icmp sle <2 x i32> %and, <i32 31, i32 31>
   ret <2 x i1> %cmp
 }
 
