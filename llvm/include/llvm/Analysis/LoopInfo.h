@@ -29,7 +29,7 @@
 // in the CFG.  There can be strongly connected components in the CFG which
 // this analysis will not recognize and that will not be represented by a Loop
 // instance.  In particular, a Loop might be inside such a non-loop SCC, or a
-// non-loop SCC might contain a sub-SCC which is a Loop. 
+// non-loop SCC might contain a sub-SCC which is a Loop.
 //
 //===----------------------------------------------------------------------===//
 
@@ -56,32 +56,31 @@ class Loop;
 class MDNode;
 class PHINode;
 class raw_ostream;
-template <class N, bool IsPostDom>
-class DominatorTreeBase;
-template<class N, class M> class LoopInfoBase;
-template<class N, class M> class LoopBase;
+template <class N, bool IsPostDom> class DominatorTreeBase;
+template <class N, class M> class LoopInfoBase;
+template <class N, class M> class LoopBase;
 
 //===----------------------------------------------------------------------===//
 /// Instances of this class are used to represent loops that are detected in the
 /// flow graph.
 ///
-template<class BlockT, class LoopT>
-class LoopBase {
+template <class BlockT, class LoopT> class LoopBase {
   LoopT *ParentLoop;
   // Loops contained entirely within this one.
   std::vector<LoopT *> SubLoops;
 
   // The list of blocks in this loop. First entry is the header node.
-  std::vector<BlockT*> Blocks;
+  std::vector<BlockT *> Blocks;
 
-  SmallPtrSet<const BlockT*, 8> DenseBlockSet;
+  SmallPtrSet<const BlockT *, 8> DenseBlockSet;
 
   /// Indicator that this loop is no longer a valid loop.
   bool IsInvalid = false;
 
   LoopBase(const LoopBase<BlockT, LoopT> &) = delete;
-  const LoopBase<BlockT, LoopT>&
-    operator=(const LoopBase<BlockT, LoopT> &) = delete;
+  const LoopBase<BlockT, LoopT> &
+  operator=(const LoopBase<BlockT, LoopT> &) = delete;
+
 public:
   /// This creates an empty loop.
   LoopBase() : ParentLoop(nullptr) {}
@@ -104,19 +103,18 @@ public:
 
   /// Return true if the specified loop is contained within in this loop.
   bool contains(const LoopT *L) const {
-    if (L == this) return true;
-    if (!L)        return false;
+    if (L == this)
+      return true;
+    if (!L)
+      return false;
     return contains(L->getParentLoop());
   }
 
   /// Return true if the specified basic block is in this loop.
-  bool contains(const BlockT *BB) const {
-    return DenseBlockSet.count(BB);
-  }
+  bool contains(const BlockT *BB) const { return DenseBlockSet.count(BB); }
 
   /// Return true if the specified instruction is in this loop.
-  template<class InstT>
-  bool contains(const InstT *Inst) const {
+  template <class InstT> bool contains(const InstT *Inst) const {
     return contains(Inst->getParent());
   }
 
@@ -124,8 +122,8 @@ public:
   const std::vector<LoopT *> &getSubLoops() const { return SubLoops; }
   std::vector<LoopT *> &getSubLoopsVector() { return SubLoops; }
   typedef typename std::vector<LoopT *>::const_iterator iterator;
-  typedef typename std::vector<LoopT *>::const_reverse_iterator
-    reverse_iterator;
+  typedef
+      typename std::vector<LoopT *>::const_reverse_iterator reverse_iterator;
   iterator begin() const { return SubLoops.begin(); }
   iterator end() const { return SubLoops.end(); }
   reverse_iterator rbegin() const { return SubLoops.rbegin(); }
@@ -133,8 +131,8 @@ public:
   bool empty() const { return SubLoops.empty(); }
 
   /// Get a list of the basic blocks which make up this loop.
-  const std::vector<BlockT*> &getBlocks() const { return Blocks; }
-  typedef typename std::vector<BlockT*>::const_iterator block_iterator;
+  const std::vector<BlockT *> &getBlocks() const { return Blocks; }
+  typedef typename std::vector<BlockT *>::const_iterator block_iterator;
   block_iterator block_begin() const { return Blocks.begin(); }
   block_iterator block_end() const { return Blocks.end(); }
   inline iterator_range<block_iterator> blocks() const {
@@ -142,9 +140,7 @@ public:
   }
 
   /// Get the number of blocks in this loop in constant time.
-  unsigned getNumBlocks() const {
-    return Blocks.size();
-  }
+  unsigned getNumBlocks() const { return Blocks.size(); }
 
   /// Invalidate the loop, indicating that it is no longer a loop.
   void invalidate() { IsInvalid = true; }
@@ -155,7 +151,7 @@ public:
   /// True if terminator in the block can branch to another block that is
   /// outside of the current loop.
   bool isLoopExiting(const BlockT *BB) const {
-    for (const auto &Succ : children<const BlockT*>(BB)) {
+    for (const auto &Succ : children<const BlockT *>(BB)) {
       if (!contains(Succ))
         return true;
     }
@@ -170,8 +166,8 @@ public:
     assert(contains(BB) && "block does not belong to the loop");
 
     BlockT *Header = getHeader();
-    auto PredBegin = GraphTraits<Inverse<BlockT*> >::child_begin(Header);
-    auto PredEnd = GraphTraits<Inverse<BlockT*> >::child_end(Header);
+    auto PredBegin = GraphTraits<Inverse<BlockT *>>::child_begin(Header);
+    auto PredEnd = GraphTraits<Inverse<BlockT *>>::child_end(Header);
     return std::find(PredBegin, PredEnd, BB) != PredEnd;
   }
 
@@ -180,7 +176,7 @@ public:
     unsigned NumBackEdges = 0;
     BlockT *H = getHeader();
 
-    for (const auto Pred : children<Inverse<BlockT*> >(H))
+    for (const auto Pred : children<Inverse<BlockT *>>(H))
       if (contains(Pred))
         ++NumBackEdges;
 
@@ -206,14 +202,14 @@ public:
 
   /// Return all of the successor blocks of this loop. These are the blocks
   /// _outside of the current loop_ which are branched to.
-  void getExitBlocks(SmallVectorImpl<BlockT*> &ExitBlocks) const;
+  void getExitBlocks(SmallVectorImpl<BlockT *> &ExitBlocks) const;
 
   /// If getExitBlocks would return exactly one block, return that block.
   /// Otherwise return null.
   BlockT *getExitBlock() const;
 
   /// Edge type.
-  typedef std::pair<const BlockT*, const BlockT*> Edge;
+  typedef std::pair<const BlockT *, const BlockT *> Edge;
 
   /// Return all pairs of (_inside_block_,_outside_block_).
   void getExitEdges(SmallVectorImpl<Edge> &ExitEdges) const;
@@ -240,7 +236,7 @@ public:
   /// contains a branch back to the header.
   void getLoopLatches(SmallVectorImpl<BlockT *> &LoopLatches) const {
     BlockT *H = getHeader();
-    for (const auto Pred : children<Inverse<BlockT*>>(H))
+    for (const auto Pred : children<Inverse<BlockT *>>(H))
       if (contains(Pred))
         LoopLatches.push_back(Pred);
   }
@@ -276,7 +272,7 @@ public:
     assert(I != SubLoops.end() && "Cannot remove end iterator!");
     LoopT *Child = *I;
     assert(Child->ParentLoop == this && "Child is not a child of this loop!");
-    SubLoops.erase(SubLoops.begin()+(I-begin()));
+    SubLoops.erase(SubLoops.begin() + (I - begin()));
     Child->ParentLoop = nullptr;
     return Child;
   }
@@ -295,15 +291,14 @@ public:
   }
 
   /// interface to do reserve() for Blocks
-  void reserveBlocks(unsigned size) {
-    Blocks.reserve(size);
-  }
+  void reserveBlocks(unsigned size) { Blocks.reserve(size); }
 
   /// This method is used to move BB (which must be part of this loop) to be the
   /// loop header of the loop (the block that dominates all others).
   void moveToHeader(BlockT *BB) {
-    if (Blocks[0] == BB) return;
-    for (unsigned i = 0; ; ++i) {
+    if (Blocks[0] == BB)
+      return;
+    for (unsigned i = 0;; ++i) {
       assert(i != Blocks.size() && "Loop does not contain BB!");
       if (Blocks[i] == BB) {
         Blocks[i] = Blocks[0];
@@ -328,7 +323,7 @@ public:
   void verifyLoop() const;
 
   /// Verify loop structure of this loop and all nested loops.
-  void verifyLoopNest(DenseSet<const LoopT*> *Loops) const;
+  void verifyLoopNest(DenseSet<const LoopT *> *Loops) const;
 
   /// Print loop with all the BBs inside it.
   void print(raw_ostream &OS, unsigned Depth = 0, bool Verbose = false) const;
@@ -355,15 +350,14 @@ protected:
   }
 };
 
-template<class BlockT, class LoopT>
-raw_ostream& operator<<(raw_ostream &OS, const LoopBase<BlockT, LoopT> &Loop) {
+template <class BlockT, class LoopT>
+raw_ostream &operator<<(raw_ostream &OS, const LoopBase<BlockT, LoopT> &Loop) {
   Loop.print(OS);
   return OS;
 }
 
 // Implementation in LoopInfoImpl.h
 extern template class LoopBase<BasicBlock, Loop>;
-
 
 /// Represents a single loop in the control flow graph.  Note that not all SCCs
 /// in the CFG are necessarily loops.
@@ -377,17 +371,15 @@ public:
   public:
     LocRange() {}
     LocRange(DebugLoc Start) : Start(std::move(Start)), End(std::move(Start)) {}
-    LocRange(DebugLoc Start, DebugLoc End) : Start(std::move(Start)),
-                                             End(std::move(End)) {}
+    LocRange(DebugLoc Start, DebugLoc End)
+        : Start(std::move(Start)), End(std::move(End)) {}
 
     const DebugLoc &getStart() const { return Start; }
     const DebugLoc &getEnd() const { return End; }
 
     /// \brief Check for null.
     ///
-    explicit operator bool() const {
-      return Start && End;
-    }
+    explicit operator bool() const { return Start && End; }
   };
 
   Loop() {}
@@ -520,8 +512,7 @@ private:
 /// structures in the specified function.
 ///
 
-template<class BlockT, class LoopT>
-class LoopInfoBase {
+template <class BlockT, class LoopT> class LoopInfoBase {
   // BBMap - Mapping of basic blocks to the inner most loop they occur in
   DenseMap<const BlockT *, LoopT *> BBMap;
   std::vector<LoopT *> TopLevelLoops;
@@ -532,8 +523,9 @@ class LoopInfoBase {
 
   void operator=(const LoopInfoBase &) = delete;
   LoopInfoBase(const LoopInfoBase &) = delete;
+
 public:
-  LoopInfoBase() { }
+  LoopInfoBase() {}
   ~LoopInfoBase() { releaseMemory(); }
 
   LoopInfoBase(LoopInfoBase &&Arg)
@@ -567,8 +559,8 @@ public:
   /// function.
   ///
   typedef typename std::vector<LoopT *>::const_iterator iterator;
-  typedef typename std::vector<LoopT *>::const_reverse_iterator
-    reverse_iterator;
+  typedef
+      typename std::vector<LoopT *>::const_reverse_iterator reverse_iterator;
   iterator begin() const { return TopLevelLoops.begin(); }
   iterator end() const { return TopLevelLoops.end(); }
   reverse_iterator rbegin() const { return TopLevelLoops.rbegin(); }
@@ -597,9 +589,7 @@ public:
   LoopT *getLoopFor(const BlockT *BB) const { return BBMap.lookup(BB); }
 
   /// Same as getLoopFor.
-  const LoopT *operator[](const BlockT *BB) const {
-    return getLoopFor(BB);
-  }
+  const LoopT *operator[](const BlockT *BB) const { return getLoopFor(BB); }
 
   /// Return the loop nesting level of the specified block. A depth of 0 means
   /// the block is not inside any loop.
@@ -621,7 +611,7 @@ public:
     assert(I != end() && "Cannot remove end iterator!");
     LoopT *L = *I;
     assert(!L->getParentLoop() && "Not a top-level loop!");
-    TopLevelLoops.erase(TopLevelLoops.begin() + (I-begin()));
+    TopLevelLoops.erase(TopLevelLoops.begin() + (I - begin()));
     return L;
   }
 
@@ -638,8 +628,7 @@ public:
 
   /// Replace the specified loop in the top-level loops list with the indicated
   /// loop.
-  void changeTopLevelLoop(LoopT *OldLoop,
-                          LoopT *NewLoop) {
+  void changeTopLevelLoop(LoopT *OldLoop, LoopT *NewLoop) {
     auto I = find(TopLevelLoops, OldLoop);
     assert(I != TopLevelLoops.end() && "Old loop not at top level!");
     *I = NewLoop;
@@ -670,8 +659,10 @@ public:
 
   static bool isNotAlreadyContainedIn(const LoopT *SubLoop,
                                       const LoopT *ParentLoop) {
-    if (!SubLoop) return true;
-    if (SubLoop == ParentLoop) return false;
+    if (!SubLoop)
+      return true;
+    if (SubLoop == ParentLoop)
+      return false;
     return isNotAlreadyContainedIn(SubLoop->getParentLoop(), ParentLoop);
   }
 
@@ -694,6 +685,7 @@ class LoopInfo : public LoopInfoBase<BasicBlock, Loop> {
 
   void operator=(const LoopInfo &) = delete;
   LoopInfo(const LoopInfo &) = delete;
+
 public:
   LoopInfo() {}
   explicit LoopInfo(const DominatorTreeBase<BasicBlock, false> &DomTree);
@@ -722,7 +714,8 @@ public:
     // Preserving LCSSA form is only problematic if the replacing value is an
     // instruction.
     Instruction *I = dyn_cast<Instruction>(To);
-    if (!I) return true;
+    if (!I)
+      return true;
     // If both instructions are defined in the same basic block then replacement
     // cannot break LCSSA form.
     if (I->getParent() == From->getParent())
@@ -730,7 +723,8 @@ public:
     // If the instruction is not defined in a loop then it can safely replace
     // anything.
     Loop *ToLoop = getLoopFor(I->getParent());
-    if (!ToLoop) return true;
+    if (!ToLoop)
+      return true;
     // If the replacing instruction is defined in the same loop as the original
     // instruction, or in a loop that contains it as an inner loop, then using
     // it as a replacement will not break LCSSA form.
@@ -810,7 +804,7 @@ public:
 };
 
 // Allow clients to walk the list of nested loops...
-template <> struct GraphTraits<const Loop*> {
+template <> struct GraphTraits<const Loop *> {
   typedef const Loop *NodeRef;
   typedef LoopInfo::iterator ChildIteratorType;
 
@@ -819,7 +813,7 @@ template <> struct GraphTraits<const Loop*> {
   static ChildIteratorType child_end(NodeRef N) { return N->end(); }
 };
 
-template <> struct GraphTraits<Loop*> {
+template <> struct GraphTraits<Loop *> {
   typedef Loop *NodeRef;
   typedef LoopInfo::iterator ChildIteratorType;
 
