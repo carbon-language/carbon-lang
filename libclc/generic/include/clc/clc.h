@@ -247,6 +247,15 @@
 #include <clc/cl_khr_int64_base_atomics/atom_xchg.h>
 #endif
 
+/* cl_khr_int64_extended_atomics Extension Functions */
+#ifdef cl_khr_int64_base_atomics
+#include <clc/cl_khr_int64_extended_atomics/atom_and.h>
+#include <clc/cl_khr_int64_extended_atomics/atom_max.h>
+#include <clc/cl_khr_int64_extended_atomics/atom_min.h>
+#include <clc/cl_khr_int64_extended_atomics/atom_or.h>
+#include <clc/cl_khr_int64_extended_atomics/atom_xor.h>
+#endif
+
 /* 6.12.12 Miscellaneous Vector Functions */
 #include <clc/misc/shuffle.h>
 #include <clc/misc/shuffle2.h>
