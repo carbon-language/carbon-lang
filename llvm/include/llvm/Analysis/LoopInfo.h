@@ -81,6 +81,14 @@ template <class BlockT, class LoopT> class LoopBase {
   const LoopBase<BlockT, LoopT> &
   operator=(const LoopBase<BlockT, LoopT> &) = delete;
 
+  void clear() {
+    IsInvalid = true;
+    SubLoops.clear();
+    Blocks.clear();
+    DenseBlockSet.clear();
+    ParentLoop = nullptr;
+  }
+
 public:
   /// This creates an empty loop.
   LoopBase() : ParentLoop(nullptr) {}
@@ -89,20 +97,25 @@ public:
   /// for consistency with loop depth values used for basic blocks, where depth
   /// 0 is used for blocks not inside any loops.
   unsigned getLoopDepth() const {
+    assert(!isInvalid() && "Loop not in a valid state!");
     unsigned D = 1;
     for (const LoopT *CurLoop = ParentLoop; CurLoop;
          CurLoop = CurLoop->ParentLoop)
       ++D;
     return D;
   }
-  BlockT *getHeader() const { return Blocks.front(); }
+  BlockT *getHeader() const { return getBlocks().front(); }
   LoopT *getParentLoop() const { return ParentLoop; }
 
   /// This is a raw interface for bypassing addChildLoop.
-  void setParentLoop(LoopT *L) { ParentLoop = L; }
+  void setParentLoop(LoopT *L) {
+    assert(!isInvalid() && "Loop not in a valid state!");
+    ParentLoop = L;
+  }
 
   /// Return true if the specified loop is contained within in this loop.
   bool contains(const LoopT *L) const {
+    assert(!isInvalid() && "Loop not in a valid state!");
     if (L == this)
       return true;
     if (!L)
@@ -111,7 +124,10 @@ public:
   }
 
   /// Return true if the specified basic block is in this loop.
-  bool contains(const BlockT *BB) const { return DenseBlockSet.count(BB); }
+  bool contains(const BlockT *BB) const {
+    assert(!isInvalid() && "Loop not in a valid state!");
+    return DenseBlockSet.count(BB);
+  }
 
   /// Return true if the specified instruction is in this loop.
   template <class InstT> bool contains(const InstT *Inst) const {
@@ -119,38 +135,50 @@ public:
   }
 
   /// Return the loops contained entirely within this loop.
-  const std::vector<LoopT *> &getSubLoops() const { return SubLoops; }
-  std::vector<LoopT *> &getSubLoopsVector() { return SubLoops; }
+  const std::vector<LoopT *> &getSubLoops() const {
+    assert(!isInvalid() && "Loop not in a valid state!");
+    return SubLoops;
+  }
+  std::vector<LoopT *> &getSubLoopsVector() {
+    assert(!isInvalid() && "Loop not in a valid state!");
+    return SubLoops;
+  }
   typedef typename std::vector<LoopT *>::const_iterator iterator;
   typedef
       typename std::vector<LoopT *>::const_reverse_iterator reverse_iterator;
-  iterator begin() const { return SubLoops.begin(); }
-  iterator end() const { return SubLoops.end(); }
-  reverse_iterator rbegin() const { return SubLoops.rbegin(); }
-  reverse_iterator rend() const { return SubLoops.rend(); }
-  bool empty() const { return SubLoops.empty(); }
+  iterator begin() const { return getSubLoops().begin(); }
+  iterator end() const { return getSubLoops().end(); }
+  reverse_iterator rbegin() const { return getSubLoops().rbegin(); }
+  reverse_iterator rend() const { return getSubLoops().rend(); }
+  bool empty() const { return getSubLoops().empty(); }
 
   /// Get a list of the basic blocks which make up this loop.
-  const std::vector<BlockT *> &getBlocks() const { return Blocks; }
+  const std::vector<BlockT *> &getBlocks() const {
+    assert(!isInvalid() && "Loop not in a valid state!");
+    return Blocks;
+  }
   typedef typename std::vector<BlockT *>::const_iterator block_iterator;
-  block_iterator block_begin() const { return Blocks.begin(); }
-  block_iterator block_end() const { return Blocks.end(); }
+  block_iterator block_begin() const { return getBlocks().begin(); }
+  block_iterator block_end() const { return getBlocks().end(); }
   inline iterator_range<block_iterator> blocks() const {
+    assert(!isInvalid() && "Loop not in a valid state!");
     return make_range(block_begin(), block_end());
   }
 
   /// Get the number of blocks in this loop in constant time.
-  unsigned getNumBlocks() const { return Blocks.size(); }
-
   /// Invalidate the loop, indicating that it is no longer a loop.
-  void invalidate() { IsInvalid = true; }
+  unsigned getNumBlocks() const {
+    assert(!isInvalid() && "Loop not in a valid state!");
+    return Blocks.size();
+  }
 
   /// Return true if this loop is no longer valid.
-  bool isInvalid() { return IsInvalid; }
+  bool isInvalid() const { return IsInvalid; }
 
   /// True if terminator in the block can branch to another block that is
   /// outside of the current loop.
   bool isLoopExiting(const BlockT *BB) const {
+    assert(!isInvalid() && "Loop not in a valid state!");
     for (const auto &Succ : children<const BlockT *>(BB)) {
       if (!contains(Succ))
         return true;
@@ -163,6 +191,7 @@ public:
   /// This function is useful when there are multiple latches in a loop
   /// because \fn getLoopLatch will return nullptr in that case.
   bool isLoopLatch(const BlockT *BB) const {
+    assert(!isInvalid() && "Loop not in a valid state!");
     assert(contains(BB) && "block does not belong to the loop");
 
     BlockT *Header = getHeader();
@@ -173,6 +202,7 @@ public:
 
   /// Calculate the number of back edges to the loop header.
   unsigned getNumBackEdges() const {
+    assert(!isInvalid() && "Loop not in a valid state!");
     unsigned NumBackEdges = 0;
     BlockT *H = getHeader();
 
@@ -235,6 +265,7 @@ public:
   /// Return all loop latch blocks of this loop. A latch block is a block that
   /// contains a branch back to the header.
   void getLoopLatches(SmallVectorImpl<BlockT *> &LoopLatches) const {
+    assert(!isInvalid() && "Loop not in a valid state!");
     BlockT *H = getHeader();
     for (const auto Pred : children<Inverse<BlockT *>>(H))
       if (contains(Pred))
@@ -261,6 +292,7 @@ public:
   /// Add the specified loop to be a child of this loop.
   /// This updates the loop depth of the new child.
   void addChildLoop(LoopT *NewChild) {
+    assert(!isInvalid() && "Loop not in a valid state!");
     assert(!NewChild->ParentLoop && "NewChild already has a parent!");
     NewChild->ParentLoop = static_cast<LoopT *>(this);
     SubLoops.push_back(NewChild);
@@ -269,6 +301,7 @@ public:
   /// This removes the specified child from being a subloop of this loop. The
   /// loop is not deleted, as it will presumably be inserted into another loop.
   LoopT *removeChildLoop(iterator I) {
+    assert(!isInvalid() && "Loop not in a valid state!");
     assert(I != SubLoops.end() && "Cannot remove end iterator!");
     LoopT *Child = *I;
     assert(Child->ParentLoop == this && "Child is not a child of this loop!");
@@ -281,21 +314,27 @@ public:
   /// This should only be used by transformations that create new loops.  Other
   /// transformations should use addBasicBlockToLoop.
   void addBlockEntry(BlockT *BB) {
+    assert(!isInvalid() && "Loop not in a valid state!");
     Blocks.push_back(BB);
     DenseBlockSet.insert(BB);
   }
 
   /// interface to reverse Blocks[from, end of loop] in this loop
   void reverseBlock(unsigned from) {
+    assert(!isInvalid() && "Loop not in a valid state!");
     std::reverse(Blocks.begin() + from, Blocks.end());
   }
 
   /// interface to do reserve() for Blocks
-  void reserveBlocks(unsigned size) { Blocks.reserve(size); }
+  void reserveBlocks(unsigned size) {
+    assert(!isInvalid() && "Loop not in a valid state!");
+    Blocks.reserve(size);
+  }
 
   /// This method is used to move BB (which must be part of this loop) to be the
   /// loop header of the loop (the block that dominates all others).
   void moveToHeader(BlockT *BB) {
+    assert(!isInvalid() && "Loop not in a valid state!");
     if (Blocks[0] == BB)
       return;
     for (unsigned i = 0;; ++i) {
@@ -312,6 +351,7 @@ public:
   /// Blocks as appropriate. This does not update the mapping in the LoopInfo
   /// class.
   void removeBlockFromLoop(BlockT *BB) {
+    assert(!isInvalid() && "Loop not in a valid state!");
     auto I = find(Blocks, BB);
     assert(I != Blocks.end() && "N is not in this list!");
     Blocks.erase(I);
@@ -494,6 +534,8 @@ public:
   LocRange getLocRange() const;
 
   StringRef getName() const {
+    if (isInvalid())
+      return "<invalidated loop>";
     if (BasicBlock *Header = getHeader())
       if (Header->hasName())
         return Header->getName();
@@ -673,6 +715,9 @@ public:
   void print(raw_ostream &OS) const;
 
   void verify(const DominatorTreeBase<BlockT, false> &DomTree) const;
+
+protected:
+  static void clearLoop(LoopT &L) { L.clear(); }
 };
 
 // Implementation in LoopInfoImpl.h

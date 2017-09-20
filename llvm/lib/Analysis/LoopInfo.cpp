@@ -16,6 +16,7 @@
 
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/LoopInfoImpl.h"
 #include "llvm/Analysis/LoopIterator.h"
@@ -619,8 +620,10 @@ bool LoopInfo::invalidate(Function &F, const PreservedAnalyses &PA,
 
 void LoopInfo::markAsErased(Loop *Unloop) {
   assert(!Unloop->isInvalid() && "Loop has already been erased!");
-  Unloop->invalidate();
   RemovedLoops.push_back(Unloop);
+
+  auto InvalidateOnExit =
+      make_scope_exit([&]() { BaseT::clearLoop(*Unloop); });
 
   // First handle the special case of no parent loop to simplify the algorithm.
   if (!Unloop->getParentLoop()) {

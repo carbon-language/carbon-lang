@@ -34,6 +34,7 @@ namespace llvm {
 template <class BlockT, class LoopT>
 void LoopBase<BlockT, LoopT>::getExitingBlocks(
     SmallVectorImpl<BlockT *> &ExitingBlocks) const {
+  assert(!isInvalid() && "Loop not in a valid state!");
   for (const auto BB : blocks())
     for (const auto &Succ : children<BlockT *>(BB))
       if (!contains(Succ)) {
@@ -47,6 +48,7 @@ void LoopBase<BlockT, LoopT>::getExitingBlocks(
 /// return that block. Otherwise return null.
 template <class BlockT, class LoopT>
 BlockT *LoopBase<BlockT, LoopT>::getExitingBlock() const {
+  assert(!isInvalid() && "Loop not in a valid state!");
   SmallVector<BlockT *, 8> ExitingBlocks;
   getExitingBlocks(ExitingBlocks);
   if (ExitingBlocks.size() == 1)
@@ -60,6 +62,7 @@ BlockT *LoopBase<BlockT, LoopT>::getExitingBlock() const {
 template <class BlockT, class LoopT>
 void LoopBase<BlockT, LoopT>::getExitBlocks(
     SmallVectorImpl<BlockT *> &ExitBlocks) const {
+  assert(!isInvalid() && "Loop not in a valid state!");
   for (const auto BB : blocks())
     for (const auto &Succ : children<BlockT *>(BB))
       if (!contains(Succ))
@@ -71,6 +74,7 @@ void LoopBase<BlockT, LoopT>::getExitBlocks(
 /// return that block. Otherwise return null.
 template <class BlockT, class LoopT>
 BlockT *LoopBase<BlockT, LoopT>::getExitBlock() const {
+  assert(!isInvalid() && "Loop not in a valid state!");
   SmallVector<BlockT *, 8> ExitBlocks;
   getExitBlocks(ExitBlocks);
   if (ExitBlocks.size() == 1)
@@ -82,6 +86,7 @@ BlockT *LoopBase<BlockT, LoopT>::getExitBlock() const {
 template <class BlockT, class LoopT>
 void LoopBase<BlockT, LoopT>::getExitEdges(
     SmallVectorImpl<Edge> &ExitEdges) const {
+  assert(!isInvalid() && "Loop not in a valid state!");
   for (const auto BB : blocks())
     for (const auto &Succ : children<BlockT *>(BB))
       if (!contains(Succ))
@@ -99,6 +104,7 @@ void LoopBase<BlockT, LoopT>::getExitEdges(
 ///
 template <class BlockT, class LoopT>
 BlockT *LoopBase<BlockT, LoopT>::getLoopPreheader() const {
+  assert(!isInvalid() && "Loop not in a valid state!");
   // Keep track of nodes outside the loop branching to the header...
   BlockT *Out = getLoopPredecessor();
   if (!Out)
@@ -126,6 +132,7 @@ BlockT *LoopBase<BlockT, LoopT>::getLoopPreheader() const {
 ///
 template <class BlockT, class LoopT>
 BlockT *LoopBase<BlockT, LoopT>::getLoopPredecessor() const {
+  assert(!isInvalid() && "Loop not in a valid state!");
   // Keep track of nodes outside the loop branching to the header...
   BlockT *Out = nullptr;
 
@@ -148,6 +155,7 @@ BlockT *LoopBase<BlockT, LoopT>::getLoopPredecessor() const {
 /// A latch block is a block that contains a branch back to the header.
 template <class BlockT, class LoopT>
 BlockT *LoopBase<BlockT, LoopT>::getLoopLatch() const {
+  assert(!isInvalid() && "Loop not in a valid state!");
   BlockT *Header = getHeader();
   BlockT *Latch = nullptr;
   for (const auto Pred : children<Inverse<BlockT *>>(Header)) {
@@ -174,6 +182,7 @@ BlockT *LoopBase<BlockT, LoopT>::getLoopLatch() const {
 template <class BlockT, class LoopT>
 void LoopBase<BlockT, LoopT>::addBasicBlockToLoop(
     BlockT *NewBB, LoopInfoBase<BlockT, LoopT> &LIB) {
+  assert(!isInvalid() && "Loop not in a valid state!");
 #ifndef NDEBUG
   if (!Blocks.empty()) {
     auto SameHeader = LIB[getHeader()];
@@ -203,6 +212,7 @@ void LoopBase<BlockT, LoopT>::addBasicBlockToLoop(
 template <class BlockT, class LoopT>
 void LoopBase<BlockT, LoopT>::replaceChildLoopWith(LoopT *OldChild,
                                                    LoopT *NewChild) {
+  assert(!isInvalid() && "Loop not in a valid state!");
   assert(OldChild->ParentLoop == this && "This loop is already broken!");
   assert(!NewChild->ParentLoop && "NewChild already has a parent!");
   typename std::vector<LoopT *>::iterator I = find(SubLoops, OldChild);
@@ -215,6 +225,7 @@ void LoopBase<BlockT, LoopT>::replaceChildLoopWith(LoopT *OldChild,
 /// verifyLoop - Verify loop structure
 template <class BlockT, class LoopT>
 void LoopBase<BlockT, LoopT>::verifyLoop() const {
+  assert(!isInvalid() && "Loop not in a valid state!");
 #ifndef NDEBUG
   assert(!Blocks.empty() && "Loop header is missing");
 
@@ -301,6 +312,7 @@ void LoopBase<BlockT, LoopT>::verifyLoop() const {
 template <class BlockT, class LoopT>
 void LoopBase<BlockT, LoopT>::verifyLoopNest(
     DenseSet<const LoopT *> *Loops) const {
+  assert(!isInvalid() && "Loop not in a valid state!");
   Loops->insert(static_cast<const LoopT *>(this));
   // Verify this loop.
   verifyLoop();

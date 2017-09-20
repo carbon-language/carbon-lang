@@ -255,8 +255,7 @@ static bool isEpilogProfitable(Loop *L) {
   return false;
 }
 
-/// Unroll the given loop by Count. The loop must be in LCSSA form. Returns true
-/// if unrolling was successful, or false if the loop was unmodified. Unrolling
+/// Unroll the given loop by Count. The loop must be in LCSSA form.  Unrolling
 /// can only fail when the loop's latch block is not terminated by a conditional
 /// branch instruction. However, if the trip count (and multiple) are not known,
 /// loop unrolling will mostly produce more code that is no faster.
@@ -285,38 +284,36 @@ static bool isEpilogProfitable(Loop *L) {
 /// runtime-unroll the loop if computing RuntimeTripCount will be expensive and
 /// AllowExpensiveTripCount is false.
 ///
-/// If we want to perform PGO-based loop peeling, PeelCount is set to the 
+/// If we want to perform PGO-based loop peeling, PeelCount is set to the
 /// number of iterations we want to peel off.
 ///
 /// The LoopInfo Analysis that is passed will be kept consistent.
 ///
 /// This utility preserves LoopInfo. It will also preserve ScalarEvolution and
 /// DominatorTree if they are non-null.
-bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount, bool Force,
-                      bool AllowRuntime, bool AllowExpensiveTripCount,
-                      bool PreserveCondBr, bool PreserveOnlyFirst,
-                      unsigned TripMultiple, unsigned PeelCount,
-                      bool UnrollRemainder, LoopInfo *LI,
-                      ScalarEvolution *SE, DominatorTree *DT,
-                      AssumptionCache *AC, OptimizationRemarkEmitter *ORE,
-                      bool PreserveLCSSA) {
+LoopUnrollStatus llvm::UnrollLoop(
+    Loop *L, unsigned Count, unsigned TripCount, bool Force, bool AllowRuntime,
+    bool AllowExpensiveTripCount, bool PreserveCondBr, bool PreserveOnlyFirst,
+    unsigned TripMultiple, unsigned PeelCount, bool UnrollRemainder,
+    LoopInfo *LI, ScalarEvolution *SE, DominatorTree *DT, AssumptionCache *AC,
+    OptimizationRemarkEmitter *ORE, bool PreserveLCSSA) {
 
   BasicBlock *Preheader = L->getLoopPreheader();
   if (!Preheader) {
     DEBUG(dbgs() << "  Can't unroll; loop preheader-insertion failed.\n");
-    return false;
+    return LoopUnrollStatus::Unmodified;
   }
 
   BasicBlock *LatchBlock = L->getLoopLatch();
   if (!LatchBlock) {
     DEBUG(dbgs() << "  Can't unroll; loop exit-block-insertion failed.\n");
-    return false;
+    return LoopUnrollStatus::Unmodified;
   }
 
   // Loops with indirectbr cannot be cloned.
   if (!L->isSafeToClone()) {
     DEBUG(dbgs() << "  Can't unroll; Loop body cannot be cloned.\n");
-    return false;
+    return LoopUnrollStatus::Unmodified;
   }
 
   // The current loop unroll pass can only unroll loops with a single latch
@@ -330,7 +327,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount, bool Force,
     // The loop-rotate pass can be helpful to avoid this in many cases.
     DEBUG(dbgs() <<
              "  Can't unroll; loop not terminated by a conditional branch.\n");
-    return false;
+    return LoopUnrollStatus::Unmodified;
   }
 
   auto CheckSuccessors = [&](unsigned S1, unsigned S2) {
@@ -340,14 +337,14 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount, bool Force,
   if (!CheckSuccessors(0, 1) && !CheckSuccessors(1, 0)) {
     DEBUG(dbgs() << "Can't unroll; only loops with one conditional latch"
                     " exiting the loop can be unrolled\n");
-    return false;
+    return LoopUnrollStatus::Unmodified;
   }
 
   if (Header->hasAddressTaken()) {
     // The loop-rotate pass can be helpful to avoid this in many cases.
     DEBUG(dbgs() <<
           "  Won't unroll loop: address of header block is taken.\n");
-    return false;
+    return LoopUnrollStatus::Unmodified;
   }
 
   if (TripCount != 0)
@@ -363,7 +360,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount, bool Force,
   // Don't enter the unroll code if there is nothing to do.
   if (TripCount == 0 && Count < 2 && PeelCount == 0) {
     DEBUG(dbgs() << "Won't unroll; almost nothing to do\n");
-    return false;
+    return LoopUnrollStatus::Unmodified;
   }
 
   assert(Count > 0);
@@ -439,7 +436,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount, bool Force,
       DEBUG(
           dbgs() << "Wont unroll; remainder loop could not be generated"
                     "when assuming runtime trip count\n");
-      return false;
+      return LoopUnrollStatus::Unmodified;
     }
   }
 
@@ -864,7 +861,8 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount, bool Force,
     }
   }
 
-  return true;
+  return CompletelyUnroll ? LoopUnrollStatus::FullyUnrolled
+                          : LoopUnrollStatus::PartiallyUnrolled;
 }
 
 /// Given an llvm.loop loop id metadata node, returns the loop hint metadata
