@@ -6,6 +6,7 @@
 
 static void ErrorReportCallbackOneToZ(const char *report) {
   fprintf(stderr, "ABCDEF%sGHIJKL", report);
+  fflush(stderr);
 }
 
 int main(int argc, char **argv) {
