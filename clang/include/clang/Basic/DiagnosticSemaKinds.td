@@ -4707,6 +4707,14 @@ def note_deleted_assign_field : Note<
 def warn_undefined_internal : Warning<
   "%select{function|variable}0 %q1 has internal linkage but is not defined">,
   InGroup<DiagGroup<"undefined-internal">>;
+def err_undefined_internal_type : Error<
+  "%select{function|variable}0 %q1 is used but not defined in this "
+  "translation unit, and cannot be defined in any other translation unit "
+  "because its type does not have linkage">;
+def ext_undefined_internal_type : Extension<
+  "ISO C++ requires a definition in this translation unit for "
+  "%select{function|variable}0 %q1 because its type does not have linkage">,
+  InGroup<DiagGroup<"undefined-internal-type">>;
 def warn_undefined_inline : Warning<"inline function %q0 is not defined">,
   InGroup<DiagGroup<"undefined-inline">>;
 def err_undefined_inline_var : Error<"inline variable %q0 is not defined">;
