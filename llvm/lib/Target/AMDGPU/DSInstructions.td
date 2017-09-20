@@ -576,6 +576,11 @@ def : DSWritePat <DS_WRITE_B8, i16, si_truncstore_local_i8>;
 def : DSWritePat <DS_WRITE_B16, i16, si_store_local>;
 def : DSWritePat <DS_WRITE_B32, i32, si_store_local>;
 
+let Predicates = [HasD16LoadStore] in {
+def : DSWritePat <DS_WRITE_B16_D16_HI, i32, store_local_hi16>;
+def : DSWritePat <DS_WRITE_B8_D16_HI, i32, truncstorei8_local_hi16>;
+}
+
 let AddedComplexity = 100 in {
 
 def : DSWritePat <DS_WRITE_B64, v2i32, si_store_local_align8>;

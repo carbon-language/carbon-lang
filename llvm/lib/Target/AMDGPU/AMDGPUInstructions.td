@@ -222,23 +222,43 @@ def COND_NULL : PatLeaf <
 // Load/Store Pattern Fragments
 //===----------------------------------------------------------------------===//
 
-class PrivateMemOp <dag ops, dag frag> : PatFrag <ops, frag, [{
-  return cast<MemSDNode>(N)->getAddressSpace() == AMDGPUASI.PRIVATE_ADDRESS;
-}]>;
+class LoadFrag <SDPatternOperator op> : PatFrag<(ops node:$ptr), (op node:$ptr)>;
 
-class PrivateLoad <SDPatternOperator op> : PrivateMemOp <
-  (ops node:$ptr), (op node:$ptr)
->;
-
-class PrivateStore <SDPatternOperator op> : PrivateMemOp <
+class StoreFrag<SDPatternOperator op> : PatFrag <
   (ops node:$value, node:$ptr), (op node:$value, node:$ptr)
 >;
 
-def load_private : PrivateLoad <load>;
+class StoreHi16<SDPatternOperator op> : PatFrag <
+  (ops node:$value, node:$ptr), (op (srl node:$value, (i32 16)), node:$ptr)
+>;
 
-def truncstorei8_private : PrivateStore <truncstorei8>;
-def truncstorei16_private : PrivateStore <truncstorei16>;
-def store_private : PrivateStore <store>;
+class PrivateAddress : CodePatPred<[{
+  return cast<MemSDNode>(N)->getAddressSpace() == AMDGPUASI.PRIVATE_ADDRESS;
+}]>;
+
+class LocalAddress : CodePatPred<[{
+  return cast<MemSDNode>(N)->getAddressSpace() == AMDGPUASI.LOCAL_ADDRESS;
+}]>;
+
+class GlobalAddress : CodePatPred<[{
+  return cast<MemSDNode>(N)->getAddressSpace() == AMDGPUASI.GLOBAL_ADDRESS;
+}]>;
+
+class FlatLoadAddress : CodePatPred<[{
+  const auto AS = cast<MemSDNode>(N)->getAddressSpace();
+  return AS == AMDGPUASI.FLAT_ADDRESS ||
+         AS == AMDGPUASI.GLOBAL_ADDRESS;
+}]>;
+
+
+def load_private : LoadFrag <load>, PrivateAddress;
+def truncstorei8_private : StoreFrag<truncstorei8>, PrivateAddress;
+def truncstorei16_private : StoreFrag <truncstorei16>, PrivateAddress;
+def store_private : StoreFrag <store>, PrivateAddress;
+
+def store_private_hi16 : StoreHi16 <truncstorei16>, PrivateAddress;
+def truncstorei8_private_hi16 : StoreHi16<truncstorei8>, PrivateAddress;
+
 
 class GlobalMemOp <dag ops, dag frag> : PatFrag <ops, frag, [{
   return cast<MemSDNode>(N)->getAddressSpace() == AMDGPUASI.GLOBAL_ADDRESS;
@@ -315,8 +335,12 @@ def sextloadi8_constant : ConstantLoad <sextloadi8>;
 def az_extloadi8_local : LocalLoad <az_extloadi8>;
 def sextloadi8_local : LocalLoad <sextloadi8>;
 
-def extloadi8_private : PrivateLoad <az_extloadi8>;
-def sextloadi8_private : PrivateLoad <sextloadi8>;
+def store_local_hi16 : StoreHi16 <truncstorei16>, LocalAddress;
+def truncstorei8_local_hi16 : StoreHi16<truncstorei8>, LocalAddress;
+
+
+def extloadi8_private : LoadFrag <az_extloadi8>, PrivateAddress;
+def sextloadi8_private : LoadFrag <sextloadi8>, PrivateAddress;
 
 def az_extloadi16 : PatFrag<(ops node:$ptr), (az_extload node:$ptr), [{
   return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i16;
@@ -331,8 +355,8 @@ def sextloadi16_constant : ConstantLoad <sextloadi16>;
 def az_extloadi16_local : LocalLoad <az_extloadi16>;
 def sextloadi16_local : LocalLoad <sextloadi16>;
 
-def extloadi16_private : PrivateLoad <az_extloadi16>;
-def sextloadi16_private : PrivateLoad <sextloadi16>;
+def extloadi16_private : LoadFrag <az_extloadi16>, PrivateAddress;
+def sextloadi16_private : LoadFrag <sextloadi16>, PrivateAddress;
 
 def az_extloadi32 : PatFrag<(ops node:$ptr), (az_extload node:$ptr), [{
   return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i32;
@@ -347,9 +371,12 @@ def az_extloadi32_constant : ConstantLoad <az_extloadi32>;
 def truncstorei8_global : GlobalStore <truncstorei8>;
 def truncstorei16_global : GlobalStore <truncstorei16>;
 
-def local_store : LocalStore <store>;
-def truncstorei8_local : LocalStore <truncstorei8>;
-def truncstorei16_local : LocalStore <truncstorei16>;
+def truncstorei8_global_hi16 : StoreHi16 <truncstorei8>, GlobalAddress;
+def truncstorei16_global_hi16 : StoreHi16 <truncstorei16>, GlobalAddress;
+
+def local_store : StoreFrag <store>, LocalAddress;
+def truncstorei8_local : StoreFrag <truncstorei8>, LocalAddress;
+def truncstorei16_local : StoreFrag <truncstorei16>, LocalAddress;
 
 def local_load : LocalLoad <load>;
 

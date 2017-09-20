@@ -645,6 +645,10 @@ def flat_store         : flat_st <store>;
 def flat_truncstorei8  : flat_st <truncstorei8>;
 def flat_truncstorei16 : flat_st <truncstorei16>;
 
+def flat_truncstorei8_hi16  : StoreHi16<truncstorei8>, FlatLoadAddress;
+def flat_truncstorei16_hi16 : StoreHi16<truncstorei16>, FlatLoadAddress;
+
+
 // Patterns for global loads with no offset.
 class FlatLoadPat <FLAT_Pseudo inst, SDPatternOperator node, ValueType vt> : Pat <
   (vt (node (FLATOffset i64:$vaddr, i16:$offset, i1:$slc))),
@@ -752,6 +756,12 @@ def : FlatAtomicPat <FLAT_ATOMIC_XOR_X2_RTN, atomic_xor_global, i64>;
 
 def : FlatStorePat <FLAT_STORE_BYTE, flat_truncstorei8, i16>;
 def : FlatStorePat <FLAT_STORE_SHORT, flat_store, i16>;
+
+ let Predicates = [HasD16LoadStore] in {
+def : FlatStorePat <FLAT_STORE_SHORT_D16_HI, flat_truncstorei16_hi16, i32>;
+def : FlatStorePat <FLAT_STORE_BYTE_D16_HI, flat_truncstorei8_hi16, i32>;
+}
+
 } // End Predicates = [HasFlatAddressSpace]
 
 let Predicates = [HasFlatGlobalInsts], AddedComplexity = 10 in {
@@ -778,6 +788,13 @@ def : FlatStoreSignedPat <GLOBAL_STORE_SHORT, global_store, i16>;
 def : FlatStoreSignedPat <GLOBAL_STORE_DWORD, global_store, i32>;
 def : FlatStoreSignedPat <GLOBAL_STORE_DWORDX2, global_store, v2i32>;
 def : FlatStoreSignedPat <GLOBAL_STORE_DWORDX4, global_store, v4i32>;
+
+
+ let Predicates = [HasD16LoadStore] in {
+def : FlatStoreSignedPat <GLOBAL_STORE_SHORT_D16_HI, truncstorei16_global_hi16, i32>;
+def : FlatStoreSignedPat <GLOBAL_STORE_BYTE_D16_HI, truncstorei8_global_hi16, i32>;
+}
+
 
 def : FlatStoreSignedAtomicPat <GLOBAL_STORE_DWORD, global_store_atomic, i32>;
 def : FlatStoreSignedAtomicPat <GLOBAL_STORE_DWORDX2, global_store_atomic, i64>;

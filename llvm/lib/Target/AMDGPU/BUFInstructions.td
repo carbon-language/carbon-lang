@@ -1264,6 +1264,16 @@ defm : MUBUFScratchStorePat <BUFFER_STORE_DWORD_OFFEN, BUFFER_STORE_DWORD_OFFSET
 defm : MUBUFScratchStorePat <BUFFER_STORE_DWORDX2_OFFEN, BUFFER_STORE_DWORDX2_OFFSET, v2i32, store_private>;
 defm : MUBUFScratchStorePat <BUFFER_STORE_DWORDX4_OFFEN, BUFFER_STORE_DWORDX4_OFFSET, v4i32, store_private>;
 
+
+let Predicates = [HasD16LoadStore] in {
+ // Hiding the extract high pattern in the PatFrag seems to not
+ // automatically increase the complexity.
+let AddedComplexity = 1 in {
+defm : MUBUFScratchStorePat <BUFFER_STORE_SHORT_D16_HI_OFFEN, BUFFER_STORE_SHORT_D16_HI_OFFSET, i32, store_private_hi16>;
+defm : MUBUFScratchStorePat <BUFFER_STORE_BYTE_D16_HI_OFFEN, BUFFER_STORE_BYTE_D16_HI_OFFSET, i32, truncstorei8_private_hi16>;
+}
+}
+
 //===----------------------------------------------------------------------===//
 // MTBUF Patterns
 //===----------------------------------------------------------------------===//
