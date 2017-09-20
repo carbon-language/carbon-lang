@@ -81,7 +81,7 @@ public:
     if (F->getContext().getDiagnosticsOutputFile() ||
         F->getContext().getDiagHandlerPtr()->isAnyRemarkEnabled()) {
       auto R = RemarkBuilder();
-      emit(R);
+      emit((DiagnosticInfoOptimizationBase &)R);
     }
   }
 
