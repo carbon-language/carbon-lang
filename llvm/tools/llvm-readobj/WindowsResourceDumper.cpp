@@ -26,8 +26,11 @@ std::string stripUTF16(const ArrayRef<UTF16> &UTF16Str) {
   Result.reserve(UTF16Str.size());
 
   for (UTF16 Ch : UTF16Str) {
-    if (Ch <= 0xFF)
-      Result += Ch;
+    // UTF16Str will have swapped byte order in case of big-endian machines.
+    // Swap it back in such a case.
+    ulittle16_t ChValue = Ch;
+    if (ChValue <= 0xFF)
+      Result += ChValue;
     else
       Result += '?';
   }
