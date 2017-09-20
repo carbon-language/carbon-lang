@@ -69,7 +69,7 @@ void Dumper::printEntry(const ResourceEntryRef &Ref) {
   SW.printNumber("Version (major)", Ref.getMajorVersion());
   SW.printNumber("Version (minor)", Ref.getMinorVersion());
   SW.printNumber("Characteristics", Ref.getCharacteristics());
-  SW.printNumber("Data size", Ref.getData().size());
+  SW.printNumber("Data size", (uint64_t)Ref.getData().size());
   SW.printBinary("Data:", Ref.getData());
   SW.startLine() << "\n";
 }
