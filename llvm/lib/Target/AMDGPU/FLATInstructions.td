@@ -618,37 +618,6 @@ defm SCRATCH_STORE_SHORT_D16_HI : FLAT_Scratch_Store_Pseudo <"scratch_store_shor
 // Flat Patterns
 //===----------------------------------------------------------------------===//
 
-class flat_ld <SDPatternOperator ld> : PatFrag<(ops node:$ptr),
-                                               (ld node:$ptr), [{
-  auto const AS = cast<MemSDNode>(N)->getAddressSpace();
-  return AS == AMDGPUASI.FLAT_ADDRESS ||
-         AS == AMDGPUASI.GLOBAL_ADDRESS ||
-         AS == AMDGPUASI.CONSTANT_ADDRESS;
-}]>;
-
-class flat_st <SDPatternOperator st> : PatFrag<(ops node:$val, node:$ptr),
-                                               (st node:$val, node:$ptr), [{
-  auto const AS = cast<MemSDNode>(N)->getAddressSpace();
-  return AS == AMDGPUASI.FLAT_ADDRESS ||
-         AS == AMDGPUASI.GLOBAL_ADDRESS;
-}]>;
-
-def atomic_flat_load   : flat_ld <atomic_load>;
-def flat_load          : flat_ld <load>;
-def flat_az_extloadi8  : flat_ld <az_extloadi8>;
-def flat_sextloadi8    : flat_ld <sextloadi8>;
-def flat_az_extloadi16 : flat_ld <az_extloadi16>;
-def flat_sextloadi16   : flat_ld <sextloadi16>;
-
-def atomic_flat_store  : flat_st <atomic_store>;
-def flat_store         : flat_st <store>;
-def flat_truncstorei8  : flat_st <truncstorei8>;
-def flat_truncstorei16 : flat_st <truncstorei16>;
-
-def flat_truncstorei8_hi16  : StoreHi16<truncstorei8>, FlatLoadAddress;
-def flat_truncstorei16_hi16 : StoreHi16<truncstorei16>, FlatLoadAddress;
-
-
 // Patterns for global loads with no offset.
 class FlatLoadPat <FLAT_Pseudo inst, SDPatternOperator node, ValueType vt> : Pat <
   (vt (node (FLATOffset i64:$vaddr, i16:$offset, i1:$slc))),
@@ -703,28 +672,28 @@ class FlatSignedAtomicPat <FLAT_Pseudo inst, SDPatternOperator node, ValueType v
 
 let Predicates = [HasFlatAddressSpace] in {
 
-def : FlatLoadPat <FLAT_LOAD_UBYTE, flat_az_extloadi8, i32>;
-def : FlatLoadPat <FLAT_LOAD_SBYTE, flat_sextloadi8, i32>;
-def : FlatLoadPat <FLAT_LOAD_UBYTE, flat_az_extloadi8, i16>;
-def : FlatLoadPat <FLAT_LOAD_SBYTE, flat_sextloadi8, i16>;
-def : FlatLoadPat <FLAT_LOAD_USHORT, flat_az_extloadi16, i32>;
-def : FlatLoadPat <FLAT_LOAD_USHORT, flat_load, i16>;
-def : FlatLoadPat <FLAT_LOAD_SSHORT, flat_sextloadi16, i32>;
-def : FlatLoadPat <FLAT_LOAD_DWORD, flat_load, i32>;
-def : FlatLoadPat <FLAT_LOAD_DWORDX2, flat_load, v2i32>;
-def : FlatLoadPat <FLAT_LOAD_DWORDX4, flat_load, v4i32>;
+def : FlatLoadPat <FLAT_LOAD_UBYTE, az_extloadi8_flat, i32>;
+def : FlatLoadPat <FLAT_LOAD_SBYTE, sextloadi8_flat, i32>;
+def : FlatLoadPat <FLAT_LOAD_UBYTE, az_extloadi8_flat, i16>;
+def : FlatLoadPat <FLAT_LOAD_SBYTE, sextloadi8_flat, i16>;
+def : FlatLoadPat <FLAT_LOAD_USHORT, az_extloadi16_flat, i32>;
+def : FlatLoadPat <FLAT_LOAD_USHORT, load_flat, i16>;
+def : FlatLoadPat <FLAT_LOAD_SSHORT, sextloadi16_flat, i32>;
+def : FlatLoadPat <FLAT_LOAD_DWORD, load_flat, i32>;
+def : FlatLoadPat <FLAT_LOAD_DWORDX2, load_flat, v2i32>;
+def : FlatLoadPat <FLAT_LOAD_DWORDX4, load_flat, v4i32>;
 
-def : FlatLoadAtomicPat <FLAT_LOAD_DWORD, atomic_flat_load, i32>;
-def : FlatLoadAtomicPat <FLAT_LOAD_DWORDX2, atomic_flat_load, i64>;
+def : FlatLoadAtomicPat <FLAT_LOAD_DWORD, atomic_load_flat, i32>;
+def : FlatLoadAtomicPat <FLAT_LOAD_DWORDX2, atomic_load_flat, i64>;
 
-def : FlatStorePat <FLAT_STORE_BYTE, flat_truncstorei8, i32>;
-def : FlatStorePat <FLAT_STORE_SHORT, flat_truncstorei16, i32>;
-def : FlatStorePat <FLAT_STORE_DWORD, flat_store, i32>;
-def : FlatStorePat <FLAT_STORE_DWORDX2, flat_store, v2i32>;
-def : FlatStorePat <FLAT_STORE_DWORDX4, flat_store, v4i32>;
+def : FlatStorePat <FLAT_STORE_BYTE, truncstorei8_flat, i32>;
+def : FlatStorePat <FLAT_STORE_SHORT, truncstorei16_flat, i32>;
+def : FlatStorePat <FLAT_STORE_DWORD, store_flat, i32>;
+def : FlatStorePat <FLAT_STORE_DWORDX2, store_flat, v2i32>;
+def : FlatStorePat <FLAT_STORE_DWORDX4, store_flat, v4i32>;
 
-def : FlatStoreAtomicPat <FLAT_STORE_DWORD, atomic_flat_store, i32>;
-def : FlatStoreAtomicPat <FLAT_STORE_DWORDX2, atomic_flat_store, i64>;
+def : FlatStoreAtomicPat <FLAT_STORE_DWORD, atomic_store_flat, i32>;
+def : FlatStoreAtomicPat <FLAT_STORE_DWORDX2, atomic_store_flat, i64>;
 
 def : FlatAtomicPat <FLAT_ATOMIC_ADD_RTN, atomic_add_global, i32>;
 def : FlatAtomicPat <FLAT_ATOMIC_SUB_RTN, atomic_sub_global, i32>;
@@ -754,12 +723,12 @@ def : FlatAtomicPat <FLAT_ATOMIC_SWAP_X2_RTN, atomic_swap_global, i64>;
 def : FlatAtomicPat <FLAT_ATOMIC_CMPSWAP_X2_RTN, AMDGPUatomic_cmp_swap_global, i64, v2i64>;
 def : FlatAtomicPat <FLAT_ATOMIC_XOR_X2_RTN, atomic_xor_global, i64>;
 
-def : FlatStorePat <FLAT_STORE_BYTE, flat_truncstorei8, i16>;
-def : FlatStorePat <FLAT_STORE_SHORT, flat_store, i16>;
+def : FlatStorePat <FLAT_STORE_BYTE, truncstorei8_flat, i16>;
+def : FlatStorePat <FLAT_STORE_SHORT, store_flat, i16>;
 
  let Predicates = [HasD16LoadStore] in {
-def : FlatStorePat <FLAT_STORE_SHORT_D16_HI, flat_truncstorei16_hi16, i32>;
-def : FlatStorePat <FLAT_STORE_BYTE_D16_HI, flat_truncstorei8_hi16, i32>;
+def : FlatStorePat <FLAT_STORE_SHORT_D16_HI, truncstorei16_hi16_flat, i32>;
+def : FlatStorePat <FLAT_STORE_BYTE_D16_HI, truncstorei8_hi16_flat, i32>;
 }
 
 } // End Predicates = [HasFlatAddressSpace]
@@ -772,32 +741,30 @@ def : FlatLoadSignedPat <GLOBAL_LOAD_UBYTE, az_extloadi8_global, i16>;
 def : FlatLoadSignedPat <GLOBAL_LOAD_SBYTE, sextloadi8_global, i16>;
 def : FlatLoadSignedPat <GLOBAL_LOAD_USHORT, az_extloadi16_global, i32>;
 def : FlatLoadSignedPat <GLOBAL_LOAD_SSHORT, sextloadi16_global, i32>;
-def : FlatLoadSignedPat <GLOBAL_LOAD_USHORT, global_load, i16>;
+def : FlatLoadSignedPat <GLOBAL_LOAD_USHORT, load_global, i16>;
 
-def : FlatLoadSignedPat <GLOBAL_LOAD_DWORD, global_load, i32>;
-def : FlatLoadSignedPat <GLOBAL_LOAD_DWORDX2, global_load, v2i32>;
-def : FlatLoadSignedPat <GLOBAL_LOAD_DWORDX4, global_load, v4i32>;
+def : FlatLoadSignedPat <GLOBAL_LOAD_DWORD, load_global, i32>;
+def : FlatLoadSignedPat <GLOBAL_LOAD_DWORDX2, load_global, v2i32>;
+def : FlatLoadSignedPat <GLOBAL_LOAD_DWORDX4, load_global, v4i32>;
 
-def : FlatLoadAtomicPat <GLOBAL_LOAD_DWORD, global_atomic_load, i32>;
-def : FlatLoadAtomicPat <GLOBAL_LOAD_DWORDX2, global_atomic_load, i64>;
+def : FlatLoadAtomicPat <GLOBAL_LOAD_DWORD, atomic_load_global, i32>;
+def : FlatLoadAtomicPat <GLOBAL_LOAD_DWORDX2, atomic_load_global, i64>;
 
 def : FlatStoreSignedPat <GLOBAL_STORE_BYTE, truncstorei8_global, i32>;
 def : FlatStoreSignedPat <GLOBAL_STORE_BYTE, truncstorei8_global, i16>;
 def : FlatStoreSignedPat <GLOBAL_STORE_SHORT, truncstorei16_global, i32>;
-def : FlatStoreSignedPat <GLOBAL_STORE_SHORT, global_store, i16>;
-def : FlatStoreSignedPat <GLOBAL_STORE_DWORD, global_store, i32>;
-def : FlatStoreSignedPat <GLOBAL_STORE_DWORDX2, global_store, v2i32>;
-def : FlatStoreSignedPat <GLOBAL_STORE_DWORDX4, global_store, v4i32>;
-
+def : FlatStoreSignedPat <GLOBAL_STORE_SHORT, store_global, i16>;
+def : FlatStoreSignedPat <GLOBAL_STORE_DWORD, store_global, i32>;
+def : FlatStoreSignedPat <GLOBAL_STORE_DWORDX2, store_global, v2i32>;
+def : FlatStoreSignedPat <GLOBAL_STORE_DWORDX4, store_global, v4i32>;
 
  let Predicates = [HasD16LoadStore] in {
-def : FlatStoreSignedPat <GLOBAL_STORE_SHORT_D16_HI, truncstorei16_global_hi16, i32>;
-def : FlatStoreSignedPat <GLOBAL_STORE_BYTE_D16_HI, truncstorei8_global_hi16, i32>;
+def : FlatStoreSignedPat <GLOBAL_STORE_SHORT_D16_HI, truncstorei16_hi16_global, i32>;
+def : FlatStoreSignedPat <GLOBAL_STORE_BYTE_D16_HI, truncstorei8_hi16_global, i32>;
 }
 
-
-def : FlatStoreSignedAtomicPat <GLOBAL_STORE_DWORD, global_store_atomic, i32>;
-def : FlatStoreSignedAtomicPat <GLOBAL_STORE_DWORDX2, global_store_atomic, i64>;
+def : FlatStoreSignedAtomicPat <GLOBAL_STORE_DWORD, store_atomic_global, i32>;
+def : FlatStoreSignedAtomicPat <GLOBAL_STORE_DWORDX2, store_atomic_global, i64>;
 
 def : FlatSignedAtomicPat <GLOBAL_ATOMIC_ADD_RTN, atomic_add_global, i32>;
 def : FlatSignedAtomicPat <GLOBAL_ATOMIC_SUB_RTN, atomic_sub_global, i32>;

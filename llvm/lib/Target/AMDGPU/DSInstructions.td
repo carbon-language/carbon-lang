@@ -543,25 +543,25 @@ class DSReadPat <DS_Pseudo inst, ValueType vt, PatFrag frag> : Pat <
   (inst $ptr, (as_i16imm $offset), (i1 0))
 >;
 
-def : DSReadPat <DS_READ_I8,  i32, si_sextload_local_i8>;
-def : DSReadPat <DS_READ_U8,  i32, si_az_extload_local_i8>;
-def : DSReadPat <DS_READ_I8,  i16, si_sextload_local_i8>;
-def : DSReadPat <DS_READ_U8,  i16, si_az_extload_local_i8>;
-def : DSReadPat <DS_READ_I16, i32, si_sextload_local_i16>;
-def : DSReadPat <DS_READ_I16, i32, si_sextload_local_i16>;
-def : DSReadPat <DS_READ_U16, i32, si_az_extload_local_i16>;
-def : DSReadPat <DS_READ_U16, i16, si_load_local>;
-def : DSReadPat <DS_READ_B32, i32, si_load_local>;
+def : DSReadPat <DS_READ_I8,  i32, sextloadi8_local_m0>;
+def : DSReadPat <DS_READ_U8,  i32, az_extloadi8_local_m0>;
+def : DSReadPat <DS_READ_I8,  i16, sextloadi8_local_m0>;
+def : DSReadPat <DS_READ_U8,  i16, az_extloadi8_local_m0>;
+def : DSReadPat <DS_READ_I16, i32, sextloadi16_local_m0>;
+def : DSReadPat <DS_READ_I16, i32, sextloadi16_local_m0>;
+def : DSReadPat <DS_READ_U16, i32, az_extloadi16_local_m0>;
+def : DSReadPat <DS_READ_U16, i16, load_local_m0>;
+def : DSReadPat <DS_READ_B32, i32, load_local_m0>;
 
 let AddedComplexity = 100 in {
 
-def : DSReadPat <DS_READ_B64, v2i32, si_load_local_align8>;
+def : DSReadPat <DS_READ_B64, v2i32, load_align8_local_m0>;
 
 } // End AddedComplexity = 100
 
 def : Pat <
-  (v2i32 (si_load_local (DS64Bit4ByteAligned i32:$ptr, i8:$offset0,
-                                                    i8:$offset1))),
+  (v2i32 (load_local_m0 (DS64Bit4ByteAligned i32:$ptr, i8:$offset0,
+                                                       i8:$offset1))),
   (DS_READ2_B32 $ptr, $offset0, $offset1, (i1 0))
 >;
 
@@ -570,11 +570,11 @@ class DSWritePat <DS_Pseudo inst, ValueType vt, PatFrag frag> : Pat <
   (inst $ptr, $value, (as_i16imm $offset), (i1 0))
 >;
 
-def : DSWritePat <DS_WRITE_B8, i32, si_truncstore_local_i8>;
-def : DSWritePat <DS_WRITE_B16, i32, si_truncstore_local_i16>;
-def : DSWritePat <DS_WRITE_B8, i16, si_truncstore_local_i8>;
-def : DSWritePat <DS_WRITE_B16, i16, si_store_local>;
-def : DSWritePat <DS_WRITE_B32, i32, si_store_local>;
+def : DSWritePat <DS_WRITE_B8, i32, truncstorei8_local_m0>;
+def : DSWritePat <DS_WRITE_B16, i32, truncstorei16_local_m0>;
+def : DSWritePat <DS_WRITE_B8, i16, truncstorei8_local_m0>;
+def : DSWritePat <DS_WRITE_B16, i16, store_local_m0>;
+def : DSWritePat <DS_WRITE_B32, i32, store_local_m0>;
 
 let Predicates = [HasD16LoadStore] in {
 def : DSWritePat <DS_WRITE_B16_D16_HI, i32, store_local_hi16>;
@@ -583,11 +583,11 @@ def : DSWritePat <DS_WRITE_B8_D16_HI, i32, truncstorei8_local_hi16>;
 
 let AddedComplexity = 100 in {
 
-def : DSWritePat <DS_WRITE_B64, v2i32, si_store_local_align8>;
+def : DSWritePat <DS_WRITE_B64, v2i32, store_align8_local_m0>;
 } // End AddedComplexity = 100
 
 def : Pat <
-  (si_store_local v2i32:$value, (DS64Bit4ByteAligned i32:$ptr, i8:$offset0,
+  (store_local_m0 v2i32:$value, (DS64Bit4ByteAligned i32:$ptr, i8:$offset0,
                                                                i8:$offset1)),
   (DS_WRITE2_B32 $ptr, (i32 (EXTRACT_SUBREG $value, sub0)),
                        (i32 (EXTRACT_SUBREG $value, sub1)), $offset0, $offset1,
