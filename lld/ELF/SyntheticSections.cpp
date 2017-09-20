@@ -417,10 +417,11 @@ CieRecord *EhFrameSection<ELFT>::addCie(EhSectionPiece &Cie,
         &Sec->template getFile<ELFT>()->getRelocTargetSym(Rels[FirstRelI]);
 
   // Search for an existing CIE by CIE contents/relocation target pair.
-  CieRecord *Rec = &CieMap[{Cie.data(), Personality}];
+  CieRecord *&Rec = CieMap[{Cie.data(), Personality}];
 
   // If not found, create a new one.
-  if (Rec->Cie == nullptr) {
+  if (!Rec) {
+    Rec = make<CieRecord>();
     Rec->Cie = &Cie;
     CieRecords.push_back(Rec);
   }
