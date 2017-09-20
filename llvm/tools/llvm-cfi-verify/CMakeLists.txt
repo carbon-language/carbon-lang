@@ -5,6 +5,7 @@ set(LLVM_LINK_COMPONENTS
   AllTargetsDisassemblers
   AllTargetsInfos
   MC
+  Object
   MCParser
   Object
   Support
