@@ -24,7 +24,8 @@
 namespace clang {
 enum : unsigned {
   IgnoreExplicitVisibilityBit = 2,
-  IgnoreAllVisibilityBit = 4
+  IgnoreAllVisibilityBit = 4,
+  IgnoreTypeLinkageBit = 8,
 };
 
 /// Kinds of LV computation.  The linkage side of the computation is
