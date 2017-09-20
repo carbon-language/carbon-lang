@@ -356,7 +356,7 @@ void UnwrappedLineParser::calculateBraceTypes(bool ExpectClassBody) {
   // definitions, too.
   unsigned StoredPosition = Tokens->getPosition();
   FormatToken *Tok = FormatTok;
-  const FormatToken *PrevTok = getPreviousToken();
+  const FormatToken *PrevTok =  Tok->Previous;
   // Keep a stack of positions of lbrace tokens. We will
   // update information about whether an lbrace starts a
   // braced init list or a different block during the loop.
@@ -1100,7 +1100,7 @@ void UnwrappedLineParser::parseStructuralElement() {
     break;
   }
   do {
-    const FormatToken *Previous = getPreviousToken();
+    const FormatToken *Previous = FormatTok->Previous;
     switch (FormatTok->Tok.getKind()) {
     case tok::at:
       nextToken();
@@ -1356,10 +1356,11 @@ bool UnwrappedLineParser::tryToParseLambda() {
 }
 
 bool UnwrappedLineParser::tryToParseLambdaIntroducer() {
-  const FormatToken* Previous = getPreviousToken();
+  const FormatToken* Previous = FormatTok->Previous;
   if (Previous &&
       (Previous->isOneOf(tok::identifier, tok::kw_operator, tok::kw_new,
                          tok::kw_delete) ||
+       FormatTok->isCppStructuredBinding(Style) ||
        Previous->closesScope() || Previous->isSimpleTypeSpecifier())) {
     nextToken();
     return false;
@@ -2232,6 +2233,8 @@ void UnwrappedLineParser::addUnwrappedLine() {
         std::make_move_iterator(PreprocessorDirectives.end()));
     PreprocessorDirectives.clear();
   }
+  // Disconnect the current token from the last token on the previous line.
+  FormatTok->Previous = nullptr;
 }
 
 bool UnwrappedLineParser::eof() const { return FormatTok->Tok.is(tok::eof); }
@@ -2378,18 +2381,12 @@ void UnwrappedLineParser::nextToken(int LevelDifference) {
     return;
   flushComments(isOnNewLine(*FormatTok));
   pushToken(FormatTok);
+  FormatToken* Previous = FormatTok;
   if (Style.Language != FormatStyle::LK_JavaScript)
     readToken(LevelDifference);
   else
     readTokenWithJavaScriptASI();
-}
-
-const FormatToken *UnwrappedLineParser::getPreviousToken() {
-  // FIXME: This is a dirty way to access the previous token. Find a better
-  // solution.
-  if (!Line || Line->Tokens.empty())
-    return nullptr;
-  return Line->Tokens.back().Tok;
+  FormatTok->Previous = Previous;
 }
 
 void UnwrappedLineParser::distributeComments(

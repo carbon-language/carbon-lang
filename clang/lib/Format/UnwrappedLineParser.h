@@ -129,7 +129,6 @@ private:
   // - if the token is '}' and closes a block, LevelDifference is -1.
   void nextToken(int LevelDifference = 0);
   void readToken(int LevelDifference = 0);
-  const FormatToken *getPreviousToken();
 
   // Decides which comment tokens should be added to the current line and which
   // should be added as comments before the next token.

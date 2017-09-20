@@ -472,6 +472,19 @@ struct FormatToken {
                               Style.Language == FormatStyle::LK_TextProto));
   }
 
+  /// \brief Returns whether the token is the left square bracket of a C++
+  /// structured binding declaration.
+  bool isCppStructuredBinding(const FormatStyle &Style) const {
+    if (!Style.isCpp() || isNot(tok::l_square))
+      return false;
+    const FormatToken* T = this;
+    do {
+      T = T->getPreviousNonComment();
+    } while (T && T->isOneOf(tok::kw_const, tok::kw_volatile, tok::amp,
+                             tok::ampamp));
+    return T && T->is(tok::kw_auto);
+  }
+
   /// \brief Same as opensBlockOrBlockTypeList, but for the closing token.
   bool closesBlockOrBlockTypeList(const FormatStyle &Style) const {
     if (is(TT_TemplateString) && closesScope())

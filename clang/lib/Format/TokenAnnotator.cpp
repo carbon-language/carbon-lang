@@ -310,16 +310,6 @@ private:
     return false;
   }
 
-  bool isCppStructuredBinding(const FormatToken *Tok) {
-    if (!Style.isCpp() || !Tok->is(tok::l_square))
-      return false;
-    do {
-      Tok = Tok->getPreviousNonComment();
-    } while (Tok && Tok->isOneOf(tok::kw_const, tok::kw_volatile, tok::amp,
-                                 tok::ampamp));
-    return Tok && Tok->is(tok::kw_auto);
-  }
-
   bool parseSquare() {
     if (!CurrentToken)
       return false;
@@ -354,7 +344,7 @@ private:
 
     unsigned BindingIncrease = 1;
     if (Left->is(TT_Unknown)) {
-      if (isCppStructuredBinding(Left)) {
+      if (Left->isCppStructuredBinding(Style)) {
         Left->Type = TT_StructuredBindingLSquare;
       } else if (StartsObjCMethodExpr) {
         Left->Type = TT_ObjCMethodExpr;
