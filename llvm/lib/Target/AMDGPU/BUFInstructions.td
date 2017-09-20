@@ -11,8 +11,8 @@ def MUBUFAddr32 : ComplexPattern<i64, 9, "SelectMUBUFAddr32">;
 def MUBUFAddr64 : ComplexPattern<i64, 7, "SelectMUBUFAddr64">;
 def MUBUFAddr64Atomic : ComplexPattern<i64, 5, "SelectMUBUFAddr64">;
 
-def MUBUFScratchOffen : ComplexPattern<i64, 4, "SelectMUBUFScratchOffen", [], [SDNPWantRoot]>;
-def MUBUFScratchOffset : ComplexPattern<i64, 3, "SelectMUBUFScratchOffset", [], [SDNPWantRoot], 20>;
+def MUBUFScratchOffen : ComplexPattern<i64, 4, "SelectMUBUFScratchOffen", [], [SDNPWantParent]>;
+def MUBUFScratchOffset : ComplexPattern<i64, 3, "SelectMUBUFScratchOffset", [], [SDNPWantParent], 20>;
 
 def MUBUFOffset : ComplexPattern<i64, 6, "SelectMUBUFOffset">;
 def MUBUFOffsetNoGLC : ComplexPattern<i64, 3, "SelectMUBUFOffset">;
@@ -425,16 +425,18 @@ class MUBUF_SetupAddr<int addrKind> {
 class MUBUF_Load_Pseudo <string opName,
                          int addrKind,
                          RegisterClass vdataClass,
+                         bit HasTiedDest = 0,
                          list<dag> pattern=[],
                          // Workaround bug bz30254
                          int addrKindCopy = addrKind>
   : MUBUF_Pseudo<opName,
                  (outs vdataClass:$vdata),
-                 getMUBUFIns<addrKindCopy>.ret,
+                 !con(getMUBUFIns<addrKindCopy>.ret, !if(HasTiedDest, (ins vdataClass:$vdata_in), (ins))),
                  " $vdata, " # getMUBUFAsmOps<addrKindCopy>.ret # "$glc$slc$tfe",
                  pattern>,
     MUBUF_SetupAddr<addrKindCopy> {
   let PseudoInstr = opName # "_" # getAddrName<addrKindCopy>.ret;
+  let Constraints = !if(HasTiedDest, "$vdata = $vdata_in", "");
   let mayLoad = 1;
   let mayStore = 0;
   let maybeAtomic = 1;
@@ -444,27 +446,30 @@ class MUBUF_Load_Pseudo <string opName,
 // opcode because it needs an N+1 register class dest register.
 multiclass MUBUF_Pseudo_Loads<string opName, RegisterClass vdataClass,
                               ValueType load_vt = i32,
-                              SDPatternOperator ld = null_frag> {
+                              SDPatternOperator ld = null_frag,
+                              bit TiedDest = 0> {
 
   def _OFFSET : MUBUF_Load_Pseudo <opName, BUFAddrKind.Offset, vdataClass,
+    TiedDest,
     [(set load_vt:$vdata,
      (ld (MUBUFOffset v4i32:$srsrc, i32:$soffset, i16:$offset, i1:$glc, i1:$slc, i1:$tfe)))]>,
     MUBUFAddr64Table<0>;
 
   def _ADDR64 : MUBUF_Load_Pseudo <opName, BUFAddrKind.Addr64, vdataClass,
+    TiedDest,
     [(set load_vt:$vdata,
      (ld (MUBUFAddr64 v4i32:$srsrc, i64:$vaddr, i32:$soffset, i16:$offset, i1:$glc, i1:$slc, i1:$tfe)))]>,
     MUBUFAddr64Table<1>;
 
-  def _OFFEN  : MUBUF_Load_Pseudo <opName, BUFAddrKind.OffEn, vdataClass>;
-  def _IDXEN  : MUBUF_Load_Pseudo <opName, BUFAddrKind.IdxEn, vdataClass>;
-  def _BOTHEN : MUBUF_Load_Pseudo <opName, BUFAddrKind.BothEn, vdataClass>;
+  def _OFFEN  : MUBUF_Load_Pseudo <opName, BUFAddrKind.OffEn, vdataClass, TiedDest>;
+  def _IDXEN  : MUBUF_Load_Pseudo <opName, BUFAddrKind.IdxEn, vdataClass, TiedDest>;
+  def _BOTHEN : MUBUF_Load_Pseudo <opName, BUFAddrKind.BothEn, vdataClass, TiedDest>;
 
   let DisableWQM = 1 in {
-    def _OFFSET_exact : MUBUF_Load_Pseudo <opName, BUFAddrKind.Offset, vdataClass>;
-    def _OFFEN_exact  : MUBUF_Load_Pseudo <opName, BUFAddrKind.OffEn, vdataClass>;
-    def _IDXEN_exact  : MUBUF_Load_Pseudo <opName, BUFAddrKind.IdxEn, vdataClass>;
-    def _BOTHEN_exact : MUBUF_Load_Pseudo <opName, BUFAddrKind.BothEn, vdataClass>;
+    def _OFFSET_exact : MUBUF_Load_Pseudo <opName, BUFAddrKind.Offset, vdataClass, TiedDest>;
+    def _OFFEN_exact  : MUBUF_Load_Pseudo <opName, BUFAddrKind.OffEn, vdataClass, TiedDest>;
+    def _IDXEN_exact  : MUBUF_Load_Pseudo <opName, BUFAddrKind.IdxEn, vdataClass, TiedDest>;
+    def _BOTHEN_exact : MUBUF_Load_Pseudo <opName, BUFAddrKind.BothEn, vdataClass, TiedDest>;
   }
 }
 
@@ -812,7 +817,7 @@ defm BUFFER_LOAD_UBYTE_D16 : MUBUF_Pseudo_Loads <
 >;
 
 defm BUFFER_LOAD_UBYTE_D16_HI : MUBUF_Pseudo_Loads <
-  "buffer_load_ubyte_d16_hi", VGPR_32, i32
+  "buffer_load_ubyte_d16_hi", VGPR_32, i32, null_frag, 1
 >;
 
 defm BUFFER_LOAD_SBYTE_D16 : MUBUF_Pseudo_Loads <
@@ -820,7 +825,7 @@ defm BUFFER_LOAD_SBYTE_D16 : MUBUF_Pseudo_Loads <
 >;
 
 defm BUFFER_LOAD_SBYTE_D16_HI : MUBUF_Pseudo_Loads <
-  "buffer_load_sbyte_d16_hi", VGPR_32, i32
+  "buffer_load_sbyte_d16_hi", VGPR_32, i32, null_frag, 1
 >;
 
 defm BUFFER_LOAD_SHORT_D16 : MUBUF_Pseudo_Loads <
@@ -828,7 +833,7 @@ defm BUFFER_LOAD_SHORT_D16 : MUBUF_Pseudo_Loads <
 >;
 
 defm BUFFER_LOAD_SHORT_D16_HI : MUBUF_Pseudo_Loads <
-  "buffer_load_short_d16_hi", VGPR_32, i32
+  "buffer_load_short_d16_hi", VGPR_32, i32, null_frag, 1
 >;
 
 defm BUFFER_STORE_BYTE_D16_HI : MUBUF_Pseudo_Stores <
@@ -1149,6 +1154,34 @@ multiclass MUBUFScratchLoadPat <MUBUF_Pseudo InstrOffen,
   >;
 }
 
+// XXX - Is it possible to have a complex pattern in a PatFrag?
+multiclass MUBUFScratchLoadPat_Hi16 <MUBUF_Pseudo InstrOffen,
+                                MUBUF_Pseudo InstrOffset,
+                                ValueType vt, PatFrag ld> {
+  def : Pat <
+    (build_vector vt:$lo, (vt (ld (MUBUFScratchOffen v4i32:$srsrc, i32:$vaddr,
+                                 i32:$soffset, u16imm:$offset)))),
+    (v2i16 (InstrOffen $vaddr, $srsrc, $soffset, $offset, 0, 0, 0, $lo))
+  >;
+
+  def : Pat <
+    (build_vector f16:$lo, (f16 (bitconvert (vt (ld (MUBUFScratchOffen v4i32:$srsrc, i32:$vaddr,
+                               i32:$soffset, u16imm:$offset)))))),
+    (v2f16 (InstrOffen $vaddr, $srsrc, $soffset, $offset, 0, 0, 0, $lo))
+  >;
+
+
+  def : Pat <
+    (build_vector vt:$lo, (vt (ld (MUBUFScratchOffset v4i32:$srsrc, i32:$soffset, u16imm:$offset)))),
+    (v2i16 (InstrOffset $srsrc, $soffset, $offset, 0, 0, 0, $lo))
+  >;
+
+  def : Pat <
+    (build_vector f16:$lo, (f16 (bitconvert (vt (ld (MUBUFScratchOffset v4i32:$srsrc, i32:$soffset, u16imm:$offset)))))),
+    (v2f16 (InstrOffset $srsrc, $soffset, $offset, 0, 0, 0, $lo))
+  >;
+}
+
 defm : MUBUFScratchLoadPat <BUFFER_LOAD_SBYTE_OFFEN, BUFFER_LOAD_SBYTE_OFFSET, i32, sextloadi8_private>;
 defm : MUBUFScratchLoadPat <BUFFER_LOAD_UBYTE_OFFEN, BUFFER_LOAD_UBYTE_OFFSET, i32, az_extloadi8_private>;
 defm : MUBUFScratchLoadPat <BUFFER_LOAD_SBYTE_OFFEN, BUFFER_LOAD_SBYTE_OFFSET, i16, sextloadi8_private>;
@@ -1159,6 +1192,12 @@ defm : MUBUFScratchLoadPat <BUFFER_LOAD_USHORT_OFFEN, BUFFER_LOAD_USHORT_OFFSET,
 defm : MUBUFScratchLoadPat <BUFFER_LOAD_DWORD_OFFEN, BUFFER_LOAD_DWORD_OFFSET, i32, load_private>;
 defm : MUBUFScratchLoadPat <BUFFER_LOAD_DWORDX2_OFFEN, BUFFER_LOAD_DWORDX2_OFFSET, v2i32, load_private>;
 defm : MUBUFScratchLoadPat <BUFFER_LOAD_DWORDX4_OFFEN, BUFFER_LOAD_DWORDX4_OFFSET, v4i32, load_private>;
+
+let Predicates = [HasD16LoadStore] in {
+defm : MUBUFScratchLoadPat_Hi16<BUFFER_LOAD_SHORT_D16_HI_OFFEN, BUFFER_LOAD_SHORT_D16_HI_OFFSET, i16, load_private>;
+defm : MUBUFScratchLoadPat_Hi16<BUFFER_LOAD_UBYTE_D16_HI_OFFEN, BUFFER_LOAD_UBYTE_D16_HI_OFFSET, i16, az_extloadi8_private>;
+defm : MUBUFScratchLoadPat_Hi16<BUFFER_LOAD_SBYTE_D16_HI_OFFEN, BUFFER_LOAD_SBYTE_D16_HI_OFFSET, i16, sextloadi8_private>;
+}
 
 // BUFFER_LOAD_DWORD*, addr64=0
 multiclass MUBUF_Load_Dword <ValueType vt,

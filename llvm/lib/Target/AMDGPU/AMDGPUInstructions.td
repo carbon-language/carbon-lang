@@ -252,6 +252,11 @@ class GlobalAddress : CodePatPred<[{
   return cast<MemSDNode>(N)->getAddressSpace() == AMDGPUASI.GLOBAL_ADDRESS;
 }]>;
 
+class GlobalLoadAddress : CodePatPred<[{
+  auto AS = cast<MemSDNode>(N)->getAddressSpace();
+  return AS == AMDGPUASI.GLOBAL_ADDRESS || AS == AMDGPUASI.CONSTANT_ADDRESS;
+}]>;
+
 class FlatLoadAddress : CodePatPred<[{
   const auto AS = cast<MemSDNode>(N)->getAddressSpace();
   return AS == AMDGPUASI.FLAT_ADDRESS ||
@@ -292,7 +297,7 @@ class PrivateStore <SDPatternOperator op> : StoreFrag <op>, PrivateAddress;
 class LocalLoad <SDPatternOperator op> : LoadFrag <op>, LocalAddress;
 class LocalStore <SDPatternOperator op> : StoreFrag <op>, LocalAddress;
 
-class GlobalLoad <SDPatternOperator op> : LoadFrag<op>, GlobalAddress;
+class GlobalLoad <SDPatternOperator op> : LoadFrag<op>, GlobalLoadAddress;
 class GlobalStore <SDPatternOperator op> : StoreFrag<op>, GlobalAddress;
 
 class FlatLoad <SDPatternOperator op> : LoadFrag <op>, FlatLoadAddress;

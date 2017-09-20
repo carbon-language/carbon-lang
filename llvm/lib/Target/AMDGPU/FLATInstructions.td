@@ -125,15 +125,18 @@ class FLAT_Real <bits<7> op, FLAT_Pseudo ps> :
 // same encoding value as exec_hi, so it isn't possible to use that if
 // saddr is 32-bit (which isn't handled here yet).
 class FLAT_Load_Pseudo <string opName, RegisterClass regClass,
+  bit HasTiedOutput = 0,
   bit HasSignedOffset = 0, bit HasSaddr = 0, bit EnableSaddr = 0> : FLAT_Pseudo<
   opName,
   (outs regClass:$vdst),
   !con(
     !con(
-      !con((ins VReg_64:$vaddr),
-        !if(EnableSaddr, (ins SReg_64:$saddr), (ins))),
-          (ins !if(HasSignedOffset,offset_s13,offset_u12):$offset)),
-          (ins GLC:$glc, slc:$slc)),
+      !con(
+        !con((ins VReg_64:$vaddr),
+          !if(EnableSaddr, (ins SReg_64:$saddr), (ins))),
+            (ins !if(HasSignedOffset,offset_s13,offset_u12):$offset)),
+            (ins GLC:$glc, slc:$slc)),
+            !if(HasTiedOutput, (ins regClass:$vdst_in), (ins))),
   " $vdst, $vaddr"#!if(HasSaddr, !if(EnableSaddr, ", $saddr", ", off"), "")#"$offset$glc$slc"> {
   let has_data = 0;
   let mayLoad = 1;
@@ -141,6 +144,9 @@ class FLAT_Load_Pseudo <string opName, RegisterClass regClass,
   let enabled_saddr = EnableSaddr;
   let PseudoInstr = opName#!if(!and(HasSaddr, EnableSaddr), "_SADDR", "");
   let maybeAtomic = 1;
+
+  let Constraints = !if(HasTiedOutput, "$vdst = $vdst_in", "");
+  let DisableEncoding = !if(HasTiedOutput, "$vdst_in", "");
 }
 
 class FLAT_Store_Pseudo <string opName, RegisterClass vdataClass,
@@ -163,10 +169,10 @@ class FLAT_Store_Pseudo <string opName, RegisterClass vdataClass,
   let maybeAtomic = 1;
 }
 
-multiclass FLAT_Global_Load_Pseudo<string opName, RegisterClass regClass> {
+multiclass FLAT_Global_Load_Pseudo<string opName, RegisterClass regClass, bit HasTiedInput = 0> {
   let is_flat_global = 1 in {
-    def "" : FLAT_Load_Pseudo<opName, regClass, 1, 1>;
-    def _SADDR : FLAT_Load_Pseudo<opName, regClass, 1, 1, 1>;
+    def "" : FLAT_Load_Pseudo<opName, regClass, HasTiedInput, 1, 1>;
+    def _SADDR : FLAT_Load_Pseudo<opName, regClass, HasTiedInput, 1, 1, 1>;
   }
 }
 
@@ -360,12 +366,12 @@ def FLAT_STORE_DWORDX4 : FLAT_Store_Pseudo <"flat_store_dwordx4", VReg_128>;
 def FLAT_STORE_DWORDX3 : FLAT_Store_Pseudo <"flat_store_dwordx3", VReg_96>;
 
 let SubtargetPredicate = HasD16LoadStore in {
-def FLAT_LOAD_UBYTE_D16     : FLAT_Load_Pseudo <"flat_load_ubyte_d16", VGPR_32>;
-def FLAT_LOAD_UBYTE_D16_HI  : FLAT_Load_Pseudo <"flat_load_ubyte_d16_hi", VGPR_32>;
-def FLAT_LOAD_SBYTE_D16     : FLAT_Load_Pseudo <"flat_load_sbyte_d16", VGPR_32>;
-def FLAT_LOAD_SBYTE_D16_HI  : FLAT_Load_Pseudo <"flat_load_sbyte_d16_hi", VGPR_32>;
-def FLAT_LOAD_SHORT_D16     : FLAT_Load_Pseudo <"flat_load_short_d16", VGPR_32>;
-def FLAT_LOAD_SHORT_D16_HI  : FLAT_Load_Pseudo <"flat_load_short_d16_hi", VGPR_32>;
+def FLAT_LOAD_UBYTE_D16     : FLAT_Load_Pseudo <"flat_load_ubyte_d16", VGPR_32, 1>;
+def FLAT_LOAD_UBYTE_D16_HI  : FLAT_Load_Pseudo <"flat_load_ubyte_d16_hi", VGPR_32, 1>;
+def FLAT_LOAD_SBYTE_D16     : FLAT_Load_Pseudo <"flat_load_sbyte_d16", VGPR_32, 1>;
+def FLAT_LOAD_SBYTE_D16_HI  : FLAT_Load_Pseudo <"flat_load_sbyte_d16_hi", VGPR_32, 1>;
+def FLAT_LOAD_SHORT_D16     : FLAT_Load_Pseudo <"flat_load_short_d16", VGPR_32, 1>;
+def FLAT_LOAD_SHORT_D16_HI  : FLAT_Load_Pseudo <"flat_load_short_d16_hi", VGPR_32, 1>;
 
 def FLAT_STORE_BYTE_D16_HI  : FLAT_Store_Pseudo <"flat_store_byte_d16_hi", VGPR_32>;
 def FLAT_STORE_SHORT_D16_HI : FLAT_Store_Pseudo <"flat_store_short_d16_hi", VGPR_32>;
@@ -483,12 +489,12 @@ defm GLOBAL_LOAD_DWORDX2  : FLAT_Global_Load_Pseudo <"global_load_dwordx2", VReg
 defm GLOBAL_LOAD_DWORDX3  : FLAT_Global_Load_Pseudo <"global_load_dwordx3", VReg_96>;
 defm GLOBAL_LOAD_DWORDX4  : FLAT_Global_Load_Pseudo <"global_load_dwordx4", VReg_128>;
 
-defm GLOBAL_LOAD_UBYTE_D16    : FLAT_Global_Load_Pseudo <"global_load_ubyte_d16", VGPR_32>;
-defm GLOBAL_LOAD_UBYTE_D16_HI : FLAT_Global_Load_Pseudo <"global_load_ubyte_d16_hi", VGPR_32>;
-defm GLOBAL_LOAD_SBYTE_D16    : FLAT_Global_Load_Pseudo <"global_load_sbyte_d16", VGPR_32>;
-defm GLOBAL_LOAD_SBYTE_D16_HI : FLAT_Global_Load_Pseudo <"global_load_sbyte_d16_hi", VGPR_32>;
-defm GLOBAL_LOAD_SHORT_D16    : FLAT_Global_Load_Pseudo <"global_load_short_d16", VGPR_32>;
-defm GLOBAL_LOAD_SHORT_D16_HI : FLAT_Global_Load_Pseudo <"global_load_short_d16_hi", VGPR_32>;
+defm GLOBAL_LOAD_UBYTE_D16    : FLAT_Global_Load_Pseudo <"global_load_ubyte_d16", VGPR_32, 1>;
+defm GLOBAL_LOAD_UBYTE_D16_HI : FLAT_Global_Load_Pseudo <"global_load_ubyte_d16_hi", VGPR_32, 1>;
+defm GLOBAL_LOAD_SBYTE_D16    : FLAT_Global_Load_Pseudo <"global_load_sbyte_d16", VGPR_32, 1>;
+defm GLOBAL_LOAD_SBYTE_D16_HI : FLAT_Global_Load_Pseudo <"global_load_sbyte_d16_hi", VGPR_32, 1>;
+defm GLOBAL_LOAD_SHORT_D16    : FLAT_Global_Load_Pseudo <"global_load_short_d16", VGPR_32, 1>;
+defm GLOBAL_LOAD_SHORT_D16_HI : FLAT_Global_Load_Pseudo <"global_load_short_d16_hi", VGPR_32, 1>;
 
 defm GLOBAL_STORE_BYTE    : FLAT_Global_Store_Pseudo <"global_store_byte", VGPR_32>;
 defm GLOBAL_STORE_SHORT   : FLAT_Global_Store_Pseudo <"global_store_short", VGPR_32>;
@@ -624,6 +630,30 @@ class FlatLoadPat <FLAT_Pseudo inst, SDPatternOperator node, ValueType vt> : Pat
   (inst $vaddr, $offset, 0, $slc)
 >;
 
+multiclass FlatLoadPat_Hi16 <FLAT_Pseudo inst, SDPatternOperator node, ValueType vt = i16> {
+  def : Pat <
+    (build_vector vt:$elt0, (vt (node (FLATOffset i64:$vaddr, i16:$offset, i1:$slc)))),
+    (v2i16 (inst $vaddr, $offset, 0, $slc, $elt0))
+  >;
+
+ def : Pat <
+    (build_vector f16:$elt0, (f16 (bitconvert (vt (node (FLATOffset i64:$vaddr, i16:$offset, i1:$slc)))))),
+    (v2f16 (inst $vaddr, $offset, 0, $slc, $elt0))
+  >;
+}
+
+multiclass FlatSignedLoadPat_Hi16 <FLAT_Pseudo inst, SDPatternOperator node, ValueType vt = i16> {
+  def : Pat <
+    (build_vector vt:$elt0, (vt (node (FLATOffsetSigned i64:$vaddr, i16:$offset, i1:$slc)))),
+    (v2i16 (inst $vaddr, $offset, 0, $slc, $elt0))
+  >;
+
+ def : Pat <
+    (build_vector f16:$elt0, (f16 (bitconvert (vt (node (FLATOffsetSigned i64:$vaddr, i16:$offset, i1:$slc)))))),
+    (v2f16 (inst $vaddr, $offset, 0, $slc, $elt0))
+  >;
+}
+
 class FlatLoadAtomicPat <FLAT_Pseudo inst, SDPatternOperator node, ValueType vt> : Pat <
   (vt (node (FLATAtomic i64:$vaddr, i16:$offset, i1:$slc))),
   (inst $vaddr, $offset, 0, $slc)
@@ -729,6 +759,12 @@ def : FlatStorePat <FLAT_STORE_SHORT, store_flat, i16>;
  let Predicates = [HasD16LoadStore] in {
 def : FlatStorePat <FLAT_STORE_SHORT_D16_HI, truncstorei16_hi16_flat, i32>;
 def : FlatStorePat <FLAT_STORE_BYTE_D16_HI, truncstorei8_hi16_flat, i32>;
+
+let AddedComplexity = 3 in {
+defm : FlatLoadPat_Hi16 <FLAT_LOAD_UBYTE_D16_HI, az_extloadi8_flat>;
+defm : FlatLoadPat_Hi16 <FLAT_LOAD_SBYTE_D16_HI, sextloadi8_flat>;
+defm : FlatLoadPat_Hi16 <FLAT_LOAD_SHORT_D16_HI, load_flat>;
+}
 }
 
 } // End Predicates = [HasFlatAddressSpace]
@@ -761,6 +797,10 @@ def : FlatStoreSignedPat <GLOBAL_STORE_DWORDX4, store_global, v4i32>;
  let Predicates = [HasD16LoadStore] in {
 def : FlatStoreSignedPat <GLOBAL_STORE_SHORT_D16_HI, truncstorei16_hi16_global, i32>;
 def : FlatStoreSignedPat <GLOBAL_STORE_BYTE_D16_HI, truncstorei8_hi16_global, i32>;
+
+defm : FlatSignedLoadPat_Hi16 <GLOBAL_LOAD_UBYTE_D16_HI, az_extloadi8_global>;
+defm : FlatSignedLoadPat_Hi16 <GLOBAL_LOAD_SBYTE_D16_HI, sextloadi8_global>;
+defm : FlatSignedLoadPat_Hi16 <GLOBAL_LOAD_SHORT_D16_HI, load_global>;
 }
 
 def : FlatStoreSignedAtomicPat <GLOBAL_STORE_DWORD, store_atomic_global, i32>;
