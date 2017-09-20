@@ -59,7 +59,6 @@ public:
 };
 
 struct CieRecord {
-  EhInputSection *Sec = nullptr;
   EhSectionPiece *Cie = nullptr;
   std::vector<EhSectionPiece *> Fdes;
 };
@@ -94,12 +93,10 @@ private:
   void addSectionAux(EhInputSection *S, llvm::ArrayRef<RelTy> Rels);
 
   template <class RelTy>
-  CieRecord *addCie(EhInputSection *Sec, EhSectionPiece &Piece,
-                    ArrayRef<RelTy> Rels);
+  CieRecord *addCie(EhSectionPiece &Piece, ArrayRef<RelTy> Rels);
 
   template <class RelTy>
-  bool isFdeLive(EhInputSection *Sec, EhSectionPiece &Piece,
-                 ArrayRef<RelTy> Rels);
+  bool isFdeLive(EhSectionPiece &Piece, ArrayRef<RelTy> Rels);
 
   uint64_t getFdePc(uint8_t *Buf, size_t Off, uint8_t Enc);
 
