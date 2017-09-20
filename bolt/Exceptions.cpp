@@ -28,6 +28,7 @@
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
+#include <functional>
 #include <map>
 
 #undef  DEBUG_TYPE
@@ -494,12 +495,10 @@ void BinaryFunction::updateEHRanges() {
 // The code is based on EHStreamer::emitExceptionTable().
 void BinaryFunction::emitLSDA(MCStreamer *Streamer, bool EmitColdPart) {
   const auto *Sites = EmitColdPart ? &ColdCallSites : &CallSites;
-
-  auto *StartSymbol = EmitColdPart ? getColdSymbol() : getSymbol();
-
   if (Sites->empty()) {
     return;
   }
+
 
   // Calculate callsite table size. Size of each callsite entry is:
   //
@@ -526,8 +525,53 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer, bool EmitColdPart) {
   assert(LSDASymbol && "no LSDA symbol set");
   Streamer->EmitLabel(LSDASymbol);
 
+  // Corresponding FDE start.
+  const auto *StartSymbol = EmitColdPart ? getColdSymbol() : getSymbol();
+
   // Emit the LSDA header.
-  Streamer->EmitIntValue(dwarf::DW_EH_PE_omit, 1); // LPStart format
+
+  // If LPStart is omitted, then the start of the FDE is used as a base for
+  // landing pad displacements. Then if a cold fragment starts with
+  // a landing pad, this means that the first landing pad offset will be 0.
+  // As a result, an exception handling runtime will ignore this landing pad,
+  // because zero offset denotes the absence of a landing pad.
+  //
+  // To workaround this issue, we issue a special LPStart for cold fragments
+  // that is equal to FDE start minus 1 byte.
+  //
+  // Note that main function fragment cannot start with a landing pad and we
+  // omit LPStart.
+  const MCExpr *LPStartExpr = nullptr;
+  std::function<void(const MCSymbol *)> emitLandingPad;
+  if (EmitColdPart) {
+    Streamer->EmitIntValue(dwarf::DW_EH_PE_udata4, 1); // LPStart format
+    LPStartExpr = MCBinaryExpr::createSub(
+                          MCSymbolRefExpr::create(StartSymbol, *BC.Ctx.get()),
+                          MCConstantExpr::create(1, *BC.Ctx.get()),
+                          *BC.Ctx.get());
+    Streamer->EmitValue(LPStartExpr, 4);
+    emitLandingPad = [&](const MCSymbol *LPSymbol) {
+      if (!LPSymbol) {
+        Streamer->EmitIntValue(0, 4);
+        return;
+      } 
+      Streamer->EmitValue(MCBinaryExpr::createSub(
+                              MCSymbolRefExpr::create(LPSymbol, *BC.Ctx.get()),
+                              LPStartExpr,
+                              *BC.Ctx.get()),
+                          4);
+    };
+  } else {
+    Streamer->EmitIntValue(dwarf::DW_EH_PE_omit, 1); // LPStart format
+    emitLandingPad = [&](const MCSymbol *LPSymbol) {
+      if (!LPSymbol) {
+        Streamer->EmitIntValue(0, 4);
+        return;
+      } 
+      Streamer->emitAbsoluteSymbolDiff(LPSymbol, StartSymbol, 4);
+    };
+  }
+
   Streamer->EmitIntValue(TTypeEncoding, 1);        // TType format
 
   // See the comment in EHStreamer::emitExceptionTable() on to use
@@ -561,8 +605,8 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer, bool EmitColdPart) {
 
   for (const auto &CallSite : *Sites) {
 
-    const MCSymbol *BeginLabel = CallSite.Start;
-    const MCSymbol *EndLabel = CallSite.End;
+    const auto *BeginLabel = CallSite.Start;
+    const auto *EndLabel = CallSite.End;
 
     assert(BeginLabel && "start EH label expected");
     assert(EndLabel && "end EH label expected");
@@ -571,14 +615,7 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer, bool EmitColdPart) {
     // function split part.
     Streamer->emitAbsoluteSymbolDiff(BeginLabel, StartSymbol, 4);
     Streamer->emitAbsoluteSymbolDiff(EndLabel, BeginLabel, 4);
-
-    if (!CallSite.LP) {
-      Streamer->EmitIntValue(0, 4);
-    } else {
-      // Difference can get negative if the handler is in hot part.
-      Streamer->emitAbsoluteSymbolDiff(CallSite.LP, StartSymbol, 4);
-    }
-
+    emitLandingPad(CallSite.LP);
     Streamer->EmitULEB128IntValue(CallSite.Action);
   }
 
