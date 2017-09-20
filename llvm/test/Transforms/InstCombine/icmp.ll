@@ -1141,7 +1141,7 @@ define i1 @test67(i32 %x) {
 define i1 @test67inverse(i32 %x) {
 ; CHECK-LABEL: @test67inverse(
 ; CHECK-NEXT:    [[AND:%.*]] = and i32 [[X:%.*]], 96
-; CHECK-NEXT:    [[CMP:%.*]] = icmp ult i32 [[AND]], 32
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i32 [[AND]], 0
 ; CHECK-NEXT:    ret i1 [[CMP]]
 ;
   %and = and i32 %x, 127
@@ -1178,7 +1178,7 @@ define <2 x i1> @test67vec2(<2 x i32> %x) {
 define <2 x i1> @test67vecinverse(<2 x i32> %x) {
 ; CHECK-LABEL: @test67vecinverse(
 ; CHECK-NEXT:    [[AND:%.*]] = and <2 x i32> [[X:%.*]], <i32 96, i32 96>
-; CHECK-NEXT:    [[CMP:%.*]] = icmp ult <2 x i32> [[AND]], <i32 32, i32 32>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq <2 x i32> [[AND]], zeroinitializer
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %and = and <2 x i32> %x, <i32 96, i32 96>

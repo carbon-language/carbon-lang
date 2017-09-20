@@ -1715,12 +1715,19 @@ Instruction *InstCombiner::foldICmpAndConstConst(ICmpInst &Cmp,
   }
 
   // (X & C2) > C1 --> (X & C2) != 0, if any bit set in (X & C2) will produce a
-  // result greater than C1.
-  unsigned NumTZ = C2->countTrailingZeros();
-  if (Cmp.getPredicate() == ICmpInst::ICMP_UGT && NumTZ < C2->getBitWidth() &&
-      NumTZ >= C1->getActiveBits()) {
-    Constant *Zero = Constant::getNullValue(And->getType());
-    return new ICmpInst(ICmpInst::ICMP_NE, And, Zero);
+ // result greater than C1. Also handle (X & C2) < C1 --> (X & C2) == 0.
+  if (!C2->isNullValue()) {
+    unsigned NumTZ = C2->countTrailingZeros();
+    if (Cmp.getPredicate() == ICmpInst::ICMP_UGT &&
+        NumTZ >= C1->getActiveBits()) {
+      Constant *Zero = Constant::getNullValue(And->getType());
+      return new ICmpInst(ICmpInst::ICMP_NE, And, Zero);
+    }
+    if (Cmp.getPredicate() == ICmpInst::ICMP_ULT &&
+        NumTZ >= C1->ceilLogBase2()) {
+      Constant *Zero = Constant::getNullValue(And->getType());
+      return new ICmpInst(ICmpInst::ICMP_EQ, And, Zero);
+    }
   }
 
   return nullptr;
