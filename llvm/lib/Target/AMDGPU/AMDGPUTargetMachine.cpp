@@ -337,8 +337,10 @@ void AMDGPUTargetMachine::adjustPassManager(PassManagerBuilder &Builder) {
   bool AMDGPUAA = EnableAMDGPUAliasAnalysis && EnableOpt;
   bool LibCallSimplify = EnableLibCallSimplify && EnableOpt;
 
-  if (EnableAMDGPUFunctionCalls)
+  if (EnableAMDGPUFunctionCalls) {
+    delete Builder.Inliner;
     Builder.Inliner = createAMDGPUFunctionInliningPass();
+  }
 
   if (Internalize) {
     // If we're generating code, we always have the whole program available. The
