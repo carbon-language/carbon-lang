@@ -235,11 +235,10 @@ define i8 @test7(i8 %a) optsize {
 ; CHECK-NEXT:    [[TMP2:%.*]] = lshr i8 [[TMP1]], 2
 ; CHECK-NEXT:    [[TMP3:%.*]] = shl i8 [[TMP1]], 6
 ; CHECK-NEXT:    [[TMP4:%.*]] = or i8 [[TMP2]], [[TMP3]]
-; CHECK-NEXT:    [[SWITCH_TABLEIDX:%.*]] = sub i8 [[TMP4]], 0
-; CHECK-NEXT:    [[TMP5:%.*]] = icmp ult i8 [[SWITCH_TABLEIDX]], 4
+; CHECK-NEXT:    [[TMP5:%.*]] = icmp ult i8 [[TMP4]], 4
 ; CHECK-NEXT:    br i1 [[TMP5]], label [[SWITCH_LOOKUP:%.*]], label [[DEF:%.*]]
 ; CHECK:       switch.lookup:
-; CHECK-NEXT:    [[SWITCH_CAST:%.*]] = zext i8 [[SWITCH_TABLEIDX]] to i32
+; CHECK-NEXT:    [[SWITCH_CAST:%.*]] = zext i8 [[TMP4]] to i32
 ; CHECK-NEXT:    [[SWITCH_SHIFTAMT:%.*]] = mul i32 [[SWITCH_CAST]], 8
 ; CHECK-NEXT:    [[SWITCH_DOWNSHIFT:%.*]] = lshr i32 -943228976, [[SWITCH_SHIFTAMT]]
 ; CHECK-NEXT:    [[SWITCH_MASKED:%.*]] = trunc i32 [[SWITCH_DOWNSHIFT]] to i8
