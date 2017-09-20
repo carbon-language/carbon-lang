@@ -56,8 +56,7 @@ private:
 };
 
 static bool isLineComment(const FormatToken &FormatTok) {
-  return FormatTok.is(tok::comment) &&
-         FormatTok.TokenText.startswith("//");
+  return FormatTok.is(tok::comment) && FormatTok.TokenText.startswith("//");
 }
 
 // Checks if \p FormatTok is a line comment that continues the line comment
@@ -331,7 +330,8 @@ void UnwrappedLineParser::parseLevel(bool HasOpeningBrace) {
       break;
     case tok::kw_default:
     case tok::kw_case:
-      if (Style.Language == FormatStyle::LK_JavaScript && Line->MustBeDeclaration) {
+      if (Style.Language == FormatStyle::LK_JavaScript &&
+          Line->MustBeDeclaration) {
         // A 'case: string' style field declaration.
         parseStructuralElement();
         break;
@@ -356,7 +356,7 @@ void UnwrappedLineParser::calculateBraceTypes(bool ExpectClassBody) {
   // definitions, too.
   unsigned StoredPosition = Tokens->getPosition();
   FormatToken *Tok = FormatTok;
-  const FormatToken *PrevTok =  Tok->Previous;
+  const FormatToken *PrevTok = Tok->Previous;
   // Keep a stack of positions of lbrace tokens. We will
   // update information about whether an lbrace starts a
   // braced init list or a different block during the loop.
@@ -591,9 +591,8 @@ void UnwrappedLineParser::parseChildBlock() {
   FormatTok->BlockKind = BK_Block;
   nextToken();
   {
-    bool SkipIndent =
-        (Style.Language == FormatStyle::LK_JavaScript &&
-         (isGoogScope(*Line) || isIIFE(*Line, Keywords)));
+    bool SkipIndent = (Style.Language == FormatStyle::LK_JavaScript &&
+                       (isGoogScope(*Line) || isIIFE(*Line, Keywords)));
     ScopedLineState LineState(*this);
     ScopedDeclarationState DeclarationState(*Line, DeclarationScopeStack,
                                             /*MustBeDeclaration=*/false);
@@ -835,8 +834,8 @@ static bool mustBeJSIdent(const AdditionalKeywords &Keywords,
               Keywords.kw_function, Keywords.kw_import, Keywords.kw_is,
               Keywords.kw_let, Keywords.kw_var, tok::kw_const,
               Keywords.kw_abstract, Keywords.kw_extends, Keywords.kw_implements,
-              Keywords.kw_instanceof, Keywords.kw_interface,
-              Keywords.kw_throws, Keywords.kw_from));
+              Keywords.kw_instanceof, Keywords.kw_interface, Keywords.kw_throws,
+              Keywords.kw_from));
 }
 
 static bool mustBeJSIdentOrValue(const AdditionalKeywords &Keywords,
@@ -1290,7 +1289,7 @@ void UnwrappedLineParser::parseStructuralElement() {
         nextToken();
         parseBracedList();
       } else if (Style.Language == FormatStyle::LK_Proto &&
-               FormatTok->Tok.is(tok::less)) {
+                 FormatTok->Tok.is(tok::less)) {
         nextToken();
         parseBracedList(/*ContinueOnSemicolons=*/false,
                         /*ClosingBraceKind=*/tok::greater);
@@ -1356,12 +1355,12 @@ bool UnwrappedLineParser::tryToParseLambda() {
 }
 
 bool UnwrappedLineParser::tryToParseLambdaIntroducer() {
-  const FormatToken* Previous = FormatTok->Previous;
+  const FormatToken *Previous = FormatTok->Previous;
   if (Previous &&
       (Previous->isOneOf(tok::identifier, tok::kw_operator, tok::kw_new,
                          tok::kw_delete) ||
-       FormatTok->isCppStructuredBinding(Style) ||
-       Previous->closesScope() || Previous->isSimpleTypeSpecifier())) {
+       FormatTok->isCppStructuredBinding(Style) || Previous->closesScope() ||
+       Previous->isSimpleTypeSpecifier())) {
     nextToken();
     return false;
   }
@@ -2200,8 +2199,8 @@ LLVM_ATTRIBUTE_UNUSED static void printDebugInfo(const UnwrappedLine &Line,
                                                     E = Line.Tokens.end();
        I != E; ++I) {
     llvm::dbgs() << I->Tok->Tok.getName() << "["
-                 << "T=" << I->Tok->Type
-                 << ", OC=" << I->Tok->OriginalColumn << "] ";
+                 << "T=" << I->Tok->Type << ", OC=" << I->Tok->OriginalColumn
+                 << "] ";
   }
   for (std::list<UnwrappedLineNode>::const_iterator I = Line.Tokens.begin(),
                                                     E = Line.Tokens.end();
@@ -2381,7 +2380,7 @@ void UnwrappedLineParser::nextToken(int LevelDifference) {
     return;
   flushComments(isOnNewLine(*FormatTok));
   pushToken(FormatTok);
-  FormatToken* Previous = FormatTok;
+  FormatToken *Previous = FormatTok;
   if (Style.Language != FormatStyle::LK_JavaScript)
     readToken(LevelDifference);
   else
@@ -2426,8 +2425,7 @@ void UnwrappedLineParser::distributeComments(
   }
   for (unsigned i = 0, e = Comments.size(); i < e; ++i) {
     FormatToken *FormatTok = Comments[i];
-    if (HasTrailAlignedWithNextToken &&
-        i == StartOfTrailAlignedWithNextToken) {
+    if (HasTrailAlignedWithNextToken && i == StartOfTrailAlignedWithNextToken) {
       FormatTok->ContinuesLineCommentSection = false;
     } else {
       FormatTok->ContinuesLineCommentSection =

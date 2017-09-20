@@ -262,8 +262,9 @@ struct UnwrappedLineNode {
   SmallVector<UnwrappedLine, 0> Children;
 };
 
-inline UnwrappedLine::UnwrappedLine() : Level(0), InPPDirective(false),
-  MustBeDeclaration(false), MatchingOpeningBlockLineIndex(kInvalidIndex) {}
+inline UnwrappedLine::UnwrappedLine()
+    : Level(0), InPPDirective(false), MustBeDeclaration(false),
+      MatchingOpeningBlockLineIndex(kInvalidIndex) {}
 
 } // end namespace format
 } // end namespace clang
