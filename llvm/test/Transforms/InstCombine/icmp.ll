@@ -1163,11 +1163,10 @@ define <2 x i1> @test67vec(<2 x i32> %x) {
   ret <2 x i1> %cmp
 }
 
-; FIXME: Vector constant for the 'and' should use less bits.
 define <2 x i1> @test67vec2(<2 x i32> %x) {
 ; CHECK-LABEL: @test67vec2(
-; CHECK-NEXT:    [[AND:%.*]] = and <2 x i32> %x, <i32 127, i32 127>
-; CHECK-NEXT:    [[CMP:%.*]] = icmp ugt <2 x i32> [[AND]], <i32 31, i32 31>
+; CHECK-NEXT:    [[AND:%.*]] = and <2 x i32> [[X:%.*]], <i32 96, i32 96>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ne <2 x i32> [[AND]], zeroinitializer
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %and = and <2 x i32> %x, <i32 127, i32 127>
@@ -1997,10 +1996,9 @@ define i1 @shrink_constant(i32 %X) {
   ret i1 %cmp
 }
 
-; FIXME: This doesn't change because of a limitation in 'DemandedBitsLHSMask'.
 define <2 x i1> @shrink_constant_vec(<2 x i32> %X) {
 ; CHECK-LABEL: @shrink_constant_vec(
-; CHECK-NEXT:    [[XOR:%.*]] = xor <2 x i32> %X, <i32 -9, i32 -9>
+; CHECK-NEXT:    [[XOR:%.*]] = xor <2 x i32> [[X:%.*]], <i32 -12, i32 -12>
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp ult <2 x i32> [[XOR]], <i32 4, i32 4>
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
