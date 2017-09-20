@@ -64,6 +64,11 @@ struct Relocation {
   /// Return size of the given relocation \p Type.
   static size_t getSizeForType(uint64_t Type);
 
+  /// Extract current relocated value from binary contents. This is used for
+  /// RISC architectures where values are encoded in specific bits depending
+  /// on the relocation value.
+  static uint64_t extractValue(uint64_t Type, uint64_t Contents);
+
   /// Return true if relocation type is PC-relative. Return false otherwise.
   static bool isPCRelative(uint64_t Type);
 
@@ -153,6 +158,11 @@ public:
   /// sets this prior to running BOLT passes, so layout passes are aware of the
   /// final addresses functions will have.
   uint64_t LayoutStartAddress{0};
+
+  /// Old .text info.
+  uint64_t OldTextSectionAddress{0};
+  uint64_t OldTextSectionOffset{0};
+  uint64_t OldTextSectionSize{0};
 
   /// True if the binary requires immediate relocation processing.
   bool RequiresZNow{false};

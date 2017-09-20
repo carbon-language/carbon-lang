@@ -405,15 +405,6 @@ private:
   /// When updating debug info, these are the sections we overwrite.
   static constexpr const char *SectionsToOverwrite[] = {
     ".shstrtab",
-    ".debug_aranges",
-    ".debug_line",
-    ".debug_loc",
-    ".debug_ranges",
-    ".gdb_index",
-  };
-
-  static constexpr const char *SectionsToOverwriteRelocMode[] = {
-    ".shstrtab",
     ".symtab",
     ".strtab",
     ".debug_aranges",
@@ -457,11 +448,6 @@ private:
   uint64_t PHDRTableAddress{0};
   uint64_t PHDRTableOffset{0};
   unsigned Phnum{0};
-
-  /// Old .text info.
-  uint64_t OldTextSectionAddress{0};
-  uint64_t OldTextSectionOffset{0};
-  uint64_t OldTextSectionSize{0};
 
   /// New code segment info.
   uint64_t NewTextSegmentAddress{0};

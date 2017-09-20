@@ -17,6 +17,9 @@ using namespace llvm;
 
 namespace opts {
 extern cl::opt<bool> Relocs;
+extern cl::opt<bool> UseOldText;
+extern cl::opt<unsigned> AlignFunctions;
+extern cl::opt<unsigned> AlignFunctionsMaxBytes;
 }
 
 namespace llvm {
@@ -24,13 +27,13 @@ namespace bolt {
 
 namespace {
 constexpr unsigned ColdFragAlign = 16;
+constexpr unsigned PageAlign = 0x200000;
 
 std::pair<std::unique_ptr<BinaryBasicBlock>, MCSymbol *>
 createNewStub(const BinaryContext &BC, BinaryFunction &Func,
               const MCSymbol *TgtSym) {
   auto *StubSym = BC.Ctx->createTempSymbol("Stub", true);
   auto StubBB = Func.createBasicBlock(0, StubSym);
-
   std::vector<MCInst> Seq;
   BC.MIA->createLongJmp(Seq, TgtSym, BC.Ctx.get());
   StubBB->addInstructions(Seq.begin(), Seq.end());
@@ -186,13 +189,36 @@ void LongJmpPass::tentativeBBLayout(const BinaryContext &BC,
   }
 }
 
-void LongJmpPass::tentativeLayout(
-    const BinaryContext &BC,
-    std::vector<BinaryFunction *> &SortedFunctions) {
-  assert(!opts::Relocs && "Pass is incompatible with relocs");
-  uint64_t DotAddress = BC.LayoutStartAddress;
+uint64_t LongJmpPass::tentativeLayoutRelocMode(
+  const BinaryContext &BC, std::vector<BinaryFunction *> &SortedFunctions,
+  uint64_t DotAddress) {
 
+  // Hot
   for (auto Func : SortedFunctions) {
+    DotAddress = RoundUpToAlignment(DotAddress, BinaryFunction::MinAlign);
+    auto Pad = OffsetToAlignment(DotAddress, opts::AlignFunctions);
+    if (Pad <= opts::AlignFunctionsMaxBytes)
+      DotAddress += Pad;
+    HotAddresses[Func] = DotAddress;
+    DEBUG(dbgs() << Func->getPrintName()
+                 << " tentative: " << Twine::utohexstr(DotAddress) << "\n");
+    if (!Func->isSimple()) {
+      DotAddress += Func->getMaxSize();
+    } else {
+      if (!Func->isSplit()) {
+        DotAddress += Func->estimateSize();
+      } else {
+        DotAddress += Func->estimateHotSize();
+        DotAddress += Func->estimateConstantIslandSize();
+      }
+    }
+  }
+  // Cold
+  for (auto Func : SortedFunctions) {
+    DotAddress = RoundUpToAlignment(DotAddress, BinaryFunction::MinAlign);
+    auto Pad = OffsetToAlignment(DotAddress, opts::AlignFunctions);
+    if (Pad <= opts::AlignFunctionsMaxBytes)
+      DotAddress += Pad;
     HotAddresses[Func] = Func->getAddress();
     DotAddress = RoundUpToAlignment(DotAddress, ColdFragAlign);
     ColdAddresses[Func] = DotAddress;
@@ -200,6 +226,42 @@ void LongJmpPass::tentativeLayout(
       DotAddress += Func->estimateColdSize();
     tentativeBBLayout(BC, *Func);
   }
+  return DotAddress;
+}
+
+void LongJmpPass::tentativeLayout(
+    const BinaryContext &BC,
+    std::vector<BinaryFunction *> &SortedFunctions) {
+  uint64_t DotAddress = BC.LayoutStartAddress;
+
+  if (!opts::Relocs) {
+    for (auto Func : SortedFunctions) {
+      HotAddresses[Func] = Func->getAddress();
+      DotAddress = RoundUpToAlignment(DotAddress, 16);
+      ColdAddresses[Func] = DotAddress;
+      if (Func->isSplit())
+        DotAddress += Func->estimateColdSize();
+      tentativeBBLayout(BC, *Func);
+    }
+
+    return;
+  }
+
+  // Relocation mode
+  auto EstimatedTextSize = tentativeLayoutRelocMode(BC, SortedFunctions, 0);
+
+  // Initial padding
+  if (opts::UseOldText && EstimatedTextSize <= BC.OldTextSectionSize) {
+    DotAddress = BC.OldTextSectionAddress;
+    auto Pad = OffsetToAlignment(DotAddress, PageAlign);
+    if (Pad + EstimatedTextSize <= BC.OldTextSectionSize) {
+      DotAddress += Pad;
+    }
+  } else {
+    DotAddress = RoundUpToAlignment(BC.LayoutStartAddress, PageAlign);
+  }
+
+  tentativeLayoutRelocMode(BC, SortedFunctions, DotAddress);
 }
 
 void LongJmpPass::removeStubRef(const BinaryContext &BC,

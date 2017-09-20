@@ -90,14 +90,14 @@ OutputFilename("o",
   cl::Required,
   cl::cat(BoltOutputCategory));
 
-static cl::opt<unsigned>
+cl::opt<unsigned>
 AlignFunctions("align-functions",
   cl::desc("align functions at a given value (relocation mode)"),
   cl::init(64),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
-static cl::opt<unsigned>
+cl::opt<unsigned>
 AlignFunctionsMaxBytes("align-functions-max-bytes",
   cl::desc("maximum number of bytes to use to align functions"),
   cl::init(32),
@@ -406,7 +406,6 @@ size_t padFunction(const BinaryFunction &Function) {
 } // namespace opts
 
 constexpr const char *RewriteInstance::SectionsToOverwrite[];
-constexpr const char *RewriteInstance::SectionsToOverwriteRelocMode[];
 
 const std::string RewriteInstance::OrgSecPrefix = ".bolt.org";
 
@@ -673,11 +672,12 @@ void RewriteInstance::aggregateData() {
 }
 
 void RewriteInstance::discoverStorage() {
-
-  // Tell EE that we guarantee we don't need stubs for x86, but not for aarch64
+  // Stubs are harmful because RuntimeDyld may try to increase the size of
+  // sections accounting for stubs when we need those sections to match the
+  // same size seen in the input binary, in case this section is a copy
+  // of the original one seen in the binary.
   EFMM.reset(new ExecutableFileMemoryManager(
-      /*AllowStubs*/ (BC->TheTriple->getArch() == llvm::Triple::aarch64 &&
-                      opts::Relocs)));
+      /*AllowStubs*/ false));
 
   auto ELF64LEFile = dyn_cast<ELF64LEObjectFile>(InputFile);
   if (!ELF64LEFile) {
@@ -715,9 +715,9 @@ void RewriteInstance::discoverStorage() {
     StringRef SectionContents;
     Section.getContents(SectionContents);
     if (SectionName == ".text") {
-      OldTextSectionAddress = Section.getAddress();
-      OldTextSectionSize = Section.getSize();
-      OldTextSectionOffset =
+      BC->OldTextSectionAddress = Section.getAddress();
+      BC->OldTextSectionSize = Section.getSize();
+      BC->OldTextSectionOffset =
         SectionContents.data() - InputFile->getData().data();
     }
 
@@ -867,6 +867,22 @@ void RewriteInstance::run() {
   if (!BC) {
     errs() << "BOLT-ERROR: failed to create a binary context\n";
     return;
+  }
+
+  // Flip unsupported flags in AArch64 mode
+  if (BC->TheTriple->getArch() == llvm::Triple::aarch64) {
+    if (opts::BoostMacroops) {
+      opts::BoostMacroops = false;
+      outs() << "BOLT-INFO: disabling -boost-macroops for AArch64\n";
+    }
+    if (opts::Relocs && opts::UseOldText) {
+      opts::UseOldText = false;
+      outs() << "BOLT-INFO: disabling -use-old-text for AArch64\n";
+    }
+    if (!opts::Relocs) {
+      outs() << "BOLT-WARNING: non-relocation mode for AArch64 is not fully "
+                "supported\n";
+    }
   }
 
   auto executeRewritePass = [&](const std::set<uint64_t> &NonSimpleFunctions) {
@@ -1020,11 +1036,30 @@ void RewriteInstance::discoverFileObjects() {
       continue;
     }
 
-    FileSymRefs[Address] = Symbol;
+    // In aarch, make $x symbols be replaceable by a more meaningful one
+    // whenever possible
+    if (BC->TheTriple->getArch() != llvm::Triple::aarch64 ||
+        FileSymRefs.find(Address) == FileSymRefs.end()) {
+      FileSymRefs[Address] = Symbol;
+    } else {
+      if (FileSymRefs[Address].getType() == SymbolRef::ST_Unknown &&
+          *FileSymRefs[Address].getName() == "$x")
+        FileSymRefs[Address] = Symbol;
+      else if (Symbol.getType() != SymbolRef::ST_Unknown ||
+               *NameOrError != "$x")
+        FileSymRefs[Address] = Symbol;
+    }
 
     // There's nothing horribly wrong with anonymous symbols, but let's
     // ignore them for now.
     if (NameOrError->empty())
+      continue;
+
+    // For aarch64, the ABI defines mapping symbols so we identify data in the
+    // code section (see IHI0056B). $d identifies data contents.
+    if (BC->TheTriple->getArch() == llvm::Triple::aarch64 &&
+        Symbol.getType() == SymbolRef::ST_Unknown &&
+        (*NameOrError == "$d" || *NameOrError == "$x"))
       continue;
 
     /// It is possible we are seeing a globalized local. LLVM might treat it as
@@ -1376,16 +1411,21 @@ void RewriteInstance::adjustFunctionBoundaries() {
 
       // This is potentially another entry point into the function.
       auto EntryOffset = NextSymRefI->first - Function.getAddress();
-      DEBUG(dbgs() << "BOLT-DEBUG: adding entry point to function "
-                   << Function << " at offset 0x"
-                   << Twine::utohexstr(EntryOffset) << '\n');
-      Function.addEntryPointAtOffset(EntryOffset);
-
-      // In non-relocation mode there's potentially an external undetectable
-      // reference to the entry point and hence we cannot move this entry point.
-      // Optimizing without moving could be difficult.
-      if (!opts::Relocs)
-        Function.setSimple(false);
+      if (Function.isDataMarker(Symbol, SymbolSize)) {
+        Function.markDataAtOffset(EntryOffset);
+      } else if (Function.isCodeMarker(Symbol, SymbolSize)) {
+        Function.markCodeAtOffset(EntryOffset);
+      } else {
+        DEBUG(dbgs() << "BOLT-DEBUG: adding entry point to function "
+                     << Function << " at offset 0x"
+                     << Twine::utohexstr(EntryOffset) << '\n');
+        Function.addEntryPointAtOffset(EntryOffset);
+        // In non-relocation mode there's potentially an external undetectable
+        // reference to the entry point and hence we cannot move this entry
+        // point. Optimizing without moving could be difficult.
+        if (!opts::Relocs)
+          Function.setSimple(false);
+      }
 
       ++NextSymRefI;
     }
@@ -1661,6 +1701,9 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     auto ExtractedValue = static_cast<uint64_t>(
       DE.getSigned(&RelocationOffset,
                    Relocation::getSizeForType(Rel.getType())));
+
+    if (BC->TheTriple->getArch() == llvm::Triple::aarch64)
+      ExtractedValue = Relocation::extractValue(Rel.getType(), ExtractedValue);
 
     bool IsPCRelative = Relocation::isPCRelative(Rel.getType());
     auto Addend = getRelocationAddend(InputFile, Rel);
@@ -2420,13 +2463,13 @@ void RewriteInstance::mapFileSections(
     auto &SI = SMII->second;
 
     uint64_t NewTextSectionOffset = 0;
-    if (opts::UseOldText && SI.Size <= OldTextSectionSize) {
+    if (opts::UseOldText && SI.Size <= BC->OldTextSectionSize) {
       outs() << "BOLT-INFO: using original .text for new code\n";
       // Utilize the original .text for storage.
-      NewTextSectionStartAddress = OldTextSectionAddress;
-      NewTextSectionOffset = OldTextSectionOffset;
+      NewTextSectionStartAddress = BC->OldTextSectionAddress;
+      NewTextSectionOffset = BC->OldTextSectionOffset;
       auto Padding = OffsetToAlignment(NewTextSectionStartAddress, PageAlign);
-      if (Padding + SI.Size <= OldTextSectionSize) {
+      if (Padding + SI.Size <= BC->OldTextSectionSize) {
         outs() << "BOLT-INFO: using 0x200000 alignment\n";
         NewTextSectionStartAddress += Padding;
         NewTextSectionOffset += Padding;
@@ -2434,7 +2477,7 @@ void RewriteInstance::mapFileSections(
     } else {
       if (opts::UseOldText) {
         errs() << "BOLT-ERROR: original .text too small to fit the new code. "
-               << SI.Size << " bytes needed, have " << OldTextSectionSize
+               << SI.Size << " bytes needed, have " << BC->OldTextSectionSize
                << " bytes available.\n";
       }
       auto Padding = OffsetToAlignment(NewTextSectionStartAddress, PageAlign);
@@ -2621,6 +2664,11 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
       const auto StartOffset = Layout.getSymbolOffset(*Function.getSymbol());
       const auto EndOffset =
         Layout.getSymbolOffset(*Function.getFunctionEndLabel());
+      if (Function.hasConstantIsland()) {
+        const auto DataOffset =
+            Layout.getSymbolOffset(*Function.getFunctionConstantIslandLabel());
+        Function.setOutputDataAddress(BaseAddress + DataOffset);
+      }
       Function.setOutputAddress(BaseAddress + StartOffset);
       Function.setOutputSize(EndOffset - StartOffset);
       if (Function.isSplit()) {
@@ -3314,9 +3362,6 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
 
 template <typename ELFT>
 void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
-  if (!opts::Relocs)
-    return;
-
   auto *Obj = File->getELFFile();
   // Set pointer at the end of the output file, so we can pwrite old symbol
   // tables if we need to.
@@ -3350,7 +3395,10 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
           NewSymbol.getType() != ELF::STT_SECTION) {
         NewSymbol.st_value = Function->getOutputAddress();
         NewSymbol.st_size = Function->getOutputSize();
-        NewSymbol.st_shndx = NewTextSectionIndex;
+        if (opts::Relocs)
+          NewSymbol.st_shndx = NewTextSectionIndex;
+        else
+          NewSymbol.st_shndx = NewSectionIndex[NewSymbol.st_shndx];
         if (!PatchExisting && Function->isSplit()) {
           auto NewColdSym = NewSymbol;
           SmallVector<char, 256> Buf;
@@ -3362,6 +3410,24 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
           Write(0, reinterpret_cast<const char *>(&NewColdSym),
                 sizeof(NewColdSym));
         }
+        if (!PatchExisting && Function->hasConstantIsland()) {
+          auto DataMark = Function->getOutputDataAddress();
+          auto CISize = Function->estimateConstantIslandSize();
+          auto CodeMark = DataMark + CISize;
+          auto DataMarkSym = NewSymbol;
+          DataMarkSym.st_name = AddToStrTab("$d");
+          DataMarkSym.st_value = DataMark;
+          DataMarkSym.st_size = 0;
+          DataMarkSym.setType(ELF::STT_NOTYPE);
+          DataMarkSym.setBinding(ELF::STB_LOCAL);
+          auto CodeMarkSym = DataMarkSym;
+          CodeMarkSym.st_name = AddToStrTab("$x");
+          CodeMarkSym.st_value = CodeMark;
+          Write(0, reinterpret_cast<const char *>(&DataMarkSym),
+                sizeof(DataMarkSym));
+          Write(0, reinterpret_cast<const char *>(&CodeMarkSym),
+                sizeof(CodeMarkSym));
+        }
       } else {
         if (NewSymbol.st_shndx < ELF::SHN_LORESERVE) {
           NewSymbol.st_shndx = NewSectionIndex[NewSymbol.st_shndx];
@@ -3369,7 +3435,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
         // Detect local syms in the text section that we didn't update
         // and were preserved by the linker to support relocations against
         // .text (t15274167). Remove then from the symtab.
-        if (opts::Relocs && NewSymbol.getType() == ELF::STT_NOTYPE &&
+        if (NewSymbol.getType() == ELF::STT_NOTYPE &&
             NewSymbol.getBinding() == ELF::STB_LOCAL &&
             NewSymbol.st_size == 0) {
           if (auto SecOrErr =
@@ -3804,10 +3870,8 @@ void RewriteInstance::rewriteFile() {
   // Finalize memory image of section string table.
   finalizeSectionStringTable();
 
-  if (opts::Relocs) {
-    // Update symbol tables.
-    patchELFSymTabs();
-  }
+  // Update symbol tables.
+  patchELFSymTabs();
 
   // Copy non-allocatable sections once allocatable part is finished.
   rewriteNoteSections();
@@ -3927,16 +3991,9 @@ uint64_t RewriteInstance::getFileOffsetForAddress(uint64_t Address) const {
 }
 
 bool RewriteInstance::willOverwriteSection(StringRef SectionName) {
-  if (opts::Relocs) {
-    for (auto &OverwriteName : SectionsToOverwriteRelocMode) {
-      if (SectionName == OverwriteName)
-        return true;
-    }
-  } else {
-    for (auto &OverwriteName : SectionsToOverwrite) {
-      if (SectionName == OverwriteName)
-        return true;
-    }
+  for (auto &OverwriteName : SectionsToOverwrite) {
+    if (SectionName == OverwriteName)
+      return true;
   }
 
   auto SMII = EFMM->SectionMapInfo.find(SectionName);

@@ -79,6 +79,10 @@ class LongJmpPass : public BinaryFunctionPass {
   /// by RewriteInstance::mapFileSections()
   void tentativeLayout(const BinaryContext &BC,
                        std::vector<BinaryFunction *> &SortedFunctions);
+  uint64_t
+  tentativeLayoutRelocMode(const BinaryContext &BC,
+                           std::vector<BinaryFunction *> &SortedFunctions,
+                           uint64_t DotAddress);
   void tentativeBBLayout(const BinaryContext &BC, const BinaryFunction &Func);
 
    /// Helper to identify whether \p Inst is branching to a stub

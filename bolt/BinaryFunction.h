@@ -415,6 +415,18 @@ private:
   /// Temporary holder of offsets that are potentially entry points.
   std::unordered_set<uint64_t> EntryOffsets;
 
+  /// Temporary holder of offsets that are data markers (used in AArch)
+  /// It is possible to have data in code sections. To ease the identification
+  /// of data in code sections, the ABI requires the symbol table to have
+  /// symbols named "$d" identifying the start of data inside code and "$x"
+  /// identifying the end of a chunk of data inside code. DataOffsets contain
+  /// all offsets of $d symbols and CodeOffsets all offsets of $x symbols.
+  std::set<uint64_t> DataOffsets;
+  std::set<uint64_t> CodeOffsets;
+  /// The address offset where we emitted the constant island, that is, the
+  /// chunk of data in the function code area (AArch only)
+  int64_t OutputDataOffset;
+
   /// Map labels to corresponding basic blocks.
   std::unordered_map<const MCSymbol *, BinaryBasicBlock *> LabelToBB;
 
@@ -621,6 +633,10 @@ private:
   /// Offsets in function that should have PC-relative relocation.
   std::set<uint64_t> PCRelativeRelocationOffsets;
 
+  /// Offsets in function that are data values in a constant island identified
+  /// after disassembling
+  std::map<uint64_t, MCSymbol *> IslandSymbols;
+
   // Blocks are kept sorted in the layout order. If we need to change the
   // layout (if BasicBlocksLayout stores a different order than BasicBlocks),
   // the terminating instructions need to be modified.
@@ -657,6 +673,8 @@ private:
   /// Symbol at the end of the cold part of split function.
   mutable MCSymbol *FunctionColdEndLabel{nullptr};
 
+  mutable MCSymbol *FunctionConstantIslandLabel{nullptr};
+
   /// Unique number associated with the function.
   uint64_t  FunctionNumber;
 
@@ -689,6 +707,16 @@ private:
   /// end label when the \p Address points immediately past the last byte
   /// of the function.
   MCSymbol *getOrCreateLocalLabel(uint64_t Address, bool CreatePastEnd = false);
+
+  /// Register an entry point at a given \p Offset into the function.
+  void markDataAtOffset(uint64_t Offset) {
+    DataOffsets.emplace(Offset);
+  }
+
+  /// Register an entry point at a given \p Offset into the function.
+  void markCodeAtOffset(uint64_t Offset) {
+    CodeOffsets.emplace(Offset);
+  }
 
   /// Register an entry point at a given \p Offset into the function.
   MCSymbol *addEntryPointAtOffset(uint64_t Offset) {
@@ -1097,6 +1125,17 @@ public:
     return FunctionColdEndLabel;
   }
 
+  /// Return a label used to identify where the constant island was emitted
+  /// (AArch only). This is used to update the symbol table accordingly,
+  /// emitting data marker symbols as required by the ABI.
+  MCSymbol *getFunctionConstantIslandLabel() const {
+    if (!FunctionConstantIslandLabel) {
+      FunctionConstantIslandLabel =
+          BC.Ctx->createTempSymbol("func_const_island", true);
+    }
+    return FunctionConstantIslandLabel;
+  }
+
   /// Return true if this is a function representing a PLT entry.
   bool isPLTFunction() const {
     return PLTSymbol != nullptr;
@@ -1126,6 +1165,13 @@ public:
     case ELF::R_X86_64_32:
     case ELF::R_X86_64_32S:
     case ELF::R_X86_64_64:
+    case ELF::R_AARCH64_ABS64:
+    case ELF::R_AARCH64_LDST64_ABS_LO12_NC:
+    case ELF::R_AARCH64_ADD_ABS_LO12_NC:
+    case ELF::R_AARCH64_LDST32_ABS_LO12_NC:
+    case ELF::R_AARCH64_LDST8_ABS_LO12_NC:
+    case ELF::R_AARCH64_CALL26:
+    case ELF::R_AARCH64_ADR_PREL_PG_HI21:
       Relocations.emplace(Offset,
                           Relocation{Offset, Symbol, RelType, Addend, Value});
       break;
@@ -1614,6 +1660,71 @@ public:
     return ColdLSDASymbol;
   }
 
+  /// True if the symbol is a mapping symbol used in AArch64 to delimit
+  /// data inside code section.
+  bool isDataMarker(const SymbolRef &Symbol, uint64_t SymbolSize) const;
+  bool isCodeMarker(const SymbolRef &Symbol, uint64_t SymbolSize) const;
+
+  void setOutputDataAddress(uint64_t Address) {
+    OutputDataOffset = Address;
+  }
+
+  uint64_t getOutputDataAddress() const {
+    return OutputDataOffset;
+  }
+
+  /// Detects whether \p Address is inside a data region in this function
+  /// (constant islands).
+  bool isInConstantIsland(uint64_t Address) const {
+    if (Address <= getAddress())
+      return false;
+
+    auto Offset = Address - getAddress();
+
+    if (Offset >= getMaxSize())
+      return false;
+
+    auto DataIter = DataOffsets.upper_bound(Offset);
+    if (DataIter == DataOffsets.begin())
+      return false;
+    DataIter = std::prev(DataIter);
+
+    auto CodeIter = CodeOffsets.upper_bound(Offset);
+    if (CodeIter == CodeOffsets.begin())
+      return true;
+
+    return *std::prev(CodeIter) <= *DataIter;
+  }
+
+  uint64_t estimateConstantIslandSize() const {
+    uint64_t Size = 0;
+    for (auto DataIter = DataOffsets.begin(); DataIter != DataOffsets.end();
+         ++DataIter) {
+      auto NextData = std::next(DataIter);
+      auto CodeIter = CodeOffsets.lower_bound(*DataIter);
+      if (CodeIter == CodeOffsets.end() &&
+          NextData == DataOffsets.end()) {
+        Size += getMaxSize() - *DataIter;
+        continue;
+      }
+
+      uint64_t NextMarker;
+      if (CodeIter == CodeOffsets.end())
+        NextMarker = *NextData;
+      else if (NextData == DataOffsets.end())
+        NextMarker = *CodeIter;
+      else
+        NextMarker = (*CodeIter > *NextData) ? *NextData : *CodeIter;
+
+      Size += NextMarker - *DataIter;
+    }
+    return Size;
+  }
+
+  bool hasConstantIsland() const {
+    return !DataOffsets.empty();
+  }
+
   /// Return true iff the symbol could be seen inside this function otherwise
   /// it is probably another function.
   bool isSymbolValidInScope(const SymbolRef &Symbol, uint64_t SymbolSize) const;
@@ -1786,6 +1897,9 @@ public:
 
   /// Emit function as a blob with relocations and labels for relocations.
   void emitBodyRaw(MCStreamer *Streamer);
+
+  /// Helper for emitBody to write data inside a function (used for AArch64)
+  void emitConstantIslands(MCStreamer &Streamer);
 
   /// Merge profile data of this function into those of the given
   /// function. The functions should have been proven identical with

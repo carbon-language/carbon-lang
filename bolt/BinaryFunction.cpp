@@ -795,10 +795,21 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       }
     }
 
+    if (BC.TheTriple->getArch() == llvm::Triple::aarch64 &&
+        isInConstantIsland(TargetAddress)) {
+      TargetSymbol = BC.getOrCreateGlobalSymbol(TargetAddress, "ISLANDat");
+      IslandSymbols[TargetAddress - getAddress()] = TargetSymbol;
+    }
+
     // Note that the address does not necessarily have to reside inside
     // a section, it could be an absolute address too.
     auto Section = BC.getSectionForAddress(TargetAddress);
-    if (Section && Section->isText()) {
+    // Assume AArch64's ADRP never references code - it does, but this is fixed
+    // after reading relocations. ADRP contents now are not really meaningful
+    // without its supporting relocation.
+    if (!TargetSymbol && Section && Section->isText() &&
+        (BC.TheTriple->getArch() != llvm::Triple::aarch64 ||
+         !BC.MIA->isADRP(Instruction))) {
       if (containsAddress(TargetAddress)) {
         if (TargetAddress != getAddress()) {
           // The address could potentially escape. Mark it as another entry
@@ -828,6 +839,16 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   for (uint64_t Offset = 0; Offset < getSize(); Offset += Size) {
     MCInst Instruction;
     const uint64_t AbsoluteInstrAddr = getAddress() + Offset;
+
+    // Check for data inside code and ignore it
+    if (DataOffsets.find(Offset) != DataOffsets.end()) {
+      auto Iter = CodeOffsets.upper_bound(Offset);
+      if (Iter != CodeOffsets.end()) {
+        Size = *Iter - Offset;
+        continue;
+      }
+      break;
+    }
 
     if (!BC.DisAsm->getInstruction(Instruction,
                                    Size,
@@ -985,10 +1006,16 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
               // code without re-assembly.
               size_t RelSize = (Size < 5) ? 1 : 4;
               auto RelOffset = Offset + Size - RelSize;
+              if (BC.TheTriple->getArch() == llvm::Triple::aarch64) {
+                RelSize = 0;
+                RelOffset = Offset;
+              }
               auto RI = MoveRelocations.find(RelOffset);
               if (RI == MoveRelocations.end()) {
                 uint64_t RelType = (RelSize == 1) ? ELF::R_X86_64_PC8
                                                   : ELF::R_X86_64_PC32;
+                if (BC.TheTriple->getArch() == llvm::Triple::aarch64)
+                  RelType = ELF::R_AARCH64_CALL26;
                 DEBUG(dbgs() << "BOLT-DEBUG: creating relocation for static"
                              << " function call to " << TargetSymbol->getName()
                              << " at offset 0x"
@@ -2485,6 +2512,9 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {
       LastIsPrefix = BC.MIA->isPrefix(Instr);
     }
   }
+
+  if (!EmitColdPart)
+    emitConstantIslands(Streamer);
 }
 
 void BinaryFunction::emitBodyRaw(MCStreamer *Streamer) {
@@ -2543,6 +2573,70 @@ void BinaryFunction::emitBodyRaw(MCStreamer *Streamer) {
   if (FunctionOffset < getSize()) {
     Streamer->EmitBytes(FunctionContents.substr(FunctionOffset));
   }
+}
+
+void BinaryFunction::emitConstantIslands(MCStreamer &Streamer) {
+  if (DataOffsets.empty())
+    return;
+
+  Streamer.EmitLabel(getFunctionConstantIslandLabel());
+  // Raw contents of the function.
+  StringRef SectionContents;
+  Section.getContents(SectionContents);
+
+  // Raw contents of the function.
+  StringRef FunctionContents =
+      SectionContents.substr(getAddress() - Section.getAddress(),
+                             getMaxSize());
+
+  if (opts::Verbosity)
+    outs() << "BOLT-INFO: emitting constant island for function " << *this
+           << "\n";
+
+  auto IS = IslandSymbols.begin();
+
+  // We split the island into smaller blocks and output labels between them.
+  for (auto DataIter = DataOffsets.begin(); DataIter != DataOffsets.end();
+       ++DataIter) {
+    uint64_t FunctionOffset = *DataIter;
+    uint64_t EndOffset = 0ULL;
+
+    // Determine size of this data chunk
+    auto NextData = std::next(DataIter);
+    auto CodeIter = CodeOffsets.lower_bound(*DataIter);
+    if (CodeIter == CodeOffsets.end() && NextData == DataOffsets.end()) {
+      EndOffset = getMaxSize();
+    } else if (CodeIter == CodeOffsets.end()) {
+      EndOffset = *NextData;
+    } else if (NextData == DataOffsets.end()) {
+      EndOffset = *CodeIter;
+    } else {
+      EndOffset = (*CodeIter > *NextData) ? *NextData : *CodeIter;
+    }
+
+    if (FunctionOffset == EndOffset)
+      continue;    // Size is zero, nothing to emit
+
+    // Emit labels and data
+    while (IS != IslandSymbols.end() && IS->first < EndOffset) {
+      auto NextStop = IS->first;
+      assert(NextStop <= EndOffset && "internal overflow error");
+      if (FunctionOffset < NextStop) {
+        Streamer.EmitBytes(FunctionContents.slice(FunctionOffset, NextStop));
+        FunctionOffset = NextStop;
+      }
+      DEBUG(dbgs() << "BOLT-DEBUG: emitted label " << IS->second->getName()
+                   << " at offset 0x" << Twine::utohexstr(IS->first) << '\n');
+      Streamer.EmitLabel(IS->second);
+      ++IS;
+    }
+    assert(FunctionOffset <= EndOffset && "overflow error");
+    if (FunctionOffset < EndOffset) {
+      Streamer.EmitBytes(FunctionContents.slice(FunctionOffset, EndOffset));
+    }
+  }
+
+  assert(IS == IslandSymbols.end() && "some symbols were not emitted!");
 }
 
 namespace {
@@ -3334,10 +3428,37 @@ BinaryBasicBlock *BinaryFunction::splitEdge(BinaryBasicBlock *From,
   return NewBBPtr;
 }
 
+bool BinaryFunction::isDataMarker(const SymbolRef &Symbol,
+                                  uint64_t SymbolSize) const {
+  // For aarch64, the ABI defines mapping symbols so we identify data in the
+  // code section (see IHI0056B). $d identifies a symbol starting data contents.
+  if (BC.TheTriple->getArch() == llvm::Triple::aarch64 &&
+      Symbol.getType() == SymbolRef::ST_Unknown &&
+      SymbolSize == 0 &&
+      (!Symbol.getName().getError() && *Symbol.getName() == "$d"))
+    return true;
+  return false;
+}
+
+bool BinaryFunction::isCodeMarker(const SymbolRef &Symbol,
+                                  uint64_t SymbolSize) const {
+  // For aarch64, the ABI defines mapping symbols so we identify data in the
+  // code section (see IHI0056B). $x identifies a symbol starting code or the
+  // end of a data chunk inside code.
+  if (BC.TheTriple->getArch() == llvm::Triple::aarch64 &&
+      Symbol.getType() == SymbolRef::ST_Unknown &&
+      SymbolSize == 0 &&
+      (!Symbol.getName().getError() && *Symbol.getName() == "$x"))
+    return true;
+  return false;
+}
+
 bool BinaryFunction::isSymbolValidInScope(const SymbolRef &Symbol,
                                           uint64_t SymbolSize) const {
   // Some symbols are tolerated inside function bodies, others are not.
   // The real function boundaries may not be known at this point.
+  if (isDataMarker(Symbol, SymbolSize) || isCodeMarker(Symbol, SymbolSize))
+    return true;
 
   // It's okay to have a zero-sized symbol in the middle of non-zero-sized
   // function.
