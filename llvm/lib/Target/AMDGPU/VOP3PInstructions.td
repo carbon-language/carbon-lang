@@ -76,7 +76,10 @@ def V_MAD_MIX_F32 : VOP3_VOP3PInst<"v_mad_mix_f32", VOP3_Profile<VOP_F32_F16_F16
 
 // Clamp modifier is applied after conversion to f16.
 def V_MAD_MIXLO_F16 : VOP3_VOP3PInst<"v_mad_mixlo_f16", VOP3_Profile<VOP_F16_F16_F16_F16, VOP3_OPSEL>, 1>;
+
+let ClampLo = 0, ClampHi = 1 in {
 def V_MAD_MIXHI_F16 : VOP3_VOP3PInst<"v_mad_mixhi_f16", VOP3_Profile<VOP_F16_F16_F16_F16, VOP3_OPSEL>, 1>;
+}
 }
 
 let Predicates = [HasMadMix] in {
@@ -88,8 +91,54 @@ def : Pat <
   (V_MAD_MIXLO_F16 $src0_modifiers, $src0,
                    $src1_modifiers, $src1,
                    $src2_modifiers, $src2,
-                   0,
+                   DSTCLAMP.NONE,
                    (i32 (IMPLICIT_DEF)))
+>;
+
+// FIXME: Special case handling for maxhi (especially for clamp)
+// because dealing with the write to high half of the register is
+// difficult.
+def : Pat <
+  (build_vector f16:$elt0, (fpround (fmad (f32 (VOP3PMadMixMods f16:$src0, i32:$src0_modifiers)),
+                                          (f32 (VOP3PMadMixMods f16:$src1, i32:$src1_modifiers)),
+                                          (f32 (VOP3PMadMixMods f16:$src2, i32:$src2_modifiers))))),
+  (v2f16 (V_MAD_MIXHI_F16 $src0_modifiers, $src0,
+                          $src1_modifiers, $src1,
+                          $src2_modifiers, $src2,
+                          DSTCLAMP.NONE,
+                          $elt0))
+>;
+
+def : Pat <
+  (build_vector
+    f16:$elt0,
+    (AMDGPUclamp (fpround (fmad (f32 (VOP3PMadMixMods f16:$src0, i32:$src0_modifiers)),
+                                (f32 (VOP3PMadMixMods f16:$src1, i32:$src1_modifiers)),
+                                (f32 (VOP3PMadMixMods f16:$src2, i32:$src2_modifiers)))))),
+  (v2f16 (V_MAD_MIXHI_F16 $src0_modifiers, $src0,
+                          $src1_modifiers, $src1,
+                          $src2_modifiers, $src2,
+                          DSTCLAMP.ENABLE,
+                          $elt0))
+>;
+
+def : Pat <
+  (AMDGPUclamp (build_vector
+    (fpround (fmad (f32 (VOP3PMadMixMods f16:$lo_src0, i32:$lo_src0_modifiers)),
+                   (f32 (VOP3PMadMixMods f16:$lo_src1, i32:$lo_src1_modifiers)),
+                   (f32 (VOP3PMadMixMods f16:$lo_src2, i32:$lo_src2_modifiers)))),
+    (fpround (fmad (f32 (VOP3PMadMixMods f16:$hi_src0, i32:$hi_src0_modifiers)),
+                   (f32 (VOP3PMadMixMods f16:$hi_src1, i32:$hi_src1_modifiers)),
+                   (f32 (VOP3PMadMixMods f16:$hi_src2, i32:$hi_src2_modifiers)))))),
+  (v2f16 (V_MAD_MIXHI_F16 $hi_src0_modifiers, $hi_src0,
+                          $hi_src1_modifiers, $hi_src1,
+                          $hi_src2_modifiers, $hi_src2,
+                          DSTCLAMP.ENABLE,
+                          (V_MAD_MIXLO_F16 $lo_src0_modifiers, $lo_src0,
+                                           $lo_src1_modifiers, $lo_src1,
+                                           $lo_src2_modifiers, $lo_src2,
+                                           DSTCLAMP.ENABLE,
+                                           (i32 (IMPLICIT_DEF)))))
 >;
 
 } // End Predicates = [HasMadMix]

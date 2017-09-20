@@ -75,13 +75,15 @@ define half @v_mad_mixlo_f16_f16lo_f16lo_f32_clamp_pre_cvt(half %src0, half %src
   ret half %cvt.result
 }
 
-; GCN-LABEL: {{^}}v_mad_mixlo_v2f32:
-; GFX9: v_mad_mixlo_f16 v3, v0, v1, v2 op_sel:[1,1,1]
-; GFX9-NEXT: v_mad_mixlo_f16 v0, v0, v1, v2
-; GFX9-NEXT: v_and_b32_e32 v0, 0xffff, v0
-; GFX9-NEXT: v_lshl_or_b32 v0, v3, 16, v0
+; FIXME: Should abe able to avoid extra register because first
+; operation only clobbers relevant lane.
+; GCN-LABEL: {{^}}v_mad_mix_v2f32:
+; GCN: s_waitcnt
+; GFX9-NEXT: v_mad_mixlo_f16 v3, v0, v1, v2{{$}}
+; GFX9-NEXT: v_mad_mixhi_f16 v3, v0, v1, v2 op_sel:[1,1,1]{{$}}
+; GFX9-NEXT: v_mov_b32_e32 v0, v3
 ; GFX9-NEXT: s_setpc_b64
-define <2 x half> @v_mad_mixlo_v2f32(<2 x half> %src0, <2 x half> %src1, <2 x half> %src2) #0 {
+define <2 x half> @v_mad_mix_v2f32(<2 x half> %src0, <2 x half> %src1, <2 x half> %src2) #0 {
   %src0.ext = fpext <2 x half> %src0 to <2 x float>
   %src1.ext = fpext <2 x half> %src1 to <2 x float>
   %src2.ext = fpext <2 x half> %src2 to <2 x float>
@@ -90,13 +92,13 @@ define <2 x half> @v_mad_mixlo_v2f32(<2 x half> %src0, <2 x half> %src1, <2 x ha
   ret <2 x half> %cvt.result
 }
 
-; GCN-LABEL: {{^}}v_mad_mixlo_v3f32:
+; GCN-LABEL: {{^}}v_mad_mix_v3f32:
 ; GCN: s_waitcnt
 ; GFX9-NEXT: v_mad_mixlo_f16 v0, v0, v3, v6
 ; GFX9-NEXT: v_mad_mixlo_f16 v1, v1, v4, v7
 ; GFX9-NEXT: v_mad_mixlo_f16 v2, v2, v5, v8
 ; GFX9-NEXT: s_setpc_b64
-define <3 x half> @v_mad_mixlo_v3f32(<3 x half> %src0, <3 x half> %src1, <3 x half> %src2) #0 {
+define <3 x half> @v_mad_mix_v3f32(<3 x half> %src0, <3 x half> %src1, <3 x half> %src2) #0 {
   %src0.ext = fpext <3 x half> %src0 to <3 x float>
   %src1.ext = fpext <3 x half> %src1 to <3 x float>
   %src2.ext = fpext <3 x half> %src2 to <3 x float>
@@ -105,19 +107,16 @@ define <3 x half> @v_mad_mixlo_v3f32(<3 x half> %src0, <3 x half> %src1, <3 x ha
   ret <3 x half> %cvt.result
 }
 
-; GCN-LABEL: {{^}}v_mad_mixlo_v4f32:
+; GCN-LABEL: {{^}}v_mad_mix_v4f32:
 ; GCN: s_waitcnt
-; GFX9-NEXT: v_mad_mixlo_f16 v6, v0, v2, v4 op_sel:[1,1,1]
-; GFX9-NEXT: v_mad_mixlo_f16 v0, v0, v2, v4
-; GFX9-NEXT: v_mov_b32_e32 v2, 0xffff
-; GFX9-NEXT: v_mad_mixlo_f16 v4, v1, v3, v5 op_sel:[1,1,1]
-; GFX9-NEXT: v_mad_mixlo_f16 v1, v1, v3, v5
-; GFX9-NEXT: v_and_b32_e32 v0, v2, v0
-; GFX9-NEXT: v_and_b32_e32 v1, v2, v1
-; GFX9-NEXT: v_lshl_or_b32 v0, v6, 16, v0
-; GFX9-NEXT: v_lshl_or_b32 v1, v4, 16, v1
+; GFX9-NEXT: v_mad_mixlo_f16 v6, v0, v2, v4
+; GFX9-NEXT: v_mad_mixhi_f16 v6, v0, v2, v4 op_sel:[1,1,1]
+; GFX9-NEXT: v_mad_mixlo_f16 v2, v1, v3, v5
+; GFX9-NEXT: v_mad_mixhi_f16 v2, v1, v3, v5 op_sel:[1,1,1]
+; GFX9-NEXT: v_mov_b32_e32 v0, v6
+; GFX9-NEXT: v_mov_b32_e32 v1, v2
 ; GFX9-NEXT: s_setpc_b64
-define <4 x half> @v_mad_mixlo_v4f32(<4 x half> %src0, <4 x half> %src1, <4 x half> %src2) #0 {
+define <4 x half> @v_mad_mix_v4f32(<4 x half> %src0, <4 x half> %src1, <4 x half> %src2) #0 {
   %src0.ext = fpext <4 x half> %src0 to <4 x float>
   %src1.ext = fpext <4 x half> %src1 to <4 x float>
   %src2.ext = fpext <4 x half> %src2 to <4 x float>
@@ -128,10 +127,9 @@ define <4 x half> @v_mad_mixlo_v4f32(<4 x half> %src0, <4 x half> %src1, <4 x ha
 
 ; FIXME: Fold clamp
 ; GCN-LABEL: {{^}}v_mad_mix_v2f32_clamp_postcvt:
-; GFX9: v_mad_mixlo_f16 v3, v0, v1, v2 op_sel:[1,1,1]
-; GFX9: v_mad_mixlo_f16 v0, v0, v1, v2
-; GFX9: v_lshl_or_b32 [[PACKED:v[0-9]+]]
-; GFX9: v_pk_max_f16 v0, [[PACKED]], [[PACKED]] clamp{{$}}
+; GFX9: v_mad_mixlo_f16 v3, v0, v1, v2 clamp{{$}}
+; GFX9-NEXT: v_mad_mixhi_f16 v3, v0, v1, v2 op_sel:[1,1,1] clamp{{$}}
+; GFX9-NEXT: v_mov_b32_e32 v0, v3
 ; GFX9-NEXT: s_setpc_b64
 define <2 x half> @v_mad_mix_v2f32_clamp_postcvt(<2 x half> %src0, <2 x half> %src1, <2 x half> %src2) #0 {
   %src0.ext = fpext <2 x half> %src0 to <2 x float>
@@ -144,14 +142,162 @@ define <2 x half> @v_mad_mix_v2f32_clamp_postcvt(<2 x half> %src0, <2 x half> %s
   ret <2 x half> %clamp
 }
 
+; FIXME: Should be packed into 2 registers per argument?
+; GCN-LABEL: {{^}}v_mad_mix_v3f32_clamp_postcvt:
+; GCN: s_waitcnt
+; GFX9-NEXT: v_mad_mixlo_f16 v2, v2, v5, v8 clamp
+; GFX9-NEXT: v_mad_mixhi_f16 v2, v0, v0, v0 op_sel_hi:[0,0,0] clamp
+; GFX9-NEXT: v_mad_mixlo_f16 v0, v0, v3, v6 clamp
+; GFX9-NEXT: v_mad_mixhi_f16 v0, v1, v4, v7 clamp
+; GFX9-NEXT: v_lshrrev_b32_e32 v1, 16, v0
+; GFX9-NEXT: s_setpc_b64
+define <3 x half> @v_mad_mix_v3f32_clamp_postcvt(<3 x half> %src0, <3 x half> %src1, <3 x half> %src2) #0 {
+  %src0.ext = fpext <3 x half> %src0 to <3 x float>
+  %src1.ext = fpext <3 x half> %src1 to <3 x float>
+  %src2.ext = fpext <3 x half> %src2 to <3 x float>
+  %result = tail call <3 x float> @llvm.fmuladd.v3f32(<3 x float> %src0.ext, <3 x float> %src1.ext, <3 x float> %src2.ext)
+  %cvt.result = fptrunc <3 x float> %result to <3 x half>
+  %max = call <3 x half> @llvm.maxnum.v3f16(<3 x half> %cvt.result, <3 x half> zeroinitializer)
+  %clamp = call <3 x half> @llvm.minnum.v3f16(<3 x half> %max, <3 x half> <half 1.0, half 1.0, half 1.0>)
+  ret <3 x half> %clamp
+}
+
+; GCN-LABEL: {{^}}v_mad_mix_v4f32_clamp_postcvt:
+; GCN: s_waitcnt
+; GFX9-NEXT: v_mad_mixlo_f16 v6, v0, v2, v4 clamp
+; GFX9-NEXT: v_mad_mixhi_f16 v6, v0, v2, v4 op_sel:[1,1,1] clamp
+; GFX9-NEXT: v_mad_mixlo_f16 v2, v1, v3, v5 clamp
+; GFX9-NEXT: v_mad_mixhi_f16 v2, v1, v3, v5 op_sel:[1,1,1] clamp
+; GFX9-DAG: v_mov_b32_e32 v0, v6
+; GFX9-DAG: v_mov_b32_e32 v1, v2
+; GFX9: s_setpc_b64
+define <4 x half> @v_mad_mix_v4f32_clamp_postcvt(<4 x half> %src0, <4 x half> %src1, <4 x half> %src2) #0 {
+  %src0.ext = fpext <4 x half> %src0 to <4 x float>
+  %src1.ext = fpext <4 x half> %src1 to <4 x float>
+  %src2.ext = fpext <4 x half> %src2 to <4 x float>
+  %result = tail call <4 x float> @llvm.fmuladd.v4f32(<4 x float> %src0.ext, <4 x float> %src1.ext, <4 x float> %src2.ext)
+  %cvt.result = fptrunc <4 x float> %result to <4 x half>
+  %max = call <4 x half> @llvm.maxnum.v4f16(<4 x half> %cvt.result, <4 x half> zeroinitializer)
+  %clamp = call <4 x half> @llvm.minnum.v4f16(<4 x half> %max, <4 x half> <half 1.0, half 1.0, half 1.0, half 1.0>)
+  ret <4 x half> %clamp
+}
+
+; GCN-LABEL: {{^}}v_mad_mix_v2f32_clamp_postcvt_lo:
+; GCN: s_waitcnt
+; GFX9-NEXT: v_mad_mixlo_f16 v3, v0, v1, v2 clamp
+; GFX9-NEXT: v_mad_mixhi_f16 v3, v0, v1, v2 op_sel:[1,1,1]
+; GFX9-NEXT: v_mov_b32_e32 v0, v3
+; GFX9-NEXT: s_setpc_b64
+define <2 x half> @v_mad_mix_v2f32_clamp_postcvt_lo(<2 x half> %src0, <2 x half> %src1, <2 x half> %src2) #0 {
+  %src0.ext = fpext <2 x half> %src0 to <2 x float>
+  %src1.ext = fpext <2 x half> %src1 to <2 x float>
+  %src2.ext = fpext <2 x half> %src2 to <2 x float>
+  %result = tail call <2 x float> @llvm.fmuladd.v2f32(<2 x float> %src0.ext, <2 x float> %src1.ext, <2 x float> %src2.ext)
+  %cvt.result = fptrunc <2 x float> %result to <2 x half>
+  %cvt.lo = extractelement <2 x half> %cvt.result, i32 0
+  %max.lo = call half @llvm.maxnum.f16(half %cvt.lo, half 0.0)
+  %clamp.lo = call half @llvm.minnum.f16(half %max.lo, half 1.0)
+  %insert = insertelement <2 x half> %cvt.result, half %clamp.lo, i32 0
+  ret <2 x half> %insert
+}
+
+; GCN-LABEL: {{^}}v_mad_mix_v2f32_clamp_postcvt_hi:
+; GCN: s_waitcnt
+; GFX9-NEXT: v_mad_mixlo_f16 v3, v0, v1, v2
+; GFX9-NEXT: v_mad_mixhi_f16 v3, v0, v1, v2 op_sel:[1,1,1] clamp
+; GFX9-NEXT: v_mov_b32_e32 v0, v3
+; GFX9-NEXT: s_setpc_b64
+define <2 x half> @v_mad_mix_v2f32_clamp_postcvt_hi(<2 x half> %src0, <2 x half> %src1, <2 x half> %src2) #0 {
+  %src0.ext = fpext <2 x half> %src0 to <2 x float>
+  %src1.ext = fpext <2 x half> %src1 to <2 x float>
+  %src2.ext = fpext <2 x half> %src2 to <2 x float>
+  %result = tail call <2 x float> @llvm.fmuladd.v2f32(<2 x float> %src0.ext, <2 x float> %src1.ext, <2 x float> %src2.ext)
+  %cvt.result = fptrunc <2 x float> %result to <2 x half>
+  %cvt.hi = extractelement <2 x half> %cvt.result, i32 1
+  %max.hi = call half @llvm.maxnum.f16(half %cvt.hi, half 0.0)
+  %clamp.hi = call half @llvm.minnum.f16(half %max.hi, half 1.0)
+  %insert = insertelement <2 x half> %cvt.result, half %clamp.hi, i32 1
+  ret <2 x half> %insert
+}
+
+; FIXME: Should be able to use mixlo/mixhi
+; GCN-LABEL: {{^}}v_mad_mix_v2f32_clamp_precvt:
+; GFX9: v_mad_mix_f32 v3, v0, v1, v2 clamp
+; GFX9-NEXT: v_mad_mix_f32 v0, v0, v1, v2 op_sel:[1,1,1] clamp
+; GFX9: v_cvt_f16_f32_e32 v1, v3
+; GFX9: v_cvt_f16_f32_e32 v0, v0
+; GFX9: v_and_b32_e32 v1, 0xffff, v1
+; GFX9: v_lshl_or_b32 v0, v0, 16, v1
+; GFX9: s_setpc_b64
+define <2 x half> @v_mad_mix_v2f32_clamp_precvt(<2 x half> %src0, <2 x half> %src1, <2 x half> %src2) #0 {
+  %src0.ext = fpext <2 x half> %src0 to <2 x float>
+  %src1.ext = fpext <2 x half> %src1 to <2 x float>
+  %src2.ext = fpext <2 x half> %src2 to <2 x float>
+  %result = tail call <2 x float> @llvm.fmuladd.v2f32(<2 x float> %src0.ext, <2 x float> %src1.ext, <2 x float> %src2.ext)
+  %max = call <2 x float> @llvm.maxnum.v2f32(<2 x float> %result, <2 x float> zeroinitializer)
+  %clamp = call <2 x float> @llvm.minnum.v2f32(<2 x float> %max, <2 x float> <float 1.0, float 1.0>)
+  %cvt.result = fptrunc <2 x float> %clamp to <2 x half>
+  ret <2 x half> %cvt.result
+}
+
+; GCN-LABEL: {{^}}v_mad_mix_v3f32_clamp_precvt:
+; GFX9: v_mad_mix_f32 v0, v0, v3, v6 clamp
+; GFX9: v_mad_mix_f32 v1, v1, v4, v7 clamp
+; GFX9: v_mad_mix_f32 v2, v2, v5, v8 clamp
+; GFX9: v_cvt_f16_f32
+; GFX9: v_cvt_f16_f32
+; GFX9: v_cvt_f16_f32
+define <3 x half> @v_mad_mix_v3f32_clamp_precvt(<3 x half> %src0, <3 x half> %src1, <3 x half> %src2) #0 {
+  %src0.ext = fpext <3 x half> %src0 to <3 x float>
+  %src1.ext = fpext <3 x half> %src1 to <3 x float>
+  %src2.ext = fpext <3 x half> %src2 to <3 x float>
+  %result = tail call <3 x float> @llvm.fmuladd.v3f32(<3 x float> %src0.ext, <3 x float> %src1.ext, <3 x float> %src2.ext)
+  %max = call <3 x float> @llvm.maxnum.v3f32(<3 x float> %result, <3 x float> zeroinitializer)
+  %clamp = call <3 x float> @llvm.minnum.v3f32(<3 x float> %max, <3 x float> <float 1.0, float 1.0, float 1.0>)
+  %cvt.result = fptrunc <3 x float> %clamp to <3 x half>
+  ret <3 x half> %cvt.result
+}
+
+; GCN-LABEL: {{^}}v_mad_mix_v4f32_clamp_precvt:
+; GFX9: v_mad_mix_f32 v6, v0, v2, v4 op_sel:[1,1,1] clamp
+; GFX9: v_mad_mix_f32 v0, v0, v2, v4 clamp
+; GFX9: v_mad_mix_f32 v2, v1, v3, v5 op_sel:[1,1,1] clamp
+; GFX9: v_mad_mix_f32 v1, v1, v3, v5 clamp
+; GFX9: v_cvt_f16_f32
+; GFX9: v_cvt_f16_f32
+; GFX9: v_cvt_f16_f32
+; GFX9: v_cvt_f16_f32
+define <4 x half> @v_mad_mix_v4f32_clamp_precvt(<4 x half> %src0, <4 x half> %src1, <4 x half> %src2) #0 {
+  %src0.ext = fpext <4 x half> %src0 to <4 x float>
+  %src1.ext = fpext <4 x half> %src1 to <4 x float>
+  %src2.ext = fpext <4 x half> %src2 to <4 x float>
+  %result = tail call <4 x float> @llvm.fmuladd.v4f32(<4 x float> %src0.ext, <4 x float> %src1.ext, <4 x float> %src2.ext)
+  %max = call <4 x float> @llvm.maxnum.v4f32(<4 x float> %result, <4 x float> zeroinitializer)
+  %clamp = call <4 x float> @llvm.minnum.v4f32(<4 x float> %max, <4 x float> <float 1.0, float 1.0, float 1.0, float 1.0>)
+  %cvt.result = fptrunc <4 x float> %clamp to <4 x half>
+  ret <4 x half> %cvt.result
+}
+
 declare half @llvm.minnum.f16(half, half) #1
 declare <2 x half> @llvm.minnum.v2f16(<2 x half>, <2 x half>) #1
+declare <3 x half> @llvm.minnum.v3f16(<3 x half>, <3 x half>) #1
+declare <4 x half> @llvm.minnum.v4f16(<4 x half>, <4 x half>) #1
 
 declare half @llvm.maxnum.f16(half, half) #1
 declare <2 x half> @llvm.maxnum.v2f16(<2 x half>, <2 x half>) #1
+declare <3 x half> @llvm.maxnum.v3f16(<3 x half>, <3 x half>) #1
+declare <4 x half> @llvm.maxnum.v4f16(<4 x half>, <4 x half>) #1
 
 declare float @llvm.minnum.f32(float, float) #1
+declare <2 x float> @llvm.minnum.v2f32(<2 x float>, <2 x float>) #1
+declare <3 x float> @llvm.minnum.v3f32(<3 x float>, <3 x float>) #1
+declare <4 x float> @llvm.minnum.v4f32(<4 x float>, <4 x float>) #1
+
 declare float @llvm.maxnum.f32(float, float) #1
+declare <2 x float> @llvm.maxnum.v2f32(<2 x float>, <2 x float>) #1
+declare <3 x float> @llvm.maxnum.v3f32(<3 x float>, <3 x float>) #1
+declare <4 x float> @llvm.maxnum.v4f32(<4 x float>, <4 x float>) #1
+
 declare float @llvm.fmuladd.f32(float, float, float) #1
 declare <2 x float> @llvm.fmuladd.v2f32(<2 x float>, <2 x float>, <2 x float>) #1
 declare <3 x float> @llvm.fmuladd.v3f32(<3 x float>, <3 x float>, <3 x float>) #1
