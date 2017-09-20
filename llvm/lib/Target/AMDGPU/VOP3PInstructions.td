@@ -68,9 +68,25 @@ def V_PK_LSHRREV_B16 : VOP3PInst<"v_pk_lshrrev_b16", VOP3_Profile<VOP_V2I16_V2I1
 // For 16-bit src arguments their location (hi/lo) are controlled by op_sel_hi.
 let isCommutable = 1 in {
 def V_MAD_MIX_F32 : VOP3_VOP3PInst<"v_mad_mix_f32", VOP3_Profile<VOP_F32_F16_F16_F16, VOP3_OPSEL>>;
+
+// Clamp modifier is applied after conversion to f16.
 def V_MAD_MIXLO_F16 : VOP3_VOP3PInst<"v_mad_mixlo_f16", VOP3_Profile<VOP_F16_F16_F16_F16, VOP3_OPSEL>>;
 def V_MAD_MIXHI_F16 : VOP3_VOP3PInst<"v_mad_mixhi_f16", VOP3_Profile<VOP_F16_F16_F16_F16, VOP3_OPSEL>>;
 }
+
+let Predicates = [HasMadMix] in {
+
+def : Pat <
+  (f16 (fpround (fmad (f32 (VOP3PMadMixMods f16:$src0, i32:$src0_modifiers)),
+                      (f32 (VOP3PMadMixMods f16:$src1, i32:$src1_modifiers)),
+                      (f32 (VOP3PMadMixMods f16:$src2, i32:$src2_modifiers))))),
+  (V_MAD_MIXLO_F16 $src0_modifiers, $src0,
+                   $src1_modifiers, $src1,
+                   $src2_modifiers, $src2,
+                   0)
+>;
+
+} // End Predicates = [HasMadMix]
 
 multiclass VOP3P_Real_vi<bits<10> op> {
   def _vi : VOP3P_Real<!cast<VOP3P_Pseudo>(NAME), SIEncodingFamily.VI>,
