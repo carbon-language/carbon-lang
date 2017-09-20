@@ -15,6 +15,7 @@
 #include "Error.h"
 #include "llvm-readobj.h"
 #include "llvm/Object/WindowsResource.h"
+#include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/ScopedPrinter.h"
 
 namespace llvm {
@@ -28,7 +29,7 @@ std::string stripUTF16(const ArrayRef<UTF16> &UTF16Str) {
   for (UTF16 Ch : UTF16Str) {
     // UTF16Str will have swapped byte order in case of big-endian machines.
     // Swap it back in such a case.
-    ulittle16_t ChValue = Ch;
+    support::ulittle16_t ChValue(Ch);
     if (ChValue <= 0xFF)
       Result += ChValue;
     else
