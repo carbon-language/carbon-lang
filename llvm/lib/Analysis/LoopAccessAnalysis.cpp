@@ -1143,8 +1143,7 @@ bool llvm::sortLoadAccesses(ArrayRef<Value *> VL, const DataLayout &DL,
     // The pointers may not have a constant offset from each other, or SCEV
     // may just not be smart enough to figure out they do. Regardless,
     // there's nothing we can do.
-    if (!Diff || Diff->getAPInt().abs().getSExtValue() >
-                     static_cast<int64_t>((VL.size() - 1) * Size))
+    if (!Diff || Diff->getAPInt().abs().getSExtValue() > (VL.size() - 1) * Size)
       return false;
 
     OffValPairs.emplace_back(Diff->getAPInt().getSExtValue(), Val);
