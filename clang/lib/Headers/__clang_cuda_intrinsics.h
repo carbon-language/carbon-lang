@@ -157,6 +157,37 @@ __MAKE_SYNC_SHUFFLES(__shfl_sync_xor, __nvvm_shfl_sync_bfly_i32,
 
 #pragma pop_macro("__MAKE_SYNC_SHUFFLES")
 
+inline __device__ void __syncwarp(unsigned int mask = 0xffffffff) {
+  return __nvvm_bar_warp_sync(mask);
+}
+
+inline __device__ void __barrier_sync(unsigned int id) {
+  __nvvm_barrier_sync(id);
+}
+
+inline __device__ void __barrier_sync_count(unsigned int id,
+                                            unsigned int count) {
+  __nvvm_barrier_sync_cnt(id, count);
+}
+
+inline __device__ int __all_sync(unsigned int mask, int pred) {
+  return __nvvm_vote_sync_all(mask, pred);
+}
+
+inline __device__ int __any_sync(unsigned int mask, int pred) {
+  return __nvvm_vote_sync_any(mask, pred);
+}
+
+inline __device__ int __uni_sync(unsigned int mask, int pred) {
+  return __nvvm_vote_sync_uni(mask, pred);
+}
+
+inline __device__ unsigned int __ballot_sync(unsigned int mask, int pred) {
+  return __nvvm_vote_sync_ballot(mask, pred);
+}
+
+inline __device__ activemask() { return __nvvm_vote.ballot(1); }
+
 #endif // __CUDA_VERSION >= 9000 && (!defined(__CUDA_ARCH__) ||
        // __CUDA_ARCH__ >= 300)
 
