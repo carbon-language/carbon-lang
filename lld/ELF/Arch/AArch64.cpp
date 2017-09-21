@@ -249,6 +249,7 @@ void AArch64::relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const {
     break;
   case R_AARCH64_CONDBR19:
   case R_AARCH64_LD_PREL_LO19:
+    checkAlignment<4>(Loc, Val, Type);
     checkInt<21>(Loc, Val, Type);
     or32le(Loc, (Val & 0x1FFFFC) << 3);
     break;
