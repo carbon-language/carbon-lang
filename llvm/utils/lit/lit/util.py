@@ -36,8 +36,6 @@ def pythonize_bool(value):
             return False
     raise ValueError('"{}" is not a valid boolean'.format(value))
 
-def make_word_regex(word):
-    return r'\b' + word + r'\b'
 
 def to_bytes(s):
     """Return the parameter as type 'bytes', possibly encoding it.
