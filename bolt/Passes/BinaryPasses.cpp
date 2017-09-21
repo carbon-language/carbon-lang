@@ -619,6 +619,16 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
       assert(Result && "internal error analyzing conditional branch");
       assert(CondBranch && "conditional branch expected");
 
+      // It's possible that PredBB is also a successor to BB that may have
+      // been processed by a previous iteration of the SCTC loop, in which
+      // case it may have been marked invalid.  We should skip rewriting in
+      // this case.
+      if (!PredBB->isValid()) {
+        assert(PredBB->isSuccessor(BB) &&
+               "PredBB should be valid if it is not a successor to BB");
+        continue;
+      }
+
       // We don't want to reverse direction of the branch in new order
       // without further profile analysis.
       const bool DirectionFlag = CondSucc == BB ? IsForwardCTC : !IsForwardCTC;
