@@ -421,9 +421,8 @@ bool TargetLowering::ShrinkDemandedOp(SDValue Op, unsigned BitWidth,
           Op.getOpcode(), dl, SmallVT,
           DAG.getNode(ISD::TRUNCATE, dl, SmallVT, Op.getOperand(0)),
           DAG.getNode(ISD::TRUNCATE, dl, SmallVT, Op.getOperand(1)));
-      bool NeedZext = DemandedSize > SmallVTBits;
-      SDValue Z = DAG.getNode(NeedZext ? ISD::ZERO_EXTEND : ISD::ANY_EXTEND,
-                              dl, Op.getValueType(), X);
+      assert(DemandedSize <= SmallVTBits && "Narrowed below demanded bits?");
+      SDValue Z = DAG.getNode(ISD::ANY_EXTEND, dl, Op.getValueType(), X);
       return TLO.CombineTo(Op, Z);
     }
   }
