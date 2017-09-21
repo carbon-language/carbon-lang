@@ -111,19 +111,12 @@ Expected<NewArchiveMember> NewArchiveMember::getFile(StringRef FileName,
 }
 
 template <typename T>
-static void printWithSpacePadding(raw_fd_ostream &OS, T Data, unsigned Size,
-                                  bool MayTruncate = false) {
+static void printWithSpacePadding(raw_fd_ostream &OS, T Data, unsigned Size) {
   uint64_t OldPos = OS.tell();
   OS << Data;
   unsigned SizeSoFar = OS.tell() - OldPos;
-  if (Size > SizeSoFar) {
-    OS.indent(Size - SizeSoFar);
-  } else if (Size < SizeSoFar) {
-    assert(MayTruncate && "Data doesn't fit in Size");
-    // Some of the data this is used for (like UID) can be larger than the
-    // space available in the archive format. Truncate in that case.
-    OS.seek(OldPos + Size);
-  }
+  assert(SizeSoFar <= Size && "Data doesn't fit in Size");
+  OS.indent(Size - SizeSoFar);
 }
 
 static bool isBSDLike(object::Archive::Kind Kind) {
@@ -153,8 +146,12 @@ static void printRestOfMemberHeader(
     raw_fd_ostream &Out, const sys::TimePoint<std::chrono::seconds> &ModTime,
     unsigned UID, unsigned GID, unsigned Perms, unsigned Size) {
   printWithSpacePadding(Out, sys::toTimeT(ModTime), 12);
-  printWithSpacePadding(Out, UID, 6, true);
-  printWithSpacePadding(Out, GID, 6, true);
+
+  // The format has only 6 chars for uid and gid. Truncate if the provided
+  // values don't fit.
+  printWithSpacePadding(Out, UID % 1000000, 6);
+  printWithSpacePadding(Out, GID % 1000000, 6);
+
   printWithSpacePadding(Out, format("%o", Perms), 8);
   printWithSpacePadding(Out, Size, 10);
   Out << "`\n";
