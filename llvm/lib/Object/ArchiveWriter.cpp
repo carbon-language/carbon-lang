@@ -278,7 +278,7 @@ static sys::TimePoint<std::chrono::seconds> now(bool Deterministic) {
 }
 
 // Returns the offset of the first reference to a member offset.
-static ErrorOr<unsigned>
+static Expected<unsigned>
 writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
                  ArrayRef<NewArchiveMember> Members,
                  std::vector<unsigned> &MemberOffsetRefs, bool Deterministic) {
@@ -320,8 +320,8 @@ writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
         continue;
 
       unsigned NameOffset = NameOS.tell();
-      if (auto EC = S.printName(NameOS))
-        return EC;
+      if (std::error_code EC = S.printName(NameOS))
+        return errorCodeToError(EC);
       NameOS << '\0';
       MemberOffsetRefs.push_back(MemberNum);
       if (isBSDLike(Kind))
@@ -373,17 +373,17 @@ writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
   return BodyStartOffset + 4;
 }
 
-std::error_code
-llvm::writeArchive(StringRef ArcName, ArrayRef<NewArchiveMember> NewMembers,
-                   bool WriteSymtab, object::Archive::Kind Kind,
-                   bool Deterministic, bool Thin,
-                   std::unique_ptr<MemoryBuffer> OldArchiveBuf) {
+Error llvm::writeArchive(StringRef ArcName,
+                         ArrayRef<NewArchiveMember> NewMembers,
+                         bool WriteSymtab, object::Archive::Kind Kind,
+                         bool Deterministic, bool Thin,
+                         std::unique_ptr<MemoryBuffer> OldArchiveBuf) {
   assert((!Thin || !isBSDLike(Kind)) && "Only the gnu format has a thin mode");
   SmallString<128> TmpArchive;
   int TmpArchiveFD;
   if (auto EC = sys::fs::createUniqueFile(ArcName + ".temp-archive-%%%%%%%.a",
                                           TmpArchiveFD, TmpArchive))
-    return EC;
+    return errorCodeToError(EC);
 
   tool_output_file Output(TmpArchive, TmpArchiveFD);
   raw_fd_ostream &Out = Output.os();
@@ -396,10 +396,10 @@ llvm::writeArchive(StringRef ArcName, ArrayRef<NewArchiveMember> NewMembers,
 
   unsigned MemberReferenceOffset = 0;
   if (WriteSymtab) {
-    ErrorOr<unsigned> MemberReferenceOffsetOrErr = writeSymbolTable(
+    Expected<unsigned> MemberReferenceOffsetOrErr = writeSymbolTable(
         Out, Kind, NewMembers, MemberOffsetRefs, Deterministic);
-    if (auto EC = MemberReferenceOffsetOrErr.getError())
-      return EC;
+    if (auto E = MemberReferenceOffsetOrErr.takeError())
+      return E;
     MemberReferenceOffset = MemberReferenceOffsetOrErr.get();
   }
 
@@ -461,5 +461,5 @@ llvm::writeArchive(StringRef ArcName, ArrayRef<NewArchiveMember> NewMembers,
   OldArchiveBuf.reset();
 
   sys::fs::rename(TmpArchive, ArcName);
-  return std::error_code();
+  return Error::success();
 }
