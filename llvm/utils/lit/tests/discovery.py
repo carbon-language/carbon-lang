@@ -37,7 +37,7 @@
 # CHECK-CONFIG-MAP-OUT: -- Test Suites --
 # CHECK-CONFIG-MAP-OUT:   config-map - 2 tests
 # CHECK-CONFIG-MAP-OUT:     Source Root: {{.*[/\\]config-map-discovery[/\\]tests}}
-# CHECK-CONFIG-MAP-OUT:     Exec Root  : {{.*[/\\]tests[/\\]inputs[/\\]config-map-discovery}}
+# CHECK-CONFIG-MAP-OUT:     Exec Root  : {{.*[/\\]tests[/\\]Inputs[/\\]config-map-discovery}}
 # CHECK-CONFIG-MAP-OUT: -- Available Tests --
 # CHECK-CONFIG-MAP-OUT-NOT: invalid-test.txt
 # CHECK-CONFIG-MAP-OUT:   config-map :: test1.txt

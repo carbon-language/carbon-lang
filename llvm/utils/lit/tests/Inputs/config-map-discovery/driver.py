@@ -4,7 +4,7 @@ import sys
 
 main_config = sys.argv[1]
 
-config_map = {lit.util.norm_path(main_config) : sys.argv[2]}
+config_map = {os.path.realpath(main_config) : sys.argv[2]}
 builtin_parameters = {'config_map' : config_map}
 
 if __name__=='__main__':
