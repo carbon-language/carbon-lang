@@ -479,11 +479,10 @@ bool HexagonVectorLoopCarriedReuse::doVLCR() {
   assert((CurLoop->getNumBlocks() == 1) &&
          "Can do VLCR only on single block loops");
 
-  BasicBlock *HdrB = CurLoop->getHeader();
   bool Changed;
   bool Continue;
 
-  DEBUG(dbgs() << "Working on Loop: " << *HdrB << "\n");
+  DEBUG(dbgs() << "Working on Loop: " << *CurLoop->getHeader() << "\n");
   do {
     // Reset datastructures.
     Dependences.clear();
