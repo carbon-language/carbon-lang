@@ -111,7 +111,7 @@ Expected<NewArchiveMember> NewArchiveMember::getFile(StringRef FileName,
 }
 
 template <typename T>
-static void printWithSpacePadding(raw_fd_ostream &OS, T Data, unsigned Size) {
+static void printWithSpacePadding(raw_ostream &OS, T Data, unsigned Size) {
   uint64_t OldPos = OS.tell();
   OS << Data;
   unsigned SizeSoFar = OS.tell() - OldPos;
@@ -143,7 +143,7 @@ static void print32(raw_ostream &Out, object::Archive::Kind Kind,
 }
 
 static void printRestOfMemberHeader(
-    raw_fd_ostream &Out, const sys::TimePoint<std::chrono::seconds> &ModTime,
+    raw_ostream &Out, const sys::TimePoint<std::chrono::seconds> &ModTime,
     unsigned UID, unsigned GID, unsigned Perms, unsigned Size) {
   printWithSpacePadding(Out, sys::toTimeT(ModTime), 12);
 
@@ -158,7 +158,7 @@ static void printRestOfMemberHeader(
 }
 
 static void
-printGNUSmallMemberHeader(raw_fd_ostream &Out, StringRef Name,
+printGNUSmallMemberHeader(raw_ostream &Out, StringRef Name,
                           const sys::TimePoint<std::chrono::seconds> &ModTime,
                           unsigned UID, unsigned GID, unsigned Perms,
                           unsigned Size) {
@@ -167,7 +167,7 @@ printGNUSmallMemberHeader(raw_fd_ostream &Out, StringRef Name,
 }
 
 static void
-printBSDMemberHeader(raw_fd_ostream &Out, StringRef Name,
+printBSDMemberHeader(raw_ostream &Out, StringRef Name,
                      const sys::TimePoint<std::chrono::seconds> &ModTime,
                      unsigned UID, unsigned GID, unsigned Perms,
                      unsigned Size) {
@@ -189,7 +189,7 @@ static bool useStringTable(bool Thin, StringRef Name) {
 }
 
 static void
-printMemberHeader(raw_fd_ostream &Out, object::Archive::Kind Kind, bool Thin,
+printMemberHeader(raw_ostream &Out, object::Archive::Kind Kind, bool Thin,
                   StringRef Name,
                   std::vector<unsigned>::iterator &StringMapIndexIter,
                   const sys::TimePoint<std::chrono::seconds> &ModTime,
