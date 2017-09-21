@@ -3666,10 +3666,10 @@ SDValue DAGCombiner::visitANDLike(SDValue N0, SDValue N1, SDNode *N) {
 bool DAGCombiner::isAndLoadExtLoad(ConstantSDNode *AndC, LoadSDNode *LoadN,
                                    EVT LoadResultTy, EVT &ExtVT, EVT &LoadedVT,
                                    bool &NarrowLoad) {
-  uint32_t ActiveBits = AndC->getAPIntValue().getActiveBits();
-
-  if (ActiveBits == 0 || !AndC->getAPIntValue().isMask(ActiveBits))
+  if (!AndC->getAPIntValue().isMask())
     return false;
+
+  unsigned ActiveBits = AndC->getAPIntValue().countTrailingOnes();
 
   ExtVT = EVT::getIntegerVT(*DAG.getContext(), ActiveBits);
   LoadedVT = LoadN->getMemoryVT();
