@@ -1108,7 +1108,7 @@ void ELFObjectWriter::writeRelocations(const MCAssembler &Asm,
 
     if (is64Bit()) {
       write(Entry.Offset);
-      if (TargetObjectWriter->isN64()) {
+      if (TargetObjectWriter->getEMachine() == ELF::EM_MIPS) {
         write(uint32_t(Index));
 
         write(TargetObjectWriter->getRSsym(Entry.Type));
