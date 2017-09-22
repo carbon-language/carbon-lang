@@ -1104,24 +1104,25 @@ LinkageInfo LinkageComputer::getLVForClosure(const DeclContext *DC,
   else
     Owner = cast<NamedDecl>(ContextDecl);
 
-  // FIXME: If there is no owner, the closure should have no linkage.
   if (!Owner)
-    return LinkageInfo::external();
+    return LinkageInfo::none();
 
   // If the owner has a deduced type, we need to skip querying the linkage and
   // visibility of that type, because it might involve this closure type.  The
   // only effect of this is that we might give a lambda VisibleNoLinkage rather
   // than NoLinkage when we don't strictly need to, which is benign.
   auto *VD = dyn_cast<VarDecl>(Owner);
-  LinkageInfo OwnerLinkage =
+  LinkageInfo OwnerLV =
       VD && VD->getType()->getContainedDeducedType()
           ? computeLVForDecl(Owner, computation, /*IgnoreVarTypeLinkage*/true)
           : getLVForDecl(Owner, computation);
 
-  // FIXME: This is wrong. A lambda never formally has linkage; if this
-  // calculation determines a lambda has external linkage, it should be
-  // downgraded to VisibleNoLinkage.
-  return OwnerLinkage;
+  // A lambda never formally has linkage. But if the owner is externally
+  // visible, then the lambda is too. We apply the same rules to blocks.
+  if (!isExternallyVisible(OwnerLV.getLinkage()))
+    return LinkageInfo::none();
+  return LinkageInfo(VisibleNoLinkage, OwnerLV.getVisibility(),
+                     OwnerLV.isVisibilityExplicit());
 }
 
 LinkageInfo LinkageComputer::getLVForLocalDecl(const NamedDecl *D,
