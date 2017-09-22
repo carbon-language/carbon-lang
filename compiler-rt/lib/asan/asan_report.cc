@@ -205,8 +205,8 @@ class ScopedInErrorReport {
       Die();
     }
 
-    atomic_store_relaxed(&reporting_thread_tid_, kUnclaimedTid);
     CommonSanitizerReportMutex.Unlock();
+    atomic_store_relaxed(&reporting_thread_tid_, kUnclaimedTid);
   }
 
   void ReportError(const ErrorDescription &description) {
