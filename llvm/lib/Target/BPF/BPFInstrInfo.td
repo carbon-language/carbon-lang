@@ -172,37 +172,49 @@ defm JSLE : J<BPF_JSLE, "s<=", BPF_CC_LE>;
 }
 
 // ALU instructions
-class ALU_RI<BPFArithOp Opc, string OpcodeStr, SDNode OpNode>
-    : TYPE_ALU_JMP<Opc.Value, BPF_K.Value,
-                   (outs GPR:$dst),
-                   (ins GPR:$src2, i64imm:$imm),
-                   "$dst "#OpcodeStr#" $imm",
-                   [(set GPR:$dst, (OpNode GPR:$src2, i64immSExt32:$imm))]> {
+class ALU_RI<BPFOpClass Class, BPFArithOp Opc,
+             dag outs, dag ins, string asmstr, list<dag> pattern>
+    : TYPE_ALU_JMP<Opc.Value, BPF_K.Value, outs, ins, asmstr, pattern> {
   bits<4> dst;
   bits<32> imm;
 
   let Inst{51-48} = dst;
   let Inst{31-0} = imm;
-  let BPFClass = BPF_ALU64;
+  let BPFClass = Class;
 }
 
-class ALU_RR<BPFArithOp Opc, string OpcodeStr, SDNode OpNode>
-    : TYPE_ALU_JMP<Opc.Value, BPF_X.Value,
-                   (outs GPR:$dst),
-                   (ins GPR:$src2, GPR:$src),
-                   "$dst "#OpcodeStr#" $src",
-                   [(set GPR:$dst, (OpNode i64:$src2, i64:$src))]> {
+class ALU_RR<BPFOpClass Class, BPFArithOp Opc,
+             dag outs, dag ins, string asmstr, list<dag> pattern>
+    : TYPE_ALU_JMP<Opc.Value, BPF_X.Value, outs, ins, asmstr, pattern> {
   bits<4> dst;
   bits<4> src;
 
   let Inst{55-52} = src;
   let Inst{51-48} = dst;
-  let BPFClass = BPF_ALU64;
+  let BPFClass = Class;
 }
 
 multiclass ALU<BPFArithOp Opc, string OpcodeStr, SDNode OpNode> {
-  def _rr : ALU_RR<Opc, OpcodeStr, OpNode>;
-  def _ri : ALU_RI<Opc, OpcodeStr, OpNode>;
+  def _rr : ALU_RR<BPF_ALU64, Opc,
+                   (outs GPR:$dst),
+                   (ins GPR:$src2, GPR:$src),
+                   "$dst "#OpcodeStr#" $src",
+                   [(set GPR:$dst, (OpNode i64:$src2, i64:$src))]>;
+  def _ri : ALU_RI<BPF_ALU64, Opc,
+                   (outs GPR:$dst),
+                   (ins GPR:$src2, i64imm:$imm),
+                   "$dst "#OpcodeStr#" $imm",
+                   [(set GPR:$dst, (OpNode GPR:$src2, i64immSExt32:$imm))]>;
+  def _rr_32 : ALU_RR<BPF_ALU, Opc,
+                   (outs GPR32:$dst),
+                   (ins GPR32:$src2, GPR32:$src),
+                   "$dst "#OpcodeStr#" $src",
+                   [(set GPR32:$dst, (OpNode i32:$src2, i32:$src))]>;
+  def _ri_32 : ALU_RI<BPF_ALU, Opc,
+                   (outs GPR32:$dst),
+                   (ins GPR32:$src2, i32imm:$imm),
+                   "$dst "#OpcodeStr#" $imm",
+                   [(set GPR32:$dst, (OpNode GPR32:$src2, i32:$imm))]>;
 }
 
 let Constraints = "$dst = $src2" in {
@@ -218,34 +230,6 @@ let isAsCheapAsAMove = 1 in {
 }
   defm MUL : ALU<BPF_MUL, "*=", mul>;
   defm DIV : ALU<BPF_DIV, "/=", udiv>;
-}
-
-class MOV_RR<string OpcodeStr>
-    : TYPE_ALU_JMP<BPF_MOV.Value, BPF_X.Value,
-                   (outs GPR:$dst),
-                   (ins GPR:$src),
-                   "$dst "#OpcodeStr#" $src",
-                   []> {
-  bits<4> dst;
-  bits<4> src;
-
-  let Inst{55-52} = src;
-  let Inst{51-48} = dst;
-  let BPFClass = BPF_ALU64;
-}
-
-class MOV_RI<string OpcodeStr>
-    : TYPE_ALU_JMP<BPF_MOV.Value, BPF_K.Value,
-                   (outs GPR:$dst),
-                   (ins i64imm:$imm),
-                   "$dst "#OpcodeStr#" $imm",
-                   [(set GPR:$dst, (i64 i64immSExt32:$imm))]> {
-  bits<4> dst;
-  bits<32> imm;
-
-  let Inst{51-48} = dst;
-  let Inst{31-0} = imm;
-  let BPFClass = BPF_ALU64;
 }
 
 class LD_IMM64<bits<4> Pseudo, string OpcodeStr>
@@ -267,8 +251,26 @@ class LD_IMM64<bits<4> Pseudo, string OpcodeStr>
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
 def LD_imm64 : LD_IMM64<0, "=">;
-def MOV_rr : MOV_RR<"=">;
-def MOV_ri : MOV_RI<"=">;
+def MOV_rr : ALU_RR<BPF_ALU64, BPF_MOV,
+                    (outs GPR:$dst),
+                    (ins GPR:$src),
+                    "$dst = $src",
+                    []>;
+def MOV_ri : ALU_RI<BPF_ALU64, BPF_MOV,
+                    (outs GPR:$dst),
+                    (ins i64imm:$imm),
+                    "$dst = $imm",
+                    [(set GPR:$dst, (i64 i64immSExt32:$imm))]>;
+def MOV_rr_32 : ALU_RR<BPF_ALU, BPF_MOV,
+                    (outs GPR32:$dst),
+                    (ins GPR32:$src),
+                    "$dst = $src",
+                    []>;
+def MOV_ri_32 : ALU_RI<BPF_ALU, BPF_MOV,
+                    (outs GPR32:$dst),
+                    (ins i32imm:$imm),
+                    "$dst = $imm",
+                    [(set GPR32:$dst, (i32 i32:$imm))]>;
 }
 
 def FI_ri
