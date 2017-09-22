@@ -9,7 +9,6 @@
 // REQUIRES: stable-runtime
 // FIXME: implement SEGV handler in other sanitizers, not just asan.
 // XFAIL: msan
-// XFAIL: lsan
 // XFAIL: tsan
 // XFAIL: ubsan
 

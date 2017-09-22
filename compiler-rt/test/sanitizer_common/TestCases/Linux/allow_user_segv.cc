@@ -18,7 +18,6 @@
 // clang-format on
 
 // Remove when fixed: https://github.com/google/sanitizers/issues/637
-// XFAIL: lsan
 // XFAIL: msan
 // XFAIL: tsan
 // XFAIL: ubsan

@@ -254,6 +254,18 @@ void ReportDeadlySignal(const SignalContext &sig, u32 tid,
   else
     ReportDeadlySignalImpl(sig, tid, unwind, unwind_context);
 }
+
+void HandleDeadlySignal(void *siginfo, void *context, u32 tid,
+                        UnwindSignalStackCallbackType unwind,
+                        const void *unwind_context) {
+  StartReportDeadlySignal();
+  ScopedErrorReportLock rl;
+  SignalContext sig(siginfo, context);
+  ReportDeadlySignal(sig, tid, unwind, unwind_context);
+  Report("ABORTING\n");
+  Die();
+}
+
 #endif  // !SANITIZER_FUCHSIA && !SANITIZER_GO
 
 void WriteToSyslog(const char *msg) {

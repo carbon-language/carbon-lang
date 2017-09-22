@@ -8,7 +8,10 @@
 // clang-format on
 
 // REQUIRES: x86-target-arch
-// XFAIL: lsan, msan, tsan, ubsan
+// FIXME: implement in other sanitizers.
+// XFAIL: msan
+// XFAIL: tsan
+// XFAIL: ubsan
 
 int main() {
 #if defined(__x86_64__)
