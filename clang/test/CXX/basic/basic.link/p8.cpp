@@ -52,6 +52,13 @@ void use_visible_no_linkage() {
   visible_no_linkage3(); // expected-note {{used here}}
 }
 
+namespace {
+  struct InternalLinkage {};
+}
+InternalLinkage internal_linkage(); // expected-error {{used but not defined}}
+void use_internal_linkage() {
+  internal_linkage(); // expected-note {{used here}}
+}
 
 extern inline int not_defined; // expected-error {{not defined}}
 extern inline int defined_after_use;
