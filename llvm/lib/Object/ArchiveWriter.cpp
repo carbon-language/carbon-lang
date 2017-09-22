@@ -277,6 +277,18 @@ static sys::TimePoint<std::chrono::seconds> now(bool Deterministic) {
   return sys::TimePoint<seconds>();
 }
 
+static bool isArchiveSymbol(const object::BasicSymbolRef &S) {
+  uint32_t Symflags = S.getFlags();
+  if (Symflags & object::SymbolRef::SF_FormatSpecific)
+    return false;
+  if (!(Symflags & object::SymbolRef::SF_Global))
+    return false;
+  if (Symflags & object::SymbolRef::SF_Undefined &&
+      !(Symflags & object::SymbolRef::SF_Indirect))
+    return false;
+  return true;
+}
+
 // Returns the offset of the first reference to a member offset.
 static Expected<unsigned>
 writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
@@ -310,13 +322,7 @@ writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
     }
 
     for (const object::BasicSymbolRef &S : Obj.symbols()) {
-      uint32_t Symflags = S.getFlags();
-      if (Symflags & object::SymbolRef::SF_FormatSpecific)
-        continue;
-      if (!(Symflags & object::SymbolRef::SF_Global))
-        continue;
-      if (Symflags & object::SymbolRef::SF_Undefined &&
-          !(Symflags & object::SymbolRef::SF_Indirect))
+      if (!isArchiveSymbol(S))
         continue;
 
       unsigned NameOffset = NameOS.tell();
