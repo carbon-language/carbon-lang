@@ -349,9 +349,11 @@ writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
   if (StringTable.size() == 0)
     print32(Out, Kind, 0);
 
-  // ld64 requires the next member header to start at an offset that is
-  // 4 bytes aligned.
-  unsigned Alignment = isBSDLike(Kind) ? 4 : 2;
+  // ld64 expects the members to be 8-byte aligned for 64-bit content and at
+  // least 4-byte aligned for 32-bit content.  Opt for the larger encoding
+  // uniformly.
+  // We do this for all bsd formats because it simplifies aligning members.
+  unsigned Alignment = isBSDLike(Kind) ? 8 : 2;
   unsigned Pad = OffsetToAlignment(Out.tell(), Alignment);
   while (Pad--)
     Out.write(uint8_t(0));
