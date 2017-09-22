@@ -382,8 +382,8 @@ int main(int argc, char **argv) {
   std::unique_ptr<tool_output_file> OutputFile;
   if (!OutputFilename.empty()) {
     std::error_code EC;
-    OutputFile =
-        make_unique<tool_output_file>(OutputFilename, EC, sys::fs::F_None);
+    OutputFile = llvm::make_unique<tool_output_file>(OutputFilename, EC,
+                                                     sys::fs::F_None);
     error("Unable to open output file" + OutputFilename, EC);
     // Don't remove output file if we exit with an error.
     OutputFile->keep();
