@@ -286,6 +286,43 @@ void MaybeStartBackgroudThread() {
 #endif
 }
 
+static const u32 kUnclaimedTid = 0xfffffe;
+static atomic_uint32_t reporting_thread_tid = {kUnclaimedTid};
+
+ScopedErrorReportLock::ScopedErrorReportLock(u32 current_tid) {
+  for (;;) {
+    u32 expected_tid = kUnclaimedTid;
+    if (current_tid == kUnclaimedTid ||
+        atomic_compare_exchange_strong(&reporting_thread_tid, &expected_tid,
+                                       current_tid, memory_order_relaxed)) {
+      // We've claimed reporting_thread_tid_ so proceed.
+      CommonSanitizerReportMutex.Lock();
+      return;
+    }
+
+    if (expected_tid == current_tid) {
+      // This is either asynch signal or nested error during error reporting.
+      // Fail simple to avoid deadlocks in Report().
+
+      // Can't use Report() here because of potential deadlocks in nested
+      // signal handlers.
+      CatastrophicErrorWrite(SanitizerToolName,
+                             internal_strlen(SanitizerToolName));
+      static const char msg[] = ": nested bug in the same thread, aborting.\n";
+      CatastrophicErrorWrite(msg, sizeof(msg) - 1);
+
+      internal__exit(common_flags()->exitcode);
+    }
+
+    internal_sched_yield();
+  }
+}
+
+ScopedErrorReportLock::~ScopedErrorReportLock() {
+  CommonSanitizerReportMutex.Unlock();
+  atomic_store_relaxed(&reporting_thread_tid, kUnclaimedTid);
+}
+
 }  // namespace __sanitizer
 
 SANITIZER_INTERFACE_WEAK_DEF(void, __sanitizer_sandbox_on_notify,
