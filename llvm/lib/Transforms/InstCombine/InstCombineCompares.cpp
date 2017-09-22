@@ -3921,14 +3921,16 @@ static Instruction *processUMulZExtIdiom(ICmpInst &I, Value *MulVal,
 /// When performing a comparison against a constant, it is possible that not all
 /// the bits in the LHS are demanded. This helper method computes the mask that
 /// IS demanded.
-static APInt getDemandedBitsLHSMask(ICmpInst &I, unsigned BitWidth,
-                                    bool isSignCheck) {
-  if (isSignCheck)
-    return APInt::getSignMask(BitWidth);
-
+static APInt getDemandedBitsLHSMask(ICmpInst &I, unsigned BitWidth) {
   const APInt *RHS;
   if (!match(I.getOperand(1), m_APInt(RHS)))
     return APInt::getAllOnesValue(BitWidth);
+
+  // If this is a normal comparison, it demands all bits. If it is a sign bit
+  // comparison, it only demands the sign bit.
+  bool UnusedBit;
+  if (isSignBitCheck(I.getPredicate(), *RHS, UnusedBit))
+    return APInt::getSignMask(BitWidth);
 
   switch (I.getPredicate()) {
   // For a UGT comparison, we don't care about any bits that
@@ -4115,20 +4117,11 @@ Instruction *InstCombiner::foldICmpUsingKnownBits(ICmpInst &I) {
   if (!BitWidth)
     return nullptr;
 
-  // If this is a normal comparison, it demands all bits. If it is a sign bit
-  // comparison, it only demands the sign bit.
-  bool IsSignBit = false;
-  const APInt *CmpC;
-  if (match(Op1, m_APInt(CmpC))) {
-    bool UnusedBit;
-    IsSignBit = isSignBitCheck(Pred, *CmpC, UnusedBit);
-  }
-
   KnownBits Op0Known(BitWidth);
   KnownBits Op1Known(BitWidth);
 
   if (SimplifyDemandedBits(&I, 0,
-                           getDemandedBitsLHSMask(I, BitWidth, IsSignBit),
+                           getDemandedBitsLHSMask(I, BitWidth),
                            Op0Known, 0))
     return &I;
 
