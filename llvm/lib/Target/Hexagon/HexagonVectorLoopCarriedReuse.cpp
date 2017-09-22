@@ -183,6 +183,7 @@ namespace {
    friend raw_ostream &operator<< (raw_ostream &OS, const DepChain &D);
   };
 
+  LLVM_ATTRIBUTE_UNUSED
   raw_ostream &operator<<(raw_ostream &OS, const DepChain &D) {
     const ChainOfDependences &CD = D.Chain;
     int ChainSize = CD.size();
@@ -206,6 +207,7 @@ namespace {
     bool isDefined() { return Inst2Replace != nullptr; }
   };
   typedef struct ReuseValue ReuseValue;
+  LLVM_ATTRIBUTE_UNUSED
   raw_ostream &operator<<(raw_ostream &OS, const ReuseValue &RU) {
     OS << "** ReuseValue ***\n";
     OS << "Instruction to Replace: " << *(RU.Inst2Replace) << "\n";
