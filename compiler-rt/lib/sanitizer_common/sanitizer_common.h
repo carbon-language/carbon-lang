@@ -211,7 +211,7 @@ extern StaticSpinMutex CommonSanitizerReportMutex;
 // Lock sanitizer error reporting and protects against nested errors.
 class ScopedErrorReportLock {
  public:
-  explicit ScopedErrorReportLock(u32 current_tid);
+  ScopedErrorReportLock();
   ~ScopedErrorReportLock();
 };
 

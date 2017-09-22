@@ -286,21 +286,20 @@ void MaybeStartBackgroudThread() {
 #endif
 }
 
-static const u32 kUnclaimedTid = 0xfffffe;
-static atomic_uint32_t reporting_thread_tid = {kUnclaimedTid};
+static atomic_uintptr_t reporting_thread = {0};
 
-ScopedErrorReportLock::ScopedErrorReportLock(u32 current_tid) {
+ScopedErrorReportLock::ScopedErrorReportLock() {
+  uptr current = GetThreadSelf();
   for (;;) {
-    u32 expected_tid = kUnclaimedTid;
-    if (current_tid == kUnclaimedTid ||
-        atomic_compare_exchange_strong(&reporting_thread_tid, &expected_tid,
-                                       current_tid, memory_order_relaxed)) {
-      // We've claimed reporting_thread_tid_ so proceed.
+    uptr expected = 0;
+    if (atomic_compare_exchange_strong(&reporting_thread, &expected, current,
+                                       memory_order_relaxed)) {
+      // We've claimed reporting_thread so proceed.
       CommonSanitizerReportMutex.Lock();
       return;
     }
 
-    if (expected_tid == current_tid) {
+    if (expected == current) {
       // This is either asynch signal or nested error during error reporting.
       // Fail simple to avoid deadlocks in Report().
 
@@ -320,7 +319,7 @@ ScopedErrorReportLock::ScopedErrorReportLock(u32 current_tid) {
 
 ScopedErrorReportLock::~ScopedErrorReportLock() {
   CommonSanitizerReportMutex.Unlock();
-  atomic_store_relaxed(&reporting_thread_tid, kUnclaimedTid);
+  atomic_store_relaxed(&reporting_thread, 0);
 }
 
 }  // namespace __sanitizer
