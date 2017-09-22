@@ -880,7 +880,7 @@ std::string TreePredicateFn::getCodeToRunOnSDNode() const {
       "    int64_t Imm = cast<ConstantSDNode>(Node)->getSExtValue();\n";
     return Result + ImmCode;
   }
-  
+
   // Handle arbitrary node predicates.
   assert(!getPredCode().empty() && "Don't have any predicate code!");
   std::string ClassName;
@@ -895,7 +895,7 @@ std::string TreePredicateFn::getCodeToRunOnSDNode() const {
     Result = "    SDNode *N = Node;\n";
   else
     Result = "    auto *N = cast<" + ClassName + ">(Node);\n";
-  
+
   return Result + getPredCode();
 }
 
