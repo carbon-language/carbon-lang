@@ -4226,20 +4226,17 @@ Instruction *InstCombiner::foldICmpUsingKnownBits(ICmpInst &I) {
     const APInt *CmpC;
     if (match(Op1, m_APInt(CmpC))) {
       // A <u C -> A == C-1 if min(A)+1 == C
-      if (Op1Max == Op0Min + 1) {
-        Constant *CMinus1 = ConstantInt::get(Op0->getType(), *CmpC - 1);
-        return new ICmpInst(ICmpInst::ICMP_EQ, Op0, CMinus1);
-      }
+      if (Op1Max == Op0Min + 1)
+        return new ICmpInst(ICmpInst::ICMP_EQ, Op0,
+                            ConstantInt::get(Op0->getType(), *CmpC - 1));
     }
     break;
   }
   case ICmpInst::ICMP_UGT: {
     if (Op0Min.ugt(Op1Max)) // A >u B -> true if min(A) > max(B)
       return replaceInstUsesWith(I, ConstantInt::getTrue(I.getType()));
-
     if (Op0Max.ule(Op1Min)) // A >u B -> false if max(A) <= max(B)
       return replaceInstUsesWith(I, ConstantInt::getFalse(I.getType()));
-
     if (Op1Max == Op0Min) // A >u B -> A != B if min(A) == max(B)
       return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
 
