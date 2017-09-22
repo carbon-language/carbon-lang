@@ -4223,12 +4223,11 @@ Instruction *InstCombiner::foldICmpUsingKnownBits(ICmpInst &I) {
     if (Op1Min == Op0Max) // A <u B -> A != B if max(A) == min(B)
       return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
 
-    const APInt *CmpC;
-    if (match(Op1, m_APInt(CmpC))) {
+    if (Op1Min == Op1Max) {
       // A <u C -> A == C-1 if min(A)+1 == C
-      if (Op1Max == Op0Min + 1)
+      if (Op1Min == Op0Min + 1)
         return new ICmpInst(ICmpInst::ICMP_EQ, Op0,
-                            ConstantInt::get(Op0->getType(), *CmpC - 1));
+                            ConstantInt::get(Op0->getType(), Op1Min - 1));
     }
     break;
   }
@@ -4240,12 +4239,11 @@ Instruction *InstCombiner::foldICmpUsingKnownBits(ICmpInst &I) {
     if (Op1Max == Op0Min) // A >u B -> A != B if min(A) == max(B)
       return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
 
-    const APInt *CmpC;
-    if (match(Op1, m_APInt(CmpC))) {
+    if (Op1Min == Op1Max) {
       // A >u C -> A == C+1 if max(a)-1 == C
-      if (*CmpC == Op0Max - 1)
+      if (Op1Min == Op0Max - 1)
         return new ICmpInst(ICmpInst::ICMP_EQ, Op0,
-                            ConstantInt::get(Op1->getType(), *CmpC + 1));
+                            ConstantInt::get(Op1->getType(), Op1Min + 1));
     }
     break;
   }
