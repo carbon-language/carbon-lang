@@ -351,7 +351,8 @@ writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
 
   // ld64 requires the next member header to start at an offset that is
   // 4 bytes aligned.
-  unsigned Pad = OffsetToAlignment(Out.tell(), 4);
+  unsigned Alignment = isBSDLike(Kind) ? 4 : 2;
+  unsigned Pad = OffsetToAlignment(Out.tell(), Alignment);
   while (Pad--)
     Out.write(uint8_t(0));
 

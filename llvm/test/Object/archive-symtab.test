@@ -122,3 +122,11 @@ RUN: llvm-ar --format=bsd rcsU %t.a %p/Inputs/trivial-object-test.macho-x86-64
 RUN: FileCheck --check-prefix=MACHO-SYMTAB-ALIGN %s < %t.a
 MACHO-SYMTAB-ALIGN: !<arch>
 MACHO-SYMTAB-ALIGN-NEXT: #1/12           {{..........}}  0     0     0       36        `
+
+With a gnu symbol table we only align to two
+8 + 60 + 14 = 82
+RUN: rm -f %t.a
+RUN: llvm-ar --format=gnu rcsD %t.a %p/Inputs/trivial-object-test.macho-x86-64
+RUN: FileCheck --check-prefix=GNU-SYMTAB-ALIGN %s < %t.a
+GNU-SYMTAB-ALIGN: !<arch>
+GNU-SYMTAB-ALIGN-NEXT: /               0           0     0     0       14        `
