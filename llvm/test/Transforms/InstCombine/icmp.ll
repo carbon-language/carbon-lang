@@ -3070,14 +3070,13 @@ define <8 x i1> @bitreverse_vec_ne(<8 x i16> %x, <8 x i16> %y) {
 
 ; These perform a comparison of a value known to be between 4 and 5 with a value between 5 and 7.
 ; They should all simplify to equality compares.
-; FIXME this should simplify to an equality comparison
 define i1 @knownbits1(i8 %a, i8 %b) {
 ; CHECK-LABEL: @knownbits1(
 ; CHECK-NEXT:    [[A1:%.*]] = and i8 [[A:%.*]], 1
 ; CHECK-NEXT:    [[A2:%.*]] = or i8 [[A1]], 4
 ; CHECK-NEXT:    [[B1:%.*]] = and i8 [[B:%.*]], 2
 ; CHECK-NEXT:    [[B2:%.*]] = or i8 [[B1]], 5
-; CHECK-NEXT:    [[C:%.*]] = icmp uge i8 [[A2]], [[B2]]
+; CHECK-NEXT:    [[C:%.*]] = icmp eq i8 [[A2]], [[B2]]
 ; CHECK-NEXT:    ret i1 [[C]]
 ;
   %a1 = and i8 %a, 5
@@ -3105,14 +3104,13 @@ define i1 @knownbits2(i8 %a, i8 %b) {
   ret i1 %c
 }
 
-; FIXME this should simplify to an equality comparison
 define i1 @knownbits3(i8 %a, i8 %b) {
 ; CHECK-LABEL: @knownbits3(
 ; CHECK-NEXT:    [[A1:%.*]] = and i8 [[A:%.*]], 1
 ; CHECK-NEXT:    [[A2:%.*]] = or i8 [[A1]], 4
 ; CHECK-NEXT:    [[B1:%.*]] = and i8 [[B:%.*]], 2
 ; CHECK-NEXT:    [[B2:%.*]] = or i8 [[B1]], 5
-; CHECK-NEXT:    [[C:%.*]] = icmp ule i8 [[B2]], [[A2]]
+; CHECK-NEXT:    [[C:%.*]] = icmp eq i8 [[B2]], [[A2]]
 ; CHECK-NEXT:    ret i1 [[C]]
 ;
   %a1 = and i8 %a, 5
@@ -3142,14 +3140,13 @@ define <2 x i1> @knownbits4(<2 x i8> %a, <2 x i8> %b) {
 
 ; These are the signed versions of the above. One value is less than or equal to 5, but maybe negative.
 ; The other is known to be a value 5-7. These should simplify to equality comparisons.
-; FIXME this should simplify to an equality comparison
 define i1 @knownbits5(i8 %a, i8 %b) {
 ; CHECK-LABEL: @knownbits5(
 ; CHECK-NEXT:    [[A1:%.*]] = and i8 [[A:%.*]], -127
 ; CHECK-NEXT:    [[A2:%.*]] = or i8 [[A1]], 4
 ; CHECK-NEXT:    [[B1:%.*]] = and i8 [[B:%.*]], 2
 ; CHECK-NEXT:    [[B2:%.*]] = or i8 [[B1]], 5
-; CHECK-NEXT:    [[C:%.*]] = icmp sge i8 [[A2]], [[B2]]
+; CHECK-NEXT:    [[C:%.*]] = icmp eq i8 [[A2]], [[B2]]
 ; CHECK-NEXT:    ret i1 [[C]]
 ;
   %a1 = and i8 %a, 133
@@ -3177,14 +3174,13 @@ define i1 @knownbits6(i8 %a, i8 %b) {
   ret i1 %c
 }
 
-; FIXME this should simplify to an equality comparison
 define <2 x i1> @knownbits7(<2 x i8> %a, <2 x i8> %b) {
 ; CHECK-LABEL: @knownbits7(
 ; CHECK-NEXT:    [[A1:%.*]] = and <2 x i8> [[A:%.*]], <i8 -127, i8 -127>
 ; CHECK-NEXT:    [[A2:%.*]] = or <2 x i8> [[A1]], <i8 4, i8 4>
 ; CHECK-NEXT:    [[B1:%.*]] = and <2 x i8> [[B:%.*]], <i8 2, i8 2>
 ; CHECK-NEXT:    [[B2:%.*]] = or <2 x i8> [[B1]], <i8 5, i8 5>
-; CHECK-NEXT:    [[C:%.*]] = icmp sle <2 x i8> [[B2]], [[A2]]
+; CHECK-NEXT:    [[C:%.*]] = icmp eq <2 x i8> [[B2]], [[A2]]
 ; CHECK-NEXT:    ret <2 x i1> [[C]]
 ;
   %a1 = and <2 x i8> %a, <i8 133, i8 133>
