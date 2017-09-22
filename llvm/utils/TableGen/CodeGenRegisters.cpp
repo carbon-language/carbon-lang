@@ -836,7 +836,7 @@ bool CodeGenRegisterClass::contains(const CodeGenRegister *Reg) const {
 namespace llvm {
 
   raw_ostream &operator<<(raw_ostream &OS, const CodeGenRegisterClass::Key &K) {
-    OS << "{ " << K.RSI;
+    OS << "{ " << K.RSI.getAsString();
     for (const auto R : *K.Members)
       OS << ", " << R->getName();
     return OS << " }";

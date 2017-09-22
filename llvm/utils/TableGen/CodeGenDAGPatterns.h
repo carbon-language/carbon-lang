@@ -240,8 +240,6 @@ private:
   bool intersect(SetType &Out, const SetType &In);
 };
 
-raw_ostream &operator<<(raw_ostream &OS, const TypeSetByHwMode &T);
-
 struct TypeInfer {
   TypeInfer(TreePattern &T) : TP(T), ForceMode(0) {}
 

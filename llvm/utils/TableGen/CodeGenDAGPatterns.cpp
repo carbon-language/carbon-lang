@@ -238,14 +238,10 @@ bool TypeSetByHwMode::operator==(const TypeSetByHwMode &VTS) const {
   return true;
 }
 
-raw_ostream &operator<<(raw_ostream &OS, const TypeSetByHwMode &T) {
-  T.writeToStream(OS);
-  return OS;
-}
-
 LLVM_DUMP_METHOD
 void TypeSetByHwMode::dump() const {
-  dbgs() << *this << '\n';
+  writeToStream(dbgs());
+  dbgs() << '\n';
 }
 
 bool TypeSetByHwMode::intersect(SetType &Out, const SetType &In) {
