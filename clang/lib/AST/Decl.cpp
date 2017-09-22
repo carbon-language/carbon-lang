@@ -103,28 +103,22 @@ TranslationUnitDecl::TranslationUnitDecl(ASTContext &ctx)
 /// Does this computation kind permit us to consider additional
 /// visibility settings from attributes and the like?
 static bool hasExplicitVisibilityAlready(LVComputationKind computation) {
-  return ((unsigned(computation) & IgnoreExplicitVisibilityBit) != 0);
+  return computation.IgnoreExplicitVisibility;
 }
 
 /// Given an LVComputationKind, return one of the same type/value sort
 /// that records that it already has explicit visibility.
 static LVComputationKind
-withExplicitVisibilityAlready(LVComputationKind oldKind) {
-  LVComputationKind newKind =
-    static_cast<LVComputationKind>(unsigned(oldKind) |
-                                   IgnoreExplicitVisibilityBit);
-  assert(oldKind != LVForType          || newKind == LVForExplicitType);
-  assert(oldKind != LVForValue         || newKind == LVForExplicitValue);
-  assert(oldKind != LVForExplicitType  || newKind == LVForExplicitType);
-  assert(oldKind != LVForExplicitValue || newKind == LVForExplicitValue);
-  return newKind;
+withExplicitVisibilityAlready(LVComputationKind Kind) {
+  Kind.IgnoreExplicitVisibility = true;
+  return Kind;
 }
 
 static Optional<Visibility> getExplicitVisibility(const NamedDecl *D,
                                                   LVComputationKind kind) {
-  assert(!hasExplicitVisibilityAlready(kind) &&
+  assert(!kind.IgnoreExplicitVisibility &&
          "asking for explicit visibility when we shouldn't be");
-  return D->getExplicitVisibility((NamedDecl::ExplicitVisibilityKind) kind);
+  return D->getExplicitVisibility(kind.getExplicitVisibilityKind());
 }
 
 /// Is the given declaration a "type" or a "value" for the purposes of
@@ -190,7 +184,7 @@ static Optional<Visibility> getVisibilityOf(const NamedDecl *D,
 
 LinkageInfo LinkageComputer::getLVForType(const Type &T,
                                           LVComputationKind computation) {
-  if (computation == LVForLinkageOnly)
+  if (computation.IgnoreAllVisibility)
     return LinkageInfo(T.getLinkage(), DefaultVisibility, true);
   return getTypeLinkageAndVisibility(&T);
 }
@@ -359,21 +353,11 @@ void LinkageComputer::mergeTemplateLV(
 /// that would match the given rules?
 static bool hasDirectVisibilityAttribute(const NamedDecl *D,
                                          LVComputationKind computation) {
-  switch (computation) {
-  case LVForType:
-  case LVForExplicitType:
-    if (D->hasAttr<TypeVisibilityAttr>())
-      return true;
-    // fallthrough
-  case LVForValue:
-  case LVForExplicitValue:
-    if (D->hasAttr<VisibilityAttr>())
-      return true;
+  if (computation.IgnoreAllVisibility)
     return false;
-  case LVForLinkageOnly:
-    return false;
-  }
-  llvm_unreachable("bad visibility computation kind");
+
+  return (computation.isTypeVisibility() && D->hasAttr<TypeVisibilityAttr>()) ||
+         D->hasAttr<VisibilityAttr>();
 }
 
 /// Should we consider visibility associated with the template
@@ -675,13 +659,10 @@ LinkageComputer::getLVForNamespaceScopeDecl(const NamedDecl *D,
     // Add in global settings if the above didn't give us direct visibility.
     if (!LV.isVisibilityExplicit()) {
       // Use global type/value visibility as appropriate.
-      Visibility globalVisibility;
-      if (computation == LVForValue) {
-        globalVisibility = Context.getLangOpts().getValueVisibilityMode();
-      } else {
-        assert(computation == LVForType);
-        globalVisibility = Context.getLangOpts().getTypeVisibilityMode();
-      }
+      Visibility globalVisibility =
+          computation.isValueVisibility()
+              ? Context.getLangOpts().getValueVisibilityMode()
+              : Context.getLangOpts().getTypeVisibilityMode();
       LV.mergeVisibility(globalVisibility, /*explicit*/ false);
 
       // If we're paying attention to global visibility, apply
@@ -1011,8 +992,9 @@ bool NamedDecl::isLinkageValid() const {
   if (!hasCachedLinkage())
     return true;
 
-  Linkage L =
-      LinkageComputer{}.computeLVForDecl(this, LVForLinkageOnly).getLinkage();
+  Linkage L = LinkageComputer{}
+                  .computeLVForDecl(this, LVComputationKind::forLinkageOnly())
+                  .getLinkage();
   return L == getCachedLinkage();
 }
 
@@ -1032,7 +1014,9 @@ ObjCStringFormatFamily NamedDecl::getObjCFStringFormattingFamily() const {
 Linkage NamedDecl::getLinkageInternal() const {
   // We don't care about visibility here, so ask for the cheapest
   // possible visibility analysis.
-  return LinkageComputer{}.getLVForDecl(this, LVForLinkageOnly).getLinkage();
+  return LinkageComputer{}
+      .getLVForDecl(this, LVComputationKind::forLinkageOnly())
+      .getLinkage();
 }
 
 LinkageInfo NamedDecl::getLinkageAndVisibility() const {
@@ -1357,7 +1341,7 @@ LinkageInfo LinkageComputer::getLVForDecl(const NamedDecl *D,
   if (D->hasAttr<InternalLinkageAttr>())
     return getInternalLinkageFor(D);
 
-  if (computation == LVForLinkageOnly && D->hasCachedLinkage())
+  if (computation.IgnoreAllVisibility && D->hasCachedLinkage())
     return LinkageInfo(D->getCachedLinkage(), DefaultVisibility, false);
 
   if (llvm::Optional<LinkageInfo> LI = lookup(D, computation))
@@ -1398,7 +1382,10 @@ LinkageInfo LinkageComputer::getLVForDecl(const NamedDecl *D,
 }
 
 LinkageInfo LinkageComputer::getDeclLinkageAndVisibility(const NamedDecl *D) {
-  return getLVForDecl(D, usesTypeVisibility(D) ? LVForType : LVForValue);
+  return getLVForDecl(D,
+                      LVComputationKind(usesTypeVisibility(D)
+                                            ? NamedDecl::VisibilityForType
+                                            : NamedDecl::VisibilityForValue));
 }
 
 Module *NamedDecl::getOwningModuleForLinkage() const {
