@@ -117,10 +117,12 @@ class LinkageComputer {
                        LVComputationKind computation);
 
   LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
-                                         LVComputationKind computation);
+                                         LVComputationKind computation,
+                                         bool IgnoreVarTypeLinkage);
 
   LinkageInfo getLVForClassMember(const NamedDecl *D,
-                                  LVComputationKind computation);
+                                  LVComputationKind computation,
+                                  bool IgnoreVarTypeLinkage);
 
   LinkageInfo getLVForClosure(const DeclContext *DC, Decl *ContextDecl,
                               LVComputationKind computation);
@@ -135,7 +137,8 @@ class LinkageComputer {
 
 public:
   LinkageInfo computeLVForDecl(const NamedDecl *D,
-                               LVComputationKind computation);
+                               LVComputationKind computation,
+                               bool IgnoreVarTypeLinkage = false);
 
   LinkageInfo getLVForDecl(const NamedDecl *D, LVComputationKind computation);
 
