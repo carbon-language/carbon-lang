@@ -2801,11 +2801,11 @@ SDValue PPCDAGToDAGISel::getCompoundZeroComparisonInGPR(SDValue LHS, SDLoc dl,
 
   // Produce the value that needs to be either zero or sign extended.
   switch (CmpTy) {
-  default: llvm_unreachable("Unknown Zero-comparison type.");
   case ZeroCompare::GEZExt:
   case ZeroCompare::GESExt:
     ToExtend = SDValue(CurDAG->getMachineNode(Is32Bit ? PPC::NOR : PPC::NOR8,
                                               dl, InVT, LHS, LHS), 0);
+    break;
   case ZeroCompare::LEZExt:
   case ZeroCompare::LESExt: {
     if (Is32Bit) {
@@ -2824,22 +2824,24 @@ SDValue PPCDAGToDAGISel::getCompoundZeroComparisonInGPR(SDValue LHS, SDLoc dl,
       ToExtend = SDValue(CurDAG->getMachineNode(PPC::OR8, dl, MVT::i64,
                                                 Addi, LHS), 0);
     }
+    break;
   }
   }
 
   // For 64-bit sequences, the extensions are the same for the GE/LE cases.
-  if (!Is32Bit && (CmpTy == ZeroCompare::GEZExt || ZeroCompare::LEZExt))
+  if (!Is32Bit &&
+      (CmpTy == ZeroCompare::GEZExt || CmpTy == ZeroCompare::LEZExt))
     return SDValue(CurDAG->getMachineNode(PPC::RLDICL, dl, MVT::i64,
                                           ToExtend, getI64Imm(1, dl),
                                           getI64Imm(63, dl)), 0);
-  if (!Is32Bit && (CmpTy == ZeroCompare::GESExt || ZeroCompare::LESExt))
+  if (!Is32Bit &&
+      (CmpTy == ZeroCompare::GESExt || CmpTy == ZeroCompare::LESExt))
     return SDValue(CurDAG->getMachineNode(PPC::SRADI, dl, MVT::i64, ToExtend,
                                           getI64Imm(63, dl)), 0);
 
   assert(Is32Bit && "Should have handled the 32-bit sequences above.");
   // For 32-bit sequences, the extensions differ between GE/LE cases.
   switch (CmpTy) {
-  default: llvm_unreachable("Unknown Zero-comparison type.");
   case ZeroCompare::GEZExt: {
     SDValue ShiftOps[] =
       { ToExtend, getI32Imm(1, dl), getI32Imm(31, dl), getI32Imm(31, dl) };
@@ -2856,6 +2858,10 @@ SDValue PPCDAGToDAGISel::getCompoundZeroComparisonInGPR(SDValue LHS, SDLoc dl,
     return SDValue(CurDAG->getMachineNode(PPC::ADDI8, dl, MVT::i64, ToExtend,
                                           getI32Imm(-1, dl)), 0);
   }
+
+  // The above case covers all the enumerators so it can't have a default clause
+  // to avoid compiler warnings.
+  llvm_unreachable("Unknown zero-comparison type.");
 }
 
 /// Produces a zero-extended result of comparing two 32-bit values according to
