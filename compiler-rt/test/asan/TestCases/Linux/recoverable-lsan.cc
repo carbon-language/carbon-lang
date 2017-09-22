@@ -3,6 +3,7 @@
 // RUN: %env_asan_opts="halt_on_error=0" %run %t 2>&1 | FileCheck %s
 // RUN: %env_asan_opts="halt_on_error=1" not %run %t 2>&1 | FileCheck %s
 // RUN: not %run %t 2>&1 | FileCheck %s
+// REQUIRES: leak-detection
 // UNSUPPORTED: android 
 
 #include <stdlib.h>
@@ -19,4 +20,3 @@ int main() {
 }
 
 // CHECK: LeakSanitizer: detected memory leaks
-// CHECK: SUMMARY: AddressSanitizer: 20 byte(s) leaked
