@@ -368,8 +368,9 @@ ScopedErrorReportLock::ScopedErrorReportLock(u32 current_tid) {
 
       // Can't use Report() here because of potential deadlocks in nested
       // signal handlers.
-      static const char msg[] =
-          "AddressSanitizer: nested bug in the same thread, aborting.\n";
+      CatastrophicErrorWrite(SanitizerToolName,
+                             internal_strlen(SanitizerToolName));
+      static const char msg[] = ": nested bug in the same thread, aborting.\n";
       CatastrophicErrorWrite(msg, sizeof(msg) - 1);
 
       internal__exit(common_flags()->exitcode);
