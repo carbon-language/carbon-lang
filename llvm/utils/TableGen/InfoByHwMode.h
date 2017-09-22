@@ -129,7 +129,7 @@ struct ValueTypeByHwMode : public InfoByHwMode<MVT> {
   MVT getType(unsigned Mode) const { return get(Mode); }
   MVT &getOrCreateTypeForMode(unsigned Mode, MVT Type);
 
-  static std::string getMVTName(MVT T);
+  static StringRef getMVTName(MVT T);
   std::string getAsString() const;
   void dump() const;
 };

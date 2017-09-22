@@ -70,10 +70,9 @@ MVT &ValueTypeByHwMode::getOrCreateTypeForMode(unsigned Mode, MVT Type) {
   return Map.insert(std::make_pair(Mode, Type)).first->second;
 }
 
-std::string ValueTypeByHwMode::getMVTName(MVT T) {
-  std::string N = llvm::getEnumName(T.SimpleTy);
-  if (N.substr(0,5) == "MVT::")
-    N = N.substr(5);
+StringRef ValueTypeByHwMode::getMVTName(MVT T) {
+  StringRef N = llvm::getEnumName(T.SimpleTy);
+  N.consume_front("MVT::");
   return N;
 }
 
@@ -91,7 +90,7 @@ std::string ValueTypeByHwMode::getAsString() const {
   for (unsigned i = 0, e = Pairs.size(); i != e; ++i) {
     const PairType *P = Pairs[i];
     str << '(' << getModeName(P->first)
-        << ':' << getMVTName(P->second) << ')';
+        << ':' << getMVTName(P->second).str() << ')';
     if (i != e-1)
       str << ',';
   }
