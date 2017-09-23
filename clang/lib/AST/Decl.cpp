@@ -871,12 +871,11 @@ LinkageComputer::getLVForClassMember(const NamedDecl *D,
 
   LinkageInfo classLV =
     getLVForDecl(cast<RecordDecl>(D->getDeclContext()), classComputation);
-  // If the class already has unique-external linkage, we can't improve.
-  if (classLV.getLinkage() == UniqueExternalLinkage)
-    return LinkageInfo::uniqueExternal();
-
+  // The member has the same linkage as the class. If that's not externally
+  // visible, we don't need to compute anything about the linkage.
+  // FIXME: If we're only computing linkage, can we bail out here?
   if (!isExternallyVisible(classLV.getLinkage()))
-    return LinkageInfo::none();
+    return classLV;
 
 
   // Otherwise, don't merge in classLV yet, because in certain cases

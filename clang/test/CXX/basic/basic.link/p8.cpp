@@ -67,3 +67,12 @@ void use_inline_vars() {
   defined_after_use = 2;
 }
 inline int defined_after_use;
+
+namespace {
+  template<typename T> struct A {
+    static const int n;
+  };
+  template<typename T> const int A<T>::n = 3;
+  static_assert(A<int>::n == 3);
+  int k = A<float>::n;
+}
