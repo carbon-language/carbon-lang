@@ -624,26 +624,6 @@ namespace llvm {
 
   /// Define some predicates that are used for node matching.
   namespace X86 {
-    /// Return true if the specified
-    /// EXTRACT_SUBVECTOR operand specifies a vector extract that is
-    /// suitable for input to VEXTRACTF128, VEXTRACTI128 instructions.
-    bool isVEXTRACT128Index(SDNode *N);
-
-    /// Return true if the specified
-    /// INSERT_SUBVECTOR operand specifies a subvector insert that is
-    /// suitable for input to VINSERTF128, VINSERTI128 instructions.
-    bool isVINSERT128Index(SDNode *N);
-
-    /// Return true if the specified
-    /// EXTRACT_SUBVECTOR operand specifies a vector extract that is
-    /// suitable for input to VEXTRACTF64X4, VEXTRACTI64X4 instructions.
-    bool isVEXTRACT256Index(SDNode *N);
-
-    /// Return true if the specified
-    /// INSERT_SUBVECTOR operand specifies a subvector insert that is
-    /// suitable for input to VINSERTF64X4, VINSERTI64X4 instructions.
-    bool isVINSERT256Index(SDNode *N);
-
     /// Return the appropriate
     /// immediate to extract the specified EXTRACT_SUBVECTOR index
     /// with VEXTRACTF128, VEXTRACTI128 instructions.

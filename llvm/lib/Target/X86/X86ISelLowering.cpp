@@ -4809,51 +4809,6 @@ static bool canWidenShuffleElements(ArrayRef<int> Mask,
   return true;
 }
 
-/// Return true if the specified EXTRACT_SUBVECTOR operand specifies a vector
-/// extract that is suitable for instruction that extract 128 or 256 bit vectors
-static bool isVEXTRACTIndex(SDNode *N, unsigned vecWidth) {
-  assert((vecWidth == 128 || vecWidth == 256) && "Unexpected vector width");
-  if (!isa<ConstantSDNode>(N->getOperand(1).getNode()))
-    return false;
-
-  // The index should be aligned on a vecWidth-bit boundary.
-  uint64_t Index = N->getConstantOperandVal(1);
-  MVT VT = N->getSimpleValueType(0);
-  unsigned ElSize = VT.getScalarSizeInBits();
-  return (Index * ElSize) % vecWidth == 0;
-}
-
-/// Return true if the specified INSERT_SUBVECTOR
-/// operand specifies a subvector insert that is suitable for input to
-/// insertion of 128 or 256-bit subvectors
-static bool isVINSERTIndex(SDNode *N, unsigned vecWidth) {
-  assert((vecWidth == 128 || vecWidth == 256) && "Unexpected vector width");
-  if (!isa<ConstantSDNode>(N->getOperand(2).getNode()))
-    return false;
-
-  // The index should be aligned on a vecWidth-bit boundary.
-  uint64_t Index = N->getConstantOperandVal(2);
-  MVT VT = N->getSimpleValueType(0);
-  unsigned ElSize = VT.getScalarSizeInBits();
-  return (Index * ElSize) % vecWidth == 0;
-}
-
-bool X86::isVINSERT128Index(SDNode *N) {
-  return isVINSERTIndex(N, 128);
-}
-
-bool X86::isVINSERT256Index(SDNode *N) {
-  return isVINSERTIndex(N, 256);
-}
-
-bool X86::isVEXTRACT128Index(SDNode *N) {
-  return isVEXTRACTIndex(N, 128);
-}
-
-bool X86::isVEXTRACT256Index(SDNode *N) {
-  return isVEXTRACTIndex(N, 256);
-}
-
 static unsigned getExtractVEXTRACTImmediate(SDNode *N, unsigned vecWidth) {
   assert((vecWidth == 128 || vecWidth == 256) && "Unsupported vector width");
   assert(isa<ConstantSDNode>(N->getOperand(1).getNode()) &&

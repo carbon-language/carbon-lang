@@ -907,30 +907,25 @@ def INSERT_get_vinsert256_imm : SDNodeXForm<insert_subvector, [{
 
 def vextract128_extract : PatFrag<(ops node:$bigvec, node:$index),
                                    (extract_subvector node:$bigvec,
-                                                      node:$index), [{
-  return X86::isVEXTRACT128Index(N);
-}], EXTRACT_get_vextract128_imm>;
+                                                      node:$index), [{}],
+                                  EXTRACT_get_vextract128_imm>;
 
 def vinsert128_insert : PatFrag<(ops node:$bigvec, node:$smallvec,
                                       node:$index),
                                  (insert_subvector node:$bigvec, node:$smallvec,
-                                                   node:$index), [{
-  return X86::isVINSERT128Index(N);
-}], INSERT_get_vinsert128_imm>;
-
+                                                   node:$index), [{}],
+                                INSERT_get_vinsert128_imm>;
 
 def vextract256_extract : PatFrag<(ops node:$bigvec, node:$index),
                                    (extract_subvector node:$bigvec,
-                                                      node:$index), [{
-  return X86::isVEXTRACT256Index(N);
-}], EXTRACT_get_vextract256_imm>;
+                                                      node:$index), [{}],
+                                  EXTRACT_get_vextract256_imm>;
 
 def vinsert256_insert : PatFrag<(ops node:$bigvec, node:$smallvec,
                                       node:$index),
                                  (insert_subvector node:$bigvec, node:$smallvec,
-                                                   node:$index), [{
-  return X86::isVINSERT256Index(N);
-}], INSERT_get_vinsert256_imm>;
+                                                   node:$index), [{}],
+                                INSERT_get_vinsert256_imm>;
 
 def X86mload : PatFrag<(ops node:$src1, node:$src2, node:$src3),
                          (masked_load node:$src1, node:$src2, node:$src3), [{
