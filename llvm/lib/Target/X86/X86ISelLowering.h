@@ -624,26 +624,6 @@ namespace llvm {
 
   /// Define some predicates that are used for node matching.
   namespace X86 {
-    /// Return the appropriate
-    /// immediate to extract the specified EXTRACT_SUBVECTOR index
-    /// with VEXTRACTF128, VEXTRACTI128 instructions.
-    unsigned getExtractVEXTRACT128Immediate(SDNode *N);
-
-    /// Return the appropriate
-    /// immediate to insert at the specified INSERT_SUBVECTOR index
-    /// with VINSERTF128, VINSERT128 instructions.
-    unsigned getInsertVINSERT128Immediate(SDNode *N);
-
-    /// Return the appropriate
-    /// immediate to extract the specified EXTRACT_SUBVECTOR index
-    /// with VEXTRACTF64X4, VEXTRACTI64x4 instructions.
-    unsigned getExtractVEXTRACT256Immediate(SDNode *N);
-
-    /// Return the appropriate
-    /// immediate to insert at the specified INSERT_SUBVECTOR index
-    /// with VINSERTF64x4, VINSERTI64x4 instructions.
-    unsigned getInsertVINSERT256Immediate(SDNode *N);
-
     /// Returns true if Elt is a constant zero or floating point constant +0.0.
     bool isZeroNode(SDValue Elt);
 
