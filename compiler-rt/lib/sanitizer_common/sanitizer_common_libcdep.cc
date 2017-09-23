@@ -334,6 +334,10 @@ ScopedErrorReportLock::~ScopedErrorReportLock() {
   atomic_store_relaxed(&reporting_thread, 0);
 }
 
+void ScopedErrorReportLock::CheckLocked() {
+  CommonSanitizerReportMutex.CheckLocked();
+}
+
 }  // namespace __sanitizer
 
 SANITIZER_INTERFACE_WEAK_DEF(void, __sanitizer_sandbox_on_notify,

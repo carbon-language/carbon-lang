@@ -213,6 +213,8 @@ class ScopedErrorReportLock {
  public:
   ScopedErrorReportLock();
   ~ScopedErrorReportLock();
+
+  static void CheckLocked();
 };
 
 extern uptr stoptheworld_tracer_pid;
