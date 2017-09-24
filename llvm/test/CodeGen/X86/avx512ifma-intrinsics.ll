@@ -151,8 +151,7 @@ define <8 x i64>@test_int_x86_avx512_vpmadd52h_uq_512_load_commute(<8 x i64> %x0
 define <8 x i64>@test_int_x86_avx512_vpmadd52h_uq_512_load_commute_bcast(<8 x i64> %x0, i64* %x1ptr, <8 x i64> %x2) {
 ; CHECK-LABEL: test_int_x86_avx512_vpmadd52h_uq_512_load_commute_bcast:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    vpbroadcastq (%rdi), %zmm2
-; CHECK-NEXT:    vpmadd52huq %zmm1, %zmm2, %zmm0
+; CHECK-NEXT:    vpmadd52huq (%rdi){1to8}, %zmm1, %zmm0
 ; CHECK-NEXT:    retq
 
   %x1load = load i64, i64* %x1ptr
@@ -204,8 +203,7 @@ define <8 x i64>@test_int_x86_avx512_mask_vpmadd52h_uq_512_load_commute_bcast(<8
 ; CHECK-LABEL: test_int_x86_avx512_mask_vpmadd52h_uq_512_load_commute_bcast:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %esi, %k1
-; CHECK-NEXT:    vpbroadcastq (%rdi), %zmm2
-; CHECK-NEXT:    vpmadd52huq %zmm1, %zmm2, %zmm0 {%k1}
+; CHECK-NEXT:    vpmadd52huq (%rdi){1to8}, %zmm1, %zmm0 {%k1}
 ; CHECK-NEXT:    retq
 
   %x1load = load i64, i64* %x1ptr
@@ -257,8 +255,7 @@ define <8 x i64>@test_int_x86_avx512_maskz_vpmadd52h_uq_512_load_commute_bcast(<
 ; CHECK-LABEL: test_int_x86_avx512_maskz_vpmadd52h_uq_512_load_commute_bcast:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %esi, %k1
-; CHECK-NEXT:    vpbroadcastq (%rdi), %zmm2
-; CHECK-NEXT:    vpmadd52huq %zmm1, %zmm2, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vpmadd52huq (%rdi){1to8}, %zmm1, %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
 
   %x1load = load i64, i64* %x1ptr
