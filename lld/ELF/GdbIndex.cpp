@@ -24,8 +24,7 @@ using namespace llvm::object;
 using namespace lld;
 using namespace lld::elf;
 
-template <class ELFT>
-LLDDwarfObj<ELFT>::LLDDwarfObj(ObjFile<ELFT> *Obj) : Obj(Obj) {
+template <class ELFT> LLDDwarfObj<ELFT>::LLDDwarfObj(ObjFile<ELFT> *Obj) {
   for (InputSectionBase *Sec : Obj->getSections()) {
     if (!Sec)
       continue;

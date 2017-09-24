@@ -24,7 +24,6 @@ struct LLDDWARFSection final : public llvm::DWARFSection {
 };
 
 template <class ELFT> class LLDDwarfObj final : public llvm::DWARFObject {
-  ObjFile<ELFT> *Obj;
   LLDDWARFSection InfoSection;
   LLDDWARFSection RangeSection;
   LLDDWARFSection LineSection;
