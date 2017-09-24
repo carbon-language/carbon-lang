@@ -34566,7 +34566,7 @@ combineToExtendBoolVectorInReg(SDNode *N, SelectionDAG &DAG,
 
   // Now, mask the relevant bit in each element.
   SmallVector<SDValue, 32> Bits;
-  for (int i = 0; i != NumElts; ++i) {
+  for (unsigned i = 0; i != NumElts; ++i) {
     int BitIdx = (i % EltSizeInBits);
     APInt Bit = APInt::getBitsSet(EltSizeInBits, BitIdx, BitIdx + 1);
     Bits.push_back(DAG.getConstant(Bit, DL, SVT));
