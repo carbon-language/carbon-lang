@@ -8351,7 +8351,7 @@ __m128d test_mm_maskz_move_sd (__mmask8 __U, __m128d __A, __m128d __B)
   // CHECK-LABEL: @test_mm_maskz_move_sd
   // CHECK:  extractelement <2 x double> %{{.*}}, i32 0
   // CHECK:  phi double [ %{{.*}}, %{{.*}} ], [ 0.000000e+00, %{{.*}} ]
-  // CHECK:  insertelement <2 x double> %6, double %cond.i, i32 0
+  // CHECK:  insertelement <2 x double> %{{.*}}, double %{{.*}}, i32 0
   return _mm_maskz_move_sd (__U, __A, __B);
 }
 
