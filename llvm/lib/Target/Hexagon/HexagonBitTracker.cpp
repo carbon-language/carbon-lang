@@ -125,8 +125,8 @@ uint16_t HexagonEvaluator::getPhysRegBitWidth(unsigned Reg) const {
   if (const TargetRegisterClass *RC = TRI.getMinimalPhysRegClass(Reg))
     return TRI.getRegSizeInBits(*RC);
 
-  StringRef E = "Unhandled physical register";
-  llvm_unreachable((Twine(E) + TRI.getName(Reg)).str().c_str());
+  llvm_unreachable(
+      (Twine("Unhandled physical register") + TRI.getName(Reg)).str().c_str());
 }
 
 const TargetRegisterClass &HexagonEvaluator::composeWithSubRegIndex(
@@ -134,10 +134,12 @@ const TargetRegisterClass &HexagonEvaluator::composeWithSubRegIndex(
   if (Idx == 0)
     return RC;
 
+#ifndef NDEBUG
   const auto &HRI = static_cast<const HexagonRegisterInfo&>(TRI);
   bool IsSubLo = (Idx == HRI.getHexagonSubRegIndex(RC, Hexagon::ps_sub_lo));
   bool IsSubHi = (Idx == HRI.getHexagonSubRegIndex(RC, Hexagon::ps_sub_hi));
   assert(IsSubLo != IsSubHi && "Must refer to either low or high subreg");
+#endif
 
   switch (RC.getID()) {
     case Hexagon::DoubleRegsRegClassID:
