@@ -1756,9 +1756,12 @@ readPubNamesAndTypes(DWARFContext &Dwarf) {
   std::vector<GdbIndexChunk::NameTypeEntry> Ret;
   for (StringRef Sec : {Sec1, Sec2}) {
     DWARFDebugPubTable Table(Sec, Config->IsLE, true);
-    for (const DWARFDebugPubTable::Set &Set : Table.getData())
-      for (const DWARFDebugPubTable::Entry &Ent : Set.Entries)
-        Ret.push_back({Ent.Name, Ent.Descriptor.toBits()});
+    for (const DWARFDebugPubTable::Set &Set : Table.getData()) {
+      for (const DWARFDebugPubTable::Entry &Ent : Set.Entries) {
+        CachedHashStringRef S(Ent.Name, computeGdbHash(Ent.Name));
+        Ret.push_back({S, Ent.Descriptor.toBits()});
+      }
+    }
   }
   return Ret;
 }
@@ -1787,12 +1790,10 @@ std::vector<std::set<uint32_t>> GdbIndexSection::createCuVectors() {
 
   for (GdbIndexChunk &Chunk : Chunks) {
     for (GdbIndexChunk::NameTypeEntry &Ent : Chunk.NamesAndTypes) {
-      uint32_t Hash = computeGdbHash(Ent.Name);
       size_t Offset = StringPool.add(Ent.Name);
-
       GdbSymbol *&Sym = SymbolMap[Offset];
       if (!Sym) {
-        Sym = make<GdbSymbol>(GdbSymbol{Hash, Offset, Ret.size()});
+        Sym = make<GdbSymbol>(GdbSymbol{Ent.Name.hash(), Offset, Ret.size()});
         Ret.resize(Ret.size() + 1);
       }
       Ret[Sym->CuVectorIndex].insert((Ent.Type << 24) | Idx);

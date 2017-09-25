@@ -510,7 +510,7 @@ struct GdbIndexChunk {
   };
 
   struct NameTypeEntry {
-    StringRef Name;
+    llvm::CachedHashStringRef Name;
     uint8_t Type;
   };
 
