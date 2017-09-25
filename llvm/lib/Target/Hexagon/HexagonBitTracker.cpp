@@ -95,8 +95,8 @@ BT::BitMask HexagonEvaluator::mask(unsigned Reg, unsigned Sub) const {
 
   if (Sub == 0)
     return MachineEvaluator::mask(Reg, 0);
-  const TargetRegisterClass *RC = MRI.getRegClass(Reg);
-  unsigned ID = RC->getID();
+  const TargetRegisterClass &RC = *MRI.getRegClass(Reg);
+  unsigned ID = RC.getID();
   uint16_t RW = getRegBitWidth(RegisterRef(Reg, Sub));
   auto &HRI = static_cast<const HexagonRegisterInfo&>(TRI);
   bool IsSubLo = (Sub == HRI.getHexagonSubRegIndex(RC, Hexagon::ps_sub_lo));
@@ -109,7 +109,8 @@ BT::BitMask HexagonEvaluator::mask(unsigned Reg, unsigned Sub) const {
       break;
   }
 #ifndef NDEBUG
-  dbgs() << PrintReg(Reg, &TRI, Sub) << '\n';
+  dbgs() << PrintReg(Reg, &TRI, Sub) << " in reg class "
+         << TRI.getRegClassName(&RC) << '\n';
 #endif
   llvm_unreachable("Unexpected register/subregister");
 }
