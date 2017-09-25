@@ -1797,14 +1797,15 @@ std::vector<std::vector<uint32_t>> GdbIndexSection::createCuVectors() {
         Off += Ent.Name.size() + 1;
         Ret.push_back({});
       }
-      Ret[Sym->CuVectorIndex].push_back((Ent.Type << 24) | Idx);
+
+      // gcc 5.4.1 produces a buggy .debug_gnu_pubnames that contains
+      // duplicate entries, so we want to dedup them.
+      std::vector<uint32_t> &Vec = Ret[Sym->CuVectorIndex];
+      uint32_t Val = (Ent.Type << 24) | Idx;
+      if (Vec.empty() || Vec.back() != Val)
+        Vec.push_back(Val);
     }
     Idx += Chunk.CompilationUnits.size();
-  }
-
-  for (std::vector<uint32_t> &V : Ret) {
-    std::sort(V.begin(), V.end());
-    V.erase(std::unique(V.begin(), V.end()), V.end());
   }
 
   StringPoolSize = Off;
