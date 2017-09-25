@@ -428,7 +428,7 @@ void LinkerScript::processCommands(OutputSectionFactory &Factory) {
 
 void LinkerScript::fabricateDefaultCommands() {
   // Define start address
-  uint64_t StartAddr = -1;
+  uint64_t StartAddr = UINT64_MAX;
 
   // The Sections with -T<section> have been sorted in order of ascending
   // address. We must lower StartAddr if the lowest -T<section address> as
