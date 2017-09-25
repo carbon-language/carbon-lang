@@ -1937,7 +1937,7 @@ void GdbIndexSection::writeTo(uint8_t *Buf) {
     GdbSymbol *Sym = KV.second;
     size_t Off = Sym->NameOffset;
     memcpy(Buf + Off, S.val().data(), S.size());
-    Buf[Off + S.size() + 1] = '\0';
+    Buf[Off + S.size()] = '\0';
   }
 }
 
