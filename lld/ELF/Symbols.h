@@ -80,7 +80,7 @@ public:
   StringRef getName() const { return Name; }
   uint8_t getVisibility() const { return StOther & 0x3; }
   void parseSymbolVersion();
-  void copy(SymbolBody *Other);
+  void copyFrom(SymbolBody *Other);
 
   bool isInGot() const { return GotIndex != -1U; }
   bool isInPlt() const { return PltIndex != -1U; }

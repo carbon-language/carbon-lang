@@ -188,7 +188,7 @@ void SymbolTable::addSymbolAlias(StringRef Alias, StringRef Name) {
 // symbols are finalized, we can perform the replacement.
 void SymbolTable::applySymbolRenames() {
   for (SymbolRenaming &S : Defsyms) {
-    S.Dst->body()->copy(S.Src->body());
+    S.Dst->body()->copyFrom(S.Src->body());
     S.Dst->File = S.Src->File;
     S.Dst->Binding = S.Binding;
   }
