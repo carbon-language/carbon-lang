@@ -27,8 +27,6 @@
 #include "llvm/ADT/MapVector.h"
 #include "llvm/MC/StringTableBuilder.h"
 
-#include <set>
-
 namespace lld {
 namespace elf {
 
@@ -536,14 +534,14 @@ public:
 
 private:
   void fixCuIndex();
-  std::vector<std::set<uint32_t>> createCuVectors();
+  std::vector<std::vector<uint32_t>> createCuVectors();
   std::vector<GdbSymbol *> createGdbSymtab();
 
   // A symbol table for this .gdb_index section.
   std::vector<GdbSymbol *> GdbSymtab;
 
   // CU vector is a part of constant pool area of section.
-  std::vector<std::set<uint32_t>> CuVectors;
+  std::vector<std::vector<uint32_t>> CuVectors;
 
   // Symbol table contents.
   llvm::DenseMap<llvm::CachedHashStringRef, GdbSymbol *> Symbols;

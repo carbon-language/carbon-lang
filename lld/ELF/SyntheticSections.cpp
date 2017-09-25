@@ -1784,8 +1784,8 @@ void GdbIndexSection::fixCuIndex() {
   }
 }
 
-std::vector<std::set<uint32_t>> GdbIndexSection::createCuVectors() {
-  std::vector<std::set<uint32_t>> Ret;
+std::vector<std::vector<uint32_t>> GdbIndexSection::createCuVectors() {
+  std::vector<std::vector<uint32_t>> Ret;
   uint32_t Idx = 0;
   uint32_t Off = 0;
 
@@ -1795,11 +1795,16 @@ std::vector<std::set<uint32_t>> GdbIndexSection::createCuVectors() {
       if (!Sym) {
         Sym = make<GdbSymbol>(GdbSymbol{Ent.Name.hash(), Off, Ret.size()});
         Off += Ent.Name.size() + 1;
-        Ret.resize(Ret.size() + 1);
+        Ret.push_back({});
       }
-      Ret[Sym->CuVectorIndex].insert((Ent.Type << 24) | Idx);
+      Ret[Sym->CuVectorIndex].push_back((Ent.Type << 24) | Idx);
     }
     Idx += Chunk.CompilationUnits.size();
+  }
+
+  for (std::vector<uint32_t> &V : Ret) {
+    std::sort(V.begin(), V.end());
+    V.erase(std::unique(V.begin(), V.end()), V.end());
   }
 
   StringPoolSize = Off;
@@ -1870,9 +1875,9 @@ GdbIndexSection::GdbIndexSection(std::vector<GdbIndexChunk> &&C)
   ConstantPoolOffset = SymtabOffset + GdbSymtab.size() * 8;
 
   size_t Off = 0;
-  for (std::set<uint32_t> &CuVec : CuVectors) {
+  for (ArrayRef<uint32_t> Vec : CuVectors) {
     CuVectorOffsets.push_back(Off);
-    Off += (CuVec.size() + 1) * 4;
+    Off += (Vec.size() + 1) * 4;
   }
   StringPoolOffset = ConstantPoolOffset + Off;
 }
@@ -1922,10 +1927,10 @@ void GdbIndexSection::writeTo(uint8_t *Buf) {
   }
 
   // Write the CU vectors.
-  for (std::set<uint32_t> &CuVec : CuVectors) {
-    write32le(Buf, CuVec.size());
+  for (ArrayRef<uint32_t> Vec : CuVectors) {
+    write32le(Buf, Vec.size());
     Buf += 4;
-    for (uint32_t Val : CuVec) {
+    for (uint32_t Val : Vec) {
       write32le(Buf, Val);
       Buf += 4;
     }
