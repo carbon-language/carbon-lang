@@ -436,15 +436,11 @@ void LinkerScript::fabricateDefaultCommands() {
   for (auto &KV : Config->SectionStartMap)
     StartAddr = std::min(StartAddr, KV.second);
 
+  auto Expr = [=] {
+    return std::min(StartAddr, Config->ImageBase + elf::getHeaderSize());
+  };
   Opt.Commands.insert(Opt.Commands.begin(),
-                      make<SymbolAssignment>(".",
-                                             [=] {
-                                               return std::min(
-                                                   StartAddr,
-                                                   Config->ImageBase +
-                                                       elf::getHeaderSize());
-                                             },
-                                             ""));
+                      make<SymbolAssignment>(".", Expr, ""));
 }
 
 // Add sections that didn't match any sections command.
