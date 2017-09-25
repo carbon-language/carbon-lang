@@ -92,5 +92,6 @@ uptr ParseHex(const char **p);
 
 }  // namespace __sanitizer
 
-#endif  // SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_NETBSD || SANITIZER_MAC
+#endif  // SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_NETBSD ||
+        // SANITIZER_MAC
 #endif  // SANITIZER_PROCMAPS_H
