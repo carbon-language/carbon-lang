@@ -1787,19 +1787,22 @@ void GdbIndexSection::fixCuIndex() {
 std::vector<std::set<uint32_t>> GdbIndexSection::createCuVectors() {
   std::vector<std::set<uint32_t>> Ret;
   uint32_t Idx = 0;
+  uint32_t Off = 0;
 
   for (GdbIndexChunk &Chunk : Chunks) {
     for (GdbIndexChunk::NameTypeEntry &Ent : Chunk.NamesAndTypes) {
-      size_t Offset = StringPool.add(Ent.Name);
-      GdbSymbol *&Sym = SymbolMap[Offset];
+      GdbSymbol *&Sym = Symbols[Ent.Name];
       if (!Sym) {
-        Sym = make<GdbSymbol>(GdbSymbol{Ent.Name.hash(), Offset, Ret.size()});
+        Sym = make<GdbSymbol>(GdbSymbol{Ent.Name.hash(), Off, Ret.size()});
+        Off += Ent.Name.size() + 1;
         Ret.resize(Ret.size() + 1);
       }
       Ret[Sym->CuVectorIndex].insert((Ent.Type << 24) | Idx);
     }
     Idx += Chunk.CompilationUnits.size();
   }
+
+  StringPoolSize = Off;
   return Ret;
 }
 
@@ -1835,12 +1838,14 @@ static size_t getAddressAreaSize(ArrayRef<GdbIndexChunk> Arr) {
 }
 
 std::vector<GdbSymbol *> GdbIndexSection::createGdbSymtab() {
-  uint32_t Size =
-      std::max<uint32_t>(1024, NextPowerOf2(SymbolMap.size() * 4 / 3));
+  uint32_t Size = NextPowerOf2(Symbols.size() * 4 / 3);
+  if (Size < 1024)
+    Size = 1024;
+
   uint32_t Mask = Size - 1;
   std::vector<GdbSymbol *> Ret(Size);
 
-  for (auto &KV : SymbolMap) {
+  for (auto &KV : Symbols) {
     GdbSymbol *Sym = KV.second;
     uint32_t I = Sym->NameHash & Mask;
     uint32_t Step = ((Sym->NameHash * 17) & Mask) | 1;
@@ -1853,8 +1858,7 @@ std::vector<GdbSymbol *> GdbIndexSection::createGdbSymtab() {
 }
 
 GdbIndexSection::GdbIndexSection(std::vector<GdbIndexChunk> &&C)
-    : SyntheticSection(0, SHT_PROGBITS, 1, ".gdb_index"),
-      StringPool(llvm::StringTableBuilder::ELF), Chunks(std::move(C)) {
+    : SyntheticSection(0, SHT_PROGBITS, 1, ".gdb_index"), Chunks(std::move(C)) {
   fixCuIndex();
   CuVectors = createCuVectors();
   GdbSymtab = createGdbSymtab();
@@ -1871,11 +1875,10 @@ GdbIndexSection::GdbIndexSection(std::vector<GdbIndexChunk> &&C)
     Off += (CuVec.size() + 1) * 4;
   }
   StringPoolOffset = ConstantPoolOffset + Off;
-  StringPool.finalizeInOrder();
 }
 
 size_t GdbIndexSection::getSize() const {
-  return StringPoolOffset + StringPool.getSize();
+  return StringPoolOffset + StringPoolSize;
 }
 
 void GdbIndexSection::writeTo(uint8_t *Buf) {
@@ -1929,7 +1932,13 @@ void GdbIndexSection::writeTo(uint8_t *Buf) {
   }
 
   // Write the string pool.
-  StringPool.write(Buf);
+  for (auto &KV : Symbols) {
+    CachedHashStringRef S = KV.first;
+    GdbSymbol *Sym = KV.second;
+    size_t Off = Sym->NameOffset;
+    memcpy(Buf + Off, S.val().data(), S.size());
+    Buf[Off + S.size() + 1] = '\0';
+  }
 }
 
 bool GdbIndexSection::empty() const { return !Out::DebugInfo; }

@@ -24,11 +24,11 @@
 # CHECK-NEXT:    Low/High address = [0x201000, 0x201001) (Size: 0x1), CU id = 0
 # CHECK-NEXT:    Low/High address = [0x201004, 0x201006) (Size: 0x2), CU id = 1
 # CHECK:       Symbol table offset = 0x60, size = 1024, filled slots:
-# CHECK-NEXT:    489: Name offset = 0x1d, CU vector offset = 0x0
+# CHECK-NEXT:    489: Name offset = 0x1c, CU vector offset = 0x0
 # CHECK-NEXT:      String name: main, CU vector index: 0
-# CHECK-NEXT:    754: Name offset = 0x22, CU vector offset = 0x8
+# CHECK-NEXT:    754: Name offset = 0x21, CU vector offset = 0x8
 # CHECK-NEXT:      String name: int, CU vector index: 1
-# CHECK-NEXT:    956: Name offset = 0x26, CU vector offset = 0x14
+# CHECK-NEXT:    956: Name offset = 0x25, CU vector offset = 0x14
 # CHECK-NEXT:      String name: main2, CU vector index: 2
 # CHECK:       Constant pool offset = 0x2060, has 3 CU vectors:
 # CHECK-NEXT:    0(0x0): 0x30000000

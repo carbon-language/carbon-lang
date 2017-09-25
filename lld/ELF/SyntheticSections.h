@@ -542,15 +542,11 @@ private:
   // A symbol table for this .gdb_index section.
   std::vector<GdbSymbol *> GdbSymtab;
 
-  // Symbol table entries are uniquified by their offsets, so
-  // we need a map from offsets to symbols.
-  llvm::DenseMap<size_t, GdbSymbol *> SymbolMap;
-
   // CU vector is a part of constant pool area of section.
   std::vector<std::set<uint32_t>> CuVectors;
 
-  // String pool is also a part of constant pool, it follows CU vectors.
-  llvm::StringTableBuilder StringPool;
+  // Symbol table contents.
+  llvm::DenseMap<llvm::CachedHashStringRef, GdbSymbol *> Symbols;
 
   // Each chunk contains information gathered from a debug sections of single
   // object and used to build different areas of gdb index.
@@ -561,6 +557,7 @@ private:
   uint32_t SymtabOffset;
   uint32_t ConstantPoolOffset;
   uint32_t StringPoolOffset;
+  uint32_t StringPoolSize;
 
   std::vector<size_t> CuVectorOffsets;
 };
