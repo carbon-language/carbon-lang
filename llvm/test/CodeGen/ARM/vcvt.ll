@@ -379,3 +379,55 @@ define i32 @multi_uint(double %c, i32* nocapture %p, i32* nocapture %q) {
   store i32 %conv, i32* %q, align 4
   ret i32 %conv
 }
+
+define i32 @double_to_sint_store(double %c, i32* nocapture %p) {
+; CHECK-LABEL: double_to_sint_store:
+; CHECK:       @ BB#0:
+; CHECK-NEXT:    vmov d16, r0, r1
+; CHECK-NEXT:    vcvt.s32.f64 s0, d16
+; CHECK-NEXT:    vmov r0, s0
+; CHECK-NEXT:    str r0, [r2]
+; CHECK-NEXT:    mov pc, lr
+  %conv = fptosi double %c to i32
+  store i32 %conv, i32* %p, align 4
+  ret i32 %conv
+}
+
+define i32 @double_to_uint_store(double %c, i32* nocapture %p) {
+; CHECK-LABEL: double_to_uint_store:
+; CHECK:       @ BB#0:
+; CHECK-NEXT:    vmov d16, r0, r1
+; CHECK-NEXT:    vcvt.u32.f64 s0, d16
+; CHECK-NEXT:    vmov r0, s0
+; CHECK-NEXT:    str r0, [r2]
+; CHECK-NEXT:    mov pc, lr
+  %conv = fptoui double %c to i32
+  store i32 %conv, i32* %p, align 4
+  ret i32 %conv
+}
+
+define i32 @float_to_sint_store(float %c, i32* nocapture %p) {
+; CHECK-LABEL: float_to_sint_store:
+; CHECK:       @ BB#0:
+; CHECK-NEXT:    vmov s0, r0
+; CHECK-NEXT:    vcvt.s32.f32 s0, s0
+; CHECK-NEXT:    vmov r0, s0
+; CHECK-NEXT:    str r0, [r1]
+; CHECK-NEXT:    mov pc, lr
+  %conv = fptosi float %c to i32
+  store i32 %conv, i32* %p, align 4
+  ret i32 %conv
+}
+
+define i32 @float_to_uint_store(float %c, i32* nocapture %p) {
+; CHECK-LABEL: float_to_uint_store:
+; CHECK:       @ BB#0:
+; CHECK-NEXT:    vmov s0, r0
+; CHECK-NEXT:    vcvt.u32.f32 s0, s0
+; CHECK-NEXT:    vmov r0, s0
+; CHECK-NEXT:    str r0, [r1]
+; CHECK-NEXT:    mov pc, lr
+  %conv = fptoui float %c to i32
+  store i32 %conv, i32* %p, align 4
+  ret i32 %conv
+}
