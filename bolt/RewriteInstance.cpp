@@ -887,6 +887,10 @@ void RewriteInstance::discoverFileObjects() {
 
     if (Symbol.getType() == SymbolRef::ST_File) {
       check_error(NameOrError.getError(), "cannot get symbol name for file");
+      // Ignore Clang LTO artificial FILE symbol as it is not always generated,
+      // and this uncertainty is causing havoc in function name matching.
+      if (*NameOrError == "ld-temp.o")
+        continue;
       FileSymbolName = *NameOrError;
       SeenFileName = true;
       continue;
