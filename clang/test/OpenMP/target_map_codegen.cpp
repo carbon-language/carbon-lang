@@ -4554,33 +4554,3 @@ void explicit_maps_member_pointer_references(SSA *sap) {
 }
 #endif
 #endif
-
-///==========================================================================///
-// RUN: %clang -DCK30 -std=c++11 -fopenmp -S -emit-llvm -fopenmp-targets=nvptx64-nvidia-cuda \
-// RUN: -nocudalib %s -o - 2>&1 | FileCheck -check-prefix=CK30 %s
-
-#ifdef CK30
-
-void target_maps_parallel_integer(int a){
-  int ParamToKernel = a;
-#pragma omp target map(tofrom: ParamToKernel)
-  {
-    ParamToKernel += 1;
-  }
-}
-
-// CK30: {{.*}}void @__omp_offloading_{{.*}}(i32* dereferenceable(4) %ParamToKernel)
-
-// CK30: {{.*}}void {{.*}}target_maps_parallel_integer{{.*}} {
-
-// CK30: [[GEPOBP:%.+]] = getelementptr inbounds {{.*}}offload_baseptrs
-// CK30: [[GEPOBPBIT:%.+]] = bitcast i8** [[GEPOBP]]
-// CK30: store i32* %ParamToKernel, i32** [[GEPOBPBIT]]
-// CK30: [[GEPOP:%.+]] = getelementptr inbounds {{.*}}offload_ptrs
-// CK30: [[GEPOPBIT:%.+]] = bitcast i8** [[GEPOP]]
-// CK30: store i32* %ParamToKernel, i32** [[GEPOPBIT]]
-// CK30: [[GEPOBPARG:%.+]] = getelementptr inbounds {{.*}}offload_baseptrs
-// CK30: [[GEPOPARG:%.+]] = getelementptr inbounds {{.*}}offload_ptrs
-// CK30: call {{.*}}tgt_target({{.*}}i8** [[GEPOBPARG]], i8** [[GEPOPARG]]
-
-#endif
