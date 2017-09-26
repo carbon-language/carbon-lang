@@ -1,4 +1,4 @@
-// RUN: %clangxx -shared -fPIC -o /dev/null -v -fxray-instrument %s 2>&1 | \
+// RUN: %clangxx -shared -o /dev/null -v -fxray-instrument %s 2>&1 | \
 // RUN:     FileCheck %s --check-prefix=SHARED
 // RUN: %clangxx -static -o /dev/null -v -fxray-instrument %s 2>&1 -DMAIN | \
 // RUN:     FileCheck %s --check-prefix=STATIC
