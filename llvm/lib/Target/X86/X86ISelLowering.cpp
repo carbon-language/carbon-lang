@@ -22667,7 +22667,7 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
   assert((Opcode == ISD::ROTL) && "Only ROTL supported");
 
   // XOP has 128-bit vector variable + immediate rotates.
-  // +ve/-ve Amt = rotate left/right.
+  // +ve/-ve Amt = rotate left/right - just need to handle ISD::ROTL.
 
   // Split 256-bit integers.
   if (VT.is256BitVector())
@@ -22680,13 +22680,13 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
     if (auto *RotateConst = BVAmt->getConstantSplatNode()) {
       uint64_t RotateAmt = RotateConst->getAPIntValue().getZExtValue();
       assert(RotateAmt < EltSizeInBits && "Rotation out of range");
-      return DAG.getNode(X86ISD::VPROTI, DL, VT, R,
+      return DAG.getNode(X86ISD::VROTLI, DL, VT, R,
                          DAG.getConstant(RotateAmt, DL, MVT::i8));
     }
   }
 
   // Use general rotate by variable (per-element).
-  return DAG.getNode(X86ISD::VPROT, DL, VT, R, Amt);
+  return Op;
 }
 
 static SDValue LowerXALUO(SDValue Op, SelectionDAG &DAG) {
@@ -24610,8 +24610,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::RDSEED:             return "X86ISD::RDSEED";
   case X86ISD::VPMADDUBSW:         return "X86ISD::VPMADDUBSW";
   case X86ISD::VPMADDWD:           return "X86ISD::VPMADDWD";
-  case X86ISD::VPROT:              return "X86ISD::VPROT";
-  case X86ISD::VPROTI:             return "X86ISD::VPROTI";
   case X86ISD::VPSHA:              return "X86ISD::VPSHA";
   case X86ISD::VPSHL:              return "X86ISD::VPSHL";
   case X86ISD::VPCOM:              return "X86ISD::VPCOM";
