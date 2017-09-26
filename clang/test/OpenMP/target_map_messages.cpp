@@ -592,6 +592,8 @@ int main(int argc, char **argv) {
 #pragma omp target map(s.p->p->p->a)
 // expected-error@+1 {{variable already marked as mapped in current construct}}
   { s.a++; }
+#pragma omp target map(s.s.s.b[:2])
+  { s.s.s.b[0]++; }
 
   return tmain<int, 3>(argc)+tmain<from, 4>(argc); // expected-note {{in instantiation of function template specialization 'tmain<int, 3>' requested here}} expected-note {{in instantiation of function template specialization 'tmain<int, 4>' requested here}}
 }

@@ -1972,9 +1972,8 @@ public:
                   OMPClauseMappableExprCommon::MappableExprComponentListRef
                       StackComponents,
                   OpenMPClauseKind) {
-                if (CurComponents.size() < StackComponents.size())
-                  return false;
                 auto CCI = CurComponents.rbegin();
+                auto CCE = CurComponents.rend();
                 for (const auto &SC : llvm::reverse(StackComponents)) {
                   // Do both expressions have the same kind?
                   if (CCI->getAssociatedExpression()->getStmtClass() !=
@@ -1992,6 +1991,8 @@ public:
                   if (SCD != CCD)
                     return false;
                   std::advance(CCI, 1);
+                  if (CCI == CCE)
+                    break;
                 }
                 return true;
               })) {
