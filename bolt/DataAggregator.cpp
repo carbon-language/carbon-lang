@@ -500,6 +500,7 @@ std::error_code DataAggregator::parseEvents() {
   NamedRegionTimer T("Samples parsing", TimerGroupName, opts::TimeAggregator);
   uint64_t NumEntries{0};
   uint64_t NumSamples{0};
+  uint64_t NumTraces{0};
   while (hasData()) {
     auto SampleRes = parseSample();
     if (std::error_code EC = SampleRes.getError())
@@ -515,17 +516,49 @@ std::error_code DataAggregator::parseEvents() {
     // Parser semantic actions
     uint64_t Last{0};
     for (const auto &LBR : Sample.LBR) {
-      if (Last)
+      if (Last) {
         doTrace(LBR.To, Last);
+        ++NumTraces;
+      }
       doBranch(LBR.From, LBR.To, LBR.Mispred);
       Last = LBR.From;
     }
   }
   outs() << "PERF2BOLT: Read " << NumSamples << " samples and "
          << NumEntries << " LBR entries\n";
-  outs() << "PERF2BOLT: Invalid traces: " << NumInvalidTraces << "\n";
-  outs() << "PERF2BOLT: Traces straddling multiple functions (discarded): "
-         << NumLongRangeTraces << "\n";
+  outs() << "PERF2BOLT: Traces mismatching disassembled function contents: "
+         << NumInvalidTraces;
+  float Perc{0.0f};
+  if (NumTraces > 0) {
+    outs() << " (";
+    Perc = NumInvalidTraces * 100.0f / NumTraces;
+    if (outs().has_colors()) {
+      if (Perc > 10.0f) {
+        outs().changeColor(raw_ostream::RED);
+      } else if (Perc > 5.0f) {
+        outs().changeColor(raw_ostream::YELLOW);
+      } else {
+        outs().changeColor(raw_ostream::GREEN);
+      }
+    }
+    outs() << format("%.1f%%", Perc);
+    outs().resetColor();
+    outs() << ")";
+  }
+  outs() << "\n";
+  if (Perc > 10.0f) {
+    outs() << "\n !! WARNING !! This high mismatch ratio indicates the input "
+              "binary is probably not the same binary used during profiling "
+              "collection. The generated data may be ineffective for improving "
+              "performance.\n\n";
+  }
+
+  outs() << "PERF2BOLT: Out of range traces involving unknown regions: "
+         << NumLongRangeTraces;
+  if (NumTraces > 0) {
+    outs() << format(" (%.1f%%)", NumLongRangeTraces * 100.0f / NumTraces);
+  }
+  outs() << "\n";
 
   return std::error_code();
 }
