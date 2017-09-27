@@ -14,7 +14,6 @@
 #ifndef LLVM_COV_COVERAGEREPORT_H
 #define LLVM_COV_COVERAGEREPORT_H
 
-#include "CoverageFilters.h"
 #include "CoverageSummaryInfo.h"
 #include "CoverageViewOptions.h"
 
@@ -41,16 +40,13 @@ public:
   static std::vector<FileCoverageSummary>
   prepareFileReports(const coverage::CoverageMapping &Coverage,
                      FileCoverageSummary &Totals, ArrayRef<std::string> Files,
-                     const CoverageViewOptions &Options,
-                     const CoverageFilter &Filters = CoverageFiltersMatchAll());
+                     const CoverageViewOptions &Options);
 
   /// Render file reports for every unique file in the coverage mapping.
   void renderFileReports(raw_ostream &OS) const;
 
-  /// Render file reports for the files specified in \p Files and the functions
-  /// in \p Filters.
-  void renderFileReports(raw_ostream &OS, ArrayRef<std::string> Files,
-                         const CoverageFilter &Filters) const;
+  /// Render file reports for the files specified in \p Files.
+  void renderFileReports(raw_ostream &OS, ArrayRef<std::string> Files) const;
 };
 
 } // end namespace llvm

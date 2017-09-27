@@ -164,9 +164,8 @@ void SourceCoverageView::addInstantiation(
 }
 
 void SourceCoverageView::print(raw_ostream &OS, bool WholeFile,
-                               bool ShowSourceName, bool ShowTitle,
-                               unsigned ViewDepth) {
-  if (ShowTitle)
+                               bool ShowSourceName, unsigned ViewDepth) {
+  if (WholeFile && getOptions().hasOutputDirectory())
     renderTitle(OS, "Coverage Report");
 
   renderViewHeader(OS);
