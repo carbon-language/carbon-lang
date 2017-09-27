@@ -60,13 +60,12 @@ try.cont:
 ;
 ; CHECK: [[RESUME]]:
 ; CHECK: leal -64(%ebp), %esi
-;     assert(UFC.__callsite <= 1);
+;     assert(UFC.__callsite < 1);
 ; CHECK: movl -60(%ebp), %eax
 ; CHECK: cmpl $1, %eax
-; CHECK: jbe [[CONT:LBB[0-9]+_[0-9]+]]
+; CHECK: jb [[CONT:LBB[0-9]+_[0-9]+]]
 ; CHECK: ud2
 ; CHECK: [[CONT]]:
-;     *Handlers[--UFC.__callsite]
-; CHECK: subl $1, %eax
+;     *Handlers[UFC.__callsite]
 ; CHECK: jmpl *LJTI
 

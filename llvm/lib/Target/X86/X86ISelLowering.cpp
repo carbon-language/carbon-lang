@@ -26576,17 +26576,13 @@ X86TargetLowering::EmitSjLjDispatchBlock(MachineInstr &MI,
   BuildMI(DispatchBB, DL, TII->get(X86::CMP32ri))
       .addReg(IReg)
       .addImm(LPadList.size());
-  BuildMI(DispatchBB, DL, TII->get(X86::JA_1)).addMBB(TrapBB);
+  BuildMI(DispatchBB, DL, TII->get(X86::JAE_1)).addMBB(TrapBB);
 
-  unsigned JReg = MRI->createVirtualRegister(&X86::GR32RegClass);
-  BuildMI(DispContBB, DL, TII->get(X86::SUB32ri), JReg)
-      .addReg(IReg)
-      .addImm(1);
   BuildMI(DispContBB, DL,
           TII->get(Subtarget.is64Bit() ? X86::JMP64m : X86::JMP32m))
       .addReg(0)
       .addImm(Subtarget.is64Bit() ? 8 : 4)
-      .addReg(JReg)
+      .addReg(IReg)
       .addJumpTableIndex(MJTI)
       .addReg(0);
 
