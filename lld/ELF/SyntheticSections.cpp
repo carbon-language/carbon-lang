@@ -1119,8 +1119,8 @@ template <class ELFT> void DynamicSection<ELFT>::finalizeContents() {
     add({DT_TEXTREL, (uint64_t)0});
   if (InX::GnuHashTab)
     add({DT_GNU_HASH, InX::GnuHashTab});
-  if (In<ELFT>::HashTab)
-    add({DT_HASH, In<ELFT>::HashTab});
+  if (InX::HashTab)
+    add({DT_HASH, InX::HashTab});
 
   if (Out::PreinitArray) {
     add({DT_PREINIT_ARRAY, Out::PreinitArray});
@@ -1612,13 +1612,12 @@ void GnuHashTableSection::addSymbols(std::vector<SymbolTableEntry> &V) {
     V.push_back({Ent.Body, Ent.StrTabOffset});
 }
 
-template <class ELFT>
-HashTableSection<ELFT>::HashTableSection()
+HashTableSection::HashTableSection()
     : SyntheticSection(SHF_ALLOC, SHT_HASH, 4, ".hash") {
   this->Entsize = 4;
 }
 
-template <class ELFT> void HashTableSection<ELFT>::finalizeContents() {
+void HashTableSection::finalizeContents() {
   getParent()->Link = InX::DynSymTab->getParent()->SectionIndex;
 
   unsigned NumEntries = 2;                       // nbucket and nchain.
@@ -1631,18 +1630,15 @@ template <class ELFT> void HashTableSection<ELFT>::finalizeContents() {
   this->Size = NumEntries * 4;
 }
 
-template <class ELFT> void HashTableSection<ELFT>::writeTo(uint8_t *Buf) {
-  // A 32-bit integer type in the target endianness.
-  typedef typename ELFT::Word Elf_Word;
-
+void HashTableSection::writeTo(uint8_t *Buf) {
   unsigned NumSymbols = InX::DynSymTab->getNumSymbols();
 
-  auto *P = reinterpret_cast<Elf_Word *>(Buf);
-  *P++ = NumSymbols; // nbucket
-  *P++ = NumSymbols; // nchain
+  uint32_t *P = reinterpret_cast<uint32_t *>(Buf);
+  write32(P++, NumSymbols, Config->Endianness); // nbucket
+  write32(P++, NumSymbols, Config->Endianness); // nchain
 
-  Elf_Word *Buckets = P;
-  Elf_Word *Chains = P + NumSymbols;
+  uint32_t *Buckets = P;
+  uint32_t *Chains = P + NumSymbols;
 
   for (const SymbolTableEntry &S : InX::DynSymTab->getSymbols()) {
     SymbolBody *Body = S.Symbol;
@@ -1650,7 +1646,7 @@ template <class ELFT> void HashTableSection<ELFT>::writeTo(uint8_t *Buf) {
     unsigned I = Body->DynsymIndex;
     uint32_t Hash = hashSysV(Name) % NumSymbols;
     Chains[I] = Buckets[Hash];
-    Buckets[Hash] = I;
+    write32(Buckets + Hash, I, Config->Endianness);
   }
 }
 
@@ -2362,6 +2358,7 @@ GdbIndexSection *InX::GdbIndex;
 GotSection *InX::Got;
 GotPltSection *InX::GotPlt;
 GnuHashTableSection *InX::GnuHashTab;
+HashTableSection *InX::HashTab;
 IgotPltSection *InX::IgotPlt;
 MipsGotSection *InX::MipsGot;
 MipsRldMapSection *InX::MipsRldMap;
@@ -2415,11 +2412,6 @@ template class elf::SymbolTableSection<ELF32LE>;
 template class elf::SymbolTableSection<ELF32BE>;
 template class elf::SymbolTableSection<ELF64LE>;
 template class elf::SymbolTableSection<ELF64BE>;
-
-template class elf::HashTableSection<ELF32LE>;
-template class elf::HashTableSection<ELF32BE>;
-template class elf::HashTableSection<ELF64LE>;
-template class elf::HashTableSection<ELF64BE>;
 
 template class elf::EhFrameHeader<ELF32LE>;
 template class elf::EhFrameHeader<ELF32BE>;
