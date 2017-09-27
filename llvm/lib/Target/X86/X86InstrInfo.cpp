@@ -10723,31 +10723,54 @@ char LDTLSCleanup::ID = 0;
 FunctionPass*
 llvm::createCleanupLocalDynamicTLSPass() { return new LDTLSCleanup(); }
 
-// Constants defining how certain sequences should be outlined.
-const unsigned MachineOutlinerDefaultFn = 0;
-const unsigned MachineOutlinerTailCallFn = 1;
+/// Constants defining how certain sequences should be outlined.
+///
+/// \p MachineOutlinerDefault implies that the function is called with a call
+/// instruction, and a return must be emitted for the outlined function frame.
+///
+/// That is,
+///
+/// I1                                 OUTLINED_FUNCTION:
+/// I2 --> call OUTLINED_FUNCTION       I1
+/// I3                                  I2
+///                                     I3
+///                                     ret
+///
+/// * Call construction overhead: 1 (call instruction)
+/// * Frame construction overhead: 1 (return instruction)
+/// 
+/// \p MachineOutlinerTailCall implies that the function is being tail called.
+/// A jump is emitted instead of a call, and the return is already present in
+/// the outlined sequence. That is,
+///
+/// I1                                 OUTLINED_FUNCTION:
+/// I2 --> jmp OUTLINED_FUNCTION       I1
+/// ret                                I2
+///                                    ret
+///
+/// * Call construction overhead: 1 (jump instruction)
+/// * Frame construction overhead: 0 (don't need to return)
+///
+enum MachineOutlinerClass {
+  MachineOutlinerDefault,
+  MachineOutlinerTailCall
+};
 
-std::pair<size_t, unsigned> X86InstrInfo::getOutliningCallOverhead(
-    MachineBasicBlock::iterator &StartIt,
-    MachineBasicBlock::iterator &EndIt) const {
+X86GenInstrInfo::MachineOutlinerInfo
+X86InstrInfo::getOutlininingCandidateInfo(
+  std::vector<
+      std::pair<MachineBasicBlock::iterator, MachineBasicBlock::iterator>>
+      &RepeatedSequenceLocs) const {
 
-  // Is this a tail call? If it is, make note of it.
-  if (EndIt->isTerminator())
-    return std::make_pair(1, MachineOutlinerTailCallFn);
-
-  return std::make_pair(1, MachineOutlinerDefaultFn);
-}
-
-std::pair<size_t, unsigned> X86InstrInfo::getOutliningFrameOverhead(
-  std::vector<std::pair<MachineBasicBlock::iterator, 
-                        MachineBasicBlock::iterator>> &CandidateClass) const {
-  // Is this a tail-call?
-  // Is the last instruction in this class a terminator?
-  if (CandidateClass[0].second->isTerminator())
-    return std::make_pair(0, MachineOutlinerTailCallFn);
-
-  // No, so we have to add a return to the end.
-  return std::make_pair(1, MachineOutlinerDefaultFn);
+  if (RepeatedSequenceLocs[0].second->isTerminator())
+    return MachineOutlinerInfo(1, // Number of instructions to emit call.
+                               0, // Number of instructions to emit frame.
+                               MachineOutlinerTailCall, // Type of call.
+                               MachineOutlinerTailCall // Type of frame.
+                              );
+  
+  return MachineOutlinerInfo(1, 1, MachineOutlinerDefault,
+                             MachineOutlinerDefault);
 }
 
 bool X86InstrInfo::isFunctionSafeToOutlineFrom(MachineFunction &MF) const {
@@ -10811,10 +10834,10 @@ X86InstrInfo::getOutliningType(MachineInstr &MI) const {
 
 void X86InstrInfo::insertOutlinerEpilogue(MachineBasicBlock &MBB,
                                           MachineFunction &MF,
-                                          unsigned FrameClass) const {
-
+                                          const MachineOutlinerInfo &MInfo)
+                                          const {
   // If we're a tail call, we already have a return, so don't do anything.
-  if (FrameClass == MachineOutlinerTailCallFn)
+  if (MInfo.FrameConstructionID == MachineOutlinerTailCall)
     return;
 
   // We're a normal call, so our sequence doesn't have a return instruction.
@@ -10825,15 +10848,16 @@ void X86InstrInfo::insertOutlinerEpilogue(MachineBasicBlock &MBB,
 
 void X86InstrInfo::insertOutlinerPrologue(MachineBasicBlock &MBB,
                                           MachineFunction &MF,
-                                          unsigned FrameClass) const {}
+                                          const MachineOutlinerInfo &MInfo)
+                                          const {}
 
 MachineBasicBlock::iterator
 X86InstrInfo::insertOutlinedCall(Module &M, MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator &It,
                                  MachineFunction &MF,
-                                 unsigned CallClass) const {
+                                 const MachineOutlinerInfo &MInfo) const {
   // Is it a tail call?
-  if (CallClass == MachineOutlinerTailCallFn) {
+  if (MInfo.CallConstructionID == MachineOutlinerTailCall) {
     // Yes, just insert a JMP.
     It = MBB.insert(It,
                   BuildMI(MF, DebugLoc(), get(X86::JMP_1))
