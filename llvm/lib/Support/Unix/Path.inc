@@ -654,7 +654,7 @@ mapped_file_region::~mapped_file_region() {
     ::munmap(Mapping, Size);
 }
 
-uint64_t mapped_file_region::size() const {
+size_t mapped_file_region::size() const {
   assert(Mapping && "Mapping failed but used anyway!");
   return Size;
 }
