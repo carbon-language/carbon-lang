@@ -1298,7 +1298,6 @@ PreservedAnalyses LoopUnrollPass::run(Function &F,
     // for unrolling is only needed to get optimization remarks emitted in
     // a forward order.
     Loop &L = *Worklist.pop_back_val();
-    Loop *ParentL = L.getParentLoop();
 
     // The API here is quite complex to call, but there are only two interesting
     // states we support: partial and full (or "simple") unrolling. However, to
@@ -1320,6 +1319,7 @@ PreservedAnalyses LoopUnrollPass::run(Function &F,
 
     // The parent must not be damaged by unrolling!
 #ifndef NDEBUG
+    Loop *ParentL = L.getParentLoop();
     if (Result != LoopUnrollResult::Unmodified && ParentL)
       ParentL->verifyLoop();
 #endif
