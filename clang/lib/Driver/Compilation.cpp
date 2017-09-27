@@ -57,13 +57,15 @@ Compilation::getArgsForToolChain(const ToolChain *TC, StringRef BoundArch,
         *TranslatedArgs, DeviceOffloadKind, AllocatedArgs);
     if (!OpenMPArgs) {
       Entry = TC->TranslateArgs(*TranslatedArgs, BoundArch, DeviceOffloadKind);
+      if (!Entry)
+        Entry = TranslatedArgs;
     } else {
       Entry = TC->TranslateArgs(*OpenMPArgs, BoundArch, DeviceOffloadKind);
-      delete OpenMPArgs;
+      if (!Entry)
+        Entry = OpenMPArgs;
+      else
+        delete OpenMPArgs;
     }
-
-    if (!Entry)
-      Entry = TranslatedArgs;
 
     // Add allocated arguments to the final DAL.
     for (auto ArgPtr : AllocatedArgs) {
