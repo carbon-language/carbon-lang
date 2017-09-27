@@ -727,9 +727,10 @@ class LoadedModule {
 // filling this information.
 class ListOfModules {
  public:
-  ListOfModules() : modules_(kInitialCapacity) {}
+  ListOfModules() {}
   ~ListOfModules() { clear(); }
   void init();
+  void fallbackInit();  // Uses fallback init if available, otherwise clears
   const LoadedModule *begin() const { return modules_.begin(); }
   LoadedModule *begin() { return modules_.begin(); }
   const LoadedModule *end() const { return modules_.end(); }
@@ -745,8 +746,11 @@ class ListOfModules {
     for (auto &module : modules_) module.clear();
     modules_.clear();
   }
+  void clearOrInit() {
+    modules_.capacity() ? clear() : modules_.Initialize(kInitialCapacity);
+  }
 
-  InternalMmapVector<LoadedModule> modules_;
+  InternalMmapVectorNoCtor<LoadedModule> modules_;
   // We rarely have more than 16K loaded modules.
   static const uptr kInitialCapacity = 1 << 14;
 };
