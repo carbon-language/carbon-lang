@@ -29321,7 +29321,7 @@ static SDValue combineBitcastvxi1(SelectionDAG &DAG, SDValue BitCast,
     // sign-extend to a 256-bit operation to avoid truncation.
     if (N0->getOpcode() == ISD::SETCC &&
         N0->getOperand(0)->getValueType(0).is256BitVector() &&
-        Subtarget.hasInt256()) {
+        Subtarget.hasAVX()) {
       SExtVT = MVT::v4i64;
       FPCastVT = MVT::v4f64;
     }
