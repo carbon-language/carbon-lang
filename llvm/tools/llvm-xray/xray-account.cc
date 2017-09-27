@@ -418,6 +418,9 @@ template <> struct format_provider<llvm::xray::RecordTypes> {
       case RecordTypes::ENTER:
         Stream << "enter";
         break;
+      case RecordTypes::ENTER_ARG:
+        Stream << "enter-arg";
+        break;
       case RecordTypes::EXIT:
         Stream << "exit";
         break;
