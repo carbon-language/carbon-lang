@@ -132,6 +132,7 @@
 #endif
 #else // !defined(__arm)
 #define DECLARE_FUNC_ENCODING
+#define DEFINE_CODE_STATE
 #endif
 
 #define GLUE2(a, b) a##b
