@@ -4938,7 +4938,8 @@ class HorizontalReduction {
       case RK_Max:
       case RK_UMin:
       case RK_UMax:
-        propagateIRFlags(cast<SelectInst>(Op)->getCondition(), ReductionOps[0]);
+        if (auto *SI = dyn_cast<SelectInst>(Op))
+          propagateIRFlags(SI->getCondition(), ReductionOps[0]);
         propagateIRFlags(Op, ReductionOps[1]);
         return Op;
       case RK_None:
@@ -4961,8 +4962,10 @@ class HorizontalReduction {
       case RK_Max:
       case RK_UMin:
       case RK_UMax:
-        propagateIRFlags(cast<SelectInst>(Op)->getCondition(),
-                         cast<SelectInst>(I)->getCondition());
+        if (auto *SI = dyn_cast<SelectInst>(Op)) {
+          propagateIRFlags(SI->getCondition(),
+                           cast<SelectInst>(I)->getCondition());
+        }
         propagateIRFlags(Op, I);
         return Op;
       case RK_None:
