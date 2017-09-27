@@ -146,7 +146,8 @@ bool LatencyAccountant::accountRecord(const XRayRecord &Record) {
 
   auto &ThreadStack = PerThreadFunctionStack[Record.TId];
   switch (Record.Type) {
-  case RecordTypes::ENTER: {
+  case RecordTypes::ENTER:
+  case RecordTypes::ENTER_ARG: {
     ThreadStack.emplace_back(Record.FuncId, Record.TSC);
     break;
   }
