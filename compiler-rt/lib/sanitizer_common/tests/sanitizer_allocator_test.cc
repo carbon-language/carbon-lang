@@ -1278,6 +1278,7 @@ TEST(SanitizerCommon, SizeClassAllocator64ReleaseFreeMemoryToOS) {
   TestReleaseFreeMemoryToOS<Allocator64>();
 }
 
+#if !SANITIZER_ANDROID
 TEST(SanitizerCommon, SizeClassAllocator64CompactReleaseFreeMemoryToOS) {
   TestReleaseFreeMemoryToOS<Allocator64Compact>();
 }
@@ -1285,6 +1286,7 @@ TEST(SanitizerCommon, SizeClassAllocator64CompactReleaseFreeMemoryToOS) {
 TEST(SanitizerCommon, SizeClassAllocator64VeryCompactReleaseFreeMemoryToOS) {
   TestReleaseFreeMemoryToOS<Allocator64VeryCompact>();
 }
+#endif  // !SANITIZER_ANDROID
 
 #endif  // SANITIZER_CAN_USE_ALLOCATOR64
 
