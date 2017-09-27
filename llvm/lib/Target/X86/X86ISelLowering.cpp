@@ -21634,14 +21634,15 @@ static SDValue LowerMULH(SDValue Op, const X86Subtarget &Subtarget,
 
   // AVX2 implementations - extend xmm subvectors to ymm.
   if (Subtarget.hasInt256()) {
+    unsigned NumElems = VT.getVectorNumElements();
     SDValue Lo = DAG.getIntPtrConstant(0, dl);
-    SDValue Hi = DAG.getIntPtrConstant(VT.getVectorNumElements() / 2, dl);
+    SDValue Hi = DAG.getIntPtrConstant(NumElems / 2, dl);
 
     if (VT == MVT::v32i8) {
-      SDValue ALo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v16i8, A, Lo);
-      SDValue BLo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v16i8, B, Lo);
-      SDValue AHi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v16i8, A, Hi);
-      SDValue BHi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v16i8, B, Hi);
+      SDValue ALo = extract128BitVector(A, 0, DAG, dl);
+      SDValue BLo = extract128BitVector(B, 0, DAG, dl);
+      SDValue AHi = extract128BitVector(A, NumElems / 2, DAG, dl);
+      SDValue BHi = extract128BitVector(B, NumElems / 2, DAG, dl);
       ALo = DAG.getNode(ExSSE41, dl, MVT::v16i16, ALo);
       BLo = DAG.getNode(ExSSE41, dl, MVT::v16i16, BLo);
       AHi = DAG.getNode(ExSSE41, dl, MVT::v16i16, AHi);
