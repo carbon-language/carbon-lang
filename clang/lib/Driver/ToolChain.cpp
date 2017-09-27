@@ -800,9 +800,10 @@ ToolChain::computeMSVCVersion(const Driver *D,
   return VersionTuple();
 }
 
-llvm::opt::DerivedArgList *
-ToolChain::TranslateOpenMPTargetArgs(const llvm::opt::DerivedArgList &Args,
-    Action::OffloadKind DeviceOffloadKind) const {
+llvm::opt::DerivedArgList *ToolChain::TranslateOpenMPTargetArgs(
+    const llvm::opt::DerivedArgList &Args,
+    Action::OffloadKind DeviceOffloadKind,
+    SmallVector<llvm::opt::Arg *, 4> &AllocatedArgs) const {
   if (DeviceOffloadKind == Action::OFK_OpenMP) {
     DerivedArgList *DAL = new DerivedArgList(Args.getBaseArgs());
     const OptTable &Opts = getDriver().getOpts();
@@ -854,6 +855,7 @@ ToolChain::TranslateOpenMPTargetArgs(const llvm::opt::DerivedArgList &Args,
       }
       XOpenMPTargetArg->setBaseArg(A);
       A = XOpenMPTargetArg.release();
+      AllocatedArgs.push_back(A);
       DAL->append(A);
       NewArgAdded = true;
     }
