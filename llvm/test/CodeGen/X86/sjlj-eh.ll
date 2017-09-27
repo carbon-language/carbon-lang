@@ -24,11 +24,11 @@ try.cont:
 
 ;     struct _Unwind_FunctionContext {
 ; +00   struct _Unwind_FunctionContext *prev;   -64(%ebp)
-; +04   uintptr_t __callsite;                   -60(%ebp)
-; +08   uintptr_t __buffer[4];                  -44(%ebp)
-; +28   __personality_routine __personality;    -40(%ebp)
-; +32   uintptr_t __lsda;                       -36(%ebp)
-; +36   void *__jbuf[];                         -32(%ebp)
+; +04   uint32_t __callsite;                    -60(%ebp)
+; +08   uint32_t __buffer[4];                   -56(%ebp)
+; +24   __personality_routine __personality;    -40(%ebp)
+; +28   uintptr_t __lsda;                       -36(%ebp)
+; +32   void *__jbuf[];                         -32(%ebp)
 ;     };
 
 
