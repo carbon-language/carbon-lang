@@ -1045,18 +1045,18 @@ static bool tryToUnrollLoop(
     UP.Count = TripCount;
 
   // Unroll the loop.
-  LoopUnrollStatus UnrollStatus = UnrollLoop(
+  LoopUnrollResult UnrollStatus = UnrollLoop(
       L, UP.Count, TripCount, UP.Force, UP.Runtime, UP.AllowExpensiveTripCount,
       UseUpperBound, MaxOrZero, TripMultiple, UP.PeelCount, UP.UnrollRemainder,
       LI, &SE, &DT, &AC, &ORE, PreserveLCSSA);
-  if (UnrollStatus == LoopUnrollStatus::Unmodified)
+  if (UnrollStatus == LoopUnrollResult::Unmodified)
     return false;
 
   // If loop has an unroll count pragma or unrolled by explicitly set count
   // mark loop as unrolled to prevent unrolling beyond that requested.
   // If the loop was peeled, we already "used up" the profile information
   // we had, so we don't want to unroll or peel again.
-  if (UnrollStatus != LoopUnrollStatus::FullyUnrolled &&
+  if (UnrollStatus != LoopUnrollResult::FullyUnrolled &&
       (IsCountSetExplicitly || UP.PeelCount))
     SetLoopAlreadyUnrolled(L);
 
