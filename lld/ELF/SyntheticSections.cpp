@@ -1355,18 +1355,24 @@ void SymbolTableBaseSection::addSymbol(SymbolBody *B) {
 }
 
 size_t SymbolTableBaseSection::getSymbolIndex(SymbolBody *Body) {
-  auto I = llvm::find_if(Symbols, [&](const SymbolTableEntry &E) {
-    if (E.Symbol == Body)
-      return true;
-    // This is used for -r, so we have to handle multiple section
-    // symbols being combined.
-    if (Body->Type == STT_SECTION && E.Symbol->Type == STT_SECTION)
-      return Body->getOutputSection() == E.Symbol->getOutputSection();
-    return false;
+  // Initializes symbol lookup tables lazily. This is used only
+  // for -r or -emit-relocs.
+  llvm::call_once(OnceFlag, [&] {
+    SymbolIndexMap.reserve(Symbols.size());
+    size_t I = 0;
+    for (const SymbolTableEntry &E : Symbols) {
+      if (E.Symbol->Type == STT_SECTION)
+        SectionIndexMap[E.Symbol->getOutputSection()] = ++I;
+      else
+        SymbolIndexMap[E.Symbol] = ++I;
+    }
   });
-  if (I == Symbols.end())
-    return 0;
-  return I - Symbols.begin() + 1;
+
+  // Section symbols are mapped based on their output sections
+  // to maintain their semantics.
+  if (Body->Type == STT_SECTION)
+    return SectionIndexMap.lookup(Body->getOutputSection());
+  return SymbolIndexMap.lookup(Body);
 }
 
 template <class ELFT>

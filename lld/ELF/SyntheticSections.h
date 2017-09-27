@@ -418,6 +418,10 @@ protected:
   std::vector<SymbolTableEntry> Symbols;
 
   StringTableSection &StrTabSec;
+
+  llvm::once_flag OnceFlag;
+  llvm::DenseMap<SymbolBody *, size_t> SymbolIndexMap;
+  llvm::DenseMap<OutputSection *, size_t> SectionIndexMap;
 };
 
 template <class ELFT>
