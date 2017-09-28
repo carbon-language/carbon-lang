@@ -21626,6 +21626,24 @@ static SDValue LowerMULH(SDValue Op, const X86Subtarget &Subtarget,
     SDValue Hi = DAG.getIntPtrConstant(NumElems / 2, dl);
 
     if (VT == MVT::v32i8) {
+      if (Subtarget.hasBWI()) {
+        SDValue ExA = getExtendInVec(ExSSE41, dl, MVT::v32i16, A, DAG);
+        SDValue ExB = getExtendInVec(ExSSE41, dl, MVT::v32i16, B, DAG);
+        SDValue Mul = DAG.getNode(ISD::MUL, dl, MVT::v32i16, ExA, ExB);
+        Mul = DAG.getNode(ISD::SRL, dl, MVT::v32i16, Mul,
+                          DAG.getConstant(8, dl, MVT::v32i16));
+        // The ymm variant of PACKUS treats the 128-bit lanes separately, so
+        // before using PACKUS we need to permute the inputs to the correct
+        // lo/hi xmm lane.
+        const int Mask[] = { 0,  1,  2,  3,  4,  5,  6,  7,
+                            16, 17, 18, 19, 20, 21, 22, 23,
+                             8,  9, 10, 11, 12, 13, 14, 15,
+                            24, 25, 26, 27, 28, 29, 30, 31};
+        Mul = DAG.getVectorShuffle(MVT::v32i16, dl, Mul, Mul, Mask);
+        Lo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v16i16, Mul, Lo);
+        Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v16i16, Mul, Hi);
+        return DAG.getNode(X86ISD::PACKUS, dl, VT, Lo, Hi);
+      }
       SDValue ALo = extract128BitVector(A, 0, DAG, dl);
       SDValue BLo = extract128BitVector(B, 0, DAG, dl);
       SDValue AHi = extract128BitVector(A, NumElems / 2, DAG, dl);
