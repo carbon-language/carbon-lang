@@ -106,12 +106,12 @@
 
 ; RUN: not llvm-rc /V %p/Inputs/parser-eof.rc 2>&1 | FileCheck %s --check-prefix PEOF
 
-; PEOF:  llvm-rc: Error parsing file: expected integer, got <EOF>
+; PEOF:  llvm-rc: Error parsing file: expected '-', '~', integer or '(', got <EOF>
 
 
 ; RUN: not llvm-rc /V %p/Inputs/parser-no-characteristics-arg.rc 2>&1 | FileCheck %s --check-prefix PCHARACTERISTICS1
 
-; PCHARACTERISTICS1:  llvm-rc: Error parsing file: expected integer, got BEGIN
+; PCHARACTERISTICS1:  llvm-rc: Error parsing file: expected '-', '~', integer or '(', got BEGIN
 
 
 ; RUN: not llvm-rc /V %p/Inputs/parser-nonsense-token.rc 2>&1 | FileCheck %s --check-prefix PNONSENSE1
@@ -136,7 +136,7 @@
 
 ; RUN: not llvm-rc /V %p/Inputs/parser-language-too-many-commas.rc 2>&1 | FileCheck %s --check-prefix PLANGUAGE2
 
-; PLANGUAGE2:  llvm-rc: Error parsing file: expected integer, got ,
+; PLANGUAGE2:  llvm-rc: Error parsing file: expected '-', '~', integer or '(', got ,
 
 
 ; RUN: not llvm-rc /V %p/Inputs/parser-html-bad-string.rc 2>&1 | FileCheck %s --check-prefix PHTML1
@@ -171,7 +171,7 @@
 
 ; RUN: not llvm-rc /V %p/Inputs/parser-menu-bad-id.rc 2>&1 | FileCheck %s --check-prefix PMENU1
 
-; PMENU1:  llvm-rc: Error parsing file: expected integer, got A
+; PMENU1:  llvm-rc: Error parsing file: expected '-', '~', integer or '(', got A
 
 
 ; RUN: not llvm-rc /V %p/Inputs/parser-menu-bad-flag.rc 2>&1 | FileCheck %s --check-prefix PMENU2
@@ -211,7 +211,7 @@
 
 ; RUN: not llvm-rc /V %p/Inputs/parser-dialog-unnecessary-string.rc 2>&1 | FileCheck %s --check-prefix PDIALOG5
 
-; PDIALOG5:  llvm-rc: Error parsing file: expected integer, got "This shouldn't be here"
+; PDIALOG5:  llvm-rc: Error parsing file: expected '-', '~', integer or '(', got "This shouldn't be here"
 
 
 ; RUN: not llvm-rc /V %p/Inputs/parser-versioninfo-wrong-fixed.rc 2>&1 | FileCheck %s --check-prefix PVERSIONINFO1

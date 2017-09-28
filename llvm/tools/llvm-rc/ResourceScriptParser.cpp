@@ -107,10 +107,102 @@ void RCParser::consume() {
   CurLoc++;
 }
 
-Expected<uint32_t> RCParser::readInt() {
-  if (!isNextTokenKind(Kind::Int))
-    return getExpectedError("integer");
-  return read().intValue();
+// An integer description might consist of a single integer or
+// an arithmetic expression evaluating to the integer. The expressions
+// can contain the following tokens: <int> ( ) + - | & ~. Their meaning
+// is the same as in C++.
+// The operators in the original RC implementation have the following
+// precedence:
+//   1) Unary operators (- ~),
+//   2) Binary operators (+ - & |), with no precedence.
+//
+// The following grammar is used to parse the expressions Exp1:
+//   Exp1 ::= Exp2 || Exp1 + Exp2 || Exp1 - Exp2 || Exp1 | Exp2 || Exp1 & Exp2
+//   Exp2 ::= -Exp2 || ~Exp2 || Int || (Exp1).
+// (More conveniently, Exp1 is a non-empty sequence of Exp2 expressions,
+// separated by binary operators.)
+//
+// Expressions of type Exp1 are read by parseIntExpr1(Inner) method, while Exp2
+// is read by parseIntExpr2().
+//
+// The original Microsoft tool handles multiple unary operators incorrectly.
+// For example, in 16-bit little-endian integers:
+//    1 => 01 00, -1 => ff ff, --1 => ff ff, ---1 => 01 00;
+//    1 => 01 00, ~1 => fe ff, ~~1 => fd ff, ~~~1 => fc ff.
+// Our implementation differs from the original one and handles these
+// operators correctly:
+//    1 => 01 00, -1 => ff ff, --1 => 01 00, ---1 => ff ff;
+//    1 => 01 00, ~1 => fe ff, ~~1 => 01 00, ~~~1 => fe ff.
+
+Expected<uint32_t> RCParser::readInt() { return parseIntExpr1(); }
+
+Expected<uint32_t> RCParser::parseIntExpr1() {
+  // Exp1 ::= Exp2 || Exp1 + Exp2 || Exp1 - Exp2 || Exp1 | Exp2 || Exp1 & Exp2.
+  ASSIGN_OR_RETURN(FirstResult, parseIntExpr2());
+  uint32_t Result = *FirstResult;
+
+  while (!isEof() && look().isBinaryOp()) {
+    auto OpToken = read();
+    ASSIGN_OR_RETURN(NextResult, parseIntExpr2());
+
+    switch (OpToken.kind()) {
+    case Kind::Plus:
+      Result += *NextResult;
+      break;
+
+    case Kind::Minus:
+      Result -= *NextResult;
+      break;
+
+    case Kind::Pipe:
+      Result |= *NextResult;
+      break;
+
+    case Kind::Amp:
+      Result &= *NextResult;
+      break;
+
+    default:
+      llvm_unreachable("Already processed all binary ops.");
+    }
+  }
+
+  return Result;
+}
+
+Expected<uint32_t> RCParser::parseIntExpr2() {
+  // Exp2 ::= -Exp2 || ~Exp2 || Int || (Exp1).
+  static const char ErrorMsg[] = "'-', '~', integer or '('";
+
+  if (isEof())
+    return getExpectedError(ErrorMsg);
+
+  switch (look().kind()) {
+  case Kind::Minus: {
+    consume();
+    ASSIGN_OR_RETURN(Result, parseIntExpr2());
+    return -(*Result);
+  }
+
+  case Kind::Tilde: {
+    consume();
+    ASSIGN_OR_RETURN(Result, parseIntExpr2());
+    return ~(*Result);
+  }
+
+  case Kind::Int:
+    return read().intValue();
+
+  case Kind::LeftParen: {
+    consume();
+    ASSIGN_OR_RETURN(Result, parseIntExpr1());
+    RETURN_IF_ERROR(consumeType(Kind::RightParen));
+    return *Result;
+  }
+
+  default:
+    return getExpectedError(ErrorMsg);
+  }
 }
 
 Expected<StringRef> RCParser::readString() {
