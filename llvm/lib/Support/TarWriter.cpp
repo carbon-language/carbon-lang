@@ -127,6 +127,7 @@ static void writePaxHeader(raw_fd_ostream &OS, StringRef Path) {
 // Otherwise, returns false.
 static bool splitUstar(StringRef Path, StringRef &Prefix, StringRef &Name) {
   if (Path.size() < sizeof(UstarHeader::Name)) {
+    Prefix = "";
     Name = Path;
     return true;
   }
