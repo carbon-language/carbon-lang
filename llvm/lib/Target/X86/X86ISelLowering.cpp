@@ -21616,7 +21616,7 @@ static SDValue LowerMULH(SDValue Op, const X86Subtarget &Subtarget,
   // and then ashr/lshr the upper bits down to the lower bits before multiply.
   unsigned Opcode = Op.getOpcode();
   unsigned ExShift = (ISD::MULHU == Opcode ? ISD::SRL : ISD::SRA);
-  unsigned ExSSE41 = (ISD::MULHU == Opcode ? X86ISD::VZEXT : X86ISD::VSEXT);
+  unsigned ExAVX = (ISD::MULHU == Opcode ? ISD::ZERO_EXTEND : ISD::SIGN_EXTEND);
 
   // AVX2 implementations - extend xmm subvectors to ymm.
   if (Subtarget.hasInt256()) {
@@ -21626,8 +21626,8 @@ static SDValue LowerMULH(SDValue Op, const X86Subtarget &Subtarget,
 
     if (VT == MVT::v32i8) {
       if (Subtarget.hasBWI()) {
-        SDValue ExA = getExtendInVec(ExSSE41, dl, MVT::v32i16, A, DAG);
-        SDValue ExB = getExtendInVec(ExSSE41, dl, MVT::v32i16, B, DAG);
+        SDValue ExA = DAG.getNode(ExAVX, dl, MVT::v32i16, A);
+        SDValue ExB = DAG.getNode(ExAVX, dl, MVT::v32i16, B);
         SDValue Mul = DAG.getNode(ISD::MUL, dl, MVT::v32i16, ExA, ExB);
         Mul = DAG.getNode(ISD::SRL, dl, MVT::v32i16, Mul,
                           DAG.getConstant(8, dl, MVT::v32i16));
@@ -21647,10 +21647,10 @@ static SDValue LowerMULH(SDValue Op, const X86Subtarget &Subtarget,
       SDValue BLo = extract128BitVector(B, 0, DAG, dl);
       SDValue AHi = extract128BitVector(A, NumElems / 2, DAG, dl);
       SDValue BHi = extract128BitVector(B, NumElems / 2, DAG, dl);
-      ALo = DAG.getNode(ExSSE41, dl, MVT::v16i16, ALo);
-      BLo = DAG.getNode(ExSSE41, dl, MVT::v16i16, BLo);
-      AHi = DAG.getNode(ExSSE41, dl, MVT::v16i16, AHi);
-      BHi = DAG.getNode(ExSSE41, dl, MVT::v16i16, BHi);
+      ALo = DAG.getNode(ExAVX, dl, MVT::v16i16, ALo);
+      BLo = DAG.getNode(ExAVX, dl, MVT::v16i16, BLo);
+      AHi = DAG.getNode(ExAVX, dl, MVT::v16i16, AHi);
+      BHi = DAG.getNode(ExAVX, dl, MVT::v16i16, BHi);
       Lo = DAG.getNode(ISD::SRL, dl, MVT::v16i16,
                        DAG.getNode(ISD::MUL, dl, MVT::v16i16, ALo, BLo),
                        DAG.getConstant(8, dl, MVT::v16i16));
@@ -21668,8 +21668,8 @@ static SDValue LowerMULH(SDValue Op, const X86Subtarget &Subtarget,
                          DAG.getVectorShuffle(MVT::v16i16, dl, Lo, Hi, HiMask));
     }
 
-    SDValue ExA = getExtendInVec(ExSSE41, dl, MVT::v16i16, A, DAG);
-    SDValue ExB = getExtendInVec(ExSSE41, dl, MVT::v16i16, B, DAG);
+    SDValue ExA = DAG.getNode(ExAVX, dl, MVT::v16i16, A);
+    SDValue ExB = DAG.getNode(ExAVX, dl, MVT::v16i16, B);
     SDValue Mul = DAG.getNode(ISD::MUL, dl, MVT::v16i16, ExA, ExB);
     SDValue MulH = DAG.getNode(ISD::SRL, dl, MVT::v16i16, Mul,
                                DAG.getConstant(8, dl, MVT::v16i16));
@@ -21681,6 +21681,7 @@ static SDValue LowerMULH(SDValue Op, const X86Subtarget &Subtarget,
   assert(VT == MVT::v16i8 &&
          "Pre-AVX2 support only supports v16i8 multiplication");
   MVT ExVT = MVT::v8i16;
+  unsigned ExSSE41 = (ISD::MULHU == Opcode ? X86ISD::VZEXT : X86ISD::VSEXT);
 
   // Extract the lo parts and zero/sign extend to i16.
   SDValue ALo, BLo;
