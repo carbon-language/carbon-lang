@@ -133,12 +133,22 @@ private:
   ParseType parseHTMLResource();
   ParseType parseMenuResource();
   ParseType parseStringTableResource();
+  ParseType parseVersionInfoResource();
 
   // Helper DIALOG parser - a single control.
   Expected<Control> parseControl();
 
   // Helper MENU parser.
   Expected<MenuDefinitionList> parseMenuItemsList();
+
+  // Helper VERSIONINFO parser - read the contents of a single BLOCK statement,
+  // from BEGIN to END.
+  Expected<std::unique_ptr<VersionInfoBlock>>
+  parseVersionInfoBlockContents(StringRef BlockName);
+  // Helper VERSIONINFO parser - read either VALUE or BLOCK statement.
+  Expected<std::unique_ptr<VersionInfoStmt>> parseVersionInfoStmt();
+  // Helper VERSIONINFO parser - read fixed VERSIONINFO statements.
+  Expected<VersionInfoResource::VersionInfoFixed> parseVersionInfoFixed();
 
   // Optional statement parsers.
   ParseOptionType parseLanguageStmt();

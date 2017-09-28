@@ -77,6 +77,8 @@ RCParser::ParseType RCParser::parseSingleResource() {
     Result = parseHTMLResource();
   else if (TypeToken->equalsLower("MENU"))
     Result = parseMenuResource();
+  else if (TypeToken->equalsLower("VERSIONINFO"))
+    Result = parseVersionInfoResource();
   else
     return getExpectedError("resource type", /* IsAlreadyRead = */ true);
 
@@ -322,6 +324,13 @@ RCParser::ParseType RCParser::parseDialogResource(bool IsExtended) {
   return std::move(Dialog);
 }
 
+RCParser::ParseType RCParser::parseVersionInfoResource() {
+  ASSIGN_OR_RETURN(FixedResult, parseVersionInfoFixed());
+  ASSIGN_OR_RETURN(BlockResult, parseVersionInfoBlockContents(StringRef()));
+  return make_unique<VersionInfoResource>(std::move(**BlockResult),
+                                          std::move(*FixedResult));
+}
+
 Expected<Control> RCParser::parseControl() {
   // Each control definition (except CONTROL) follows one of the schemes below
   // depending on the control class:
@@ -444,6 +453,72 @@ RCParser::ParseType RCParser::parseStringTableResource() {
   }
 
   return std::move(Table);
+}
+
+Expected<std::unique_ptr<VersionInfoBlock>>
+RCParser::parseVersionInfoBlockContents(StringRef BlockName) {
+  RETURN_IF_ERROR(consumeType(Kind::BlockBegin));
+
+  auto Contents = make_unique<VersionInfoBlock>(BlockName);
+
+  while (!isNextTokenKind(Kind::BlockEnd)) {
+    ASSIGN_OR_RETURN(Stmt, parseVersionInfoStmt());
+    Contents->addStmt(std::move(*Stmt));
+  }
+
+  consume(); // Consume BlockEnd.
+
+  return std::move(Contents);
+}
+
+Expected<std::unique_ptr<VersionInfoStmt>> RCParser::parseVersionInfoStmt() {
+  // Expect either BLOCK or VALUE, then a name or a key (a string).
+  ASSIGN_OR_RETURN(TypeResult, readIdentifier());
+
+  if (TypeResult->equals_lower("BLOCK")) {
+    ASSIGN_OR_RETURN(NameResult, readString());
+    return parseVersionInfoBlockContents(*NameResult);
+  }
+
+  if (TypeResult->equals_lower("VALUE")) {
+    ASSIGN_OR_RETURN(KeyResult, readString());
+    // Read a (possibly empty) list of strings and/or ints, each preceded by
+    // a comma.
+    std::vector<IntOrString> Values;
+
+    while (consumeOptionalType(Kind::Comma)) {
+      ASSIGN_OR_RETURN(ValueResult, readIntOrString());
+      Values.push_back(*ValueResult);
+    }
+    return make_unique<VersionInfoValue>(*KeyResult, std::move(Values));
+  }
+
+  return getExpectedError("BLOCK or VALUE", true);
+}
+
+Expected<VersionInfoResource::VersionInfoFixed>
+RCParser::parseVersionInfoFixed() {
+  using RetType = VersionInfoResource::VersionInfoFixed;
+  RetType Result;
+
+  // Read until the beginning of the block.
+  while (!isNextTokenKind(Kind::BlockBegin)) {
+    ASSIGN_OR_RETURN(TypeResult, readIdentifier());
+    auto FixedType = RetType::getFixedType(*TypeResult);
+
+    if (!RetType::isTypeSupported(FixedType))
+      return getExpectedError("fixed VERSIONINFO statement type", true);
+    if (Result.IsTypePresent[FixedType])
+      return getExpectedError("yet unread fixed VERSIONINFO statement type",
+                              true);
+
+    // VERSION variations take multiple integers.
+    size_t NumInts = RetType::isVersionType(FixedType) ? 4 : 1;
+    ASSIGN_OR_RETURN(ArgsResult, readIntsWithCommas(NumInts, NumInts));
+    Result.setValue(FixedType, *ArgsResult);
+  }
+
+  return Result;
 }
 
 RCParser::ParseOptionType RCParser::parseLanguageStmt() {
