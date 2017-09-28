@@ -327,8 +327,8 @@ RCParser::ParseType RCParser::parseDialogResource(bool IsExtended) {
 RCParser::ParseType RCParser::parseVersionInfoResource() {
   ASSIGN_OR_RETURN(FixedResult, parseVersionInfoFixed());
   ASSIGN_OR_RETURN(BlockResult, parseVersionInfoBlockContents(StringRef()));
-  return make_unique<VersionInfoResource>(std::move(**BlockResult),
-                                          std::move(*FixedResult));
+  return llvm::make_unique<VersionInfoResource>(std::move(**BlockResult),
+                                                std::move(*FixedResult));
 }
 
 Expected<Control> RCParser::parseControl() {
@@ -459,7 +459,7 @@ Expected<std::unique_ptr<VersionInfoBlock>>
 RCParser::parseVersionInfoBlockContents(StringRef BlockName) {
   RETURN_IF_ERROR(consumeType(Kind::BlockBegin));
 
-  auto Contents = make_unique<VersionInfoBlock>(BlockName);
+  auto Contents = llvm::make_unique<VersionInfoBlock>(BlockName);
 
   while (!isNextTokenKind(Kind::BlockEnd)) {
     ASSIGN_OR_RETURN(Stmt, parseVersionInfoStmt());
@@ -490,7 +490,7 @@ Expected<std::unique_ptr<VersionInfoStmt>> RCParser::parseVersionInfoStmt() {
       ASSIGN_OR_RETURN(ValueResult, readIntOrString());
       Values.push_back(*ValueResult);
     }
-    return make_unique<VersionInfoValue>(*KeyResult, std::move(Values));
+    return llvm::make_unique<VersionInfoValue>(*KeyResult, std::move(Values));
   }
 
   return getExpectedError("BLOCK or VALUE", true);
