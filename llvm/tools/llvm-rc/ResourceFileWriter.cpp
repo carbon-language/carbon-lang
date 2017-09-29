@@ -205,6 +205,10 @@ Error ResourceFileWriter::visitHTMLResource(const RCResource *Res) {
   return writeResource(Res, &ResourceFileWriter::writeHTMLBody);
 }
 
+Error ResourceFileWriter::visitMenuResource(const RCResource *Res) {
+  return writeResource(Res, &ResourceFileWriter::writeMenuBody);
+}
+
 Error ResourceFileWriter::visitCharacteristicsStmt(
     const CharacteristicsStmt *Stmt) {
   ObjectData.Characteristics = Stmt->Value;
@@ -380,6 +384,56 @@ Error ResourceFileWriter::writeAcceleratorsBody(const RCResource *Base) {
 
 Error ResourceFileWriter::writeHTMLBody(const RCResource *Base) {
   return appendFile(cast<HTMLResource>(Base)->HTMLLoc);
+}
+
+// --- MenuResource helpers. --- //
+
+Error ResourceFileWriter::writeMenuDefinition(
+    const std::unique_ptr<MenuDefinition> &Def, uint16_t Flags) {
+  assert(Def);
+  const MenuDefinition *DefPtr = Def.get();
+
+  if (auto *MenuItemPtr = dyn_cast<MenuItem>(DefPtr)) {
+    writeInt<uint16_t>(Flags);
+    RETURN_IF_ERROR(
+        checkNumberFits<uint16_t>(MenuItemPtr->Id, "MENUITEM action ID"));
+    writeInt<uint16_t>(MenuItemPtr->Id);
+    RETURN_IF_ERROR(writeCString(MenuItemPtr->Name));
+    return Error::success();
+  }
+
+  if (isa<MenuSeparator>(DefPtr)) {
+    writeInt<uint16_t>(Flags);
+    writeInt<uint32_t>(0);
+    return Error::success();
+  }
+
+  auto *PopupPtr = cast<PopupItem>(DefPtr);
+  writeInt<uint16_t>(Flags);
+  RETURN_IF_ERROR(writeCString(PopupPtr->Name));
+  return writeMenuDefinitionList(PopupPtr->SubItems);
+}
+
+Error ResourceFileWriter::writeMenuDefinitionList(
+    const MenuDefinitionList &List) {
+  for (auto &Def : List.Definitions) {
+    uint16_t Flags = Def->getResFlags();
+    // Last element receives an additional 0x80 flag.
+    const uint16_t LastElementFlag = 0x0080;
+    if (&Def == &List.Definitions.back())
+      Flags |= LastElementFlag;
+
+    RETURN_IF_ERROR(writeMenuDefinition(Def, Flags));
+  }
+  return Error::success();
+}
+
+Error ResourceFileWriter::writeMenuBody(const RCResource *Base) {
+  // At first, MENUHEADER structure. In fact, these are two WORDs equal to 0.
+  // Ref: msdn.microsoft.com/en-us/library/windows/desktop/ms648018.aspx
+  writeObject<uint32_t>(0);
+
+  return writeMenuDefinitionList(cast<MenuResource>(Base)->Elements);
 }
 
 } // namespace rc

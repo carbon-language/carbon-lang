@@ -32,6 +32,7 @@ public:
   Error visitNullResource(const RCResource *) override;
   Error visitAcceleratorsResource(const RCResource *) override;
   Error visitHTMLResource(const RCResource *) override;
+  Error visitMenuResource(const RCResource *) override;
 
   Error visitCharacteristicsStmt(const CharacteristicsStmt *) override;
   Error visitLanguageStmt(const LanguageResource *) override;
@@ -62,6 +63,12 @@ private:
 
   // HTMLResource
   Error writeHTMLBody(const RCResource *);
+
+  // MenuResource
+  Error writeMenuDefinition(const std::unique_ptr<MenuDefinition> &,
+                            uint16_t Flags);
+  Error writeMenuDefinitionList(const MenuDefinitionList &List);
+  Error writeMenuBody(const RCResource *);
 
   // Output stream handling.
   std::unique_ptr<raw_fd_ostream> FS;

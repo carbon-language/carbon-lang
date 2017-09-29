@@ -315,6 +315,8 @@ public:
     MENUBREAK = 0x0040
   };
 
+  enum MenuDefKind { MkBase, MkSeparator, MkMenuItem, MkPopup };
+
   static constexpr size_t NumFlags = 6;
   static StringRef OptionsStr[NumFlags];
   static uint32_t OptionsFlags[NumFlags];
@@ -323,13 +325,16 @@ public:
     return OS << "Base menu definition\n";
   }
   virtual ~MenuDefinition() {}
+
+  virtual uint16_t getResFlags() const { return 0; }
+  virtual MenuDefKind getKind() const { return MkBase; }
 };
 
 // Recursive description of a whole submenu.
 class MenuDefinitionList : public MenuDefinition {
+public:
   std::vector<std::unique_ptr<MenuDefinition>> Definitions;
 
-public:
   void addDefinition(std::unique_ptr<MenuDefinition> Def) {
     Definitions.push_back(std::move(Def));
   }
@@ -342,46 +347,73 @@ public:
 class MenuSeparator : public MenuDefinition {
 public:
   raw_ostream &log(raw_ostream &) const override;
+
+  MenuDefKind getKind() const override { return MkSeparator; }
+  static bool classof(const MenuDefinition *D) {
+    return D->getKind() == MkSeparator;
+  }
 };
 
 // MENUITEM statement definition.
 //
 // Ref: msdn.microsoft.com/en-us/library/windows/desktop/aa381024(v=vs.85).aspx
 class MenuItem : public MenuDefinition {
+public:
   StringRef Name;
   uint32_t Id;
   uint16_t Flags;
 
-public:
   MenuItem(StringRef Caption, uint32_t ItemId, uint16_t ItemFlags)
       : Name(Caption), Id(ItemId), Flags(ItemFlags) {}
   raw_ostream &log(raw_ostream &) const override;
+
+  uint16_t getResFlags() const override { return Flags; }
+  MenuDefKind getKind() const override { return MkMenuItem; }
+  static bool classof(const MenuDefinition *D) {
+    return D->getKind() == MkMenuItem;
+  }
 };
 
 // POPUP statement definition.
 //
 // Ref: msdn.microsoft.com/en-us/library/windows/desktop/aa381030(v=vs.85).aspx
 class PopupItem : public MenuDefinition {
+public:
   StringRef Name;
   uint16_t Flags;
   MenuDefinitionList SubItems;
 
-public:
   PopupItem(StringRef Caption, uint16_t ItemFlags,
             MenuDefinitionList &&SubItemsList)
       : Name(Caption), Flags(ItemFlags), SubItems(std::move(SubItemsList)) {}
   raw_ostream &log(raw_ostream &) const override;
+
+  // This has an additional (0x10) flag. It doesn't match with documented
+  // 0x01 flag, though.
+  uint16_t getResFlags() const override { return Flags | 0x10; }
+  MenuDefKind getKind() const override { return MkPopup; }
+  static bool classof(const MenuDefinition *D) {
+    return D->getKind() == MkPopup;
+  }
 };
 
 // Menu resource definition.
 class MenuResource : public OptStatementsRCResource {
+public:
   MenuDefinitionList Elements;
 
-public:
   MenuResource(OptionalStmtList &&OptStmts, MenuDefinitionList &&Items)
       : OptStatementsRCResource(std::move(OptStmts)),
         Elements(std::move(Items)) {}
   raw_ostream &log(raw_ostream &) const override;
+
+  IntOrString getResourceType() const override { return RkMenu; }
+  Twine getResourceTypeName() const override { return "MENU"; }
+  Error visit(Visitor *V) const override { return V->visitMenuResource(this); }
+  ResourceKind getKind() const override { return RkMenu; }
+  static bool classof(const RCResource *Res) {
+    return Res->getKind() == RkMenu;
+  }
 };
 
 // STRINGTABLE resource. Contains a list of strings, each having its unique ID.
