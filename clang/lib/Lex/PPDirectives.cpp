@@ -2132,10 +2132,10 @@ void Preprocessor::HandleIncludeMacrosDirective(SourceLocation HashLoc,
 // Preprocessor Macro Directive Handling.
 //===----------------------------------------------------------------------===//
 
-/// ReadMacroParameterList - The ( starting an argument list of a macro
-/// definition has just been read.  Lex the rest of the arguments and the
+/// ReadMacroParameterList - The ( starting a parameter list of a macro
+/// definition has just been read.  Lex the rest of the parameters and the
 /// closing ), updating MI with what we learn.  Return true if an error occurs
-/// parsing the arg list.
+/// parsing the param list.
 bool Preprocessor::ReadMacroParameterList(MacroInfo *MI, Token &Tok) {
   SmallVector<IdentifierInfo*, 32> Parameters;
 
@@ -2143,7 +2143,7 @@ bool Preprocessor::ReadMacroParameterList(MacroInfo *MI, Token &Tok) {
     LexUnexpandedToken(Tok);
     switch (Tok.getKind()) {
     case tok::r_paren:
-      // Found the end of the argument list.
+      // Found the end of the parameter list.
       if (Parameters.empty())  // #define FOO()
         return false;
       // Otherwise we have #define FOO(A,)
@@ -2167,7 +2167,7 @@ bool Preprocessor::ReadMacroParameterList(MacroInfo *MI, Token &Tok) {
         Diag(Tok, diag::err_pp_missing_rparen_in_macro_def);
         return true;
       }
-      // Add the __VA_ARGS__ identifier as an argument.
+      // Add the __VA_ARGS__ identifier as a parameter.
       Parameters.push_back(Ident__VA_ARGS__);
       MI->setIsC99Varargs();
       MI->setParameterList(Parameters, BP);
@@ -2185,7 +2185,7 @@ bool Preprocessor::ReadMacroParameterList(MacroInfo *MI, Token &Tok) {
         return true;
       }
 
-      // If this is already used as an argument, it is used multiple times (e.g.
+      // If this is already used as a parameter, it is used multiple times (e.g.
       // #define X(A,A.
       if (std::find(Parameters.begin(), Parameters.end(), II) !=
           Parameters.end()) {  // C99 6.10.3p6
@@ -2193,7 +2193,7 @@ bool Preprocessor::ReadMacroParameterList(MacroInfo *MI, Token &Tok) {
         return true;
       }
 
-      // Add the argument to the macro info.
+      // Add the parameter to the macro info.
       Parameters.push_back(II);
 
       // Lex the token after the identifier.
