@@ -214,6 +214,8 @@ function(add_link_opts target_name)
 endfunction(add_link_opts)
 
 # Set each output directory according to ${CMAKE_CONFIGURATION_TYPES}.
+# Note: Don't set variables CMAKE_*_OUTPUT_DIRECTORY any more,
+# or a certain builder, for eaxample, msbuild.exe, would be confused.
 function(set_output_directory target)
   cmake_parse_arguments(ARG "" "BINARY_DIR;LIBRARY_DIR" "" ${ARGN})
 
