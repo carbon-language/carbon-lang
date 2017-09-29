@@ -761,12 +761,6 @@ add_custom_target(srpm
   COMMAND cpack -G TGZ --config CPackSourceConfig.cmake -B ${LLVM_SRPM_DIR}/SOURCES
   COMMAND rpmbuild -bs --define '_topdir ${LLVM_SRPM_DIR}' ${LLVM_SRPM_BINARY_SPECFILE})
 
-
-# They are not referenced. See set_output_directory().
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LLVM_BINARY_DIR}/bin )
-set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${LLVM_BINARY_DIR}/lib${LLVM_LIBDIR_SUFFIX} )
-set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LLVM_BINARY_DIR}/lib${LLVM_LIBDIR_SUFFIX} )
-
 if(APPLE AND DARWIN_LTO_LIBRARY)
   set(CMAKE_EXE_LINKER_FLAGS
     "${CMAKE_EXE_LINKER_FLAGS} -Wl,-lto_library -Wl,${DARWIN_LTO_LIBRARY}")
