@@ -365,7 +365,8 @@ RCParser::ParseType RCParser::parseAcceleratorsResource() {
   ASSIGN_OR_RETURN(OptStatements, parseOptionalStatements());
   RETURN_IF_ERROR(consumeType(Kind::BlockBegin));
 
-  auto Accels = make_unique<AcceleratorsResource>(std::move(*OptStatements));
+  auto Accels =
+      llvm::make_unique<AcceleratorsResource>(std::move(*OptStatements));
 
   while (!consumeOptionalType(Kind::BlockEnd)) {
     ASSIGN_OR_RETURN(EventResult, readIntOrString());
@@ -381,7 +382,7 @@ RCParser::ParseType RCParser::parseAcceleratorsResource() {
 
 RCParser::ParseType RCParser::parseCursorResource() {
   ASSIGN_OR_RETURN(Arg, readString());
-  return make_unique<CursorResource>(*Arg);
+  return llvm::make_unique<CursorResource>(*Arg);
 }
 
 RCParser::ParseType RCParser::parseDialogResource(bool IsExtended) {
@@ -404,7 +405,7 @@ RCParser::ParseType RCParser::parseDialogResource(bool IsExtended) {
          "parseOptionalStatements, when successful, halts on BlockBegin.");
   consume();
 
-  auto Dialog = make_unique<DialogResource>(
+  auto Dialog = llvm::make_unique<DialogResource>(
       (*LocResult)[0], (*LocResult)[1], (*LocResult)[2], (*LocResult)[3],
       HelpID, std::move(*OptStatements), IsExtended);
 
@@ -422,7 +423,7 @@ RCParser::ParseType RCParser::parseUserDefinedResource(IntOrString Type) {
 
   // Check if this is a file resource.
   if (look().kind() == Kind::String)
-    return make_unique<UserDefinedResource>(Type, read().value());
+    return llvm::make_unique<UserDefinedResource>(Type, read().value());
 
   RETURN_IF_ERROR(consumeType(Kind::BlockBegin));
   std::vector<IntOrString> Data;
@@ -438,7 +439,7 @@ RCParser::ParseType RCParser::parseUserDefinedResource(IntOrString Type) {
     Data.push_back(*Item);
   }
 
-  return make_unique<UserDefinedResource>(Type, std::move(Data));
+  return llvm::make_unique<UserDefinedResource>(Type, std::move(Data));
 }
 
 RCParser::ParseType RCParser::parseVersionInfoResource() {
@@ -480,19 +481,19 @@ Expected<Control> RCParser::parseControl() {
 
 RCParser::ParseType RCParser::parseIconResource() {
   ASSIGN_OR_RETURN(Arg, readString());
-  return make_unique<IconResource>(*Arg);
+  return llvm::make_unique<IconResource>(*Arg);
 }
 
 RCParser::ParseType RCParser::parseHTMLResource() {
   ASSIGN_OR_RETURN(Arg, readString());
-  return make_unique<HTMLResource>(*Arg);
+  return llvm::make_unique<HTMLResource>(*Arg);
 }
 
 RCParser::ParseType RCParser::parseMenuResource() {
   ASSIGN_OR_RETURN(OptStatements, parseOptionalStatements());
   ASSIGN_OR_RETURN(Items, parseMenuItemsList());
-  return make_unique<MenuResource>(std::move(*OptStatements),
-                                   std::move(*Items));
+  return llvm::make_unique<MenuResource>(std::move(*OptStatements),
+                                         std::move(*Items));
 }
 
 Expected<MenuDefinitionList> RCParser::parseMenuItemsList() {
@@ -516,7 +517,7 @@ Expected<MenuDefinitionList> RCParser::parseMenuItemsList() {
       // Now, expecting SEPARATOR.
       ASSIGN_OR_RETURN(SeparatorResult, readIdentifier());
       if (SeparatorResult->equals_lower("SEPARATOR")) {
-        List.addDefinition(make_unique<MenuSeparator>());
+        List.addDefinition(llvm::make_unique<MenuSeparator>());
         continue;
       }
 
@@ -540,14 +541,14 @@ Expected<MenuDefinitionList> RCParser::parseMenuItemsList() {
     if (IsPopup) {
       // If POPUP, read submenu items recursively.
       ASSIGN_OR_RETURN(SubMenuResult, parseMenuItemsList());
-      List.addDefinition(make_unique<PopupItem>(*CaptionResult, *FlagsResult,
-                                                std::move(*SubMenuResult)));
+      List.addDefinition(llvm::make_unique<PopupItem>(
+          *CaptionResult, *FlagsResult, std::move(*SubMenuResult)));
       continue;
     }
 
     assert(IsMenuItem);
     List.addDefinition(
-        make_unique<MenuItem>(*CaptionResult, MenuResult, *FlagsResult));
+        llvm::make_unique<MenuItem>(*CaptionResult, MenuResult, *FlagsResult));
   }
 
   return std::move(List);
@@ -557,7 +558,8 @@ RCParser::ParseType RCParser::parseStringTableResource() {
   ASSIGN_OR_RETURN(OptStatements, parseOptionalStatements());
   RETURN_IF_ERROR(consumeType(Kind::BlockBegin));
 
-  auto Table = make_unique<StringTableResource>(std::move(*OptStatements));
+  auto Table =
+      llvm::make_unique<StringTableResource>(std::move(*OptStatements));
 
   // Read strings until we reach the end of the block.
   while (!consumeOptionalType(Kind::BlockEnd)) {
@@ -640,34 +642,34 @@ RCParser::parseVersionInfoFixed() {
 
 RCParser::ParseOptionType RCParser::parseLanguageStmt() {
   ASSIGN_OR_RETURN(Args, readIntsWithCommas(/* min = */ 2, /* max = */ 2));
-  return make_unique<LanguageResource>((*Args)[0], (*Args)[1]);
+  return llvm::make_unique<LanguageResource>((*Args)[0], (*Args)[1]);
 }
 
 RCParser::ParseOptionType RCParser::parseCharacteristicsStmt() {
   ASSIGN_OR_RETURN(Arg, readInt());
-  return make_unique<CharacteristicsStmt>(*Arg);
+  return llvm::make_unique<CharacteristicsStmt>(*Arg);
 }
 
 RCParser::ParseOptionType RCParser::parseVersionStmt() {
   ASSIGN_OR_RETURN(Arg, readInt());
-  return make_unique<VersionStmt>(*Arg);
+  return llvm::make_unique<VersionStmt>(*Arg);
 }
 
 RCParser::ParseOptionType RCParser::parseCaptionStmt() {
   ASSIGN_OR_RETURN(Arg, readString());
-  return make_unique<CaptionStmt>(*Arg);
+  return llvm::make_unique<CaptionStmt>(*Arg);
 }
 
 RCParser::ParseOptionType RCParser::parseFontStmt() {
   ASSIGN_OR_RETURN(SizeResult, readInt());
   RETURN_IF_ERROR(consumeType(Kind::Comma));
   ASSIGN_OR_RETURN(NameResult, readString());
-  return make_unique<FontStmt>(*SizeResult, *NameResult);
+  return llvm::make_unique<FontStmt>(*SizeResult, *NameResult);
 }
 
 RCParser::ParseOptionType RCParser::parseStyleStmt() {
   ASSIGN_OR_RETURN(Arg, readInt());
-  return make_unique<StyleStmt>(*Arg);
+  return llvm::make_unique<StyleStmt>(*Arg);
 }
 
 Error RCParser::getExpectedError(const Twine Message, bool IsAlreadyRead) {
