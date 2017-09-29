@@ -2137,14 +2137,14 @@ void Preprocessor::HandleIncludeMacrosDirective(SourceLocation HashLoc,
 /// closing ), updating MI with what we learn.  Return true if an error occurs
 /// parsing the arg list.
 bool Preprocessor::ReadMacroParameterList(MacroInfo *MI, Token &Tok) {
-  SmallVector<IdentifierInfo*, 32> Arguments;
+  SmallVector<IdentifierInfo*, 32> Parameters;
 
   while (true) {
     LexUnexpandedToken(Tok);
     switch (Tok.getKind()) {
     case tok::r_paren:
       // Found the end of the argument list.
-      if (Arguments.empty())  // #define FOO()
+      if (Parameters.empty())  // #define FOO()
         return false;
       // Otherwise we have #define FOO(A,)
       Diag(Tok, diag::err_pp_expected_ident_in_arg_list);
@@ -2168,9 +2168,9 @@ bool Preprocessor::ReadMacroParameterList(MacroInfo *MI, Token &Tok) {
         return true;
       }
       // Add the __VA_ARGS__ identifier as an argument.
-      Arguments.push_back(Ident__VA_ARGS__);
+      Parameters.push_back(Ident__VA_ARGS__);
       MI->setIsC99Varargs();
-      MI->setParameterList(Arguments, BP);
+      MI->setParameterList(Parameters, BP);
       return false;
     case tok::eod:  // #define X(
       Diag(Tok, diag::err_pp_missing_rparen_in_macro_def);
@@ -2187,14 +2187,14 @@ bool Preprocessor::ReadMacroParameterList(MacroInfo *MI, Token &Tok) {
 
       // If this is already used as an argument, it is used multiple times (e.g.
       // #define X(A,A.
-      if (std::find(Arguments.begin(), Arguments.end(), II) !=
-          Arguments.end()) {  // C99 6.10.3p6
+      if (std::find(Parameters.begin(), Parameters.end(), II) !=
+          Parameters.end()) {  // C99 6.10.3p6
         Diag(Tok, diag::err_pp_duplicate_name_in_arg_list) << II;
         return true;
       }
 
       // Add the argument to the macro info.
-      Arguments.push_back(II);
+      Parameters.push_back(II);
 
       // Lex the token after the identifier.
       LexUnexpandedToken(Tok);
@@ -2204,7 +2204,7 @@ bool Preprocessor::ReadMacroParameterList(MacroInfo *MI, Token &Tok) {
         Diag(Tok, diag::err_pp_expected_comma_in_arg_list);
         return true;
       case tok::r_paren: // #define X(A)
-        MI->setParameterList(Arguments, BP);
+        MI->setParameterList(Parameters, BP);
         return false;
       case tok::comma:  // #define X(A,
         break;
@@ -2220,7 +2220,7 @@ bool Preprocessor::ReadMacroParameterList(MacroInfo *MI, Token &Tok) {
         }
 
         MI->setIsGNUVarargs();
-        MI->setParameterList(Arguments, BP);
+        MI->setParameterList(Parameters, BP);
         return false;
       }
     }
