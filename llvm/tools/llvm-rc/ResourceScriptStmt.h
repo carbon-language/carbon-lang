@@ -15,6 +15,7 @@
 #define LLVM_TOOLS_LLVMRC_RESOURCESCRIPTSTMT_H
 
 #include "ResourceScriptToken.h"
+#include "ResourceVisitor.h"
 
 #include "llvm/ADT/StringSet.h"
 
@@ -49,15 +50,61 @@ public:
     return !IsInt && Data.String.equals_lower(Str);
   }
 
+  bool isInt() const { return IsInt; }
+
+  uint32_t getInt() const {
+    assert(IsInt);
+    return Data.Int;
+  }
+
+  const StringRef &getString() const {
+    assert(!IsInt);
+    return Data.String;
+  }
+
+  operator Twine() const {
+    return isInt() ? Twine(getInt()) : Twine(getString());
+  }
+
   friend raw_ostream &operator<<(raw_ostream &, const IntOrString &);
+};
+
+enum ResourceKind {
+  // These resource kinds have corresponding .res resource type IDs
+  // (TYPE in RESOURCEHEADER structure). The numeric value assigned to each
+  // kind is equal to this type ID.
+  RkNull = 0,
+  RkMenu = 4,
+  RkDialog = 5,
+  RkAccelerators = 9,
+  RkVersionInfo = 16,
+  RkHTML = 23,
+
+  // These kinds don't have assigned type IDs (they might be the resources
+  // of invalid kind, expand to many resource structures in .res files,
+  // or have variable type ID). In order to avoid ID clashes with IDs above,
+  // we assign the kinds the values 256 and larger.
+  RkInvalid = 256,
+  RkBase,
+  RkCursor,
+  RkIcon,
+  RkUser
+};
+
+// Non-zero memory flags.
+// Ref: msdn.microsoft.com/en-us/library/windows/desktop/ms648027(v=vs.85).aspx
+enum MemoryFlags {
+  MfMoveable = 0x10,
+  MfPure = 0x20,
+  MfPreload = 0x40,
+  MfDiscardable = 0x1000
 };
 
 // Base resource. All the resources should derive from this base.
 class RCResource {
-protected:
+public:
   IntOrString ResName;
 
-public:
   RCResource() = default;
   RCResource(RCResource &&) = default;
   void setName(const IntOrString &Name) { ResName = Name; }
@@ -65,6 +112,37 @@ public:
     return OS << "Base statement\n";
   };
   virtual ~RCResource() {}
+
+  virtual Error visit(Visitor *) const {
+    llvm_unreachable("This is unable to call methods from Visitor base");
+  }
+
+  // By default, memory flags are DISCARDABLE | PURE | MOVEABLE.
+  virtual uint16_t getMemoryFlags() const {
+    return MfDiscardable | MfPure | MfMoveable;
+  }
+  virtual ResourceKind getKind() const { return RkBase; }
+  static bool classof(const RCResource *Res) { return true; }
+
+  virtual IntOrString getResourceType() const {
+    llvm_unreachable("This cannot be called on objects without types.");
+  }
+  virtual Twine getResourceTypeName() const {
+    llvm_unreachable("This cannot be called on objects without types.");
+  };
+};
+
+// An empty resource. It has no content, type 0, ID 0 and all of its
+// characteristics are equal to 0.
+class NullResource : public RCResource {
+public:
+  raw_ostream &log(raw_ostream &OS) const override {
+    return OS << "Null resource\n";
+  }
+  Error visit(Visitor *V) const override { return V->visitNullResource(this); }
+  IntOrString getResourceType() const override { return 0; }
+  Twine getResourceTypeName() const override { return "(NULL)"; }
+  uint16_t getMemoryFlags() const override { return 0; }
 };
 
 // Optional statement base. All such statements should derive from this base.
@@ -89,12 +167,17 @@ public:
 //
 // Ref: msdn.microsoft.com/en-us/library/windows/desktop/aa381019(v=vs.85).aspx
 class LanguageResource : public OptionalStmt {
+public:
   uint32_t Lang, SubLang;
 
-public:
   LanguageResource(uint32_t LangId, uint32_t SubLangId)
       : Lang(LangId), SubLang(SubLangId) {}
   raw_ostream &log(raw_ostream &) const override;
+
+  // This is not a regular top-level statement; when it occurs, it just
+  // modifies the language context.
+  Error visit(Visitor *V) const override { return V->visitLanguageStmt(this); }
+  Twine getResourceTypeName() const override { return "LANGUAGE"; }
 };
 
 // ACCELERATORS resource. Defines a named table of accelerators for the app.
@@ -161,11 +244,22 @@ public:
 //
 // Ref: msdn.microsoft.com/en-us/library/windows/desktop/aa966018(v=vs.85).aspx
 class HTMLResource : public RCResource {
+public:
   StringRef HTMLLoc;
 
-public:
   HTMLResource(StringRef Location) : HTMLLoc(Location) {}
   raw_ostream &log(raw_ostream &) const override;
+
+  Error visit(Visitor *V) const override { return V->visitHTMLResource(this); }
+
+  // Curiously, file resources don't have DISCARDABLE flag set.
+  uint16_t getMemoryFlags() const override { return MfPure | MfMoveable; }
+  IntOrString getResourceType() const override { return RkHTML; }
+  Twine getResourceTypeName() const override { return "HTML"; }
+  ResourceKind getKind() const override { return RkHTML; }
+  static bool classof(const RCResource *Res) {
+    return Res->getKind() == RkHTML;
+  }
 };
 
 // -- MENU resource and its helper classes --
