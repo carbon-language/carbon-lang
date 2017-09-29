@@ -28,6 +28,19 @@ using namespace llvm::support;
 namespace llvm {
 namespace rc {
 
+// Class that employs RAII to save the current serializator object state
+// and revert to it as soon as we leave the scope. This is useful if resources
+// declare their own resource-local statements.
+class ContextKeeper {
+  ResourceFileWriter *FileWriter;
+  ResourceFileWriter::ObjectInfo SavedInfo;
+
+public:
+  ContextKeeper(ResourceFileWriter *V)
+      : FileWriter(V), SavedInfo(V->ObjectData) {}
+  ~ContextKeeper() { FileWriter->ObjectData = SavedInfo; }
+};
+
 static Error createError(Twine Message,
                          std::errc Type = std::errc::invalid_argument) {
   return make_error<StringError>(Message, std::make_error_code(Type));
@@ -184,14 +197,29 @@ Error ResourceFileWriter::visitNullResource(const RCResource *Res) {
   return writeResource(Res, &ResourceFileWriter::writeNullBody);
 }
 
+Error ResourceFileWriter::visitAcceleratorsResource(const RCResource *Res) {
+  return writeResource(Res, &ResourceFileWriter::writeAcceleratorsBody);
+}
+
 Error ResourceFileWriter::visitHTMLResource(const RCResource *Res) {
   return writeResource(Res, &ResourceFileWriter::writeHTMLBody);
+}
+
+Error ResourceFileWriter::visitCharacteristicsStmt(
+    const CharacteristicsStmt *Stmt) {
+  ObjectData.Characteristics = Stmt->Value;
+  return Error::success();
 }
 
 Error ResourceFileWriter::visitLanguageStmt(const LanguageResource *Stmt) {
   RETURN_IF_ERROR(checkNumberFits(Stmt->Lang, 10, "Primary language ID"));
   RETURN_IF_ERROR(checkNumberFits(Stmt->SubLang, 6, "Sublanguage ID"));
   ObjectData.LanguageInfo = Stmt->Lang | (Stmt->SubLang << 10);
+  return Error::success();
+}
+
+Error ResourceFileWriter::visitVersionStmt(const VersionStmt *Stmt) {
+  ObjectData.VersionInfo = Stmt->Value;
   return Error::success();
 }
 
@@ -208,12 +236,16 @@ Error ResourceFileWriter::writeResource(
   RETURN_IF_ERROR(handleError(writeIdentifier(ResType), Res));
   RETURN_IF_ERROR(handleError(writeIdentifier(Res->ResName), Res));
 
+  // Apply the resource-local optional statements.
+  ContextKeeper RAII(this);
+  RETURN_IF_ERROR(handleError(Res->applyStmts(this), Res));
+
   padStream(sizeof(uint32_t));
   object::WinResHeaderSuffix HeaderSuffix{
       ulittle32_t(0), // DataVersion; seems to always be 0
       ulittle16_t(Res->getMemoryFlags()), ulittle16_t(ObjectData.LanguageInfo),
-      ulittle32_t(0),  // VersionInfo
-      ulittle32_t(0)}; // Characteristics
+      ulittle32_t(ObjectData.VersionInfo),
+      ulittle32_t(ObjectData.Characteristics)};
   writeObject(HeaderSuffix);
 
   uint64_t DataLoc = tell();
@@ -229,9 +261,122 @@ Error ResourceFileWriter::writeResource(
   return Error::success();
 }
 
+// --- NullResource helpers. --- //
+
 Error ResourceFileWriter::writeNullBody(const RCResource *) {
   return Error::success();
 }
+
+// --- AcceleratorsResource helpers. --- //
+
+Error ResourceFileWriter::writeSingleAccelerator(
+    const AcceleratorsResource::Accelerator &Obj, bool IsLastItem) {
+  using Accelerator = AcceleratorsResource::Accelerator;
+  using Opt = Accelerator::Options;
+
+  struct AccelTableEntry {
+    ulittle16_t Flags;
+    ulittle16_t ANSICode;
+    ulittle16_t Id;
+    uint16_t Padding;
+  } Entry{ulittle16_t(0), ulittle16_t(0), ulittle16_t(0), 0};
+
+  bool IsASCII = Obj.Flags & Opt::ASCII, IsVirtKey = Obj.Flags & Opt::VIRTKEY;
+
+  // Remove ASCII flags (which doesn't occur in .res files).
+  Entry.Flags = Obj.Flags & ~Opt::ASCII;
+
+  if (IsLastItem)
+    Entry.Flags |= 0x80;
+
+  RETURN_IF_ERROR(checkNumberFits<uint16_t>(Obj.Id, "ACCELERATORS entry ID"));
+  Entry.Id = ulittle16_t(Obj.Id);
+
+  auto createAccError = [&Obj](const char *Msg) {
+    return createError("Accelerator ID " + Twine(Obj.Id) + ": " + Msg);
+  };
+
+  if (IsASCII && IsVirtKey)
+    return createAccError("Accelerator can't be both ASCII and VIRTKEY");
+
+  if (!IsVirtKey && (Obj.Flags & (Opt::ALT | Opt::SHIFT | Opt::CONTROL)))
+    return createAccError("Can only apply ALT, SHIFT or CONTROL to VIRTKEY"
+                          " accelerators");
+
+  if (Obj.Event.isInt()) {
+    if (!IsASCII && !IsVirtKey)
+      return createAccError(
+          "Accelerator with a numeric event must be either ASCII"
+          " or VIRTKEY");
+
+    uint32_t EventVal = Obj.Event.getInt();
+    RETURN_IF_ERROR(
+        checkNumberFits<uint16_t>(EventVal, "Numeric event key ID"));
+    Entry.ANSICode = ulittle16_t(EventVal);
+    writeObject(Entry);
+    return Error::success();
+  }
+
+  StringRef Str = Obj.Event.getString();
+  bool IsWide;
+  stripQuotes(Str, IsWide);
+
+  if (Str.size() == 0 || Str.size() > 2)
+    return createAccError(
+        "Accelerator string events should have length 1 or 2");
+
+  if (Str[0] == '^') {
+    if (Str.size() == 1)
+      return createAccError("No character following '^' in accelerator event");
+    if (IsVirtKey)
+      return createAccError(
+          "VIRTKEY accelerator events can't be preceded by '^'");
+
+    char Ch = Str[1];
+    if (Ch >= 'a' && Ch <= 'z')
+      Entry.ANSICode = ulittle16_t(Ch - 'a' + 1);
+    else if (Ch >= 'A' && Ch <= 'Z')
+      Entry.ANSICode = ulittle16_t(Ch - 'A' + 1);
+    else
+      return createAccError("Control character accelerator event should be"
+                            " alphabetic");
+
+    writeObject(Entry);
+    return Error::success();
+  }
+
+  if (Str.size() == 2)
+    return createAccError("Event string should be one-character, possibly"
+                          " preceded by '^'");
+
+  uint8_t EventCh = Str[0];
+  // The original tool just warns in this situation. We chose to fail.
+  if (IsVirtKey && !isalnum(EventCh))
+    return createAccError("Non-alphanumeric characters cannot describe virtual"
+                          " keys");
+  if (EventCh > 0x7F)
+    return createAccError("Non-ASCII description of accelerator");
+
+  if (IsVirtKey)
+    EventCh = toupper(EventCh);
+  Entry.ANSICode = ulittle16_t(EventCh);
+  writeObject(Entry);
+  return Error::success();
+}
+
+Error ResourceFileWriter::writeAcceleratorsBody(const RCResource *Base) {
+  auto *Res = cast<AcceleratorsResource>(Base);
+  size_t AcceleratorId = 0;
+  for (auto &Acc : Res->Accelerators) {
+    ++AcceleratorId;
+    RETURN_IF_ERROR(
+        writeSingleAccelerator(Acc, AcceleratorId == Res->Accelerators.size()));
+  }
+  return Error::success();
+}
+
+// --- HTMLResource helpers. --- //
+
 
 Error ResourceFileWriter::writeHTMLBody(const RCResource *Base) {
   return appendFile(cast<HTMLResource>(Base)->HTMLLoc);

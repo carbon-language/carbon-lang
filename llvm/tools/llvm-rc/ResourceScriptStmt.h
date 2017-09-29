@@ -104,9 +104,6 @@ enum MemoryFlags {
 class RCResource {
 public:
   IntOrString ResName;
-
-  RCResource() = default;
-  RCResource(RCResource &&) = default;
   void setName(const IntOrString &Name) { ResName = Name; }
   virtual raw_ostream &log(raw_ostream &OS) const {
     return OS << "Base statement\n";
@@ -116,6 +113,10 @@ public:
   virtual Error visit(Visitor *) const {
     llvm_unreachable("This is unable to call methods from Visitor base");
   }
+
+  // Apply the statements attached to this resource. Generic resources
+  // don't have any.
+  virtual Error applyStmts(Visitor *) const { return Error::success(); }
 
   // By default, memory flags are DISCARDABLE | PURE | MOVEABLE.
   virtual uint16_t getMemoryFlags() const {
@@ -153,10 +154,17 @@ class OptionalStmtList : public OptionalStmt {
 
 public:
   OptionalStmtList() {}
-  virtual raw_ostream &log(raw_ostream &OS) const;
+  raw_ostream &log(raw_ostream &OS) const override;
 
   void addStmt(std::unique_ptr<OptionalStmt> Stmt) {
     Statements.push_back(std::move(Stmt));
+  }
+
+  Error visit(Visitor *V) const override {
+    for (auto &StmtPtr : Statements)
+      if (auto Err = StmtPtr->visit(V))
+        return Err;
+    return Error::success();
   }
 };
 
@@ -166,6 +174,8 @@ public:
 
   OptStatementsRCResource(OptionalStmtList &&Stmts)
       : OptStatements(llvm::make_unique<OptionalStmtList>(std::move(Stmts))) {}
+
+  virtual Error applyStmts(Visitor *V) const { return OptStatements->visit(V); }
 };
 
 // LANGUAGE statement. It can occur both as a top-level statement (in such
@@ -218,14 +228,27 @@ public:
     static uint32_t OptionsFlags[NumFlags];
   };
 
+  std::vector<Accelerator> Accelerators;
+
   using OptStatementsRCResource::OptStatementsRCResource;
   void addAccelerator(IntOrString Event, uint32_t Id, uint16_t Flags) {
     Accelerators.push_back(Accelerator{Event, Id, Flags});
   }
   raw_ostream &log(raw_ostream &) const override;
 
-private:
-  std::vector<Accelerator> Accelerators;
+  IntOrString getResourceType() const override { return RkAccelerators; }
+  uint16_t getMemoryFlags() const override {
+    return MfPure | MfMoveable;
+  }
+  Twine getResourceTypeName() const override { return "ACCELERATORS"; }
+
+  Error visit(Visitor *V) const override {
+    return V->visitAcceleratorsResource(this);
+  }
+  ResourceKind getKind() const override { return RkAccelerators; }
+  static bool classof(const RCResource *Res) {
+    return Res->getKind() == RkAccelerators;
+  }
 };
 
 // CURSOR resource. Represents a single cursor (".cur") file.
@@ -546,22 +569,30 @@ public:
 //
 // Ref: msdn.microsoft.com/en-us/library/windows/desktop/aa380872(v=vs.85).aspx
 class CharacteristicsStmt : public OptionalStmt {
+public:
   uint32_t Value;
 
-public:
   CharacteristicsStmt(uint32_t Characteristic) : Value(Characteristic) {}
   raw_ostream &log(raw_ostream &) const override;
+
+  Twine getResourceTypeName() const override { return "CHARACTERISTICS"; }
+  Error visit(Visitor *V) const override {
+    return V->visitCharacteristicsStmt(this);
+  }
 };
 
 // VERSION optional statement.
 //
 // Ref: msdn.microsoft.com/en-us/library/windows/desktop/aa381059(v=vs.85).aspx
 class VersionStmt : public OptionalStmt {
+public:
   uint32_t Value;
 
-public:
   VersionStmt(uint32_t Version) : Value(Version) {}
   raw_ostream &log(raw_ostream &) const override;
+
+  Twine getResourceTypeName() const override { return "VERSION"; }
+  Error visit(Visitor *V) const override { return V->visitVersionStmt(this); }
 };
 
 // CAPTION optional statement.

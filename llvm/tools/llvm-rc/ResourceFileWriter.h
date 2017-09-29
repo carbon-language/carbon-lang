@@ -30,14 +30,19 @@ public:
   }
 
   Error visitNullResource(const RCResource *) override;
+  Error visitAcceleratorsResource(const RCResource *) override;
   Error visitHTMLResource(const RCResource *) override;
 
+  Error visitCharacteristicsStmt(const CharacteristicsStmt *) override;
   Error visitLanguageStmt(const LanguageResource *) override;
+  Error visitVersionStmt(const VersionStmt *) override;
 
   struct ObjectInfo {
     uint16_t LanguageInfo;
+    uint32_t Characteristics;
+    uint32_t VersionInfo;
 
-    ObjectInfo() : LanguageInfo(0) {}
+    ObjectInfo() : LanguageInfo(0), Characteristics(0), VersionInfo(0) {}
   } ObjectData;
 
 private:
@@ -47,7 +52,15 @@ private:
   writeResource(const RCResource *Res,
                 Error (ResourceFileWriter::*BodyWriter)(const RCResource *));
 
+  // NullResource
   Error writeNullBody(const RCResource *);
+
+  // AcceleratorsResource
+  Error writeSingleAccelerator(const AcceleratorsResource::Accelerator &,
+                               bool IsLastItem);
+  Error writeAcceleratorsBody(const RCResource *);
+
+  // HTMLResource
   Error writeHTMLBody(const RCResource *);
 
   // Output stream handling.
