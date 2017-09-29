@@ -424,7 +424,7 @@ typedef ElfW(Phdr) Elf_Phdr;
 # endif
 
 struct DlIteratePhdrData {
-  InternalMmapVector<LoadedModule> *modules;
+  InternalMmapVectorNoCtor<LoadedModule> *modules;
   bool first;
 };
 
@@ -473,13 +473,13 @@ static bool requiresProcmaps() {
 #endif
 }
 
-static void procmapsInit(InternalMmapVector<LoadedModule> *modules) {
+static void procmapsInit(InternalMmapVectorNoCtor<LoadedModule> *modules) {
   MemoryMappingLayout memory_mapping(false);
   memory_mapping.DumpListOfModules(modules);
 }
 
 void ListOfModules::init() {
-  clear();
+  clearOrInit();
   if (requiresProcmaps()) {
     procmapsInit(&modules_);
   } else {
