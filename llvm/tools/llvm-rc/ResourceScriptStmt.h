@@ -160,6 +160,14 @@ public:
   }
 };
 
+class OptStatementsRCResource : public RCResource {
+public:
+  std::unique_ptr<OptionalStmtList> OptStatements;
+
+  OptStatementsRCResource(OptionalStmtList &&Stmts)
+      : OptStatements(llvm::make_unique<OptionalStmtList>(std::move(Stmts))) {}
+};
+
 // LANGUAGE statement. It can occur both as a top-level statement (in such
 // a situation, it changes the default language until the end of the file)
 // and as an optional resource statement (then it changes the language
@@ -183,37 +191,41 @@ public:
 // ACCELERATORS resource. Defines a named table of accelerators for the app.
 //
 // Ref: msdn.microsoft.com/en-us/library/windows/desktop/aa380610(v=vs.85).aspx
-class AcceleratorsResource : public RCResource {
+class AcceleratorsResource : public OptStatementsRCResource {
 public:
   class Accelerator {
   public:
     IntOrString Event;
     uint32_t Id;
-    uint8_t Flags;
+    uint16_t Flags;
 
     enum Options {
-      ASCII = (1 << 0),
-      VIRTKEY = (1 << 1),
-      NOINVERT = (1 << 2),
-      ALT = (1 << 3),
-      SHIFT = (1 << 4),
-      CONTROL = (1 << 5)
+      // This is actually 0x0000 (accelerator is assumed to be ASCII if it's
+      // not VIRTKEY). However, rc.exe behavior is different in situations
+      // "only ASCII defined" and "neither ASCII nor VIRTKEY defined".
+      // Therefore, we include ASCII as another flag. This must be zeroed
+      // when serialized.
+      ASCII = 0x8000,
+      VIRTKEY = 0x0001,
+      NOINVERT = 0x0002,
+      ALT = 0x0010,
+      SHIFT = 0x0004,
+      CONTROL = 0x0008
     };
 
     static constexpr size_t NumFlags = 6;
     static StringRef OptionsStr[NumFlags];
+    static uint32_t OptionsFlags[NumFlags];
   };
 
-  AcceleratorsResource(OptionalStmtList &&OptStmts)
-      : OptStatements(std::move(OptStmts)) {}
-  void addAccelerator(IntOrString Event, uint32_t Id, uint8_t Flags) {
+  using OptStatementsRCResource::OptStatementsRCResource;
+  void addAccelerator(IntOrString Event, uint32_t Id, uint16_t Flags) {
     Accelerators.push_back(Accelerator{Event, Id, Flags});
   }
   raw_ostream &log(raw_ostream &) const override;
 
 private:
   std::vector<Accelerator> Accelerators;
-  OptionalStmtList OptStatements;
 };
 
 // CURSOR resource. Represents a single cursor (".cur") file.
@@ -272,17 +284,18 @@ public:
 class MenuDefinition {
 public:
   enum Options {
-    CHECKED = (1 << 0),
-    GRAYED = (1 << 1),
-    HELP = (1 << 2),
-    INACTIVE = (1 << 3),
-    MENUBARBREAK = (1 << 4),
-    MENUBREAK = (1 << 5)
+    CHECKED = 0x0008,
+    GRAYED = 0x0001,
+    HELP = 0x4000,
+    INACTIVE = 0x0002,
+    MENUBARBREAK = 0x0020,
+    MENUBREAK = 0x0040
   };
 
   static constexpr size_t NumFlags = 6;
   static StringRef OptionsStr[NumFlags];
-  static raw_ostream &logFlags(raw_ostream &, uint8_t Flags);
+  static uint32_t OptionsFlags[NumFlags];
+  static raw_ostream &logFlags(raw_ostream &, uint16_t Flags);
   virtual raw_ostream &log(raw_ostream &OS) const {
     return OS << "Base menu definition\n";
   }
@@ -314,10 +327,10 @@ public:
 class MenuItem : public MenuDefinition {
   StringRef Name;
   uint32_t Id;
-  uint8_t Flags;
+  uint16_t Flags;
 
 public:
-  MenuItem(StringRef Caption, uint32_t ItemId, uint8_t ItemFlags)
+  MenuItem(StringRef Caption, uint32_t ItemId, uint16_t ItemFlags)
       : Name(Caption), Id(ItemId), Flags(ItemFlags) {}
   raw_ostream &log(raw_ostream &) const override;
 };
@@ -327,37 +340,35 @@ public:
 // Ref: msdn.microsoft.com/en-us/library/windows/desktop/aa381030(v=vs.85).aspx
 class PopupItem : public MenuDefinition {
   StringRef Name;
-  uint8_t Flags;
+  uint16_t Flags;
   MenuDefinitionList SubItems;
 
 public:
-  PopupItem(StringRef Caption, uint8_t ItemFlags,
+  PopupItem(StringRef Caption, uint16_t ItemFlags,
             MenuDefinitionList &&SubItemsList)
       : Name(Caption), Flags(ItemFlags), SubItems(std::move(SubItemsList)) {}
   raw_ostream &log(raw_ostream &) const override;
 };
 
 // Menu resource definition.
-class MenuResource : public RCResource {
-  OptionalStmtList OptStatements;
+class MenuResource : public OptStatementsRCResource {
   MenuDefinitionList Elements;
 
 public:
   MenuResource(OptionalStmtList &&OptStmts, MenuDefinitionList &&Items)
-      : OptStatements(std::move(OptStmts)), Elements(std::move(Items)) {}
+      : OptStatementsRCResource(std::move(OptStmts)),
+        Elements(std::move(Items)) {}
   raw_ostream &log(raw_ostream &) const override;
 };
 
 // STRINGTABLE resource. Contains a list of strings, each having its unique ID.
 //
 // Ref: msdn.microsoft.com/en-us/library/windows/desktop/aa381050(v=vs.85).aspx
-class StringTableResource : public RCResource {
-  OptionalStmtList OptStatements;
+class StringTableResource : public OptStatementsRCResource {
   std::vector<std::pair<uint32_t, StringRef>> Table;
 
 public:
-  StringTableResource(OptionalStmtList &&OptStmts)
-      : OptStatements(std::move(OptStmts)) {}
+  using OptStatementsRCResource::OptStatementsRCResource;
   void addString(uint32_t ID, StringRef String) {
     Table.emplace_back(ID, String);
   }
@@ -395,9 +406,8 @@ public:
 // Single dialog definition. We don't create distinct classes for DIALOG and
 // DIALOGEX because of their being too similar to each other. We only have a
 // flag determining the type of the dialog box.
-class DialogResource : public RCResource {
+class DialogResource : public OptStatementsRCResource {
   uint32_t X, Y, Width, Height, HelpID;
-  OptionalStmtList OptStatements;
   std::vector<Control> Controls;
   bool IsExtended;
 
@@ -405,8 +415,9 @@ public:
   DialogResource(uint32_t PosX, uint32_t PosY, uint32_t DlgWidth,
                  uint32_t DlgHeight, uint32_t DlgHelpID,
                  OptionalStmtList &&OptStmts, bool IsDialogEx)
-      : X(PosX), Y(PosY), Width(DlgWidth), Height(DlgHeight), HelpID(DlgHelpID),
-        OptStatements(std::move(OptStmts)), IsExtended(IsDialogEx) {}
+      : OptStatementsRCResource(std::move(OptStmts)), X(PosX), Y(PosY),
+        Width(DlgWidth), Height(DlgHeight), HelpID(DlgHelpID),
+        IsExtended(IsDialogEx) {}
 
   void addControl(Control &&Ctl) { Controls.push_back(std::move(Ctl)); }
 
