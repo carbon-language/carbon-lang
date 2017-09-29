@@ -34,8 +34,7 @@ class MCStreamer;
 class MCTargetAsmParser;
 class SourceMgr;
 
-class InlineAsmIdentifierInfo {
-public:
+struct InlineAsmIdentifierInfo {
   enum IdKind {
     IK_Invalid,  // Initial state. Unexpected after a successful parsing.
     IK_Label,    // Function/Label reference.
