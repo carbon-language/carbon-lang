@@ -111,3 +111,13 @@ BEGIN
 
     END
 END
+
+MYNAME MYTYPE "filename"
+
+500 600 "other filename"
+
+HELLO INTEGERS {1, 2, 3, 4}
+
+HELLO STRINGS {"1", "2", "3", "4"}
+
+4 MIXED {1, "2", 3, "4"}

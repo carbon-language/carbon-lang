@@ -139,6 +139,7 @@ private:
   ParseType parseHTMLResource();
   ParseType parseMenuResource();
   ParseType parseStringTableResource();
+  ParseType parseUserDefinedResource(IntOrString Type);
   ParseType parseVersionInfoResource();
 
   // Helper DIALOG parser - a single control.

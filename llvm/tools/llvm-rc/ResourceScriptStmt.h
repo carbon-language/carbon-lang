@@ -319,6 +319,24 @@ public:
   raw_ostream &log(raw_ostream &) const override;
 };
 
+// User-defined resource. It is either:
+//   * a link to the file, e.g. NAME TYPE "filename",
+//   * or contains a list of integers and strings, e.g. NAME TYPE {1, "a", 2}.
+class UserDefinedResource : public RCResource {
+  IntOrString Type;
+  StringRef FileLoc;
+  std::vector<IntOrString> Contents;
+  bool IsFileResource;
+
+public:
+  UserDefinedResource(IntOrString ResourceType, StringRef FileLocation)
+      : Type(ResourceType), FileLoc(FileLocation), IsFileResource(true) {}
+  UserDefinedResource(IntOrString ResourceType, std::vector<IntOrString> &&Data)
+      : Type(ResourceType), Contents(std::move(Data)), IsFileResource(false) {}
+
+  raw_ostream &log(raw_ostream &) const override;
+};
+
 // -- VERSIONINFO resource and its helper classes --
 //
 // This resource lists the version information on the executable/library.

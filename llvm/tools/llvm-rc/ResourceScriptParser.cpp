@@ -80,7 +80,7 @@ RCParser::ParseType RCParser::parseSingleResource() {
   else if (TypeToken->equalsLower("VERSIONINFO"))
     Result = parseVersionInfoResource();
   else
-    return getExpectedError("resource type", /* IsAlreadyRead = */ true);
+    Result = parseUserDefinedResource(*TypeToken);
 
   if (Result)
     (*Result)->setName(*NameToken);
@@ -414,6 +414,31 @@ RCParser::ParseType RCParser::parseDialogResource(bool IsExtended) {
   }
 
   return std::move(Dialog);
+}
+
+RCParser::ParseType RCParser::parseUserDefinedResource(IntOrString Type) {
+  if (isEof())
+    return getExpectedError("filename, '{' or BEGIN");
+
+  // Check if this is a file resource.
+  if (look().kind() == Kind::String)
+    return make_unique<UserDefinedResource>(Type, read().value());
+
+  RETURN_IF_ERROR(consumeType(Kind::BlockBegin));
+  std::vector<IntOrString> Data;
+
+  // Consume comma before each consecutive token except the first one.
+  bool ConsumeComma = false;
+  while (!consumeOptionalType(Kind::BlockEnd)) {
+    if (ConsumeComma)
+      RETURN_IF_ERROR(consumeType(Kind::Comma));
+    ConsumeComma = true;
+
+    ASSIGN_OR_RETURN(Item, readIntOrString());
+    Data.push_back(*Item);
+  }
+
+  return make_unique<UserDefinedResource>(Type, std::move(Data));
 }
 
 RCParser::ParseType RCParser::parseVersionInfoResource() {

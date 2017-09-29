@@ -214,6 +214,16 @@ raw_ostream &VersionInfoResource::log(raw_ostream &OS) const {
   return MainBlock.log(OS);
 }
 
+raw_ostream &UserDefinedResource::log(raw_ostream &OS) const {
+  OS << "User-defined (type: " << Type << ", name: " << ResName << "): ";
+  if (IsFileResource)
+    return OS << FileLoc << "\n";
+  OS << "data = ";
+  for (auto &Item : Contents)
+    OS << Item << " ";
+  return OS << "\n";
+}
+
 raw_ostream &CharacteristicsStmt::log(raw_ostream &OS) const {
   return OS << "Characteristics: " << Value << "\n";
 }

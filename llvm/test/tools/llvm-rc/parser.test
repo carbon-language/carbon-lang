@@ -91,6 +91,12 @@
 ; PGOOD-NEXT:    "Translation" => 1033 1252
 ; PGOOD-NEXT:    End of block
 ; PGOOD-NEXT:    End of block
+; PGOOD-NEXT:  User-defined (type: MYTYPE, name: MYNAME): "filename"
+; PGOOD-NEXT:  User-defined (type: 600, name: 500): "other filename"
+; PGOOD-NEXT:  User-defined (type: INTEGERS, name: HELLO): data = 1 2 3 4
+; PGOOD-NEXT:  User-defined (type: STRINGS, name: HELLO): data = "1" "2" "3" "4"
+; PGOOD-NEXT:  User-defined (type: MIXED, name: 4): data = 1 "2" 3 "4"
+
 
 
 
@@ -121,7 +127,7 @@
 
 ; RUN: not llvm-rc /V %p/Inputs/parser-nonsense-type.rc 2>&1 | FileCheck %s --check-prefix PNONSENSE2
 
-; PNONSENSE2:  llvm-rc: Error parsing file: expected resource type, got WORLD
+; PNONSENSE2:  llvm-rc: Error parsing file: expected filename, '{' or BEGIN, got <EOF>
 
 
 ; RUN: not llvm-rc /V %p/Inputs/parser-nonsense-type-eof.rc 2>&1 | FileCheck %s --check-prefix PNONSENSE3
@@ -242,3 +248,8 @@
 ; RUN: not llvm-rc /V %p/Inputs/parser-versioninfo-repeated-fixed.rc 2>&1 | FileCheck %s --check-prefix PVERSIONINFO6
 
 ; PVERSIONINFO6:  llvm-rc: Error parsing file: expected yet unread fixed VERSIONINFO statement type, got FILEVERSION
+
+
+; RUN: not llvm-rc /V %p/Inputs/parser-user-invalid-contents.rc 2>&1 | FileCheck %s --check-prefix PUSER1
+
+; PUSER1:  llvm-rc: Error parsing file: expected int or string, got InvalidToken
