@@ -524,7 +524,7 @@ static uptr GetPreferredBase(const char *modname) {
 }
 
 void ListOfModules::init() {
-  clearOrInit();
+  clear();
   HANDLE cur_process = GetCurrentProcess();
 
   // Query the list of modules.  Start by assuming there are no more than 256

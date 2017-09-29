@@ -411,7 +411,7 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
 }
 
 void ListOfModules::init() {
-  clearOrInit();
+  clear();
   MemoryMappingLayout memory_mapping(false);
   memory_mapping.DumpListOfModules(&modules_);
 }
