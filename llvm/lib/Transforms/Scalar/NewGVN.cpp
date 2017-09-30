@@ -56,6 +56,7 @@
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SparseBitVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AssumptionCache.h"
@@ -453,7 +454,8 @@ class NewGVN {
   // op(phi, phi).
   // These mappings just store various data that would normally be part of the
   // IR.
-  DenseSet<const Instruction *> PHINodeUses;
+  SmallPtrSet<const Instruction *, 8> PHINodeUses;
+
   DenseMap<const Value *, bool> OpSafeForPHIOfOps;
   // Map a temporary instruction we created to a parent block.
   DenseMap<const Value *, BasicBlock *> TempToBlock;
@@ -471,8 +473,6 @@ class NewGVN {
   mutable DenseMap<const Value *, SmallPtrSet<Value *, 2>> AdditionalUsers;
   DenseMap<const Expression *, SmallPtrSet<Instruction *, 2>>
       ExpressionToPhiOfOps;
-  // Map from basic block to the temporary operations we created
-  DenseMap<const BasicBlock *, SmallPtrSet<PHINode *, 2>> PHIOfOpsPHIs;
   // Map from temporary operation to MemoryAccess.
   DenseMap<const Instruction *, MemoryUseOrDef *> TempToMemory;
   // Set of all temporary instructions we created.
@@ -481,6 +481,15 @@ class NewGVN {
   // RealToTemp.
 
   DenseSet<Instruction *> AllTempInstructions;
+
+  // This is the set of instructions to revisit on a reachability change.  At
+  // the end of the main iteration loop it will contain at least all the phi of
+  // ops instructions that will be changed to phis, as well as regular phis.
+  // During the iteration loop, it may contain other things, such as phi of ops
+  // instructions that used edge reachability to reach a result, and so need to
+  // be revisited when the edge changes, independent of whether the phi they
+  // depended on changes.
+  DenseMap<BasicBlock *, SparseBitVector<>> RevisitOnReachabilityChange;
 
   // Mapping from predicate info we used to the instructions we used it with.
   // In order to correctly ensure propagation, we must keep track of what
@@ -621,7 +630,7 @@ private:
     return CClass;
   }
   void initializeCongruenceClasses(Function &F);
-  const Expression *makePossiblePhiOfOps(Instruction *,
+  const Expression *makePossiblePHIOfOps(Instruction *,
                                          SmallPtrSetImpl<Value *> &);
   Value *findLeaderForInst(Instruction *ValueOp,
                            SmallPtrSetImpl<Value *> &Visited,
@@ -846,6 +855,13 @@ static bool isCopyOfPHI(const Value *V, const PHINode *PN) {
 static bool isCopyOfAPHI(const Value *V) {
   auto *CO = getCopyOf(V);
   return CO && isa<PHINode>(CO);
+}
+
+// Return true if V is a value that will always be available (IE can
+// be placed anywhere) in the function.  We don't do globals here
+// because they are often worse to put in place.
+static bool alwaysAvailable(Value *V) {
+  return isa<Constant>(V) || isa<Argument>(V);
 }
 
 PHIExpression *NewGVN::createPHIExpression(Instruction *I, bool &HasBackedge,
@@ -1139,7 +1155,7 @@ NewGVN::createCallExpression(CallInst *CI, const MemoryAccess *MA) const {
 bool NewGVN::someEquivalentDominates(const Instruction *Inst,
                                      const Instruction *U) const {
   auto *CC = ValueToClass.lookup(Inst);
-  // This must be an instruction because we are only called from phi nodes
+   // This must be an instruction because we are only called from phi nodes
   // in the case that the value it needs to check against is an instruction.
 
   // The most likely candiates for dominance are the leader and the next leader.
@@ -1157,6 +1173,8 @@ bool NewGVN::someEquivalentDominates(const Instruction *Inst,
   // any of these siblings.
   if (!CC)
     return false;
+  if (alwaysAvailable(CC->getLeader()))
+    return true;
   if (DT->dominates(cast<Instruction>(CC->getLeader()), U))
     return true;
   if (CC->getNextLeader().first &&
@@ -1849,13 +1867,6 @@ const Expression *NewGVN::performSymbolicCmpEvaluation(Instruction *I) const {
   return createExpression(I);
 }
 
-// Return true if V is a value that will always be available (IE can
-// be placed anywhere) in the function.  We don't do globals here
-// because they are often worse to put in place.
-static bool alwaysAvailable(Value *V) {
-  return isa<Constant>(V) || isa<Argument>(V);
-}
-
 // Substitute and symbolize the value before value numbering.
 const Expression *
 NewGVN::performSymbolicEvaluation(Value *V,
@@ -2341,14 +2352,11 @@ void NewGVN::updateReachableEdge(BasicBlock *From, BasicBlock *To) {
       if (MemoryAccess *MemPhi = getMemoryAccess(To))
         TouchedInstructions.set(InstrToDFSNum(MemPhi));
 
-      auto BI = To->begin();
-      while (isa<PHINode>(BI)) {
-        TouchedInstructions.set(InstrToDFSNum(&*BI));
-        ++BI;
-      }
-      for_each_found(PHIOfOpsPHIs, To, [&](const PHINode *I) {
-        TouchedInstructions.set(InstrToDFSNum(I));
-      });
+      // FIXME: We should just add a union op on a Bitvector and
+      // SparseBitVector.  We can do it word by word faster than we are doing it
+      // here.
+      for (auto InstNum : RevisitOnReachabilityChange[To])
+        TouchedInstructions.set(InstNum);
     }
   }
 }
@@ -2449,10 +2457,13 @@ void NewGVN::processOutgoingEdges(TerminatorInst *TI, BasicBlock *B) {
 void NewGVN::removePhiOfOps(Instruction *I, PHINode *PHITemp) {
   InstrDFS.erase(PHITemp);
   // It's still a temp instruction. We keep it in the array so it gets erased.
-  // However, it's no longer used by I, or in the block/
-  PHIOfOpsPHIs[getBlockForValue(PHITemp)].erase(PHITemp);
+  // However, it's no longer used by I, or in the block
   TempToBlock.erase(PHITemp);
   RealToTemp.erase(I);
+  // We don't remove the users from the phi node uses. This wastes a little
+  // time, but such is life.  We could use two sets to track which were there
+  // are the start of NewGVN, and which were added, but right nowt he cost of
+  // tracking is more than the cost of checking for more phi of ops.
 }
 
 // Add PHI Op in BB as a PHI of operations version of ExistingValue.
@@ -2460,9 +2471,13 @@ void NewGVN::addPhiOfOps(PHINode *Op, BasicBlock *BB,
                          Instruction *ExistingValue) {
   InstrDFS[Op] = InstrToDFSNum(ExistingValue);
   AllTempInstructions.insert(Op);
-  PHIOfOpsPHIs[BB].insert(Op);
   TempToBlock[Op] = BB;
   RealToTemp[ExistingValue] = Op;
+  // Add all users to phi node use, as they are now uses of the phi of ops phis
+  // and may themselves be phi of ops.
+  for (auto *U : ExistingValue->users())
+    if (auto *UI = dyn_cast<Instruction>(U))
+      PHINodeUses.insert(UI);
 }
 
 static bool okayForPHIOfOps(const Instruction *I) {
@@ -2592,7 +2607,7 @@ Value *NewGVN::findLeaderForInst(Instruction *TransInst,
 // When we see an instruction that is an op of phis, generate the equivalent phi
 // of ops form.
 const Expression *
-NewGVN::makePossiblePhiOfOps(Instruction *I,
+NewGVN::makePossiblePHIOfOps(Instruction *I,
                              SmallPtrSetImpl<Value *> &Visited) {
   if (!okayForPHIOfOps(I))
     return nullptr;
@@ -2620,9 +2635,14 @@ NewGVN::makePossiblePhiOfOps(Instruction *I,
 
   SmallPtrSet<const Value *, 10> VisitedOps;
   // Convert op of phis to phi of ops
-  for (auto &Op : I->operands()) {
-    if (!isa<PHINode>(Op))
-      continue;
+  for (auto *Op : I->operand_values()) {
+    if (!isa<PHINode>(Op)) {
+      auto *ValuePHI = RealToTemp.lookup(Op);
+      if (!ValuePHI)
+        continue;
+      DEBUG(dbgs() << "Found possible dependent phi of ops\n");
+      Op = ValuePHI;
+    }
     auto *OpPHI = cast<PHINode>(Op);
     // No point in doing this for one-operand phis.
     if (OpPHI->getNumOperands() == 1)
@@ -2631,13 +2651,15 @@ NewGVN::makePossiblePhiOfOps(Instruction *I,
       return nullptr;
     SmallVector<std::pair<Value *, BasicBlock *>, 4> Ops;
     auto *PHIBlock = getBlockForValue(OpPHI);
-    for (auto PredBB : OpPHI->blocks()) {
+    RevisitOnReachabilityChange[PHIBlock].reset(InstrToDFSNum(I));
+    for (unsigned PredNum = 0; PredNum < OpPHI->getNumOperands(); ++PredNum) {
+      auto *PredBB = OpPHI->getIncomingBlock(PredNum);
       Value *FoundVal = nullptr;
       // We could just skip unreachable edges entirely but it's tricky to do
       // with rewriting existing phi nodes.
       if (ReachableEdges.count({PredBB, PHIBlock})) {
-        // Clone the instruction, create an expression from it, and see if we
-        // have a leader.
+        // Clone the instruction, create an expression from it that is
+        // translated back into the predecessor, and see if we have a leader.
         Instruction *ValueOp = I->clone();
         if (MemAccess)
           TempToMemory.insert({ValueOp, MemAccess});
@@ -2645,7 +2667,16 @@ NewGVN::makePossiblePhiOfOps(Instruction *I,
         VisitedOps.clear();
         for (auto &Op : ValueOp->operands()) {
           auto *OrigOp = &*Op;
-          Op = Op->DoPHITranslation(PHIBlock, PredBB);
+          // When these operand changes, it could change whether there is a
+          // leader for us or not, so we have to add additional users
+          if (isa<PHINode>(Op)) {
+            Op = Op->DoPHITranslation(PHIBlock, PredBB);
+            if (Op != OrigOp && Op != I)
+              addAdditionalUsers(Op, I);
+          } else if (auto *ValuePHI = RealToTemp.lookup(Op)) {
+            if (getBlockForValue(ValuePHI) == PHIBlock)
+              Op = ValuePHI->getIncomingValue(PredNum);
+          }
           // When this operand changes, it could change whether there is a
           // leader for us or not.
           addAdditionalUsers(Op, I);
@@ -2670,12 +2701,16 @@ NewGVN::makePossiblePhiOfOps(Instruction *I,
                      << getBlockName(PredBB)
                      << " because the block is unreachable\n");
         FoundVal = UndefValue::get(I->getType());
+        RevisitOnReachabilityChange[PHIBlock].set(InstrToDFSNum(I));
       }
 
       Ops.push_back({FoundVal, PredBB});
       DEBUG(dbgs() << "Found phi of ops operand " << *FoundVal << " in "
                    << getBlockName(PredBB) << "\n");
     }
+
+    // FIXME: We should evaluate the phi operands first and see if it ends up a
+    // constant or variable expression.
     auto *ValuePHI = RealToTemp.lookup(I);
     bool NewPHI = false;
     if (!ValuePHI) {
@@ -2696,7 +2731,7 @@ NewGVN::makePossiblePhiOfOps(Instruction *I,
         ++i;
       }
     }
-
+    RevisitOnReachabilityChange[PHIBlock].set(InstrToDFSNum(I));
     DEBUG(dbgs() << "Created phi of ops " << *ValuePHI << " for " << *I
                  << "\n");
     return performSymbolicEvaluation(ValuePHI, Visited);
@@ -2745,8 +2780,11 @@ void NewGVN::initializeCongruenceClasses(Function &F) {
         if (MD && isa<StoreInst>(MD->getMemoryInst()))
           TOPClass->incStoreCount();
       }
+
+    // FIXME: This is trying to discover which instructions are uses of phi
+    // nodes.  We should move this into one of the myriad of places that walk
+    // all the operands already.
     for (auto &I : *BB) {
-      // TODO: Move to helper
       if (isa<PHINode>(&I))
         for (auto *U : I.users())
           if (auto *UInst = dyn_cast<Instruction>(U))
@@ -2804,7 +2842,6 @@ void NewGVN::cleanupTables() {
   ExpressionToPhiOfOps.clear();
   TempToBlock.clear();
   TempToMemory.clear();
-  PHIOfOpsPHIs.clear();
   PHINodeUses.clear();
   OpSafeForPHIOfOps.clear();
   ReachableBlocks.clear();
@@ -2820,6 +2857,7 @@ void NewGVN::cleanupTables() {
   MemoryAccessToClass.clear();
   PredicateToUsers.clear();
   MemoryToUsers.clear();
+  RevisitOnReachabilityChange.clear();
 }
 
 // Assign local DFS number mapping to instructions, and leave space for Value
@@ -2843,6 +2881,8 @@ std::pair<unsigned, unsigned> NewGVN::assignDFSNumbers(BasicBlock *B,
       markInstructionForDeletion(&I);
       continue;
     }
+    if (isa<PHINode>(&I))
+      RevisitOnReachabilityChange[B].set(End);
     InstrDFS[&I] = End++;
     DFSToInstr.emplace_back(&I);
   }
@@ -2932,7 +2972,7 @@ void NewGVN::valueNumberInstruction(Instruction *I) {
       // Make a phi of ops if necessary
       if (Symbolized && !isa<ConstantExpression>(Symbolized) &&
           !isa<VariableExpression>(Symbolized) && PHINodeUses.count(I)) {
-        auto *PHIE = makePossiblePhiOfOps(I, Visited);
+        auto *PHIE = makePossiblePHIOfOps(I, Visited);
         // If we created a phi of ops, use it.
         // If we couldn't create one, make sure we don't leave one lying around
         if (PHIE) {
@@ -3710,36 +3750,39 @@ bool NewGVN::eliminateInstructions(Function &F) {
 
   // Go through all of our phi nodes, and kill the arguments associated with
   // unreachable edges.
-  auto ReplaceUnreachablePHIArgs = [&](PHINode &PHI, BasicBlock *BB) {
-    for (auto &Operand : PHI.incoming_values())
-      if (!ReachableEdges.count({PHI.getIncomingBlock(Operand), BB})) {
+  auto ReplaceUnreachablePHIArgs = [&](PHINode *PHI, BasicBlock *BB) {
+    for (auto &Operand : PHI->incoming_values())
+      if (!ReachableEdges.count({PHI->getIncomingBlock(Operand), BB})) {
         DEBUG(dbgs() << "Replacing incoming value of " << PHI << " for block "
-                     << getBlockName(PHI.getIncomingBlock(Operand))
+                     << getBlockName(PHI->getIncomingBlock(Operand))
                      << " with undef due to it being unreachable\n");
-        Operand.set(UndefValue::get(PHI.getType()));
+        Operand.set(UndefValue::get(PHI->getType()));
       }
   };
-  SmallPtrSet<BasicBlock *, 8> BlocksWithPhis;
-  for (auto &B : F)
-    if ((!B.empty() && isa<PHINode>(*B.begin())) ||
-        (PHIOfOpsPHIs.find(&B) != PHIOfOpsPHIs.end()))
-      BlocksWithPhis.insert(&B);
+  // Replace unreachable phi arguments.
+  // At this point, RevisitOnReachabilityChange only contains:
+  //
+  // 1. PHIs
+  // 2. Temporaries that will convert to PHIs
+  // 3. Operations that are affected by an unreachable edge but do not fit into
+  // 1 or 2 (rare).
+  // So it is a slight overshoot of what we want. We could make it exact by
+  // using two SparseBitVectors per block.
   DenseMap<const BasicBlock *, unsigned> ReachablePredCount;
-  for (auto KV : ReachableEdges)
+  for (auto &KV : ReachableEdges)
     ReachablePredCount[KV.getEnd()]++;
-  for (auto *BB : BlocksWithPhis)
-    // TODO: It would be faster to use getNumIncomingBlocks() on a phi node in
-    // the block and subtract the pred count, but it's more complicated.
-    if (ReachablePredCount.lookup(BB) !=
-        unsigned(std::distance(pred_begin(BB), pred_end(BB)))) {
-      for (auto II = BB->begin(); isa<PHINode>(II); ++II) {
-        auto &PHI = cast<PHINode>(*II);
+  for (auto &BBPair : RevisitOnReachabilityChange) {
+    for (auto InstNum : BBPair.second) {
+      auto *Inst = InstrFromDFSNum(InstNum);
+      auto *PHI = dyn_cast<PHINode>(Inst);
+      PHI = PHI ? PHI : dyn_cast_or_null<PHINode>(RealToTemp.lookup(Inst));
+      if (!PHI)
+        continue;
+      auto *BB = BBPair.first;
+      if (ReachablePredCount.lookup(BB) != PHI->getNumIncomingValues())
         ReplaceUnreachablePHIArgs(PHI, BB);
-      }
-      for_each_found(PHIOfOpsPHIs, BB, [&](PHINode *PHI) {
-        ReplaceUnreachablePHIArgs(*PHI, BB);
-      });
     }
+  }
 
   // Map to store the use counts
   DenseMap<const Value *, unsigned int> UseCounts;

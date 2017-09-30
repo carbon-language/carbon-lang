@@ -26,6 +26,33 @@ define i32 @test1(i32, i8**) {
   %7 = mul nsw i32 %.0, 15
   ret i32 %7
 }
+;; Dependent phi of ops
+define i32 @test1b(i32, i8**) {
+; CHECK-LABEL: @test1b(
+; CHECK-NEXT:    [[TMP3:%.*]] = icmp ne i32 [[TMP0:%.*]], 0
+; CHECK-NEXT:    br i1 [[TMP3]], label [[TMP4:%.*]], label [[TMP5:%.*]]
+; CHECK:         br label [[TMP6:%.*]]
+; CHECK:         br label [[TMP6]]
+; CHECK:         [[PHIOFOPS1:%.*]] = phi i32 [ 75, [[TMP4]] ], [ 105, [[TMP5]] ]
+; CHECK-NEXT:    [[PHIOFOPS:%.*]] = phi i32 [ 1125, [[TMP4]] ], [ 1575, [[TMP5]] ]
+; CHECK-NEXT:    [[DOT0:%.*]] = phi i32 [ 5, [[TMP4]] ], [ 7, [[TMP5]] ]
+; CHECK-NEXT:    ret i32 [[PHIOFOPS]]
+;
+  %3 = icmp ne i32 %0, 0
+  br i1 %3, label %4, label %5
+
+; <label>:4:                                      ; preds = %2
+  br label %6
+
+; <label>:5:                                      ; preds = %2
+  br label %6
+
+; <label>:6:                                      ; preds = %5, %4
+  %.0 = phi i32 [ 5, %4 ], [ 7, %5 ]
+  %7 = mul nsw i32 %.0, 15
+  %8 = mul nsw i32 %7, 15
+  ret i32 %8
+}
 
 define i32 @test2(i32) {
 ; CHECK-LABEL: @test2(
@@ -470,3 +497,51 @@ bb7:                                              ; preds = %bb2
 }
 
 declare i32* @wombat()
+
+;; Ensure that when reachability affects a phi of ops, we recompute
+;; it.  Here, the phi node is marked for recomputation when bb7->bb3
+;; becomes live, but the value does not change. if we do not directly
+;; recompute the phi of ops instruction (tmp5), the value number will
+;; change in the verifier, as it goes from a constant value to a
+;; phi of [true, false]
+
+define void @test12() {
+; CHECK-LABEL: @test12(
+; CHECK-NEXT:  bb:
+; CHECK-NEXT:    [[TMP:%.*]] = load i32, i32* null
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt i32 [[TMP]], 0
+; CHECK-NEXT:    br i1 [[TMP1]], label [[BB2:%.*]], label [[BB8:%.*]]
+; CHECK:       bb2:
+; CHECK-NEXT:    br label [[BB3:%.*]]
+; CHECK:       bb3:
+; CHECK-NEXT:    [[PHIOFOPS:%.*]] = phi i1 [ true, [[BB2]] ], [ false, [[BB7:%.*]] ]
+; CHECK-NEXT:    br i1 [[PHIOFOPS]], label [[BB6:%.*]], label [[BB7]]
+; CHECK:       bb6:
+; CHECK-NEXT:    br label [[BB7]]
+; CHECK:       bb7:
+; CHECK-NEXT:    br label [[BB3]]
+; CHECK:       bb8:
+; CHECK-NEXT:    ret void
+;
+bb:
+  %tmp = load i32, i32* null
+  %tmp1 = icmp sgt i32 %tmp, 0
+  br i1 %tmp1, label %bb2, label %bb8
+
+bb2:                                              ; preds = %bb
+  br label %bb3
+
+bb3:                                              ; preds = %bb7, %bb2
+  %tmp4 = phi i32 [ %tmp, %bb2 ], [ undef, %bb7 ]
+  %tmp5 = icmp sgt i32 %tmp4, 0
+  br i1 %tmp5, label %bb6, label %bb7
+
+bb6:                                              ; preds = %bb3
+  br label %bb7
+
+bb7:                                              ; preds = %bb6, %bb3
+  br label %bb3
+
+bb8:                                              ; preds = %bb
+  ret void
+}
