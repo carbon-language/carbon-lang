@@ -118,10 +118,13 @@ unsigned MacroArgs::getArgLength(const Token *ArgPtr) {
 /// getUnexpArgument - Return the unexpanded tokens for the specified formal.
 ///
 const Token *MacroArgs::getUnexpArgument(unsigned Arg) const {
+
+  assert(Arg < getNumMacroArguments() && "Invalid arg #");
   // The unexpanded argument tokens start immediately after the MacroArgs object
   // in memory.
   const Token *Start = getTrailingObjects<Token>();
   const Token *Result = Start;
+  
   // Scan to find Arg.
   for (; Arg; ++Result) {
     assert(Result < Start+NumUnexpArgTokens && "Invalid arg #");
