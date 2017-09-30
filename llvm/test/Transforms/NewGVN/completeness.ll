@@ -545,3 +545,61 @@ bb7:                                              ; preds = %bb6, %bb3
 bb8:                                              ; preds = %bb
   ret void
 }
+
+;; Make sure we reprocess phi of ops involving loads when loads change class.
+;; This is PR 34473
+define void @test13() {
+; CHECK-LABEL: @test13(
+; CHECK-NEXT:  bb:
+; CHECK-NEXT:    br label [[BB1:%.*]]
+; CHECK:       bb1:
+; CHECK-NEXT:    [[TMP:%.*]] = load i8, i8* null
+; CHECK-NEXT:    br label [[BB3:%.*]]
+; CHECK:       bb3:
+; CHECK-NEXT:    [[PHIOFOPS:%.*]] = phi i8 [ [[TMP]], [[BB1]] ], [ [[TMP10:%.*]], [[BB3]] ]
+; CHECK-NEXT:    [[TMP4:%.*]] = phi i8* [ null, [[BB1]] ], [ [[TMP6:%.*]], [[BB3]] ]
+; CHECK-NEXT:    [[TMP5:%.*]] = phi i32 [ undef, [[BB1]] ], [ [[TMP9:%.*]], [[BB3]] ]
+; CHECK-NEXT:    [[TMP6]] = getelementptr i8, i8* [[TMP4]], i64 1
+; CHECK-NEXT:    [[TMP8:%.*]] = sext i8 [[PHIOFOPS]] to i32
+; CHECK-NEXT:    [[TMP9]] = mul i32 [[TMP5]], [[TMP8]]
+; CHECK-NEXT:    [[TMP10]] = load i8, i8* [[TMP6]]
+; CHECK-NEXT:    [[TMP11:%.*]] = icmp eq i8 [[TMP10]], 0
+; CHECK-NEXT:    br i1 [[TMP11]], label [[BB12:%.*]], label [[BB3]]
+; CHECK:       bb12:
+; CHECK-NEXT:    [[TMP14:%.*]] = icmp eq i32 [[TMP9]], 0
+; CHECK-NEXT:    br i1 [[TMP14]], label [[BB1]], label [[BB15:%.*]]
+; CHECK:       bb15:
+; CHECK-NEXT:    call void (...) @bar()
+; CHECK-NEXT:    br label [[BB1]]
+;
+bb:
+  br label %bb1
+
+bb1:                                              ; preds = %bb15, %bb12, %bb
+  %tmp = load i8, i8* null
+  %tmp2 = icmp eq i8 %tmp, 8
+  br label %bb3
+
+bb3:                                              ; preds = %bb3, %bb1
+  %tmp4 = phi i8* [ null, %bb1 ], [ %tmp6, %bb3 ]
+  %tmp5 = phi i32 [ undef, %bb1 ], [ %tmp9, %bb3 ]
+  %tmp6 = getelementptr i8, i8* %tmp4, i64 1
+  %tmp7 = load i8, i8* %tmp4
+  %tmp8 = sext i8 %tmp7 to i32
+  %tmp9 = mul i32 %tmp5, %tmp8
+  %tmp10 = load i8, i8* %tmp6
+  %tmp11 = icmp eq i8 %tmp10, 0
+  br i1 %tmp11, label %bb12, label %bb3
+
+bb12:                                             ; preds = %bb3
+  %tmp13 = phi i32 [ %tmp9, %bb3 ]
+  %tmp14 = icmp eq i32 %tmp13, 0
+  br i1 %tmp14, label %bb1, label %bb15
+
+bb15:                                             ; preds = %bb12
+  call void (...) @bar()
+  br label %bb1
+}
+
+declare void @bar(...)
+

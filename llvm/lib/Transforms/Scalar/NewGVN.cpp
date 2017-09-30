@@ -2249,7 +2249,7 @@ void NewGVN::moveValueToNewCongruenceClass(Instruction *I, const Expression *E,
 // For a given expression, mark the phi of ops instructions that could have
 // changed as a result.
 void NewGVN::markPhiOfOpsChanged(const Expression *E) {
-  touchAndErase(ExpressionToPhiOfOps, ExactEqualsExpression(*E));
+  touchAndErase(ExpressionToPhiOfOps, E);
 }
 
 // Perform congruence finding on a given value numbering expression.
@@ -2668,6 +2668,7 @@ NewGVN::makePossiblePHIOfOps(Instruction *I,
     if (!DebugCounter::shouldExecute(PHIOfOpsCounter))
       return nullptr;
     SmallVector<ValPair, 4> Ops;
+    SmallPtrSet<Value *, 4> Deps;
     auto *PHIBlock = getBlockForValue(OpPHI);
     RevisitOnReachabilityChange[PHIBlock].reset(InstrToDFSNum(I));
     for (unsigned PredNum = 0; PredNum < OpPHI->getNumOperands(); ++PredNum) {
@@ -2686,18 +2687,15 @@ NewGVN::makePossiblePHIOfOps(Instruction *I,
         for (auto &Op : ValueOp->operands()) {
           auto *OrigOp = &*Op;
           // When these operand changes, it could change whether there is a
-          // leader for us or not, so we have to add additional users
+          // leader for us or not, so we have to add additional users.
           if (isa<PHINode>(Op)) {
             Op = Op->DoPHITranslation(PHIBlock, PredBB);
             if (Op != OrigOp && Op != I)
-              addAdditionalUsers(Op, I);
+              Deps.insert(Op);
           } else if (auto *ValuePHI = RealToTemp.lookup(Op)) {
             if (getBlockForValue(ValuePHI) == PHIBlock)
               Op = ValuePHI->getIncomingValue(PredNum);
           }
-          // When this operand changes, it could change whether there is a
-          // leader for us or not.
-          addAdditionalUsers(Op, I);
           // If we phi-translated the op, it must be safe.
           SafeForPHIOfOps = SafeForPHIOfOps &&
                             (Op != OrigOp ||
@@ -2726,6 +2724,8 @@ NewGVN::makePossiblePHIOfOps(Instruction *I,
       DEBUG(dbgs() << "Found phi of ops operand " << *FoundVal << " in "
                    << getBlockName(PredBB) << "\n");
     }
+    for (auto Dep : Deps)
+      addAdditionalUsers(Dep, I);
     sortPHIOps(Ops);
     auto *E = performSymbolicPHIEvaluation(Ops, I, PHIBlock);
     if (isa<ConstantExpression>(E) || isa<VariableExpression>(E)) {
