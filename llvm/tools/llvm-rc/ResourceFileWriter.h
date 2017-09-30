@@ -31,6 +31,7 @@ public:
 
   Error visitNullResource(const RCResource *) override;
   Error visitAcceleratorsResource(const RCResource *) override;
+  Error visitDialogResource(const RCResource *) override;
   Error visitHTMLResource(const RCResource *) override;
   Error visitMenuResource(const RCResource *) override;
 
@@ -60,6 +61,10 @@ private:
   Error writeSingleAccelerator(const AcceleratorsResource::Accelerator &,
                                bool IsLastItem);
   Error writeAcceleratorsBody(const RCResource *);
+
+  // DialogResource
+  Error writeSingleDialogControl(const Control &, bool IsExtended);
+  Error writeDialogBody(const RCResource *);
 
   // HTMLResource
   Error writeHTMLBody(const RCResource *);

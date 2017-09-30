@@ -439,21 +439,40 @@ public:
 
 // Single control definition.
 class Control {
-  StringRef Type, Title;
+public:
+  StringRef Type;
+  IntOrString Title;
   uint32_t ID, X, Y, Width, Height;
   Optional<uint32_t> Style, ExtStyle, HelpID;
 
-public:
-  Control(StringRef CtlType, StringRef CtlTitle, uint32_t CtlID, uint32_t PosX,
-          uint32_t PosY, uint32_t ItemWidth, uint32_t ItemHeight,
+  // Control classes as described in DLGITEMTEMPLATEEX documentation.
+  //
+  // Ref: msdn.microsoft.com/en-us/library/windows/desktop/ms645389.aspx
+  enum CtlClasses {
+    ClsButton = 0x80,
+    ClsEdit = 0x81,
+    ClsStatic = 0x82,
+    ClsListBox = 0x83,
+    ClsScrollBar = 0x84,
+    ClsComboBox = 0x85
+  };
+
+  // Simple information about a single control type.
+  struct CtlInfo {
+    uint32_t Style;
+    uint16_t CtlClass;
+    bool HasTitle;
+  };
+
+  Control(StringRef CtlType, IntOrString CtlTitle, uint32_t CtlID,
+          uint32_t PosX, uint32_t PosY, uint32_t ItemWidth, uint32_t ItemHeight,
           Optional<uint32_t> ItemStyle, Optional<uint32_t> ExtItemStyle,
           Optional<uint32_t> CtlHelpID)
       : Type(CtlType), Title(CtlTitle), ID(CtlID), X(PosX), Y(PosY),
         Width(ItemWidth), Height(ItemHeight), Style(ItemStyle),
         ExtStyle(ExtItemStyle), HelpID(CtlHelpID) {}
 
-  static const StringSet<> SupportedCtls;
-  static const StringSet<> CtlsWithTitle;
+  static const StringMap<CtlInfo> SupportedCtls;
 
   raw_ostream &log(raw_ostream &) const;
 };
@@ -462,11 +481,11 @@ public:
 // DIALOGEX because of their being too similar to each other. We only have a
 // flag determining the type of the dialog box.
 class DialogResource : public OptStatementsRCResource {
+public:
   uint32_t X, Y, Width, Height, HelpID;
   std::vector<Control> Controls;
   bool IsExtended;
 
-public:
   DialogResource(uint32_t PosX, uint32_t PosY, uint32_t DlgWidth,
                  uint32_t DlgHeight, uint32_t DlgHelpID,
                  OptionalStmtList &&OptStmts, bool IsDialogEx)
@@ -477,6 +496,21 @@ public:
   void addControl(Control &&Ctl) { Controls.push_back(std::move(Ctl)); }
 
   raw_ostream &log(raw_ostream &) const override;
+
+  // It was a weird design decision to assign the same resource type number
+  // both for DIALOG and DIALOGEX (and the same structure version number).
+  // It makes it possible for DIALOG to be mistaken for DIALOGEX.
+  IntOrString getResourceType() const override { return RkDialog; }
+  Twine getResourceTypeName() const override {
+    return "DIALOG" + Twine(IsExtended ? "EX" : "");
+  }
+  Error visit(Visitor *V) const override {
+    return V->visitDialogResource(this);
+  }
+  ResourceKind getKind() const override { return RkDialog; }
+  static bool classof(const RCResource *Res) {
+    return Res->getKind() == RkDialog;
+  }
 };
 
 // User-defined resource. It is either:
