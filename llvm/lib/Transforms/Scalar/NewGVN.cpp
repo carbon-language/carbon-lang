@@ -2487,8 +2487,7 @@ bool NewGVN::OpIsSafeForPHIOfOps(Value *V, Instruction *OrigInst,
   auto OISIt = OpSafeForPHIOfOps.find(V);
   if (OISIt != OpSafeForPHIOfOps.end())
     return OISIt->second;
-  // Keep walking until we either dominate the phi block, or hit a phi, or run
-  // out of things to check.
+
   if (DT->properlyDominates(getBlockForValue(V), PHIBlock)) {
     OpSafeForPHIOfOps.insert({V, true});
     return true;
@@ -2498,22 +2497,54 @@ bool NewGVN::OpIsSafeForPHIOfOps(Value *V, Instruction *OrigInst,
     OpSafeForPHIOfOps.insert({V, false});
     return false;
   }
-  for (auto Op : cast<Instruction>(V)->operand_values()) {
+
+  SmallVector<Instruction *, 4> Worklist;
+  auto *OrigI = cast<Instruction>(V);
+  for (auto *Op : OrigI->operand_values()) {
     if (!isa<Instruction>(Op))
       continue;
-    // See if we already know the answer for this node.
-    auto OISIt = OpSafeForPHIOfOps.find(Op);
+    // Stop now if we find an unsafe operand.
+    auto OISIt = OpSafeForPHIOfOps.find(OrigI);
     if (OISIt != OpSafeForPHIOfOps.end()) {
       if (!OISIt->second) {
         OpSafeForPHIOfOps.insert({V, false});
         return false;
       }
-    }
-    if (!Visited.insert(Op).second)
       continue;
-    if (!OpIsSafeForPHIOfOps(Op, OrigInst, PHIBlock, Visited)) {
+    }
+    Worklist.push_back(cast<Instruction>(Op));
+  }
+
+  while (!Worklist.empty()) {
+    auto *I = Worklist.pop_back_val();
+    // Keep walking until we either dominate the phi block, or hit a phi, or run
+    // out of things to check.
+    //
+    if (DT->properlyDominates(getBlockForValue(I), PHIBlock)) {
+      OpSafeForPHIOfOps.insert({I, true});
+      continue;
+    }
+    // PHI in the same block.
+    if (isa<PHINode>(I) && getBlockForValue(I) == PHIBlock) {
+      OpSafeForPHIOfOps.insert({I, false});
       OpSafeForPHIOfOps.insert({V, false});
       return false;
+    }
+    for (auto *Op : cast<Instruction>(I)->operand_values()) {
+      if (!isa<Instruction>(Op))
+        continue;
+      // See if we already know the answer for this node.
+      auto OISIt = OpSafeForPHIOfOps.find(Op);
+      if (OISIt != OpSafeForPHIOfOps.end()) {
+        if (!OISIt->second) {
+          OpSafeForPHIOfOps.insert({V, false});
+          return false;
+        }
+        continue;
+      }
+      if (!Visited.insert(Op).second)
+        continue;
+      Worklist.push_back(cast<Instruction>(Op));
     }
   }
   OpSafeForPHIOfOps.insert({V, true});
