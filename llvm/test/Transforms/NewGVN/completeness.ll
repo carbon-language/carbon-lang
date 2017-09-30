@@ -8,7 +8,7 @@ define i32 @test1(i32, i8**) {
 ; CHECK-NEXT:    br i1 [[TMP3]], label [[TMP4:%.*]], label [[TMP5:%.*]]
 ; CHECK:         br label [[TMP6:%.*]]
 ; CHECK:         br label [[TMP6]]
-; CHECK:         [[PHIOFOPS:%.*]] = phi i32 [ 75, [[TMP4]] ], [ 105, [[TMP5]] ]
+; CHECK:         [[PHIOFOPS:%.*]] = phi i32 [ 105, [[TMP5]] ], [ 75, [[TMP4]] ]
 ; CHECK-NEXT:    [[DOT0:%.*]] = phi i32 [ 5, [[TMP4]] ], [ 7, [[TMP5]] ]
 ; CHECK-NEXT:    ret i32 [[PHIOFOPS]]
 ;
@@ -33,8 +33,8 @@ define i32 @test1b(i32, i8**) {
 ; CHECK-NEXT:    br i1 [[TMP3]], label [[TMP4:%.*]], label [[TMP5:%.*]]
 ; CHECK:         br label [[TMP6:%.*]]
 ; CHECK:         br label [[TMP6]]
-; CHECK:         [[PHIOFOPS1:%.*]] = phi i32 [ 75, [[TMP4]] ], [ 105, [[TMP5]] ]
-; CHECK-NEXT:    [[PHIOFOPS:%.*]] = phi i32 [ 1125, [[TMP4]] ], [ 1575, [[TMP5]] ]
+; CHECK:         [[PHIOFOPS1:%.*]] = phi i32 [ 105, [[TMP5]] ], [ 75, [[TMP4]] ]
+; CHECK-NEXT:    [[PHIOFOPS:%.*]] = phi i32 [ 1575, [[TMP5]] ], [ 1125, [[TMP4]] ]
 ; CHECK-NEXT:    [[DOT0:%.*]] = phi i32 [ 5, [[TMP4]] ], [ 7, [[TMP5]] ]
 ; CHECK-NEXT:    ret i32 [[PHIOFOPS]]
 ;
@@ -215,7 +215,7 @@ define i64 @test5(i64 %arg) {
 ; CHECK:       bb14:
 ; CHECK-NEXT:    br label [[BB15:%.*]]
 ; CHECK:       bb15:
-; CHECK-NEXT:    [[PHIOFOPS:%.*]] = phi i64 [ [[TMP25:%.*]], [[BB15]] ], [ [[TMP12]], [[BB14]] ]
+; CHECK-NEXT:    [[PHIOFOPS:%.*]] = phi i64 [ [[TMP12]], [[BB14]] ], [ [[TMP25:%.*]], [[BB15]] ]
 ; CHECK-NEXT:    [[TMP16:%.*]] = phi i64 [ [[TMP24:%.*]], [[BB15]] ], [ [[TMP11]], [[BB14]] ]
 ; CHECK-NEXT:    [[TMP17:%.*]] = phi i64 [ [[TMP22:%.*]], [[BB15]] ], [ [[TMP10]], [[BB14]] ]
 ; CHECK-NEXT:    [[TMP18:%.*]] = phi i64 [ [[TMP20:%.*]], [[BB15]] ], [ 0, [[BB14]] ]

@@ -587,7 +587,11 @@ private:
   const Expression *createExpression(Instruction *) const;
   const Expression *createBinaryExpression(unsigned, Type *, Value *, Value *,
                                            Instruction *) const;
-  PHIExpression *createPHIExpression(Instruction *, bool &HasBackEdge,
+  // Our canonical form for phi arguments is a pair of incoming value, incoming
+  // basic block.
+  typedef std::pair<Value *, BasicBlock *> ValPair;
+  PHIExpression *createPHIExpression(ArrayRef<ValPair>, const Instruction *,
+                                     BasicBlock *, bool &HasBackEdge,
                                      bool &OriginalOpsConstant) const;
   const DeadExpression *createDeadExpression() const;
   const VariableExpression *createVariableExpression(Value *) const;
@@ -658,7 +662,10 @@ private:
   const Expression *performSymbolicLoadEvaluation(Instruction *) const;
   const Expression *performSymbolicStoreEvaluation(Instruction *) const;
   const Expression *performSymbolicCallEvaluation(Instruction *) const;
-  const Expression *performSymbolicPHIEvaluation(Instruction *) const;
+  void sortPHIOps(MutableArrayRef<ValPair> Ops) const;
+  const Expression *performSymbolicPHIEvaluation(ArrayRef<ValPair>,
+                                                 Instruction *I,
+                                                 BasicBlock *PHIBlock) const;
   const Expression *performSymbolicAggrValueEvaluation(Instruction *) const;
   const Expression *performSymbolicCmpEvaluation(Instruction *) const;
   const Expression *performSymbolicPredicateInfoEvaluation(Instruction *) const;
@@ -857,6 +864,16 @@ static bool isCopyOfAPHI(const Value *V) {
   return CO && isa<PHINode>(CO);
 }
 
+// Sort PHI Operands into a canonical order.  What we use here is an RPO
+// order. The BlockInstRange numbers are generated in an RPO walk of the basic
+// blocks.
+void NewGVN::sortPHIOps(MutableArrayRef<ValPair> Ops) const {
+  std::sort(Ops.begin(), Ops.end(), [&](const ValPair &P1, const ValPair &P2) {
+    return BlockInstRange.lookup(P1.second).first <
+           BlockInstRange.lookup(P2.second).first;
+  });
+}
+
 // Return true if V is a value that will always be available (IE can
 // be placed anywhere) in the function.  We don't do globals here
 // because they are often worse to put in place.
@@ -864,50 +881,42 @@ static bool alwaysAvailable(Value *V) {
   return isa<Constant>(V) || isa<Argument>(V);
 }
 
-PHIExpression *NewGVN::createPHIExpression(Instruction *I, bool &HasBackedge,
+// Create a PHIExpression from an array of {incoming edge, value} pairs.  I is
+// the original instruction we are creating a PHIExpression for (but may not be
+// a phi node). We require, as an invariant, that all the PHIOperands in the
+// same block are sorted the same way. sortPHIOps will sort them into a
+// canonical order.
+PHIExpression *NewGVN::createPHIExpression(ArrayRef<ValPair> PHIOperands,
+                                           const Instruction *I,
+                                           BasicBlock *PHIBlock,
+                                           bool &HasBackedge,
                                            bool &OriginalOpsConstant) const {
-  BasicBlock *PHIBlock = getBlockForValue(I);
-  auto *PN = cast<PHINode>(I);
-  auto *E =
-      new (ExpressionAllocator) PHIExpression(PN->getNumOperands(), PHIBlock);
+  unsigned NumOps = PHIOperands.size();
+  auto *E = new (ExpressionAllocator) PHIExpression(NumOps, PHIBlock);
 
   E->allocateOperands(ArgRecycler, ExpressionAllocator);
-  E->setType(I->getType());
-  E->setOpcode(I->getOpcode());
-
-  // NewGVN assumes the operands of a PHI node are in a consistent order across
-  // PHIs. LLVM doesn't seem to always guarantee this. While we need to fix
-  // this in LLVM at some point we don't want GVN to find wrong congruences.
-  // Therefore, here we sort uses in predecessor order.
-  // We're sorting the values by pointer. In theory this might be cause of
-  // non-determinism, but here we don't rely on the ordering for anything
-  // significant, e.g. we don't create new instructions based on it so we're
-  // fine.
-  SmallVector<const Use *, 4> PHIOperands;
-  for (const Use &U : PN->operands())
-    PHIOperands.push_back(&U);
-  std::sort(PHIOperands.begin(), PHIOperands.end(),
-            [&](const Use *U1, const Use *U2) {
-              return PN->getIncomingBlock(*U1) < PN->getIncomingBlock(*U2);
-            });
+  E->setType(PHIOperands.begin()->first->getType());
+  E->setOpcode(Instruction::PHI);
 
   // Filter out unreachable phi operands.
-  auto Filtered = make_filter_range(PHIOperands, [&](const Use *U) {
-    auto *BB = PN->getIncomingBlock(*U);
-    if (isCopyOfPHI(*U, PN))
-      return false;
+  auto Filtered = make_filter_range(PHIOperands, [&](const ValPair &P) {
+    auto *BB = P.second;
+    if (auto *PHIOp = dyn_cast<PHINode>(I))
+      if (isCopyOfPHI(P.first, PHIOp))
+        return false;
     if (!ReachableEdges.count({BB, PHIBlock}))
       return false;
     // Things in TOPClass are equivalent to everything.
-    if (ValueToClass.lookup(*U) == TOPClass)
+    if (ValueToClass.lookup(P.first) == TOPClass)
       return false;
-    OriginalOpsConstant = OriginalOpsConstant && isa<Constant>(*U);
+    OriginalOpsConstant = OriginalOpsConstant && isa<Constant>(P.first);
     HasBackedge = HasBackedge || isBackedge(BB, PHIBlock);
-    return lookupOperandLeader(*U) != PN;
+    return lookupOperandLeader(P.first) != I;
   });
-  std::transform(
-      Filtered.begin(), Filtered.end(), op_inserter(E),
-      [&](const Use *U) -> Value * { return lookupOperandLeader(*U); });
+  std::transform(Filtered.begin(), Filtered.end(), op_inserter(E),
+                 [&](const ValPair &P) -> Value * {
+                   return lookupOperandLeader(P.first);
+                 });
   return E;
 }
 
@@ -1628,7 +1637,10 @@ bool NewGVN::isCycleFree(const Instruction *I) const {
 }
 
 // Evaluate PHI nodes symbolically and create an expression result.
-const Expression *NewGVN::performSymbolicPHIEvaluation(Instruction *I) const {
+const Expression *
+NewGVN::performSymbolicPHIEvaluation(ArrayRef<ValPair> PHIOps,
+                                     Instruction *I,
+                                     BasicBlock *PHIBlock) const {
   // True if one of the incoming phi edges is a backedge.
   bool HasBackedge = false;
   // All constant tracks the state of whether all the *original* phi operands
@@ -1636,8 +1648,8 @@ const Expression *NewGVN::performSymbolicPHIEvaluation(Instruction *I) const {
   // change in value of the phi is guaranteed not to later change the value of
   // the phi. IE it can't be v = phi(undef, v+1)
   bool OriginalOpsConstant = true;
-  auto *E = cast<PHIExpression>(
-      createPHIExpression(I, HasBackedge, OriginalOpsConstant));
+  auto *E = cast<PHIExpression>(createPHIExpression(
+      PHIOps, I, PHIBlock, HasBackedge, OriginalOpsConstant));
   // We match the semantics of SimplifyPhiNode from InstructionSimplify here.
   // See if all arguments are the same.
   // We track if any were undef because they need special handling.
@@ -1886,9 +1898,15 @@ NewGVN::performSymbolicEvaluation(Value *V,
     case Instruction::InsertValue:
       E = performSymbolicAggrValueEvaluation(I);
       break;
-    case Instruction::PHI:
-      E = performSymbolicPHIEvaluation(I);
-      break;
+    case Instruction::PHI: {
+      SmallVector<ValPair, 3> Ops;
+      auto *PN = cast<PHINode>(I);
+      for (unsigned i = 0; i < PN->getNumOperands(); ++i)
+        Ops.push_back({PN->getIncomingValue(i), PN->getIncomingBlock(i)});
+      // Sort to ensure the invariant createPHIExpression requires is met.
+      sortPHIOps(Ops);
+      E = performSymbolicPHIEvaluation(Ops, I, getBlockForValue(I));
+    } break;
     case Instruction::Call:
       E = performSymbolicCallEvaluation(I);
       break;
@@ -2649,7 +2667,7 @@ NewGVN::makePossiblePHIOfOps(Instruction *I,
       continue;
     if (!DebugCounter::shouldExecute(PHIOfOpsCounter))
       return nullptr;
-    SmallVector<std::pair<Value *, BasicBlock *>, 4> Ops;
+    SmallVector<ValPair, 4> Ops;
     auto *PHIBlock = getBlockForValue(OpPHI);
     RevisitOnReachabilityChange[PHIBlock].reset(InstrToDFSNum(I));
     for (unsigned PredNum = 0; PredNum < OpPHI->getNumOperands(); ++PredNum) {
@@ -2685,7 +2703,7 @@ NewGVN::makePossiblePHIOfOps(Instruction *I,
                             (Op != OrigOp ||
                              OpIsSafeForPHIOfOps(Op, I, PHIBlock, VisitedOps));
         }
-        // FIXME: For those things that are not safe We could generate
+        // FIXME: For those things that are not safe we could generate
         // expressions all the way down, and see if this comes out to a
         // constant.  For anything where that is true, and unsafe, we should
         // have made a phi-of-ops (or value numbered it equivalent to something)
@@ -2708,9 +2726,14 @@ NewGVN::makePossiblePHIOfOps(Instruction *I,
       DEBUG(dbgs() << "Found phi of ops operand " << *FoundVal << " in "
                    << getBlockName(PredBB) << "\n");
     }
-
-    // FIXME: We should evaluate the phi operands first and see if it ends up a
-    // constant or variable expression.
+    sortPHIOps(Ops);
+    auto *E = performSymbolicPHIEvaluation(Ops, I, PHIBlock);
+    if (isa<ConstantExpression>(E) || isa<VariableExpression>(E)) {
+      DEBUG(dbgs()
+            << "Not creating real PHI of ops because it simplified to existing "
+               "value or constant\n");
+      return E;
+    }
     auto *ValuePHI = RealToTemp.lookup(I);
     bool NewPHI = false;
     if (!ValuePHI) {
@@ -2734,7 +2757,8 @@ NewGVN::makePossiblePHIOfOps(Instruction *I,
     RevisitOnReachabilityChange[PHIBlock].set(InstrToDFSNum(I));
     DEBUG(dbgs() << "Created phi of ops " << *ValuePHI << " for " << *I
                  << "\n");
-    return performSymbolicEvaluation(ValuePHI, Visited);
+
+    return E;
   }
   return nullptr;
 }
@@ -3095,7 +3119,7 @@ void NewGVN::verifyMemoryCongruency() const {
         // so we don't process them.
         if (auto *MemPHI = dyn_cast<MemoryPhi>(Pair.first)) {
           for (auto &U : MemPHI->incoming_values()) {
-            if (Instruction *I = dyn_cast<Instruction>(U.get())) {
+            if (auto *I = dyn_cast<Instruction>(&*U)) {
               if (!isInstructionTriviallyDead(I))
                 return true;
             }
