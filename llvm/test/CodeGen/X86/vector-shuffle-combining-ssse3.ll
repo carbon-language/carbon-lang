@@ -644,15 +644,13 @@ define <16 x i8> @shuffle_combine_packssdw_pshufb(<4 x i32> %a0) {
 ; SSE-LABEL: shuffle_combine_packssdw_pshufb:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    psrad $31, %xmm0
-; SSE-NEXT:    packssdw %xmm0, %xmm0
-; SSE-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[7,6,5,4,3,2,1,0,15,14,13,12,11,10,9,8]
+; SSE-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[13,12,9,8,5,4,1,0,13,12,9,8,5,4,1,0]
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: shuffle_combine_packssdw_pshufb:
 ; AVX:       # BB#0:
 ; AVX-NEXT:    vpsrad $31, %xmm0, %xmm0
-; AVX-NEXT:    vpackssdw %xmm0, %xmm0, %xmm0
-; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[7,6,5,4,3,2,1,0,15,14,13,12,11,10,9,8]
+; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[13,12,9,8,5,4,1,0,13,12,9,8,5,4,1,0]
 ; AVX-NEXT:    retq
   %1 = ashr <4 x i32> %a0, <i32 31, i32 31, i32 31, i32 31>
   %2 = tail call <8 x i16> @llvm.x86.sse2.packssdw.128(<4 x i32> %1, <4 x i32> %1)

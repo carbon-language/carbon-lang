@@ -808,15 +808,13 @@ define <16 x i16> @shuffle_combine_packssdw_pshufb(<8 x i32> %a0) {
 ; X32-LABEL: shuffle_combine_packssdw_pshufb:
 ; X32:       # BB#0:
 ; X32-NEXT:    vpsrad $31, %ymm0, %ymm0
-; X32-NEXT:    vpackssdw %ymm0, %ymm0, %ymm0
-; X32-NEXT:    vpshufb {{.*#+}} ymm0 = ymm0[6,7,4,5,2,3,0,1,6,7,4,5,2,3,0,1,16,17,18,19,20,21,22,23,22,23,20,21,18,19,16,17]
+; X32-NEXT:    vpshufb {{.*#+}} ymm0 = ymm0[12,13,8,9,4,5,0,1,12,13,8,9,4,5,0,1,16,17,20,21,24,25,28,29,28,29,24,25,20,21,16,17]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: shuffle_combine_packssdw_pshufb:
 ; X64:       # BB#0:
 ; X64-NEXT:    vpsrad $31, %ymm0, %ymm0
-; X64-NEXT:    vpackssdw %ymm0, %ymm0, %ymm0
-; X64-NEXT:    vpshufb {{.*#+}} ymm0 = ymm0[6,7,4,5,2,3,0,1,6,7,4,5,2,3,0,1,16,17,18,19,20,21,22,23,22,23,20,21,18,19,16,17]
+; X64-NEXT:    vpshufb {{.*#+}} ymm0 = ymm0[12,13,8,9,4,5,0,1,12,13,8,9,4,5,0,1,16,17,20,21,24,25,28,29,28,29,24,25,20,21,16,17]
 ; X64-NEXT:    retq
   %1 = ashr <8 x i32> %a0, <i32 31, i32 31, i32 31, i32 31, i32 31, i32 31, i32 31, i32 31>
   %2 = tail call <16 x i16> @llvm.x86.avx2.packssdw(<8 x i32> %1, <8 x i32> %1)
@@ -829,17 +827,13 @@ define <32 x i8> @shuffle_combine_packsswb_pshufb(<16 x i16> %a0, <16 x i16> %a1
 ; X32-LABEL: shuffle_combine_packsswb_pshufb:
 ; X32:       # BB#0:
 ; X32-NEXT:    vpsraw $15, %ymm0, %ymm0
-; X32-NEXT:    vpsraw $15, %ymm1, %ymm1
-; X32-NEXT:    vpacksswb %ymm1, %ymm0, %ymm0
-; X32-NEXT:    vpshufb {{.*#+}} ymm0 = ymm0[7,6,5,4,3,2,1,0,7,6,5,4,3,2,1,0,23,22,21,20,19,18,17,16,23,22,21,20,19,18,17,16]
+; X32-NEXT:    vpshufb {{.*#+}} ymm0 = ymm0[14,12,10,8,6,4,2,0,14,12,10,8,6,4,2,0,30,28,26,24,22,20,18,16,30,28,26,24,22,20,18,16]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: shuffle_combine_packsswb_pshufb:
 ; X64:       # BB#0:
 ; X64-NEXT:    vpsraw $15, %ymm0, %ymm0
-; X64-NEXT:    vpsraw $15, %ymm1, %ymm1
-; X64-NEXT:    vpacksswb %ymm1, %ymm0, %ymm0
-; X64-NEXT:    vpshufb {{.*#+}} ymm0 = ymm0[7,6,5,4,3,2,1,0,7,6,5,4,3,2,1,0,23,22,21,20,19,18,17,16,23,22,21,20,19,18,17,16]
+; X64-NEXT:    vpshufb {{.*#+}} ymm0 = ymm0[14,12,10,8,6,4,2,0,14,12,10,8,6,4,2,0,30,28,26,24,22,20,18,16,30,28,26,24,22,20,18,16]
 ; X64-NEXT:    retq
   %1 = ashr <16 x i16> %a0, <i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15>
   %2 = ashr <16 x i16> %a1, <i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15>

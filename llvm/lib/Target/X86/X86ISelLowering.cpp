@@ -5932,16 +5932,34 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
     return true;
   }
   case X86ISD::PACKSS: {
+    SDValue N0 = N.getOperand(0);
+    SDValue N1 = N.getOperand(1);
+    assert(N0.getValueType().getVectorNumElements() == (NumElts / 2) &&
+           N1.getValueType().getVectorNumElements() == (NumElts / 2) &&
+           "Unexpected input value type");
+
     // If we know input saturation won't happen we can treat this
     // as a truncation shuffle.
-    if (DAG.ComputeNumSignBits(N.getOperand(0)) <= NumBitsPerElt ||
-        DAG.ComputeNumSignBits(N.getOperand(1)) <= NumBitsPerElt)
+    if (DAG.ComputeNumSignBits(N0) <= NumBitsPerElt ||
+        DAG.ComputeNumSignBits(N1) <= NumBitsPerElt)
       return false;
 
-    Ops.push_back(N.getOperand(0));
-    Ops.push_back(N.getOperand(1));
-    for (unsigned i = 0; i != NumElts; ++i)
-      Mask.push_back(i * 2);
+    bool IsUnary = (N0 == N1);
+    unsigned Offset = IsUnary ? 0 : NumElts;
+    unsigned NumLanes = VT.getSizeInBits() / 128;
+    unsigned NumEltsPerLane = NumElts / NumLanes;
+    unsigned HalfEltsPerLane = NumEltsPerLane / 2;
+
+    Ops.push_back(N0);
+    if (!IsUnary)
+      Ops.push_back(N1);
+
+    for (unsigned Lane = 0; Lane != NumLanes; ++Lane) {
+      for (unsigned Elt = 0; Elt != HalfEltsPerLane; ++Elt)
+        Mask.push_back((Elt * 2) + (Lane * NumEltsPerLane));
+      for (unsigned Elt = 0; Elt != HalfEltsPerLane; ++Elt)
+        Mask.push_back((Elt * 2) + (Lane * NumEltsPerLane) + Offset);
+    }
     return true;
   }
   case X86ISD::VSHLI:
