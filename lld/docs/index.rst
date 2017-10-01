@@ -73,7 +73,7 @@ Performance
 This is a link time comparison on a 2-socket 20-core 40-thread Xeon
 E5-2680 2.80 GHz machine with an SSD drive. We ran gold and lld with
 or without multi-threading support. To disable multi-threading, we
-added ``-no-threads'' to the command lines.
+added ``-no-threads`` to the command lines.
 
 ============  ===========  ============  ====================  ==================  ===============  =============
 Program       Output size  GNU ld        GNU gold w/o threads  GNU gold w/threads  lld w/o threads  lld w/threads
