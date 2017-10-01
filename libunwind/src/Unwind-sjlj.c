@@ -67,7 +67,7 @@ struct _Unwind_FunctionContext {
 #if defined(__APPLE__)
 #include <System/pthread_machdep.h>
 #else
-static _LIBUNWIND_THREAD_LOCAL _Unwind_FunctionContext *stack = nullptr;
+static _LIBUNWIND_THREAD_LOCAL struct _Unwind_FunctionContext *stack = NULL;
 #endif
 
 static struct _Unwind_FunctionContext *__Unwind_SjLj_GetTopOfFunctionStack() {
