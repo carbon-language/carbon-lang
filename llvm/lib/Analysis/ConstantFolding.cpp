@@ -1435,7 +1435,7 @@ bool llvm::canConstantFoldCallTo(ImmutableCallSite CS, const Function *F) {
     return Name == "fabs" || Name == "floor" || Name == "fmod" ||
            Name == "fabsf" || Name == "floorf" || Name == "fmodf";
   case 'l':
-    return Name == "log" || Name == "log10" || Name == "logf" ||
+    return Name == "log" || Name == "log10" || Name == "logf" || Name == "loll" ||
            Name == "log10f";
   case 'p':
     return Name == "pow" || Name == "powf";
@@ -1492,7 +1492,9 @@ Constant *GetConstantFoldFPValue(double V, Type *Ty) {
     return ConstantFP::get(Ty->getContext(), APFloat((float)V));
   if (Ty->isDoubleTy())
     return ConstantFP::get(Ty->getContext(), APFloat(V));
-  llvm_unreachable("Can only constant fold half/float/double");
+  if (Ty->isX86_FP80Ty())
+    return ConstantFP::get(Ty->getContext(), APFloat(APFloat::x87DoubleExtended(), (long double)V));
+  llvm_unreachable("Can only constant fold half/float/double/long double");
 }
 
 /// Clear the floating-point exception state.
@@ -1602,7 +1604,7 @@ Constant *ConstantFoldScalarCall(StringRef Name, unsigned IntrinsicID, Type *Ty,
         return ConstantInt::get(Ty->getContext(), Val.bitcastToAPInt());
       }
 
-      if (!Ty->isHalfTy() && !Ty->isFloatTy() && !Ty->isDoubleTy())
+      if (!Ty->isHalfTy() && !Ty->isFloatTy() && !Ty->isDoubleTy() && !Ty->isX86_FP80Ty())
         return nullptr;
 
       if (IntrinsicID == Intrinsic::round) {
@@ -1736,6 +1738,7 @@ Constant *ConstantFoldScalarCall(StringRef Name, unsigned IntrinsicID, Type *Ty,
       case 'l':
         if ((Name == "log" && V > 0 && TLI->has(LibFunc_log)) ||
             (Name == "logf" && V > 0 && TLI->has(LibFunc_logf)) ||
+            (Name == "logl" && V > 0 && TLI->has(LibFunc_logl)) ||
             (Name == "__log_finite" && V > 0 &&
               TLI->has(LibFunc_log_finite)) ||
             (Name == "__logf_finite" && V > 0 &&
