@@ -16501,8 +16501,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, const SDLoc &dl,
           UI->getOpcode() != ISD::STORE)
         goto default_case;
 
-    if (ConstantSDNode *C =
-        dyn_cast<ConstantSDNode>(ArithOp.getOperand(1))) {
+    if (auto *C = dyn_cast<ConstantSDNode>(ArithOp.getOperand(1))) {
       // An add of one will be selected as an INC.
       if (C->isOne() &&
           (!Subtarget.slowIncDec() ||
@@ -16719,8 +16718,7 @@ SDValue X86TargetLowering::EmitCmp(SDValue Op0, SDValue Op1, unsigned X86CC,
     }
     // Use SUB instead of CMP to enable CSE between SUB and CMP.
     SDVTList VTs = DAG.getVTList(Op0.getValueType(), MVT::i32);
-    SDValue Sub = DAG.getNode(X86ISD::SUB, dl, VTs,
-                              Op0, Op1);
+    SDValue Sub = DAG.getNode(X86ISD::SUB, dl, VTs, Op0, Op1);
     return SDValue(Sub.getNode(), 1);
   }
   return DAG.getNode(X86ISD::CMP, dl, MVT::i32, Op0, Op1);
