@@ -5931,7 +5931,8 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
       Mask.push_back(i == InIdx ? NumElts + ExIdx : i);
     return true;
   }
-  case X86ISD::PACKSS: {
+  case X86ISD::PACKSS:
+  case X86ISD::PACKUS: {
     SDValue N0 = N.getOperand(0);
     SDValue N1 = N.getOperand(1);
     assert(N0.getValueType().getVectorNumElements() == (NumElts / 2) &&
@@ -5940,9 +5941,19 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
 
     // If we know input saturation won't happen we can treat this
     // as a truncation shuffle.
-    if (DAG.ComputeNumSignBits(N0) <= NumBitsPerElt ||
-        DAG.ComputeNumSignBits(N1) <= NumBitsPerElt)
-      return false;
+    if (Opcode == X86ISD::PACKSS) {
+      if (DAG.ComputeNumSignBits(N0) <= NumBitsPerElt ||
+          DAG.ComputeNumSignBits(N1) <= NumBitsPerElt)
+        return false;
+    } else {
+      KnownBits Known0, Known1;
+      DAG.computeKnownBits(N0, Known0);
+      if (Known0.countMinLeadingZeros() < NumBitsPerElt)
+        return false;
+      DAG.computeKnownBits(N1, Known1);
+      if (Known1.countMinLeadingZeros() < NumBitsPerElt)
+        return false;
+    }
 
     bool IsUnary = (N0 == N1);
     unsigned Offset = IsUnary ? 0 : NumElts;

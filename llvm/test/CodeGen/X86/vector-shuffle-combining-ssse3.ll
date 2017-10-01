@@ -683,18 +683,12 @@ declare <16 x i8> @llvm.x86.sse2.packsswb.128(<8 x i16>, <8 x i16>) nounwind rea
 define <16 x i8> @shuffle_combine_packuswb_pshufb(<8 x i16> %a0, <8 x i16> %a1) {
 ; SSE-LABEL: shuffle_combine_packuswb_pshufb:
 ; SSE:       # BB#0:
-; SSE-NEXT:    psrlw $8, %xmm0
-; SSE-NEXT:    psrlw $8, %xmm1
-; SSE-NEXT:    packuswb %xmm1, %xmm0
-; SSE-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[7,6,5,4,3,2,1,0,7,6,5,4,3,2,1,0]
+; SSE-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[15,13,11,9,7,5,3,1,15,13,11,9,7,5,3,1]
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: shuffle_combine_packuswb_pshufb:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vpsrlw $8, %xmm0, %xmm0
-; AVX-NEXT:    vpsrlw $8, %xmm1, %xmm1
-; AVX-NEXT:    vpackuswb %xmm1, %xmm0, %xmm0
-; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[7,6,5,4,3,2,1,0,7,6,5,4,3,2,1,0]
+; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[15,13,11,9,7,5,3,1,15,13,11,9,7,5,3,1]
 ; AVX-NEXT:    retq
   %1 = lshr <8 x i16> %a0, <i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8>
   %2 = lshr <8 x i16> %a1, <i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8>
