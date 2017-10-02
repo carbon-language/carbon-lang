@@ -196,7 +196,7 @@ TEST_F(RefactoringActionRulesTest, ReturnSymbolOccurrences) {
       Occurrences.push_back(SymbolOccurrence(SymbolName("test"),
                                              SymbolOccurrence::MatchingSymbol,
                                              Selection.getBegin()));
-      return Occurrences;
+      return std::move(Occurrences);
     }
   };
 
