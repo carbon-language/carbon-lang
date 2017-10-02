@@ -721,6 +721,20 @@ void ScopBuilder::buildAccessFunctions(ScopStmt *Stmt, BasicBlock &BB,
   if (isErrorBlock(BB, scop->getRegion(), LI, DT))
     return;
 
+  auto &RIL = scop->getRequiredInvariantLoads();
+  std::function<bool(Instruction & Inst)> IsInStmtFunc =
+      [&RIL](Instruction &Inst) -> bool {
+    return !isa<LoadInst>(Inst) || !RIL.count(cast<LoadInst>(&Inst));
+  };
+  bool IsEntryBlock = (Stmt->getEntryBlock() == &BB);
+  if (IsEntryBlock) {
+    auto &Insts = Stmt->getInstructions();
+    SmallPtrSet<Instruction *, 8> InStmtInsts(Insts.begin(), Insts.end());
+    IsInStmtFunc = [InStmtInsts](const Instruction &Inst) -> bool {
+      return InStmtInsts.count(&Inst);
+    };
+  }
+
   int Count = 0;
   bool Split = false;
   for (Instruction &Inst : BB) {
@@ -738,9 +752,12 @@ void ScopBuilder::buildAccessFunctions(ScopStmt *Stmt, BasicBlock &BB,
     if (PHI)
       buildPHIAccesses(Stmt, PHI, NonAffineSubRegion, false);
 
-    if (auto MemInst = MemAccInst::dyn_cast(Inst)) {
-      assert(Stmt && "Cannot build access function in non-existing statement");
-      buildMemoryAccess(MemInst, Stmt);
+    if (IsInStmtFunc(Inst)) {
+      if (auto MemInst = MemAccInst::dyn_cast(Inst)) {
+        assert(Stmt &&
+               "Cannot build access function in non-existing statement");
+        buildMemoryAccess(MemInst, Stmt);
+      }
     }
 
     if (isIgnoredIntrinsic(&Inst))
@@ -1185,6 +1202,33 @@ void ScopBuilder::buildScop(Region &R, AssumptionCache &AC,
   scop.reset(new Scop(R, SE, LI, DT, *SD.getDetectionContext(&R), ORE));
 
   buildStmts(R);
+
+  // Create all invariant load instructions first. These are categorized as
+  // 'synthesizable', therefore are not part of any ScopStmt but need to be
+  // created somewhere.
+  const InvariantLoadsSetTy &RIL = scop->getRequiredInvariantLoads();
+  for (BasicBlock *BB : scop->getRegion().blocks()) {
+    if (isErrorBlock(*BB, scop->getRegion(), LI, DT))
+      continue;
+
+    for (Instruction &Inst : *BB) {
+      LoadInst *Load = dyn_cast<LoadInst>(&Inst);
+      if (!Load)
+        continue;
+
+      if (!RIL.count(Load))
+        continue;
+
+      // Invariant loads require a MemoryAccess to be created in some statement.
+      // It is not important to which statement the MemoryAccess is added
+      // because it will later be removed from the ScopStmt again. We chose the
+      // first statement of the basic block the LoadInst is in.
+      ArrayRef<ScopStmt *> List = scop->getStmtListFor(BB);
+      assert(!List.empty());
+      ScopStmt *RILStmt = List.front();
+      buildMemoryAccess(Load, RILStmt);
+    }
+  }
   buildAccessFunctions();
 
   // In case the region does not have an exiting block we will later (during
