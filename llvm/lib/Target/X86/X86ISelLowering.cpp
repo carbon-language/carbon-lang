@@ -5449,10 +5449,10 @@ static bool getTargetShuffleMaskIndices(SDValue MaskNode,
 static void createPackShuffleMask(MVT VT, SmallVectorImpl<int> &Mask,
                                   bool Unary) {
   assert(Mask.empty() && "Expected an empty shuffle mask vector");
-  int NumElts = VT.getVectorNumElements();
-  int NumLanes = VT.getSizeInBits() / 128;
-  int NumEltsPerLane = 128 / VT.getScalarSizeInBits();
-  int Offset = Unary ? 0 : NumElts;
+  unsigned NumElts = VT.getVectorNumElements();
+  unsigned NumLanes = VT.getSizeInBits() / 128;
+  unsigned NumEltsPerLane = 128 / VT.getScalarSizeInBits();
+  unsigned Offset = Unary ? 0 : NumElts;
 
   for (unsigned Lane = 0; Lane != NumLanes; ++Lane) {
     for (unsigned Elt = 0; Elt != NumEltsPerLane; Elt += 2)
