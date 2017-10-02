@@ -1522,7 +1522,7 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(Address Addr, bool Volatile,
   if (TBAAAccessType) {
     bool MayAlias = BaseInfo.getMayAlias();
     llvm::MDNode *TBAA = MayAlias
-        ? CGM.getTBAATypeInfo(getContext().CharTy)
+        ? CGM.getTBAAMayAliasTypeInfo()
         : CGM.getTBAAStructTagInfo(TBAABaseType, TBAAAccessType, TBAAOffset);
     if (TBAA)
       CGM.DecorateInstructionWithTBAA(Load, TBAA, MayAlias);
@@ -1613,7 +1613,7 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, Address Addr,
   if (TBAAAccessType) {
     bool MayAlias = BaseInfo.getMayAlias();
     llvm::MDNode *TBAA = MayAlias
-        ? CGM.getTBAATypeInfo(getContext().CharTy)
+        ? CGM.getTBAAMayAliasTypeInfo()
         : CGM.getTBAAStructTagInfo(TBAABaseType, TBAAAccessType, TBAAOffset);
     if (TBAA)
       CGM.DecorateInstructionWithTBAA(Store, TBAA, MayAlias);
@@ -3724,11 +3724,8 @@ LValue CodeGenFunction::EmitLValueForField(LValue base,
       // Loading the reference will disable path-aware TBAA.
       TBAAPath = false;
       if (CGM.shouldUseTBAA()) {
-        llvm::MDNode *tbaa;
-        if (mayAlias)
-          tbaa = CGM.getTBAATypeInfo(getContext().CharTy);
-        else
-          tbaa = CGM.getTBAATypeInfo(type);
+        llvm::MDNode *tbaa = mayAlias ? CGM.getTBAAMayAliasTypeInfo() :
+                                        CGM.getTBAATypeInfo(type);
         if (tbaa)
           CGM.DecorateInstructionWithTBAA(load, tbaa);
       }
@@ -3780,7 +3777,7 @@ LValue CodeGenFunction::EmitLValueForField(LValue base,
   // FIXME: this should get propagated down through anonymous structs
   // and unions.
   if (mayAlias && LV.getTBAAAccessType())
-    LV.setTBAAAccessType(CGM.getTBAATypeInfo(getContext().CharTy));
+    LV.setTBAAAccessType(CGM.getTBAAMayAliasTypeInfo());
 
   return LV;
 }
