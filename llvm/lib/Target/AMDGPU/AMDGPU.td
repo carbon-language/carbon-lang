@@ -181,13 +181,13 @@ def FeatureGCN3Encoding : SubtargetFeature<"gcn3-encoding",
 def FeatureCIInsts : SubtargetFeature<"ci-insts",
   "CIInsts",
   "true",
-  "Additional intstructions for CI+"
+  "Additional instructions for CI+"
 >;
 
 def FeatureGFX9Insts : SubtargetFeature<"gfx9-insts",
   "GFX9Insts",
   "true",
-  "Additional intstructions for GFX9+"
+  "Additional instructions for GFX9+"
 >;
 
 def FeatureSMemRealTime : SubtargetFeature<"s-memrealtime",
