@@ -522,11 +522,9 @@ MachineInstr *TargetInstrInfo::foldMemoryOperand(MachineInstr &MI,
                                                  ArrayRef<unsigned> Ops, int FI,
                                                  LiveIntervals *LIS) const {
   auto Flags = MachineMemOperand::MONone;
-  for (unsigned i = 0, e = Ops.size(); i != e; ++i)
-    if (MI.getOperand(Ops[i]).isDef())
-      Flags |= MachineMemOperand::MOStore;
-    else
-      Flags |= MachineMemOperand::MOLoad;
+  for (unsigned OpIdx : Ops)
+    Flags |= MI.getOperand(OpIdx).isDef() ? MachineMemOperand::MOStore
+                                          : MachineMemOperand::MOLoad;
 
   MachineBasicBlock *MBB = MI.getParent();
   assert(MBB && "foldMemoryOperand needs an inserted instruction");
@@ -542,10 +540,10 @@ MachineInstr *TargetInstrInfo::foldMemoryOperand(MachineInstr &MI,
   if (Flags & MachineMemOperand::MOStore) {
     MemSize = MFI.getObjectSize(FI);
   } else {
-    for (unsigned Idx : Ops) {
+    for (unsigned OpIdx : Ops) {
       int64_t OpSize = MFI.getObjectSize(FI);
 
-      if (auto SubReg = MI.getOperand(Idx).getSubReg()) {
+      if (auto SubReg = MI.getOperand(OpIdx).getSubReg()) {
         unsigned SubRegSize = TRI->getSubRegIdxSize(SubReg);
         if (SubRegSize > 0 && !(SubRegSize % 8))
           OpSize = SubRegSize / 8;
@@ -613,9 +611,10 @@ MachineInstr *TargetInstrInfo::foldMemoryOperand(MachineInstr &MI,
                                                  LiveIntervals *LIS) const {
   assert(LoadMI.canFoldAsLoad() && "LoadMI isn't foldable!");
 #ifndef NDEBUG
-  for (unsigned i = 0, e = Ops.size(); i != e; ++i)
-    assert(MI.getOperand(Ops[i]).isUse() && "Folding load into def!");
+  for (unsigned OpIdx : Ops)
+    assert(MI.getOperand(OpIdx).isUse() && "Folding load into def!");
 #endif
+
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
 
