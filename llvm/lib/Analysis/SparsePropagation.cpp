@@ -36,10 +36,13 @@ using namespace llvm;
 //                  AbstractLatticeFunction Implementation
 //===----------------------------------------------------------------------===//
 
-AbstractLatticeFunction::~AbstractLatticeFunction() = default;
+template <class LatticeVal>
+AbstractLatticeFunction<LatticeVal>::~AbstractLatticeFunction() = default;
 
 /// PrintValue - Render the specified lattice value to the specified stream.
-void AbstractLatticeFunction::PrintValue(LatticeVal V, raw_ostream &OS) {
+template <class LatticeVal>
+void AbstractLatticeFunction<LatticeVal>::PrintValue(LatticeVal V,
+                                                     raw_ostream &OS) {
   if (V == UndefVal)
     OS << "undefined";
   else if (V == OverdefinedVal)
@@ -59,8 +62,9 @@ void AbstractLatticeFunction::PrintValue(LatticeVal V, raw_ostream &OS) {
 /// map yet.   This function is necessary because not all values should start
 /// out in the underdefined state... Arguments should be overdefined, and
 /// constants should be marked as constants.
-SparseSolver::LatticeVal SparseSolver::getOrInitValueState(Value *V) {
-  DenseMap<Value*, LatticeVal>::iterator I = ValueState.find(V);
+template <class LatticeVal>
+LatticeVal SparseSolver<LatticeVal>::getOrInitValueState(Value *V) {
+  auto I = ValueState.find(V);
   if (I != ValueState.end()) return I->second;  // Common case, in the map
   
   LatticeVal LV;
@@ -85,8 +89,9 @@ SparseSolver::LatticeVal SparseSolver::getOrInitValueState(Value *V) {
 
 /// UpdateState - When the state for some instruction is potentially updated,
 /// this function notices and adds I to the worklist if needed.
-void SparseSolver::UpdateState(Instruction &Inst, LatticeVal V) {
-  DenseMap<Value*, LatticeVal>::iterator I = ValueState.find(&Inst);
+template <class LatticeVal>
+void SparseSolver<LatticeVal>::UpdateState(Instruction &Inst, LatticeVal V) {
+  auto I = ValueState.find(&Inst);
   if (I != ValueState.end() && I->second == V)
     return;  // No change.
   
@@ -97,7 +102,8 @@ void SparseSolver::UpdateState(Instruction &Inst, LatticeVal V) {
 
 /// MarkBlockExecutable - This method can be used by clients to mark all of
 /// the blocks that are known to be intrinsically live in the processed unit.
-void SparseSolver::MarkBlockExecutable(BasicBlock *BB) {
+template <class LatticeVal>
+void SparseSolver<LatticeVal>::MarkBlockExecutable(BasicBlock *BB) {
   DEBUG(dbgs() << "Marking Block Executable: " << BB->getName() << "\n");
   BBExecutable.insert(BB);   // Basic block is executable!
   BBWorkList.push_back(BB);  // Add the block to the work list!
@@ -105,7 +111,9 @@ void SparseSolver::MarkBlockExecutable(BasicBlock *BB) {
 
 /// markEdgeExecutable - Mark a basic block as executable, adding it to the BB
 /// work list if it is not already executable...
-void SparseSolver::markEdgeExecutable(BasicBlock *Source, BasicBlock *Dest) {
+template <class LatticeVal>
+void SparseSolver<LatticeVal>::markEdgeExecutable(BasicBlock *Source,
+                                                  BasicBlock *Dest) {
   if (!KnownFeasibleEdges.insert(Edge(Source, Dest)).second)
     return;  // This edge is already known to be executable!
   
@@ -125,9 +133,9 @@ void SparseSolver::markEdgeExecutable(BasicBlock *Source, BasicBlock *Dest) {
 
 /// getFeasibleSuccessors - Return a vector of booleans to indicate which
 /// successors are reachable from a given terminator instruction.
-void SparseSolver::getFeasibleSuccessors(TerminatorInst &TI,
-                                         SmallVectorImpl<bool> &Succs,
-                                         bool AggressiveUndef) {
+template <class LatticeVal>
+void SparseSolver<LatticeVal>::getFeasibleSuccessors(
+    TerminatorInst &TI, SmallVectorImpl<bool> &Succs, bool AggressiveUndef) {
   Succs.resize(TI.getNumSuccessors());
   if (TI.getNumSuccessors() == 0) return;
   
@@ -208,8 +216,9 @@ void SparseSolver::getFeasibleSuccessors(TerminatorInst &TI,
 
 /// isEdgeFeasible - Return true if the control flow edge from the 'From'
 /// basic block to the 'To' basic block is currently feasible...
-bool SparseSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To,
-                                  bool AggressiveUndef) {
+template <class LatticeVal>
+bool SparseSolver<LatticeVal>::isEdgeFeasible(BasicBlock *From, BasicBlock *To,
+                                              bool AggressiveUndef) {
   SmallVector<bool, 16> SuccFeasible;
   TerminatorInst *TI = From->getTerminator();
   getFeasibleSuccessors(*TI, SuccFeasible, AggressiveUndef);
@@ -221,7 +230,8 @@ bool SparseSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To,
   return false;
 }
 
-void SparseSolver::visitTerminatorInst(TerminatorInst &TI) {
+template <class LatticeVal>
+void SparseSolver<LatticeVal>::visitTerminatorInst(TerminatorInst &TI) {
   SmallVector<bool, 16> SuccFeasible;
   getFeasibleSuccessors(TI, SuccFeasible, true);
   
@@ -233,7 +243,8 @@ void SparseSolver::visitTerminatorInst(TerminatorInst &TI) {
       markEdgeExecutable(BB, TI.getSuccessor(i));
 }
 
-void SparseSolver::visitPHINode(PHINode &PN) {
+template <class LatticeVal>
+void SparseSolver<LatticeVal>::visitPHINode(PHINode &PN) {
   // The lattice function may store more information on a PHINode than could be
   // computed from its incoming values.  For example, SSI form stores its sigma
   // functions as PHINodes with a single incoming value.
@@ -279,7 +290,8 @@ void SparseSolver::visitPHINode(PHINode &PN) {
   UpdateState(PN, PNIV);
 }
 
-void SparseSolver::visitInst(Instruction &I) {
+template <class LatticeVal>
+void SparseSolver<LatticeVal>::visitInst(Instruction &I) {
   // PHIs are handled by the propagation logic, they are never passed into the
   // transfer functions.
   if (PHINode *PN = dyn_cast<PHINode>(&I))
@@ -295,7 +307,7 @@ void SparseSolver::visitInst(Instruction &I) {
     visitTerminatorInst(*TI);
 }
 
-void SparseSolver::Solve(Function &F) {
+template <class LatticeVal> void SparseSolver<LatticeVal>::Solve(Function &F) {
   MarkBlockExecutable(&F.getEntryBlock());
   
   // Process the work lists until they are empty!
@@ -331,7 +343,8 @@ void SparseSolver::Solve(Function &F) {
   }
 }
 
-void SparseSolver::Print(Function &F, raw_ostream &OS) const {
+template <class LatticeVal>
+void SparseSolver<LatticeVal>::Print(Function &F, raw_ostream &OS) const {
   OS << "\nFUNCTION: " << F.getName() << "\n";
   for (auto &BB : F) {
     if (!BBExecutable.count(&BB))
