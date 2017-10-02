@@ -8,6 +8,7 @@ add_lld_library(lldCommon
 
   LINK_COMPONENTS
   Codegen
+  MC
   Option
   Support
   Target
