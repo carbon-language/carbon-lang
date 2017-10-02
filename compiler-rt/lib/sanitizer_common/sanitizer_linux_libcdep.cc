@@ -488,6 +488,17 @@ void ListOfModules::init() {
   }
 }
 
+// When a custom loader is used, dl_iterate_phdr may not contain the full
+// list of modules. Allow callers to fall back to using procmaps.
+void ListOfModules::fallbackInit() {
+  if (!requiresProcmaps()) {
+    clearOrInit();
+    procmapsInit(&modules_);
+  } else {
+    clear();
+  }
+}
+
 // getrusage does not give us the current RSS, only the max RSS.
 // Still, this is better than nothing if /proc/self/statm is not available
 // for some reason, e.g. due to a sandbox.
