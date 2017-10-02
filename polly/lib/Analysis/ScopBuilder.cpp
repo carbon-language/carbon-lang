@@ -701,16 +701,15 @@ void ScopBuilder::buildStmts(Region &SR) {
 }
 
 void ScopBuilder::buildAccessFunctions(ScopStmt *Stmt, BasicBlock &BB,
-                                       Region *NonAffineSubRegion,
-                                       bool IsExitBlock) {
+                                       Region *NonAffineSubRegion) {
   assert(
-      !Stmt == IsExitBlock &&
+      Stmt &&
       "The exit BB is the only one that cannot be represented by a statement");
-  assert(IsExitBlock || Stmt->represents(&BB));
+  assert(Stmt->represents(&BB));
 
   // We do not build access functions for error blocks, as they may contain
   // instructions we can not model.
-  if (isErrorBlock(BB, scop->getRegion(), LI, DT) && !IsExitBlock)
+  if (isErrorBlock(BB, scop->getRegion(), LI, DT))
     return;
 
   int Count = 0;
@@ -728,11 +727,7 @@ void ScopBuilder::buildAccessFunctions(ScopStmt *Stmt, BasicBlock &BB,
 
     PHINode *PHI = dyn_cast<PHINode>(&Inst);
     if (PHI)
-      buildPHIAccesses(Stmt, PHI, NonAffineSubRegion, IsExitBlock);
-
-    // For the exit block we stop modeling after the last PHI node.
-    if (!PHI && IsExitBlock)
-      break;
+      buildPHIAccesses(Stmt, PHI, NonAffineSubRegion, false);
 
     if (auto MemInst = MemAccInst::dyn_cast(Inst)) {
       assert(Stmt && "Cannot build access function in non-existing statement");
@@ -749,8 +744,7 @@ void ScopBuilder::buildAccessFunctions(ScopStmt *Stmt, BasicBlock &BB,
     if (!PHI && (!isa<TerminatorInst>(&Inst) || NonAffineSubRegion))
       buildScalarDependences(Stmt, &Inst);
 
-    if (!IsExitBlock)
-      buildEscapingDependences(&Inst);
+    buildEscapingDependences(&Inst);
   }
 }
 
@@ -1193,9 +1187,15 @@ void ScopBuilder::buildScop(Region &R, AssumptionCache &AC,
   // To handle these PHI nodes later we will now model their operands as scalar
   // accesses. Note that we do not model anything in the exit block if we have
   // an exiting block in the region, as there will not be any splitting later.
-  if (!R.isTopLevelRegion() && !scop->hasSingleExitEdge())
-    buildAccessFunctions(nullptr, *R.getExit(), nullptr,
-                         /* IsExitBlock */ true);
+  if (!R.isTopLevelRegion() && !scop->hasSingleExitEdge()) {
+    for (Instruction &Inst : *R.getExit()) {
+      PHINode *PHI = dyn_cast<PHINode>(&Inst);
+      if (!PHI)
+        break;
+
+      buildPHIAccesses(nullptr, PHI, nullptr, true);
+    }
+  }
 
   // Create memory accesses for global reads since all arrays are now known.
   auto *AF = SE.getConstant(IntegerType::getInt64Ty(SE.getContext()), 0);
