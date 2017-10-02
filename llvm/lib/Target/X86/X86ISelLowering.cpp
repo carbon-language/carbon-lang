@@ -22341,7 +22341,7 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
   // the vector shift into four scalar shifts plus four pairs of vector
   // insert/extract.
   if (ConstantAmt && (VT == MVT::v8i16 || VT == MVT::v4i32)) {
-    unsigned TargetOpcode = X86ISD::MOVSS;
+    bool UseMOVSD = false;
     bool CanBeSimplified;
     // The splat value for the first packed shift (the 'X' from the example).
     SDValue Amt1 = Amt->getOperand(0);
@@ -22358,7 +22358,7 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
         // Otherwise, check if we can still simplify this node using a MOVSD.
         CanBeSimplified = Amt1 == Amt->getOperand(1) &&
                           Amt->getOperand(2) == Amt->getOperand(3);
-        TargetOpcode = X86ISD::MOVSD;
+        UseMOVSD = true;
         Amt2 = Amt->getOperand(2);
       }
     } else {
@@ -22369,7 +22369,7 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
         CanBeSimplified = Amt2 == Amt->getOperand(i);
 
       if (!CanBeSimplified) {
-        TargetOpcode = X86ISD::MOVSD;
+        UseMOVSD = true;
         CanBeSimplified = true;
         Amt2 = Amt->getOperand(4);
         for (unsigned i=0; i != 4 && CanBeSimplified; ++i)
@@ -22382,19 +22382,18 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
     if (CanBeSimplified && isa<ConstantSDNode>(Amt1) &&
         isa<ConstantSDNode>(Amt2)) {
       // Replace this node with two shifts followed by a MOVSS/MOVSD/PBLEND.
-      MVT CastVT = MVT::v4i32;
       SDValue Splat1 =
           DAG.getConstant(cast<ConstantSDNode>(Amt1)->getAPIntValue(), dl, VT);
       SDValue Shift1 = DAG.getNode(Op->getOpcode(), dl, VT, R, Splat1);
       SDValue Splat2 =
           DAG.getConstant(cast<ConstantSDNode>(Amt2)->getAPIntValue(), dl, VT);
       SDValue Shift2 = DAG.getNode(Op->getOpcode(), dl, VT, R, Splat2);
-      SDValue BitCast1 = DAG.getBitcast(CastVT, Shift1);
-      SDValue BitCast2 = DAG.getBitcast(CastVT, Shift2);
-      if (TargetOpcode == X86ISD::MOVSD)
-        return DAG.getBitcast(VT, DAG.getVectorShuffle(CastVT, dl, BitCast1,
+      SDValue BitCast1 = DAG.getBitcast(MVT::v4i32, Shift1);
+      SDValue BitCast2 = DAG.getBitcast(MVT::v4i32, Shift2);
+      if (UseMOVSD)
+        return DAG.getBitcast(VT, DAG.getVectorShuffle(MVT::v4i32, dl, BitCast1,
                                                        BitCast2, {0, 1, 6, 7}));
-      return DAG.getBitcast(VT, DAG.getVectorShuffle(CastVT, dl, BitCast1,
+      return DAG.getBitcast(VT, DAG.getVectorShuffle(MVT::v4i32, dl, BitCast1,
                                                      BitCast2, {0, 5, 6, 7}));
     }
   }
