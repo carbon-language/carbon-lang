@@ -196,11 +196,11 @@ private:
 // be found by looking at the next one) and put the hash in a side table.
 struct SectionPiece {
   SectionPiece(size_t Off, bool Live = false)
-      : InputOff(Off), OutputOff(-1), Live(Live || !Config->GcSections) {}
+      : InputOff(Off), Live(Live || !Config->GcSections), OutputOff(-1) {}
 
-  size_t InputOff;
-  ssize_t OutputOff : 8 * sizeof(ssize_t) - 1;
+  size_t InputOff : 8 * sizeof(ssize_t) - 1;
   size_t Live : 1;
+  ssize_t OutputOff;
 };
 static_assert(sizeof(SectionPiece) == 2 * sizeof(size_t),
               "SectionPiece is too big");
