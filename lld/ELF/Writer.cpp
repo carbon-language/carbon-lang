@@ -1798,7 +1798,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
     // kernels (as of 2016) require an EABI version to be set.
     EHdr->e_flags = EF_ARM_EABI_VER5;
   else if (Config->EMachine == EM_MIPS)
-    EHdr->e_flags = getMipsEFlags<ELFT>();
+    EHdr->e_flags = Config->MipsEFlags;
 
   if (!Config->Relocatable) {
     EHdr->e_phoff = sizeof(Elf_Ehdr);
