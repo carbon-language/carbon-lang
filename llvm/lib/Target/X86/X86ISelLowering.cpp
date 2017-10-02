@@ -5946,12 +5946,9 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
           DAG.ComputeNumSignBits(N1) <= NumBitsPerElt)
         return false;
     } else {
-      KnownBits Known0, Known1;
-      DAG.computeKnownBits(N0, Known0);
-      if (Known0.countMinLeadingZeros() < NumBitsPerElt)
-        return false;
-      DAG.computeKnownBits(N1, Known1);
-      if (Known1.countMinLeadingZeros() < NumBitsPerElt)
+      APInt ZeroMask = APInt::getHighBitsSet(2 * NumBitsPerElt, NumBitsPerElt);
+      if (!DAG.MaskedValueIsZero(N0, ZeroMask) ||
+          !DAG.MaskedValueIsZero(N1, ZeroMask))
         return false;
     }
 
