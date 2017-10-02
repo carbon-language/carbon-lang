@@ -7,6 +7,8 @@ add_lld_library(lldCommon
   ${LLD_INCLUDE_DIR}/lld/Common
 
   LINK_COMPONENTS
-    Option
-    Support
+  Codegen
+  Option
+  Support
+  Target
   )
