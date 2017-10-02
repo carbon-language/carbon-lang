@@ -92,14 +92,17 @@ int foo(int n) {
   double cn[5][n];
   TT<long long, char> d;
 
-  // CHECK:       [[RET:%.+]] = call i32 @__tgt_target(i32 -1, i8* @{{[^,]+}}, i32 0, i8** null, i8** null, i[[SZ]]* null, i32* null)
+  // CHECK:       [[ADD:%.+]] = add nsw i32
+  // CHECK:       store i32 [[ADD]], i32* [[CAPTURE:%.+]],
+  // CHECK:       [[LD:%.+]] = load i32, i32* [[CAPTURE]],
+  // CHECK:       [[RET:%.+]] = call i32 @__tgt_target(i32 [[LD]], i8* @{{[^,]+}}, i32 0, i8** null, i8** null, i[[SZ]]* null, i32* null)
   // CHECK-NEXT:  [[ERROR:%.+]] = icmp ne i32 [[RET]], 0
   // CHECK-NEXT:  br i1 [[ERROR]], label %[[FAIL:[^,]+]], label %[[END:[^,]+]]
   // CHECK:       [[FAIL]]
   // CHECK:       call void [[HVT0:@.+]]()
   // CHECK-NEXT:  br label %[[END]]
   // CHECK:       [[END]]
-  #pragma omp target
+  #pragma omp target device(global + a)
   {
   }
 
