@@ -67,8 +67,6 @@ integer/add_sat.cl
 integer/add_sat_if.ll
 integer/add_sat_impl.ll
 integer/clz.cl
-integer/clz_if.ll
-integer/clz_impl.ll
 integer/hadd.cl
 integer/mad24.cl
 integer/mad_sat.cl
