@@ -730,7 +730,6 @@ class ListOfModules {
   ListOfModules() : initialized(false) {}
   ~ListOfModules() { clear(); }
   void init();
-  void fallbackInit();  // Uses fallback init if available, otherwise clears
   const LoadedModule *begin() const { return modules_.begin(); }
   LoadedModule *begin() { return modules_.begin(); }
   const LoadedModule *end() const { return modules_.end(); }
