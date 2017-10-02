@@ -657,6 +657,15 @@ void ScopBuilder::buildAccessFunctions() {
     for (BasicBlock *BB : R->blocks())
       buildAccessFunctions(&Stmt, *BB, R);
   }
+
+  // Build write accesses for values that are used after the SCoP.
+  // The instructions defining them might be synthesizable and therefore not
+  // contained in any statement, hence we iterate over the original instructions
+  // to identify all escaping values.
+  for (BasicBlock *BB : scop->getRegion().blocks()) {
+    for (Instruction &Inst : *BB)
+      buildEscapingDependences(&Inst);
+  }
 }
 
 bool ScopBuilder::shouldModelInst(Instruction *Inst, Loop *L) {
@@ -743,8 +752,6 @@ void ScopBuilder::buildAccessFunctions(ScopStmt *Stmt, BasicBlock &BB,
     // explicit data dependences.
     if (!PHI && (!isa<TerminatorInst>(&Inst) || NonAffineSubRegion))
       buildScalarDependences(Stmt, &Inst);
-
-    buildEscapingDependences(&Inst);
   }
 }
 
