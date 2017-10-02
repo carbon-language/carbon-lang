@@ -493,3 +493,17 @@ define i1 @exact_multiuse(i32 %x) {
   ret i1 %cmp
 }
 
+declare void @foo2(<2 x i32>)
+define <2 x i1> @exact_eq0_multiuse(<2 x i32> %x, <2 x i32> %y) {
+; CHECK-LABEL: @exact_eq0_multiuse(
+; CHECK-NEXT:    [[SH:%.*]] = ashr exact <2 x i32> %x, %y
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq <2 x i32> [[SH]], zeroinitializer
+; CHECK-NEXT:    call void @foo2(<2 x i32> [[SH]])
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %sh = ashr exact <2 x i32> %x, %y
+  %cmp = icmp eq <2 x i32> %sh, zeroinitializer
+  call void @foo2(<2 x i32> %sh)
+  ret <2 x i1> %cmp
+}
+
