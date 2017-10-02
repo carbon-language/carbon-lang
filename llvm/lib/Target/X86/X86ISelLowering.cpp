@@ -5444,6 +5444,24 @@ static bool getTargetShuffleMaskIndices(SDValue MaskNode,
   return true;
 }
 
+/// Create a shuffle mask that matches the PACKSS/PACKUS truncation.
+/// Note: This ignores saturation, so inputs must be checked first.
+static void createPackShuffleMask(MVT VT, SmallVectorImpl<int> &Mask,
+                                  bool Unary) {
+  assert(Mask.empty() && "Expected an empty shuffle mask vector");
+  int NumElts = VT.getVectorNumElements();
+  int NumLanes = VT.getSizeInBits() / 128;
+  int NumEltsPerLane = 128 / VT.getScalarSizeInBits();
+  int Offset = Unary ? 0 : NumElts;
+
+  for (unsigned Lane = 0; Lane != NumLanes; ++Lane) {
+    for (unsigned Elt = 0; Elt != NumEltsPerLane; Elt += 2)
+      Mask.push_back(Elt + (Lane * NumEltsPerLane));
+    for (unsigned Elt = 0; Elt != NumEltsPerLane; Elt += 2)
+      Mask.push_back(Elt + (Lane * NumEltsPerLane) + Offset);
+  }
+}
+
 /// Calculates the shuffle mask corresponding to the target-specific opcode.
 /// If the mask could be calculated, returns it in \p Mask, returns the shuffle
 /// operands in \p Ops, and returns true.
@@ -5953,21 +5971,12 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
     }
 
     bool IsUnary = (N0 == N1);
-    unsigned Offset = IsUnary ? 0 : NumElts;
-    unsigned NumLanes = VT.getSizeInBits() / 128;
-    unsigned NumEltsPerLane = NumElts / NumLanes;
-    unsigned HalfEltsPerLane = NumEltsPerLane / 2;
 
     Ops.push_back(N0);
     if (!IsUnary)
       Ops.push_back(N1);
 
-    for (unsigned Lane = 0; Lane != NumLanes; ++Lane) {
-      for (unsigned Elt = 0; Elt != HalfEltsPerLane; ++Elt)
-        Mask.push_back((Elt * 2) + (Lane * NumEltsPerLane));
-      for (unsigned Elt = 0; Elt != HalfEltsPerLane; ++Elt)
-        Mask.push_back((Elt * 2) + (Lane * NumEltsPerLane) + Offset);
-    }
+    createPackShuffleMask(VT, Mask, IsUnary);
     return true;
   }
   case X86ISD::VSHLI:
