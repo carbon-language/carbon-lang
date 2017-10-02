@@ -13,7 +13,7 @@
 #include "Config.h"
 #include "Relocations.h"
 #include "Thunks.h"
-#include "lld/Core/LLVM.h"
+#include "lld/Common/LLVM.h"
 #include "llvm/ADT/CachedHashString.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/TinyPtrVector.h"
