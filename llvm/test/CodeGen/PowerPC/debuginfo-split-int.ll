@@ -1,4 +1,6 @@
 ; RUN: llc < %s -stop-after=isel -o - | FileCheck %s
+; FIXME: See the comments in D38172, regarding the name "isel" is registered only by AMDGPU.
+; XFAIL: *
 
 source_filename = "foo.c"
 target datalayout = "E-m:e-p:32:32-i64:64-n32"
