@@ -29332,7 +29332,7 @@ static SDValue combineBitcastvxi1(SelectionDAG &DAG, SDValue BitCast,
   // v8i16 and v16i16.
   // For these two cases, we can shuffle the upper element bytes to a
   // consecutive sequence at the start of the vector and treat the results as
-  // v16i8 or v32i8, and for v61i8 this is the preferable solution. However,
+  // v16i8 or v32i8, and for v16i8 this is the preferable solution. However,
   // for v16i16 this is not the case, because the shuffle is expensive, so we
   // avoid sign-extending to this type entirely.
   // For example, t0 := (v8i16 sext(v8i1 x)) needs to be shuffled as:
