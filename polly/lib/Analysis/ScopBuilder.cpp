@@ -721,54 +721,43 @@ void ScopBuilder::buildAccessFunctions(ScopStmt *Stmt, BasicBlock &BB,
   if (isErrorBlock(BB, scop->getRegion(), LI, DT))
     return;
 
-  auto &RIL = scop->getRequiredInvariantLoads();
-  std::function<bool(Instruction & Inst)> IsInStmtFunc =
-      [&RIL](Instruction &Inst) -> bool {
-    return !isa<LoadInst>(Inst) || !RIL.count(cast<LoadInst>(&Inst));
-  };
-  bool IsEntryBlock = (Stmt->getEntryBlock() == &BB);
-  if (IsEntryBlock) {
-    auto &Insts = Stmt->getInstructions();
-    SmallPtrSet<Instruction *, 8> InStmtInsts(Insts.begin(), Insts.end());
-    IsInStmtFunc = [InStmtInsts](const Instruction &Inst) -> bool {
-      return InStmtInsts.count(&Inst);
-    };
-  }
-
-  int Count = 0;
-  bool Split = false;
-  for (Instruction &Inst : BB) {
-    if (Split) {
-      Split = false;
-      Count++;
-    }
-    if (Inst.getMetadata("polly_split_after"))
-      Split = true;
-
-    if (Stmt && Stmt->isBlockStmt() && Stmt != scop->getStmtListFor(&BB)[Count])
-      continue;
-
-    PHINode *PHI = dyn_cast<PHINode>(&Inst);
+  auto BuildAccessesForInst = [this, Stmt,
+                               NonAffineSubRegion](Instruction *Inst) {
+    PHINode *PHI = dyn_cast<PHINode>(Inst);
     if (PHI)
       buildPHIAccesses(Stmt, PHI, NonAffineSubRegion, false);
 
-    if (IsInStmtFunc(Inst)) {
-      if (auto MemInst = MemAccInst::dyn_cast(Inst)) {
-        assert(Stmt &&
-               "Cannot build access function in non-existing statement");
-        buildMemoryAccess(MemInst, Stmt);
-      }
+    if (auto MemInst = MemAccInst::dyn_cast(*Inst)) {
+      assert(Stmt && "Cannot build access function in non-existing statement");
+      buildMemoryAccess(MemInst, Stmt);
     }
-
-    if (isIgnoredIntrinsic(&Inst))
-      continue;
 
     // PHI nodes have already been modeled above and TerminatorInsts that are
     // not part of a non-affine subregion are fully modeled and regenerated
     // from the polyhedral domains. Hence, they do not need to be modeled as
     // explicit data dependences.
-    if (!PHI && (!isa<TerminatorInst>(&Inst) || NonAffineSubRegion))
-      buildScalarDependences(Stmt, &Inst);
+    if (!PHI)
+      buildScalarDependences(Stmt, Inst);
+  };
+
+  const InvariantLoadsSetTy &RIL = scop->getRequiredInvariantLoads();
+  bool IsEntryBlock = (Stmt->getEntryBlock() == &BB);
+  if (IsEntryBlock) {
+    for (Instruction *Inst : Stmt->getInstructions())
+      BuildAccessesForInst(Inst);
+    if (Stmt->isRegionStmt())
+      BuildAccessesForInst(BB.getTerminator());
+  } else {
+    for (Instruction &Inst : BB) {
+      if (isIgnoredIntrinsic(&Inst))
+        continue;
+
+      // Invariant loads already have been processed.
+      if (isa<LoadInst>(Inst) && RIL.count(cast<LoadInst>(&Inst)))
+        continue;
+
+      BuildAccessesForInst(&Inst);
+    }
   }
 }
 
