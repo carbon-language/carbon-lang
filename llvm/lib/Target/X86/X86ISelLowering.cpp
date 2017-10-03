@@ -8664,6 +8664,39 @@ static SDValue lowerVectorShuffleWithUNPCK(const SDLoc &DL, MVT VT,
   return SDValue();
 }
 
+// X86 has dedicated pack instructions that can handle specific truncation
+// operations: PACKSS and PACKUS.
+static SDValue lowerVectorShuffleWithPACK(const SDLoc &DL, MVT VT,
+                                          ArrayRef<int> Mask, SDValue V1,
+                                          SDValue V2, SelectionDAG &DAG,
+                                          const X86Subtarget &Subtarget) {
+  unsigned NumElts = VT.getVectorNumElements();
+  unsigned BitSize = VT.getScalarSizeInBits();
+  MVT PackSVT = MVT::getIntegerVT(BitSize * 2);
+  MVT PackVT = MVT::getVectorVT(PackSVT, NumElts / 2);
+
+  // TODO - Add support for unary packs.
+  SmallVector<int, 32> BinaryMask;
+  createPackShuffleMask(VT, BinaryMask, false);
+
+  if (isShuffleEquivalent(V1, V2, Mask, BinaryMask)) {
+    SDValue VV1 = DAG.getBitcast(PackVT, V1);
+    SDValue VV2 = DAG.getBitcast(PackVT, V2);
+    if ((V1.isUndef() || DAG.ComputeNumSignBits(VV1) > BitSize) &&
+        (V2.isUndef() || DAG.ComputeNumSignBits(VV2) > BitSize))
+      return DAG.getNode(X86ISD::PACKSS, DL, VT, VV1, VV2);
+
+    if (Subtarget.hasSSE41() || PackSVT == MVT::i16) {
+      APInt ZeroMask = APInt::getHighBitsSet(BitSize * 2, BitSize);
+      if ((V1.isUndef() || DAG.MaskedValueIsZero(VV1, ZeroMask)) &&
+          (V2.isUndef() || DAG.MaskedValueIsZero(VV2, ZeroMask)))
+        return DAG.getNode(X86ISD::PACKUS, DL, VT, VV1, VV2);
+    }
+  }
+
+  return SDValue();
+}
+
 /// \brief Try to emit a bitmask instruction for a shuffle.
 ///
 /// This handles cases where we can model a blend exactly as a bitmask due to
@@ -11403,6 +11436,11 @@ static SDValue lowerV8I16VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
             lowerVectorShuffleWithUNPCK(DL, MVT::v8i16, Mask, V1, V2, DAG))
       return V;
 
+    // Use dedicated pack instructions for masks that match their pattern.
+    if (SDValue V = lowerVectorShuffleWithPACK(DL, MVT::v8i16, Mask, V1, V2,
+                                               DAG, Subtarget))
+      return V;
+
     // Try to use byte rotation instructions.
     if (SDValue Rotate = lowerVectorShuffleAsByteRotate(DL, MVT::v8i16, V1, V1,
                                                         Mask, Subtarget, DAG))
@@ -11572,6 +11610,11 @@ static SDValue lowerV16I8VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
           DL, MVT::v16i8, V1, V2, Mask, Subtarget, DAG))
     return Rotate;
+
+  // Use dedicated pack instructions for masks that match their pattern.
+  if (SDValue V = lowerVectorShuffleWithPACK(DL, MVT::v16i8, Mask, V1, V2, DAG,
+                                             Subtarget))
+    return V;
 
   // Try to use a zext lowering.
   if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(
@@ -13067,6 +13110,11 @@ static SDValue lowerV16I16VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
           lowerVectorShuffleWithUNPCK(DL, MVT::v16i16, Mask, V1, V2, DAG))
     return V;
 
+  // Use dedicated pack instructions for masks that match their pattern.
+  if (SDValue V = lowerVectorShuffleWithPACK(DL, MVT::v16i16, Mask, V1, V2, DAG,
+                                             Subtarget))
+    return V;
+
   // Try to use shift instructions.
   if (SDValue Shift = lowerVectorShuffleAsShift(DL, MVT::v16i16, V1, V2, Mask,
                                                 Zeroable, Subtarget, DAG))
@@ -13151,6 +13199,11 @@ static SDValue lowerV32I8VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   // Use dedicated unpack instructions for masks that match their pattern.
   if (SDValue V =
           lowerVectorShuffleWithUNPCK(DL, MVT::v32i8, Mask, V1, V2, DAG))
+    return V;
+
+  // Use dedicated pack instructions for masks that match their pattern.
+  if (SDValue V = lowerVectorShuffleWithPACK(DL, MVT::v32i8, Mask, V1, V2, DAG,
+                                             Subtarget))
     return V;
 
   // Try to use shift instructions.
