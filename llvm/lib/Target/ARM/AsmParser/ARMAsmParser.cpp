@@ -3407,13 +3407,13 @@ int ARMAsmParser::tryParseShiftRegister(OperandVector &Operands) {
 /// parse for a specific register type.
 bool ARMAsmParser::tryParseRegisterWithWriteBack(OperandVector &Operands) {
   MCAsmParser &Parser = getParser();
-  const AsmToken &RegTok = Parser.getTok();
+  SMLoc RegStartLoc = Parser.getTok().getLoc();
+  SMLoc RegEndLoc = Parser.getTok().getEndLoc();
   int RegNo = tryParseRegister();
   if (RegNo == -1)
     return true;
 
-  Operands.push_back(ARMOperand::CreateReg(RegNo, RegTok.getLoc(),
-                                           RegTok.getEndLoc()));
+  Operands.push_back(ARMOperand::CreateReg(RegNo, RegStartLoc, RegEndLoc));
 
   const AsmToken &ExclaimTok = Parser.getTok();
   if (ExclaimTok.is(AsmToken::Exclaim)) {
