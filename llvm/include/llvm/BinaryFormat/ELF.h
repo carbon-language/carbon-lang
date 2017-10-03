@@ -355,9 +355,10 @@ enum {
   ELFOSABI_CLOUDABI = 17,     // Nuxi CloudABI
   ELFOSABI_FIRST_ARCH = 64,   // First architecture-specific OS ABI
   ELFOSABI_AMDGPU_HSA = 64,   // AMD HSA runtime
+  ELFOSABI_AMDGPU_PAL = 65,   // AMD PAL runtime
+  ELFOSABI_ARM = 97,          // ARM
   ELFOSABI_C6000_ELFABI = 64, // Bare-metal TMS320C6000
   ELFOSABI_C6000_LINUX = 65,  // Linux TMS320C6000
-  ELFOSABI_ARM = 97,          // ARM
   ELFOSABI_STANDALONE = 255,  // Standalone (embedded) application
   ELFOSABI_LAST_ARCH = 255    // Last Architecture-specific OS ABI
 };
