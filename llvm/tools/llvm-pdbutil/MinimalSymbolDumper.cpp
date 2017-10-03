@@ -290,9 +290,8 @@ static std::string formatRegisterId(RegisterId Id) {
 #define CV_REGISTER(name, val) RETURN_CASE(RegisterId, name, #name)
 #include "llvm/DebugInfo/CodeView/CodeViewRegisters.def"
 #undef CV_REGISTER
-    default:
-      return formatUnknownEnum(Id);
   }
+  return formatUnknownEnum(Id);
 }
 
 static std::string formatRange(LocalVariableAddrRange Range) {

@@ -94,12 +94,11 @@ raw_ostream &llvm::pdb::operator<<(raw_ostream &OS, const PDB_DataKind &Data) {
 raw_ostream &llvm::pdb::operator<<(raw_ostream &OS,
                                    const codeview::RegisterId &Reg) {
   switch (Reg) {
-#define CV_REGISTER(name, val) case codeview::RegisterId::name: OS << #name; break;
+#define CV_REGISTER(name, val) case codeview::RegisterId::name: OS << #name; return OS;
 #include "llvm/DebugInfo/CodeView/CodeViewRegisters.def"
 #undef CV_REGISTER
-    default:
-      OS << static_cast<int>(Reg);
   }
+  OS << static_cast<int>(Reg);
   return OS;
 }
 
