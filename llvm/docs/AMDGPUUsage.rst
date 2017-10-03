@@ -365,9 +365,11 @@ The AMDGPU backend uses the following ELF header:
      ``e_ident[EI_CLASS]``      ``ELFCLASS64``
      ``e_ident[EI_DATA]``       ``ELFDATA2LSB``
      ``e_ident[EI_OSABI]``      ``ELFOSABI_AMDGPU_HSA`` or
-                                ``ELFOSABI_AMDGPU_PAL``
+                                ``ELFOSABI_AMDGPU_PAL`` or
+                                ``ELFOSABI_AMDGPU_MESA3D``
      ``e_ident[EI_ABIVERSION]`` ``ELFABIVERSION_AMDGPU_HSA`` or
-                                ``ELFABIVERSION_AMDGPU_PAL``
+                                ``ELFABIVERSION_AMDGPU_PAL`` or
+                                ``ELFABIVERSION_AMDGPU_MESA3D``
      ``e_type``                 ``ET_REL`` or ``ET_DYN``
      ``e_machine``              ``EM_AMDGPU``
      ``e_entry``                0
@@ -379,15 +381,17 @@ The AMDGPU backend uses the following ELF header:
   .. table:: AMDGPU ELF Header Enumeration Values
      :name: amdgpu-elf-header-enumeration-values-table
 
-     ============================ =====
-     Name                         Value
-     ============================ =====
-     ``EM_AMDGPU``                224
-     ``ELFOSABI_AMDGPU_HSA``      64
-     ``ELFOSABI_AMDGPU_PAL``      65
-     ``ELFABIVERSION_AMDGPU_HSA`` 1
-     ``ELFABIVERSION_AMDGPU_PAL`` 0
-     ============================ =====
+     =============================== =====
+     Name                            Value
+     =============================== =====
+     ``EM_AMDGPU``                   224
+     ``ELFOSABI_AMDGPU_HSA``         64
+     ``ELFOSABI_AMDGPU_PAL``         65
+     ``ELFOSABI_AMDGPU_MESA3D``      66
+     ``ELFABIVERSION_AMDGPU_HSA``    1
+     ``ELFABIVERSION_AMDGPU_PAL``    0
+     ``ELFABIVERSION_AMDGPU_MESA3D`` 0
+     =============================== =====
 
 ``e_ident[EI_CLASS]``
   The ELF class is always ``ELFCLASS64``. The AMDGPU backend only supports 64
@@ -397,13 +401,16 @@ The AMDGPU backend uses the following ELF header:
   All AMDGPU targets use ELFDATA2LSB for little-endian byte ordering.
 
 ``e_ident[EI_OSABI]``
-  One of two AMD GPU architecture specific OS ABI:
+  One of the following AMD GPU architecture specific OS ABIs:
 
   * ``ELFOSABI_AMDGPU_HSA`` is used to specify that the code object conforms to
     the AMD HSA runtime ABI [HSA]_.
 
   * ``ELFOSABI_AMDGPU_PAL`` is used to specify that the code object conforms to
     the AMD PAL runtime ABI.
+
+  * ``ELFOSABI_AMDGPU_MESA3D`` is used to specify that the code object conforms
+    to the AMD MESA runtime ABI.
 
 ``e_ident[EI_ABIVERSION]``
   The ABI version of the AMD GPU architecture specific OS ABI to which the code
@@ -413,6 +420,9 @@ The AMDGPU backend uses the following ELF header:
     runtime ABI.
 
   * ``ELFABIVERSION_AMDGPU_PAL`` is used to specify the version of AMD PAL
+    runtime ABI.
+
+  * ``ELFABIVERSION_AMDGPU_MESA3D`` is used to specify the version of AMD MESA
     runtime ABI.
 
 ``e_type``
