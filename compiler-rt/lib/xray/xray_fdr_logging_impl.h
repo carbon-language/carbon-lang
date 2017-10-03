@@ -93,8 +93,10 @@ static void writeEOBMetadata();
 static void writeTSCWrapMetadata(uint64_t TSC);
 
 // Group together thread-local-data in a struct, then hide it behind a function
-// call so that it can be initialized on first use instead of as a global.
-struct ThreadLocalData {
+// call so that it can be initialized on first use instead of as a global. We
+// force the alignment to 64-bytes for x86 cache line alignment, as this
+// structure is used in the hot path of implementation.
+struct ALIGNED(64) ThreadLocalData {
   BufferQueue::Buffer Buffer;
   char *RecordPtr = nullptr;
   // The number of FunctionEntry records immediately preceding RecordPtr.
@@ -174,12 +176,13 @@ static ThreadLocalData &getThreadLocalData() {
   // We need aligned, uninitialized storage for the TLS object which is
   // trivially destructible. We're going to use this as raw storage and
   // placement-new the ThreadLocalData object into it later.
-  thread_local std::aligned_union<1, ThreadLocalData>::type TLSBuffer;
+  thread_local std::aligned_storage<sizeof(ThreadLocalData),
+                                    alignof(ThreadLocalData)>::type TLSBuffer;
 
   // Ensure that we only actually ever do the pthread initialization once.
-  thread_local bool unused = [] {
+  thread_local bool UNUSED Unused = [] {
     new (&TLSBuffer) ThreadLocalData();
-    pthread_key_create(&key, +[](void *) {
+    auto result = pthread_key_create(&key, +[](void *) {
       auto &TLD = *reinterpret_cast<ThreadLocalData *>(&TLSBuffer);
       auto &RecordPtr = TLD.RecordPtr;
       auto &Buffers = TLD.LocalBQ;
@@ -203,10 +206,14 @@ static ThreadLocalData &getThreadLocalData() {
         return;
       }
     });
+    if (result != 0) {
+      Report("Failed to allocate thread-local data through pthread; error=%d",
+             result);
+      return false;
+    }
     pthread_setspecific(key, &TLSBuffer);
     return true;
   }();
-  (void)unused;
 
   return *reinterpret_cast<ThreadLocalData *>(&TLSBuffer);
 }
