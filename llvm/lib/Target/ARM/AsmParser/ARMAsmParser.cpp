@@ -10211,8 +10211,8 @@ ARMAsmParser::FilterNearMisses(SmallVectorImpl<NearMissInfo> &NearMissesIn,
       if (std::any_of(PrevReports.first, PrevReports.second,
                       [DupCheckMatchClass](
                           const std::pair<unsigned, unsigned> Pair) {
-            if (DupCheckMatchClass == ~0U)
-              return Pair.second == ~0U;
+            if (DupCheckMatchClass == ~0U || Pair.second == ~0U)
+              return Pair.second == DupCheckMatchClass;
             else
               return isSubclass((MatchClassKind)DupCheckMatchClass,
                                 (MatchClassKind)Pair.second);
