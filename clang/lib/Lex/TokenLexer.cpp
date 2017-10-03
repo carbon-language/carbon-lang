@@ -537,10 +537,6 @@ bool TokenLexer::pasteTokens(Token &LHSTok, ArrayRef<Token> TokenStream,
              "Token at this Index must be ## or part of the MSVC 'L "
              "#macro-arg' pasting pair");
 
-  assert(std::is_trivial<Token>::value &&
-          !std::memcmp(&LHSTok, &TokenStream[CurIdx - 1], sizeof(Token)) &&
-         "LHSTok must equal the token preceding the hashhash");
-
   // MSVC: If previous token was pasted, this must be a recovery from an invalid
   // paste operation. Ignore spaces before this token to mimic MSVC output.
   // Required for generating valid UUID strings in some MS headers.
