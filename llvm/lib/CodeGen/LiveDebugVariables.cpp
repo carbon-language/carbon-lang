@@ -116,10 +116,15 @@ public:
     return DbgValueLocation(NewLocNo, WasIndirect);
   }
 
-  bool operator==(const DbgValueLocation &O) const {
-    return LocNo == O.LocNo && WasIndirect == O.WasIndirect;
+  friend inline bool operator==(const DbgValueLocation &LHS,
+                                const DbgValueLocation &RHS) {
+    return LHS.LocNo == RHS.LocNo && LHS.WasIndirect == RHS.WasIndirect;
   }
-  bool operator!=(const DbgValueLocation &O) const { return !(*this == O); }
+
+  friend inline bool operator!=(const DbgValueLocation &LHS,
+                                const DbgValueLocation &RHS) {
+    return !(LHS == RHS);
+  }
 
 private:
   unsigned LocNo : 31;
