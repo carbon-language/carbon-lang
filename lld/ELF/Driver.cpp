@@ -1041,7 +1041,8 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
     return;
 
   // Handle the `--undefined <sym>` options.
-  Symtab->scanUndefinedFlags<ELFT>();
+  for (StringRef S : Config->Undefined)
+    Symtab->fetchIfLazy<ELFT>(S);
 
   // Handle undefined symbols in DSOs.
   Symtab->scanShlibUndefined<ELFT>();
