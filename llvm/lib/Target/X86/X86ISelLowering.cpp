@@ -5350,6 +5350,13 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
     return false;
   };
 
+  // Handle UNDEFs.
+  if (Op.isUndef()) {
+    APInt UndefSrcElts = APInt::getAllOnesValue(NumElts);
+    SmallVector<APInt, 64> SrcEltBits(NumElts, APInt(EltSizeInBits, 0));
+    return CastBitData(UndefSrcElts, SrcEltBits);
+  }
+
   // Extract constant bits from build vector.
   if (ISD::isBuildVectorOfConstantSDNodes(Op.getNode())) {
     unsigned SrcEltSizeInBits = VT.getScalarSizeInBits();
@@ -31838,6 +31845,82 @@ static SDValue combineShift(SDNode* N, SelectionDAG &DAG,
   return SDValue();
 }
 
+static SDValue combineVectorPack(SDNode *N, SelectionDAG &DAG,
+                                 TargetLowering::DAGCombinerInfo &DCI,
+                                 const X86Subtarget &Subtarget) {
+  unsigned Opcode = N->getOpcode();
+  assert((X86ISD::PACKSS == Opcode || X86ISD::PACKUS == Opcode) &&
+         "Unexpected shift opcode");
+
+  EVT VT = N->getValueType(0);
+  EVT SVT = VT.getScalarType();
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  unsigned DstBitsPerElt = VT.getScalarSizeInBits();
+  unsigned SrcBitsPerElt = 2 * DstBitsPerElt;
+  assert(N0.getScalarValueSizeInBits() == SrcBitsPerElt &&
+         N1.getScalarValueSizeInBits() == SrcBitsPerElt &&
+         "Unexpected PACKSS/PACKUS input type");
+
+  // Constant Folding.
+  APInt UndefElts0, UndefElts1;
+  SmallVector<APInt, 32> EltBits0, EltBits1;
+  if ((N0->isUndef() || N->isOnlyUserOf(N0.getNode())) &&
+      (N1->isUndef() || N->isOnlyUserOf(N1.getNode())) &&
+      getTargetConstantBitsFromNode(N0, SrcBitsPerElt, UndefElts0, EltBits0) &&
+      getTargetConstantBitsFromNode(N1, SrcBitsPerElt, UndefElts1, EltBits1)) {
+    unsigned NumLanes = VT.getSizeInBits() / 128;
+    unsigned NumDstElts = VT.getVectorNumElements();
+    unsigned NumSrcElts = NumDstElts / 2;
+    unsigned NumDstEltsPerLane = NumDstElts / NumLanes;
+    unsigned NumSrcEltsPerLane = NumSrcElts / NumLanes;
+    bool IsSigned = (X86ISD::PACKSS == Opcode);
+
+    APInt Undefs(NumDstElts, 0);
+    SmallVector<APInt, 32> Bits(NumDstElts, APInt::getNullValue(DstBitsPerElt));
+    for (unsigned Lane = 0; Lane != NumLanes; ++Lane) {
+      for (unsigned Elt = 0; Elt != NumDstEltsPerLane; ++Elt) {
+        unsigned SrcIdx = Lane * NumSrcEltsPerLane + Elt % NumSrcEltsPerLane;
+        auto &UndefElts = (Elt >= NumSrcEltsPerLane ? UndefElts1 : UndefElts0);
+        auto &EltBits = (Elt >= NumSrcEltsPerLane ? EltBits1 : EltBits0);
+
+        if (UndefElts[SrcIdx]) {
+          Undefs.setBit(Lane * NumDstEltsPerLane + Elt);
+          continue;
+        }
+
+        APInt &Val = EltBits[SrcIdx];
+        if (IsSigned) {
+          // PACKSS: Truncate signed value with signed saturation.
+          // Source values less than dst minint are saturated to minint.
+          // Source values greater than dst maxint are saturated to maxint.
+          if (Val.isSignedIntN(DstBitsPerElt))
+            Val = Val.trunc(DstBitsPerElt);
+          else if (Val.isNegative())
+            Val = APInt::getSignedMinValue(DstBitsPerElt);
+          else
+            Val = APInt::getSignedMaxValue(DstBitsPerElt);
+        } else {
+          // PACKUS: Truncate signed value with unsigned saturation.
+          // Source values less than zero are saturated to zero.
+          // Source values greater than dst maxuint are saturated to maxuint.
+          if (Val.isIntN(DstBitsPerElt))
+            Val = Val.trunc(DstBitsPerElt);
+          else if (Val.isNegative())
+            Val = APInt::getNullValue(DstBitsPerElt);
+          else
+            Val = APInt::getAllOnesValue(DstBitsPerElt);
+        }
+        Bits[Lane * NumDstEltsPerLane + Elt] = Val;
+      }
+    }
+
+    return getConstVector(Bits, Undefs, VT.getSimpleVT(), DAG, SDLoc(N));
+  }
+
+  return SDValue();
+}
+
 static SDValue combineVectorShiftImm(SDNode *N, SelectionDAG &DAG,
                                      TargetLowering::DAGCombinerInfo &DCI,
                                      const X86Subtarget &Subtarget) {
@@ -36069,6 +36152,8 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::SETCC:          return combineSetCC(N, DAG, Subtarget);
   case X86ISD::SETCC:       return combineX86SetCC(N, DAG, Subtarget);
   case X86ISD::BRCOND:      return combineBrCond(N, DAG, Subtarget);
+  case X86ISD::PACKSS:
+  case X86ISD::PACKUS:      return combineVectorPack(N, DAG, DCI, Subtarget);
   case X86ISD::VSHLI:
   case X86ISD::VSRAI:
   case X86ISD::VSRLI:
