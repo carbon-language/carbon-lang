@@ -584,9 +584,14 @@ void SymbolTable::addLazyObject(StringRef Name, LazyObjFile &Obj) {
 // Process undefined (-u) flags by loading lazy symbols named by those flags.
 template <class ELFT> void SymbolTable::scanUndefinedFlags() {
   for (StringRef S : Config->Undefined)
-    if (auto *L = dyn_cast_or_null<Lazy>(find(S)))
-      if (InputFile *File = L->fetch())
-        addFile<ELFT>(File);
+    if (SymbolBody *B = find(S)) {
+      // Mark the symbol not to be eliminated by LTO
+      // even if it is a bitcode symbol.
+      B->symbol()->IsUsedInRegularObj = true;
+      if (auto *L = dyn_cast_or_null<Lazy>(B))
+        if (InputFile *File = L->fetch())
+          addFile<ELFT>(File);
+    }
 }
 
 // This function takes care of the case in which shared libraries depend on
