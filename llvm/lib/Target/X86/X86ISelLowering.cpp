@@ -31918,6 +31918,10 @@ static SDValue combineVectorPack(SDNode *N, SelectionDAG &DAG,
     return getConstVector(Bits, Undefs, VT.getSimpleVT(), DAG, SDLoc(N));
   }
 
+  // Attempt to combine as shuffle.
+  SDValue Op(N, 0);
+  combineX86ShufflesRecursively({Op}, 0, Op, {0}, {}, /*Depth*/ 1,
+                                /*HasVarMask*/ false, DAG, DCI, Subtarget);
   return SDValue();
 }
 
