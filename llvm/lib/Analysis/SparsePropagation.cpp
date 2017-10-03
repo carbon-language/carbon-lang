@@ -57,13 +57,13 @@ void AbstractLatticeFunction<LatticeVal>::PrintValue(LatticeVal V,
 //                          SparseSolver Implementation
 //===----------------------------------------------------------------------===//
 
-/// getOrInitValueState - Return the LatticeVal object that corresponds to the
+/// getValueState - Return the LatticeVal object that corresponds to the
 /// value, initializing the value's state if it hasn't been entered into the
 /// map yet.   This function is necessary because not all values should start
 /// out in the underdefined state... Arguments should be overdefined, and
 /// constants should be marked as constants.
 template <class LatticeVal>
-LatticeVal SparseSolver<LatticeVal>::getOrInitValueState(Value *V) {
+LatticeVal SparseSolver<LatticeVal>::getValueState(Value *V) {
   auto I = ValueState.find(V);
   if (I != ValueState.end()) return I->second;  // Common case, in the map
   
@@ -147,7 +147,7 @@ void SparseSolver<LatticeVal>::getFeasibleSuccessors(
     
     LatticeVal BCValue;
     if (AggressiveUndef)
-      BCValue = getOrInitValueState(BI->getCondition());
+      BCValue = getValueState(BI->getCondition());
     else
       BCValue = getLatticeState(BI->getCondition());
     
@@ -189,7 +189,7 @@ void SparseSolver<LatticeVal>::getFeasibleSuccessors(
   SwitchInst &SI = cast<SwitchInst>(TI);
   LatticeVal SCValue;
   if (AggressiveUndef)
-    SCValue = getOrInitValueState(SI.getCondition());
+    SCValue = getValueState(SI.getCondition());
   else
     SCValue = getLatticeState(SI.getCondition());
   
@@ -255,7 +255,7 @@ void SparseSolver<LatticeVal>::visitPHINode(PHINode &PN) {
     return;
   }
 
-  LatticeVal PNIV = getOrInitValueState(&PN);
+  LatticeVal PNIV = getValueState(&PN);
   LatticeVal Overdefined = LatticeFunc->getOverdefinedVal();
   
   // If this value is already overdefined (common) just return.
@@ -278,7 +278,7 @@ void SparseSolver<LatticeVal>::visitPHINode(PHINode &PN) {
       continue;
     
     // Merge in this value.
-    LatticeVal OpVal = getOrInitValueState(PN.getIncomingValue(i));
+    LatticeVal OpVal = getValueState(PN.getIncomingValue(i));
     if (OpVal != PNIV)
       PNIV = LatticeFunc->MergeValues(PNIV, OpVal);
     
