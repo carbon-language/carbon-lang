@@ -1400,7 +1400,7 @@ struct SemiNCAInfo {
                 });
 
       auto PrintChildrenError = [Node, &Children, PrintNodeAndDFSNums](
-          const TreeNodePtr FirstCh, const TreeNodePtr SecondCh = nullptr) {
+          const TreeNodePtr FirstCh, const TreeNodePtr SecondCh) {
         assert(FirstCh);
 
         errs() << "Incorrect DFS numbers for:\n\tParent ";
@@ -1425,12 +1425,12 @@ struct SemiNCAInfo {
       };
 
       if (Children.front()->getDFSNumIn() != Node->getDFSNumIn() + 1) {
-        PrintChildrenError(Children.front());
+        PrintChildrenError(Children.front(), nullptr);
         return false;
       }
 
       if (Children.back()->getDFSNumOut() + 1 != Node->getDFSNumOut()) {
-        PrintChildrenError(Children.back());
+        PrintChildrenError(Children.back(), nullptr);
         return false;
       }
 
