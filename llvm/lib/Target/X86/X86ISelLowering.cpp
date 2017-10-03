@@ -31853,7 +31853,6 @@ static SDValue combineVectorPack(SDNode *N, SelectionDAG &DAG,
          "Unexpected shift opcode");
 
   EVT VT = N->getValueType(0);
-  EVT SVT = VT.getScalarType();
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
   unsigned DstBitsPerElt = VT.getScalarSizeInBits();
