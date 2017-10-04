@@ -246,12 +246,6 @@ template <class ELFT> void Writer<ELFT>::run() {
 
   if (auto EC = Buffer->commit())
     error("failed to write to the output file: " + EC.message());
-
-  // Flush the output streams and exit immediately. A full shutdown
-  // is a good test that we are keeping track of all allocated memory,
-  // but actually freeing it is a waste of time in a regular linker run.
-  if (Config->ExitEarly)
-    exitLld(0);
 }
 
 // Initialize Out members.
