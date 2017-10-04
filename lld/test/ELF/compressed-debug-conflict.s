@@ -1,4 +1,4 @@
-# REQUIRES: x86
+# REQUIRES: x86, zlib
 # RUN: llvm-mc -filetype=obj -triple i686-linux-gnu -compress-debug-sections=zlib %s -o %t.o
 # RUN: llvm-readobj -sections %t.o | FileCheck -check-prefix=OBJ %s
 # RUN: not ld.lld %t.o %t.o -o %tout 2>&1 | FileCheck -check-prefix=ERROR %s
