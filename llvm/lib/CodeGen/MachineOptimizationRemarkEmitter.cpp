@@ -60,12 +60,6 @@ void MachineOptimizationRemarkEmitter::emit(
     return;
   }
 
-  yaml::Output *Out = Ctx.getDiagnosticsOutputFile();
-  if (Out) {
-    auto *P = &const_cast<DiagnosticInfoOptimizationBase &>(OptDiagCommon);
-    *Out << P;
-  }
-
   Ctx.diagnose(OptDiag);
 }
 
