@@ -822,6 +822,7 @@ def imm0_65535_neg : Operand<i32>, ImmLeaf<i32, [{
 def Imm0_65535ExprAsmOperand: AsmOperandClass {
   let Name = "Imm0_65535Expr";
   let RenderMethod = "addImmOperands";
+  let DiagnosticString = "operand must be an immediate in the range [0,0xffff] or a relocatable expression";
 }
 
 def imm0_65535_expr : Operand<i32> {

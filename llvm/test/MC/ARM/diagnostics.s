@@ -175,7 +175,7 @@
 
         @ Out of range immediate for MOV
         movw r9, 0x10000
-@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS: error: operand must be an immediate in the range [0,0xffff] or a relocatable expression
 @ CHECK-ERRORS:        movw r9, 0x10000
 @ CHECK-ERRORS:                 ^
 
@@ -187,7 +187,7 @@
 
         @ Out of range immediate for MOVT
         movt r9, 0x10000
-@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS: error: operand must be an immediate in the range [0,0xffff] or a relocatable expression
 @ CHECK-ERRORS:        movt r9, 0x10000
 @ CHECK-ERRORS:                 ^
 
