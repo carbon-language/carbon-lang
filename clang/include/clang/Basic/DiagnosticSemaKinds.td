@@ -366,8 +366,10 @@ def err_language_linkage_spec_unknown : Error<"unknown linkage language">;
 def err_language_linkage_spec_not_ascii : Error<
   "string literal in language linkage specifier cannot have an "
   "encoding-prefix">;
-def warn_use_out_of_scope_declaration : Warning<
-  "use of out-of-scope declaration of %0">;
+def ext_use_out_of_scope_declaration : ExtWarn<
+  "use of out-of-scope declaration of %0%select{| whose type is not "
+  "compatible with that of an implicit declaration}1">,
+  InGroup<DiagGroup<"out-of-scope-function">>;
 def err_inline_non_function : Error<
   "'inline' can only appear on functions%select{| and non-local variables}0">;
 def err_noreturn_non_function : Error<
