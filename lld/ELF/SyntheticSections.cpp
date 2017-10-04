@@ -2300,8 +2300,7 @@ void elf::decompressAndMergeSections() {
   parallelForEach(InputSections, [](InputSectionBase *S) {
     if (!S->Live)
       return;
-    if (Decompressor::isCompressedELFSection(S->Flags, S->Name))
-      S->uncompress();
+    S->maybeUncompress();
     if (auto *MS = dyn_cast<MergeInputSection>(S))
       MS->splitIntoPieces();
   });
