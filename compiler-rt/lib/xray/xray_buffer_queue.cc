@@ -55,7 +55,6 @@ BufferQueue::ErrorCode BufferQueue::getBuffer(Buffer &Buf) {
   Buf = B;
   ++LiveBuffers;
 
-  First = Next;
   if (++Next == (Buffers.get() + BufferCount))
     Next = Buffers.get();
 
@@ -81,6 +80,7 @@ BufferQueue::ErrorCode BufferQueue::releaseBuffer(Buffer &Buf) {
   --LiveBuffers;
   if (++First == (Buffers.get() + BufferCount))
     First = Buffers.get();
+
   return ErrorCode::Ok;
 }
 
