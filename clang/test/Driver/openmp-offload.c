@@ -71,6 +71,14 @@
 
 /// ###########################################################################
 
+/// Check -march=pwr7 is NOT passed to x86_64-unknown-linux-gnu.
+// RUN:    %clang -### -no-canonical-prefixes -fopenmp=libomp -fopenmp-targets=x86_64-unknown-linux-gnu -march=pwr7 %s 2>&1 \
+// RUN:    | FileCheck -check-prefix=CHK-FOPENMP-MARCH-TO-X86 %s
+
+// CHK-FOPENMP-MARCH-TO-X86-NOT: clang{{.*}} "-target-cpu" "pwr7" {{.*}}"-fopenmp-is-device"
+
+/// ###########################################################################
+
 /// Check -Xopenmp-target triggers error when multiple triples are used.
 // RUN:   %clang -### -no-canonical-prefixes -fopenmp=libomp -fopenmp-targets=powerpc64le-ibm-linux-gnu,powerpc64le-unknown-linux-gnu -Xopenmp-target -mcpu=pwr8 %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHK-FOPENMP-TARGET-AMBIGUOUS-ERROR %s
