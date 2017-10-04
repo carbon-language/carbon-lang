@@ -188,6 +188,8 @@ public:
   }
 
   bool isLoweredToCall(const Function *F) {
+    assert(F && "A concrete function must be provided to this routine.");
+
     // FIXME: These should almost certainly not be handled here, and instead
     // handled with the help of TLI or the target itself. This was largely
     // ported from existing analysis heuristics here so that such refactorings
@@ -828,7 +830,7 @@ public:
     // A real function call is much slower.
     if (auto *CI = dyn_cast<CallInst>(I)) {
       const Function *F = CI->getCalledFunction();
-      if (static_cast<T *>(this)->isLoweredToCall(F))
+      if (!F || static_cast<T *>(this)->isLoweredToCall(F))
         return 40;
       // Some intrinsics return a value and a flag, we use the value type
       // to decide its latency.
