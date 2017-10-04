@@ -385,30 +385,12 @@ entry:
 }
 
 define <8 x i16> @trunc8i32_8i16_ashr(<8 x i32> %a) {
-; SSE2-LABEL: trunc8i32_8i16_ashr:
-; SSE2:       # BB#0: # %entry
-; SSE2-NEXT:    psrad $16, %xmm1
-; SSE2-NEXT:    psrad $16, %xmm0
-; SSE2-NEXT:    packssdw %xmm1, %xmm0
-; SSE2-NEXT:    retq
-;
-; SSSE3-LABEL: trunc8i32_8i16_ashr:
-; SSSE3:       # BB#0: # %entry
-; SSSE3-NEXT:    psrad $16, %xmm0
-; SSSE3-NEXT:    psrad $16, %xmm1
-; SSSE3-NEXT:    packssdw %xmm0, %xmm1
-; SSSE3-NEXT:    packssdw %xmm0, %xmm0
-; SSSE3-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
-; SSSE3-NEXT:    retq
-;
-; SSE41-LABEL: trunc8i32_8i16_ashr:
-; SSE41:       # BB#0: # %entry
-; SSE41-NEXT:    psrad $16, %xmm0
-; SSE41-NEXT:    psrad $16, %xmm1
-; SSE41-NEXT:    packssdw %xmm0, %xmm1
-; SSE41-NEXT:    packssdw %xmm0, %xmm0
-; SSE41-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
-; SSE41-NEXT:    retq
+; SSE-LABEL: trunc8i32_8i16_ashr:
+; SSE:       # BB#0: # %entry
+; SSE-NEXT:    psrad $16, %xmm1
+; SSE-NEXT:    psrad $16, %xmm0
+; SSE-NEXT:    packssdw %xmm1, %xmm0
+; SSE-NEXT:    retq
 ;
 ; AVX1-LABEL: trunc8i32_8i16_ashr:
 ; AVX1:       # BB#0: # %entry
@@ -487,11 +469,9 @@ define <8 x i16> @trunc8i32_8i16_lshr(<8 x i32> %a) {
 ;
 ; SSE41-LABEL: trunc8i32_8i16_lshr:
 ; SSE41:       # BB#0: # %entry
-; SSE41-NEXT:    psrld $16, %xmm0
 ; SSE41-NEXT:    psrld $16, %xmm1
-; SSE41-NEXT:    packusdw %xmm0, %xmm1
-; SSE41-NEXT:    packusdw %xmm0, %xmm0
-; SSE41-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; SSE41-NEXT:    psrld $16, %xmm0
+; SSE41-NEXT:    packusdw %xmm1, %xmm0
 ; SSE41-NEXT:    retq
 ;
 ; AVX1-LABEL: trunc8i32_8i16_lshr:
