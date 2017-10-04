@@ -384,8 +384,6 @@ void DWARFDie::dump(raw_ostream &OS, unsigned Indent,
   DWARFDataExtractor debug_info_data = U->getDebugInfoExtractor();
   const uint32_t Offset = getOffset();
   uint32_t offset = Offset;
-  //  if (DumpOpts.ShowChildren && DumpOpts.RecurseDepth)
-  //  DumpOpts.RecurseDepth++;
   if (DumpOpts.ShowParents) {
     DumpOpts.ShowParents = false;
     Indent = dumpParentChain(getParent(), OS, Indent, DumpOpts);
