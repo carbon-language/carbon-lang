@@ -28,6 +28,8 @@
 #include <vector>
 #include "llvm/ADT/APSInt.h"
 #include "llvm/Analysis/Loads.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/IntrinsicInst.h"
@@ -40,8 +42,6 @@ using namespace llvm;
 namespace {
 
 #define DEBUG_TYPE "mergeicmps"
-
-#define MERGEICMPS_DOT_ON
 
 // A BCE atom.
 struct BCEAtom {
@@ -589,21 +589,29 @@ class MergeICmps : public FunctionPass {
   bool runOnFunction(Function &F) override {
     if (skipFunction(F)) return false;
     const auto &TLI = getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
-    auto PA = runImpl(F, &TLI);
+    const auto &TTI = getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
+    auto PA = runImpl(F, &TLI, &TTI);
     return !PA.areAllPreserved();
   }
 
  private:
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<TargetLibraryInfoWrapperPass>();
+    AU.addRequired<TargetTransformInfoWrapperPass>();
   }
 
-  PreservedAnalyses runImpl(Function &F, const TargetLibraryInfo *TLI);
+  PreservedAnalyses runImpl(Function &F, const TargetLibraryInfo *TLI,
+                            const TargetTransformInfo *TTI);
 };
 
-PreservedAnalyses MergeICmps::runImpl(Function &F,
-                                      const TargetLibraryInfo *TLI) {
+PreservedAnalyses MergeICmps::runImpl(Function &F, const TargetLibraryInfo *TLI,
+                                      const TargetTransformInfo *TTI) {
   DEBUG(dbgs() << "MergeICmpsPass: " << F.getName() << "\n");
+
+  // We only try merging comparisons if the target wants to expand memcmp later.
+  // The rationale is to avoid turning small chains into memcmp calls.
+  unsigned MaxLoadSize;
+  if (!TTI->enableMemCmpExpansion(MaxLoadSize)) return PreservedAnalyses::all();
 
   bool MadeChange = false;
 
@@ -623,6 +631,7 @@ char MergeICmps::ID = 0;
 INITIALIZE_PASS_BEGIN(MergeICmps, "mergeicmps",
                       "Merge contiguous icmps into a memcmp", false, false)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_END(MergeICmps, "mergeicmps",
                     "Merge contiguous icmps into a memcmp", false, false)
 
