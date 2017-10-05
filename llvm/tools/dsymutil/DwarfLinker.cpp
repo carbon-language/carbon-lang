@@ -3493,7 +3493,7 @@ bool DwarfLinker::link(const DebugMap &Map) {
     if (Obj->getType() == MachO::N_AST) {
       auto ErrOrMemBufferRefs = BinHolder.GetMemoryBuffersForFile(
           Obj->getObjectFilename(), Obj->getTimestamp());
-      if (auto Err = ErrOrMemBufferRefs.getError())
+      if (ErrOrMemBufferRefs.getError())
         continue;
       if (!Options.NoOutput)
         Streamer->emitSwiftAST(ErrOrMemBufferRefs.get());
