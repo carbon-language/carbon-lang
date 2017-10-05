@@ -467,6 +467,7 @@ FunctionDecl *ASTDeclReader::TryRegisterAsFunctionDefinition(FunctionDecl *D) {
     // declaration.
     if (Definition != D) {
       // Already have a different definition, merge this one into it.
+      Reader.MergedDeclContexts.insert(std::make_pair(D, Definition));
       Reader.mergeDefinitionVisibility(Definition, D);
     }
     return Definition;
