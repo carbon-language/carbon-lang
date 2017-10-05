@@ -737,6 +737,7 @@ const MachineOperand *SIFoldOperands::isClamp(const MachineInstr &MI) const {
     const MachineOperand *Src0 = TII->getNamedOperand(MI, AMDGPU::OpName::src0);
     const MachineOperand *Src1 = TII->getNamedOperand(MI, AMDGPU::OpName::src1);
     if (!Src0->isReg() || !Src1->isReg() ||
+        Src0->getReg() != Src1->getReg() ||
         Src0->getSubReg() != Src1->getSubReg() ||
         Src0->getSubReg() != AMDGPU::NoSubRegister)
       return nullptr;
