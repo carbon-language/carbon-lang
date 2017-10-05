@@ -656,36 +656,28 @@ public:
   /// the given type.
   llvm::MDNode *getTBAATypeInfo(QualType QTy);
 
-  /// getTBAAAccessInfo - Get TBAA information that describes an access to
-  /// an object of the given type.
-  TBAAAccessInfo getTBAAAccessInfo(QualType AccessType);
-
-  /// getTBAAVTablePtrAccessInfo - Get the TBAA information that describes an
-  /// access to a virtual table pointer.
-  TBAAAccessInfo getTBAAVTablePtrAccessInfo();
-
+  llvm::MDNode *getTBAAInfoForVTablePtr();
   llvm::MDNode *getTBAAStructInfo(QualType QTy);
 
-  /// getTBAABaseTypeMetadata - Get metadata that describes the given base
-  /// access type. Return null if the type is not suitable for use in TBAA
-  /// access tags.
-  llvm::MDNode *getTBAABaseTypeInfo(QualType QTy);
+  /// Get path-aware TBAA tag for a given memory access.
+  llvm::MDNode *getTBAAStructTagInfo(TBAAAccessInfo Info);
 
-  /// getTBAAAccessTagInfo - Get TBAA tag for a given memory access.
-  llvm::MDNode *getTBAAAccessTagInfo(TBAAAccessInfo Info);
-
-  /// getTBAAMayAliasAccessInfo - Get TBAA information that represents
+  /// getTBAAMayAliasTypeInfo - Get TBAA information that represents
   /// may-alias accesses.
-  TBAAAccessInfo getTBAAMayAliasAccessInfo();
+  llvm::MDNode *getTBAAMayAliasTypeInfo();
 
   bool isTypeConstant(QualType QTy, bool ExcludeCtorDtor);
 
   bool isPaddedAtomicType(QualType type);
   bool isPaddedAtomicType(const AtomicType *type);
 
-  /// DecorateInstructionWithTBAA - Decorate the instruction with a TBAA tag.
+  /// Decorate the instruction with a TBAA tag. For scalar TBAA, the tag
+  /// is the same as the type. For struct-path aware TBAA, the tag
+  /// is different from the type: base type, access type and offset.
+  /// When ConvertTypeToTag is true, we create a tag based on the scalar type.
   void DecorateInstructionWithTBAA(llvm::Instruction *Inst,
-                                   TBAAAccessInfo TBAAInfo);
+                                   llvm::MDNode *TBAAInfo,
+                                   bool ConvertTypeToTag = true);
 
   /// Adds !invariant.barrier !tag to instruction
   void DecorateInstructionWithInvariantGroup(llvm::Instruction *I,

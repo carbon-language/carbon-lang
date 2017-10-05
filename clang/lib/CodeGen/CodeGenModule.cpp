@@ -578,14 +578,10 @@ llvm::MDNode *CodeGenModule::getTBAATypeInfo(QualType QTy) {
   return TBAA->getTypeInfo(QTy);
 }
 
-TBAAAccessInfo CodeGenModule::getTBAAAccessInfo(QualType AccessType) {
-  return TBAAAccessInfo(getTBAATypeInfo(AccessType));
-}
-
-TBAAAccessInfo CodeGenModule::getTBAAVTablePtrAccessInfo() {
+llvm::MDNode *CodeGenModule::getTBAAInfoForVTablePtr() {
   if (!TBAA)
-    return TBAAAccessInfo();
-  return TBAA->getVTablePtrAccessInfo();
+    return nullptr;
+  return TBAA->getTBAAInfoForVTablePtr();
 }
 
 llvm::MDNode *CodeGenModule::getTBAAStructInfo(QualType QTy) {
@@ -594,28 +590,30 @@ llvm::MDNode *CodeGenModule::getTBAAStructInfo(QualType QTy) {
   return TBAA->getTBAAStructInfo(QTy);
 }
 
-llvm::MDNode *CodeGenModule::getTBAABaseTypeInfo(QualType QTy) {
+llvm::MDNode *CodeGenModule::getTBAAStructTagInfo(TBAAAccessInfo Info) {
   if (!TBAA)
     return nullptr;
-  return TBAA->getBaseTypeInfo(QTy);
+  return TBAA->getTBAAStructTagInfo(Info);
 }
 
-llvm::MDNode *CodeGenModule::getTBAAAccessTagInfo(TBAAAccessInfo Info) {
+llvm::MDNode *CodeGenModule::getTBAAMayAliasTypeInfo() {
   if (!TBAA)
     return nullptr;
-  return TBAA->getAccessTagInfo(Info);
+  return TBAA->getMayAliasTypeInfo();
 }
 
-TBAAAccessInfo CodeGenModule::getTBAAMayAliasAccessInfo() {
-  if (!TBAA)
-    return TBAAAccessInfo();
-  return TBAA->getMayAliasAccessInfo();
-}
-
+/// Decorate the instruction with a TBAA tag. For both scalar TBAA
+/// and struct-path aware TBAA, the tag has the same format:
+/// base type, access type and offset.
+/// When ConvertTypeToTag is true, we create a tag based on the scalar type.
 void CodeGenModule::DecorateInstructionWithTBAA(llvm::Instruction *Inst,
-                                                TBAAAccessInfo TBAAInfo) {
-  if (llvm::MDNode *Tag = getTBAAAccessTagInfo(TBAAInfo))
-    Inst->setMetadata(llvm::LLVMContext::MD_tbaa, Tag);
+                                                llvm::MDNode *TBAAInfo,
+                                                bool ConvertTypeToTag) {
+  if (ConvertTypeToTag && TBAA)
+    Inst->setMetadata(llvm::LLVMContext::MD_tbaa,
+                      TBAA->getTBAAScalarTagInfo(TBAAInfo));
+  else
+    Inst->setMetadata(llvm::LLVMContext::MD_tbaa, TBAAInfo);
 }
 
 void CodeGenModule::DecorateInstructionWithInvariantGroup(
