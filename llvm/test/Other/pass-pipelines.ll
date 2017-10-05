@@ -56,6 +56,8 @@
 ; a barrier pass.
 ; CHECK-O2: A No-Op Barrier Pass
 ; Reduce the size of the IR ASAP after the inliner.
+; CHECK-O2-NEXT: Global Variable Optimizer
+; CHECK-O2: Dead Global Elimination
 ; CHECK-O2-NEXT: Eliminate Available Externally
 ; Inferring function attribute should be right after the CGSCC pipeline, before
 ; any other optimizations/analyses.
