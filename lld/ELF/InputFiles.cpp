@@ -780,9 +780,7 @@ template <class ELFT> void SharedFile<ELFT>::parseRest() {
       if (VersymIndex >= Verdefs.size()) {
         error("corrupt input file: version definition index " +
               Twine(VersymIndex) + " for symbol " + Name +
-              " is greater than the maximum value " +
-              Twine(Verdefs.size() - 1) + "\n>>> symbol is defined in " +
-              toString(this));
+              " is out of bounds\n>>> defined in " + toString(this));
         continue;
       }
       V = Verdefs[VersymIndex];
