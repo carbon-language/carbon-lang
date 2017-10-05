@@ -1910,14 +1910,14 @@ public:
                         LValueBaseInfo BaseInfo =
                             LValueBaseInfo(AlignmentSource::Type)) {
     return LValue::MakeAddr(Addr, T, getContext(), BaseInfo,
-                            CGM.getTBAATypeInfo(T));
+                            CGM.getTBAAAccessInfo(T));
   }
 
   LValue MakeAddrLValue(llvm::Value *V, QualType T, CharUnits Alignment,
                         LValueBaseInfo BaseInfo =
                             LValueBaseInfo(AlignmentSource::Type)) {
     return LValue::MakeAddr(Address(V, Alignment), T, getContext(),
-                            BaseInfo, CGM.getTBAATypeInfo(T));
+                            BaseInfo, CGM.getTBAAAccessInfo(T));
   }
 
   LValue MakeNaturalAlignPointeeAddrLValue(llvm::Value *V, QualType T);
@@ -3056,7 +3056,14 @@ public:
                                 SourceLocation Loc,
                                 LValueBaseInfo BaseInfo =
                                     LValueBaseInfo(AlignmentSource::Type),
-                                TBAAAccessInfo TBAAInfo = TBAAAccessInfo(),
+                                bool isNontemporal = false) {
+    return EmitLoadOfScalar(Addr, Volatile, Ty, Loc, BaseInfo,
+                            CGM.getTBAAAccessInfo(Ty), isNontemporal);
+  }
+
+  llvm::Value *EmitLoadOfScalar(Address Addr, bool Volatile, QualType Ty,
+                                SourceLocation Loc, LValueBaseInfo BaseInfo,
+                                TBAAAccessInfo TBAAInfo,
                                 bool isNontemporal = false);
 
   /// EmitLoadOfScalar - Load a scalar value from an address, taking
@@ -3072,7 +3079,14 @@ public:
                          bool Volatile, QualType Ty,
                          LValueBaseInfo BaseInfo =
                              LValueBaseInfo(AlignmentSource::Type),
-                         TBAAAccessInfo TBAAInfo = TBAAAccessInfo(),
+                         bool isInit = false, bool isNontemporal = false) {
+    EmitStoreOfScalar(Value, Addr, Volatile, Ty, BaseInfo,
+                      CGM.getTBAAAccessInfo(Ty), isInit, isNontemporal);
+  }
+
+  void EmitStoreOfScalar(llvm::Value *Value, Address Addr,
+                         bool Volatile, QualType Ty,
+                         LValueBaseInfo BaseInfo, TBAAAccessInfo TBAAInfo,
                          bool isInit = false, bool isNontemporal = false);
 
   /// EmitStoreOfScalar - Store a scalar value to an address, taking
