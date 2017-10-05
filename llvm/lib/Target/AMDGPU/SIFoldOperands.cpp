@@ -723,6 +723,8 @@ void SIFoldOperands::foldInstOperand(MachineInstr &MI,
   }
 }
 
+// Clamp patterns are canonically selected to v_max_* instructions, so only
+// handle them.
 const MachineOperand *SIFoldOperands::isClamp(const MachineInstr &MI) const {
   unsigned Op = MI.getOpcode();
   switch (Op) {
