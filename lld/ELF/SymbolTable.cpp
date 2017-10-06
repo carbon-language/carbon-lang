@@ -733,7 +733,7 @@ void SymbolTable::handleDynamicList() {
 
     for (SymbolBody *B : Syms) {
       if (!Config->Shared)
-        B->symbol()->VersionId = VER_NDX_GLOBAL;
+        B->symbol()->ExportDynamic = true;
       else if (B->symbol()->includeInDynsym())
         B->IsPreemptible = true;
     }
