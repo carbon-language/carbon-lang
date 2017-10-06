@@ -1171,10 +1171,10 @@ template <class ELFT> void DynamicSection<ELFT>::finalizeContents() {
       add({DT_MIPS_RLD_MAP, InX::MipsRldMap});
   }
 
-  getParent()->Link = this->Link;
+  add({DT_NULL, (uint64_t)0});
 
-  // +1 for DT_NULL
-  this->Size = (Entries.size() + 1) * this->Entsize;
+  getParent()->Link = this->Link;
+  this->Size = Entries.size() * this->Entsize;
 }
 
 template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
