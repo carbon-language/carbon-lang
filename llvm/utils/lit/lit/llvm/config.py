@@ -5,6 +5,8 @@ import subprocess
 import sys
 
 import lit.util
+from lit.llvm.subst import FindTool
+from lit.llvm.subst import ToolSubst
 
 
 def binary_feature(on, feature, off_prefix):
@@ -225,41 +227,47 @@ class LLVMConfig(object):
         # -win32 is not supported for non-x86 targets; use a default.
         return 'i686-pc-win32'
 
-    def add_tool_substitutions(self, tools, search_dirs, warn_missing=True):
+    def add_tool_substitutions(self, tools, search_dirs=None):
+        if not search_dirs:
+            search_dirs = [self.config.llvm_tools_dir]
+
         if lit.util.is_string(search_dirs):
             search_dirs = [search_dirs]
 
-        search_dirs = os.pathsep.join(search_dirs)
-        for tool in tools:
-            # Extract the tool name from the pattern.  This relies on the tool
-            # name being surrounded by \b word match operators.  If the
-            # pattern starts with "| ", include it in the string to be
-            # substituted.
-            if lit.util.is_string(tool):
-                tool = lit.util.make_word_regex(tool)
-            else:
-                tool = str(tool)
+        tools = [x if isinstance(x, ToolSubst) else ToolSubst(x)
+                 for x in tools]
 
-            tool_match = re.match(r"^(\\)?((\| )?)\W+b([0-9A-Za-z-_\.]+)\\b\W*$",
-                                  tool)
-            if not tool_match:
+        search_dirs = os.pathsep.join(search_dirs)
+        substitutions = []
+
+        for tool in tools:
+            match = tool.resolve(self, search_dirs)
+
+            # Either no match occurred, or there was an unresolved match that
+            # is ignored.
+            if not match:
                 continue
 
-            tool_pipe = tool_match.group(2)
-            tool_name = tool_match.group(4)
-            tool_path = lit.util.which(tool_name, search_dirs)
-            if not tool_path:
-                if warn_missing:
-                    # Warn, but still provide a substitution.
-                    self.lit_config.note(
-                        'Did not find ' + tool_name + ' in %s' % search_dirs)
-                tool_path = self.config.llvm_tools_dir + '/' + tool_name
+            subst_key, tool_pipe, command = match
 
-            if tool_name == 'llc' and os.environ.get('LLVM_ENABLE_MACHINE_VERIFIER') == '1':
-                tool_path += ' -verify-machineinstrs'
-            if tool_name == 'llvm-go':
-                exe = getattr(self.config, 'go_executable', None)
-                if exe:
-                    tool_path += ' go=' + exe
+            # An unresolved match occurred that can't be ignored.  Fail without
+            # adding any of the previously-discovered substitutions.
+            if not command:
+                return False
 
-            self.config.substitutions.append((tool, tool_pipe + tool_path))
+            substitutions.append((subst_key, tool_pipe + command))
+
+        self.config.substitutions.extend(substitutions)
+        return True
+
+    def use_default_substitutions(self):
+        tool_patterns = [
+            ToolSubst('FileCheck', unresolved='fatal'),
+            # Handle these specially as they are strings searched for during testing.
+            ToolSubst(r'\| \bcount\b', command=FindTool(
+                'count'), verbatim=True, unresolved='fatal'),
+            ToolSubst(r'\| \bnot\b', command=FindTool('not'), verbatim=True, unresolved='fatal')]
+
+        self.config.substitutions.append(('%python', sys.executable))
+        self.add_tool_substitutions(
+            tool_patterns, [self.config.llvm_tools_dir])

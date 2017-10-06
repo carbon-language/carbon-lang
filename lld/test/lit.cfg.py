@@ -10,7 +10,7 @@ import lit.formats
 import lit.util
 
 from lit.llvm import llvm_config
-from lit.llvm import ToolFilter
+from lit.llvm.subst import ToolSubst
 
 # Configuration file for the 'lit' test runner.
 
@@ -43,23 +43,21 @@ llvm_config.with_environment('PATH',
 llvm_config.with_environment('LD_LIBRARY_PATH',
                              [config.lld_libs_dir, config.llvm_libs_dir], append_path=True)
 
+llvm_config.use_default_substitutions()
+
 # For each occurrence of a clang tool name, replace it with the full path to
 # the build directory holding that tool.  We explicitly specify the directories
 # to search to ensure that we get the tools just built and not some random
 # tools that might happen to be in the user's PATH.
 tool_dirs = [config.lld_tools_dir, config.llvm_tools_dir]
 
-config.substitutions.append((r"\bld.lld\b", 'ld.lld --full-shutdown'))
-
 tool_patterns = [
-    'FileCheck', 'not', 'ld.lld', 'lld-link', 'llvm-as', 'llvm-mc', 'llvm-nm',
+    ToolSubst('ld.lld', extra_args=['--full-shutdown']),
+    'lld-link', 'llvm-as', 'llvm-mc', 'llvm-nm',
     'llvm-objdump', 'llvm-pdbutil', 'llvm-readobj', 'obj2yaml', 'yaml2obj',
-    ToolFilter('lld', pre='-./', post='-.')]
+    'lld']
 
 llvm_config.add_tool_substitutions(tool_patterns, tool_dirs)
-
-# Add site-specific substitutions.
-config.substitutions.append(('%python', config.python_executable))
 
 # When running under valgrind, we mangle '-vg' onto the end of the triple so we
 # can check it with XFAIL and XTARGET.

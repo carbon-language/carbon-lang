@@ -10,7 +10,8 @@ import lit.formats
 import lit.util
 
 from lit.llvm import llvm_config
-from lit.llvm import ToolFilter
+from lit.llvm.subst import ToolSubst
+from lit.llvm.subst import FindTool
 
 # Configuration file for the 'lit' test runner.
 
@@ -76,6 +77,8 @@ llvm_config.with_environment('LD_LIBRARY_PATH', [
 llvm_config.with_system_environment(
     ['ASAN_SYMBOLIZER_PATH', 'MSAN_SYMBOLIZER_PATH'])
 
+llvm_config.use_default_substitutions()
+
 # Discover the 'clang' and 'clangcc' to use.
 
 
@@ -120,44 +123,37 @@ if config.clang_examples:
     config.available_features.add('examples')
 
 builtin_include_dir = llvm_config.get_clang_builtin_include_dir(config.clang)
-config.substitutions.append(('%clang_analyze_cc1',
-                             '%clang_cc1 -analyze %analyze'))
-config.substitutions.append(('%clang_cc1',
-                             '%s -cc1 -internal-isystem %s -nostdsysteminc'
-                             % (config.clang, builtin_include_dir)))
-config.substitutions.append(('%clang_cpp', ' ' + config.clang +
-                             ' --driver-mode=cpp '))
-config.substitutions.append(('%clang_cl', ' ' + config.clang +
-                             ' --driver-mode=cl '))
-config.substitutions.append(('%clangxx', ' ' + config.clang +
-                             ' --driver-mode=g++ '))
 
-clang_func_map = lit.util.which(
-    'clang-func-mapping', config.environment['PATH'])
-if clang_func_map:
-    config.substitutions.append(
-        ('%clang_func_map', ' ' + clang_func_map + ' '))
+tools = [
+    # By specifying %clang_cc1 as part of the substitution, this substitution
+    # relies on repeated substitution, so must come before %clang_cc1.
+    ToolSubst('%clang_analyze_cc1', command='%clang_cc1',
+              extra_args=['-analyze', '%analyze']),
+    ToolSubst('%clang_cc1', command=config.clang, extra_args=[
+              '-cc1', '-internal-isystem', builtin_include_dir, '-nostdsysteminc']),
+    ToolSubst('%clang_cpp', command=config.clang,
+              extra_args=['--driver-mode=cpp']),
+    ToolSubst('%clang_cl', command=config.clang,
+              extra_args=['--driver-mode=cl']),
+    ToolSubst('%clangxx', command=config.clang,
+              extra_args=['--driver-mode=g++']),
+    ToolSubst('%clang_func_map', command=FindTool(
+        'clang-func-mapping'), unresolved='ignore'),
+    ToolSubst('%clang', command=config.clang),
+    ToolSubst('%test_debuginfo', command=os.path.join(
+        config.llvm_src_root, 'utils', 'test_debuginfo.pl')),
+    'c-index-test', 'clang-check', 'clang-diff', 'clang-format', 'opt']
 
-config.substitutions.append(('%clang', ' ' + config.clang + ' '))
-config.substitutions.append(('%test_debuginfo',
-                             ' ' + config.llvm_src_root + '/utils/test_debuginfo.pl '))
-config.substitutions.append(('%itanium_abi_triple',
-                             llvm_config.make_itanium_abi_triple(config.target_triple)))
-config.substitutions.append(('%ms_abi_triple',
-                             llvm_config.make_msabi_triple(config.target_triple)))
-config.substitutions.append(('%resource_dir', builtin_include_dir))
-config.substitutions.append(('%python', config.python_executable))
+if config.clang_examples:
+    tools.append('clang-interpreter')
 
-# The host triple might not be set, at least if we're compiling clang from
-# an already installed llvm.
-if config.host_triple and config.host_triple != '@LLVM_HOST_TRIPLE@':
-    config.substitutions.append(('%target_itanium_abi_host_triple',
-                                 '--target=%s' % llvm_config.make_itanium_abi_triple(config.host_triple)))
-else:
-    config.substitutions.append(('%target_itanium_abi_host_triple', ''))
+# For each occurrence of a clang tool name, replace it with the full path to
+# the build directory holding that tool.  We explicitly specify the directories
+# to search to ensure that we get the tools just built and not some random
+# tools that might happen to be in the user's PATH.
+tool_dirs = [config.clang_tools_dir, config.llvm_tools_dir]
 
-config.substitutions.append(
-    ('%src_include_dir', config.clang_src_dir + '/include'))
+llvm_config.add_tool_substitutions(tools, tool_dirs)
 
 # FIXME: Find nicer way to prohibit this.
 config.substitutions.append(
@@ -183,27 +179,22 @@ config.substitutions.append(
     (' %clang-cl ',
      """*** invalid substitution, use '%clang_cl'. ***"""))
 
-# For each occurrence of a clang tool name, replace it with the full path to
-# the build directory holding that tool.  We explicitly specify the directories
-# to search to ensure that we get the tools just built and not some random
-# tools that might happen to be in the user's PATH.
-tool_dirs = [config.clang_tools_dir, config.llvm_tools_dir]
+config.substitutions.append(('%itanium_abi_triple',
+                             llvm_config.make_itanium_abi_triple(config.target_triple)))
+config.substitutions.append(('%ms_abi_triple',
+                             llvm_config.make_msabi_triple(config.target_triple)))
+config.substitutions.append(('%resource_dir', builtin_include_dir))
 
-tool_patterns = [
-    'FileCheck', 'c-index-test',
-    ToolFilter('clang-check', pre='-.', post='-.'),
-    ToolFilter('clang-diff', pre='-.', post='-.'),
-    ToolFilter('clang-format', pre='-.', post='-.'),
-    # FIXME: Some clang test uses opt?
-    ToolFilter('opt', pre='-.', post=r'/\-.'),
-    # Handle these specially as they are strings searched for during testing.
-    ToolFilter(r'\| \bcount\b', verbatim=True),
-    ToolFilter(r'\| \bnot\b', verbatim=True)]
+# The host triple might not be set, at least if we're compiling clang from
+# an already installed llvm.
+if config.host_triple and config.host_triple != '@LLVM_HOST_TRIPLE@':
+    config.substitutions.append(('%target_itanium_abi_host_triple',
+                                 '--target=%s' % llvm_config.make_itanium_abi_triple(config.host_triple)))
+else:
+    config.substitutions.append(('%target_itanium_abi_host_triple', ''))
 
-if config.clang_examples:
-    tool_patterns.append(ToolFilter('clang-interpreter', '-.', '-.'))
-
-llvm_config.add_tool_substitutions(tool_patterns, tool_dirs)
+config.substitutions.append(
+    ('%src_include_dir', config.clang_src_dir + '/include'))
 
 # Set available features we allow tests to conditionalize on.
 #
@@ -236,8 +227,6 @@ if platform.system() not in ['Darwin', 'Fuchsia']:
     config.available_features.add('libgcc')
 
 # Case-insensitive file system
-
-
 def is_filesystem_case_insensitive():
     handle, path = tempfile.mkstemp(
         prefix='case-test', dir=config.test_exec_root)
