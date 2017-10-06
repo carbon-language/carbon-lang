@@ -201,6 +201,10 @@ static opt<bool>
     SummarizeTypes("summarize-types",
                    desc("Abbreviate the description of type unit entries"),
                    cat(DwarfDumpCategory));
+static cl::opt<bool>
+    Statistics("statistics",
+               cl::desc("Emit JSON-formatted debug info quality metrics."),
+               cat(DwarfDumpCategory));
 static opt<bool> Verify("verify", desc("Verify the DWARF debug info"),
                         cat(DwarfDumpCategory));
 static opt<bool> Quiet("quiet", desc("Use with -verify to not emit to STDOUT."),
@@ -300,6 +304,9 @@ static void filterByName(const StringSet<> &Names,
       }
     }
 }
+
+bool collectStatsForObjectFile(ObjectFile &Obj, DWARFContext &DICtx,
+                               Twine Filename, raw_ostream &OS);
 
 static bool dumpObjectFile(ObjectFile &Obj, DWARFContext &DICtx, Twine Filename,
                            raw_ostream &OS) {
@@ -536,7 +543,10 @@ int main(int argc, char **argv) {
           return handleFile(Object, verifyObjectFile, OS);
         }))
       exit(1);
-  } else
+  } else if (Statistics)
+    for (auto Object : Objects)
+      handleFile(Object, collectStatsForObjectFile, OS);
+  else
     for (auto Object : Objects)
       handleFile(Object, dumpObjectFile, OS);
 
