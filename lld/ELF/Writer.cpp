@@ -880,7 +880,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   Script->Opt.Commands.clear();
   for (InputSectionBase *IS : InputSections)
     if (IS)
-      Factory.addInputSec(IS, getOutputSectionName(IS->Name));
+      Factory.addInputSec(IS, getOutputSectionName(IS->Name), nullptr);
   Script->Opt.Commands.insert(Script->Opt.Commands.end(), Old.begin(),
                               Old.end());
 

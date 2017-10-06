@@ -200,14 +200,25 @@ void elf::reportDiscarded(InputSectionBase *IS) {
           IS->File->getName() + "'");
 }
 
-static OutputSection *addSection(InputSectionBase *IS, StringRef OutsecName,
-                                 OutputSection *Sec) {
-  if (Sec && Sec->Live) {
+static OutputSection *createSection(InputSectionBase *IS, StringRef OutsecName) {
+  OutputSection *Sec = Script->createOutputSection(OutsecName, "<internal>");
+  Sec->Type = IS->Type;
+  Sec->Flags = IS->Flags;
+  Sec->addSection(cast<InputSection>(IS));
+
+  Script->Opt.Commands.push_back(Sec);
+
+  return Sec;
+}
+
+static void addSection(OutputSection *Sec, InputSectionBase *IS, StringRef OutsecName) {
+  if (Sec->Live) {
     if (getIncompatibleFlags(Sec->Flags) != getIncompatibleFlags(IS->Flags))
       error("incompatible section flags for " + Sec->Name + "\n>>> " +
             toString(IS) + ": 0x" + utohexstr(IS->Flags) +
             "\n>>> output section " + Sec->Name + ": 0x" +
             utohexstr(Sec->Flags));
+
     if (Sec->Type != IS->Type) {
       if (canMergeToProgbits(Sec->Type) && canMergeToProgbits(IS->Type))
         Sec->Type = SHT_PROGBITS;
@@ -218,18 +229,12 @@ static OutputSection *addSection(InputSectionBase *IS, StringRef OutsecName,
               "\n>>> output section " + Sec->Name + ": " +
               getELFSectionTypeName(Config->EMachine, Sec->Type));
     }
-    Sec->Flags |= IS->Flags;
   } else {
-    if (!Sec) {
-      Sec = Script->createOutputSection(OutsecName, "<internal>");
-      Script->Opt.Commands.push_back(Sec);
-    }
     Sec->Type = IS->Type;
-    Sec->Flags = IS->Flags;
   }
 
+  Sec->Flags |= IS->Flags;
   Sec->addSection(cast<InputSection>(IS));
-  return Sec;
 }
 
 void OutputSectionFactory::addInputSec(InputSectionBase *IS,
@@ -242,7 +247,7 @@ void OutputSectionFactory::addInputSec(InputSectionBase *IS,
 
   // If we have destination output section - use it directly.
   if (OS) {
-    addSection(IS, OutsecName, OS);
+    addSection(OS, IS, OutsecName);
     return;
   }
 
@@ -254,7 +259,7 @@ void OutputSectionFactory::addInputSec(InputSectionBase *IS,
   // as-is because adding/removing members or merging them with other groups
   // change their semantics.
   if (IS->Type == SHT_GROUP || (IS->Flags & SHF_GROUP)) {
-    addSection(IS, OutsecName, nullptr);
+    createSection(IS, OutsecName);
     return;
   }
 
@@ -268,13 +273,20 @@ void OutputSectionFactory::addInputSec(InputSectionBase *IS,
       (IS->Type == SHT_REL || IS->Type == SHT_RELA)) {
     auto *Sec = cast<InputSection>(IS);
     OutputSection *Out = Sec->getRelocatedSection()->getOutputSection();
-    Out->RelocationSection = addSection(IS, OutsecName, Out->RelocationSection);
+
+    if (Out->RelocationSection)
+      addSection(Out->RelocationSection, IS, OutsecName);
+    else
+      Out->RelocationSection = createSection(IS, OutsecName);
     return;
   }
 
   SectionKey Key = createKey(IS, OutsecName);
   OutputSection *&Sec = Map[Key];
-  Sec = addSection(IS, OutsecName, Sec);
+  if (Sec)
+    addSection(Sec, IS, OutsecName);
+  else
+    Sec = createSection(IS, OutsecName);
 }
 
 OutputSectionFactory::~OutputSectionFactory() {}

@@ -458,7 +458,7 @@ void LinkerScript::addOrphanSections(OutputSectionFactory &Factory) {
     });
     log(toString(S) + " is being placed in '" + Name + "'");
     if (I == End) {
-      Factory.addInputSec(S, Name);
+      Factory.addInputSec(S, Name, nullptr);
       assert(S->getOutputSection()->SectionIndex == INT_MAX);
     } else {
       OutputSection *Sec = cast<OutputSection>(*I);
