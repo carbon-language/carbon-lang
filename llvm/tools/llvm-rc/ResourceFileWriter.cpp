@@ -122,23 +122,174 @@ enum class NullHandlingMethod {
   CutAtDoubleNull // Terminate string on '\0\0'; strip final '\0'.
 };
 
-// Parses an identifier or string and returns a processed version of it.
-// For now, it only strips the string boundaries, but TODO:
+// Parses an identifier or string and returns a processed version of it:
+//   * String the string boundary quotes.
 //   * Squash "" to a single ".
 //   * Replace the escape sequences with their processed version.
 // For identifiers, this is no-op.
 static Error processString(StringRef Str, NullHandlingMethod NullHandler,
                            bool &IsLongString, SmallVectorImpl<UTF16> &Result) {
   bool IsString = stripQuotes(Str, IsLongString);
-  convertUTF8ToUTF16String(Str, Result);
+  SmallVector<UTF16, 128> Chars;
+  convertUTF8ToUTF16String(Str, Chars);
 
   if (!IsString) {
     // It's an identifier if it's not a string. Make all characters uppercase.
-    for (UTF16 &Ch : Result) {
+    for (UTF16 &Ch : Chars) {
       assert(Ch <= 0x7F && "We didn't allow identifiers to be non-ASCII");
       Ch = toupper(Ch);
     }
+    Result.swap(Chars);
     return Error::success();
+  }
+  Result.reserve(Chars.size());
+  size_t Pos = 0;
+
+  auto AddRes = [&Result, NullHandler, IsLongString](UTF16 Char) -> Error {
+    if (!IsLongString) {
+      if (NullHandler == NullHandlingMethod::UserResource) {
+        // Narrow strings in user-defined resources are *not* output in
+        // UTF-16 format.
+        if (Char > 0xFF)
+          return createError("Non-8-bit codepoint (" + Twine(Char) +
+                             ") can't occur in a user-defined narrow string");
+
+      } else {
+        // In case of narrow non-user strings, Windows RC converts
+        // [0x80, 0xFF] chars according to the current codepage.
+        // There is no 'codepage' concept settled in every supported platform,
+        // so we should reject such inputs.
+        if (Char > 0x7F && Char <= 0xFF)
+          return createError("Non-ASCII 8-bit codepoint (" + Twine(Char) +
+                             ") can't "
+                             "occur in a non-Unicode string");
+      }
+    }
+
+    Result.push_back(Char);
+    return Error::success();
+  };
+
+  while (Pos < Chars.size()) {
+    UTF16 CurChar = Chars[Pos];
+    ++Pos;
+
+    // Strip double "".
+    if (CurChar == '"') {
+      if (Pos == Chars.size() || Chars[Pos] != '"')
+        return createError("Expected \"\"");
+      ++Pos;
+      RETURN_IF_ERROR(AddRes('"'));
+      continue;
+    }
+
+    if (CurChar == '\\') {
+      UTF16 TypeChar = Chars[Pos];
+      ++Pos;
+
+      if (TypeChar == 'x' || TypeChar == 'X') {
+        // Read a hex number. Max number of characters to read differs between
+        // narrow and wide strings.
+        UTF16 ReadInt = 0;
+        size_t RemainingChars = IsLongString ? 4 : 2;
+        // We don't want to read non-ASCII hex digits. std:: functions past
+        // 0xFF invoke UB.
+        //
+        // FIXME: actually, Microsoft version probably doesn't check this
+        // condition and uses their Unicode version of 'isxdigit'. However,
+        // there are some hex-digit Unicode character outside of ASCII, and
+        // some of these are actually accepted by rc.exe, the notable example
+        // being fullwidth forms (U+FF10..U+FF19 etc.) These can be written
+        // instead of ASCII digits in \x... escape sequence and get accepted.
+        // However, the resulting hexcodes seem totally unpredictable.
+        // We think it's infeasible to try to reproduce this behavior, nor to
+        // put effort in order to detect it.
+        while (RemainingChars && Pos < Chars.size() && Chars[Pos] < 0x80) {
+          if (!isxdigit(Chars[Pos]))
+            break;
+          char Digit = tolower(Chars[Pos]);
+          ++Pos;
+
+          ReadInt <<= 4;
+          if (isdigit(Digit))
+            ReadInt |= Digit - '0';
+          else
+            ReadInt |= Digit - 'a' + 10;
+
+          --RemainingChars;
+        }
+
+        RETURN_IF_ERROR(AddRes(ReadInt));
+        continue;
+      }
+
+      if (TypeChar >= '0' && TypeChar < '8') {
+        // Read an octal number. Note that we've already read the first digit.
+        UTF16 ReadInt = TypeChar - '0';
+        size_t RemainingChars = IsLongString ? 6 : 2;
+
+        while (RemainingChars && Pos < Chars.size() && Chars[Pos] >= '0' &&
+               Chars[Pos] < '8') {
+          ReadInt <<= 3;
+          ReadInt |= Chars[Pos] - '0';
+          --RemainingChars;
+          ++Pos;
+        }
+
+        RETURN_IF_ERROR(AddRes(ReadInt));
+
+        continue;
+      }
+
+      switch (TypeChar) {
+      case 'A':
+      case 'a':
+        // Windows '\a' translates into '\b' (Backspace).
+        RETURN_IF_ERROR(AddRes('\b'));
+        break;
+
+      case 'n': // Somehow, RC doesn't recognize '\N' and '\R'.
+        RETURN_IF_ERROR(AddRes('\n'));
+        break;
+
+      case 'r':
+        RETURN_IF_ERROR(AddRes('\r'));
+        break;
+
+      case 'T':
+      case 't':
+        RETURN_IF_ERROR(AddRes('\t'));
+        break;
+
+      case '\\':
+        RETURN_IF_ERROR(AddRes('\\'));
+        break;
+
+      case '"':
+        // RC accepts \" only if another " comes afterwards; then, \"" means
+        // a single ".
+        if (Pos == Chars.size() || Chars[Pos] != '"')
+          return createError("Expected \\\"\"");
+        ++Pos;
+        RETURN_IF_ERROR(AddRes('"'));
+        break;
+
+      default:
+        // If TypeChar means nothing, \ is should be output to stdout with
+        // following char. However, rc.exe consumes these characters when
+        // dealing with wide strings.
+        if (!IsLongString) {
+          RETURN_IF_ERROR(AddRes('\\'));
+          RETURN_IF_ERROR(AddRes(TypeChar));
+        }
+        break;
+      }
+
+      continue;
+    }
+
+    // If nothing interesting happens, just output the character.
+    RETURN_IF_ERROR(AddRes(CurChar));
   }
 
   switch (NullHandler) {

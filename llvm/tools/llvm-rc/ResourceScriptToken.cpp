@@ -219,7 +219,10 @@ Error Tokenizer::consumeToken(const Kind TokenKind) {
       } else if (Data[Pos] == '"') {
         // Consume the ending double-quote.
         advance();
-        return Error::success();
+        // However, if another '"' follows this double-quote, the string didn't
+        // end and we just included '"' into the string.
+        if (!willNowRead("\""))
+          return Error::success();
       } else if (Data[Pos] == '\n') {
         return getStringError("String literal not terminated in the line.");
       }
