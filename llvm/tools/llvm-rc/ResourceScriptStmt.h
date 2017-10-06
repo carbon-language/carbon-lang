@@ -22,17 +22,62 @@
 namespace llvm {
 namespace rc {
 
+// Integer wrapper that also holds information whether the user declared
+// the integer to be long (by appending L to the end of the integer) or not.
+// It allows to be implicitly cast from and to uint32_t in order
+// to be compatible with the parts of code that don't care about the integers
+// being marked long.
+class RCInt {
+  uint32_t Val;
+  bool Long;
+
+public:
+  RCInt(const RCToken &Token)
+      : Val(Token.intValue()), Long(Token.isLongInt()) {}
+  RCInt(uint32_t Value) : Val(Value), Long(false) {}
+  RCInt(uint32_t Value, bool IsLong) : Val(Value), Long(IsLong) {}
+  operator uint32_t() const { return Val; }
+  bool isLong() const { return Long; }
+
+  RCInt &operator+=(const RCInt &Rhs) {
+    std::tie(Val, Long) = std::make_pair(Val + Rhs.Val, Long | Rhs.Long);
+    return *this;
+  }
+
+  RCInt &operator-=(const RCInt &Rhs) {
+    std::tie(Val, Long) = std::make_pair(Val - Rhs.Val, Long | Rhs.Long);
+    return *this;
+  }
+
+  RCInt &operator|=(const RCInt &Rhs) {
+    std::tie(Val, Long) = std::make_pair(Val | Rhs.Val, Long | Rhs.Long);
+    return *this;
+  }
+
+  RCInt &operator&=(const RCInt &Rhs) {
+    std::tie(Val, Long) = std::make_pair(Val & Rhs.Val, Long | Rhs.Long);
+    return *this;
+  }
+
+  RCInt operator-() const { return {-Val, Long}; }
+  RCInt operator~() const { return {~Val, Long}; }
+
+  friend raw_ostream &operator<<(raw_ostream &OS, const RCInt &Int) {
+    return OS << Int.Val << (Int.Long ? "L" : "");
+  }
+};
+
 // A class holding a name - either an integer or a reference to the string.
 class IntOrString {
 private:
   union Data {
-    uint32_t Int;
+    RCInt Int;
     StringRef String;
-    Data(uint32_t Value) : Int(Value) {}
+    Data(RCInt Value) : Int(Value) {}
     Data(const StringRef Value) : String(Value) {}
     Data(const RCToken &Token) {
       if (Token.kind() == RCToken::Kind::Int)
-        Int = Token.intValue();
+        Int = RCInt(Token);
       else
         String = Token.value();
     }
@@ -40,8 +85,9 @@ private:
   bool IsInt;
 
 public:
-  IntOrString() : IntOrString(0) {}
+  IntOrString() : IntOrString(RCInt(0)) {}
   IntOrString(uint32_t Value) : Data(Value), IsInt(1) {}
+  IntOrString(RCInt Value) : Data(Value), IsInt(1) {}
   IntOrString(StringRef Value) : Data(Value), IsInt(0) {}
   IntOrString(const RCToken &Token)
       : Data(Token), IsInt(Token.kind() == RCToken::Kind::Int) {}
@@ -52,7 +98,7 @@ public:
 
   bool isInt() const { return IsInt; }
 
-  uint32_t getInt() const {
+  RCInt getInt() const {
     assert(IsInt);
     return Data.Int;
   }
@@ -570,8 +616,15 @@ public:
 // A single VERSIONINFO statement;
 class VersionInfoStmt {
 public:
+  enum StmtKind { StBase = 0, StBlock = 1, StValue = 2 };
+
   virtual raw_ostream &log(raw_ostream &OS) const { return OS << "VI stmt\n"; }
   virtual ~VersionInfoStmt() {}
+
+  virtual StmtKind getKind() const { return StBase; }
+  static bool classof(const VersionInfoStmt *S) {
+    return S->getKind() == StBase;
+  }
 };
 
 // BLOCK definition; also the main VERSIONINFO declaration is considered a
@@ -579,25 +632,38 @@ public:
 // The correct top-level blocks are "VarFileInfo" and "StringFileInfo". We don't
 // care about them at the parsing phase.
 class VersionInfoBlock : public VersionInfoStmt {
+public:
   std::vector<std::unique_ptr<VersionInfoStmt>> Stmts;
   StringRef Name;
 
-public:
   VersionInfoBlock(StringRef BlockName) : Name(BlockName) {}
   void addStmt(std::unique_ptr<VersionInfoStmt> Stmt) {
     Stmts.push_back(std::move(Stmt));
   }
   raw_ostream &log(raw_ostream &) const override;
+
+  StmtKind getKind() const override { return StBlock; }
+  static bool classof(const VersionInfoStmt *S) {
+    return S->getKind() == StBlock;
+  }
 };
 
 class VersionInfoValue : public VersionInfoStmt {
+public:
   StringRef Key;
   std::vector<IntOrString> Values;
+  std::vector<bool> HasPrecedingComma;
 
-public:
-  VersionInfoValue(StringRef InfoKey, std::vector<IntOrString> &&Vals)
-      : Key(InfoKey), Values(std::move(Vals)) {}
+  VersionInfoValue(StringRef InfoKey, std::vector<IntOrString> &&Vals,
+                   std::vector<bool> &&CommasBeforeVals)
+      : Key(InfoKey), Values(std::move(Vals)),
+        HasPrecedingComma(std::move(CommasBeforeVals)) {}
   raw_ostream &log(raw_ostream &) const override;
+
+  StmtKind getKind() const override { return StValue; }
+  static bool classof(const VersionInfoStmt *S) {
+    return S->getKind() == StValue;
+  }
 };
 
 class VersionInfoResource : public RCResource {
@@ -641,16 +707,24 @@ public:
     raw_ostream &log(raw_ostream &) const;
   };
 
-private:
   VersionInfoBlock MainBlock;
   VersionInfoFixed FixedData;
 
-public:
   VersionInfoResource(VersionInfoBlock &&TopLevelBlock,
                       VersionInfoFixed &&FixedInfo)
       : MainBlock(std::move(TopLevelBlock)), FixedData(std::move(FixedInfo)) {}
 
   raw_ostream &log(raw_ostream &) const override;
+  IntOrString getResourceType() const override { return RkVersionInfo; }
+  uint16_t getMemoryFlags() const override { return MfMoveable | MfPure; }
+  Twine getResourceTypeName() const override { return "VERSIONINFO"; }
+  Error visit(Visitor *V) const override {
+    return V->visitVersionInfoResource(this);
+  }
+  ResourceKind getKind() const override { return RkVersionInfo; }
+  static bool classof(const RCResource *Res) {
+    return Res->getKind() == RkVersionInfo;
+  }
 };
 
 // CHARACTERISTICS optional statement.

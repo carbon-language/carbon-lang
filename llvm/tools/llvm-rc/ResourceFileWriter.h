@@ -36,6 +36,7 @@ public:
   Error visitHTMLResource(const RCResource *) override;
   Error visitIconResource(const RCResource *) override;
   Error visitMenuResource(const RCResource *) override;
+  Error visitVersionInfoResource(const RCResource *) override;
 
   Error visitCaptionStmt(const CaptionStmt *) override;
   Error visitCharacteristicsStmt(const CharacteristicsStmt *) override;
@@ -98,6 +99,11 @@ private:
   Error writeMenuDefinitionList(const MenuDefinitionList &List);
   Error writeMenuBody(const RCResource *);
 
+  // VersionInfoResource
+  Error writeVersionInfoBody(const RCResource *);
+  Error writeVersionInfoBlock(const VersionInfoBlock &);
+  Error writeVersionInfoValue(const VersionInfoValue &);
+
   // Output stream handling.
   std::unique_ptr<raw_fd_ostream> FS;
 
@@ -125,6 +131,8 @@ private:
 
   Error writeIdentifier(const IntOrString &Ident);
   Error writeIntOrString(const IntOrString &Data);
+
+  void writeRCInt(RCInt);
 
   Error appendFile(StringRef Filename);
 

@@ -56,6 +56,10 @@ uint32_t RCToken::intValue() const {
   return Result;
 }
 
+bool RCToken::isLongInt() const {
+  return TokenKind == Kind::Int && std::toupper(TokenValue.back()) == 'L';
+}
+
 StringRef RCToken::value() const { return TokenValue; }
 
 Kind RCToken::kind() const { return TokenKind; }

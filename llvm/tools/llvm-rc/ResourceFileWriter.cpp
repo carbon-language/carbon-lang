@@ -28,7 +28,7 @@ using namespace llvm::support;
 namespace llvm {
 namespace rc {
 
-// Class that employs RAII to save the current serializator object state
+// Class that employs RAII to save the current FileWriter object state
 // and revert to it as soon as we leave the scope. This is useful if resources
 // declare their own resource-local statements.
 class ContextKeeper {
@@ -77,6 +77,12 @@ static Error checkSignedNumberFits(uint32_t Number, Twine FieldName,
                        ") cannot be negative.");
 
   return Error::success();
+}
+
+static Error checkRCInt(RCInt Number, Twine FieldName) {
+  if (Number.isLong())
+    return Error::success();
+  return checkNumberFits<uint16_t>(Number, FieldName);
 }
 
 static Error checkIntOrString(IntOrString Value, Twine FieldName) {
@@ -177,6 +183,13 @@ Error ResourceFileWriter::writeIntOrString(const IntOrString &Value) {
   return Error::success();
 }
 
+void ResourceFileWriter::writeRCInt(RCInt Value) {
+  if (Value.isLong())
+    writeObject((uint32_t)Value);
+  else
+    writeObject((uint16_t)Value);
+}
+
 Error ResourceFileWriter::appendFile(StringRef Filename) {
   bool IsLong;
   stripQuotes(Filename, IsLong);
@@ -243,6 +256,10 @@ Error ResourceFileWriter::visitHTMLResource(const RCResource *Res) {
 
 Error ResourceFileWriter::visitMenuResource(const RCResource *Res) {
   return writeResource(Res, &ResourceFileWriter::writeMenuBody);
+}
+
+Error ResourceFileWriter::visitVersionInfoResource(const RCResource *Res) {
+  return writeResource(Res, &ResourceFileWriter::writeVersionInfoBody);
 }
 
 Error ResourceFileWriter::visitCharacteristicsStmt(
@@ -920,6 +937,179 @@ Error ResourceFileWriter::writeMenuBody(const RCResource *Base) {
   writeObject<uint32_t>(0);
 
   return writeMenuDefinitionList(cast<MenuResource>(Base)->Elements);
+}
+
+// --- VersionInfoResourceResource helpers. --- //
+
+Error ResourceFileWriter::writeVersionInfoBlock(const VersionInfoBlock &Blk) {
+  // Output the header if the block has name.
+  bool OutputHeader = Blk.Name != "";
+  uint64_t LengthLoc;
+
+  if (OutputHeader) {
+    LengthLoc = writeObject<uint16_t>(0);
+    writeObject<uint16_t>(0);
+    writeObject<uint16_t>(true);
+    RETURN_IF_ERROR(writeCString(Blk.Name));
+    padStream(sizeof(uint32_t));
+  }
+
+  for (const std::unique_ptr<VersionInfoStmt> &Item : Blk.Stmts) {
+    VersionInfoStmt *ItemPtr = Item.get();
+
+    if (auto *BlockPtr = dyn_cast<VersionInfoBlock>(ItemPtr)) {
+      RETURN_IF_ERROR(writeVersionInfoBlock(*BlockPtr));
+      continue;
+    }
+
+    auto *ValuePtr = cast<VersionInfoValue>(ItemPtr);
+    RETURN_IF_ERROR(writeVersionInfoValue(*ValuePtr));
+  }
+
+  if (OutputHeader) {
+    uint64_t CurLoc = tell();
+    writeObjectAt(ulittle16_t(CurLoc - LengthLoc), LengthLoc);
+  }
+
+  padStream(sizeof(uint32_t));
+  return Error::success();
+}
+
+Error ResourceFileWriter::writeVersionInfoValue(const VersionInfoValue &Val) {
+  // rc has a peculiar algorithm to output VERSIONINFO VALUEs. Each VALUE
+  // is a mapping from the key (string) to the value (a sequence of ints or
+  // a sequence of strings).
+  //
+  // If integers are to be written: width of each integer written depends on
+  // whether it's been declared 'long' (it's DWORD then) or not (it's WORD).
+  // ValueLength defined in structure referenced below is then the total
+  // number of bytes taken by these integers.
+  //
+  // If strings are to be written: characters are always WORDs.
+  // Moreover, '\0' character is written after the last string, and between
+  // every two strings separated by comma (if strings are not comma-separated,
+  // they're simply concatenated). ValueLength is equal to the number of WORDs
+  // written (that is, half of the bytes written).
+  //
+  // Ref: msdn.microsoft.com/en-us/library/windows/desktop/ms646994.aspx
+  bool HasStrings = false, HasInts = false;
+  for (auto &Item : Val.Values)
+    (Item.isInt() ? HasInts : HasStrings) = true;
+
+  assert((HasStrings || HasInts) && "VALUE must have at least one argument");
+  if (HasStrings && HasInts)
+    return createError(Twine("VALUE ") + Val.Key +
+                       " cannot contain both strings and integers");
+
+  auto LengthLoc = writeObject<uint16_t>(0);
+  auto ValLengthLoc = writeObject<uint16_t>(0);
+  writeObject<uint16_t>(HasStrings);
+  RETURN_IF_ERROR(writeCString(Val.Key));
+  padStream(sizeof(uint32_t));
+
+  auto DataLoc = tell();
+  for (size_t Id = 0; Id < Val.Values.size(); ++Id) {
+    auto &Item = Val.Values[Id];
+    if (Item.isInt()) {
+      auto Value = Item.getInt();
+      RETURN_IF_ERROR(checkRCInt(Value, "VERSIONINFO integer value"));
+      writeRCInt(Value);
+      continue;
+    }
+
+    bool WriteTerminator =
+        Id == Val.Values.size() - 1 || Val.HasPrecedingComma[Id + 1];
+    RETURN_IF_ERROR(writeCString(Item.getString(), WriteTerminator));
+  }
+
+  auto CurLoc = tell();
+  auto ValueLength = CurLoc - DataLoc;
+  if (HasStrings) {
+    assert(ValueLength % 2 == 0);
+    ValueLength /= 2;
+  }
+  writeObjectAt(ulittle16_t(CurLoc - LengthLoc), LengthLoc);
+  writeObjectAt(ulittle16_t(ValueLength), ValLengthLoc);
+  padStream(sizeof(uint32_t));
+  return Error::success();
+}
+
+template <typename Ty>
+static Ty getWithDefault(const StringMap<Ty> &Map, StringRef Key,
+                         const Ty &Default) {
+  auto Iter = Map.find(Key);
+  if (Iter != Map.end())
+    return Iter->getValue();
+  return Default;
+}
+
+Error ResourceFileWriter::writeVersionInfoBody(const RCResource *Base) {
+  auto *Res = cast<VersionInfoResource>(Base);
+
+  const auto &FixedData = Res->FixedData;
+
+  struct /* VS_FIXEDFILEINFO */ {
+    ulittle32_t Signature = ulittle32_t(0xFEEF04BD);
+    ulittle32_t StructVersion = ulittle32_t(0x10000);
+    // It's weird to have most-significant DWORD first on the little-endian
+    // machines, but let it be this way.
+    ulittle32_t FileVersionMS;
+    ulittle32_t FileVersionLS;
+    ulittle32_t ProductVersionMS;
+    ulittle32_t ProductVersionLS;
+    ulittle32_t FileFlagsMask;
+    ulittle32_t FileFlags;
+    ulittle32_t FileOS;
+    ulittle32_t FileType;
+    ulittle32_t FileSubtype;
+    // MS implementation seems to always set these fields to 0.
+    ulittle32_t FileDateMS = ulittle32_t(0);
+    ulittle32_t FileDateLS = ulittle32_t(0);
+  } FixedInfo;
+
+  // First, VS_VERSIONINFO.
+  auto LengthLoc = writeObject<uint16_t>(0);
+  writeObject(ulittle16_t(sizeof(FixedInfo)));
+  writeObject(ulittle16_t(0));
+  cantFail(writeCString("VS_VERSION_INFO"));
+  padStream(sizeof(uint32_t));
+
+  using VersionInfoFixed = VersionInfoResource::VersionInfoFixed;
+  auto GetField = [&](VersionInfoFixed::VersionInfoFixedType Type) {
+    static const SmallVector<uint32_t, 4> DefaultOut{0, 0, 0, 0};
+    if (!FixedData.IsTypePresent[(int)Type])
+      return DefaultOut;
+    return FixedData.FixedInfo[(int)Type];
+  };
+
+  auto FileVer = GetField(VersionInfoFixed::FtFileVersion);
+  RETURN_IF_ERROR(checkNumberFits<uint16_t>(
+      *std::max_element(FileVer.begin(), FileVer.end()), "FILEVERSION fields"));
+  FixedInfo.FileVersionMS = (FileVer[0] << 16) | FileVer[1];
+  FixedInfo.FileVersionLS = (FileVer[2] << 16) | FileVer[3];
+
+  auto ProdVer = GetField(VersionInfoFixed::FtProductVersion);
+  RETURN_IF_ERROR(checkNumberFits<uint16_t>(
+      *std::max_element(ProdVer.begin(), ProdVer.end()),
+      "PRODUCTVERSION fields"));
+  FixedInfo.ProductVersionMS = (ProdVer[0] << 16) | ProdVer[1];
+  FixedInfo.ProductVersionLS = (ProdVer[2] << 16) | ProdVer[3];
+
+  FixedInfo.FileFlagsMask = GetField(VersionInfoFixed::FtFileFlagsMask)[0];
+  FixedInfo.FileFlags = GetField(VersionInfoFixed::FtFileFlags)[0];
+  FixedInfo.FileOS = GetField(VersionInfoFixed::FtFileOS)[0];
+  FixedInfo.FileType = GetField(VersionInfoFixed::FtFileType)[0];
+  FixedInfo.FileSubtype = GetField(VersionInfoFixed::FtFileSubtype)[0];
+
+  writeObject(FixedInfo);
+  padStream(sizeof(uint32_t));
+
+  RETURN_IF_ERROR(writeVersionInfoBlock(Res->MainBlock));
+
+  // FIXME: check overflow?
+  writeObjectAt(ulittle16_t(tell() - LengthLoc), LengthLoc);
+
+  return Error::success();
 }
 
 } // namespace rc
