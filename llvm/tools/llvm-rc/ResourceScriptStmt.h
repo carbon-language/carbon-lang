@@ -74,9 +74,13 @@ enum ResourceKind {
   // (TYPE in RESOURCEHEADER structure). The numeric value assigned to each
   // kind is equal to this type ID.
   RkNull = 0,
+  RkSingleCursor = 1,
+  RkSingleIcon = 3,
   RkMenu = 4,
   RkDialog = 5,
   RkAccelerators = 9,
+  RkCursorGroup = 12,
+  RkIconGroup = 14,
   RkVersionInfo = 16,
   RkHTML = 23,
 
@@ -88,7 +92,9 @@ enum ResourceKind {
   RkBase,
   RkCursor,
   RkIcon,
-  RkUser
+  RkUser,
+  RkSingleCursorOrIconRes,
+  RkCursorOrIconGroupRes
 };
 
 // Non-zero memory flags.
@@ -255,22 +261,38 @@ public:
 //
 // Ref: msdn.microsoft.com/en-us/library/windows/desktop/aa380920(v=vs.85).aspx
 class CursorResource : public RCResource {
+public:
   StringRef CursorLoc;
 
-public:
   CursorResource(StringRef Location) : CursorLoc(Location) {}
   raw_ostream &log(raw_ostream &) const override;
+
+  Twine getResourceTypeName() const override { return "CURSOR"; }
+  Error visit(Visitor *V) const override {
+    return V->visitCursorResource(this);
+  }
+  ResourceKind getKind() const override { return RkCursor; }
+  static bool classof(const RCResource *Res) {
+    return Res->getKind() == RkCursor;
+  }
 };
 
 // ICON resource. Represents a single ".ico" file containing a group of icons.
 //
 // Ref: msdn.microsoft.com/en-us/library/windows/desktop/aa381018(v=vs.85).aspx
 class IconResource : public RCResource {
+public:
   StringRef IconLoc;
 
-public:
   IconResource(StringRef Location) : IconLoc(Location) {}
   raw_ostream &log(raw_ostream &) const override;
+
+  Twine getResourceTypeName() const override { return "ICON"; }
+  Error visit(Visitor *V) const override { return V->visitIconResource(this); }
+  ResourceKind getKind() const override { return RkIcon; }
+  static bool classof(const RCResource *Res) {
+    return Res->getKind() == RkIcon;
+  }
 };
 
 // HTML resource. Represents a local webpage that is to be embedded into the

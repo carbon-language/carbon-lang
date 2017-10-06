@@ -220,8 +220,16 @@ Error ResourceFileWriter::visitAcceleratorsResource(const RCResource *Res) {
   return writeResource(Res, &ResourceFileWriter::writeAcceleratorsBody);
 }
 
+Error ResourceFileWriter::visitCursorResource(const RCResource *Res) {
+  return handleError(visitIconOrCursorResource(Res), Res);
+}
+
 Error ResourceFileWriter::visitDialogResource(const RCResource *Res) {
   return writeResource(Res, &ResourceFileWriter::writeDialogBody);
+}
+
+Error ResourceFileWriter::visitIconResource(const RCResource *Res) {
+  return handleError(visitIconOrCursorResource(Res), Res);
 }
 
 Error ResourceFileWriter::visitCaptionStmt(const CaptionStmt *Stmt) {
@@ -419,6 +427,260 @@ Error ResourceFileWriter::writeAcceleratorsBody(const RCResource *Base) {
     RETURN_IF_ERROR(
         writeSingleAccelerator(Acc, AcceleratorId == Res->Accelerators.size()));
   }
+  return Error::success();
+}
+
+// --- CursorResource and IconResource helpers. --- //
+
+// ICONRESDIR structure. Describes a single icon in resouce group.
+//
+// Ref: msdn.microsoft.com/en-us/library/windows/desktop/ms648016.aspx
+struct IconResDir {
+  uint8_t Width;
+  uint8_t Height;
+  uint8_t ColorCount;
+  uint8_t Reserved;
+};
+
+// CURSORDIR structure. Describes a single cursor in resource group.
+//
+// Ref: msdn.microsoft.com/en-us/library/windows/desktop/ms648011(v=vs.85).aspx
+struct CursorDir {
+  ulittle16_t Width;
+  ulittle16_t Height;
+};
+
+// RESDIRENTRY structure, stripped from the last item. Stripping made
+// for compatibility with RESDIR.
+//
+// Ref: msdn.microsoft.com/en-us/library/windows/desktop/ms648026(v=vs.85).aspx
+struct ResourceDirEntryStart {
+  union {
+    CursorDir Cursor; // Used in CURSOR resources.
+    IconResDir Icon;  // Used in .ico and .cur files, and ICON resources.
+  };
+  ulittle16_t Planes;   // HotspotX (.cur files but not CURSOR resource).
+  ulittle16_t BitCount; // HotspotY (.cur files but not CURSOR resource).
+  ulittle32_t Size;
+  // ulittle32_t ImageOffset;  // Offset to image data (ICONDIRENTRY only).
+  // ulittle16_t IconID;       // Resource icon ID (RESDIR only).
+};
+
+// BITMAPINFOHEADER structure. Describes basic information about the bitmap
+// being read.
+//
+// Ref: msdn.microsoft.com/en-us/library/windows/desktop/dd183376(v=vs.85).aspx
+struct BitmapInfoHeader {
+  ulittle32_t Size;
+  ulittle32_t Width;
+  ulittle32_t Height;
+  ulittle16_t Planes;
+  ulittle16_t BitCount;
+  ulittle32_t Compression;
+  ulittle32_t SizeImage;
+  ulittle32_t XPelsPerMeter;
+  ulittle32_t YPelsPerMeter;
+  ulittle32_t ClrUsed;
+  ulittle32_t ClrImportant;
+};
+
+// Group icon directory header. Called ICONDIR in .ico/.cur files and
+// NEWHEADER in .res files.
+//
+// Ref: msdn.microsoft.com/en-us/library/windows/desktop/ms648023(v=vs.85).aspx
+struct GroupIconDir {
+  ulittle16_t Reserved; // Always 0.
+  ulittle16_t ResType;  // 1 for icons, 2 for cursors.
+  ulittle16_t ResCount; // Number of items.
+};
+
+enum class IconCursorGroupType { Icon, Cursor };
+
+class SingleIconCursorResource : public RCResource {
+public:
+  IconCursorGroupType Type;
+  const ResourceDirEntryStart &Header;
+  ArrayRef<uint8_t> Image;
+
+  SingleIconCursorResource(IconCursorGroupType ResourceType,
+                           const ResourceDirEntryStart &HeaderEntry,
+                           ArrayRef<uint8_t> ImageData)
+      : Type(ResourceType), Header(HeaderEntry), Image(ImageData) {}
+
+  Twine getResourceTypeName() const override { return "Icon/cursor image"; }
+  IntOrString getResourceType() const override {
+    return Type == IconCursorGroupType::Icon ? RkSingleIcon : RkSingleCursor;
+  }
+  uint16_t getMemoryFlags() const override {
+    return MfDiscardable | MfMoveable;
+  }
+  ResourceKind getKind() const override { return RkSingleCursorOrIconRes; }
+  static bool classof(const RCResource *Res) {
+    return Res->getKind() == RkSingleCursorOrIconRes;
+  }
+};
+
+class IconCursorGroupResource : public RCResource {
+public:
+  IconCursorGroupType Type;
+  GroupIconDir Header;
+  std::vector<ResourceDirEntryStart> ItemEntries;
+
+  IconCursorGroupResource(IconCursorGroupType ResourceType,
+                          const GroupIconDir &HeaderData,
+                          std::vector<ResourceDirEntryStart> &&Entries)
+      : Type(ResourceType), Header(HeaderData),
+        ItemEntries(std::move(Entries)) {}
+
+  Twine getResourceTypeName() const override { return "Icon/cursor group"; }
+  IntOrString getResourceType() const override {
+    return Type == IconCursorGroupType::Icon ? RkIconGroup : RkCursorGroup;
+  }
+  ResourceKind getKind() const override { return RkCursorOrIconGroupRes; }
+  static bool classof(const RCResource *Res) {
+    return Res->getKind() == RkCursorOrIconGroupRes;
+  }
+};
+
+Error ResourceFileWriter::writeSingleIconOrCursorBody(const RCResource *Base) {
+  auto *Res = cast<SingleIconCursorResource>(Base);
+  if (Res->Type == IconCursorGroupType::Cursor) {
+    // In case of cursors, two WORDS are appended to the beginning
+    // of the resource: HotspotX (Planes in RESDIRENTRY),
+    // and HotspotY (BitCount).
+    //
+    // Ref: msdn.microsoft.com/en-us/library/windows/desktop/ms648026.aspx
+    //  (Remarks section).
+    writeObject(Res->Header.Planes);
+    writeObject(Res->Header.BitCount);
+  }
+
+  writeObject(Res->Image);
+  return Error::success();
+}
+
+Error ResourceFileWriter::writeIconOrCursorGroupBody(const RCResource *Base) {
+  auto *Res = cast<IconCursorGroupResource>(Base);
+  writeObject(Res->Header);
+  for (auto Item : Res->ItemEntries) {
+    writeObject(Item);
+    writeObject(ulittle16_t(IconCursorID++));
+  }
+  return Error::success();
+}
+
+Error ResourceFileWriter::visitSingleIconOrCursor(const RCResource *Res) {
+  return writeResource(Res, &ResourceFileWriter::writeSingleIconOrCursorBody);
+}
+
+Error ResourceFileWriter::visitIconOrCursorGroup(const RCResource *Res) {
+  return writeResource(Res, &ResourceFileWriter::writeIconOrCursorGroupBody);
+}
+
+Error ResourceFileWriter::visitIconOrCursorResource(const RCResource *Base) {
+  IconCursorGroupType Type;
+  StringRef FileStr;
+  IntOrString ResName = Base->ResName;
+
+  if (auto *IconRes = dyn_cast<IconResource>(Base)) {
+    FileStr = IconRes->IconLoc;
+    Type = IconCursorGroupType::Icon;
+  } else {
+    auto *CursorRes = dyn_cast<CursorResource>(Base);
+    FileStr = CursorRes->CursorLoc;
+    Type = IconCursorGroupType::Cursor;
+  }
+
+  bool IsLong;
+  stripQuotes(FileStr, IsLong);
+  ErrorOr<std::unique_ptr<MemoryBuffer>> File =
+      MemoryBuffer::getFile(FileStr, -1, false);
+
+  if (!File)
+    return make_error<StringError>(
+        "Error opening " +
+            Twine(Type == IconCursorGroupType::Icon ? "icon" : "cursor") +
+            " '" + FileStr + "': " + File.getError().message(),
+        File.getError());
+
+  BinaryStreamReader Reader((*File)->getBuffer(), support::little);
+
+  // Read the file headers.
+  //   - At the beginning, ICONDIR/NEWHEADER header.
+  //   - Then, a number of RESDIR headers follow. These contain offsets
+  //       to data.
+  const GroupIconDir *Header;
+
+  RETURN_IF_ERROR(Reader.readObject(Header));
+  if (Header->Reserved != 0)
+    return createError("Incorrect icon/cursor Reserved field; should be 0.");
+  uint16_t NeededType = Type == IconCursorGroupType::Icon ? 1 : 2;
+  if (Header->ResType != NeededType)
+    return createError("Incorrect icon/cursor ResType field; should be " +
+                       Twine(NeededType) + ".");
+
+  uint16_t NumItems = Header->ResCount;
+
+  // Read single ico/cur headers.
+  std::vector<ResourceDirEntryStart> ItemEntries;
+  ItemEntries.reserve(NumItems);
+  std::vector<uint32_t> ItemOffsets(NumItems);
+  for (size_t ID = 0; ID < NumItems; ++ID) {
+    const ResourceDirEntryStart *Object;
+    RETURN_IF_ERROR(Reader.readObject(Object));
+    ItemEntries.push_back(*Object);
+    RETURN_IF_ERROR(Reader.readInteger(ItemOffsets[ID]));
+  }
+
+  // Now write each icon/cursors one by one. At first, all the contents
+  // without ICO/CUR header. This is described by SingleIconCursorResource.
+  for (size_t ID = 0; ID < NumItems; ++ID) {
+    // Load the fragment of file.
+    Reader.setOffset(ItemOffsets[ID]);
+    ArrayRef<uint8_t> Image;
+    RETURN_IF_ERROR(Reader.readArray(Image, ItemEntries[ID].Size));
+    SingleIconCursorResource SingleRes(Type, ItemEntries[ID], Image);
+    SingleRes.setName(IconCursorID + ID);
+    RETURN_IF_ERROR(visitSingleIconOrCursor(&SingleRes));
+  }
+
+  // Now, write all the headers concatenated into a separate resource.
+  for (size_t ID = 0; ID < NumItems; ++ID) {
+    if (Type == IconCursorGroupType::Icon) {
+      // rc.exe seems to always set NumPlanes to 1. No idea why it happens.
+      ItemEntries[ID].Planes = 1;
+      continue;
+    }
+
+    // We need to rewrite the cursor headers.
+    const auto &OldHeader = ItemEntries[ID];
+    ResourceDirEntryStart NewHeader;
+    NewHeader.Cursor.Width = OldHeader.Icon.Width;
+    // Each cursor in fact stores two bitmaps, one under another.
+    // Height provided in cursor definition describes the height of the
+    // cursor, whereas the value existing in resource definition describes
+    // the height of the bitmap. Therefore, we need to double this height.
+    NewHeader.Cursor.Height = OldHeader.Icon.Height * 2;
+
+    // Now, we actually need to read the bitmap header to find
+    // the number of planes and the number of bits per pixel.
+    Reader.setOffset(ItemOffsets[ID]);
+    const BitmapInfoHeader *BMPHeader;
+    RETURN_IF_ERROR(Reader.readObject(BMPHeader));
+    NewHeader.Planes = BMPHeader->Planes;
+    NewHeader.BitCount = BMPHeader->BitCount;
+
+    // Two WORDs were written at the beginning of the resource (hotspot
+    // location). This is reflected in Size field.
+    NewHeader.Size = OldHeader.Size + 2 * sizeof(uint16_t);
+
+    ItemEntries[ID] = NewHeader;
+  }
+
+  IconCursorGroupResource HeaderRes(Type, *Header, std::move(ItemEntries));
+  HeaderRes.setName(ResName);
+  RETURN_IF_ERROR(visitIconOrCursorGroup(&HeaderRes));
+
   return Error::success();
 }
 

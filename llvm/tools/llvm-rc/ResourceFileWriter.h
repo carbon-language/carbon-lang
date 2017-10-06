@@ -25,14 +25,16 @@ namespace rc {
 class ResourceFileWriter : public Visitor {
 public:
   ResourceFileWriter(std::unique_ptr<raw_fd_ostream> Stream)
-      : FS(std::move(Stream)) {
+      : FS(std::move(Stream)), IconCursorID(1) {
     assert(FS && "Output stream needs to be provided to the serializator");
   }
 
   Error visitNullResource(const RCResource *) override;
   Error visitAcceleratorsResource(const RCResource *) override;
+  Error visitCursorResource(const RCResource *) override;
   Error visitDialogResource(const RCResource *) override;
   Error visitHTMLResource(const RCResource *) override;
+  Error visitIconResource(const RCResource *) override;
   Error visitMenuResource(const RCResource *) override;
 
   Error visitCaptionStmt(const CaptionStmt *) override;
@@ -75,6 +77,13 @@ private:
   Error writeSingleAccelerator(const AcceleratorsResource::Accelerator &,
                                bool IsLastItem);
   Error writeAcceleratorsBody(const RCResource *);
+
+  // CursorResource and IconResource
+  Error visitIconOrCursorResource(const RCResource *);
+  Error visitIconOrCursorGroup(const RCResource *);
+  Error visitSingleIconOrCursor(const RCResource *);
+  Error writeSingleIconOrCursorBody(const RCResource *);
+  Error writeIconOrCursorGroupBody(const RCResource *);
 
   // DialogResource
   Error writeSingleDialogControl(const Control &, bool IsExtended);
@@ -120,6 +129,10 @@ private:
   Error appendFile(StringRef Filename);
 
   void padStream(uint64_t Length);
+
+  // Icon and cursor IDs are allocated starting from 1 and increasing for
+  // each icon/cursor dumped. This maintains the current ID to be allocated.
+  uint16_t IconCursorID;
 };
 
 } // namespace rc
