@@ -166,7 +166,9 @@ static Error processString(StringRef Str, NullHandlingMethod NullHandler,
       }
     }
 
-    Result.push_back(Char);
+    // Make sure to write little-endian strings, regardless of the host
+    // byte-order.
+    Result.push_back(endian::byte_swap(Char, little));
     return Error::success();
   };
 
@@ -347,9 +349,9 @@ Error ResourceFileWriter::writeIntOrString(const IntOrString &Value) {
 
 void ResourceFileWriter::writeRCInt(RCInt Value) {
   if (Value.isLong())
-    writeObject((uint32_t)Value);
+    writeInt<uint32_t>(Value);
   else
-    writeObject((uint16_t)Value);
+    writeInt<uint16_t>(Value);
 }
 
 Error ResourceFileWriter::appendFile(StringRef Filename) {
@@ -776,7 +778,7 @@ Error ResourceFileWriter::writeIconOrCursorGroupBody(const RCResource *Base) {
   writeObject(Res->Header);
   for (auto Item : Res->ItemEntries) {
     writeObject(Item);
-    writeObject(ulittle16_t(IconCursorID++));
+    writeInt(IconCursorID++);
   }
   return Error::success();
 }
@@ -1179,9 +1181,9 @@ Error ResourceFileWriter::writeStringTableBundleBody(const RCResource *Base) {
       Data.push_back('\0');
     RETURN_IF_ERROR(
         checkNumberFits<uint16_t>(Data.size(), "STRINGTABLE string size"));
-    writeObject(ulittle16_t(Data.size()));
+    writeInt<uint16_t>(Data.size());
     for (auto Char : Data)
-      writeObject(ulittle16_t(Char));
+      writeInt(Char);
   }
   return Error::success();
 }
@@ -1227,13 +1229,13 @@ Error ResourceFileWriter::writeUserDefinedBody(const RCResource *Base) {
 
     for (auto Ch : ProcessedString) {
       if (IsLongString) {
-        writeObject(ulittle16_t(Ch));
+        writeInt(Ch);
         continue;
       }
 
       RETURN_IF_ERROR(checkNumberFits<uint8_t>(
           Ch, "Character in narrow string in user-defined resoutce"));
-      writeObject(uint8_t(Ch));
+      writeInt<uint8_t>(Ch);
     }
   }
 
@@ -1369,9 +1371,9 @@ Error ResourceFileWriter::writeVersionInfoBody(const RCResource *Base) {
   } FixedInfo;
 
   // First, VS_VERSIONINFO.
-  auto LengthLoc = writeObject<uint16_t>(0);
-  writeObject(ulittle16_t(sizeof(FixedInfo)));
-  writeObject(ulittle16_t(0));
+  auto LengthLoc = writeInt<uint16_t>(0);
+  writeInt<uint16_t>(sizeof(FixedInfo));
+  writeInt<uint16_t>(0);
   cantFail(writeCString("VS_VERSION_INFO"));
   padStream(sizeof(uint32_t));
 
