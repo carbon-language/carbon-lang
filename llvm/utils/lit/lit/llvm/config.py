@@ -6,8 +6,10 @@ import sys
 
 import lit.util
 
+
 def binary_feature(on, feature, off_prefix):
     return feature if on else off_prefix + feature
+
 
 class LLVMConfig(object):
 
@@ -25,21 +27,20 @@ class LLVMConfig(object):
 
             # Seek sane tools in directories and set to $PATH.
             path = self.lit_config.getToolsPath(config.lit_tools_dir,
-                                           config.environment['PATH'],
-                                           ['cmp.exe', 'grep.exe', 'sed.exe'])
+                                                config.environment['PATH'],
+                                                ['cmp.exe', 'grep.exe', 'sed.exe'])
             if path is not None:
                 self.with_environment('PATH', path, append_path=True)
             self.use_lit_shell = True
 
         # Choose between lit's internal shell pipeline runner and a real shell.  If
         # LIT_USE_INTERNAL_SHELL is in the environment, we use that as an override.
-        lit_shell_env = os.environ.get("LIT_USE_INTERNAL_SHELL")
+        lit_shell_env = os.environ.get('LIT_USE_INTERNAL_SHELL')
         if lit_shell_env:
             self.use_lit_shell = lit.util.pythonize_bool(lit_shell_env)
 
         if not self.use_lit_shell:
             features.add('shell')
-
 
         # Running on Darwin OS
         if platform.system() in ['Darwin']:
@@ -57,29 +58,31 @@ class LLVMConfig(object):
         host_triple = getattr(config, 'host_triple', None)
         target_triple = getattr(config, 'target_triple', None)
         if host_triple and host_triple == target_triple:
-            features.add("native")
+            features.add('native')
 
         # Sanitizers.
         sanitizers = getattr(config, 'llvm_use_sanitizer', '')
         sanitizers = frozenset(x.lower() for x in sanitizers.split(';'))
         features.add(binary_feature('address' in sanitizers, 'asan', 'not_'))
         features.add(binary_feature('memory' in sanitizers, 'msan', 'not_'))
-        features.add(binary_feature('undefined' in sanitizers, 'ubsan', 'not_'))
+        features.add(binary_feature(
+            'undefined' in sanitizers, 'ubsan', 'not_'))
 
         have_zlib = getattr(config, 'have_zlib', None)
         features.add(binary_feature(have_zlib, 'zlib', 'no'))
 
         # Check if we should run long running tests.
-        long_tests = lit_config.params.get("run_long_tests", None)
+        long_tests = lit_config.params.get('run_long_tests', None)
         if lit.util.pythonize_bool(long_tests):
-            features.add("long_tests")
+            features.add('long_tests')
 
         if target_triple:
             if re.match(r'^x86_64.*-apple', target_triple):
                 if 'address' in sanitizers:
-                    self.with_environment('ASAN_OPTIONS', 'detect_leaks=1', append_path=True)
+                    self.with_environment(
+                        'ASAN_OPTIONS', 'detect_leaks=1', append_path=True)
             if re.match(r'^x86_64.*-linux', target_triple):
-                features.add("x86_64-linux")
+                features.add('x86_64-linux')
             if re.match(r'.*-win32$', target_triple):
                 features.add('target-windows')
 
@@ -90,13 +93,14 @@ class LLVMConfig(object):
             gmalloc_path_str = lit_config.params.get('gmalloc_path',
                                                      '/usr/lib/libgmalloc.dylib')
             if gmalloc_path_str is not None:
-                self.with_environment('DYLD_INSERT_LIBRARIES', gmalloc_path_str)
+                self.with_environment(
+                    'DYLD_INSERT_LIBRARIES', gmalloc_path_str)
 
         breaking_checks = getattr(config, 'enable_abi_breaking_checks', None)
         if lit.util.pythonize_bool(breaking_checks):
             features.add('abi-breaking-checks')
 
-    def with_environment(self, variable, value, append_path = False):
+    def with_environment(self, variable, value, append_path=False):
         if append_path:
             # For paths, we should be able to take a list of them and process all
             # of them.
@@ -129,8 +133,7 @@ class LLVMConfig(object):
             value = os.pathsep.join(paths)
         self.config.environment[variable] = value
 
-
-    def with_system_environment(self, variables, append_path = False):
+    def with_system_environment(self, variables, append_path=False):
         if lit.util.is_string(variables):
             variables = [variables]
         for v in variables:
@@ -153,7 +156,7 @@ class LLVMConfig(object):
             stderr = lit.util.to_string(stderr)
             return (stdout, stderr)
         except OSError:
-            self.lit_config.fatal("Could not run process %s" % command)
+            self.lit_config.fatal('Could not run process %s' % command)
 
     def feature_config(self, features):
         # Ask llvm-config about the specified feature.
@@ -175,17 +178,18 @@ class LLVMConfig(object):
                     if re.search(re_pattern, feature_line):
                         self.config.available_features.add(feature)
 
-
     # Note that when substituting %clang_cc1 also fill in the include directory of
     # the builtin headers. Those are part of even a freestanding environment, but
     # Clang relies on the driver to locate them.
     def get_clang_builtin_include_dir(self, clang):
         # FIXME: Rather than just getting the version, we should have clang print
         # out its resource dir here in an easy to scrape form.
-        clang_dir, _ = self.get_process_output([clang, '-print-file-name=include'])
+        clang_dir, _ = self.get_process_output(
+            [clang, '-print-file-name=include'])
 
         if not clang_dir:
-          self.lit_config.fatal("Couldn't find the include dir for Clang ('%s')" % clang)
+            self.lit_config.fatal(
+                "Couldn't find the include dir for Clang ('%s')" % clang)
 
         clang_dir = clang_dir.strip()
         if sys.platform in ['win32'] and not self.use_lit_shell:
@@ -197,29 +201,31 @@ class LLVMConfig(object):
     def make_itanium_abi_triple(self, triple):
         m = re.match(r'(\w+)-(\w+)-(\w+)', triple)
         if not m:
-          self.lit_config.fatal("Could not turn '%s' into Itanium ABI triple" % triple)
+            self.lit_config.fatal(
+                "Could not turn '%s' into Itanium ABI triple" % triple)
         if m.group(3).lower() != 'win32':
-          # All non-win32 triples use the Itanium ABI.
-          return triple
+            # All non-win32 triples use the Itanium ABI.
+            return triple
         return m.group(1) + '-' + m.group(2) + '-mingw32'
 
     def make_msabi_triple(self, triple):
         m = re.match(r'(\w+)-(\w+)-(\w+)', triple)
         if not m:
-          self.lit_config.fatal("Could not turn '%s' into MS ABI triple" % triple)
+            self.lit_config.fatal(
+                "Could not turn '%s' into MS ABI triple" % triple)
         isa = m.group(1).lower()
         vendor = m.group(2).lower()
         os = m.group(3).lower()
         if os == 'win32':
-          # If the OS is win32, we're done.
-          return triple
+            # If the OS is win32, we're done.
+            return triple
         if isa.startswith('x86') or isa == 'amd64' or re.match(r'i\d86', isa):
-          # For x86 ISAs, adjust the OS.
-          return isa + '-' + vendor + '-win32'
+            # For x86 ISAs, adjust the OS.
+            return isa + '-' + vendor + '-win32'
         # -win32 is not supported for non-x86 targets; use a default.
         return 'i686-pc-win32'
 
-    def add_tool_substitutions(self, tools, search_dirs, warn_missing = True):
+    def add_tool_substitutions(self, tools, search_dirs, warn_missing=True):
         if lit.util.is_string(search_dirs):
             search_dirs = [search_dirs]
 
@@ -245,7 +251,8 @@ class LLVMConfig(object):
             if not tool_path:
                 if warn_missing:
                     # Warn, but still provide a substitution.
-                    self.lit_config.note('Did not find ' + tool_name + ' in %s' % search_dirs)
+                    self.lit_config.note(
+                        'Did not find ' + tool_name + ' in %s' % search_dirs)
                 tool_path = self.config.llvm_tools_dir + '/' + tool_name
 
             if tool_name == 'llc' and os.environ.get('LLVM_ENABLE_MACHINE_VERIFIER') == '1':
@@ -253,6 +260,6 @@ class LLVMConfig(object):
             if tool_name == 'llvm-go':
                 exe = getattr(self.config, 'go_executable', None)
                 if exe:
-                    tool_path += " go=" + exe
+                    tool_path += ' go=' + exe
 
             self.config.substitutions.append((tool, tool_pipe + tool_path))

@@ -49,7 +49,7 @@ llvm_config.with_environment('LD_LIBRARY_PATH',
 # tools that might happen to be in the user's PATH.
 tool_dirs = [config.lld_tools_dir, config.llvm_tools_dir]
 
-config.substitutions.append( (r"\bld.lld\b", 'ld.lld --full-shutdown') )
+config.substitutions.append((r"\bld.lld\b", 'ld.lld --full-shutdown'))
 
 tool_patterns = [
     'FileCheck', 'not', 'ld.lld', 'lld-link', 'llvm-as', 'llvm-mc', 'llvm-nm',
@@ -59,7 +59,7 @@ tool_patterns = [
 llvm_config.add_tool_substitutions(tool_patterns, tool_dirs)
 
 # Add site-specific substitutions.
-config.substitutions.append( ('%python', config.python_executable) )
+config.substitutions.append(('%python', config.python_executable))
 
 # When running under valgrind, we mangle '-vg' onto the end of the triple so we
 # can check it with XFAIL and XTARGET.
@@ -75,17 +75,17 @@ if platform.system() not in ['Windows']:
     config.available_features.add('demangler')
 
 llvm_config.feature_config(
-    [('--build-mode', {'DEBUG' : 'debug'}),
-     ('--assertion-mode', {'ON' : 'asserts'}),
-     ('--targets-built', {'AArch64' : 'aarch64',
-                          'AMDGPU' : 'amdgpu',
-                          'ARM' : 'arm',
-                          'AVR' : 'avr',
-                          'Mips' : 'mips',
-                          'PowerPC' : 'ppc',
-                          'Sparc' : 'sparc',
-                          'X86' : 'x86'})
-    ])
+    [('--build-mode', {'DEBUG': 'debug'}),
+     ('--assertion-mode', {'ON': 'asserts'}),
+     ('--targets-built', {'AArch64': 'aarch64',
+                          'AMDGPU': 'amdgpu',
+                          'ARM': 'arm',
+                          'AVR': 'avr',
+                          'Mips': 'mips',
+                          'PowerPC': 'ppc',
+                          'Sparc': 'sparc',
+                          'X86': 'x86'})
+     ])
 
 # Set a fake constant version so that we get consitent output.
 config.environment['LLD_VERSION'] = 'LLD 1.0'
@@ -94,8 +94,8 @@ config.environment['LLD_VERSION'] = 'LLD 1.0'
 # cvtres, which always accompanies it.  Alternatively, check if we can use
 # libxml2 to merge manifests.
 if (lit.util.which('cvtres', config.environment['PATH'])) or \
- (config.llvm_libxml2_enabled == "1"):
+        (config.llvm_libxml2_enabled == '1'):
     config.available_features.add('manifest_tool')
 
-if (config.llvm_libxml2_enabled == "1"):
+if (config.llvm_libxml2_enabled == '1'):
     config.available_features.add('libxml2')
