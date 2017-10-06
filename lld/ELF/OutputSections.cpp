@@ -206,8 +206,6 @@ static OutputSection *createSection(InputSectionBase *IS, StringRef OutsecName) 
   Sec->Flags = IS->Flags;
   Sec->addSection(cast<InputSection>(IS));
 
-  Script->Opt.Commands.push_back(Sec);
-
   return Sec;
 }
 
@@ -240,15 +238,17 @@ static void addSection(OutputSection *Sec, InputSectionBase *IS, StringRef Outse
 void OutputSectionFactory::addInputSec(InputSectionBase *IS,
                                        StringRef OutsecName,
                                        OutputSection *OS) {
+  if (IS->Live)
+    addSection(OS, IS, OutsecName);
+  else
+    reportDiscarded(IS);
+}
+
+OutputSection *OutputSectionFactory::addInputSec(InputSectionBase *IS,
+                                                 StringRef OutsecName) {
   if (!IS->Live) {
     reportDiscarded(IS);
-    return;
-  }
-
-  // If we have destination output section - use it directly.
-  if (OS) {
-    addSection(OS, IS, OutsecName);
-    return;
+    return nullptr;
   }
 
   // Sections with SHT_GROUP or SHF_GROUP attributes reach here only when the -r
@@ -258,10 +258,8 @@ void OutputSectionFactory::addInputSec(InputSectionBase *IS,
   // However, for the -r option, we want to pass through all section groups
   // as-is because adding/removing members or merging them with other groups
   // change their semantics.
-  if (IS->Type == SHT_GROUP || (IS->Flags & SHF_GROUP)) {
-    createSection(IS, OutsecName);
-    return;
-  }
+  if (IS->Type == SHT_GROUP || (IS->Flags & SHF_GROUP))
+    return createSection(IS, OutsecName);
 
   // Imagine .zed : { *(.foo) *(.bar) } script. Both foo and bar may have
   // relocation sections .rela.foo and .rela.bar for example. Most tools do
@@ -274,19 +272,24 @@ void OutputSectionFactory::addInputSec(InputSectionBase *IS,
     auto *Sec = cast<InputSection>(IS);
     OutputSection *Out = Sec->getRelocatedSection()->getOutputSection();
 
-    if (Out->RelocationSection)
+    if (Out->RelocationSection) {
       addSection(Out->RelocationSection, IS, OutsecName);
-    else
-      Out->RelocationSection = createSection(IS, OutsecName);
-    return;
+      return nullptr;
+    }
+
+    Out->RelocationSection = createSection(IS, OutsecName);
+    return Out->RelocationSection;
   }
 
   SectionKey Key = createKey(IS, OutsecName);
   OutputSection *&Sec = Map[Key];
-  if (Sec)
+  if (Sec) {
     addSection(Sec, IS, OutsecName);
-  else
-    Sec = createSection(IS, OutsecName);
+    return nullptr;
+  }
+
+  Sec = createSection(IS, OutsecName);
+  return Sec;
 }
 
 OutputSectionFactory::~OutputSectionFactory() {}

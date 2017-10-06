@@ -164,6 +164,8 @@ public:
   OutputSectionFactory();
   ~OutputSectionFactory();
 
+  OutputSection *addInputSec(InputSectionBase *IS, StringRef OutsecName);
+
   void addInputSec(InputSectionBase *IS, StringRef OutsecName,
                    OutputSection *OS);
 

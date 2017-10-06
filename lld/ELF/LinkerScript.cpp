@@ -417,6 +417,7 @@ void LinkerScript::processCommands(OutputSectionFactory &Factory) {
       // Add input sections to an output section.
       for (InputSectionBase *S : V)
         Factory.addInputSec(S, Sec->Name, Sec);
+
       assert(Sec->SectionIndex == INT_MAX);
       Sec->SectionIndex = I;
       if (Sec->Noload)
@@ -466,10 +467,12 @@ void LinkerScript::addOrphanSections(OutputSectionFactory &Factory) {
     if (OutputSection *Sec = findByName(
             makeArrayRef(Opt.Commands).slice(0, End), Name)) {
       Factory.addInputSec(S, Name, Sec);
-    } else {
-      Factory.addInputSec(S, Name, nullptr);
-      assert(S->getOutputSection()->SectionIndex == INT_MAX);
+      continue;
     }
+
+    if (OutputSection *OS = Factory.addInputSec(S, Name))
+      Script->Opt.Commands.push_back(OS);
+    assert(S->getOutputSection()->SectionIndex == INT_MAX);
   }
 }
 
