@@ -37,6 +37,7 @@ public:
   virtual Error visitHTMLResource(const RCResource *) = 0;
   virtual Error visitIconResource(const RCResource *) = 0;
   virtual Error visitMenuResource(const RCResource *) = 0;
+  virtual Error visitStringTableResource(const RCResource *) = 0;
   virtual Error visitVersionInfoResource(const RCResource *) = 0;
 
   virtual Error visitCaptionStmt(const CaptionStmt *) = 0;

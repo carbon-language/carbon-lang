@@ -124,6 +124,7 @@ enum ResourceKind {
   RkSingleIcon = 3,
   RkMenu = 4,
   RkDialog = 5,
+  RkStringTableBundle = 6,
   RkAccelerators = 9,
   RkCursorGroup = 12,
   RkIconGroup = 14,
@@ -138,9 +139,10 @@ enum ResourceKind {
   RkBase,
   RkCursor,
   RkIcon,
+  RkStringTable,
   RkUser,
   RkSingleCursorOrIconRes,
-  RkCursorOrIconGroupRes
+  RkCursorOrIconGroupRes,
 };
 
 // Non-zero memory flags.
@@ -488,14 +490,18 @@ public:
 //
 // Ref: msdn.microsoft.com/en-us/library/windows/desktop/aa381050(v=vs.85).aspx
 class StringTableResource : public OptStatementsRCResource {
+public:
   std::vector<std::pair<uint32_t, StringRef>> Table;
 
-public:
   using OptStatementsRCResource::OptStatementsRCResource;
   void addString(uint32_t ID, StringRef String) {
     Table.emplace_back(ID, String);
   }
   raw_ostream &log(raw_ostream &) const override;
+  Twine getResourceTypeName() const override { return "STRINGTABLE"; }
+  Error visit(Visitor *V) const override {
+    return V->visitStringTableResource(this);
+  }
 };
 
 // -- DIALOG(EX) resource and its helper classes --

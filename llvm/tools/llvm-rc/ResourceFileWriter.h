@@ -37,6 +37,7 @@ public:
   Error visitIconResource(const RCResource *) override;
   Error visitMenuResource(const RCResource *) override;
   Error visitVersionInfoResource(const RCResource *) override;
+  Error visitStringTableResource(const RCResource *) override;
 
   Error visitCaptionStmt(const CaptionStmt *) override;
   Error visitCharacteristicsStmt(const CharacteristicsStmt *) override;
@@ -44,6 +45,12 @@ public:
   Error visitLanguageStmt(const LanguageResource *) override;
   Error visitStyleStmt(const StyleStmt *) override;
   Error visitVersionStmt(const VersionStmt *) override;
+
+  // Stringtables are output at the end of .res file. We need a separate
+  // function to do it.
+  Error dumpAllStringTables();
+
+  bool AppendNull; // Append '\0' to each existing STRINGTABLE element?
 
   struct ObjectInfo {
     uint16_t LanguageInfo;
@@ -63,6 +70,21 @@ public:
 
     ObjectInfo() : LanguageInfo(0), Characteristics(0), VersionInfo(0) {}
   } ObjectData;
+
+  struct StringTableInfo {
+    // Each STRINGTABLE bundle depends on ID of the bundle and language
+    // description.
+    using BundleKey = std::pair<uint16_t, uint16_t>;
+    // Each bundle is in fact an array of 16 strings.
+    struct Bundle {
+      std::array<Optional<StringRef>, 16> Data;
+      ObjectInfo DeclTimeInfo;
+      Bundle(const ObjectInfo &Info) : DeclTimeInfo(Info) {}
+    };
+    std::map<BundleKey, Bundle> BundleData;
+    // Bundles are listed in the order of their first occurence.
+    std::vector<BundleKey> BundleList;
+  } StringTableData;
 
 private:
   Error handleError(Error &&Err, const RCResource *Res);
@@ -98,6 +120,12 @@ private:
                             uint16_t Flags);
   Error writeMenuDefinitionList(const MenuDefinitionList &List);
   Error writeMenuBody(const RCResource *);
+
+  // StringTableResource
+  Error visitStringTableBundle(const RCResource *);
+  Error writeStringTableBundleBody(const RCResource *);
+  Error insertStringIntoBundle(StringTableInfo::Bundle &Bundle,
+                               uint16_t StringID, StringRef String);
 
   // VersionInfoResource
   Error writeVersionInfoBody(const RCResource *);

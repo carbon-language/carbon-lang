@@ -129,8 +129,6 @@ enum class NullHandlingMethod {
 // For identifiers, this is no-op.
 static Error processString(StringRef Str, NullHandlingMethod NullHandler,
                            bool &IsLongString, SmallVectorImpl<UTF16> &Result) {
-  assert(NullHandler == NullHandlingMethod::CutAtNull);
-
   bool IsString = stripQuotes(Str, IsLongString);
   convertUTF8ToUTF16String(Str, Result);
 
@@ -143,11 +141,24 @@ static Error processString(StringRef Str, NullHandlingMethod NullHandler,
     return Error::success();
   }
 
-  // We don't process the string contents. Only cut at '\0'.
+  switch (NullHandler) {
+  case NullHandlingMethod::CutAtNull:
+    for (size_t Pos = 0; Pos < Result.size(); ++Pos)
+      if (Result[Pos] == '\0')
+        Result.resize(Pos);
+    break;
 
-  for (size_t Pos = 0; Pos < Result.size(); ++Pos)
-    if (Result[Pos] == '\0')
-      Result.resize(Pos);
+  case NullHandlingMethod::CutAtDoubleNull:
+    for (size_t Pos = 0; Pos + 1 < Result.size(); ++Pos)
+      if (Result[Pos] == '\0' && Result[Pos + 1] == '\0')
+        Result.resize(Pos);
+    if (Result.size() > 0 && Result.back() == '\0')
+      Result.pop_back();
+    break;
+
+  case NullHandlingMethod::UserResource:
+    break;
+  }
 
   return Error::success();
 }
@@ -256,6 +267,35 @@ Error ResourceFileWriter::visitHTMLResource(const RCResource *Res) {
 
 Error ResourceFileWriter::visitMenuResource(const RCResource *Res) {
   return writeResource(Res, &ResourceFileWriter::writeMenuBody);
+}
+
+Error ResourceFileWriter::visitStringTableResource(const RCResource *Base) {
+  const auto *Res = cast<StringTableResource>(Base);
+
+  ContextKeeper RAII(this);
+  RETURN_IF_ERROR(Res->applyStmts(this));
+
+  for (auto &String : Res->Table) {
+    RETURN_IF_ERROR(checkNumberFits<uint16_t>(String.first, "String ID"));
+    uint16_t BundleID = String.first >> 4;
+    StringTableInfo::BundleKey Key(BundleID, ObjectData.LanguageInfo);
+    auto &BundleData = StringTableData.BundleData;
+    auto Iter = BundleData.find(Key);
+
+    if (Iter == BundleData.end()) {
+      // Need to create a bundle.
+      StringTableData.BundleList.push_back(Key);
+      auto EmplaceResult =
+          BundleData.emplace(Key, StringTableInfo::Bundle(ObjectData));
+      assert(EmplaceResult.second && "Could not create a bundle");
+      Iter = EmplaceResult.first;
+    }
+
+    RETURN_IF_ERROR(
+        insertStringIntoBundle(Iter->second, String.first, String.second));
+  }
+
+  return Error::success();
 }
 
 Error ResourceFileWriter::visitVersionInfoResource(const RCResource *Res) {
@@ -937,6 +977,75 @@ Error ResourceFileWriter::writeMenuBody(const RCResource *Base) {
   writeObject<uint32_t>(0);
 
   return writeMenuDefinitionList(cast<MenuResource>(Base)->Elements);
+}
+
+// --- StringTableResource helpers. --- //
+
+class BundleResource : public RCResource {
+public:
+  using BundleType = ResourceFileWriter::StringTableInfo::Bundle;
+  BundleType Bundle;
+
+  BundleResource(const BundleType &StrBundle) : Bundle(StrBundle) {}
+  IntOrString getResourceType() const override { return 6; }
+
+  ResourceKind getKind() const override { return RkStringTableBundle; }
+  static bool classof(const RCResource *Res) {
+    return Res->getKind() == RkStringTableBundle;
+  }
+};
+
+Error ResourceFileWriter::visitStringTableBundle(const RCResource *Res) {
+  return writeResource(Res, &ResourceFileWriter::writeStringTableBundleBody);
+}
+
+Error ResourceFileWriter::insertStringIntoBundle(
+    StringTableInfo::Bundle &Bundle, uint16_t StringID, StringRef String) {
+  uint16_t StringLoc = StringID & 15;
+  if (Bundle.Data[StringLoc])
+    return createError("Multiple STRINGTABLE strings located under ID " +
+                       Twine(StringID));
+  Bundle.Data[StringLoc] = String;
+  return Error::success();
+}
+
+Error ResourceFileWriter::writeStringTableBundleBody(const RCResource *Base) {
+  auto *Res = cast<BundleResource>(Base);
+  for (size_t ID = 0; ID < Res->Bundle.Data.size(); ++ID) {
+    // The string format is a tiny bit different here. We
+    // first output the size of the string, and then the string itself
+    // (which is not null-terminated).
+    bool IsLongString;
+    SmallVector<UTF16, 128> Data;
+    RETURN_IF_ERROR(processString(Res->Bundle.Data[ID].getValueOr(StringRef()),
+                                  NullHandlingMethod::CutAtDoubleNull,
+                                  IsLongString, Data));
+    if (AppendNull && Res->Bundle.Data[ID])
+      Data.push_back('\0');
+    RETURN_IF_ERROR(
+        checkNumberFits<uint16_t>(Data.size(), "STRINGTABLE string size"));
+    writeObject(ulittle16_t(Data.size()));
+    for (auto Char : Data)
+      writeObject(ulittle16_t(Char));
+  }
+  return Error::success();
+}
+
+Error ResourceFileWriter::dumpAllStringTables() {
+  for (auto Key : StringTableData.BundleList) {
+    auto Iter = StringTableData.BundleData.find(Key);
+    assert(Iter != StringTableData.BundleData.end());
+
+    // For a moment, revert the context info to moment of bundle declaration.
+    ContextKeeper RAII(this);
+    ObjectData = Iter->second.DeclTimeInfo;
+
+    BundleResource Res(Iter->second);
+    // Bundle #(k+1) contains keys [16k, 16k + 15].
+    Res.setName(Key.first + 1);
+    RETURN_IF_ERROR(visitStringTableBundle(&Res));
+  }
+  return Error::success();
 }
 
 // --- VersionInfoResourceResource helpers. --- //
