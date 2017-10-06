@@ -202,6 +202,7 @@ typedef std::pair<uint64_t, DiceRef> DiceTableEntry;
 typedef std::vector<DiceTableEntry> DiceTable;
 typedef DiceTable::iterator dice_table_iterator;
 
+#ifdef HAVE_LIBXAR
 namespace {
 struct ScopedXarFile {
   xar_t xar;
@@ -229,6 +230,7 @@ struct ScopedXarIter {
   operator xar_iter_t() { return iter; }
 };
 } // namespace
+#endif // defined(HAVE_LIBXAR)
 
 // This is used to search for a data in code table entry for the PC being
 // disassembled.  The j parameter has the PC in j.first.  A single data in code
