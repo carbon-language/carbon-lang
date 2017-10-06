@@ -277,7 +277,7 @@ public:
   Instruction *visitURem(BinaryOperator &I);
   Instruction *visitSRem(BinaryOperator &I);
   Instruction *visitFRem(BinaryOperator &I);
-  bool SimplifyDivRemOfSelect(BinaryOperator &I);
+  bool simplifyDivRemOfSelectWithZeroOp(BinaryOperator &I);
   Instruction *commonRemTransforms(BinaryOperator &I);
   Instruction *commonIRemTransforms(BinaryOperator &I);
   Instruction *commonDivTransforms(BinaryOperator &I);
