@@ -60,14 +60,25 @@ void DataAggregator::findPerfExecutable() {
 
 void DataAggregator::start(StringRef PerfDataFilename) {
   Enabled = true;
+  this->PerfDataFilename = PerfDataFilename;
   outs() << "PERF2BOLT: Starting data aggregation job for " << PerfDataFilename
          << "\n";
   findPerfExecutable();
-  launchPerfEventsNoWait(PerfDataFilename);
-  launchPerfTasksNoWait(PerfDataFilename);
+  launchPerfEventsNoWait();
+  launchPerfTasksNoWait();
 }
 
-bool DataAggregator::launchPerfEventsNoWait(StringRef PerfDataFilename) {
+void DataAggregator::abort() {
+  std::string Error;
+
+  // Kill subprocesses in case they are not finished
+  sys::Wait(TasksPI, 1, false, &Error);
+  sys::Wait(EventsPI, 1, false, &Error);
+
+  deleteTempFiles();
+}
+
+bool DataAggregator::launchPerfEventsNoWait() {
   SmallVector<const char*, 4> Argv;
   SmallVector<StringRef, 3> Redirects;
   SmallVector<const StringRef*, 3> RedirectPtrs;
@@ -112,7 +123,7 @@ bool DataAggregator::launchPerfEventsNoWait(StringRef PerfDataFilename) {
   return true;
 }
 
-bool DataAggregator::launchPerfTasksNoWait(StringRef PerfDataFilename) {
+bool DataAggregator::launchPerfTasksNoWait() {
   SmallVector<const char*, 4> Argv;
   SmallVector<StringRef, 3> Redirects;
   SmallVector<const StringRef*, 3> RedirectPtrs;
@@ -156,6 +167,88 @@ bool DataAggregator::launchPerfTasksNoWait(StringRef PerfDataFilename) {
   return true;
 }
 
+Optional<std::string> DataAggregator::getPerfBuildID() {
+  SmallVector<const char *, 4> Argv;
+  SmallVector<StringRef, 3> Redirects;
+  SmallVector<const StringRef*, 3> RedirectPtrs;
+  SmallVector<char, 256> OutputPath;
+  SmallVector<char, 256> ErrPath;
+
+  Argv.push_back(PerfPath.data());
+  Argv.push_back("buildid-list");
+  Argv.push_back("-i");
+  Argv.push_back(PerfDataFilename.data());
+  Argv.push_back(nullptr);
+
+  if (auto Errc = sys::fs::createTemporaryFile("perf.buildid", "out",
+                                               OutputPath)) {
+    outs() << "PERF2BOLT: Failed to create temporary file "
+           << OutputPath << " with error " << Errc.message() << "\n";
+    exit(1);
+  }
+
+  if (auto Errc = sys::fs::createTemporaryFile("perf.script", "err",
+                                               ErrPath)) {
+    outs() << "PERF2BOLT: Failed to create temporary file "
+           << ErrPath << " with error " << Errc.message() << "\n";
+    exit(1);
+  }
+
+  Redirects.push_back("");                           // Stdin
+  Redirects.push_back(StringRef(OutputPath.data())); // Stdout
+  Redirects.push_back(StringRef(ErrPath.data()));    // Stderr
+  RedirectPtrs.push_back(&Redirects[0]);
+  RedirectPtrs.push_back(&Redirects[1]);
+  RedirectPtrs.push_back(&Redirects[2]);
+
+  DEBUG(dbgs() << "Launching perf: " << PerfPath.data() << " 1> "
+               << OutputPath.data() << " 2> "
+               << ErrPath.data() << "\n");
+
+  auto RetCode = sys::ExecuteAndWait(PerfPath.data(), Argv.data(),
+                                     /*envp*/ nullptr, &RedirectPtrs[0]);
+
+  if (RetCode != 0) {
+    ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
+      MemoryBuffer::getFileOrSTDIN(ErrPath.data());
+    StringRef ErrBuf = (*MB)->getBuffer();
+
+    errs() << "PERF-ERROR: Return code " << RetCode << "\n";
+    errs() << ErrBuf;
+    deleteTempFile(ErrPath.data());
+    deleteTempFile(OutputPath.data());
+    return NoneType();
+  }
+
+  ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
+    MemoryBuffer::getFileOrSTDIN(OutputPath.data());
+  if (std::error_code EC = MB.getError()) {
+    errs() << "Cannot open " << PerfTasksOutputPath.data() << ": "
+           << EC.message() << "\n";
+    deleteTempFile(ErrPath.data());
+    deleteTempFile(OutputPath.data());
+    return NoneType();
+  }
+
+  FileBuf.reset(MB->release());
+  ParsingBuf = FileBuf->getBuffer();
+  Col = 0;
+  Line = 1;
+  auto ParseResult = parsePerfBuildID();
+  if (!ParseResult) {
+    outs() << "PERF2BOLT: Failed to parse build-id from perf output\n";
+    deleteTempFile(ErrPath.data());
+    deleteTempFile(OutputPath.data());
+    return NoneType();
+  }
+
+  outs() << "PERF2BOLT: Perf.data build-id is:  " << *ParseResult << "\n";
+
+  deleteTempFile(ErrPath.data());
+  deleteTempFile(OutputPath.data());
+  return std::string(ParseResult->data(), ParseResult->size());
+}
+
 bool DataAggregator::checkPerfDataMagic(StringRef FileName) {
   int FD;
   if (sys::fs::openFileForRead(FileName, FD)) {
@@ -175,26 +268,18 @@ bool DataAggregator::checkPerfDataMagic(StringRef FileName) {
   return false;
 }
 
+void DataAggregator::deleteTempFile(StringRef File) {
+  if (auto Errc = sys::fs::remove(File.data())) {
+    outs() << "PERF2BOLT: Failed to delete temporary file "
+           << File << " with error " << Errc.message() << "\n";
+  }
+}
+
 void DataAggregator::deleteTempFiles() {
-  if (auto Errc = sys::fs::remove(PerfEventsErrPath.data())) {
-    outs() << "PERF2BOLT: Failed to delete temporary file "
-           << PerfEventsErrPath << " with error " << Errc.message() << "\n";
-  }
-
-  if (auto Errc = sys::fs::remove(PerfEventsOutputPath.data())) {
-    outs() << "PERF2BOLT: Failed to delete temporary file "
-           << PerfEventsOutputPath << " with error " << Errc.message() << "\n";
-  }
-
-  if (auto Errc = sys::fs::remove(PerfTasksErrPath.data())) {
-    outs() << "PERF2BOLT: Failed to delete temporary file "
-           << PerfTasksErrPath << " with error " << Errc.message() << "\n";
-  }
-
-  if (auto Errc = sys::fs::remove(PerfTasksOutputPath.data())) {
-    outs() << "PERF2BOLT: Failed to delete temporary file "
-           << PerfTasksOutputPath << " with error " << Errc.message() << "\n";
-  }
+  deleteTempFile(PerfEventsErrPath.data());
+  deleteTempFile(PerfEventsOutputPath.data());
+  deleteTempFile(PerfTasksErrPath.data());
+  deleteTempFile(PerfTasksOutputPath.data());
 }
 
 bool DataAggregator::aggregate(BinaryContext &BC,
@@ -541,7 +626,8 @@ std::error_code DataAggregator::parseEvents() {
       }
     }
     outs() << format("%.1f%%", Perc);
-    outs().resetColor();
+    if (outs().has_colors())
+      outs().resetColor();
     outs() << ")";
   }
   outs() << "\n";
@@ -621,6 +707,36 @@ std::error_code DataAggregator::parseTasks() {
               "all samples in perf data.\n";
 
   return std::error_code();
+}
+
+Optional<std::pair<StringRef, StringRef>>
+DataAggregator::parseNameBuildIDPair() {
+  while (checkAndConsumeFS()) {}
+
+  auto BuildIDStr = parseString(FieldSeparator, true);
+  if (std::error_code EC = BuildIDStr.getError())
+    return NoneType();
+
+  auto NameStr = parseString(FieldSeparator, true);
+  if (std::error_code EC = NameStr.getError())
+    return NoneType();
+
+  consumeRestOfLine();
+  return std::make_pair(NameStr.get(), BuildIDStr.get());
+}
+
+Optional<StringRef> DataAggregator::parsePerfBuildID() {
+  while (hasData()) {
+    auto IDPair = parseNameBuildIDPair();
+    if (!IDPair)
+      return NoneType();
+
+    if (sys::path::filename(IDPair->first) != BinaryName)
+      continue;
+
+    return IDPair->second;
+  }
+  return NoneType();
 }
 
 std::error_code DataAggregator::writeAggregatedFile() const {

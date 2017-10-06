@@ -325,6 +325,12 @@ AggregateOnly("aggregate-only",
   cl::Hidden,
   cl::cat(AggregatorCategory));
 
+static cl::opt<bool>
+IgnoreBuildID("ignore-build-id",
+  cl::desc("continue even if build-ids in input binary and perf.data mismatch"),
+  cl::init(false),
+  cl::cat(AggregatorCategory));
+
 // Check against lists of functions from options if we should
 // optimize the function with a given name.
 bool shouldProcess(const BinaryFunction &Function) {
@@ -774,6 +780,86 @@ void RewriteInstance::discoverStorage() {
   NewTextSegmentOffset = NextAvailableOffset;
 }
 
+Optional<std::string>
+RewriteInstance::getBuildID() {
+  for (auto &Section : InputFile->sections()) {
+    StringRef SectionName;
+    Section.getName(SectionName);
+
+    if (SectionName != ".note.gnu.build-id")
+      continue;
+
+    StringRef SectionContents;
+    Section.getContents(SectionContents);
+
+    // Reading notes section (see Portable Formats Specification, Version 1.1,
+    // pg 2-5, section "Note Section").
+    DataExtractor DE = DataExtractor(SectionContents, true, 8);
+    uint32_t Offset = 0;
+    if (!DE.isValidOffset(Offset))
+      return NoneType();
+    uint32_t NameSz = DE.getU32(&Offset);
+    if (!DE.isValidOffset(Offset))
+      return NoneType();
+    uint32_t DescSz = DE.getU32(&Offset);
+    if (!DE.isValidOffset(Offset))
+      return NoneType();
+    uint32_t Type = DE.getU32(&Offset);
+
+    DEBUG(dbgs() << "NameSz = " << NameSz << "; DescSz = " << DescSz
+                 << "; Type = " << Type << "\n");
+
+    // Type 3 is a GNU build-id note section
+    if (Type != 3)
+      return NoneType();
+
+    StringRef Name = SectionContents.slice(Offset, Offset + NameSz);
+    Offset = RoundUpToAlignment(Offset + NameSz, 4);
+    StringRef BinaryBuildID = SectionContents.slice(Offset, Offset + DescSz);
+    if (Name.substr(0, 3) != "GNU")
+      return NoneType();
+
+    std::string Str;
+    raw_string_ostream OS(Str);
+    auto CharIter = BinaryBuildID.bytes_begin();
+    while (CharIter != BinaryBuildID.bytes_end()) {
+      if (*CharIter < 0x10)
+        OS << "0";
+      OS << Twine::utohexstr(*CharIter);
+      ++CharIter;
+    }
+    outs() << "BOLT-INFO: Binary build-id is:     " << OS.str() << "\n";
+    return OS.str();
+  }
+  return NoneType();
+}
+
+void RewriteInstance::checkBuildID() {
+  auto FileBuildID = getBuildID();
+  if (!FileBuildID) {
+    outs() << "BOLT-WARNING: Build ID will not be checked because we could not "
+              "read one from input binary\n";
+    return;
+  }
+  auto PerfBuildID = DA.getPerfBuildID();
+  if (!PerfBuildID) {
+    outs() << "BOLT-WARNING: Build ID will not be checked because we could not "
+              "read one from perf.data\n";
+    return;
+  }
+  if (*FileBuildID == *PerfBuildID)
+    return;
+
+  outs() << "BOLT-ERROR: Build ID mismatch! This indicates the input binary "
+            "supplied for data aggregation is not the same recorded by perf "
+            "when collecting profiling data.\n";
+
+  if (!opts::IgnoreBuildID) {
+    DA.abort();
+    exit(1);
+  }
+}
+
 void RewriteInstance::run() {
   if (!BC) {
     errs() << "BOLT-ERROR: failed to create a binary context\n";
@@ -806,6 +892,8 @@ void RewriteInstance::run() {
                 (llvm::Triple::ArchType)InputFile->getArch())
          << "\n";
 
+  if (DA.started())
+    checkBuildID();
   unsigned PassNumber = 1;
   executeRewritePass({});
   if (opts::AggregateOnly)

@@ -158,6 +158,10 @@ public:
   /// Run all the necessary steps to read, optimize and rewrite the binary.
   void run();
 
+  /// Check that binary build ID matches the one used in perf.data to collect
+  /// profile
+  void checkBuildID();
+
   /// Populate array of binary functions and other objects of interest
   /// from meta data in the file.
   void discoverFileObjects();
@@ -277,6 +281,9 @@ private:
   /// Detect addresses and offsets available in the binary for allocating
   /// new sections.
   void discoverStorage();
+
+  /// Read binary sections and find a gnu note section with the build-id
+  Optional<std::string> getBuildID();
 
   /// Adjust function sizes and set proper maximum size values after the whole
   /// symbol table has been processed.
