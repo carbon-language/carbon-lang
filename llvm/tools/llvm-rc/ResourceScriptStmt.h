@@ -591,18 +591,29 @@ public:
 //   * a link to the file, e.g. NAME TYPE "filename",
 //   * or contains a list of integers and strings, e.g. NAME TYPE {1, "a", 2}.
 class UserDefinedResource : public RCResource {
+public:
   IntOrString Type;
   StringRef FileLoc;
   std::vector<IntOrString> Contents;
   bool IsFileResource;
 
-public:
   UserDefinedResource(IntOrString ResourceType, StringRef FileLocation)
       : Type(ResourceType), FileLoc(FileLocation), IsFileResource(true) {}
   UserDefinedResource(IntOrString ResourceType, std::vector<IntOrString> &&Data)
       : Type(ResourceType), Contents(std::move(Data)), IsFileResource(false) {}
 
   raw_ostream &log(raw_ostream &) const override;
+  IntOrString getResourceType() const override { return Type; }
+  Twine getResourceTypeName() const override { return Type; }
+  uint16_t getMemoryFlags() const override { return MfPure | MfMoveable; }
+
+  Error visit(Visitor *V) const override {
+    return V->visitUserDefinedResource(this);
+  }
+  ResourceKind getKind() const override { return RkUser; }
+  static bool classof(const RCResource *Res) {
+    return Res->getKind() == RkUser;
+  }
 };
 
 // -- VERSIONINFO resource and its helper classes --

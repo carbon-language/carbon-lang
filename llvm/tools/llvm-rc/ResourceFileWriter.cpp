@@ -298,6 +298,10 @@ Error ResourceFileWriter::visitStringTableResource(const RCResource *Base) {
   return Error::success();
 }
 
+Error ResourceFileWriter::visitUserDefinedResource(const RCResource *Res) {
+  return writeResource(Res, &ResourceFileWriter::writeUserDefinedBody);
+}
+
 Error ResourceFileWriter::visitVersionInfoResource(const RCResource *Res) {
   return writeResource(Res, &ResourceFileWriter::writeVersionInfoBody);
 }
@@ -1045,6 +1049,43 @@ Error ResourceFileWriter::dumpAllStringTables() {
     Res.setName(Key.first + 1);
     RETURN_IF_ERROR(visitStringTableBundle(&Res));
   }
+  return Error::success();
+}
+
+// --- UserDefinedResource helpers. --- //
+
+Error ResourceFileWriter::writeUserDefinedBody(const RCResource *Base) {
+  auto *Res = cast<UserDefinedResource>(Base);
+
+  if (Res->IsFileResource)
+    return appendFile(Res->FileLoc);
+
+  for (auto &Elem : Res->Contents) {
+    if (Elem.isInt()) {
+      RETURN_IF_ERROR(
+          checkRCInt(Elem.getInt(), "Number in user-defined resource"));
+      writeRCInt(Elem.getInt());
+      continue;
+    }
+
+    SmallVector<UTF16, 128> ProcessedString;
+    bool IsLongString;
+    RETURN_IF_ERROR(processString(Elem.getString(),
+                                  NullHandlingMethod::UserResource,
+                                  IsLongString, ProcessedString));
+
+    for (auto Ch : ProcessedString) {
+      if (IsLongString) {
+        writeObject(ulittle16_t(Ch));
+        continue;
+      }
+
+      RETURN_IF_ERROR(checkNumberFits<uint8_t>(
+          Ch, "Character in narrow string in user-defined resoutce"));
+      writeObject(uint8_t(Ch));
+    }
+  }
+
   return Error::success();
 }
 

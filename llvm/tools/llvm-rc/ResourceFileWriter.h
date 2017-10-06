@@ -38,6 +38,7 @@ public:
   Error visitMenuResource(const RCResource *) override;
   Error visitVersionInfoResource(const RCResource *) override;
   Error visitStringTableResource(const RCResource *) override;
+  Error visitUserDefinedResource(const RCResource *) override;
 
   Error visitCaptionStmt(const CaptionStmt *) override;
   Error visitCharacteristicsStmt(const CharacteristicsStmt *) override;
@@ -126,6 +127,9 @@ private:
   Error writeStringTableBundleBody(const RCResource *);
   Error insertStringIntoBundle(StringTableInfo::Bundle &Bundle,
                                uint16_t StringID, StringRef String);
+
+  // User defined resource
+  Error writeUserDefinedBody(const RCResource *);
 
   // VersionInfoResource
   Error writeVersionInfoBody(const RCResource *);
