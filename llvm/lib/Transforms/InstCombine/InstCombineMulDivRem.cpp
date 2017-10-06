@@ -813,7 +813,7 @@ bool InstCombiner::simplifyDivRemOfSelectWithZeroOp(BinaryOperator &I) {
 
   // Scan the current block backward, looking for other uses of SI.
   BasicBlock::iterator BBI = I.getIterator(), BBFront = I.getParent()->begin();
-
+  Type *CondTy = SelectCond->getType();
   while (BBI != BBFront) {
     --BBI;
     // If we found a call to a function, we can't assume it will return, so
@@ -828,7 +828,8 @@ bool InstCombiner::simplifyDivRemOfSelectWithZeroOp(BinaryOperator &I) {
         *I = SI->getOperand(NonNullOperand);
         Worklist.Add(&*BBI);
       } else if (*I == SelectCond) {
-        *I = Builder.getInt1(NonNullOperand == 1);
+        *I = NonNullOperand == 1 ? ConstantInt::getTrue(CondTy)
+                                 : ConstantInt::getFalse(CondTy);
         Worklist.Add(&*BBI);
       }
     }
