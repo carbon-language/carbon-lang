@@ -22150,9 +22150,9 @@ static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,
     }
   }
 
-  // Special case in 32-bit mode, where i64 is expanded into high and low parts.
+  // Check cases (mainly 32-bit) where i64 is expanded into high and low parts.
   // TODO: Replace constant extraction with getTargetConstantBitsFromNode.
-  if (!Subtarget.is64Bit() && !Subtarget.hasXOP() &&
+  if (!Subtarget.hasXOP() &&
       (VT == MVT::v2i64 || (Subtarget.hasInt256() && VT == MVT::v4i64) ||
        (Subtarget.hasAVX512() && VT == MVT::v8i64))) {
 

@@ -18,12 +18,6 @@ define void @PR34855(<2 x i32> *%p0, <2 x i32> *%p1, <2 x i32> *%p2) {
 ; X64-NEXT:    movslq (%rdi), %rax
 ; X64-NEXT:    movq %rax, %xmm1
 ; X64-NEXT:    punpcklqdq {{.*#+}} xmm1 = xmm1[0],xmm0[0]
-; X64-NEXT:    pxor %xmm0, %xmm0
-; X64-NEXT:    movdqa {{.*#+}} xmm2 = [9223372036854775808,9223372036854775808]
-; X64-NEXT:    psrlq %xmm0, %xmm2
-; X64-NEXT:    psrlq %xmm0, %xmm1
-; X64-NEXT:    pxor %xmm2, %xmm1
-; X64-NEXT:    psubq %xmm2, %xmm1
 ; X64-NEXT:    pshufd {{.*#+}} xmm0 = xmm1[0,2,2,3]
 ; X64-NEXT:    movq %xmm0, (%rdx)
 ; X64-NEXT:    retq
