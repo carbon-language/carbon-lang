@@ -22279,9 +22279,8 @@ static SDValue LowerScalarVariableShift(SDValue Op, SelectionDAG &DAG,
     }
   }
 
-  // Special case in 32-bit mode, where i64 is expanded into high and low parts.
-  if (!Subtarget.is64Bit() && VT == MVT::v2i64  &&
-      Amt.getOpcode() == ISD::BITCAST &&
+  // Check cases (mainly 32-bit) where i64 is expanded into high and low parts.
+  if (VT == MVT::v2i64  && Amt.getOpcode() == ISD::BITCAST &&
       Amt.getOperand(0).getOpcode() == ISD::BUILD_VECTOR) {
     Amt = Amt.getOperand(0);
     unsigned Ratio = Amt.getSimpleValueType().getVectorNumElements() /
