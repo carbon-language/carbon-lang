@@ -94,7 +94,13 @@ void OutputSection::addSection(InputSection *IS) {
     return;
   }
 
-  if (Live) {
+  if (!Live) {
+    // If IS is the first section to be added to this section,
+    // initialize Type by IS->Type.
+    Live = true;
+    Type = IS->Type;
+  } else {
+    // Otherwise, check if new type or flags are compatible with existing ones.
     if ((Flags & (SHF_ALLOC | SHF_TLS)) != (IS->Flags & (SHF_ALLOC | SHF_TLS)))
       error("incompatible section flags for " + Name + "\n>>> " + toString(IS) +
             ": 0x" + utohexstr(IS->Flags) + "\n>>> output section " + Name +
@@ -109,11 +115,8 @@ void OutputSection::addSection(InputSection *IS) {
               getELFSectionTypeName(Config->EMachine, Type));
       Type = SHT_PROGBITS;
     }
-  } else {
-    Type = IS->Type;
   }
 
-  Live = true;
   IS->Parent = this;
   Flags |= IS->Flags;
   this->updateAlignment(IS->Alignment);
