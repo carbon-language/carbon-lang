@@ -51,6 +51,7 @@ struct SectionInfo {
   uint64_t FileAddress{0};    /// Address for the output file (final address).
   uint64_t FileOffset{0};     /// Offset in the output file.
   unsigned SectionID{0};      /// Unique ID used for address mapping.
+  bool     IsELFNote{false};  /// Is ELF note section?
 
   struct Reloc {
     uint32_t Offset;
@@ -62,13 +63,13 @@ struct SectionInfo {
   /// Pending relocations for the section.
   std::vector<Reloc> PendingRelocs;
 
-  SectionInfo(uint64_t Address, uint64_t Size, unsigned Alignment,
-              bool IsCode, bool IsReadOnly,
-              bool IsLocal, uint64_t FileAddress = 0,
-              uint64_t FileOffset = 0, unsigned SectionID = 0)
-    : AllocAddress(Address), Size(Size), Alignment(Alignment), IsCode(IsCode),
-      IsReadOnly(IsReadOnly), IsLocal(IsLocal), FileAddress(FileAddress),
-      FileOffset(FileOffset), SectionID(SectionID) {}
+  SectionInfo(uint64_t Address, uint64_t Size, unsigned Alignment, bool IsCode,
+              bool IsReadOnly, bool IsLocal, uint64_t FileAddress = 0,
+              uint64_t FileOffset = 0, unsigned SectionID = 0,
+              bool IsELFNote = false)
+      : AllocAddress(Address), Size(Size), Alignment(Alignment), IsCode(IsCode),
+        IsReadOnly(IsReadOnly), IsLocal(IsLocal), FileAddress(FileAddress),
+        FileOffset(FileOffset), SectionID(SectionID), IsELFNote(IsELFNote) {}
 
   SectionInfo() {}
 };

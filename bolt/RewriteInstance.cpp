@@ -3043,25 +3043,42 @@ void RewriteInstance::finalizeSectionStringTable(ELFObjectFile<ELFT> *File) {
 
 void RewriteInstance::addBoltInfoSection() {
   if (opts::AddBoltInfo) {
+    std::string DescStr;
+    raw_string_ostream DescOS(DescStr);
+
+    DescOS << "BOLT revision: " << BoltRevision << ", " << "command line:";
+    for (auto I = 0; I < Argc; ++I) {
+      DescOS << " " << Argv[I];
+    }
+    DescOS.flush();
+
     std::string Str;
     raw_string_ostream OS(Str);
-
-    OS << "BOLT revision: " << BoltRevision << ", " << "command line:";
-    for (auto I = 0; I < Argc; ++I) {
-      OS << " " << Argv[I];
+    std::string NameStr = "GNU";
+    const uint32_t NameSz = NameStr.size() + 1;
+    const uint32_t DescSz = DescStr.size() + 1;
+    const uint32_t Type = 4; // NT_GNU_GOLD_VERSION (gold version)
+    OS.write(reinterpret_cast<const char*>(&(NameSz)), 4);
+    OS.write(reinterpret_cast<const char*>(&(DescSz)), 4);
+    OS.write(reinterpret_cast<const char*>(&(Type)), 4);
+    OS << NameStr << '\0';
+    for (uint64_t I = NameStr.size() + 1;
+         I < RoundUpToAlignment(NameStr.size() + 1, 4); ++I) {
+      OS << '\0';
     }
+    OS << DescStr << '\0';
 
     const auto BoltInfo = OS.str();
     const auto SectionSize = BoltInfo.size();
     uint8_t *SectionData = new uint8_t[SectionSize];
     memcpy(SectionData, BoltInfo.data(), SectionSize);
-    EFMM->NoteSectionInfo[".bolt_info"] =
-      SectionInfo(reinterpret_cast<uint64_t>(SectionData),
-                  SectionSize,
-                  /*Alignment=*/1,
-                  /*IsCode=*/false,
-                  /*IsReadOnly=*/true,
-                  /*IsLocal=*/false);
+    EFMM->NoteSectionInfo[".note.bolt_info"] =
+        SectionInfo(reinterpret_cast<uint64_t>(SectionData), SectionSize,
+                    /*Alignment=*/1,
+                    /*IsCode=*/false,
+                    /*IsReadOnly=*/true,
+                    /*IsLocal=*/false, 0, 0, 0,
+                    /*IsELFNote=*/true);
   }
 }
 
@@ -3223,7 +3240,9 @@ RewriteInstance::getOutputSections(ELFObjectFile<ELFT> *File,
       outs() << "BOLT-INFO: writing section header for " << SectionName << '\n';
     ELFShdrTy NewSection;
     NewSection.sh_name = SHStrTab.getOffset(SectionName);
-    NewSection.sh_type = (SI.IsStrTab ? ELF::SHT_STRTAB : ELF::SHT_PROGBITS);
+    NewSection.sh_type =
+        (SI.IsStrTab ? ELF::SHT_STRTAB
+                     : SI.IsELFNote ? ELF::SHT_NOTE : ELF::SHT_PROGBITS);
     NewSection.sh_addr = 0;
     NewSection.sh_offset = SI.FileOffset;
     NewSection.sh_size = SI.Size;
