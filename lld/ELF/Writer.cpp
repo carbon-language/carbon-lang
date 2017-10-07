@@ -804,7 +804,9 @@ template <class ELFT> void Writer<ELFT>::addReservedSymbols() {
   // __tls_get_addr, so it's not defined anywhere. Create a hidden definition
   // to avoid the undefined symbol error.
   if (!InX::DynSymTab)
-    Symtab->addIgnored<ELFT>("__tls_get_addr");
+    if (SymbolBody *S = Symtab->find("__tls_get_addr"))
+      if (!S->isInCurrentDSO())
+        Symtab->addAbsolute<ELFT>(S->getName(), STV_HIDDEN);
 
   // __ehdr_start is the location of ELF file headers. Note that we define
   // this symbol unconditionally even when using a linker script, which
