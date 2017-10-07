@@ -76,18 +76,54 @@ OutputSection::OutputSection(StringRef Name, uint32_t Type, uint64_t Flags)
   Live = false;
 }
 
-void OutputSection::addSection(InputSection *S) {
-  assert(S->Live);
+// We allow sections of types listed below to merged into a
+// single progbits section. This is typically done by linker
+// scripts. Merging nobits and progbits will force disk space
+// to be allocated for nobits sections. Other ones don't require
+// any special treatment on top of progbits, so there doesn't
+// seem to be a harm in merging them.
+static bool canMergeToProgbits(unsigned Type) {
+  return Type == SHT_NOBITS || Type == SHT_PROGBITS || Type == SHT_INIT_ARRAY ||
+         Type == SHT_PREINIT_ARRAY || Type == SHT_FINI_ARRAY ||
+         Type == SHT_NOTE;
+}
+
+void OutputSection::addSection(InputSection *IS) {
+  if (!IS->Live) {
+    reportDiscarded(IS);
+    return;
+  }
+
+  if (Live) {
+    if ((Flags & (SHF_ALLOC | SHF_TLS)) != (IS->Flags & (SHF_ALLOC | SHF_TLS)))
+      error("incompatible section flags for " + Name + "\n>>> " + toString(IS) +
+            ": 0x" + utohexstr(IS->Flags) + "\n>>> output section " + Name +
+            ": 0x" + utohexstr(Flags));
+
+    if (Type != IS->Type) {
+      if (!canMergeToProgbits(Type) || !canMergeToProgbits(IS->Type))
+        error("section type mismatch for " + IS->Name + "\n>>> " +
+              toString(IS) + ": " +
+              getELFSectionTypeName(Config->EMachine, IS->Type) +
+              "\n>>> output section " + Name + ": " +
+              getELFSectionTypeName(Config->EMachine, Type));
+      Type = SHT_PROGBITS;
+    }
+  } else {
+    Type = IS->Type;
+  }
+
   Live = true;
-  S->Parent = this;
-  this->updateAlignment(S->Alignment);
+  IS->Parent = this;
+  Flags |= IS->Flags;
+  this->updateAlignment(IS->Alignment);
 
   // The actual offsets will be computed by assignAddresses. For now, use
   // crude approximation so that it is at least easy for other code to know the
   // section order. It is also used to calculate the output section size early
   // for compressed debug sections.
-  S->OutSecOff = alignTo(Size, S->Alignment);
-  this->Size = S->OutSecOff + S->getSize();
+  IS->OutSecOff = alignTo(Size, IS->Alignment);
+  this->Size = IS->OutSecOff + IS->getSize();
 
   // If this section contains a table of fixed-size entries, sh_entsize
   // holds the element size. Consequently, if this contains two or more
@@ -96,14 +132,14 @@ void OutputSection::addSection(InputSection *S) {
   // section by using linker scripts. I don't know what to do here.
   // Probably we sholuld handle that as an error. But for now we just
   // pick the largest sh_entsize.
-  this->Entsize = std::max(this->Entsize, S->Entsize);
+  this->Entsize = std::max(this->Entsize, IS->Entsize);
 
-  if (!S->Assigned) {
-    S->Assigned = true;
+  if (!IS->Assigned) {
+    IS->Assigned = true;
     if (Commands.empty() || !isa<InputSectionDescription>(Commands.back()))
       Commands.push_back(make<InputSectionDescription>(""));
     auto *ISD = cast<InputSectionDescription>(Commands.back());
-    ISD->Sections.push_back(S);
+    ISD->Sections.push_back(IS);
   }
 }
 
@@ -164,22 +200,6 @@ static SectionKey createKey(InputSectionBase *IS, StringRef OutsecName) {
 
 OutputSectionFactory::OutputSectionFactory() {}
 
-static uint64_t getIncompatibleFlags(uint64_t Flags) {
-  return Flags & (SHF_ALLOC | SHF_TLS);
-}
-
-// We allow sections of types listed below to merged into a
-// single progbits section. This is typically done by linker
-// scripts. Merging nobits and progbits will force disk space
-// to be allocated for nobits sections. Other ones don't require
-// any special treatment on top of progbits, so there doesn't
-// seem to be a harm in merging them.
-static bool canMergeToProgbits(unsigned Type) {
-  return Type == SHT_NOBITS || Type == SHT_PROGBITS || Type == SHT_INIT_ARRAY ||
-         Type == SHT_PREINIT_ARRAY || Type == SHT_FINI_ARRAY ||
-         Type == SHT_NOTE;
-}
-
 void elf::sortByOrder(MutableArrayRef<InputSection *> In,
                       std::function<int(InputSectionBase *S)> Order) {
   typedef std::pair<int, InputSection *> Pair;
@@ -207,40 +227,6 @@ static OutputSection *createSection(InputSectionBase *IS, StringRef OutsecName) 
   Sec->Flags = IS->Flags;
   Sec->addSection(cast<InputSection>(IS));
   return Sec;
-}
-
-static void addSection(OutputSection *Sec, InputSectionBase *IS) {
-  if (Sec->Live) {
-    if (getIncompatibleFlags(Sec->Flags) != getIncompatibleFlags(IS->Flags))
-      error("incompatible section flags for " + Sec->Name + "\n>>> " +
-            toString(IS) + ": 0x" + utohexstr(IS->Flags) +
-            "\n>>> output section " + Sec->Name + ": 0x" +
-            utohexstr(Sec->Flags));
-
-    if (Sec->Type != IS->Type) {
-      if (canMergeToProgbits(Sec->Type) && canMergeToProgbits(IS->Type))
-        Sec->Type = SHT_PROGBITS;
-      else
-        error("section type mismatch for " + IS->Name + "\n>>> " +
-              toString(IS) + ": " +
-              getELFSectionTypeName(Config->EMachine, IS->Type) +
-              "\n>>> output section " + Sec->Name + ": " +
-              getELFSectionTypeName(Config->EMachine, Sec->Type));
-    }
-  } else {
-    Sec->Type = IS->Type;
-  }
-
-  Sec->Flags |= IS->Flags;
-  Sec->addSection(cast<InputSection>(IS));
-}
-
-void OutputSectionFactory::addInputSec(InputSectionBase *IS,
-                                       OutputSection *OS) {
-  if (IS->Live)
-    addSection(OS, IS);
-  else
-    reportDiscarded(IS);
 }
 
 OutputSection *OutputSectionFactory::addInputSec(InputSectionBase *IS,
@@ -272,7 +258,7 @@ OutputSection *OutputSectionFactory::addInputSec(InputSectionBase *IS,
     OutputSection *Out = Sec->getRelocatedSection()->getOutputSection();
 
     if (Out->RelocationSection) {
-      addSection(Out->RelocationSection, IS);
+      Out->RelocationSection->addSection(Sec);
       return nullptr;
     }
 
@@ -283,7 +269,7 @@ OutputSection *OutputSectionFactory::addInputSec(InputSectionBase *IS,
   SectionKey Key = createKey(IS, OutsecName);
   OutputSection *&Sec = Map[Key];
   if (Sec) {
-    addSection(Sec, IS);
+    Sec->addSection(cast<InputSection>(IS));
     return nullptr;
   }
 

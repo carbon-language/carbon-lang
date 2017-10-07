@@ -416,7 +416,7 @@ void LinkerScript::processCommands(OutputSectionFactory &Factory) {
 
       // Add input sections to an output section.
       for (InputSectionBase *S : V)
-        Factory.addInputSec(S, Sec);
+        Sec->addSection(cast<InputSection>(S));
 
       assert(Sec->SectionIndex == INT_MAX);
       Sec->SectionIndex = I;
@@ -466,7 +466,7 @@ void LinkerScript::addOrphanSections(OutputSectionFactory &Factory) {
 
     if (OutputSection *Sec = findByName(
             makeArrayRef(Opt.Commands).slice(0, End), Name)) {
-      Factory.addInputSec(S, Sec);
+      Sec->addSection(cast<InputSection>(S));
       continue;
     }
 

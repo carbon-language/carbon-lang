@@ -82,7 +82,7 @@ public:
   uint64_t Addr = 0;
   uint32_t ShName = 0;
 
-  void addSection(InputSection *S);
+  void addSection(InputSection *IS);
 
   // Location in the output buffer.
   uint8_t *Loc = nullptr;
@@ -165,7 +165,6 @@ public:
   ~OutputSectionFactory();
 
   OutputSection *addInputSec(InputSectionBase *IS, StringRef OutsecName);
-  void addInputSec(InputSectionBase *IS, OutputSection *OS);
 
 private:
   llvm::SmallDenseMap<SectionKey, OutputSection *> Map;
