@@ -107,7 +107,16 @@ void OutputSection::addSection(InputSection *S) {
   }
 }
 
-static SectionKey createKey(InputSectionBase *C, StringRef OutsecName) {
+static SectionKey createKey(InputSectionBase *IS, StringRef OutsecName) {
+  // When control reaches here, mergeable sections have already been
+  // merged except the -r case. If that's the case, we want to combine
+  // mergeable sections by sh_entsize and sh_flags.
+  if (Config->Relocatable && (IS->Flags & SHF_MERGE)) {
+    uint64_t Flags = IS->Flags & (SHF_MERGE | SHF_STRINGS);
+    uint32_t Alignment = std::max<uint32_t>(IS->Alignment, IS->Entsize);
+    return SectionKey{OutsecName, Flags, Alignment};
+  }
+
   //  The ELF spec just says
   // ----------------------------------------------------------------
   // In the first phase, input sections that match in name, type and
@@ -150,15 +159,7 @@ static SectionKey createKey(InputSectionBase *C, StringRef OutsecName) {
   //
   // Given the above issues, we instead merge sections by name and error on
   // incompatible types and flags.
-
-  uint32_t Alignment = 0;
-  uint64_t Flags = 0;
-  if (Config->Relocatable && (C->Flags & SHF_MERGE)) {
-    Alignment = std::max<uint64_t>(C->Alignment, C->Entsize);
-    Flags = C->Flags & (SHF_MERGE | SHF_STRINGS);
-  }
-
-  return SectionKey{OutsecName, Flags, Alignment};
+  return SectionKey{OutsecName, 0, 0};
 }
 
 OutputSectionFactory::OutputSectionFactory() {}
