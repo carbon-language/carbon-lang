@@ -56,11 +56,6 @@ public:
 
   uint32_t getPhdrFlags() const;
 
-  void updateAlignment(uint32_t Val) {
-    if (Val > Alignment)
-      Alignment = Val;
-  }
-
   // Pointer to the PT_LOAD segment, which this section resides in. This field
   // is used to correctly compute file offset of a section. When two sections
   // share the same load segment, difference between their file offsets should

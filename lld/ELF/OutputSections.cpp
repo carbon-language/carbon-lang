@@ -119,7 +119,7 @@ void OutputSection::addSection(InputSection *IS) {
 
   IS->Parent = this;
   Flags |= IS->Flags;
-  this->updateAlignment(IS->Alignment);
+  Alignment = std::max(Alignment, IS->Alignment);
 
   // The actual offsets will be computed by assignAddresses. For now, use
   // crude approximation so that it is at least easy for other code to know the

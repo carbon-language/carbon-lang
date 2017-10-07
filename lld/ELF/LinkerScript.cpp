@@ -688,7 +688,8 @@ void LinkerScript::adjustSectionsAfterSorting() {
       Sec->MemRegion = findMemoryRegion(Sec);
       // Handle align (e.g. ".foo : ALIGN(16) { ... }").
       if (Sec->AlignExpr)
-        Sec->updateAlignment(Sec->AlignExpr().getValue());
+        Sec->Alignment =
+            std::max<uint32_t>(Sec->Alignment, Sec->AlignExpr().getValue());
     }
   }
 

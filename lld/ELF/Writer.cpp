@@ -265,7 +265,7 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
   Out::ElfHeader = make<OutputSection>("", 0, SHF_ALLOC);
   Out::ElfHeader->Size = sizeof(Elf_Ehdr);
   Out::ProgramHeaders = make<OutputSection>("", 0, SHF_ALLOC);
-  Out::ProgramHeaders->updateAlignment(Config->Wordsize);
+  Out::ProgramHeaders->Alignment = Config->Wordsize;
 
   if (needsInterpSection()) {
     InX::Interp = createInterpSection();
