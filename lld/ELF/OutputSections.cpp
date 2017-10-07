@@ -205,11 +205,10 @@ static OutputSection *createSection(InputSectionBase *IS, StringRef OutsecName) 
   Sec->Type = IS->Type;
   Sec->Flags = IS->Flags;
   Sec->addSection(cast<InputSection>(IS));
-
   return Sec;
 }
 
-static void addSection(OutputSection *Sec, InputSectionBase *IS, StringRef OutsecName) {
+static void addSection(OutputSection *Sec, InputSectionBase *IS) {
   if (Sec->Live) {
     if (getIncompatibleFlags(Sec->Flags) != getIncompatibleFlags(IS->Flags))
       error("incompatible section flags for " + Sec->Name + "\n>>> " +
@@ -236,10 +235,9 @@ static void addSection(OutputSection *Sec, InputSectionBase *IS, StringRef Outse
 }
 
 void OutputSectionFactory::addInputSec(InputSectionBase *IS,
-                                       StringRef OutsecName,
                                        OutputSection *OS) {
   if (IS->Live)
-    addSection(OS, IS, OutsecName);
+    addSection(OS, IS);
   else
     reportDiscarded(IS);
 }
@@ -273,7 +271,7 @@ OutputSection *OutputSectionFactory::addInputSec(InputSectionBase *IS,
     OutputSection *Out = Sec->getRelocatedSection()->getOutputSection();
 
     if (Out->RelocationSection) {
-      addSection(Out->RelocationSection, IS, OutsecName);
+      addSection(Out->RelocationSection, IS);
       return nullptr;
     }
 
@@ -284,7 +282,7 @@ OutputSection *OutputSectionFactory::addInputSec(InputSectionBase *IS,
   SectionKey Key = createKey(IS, OutsecName);
   OutputSection *&Sec = Map[Key];
   if (Sec) {
-    addSection(Sec, IS, OutsecName);
+    addSection(Sec, IS);
     return nullptr;
   }
 
