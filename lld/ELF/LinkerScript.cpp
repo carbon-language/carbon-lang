@@ -871,27 +871,26 @@ ExprValue LinkerScript::getSymbolValue(const Twine &Loc, StringRef S) {
   return 0;
 }
 
+// Returns the index of the segment named Name.
+static Optional<size_t> getPhdrIndex(ArrayRef<PhdrsCommand> Vec,
+                                     StringRef Name) {
+  for (size_t I = 0; I < Vec.size(); ++I)
+    if (Vec[I].Name == Name)
+      return I;
+  return None;
+}
+
 // Returns indices of ELF headers containing specific section. Each index is a
 // zero based number of ELF header listed within PHDRS {} script block.
 std::vector<size_t> LinkerScript::getPhdrIndices(OutputSection *Cmd) {
   std::vector<size_t> Ret;
-  for (StringRef PhdrName : Cmd->Phdrs)
-    if (Optional<size_t> Idx = getPhdrIndex(Cmd->Location, PhdrName))
+
+  for (StringRef S : Cmd->Phdrs) {
+    if (Optional<size_t> Idx = getPhdrIndex(Opt.PhdrsCommands, S))
       Ret.push_back(*Idx);
+    else if (S != "NONE")
+      error(Cmd->Location + ": section header '" + S +
+            "' is not listed in PHDRS");
+  }
   return Ret;
-}
-
-// Returns the index of the segment named PhdrName if found otherwise
-// NoPhdr. When not found, if PhdrName is not the special case value 'NONE'
-// (which can be used to explicitly specify that a section isn't assigned to a
-// segment) then error.
-Optional<size_t> LinkerScript::getPhdrIndex(const Twine &Loc,
-                                            StringRef PhdrName) {
-  for (size_t I = 0; I < Opt.PhdrsCommands.size(); ++I)
-    if (Opt.PhdrsCommands[I].Name == PhdrName)
-      return I;
-
-  if (PhdrName != "NONE")
-    error(Loc + ": section header '" + PhdrName + "' is not listed in PHDRS");
-  return None;
 }
