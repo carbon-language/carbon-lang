@@ -56,7 +56,6 @@ public:
 
 private:
   void addFile(StringRef Path);
-  OutputSection *checkSection(OutputSection *Cmd, StringRef Loccation);
 
   void readAsNeeded();
   void readEntry();
@@ -908,11 +907,9 @@ StringRef ScriptParser::readParenLiteral() {
   return Tok;
 }
 
-OutputSection *ScriptParser::checkSection(OutputSection *Cmd,
-                                          StringRef Location) {
+static void checkIfExists(OutputSection *Cmd, StringRef Location) {
   if (Cmd->Location.empty() && Script->ErrorOnMissingSection)
     error(Location + ": undefined section " + Cmd->Name);
-  return Cmd;
 }
 
 Expr ScriptParser::readPrimary() {
@@ -949,7 +946,8 @@ Expr ScriptParser::readPrimary() {
     StringRef Name = readParenLiteral();
     OutputSection *Cmd = Script->getOrCreateOutputSection(Name);
     return [=]() -> ExprValue {
-      return {checkSection(Cmd, Location), 0, Location};
+      checkIfExists(Cmd, Location);
+      return {Cmd, 0, Location};
     };
   }
   if (Tok == "ALIGN") {
@@ -971,7 +969,10 @@ Expr ScriptParser::readPrimary() {
   if (Tok == "ALIGNOF") {
     StringRef Name = readParenLiteral();
     OutputSection *Cmd = Script->getOrCreateOutputSection(Name);
-    return [=] { return checkSection(Cmd, Location)->Alignment; };
+    return [=] {
+      checkIfExists(Cmd, Location);
+      return Cmd->Alignment;
+    };
   }
   if (Tok == "ASSERT")
     return readAssertExpr();
@@ -1018,7 +1019,10 @@ Expr ScriptParser::readPrimary() {
   if (Tok == "LOADADDR") {
     StringRef Name = readParenLiteral();
     OutputSection *Cmd = Script->getOrCreateOutputSection(Name);
-    return [=] { return checkSection(Cmd, Location)->getLMA(); };
+    return [=] {
+      checkIfExists(Cmd, Location);
+      return Cmd->getLMA();
+    };
   }
   if (Tok == "ORIGIN") {
     StringRef Name = readParenLiteral();
