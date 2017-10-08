@@ -388,25 +388,26 @@ void ScriptParser::readOutputFormat() {
 
 void ScriptParser::readPhdrs() {
   expect("{");
-  while (!ErrorCount && !consume("}")) {
-    Script->Opt.PhdrsCommands.push_back(
-        {next(), PT_NULL, false, false, UINT_MAX, nullptr});
 
-    PhdrsCommand &PhdrCmd = Script->Opt.PhdrsCommands.back();
-    PhdrCmd.Type = readPhdrType();
+  while (!ErrorCount && !consume("}")) {
+    PhdrsCommand Cmd;
+    Cmd.Name = next();
+    Cmd.Type = readPhdrType();
 
     while (!ErrorCount && !consume(";")) {
       if (consume("FILEHDR"))
-        PhdrCmd.HasFilehdr = true;
+        Cmd.HasFilehdr = true;
       else if (consume("PHDRS"))
-        PhdrCmd.HasPhdrs = true;
+        Cmd.HasPhdrs = true;
       else if (consume("AT"))
-        PhdrCmd.LMAExpr = readParenExpr();
+        Cmd.LMAExpr = readParenExpr();
       else if (consume("FLAGS"))
-        PhdrCmd.Flags = readParenExpr()().getValue();
+        Cmd.Flags = readParenExpr()().getValue();
       else
         setError("unexpected header attribute: " + next());
     }
+
+    Script->Opt.PhdrsCommands.push_back(Cmd);
   }
 }
 

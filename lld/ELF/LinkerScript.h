@@ -166,11 +166,11 @@ struct BytesDataCommand : BaseCommand {
 
 struct PhdrsCommand {
   StringRef Name;
-  unsigned Type;
-  bool HasFilehdr;
-  bool HasPhdrs;
-  unsigned Flags;
-  Expr LMAExpr;
+  unsigned Type = llvm::ELF::PT_NULL;
+  bool HasFilehdr = false;
+  bool HasPhdrs = false;
+  llvm::Optional<unsigned> Flags;
+  Expr LMAExpr = nullptr;
 };
 
 // ScriptConfiguration holds linker script parse results.

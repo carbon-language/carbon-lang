@@ -815,8 +815,7 @@ std::vector<PhdrEntry *> LinkerScript::createPhdrs() {
   // Process PHDRS and FILEHDR keywords because they are not
   // real output sections and cannot be added in the following loop.
   for (const PhdrsCommand &Cmd : Opt.PhdrsCommands) {
-    PhdrEntry *Phdr =
-        make<PhdrEntry>(Cmd.Type, Cmd.Flags == UINT_MAX ? PF_R : Cmd.Flags);
+    PhdrEntry *Phdr = make<PhdrEntry>(Cmd.Type, Cmd.Flags ? *Cmd.Flags : PF_R);
 
     if (Cmd.HasFilehdr)
       Phdr->add(Out::ElfHeader);
@@ -835,7 +834,7 @@ std::vector<PhdrEntry *> LinkerScript::createPhdrs() {
     // Assign headers specified by linker script
     for (size_t Id : getPhdrIndices(Sec)) {
       Ret[Id]->add(Sec);
-      if (Opt.PhdrsCommands[Id].Flags == UINT_MAX)
+      if (!Opt.PhdrsCommands[Id].Flags.hasValue())
         Ret[Id]->p_flags |= Sec->getPhdrFlags();
     }
   }
