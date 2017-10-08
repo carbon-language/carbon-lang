@@ -241,7 +241,6 @@ public:
   void discard(ArrayRef<InputSectionBase *> V);
 
   ExprValue getSymbolValue(const Twine &Loc, StringRef S);
-  bool isDefined(StringRef S);
 
   void fabricateDefaultCommands();
   void addOrphanSections(OutputSectionFactory &Factory);

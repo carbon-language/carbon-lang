@@ -1007,7 +1007,7 @@ Expr ScriptParser::readPrimary() {
   }
   if (Tok == "DEFINED") {
     StringRef Name = readParenLiteral();
-    return [=] { return Script->isDefined(Name) ? 1 : 0; };
+    return [=] { return Symtab->find(Name) ? 1 : 0; };
   }
   if (Tok == "LENGTH") {
     StringRef Name = readParenLiteral();

@@ -871,8 +871,6 @@ ExprValue LinkerScript::getSymbolValue(const Twine &Loc, StringRef S) {
   return 0;
 }
 
-bool LinkerScript::isDefined(StringRef S) { return Symtab->find(S) != nullptr; }
-
 static const size_t NoPhdr = -1;
 
 // Returns indices of ELF headers containing specific section. Each index is a
