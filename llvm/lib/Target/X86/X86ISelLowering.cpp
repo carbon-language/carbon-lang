@@ -36112,9 +36112,8 @@ static SDValue combineInsertSubvector(SDNode *N, SelectionDAG &DAG,
   SDLoc dl(N);
   SDValue Vec = N->getOperand(0);
   SDValue SubVec = N->getOperand(1);
-  SDValue Idx = N->getOperand(2);
 
-  unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
+  unsigned IdxVal = N->getConstantOperandVal(2);
   MVT SubVecVT = SubVec.getSimpleValueType();
 
   if (ISD::isBuildVectorAllZeros(Vec.getNode())) {
@@ -36220,7 +36219,8 @@ static SDValue combineInsertSubvector(SDNode *N, SelectionDAG &DAG,
         Vec = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, OpVT, DAG.getUNDEF(OpVT),
                           SubVec2, Vec.getOperand(2));
         DCI.AddToWorklist(Vec.getNode());
-        return DAG.getNode(ISD::INSERT_SUBVECTOR, dl, OpVT, Vec, SubVec, Idx);
+        return DAG.getNode(ISD::INSERT_SUBVECTOR, dl, OpVT, Vec, SubVec,
+                           N->getOperand(2));
 
       }
     }
