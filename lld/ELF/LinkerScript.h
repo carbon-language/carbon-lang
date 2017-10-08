@@ -217,7 +217,7 @@ class LinkerScript final {
   std::vector<InputSectionBase *> createInputSectionList(OutputSection &Cmd);
 
   std::vector<size_t> getPhdrIndices(OutputSection *Sec);
-  size_t getPhdrIndex(const Twine &Loc, StringRef PhdrName);
+  llvm::Optional<size_t> getPhdrIndex(const Twine &Loc, StringRef PhdrName);
 
   MemoryRegion *findMemoryRegion(OutputSection *Sec);
 
