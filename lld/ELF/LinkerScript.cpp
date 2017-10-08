@@ -841,15 +841,18 @@ std::vector<PhdrEntry *> LinkerScript::createPhdrs() {
   return Ret;
 }
 
-bool LinkerScript::ignoreInterpSection() {
-  // Ignore .interp section in case we have PHDRS specification
-  // and PT_INTERP isn't listed.
+// Returns true if we should emit an .interp section.
+//
+// We usually do. But if PHDRS commands are given, and
+// no PT_INTERP is there, there's no place to emit an
+// .interp, so we don't do that in that case.
+bool LinkerScript::needsInterpSection() {
   if (Opt.PhdrsCommands.empty())
-    return false;
+    return true;
   for (PhdrsCommand &Cmd : Opt.PhdrsCommands)
     if (Cmd.Type == PT_INTERP)
-      return false;
-  return true;
+      return true;
+  return false;
 }
 
 ExprValue LinkerScript::getSymbolValue(const Twine &Loc, StringRef S) {

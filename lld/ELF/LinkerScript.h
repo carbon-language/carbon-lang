@@ -248,7 +248,7 @@ public:
   void adjustSectionsAfterSorting();
 
   std::vector<PhdrEntry *> createPhdrs();
-  bool ignoreInterpSection();
+  bool needsInterpSection();
 
   bool shouldKeep(InputSectionBase *S);
   void assignOffsets(OutputSection *Sec);
