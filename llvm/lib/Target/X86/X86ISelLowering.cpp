@@ -1143,7 +1143,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     for (auto ExtType : {ISD::ZEXTLOAD, ISD::SEXTLOAD, ISD::EXTLOAD}) {
       setLoadExtAction(ExtType, MVT::v16i32, MVT::v16i8,  Legal);
       setLoadExtAction(ExtType, MVT::v16i32, MVT::v16i16, Legal);
-      setLoadExtAction(ExtType, MVT::v32i16, MVT::v32i8,  Legal);
       setLoadExtAction(ExtType, MVT::v8i64,  MVT::v8i8,   Legal);
       setLoadExtAction(ExtType, MVT::v8i64,  MVT::v8i16,  Legal);
       setLoadExtAction(ExtType, MVT::v8i64,  MVT::v8i32,  Legal);
