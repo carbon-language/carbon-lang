@@ -476,8 +476,7 @@ ErrorOr<PerfSample> DataAggregator::parseSample() {
   }
 
   while (!checkAndConsumeNewLine()) {
-    if (!expectAndConsumeFS())
-      return make_error_code(llvm::errc::io_error);
+    checkAndConsumeFS();
 
     auto LBRRes = parseLBREntry();
     if (std::error_code EC = LBRRes.getError())
