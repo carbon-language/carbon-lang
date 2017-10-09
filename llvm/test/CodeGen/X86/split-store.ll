@@ -197,13 +197,11 @@ define void @int12_int12_pair(i12 signext %tmp1, i12 signext %tmp2, i24* %ref.tm
 define void @int7_int7_pair(i7 signext %tmp1, i7 signext %tmp2, i14* %ref.tmp) {
 ; CHECK-LABEL: int7_int7_pair:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    movzbl %sil, %eax
-; CHECK-NEXT:    shll $7, %eax
-; CHECK-NEXT:    andb $127, %dil
-; CHECK-NEXT:    movzbl %dil, %ecx
-; CHECK-NEXT:    orl %eax, %ecx
-; CHECK-NEXT:    andl $16383, %ecx # imm = 0x3FFF
-; CHECK-NEXT:    movw %cx, (%rdx)
+; CHECK-NEXT:    shll $7, %esi
+; CHECK-NEXT:    andl $127, %edi
+; CHECK-NEXT:    orl %esi, %edi
+; CHECK-NEXT:    andl $16383, %edi # imm = 0x3FFF
+; CHECK-NEXT:    movw %di, (%rdx)
 ; CHECK-NEXT:    retq
   %t1 = zext i7 %tmp2 to i14
   %t2 = shl nuw i14 %t1, 7
