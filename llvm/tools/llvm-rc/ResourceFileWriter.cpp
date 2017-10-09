@@ -380,7 +380,7 @@ void ResourceFileWriter::padStream(uint64_t Length) {
     writeInt<uint8_t>(0);
 }
 
-Error ResourceFileWriter::handleError(Error &&Err, const RCResource *Res) {
+Error ResourceFileWriter::handleError(Error Err, const RCResource *Res) {
   if (Err)
     return joinErrors(createError("Error in " + Res->getResourceTypeName() +
                                   " statement (ID " + Twine(Res->ResName) +
