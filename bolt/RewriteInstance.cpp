@@ -2604,7 +2604,7 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
       }
       PrevBB = BB;
     }
-    PrevBB->setOutputEndAddress(Function.isSplit() ?
+    PrevBB->setOutputEndAddress(PrevBB->isCold() ?
         Function.cold().getAddress() + Function.cold().getImageSize() :
         Function.getOutputAddress() + Function.getOutputSize());
   }

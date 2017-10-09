@@ -713,6 +713,11 @@ public:
     return OutputAddressRange;
   }
 
+  /// Return size of the basic block in the output binary.
+  uint64_t getOutputSize() const {
+    return OutputAddressRange.second - OutputAddressRange.first;
+  }
+
   BinaryFunction *getFunction() const {
     return Function;
   }
