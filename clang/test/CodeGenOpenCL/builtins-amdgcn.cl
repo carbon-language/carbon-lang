@@ -421,6 +421,13 @@ void test_read_exec(global ulong* out) {
 
 // CHECK: declare i64 @llvm.read_register.i64(metadata) #[[NOUNWIND_READONLY:[0-9]+]]
 
+// CHECK-LABEL: @test_dispatch_ptr
+// CHECK: call i8 addrspace(2)* @llvm.amdgcn.dispatch.ptr()
+void test_dispatch_ptr(__attribute__((address_space(2))) unsigned char ** out)
+{
+  *out = __builtin_amdgcn_dispatch_ptr();
+}
+
 // CHECK-LABEL: @test_kernarg_segment_ptr
 // CHECK: call i8 addrspace(2)* @llvm.amdgcn.kernarg.segment.ptr()
 void test_kernarg_segment_ptr(__attribute__((address_space(2))) unsigned char ** out)
