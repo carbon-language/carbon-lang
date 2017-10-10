@@ -3,6 +3,7 @@ set(CXX_FLAGS_NOFUZZ ${CMAKE_CXX_FLAGS})
 set(DUMMY_MAIN DummyClangFuzzer.cpp)
 if(LLVM_USE_SANITIZE_COVERAGE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=fuzzer")
+  set(CXX_FLAGS_NOFUZZ "${CXX_FLAGS_NOFUZZ} -fsanitize=fuzzer-no-link")
   unset(DUMMY_MAIN)
 endif()
 
