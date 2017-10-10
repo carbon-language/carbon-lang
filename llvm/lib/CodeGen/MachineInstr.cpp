@@ -1154,6 +1154,10 @@ bool MachineInstr::isIdenticalTo(const MachineInstr &Other,
   return true;
 }
 
+const MachineFunction *MachineInstr::getMF() const {
+  return getParent()->getParent();
+}
+
 MachineInstr *MachineInstr::removeFromParent() {
   assert(getParent() && "Not embedded in a basic block!");
   return getParent()->remove(this);
