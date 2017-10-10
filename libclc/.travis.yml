@@ -28,6 +28,7 @@ matrix:
         - LABEL="make gcc LLVM-4.0"
         - LLVM_VERSION=4.0
         - LLVM_CONFIG="llvm-config-${LLVM_VERSION}"
+        - CHECK_FILES="barts-r600--.bc cayman-r600--.bc cedar-r600--.bc cypress-r600--.bc tahiti-amdgcn--.bc amdgcn--amdhsa.bc"
       addons:
         apt:
           sources:
@@ -42,6 +43,7 @@ matrix:
         - LABEL="make gcc LLVM-5.0"
         - LLVM_VERSION=5.0
         - LLVM_CONFIG="llvm-config-${LLVM_VERSION}"
+        - CHECK_FILES="barts-r600--.bc cayman-r600--.bc cedar-r600--.bc cypress-r600--.bc tahiti-amdgcn--.bc amdgcn--amdhsa.bc"
       addons:
         apt:
           sources:
