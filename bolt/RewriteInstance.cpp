@@ -1351,12 +1351,14 @@ void RewriteInstance::disassemblePLT() {
 }
 
 void RewriteInstance::adjustFunctionBoundaries() {
-  for (auto &BFI : BinaryFunctions) {
-    auto &Function = BFI.second;
+  for (auto BFI = BinaryFunctions.begin(), BFE = BinaryFunctions.end();
+       BFI != BFE; ++BFI) {
+    auto &Function = BFI->second;
 
-    // Check if there's a symbol with a larger address in the same section.
-    // If there is - it determines the maximum size for the current function,
-    // otherwise, it is the size of containing section the defines it.
+    // Check if there's a symbol or a function with a larger address in the
+    // same section. If there is - it determines the maximum size for the
+    // current function. Otherwise, it is the size of a containing section
+    // the defines it.
     //
     // NOTE: ignore some symbols that could be tolerated inside the body
     //       of a function.
@@ -1387,22 +1389,21 @@ void RewriteInstance::adjustFunctionBoundaries() {
       ? InputFile->section_end()
       : NextSymRefI->second.getSection();
 
-    uint64_t MaxSize;
-    if (NextSymRefI != FileSymRefs.end() &&
-        NextSymRefI->second.getSection() &&
-        *NextSymRefI->second.getSection() != InputFile->section_end() &&
-        **NextSymRefI->second.getSection() == Function.getSection()) {
-      MaxSize = NextSymRefI->first - Function.getAddress();
-    } else {
-      // Function runs till the end of the containing section.
-      uint64_t SectionEnd = Function.getSection().getAddress() +
-                            Function.getSection().getSize();
-      assert((NextSymRefI == FileSymRefs.end() ||
-              NextSymRefI->first >= SectionEnd) &&
-             "different sections should not overlap");
-      MaxSize = SectionEnd - Function.getAddress();
+    // Function runs at most till the end of the containing section.
+    uint64_t NextObjectAddress = Function.getSection().getAddress() +
+                                 Function.getSection().getSize();
+    // Or till the next object marked by a symbol.
+    if (NextSymRefI != FileSymRefs.end()) {
+      NextObjectAddress = std::min(NextSymRefI->first, NextObjectAddress);
+    }
+    // Or till the next function not marked by a symbol.
+    if (std::next(BFI) != BFE) {
+      const auto &NextFunction = std::next(BFI)->second;
+      NextObjectAddress = std::min(NextFunction.getAddress(),
+                                   NextObjectAddress);
     }
 
+    const auto MaxSize = NextObjectAddress - Function.getAddress();
     if (MaxSize < Function.getSize()) {
       errs() << "BOLT-ERROR: symbol seen in the middle of the function "
              << Function << ". Skipping.\n";
