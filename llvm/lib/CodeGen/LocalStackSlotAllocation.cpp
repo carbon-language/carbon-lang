@@ -401,7 +401,7 @@ bool LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
         continue;
       }
 
-      const MachineFunction *MF = MI.getParent()->getParent();
+      const MachineFunction *MF = MI.getMF();
       const TargetRegisterClass *RC = TRI->getPointerRegClass(*MF);
       BaseReg = Fn.getRegInfo().createVirtualRegister(RC);
 

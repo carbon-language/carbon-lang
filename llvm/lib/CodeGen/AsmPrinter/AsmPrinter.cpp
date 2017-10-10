@@ -744,7 +744,7 @@ void AsmPrinter::EmitFunctionEntryLabel() {
 /// emitComments - Pretty-print comments for instructions.
 static void emitComments(const MachineInstr &MI, raw_ostream &CommentOS,
                          AsmPrinter *AP) {
-  const MachineFunction *MF = MI.getParent()->getParent();
+  const MachineFunction *MF = MI.getMF();
   const TargetInstrInfo *TII = MF->getSubtarget().getInstrInfo();
 
   // Check for spills and reloads
@@ -2846,7 +2846,7 @@ void AsmPrinter::emitXRayTable() {
 
 void AsmPrinter::recordSled(MCSymbol *Sled, const MachineInstr &MI,
                             SledKind Kind, uint8_t Version) {
-  auto Fn = MI.getParent()->getParent()->getFunction();
+  auto Fn = MI.getMF()->getFunction();
   auto Attr = Fn->getFnAttribute("function-instrument");
   bool LogArgs = Fn->hasFnAttribute("xray-log-args");
   bool AlwaysInstrument =
