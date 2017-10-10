@@ -1395,7 +1395,7 @@ LinkageInfo LinkageComputer::getDeclLinkageAndVisibility(const NamedDecl *D) {
                                             : NamedDecl::VisibilityForValue));
 }
 
-Module *Decl::getOwningModuleForLinkage() const {
+Module *Decl::getOwningModuleForLinkage(bool IgnoreLinkage) const {
   Module *M = getOwningModule();
   if (!M)
     return nullptr;
@@ -1413,6 +1413,8 @@ Module *Decl::getOwningModuleForLinkage() const {
     // for linkage purposes. But internal linkage declarations in the global
     // module fragment of a particular module are owned by that module for
     // linkage purposes.
+    if (IgnoreLinkage)
+      return nullptr;
     bool InternalLinkage;
     if (auto *ND = dyn_cast<NamedDecl>(this))
       InternalLinkage = !ND->hasExternalFormalLinkage();

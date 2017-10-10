@@ -3051,8 +3051,11 @@ public:
 
   RedeclarationKind forRedeclarationInCurContext() {
     // A declaration with an owning module for linkage can never link against
-    // anything that is not visible.
-    if (cast<Decl>(CurContext)->getOwningModuleForLinkage())
+    // anything that is not visible. We don't need to check linkage here; if
+    // the context has internal linkage, redeclaration lookup won't find things
+    // from other TUs, and we can't safely compute linkage yet in general.
+    if (cast<Decl>(CurContext)
+            ->getOwningModuleForLinkage(/*IgnoreLinkage*/true))
       return ForVisibleRedeclaration;
     return ForExternalRedeclaration;
   }
