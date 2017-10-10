@@ -171,9 +171,6 @@ class MCStreamer {
 
   std::vector<MCDwarfFrameInfo> DwarfFrameInfos;
   MCDwarfFrameInfo *getCurrentDwarfFrameInfo();
-  void EnsureValidDwarfFrame();
-
-  MCSymbol *EmitCFICommon();
 
   /// Similar to DwarfFrameInfos, but for SEH unwind info. Chained frames may
   /// refer to each other, so use std::unique_ptr to provide pointer stability.
