@@ -111,8 +111,8 @@ template <class LatticeVal> class SparseSolver {
   /// BBExecutable - Holds the basic blocks that are executable.
   SmallPtrSet<BasicBlock *, 16> BBExecutable;
 
-  /// InstWorkList - Holds instructions that should be processed.
-  SmallVector<Instruction *, 64> InstWorkList;
+  /// ValueWorkList - Holds values that should be processed.
+  SmallVector<Value *, 64> ValueWorkList;
 
   /// BBWorkList - Holds basic blocks that should be processed.
   SmallVector<BasicBlock *, 64> BBWorkList;
@@ -240,7 +240,7 @@ void SparseSolver<LatticeVal>::UpdateState(Instruction &Inst, LatticeVal V) {
 
   // An update.  Visit uses of I.
   ValueState[&Inst] = V;
-  InstWorkList.push_back(&Inst);
+  ValueWorkList.push_back(&Inst);
 }
 
 template <class LatticeVal>
@@ -447,21 +447,20 @@ template <class LatticeVal> void SparseSolver<LatticeVal>::Solve(Function &F) {
   MarkBlockExecutable(&F.getEntryBlock());
 
   // Process the work lists until they are empty!
-  while (!BBWorkList.empty() || !InstWorkList.empty()) {
-    // Process the instruction work list.
-    while (!InstWorkList.empty()) {
-      Instruction *I = InstWorkList.back();
-      InstWorkList.pop_back();
+  while (!BBWorkList.empty() || !ValueWorkList.empty()) {
+    // Process the value work list.
+    while (!ValueWorkList.empty()) {
+      Value *V = ValueWorkList.back();
+      ValueWorkList.pop_back();
 
-      DEBUG(dbgs() << "\nPopped off I-WL: " << *I << "\n");
+      DEBUG(dbgs() << "\nPopped off V-WL: " << *V << "\n");
 
-      // "I" got into the work list because it made a transition.  See if any
+      // "V" got into the work list because it made a transition. See if any
       // users are both live and in need of updating.
-      for (User *U : I->users()) {
-        Instruction *UI = cast<Instruction>(U);
-        if (BBExecutable.count(UI->getParent())) // Inst is executable?
-          visitInst(*UI);
-      }
+      for (User *U : V->users())
+        if (Instruction *Inst = dyn_cast<Instruction>(U))
+          if (BBExecutable.count(Inst->getParent())) // Inst is executable?
+            visitInst(*Inst);
     }
 
     // Process the basic block work list.
