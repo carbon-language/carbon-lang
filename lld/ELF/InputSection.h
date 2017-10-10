@@ -176,6 +176,9 @@ public:
 
   InputSection *getLinkOrderDep() const;
 
+  // Compilers emit zlib-compressed debug sections if the -gz option
+  // is given. This function checks if this section is compressed, and
+  // if so, decompress in memory.
   void maybeUncompress();
 
   // Returns a source location string. Used to construct an error message.
@@ -183,9 +186,15 @@ public:
   template <class ELFT> std::string getSrcMsg(uint64_t Offset);
   template <class ELFT> std::string getObjMsg(uint64_t Offset);
 
+  // Each section knows how to relocate itself. These functions apply
+  // relocations, assuming that Buf points to this section's copy in
+  // the mmap'ed output buffer.
   template <class ELFT> void relocate(uint8_t *Buf, uint8_t *BufEnd);
   void relocateAlloc(uint8_t *Buf, uint8_t *BufEnd);
 
+  // The native ELF reloc data type is not very convenient to handle.
+  // So we convert ELF reloc records to our own records in Relocations.cpp.
+  // This vector contains such "cooked" relocations.
   std::vector<Relocation> Relocations;
 
   template <typename T> llvm::ArrayRef<T> getDataAs() const {
