@@ -1600,10 +1600,8 @@ static bool tryToReplaceWithConstantRange(SCCPSolver &Solver, Value *V) {
   if (!(V->getType()->isIntegerTy() && IV.isConstantRange()))
     return false;
 
-  for (auto UI = V->uses().begin(), E = V->uses().end(); UI != E;) {
-    // Advance the iterator here, as we might remove the current use.
-    const Use &U = *UI++;
-    auto *Icmp = dyn_cast<ICmpInst>(U.getUser());
+  for (auto &Use : V->uses()) {
+    auto *Icmp = dyn_cast<ICmpInst>(Use.getUser());
     if (!Icmp)
       continue;
 
