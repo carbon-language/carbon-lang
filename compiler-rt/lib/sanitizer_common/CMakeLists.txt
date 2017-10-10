@@ -3,7 +3,6 @@
 
 set(SANITIZER_SOURCES_NOTERMINATION
   sanitizer_allocator.cc
-  sanitizer_allocator_checks.cc
   sanitizer_common.cc
   sanitizer_deadlock_detector1.cc
   sanitizer_deadlock_detector2.cc
