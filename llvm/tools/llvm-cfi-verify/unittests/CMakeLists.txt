@@ -11,7 +11,7 @@ set(LLVM_LINK_COMPONENTS
   Support
   )
 
-add_llvm_tool(llvm-cfi-verify
-  llvm-cfi-verify.cpp
-  FileAnalysis.cpp
-  )
+
+
+add_llvm_unittest(CFIVerifyTests
+  FileAnalysis.cpp ../FileAnalysis.cpp)
