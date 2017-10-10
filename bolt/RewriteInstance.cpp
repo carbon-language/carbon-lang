@@ -101,7 +101,7 @@ AlignFunctions("align-functions",
 static cl::opt<unsigned>
 AlignFunctionsMaxBytes("align-functions-max-bytes",
   cl::desc("maximum number of bytes to use to align functions"),
-  cl::init(7),
+  cl::init(32),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
