@@ -101,20 +101,26 @@ public:
 /// Propagation with a programmable lattice function.
 template <class LatticeVal> class SparseSolver {
 
-  /// LatticeFunc - This is the object that knows the lattice and how to do
+  /// LatticeFunc - This is the object that knows the lattice and how to
   /// compute transfer functions.
   AbstractLatticeFunction<LatticeVal> *LatticeFunc;
 
-  DenseMap<Value *, LatticeVal> ValueState;   // The state each value is in.
-  SmallPtrSet<BasicBlock *, 16> BBExecutable; // The bbs that are executable.
+  /// ValueState - Holds the lattice state associated with LLVM values.
+  DenseMap<Value *, LatticeVal> ValueState;
 
-  std::vector<Instruction *> InstWorkList; // Worklist of insts to process.
+  /// BBExecutable - Holds the basic blocks that are executable.
+  SmallPtrSet<BasicBlock *, 16> BBExecutable;
 
-  std::vector<BasicBlock *> BBWorkList; // The BasicBlock work list
+  /// InstWorkList - Holds instructions that should be processed.
+  SmallVector<Instruction *, 64> InstWorkList;
+
+  /// BBWorkList - Holds basic blocks that should be processed.
+  SmallVector<BasicBlock *, 64> BBWorkList;
+
+  using Edge = std::pair<BasicBlock *, BasicBlock *>;
 
   /// KnownFeasibleEdges - Entries in this set are edges which have already had
   /// PHI nodes retriggered.
-  using Edge = std::pair<BasicBlock *, BasicBlock *>;
   std::set<Edge> KnownFeasibleEdges;
 
 public:
