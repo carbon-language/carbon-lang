@@ -210,6 +210,10 @@ public:
   using Elf_Rela = typename ELFFile<ELFT>::Elf_Rela;
   using Elf_Dyn = typename ELFFile<ELFT>::Elf_Dyn;
 
+private:
+  ELFObjectFile(MemoryBufferRef Object, const Elf_Shdr *DotDynSymSec,
+                const Elf_Shdr *DotSymtabSec, ArrayRef<Elf_Word> ShndxTable);
+
 protected:
   ELFFile<ELFT> EF;
 
@@ -328,7 +332,8 @@ protected:
   bool isDyldELFObject;
 
 public:
-  ELFObjectFile(MemoryBufferRef Object, std::error_code &EC);
+  ELFObjectFile(ELFObjectFile<ELFT> &&Other);
+  static Expected<ELFObjectFile<ELFT>> create(MemoryBufferRef Object);
 
   const Elf_Rel *getRel(DataRefImpl Rel) const;
   const Elf_Rela *getRela(DataRefImpl Rela) const;
@@ -844,48 +849,58 @@ ELFObjectFile<ELFT>::getRela(DataRefImpl Rela) const {
 }
 
 template <class ELFT>
-ELFObjectFile<ELFT>::ELFObjectFile(MemoryBufferRef Object, std::error_code &EC)
-    : ELFObjectFileBase(
-          getELFType(ELFT::TargetEndianness == support::little, ELFT::Is64Bits),
-          Object),
-      EF(Data.getBuffer()) {
+Expected<ELFObjectFile<ELFT>>
+ELFObjectFile<ELFT>::create(MemoryBufferRef Object) {
+  ELFFile<ELFT> EF(Object.getBuffer());
+
   auto SectionsOrErr = EF.sections();
-  if (!SectionsOrErr) {
-    EC = errorToErrorCode(SectionsOrErr.takeError());
-    return;
-  }
+  if (!SectionsOrErr)
+    return SectionsOrErr.takeError();
+
+  const Elf_Shdr *DotDynSymSec = nullptr;
+  const Elf_Shdr *DotSymtabSec = nullptr;
+  ArrayRef<Elf_Word> ShndxTable;
   for (const Elf_Shdr &Sec : *SectionsOrErr) {
     switch (Sec.sh_type) {
     case ELF::SHT_DYNSYM: {
-      if (DotDynSymSec) {
-        // More than one .dynsym!
-        EC = object_error::parse_failed;
-        return;
-      }
+      if (DotDynSymSec)
+        return createError("More than one dynamic symbol table!");
       DotDynSymSec = &Sec;
       break;
     }
     case ELF::SHT_SYMTAB: {
-      if (DotSymtabSec) {
-        // More than one .dynsym!
-        EC = object_error::parse_failed;
-        return;
-      }
+      if (DotSymtabSec)
+        return createError("More than one static symbol table!");
       DotSymtabSec = &Sec;
       break;
     }
     case ELF::SHT_SYMTAB_SHNDX: {
       auto TableOrErr = EF.getSHNDXTable(Sec);
-      if (!TableOrErr) {
-        EC = errorToErrorCode(TableOrErr.takeError());
-        return;
-      }
+      if (!TableOrErr)
+        return TableOrErr.takeError();
       ShndxTable = *TableOrErr;
       break;
     }
     }
   }
+  return ELFObjectFile<ELFT>(Object, DotDynSymSec, DotSymtabSec, ShndxTable);
 }
+
+template <class ELFT>
+ELFObjectFile<ELFT>::ELFObjectFile(MemoryBufferRef Object,
+                                   const Elf_Shdr *DotDynSymSec,
+                                   const Elf_Shdr *DotSymtabSec,
+                                   ArrayRef<Elf_Word> ShndxTable)
+    : ELFObjectFileBase(
+          getELFType(ELFT::TargetEndianness == support::little, ELFT::Is64Bits),
+          Object),
+      EF(Data.getBuffer()), DotDynSymSec(DotDynSymSec),
+      DotSymtabSec(DotSymtabSec), ShndxTable(ShndxTable) {}
+
+template <class ELFT>
+ELFObjectFile<ELFT>::ELFObjectFile(ELFObjectFile<ELFT> &&Other)
+    : ELFObjectFile(Other.Data, Other.DotDynSymSec, Other.DotSymtabSec,
+                    Other.ShndxTable) {}
 
 template <class ELFT>
 basic_symbol_iterator ELFObjectFile<ELFT>::symbol_begin() const {
