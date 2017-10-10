@@ -386,7 +386,8 @@ InputSectionBase *InputSection::getRelocatedSection() {
 // for each relocation. So we copy relocations one by one.
 template <class ELFT, class RelTy>
 void InputSection::copyRelocations(uint8_t *Buf, ArrayRef<RelTy> Rels) {
-  InputSectionBase *RelocatedSection = getRelocatedSection();
+  InputSectionBase *Sec = getRelocatedSection();
+
   for (const RelTy &Rel : Rels) {
     uint32_t Type = Rel.getType(Config->IsMips64EL);
     SymbolBody &Body = this->getFile<ELFT>()->getRelocTargetSym(Rel);
@@ -399,8 +400,7 @@ void InputSection::copyRelocations(uint8_t *Buf, ArrayRef<RelTy> Rels) {
 
     // Output section VA is zero for -r, so r_offset is an offset within the
     // section, but for --emit-relocs it is an virtual address.
-    P->r_offset = RelocatedSection->getOutputSection()->Addr +
-                  RelocatedSection->getOffset(Rel.r_offset);
+    P->r_offset = Sec->getOutputSection()->Addr + Sec->getOffset(Rel.r_offset);
     P->setSymbolAndType(InX::SymTab->getSymbolIndex(&Body), Type,
                         Config->IsMips64EL);
 
@@ -423,10 +423,10 @@ void InputSection::copyRelocations(uint8_t *Buf, ArrayRef<RelTy> Rels) {
       if (Config->IsRela) {
         P->r_addend += Body.getVA() - Section->getOutputSection()->Addr;
       } else if (Config->Relocatable) {
-        const uint8_t *BufLoc = RelocatedSection->Data.begin() + Rel.r_offset;
-        RelocatedSection->Relocations.push_back(
-            {R_ABS, Type, Rel.r_offset, Target->getImplicitAddend(BufLoc, Type),
-             &Body});
+        const uint8_t *BufLoc = Sec->Data.begin() + Rel.r_offset;
+        Sec->Relocations.push_back({R_ABS, Type, Rel.r_offset,
+                                    Target->getImplicitAddend(BufLoc, Type),
+                                    &Body});
       }
     }
 
