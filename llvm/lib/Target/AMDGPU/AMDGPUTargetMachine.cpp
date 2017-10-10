@@ -117,10 +117,10 @@ static cl::opt<bool> EnableSIInsertWaitcntsPass(
   cl::init(true));
 
 // Option to run late CFG structurizer
-static cl::opt<bool> LateCFGStructurize(
+static cl::opt<bool, true> LateCFGStructurize(
   "amdgpu-late-structurize",
   cl::desc("Enable late CFG structurization"),
-  cl::init(false),
+  cl::location(AMDGPUTargetMachine::EnableLateStructurizeCFG),
   cl::Hidden);
 
 static cl::opt<bool> EnableAMDGPUFunctionCalls(
@@ -299,6 +299,8 @@ AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, const Triple &TT,
 }
 
 AMDGPUTargetMachine::~AMDGPUTargetMachine() = default;
+
+bool AMDGPUTargetMachine::EnableLateStructurizeCFG = false;
 
 StringRef AMDGPUTargetMachine::getGPUName(const Function &F) const {
   Attribute GPUAttr = F.getFnAttribute("target-cpu");

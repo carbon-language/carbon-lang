@@ -18,6 +18,7 @@
 #include "AMDGPUInstrInfo.h"
 #include "AMDGPURegisterInfo.h"
 #include "AMDGPUSubtarget.h"
+#include "AMDGPUTargetMachine.h"
 #include "SIDefines.h"
 #include "SIISelLowering.h"
 #include "SIInstrInfo.h"
@@ -69,12 +70,14 @@ class AMDGPUDAGToDAGISel : public SelectionDAGISel {
   // make the right decision when generating code for different targets.
   const AMDGPUSubtarget *Subtarget;
   AMDGPUAS AMDGPUASI;
+  bool EnableLateStructurizeCFG;
 
 public:
   explicit AMDGPUDAGToDAGISel(TargetMachine *TM = nullptr,
                               CodeGenOpt::Level OptLevel = CodeGenOpt::Default)
     : SelectionDAGISel(*TM, OptLevel) {
     AMDGPUASI = AMDGPU::getAMDGPUAS(*TM);
+    EnableLateStructurizeCFG = AMDGPUTargetMachine::EnableLateStructurizeCFG;
   }
   ~AMDGPUDAGToDAGISel() override = default;
 
