@@ -213,6 +213,7 @@ def GPR : RegisterClass<"ARM", [i32], 32, (add (sequence "R%u", 0, 12),
   let AltOrderSelect = [{
       return 1 + MF.getSubtarget<ARMSubtarget>().isThumb1Only();
   }];
+  let DiagnosticString = "operand must be a register in range [r0, r15]";
 }
 
 // GPRs without the PC.  Some ARM instructions do not allow the PC in
@@ -223,6 +224,7 @@ def GPRnopc : RegisterClass<"ARM", [i32], 32, (sub GPR, PC)> {
   let AltOrderSelect = [{
       return 1 + MF.getSubtarget<ARMSubtarget>().isThumb1Only();
   }];
+  let DiagnosticString = "operand must be a register in range [r0, r14]";
 }
 
 // GPRs without the PC but with APSR. Some instructions allow accessing the
@@ -233,6 +235,7 @@ def GPRwithAPSR : RegisterClass<"ARM", [i32], 32, (add (sub GPR, PC), APSR_NZCV)
   let AltOrderSelect = [{
       return 1 + MF.getSubtarget<ARMSubtarget>().isThumb1Only();
   }];
+  let DiagnosticString = "operand must be a register in range [r0, r14] or apsr_nzcv";
 }
 
 // GPRsp - Only the SP is legal. Used by Thumb1 instructions that want the
@@ -240,7 +243,9 @@ def GPRwithAPSR : RegisterClass<"ARM", [i32], 32, (add (sub GPR, PC), APSR_NZCV)
 // FIXME: It would be better to not use this at all and refactor the
 // instructions to not have SP an an explicit argument. That makes
 // frame index resolution a bit trickier, though.
-def GPRsp : RegisterClass<"ARM", [i32], 32, (add SP)>;
+def GPRsp : RegisterClass<"ARM", [i32], 32, (add SP)> {
+  let DiagnosticString = "operand must be a register sp";
+}
 
 // restricted GPR register class. Many Thumb2 instructions allow the full
 // register range for operands, but have undefined behaviours when PC
@@ -251,18 +256,23 @@ def rGPR : RegisterClass<"ARM", [i32], 32, (sub GPR, SP, PC)> {
   let AltOrderSelect = [{
       return 1 + MF.getSubtarget<ARMSubtarget>().isThumb1Only();
   }];
+  let DiagnosticType = "rGPR";
 }
 
 // Thumb registers are R0-R7 normally. Some instructions can still use
 // the general GPR register class above (MOV, e.g.)
-def tGPR : RegisterClass<"ARM", [i32], 32, (trunc GPR, 8)>;
+def tGPR : RegisterClass<"ARM", [i32], 32, (trunc GPR, 8)> {
+  let DiagnosticString = "operand must be a register in range [r0, r7]";
+}
 
 // Thumb registers R0-R7 and the PC. Some instructions like TBB or THH allow
 // the PC to be used as a destination operand as well.
 def tGPRwithpc : RegisterClass<"ARM", [i32], 32, (add tGPR, PC)>;
 
 // The high registers in thumb mode, R8-R15.
-def hGPR : RegisterClass<"ARM", [i32], 32, (sub GPR, tGPR)>;
+def hGPR : RegisterClass<"ARM", [i32], 32, (sub GPR, tGPR)> {
+  let DiagnosticString = "operand must be a register in range [r8, r15]";
+}
 
 // For tail calls, we can't use callee-saved registers, as they are restored
 // to the saved value before the tail call, which would clobber a call address.

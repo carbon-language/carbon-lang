@@ -623,6 +623,8 @@ public:
     SmallString<128> Message;
   };
 
+  const char *getCustomOperandDiag(ARMMatchResultTy MatchError);
+
   void FilterNearMisses(SmallVectorImpl<NearMissInfo> &NearMissesIn,
                         SmallVectorImpl<NearMissMessage> &NearMissesOut,
                         SMLoc IDLoc, OperandVector &Operands);
@@ -10094,6 +10096,23 @@ extern "C" void LLVMInitializeARMAsmParser() {
 #define GET_MATCHER_IMPLEMENTATION
 #include "ARMGenAsmMatcher.inc"
 
+// Some diagnostics need to vary with subtarget features, so they are handled
+// here. For example, the DPR class has either 16 or 32 registers, depending
+// on the FPU available.
+const char *
+ARMAsmParser::getCustomOperandDiag(ARMMatchResultTy MatchError) {
+  switch (MatchError) {
+  // rGPR contains sp starting with ARMv8.
+  case Match_rGPR:
+    return hasV8Ops() ? "operand must be a register in range [r0, r14]"
+                      : "operand must be a register in range [r0, r12] or r14";
+
+  // For all other diags, use the static string from tablegen.
+  default:
+    return getMatchKindDiag(MatchError);
+  }
+}
+
 // Process the list of near-misses, throwing away ones we don't want to report
 // to the user, and converting the rest to a source location and string that
 // should be reported.
@@ -10124,7 +10143,7 @@ ARMAsmParser::FilterNearMisses(SmallVectorImpl<NearMissInfo> &NearMissesIn,
       SMLoc OperandLoc =
           ((ARMOperand &)*Operands[I.getOperandIndex()]).getStartLoc();
       const char *OperandDiag =
-          getMatchKindDiag((ARMMatchResultTy)I.getOperandError());
+          getCustomOperandDiag((ARMMatchResultTy)I.getOperandError());
 
       // If we have already emitted a message for a superclass, don't also report
       // the sub-class. We consider all operand classes that we don't have a
@@ -10382,7 +10401,7 @@ unsigned ARMAsmParser::validateTargetOperandClass(MCParsedAsmOperand &AsmOp,
   case MCK_rGPR:
     if (hasV8Ops() && Op.isReg() && Op.getReg() == ARM::SP)
       return Match_Success;
-    break;
+    return Match_rGPR;
   case MCK_GPRPair:
     if (Op.isReg() &&
         MRI->getRegClass(ARM::GPRRegClassID).contains(Op.getReg()))
