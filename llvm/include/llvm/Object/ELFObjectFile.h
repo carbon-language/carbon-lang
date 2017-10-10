@@ -211,8 +211,9 @@ public:
   using Elf_Dyn = typename ELFFile<ELFT>::Elf_Dyn;
 
 private:
-  ELFObjectFile(MemoryBufferRef Object, const Elf_Shdr *DotDynSymSec,
-                const Elf_Shdr *DotSymtabSec, ArrayRef<Elf_Word> ShndxTable);
+  ELFObjectFile(MemoryBufferRef Object, ELFFile<ELFT> EF,
+                const Elf_Shdr *DotDynSymSec, const Elf_Shdr *DotSymtabSec,
+                ArrayRef<Elf_Word> ShndxTable);
 
 protected:
   ELFFile<ELFT> EF;
@@ -851,7 +852,10 @@ ELFObjectFile<ELFT>::getRela(DataRefImpl Rela) const {
 template <class ELFT>
 Expected<ELFObjectFile<ELFT>>
 ELFObjectFile<ELFT>::create(MemoryBufferRef Object) {
-  ELFFile<ELFT> EF(Object.getBuffer());
+  auto EFOrErr = ELFFile<ELFT>::create(Object.getBuffer());
+  if (Error E = EFOrErr.takeError())
+    return std::move(E);
+  auto EF = std::move(*EFOrErr);
 
   auto SectionsOrErr = EF.sections();
   if (!SectionsOrErr)
@@ -883,24 +887,25 @@ ELFObjectFile<ELFT>::create(MemoryBufferRef Object) {
     }
     }
   }
-  return ELFObjectFile<ELFT>(Object, DotDynSymSec, DotSymtabSec, ShndxTable);
+  return ELFObjectFile<ELFT>(Object, EF, DotDynSymSec, DotSymtabSec,
+                             ShndxTable);
 }
 
 template <class ELFT>
-ELFObjectFile<ELFT>::ELFObjectFile(MemoryBufferRef Object,
+ELFObjectFile<ELFT>::ELFObjectFile(MemoryBufferRef Object, ELFFile<ELFT> EF,
                                    const Elf_Shdr *DotDynSymSec,
                                    const Elf_Shdr *DotSymtabSec,
                                    ArrayRef<Elf_Word> ShndxTable)
     : ELFObjectFileBase(
           getELFType(ELFT::TargetEndianness == support::little, ELFT::Is64Bits),
           Object),
-      EF(Data.getBuffer()), DotDynSymSec(DotDynSymSec),
-      DotSymtabSec(DotSymtabSec), ShndxTable(ShndxTable) {}
+      EF(EF), DotDynSymSec(DotDynSymSec), DotSymtabSec(DotSymtabSec),
+      ShndxTable(ShndxTable) {}
 
 template <class ELFT>
 ELFObjectFile<ELFT>::ELFObjectFile(ELFObjectFile<ELFT> &&Other)
-    : ELFObjectFile(Other.Data, Other.DotDynSymSec, Other.DotSymtabSec,
-                    Other.ShndxTable) {}
+    : ELFObjectFile(Other.Data, Other.EF, Other.DotDynSymSec,
+                    Other.DotSymtabSec, Other.ShndxTable) {}
 
 template <class ELFT>
 basic_symbol_iterator ELFObjectFile<ELFT>::symbol_begin() const {

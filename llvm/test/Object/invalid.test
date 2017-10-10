@@ -81,3 +81,6 @@ INVALID-SECTION-NUM: section table goes past the end of file
 
 RUN: not llvm-readobj -r %p/Inputs/invalid-rel-sym.elf 2>&1 | FileCheck --check-prefix=INVALID-REL-SYM %s
 INVALID-REL-SYM: invalid section offset
+
+RUN: not llvm-readobj -r %p/Inputs/invalid-buffer.elf 2>&1 | FileCheck --check-prefix=INVALID-BUFFER %s
+INVALID-BUFFER: Invalid buffer
