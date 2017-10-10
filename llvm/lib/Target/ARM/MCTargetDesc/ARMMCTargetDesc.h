@@ -15,6 +15,7 @@
 #define LLVM_LIB_TARGET_ARM_MCTARGETDESC_ARMMCTARGETDESC_H
 
 #include "llvm/Support/DataTypes.h"
+#include <memory>
 #include <string>
 
 namespace llvm {
