@@ -564,6 +564,7 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool shouldOmitCCOutOperand(StringRef Mnemonic, OperandVector &Operands);
   bool shouldOmitPredicateOperand(StringRef Mnemonic, OperandVector &Operands);
   bool isITBlockTerminator(MCInst &Inst) const;
+  void fixupGNULDRDAlias(StringRef Mnemonic, OperandVector &Operands);
 
 public:
   enum ARMMatchResultTy {
@@ -5865,6 +5866,52 @@ static bool RequiresVFPRegListValidation(StringRef Inst,
   return false;
 }
 
+// The GNU assembler has aliases of ldrd and strd with the second register
+// omitted. We don't have a way to do that in tablegen, so fix it up here.
+//
+// We have to be careful to not emit an invalid Rt2 here, because the rest of
+// the assmebly parser could then generate confusing diagnostics refering to
+// it. If we do find anything that prevents us from doing the transformation we
+// bail out, and let the assembly parser report an error on the instruction as
+// it is written.
+void ARMAsmParser::fixupGNULDRDAlias(StringRef Mnemonic,
+                                     OperandVector &Operands) {
+  if (Mnemonic != "ldrd" && Mnemonic != "strd")
+    return;
+  if (Operands.size() < 4)
+    return;
+
+  ARMOperand &Op2 = static_cast<ARMOperand &>(*Operands[2]);
+  ARMOperand &Op3 = static_cast<ARMOperand &>(*Operands[3]);
+
+  if (!Op2.isReg())
+    return;
+  if (!Op3.isMem())
+    return;
+
+  const MCRegisterClass &GPR = MRI->getRegClass(ARM::GPRRegClassID);
+  if (!GPR.contains(Op2.getReg()))
+    return;
+
+  unsigned RtEncoding = MRI->getEncodingValue(Op2.getReg());
+  if (!isThumb() && (RtEncoding & 1)) {
+    // In ARM mode, the registers must be from an aligned pair, this
+    // restriction does not apply in Thumb mode.
+    return;
+  }
+  if (Op2.getReg() == ARM::PC)
+    return;
+  unsigned PairedReg = GPR.getRegister(RtEncoding + 1);
+  if (!PairedReg || PairedReg == ARM::PC ||
+      (PairedReg == ARM::SP && !hasV8Ops()))
+    return;
+
+  Operands.insert(
+      Operands.begin() + 3,
+      ARMOperand::CreateReg(PairedReg, Op2.getStartLoc(), Op2.getEndLoc()));
+  return;
+}
+
 /// Parse an arm instruction mnemonic followed by its operands.
 bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                                     SMLoc NameLoc, OperandVector &Operands) {
@@ -6107,25 +6154,8 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
     }
   }
 
-  // GNU Assembler extension (compatibility)
-  if ((Mnemonic == "ldrd" || Mnemonic == "strd")) {
-    ARMOperand &Op2 = static_cast<ARMOperand &>(*Operands[2]);
-    ARMOperand &Op3 = static_cast<ARMOperand &>(*Operands[3]);
-    if (Op3.isMem()) {
-      assert(Op2.isReg() && "expected register argument");
-
-      unsigned SuperReg = MRI->getMatchingSuperReg(
-          Op2.getReg(), ARM::gsub_0, &MRI->getRegClass(ARM::GPRPairRegClassID));
-
-      assert(SuperReg && "expected register pair");
-
-      unsigned PairedReg = MRI->getSubReg(SuperReg, ARM::gsub_1);
-
-      Operands.insert(
-          Operands.begin() + 3,
-          ARMOperand::CreateReg(PairedReg, Op2.getStartLoc(), Op2.getEndLoc()));
-    }
-  }
+  // GNU Assembler extension (compatibility).
+  fixupGNULDRDAlias(Mnemonic, Operands);
 
   // FIXME: As said above, this is all a pretty gross hack.  This instruction
   // does not fit with other "subs" and tblgen.
