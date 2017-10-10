@@ -696,10 +696,6 @@ void InputSection::relocateNonAlloc(uint8_t *Buf, ArrayRef<RelTy> Rels) {
   }
 }
 
-template <class ELFT> ObjFile<ELFT> *InputSectionBase::getFile() const {
-  return cast_or_null<ObjFile<ELFT>>(File);
-}
-
 template <class ELFT>
 void InputSectionBase::relocate(uint8_t *Buf, uint8_t *BufEnd) {
   if (Flags & SHF_ALLOC) {
@@ -1030,11 +1026,6 @@ template void InputSection::writeTo<ELF32LE>(uint8_t *);
 template void InputSection::writeTo<ELF32BE>(uint8_t *);
 template void InputSection::writeTo<ELF64LE>(uint8_t *);
 template void InputSection::writeTo<ELF64BE>(uint8_t *);
-
-template ObjFile<ELF32LE> *InputSectionBase::getFile<ELF32LE>() const;
-template ObjFile<ELF32BE> *InputSectionBase::getFile<ELF32BE>() const;
-template ObjFile<ELF64LE> *InputSectionBase::getFile<ELF64LE>() const;
-template ObjFile<ELF64BE> *InputSectionBase::getFile<ELF64BE>() const;
 
 template MergeInputSection::MergeInputSection(ObjFile<ELF32LE> *,
                                               const ELF32LE::Shdr *, StringRef);
