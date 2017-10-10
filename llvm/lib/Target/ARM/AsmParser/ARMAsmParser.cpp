@@ -10106,6 +10106,10 @@ ARMAsmParser::getCustomOperandDiag(ARMMatchResultTy MatchError) {
   case Match_rGPR:
     return hasV8Ops() ? "operand must be a register in range [r0, r14]"
                       : "operand must be a register in range [r0, r12] or r14";
+  // DPR contains 16 registers for some FPUs, and 32 for others.
+  case Match_DPR:
+    return hasD16() ? "operand must be a register in range [d0, d15]"
+                    : "operand must be a register in range [d0, d31]";
 
   // For all other diags, use the static string from tablegen.
   default:

@@ -304,11 +304,14 @@ def SPR : RegisterClass<"ARM", [f32], 32, (sequence "S%u", 0, 31)> {
   let AltOrderSelect = [{
     return 1 + MF.getSubtarget<ARMSubtarget>().useStride4VFPs(MF);
   }];
+  let DiagnosticString = "operand must be a register in range [s0, s31]";
 }
 
 // Subset of SPR which can be used as a source of NEON scalars for 16-bit
 // operations
-def SPR_8 : RegisterClass<"ARM", [f32], 32, (sequence "S%u", 0, 15)>;
+def SPR_8 : RegisterClass<"ARM", [f32], 32, (sequence "S%u", 0, 15)> {
+  let DiagnosticString = "operand must be a register in range [s0, s15]";
+}
 
 // Scalar double precision floating point / generic 64-bit vector register
 // class.
@@ -323,17 +326,22 @@ def DPR : RegisterClass<"ARM", [f64, v8i8, v4i16, v2i32, v1i64, v2f32, v4f16], 6
   let AltOrderSelect = [{
     return 1 + MF.getSubtarget<ARMSubtarget>().useStride4VFPs(MF);
   }];
+  let DiagnosticType = "DPR";
 }
 
 // Subset of DPR that are accessible with VFP2 (and so that also have
 // 32-bit SPR subregs).
 def DPR_VFP2 : RegisterClass<"ARM", [f64, v8i8, v4i16, v2i32, v1i64, v2f32, v4f16], 64,
-                             (trunc DPR, 16)>;
+                             (trunc DPR, 16)> {
+  let DiagnosticString = "operand must be a register in range [d0, d15]";
+}
 
 // Subset of DPR which can be used as a source of NEON scalars for 16-bit
 // operations
 def DPR_8 : RegisterClass<"ARM", [f64, v8i8, v4i16, v2i32, v1i64, v2f32, v4f16], 64,
-                          (trunc DPR, 8)>;
+                          (trunc DPR, 8)> {
+  let DiagnosticString = "operand must be a register in range [d0, d7]";
+}
 
 // Generic 128-bit vector register class.
 def QPR : RegisterClass<"ARM", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64, v8f16], 128,
@@ -341,15 +349,20 @@ def QPR : RegisterClass<"ARM", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64, v8f16]
   // Allocate non-VFP2 aliases Q8-Q15 first.
   let AltOrders = [(rotl QPR, 8)];
   let AltOrderSelect = [{ return 1; }];
+  let DiagnosticString = "operand must be a register in range [q0, q15]";
 }
 
 // Subset of QPR that have 32-bit SPR subregs.
 def QPR_VFP2 : RegisterClass<"ARM", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
-                             128, (trunc QPR, 8)>;
+                             128, (trunc QPR, 8)> {
+  let DiagnosticString = "operand must be a register in range [q0, q7]";
+}
 
 // Subset of QPR that have DPR_8 and SPR_8 subregs.
 def QPR_8 : RegisterClass<"ARM", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
-                           128, (trunc QPR, 4)>;
+                           128, (trunc QPR, 4)> {
+  let DiagnosticString = "operand must be a register in range [q0, q3]";
+}
 
 // Pseudo-registers representing odd-even pairs of D registers. The even-odd
 // pairs are already represented by the Q registers.
