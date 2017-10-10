@@ -3056,17 +3056,21 @@ void RewriteInstance::addBoltInfoSection() {
     raw_string_ostream OS(Str);
     std::string NameStr = "GNU";
     const uint32_t NameSz = NameStr.size() + 1;
-    const uint32_t DescSz = DescStr.size() + 1;
+    const uint32_t DescSz = DescStr.size();
     const uint32_t Type = 4; // NT_GNU_GOLD_VERSION (gold version)
     OS.write(reinterpret_cast<const char*>(&(NameSz)), 4);
     OS.write(reinterpret_cast<const char*>(&(DescSz)), 4);
     OS.write(reinterpret_cast<const char*>(&(Type)), 4);
-    OS << NameStr << '\0';
-    for (uint64_t I = NameStr.size() + 1;
-         I < RoundUpToAlignment(NameStr.size() + 1, 4); ++I) {
+    OS << NameStr;
+    for (uint64_t I = NameStr.size();
+         I < RoundUpToAlignment(NameStr.size(), 4); ++I) {
       OS << '\0';
     }
-    OS << DescStr << '\0';
+    OS << DescStr;
+    for (uint64_t I = DescStr.size();
+         I < RoundUpToAlignment(DescStr.size(), 4); ++I) {
+      OS << '\0';
+    }
 
     const auto BoltInfo = OS.str();
     const auto SectionSize = BoltInfo.size();
