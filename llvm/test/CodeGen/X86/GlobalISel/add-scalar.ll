@@ -11,12 +11,9 @@ define i64 @test_add_i64(i64 %arg1, i64 %arg2) {
 ; X32-LABEL: test_add_i64:
 ; X32:       # BB#0:
 ; X32-NEXT:    pushl %ebp
-; X32-NEXT:  .Lcfi0:
 ; X32-NEXT:    .cfi_def_cfa_offset 8
-; X32-NEXT:  .Lcfi1:
 ; X32-NEXT:    .cfi_offset %ebp, -8
 ; X32-NEXT:    movl %esp, %ebp
-; X32-NEXT:  .Lcfi2:
 ; X32-NEXT:    .cfi_def_cfa_register %ebp
 ; X32-NEXT:    movl 16(%ebp), %eax
 ; X32-NEXT:    movl 20(%ebp), %edx
