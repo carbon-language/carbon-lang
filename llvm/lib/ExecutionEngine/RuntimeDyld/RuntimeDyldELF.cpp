@@ -164,7 +164,7 @@ createRTDyldELFObject(MemoryBufferRef Buffer, const ObjectFile &SourceObject,
     ++SI;
   }
 
-  return Obj;
+  return std::move(Obj);
 }
 
 static OwningBinary<ObjectFile>
