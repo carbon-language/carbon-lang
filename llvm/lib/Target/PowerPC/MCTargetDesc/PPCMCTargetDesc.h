@@ -19,6 +19,7 @@
 
 #include "llvm/Support/MathExtras.h"
 #include <cstdint>
+#include <memory>
 
 namespace llvm {
 
