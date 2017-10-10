@@ -12,7 +12,7 @@
 ; GCN-DAG: v_cmp_lt_i32
 ; GCN-DAG: v_cmp_gt_i32
 ; GCN: s_and_b64
-; GCN: s_and_saveexec_b64
+; GCN: s_mov_b64 exec
 
 ; GCN: s_or_b64 exec, exec
 ; GCN: v_cmp_eq_u32
