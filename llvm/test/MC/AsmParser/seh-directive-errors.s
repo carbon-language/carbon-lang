@@ -1,4 +1,4 @@
-# RUN: not llvm-mc %s -filetype=obj -o /dev/null 2>&1 | FileCheck %s --implicit-check-not=error:
+# RUN: not llvm-mc -triple x86_64-windows-msvc %s -filetype=obj -o /dev/null 2>&1 | FileCheck %s --implicit-check-not=error:
 	.text
 
 	.seh_pushreg 6
