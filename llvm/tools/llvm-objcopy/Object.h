@@ -58,7 +58,6 @@ public:
   virtual ~SectionBase() {}
   virtual void initialize(SectionTableRef SecTable);
   virtual void finalize();
-  virtual void removeSectionReferences(const SectionBase *Sec);
   template <class ELFT> void writeHeader(llvm::FileOutputBuffer &Out) const;
   virtual void writeSection(llvm::FileOutputBuffer &Out) const = 0;
 };
@@ -99,8 +98,7 @@ public:
       return *Sections.begin();
     return nullptr;
   }
-  void removeSection(const SectionBase *Sec) { Sections.erase(Sec); }
-  void addSection(const SectionBase *Sec) { Sections.insert(Sec); }
+  void addSection(const SectionBase *sec) { Sections.insert(sec); }
   template <class ELFT> void writeHeader(llvm::FileOutputBuffer &Out) const;
   void writeSegment(llvm::FileOutputBuffer &Out) const;
 };
@@ -166,8 +164,6 @@ protected:
   std::vector<std::unique_ptr<Symbol>> Symbols;
   StringTableSection *SymbolNames = nullptr;
 
-  typedef std::unique_ptr<Symbol> SymPtr;
-
 public:
   void setStrTab(StringTableSection *StrTab) { SymbolNames = StrTab; }
   void addSymbol(llvm::StringRef Name, uint8_t Bind, uint8_t Type,
@@ -175,7 +171,6 @@ public:
                  uint64_t Sz);
   void addSymbolNames();
   const Symbol *getSymbolByIndex(uint32_t Index) const;
-  void removeSectionReferences(const SectionBase *Sec) override;
   void initialize(SectionTableRef SecTable) override;
   void finalize() override;
   static bool classof(const SectionBase *S) {
@@ -195,49 +190,20 @@ struct Relocation {
   uint32_t Type;
 };
 
-// All relocation sections denote relocations to apply to another section.
-// However, some relocation sections use a dynamic symbol table and others use
-// a regular symbol table. Because the types of the two symbol tables differ in
-// our system (because they should behave differently) we can't uniformly
-// represent all relocations with the same base class if we expose an interface
-// that mentions the symbol table type. So we split the two base types into two
-// different classes, one which handles the section the relocation is applied to
-// and another which handles the symbol table type. The symbol table type is
-// taken as a type parameter to the class (see RelocSectionWithSymtabBase).
-class RelocationSectionBase : public SectionBase {
-protected:
+template <class SymTabType> class RelocationSectionBase : public SectionBase {
+private:
+  SymTabType *Symbols = nullptr;
   SectionBase *SecToApplyRel = nullptr;
 
 public:
-  const SectionBase *getSection() const { return SecToApplyRel; }
-  void setSection(SectionBase *Sec) { SecToApplyRel = Sec; }
-
-  static bool classof(const SectionBase *S) {
-    return S->Type == llvm::ELF::SHT_REL || S->Type == llvm::ELF::SHT_RELA;
-  }
-};
-
-// Takes the symbol table type to use as a parameter so that we can deduplicate
-// that code between the two symbol table types.
-template <class SymTabType>
-class RelocSectionWithSymtabBase : public RelocationSectionBase {
-private:
-  SymTabType *Symbols = nullptr;
-
-protected:
-  RelocSectionWithSymtabBase() {}
-
-public:
   void setSymTab(SymTabType *StrTab) { Symbols = StrTab; }
-
-  void removeSectionReferences(const SectionBase *Sec) override;
+  void setSection(SectionBase *Sec) { SecToApplyRel = Sec; }
   void initialize(SectionTableRef SecTable) override;
   void finalize() override;
 };
 
 template <class ELFT>
-class RelocationSection
-    : public RelocSectionWithSymtabBase<SymbolTableSection> {
+class RelocationSection : public RelocationSectionBase<SymbolTableSection> {
 private:
   typedef typename ELFT::Rel Elf_Rel;
   typedef typename ELFT::Rela Elf_Rela;
@@ -264,7 +230,6 @@ private:
 public:
   SectionWithStrTab(llvm::ArrayRef<uint8_t> Data) : Section(Data) {}
   void setStrTab(StringTableSection *StringTable) { StrTab = StringTable; }
-  void removeSectionReferences(const SectionBase *Sec) override;
   void initialize(SectionTableRef SecTable) override;
   void finalize() override;
   static bool classof(const SectionBase *S);
@@ -288,7 +253,7 @@ public:
 };
 
 class DynamicRelocationSection
-    : public RelocSectionWithSymtabBase<DynamicSymbolTableSection> {
+    : public RelocationSectionBase<DynamicSymbolTableSection> {
 private:
   llvm::ArrayRef<uint8_t> Contents;
 
@@ -339,7 +304,6 @@ public:
   uint32_t Flags;
 
   Object(const llvm::object::ELFObjectFile<ELFT> &Obj);
-  void removeSections(std::function<bool(const SectionBase &)> ToRemove);
   virtual size_t totalSize() const = 0;
   virtual void finalize() = 0;
   virtual void write(llvm::FileOutputBuffer &Out) const = 0;
