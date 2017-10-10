@@ -168,10 +168,6 @@ public:
 
   template <class ELFT> ObjFile<ELFT> *getFile() const;
 
-  template <class ELFT> llvm::object::ELFFile<ELFT> getObj() const {
-    return getFile<ELFT>()->getObj();
-  }
-
   InputSection *getLinkOrderDep() const;
 
   void maybeUncompress();
