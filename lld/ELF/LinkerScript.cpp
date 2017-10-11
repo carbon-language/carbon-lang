@@ -231,18 +231,17 @@ static bool matchConstraints(ArrayRef<InputSectionBase *> Sections,
          (!IsRW && Kind == ConstraintKind::ReadOnly);
 }
 
-static void sortSections(InputSection **Begin, InputSection **End,
+static void sortSections(MutableArrayRef<InputSection *> Vec,
                          SortSectionPolicy K) {
   if (K != SortSectionPolicy::Default && K != SortSectionPolicy::None)
-    std::stable_sort(Begin, End, getComparator(K));
+    std::stable_sort(Vec.begin(), Vec.end(), getComparator(K));
 }
 
-static void sortBySymbolOrder(InputSection **Begin, InputSection **End) {
+static void sortBySymbolOrder(MutableArrayRef<InputSection *> Vec) {
   if (Config->SymbolOrderingFile.empty())
     return;
   static llvm::DenseMap<SectionBase *, int> Order = buildSectionOrder();
-  MutableArrayRef<InputSection *> In(Begin, End - Begin);
-  sortByOrder(In, [&](InputSectionBase *S) { return Order.lookup(S); });
+  sortByOrder(Vec, [&](InputSectionBase *S) { return Order.lookup(S); });
 }
 
 // Compute and remember which sections the InputSectionDescription matches.
@@ -295,19 +294,20 @@ LinkerScript::computeInputSections(const InputSectionDescription *Cmd) {
     // 4. If no SORT command is given, sort according to --sort-section.
     // 5. If no SORT commands are given and --sort-section is not specified,
     //    apply sorting provided by --symbol-ordering-file if any exist.
-    InputSection **Begin = Ret.data() + SizeBefore;
-    InputSection **End = Ret.data() + Ret.size();
+    auto Vec = MutableArrayRef<InputSection *>(Ret).slice(SizeBefore);
+
     if (Pat.SortOuter == SortSectionPolicy::Default &&
         Config->SortSection == SortSectionPolicy::Default) {
-      sortBySymbolOrder(Begin, End);
+      sortBySymbolOrder(Vec);
       continue;
     }
+
     if (Pat.SortOuter != SortSectionPolicy::None) {
       if (Pat.SortInner == SortSectionPolicy::Default)
-        sortSections(Begin, End, Config->SortSection);
+        sortSections(Vec, Config->SortSection);
       else
-        sortSections(Begin, End, Pat.SortInner);
-      sortSections(Begin, End, Pat.SortOuter);
+        sortSections(Vec, Pat.SortInner);
+      sortSections(Vec, Pat.SortOuter);
     }
   }
   return Ret;
