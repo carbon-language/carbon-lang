@@ -219,13 +219,13 @@ getComparator(SortSectionPolicy K) {
 }
 
 // A helper function for the SORT() command.
-static bool matchConstraints(ArrayRef<InputSectionBase *> Sections,
+static bool matchConstraints(ArrayRef<InputSection *> Sections,
                              ConstraintKind Kind) {
   if (Kind == ConstraintKind::NoConstraint)
     return true;
 
   bool IsRW = llvm::any_of(
-      Sections, [](InputSectionBase *Sec) { return Sec->Flags & SHF_WRITE; });
+      Sections, [](InputSection *Sec) { return Sec->Flags & SHF_WRITE; });
 
   return (IsRW && Kind == ConstraintKind::ReadWrite) ||
          (!IsRW && Kind == ConstraintKind::ReadOnly);
@@ -311,8 +311,8 @@ LinkerScript::computeInputSections(const InputSectionDescription *Cmd) {
   return Ret;
 }
 
-void LinkerScript::discard(ArrayRef<InputSectionBase *> V) {
-  for (InputSectionBase *S : V) {
+void LinkerScript::discard(ArrayRef<InputSection *> V) {
+  for (InputSection *S : V) {
     S->Live = false;
     if (S == InX::ShStrTab || S == InX::Dynamic || S == InX::DynSymTab ||
         S == InX::DynStrTab)
@@ -321,19 +321,16 @@ void LinkerScript::discard(ArrayRef<InputSectionBase *> V) {
   }
 }
 
-std::vector<InputSectionBase *>
+std::vector<InputSection *>
 LinkerScript::createInputSectionList(OutputSection &OutCmd) {
-  std::vector<InputSectionBase *> Ret;
+  std::vector<InputSection *> Ret;
 
   for (BaseCommand *Base : OutCmd.SectionCommands) {
-    auto *Cmd = dyn_cast<InputSectionDescription>(Base);
-    if (!Cmd)
-      continue;
-
-    Cmd->Sections = computeInputSections(Cmd);
-    Ret.insert(Ret.end(), Cmd->Sections.begin(), Cmd->Sections.end());
+    if (auto *Cmd = dyn_cast<InputSectionDescription>(Base)) {
+      Cmd->Sections = computeInputSections(Cmd);
+      Ret.insert(Ret.end(), Cmd->Sections.begin(), Cmd->Sections.end());
+    }
   }
-
   return Ret;
 }
 
@@ -365,7 +362,7 @@ void LinkerScript::processSectionCommands(OutputSectionFactory &Factory) {
     }
 
     if (auto *Sec = dyn_cast<OutputSection>(SectionCommands[I])) {
-      std::vector<InputSectionBase *> V = createInputSectionList(*Sec);
+      std::vector<InputSection *> V = createInputSectionList(*Sec);
 
       // The output section name `/DISCARD/' is special.
       // Any input section assigned to it is discarded.
@@ -405,8 +402,8 @@ void LinkerScript::processSectionCommands(OutputSectionFactory &Factory) {
       }
 
       // Add input sections to an output section.
-      for (InputSectionBase *S : V)
-        Sec->addSection(cast<InputSection>(S));
+      for (InputSection *S : V)
+        Sec->addSection(S);
 
       assert(Sec->SectionIndex == INT_MAX);
       Sec->SectionIndex = I;

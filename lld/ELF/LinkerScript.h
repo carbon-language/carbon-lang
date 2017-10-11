@@ -207,7 +207,7 @@ class LinkerScript final {
   std::vector<InputSection *>
   computeInputSections(const InputSectionDescription *);
 
-  std::vector<InputSectionBase *> createInputSectionList(OutputSection &Cmd);
+  std::vector<InputSection *> createInputSectionList(OutputSection &Cmd);
 
   std::vector<size_t> getPhdrIndices(OutputSection *Sec);
 
@@ -229,7 +229,7 @@ public:
 
   bool hasPhdrsCommands() { return !PhdrsCommands.empty(); }
   uint64_t getDot() { return Dot; }
-  void discard(ArrayRef<InputSectionBase *> V);
+  void discard(ArrayRef<InputSection *> V);
 
   ExprValue getSymbolValue(const Twine &Loc, StringRef S);
 
