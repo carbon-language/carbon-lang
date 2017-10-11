@@ -79,25 +79,6 @@ uint64_t ExprValue::getSectionOffset() const {
   return getValue() - getSecAddr();
 }
 
-static SymbolBody *addRegular(SymbolAssignment *Cmd) {
-  Symbol *Sym;
-  uint8_t Visibility = Cmd->Hidden ? STV_HIDDEN : STV_DEFAULT;
-  std::tie(Sym, std::ignore) = Symtab->insert(Cmd->Name, /*Type*/ 0, Visibility,
-                                              /*CanOmitFromDynSym*/ false,
-                                              /*File*/ nullptr);
-  Sym->Binding = STB_GLOBAL;
-  ExprValue Value = Cmd->Expression();
-  SectionBase *Sec = Value.isAbsolute() ? nullptr : Value.Sec;
-
-  // We want to set symbol values early if we can. This allows us to use symbols
-  // as variables in linker scripts. Doing so allows us to write expressions
-  // like this: `alignment = 16; . = ALIGN(., alignment)`
-  uint64_t SymValue = Value.Sec ? 0 : Value.getValue();
-  replaceBody<DefinedRegular>(Sym, nullptr, Cmd->Name, /*IsLocal=*/false,
-                              Visibility, STT_NOTYPE, SymValue, 0, Sec);
-  return Sym->body();
-}
-
 OutputSection *LinkerScript::createOutputSection(StringRef Name,
                                                  StringRef Location) {
   OutputSection *&SecRef = NameToOutputSection[Name];
@@ -127,34 +108,14 @@ void LinkerScript::setDot(Expr E, const Twine &Loc, bool InSec) {
     error(Loc + ": unable to move location counter backward for: " +
           CurAddressState->OutSec->Name);
   Dot = Val;
+
   // Update to location counter means update to section size.
   if (InSec)
     CurAddressState->OutSec->Size = Dot - CurAddressState->OutSec->Addr;
 }
 
-// Sets value of a symbol. Two kinds of symbols are processed: synthetic
-// symbols, whose value is an offset from beginning of section and regular
-// symbols whose value is absolute.
-void LinkerScript::assignSymbol(SymbolAssignment *Cmd, bool InSec) {
-  if (Cmd->Name == ".") {
-    setDot(Cmd->Expression, Cmd->Location, InSec);
-    return;
-  }
-
-  if (!Cmd->Sym)
-    return;
-
-  auto *Sym = cast<DefinedRegular>(Cmd->Sym);
-  ExprValue V = Cmd->Expression();
-  if (V.isAbsolute()) {
-    Sym->Value = V.getValue();
-    Sym->Section = nullptr;
-  } else {
-    Sym->Section = V.Sec;
-    Sym->Value = V.getSectionOffset();
-  }
-}
-
+// This function is called from processCommands, while we are
+// fixing the output section layout.
 void LinkerScript::addSymbol(SymbolAssignment *Cmd) {
   if (Cmd->Name == ".")
     return;
@@ -165,7 +126,54 @@ void LinkerScript::addSymbol(SymbolAssignment *Cmd) {
   if (Cmd->Provide && (!B || B->isDefined()))
     return;
 
-  Cmd->Sym = addRegular(Cmd);
+  // Define a symbol.
+  Symbol *Sym;
+  uint8_t Visibility = Cmd->Hidden ? STV_HIDDEN : STV_DEFAULT;
+  std::tie(Sym, std::ignore) = Symtab->insert(Cmd->Name, /*Type*/ 0, Visibility,
+                                              /*CanOmitFromDynSym*/ false,
+                                              /*File*/ nullptr);
+  Sym->Binding = STB_GLOBAL;
+  ExprValue Value = Cmd->Expression();
+  SectionBase *Sec = Value.isAbsolute() ? nullptr : Value.Sec;
+
+  // When this function is called, section addresses have not been
+  // fixed yet. So, we may or may not know the value of the RHS
+  // expression.
+  //
+  // For example, if an expression is `x = 42`, we know x is always 42.
+  // However, if an expression is `x = .`, there's no way to know its
+  // value at the moment.
+  //
+  // We want to set symbol values early if we can. This allows us to
+  // use symbols as variables in linker scripts. Doing so allows us to
+  // write expressions like this: `alignment = 16; . = ALIGN(., alignment)`.
+  uint64_t SymValue = Value.Sec ? 0 : Value.getValue();
+
+  replaceBody<DefinedRegular>(Sym, nullptr, Cmd->Name, /*IsLocal=*/false,
+                              Visibility, STT_NOTYPE, SymValue, 0, Sec);
+  Cmd->Sym = cast<DefinedRegular>(Sym->body());
+}
+
+// This function is called from assignAddresses, while we are
+// fixing the output section addresses. This function is supposed
+// to set the final value for a given symbol assignment.
+void LinkerScript::assignSymbol(SymbolAssignment *Cmd, bool InSec) {
+  if (Cmd->Name == ".") {
+    setDot(Cmd->Expression, Cmd->Location, InSec);
+    return;
+  }
+
+  if (!Cmd->Sym)
+    return;
+
+  ExprValue V = Cmd->Expression();
+  if (V.isAbsolute()) {
+    Cmd->Sym->Section = nullptr;
+    Cmd->Sym->Value = V.getValue();
+  } else {
+    Cmd->Sym->Section = V.Sec;
+    Cmd->Sym->Value = V.getSectionOffset();
+  }
 }
 
 bool SymbolAssignment::classof(const BaseCommand *C) {
@@ -359,6 +367,7 @@ void LinkerScript::processCommands(OutputSectionFactory &Factory) {
   Aether = make<OutputSection>("", 0, SHF_ALLOC);
   Aether->SectionIndex = 1;
   auto State = make_unique<AddressState>(Opt);
+
   // CurAddressState captures the local AddressState and makes it accessible
   // deliberately. This is needed as there are some cases where we cannot just
   // thread the current state through to a lambda function created by the
@@ -785,6 +794,7 @@ void LinkerScript::assignAddresses() {
   // -image-base if set.
   Dot = Config->ImageBase ? *Config->ImageBase : 0;
   auto State = make_unique<AddressState>(Opt);
+
   // CurAddressState captures the local AddressState and makes it accessible
   // deliberately. This is needed as there are some cases where we cannot just
   // thread the current state through to a lambda function created by the

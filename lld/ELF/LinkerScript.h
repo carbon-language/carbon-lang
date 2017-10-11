@@ -28,7 +28,7 @@
 namespace lld {
 namespace elf {
 
-class DefinedCommon;
+class DefinedRegular;
 class SymbolBody;
 class InputSectionBase;
 class InputSection;
@@ -93,7 +93,7 @@ struct SymbolAssignment : BaseCommand {
 
   // The LHS of an expression. Name is either a symbol name or ".".
   StringRef Name;
-  SymbolBody *Sym = nullptr;
+  DefinedRegular *Sym = nullptr;
 
   // The RHS of an expression.
   Expr Expression;
