@@ -859,12 +859,10 @@ ExprValue LinkerScript::getSymbolValue(const Twine &Loc, StringRef S) {
     error(Loc + ": unable to get location counter value");
     return 0;
   }
-  if (SymbolBody *B = Symtab->find(S)) {
-    if (auto *D = dyn_cast<DefinedRegular>(B))
-      return {D->Section, false, D->Value, Loc};
-    if (auto *C = dyn_cast<DefinedCommon>(B))
-      return {C->Section, false, 0, Loc};
-  }
+
+  if (auto *Sym = dyn_cast_or_null<DefinedRegular>(Symtab->find(S)))
+    return {Sym->Section, false, Sym->Value, Loc};
+
   error(Loc + ": symbol not found: " + S);
   return 0;
 }
