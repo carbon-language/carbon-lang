@@ -237,6 +237,41 @@ static void sortSections(MutableArrayRef<InputSection *> Vec,
     std::stable_sort(Vec.begin(), Vec.end(), getComparator(K));
 }
 
+// Sort sections as instructed by SORT-family commands and --sort-section
+// option. Because SORT-family commands can be nested at most two depth
+// (e.g. SORT_BY_NAME(SORT_BY_ALIGNMENT(.text.*))) and because the command
+// line option is respected even if a SORT command is given, the exact
+// behavior we have here is a bit complicated. Here are the rules.
+//
+// 1. If two SORT commands are given, --sort-section is ignored.
+// 2. If one SORT command is given, and if it is not SORT_NONE,
+//    --sort-section is handled as an inner SORT command.
+// 3. If one SORT command is given, and if it is SORT_NONE, don't sort.
+// 4. If no SORT command is given, sort according to --sort-section.
+// 5. If no SORT commands are given and --sort-section is not specified,
+//    apply sorting provided by --symbol-ordering-file if any exist.
+static void sortInputSections(
+    MutableArrayRef<InputSection *> Vec, const SectionPattern &Pat,
+    const DenseMap<SectionBase *, int> &Order) {
+  if (Pat.SortOuter == SortSectionPolicy::None)
+    return;
+
+  if (Pat.SortOuter == SortSectionPolicy::Default &&
+      Config->SortSection == SortSectionPolicy::Default) {
+    // If -symbol-ordering-file was given, sort accordingly.
+    // Usually, Order is empty.
+    if (!Order.empty())
+      sortByOrder(Vec, [&](InputSectionBase *S) { return Order.lookup(S); });
+    return;
+  }
+
+  if (Pat.SortInner == SortSectionPolicy::Default)
+    sortSections(Vec, Config->SortSection);
+  else
+    sortSections(Vec, Pat.SortInner);
+  sortSections(Vec, Pat.SortOuter);
+}
+
 // Compute and remember which sections the InputSectionDescription matches.
 std::vector<InputSection *>
 LinkerScript::computeInputSections(const InputSectionDescription *Cmd) {
@@ -275,38 +310,8 @@ LinkerScript::computeInputSections(const InputSectionDescription *Cmd) {
       Sec->Assigned = true;
     }
 
-    // Sort sections as instructed by SORT-family commands and --sort-section
-    // option. Because SORT-family commands can be nested at most two depth
-    // (e.g. SORT_BY_NAME(SORT_BY_ALIGNMENT(.text.*))) and because the command
-    // line option is respected even if a SORT command is given, the exact
-    // behavior we have here is a bit complicated. Here are the rules.
-    //
-    // 1. If two SORT commands are given, --sort-section is ignored.
-    // 2. If one SORT command is given, and if it is not SORT_NONE,
-    //    --sort-section is handled as an inner SORT command.
-    // 3. If one SORT command is given, and if it is SORT_NONE, don't sort.
-    // 4. If no SORT command is given, sort according to --sort-section.
-    // 5. If no SORT commands are given and --sort-section is not specified,
-    //    apply sorting provided by --symbol-ordering-file if any exist.
-    auto Vec = MutableArrayRef<InputSection *>(Ret).slice(SizeBefore);
-
-    if (Pat.SortOuter == SortSectionPolicy::Default &&
-        Config->SortSection == SortSectionPolicy::Default) {
-
-      // If -symbol-ordering-file was given, sort accordingly.
-      // Usually, Order is empty.
-      if (!Order.empty())
-        sortByOrder(Vec, [&](InputSectionBase *S) { return Order.lookup(S); });
-      continue;
-    }
-
-    if (Pat.SortOuter != SortSectionPolicy::None) {
-      if (Pat.SortInner == SortSectionPolicy::Default)
-        sortSections(Vec, Config->SortSection);
-      else
-        sortSections(Vec, Pat.SortInner);
-      sortSections(Vec, Pat.SortOuter);
-    }
+    sortInputSections(MutableArrayRef<InputSection *>(Ret).slice(SizeBefore),
+                      Pat, Order);
   }
   return Ret;
 }
