@@ -756,7 +756,7 @@ SymbolAssignment *ScriptParser::readAssignment(StringRef Name) {
   Expr E = readExpr();
   if (Op == "+=") {
     std::string Loc = getCurrentLocation();
-    E = [=] { return add(Script->getSymbolValue(Loc, Name), E()); };
+    E = [=] { return add(Script->getSymbolValue(Name, Loc), E()); };
   }
   return make<SymbolAssignment>(Name, E, getCurrentLocation());
 }
@@ -1051,7 +1051,7 @@ Expr ScriptParser::readPrimary() {
 
   // Tok is the dot.
   if (Tok == ".")
-    return [=] { return Script->getSymbolValue(Location, Tok); };
+    return [=] { return Script->getSymbolValue(Tok, Location); };
 
   // Tok is a literal number.
   if (Optional<uint64_t> Val = parseInt(Tok))
@@ -1061,7 +1061,7 @@ Expr ScriptParser::readPrimary() {
   if (!isValidCIdentifier(Tok))
     setError("malformed number: " + Tok);
   Script->ReferencedSymbols.push_back(Tok);
-  return [=] { return Script->getSymbolValue(Location, Tok); };
+  return [=] { return Script->getSymbolValue(Tok, Location); };
 }
 
 Expr ScriptParser::readTernary(Expr Cond) {

@@ -852,18 +852,18 @@ bool LinkerScript::needsInterpSection() {
   return false;
 }
 
-ExprValue LinkerScript::getSymbolValue(const Twine &Loc, StringRef S) {
-  if (S == ".") {
+ExprValue LinkerScript::getSymbolValue(StringRef Name, const Twine &Loc) {
+  if (Name == ".") {
     if (Ctx)
       return {Ctx->OutSec, false, Dot - Ctx->OutSec->Addr, Loc};
     error(Loc + ": unable to get location counter value");
     return 0;
   }
 
-  if (auto *Sym = dyn_cast_or_null<DefinedRegular>(Symtab->find(S)))
+  if (auto *Sym = dyn_cast_or_null<DefinedRegular>(Symtab->find(Name)))
     return {Sym->Section, false, Sym->Value, Loc};
 
-  error(Loc + ": symbol not found: " + S);
+  error(Loc + ": symbol not found: " + Name);
   return 0;
 }
 

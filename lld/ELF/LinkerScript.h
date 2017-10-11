@@ -231,7 +231,7 @@ public:
   uint64_t getDot() { return Dot; }
   void discard(ArrayRef<InputSection *> V);
 
-  ExprValue getSymbolValue(const Twine &Loc, StringRef S);
+  ExprValue getSymbolValue(StringRef Name, const Twine &Loc);
 
   void fabricateDefaultCommands();
   void addOrphanSections(OutputSectionFactory &Factory);
