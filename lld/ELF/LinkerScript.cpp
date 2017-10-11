@@ -341,7 +341,7 @@ std::vector<InputSectionBase *>
 LinkerScript::createInputSectionList(OutputSection &OutCmd) {
   std::vector<InputSectionBase *> Ret;
 
-  for (BaseCommand *Base : OutCmd.Commands) {
+  for (BaseCommand *Base : OutCmd.SectionCommands) {
     auto *Cmd = dyn_cast<InputSectionDescription>(Base);
     if (!Cmd)
       continue;
@@ -374,14 +374,14 @@ void LinkerScript::processCommands(OutputSectionFactory &Factory) {
   CurAddressState = State.get();
   CurAddressState->OutSec = Aether;
 
-  for (size_t I = 0; I < Commands.size(); ++I) {
+  for (size_t I = 0; I < SectionCommands.size(); ++I) {
     // Handle symbol assignments outside of any output section.
-    if (auto *Cmd = dyn_cast<SymbolAssignment>(Commands[I])) {
+    if (auto *Cmd = dyn_cast<SymbolAssignment>(SectionCommands[I])) {
       addSymbol(Cmd);
       continue;
     }
 
-    if (auto *Sec = dyn_cast<OutputSection>(Commands[I])) {
+    if (auto *Sec = dyn_cast<OutputSection>(SectionCommands[I])) {
       std::vector<InputSectionBase *> V = createInputSectionList(*Sec);
 
       // The output section name `/DISCARD/' is special.
@@ -396,19 +396,19 @@ void LinkerScript::processCommands(OutputSectionFactory &Factory) {
       // sections satisfy a given constraint. If not, a directive is handled
       // as if it wasn't present from the beginning.
       //
-      // Because we'll iterate over Commands many more times, the easiest
+      // Because we'll iterate over SectionCommands many more times, the easiest
       // way to "make it as if it wasn't present" is to just remove it.
       if (!matchConstraints(V, Sec->Constraint)) {
         for (InputSectionBase *S : V)
           S->Assigned = false;
-        Commands.erase(Commands.begin() + I);
+        SectionCommands.erase(SectionCommands.begin() + I);
         --I;
         continue;
       }
 
       // A directive may contain symbol definitions like this:
       // ".foo : { ...; bar = .; }". Handle them.
-      for (BaseCommand *Base : Sec->Commands)
+      for (BaseCommand *Base : Sec->SectionCommands)
         if (auto *OutCmd = dyn_cast<SymbolAssignment>(Base))
           addSymbol(OutCmd);
 
@@ -447,7 +447,8 @@ void LinkerScript::fabricateDefaultCommands() {
   auto Expr = [=] {
     return std::min(StartAddr, Target->getImageBase() + elf::getHeaderSize());
   };
-  Commands.insert(Commands.begin(), make<SymbolAssignment>(".", Expr, ""));
+  SectionCommands.insert(SectionCommands.begin(),
+                         make<SymbolAssignment>(".", Expr, ""));
 }
 
 static OutputSection *findByName(ArrayRef<BaseCommand *> Vec,
@@ -461,7 +462,7 @@ static OutputSection *findByName(ArrayRef<BaseCommand *> Vec,
 
 // Add sections that didn't match any sections command.
 void LinkerScript::addOrphanSections(OutputSectionFactory &Factory) {
-  unsigned End = Commands.size();
+  unsigned End = SectionCommands.size();
 
   for (InputSectionBase *S : InputSections) {
     if (!S->Live || S->Parent)
@@ -471,13 +472,13 @@ void LinkerScript::addOrphanSections(OutputSectionFactory &Factory) {
     log(toString(S) + " is being placed in '" + Name + "'");
 
     if (OutputSection *Sec =
-            findByName(makeArrayRef(Commands).slice(0, End), Name)) {
+            findByName(makeArrayRef(SectionCommands).slice(0, End), Name)) {
       Sec->addSection(cast<InputSection>(S));
       continue;
     }
 
     if (OutputSection *OS = Factory.addInputSec(S, Name))
-      Script->Commands.push_back(OS);
+      SectionCommands.push_back(OS);
     assert(S->getOutputSection()->SectionIndex == INT_MAX);
   }
 }
@@ -636,7 +637,7 @@ void LinkerScript::assignOffsets(OutputSection *Sec) {
   if (CurAddressState->OutSec->Flags & SHF_COMPRESSED)
     return;
 
-  for (BaseCommand *C : Sec->Commands)
+  for (BaseCommand *C : Sec->SectionCommands)
     process(*C);
 }
 
@@ -647,7 +648,7 @@ void LinkerScript::removeEmptyCommands() {
   // clutter the output.
   // We instead remove trivially empty sections. The bfd linker seems even
   // more aggressive at removing them.
-  llvm::erase_if(Commands, [&](BaseCommand *Base) {
+  llvm::erase_if(SectionCommands, [&](BaseCommand *Base) {
     if (auto *Sec = dyn_cast<OutputSection>(Base))
       return !Sec->Live;
     return false;
@@ -655,7 +656,7 @@ void LinkerScript::removeEmptyCommands() {
 }
 
 static bool isAllSectionDescription(const OutputSection &Cmd) {
-  for (BaseCommand *Base : Cmd.Commands)
+  for (BaseCommand *Base : Cmd.SectionCommands)
     if (!isa<InputSectionDescription>(*Base))
       return false;
   return true;
@@ -668,7 +669,7 @@ void LinkerScript::adjustSectionsBeforeSorting() {
   // consequeces and gives us a section to put the symbol in.
   uint64_t Flags = SHF_ALLOC;
 
-  for (BaseCommand *Cmd : Commands) {
+  for (BaseCommand *Cmd : SectionCommands) {
     auto *Sec = dyn_cast<OutputSection>(Cmd);
     if (!Sec)
       continue;
@@ -687,7 +688,7 @@ void LinkerScript::adjustSectionsBeforeSorting() {
 
 void LinkerScript::adjustSectionsAfterSorting() {
   // Try and find an appropriate memory region to assign offsets in.
-  for (BaseCommand *Base : Commands) {
+  for (BaseCommand *Base : SectionCommands) {
     if (auto *Sec = dyn_cast<OutputSection>(Base)) {
       if (!Sec->Live)
         continue;
@@ -714,7 +715,7 @@ void LinkerScript::adjustSectionsAfterSorting() {
 
   // Walk the commands and propagate the program headers to commands that don't
   // explicitly specify them.
-  for (BaseCommand *Base : Commands) {
+  for (BaseCommand *Base : SectionCommands) {
     auto *Sec = dyn_cast<OutputSection>(Base);
     if (!Sec)
       continue;
@@ -801,7 +802,7 @@ void LinkerScript::assignAddresses() {
   ErrorOnMissingSection = true;
   switchTo(Aether);
 
-  for (BaseCommand *Base : Commands) {
+  for (BaseCommand *Base : SectionCommands) {
     if (auto *Cmd = dyn_cast<SymbolAssignment>(Base)) {
       assignSymbol(Cmd, false);
       continue;

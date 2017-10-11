@@ -234,7 +234,7 @@ void ScriptParser::readLinkerScript() {
       continue;
 
     if (Tok == "ASSERT") {
-      Script->Commands.push_back(readAssert());
+      Script->SectionCommands.push_back(readAssert());
     } else if (Tok == "ENTRY") {
       readEntry();
     } else if (Tok == "EXTERN") {
@@ -262,7 +262,7 @@ void ScriptParser::readLinkerScript() {
     } else if (Tok == "VERSION") {
       readVersion();
     } else if (SymbolAssignment *Cmd = readProvideOrAssignment(Tok)) {
-      Script->Commands.push_back(Cmd);
+      Script->SectionCommands.push_back(Cmd);
     } else {
       setError("unknown directive: " + Tok);
     }
@@ -451,7 +451,7 @@ void ScriptParser::readSections() {
       else
         Cmd = readOutputSectionDescription(Tok);
     }
-    Script->Commands.push_back(Cmd);
+    Script->SectionCommands.push_back(Cmd);
   }
 }
 
@@ -669,11 +669,11 @@ OutputSection *ScriptParser::readOutputSectionDescription(StringRef OutSec) {
     if (Tok == ";") {
       // Empty commands are allowed. Do nothing here.
     } else if (SymbolAssignment *Assign = readProvideOrAssignment(Tok)) {
-      Cmd->Commands.push_back(Assign);
+      Cmd->SectionCommands.push_back(Assign);
     } else if (BytesDataCommand *Data = readBytesDataCommand(Tok)) {
-      Cmd->Commands.push_back(Data);
+      Cmd->SectionCommands.push_back(Data);
     } else if (Tok == "ASSERT") {
-      Cmd->Commands.push_back(readAssert());
+      Cmd->SectionCommands.push_back(readAssert());
       expect(";");
     } else if (Tok == "CONSTRUCTORS") {
       // CONSTRUCTORS is a keyword to make the linker recognize C++ ctors/dtors
@@ -684,7 +684,7 @@ OutputSection *ScriptParser::readOutputSectionDescription(StringRef OutSec) {
     } else if (Tok == "SORT") {
       readSort();
     } else if (peek() == "(") {
-      Cmd->Commands.push_back(readInputSectionDescription(Tok));
+      Cmd->SectionCommands.push_back(readInputSectionDescription(Tok));
     } else {
       setError("unknown command " + Tok);
     }

@@ -2378,10 +2378,11 @@ void ARMExidxSentinelSection::writeTo(uint8_t *Buf) {
   // sentinel. By construction the Sentinel is in the last
   // InputSectionDescription as the InputSection that precedes it.
   OutputSection *C = getParent();
-  auto ISD = std::find_if(C->Commands.rbegin(), C->Commands.rend(),
-                          [](const BaseCommand *Base) {
-                            return isa<InputSectionDescription>(Base);
-                          });
+  auto ISD =
+      std::find_if(C->SectionCommands.rbegin(), C->SectionCommands.rend(),
+                   [](const BaseCommand *Base) {
+                     return isa<InputSectionDescription>(Base);
+                   });
   auto L = cast<InputSectionDescription>(*ISD);
   InputSection *Highest = L->Sections[L->Sections.size() - 2];
   InputSection *LS = Highest->getLinkOrderDep();

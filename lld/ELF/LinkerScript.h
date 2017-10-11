@@ -246,7 +246,7 @@ public:
   void processCommands(OutputSectionFactory &Factory);
 
   // SECTIONS command list.
-  std::vector<BaseCommand *> Commands;
+  std::vector<BaseCommand *> SectionCommands;
 
   // PHDRS command list.
   std::vector<PhdrsCommand> PhdrsCommands;
