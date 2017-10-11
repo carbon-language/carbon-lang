@@ -41,6 +41,10 @@
 #include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
 
+X86AsmPrinter::X86AsmPrinter(TargetMachine &TM,
+                             std::unique_ptr<MCStreamer> Streamer)
+    : AsmPrinter(TM, std::move(Streamer)), SM(*this), FM(*this) {}
+
 //===----------------------------------------------------------------------===//
 // Primitive Helper Functions.
 //===----------------------------------------------------------------------===//
