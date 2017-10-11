@@ -1,5 +1,5 @@
 ; Should find the bitmap if it is in the same folder as the rc file.
-; RUN: rm %t.include.res
+; RUN: rm -f %t.include.res
 ; RUN: llvm-rc /FO %t.include.res %p/Inputs/include.rc
 ; RUN: llvm-readobj %t.include.res | FileCheck --check-prefix=FOUND %s
 
