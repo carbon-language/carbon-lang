@@ -3892,9 +3892,14 @@ void SwingSchedulerDAG::fixupRegisterOverlaps(std::deque<SUnit *> &Instrs) {
           unsigned BasePos, OffsetPos;
           // Update the base register and adjust the offset.
           if (TII->getBaseAndOffsetPosition(*MI, BasePos, OffsetPos)) {
-            MI->getOperand(BasePos).setReg(NewBaseReg);
-            int64_t Offset = MI->getOperand(OffsetPos).getImm();
-            MI->getOperand(OffsetPos).setImm(Offset - It->second.second);
+            MachineInstr *NewMI = MF.CloneMachineInstr(MI);
+            NewMI->getOperand(BasePos).setReg(NewBaseReg);
+            int64_t NewOffset =
+                MI->getOperand(OffsetPos).getImm() - It->second.second;
+            NewMI->getOperand(OffsetPos).setImm(NewOffset);
+            SU->setInstr(NewMI);
+            MISUnitMap[NewMI] = SU;
+            NewMIs.insert(NewMI);
           }
         }
         OverlapReg = 0;

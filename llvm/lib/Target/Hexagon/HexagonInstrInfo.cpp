@@ -1651,13 +1651,14 @@ bool HexagonInstrInfo::areMemAccessesTriviallyDisjoint(
 bool HexagonInstrInfo::getIncrementValue(const MachineInstr &MI,
       int &Value) const {
   if (isPostIncrement(MI)) {
-    // For a post-increment, the offset is zero and the increment value is
-    // determined by the instruction's access size.
-    int Zero;
-    unsigned AccessSize;
-    bool RetVal = getBaseAndOffset(MI, Zero, AccessSize);
-    Value = (int) AccessSize;
-    return RetVal;
+    unsigned BasePos = 0, OffsetPos = 0;
+    if (!getBaseAndOffsetPosition(MI, BasePos, OffsetPos))
+      return false;
+    const MachineOperand &OffsetOp = MI.getOperand(OffsetPos);
+    if (OffsetOp.isImm()) {
+      Value = OffsetOp.getImm();
+      return true;
+    }
   }
   if (MI.getOpcode() == Hexagon::A2_addi) {
     Value = MI.getOperand(2).getImm();
