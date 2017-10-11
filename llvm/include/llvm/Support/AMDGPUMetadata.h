@@ -1,4 +1,4 @@
-//===--- AMDGPUCodeObjectMetadata.h -----------------------------*- C++ -*-===//
+//===--- AMDGPUMetadata.h ---------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,14 +8,13 @@
 //===----------------------------------------------------------------------===//
 //
 /// \file
-/// \brief AMDGPU Code Object Metadata definitions and in-memory
-/// representations.
+/// \brief AMDGPU metadata definitions and in-memory representations.
 ///
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_AMDGPUCODEOBJECTMETADATA_H
-#define LLVM_SUPPORT_AMDGPUCODEOBJECTMETADATA_H
+#ifndef LLVM_SUPPORT_AMDGPUMETADATA_H
+#define LLVM_SUPPORT_AMDGPUMETADATA_H
 
 #include <cstdint>
 #include <string>
@@ -26,21 +25,19 @@ namespace llvm {
 namespace AMDGPU {
 
 //===----------------------------------------------------------------------===//
-// Code Object Metadata.
+// HSA metadata.
 //===----------------------------------------------------------------------===//
-namespace CodeObject {
+namespace HSAMD {
 
-/// \brief Code object metadata major version.
-constexpr uint32_t MetadataVersionMajor = 1;
-/// \brief Code object metadata minor version.
-constexpr uint32_t MetadataVersionMinor = 0;
+/// \brief HSA metadata major version.
+constexpr uint32_t VersionMajor = 1;
+/// \brief HSA metadata minor version.
+constexpr uint32_t VersionMinor = 0;
 
-/// \brief Code object metadata beginning assembler directive.
-constexpr char MetadataAssemblerDirectiveBegin[] =
-    ".amdgpu_code_object_metadata";
-/// \brief Code object metadata ending assembler directive.
-constexpr char MetadataAssemblerDirectiveEnd[] =
-    ".end_amdgpu_code_object_metadata";
+/// \brief HSA metadata beginning assembler directive.
+constexpr char AssemblerDirectiveBegin[] = ".amd_amdgpu_hsa_metadata";
+/// \brief HSA metadata ending assembler directive.
+constexpr char AssemblerDirectiveEnd[] = ".end_amd_amdgpu_hsa_metadata";
 
 /// \brief Access qualifiers.
 enum class AccessQualifier : uint8_t {
@@ -390,17 +387,17 @@ struct Metadata final {
 } // end namespace Kernel
 
 namespace Key {
-/// \brief Key for CodeObject::Metadata::mVersion.
+/// \brief Key for HSA::Metadata::mVersion.
 constexpr char Version[] = "Version";
-/// \brief Key for CodeObject::Metadata::mPrintf.
+/// \brief Key for HSA::Metadata::mPrintf.
 constexpr char Printf[] = "Printf";
-/// \brief Key for CodeObject::Metadata::mKernels.
+/// \brief Key for HSA::Metadata::mKernels.
 constexpr char Kernels[] = "Kernels";
 } // end namespace Key
 
-/// \brief In-memory representation of code object metadata.
+/// \brief In-memory representation of HSA metadata.
 struct Metadata final {
-  /// \brief Code object metadata version. Required.
+  /// \brief HSA metadata version. Required.
   std::vector<uint32_t> mVersion = std::vector<uint32_t>();
   /// \brief Printf metadata. Optional.
   std::vector<std::string> mPrintf = std::vector<std::string>();
@@ -410,17 +407,17 @@ struct Metadata final {
   /// \brief Default constructor.
   Metadata() = default;
 
-  /// \brief Converts \p YamlString to \p CodeObjectMetadata.
+  /// \brief Converts \p YamlString to \p HSAMetadata.
   static std::error_code fromYamlString(std::string YamlString,
-                                        Metadata &CodeObjectMetadata);
+                                        Metadata &HSAMetadata);
 
-  /// \brief Converts \p CodeObjectMetadata to \p YamlString.
-  static std::error_code toYamlString(Metadata CodeObjectMetadata,
+  /// \brief Converts \p HSAMetadata to \p YamlString.
+  static std::error_code toYamlString(Metadata HSAMetadata,
                                       std::string &YamlString);
 };
 
-} // end namespace CodeObject
+} // end namespace HSAMD
 } // end namespace AMDGPU
 } // end namespace llvm
 
-#endif // LLVM_SUPPORT_AMDGPUCODEOBJECTMETADATA_H
+#endif // LLVM_SUPPORT_AMDGPUMETADATA_H

@@ -42,18 +42,18 @@ using namespace llvm::AMDGPU;
 AMDGPUTargetStreamer::AMDGPUTargetStreamer(MCStreamer &S)
     : MCTargetStreamer(S) {}
 
-void AMDGPUTargetStreamer::EmitStartOfCodeObjectMetadata(const Module &Mod) {
-  CodeObjectMetadataStreamer.begin(Mod);
+void AMDGPUTargetStreamer::EmitStartOfHSAMetadata(const Module &Mod) {
+  HSAMetadataStreamer.begin(Mod);
 }
 
-void AMDGPUTargetStreamer::EmitKernelCodeObjectMetadata(
+void AMDGPUTargetStreamer::EmitKernelHSAMetadata(
     const Function &Func, const amd_kernel_code_t &KernelCode) {
-  CodeObjectMetadataStreamer.emitKernel(Func, KernelCode);
+  HSAMetadataStreamer.emitKernel(Func, KernelCode);
 }
 
-void AMDGPUTargetStreamer::EmitEndOfCodeObjectMetadata() {
-  CodeObjectMetadataStreamer.end();
-  EmitCodeObjectMetadata(CodeObjectMetadataStreamer.toYamlString().get());
+void AMDGPUTargetStreamer::EmitEndOfHSAMetadata() {
+  HSAMetadataStreamer.end();
+  EmitHSAMetadata(HSAMetadataStreamer.toYamlString().get());
 }
 
 //===----------------------------------------------------------------------===//
@@ -100,14 +100,14 @@ void AMDGPUTargetAsmStreamer::EmitAMDGPUSymbolType(StringRef SymbolName,
   }
 }
 
-bool AMDGPUTargetAsmStreamer::EmitCodeObjectMetadata(StringRef YamlString) {
-  auto VerifiedYamlString = CodeObjectMetadataStreamer.toYamlString(YamlString);
+bool AMDGPUTargetAsmStreamer::EmitHSAMetadata(StringRef YamlString) {
+  auto VerifiedYamlString = HSAMetadataStreamer.toYamlString(YamlString);
   if (!VerifiedYamlString)
     return false;
 
-  OS << '\t' << AMDGPU::CodeObject::MetadataAssemblerDirectiveBegin << '\n';
+  OS << '\t' << AMDGPU::HSAMD::AssemblerDirectiveBegin << '\n';
   OS << VerifiedYamlString.get();
-  OS << '\t' << AMDGPU::CodeObject::MetadataAssemblerDirectiveEnd << '\n';
+  OS << '\t' << AMDGPU::HSAMD::AssemblerDirectiveEnd << '\n';
 
   return true;
 }
@@ -212,8 +212,8 @@ void AMDGPUTargetELFStreamer::EmitAMDGPUSymbolType(StringRef SymbolName,
   Symbol->setType(ELF::STT_AMDGPU_HSA_KERNEL);
 }
 
-bool AMDGPUTargetELFStreamer::EmitCodeObjectMetadata(StringRef YamlString) {
-  auto VerifiedYamlString = CodeObjectMetadataStreamer.toYamlString(YamlString);
+bool AMDGPUTargetELFStreamer::EmitHSAMetadata(StringRef YamlString) {
+  auto VerifiedYamlString = HSAMetadataStreamer.toYamlString(YamlString);
   if (!VerifiedYamlString)
     return false;
 

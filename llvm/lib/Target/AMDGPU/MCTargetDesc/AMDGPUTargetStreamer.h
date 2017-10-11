@@ -10,7 +10,7 @@
 #ifndef LLVM_LIB_TARGET_AMDGPU_MCTARGETDESC_AMDGPUTARGETSTREAMER_H
 #define LLVM_LIB_TARGET_AMDGPU_MCTARGETDESC_AMDGPUTARGETSTREAMER_H
 
-#include "AMDGPUCodeObjectMetadataStreamer.h"
+#include "AMDGPUHSAMetadataStreamer.h"
 #include "AMDKernelCodeT.h"
 #include "llvm/MC/MCStreamer.h"
 
@@ -27,7 +27,7 @@ class Type;
 
 class AMDGPUTargetStreamer : public MCTargetStreamer {
 protected:
-  AMDGPU::CodeObject::MetadataStreamer CodeObjectMetadataStreamer;
+  AMDGPU::HSAMD::MetadataStreamer HSAMetadataStreamer;
   MCContext &getContext() const { return Streamer.getContext(); }
 
 public:
@@ -44,15 +44,15 @@ public:
 
   virtual void EmitAMDGPUSymbolType(StringRef SymbolName, unsigned Type) = 0;
 
-  virtual void EmitStartOfCodeObjectMetadata(const Module &Mod);
+  virtual void EmitStartOfHSAMetadata(const Module &Mod);
 
-  virtual void EmitKernelCodeObjectMetadata(
+  virtual void EmitKernelHSAMetadata(
       const Function &Func, const amd_kernel_code_t &KernelCode);
 
-  virtual void EmitEndOfCodeObjectMetadata();
+  virtual void EmitEndOfHSAMetadata();
 
   /// \returns True on success, false on failure.
-  virtual bool EmitCodeObjectMetadata(StringRef YamlString) = 0;
+  virtual bool EmitHSAMetadata(StringRef YamlString) = 0;
 
   virtual bool EmitPalMetadata(ArrayRef<uint32_t> Data) = 0;
 };
@@ -73,7 +73,7 @@ public:
   void EmitAMDGPUSymbolType(StringRef SymbolName, unsigned Type) override;
 
   /// \returns True on success, false on failure.
-  bool EmitCodeObjectMetadata(StringRef YamlString) override;
+  bool EmitHSAMetadata(StringRef YamlString) override;
 
   bool EmitPalMetadata(ArrayRef<uint32_t> data) override;
 };
@@ -102,7 +102,7 @@ public:
   void EmitAMDGPUSymbolType(StringRef SymbolName, unsigned Type) override;
 
   /// \returns True on success, false on failure.
-  bool EmitCodeObjectMetadata(StringRef YamlString) override;
+  bool EmitHSAMetadata(StringRef YamlString) override;
 
   bool EmitPalMetadata(ArrayRef<uint32_t> data) override;
 };

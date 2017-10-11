@@ -1,4 +1,4 @@
-//===--- AMDGPUCodeObjectMetadataStreamer.cpp -------------------*- C++ -*-===//
+//===--- AMDGPUHSAMetadataStreamer.cpp --------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,12 +8,12 @@
 //===----------------------------------------------------------------------===//
 //
 /// \file
-/// \brief AMDGPU Code Object Metadata Streamer.
+/// \brief AMDGPU HSA Metadata Streamer.
 ///
 //
 //===----------------------------------------------------------------------===//
 
-#include "AMDGPUCodeObjectMetadataStreamer.h"
+#include "AMDGPUHSAMetadataStreamer.h"
 #include "AMDGPU.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/IR/Constants.h"
@@ -22,24 +22,24 @@
 
 namespace llvm {
 
-static cl::opt<bool> DumpCodeObjectMetadata(
-    "amdgpu-dump-comd",
-    cl::desc("Dump AMDGPU Code Object Metadata"));
-static cl::opt<bool> VerifyCodeObjectMetadata(
-    "amdgpu-verify-comd",
-    cl::desc("Verify AMDGPU Code Object Metadata"));
+static cl::opt<bool> DumpHSAMetadata(
+    "amdgpu-dump-hsa-metadata",
+    cl::desc("Dump AMDGPU HSA Metadata"));
+static cl::opt<bool> VerifyHSAMetadata(
+    "amdgpu-verify-hsa-metadata",
+    cl::desc("Verify AMDGPU HSA Metadata"));
 
 namespace AMDGPU {
-namespace CodeObject {
+namespace HSAMD {
 
 void MetadataStreamer::dump(StringRef YamlString) const {
-  errs() << "AMDGPU Code Object Metadata:\n" << YamlString << '\n';
+  errs() << "AMDGPU HSA Metadata:\n" << YamlString << '\n';
 }
 
 void MetadataStreamer::verify(StringRef YamlString) const {
-  errs() << "AMDGPU Code Object Metadata Parser Test: ";
+  errs() << "AMDGPU HSA Metadata Parser Test: ";
 
-  CodeObject::Metadata FromYamlString;
+  HSAMD::Metadata FromYamlString;
   if (Metadata::fromYamlString(YamlString, FromYamlString)) {
     errs() << "FAIL\n";
     return;
@@ -196,14 +196,14 @@ std::vector<uint32_t> MetadataStreamer::getWorkGroupDimensions(
 }
 
 void MetadataStreamer::emitVersion() {
-  auto &Version = CodeObjectMetadata.mVersion;
+  auto &Version = HSAMetadata.mVersion;
 
-  Version.push_back(MetadataVersionMajor);
-  Version.push_back(MetadataVersionMinor);
+  Version.push_back(VersionMajor);
+  Version.push_back(VersionMinor);
 }
 
 void MetadataStreamer::emitPrintf(const Module &Mod) {
-  auto &Printf = CodeObjectMetadata.mPrintf;
+  auto &Printf = HSAMetadata.mPrintf;
 
   auto Node = Mod.getNamedMetadata("llvm.printf.fmts");
   if (!Node)
@@ -215,7 +215,7 @@ void MetadataStreamer::emitPrintf(const Module &Mod) {
 }
 
 void MetadataStreamer::emitKernelLanguage(const Function &Func) {
-  auto &Kernel = CodeObjectMetadata.mKernels.back();
+  auto &Kernel = HSAMetadata.mKernels.back();
 
   // TODO: What about other languages?
   auto Node = Func.getParent()->getNamedMetadata("opencl.ocl.version");
@@ -233,7 +233,7 @@ void MetadataStreamer::emitKernelLanguage(const Function &Func) {
 }
 
 void MetadataStreamer::emitKernelAttrs(const Function &Func) {
-  auto &Attrs = CodeObjectMetadata.mKernels.back().mAttrs;
+  auto &Attrs = HSAMetadata.mKernels.back().mAttrs;
 
   if (auto Node = Func.getMetadata("reqd_work_group_size"))
     Attrs.mReqdWorkGroupSize = getWorkGroupDimensions(Node);
@@ -317,8 +317,8 @@ void MetadataStreamer::emitKernelArg(const DataLayout &DL, Type *Ty,
                                      ValueKind ValueKind, StringRef TypeQual,
                                      StringRef BaseTypeName, StringRef AccQual,
                                      StringRef Name, StringRef TypeName) {
-  CodeObjectMetadata.mKernels.back().mArgs.push_back(Kernel::Arg::Metadata());
-  auto &Arg = CodeObjectMetadata.mKernels.back().mArgs.back();
+  HSAMetadata.mKernels.back().mArgs.push_back(Kernel::Arg::Metadata());
+  auto &Arg = HSAMetadata.mKernels.back().mArgs.back();
 
   Arg.mSize = DL.getTypeAllocSize(Ty);
   Arg.mAlign = DL.getABITypeAlignment(Ty);
@@ -355,7 +355,7 @@ void MetadataStreamer::emitKernelArg(const DataLayout &DL, Type *Ty,
 
 void MetadataStreamer::emitKernelCodeProps(
     const amd_kernel_code_t &KernelCode) {
-  auto &CodeProps = CodeObjectMetadata.mKernels.back().mCodeProps;
+  auto &CodeProps = HSAMetadata.mKernels.back().mCodeProps;
 
   CodeProps.mKernargSegmentSize = KernelCode.kernarg_segment_byte_size;
   CodeProps.mWorkgroupGroupSegmentSize =
@@ -375,7 +375,7 @@ void MetadataStreamer::emitKernelDebugProps(
   if (!(KernelCode.code_properties & AMD_CODE_PROPERTY_IS_DEBUG_SUPPORTED))
     return;
 
-  auto &DebugProps = CodeObjectMetadata.mKernels.back().mDebugProps;
+  auto &DebugProps = HSAMetadata.mKernels.back().mDebugProps;
 
   // FIXME: Need to pass down debugger ABI version through features. This is ok
   // for now because we only have one version.
@@ -400,8 +400,8 @@ void MetadataStreamer::emitKernel(const Function &Func,
   if (Func.getCallingConv() != CallingConv::AMDGPU_KERNEL)
     return;
 
-  CodeObjectMetadata.mKernels.push_back(Kernel::Metadata());
-  auto &Kernel = CodeObjectMetadata.mKernels.back();
+  HSAMetadata.mKernels.push_back(Kernel::Metadata());
+  auto &Kernel = HSAMetadata.mKernels.back();
 
   Kernel.mName = Func.getName();
   emitKernelLanguage(Func);
@@ -412,25 +412,25 @@ void MetadataStreamer::emitKernel(const Function &Func,
 }
 
 ErrorOr<std::string> MetadataStreamer::toYamlString() {
-  std::string YamlString;
-  if (auto Error = Metadata::toYamlString(CodeObjectMetadata, YamlString))
+  std::string ToYamlString;
+  if (auto Error = Metadata::toYamlString(HSAMetadata, ToYamlString))
     return Error;
 
-  if (DumpCodeObjectMetadata)
-    dump(YamlString);
-  if (VerifyCodeObjectMetadata)
-    verify(YamlString);
+  if (DumpHSAMetadata)
+    dump(ToYamlString);
+  if (VerifyHSAMetadata)
+    verify(ToYamlString);
 
-  return YamlString;
+  return ToYamlString;
 }
 
 ErrorOr<std::string> MetadataStreamer::toYamlString(StringRef YamlString) {
-  if (auto Error = Metadata::fromYamlString(YamlString, CodeObjectMetadata))
+  if (auto Error = Metadata::fromYamlString(YamlString, HSAMetadata))
     return Error;
 
   return toYamlString();
 }
 
-} // end namespace CodeObject
+} // end namespace HSAMD
 } // end namespace AMDGPU
 } // end namespace llvm

@@ -41,7 +41,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Support/AMDGPUCodeObjectMetadata.h"
+#include "llvm/Support/AMDGPUMetadata.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -827,7 +827,7 @@ private:
   bool ParseDirectiveMajorMinor(uint32_t &Major, uint32_t &Minor);
   bool ParseDirectiveHSACodeObjectVersion();
   bool ParseDirectiveHSACodeObjectISA();
-  bool ParseDirectiveCodeObjectMetadata();
+  bool ParseDirectiveHSAMetadata();
   bool ParseAMDKernelCodeTValue(StringRef ID, amd_kernel_code_t &Header);
   bool ParseDirectiveAMDKernelCodeT();
   bool subtargetHasRegister(const MCRegisterInfo &MRI, unsigned RegNo) const;
@@ -2398,7 +2398,7 @@ bool AMDGPUAsmParser::ParseDirectiveHSACodeObjectISA() {
   return false;
 }
 
-bool AMDGPUAsmParser::ParseDirectiveCodeObjectMetadata() {
+bool AMDGPUAsmParser::ParseDirectiveHSAMetadata() {
   std::string YamlString;
   raw_string_ostream YamlStream(YamlString);
 
@@ -2413,7 +2413,7 @@ bool AMDGPUAsmParser::ParseDirectiveCodeObjectMetadata() {
 
     if (getLexer().is(AsmToken::Identifier)) {
       StringRef ID = getLexer().getTok().getIdentifier();
-      if (ID == AMDGPU::CodeObject::MetadataAssemblerDirectiveEnd) {
+      if (ID == AMDGPU::HSAMD::AssemblerDirectiveEnd) {
         Lex();
         FoundEnd = true;
         break;
@@ -2430,12 +2430,12 @@ bool AMDGPUAsmParser::ParseDirectiveCodeObjectMetadata() {
 
   if (getLexer().is(AsmToken::Eof) && !FoundEnd) {
     return TokError(
-        "expected directive .end_amdgpu_code_object_metadata not found");
+        "expected directive .end_amd_amdgpu_hsa_metadata not found");
   }
 
   YamlStream.flush();
 
-  if (!getTargetStreamer().EmitCodeObjectMetadata(YamlString))
+  if (!getTargetStreamer().EmitHSAMetadata(YamlString))
     return Error(getParser().getTok().getLoc(), "invalid code object metadata");
 
   return false;
@@ -2517,8 +2517,8 @@ bool AMDGPUAsmParser::ParseDirective(AsmToken DirectiveID) {
   if (IDVal == ".hsa_code_object_isa")
     return ParseDirectiveHSACodeObjectISA();
 
-  if (IDVal == AMDGPU::CodeObject::MetadataAssemblerDirectiveBegin)
-    return ParseDirectiveCodeObjectMetadata();
+  if (IDVal == AMDGPU::HSAMD::AssemblerDirectiveBegin)
+    return ParseDirectiveHSAMetadata();
 
   if (IDVal == ".amd_kernel_code_t")
     return ParseDirectiveAMDKernelCodeT();
