@@ -1,4 +1,4 @@
-;===- ./tools/llvm-cfi-verify/LLVMBuild.txt --------------------*- Conf -*--===;
+;===- ./tools/llvm-cfi-verify/lib/LLVMBuild.txt ----------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -16,7 +16,7 @@
 ;===------------------------------------------------------------------------===;
 
 [component_0]
-type = Tool
-name = llvm-cfi-verify
-parent = Tools
-required_libraries = all-targets MC MCDisassembler MCParser Support
+type = Library
+name = CFIVerify
+parent = Libraries
+required_libraries = MC MCDisassembler MCParser Support
