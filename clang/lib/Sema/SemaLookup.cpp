@@ -3349,16 +3349,24 @@ void Sema::ArgumentDependentLookup(DeclarationName Name, SourceLocation Loc,
           continue;
       }
 
-      if (isa<UsingShadowDecl>(D))
-        D = cast<UsingShadowDecl>(D)->getTargetDecl();
+      auto *Underlying = D;
+      if (auto *USD = dyn_cast<UsingShadowDecl>(D))
+        Underlying = USD->getTargetDecl();
 
-      if (!isa<FunctionDecl>(D) && !isa<FunctionTemplateDecl>(D))
+      if (!isa<FunctionDecl>(Underlying) &&
+          !isa<FunctionTemplateDecl>(Underlying))
         continue;
 
-      if (!isVisible(D) && !(D = findAcceptableDecl(*this, D)))
-        continue;
+      if (!isVisible(D)) {
+        D = findAcceptableDecl(*this, D);
+        if (!D)
+          continue;
+        if (auto *USD = dyn_cast<UsingShadowDecl>(D))
+          Underlying = USD->getTargetDecl();
+      }
 
-      Result.insert(D);
+      // FIXME: Preserve D as the FoundDecl.
+      Result.insert(Underlying);
     }
   }
 }
