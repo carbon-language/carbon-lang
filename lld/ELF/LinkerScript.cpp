@@ -275,6 +275,9 @@ LinkerScript::computeInputSections(const InputSectionDescription *Cmd) {
           !Pat.SectionPat.match(Sec->Name))
         continue;
 
+      // It is safe to assume that Sec is an InputSection
+      // because mergeable or EH input sections have already been
+      // handled and eliminated.
       Ret.push_back(cast<InputSection>(Sec));
       Sec->Assigned = true;
     }
