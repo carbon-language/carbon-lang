@@ -4274,7 +4274,7 @@ CGOpenMPRuntime::emitTaskInit(CodeGenFunction &CGF, SourceLocation Loc,
           CGM, D.getDirectiveKind(), KmpInt32Ty, KmpRoutineEntryPtrQTy));
     }
     KmpTaskTQTy = SavedKmpTaskloopTQTy;
-  } else if (D.getDirectiveKind() == OMPD_task) {
+  } else {
     assert(D.getDirectiveKind() == OMPD_task &&
            "Expected taskloop or task directive");
     if (SavedKmpTaskTQTy.isNull()) {
