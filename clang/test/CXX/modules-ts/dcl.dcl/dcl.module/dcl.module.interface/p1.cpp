@@ -17,7 +17,7 @@ module A;
  #endif
 #else
  #ifdef BUILT_AS_INTERFACE
-  // FIXME: Diagnose missing module declaration (at end of TU)
+  // expected-error@1 {{missing 'export module' declaration in module interface unit}}
  #endif
 #endif
 
