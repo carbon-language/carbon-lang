@@ -169,7 +169,7 @@ void RegisterBankEmitter::emitBaseClassDefinition(
 ///                to the class.
 static void visitRegisterBankClasses(
     CodeGenRegBank &RegisterClassHierarchy, const CodeGenRegisterClass *RC,
-    const Twine Kind,
+    const Twine &Kind,
     std::function<void(const CodeGenRegisterClass *, StringRef)> VisitFn,
     SmallPtrSetImpl<const CodeGenRegisterClass *> &VisitedRCs) {
 
@@ -183,7 +183,7 @@ static void visitRegisterBankClasses(
 
   for (const auto &PossibleSubclass : RegisterClassHierarchy.getRegClasses()) {
     std::string TmpKind =
-        (Twine(Kind) + " (" + PossibleSubclass.getName() + ")").str();
+        (Kind + " (" + PossibleSubclass.getName() + ")").str();
 
     // Visit each subclass of an explicitly named class.
     if (RC != &PossibleSubclass && RC->hasSubClass(&PossibleSubclass))

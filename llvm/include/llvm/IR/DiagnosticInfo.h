@@ -962,7 +962,7 @@ public:
 /// Diagnostic information for unsupported feature in backend.
 class DiagnosticInfoUnsupported : public DiagnosticInfoWithLocationBase {
 private:
-  Twine Msg;
+  std::string Msg;
 
 public:
   /// \p Fn is the function where the diagnostic is being emitted. \p Loc is
@@ -976,13 +976,13 @@ public:
       const DiagnosticLocation &Loc = DiagnosticLocation(),
       DiagnosticSeverity Severity = DS_Error)
       : DiagnosticInfoWithLocationBase(DK_Unsupported, Severity, Fn, Loc),
-        Msg(Msg) {}
+        Msg(Msg.str()) {}
 
   static bool classof(const DiagnosticInfo *DI) {
     return DI->getKind() == DK_Unsupported;
   }
 
-  const Twine &getMessage() const { return Msg; }
+  StringRef getMessage() const { return Msg; }
 
   void print(DiagnosticPrinter &DP) const override;
 };

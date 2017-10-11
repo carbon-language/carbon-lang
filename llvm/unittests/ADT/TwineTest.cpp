@@ -88,6 +88,14 @@ TEST(TwineTest, Concat) {
             repr(Twine("a").concat(Twine(SmallString<3>("b")).concat(Twine("c")))));
 }
 
+TEST(TwineTest, Operators) {
+  EXPECT_EQ(R"((Twine cstring:"a" stringref:"b"))", repr("a" + StringRef("b")));
+
+  EXPECT_EQ(R"((Twine stringref:"a" cstring:"b"))", repr(StringRef("a") + "b"));
+  EXPECT_EQ(R"((Twine stringref:"a" stringref:"b"))",
+            repr(StringRef("a") + StringRef("b")));
+}
+
 TEST(TwineTest, toNullTerminatedStringRef) {
   SmallString<8> storage;
   EXPECT_EQ(0, *Twine("hello").toNullTerminatedStringRef(storage).end());

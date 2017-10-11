@@ -14,7 +14,7 @@
 
 namespace llvm {
 
-LLVM_ATTRIBUTE_NORETURN extern void error(Twine Message);
+LLVM_ATTRIBUTE_NORETURN extern void error(const Twine &Message);
 
 // This is taken from llvm-readobj.
 // [see here](llvm/tools/llvm-readobj/llvm-readobj.h:38)

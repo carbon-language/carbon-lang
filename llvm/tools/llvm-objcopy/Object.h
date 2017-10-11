@@ -29,11 +29,11 @@ public:
       : Sections(Secs) {}
   SectionTableRef(const SectionTableRef &) = default;
 
-  SectionBase *getSection(uint16_t Index, llvm::Twine ErrMsg);
+  SectionBase *getSection(uint16_t Index, const llvm::Twine &ErrMsg);
 
   template <class T>
-  T *getSectionOfType(uint16_t Index, llvm::Twine IndexErrMsg,
-                      llvm::Twine TypeErrMsg);
+  T *getSectionOfType(uint16_t Index, const llvm::Twine &IndexErrMsg,
+                      const llvm::Twine &TypeErrMsg);
 };
 
 class SectionBase {

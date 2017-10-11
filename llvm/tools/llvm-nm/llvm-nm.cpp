@@ -195,12 +195,12 @@ bool HadError = false;
 std::string ToolName;
 } // anonymous namespace
 
-static void error(Twine Message, Twine Path = Twine()) {
+static void error(const Twine &Message, const Twine &Path = Twine()) {
   HadError = true;
   errs() << ToolName << ": " << Path << ": " << Message << ".\n";
 }
 
-static bool error(std::error_code EC, Twine Path = Twine()) {
+static bool error(std::error_code EC, const Twine &Path = Twine()) {
   if (EC) {
     error(EC.message(), Path);
     return true;

@@ -60,9 +60,10 @@ std::string _object_error_category::message(int EV) const {
 char BinaryError::ID = 0;
 char GenericBinaryError::ID = 0;
 
-GenericBinaryError::GenericBinaryError(Twine Msg) : Msg(Msg.str()) {}
+GenericBinaryError::GenericBinaryError(const Twine &Msg) : Msg(Msg.str()) {}
 
-GenericBinaryError::GenericBinaryError(Twine Msg, object_error ECOverride)
+GenericBinaryError::GenericBinaryError(const Twine &Msg,
+                                       object_error ECOverride)
     : Msg(Msg.str()) {
   setErrorCode(make_error_code(ECOverride));
 }

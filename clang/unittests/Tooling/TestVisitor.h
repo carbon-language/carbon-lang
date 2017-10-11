@@ -128,7 +128,7 @@ public:
   /// \brief Expect 'Match' *not* to occur at the given 'Line' and 'Column'.
   ///
   /// Any number of matches can be disallowed.
-  void DisallowMatch(Twine Match, unsigned Line, unsigned Column) {
+  void DisallowMatch(const Twine &Match, unsigned Line, unsigned Column) {
     DisallowedMatches.push_back(MatchCandidate(Match, Line, Column));
   }
 
@@ -138,7 +138,7 @@ public:
   /// Each is expected to be matched 'Times' number of times. (This is useful in
   /// cases in which different AST nodes can match at the same source code
   /// location.)
-  void ExpectMatch(Twine Match, unsigned Line, unsigned Column,
+  void ExpectMatch(const Twine &Match, unsigned Line, unsigned Column,
                    unsigned Times = 1) {
     ExpectedMatches.push_back(ExpectedMatch(Match, Line, Column, Times));
   }
@@ -180,10 +180,10 @@ protected:
     unsigned LineNumber;
     unsigned ColumnNumber;
 
-    MatchCandidate(Twine Name, unsigned LineNumber, unsigned ColumnNumber)
-      : ExpectedName(Name.str()), LineNumber(LineNumber),
-        ColumnNumber(ColumnNumber) {
-    }
+    MatchCandidate(const Twine &Name, unsigned LineNumber,
+                   unsigned ColumnNumber)
+        : ExpectedName(Name.str()), LineNumber(LineNumber),
+          ColumnNumber(ColumnNumber) {}
 
     bool Matches(StringRef Name, FullSourceLoc const &Location) const {
       return MatchesName(Name) && MatchesLocation(Location);
@@ -211,7 +211,7 @@ protected:
   };
 
   struct ExpectedMatch {
-    ExpectedMatch(Twine Name, unsigned LineNumber, unsigned ColumnNumber,
+    ExpectedMatch(const Twine &Name, unsigned LineNumber, unsigned ColumnNumber,
                   unsigned Times)
         : Candidate(Name, LineNumber, ColumnNumber), TimesExpected(Times),
           TimesSeen(0) {}

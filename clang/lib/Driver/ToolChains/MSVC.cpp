@@ -369,7 +369,7 @@ void visualstudio::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
     SmallString<128> ImplibName(Output.getFilename());
     llvm::sys::path::replace_extension(ImplibName, "lib");
-    CmdArgs.push_back(Args.MakeArgString(std::string("-implib:") + ImplibName));
+    CmdArgs.push_back(Args.MakeArgString(Twine("-implib:") + ImplibName));
   }
 
   if (TC.getSanitizerArgs().needsAsanRt()) {
