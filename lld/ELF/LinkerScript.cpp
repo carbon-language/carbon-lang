@@ -106,12 +106,12 @@ void LinkerScript::setDot(Expr E, const Twine &Loc, bool InSec) {
   uint64_t Val = E().getValue();
   if (Val < Dot && InSec)
     error(Loc + ": unable to move location counter backward for: " +
-          CurAddressState->OutSec->Name);
+          Ctx->OutSec->Name);
   Dot = Val;
 
   // Update to location counter means update to section size.
   if (InSec)
-    CurAddressState->OutSec->Size = Dot - CurAddressState->OutSec->Addr;
+    Ctx->OutSec->Size = Dot - Ctx->OutSec->Addr;
 }
 
 // This function is called from processSectionCommands,
@@ -349,14 +349,13 @@ void LinkerScript::processSectionCommands(OutputSectionFactory &Factory) {
   // which will map to whatever the first actual section is.
   Aether = make<OutputSection>("", 0, SHF_ALLOC);
   Aether->SectionIndex = 1;
-  auto State = make_unique<AddressState>();
 
-  // CurAddressState captures the local AddressState and makes it accessible
-  // deliberately. This is needed as there are some cases where we cannot just
+  // Ctx captures the local AddressState and makes it accessible deliberately.
+  // This is needed as there are some cases where we cannot just
   // thread the current state through to a lambda function created by the
   // script parser.
-  CurAddressState = State.get();
-  CurAddressState->OutSec = Aether;
+  Ctx = make_unique<AddressState>();
+  Ctx->OutSec = Aether;
 
   for (size_t I = 0; I < SectionCommands.size(); ++I) {
     // Handle symbol assignments outside of any output section.
@@ -415,7 +414,7 @@ void LinkerScript::processSectionCommands(OutputSectionFactory &Factory) {
         Sec->Type = SHT_NOBITS;
     }
   }
-  CurAddressState = nullptr;
+  Ctx = nullptr;
 }
 
 void LinkerScript::fabricateDefaultCommands() {
@@ -468,14 +467,14 @@ void LinkerScript::addOrphanSections(OutputSectionFactory &Factory) {
 }
 
 uint64_t LinkerScript::advance(uint64_t Size, unsigned Align) {
-  bool IsTbss = (CurAddressState->OutSec->Flags & SHF_TLS) &&
-                CurAddressState->OutSec->Type == SHT_NOBITS;
-  uint64_t Start = IsTbss ? Dot + CurAddressState->ThreadBssOffset : Dot;
+  bool IsTbss =
+      (Ctx->OutSec->Flags & SHF_TLS) && Ctx->OutSec->Type == SHT_NOBITS;
+  uint64_t Start = IsTbss ? Dot + Ctx->ThreadBssOffset : Dot;
   Start = alignTo(Start, Align);
   uint64_t End = Start + Size;
 
   if (IsTbss)
-    CurAddressState->ThreadBssOffset = End - Dot;
+    Ctx->ThreadBssOffset = End - Dot;
   else
     Dot = End;
   return End;
@@ -484,43 +483,41 @@ uint64_t LinkerScript::advance(uint64_t Size, unsigned Align) {
 void LinkerScript::output(InputSection *S) {
   uint64_t Before = advance(0, 1);
   uint64_t Pos = advance(S->getSize(), S->Alignment);
-  S->OutSecOff = Pos - S->getSize() - CurAddressState->OutSec->Addr;
+  S->OutSecOff = Pos - S->getSize() - Ctx->OutSec->Addr;
 
   // Update output section size after adding each section. This is so that
   // SIZEOF works correctly in the case below:
   // .foo { *(.aaa) a = SIZEOF(.foo); *(.bbb) }
-  CurAddressState->OutSec->Size = Pos - CurAddressState->OutSec->Addr;
+  Ctx->OutSec->Size = Pos - Ctx->OutSec->Addr;
 
   // If there is a memory region associated with this input section, then
   // place the section in that region and update the region index.
-  if (CurAddressState->MemRegion) {
-    uint64_t &CurOffset =
-        CurAddressState->MemRegionOffset[CurAddressState->MemRegion];
+  if (Ctx->MemRegion) {
+    uint64_t &CurOffset = Ctx->MemRegionOffset[Ctx->MemRegion];
     CurOffset += Pos - Before;
-    uint64_t CurSize = CurOffset - CurAddressState->MemRegion->Origin;
-    if (CurSize > CurAddressState->MemRegion->Length) {
-      uint64_t OverflowAmt = CurSize - CurAddressState->MemRegion->Length;
-      error("section '" + CurAddressState->OutSec->Name +
-            "' will not fit in region '" + CurAddressState->MemRegion->Name +
-            "': overflowed by " + Twine(OverflowAmt) + " bytes");
+    uint64_t CurSize = CurOffset - Ctx->MemRegion->Origin;
+    if (CurSize > Ctx->MemRegion->Length) {
+      uint64_t OverflowAmt = CurSize - Ctx->MemRegion->Length;
+      error("section '" + Ctx->OutSec->Name + "' will not fit in region '" +
+            Ctx->MemRegion->Name + "': overflowed by " + Twine(OverflowAmt) +
+            " bytes");
     }
   }
 }
 
 void LinkerScript::switchTo(OutputSection *Sec) {
-  if (CurAddressState->OutSec == Sec)
+  if (Ctx->OutSec == Sec)
     return;
 
-  CurAddressState->OutSec = Sec;
-  CurAddressState->OutSec->Addr =
-      advance(0, CurAddressState->OutSec->Alignment);
+  Ctx->OutSec = Sec;
+  Ctx->OutSec->Addr = advance(0, Ctx->OutSec->Alignment);
 
   // If neither AT nor AT> is specified for an allocatable section, the linker
   // will set the LMA such that the difference between VMA and LMA for the
   // section is the same as the preceding output section in the same region
   // https://sourceware.org/binutils/docs-2.20/ld/Output-Section-LMA.html
-  if (CurAddressState->LMAOffset)
-    CurAddressState->OutSec->LMAOffset = CurAddressState->LMAOffset();
+  if (Ctx->LMAOffset)
+    Ctx->OutSec->LMAOffset = Ctx->LMAOffset();
 }
 
 void LinkerScript::process(BaseCommand &Base) {
@@ -532,9 +529,9 @@ void LinkerScript::process(BaseCommand &Base) {
 
   // Handle BYTE(), SHORT(), LONG(), or QUAD().
   if (auto *Cmd = dyn_cast<BytesDataCommand>(&Base)) {
-    Cmd->Offset = Dot - CurAddressState->OutSec->Addr;
+    Cmd->Offset = Dot - Ctx->OutSec->Addr;
     Dot += Cmd->Size;
-    CurAddressState->OutSec->Size = Dot - CurAddressState->OutSec->Addr;
+    Ctx->OutSec->Size = Dot - Ctx->OutSec->Addr;
     return;
   }
 
@@ -559,7 +556,7 @@ void LinkerScript::process(BaseCommand &Base) {
 
     if (!Sec->Live)
       continue;
-    assert(CurAddressState->OutSec == Sec->getParent());
+    assert(Ctx->OutSec == Sec->getParent());
     output(Sec);
   }
 }
@@ -605,20 +602,20 @@ void LinkerScript::assignOffsets(OutputSection *Sec) {
   else if (Sec->AddrExpr)
     setDot(Sec->AddrExpr, Sec->Location, false);
 
-  CurAddressState->MemRegion = Sec->MemRegion;
-  if (CurAddressState->MemRegion)
-    Dot = CurAddressState->MemRegionOffset[CurAddressState->MemRegion];
+  Ctx->MemRegion = Sec->MemRegion;
+  if (Ctx->MemRegion)
+    Dot = Ctx->MemRegionOffset[Ctx->MemRegion];
 
   if (Sec->LMAExpr) {
     uint64_t D = Dot;
-    CurAddressState->LMAOffset = [=] { return Sec->LMAExpr().getValue() - D; };
+    Ctx->LMAOffset = [=] { return Sec->LMAExpr().getValue() - D; };
   }
 
   switchTo(Sec);
 
   // We do not support custom layout for compressed debug sectons.
   // At this point we already know their size and have compressed content.
-  if (CurAddressState->OutSec->Flags & SHF_COMPRESSED)
+  if (Ctx->OutSec->Flags & SHF_COMPRESSED)
     return;
 
   for (BaseCommand *C : Sec->SectionCommands)
@@ -776,13 +773,12 @@ void LinkerScript::assignAddresses() {
   // By default linker scripts use an initial value of 0 for '.', but prefer
   // -image-base if set.
   Dot = Config->ImageBase ? *Config->ImageBase : 0;
-  auto State = make_unique<AddressState>();
 
-  // CurAddressState captures the local AddressState and makes it accessible
+  // Ctx captures the local AddressState and makes it accessible
   // deliberately. This is needed as there are some cases where we cannot just
   // thread the current state through to a lambda function created by the
   // script parser.
-  CurAddressState = State.get();
+  Ctx = make_unique<AddressState>();
   ErrorOnMissingSection = true;
   switchTo(Aether);
 
@@ -799,7 +795,7 @@ void LinkerScript::assignAddresses() {
 
     assignOffsets(cast<OutputSection>(Base));
   }
-  CurAddressState = nullptr;
+  Ctx = nullptr;
 }
 
 // Creates program headers as instructed by PHDRS linker script command.
@@ -851,9 +847,8 @@ bool LinkerScript::needsInterpSection() {
 
 ExprValue LinkerScript::getSymbolValue(const Twine &Loc, StringRef S) {
   if (S == ".") {
-    if (CurAddressState)
-      return {CurAddressState->OutSec, false,
-              Dot - CurAddressState->OutSec->Addr, Loc};
+    if (Ctx)
+      return {Ctx->OutSec, false, Dot - Ctx->OutSec->Addr, Loc};
     error(Loc + ": unable to get location counter value");
     return 0;
   }

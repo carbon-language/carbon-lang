@@ -218,7 +218,7 @@ class LinkerScript final {
   void output(InputSection *Sec);
   void process(BaseCommand &Base);
 
-  AddressState *CurAddressState = nullptr;
+  std::unique_ptr<AddressState> Ctx;
   OutputSection *Aether;
 
   uint64_t Dot;
