@@ -237,17 +237,11 @@ static void sortSections(MutableArrayRef<InputSection *> Vec,
     std::stable_sort(Vec.begin(), Vec.end(), getComparator(K));
 }
 
-static void sortBySymbolOrder(MutableArrayRef<InputSection *> Vec) {
-  if (Config->SymbolOrderingFile.empty())
-    return;
-  static llvm::DenseMap<SectionBase *, int> Order = buildSectionOrder();
-  sortByOrder(Vec, [&](InputSectionBase *S) { return Order.lookup(S); });
-}
-
 // Compute and remember which sections the InputSectionDescription matches.
 std::vector<InputSection *>
 LinkerScript::computeInputSections(const InputSectionDescription *Cmd) {
   std::vector<InputSection *> Ret;
+  DenseMap<SectionBase *, int> Order = buildSectionOrder();
 
   // Collects all sections that satisfy constraints of Cmd.
   for (const SectionPattern &Pat : Cmd->SectionPatterns) {
@@ -298,7 +292,11 @@ LinkerScript::computeInputSections(const InputSectionDescription *Cmd) {
 
     if (Pat.SortOuter == SortSectionPolicy::Default &&
         Config->SortSection == SortSectionPolicy::Default) {
-      sortBySymbolOrder(Vec);
+
+      // If -symbol-ordering-file was given, sort accordingly.
+      // Usually, Order is empty.
+      if (!Order.empty())
+        sortByOrder(Vec, [&](InputSectionBase *S) { return Order.lookup(S); });
       continue;
     }
 
