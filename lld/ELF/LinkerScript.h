@@ -181,39 +181,19 @@ struct PhdrsCommand {
   Expr LMAExpr = nullptr;
 };
 
-// ScriptConfiguration holds linker script parse results.
-struct ScriptConfiguration {
-  // Used to assign addresses to sections.
-  std::vector<BaseCommand *> Commands;
-
-  // Used to assign sections to headers.
-  std::vector<PhdrsCommand> PhdrsCommands;
-
-  bool HasSections = false;
-
-  // List of section patterns specified with KEEP commands. They will
-  // be kept even if they are unused and --gc-sections is specified.
-  std::vector<InputSectionDescription *> KeptSections;
-
-  // A map from memory region name to a memory region descriptor.
-  llvm::DenseMap<llvm::StringRef, MemoryRegion *> MemoryRegions;
-
-  // A list of symbols referenced by the script.
-  std::vector<llvm::StringRef> ReferencedSymbols;
-};
-
 class LinkerScript final {
   // Temporary state used in processCommands() and assignAddresses()
   // that must be reinitialized for each call to the above functions, and must
   // not be used outside of the scope of a call to the above functions.
   struct AddressState {
+    AddressState();
     uint64_t ThreadBssOffset = 0;
     OutputSection *OutSec = nullptr;
     MemoryRegion *MemRegion = nullptr;
     llvm::DenseMap<const MemoryRegion *, uint64_t> MemRegionOffset;
     std::function<uint64_t()> LMAOffset;
-    AddressState(const ScriptConfiguration &Opt);
   };
+
   llvm::DenseMap<StringRef, OutputSection *> NameToOutputSection;
 
   void assignSymbol(SymbolAssignment *Cmd, bool InSec);
@@ -243,7 +223,7 @@ public:
   OutputSection *createOutputSection(StringRef Name, StringRef Location);
   OutputSection *getOrCreateOutputSection(StringRef Name);
 
-  bool hasPhdrsCommands() { return !Opt.PhdrsCommands.empty(); }
+  bool hasPhdrsCommands() { return !PhdrsCommands.empty(); }
   uint64_t getDot() { return Dot; }
   void discard(ArrayRef<InputSectionBase *> V);
 
@@ -265,8 +245,23 @@ public:
   void addSymbol(SymbolAssignment *Cmd);
   void processCommands(OutputSectionFactory &Factory);
 
-  // Parsed linker script configurations are set to this struct.
-  ScriptConfiguration Opt;
+  // SECTIONS command list.
+  std::vector<BaseCommand *> Commands;
+
+  // PHDRS command list.
+  std::vector<PhdrsCommand> PhdrsCommands;
+
+  bool HasSections = false;
+
+  // List of section patterns specified with KEEP commands. They will
+  // be kept even if they are unused and --gc-sections is specified.
+  std::vector<InputSectionDescription *> KeptSections;
+
+  // A map from memory region name to a memory region descriptor.
+  llvm::DenseMap<llvm::StringRef, MemoryRegion *> MemoryRegions;
+
+  // A list of symbols referenced by the script.
+  std::vector<llvm::StringRef> ReferencedSymbols;
 };
 
 extern LinkerScript *Script;
