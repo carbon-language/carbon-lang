@@ -3356,6 +3356,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
                                Write,
                                std::function<size_t(StringRef)> AddToStrTab) {
     auto StringSection = *Obj->getStringTableForSymtab(*Section);
+    unsigned IsHotTextUpdated = 0;
 
     for (const Elf_Sym &Symbol : Obj->symbols(Section)) {
       auto NewSymbol = Symbol;
@@ -3412,6 +3413,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
           NewSymbol.st_shndx = ELF::SHN_ABS;
           outs() << "BOLT-INFO: setting " << Name << " to 0x"
                  << Twine::utohexstr(NewSymbol.st_value) << '\n';
+          ++IsHotTextUpdated;
           return true;
         };
 
@@ -3423,6 +3425,28 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
 
       Write((&Symbol - Obj->symbol_begin(Section)) * sizeof(Elf_Sym),
             reinterpret_cast<const char *>(&NewSymbol), sizeof(NewSymbol));
+    }
+
+    assert((!IsHotTextUpdated || IsHotTextUpdated == 2) &&
+           "either none or both __hot_start/__hot_end symbols were expected");
+    if (opts::HotText && !IsHotTextUpdated && !PatchExisting) {
+      auto addSymbol = [&](const std::string &Name) {
+        Elf_Sym Symbol;
+        Symbol.st_value = getNewValueForSymbol(Name);
+        Symbol.st_shndx = ELF::SHN_ABS;
+        Symbol.st_name = AddToStrTab(Name);
+        Symbol.st_size = 0;
+        Symbol.st_shndx = 0;
+        Symbol.st_other = 0;
+        Symbol.setBindingAndType(ELF::STB_WEAK, ELF::STT_NOTYPE);
+
+        outs() << "BOLT-INFO: setting " << Name << " to 0x"
+               << Twine::utohexstr(Symbol.st_value) << '\n';
+
+        Write(0, reinterpret_cast<const char *>(&Symbol), sizeof(Symbol));
+      };
+      addSymbol("__hot_start");
+      addSymbol("__hot_end");
     }
   };
 
