@@ -201,13 +201,12 @@ static std::string filename(InputFile *File) {
 }
 
 bool LinkerScript::shouldKeep(InputSectionBase *S) {
-  for (InputSectionDescription *ID : KeptSections) {
-    std::string Filename = filename(S->File);
+  std::string Filename = filename(S->File);
+  for (InputSectionDescription *ID : KeptSections)
     if (ID->FilePat.match(Filename))
       for (SectionPattern &P : ID->SectionPatterns)
         if (P.SectionPat.match(S->Name))
           return true;
-  }
   return false;
 }
 
