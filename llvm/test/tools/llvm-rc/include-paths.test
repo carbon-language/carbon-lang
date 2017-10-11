@@ -4,12 +4,12 @@
 ; RUN: llvm-readobj %t.include.res | FileCheck --check-prefix=FOUND %s
 
 ; Should find the bitmap if the folder is explicitly specified.
-; RUN: rm %t.nested-include.res
+; RUN: rm -f %t.nested-include.res
 ; RUN: llvm-rc /FO %t.nested-include.res /I %p/Inputs/nested %p/Inputs/deep-include.rc
 ; RUN: llvm-readobj %t.nested-include.res | FileCheck --check-prefix=FOUND %s
 
 ; Otherwise, it should not find the bitmap.
-; RUN: rm %t.nested-include.res
+; RUN: rm -f %t.nested-include.res
 ; RUN: not llvm-rc /FO %t.nested-include.res %p/Inputs/deep-include.rc 2>&1 \
 ; RUN:   | FileCheck --check-prefix=MISSING %s
 
@@ -17,7 +17,7 @@
 ; contains the resource being searched for.  Do this test last since it
 ; changes the current working directory and could affect the success or
 ; failure of other tests if run first.
-; RUN: rm %t.nested-include.res
+; RUN: rm -f %t.nested-include.res
 ; RUN: cd %p/Inputs/nested
 ; RUN: llvm-rc /FO %t.nested-include.res %p/Inputs/include.rc
 ; RUN: llvm-readobj %t.nested-include.res | FileCheck --check-prefix=FOUND %s
