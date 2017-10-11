@@ -354,6 +354,7 @@ void LinkerScript::processSectionCommands(OutputSectionFactory &Factory) {
   Ctx = make_unique<AddressState>();
   Ctx->OutSec = Aether;
 
+  // Add input sections to output sections.
   for (size_t I = 0; I < SectionCommands.size(); ++I) {
     // Handle symbol assignments outside of any output section.
     if (auto *Cmd = dyn_cast<SymbolAssignment>(SectionCommands[I])) {
@@ -404,14 +405,21 @@ void LinkerScript::processSectionCommands(OutputSectionFactory &Factory) {
       // Add input sections to an output section.
       for (InputSection *S : V)
         Sec->addSection(S);
-
-      assert(Sec->SectionIndex == INT_MAX);
-      Sec->SectionIndex = I;
-      if (Sec->Noload)
-        Sec->Type = SHT_NOBITS;
     }
   }
   Ctx = nullptr;
+
+  // Output sections are emitted in the exact same order as
+  // appeared in SECTIONS command, so we know their section indices.
+  for (size_t I = 0; I < SectionCommands.size(); ++I) {
+    auto *Sec = dyn_cast<OutputSection>(SectionCommands[I]);
+    if (!Sec)
+      continue;
+    assert(Sec->SectionIndex == INT_MAX);
+    Sec->SectionIndex = I;
+    if (Sec->Noload)
+      Sec->Type = SHT_NOBITS;
+  }
 }
 
 void LinkerScript::fabricateDefaultCommands() {
