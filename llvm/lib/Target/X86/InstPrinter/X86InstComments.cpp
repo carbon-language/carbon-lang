@@ -205,16 +205,14 @@ static MVT getZeroExtensionResultType(const MCInst *MI) {
 }
 
 /// Wraps the destination register name with AVX512 mask/maskz filtering.
-static std::string getMaskName(const MCInst *MI, const char *DestName,
-                               const char *(*getRegName)(unsigned)) {
-  std::string OpMaskName(DestName);
-
+static void printMasking(raw_ostream &OS, const MCInst *MI,
+                         const char *(*getRegName)(unsigned)) {
   bool MaskWithZero = false;
   const char *MaskRegName = nullptr;
 
   switch (MI->getOpcode()) {
   default:
-    return OpMaskName;
+    return;
   CASE_MASKZ_MOVDUP(MOVDDUP, m)
   CASE_MASKZ_MOVDUP(MOVDDUP, r)
   CASE_MASKZ_MOVDUP(MOVSHDUP, m)
@@ -399,15 +397,11 @@ static std::string getMaskName(const MCInst *MI, const char *DestName,
   }
 
   // MASK: zmmX {%kY}
-  OpMaskName += " {%";
-  OpMaskName += MaskRegName;
-  OpMaskName += "}";
+  OS << " {%" << MaskRegName << "}";
 
   // MASKZ: zmmX {%kY} {z}
   if (MaskWithZero)
-    OpMaskName += " {z}";
-
-  return OpMaskName;
+    OS << " {z}";
 }
 
 //===----------------------------------------------------------------------===//
@@ -1160,7 +1154,13 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     return false;
 
   if (!DestName) DestName = Src1Name;
-  OS << (DestName ? getMaskName(MI, DestName, getRegName) : "mem") << " = ";
+  if (DestName) {
+    OS << DestName;
+    printMasking(OS, MI, getRegName);
+  } else
+    OS << "mem";
+
+  OS << " = ";
 
   // If the two sources are the same, canonicalize the input elements to be
   // from the first src so that we get larger element spans.
