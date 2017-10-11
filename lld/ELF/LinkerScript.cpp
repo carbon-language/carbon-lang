@@ -176,22 +176,6 @@ void LinkerScript::assignSymbol(SymbolAssignment *Cmd, bool InSec) {
   }
 }
 
-bool SymbolAssignment::classof(const BaseCommand *C) {
-  return C->Kind == AssignmentKind;
-}
-
-bool InputSectionDescription::classof(const BaseCommand *C) {
-  return C->Kind == InputSectionKind;
-}
-
-bool AssertCommand::classof(const BaseCommand *C) {
-  return C->Kind == AssertKind;
-}
-
-bool BytesDataCommand::classof(const BaseCommand *C) {
-  return C->Kind == BytesDataKind;
-}
-
 static std::string filename(InputFile *File) {
   if (!File)
     return "";
