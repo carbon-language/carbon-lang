@@ -422,6 +422,8 @@ void LinkerScript::processSectionCommands(OutputSectionFactory &Factory) {
   }
 }
 
+// If no SECTIONS command was given, we create simple SectionCommands
+// as if a minimum SECTIONS command were given. This function does that.
 void LinkerScript::fabricateDefaultCommands() {
   // Define start address
   uint64_t StartAddr = UINT64_MAX;
@@ -525,47 +527,6 @@ void LinkerScript::switchTo(OutputSection *Sec) {
     Ctx->OutSec->LMAOffset = Ctx->LMAOffset();
 }
 
-void LinkerScript::process(BaseCommand &Base) {
-  // This handles the assignments to symbol or to the dot.
-  if (auto *Cmd = dyn_cast<SymbolAssignment>(&Base)) {
-    assignSymbol(Cmd, true);
-    return;
-  }
-
-  // Handle BYTE(), SHORT(), LONG(), or QUAD().
-  if (auto *Cmd = dyn_cast<BytesDataCommand>(&Base)) {
-    Cmd->Offset = Dot - Ctx->OutSec->Addr;
-    Dot += Cmd->Size;
-    Ctx->OutSec->Size = Dot - Ctx->OutSec->Addr;
-    return;
-  }
-
-  // Handle ASSERT().
-  if (auto *Cmd = dyn_cast<AssertCommand>(&Base)) {
-    Cmd->Expression();
-    return;
-  }
-
-  // Handle a single input section description command.
-  // It calculates and assigns the offsets for each section and also
-  // updates the output section size.
-  auto &Cmd = cast<InputSectionDescription>(Base);
-  for (InputSection *Sec : Cmd.Sections) {
-    // We tentatively added all synthetic sections at the beginning and removed
-    // empty ones afterwards (because there is no way to know whether they were
-    // going be empty or not other than actually running linker scripts.)
-    // We need to ignore remains of empty sections.
-    if (auto *S = dyn_cast<SyntheticSection>(Sec))
-      if (S->empty())
-        continue;
-
-    if (!Sec->Live)
-      continue;
-    assert(Ctx->OutSec == Sec->getParent());
-    output(Sec);
-  }
-}
-
 // This function searches for a memory region to place the given output
 // section in. If found, a pointer to the appropriate memory region is
 // returned. Otherwise, a nullptr is returned.
@@ -623,8 +584,49 @@ void LinkerScript::assignOffsets(OutputSection *Sec) {
   if (Ctx->OutSec->Flags & SHF_COMPRESSED)
     return;
 
-  for (BaseCommand *C : Sec->SectionCommands)
-    process(*C);
+  // We visited SectionsCommands from processSectionCommands to
+  // layout sections. Now, we visit SectionsCommands again to fix
+  // section offsets.
+  for (BaseCommand *Base : Sec->SectionCommands) {
+    // This handles the assignments to symbol or to the dot.
+    if (auto *Cmd = dyn_cast<SymbolAssignment>(Base)) {
+      assignSymbol(Cmd, true);
+      continue;
+    }
+
+    // Handle BYTE(), SHORT(), LONG(), or QUAD().
+    if (auto *Cmd = dyn_cast<BytesDataCommand>(Base)) {
+      Cmd->Offset = Dot - Ctx->OutSec->Addr;
+      Dot += Cmd->Size;
+      Ctx->OutSec->Size = Dot - Ctx->OutSec->Addr;
+      continue;
+    }
+
+    // Handle ASSERT().
+    if (auto *Cmd = dyn_cast<AssertCommand>(Base)) {
+      Cmd->Expression();
+      continue;
+    }
+
+    // Handle a single input section description command.
+    // It calculates and assigns the offsets for each section and also
+    // updates the output section size.
+    auto *Cmd = cast<InputSectionDescription>(Base);
+    for (InputSection *Sec : Cmd->Sections) {
+      // We tentatively added all synthetic sections at the beginning and
+      // removed empty ones afterwards (because there is no way to know
+      // whether they were going be empty or not other than actually running
+      // linker scripts.) We need to ignore remains of empty sections.
+      if (auto *S = dyn_cast<SyntheticSection>(Sec))
+        if (S->empty())
+          continue;
+
+      if (!Sec->Live)
+        continue;
+      assert(Ctx->OutSec == Sec->getParent());
+      output(Sec);
+    }
+  }
 }
 
 void LinkerScript::removeEmptyCommands() {
