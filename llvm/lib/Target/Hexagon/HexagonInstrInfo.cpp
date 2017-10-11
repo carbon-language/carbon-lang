@@ -1659,10 +1659,12 @@ bool HexagonInstrInfo::getIncrementValue(const MachineInstr &MI,
       Value = OffsetOp.getImm();
       return true;
     }
-  }
-  if (MI.getOpcode() == Hexagon::A2_addi) {
-    Value = MI.getOperand(2).getImm();
-    return true;
+  } else if (MI.getOpcode() == Hexagon::A2_addi) {
+    const MachineOperand &AddOp = MI.getOperand(2);
+    if (AddOp.isImm()) {
+      Value = AddOp.getImm();
+      return true;
+    }
   }
 
   return false;
