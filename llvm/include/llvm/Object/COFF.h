@@ -954,28 +954,28 @@ public:
     Res = reinterpret_cast<coff_symbol_type *>(getSymbolTable()) + Index;
     return std::error_code();
   }
-  ErrorOr<COFFSymbolRef> getSymbol(uint32_t index) const {
+  Expected<COFFSymbolRef> getSymbol(uint32_t index) const {
     if (SymbolTable16) {
       const coff_symbol16 *Symb = nullptr;
       if (std::error_code EC = getSymbol(index, Symb))
-        return EC;
+        return errorCodeToError(EC);
       return COFFSymbolRef(Symb);
     }
     if (SymbolTable32) {
       const coff_symbol32 *Symb = nullptr;
       if (std::error_code EC = getSymbol(index, Symb))
-        return EC;
+        return errorCodeToError(EC);
       return COFFSymbolRef(Symb);
     }
-    return object_error::parse_failed;
+    return errorCodeToError(object_error::parse_failed);
   }
 
   template <typename T>
   std::error_code getAuxSymbol(uint32_t index, const T *&Res) const {
-    ErrorOr<COFFSymbolRef> s = getSymbol(index);
-    if (std::error_code EC = s.getError())
-      return EC;
-    Res = reinterpret_cast<const T *>(s->getRawPtr());
+    Expected<COFFSymbolRef> S = getSymbol(index);
+    if (Error E = S.takeError())
+      return errorToErrorCode(std::move(E));
+    Res = reinterpret_cast<const T *>(S->getRawPtr());
     return std::error_code();
   }
 
