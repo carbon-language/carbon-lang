@@ -1172,8 +1172,8 @@ public:
 private:
   BinaryByteStream BBS;
 
-  ErrorOr<const coff_resource_dir_table &> getTableAtOffset(uint32_t Offset);
-  ErrorOr<ArrayRef<UTF16>> getDirStringAtOffset(uint32_t Offset);
+  Expected<const coff_resource_dir_table &> getTableAtOffset(uint32_t Offset);
+  Expected<ArrayRef<UTF16>> getDirStringAtOffset(uint32_t Offset);
 };
 
 // Corresponds to `_FPO_DATA` structure in the PE/COFF spec.

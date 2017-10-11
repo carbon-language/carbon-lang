@@ -1633,11 +1633,12 @@ std::error_code BaseRelocRef::getRVA(uint32_t &Result) const {
   return std::error_code();
 }
 
-#define RETURN_IF_ERROR(X)                                                     \
-  if (auto EC = errorToErrorCode(X))                                           \
-    return EC;
+#define RETURN_IF_ERROR(E)                                                     \
+  if (E)                                                                       \
+    return E;
 
-ErrorOr<ArrayRef<UTF16>> ResourceSectionRef::getDirStringAtOffset(uint32_t Offset) {
+Expected<ArrayRef<UTF16>>
+ResourceSectionRef::getDirStringAtOffset(uint32_t Offset) {
   BinaryStreamReader Reader = BinaryStreamReader(BBS);
   Reader.setOffset(Offset);
   uint16_t Length;
@@ -1649,10 +1650,11 @@ ErrorOr<ArrayRef<UTF16>> ResourceSectionRef::getDirStringAtOffset(uint32_t Offse
 
 ErrorOr<ArrayRef<UTF16>>
 ResourceSectionRef::getEntryNameString(const coff_resource_dir_entry &Entry) {
-  return getDirStringAtOffset(Entry.Identifier.getNameOffset());
+  return expectedToErrorOr(
+      getDirStringAtOffset(Entry.Identifier.getNameOffset()));
 }
 
-ErrorOr<const coff_resource_dir_table &>
+Expected<const coff_resource_dir_table &>
 ResourceSectionRef::getTableAtOffset(uint32_t Offset) {
   const coff_resource_dir_table *Table = nullptr;
 
@@ -1665,9 +1667,9 @@ ResourceSectionRef::getTableAtOffset(uint32_t Offset) {
 
 ErrorOr<const coff_resource_dir_table &>
 ResourceSectionRef::getEntrySubDir(const coff_resource_dir_entry &Entry) {
-  return getTableAtOffset(Entry.Offset.value());
+  return expectedToErrorOr(getTableAtOffset(Entry.Offset.value()));
 }
 
 ErrorOr<const coff_resource_dir_table &> ResourceSectionRef::getBaseTable() {
-  return getTableAtOffset(0);
+  return expectedToErrorOr(getTableAtOffset(0));
 }
