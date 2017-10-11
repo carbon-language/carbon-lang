@@ -200,6 +200,7 @@ class LinkerScript final {
 
   llvm::DenseMap<StringRef, OutputSection *> NameToOutputSection;
 
+  void addSymbol(SymbolAssignment *Cmd);
   void assignSymbol(SymbolAssignment *Cmd, bool InSec);
   void setDot(Expr E, const Twine &Loc, bool InSec);
 
@@ -223,7 +224,6 @@ class LinkerScript final {
   uint64_t Dot;
 
 public:
-  bool ErrorOnMissingSection = false;
   OutputSection *createOutputSection(StringRef Name, StringRef Location);
   OutputSection *getOrCreateOutputSection(StringRef Name);
 
@@ -246,7 +246,6 @@ public:
   void assignOffsets(OutputSection *Sec);
   void assignAddresses();
   void allocateHeaders(std::vector<PhdrEntry *> &Phdrs);
-  void addSymbol(SymbolAssignment *Cmd);
   void processSectionCommands(OutputSectionFactory &Factory);
 
   // SECTIONS command list.
@@ -256,6 +255,7 @@ public:
   std::vector<PhdrsCommand> PhdrsCommands;
 
   bool HasSectionsCommand = false;
+  bool ErrorOnMissingSection = false;
 
   // List of section patterns specified with KEEP commands. They will
   // be kept even if they are unused and --gc-sections is specified.
