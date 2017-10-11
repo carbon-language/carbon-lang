@@ -114,8 +114,8 @@ void LinkerScript::setDot(Expr E, const Twine &Loc, bool InSec) {
     CurAddressState->OutSec->Size = Dot - CurAddressState->OutSec->Addr;
 }
 
-// This function is called from processCommands, while we are
-// fixing the output section layout.
+// This function is called from processSectionCommands,
+// while we are fixing the output section layout.
 void LinkerScript::addSymbol(SymbolAssignment *Cmd) {
   if (Cmd->Name == ".")
     return;
@@ -337,7 +337,7 @@ LinkerScript::createInputSectionList(OutputSection &OutCmd) {
   return Ret;
 }
 
-void LinkerScript::processCommands(OutputSectionFactory &Factory) {
+void LinkerScript::processSectionCommands(OutputSectionFactory &Factory) {
   // A symbol can be assigned before any section is mentioned in the linker
   // script. In an DSO, the symbol values are addresses, so the only important
   // section values are:

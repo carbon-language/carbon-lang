@@ -186,7 +186,7 @@ struct PhdrsCommand {
 };
 
 class LinkerScript final {
-  // Temporary state used in processCommands() and assignAddresses()
+  // Temporary state used in processSectionCommands() and assignAddresses()
   // that must be reinitialized for each call to the above functions, and must
   // not be used outside of the scope of a call to the above functions.
   struct AddressState {
@@ -247,7 +247,7 @@ public:
   void assignAddresses();
   void allocateHeaders(std::vector<PhdrEntry *> &Phdrs);
   void addSymbol(SymbolAssignment *Cmd);
-  void processCommands(OutputSectionFactory &Factory);
+  void processSectionCommands(OutputSectionFactory &Factory);
 
   // SECTIONS command list.
   std::vector<BaseCommand *> SectionCommands;

@@ -46,6 +46,7 @@ public:
   static bool classof(const SectionBase *S) {
     return S->kind() == SectionBase::Output;
   }
+
   static bool classof(const BaseCommand *C);
 
   uint64_t getLMA() const { return Addr + LMAOffset; }
