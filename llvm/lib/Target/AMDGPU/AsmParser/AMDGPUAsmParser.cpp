@@ -832,7 +832,9 @@ private:
   bool ParseDirectiveAMDKernelCodeT();
   bool subtargetHasRegister(const MCRegisterInfo &MRI, unsigned RegNo) const;
   bool ParseDirectiveAMDGPUHsaKernel();
-  bool ParseDirectivePalMetadata();
+
+  bool ParseDirectivePALMetadata();
+
   bool AddNextRegisterToList(unsigned& Reg, unsigned& RegWidth,
                              RegisterKind RegKind, unsigned Reg1,
                              unsigned RegNum);
@@ -2493,18 +2495,20 @@ bool AMDGPUAsmParser::ParseDirectiveAMDGPUHsaKernel() {
   return false;
 }
 
-bool AMDGPUAsmParser::ParseDirectivePalMetadata() {
-  std::vector<uint32_t> Data;
+bool AMDGPUAsmParser::ParseDirectivePALMetadata() {
+  PALMD::Metadata PALMetadata;
   for (;;) {
     uint32_t Value;
-    if (ParseAsAbsoluteExpression(Value))
-      return TokError("invalid value in .amdgpu_pal_metadata");
-    Data.push_back(Value);
+    if (ParseAsAbsoluteExpression(Value)) {
+      return TokError(Twine("invalid value in ") +
+                      Twine(PALMD::AssemblerDirective));
+    }
+    PALMetadata.push_back(Value);
     if (getLexer().isNot(AsmToken::Comma))
       break;
     Lex();
   }
-  getTargetStreamer().EmitPalMetadata(Data);
+  getTargetStreamer().EmitPALMetadata(PALMetadata);
   return false;
 }
 
@@ -2526,8 +2530,8 @@ bool AMDGPUAsmParser::ParseDirective(AsmToken DirectiveID) {
   if (IDVal == ".amdgpu_hsa_kernel")
     return ParseDirectiveAMDGPUHsaKernel();
 
-  if (IDVal == ".amdgpu_pal_metadata")
-    return ParseDirectivePalMetadata();
+  if (IDVal == PALMD::AssemblerDirective)
+    return ParseDirectivePALMetadata();
 
   return true;
 }

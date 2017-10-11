@@ -417,6 +417,49 @@ struct Metadata final {
 };
 
 } // end namespace HSAMD
+
+//===----------------------------------------------------------------------===//
+// PAL metadata.
+//===----------------------------------------------------------------------===//
+namespace PALMD {
+
+/// \brief PAL metadata assembler directive.
+constexpr char AssemblerDirective[] = ".amd_amdgpu_pal_metadata";
+
+/// \brief PAL metadata keys.
+enum Key : uint32_t {
+  LS_NUM_USED_VGPRS = 0x10000015,
+  HS_NUM_USED_VGPRS = 0x10000016,
+  ES_NUM_USED_VGPRS = 0x10000017,
+  GS_NUM_USED_VGPRS = 0x10000018,
+  VS_NUM_USED_VGPRS = 0x10000019,
+  PS_NUM_USED_VGPRS = 0x1000001a,
+  CS_NUM_USED_VGPRS = 0x1000001b,
+
+  LS_NUM_USED_SGPRS = 0x1000001c,
+  HS_NUM_USED_SGPRS = 0x1000001d,
+  ES_NUM_USED_SGPRS = 0x1000001e,
+  GS_NUM_USED_SGPRS = 0x1000001f,
+  VS_NUM_USED_SGPRS = 0x10000020,
+  PS_NUM_USED_SGPRS = 0x10000021,
+  CS_NUM_USED_SGPRS = 0x10000022,
+
+  LS_SCRATCH_SIZE = 0x10000038,
+  HS_SCRATCH_SIZE = 0x10000039,
+  ES_SCRATCH_SIZE = 0x1000003a,
+  GS_SCRATCH_SIZE = 0x1000003b,
+  VS_SCRATCH_SIZE = 0x1000003c,
+  PS_SCRATCH_SIZE = 0x1000003d,
+  CS_SCRATCH_SIZE = 0x1000003e
+};
+
+/// \brief PAL metadata represented as a vector.
+typedef std::vector<uint32_t> Metadata;
+
+/// \brief Converts \p PALMetadata to \p String.
+std::error_code toString(const Metadata &PALMetadata, std::string &String);
+
+} // end namespace PALMD
 } // end namespace AMDGPU
 } // end namespace llvm
 

@@ -54,7 +54,8 @@ public:
   /// \returns True on success, false on failure.
   virtual bool EmitHSAMetadata(StringRef YamlString) = 0;
 
-  virtual bool EmitPalMetadata(ArrayRef<uint32_t> Data) = 0;
+  /// \returns True on success, false on failure.
+  virtual bool EmitPALMetadata(const AMDGPU::PALMD::Metadata &PALMetadata) = 0;
 };
 
 class AMDGPUTargetAsmStreamer final : public AMDGPUTargetStreamer {
@@ -75,7 +76,8 @@ public:
   /// \returns True on success, false on failure.
   bool EmitHSAMetadata(StringRef YamlString) override;
 
-  bool EmitPalMetadata(ArrayRef<uint32_t> data) override;
+  /// \returns True on success, false on failure.
+  bool EmitPALMetadata(const AMDGPU::PALMD::Metadata &PALMetadata) override;
 };
 
 class AMDGPUTargetELFStreamer final : public AMDGPUTargetStreamer {
@@ -104,7 +106,8 @@ public:
   /// \returns True on success, false on failure.
   bool EmitHSAMetadata(StringRef YamlString) override;
 
-  bool EmitPalMetadata(ArrayRef<uint32_t> data) override;
+  /// \returns True on success, false on failure.
+  bool EmitPALMetadata(const AMDGPU::PALMD::Metadata &PALMetadata) override;
 };
 
 }
