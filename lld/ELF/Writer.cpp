@@ -161,7 +161,7 @@ template <class ELFT> void Writer<ELFT>::run() {
     addReservedSymbols();
 
   // Create output sections.
-  if (Script->HasSections) {
+  if (Script->HasSectionsCommand) {
     // If linker script contains SECTIONS commands, let it create sections.
     Script->processCommands(Factory);
 
@@ -813,7 +813,7 @@ template <class ELFT> void Writer<ELFT>::addReservedSymbols() {
     addOptionalRegular<ELFT>(Name, Out::ElfHeader, 0, STV_HIDDEN);
 
   // If linker script do layout we do not need to create any standart symbols.
-  if (Script->HasSections)
+  if (Script->HasSectionsCommand)
     return;
 
   auto Add = [](StringRef S, int64_t Pos) {
@@ -1055,7 +1055,7 @@ template <class ELFT> void Writer<ELFT>::sortSections() {
     if (auto *Sec = dyn_cast<OutputSection>(Base))
       Sec->SortRank = getSectionRank(Sec);
 
-  if (!Script->HasSections) {
+  if (!Script->HasSectionsCommand) {
     // We know that all the OutputSections are contiguous in
     // this case.
     auto E = Script->Commands.end();
@@ -1355,7 +1355,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
                   InX::Dynamic},
                  [](SyntheticSection *SS) { SS->finalizeContents(); });
 
-  if (!Script->HasSections && !Config->Relocatable)
+  if (!Script->HasSectionsCommand && !Config->Relocatable)
     fixSectionAlignments();
 
   // Some architectures use small displacements for jump instructions.
@@ -1681,7 +1681,7 @@ template <class ELFT> void Writer<ELFT>::assignFileOffsets() {
 
   for (OutputSection *Sec : OutputSections) {
     Off = setOffset(Sec, Off);
-    if (Script->HasSections)
+    if (Script->HasSectionsCommand)
       continue;
     // If this is a last section of the last executable segment and that
     // segment is the last loadable segment, align the offset of the
@@ -1860,7 +1860,7 @@ static void fillTrap(uint8_t *I, uint8_t *End) {
 // We'll leave other pages in segments as-is because the rest will be
 // overwritten by output sections.
 template <class ELFT> void Writer<ELFT>::writeTrapInstr() {
-  if (Script->HasSections)
+  if (Script->HasSectionsCommand)
     return;
 
   // Fill the last page.

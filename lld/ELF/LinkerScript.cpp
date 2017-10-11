@@ -763,7 +763,7 @@ void LinkerScript::allocateHeaders(std::vector<PhdrEntry *> &Phdrs) {
   uint64_t HeaderSize = getHeaderSize();
   // When linker script with SECTIONS is being used, don't output headers
   // unless there's a space for them.
-  uint64_t Base = HasSections ? alignDown(Min, Config->MaxPageSize) : 0;
+  uint64_t Base = HasSectionsCommand ? alignDown(Min, Config->MaxPageSize) : 0;
   if (HeaderSize <= Min - Base || Script->hasPhdrsCommands()) {
     Min = alignDown(Min - HeaderSize, Config->MaxPageSize);
     Out::ElfHeader->Addr = Min;

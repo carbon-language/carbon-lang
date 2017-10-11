@@ -251,7 +251,7 @@ public:
   // PHDRS command list.
   std::vector<PhdrsCommand> PhdrsCommands;
 
-  bool HasSections = false;
+  bool HasSectionsCommand = false;
 
   // List of section patterns specified with KEEP commands. They will
   // be kept even if they are unused and --gc-sections is specified.
