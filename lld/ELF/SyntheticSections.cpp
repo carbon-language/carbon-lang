@@ -2305,21 +2305,28 @@ static MergeSyntheticSection *createMergeSynthetic(StringRef Name,
   return make<MergeNoTailSection>(Name, Type, Flags, Alignment);
 }
 
-// This function decompresses compressed sections and scans over the input
-// sections to create mergeable synthetic sections. It removes
-// MergeInputSections from the input section array and adds new synthetic
-// sections at the location of the first input section that it replaces. It then
-// finalizes each synthetic section in order to compute an output offset for
-// each piece of each input section.
-void elf::decompressAndMergeSections() {
-  // splitIntoPieces needs to be called on each MergeInputSection before calling
-  // finalizeContents(). Do that first.
-  parallelForEach(InputSections, [](InputSectionBase *S) {
-    if (!S->Live)
-      return;
-    S->maybeUncompress();
-    if (auto *MS = dyn_cast<MergeInputSection>(S))
-      MS->splitIntoPieces();
+// Debug sections may be compressed by zlib. Uncompress if exists.
+void elf::decompressSections() {
+  parallelForEach(InputSections, [](InputSectionBase *Sec) {
+    if (Sec->Live)
+      Sec->maybeUncompress();
+  });
+}
+
+// This function scans over the inputsections to create mergeable
+// synthetic sections.
+//
+// It removes MergeInputSections from the input section array and adds
+// new synthetic sections at the location of the first input section
+// that it replaces. It then finalizes each synthetic section in order
+// to compute an output offset for each piece of each input section.
+void elf::mergeSections() {
+  // splitIntoPieces needs to be called on each MergeInputSection
+  // before calling finalizeContents(). Do that first.
+  parallelForEach(InputSections, [](InputSectionBase *Sec) {
+    if (Sec->Live)
+      if (auto *S = dyn_cast<MergeInputSection>(Sec))
+        S->splitIntoPieces();
   });
 
   std::vector<MergeSyntheticSection *> MergeSections;
