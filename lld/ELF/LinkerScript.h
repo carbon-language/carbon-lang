@@ -37,23 +37,34 @@ class OutputSectionFactory;
 class InputSectionBase;
 class SectionBase;
 
+// This represents an r-value in the linker script.
 struct ExprValue {
-  SectionBase *Sec;
-  uint64_t Val;
-  bool ForceAbsolute;
-  uint64_t Alignment = 1;
-  std::string Loc;
-
   ExprValue(SectionBase *Sec, bool ForceAbsolute, uint64_t Val,
             const Twine &Loc)
-      : Sec(Sec), Val(Val), ForceAbsolute(ForceAbsolute), Loc(Loc.str()) {}
+      : Sec(Sec), ForceAbsolute(ForceAbsolute), Val(Val), Loc(Loc.str()) {}
+
   ExprValue(SectionBase *Sec, uint64_t Val, const Twine &Loc)
       : ExprValue(Sec, false, Val, Loc) {}
-  ExprValue(uint64_t Val) : ExprValue(nullptr, Val, "") {}
+
+  ExprValue(uint64_t Val) : ExprValue(nullptr, false, Val, "") {}
+
   bool isAbsolute() const { return ForceAbsolute || Sec == nullptr; }
   uint64_t getValue() const;
   uint64_t getSecAddr() const;
   uint64_t getSectionOffset() const;
+
+  // If a value is relative to a section, it has a non-null Sec.
+  SectionBase *Sec;
+
+  // True if this expression is enclosed in ABSOLUTE().
+  // This flag affects the return value of getValue().
+  bool ForceAbsolute;
+
+  uint64_t Val;
+  uint64_t Alignment = 1;
+
+  // Original source location. Used for error messages.
+  std::string Loc;
 };
 
 // This represents an expression in the linker script.
