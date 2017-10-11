@@ -176,7 +176,7 @@ void LinkerScript::assignSymbol(SymbolAssignment *Cmd, bool InSec) {
   }
 }
 
-static std::string filename(InputFile *File) {
+static std::string getFilename(InputFile *File) {
   if (!File)
     return "";
   if (File->ArchiveName.empty())
@@ -185,7 +185,7 @@ static std::string filename(InputFile *File) {
 }
 
 bool LinkerScript::shouldKeep(InputSectionBase *S) {
-  std::string Filename = filename(S->File);
+  std::string Filename = getFilename(S->File);
   for (InputSectionDescription *ID : KeptSections)
     if (ID->FilePat.match(Filename))
       for (SectionPattern &P : ID->SectionPatterns)
@@ -270,7 +270,7 @@ LinkerScript::computeInputSections(const InputSectionDescription *Cmd) {
       if (Sec->Type == SHT_REL || Sec->Type == SHT_RELA)
         continue;
 
-      std::string Filename = filename(Sec->File);
+      std::string Filename = getFilename(Sec->File);
       if (!Cmd->FilePat.match(Filename) ||
           Pat.ExcludedFilePat.match(Filename) ||
           !Pat.SectionPat.match(Sec->Name))
