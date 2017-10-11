@@ -799,7 +799,7 @@ int mapped_file_region::alignment() {
   return SysInfo.dwAllocationGranularity;
 }
 
-static basic_file_status status_from_find_data(WIN32_FIND_DATA *FindData) {
+static basic_file_status status_from_find_data(WIN32_FIND_DATAW *FindData) {
   return basic_file_status(file_type_from_attrs(FindData->dwFileAttributes),
                            perms_from_attrs(FindData->dwFileAttributes),
                            FindData->ftLastAccessTime.dwHighDateTime,
