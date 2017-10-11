@@ -1,4 +1,4 @@
-//===- PredicateInfo.h - Build PredicateInfo --------------------*- C++ -*-===//
+//===- PredicateInfo.h - Build PredicateInfo ----------------------*-C++-*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,7 +6,7 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
+///
 /// \file
 /// \brief  This file implements the PredicateInfo analysis, which creates an Extended
 /// SSA form for operations used in branch comparisons and llvm.assume
@@ -44,7 +44,8 @@
 /// inserted where it would actually be live.  This means if there are no uses of
 /// an operation dominated by the branch edges, or by an assume, the associated
 /// predicate info is never inserted.
-//
+///
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_TRANSFORMS_UTILS_PREDICATEINFO_H
@@ -56,27 +57,39 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
+#include "llvm/ADT/iterator.h"
+#include "llvm/Analysis/AssumptionCache.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/OperandTraits.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/Use.h"
+#include "llvm/IR/User.h"
+#include "llvm/IR/Value.h"
 #include "llvm/Pass.h"
+#include "llvm/PassAnalysisSupport.h"
+#include "llvm/Support/Casting.h"
+#include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Transforms/Utils/OrderedInstructions.h"
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <iterator>
+#include <memory>
 #include <utility>
 
 namespace llvm {
 
-class AssumptionCache;
-class BasicBlock;
 class DominatorTree;
 class Function;
-class IntrinsicInst;
+class Instruction;
+class MemoryAccess;
+class LLVMContext;
 class raw_ostream;
-class Value;
-
-// This name is used in a few places, so kick it into their own namespace
-namespace PredicateInfoClasses {
-
-struct ValueDFS;
-
-}
 
 enum PredicateType { PT_Branch, PT_Assume, PT_Switch };
 
@@ -85,12 +98,10 @@ enum PredicateType { PT_Branch, PT_Assume, PT_Switch };
 class PredicateBase : public ilist_node<PredicateBase> {
 public:
   PredicateType Type;
-
   // The original operand before we renamed it.
   // This can be use by passes, when destroying predicateinfo, to know
   // whether they can just drop the intrinsic, or have to merge metadata.
   Value *OriginalOp;
-
   PredicateBase(const PredicateBase &) = delete;
   PredicateBase &operator=(const PredicateBase &) = delete;
   PredicateBase() = delete;
@@ -103,7 +114,6 @@ protected:
 class PredicateWithCondition : public PredicateBase {
 public:
   Value *Condition;
-
   static bool classof(const PredicateBase *PB) {
     return PB->Type == PT_Assume || PB->Type == PT_Branch ||
            PB->Type == PT_Switch;
@@ -120,12 +130,10 @@ protected:
 class PredicateAssume : public PredicateWithCondition {
 public:
   IntrinsicInst *AssumeInst;
-
   PredicateAssume(Value *Op, IntrinsicInst *AssumeInst, Value *Condition)
       : PredicateWithCondition(PT_Assume, Op, Condition),
         AssumeInst(AssumeInst) {}
   PredicateAssume() = delete;
-
   static bool classof(const PredicateBase *PB) {
     return PB->Type == PT_Assume;
   }
@@ -138,9 +146,7 @@ class PredicateWithEdge : public PredicateWithCondition {
 public:
   BasicBlock *From;
   BasicBlock *To;
-
   PredicateWithEdge() = delete;
-
   static bool classof(const PredicateBase *PB) {
     return PB->Type == PT_Branch || PB->Type == PT_Switch;
   }
@@ -156,13 +162,11 @@ class PredicateBranch : public PredicateWithEdge {
 public:
   // If true, SplitBB is the true successor, otherwise it's the false successor.
   bool TrueEdge;
-
   PredicateBranch(Value *Op, BasicBlock *BranchBB, BasicBlock *SplitBB,
                   Value *Condition, bool TakenEdge)
       : PredicateWithEdge(PT_Branch, Op, BranchBB, SplitBB, Condition),
         TrueEdge(TakenEdge) {}
   PredicateBranch() = delete;
-
   static bool classof(const PredicateBase *PB) {
     return PB->Type == PT_Branch;
   }
@@ -171,21 +175,23 @@ public:
 class PredicateSwitch : public PredicateWithEdge {
 public:
   Value *CaseValue;
-
   // This is the switch instruction.
   SwitchInst *Switch;
-
   PredicateSwitch(Value *Op, BasicBlock *SwitchBB, BasicBlock *TargetBB,
                   Value *CaseValue, SwitchInst *SI)
       : PredicateWithEdge(PT_Switch, Op, SwitchBB, TargetBB,
                           SI->getCondition()),
         CaseValue(CaseValue), Switch(SI) {}
   PredicateSwitch() = delete;
-
   static bool classof(const PredicateBase *PB) {
     return PB->Type == PT_Switch;
   }
 };
+
+// This name is used in a few places, so kick it into their own namespace
+namespace PredicateInfoClasses {
+struct ValueDFS;
+}
 
 /// \brief Encapsulates PredicateInfo, including all data associated with memory
 /// accesses.
@@ -199,12 +205,11 @@ private:
     SmallVector<PredicateBase *, 4> Infos;
     SmallVector<PredicateBase *, 4> UninsertedInfos;
   };
-
   // This owns the all the predicate infos in the function, placed or not.
   iplist<PredicateBase> AllInfos;
 
 public:
-  PredicateInfo(Function &F, DominatorTree &DT, AssumptionCache &AC);
+  PredicateInfo(Function &, DominatorTree &, AssumptionCache &);
   ~PredicateInfo();
 
   void verifyPredicateInfo() const;
@@ -222,14 +227,13 @@ protected:
   friend class PredicateInfoPrinterLegacyPass;
 
 private:
-  using ValueDFS = PredicateInfoClasses::ValueDFS;
-  using ValueDFSStack = SmallVectorImpl<ValueDFS>;
-
   void buildPredicateInfo();
   void processAssume(IntrinsicInst *, BasicBlock *, SmallPtrSetImpl<Value *> &);
   void processBranch(BranchInst *, BasicBlock *, SmallPtrSetImpl<Value *> &);
   void processSwitch(SwitchInst *, BasicBlock *, SmallPtrSetImpl<Value *> &);
   void renameUses(SmallPtrSetImpl<Value *> &);
+  using ValueDFS = PredicateInfoClasses::ValueDFS;
+  typedef SmallVectorImpl<ValueDFS> ValueDFSStack;
   void convertUsesToDFSOrdered(Value *, SmallVectorImpl<ValueDFS> &);
   Value *materializeStack(unsigned int &, ValueDFSStack &, Value *);
   bool stackIsInScope(const ValueDFSStack &, const ValueDFS &) const;
@@ -238,27 +242,22 @@ private:
   void addInfoFor(SmallPtrSetImpl<Value *> &OpsToRename, Value *Op,
                   PredicateBase *PB);
   const ValueInfo &getValueInfo(Value *) const;
-
   Function &F;
   DominatorTree &DT;
   AssumptionCache &AC;
   OrderedInstructions OI;
-
   // This maps from copy operands to Predicate Info. Note that it does not own
   // the Predicate Info, they belong to the ValueInfo structs in the ValueInfos
   // vector.
   DenseMap<const Value *, const PredicateBase *> PredicateMap;
-
   // This stores info about each operand or comparison result we make copies
   // of.  The real ValueInfos start at index 1, index 0 is unused so that we can
   // more easily detect invalid indexing.
   SmallVector<ValueInfo, 32> ValueInfos;
-
   // This gives the index into the ValueInfos array for a given Value.  Because
   // 0 is not a valid Value Info index, you can use DenseMap::lookup and tell
   // whether it returned a valid result.
   DenseMap<Value *, unsigned int> ValueInfoNums;
-
   // The set of edges along which we can only handle phi uses, due to critical
   // edges.
   DenseSet<std::pair<BasicBlock *, BasicBlock *>> EdgeUsesOnly;
@@ -269,10 +268,9 @@ private:
 // the tests to be able to build, dump, and verify PredicateInfo.
 class PredicateInfoPrinterLegacyPass : public FunctionPass {
 public:
-  static char ID;
-
   PredicateInfoPrinterLegacyPass();
 
+  static char ID;
   bool runOnFunction(Function &) override;
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 };
@@ -284,7 +282,6 @@ class PredicateInfoPrinterPass
 
 public:
   explicit PredicateInfoPrinterPass(raw_ostream &OS) : OS(OS) {}
-
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
 };
 

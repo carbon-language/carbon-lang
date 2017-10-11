@@ -1,60 +1,44 @@
-//===- PredicateInfo.cpp - PredicateInfo Builder --------------------------===//
+//===-- PredicateInfo.cpp - PredicateInfo Builder--------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===----------------------------------------------------------------------===//
+//===----------------------------------------------------------------===//
 //
 // This file implements the PredicateInfo class.
 //
-//===----------------------------------------------------------------------===//
+//===----------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/PredicateInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/Twine.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AssumptionCache.h"
-#include "llvm/IR/Argument.h"
+#include "llvm/Analysis/CFG.h"
 #include "llvm/IR/AssemblyAnnotationWriter.h"
-#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Dominators.h"
-#include "llvm/IR/Function.h"
+#include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/InstrTypes.h"
-#include "llvm/IR/Instruction.h"
-#include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/IR/Intrinsics.h"
-#include "llvm/IR/PassManager.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Metadata.h"
+#include "llvm/IR/Module.h"
 #include "llvm/IR/PatternMatch.h"
-#include "llvm/IR/Use.h"
-#include "llvm/IR/User.h"
-#include "llvm/IR/Value.h"
-#include "llvm/Pass.h"
-#include "llvm/Support/Casting.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/DebugCounter.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/OrderedInstructions.h"
 #include <algorithm>
-#include <cassert>
-#include <cstddef>
-#include <tuple>
-#include <utility>
-
+#define DEBUG_TYPE "predicateinfo"
 using namespace llvm;
 using namespace PatternMatch;
 using namespace llvm::PredicateInfoClasses;
-
-#define DEBUG_TYPE "predicateinfo"
 
 INITIALIZE_PASS_BEGIN(PredicateInfoPrinterLegacyPass, "print-predicateinfo",
                       "PredicateInfo Printer", false, false)
@@ -62,17 +46,16 @@ INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_END(PredicateInfoPrinterLegacyPass, "print-predicateinfo",
                     "PredicateInfo Printer", false, false)
-
 static cl::opt<bool> VerifyPredicateInfo(
     "verify-predicateinfo", cl::init(false), cl::Hidden,
     cl::desc("Verify PredicateInfo in legacy printer pass."));
-
 DEBUG_COUNTER(RenameCounter, "predicateinfo-rename",
               "Controls which variables are renamed with predicateinfo");
 
+namespace {
 // Given a predicate info that is a type of branching terminator, get the
 // branching block.
-static const BasicBlock *getBranchBlock(const PredicateBase *PB) {
+const BasicBlock *getBranchBlock(const PredicateBase *PB) {
   assert(isa<PredicateWithEdge>(PB) &&
          "Only branches and switches should have PHIOnly defs that "
          "require branch blocks.");
@@ -89,31 +72,17 @@ static Instruction *getBranchTerminator(const PredicateBase *PB) {
 
 // Given a predicate info that is a type of branching terminator, get the
 // edge this predicate info represents
-static const std::pair<BasicBlock *, BasicBlock *>
+const std::pair<BasicBlock *, BasicBlock *>
 getBlockEdge(const PredicateBase *PB) {
   assert(isa<PredicateWithEdge>(PB) &&
          "Not a predicate info type we know how to get an edge from.");
   const auto *PEdge = cast<PredicateWithEdge>(PB);
   return std::make_pair(PEdge->From, PEdge->To);
 }
-
-// Perform a strict weak ordering on instructions and arguments.
-static bool valueComesBefore(OrderedInstructions &OI, const Value *A,
-                             const Value *B) {
-  auto *ArgA = dyn_cast_or_null<Argument>(A);
-  auto *ArgB = dyn_cast_or_null<Argument>(B);
-  if (ArgA && !ArgB)
-    return true;
-  if (ArgB && !ArgA)
-    return false;
-  if (ArgA && ArgB)
-    return ArgA->getArgNo() < ArgB->getArgNo();
-  return OI.dominates(cast<Instruction>(A), cast<Instruction>(B));
 }
 
 namespace llvm {
 namespace PredicateInfoClasses {
-
 enum LocalNum {
   // Operations that must appear first in the block.
   LN_First,
@@ -138,12 +107,25 @@ struct ValueDFS {
   bool EdgeOnly = false;
 };
 
+// Perform a strict weak ordering on instructions and arguments.
+static bool valueComesBefore(OrderedInstructions &OI, const Value *A,
+                             const Value *B) {
+  auto *ArgA = dyn_cast_or_null<Argument>(A);
+  auto *ArgB = dyn_cast_or_null<Argument>(B);
+  if (ArgA && !ArgB)
+    return true;
+  if (ArgB && !ArgA)
+    return false;
+  if (ArgA && ArgB)
+    return ArgA->getArgNo() < ArgB->getArgNo();
+  return OI.dominates(cast<Instruction>(A), cast<Instruction>(B));
+}
+
 // This compares ValueDFS structures, creating OrderedBasicBlocks where
 // necessary to compare uses/defs in the same block.  Doing so allows us to walk
 // the minimum number of instructions necessary to compute our def/use ordering.
 struct ValueDFS_Compare {
   OrderedInstructions &OI;
-
   ValueDFS_Compare(OrderedInstructions &OI) : OI(OI) {}
 
   bool operator()(const ValueDFS &A, const ValueDFS &B) const {
@@ -237,8 +219,7 @@ struct ValueDFS_Compare {
   }
 };
 
-} // end namespace PredicateInfoClasses
-} // end namespace llvm
+} // namespace PredicateInfoClasses
 
 bool PredicateInfo::stackIsInScope(const ValueDFSStack &Stack,
                                    const ValueDFS &VDUse) const {
@@ -308,8 +289,7 @@ void PredicateInfo::convertUsesToDFSOrdered(
 
 // Collect relevant operations from Comparison that we may want to insert copies
 // for.
-static void collectCmpOps(CmpInst *Comparison,
-                          SmallVectorImpl<Value *> &CmpOperands) {
+void collectCmpOps(CmpInst *Comparison, SmallVectorImpl<Value *> &CmpOperands) {
   auto *Op0 = Comparison->getOperand(0);
   auto *Op1 = Comparison->getOperand(1);
   if (Op0 == Op1)
@@ -444,7 +424,6 @@ void PredicateInfo::processBranch(BranchInst *BI, BasicBlock *BranchBB,
     CmpOperands.clear();
   }
 }
-
 // Process a block terminating switch, and place relevant operations to be
 // renamed into OpsToRename.
 void PredicateInfo::processSwitch(SwitchInst *SI, BasicBlock *BranchBB,
@@ -718,7 +697,7 @@ PredicateInfo::PredicateInfo(Function &F, DominatorTree &DT,
   buildPredicateInfo();
 }
 
-PredicateInfo::~PredicateInfo() = default;
+PredicateInfo::~PredicateInfo() {}
 
 void PredicateInfo::verifyPredicateInfo() const {}
 
@@ -760,17 +739,16 @@ PreservedAnalyses PredicateInfoPrinterPass::run(Function &F,
 /// comments.
 class PredicateInfoAnnotatedWriter : public AssemblyAnnotationWriter {
   friend class PredicateInfo;
-
   const PredicateInfo *PredInfo;
 
 public:
   PredicateInfoAnnotatedWriter(const PredicateInfo *M) : PredInfo(M) {}
 
-  void emitBasicBlockStartAnnot(const BasicBlock *BB,
-                                formatted_raw_ostream &OS) override {}
+  virtual void emitBasicBlockStartAnnot(const BasicBlock *BB,
+                                        formatted_raw_ostream &OS) {}
 
-  void emitInstructionAnnot(const Instruction *I,
-                            formatted_raw_ostream &OS) override {
+  virtual void emitInstructionAnnot(const Instruction *I,
+                                    formatted_raw_ostream &OS) {
     if (const auto *PI = PredInfo->getPredicateInfoFor(I)) {
       OS << "; Has predicate info\n";
       if (const auto *PB = dyn_cast<PredicateBranch>(PI)) {
@@ -812,4 +790,5 @@ PreservedAnalyses PredicateInfoVerifierPass::run(Function &F,
   make_unique<PredicateInfo>(F, DT, AC)->verifyPredicateInfo();
 
   return PreservedAnalyses::all();
+}
 }
