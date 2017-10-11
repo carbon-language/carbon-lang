@@ -37,6 +37,7 @@ if( LLVM_USE_SANITIZE_COVERAGE )
     add_clang_executable(clang-proto-fuzzer ExampleClangProtoFuzzer.cpp)
     target_link_libraries(clang-proto-fuzzer
       ${ProtobufMutator_LIBRARIES}
+      ${PROTOBUF_LIBRARIES}
       clangCXXProto
       clangHandleCXX
       clangProtoToCXX
