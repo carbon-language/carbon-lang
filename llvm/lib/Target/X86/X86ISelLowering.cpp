@@ -16064,14 +16064,6 @@ SDValue X86TargetLowering::LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
   SDValue In = Op.getOperand(0);
   MVT InVT = In.getSimpleValueType();
 
-  if (VT == MVT::i1) {
-    assert((InVT.isInteger() && (InVT.getSizeInBits() <= 64)) &&
-           "Invalid scalar TRUNCATE operation");
-    if (InVT.getSizeInBits() >= 32)
-      return SDValue();
-    In = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i32, In);
-    return DAG.getNode(ISD::TRUNCATE, DL, VT, In);
-  }
   assert(VT.getVectorNumElements() == InVT.getVectorNumElements() &&
          "Invalid TRUNCATE operation");
 
