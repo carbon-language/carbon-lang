@@ -496,6 +496,48 @@ void HexagonPacketizerList::useCalleesSP(MachineInstr &MI) {
   Off.setImm(Off.getImm() + FrameSize + HEXAGON_LRFP_SIZE);
 }
 
+/// Return true if we can update the offset in MI so that MI and MJ
+/// can be packetized together.
+bool HexagonPacketizerList::updateOffset(SUnit *SUI, SUnit *SUJ) {
+  assert(SUI->getInstr() && SUJ->getInstr());
+  MachineInstr &MI = *SUI->getInstr();
+  MachineInstr &MJ = *SUJ->getInstr();
+
+  unsigned BPI, OPI;
+  if (!HII->getBaseAndOffsetPosition(MI, BPI, OPI))
+    return false;
+  unsigned BPJ, OPJ;
+  if (!HII->getBaseAndOffsetPosition(MJ, BPJ, OPJ))
+    return false;
+  unsigned Reg = MI.getOperand(BPI).getReg();
+  if (Reg != MJ.getOperand(BPJ).getReg())
+    return false;
+  // Make sure that the dependences do not restrict adding MI to the packet.
+  // That is, ignore anti dependences, and make sure the only data dependence
+  // involves the specific register.
+  for (const auto &PI : SUI->Preds)
+    if (PI.getKind() != SDep::Anti &&
+        (PI.getKind() != SDep::Data || PI.getReg() != Reg))
+      return false;
+  int Incr;
+  if (!HII->getIncrementValue(MJ, Incr))
+    return false;
+
+  int64_t Offset = MI.getOperand(OPI).getImm();
+  MI.getOperand(OPI).setImm(Offset + Incr);
+  ChangedOffset = Offset;
+  return true;
+}
+
+/// Undo the changed offset. This is needed if the instruction cannot be
+/// added to the current packet due to a different instruction.
+void HexagonPacketizerList::undoChangedOffset(MachineInstr &MI) {
+  unsigned BP, OP;
+  if (!HII->getBaseAndOffsetPosition(MI, BP, OP))
+    llvm_unreachable("Unable to find base and offset operands.");
+  MI.getOperand(OP).setImm(ChangedOffset);
+}
+
 enum PredicateKind {
   PK_False,
   PK_True,
@@ -980,6 +1022,7 @@ void HexagonPacketizerList::initPacketizerState() {
   GlueToNewValueJump = false;
   GlueAllocframeStore = false;
   FoundSequentialDependence = false;
+  ChangedOffset = INT64_MAX;
 }
 
 // Ignore bundling of pseudo instructions.
@@ -1567,6 +1610,15 @@ bool HexagonPacketizerList::isLegalToPruneDependencies(SUnit *SUI, SUnit *SUJ) {
     useCalleesSP(I);
     GlueAllocframeStore = false;
   }
+
+  if (ChangedOffset != INT64_MAX)
+    undoChangedOffset(I);
+  else if (updateOffset(SUI, SUJ)) {
+    FoundSequentialDependence = false;
+    Dependence = false;
+    return true;
+  }
+
   return false;
 }
 
