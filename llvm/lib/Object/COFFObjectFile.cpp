@@ -1648,10 +1648,9 @@ ResourceSectionRef::getDirStringAtOffset(uint32_t Offset) {
   return RawDirString;
 }
 
-ErrorOr<ArrayRef<UTF16>>
+Expected<ArrayRef<UTF16>>
 ResourceSectionRef::getEntryNameString(const coff_resource_dir_entry &Entry) {
-  return expectedToErrorOr(
-      getDirStringAtOffset(Entry.Identifier.getNameOffset()));
+  return getDirStringAtOffset(Entry.Identifier.getNameOffset());
 }
 
 Expected<const coff_resource_dir_table &>
@@ -1665,11 +1664,11 @@ ResourceSectionRef::getTableAtOffset(uint32_t Offset) {
   return *Table;
 }
 
-ErrorOr<const coff_resource_dir_table &>
+Expected<const coff_resource_dir_table &>
 ResourceSectionRef::getEntrySubDir(const coff_resource_dir_entry &Entry) {
-  return expectedToErrorOr(getTableAtOffset(Entry.Offset.value()));
+  return getTableAtOffset(Entry.Offset.value());
 }
 
-ErrorOr<const coff_resource_dir_table &> ResourceSectionRef::getBaseTable() {
-  return expectedToErrorOr(getTableAtOffset(0));
+Expected<const coff_resource_dir_table &> ResourceSectionRef::getBaseTable() {
+  return getTableAtOffset(0);
 }

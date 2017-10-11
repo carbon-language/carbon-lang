@@ -25,7 +25,6 @@
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/ErrorOr.h"
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -1164,10 +1163,11 @@ public:
   ResourceSectionRef() = default;
   explicit ResourceSectionRef(StringRef Ref) : BBS(Ref, support::little) {}
 
-  ErrorOr<ArrayRef<UTF16>> getEntryNameString(const coff_resource_dir_entry &Entry);
-  ErrorOr<const coff_resource_dir_table &>
+  Expected<ArrayRef<UTF16>>
+  getEntryNameString(const coff_resource_dir_entry &Entry);
+  Expected<const coff_resource_dir_table &>
   getEntrySubDir(const coff_resource_dir_entry &Entry);
-  ErrorOr<const coff_resource_dir_table &> getBaseTable();
+  Expected<const coff_resource_dir_table &> getBaseTable();
 
 private:
   BinaryByteStream BBS;
