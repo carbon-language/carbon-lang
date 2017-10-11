@@ -43,9 +43,6 @@ struct ExprValue {
             const Twine &Loc)
       : Sec(Sec), ForceAbsolute(ForceAbsolute), Val(Val), Loc(Loc.str()) {}
 
-  ExprValue(SectionBase *Sec, uint64_t Val, const Twine &Loc)
-      : ExprValue(Sec, false, Val, Loc) {}
-
   ExprValue(uint64_t Val) : ExprValue(nullptr, false, Val, "") {}
 
   bool isAbsolute() const { return ForceAbsolute || Sec == nullptr; }

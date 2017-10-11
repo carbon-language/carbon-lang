@@ -150,7 +150,7 @@ static ExprValue add(ExprValue A, ExprValue B) {
 }
 
 static ExprValue sub(ExprValue A, ExprValue B) {
-  return {A.Sec, A.getSectionOffset() - B.getValue(), A.Loc};
+  return {A.Sec, false, A.getSectionOffset() - B.getValue(), A.Loc};
 }
 
 static ExprValue mul(ExprValue A, ExprValue B) {
@@ -945,10 +945,10 @@ Expr ScriptParser::readPrimary() {
   }
   if (Tok == "ADDR") {
     StringRef Name = readParenLiteral();
-    OutputSection *Cmd = Script->getOrCreateOutputSection(Name);
+    OutputSection *Sec = Script->getOrCreateOutputSection(Name);
     return [=]() -> ExprValue {
-      checkIfExists(Cmd, Location);
-      return {Cmd, 0, Location};
+      checkIfExists(Sec, Location);
+      return {Sec, false, 0, Location};
     };
   }
   if (Tok == "ALIGN") {
