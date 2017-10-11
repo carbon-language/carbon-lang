@@ -10,6 +10,7 @@ add_clang_unittest(ClangCodeGenTests
   )
 
 target_link_libraries(ClangCodeGenTests
+  clangAST
   clangBasic
   clangCodeGen
   clangFrontend
