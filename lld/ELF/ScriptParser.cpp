@@ -74,7 +74,7 @@ private:
   void readVersionScriptCommand();
 
   SymbolAssignment *readAssignment(StringRef Name);
-  BytesDataCommand *readBytesDataCommand(StringRef Tok);
+  ByteCommand *readByteCommand(StringRef Tok);
   uint32_t readFill();
   uint32_t parseFill(StringRef Tok);
   void readSectionAddressType(OutputSection *Cmd);
@@ -670,7 +670,7 @@ OutputSection *ScriptParser::readOutputSectionDescription(StringRef OutSec) {
       // Empty commands are allowed. Do nothing here.
     } else if (SymbolAssignment *Assign = readProvideOrAssignment(Tok)) {
       Cmd->SectionCommands.push_back(Assign);
-    } else if (BytesDataCommand *Data = readBytesDataCommand(Tok)) {
+    } else if (ByteCommand *Data = readByteCommand(Tok)) {
       Cmd->SectionCommands.push_back(Data);
     } else if (Tok == "ASSERT") {
       Cmd->SectionCommands.push_back(readAssert());
@@ -888,7 +888,7 @@ static Optional<uint64_t> parseInt(StringRef Tok) {
   return Val;
 }
 
-BytesDataCommand *ScriptParser::readBytesDataCommand(StringRef Tok) {
+ByteCommand *ScriptParser::readByteCommand(StringRef Tok) {
   int Size = StringSwitch<int>(Tok)
                  .Case("BYTE", 1)
                  .Case("SHORT", 2)
@@ -897,8 +897,7 @@ BytesDataCommand *ScriptParser::readBytesDataCommand(StringRef Tok) {
                  .Default(-1);
   if (Size == -1)
     return nullptr;
-
-  return make<BytesDataCommand>(readParenExpr(), Size);
+  return make<ByteCommand>(readParenExpr(), Size);
 }
 
 StringRef ScriptParser::readParenLiteral() {

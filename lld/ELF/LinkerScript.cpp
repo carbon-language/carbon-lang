@@ -595,7 +595,7 @@ void LinkerScript::assignOffsets(OutputSection *Sec) {
     }
 
     // Handle BYTE(), SHORT(), LONG(), or QUAD().
-    if (auto *Cmd = dyn_cast<BytesDataCommand>(Base)) {
+    if (auto *Cmd = dyn_cast<ByteCommand>(Base)) {
       Cmd->Offset = Dot - Ctx->OutSec->Addr;
       Dot += Cmd->Size;
       Ctx->OutSec->Size = Dot - Ctx->OutSec->Addr;

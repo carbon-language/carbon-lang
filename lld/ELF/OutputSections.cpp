@@ -412,7 +412,7 @@ template <class ELFT> void OutputSection::writeTo(uint8_t *Buf) {
   // Linker scripts may have BYTE()-family commands with which you
   // can write arbitrary bytes to the output. Process them if any.
   for (BaseCommand *Base : SectionCommands)
-    if (auto *Data = dyn_cast<BytesDataCommand>(Base))
+    if (auto *Data = dyn_cast<ByteCommand>(Base))
       writeInt(Buf + Data->Offset, Data->Expression().getValue(), Data->Size);
 }
 
