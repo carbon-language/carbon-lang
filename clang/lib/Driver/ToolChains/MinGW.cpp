@@ -479,7 +479,7 @@ void toolchains::MinGW::AddClangCXXStdlibIncludeArgs(
     for (auto &CppIncludeBase : CppIncludeBases) {
       addSystemInclude(DriverArgs, CC1Args, CppIncludeBase);
       CppIncludeBase += llvm::sys::path::get_separator();
-      addSystemInclude(DriverArgs, CC1Args, Twine(CppIncludeBase) + Arch);
+      addSystemInclude(DriverArgs, CC1Args, CppIncludeBase + Arch);
       addSystemInclude(DriverArgs, CC1Args, CppIncludeBase + "backward");
     }
     break;

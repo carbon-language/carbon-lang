@@ -27,7 +27,7 @@ static StringRef ToolName;
 
 namespace llvm {
 
-LLVM_ATTRIBUTE_NORETURN void error(const Twine &Message) {
+LLVM_ATTRIBUTE_NORETURN void error(Twine Message) {
   errs() << ToolName << ": " << Message << ".\n";
   errs().flush();
   exit(1);

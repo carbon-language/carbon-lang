@@ -79,10 +79,6 @@ namespace llvm {
   /// overloads) to guarantee that particularly important cases (cstring plus
   /// StringRef) codegen as desired.
   class Twine {
-    friend Twine operator+(const char *LHS, const StringRef &RHS);
-    friend Twine operator+(const StringRef &LHS, const char *RHS);
-    friend Twine operator+(const StringRef &LHS, const StringRef &RHS);
-
     /// NodeKind - Represent the type of an argument.
     enum NodeKind : unsigned char {
       /// An empty string; the result of concatenating anything with it is also
@@ -173,12 +169,6 @@ namespace llvm {
       assert(isNullary() && "Invalid kind!");
     }
 
-    // While there are some valid use cases for copying Twines, most of them
-    // are confined to the implementation of Twine itself, and Twine itself is
-    // not intended to be publicly copyable since it can very easily lead to
-    // dangling pointers / references.
-    Twine(const Twine &) = default;
-
     /// Construct a binary twine.
     explicit Twine(const Twine &LHS, const Twine &RHS)
         : LHSKind(TwineKind), RHSKind(TwineKind) {
@@ -266,6 +256,8 @@ namespace llvm {
       assert(isValid() && "Invalid twine!");
     }
 
+    Twine(const Twine &) = default;
+
     /// Construct from a C string.
     ///
     /// We take care here to optimize "" into the empty twine -- this will be
@@ -281,8 +273,6 @@ namespace llvm {
 
       assert(isValid() && "Invalid twine!");
     }
-
-    Twine(Twine &&Other) = default;
 
     /// Construct from an std::string.
     /*implicit*/ Twine(const std::string &Str)
@@ -384,14 +374,6 @@ namespace llvm {
         : LHSKind(StringRefKind), RHSKind(CStringKind) {
       this->LHS.stringRef = &LHS;
       this->RHS.cString = RHS;
-      assert(isValid() && "Invalid twine!");
-    }
-
-    /// Construct as the concatenation of two StringRefs.
-    /*implicit*/ Twine(const StringRef &LHS, const StringRef &RHS)
-        : LHSKind(StringRefKind), RHSKind(StringRefKind) {
-      this->LHS.stringRef = &LHS;
-      this->RHS.stringRef = &RHS;
       assert(isValid() && "Invalid twine!");
     }
 
@@ -505,10 +487,6 @@ namespace llvm {
     /// Dump the representation of this twine to stderr.
     void dumpRepr() const;
 
-    friend inline Twine operator+(const Twine &LHS, const Twine &RHS) {
-      return LHS.concat(RHS);
-    }
-
     /// @}
   };
 
@@ -544,6 +522,10 @@ namespace llvm {
     return Twine(NewLHS, NewLHSKind, NewRHS, NewRHSKind);
   }
 
+  inline Twine operator+(const Twine &LHS, const Twine &RHS) {
+    return LHS.concat(RHS);
+  }
+
   /// Additional overload to guarantee simplified codegen; this is equivalent to
   /// concat().
 
@@ -551,11 +533,10 @@ namespace llvm {
     return Twine(LHS, RHS);
   }
 
-  inline Twine operator+(const StringRef &LHS, const char *RHS) {
-    return Twine(LHS, RHS);
-  }
+  /// Additional overload to guarantee simplified codegen; this is equivalent to
+  /// concat().
 
-  inline Twine operator+(const StringRef &LHS, const StringRef &RHS) {
+  inline Twine operator+(const StringRef &LHS, const char *RHS) {
     return Twine(LHS, RHS);
   }
 

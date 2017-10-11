@@ -586,7 +586,7 @@ void BackendConsumer::UnsupportedDiagHandler(
   FullSourceLoc Loc =
       getBestLocationFromDebugLoc(D, BadDebugInfo, Filename, Line, Column);
 
-  Diags.Report(Loc, diag::err_fe_backend_unsupported) << D.getMessage();
+  Diags.Report(Loc, diag::err_fe_backend_unsupported) << D.getMessage().str();
 
   if (BadDebugInfo)
     // If we were not able to translate the file:line:col information

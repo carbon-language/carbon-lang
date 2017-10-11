@@ -981,17 +981,17 @@ protected:
 
   /// EmitPropertyList - Emit the given property list. The return
   /// value has type PropertyListPtrTy.
-  llvm::Constant *EmitPropertyList(const Twine &Name, const Decl *Container,
+  llvm::Constant *EmitPropertyList(Twine Name,
+                                   const Decl *Container,
                                    const ObjCContainerDecl *OCD,
                                    const ObjCCommonTypesHelper &ObjCTypes,
                                    bool IsClassProperty);
 
   /// EmitProtocolMethodTypes - Generate the array of extended method type 
   /// strings. The return value has type Int8PtrPtrTy.
-  llvm::Constant *
-  EmitProtocolMethodTypes(const Twine &Name,
-                          ArrayRef<llvm::Constant *> MethodTypes,
-                          const ObjCCommonTypesHelper &ObjCTypes);
+  llvm::Constant *EmitProtocolMethodTypes(Twine Name, 
+                                          ArrayRef<llvm::Constant*> MethodTypes,
+                                       const ObjCCommonTypesHelper &ObjCTypes);
 
   /// GetProtocolRef - Return a reference to the internal protocol
   /// description, creating an empty one if it has not been
@@ -1021,11 +1021,11 @@ public:
   /// \param Align - The alignment for the variable, or 0.
   /// \param AddToUsed - Whether the variable should be added to
   ///   "llvm.used".
-  llvm::GlobalVariable *CreateMetadataVar(const Twine &Name,
+  llvm::GlobalVariable *CreateMetadataVar(Twine Name,
                                           ConstantStructBuilder &Init,
                                           StringRef Section, CharUnits Align,
                                           bool AddToUsed);
-  llvm::GlobalVariable *CreateMetadataVar(const Twine &Name,
+  llvm::GlobalVariable *CreateMetadataVar(Twine Name,
                                           llvm::Constant *Init,
                                           StringRef Section, CharUnits Align,
                                           bool AddToUsed);
@@ -1241,7 +1241,7 @@ private:
 
   /// EmitMethodList - Emit the method list for the given
   /// implementation. The return value has type MethodListPtrTy.
-  llvm::Constant *emitMethodList(const Twine &Name, MethodListType MLT,
+  llvm::Constant *emitMethodList(Twine Name, MethodListType MLT,
                                  ArrayRef<const ObjCMethodDecl *> Methods);
 
   /// GetOrEmitProtocol - Get the protocol object for the given
@@ -1265,7 +1265,7 @@ private:
 
   /// EmitProtocolList - Generate the list of referenced
   /// protocols. The return value has type ProtocolListPtrTy.
-  llvm::Constant *EmitProtocolList(const Twine &Name,
+  llvm::Constant *EmitProtocolList(Twine Name,
                                    ObjCProtocolDecl::protocol_iterator begin,
                                    ObjCProtocolDecl::protocol_iterator end);
 
@@ -1413,7 +1413,7 @@ private:
 
   /// Emit the method list for the given implementation. The return value
   /// has type MethodListnfABITy.
-  llvm::Constant *emitMethodList(const Twine &Name, MethodListType MLT,
+  llvm::Constant *emitMethodList(Twine Name, MethodListType MLT,
                                  ArrayRef<const ObjCMethodDecl *> Methods);
 
   /// EmitIvarList - Emit the ivar list for the given
@@ -1440,7 +1440,7 @@ private:
 
   /// EmitProtocolList - Generate the list of referenced
   /// protocols. The return value has type ProtocolListPtrTy.
-  llvm::Constant *EmitProtocolList(const Twine &Name,
+  llvm::Constant *EmitProtocolList(Twine Name,
                                    ObjCProtocolDecl::protocol_iterator begin,
                                    ObjCProtocolDecl::protocol_iterator end);
 
@@ -3057,7 +3057,7 @@ CGObjCMac::EmitProtocolExtension(const ObjCProtocolDecl *PD,
   };
 */
 llvm::Constant *
-CGObjCMac::EmitProtocolList(const Twine &Name,
+CGObjCMac::EmitProtocolList(Twine name,
                             ObjCProtocolDecl::protocol_iterator begin,
                             ObjCProtocolDecl::protocol_iterator end) {
   // Just return null for empty protocol lists
@@ -3090,7 +3090,7 @@ CGObjCMac::EmitProtocolList(const Twine &Name,
     section = "__OBJC,__cat_cls_meth,regular,no_dead_strip";
 
   llvm::GlobalVariable *GV =
-      CreateMetadataVar(Name, values, section, CGM.getPointerAlign(), false);
+      CreateMetadataVar(name, values, section, CGM.getPointerAlign(), false);
   return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.ProtocolListPtrTy);
 }
 
@@ -3123,9 +3123,11 @@ PushProtocolProperties(llvm::SmallPtrSet<const IdentifierInfo*,16> &PropertySet,
     struct _objc_property[prop_count];
   };
 */
-llvm::Constant *CGObjCCommonMac::EmitPropertyList(
-    const Twine &Name, const Decl *Container, const ObjCContainerDecl *OCD,
-    const ObjCCommonTypesHelper &ObjCTypes, bool IsClassProperty) {
+llvm::Constant *CGObjCCommonMac::EmitPropertyList(Twine Name,
+                                       const Decl *Container,
+                                       const ObjCContainerDecl *OCD,
+                                       const ObjCCommonTypesHelper &ObjCTypes,
+                                       bool IsClassProperty) {
   if (IsClassProperty) {
     // Make this entry NULL for OS X with deployment target < 10.11, for iOS
     // with deployment target < 9.0.
@@ -3196,9 +3198,10 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(
   return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.PropertyListPtrTy);
 }
 
-llvm::Constant *CGObjCCommonMac::EmitProtocolMethodTypes(
-    const Twine &Name, ArrayRef<llvm::Constant *> MethodTypes,
-    const ObjCCommonTypesHelper &ObjCTypes) {
+llvm::Constant *
+CGObjCCommonMac::EmitProtocolMethodTypes(Twine Name,
+                                         ArrayRef<llvm::Constant*> MethodTypes,
+                                         const ObjCCommonTypesHelper &ObjCTypes) {
   // Return null for empty list.
   if (MethodTypes.empty())
     return llvm::Constant::getNullValue(ObjCTypes.Int8PtrPtrTy);
@@ -3759,9 +3762,8 @@ void CGObjCMac::emitMethodConstant(ConstantArrayBuilder &builder,
 ///   int count;
 ///   struct objc_method_description list[count];
 /// };
-llvm::Constant *
-CGObjCMac::emitMethodList(const Twine &Name, MethodListType MLT,
-                          ArrayRef<const ObjCMethodDecl *> methods) {
+llvm::Constant *CGObjCMac::emitMethodList(Twine name, MethodListType MLT,
+                                 ArrayRef<const ObjCMethodDecl *> methods) {
   StringRef prefix;
   StringRef section;
   bool forProtocol = false;
@@ -3826,7 +3828,7 @@ CGObjCMac::emitMethodList(const Twine &Name, MethodListType MLT,
     }
     methodArray.finishAndAddTo(values);
 
-    llvm::GlobalVariable *GV = CreateMetadataVar(prefix + Name, values, section,
+    llvm::GlobalVariable *GV = CreateMetadataVar(prefix + name, values, section,
                                                  CGM.getPointerAlign(), true);
     return llvm::ConstantExpr::getBitCast(GV,
                                           ObjCTypes.MethodDescriptionListPtrTy);
@@ -3843,7 +3845,7 @@ CGObjCMac::emitMethodList(const Twine &Name, MethodListType MLT,
   }
   methodArray.finishAndAddTo(values);
 
-  llvm::GlobalVariable *GV = CreateMetadataVar(prefix + Name, values, section,
+  llvm::GlobalVariable *GV = CreateMetadataVar(prefix + name, values, section,
                                                CGM.getPointerAlign(), true);
   return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.MethodListPtrTy);
 }
@@ -3866,9 +3868,11 @@ llvm::Function *CGObjCCommonMac::GenerateMethod(const ObjCMethodDecl *OMD,
   return Method;
 }
 
-llvm::GlobalVariable *CGObjCCommonMac::CreateMetadataVar(
-    const Twine &Name, ConstantStructBuilder &Init, StringRef Section,
-    CharUnits Align, bool AddToUsed) {
+llvm::GlobalVariable *CGObjCCommonMac::CreateMetadataVar(Twine Name,
+                                               ConstantStructBuilder &Init,
+                                                         StringRef Section,
+                                                         CharUnits Align,
+                                                         bool AddToUsed) {
   llvm::GlobalVariable *GV =
     Init.finishAndCreateGlobal(Name, Align, /*constant*/ false,
                                llvm::GlobalValue::PrivateLinkage);
@@ -3879,7 +3883,7 @@ llvm::GlobalVariable *CGObjCCommonMac::CreateMetadataVar(
   return GV;
 }
 
-llvm::GlobalVariable *CGObjCCommonMac::CreateMetadataVar(const Twine &Name,
+llvm::GlobalVariable *CGObjCCommonMac::CreateMetadataVar(Twine Name,
                                                          llvm::Constant *Init,
                                                          StringRef Section,
                                                          CharUnits Align,
@@ -6522,9 +6526,9 @@ void CGObjCNonFragileABIMac::emitMethodConstant(ConstantArrayBuilder &builder,
 ///   struct _objc_method method_list[method_count];
 /// }
 ///
-llvm::Constant *CGObjCNonFragileABIMac::emitMethodList(
-    const Twine &Name, MethodListType kind,
-    ArrayRef<const ObjCMethodDecl *> methods) {
+llvm::Constant *
+CGObjCNonFragileABIMac::emitMethodList(Twine name, MethodListType kind,
+                              ArrayRef<const ObjCMethodDecl *> methods) {
   // Return null for empty list.
   if (methods.empty())
     return llvm::Constant::getNullValue(ObjCTypes.MethodListnfABIPtrTy);
@@ -6581,7 +6585,7 @@ llvm::Constant *CGObjCNonFragileABIMac::emitMethodList(
   }
   methodArray.finishAndAddTo(values);
 
-  auto *GV = values.finishAndCreateGlobal(prefix + Name, CGM.getPointerAlign(),
+  auto *GV = values.finishAndCreateGlobal(prefix + name, CGM.getPointerAlign(),
                                           /*constant*/ false,
                                           llvm::GlobalValue::PrivateLinkage);
   if (CGM.getTriple().isOSBinFormatMachO())
@@ -6868,9 +6872,10 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
 /// }
 /// @endcode
 ///
-llvm::Constant *CGObjCNonFragileABIMac::EmitProtocolList(
-    const Twine &Name, ObjCProtocolDecl::protocol_iterator begin,
-    ObjCProtocolDecl::protocol_iterator end) {
+llvm::Constant *
+CGObjCNonFragileABIMac::EmitProtocolList(Twine Name,
+                                      ObjCProtocolDecl::protocol_iterator begin,
+                                      ObjCProtocolDecl::protocol_iterator end) {
   SmallVector<llvm::Constant *, 16> ProtocolRefs;
 
   // Just return null for empty protocol lists

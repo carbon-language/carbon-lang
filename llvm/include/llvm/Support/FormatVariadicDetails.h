@@ -28,7 +28,7 @@ public:
 };
 
 template <typename T> class provider_format_adapter : public format_adapter {
-  T &Item;
+  T Item;
 
 public:
   explicit provider_format_adapter(T &&Item) : Item(Item) {}

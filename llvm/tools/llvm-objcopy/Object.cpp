@@ -428,15 +428,15 @@ void initRelocations(RelocationSection<ELFT> *Relocs,
   }
 }
 
-SectionBase *SectionTableRef::getSection(uint16_t Index, const Twine &ErrMsg) {
+SectionBase *SectionTableRef::getSection(uint16_t Index, Twine ErrMsg) {
   if (Index == SHN_UNDEF || Index > Sections.size())
     error(ErrMsg);
   return Sections[Index - 1].get();
 }
 
 template <class T>
-T *SectionTableRef::getSectionOfType(uint16_t Index, const Twine &IndexErrMsg,
-                                     const Twine &TypeErrMsg) {
+T *SectionTableRef::getSectionOfType(uint16_t Index, Twine IndexErrMsg,
+                                     Twine TypeErrMsg) {
   if (T *Sec = llvm::dyn_cast<T>(getSection(Index, IndexErrMsg)))
     return Sec;
   error(TypeErrMsg);

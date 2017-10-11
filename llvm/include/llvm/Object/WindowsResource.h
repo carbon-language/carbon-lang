@@ -87,7 +87,7 @@ struct WinResHeaderSuffix {
 
 class EmptyResError : public GenericBinaryError {
 public:
-  EmptyResError(const Twine &Msg, object_error ECOverride)
+  EmptyResError(Twine Msg, object_error ECOverride)
       : GenericBinaryError(Msg, ECOverride) {}
 };
 
