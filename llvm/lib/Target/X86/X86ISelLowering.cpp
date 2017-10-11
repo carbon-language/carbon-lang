@@ -8026,7 +8026,7 @@ static SDValue LowerCONCAT_VECTORSvXi1(SDValue Op,
   // If this node promotes - by concatenating zeroes - the type of the result
   // of a node with instruction that zeroes all upper (irrelevant) bits of the
   // output register, mark it as legal and catch the pattern in instruction
-  // selection to avoid emitting extra insturctions (for zeroing upper bits).
+  // selection to avoid emitting extra instructions (for zeroing upper bits).
   if (SDValue Promoted = isTypePromotionOfi1ZeroUpBits(Op)) {
     SDValue ZeroC = DAG.getIntPtrConstant(0, dl);
     SDValue AllZeros = getZeroVector(ResVT, Subtarget, DAG, dl);
