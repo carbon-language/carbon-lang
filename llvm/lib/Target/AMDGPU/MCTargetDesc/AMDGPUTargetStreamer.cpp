@@ -42,18 +42,12 @@ using namespace llvm::AMDGPU;
 AMDGPUTargetStreamer::AMDGPUTargetStreamer(MCStreamer &S)
     : MCTargetStreamer(S) {}
 
-void AMDGPUTargetStreamer::EmitStartOfHSAMetadata(const Module &Mod) {
-  HSAMetadataStreamer.begin(Mod);
-}
+bool AMDGPUTargetStreamer::EmitHSAMetadata(StringRef HSAMetadataString) {
+  HSAMD::Metadata HSAMetadata;
+  if (auto Error = HSAMD::fromString(HSAMetadataString, HSAMetadata))
+    return false;
 
-void AMDGPUTargetStreamer::EmitKernelHSAMetadata(
-    const Function &Func, const amd_kernel_code_t &KernelCode) {
-  HSAMetadataStreamer.emitKernel(Func, KernelCode);
-}
-
-void AMDGPUTargetStreamer::EmitEndOfHSAMetadata() {
-  HSAMetadataStreamer.end();
-  EmitHSAMetadata(HSAMetadataStreamer.toYamlString().get());
+  return EmitHSAMetadata(HSAMetadata);
 }
 
 //===----------------------------------------------------------------------===//
@@ -100,23 +94,22 @@ void AMDGPUTargetAsmStreamer::EmitAMDGPUSymbolType(StringRef SymbolName,
   }
 }
 
-bool AMDGPUTargetAsmStreamer::EmitHSAMetadata(StringRef YamlString) {
-  auto VerifiedYamlString = HSAMetadataStreamer.toYamlString(YamlString);
-  if (!VerifiedYamlString)
+bool AMDGPUTargetAsmStreamer::EmitHSAMetadata(
+    const AMDGPU::HSAMD::Metadata &HSAMetadata) {
+  std::string HSAMetadataString;
+  if (auto Error = HSAMD::toString(HSAMetadata, HSAMetadataString))
     return false;
 
-  OS << '\t' << AMDGPU::HSAMD::AssemblerDirectiveBegin << '\n';
-  OS << VerifiedYamlString.get();
-  OS << '\t' << AMDGPU::HSAMD::AssemblerDirectiveEnd << '\n';
-
+  OS << '\t' << HSAMD::AssemblerDirectiveBegin << '\n';
+  OS << HSAMetadataString << '\n';
+  OS << '\t' << HSAMD::AssemblerDirectiveEnd << '\n';
   return true;
 }
 
 bool AMDGPUTargetAsmStreamer::EmitPALMetadata(
     const PALMD::Metadata &PALMetadata) {
   std::string PALMetadataString;
-  auto Error = PALMD::toString(PALMetadata, PALMetadataString);
-  if (Error)
+  if (auto Error = PALMD::toString(PALMetadata, PALMetadataString))
     return false;
 
   OS << '\t' << PALMD::AssemblerDirective << PALMetadataString << '\n';
@@ -215,9 +208,10 @@ void AMDGPUTargetELFStreamer::EmitAMDGPUSymbolType(StringRef SymbolName,
   Symbol->setType(ELF::STT_AMDGPU_HSA_KERNEL);
 }
 
-bool AMDGPUTargetELFStreamer::EmitHSAMetadata(StringRef YamlString) {
-  auto VerifiedYamlString = HSAMetadataStreamer.toYamlString(YamlString);
-  if (!VerifiedYamlString)
+bool AMDGPUTargetELFStreamer::EmitHSAMetadata(
+    const AMDGPU::HSAMD::Metadata &HSAMetadata) {
+  std::string HSAMetadataString;
+  if (auto Error = HSAMD::toString(HSAMetadata, HSAMetadataString))
     return false;
 
   // Create two labels to mark the beginning and end of the desc field
@@ -234,11 +228,10 @@ bool AMDGPUTargetELFStreamer::EmitHSAMetadata(StringRef YamlString) {
     ElfNote::NT_AMDGPU_HSA_CODE_OBJECT_METADATA,
     [&](MCELFStreamer &OS) {
       OS.EmitLabel(DescBegin);
-      OS.EmitBytes(VerifiedYamlString.get());
+      OS.EmitBytes(HSAMetadataString);
       OS.EmitLabel(DescEnd);
     }
   );
-
   return true;
 }
 

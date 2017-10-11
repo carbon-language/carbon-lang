@@ -127,7 +127,8 @@ void AMDGPUAsmPrinter::EmitStartOfAsmFile(Module &M) {
   getTargetStreamer().EmitDirectiveHSACodeObjectVersion(2, 1);
   getTargetStreamer().EmitDirectiveHSACodeObjectISA(
       ISA.Major, ISA.Minor, ISA.Stepping, "AMD", "AMDGPU");
-  getTargetStreamer().EmitStartOfHSAMetadata(M);
+
+  HSAMetadataStream.begin(M);
 }
 
 void AMDGPUAsmPrinter::EmitEndOfAsmFile(Module &M) {
@@ -145,7 +146,8 @@ void AMDGPUAsmPrinter::EmitEndOfAsmFile(Module &M) {
   if (TM.getTargetTriple().getOS() != Triple::AMDHSA)
     return;
 
-  getTargetStreamer().EmitEndOfHSAMetadata();
+  HSAMetadataStream.end();
+  getTargetStreamer().EmitHSAMetadata(HSAMetadataStream.getHSAMetadata());
 }
 
 bool AMDGPUAsmPrinter::isBlockOnlyReachableByFallthrough(
@@ -178,7 +180,8 @@ void AMDGPUAsmPrinter::EmitFunctionBodyStart() {
 
   if (TM.getTargetTriple().getOS() != Triple::AMDHSA)
     return;
-  getTargetStreamer().EmitKernelHSAMetadata(*MF->getFunction(), KernelCode);
+
+  HSAMetadataStream.emitKernel(*MF->getFunction(), KernelCode);
 }
 
 void AMDGPUAsmPrinter::EmitFunctionEntryLabel() {

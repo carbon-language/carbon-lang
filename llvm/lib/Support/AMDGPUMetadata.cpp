@@ -196,18 +196,14 @@ struct MappingTraits<HSAMD::Metadata> {
 namespace AMDGPU {
 namespace HSAMD {
 
-/* static */
-std::error_code Metadata::fromYamlString(
-    std::string YamlString, Metadata &HSAMetadata) {
-  yaml::Input YamlInput(YamlString);
+std::error_code fromString(std::string String, Metadata &HSAMetadata) {
+  yaml::Input YamlInput(String);
   YamlInput >> HSAMetadata;
   return YamlInput.error();
 }
 
-/* static */
-std::error_code Metadata::toYamlString(
-    Metadata HSAMetadata, std::string &YamlString) {
-  raw_string_ostream YamlStream(YamlString);
+std::error_code toString(Metadata HSAMetadata, std::string &String) {
+  raw_string_ostream YamlStream(String);
   yaml::Output YamlOutput(YamlStream, nullptr, std::numeric_limits<int>::max());
   YamlOutput << HSAMetadata;
   return std::error_code();

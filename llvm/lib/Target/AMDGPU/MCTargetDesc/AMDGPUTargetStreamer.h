@@ -10,9 +10,9 @@
 #ifndef LLVM_LIB_TARGET_AMDGPU_MCTARGETDESC_AMDGPUTARGETSTREAMER_H
 #define LLVM_LIB_TARGET_AMDGPU_MCTARGETDESC_AMDGPUTARGETSTREAMER_H
 
-#include "AMDGPUHSAMetadataStreamer.h"
 #include "AMDKernelCodeT.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/Support/AMDGPUMetadata.h"
 
 namespace llvm {
 #include "AMDGPUPTNote.h"
@@ -27,7 +27,6 @@ class Type;
 
 class AMDGPUTargetStreamer : public MCTargetStreamer {
 protected:
-  AMDGPU::HSAMD::MetadataStreamer HSAMetadataStreamer;
   MCContext &getContext() const { return Streamer.getContext(); }
 
 public:
@@ -44,15 +43,11 @@ public:
 
   virtual void EmitAMDGPUSymbolType(StringRef SymbolName, unsigned Type) = 0;
 
-  virtual void EmitStartOfHSAMetadata(const Module &Mod);
-
-  virtual void EmitKernelHSAMetadata(
-      const Function &Func, const amd_kernel_code_t &KernelCode);
-
-  virtual void EmitEndOfHSAMetadata();
+  /// \returns True on success, false on failure.
+  virtual bool EmitHSAMetadata(StringRef HSAMetadataString);
 
   /// \returns True on success, false on failure.
-  virtual bool EmitHSAMetadata(StringRef YamlString) = 0;
+  virtual bool EmitHSAMetadata(const AMDGPU::HSAMD::Metadata &HSAMetadata) = 0;
 
   /// \returns True on success, false on failure.
   virtual bool EmitPALMetadata(const AMDGPU::PALMD::Metadata &PALMetadata) = 0;
@@ -74,7 +69,7 @@ public:
   void EmitAMDGPUSymbolType(StringRef SymbolName, unsigned Type) override;
 
   /// \returns True on success, false on failure.
-  bool EmitHSAMetadata(StringRef YamlString) override;
+  bool EmitHSAMetadata(const AMDGPU::HSAMD::Metadata &HSAMetadata) override;
 
   /// \returns True on success, false on failure.
   bool EmitPALMetadata(const AMDGPU::PALMD::Metadata &PALMetadata) override;
@@ -104,7 +99,7 @@ public:
   void EmitAMDGPUSymbolType(StringRef SymbolName, unsigned Type) override;
 
   /// \returns True on success, false on failure.
-  bool EmitHSAMetadata(StringRef YamlString) override;
+  bool EmitHSAMetadata(const AMDGPU::HSAMD::Metadata &HSAMetadata) override;
 
   /// \returns True on success, false on failure.
   bool EmitPALMetadata(const AMDGPU::PALMD::Metadata &PALMetadata) override;

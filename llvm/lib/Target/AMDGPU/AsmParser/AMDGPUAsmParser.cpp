@@ -827,12 +827,12 @@ private:
   bool ParseDirectiveMajorMinor(uint32_t &Major, uint32_t &Minor);
   bool ParseDirectiveHSACodeObjectVersion();
   bool ParseDirectiveHSACodeObjectISA();
-  bool ParseDirectiveHSAMetadata();
   bool ParseAMDKernelCodeTValue(StringRef ID, amd_kernel_code_t &Header);
   bool ParseDirectiveAMDKernelCodeT();
   bool subtargetHasRegister(const MCRegisterInfo &MRI, unsigned RegNo) const;
   bool ParseDirectiveAMDGPUHsaKernel();
 
+  bool ParseDirectiveHSAMetadata();
   bool ParseDirectivePALMetadata();
 
   bool AddNextRegisterToList(unsigned& Reg, unsigned& RegWidth,
@@ -2400,49 +2400,6 @@ bool AMDGPUAsmParser::ParseDirectiveHSACodeObjectISA() {
   return false;
 }
 
-bool AMDGPUAsmParser::ParseDirectiveHSAMetadata() {
-  std::string YamlString;
-  raw_string_ostream YamlStream(YamlString);
-
-  getLexer().setSkipSpace(false);
-
-  bool FoundEnd = false;
-  while (!getLexer().is(AsmToken::Eof)) {
-    while (getLexer().is(AsmToken::Space)) {
-      YamlStream << getLexer().getTok().getString();
-      Lex();
-    }
-
-    if (getLexer().is(AsmToken::Identifier)) {
-      StringRef ID = getLexer().getTok().getIdentifier();
-      if (ID == AMDGPU::HSAMD::AssemblerDirectiveEnd) {
-        Lex();
-        FoundEnd = true;
-        break;
-      }
-    }
-
-    YamlStream << Parser.parseStringToEndOfStatement()
-               << getContext().getAsmInfo()->getSeparatorString();
-
-    Parser.eatToEndOfStatement();
-  }
-
-  getLexer().setSkipSpace(true);
-
-  if (getLexer().is(AsmToken::Eof) && !FoundEnd) {
-    return TokError(
-        "expected directive .end_amd_amdgpu_hsa_metadata not found");
-  }
-
-  YamlStream.flush();
-
-  if (!getTargetStreamer().EmitHSAMetadata(YamlString))
-    return Error(getParser().getTok().getLoc(), "invalid code object metadata");
-
-  return false;
-}
-
 bool AMDGPUAsmParser::ParseAMDKernelCodeTValue(StringRef ID,
                                                amd_kernel_code_t &Header) {
   SmallString<40> ErrStr;
@@ -2495,6 +2452,49 @@ bool AMDGPUAsmParser::ParseDirectiveAMDGPUHsaKernel() {
   return false;
 }
 
+bool AMDGPUAsmParser::ParseDirectiveHSAMetadata() {
+  std::string HSAMetadataString;
+  raw_string_ostream YamlStream(HSAMetadataString);
+
+  getLexer().setSkipSpace(false);
+
+  bool FoundEnd = false;
+  while (!getLexer().is(AsmToken::Eof)) {
+    while (getLexer().is(AsmToken::Space)) {
+      YamlStream << getLexer().getTok().getString();
+      Lex();
+    }
+
+    if (getLexer().is(AsmToken::Identifier)) {
+      StringRef ID = getLexer().getTok().getIdentifier();
+      if (ID == AMDGPU::HSAMD::AssemblerDirectiveEnd) {
+        Lex();
+        FoundEnd = true;
+        break;
+      }
+    }
+
+    YamlStream << Parser.parseStringToEndOfStatement()
+               << getContext().getAsmInfo()->getSeparatorString();
+
+    Parser.eatToEndOfStatement();
+  }
+
+  getLexer().setSkipSpace(true);
+
+  if (getLexer().is(AsmToken::Eof) && !FoundEnd) {
+    return TokError(Twine("expected directive ") +
+                    Twine(HSAMD::AssemblerDirectiveEnd) + Twine("not found"));
+  }
+
+  YamlStream.flush();
+
+  if (!getTargetStreamer().EmitHSAMetadata(HSAMetadataString))
+    return Error(getParser().getTok().getLoc(), "invalid HSA metadata");
+
+  return false;
+}
+
 bool AMDGPUAsmParser::ParseDirectivePALMetadata() {
   PALMD::Metadata PALMetadata;
   for (;;) {
@@ -2521,14 +2521,14 @@ bool AMDGPUAsmParser::ParseDirective(AsmToken DirectiveID) {
   if (IDVal == ".hsa_code_object_isa")
     return ParseDirectiveHSACodeObjectISA();
 
-  if (IDVal == AMDGPU::HSAMD::AssemblerDirectiveBegin)
-    return ParseDirectiveHSAMetadata();
-
   if (IDVal == ".amd_kernel_code_t")
     return ParseDirectiveAMDKernelCodeT();
 
   if (IDVal == ".amdgpu_hsa_kernel")
     return ParseDirectiveAMDGPUHsaKernel();
+
+  if (IDVal == AMDGPU::HSAMD::AssemblerDirectiveBegin)
+    return ParseDirectiveHSAMetadata();
 
   if (IDVal == PALMD::AssemblerDirective)
     return ParseDirectivePALMetadata();

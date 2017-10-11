@@ -32,29 +32,30 @@ static cl::opt<bool> VerifyHSAMetadata(
 namespace AMDGPU {
 namespace HSAMD {
 
-void MetadataStreamer::dump(StringRef YamlString) const {
-  errs() << "AMDGPU HSA Metadata:\n" << YamlString << '\n';
+void MetadataStreamer::dump(StringRef HSAMetadataString) const {
+  errs() << "AMDGPU HSA Metadata:\n" << HSAMetadataString << '\n';
 }
 
-void MetadataStreamer::verify(StringRef YamlString) const {
+void MetadataStreamer::verify(StringRef HSAMetadataString) const {
   errs() << "AMDGPU HSA Metadata Parser Test: ";
 
-  HSAMD::Metadata FromYamlString;
-  if (Metadata::fromYamlString(YamlString, FromYamlString)) {
+  HSAMD::Metadata FromHSAMetadataString;
+  if (fromString(HSAMetadataString, FromHSAMetadataString)) {
     errs() << "FAIL\n";
     return;
   }
 
-  std::string ToYamlString;
-  if (Metadata::toYamlString(FromYamlString, ToYamlString)) {
+  std::string ToHSAMetadataString;
+  if (toString(FromHSAMetadataString, ToHSAMetadataString)) {
     errs() << "FAIL\n";
     return;
   }
 
-  errs() << (YamlString == ToYamlString ? "PASS" : "FAIL") << '\n';
-  if (YamlString != ToYamlString) {
-    errs() << "Original input: " << YamlString << '\n'
-           << "Produced output: " << ToYamlString << '\n';
+  errs() << (HSAMetadataString == ToHSAMetadataString ? "PASS" : "FAIL")
+         << '\n';
+  if (HSAMetadataString != ToHSAMetadataString) {
+    errs() << "Original input: " << HSAMetadataString << '\n'
+           << "Produced output: " << ToHSAMetadataString << '\n';
   }
 }
 
@@ -395,6 +396,17 @@ void MetadataStreamer::begin(const Module &Mod) {
   emitPrintf(Mod);
 }
 
+void MetadataStreamer::end() {
+  std::string HSAMetadataString;
+  if (auto Error = toString(HSAMetadata, HSAMetadataString))
+    return;
+
+  if (DumpHSAMetadata)
+    dump(HSAMetadataString);
+  if (VerifyHSAMetadata)
+    verify(HSAMetadataString);
+}
+
 void MetadataStreamer::emitKernel(const Function &Func,
                                   const amd_kernel_code_t &KernelCode) {
   if (Func.getCallingConv() != CallingConv::AMDGPU_KERNEL)
@@ -409,26 +421,6 @@ void MetadataStreamer::emitKernel(const Function &Func,
   emitKernelArgs(Func);
   emitKernelCodeProps(KernelCode);
   emitKernelDebugProps(KernelCode);
-}
-
-ErrorOr<std::string> MetadataStreamer::toYamlString() {
-  std::string ToYamlString;
-  if (auto Error = Metadata::toYamlString(HSAMetadata, ToYamlString))
-    return Error;
-
-  if (DumpHSAMetadata)
-    dump(ToYamlString);
-  if (VerifyHSAMetadata)
-    verify(ToYamlString);
-
-  return ToYamlString;
-}
-
-ErrorOr<std::string> MetadataStreamer::toYamlString(StringRef YamlString) {
-  if (auto Error = Metadata::fromYamlString(YamlString, HSAMetadata))
-    return Error;
-
-  return toYamlString();
 }
 
 } // end namespace HSAMD

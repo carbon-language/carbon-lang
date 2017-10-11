@@ -406,15 +406,13 @@ struct Metadata final {
 
   /// \brief Default constructor.
   Metadata() = default;
-
-  /// \brief Converts \p YamlString to \p HSAMetadata.
-  static std::error_code fromYamlString(std::string YamlString,
-                                        Metadata &HSAMetadata);
-
-  /// \brief Converts \p HSAMetadata to \p YamlString.
-  static std::error_code toYamlString(Metadata HSAMetadata,
-                                      std::string &YamlString);
 };
+
+/// \brief Converts \p String to \p HSAMetadata.
+std::error_code fromString(std::string String, Metadata &HSAMetadata);
+
+/// \brief Converts \p HSAMetadata to \p String.
+std::error_code toString(Metadata HSAMetadata, std::string &String);
 
 } // end namespace HSAMD
 

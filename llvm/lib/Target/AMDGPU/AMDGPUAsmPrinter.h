@@ -17,6 +17,7 @@
 
 #include "AMDGPU.h"
 #include "AMDKernelCodeT.h"
+#include "MCTargetDesc/AMDGPUHSAMetadataStreamer.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include <cstddef>
@@ -112,6 +113,8 @@ private:
 
   SIProgramInfo CurrentProgramInfo;
   DenseMap<const Function *, SIFunctionResourceInfo> CallGraphResourceInfo;
+
+  AMDGPU::HSAMD::MetadataStreamer HSAMetadataStream;
   std::map<uint32_t, uint32_t> PALMetadataMap;
 
   uint64_t getFunctionCodeSize(const MachineFunction &MF) const;
