@@ -466,11 +466,11 @@ void LinkerScript::addOrphanSections(OutputSectionFactory &Factory) {
   }
 }
 
-uint64_t LinkerScript::advance(uint64_t Size, unsigned Align) {
+uint64_t LinkerScript::advance(uint64_t Size, unsigned Alignment) {
   bool IsTbss =
       (Ctx->OutSec->Flags & SHF_TLS) && Ctx->OutSec->Type == SHT_NOBITS;
   uint64_t Start = IsTbss ? Dot + Ctx->ThreadBssOffset : Dot;
-  Start = alignTo(Start, Align);
+  Start = alignTo(Start, Alignment);
   uint64_t End = Start + Size;
 
   if (IsTbss)
