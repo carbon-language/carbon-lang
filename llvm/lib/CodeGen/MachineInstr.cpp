@@ -1129,9 +1129,9 @@ bool MachineInstr::isIdenticalTo(const MachineInstr &Other,
       if (Check == IgnoreDefs)
         continue;
       else if (Check == IgnoreVRegDefs) {
-        if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()) ||
-            TargetRegisterInfo::isPhysicalRegister(OMO.getReg()))
-          if (MO.getReg() != OMO.getReg())
+        if (!TargetRegisterInfo::isVirtualRegister(MO.getReg()) ||
+            !TargetRegisterInfo::isVirtualRegister(OMO.getReg()))
+          if (!MO.isIdenticalTo(OMO))
             return false;
       } else {
         if (!MO.isIdenticalTo(OMO))
