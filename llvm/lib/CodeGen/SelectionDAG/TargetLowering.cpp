@@ -479,7 +479,7 @@ TargetLowering::SimplifyDemandedBits(SDNode *User, unsigned OpIdx,
   return true;
 }
 
-bool TargetLowering::SimplifyDemandedBits(SDValue Op, APInt &DemandedMask,
+bool TargetLowering::SimplifyDemandedBits(SDValue Op, const APInt &DemandedMask,
                                           DAGCombinerInfo &DCI) const {
 
   SelectionDAG &DAG = DCI.DAG;
