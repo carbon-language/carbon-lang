@@ -864,8 +864,8 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
         continue;
     }
 
-    RelExpr Expr = Target->getRelExpr(Type, Body, *Sec.File,
-                                      Sec.Data.begin() + Rel.r_offset);
+    RelExpr Expr =
+        Target->getRelExpr(Type, Body, Sec.Data.begin() + Rel.r_offset);
 
     // Ignore "hint" relocations because they are only markers for relaxation.
     if (isRelExprOneOf<R_HINT, R_NONE>(Expr))
