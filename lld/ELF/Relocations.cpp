@@ -852,7 +852,7 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
     if (Config->MipsN32Abi)
       Type = getMipsN32RelType(I, End);
 
-    // Compute the offset of this section in the output section.
+    // Get an offset in an output section this relocation is applied to.
     uint64_t Offset = GetOffset.get(Rel.r_offset);
     if (Offset == uint64_t(-1))
       continue;
