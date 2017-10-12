@@ -80,24 +80,25 @@ static std::string getLocation(InputSectionBase &S, const SymbolBody &Sym,
   return Msg + S.getObjMsg<ELFT>(Off);
 }
 
-static bool isPreemptible(const SymbolBody &Body, RelType Type) {
-  // In case of MIPS GP-relative relocations always resolve to a definition
-  // in a regular input file, ignoring the one-definition rule. So we,
-  // for example, should not attempt to create a dynamic relocation even
-  // if the target symbol is preemptible. There are two two MIPS GP-relative
-  // relocations R_MIPS_GPREL16 and R_MIPS_GPREL32. But only R_MIPS_GPREL16
-  // can be against a preemptible symbol.
-  // To get MIPS relocation type we apply 0xff mask. In case of O32 ABI all
-  // relocation types occupy eight bit. In case of N64 ABI we extract first
-  // relocation from 3-in-1 packet because only the first relocation can
-  // be against a real symbol.
-  if (Config->EMachine == EM_MIPS) {
-    Type &= 0xff;
-    if (Type == R_MIPS_GPREL16 || Type == R_MICROMIPS_GPREL16 ||
-        Type == R_MICROMIPS_GPREL7_S2)
-      return false;
-  }
-  return Body.IsPreemptible;
+// This is a MIPS-specific rule.
+//
+// In case of MIPS GP-relative relocations always resolve to a definition
+// in a regular input file, ignoring the one-definition rule. So we,
+// for example, should not attempt to create a dynamic relocation even
+// if the target symbol is preemptible. There are two two MIPS GP-relative
+// relocations R_MIPS_GPREL16 and R_MIPS_GPREL32. But only R_MIPS_GPREL16
+// can be against a preemptible symbol.
+//
+// To get MIPS relocation type we apply 0xff mask. In case of O32 ABI all
+// relocation types occupy eight bit. In case of N64 ABI we extract first
+// relocation from 3-in-1 packet because only the first relocation can
+// be against a real symbol.
+static bool isMipsGprel(RelType Type) {
+  if (Config->EMachine != EM_MIPS)
+    return false;
+  Type &= 0xff;
+  return Type == R_MIPS_GPREL16 || Type == R_MICROMIPS_GPREL16 ||
+         Type == R_MICROMIPS_GPREL7_S2;
 }
 
 // This function is similar to the `handleTlsRelocation`. MIPS does not
@@ -209,13 +210,12 @@ handleTlsRelocation(RelType Type, SymbolBody &Body, InputSectionBase &C,
   if (Config->EMachine == EM_MIPS)
     return handleMipsTlsRelocation<ELFT>(Type, Body, C, Offset, Addend, Expr);
 
-  bool IsPreemptible = isPreemptible(Body, Type);
   if (isRelExprOneOf<R_TLSDESC, R_TLSDESC_PAGE, R_TLSDESC_CALL>(Expr) &&
       Config->Shared) {
     if (InX::Got->addDynTlsEntry(Body)) {
       uint64_t Off = InX::Got->getGlobalDynOffset(Body);
       In<ELFT>::RelaDyn->addReloc(
-          {Target->TlsDescRel, InX::Got, Off, !IsPreemptible, &Body, 0});
+          {Target->TlsDescRel, InX::Got, Off, !Body.IsPreemptible, &Body, 0});
     }
     if (Expr != R_TLSDESC_CALL)
       C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
@@ -255,7 +255,7 @@ handleTlsRelocation(RelType Type, SymbolBody &Body, InputSectionBase &C,
         // If the symbol is preemptible we need the dynamic linker to write
         // the offset too.
         uint64_t OffsetOff = Off + Config->Wordsize;
-        if (IsPreemptible)
+        if (Body.IsPreemptible)
           In<ELFT>::RelaDyn->addReloc(
               {Target->TlsOffsetRel, InX::Got, OffsetOff, false, &Body, 0});
         else
@@ -268,7 +268,7 @@ handleTlsRelocation(RelType Type, SymbolBody &Body, InputSectionBase &C,
 
     // Global-Dynamic relocs can be relaxed to Initial-Exec or Local-Exec
     // depending on the symbol being locally defined or not.
-    if (IsPreemptible) {
+    if (Body.IsPreemptible) {
       C.Relocations.push_back(
           {Target->adjustRelaxExpr(Type, nullptr, R_RELAX_TLS_GD_TO_IE), Type,
            Offset, Addend, &Body});
@@ -288,7 +288,7 @@ handleTlsRelocation(RelType Type, SymbolBody &Body, InputSectionBase &C,
   // Initial-Exec relocs can be relaxed to Local-Exec if the symbol is locally
   // defined.
   if (isRelExprOneOf<R_GOT, R_GOT_FROM_END, R_GOT_PC, R_GOT_PAGE_PC>(Expr) &&
-      !Config->Shared && !IsPreemptible) {
+      !Config->Shared && !Body.IsPreemptible) {
     C.Relocations.push_back(
         {R_RELAX_TLS_IE_TO_LE, Type, Offset, Addend, &Body});
     return 1;
@@ -377,7 +377,7 @@ static bool isStaticLinkTimeConstant(RelExpr E, RelType Type,
   if (E == R_GOT || E == R_PLT || E == R_TLSDESC)
     return Target->usesOnlyLowPageBits(Type) || !Config->Pic;
 
-  if (isPreemptible(Body, Type))
+  if (Body.IsPreemptible)
     return false;
   if (!Config->Pic)
     return true;
@@ -858,7 +858,15 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
     if (isRelExprOneOf<R_HINT, R_NONE>(Expr))
       continue;
 
-    bool Preemptible = isPreemptible(Body, Type);
+    // Handle yet another MIPS-ness.
+    if (isMipsGprel(Type)) {
+      int64_t Addend = computeAddend<ELFT>(Rel, Sec.Data.data()) +
+                       computeMipsAddend<ELFT>(Rel, Sec, Expr, Body, End);
+      Sec.Relocations.push_back({R_MIPS_GOTREL, Type, Offset, Addend, &Body});
+      continue;
+    }
+
+    bool Preemptible = Body.IsPreemptible;
 
     // Strenghten or relax a PLT access.
     //
@@ -931,7 +939,7 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
       }
     }
 
-    if (!needsPlt(Expr) && !needsGot(Expr) && isPreemptible(Body, Type)) {
+    if (!needsPlt(Expr) && !needsGot(Expr) && Body.IsPreemptible) {
       // We don't know anything about the finaly symbol. Just ask the dynamic
       // linker to handle the relocation for us.
       if (!Target->isPicRel(Type))
