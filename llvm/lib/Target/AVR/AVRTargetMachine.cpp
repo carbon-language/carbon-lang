@@ -52,9 +52,8 @@ AVRTargetMachine::AVRTargetMachine(const Target &T, const Triple &TT,
                                    Optional<Reloc::Model> RM,
                                    Optional<CodeModel::Model> CM,
                                    CodeGenOpt::Level OL, bool JIT)
-    : LLVMTargetMachine(T, AVRDataLayout, TT, getCPU(CPU), FS, Options,
-                        getEffectiveRelocModel(RM), getEffectiveCodeModel(CM),
-                        OL),
+    : TargetMachine(T, AVRDataLayout, TT, getCPU(CPU), FS, Options,
+                    getEffectiveRelocModel(RM), getEffectiveCodeModel(CM), OL),
       SubTarget(TT, getCPU(CPU), FS, *this) {
   this->TLOF = make_unique<AVRTargetObjectFile>();
   initAsmInfo();

@@ -23,7 +23,7 @@ namespace llvm {
 
 /// Common code between 32-bit and 64-bit PowerPC targets.
 ///
-class PPCTargetMachine final : public LLVMTargetMachine {
+class PPCTargetMachine final : public TargetMachine {
 public:
   enum PPCABI { PPC_ABI_UNKNOWN, PPC_ABI_ELFv1, PPC_ABI_ELFv2 };
 private:

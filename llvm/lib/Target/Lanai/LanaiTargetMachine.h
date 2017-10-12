@@ -25,7 +25,7 @@
 namespace llvm {
 class formatted_raw_ostream;
 
-class LanaiTargetMachine : public LLVMTargetMachine {
+class LanaiTargetMachine : public TargetMachine {
   LanaiSubtarget Subtarget;
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
 

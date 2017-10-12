@@ -88,7 +88,7 @@ SparcTargetMachine::SparcTargetMachine(
     const Target &T, const Triple &TT, StringRef CPU, StringRef FS,
     const TargetOptions &Options, Optional<Reloc::Model> RM,
     Optional<CodeModel::Model> CM, CodeGenOpt::Level OL, bool JIT, bool is64bit)
-    : LLVMTargetMachine(
+    : TargetMachine(
           T, computeDataLayout(TT, is64bit), TT, CPU, FS, Options,
           getEffectiveRelocModel(RM),
           getEffectiveCodeModel(CM, getEffectiveRelocModel(RM), is64bit, JIT),

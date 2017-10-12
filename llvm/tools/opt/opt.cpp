@@ -593,10 +593,9 @@ int main(int argc, char **argv) {
   }
 
   if (TM) {
-    // FIXME: We should dyn_cast this when supported.
-    auto &LTM = static_cast<LLVMTargetMachine &>(*TM);
-    Pass *TPC = LTM.createPassConfig(Passes);
-    Passes.add(TPC);
+    Pass *TPC = TM->createPassConfig(Passes);
+    if (TPC)
+      Passes.add(TPC);
   }
 
   // Create a new optimization pass for each one specified on the command line

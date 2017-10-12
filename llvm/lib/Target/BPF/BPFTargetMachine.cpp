@@ -55,9 +55,8 @@ BPFTargetMachine::BPFTargetMachine(const Target &T, const Triple &TT,
                                    Optional<Reloc::Model> RM,
                                    Optional<CodeModel::Model> CM,
                                    CodeGenOpt::Level OL, bool JIT)
-    : LLVMTargetMachine(T, computeDataLayout(TT), TT, CPU, FS, Options,
-                        getEffectiveRelocModel(RM), getEffectiveCodeModel(CM),
-                        OL),
+    : TargetMachine(T, computeDataLayout(TT), TT, CPU, FS, Options,
+                    getEffectiveRelocModel(RM), getEffectiveCodeModel(CM), OL),
       TLOF(make_unique<TargetLoweringObjectFileELF>()),
       Subtarget(TT, CPU, FS, *this) {
   initAsmInfo();

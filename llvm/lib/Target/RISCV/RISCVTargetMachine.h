@@ -20,7 +20,7 @@
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
-class RISCVTargetMachine : public LLVMTargetMachine {
+class RISCVTargetMachine : public TargetMachine {
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
 
 public:

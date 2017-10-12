@@ -686,7 +686,7 @@ MipsTargetELFStreamer::MipsTargetELFStreamer(MCStreamer &S,
   MCAssembler &MCA = getStreamer().getAssembler();
 
   // It's possible that MCObjectFileInfo isn't fully initialized at this point
-  // due to an initialization order problem where LLVMTargetMachine creates the
+  // due to an initialization order problem where TargetMachine creates the
   // target streamer before TargetLoweringObjectFile calls
   // InitializeMCObjectFileInfo. There doesn't seem to be a single place that
   // covers all cases so this statement covers most cases and direct object

@@ -25,7 +25,7 @@
 
 namespace llvm {
 
-class SystemZTargetMachine : public LLVMTargetMachine {
+class SystemZTargetMachine : public TargetMachine {
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
   SystemZSubtarget Subtarget;
 
@@ -42,7 +42,7 @@ public:
     return &Subtarget;
   }
 
-  // Override LLVMTargetMachine
+  // Override TargetMachine
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
   TargetIRAnalysis getTargetIRAnalysis() override;
 

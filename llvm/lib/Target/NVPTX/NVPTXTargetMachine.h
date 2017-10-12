@@ -24,7 +24,7 @@ namespace llvm {
 
 /// NVPTXTargetMachine
 ///
-class NVPTXTargetMachine : public LLVMTargetMachine {
+class NVPTXTargetMachine : public TargetMachine {
   bool is64bit;
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
   NVPTX::DrvInterface drvInterface;

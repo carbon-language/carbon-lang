@@ -26,12 +26,11 @@
 namespace llvm {
 
 /// A generic AVR implementation.
-class AVRTargetMachine : public LLVMTargetMachine {
+class AVRTargetMachine : public TargetMachine {
 public:
   AVRTargetMachine(const Target &T, const Triple &TT, StringRef CPU,
                    StringRef FS, const TargetOptions &Options,
-                   Optional<Reloc::Model> RM,
-                   Optional<CodeModel::Model> CM,
+                   Optional<Reloc::Model> RM, Optional<CodeModel::Model> CM,
                    CodeGenOpt::Level OL, bool JIT);
 
   const AVRSubtarget *getSubtargetImpl() const;

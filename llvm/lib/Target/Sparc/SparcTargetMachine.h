@@ -20,7 +20,7 @@
 
 namespace llvm {
 
-class SparcTargetMachine : public LLVMTargetMachine {
+class SparcTargetMachine : public TargetMachine {
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
   SparcSubtarget Subtarget;
   bool is64Bit;

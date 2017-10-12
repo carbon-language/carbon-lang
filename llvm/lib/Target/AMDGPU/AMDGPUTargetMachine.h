@@ -31,7 +31,7 @@ namespace llvm {
 // AMDGPU Target Machine (R600+)
 //===----------------------------------------------------------------------===//
 
-class AMDGPUTargetMachine : public LLVMTargetMachine {
+class AMDGPUTargetMachine : public TargetMachine {
 protected:
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
   AMDGPUIntrinsicInfo IntrinsicInfo;

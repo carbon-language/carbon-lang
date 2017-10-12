@@ -23,7 +23,7 @@ namespace llvm {
 
 class Module;
 
-class HexagonTargetMachine : public LLVMTargetMachine {
+class HexagonTargetMachine : public TargetMachine {
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
   mutable StringMap<std::unique_ptr<HexagonSubtarget>> SubtargetMap;
 

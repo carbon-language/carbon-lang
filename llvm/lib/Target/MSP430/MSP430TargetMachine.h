@@ -23,7 +23,7 @@ namespace llvm {
 
 /// MSP430TargetMachine
 ///
-class MSP430TargetMachine : public LLVMTargetMachine {
+class MSP430TargetMachine : public TargetMachine {
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
   MSP430Subtarget        Subtarget;
 

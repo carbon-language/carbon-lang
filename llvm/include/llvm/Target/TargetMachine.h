@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the TargetMachine and LLVMTargetMachine classes.
+/// \file Defines the TargetMachine interface.
 //
 //===----------------------------------------------------------------------===//
 
@@ -49,16 +49,16 @@ class PassManagerBase;
 using legacy::PassManagerBase;
 
 //===----------------------------------------------------------------------===//
-///
+
 /// Primary interface to the complete machine description for the target
 /// machine.  All target-specific information should be accessible through this
 /// interface.
-///
 class TargetMachine {
 protected: // Can only create subclasses.
   TargetMachine(const Target &T, StringRef DataLayoutString,
                 const Triple &TargetTriple, StringRef CPU, StringRef FS,
-                const TargetOptions &Options);
+                const TargetOptions &Options, Reloc::Model RM,
+                CodeModel::Model CM, CodeGenOpt::Level OL);
 
   /// The Target that this machine was created for.
   const Target &TheTarget;
@@ -90,6 +90,8 @@ protected: // Can only create subclasses.
 
   unsigned RequireStructuredCFG : 1;
   unsigned O0WantsFastISel : 1;
+
+  void initAsmInfo();
 
 public:
   const TargetOptions DefaultOptions;
@@ -225,23 +227,18 @@ public:
   /// supported, or false on success.
   /// \p MMI is an optional parameter that, if set to non-nullptr,
   /// will be used to set the MachineModuloInfo for this PM.
-  virtual bool addPassesToEmitFile(PassManagerBase &, raw_pwrite_stream &,
-                                   CodeGenFileType,
-                                   bool /*DisableVerify*/ = true,
-                                   MachineModuleInfo *MMI = nullptr) {
-    return true;
-  }
+  virtual bool addPassesToEmitFile(PassManagerBase &PM, raw_pwrite_stream &Out,
+                                   CodeGenFileType FileType,
+                                   bool DisableVerify = true,
+                                   MachineModuleInfo *MMI = nullptr);
 
   /// Add passes to the specified pass manager to get machine code emitted with
   /// the MCJIT. This method returns true if machine code is not supported. It
   /// fills the MCContext Ctx pointer which can be used to build custom
   /// MCStreamer.
-  ///
-  virtual bool addPassesToEmitMC(PassManagerBase &, MCContext *&,
-                                 raw_pwrite_stream &,
-                                 bool /*DisableVerify*/ = true) {
-    return true;
-  }
+  virtual bool addPassesToEmitMC(PassManagerBase &PM, MCContext *&Ctx,
+                                 raw_pwrite_stream &OS,
+                                 bool DisableVerify = true);
 
   /// True if subtarget inserts the final scheduling pass on its own.
   ///
@@ -265,46 +262,10 @@ public:
   virtual bool useIPRA() const {
     return false;
   }
-};
-
-/// This class describes a target machine that is implemented with the LLVM
-/// target-independent code generator.
-///
-class LLVMTargetMachine : public TargetMachine {
-protected: // Can only create subclasses.
-  LLVMTargetMachine(const Target &T, StringRef DataLayoutString,
-                    const Triple &TargetTriple, StringRef CPU, StringRef FS,
-                    const TargetOptions &Options, Reloc::Model RM,
-                    CodeModel::Model CM, CodeGenOpt::Level OL);
-
-  void initAsmInfo();
-
-public:
-  /// \brief Get a TargetIRAnalysis implementation for the target.
-  ///
-  /// This analysis will produce a TTI result which uses the common code
-  /// generator to answer queries about the IR.
-  TargetIRAnalysis getTargetIRAnalysis() override;
 
   /// Create a pass configuration object to be used by addPassToEmitX methods
   /// for generating a pipeline of CodeGen passes.
   virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
-
-  /// Add passes to the specified pass manager to get the specified file
-  /// emitted.  Typically this will involve several steps of code generation.
-  /// \p MMI is an optional parameter that, if set to non-nullptr,
-  /// will be used to set the MachineModuloInfofor this PM.
-  bool addPassesToEmitFile(PassManagerBase &PM, raw_pwrite_stream &Out,
-                           CodeGenFileType FileType, bool DisableVerify = true,
-                           MachineModuleInfo *MMI = nullptr) override;
-
-  /// Add passes to the specified pass manager to get machine code emitted with
-  /// the MCJIT. This method returns true if machine code is not supported. It
-  /// fills the MCContext Ctx pointer which can be used to build custom
-  /// MCStreamer.
-  bool addPassesToEmitMC(PassManagerBase &PM, MCContext *&Ctx,
-                         raw_pwrite_stream &OS,
-                         bool DisableVerify = true) override;
 
   /// Returns true if the target is expected to pass all machine verifier
   /// checks. This is a stopgap measure to fix targets one by one. We will

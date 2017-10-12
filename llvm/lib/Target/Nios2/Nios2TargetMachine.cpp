@@ -42,8 +42,8 @@ Nios2TargetMachine::Nios2TargetMachine(const Target &T, const Triple &TT,
                                        Optional<Reloc::Model> RM,
                                        Optional<CodeModel::Model> CM,
                                        CodeGenOpt::Level OL, bool JIT)
-    : LLVMTargetMachine(T, computeDataLayout(), TT, CPU, FS, Options,
-                        getEffectiveRelocModel(RM), *CM, OL) {}
+    : TargetMachine(T, computeDataLayout(), TT, CPU, FS, Options,
+                    getEffectiveRelocModel(RM), *CM, OL) {}
 
 Nios2TargetMachine::~Nios2TargetMachine() {}
 

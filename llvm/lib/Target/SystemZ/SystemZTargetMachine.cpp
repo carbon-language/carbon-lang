@@ -143,7 +143,7 @@ SystemZTargetMachine::SystemZTargetMachine(const Target &T, const Triple &TT,
                                            Optional<Reloc::Model> RM,
                                            Optional<CodeModel::Model> CM,
                                            CodeGenOpt::Level OL, bool JIT)
-    : LLVMTargetMachine(
+    : TargetMachine(
           T, computeDataLayout(TT, CPU, FS), TT, CPU, FS, Options,
           getEffectiveRelocModel(RM),
           getEffectiveCodeModel(CM, getEffectiveRelocModel(RM), JIT), OL),

@@ -25,7 +25,7 @@
 
 namespace llvm {
 
-class MipsTargetMachine : public LLVMTargetMachine {
+class MipsTargetMachine : public TargetMachine {
   bool isLittle;
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
   // Selected ABI

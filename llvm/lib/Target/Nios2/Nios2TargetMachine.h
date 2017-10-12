@@ -18,7 +18,7 @@
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
-class Nios2TargetMachine : public LLVMTargetMachine {
+class Nios2TargetMachine : public TargetMachine {
   mutable StringMap<std::unique_ptr<Nios2Subtarget>> SubtargetMap;
 
 public:

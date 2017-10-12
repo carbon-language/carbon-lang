@@ -17,10 +17,8 @@
 // Register live intervals: Registers must be defined only once, and must be
 // defined before use.
 //
-// The machine code verifier is enabled from LLVMTargetMachine.cpp with the
-// command-line option -verify-machineinstrs, or by defining the environment
-// variable LLVM_VERIFY_MACHINEINSTRS to the name of a file that will receive
-// the verifier errors.
+// The machine code verifier is enabled with the command-line option
+// -verify-machineinstrs.
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/BitVector.h"

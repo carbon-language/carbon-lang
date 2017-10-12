@@ -21,7 +21,7 @@
 
 namespace llvm {
 
-class WebAssemblyTargetMachine final : public LLVMTargetMachine {
+class WebAssemblyTargetMachine final : public TargetMachine {
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
   mutable StringMap<std::unique_ptr<WebAssemblySubtarget>> SubtargetMap;
 
