@@ -44,7 +44,7 @@ AMDGPUTargetStreamer::AMDGPUTargetStreamer(MCStreamer &S)
 
 bool AMDGPUTargetStreamer::EmitHSAMetadata(StringRef HSAMetadataString) {
   HSAMD::Metadata HSAMetadata;
-  if (auto Error = HSAMD::fromString(HSAMetadataString, HSAMetadata))
+  if (HSAMD::fromString(HSAMetadataString, HSAMetadata))
     return false;
 
   return EmitHSAMetadata(HSAMetadata);
@@ -97,7 +97,7 @@ void AMDGPUTargetAsmStreamer::EmitAMDGPUSymbolType(StringRef SymbolName,
 bool AMDGPUTargetAsmStreamer::EmitHSAMetadata(
     const AMDGPU::HSAMD::Metadata &HSAMetadata) {
   std::string HSAMetadataString;
-  if (auto Error = HSAMD::toString(HSAMetadata, HSAMetadataString))
+  if (HSAMD::toString(HSAMetadata, HSAMetadataString))
     return false;
 
   OS << '\t' << HSAMD::AssemblerDirectiveBegin << '\n';
@@ -109,7 +109,7 @@ bool AMDGPUTargetAsmStreamer::EmitHSAMetadata(
 bool AMDGPUTargetAsmStreamer::EmitPALMetadata(
     const PALMD::Metadata &PALMetadata) {
   std::string PALMetadataString;
-  if (auto Error = PALMD::toString(PALMetadata, PALMetadataString))
+  if (PALMD::toString(PALMetadata, PALMetadataString))
     return false;
 
   OS << '\t' << PALMD::AssemblerDirective << PALMetadataString << '\n';
@@ -211,7 +211,7 @@ void AMDGPUTargetELFStreamer::EmitAMDGPUSymbolType(StringRef SymbolName,
 bool AMDGPUTargetELFStreamer::EmitHSAMetadata(
     const AMDGPU::HSAMD::Metadata &HSAMetadata) {
   std::string HSAMetadataString;
-  if (auto Error = HSAMD::toString(HSAMetadata, HSAMetadataString))
+  if (HSAMD::toString(HSAMetadata, HSAMetadataString))
     return false;
 
   // Create two labels to mark the beginning and end of the desc field
