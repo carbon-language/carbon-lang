@@ -35916,9 +35916,9 @@ static SDValue combineSubToSubus(SDNode *N, SelectionDAG &DAG,
     SubusRHS = Op1;
     SDValue MaxLHS = Op0.getOperand(0);
     SDValue MaxRHS = Op0.getOperand(1);
-    if (DAG.isEqualTo(MaxLHS, Op1))
+    if (MaxLHS == Op1)
       SubusLHS = MaxRHS;
-    else if (DAG.isEqualTo(MaxRHS, Op1))
+    else if (MaxRHS == Op1)
       SubusLHS = MaxLHS;
     else
       return SDValue();
@@ -35926,9 +35926,9 @@ static SDValue combineSubToSubus(SDNode *N, SelectionDAG &DAG,
     SubusLHS = Op0;
     SDValue MinLHS = Op1.getOperand(0);
     SDValue MinRHS = Op1.getOperand(1);
-    if (DAG.isEqualTo(MinLHS, Op0))
+    if (MinLHS == Op0)
       SubusRHS = MinRHS;
-    else if (DAG.isEqualTo(MinRHS, Op0))
+    else if (MinRHS == Op0)
       SubusRHS = MinLHS;
     else
       return SDValue();
