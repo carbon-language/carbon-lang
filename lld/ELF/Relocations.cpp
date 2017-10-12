@@ -299,14 +299,16 @@ handleTlsRelocation(RelType Type, SymbolBody &Body, InputSectionBase &C,
   return 0;
 }
 
-static uint32_t getMipsPairType(RelType Type, const SymbolBody &Sym) {
+static RelType getMipsPairType(RelType Type, bool IsLocal) {
   switch (Type) {
   case R_MIPS_HI16:
     return R_MIPS_LO16;
   case R_MIPS_GOT16:
-    return Sym.isLocal() ? R_MIPS_LO16 : R_MIPS_NONE;
+    // I don't know why these relocations had to be defined like this,
+    // but they are handled differently when they refer to local symbols.
+    return IsLocal ? R_MIPS_LO16 : R_MIPS_NONE;
   case R_MICROMIPS_GOT16:
-    return Sym.isLocal() ? R_MICROMIPS_LO16 : R_MIPS_NONE;
+    return IsLocal ? R_MICROMIPS_LO16 : R_MIPS_NONE;
   case R_MIPS_PCHI16:
     return R_MIPS_PCLO16;
   case R_MICROMIPS_HI16:
@@ -631,30 +633,15 @@ static RelExpr adjustExpr(SymbolBody &Body, RelExpr Expr, RelType Type,
   return Expr;
 }
 
-// Returns an addend of a given relocation. If it is RELA, an addend
-// is in a relocation itself. If it is REL, we need to read it from an
-// input section.
-template <class ELFT, class RelTy>
-static int64_t computeAddend(const RelTy &Rel, const uint8_t *Buf) {
-  RelType Type = Rel.getType(Config->IsMips64EL);
-  int64_t A = RelTy::IsRela
-                  ? getAddend<ELFT>(Rel)
-                  : Target->getImplicitAddend(Buf + Rel.r_offset, Type);
-
-  if (Config->EMachine == EM_PPC64 && Config->Pic && Type == R_PPC64_TOC)
-    A += getPPC64TocBase();
-  return A;
-}
-
 // MIPS has an odd notion of "paired" relocations to calculate addends.
 // For example, if a relocation is of R_MIPS_HI16, there must be a
 // R_MIPS_LO16 relocation after that, and an addend is calculated using
 // the two relocations.
 template <class ELFT, class RelTy>
-static int64_t computeMipsAddend(const RelTy &Rel, InputSectionBase &Sec,
-                                 RelExpr Expr, SymbolBody &Body,
-                                 const RelTy *End) {
-  if (Expr == R_MIPS_GOTREL && Body.isLocal())
+static int64_t computeMipsAddend(const RelTy &Rel, const RelTy *End,
+                                 InputSectionBase &Sec, RelExpr Expr,
+                                 bool IsLocal) {
+  if (Expr == R_MIPS_GOTREL && IsLocal)
     return Sec.getFile<ELFT>()->MipsGp0;
 
   // The ABI says that the paired relocation is used only for REL.
@@ -663,7 +650,7 @@ static int64_t computeMipsAddend(const RelTy &Rel, InputSectionBase &Sec,
     return 0;
 
   RelType Type = Rel.getType(Config->IsMips64EL);
-  uint32_t PairTy = getMipsPairType(Type, Body);
+  uint32_t PairTy = getMipsPairType(Type, IsLocal);
   if (PairTy == R_MIPS_NONE)
     return 0;
 
@@ -672,18 +659,39 @@ static int64_t computeMipsAddend(const RelTy &Rel, InputSectionBase &Sec,
 
   // To make things worse, paired relocations might not be contiguous in
   // the relocation table, so we need to do linear search. *sigh*
-  for (const RelTy *RI = &Rel; RI != End; ++RI) {
-    if (RI->getType(Config->IsMips64EL) != PairTy)
-      continue;
-    if (RI->getSymbol(Config->IsMips64EL) != SymIndex)
-      continue;
-
-    return Target->getImplicitAddend(Buf + RI->r_offset, PairTy);
-  }
+  for (const RelTy *RI = &Rel; RI != End; ++RI)
+    if (RI->getType(Config->IsMips64EL) == PairTy &&
+        RI->getSymbol(Config->IsMips64EL) == SymIndex)
+      return Target->getImplicitAddend(Buf + RI->r_offset, PairTy);
 
   warn("can't find matching " + toString(PairTy) + " relocation for " +
        toString(Type));
   return 0;
+}
+
+// Returns an addend of a given relocation. If it is RELA, an addend
+// is in a relocation itself. If it is REL, we need to read it from an
+// input section.
+template <class ELFT, class RelTy>
+static int64_t computeAddend(const RelTy &Rel, const RelTy *End,
+                             InputSectionBase &Sec, RelExpr Expr,
+                             bool IsLocal) {
+  int64_t Addend;
+  RelType Type = Rel.getType(Config->IsMips64EL);
+
+  if (RelTy::IsRela) {
+    Addend = getAddend<ELFT>(Rel);
+  } else {
+    const uint8_t *Buf = Sec.Data.data();
+    Addend = Target->getImplicitAddend(Buf + Rel.r_offset, Type);
+  }
+
+  if (Config->EMachine == EM_PPC64 && Config->Pic && Type == R_PPC64_TOC)
+    Addend += getPPC64TocBase();
+  if (Config->EMachine == EM_MIPS)
+    Addend += computeMipsAddend<ELFT>(Rel, End, Sec, Expr, IsLocal);
+
+  return Addend;
 }
 
 // Report an undefined symbol if necessary.
@@ -860,8 +868,7 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
 
     // Handle yet another MIPS-ness.
     if (isMipsGprel(Type)) {
-      int64_t Addend = computeAddend<ELFT>(Rel, Sec.Data.data()) +
-                       computeMipsAddend<ELFT>(Rel, Sec, Expr, Body, End);
+      int64_t Addend = computeAddend<ELFT>(Rel, End, Sec, Expr, Body.isLocal());
       Sec.Relocations.push_back({R_MIPS_GOTREL, Type, Offset, Addend, &Body});
       continue;
     }
@@ -898,9 +905,7 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
       InX::Got->HasGotOffRel = true;
 
     // Read an addend.
-    int64_t Addend = computeAddend<ELFT>(Rel, Sec.Data.data());
-    if (Config->EMachine == EM_MIPS)
-      Addend += computeMipsAddend<ELFT>(Rel, Sec, Expr, Body, End);
+    int64_t Addend = computeAddend<ELFT>(Rel, End, Sec, Expr, Body.isLocal());
 
     // Process some TLS relocations, including relaxing TLS relocations.
     // Note that this function does not handle all TLS relocations.
