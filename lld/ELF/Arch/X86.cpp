@@ -87,17 +87,41 @@ RelExpr X86::getRelExpr(RelType Type, const SymbolBody &S,
     return R_GOT;
   case R_386_GOT32:
   case R_386_GOT32X:
-    // These relocations can be calculated in two different ways.
-    // Usual calculation is G + A - GOT what means an offset in GOT table
-    // (R_GOT_FROM_END). When instruction pointed by relocation has no base
-    // register, then relocations can be used when PIC code is disabled. In that
-    // case calculation is G + A, it resolves to an address of entry in GOT
-    // (R_GOT) and not an offset.
+    // These relocations are arguably mis-designed because their calculations
+    // depend on the instructions they are applied to. This is bad because we
+    // usually don't care about whether the target section contains valid
+    // machine instructions or not. But this is part of the documented ABI, so
+    // we had to implement as the standard requires.
     //
-    // To check that instruction has no base register we scan ModR/M byte.
-    // See "Table 2-2. 32-Bit Addressing Forms with the ModR/M Byte"
-    // (http://www.intel.com/content/dam/www/public/us/en/documents/manuals/
-    //  64-ia-32-architectures-software-developer-instruction-set-reference-manual-325383.pdf)
+    // x86 does not support PC-relative data access. Therefore, in order to
+    // access GOT contents, a GOT address needs to be known at link-time
+    // (which means non-PIC) or compilers have to emit code to get a GOT
+    // address at runtime (which means code is position-independent but
+    // compilers need to emit extra code for each GOT access.) This decision
+    // is made at compile-time. In the latter case, compilers emit code to
+    // load an GOT address to a register, which is usually %ebx.
+    //
+    // So, there are two ways to refer to symbol foo's GOT entry: foo@GOT or
+    // foo@GOT(%reg).
+    //
+    // foo@GOT is not usable in PIC. If we are creating a PIC output and if we
+    // find such relocation, we should report an error. foo@GOT is resolved to
+    // an *absolute* address of foo's GOT entry, because both GOT address and
+    // foo's offset are known. In other words, it's G + A.
+    //
+    // foo@GOT(%reg) needs to be resolved to a *relative* offset from a GOT to
+    // foo's GOT entry in the table, because GOT address is not known but foo's
+    // offset in the table is known. It's G + A - GOT.
+    //
+    // It's unfortunate that compilers emit the same relocation for these
+    // different use cases. In order to distinguish them, we have to read a
+    // machine instruction.
+    //
+    // The following code implements it. We assume that Loc[0] is the first
+    // byte of a displacement or an immediate field of a valid machine
+    // instruction. That means a ModRM byte is at Loc[-1]. By taking a look at
+    // the byte, we can determine whether the instruction is register-relative
+    // (i.e. it was generated for foo@GOT(%reg)) or absolute (i.e. foo@GOT).
     if ((Loc[-1] & 0xc7) != 0x5)
       return R_GOT_FROM_END;
     if (Config->Pic)
