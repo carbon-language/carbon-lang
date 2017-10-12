@@ -8652,7 +8652,8 @@ bool CheckTautologicalComparison(Sema &S, BinaryOperator *E, Expr *Constant,
 
   bool ConstIsLowerBound = (Op == BO_LT || Op == BO_LE) ^ RhsConstant;
   bool ResultWhenConstEqualsOther = (Op == BO_LE || Op == BO_GE);
-  bool ResultWhenConstNeOther = ConstIsLowerBound ^ ValueType == LimitType::Max;
+  bool ResultWhenConstNeOther =
+      ConstIsLowerBound ^ (ValueType == LimitType::Max);
   if (ResultWhenConstEqualsOther != ResultWhenConstNeOther)
     return false; // The comparison is not tautological.
 
