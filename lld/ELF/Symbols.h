@@ -229,7 +229,7 @@ public:
     //
     // For DSO symbols, we always call them through PLT slots anyway.
     // So there's no difference between GNU ifunc and regular function
-    // symbols if they are in DSOs. So we can handle GNU_IFUCN as FUNC.
+    // symbols if they are in DSOs. So we can handle GNU_IFUNC as FUNC.
     if (this->Type == llvm::ELF::STT_GNU_IFUNC)
       this->Type = llvm::ELF::STT_FUNC;
   }
