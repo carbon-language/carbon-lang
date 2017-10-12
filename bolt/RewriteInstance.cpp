@@ -3429,7 +3429,6 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
         Symbol.st_shndx = ELF::SHN_ABS;
         Symbol.st_name = AddToStrTab(Name);
         Symbol.st_size = 0;
-        Symbol.st_shndx = 0;
         Symbol.st_other = 0;
         Symbol.setBindingAndType(ELF::STB_WEAK, ELF::STT_NOTYPE);
 

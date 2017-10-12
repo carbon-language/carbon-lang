@@ -196,7 +196,7 @@ IndirectCallPromotion::getCallTargets(
   } else {
     const auto *BranchData = BF.getBranchData();
     assert(BranchData && "expected initialized branch data");
-    auto Offset = BC.MIA->getAnnotationAs<uint64_t>(Inst, "IndirectBranchData");
+    auto Offset = BC.MIA->getAnnotationAs<uint64_t>(Inst, "Offset");
     for (const auto &BI : BranchData->getBranchRange(Offset)) {
       Callsite Site(BF, BI);
       if (Site.isValid()) {
@@ -309,7 +309,7 @@ IndirectCallPromotion::rewriteCall(BinaryContext &BC,
     auto TBB = Function.createBasicBlock(0, Sym);
     for (auto &Inst : Insts) { // sanitize new instructions.
       if (BC.MIA->isCall(Inst))
-        BC.MIA->removeAnnotation(Inst, "IndirectBranchData");
+        BC.MIA->removeAnnotation(Inst, "Offset");
     }
     TBB->addInstructions(Insts.begin(), Insts.end());
     NewBBs.emplace_back(std::move(TBB));
@@ -725,9 +725,9 @@ void IndirectCallPromotion::runOnFunctions(
         auto &Inst = BB->getInstructionAtIndex(Idx);
         const auto InstIdx = &Inst - &(*BB->begin());
         const bool IsTailCall = BC.MIA->isTailCall(Inst);
+        const bool HasBranchData = Function.getBranchData() &&
+                                   BC.MIA->hasAnnotation(Inst, "Offset");
         const bool IsJumpTable = Function.getJumpTable(Inst);
-        const bool HasBranchData =
-          BC.MIA->hasAnnotation(Inst, "IndirectBranchData");
         const bool OptimizeCalls =
           (opts::IndirectCallPromotion == ICP_CALLS ||
            opts::IndirectCallPromotion == ICP_ALL);
@@ -735,8 +735,12 @@ void IndirectCallPromotion::runOnFunctions(
           (opts::IndirectCallPromotion == ICP_JUMP_TABLES ||
            opts::IndirectCallPromotion == ICP_ALL);
 
-        if (!((HasBranchData && OptimizeCalls) ||
+        if (!((HasBranchData && !IsJumpTable && OptimizeCalls) ||
               (IsJumpTable && OptimizeJumpTables)))
+          continue;
+
+        // Ignore direct calls.
+        if (BC.MIA->isCall(Inst) && BC.MIA->getTargetSymbol(Inst, 0))
           continue;
 
         assert(BC.MIA->isCall(Inst) || BC.MIA->isIndirectBranch(Inst));

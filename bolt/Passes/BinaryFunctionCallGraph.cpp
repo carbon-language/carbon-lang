@@ -188,10 +188,10 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
 
       // If this is an indirect call use perf data directly.
       if (!DstSym && BranchData &&
-          BC.MIA->hasAnnotation(Inst, "EdgeCountData")) {
-        const auto DataOffset =
-          BC.MIA->getAnnotationAs<uint64_t>(Inst, "EdgeCountData");
-        for (const auto &BI : BranchData->getBranchRange(DataOffset)) {
+          BC.MIA->hasAnnotation(Inst, "Offset")) {
+        const auto InstrOffset =
+          BC.MIA->getAnnotationAs<uint64_t>(Inst, "Offset");
+        for (const auto &BI : BranchData->getBranchRange(InstrOffset)) {
           Counts.push_back(getCallInfoFromBranchData(BI, false));
         }
       } else {

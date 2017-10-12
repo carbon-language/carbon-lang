@@ -740,7 +740,7 @@ BinaryFunction::analyzeIndirectBranch(MCInst &Instruction,
   //
   // We handle PIC-style jump tables separately.
   //
-  if (Instruction.getNumOperands() == 1) {
+  if (Instruction.getNumPrimeOperands() == 1) {
     // If the indirect jump is on register - try to detect if the
     // register value is loaded from a memory location.
     assert(Instruction.getOperand(0).isReg() && "register operand expected");
@@ -1064,7 +1064,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
 
       if (!IsZeroPadding) {
         // Ignore this function. Skip to the next one in non-relocs mode.
-        errs() << "BOLT-ERROR: unable to disassemble instruction at offset 0x"
+        errs() << "BOLT-WARNING: unable to disassemble instruction at offset 0x"
                << Twine::utohexstr(Offset) << " (address 0x"
                << Twine::utohexstr(AbsoluteInstrAddr) << ") in function "
                << *this << '\n';
@@ -1098,7 +1098,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         int64_t Value;
         const auto Result =
           BC.MIA->replaceImmWithSymbol(Instruction, Relocation.Symbol,
-                                       Relocation.Addend, BC.Ctx.get(), Value);
+                                       Relocation.Addend, Ctx.get(), Value);
         (void)Result;
         assert(Result && "cannot replace immediate with relocation");
 
@@ -1125,7 +1125,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         // or a recursive call.
         bool IsCall = MIA->isCall(Instruction);
         const bool IsCondBranch = MIA->isConditionalBranch(Instruction);
-        MCSymbol *TargetSymbol{nullptr};
+        MCSymbol *TargetSymbol = nullptr;
 
         if (IsCall && containsAddress(TargetAddress)) {
           if (TargetAddress == getAddress()) {
@@ -1154,7 +1154,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                            << " : replacing with nop.\n");
               BC.MIA->createNoop(Instruction);
               if (IsCondBranch) {
-                // Register branch function profile validation.
+                // Register branch offset for profile validation.
                 IgnoredBranches.emplace_back(Offset, Offset + Size);
               }
               goto add_instruction;
@@ -1182,10 +1182,6 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                          << Twine::utohexstr(AbsoluteInstrAddr) << ".\n";
                 }
               }
-              // TODO: A better way to do this would be using annotations for
-              // MCInst objects.
-              TailCallOffsets.emplace(std::make_pair(Offset,
-                                                     TargetAddress));
               IsCall = true;
             }
 
@@ -1231,14 +1227,6 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           // Add taken branch info.
           TakenBranches.emplace_back(Offset, TargetAddress - getAddress());
         }
-        if (IsCondBranch) {
-          // Add fallthrough branch info.
-          FTBranches.emplace_back(Offset, Offset + Size);
-        }
-
-        const bool isIndirect =
-          ((IsCall || !IsCondBranch) && MIA->isIndirectBranch(Instruction));
-
         Instruction.clear();
         Instruction.addOperand(
             MCOperand::createExpr(
@@ -1246,19 +1234,21 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                                       MCSymbolRefExpr::VK_None,
                                       *Ctx)));
 
-        if (BranchData) {
+        // Record call offset for profile matching.
+        if (IsCall) {
+          MIA->addAnnotation(Ctx.get(), Instruction, "Offset", Offset);
+        }
+        if (IsCondBranch) {
+          // Add fallthrough branch info.
+          FTBranches.emplace_back(Offset, Offset + Size);
           if (IsCall) {
-            MIA->addAnnotation(Ctx.get(), Instruction, "EdgeCountData", Offset);
-          }
-          if (isIndirect) {
-            MIA->addAnnotation(Ctx.get(), Instruction, "IndirectBranchData",
-                               Offset);
+            MIA->setConditionalTailCall(Instruction, TargetAddress);
           }
         }
       } else {
         // Could not evaluate branch. Should be an indirect call or an
         // indirect branch. Bail out on the latter case.
-        bool MaybeEdgeCountData = false;
+        MIA->addAnnotation(Ctx.get(), Instruction, "Offset", Offset);
         if (MIA->isIndirectBranch(Instruction)) {
           auto Result = analyzeIndirectBranch(Instruction, Size, Offset);
           switch (Result) {
@@ -1269,40 +1259,18 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
               auto Result = MIA->convertJmpToTailCall(Instruction);
               (void)Result;
               assert(Result);
-              if (BranchData) {
-                MIA->addAnnotation(Ctx.get(), Instruction, "IndirectBranchData",
-                                   Offset);
-              }
             }
             break;
           case IndirectBranchType::POSSIBLE_JUMP_TABLE:
           case IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE:
             if (opts::JumpTables == JTS_NONE)
               IsSimple = false;
-            MaybeEdgeCountData = true;
             break;
           case IndirectBranchType::UNKNOWN:
             // Keep processing. We'll do more checks and fixes in
             // postProcessIndirectBranches().
-            MaybeEdgeCountData = true;
-            if (BranchData) {
-              MIA->addAnnotation(Ctx.get(),
-                                 Instruction,
-                                 "MaybeIndirectBranchData",
-                                 Offset);
-            }
             break;
           };
-        } else if (MIA->isCall(Instruction)) {
-          if (BranchData) {
-            MIA->addAnnotation(Ctx.get(), Instruction, "IndirectBranchData",
-                               Offset);
-          }
-        }
-        if (BranchData) {
-          const char* AttrName =
-            MaybeEdgeCountData ? "MaybeEdgeCountData" : "EdgeCountData";
-          MIA->addAnnotation(Ctx.get(), Instruction, AttrName, Offset);
         }
         // Indirect call. We only need to fix it if the operand is RIP-relative
         if (IsSimple && MIA->hasRIPOperand(Instruction)) {
@@ -1310,6 +1278,8 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             errs() << "BOLT-ERROR: cannot handle RIP operand at 0x"
                    << Twine::utohexstr(AbsoluteInstrAddr)
                    << ". Skipping function " << *this << ".\n";
+            if (opts::Relocs)
+              exit(1);
             IsSimple = false;
           }
         }
@@ -1320,6 +1290,8 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           errs() << "BOLT-ERROR: cannot handle RIP operand at 0x"
                  << Twine::utohexstr(AbsoluteInstrAddr)
                  << ". Skipping function " << *this << ".\n";
+          if (opts::Relocs)
+            exit(1);
           IsSimple = false;
         }
       }
@@ -1336,7 +1308,6 @@ add_instruction:
 
   postProcessJumpTables();
 
-  // Update state.
   updateState(State::Disassembled);
 }
 
@@ -1402,12 +1373,6 @@ bool BinaryFunction::postProcessIndirectBranches() {
       // it must be a tail call.
       if (layout_size() == 1) {
         BC.MIA->convertJmpToTailCall(Instr);
-        BC.MIA->renameAnnotation(Instr,
-                                 "MaybeEdgeCountData",
-                                 "EdgeCountData");
-        BC.MIA->renameAnnotation(Instr,
-                                 "MaybeIndirectBranchData",
-                                 "IndirectBranchData");
         return true;
       }
 
@@ -1487,12 +1452,6 @@ bool BinaryFunction::postProcessIndirectBranches() {
         return false;
       }
       BC.MIA->convertJmpToTailCall(Instr);
-      BC.MIA->renameAnnotation(Instr,
-                               "MaybeEdgeCountData",
-                               "EdgeCountData");
-      BC.MIA->renameAnnotation(Instr,
-                               "MaybeIndirectBranchData",
-                               "IndirectBranchData");
     }
   }
   return true;
@@ -1573,7 +1532,7 @@ bool BinaryFunction::buildCFG() {
   //    unconditional branch, and the unconditional branch is not
   //    a destination of another branch. In the latter case, the
   //    basic block will consist of a single unconditional branch
-  //    (missed optimization opportunity?).
+  //    (missed "double-jump" optimization).
   //
   // Created basic blocks are sorted in layout order since they are
   // created in the same order as instructions, and instructions are
@@ -1581,7 +1540,6 @@ bool BinaryFunction::buildCFG() {
   BinaryBasicBlock *InsertBB{nullptr};
   BinaryBasicBlock *PrevBB{nullptr};
   bool IsLastInstrNop{false};
-  bool IsPreviousInstrTailCall{false};
   const MCInst *PrevInstr{nullptr};
 
   auto addCFIPlaceholders =
@@ -1615,11 +1573,13 @@ bool BinaryFunction::buildCFG() {
     }
     if (!InsertBB) {
       // It must be a fallthrough or unreachable code. Create a new block unless
-      // we see an unconditional branch following a conditional one.
+      // we see an unconditional branch following a conditional one. The latter
+      // should not be a conditional tail call.
       assert(PrevBB && "no previous basic block for a fall through");
       assert(PrevInstr && "no previous instruction for a fall through");
       if (MIA->isUnconditionalBranch(Instr) &&
-          !MIA->isUnconditionalBranch(*PrevInstr) && !IsPreviousInstrTailCall) {
+          !MIA->isUnconditionalBranch(*PrevInstr) &&
+          !MIA->getConditionalTailCall(*PrevInstr)) {
         // Temporarily restore inserter basic block.
         InsertBB = PrevBB;
       } else {
@@ -1637,16 +1597,10 @@ bool BinaryFunction::buildCFG() {
     uint32_t InsertIndex = InsertBB->addInstruction(Instr);
     PrevInstr = &Instr;
 
-    // Record whether this basic block is terminated with a tail call.
-    auto TCI = TailCallOffsets.find(Offset);
-    if (TCI != TailCallOffsets.end()) {
-      uint64_t TargetAddr = TCI->second;
+    // Record conditional tail call info.
+    if (const auto CTCDest = MIA->getConditionalTailCall(Instr)) {
       TailCallTerminatedBlocks.emplace(
-          std::make_pair(InsertBB,
-                         TailCallInfo(Offset, InsertIndex, TargetAddr)));
-      IsPreviousInstrTailCall = true;
-    } else {
-      IsPreviousInstrTailCall = false;
+        std::make_pair(InsertBB, TailCallInfo(Offset, InsertIndex, *CTCDest)));
     }
 
     // Add associated CFI instrs. We always add the CFI instruction that is
@@ -1821,9 +1775,7 @@ bool BinaryFunction::buildCFG() {
 
     // Check if the last instruction is a conditional jump that serves as a tail
     // call.
-    bool IsCondTailCall = MIA->isConditionalBranch(*LastInstIter) &&
-                          TailCallTerminatedBlocks.count(BB);
-
+    const auto IsCondTailCall = MIA->getConditionalTailCall(*LastInstIter);
     if (BB->succ_size() == 0) {
       if (IsCondTailCall) {
         // Conditional tail call without profile data for non-taken branch.
@@ -1915,7 +1867,6 @@ bool BinaryFunction::buildCFG() {
   // NB: don't clear Labels list as we may need them if we mark the function
   //     as non-simple later in the process of discovering extra entry points.
   clearList(Instructions);
-  clearList(TailCallOffsets);
   clearList(TailCallTerminatedBlocks);
   clearList(OffsetToCFI);
   clearList(TakenBranches);
@@ -4384,7 +4335,7 @@ DynoStats BinaryFunction::getDynoStats() const {
       if (!BC.MIA->isCall(Instr))
         continue;
       uint64_t CallFreq = BBExecutionCount;
-      if (BC.MIA->isCTC(Instr)) {
+      if (BC.MIA->getConditionalTailCall(Instr)) {
         CallFreq = 0;
         if (auto FreqOrErr =
                 BC.MIA->tryGetAnnotationAs<uint64_t>(Instr, "CTCTakenFreq")) {
@@ -4444,7 +4395,7 @@ DynoStats BinaryFunction::getDynoStats() const {
     }
 
     // CTCs
-    if (BC.MIA->isCTC(*CondBranch)) {
+    if (BC.MIA->getConditionalTailCall(*CondBranch)) {
       if (BB->branch_info_begin() != BB->branch_info_end())
         Stats[DynoStats::UNCOND_BRANCHES] += BB->branch_info_begin()->Count;
       continue;

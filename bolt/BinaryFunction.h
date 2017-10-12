@@ -482,12 +482,6 @@ private:
   using InstrMapType = std::map<uint32_t, MCInst>;
   InstrMapType Instructions;
 
-  /// Temporary holder of offsets of tail call instructions before CFG is
-  /// constructed. Map from offset to the corresponding target address of the
-  /// tail call.
-  using TailCallOffsetMapType = std::map<uint32_t, uint64_t>;
-  TailCallOffsetMapType TailCallOffsets;
-
   /// Temporary holder of tail call terminated basic blocks used during CFG
   /// construction. Map from tail call terminated basic block to a struct with
   /// information about the tail call.

@@ -447,7 +447,7 @@ bool InlineSmallFunctions::inlineCallsInFunction(
       auto &Inst = *InstIt;
       if (BC.MIA->isCall(Inst) &&
           !BC.MIA->isTailCall(Inst) &&
-          Inst.size() == 1 &&
+          Inst.getNumPrimeOperands() == 1 &&
           Inst.getOperand(0).isExpr()) {
         const auto *TargetSymbol = BC.MIA->getTargetSymbol(Inst);
         assert(TargetSymbol && "target symbol expected for direct call");
@@ -513,7 +513,7 @@ bool InlineSmallFunctions::inlineCallsInFunctionAggressive(
     for (auto InstIt = BB->begin(); InstIt != BB->end(); ) {
       auto &Inst = *InstIt;
       if (BC.MIA->isCall(Inst) &&
-          Inst.size() == 1 &&
+          Inst.getNumPrimeOperands() == 1 &&
           Inst.getOperand(0).isExpr()) {
         assert(!BC.MIA->isInvoke(Inst));
         const auto *TargetSymbol = BC.MIA->getTargetSymbol(Inst);

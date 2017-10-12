@@ -655,7 +655,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
                                         ? 0
                                         : PredBB->getBranchInfo(true).Count;
       // Annotate it, so "isCall" returns true for this jcc
-      MIA->addAnnotation(BC.Ctx.get(), *CondBranch, "IsCTC", true);
+      MIA->setConditionalTailCall(*CondBranch);
       // Add info abount the conditional tail call frequency, otherwise this
       // info will be lost when we delete the associated BranchInfo entry
       BC.MIA->addAnnotation(BC.Ctx.get(), *CondBranch, "CTCTakenFreq",
