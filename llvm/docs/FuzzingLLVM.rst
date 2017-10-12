@@ -20,9 +20,11 @@ clang-fuzzer
 ------------
 
 A |generic fuzzer| that tries to compile textual input as C++ code. Some of the
-bugs this fuzzer has reported are `on bugzilla <https://llvm.org/pr23057>`__
-and `on OSS Fuzz's tracker
-<https://bugs.chromium.org/p/oss-fuzz/issues/list?q=proj-llvm+clang-fuzzer>`__.
+bugs this fuzzer has reported are `on bugzilla`__ and `on OSS Fuzz's
+tracker`__.
+
+__ https://llvm.org/pr23057
+__ https://bugs.chromium.org/p/oss-fuzz/issues/list?q=proj-llvm+clang-fuzzer
 
 clang-proto-fuzzer
 ------------------
@@ -42,26 +44,29 @@ clang-format-fuzzer
 -------------------
 
 A |generic fuzzer| that runs clang-format_ on C++ text fragments. Some of the
-bugs this fuzzer has reported are `on bugzilla <https://llvm.org/pr23052>`__
-and `on OSS Fuzz's tracker
-<https://bugs.chromium.org/p/oss-fuzz/issues/list?q=proj-llvm+clang-format-fuzzer`__.
+bugs this fuzzer has reported are `on bugzilla`__
+and `on OSS Fuzz's tracker`__.
 
 .. _clang-format: https://clang.llvm.org/docs/ClangFormat.html
+__ https://llvm.org/pr23052
+__ https://bugs.chromium.org/p/oss-fuzz/issues/list?q=proj-llvm+clang-format-fuzzer
 
 llvm-as-fuzzer
 --------------
 
 A |generic fuzzer| that tries to parse text as :doc:`LLVM assembly <LangRef>`.
-Some of the bugs this fuzzer has reported are `on bugzilla
-<https://llvm.org/pr24639>`__
+Some of the bugs this fuzzer has reported are `on bugzilla`__.
+
+__ https://llvm.org/pr24639
 
 llvm-dwarfdump-fuzzer
 ---------------------
 
 A |generic fuzzer| that interprets inputs as object files and runs
 :doc:`llvm-dwarfdump <CommandGuide/llvm-dwarfdump>` on them. Some of the bugs
-this fuzzer has reported are `on OSS Fuzz's tracker
-<https://bugs.chromium.org/p/oss-fuzz/issues/list?q=proj-llvm+llvm-dwarfdump-fuzzer`__.
+this fuzzer has reported are `on OSS Fuzz's tracker`__
+
+__ https://bugs.chromium.org/p/oss-fuzz/issues/list?q=proj-llvm+llvm-dwarfdump-fuzzer
 
 llvm-isel-fuzzer
 ----------------
