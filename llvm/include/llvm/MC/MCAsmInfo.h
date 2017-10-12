@@ -353,7 +353,7 @@ protected:
   /// The integrated assembler should be enabled by default (by the
   /// constructors) when failing to parse a valid piece of assembly (inline
   /// or otherwise) is considered a bug. It may then be overridden after
-  /// construction (see TargetMachine::initAsmInfo()).
+  /// construction (see LLVMTargetMachine::initAsmInfo()).
   bool UseIntegratedAssembler;
 
   /// Preserve Comments in assembly

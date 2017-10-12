@@ -39,10 +39,11 @@ ARCTargetMachine::ARCTargetMachine(const Target &T, const Triple &TT,
                                    Optional<Reloc::Model> RM,
                                    Optional<CodeModel::Model> CM,
                                    CodeGenOpt::Level OL, bool JIT)
-    : TargetMachine(T, "e-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-"
-                    "f32:32:32-i64:32-f64:32-a:0:32-n32",
-                    TT, CPU, FS, Options, getRelocModel(RM),
-                    getEffectiveCodeModel(CM), OL),
+    : LLVMTargetMachine(T,
+                        "e-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-"
+                        "f32:32:32-i64:32-f64:32-a:0:32-n32",
+                        TT, CPU, FS, Options, getRelocModel(RM),
+                        getEffectiveCodeModel(CM), OL),
       TLOF(make_unique<TargetLoweringObjectFileELF>()),
       Subtarget(TT, CPU, FS, *this) {
   initAsmInfo();

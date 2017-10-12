@@ -62,11 +62,11 @@ private:
   TargetInstrInfo TII;
 };
 
-class BogusTargetMachine : public TargetMachine {
+class BogusTargetMachine : public LLVMTargetMachine {
 public:
   BogusTargetMachine()
-      : TargetMachine(Target(), "", Triple(""), "", "", TargetOptions(),
-                      Reloc::Static, CodeModel::Small, CodeGenOpt::Default),
+      : LLVMTargetMachine(Target(), "", Triple(""), "", "", TargetOptions(),
+                          Reloc::Static, CodeModel::Small, CodeGenOpt::Default),
         ST(*this) {}
   ~BogusTargetMachine() override {}
 

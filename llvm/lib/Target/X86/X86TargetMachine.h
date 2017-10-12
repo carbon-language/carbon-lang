@@ -28,7 +28,7 @@ class StringRef;
 class X86Subtarget;
 class X86RegisterBankInfo;
 
-class X86TargetMachine final : public TargetMachine {
+class X86TargetMachine final : public LLVMTargetMachine {
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
   mutable StringMap<std::unique_ptr<X86Subtarget>> SubtargetMap;
 

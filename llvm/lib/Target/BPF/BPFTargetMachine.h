@@ -18,7 +18,7 @@
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
-class BPFTargetMachine : public TargetMachine {
+class BPFTargetMachine : public LLVMTargetMachine {
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
   BPFSubtarget Subtarget;
 

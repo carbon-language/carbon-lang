@@ -511,7 +511,8 @@ static int compileModule(char **argv, LLVMContext &Context) {
     }
 
     const char *argv0 = argv[0];
-    MachineModuleInfo *MMI = new MachineModuleInfo(Target.get());
+    LLVMTargetMachine &LLVMTM = static_cast<LLVMTargetMachine&>(*Target);
+    MachineModuleInfo *MMI = new MachineModuleInfo(&LLVMTM);
 
     // Construct a custom pass pipeline that starts after instruction
     // selection.
@@ -520,7 +521,7 @@ static int compileModule(char **argv, LLVMContext &Context) {
         errs() << argv0 << ": run-pass is for .mir file only.\n";
         return 1;
       }
-      TargetPassConfig &TPC = *Target->createPassConfig(PM);
+      TargetPassConfig &TPC = *LLVMTM.createPassConfig(PM);
       if (TPC.hasLimitedCodeGenPipeline()) {
         errs() << argv0 << ": run-pass cannot be used with "
                << TPC.getLimitedCodeGenPipelineReason(" and ") << ".\n";

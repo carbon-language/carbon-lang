@@ -225,7 +225,7 @@ static CodeModel::Model getEffectiveCodeModel(const Triple &TT,
 
 // The FeatureString here is a little subtle. We are modifying the feature
 // string with what are (currently) non-function specific overrides as it goes
-// into the TargetMachine constructor and then using the stored value in the
+// into the LLVMTargetMachine constructor and then using the stored value in the
 // Subtarget constructor below it.
 PPCTargetMachine::PPCTargetMachine(const Target &T, const Triple &TT,
                                    StringRef CPU, StringRef FS,
@@ -233,10 +233,10 @@ PPCTargetMachine::PPCTargetMachine(const Target &T, const Triple &TT,
                                    Optional<Reloc::Model> RM,
                                    Optional<CodeModel::Model> CM,
                                    CodeGenOpt::Level OL, bool JIT)
-    : TargetMachine(T, getDataLayoutString(TT), TT, CPU,
-                    computeFSAdditions(FS, OL, TT), Options,
-                    getEffectiveRelocModel(TT, RM),
-                    getEffectiveCodeModel(TT, CM, JIT), OL),
+    : LLVMTargetMachine(T, getDataLayoutString(TT), TT, CPU,
+                        computeFSAdditions(FS, OL, TT), Options,
+                        getEffectiveRelocModel(TT, RM),
+                        getEffectiveCodeModel(TT, CM, JIT), OL),
       TLOF(createTLOF(getTargetTriple())),
       TargetABI(computeTargetABI(TT, Options)) {
   initAsmInfo();

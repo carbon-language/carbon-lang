@@ -205,9 +205,9 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T, const Triple &TT,
                                            Optional<Reloc::Model> RM,
                                            Optional<CodeModel::Model> CM,
                                            CodeGenOpt::Level OL, bool isLittle)
-    : TargetMachine(T, computeDataLayout(TT, CPU, Options, isLittle), TT,
-                    CPU, FS, Options, getEffectiveRelocModel(TT, RM),
-                    getEffectiveCodeModel(CM), OL),
+    : LLVMTargetMachine(T, computeDataLayout(TT, CPU, Options, isLittle), TT,
+                        CPU, FS, Options, getEffectiveRelocModel(TT, RM),
+                        getEffectiveCodeModel(CM), OL),
       TargetABI(computeTargetABI(TT, CPU, Options)),
       TLOF(createTLOF(getTargetTriple())), isLittle(isLittle) {
 

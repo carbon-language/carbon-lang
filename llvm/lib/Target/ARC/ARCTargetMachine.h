@@ -21,7 +21,7 @@ namespace llvm {
 
 class TargetPassConfig;
 
-class ARCTargetMachine : public TargetMachine {
+class ARCTargetMachine : public LLVMTargetMachine {
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
   ARCSubtarget Subtarget;
 

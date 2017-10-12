@@ -200,7 +200,7 @@ X86TargetMachine::X86TargetMachine(const Target &T, const Triple &TT,
                                    Optional<Reloc::Model> RM,
                                    Optional<CodeModel::Model> CM,
                                    CodeGenOpt::Level OL, bool JIT)
-    : TargetMachine(
+    : LLVMTargetMachine(
           T, computeDataLayout(TT), TT, CPU, FS, Options,
           getEffectiveRelocModel(TT, RM),
           getEffectiveCodeModel(CM, JIT, TT.getArch() == Triple::x86_64), OL),

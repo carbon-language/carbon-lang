@@ -355,7 +355,7 @@ void TargetPassConfig::setStartStopPasses() {
 
 // Out of line constructor provides default values for pass options and
 // registers all common codegen passes.
-TargetPassConfig::TargetPassConfig(TargetMachine &TM, PassManagerBase &pm)
+TargetPassConfig::TargetPassConfig(LLVMTargetMachine &TM, PassManagerBase &pm)
     : ImmutablePass(ID), PM(&pm), TM(&TM) {
   Impl = new PassConfigImpl();
 
@@ -408,7 +408,7 @@ void TargetPassConfig::insertPass(AnalysisID TargetPassID,
 /// addPassToEmitX methods for generating a pipeline of CodeGen passes.
 ///
 /// Targets may override this to extend TargetPassConfig.
-TargetPassConfig *TargetMachine::createPassConfig(PassManagerBase &PM) {
+TargetPassConfig *LLVMTargetMachine::createPassConfig(PassManagerBase &PM) {
   return new TargetPassConfig(*this, PM);
 }
 

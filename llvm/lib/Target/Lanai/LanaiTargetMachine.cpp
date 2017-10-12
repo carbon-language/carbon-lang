@@ -65,9 +65,9 @@ LanaiTargetMachine::LanaiTargetMachine(const Target &T, const Triple &TT,
                                        Optional<Reloc::Model> RM,
                                        Optional<CodeModel::Model> CodeModel,
                                        CodeGenOpt::Level OptLevel, bool JIT)
-    : TargetMachine(T, computeDataLayout(), TT, Cpu, FeatureString, Options,
-                    getEffectiveRelocModel(RM),
-                    getEffectiveCodeModel(CodeModel), OptLevel),
+    : LLVMTargetMachine(T, computeDataLayout(), TT, Cpu, FeatureString, Options,
+                        getEffectiveRelocModel(RM),
+                        getEffectiveCodeModel(CodeModel), OptLevel),
       Subtarget(TT, Cpu, FeatureString, *this, Options, getCodeModel(),
                 OptLevel),
       TLOF(new LanaiTargetObjectFile()) {

@@ -24,7 +24,7 @@
 
 namespace llvm {
 
-class XCoreTargetMachine : public TargetMachine {
+class XCoreTargetMachine : public LLVMTargetMachine {
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
   XCoreSubtarget Subtarget;
 

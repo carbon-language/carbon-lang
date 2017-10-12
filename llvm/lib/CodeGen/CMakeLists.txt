@@ -53,6 +53,7 @@ add_llvm_library(LLVMCodeGen
   LiveRegUnits.cpp
   LiveStackAnalysis.cpp
   LiveVariables.cpp
+  LLVMTargetMachine.cpp
   LocalStackSlotAllocation.cpp
   LowLevelType.cpp
   LowerEmuTLS.cpp
@@ -141,8 +142,6 @@ add_llvm_library(LLVMCodeGen
   TargetInstrInfo.cpp
   TargetLoweringBase.cpp
   TargetLoweringObjectFileImpl.cpp
-  TargetMachine.cpp
-  TargetMachineC.cpp
   TargetOptionsImpl.cpp
   TargetPassConfig.cpp
   TargetRegisterInfo.cpp

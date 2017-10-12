@@ -23,7 +23,7 @@ namespace llvm {
 
 class AArch64RegisterBankInfo;
 
-class AArch64TargetMachine : public TargetMachine {
+class AArch64TargetMachine : public LLVMTargetMachine {
 protected:
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
   mutable StringMap<std::unique_ptr<AArch64Subtarget>> SubtargetMap;

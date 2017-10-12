@@ -25,7 +25,7 @@
 
 namespace llvm {
 
-class ARMBaseTargetMachine : public TargetMachine {
+class ARMBaseTargetMachine : public LLVMTargetMachine {
 public:
   enum ARMABI {
     ARM_ABI_UNKNOWN,
