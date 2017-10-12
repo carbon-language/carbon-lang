@@ -128,7 +128,7 @@ MCELFStreamer &AMDGPUTargetELFStreamer::getStreamer() {
 }
 
 void AMDGPUTargetELFStreamer::EmitAMDGPUNote(
-    const MCExpr *DescSZ, ElfNote::NoteType Type,
+    const MCExpr *DescSZ, unsigned NoteType,
     function_ref<void(MCELFStreamer &)> EmitDesc) {
   auto &S = getStreamer();
   auto &Context = S.getContext();
@@ -140,7 +140,7 @@ void AMDGPUTargetELFStreamer::EmitAMDGPUNote(
     ElfNote::SectionName, ELF::SHT_NOTE, ELF::SHF_ALLOC));
   S.EmitIntValue(NameSZ, 4);                                  // namesz
   S.EmitValue(DescSZ, 4);                                     // descz
-  S.EmitIntValue(Type, 4);                                    // type
+  S.EmitIntValue(NoteType, 4);                                // type
   S.EmitBytes(StringRef(ElfNote::NoteName, NameSZ));          // name
   S.EmitValueToAlignment(4, 0, 1, 0);                         // padding 0
   EmitDesc(S);                                                // desc
@@ -225,7 +225,7 @@ bool AMDGPUTargetELFStreamer::EmitHSAMetadata(
 
   EmitAMDGPUNote(
     DescSZ,
-    ElfNote::NT_AMDGPU_HSA_CODE_OBJECT_METADATA,
+    ELF::NT_AMD_AMDGPU_HSA_METADATA,
     [&](MCELFStreamer &OS) {
       OS.EmitLabel(DescBegin);
       OS.EmitBytes(HSAMetadataString);
@@ -239,7 +239,7 @@ bool AMDGPUTargetELFStreamer::EmitPALMetadata(
     const PALMD::Metadata &PALMetadata) {
   EmitAMDGPUNote(
     MCConstantExpr::create(PALMetadata.size() * sizeof(uint32_t), getContext()),
-    ElfNote::NT_AMDGPU_PAL_METADATA,
+    ELF::NT_AMD_AMDGPU_PAL_METADATA,
     [&](MCELFStreamer &OS){
       for (auto I : PALMetadata)
         OS.EmitIntValue(I, sizeof(uint32_t));
