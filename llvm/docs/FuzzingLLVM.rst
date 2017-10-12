@@ -81,13 +81,6 @@ the following command would fuzz AArch64 with :doc:`GlobalISel`:
 
    % bin/llvm-isel-fuzzer <corpus-dir> -ignore_remaining_args=1 -mtriple aarch64 -global-isel -O0
 
-Some flags can also be specified in the binary name itself in order to support
-OSS Fuzz, which has trouble with required arguments. To do this, you can copy
-or move ``llvm-isel-fuzzer`` to ``llvm-isel-fuzzer:x-y-z``, where x, y, and z
-are architecture names (``aarch64``, ``x86_64``), optimization levels (``O0``,
-``O2``), or specific keywords like ``gisel`` for enabling global instruction
-selection.
-
 llvm-mc-assemble-fuzzer
 -----------------------
 
