@@ -97,7 +97,7 @@ static bool isPreemptible(const SymbolBody &Body, RelType Type) {
         Type == R_MICROMIPS_GPREL7_S2)
       return false;
   }
-  return Body.isPreemptible();
+  return Body.IsPreemptible;
 }
 
 // This function is similar to the `handleTlsRelocation`. MIPS does not
@@ -120,11 +120,11 @@ static unsigned handleMipsTlsRelocation(RelType Type, SymbolBody &Body,
   }
 
   if (Expr == R_MIPS_TLSGD) {
-    if (InX::MipsGot->addDynTlsEntry(Body) && Body.isPreemptible()) {
+    if (InX::MipsGot->addDynTlsEntry(Body) && Body.IsPreemptible) {
       uint64_t Off = InX::MipsGot->getGlobalDynOffset(Body);
       In<ELFT>::RelaDyn->addReloc(
           {Target->TlsModuleIndexRel, InX::MipsGot, Off, false, &Body, 0});
-      if (Body.isPreemptible())
+      if (Body.IsPreemptible)
         In<ELFT>::RelaDyn->addReloc({Target->TlsOffsetRel, InX::MipsGot,
                                      Off + Config->Wordsize, false, &Body, 0});
     }
@@ -155,8 +155,8 @@ static unsigned handleARMTlsRelocation(RelType Type, SymbolBody &Body,
   // The Dynamic TLS Module Index Relocation for a symbol defined in an
   // executable is always 1. If the target Symbol is not preemptible then
   // we know the offset into the TLS block at static link time.
-  bool NeedDynId = Body.isPreemptible() || Config->Shared;
-  bool NeedDynOff = Body.isPreemptible();
+  bool NeedDynId = Body.IsPreemptible || Config->Shared;
+  bool NeedDynOff = Body.IsPreemptible;
 
   auto AddTlsReloc = [&](uint64_t Off, RelType Type, SymbolBody *Dest,
                          bool Dyn) {
@@ -923,7 +923,7 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
         // for detailed description:
         // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
         InX::MipsGot->addEntry(Body, Addend, Expr);
-        if (Body.isTls() && Body.isPreemptible())
+        if (Body.isTls() && Body.IsPreemptible)
           In<ELFT>::RelaDyn->addReloc({Target->TlsGotRel, InX::MipsGot,
                                        Body.getGotOffset(), false, &Body, 0});
       } else if (!Body.isInGot()) {
