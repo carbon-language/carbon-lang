@@ -721,20 +721,19 @@ static void reportUndefined(SymbolBody &Sym, InputSectionBase &S,
     errorOrWarn(Msg);
 }
 
-template <class RelTy>
-static std::pair<uint32_t, uint32_t>
-mergeMipsN32RelTypes(RelType Type, uint32_t Offset, RelTy *I, RelTy *E) {
-  // MIPS N32 ABI treats series of successive relocations with the same offset
-  // as a single relocation. The similar approach used by N64 ABI, but this ABI
-  // packs all relocations into the single relocation record. Here we emulate
-  // this for the N32 ABI. Iterate over relocation with the same offset and put
-  // theirs types into the single bit-set.
-  uint32_t Processed = 0;
-  for (; I != E && Offset == I->r_offset; ++I) {
-    ++Processed;
-    Type |= I->getType(Config->IsMips64EL) << (8 * Processed);
-  }
-  return std::make_pair(Type, Processed);
+// MIPS N32 ABI treats series of successive relocations with the same offset
+// as a single relocation. The similar approach used by N64 ABI, but this ABI
+// packs all relocations into the single relocation record. Here we emulate
+// this for the N32 ABI. Iterate over relocation with the same offset and put
+// theirs types into the single bit-set.
+template <class RelTy> static RelType getMipsN32RelType(RelTy *&Rel, RelTy *End) {
+  RelType Type = Rel->getType(Config->IsMips64EL);
+  uint64_t Offset = Rel->r_offset;
+
+  int N = 0;
+  while (Rel + 1 != End && (Rel + 1)->r_offset == Offset)
+    Type |= (++Rel)->getType(Config->IsMips64EL) << (8 * ++N);
+  return Type;
 }
 
 // .eh_frame sections are mergeable input sections, so their input
@@ -840,12 +839,9 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
     SymbolBody &Body = Sec.getFile<ELFT>()->getRelocTargetSym(Rel);
     RelType Type = Rel.getType(Config->IsMips64EL);
 
-    if (Config->MipsN32Abi) {
-      uint32_t Processed;
-      std::tie(Type, Processed) =
-          mergeMipsN32RelTypes(Type, Rel.r_offset, I + 1, End);
-      I += Processed;
-    }
+    // Deal with MIPS oddity.
+    if (Config->MipsN32Abi)
+      Type = getMipsN32RelType(I, End);
 
     // Compute the offset of this section in the output section.
     uint64_t Offset = GetOffset.get(Rel.r_offset);
