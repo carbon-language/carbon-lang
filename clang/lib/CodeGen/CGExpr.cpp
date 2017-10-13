@@ -2151,12 +2151,10 @@ Address CodeGenFunction::EmitLoadOfReference(Address Addr,
                                              const ReferenceType *RefTy,
                                              LValueBaseInfo *BaseInfo,
                                              TBAAAccessInfo *TBAAInfo) {
-  if (TBAAInfo)
-    *TBAAInfo = CGM.getTBAAAccessInfo(RefTy->getPointeeType());
-
   llvm::Value *Ptr = Builder.CreateLoad(Addr);
   return Address(Ptr, getNaturalTypeAlignment(RefTy->getPointeeType(),
-                                              BaseInfo, /*forPointee*/ true));
+                                              BaseInfo, TBAAInfo,
+                                              /* forPointeeType= */ true));
 }
 
 LValue CodeGenFunction::EmitLoadOfReferenceLValue(Address RefAddr,
@@ -2171,12 +2169,9 @@ Address CodeGenFunction::EmitLoadOfPointer(Address Ptr,
                                            const PointerType *PtrTy,
                                            LValueBaseInfo *BaseInfo,
                                            TBAAAccessInfo *TBAAInfo) {
-  if (TBAAInfo)
-    *TBAAInfo = CGM.getTBAAAccessInfo(PtrTy->getPointeeType());
-
   llvm::Value *Addr = Builder.CreateLoad(Ptr);
   return Address(Addr, getNaturalTypeAlignment(PtrTy->getPointeeType(),
-                                               BaseInfo,
+                                               BaseInfo, TBAAInfo,
                                                /*forPointeeType=*/true));
 }
 
@@ -2315,8 +2310,10 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       // FIXME: Eventually we will want to emit vector element references.
 
       // Should we be using the alignment of the constant pointer we emitted?
-      CharUnits Alignment = getNaturalTypeAlignment(E->getType(), nullptr,
-                                                    /*pointee*/ true);
+      CharUnits Alignment = getNaturalTypeAlignment(E->getType(),
+                                                    /* BaseInfo= */ nullptr,
+                                                    /* TBAAInfo= */ nullptr,
+                                                    /* forPointeeType= */ true);
       return MakeAddrLValue(Address(Val, Alignment), T, AlignmentSource::Decl);
     }
 
@@ -3729,7 +3726,8 @@ LValue CodeGenFunction::EmitLValueForField(LValue base,
       type = refType->getPointeeType();
 
       CharUnits alignment =
-        getNaturalTypeAlignment(type, &FieldBaseInfo, /*pointee*/ true);
+        getNaturalTypeAlignment(type, &FieldBaseInfo, /* TBAAInfo= */ nullptr,
+                                /* forPointeeType= */ true);
       FieldBaseInfo.setMayAlias(false);
       addr = Address(load, alignment);
 

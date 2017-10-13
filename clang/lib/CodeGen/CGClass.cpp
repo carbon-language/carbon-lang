@@ -137,9 +137,8 @@ CodeGenFunction::EmitCXXMemberDataPointerAddress(const Expr *E, Address base,
                                                  memberPtr, memberPtrType);
 
   QualType memberType = memberPtrType->getPointeeType();
-  if (TBAAInfo)
-    *TBAAInfo = CGM.getTBAAAccessInfo(memberType);
-  CharUnits memberAlign = getNaturalTypeAlignment(memberType, BaseInfo);
+  CharUnits memberAlign = getNaturalTypeAlignment(memberType, BaseInfo,
+                                                  TBAAInfo);
   memberAlign =
     CGM.getDynamicOffsetAlignment(base.getAlignment(),
                             memberPtrType->getClass()->getAsCXXRecordDecl(),
