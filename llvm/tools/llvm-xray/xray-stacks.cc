@@ -798,10 +798,6 @@ static CommandRegistration Unused(&Stack, []() -> Error {
         ST.printAllAggregatingThreads<AggregationType::INVOCATION_COUNT>(
             outs(), FuncIdHelper, StacksOutputFormat);
         break;
-      default:
-        return make_error<StringError>(
-            "Illegal value for aggregation-type.",
-            make_error_code(errc::result_out_of_range));
       }
     } else {
       switch (RequestedAggregation) {
@@ -813,10 +809,6 @@ static CommandRegistration Unused(&Stack, []() -> Error {
         ST.printAllPerThread<AggregationType::INVOCATION_COUNT>(
             outs(), FuncIdHelper, StacksOutputFormat);
         break;
-      default:
-        return make_error<StringError>(
-            "Illegal value for aggregation-type.",
-            make_error_code(errc::result_out_of_range));
       }
     }
     return Error::success();
