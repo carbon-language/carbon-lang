@@ -815,13 +815,31 @@ static void addGotEntry(SymbolBody &Sym, bool Preemptible) {
     DynType = Target->GotRel;
   }
 
-  bool Constant = !Preemptible && (!Config->Pic || isAbsolute(Sym));
-  if (!Constant)
+  // If a GOT slot value can be calculated at link-time, which is now,
+  // we can just fill that out.
+  //
+  // (We don't actually write a value to a GOT slot right now, but we
+  // add a static relocation to a Relocations vector so that
+  // InputSection::relocate will do the work for us. We may be able
+  // to just write a value now, but it is a TODO.)
+  bool IsLinkTimeConstant = !Preemptible && (!Config->Pic || isAbsolute(Sym));
+  if (IsLinkTimeConstant) {
+    InX::Got->Relocations.push_back({Expr, DynType, Off, 0, &Sym});
+  } else {
+    // Otherwise, we emit a dynamic relocation to .rel[a].dyn so that
+    // the GOT slot will be fixed at load-time.
     In<ELFT>::RelaDyn->addReloc(
         {DynType, InX::Got, Off, !Preemptible, &Sym, 0});
 
-  if (Constant || (!Config->IsRela && !Preemptible))
-    InX::Got->Relocations.push_back({Expr, DynType, Off, 0, &Sym});
+    // REL type relocations don't have addend fields unlike RELAs, and
+    // their addends are stored to the section to which they are applied.
+    // So, store addends if we need to.
+    //
+    // This is ugly -- the difference between REL and RELA should be
+    // handled in a better way. It's a TODO.
+    if (!Config->IsRela)
+      InX::Got->Relocations.push_back({R_ABS, Target->GotRel, Off, 0, &Sym});
+  }
 }
 
 // The reason we have to do this early scan is as follows
