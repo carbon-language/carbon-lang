@@ -458,7 +458,7 @@ TargetLowering::SimplifyDemandedBits(SDNode *User, unsigned OpIdx,
   // If Old has more than one use then it must be Op, because the
   // AssumeSingleUse flag is not propogated to recursive calls of
   // SimplifyDemanded bits, so the only node with multiple use that
-  // it will attempt to combine will be opt.
+  // it will attempt to combine will be Op.
   assert(TLO.Old == Op);
 
   SmallVector <SDValue, 4> NewOps;
