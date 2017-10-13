@@ -1,7 +1,6 @@
 ; If the binary looks up libraries using an rpath, we can't test this
 ; without copying the whole lib dir or polluting the build dir.
-; UNSUPPORTED: rpath_in_use
-
+; REQUIRES: static-libs
 ; REQUIRES: aarch64-registered-target
 
 ; RUN: echo > %t.input
