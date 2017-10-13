@@ -73,8 +73,7 @@ define i32 @zext_add_scalar(i1 %x) {
 
 define <2 x i32> @zext_add_vec_splat(<2 x i1> %x) {
 ; CHECK-LABEL: @zext_add_vec_splat(
-; CHECK-NEXT:    [[ZEXT:%.*]] = zext <2 x i1> %x to <2 x i32>
-; CHECK-NEXT:    [[ADD:%.*]] = or <2 x i32> [[ZEXT]], <i32 42, i32 42>
+; CHECK-NEXT:    [[ADD:%.*]] = select <2 x i1> %x, <2 x i32> <i32 43, i32 43>, <2 x i32> <i32 42, i32 42>
 ; CHECK-NEXT:    ret <2 x i32> [[ADD]]
 ;
   %zext = zext <2 x i1> %x to <2 x i32>
@@ -84,8 +83,7 @@ define <2 x i32> @zext_add_vec_splat(<2 x i1> %x) {
 
 define <2 x i32> @zext_add_vec(<2 x i1> %x) {
 ; CHECK-LABEL: @zext_add_vec(
-; CHECK-NEXT:    [[ZEXT:%.*]] = zext <2 x i1> %x to <2 x i32>
-; CHECK-NEXT:    [[ADD:%.*]] = add nuw nsw <2 x i32> [[ZEXT]], <i32 42, i32 23>
+; CHECK-NEXT:    [[ADD:%.*]] = select <2 x i1> %x, <2 x i32> <i32 43, i32 24>, <2 x i32> <i32 42, i32 23>
 ; CHECK-NEXT:    ret <2 x i32> [[ADD]]
 ;
   %zext = zext <2 x i1> %x to <2 x i32>
