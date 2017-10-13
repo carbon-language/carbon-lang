@@ -1516,7 +1516,7 @@ namespace {
   llvm::Value *LoadThisForDtorDelete(CodeGenFunction &CGF,
                                      const CXXDestructorDecl *DD) {
     if (Expr *ThisArg = DD->getOperatorDeleteThisArg())
-      return CGF.EmitScalarExpr(DD->getOperatorDeleteThisArg());
+      return CGF.EmitScalarExpr(ThisArg);
     return CGF.LoadCXXThis();
   }
 
