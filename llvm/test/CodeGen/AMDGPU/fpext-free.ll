@@ -254,11 +254,9 @@ entry:
 ; fold (fsub (fpext (fneg (fmul, x, y))), z)
 ;   -> (fneg (fma (fpext x), (fpext y), z))
 
-; FIXME: Should be able to fold fneg
 ; GCN-LABEL: {{^}}fsub_fpext_fneg_fmul_f16_to_f32:
 ; GCN: s_waitcnt
-; GFX9-F32FLUSH-NEXT: v_xor_b32_e32 v1, 0x8000, v1
-; GFX9-F32FLUSH-NEXT: v_mad_mix_f32 v0, v0, v1, -v2 op_sel_hi:[1,1,0]{{$}}
+; GFX9-F32FLUSH-NEXT: v_mad_mix_f32 v0, v0, -v1, -v2 op_sel_hi:[1,1,0]{{$}}
 ; GFX9-F32FLUSH-NEXT: s_setpc_b64
 
 ; GFX9-F32DENORM-NEXT: v_mul_f16_e64 v0, v0, -v1
@@ -277,11 +275,9 @@ entry:
 ; fold (fsub (fneg (fpext (fmul, x, y))), z)
 ;   -> (fneg (fma (fpext x)), (fpext y), z)
 
-; FIXME: Should be able to fold fneg
 ; GCN-LABEL: {{^}}fsub_fneg_fpext_fmul_f16_to_f32:
 ; GCN: s_waitcnt
-; GFX9-F32FLUSH-NEXT: v_xor_b32_e32 v1, 0x8000, v1
-; GFX9-F32FLUSH-NEXT: v_mad_mix_f32 v0, v0, v1, -v2 op_sel_hi:[1,1,0]{{$}}
+; GFX9-F32FLUSH-NEXT: v_mad_mix_f32 v0, v0, -v1, -v2 op_sel_hi:[1,1,0]{{$}}
 ; GFX9-F32FLUSH-NEXT: s_setpc_b64
 
 ; GFX9-F32DENORM-NEXT: v_mul_f16_e64 v0, v0, -v1
