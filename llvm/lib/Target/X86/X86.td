@@ -579,18 +579,19 @@ def HSWFeatures : ProcessorFeatures<IVBFeatures.Value, [
 
 class HaswellProc<string Name> : ProcModel<Name, HaswellModel,
                                            HSWFeatures.Value, [
-    ProcIntelHSW
-  ]>;
+  ProcIntelHSW
+]>;
 def : HaswellProc<"haswell">;
 def : HaswellProc<"core-avx2">; // Legacy alias.
 
 def BDWFeatures : ProcessorFeatures<HSWFeatures.Value, [
-  ProcIntelBDW,
   FeatureADX,
   FeatureRDSEED
 ]>;
 class BroadwellProc<string Name> : ProcModel<Name, HaswellModel,
-                                             BDWFeatures.Value, []>;
+                                             BDWFeatures.Value, [
+  ProcIntelBDW
+]>;
 def : BroadwellProc<"broadwell">;
 
 def SKLFeatures : ProcessorFeatures<BDWFeatures.Value, [
