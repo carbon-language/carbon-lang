@@ -1020,11 +1020,10 @@ Instruction *InstCombiner::foldAddWithConstant(BinaryOperator &Add) {
 
 Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   bool Changed = SimplifyAssociativeOrCommutative(I);
-  Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
-
   if (Value *V = SimplifyVectorOp(I))
     return replaceInstUsesWith(I, V);
 
+  Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
   if (Value *V =
           SimplifyAddInst(LHS, RHS, I.hasNoSignedWrap(), I.hasNoUnsignedWrap(),
                           SQ.getWithInstruction(&I)))
@@ -1039,10 +1038,11 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
 
   // FIXME: This should be moved into the above helper function to allow these
   // transforms for general constant or constant splat vectors.
+  Type *Ty = I.getType();
   if (ConstantInt *CI = dyn_cast<ConstantInt>(RHS)) {
     Value *XorLHS = nullptr; ConstantInt *XorRHS = nullptr;
     if (match(LHS, m_Xor(m_Value(XorLHS), m_ConstantInt(XorRHS)))) {
-      uint32_t TySizeBits = I.getType()->getScalarSizeInBits();
+      unsigned TySizeBits = Ty->getScalarSizeInBits();
       const APInt &RHSVal = CI->getValue();
       unsigned ExtendAmt = 0;
       // If we have ADD(XOR(AND(X, 0xFF), 0x80), 0xF..F80), it's a sext.
@@ -1061,7 +1061,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       }
 
       if (ExtendAmt) {
-        Constant *ShAmt = ConstantInt::get(I.getType(), ExtendAmt);
+        Constant *ShAmt = ConstantInt::get(Ty, ExtendAmt);
         Value *NewShl = Builder.CreateShl(XorLHS, ShAmt, "sext");
         return BinaryOperator::CreateAShr(NewShl, ShAmt);
       }
@@ -1082,16 +1082,15 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     }
   }
 
-  if (I.getType()->isIntOrIntVectorTy(1))
+  if (Ty->isIntOrIntVectorTy(1))
     return BinaryOperator::CreateXor(LHS, RHS);
 
   // X + X --> X << 1
   if (LHS == RHS) {
-    BinaryOperator *New =
-      BinaryOperator::CreateShl(LHS, ConstantInt::get(I.getType(), 1));
-    New->setHasNoSignedWrap(I.hasNoSignedWrap());
-    New->setHasNoUnsignedWrap(I.hasNoUnsignedWrap());
-    return New;
+    auto *Shl = BinaryOperator::CreateShl(LHS, ConstantInt::get(Ty, 1));
+    Shl->setHasNoSignedWrap(I.hasNoSignedWrap());
+    Shl->setHasNoUnsignedWrap(I.hasNoUnsignedWrap());
+    return Shl;
   }
 
   // -A + B  -->  B - A
@@ -1185,12 +1184,12 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       if (LHSConv->hasOneUse()) {
         Constant *CI =
             ConstantExpr::getTrunc(RHSC, LHSConv->getOperand(0)->getType());
-        if (ConstantExpr::getSExt(CI, I.getType()) == RHSC &&
+        if (ConstantExpr::getSExt(CI, Ty) == RHSC &&
             willNotOverflowSignedAdd(LHSConv->getOperand(0), CI, I)) {
           // Insert the new, smaller add.
           Value *NewAdd =
               Builder.CreateNSWAdd(LHSConv->getOperand(0), CI, "addconv");
-          return new SExtInst(NewAdd, I.getType());
+          return new SExtInst(NewAdd, Ty);
         }
       }
     }
@@ -1208,7 +1207,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
         // Insert the new integer add.
         Value *NewAdd = Builder.CreateNSWAdd(LHSConv->getOperand(0),
                                              RHSConv->getOperand(0), "addconv");
-        return new SExtInst(NewAdd, I.getType());
+        return new SExtInst(NewAdd, Ty);
       }
     }
   }
@@ -1221,12 +1220,12 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       if (LHSConv->hasOneUse()) {
         Constant *CI =
             ConstantExpr::getTrunc(RHSC, LHSConv->getOperand(0)->getType());
-        if (ConstantExpr::getZExt(CI, I.getType()) == RHSC &&
+        if (ConstantExpr::getZExt(CI, Ty) == RHSC &&
             willNotOverflowUnsignedAdd(LHSConv->getOperand(0), CI, I)) {
           // Insert the new, smaller add.
           Value *NewAdd =
               Builder.CreateNUWAdd(LHSConv->getOperand(0), CI, "addconv");
-          return new ZExtInst(NewAdd, I.getType());
+          return new ZExtInst(NewAdd, Ty);
         }
       }
     }
@@ -1244,7 +1243,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
         // Insert the new integer add.
         Value *NewAdd = Builder.CreateNUWAdd(
             LHSConv->getOperand(0), RHSConv->getOperand(0), "addconv");
-        return new ZExtInst(NewAdd, I.getType());
+        return new ZExtInst(NewAdd, Ty);
       }
     }
   }
