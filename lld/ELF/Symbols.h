@@ -108,14 +108,13 @@ protected:
 
   const unsigned SymbolKind : 8;
 
+  // True if this is a local symbol.
+  unsigned IsLocal : 1;
+
 public:
   // True the symbol should point to its PLT entry.
   // For SharedSymbol only.
   unsigned NeedsPltAddr : 1;
-
-  // True if this is a local symbol.
-  unsigned IsLocal : 1;
-
   // True if this symbol has an entry in the global part of MIPS GOT.
   unsigned IsInGlobalMipsGot : 1;
 
