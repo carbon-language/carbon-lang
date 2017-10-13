@@ -556,8 +556,19 @@ static void errorOrWarn(const Twine &Msg) {
 template <class ELFT>
 static RelExpr adjustExpr(SymbolBody &Body, RelExpr Expr, RelType Type,
                           InputSectionBase &S, uint64_t RelOff) {
-  bool IsWrite = !Config->ZText || (S.Flags & SHF_WRITE);
-  if (IsWrite || isStaticLinkTimeConstant<ELFT>(Expr, Type, Body, S, RelOff))
+  // We can create any dynamic relocation if a section is simply writable.
+  if (S.Flags & SHF_WRITE)
+    return Expr;
+
+  // Or, if we are allowed to create dynamic relocations against
+  // read-only sections (i.e. unless "-z notext" is given),
+  // we can create a dynamic relocation as we want, too.
+  if (!Config->ZText)
+    return Expr;
+
+  // If a relocation can be applied at link-time, we don't need to
+  // create a dynamic relocation in the first place.
+  if (isStaticLinkTimeConstant<ELFT>(Expr, Type, Body, S, RelOff))
     return Expr;
 
   // If we got here we know that this relocation would require the dynamic
