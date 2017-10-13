@@ -960,9 +960,14 @@ Instruction *InstCombiner::foldAddWithConstant(BinaryOperator &Add) {
     return NV;
 
   Value *X;
-  if (match(Op0, m_ZExt(m_Value(X))) && X->getType()->getScalarSizeInBits() == 1)
-    // zext(bool) + C -> bool ? C + 1 : C
+  // zext(bool) + C -> bool ? C + 1 : C
+  if (match(Op0, m_ZExt(m_Value(X))) &&
+      X->getType()->getScalarSizeInBits() == 1)
     return SelectInst::Create(X, AddOne(Op1C), Op1);
+
+  // ~X + C --> (C-1) - X
+  if (match(Op0, m_Not(m_Value(X))))
+    return BinaryOperator::CreateSub(SubOne(Op1C), X);
 
   const APInt *C;
   if (!match(Op1, m_APInt(C)))
@@ -1116,12 +1121,6 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   // A+B --> A|B iff A and B have no bits set in common.
   if (haveNoCommonBitsSet(LHS, RHS, DL, &AC, &I, &DT))
     return BinaryOperator::CreateOr(LHS, RHS);
-
-  if (Constant *CRHS = dyn_cast<Constant>(RHS)) {
-    Value *X;
-    if (match(LHS, m_Not(m_Value(X)))) // ~X + C --> (C-1) - X
-      return BinaryOperator::CreateSub(SubOne(CRHS), X);
-  }
 
   // FIXME: We already did a check for ConstantInt RHS above this.
   // FIXME: Is this pattern covered by another fold? No regression tests fail on
