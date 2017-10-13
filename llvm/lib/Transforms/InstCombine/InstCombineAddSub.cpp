@@ -988,10 +988,8 @@ Instruction *InstCombiner::foldAddWithConstant(BinaryOperator &Add) {
     return CastInst::Create(Instruction::SExt, X, Ty);
 
   // (add (zext (add nuw X, C2)), C) --> (zext (add nuw X, C2 + C))
-  // FIXME: This should check hasOneUse to not increase the instruction count?
-  if (C->isNegative() &&
-      match(Op0, m_ZExt(m_NUWAdd(m_Value(X), m_APInt(C2)))) &&
-      C->sge(-C2->sext(C->getBitWidth()))) {
+  if (match(Op0, m_OneUse(m_ZExt(m_NUWAdd(m_Value(X), m_APInt(C2))))) &&
+      C->isNegative() && C->sge(-C2->sext(C->getBitWidth()))) {
     Constant *NewC =
         ConstantInt::get(X->getType(), *C2 + C->trunc(C2->getBitWidth()));
     return new ZExtInst(Builder.CreateNUWAdd(X, NewC), Ty);

@@ -633,9 +633,8 @@ define <2 x i64> @test41vec_and_multiuse(<2 x i32> %a) {
 ; CHECK-LABEL: @test41vec_and_multiuse(
 ; CHECK-NEXT:    [[ADD:%.*]] = add nuw <2 x i32> %a, <i32 16, i32 16>
 ; CHECK-NEXT:    [[ZEXT:%.*]] = zext <2 x i32> [[ADD]] to <2 x i64>
-; CHECK-NEXT:    [[TMP1:%.*]] = add nuw <2 x i32> %a, <i32 15, i32 15>
-; CHECK-NEXT:    [[SUB:%.*]] = zext <2 x i32> [[TMP1]] to <2 x i64>
-; CHECK-NEXT:    [[EXTRAUSE:%.*]] = add nuw nsw <2 x i64> [[ZEXT]], [[SUB]]
+; CHECK-NEXT:    [[SUB:%.*]] = add nsw <2 x i64> [[ZEXT]], <i64 -1, i64 -1>
+; CHECK-NEXT:    [[EXTRAUSE:%.*]] = add nsw <2 x i64> [[SUB]], [[ZEXT]]
 ; CHECK-NEXT:    ret <2 x i64> [[EXTRAUSE]]
 ;
   %add = add nuw <2 x i32> %a, <i32 16, i32 16>
