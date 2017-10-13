@@ -9,6 +9,7 @@
 
 #include "lld/Common/Threads.h"
 #include <thread>
+#include <vector>
 
 static std::vector<std::thread> Threads;
 
