@@ -606,8 +606,8 @@ def SKLFeatures : ProcessorFeatures<BDWFeatures.Value, [
 
 class SkylakeClientProc<string Name> : ProcModel<Name, SkylakeClientModel,
                                                  SKLFeatures.Value, [
-    ProcIntelSKL
-  ]>;
+  ProcIntelSKL
+]>;
 def : SkylakeClientProc<"skylake">;
 
 // FIXME: define KNL model
@@ -656,8 +656,8 @@ def CNLFeatures : ProcessorFeatures<SKXFeatures.Value, [
 
 class CannonlakeProc<string Name> : ProcModel<Name, HaswellModel,
                                               CNLFeatures.Value, [
-    ProcIntelCNL
-  ]>;
+  ProcIntelCNL
+]>;
 def : CannonlakeProc<"cannonlake">;
 
 // AMD CPUs.
