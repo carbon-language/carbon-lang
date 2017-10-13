@@ -960,13 +960,9 @@ Instruction *InstCombiner::foldAddWithConstant(BinaryOperator &Add) {
     return NV;
 
   Value *X;
-  Type *Ty = Add.getType();
-  if (match(Op0, m_ZExt(m_Value(X))) &&
-      X->getType()->getScalarSizeInBits() == 1) {
+  if (match(Op0, m_ZExt(m_Value(X))) && X->getType()->getScalarSizeInBits() == 1)
     // zext(bool) + C -> bool ? C + 1 : C
-    Constant *One = ConstantInt::get(Ty, 1);
-    return SelectInst::Create(X, ConstantExpr::getAdd(Op1C, One), Op1);
-  }
+    return SelectInst::Create(X, AddOne(Op1C), Op1);
 
   const APInt *C;
   if (!match(Op1, m_APInt(C)))
@@ -985,6 +981,7 @@ Instruction *InstCombiner::foldAddWithConstant(BinaryOperator &Add) {
 
   // Is this add the last step in a convoluted sext?
   // add(zext(xor i16 X, -32768), -32768) --> sext X
+  Type *Ty = Add.getType();
   const APInt *C2;
   if (match(Op0, m_ZExt(m_Xor(m_Value(X), m_APInt(C2)))) &&
       C2->isMinSignedValue() && C2->sext(Ty->getScalarSizeInBits()) == *C)
