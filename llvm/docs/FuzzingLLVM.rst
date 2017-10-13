@@ -83,7 +83,7 @@ the following command would fuzz AArch64 with :doc:`GlobalISel`:
 
 Some flags can also be specified in the binary name itself in order to support
 OSS Fuzz, which has trouble with required arguments. To do this, you can copy
-or move ``llvm-isel-fuzzer`` to ``llvm-isel-fuzzer=x-y-z``, where x, y, and z
+or move ``llvm-isel-fuzzer`` to ``llvm-isel-fuzzer--x-y-z``, where x, y, and z
 are architecture names (``aarch64``, ``x86_64``), optimization levels (``O0``,
 ``O2``), or specific keywords like ``gisel`` for enabling global instruction
 selection.
