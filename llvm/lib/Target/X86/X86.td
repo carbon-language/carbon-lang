@@ -610,10 +610,7 @@ class SkylakeClientProc<string Name> : ProcModel<Name, SkylakeClientModel,
 ]>;
 def : SkylakeClientProc<"skylake">;
 
-// FIXME: define KNL model
-class KnightsLandingProc<string Name> : ProcModel<Name, HaswellModel,
-                                                  IVBFeatures.Value, [
-  ProcIntelKNL,                                                  
+def KNLFeatures : ProcessorFeatures<IVBFeatures.Value, [
   FeatureAVX512,
   FeatureERI,
   FeatureCDI,
@@ -625,11 +622,25 @@ class KnightsLandingProc<string Name> : ProcModel<Name, HaswellModel,
   FeatureLZCNT,
   FeatureBMI,
   FeatureBMI2,
-  FeatureFMA,
+  FeatureFMA
+]>;
+
+// FIXME: define KNL model
+class KnightsLandingProc<string Name> : ProcModel<Name, HaswellModel,
+                                                  KNLFeatures.Value, [
+  ProcIntelKNL,
   FeatureSlowTwoMemOps,
   FeatureFastPartialYMMorZMMWrite
 ]>;
 def : KnightsLandingProc<"knl">;
+
+class KnightsMillProc<string Name> : ProcModel<Name, HaswellModel,
+                                               KNLFeatures.Value, [
+  ProcIntelKNL,
+  FeatureSlowTwoMemOps,
+  FeatureFastPartialYMMorZMMWrite
+]>;
+def : KnightsMillProc<"knm">; // TODO Add AVX5124FMAPS/AVX5124VNNIW features
 
 def SKXFeatures : ProcessorFeatures<SKLFeatures.Value, [
   FeatureAVX512,
