@@ -62,14 +62,16 @@ public:
   bool isUndefined() const { return SymbolKind == UndefinedKind; }
   bool isDefined() const { return SymbolKind <= DefinedLast; }
   bool isCommon() const { return SymbolKind == DefinedCommonKind; }
+  bool isShared() const { return SymbolKind == SharedKind; }
+  bool isLocal() const { return IsLocal; }
+
   bool isLazy() const {
     return SymbolKind == LazyArchiveKind || SymbolKind == LazyObjectKind;
   }
-  bool isShared() const { return SymbolKind == SharedKind; }
+
   bool isInCurrentDSO() const {
-    return !isUndefined() && !isShared() && !isLazy();
+    return SymbolKind == DefinedRegularKind || SymbolKind == DefinedCommonKind;
   }
-  bool isLocal() const { return IsLocal; }
 
   // True is this is an undefined weak symbol. This only works once
   // all input files have been added.
