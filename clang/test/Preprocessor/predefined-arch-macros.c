@@ -815,9 +815,6 @@
 // CHECK_KNM_M32: #define __XSAVE__ 1
 // CHECK_KNM_M32: #define __i386 1
 // CHECK_KNM_M32: #define __i386__ 1
-// CHECK_KNM_M32: #define __knm 1
-// CHECK_KNM_M32: #define __knm__ 1
-// CHECK_KNM_M32: #define __tune_knm__ 1
 // CHECK_KNM_M32: #define i386 1
 
 // RUN: %clang -march=knm -m64 -E -dM %s -o - 2>&1 \
@@ -853,9 +850,6 @@
 // CHECK_KNM_M64: #define __XSAVE__ 1
 // CHECK_KNM_M64: #define __amd64 1
 // CHECK_KNM_M64: #define __amd64__ 1
-// CHECK_KNM_M64: #define __knm 1
-// CHECK_KNM_M64: #define __knm__ 1
-// CHECK_KNM_M64: #define __tune_knm__ 1
 // CHECK_KNM_M64: #define __x86_64 1
 // CHECK_KNM_M64: #define __x86_64__ 1
 //
