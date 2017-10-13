@@ -1741,6 +1741,12 @@ private:
   const SCEV *computeBECount(const SCEV *Delta, const SCEV *Stride,
                              bool Equality);
 
+  // Compute the maximum backedge count based on the range of values
+  // permitted by Start, End, and Stride.
+  const SCEV *computeMaxBECount(const SCEV *Start, const SCEV *Stride,
+                                const SCEV *End, unsigned BitWidth,
+                                bool IsSigned);
+
   /// Verify if an linear IV with positive stride can overflow when in a
   /// less-than comparison, knowing the invariant term of the comparison,
   /// the stride and the knowledge of NSW/NUW flags on the recurrence.
