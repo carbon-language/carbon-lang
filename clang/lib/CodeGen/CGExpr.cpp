@@ -2149,7 +2149,11 @@ static LValue EmitThreadPrivateVarDeclLValue(
 
 Address CodeGenFunction::EmitLoadOfReference(Address Addr,
                                              const ReferenceType *RefTy,
-                                             LValueBaseInfo *BaseInfo) {
+                                             LValueBaseInfo *BaseInfo,
+                                             TBAAAccessInfo *TBAAInfo) {
+  if (TBAAInfo)
+    *TBAAInfo = CGM.getTBAAAccessInfo(RefTy->getPointeeType());
+
   llvm::Value *Ptr = Builder.CreateLoad(Addr);
   return Address(Ptr, getNaturalTypeAlignment(RefTy->getPointeeType(),
                                               BaseInfo, /*forPointee*/ true));
@@ -2158,9 +2162,9 @@ Address CodeGenFunction::EmitLoadOfReference(Address Addr,
 LValue CodeGenFunction::EmitLoadOfReferenceLValue(Address RefAddr,
                                                   const ReferenceType *RefTy) {
   LValueBaseInfo BaseInfo;
-  Address Addr = EmitLoadOfReference(RefAddr, RefTy, &BaseInfo);
-  return MakeAddrLValue(Addr, RefTy->getPointeeType(), BaseInfo,
-                        CGM.getTBAAAccessInfo(RefTy->getPointeeType()));
+  TBAAAccessInfo TBAAInfo;
+  Address Addr = EmitLoadOfReference(RefAddr, RefTy, &BaseInfo, &TBAAInfo);
+  return MakeAddrLValue(Addr, RefTy->getPointeeType(), BaseInfo, TBAAInfo);
 }
 
 Address CodeGenFunction::EmitLoadOfPointer(Address Ptr,

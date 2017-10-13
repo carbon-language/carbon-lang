@@ -1944,7 +1944,8 @@ public:
                                            LValueBaseInfo *BaseInfo = nullptr);
 
   Address EmitLoadOfReference(Address Ref, const ReferenceType *RefTy,
-                              LValueBaseInfo *BaseInfo = nullptr);
+                              LValueBaseInfo *BaseInfo = nullptr,
+                              TBAAAccessInfo *TBAAInfo = nullptr);
   LValue EmitLoadOfReferenceLValue(Address Ref, const ReferenceType *RefTy);
 
   Address EmitLoadOfPointer(Address Ptr, const PointerType *PtrTy,
