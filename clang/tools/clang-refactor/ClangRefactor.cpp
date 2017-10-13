@@ -314,6 +314,10 @@ public:
     SourceChanges.insert(SourceChanges.begin(), Changes.begin(), Changes.end());
   }
 
+  void handle(SymbolOccurrences Occurrences) override {
+    RefactoringResultConsumer::handle(std::move(Occurrences));
+  }
+
   const AtomicChanges &getSourceChanges() const { return SourceChanges; }
 
 private:
