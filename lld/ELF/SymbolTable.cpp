@@ -205,7 +205,7 @@ void SymbolTable::applySymbolRenames() {
 
     Symbol *Real = &Origs[I];
     // If __real_foo was undefined, we don't want it in the symbol table.
-    if (Real->body()->isUndefined())
+    if (!Real->body()->isInCurrentDSO())
       continue;
 
     auto *NewSym = make<Symbol>();
