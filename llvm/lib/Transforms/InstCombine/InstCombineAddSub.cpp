@@ -950,12 +950,14 @@ static Value *checkForNegativeOperand(BinaryOperator &I,
   return nullptr;
 }
 
-static Instruction *foldAddWithConstant(BinaryOperator &Add,
-                                        InstCombiner::BuilderTy &Builder) {
+Instruction *InstCombiner::foldAddWithConstant(BinaryOperator &Add) {
   Value *Op0 = Add.getOperand(0), *Op1 = Add.getOperand(1);
   Constant *Op1C;
   if (!match(Op1, m_Constant(Op1C)))
     return nullptr;
+
+  if (Instruction *NV = foldOpWithConstantIntoOperand(Add))
+    return NV;
 
   Value *X;
   Type *Ty = Add.getType();
@@ -1037,7 +1039,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   if (Value *V = SimplifyUsingDistributiveLaws(I))
     return replaceInstUsesWith(I, V);
 
-  if (Instruction *X = foldAddWithConstant(I, Builder))
+  if (Instruction *X = foldAddWithConstant(I))
     return X;
 
   // FIXME: This should be moved into the above helper function to allow these
@@ -1084,10 +1086,6 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
                                          ConstantExpr::getXor(XorRHS, CI));
     }
   }
-
-  if (isa<Constant>(RHS))
-    if (Instruction *NV = foldOpWithConstantIntoOperand(I))
-      return NV;
 
   if (I.getType()->isIntOrIntVectorTy(1))
     return BinaryOperator::CreateXor(LHS, RHS);
