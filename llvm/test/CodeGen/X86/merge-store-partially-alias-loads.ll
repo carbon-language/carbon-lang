@@ -16,7 +16,7 @@
 ; DBGDAG-LABEL: Optimized legalized selection DAG: BB#0 'merge_store_partial_overlap_load:'
 ; DBGDAG: [[ENTRYTOKEN:t[0-9]+]]: ch = EntryToken
 ; DBGDAG-DAG: [[BASEPTR:t[0-9]+]]: i64,ch = CopyFromReg [[ENTRYTOKEN]],
-; DBGDAG-DAG: [[ADDPTR:t[0-9]+]]: i64 = add nuw [[BASEPTR]], Constant:i64<2>
+; DBGDAG-DAG: [[ADDPTR:t[0-9]+]]: i64 = add {{(nuw )?}}[[BASEPTR]], Constant:i64<2>
 
 ; DBGDAG-DAG: [[LD2:t[0-9]+]]: i16,ch = load<LD2[%tmp81](align=1)> [[ENTRYTOKEN]], [[BASEPTR]], undef:i64
 ; DBGDAG-DAG: [[LD1:t[0-9]+]]: i8,ch = load<LD1[%tmp12]> [[ENTRYTOKEN]], [[ADDPTR]], undef:i64
