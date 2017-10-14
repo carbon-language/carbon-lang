@@ -3393,7 +3393,7 @@ static std::string getGNUNoteTypeName(const uint32_t NT) {
   std::string string;
   raw_string_ostream OS(string);
   OS << format("Unknown note type (0x%08x)", NT);
-  return string;
+  return OS.str();
 }
 
 static std::string getFreeBSDNoteTypeName(const uint32_t NT) {
@@ -3421,7 +3421,30 @@ static std::string getFreeBSDNoteTypeName(const uint32_t NT) {
   std::string string;
   raw_string_ostream OS(string);
   OS << format("Unknown note type (0x%08x)", NT);
-  return string;
+  return OS.str();
+}
+
+static std::string getAMDGPUNoteTypeName(const uint32_t NT) {
+  static const struct {
+    uint32_t ID;
+    const char *Name;
+  } Notes[] = {
+    {ELF::NT_AMD_AMDGPU_HSA_METADATA,
+     "NT_AMD_AMDGPU_HSA_METADATA (HSA Metadata)"},
+    {ELF::NT_AMD_AMDGPU_ISA,
+     "NT_AMD_AMDGPU_ISA (ISA Version)"},
+    {ELF::NT_AMD_AMDGPU_PAL_METADATA,
+     "NT_AMD_AMDGPU_PAL_METADATA (PAL Metadata)"}
+  };
+
+  for (const auto &Note : Notes)
+    if (Note.ID == NT)
+      return std::string(Note.Name);
+
+  std::string string;
+  raw_string_ostream OS(string);
+  OS << format("Unknown note type (0x%08x)", NT);
+  return OS.str();
 }
 
 template <typename ELFT>
@@ -3504,6 +3527,8 @@ void GNUStyle<ELFT>::printNotes(const ELFFile<ELFT> *Obj) {
         printGNUNote<ELFT>(OS, Type, Descriptor, DescriptorSize);
       } else if (Name == "FreeBSD") {
         OS << getFreeBSDNoteTypeName(Type) << '\n';
+      } else if (Name == "AMD") {
+        OS << getAMDGPUNoteTypeName(Type) << '\n';
       } else {
         OS << "Unknown note type: (" << format_hex(Type, 10) << ')';
       }

@@ -24,6 +24,10 @@
 ; OSABI-PAL-NOT: .amd_amdgpu_hsa_metadata
 ; OSABI-PAL: .amd_amdgpu_pal_metadata
 
+; RUN: llc -mtriple=amdgcn-amd-unknown -mcpu=gfx800 -mattr=+code-object-v3 -filetype=obj < %s | llvm-readobj -elf-output-style=GNU -notes  | FileCheck --check-prefix=GCN --check-prefix=OSABI-UNK-ELF --check-prefix=GFX800 %s
+; RUN: llc -mtriple=amdgcn-amd-amdhsa -mcpu=gfx800 -mattr=+code-object-v3 -filetype=obj < %s | llvm-readobj -elf-output-style=GNU -notes  | FileCheck --check-prefix=GCN --check-prefix=OSABI-HSA-ELF --check-prefix=GFX800 %s
+; RUN: llc -mtriple=amdgcn-amd-amdpal -mcpu=gfx800 -mattr=+code-object-v3 -filetype=obj < %s | llvm-readobj -elf-output-style=GNU -notes  | FileCheck --check-prefix=GCN --check-prefix=OSABI-PAL-ELF --check-prefix=GFX800 %s
+
 ; R600-NOT: .hsa_code_object_version
 ; R600-NOT: .hsa_code_object_isa
 ; R600-NOT: .amd_amdgpu_isa
@@ -33,3 +37,27 @@
 define amdgpu_kernel void @elf_notes() {
   ret void
 }
+
+; OSABI-UNK-ELF-NOT: Unknown note type
+; OSABI-UNK-ELF: NT_AMD_AMDGPU_ISA (ISA Version)
+; OSABI-UNK-ELF-NOT: Unknown note type
+; OSABI-UNK-ELF-NOT: NT_AMD_AMDGPU_HSA_METADATA (HSA Metadata)
+; OSABI-UNK-ELF-NOT: Unknown note type
+; OSABI-UNK-ELF-NOT: NT_AMD_AMDGPU_PAL_METADATA (PAL Metadata)
+; OSABI-UNK-ELF-NOT: Unknown note type
+
+; OSABI-HSA-ELF-NOT: Unknown note type
+; OSABI-HSA-ELF: NT_AMD_AMDGPU_ISA (ISA Version)
+; OSABI-HSA-ELF-NOT: Unknown note type
+; OSABI-HSA-ELF: NT_AMD_AMDGPU_HSA_METADATA (HSA Metadata)
+; OSABI-HSA-ELF-NOT: Unknown note type
+; OSABI-HSA-ELF-NOT: NT_AMD_AMDGPU_PAL_METADATA (PAL Metadata)
+; OSABI-HSA-ELF-NOT: Unknown note type
+
+; OSABI-PAL-ELF-NOT: Unknown note type
+; OSABI-PAL-ELF: NT_AMD_AMDGPU_ISA (ISA Version)
+; OSABI-PAL-ELF-NOT: Unknown note type
+; OSABI-PAL-ELF-NOT: NT_AMD_AMDGPU_HSA_METADATA (HSA Metadata)
+; OSABI-PAL-ELF-NOT: Unknown note type
+; OSABI-PAL-ELF: NT_AMD_AMDGPU_PAL_METADATA (PAL Metadata)
+; OSABI-PAL-ELF-NOT: Unknown note type

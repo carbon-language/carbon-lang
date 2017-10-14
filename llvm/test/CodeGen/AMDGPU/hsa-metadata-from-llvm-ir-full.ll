@@ -1293,11 +1293,11 @@ attributes #0 = { "runtime-handle"="__test_block_invoke_kernel_runtime_handle" }
 !110 = !{!"__block_literal"}
 
 ; NOTES: Displaying notes found at file offset 0x{{[0-9]+}}
-; NOTES-NEXT: Owner    Data size    Description
-; NOTES-NEXT: AMD      0x00000008   Unknown note type: (0x00000001)
-; NOTES-NEXT: AMD      0x0000001b   Unknown note type: (0x00000003)
-; GFX700:     AMD      0x00008f64   Unknown note type: (0x0000000a)
-; GFX800:     AMD      0x000092e4   Unknown note type: (0x0000000a)
-; GFX900:     AMD      0x00008f64   Unknown note type: (0x0000000a)
+; NOTES:  Owner    Data size    Description
+; NOTES:  AMD      0x00000008   Unknown note type (0x00000001)
+; NOTES:  AMD      0x0000001b   Unknown note type (0x00000003)
+; GFX700: AMD      0x00008f64   NT_AMD_AMDGPU_HSA_METADATA (HSA Metadata)
+; GFX800: AMD      0x000092e4   NT_AMD_AMDGPU_HSA_METADATA (HSA Metadata)
+; GFX900: AMD      0x00008f64   NT_AMD_AMDGPU_HSA_METADATA (HSA Metadata)
 
 ; PARSER: AMDGPU HSA Metadata Parser Test: PASS
