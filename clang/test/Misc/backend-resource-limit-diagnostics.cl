@@ -1,5 +1,4 @@
 // REQUIRES: amdgpu-registered-target
-// UNSUPPORTED: system-darwin
 // RUN: not %clang_cc1 -emit-codegen-only -triple=amdgcn-- %s 2>&1 | FileCheck %s
 
 // CHECK: error: local memory limit exceeded (480000) in use_huge_lds
