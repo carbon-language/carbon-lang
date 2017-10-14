@@ -41,13 +41,15 @@
 ; OSABI-HSA-ELF: ---
 ; OSABI-HSA-ELF: Version: [ 1, 0 ]
 ; OSABI-HSA-ELF: Kernels:
-; OSABI-HSA-ELF:   - Name: elf_notes
+; OSABI-HSA-ELF:   - Name:       elf_notes
+; OSABI-HSA-ELF:     SymbolName: 'elf_notes@kd'
 ; OSABI-HSA-ELF:     CodeProps:
-; OSABI-HSA-ELF:       WavefrontNumSGPRs: 96
-; OSABI-HSA-ELF:       KernargSegmentAlign: 32
-; OSABI-HSA-ELF:       GroupSegmentAlign: 4
-; OSABI-HSA-ELF:       PrivateSegmentAlign: 4
-; OSABI-HSA-ELF:       WavefrontSize:   6
+; OSABI-HSA-ELF:       KernargSegmentSize: 0
+; OSABI-HSA-ELF:       GroupSegmentFixedSize: 0
+; OSABI-HSA-ELF:       PrivateSegmentFixedSize: 0
+; OSABI-HSA-ELF:       KernargSegmentAlign: 4
+; OSABI-HSA-ELF:       WavefrontSize:   64
+; OSABI-HSA-ELF:       NumSGPRs:        96
 ; OSABI-HSA-ELF: ...
 ; OSABI-HSA-ELF-NOT: Unknown note type
 ; OSABI-HSA-ELF-NOT: NT_AMD_AMDGPU_PAL_METADATA (PAL Metadata)

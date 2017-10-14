@@ -6,19 +6,20 @@
 ; CHECK:  Version: [ 1, 0 ]
 
 ; CHECK:  Kernels:
-; CHECK:    - Name: test
+; CHECK:    - Name:       test
+; CHECK:      SymbolName: 'test@kd'
 ; CHECK:      CodeProps:
 ; CHECK:        KernargSegmentSize:  24
-; GFX700:       WavefrontNumSGPRs:   6
-; GFX800:       WavefrontNumSGPRs:   96
-; GFX900:       WavefrontNumSGPRs:   6
-; GFX700:       WorkitemNumVGPRs:    4
-; GFX800:       WorkitemNumVGPRs:    6
-; GFX900:       WorkitemNumVGPRs:    6
-; CHECK:        KernargSegmentAlign: 4
-; CHECK:        GroupSegmentAlign:   4
-; CHECK:        PrivateSegmentAlign: 4
-; CHECK:        WavefrontSize:       6
+; CHECK:        GroupSegmentFixedSize: 0
+; CHECK:        PrivateSegmentFixedSize: 0
+; CHECK:        KernargSegmentAlign: 8
+; CHECK:        WavefrontSize: 64
+; GFX700:       NumSGPRs: 6
+; GFX800:       NumSGPRs: 96
+; GFX900:       NumSGPRs: 6
+; GFX700:       NumVGPRs: 4
+; GFX800:       NumVGPRs: 6
+; GFX900:       NumVGPRs: 6
 define amdgpu_kernel void @test(
     half addrspace(1)* %r,
     half addrspace(1)* %a,

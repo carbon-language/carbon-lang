@@ -199,7 +199,9 @@ void AMDGPUAsmPrinter::EmitFunctionBodyStart() {
   if (TM.getTargetTriple().getOS() != Triple::AMDHSA)
     return;
 
-  HSAMetadataStream.emitKernel(*MF->getFunction(), KernelCode);
+  HSAMetadataStream.emitKernel(*MF->getFunction(),
+                               getHSACodeProps(*MF, CurrentProgramInfo),
+                               getHSADebugProps(*MF, CurrentProgramInfo));
 }
 
 void AMDGPUAsmPrinter::EmitFunctionEntryLabel() {
@@ -1153,6 +1155,53 @@ void AMDGPUAsmPrinter::getAmdKernelCode(amd_kernel_code_t &Out,
     Out.debug_private_segment_buffer_sgpr =
       CurrentProgramInfo.DebuggerPrivateSegmentBufferSGPR;
   }
+}
+
+AMDGPU::HSAMD::Kernel::CodeProps::Metadata AMDGPUAsmPrinter::getHSACodeProps(
+    const MachineFunction &MF,
+    const SIProgramInfo &ProgramInfo) const {
+  const SISubtarget &STM = MF.getSubtarget<SISubtarget>();
+  const SIMachineFunctionInfo &MFI = *MF.getInfo<SIMachineFunctionInfo>();
+  HSAMD::Kernel::CodeProps::Metadata HSACodeProps;
+
+  HSACodeProps.mKernargSegmentSize =
+      STM.getKernArgSegmentSize(MF, MFI.getABIArgOffset());
+  HSACodeProps.mGroupSegmentFixedSize = ProgramInfo.LDSSize;
+  HSACodeProps.mPrivateSegmentFixedSize = ProgramInfo.ScratchSize;
+  HSACodeProps.mKernargSegmentAlign =
+      std::max(uint32_t(4), MFI.getMaxKernArgAlign());
+  HSACodeProps.mWavefrontSize = STM.getWavefrontSize();
+  HSACodeProps.mNumSGPRs = CurrentProgramInfo.NumSGPR;
+  HSACodeProps.mNumVGPRs = CurrentProgramInfo.NumVGPR;
+  // TODO: Emit HSACodeProps.mMaxFlatWorkgroupSize.
+  HSACodeProps.mIsDynamicCallStack = ProgramInfo.DynamicCallStack;
+  HSACodeProps.mIsXNACKEnabled = STM.isXNACKEnabled();
+
+  return HSACodeProps;
+}
+
+AMDGPU::HSAMD::Kernel::DebugProps::Metadata AMDGPUAsmPrinter::getHSADebugProps(
+    const MachineFunction &MF,
+    const SIProgramInfo &ProgramInfo) const {
+  const SISubtarget &STM = MF.getSubtarget<SISubtarget>();
+  HSAMD::Kernel::DebugProps::Metadata HSADebugProps;
+
+  if (!STM.debuggerSupported())
+    return HSADebugProps;
+
+  HSADebugProps.mDebuggerABIVersion.push_back(1);
+  HSADebugProps.mDebuggerABIVersion.push_back(0);
+  HSADebugProps.mReservedNumVGPRs = ProgramInfo.ReservedVGPRCount;
+  HSADebugProps.mReservedFirstVGPR = ProgramInfo.ReservedVGPRFirst;
+
+  if (STM.debuggerEmitPrologue()) {
+    HSADebugProps.mPrivateSegmentBufferSGPR =
+        ProgramInfo.DebuggerPrivateSegmentBufferSGPR;
+    HSADebugProps.mWavefrontPrivateSegmentOffsetSGPR =
+        ProgramInfo.DebuggerWavefrontPrivateSegmentOffsetSGPR;
+  }
+
+  return HSADebugProps;
 }
 
 bool AMDGPUAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,

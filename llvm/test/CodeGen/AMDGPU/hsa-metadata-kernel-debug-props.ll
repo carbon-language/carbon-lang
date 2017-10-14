@@ -8,7 +8,8 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata)
 ; CHECK:  Version: [ 1, 0 ]
 
 ; CHECK:  Kernels:
-; CHECK:    - Name: test
+; CHECK:    - Name:       test
+; CHECK:      SymbolName: 'test@kd'
 ; CHECK:      DebugProps:
 ; CHECK:        DebuggerABIVersion:                [ 1, 0 ]
 ; CHECK:        ReservedNumVGPRs:                  4
