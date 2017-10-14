@@ -1,3 +1,6 @@
+# XFAIL: windows
+# Still need to work out some path issues
+
 # RUN: rm -rf %t && mkdir -p %t
 # RUN: echo 'lit_config.load_config(config, os.path.join(r"%{inputs}", "shared-output", "lit.cfg"))' > %t/lit.site.cfg
 # RUN: %{lit} %t
