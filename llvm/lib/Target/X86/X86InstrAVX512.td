@@ -7055,6 +7055,16 @@ let Predicates = [HasAVX512, HasVLX] in {
                                  (v4i32 (X86cvttp2ui (v2f64 VR128X:$src)))))))),
               (VCVTTPD2UDQZ128rr VR128X:$src)>;
   }
+
+  def : Pat<(v2f64 (X86VSintToFP (bc_v4i32 (v2i64 (scalar_to_vector (loadi64 addr:$src)))))),
+            (VCVTDQ2PDZ128rm addr:$src)>;
+  def : Pat<(v2f64 (X86VSintToFP (bc_v4i32 (v2i64 (X86vzload addr:$src))))),
+            (VCVTDQ2PDZ128rm addr:$src)>;
+
+  def : Pat<(v2f64 (X86VUintToFP (bc_v4i32 (v2i64 (scalar_to_vector (loadi64 addr:$src)))))),
+            (VCVTUDQ2PDZ128rm addr:$src)>;
+  def : Pat<(v2f64 (X86VUintToFP (bc_v4i32 (v2i64 (X86vzload addr:$src))))),
+            (VCVTUDQ2PDZ128rm addr:$src)>;
 }
 
 let Predicates = [HasAVX512] in {
