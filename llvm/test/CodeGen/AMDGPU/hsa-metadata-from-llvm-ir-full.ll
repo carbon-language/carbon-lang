@@ -1,6 +1,3 @@
-; RUN: llc -mtriple=amdgcn-amd-amdhsa -mcpu=gfx700 -filetype=obj -o - < %s | llvm-readobj -amdgpu-code-object-metadata -elf-output-style=GNU -notes | FileCheck --check-prefix=CHECK --check-prefix=GFX700 --check-prefix=NOTES %s
-; RUN: llc -mtriple=amdgcn-amd-amdhsa -mcpu=gfx800 -filetype=obj -o - < %s | llvm-readobj -amdgpu-code-object-metadata -elf-output-style=GNU -notes | FileCheck --check-prefix=CHECK --check-prefix=GFX800 --check-prefix=NOTES %s
-; RUN: llc -mtriple=amdgcn-amd-amdhsa -mcpu=gfx900 -filetype=obj -o - < %s | llvm-readobj -amdgpu-code-object-metadata -elf-output-style=GNU -notes | FileCheck --check-prefix=CHECK --check-prefix=GFX900 --check-prefix=NOTES %s
 ; RUN: llc -mtriple=amdgcn-amd-amdhsa -mcpu=gfx700 -amdgpu-dump-hsa-metadata -amdgpu-verify-hsa-metadata -filetype=obj -o - < %s 2>&1 | FileCheck --check-prefix=PARSER %s
 ; RUN: llc -mtriple=amdgcn-amd-amdhsa -mcpu=gfx800 -amdgpu-dump-hsa-metadata -amdgpu-verify-hsa-metadata -filetype=obj -o - < %s 2>&1 | FileCheck --check-prefix=PARSER %s
 ; RUN: llc -mtriple=amdgcn-amd-amdhsa -mcpu=gfx900 -amdgpu-dump-hsa-metadata -amdgpu-verify-hsa-metadata -filetype=obj -o - < %s 2>&1 | FileCheck --check-prefix=PARSER %s
@@ -1291,13 +1288,5 @@ attributes #0 = { "runtime-handle"="__test_block_invoke_kernel_runtime_handle" }
 !100 = !{!"1:1:4:%d\5Cn"}
 !101 = !{!"2:1:8:%g\5Cn"}
 !110 = !{!"__block_literal"}
-
-; NOTES: Displaying notes found at file offset 0x{{[0-9]+}}
-; NOTES:  Owner    Data size    Description
-; NOTES:  AMD      0x00000008   Unknown note type (0x00000001)
-; NOTES:  AMD      0x0000001b   Unknown note type (0x00000003)
-; GFX700: AMD      0x00008f64   NT_AMD_AMDGPU_HSA_METADATA (HSA Metadata)
-; GFX800: AMD      0x000092e4   NT_AMD_AMDGPU_HSA_METADATA (HSA Metadata)
-; GFX900: AMD      0x00008f64   NT_AMD_AMDGPU_HSA_METADATA (HSA Metadata)
 
 ; PARSER: AMDGPU HSA Metadata Parser Test: PASS
