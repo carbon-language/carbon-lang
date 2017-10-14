@@ -112,23 +112,31 @@ AMDGPUTargetStreamer& AMDGPUAsmPrinter::getTargetStreamer() const {
 }
 
 void AMDGPUAsmPrinter::EmitStartOfAsmFile(Module &M) {
-  AMDGPU::IsaInfo::IsaVersion ISA =
-      AMDGPU::IsaInfo::getIsaVersion(getSTI()->getFeatureBits());
-
-  if (TM.getTargetTriple().getOS() == Triple::AMDPAL) {
-    readPALMetadata(M);
-    // AMDPAL wants an HSA_ISA .note.
-    getTargetStreamer().EmitDirectiveHSACodeObjectISA(
-        ISA.Major, ISA.Minor, ISA.Stepping, "AMD", "AMDGPU");
-  }
-  if (TM.getTargetTriple().getOS() != Triple::AMDHSA)
+  if (TM.getTargetTriple().getArch() != Triple::amdgcn)
     return;
 
-  getTargetStreamer().EmitDirectiveHSACodeObjectVersion(2, 1);
+  if (TM.getTargetTriple().getOS() != Triple::AMDHSA &&
+      TM.getTargetTriple().getOS() != Triple::AMDPAL)
+    return;
+
+  if (TM.getTargetTriple().getOS() == Triple::AMDHSA)
+    HSAMetadataStream.begin(M);
+
+  if (TM.getTargetTriple().getOS() == Triple::AMDPAL)
+    readPALMetadata(M);
+
+  // Deprecated notes are not emitted for code object v3.
+  if (IsaInfo::hasCodeObjectV3(getSTI()->getFeatureBits()))
+    return;
+
+  // HSA emits NT_AMDGPU_HSA_CODE_OBJECT_VERSION for code objects v2.
+  if (TM.getTargetTriple().getOS() == Triple::AMDHSA)
+    getTargetStreamer().EmitDirectiveHSACodeObjectVersion(2, 1);
+
+  // HSA and PAL emit NT_AMDGPU_HSA_ISA for code objects v2.
+  IsaInfo::IsaVersion ISA = IsaInfo::getIsaVersion(getSTI()->getFeatureBits());
   getTargetStreamer().EmitDirectiveHSACodeObjectISA(
       ISA.Major, ISA.Minor, ISA.Stepping, "AMD", "AMDGPU");
-
-  HSAMetadataStream.begin(M);
 }
 
 void AMDGPUAsmPrinter::EmitEndOfAsmFile(Module &M) {
