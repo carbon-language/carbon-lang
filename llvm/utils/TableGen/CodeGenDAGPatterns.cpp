@@ -854,11 +854,11 @@ TreePredicateFn::TreePredicateFn(TreePattern *N) : PatFragRec(N) {
         ".td file corrupt: can't have a node predicate *and* an imm predicate");
 }
 
-std::string TreePredicateFn::getPredCode() const {
+StringRef TreePredicateFn::getPredCode() const {
   return PatFragRec->getRecord()->getValueAsString("PredicateCode");
 }
 
-std::string TreePredicateFn::getImmCode() const {
+StringRef TreePredicateFn::getImmCode() const {
   return PatFragRec->getRecord()->getValueAsString("ImmediateCode");
 }
 
@@ -873,7 +873,7 @@ bool TreePredicateFn::immCodeUsesAPFloat() const {
                                                                    Unset);
 }
 
-std::string TreePredicateFn::getImmType() const {
+StringRef TreePredicateFn::getImmType() const {
   if (immCodeUsesAPInt())
     return "const APInt &";
   if (immCodeUsesAPFloat())
@@ -881,7 +881,7 @@ std::string TreePredicateFn::getImmType() const {
   return "int64_t";
 }
 
-std::string TreePredicateFn::getImmTypeIdentifier() const {
+StringRef TreePredicateFn::getImmTypeIdentifier() const {
   if (immCodeUsesAPInt())
     return "APInt";
   else if (immCodeUsesAPFloat())
@@ -906,21 +906,21 @@ std::string TreePredicateFn::getFnName() const {
 /// appropriate.
 std::string TreePredicateFn::getCodeToRunOnSDNode() const {
   // Handle immediate predicates first.
-  std::string ImmCode = getImmCode();
+  StringRef ImmCode = getImmCode();
   if (!ImmCode.empty()) {
-    std::string Result = "    " + getImmType() + " Imm = ";
+    std::string Result = "    " + getImmType().str() + " Imm = ";
     if (immCodeUsesAPFloat())
       Result += "cast<ConstantFPSDNode>(Node)->getValueAPF();\n";
     else if (immCodeUsesAPInt())
       Result += "cast<ConstantSDNode>(Node)->getAPIntValue();\n";
     else
       Result += "cast<ConstantSDNode>(Node)->getSExtValue();\n";
-    return Result + ImmCode;
+    return Result + ImmCode.str();
   }
 
   // Handle arbitrary node predicates.
   assert(!getPredCode().empty() && "Don't have any predicate code!");
-  std::string ClassName;
+  StringRef ClassName;
   if (PatFragRec->getOnlyTree()->isLeaf())
     ClassName = "SDNode";
   else {
@@ -931,9 +931,9 @@ std::string TreePredicateFn::getCodeToRunOnSDNode() const {
   if (ClassName == "SDNode")
     Result = "    SDNode *N = Node;\n";
   else
-    Result = "    auto *N = cast<" + ClassName + ">(Node);\n";
+    Result = "    auto *N = cast<" + ClassName.str() + ">(Node);\n";
 
-  return Result + getPredCode();
+  return Result + getPredCode().str();
 }
 
 //===----------------------------------------------------------------------===//
