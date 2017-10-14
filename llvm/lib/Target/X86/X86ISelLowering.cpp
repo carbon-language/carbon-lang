@@ -31476,6 +31476,9 @@ static SDValue reduceVMULWidth(SDNode *N, SelectionDAG &DAG,
   SDValue N1 = N->getOperand(1);
   EVT VT = N->getOperand(0).getValueType();
   unsigned NumElts = VT.getVectorNumElements();
+  if ((NumElts % 2) != 0)
+    return SDValue();
+
   unsigned RegSize = 128;
   MVT OpsVT = MVT::getVectorVT(MVT::i16, RegSize / 16);
   EVT ReducedVT = EVT::getVectorVT(*DAG.getContext(), MVT::i16, NumElts);
@@ -31502,7 +31505,7 @@ static SDValue reduceVMULWidth(SDNode *N, SelectionDAG &DAG,
       // result.
       // Generate shuffle functioning as punpcklwd.
       SmallVector<int, 16> ShuffleMask(NumElts);
-      for (unsigned i = 0, e = NumElts/ 2; i < e; i++) {
+      for (unsigned i = 0, e = NumElts / 2; i < e; i++) {
         ShuffleMask[2 * i] = i;
         ShuffleMask[2 * i + 1] = i + NumElts;
       }
