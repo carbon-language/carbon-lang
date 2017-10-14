@@ -1723,8 +1723,7 @@ static bool ShouldDiagnoseUnusedDecl(const NamedDecl *D) {
             dyn_cast<CXXConstructExpr>(Init);
           if (Construct && !Construct->isElidable()) {
             CXXConstructorDecl *CD = Construct->getConstructor();
-            if (!CD->isTrivial() && !RD->hasAttr<WarnUnusedAttr>() &&
-                !VD->evaluateValue())
+            if (!CD->isTrivial() && !RD->hasAttr<WarnUnusedAttr>())
               return false;
           }
         }
