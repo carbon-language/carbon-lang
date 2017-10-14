@@ -25,6 +25,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Support/raw_ostream.h"
@@ -8994,7 +8995,7 @@ llvm::Function *AMDGPUTargetCodeGenInfo::createEnqueuedBlockKernel(
     ArgBaseTypeNames.push_back(llvm::MDString::get(C, "void*"));
     ArgTypeQuals.push_back(llvm::MDString::get(C, ""));
     ArgNames.push_back(
-        llvm::MDString::get(C, std::string("local_arg") + std::to_string(I)));
+        llvm::MDString::get(C, (Twine("local_arg") + Twine(I)).str()));
   }
   std::string Name = Invoke->getName().str() + "_kernel";
   auto *FT = llvm::FunctionType::get(llvm::Type::getVoidTy(C), ArgTys, false);
