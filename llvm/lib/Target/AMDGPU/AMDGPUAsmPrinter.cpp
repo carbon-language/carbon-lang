@@ -132,6 +132,22 @@ void AMDGPUAsmPrinter::EmitStartOfAsmFile(Module &M) {
 }
 
 void AMDGPUAsmPrinter::EmitEndOfAsmFile(Module &M) {
+  if (TM.getTargetTriple().getArch() != Triple::amdgcn)
+    return;
+
+  // Emit ISA Version (NT_AMD_AMDGPU_ISA).
+  std::string ISAVersionString;
+  raw_string_ostream ISAVersionStream(ISAVersionString);
+  IsaInfo::streamIsaVersion(getSTI(), ISAVersionStream);
+  getTargetStreamer().EmitISAVersion(ISAVersionStream.str());
+
+  // Emit HSA Metadata (NT_AMD_AMDGPU_HSA_METADATA).
+  if (TM.getTargetTriple().getOS() == Triple::AMDHSA) {
+    HSAMetadataStream.end();
+    getTargetStreamer().EmitHSAMetadata(HSAMetadataStream.getHSAMetadata());
+  }
+
+  // Emit PAL Metadata (NT_AMD_AMDGPU_PAL_METADATA).
   if (TM.getTargetTriple().getOS() == Triple::AMDPAL) {
     // Copy the PAL metadata from the map where we collected it into a vector,
     // then write it as a .note.
@@ -142,12 +158,6 @@ void AMDGPUAsmPrinter::EmitEndOfAsmFile(Module &M) {
     }
     getTargetStreamer().EmitPALMetadata(PALMetadataVector);
   }
-
-  if (TM.getTargetTriple().getOS() != Triple::AMDHSA)
-    return;
-
-  HSAMetadataStream.end();
-  getTargetStreamer().EmitHSAMetadata(HSAMetadataStream.getHSAMetadata());
 }
 
 bool AMDGPUAsmPrinter::isBlockOnlyReachableByFallthrough(
