@@ -1367,13 +1367,13 @@ AArch64InstructionSelector::selectArithImmed(MachineOperand &Root) const {
   else if (Root.isReg()) {
     MachineInstr *Def = MRI.getVRegDef(Root.getReg());
     if (Def->getOpcode() != TargetOpcode::G_CONSTANT)
-      return None;
+      return nullptr;
     MachineOperand &Op1 = Def->getOperand(1);
     if (!Op1.isCImm() || Op1.getCImm()->getBitWidth() > 64)
-      return None;
+      return nullptr;
     Immed = Op1.getCImm()->getZExtValue();
   } else
-    return None;
+    return nullptr;
 
   unsigned ShiftAmt;
 
@@ -1383,13 +1383,10 @@ AArch64InstructionSelector::selectArithImmed(MachineOperand &Root) const {
     ShiftAmt = 12;
     Immed = Immed >> 12;
   } else
-    return None;
+    return nullptr;
 
   unsigned ShVal = AArch64_AM::getShifterImm(AArch64_AM::LSL, ShiftAmt);
-  return {{
-      [=](MachineInstrBuilder &MIB) { MIB.addImm(Immed); },
-      [=](MachineInstrBuilder &MIB) { MIB.addImm(ShVal); },
-  }};
+  return [=](MachineInstrBuilder &MIB) { MIB.addImm(Immed).addImm(ShVal); };
 }
 
 namespace llvm {

@@ -17,7 +17,6 @@
 #define LLVM_CODEGEN_GLOBALISEL_INSTRUCTIONSELECTOR_H
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/Optional.h"
 #include <bitset>
 #include <cstddef>
 #include <cstdint>
@@ -208,11 +207,6 @@ enum {
   /// - InsnID - Instruction ID to modify
   /// - RendererID - The renderer to call
   GIR_ComplexRenderer,
-  /// Render sub-operands of complex operands to the specified instruction
-  /// - InsnID - Instruction ID to modify
-  /// - RendererID - The renderer to call
-  /// - RenderOpID - The suboperand to render.
-  GIR_ComplexSubOperandRenderer,
 
   /// Render a G_CONSTANT operator as a sign-extended immediate.
   /// - NewInsnID - Instruction ID to modify
@@ -271,13 +265,12 @@ public:
   virtual bool select(MachineInstr &I) const = 0;
 
 protected:
-  using ComplexRendererFn =
-      Optional<SmallVector<std::function<void(MachineInstrBuilder &)>, 4>>;
+  using ComplexRendererFn = std::function<void(MachineInstrBuilder &)>;
   using RecordedMIVector = SmallVector<MachineInstr *, 4>;
   using NewMIVector = SmallVector<MachineInstrBuilder, 4>;
 
   struct MatcherState {
-    std::vector<ComplexRendererFn::value_type> Renderers;
+    std::vector<ComplexRendererFn> Renderers;
     RecordedMIVector MIs;
 
     MatcherState(unsigned MaxRenderers);
