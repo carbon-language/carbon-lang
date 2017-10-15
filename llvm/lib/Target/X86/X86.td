@@ -579,7 +579,8 @@ def HSWFeatures : ProcessorFeatures<IVBFeatures.Value, [
 
 class HaswellProc<string Name> : ProcModel<Name, HaswellModel,
                                            HSWFeatures.Value, [
-  ProcIntelHSW
+  ProcIntelHSW,
+  FeatureSlowBTMem
 ]>;
 def : HaswellProc<"haswell">;
 def : HaswellProc<"core-avx2">; // Legacy alias.
@@ -590,7 +591,8 @@ def BDWFeatures : ProcessorFeatures<HSWFeatures.Value, [
 ]>;
 class BroadwellProc<string Name> : ProcModel<Name, HaswellModel,
                                              BDWFeatures.Value, [
-  ProcIntelBDW
+  ProcIntelBDW,
+  FeatureSlowBTMem
 ]>;
 def : BroadwellProc<"broadwell">;
 
@@ -606,7 +608,8 @@ def SKLFeatures : ProcessorFeatures<BDWFeatures.Value, [
 
 class SkylakeClientProc<string Name> : ProcModel<Name, SkylakeClientModel,
                                                  SKLFeatures.Value, [
-  ProcIntelSKL
+  ProcIntelSKL,
+  FeatureSlowBTMem
 ]>;
 def : SkylakeClientProc<"skylake">;
 
@@ -629,6 +632,7 @@ def KNLFeatures : ProcessorFeatures<IVBFeatures.Value, [
 class KnightsLandingProc<string Name> : ProcModel<Name, HaswellModel,
                                                   KNLFeatures.Value, [
   ProcIntelKNL,
+  FeatureSlowBTMem,
   FeatureSlowTwoMemOps,
   FeatureFastPartialYMMorZMMWrite
 ]>;
@@ -637,6 +641,7 @@ def : KnightsLandingProc<"knl">;
 class KnightsMillProc<string Name> : ProcModel<Name, HaswellModel,
                                                KNLFeatures.Value, [
   ProcIntelKNL,
+  FeatureSlowBTMem,
   FeatureSlowTwoMemOps,
   FeatureFastPartialYMMorZMMWrite
 ]>;
@@ -654,8 +659,9 @@ def SKXFeatures : ProcessorFeatures<SKLFeatures.Value, [
 
 class SkylakeServerProc<string Name> : ProcModel<Name, SkylakeServerModel,
                                                  SKXFeatures.Value, [
-    ProcIntelSKX
-  ]>;
+  ProcIntelSKX,
+  FeatureSlowBTMem
+]>;
 def : SkylakeServerProc<"skylake-avx512">;
 def : SkylakeServerProc<"skx">; // Legacy alias.
 
@@ -667,7 +673,8 @@ def CNLFeatures : ProcessorFeatures<SKXFeatures.Value, [
 
 class CannonlakeProc<string Name> : ProcModel<Name, HaswellModel,
                                               CNLFeatures.Value, [
-  ProcIntelCNL
+  ProcIntelCNL,
+  FeatureSlowBTMem
 ]>;
 def : CannonlakeProc<"cannonlake">;
 
