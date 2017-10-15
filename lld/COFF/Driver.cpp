@@ -547,7 +547,7 @@ static void parseModuleDefs(StringRef Path) {
   }
 }
 
-// Get a sorted list of symbols not to automatically export
+// Get a set of symbols not to automatically export
 // when exporting all global symbols for MinGW.
 static StringSet<> getExportExcludeSymbols() {
   if (Config->Machine == I386)
