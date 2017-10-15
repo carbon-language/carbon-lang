@@ -555,7 +555,7 @@ static StringSet<> getExportExcludeSymbols() {
         "__NULL_IMPORT_DESCRIPTOR",
         "__pei386_runtime_relocator",
         "_do_pseudo_reloc",
-       "_impure_ptr",
+        "_impure_ptr",
         "__impure_ptr",
         "__fmode",
         "_environ",
