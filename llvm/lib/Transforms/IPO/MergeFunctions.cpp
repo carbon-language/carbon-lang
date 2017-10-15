@@ -647,6 +647,16 @@ void MergeFunctions::writeThunk(Function *F, Function *G) {
     return;
   }
 
+  // Don't merge tiny functions using a thunk, since it can just end up
+  // making the function larger.
+  if (F->size() == 1) {
+    if (F->front().size() <= 2) {
+      DEBUG(dbgs() << "writeThunk: " << F->getName()
+                   << " is too small to bother creating a thunk for\n");
+      return;
+    }
+  }
+
   BasicBlock *GEntryBlock = nullptr;
   std::vector<Instruction *> PDIUnrelatedWL;
   BasicBlock *BB = nullptr;
@@ -778,18 +788,6 @@ bool MergeFunctions::insert(Function *NewFunction) {
   }
 
   const FunctionNode &OldF = *Result.first;
-
-  // Don't merge tiny functions, since it can just end up making the function
-  // larger.
-  // FIXME: Should still merge them if they are unnamed_addr and produce an
-  // alias.
-  if (NewFunction->size() == 1) {
-    if (NewFunction->front().size() <= 2) {
-      DEBUG(dbgs() << NewFunction->getName()
-                   << " is to small to bother merging\n");
-      return false;
-    }
-  }
 
   // Impose a total order (by name) on the replacement of functions. This is
   // important when operating on more than one module independently to prevent
