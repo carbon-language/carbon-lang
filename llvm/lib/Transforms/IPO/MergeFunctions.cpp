@@ -628,9 +628,15 @@ void MergeFunctions::filterInstsUnrelatedToPDI(
 // call sites to point to F even when within the same translation unit.
 void MergeFunctions::writeThunk(Function *F, Function *G) {
   if (!G->isInterposable() && !MergeFunctionsPDI) {
-    // Redirect direct callers of G to F. (See note on MergeFunctionsPDI
-    // above).
-    replaceDirectCallers(G, F);
+    if (G->hasGlobalUnnamedAddr()) {
+      // If G's address is not significant, replace it entirely.
+      Constant *BitcastF = ConstantExpr::getBitCast(F, G->getType());
+      G->replaceAllUsesWith(BitcastF);
+    } else {
+      // Redirect direct callers of G to F. (See note on MergeFunctionsPDI
+      // above).
+      replaceDirectCallers(G, F);
+    }
   }
 
   // If G was internal then we may have replaced all uses of G with F. If so,
