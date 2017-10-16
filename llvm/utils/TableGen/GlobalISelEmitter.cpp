@@ -775,8 +775,8 @@ std::set<LLTCodeGen> LLTOperandMatcher::KnownTypes;
 /// no reliable means to derive the missing type information from the pattern so
 /// imported rules must test the components of a pointer separately.
 ///
-/// If SizeInBits is zero, then the pointer size will be obtained from the
-/// subtarget.
+/// SizeInBits must be non-zero and the matched pointer must be that size.
+/// TODO: Add support for iPTR via SizeInBits==0 and a subtarget query.
 class PointerToAnyOperandMatcher : public OperandPredicateMatcher {
 protected:
   unsigned SizeInBits;
@@ -979,15 +979,9 @@ public:
 
   Error addTypeCheckPredicate(const TypeSetByHwMode &VTy,
                               bool OperandIsAPointer) {
-    if (!VTy.isMachineValueType())
-      return failedImport("unsupported typeset");
-
-    if (VTy.getMachineValueType() == MVT::iPTR && OperandIsAPointer) {
-      addPredicate<PointerToAnyOperandMatcher>(0);
-      return Error::success();
-    }
-
-    auto OpTyOrNone = MVTToLLT(VTy.getMachineValueType().SimpleTy);
+    auto OpTyOrNone = VTy.isMachineValueType()
+                          ? MVTToLLT(VTy.getMachineValueType().SimpleTy)
+                          : None;
     if (!OpTyOrNone)
       return failedImport("unsupported type");
 
