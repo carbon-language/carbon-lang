@@ -423,7 +423,8 @@ createMemoryBufferForManifestRes(size_t ManifestSize) {
           sizeof(object::WinResHeaderPrefix) + sizeof(object::WinResIDs) +
           sizeof(object::WinResHeaderSuffix) + ManifestSize,
       object::WIN_RES_DATA_ALIGNMENT);
-  return MemoryBuffer::getNewMemBuffer(ResSize);
+  return MemoryBuffer::getNewMemBuffer(ResSize,
+                                       Config->OutputFile + ".manifest.res");
 }
 
 static void writeResFileHeader(char *&Buf) {
