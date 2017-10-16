@@ -315,7 +315,7 @@ public:
   }
 
   void handle(SymbolOccurrences Occurrences) override {
-    RefactoringResultConsumer::handle(std::move(Occurrences));
+    llvm_unreachable("symbol occurrence results are not handled yet");
   }
 
   const AtomicChanges &getSourceChanges() const { return SourceChanges; }
