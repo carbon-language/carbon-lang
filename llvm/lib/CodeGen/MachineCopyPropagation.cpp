@@ -275,18 +275,20 @@ void MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
         ClobberRegister(Reg);
       }
 
-      // Remember Def is defined by the copy.
-      for (MCSubRegIterator SR(Def, TRI, /*IncludeSelf=*/true); SR.isValid();
-           ++SR) {
-        CopyMap[*SR] = MI;
-        AvailCopyMap[*SR] = MI;
-      }
+      if (!MI->getOperand(0).isDead() && !MI->getOperand(1).isUndef()) {
+        // Remember Def is defined by the copy.
+        for (MCSubRegIterator SR(Def, TRI, /*IncludeSelf=*/true); SR.isValid();
+             ++SR) {
+          CopyMap[*SR] = MI;
+          AvailCopyMap[*SR] = MI;
+        }
 
-      // Remember source that's copied to Def. Once it's clobbered, then
-      // it's no longer available for copy propagation.
-      RegList &DestList = SrcMap[Src];
-      if (!is_contained(DestList, Def))
-        DestList.push_back(Def);
+        // Remember source that's copied to Def. Once it's clobbered, then
+        // it's no longer available for copy propagation.
+        RegList &DestList = SrcMap[Src];
+        if (!is_contained(DestList, Def))
+          DestList.push_back(Def);
+      }
 
       continue;
     }
