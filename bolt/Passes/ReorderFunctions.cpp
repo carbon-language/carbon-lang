@@ -444,7 +444,20 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC,
     for (const auto *Func : SortedFunctions) {
       if (!Func->hasValidIndex())
         break;
-      FuncsFile << Func->getSymbol()->getName().data() << "\n";
+      if (Func->isPLTFunction())
+        continue;
+      const char *Indent = "";
+      for (auto Name : Func->getNames()) {
+        const auto SlashPos = Name.find('/');
+        if (SlashPos != std::string::npos) {
+          // Avoid duplicates for local functions.
+          if (Name.find('/', SlashPos + 1) != std::string::npos)
+            continue;
+          Name = Name.substr(0, SlashPos);
+        }
+        FuncsFile << Indent << ".text." << Name << "\n";
+        Indent = " ";
+      }
     }
     FuncsFile.close();
 
