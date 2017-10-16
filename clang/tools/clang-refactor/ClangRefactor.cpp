@@ -15,6 +15,7 @@
 
 #include "TestSupport.h"
 #include "clang/Frontend/CommandLineSourceLoc.h"
+#include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Refactoring.h"
@@ -65,7 +66,8 @@ public:
   /// logic into the refactoring operation. The test-specific consumer
   /// ensures that the individual results in a particular test group are
   /// identical.
-  virtual std::unique_ptr<RefactoringResultConsumer> createCustomConsumer() {
+  virtual std::unique_ptr<ClangRefactorToolConsumerInterface>
+  createCustomConsumer() {
     return nullptr;
   }
 
@@ -85,7 +87,8 @@ public:
 
   void print(raw_ostream &OS) override { TestSelections.dump(OS); }
 
-  std::unique_ptr<RefactoringResultConsumer> createCustomConsumer() override {
+  std::unique_ptr<ClangRefactorToolConsumerInterface>
+  createCustomConsumer() override {
     return TestSelections.createConsumer();
   }
 
@@ -304,10 +307,20 @@ private:
   RefactoringActionCommandLineOptions Options;
 };
 
-class ClangRefactorConsumer : public RefactoringResultConsumer {
+class ClangRefactorConsumer final : public ClangRefactorToolConsumerInterface {
 public:
+  ClangRefactorConsumer() {}
+
   void handleError(llvm::Error Err) override {
-    llvm::errs() << llvm::toString(std::move(Err)) << "\n";
+    Optional<PartialDiagnosticAt> Diag = DiagnosticError::take(Err);
+    if (!Diag) {
+      llvm::errs() << llvm::toString(std::move(Err)) << "\n";
+      return;
+    }
+    llvm::cantFail(std::move(Err)); // This is a success.
+    DiagnosticBuilder DB(
+        getDiags().Report(Diag->first, Diag->second.getDiagID()));
+    Diag->second.Emit(DB);
   }
 
   void handle(AtomicChanges Changes) override {
@@ -468,8 +481,8 @@ public:
       return true;
     }
 
-    bool HasFailed = false;
     ClangRefactorConsumer Consumer;
+    bool HasFailed = false;
     if (foreachTranslationUnit(DB, Sources, [&](ASTContext &AST) {
           RefactoringRuleContext Context(AST.getSourceManager());
           Context.setASTContext(AST);
@@ -488,21 +501,27 @@ public:
                 "The action must have at least one selection rule");
           };
 
+          std::unique_ptr<ClangRefactorToolConsumerInterface> CustomConsumer;
+          if (HasSelection)
+            CustomConsumer = Subcommand.getSelection()->createCustomConsumer();
+          ClangRefactorToolConsumerInterface &ActiveConsumer =
+              CustomConsumer ? *CustomConsumer : Consumer;
+          ActiveConsumer.beginTU(AST);
           if (HasSelection) {
             assert(Subcommand.getSelection() && "Missing selection argument?");
             if (opts::Verbose)
               Subcommand.getSelection()->print(llvm::outs());
-            auto CustomConsumer =
-                Subcommand.getSelection()->createCustomConsumer();
             if (Subcommand.getSelection()->forAllRanges(
                     Context.getSources(), [&](SourceRange R) {
                       Context.setSelectionRange(R);
-                      InvokeRule(CustomConsumer ? *CustomConsumer : Consumer);
+                      InvokeRule(ActiveConsumer);
                     }))
               HasFailed = true;
+            ActiveConsumer.endTU();
             return;
           }
           // FIXME (Alex L): Implement non-selection based invocation path.
+          ActiveConsumer.endTU();
         }))
       return true;
     return HasFailed || applySourceChanges(Consumer.getSourceChanges());
