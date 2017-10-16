@@ -1290,6 +1290,7 @@ Here is an example:
 
 def ARMInterruptDocs : Documentation {
   let Category = DocCatFunction;
+  let Heading = "interrupt (ARM)";
   let Content = [{
 Clang supports the GNU style ``__attribute__((interrupt("TYPE")))`` attribute on
 ARM targets. This attribute may be attached to a function definition and
@@ -1331,6 +1332,7 @@ The semantics are as follows:
 
 def MipsInterruptDocs : Documentation {
   let Category = DocCatFunction;
+  let Heading = "interrupt (MIPS)";
   let Content = [{
 Clang supports the GNU style ``__attribute__((interrupt("ARGUMENT")))`` attribute on
 MIPS targets. This attribute may be attached to a function definition and instructs
@@ -1427,6 +1429,7 @@ as ``-mlong-calls`` and ``-mno-long-calls``.
 
 def AVRInterruptDocs : Documentation {
   let Category = DocCatFunction;
+  let Heading = "interrupt (AVR)";
   let Content = [{
 Clang supports the GNU style ``__attribute__((interrupt))`` attribute on
 AVR targets. This attribute may be attached to a function definition and instructs
@@ -2789,6 +2792,7 @@ Marking virtual functions as ``disable_tail_calls`` is legal.
 
 def AnyX86InterruptDocs : Documentation {
   let Category = DocCatFunction;
+  let Heading = "interrupt (X86)";
   let Content = [{
 Clang supports the GNU style ``__attribute__((interrupt))`` attribute on
 x86/x86-64 targets.The compiler generates function entry and exit sequences
