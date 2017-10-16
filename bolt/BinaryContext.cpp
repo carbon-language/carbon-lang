@@ -369,6 +369,16 @@ void BinaryContext::printInstruction(raw_ostream &OS,
     }
   }
 
+  auto *MD = Function ? DR.getFuncMemData(Function->getNames()) : nullptr;
+  if (MD) {
+    bool DidPrint = false;
+    for (auto &MI : MD->getMemInfoRange(Offset)) {
+      OS << (DidPrint ? ", " : " # Loads: ");
+      OS << MI.Addr << "/" << MI.Count;
+      DidPrint = true;
+    }
+  }
+
   OS << "\n";
 
   if (printMCInst) {

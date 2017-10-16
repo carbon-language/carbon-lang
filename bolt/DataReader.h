@@ -32,7 +32,7 @@ namespace llvm {
 namespace bolt {
 
 /// LTO-generated function names take a form:
-//
+///
 ///   <function_name>.lto_priv.<decimal_number>/...
 ///     or
 ///   <function_name>.constprop.<decimal_number>/...
@@ -62,6 +62,9 @@ struct Location {
   StringRef Name;
   uint64_t Offset;
 
+  explicit Location(uint64_t Offset)
+      : IsSymbol(false), Name("[unknown]"), Offset(Offset) {}
+
   Location(bool IsSymbol, StringRef Name, uint64_t Offset)
       : IsSymbol(IsSymbol), Name(Name), Offset(Offset) {}
 
@@ -80,6 +83,8 @@ struct Location {
 
     return Name != "[heap]" && Offset < RHS.Offset;
   }
+
+  friend raw_ostream &operator<<(raw_ostream &OS, const Location &Loc);
 };
 
 typedef std::vector<std::pair<Location, Location>> BranchContext;
@@ -123,7 +128,7 @@ struct BranchInfo {
   }
 
   /// Merges the branch and misprediction counts as well as the histories of BI
-  /// with those of this objetc.
+  /// with those of this object.
   void mergeWith(const BranchInfo &BI);
 
   void print(raw_ostream &OS) const;
@@ -145,10 +150,10 @@ struct FuncBranchData {
   FuncBranchData() {}
 
   FuncBranchData(StringRef Name, ContainerTy Data)
-      : Name(Name), Data(std::move(Data)) {}
+    : Name(Name), Data(std::move(Data)) {}
 
   FuncBranchData(StringRef Name, ContainerTy Data, ContainerTy EntryData)
-      : Name(Name), Data(std::move(Data)), EntryData(std::move(EntryData)) {}
+    : Name(Name), Data(std::move(Data)), EntryData(std::move(EntryData)) {}
 
   ErrorOr<const BranchInfo &> getBranch(uint64_t From, uint64_t To) const;
 
@@ -174,6 +179,63 @@ struct FuncBranchData {
   void bumpBranchCount(uint64_t OffsetFrom, uint64_t OffsetTo, bool Mispred);
   void bumpCallCount(uint64_t OffsetFrom, const Location &To, bool Mispred);
   void bumpEntryCount(const Location &From, uint64_t OffsetTo, bool Mispred);
+};
+
+/// MemInfo represents a single memory load from an address \p Addr at an \p
+/// Offset within a function.  \p Count represents how many times a particular
+/// address was seen.
+struct MemInfo {
+  Location Offset;
+  Location Addr;
+  uint64_t Count;
+
+  bool operator==(const MemInfo &RHS) const {
+    return Offset == RHS.Offset && Addr == RHS.Addr;
+  }
+
+  bool operator<(const MemInfo &RHS) const {
+    if (Offset < RHS.Offset)
+      return true;
+
+    if (Offset == RHS.Offset)
+      return (Addr < RHS.Addr);
+
+    return false;
+  }
+
+  void mergeWith(const MemInfo &MI) {
+    Count += MI.Count;
+  }
+
+  void print(raw_ostream &OS) const;
+
+  MemInfo(const Location &Offset, const Location &Addr, uint64_t Count = 0)
+    : Offset(Offset), Addr(Addr), Count(Count) {}
+};
+
+/// Helper class to store memory load events recorded in the address space of
+/// a given function, analogous to FuncBranchData but for memory load events
+/// instead of branches.
+struct FuncMemData {
+  typedef std::vector<MemInfo> ContainerTy;
+
+  StringRef Name;
+  ContainerTy Data;
+
+  DenseMap<uint64_t, DenseMap<Location, size_t>> EventIndex;
+
+  /// Find all the memory events originating at Offset.
+  iterator_range<ContainerTy::const_iterator> getMemInfoRange(
+    uint64_t Offset) const;
+
+  /// Update \p Data with a memory event.  Events with the same
+  /// \p Offset and \p Addr will be coalesced.
+  void update(const Location &Offset, const Location &Addr);
+
+  FuncMemData() {}
+
+  FuncMemData(StringRef Name, ContainerTy Data)
+    : Name(Name), Data(std::move(Data)) {}
 };
 
 /// Similar to BranchInfo, but instead of recording from-to address (an edge),
@@ -297,6 +359,9 @@ public:
   FuncBranchData *
   getFuncBranchData(const std::vector<std::string> &FuncNames);
 
+  /// Return mem data matching one of the names in \p FuncNames.
+  FuncMemData *getFuncMemData(const std::vector<std::string> &FuncNames);
+
   FuncSampleData *
   getFuncSampleData(const std::vector<std::string> &FuncNames);
 
@@ -306,10 +371,18 @@ public:
   std::vector<FuncBranchData *>
   getFuncBranchDataRegex(const std::vector<std::string> &FuncNames);
 
+  /// Return a vector of all FuncMemData matching the list of names.
+  /// Internally use fuzzy matching to match special names like LTO-generated
+  /// function names.
+  std::vector<FuncMemData *>
+  getFuncMemDataRegex(const std::vector<std::string> &FuncNames);
+
   using FuncsToBranchesMapTy = StringMap<FuncBranchData>;
   using FuncsToSamplesMapTy = StringMap<FuncSampleData>;
+  using FuncsToMemEventsMapTy = StringMap<FuncMemData>;
 
   FuncsToBranchesMapTy &getAllFuncsBranchData() { return FuncsToBranches; }
+  FuncsToMemEventsMapTy &getAllFuncsMemData() { return FuncsToMemEvents; }
   FuncsToSamplesMapTy &getAllFuncsSampleData() { return FuncsToSamples; }
 
   const FuncsToBranchesMapTy &getAllFuncsData() const {
@@ -348,15 +421,24 @@ protected:
   bool checkAndConsumeNewLine();
   ErrorOr<StringRef> parseString(char EndChar, bool EndNl=false);
   ErrorOr<int64_t> parseNumberField(char EndChar, bool EndNl=false);
-  ErrorOr<Location> parseLocation(char EndChar, bool EndNl=false);
+  ErrorOr<uint64_t> parseHexField(char EndChar, bool EndNl=false);
+  ErrorOr<Location> parseLocation(char EndChar, bool EndNl, bool ExpectMemLoc);
+  ErrorOr<Location> parseLocation(char EndChar, bool EndNl=false) {
+    return parseLocation(EndChar, EndNl, false);
+  }
+  ErrorOr<Location> parseMemLocation(char EndChar, bool EndNl=false) {
+    return parseLocation(EndChar, EndNl, true);
+  }
   ErrorOr<BranchHistory> parseBranchHistory();
   ErrorOr<BranchInfo> parseBranchInfo();
   ErrorOr<SampleInfo> parseSampleInfo();
+  ErrorOr<MemInfo> parseMemInfo();
   ErrorOr<bool> maybeParseNoLBRFlag();
-  bool hasData();
+  bool hasBranchData();
+  bool hasMemData();
 
   /// Build suffix map once the profile data is parsed.
-  void buildLTONameMap();
+  void buildLTONameMaps();
 
   /// An in-memory copy of the input data file - owns strings used in reader.
   std::unique_ptr<MemoryBuffer> FileBuf;
@@ -366,12 +448,14 @@ protected:
   unsigned Col;
   FuncsToBranchesMapTy FuncsToBranches;
   FuncsToSamplesMapTy FuncsToSamples;
+  FuncsToMemEventsMapTy FuncsToMemEvents;
   bool NoLBRMode{false};
   StringSet<> EventNames;
   static const char FieldSeparator = ' ';
 
-  /// Map of common LTO names to possible matching profiles.
+  /// Maps of common LTO names to possible matching profiles.
   StringMap<std::vector<FuncBranchData *>> LTOCommonNameMap;
+  StringMap<std::vector<FuncMemData *>> LTOCommonNameMemMap;
 };
 
 }

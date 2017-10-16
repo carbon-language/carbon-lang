@@ -41,6 +41,17 @@ StringRef normalizeName(StringRef Name) {
 
 } // anonymous namespace
 
+raw_ostream &operator<<(raw_ostream &OS, const Location &Loc) {
+  if (Loc.IsSymbol) {
+    OS << Loc.Name;
+    if (Loc.Offset)
+      OS << "+" << Twine::utohexstr(Loc.Offset);
+  } else {
+    OS << Twine::utohexstr(Loc.Offset);
+  }
+  return OS;
+}
+
 iterator_range<FuncBranchData::ContainerTy::const_iterator>
 FuncBranchData::getBranchRange(uint64_t From) const {
   assert(std::is_sorted(Data.begin(), Data.end()));
@@ -285,6 +296,39 @@ FuncBranchData::getDirectCallBranch(uint64_t From) const {
   return make_error_code(llvm::errc::invalid_argument);
 }
 
+void MemInfo::print(raw_ostream &OS) const {
+  OS << (Offset.IsSymbol + 3) << " " << Offset.Name << " "
+     << Twine::utohexstr(Offset.Offset) << " "
+     << (Addr.IsSymbol + 3) << " " << Addr.Name << " "
+     << Twine::utohexstr(Addr.Offset) << " "
+     << Count << "\n";
+}
+
+iterator_range<FuncMemData::ContainerTy::const_iterator>
+FuncMemData::getMemInfoRange(uint64_t Offset) const {
+  assert(std::is_sorted(Data.begin(), Data.end()));
+  struct Compare {
+    bool operator()(const MemInfo &MI, const uint64_t Val) const {
+      return MI.Offset.Offset < Val;
+    }
+    bool operator()(const uint64_t Val, const MemInfo &MI) const {
+      return Val < MI.Offset.Offset;
+    }
+  };
+  auto Range = std::equal_range(Data.begin(), Data.end(), Offset, Compare());
+  return iterator_range<ContainerTy::const_iterator>(Range.first, Range.second);
+}
+
+void FuncMemData::update(const Location &Offset, const Location &Addr) {
+  auto Iter = EventIndex[Offset.Offset].find(Addr);
+  if (Iter == EventIndex[Offset.Offset].end()) {
+    Data.emplace_back(MemInfo(Offset, Addr, 1));
+    EventIndex[Offset.Offset][Addr] = Data.size() - 1;
+    return;
+  }
+  ++Data[Iter->second].Count;
+}
+
 ErrorOr<std::unique_ptr<DataReader>>
 DataReader::readPerfData(StringRef Path, raw_ostream &Diag) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
@@ -295,7 +339,7 @@ DataReader::readPerfData(StringRef Path, raw_ostream &Diag) {
   }
   auto DR = make_unique<DataReader>(std::move(MB.get()), Diag);
   DR->parse();
-  DR->buildLTONameMap();
+  DR->buildLTONameMaps();
   return std::move(DR);
 }
 
@@ -366,16 +410,43 @@ ErrorOr<int64_t> DataReader::parseNumberField(char EndChar, bool EndNl) {
   return Num;
 }
 
-ErrorOr<Location> DataReader::parseLocation(char EndChar, bool EndNl) {
+ErrorOr<uint64_t> DataReader::parseHexField(char EndChar, bool EndNl) {
+  auto NumStrRes = parseString(EndChar, EndNl);
+  if (std::error_code EC = NumStrRes.getError())
+    return EC;
+  StringRef NumStr = NumStrRes.get();
+  uint64_t Num;
+  if (NumStr.getAsInteger(16, Num)) {
+    reportError("expected hexidecimal number");
+    Diag << "Found: " << NumStr << "\n";
+    return make_error_code(llvm::errc::io_error);
+  }
+  return Num;
+}
+
+ErrorOr<Location> DataReader::parseLocation(char EndChar,
+                                            bool EndNl,
+                                            bool ExpectMemLoc) {
   // Read whether the location of the branch should be DSO or a symbol
   // 0 means it is a DSO. 1 means it is a global symbol. 2 means it is a local
   // symbol.
-  if (ParsingBuf[0] != '0' && ParsingBuf[0] != '1' && ParsingBuf[0] != '2') {
+  // The symbol flag is also used to tag memory load events by adding 3 to the
+  // base values, i.e. 3 not a symbol, 4 global symbol and 5 local symbol.
+  if (!ExpectMemLoc &&
+      ParsingBuf[0] != '0' && ParsingBuf[0] != '1' && ParsingBuf[0] != '2') {
     reportError("expected 0, 1 or 2");
     return make_error_code(llvm::errc::io_error);
   }
 
-  bool IsSymbol = ParsingBuf[0] == '1' || ParsingBuf[0] == '2';
+  if (ExpectMemLoc &&
+      ParsingBuf[0] != '3' && ParsingBuf[0] != '4' && ParsingBuf[0] != '5') {
+    reportError("expected 3, 4 or 5");
+    return make_error_code(llvm::errc::io_error);
+  }
+
+  bool IsSymbol =
+    (!ExpectMemLoc && (ParsingBuf[0] == '1' || ParsingBuf[0] == '2')) ||
+    (ExpectMemLoc && (ParsingBuf[0] == '4' || ParsingBuf[0] == '5'));
   ParsingBuf = ParsingBuf.drop_front(1);
   Col += 1;
 
@@ -389,18 +460,11 @@ ErrorOr<Location> DataReader::parseLocation(char EndChar, bool EndNl) {
   StringRef Name = NameRes.get();
 
   // Read the offset
-  auto OffsetStrRes = parseString(EndChar, EndNl);
-  if (std::error_code EC = OffsetStrRes.getError())
+  auto Offset = parseHexField(EndChar, EndNl);
+  if (std::error_code EC = Offset.getError())
     return EC;
-  StringRef OffsetStr = OffsetStrRes.get();
-  uint64_t Offset;
-  if (OffsetStr.getAsInteger(16, Offset)) {
-    reportError("expected hexadecimal number");
-    Diag << "Found: " << OffsetStr << "\n";
-    return make_error_code(llvm::errc::io_error);
-  }
 
-  return Location(IsSymbol, Name, Offset);
+  return Location(IsSymbol, Name, Offset.get());
 }
 
 ErrorOr<BranchHistory> DataReader::parseBranchHistory() {
@@ -483,6 +547,26 @@ ErrorOr<BranchInfo> DataReader::parseBranchInfo() {
                     std::move(Histories));
 }
 
+ErrorOr<MemInfo> DataReader::parseMemInfo() {
+  auto Res = parseMemLocation(FieldSeparator);
+  if (std::error_code EC = Res.getError())
+    return EC;
+  Location Offset = Res.get();
+
+  Res = parseMemLocation(FieldSeparator);
+  if (std::error_code EC = Res.getError())
+    return EC;
+  Location Addr = Res.get();
+
+  auto CountRes = parseNumberField(FieldSeparator, true);
+  if (std::error_code EC = CountRes.getError())
+    return EC;
+
+  checkAndConsumeNewLine();
+
+  return MemInfo(Offset, Addr, CountRes.get());
+}
+  
 ErrorOr<SampleInfo> DataReader::parseSampleInfo() {
   auto Res = parseLocation(FieldSeparator);
   if (std::error_code EC = Res.getError())
@@ -525,11 +609,20 @@ ErrorOr<bool> DataReader::maybeParseNoLBRFlag() {
   return true;
 }
 
-bool DataReader::hasData() {
+bool DataReader::hasBranchData() {
   if (ParsingBuf.size() == 0)
     return false;
 
   if (ParsingBuf[0] == '0' || ParsingBuf[0] == '1' || ParsingBuf[0] == '2')
+    return true;
+  return false;
+}
+
+bool DataReader::hasMemData() {
+  if (ParsingBuf.size() == 0)
+    return false;
+
+  if (ParsingBuf[0] == '3' || ParsingBuf[0] == '4' || ParsingBuf[0] == '5')
     return true;
   return false;
 }
@@ -547,7 +640,18 @@ std::error_code DataReader::parseInNoLBRMode() {
     return I;
   };
 
-  while (hasData()) {
+  auto GetOrCreateFuncMemEntry = [&](StringRef Name) {
+    auto I = FuncsToMemEvents.find(Name);
+    if (I == FuncsToMemEvents.end()) {
+      bool success;
+      std::tie(I, success) = FuncsToMemEvents.insert(
+          std::make_pair(Name, FuncMemData(Name, FuncMemData::ContainerTy())));
+      assert(success && "unexpected result of insert");
+    }
+    return I;
+  };
+
+  while (hasBranchData()) {
     auto Res = parseSampleInfo();
     if (std::error_code EC = Res.getError())
       return EC;
@@ -562,9 +666,29 @@ std::error_code DataReader::parseInNoLBRMode() {
     I->getValue().Data.emplace_back(std::move(SI));
   }
 
+  while (hasMemData()) {
+    auto Res = parseMemInfo();
+    if (std::error_code EC = Res.getError())
+      return EC;
+
+    MemInfo MI = Res.get();
+
+    // Ignore memory events not involving known pc.
+    if (!MI.Offset.IsSymbol)
+      continue;
+
+    auto I = GetOrCreateFuncMemEntry(MI.Offset.Name);
+    I->getValue().Data.emplace_back(std::move(MI));
+  }
+
   for (auto &FuncSamples : FuncsToSamples) {
     std::stable_sort(FuncSamples.second.Data.begin(),
                      FuncSamples.second.Data.end());
+  }
+
+  for (auto &MemEvents : FuncsToMemEvents) {
+    std::stable_sort(MemEvents.second.Data.begin(),
+                     MemEvents.second.Data.end());
   }
 
   return std::error_code();
@@ -584,6 +708,17 @@ std::error_code DataReader::parse() {
     return I;
   };
 
+  auto GetOrCreateFuncMemEntry = [&](StringRef Name) {
+    auto I = FuncsToMemEvents.find(Name);
+    if (I == FuncsToMemEvents.end()) {
+      bool success;
+      std::tie(I, success) = FuncsToMemEvents.insert(
+          std::make_pair(Name, FuncMemData(Name, FuncMemData::ContainerTy())));
+      assert(success && "unexpected result of insert");
+    }
+    return I;
+  };
+
   Col = 0;
   Line = 1;
   auto FlagOrErr = maybeParseNoLBRFlag();
@@ -593,7 +728,7 @@ std::error_code DataReader::parse() {
   if (NoLBRMode)
     return parseInNoLBRMode();
 
-  while (hasData()) {
+  while (hasBranchData()) {
     auto Res = parseBranchInfo();
     if (std::error_code EC = Res.getError())
       return EC;
@@ -624,20 +759,47 @@ std::error_code DataReader::parse() {
     }
   }
 
+  while (hasMemData()) {
+    auto Res = parseMemInfo();
+    if (std::error_code EC = Res.getError())
+      return EC;
+
+    MemInfo MI = Res.get();
+
+    // Ignore memory events not involving known pc.
+    if (!MI.Offset.IsSymbol)
+      continue;
+
+    auto I = GetOrCreateFuncMemEntry(MI.Offset.Name);
+    I->getValue().Data.emplace_back(std::move(MI));
+  }
+
   for (auto &FuncBranches : FuncsToBranches) {
     std::stable_sort(FuncBranches.second.Data.begin(),
                      FuncBranches.second.Data.end());
   }
 
+  for (auto &MemEvents : FuncsToMemEvents) {
+    std::stable_sort(MemEvents.second.Data.begin(),
+                     MemEvents.second.Data.end());
+  }
+
   return std::error_code();
 }
 
-void DataReader::buildLTONameMap() {
+void DataReader::buildLTONameMaps() {
   for (auto &FuncData : FuncsToBranches) {
     const auto FuncName = FuncData.getKey();
     const auto CommonName = getLTOCommonName(FuncName);
     if (CommonName)
       LTOCommonNameMap[*CommonName].push_back(&FuncData.getValue());
+  }
+
+  for (auto &FuncData : FuncsToMemEvents) {
+    const auto FuncName = FuncData.getKey();
+    const auto CommonName = getLTOCommonName(FuncName);
+    if (CommonName)
+      LTOCommonNameMemMap[*CommonName].push_back(&FuncData.getValue());
   }
 }
 
@@ -654,21 +816,14 @@ fetchMapEntry(MapTy &Map, const std::vector<std::string> &FuncNames) {
   }
   return nullptr;
 }
-}
 
-FuncBranchData *
-DataReader::getFuncBranchData(const std::vector<std::string> &FuncNames) {
-  return fetchMapEntry<FuncsToBranchesMapTy>(FuncsToBranches, FuncNames);
-}
-
-FuncSampleData *
-DataReader::getFuncSampleData(const std::vector<std::string> &FuncNames) {
-  return fetchMapEntry<FuncsToSamplesMapTy>(FuncsToSamples, FuncNames);
-}
-
-std::vector<FuncBranchData *>
-DataReader::getFuncBranchDataRegex(const std::vector<std::string> &FuncNames) {
-  std::vector<FuncBranchData *> AllData;
+template <typename MapTy>
+std::vector<decltype(MapTy::MapEntryTy::second) *>
+fetchMapEntriesRegex(
+  MapTy &Map,
+  const StringMap<std::vector<decltype(MapTy::MapEntryTy::second) *>> &LTOCommonNameMap,
+  const std::vector<std::string> &FuncNames) {
+  std::vector<decltype(MapTy::MapEntryTy::second) *> AllData;
   // Do a reverse order iteration since the name in profile has a higher chance
   // of matching a name at the end of the list.
   for (auto FI = FuncNames.rbegin(), FE = FuncNames.rend(); FI != FE; ++FI) {
@@ -682,13 +837,40 @@ DataReader::getFuncBranchDataRegex(const std::vector<std::string> &FuncNames) {
         AllData.insert(AllData.end(), CommonData.begin(), CommonData.end());
       }
     } else {
-      auto I = FuncsToBranches.find(Name);
-      if (I != FuncsToBranches.end()) {
+      auto I = Map.find(Name);
+      if (I != Map.end()) {
         return {&I->getValue()};
       }
     }
   }
   return AllData;
+}
+
+}
+
+FuncBranchData *
+DataReader::getFuncBranchData(const std::vector<std::string> &FuncNames) {
+  return fetchMapEntry<FuncsToBranchesMapTy>(FuncsToBranches, FuncNames);
+}
+
+FuncMemData *
+DataReader::getFuncMemData(const std::vector<std::string> &FuncNames) {
+  return fetchMapEntry<FuncsToMemEventsMapTy>(FuncsToMemEvents, FuncNames);
+}
+
+FuncSampleData *
+DataReader::getFuncSampleData(const std::vector<std::string> &FuncNames) {
+  return fetchMapEntry<FuncsToSamplesMapTy>(FuncsToSamples, FuncNames);
+}
+
+std::vector<FuncBranchData *>
+DataReader::getFuncBranchDataRegex(const std::vector<std::string> &FuncNames) {
+  return fetchMapEntriesRegex(FuncsToBranches, LTOCommonNameMap, FuncNames);
+}
+
+std::vector<FuncMemData *>
+DataReader::getFuncMemDataRegex(const std::vector<std::string> &FuncNames) {
+  return fetchMapEntriesRegex(FuncsToMemEvents, LTOCommonNameMemMap, FuncNames);
 }
 
 bool DataReader::hasLocalsWithFileName() const {
@@ -738,6 +920,20 @@ void DataReader::dump() const {
       Diag << SI.Address.Name << " " << SI.Address.Offset << " "
            << SI.Occurrences << "\n";
     }
+  }
+
+  for (const auto &Func : FuncsToMemEvents) {
+    Diag << "Memory events for " << Func.getValue().Name;
+    Location LastOffset(0);
+    for (auto &MI : Func.getValue().Data) {
+      if (MI.Offset == LastOffset) {
+        Diag << ", " << MI.Addr << "/" << MI.Count;
+      } else {
+        Diag << "\n" << MI.Offset << ": " << MI.Addr << "/" << MI.Count;
+      }
+      LastOffset = MI.Offset;
+    }
+    Diag << "\n";
   }
 }
 

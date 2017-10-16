@@ -94,6 +94,7 @@ int main(int argc, char **argv) {
   // All merged data.
   DataReader::FuncsToBranchesMapTy MergedFunctionsBranchData;
   DataReader::FuncsToSamplesMapTy MergedFunctionsSampleData;
+  DataReader::FuncsToMemEventsMapTy MergedFunctionsMemData;
   StringSet<> EventNames;
 
   // Merged functions data has to replace strings refs with strings from the
@@ -143,6 +144,22 @@ int main(int argc, char **argv) {
     AllStrings.emplace_back(ToNamePtr);   // keep the reference
   };
 
+  // Copy mem info replacing string references with internal storage
+  // references.
+  auto CopyMemInfo = [&](const MemInfo &MI, std::vector<MemInfo> &MIData) {
+    auto OffsetNamePtr = MergedStringPool.intern(MI.Offset.Name);
+    auto AddrNamePtr = MergedStringPool.intern(MI.Addr.Name);
+    MIData.emplace_back(MemInfo(Location(MI.Offset.IsSymbol,
+                                         *OffsetNamePtr,
+                                         MI.Offset.Offset),
+                                Location(MI.Addr.IsSymbol,
+                                         *AddrNamePtr,
+                                         MI.Addr.Offset),
+                                MI.Count));
+    AllStrings.emplace_back(OffsetNamePtr); // keep the reference
+    AllStrings.emplace_back(AddrNamePtr);   // keep the reference
+  };
+
   auto CopySampleInfo = [&](const SampleInfo &SI,
                             std::vector<SampleInfo> &SIData) {
     auto NamePtr = MergedStringPool.intern(SI.Address.Name);
@@ -181,6 +198,16 @@ int main(int argc, char **argv) {
     auto NamePtr = MergedStringPool.intern(SI.Address.Name);
     SI.Address.Name = *NamePtr;
     AllStrings.emplace_back(NamePtr); // keep the reference
+  };
+
+  auto replaceMIStringRefs = [&] (MemInfo &MI) {
+    auto OffsetNamePtr = MergedStringPool.intern(MI.Offset.Name);
+    MI.Offset.Name = *OffsetNamePtr;
+    AllStrings.emplace_back(OffsetNamePtr); // keep the reference
+
+    auto AddrNamePtr = MergedStringPool.intern(MI.Addr.Name);
+    MI.Addr.Name = *AddrNamePtr;
+    AllStrings.emplace_back(AddrNamePtr);   // keep the reference
   };
 
   for (auto &InputDataFilename : opts::InputDataFilenames) {
@@ -313,6 +340,56 @@ int main(int argc, char **argv) {
         }
       }
     }
+
+    for (auto &FI : ReaderOrErr.get()->getAllFuncsMemData()) {
+      auto MI = MergedFunctionsMemData.find(FI.second.Name);
+      if (MI != MergedFunctionsMemData.end()) {
+        std::vector<MemInfo> TmpMI;
+        for (auto &MMI : FI.second.Data) {
+          // Find and merge a corresponding entry or copy data.
+          auto TI = std::lower_bound(MI->second.Data.begin(),
+                                     MI->second.Data.end(),
+                                     MMI);
+          if (TI != MI->second.Data.end() && *TI == MMI) {
+            replaceMIStringRefs(MMI);
+            TI->mergeWith(MMI);
+          } else {
+            CopyMemInfo(MMI, TmpMI);
+          }
+        }
+        // Merge in the temp vector making sure it doesn't contain duplicates.
+        std::sort(TmpMI.begin(), TmpMI.end());
+        MemInfo *PrevMI = nullptr;
+        for (auto &MMI : TmpMI) {
+          if (PrevMI && *PrevMI == MMI) {
+            PrevMI->mergeWith(MMI);
+          } else {
+            MI->second.Data.emplace_back(MMI);
+            PrevMI = &MI->second.Data.back();
+          }
+        }
+        std::sort(MI->second.Data.begin(), MI->second.Data.end());
+      } else {
+        auto NamePtr = MergedStringPool.intern(FI.second.Name);
+        AllStrings.emplace_back(NamePtr); // keep the ref
+        bool Success;
+        std::tie(MI, Success) = MergedFunctionsMemData.insert(
+            std::make_pair(*NamePtr,
+                           FuncMemData(*NamePtr, FuncMemData::ContainerTy())));
+        // Copy with string conversion while eliminating duplicates.
+        std::sort(FI.second.Data.begin(), FI.second.Data.end());
+        MemInfo *PrevMI = nullptr;
+        for (auto &MMI : FI.second.Data) {
+          if (PrevMI && *PrevMI == MMI) {
+            replaceMIStringRefs(MMI);
+            PrevMI->mergeWith(MMI);
+          } else {
+            CopyMemInfo(MMI, MI->second.Data);
+            PrevMI = &MI->second.Data.back();
+          }
+        }
+      }
+    }
   }
 
   if (!opts::SuppressMergedDataOutput) {
@@ -336,11 +413,17 @@ int main(int argc, char **argv) {
         SD.print(outs());
       }
     }
+    for (const auto &FDI : MergedFunctionsMemData) {
+      for (const auto &MD : FDI.second.Data) {
+        MD.print(outs());
+      }
+    }
   }
 
   errs() << "Data for "
          << (MergedFunctionsBranchData.size() +
-             MergedFunctionsSampleData.size())
+             MergedFunctionsSampleData.size() +
+             MergedFunctionsMemData.size())
          << " unique objects successfully merged.\n";
 
   if (opts::PrintFunctionList != opts::ST_NONE) {

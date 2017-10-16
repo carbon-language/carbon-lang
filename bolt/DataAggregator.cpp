@@ -21,6 +21,7 @@
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Regex.h"
 #include "llvm/Support/Timer.h"
 
 #include <unistd.h>
@@ -64,7 +65,8 @@ void DataAggregator::start(StringRef PerfDataFilename) {
   outs() << "PERF2BOLT: Starting data aggregation job for " << PerfDataFilename
          << "\n";
   findPerfExecutable();
-  launchPerfEventsNoWait();
+  launchPerfBranchEventsNoWait();
+  launchPerfMemEventsNoWait();
   launchPerfTasksNoWait();
 }
 
@@ -73,17 +75,18 @@ void DataAggregator::abort() {
 
   // Kill subprocesses in case they are not finished
   sys::Wait(TasksPI, 1, false, &Error);
-  sys::Wait(EventsPI, 1, false, &Error);
+  sys::Wait(BranchEventsPI, 1, false, &Error);
+  sys::Wait(MemEventsPI, 1, false, &Error);
 
   deleteTempFiles();
 }
 
-bool DataAggregator::launchPerfEventsNoWait() {
+bool DataAggregator::launchPerfBranchEventsNoWait() {
   SmallVector<const char*, 4> Argv;
   SmallVector<StringRef, 3> Redirects;
   SmallVector<const StringRef*, 3> RedirectPtrs;
 
-  outs() << "PERF2BOLT: Spawning perf-script job to read events\n";
+  outs() << "PERF2BOLT: Spawning perf-script job to read branch events\n";
   Argv.push_back(PerfPath.data());
   Argv.push_back("script");
   Argv.push_back("-F");
@@ -93,32 +96,77 @@ bool DataAggregator::launchPerfEventsNoWait() {
   Argv.push_back(nullptr);
 
   if (auto Errc = sys::fs::createTemporaryFile("perf.script", "out",
-                                               PerfEventsOutputPath)) {
+                                               PerfBranchEventsOutputPath)) {
     outs() << "PERF2BOLT: Failed to create temporary file "
-           << PerfEventsOutputPath << " with error " << Errc.message() << "\n";
+           << PerfBranchEventsOutputPath << " with error " << Errc.message() << "\n";
     exit(1);
   }
 
   if (auto Errc = sys::fs::createTemporaryFile("perf.script", "err",
-                                               PerfEventsErrPath)) {
+                                               PerfBranchEventsErrPath)) {
     outs() << "PERF2BOLT: Failed to create temporary file "
-           << PerfEventsErrPath << " with error " << Errc.message() << "\n";
+           << PerfBranchEventsErrPath << " with error " << Errc.message() << "\n";
     exit(1);
   }
 
-  Redirects.push_back("");                                     // Stdin
-  Redirects.push_back(StringRef(PerfEventsOutputPath.data())); // Stdout
-  Redirects.push_back(StringRef(PerfEventsErrPath.data()));    // Stderr
+  Redirects.push_back("");                                           // Stdin
+  Redirects.push_back(StringRef(PerfBranchEventsOutputPath.data())); // Stdout
+  Redirects.push_back(StringRef(PerfBranchEventsErrPath.data()));    // Stderr
   RedirectPtrs.push_back(&Redirects[0]);
   RedirectPtrs.push_back(&Redirects[1]);
   RedirectPtrs.push_back(&Redirects[2]);
 
   DEBUG(dbgs() << "Launching perf: " << PerfPath.data() << " 1> "
-               << PerfEventsOutputPath.data() << " 2> "
-               << PerfEventsErrPath.data() << "\n");
+               << PerfBranchEventsOutputPath.data() << " 2> "
+               << PerfBranchEventsErrPath.data() << "\n");
 
-  EventsPI = sys::ExecuteNoWait(PerfPath.data(), Argv.data(),
-                                /*envp*/ nullptr, &RedirectPtrs[0]);
+  BranchEventsPI = sys::ExecuteNoWait(PerfPath.data(), Argv.data(),
+                                      /*envp*/ nullptr, &RedirectPtrs[0]);
+
+  return true;
+}
+
+bool DataAggregator::launchPerfMemEventsNoWait() {
+  SmallVector<const char*, 4> Argv;
+  SmallVector<StringRef, 3> Redirects;
+  SmallVector<const StringRef*, 3> RedirectPtrs;
+
+  outs() << "PERF2BOLT: Spawning perf-script job to read mem events\n";
+  Argv.push_back(PerfPath.data());
+  Argv.push_back("script");
+  Argv.push_back("-F");
+  Argv.push_back("pid,event,addr,ip");
+  Argv.push_back("-i");
+  Argv.push_back(PerfDataFilename.data());
+  Argv.push_back(nullptr);
+
+  if (auto Errc = sys::fs::createTemporaryFile("perf.script", "out",
+                                               PerfMemEventsOutputPath)) {
+    outs() << "PERF2BOLT: Failed to create temporary file "
+           << PerfMemEventsOutputPath << " with error " << Errc.message() << "\n";
+    exit(1);
+  }
+
+  if (auto Errc = sys::fs::createTemporaryFile("perf.script", "err",
+                                               PerfMemEventsErrPath)) {
+    outs() << "PERF2BOLT: Failed to create temporary file "
+           << PerfMemEventsErrPath << " with error " << Errc.message() << "\n";
+    exit(1);
+  }
+
+  Redirects.push_back("");                                        // Stdin
+  Redirects.push_back(StringRef(PerfMemEventsOutputPath.data())); // Stdout
+  Redirects.push_back(StringRef(PerfMemEventsErrPath.data()));    // Stderr
+  RedirectPtrs.push_back(&Redirects[0]);
+  RedirectPtrs.push_back(&Redirects[1]);
+  RedirectPtrs.push_back(&Redirects[2]);
+
+  DEBUG(dbgs() << "Launching perf: " << PerfPath.data() << " 1> "
+               << PerfMemEventsOutputPath.data() << " 2> "
+               << PerfMemEventsErrPath.data() << "\n");
+
+  MemEventsPI = sys::ExecuteNoWait(PerfPath.data(), Argv.data(),
+                                   /*envp*/ nullptr, &RedirectPtrs[0]);
 
   return true;
 }
@@ -276,8 +324,10 @@ void DataAggregator::deleteTempFile(StringRef File) {
 }
 
 void DataAggregator::deleteTempFiles() {
-  deleteTempFile(PerfEventsErrPath.data());
-  deleteTempFile(PerfEventsOutputPath.data());
+  deleteTempFile(PerfBranchEventsErrPath.data());
+  deleteTempFile(PerfBranchEventsOutputPath.data());
+  deleteTempFile(PerfMemEventsErrPath.data());
+  deleteTempFile(PerfMemEventsOutputPath.data());
   deleteTempFile(PerfTasksErrPath.data());
   deleteTempFile(PerfTasksOutputPath.data());
 }
@@ -328,7 +378,7 @@ bool DataAggregator::aggregate(BinaryContext &BC,
 
   outs()
       << "PERF2BOLT: Waiting for perf events collection to finish...\n";
-  auto PI2 = sys::Wait(EventsPI, 0, true, &Error);
+  auto PI2 = sys::Wait(BranchEventsPI, 0, true, &Error);
 
   if (!Error.empty()) {
     errs() << "PERF-ERROR: " << Error << "\n";
@@ -338,7 +388,7 @@ bool DataAggregator::aggregate(BinaryContext &BC,
 
   if (PI2.ReturnCode != 0) {
     ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
-      MemoryBuffer::getFileOrSTDIN(PerfEventsErrPath.data());
+      MemoryBuffer::getFileOrSTDIN(PerfBranchEventsErrPath.data());
     StringRef ErrBuf = (*MB)->getBuffer();
 
     errs() << "PERF-ERROR: Return code " << PI2.ReturnCode << "\n";
@@ -348,23 +398,59 @@ bool DataAggregator::aggregate(BinaryContext &BC,
   }
 
   ErrorOr<std::unique_ptr<MemoryBuffer>> MB2 =
-    MemoryBuffer::getFileOrSTDIN(PerfEventsOutputPath.data());
+    MemoryBuffer::getFileOrSTDIN(PerfBranchEventsOutputPath.data());
   if (std::error_code EC = MB2.getError()) {
-    errs() << "Cannot open " << PerfEventsOutputPath.data() << ": "
+    errs() << "Cannot open " << PerfBranchEventsOutputPath.data() << ": "
            << EC.message() << "\n";
     deleteTempFiles();
     exit(1);
   }
 
   FileBuf.reset(MB2->release());
-  deleteTempFiles();
   ParsingBuf = FileBuf->getBuffer();
   Col = 0;
   Line = 1;
-  if (parseEvents()) {
-    outs() << "PERF2BOLT: Failed to parse events\n";
+  if (parseBranchEvents()) {
+    outs() << "PERF2BOLT: Failed to parse branch events\n";
   }
 
+  auto PI3 = sys::Wait(MemEventsPI, 0, true, &Error);
+
+  if (PI3.ReturnCode != 0) {
+    ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
+      MemoryBuffer::getFileOrSTDIN(PerfMemEventsErrPath.data());
+    StringRef ErrBuf = (*MB)->getBuffer();
+
+    deleteTempFiles();
+
+    Regex NoData("Samples for '.*' event do not have ADDR attribute set. Cannot print 'addr' field.");
+    if (!NoData.match(ErrBuf)) {
+      errs() << "PERF-ERROR: Return code " << PI3.ReturnCode << "\n";
+      errs() << ErrBuf;
+      exit(1);
+    }
+    return true;
+  }
+
+  ErrorOr<std::unique_ptr<MemoryBuffer>> MB3 =
+    MemoryBuffer::getFileOrSTDIN(PerfMemEventsOutputPath.data());
+  if (std::error_code EC = MB3.getError()) {
+    errs() << "Cannot open " << PerfMemEventsOutputPath.data() << ": "
+           << EC.message() << "\n";
+    deleteTempFiles();
+    exit(1);
+  }
+
+  FileBuf.reset(MB3->release());
+  ParsingBuf = FileBuf->getBuffer();
+  Col = 0;
+  Line = 1;
+  if (parseMemEvents()) {
+    outs() << "PERF2BOLT: Failed to parse memory events\n";
+  }
+
+  deleteTempFiles();
+  
   return true;
 }
 
@@ -547,8 +633,8 @@ void DataAggregator::consumeRestOfLine() {
   Line += 1;
 }
 
-ErrorOr<PerfSample> DataAggregator::parseSample() {
-  PerfSample Res;
+ErrorOr<PerfBranchSample> DataAggregator::parseBranchSample() {
+  PerfBranchSample Res;
 
   while (checkAndConsumeFS()) {}
 
@@ -572,6 +658,49 @@ ErrorOr<PerfSample> DataAggregator::parseSample() {
   return Res;
 }
 
+ErrorOr<PerfMemSample> DataAggregator::parseMemSample() {
+  PerfMemSample Res{0,0};
+
+  while (checkAndConsumeFS()) {}
+
+  auto PIDRes = parseNumberField(FieldSeparator, true);
+  if (std::error_code EC = PIDRes.getError())
+    return EC;
+  if (!PIDs.empty() && !PIDs.count(PIDRes.get())) {
+    consumeRestOfLine();
+    return Res;
+  }
+
+  while (checkAndConsumeFS()) {}
+
+  auto Event = parseString(FieldSeparator);
+  if (std::error_code EC = Event.getError())
+    return EC;
+  if (Event.get().find("mem-loads") == StringRef::npos) {
+    consumeRestOfLine();
+    return Res;
+  }
+
+  while (checkAndConsumeFS()) {}
+
+  auto AddrRes = parseHexField(FieldSeparator);
+  if (std::error_code EC = AddrRes.getError()) {
+    return EC;
+  }
+
+  while (checkAndConsumeFS()) {}
+
+  auto PCRes = parseHexField(FieldSeparator, true);
+  if (std::error_code EC = PCRes.getError()) {
+    consumeRestOfLine();
+    return EC;
+  }
+
+  checkAndConsumeNewLine();
+
+  return PerfMemSample{PCRes.get(), AddrRes.get()};
+}
+
 bool DataAggregator::hasData() {
   if (ParsingBuf.size() == 0)
     return false;
@@ -579,14 +708,14 @@ bool DataAggregator::hasData() {
   return true;
 }
 
-std::error_code DataAggregator::parseEvents() {
-  outs() << "PERF2BOLT: Aggregating...\n";
-  NamedRegionTimer T("Samples parsing", TimerGroupName, opts::TimeAggregator);
+std::error_code DataAggregator::parseBranchEvents() {
+  outs() << "PERF2BOLT: Aggregating branch events...\n";
+  NamedRegionTimer T("Branch samples parsing", TimerGroupName, opts::TimeAggregator);
   uint64_t NumEntries{0};
   uint64_t NumSamples{0};
   uint64_t NumTraces{0};
   while (hasData()) {
-    auto SampleRes = parseSample();
+    auto SampleRes = parseBranchSample();
     if (std::error_code EC = SampleRes.getError())
       return EC;
 
@@ -644,6 +773,58 @@ std::error_code DataAggregator::parseEvents() {
     outs() << format(" (%.1f%%)", NumLongRangeTraces * 100.0f / NumTraces);
   }
   outs() << "\n";
+
+  return std::error_code();
+}
+
+std::error_code DataAggregator::parseMemEvents() {
+  outs() << "PERF2BOLT: Aggregating memory events...\n";
+  NamedRegionTimer T("Mem samples parsing", TimerGroupName, opts::TimeAggregator);
+
+  while (hasData()) {
+    auto SampleRes = parseMemSample();
+    if (std::error_code EC = SampleRes.getError())
+      return EC;
+
+    auto PC = SampleRes.get().PC;
+    auto Addr = SampleRes.get().Addr;
+    StringRef FuncName;
+    StringRef MemName;
+
+    // Try to resolve symbol for PC
+    auto *Func = getBinaryFunctionContainingAddress(PC);
+    if (Func) {
+      FuncName = Func->getNames()[0];
+      PC -= Func->getAddress();
+    }
+
+    // Try to resolve symbol for memory load
+    auto *MemFunc = getBinaryFunctionContainingAddress(Addr);
+    if (MemFunc) {
+      MemName = MemFunc->getNames()[0];
+      Addr -= MemFunc->getAddress();
+    } else {
+      // TODO: global symbol size?
+      auto Sym = BC->getGlobalSymbolAtAddress(Addr);
+      if (Sym) {
+        MemName = Sym->getName();
+        Addr = 0;
+      }
+    }
+
+    const Location FuncLoc(!FuncName.empty(), FuncName, PC);
+    const Location AddrLoc(!MemName.empty(), MemName, Addr);
+
+    // TODO what does it mean when PC is 0 (or not a known function)?
+    DEBUG(if (!Func && PC != 0) {
+      dbgs() << "Skipped mem event: " << FuncLoc << " = " << AddrLoc << "\n";
+    });
+
+    if (Func) {
+      FuncsToMemEvents[FuncName].update(FuncLoc, AddrLoc);
+      DEBUG(dbgs() << "Mem event: " << FuncLoc << " = " << AddrLoc << "\n");
+    }
+  }
 
   return std::error_code();
 }
@@ -745,35 +926,52 @@ std::error_code DataAggregator::writeAggregatedFile() const {
   if (EC)
     return EC;
 
-  uint64_t Values{0};
+  bool WriteMemLocs = false;
+
+  auto writeLocation = [&OutFile,&WriteMemLocs](const Location &Loc) {
+    if (WriteMemLocs)
+      OutFile << (Loc.IsSymbol ? "4 " : "3 ");
+    else
+      OutFile << (Loc.IsSymbol ? "1 " : "0 ");
+    OutFile << (Loc.Name.empty() ? "[unknown]" : Loc.Name)  << " "
+            << Twine::utohexstr(Loc.Offset)
+            << FieldSeparator;
+  };
+
+  uint64_t BranchValues{0};
+  uint64_t MemValues{0};
+
   for (const auto &Func : FuncsToBranches) {
     for (const auto &BI : Func.getValue().Data) {
-      OutFile << (BI.From.IsSymbol ? "1 " : "0 ")
-              << (BI.From.Name.empty() ? "[unknown]" : BI.From.Name)  << " "
-              << Twine::utohexstr(BI.From.Offset) << " "
-              << (BI.To.IsSymbol ? "1 " : "0 ")
-              << (BI.To.Name.empty() ? "[unknown]" : BI.To.Name)  << " "
-              << Twine::utohexstr(BI.To.Offset) << " " << BI.Mispreds << " "
-              << BI.Branches << "\n";
-      ++Values;
+      writeLocation(BI.From);
+      writeLocation(BI.To);
+      OutFile << BI.Mispreds << " " << BI.Branches << "\n";
+      ++BranchValues;
     }
     for (const auto &BI : Func.getValue().EntryData) {
       // Do not output if source is a known symbol, since this was already
       // accounted for in the source function
       if (BI.From.IsSymbol)
         continue;
-      OutFile << (BI.From.IsSymbol ? "1 " : "0 ")
-              << (BI.From.Name.empty() ? "[unknown]" : BI.From.Name)  << " "
-              << Twine::utohexstr(BI.From.Offset) << " "
-              << (BI.To.IsSymbol ? "1 " : "0 ")
-              << (BI.To.Name.empty() ? "[unknown]" : BI.To.Name)  << " "
-              << Twine::utohexstr(BI.To.Offset) << " " << BI.Mispreds << " "
-              << BI.Branches << "\n";
-      ++Values;
+      writeLocation(BI.From);
+      writeLocation(BI.To);
+      OutFile << BI.Mispreds << " " << BI.Branches << "\n";
+      ++BranchValues;
     }
   }
-  outs() << "PERF2BOLT: Wrote " << Values << " objects to "
-         << OutputFDataName << "\n";
+
+  WriteMemLocs = true;
+  for (const auto &Func : FuncsToMemEvents) {
+    for (const auto &MemEvent : Func.getValue().Data) {
+      writeLocation(MemEvent.Offset);
+      writeLocation(MemEvent.Addr);
+      OutFile << MemEvent.Count << "\n";
+      ++MemValues;
+    }
+  }
+
+  outs() << "PERF2BOLT: Wrote " << BranchValues << " branch objects and "
+         << MemValues << " memory objects to " << OutputFDataName << "\n";
 
   return std::error_code();
 }
@@ -788,9 +986,13 @@ void DataAggregator::dump(const LBREntry &LBR) const {
        << "\n";
 }
 
-void DataAggregator::dump(const PerfSample &Sample) const {
+void DataAggregator::dump(const PerfBranchSample &Sample) const {
   Diag << "Sample LBR entries: " << Sample.LBR.size() << "\n";
   for (const auto &LBR : Sample.LBR) {
     dump(LBR);
   }
+}
+
+void DataAggregator::dump(const PerfMemSample &Sample) const {
+  Diag << "Sample mem entries: " << Sample.PC << ": " << Sample.Addr << "\n";
 }
