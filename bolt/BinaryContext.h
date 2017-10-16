@@ -67,10 +67,13 @@ struct Relocation {
   /// Extract current relocated value from binary contents. This is used for
   /// RISC architectures where values are encoded in specific bits depending
   /// on the relocation value.
-  static uint64_t extractValue(uint64_t Type, uint64_t Contents);
+  static uint64_t extractValue(uint64_t Type, uint64_t Contents, uint64_t PC);
 
   /// Return true if relocation type is PC-relative. Return false otherwise.
   static bool isPCRelative(uint64_t Type);
+
+  /// Return true if relocation type implies the creation of a GOT entry
+  static bool isGOT(uint64_t Type);
 
   /// Emit relocation at a current \p Streamer' position. The caller is
   /// responsible for setting the position correctly.
@@ -303,6 +306,10 @@ public:
       SmallString<256> Code;
       SmallVector<MCFixup, 4> Fixups;
       raw_svector_ostream VecOS(Code);
+      if (MIA->isCFI(*Beg)) {
+        ++Beg;
+        continue;
+      }
       MCE->encodeInstruction(*Beg++, VecOS, Fixups, *STI);
       Size += Code.size();
     }

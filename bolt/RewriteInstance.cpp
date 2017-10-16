@@ -1703,7 +1703,8 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
                    Relocation::getSizeForType(Rel.getType())));
 
     if (BC->TheTriple->getArch() == llvm::Triple::aarch64)
-      ExtractedValue = Relocation::extractValue(Rel.getType(), ExtractedValue);
+      ExtractedValue = Relocation::extractValue(Rel.getType(), ExtractedValue,
+                                                Rel.getOffset());
 
     bool IsPCRelative = Relocation::isPCRelative(Rel.getType());
     auto Addend = getRelocationAddend(InputFile, Rel);
@@ -1712,9 +1713,14 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     auto SymbolIter = Rel.getSymbol();
     std::string SymbolName = "<no symbol>";
     SymbolAddress = *SymbolIter->getAddress();
-    if (!SymbolAddress) {
+    // If no symbol has been found or if it is a relocation requiring the
+    // creation of a GOT entry, do not link against the symbol but against
+    // whatever address was extracted from the instruction itself. We are
+    // not creating a GOT entry as this was already processed by the linker.
+    if (!SymbolAddress || Relocation::isGOT(Rel.getType())) {
       Address = ExtractedValue;
-      if (IsPCRelative) {
+      // For aarch, pc address has already been added in extractValue
+      if (IsPCRelative && BC->TheTriple->getArch() != llvm::Triple::aarch64) {
         Address += Rel.getOffset();
       }
     } else {
@@ -1731,7 +1737,8 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
           StringRef SymbolSectionName;
           (*SymbolSection)->getName(SymbolSectionName);
           SymbolName = "section " + std::string(SymbolSectionName);
-          Address = Addend;
+          if (BC->TheTriple->getArch() != llvm::Triple::aarch64)
+            Address = Addend;
         }
       }
     }
@@ -1761,6 +1768,8 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
         assert(ExtractedValue == SymbolAddress + Addend && "value mismatch");
         Address = SymbolAddress;
         IsAbsoluteCodeRefWithAddend = true;
+      } else if (BC->TheTriple->getArch() == llvm::Triple::aarch64) {
+        Addend = 0; // TODO: check if should apply for x86 as well
       }
     } else if (Addend < 0 && IsPCRelative) {
       Address -= Addend;
@@ -1778,9 +1787,13 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
                  << "; type name = " << TypeName
                  << '\n');
 
+    if (Rel.getType() == ELF::R_AARCH64_ADR_GOT_PAGE)
+      ForceRelocation = true;
+
     if (Rel.getType() != ELF::R_X86_64_TPOFF32 &&
         Rel.getType() != ELF::R_X86_64_GOTTPOFF &&
-        Rel.getType() != ELF::R_X86_64_GOTPCREL) {
+        Rel.getType() != ELF::R_X86_64_GOTPCREL &&
+        BC->TheTriple->getArch() != llvm::Triple::aarch64) {
       if (!IsPCRelative) {
         if (!IsAbsoluteCodeRefWithAddend) {
           if (opts::Verbosity > 2 &&
@@ -1802,7 +1815,10 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
 
     BinaryFunction *ContainingBF = nullptr;
     if (IsFromCode) {
-      ContainingBF = getBinaryFunctionContainingAddress(Rel.getOffset());
+      ContainingBF = getBinaryFunctionContainingAddress(
+          Rel.getOffset(),
+          /*CheckPastEnd*/ false,
+          /*UseMaxSize*/ BC->TheTriple->getArch() == llvm::Triple::aarch64);
       assert(ContainingBF && "cannot find function for address in code");
       DEBUG(dbgs() << "BOLT-DEBUG: relocation belongs to " << *ContainingBF
                    << '\n');
@@ -1815,7 +1831,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     // between the two. If we blindly apply the relocation it will appear
     // that it references an arbitrary location in the code, possibly even
     // in a different function from that containing the jump table.
-    if (IsPCRelative) {
+    if (BC->TheTriple->getArch() != llvm::Triple::aarch64 && IsPCRelative) {
       // Just register the fact that we have PC-relative relocation at a given
       // address. The actual referenced label/address cannot be determined
       // from linker data alone.
@@ -1869,7 +1885,8 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     }
 
     if (IsFromCode) {
-      if (ReferencedBF || ForceRelocation) {
+      if (ReferencedBF || ForceRelocation ||
+          BC->TheTriple->getArch() == llvm::Triple::aarch64) {
         ContainingBF->addRelocation(Rel.getOffset(), ReferencedSymbol,
                                     Rel.getType(), Addend, ExtractedValue);
       } else {
@@ -2015,8 +2032,8 @@ void RewriteInstance::disassembleFunctions() {
           errs() << "BOLT-WARNING: function " << *ContainingFunction
                  << " has an object detected in a padding region at address 0x"
                  << Twine::utohexstr(Addr) << '\n';
-          ContainingFunction->setMaxSize(
-              Addr - ContainingFunction->getAddress());
+          ContainingFunction->setMaxSize(Addr -
+                                         ContainingFunction->getAddress());
         }
       }
     }

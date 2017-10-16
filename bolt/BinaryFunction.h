@@ -255,6 +255,10 @@ private:
   /// In relocation mode we still disassemble and re-assemble such functions.
   bool IsSimple{true};
 
+  /// In AArch64, preserve nops to maintain code equal to input (assuming no
+  /// optimizations are done).
+  bool PreserveNops{false};
+
   /// Indicate if this function has associated exception handling metadata.
   bool HasEHRanges{false};
 
@@ -758,6 +762,9 @@ private:
                                            unsigned Size,
                                            uint64_t Offset);
 
+  DenseMap<const MCInst *, SmallVector<MCInst *, 4>>
+  computeLocalUDChain(const MCInst *CurInstr);
+
   /// Emit line number information corresponding to \p NewLoc. \p PrevLoc
   /// provides a context for de-duplication of line number info.
   ///
@@ -1158,7 +1165,7 @@ public:
   /// Assert if the \p Address is not inside this function.
   void addRelocation(uint64_t Address, MCSymbol *Symbol, uint64_t RelType,
                      uint64_t Addend, uint64_t Value) {
-    assert(Address >= getAddress() && Address < getAddress() + getSize() &&
+    assert(Address >= getAddress() && Address < getAddress() + getMaxSize() &&
            "address is outside of the function");
     auto Offset = Address - getAddress();
     switch (RelType) {
@@ -1167,10 +1174,13 @@ public:
     case ELF::R_X86_64_64:
     case ELF::R_AARCH64_ABS64:
     case ELF::R_AARCH64_LDST64_ABS_LO12_NC:
+    case ELF::R_AARCH64_LD64_GOT_LO12_NC:
     case ELF::R_AARCH64_ADD_ABS_LO12_NC:
+    case ELF::R_AARCH64_LDST16_ABS_LO12_NC:
     case ELF::R_AARCH64_LDST32_ABS_LO12_NC:
     case ELF::R_AARCH64_LDST8_ABS_LO12_NC:
-    case ELF::R_AARCH64_CALL26:
+    case ELF::R_AARCH64_LDST128_ABS_LO12_NC:
+    case ELF::R_AARCH64_ADR_GOT_PAGE:
     case ELF::R_AARCH64_ADR_PREL_PG_HI21:
       Relocations.emplace(Offset,
                           Relocation{Offset, Symbol, RelType, Addend, Value});
@@ -1180,6 +1190,8 @@ public:
     case ELF::R_X86_64_PLT32:
     case ELF::R_X86_64_GOTPCRELX:
     case ELF::R_X86_64_REX_GOTPCRELX:
+    case ELF::R_AARCH64_JUMP26:
+    case ELF::R_AARCH64_CALL26:
       break;
 
     // The following relocations are ignored.
@@ -1272,7 +1284,9 @@ public:
   }
 
   /// Return true if the given address \p PC is inside the function body.
-  bool containsAddress(uint64_t PC) const {
+  bool containsAddress(uint64_t PC, bool UseMaxSize=false) const {
+    if (UseMaxSize)
+      return Address <= PC && PC < Address + MaxSize;
     return Address <= PC && PC < Address + Size;
   }
 

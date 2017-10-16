@@ -26,6 +26,7 @@
 #include <set>
 
 namespace llvm {
+
 namespace bolt {
 
 class BinaryFunction;

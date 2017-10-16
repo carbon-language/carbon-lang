@@ -50,9 +50,11 @@ void shrinkStubToShortJmp(const BinaryContext &BC, BinaryBasicBlock &StubBB,
 }
 
 void shrinkStubToSingleInst(const BinaryContext &BC, BinaryBasicBlock &StubBB,
-                            const MCSymbol *Tgt) {
+                            const MCSymbol *Tgt, bool TgtIsFunc) {
   MCInst Inst;
   BC.MIA->createUncondBranch(Inst, Tgt, BC.Ctx.get());
+  if (TgtIsFunc)
+    BC.MIA->convertJmpToTailCall(Inst, BC.Ctx.get());
   StubBB.clear();
   StubBB.addInstruction(Inst);
 }
@@ -392,7 +394,7 @@ bool LongJmpPass::removeOrShrinkStubs(const BinaryContext &BC,
     }
 
     if (Bits > RangeSingleInstr) {
-      shrinkStubToSingleInst(BC, BB, RealTargetSym);
+      shrinkStubToSingleInst(BC, BB, RealTargetSym, /*is func?*/!TgtBB);
       StubBits[&BB] = RangeSingleInstr;
       Modified = true;
     }
@@ -405,6 +407,10 @@ void LongJmpPass::runOnFunctions(BinaryContext &BC,
                                  std::set<uint64_t> &LargeFunctions) {
   auto Sorted = BinaryContext::getSortedFunctions(BFs);
   for (auto Func : Sorted) {
+    // We are going to remove invalid BBs, so remove any previous marks
+    for (auto &BB : *Func) {
+      BB.markValid(true);
+    }
     insertStubs(BC, *Func);
     Func->fixBranches();
   }

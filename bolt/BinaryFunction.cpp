@@ -575,14 +575,36 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
   int64_t DispValue;
   const MCExpr *DispExpr;
 
+  // In AArch, identify the instruction adding the PC-relative offset to
+  // jump table entries to correctly decode it.
+  MCInst *PCRelBaseInstr;
+  uint64_t PCRelAddr = 0;
+
+  MutableArrayRef<MCInst> BB = Instructions;
+
+  if (BC.TheTriple->getArch() == llvm::Triple::aarch64) {
+    PreserveNops = opts::Relocs;
+    // Start at the last label as an approximation of the current basic block.
+    // This is a heuristic, since the full set of labels have yet to be
+    // determined
+    for (auto LI = Labels.rbegin(); LI != Labels.rend(); ++LI) {
+      auto II = InstructionOffsets.find(LI->first);
+      if (II != InstructionOffsets.end()) {
+        BB = BB.slice(II->second);
+        break;
+      }
+    }
+  }
+
   auto Type = BC.MIA->analyzeIndirectBranch(Instruction,
-                                            Instructions,
+                                            BB,
                                             PtrSize,
                                             MemLocInstr,
                                             BaseRegNum,
                                             IndexRegNum,
                                             DispValue,
-                                            DispExpr);
+                                            DispExpr,
+                                            PCRelBaseInstr);
 
   if (Type == IndirectBranchType::UNKNOWN && !MemLocInstr)
     return Type;
@@ -590,13 +612,52 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
   if (MemLocInstr != &Instruction)
     IndexRegNum = 0;
 
+  if (BC.TheTriple->getArch() == llvm::Triple::aarch64) {
+    const auto *Sym = BC.MIA->getTargetSymbol(*PCRelBaseInstr, 1);
+    assert (Sym && "Symbol extraction failed");
+    auto SI = BC.GlobalSymbols.find(Sym->getName());
+    if (SI != BC.GlobalSymbols.end()) {
+      PCRelAddr = SI->second;
+    } else {
+      for (auto &Elmt : Labels) {
+        if (Elmt.second == Sym) {
+          PCRelAddr = Elmt.first + getAddress();
+          break;
+        }
+      }
+    }
+    uint64_t InstrAddr = 0;
+    for (auto II = InstructionOffsets.rbegin(); II != InstructionOffsets.rend();
+         ++II) {
+      if (&Instructions[II->second] == PCRelBaseInstr) {
+        InstrAddr = II->first + getAddress();
+        break;
+      }
+    }
+    assert(InstrAddr != 0 && "instruction not found");
+    // We do this to avoid spurious references to code locations outside this
+    // function (for example, if the indirect jump lives in the last basic
+    // block of the function, it will create a reference to the next function).
+    // This replaces a symbol reference with an immediate.
+    BC.MIA->replaceMemOperandDisp(*PCRelBaseInstr,
+                                  MCOperand::createImm(PCRelAddr - InstrAddr));
+    // FIXME: Disable full jump table processing for AArch64 until we have a
+    // proper way of determining the jump table limits.
+    return IndirectBranchType::UNKNOWN;
+  }
+
   // RIP-relative addressing should be converted to symbol form by now
   // in processed instructions (but not in jump).
   if (DispExpr) {
-    auto SI = BC.GlobalSymbols.find(DispExpr->getSymbol().getName());
+    auto SI =
+        BC.GlobalSymbols.find(BC.MIA->getTargetSymbol(DispExpr)->getName());
     assert(SI != BC.GlobalSymbols.end() && "global symbol needs a value");
     ArrayStart = SI->second;
     BaseRegNum = 0;
+    if (BC.TheTriple->getArch() == llvm::Triple::aarch64) {
+      ArrayStart &= ~0xFFFULL;
+      ArrayStart += DispValue & 0xFFFULL;
+    }
   } else {
     ArrayStart = static_cast<uint64_t>(DispValue);
   }
@@ -679,7 +740,9 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
                  << " is referencing address 0x"
                  << Twine::utohexstr(Section.getAddress() + ValueOffset));
     // Extract the value and increment the offset.
-    if (Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE) {
+    if (BC.TheTriple->getArch() == llvm::Triple::aarch64) {
+      Value = PCRelAddr + DE.getSigned(&ValueOffset, EntrySize);
+    } else if (Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE) {
       Value = ArrayStart + DE.getSigned(&ValueOffset, 4);
     } else {
       Value = DE.getAddress(&ValueOffset);
@@ -810,7 +873,8 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     if (!TargetSymbol && Section && Section->isText() &&
         (BC.TheTriple->getArch() != llvm::Triple::aarch64 ||
          !BC.MIA->isADRP(Instruction))) {
-      if (containsAddress(TargetAddress)) {
+      if (containsAddress(TargetAddress, /*UseMaxSize=*/
+                          BC.TheTriple->getArch() == llvm::Triple::aarch64)) {
         if (TargetAddress != getAddress()) {
           // The address could potentially escape. Mark it as another entry
           // point into the function.
@@ -831,7 +895,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                          Instruction,
                          MCSymbolRefExpr::create(
                              TargetSymbol, MCSymbolRefExpr::VK_None, *BC.Ctx),
-                         *BC.Ctx)));
+                         *BC.Ctx, 0)));
     return true;
   };
 
@@ -890,6 +954,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     }
 
     // Check if there's a relocation associated with this instruction.
+    bool UsedReloc{false};
     if (!Relocations.empty()) {
       auto RI = Relocations.lower_bound(Offset);
       if (RI != Relocations.end() && RI->first < Offset + Size) {
@@ -900,15 +965,21 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                      << " for instruction at offset 0x"
                      << Twine::utohexstr(Offset) << '\n');
         int64_t Value;
-        const auto Result =
-          BC.MIA->replaceImmWithSymbol(Instruction, Relocation.Symbol,
-                                       Relocation.Addend, Ctx.get(), Value);
+        const auto Result = BC.MIA->replaceImmWithSymbol(
+            Instruction, Relocation.Symbol, Relocation.Addend, Ctx.get(), Value,
+            Relocation.Type);
         (void)Result;
         assert(Result && "cannot replace immediate with relocation");
+        // For aarch, if we replaced an immediate with a symbol from a
+        // relocation, we mark it so we do not try to further process a
+        // pc-relative operand. All we need is the symbol.
+        if (BC.TheTriple->getArch() == llvm::Triple::aarch64)
+          UsedReloc = true;
 
         // Make sure we replaced the correct immediate (instruction
         // can have multiple immediate operands).
-        assert(static_cast<uint64_t>(Value) == Relocation.Value &&
+        assert((BC.TheTriple->getArch() == llvm::Triple::aarch64 ||
+                static_cast<uint64_t>(Value) == Relocation.Value) &&
                "immediate value mismatch in function");
       }
     }
@@ -1081,7 +1152,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         // Indirect call. We only need to fix it if the operand is RIP-relative
         if (IsSimple && MIA->hasPCRelOperand(Instruction)) {
           if (!handlePCRelOperand(Instruction, AbsoluteInstrAddr, Size)) {
-            errs() << "BOLT-ERROR: cannot handle RIP operand at 0x"
+            errs() << "BOLT-ERROR: cannot handle PC-relative operand at 0x"
                    << Twine::utohexstr(AbsoluteInstrAddr)
                    << ". Skipping function " << *this << ".\n";
             if (opts::Relocs)
@@ -1091,9 +1162,9 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         }
       }
     } else {
-      if (MIA->hasPCRelOperand(Instruction)) {
+      if (MIA->hasPCRelOperand(Instruction) && !UsedReloc) {
         if (!handlePCRelOperand(Instruction, AbsoluteInstrAddr, Size)) {
-          errs() << "BOLT-ERROR: cannot handle RIP operand at 0x"
+          errs() << "BOLT-ERROR: cannot handle PC-relative operand at 0x"
                  << Twine::utohexstr(AbsoluteInstrAddr)
                  << ". Skipping function " << *this << ".\n";
           if (opts::Relocs)
@@ -1359,7 +1430,7 @@ bool BinaryFunction::buildCFG() {
     // Ignore nops. We use nops to derive alignment of the next basic block.
     // It will not always work, as some blocks are naturally aligned, but
     // it's just part of heuristic for block alignment.
-    if (MIA->isNoop(Instr)) {
+    if (MIA->isNoop(Instr) && !PreserveNops) {
       IsLastInstrNop = true;
       continue;
     }
@@ -2593,9 +2664,8 @@ void BinaryFunction::emitConstantIslands(MCStreamer &Streamer) {
     outs() << "BOLT-INFO: emitting constant island for function " << *this
            << "\n";
 
-  auto IS = IslandSymbols.begin();
-
   // We split the island into smaller blocks and output labels between them.
+  auto IS = IslandSymbols.begin();
   for (auto DataIter = DataOffsets.begin(); DataIter != DataOffsets.end();
        ++DataIter) {
     uint64_t FunctionOffset = *DataIter;
@@ -2617,18 +2687,33 @@ void BinaryFunction::emitConstantIslands(MCStreamer &Streamer) {
     if (FunctionOffset == EndOffset)
       continue;    // Size is zero, nothing to emit
 
-    // Emit labels and data
-    while (IS != IslandSymbols.end() && IS->first < EndOffset) {
-      auto NextStop = IS->first;
+    // Emit labels, relocs and data
+    auto RI = MoveRelocations.lower_bound(FunctionOffset);
+    while ((IS != IslandSymbols.end() && IS->first < EndOffset) ||
+           (RI != MoveRelocations.end() && RI->first < EndOffset)) {
+      auto NextLabelOffset = IS == IslandSymbols.end() ? EndOffset : IS->first;
+      auto NextRelOffset = RI == MoveRelocations.end() ? EndOffset : RI->first;
+      auto NextStop = std::min(NextLabelOffset, NextRelOffset);
       assert(NextStop <= EndOffset && "internal overflow error");
       if (FunctionOffset < NextStop) {
         Streamer.EmitBytes(FunctionContents.slice(FunctionOffset, NextStop));
         FunctionOffset = NextStop;
       }
-      DEBUG(dbgs() << "BOLT-DEBUG: emitted label " << IS->second->getName()
-                   << " at offset 0x" << Twine::utohexstr(IS->first) << '\n');
-      Streamer.EmitLabel(IS->second);
-      ++IS;
+      if (IS != IslandSymbols.end() && FunctionOffset == IS->first) {
+        DEBUG(dbgs() << "BOLT-DEBUG: emitted label " << IS->second->getName()
+                     << " at offset 0x" << Twine::utohexstr(IS->first) << '\n');
+        Streamer.EmitLabel(IS->second);
+        ++IS;
+      }
+      if (RI != MoveRelocations.end() && FunctionOffset == RI->first) {
+        auto RelocationSize = RI->second.emit(&Streamer);
+        DEBUG(dbgs() << "BOLT-DEBUG: emitted relocation for symbol "
+                     << RI->second.Symbol->getName() << " at offset 0x"
+                     << Twine::utohexstr(RI->first)
+                     << " with size " << RelocationSize << '\n');
+        FunctionOffset += RelocationSize;
+        ++RI;
+      }
     }
     assert(FunctionOffset <= EndOffset && "overflow error");
     if (FunctionOffset < EndOffset) {
