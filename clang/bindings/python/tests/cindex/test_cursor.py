@@ -1,6 +1,7 @@
 import ctypes
 import gc
 
+from clang.cindex import AvailabilityKind
 from clang.cindex import CursorKind
 from clang.cindex import TemplateArgumentKind
 from clang.cindex import TranslationUnit
@@ -404,6 +405,30 @@ def test_result_type():
     assert foo is not None
     t = foo.result_type
     assert t.kind == TypeKind.INT
+
+def test_availability():
+    tu = get_tu('class A { A(A const&) = delete; };', lang='cpp')
+
+    # AvailabilityKind.AVAILABLE
+    cursor = get_cursor(tu, 'A')
+    assert cursor.kind == CursorKind.CLASS_DECL
+    assert cursor.availability == AvailabilityKind.AVAILABLE
+
+    # AvailabilityKind.NOT_AVAILABLE
+    cursors = get_cursors(tu, 'A')
+    for c in cursors:
+        if c.kind == CursorKind.CONSTRUCTOR:
+            assert c.availability == AvailabilityKind.NOT_AVAILABLE
+            break
+    else:
+        assert False, "Could not find cursor for deleted constructor"
+
+    # AvailabilityKind.DEPRECATED
+    tu = get_tu('void test() __attribute__((deprecated));', lang='cpp')
+    cursor = get_cursor(tu, 'test')
+    assert cursor.availability == AvailabilityKind.DEPRECATED
+
+    # AvailabilityKind.NOT_ACCESSIBLE is only used in the code completion results
 
 def test_get_tokens():
     """Ensure we can map cursors back to tokens."""
