@@ -341,6 +341,12 @@ protected:
   bool isOperandImmEqual(const MachineOperand &MO, int64_t Value,
                          const MachineRegisterInfo &MRI) const;
 
+  /// Return true if the specified operand is a G_GEP with a G_CONSTANT on the
+  /// right-hand side. GlobalISel's separation of pointer and integer types
+  /// means that we don't need to worry about G_OR with equivalent semantics.
+  bool isBaseWithConstantOffset(const MachineOperand &Root,
+                                const MachineRegisterInfo &MRI) const;
+
   bool isObviouslySafeToFold(MachineInstr &MI) const;
 };
 
