@@ -377,6 +377,26 @@ def test_annotation_attribute():
     else:
         assert False, "Couldn't find annotation"
 
+def test_annotation_template():
+    annotation = '__attribute__ ((annotate("annotation")))'
+    for source, kind in [
+            ('int foo (T value) %s;', CursorKind.FUNCTION_TEMPLATE),
+            ('class %s foo {};', CursorKind.CLASS_TEMPLATE),
+    ]:
+        source = 'template<typename T> ' + (source % annotation)
+        tu = get_tu(source, lang="cpp")
+
+        foo = get_cursor(tu, 'foo')
+        assert foo is not None
+        assert foo.kind == kind
+
+        for c in foo.get_children():
+            if c.kind == CursorKind.ANNOTATE_ATTR:
+                assert c.displayname == "annotation"
+                break
+        else:
+            assert False, "Couldn't find annotation for {}".format(kind)
+
 def test_result_type():
     tu = get_tu('int foo();')
     foo = get_cursor(tu, 'foo')
