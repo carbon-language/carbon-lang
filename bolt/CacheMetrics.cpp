@@ -1,4 +1,4 @@
-//===------ CalcCacheMetrics.cpp - Calculate metrics of cache lines -------===//
+//===------ CacheMetrics.cpp - Calculate metrics for instruction cache ----===//
 //
 //                     Functions to show metrics of cache lines
 //
@@ -7,30 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-#include "BinaryBasicBlock.h"
-#include "BinaryContext.h"
-#include "BinaryFunction.h"
-#include "BinaryPassManager.h"
-#include "CalcCacheMetrics.h"
-#include "Exceptions.h"
-#include "RewriteInstance.h"
-#include "llvm/MC/MCAsmLayout.h"
-#include "llvm/MC/MCObjectStreamer.h"
-#include "llvm/MC/MCSectionELF.h"
-#include <fstream>
+#include "CacheMetrics.h"
 
 using namespace llvm;
-using namespace object;
 using namespace bolt;
 using Traversal = std::vector<BinaryBasicBlock *>;
-
-namespace opts {
-
-extern cl::OptionCategory BoltOptCategory;
-
-} // namespace opts
-
 
 namespace {
 
@@ -47,10 +28,8 @@ getPositionMap(const BinaryFunction &Function) {
   return DistMap;
 }
 
-/// Initialize and return a vector of traversals for a given function and its
-/// entry point
-std::vector<Traversal> getTraversals(const BinaryFunction &Function,
-                                     BinaryBasicBlock *EntryBB) {
+/// Initialize and return a vector of traversals for a given entry block
+std::vector<Traversal> getTraversals(BinaryBasicBlock *EntryBB) {
   std::vector<Traversal> AllTraversals;
   std::stack<std::pair<BinaryBasicBlock *, Traversal>> Stack;
   Stack.push(std::make_pair(EntryBB, Traversal()));
@@ -105,10 +84,6 @@ std::vector<Traversal> getTraversals(const BinaryFunction &Function,
 double
 getTraversalLength(std::unordered_map<BinaryBasicBlock *, double> &DistMap,
                    Traversal const &Path) {
-  if (Path.size() <= 1) {
-    return 0.0;
-  }
-
   double Length = 0.0;
   BinaryBasicBlock *PrevBB = Path.front();
   for (auto BBI = std::next(Path.begin()); BBI != Path.end(); ++BBI) {
@@ -119,56 +94,62 @@ getTraversalLength(std::unordered_map<BinaryBasicBlock *, double> &DistMap,
   return Length;
 }
 
-/// Helper function of calcGraphDistance to go through the call traversals of
-/// certain function and to calculate and record the length of each
-/// traversal.
-void graphDistHelper(std::vector<Traversal> &AllTraversals,
-                     const BinaryFunction &Function,
-                     std::unordered_map<uint64_t, double> &TraversalMap,
-                     uint64_t &TraversalCount) {
-  auto DistMap = getPositionMap(Function);
-
-  for (auto const &Path : AllTraversals) {
-    TraversalMap[++TraversalCount] = getTraversalLength(DistMap, Path);
-  }
-}
-}
-
-void CalcCacheMetrics::calcGraphDistance(
-    const std::map<uint64_t, BinaryFunction> &BinaryFunctions) {
-
-  double TotalFuncValue = 0;
-  uint64_t FuncCount = 0;
-  for (auto &BFI : BinaryFunctions) {
-    auto &Function = BFI.second;
+/// Calculate average number of call distance for every graph traversal
+double calcGraphDistance(const std::vector<BinaryFunction *> &BinaryFunctions) {
+  double TotalTraversalLength = 0;
+  double NumTraversals = 0;
+  for (auto BF : BinaryFunctions) {
     // Only consider functions which are known to be executed
-    if (Function.getKnownExecutionCount() == 0)
+    if (BF->getKnownExecutionCount() == 0)
       continue;
 
-    std::unordered_map<uint64_t, double> TraversalMap;
-    uint64_t TraversalCount = 0;
-    for (auto *BB : Function.layout()) {
+    for (auto BB : BF->layout()) {
       if (BB->isEntryPoint()) {
-        auto AllTraversals = getTraversals(Function, BB);
-        graphDistHelper(AllTraversals, Function, TraversalMap, TraversalCount);
+        auto AllTraversals = getTraversals(BB);
+        auto DistMap = getPositionMap(*BF);
+        for (auto const &Path : AllTraversals) {
+          // Ignore short traversals
+          if (Path.size() <= 1)
+            continue;
+          TotalTraversalLength += getTraversalLength(DistMap, Path);
+          NumTraversals++;
+        }
       }
     }
-
-    double TotalValue = 0;
-    for (auto const &Entry : TraversalMap) {
-      TotalValue += Entry.second;
-    }
-
-    double AverageValue =
-        TraversalMap.empty() ? 0 : (TotalValue * 1.0 / TraversalMap.size());
-    TotalFuncValue += AverageValue;
-    FuncCount += TraversalMap.empty() ? 0 : 1;
   }
 
-  outs() << format("           Sum of averages of traversal distance for all "
-                   "functions is: %.2f\n",
-                   TotalFuncValue)
-         << format("           There are %u functions in total\n", FuncCount)
-         << format("           On average, every traversal is %.2f long\n\n",
-                   TotalFuncValue / FuncCount);
+  return TotalTraversalLength / NumTraversals;
+}
+
+}
+
+void CacheMetrics::printAll(
+  const std::vector<BinaryFunction *> &BinaryFunctions) {
+
+  size_t NumFunctions = 0;
+  size_t NumHotFunctions = 0;
+  size_t NumBlocks = 0;
+  size_t NumHotBlocks = 0;
+
+  for (auto BF : BinaryFunctions) {
+    NumFunctions++;
+    if (BF->getKnownExecutionCount() > 0)
+      NumHotFunctions++;
+    for (auto BB : BF->layout()) {
+      NumBlocks++;
+      if (BB->getKnownExecutionCount() > 0)
+        NumHotBlocks++;
+    }
+  }
+
+  outs() << format("  There are %zu functions;", NumFunctions)
+         << format(" %zu (%.2lf%%) have non-empty execution count\n",
+                   NumHotFunctions, 100.0 * NumHotFunctions / NumFunctions);
+  outs() << format("  There are %zu basic blocks;", NumBlocks)
+         << format(" %zu (%.2lf%%) have non-empty execution count\n",
+                  NumHotBlocks, 100.0 * NumHotBlocks / NumBlocks);
+
+  const auto GraphDistance = calcGraphDistance(BinaryFunctions);
+  outs() << "  An average length of graph traversal is "
+         << format("%.2lf\n", GraphDistance);
 }

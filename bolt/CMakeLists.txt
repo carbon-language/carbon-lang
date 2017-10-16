@@ -64,7 +64,7 @@ add_llvm_tool(llvm-bolt
   BinaryContext.cpp
   BinaryFunction.cpp
   BinaryPassManager.cpp
-  CalcCacheMetrics.cpp
+  CacheMetrics.cpp
   DataAggregator.cpp
   DataReader.cpp
   DebugData.cpp

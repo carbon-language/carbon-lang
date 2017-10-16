@@ -14,7 +14,7 @@
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
 #include "BinaryPassManager.h"
-#include "CalcCacheMetrics.h"
+#include "CacheMetrics.h"
 #include "DataAggregator.h"
 #include "DataReader.h"
 #include "Exceptions.h"
@@ -79,8 +79,8 @@ extern cl::opt<JumpTableSupportLevel> JumpTables;
 extern cl::opt<BinaryFunction::ReorderType> ReorderFunctions;
 
 static cl::opt<bool>
-CalcCacheMetrics("calc-cache-metrics",
-  cl::desc("calculate metrics of cache lines"),
+PrintCacheMetrics("print-cache-metrics",
+  cl::desc("calculate and print various metrics for instruction cache"),
   cl::init(false),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
@@ -918,12 +918,6 @@ void RewriteInstance::run() {
            << PassNumber << "...\n";
     reset();
     executeRewritePass(LargeFunctions);
-  }
-
-  if (opts::CalcCacheMetrics) {
-    outs() << "\nBOLT-INFO: After Optimization CFG Graph Statistics: Jump "
-            "Distance \n\n";
-    CalcCacheMetrics::calcGraphDistance(BinaryFunctions);
   }
 
   if (opts::UpdateDebugSections)
@@ -2096,12 +2090,6 @@ void RewriteInstance::disassembleFunctions() {
       }
     }
   }
-
-  if (opts::CalcCacheMetrics) {
-    outs() << "\nBOLT-INFO: Before Optimization CFG Graph Statistics: Jump "
-            "Distance \n\n";
-    CalcCacheMetrics::calcGraphDistance(BinaryFunctions);
-  }
 }
 
 void RewriteInstance::runOptimizationPasses() {
@@ -2423,6 +2411,11 @@ void RewriteInstance::emitFunctions() {
   updateOutputValues(FinalLayout);
 
   OLT.emitAndFinalize(ObjectsHandle);
+
+  if (opts::PrintCacheMetrics) {
+    outs() << "BOLT-INFO: cache metrics after optimization\n";
+    CacheMetrics::printAll(SortedFunctions);
+  }
 
   if (opts::KeepTmp)
     TempOut->keep();
