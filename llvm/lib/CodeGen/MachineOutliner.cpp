@@ -92,22 +92,32 @@ namespace {
 /// \brief An individual sequence of instructions to be replaced with a call to
 /// an outlined function.
 struct Candidate {
-
-  /// Set to false if the candidate overlapped with another candidate.
-  bool InCandidateList = true;
-
-  /// The start index of this \p Candidate.
+private:
+  /// The start index of this \p Candidate in the instruction list.
   unsigned StartIdx;
 
   /// The number of instructions in this \p Candidate.
   unsigned Len;
 
-  /// The index of this \p Candidate's \p OutlinedFunction in the list of
+public:
+  /// Set to false if the candidate overlapped with another candidate.
+  bool InCandidateList = true;
+
+  /// \brief The index of this \p Candidate's \p OutlinedFunction in the list of
   /// \p OutlinedFunctions.
   unsigned FunctionIdx;
 
   /// Contains all target-specific information for this \p Candidate.
   TargetInstrInfo::MachineOutlinerInfo MInfo;
+
+  /// Return the number of instructions in this Candidate.
+  unsigned length() const { return Len; }
+
+  /// Return the start index of this candidate.
+  unsigned startIdx() const { return StartIdx; }
+
+  // Return the end index of this candidate.
+  unsigned endIdx() const { return StartIdx + Len - 1; }
 
   /// \brief The number of instructions that would be saved by outlining every
   /// candidate of this type.
@@ -125,7 +135,9 @@ struct Candidate {
 
   /// \brief Used to ensure that \p Candidates are outlined in an order that
   /// preserves the start and end indices of other \p Candidates.
-  bool operator<(const Candidate &RHS) const { return StartIdx > RHS.StartIdx; }
+  bool operator<(const Candidate &RHS) const {
+    return startIdx() > RHS.startIdx();
+  }
 };
 
 /// \brief The information necessary to create an outlined function for some
@@ -759,8 +771,8 @@ struct MachineOutliner : public ModulePass {
     ModulePass::getAnalysisUsage(AU);
   }
 
-  MachineOutliner(bool OutlineFromLinkOnceODRs = false) :
-  ModulePass(ID), OutlineFromLinkOnceODRs(OutlineFromLinkOnceODRs) {
+  MachineOutliner(bool OutlineFromLinkOnceODRs = false)
+      : ModulePass(ID), OutlineFromLinkOnceODRs(OutlineFromLinkOnceODRs) {
     initializeMachineOutlinerPass(*PassRegistry::getPassRegistry());
   }
 
@@ -1060,8 +1072,8 @@ void MachineOutliner::pruneOverlaps(std::vector<Candidate> &CandidateList,
     unsigned FarthestPossibleIdx = 0;
 
     // Either the index is 0, or it's at most MaxCandidateLen indices away.
-    if (C1.StartIdx > MaxCandidateLen)
-      FarthestPossibleIdx = C1.StartIdx - MaxCandidateLen;
+    if (C1.startIdx() > MaxCandidateLen)
+      FarthestPossibleIdx = C1.startIdx() - MaxCandidateLen;
 
     // Compare against the candidates in the list that start at at most
     // FarthestPossibleIdx indices away from C1. There are at most
@@ -1070,15 +1082,13 @@ void MachineOutliner::pruneOverlaps(std::vector<Candidate> &CandidateList,
       Candidate &C2 = *Sit;
 
       // Is this candidate too far away to overlap?
-      if (C2.StartIdx < FarthestPossibleIdx)
+      if (C2.startIdx() < FarthestPossibleIdx)
         break;
 
       // If C2 was already pruned, or its function is no longer beneficial for
       // outlining, move to the next candidate.
       if (ShouldSkipCandidate(C2))
         continue;
-
-      unsigned C2End = C2.StartIdx + C2.Len - 1;
 
       // Do C1 and C2 overlap?
       //
@@ -1088,7 +1098,7 @@ void MachineOutliner::pruneOverlaps(std::vector<Candidate> &CandidateList,
       // We sorted our candidate list so C2Start <= C1Start. We know that
       // C2End > C2Start since each candidate has length >= 2. Therefore, all we
       // have to check is C2End < C2Start to see if we overlap.
-      if (C2End < C1.StartIdx)
+      if (C2.endIdx() < C1.startIdx())
         continue;
 
       // C1 and C2 overlap.
@@ -1202,10 +1212,11 @@ bool MachineOutliner::outline(Module &M,
       continue;
 
     // If not, then outline it.
-    assert(C.StartIdx < Mapper.InstrList.size() && "Candidate out of bounds!");
-    MachineBasicBlock *MBB = (*Mapper.InstrList[C.StartIdx]).getParent();
-    MachineBasicBlock::iterator StartIt = Mapper.InstrList[C.StartIdx];
-    unsigned EndIdx = C.StartIdx + C.Len - 1;
+    assert(C.startIdx() < Mapper.InstrList.size() &&
+           "Candidate out of bounds!");
+    MachineBasicBlock *MBB = (*Mapper.InstrList[C.startIdx()]).getParent();
+    MachineBasicBlock::iterator StartIt = Mapper.InstrList[C.startIdx()];
+    unsigned EndIdx = C.endIdx();
 
     assert(EndIdx < Mapper.InstrList.size() && "Candidate out of bounds!");
     MachineBasicBlock::iterator EndIt = Mapper.InstrList[EndIdx];
@@ -1225,7 +1236,7 @@ bool MachineOutliner::outline(Module &M,
 
     // Insert a call to the new function and erase the old sequence.
     TII.insertOutlinedCall(M, *MBB, StartIt, *MF, C.MInfo);
-    StartIt = Mapper.InstrList[C.StartIdx];
+    StartIt = Mapper.InstrList[C.startIdx()];
     MBB->erase(StartIt, EndIt);
 
     OutlinedSomething = true;
