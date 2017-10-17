@@ -164,9 +164,7 @@ public:
   TargetInstrInfo::MachineOutlinerInfo MInfo;
 
   /// Return the number of candidates for this \p OutlinedFunction.
-  unsigned getOccurrenceCount() {
-    return OccurrenceCount;
-  }
+  unsigned getOccurrenceCount() { return OccurrenceCount; }
 
   /// Decrement the occurrence count of this OutlinedFunction and return the
   /// new count.
@@ -848,6 +846,10 @@ struct MachineOutliner : public ModulePass {
                               SuffixTree &ST, InstructionMapper &Mapper,
                               const TargetInstrInfo &TII);
 
+  /// Helper function for pruneOverlaps.
+  /// Removes \p C from the candidate list, and updates its \p OutlinedFunction.
+  void prune(Candidate &C, std::vector<OutlinedFunction> &FunctionList);
+
   /// \brief Remove any overlapping candidates that weren't handled by the
   /// suffix tree's pruning method.
   ///
@@ -1017,6 +1019,25 @@ MachineOutliner::findCandidates(SuffixTree &ST, const TargetInstrInfo &TII,
   return MaxLen;
 }
 
+// Remove C from the candidate space, and update its OutlinedFunction.
+void MachineOutliner::prune(Candidate &C,
+                            std::vector<OutlinedFunction> &FunctionList) {
+  // Get the OutlinedFunction associated with this Candidate.
+  OutlinedFunction &F = FunctionList[C.FunctionIdx];
+
+  // Update C's associated function's occurrence count.
+  F.decrement();
+
+  // Remove C from the CandidateList.
+  C.InCandidateList = false;
+
+  DEBUG(dbgs() << "- Removed a Candidate \n";
+        dbgs() << "--- Num fns left for candidate: " << F.getOccurrenceCount()
+               << "\n";
+        dbgs() << "--- Candidate's functions's benefit: " << F.getBenefit()
+               << "\n";);
+}
+
 void MachineOutliner::pruneOverlaps(std::vector<Candidate> &CandidateList,
                                     std::vector<OutlinedFunction> &FunctionList,
                                     InstructionMapper &Mapper,
@@ -1025,42 +1046,20 @@ void MachineOutliner::pruneOverlaps(std::vector<Candidate> &CandidateList,
 
   // Return true if this candidate became unbeneficial for outlining in a
   // previous step.
-  auto ShouldSkipCandidate = [&FunctionList](Candidate &C) {
+  auto ShouldSkipCandidate = [&FunctionList, this](Candidate &C) {
 
     // Check if the candidate was removed in a previous step.
     if (!C.InCandidateList)
       return true;
 
     // C must be alive. Check if we should remove it.
-    OutlinedFunction &F = FunctionList[C.FunctionIdx];
-
-    if (F.getBenefit() < 1) {
-      F.decrement();
-      C.InCandidateList = false;
+    if (FunctionList[C.FunctionIdx].getBenefit() < 1) {
+      prune(C, FunctionList);
       return true;
     }
 
     // C is in the list, and F is still beneficial.
     return false;
-  };
-
-  // Remove C from the candidate space, and update its OutlinedFunction.
-  auto Prune = [&FunctionList](Candidate &C) {
-
-    // Get the OutlinedFunction associated with this Candidate.
-    OutlinedFunction &F = FunctionList[C.FunctionIdx];
-
-    // Update C's associated function's occurrence count.
-    F.decrement();
-
-    // Remove C from the CandidateList.
-    C.InCandidateList = false;
-
-    DEBUG(dbgs() << "- Removed a Candidate \n";
-          dbgs() << "--- Num fns left for candidate: " << F.getOccurrenceCount()
-                 << "\n";
-          dbgs() << "--- Candidate's functions's benefit: " << F.getBenefit()
-                 << "\n";);
   };
 
   // TODO: Experiment with interval trees or other interval-checking structures
@@ -1116,13 +1115,17 @@ void MachineOutliner::pruneOverlaps(std::vector<Candidate> &CandidateList,
       //
       // Approximate this by picking the one which would have saved us the
       // most instructions before any pruning.
-      if (C1.Benefit >= C2.Benefit) {
-        Prune(C2);
-      } else {
-        Prune(C1);
-        // C1 is out, so we don't have to compare it against anyone else.
+
+      // Is C2 a better candidate?
+      if (C2.Benefit > C1.Benefit) {
+        // Yes, so prune C1. Since C1 is dead, we don't have to compare it
+        // against anything anymore, so break.
+        prune(C1, FunctionList);
         break;
       }
+
+      // Prune C2 and move on to the next candidate.
+      prune(C2, FunctionList);
     }
   }
 }
