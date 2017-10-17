@@ -171,9 +171,6 @@ public:
     void
     SetErrorFileHandle (FILE *f, bool transfer_ownership);
 
-    void
-    Flush ();
-
     FILE *
     GetInputFileHandle ();
 
