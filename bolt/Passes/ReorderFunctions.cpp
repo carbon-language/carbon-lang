@@ -75,6 +75,12 @@ GenerateFunctionOrderFile("generate-function-order",
            "reordering"),
   cl::cat(BoltOptCategory));
 
+static cl::opt<std::string>
+LinkSectionsFile("generate-link-sections",
+  cl::desc("generate a list of function sections in a format suitable for "
+           "inclusion in a linker script"),
+  cl::cat(BoltOptCategory));
+
 static cl::opt<bool>
 UseEdgeCounts("use-edge-counts",
   cl::desc("use edge count data when doing clustering"),
@@ -408,16 +414,32 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC,
 
   reorder(std::move(Clusters), BFs);
 
+  std::unique_ptr<std::ofstream> FuncsFile;
   if (!opts::GenerateFunctionOrderFile.empty()) {
-    std::ofstream FuncsFile(opts::GenerateFunctionOrderFile, std::ios::out);
+    FuncsFile =
+      llvm::make_unique<std::ofstream>(opts::GenerateFunctionOrderFile,
+                                       std::ios::out);
     if (!FuncsFile) {
-      errs() << "Ordered functions file \"" << opts::GenerateFunctionOrderFile
-             << "\" can't be opened.\n";
+      errs() << "BOLT-ERROR: ordered functions file "
+             << opts::GenerateFunctionOrderFile << " cannot be opened\n";
       exit(1);
     }
+  }
 
+  std::unique_ptr<std::ofstream> LinkSectionsFile;
+  if (!opts::LinkSectionsFile.empty()) {
+    LinkSectionsFile =
+      llvm::make_unique<std::ofstream>(opts::LinkSectionsFile,
+                                       std::ios::out);
+    if (!LinkSectionsFile) {
+      errs() << "BOLT-ERROR: link sections file "
+             << opts::LinkSectionsFile << " cannot be opened\n";
+      exit(1);
+    }
+  }
+
+  if (FuncsFile || LinkSectionsFile) {
     std::vector<BinaryFunction *> SortedFunctions(BFs.size());
-
     std::transform(BFs.begin(),
                    BFs.end(),
                    SortedFunctions.begin(),
@@ -446,25 +468,37 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC,
         break;
       if (Func->isPLTFunction())
         continue;
-      const char *Indent = "";
-      for (auto Name : Func->getNames()) {
-        const auto SlashPos = Name.find('/');
-        if (SlashPos != std::string::npos) {
-          // Avoid duplicates for local functions.
-          if (Name.find('/', SlashPos + 1) != std::string::npos)
-            continue;
-          Name = Name.substr(0, SlashPos);
+
+      if (FuncsFile)
+        *FuncsFile << Func->getSymbol()->getName().data() << "\n";
+
+      if (LinkSectionsFile) {
+        const char *Indent = "";
+        for (auto Name : Func->getNames()) {
+          const auto SlashPos = Name.find('/');
+          if (SlashPos != std::string::npos) {
+            // Avoid duplicates for local functions.
+            if (Name.find('/', SlashPos + 1) != std::string::npos)
+              continue;
+            Name = Name.substr(0, SlashPos);
+          }
+          *LinkSectionsFile << Indent << ".text." << Name << "\n";
+          Indent = " ";
         }
-        FuncsFile << Indent << ".text." << Name << "\n";
-        Indent = " ";
       }
     }
-    FuncsFile.close();
 
-    outs() << "BOLT-INFO: dumped function order to \""
-           << opts::GenerateFunctionOrderFile << "\"\n";
+    if (FuncsFile) {
+      FuncsFile->close();
+      outs() << "BOLT-INFO: dumped function order to "
+             << opts::GenerateFunctionOrderFile << '\n';
+    }
 
-    exit(0);
+    if (LinkSectionsFile) {
+      LinkSectionsFile->close();
+      outs() << "BOLT-INFO: dumped linker section order to "
+             << opts::LinkSectionsFile << '\n';
+    }
   }
 }
 
