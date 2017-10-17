@@ -144,6 +144,11 @@ public:
 /// class of candidate.
 struct OutlinedFunction {
 
+private:
+  /// The number of candidates for this \p OutlinedFunction.
+  unsigned OccurrenceCount = 0;
+
+public:
   /// The actual outlined function created.
   /// This is initialized after we go through and create the actual function.
   MachineFunction *MF = nullptr;
@@ -151,15 +156,25 @@ struct OutlinedFunction {
   /// A number assigned to this function which appears at the end of its name.
   unsigned Name;
 
-  /// The number of candidates for this OutlinedFunction.
-  unsigned OccurrenceCount = 0;
-
   /// \brief The sequence of integers corresponding to the instructions in this
   /// function.
   std::vector<unsigned> Sequence;
 
   /// Contains all target-specific information for this \p OutlinedFunction.
   TargetInstrInfo::MachineOutlinerInfo MInfo;
+
+  /// Return the number of candidates for this \p OutlinedFunction.
+  unsigned getOccurrenceCount() {
+    return OccurrenceCount;
+  }
+
+  /// Decrement the occurrence count of this OutlinedFunction and return the
+  /// new count.
+  unsigned decrement() {
+    assert(OccurrenceCount > 0 && "Can't decrement an empty function!");
+    OccurrenceCount--;
+    return getOccurrenceCount();
+  }
 
   /// \brief Return the number of instructions it would take to outline this
   /// function.
@@ -180,7 +195,7 @@ struct OutlinedFunction {
   OutlinedFunction(unsigned Name, unsigned OccurrenceCount,
                    const std::vector<unsigned> &Sequence,
                    TargetInstrInfo::MachineOutlinerInfo &MInfo)
-      : Name(Name), OccurrenceCount(OccurrenceCount), Sequence(Sequence),
+      : OccurrenceCount(OccurrenceCount), Name(Name), Sequence(Sequence),
         MInfo(MInfo) {}
 };
 
@@ -963,7 +978,7 @@ MachineOutliner::findCandidates(SuffixTree &ST, const TargetInstrInfo &TII,
           << " Instructions from outlining all occurrences ("
           << NV("OutliningCost", OF.getOutliningCost()) << ")"
           << " >= Unoutlined instruction count ("
-          << NV("NotOutliningCost", StringLen * OF.OccurrenceCount) << ")"
+          << NV("NotOutliningCost", StringLen * OF.getOccurrenceCount()) << ")"
           << " (Also found at: ";
 
         // Tell the user the other places the candidate was found.
@@ -1016,14 +1031,11 @@ void MachineOutliner::pruneOverlaps(std::vector<Candidate> &CandidateList,
     if (!C.InCandidateList)
       return true;
 
-    // Check if C's associated function is still beneficial after previous
-    // pruning steps.
+    // C must be alive. Check if we should remove it.
     OutlinedFunction &F = FunctionList[C.FunctionIdx];
 
-    if (F.OccurrenceCount < 2 || F.getBenefit() < 1) {
-      assert(F.OccurrenceCount > 0 &&
-             "Can't remove OutlinedFunction with no occurrences!");
-      F.OccurrenceCount--;
+    if (F.getBenefit() < 1) {
+      F.decrement();
       C.InCandidateList = false;
       return true;
     }
@@ -1039,15 +1051,13 @@ void MachineOutliner::pruneOverlaps(std::vector<Candidate> &CandidateList,
     OutlinedFunction &F = FunctionList[C.FunctionIdx];
 
     // Update C's associated function's occurrence count.
-    assert(F.OccurrenceCount > 0 &&
-           "Can't remove OutlinedFunction with no occurrences!");
-    F.OccurrenceCount--;
+    F.decrement();
 
     // Remove C from the CandidateList.
     C.InCandidateList = false;
 
     DEBUG(dbgs() << "- Removed a Candidate \n";
-          dbgs() << "--- Num fns left for candidate: " << F.OccurrenceCount
+          dbgs() << "--- Num fns left for candidate: " << F.getOccurrenceCount()
                  << "\n";
           dbgs() << "--- Candidate's functions's benefit: " << F.getBenefit()
                  << "\n";);
@@ -1208,7 +1218,7 @@ bool MachineOutliner::outline(Module &M,
     OutlinedFunction &OF = FunctionList[C.FunctionIdx];
 
     // Was its OutlinedFunction made unbeneficial during pruneOverlaps?
-    if (OF.OccurrenceCount < 2 || OF.getBenefit() < 1)
+    if (OF.getBenefit() < 1)
       continue;
 
     // If not, then outline it.
