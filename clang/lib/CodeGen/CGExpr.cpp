@@ -3213,9 +3213,8 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E,
     LValue LHS = EmitLValue(E->getBase());
     auto *Idx = EmitIdxAfterBase(/*Promote*/false);
     assert(LHS.isSimple() && "Can only subscript lvalue vectors here!");
-    return LValue::MakeVectorElt(LHS.getAddress(), Idx,
-                                 E->getBase()->getType(),
-                                 LHS.getBaseInfo());
+    return LValue::MakeVectorElt(LHS.getAddress(), Idx, E->getBase()->getType(),
+                                 LHS.getBaseInfo(), TBAAAccessInfo());
   }
 
   // All the other cases basically behave like simple offsetting.
@@ -3567,7 +3566,7 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
     llvm::Constant *CV =
         llvm::ConstantDataVector::get(getLLVMContext(), Indices);
     return LValue::MakeExtVectorElt(Base.getAddress(), CV, type,
-                                    Base.getBaseInfo());
+                                    Base.getBaseInfo(), TBAAAccessInfo());
   }
   assert(Base.isExtVectorElt() && "Can only subscript lvalue vec elts here!");
 
@@ -3578,7 +3577,7 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
     CElts.push_back(BaseElts->getAggregateElement(Indices[i]));
   llvm::Constant *CV = llvm::ConstantVector::get(CElts);
   return LValue::MakeExtVectorElt(Base.getExtVectorAddress(), CV, type,
-                                  Base.getBaseInfo());
+                                  Base.getBaseInfo(), TBAAAccessInfo());
 }
 
 LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
@@ -3708,7 +3707,8 @@ LValue CodeGenFunction::EmitLValueForField(LValue base,
 
     QualType fieldType =
       field->getType().withCVRQualifiers(base.getVRQualifiers());
-    return LValue::MakeBitfield(Addr, Info, fieldType, FieldBaseInfo);
+    return LValue::MakeBitfield(Addr, Info, fieldType, FieldBaseInfo,
+                                TBAAAccessInfo());
   }
 
   Address addr = base.getAddress();
