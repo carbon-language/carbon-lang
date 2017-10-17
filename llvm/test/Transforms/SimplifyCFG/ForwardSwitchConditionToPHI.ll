@@ -41,3 +41,46 @@ return:                                           ; preds = %entry, %sw.bb4, %sw
   ret i32 %retval.0
 }
 
+; If 1 incoming phi value is a case constant of a switch, convert it to the switch condition:
+; https://bugs.llvm.org/show_bug.cgi?id=34471
+; This then subsequently should allow squashing of the other trivial case blocks.
+
+define i32 @PR34471(i32 %x) {
+; CHECK-LABEL: @PR34471(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    switch i32 [[X:%.*]], label [[ELSE3:%.*]] [
+; CHECK-NEXT:    i32 17, label [[RETURN:%.*]]
+; CHECK-NEXT:    i32 19, label [[IF19:%.*]]
+; CHECK-NEXT:    i32 42, label [[IF42:%.*]]
+; CHECK-NEXT:    ]
+; CHECK:       if19:
+; CHECK-NEXT:    br label [[RETURN]]
+; CHECK:       if42:
+; CHECK-NEXT:    br label [[RETURN]]
+; CHECK:       else3:
+; CHECK-NEXT:    br label [[RETURN]]
+; CHECK:       return:
+; CHECK-NEXT:    [[R:%.*]] = phi i32 [ [[X]], [[IF19]] ], [ [[X]], [[IF42]] ], [ 0, [[ELSE3]] ], [ 17, [[ENTRY:%.*]] ]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+entry:
+  switch i32 %x, label %else3 [
+  i32 17, label %return
+  i32 19, label %if19
+  i32 42, label %if42
+  ]
+
+if19:
+  br label %return
+
+if42:
+  br label %return
+
+else3:
+  br label %return
+
+return:
+  %r = phi i32 [ %x, %if19 ], [ %x, %if42 ], [ 0, %else3 ], [ 17, %entry ]
+  ret i32 %r
+}
+
