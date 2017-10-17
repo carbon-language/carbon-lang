@@ -361,8 +361,7 @@ static bool hasThrowOutNonThrowingFunc(SourceLocation &OpLoc, CFG *BodyCFG) {
   SmallVector<CFGBlock *, 16> Stack;
   Stack.push_back(&BodyCFG->getEntry());
   while (!Stack.empty()) {
-    CFGBlock *CurBlock = Stack.back();
-    Stack.pop_back();
+    CFGBlock *CurBlock = Stack.pop_back_val();
 
     unsigned ID = CurBlock->getBlockID();
     ThrowState CurState = States[ID];
