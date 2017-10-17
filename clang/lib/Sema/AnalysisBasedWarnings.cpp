@@ -289,14 +289,14 @@ enum ThrowState {
 
 static bool isThrowCaught(const CXXThrowExpr *Throw,
                           const CXXCatchStmt *Catch) {
+  const Type *CaughtType = Catch->getCaughtType().getTypePtrOrNull();
+  if (!CaughtType)
+    return true;
   const Type *ThrowType = nullptr;
   if (Throw->getSubExpr())
     ThrowType = Throw->getSubExpr()->getType().getTypePtrOrNull();
   if (!ThrowType)
     return false;
-  const Type *CaughtType = Catch->getCaughtType().getTypePtrOrNull();
-  if (!CaughtType)
-    return true;
   if (ThrowType->isReferenceType())
     ThrowType = ThrowType->castAs<ReferenceType>()
                     ->getPointeeType()
