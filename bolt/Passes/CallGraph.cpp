@@ -44,7 +44,7 @@ inline size_t hash_int64(int64_t k) {
   return hash_int64_fallback(k);
 #endif
 }
-  
+
 inline size_t hash_int64_pair(int64_t k1, int64_t k2) {
 #if defined(USE_SSECRC) && defined(__SSE4_2__)
   // crc32 is commutative, so we need to perturb k1 so that (k1, k2) hashes
@@ -56,7 +56,7 @@ inline size_t hash_int64_pair(int64_t k1, int64_t k2) {
   return (hash_int64(k1) << 1) ^ hash_int64(k2);
 #endif
 }
-  
+
 }
 
 namespace llvm {
@@ -79,36 +79,31 @@ CallGraph::NodeId CallGraph::addNode(uint32_t Size, uint64_t Samples) {
 
 const CallGraph::Arc &CallGraph::incArcWeight(NodeId Src, NodeId Dst, double W,
                                               double Offset) {
+  assert(Offset <= size(Src) && "Call offset exceeds function size");
+
   auto Res = Arcs.emplace(Src, Dst, W);
   if (!Res.second) {
     Res.first->Weight += W;
+    Res.first->AvgCallOffset += Offset * W;
     return *Res.first;
   }
-  Res.first->AvgCallOffset += Offset;
+  Res.first->AvgCallOffset = Offset * W;
   Nodes[Src].Succs.push_back(Dst);
   Nodes[Dst].Preds.push_back(Src);
   return *Res.first;
 }
 
-void CallGraph::normalizeArcWeights(bool UseEdgeCounts) {
-  // Normalize arc weights.
-  if (!UseEdgeCounts) {
-    for (NodeId FuncId = 0; FuncId < numNodes(); ++FuncId) {
-      auto& Func = getNode(FuncId);
-      for (auto Caller : Func.predecessors()) {
-        auto Arc = findArc(Caller, FuncId);
-        Arc->NormalizedWeight = Arc->weight() / Func.samples();
+void CallGraph::normalizeArcWeights() {
+  // Normalize arc weights
+  for (NodeId FuncId = 0; FuncId < numNodes(); ++FuncId) {
+    auto& Func = getNode(FuncId);
+    for (auto Caller : Func.predecessors()) {
+      auto Arc = findArc(Caller, FuncId);
+      Arc->NormalizedWeight = Arc->weight() / Func.samples();
+      if (Arc->weight() > 0)
         Arc->AvgCallOffset /= Arc->weight();
-        assert(Arc->AvgCallOffset < size(Caller));
-      }
-    }
-  } else {
-    for (NodeId FuncId = 0; FuncId < numNodes(); ++FuncId) {
-      auto &Func = getNode(FuncId);
-      for (auto Caller : Func.predecessors()) {
-        auto Arc = findArc(Caller, FuncId);
-        Arc->NormalizedWeight = Arc->weight() / Func.samples();
-      }
+      assert(Arc->AvgCallOffset <= size(Caller) &&
+             "Avg call offset exceeds function size");
     }
   }
 }

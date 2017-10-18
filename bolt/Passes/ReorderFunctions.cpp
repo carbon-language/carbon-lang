@@ -134,7 +134,7 @@ namespace bolt {
 
 using NodeId = CallGraph::NodeId;
 using Arc = CallGraph::Arc;
-using Node = CallGraph::Node;  
+using Node = CallGraph::Node;
 
 void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
                                std::map<uint64_t, BinaryFunction> &BFs) {
@@ -310,7 +310,7 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC,
                         opts::CgUseSplitHotSize,
                         opts::UseEdgeCounts,
                         opts::CgIgnoreRecursiveCalls);
-    Cg.normalizeArcWeights(opts::UseEdgeCounts);
+    Cg.normalizeArcWeights();
   }
 
   std::vector<Cluster> Clusters;

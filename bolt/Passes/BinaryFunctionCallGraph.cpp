@@ -89,6 +89,13 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
   BinaryFunctionCallGraph Cg;
   static constexpr auto COUNT_NO_PROFILE = BinaryBasicBlock::COUNT_NO_PROFILE;
 
+  // Compute function size
+  auto functionSize = [&](const BinaryFunction *Function) {
+    return UseFunctionHotSize && Function->isSplit()
+      ? Function->estimateHotSize(UseSplitHotSize)
+      : Function->estimateSize();
+  };
+
   // Add call graph nodes.
   auto lookupNode = [&](BinaryFunction *Function) {
     const auto Id = Cg.maybeGetNodeId(Function);
@@ -97,9 +104,7 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
       // because emitFunctions will emit the hot part first in the order that is
       // computed by ReorderFunctions.  The cold part will be emitted with the
       // rest of the cold functions and code.
-      const auto Size = UseFunctionHotSize && Function->isSplit()
-        ? Function->estimateHotSize(UseSplitHotSize)
-        : Function->estimateSize();
+      const auto Size = functionSize(Function);
       // NOTE: for functions without a profile, we set the number of samples
       // to zero.  This will keep these functions from appearing in the hot
       // section.  This is a little weird because we wouldn't be trying to
@@ -125,14 +130,14 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
   for (auto &It : BFs) {
     auto *Function = &It.second;
 
-    if(Filter(*Function)) {
+    if (Filter(*Function)) {
       continue;
     }
 
     const auto *BranchData = Function->getBranchData();
     const auto SrcId = lookupNode(Function);
-    uint64_t Offset = Function->getAddress();
-    uint64_t LastInstSize = 0;
+    // Offset of the current basic block from the beginning of the function
+    uint64_t Offset = 0;
 
     auto recordCall = [&](const MCSymbol *DestSymbol, const uint64_t Count) {
       if (auto *DstFunc =
@@ -145,11 +150,11 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
             return false;
         }
         const auto DstId = lookupNode(DstFunc);
-        const auto AvgDelta = UseEdgeCounts ? 0 : Offset - DstFunc->getAddress();
         const bool IsValidCount = Count != COUNT_NO_PROFILE;
         const auto AdjCount = UseEdgeCounts && IsValidCount ? Count : 1;
-        if (!IsValidCount) ++NoProfileCallsites;
-        Cg.incArcWeight(SrcId, DstId, AdjCount, AvgDelta);
+        if (!IsValidCount)
+          ++NoProfileCallsites;
+        Cg.incArcWeight(SrcId, DstId, AdjCount, Offset);
         DEBUG(
           if (opts::Verbosity > 1) {
             dbgs() << "BOLT-DEBUG: buildCallGraph: call " << *Function
@@ -157,6 +162,7 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
           });
         return true;
       }
+      
       return false;
     };
 
@@ -209,8 +215,14 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
       DEBUG(dbgs() << "BOLT-DEBUG: buildCallGraph: Falling back to perf data"
                    << " for " << *Function << "\n");
       ++NumFallbacks;
+      const auto Size = functionSize(Function);
       for (const auto &BI : BranchData->Data) {
-        Offset = Function->getAddress() + BI.From.Offset;
+        Offset = BI.From.Offset;
+        // The computed offset may exceed the hot part of the function; hence,
+        // bound it the size
+        if (Offset > Size)
+          Offset = Size;
+
         const auto CI = getCallInfoFromBranchData(BI, true);
         if (!CI.first && CI.second == COUNT_NO_PROFILE) // probably a branch
           continue;
@@ -225,29 +237,37 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
         if (BB->isCold() && !IncludeColdCalls)
           continue;
 
+        // Determine whether the block is included in Function's (hot) size
+        // See BinaryFunction::estimateHotSize
+        bool BBIncludedInFunctionSize = false;
+        if (UseFunctionHotSize && Function->isSplit()) {
+          if (UseSplitHotSize)
+            BBIncludedInFunctionSize = !BB->isCold();
+          else
+            BBIncludedInFunctionSize = BB->getKnownExecutionCount() != 0;
+        } else {
+          BBIncludedInFunctionSize = true;
+        }
+
         for (auto &Inst : *BB) {
-          if (!UseEdgeCounts) {
-            Offset += LastInstSize;
-            LastInstSize = BC.computeCodeSize(&Inst, &Inst + 1);
-          }
-
           // Find call instructions and extract target symbols from each one.
-          if (!BC.MIA->isCall(Inst))
-            continue;
+          if (BC.MIA->isCall(Inst)) {
+            const auto CallInfo = getCallInfo(BB, Inst);
 
-          const auto CallInfo = getCallInfo(BB, Inst);
-
-          if (CallInfo.empty()) {
-            ++TotalCallsites;
-            ++NotProcessed;
-            continue;
-          }
-
-          for (const auto &CI : CallInfo) {
-            ++TotalCallsites;
-            if (!recordCall(CI.first, CI.second)) {
+            if (!CallInfo.empty()) {
+              for (const auto &CI : CallInfo) {
+                ++TotalCallsites;
+                if (!recordCall(CI.first, CI.second))
+                  ++NotProcessed;
+              }
+            } else {
+              ++TotalCallsites;
               ++NotProcessed;
             }
+          }
+          // Increase Offset if needed
+          if (BBIncludedInFunctionSize) {
+            Offset += BC.computeCodeSize(&Inst, &Inst + 1);
           }
         }
       }

@@ -153,7 +153,7 @@ public:
     return double(Arcs.size()) / (Nodes.size()*Nodes.size());
   }
 
-  void normalizeArcWeights(bool UseEdgeCounts);
+  void normalizeArcWeights();
 
   template <typename L>
   void printDot(char* fileName, L getLabel) const;

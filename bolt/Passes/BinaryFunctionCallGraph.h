@@ -65,8 +65,8 @@ inline bool NoFilter(const BinaryFunction &) { return false; }
 /// graph, otherwise they are ignored.
 /// UseFunctionHotSize controls whether the hot size of a function is used when
 /// filling in the Size attribute of new Nodes.
-/// UseEdgeCounts is used to control if the AvgCallOffset attribute on Arcs is
-/// computed using the offsets of call instructions.
+/// UseEdgeCounts is used to control if the Weight attribute on Arcs is computed
+/// using the number of calls.
 BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
                                        std::map<uint64_t, BinaryFunction> &BFs,
                                        CgFilterFunction Filter = NoFilter,
