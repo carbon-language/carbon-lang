@@ -1316,10 +1316,6 @@ static bool sortMipsSymbols(const SymbolTableEntry &L,
   return L.Symbol->GotIndex < R.Symbol->GotIndex;
 }
 
-// Finalize a symbol table. The ELF spec requires that all local
-// symbols precede global symbols, so we sort symbol entries in this
-// function. (For .dynsym, we don't do that because symbols for
-// dynamic linking are inherently all globals.)
 void SymbolTableBaseSection::finalizeContents() {
   getParent()->Link = StrTabSec.getParent()->SectionIndex;
 
@@ -1344,6 +1340,9 @@ void SymbolTableBaseSection::finalizeContents() {
   }
 }
 
+// The ELF spec requires that all local symbols precede global symbols, so we
+// sort symbol entries in this function. (For .dynsym, we don't do that because
+// symbols for dynamic linking are inherently all globals.)
 void SymbolTableBaseSection::postThunkContents() {
   if (this->Type == SHT_DYNSYM)
     return;
