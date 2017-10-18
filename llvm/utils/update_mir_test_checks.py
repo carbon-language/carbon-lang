@@ -40,7 +40,7 @@ VREG_RE = re.compile(r'(%[0-9]+)(?::[a-z0-9_]+)?(?:\([<>a-z0-9 ]+\))?')
 VREG_DEF_RE = re.compile(
     r'^ *(?P<vregs>{0}(?:, {0})*) '
     r'= (?P<opcode>[A-Zt][A-Za-z0-9_]+)'.format(VREG_RE.pattern))
-PREFIX_DATA_RE = re.compile(r'^ *(;|bb.[0-9].*: *$|[a-z]+: |$)')
+PREFIX_DATA_RE = re.compile(r'^ *(;|bb.[0-9].*: *$|[a-z]+:( |$)|$)')
 
 MIR_FUNC_RE = re.compile(
     r'^---$'
