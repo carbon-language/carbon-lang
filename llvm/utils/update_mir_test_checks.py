@@ -33,7 +33,7 @@ TRIPLE_IR_RE = re.compile(r'^\s*target\s+triple\s*=\s*"([^"]+)"$')
 CHECK_PREFIX_RE = re.compile('--?check-prefix(?:es)?[= ](\S+)')
 CHECK_RE = re.compile(r'^\s*[;#]\s*([^:]+?)(?:-NEXT|-NOT|-DAG|-LABEL)?:')
 
-FUNC_NAME_RE = re.compile(r' *name: *(?P<func>[A-Za-z0-9_.]+)')
+FUNC_NAME_RE = re.compile(r' *name: *(?P<func>[A-Za-z0-9_.-]+)')
 BODY_BEGIN_RE = re.compile(r' *body: *\|')
 BASIC_BLOCK_RE = re.compile(r' *bb\.[0-9]+.*:$')
 VREG_RE = re.compile(r'(%[0-9]+)(?::[a-z0-9_]+)?(?:\([<>a-z0-9 ]+\))?')
@@ -45,7 +45,7 @@ PREFIX_DATA_RE = re.compile(r'^ *(;|bb.[0-9].*: *$|[a-z]+: |$)')
 MIR_FUNC_RE = re.compile(
     r'^---$'
     r'\n'
-    r'^ *name: *(?P<func>[A-Za-z0-9_.]+)$'
+    r'^ *name: *(?P<func>[A-Za-z0-9_.-]+)$'
     r'.*?'
     r'^ *body: *\|\n'
     r'(?P<body>.*?)\n'
