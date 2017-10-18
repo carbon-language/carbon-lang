@@ -308,7 +308,7 @@ def update_test_file(llc, test, remove_common_prefixes=False, verbose=False):
             warn('No triple found: skipping file', test_file=test)
             return
 
-        build_function_body_dictionary(test, raw_tool_output, '',
+        build_function_body_dictionary(test, raw_tool_output,
                                        triple_in_cmd or triple_in_ir,
                                        prefixes, func_dict, verbose)
 
