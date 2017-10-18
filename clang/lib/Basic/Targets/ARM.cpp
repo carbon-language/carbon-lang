@@ -236,6 +236,10 @@ ARMTargetInfo::ARMTargetInfo(const llvm::Triple &Triple,
     break;
   }
 
+  IntPtrType = (Triple.isOSDarwin() || Triple.getOS() == llvm::Triple::OpenBSD)
+                   ? SignedLong
+                   : SignedInt;
+
   // Cache arch related info.
   setArchInfo();
 
@@ -923,7 +927,6 @@ WindowsARMTargetInfo::WindowsARMTargetInfo(const llvm::Triple &Triple,
                                            const TargetOptions &Opts)
     : WindowsTargetInfo<ARMleTargetInfo>(Triple, Opts), Triple(Triple) {
   SizeType = UnsignedInt;
-  IntPtrType = SignedInt;
 }
 
 void WindowsARMTargetInfo::getVisualStudioDefines(const LangOptions &Opts,
