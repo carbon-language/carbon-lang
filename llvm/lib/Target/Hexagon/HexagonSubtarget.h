@@ -14,9 +14,10 @@
 #ifndef LLVM_LIB_TARGET_HEXAGON_HEXAGONSUBTARGET_H
 #define LLVM_LIB_TARGET_HEXAGON_HEXAGONSUBTARGET_H
 
+#include "HexagonDepArch.h"
 #include "HexagonFrameLowering.h"
-#include "HexagonInstrInfo.h"
 #include "HexagonISelLowering.h"
+#include "HexagonInstrInfo.h"
 #include "HexagonRegisterInfo.h"
 #include "HexagonSelectionDAGInfo.h"
 #include "llvm/ADT/SmallSet.h"
@@ -50,9 +51,7 @@ class HexagonSubtarget : public HexagonGenSubtargetInfo {
   bool ModeIEEERndNear;
 
 public:
-#include "HexagonDepArch.h"
-
-  HexagonArchEnum HexagonArchVersion;
+  Hexagon::ArchEnum HexagonArchVersion;
   /// True if the target should use Back-Skip-Back scheduling. This is the
   /// default for V60.
   bool UseBSBScheduling;
@@ -113,14 +112,30 @@ public:
   void ParseSubtargetFeatures(StringRef CPU, StringRef FS);
 
   bool useMemOps() const { return UseMemOps; }
-  bool hasV5TOps() const { return getHexagonArchVersion() >= V5; }
-  bool hasV5TOpsOnly() const { return getHexagonArchVersion() == V5; }
-  bool hasV55TOps() const { return getHexagonArchVersion() >= V55; }
-  bool hasV55TOpsOnly() const { return getHexagonArchVersion() == V55; }
-  bool hasV60TOps() const { return getHexagonArchVersion() >= V60; }
-  bool hasV60TOpsOnly() const { return getHexagonArchVersion() == V60; }
-  bool hasV62TOps() const { return getHexagonArchVersion() >= V62; }
-  bool hasV62TOpsOnly() const { return getHexagonArchVersion() == V62; }
+  bool hasV5TOps() const {
+    return getHexagonArchVersion() >= Hexagon::ArchEnum::V5;
+  }
+  bool hasV5TOpsOnly() const {
+    return getHexagonArchVersion() == Hexagon::ArchEnum::V5;
+  }
+  bool hasV55TOps() const {
+    return getHexagonArchVersion() >= Hexagon::ArchEnum::V55;
+  }
+  bool hasV55TOpsOnly() const {
+    return getHexagonArchVersion() == Hexagon::ArchEnum::V55;
+  }
+  bool hasV60TOps() const {
+    return getHexagonArchVersion() >= Hexagon::ArchEnum::V60;
+  }
+  bool hasV60TOpsOnly() const {
+    return getHexagonArchVersion() == Hexagon::ArchEnum::V60;
+  }
+  bool hasV62TOps() const {
+    return getHexagonArchVersion() >= Hexagon::ArchEnum::V62;
+  }
+  bool hasV62TOpsOnly() const {
+    return getHexagonArchVersion() == Hexagon::ArchEnum::V62;
+  }
 
   bool modeIEEERndNear() const { return ModeIEEERndNear; }
   bool useHVXOps() const { return UseHVXOps; }
@@ -149,7 +164,7 @@ public:
     return Hexagon_SMALL_DATA_THRESHOLD;
   }
 
-  const HexagonArchEnum &getHexagonArchVersion() const {
+  const Hexagon::ArchEnum &getHexagonArchVersion() const {
     return HexagonArchVersion;
   }
 

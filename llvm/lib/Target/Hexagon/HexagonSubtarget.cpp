@@ -112,12 +112,12 @@ HexagonSubtarget::HexagonSubtarget(const Triple &TT, StringRef CPU,
 
 HexagonSubtarget &
 HexagonSubtarget::initializeSubtargetDependencies(StringRef CPU, StringRef FS) {
-  static std::map<StringRef, HexagonArchEnum> CpuTable {
-    { "hexagonv4", V4 },
-    { "hexagonv5", V5 },
-    { "hexagonv55", V55 },
-    { "hexagonv60", V60 },
-    { "hexagonv62", V62 },
+  static std::map<StringRef, Hexagon::ArchEnum> CpuTable{
+      {"hexagonv4", Hexagon::ArchEnum::V4},
+      {"hexagonv5", Hexagon::ArchEnum::V5},
+      {"hexagonv55", Hexagon::ArchEnum::V55},
+      {"hexagonv60", Hexagon::ArchEnum::V60},
+      {"hexagonv62", Hexagon::ArchEnum::V62},
   };
 
   auto FoundIt = CpuTable.find(CPUString);
