@@ -43,9 +43,9 @@ void f(int n) {
   }
 }
 
-[[fallthrough]] typedef int n; // expected-error {{'fallthrough' attribute cannot be applied to a declaration}}
-typedef int [[fallthrough]] n; // expected-error {{'fallthrough' attribute cannot be applied to types}}
-typedef int n [[fallthrough]]; // expected-error {{'fallthrough' attribute cannot be applied to a declaration}}
+[[fallthrough]] typedef int n1; // expected-error {{'fallthrough' attribute cannot be applied to a declaration}}
+typedef int [[fallthrough]] n2; // expected-error {{'fallthrough' attribute cannot be applied to types}}
+typedef int n3 [[fallthrough]]; // expected-error {{'fallthrough' attribute cannot be applied to a declaration}}
 
 enum [[fallthrough]] E { // expected-error {{'fallthrough' attribute cannot be applied to a declaration}}
   One
