@@ -46,12 +46,13 @@ class Triple;
 class HexagonSubtarget : public HexagonGenSubtargetInfo {
   virtual void anchor();
 
-  bool UseMemOps, UseHVXOps, UseHVXDblOps;
+  bool UseMemOps, UseHVX64BOps, UseHVX128BOps;
   bool UseLongCalls;
   bool ModeIEEERndNear;
 
 public:
   Hexagon::ArchEnum HexagonArchVersion;
+  Hexagon::ArchEnum HexagonHVXVersion = Hexagon::ArchEnum::V4;
   /// True if the target should use Back-Skip-Back scheduling. This is the
   /// default for V60.
   bool UseBSBScheduling;
@@ -138,9 +139,9 @@ public:
   }
 
   bool modeIEEERndNear() const { return ModeIEEERndNear; }
-  bool useHVXOps() const { return UseHVXOps; }
-  bool useHVXDblOps() const { return UseHVXOps && UseHVXDblOps; }
-  bool useHVXSglOps() const { return UseHVXOps && !UseHVXDblOps; }
+  bool useHVXOps() const { return HexagonHVXVersion > Hexagon::ArchEnum::V4; }
+  bool useHVX128BOps() const { return useHVXOps() && UseHVX128BOps; }
+  bool useHVX64BOps() const { return useHVXOps() && UseHVX64BOps; }
   bool useLongCalls() const { return UseLongCalls; }
   bool usePredicatedCalls() const;
 
