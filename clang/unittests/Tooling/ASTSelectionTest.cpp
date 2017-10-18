@@ -59,6 +59,11 @@ public:
   }
 };
 
+/// This is a test utility function that computes the AST selection at the
+/// given location with an optional selection range.
+///
+/// A location roughly corresponds to a cursor location in an editor, while
+/// the optional range corresponds to the selection range in an editor.
 void findSelectedASTNodesWithRange(
     StringRef Source, FileLocation Location, Optional<FileRange> SelectionRange,
     llvm::function_ref<void(SourceRange SelectionRange,
