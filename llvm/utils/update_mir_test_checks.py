@@ -399,8 +399,12 @@ def main():
     args = parser.parse_args()
 
     for test in args.tests:
-        update_test_file(args.llc, test, args.remove_common_prefixes,
-                         verbose=args.verbose)
+        try:
+            update_test_file(args.llc, test, args.remove_common_prefixes,
+                             verbose=args.verbose)
+        except Exception:
+            warn('Error processing file', test_file=test)
+            raise
 
 
 if __name__ == '__main__':
