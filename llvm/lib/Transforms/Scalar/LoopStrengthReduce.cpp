@@ -2969,11 +2969,8 @@ void LSRInstance::CollectChains() {
       // Ignore users that are part of a SCEV expression. This way we only
       // consider leaf IV Users. This effectively rediscovers a portion of
       // IVUsers analysis but in program order this time.
-      if (SE.isSCEVable(I.getType())) {
-        const SCEV *SI = SE.getSCEV(&I);
-        if (!isa<SCEVUnknown>(SI) && !isa<SCEVConstant>(SI))
-          continue;
-      }
+      if (SE.isSCEVable(I.getType()) && !isa<SCEVUnknown>(SE.getSCEV(&I)))
+        continue;
 
       // Remove this instruction from any NearUsers set it may be in.
       for (unsigned ChainIdx = 0, NChains = IVChainVec.size();
