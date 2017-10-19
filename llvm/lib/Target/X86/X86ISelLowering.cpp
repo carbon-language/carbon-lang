@@ -14596,31 +14596,6 @@ static SDValue LowerSCALAR_TO_VECTOR(SDValue Op, const X86Subtarget &Subtarget,
       OpVT, DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v4i32, AnyExt));
 }
 
-// Lower a node with an EXTRACT_SUBVECTOR opcode.  This may result in
-// a simple subregister reference or explicit instructions to grab
-// upper bits of a vector.
-static SDValue LowerEXTRACT_SUBVECTOR(SDValue Op, const X86Subtarget &Subtarget,
-                                      SelectionDAG &DAG) {
-  SDLoc dl(Op);
-  SDValue In =  Op.getOperand(0);
-  SDValue Idx = Op.getOperand(1);
-  MVT ResVT = Op.getSimpleValueType();
-
-  // When v1i1 is legal a scalarization of a vselect with a vXi1 Cond
-  // would result with: v1i1 = extract_subvector(vXi1, idx).
-  // Lower these into extract_vector_elt which is already selectable.
-  assert(ResVT == MVT::v1i1);
-  assert(Subtarget.hasAVX512() &&
-         "Boolean EXTRACT_SUBVECTOR requires AVX512");
-
-  MVT EltVT = ResVT.getVectorElementType();
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  MVT LegalVT =
-      (TLI.getTypeToTransformTo(*DAG.getContext(), EltVT)).getSimpleVT();
-  SDValue Res = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, LegalVT, In, Idx);
-  return DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, ResVT, Res);
-}
-
 // Lower a node with an INSERT_SUBVECTOR opcode.  This may result in a
 // simple superregister reference or explicit instructions to insert
 // the upper bits of a vector.
@@ -24084,7 +24059,6 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::VSELECT:            return LowerVSELECT(Op, DAG);
   case ISD::EXTRACT_VECTOR_ELT: return LowerEXTRACT_VECTOR_ELT(Op, DAG);
   case ISD::INSERT_VECTOR_ELT:  return LowerINSERT_VECTOR_ELT(Op, DAG);
-  case ISD::EXTRACT_SUBVECTOR:  return LowerEXTRACT_SUBVECTOR(Op,Subtarget,DAG);
   case ISD::INSERT_SUBVECTOR:   return LowerINSERT_SUBVECTOR(Op, Subtarget,DAG);
   case ISD::SCALAR_TO_VECTOR:   return LowerSCALAR_TO_VECTOR(Op, Subtarget,DAG);
   case ISD::ConstantPool:       return LowerConstantPool(Op, DAG);
