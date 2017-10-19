@@ -30,6 +30,8 @@ public:
   unsigned AddMissingHeaderDeps : 1; ///< Add missing headers to dependency list
   unsigned PrintShowIncludes : 1; ///< Print cl.exe style /showIncludes info.
   unsigned IncludeModuleFiles : 1; ///< Include module file dependencies.
+  unsigned CanonicalSystemHeaders : 1; ///< Try to output a shorter path for
+                                       /// system header dependencies.
 
   /// The format for the dependency file.
   DependencyOutputFormat OutputFormat;
@@ -67,6 +69,7 @@ public:
     AddMissingHeaderDeps = 0;
     PrintShowIncludes = 0;
     IncludeModuleFiles = 0;
+    CanonicalSystemHeaders = 1;
     OutputFormat = DependencyOutputFormat::Make;
   }
 };

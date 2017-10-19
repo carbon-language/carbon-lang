@@ -161,6 +161,7 @@ class DFGImpl : public PPCallbacks {
   bool AddMissingHeaderDeps;
   bool SeenMissingHeader;
   bool IncludeModuleFiles;
+  bool CanonicalSystemHeaders;
   DependencyOutputFormat OutputFormat;
 
 private:
@@ -176,6 +177,7 @@ public:
       AddMissingHeaderDeps(Opts.AddMissingHeaderDeps),
       SeenMissingHeader(false),
       IncludeModuleFiles(Opts.IncludeModuleFiles),
+      CanonicalSystemHeaders(Opts.CanonicalSystemHeaders),
       OutputFormat(Opts.OutputFormat) {
     for (const auto &ExtraDep : Opts.ExtraDeps) {
       AddFilename(ExtraDep);
@@ -287,6 +289,15 @@ void DFGImpl::FileChanged(SourceLocation Loc,
   StringRef Filename = FE->getName();
   if (!FileMatchesDepCriteria(Filename.data(), FileType))
     return;
+
+  // Try to shorten system header paths like GCC does (unless
+  // -fno-canonical-system-headers is given).
+  if (CanonicalSystemHeaders && isSystem(FileType)) {
+    StringRef RealPath = FE->tryGetRealPathName();
+    if (!RealPath.empty() && RealPath.size() < Filename.size()) {
+      Filename = RealPath;
+    }
+  }
 
   AddFilename(llvm::sys::path::remove_leading_dotslash(Filename));
 }

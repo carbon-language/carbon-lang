@@ -58,7 +58,9 @@ ArgumentsAdjuster getClangStripDependencyFileAdjuster() {
       StringRef Arg = Args[i];
       // All dependency-file options begin with -M. These include -MM,
       // -MF, -MG, -MP, -MT, -MQ, -MD, and -MMD.
-      if (!Arg.startswith("-M"))
+      // The exception is -f[no-]canonical-system-headers.
+      if (!Arg.startswith("-M") && Arg != "-fno-canonical-system-headers" &&
+          Arg != "-fcanonical-system-headers")
         AdjustedArgs.push_back(Args[i]);
 
       if ((Arg == "-MF") || (Arg == "-MT") || (Arg == "-MQ") ||

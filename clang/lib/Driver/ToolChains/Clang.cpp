@@ -964,6 +964,13 @@ void Clang::AddPreprocessingOptions(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_C);
   Args.AddLastArg(CmdArgs, options::OPT_CC);
 
+  if (Arg *A = Args.getLastArg(options::OPT_fno_canonical_system_headers,
+                               options::OPT_fcanonical_system_headers)) {
+    if (A->getOption().matches(options::OPT_fno_canonical_system_headers)) {
+      CmdArgs.push_back("-fno-canonical-system-headers");
+    }
+  }
+
   // Handle dependency file generation.
   if ((A = Args.getLastArg(options::OPT_M, options::OPT_MM)) ||
       (A = Args.getLastArg(options::OPT_MD)) ||

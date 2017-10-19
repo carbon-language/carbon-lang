@@ -384,6 +384,11 @@ def MT : JoinedOrSeparate<["-"], "MT">, Group<M_Group>, Flags<[CC1Option]>,
     HelpText<"Specify name of main file output in depfile">;
 def MV : Flag<["-"], "MV">, Group<M_Group>, Flags<[CC1Option]>,
     HelpText<"Use NMake/Jom format for the depfile">;
+def fno_canonical_system_headers : Flag<["-"], "fno-canonical-system-headers">,
+    Group<M_Group>, Flags<[CC1Option]>,
+    HelpText<"Do not shorten system header paths in depfiles">;
+def fcanonical_system_headers : Flag<["-"], "fcanonical-system-headers">,
+    Group<M_Group>;
 def Mach : Flag<["-"], "Mach">, Group<Link_Group>;
 def O0 : Flag<["-"], "O0">, Group<O_Group>, Flags<[CC1Option, HelpHidden]>;
 def O4 : Flag<["-"], "O4">, Group<O_Group>, Flags<[CC1Option, HelpHidden]>;

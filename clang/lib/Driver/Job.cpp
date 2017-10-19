@@ -73,8 +73,8 @@ static bool skipArgs(const char *Flag, bool HaveCrashVFS, int &SkipNum,
 
   // These flags are all of the form -Flag and have no second argument.
   ShouldSkip = llvm::StringSwitch<bool>(Flag)
-    .Cases("-M", "-MM", "-MG", "-MP", "-MD", true)
-    .Case("-MMD", true)
+    .Cases("-M", "-MM", "-MG", "-MP", "-MD", "-MMD", true)
+    .Cases("-fno-canonical-system-headers", "-fcanonical-system-headers", true)
     .Default(false);
 
   // Match found.
