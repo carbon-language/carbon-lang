@@ -30,7 +30,6 @@ namespace {
 struct RISCVOperand;
 
 class RISCVAsmParser : public MCTargetAsmParser {
-
   SMLoc getLoc() const { return getParser().getTok().getLoc(); }
 
   bool generateImmOutOfRangeError(OperandVector &Operands, uint64_t ErrorInfo,
@@ -281,7 +280,7 @@ public:
   }
 
   static std::unique_ptr<RISCVOperand> createImm(const MCExpr *Val, SMLoc S,
-                                                 SMLoc E, MCContext &Ctx) {
+                                                 SMLoc E) {
     auto Op = make_unique<RISCVOperand>(Immediate);
     Op->Imm.Val = Val;
     Op->StartLoc = S;
@@ -471,7 +470,7 @@ OperandMatchResultTy RISCVAsmParser::parseImmediate(OperandVector &Operands) {
     return parseOperandWithModifier(Operands);
   }
 
-  Operands.push_back(RISCVOperand::createImm(Res, S, E, getContext()));
+  Operands.push_back(RISCVOperand::createImm(Res, S, E));
   return MatchOperand_Success;
 }
 
@@ -511,7 +510,7 @@ RISCVAsmParser::parseOperandWithModifier(OperandVector &Operands) {
   }
 
   const MCExpr *ModExpr = RISCVMCExpr::create(SubExpr, VK, getContext());
-  Operands.push_back(RISCVOperand::createImm(ModExpr, S, E, getContext()));
+  Operands.push_back(RISCVOperand::createImm(ModExpr, S, E));
   return MatchOperand_Success;
 }
 
