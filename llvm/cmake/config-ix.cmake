@@ -132,7 +132,17 @@ endif()
 # like strlen, leading to false positives.
 if( NOT PURE_WINDOWS AND NOT LLVM_USE_SANITIZER MATCHES "Memory.*")
   if (LLVM_ENABLE_ZLIB)
-    check_library_exists(z compress2 "" HAVE_LIBZ)
+    find_package(ZLIB)
+    if (ZLIB_FOUND)
+      set(HAVE_LIBZ 1)
+    else()
+      # Some LLVM bots do not have zlib in a standard location and rely on the
+      # compiler to find it.
+      check_library_exists(z compress2 "" HAVE_LIBZ)
+      if(HAVE_LIBZ)
+        set(ZLIB_LIBRARIES z)
+      endif()
+    endif()
   else()
     set(HAVE_LIBZ 0)
   endif()
