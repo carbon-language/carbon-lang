@@ -185,7 +185,7 @@ file_magic llvm::identify_magic(StringRef Magic) {
     if (startswith(Magic, "MZ") && Magic.size() >= 0x3c + 4) {
       uint32_t off = read32le(Magic.data() + 0x3c);
       // PE/COFF file, either EXE or DLL.
-      if (off < Magic.size() &&
+      if (off + sizeof(COFF::PEMagic) <= Magic.size() &&
           memcmp(Magic.data() + off, COFF::PEMagic, sizeof(COFF::PEMagic)) == 0)
         return file_magic::pecoff_executable;
     }
