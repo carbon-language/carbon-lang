@@ -146,6 +146,8 @@ public:
   template <int N> bool isBareSimmNLsb0() const {
     int64_t Imm;
     RISCVMCExpr::VariantKind VK;
+    if (!isImm())
+      return false;
     bool IsConstantImm = evaluateConstantImm(Imm, VK);
     bool IsValid;
     if (!IsConstantImm)
@@ -185,6 +187,8 @@ public:
   bool isUImm5() const {
     int64_t Imm;
     RISCVMCExpr::VariantKind VK;
+    if (!isImm())
+      return false;
     bool IsConstantImm = evaluateConstantImm(Imm, VK);
     return IsConstantImm && isUInt<5>(Imm) && VK == RISCVMCExpr::VK_RISCV_None;
   }
@@ -193,6 +197,8 @@ public:
     RISCVMCExpr::VariantKind VK;
     int64_t Imm;
     bool IsValid;
+    if (!isImm())
+      return false;
     bool IsConstantImm = evaluateConstantImm(Imm, VK);
     if (!IsConstantImm)
       IsValid = RISCVAsmParser::classifySymbolRef(getImm(), VK, Imm);
@@ -205,6 +211,8 @@ public:
   bool isUImm12() const {
     int64_t Imm;
     RISCVMCExpr::VariantKind VK;
+    if (!isImm())
+      return false;
     bool IsConstantImm = evaluateConstantImm(Imm, VK);
     return IsConstantImm && isUInt<12>(Imm) && VK == RISCVMCExpr::VK_RISCV_None;
   }
@@ -215,6 +223,8 @@ public:
     RISCVMCExpr::VariantKind VK;
     int64_t Imm;
     bool IsValid;
+    if (!isImm())
+      return false;
     bool IsConstantImm = evaluateConstantImm(Imm, VK);
     if (!IsConstantImm)
       IsValid = RISCVAsmParser::classifySymbolRef(getImm(), VK, Imm);
