@@ -25,7 +25,6 @@ namespace llvm {
   // ADT's.
   class Error;
   class StringRef;
-  template<typename T> class StringSet;
   class Twine;
   class MemoryBuffer;
   class MemoryBufferRef;
@@ -58,7 +57,6 @@ namespace lld {
   // ADT's.
   using llvm::Error;
   using llvm::StringRef;
-  using llvm::StringSet;
   using llvm::Twine;
   using llvm::MemoryBuffer;
   using llvm::MemoryBufferRef;

@@ -23,9 +23,9 @@ class AutoExporter {
 public:
   AutoExporter();
 
-  StringSet<> ExcludeSymbols;
-  StringSet<> ExcludeLibs;
-  StringSet<> ExcludeObjects;
+  llvm::StringSet<> ExcludeSymbols;
+  llvm::StringSet<> ExcludeLibs;
+  llvm::StringSet<> ExcludeObjects;
 
   bool shouldExport(Defined *Sym) const;
 };
