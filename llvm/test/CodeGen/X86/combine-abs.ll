@@ -26,12 +26,9 @@ define <16 x i16> @combine_v16i16_abs_constant() {
 define i32 @combine_i32_abs_abs(i32 %a) {
 ; CHECK-LABEL: combine_i32_abs_abs:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    movl %edi, %ecx
-; CHECK-NEXT:    negl %ecx
-; CHECK-NEXT:    cmovll %edi, %ecx
-; CHECK-NEXT:    movl %ecx, %eax
+; CHECK-NEXT:    movl %edi, %eax
 ; CHECK-NEXT:    negl %eax
-; CHECK-NEXT:    cmovll %ecx, %eax
+; CHECK-NEXT:    cmovll %edi, %eax
 ; CHECK-NEXT:    retq
   %n1 = sub i32 zeroinitializer, %a
   %b1 = icmp slt i32 %a, zeroinitializer
