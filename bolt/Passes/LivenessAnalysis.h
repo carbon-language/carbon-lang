@@ -26,14 +26,20 @@ namespace llvm {
 namespace bolt {
 
 class LivenessAnalysis
-    : public DataflowAnalysis<LivenessAnalysis, BitVector, true> {
-  friend class DataflowAnalysis<LivenessAnalysis, BitVector, true>;
+  : public DataflowAnalysis<LivenessAnalysis, BitVector, true, RegStatePrinter> {
+  using Parent = DataflowAnalysis<LivenessAnalysis,
+                                  BitVector,
+                                  true,
+                                  RegStatePrinter>;
+  friend class DataflowAnalysis<LivenessAnalysis,
+                                BitVector,
+                                true,
+                                RegStatePrinter>;
 
 public:
   LivenessAnalysis(const RegAnalysis &RA, const BinaryContext &BC,
                    BinaryFunction &BF)
-      : DataflowAnalysis<LivenessAnalysis, BitVector, true>(BC, BF), RA(RA),
-        NumRegs(BC.MRI->getNumRegs()) {}
+      : Parent(BC, BF), RA(RA), NumRegs(BC.MRI->getNumRegs()) {}
   virtual ~LivenessAnalysis();
 
   bool isAlive(ProgramPoint PP, MCPhysReg Reg) const {
@@ -45,7 +51,7 @@ public:
 
   void run() {
     NamedRegionTimer T1("LA", "Dataflow", opts::TimeOpts);
-    DataflowAnalysis<LivenessAnalysis, BitVector, true>::run();
+    Parent::run();
   }
 
   // Return a usable general-purpose reg after point P. Return 0 if no reg is
@@ -121,6 +127,5 @@ protected:
 
 } // end namespace bolt
 } // end namespace llvm
-
 
 #endif

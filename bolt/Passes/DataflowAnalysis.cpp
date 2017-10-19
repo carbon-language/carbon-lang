@@ -1,6 +1,12 @@
 #include "DataflowAnalysis.h"
 
 namespace llvm {
+
+raw_ostream &operator<<(raw_ostream &OS, const BitVector &Val) {
+  OS << "BitVector";
+  return OS;
+}
+
 namespace bolt {
 
 void doForAllPreds(const BinaryContext &BC, const BinaryBasicBlock &BB,
@@ -30,11 +36,11 @@ void doForAllSuccs(const BinaryBasicBlock &BB,
   }
 }
 
+void RegStatePrinter::print(raw_ostream &OS, const BitVector &State) const {
+  for (auto I = State.find_first(); I != -1; I = State.find_next(I)) {
+    OS << BC.MRI->getName(I) << " ";
+  }
+}
+
 } // namespace bolt
 } // namespace llvm
-
-llvm::raw_ostream &llvm::operator<<(llvm::raw_ostream &OS,
-                                    const BitVector &Val) {
-  OS << "BitVector";
-  return OS;
-}

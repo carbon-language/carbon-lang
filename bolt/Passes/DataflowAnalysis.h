@@ -105,6 +105,25 @@ void doForAllPreds(const BinaryContext &BC, const BinaryBasicBlock &BB,
 void doForAllSuccs(const BinaryBasicBlock &BB,
                    std::function<void(ProgramPoint)> Task);
 
+/// Default printer for State data.
+template <typename StateTy>
+class StatePrinter {
+public:
+  void print(raw_ostream &OS, const StateTy &State) const {
+    OS << State;
+  }
+  explicit StatePrinter(const BinaryContext &) { }
+};
+
+/// Printer for State data that is a BitVector of registers.
+class RegStatePrinter {
+public:
+  void print(raw_ostream &OS, const BitVector &State) const;
+  explicit RegStatePrinter(const BinaryContext &BC) : BC(BC) { }
+private:
+  const BinaryContext &BC;
+};
+
 /// Base class for dataflow analyses. Depends on the type of whatever object is
 /// stored as the state (StateTy) at each program point. The dataflow then
 /// updates the state at each program point depending on the instruction being
@@ -132,7 +151,10 @@ void doForAllSuccs(const BinaryBasicBlock &BB,
 ///     Confluence operator = union  (if a reg is alive in any succ, it is alive
 ///     in the current block).
 ///
-template <typename Derived, typename StateTy, bool Backward=false>
+template <typename Derived,
+          typename StateTy,
+          bool Backward = false,
+          typename StatePrinterTy = StatePrinter<StateTy>>
 class DataflowAnalysis {
   /// CRTP convenience methods
   Derived &derived() {
@@ -212,7 +234,7 @@ protected:
 
   StateTy &getOrCreateStateAt(MCInst &Point) {
     return BC.MIA->getOrCreateAnnotationAs<StateTy>(
-        BC.Ctx.get(), Point, derived().getAnnotationName());
+        BC.Ctx.get(), Point, derived().getAnnotationName(), StatePrinterTy(BC));
   }
 
   StateTy &getOrCreateStateAt(ProgramPoint Point) {
@@ -272,7 +294,7 @@ public:
     return getStateAt(PrevPoint[&Point]);
   }
 
-  ErrorOr<const StateTy &>getStateBefore(ProgramPoint Point) {
+  ErrorOr<const StateTy &> getStateBefore(ProgramPoint Point) {
     if (Point.isBB())
       return getStateAt(*Point.getBB());
     return getStateAt(PrevPoint[Point.getInst()]);
@@ -462,9 +484,11 @@ public:
 
 /// Specialization of DataflowAnalysis whose state specifically stores
 /// a set of instructions.
-template <typename Derived, bool Backward = false>
+template <typename Derived,
+          bool Backward = false,
+          typename StatePrinterTy = StatePrinter<BitVector>>
 class InstrsDataflowAnalysis
-    : public DataflowAnalysis<Derived, BitVector, Backward> {
+    : public DataflowAnalysis<Derived, BitVector, Backward, StatePrinterTy> {
 public:
   /// These iterator functions offer access to the set of pointers to
   /// instructions in a given program point
@@ -512,7 +536,7 @@ public:
   }
 
   InstrsDataflowAnalysis(const BinaryContext &BC, BinaryFunction &BF)
-      : DataflowAnalysis<Derived, BitVector, Backward>(BC, BF) {}
+    : DataflowAnalysis<Derived, BitVector, Backward, StatePrinterTy>(BC, BF) {}
   virtual ~InstrsDataflowAnalysis() {}
 };
 
@@ -541,8 +565,7 @@ template<> struct DenseMapInfo<bolt::ProgramPoint> {
   }
 };
 
-llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                              const BitVector &Val);
+raw_ostream &operator<<(raw_ostream &OS, const BitVector &Val);
 
 } // namespace llvm
 
