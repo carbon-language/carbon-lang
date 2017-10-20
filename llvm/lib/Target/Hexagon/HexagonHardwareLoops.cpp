@@ -111,9 +111,7 @@ namespace {
   public:
     static char ID;
 
-    HexagonHardwareLoops() : MachineFunctionPass(ID) {
-      initializeHexagonHardwareLoopsPass(*PassRegistry::getPassRegistry());
-    }
+    HexagonHardwareLoops() : MachineFunctionPass(ID) {}
 
     bool runOnMachineFunction(MachineFunction &MF) override;
 
@@ -685,15 +683,21 @@ CountValue *HexagonHardwareLoops::getLoopTripCount(MachineLoop *L,
   if (InitialValue->isReg()) {
     unsigned R = InitialValue->getReg();
     MachineBasicBlock *DefBB = MRI->getVRegDef(R)->getParent();
-    if (!MDT->properlyDominates(DefBB, Header))
-      return nullptr;
+    if (!MDT->properlyDominates(DefBB, Header)) {
+      int64_t V;
+      if (!checkForImmediate(*InitialValue, V))
+        return nullptr;
+    }
     OldInsts.push_back(MRI->getVRegDef(R));
   }
   if (EndValue->isReg()) {
     unsigned R = EndValue->getReg();
     MachineBasicBlock *DefBB = MRI->getVRegDef(R)->getParent();
-    if (!MDT->properlyDominates(DefBB, Header))
-      return nullptr;
+    if (!MDT->properlyDominates(DefBB, Header)) {
+      int64_t V;
+      if (!checkForImmediate(*EndValue, V))
+        return nullptr;
+    }
     OldInsts.push_back(MRI->getVRegDef(R));
   }
 
