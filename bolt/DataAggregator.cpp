@@ -821,7 +821,9 @@ std::error_code DataAggregator::parseMemEvents() {
     });
 
     if (Func) {
-      FuncsToMemEvents[FuncName].update(FuncLoc, AddrLoc);
+      auto *MemData = &FuncsToMemEvents[FuncName];
+      Func->setMemData(MemData);
+      MemData->update(FuncLoc, AddrLoc);
       DEBUG(dbgs() << "Mem event: " << FuncLoc << " = " << AddrLoc << "\n");
     }
   }

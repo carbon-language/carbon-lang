@@ -55,6 +55,7 @@ class DataReader;
 
 /// Relocation class.
 struct Relocation {
+  static Triple::ArchType Arch; /// for printing, set by BinaryContext ctor.
   uint64_t Offset;
   mutable MCSymbol *Symbol; /// mutable to allow modification by emitter.
   uint64_t Type;
@@ -78,11 +79,19 @@ struct Relocation {
   /// Emit relocation at a current \p Streamer' position. The caller is
   /// responsible for setting the position correctly.
   size_t emit(MCStreamer *Streamer) const;
+
+  /// Print a relocation to \p OS.
+  void print(raw_ostream &OS) const;
 };
 
 /// Relocation ordering by offset.
 inline bool operator<(const Relocation &A, const Relocation &B) {
   return A.Offset < B.Offset;
+}
+
+inline raw_ostream &operator<<(raw_ostream &OS, const Relocation &Rel) {
+  Rel.print(OS);
+  return OS;
 }
 
 class BinaryContext {
@@ -199,7 +208,9 @@ public:
       MIA(std::move(MIA)),
       MRI(std::move(MRI)),
       DisAsm(std::move(DisAsm)),
-      DR(DR) {}
+      DR(DR) {
+    Relocation::Arch = this->TheTriple->getArch();
+  }
 
   ~BinaryContext();
 
@@ -215,12 +226,25 @@ public:
   /// global symbol was registered at the location.
   MCSymbol *getGlobalSymbolAtAddress(uint64_t Address) const;
 
+  /// Find the address of the global symbol with the given \p Name.
+  /// return an error if no such symbol exists.
+  ErrorOr<uint64_t> getAddressForGlobalSymbol(StringRef Name) const {
+    auto Itr = GlobalSymbols.find(Name);
+    if (Itr != GlobalSymbols.end())
+      return Itr->second;
+    return std::make_error_code(std::errc::bad_address);
+  }
+
   /// Return MCSymbol for the given \p Name or nullptr if no
   /// global symbol with that name exists.
   MCSymbol *getGlobalSymbolByName(const std::string &Name) const;
 
   /// Print the global symbol table.
   void printGlobalSymbols(raw_ostream& OS) const;
+
+  /// Get the raw bytes for a given function.
+  ErrorOr<ArrayRef<uint8_t>>
+  getFunctionData(const BinaryFunction &Function) const;
 
   /// Return (allocatable) section containing the given \p Address.
   ErrorOr<SectionRef> getSectionForAddress(uint64_t Address) const;
@@ -340,7 +364,9 @@ public:
                         const MCInst &Instruction,
                         uint64_t Offset = 0,
                         const BinaryFunction *Function = nullptr,
-                        bool printMCInst = false) const;
+                        bool PrintMCInst = false,
+                        bool PrintMemData = false,
+                        bool PrintRelocations = false) const;
 
   /// Print a range of instructions.
   template <typename Itr>
@@ -349,9 +375,12 @@ public:
                              Itr End,
                              uint64_t Offset = 0,
                              const BinaryFunction *Function = nullptr,
-                             bool printMCInst = false) const {
+                             bool PrintMCInst = false,
+                             bool PrintMemData = false,
+                             bool PrintRelocations = false) const {
     while (Begin != End) {
-      printInstruction(OS, *Begin, Offset, Function, printMCInst);
+      printInstruction(OS, *Begin, Offset, Function, PrintMCInst,
+                       PrintMemData, PrintRelocations);
       Offset += computeCodeSize(Begin, Begin + 1);
       ++Begin;
     }

@@ -319,8 +319,12 @@ IgnoreBuildID("ignore-build-id",
 // Check against lists of functions from options if we should
 // optimize the function with a given name.
 bool shouldProcess(const BinaryFunction &Function) {
-  if (opts::MaxFunctions && Function.getFunctionNumber() > opts::MaxFunctions)
-    return false;
+  if (opts::MaxFunctions && Function.getFunctionNumber() >= opts::MaxFunctions) {
+    if (Function.getFunctionNumber() == opts::MaxFunctions)
+      dbgs() << "BOLT-INFO: processing ending on " << Function << "\n";
+    else
+      return false;
+  }
 
   auto populateFunctionNames = [](cl::opt<std::string> &FunctionNamesFile,
                                   cl::list<std::string> &FunctionNames) {
@@ -400,19 +404,20 @@ const std::string RewriteInstance::BOLTSecPrefix = ".bolt";
 namespace llvm {
 namespace bolt {
 extern const char *BoltRevision;
-}
-}
 
-static void report_error(StringRef Message, std::error_code EC) {
+void report_error(StringRef Message, std::error_code EC) {
   assert(EC);
   errs() << "BOLT-ERROR: '" << Message << "': " << EC.message() << ".\n";
   exit(1);
 }
 
-static void check_error(std::error_code EC, StringRef Message) {
+void check_error(std::error_code EC, StringRef Message) {
   if (!EC)
     return;
   report_error(Message, EC);
+}
+
+}
 }
 
 uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
@@ -1900,12 +1905,15 @@ void RewriteInstance::readProfileData() {
 
   for (auto &BFI : BinaryFunctions) {
     auto &Function = BFI.second;
-    auto *FuncData = BC->DR.getFuncBranchData(Function.getNames());
-    if (!FuncData)
-      continue;
-    Function.BranchData = FuncData;
-    Function.ExecutionCount = FuncData->ExecutionCount;
-    FuncData->Used = true;
+    if (auto *MemData = BC->DR.getFuncMemData(Function.getNames())) {
+      Function.MemData = MemData;
+      MemData->Used = true;
+    }
+    if (auto *FuncData = BC->DR.getFuncBranchData(Function.getNames())) {
+      Function.BranchData = FuncData;
+      Function.ExecutionCount = FuncData->ExecutionCount;
+      FuncData->Used = true;
+    }
   }
 }
 
@@ -1923,12 +1931,9 @@ void RewriteInstance::disassembleFunctions() {
       continue;
     }
 
-    SectionRef Section = Function.getSection();
-    assert(Section.getAddress() <= Function.getAddress() &&
-           Section.getAddress() + Section.getSize()
-             >= Function.getAddress() + Function.getSize() &&
-          "wrong section for function");
-    if (!Section.isText() || Section.isVirtual() || !Section.getSize()) {
+    auto FunctionData = BC->getFunctionData(Function);
+    
+    if (!FunctionData) {
       // When could it happen?
       errs() << "BOLT-ERROR: corresponding section is non-executable or "
              << "empty for function " << Function << '\n';
@@ -1941,26 +1946,12 @@ void RewriteInstance::disassembleFunctions() {
       continue;
     }
 
-    StringRef SectionContents;
-    check_error(Section.getContents(SectionContents),
-                "cannot get section contents");
-
-    assert(SectionContents.size() == Section.getSize() &&
-           "section size mismatch");
-
-    // Function offset from the section start.
-    auto FunctionOffset = Function.getAddress() - Section.getAddress();
-
     // Offset of the function in the file.
-    Function.setFileOffset(
-        SectionContents.data() - InputFile->getData().data() + FunctionOffset);
+    auto *FileBegin =
+      reinterpret_cast<const uint8_t*>(InputFile->getData().data());
+    Function.setFileOffset(FunctionData->begin() - FileBegin);
 
-    ArrayRef<uint8_t> FunctionData(
-        reinterpret_cast<const uint8_t *>
-          (SectionContents.data()) + FunctionOffset,
-        Function.getSize());
-
-    Function.disassemble(FunctionData);
+    Function.disassemble(*FunctionData);
 
     if (!Function.isSimple() && opts::Relocs) {
       errs() << "BOLT-ERROR: function " << Function << " cannot be properly "

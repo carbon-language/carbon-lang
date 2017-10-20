@@ -36,7 +36,27 @@ PrintDebugInfo("print-debug-info",
   cl::Hidden,
   cl::cat(BoltCategory));
 
+static cl::opt<bool>
+PrintRelocations("print-relocations",
+  cl::desc("print relocations when printing functions"),
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+static cl::opt<bool>
+PrintMemData("print-mem-data",
+  cl::desc("print memory data annotations when printing functions"),
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
 } // namespace opts
+
+namespace llvm {
+namespace bolt {
+extern void check_error(std::error_code EC, StringRef Message);
+}
+}
+
+Triple::ArchType Relocation::Arch;
 
 BinaryContext::~BinaryContext() { }
 
@@ -326,7 +346,9 @@ void BinaryContext::printInstruction(raw_ostream &OS,
                                      const MCInst &Instruction,
                                      uint64_t Offset,
                                      const BinaryFunction* Function,
-                                     bool printMCInst) const {
+                                     bool PrintMCInst,
+                                     bool PrintMemData,
+                                     bool PrintRelocations) const {
   if (MIA->isEHLabel(Instruction)) {
     OS << "  EH_LABEL: " << *MIA->getTargetSymbol(Instruction) << '\n';
     return;
@@ -392,22 +414,56 @@ void BinaryContext::printInstruction(raw_ostream &OS,
     }
   }
 
-  auto *MD = Function ? DR.getFuncMemData(Function->getNames()) : nullptr;
-  if (MD) {
-    bool DidPrint = false;
-    for (auto &MI : MD->getMemInfoRange(Offset)) {
-      OS << (DidPrint ? ", " : " # Loads: ");
-      OS << MI.Addr << "/" << MI.Count;
-      DidPrint = true;
+  if ((opts::PrintMemData || PrintMemData) && Function) {
+    const auto *MD = Function->getMemData();
+    const auto MemDataOffset =
+      MIA->tryGetAnnotationAs<uint64_t>(Instruction, "MemDataOffset");
+    if (MD && MemDataOffset) {
+      bool DidPrint = false;
+      for (auto &MI : MD->getMemInfoRange(MemDataOffset.get())) {
+        OS << (DidPrint ? ", " : " # Loads: ");
+        OS << MI.Addr << "/" << MI.Count;
+        DidPrint = true;
+      }
     }
+  }
+
+  if ((opts::PrintRelocations || PrintRelocations) && Function) {
+    const auto Size = computeCodeSize(&Instruction, &Instruction + 1);
+    Function->printRelocations(OS, Offset, Size);
   }
 
   OS << "\n";
 
-  if (printMCInst) {
+  if (PrintMCInst) {
     Instruction.dump_pretty(OS, InstPrinter.get());
     OS << "\n";
   }
+}
+
+ErrorOr<ArrayRef<uint8_t>>
+BinaryContext::getFunctionData(const BinaryFunction &Function) const {
+  auto Section = Function.getSection();
+  assert(Section.getAddress() <= Function.getAddress() &&
+         Section.getAddress() + Section.getSize()
+         >= Function.getAddress() + Function.getSize() &&
+         "wrong section for function");
+
+  if (!Section.isText() || Section.isVirtual() || !Section.getSize()) {
+    return std::make_error_code(std::errc::bad_address);
+  }
+
+  StringRef SectionContents;
+  check_error(Section.getContents(SectionContents),
+              "cannot get section contents");
+
+  assert(SectionContents.size() == Section.getSize() &&
+         "section size mismatch");
+
+  // Function offset from the section start.
+  auto FunctionOffset = Function.getAddress() - Section.getAddress();
+  auto *Bytes = reinterpret_cast<const uint8_t *>(SectionContents.data());
+  return ArrayRef<uint8_t>(Bytes + FunctionOffset, Function.getSize());
 }
 
 ErrorOr<SectionRef> BinaryContext::getSectionForAddress(uint64_t Address) const{
@@ -639,4 +695,28 @@ size_t Relocation::emit(MCStreamer *Streamer) const {
     Streamer->EmitSymbolValue(Symbol, Size);
   }
   return Size;
+}
+
+#define ELF_RELOC(name, value) #name,
+
+void Relocation::print(raw_ostream &OS) const {
+  static const char *X86RelocNames[] = {
+#include "llvm/Support/ELFRelocs/x86_64.def"
+  };
+  static const char *AArch64RelocNames[] = {
+#include "llvm/Support/ELFRelocs/AArch64.def"
+  };
+  if (Arch == Triple::aarch64)
+    OS << AArch64RelocNames[Type];
+  else
+    OS << X86RelocNames[Type];
+  OS << ", 0x" << Twine::utohexstr(Offset);
+  if (Symbol) {
+    OS << ", " << Symbol->getName();
+  }
+  if (int64_t(Addend) < 0)
+    OS << ", -0x" << Twine::utohexstr(-int64_t(Addend));
+  else
+    OS << ", 0x" << Twine::utohexstr(Addend);
+  OS << ", 0x" << Twine::utohexstr(Value);
 }

@@ -30,6 +30,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Regex.h"
 #include <limits>
 #include <queue>
 #include <string>
@@ -137,12 +138,26 @@ PrintOnly("print-only",
   cl::Hidden,
   cl::cat(BoltCategory));
 
+static cl::list<std::string>
+PrintOnlyRegex("print-only-regex",
+  cl::CommaSeparated,
+  cl::desc("list of function regexes to print"),
+  cl::value_desc("func1,func2,func3,..."),
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
 bool shouldPrint(const BinaryFunction &Function) {
-  if (PrintOnly.empty())
+  if (PrintOnly.empty() && PrintOnlyRegex.empty())
     return true;
 
   for (auto &Name : opts::PrintOnly) {
     if (Function.hasName(Name)) {
+      return true;
+    }
+  }
+
+  for (auto &Name : opts::PrintOnlyRegex) {
+    if (Function.hasNameRegex(Name)) {
       return true;
     }
   }
@@ -160,6 +175,11 @@ constexpr unsigned BinaryFunction::MinAlign;
 
 namespace {
 
+template <typename R>
+bool emptyRange(const R &Range) {
+  return Range.begin() == Range.end();
+}
+  
 /// Gets debug line information for the instruction located at the given
 /// address in the original binary. The SMLoc's pointer is used
 /// to point to this information, which is represented by a
@@ -227,6 +247,14 @@ bool DynoStats::lessThan(const DynoStats &Other,
 
 uint64_t BinaryFunction::Count = 0;
 
+bool BinaryFunction::hasNameRegex(const std::string &NameRegex) const {
+  Regex MatchName(NameRegex);
+  for (auto &Name : Names)
+    if (MatchName.match(Name))
+      return true;
+  return false;
+}
+  
 BinaryBasicBlock *
 BinaryFunction::getBasicBlockContainingOffset(uint64_t Offset) {
   if (Offset > Size)
@@ -558,6 +586,31 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   OS << "End of Function \"" << *this << "\"\n\n";
 }
 
+void BinaryFunction::printRelocations(raw_ostream &OS,
+                                      uint64_t Offset,
+                                      uint64_t Size) const {
+  const char* Sep = " # Relocs: ";
+
+  auto RI = Relocations.lower_bound(Offset);
+  while (RI != Relocations.end() && RI->first < Offset + Size) {
+    OS << Sep << "(R: " << RI->second << ")";
+    Sep = ", ";
+    ++RI;
+  }
+
+  RI = MoveRelocations.lower_bound(Offset);
+  while (RI != MoveRelocations.end() && RI->first < Offset + Size) {
+    OS << Sep << "(M: " << RI->second << ")";
+    Sep = ", ";
+    ++RI;
+  }
+
+  auto PI = PCRelativeRelocationOffsets.lower_bound(Offset);
+  if (PI != PCRelativeRelocationOffsets.end() && *PI < Offset + Size) {
+    OS << Sep << "(pcrel)";
+  }
+}
+  
 IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
                                                          unsigned Size,
                                                          uint64_t Offset) {
@@ -566,7 +619,7 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
   // An instruction referencing memory used by jump instruction (directly or
   // via register). This location could be an array of function pointers
   // in case of indirect tail call, or a jump table.
-  const MCInst *MemLocInstr;
+  MCInst *MemLocInstr;
 
   // Address of the table referenced by MemLocInstr. Could be either an
   // array of function pointers, or a jump table.
@@ -833,6 +886,8 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   auto &MIA = BC.MIA;
 
   DWARFUnitLineTable ULT = getDWARFUnitLineTable();
+
+  matchProfileMemData();
 
   // Insert a label at the beginning of the function. This will be our first
   // basic block.
@@ -1179,6 +1234,10 @@ add_instruction:
     if (ULT.first && ULT.second) {
       Instruction.setLoc(
           findDebugLineInformationForInstructionAt(AbsoluteInstrAddr, ULT));
+    }
+
+    if (MemData && !emptyRange(MemData->getMemInfoRange(Offset))) {
+      MIA->addAnnotation(Ctx.get(), Instruction, "MemDataOffset", Offset);
     }
 
     addInstruction(Offset, std::move(Instruction));
@@ -1890,6 +1949,23 @@ bool BinaryFunction::fetchProfileForOtherEntryPoints() {
     }
   }
   return Updated;
+}
+
+void BinaryFunction::matchProfileMemData() {
+  const auto AllMemData = BC.DR.getFuncMemDataRegex(getNames());
+  for (auto *NewMemData : AllMemData) {
+    // Prevent functions from sharing the same profile.
+    if (NewMemData->Used)
+      continue;
+
+    if (MemData)
+      MemData->Used = false;
+
+    // Update function profile data with the new set.
+    MemData = NewMemData;
+    MemData->Used = true;
+    break;
+  }
 }
 
 void BinaryFunction::matchProfileData() {

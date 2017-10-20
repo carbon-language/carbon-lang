@@ -534,12 +534,12 @@ FrameAnalysis::FrameAnalysis(BinaryContext &BC,
 }
 
 void FrameAnalysis::printStats() {
-  outs() << "BOLT-INFO FRAME ANALYSIS: " << NumFunctionsNotOptimized
+  outs() << "BOLT-INFO: FRAME ANALYSIS: " << NumFunctionsNotOptimized
          << " function(s) "
          << format("(%.1lf%% dyn cov)",
                    (100.0 * CountFunctionsNotOptimized / CountDenominator))
          << " were not optimized.\n"
-         << "BOLT-INFO FRAME ANALYSIS: " << NumFunctionsFailedRestoreFI
+         << "BOLT-INFO: FRAME ANALYSIS: " << NumFunctionsFailedRestoreFI
          << " function(s) "
          << format("(%.1lf%% dyn cov)",
                    (100.0 * CountFunctionsFailedRestoreFI / CountDenominator))

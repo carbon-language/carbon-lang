@@ -296,6 +296,9 @@ private:
   /// Profile data for branches.
   FuncBranchData *BranchData{nullptr};
 
+  /// Profile data for memory loads.
+  FuncMemData *MemData{nullptr};
+
   /// Profile match ratio for BranchData.
   float ProfileMatchRatio{0.0f};
 
@@ -453,7 +456,7 @@ private:
   LabelsMapType Labels;
 
   /// Temporary holder of instructions before CFG is constructed.
-  /// Map offset in the function to MCInst.
+  /// Map offset in the function to MCInst index.
   using InstrMapType = std::map<uint32_t, size_t>;
   InstrMapType InstructionOffsets;
   std::vector<MCInst> Instructions;
@@ -1014,6 +1017,10 @@ public:
     return false;
   }
 
+  /// Check if (possibly one out of many) function name matches the given
+  /// regex.
+  bool hasNameRegex(const std::string &NameRegex) const;
+
   /// Return a vector of all possible names for the function.
   const std::vector<std::string> &getNames() const {
     return Names;
@@ -1455,6 +1462,10 @@ public:
   void print(raw_ostream &OS, std::string Annotation = "",
              bool PrintInstructions = true) const;
 
+  /// Print all relocations between \p Offset and \p Offset + \p Size in
+  /// this function.
+  void printRelocations(raw_ostream &OS, uint64_t Offset, uint64_t Size) const;
+
   /// Return true if function has a profile, even if the profile does not
   /// match CFG 100%.
   bool hasProfile() const {
@@ -1821,6 +1832,10 @@ public:
   /// blocks.
   void matchProfileData();
 
+  /// Find the best matching memory data profile for a function before the
+  /// creation of basic blocks.
+  void matchProfileMemData();
+
   /// Check how closely the profile data matches the function and set
   /// Return accuracy (ranging from 0.0 to 1.0) of matching.
   float evaluateProfileData(const FuncBranchData &BranchData);
@@ -1831,13 +1846,32 @@ public:
     return BranchData;
   }
 
+  /// Return profile data associated with this function, or nullptr if the
+  /// function has no associated profile.
   FuncBranchData *getBranchData() {
     return BranchData;
+  }
+
+  /// Return memory profile data associated with this function, or nullptr
+  /// if the function has no associated profile.
+  const FuncMemData *getMemData() const {
+    return MemData;
+  }
+
+  /// Return memory profile data associated with this function, or nullptr
+  /// if the function has no associated profile.
+  FuncMemData *getMemData() {
+    return MemData;
   }
 
   /// Updates profile data associated with this function
   void setBranchData(FuncBranchData *Data) {
     BranchData = Data;
+  }
+
+  /// Updates the memory profile data associated with this function
+  void setMemData(FuncMemData *Data) {
+    MemData = Data;
   }
 
   /// Walks the list of basic blocks filling in missing information about

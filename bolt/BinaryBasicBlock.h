@@ -642,6 +642,14 @@ public:
     return Instructions.erase(II);
   }
 
+  /// Erase instructions in the specified range.
+  template <typename ItrType>
+  void eraseInstructions(ItrType Begin, ItrType End) {
+    while (End > Begin) {
+      eraseInstruction(*--End);
+    }
+  }
+
   /// Erase all instructions
   void clear() {
     Instructions.clear();

@@ -99,6 +99,9 @@ namespace bolt {
 ///
 class IndirectCallPromotion : public BinaryFunctionPass {
   using BasicBlocksVector = std::vector<std::unique_ptr<BinaryBasicBlock>>;
+  using MethodInfoType = std::pair<std::vector<uint64_t>, std::vector<MCInst *>>;
+  using JumpTableInfoType = std::vector<std::pair<uint64_t, uint64_t>>;
+  using SymTargetsType = std::vector<std::pair<MCSymbol *, uint64_t>>;
   struct Location {
     bool IsSymbol{false};
     MCSymbol *Sym{nullptr};
@@ -153,6 +156,12 @@ class IndirectCallPromotion : public BinaryFunctionPass {
   // (a fraction of TotalIndirectCallsites)
   uint64_t TotalOptimizedIndirectCallsites{0};
 
+  // Total number of method callsites that can have loads eliminated.
+  mutable uint64_t TotalMethodLoadEliminationCandidates{0};
+
+  // Total number of method callsites that had loads eliminated.
+  uint64_t TotalMethodLoadsEliminated{0};
+
   // Total number of jump table callsites that are optimized by ICP.
   uint64_t TotalOptimizedJumpTableCallsites{0};
 
@@ -163,6 +172,12 @@ class IndirectCallPromotion : public BinaryFunctionPass {
   // Total number of jump table calls that are optimized by ICP.
   // (a fraction of TotalCalls)
   uint64_t TotalNumFrequentJmps{0};
+
+  // Total number of jump table sites that can use hot indices.
+  mutable uint64_t TotalIndexBasedCandidates{0};
+
+  // Total number of jump table sites that use hot indices.
+  uint64_t TotalIndexBasedJumps{0};
 
   std::vector<Callsite> getCallTargets(BinaryFunction &BF,
                                        const MCInst &Inst) const;
@@ -178,17 +193,36 @@ class IndirectCallPromotion : public BinaryFunctionPass {
                          const size_t N,
                          uint64_t NumCalls) const;
 
-  std::vector<std::pair<MCSymbol *, uint64_t>>
-  findCallTargetSymbols(BinaryContext &BC,
-                        const std::vector<Callsite> &Targets,
-                        const size_t N) const;
+  JumpTableInfoType
+  maybeGetHotJumpTableTargets(BinaryContext &BC,
+                              BinaryFunction &Function,
+                              BinaryBasicBlock *BB,
+                              MCInst &Inst,
+                              MCInst *&TargetFetchInst,
+                              const BinaryFunction::JumpTable *JT,
+                              const std::vector<Callsite> &Targets) const;
+
+  SymTargetsType findCallTargetSymbols(BinaryContext &BC,
+                                       std::vector<Callsite> &Targets,
+                                       const size_t N,
+                                       BinaryFunction &Function,
+                                       BinaryBasicBlock *BB,
+                                       MCInst &Inst,
+                                       MCInst *&TargetFetchInst) const;
+
+  MethodInfoType maybeGetVtableAddrs(BinaryContext &BC,
+                                     BinaryFunction &Function,
+                                     BinaryBasicBlock *BB,
+                                     MCInst &Inst,
+                                     const SymTargetsType &SymTargets) const;
 
   std::vector<std::unique_ptr<BinaryBasicBlock>>
   rewriteCall(BinaryContext &BC,
               BinaryFunction &Function,
               BinaryBasicBlock *IndCallBlock,
               const MCInst &CallInst,
-              MCInstrAnalysis::ICPdata &&ICPcode) const;
+              MCInstrAnalysis::ICPdata &&ICPcode,
+              const std::vector<MCInst *> &MethodFetchInsns) const;
 
   BinaryBasicBlock *fixCFG(BinaryContext &BC,
                            BinaryFunction &Function,

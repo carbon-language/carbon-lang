@@ -194,6 +194,7 @@ Peepholes("peepholes",
   cl::desc("enable peephole optimizations"),
   cl::value_desc("opt1,opt2,opt3,..."),
   cl::values(
+    clEnumValN(PEEP_NONE, "none", "disable peepholes"),
     clEnumValN(PEEP_SHORTEN, "shorten", "perform instruction shortening"),
     clEnumValN(PEEP_DOUBLE_JUMPS, "double-jumps",
                "remove double jumps when able"),
@@ -566,6 +567,13 @@ void FinalizeFunctions::runOnFunctions(
     auto &Function = It.second;
     const auto ShouldOptimize = shouldOptimize(Function);
 
+    // Strip all annotations.
+    for (auto &BB : Function) {
+      for (auto &Inst : BB) {
+        BC.MIA->removeAllAnnotations(Inst);
+      }
+    }
+
     // Always fix functions in relocation mode.
     if (!opts::Relocs && !ShouldOptimize)
       continue;
@@ -632,12 +640,18 @@ uint64_t fixDoubleJumps(BinaryContext &BC,
         // We must patch up any existing branch instructions to match up
         // with the new successor.
         auto *Ctx = BC.Ctx.get();
+        assert((CondBranch || (!CondBranch && Pred->succ_size() == 1)) &&
+               "Predecessor block has inconsistent number of successors");
         if (CondBranch &&
             BC.MIA->getTargetSymbol(*CondBranch) == BB.getLabel()) {
           BC.MIA->replaceBranchTarget(*CondBranch, Succ->getLabel(), Ctx);
         } else if (UncondBranch &&
                    BC.MIA->getTargetSymbol(*UncondBranch) == BB.getLabel()) {
           BC.MIA->replaceBranchTarget(*UncondBranch, Succ->getLabel(), Ctx);
+        } else if (!UncondBranch) {
+          assert(Function.getBasicBlockAfter(Pred, false) != Succ &&
+                 "Don't add an explicit jump to a fallthrough block.");
+          Pred->addBranchInstruction(Succ);
         }
       } else {
         // Succ will be null in the tail call case.  In this case we

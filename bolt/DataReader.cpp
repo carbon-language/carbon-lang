@@ -306,7 +306,8 @@ void MemInfo::print(raw_ostream &OS) const {
 
 iterator_range<FuncMemData::ContainerTy::const_iterator>
 FuncMemData::getMemInfoRange(uint64_t Offset) const {
-  assert(std::is_sorted(Data.begin(), Data.end()));
+  // Commented out because it can be expensive.
+  //assert(std::is_sorted(Data.begin(), Data.end()));
   struct Compare {
     bool operator()(const MemInfo &MI, const uint64_t Val) const {
       return MI.Offset.Offset < Val;

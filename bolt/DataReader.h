@@ -222,6 +222,9 @@ struct FuncMemData {
   StringRef Name;
   ContainerTy Data;
 
+  /// Indicate if the data was used.
+  bool Used{false};
+
   DenseMap<uint64_t, DenseMap<Location, size_t>> EventIndex;
 
   /// Find all the memory events originating at Offset.
