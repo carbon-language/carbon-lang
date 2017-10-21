@@ -397,6 +397,68 @@ define <4 x float> @test_dpps(<4 x float> %a0, <4 x float> %a1, <4 x float> *%a2
 }
 declare <4 x float> @llvm.x86.sse41.dpps(<4 x float>, <4 x float>, i8) nounwind readnone
 
+define i32 @test_extractps(<4 x float> %a0, i32 *%a1) {
+; GENERIC-LABEL: test_extractps:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    extractps $3, %xmm0, %eax # sched: [3:1.00]
+; GENERIC-NEXT:    extractps $1, %xmm0, (%rdi) # sched: [5:1.00]
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; SLM-LABEL: test_extractps:
+; SLM:       # BB#0:
+; SLM-NEXT:    extractps $3, %xmm0, %eax # sched: [1:1.00]
+; SLM-NEXT:    extractps $1, %xmm0, (%rdi) # sched: [4:2.00]
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_extractps:
+; SANDY:       # BB#0:
+; SANDY-NEXT:    vextractps $3, %xmm0, %eax # sched: [3:1.00]
+; SANDY-NEXT:    vextractps $1, %xmm0, (%rdi) # sched: [5:1.00]
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_extractps:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    vextractps $3, %xmm0, %eax # sched: [2:1.00]
+; HASWELL-NEXT:    vextractps $1, %xmm0, (%rdi) # sched: [1:1.00]
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; BROADWELL-LABEL: test_extractps:
+; BROADWELL:       # BB#0:
+; BROADWELL-NEXT:    vextractps $3, %xmm0, %eax # sched: [2:1.00]
+; BROADWELL-NEXT:    vextractps $1, %xmm0, (%rdi) # sched: [1:1.00]
+; BROADWELL-NEXT:    retq # sched: [2:1.00]
+;
+; SKYLAKE-LABEL: test_extractps:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    vextractps $3, %xmm0, %eax # sched: [3:1.00]
+; SKYLAKE-NEXT:    vextractps $1, %xmm0, (%rdi) # sched: [2:1.00]
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_extractps:
+; SKX:       # BB#0:
+; SKX-NEXT:    vextractps $3, %xmm0, %eax # sched: [3:1.00]
+; SKX-NEXT:    vextractps $1, %xmm0, (%rdi) # sched: [2:1.00]
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_extractps:
+; BTVER2:       # BB#0:
+; BTVER2-NEXT:    vextractps $3, %xmm0, %eax # sched: [1:0.50]
+; BTVER2-NEXT:    vextractps $1, %xmm0, (%rdi) # sched: [6:1.00]
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_extractps:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vextractps $3, %xmm0, %eax # sched: [2:2.00]
+; ZNVER1-NEXT:    vextractps $1, %xmm0, (%rdi) # sched: [5:2.50]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = extractelement <4 x float> %a0, i32 3
+  %2 = extractelement <4 x float> %a0, i32 1
+  %3 = bitcast float %1 to i32
+  %4 = bitcast float %2 to i32
+  store i32 %4, i32 *%a1
+  ret i32 %3
+}
+
 define <4 x float> @test_insertps(<4 x float> %a0, <4 x float> %a1, float *%a2) {
 ; GENERIC-LABEL: test_insertps:
 ; GENERIC:       # BB#0:
