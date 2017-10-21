@@ -2966,7 +2966,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, const APInt &DemandedElts,
   unsigned Tmp, Tmp2;
   unsigned FirstAnswer = 1;
 
-  if (auto *C = dyn_cast<ConstantSDNode>(Op)) {
+  if (isa<ConstantSDNode>(Op)) {
     const APInt &Val = cast<ConstantSDNode>(Op)->getAPIntValue();
     return Val.getNumSignBits();
   }
