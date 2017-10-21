@@ -10793,7 +10793,7 @@ llvm::createCleanupLocalDynamicTLSPass() { return new LDTLSCleanup(); }
 ///
 /// * Call construction overhead: 1 (call instruction)
 /// * Frame construction overhead: 1 (return instruction)
-/// 
+///
 /// \p MachineOutlinerTailCall implies that the function is being tail called.
 /// A jump is emitted instead of a call, and the return is already present in
 /// the outlined sequence. That is,
@@ -10823,7 +10823,7 @@ X86InstrInfo::getOutlininingCandidateInfo(
                                MachineOutlinerTailCall, // Type of call.
                                MachineOutlinerTailCall // Type of frame.
                               );
-  
+
   return MachineOutlinerInfo(1, 1, MachineOutlinerDefault,
                              MachineOutlinerDefault);
 }
@@ -10836,12 +10836,12 @@ bool X86InstrInfo::isFunctionSafeToOutlineFrom(MachineFunction &MF,
   // with the stack.
   if (!F->hasFnAttribute(Attribute::NoRedZone))
       return false;
-  
+
   // If we *don't* want to outline from things that could potentially be deduped
   // then return false.
   if (!OutlineFromLinkOnceODRs && F->hasLinkOnceODRLinkage())
       return false;
-  
+
   // This function is viable for outlining, so return true.
   return true;
 }
