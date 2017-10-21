@@ -4668,7 +4668,7 @@ def DWLo32RotateInsertByte1 {
 }
 
 def ExtendLo32 {
-  dag ToLo32 =
+  dag To64Bit =
     (i64 (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
           DWLo32RotateInsertByte1.Left, sub_32));
 }
@@ -4695,17 +4695,15 @@ def DWHi32RotateInsertByte1 {
     (RLWIMI DWHi32RotateInsertByte3.Left, DWExtractHi32.SubReg, 8, 24, 31);
 }
 
-def MoveHi32 {
-  dag ToLo32 =
+def ExtendHi32 {
+  dag To64Bit =
     (i64 (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
           DWHi32RotateInsertByte1.Left, sub_32));
 }
 
-// Now byte-swap within the high word and low word both are done, next
-// swap the high word and low word.
-def DWShiftLo32 { // SLDI ExtendLo32.ToLo32, 32
-  dag ToHi32 = (RLDICR ExtendLo32.ToLo32, 32, 31);
+def DWShiftLo32 { // SLDI ExtendHi32.To64Bit, 32
+  dag ToHi32 = (RLDICR ExtendHi32.To64Bit, 32, 31);
 }
 
 def : Pat<(i64 (bitreverse i64:$A)),
-  (OR8 DWShiftLo32.ToHi32, MoveHi32.ToLo32)>;
+  (OR8 DWShiftLo32.ToHi32, ExtendLo32.To64Bit)>;
