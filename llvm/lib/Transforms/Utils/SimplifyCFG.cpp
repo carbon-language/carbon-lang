@@ -5563,7 +5563,7 @@ bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI, IRBuilder<> &Builder) {
   if (switchToSelect(SI, Builder, DL, TTI))
     return simplifyCFG(BB, TTI, Options) | true;
 
-  if (ForwardSwitchConditionToPHI(SI))
+  if (Options.ForwardSwitchCondToPhi && ForwardSwitchConditionToPHI(SI))
     return simplifyCFG(BB, TTI, Options) | true;
 
   // The conversion from switch to lookup tables results in difficult-to-analyze
