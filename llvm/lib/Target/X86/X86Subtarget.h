@@ -673,9 +673,7 @@ public:
     return TargetSubtargetInfo::ANTIDEP_CRITICAL;
   }
 
-  virtual bool enableAdvancedRASplitCost() const {
-    return true;
-  }
+  bool enableAdvancedRASplitCost() const override { return true; }
 };
 
 } // end namespace llvm
