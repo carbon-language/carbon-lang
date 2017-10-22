@@ -848,9 +848,8 @@ void EhInputSection::split(ArrayRef<RelTy> Rels) {
   }
 }
 
-static size_t findNull(ArrayRef<uint8_t> A, size_t EntSize) {
+static size_t findNull(StringRef S, size_t EntSize) {
   // Optimize the common case.
-  StringRef S((const char *)A.data(), A.size());
   if (EntSize == 1)
     return S.find(0);
 
@@ -871,16 +870,16 @@ SyntheticSection *MergeInputSection::getParent() const {
 void MergeInputSection::splitStrings(ArrayRef<uint8_t> Data, size_t EntSize) {
   size_t Off = 0;
   bool IsAlloc = this->Flags & SHF_ALLOC;
+  StringRef S = toStringRef(Data);
 
-  while (!Data.empty()) {
-    size_t End = findNull(Data, EntSize);
+  while (!S.empty()) {
+    size_t End = findNull(S, EntSize);
     if (End == StringRef::npos)
       fatal(toString(this) + ": string is not null terminated");
     size_t Size = End + EntSize;
 
-    Pieces.emplace_back(Off, xxHash64(toStringRef(Data.slice(0, Size))),
-                        !IsAlloc);
-    Data = Data.slice(Size);
+    Pieces.emplace_back(Off, xxHash64(S.substr(0, Size)), !IsAlloc);
+    S = S.substr(Size);
     Off += Size;
   }
 }
@@ -918,12 +917,11 @@ MergeInputSection::MergeInputSection(ObjFile<ELFT> *F,
 // thread-safe (i.e. no memory allocation from the pools).
 void MergeInputSection::splitIntoPieces() {
   assert(Pieces.empty());
-  ArrayRef<uint8_t> Data = this->Data;
-  uint64_t EntSize = this->Entsize;
+
   if (this->Flags & SHF_STRINGS)
-    splitStrings(Data, EntSize);
+    splitStrings(Data, Entsize);
   else
-    splitNonStrings(Data, EntSize);
+    splitNonStrings(Data, Entsize);
 
   if (Config->GcSections && (this->Flags & SHF_ALLOC))
     for (uint64_t Off : LiveOffsets)
