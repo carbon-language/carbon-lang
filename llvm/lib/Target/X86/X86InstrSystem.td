@@ -635,3 +635,12 @@ let Defs = [EFLAGS] in {
 let Uses = [RAX, RBX, RCX, RDX], Defs = [RAX, RBX, RCX] in {
   def GETSEC : I<0x37, RawFrm, (outs), (ins), "getsec", []>, TB;
 }
+
+//===----------------------------------------------------------------------===//
+// RDPID Instruction
+def RDPID32 : I<0xC7, MRM7r, (outs GR32:$src), (ins),
+              "rdpid\t$src", []>, XS,
+              Requires<[Not64BitMode]>;
+def RDPID64 : I<0xC7, MRM7r, (outs GR64:$src), (ins),
+              "rdpid\t$src", []>, XS,
+              Requires<[In64BitMode]>;

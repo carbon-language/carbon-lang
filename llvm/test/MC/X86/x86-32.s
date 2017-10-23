@@ -1097,3 +1097,7 @@ data16
 // CHECK: lgdtl 4(%eax)
 // CHECK:  encoding: [0x0f,0x01,0x50,0x04]
 data16 lgdt 4(%eax)
+
+// CHECK: rdpid %eax
+// CHECK: encoding: [0xf3,0x0f,0xc7,0xf8]
+rdpid %eax

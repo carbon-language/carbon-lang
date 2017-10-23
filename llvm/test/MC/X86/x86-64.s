@@ -1527,3 +1527,7 @@ nopq	0xdeadbeef(%rbx,%rcx,8)
 // CHECK: nopq	%rax
 // CHECK:  encoding: [0x48,0x0f,0x1f,0xc0]
 nopq	%rax
+
+// CHECK: rdpid %rax
+// CHECK: encoding: [0xf3,0x0f,0xc7,0xf8]
+rdpid %rax
