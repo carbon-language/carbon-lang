@@ -506,10 +506,10 @@ let Uses = [EDX, EAX] in {
 let Predicates = [HasXSAVE] in {
   def XSAVE : I<0xAE, MRM4m, (outs), (ins opaque512mem:$dst),
                 "xsave\t$dst",
-                [(int_x86_xsave addr:$dst, EDX, EAX)]>, TB;
+                [(int_x86_xsave addr:$dst, EDX, EAX)]>, PS;
   def XSAVE64 : RI<0xAE, MRM4m, (outs), (ins opaque512mem:$dst),
                    "xsave64\t$dst",
-                   [(int_x86_xsave64 addr:$dst, EDX, EAX)]>, TB, Requires<[In64BitMode]>;
+                   [(int_x86_xsave64 addr:$dst, EDX, EAX)]>, PS, Requires<[In64BitMode]>;
   def XRSTOR : I<0xAE, MRM5m, (outs), (ins opaque512mem:$dst),
                  "xrstor\t$dst",
                  [(int_x86_xrstor addr:$dst, EDX, EAX)]>, TB;
@@ -644,3 +644,15 @@ def RDPID32 : I<0xC7, MRM7r, (outs GR32:$src), (ins),
 def RDPID64 : I<0xC7, MRM7r, (outs GR64:$src), (ins),
               "rdpid\t$src", []>, XS,
               Requires<[In64BitMode]>;
+
+//===----------------------------------------------------------------------===//
+// PTWRITE Instruction
+def PTWRITEm: I<0xAE, MRM4m, (outs), (ins i32mem:$dst),
+                "ptwrite{l}\t$dst", []>, XS;
+def PTWRITE64m : RI<0xAE, MRM4m, (outs), (ins i64mem:$dst),
+                    "ptwrite{q}\t$dst", []>, XS, Requires<[In64BitMode]>;
+
+def PTWRITEr : I<0xAE, MRM4r, (outs), (ins GR32:$dst),
+                "ptwrite{l}\t$dst", []>, XS;
+def PTWRITE64r : RI<0xAE, MRM4r, (outs), (ins GR64:$dst),
+                   "ptwrite{q}\t$dst", []>, XS, Requires<[In64BitMode]>;
