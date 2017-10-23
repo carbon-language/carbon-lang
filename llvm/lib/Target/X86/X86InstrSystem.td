@@ -512,10 +512,10 @@ let Predicates = [HasXSAVE] in {
                    [(int_x86_xsave64 addr:$dst, EDX, EAX)]>, PS, Requires<[In64BitMode]>;
   def XRSTOR : I<0xAE, MRM5m, (outs), (ins opaque512mem:$dst),
                  "xrstor\t$dst",
-                 [(int_x86_xrstor addr:$dst, EDX, EAX)]>, TB;
+                 [(int_x86_xrstor addr:$dst, EDX, EAX)]>, PS;
   def XRSTOR64 : RI<0xAE, MRM5m, (outs), (ins opaque512mem:$dst),
                     "xrstor64\t$dst",
-                    [(int_x86_xrstor64 addr:$dst, EDX, EAX)]>, TB, Requires<[In64BitMode]>;
+                    [(int_x86_xrstor64 addr:$dst, EDX, EAX)]>, PS, Requires<[In64BitMode]>;
 }
 let Predicates = [HasXSAVEOPT] in {
   def XSAVEOPT : I<0xAE, MRM6m, (outs), (ins opaque512mem:$dst),
