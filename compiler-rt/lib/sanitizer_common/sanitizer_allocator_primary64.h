@@ -241,22 +241,28 @@ class SizeClassAllocator64 {
   }
 
   void PrintStats() {
-    uptr total_mapped = 0;
-    uptr n_allocated = 0;
-    uptr n_freed = 0;
-    for (uptr class_id = 1; class_id < kNumClasses; class_id++) {
-      RegionInfo *region = GetRegionInfo(class_id);
-      total_mapped += region->mapped_user;
-      n_allocated += region->stats.n_allocated;
-      n_freed += region->stats.n_freed;
-    }
-    Printf("Stats: SizeClassAllocator64: %zdM mapped in %zd allocations; "
-           "remains %zd\n",
-           total_mapped >> 20, n_allocated, n_allocated - n_freed);
     uptr rss_stats[kNumClasses];
     for (uptr class_id = 0; class_id < kNumClasses; class_id++)
       rss_stats[class_id] = SpaceBeg() + kRegionSize * class_id;
     GetMemoryProfile(FillMemoryProfile, rss_stats, kNumClasses);
+
+    uptr total_mapped = 0;
+    uptr total_rss = 0;
+    uptr n_allocated = 0;
+    uptr n_freed = 0;
+    for (uptr class_id = 1; class_id < kNumClasses; class_id++) {
+      RegionInfo *region = GetRegionInfo(class_id);
+      if (region->mapped_user != 0) {
+        total_mapped += region->mapped_user;
+        total_rss += rss_stats[class_id];
+      }
+      n_allocated += region->stats.n_allocated;
+      n_freed += region->stats.n_freed;
+    }
+
+    Printf("Stats: SizeClassAllocator64: %zdM mapped (%zdM rss) in "
+           "%zd allocations; remains %zd\n", total_mapped >> 20,
+           total_rss >> 20, n_allocated, n_allocated - n_freed);
     for (uptr class_id = 1; class_id < kNumClasses; class_id++)
       PrintStats(class_id, rss_stats[class_id]);
   }
