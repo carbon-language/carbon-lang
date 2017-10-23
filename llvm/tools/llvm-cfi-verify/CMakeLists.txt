@@ -4,7 +4,6 @@ set(LLVM_LINK_COMPONENTS
   AllTargetsDescs
   AllTargetsDisassemblers
   AllTargetsInfos
-  CFIVerify
   MC
   MCParser
   Object
@@ -12,6 +11,8 @@ set(LLVM_LINK_COMPONENTS
   )
 
 add_llvm_tool(llvm-cfi-verify
-  llvm-cfi-verify.cpp)
+  llvm-cfi-verify.cpp
+  lib/FileAnalysis.cpp
+  )
 
 add_subdirectory(lib)

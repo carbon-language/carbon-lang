@@ -4,7 +4,6 @@ set(LLVM_LINK_COMPONENTS
   AllTargetsDescs
   AllTargetsDisassemblers
   AllTargetsInfos
-  CFIVerify
   MC
   MCParser
   Object
@@ -14,6 +13,6 @@ set(LLVM_LINK_COMPONENTS
 list(FIND LLVM_TARGETS_TO_BUILD "X86" x86_idx)
 if (NOT x86_idx LESS 0)
   add_llvm_unittest(CFIVerifyTests
-    FileAnalysis.cpp
-    GraphBuilder.cpp)
+    FileAnalysis.cpp)
+  target_link_libraries(CFIVerifyTests LLVMCFIVerify)
 endif()

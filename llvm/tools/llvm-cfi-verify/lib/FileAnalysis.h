@@ -10,7 +10,6 @@
 #ifndef LLVM_CFI_VERIFY_FILE_ANALYSIS_H
 #define LLVM_CFI_VERIFY_FILE_ANALYSIS_H
 
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -162,7 +161,7 @@ private:
 
   // Contains a mapping between a specific address, and a list of instructions
   // that use this address as a branch target (including call instructions).
-  DenseMap<uint64_t, std::vector<uint64_t>> StaticBranchTargetings;
+  std::unordered_map<uint64_t, std::vector<uint64_t>> StaticBranchTargetings;
 
   // A list of addresses of indirect control flow instructions.
   std::set<uint64_t> IndirectInstructions;
