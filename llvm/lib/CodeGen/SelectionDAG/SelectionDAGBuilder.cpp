@@ -942,6 +942,7 @@ void RegsForValue::AddInlineAsmOperands(unsigned Code, bool HasMatching,
     assert(Regs.size() == RegVTs.size() && Regs.size() == ValueVTs.size() &&
            "No 1:1 mapping from clobbers to regs?");
     unsigned SP = TLI.getStackPointerRegisterToSaveRestore();
+    (void)SP;
     for (unsigned I = 0, E = ValueVTs.size(); I != E; ++I) {
       Ops.push_back(DAG.getRegister(Regs[I], RegVTs[I]));
       assert(
