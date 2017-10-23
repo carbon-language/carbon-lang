@@ -593,11 +593,13 @@ struct Recorder {
       : Copied(Move.Copied), Moved(1 + Move.Moved) {}
 };
 } // namespace
-template <> struct llvm::format_provider<Recorder> {
+namespace llvm {
+template <> struct format_provider<Recorder> {
   static void format(const Recorder &R, raw_ostream &OS, StringRef style) {
     OS << R.Copied << "C " << R.Moved << "M";
   }
 };
+} // namespace
 
 TEST(FormatVariadicTest, CopiesAndMoves) {
   Recorder R;
