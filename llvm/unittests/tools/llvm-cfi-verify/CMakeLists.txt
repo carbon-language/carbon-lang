@@ -11,9 +11,6 @@ set(LLVM_LINK_COMPONENTS
   Support
   )
 
-list(FIND LLVM_TARGETS_TO_BUILD "X86" x86_idx)
-if (NOT x86_idx LESS 0)
-  add_llvm_unittest(CFIVerifyTests
-    FileAnalysis.cpp
-    GraphBuilder.cpp)
-endif()
+add_llvm_unittest(CFIVerifyTests
+  FileAnalysis.cpp
+  GraphBuilder.cpp)

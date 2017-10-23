@@ -171,6 +171,9 @@ private:
 class UnsupportedDisassembly : public ErrorInfo<UnsupportedDisassembly> {
 public:
   static char ID;
+  std::string Text;
+
+  UnsupportedDisassembly(StringRef Text);
 
   void log(raw_ostream &OS) const override;
   std::error_code convertToErrorCode() const override;

@@ -126,11 +126,18 @@ public:
 class BasicGraphBuilderTest : public ::testing::Test {
 protected:
   virtual void SetUp() {
-    if (Analysis.initialiseDisassemblyMembers()) {
-      FAIL() << "Failed to initialise FileAnalysis.";
+    SuccessfullyInitialised = true;
+    if (auto Err = Analysis.initialiseDisassemblyMembers()) {
+      handleAllErrors(std::move(Err), [&](const UnsupportedDisassembly &E) {
+        SuccessfullyInitialised = false;
+        outs()
+            << "Note: CFIVerifyTests are disabled due to lack of x86 support "
+               "on this build.\n";
+      });
     }
   }
 
+  bool SuccessfullyInitialised;
   ELFx86TestFileAnalysis Analysis;
 };
 
@@ -141,6 +148,8 @@ MATCHER_P2(HasPath, Result, Matcher, "has path " + PrintToString(Matcher)) {
 }
 
 TEST_F(BasicGraphBuilderTest, BuildFlowGraphTestSinglePathFallthroughUd2) {
+  if (!SuccessfullyInitialised)
+    return;
   Analysis.parseSectionContents(
       {
           0x75, 0x02, // 0: jne 4 [+2]
@@ -165,6 +174,8 @@ TEST_F(BasicGraphBuilderTest, BuildFlowGraphTestSinglePathFallthroughUd2) {
 }
 
 TEST_F(BasicGraphBuilderTest, BuildFlowGraphTestSinglePathJumpUd2) {
+  if (!SuccessfullyInitialised)
+    return;
   Analysis.parseSectionContents(
       {
           0x75, 0x02, // 0: jne 4 [+2]
@@ -189,6 +200,8 @@ TEST_F(BasicGraphBuilderTest, BuildFlowGraphTestSinglePathJumpUd2) {
 }
 
 TEST_F(BasicGraphBuilderTest, BuildFlowGraphTestDualPathDualUd2) {
+  if (!SuccessfullyInitialised)
+    return;
   Analysis.parseSectionContents(
       {
           0x75, 0x03, // 0: jne 5 [+3]
@@ -226,6 +239,8 @@ TEST_F(BasicGraphBuilderTest, BuildFlowGraphTestDualPathDualUd2) {
 }
 
 TEST_F(BasicGraphBuilderTest, BuildFlowGraphTestDualPathSingleUd2) {
+  if (!SuccessfullyInitialised)
+    return;
   Analysis.parseSectionContents(
       {
           0x75, 0x05, // 0: jne 7 [+5]
@@ -262,6 +277,8 @@ TEST_F(BasicGraphBuilderTest, BuildFlowGraphTestDualPathSingleUd2) {
 }
 
 TEST_F(BasicGraphBuilderTest, BuildFlowGraphFailures) {
+  if (!SuccessfullyInitialised)
+    return;
   Analysis.parseSectionContents(
       {
           0x90,       // 0: nop
@@ -282,6 +299,8 @@ TEST_F(BasicGraphBuilderTest, BuildFlowGraphFailures) {
 }
 
 TEST_F(BasicGraphBuilderTest, BuildFlowGraphNoXrefs) {
+  if (!SuccessfullyInitialised)
+    return;
   Analysis.parseSectionContents(
       {
           0xeb, 0xfe, // 0: jmp 0 [-2]
@@ -295,6 +314,8 @@ TEST_F(BasicGraphBuilderTest, BuildFlowGraphNoXrefs) {
 }
 
 TEST_F(BasicGraphBuilderTest, BuildFlowGraphConditionalInfiniteLoop) {
+  if (!SuccessfullyInitialised)
+    return;
   Analysis.parseSectionContents(
       {
           0x75, 0xfe, // 0: jne 0 [-2]
@@ -315,6 +336,8 @@ TEST_F(BasicGraphBuilderTest, BuildFlowGraphConditionalInfiniteLoop) {
 }
 
 TEST_F(BasicGraphBuilderTest, BuildFlowGraphUnconditionalInfiniteLoop) {
+  if (!SuccessfullyInitialised)
+    return;
   Analysis.parseSectionContents(
       {
           0x75, 0x02, // 0: jne 4 [+2]
@@ -337,6 +360,8 @@ TEST_F(BasicGraphBuilderTest, BuildFlowGraphUnconditionalInfiniteLoop) {
 }
 
 TEST_F(BasicGraphBuilderTest, BuildFlowGraphNoFlowsToIndirection) {
+  if (!SuccessfullyInitialised)
+    return;
   Analysis.parseSectionContents(
       {
           0x75, 0x00, // 0: jne 2 [+0]
@@ -350,6 +375,8 @@ TEST_F(BasicGraphBuilderTest, BuildFlowGraphNoFlowsToIndirection) {
 }
 
 TEST_F(BasicGraphBuilderTest, BuildFlowGraphLengthExceededUpwards) {
+  if (!SuccessfullyInitialised)
+    return;
   Analysis.parseSectionContents(
       {
           0x75, 0x06, // 0: jne 8 [+6]
@@ -377,6 +404,8 @@ TEST_F(BasicGraphBuilderTest, BuildFlowGraphLengthExceededUpwards) {
 }
 
 TEST_F(BasicGraphBuilderTest, BuildFlowGraphLengthExceededDownwards) {
+  if (!SuccessfullyInitialised)
+    return;
   Analysis.parseSectionContents(
       {
           0x75, 0x02, // 0: jne 4 [+2]
@@ -411,6 +440,8 @@ TEST_F(BasicGraphBuilderTest, BuildFlowGraphLengthExceededDownwards) {
 // paths correctly. We don't need to recalculate the flow from 0x2 -> 0x3 as it
 // should only need to be generated once.
 TEST_F(BasicGraphBuilderTest, BuildFlowGraphWithRepeatedWork) {
+  if (!SuccessfullyInitialised)
+    return;
   Analysis.parseSectionContents(
       {
           0x75, 0x05, // 0: jne 7 [+5]
@@ -449,6 +480,8 @@ TEST_F(BasicGraphBuilderTest, BuildFlowGraphWithRepeatedWork) {
 }
 
 TEST_F(BasicGraphBuilderTest, BuildFlowGraphComplexExample) {
+  if (!SuccessfullyInitialised)
+    return;
   // The following code has this graph:
   //  +----------+      +--------------+
   //  |    20    | <--- |      0       |
