@@ -92,6 +92,13 @@ class SizeClassAllocator64 {
                  memory_order_relaxed);
   }
 
+  void ForceReleaseToOS() {
+    for (uptr class_id = 1; class_id < kNumClasses; class_id++) {
+      BlockingMutexLock l(&GetRegionInfo(class_id)->mutex);
+      MaybeReleaseToOS(class_id, true /*force*/);
+    }
+  }
+
   static bool CanAllocate(uptr size, uptr alignment) {
     return size <= SizeClassMap::kMaxSize &&
       alignment <= SizeClassMap::kMaxSize;
@@ -116,7 +123,7 @@ class SizeClassAllocator64 {
     region->num_freed_chunks = new_num_freed_chunks;
     region->stats.n_freed += n_chunks;
 
-    MaybeReleaseToOS(class_id);
+    MaybeReleaseToOS(class_id, false /*force*/);
   }
 
   NOINLINE bool GetFromAllocator(AllocatorStats *stat, uptr class_id,
@@ -786,7 +793,7 @@ class SizeClassAllocator64 {
 
   // Attempts to release RAM occupied by freed chunks back to OS. The region is
   // expected to be locked.
-  void MaybeReleaseToOS(uptr class_id) {
+  void MaybeReleaseToOS(uptr class_id, bool force) {
     RegionInfo *region = GetRegionInfo(class_id);
     const uptr chunk_size = ClassIdToSize(class_id);
     const uptr page_size = GetPageSizeCached();
@@ -799,12 +806,16 @@ class SizeClassAllocator64 {
       return;  // Nothing new to release.
     }
 
-    s32 interval_ms = ReleaseToOSIntervalMs();
-    if (interval_ms < 0)
-      return;
+    if (!force) {
+      s32 interval_ms = ReleaseToOSIntervalMs();
+      if (interval_ms < 0)
+        return;
 
-    if (region->rtoi.last_release_at_ns + interval_ms * 1000000ULL > NanoTime())
-      return;  // Memory was returned recently.
+      if (region->rtoi.last_release_at_ns + interval_ms * 1000000ULL >
+          NanoTime()) {
+        return;  // Memory was returned recently.
+      }
+    }
 
     MemoryMapper memory_mapper(*this, class_id);
 
