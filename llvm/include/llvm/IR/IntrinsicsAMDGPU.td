@@ -747,6 +747,12 @@ def int_amdgcn_wqm : Intrinsic<[llvm_any_ty],
   [LLVMMatchType<0>], [IntrNoMem, IntrSpeculatable]
 >;
 
+// Return true if at least one thread within the pixel quad passes true into
+// the function.
+def int_amdgcn_wqm_vote : Intrinsic<[llvm_i1_ty],
+  [llvm_i1_ty], [IntrNoMem, IntrConvergent]
+>;
+
 // Copies the active channels of the source value to the destination value,
 // with the guarantee that the source value is computed as if the entire
 // program were executed in Whole Wavefront Mode, i.e. with all channels
