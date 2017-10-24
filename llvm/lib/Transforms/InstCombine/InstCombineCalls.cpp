@@ -3539,6 +3539,14 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
     return replaceInstUsesWith(*II, II->getArgOperand(0));
   }
+  case Intrinsic::amdgcn_kill: {
+    const ConstantInt *C = dyn_cast<ConstantInt>(II->getArgOperand(0));
+    if (!C || !C->getZExtValue())
+      break;
+
+    // amdgcn.kill(i1 1) is a no-op
+    return eraseInstFromFunction(CI);
+  }
   case Intrinsic::stackrestore: {
     // If the save is right next to the restore, remove the restore.  This can
     // happen when variable allocas are DCE'd.

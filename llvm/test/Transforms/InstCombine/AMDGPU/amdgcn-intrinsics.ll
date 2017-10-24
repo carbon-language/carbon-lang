@@ -1570,4 +1570,19 @@ main_body:
   ret float %r
 }
 
+; --------------------------------------------------------------------
+; llvm.amdgcn.kill
+; --------------------------------------------------------------------
+
+declare void @llvm.amdgcn.kill(i1)
+
+; CHECK-LABEL: @kill_true() {
+; CHECK-NEXT: ret void
+; CHECK-NEXT: }
+define void @kill_true() {
+  call void @llvm.amdgcn.kill(i1 true)
+  ret void
+}
+
+
 ; CHECK: attributes #5 = { convergent }
