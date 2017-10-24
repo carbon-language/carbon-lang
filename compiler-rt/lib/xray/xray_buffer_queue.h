@@ -141,7 +141,7 @@ class BufferQueue {
     __sanitizer::SpinMutexLock G(&Mutex);
     for (auto I = Buffers, E = Buffers + BufferCount; I != E; ++I) {
       const auto &T = *I;
-      if (T.Used) Fn(T.Buffer);
+      if (T.Used) Fn(T.Buff);
     }
   }
 
