@@ -1658,21 +1658,23 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
       if (CCC == Sema::PCC_Class) {
         AddTypedefResult(Results);
 
+        bool IsNotInheritanceScope =
+            !(S->getFlags() & Scope::ClassInheritanceScope);
         // public:
         Builder.AddTypedTextChunk("public");
-        if (Results.includeCodePatterns())
+        if (IsNotInheritanceScope && Results.includeCodePatterns())
           Builder.AddChunk(CodeCompletionString::CK_Colon);
         Results.AddResult(Result(Builder.TakeString()));
 
         // protected:
         Builder.AddTypedTextChunk("protected");
-        if (Results.includeCodePatterns())
+        if (IsNotInheritanceScope && Results.includeCodePatterns())
           Builder.AddChunk(CodeCompletionString::CK_Colon);
         Results.AddResult(Result(Builder.TakeString()));
 
         // private:
         Builder.AddTypedTextChunk("private");
-        if (Results.includeCodePatterns())
+        if (IsNotInheritanceScope && Results.includeCodePatterns())
           Builder.AddChunk(CodeCompletionString::CK_Colon);
         Results.AddResult(Result(Builder.TakeString()));
       }
