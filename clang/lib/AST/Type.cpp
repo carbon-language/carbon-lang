@@ -2260,8 +2260,8 @@ bool QualType::hasUniqueObjectRepresentations(const ASTContext &Context) const {
   //   The predicate condition for a template specialization
   //   has_unique_object_representations<T> shall be
   //   satisfied if and only if:
-  //     (9.1) — T is trivially copyable, and
-  //     (9.2) — any two objects of type T with the same value have the same
+  //     (9.1) - T is trivially copyable, and
+  //     (9.2) - any two objects of type T with the same value have the same
   //     object representation, where two objects
   //   of array or non-union class type are considered to have the same value
   //   if their respective sequences of
@@ -2272,8 +2272,7 @@ bool QualType::hasUniqueObjectRepresentations(const ASTContext &Context) const {
   //   The set of scalar types for which this condition holds is
   //   implementation-defined. [ Note: If a type has padding
   //   bits, the condition does not hold; otherwise, the condition holds true
-  //   for unsigned integral types. — end
-  //   note ]
+  //   for unsigned integral types. -- end note ]
   if (isNull())
     return false;
 
@@ -2282,7 +2281,7 @@ bool QualType::hasUniqueObjectRepresentations(const ASTContext &Context) const {
     return Context.getBaseElementType(*this).hasUniqueObjectRepresentations(
         Context);
 
-  // (9.1) — T is trivially copyable, and
+  // (9.1) - T is trivially copyable, and
   if (!isTriviallyCopyableType(Context))
     return false;
 
