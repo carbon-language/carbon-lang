@@ -19,5 +19,6 @@ add_clang_library(clangToolingRefactor
   clangFormat
   clangIndex
   clangLex
+  clangRewrite
   clangToolingCore
   )
