@@ -27239,6 +27239,16 @@ unsigned X86TargetLowering::ComputeNumSignBitsForTargetNode(
     return Tmp;
   }
 
+  case X86ISD::VTRUNC: {
+    SDValue Src = Op.getOperand(0);
+    unsigned NumSrcBits = Src.getScalarValueSizeInBits();
+    assert(VTBits < NumSrcBits && "Illegal truncation input type");
+    unsigned Tmp = DAG.ComputeNumSignBits(Src, Depth + 1);
+    if (Tmp > (NumSrcBits - VTBits))
+      return Tmp - (NumSrcBits - VTBits);
+    return 1;
+  }
+
   case X86ISD::PACKSS: {
     // PACKSS is just a truncation if the sign bits extend to the packed size.
     // TODO: Add DemandedElts support.

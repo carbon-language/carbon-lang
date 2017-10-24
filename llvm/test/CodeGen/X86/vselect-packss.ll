@@ -54,9 +54,7 @@ define <16 x i8> @vselect_packss_v16i16(<16 x i16> %a0, <16 x i16> %a1, <16 x i8
 ; AVX512-NEXT:    vpcmpeqw %ymm1, %ymm0, %ymm0
 ; AVX512-NEXT:    vpmovsxwd %ymm0, %zmm0
 ; AVX512-NEXT:    vpmovdb %zmm0, %xmm0
-; AVX512-NEXT:    vpand %xmm2, %xmm0, %xmm1
-; AVX512-NEXT:    vpandn %xmm3, %xmm0, %xmm0
-; AVX512-NEXT:    vpor %xmm0, %xmm1, %xmm0
+; AVX512-NEXT:    vpblendvb %xmm0, %xmm2, %xmm3, %xmm0
 ; AVX512-NEXT:    vzeroupper
 ; AVX512-NEXT:    retq
   %1 = icmp eq <16 x i16> %a0, %a1
@@ -134,9 +132,7 @@ define <16 x i8> @vselect_packss_v16i32(<16 x i32> %a0, <16 x i32> %a1, <16 x i8
 ; AVX512-NEXT:    vpcmpeqd %zmm1, %zmm0, %k1
 ; AVX512-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0 {%k1} {z}
 ; AVX512-NEXT:    vpmovdb %zmm0, %xmm0
-; AVX512-NEXT:    vpand %xmm2, %xmm0, %xmm1
-; AVX512-NEXT:    vpandn %xmm3, %xmm0, %xmm0
-; AVX512-NEXT:    vpor %xmm0, %xmm1, %xmm0
+; AVX512-NEXT:    vpblendvb %xmm0, %xmm2, %xmm3, %xmm0
 ; AVX512-NEXT:    vzeroupper
 ; AVX512-NEXT:    retq
   %1 = icmp eq <16 x i32> %a0, %a1
@@ -392,9 +388,7 @@ define <16 x i8> @vselect_packss_v16i64(<16 x i64> %a0, <16 x i64> %a1, <16 x i8
 ; AVX512-NEXT:    vpmovqd %zmm0, %ymm0
 ; AVX512-NEXT:    vinserti64x4 $1, %ymm0, %zmm8, %zmm0
 ; AVX512-NEXT:    vpmovdb %zmm0, %xmm0
-; AVX512-NEXT:    vpand %xmm4, %xmm0, %xmm1
-; AVX512-NEXT:    vpandn %xmm5, %xmm0, %xmm0
-; AVX512-NEXT:    vpor %xmm0, %xmm1, %xmm0
+; AVX512-NEXT:    vpblendvb %xmm0, %xmm4, %xmm5, %xmm0
 ; AVX512-NEXT:    vzeroupper
 ; AVX512-NEXT:    retq
   %1 = icmp eq <16 x i64> %a0, %a1
