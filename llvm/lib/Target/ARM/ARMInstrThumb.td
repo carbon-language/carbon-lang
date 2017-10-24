@@ -1671,13 +1671,6 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
 def : InstAlias<"nop", (tMOVr R8, R8, 14, 0), 0>, Requires<[IsThumb, IsThumb1Only]>;
 
 
-// For round-trip assembly/disassembly, we have to handle a CPS instruction
-// without any iflags. That's not, strictly speaking, valid syntax, but it's
-// a useful extension and assembles to defined behaviour (the insn does
-// nothing).
-def : tInstAlias<"cps$imod", (tCPS imod_op:$imod, 0)>;
-def : tInstAlias<"cps$imod", (tCPS imod_op:$imod, 0)>;
-
 // "neg" is and alias for "rsb rd, rn, #0"
 def : tInstAlias<"neg${s}${p} $Rd, $Rm",
                  (tRSB tGPR:$Rd, s_cc_out:$s, tGPR:$Rm, pred:$p)>;
