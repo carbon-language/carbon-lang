@@ -15962,21 +15962,20 @@ static SDValue truncateVectorCompareWithPACKSS(EVT DstVT, SDValue In,
 
   // We only support vector truncation to 128bits or greater from a
   // 256bits or greater source.
-  if ((DstVT.getSizeInBits() % 128) != 0)
-    return SDValue();
-  if ((SrcVT.getSizeInBits() % 256) != 0)
+  unsigned DstSizeInBits = DstVT.getSizeInBits();
+  unsigned SrcSizeInBits = SrcVT.getSizeInBits();
+  if ((DstSizeInBits % 128) != 0 || (SrcSizeInBits % 256) != 0)
     return SDValue();
 
+  LLVMContext &Ctx = *DAG.getContext();
   unsigned NumElems = SrcVT.getVectorNumElements();
   assert(DstVT.getVectorNumElements() == NumElems && "Illegal truncation");
-  assert(SrcVT.getSizeInBits() > DstVT.getSizeInBits() && "Illegal truncation");
+  assert(SrcSizeInBits > DstSizeInBits && "Illegal truncation");
 
-  EVT PackedSVT =
-      EVT::getIntegerVT(*DAG.getContext(), SrcVT.getScalarSizeInBits() / 2);
+  EVT PackedSVT = EVT::getIntegerVT(Ctx, SrcVT.getScalarSizeInBits() / 2);
 
   // Extract lower/upper subvectors.
   unsigned NumSubElts = NumElems / 2;
-  unsigned SrcSizeInBits = SrcVT.getSizeInBits();
   SDValue Lo = extractSubVector(In, 0 * NumSubElts, DAG, DL, SrcSizeInBits / 2);
   SDValue Hi = extractSubVector(In, 1 * NumSubElts, DAG, DL, SrcSizeInBits / 2);
 
@@ -16004,18 +16003,18 @@ static SDValue truncateVectorCompareWithPACKSS(EVT DstVT, SDValue In,
       return DAG.getBitcast(DstVT, Res);
 
     // If 512bit -> 128bit truncate another stage.
-    EVT PackedVT = EVT::getVectorVT(*DAG.getContext(), PackedSVT, NumElems);
+    EVT PackedVT = EVT::getVectorVT(Ctx, PackedSVT, NumElems);
     Res = DAG.getBitcast(PackedVT, Res);
     return truncateVectorCompareWithPACKSS(DstVT, Res, DL, DAG, Subtarget);
   }
 
   // Recursively pack lower/upper subvectors, concat result and pack again.
-  assert(SrcVT.getSizeInBits() >= 512 && "Expected 512-bit vector or greater");
-  EVT PackedVT = EVT::getVectorVT(*DAG.getContext(), PackedSVT, NumElems / 2);
+  assert(SrcSizeInBits >= 512 && "Expected 512-bit vector or greater");
+  EVT PackedVT = EVT::getVectorVT(Ctx, PackedSVT, NumSubElts);
   Lo = truncateVectorCompareWithPACKSS(PackedVT, Lo, DL, DAG, Subtarget);
   Hi = truncateVectorCompareWithPACKSS(PackedVT, Hi, DL, DAG, Subtarget);
 
-  PackedVT = EVT::getVectorVT(*DAG.getContext(), PackedSVT, NumElems);
+  PackedVT = EVT::getVectorVT(Ctx, PackedSVT, NumElems);
   SDValue Res = DAG.getNode(ISD::CONCAT_VECTORS, DL, PackedVT, Lo, Hi);
   return truncateVectorCompareWithPACKSS(DstVT, Res, DL, DAG, Subtarget);
 }
