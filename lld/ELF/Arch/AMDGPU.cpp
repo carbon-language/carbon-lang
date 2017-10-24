@@ -38,21 +38,21 @@ AMDGPU::AMDGPU() {
   GotEntrySize = 8;
 }
 
-uint32_t AMDGPU::calcEFlags() const {
-  if (ObjectFiles.empty())
-    return 0;
+static uint32_t getEFlags(InputFile *File) {
+  return cast<ObjFile<ELF64LE>>(File)->getObj().getHeader()->e_flags;
+}
 
-  uint32_t Ret =
-    cast<ObjFile<ELF64LE>>(ObjectFiles.front())->getObj().getHeader()->e_flags;
+uint32_t AMDGPU::calcEFlags() const {
+  assert(!ObjectFiles.empty());
+  uint32_t Ret = getEFlags(ObjectFiles[0]);
 
   // Verify that all input files have the same e_flags.
-  for (InputFile *F : ArrayRef<InputFile*>(ObjectFiles).slice(1)) {
-    if (Ret != cast<ObjFile<ELF64LE>>(F)->getObj().getHeader()->e_flags) {
-      error("incompatible e_flags: " + toString(F));
-      return 0;
-    }
+  for (InputFile *F : makeArrayRef(ObjectFiles).slice(1)) {
+    if (Ret == getEFlags(F))
+      continue;
+    error("incompatible e_flags: " + toString(F));
+    return 0;
   }
-
   return Ret;
 }
 
