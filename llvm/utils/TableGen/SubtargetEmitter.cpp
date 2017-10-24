@@ -1157,9 +1157,10 @@ void SubtargetEmitter::EmitProcessorModels(raw_ostream &OS) {
       OS << "  nullptr, nullptr, 0, 0,"
          << " // No instruction-level machine model.\n";
     if (PM.hasItineraries())
-      OS << "  " << PM.ItinsDef->getName() << "};\n";
+      OS << "  " << PM.ItinsDef->getName() << "\n";
     else
-      OS << "  nullptr}; // No Itinerary\n";
+      OS << "  nullptr // No Itinerary\n";
+    OS << "};\n";
   }
 }
 
@@ -1225,7 +1226,7 @@ void SubtargetEmitter::EmitSchedModel(raw_ostream &OS) {
   // Emit the processor lookup data
   EmitProcessorLookup(OS);
 
-  OS << "#undef DBGFIELD";
+  OS << "\n#undef DBGFIELD";
 }
 
 void SubtargetEmitter::EmitSchedModelHelpers(const std::string &ClassName,
@@ -1389,7 +1390,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
 #endif
 
   // MCInstrInfo initialization routine.
-  OS << "static inline MCSubtargetInfo *create" << Target
+  OS << "\nstatic inline MCSubtargetInfo *create" << Target
      << "MCSubtargetInfoImpl("
      << "const Triple &TT, StringRef CPU, StringRef FS) {\n";
   OS << "  return new MCSubtargetInfo(TT, CPU, FS, ";
