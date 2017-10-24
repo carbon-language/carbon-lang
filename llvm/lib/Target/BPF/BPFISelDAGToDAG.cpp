@@ -329,6 +329,11 @@ void BPFDAGToDAGISel::PreprocessISelDAG() {
   //    are 32-bit registers, but later on, kernel verifier will rewrite
   //    it with 64-bit value. Therefore, truncating the value after the
   //    load will result in incorrect code.
+
+  // clear the load_to_vreg_ map so that we have a clean start
+  // for this function.
+  load_to_vreg_.clear();
+
   for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
                                        E = CurDAG->allnodes_end();
        I != E;) {
