@@ -56,13 +56,22 @@ static cl::opt<bool>
                cl::desc("Avoid optimizing x86 call frames for size"),
                cl::init(false), cl::Hidden);
 
+namespace llvm {
+void initializeX86CallFrameOptimizationPass(PassRegistry &);
+}
+
 namespace {
 
 class X86CallFrameOptimization : public MachineFunctionPass {
 public:
-  X86CallFrameOptimization() : MachineFunctionPass(ID) {}
+  X86CallFrameOptimization() : MachineFunctionPass(ID) {
+    initializeX86CallFrameOptimizationPass(
+        *PassRegistry::getPassRegistry());
+  }
 
   bool runOnMachineFunction(MachineFunction &MF) override;
+
+  static char ID;
 
 private:
   // Information we know about a particular call site
@@ -120,12 +129,12 @@ private:
   MachineRegisterInfo *MRI;
   unsigned SlotSize;
   unsigned Log2SlotSize;
-  static char ID;
 };
 
-char X86CallFrameOptimization::ID = 0;
-
 } // end anonymous namespace
+char X86CallFrameOptimization::ID = 0;
+INITIALIZE_PASS(X86CallFrameOptimization, DEBUG_TYPE,
+                "X86 Call Frame Optimization", false, false)
 
 // This checks whether the transformation is legal.
 // Also returns false in cases where it's potentially legal, but
