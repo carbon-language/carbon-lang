@@ -366,7 +366,7 @@ protected:
   unsigned Col;
   FuncsToBranchesMapTy FuncsToBranches;
   FuncsToSamplesMapTy FuncsToSamples;
-  bool NoLBRMode;
+  bool NoLBRMode{false};
   StringSet<> EventNames;
   static const char FieldSeparator = ' ';
 

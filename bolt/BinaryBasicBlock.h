@@ -115,6 +115,8 @@ private:
 
 private:
   BinaryBasicBlock() = delete;
+  BinaryBasicBlock(const BinaryBasicBlock &) = delete;
+  BinaryBasicBlock& operator=(const BinaryBasicBlock &) = delete;
 
   explicit BinaryBasicBlock(
       BinaryFunction *Function,

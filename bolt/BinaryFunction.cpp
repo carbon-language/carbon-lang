@@ -1479,6 +1479,8 @@ void BinaryFunction::addLandingPads(const unsigned StartIndex,
       }
     }
   }
+
+  clearList(LPToBBIndex);
 }
 
 void BinaryFunction::recomputeLandingPads(const unsigned StartIndex,
@@ -1503,8 +1505,6 @@ void BinaryFunction::recomputeLandingPads(const unsigned StartIndex,
   }
 
   addLandingPads(StartIndex, NumBlocks);
-
-  clearList(LPToBBIndex);
 }
 
 bool BinaryFunction::buildCFG() {
@@ -1552,7 +1552,7 @@ bool BinaryFunction::buildCFG() {
       };
 
   for (auto I = Instructions.begin(), E = Instructions.end(); I != E; ++I) {
-    const uint32_t Offset = I->first;
+    const auto Offset = I->first;
     const auto &Instr = I->second;
 
     auto LI = Labels.find(Offset);
@@ -1594,14 +1594,8 @@ bool BinaryFunction::buildCFG() {
     }
 
     IsLastInstrNop = false;
-    uint32_t InsertIndex = InsertBB->addInstruction(Instr);
+    InsertBB->addInstruction(Instr);
     PrevInstr = &Instr;
-
-    // Record conditional tail call info.
-    if (const auto CTCDest = MIA->getConditionalTailCall(Instr)) {
-      TailCallTerminatedBlocks.emplace(
-        std::make_pair(InsertBB, TailCallInfo(Offset, InsertIndex, *CTCDest)));
-    }
 
     // Add associated CFI instrs. We always add the CFI instruction that is
     // located immediately after this instruction, since the next CFI
@@ -1624,7 +1618,6 @@ bool BinaryFunction::buildCFG() {
       }
     }
 
-    // How well do we detect tail calls here?
     if (MIA->isTerminator(Instr)) {
       PrevBB = InsertBB;
       InsertBB = nullptr;
@@ -1667,6 +1660,7 @@ bool BinaryFunction::buildCFG() {
 
     const BranchInfo &BInfo = BranchInfoOrErr.get();
     FromBB->addSuccessor(ToBB, BInfo.Branches, BInfo.Mispreds);
+
     // Populate profile counts for the jump table.
     auto *LastInstr = FromBB->getLastNonPseudoInstr();
     if (!LastInstr)
@@ -1742,15 +1736,24 @@ bool BinaryFunction::buildCFG() {
     }
   }
 
-  for (auto &I : TailCallTerminatedBlocks) {
-    TailCallInfo &TCInfo = I.second;
-    if (BranchData) {
-      auto BranchInfoOrErr = BranchData->getDirectCallBranch(TCInfo.Offset);
-      if (BranchInfoOrErr) {
-        const BranchInfo &BInfo = BranchInfoOrErr.get();
-        TCInfo.Count = BInfo.Branches;
-        TCInfo.Mispreds = BInfo.Mispreds;
-      }
+  if (BranchData) {
+    for (auto BB : BasicBlocks) {
+      auto *CTCInstr = BB->getLastNonPseudoInstr();
+      if (!CTCInstr || !MIA->getConditionalTailCall(*CTCInstr))
+        continue;
+
+      auto OffsetOrErr =
+        MIA->tryGetAnnotationAs<uint64_t>(*CTCInstr, "Offset");
+      assert(OffsetOrErr && "offset not set for conditional tail call");
+
+      auto BranchInfoOrErr = BranchData->getDirectCallBranch(*OffsetOrErr);
+      if (!BranchInfoOrErr)
+        continue;
+
+      MIA->addAnnotation(BC.Ctx.get(), *CTCInstr, "CTCTakenCount",
+                         BranchInfoOrErr->Branches);
+      MIA->addAnnotation(BC.Ctx.get(), *CTCInstr, "CTCMispredCount",
+                         BranchInfoOrErr->Mispreds);
     }
   }
 
@@ -1769,13 +1772,11 @@ bool BinaryFunction::buildCFG() {
       continue;
     }
 
-    auto LastInstIter = --BB->end();
-    while (MIA->isCFI(*LastInstIter) && LastInstIter != BB->begin())
-      --LastInstIter;
+    auto LastInstr = BB->getLastNonPseudoInstr();
+    assert(LastInstr &&
+           "should have non-pseudo instruction in non-empty block");
 
-    // Check if the last instruction is a conditional jump that serves as a tail
-    // call.
-    const auto IsCondTailCall = MIA->getConditionalTailCall(*LastInstIter);
+    const auto IsCondTailCall = MIA->getConditionalTailCall(*LastInstr);
     if (BB->succ_size() == 0) {
       if (IsCondTailCall) {
         // Conditional tail call without profile data for non-taken branch.
@@ -1783,7 +1784,7 @@ bool BinaryFunction::buildCFG() {
       } else {
         // Unless the last instruction is a terminator, control will fall
         // through to the next basic block.
-        IsPrevFT = MIA->isTerminator(*LastInstIter) ? false : true;
+        IsPrevFT = !MIA->isTerminator(*LastInstr);
       }
     } else if (BB->succ_size() == 1) {
       if (IsCondTailCall) {
@@ -1793,7 +1794,7 @@ bool BinaryFunction::buildCFG() {
       } else {
         // Fall-through should be added if the last instruction is a conditional
         // jump, since there was no profile data for the non-taken branch.
-        IsPrevFT = MIA->isConditionalBranch(*LastInstIter) ? true : false;
+        IsPrevFT = MIA->isConditionalBranch(*LastInstr);
       }
     } else {
       // Ends with 2 branches, with an indirect jump or it is a conditional
@@ -1826,10 +1827,6 @@ bool BinaryFunction::buildCFG() {
   // Assign CFI information to each BB entry.
   annotateCFIState();
 
-  // Convert conditional tail call branches to conditional branches that jump
-  // to a tail call.
-  removeConditionalTailCalls();
-
   // Set the basic block layout to the original order.
   PrevBB = nullptr;
   for (auto BB : BasicBlocks) {
@@ -1839,6 +1836,11 @@ bool BinaryFunction::buildCFG() {
     PrevBB = BB;
   }
   PrevBB->setEndOffset(getSize());
+
+  // Convert conditional tail call branches to conditional branches that jump
+  // to a tail call.
+  // TODO: make a separate pass
+  removeConditionalTailCalls();
 
   // Make any necessary adjustments for indirect branches.
   if (!postProcessIndirectBranches()) {
@@ -1867,7 +1869,6 @@ bool BinaryFunction::buildCFG() {
   // NB: don't clear Labels list as we may need them if we mark the function
   //     as non-simple later in the process of discovering extra entry points.
   clearList(Instructions);
-  clearList(TailCallTerminatedBlocks);
   clearList(OffsetToCFI);
   clearList(TakenBranches);
   clearList(FTBranches);
@@ -2258,11 +2259,11 @@ void BinaryFunction::inferFallThroughCounts() {
   }
 
   for (auto CurBB : BasicBlocks) {
-    auto SuccCount = CurBB->branch_info_begin();
+    auto SuccBIIter = CurBB->branch_info_begin();
     for (auto Succ : CurBB->successors()) {
-      if (SuccCount->Count != BinaryBasicBlock::COUNT_NO_PROFILE)
-        Succ->setExecutionCount(Succ->getExecutionCount() + SuccCount->Count);
-      ++SuccCount;
+      if (SuccBIIter->Count != BinaryBasicBlock::COUNT_NO_PROFILE)
+        Succ->setExecutionCount(Succ->getExecutionCount() + SuccBIIter->Count);
+      ++SuccBIIter;
     }
   }
 
@@ -2281,8 +2282,7 @@ void BinaryFunction::inferFallThroughCounts() {
   // should rarely happen because there are few multiple-entry functions.
   for (const auto &I : BranchData->EntryData) {
     BinaryBasicBlock *BB = getBasicBlockAtOffset(I.To.Offset);
-    if (BB && (BB->isEntryPoint() ||
-               LandingPads.find(BB->getLabel()) != LandingPads.end())) {
+    if (BB && (BB->isEntryPoint() || BB->isLandingPad())) {
       BB->setExecutionCount(BB->getExecutionCount() + I.Branches);
     }
   }
@@ -2290,28 +2290,28 @@ void BinaryFunction::inferFallThroughCounts() {
   // Work on a basic block at a time, propagating frequency information
   // forwards.
   // It is important to walk in the layout order.
-  for (auto CurBB : BasicBlocks) {
-    uint64_t BBExecCount = CurBB->getExecutionCount();
+  for (auto BB : BasicBlocks) {
+    uint64_t BBExecCount = BB->getExecutionCount();
 
     // Propagate this information to successors, filling in fall-through edges
     // with frequency information
-    if (CurBB->succ_size() == 0)
+    if (BB->succ_size() == 0)
       continue;
 
     // Calculate frequency of outgoing branches from this node according to
     // LBR data.
     uint64_t ReportedBranches = 0;
-    for (const auto &SuccCount : CurBB->branch_info()) {
-      if (SuccCount.Count != BinaryBasicBlock::COUNT_NO_PROFILE)
-        ReportedBranches += SuccCount.Count;
+    for (const auto &SuccBI : BB->branch_info()) {
+      if (SuccBI.Count != BinaryBasicBlock::COUNT_NO_PROFILE)
+        ReportedBranches += SuccBI.Count;
     }
 
-    // Calculate frequency of outgoing tail calls from this node according to
-    // LBR data.
-    uint64_t ReportedTailCalls = 0;
-    auto TCI = TailCallTerminatedBlocks.find(CurBB);
-    if (TCI != TailCallTerminatedBlocks.end()) {
-      ReportedTailCalls = TCI->second.Count;
+    // Get taken count of conditional tail call if the block ends with one.
+    uint64_t CTCTakenCount = 0;
+    const auto CTCInstr = BB->getLastNonPseudoInstr();
+    if (CTCInstr && BC.MIA->getConditionalTailCall(*CTCInstr)) {
+      CTCTakenCount =
+        BC.MIA->getAnnotationWithDefault<uint64_t>(*CTCInstr, "CTCTakenCount");
     }
 
     // Calculate frequency of throws from this node according to LBR data
@@ -2319,12 +2319,12 @@ void BinaryFunction::inferFallThroughCounts() {
     // for a landing pad to be associated with more than one basic blocks,
     // we may overestimate the frequency of throws for such blocks.
     uint64_t ReportedThrows = 0;
-    for (BinaryBasicBlock *LP: CurBB->landing_pads()) {
+    for (const auto *LP: BB->landing_pads()) {
       ReportedThrows += LP->getExecutionCount();
     }
 
-    uint64_t TotalReportedJumps =
-      ReportedBranches + ReportedTailCalls + ReportedThrows;
+    const uint64_t TotalReportedJumps =
+      ReportedBranches + CTCTakenCount + ReportedThrows;
 
     // Infer the frequency of the fall-through edge, representing not taking the
     // branch.
@@ -2332,121 +2332,111 @@ void BinaryFunction::inferFallThroughCounts() {
     if (BBExecCount > TotalReportedJumps)
       Inferred = BBExecCount - TotalReportedJumps;
 
-    DEBUG({
+    DEBUG(
       if (opts::Verbosity >= 1 && BBExecCount < TotalReportedJumps)
         errs()
             << "BOLT-WARNING: Fall-through inference is slightly inconsistent. "
                "exec frequency is less than the outgoing edges frequency ("
             << BBExecCount << " < " << ReportedBranches
             << ") for  BB at offset 0x"
-            << Twine::utohexstr(getAddress() + CurBB->getOffset()) << '\n';
-    });
+            << Twine::utohexstr(getAddress() + BB->getOffset()) << '\n';
+    );
 
-    if (CurBB->succ_size() <= 2) {
+    if (BB->succ_size() <= 2) {
       // If there is an FT it will be the last successor.
-      auto &SuccCount = *CurBB->branch_info_rbegin();
-      auto &Succ = *CurBB->succ_rbegin();
-      if (SuccCount.Count == BinaryBasicBlock::COUNT_NO_PROFILE) {
-        SuccCount.Count = Inferred;
+      auto &SuccBI = *BB->branch_info_rbegin();
+      auto &Succ = *BB->succ_rbegin();
+      if (SuccBI.Count == BinaryBasicBlock::COUNT_NO_PROFILE) {
+        SuccBI.Count = Inferred;
         Succ->ExecutionCount += Inferred;
       }
     }
-
-  } // end for (CurBB : BasicBlocks)
+  }
 
   return;
 }
 
 void BinaryFunction::removeConditionalTailCalls() {
-  for (auto &I : TailCallTerminatedBlocks) {
-    BinaryBasicBlock *BB = I.first;
-    TailCallInfo &TCInfo = I.second;
+  CurrentState = State::CFG;
 
-    // Get the conditional tail call instruction.
-    MCInst &CondTailCallInst = BB->getInstructionAtIndex(TCInfo.Index);
-    if (!BC.MIA->isConditionalBranch(CondTailCallInst)) {
-      // The block is not terminated with a conditional tail call.
+  // Blocks to be appended at the end.
+  std::vector<std::unique_ptr<BinaryBasicBlock>> NewBlocks;
+
+  for (auto BBI = begin(); BBI != end(); ++BBI) {
+    auto &BB = *BBI;
+    auto *CTCInstr = BB.getLastNonPseudoInstr();
+    if (!CTCInstr)
       continue;
+
+    auto TargetAddressOrNone = BC.MIA->getConditionalTailCall(*CTCInstr);
+    if (!TargetAddressOrNone)
+      continue;
+
+    // Gather all necessary information about CTC instruction before
+    // annotations are destroyed.
+    const auto CFIStateBeforeCTC = BB.getCFIStateAtInstr(CTCInstr);
+    uint64_t CTCTakenCount = BinaryBasicBlock::COUNT_NO_PROFILE;
+    uint64_t CTCMispredCount = BinaryBasicBlock::COUNT_NO_PROFILE;
+    if (hasValidProfile()) {
+      CTCTakenCount =
+        BC.MIA->getAnnotationWithDefault<uint64_t>(*CTCInstr, "CTCTakenCount");
+      CTCMispredCount =
+        BC.MIA->getAnnotationWithDefault<uint64_t>(*CTCInstr,
+                                                   "CTCMispredCount");
     }
 
     // Assert that the tail call does not throw.
     const MCSymbol *LP;
     uint64_t Action;
-    std::tie(LP, Action) = BC.MIA->getEHInfo(CondTailCallInst);
+    std::tie(LP, Action) = BC.MIA->getEHInfo(*CTCInstr);
     assert(!LP && "found tail call with associated landing pad");
 
-    // Create the unconditional tail call instruction.
-    const auto *TailCallTargetLabel = BC.MIA->getTargetSymbol(CondTailCallInst);
-    assert(TailCallTargetLabel && "symbol expected for direct tail call");
-    MCInst TailCallInst;
-    BC.MIA->createTailCall(TailCallInst, TailCallTargetLabel, BC.Ctx.get());
+    // Create a basic block with an unconditional tail call instruction using
+    // the same destination.
+    const auto *CTCTargetLabel = BC.MIA->getTargetSymbol(*CTCInstr);
+    assert(CTCTargetLabel && "symbol expected for conditional tail call");
+    MCInst TailCallInstr;
+    BC.MIA->createTailCall(TailCallInstr, CTCTargetLabel, BC.Ctx.get());
+    auto TailCallBB = createBasicBlock(BinaryBasicBlock::INVALID_OFFSET,
+                                       BC.Ctx->createTempSymbol("TC", true));
+    TailCallBB->addInstruction(TailCallInstr);
+    TailCallBB->setCFIState(CFIStateBeforeCTC);
 
-    // The way we will remove this conditional tail call depends on the
-    // direction of the jump when it is taken. We want to preserve this
-    // direction.
-    BinaryBasicBlock *TailCallBB = nullptr;
-    MCSymbol *TCLabel = BC.Ctx->createTempSymbol("TC", true);
-    if (getAddress() >= TCInfo.TargetAddress) {
-      // Backward jump: We will reverse the condition of the tail call, change
-      // its target to the following (currently fall-through) block, and insert
-      // a new block between them that will contain the unconditional tail call.
-
-      // Reverse the condition of the tail call and update its target.
-      unsigned InsertIdx = getIndex(BB) + 1;
-      assert(InsertIdx < size() && "no fall-through for conditional tail call");
-      BinaryBasicBlock *NextBB = BasicBlocks[InsertIdx];
-
-      BC.MIA->reverseBranchCondition(
-          CondTailCallInst, NextBB->getLabel(), BC.Ctx.get());
-
-      // Create a basic block containing the unconditional tail call instruction
-      // and place it between BB and NextBB.
-      std::vector<std::unique_ptr<BinaryBasicBlock>> TailCallBBs;
-      TailCallBBs.emplace_back(createBasicBlock(NextBB->getOffset(), TCLabel));
-      TailCallBBs[0]->addInstruction(TailCallInst);
-      insertBasicBlocks(BB, std::move(TailCallBBs),
-                        /* UpdateLayout */ false,
-                        /* UpdateCFIState */ false);
-      TailCallBB = BasicBlocks[InsertIdx];
-
-      // Add the correct CFI state for the new block.
-      TailCallBB->setCFIState(TCInfo.CFIStateBefore);
-    } else {
-      // Forward jump: we will create a new basic block at the end of the
-      // function containing the unconditional tail call and change the target
-      // of the conditional tail call to this basic block.
-
-      // Create a basic block containing the unconditional tail call
-      // instruction and place it at the end of the function.
-      // We have to add 1 byte as there's potentially an existing branch past
-      // the end of the code as a result of __builtin_unreachable().
-      const BinaryBasicBlock *LastBB = BasicBlocks.back();
-      uint64_t NewBlockOffset =
-        LastBB->getOffset()
-          + BC.computeCodeSize(LastBB->begin(), LastBB->end()) + 1;
-      TailCallBB = addBasicBlock(NewBlockOffset, TCLabel);
-      TailCallBB->addInstruction(TailCallInst);
-
-      // Add the correct CFI state for the new block. It has to be inserted in
-      // the one before last position (the last position holds the CFI state
-      // after the last block).
-      TailCallBB->setCFIState(TCInfo.CFIStateBefore);
-
-      // Replace the target of the conditional tail call with the label of the
-      // new basic block.
-      BC.MIA->replaceBranchTarget(CondTailCallInst, TCLabel, BC.Ctx.get());
-    }
-
-    // Add CFG edge with profile info from BB to TailCallBB info and swap
-    // edges if the TailCallBB corresponds to the taken branch.
-    BB->addSuccessor(TailCallBB, TCInfo.Count, TCInfo.Mispreds);
-    if (getAddress() < TCInfo.TargetAddress)
-      BB->swapConditionalSuccessors();
+    // Add CFG edge with profile info from BB to TailCallBB.
+    BB.addSuccessor(TailCallBB.get(), CTCTakenCount, CTCMispredCount);
 
     // Add execution count for the block.
-    if (hasValidProfile())
-      TailCallBB->setExecutionCount(TCInfo.Count);
+    TailCallBB->setExecutionCount(CTCTakenCount);
+
+    // In attempt to preserve the direction of the original conditional jump,
+    // we will either create an unconditional jump in a separate basic block
+    // at the end of the function, or reverse a condition of the jump
+    // and create a fall-through block right after the original tail call.
+    if (getAddress() >= *TargetAddressOrNone) {
+      // Insert the basic block right after the current one.
+      std::vector<std::unique_ptr<BinaryBasicBlock>> TCBB;
+      TCBB.emplace_back(std::move(TailCallBB));
+      BBI = insertBasicBlocks(BBI,
+                              std::move(TCBB),
+                              /* UpdateLayout */ true,
+                              /* UpdateCFIState */ false);
+      BC.MIA->reverseBranchCondition(
+          *CTCInstr, (*std::next(BBI)).getLabel(), BC.Ctx.get());
+
+    } else {
+      BC.MIA->replaceBranchTarget(*CTCInstr, TailCallBB->getLabel(),
+                                  BC.Ctx.get());
+      // Add basic block to the list that will be added to the end.
+      NewBlocks.emplace_back(std::move(TailCallBB));
+      // Swap edges as the TailCallBB corresponds to the taken branch.
+      BB.swapConditionalSuccessors();
+    }
   }
+
+  insertBasicBlocks(std::prev(end()),
+                    std::move(NewBlocks),
+                    /* UpdateLayout */ true,
+                    /* UpdateCFIState */ false);
 }
 
 uint64_t BinaryFunction::getFunctionScore() {
@@ -2470,7 +2460,7 @@ void BinaryFunction::annotateCFIState() {
   assert(!BasicBlocks.empty() && "basic block list should not be empty");
 
   // This is an index of the last processed CFI in FDE CFI program.
-  int32_t State = 0;
+  uint32_t State = 0;
 
   // This is an index of RememberState CFI reflecting effective state right
   // after execution of RestoreState CFI.
@@ -2480,42 +2470,37 @@ void BinaryFunction::annotateCFIState() {
   //
   // This allows us to generate shorter replay sequences when producing new
   // CFI programs.
-  int32_t EffectiveState = 0;
+  uint32_t EffectiveState = 0;
 
   // For tracking RememberState/RestoreState sequences.
-  std::stack<int32_t> StateStack;
+  std::stack<uint32_t> StateStack;
 
   for (auto *BB : BasicBlocks) {
     BB->setCFIState(EffectiveState);
 
-    // While building the CFG, we want to save the CFI state before a tail call
-    // instruction, so that we can correctly remove conditional tail calls.
-    auto TCI = TailCallTerminatedBlocks.find(BB);
-    bool SaveState = TCI != TailCallTerminatedBlocks.end();
-
-    uint32_t Idx = 0; // instruction index in a current basic block
     for (const auto &Instr : *BB) {
-      ++Idx;
-      if (SaveState && Idx == TCI->second.Index) {
-        TCI->second.CFIStateBefore = EffectiveState;
-        SaveState = false;
-      }
-
       const auto *CFI = getCFIFor(Instr);
       if (!CFI)
         continue;
 
       ++State;
 
-      if (CFI->getOperation() == MCCFIInstruction::OpRememberState) {
+      switch (CFI->getOperation()) {
+      case MCCFIInstruction::OpRememberState:
         StateStack.push(EffectiveState);
-      } else if (CFI->getOperation() == MCCFIInstruction::OpRestoreState) {
+        break;
+      case MCCFIInstruction::OpRestoreState:
         assert(!StateStack.empty() && "corrupt CFI stack");
         EffectiveState = StateStack.top();
         StateStack.pop();
-      } else if (CFI->getOperation() != MCCFIInstruction::OpGnuArgsSize) {
+        break;
+      case MCCFIInstruction::OpGnuArgsSize:
         // OpGnuArgsSize CFIs do not affect the CFI state.
+        break;
+      default:
+        // Any other CFI updates the state.
         EffectiveState = State;
+        break;
       }
     }
   }
@@ -3588,10 +3573,10 @@ std::size_t BinaryFunction::hash(bool Recompute, bool UseDFS) const {
 }
 
 void BinaryFunction::insertBasicBlocks(
-  BinaryBasicBlock *Start,
-  std::vector<std::unique_ptr<BinaryBasicBlock>> &&NewBBs,
-  const bool UpdateLayout,
-  const bool UpdateCFIState) {
+    BinaryBasicBlock *Start,
+    std::vector<std::unique_ptr<BinaryBasicBlock>> &&NewBBs,
+    const bool UpdateLayout,
+    const bool UpdateCFIState) {
   const auto StartIndex = getIndex(Start);
   const auto NumNewBlocks = NewBBs.size();
 
@@ -3600,7 +3585,7 @@ void BinaryFunction::insertBasicBlocks(
                      nullptr);
 
   auto I = StartIndex + 1;
-  for (auto &BB :  NewBBs) {
+  for (auto &BB : NewBBs) {
     assert(!BasicBlocks[I]);
     BasicBlocks[I++] = BB.release();
   }
@@ -3621,6 +3606,42 @@ void BinaryFunction::insertBasicBlocks(
   }
 }
 
+BinaryFunction::iterator BinaryFunction::insertBasicBlocks(
+    BinaryFunction::iterator StartBB,
+    std::vector<std::unique_ptr<BinaryBasicBlock>> &&NewBBs,
+    const bool UpdateLayout,
+    const bool UpdateCFIState) {
+  const auto StartIndex = getIndex(&*StartBB);
+  const auto NumNewBlocks = NewBBs.size();
+
+  auto RetIter = BasicBlocks.insert(BasicBlocks.begin() + StartIndex + 1,
+                                    NumNewBlocks,
+                                    nullptr);
+
+  auto I = StartIndex + 1;
+  for (auto &BB : NewBBs) {
+    assert(!BasicBlocks[I]);
+    BasicBlocks[I++] = BB.release();
+  }
+
+  updateBBIndices(StartIndex);
+
+  recomputeLandingPads(StartIndex, NumNewBlocks + 1);
+
+  // Make sure the basic blocks are sorted properly.
+  assert(std::is_sorted(begin(), end()));
+
+  if (UpdateLayout) {
+    updateLayout(*std::prev(RetIter), NumNewBlocks);
+  }
+
+  if (UpdateCFIState) {
+    updateCFIState(*std::prev(RetIter), NumNewBlocks);
+  }
+
+  return RetIter;
+}
+
 void BinaryFunction::updateBBIndices(const unsigned StartIndex) {
   for (auto I = StartIndex; I < BasicBlocks.size(); ++I) {
     BasicBlocks[I]->Index = I;
@@ -3629,7 +3650,6 @@ void BinaryFunction::updateBBIndices(const unsigned StartIndex) {
 
 void BinaryFunction::updateCFIState(BinaryBasicBlock *Start,
                                     const unsigned NumNewBlocks) {
-  assert(TailCallTerminatedBlocks.empty());
   const auto CFIState = Start->getCFIStateAtExit();
   const auto StartIndex = getIndex(Start) + 1;
   for (unsigned I = 0; I < NumNewBlocks; ++I) {
@@ -4336,11 +4356,8 @@ DynoStats BinaryFunction::getDynoStats() const {
         continue;
       uint64_t CallFreq = BBExecutionCount;
       if (BC.MIA->getConditionalTailCall(Instr)) {
-        CallFreq = 0;
-        if (auto FreqOrErr =
-                BC.MIA->tryGetAnnotationAs<uint64_t>(Instr, "CTCTakenFreq")) {
-          CallFreq = *FreqOrErr;
-        }
+        CallFreq =
+          BC.MIA->getAnnotationWithDefault<uint64_t>(Instr, "CTCTakenCount");
       }
       Stats[DynoStats::FUNCTION_CALLS] += CallFreq;
       if (BC.MIA->getMemoryOperandNo(Instr) != -1) {

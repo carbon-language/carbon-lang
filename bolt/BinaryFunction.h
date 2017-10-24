@@ -482,24 +482,6 @@ private:
   using InstrMapType = std::map<uint32_t, MCInst>;
   InstrMapType Instructions;
 
-  /// Temporary holder of tail call terminated basic blocks used during CFG
-  /// construction. Map from tail call terminated basic block to a struct with
-  /// information about the tail call.
-  struct TailCallInfo {
-    uint32_t Offset;            // offset of the tail call from the function
-                                // start
-    uint32_t Index;             // index of the tail call in the basic block
-    uint64_t TargetAddress;     // address of the callee
-    uint64_t Count{0};          // taken count from profile data
-    uint64_t Mispreds{0};       // mispredicted count from profile data
-    uint32_t CFIStateBefore{0}; // CFI state before the tail call instruction
-
-    TailCallInfo(uint32_t Offset, uint32_t Index, uint64_t TargetAddress) :
-      Offset(Offset), Index(Index), TargetAddress(TargetAddress) { }
-  };
-  using TailCallBasicBlockMapType = std::map<BinaryBasicBlock *, TailCallInfo>;
-  TailCallBasicBlockMapType TailCallTerminatedBlocks;
-
   /// List of DWARF CFI instructions. Original CFI from the binary must be
   /// sorted w.r.t. offset that it appears. We rely on this to replay CFIs
   /// if needed (to fix state after reordering BBs).
@@ -1386,6 +1368,12 @@ public:
   ///
   void insertBasicBlocks(
     BinaryBasicBlock *Start,
+    std::vector<std::unique_ptr<BinaryBasicBlock>> &&NewBBs,
+    const bool UpdateLayout = true,
+    const bool UpdateCFIState = true);
+
+  iterator insertBasicBlocks(
+    iterator StartBB,
     std::vector<std::unique_ptr<BinaryBasicBlock>> &&NewBBs,
     const bool UpdateLayout = true,
     const bool UpdateCFIState = true);

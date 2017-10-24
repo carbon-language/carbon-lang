@@ -658,7 +658,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
       MIA->setConditionalTailCall(*CondBranch);
       // Add info abount the conditional tail call frequency, otherwise this
       // info will be lost when we delete the associated BranchInfo entry
-      BC.MIA->addAnnotation(BC.Ctx.get(), *CondBranch, "CTCTakenFreq",
+      BC.MIA->addAnnotation(BC.Ctx.get(), *CondBranch, "CTCTakenCount",
                             CTCTakenFreq);
 
       // Remove the unused successor which may be eliminated later
