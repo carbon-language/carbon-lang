@@ -338,7 +338,7 @@ def tHLT : T1I<(outs), (ins imm0_63:$val), NoItinerary, "hlt\t$val",
 }
 
 def tSETEND : T1I<(outs), (ins setend_op:$end), NoItinerary, "setend\t$end",
-                  []>, T1Encoding<0b101101>, Requires<[IsNotMClass]>, Deprecated<HasV8Ops> {
+                  []>, T1Encoding<0b101101>, Requires<[IsThumb, IsNotMClass]>, Deprecated<HasV8Ops> {
   bits<1> end;
   // A8.6.156
   let Inst{9-5} = 0b10010;
