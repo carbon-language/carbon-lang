@@ -493,6 +493,14 @@ def normalizeReferenceResults(Dir, SBOutputDir, ProjectBuildMode):
                      if SourceFile.startswith(PathPrefix)
                      else SourceFile for SourceFile in Data['files']]
             Data['files'] = Paths
+
+            # Remove transient fields which change from run to run.
+            for Diag in Data['diagnostics']:
+                if 'HTMLDiagnostics_files' in Diag:
+                    Diag.pop('HTMLDiagnostics_files')
+            if 'clang_version' in Data:
+                Data.pop('clang_version')
+
             plistlib.writePlist(Data, Plist)
 
 
