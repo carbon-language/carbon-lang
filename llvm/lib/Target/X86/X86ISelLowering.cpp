@@ -15943,7 +15943,7 @@ static SDValue LowerZERO_EXTEND(SDValue Op, const X86Subtarget &Subtarget,
 
 /// Helper to recursively truncate vector elements in half with PACKSS.
 /// It makes use of the fact that vector comparison results will be all-zeros
-/// or all-ones to use (vXi8 PACKSS(vYi16, vYi16)) instead of matching types.
+/// or all-ones to prevent the PACKSS from saturating the results.
 /// AVX2 (Int256) sub-targets require extra shuffling as the PACKSS operates
 /// within each 128-bit lane.
 static SDValue truncateVectorCompareWithPACKSS(EVT DstVT, SDValue In,
@@ -15979,20 +15979,32 @@ static SDValue truncateVectorCompareWithPACKSS(EVT DstVT, SDValue In,
   SDValue Lo = extractSubVector(In, 0 * NumSubElts, DAG, DL, SrcSizeInBits / 2);
   SDValue Hi = extractSubVector(In, 1 * NumSubElts, DAG, DL, SrcSizeInBits / 2);
 
+  // Pack to the largest type possible:
+  // vXi64/vXi32 -> PACKSSDW and vXi16 -> PACKSSWB.
+  EVT InVT = MVT::i16, OutVT = MVT::i8;
+  if (DstVT.getScalarSizeInBits() > 8) {
+    InVT = MVT::i32;
+    OutVT = MVT::i16;
+  }
+
+  unsigned SubSizeInBits = SrcSizeInBits / 2;
+  InVT = EVT::getVectorVT(Ctx, InVT, SubSizeInBits / InVT.getSizeInBits());
+  OutVT = EVT::getVectorVT(Ctx, OutVT, SubSizeInBits / OutVT.getSizeInBits());
+
   // 256bit -> 128bit truncate - PACKSS lower/upper 128-bit subvectors.
   if (SrcVT.is256BitVector()) {
-    Lo = DAG.getBitcast(MVT::v8i16, Lo);
-    Hi = DAG.getBitcast(MVT::v8i16, Hi);
-    SDValue Res = DAG.getNode(X86ISD::PACKSS, DL, MVT::v16i8, Lo, Hi);
+    Lo = DAG.getBitcast(InVT, Lo);
+    Hi = DAG.getBitcast(InVT, Hi);
+    SDValue Res = DAG.getNode(X86ISD::PACKSS, DL, OutVT, Lo, Hi);
     return DAG.getBitcast(DstVT, Res);
   }
 
   // AVX2: 512bit -> 256bit truncate - PACKSS lower/upper 256-bit subvectors.
   // AVX2: 512bit -> 128bit truncate - PACKSS(PACKSS, PACKSS).
   if (SrcVT.is512BitVector() && Subtarget.hasInt256()) {
-    Lo = DAG.getBitcast(MVT::v16i16, Lo);
-    Hi = DAG.getBitcast(MVT::v16i16, Hi);
-    SDValue Res = DAG.getNode(X86ISD::PACKSS, DL, MVT::v32i8, Lo, Hi);
+    Lo = DAG.getBitcast(InVT, Lo);
+    Hi = DAG.getBitcast(InVT, Hi);
+    SDValue Res = DAG.getNode(X86ISD::PACKSS, DL, OutVT, Lo, Hi);
 
     // 256-bit PACKSS(ARG0, ARG1) leaves us with ((LO0,LO1),(HI0,HI1)),
     // so we need to shuffle to get ((LO0,HI0),(LO1,HI1)).
