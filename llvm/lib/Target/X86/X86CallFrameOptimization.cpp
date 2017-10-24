@@ -363,14 +363,23 @@ void X86CallFrameOptimization::collectCallInfo(MachineFunction &MF,
     ++I;
 
   unsigned StackPtr = RegInfo.getStackRegister();
+  auto StackPtrCopyInst = MBB.end();
   // SelectionDAG (but not FastISel) inserts a copy of ESP into a virtual
-  // register here.  If it's there, use that virtual register as stack pointer
-  // instead.
-  if (I->isCopy() && I->getOperand(0).isReg() && I->getOperand(1).isReg() &&
-      I->getOperand(1).getReg() == StackPtr) {
-    Context.SPCopy = &*I++;
-    StackPtr = Context.SPCopy->getOperand(0).getReg();
-  }
+  // register.  If it's there, use that virtual register as stack pointer
+  // instead. Also, we need to locate this instruction so that we can later
+  // safely ignore it while doing the conservative processing of the call chain.
+  // The COPY can be located anywhere between the call-frame setup
+  // instruction and its first use. We use the call instruction as a boundary
+  // because it is usually cheaper to check if an instruction is a call than
+  // checking if an instruction uses a register.
+  for (auto J = I; !J->isCall(); ++J)
+    if (J->isCopy() && J->getOperand(0).isReg() && J->getOperand(1).isReg() &&
+        J->getOperand(1).getReg() == StackPtr) {
+      StackPtrCopyInst = J;
+      Context.SPCopy = &*J++;
+      StackPtr = Context.SPCopy->getOperand(0).getReg();
+      break;
+    }
 
   // Scan the call setup sequence for the pattern we're looking for.
   // We only handle a simple case - a sequence of store instructions that
@@ -379,16 +388,15 @@ void X86CallFrameOptimization::collectCallInfo(MachineFunction &MF,
   if (MaxAdjust > 4)
     Context.MovVector.resize(MaxAdjust, nullptr);
 
-  InstClassification Classification;
   DenseSet<unsigned int> UsedRegs;
 
-  while ((Classification = classifyInstruction(MBB, I, RegInfo, UsedRegs)) !=
-         Exit) {
-    if (Classification == Skip) {
-      ++I;
+  for (InstClassification Classification = Skip; Classification != Exit; ++I) {
+    // If this is the COPY of the stack pointer, it's ok to ignore.
+    if (I == StackPtrCopyInst)
       continue;
-    }
-
+    Classification = classifyInstruction(MBB, I, RegInfo, UsedRegs);
+    if (Classification != Convert)
+      continue;
     // We know the instruction has a supported store opcode.
     // We only want movs of the form:
     // mov imm/reg, k(%StackPtr)
@@ -431,9 +439,9 @@ void X86CallFrameOptimization::collectCallInfo(MachineFunction &MF,
       if (RegInfo.isPhysicalRegister(Reg))
         UsedRegs.insert(Reg);
     }
-
-    ++I;
   }
+
+  --I;
 
   // We now expect the end of the sequence. If we stopped early,
   // or reached the end of the block without finding a call, bail.
