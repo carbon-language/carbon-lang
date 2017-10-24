@@ -78,7 +78,7 @@ BufferQueue::ErrorCode BufferQueue::releaseBuffer(Buffer &Buf) {
   if (LiveBuffers == 0) return ErrorCode::NotEnoughMemory;
 
   // Now that the buffer has been released, we mark it as "used".
-  First->Buffer = Buf;
+  First->Buff = Buf;
   First->Used = true;
   Buf.Buffer = nullptr;
   Buf.Size = 0;
@@ -98,8 +98,8 @@ BufferQueue::ErrorCode BufferQueue::finalize() {
 BufferQueue::~BufferQueue() {
   for (auto I = Buffers, E = Buffers + BufferCount; I != E; ++I) {
     auto &T = *I;
-    auto &Buf = T.Buffer;
-    InternalFree(Buf.Buffer);
+    auto &Buf = T.Buff;
+    InternalFree(Buf.Buff);
   }
   delete[] Buffers;
   delete[] OwnedBuffers;
