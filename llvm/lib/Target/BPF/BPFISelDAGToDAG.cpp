@@ -85,6 +85,8 @@ private:
   std::map<const void *, val_vec_type> cs_vals_;
   // Mapping from vreg to load memory opcode
   std::map<unsigned, unsigned> load_to_vreg_;
+  // Current function
+  const Function *curr_func_;
 };
 } // namespace
 
@@ -332,7 +334,12 @@ void BPFDAGToDAGISel::PreprocessISelDAG() {
 
   // clear the load_to_vreg_ map so that we have a clean start
   // for this function.
-  load_to_vreg_.clear();
+  if (!curr_func_) {
+    curr_func_ = FuncInfo->Fn;
+  } else if (curr_func_ != FuncInfo->Fn) {
+    load_to_vreg_.clear();
+    curr_func_ = FuncInfo->Fn;
+  }
 
   for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
                                        E = CurDAG->allnodes_end();
