@@ -97,6 +97,7 @@ set(LLVM_DISTRIBUTION_COMPONENTS
   LTO
   clang-format
   clang-headers
+  clang-refactor
   clang-tidy
   clangd
   builtins
