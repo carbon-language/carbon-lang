@@ -9710,8 +9710,9 @@ const SCEV *ScalarEvolution::computeMaxBECountForLT(const SCEV *Start,
     StrideForMaxBECount =
         IsSigned ? getSignedRangeMin(Stride) : getUnsignedRangeMin(Stride);
   else
-    // Using a stride of 1 is safe when computing max backedge taken count for
-    // a loop with unknown stride.
+    // Using a stride of 1 is safe when computing max backedge taken count for a
+    // loop with unknown stride, since the precondition for this function is
+    // that it is positive.
     StrideForMaxBECount = APInt(BitWidth, 1, IsSigned);
 
   APInt MaxValue = IsSigned ? APInt::getSignedMaxValue(BitWidth)
