@@ -422,9 +422,14 @@ static void PrintShadowMemoryForAddress(uptr addr) {
   InternalScopedString str(4096 * 8);
   str.append("Shadow bytes around the buggy address:\n");
   for (int i = -5; i <= 5; i++) {
+    uptr row_shadow_addr = aligned_shadow + i * n_bytes_per_row;
+    // Skip rows that would be outside the shadow range. This can happen when
+    // the user address is near the bottom, top, or shadow gap of the address
+    // space.
+    if (!AddrIsInShadow(row_shadow_addr)) continue;
     const char *prefix = (i == 0) ? "=>" : "  ";
-    PrintShadowBytes(&str, prefix, (u8 *)(aligned_shadow + i * n_bytes_per_row),
-                     (u8 *)shadow_addr, n_bytes_per_row);
+    PrintShadowBytes(&str, prefix, (u8 *)row_shadow_addr, (u8 *)shadow_addr,
+                     n_bytes_per_row);
   }
   if (flags()->print_legend) PrintLegend(&str);
   Printf("%s", str.data());
