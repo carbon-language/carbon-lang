@@ -3857,6 +3857,12 @@ SDValue ARMTargetLowering::getARMCmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
         break;
       }
     }
+  } else if ((ARM_AM::getShiftOpcForNode(LHS.getOpcode()) != ARM_AM::no_shift) &&
+             (ARM_AM::getShiftOpcForNode(RHS.getOpcode()) == ARM_AM::no_shift)) {
+    // In ARM and Thumb-2, the compare instructions can shift their second
+    // operand.
+    CC = ISD::getSetCCSwappedOperands(CC);
+    std::swap(LHS, RHS);
   }
 
   ARMCC::CondCodes CondCode = IntCCToARMCC(CC);
