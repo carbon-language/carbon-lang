@@ -208,7 +208,14 @@ public:
     Type *getType() const { return Begin->getType(); }
     const SCEV *getBegin() const { return Begin; }
     const SCEV *getEnd() const { return End; }
-    bool isEmpty() const { return Begin == End; }
+    bool isEmpty(ScalarEvolution &SE, bool IsSigned) const {
+      if (Begin == End)
+        return true;
+      if (IsSigned)
+        return SE.isKnownPredicate(ICmpInst::ICMP_SGE, Begin, End);
+      else
+        return SE.isKnownPredicate(ICmpInst::ICMP_UGE, Begin, End);
+    }
   };
 
   /// This is the value the condition of the branch needs to evaluate to for the
@@ -1666,14 +1673,15 @@ static Optional<InductiveRangeCheck::Range>
 IntersectRange(ScalarEvolution &SE,
                const Optional<InductiveRangeCheck::Range> &R1,
                const InductiveRangeCheck::Range &R2) {
-  if (R2.isEmpty())
+  if (R2.isEmpty(SE, /* IsSigned */ true))
     return None;
   if (!R1.hasValue())
     return R2;
   auto &R1Value = R1.getValue();
   // We never return empty ranges from this function, and R1 is supposed to be
   // a result of intersection. Thus, R1 is never empty.
-  assert(!R1Value.isEmpty() && "We should never have empty R1!");
+  assert(!R1Value.isEmpty(SE, /* IsSigned */ true) &&
+         "We should never have empty R1!");
 
   // TODO: we could widen the smaller range and have this work; but for now we
   // bail out to keep things simple.
@@ -1685,7 +1693,7 @@ IntersectRange(ScalarEvolution &SE,
 
   // If the resulting range is empty, just return None.
   auto Ret = InductiveRangeCheck::Range(NewBegin, NewEnd);
-  if (Ret.isEmpty())
+  if (Ret.isEmpty(SE, /* IsSigned */ true))
     return None;
   return Ret;
 }
@@ -1756,8 +1764,9 @@ bool InductiveRangeCheckElimination::runOnLoop(Loop *L, LPPassManager &LPM) {
       auto MaybeSafeIterRange =
           IntersectRange(SE, SafeIterRange, Result.getValue());
       if (MaybeSafeIterRange.hasValue()) {
-        assert(!MaybeSafeIterRange.getValue().isEmpty() &&
-               "We should never return empty ranges!");
+        assert(
+            !MaybeSafeIterRange.getValue().isEmpty(SE, LS.IsSignedPredicate) &&
+            "We should never return empty ranges!");
         RangeChecksToEliminate.push_back(IRC);
         SafeIterRange = MaybeSafeIterRange.getValue();
       }

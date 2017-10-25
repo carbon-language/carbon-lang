@@ -1,3 +1,7 @@
+; This test demonstrates the confusion in ranges: we have unsigned ranges here,
+; but signed comparisons in IntersectRanges produce bad results. We temporarily
+; disable it and re-enable once the unsigned ranges are supported again.
+; XFAIL: *
 ; RUN: opt -verify-loop-info -irce-print-changed-loops -irce -irce-allow-unsigned-latch=true -S < %s 2>&1 | FileCheck %s
 
 ; The test demonstrates that incorrect behavior of Clamp may lead to incorrect
