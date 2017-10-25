@@ -1,5 +1,4 @@
-; RUN: opt -verify-loop-info -irce-print-changed-loops -irce -irce-allow-unsigned-latch=true -S
-
+; RUN: opt -verify-loop-info -irce-print-changed-loops -irce -S
 
 ; Make sure that IRCE doesn't apply in case of empty ranges.
 ; (i + 30 < 40) if i in [-30, 10).
