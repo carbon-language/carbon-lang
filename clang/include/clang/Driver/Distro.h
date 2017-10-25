@@ -58,6 +58,7 @@ public:
     UbuntuYakkety,
     UbuntuZesty,
     UbuntuArtful,
+    UbuntuBionic,
     UnknownDistro
   };
 
