@@ -615,7 +615,7 @@ void Writer::assignAddresses() {
     RVA += alignTo(Sec->getVirtualSize(), PageSize);
     FileSize += alignTo(Sec->getRawSize(), SectorSize);
   }
-  SizeOfImage = SizeOfHeaders + alignTo(RVA - 0x1000, PageSize);
+  SizeOfImage = alignTo(RVA, PageSize);
 }
 
 template <typename PEHeaderTy> void Writer::writeHeader() {
