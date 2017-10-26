@@ -3694,9 +3694,9 @@ bool operator<(const BlockLayoutChunk &l, const BlockLayoutChunk &r) {
 }
 
 void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
-                                                       StringRef Name,
+                                                       llvm::Value *Arg,
                                                        unsigned ArgNo,
-                                                       llvm::AllocaInst *Alloca,
+                                                       llvm::Value *LocalAddr,
                                                        CGBuilderTy &Builder) {
   assert(DebugKind >= codegenoptions::LimitedDebugInfo);
   ASTContext &C = CGM.getContext();
@@ -3828,11 +3828,19 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
 
   // Create the descriptor for the parameter.
   auto *debugVar = DBuilder.createParameterVariable(
-      scope, Name, ArgNo, tunit, line, type,
+      scope, Arg->getName(), ArgNo, tunit, line, type,
       CGM.getLangOpts().Optimize, flags);
 
+  if (LocalAddr) {
+    // Insert an llvm.dbg.value into the current block.
+    DBuilder.insertDbgValueIntrinsic(
+        LocalAddr, debugVar, DBuilder.createExpression(),
+        llvm::DebugLoc::get(line, column, scope, CurInlinedAt),
+        Builder.GetInsertBlock());
+  }
+
   // Insert an llvm.dbg.declare into the current block.
-  DBuilder.insertDeclare(Alloca, debugVar, DBuilder.createExpression(),
+  DBuilder.insertDeclare(Arg, debugVar, DBuilder.createExpression(),
                          llvm::DebugLoc::get(line, column, scope, CurInlinedAt),
                          Builder.GetInsertBlock());
 }
