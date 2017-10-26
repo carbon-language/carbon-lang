@@ -19,6 +19,7 @@ def no_whole_archive: F<"no-whole-archive">,
 def o: JoinedOrSeparate<["-"], "o">, MetaVarName<"<path>">,
   HelpText<"Path to file to write output">;
 def out_implib: Separate<["--"], "out-implib">, HelpText<"Import library name">;
+def out_implib_eq: Joined<["--"], "out-implib=">, Alias<out_implib>;
 def output_def: S<"output-def">, HelpText<"Output def file">;
 def shared: F<"shared">, HelpText<"Build a shared object">;
 def subs: S<"subsystem">, HelpText<"Specify subsystem">;
