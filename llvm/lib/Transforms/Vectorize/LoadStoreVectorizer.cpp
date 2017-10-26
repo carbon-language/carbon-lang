@@ -613,7 +613,7 @@ Vectorizer::collectInstructions(BasicBlock *BB) {
       // Skip weird non-byte sizes. They probably aren't worth the effort of
       // handling correctly.
       unsigned TySize = DL.getTypeSizeInBits(Ty);
-      if (TySize < 8)
+      if ((TySize % 8) != 0)
         continue;
 
       Value *Ptr = LI->getPointerOperand();
@@ -649,12 +649,14 @@ Vectorizer::collectInstructions(BasicBlock *BB) {
       // Skip weird non-byte sizes. They probably aren't worth the effort of
       // handling correctly.
       unsigned TySize = DL.getTypeSizeInBits(Ty);
-      if (TySize < 8)
+      if ((TySize % 8) != 0)
         continue;
 
       Value *Ptr = SI->getPointerOperand();
       unsigned AS = Ptr->getType()->getPointerAddressSpace();
       unsigned VecRegSize = TTI.getLoadStoreVecRegBitWidth(AS);
+
+      // No point in looking at these if they're too big to vectorize.
       if (TySize > VecRegSize / 2)
         continue;
 
