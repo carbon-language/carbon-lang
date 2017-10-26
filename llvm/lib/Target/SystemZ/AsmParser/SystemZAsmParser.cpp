@@ -1169,7 +1169,8 @@ bool SystemZAsmParser::parseOperand(OperandVector &Operands,
   return false;
 }
 
-static std::string SystemZMnemonicSpellCheck(StringRef S, uint64_t FBS);
+static std::string SystemZMnemonicSpellCheck(StringRef S, uint64_t FBS,
+                                             unsigned VariantID = 0);
 
 bool SystemZAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                                OperandVector &Operands,

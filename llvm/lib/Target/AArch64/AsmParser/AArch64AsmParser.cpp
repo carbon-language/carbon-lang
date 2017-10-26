@@ -3297,7 +3297,8 @@ bool AArch64AsmParser::validateInstruction(MCInst &Inst,
   }
 }
 
-static std::string AArch64MnemonicSpellCheck(StringRef S, uint64_t FBS);
+static std::string AArch64MnemonicSpellCheck(StringRef S, uint64_t FBS,
+                                             unsigned VariantID = 0);
 
 bool AArch64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode,
                                       OperandVector &Operands) {
