@@ -616,6 +616,13 @@ Vectorizer::collectInstructions(BasicBlock *BB) {
       if ((TySize % 8) != 0)
         continue;
 
+      // Skip vectors of pointers. The vectorizeLoadChain/vectorizeStoreChain
+      // functions are currently using an integer type for the vectorized
+      // load/store, and does not support casting between the integer type and a
+      // vector of pointers (e.g. i64 to <2 x i16*>)
+      if (Ty->isVectorTy() && Ty->isPtrOrPtrVectorTy())
+        continue;
+
       Value *Ptr = LI->getPointerOperand();
       unsigned AS = Ptr->getType()->getPointerAddressSpace();
       unsigned VecRegSize = TTI.getLoadStoreVecRegBitWidth(AS);
@@ -644,6 +651,13 @@ Vectorizer::collectInstructions(BasicBlock *BB) {
 
       Type *Ty = SI->getValueOperand()->getType();
       if (!VectorType::isValidElementType(Ty->getScalarType()))
+        continue;
+
+      // Skip vectors of pointers. The vectorizeLoadChain/vectorizeStoreChain
+      // functions are currently using an integer type for the vectorized
+      // load/store, and does not support casting between the integer type and a
+      // vector of pointers (e.g. i64 to <2 x i16*>)
+      if (Ty->isVectorTy() && Ty->isPtrOrPtrVectorTy())
         continue;
 
       // Skip weird non-byte sizes. They probably aren't worth the effort of
@@ -701,8 +715,8 @@ bool Vectorizer::vectorizeInstructions(ArrayRef<Instruction *> Instrs) {
   SmallVector<int, 16> Heads, Tails;
   int ConsecutiveChain[64];
 
-  // Do a quadratic search on all of the given stores and find all of the pairs
-  // of stores that follow each other.
+  // Do a quadratic search on all of the given loads/stores and find all of the
+  // pairs of loads/stores that follow each other.
   for (int i = 0, e = Instrs.size(); i < e; ++i) {
     ConsecutiveChain[i] = -1;
     for (int j = e - 1; j >= 0; --j) {
@@ -769,7 +783,7 @@ bool Vectorizer::vectorizeStoreChain(
     SmallPtrSet<Instruction *, 16> *InstructionsProcessed) {
   StoreInst *S0 = cast<StoreInst>(Chain[0]);
 
-  // If the vector has an int element, default to int for the whole load.
+  // If the vector has an int element, default to int for the whole store.
   Type *StoreTy;
   for (Instruction *I : Chain) {
     StoreTy = cast<StoreInst>(I)->getValueOperand()->getType();
