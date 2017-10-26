@@ -37,6 +37,7 @@ def Bdynamic: F<"Bdynamic">, HelpText<"Link against shared libraries">;
 def Bstatic: F<"Bstatic">, HelpText<"Do not link against shared libraries">;
 def O: Joined<["-"], "O">, HelpText<"Optimize output file size">;
 def enable_auto_image_base: F<"enable-auto-image-base">;
+def enable_auto_import: F<"enable-auto-import">;
 def full_shutdown: Flag<["--"], "full-shutdown">;
 def major_image_version: S<"major-image-version">;
 def minor_image_version: S<"minor-image-version">;
