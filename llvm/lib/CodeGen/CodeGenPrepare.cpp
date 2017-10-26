@@ -212,6 +212,7 @@ class TypePromotionTransaction;
     const TargetTransformInfo *TTI = nullptr;
     const TargetLibraryInfo *TLInfo;
     const LoopInfo *LI;
+    DominatorTree *DT;
     std::unique_ptr<BlockFrequencyInfo> BFI;
     std::unique_ptr<BranchProbabilityInfo> BPI;
 
@@ -262,6 +263,7 @@ class TypePromotionTransaction;
 
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       // FIXME: When we can selectively preserve passes, preserve the domtree.
+      AU.addRequired<DominatorTreeWrapperPass>();
       AU.addRequired<ProfileSummaryInfoWrapperPass>();
       AU.addRequired<TargetLibraryInfoWrapperPass>();
       AU.addRequired<TargetTransformInfoWrapperPass>();
@@ -343,6 +345,8 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   TLInfo = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
   TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+
   OptSize = F.optForSize();
 
   if (ProfileGuidedSectionPrefix) {
@@ -755,6 +759,11 @@ bool CodeGenPrepare::isMergingEmptyBlockProfitable(BasicBlock *BB,
     return true;
 
   SmallPtrSet<BasicBlock *, 16> SameIncomingValueBBs;
+  SmallVector<PHINode *, 16> PNs;
+
+  for (auto DestBBI = DestBB->begin();
+       auto *DestPN = dyn_cast<PHINode>(&*DestBBI); ++DestBBI)
+    PNs.push_back(DestPN);
 
   // Find all other incoming blocks from which incoming values of all PHIs in
   // DestBB are the same as the ones from BB.
@@ -764,16 +773,10 @@ bool CodeGenPrepare::isMergingEmptyBlockProfitable(BasicBlock *BB,
     if (DestBBPred == BB)
       continue;
 
-    bool HasAllSameValue = true;
-    BasicBlock::const_iterator DestBBI = DestBB->begin();
-    while (const PHINode *DestPN = dyn_cast<PHINode>(DestBBI++)) {
-      if (DestPN->getIncomingValueForBlock(BB) !=
-          DestPN->getIncomingValueForBlock(DestBBPred)) {
-        HasAllSameValue = false;
-        break;
-      }
-    }
-    if (HasAllSameValue)
+    if (llvm::all_of(PNs, [&](PHINode *PN) {
+      return (PN->getIncomingValueForBlock(BB) ==
+              PN->getIncomingValueForBlock(DestBBPred));
+        }))
       SameIncomingValueBBs.insert(DestBBPred);
   }
 
@@ -781,6 +784,14 @@ bool CodeGenPrepare::isMergingEmptyBlockProfitable(BasicBlock *BB,
   // case, no reason to skip merging because COPYs are expected to be place in
   // Pred already.
   if (SameIncomingValueBBs.count(Pred))
+    return true;
+
+  // Check to see if none of the phis have constant incoming values for BB and
+  // Pred dominates DestBB, in such case extra COPYs are likely not added, so
+  // there is no reason to skip merging.
+  if (DT->dominates(Pred, DestBB) && llvm::none_of(PNs, [BB](PHINode *PN) {
+        return isa<Constant>(PN->getIncomingValueForBlock(BB));
+      }))
     return true;
 
   if (!BFI) {
@@ -885,7 +896,7 @@ void CodeGenPrepare::eliminateMostlyEmptyBlock(BasicBlock *BB) {
       // Remember if SinglePred was the entry block of the function.  If so, we
       // will need to move BB back to the entry position.
       bool isEntry = SinglePred == &SinglePred->getParent()->getEntryBlock();
-      MergeBasicBlockIntoOnlyPred(DestBB, nullptr);
+      MergeBasicBlockIntoOnlyPred(DestBB, DT);
 
       if (isEntry && BB != &BB->getParent()->getEntryBlock())
         BB->moveBefore(&BB->getParent()->getEntryBlock());
@@ -926,7 +937,21 @@ void CodeGenPrepare::eliminateMostlyEmptyBlock(BasicBlock *BB) {
 
   // The PHIs are now updated, change everything that refers to BB to use
   // DestBB and remove BB.
+  SmallVector<DominatorTree::UpdateType, 3> Updates;
+  for (auto *PredBB : predecessors(BB)) {
+    if (PredBB == BB)
+      continue;
+    DominatorTree::UpdateType UT = {DominatorTree::Delete, PredBB, BB};
+    if (!is_contained(Updates, UT)) {
+      Updates.push_back(UT);
+      if (PredBB != DestBB)
+        Updates.push_back({DominatorTree::Insert, PredBB, DestBB});
+    }
+  }
   BB->replaceAllUsesWith(DestBB);
+  DT->applyUpdates(Updates);
+  BB->getTerminator()->eraseFromParent();
+  DT->deleteEdge(BB, DestBB);
   BB->eraseFromParent();
   ++NumBlocksElim;
 
