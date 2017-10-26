@@ -19,47 +19,33 @@
 //  - Code size is smaller, both because jumps are removed and because the
 //    encoding of a 2*n byte compare is smaller than that of two n-byte
 //    compares.
-//
+
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/APInt.h"
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/Analysis/Loads.h"
-#include "llvm/Analysis/TargetLibraryInfo.h"
-#include "llvm/Analysis/TargetTransformInfo.h"
-#include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/DataLayout.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/Instruction.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/PassManager.h"
-#include "llvm/IR/Type.h"
-#include "llvm/IR/Value.h"
-#include "llvm/Pass.h"
-#include "llvm/Support/Casting.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Utils/BuildLibCalls.h"
 #include <algorithm>
-#include <cassert>
-#include <cstddef>
 #include <numeric>
 #include <utility>
 #include <vector>
+#include "llvm/ADT/APSInt.h"
+#include "llvm/Analysis/Loads.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/Pass.h"
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Utils/BuildLibCalls.h"
 
 using namespace llvm;
 
-#define DEBUG_TYPE "mergeicmps"
-
 namespace {
+
+#define DEBUG_TYPE "mergeicmps"
 
 // A BCE atom.
 struct BCEAtom {
-  BCEAtom() = default;
+  BCEAtom() : GEP(nullptr), LoadI(nullptr), Offset() {}
 
   const Value *Base() const { return GEP ? GEP->getPointerOperand() : nullptr; }
 
@@ -81,17 +67,15 @@ struct BCEAtom {
     return NameCmp < 0;
   }
 
-  GetElementPtrInst *GEP = nullptr;
-  LoadInst *LoadI = nullptr;
+  GetElementPtrInst *GEP;
+  LoadInst *LoadI;
   APInt Offset;
 };
-
-} // end anonymous namespace
 
 // If this value is a load from a constant offset w.r.t. a base address, and
 // there are no othe rusers of the load or address, returns the base address and
 // the offset.
-static BCEAtom visitICmpLoadOperand(Value *const Val) {
+BCEAtom visitICmpLoadOperand(Value *const Val) {
   BCEAtom Result;
   if (auto *const LoadI = dyn_cast<LoadInst>(Val)) {
     DEBUG(dbgs() << "load\n");
@@ -127,16 +111,14 @@ static BCEAtom visitICmpLoadOperand(Value *const Val) {
   return Result;
 }
 
-namespace {
-
 // A basic block with a comparison between two BCE atoms.
 // Note: the terminology is misleading: the comparison is symmetric, so there
 // is no real {l/r}hs. What we want though is to have the same base on the
 // left (resp. right), so that we can detect consecutive loads. To ensure this
 // we put the smallest atom on the left.
 class BCECmpBlock {
-public:
-  BCECmpBlock() = default;
+ public:
+  BCECmpBlock() {}
 
   BCECmpBlock(BCEAtom L, BCEAtom R, int SizeBits)
       : Lhs_(L), Rhs_(R), SizeBits_(SizeBits) {
@@ -166,20 +148,16 @@ public:
 
   // The basic block where this comparison happens.
   BasicBlock *BB = nullptr;
-
   // The ICMP for this comparison.
   ICmpInst *CmpI = nullptr;
-
   // The terminating branch.
   BranchInst *BranchI = nullptr;
 
-private:
+ private:
   BCEAtom Lhs_;
   BCEAtom Rhs_;
   int SizeBits_ = 0;
 };
-
-} // end anonymous namespace
 
 bool BCECmpBlock::doesOtherWork() const {
   AssertConsistent();
@@ -205,8 +183,8 @@ bool BCECmpBlock::doesOtherWork() const {
 
 // Visit the given comparison. If this is a comparison between two valid
 // BCE atoms, returns the comparison.
-static BCECmpBlock visitICmp(const ICmpInst *const CmpI,
-                             const ICmpInst::Predicate ExpectedPredicate) {
+BCECmpBlock visitICmp(const ICmpInst *const CmpI,
+                      const ICmpInst::Predicate ExpectedPredicate) {
   if (CmpI->getPredicate() == ExpectedPredicate) {
     DEBUG(dbgs() << "cmp "
                  << (ExpectedPredicate == ICmpInst::ICMP_EQ ? "eq" : "ne")
@@ -223,8 +201,8 @@ static BCECmpBlock visitICmp(const ICmpInst *const CmpI,
 
 // Visit the given comparison block. If this is a comparison between two valid
 // BCE atoms, returns the comparison.
-static BCECmpBlock visitCmpBlock(Value *const Val, BasicBlock *const Block,
-                                 const BasicBlock *const PhiBlock) {
+BCECmpBlock visitCmpBlock(Value *const Val, BasicBlock *const Block,
+                          const BasicBlock *const PhiBlock) {
   if (Block->empty()) return {};
   auto *const BranchI = dyn_cast<BranchInst>(Block->getTerminator());
   if (!BranchI) return {};
@@ -262,11 +240,9 @@ static BCECmpBlock visitCmpBlock(Value *const Val, BasicBlock *const Block,
   return {};
 }
 
-namespace {
-
 // A chain of comparisons.
 class BCECmpChain {
-public:
+ public:
   BCECmpChain(const std::vector<BasicBlock *> &Blocks, PHINode &Phi);
 
   int size() const { return Comparisons_.size(); }
@@ -277,7 +253,7 @@ public:
 
   bool simplify(const TargetLibraryInfo *const TLI);
 
-private:
+ private:
   static bool IsContiguous(const BCECmpBlock &First,
                            const BCECmpBlock &Second) {
     return First.Lhs().Base() == Second.Lhs().Base() &&
@@ -295,12 +271,9 @@ private:
 
   PHINode &Phi_;
   std::vector<BCECmpBlock> Comparisons_;
-
   // The original entry block (before sorting);
   BasicBlock *EntryBlock_;
 };
-
-} // end anonymous namespace
 
 BCECmpChain::BCECmpChain(const std::vector<BasicBlock *> &Blocks, PHINode &Phi)
     : Phi_(Phi) {
@@ -474,8 +447,7 @@ void BCECmpChain::mergeComparisons(ArrayRef<BCECmpBlock> Comparisons,
     IRBuilder<> Builder(BB);
     const auto &DL = Phi.getModule()->getDataLayout();
     Value *const MemCmpCall = emitMemCmp(
-        FirstComparison.Lhs().GEP, FirstComparison.Rhs().GEP,
-        ConstantInt::get(DL.getIntPtrType(Context), TotalSize),
+        FirstComparison.Lhs().GEP, FirstComparison.Rhs().GEP, ConstantInt::get(DL.getIntPtrType(Context), TotalSize),
         Builder, DL, TLI);
     Value *const MemCmpIsZero = Builder.CreateICmpEQ(
         MemCmpCall, ConstantInt::get(Type::getInt32Ty(Context), 0));
@@ -532,9 +504,9 @@ void BCECmpChain::mergeComparisons(ArrayRef<BCECmpBlock> Comparisons,
   }
 }
 
-static std::vector<BasicBlock *> getOrderedBlocks(PHINode &Phi,
-                                                  BasicBlock *const LastBlock,
-                                                  int NumBlocks) {
+std::vector<BasicBlock *> getOrderedBlocks(PHINode &Phi,
+                                           BasicBlock *const LastBlock,
+                                           int NumBlocks) {
   // Walk up from the last block to find other blocks.
   std::vector<BasicBlock *> Blocks(NumBlocks);
   BasicBlock *CurBlock = LastBlock;
@@ -566,7 +538,7 @@ static std::vector<BasicBlock *> getOrderedBlocks(PHINode &Phi,
   return Blocks;
 }
 
-static bool processPhi(PHINode &Phi, const TargetLibraryInfo *const TLI) {
+bool processPhi(PHINode &Phi, const TargetLibraryInfo *const TLI) {
   DEBUG(dbgs() << "processPhi()\n");
   if (Phi.getNumIncomingValues() <= 1) {
     DEBUG(dbgs() << "skip: only one incoming value in phi\n");
@@ -621,10 +593,8 @@ static bool processPhi(PHINode &Phi, const TargetLibraryInfo *const TLI) {
   return CmpChain.simplify(TLI);
 }
 
-namespace {
-
 class MergeICmps : public FunctionPass {
-public:
+ public:
   static char ID;
 
   MergeICmps() : FunctionPass(ID) {
@@ -639,17 +609,15 @@ public:
     return !PA.areAllPreserved();
   }
 
+ private:
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<TargetLibraryInfoWrapperPass>();
     AU.addRequired<TargetTransformInfoWrapperPass>();
   }
 
-private:
   PreservedAnalyses runImpl(Function &F, const TargetLibraryInfo *TLI,
                             const TargetTransformInfo *TTI);
 };
-
-} // end anonymous namespace
 
 PreservedAnalyses MergeICmps::runImpl(Function &F, const TargetLibraryInfo *TLI,
                                       const TargetTransformInfo *TTI) {
@@ -672,8 +640,9 @@ PreservedAnalyses MergeICmps::runImpl(Function &F, const TargetLibraryInfo *TLI,
   return PreservedAnalyses::all();
 }
 
-char MergeICmps::ID = 0;
+}  // namespace
 
+char MergeICmps::ID = 0;
 INITIALIZE_PASS_BEGIN(MergeICmps, "mergeicmps",
                       "Merge contiguous icmps into a memcmp", false, false)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
