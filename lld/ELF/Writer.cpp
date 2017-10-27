@@ -98,6 +98,14 @@ StringRef elf::getOutputSectionName(StringRef Name) {
   if (Config->Relocatable)
     return Name;
 
+  // This is for --emit-relocs. If .text.foo is emitted as .text, we want to
+  // emit .rela.text.foo as .rel.text for consistency (this is not technically
+  // required, but not doing it is odd). This code guarantees that.
+  if (Name.startswith(".rel."))
+    return Saver.save(".rel" + getOutputSectionName(Name.substr(4)));
+  if (Name.startswith(".rela."))
+    return Saver.save(".rela" + getOutputSectionName(Name.substr(5)));
+
   for (StringRef V :
        {".text.", ".rodata.", ".data.rel.ro.", ".data.", ".bss.rel.ro.",
         ".bss.", ".init_array.", ".fini_array.", ".ctors.", ".dtors.", ".tbss.",
