@@ -168,12 +168,11 @@ class DefinedCommon : public Defined {
 public:
   DefinedCommon(StringRef Name, uint64_t Size, uint32_t Alignment,
                 uint8_t StOther, uint8_t Type)
-      : Defined(SymbolBody::DefinedCommonKind, Name, /*IsLocal=*/false, StOther,
-                Type),
+      : Defined(DefinedCommonKind, Name, /*IsLocal=*/false, StOther, Type),
         Alignment(Alignment), Size(Size) {}
 
   static bool classof(const SymbolBody *S) {
-    return S->kind() == SymbolBody::DefinedCommonKind;
+    return S->kind() == DefinedCommonKind;
   }
 
   // The maximum alignment we have seen for this symbol.
@@ -190,14 +189,14 @@ class DefinedRegular : public Defined {
 public:
   DefinedRegular(StringRefZ Name, bool IsLocal, uint8_t StOther, uint8_t Type,
                  uint64_t Value, uint64_t Size, SectionBase *Section)
-      : Defined(SymbolBody::DefinedRegularKind, Name, IsLocal, StOther, Type),
-        Value(Value), Size(Size), Section(Section) {}
+      : Defined(DefinedRegularKind, Name, IsLocal, StOther, Type), Value(Value),
+        Size(Size), Section(Section) {}
 
   // Return true if the symbol is a PIC function.
   template <class ELFT> bool isMipsPIC() const;
 
   static bool classof(const SymbolBody *S) {
-    return S->kind() == SymbolBody::DefinedRegularKind;
+    return S->kind() == DefinedRegularKind;
   }
 
   uint64_t Value;
@@ -208,7 +207,7 @@ public:
 class Undefined : public SymbolBody {
 public:
   Undefined(StringRefZ Name, bool IsLocal, uint8_t StOther, uint8_t Type)
-      : SymbolBody(SymbolBody::UndefinedKind, Name, IsLocal, StOther, Type) {}
+      : SymbolBody(UndefinedKind, Name, IsLocal, StOther, Type) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == UndefinedKind;
@@ -217,13 +216,11 @@ public:
 
 class SharedSymbol : public Defined {
 public:
-  static bool classof(const SymbolBody *S) {
-    return S->kind() == SymbolBody::SharedKind;
-  }
+  static bool classof(const SymbolBody *S) { return S->kind() == SharedKind; }
 
   SharedSymbol(StringRef Name, uint8_t StOther, uint8_t Type,
                const void *ElfSym, const void *Verdef)
-      : Defined(SymbolBody::SharedKind, Name, /*IsLocal=*/false, StOther, Type),
+      : Defined(SharedKind, Name, /*IsLocal=*/false, StOther, Type),
         Verdef(Verdef), ElfSym(ElfSym) {
     // GNU ifunc is a mechanism to allow user-supplied functions to
     // resolve PLT slot values at load-time. This is contrary to the
@@ -295,7 +292,7 @@ public:
   InputFile *fetch();
 
 protected:
-  Lazy(SymbolBody::Kind K, StringRef Name, uint8_t Type)
+  Lazy(Kind K, StringRef Name, uint8_t Type)
       : SymbolBody(K, Name, /*IsLocal=*/false, llvm::ELF::STV_DEFAULT, Type) {}
 };
 
