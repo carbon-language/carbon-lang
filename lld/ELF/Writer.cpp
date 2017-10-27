@@ -1354,12 +1354,10 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   if (Target->NeedsThunks) {
     ThunkCreator TC;
     Script->assignAddresses();
-    if (TC.createThunks(OutputSections)) {
+    while (TC.createThunks(OutputSections)) {
       applySynthetic({InX::MipsGot},
                      [](SyntheticSection *SS) { SS->updateAllocSize(); });
       Script->assignAddresses();
-      if (TC.createThunks(OutputSections))
-        fatal("All non-range thunks should be created in first call");
     }
   }
 
