@@ -545,7 +545,6 @@ void EhFrameSection::finalizeContents() {
 // Returns data for .eh_frame_hdr. .eh_frame_hdr is a binary search table
 // to get an FDE from an address to which FDE is applied. This function
 // returns a list of such pairs.
-template <class ELFT>
 std::vector<EhFrameSection::FdeData> EhFrameSection::getFdeData() const {
   uint8_t *Buf = getParent()->Loc + OutSecOff;
   std::vector<FdeData> Ret;
@@ -1953,19 +1952,17 @@ void GdbIndexSection::writeTo(uint8_t *Buf) {
 
 bool GdbIndexSection::empty() const { return !Out::DebugInfo; }
 
-template <class ELFT>
-EhFrameHeader<ELFT>::EhFrameHeader()
+EhFrameHeader::EhFrameHeader()
     : SyntheticSection(SHF_ALLOC, SHT_PROGBITS, 1, ".eh_frame_hdr") {}
 
 // .eh_frame_hdr contains a binary search table of pointers to FDEs.
 // Each entry of the search table consists of two values,
 // the starting PC from where FDEs covers, and the FDE's address.
 // It is sorted by PC.
-template <class ELFT> void EhFrameHeader<ELFT>::writeTo(uint8_t *Buf) {
+void EhFrameHeader::writeTo(uint8_t *Buf) {
   typedef EhFrameSection::FdeData FdeData;
-  const endianness E = ELFT::TargetEndianness;
 
-  std::vector<FdeData> Fdes = InX::EhFrame->getFdeData<ELFT>();
+  std::vector<FdeData> Fdes = InX::EhFrame->getFdeData();
 
   // Sort the FDE list by their PC and uniqueify. Usually there is only
   // one FDE for a PC (i.e. function), but if ICF merges two functions
@@ -1979,26 +1976,25 @@ template <class ELFT> void EhFrameHeader<ELFT>::writeTo(uint8_t *Buf) {
   Buf[1] = DW_EH_PE_pcrel | DW_EH_PE_sdata4;
   Buf[2] = DW_EH_PE_udata4;
   Buf[3] = DW_EH_PE_datarel | DW_EH_PE_sdata4;
-  write32<E>(Buf + 4, InX::EhFrame->getParent()->Addr - this->getVA() - 4);
-  write32<E>(Buf + 8, Fdes.size());
+  write32(Buf + 4, InX::EhFrame->getParent()->Addr - this->getVA() - 4,
+          Config->Endianness);
+  write32(Buf + 8, Fdes.size(), Config->Endianness);
   Buf += 12;
 
   uint64_t VA = this->getVA();
   for (FdeData &Fde : Fdes) {
-    write32<E>(Buf, Fde.Pc - VA);
-    write32<E>(Buf + 4, Fde.FdeVA - VA);
+    write32(Buf, Fde.Pc - VA, Config->Endianness);
+    write32(Buf + 4, Fde.FdeVA - VA, Config->Endianness);
     Buf += 8;
   }
 }
 
-template <class ELFT> size_t EhFrameHeader<ELFT>::getSize() const {
+size_t EhFrameHeader::getSize() const {
   // .eh_frame_hdr has a 12 bytes header followed by an array of FDEs.
   return 12 + InX::EhFrame->NumFdes * 8;
 }
 
-template <class ELFT> bool EhFrameHeader<ELFT>::empty() const {
-  return InX::EhFrame->empty();
-}
+bool EhFrameHeader::empty() const { return InX::EhFrame->empty(); }
 
 template <class ELFT>
 VersionDefinitionSection<ELFT>::VersionDefinitionSection()
@@ -2402,6 +2398,7 @@ InputSection *InX::ARMAttributes;
 BssSection *InX::Bss;
 BssSection *InX::BssRelRo;
 BuildIdSection *InX::BuildId;
+EhFrameHeader *InX::EhFrameHdr;
 EhFrameSection *InX::EhFrame;
 SyntheticSection *InX::Dynamic;
 StringTableSection *InX::DynStrTab;
@@ -2475,11 +2472,6 @@ template class elf::SymbolTableSection<ELF32LE>;
 template class elf::SymbolTableSection<ELF32BE>;
 template class elf::SymbolTableSection<ELF64LE>;
 template class elf::SymbolTableSection<ELF64BE>;
-
-template class elf::EhFrameHeader<ELF32LE>;
-template class elf::EhFrameHeader<ELF32BE>;
-template class elf::EhFrameHeader<ELF64LE>;
-template class elf::EhFrameHeader<ELF64BE>;
 
 template class elf::VersionTableSection<ELF32LE>;
 template class elf::VersionTableSection<ELF32BE>;

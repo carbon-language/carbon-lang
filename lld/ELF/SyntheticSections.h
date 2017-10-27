@@ -80,7 +80,7 @@ public:
     uint32_t FdeVA;
   };
 
-  template <class ELFT> std::vector<FdeData> getFdeData() const;
+  std::vector<FdeData> getFdeData() const;
 
 private:
   uint64_t Size = 0;
@@ -572,7 +572,7 @@ template <class ELFT> GdbIndexSection *createGdbIndex();
 // Detailed info about internals can be found in Ian Lance Taylor's blog:
 // http://www.airs.com/blog/archives/460 (".eh_frame")
 // http://www.airs.com/blog/archives/462 (".eh_frame_hdr")
-template <class ELFT> class EhFrameHeader final : public SyntheticSection {
+class EhFrameHeader final : public SyntheticSection {
 public:
   EhFrameHeader();
   void writeTo(uint8_t *Buf) override;
@@ -811,6 +811,7 @@ struct InX {
   static BssSection *Bss;
   static BssSection *BssRelRo;
   static BuildIdSection *BuildId;
+  static EhFrameHeader *EhFrameHdr;
   static EhFrameSection *EhFrame;
   static SyntheticSection *Dynamic;
   static StringTableSection *DynStrTab;
@@ -832,7 +833,6 @@ struct InX {
 };
 
 template <class ELFT> struct In {
-  static EhFrameHeader<ELFT> *EhFrameHdr;
   static RelocationSection<ELFT> *RelaDyn;
   static RelocationSection<ELFT> *RelaPlt;
   static RelocationSection<ELFT> *RelaIplt;
@@ -841,7 +841,6 @@ template <class ELFT> struct In {
   static VersionNeedSection<ELFT> *VerNeed;
 };
 
-template <class ELFT> EhFrameHeader<ELFT> *In<ELFT>::EhFrameHdr;
 template <class ELFT> RelocationSection<ELFT> *In<ELFT>::RelaDyn;
 template <class ELFT> RelocationSection<ELFT> *In<ELFT>::RelaPlt;
 template <class ELFT> RelocationSection<ELFT> *In<ELFT>::RelaIplt;

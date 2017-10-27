@@ -373,8 +373,8 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
 
   if (!Config->Relocatable) {
     if (Config->EhFrameHdr) {
-      In<ELFT>::EhFrameHdr = make<EhFrameHeader<ELFT>>();
-      Add(In<ELFT>::EhFrameHdr);
+      InX::EhFrameHdr = make<EhFrameHeader>();
+      Add(InX::EhFrameHdr);
     }
     InX::EhFrame = make<EhFrameSection>();
     Add(InX::EhFrame);
@@ -1335,18 +1335,14 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
 
   // Dynamic section must be the last one in this list and dynamic
   // symbol table section (DynSymTab) must be the first one.
-  applySynthetic({InX::DynSymTab,    InX::Bss,
-                  InX::BssRelRo,     InX::GnuHashTab,
-                  InX::HashTab,      InX::SymTab,
-                  InX::ShStrTab,     InX::StrTab,
-                  In<ELFT>::VerDef,  InX::DynStrTab,
-                  InX::Got,          InX::MipsGot,
-                  InX::IgotPlt,      InX::GotPlt,
-                  In<ELFT>::RelaDyn, In<ELFT>::RelaIplt,
-                  In<ELFT>::RelaPlt, InX::Plt,
-                  InX::Iplt,         In<ELFT>::EhFrameHdr,
-                  In<ELFT>::VerSym,  In<ELFT>::VerNeed,
-                  InX::Dynamic},
+  applySynthetic({InX::DynSymTab,     InX::Bss,          InX::BssRelRo,
+                  InX::GnuHashTab,    InX::HashTab,      InX::SymTab,
+                  InX::ShStrTab,      InX::StrTab,       In<ELFT>::VerDef,
+                  InX::DynStrTab,     InX::Got,          InX::MipsGot,
+                  InX::IgotPlt,       InX::GotPlt,       In<ELFT>::RelaDyn,
+                  In<ELFT>::RelaIplt, In<ELFT>::RelaPlt, InX::Plt,
+                  InX::Iplt,          InX::EhFrameHdr,   In<ELFT>::VerSym,
+                  In<ELFT>::VerNeed,  InX::Dynamic},
                  [](SyntheticSection *SS) { SS->finalizeContents(); });
 
   if (!Script->HasSectionsCommand && !Config->Relocatable)
@@ -1532,10 +1528,10 @@ template <class ELFT> std::vector<PhdrEntry *> Writer<ELFT>::createPhdrs() {
     Ret.push_back(RelRo);
 
   // PT_GNU_EH_FRAME is a special section pointing on .eh_frame_hdr.
-  if (!InX::EhFrame->empty() && In<ELFT>::EhFrameHdr &&
-      InX::EhFrame->getParent() && In<ELFT>::EhFrameHdr->getParent())
-    AddHdr(PT_GNU_EH_FRAME, In<ELFT>::EhFrameHdr->getParent()->getPhdrFlags())
-        ->add(In<ELFT>::EhFrameHdr->getParent());
+  if (!InX::EhFrame->empty() && InX::EhFrameHdr && InX::EhFrame->getParent() &&
+      InX::EhFrameHdr->getParent())
+    AddHdr(PT_GNU_EH_FRAME, InX::EhFrameHdr->getParent()->getPhdrFlags())
+        ->add(InX::EhFrameHdr->getParent());
 
   // PT_OPENBSD_RANDOMIZE is an OpenBSD-specific feature. That makes
   // the dynamic linker fill the segment with random data.
@@ -1888,10 +1884,9 @@ template <class ELFT> void Writer<ELFT>::writeSections() {
     OpdCmd->template writeTo<ELFT>(Buf + Out::Opd->Offset);
   }
 
-  OutputSection *EhFrameHdr =
-      (In<ELFT>::EhFrameHdr && !In<ELFT>::EhFrameHdr->empty())
-          ? In<ELFT>::EhFrameHdr->getParent()
-          : nullptr;
+  OutputSection *EhFrameHdr = nullptr;
+  if (InX::EhFrameHdr && !InX::EhFrameHdr->empty())
+    EhFrameHdr = InX::EhFrameHdr->getParent();
 
   // In -r or -emit-relocs mode, write the relocation sections first as in
   // ELf_Rel targets we might find out that we need to modify the relocated
