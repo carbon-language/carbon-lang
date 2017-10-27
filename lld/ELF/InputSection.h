@@ -30,7 +30,6 @@ struct SectionPiece;
 
 class DefinedRegular;
 class SyntheticSection;
-template <class ELFT> class EhFrameSection;
 class MergeSyntheticSection;
 template <class ELFT> class ObjFile;
 class OutputSection;
