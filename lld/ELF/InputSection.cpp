@@ -834,7 +834,7 @@ void EhInputSection::split(ArrayRef<RelTy> Rels) {
   ArrayRef<uint8_t> Data = this->Data;
   unsigned RelI = 0;
   for (size_t Off = 0, End = Data.size(); Off != End;) {
-    size_t Size = readEhRecordSize<ELFT>(this, Off);
+    size_t Size = readEhRecordSize(this, Off);
     this->Pieces.emplace_back(Off, this, Size, getReloc(Off, Size, Rels, RelI));
     // The empty record is the end marker.
     if (Size == 4)

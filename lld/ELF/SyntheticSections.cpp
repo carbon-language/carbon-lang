@@ -551,7 +551,7 @@ std::vector<EhFrameSection::FdeData> EhFrameSection::getFdeData() const {
   std::vector<FdeData> Ret;
 
   for (CieRecord *Rec : CieRecords) {
-    uint8_t Enc = getFdeEncoding<ELFT>(Rec->Cie);
+    uint8_t Enc = getFdeEncoding(Rec->Cie);
     for (EhSectionPiece *Fde : Rec->Fdes) {
       uint32_t Pc = getFdePc(Buf, Fde->OutputOff, Enc);
       uint32_t FdeVA = getParent()->Addr + Fde->OutputOff;
