@@ -409,8 +409,7 @@ template <class RelTy>
 CieRecord *EhFrameSection<ELFT>::addCie(EhSectionPiece &Cie,
                                         ArrayRef<RelTy> Rels) {
   auto *Sec = cast<EhInputSection>(Cie.Sec);
-  const endianness E = ELFT::TargetEndianness;
-  if (read32<E>(Cie.data().data() + 4) != 0)
+  if (read32(Cie.data().data() + 4, Config->Endianness) != 0)
     fatal(toString(Sec) + ": CIE expected at beginning of .eh_frame");
 
   SymbolBody *Personality = nullptr;
@@ -466,8 +465,6 @@ template <class ELFT>
 template <class RelTy>
 void EhFrameSection<ELFT>::addSectionAux(EhInputSection *Sec,
                                          ArrayRef<RelTy> Rels) {
-  const endianness E = ELFT::TargetEndianness;
-
   DenseMap<size_t, CieRecord *> OffsetToCie;
   for (EhSectionPiece &Piece : Sec->Pieces) {
     // The empty record is the end marker.
@@ -475,7 +472,7 @@ void EhFrameSection<ELFT>::addSectionAux(EhInputSection *Sec,
       return;
 
     size_t Offset = Piece.InputOff;
-    uint32_t ID = read32<E>(Piece.data().data() + 4);
+    uint32_t ID = read32(Piece.data().data() + 4, Config->Endianness);
     if (ID == 0) {
       OffsetToCie[Offset] = addCie(Piece, Rels);
       continue;
@@ -517,18 +514,16 @@ void EhFrameSection<ELFT>::addSection(InputSectionBase *C) {
     addSectionAux(Sec, Sec->template rels<ELFT>());
 }
 
-template <class ELFT>
 static void writeCieFde(uint8_t *Buf, ArrayRef<uint8_t> D) {
   memcpy(Buf, D.data(), D.size());
 
-  size_t Aligned = alignTo(D.size(), sizeof(typename ELFT::uint));
+  size_t Aligned = alignTo(D.size(), Config->Wordsize);
 
   // Zero-clear trailing padding if it exists.
   memset(Buf + D.size(), 0, Aligned - D.size());
 
   // Fix the size field. -4 since size does not include the size field itself.
-  const endianness E = ELFT::TargetEndianness;
-  write32<E>(Buf, Aligned - 4);
+  write32(Buf, Aligned - 4, Config->Endianness);
 }
 
 template <class ELFT> void EhFrameSection<ELFT>::finalizeContents() {
@@ -555,19 +550,16 @@ template <class ELFT> void EhFrameSection<ELFT>::finalizeContents() {
   this->Size = Off;
 }
 
-template <class ELFT> static uint64_t readFdeAddr(uint8_t *Buf, int Size) {
-  const endianness E = ELFT::TargetEndianness;
+static uint64_t readFdeAddr(uint8_t *Buf, int Size) {
   switch (Size) {
   case DW_EH_PE_udata2:
-    return read16<E>(Buf);
+    return read16(Buf, Config->Endianness);
   case DW_EH_PE_udata4:
-    return read32<E>(Buf);
+    return read32(Buf, Config->Endianness);
   case DW_EH_PE_udata8:
-    return read64<E>(Buf);
+    return read64(Buf, Config->Endianness);
   case DW_EH_PE_absptr:
-    if (ELFT::Is64Bits)
-      return read64<E>(Buf);
-    return read32<E>(Buf);
+    return readUint(Buf);
   }
   fatal("unknown FDE size encoding");
 }
@@ -580,7 +572,7 @@ uint64_t EhFrameSection<ELFT>::getFdePc(uint8_t *Buf, size_t FdeOff,
   // The starting address to which this FDE applies is
   // stored at FDE + 8 byte.
   size_t Off = FdeOff + 8;
-  uint64_t Addr = readFdeAddr<ELFT>(Buf + Off, Enc & 0x7);
+  uint64_t Addr = readFdeAddr(Buf + Off, Enc & 0x7);
   if ((Enc & 0x70) == DW_EH_PE_absptr)
     return Addr;
   if ((Enc & 0x70) == DW_EH_PE_pcrel)
@@ -589,20 +581,18 @@ uint64_t EhFrameSection<ELFT>::getFdePc(uint8_t *Buf, size_t FdeOff,
 }
 
 template <class ELFT> void EhFrameSection<ELFT>::writeTo(uint8_t *Buf) {
-  const endianness E = ELFT::TargetEndianness;
-
   // Write CIE and FDE records.
   for (CieRecord *Rec : CieRecords) {
     size_t CieOffset = Rec->Cie->OutputOff;
-    writeCieFde<ELFT>(Buf + CieOffset, Rec->Cie->data());
+    writeCieFde(Buf + CieOffset, Rec->Cie->data());
 
     for (EhSectionPiece *Fde : Rec->Fdes) {
       size_t Off = Fde->OutputOff;
-      writeCieFde<ELFT>(Buf + Off, Fde->data());
+      writeCieFde(Buf + Off, Fde->data());
 
       // FDE's second word should have the offset to an associated CIE.
       // Write it.
-      write32<E>(Buf + Off + 4, Off + 4 - CieOffset);
+      write32(Buf + Off + 4, Off + 4 - CieOffset, Config->Endianness);
     }
   }
 
