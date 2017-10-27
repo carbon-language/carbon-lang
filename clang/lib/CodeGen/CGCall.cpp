@@ -1885,10 +1885,11 @@ void CodeGenModule::ConstructAttributeList(
       // the function.
       const auto *TD = FD->getAttr<TargetAttr>();
       TargetAttr::ParsedTargetAttr ParsedAttr = TD->parse();
-      if (ParsedAttr.Architecture != "")
+      if (ParsedAttr.Architecture != "" &&
+          getTarget().isValidCPUName(ParsedAttr.Architecture))
         TargetCPU = ParsedAttr.Architecture;
       if (TargetCPU != "")
-        FuncAttrs.addAttribute("target-cpu", TargetCPU);
+         FuncAttrs.addAttribute("target-cpu", TargetCPU);
       if (!Features.empty()) {
         std::sort(Features.begin(), Features.end());
         FuncAttrs.addAttribute(

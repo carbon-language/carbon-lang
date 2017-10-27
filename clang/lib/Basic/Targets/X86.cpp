@@ -1169,6 +1169,7 @@ bool X86TargetInfo::isValidFeatureName(StringRef Name) const {
       .Case("sse4.2", true)
       .Case("sse4a", true)
       .Case("tbm", true)
+      .Case("x87", true)
       .Case("xop", true)
       .Case("xsave", true)
       .Case("xsavec", true)
