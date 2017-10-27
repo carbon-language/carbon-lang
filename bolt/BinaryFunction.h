@@ -325,9 +325,6 @@ private:
   /// Original LSDA address for the function.
   uint64_t LSDAAddress{0};
 
-  /// Landing pads for the function.
-  std::set<const MCSymbol *> LandingPads;
-
   /// Associated DIEs in the .debug_info section with their respective CUs.
   /// There can be multiple because of identical code folding.
   std::vector<std::pair<const DWARFDebugInfoEntryMinimal *,
@@ -441,19 +438,8 @@ private:
     return InstA.equals(InstB, Comp);
   }
 
-  /// Clear the landing pads for all blocks contained in the range of
-  /// [StartIndex, StartIndex + NumBlocks).  This also has the effect of
-  /// removing throws that point to any of these blocks.
-  void clearLandingPads(const unsigned StartIndex, const unsigned NumBlocks);
-
-  /// Add landing pads for all blocks in the range
-  /// [StartIndex, StartIndex + NumBlocks) using LPToBBIndex.
-  void addLandingPads(const unsigned StartIndex, const unsigned NumBlocks);
-
-  /// Recompute the landing pad information for all the basic blocks in the
-  /// range of [StartIndex to StartIndex + NumBlocks).
-  void recomputeLandingPads(const unsigned StartIndex,
-                            const unsigned NumBlocks);
+  /// Recompute landing pad information for the function and all its blocks.
+  void recomputeLandingPads();
 
   /// Temporary holder of offsets that are potentially entry points.
   std::unordered_set<uint64_t> EntryOffsets;
@@ -465,10 +451,6 @@ private:
   BranchListType TakenBranches;       /// All local taken branches.
   BranchListType FTBranches;          /// All fall-through branches.
   BranchListType IgnoredBranches;     /// Branches ignored by CFG purposes.
-
-  /// Storage for all landing pads and their corresponding invokes.
-  using LandingPadsMapType = std::map<const MCSymbol *, std::vector<unsigned> >;
-  LandingPadsMapType LPToBBIndex;
 
   /// Map offset in the function to a label.
   /// Labels are used for building CFG for simple functions. For non-simple

@@ -330,10 +330,8 @@ std::pair<unsigned, uint64_t> BinaryFunction::eraseInvalidBBs() {
   assert(BasicBlocks.size() == BasicBlocksLayout.size());
 
   // Update CFG state if needed
-  if (Count > 0) {
-    updateBBIndices(0);
-    recomputeLandingPads(0, BasicBlocks.size());
-  }
+  if (Count > 0)
+    recomputeLandingPads();
 
   return std::make_pair(Count, Bytes);
 }
@@ -1457,54 +1455,39 @@ bool BinaryFunction::postProcessIndirectBranches() {
   return true;
 }
 
-void BinaryFunction::clearLandingPads(const unsigned StartIndex,
-                                      const unsigned NumBlocks) {
-  // remove all landing pads/throws for the given collection of blocks
-  for (auto I = StartIndex; I < StartIndex + NumBlocks; ++I) {
-    BasicBlocks[I]->clearLandingPads();
-  }
-}
+void BinaryFunction::recomputeLandingPads() {
+  updateBBIndices(0);
 
-void BinaryFunction::addLandingPads(const unsigned StartIndex,
-                                    const unsigned NumBlocks) {
   for (auto *BB : BasicBlocks) {
-    if (LandingPads.find(BB->getLabel()) != LandingPads.end()) {
-      const MCSymbol *LP = BB->getLabel();
-      for (unsigned I : LPToBBIndex[LP]) {
-        assert(I < BasicBlocks.size());
-        BinaryBasicBlock *ThrowBB = BasicBlocks[I];
-        const unsigned ThrowBBIndex = getIndex(ThrowBB);
-        if (ThrowBBIndex >= StartIndex && ThrowBBIndex < StartIndex + NumBlocks)
-          ThrowBB->addLandingPad(BB);
-      }
-    }
+    BB->LandingPads.clear();
+    BB->Throwers.clear();
   }
 
-  clearList(LPToBBIndex);
-}
+  for (auto *BB : BasicBlocks) {
+    for (auto &Instr : *BB) {
+      if (!BC.MIA->isInvoke(Instr))
+        continue;
 
-void BinaryFunction::recomputeLandingPads(const unsigned StartIndex,
-                                          const unsigned NumBlocks) {
-  assert(LPToBBIndex.empty());
+      const MCSymbol *LPLabel;
+      uint64_t Action;
+      std::tie(LPLabel, Action) = BC.MIA->getEHInfo(Instr);
+      if (!LPLabel)
+        continue;
 
-  clearLandingPads(StartIndex, NumBlocks);
-
-  for (auto I = StartIndex; I < StartIndex + NumBlocks; ++I) {
-    auto *BB = BasicBlocks[I];
-    for (auto &Instr : BB->instructions()) {
-      // Store info about associated landing pad.
-      if (BC.MIA->isInvoke(Instr)) {
-        const MCSymbol *LP;
-        uint64_t Action;
-        std::tie(LP, Action) = BC.MIA->getEHInfo(Instr);
-        if (LP) {
-          LPToBBIndex[LP].push_back(getIndex(BB));
-        }
-      }
+      auto *LPBlock = getBasicBlockForLabel(LPLabel);
+      BB->LandingPads.emplace_back(LPBlock);
+      LPBlock->Throwers.emplace_back(BB);
     }
+    std::sort(BB->lp_begin(), BB->lp_end());
+    auto NewEnd = std::unique(BB->lp_begin(), BB->lp_end());
+    BB->LandingPads.erase(NewEnd, BB->lp_end());
   }
 
-  addLandingPads(StartIndex, NumBlocks);
+  for (auto *BB : BasicBlocks) {
+    std::sort(BB->throw_begin(), BB->throw_end());
+    auto NewEnd = std::unique(BB->throw_begin(), BB->throw_end());
+    BB->Throwers.erase(NewEnd, BB->throw_end());
+  }
 }
 
 bool BinaryFunction::buildCFG() {
@@ -1607,16 +1590,6 @@ bool BinaryFunction::buildCFG() {
     else
       CFIOffset = getSize();
     addCFIPlaceholders(CFIOffset, InsertBB);
-
-    // Store info about associated landing pad.
-    if (MIA->isInvoke(Instr)) {
-      const MCSymbol *LP;
-      uint64_t Action;
-      std::tie(LP, Action) = MIA->getEHInfo(Instr);
-      if (LP) {
-        LPToBBIndex[LP].push_back(getIndex(InsertBB));
-      }
-    }
 
     if (MIA->isTerminator(Instr)) {
       PrevBB = InsertBB;
@@ -1810,8 +1783,7 @@ bool BinaryFunction::buildCFG() {
     DEBUG(dbgs() << "last block was marked as a fall-through\n");
   }
 
-  // Add associated landing pad blocks to each basic block.
-  addLandingPads(0, BasicBlocks.size());
+  recomputeLandingPads();
 
   // Infer frequency for non-taken branches
   if (hasValidProfile() && opts::DoMCF != MCF_DISABLE) {
@@ -1873,7 +1845,6 @@ bool BinaryFunction::buildCFG() {
   clearList(TakenBranches);
   clearList(FTBranches);
   clearList(IgnoredBranches);
-  clearList(LPToBBIndex);
   clearList(EntryOffsets);
 
   // Update the state.
@@ -3033,23 +3004,35 @@ bool BinaryFunction::validateCFG() const {
     return Valid;
 
   for (auto *BB : BasicBlocks) {
-    std::set<BinaryBasicBlock *> Seen;
+    if (!std::is_sorted(BB->lp_begin(), BB->lp_end())) {
+      errs() << "BOLT-ERROR: unsorted list of landing pads in "
+             << BB->getName() << " in function " << *this << '\n';
+      return false;
+    }
+    if (std::unique(BB->lp_begin(), BB->lp_end()) != BB->lp_end()) {
+      errs() << "BOLT-ERROR: duplicate landing pad detected in"
+             << BB->getName() << " in function " << *this << '\n';
+      return false;
+    }
+    if (!std::is_sorted(BB->throw_begin(), BB->throw_end())) {
+      errs() << "BOLT-ERROR: unsorted list of throwers in "
+             << BB->getName() << " in function " << *this << '\n';
+      return false;
+    }
+    if (std::unique(BB->throw_begin(), BB->throw_end()) != BB->throw_end()) {
+      errs() << "BOLT-ERROR: duplicate thrower detected in"
+             << BB->getName() << " in function " << *this << '\n';
+      return false;
+    }
     for (auto *LPBlock : BB->LandingPads) {
-      Valid &= Seen.count(LPBlock) == 0;
-      if (!Valid) {
-        errs() << "BOLT-WARNING: Duplicate LP seen " << LPBlock->getName()
-               << "in " << *this << "\n";
-        break;
-      }
-      Seen.insert(LPBlock);
-      auto count = LPBlock->Throwers.count(BB);
-      Valid &= (count == 1);
-      if (!Valid) {
-        errs() << "BOLT-WARNING: Inconsistent landing pad detected in "
-               << *this << ": " << LPBlock->getName()
-               << " is in LandingPads but not in " << BB->getName()
-               << "->Throwers\n";
-        break;
+      if (!std::binary_search(LPBlock->throw_begin(),
+                              LPBlock->throw_end(),
+                              BB)) {
+        errs() << "BOLT-ERROR: inconsistent landing pad detected in "
+               << *this << ": " << BB->getName()
+               << " is in LandingPads but not in " << LPBlock->getName()
+               << " Throwers\n";
+        return false;
       }
     }
   }
@@ -3590,12 +3573,7 @@ void BinaryFunction::insertBasicBlocks(
     BasicBlocks[I++] = BB.release();
   }
 
-  updateBBIndices(StartIndex);
-
-  recomputeLandingPads(StartIndex, NumNewBlocks + 1);
-
-  // Make sure the basic blocks are sorted properly.
-  assert(std::is_sorted(begin(), end()));
+  recomputeLandingPads();
 
   if (UpdateLayout) {
     updateLayout(Start, NumNewBlocks);
@@ -3624,12 +3602,7 @@ BinaryFunction::iterator BinaryFunction::insertBasicBlocks(
     BasicBlocks[I++] = BB.release();
   }
 
-  updateBBIndices(StartIndex);
-
-  recomputeLandingPads(StartIndex, NumNewBlocks + 1);
-
-  // Make sure the basic blocks are sorted properly.
-  assert(std::is_sorted(begin(), end()));
+  recomputeLandingPads();
 
   if (UpdateLayout) {
     updateLayout(*std::prev(RetIter), NumNewBlocks);

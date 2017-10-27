@@ -60,7 +60,7 @@ private:
   /// CFG information.
   std::vector<BinaryBasicBlock *> Predecessors;
   std::vector<BinaryBasicBlock *> Successors;
-  std::set<BinaryBasicBlock *> Throwers;
+  std::vector<BinaryBasicBlock *> Throwers;
   std::vector<BinaryBasicBlock *> LandingPads;
 
   /// Each successor has a corresponding BranchInfo entry in the list.
@@ -222,7 +222,7 @@ public:
     return (unsigned)Throwers.size();
   }
   bool                  throw_empty() const { return Throwers.empty(); }
-  bool                 isLandingPad() const { return !Throwers.empty(); }
+  bool                  isLandingPad() const { return !Throwers.empty(); }
 
   lp_iterator        lp_begin()       { return LandingPads.begin();   }
   const_lp_iterator  lp_begin() const { return LandingPads.begin();   }
@@ -524,9 +524,6 @@ public:
                         uint64_t Count = 0,
                         uint64_t MispredictedCount = 0);
 
-  /// Adds block to landing pad list.
-  void addLandingPad(BinaryBasicBlock *LPBlock);
-
   /// Remove /p Succ basic block from the list of successors. Update the
   /// list of predecessors of /p Succ and update branch info.
   void removeSuccessor(BinaryBasicBlock *Succ);
@@ -780,9 +777,6 @@ private:
   /// Remove predecessor of the basic block. Don't use directly, instead
   /// use removeSuccessor() function.
   void removePredecessor(BinaryBasicBlock *Pred);
-
-  /// Remove landing pads of this basic block.
-  void clearLandingPads();
 
   /// Return offset of the basic block from the function start.
   uint32_t getOffset() const {

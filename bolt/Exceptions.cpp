@@ -233,7 +233,6 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
           LPSymbol = BC.Ctx->createTempSymbol("LP", true);
           Labels[LandingPad] = LPSymbol;
         }
-        LandingPads.insert(LPSymbol);
       }
     }
 

@@ -293,22 +293,6 @@ void BinaryBasicBlock::removeDuplicateConditionalSuccessor(MCInst *CondBranch) {
   BranchInfo.push_back({Count, 0});
 }
 
-void BinaryBasicBlock::addLandingPad(BinaryBasicBlock *LPBlock) {
-  if (std::find(LandingPads.begin(), LandingPads.end(), LPBlock) == LandingPads.end()) {
-    LandingPads.push_back(LPBlock);
-  }
-  LPBlock->Throwers.insert(this);
-}
-
-void BinaryBasicBlock::clearLandingPads() {
-  for (auto *LPBlock : LandingPads) {
-    auto Count = LPBlock->Throwers.erase(this);
-    (void)Count;
-    assert(Count == 1 && "Possible duplicate entry in LandingPads");
-  }
-  LandingPads.clear();
-}
-
 bool BinaryBasicBlock::analyzeBranch(const MCSymbol *&TBB,
                                      const MCSymbol *&FBB,
                                      MCInst *&CondBranch,
