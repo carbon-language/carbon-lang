@@ -134,7 +134,7 @@ MipsAbiFlagsSection<ELFT> *MipsAbiFlagsSection<ELFT>::create() {
     Sec->Live = false;
     Create = true;
 
-    std::string Filename = toString(Sec->getFile<ELFT>());
+    std::string Filename = toString(Sec->File);
     const size_t Size = Sec->Data.size();
     // Older version of BFD (such as the default FreeBSD linker) concatenate
     // .MIPS.abiflags instead of merging. To allow for this case (or potential
@@ -203,7 +203,7 @@ MipsOptionsSection<ELFT> *MipsOptionsSection<ELFT>::create() {
     Sec->Live = false;
     Create = true;
 
-    std::string Filename = toString(Sec->getFile<ELFT>());
+    std::string Filename = toString(Sec->File);
     ArrayRef<uint8_t> D = Sec->Data;
 
     while (!D.empty()) {
@@ -262,14 +262,12 @@ MipsReginfoSection<ELFT> *MipsReginfoSection<ELFT>::create() {
     Create = true;
 
     if (Sec->Data.size() != sizeof(Elf_Mips_RegInfo)) {
-      error(toString(Sec->getFile<ELFT>()) +
-            ": invalid size of .reginfo section");
+      error(toString(Sec->File) + ": invalid size of .reginfo section");
       return nullptr;
     }
     auto *R = reinterpret_cast<const Elf_Mips_RegInfo *>(Sec->Data.data());
     if (Config->Relocatable && R->ri_gp_value)
-      error(toString(Sec->getFile<ELFT>()) +
-            ": unsupported non-zero ri_gp_value");
+      error(toString(Sec->File) + ": unsupported non-zero ri_gp_value");
 
     Reginfo.ri_gprmask |= R->ri_gprmask;
     Sec->getFile<ELFT>()->MipsGp0 = R->ri_gp_value;

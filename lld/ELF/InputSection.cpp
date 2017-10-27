@@ -251,7 +251,7 @@ std::string InputSectionBase::getLocation(uint64_t Offset) {
     SrcFile = toString(File);
 
   // Find a function symbol that encloses a given location.
-  for (SymbolBody *B : getFile<ELFT>()->getSymbols())
+  for (SymbolBody *B : File->getSymbols())
     if (auto *D = dyn_cast<DefinedRegular>(B))
       if (D->Section == this && D->Type == STT_FUNC)
         if (D->Value <= Offset && Offset < D->Value + D->Size)
