@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BinaryPassManager.h"
+#include "Passes/Aligner.h"
 #include "Passes/AllocCombiner.h"
 #include "Passes/FrameOptimizer.h"
 #include "Passes/IndirectCallPromotion.h"
@@ -392,6 +393,8 @@ void BinaryFunctionPassManager::runAllPasses(
   Manager.registerPass(
     llvm::make_unique<SimplifyConditionalTailCalls>(PrintSCTC),
     opts::SimplifyConditionalTailCalls);
+
+  Manager.registerPass(llvm::make_unique<AlignerPass>());
 
   // This pass should always run last.*
   Manager.registerPass(llvm::make_unique<FinalizeFunctions>(PrintFinalized));

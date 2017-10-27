@@ -241,7 +241,13 @@ private:
   uint64_t MaxSize{std::numeric_limits<uint64_t>::max()};
 
   /// Alignment requirements for the function.
-  uint64_t Alignment{2};
+  uint16_t Alignment{2};
+
+  /// Maximum number of bytes used for alignment of hot part of the function.
+  uint16_t MaxAlignmentBytes{0};
+
+  /// Maximum number of bytes used for alignment of cold part of the function.
+  uint16_t MaxColdAlignmentBytes{0};
 
   const MCSymbol *PersonalityFunction{nullptr};
   uint8_t PersonalityEncoding{dwarf::DW_EH_PE_sdata4 | dwarf::DW_EH_PE_pcrel};
@@ -1580,13 +1586,31 @@ public:
     return *this;
   }
 
-  BinaryFunction &setAlignment(uint64_t Align) {
+  BinaryFunction &setAlignment(uint16_t Align) {
     Alignment = Align;
     return *this;
   }
 
-  uint64_t getAlignment() const {
+  uint16_t getAlignment() const {
     return Alignment;
+  }
+
+  BinaryFunction &setMaxAlignmentBytes(uint16_t MaxAlignBytes) {
+    MaxAlignmentBytes = MaxAlignBytes;
+    return *this;
+  }
+
+  uint16_t getMaxAlignmentBytes() const {
+    return MaxAlignmentBytes;
+  }
+
+  BinaryFunction &setMaxColdAlignmentBytes(uint16_t MaxAlignBytes) {
+    MaxColdAlignmentBytes = MaxAlignBytes;
+    return *this;
+  }
+
+  uint16_t getMaxColdAlignmentBytes() const {
+    return MaxColdAlignmentBytes;
   }
 
   BinaryFunction &setImageAddress(uint64_t Address) {

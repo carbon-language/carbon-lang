@@ -90,20 +90,6 @@ OutputFilename("o",
   cl::Required,
   cl::cat(BoltOutputCategory));
 
-cl::opt<unsigned>
-AlignFunctions("align-functions",
-  cl::desc("align functions at a given value (relocation mode)"),
-  cl::init(64),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
-cl::opt<unsigned>
-AlignFunctionsMaxBytes("align-functions-max-bytes",
-  cl::desc("maximum number of bytes to use to align functions"),
-  cl::init(32),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
 cl::opt<bool>
 AllowStripped("allow-stripped",
   cl::desc("allow processing of stripped binaries"),
@@ -2190,8 +2176,11 @@ void RewriteInstance::emitFunction(MCStreamer &Streamer, BinaryFunction &Functio
 
   if (opts::Relocs) {
     Streamer.EmitCodeAlignment(BinaryFunction::MinAlign);
-    Streamer.EmitCodeAlignment(opts::AlignFunctions,
-                               opts::AlignFunctionsMaxBytes);
+    auto MaxAlignBytes = EmitColdPart
+      ? Function.getMaxColdAlignmentBytes()
+      : Function.getMaxAlignmentBytes();
+    if (MaxAlignBytes > 0)
+      Streamer.EmitCodeAlignment(Function.getAlignment(), MaxAlignBytes);
   } else {
     Streamer.EmitCodeAlignment(Function.getAlignment());
     Streamer.setCodeSkew(EmitColdPart ? 0 : Function.getAddress());

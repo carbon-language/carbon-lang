@@ -1,4 +1,5 @@
 add_llvm_library(LLVMBOLTPasses
+  Aligner.cpp
   AllocCombiner.cpp
   BinaryPasses.cpp
   BinaryFunctionCallGraph.cpp
