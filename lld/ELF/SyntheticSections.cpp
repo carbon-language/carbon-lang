@@ -52,6 +52,10 @@ using namespace lld::elf;
 
 constexpr size_t MergeNoTailSection::NumShards;
 
+static void write32(void *Buf, uint32_t Val) {
+  endian::write32(Buf, Val, Config->Endianness);
+}
+
 uint64_t SyntheticSection::getVA() const {
   if (OutputSection *Sec = getParent())
     return Sec->Addr + OutSecOff;
@@ -319,10 +323,9 @@ BuildIdSection::BuildIdSection()
       HashSize(getHashSize()) {}
 
 void BuildIdSection::writeTo(uint8_t *Buf) {
-  endianness E = Config->Endianness;
-  write32(Buf, 4, E);                   // Name size
-  write32(Buf + 4, HashSize, E);        // Content size
-  write32(Buf + 8, NT_GNU_BUILD_ID, E); // Type
+  write32(Buf, 4);                      // Name size
+  write32(Buf + 4, HashSize);           // Content size
+  write32(Buf + 8, NT_GNU_BUILD_ID);    // Type
   memcpy(Buf + 12, "GNU", 4);           // Name string
   HashBuf = Buf + 16;
 }
@@ -513,7 +516,7 @@ static void writeCieFde(uint8_t *Buf, ArrayRef<uint8_t> D) {
   memset(Buf + D.size(), 0, Aligned - D.size());
 
   // Fix the size field. -4 since size does not include the size field itself.
-  write32(Buf, Aligned - 4, Config->Endianness);
+  write32(Buf, Aligned - 4);
 }
 
 void EhFrameSection::finalizeContents() {
@@ -599,7 +602,7 @@ void EhFrameSection::writeTo(uint8_t *Buf) {
 
       // FDE's second word should have the offset to an associated CIE.
       // Write it.
-      write32(Buf + Off + 4, Off + 4 - CieOffset, Config->Endianness);
+      write32(Buf + Off + 4, Off + 4 - CieOffset);
     }
   }
 
@@ -1489,11 +1492,10 @@ void GnuHashTableSection::finalizeContents() {
 
 void GnuHashTableSection::writeTo(uint8_t *Buf) {
   // Write a header.
-  write32(Buf, NBuckets, Config->Endianness);
-  write32(Buf + 4, InX::DynSymTab->getNumSymbols() - Symbols.size(),
-          Config->Endianness);
-  write32(Buf + 8, MaskWords, Config->Endianness);
-  write32(Buf + 12, getShift2(), Config->Endianness);
+  write32(Buf, NBuckets);
+  write32(Buf + 4, InX::DynSymTab->getNumSymbols() - Symbols.size());
+  write32(Buf + 8, MaskWords);
+  write32(Buf + 12, getShift2());
   Buf += 16;
 
   // Write a bloom filter and a hash table.
@@ -1531,7 +1533,7 @@ void GnuHashTableSection::writeHashTable(uint8_t *Buf) {
   uint32_t *Buckets = reinterpret_cast<uint32_t *>(Buf);
   for (size_t I = 0; I < NBuckets; ++I)
     if (!Syms[I].empty())
-      write32(Buckets + I, Syms[I][0].Body->DynsymIndex, Config->Endianness);
+      write32(Buckets + I, Syms[I][0].Body->DynsymIndex);
 
   // Write a hash value table. It represents a sequence of chains that
   // share the same hash modulo value. The last element of each chain
@@ -1542,8 +1544,8 @@ void GnuHashTableSection::writeHashTable(uint8_t *Buf) {
     if (Vec.empty())
       continue;
     for (const Entry &Ent : makeArrayRef(Vec).drop_back())
-      write32(Values + I++, Ent.Hash & ~1, Config->Endianness);
-    write32(Values + I++, Vec.back().Hash | 1, Config->Endianness);
+      write32(Values + I++, Ent.Hash & ~1);
+    write32(Values + I++, Vec.back().Hash | 1);
   }
 }
 
@@ -1623,8 +1625,8 @@ void HashTableSection::writeTo(uint8_t *Buf) {
   unsigned NumSymbols = InX::DynSymTab->getNumSymbols();
 
   uint32_t *P = reinterpret_cast<uint32_t *>(Buf);
-  write32(P++, NumSymbols, Config->Endianness); // nbucket
-  write32(P++, NumSymbols, Config->Endianness); // nchain
+  write32(P++, NumSymbols); // nbucket
+  write32(P++, NumSymbols); // nchain
 
   uint32_t *Buckets = P;
   uint32_t *Chains = P + NumSymbols;
@@ -1635,7 +1637,7 @@ void HashTableSection::writeTo(uint8_t *Buf) {
     unsigned I = Body->DynsymIndex;
     uint32_t Hash = hashSysV(Name) % NumSymbols;
     Chains[I] = Buckets[Hash];
-    write32(Buckets + Hash, I, Config->Endianness);
+    write32(Buckets + Hash, I);
   }
 }
 
@@ -1974,15 +1976,14 @@ void EhFrameHeader::writeTo(uint8_t *Buf) {
   Buf[1] = DW_EH_PE_pcrel | DW_EH_PE_sdata4;
   Buf[2] = DW_EH_PE_udata4;
   Buf[3] = DW_EH_PE_datarel | DW_EH_PE_sdata4;
-  write32(Buf + 4, InX::EhFrame->getParent()->Addr - this->getVA() - 4,
-          Config->Endianness);
-  write32(Buf + 8, Fdes.size(), Config->Endianness);
+  write32(Buf + 4, InX::EhFrame->getParent()->Addr - this->getVA() - 4);
+  write32(Buf + 8, Fdes.size());
   Buf += 12;
 
   uint64_t VA = this->getVA();
   for (FdeData &Fde : Fdes) {
-    write32(Buf, Fde.Pc - VA, Config->Endianness);
-    write32(Buf + 4, Fde.FdeVA - VA, Config->Endianness);
+    write32(Buf, Fde.Pc - VA);
+    write32(Buf + 4, Fde.FdeVA - VA);
     Buf += 8;
   }
 }
@@ -2364,7 +2365,7 @@ void ARMExidxSentinelSection::writeTo(uint8_t *Buf) {
   uint64_t S = LS->getParent()->Addr + LS->getOffset(LS->getSize());
   uint64_t P = getVA();
   Target->relocateOne(Buf, R_ARM_PREL31, S - P);
-  write32le(Buf + 4, 0x1);
+  write32le(Buf + 4, 1);
 }
 
 ThunkSection::ThunkSection(OutputSection *OS, uint64_t Off)
