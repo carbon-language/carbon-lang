@@ -51,12 +51,12 @@ public:
 
   // Decide whether a Thunk is needed for the relocation from File
   // targeting S.
-  virtual bool needsThunk(RelExpr Expr, RelType Type, const InputFile *File,
+  virtual bool needsThunk(RelExpr Expr, RelType RelocType,
+                          const InputFile *File, uint64_t BranchAddr,
                           const SymbolBody &S) const;
-
-  // Return true if we can reach Dst from Src with Relocation Type
-  virtual bool inBranchRange(RelType Type, uint64_t Src, uint64_t Dst) const;
-
+  // Return true if we can reach Dst from Src with Relocation RelocType
+  virtual bool inBranchRange(RelType Type, uint64_t Src,
+                             uint64_t Dst) const;
   virtual RelExpr getRelExpr(RelType Type, const SymbolBody &S,
                              const uint8_t *Loc) const = 0;
 

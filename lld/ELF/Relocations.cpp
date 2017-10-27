@@ -1072,12 +1072,18 @@ void ThunkCreator::mergeThunks(ArrayRef<OutputSection *> OutputSections) {
           // std::merge requires a strict weak ordering.
           if (A->OutSecOff < B->OutSecOff)
             return true;
-          if (A->OutSecOff == B->OutSecOff)
+          if (A->OutSecOff == B->OutSecOff) {
+            auto *TA = dyn_cast<ThunkSection>(A);
+            auto *TB = dyn_cast<ThunkSection>(B);
             // Check if Thunk is immediately before any specific Target
             // InputSection for example Mips LA25 Thunks.
-            if (auto *TA = dyn_cast<ThunkSection>(A))
-              if (TA && TA->getTargetInputSection() == B)
-                return true;
+            if (TA && TA->getTargetInputSection() == B)
+              return true;
+            if (TA && !TB && !TA->getTargetInputSection())
+              // Place Thunk Sections without specific targets before
+              // non-Thunk Sections.
+              return true;
+          }
           return false;
         };
         std::merge(ISD->Sections.begin(), ISD->Sections.end(),
@@ -1088,17 +1094,32 @@ void ThunkCreator::mergeThunks(ArrayRef<OutputSection *> OutputSections) {
       });
 }
 
-ThunkSection *ThunkCreator::getISDThunkSec(OutputSection *OS,
-                                           InputSectionDescription *ISD) {
-  // FIXME: When range extension thunks are supported we will need to check
-  // that the ThunkSection is in range of the caller.
-  if (!ISD->ThunkSections.empty())
-    return ISD->ThunkSections.front();
+// Find or create a ThunkSection within the InputSectionDescription (ISD) that
+// is in range of Src. An ISR maps to a range of InputSections described by a
+// linker script section pattern such as { .text .text.* }.
+ThunkSection *ThunkCreator::getISDThunkSec(OutputSection *OS, InputSection *IS,
+                                           InputSectionDescription *ISD,
+                                           uint32_t Type, uint64_t Src) {
+  for (ThunkSection *TS : ISD->ThunkSections) {
+    uint64_t TSBase = OS->Addr + TS->OutSecOff;
+    uint64_t TSLimit = TSBase + TS->getSize();
+    if (Target->inBranchRange(Type, Src, (Src > TSLimit) ? TSBase : TSLimit))
+      return TS;
+  }
 
-  // FIXME: When range extension thunks are supported we must handle the case
-  // where no pre-created ThunkSections are in range by creating a new one in
-  // range; for now, it is unreachable.
-  llvm_unreachable("Must have created at least one ThunkSection per ISR");
+  // No suitable ThunkSection exists. This can happen when there is a branch
+  // with lower range than the ThunkSection spacing or when there are too
+  // many Thunks. Create a new ThunkSection as close to the InputSection as
+  // possible. Error if InputSection is so large we cannot place ThunkSection
+  // anywhere in Range.
+  uint64_t ThunkSecOff = IS->OutSecOff;
+  if (!Target->inBranchRange(Type, Src, OS->Addr + ThunkSecOff)) {
+    ThunkSecOff = IS->OutSecOff + IS->getSize();
+    if (!Target->inBranchRange(Type, Src, OS->Addr + ThunkSecOff))
+      fatal("InputSection too large for range extension thunk " +
+            IS->getObjMsg(Src - (OS->Addr + IS->OutSecOff)));
+  }
+  return addThunkSection(OS, ISD, ThunkSecOff);
 }
 
 // Add a Thunk that needs to be placed in a ThunkSection that immediately
@@ -1165,13 +1186,14 @@ ThunkSection *ThunkCreator::addThunkSection(OutputSection *OS,
   return TS;
 }
 
-std::pair<Thunk *, bool> ThunkCreator::getThunk(SymbolBody &Body,
-                                                RelType Type) {
+std::pair<Thunk *, bool> ThunkCreator::getThunk(SymbolBody &Body, RelType Type,
+                                                uint64_t Src) {
   auto Res = ThunkedSymbols.insert({&Body, std::vector<Thunk *>()});
   if (!Res.second) {
     // Check existing Thunks for Body to see if they can be reused
     for (Thunk *ET : Res.first->second)
-      if (ET->isCompatibleWith(Type))
+      if (ET->isCompatibleWith(Type) &&
+          Target->inBranchRange(Type, Src, ET->ThunkSym->getVA()))
         return std::make_pair(ET, false);
   }
   // No existing compatible Thunk in range, create a new one
@@ -1202,8 +1224,7 @@ void ThunkCreator::forEachInputSectionDescription(
 // finalized. If any Thunks are added to an InputSectionDescription the
 // offsets within the OutputSection of the InputSections will change.
 //
-// FIXME: All Thunks are assumed to be in range of the relocation. Range
-// extension Thunks are not yet supported.
+// FIXME: Initial support for RangeThunks; only one pass supported.
 bool ThunkCreator::createThunks(ArrayRef<OutputSection *> OutputSections) {
   bool AddressesChanged = false;
   if (Pass == 0 && Target->ThunkSectionSpacing)
@@ -1219,12 +1240,13 @@ bool ThunkCreator::createThunks(ArrayRef<OutputSection *> OutputSections) {
         for (InputSection *IS : ISD->Sections)
           for (Relocation &Rel : IS->Relocations) {
             SymbolBody &Body = *Rel.Sym;
+            uint64_t Src = OS->Addr + IS->OutSecOff + Rel.Offset;
             if (Thunks.find(&Body) != Thunks.end() ||
-                !Target->needsThunk(Rel.Expr, Rel.Type, IS->File, Body))
+                !Target->needsThunk(Rel.Expr, Rel.Type, IS->File, Src, Body))
               continue;
             Thunk *T;
             bool IsNew;
-            std::tie(T, IsNew) = getThunk(Body, Rel.Type);
+            std::tie(T, IsNew) = getThunk(Body, Rel.Type, Src);
             if (IsNew) {
               AddressesChanged = true;
               // Find or create a ThunkSection for the new Thunk
@@ -1232,7 +1254,7 @@ bool ThunkCreator::createThunks(ArrayRef<OutputSection *> OutputSections) {
               if (auto *TIS = T->getTargetInputSection())
                 TS = getISThunkSec(TIS);
               else
-                TS = getISDThunkSec(OS, ISD);
+                TS = getISDThunkSec(OS, IS, ISD, Rel.Type, Src);
               TS->addThunk(T);
               Thunks[T->ThunkSym] = T;
             }

@@ -139,7 +139,11 @@ public:
 
 private:
   void mergeThunks(ArrayRef<OutputSection *> OutputSections);
-  ThunkSection *getISDThunkSec(OutputSection *OS, InputSectionDescription *ISD);
+
+  ThunkSection *getISDThunkSec(OutputSection *OS, InputSection *IS,
+                               InputSectionDescription *ISD, uint32_t Type,
+                               uint64_t Src);
+
   ThunkSection *getISThunkSec(InputSection *IS);
 
   void createInitialThunkSections(ArrayRef<OutputSection *> OutputSections);
@@ -148,7 +152,8 @@ private:
       ArrayRef<OutputSection *> OutputSections,
       std::function<void(OutputSection *, InputSectionDescription *)> Fn);
 
-  std::pair<Thunk *, bool> getThunk(SymbolBody &Body, RelType Type);
+  std::pair<Thunk *, bool> getThunk(SymbolBody &Body, RelType Type,
+                                    uint64_t Src);
 
   ThunkSection *addThunkSection(OutputSection *OS, InputSectionDescription *,
                                 uint64_t Off);

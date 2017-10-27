@@ -1352,17 +1352,12 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   // It is linker's responsibility to create thunks containing long
   // jump instructions if jump targets are too far. Create thunks.
   if (Target->NeedsThunks) {
-    // FIXME: only ARM Interworking and Mips LA25 Thunks are implemented,
-    // these
-    // do not require address information. To support range extension Thunks
-    // we need to assign addresses so that we can tell if jump instructions
-    // are out of range. This will need to turn into a loop that converges
-    // when no more Thunks are added
     ThunkCreator TC;
     Script->assignAddresses();
     if (TC.createThunks(OutputSections)) {
       applySynthetic({InX::MipsGot},
                      [](SyntheticSection *SS) { SS->updateAllocSize(); });
+      Script->assignAddresses();
       if (TC.createThunks(OutputSections))
         fatal("All non-range thunks should be created in first call");
     }
