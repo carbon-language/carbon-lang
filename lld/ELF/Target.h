@@ -74,6 +74,10 @@ public:
   // end of .got
   uint64_t GotBaseSymOff = 0;
 
+  // On systems with range extensions we place collections of Thunks at
+  // regular spacings that enable the majority of branches reach the Thunks.
+  uint32_t ThunkSectionSpacing = 0;
+
   RelType CopyRel;
   RelType GotRel;
   RelType PltRel;

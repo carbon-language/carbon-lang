@@ -1055,7 +1055,11 @@ void ThunkCreator::mergeThunks(ArrayRef<OutputSection *> OutputSections) {
         if (ISD->ThunkSections.empty())
           return;
 
-        // Order Thunks in ascending OutSecOff
+        // Remove any zero sized precreated Thunks.
+        llvm::erase_if(ISD->ThunkSections, [](const ThunkSection *TS) {
+          return TS->getSize() == 0;
+        });
+        // Order Thunks in ascending OutSecOff.
         std::stable_sort(ISD->ThunkSections.begin(), ISD->ThunkSections.end(),
                          [](const ThunkSection *A, const ThunkSection *B) {
                            return A->OutSecOff < B->OutSecOff;
@@ -1084,22 +1088,17 @@ void ThunkCreator::mergeThunks(ArrayRef<OutputSection *> OutputSections) {
       });
 }
 
-static uint32_t findEndOfFirstNonExec(OutputSection &Cmd) {
-  for (BaseCommand *Base : Cmd.SectionCommands)
-    if (auto *ISD = dyn_cast<InputSectionDescription>(Base))
-      for (auto *IS : ISD->Sections)
-        if ((IS->Flags & SHF_EXECINSTR) == 0)
-          return IS->OutSecOff + IS->getSize();
-  return 0;
-}
-
-ThunkSection *ThunkCreator::getOSThunkSec(OutputSection *OS,
-                                          InputSectionDescription *ISD) {
+ThunkSection *ThunkCreator::getISDThunkSec(OutputSection *OS,
+                                           InputSectionDescription *ISD) {
+  // FIXME: When range extension thunks are supported we will need to check
+  // that the ThunkSection is in range of the caller.
   if (!ISD->ThunkSections.empty())
     return ISD->ThunkSections.front();
 
-  uint32_t Off = findEndOfFirstNonExec(*OS);
-  return addThunkSection(OS, ISD, Off);
+  // FIXME: When range extension thunks are supported we must handle the case
+  // where no pre-created ThunkSections are in range by creating a new one in
+  // range; for now, it is unreachable.
+  llvm_unreachable("Must have created at least one ThunkSection per ISR");
 }
 
 // Add a Thunk that needs to be placed in a ThunkSection that immediately
@@ -1124,6 +1123,38 @@ ThunkSection *ThunkCreator::getISThunkSec(InputSection *IS) {
       }
     }
   return TS;
+}
+
+// Create one or more ThunkSections per OS that can be used to place Thunks.
+// We attempt to place the ThunkSections using the following desirable
+// properties:
+// - Within range of the maximum number of callers
+// - Minimise the number of ThunkSections
+//
+// We follow a simple but conservative heuristic to place ThunkSections at
+// offsets that are multiples of a Target specific branch range.
+// For an InputSectionRange that is smaller than the range, a single
+// ThunkSection at the end of the range will do.
+void ThunkCreator::createInitialThunkSections(
+    ArrayRef<OutputSection *> OutputSections) {
+  forEachInputSectionDescription(
+      OutputSections, [&](OutputSection *OS, InputSectionDescription *ISD) {
+        if (ISD->Sections.empty())
+          return;
+        uint32_t ISLimit;
+        uint32_t PrevISLimit = ISD->Sections.front()->OutSecOff;
+        uint32_t ThunkUpperBound = PrevISLimit + Target->ThunkSectionSpacing;
+
+        for (const InputSection *IS : ISD->Sections) {
+          ISLimit = IS->OutSecOff + IS->getSize();
+          if (ISLimit > ThunkUpperBound) {
+            addThunkSection(OS, ISD, PrevISLimit);
+            ThunkUpperBound = PrevISLimit + Target->ThunkSectionSpacing;
+          }
+          PrevISLimit = ISLimit;
+        }
+        addThunkSection(OS, ISD, ISLimit);
+      });
 }
 
 ThunkSection *ThunkCreator::addThunkSection(OutputSection *OS,
@@ -1175,6 +1206,9 @@ void ThunkCreator::forEachInputSectionDescription(
 // extension Thunks are not yet supported.
 bool ThunkCreator::createThunks(ArrayRef<OutputSection *> OutputSections) {
   bool AddressesChanged = false;
+  if (Pass == 0 && Target->ThunkSectionSpacing)
+    createInitialThunkSections(OutputSections);
+
   // Create all the Thunks and insert them into synthetic ThunkSections. The
   // ThunkSections are later inserted back into InputSectionDescriptions.
   // We separate the creation of ThunkSections from the insertion of the
@@ -1198,7 +1232,7 @@ bool ThunkCreator::createThunks(ArrayRef<OutputSection *> OutputSections) {
               if (auto *TIS = T->getTargetInputSection())
                 TS = getISThunkSec(TIS);
               else
-                TS = getOSThunkSec(OS, ISD);
+                TS = getISDThunkSec(OS, ISD);
               TS->addThunk(T);
               Thunks[T->ThunkSym] = T;
             }

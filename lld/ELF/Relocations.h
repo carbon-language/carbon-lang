@@ -139,16 +139,20 @@ public:
 
 private:
   void mergeThunks(ArrayRef<OutputSection *> OutputSections);
-  ThunkSection *getOSThunkSec(OutputSection *OS, InputSectionDescription *ISD);
+  ThunkSection *getISDThunkSec(OutputSection *OS, InputSectionDescription *ISD);
   ThunkSection *getISThunkSec(InputSection *IS);
+
+  void createInitialThunkSections(ArrayRef<OutputSection *> OutputSections);
 
   void forEachInputSectionDescription(
       ArrayRef<OutputSection *> OutputSections,
       std::function<void(OutputSection *, InputSectionDescription *)> Fn);
 
   std::pair<Thunk *, bool> getThunk(SymbolBody &Body, RelType Type);
+
   ThunkSection *addThunkSection(OutputSection *OS, InputSectionDescription *,
                                 uint64_t Off);
+
   // Record all the available Thunks for a Symbol
   llvm::DenseMap<SymbolBody *, std::vector<Thunk *>> ThunkedSymbols;
 
