@@ -1048,40 +1048,40 @@ template <class ELFT> void elf::scanRelocations(InputSectionBase &S) {
     scanRelocs<ELFT>(S, S.rels<ELFT>());
 }
 
-// Insert the Thunks for OutputSection OS into their designated place
-// in the Sections vector, and recalculate the InputSection output section
-// offsets.
-// This may invalidate any output section offsets stored outside of InputSection
-void ThunkCreator::mergeThunks() {
-  for (auto &KV : ThunkSections) {
-    std::vector<InputSection *> *ISR = KV.first;
-    std::vector<ThunkSection *> &Thunks = KV.second;
+// Merge the ThunkSections created this pass into the InputSectionDescriptions.
+void ThunkCreator::mergeThunks(ArrayRef<OutputSection *> OutputSections) {
+  forEachInputSectionDescription(
+      OutputSections, [&](OutputSection *OS, InputSectionDescription *ISD) {
+        if (ISD->ThunkSections.empty())
+          return;
 
-    // Order Thunks in ascending OutSecOff
-    auto ThunkCmp = [](const ThunkSection *A, const ThunkSection *B) {
-      return A->OutSecOff < B->OutSecOff;
-    };
-    std::stable_sort(Thunks.begin(), Thunks.end(), ThunkCmp);
+        // Order Thunks in ascending OutSecOff
+        std::stable_sort(ISD->ThunkSections.begin(), ISD->ThunkSections.end(),
+                         [](const ThunkSection *A, const ThunkSection *B) {
+                           return A->OutSecOff < B->OutSecOff;
+                         });
 
-    // Merge sorted vectors of Thunks and InputSections by OutSecOff
-    std::vector<InputSection *> Tmp;
-    Tmp.reserve(ISR->size() + Thunks.size());
-    auto MergeCmp = [](const InputSection *A, const InputSection *B) {
-      // std::merge requires a strict weak ordering.
-      if (A->OutSecOff < B->OutSecOff)
-        return true;
-      if (A->OutSecOff == B->OutSecOff)
-        // Check if Thunk is immediately before any specific Target InputSection
-        // for example Mips LA25 Thunks.
-        if (auto *TA = dyn_cast<ThunkSection>(A))
-          if (TA && TA->getTargetInputSection() == B)
+        // Merge sorted vectors of Thunks and InputSections by OutSecOff
+        std::vector<InputSection *> Tmp;
+        Tmp.reserve(ISD->Sections.size() + ISD->ThunkSections.size());
+        auto MergeCmp = [](const InputSection *A, const InputSection *B) {
+          // std::merge requires a strict weak ordering.
+          if (A->OutSecOff < B->OutSecOff)
             return true;
-      return false;
-    };
-    std::merge(ISR->begin(), ISR->end(), Thunks.begin(), Thunks.end(),
-               std::back_inserter(Tmp), MergeCmp);
-    *ISR = std::move(Tmp);
-  }
+          if (A->OutSecOff == B->OutSecOff)
+            // Check if Thunk is immediately before any specific Target
+            // InputSection for example Mips LA25 Thunks.
+            if (auto *TA = dyn_cast<ThunkSection>(A))
+              if (TA && TA->getTargetInputSection() == B)
+                return true;
+          return false;
+        };
+        std::merge(ISD->Sections.begin(), ISD->Sections.end(),
+                   ISD->ThunkSections.begin(), ISD->ThunkSections.end(),
+                   std::back_inserter(Tmp), MergeCmp);
+        ISD->Sections = std::move(Tmp);
+        ISD->ThunkSections.clear();
+      });
 }
 
 static uint32_t findEndOfFirstNonExec(OutputSection &Cmd) {
@@ -1094,12 +1094,12 @@ static uint32_t findEndOfFirstNonExec(OutputSection &Cmd) {
 }
 
 ThunkSection *ThunkCreator::getOSThunkSec(OutputSection *OS,
-                                          std::vector<InputSection *> *ISR) {
-  if (CurTS == nullptr) {
-    uint32_t Off = findEndOfFirstNonExec(*OS);
-    CurTS = addThunkSection(OS, ISR, Off);
-  }
-  return CurTS;
+                                          InputSectionDescription *ISD) {
+  if (!ISD->ThunkSections.empty())
+    return ISD->ThunkSections.front();
+
+  uint32_t Off = findEndOfFirstNonExec(*OS);
+  return addThunkSection(OS, ISD, Off);
 }
 
 // Add a Thunk that needs to be placed in a ThunkSection that immediately
@@ -1112,27 +1112,25 @@ ThunkSection *ThunkCreator::getISThunkSec(InputSection *IS) {
   // Find InputSectionRange within Target Output Section (TOS) that the
   // InputSection (IS) that we need to precede is in.
   OutputSection *TOS = IS->getParent();
-  std::vector<InputSection *> *Range = nullptr;
   for (BaseCommand *BC : TOS->SectionCommands)
     if (auto *ISD = dyn_cast<InputSectionDescription>(BC)) {
       InputSection *first = ISD->Sections.front();
       InputSection *last = ISD->Sections.back();
       if (IS->OutSecOff >= first->OutSecOff &&
           IS->OutSecOff <= last->OutSecOff) {
-        Range = &ISD->Sections;
+        TS = addThunkSection(TOS, ISD, IS->OutSecOff);
+        ThunkedSections[IS] = TS;
         break;
       }
     }
-  TS = addThunkSection(TOS, Range, IS->OutSecOff);
-  ThunkedSections[IS] = TS;
   return TS;
 }
 
 ThunkSection *ThunkCreator::addThunkSection(OutputSection *OS,
-                                            std::vector<InputSection *> *ISR,
+                                            InputSectionDescription *ISD,
                                             uint64_t Off) {
   auto *TS = make<ThunkSection>(OS, Off);
-  ThunkSections[ISR].push_back(TS);
+  ISD->ThunkSections.push_back(TS);
   return TS;
 }
 
@@ -1153,73 +1151,66 @@ std::pair<Thunk *, bool> ThunkCreator::getThunk(SymbolBody &Body,
 
 // Call Fn on every executable InputSection accessed via the linker script
 // InputSectionDescription::Sections.
-void ThunkCreator::forEachExecInputSection(
+void ThunkCreator::forEachInputSectionDescription(
     ArrayRef<OutputSection *> OutputSections,
-    std::function<void(OutputSection *, std::vector<InputSection *> *,
-                       InputSection *)>
-        Fn) {
+    std::function<void(OutputSection *, InputSectionDescription *)> Fn) {
   for (OutputSection *OS : OutputSections) {
     if (!(OS->Flags & SHF_ALLOC) || !(OS->Flags & SHF_EXECINSTR))
       continue;
     for (BaseCommand *BC : OS->SectionCommands)
-      if (auto *ISD = dyn_cast<InputSectionDescription>(BC)) {
-        CurTS = nullptr;
-        for (InputSection *IS : ISD->Sections)
-          Fn(OS, &ISD->Sections, IS);
-      }
+      if (auto *ISD = dyn_cast<InputSectionDescription>(BC))
+        Fn(OS, ISD);
   }
 }
 
 // Process all relocations from the InputSections that have been assigned
-// to OutputSections and redirect through Thunks if needed.
+// to InputSectionDescriptions and redirect through Thunks if needed.
 //
 // createThunks must be called after scanRelocs has created the Relocations for
 // each InputSection. It must be called before the static symbol table is
-// finalized. If any Thunks are added to an OutputSection the output section
-// offsets of the InputSections will change.
+// finalized. If any Thunks are added to an InputSectionDescription the
+// offsets within the OutputSection of the InputSections will change.
 //
 // FIXME: All Thunks are assumed to be in range of the relocation. Range
 // extension Thunks are not yet supported.
 bool ThunkCreator::createThunks(ArrayRef<OutputSection *> OutputSections) {
-  if (Pass > 0)
-    ThunkSections.clear();
-
+  bool AddressesChanged = false;
   // Create all the Thunks and insert them into synthetic ThunkSections. The
-  // ThunkSections are later inserted back into the OutputSection.
-
+  // ThunkSections are later inserted back into InputSectionDescriptions.
   // We separate the creation of ThunkSections from the insertion of the
-  // ThunkSections back into the OutputSection as ThunkSections are not always
-  // inserted into the same OutputSection as the caller.
-  forEachExecInputSection(OutputSections, [&](OutputSection *OS,
-                                              std::vector<InputSection *> *ISR,
-                                              InputSection *IS) {
-    for (Relocation &Rel : IS->Relocations) {
-      SymbolBody &Body = *Rel.Sym;
-      if (Thunks.find(&Body) != Thunks.end() ||
-          !Target->needsThunk(Rel.Expr, Rel.Type, IS->File, Body))
-        continue;
-      Thunk *T;
-      bool IsNew;
-      std::tie(T, IsNew) = getThunk(Body, Rel.Type);
-      if (IsNew) {
-        // Find or create a ThunkSection for the new Thunk
-        ThunkSection *TS;
-        if (auto *TIS = T->getTargetInputSection())
-          TS = getISThunkSec(TIS);
-        else
-          TS = getOSThunkSec(OS, ISR);
-        TS->addThunk(T);
-        Thunks[T->ThunkSym] = T;
-      }
-      // Redirect relocation to Thunk, we never go via the PLT to a Thunk
-      Rel.Sym = T->ThunkSym;
-      Rel.Expr = fromPlt(Rel.Expr);
-    }
-  });
+  // ThunkSections as ThunkSections are not always inserted into the same
+  // InputSectionDescription as the caller.
+  forEachInputSectionDescription(
+      OutputSections, [&](OutputSection *OS, InputSectionDescription *ISD) {
+        for (InputSection *IS : ISD->Sections)
+          for (Relocation &Rel : IS->Relocations) {
+            SymbolBody &Body = *Rel.Sym;
+            if (Thunks.find(&Body) != Thunks.end() ||
+                !Target->needsThunk(Rel.Expr, Rel.Type, IS->File, Body))
+              continue;
+            Thunk *T;
+            bool IsNew;
+            std::tie(T, IsNew) = getThunk(Body, Rel.Type);
+            if (IsNew) {
+              AddressesChanged = true;
+              // Find or create a ThunkSection for the new Thunk
+              ThunkSection *TS;
+              if (auto *TIS = T->getTargetInputSection())
+                TS = getISThunkSec(TIS);
+              else
+                TS = getOSThunkSec(OS, ISD);
+              TS->addThunk(T);
+              Thunks[T->ThunkSym] = T;
+            }
+            // Redirect relocation to Thunk, we never go via the PLT to a Thunk
+            Rel.Sym = T->ThunkSym;
+            Rel.Expr = fromPlt(Rel.Expr);
+          }
+      });
   // Merge all created synthetic ThunkSections back into OutputSection
-  mergeThunks();
+  mergeThunks(OutputSections);
   ++Pass;
-  return !ThunkSections.empty();
+  return AddressesChanged;
 }
 
 template void elf::scanRelocations<ELF32LE>(InputSectionBase &);
