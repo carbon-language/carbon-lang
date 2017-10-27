@@ -198,14 +198,17 @@ MipsOptionsSection<ELFT> *MipsOptionsSection<ELFT>::create() {
   if (!ELFT::Is64Bits)
     return nullptr;
 
-  Elf_Mips_RegInfo Reginfo = {};
-  bool Create = false;
+  std::vector<InputSectionBase *> Sections;
+  for (InputSectionBase *Sec : InputSections)
+    if (Sec->Type == SHT_MIPS_OPTIONS)
+      Sections.push_back(Sec);
 
-  for (InputSectionBase *Sec : InputSections) {
-    if (Sec->Type != SHT_MIPS_OPTIONS)
-      continue;
+  if (Sections.empty())
+    return nullptr;
+
+  Elf_Mips_RegInfo Reginfo = {};
+  for (InputSectionBase *Sec : Sections) {
     Sec->Live = false;
-    Create = true;
 
     std::string Filename = toString(Sec->File);
     ArrayRef<uint8_t> D = Sec->Data;
@@ -231,9 +234,7 @@ MipsOptionsSection<ELFT> *MipsOptionsSection<ELFT>::create() {
     }
   };
 
-  if (Create)
-    return make<MipsOptionsSection<ELFT>>(Reginfo);
-  return nullptr;
+  return make<MipsOptionsSection<ELFT>>(Reginfo);
 }
 
 // MIPS .reginfo section.
@@ -256,14 +257,17 @@ MipsReginfoSection<ELFT> *MipsReginfoSection<ELFT>::create() {
   if (ELFT::Is64Bits)
     return nullptr;
 
-  Elf_Mips_RegInfo Reginfo = {};
-  bool Create = false;
+  std::vector<InputSectionBase *> Sections;
+  for (InputSectionBase *Sec : InputSections)
+    if (Sec->Type == SHT_MIPS_REGINFO)
+      Sections.push_back(Sec);
 
-  for (InputSectionBase *Sec : InputSections) {
-    if (Sec->Type != SHT_MIPS_REGINFO)
-      continue;
+  if (Sections.empty())
+    return nullptr;
+
+  Elf_Mips_RegInfo Reginfo = {};
+  for (InputSectionBase *Sec : Sections) {
     Sec->Live = false;
-    Create = true;
 
     if (Sec->Data.size() != sizeof(Elf_Mips_RegInfo)) {
       error(toString(Sec->File) + ": invalid size of .reginfo section");
@@ -277,9 +281,7 @@ MipsReginfoSection<ELFT> *MipsReginfoSection<ELFT>::create() {
     Sec->getFile<ELFT>()->MipsGp0 = R->ri_gp_value;
   };
 
-  if (Create)
-    return make<MipsReginfoSection<ELFT>>(Reginfo);
-  return nullptr;
+  return make<MipsReginfoSection<ELFT>>(Reginfo);
 }
 
 InputSection *elf::createInterpSection() {
