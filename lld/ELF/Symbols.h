@@ -104,7 +104,11 @@ public:
 
 protected:
   SymbolBody(Kind K, StringRefZ Name, bool IsLocal, uint8_t StOther,
-             uint8_t Type);
+             uint8_t Type)
+      : SymbolKind(K), IsLocal(IsLocal), NeedsPltAddr(false),
+        IsInGlobalMipsGot(false), Is32BitMipsGot(false), IsInIplt(false),
+        IsInIgot(false), IsPreemptible(false), Type(Type), StOther(StOther),
+        Name(Name) {}
 
   const unsigned SymbolKind : 8;
 
@@ -154,14 +158,19 @@ protected:
 // The base class for any defined symbols.
 class Defined : public SymbolBody {
 public:
-  Defined(Kind K, StringRefZ Name, bool IsLocal, uint8_t StOther, uint8_t Type);
+  Defined(Kind K, StringRefZ Name, bool IsLocal, uint8_t StOther, uint8_t Type)
+      : SymbolBody(K, Name, IsLocal, StOther, Type) {}
+
   static bool classof(const SymbolBody *S) { return S->isDefined(); }
 };
 
 class DefinedCommon : public Defined {
 public:
-  DefinedCommon(StringRef N, uint64_t Size, uint32_t Alignment, uint8_t StOther,
-                uint8_t Type);
+  DefinedCommon(StringRef Name, uint64_t Size, uint32_t Alignment,
+                uint8_t StOther, uint8_t Type)
+      : Defined(SymbolBody::DefinedCommonKind, Name, /*IsLocal=*/false, StOther,
+                Type),
+        Alignment(Alignment), Size(Size) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == SymbolBody::DefinedCommonKind;
@@ -198,7 +207,8 @@ public:
 
 class Undefined : public SymbolBody {
 public:
-  Undefined(StringRefZ Name, bool IsLocal, uint8_t StOther, uint8_t Type);
+  Undefined(StringRefZ Name, bool IsLocal, uint8_t StOther, uint8_t Type)
+      : SymbolBody(SymbolBody::UndefinedKind, Name, IsLocal, StOther, Type) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == UndefinedKind;
@@ -295,7 +305,8 @@ protected:
 // symbol.
 class LazyArchive : public Lazy {
 public:
-  LazyArchive(const llvm::object::Archive::Symbol S, uint8_t Type);
+  LazyArchive(const llvm::object::Archive::Symbol S, uint8_t Type)
+      : Lazy(LazyArchiveKind, S.getName(), Type), Sym(S) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == LazyArchiveKind;
@@ -312,7 +323,7 @@ private:
 // --start-lib and --end-lib options.
 class LazyObject : public Lazy {
 public:
-  LazyObject(StringRef Name, uint8_t Type);
+  LazyObject(StringRef Name, uint8_t Type) : Lazy(LazyObjectKind, Name, Type) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == LazyObjectKind;
