@@ -860,7 +860,7 @@ void Writer<ELFT>::forEachRelSec(std::function<void(InputSectionBase &)> Fn) {
 template <class ELFT> void Writer<ELFT>::createSections() {
   std::vector<OutputSection *> Vec;
   for (InputSectionBase *IS : InputSections)
-    if (IS)
+    if (IS && IS->Live)
       if (OutputSection *Sec =
               Factory.addInputSec(IS, getOutputSectionName(IS->Name)))
         Vec.push_back(Sec);
