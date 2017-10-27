@@ -76,9 +76,15 @@ public:
 
   void addSection(InputSectionBase *S);
 
+  std::vector<EhInputSection *> Sections;
   size_t NumFdes = 0;
 
-  std::vector<EhInputSection *> Sections;
+  struct FdeData {
+    uint32_t Pc;
+    uint32_t FdeVA;
+  };
+
+  std::vector<FdeData> getFdeData() const;
 
 private:
   uint64_t Size = 0;
@@ -91,7 +97,7 @@ private:
   template <class RelTy>
   bool isFdeLive(EhSectionPiece &Piece, ArrayRef<RelTy> Rels);
 
-  uint64_t getFdePc(uint8_t *Buf, size_t Off, uint8_t Enc);
+  uint64_t getFdePc(uint8_t *Buf, size_t Off, uint8_t Enc) const;
 
   std::vector<CieRecord *> CieRecords;
 
@@ -574,16 +580,7 @@ public:
   EhFrameHeader();
   void writeTo(uint8_t *Buf) override;
   size_t getSize() const override;
-  void addFde(uint32_t Pc, uint32_t FdeVA);
   bool empty() const override;
-
-private:
-  struct FdeData {
-    uint32_t Pc;
-    uint32_t FdeVA;
-  };
-
-  std::vector<FdeData> Fdes;
 };
 
 // For more information about .gnu.version and .gnu.version_r see:
