@@ -27698,6 +27698,16 @@ static bool matchBinaryVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
     }
   }
 
+  // Attempt to match against either a unary or binary PACKSS/PACKUS shuffle.
+  // TODO add support for 256/512-bit types.
+  if ((MaskVT == MVT::v8i16 || MaskVT == MVT::v16i8) && Subtarget.hasSSE2()) {
+    if (matchVectorShuffleWithPACK(MaskVT, SrcVT, V1, V2, Shuffle, Mask, DAG,
+                                   Subtarget)) {
+      DstVT = MaskVT;
+      return true;
+    }
+  }
+
   // Attempt to match against either a unary or binary UNPCKL/UNPCKH shuffle.
   if ((MaskVT == MVT::v4f32 && Subtarget.hasSSE1()) ||
       (MaskVT.is128BitVector() && Subtarget.hasSSE2()) ||
