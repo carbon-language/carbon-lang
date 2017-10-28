@@ -153,11 +153,21 @@ public:
     return double(Arcs.size()) / (Nodes.size()*Nodes.size());
   }
 
+  // Initialize NormalizedWeight field for every arc
   void normalizeArcWeights();
+  // Make sure that the sum of incoming arc weights is at least the number of
+  // samples for every node
+  void adjustArcWeights();
 
   template <typename L>
   void printDot(char* fileName, L getLabel) const;
+  
 private:
+  void setSamples(const NodeId Id, uint64_t Samples) {
+    assert(Id < Nodes.size());
+    Nodes[Id].Samples = Samples;
+  }
+
   std::vector<Node> Nodes;
   ArcsType Arcs;
 };

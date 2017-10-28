@@ -94,7 +94,6 @@ const CallGraph::Arc &CallGraph::incArcWeight(NodeId Src, NodeId Dst, double W,
 }
 
 void CallGraph::normalizeArcWeights() {
-  // Normalize arc weights
   for (NodeId FuncId = 0; FuncId < numNodes(); ++FuncId) {
     auto& Func = getNode(FuncId);
     for (auto Caller : Func.predecessors()) {
@@ -105,6 +104,19 @@ void CallGraph::normalizeArcWeights() {
       assert(Arc->AvgCallOffset <= size(Caller) &&
              "Avg call offset exceeds function size");
     }
+  }
+}
+
+void CallGraph::adjustArcWeights() {
+  for (NodeId FuncId = 0; FuncId < numNodes(); ++FuncId) {
+    auto& Func = getNode(FuncId);
+    uint64_t InWeight = 0;
+    for (auto Caller : Func.predecessors()) {
+      auto Arc = findArc(Caller, FuncId);
+      InWeight += (uint64_t)Arc->weight();
+    }
+    if (Func.samples() < InWeight)
+      setSamples(FuncId, InWeight);
   }
 }
 

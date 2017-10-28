@@ -145,7 +145,6 @@ void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
   // Set order of hot functions based on clusters.
   for (const auto& Cluster : Clusters) {
     for (const auto FuncId : Cluster.targets()) {
-      assert(Cg.samples(FuncId) > 0);
       Cg.nodeIdToFunc(FuncId)->setIndex(Index++);
       FuncAddr[FuncId] = TotalSize;
       TotalSize += Cg.size(FuncId);
