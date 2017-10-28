@@ -748,7 +748,7 @@ template <class ELFT> void SharedFile<ELFT>::parseRest() {
     // Ignore local symbols.
     if (Versym && VersymIndex == VER_NDX_LOCAL)
       continue;
-    const Elf_Verdef *V = nullptr;
+    const Elf_Verdef *Ver = nullptr;
     if (VersymIndex != VER_NDX_GLOBAL) {
       if (VersymIndex >= Verdefs.size()) {
         error("corrupt input file: version definition index " +
@@ -756,7 +756,7 @@ template <class ELFT> void SharedFile<ELFT>::parseRest() {
               " is out of bounds\n>>> defined in " + toString(this));
         continue;
       }
-      V = Verdefs[VersymIndex];
+      Ver = Verdefs[VersymIndex];
     }
 
     // We do not usually care about alignments of data in shared object
@@ -770,14 +770,14 @@ template <class ELFT> void SharedFile<ELFT>::parseRest() {
     }
 
     if (!Hidden)
-      Symtab->addShared(Name, this, Sym, Alignment, V);
+      Symtab->addShared(Name, this, Sym, Alignment, Ver);
 
     // Also add the symbol with the versioned name to handle undefined symbols
     // with explicit versions.
-    if (V) {
-      StringRef VerName = this->StringTable.data() + V->getAux()->vda_name;
+    if (Ver) {
+      StringRef VerName = this->StringTable.data() + Ver->getAux()->vda_name;
       Name = Saver.save(Name + "@" + VerName);
-      Symtab->addShared(Name, this, Sym, Alignment, V);
+      Symtab->addShared(Name, this, Sym, Alignment, Ver);
     }
   }
 }
