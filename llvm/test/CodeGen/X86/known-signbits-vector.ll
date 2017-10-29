@@ -279,10 +279,7 @@ define <2 x double> @signbits_ashr_concat_ashr_extract_sitofp(<2 x i64> %a0, <4 
 define float @signbits_ashr_sext_sextinreg_and_extract_sitofp(<2 x i64> %a0, <2 x i64> %a1, i32 %a2) nounwind {
 ; X32-LABEL: signbits_ashr_sext_sextinreg_and_extract_sitofp:
 ; X32:       # BB#0:
-; X32-NEXT:    pushl %ebp
-; X32-NEXT:    movl %esp, %ebp
-; X32-NEXT:    andl $-8, %esp
-; X32-NEXT:    subl $16, %esp
+; X32-NEXT:    pushl %eax
 ; X32-NEXT:    vmovdqa {{.*#+}} xmm2 = [0,2147483648,0,2147483648]
 ; X32-NEXT:    vpsrlq $60, %xmm2, %xmm3
 ; X32-NEXT:    vpsrlq $61, %xmm2, %xmm2
@@ -292,7 +289,7 @@ define float @signbits_ashr_sext_sextinreg_and_extract_sitofp(<2 x i64> %a0, <2 
 ; X32-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1,2,3],xmm3[4,5,6,7]
 ; X32-NEXT:    vpxor %xmm2, %xmm0, %xmm0
 ; X32-NEXT:    vpsubq %xmm2, %xmm0, %xmm0
-; X32-NEXT:    movl 8(%ebp), %eax
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    vpinsrd $0, %eax, %xmm1, %xmm1
 ; X32-NEXT:    sarl $31, %eax
 ; X32-NEXT:    vpinsrd $1, %eax, %xmm1, %xmm1
@@ -301,12 +298,11 @@ define float @signbits_ashr_sext_sextinreg_and_extract_sitofp(<2 x i64> %a0, <2 
 ; X32-NEXT:    vpsrlq $20, %xmm1, %xmm1
 ; X32-NEXT:    vpblendw {{.*#+}} xmm1 = xmm1[0,1],xmm2[2,3],xmm1[4,5],xmm2[6,7]
 ; X32-NEXT:    vpand %xmm1, %xmm0, %xmm0
-; X32-NEXT:    vmovq %xmm0, {{[0-9]+}}(%esp)
-; X32-NEXT:    fildll {{[0-9]+}}(%esp)
-; X32-NEXT:    fstps {{[0-9]+}}(%esp)
-; X32-NEXT:    flds {{[0-9]+}}(%esp)
-; X32-NEXT:    movl %ebp, %esp
-; X32-NEXT:    popl %ebp
+; X32-NEXT:    vmovd %xmm0, %eax
+; X32-NEXT:    vcvtsi2ssl %eax, %xmm4, %xmm0
+; X32-NEXT:    vmovss %xmm0, (%esp)
+; X32-NEXT:    flds (%esp)
+; X32-NEXT:    popl %eax
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: signbits_ashr_sext_sextinreg_and_extract_sitofp:
@@ -325,7 +321,7 @@ define float @signbits_ashr_sext_sextinreg_and_extract_sitofp(<2 x i64> %a0, <2 
 ; X64-NEXT:    vpblendw {{.*#+}} xmm1 = xmm1[0,1],xmm2[2,3],xmm1[4,5],xmm2[6,7]
 ; X64-NEXT:    vpand %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vmovq %xmm0, %rax
-; X64-NEXT:    vcvtsi2ssq %rax, %xmm3, %xmm0
+; X64-NEXT:    vcvtsi2ssl %eax, %xmm3, %xmm0
 ; X64-NEXT:    retq
   %1 = ashr <2 x i64> %a0, <i64 61, i64 60>
   %2 = sext i32 %a2 to i64
@@ -341,10 +337,7 @@ define float @signbits_ashr_sext_sextinreg_and_extract_sitofp(<2 x i64> %a0, <2 
 define float @signbits_ashr_sextvecinreg_bitops_extract_sitofp(<2 x i64> %a0, <4 x i32> %a1) nounwind {
 ; X32-LABEL: signbits_ashr_sextvecinreg_bitops_extract_sitofp:
 ; X32:       # BB#0:
-; X32-NEXT:    pushl %ebp
-; X32-NEXT:    movl %esp, %ebp
-; X32-NEXT:    andl $-8, %esp
-; X32-NEXT:    subl $16, %esp
+; X32-NEXT:    pushl %eax
 ; X32-NEXT:    vmovdqa {{.*#+}} xmm2 = [0,2147483648,0,2147483648]
 ; X32-NEXT:    vpsrlq $60, %xmm2, %xmm3
 ; X32-NEXT:    vpsrlq $61, %xmm2, %xmm2
@@ -358,12 +351,11 @@ define float @signbits_ashr_sextvecinreg_bitops_extract_sitofp(<2 x i64> %a0, <4
 ; X32-NEXT:    vpand %xmm1, %xmm0, %xmm2
 ; X32-NEXT:    vpor %xmm1, %xmm2, %xmm1
 ; X32-NEXT:    vpxor %xmm0, %xmm1, %xmm0
-; X32-NEXT:    vmovq %xmm0, {{[0-9]+}}(%esp)
-; X32-NEXT:    fildll {{[0-9]+}}(%esp)
-; X32-NEXT:    fstps {{[0-9]+}}(%esp)
-; X32-NEXT:    flds {{[0-9]+}}(%esp)
-; X32-NEXT:    movl %ebp, %esp
-; X32-NEXT:    popl %ebp
+; X32-NEXT:    vmovd %xmm0, %eax
+; X32-NEXT:    vcvtsi2ssl %eax, %xmm4, %xmm0
+; X32-NEXT:    vmovss %xmm0, (%esp)
+; X32-NEXT:    flds (%esp)
+; X32-NEXT:    popl %eax
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: signbits_ashr_sextvecinreg_bitops_extract_sitofp:
@@ -379,7 +371,7 @@ define float @signbits_ashr_sextvecinreg_bitops_extract_sitofp(<2 x i64> %a0, <4
 ; X64-NEXT:    vpor %xmm1, %xmm2, %xmm1
 ; X64-NEXT:    vpxor %xmm0, %xmm1, %xmm0
 ; X64-NEXT:    vmovq %xmm0, %rax
-; X64-NEXT:    vcvtsi2ssq %rax, %xmm3, %xmm0
+; X64-NEXT:    vcvtsi2ssl %eax, %xmm3, %xmm0
 ; X64-NEXT:    retq
   %1 = ashr <2 x i64> %a0, <i64 61, i64 60>
   %2 = shufflevector <4 x i32> %a1, <4 x i32> undef, <2 x i32> <i32 0, i32 1>
