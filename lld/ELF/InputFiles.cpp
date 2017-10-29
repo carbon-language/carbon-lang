@@ -517,12 +517,9 @@ InputSectionBase *ObjFile<ELFT>::getSection(uint32_t Index) const {
   if (Index >= this->Sections.size())
     fatal(toString(this) + ": invalid section index: " + Twine(Index));
 
-  InputSectionBase *Sec = this->Sections[Index];
-  if (!Sec)
-    return nullptr;
-  if (Sec == &InputSection::Discarded)
-    return Sec;
-  return Sec->Repl;
+  if (InputSectionBase *Sec = this->Sections[Index])
+    return Sec->Repl;
+  return nullptr;
 }
 
 template <class ELFT>
