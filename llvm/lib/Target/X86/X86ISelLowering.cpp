@@ -31058,7 +31058,7 @@ static SDValue combineSetCCAtomicArith(SDValue Cmp, X86::CondCode &CC,
   APInt Comparison = CmpRHSC->getAPIntValue();
 
   // If the addend is the negation of the comparison value, then we can do
-  // a full comparison by emitting the atomic arithmetic is a locked sub.
+  // a full comparison by emitting the atomic arithmetic as a locked sub.
   if (Comparison == -Addend) {
     // The CC is fine, but we need to rewrite the LHS of the comparison as an
     // atomic sub.
