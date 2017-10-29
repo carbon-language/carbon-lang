@@ -91,11 +91,9 @@ protected:
   SectionBase(Kind SectionKind, StringRef Name, uint64_t Flags,
               uint64_t Entsize, uint64_t Alignment, uint32_t Type,
               uint32_t Info, uint32_t Link)
-      : Name(Name), SectionKind(SectionKind), Alignment(Alignment),
-        Flags(Flags), Entsize(Entsize), Type(Type), Link(Link), Info(Info) {
-    Live = false;
-    Assigned = false;
-  }
+      : Name(Name), SectionKind(SectionKind), Live(false), Assigned(false),
+        Alignment(Alignment), Flags(Flags), Entsize(Entsize), Type(Type),
+        Link(Link), Info(Info) {}
 };
 
 // This corresponds to a section of an input file.
@@ -105,10 +103,7 @@ public:
       : SectionBase(Regular, "", /*Flags*/ 0, /*Entsize*/ 0, /*Alignment*/ 0,
                     /*Type*/ 0,
                     /*Info*/ 0, /*Link*/ 0),
-        Repl(this) {
-    NumRelocations = 0;
-    AreRelocsRela = false;
-  }
+        NumRelocations(0), AreRelocsRela(false), Repl(this) {}
 
   template <class ELFT>
   InputSectionBase(ObjFile<ELFT> *File, const typename ELFT::Shdr *Header,
