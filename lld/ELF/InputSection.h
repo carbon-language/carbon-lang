@@ -55,19 +55,6 @@ public:
   // If GC is disabled, all sections are considered live by default.
   unsigned Live : 1;
 
-  // True if this section has already been placed to a linker script
-  // output section. This is needed because, in a linker script, you
-  // can refer to the same section more than once. For example, in
-  // the following linker script,
-  //
-  //   .foo : { *(.text) }
-  //   .bar : { *(.text) }
-  //
-  // .foo takes all .text sections, and .bar becomes empty. To achieve
-  // this, we need to memorize whether a section has been placed or
-  // not for each input section.
-  unsigned Assigned : 1;
-
   // These corresponds to the fields in Elf_Shdr.
   uint32_t Alignment;
   uint64_t Flags;
@@ -91,7 +78,7 @@ protected:
   SectionBase(Kind SectionKind, StringRef Name, uint64_t Flags,
               uint64_t Entsize, uint64_t Alignment, uint32_t Type,
               uint32_t Info, uint32_t Link)
-      : Name(Name), SectionKind(SectionKind), Live(false), Assigned(false),
+      : Name(Name), SectionKind(SectionKind), Live(false),
         Alignment(Alignment), Flags(Flags), Entsize(Entsize), Type(Type),
         Link(Link), Info(Info) {}
 };
@@ -129,6 +116,19 @@ public:
   uint64_t getOffsetInFile() const;
 
   static InputSectionBase Discarded;
+
+  // True if this section has already been placed to a linker script
+  // output section. This is needed because, in a linker script, you
+  // can refer to the same section more than once. For example, in
+  // the following linker script,
+  //
+  //   .foo : { *(.text) }
+  //   .bar : { *(.text) }
+  //
+  // .foo takes all .text sections, and .bar becomes empty. To achieve
+  // this, we need to memorize whether a section has been placed or
+  // not for each input section.
+  bool Assigned = false;
 
   // Input sections are part of an output section. Special sections
   // like .eh_frame and merge sections are first combined into a
