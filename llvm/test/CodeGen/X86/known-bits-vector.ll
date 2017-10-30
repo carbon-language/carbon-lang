@@ -618,11 +618,7 @@ define <4 x float> @knownbits_and_select_shuffle_uitofp(<4 x i32> %a0, <4 x i32>
 ; X32-NEXT:    vpcmpeqd %xmm1, %xmm0, %xmm0
 ; X32-NEXT:    vblendvps %xmm0, %xmm2, %xmm3, %xmm0
 ; X32-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,0,2,2]
-; X32-NEXT:    vpblendw {{.*#+}} xmm1 = xmm0[0],mem[1],xmm0[2],mem[3],xmm0[4],mem[5],xmm0[6],mem[7]
-; X32-NEXT:    vpsrld $16, %xmm0, %xmm0
-; X32-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0],mem[1],xmm0[2],mem[3],xmm0[4],mem[5],xmm0[6],mem[7]
-; X32-NEXT:    vaddps {{\.LCPI.*}}, %xmm0, %xmm0
-; X32-NEXT:    vaddps %xmm0, %xmm1, %xmm0
+; X32-NEXT:    vcvtdq2ps %xmm0, %xmm0
 ; X32-NEXT:    movl %ebp, %esp
 ; X32-NEXT:    popl %ebp
 ; X32-NEXT:    retl
@@ -634,11 +630,7 @@ define <4 x float> @knownbits_and_select_shuffle_uitofp(<4 x i32> %a0, <4 x i32>
 ; X64-NEXT:    vpcmpeqd %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vblendvps %xmm0, %xmm2, %xmm3, %xmm0
 ; X64-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,0,2,2]
-; X64-NEXT:    vpblendw {{.*#+}} xmm1 = xmm0[0],mem[1],xmm0[2],mem[3],xmm0[4],mem[5],xmm0[6],mem[7]
-; X64-NEXT:    vpsrld $16, %xmm0, %xmm0
-; X64-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0],mem[1],xmm0[2],mem[3],xmm0[4],mem[5],xmm0[6],mem[7]
-; X64-NEXT:    vaddps {{.*}}(%rip), %xmm0, %xmm0
-; X64-NEXT:    vaddps %xmm0, %xmm1, %xmm0
+; X64-NEXT:    vcvtdq2ps %xmm0, %xmm0
 ; X64-NEXT:    retq
   %1 = and <4 x i32> %a2, <i32 65535, i32 -1, i32 255, i32 -1>
   %2 = and <4 x i32> %a3, <i32 255, i32 -1, i32 65535, i32 -1>
@@ -664,11 +656,7 @@ define <4 x float> @knownbits_lshr_and_select_shuffle_uitofp(<4 x i32> %a0, <4 x
 ; X32-NEXT:    vpcmpeqd %xmm1, %xmm0, %xmm0
 ; X32-NEXT:    vblendvps %xmm0, %xmm2, %xmm3, %xmm0
 ; X32-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,0,2,2]
-; X32-NEXT:    vpblendw {{.*#+}} xmm1 = xmm0[0],mem[1],xmm0[2],mem[3],xmm0[4],mem[5],xmm0[6],mem[7]
-; X32-NEXT:    vpsrld $16, %xmm0, %xmm0
-; X32-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0],mem[1],xmm0[2],mem[3],xmm0[4],mem[5],xmm0[6],mem[7]
-; X32-NEXT:    vaddps {{\.LCPI.*}}, %xmm0, %xmm0
-; X32-NEXT:    vaddps %xmm0, %xmm1, %xmm0
+; X32-NEXT:    vcvtdq2ps %xmm0, %xmm0
 ; X32-NEXT:    movl %ebp, %esp
 ; X32-NEXT:    popl %ebp
 ; X32-NEXT:    retl
@@ -682,11 +670,7 @@ define <4 x float> @knownbits_lshr_and_select_shuffle_uitofp(<4 x i32> %a0, <4 x
 ; X64-NEXT:    vpcmpeqd %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vblendvps %xmm0, %xmm2, %xmm3, %xmm0
 ; X64-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,0,2,2]
-; X64-NEXT:    vpblendw {{.*#+}} xmm1 = xmm0[0],mem[1],xmm0[2],mem[3],xmm0[4],mem[5],xmm0[6],mem[7]
-; X64-NEXT:    vpsrld $16, %xmm0, %xmm0
-; X64-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0],mem[1],xmm0[2],mem[3],xmm0[4],mem[5],xmm0[6],mem[7]
-; X64-NEXT:    vaddps {{.*}}(%rip), %xmm0, %xmm0
-; X64-NEXT:    vaddps %xmm0, %xmm1, %xmm0
+; X64-NEXT:    vcvtdq2ps %xmm0, %xmm0
 ; X64-NEXT:    retq
   %1 = lshr <4 x i32> %a2, <i32 5, i32 1, i32 5, i32 1>
   %2 = and <4 x i32> %a3, <i32 255, i32 -1, i32 65535, i32 -1>

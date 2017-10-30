@@ -2417,22 +2417,22 @@ void SelectionDAG::computeKnownBits(SDValue Op, KnownBits &Known,
   }
   case ISD::SELECT:
   case ISD::VSELECT:
-    computeKnownBits(Op.getOperand(2), Known, Depth+1);
+    computeKnownBits(Op.getOperand(2), Known, DemandedElts, Depth+1);
     // If we don't know any bits, early out.
     if (Known.isUnknown())
       break;
-    computeKnownBits(Op.getOperand(1), Known2, Depth+1);
+    computeKnownBits(Op.getOperand(1), Known2, DemandedElts, Depth+1);
 
     // Only known if known in both the LHS and RHS.
     Known.One &= Known2.One;
     Known.Zero &= Known2.Zero;
     break;
   case ISD::SELECT_CC:
-    computeKnownBits(Op.getOperand(3), Known, Depth+1);
+    computeKnownBits(Op.getOperand(3), Known, DemandedElts, Depth+1);
     // If we don't know any bits, early out.
     if (Known.isUnknown())
       break;
-    computeKnownBits(Op.getOperand(2), Known2, Depth+1);
+    computeKnownBits(Op.getOperand(2), Known2, DemandedElts, Depth+1);
 
     // Only known if known in both the LHS and RHS.
     Known.One &= Known2.One;
