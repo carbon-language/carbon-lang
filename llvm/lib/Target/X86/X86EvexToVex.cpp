@@ -223,8 +223,7 @@ bool EvexToVexInstPass::CompressEvexToVexImpl(MachineInstr &MI) const {
   if (usesExtendedRegister(MI))
     return false;
 
-  const MCInstrDesc &MCID = TII->get(NewOpc);
-  MI.setDesc(MCID);
+  MI.setDesc(TII->get(NewOpc));
   MI.setAsmPrinterFlag(AC_EVEX_2_VEX);
   return true;
 }
