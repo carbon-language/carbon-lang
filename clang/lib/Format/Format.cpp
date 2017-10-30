@@ -1027,8 +1027,8 @@ public:
                     /*LastStartColumn=*/Env.getLastStartColumn());
     for (const auto &R : Whitespaces.generateReplacements())
       if (Result.add(R))
-        return {Result, 0};
-    return {Result, Penalty};
+        return std::make_pair(Result, 0);
+    return std::make_pair(Result, Penalty);
   }
 
 private:
