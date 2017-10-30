@@ -2582,7 +2582,6 @@ void SelectionDAG::computeKnownBits(SDValue Op, KnownBits &Known,
   }
   // TODO ISD::SIGN_EXTEND_VECTOR_INREG
   case ISD::SIGN_EXTEND: {
-    EVT InVT = Op.getOperand(0).getValueType();
     computeKnownBits(Op.getOperand(0), Known, DemandedElts, Depth + 1);
     // If the sign bit is known to be zero or one, then sext will extend
     // it to the top bits, else it will just zext.
@@ -2590,13 +2589,11 @@ void SelectionDAG::computeKnownBits(SDValue Op, KnownBits &Known,
     break;
   }
   case ISD::ANY_EXTEND: {
-    EVT InVT = Op.getOperand(0).getValueType();
     computeKnownBits(Op.getOperand(0), Known, Depth+1);
     Known = Known.zext(BitWidth);
     break;
   }
   case ISD::TRUNCATE: {
-    EVT InVT = Op.getOperand(0).getValueType();
     computeKnownBits(Op.getOperand(0), Known, DemandedElts, Depth + 1);
     Known = Known.trunc(BitWidth);
     break;
