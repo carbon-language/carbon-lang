@@ -2416,6 +2416,7 @@ void SelectionDAG::computeKnownBits(SDValue Op, KnownBits &Known,
     break;
   }
   case ISD::SELECT:
+  case ISD::VSELECT:
     computeKnownBits(Op.getOperand(2), Known, Depth+1);
     // If we don't know any bits, early out.
     if (Known.isUnknown())
