@@ -242,7 +242,7 @@ uptr ReservedAddressRange::Map(uptr fixed_addr, uptr size,
   if (tolerate_enomem) {
     return reinterpret_cast<uptr>(MmapFixedOrDieOnFatalError(fixed_addr, size));
   }
-  return reinterpret_cast<uptr>(MmapFixedOrDie(uptr fixed_addr, uptr size));
+  return reinterpret_cast<uptr>(MmapFixedOrDie(fixed_addr, size));
 }
 
 void ReservedAddressRange::Unmap(uptr addr, uptr size) {
