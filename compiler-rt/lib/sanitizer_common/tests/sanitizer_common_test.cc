@@ -349,25 +349,23 @@ TEST(SanitizerCommon, ReservedAddressRangeMap) {
   unsigned char buffer[init_size];
   memcpy(buffer, reinterpret_cast<void *>(res), init_size);
 
-  // Invalid mappings should fail.
-  EXPECT_DEATH(address_range.Map(res, 0), ".*");
-
   // TODO(flowerhack): Once this is switched to the "real" implementation, make
   // sure you can only mmap into offsets in the Init range.
 }
 
 TEST(SanitizerCommon, ReservedAddressRangeUnmap) {
   uptr PageSize = GetPageSizeCached();
-  uptr init_size = PageSize * 4;
+  uptr init_size = PageSize * 8;
   ReservedAddressRange address_range;
   uptr base_addr = address_range.Init(init_size);
   CHECK_NE(base_addr, (void*)-1);
   CHECK_EQ(base_addr, address_range.Map(base_addr, init_size));
 
   // Unmapping the entire range should succeed.
-  address_range.Unmap(base_addr, PageSize * 4);
+  address_range.Unmap(base_addr, init_size);
 
-  // Remap that range in.
+  // Map a new range.
+  base_addr = address_range.Init(init_size);
   CHECK_EQ(base_addr, address_range.Map(base_addr, init_size));
 
   // Windows doesn't allow partial unmappings.
@@ -384,7 +382,7 @@ TEST(SanitizerCommon, ReservedAddressRangeUnmap) {
   #endif
 
   // Unmapping in the middle of the ReservedAddressRange should fail.
-  EXPECT_DEATH(address_range.Unmap(base_addr + 0xf, 0xff), ".*");
+  EXPECT_DEATH(address_range.Unmap(base_addr + (PageSize * 2), PageSize), ".*");
 }
 
 }  // namespace __sanitizer
