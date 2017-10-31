@@ -1690,13 +1690,8 @@ SCEVExpander::FindValueInExprValueMap(const SCEV *S,
       // the LCSSA form.
       for (auto const &VOPair : *Set) {
         Value *V = VOPair.first;
-        dbgs() << "found " << *V << "\n";
         ConstantInt *Offset = VOPair.second;
         Instruction *EntInst = nullptr;
-        if (V && isa<Constant>(V))
-          return {V, Offset};
-        if (V && isa<Argument>(V))
-          return {V, Offset};
         if (V && isa<Instruction>(V) && (EntInst = cast<Instruction>(V)) &&
             S->getType() == V->getType() &&
             EntInst->getFunction() == InsertPt->getFunction() &&
@@ -1707,9 +1702,6 @@ SCEVExpander::FindValueInExprValueMap(const SCEV *S,
       }
     }
   }
-  if (auto *C = dyn_cast<SCEVConstant>(S))
-    return {C->getValue(), nullptr};
-  dbgs() << "Reject: " << *S << "\n";
   return {nullptr, nullptr};
 }
 
