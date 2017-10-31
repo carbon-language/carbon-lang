@@ -106,7 +106,17 @@ void SymbolTable::reportRemainingUndefines() {
 
     // A weak alias may have been resolved, so check for that.
     if (Defined *D = Undef->getWeakAlias()) {
-      memcpy(Sym, D, sizeof(SymbolUnion));
+      // We want to replace Sym with D. However, we can't just blindly
+      // copy sizeof(SymbolUnion) bytes from D to Sym because D may be an
+      // internal symbol, and internal symbols are stored as "unparented"
+      // Symbols. For that reason we need to check which type of symbol we
+      // are dealing with and copy the correct number of bytes.
+      if (isa<DefinedRegular>(D))
+        memcpy(Sym, D, sizeof(DefinedRegular));
+      else if (isa<DefinedAbsolute>(D))
+        memcpy(Sym, D, sizeof(DefinedAbsolute));
+      else
+        memcpy(Sym, D, sizeof(SymbolUnion));
       continue;
     }
 
