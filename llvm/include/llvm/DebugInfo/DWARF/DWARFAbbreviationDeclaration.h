@@ -33,8 +33,11 @@ public:
       assert(isImplicitConst());
     }
     AttributeSpec(dwarf::Attribute A, dwarf::Form F, Optional<uint8_t> ByteSize)
-        : Attr(A), Form(F), ByteSize(ByteSize) {
+        : Attr(A), Form(F) {
       assert(!isImplicitConst());
+      this->ByteSize.HasByteSize = ByteSize.hasValue();
+      if (this->ByteSize.HasByteSize)
+        this->ByteSize.ByteSize = *ByteSize;
     }
 
     dwarf::Attribute Attr;
@@ -45,17 +48,21 @@ public:
     /// attributes and as value for implicit_const ones, indicated by
     /// Form == DW_FORM_implicit_const.
     /// The following cases are distinguished:
-    /// * Form != DW_FORM_implicit_const and ByteSize has a value:
+    /// * Form != DW_FORM_implicit_const and HasByteSize is true:
     ///     ByteSize contains the fixed size in bytes for the Form in this
     ///     object.
-    /// * Form != DW_FORM_implicit_const and ByteSize is None:
+    /// * Form != DW_FORM_implicit_const and HasByteSize is false:
     ///     byte size of Form either varies according to the DWARFUnit
     ///     that it is contained in or the value size varies and must be
     ///     decoded from the debug information in order to determine its size.
     /// * Form == DW_FORM_implicit_const:
     ///     Value contains value for the implicit_const attribute.
+    struct ByteSizeStorage {
+      bool HasByteSize;
+      uint8_t ByteSize;
+    };
     union {
-      Optional<uint8_t> ByteSize;
+      ByteSizeStorage ByteSize;
       int64_t Value;
     };
 
