@@ -214,8 +214,8 @@ Optional<int64_t> DWARFAbbreviationDeclaration::AttributeSpec::getByteSize(
     const DWARFUnit &U) const {
   if (isImplicitConst())
     return 0;
-  if (ByteSize.HasByteSize)
-    return ByteSize.ByteSize;
+  if (ByteSize)
+    return *ByteSize;
   Optional<int64_t> S;
   auto FixedByteSize =
       DWARFFormValue::getFixedByteSize(Form, U.getFormParams());
