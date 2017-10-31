@@ -83,6 +83,11 @@ namespace {
 
     bool eliminateOverflowIntrinsic(CallInst *CI);
     bool eliminateIVUser(Instruction *UseInst, Instruction *IVOperand);
+    bool isCheapLoopInvariantPredicate(ICmpInst::Predicate Pred,
+           const SCEV *LHS, const SCEV *RHS, const Loop *L,
+           const SmallDenseMap<const SCEV*, Value*> &FreeExpansions,
+           ICmpInst::Predicate &InvariantPred,
+           Value *&LHSV, Value *& RHSV);
     bool makeIVComparisonInvariant(ICmpInst *ICmp, Value *IVOperand);
     void eliminateIVComparison(ICmpInst *ICmp, Value *IVOperand);
     void simplifyIVRemainder(BinaryOperator *Rem, Value *IVOperand,
@@ -162,6 +167,26 @@ Value *SimplifyIndvar::foldIVUser(Instruction *UseInst, Instruction *IVOperand) 
   return IVSrc;
 }
 
+bool SimplifyIndvar::isCheapLoopInvariantPredicate(ICmpInst::Predicate Pred,
+           const SCEV *LHS, const SCEV *RHS, const Loop *L,
+           const SmallDenseMap<const SCEV*, Value*> &FreeExpansions,
+           ICmpInst::Predicate &InvariantPred,
+           Value *&LHSV, Value *& RHSV) {
+
+  const SCEV *InvariantLHS, *InvariantRHS;
+  if (!SE->isLoopInvariantPredicate(Pred, LHS, RHS, L, InvariantPred,
+                                    InvariantLHS, InvariantRHS))
+    return false;
+
+  // Rewrite the comparison to a loop invariant comparison if it can be done
+  // cheaply, where cheaply means "we don't need to emit any new
+  // instructions".
+  LHSV = FreeExpansions.lookup(InvariantLHS);
+  RHSV = FreeExpansions.lookup(InvariantRHS);
+
+  return (LHSV && RHSV);
+}
+
 bool SimplifyIndvar::makeIVComparisonInvariant(ICmpInst *ICmp,
                                                Value *IVOperand) {
   unsigned IVOperIdx = 0;
@@ -179,19 +204,9 @@ bool SimplifyIndvar::makeIVComparisonInvariant(ICmpInst *ICmp,
   const SCEV *S = SE->getSCEVAtScope(ICmp->getOperand(IVOperIdx), ICmpLoop);
   const SCEV *X = SE->getSCEVAtScope(ICmp->getOperand(1 - IVOperIdx), ICmpLoop);
 
-  ICmpInst::Predicate InvariantPredicate;
-  const SCEV *InvariantLHS, *InvariantRHS;
-
   auto *PN = dyn_cast<PHINode>(IVOperand);
   if (!PN)
     return false;
-  if (!SE->isLoopInvariantPredicate(Pred, S, X, L, InvariantPredicate,
-                                    InvariantLHS, InvariantRHS))
-    return false;
-
-  // Rewrite the comparison to a loop invariant comparison if it can be done
-  // cheaply, where cheaply means "we don't need to emit any new
-  // instructions".
 
   SmallDenseMap<const SCEV*, Value*> CheapExpansions;
   CheapExpansions[S] = ICmp->getOperand(IVOperIdx);
@@ -204,17 +219,18 @@ bool SimplifyIndvar::makeIVComparisonInvariant(ICmpInst *ICmp,
     const SCEV *IncomingS = SE->getSCEV(Incoming);
     CheapExpansions[IncomingS] = Incoming;
   }
-  Value *NewLHS = CheapExpansions[InvariantLHS];
-  Value *NewRHS = CheapExpansions[InvariantRHS];
 
-  if (!NewLHS || !NewRHS)
-    // We could not find an existing value to replace either LHS or RHS.
-    // Generating new instructions has subtler tradeoffs, so avoid doing that
-    // for now.
+  ICmpInst::Predicate NewPred;
+  Value *NewLHS = nullptr, *NewRHS = nullptr;
+
+  if (!isCheapLoopInvariantPredicate(Pred, S, X, L, CheapExpansions,
+                                     NewPred, NewLHS, NewRHS))
     return false;
+  
+  assert(NewLHS && NewRHS);
 
   DEBUG(dbgs() << "INDVARS: Simplified comparison: " << *ICmp << '\n');
-  ICmp->setPredicate(InvariantPredicate);
+  ICmp->setPredicate(NewPred);
   ICmp->setOperand(0, NewLHS);
   ICmp->setOperand(1, NewRHS);
   return true;
