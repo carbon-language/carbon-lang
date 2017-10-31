@@ -1363,7 +1363,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
     Sec->finalize<ELFT>();
 
   // createThunks may have added local symbols to the static symbol table
-  applySynthetic({InX::SymTab, InX::ShStrTab, InX::StrTab},
+  applySynthetic({InX::SymTab},
                  [](SyntheticSection *SS) { SS->postThunkContents(); });
 }
 
