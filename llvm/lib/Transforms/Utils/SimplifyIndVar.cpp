@@ -83,12 +83,6 @@ namespace {
 
     bool eliminateOverflowIntrinsic(CallInst *CI);
     bool eliminateIVUser(Instruction *UseInst, Instruction *IVOperand);
-    bool isCheapLoopInvariantPredicate(ICmpInst::Predicate Pred,
-           const SCEV *LHS, const SCEV *RHS, const Loop *L,
-           const SmallDenseMap<const SCEV*, Value*> &FreeExpansions,
-           ICmpInst::Predicate &InvariantPred,
-           Value *&LHSV, Value *& RHSV);
-    bool makeIVComparisonInvariant(ICmpInst *ICmp, Value *IVOperand);
     void eliminateIVComparison(ICmpInst *ICmp, Value *IVOperand);
     void simplifyIVRemainder(BinaryOperator *Rem, Value *IVOperand,
                              bool IsSigned);
@@ -98,6 +92,16 @@ namespace {
     bool eliminateSDiv(BinaryOperator *SDiv);
     bool strengthenOverflowingOperation(BinaryOperator *OBO, Value *IVOperand);
     bool strengthenRightShift(BinaryOperator *BO, Value *IVOperand);
+
+
+  private:
+    // Wrapped around ScalarEvolution::isLoopInvariantPredicate which returns
+    // true only when a free expansion is available.
+    bool isCheapLoopInvariantPredicate(ICmpInst::Predicate Pred,
+           const SCEV *LHS, const SCEV *RHS, const Loop *L,
+           const SmallDenseMap<const SCEV*, Value*> &FreeExpansions,
+           ICmpInst::Predicate &InvariantPred,
+           Value *&LHSV, Value *& RHSV);
   };
 }
 
@@ -187,55 +191,6 @@ bool SimplifyIndvar::isCheapLoopInvariantPredicate(ICmpInst::Predicate Pred,
   return (LHSV && RHSV);
 }
 
-bool SimplifyIndvar::makeIVComparisonInvariant(ICmpInst *ICmp,
-                                               Value *IVOperand) {
-  unsigned IVOperIdx = 0;
-  ICmpInst::Predicate Pred = ICmp->getPredicate();
-  if (IVOperand != ICmp->getOperand(0)) {
-    // Swapped
-    assert(IVOperand == ICmp->getOperand(1) && "Can't find IVOperand");
-    IVOperIdx = 1;
-    Pred = ICmpInst::getSwappedPredicate(Pred);
-  }
-
-  // Get the SCEVs for the ICmp operands (in the specific context of the
-  // current loop)
-  const Loop *ICmpLoop = LI->getLoopFor(ICmp->getParent());
-  const SCEV *S = SE->getSCEVAtScope(ICmp->getOperand(IVOperIdx), ICmpLoop);
-  const SCEV *X = SE->getSCEVAtScope(ICmp->getOperand(1 - IVOperIdx), ICmpLoop);
-
-  auto *PN = dyn_cast<PHINode>(IVOperand);
-  if (!PN)
-    return false;
-
-  SmallDenseMap<const SCEV*, Value*> CheapExpansions;
-  CheapExpansions[S] = ICmp->getOperand(IVOperIdx);
-  CheapExpansions[X] = ICmp->getOperand(1 - IVOperIdx);
-  
-  // TODO: Support multiple entry loops?  (We currently bail out of these in
-  // the IndVarSimplify pass)
-  if (auto *BB = L->getLoopPredecessor()) {
-    Value *Incoming = PN->getIncomingValueForBlock(BB);
-    const SCEV *IncomingS = SE->getSCEV(Incoming);
-    CheapExpansions[IncomingS] = Incoming;
-  }
-
-  ICmpInst::Predicate NewPred;
-  Value *NewLHS = nullptr, *NewRHS = nullptr;
-
-  if (!isCheapLoopInvariantPredicate(Pred, S, X, L, CheapExpansions,
-                                     NewPred, NewLHS, NewRHS))
-    return false;
-  
-  assert(NewLHS && NewRHS);
-
-  DEBUG(dbgs() << "INDVARS: Simplified comparison: " << *ICmp << '\n');
-  ICmp->setPredicate(NewPred);
-  ICmp->setOperand(0, NewLHS);
-  ICmp->setOperand(1, NewRHS);
-  return true;
-}
-
 /// SimplifyIVUsers helper for eliminating useless
 /// comparisons against an induction variable.
 void SimplifyIndvar::eliminateIVComparison(ICmpInst *ICmp, Value *IVOperand) {
@@ -255,6 +210,23 @@ void SimplifyIndvar::eliminateIVComparison(ICmpInst *ICmp, Value *IVOperand) {
   const SCEV *S = SE->getSCEVAtScope(ICmp->getOperand(IVOperIdx), ICmpLoop);
   const SCEV *X = SE->getSCEVAtScope(ICmp->getOperand(1 - IVOperIdx), ICmpLoop);
 
+  SmallDenseMap<const SCEV*, Value*> CheapExpansions;
+  CheapExpansions[S] = ICmp->getOperand(IVOperIdx);
+  CheapExpansions[X] = ICmp->getOperand(1 - IVOperIdx);
+  
+  // TODO: Support multiple entry loops?  (We currently bail out of these in
+  // the IndVarSimplify pass)
+  auto *PN = dyn_cast<PHINode>(IVOperand);
+  if (PN)
+    if (auto *BB = L->getLoopPredecessor()) {
+      Value *Incoming = PN->getIncomingValueForBlock(BB);
+      const SCEV *IncomingS = SE->getSCEV(Incoming);
+      CheapExpansions[IncomingS] = Incoming;
+    }
+
+  ICmpInst::Predicate NewPred;
+  Value *NewLHS = nullptr, *NewRHS = nullptr;
+
   // If the condition is always true or always false, replace it with
   // a constant value.
   if (SE->isKnownPredicate(Pred, S, X)) {
@@ -265,8 +237,14 @@ void SimplifyIndvar::eliminateIVComparison(ICmpInst *ICmp, Value *IVOperand) {
     ICmp->replaceAllUsesWith(ConstantInt::getFalse(ICmp->getContext()));
     DeadInsts.emplace_back(ICmp);
     DEBUG(dbgs() << "INDVARS: Eliminated comparison: " << *ICmp << '\n');
-  } else if (makeIVComparisonInvariant(ICmp, IVOperand)) {
-    // fallthrough to end of function
+  } else if (PN &&
+             isCheapLoopInvariantPredicate(Pred, S, X, L, CheapExpansions,
+                                           NewPred, NewLHS, NewRHS)) {
+    DEBUG(dbgs() << "INDVARS: Simplified comparison: " << *ICmp << '\n');
+    ICmp->setPredicate(NewPred);
+    assert(NewLHS && NewRHS);
+    ICmp->setOperand(0, NewLHS);
+    ICmp->setOperand(1, NewRHS);
   } else if (ICmpInst::isSigned(OriginalPred) &&
              SE->isKnownNonNegative(S) && SE->isKnownNonNegative(X)) {
     // If we were unable to make anything above, all we can is to canonicalize
