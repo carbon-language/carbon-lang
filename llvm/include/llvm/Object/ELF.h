@@ -357,11 +357,6 @@ Expected<ELFFile<ELFT>> ELFFile<ELFT>::create(StringRef Object) {
 }
 
 template <class ELFT>
-bool compareAddr(uint64_t VAddr, const Elf_Phdr_Impl<ELFT> *Phdr) {
-  return VAddr < Phdr->p_vaddr;
-}
-
-template <class ELFT>
 Expected<typename ELFT::ShdrRange> ELFFile<ELFT>::sections() const {
   const uintX_t SectionTableOffset = getHeader()->e_shoff;
   if (SectionTableOffset == 0)
