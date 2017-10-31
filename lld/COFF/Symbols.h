@@ -32,7 +32,6 @@ using llvm::object::coff_symbol_generic;
 class ArchiveFile;
 class InputFile;
 class ObjFile;
-struct Symbol;
 class SymbolTable;
 
 // The base class for real symbol classes.
@@ -74,11 +73,6 @@ public:
   // after calling markLive.
   bool isLive() const;
 
-  Symbol *symbol();
-  const Symbol *symbol() const {
-    return const_cast<SymbolBody *>(this)->symbol();
-  }
-
 protected:
   friend SymbolTable;
   explicit SymbolBody(Kind K, StringRef N = "")
@@ -95,6 +89,14 @@ public:
   // This bit is used by Writer::createSymbolAndStringTable() to prevent
   // symbols from being written to the symbol table more than once.
   unsigned WrittenToSymtab : 1;
+
+  // True if this symbol was referenced by a regular (non-bitcode) object.
+  unsigned IsUsedInRegularObj : 1;
+
+  // True if we've seen both a lazy and an undefined symbol with this symbol
+  // name, which means that we have enqueued an archive member load and should
+  // not load any more archive members to resolve the same symbol.
+  unsigned PendingArchiveLoad : 1;
 
 protected:
   StringRef Name;
@@ -397,47 +399,30 @@ inline Chunk *Defined::getChunk() {
   llvm_unreachable("unknown symbol kind");
 }
 
-// A real symbol object, SymbolBody, is usually stored within a Symbol. There's
-// always one Symbol for each symbol name. The resolver updates the SymbolBody
-// stored in the Body field of this object as it resolves symbols. Symbol also
-// holds computed properties of symbol names.
-struct Symbol {
-  // True if this symbol was referenced by a regular (non-bitcode) object.
-  unsigned IsUsedInRegularObj : 1;
-
-  // True if we've seen both a lazy and an undefined symbol with this symbol
-  // name, which means that we have enqueued an archive member load and should
-  // not load any more archive members to resolve the same symbol.
-  unsigned PendingArchiveLoad : 1;
-
-  // This field is used to store the Symbol's SymbolBody. This instantiation of
-  // AlignedCharArrayUnion gives us a struct with a char array field that is
-  // large and aligned enough to store any derived class of SymbolBody.
-  llvm::AlignedCharArrayUnion<
-      DefinedRegular, DefinedCommon, DefinedAbsolute, DefinedSynthetic, Lazy,
-      Undefined, DefinedImportData, DefinedImportThunk, DefinedLocalImport>
-      Body;
-
-  SymbolBody *body() {
-    return reinterpret_cast<SymbolBody *>(Body.buffer);
-  }
-  const SymbolBody *body() const { return const_cast<Symbol *>(this)->body(); }
+// A buffer class that is large enough to hold any SymbolBody-derived
+// object. We allocate memory using this class and instantiate a symbol
+// using the placement new.
+union SymbolUnion {
+  alignas(DefinedCOFF) char A[sizeof(DefinedCOFF)];
+  alignas(DefinedRegular) char B[sizeof(DefinedRegular)];
+  alignas(DefinedCommon) char C[sizeof(DefinedCommon)];
+  alignas(DefinedAbsolute) char D[sizeof(DefinedAbsolute)];
+  alignas(DefinedSynthetic) char E[sizeof(DefinedSynthetic)];
+  alignas(Lazy) char F[sizeof(Lazy)];
+  alignas(Undefined) char G[sizeof(Undefined)];
+  alignas(DefinedImportData) char H[sizeof(DefinedImportData)];
+  alignas(DefinedImportThunk) char I[sizeof(DefinedImportThunk)];
+  alignas(DefinedLocalImport) char J[sizeof(DefinedLocalImport)];
 };
 
 template <typename T, typename... ArgT>
-void replaceBody(Symbol *S, ArgT &&... Arg) {
-  static_assert(sizeof(T) <= sizeof(S->Body), "Body too small");
-  static_assert(alignof(T) <= alignof(decltype(S->Body)),
-                "Body not aligned enough");
+void replaceBody(SymbolBody *S, ArgT &&... Arg) {
+  static_assert(sizeof(T) <= sizeof(SymbolUnion), "Symbol too small");
+  static_assert(alignof(T) <= alignof(SymbolUnion),
+                "SymbolUnion not aligned enough");
   assert(static_cast<SymbolBody *>(static_cast<T *>(nullptr)) == nullptr &&
          "Not a SymbolBody");
-  new (S->Body.buffer) T(std::forward<ArgT>(Arg)...);
-}
-
-inline Symbol *SymbolBody::symbol() {
-  assert(isExternal());
-  return reinterpret_cast<Symbol *>(reinterpret_cast<char *>(this) -
-                                    offsetof(Symbol, Body));
+  new (S) T(std::forward<ArgT>(Arg)...);
 }
 } // namespace coff
 
