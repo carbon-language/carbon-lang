@@ -15,7 +15,7 @@ define i8 @v8i16(<8 x i16> %a, <8 x i16> %b, <8 x i16> %c, <8 x i16> %d) {
 ; SSE2-SSSE3-NEXT:    packsswb %xmm0, %xmm2
 ; SSE2-SSSE3-NEXT:    pmovmskb %xmm2, %eax
 ; SSE2-SSSE3-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; SSE2-SSSE3-NEXT:    ret{{[l|q]}}
+; SSE2-SSSE3-NEXT:    retq
 ;
 ; AVX12-LABEL: v8i16:
 ; AVX12:       # BB#0:
@@ -25,7 +25,7 @@ define i8 @v8i16(<8 x i16> %a, <8 x i16> %b, <8 x i16> %c, <8 x i16> %d) {
 ; AVX12-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
 ; AVX12-NEXT:    vpmovmskb %xmm0, %eax
 ; AVX12-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; AVX12-NEXT:    ret{{[l|q]}}
+; AVX12-NEXT:    retq
 ;
 ; AVX512F-LABEL: v8i16:
 ; AVX512F:       # BB#0:
@@ -40,7 +40,7 @@ define i8 @v8i16(<8 x i16> %a, <8 x i16> %b, <8 x i16> %c, <8 x i16> %d) {
 ; AVX512F-NEXT:    kmovw %k0, %eax
 ; AVX512F-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
 ; AVX512F-NEXT:    vzeroupper
-; AVX512F-NEXT:    ret{{[l|q]}}
+; AVX512F-NEXT:    retq
 ;
 ; AVX512BW-LABEL: v8i16:
 ; AVX512BW:       # BB#0:
@@ -48,7 +48,7 @@ define i8 @v8i16(<8 x i16> %a, <8 x i16> %b, <8 x i16> %c, <8 x i16> %d) {
 ; AVX512BW-NEXT:    vpcmpgtw %xmm3, %xmm2, %k0 {%k1}
 ; AVX512BW-NEXT:    kmovd %k0, %eax
 ; AVX512BW-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; AVX512BW-NEXT:    ret{{[l|q]}}
+; AVX512BW-NEXT:    retq
   %x0 = icmp sgt <8 x i16> %a, %b
   %x1 = icmp sgt <8 x i16> %c, %d
   %y = and <8 x i1> %x0, %x1
@@ -64,7 +64,7 @@ define i4 @v4i32(<4 x i32> %a, <4 x i32> %b, <4 x i32> %c, <4 x i32> %d) {
 ; SSE2-SSSE3-NEXT:    pand %xmm0, %xmm2
 ; SSE2-SSSE3-NEXT:    movmskps %xmm2, %eax
 ; SSE2-SSSE3-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; SSE2-SSSE3-NEXT:    ret{{[l|q]}}
+; SSE2-SSSE3-NEXT:    retq
 ;
 ; AVX12-LABEL: v4i32:
 ; AVX12:       # BB#0:
@@ -73,7 +73,7 @@ define i4 @v4i32(<4 x i32> %a, <4 x i32> %b, <4 x i32> %c, <4 x i32> %d) {
 ; AVX12-NEXT:    vpand %xmm1, %xmm0, %xmm0
 ; AVX12-NEXT:    vmovmskps %xmm0, %eax
 ; AVX12-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; AVX12-NEXT:    ret{{[l|q]}}
+; AVX12-NEXT:    retq
 ;
 ; AVX512F-LABEL: v4i32:
 ; AVX512F:       # BB#0:
@@ -82,7 +82,7 @@ define i4 @v4i32(<4 x i32> %a, <4 x i32> %b, <4 x i32> %c, <4 x i32> %d) {
 ; AVX512F-NEXT:    kmovw %k0, %eax
 ; AVX512F-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
 ; AVX512F-NEXT:    movb -{{[0-9]+}}(%rsp), %al
-; AVX512F-NEXT:    ret{{[l|q]}}
+; AVX512F-NEXT:    retq
 ;
 ; AVX512BW-LABEL: v4i32:
 ; AVX512BW:       # BB#0:
@@ -91,7 +91,7 @@ define i4 @v4i32(<4 x i32> %a, <4 x i32> %b, <4 x i32> %c, <4 x i32> %d) {
 ; AVX512BW-NEXT:    kmovd %k0, %eax
 ; AVX512BW-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
 ; AVX512BW-NEXT:    movb -{{[0-9]+}}(%rsp), %al
-; AVX512BW-NEXT:    ret{{[l|q]}}
+; AVX512BW-NEXT:    retq
   %x0 = icmp sgt <4 x i32> %a, %b
   %x1 = icmp sgt <4 x i32> %c, %d
   %y = and <4 x i1> %x0, %x1
@@ -107,7 +107,7 @@ define i4 @v4f32(<4 x float> %a, <4 x float> %b, <4 x float> %c, <4 x float> %d)
 ; SSE2-SSSE3-NEXT:    andps %xmm1, %xmm3
 ; SSE2-SSSE3-NEXT:    movmskps %xmm3, %eax
 ; SSE2-SSSE3-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; SSE2-SSSE3-NEXT:    ret{{[l|q]}}
+; SSE2-SSSE3-NEXT:    retq
 ;
 ; AVX12-LABEL: v4f32:
 ; AVX12:       # BB#0:
@@ -116,7 +116,7 @@ define i4 @v4f32(<4 x float> %a, <4 x float> %b, <4 x float> %c, <4 x float> %d)
 ; AVX12-NEXT:    vandps %xmm1, %xmm0, %xmm0
 ; AVX12-NEXT:    vmovmskps %xmm0, %eax
 ; AVX12-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; AVX12-NEXT:    ret{{[l|q]}}
+; AVX12-NEXT:    retq
 ;
 ; AVX512F-LABEL: v4f32:
 ; AVX512F:       # BB#0:
@@ -125,7 +125,7 @@ define i4 @v4f32(<4 x float> %a, <4 x float> %b, <4 x float> %c, <4 x float> %d)
 ; AVX512F-NEXT:    kmovw %k0, %eax
 ; AVX512F-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
 ; AVX512F-NEXT:    movb -{{[0-9]+}}(%rsp), %al
-; AVX512F-NEXT:    ret{{[l|q]}}
+; AVX512F-NEXT:    retq
 ;
 ; AVX512BW-LABEL: v4f32:
 ; AVX512BW:       # BB#0:
@@ -134,7 +134,7 @@ define i4 @v4f32(<4 x float> %a, <4 x float> %b, <4 x float> %c, <4 x float> %d)
 ; AVX512BW-NEXT:    kmovd %k0, %eax
 ; AVX512BW-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
 ; AVX512BW-NEXT:    movb -{{[0-9]+}}(%rsp), %al
-; AVX512BW-NEXT:    ret{{[l|q]}}
+; AVX512BW-NEXT:    retq
   %x0 = fcmp ogt <4 x float> %a, %b
   %x1 = fcmp ogt <4 x float> %c, %d
   %y = and <4 x i1> %x0, %x1
@@ -150,7 +150,7 @@ define i16 @v16i8(<16 x i8> %a, <16 x i8> %b, <16 x i8> %c, <16 x i8> %d) {
 ; SSE2-SSSE3-NEXT:    pand %xmm0, %xmm2
 ; SSE2-SSSE3-NEXT:    pmovmskb %xmm2, %eax
 ; SSE2-SSSE3-NEXT:    # kill: %AX<def> %AX<kill> %EAX<kill>
-; SSE2-SSSE3-NEXT:    ret{{[l|q]}}
+; SSE2-SSSE3-NEXT:    retq
 ;
 ; AVX12-LABEL: v16i8:
 ; AVX12:       # BB#0:
@@ -159,7 +159,7 @@ define i16 @v16i8(<16 x i8> %a, <16 x i8> %b, <16 x i8> %c, <16 x i8> %d) {
 ; AVX12-NEXT:    vpand %xmm1, %xmm0, %xmm0
 ; AVX12-NEXT:    vpmovmskb %xmm0, %eax
 ; AVX12-NEXT:    # kill: %AX<def> %AX<kill> %EAX<kill>
-; AVX12-NEXT:    ret{{[l|q]}}
+; AVX12-NEXT:    retq
 ;
 ; AVX512F-LABEL: v16i8:
 ; AVX512F:       # BB#0:
@@ -174,7 +174,7 @@ define i16 @v16i8(<16 x i8> %a, <16 x i8> %b, <16 x i8> %c, <16 x i8> %d) {
 ; AVX512F-NEXT:    kmovw %k0, %eax
 ; AVX512F-NEXT:    # kill: %AX<def> %AX<kill> %EAX<kill>
 ; AVX512F-NEXT:    vzeroupper
-; AVX512F-NEXT:    ret{{[l|q]}}
+; AVX512F-NEXT:    retq
 ;
 ; AVX512BW-LABEL: v16i8:
 ; AVX512BW:       # BB#0:
@@ -182,7 +182,7 @@ define i16 @v16i8(<16 x i8> %a, <16 x i8> %b, <16 x i8> %c, <16 x i8> %d) {
 ; AVX512BW-NEXT:    vpcmpgtb %xmm3, %xmm2, %k0 {%k1}
 ; AVX512BW-NEXT:    kmovd %k0, %eax
 ; AVX512BW-NEXT:    # kill: %AX<def> %AX<kill> %EAX<kill>
-; AVX512BW-NEXT:    ret{{[l|q]}}
+; AVX512BW-NEXT:    retq
   %x0 = icmp sgt <16 x i8> %a, %b
   %x1 = icmp sgt <16 x i8> %c, %d
   %y = and <16 x i1> %x0, %x1
@@ -245,7 +245,7 @@ define i2 @v2i8(<2 x i8> %a, <2 x i8> %b, <2 x i8> %c, <2 x i8> %d) {
 ; SSE2-SSSE3-NEXT:    pand %xmm1, %xmm0
 ; SSE2-SSSE3-NEXT:    movmskpd %xmm0, %eax
 ; SSE2-SSSE3-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; SSE2-SSSE3-NEXT:    ret{{[l|q]}}
+; SSE2-SSSE3-NEXT:    retq
 ;
 ; AVX1-LABEL: v2i8:
 ; AVX1:       # BB#0:
@@ -274,7 +274,7 @@ define i2 @v2i8(<2 x i8> %a, <2 x i8> %b, <2 x i8> %c, <2 x i8> %d) {
 ; AVX1-NEXT:    vpand %xmm2, %xmm0, %xmm0
 ; AVX1-NEXT:    vmovmskpd %xmm0, %eax
 ; AVX1-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; AVX1-NEXT:    ret{{[l|q]}}
+; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: v2i8:
 ; AVX2:       # BB#0:
@@ -303,7 +303,7 @@ define i2 @v2i8(<2 x i8> %a, <2 x i8> %b, <2 x i8> %c, <2 x i8> %d) {
 ; AVX2-NEXT:    vpand %xmm2, %xmm0, %xmm0
 ; AVX2-NEXT:    vmovmskpd %xmm0, %eax
 ; AVX2-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; AVX2-NEXT:    ret{{[l|q]}}
+; AVX2-NEXT:    retq
 ;
 ; AVX512F-LABEL: v2i8:
 ; AVX512F:       # BB#0:
@@ -320,7 +320,7 @@ define i2 @v2i8(<2 x i8> %a, <2 x i8> %b, <2 x i8> %c, <2 x i8> %d) {
 ; AVX512F-NEXT:    kmovw %k0, %eax
 ; AVX512F-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
 ; AVX512F-NEXT:    movb -{{[0-9]+}}(%rsp), %al
-; AVX512F-NEXT:    ret{{[l|q]}}
+; AVX512F-NEXT:    retq
 ;
 ; AVX512BW-LABEL: v2i8:
 ; AVX512BW:       # BB#0:
@@ -337,7 +337,7 @@ define i2 @v2i8(<2 x i8> %a, <2 x i8> %b, <2 x i8> %c, <2 x i8> %d) {
 ; AVX512BW-NEXT:    kmovd %k0, %eax
 ; AVX512BW-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
 ; AVX512BW-NEXT:    movb -{{[0-9]+}}(%rsp), %al
-; AVX512BW-NEXT:    ret{{[l|q]}}
+; AVX512BW-NEXT:    retq
   %x0 = icmp sgt <2 x i8> %a, %b
   %x1 = icmp sgt <2 x i8> %c, %d
   %y = and <2 x i1> %x0, %x1
@@ -400,7 +400,7 @@ define i2 @v2i16(<2 x i16> %a, <2 x i16> %b, <2 x i16> %c, <2 x i16> %d) {
 ; SSE2-SSSE3-NEXT:    pand %xmm1, %xmm0
 ; SSE2-SSSE3-NEXT:    movmskpd %xmm0, %eax
 ; SSE2-SSSE3-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; SSE2-SSSE3-NEXT:    ret{{[l|q]}}
+; SSE2-SSSE3-NEXT:    retq
 ;
 ; AVX1-LABEL: v2i16:
 ; AVX1:       # BB#0:
@@ -429,7 +429,7 @@ define i2 @v2i16(<2 x i16> %a, <2 x i16> %b, <2 x i16> %c, <2 x i16> %d) {
 ; AVX1-NEXT:    vpand %xmm2, %xmm0, %xmm0
 ; AVX1-NEXT:    vmovmskpd %xmm0, %eax
 ; AVX1-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; AVX1-NEXT:    ret{{[l|q]}}
+; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: v2i16:
 ; AVX2:       # BB#0:
@@ -458,7 +458,7 @@ define i2 @v2i16(<2 x i16> %a, <2 x i16> %b, <2 x i16> %c, <2 x i16> %d) {
 ; AVX2-NEXT:    vpand %xmm2, %xmm0, %xmm0
 ; AVX2-NEXT:    vmovmskpd %xmm0, %eax
 ; AVX2-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; AVX2-NEXT:    ret{{[l|q]}}
+; AVX2-NEXT:    retq
 ;
 ; AVX512F-LABEL: v2i16:
 ; AVX512F:       # BB#0:
@@ -475,7 +475,7 @@ define i2 @v2i16(<2 x i16> %a, <2 x i16> %b, <2 x i16> %c, <2 x i16> %d) {
 ; AVX512F-NEXT:    kmovw %k0, %eax
 ; AVX512F-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
 ; AVX512F-NEXT:    movb -{{[0-9]+}}(%rsp), %al
-; AVX512F-NEXT:    ret{{[l|q]}}
+; AVX512F-NEXT:    retq
 ;
 ; AVX512BW-LABEL: v2i16:
 ; AVX512BW:       # BB#0:
@@ -492,7 +492,7 @@ define i2 @v2i16(<2 x i16> %a, <2 x i16> %b, <2 x i16> %c, <2 x i16> %d) {
 ; AVX512BW-NEXT:    kmovd %k0, %eax
 ; AVX512BW-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
 ; AVX512BW-NEXT:    movb -{{[0-9]+}}(%rsp), %al
-; AVX512BW-NEXT:    ret{{[l|q]}}
+; AVX512BW-NEXT:    retq
   %x0 = icmp sgt <2 x i16> %a, %b
   %x1 = icmp sgt <2 x i16> %c, %d
   %y = and <2 x i1> %x0, %x1
@@ -547,7 +547,7 @@ define i2 @v2i32(<2 x i32> %a, <2 x i32> %b, <2 x i32> %c, <2 x i32> %d) {
 ; SSE2-SSSE3-NEXT:    pand %xmm3, %xmm0
 ; SSE2-SSSE3-NEXT:    movmskpd %xmm0, %eax
 ; SSE2-SSSE3-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; SSE2-SSSE3-NEXT:    ret{{[l|q]}}
+; SSE2-SSSE3-NEXT:    retq
 ;
 ; AVX1-LABEL: v2i32:
 ; AVX1:       # BB#0:
@@ -572,7 +572,7 @@ define i2 @v2i32(<2 x i32> %a, <2 x i32> %b, <2 x i32> %c, <2 x i32> %d) {
 ; AVX1-NEXT:    vpand %xmm2, %xmm0, %xmm0
 ; AVX1-NEXT:    vmovmskpd %xmm0, %eax
 ; AVX1-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; AVX1-NEXT:    ret{{[l|q]}}
+; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: v2i32:
 ; AVX2:       # BB#0:
@@ -597,7 +597,7 @@ define i2 @v2i32(<2 x i32> %a, <2 x i32> %b, <2 x i32> %c, <2 x i32> %d) {
 ; AVX2-NEXT:    vpand %xmm2, %xmm0, %xmm0
 ; AVX2-NEXT:    vmovmskpd %xmm0, %eax
 ; AVX2-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; AVX2-NEXT:    ret{{[l|q]}}
+; AVX2-NEXT:    retq
 ;
 ; AVX512F-LABEL: v2i32:
 ; AVX512F:       # BB#0:
@@ -614,7 +614,7 @@ define i2 @v2i32(<2 x i32> %a, <2 x i32> %b, <2 x i32> %c, <2 x i32> %d) {
 ; AVX512F-NEXT:    kmovw %k0, %eax
 ; AVX512F-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
 ; AVX512F-NEXT:    movb -{{[0-9]+}}(%rsp), %al
-; AVX512F-NEXT:    ret{{[l|q]}}
+; AVX512F-NEXT:    retq
 ;
 ; AVX512BW-LABEL: v2i32:
 ; AVX512BW:       # BB#0:
@@ -631,7 +631,7 @@ define i2 @v2i32(<2 x i32> %a, <2 x i32> %b, <2 x i32> %c, <2 x i32> %d) {
 ; AVX512BW-NEXT:    kmovd %k0, %eax
 ; AVX512BW-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
 ; AVX512BW-NEXT:    movb -{{[0-9]+}}(%rsp), %al
-; AVX512BW-NEXT:    ret{{[l|q]}}
+; AVX512BW-NEXT:    retq
   %x0 = icmp sgt <2 x i32> %a, %b
   %x1 = icmp sgt <2 x i32> %c, %d
   %y = and <2 x i1> %x0, %x1
@@ -666,7 +666,7 @@ define i2 @v2i64(<2 x i64> %a, <2 x i64> %b, <2 x i64> %c, <2 x i64> %d) {
 ; SSE2-SSSE3-NEXT:    pand %xmm1, %xmm0
 ; SSE2-SSSE3-NEXT:    movmskpd %xmm0, %eax
 ; SSE2-SSSE3-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; SSE2-SSSE3-NEXT:    ret{{[l|q]}}
+; SSE2-SSSE3-NEXT:    retq
 ;
 ; AVX12-LABEL: v2i64:
 ; AVX12:       # BB#0:
@@ -675,7 +675,7 @@ define i2 @v2i64(<2 x i64> %a, <2 x i64> %b, <2 x i64> %c, <2 x i64> %d) {
 ; AVX12-NEXT:    vpand %xmm1, %xmm0, %xmm0
 ; AVX12-NEXT:    vmovmskpd %xmm0, %eax
 ; AVX12-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; AVX12-NEXT:    ret{{[l|q]}}
+; AVX12-NEXT:    retq
 ;
 ; AVX512F-LABEL: v2i64:
 ; AVX512F:       # BB#0:
@@ -684,7 +684,7 @@ define i2 @v2i64(<2 x i64> %a, <2 x i64> %b, <2 x i64> %c, <2 x i64> %d) {
 ; AVX512F-NEXT:    kmovw %k0, %eax
 ; AVX512F-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
 ; AVX512F-NEXT:    movb -{{[0-9]+}}(%rsp), %al
-; AVX512F-NEXT:    ret{{[l|q]}}
+; AVX512F-NEXT:    retq
 ;
 ; AVX512BW-LABEL: v2i64:
 ; AVX512BW:       # BB#0:
@@ -693,7 +693,7 @@ define i2 @v2i64(<2 x i64> %a, <2 x i64> %b, <2 x i64> %c, <2 x i64> %d) {
 ; AVX512BW-NEXT:    kmovd %k0, %eax
 ; AVX512BW-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
 ; AVX512BW-NEXT:    movb -{{[0-9]+}}(%rsp), %al
-; AVX512BW-NEXT:    ret{{[l|q]}}
+; AVX512BW-NEXT:    retq
   %x0 = icmp sgt <2 x i64> %a, %b
   %x1 = icmp sgt <2 x i64> %c, %d
   %y = and <2 x i1> %x0, %x1
@@ -709,7 +709,7 @@ define i2 @v2f64(<2 x double> %a, <2 x double> %b, <2 x double> %c, <2 x double>
 ; SSE2-SSSE3-NEXT:    andpd %xmm1, %xmm3
 ; SSE2-SSSE3-NEXT:    movmskpd %xmm3, %eax
 ; SSE2-SSSE3-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; SSE2-SSSE3-NEXT:    ret{{[l|q]}}
+; SSE2-SSSE3-NEXT:    retq
 ;
 ; AVX12-LABEL: v2f64:
 ; AVX12:       # BB#0:
@@ -718,7 +718,7 @@ define i2 @v2f64(<2 x double> %a, <2 x double> %b, <2 x double> %c, <2 x double>
 ; AVX12-NEXT:    vandpd %xmm1, %xmm0, %xmm0
 ; AVX12-NEXT:    vmovmskpd %xmm0, %eax
 ; AVX12-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; AVX12-NEXT:    ret{{[l|q]}}
+; AVX12-NEXT:    retq
 ;
 ; AVX512F-LABEL: v2f64:
 ; AVX512F:       # BB#0:
@@ -727,7 +727,7 @@ define i2 @v2f64(<2 x double> %a, <2 x double> %b, <2 x double> %c, <2 x double>
 ; AVX512F-NEXT:    kmovw %k0, %eax
 ; AVX512F-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
 ; AVX512F-NEXT:    movb -{{[0-9]+}}(%rsp), %al
-; AVX512F-NEXT:    ret{{[l|q]}}
+; AVX512F-NEXT:    retq
 ;
 ; AVX512BW-LABEL: v2f64:
 ; AVX512BW:       # BB#0:
@@ -736,7 +736,7 @@ define i2 @v2f64(<2 x double> %a, <2 x double> %b, <2 x double> %c, <2 x double>
 ; AVX512BW-NEXT:    kmovd %k0, %eax
 ; AVX512BW-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
 ; AVX512BW-NEXT:    movb -{{[0-9]+}}(%rsp), %al
-; AVX512BW-NEXT:    ret{{[l|q]}}
+; AVX512BW-NEXT:    retq
   %x0 = fcmp ogt <2 x double> %a, %b
   %x1 = fcmp ogt <2 x double> %c, %d
   %y = and <2 x i1> %x0, %x1
@@ -760,7 +760,7 @@ define i4 @v4i8(<4 x i8> %a, <4 x i8> %b, <4 x i8> %c, <4 x i8> %d) {
 ; SSE2-SSSE3-NEXT:    pand %xmm2, %xmm0
 ; SSE2-SSSE3-NEXT:    movmskps %xmm0, %eax
 ; SSE2-SSSE3-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; SSE2-SSSE3-NEXT:    ret{{[l|q]}}
+; SSE2-SSSE3-NEXT:    retq
 ;
 ; AVX12-LABEL: v4i8:
 ; AVX12:       # BB#0:
@@ -777,7 +777,7 @@ define i4 @v4i8(<4 x i8> %a, <4 x i8> %b, <4 x i8> %c, <4 x i8> %d) {
 ; AVX12-NEXT:    vpand %xmm2, %xmm0, %xmm0
 ; AVX12-NEXT:    vmovmskps %xmm0, %eax
 ; AVX12-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; AVX12-NEXT:    ret{{[l|q]}}
+; AVX12-NEXT:    retq
 ;
 ; AVX512F-LABEL: v4i8:
 ; AVX512F:       # BB#0:
@@ -794,7 +794,7 @@ define i4 @v4i8(<4 x i8> %a, <4 x i8> %b, <4 x i8> %c, <4 x i8> %d) {
 ; AVX512F-NEXT:    kmovw %k0, %eax
 ; AVX512F-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
 ; AVX512F-NEXT:    movb -{{[0-9]+}}(%rsp), %al
-; AVX512F-NEXT:    ret{{[l|q]}}
+; AVX512F-NEXT:    retq
 ;
 ; AVX512BW-LABEL: v4i8:
 ; AVX512BW:       # BB#0:
@@ -811,7 +811,7 @@ define i4 @v4i8(<4 x i8> %a, <4 x i8> %b, <4 x i8> %c, <4 x i8> %d) {
 ; AVX512BW-NEXT:    kmovd %k0, %eax
 ; AVX512BW-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
 ; AVX512BW-NEXT:    movb -{{[0-9]+}}(%rsp), %al
-; AVX512BW-NEXT:    ret{{[l|q]}}
+; AVX512BW-NEXT:    retq
   %x0 = icmp sgt <4 x i8> %a, %b
   %x1 = icmp sgt <4 x i8> %c, %d
   %y = and <4 x i1> %x0, %x1
@@ -835,7 +835,7 @@ define i4 @v4i16(<4 x i16> %a, <4 x i16> %b, <4 x i16> %c, <4 x i16> %d) {
 ; SSE2-SSSE3-NEXT:    pand %xmm2, %xmm0
 ; SSE2-SSSE3-NEXT:    movmskps %xmm0, %eax
 ; SSE2-SSSE3-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; SSE2-SSSE3-NEXT:    ret{{[l|q]}}
+; SSE2-SSSE3-NEXT:    retq
 ;
 ; AVX12-LABEL: v4i16:
 ; AVX12:       # BB#0:
@@ -852,7 +852,7 @@ define i4 @v4i16(<4 x i16> %a, <4 x i16> %b, <4 x i16> %c, <4 x i16> %d) {
 ; AVX12-NEXT:    vpand %xmm2, %xmm0, %xmm0
 ; AVX12-NEXT:    vmovmskps %xmm0, %eax
 ; AVX12-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; AVX12-NEXT:    ret{{[l|q]}}
+; AVX12-NEXT:    retq
 ;
 ; AVX512F-LABEL: v4i16:
 ; AVX512F:       # BB#0:
@@ -869,7 +869,7 @@ define i4 @v4i16(<4 x i16> %a, <4 x i16> %b, <4 x i16> %c, <4 x i16> %d) {
 ; AVX512F-NEXT:    kmovw %k0, %eax
 ; AVX512F-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
 ; AVX512F-NEXT:    movb -{{[0-9]+}}(%rsp), %al
-; AVX512F-NEXT:    ret{{[l|q]}}
+; AVX512F-NEXT:    retq
 ;
 ; AVX512BW-LABEL: v4i16:
 ; AVX512BW:       # BB#0:
@@ -886,7 +886,7 @@ define i4 @v4i16(<4 x i16> %a, <4 x i16> %b, <4 x i16> %c, <4 x i16> %d) {
 ; AVX512BW-NEXT:    kmovd %k0, %eax
 ; AVX512BW-NEXT:    movb %al, -{{[0-9]+}}(%rsp)
 ; AVX512BW-NEXT:    movb -{{[0-9]+}}(%rsp), %al
-; AVX512BW-NEXT:    ret{{[l|q]}}
+; AVX512BW-NEXT:    retq
   %x0 = icmp sgt <4 x i16> %a, %b
   %x1 = icmp sgt <4 x i16> %c, %d
   %y = and <4 x i1> %x0, %x1
@@ -911,7 +911,7 @@ define i8 @v8i8(<8 x i8> %a, <8 x i8> %b, <8 x i8> %c, <8 x i8> %d) {
 ; SSE2-SSSE3-NEXT:    packsswb %xmm0, %xmm0
 ; SSE2-SSSE3-NEXT:    pmovmskb %xmm0, %eax
 ; SSE2-SSSE3-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; SSE2-SSSE3-NEXT:    ret{{[l|q]}}
+; SSE2-SSSE3-NEXT:    retq
 ;
 ; AVX12-LABEL: v8i8:
 ; AVX12:       # BB#0:
@@ -929,7 +929,7 @@ define i8 @v8i8(<8 x i8> %a, <8 x i8> %b, <8 x i8> %c, <8 x i8> %d) {
 ; AVX12-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
 ; AVX12-NEXT:    vpmovmskb %xmm0, %eax
 ; AVX12-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; AVX12-NEXT:    ret{{[l|q]}}
+; AVX12-NEXT:    retq
 ;
 ; AVX512F-LABEL: v8i8:
 ; AVX512F:       # BB#0:
@@ -952,7 +952,7 @@ define i8 @v8i8(<8 x i8> %a, <8 x i8> %b, <8 x i8> %c, <8 x i8> %d) {
 ; AVX512F-NEXT:    kmovw %k0, %eax
 ; AVX512F-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
 ; AVX512F-NEXT:    vzeroupper
-; AVX512F-NEXT:    ret{{[l|q]}}
+; AVX512F-NEXT:    retq
 ;
 ; AVX512BW-LABEL: v8i8:
 ; AVX512BW:       # BB#0:
@@ -968,7 +968,7 @@ define i8 @v8i8(<8 x i8> %a, <8 x i8> %b, <8 x i8> %c, <8 x i8> %d) {
 ; AVX512BW-NEXT:    vpcmpgtw %xmm3, %xmm2, %k0 {%k1}
 ; AVX512BW-NEXT:    kmovd %k0, %eax
 ; AVX512BW-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
-; AVX512BW-NEXT:    ret{{[l|q]}}
+; AVX512BW-NEXT:    retq
   %x0 = icmp sgt <8 x i8> %a, %b
   %x1 = icmp sgt <8 x i8> %c, %d
   %y = and <8 x i1> %x0, %x1
