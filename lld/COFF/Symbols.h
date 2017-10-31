@@ -403,16 +403,15 @@ inline Chunk *Defined::getChunk() {
 // object. We allocate memory using this class and instantiate a symbol
 // using the placement new.
 union SymbolUnion {
-  alignas(DefinedCOFF) char A[sizeof(DefinedCOFF)];
-  alignas(DefinedRegular) char B[sizeof(DefinedRegular)];
-  alignas(DefinedCommon) char C[sizeof(DefinedCommon)];
-  alignas(DefinedAbsolute) char D[sizeof(DefinedAbsolute)];
-  alignas(DefinedSynthetic) char E[sizeof(DefinedSynthetic)];
-  alignas(Lazy) char F[sizeof(Lazy)];
-  alignas(Undefined) char G[sizeof(Undefined)];
-  alignas(DefinedImportData) char H[sizeof(DefinedImportData)];
-  alignas(DefinedImportThunk) char I[sizeof(DefinedImportThunk)];
-  alignas(DefinedLocalImport) char J[sizeof(DefinedLocalImport)];
+  alignas(DefinedRegular) char A[sizeof(DefinedRegular)];
+  alignas(DefinedCommon) char B[sizeof(DefinedCommon)];
+  alignas(DefinedAbsolute) char C[sizeof(DefinedAbsolute)];
+  alignas(DefinedSynthetic) char D[sizeof(DefinedSynthetic)];
+  alignas(Lazy) char E[sizeof(Lazy)];
+  alignas(Undefined) char F[sizeof(Undefined)];
+  alignas(DefinedImportData) char G[sizeof(DefinedImportData)];
+  alignas(DefinedImportThunk) char H[sizeof(DefinedImportThunk)];
+  alignas(DefinedLocalImport) char I[sizeof(DefinedLocalImport)];
 };
 
 template <typename T, typename... ArgT>
