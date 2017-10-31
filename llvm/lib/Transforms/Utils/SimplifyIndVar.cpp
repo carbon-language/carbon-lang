@@ -193,27 +193,19 @@ bool SimplifyIndvar::makeIVComparisonInvariant(ICmpInst *ICmp,
   // cheaply, where cheaply means "we don't need to emit any new
   // instructions".
 
-  Value *NewLHS = nullptr, *NewRHS = nullptr;
-
-  if (S == InvariantLHS || X == InvariantLHS)
-    NewLHS =
-      ICmp->getOperand(S == InvariantLHS ? IVOperIdx : (1 - IVOperIdx));
-
-  if (S == InvariantRHS || X == InvariantRHS)
-    NewRHS =
-      ICmp->getOperand(S == InvariantRHS ? IVOperIdx : (1 - IVOperIdx));
-
+  SmallDenseMap<const SCEV*, Value*> CheapExpansions;
+  CheapExpansions[S] = ICmp->getOperand(IVOperIdx);
+  CheapExpansions[X] = ICmp->getOperand(1 - IVOperIdx);
+  
   // TODO: Support multiple entry loops?  (We currently bail out of these in
   // the IndVarSimplify pass)
   if (auto *BB = L->getLoopPredecessor()) {
-    Value *Incoming = PN->getIncomingValue(PN->getBasicBlockIndex(BB));
+    Value *Incoming = PN->getIncomingValueForBlock(BB);
     const SCEV *IncomingS = SE->getSCEV(Incoming);
-
-    if (!NewLHS && IncomingS == InvariantLHS)
-      NewLHS = Incoming;
-    if (!NewRHS && IncomingS == InvariantRHS)
-      NewRHS = Incoming;
+    CheapExpansions[IncomingS] = Incoming;
   }
+  Value *NewLHS = CheapExpansions[InvariantLHS];
+  Value *NewRHS = CheapExpansions[InvariantRHS];
 
   if (!NewLHS || !NewRHS)
     // We could not find an existing value to replace either LHS or RHS.
