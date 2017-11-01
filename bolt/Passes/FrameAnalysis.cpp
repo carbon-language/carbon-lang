@@ -106,10 +106,9 @@ class FrameAccessAnalysis {
     MCPhysReg Reg{0};
     int64_t StackOffset{0};
     bool IsIndexed{false};
-    if (!BC.MIA->isStackAccess(*BC.MRI, Inst, FIE.IsLoad, FIE.IsStore,
-                               FIE.IsStoreFromReg, Reg, SrcImm, FIE.StackPtrReg,
-                               StackOffset, FIE.Size, FIE.IsSimple,
-                               IsIndexed)) {
+    if (!BC.MIA->isStackAccess(Inst, FIE.IsLoad, FIE.IsStore, FIE.IsStoreFromReg,
+                               Reg, SrcImm, FIE.StackPtrReg, StackOffset, FIE.Size,
+                               FIE.IsSimple, IsIndexed)) {
       return true;
     }
 
@@ -205,7 +204,7 @@ public:
       return true;
     }
 
-    if (BC.MIA->escapesVariable(Inst, *BC.MRI, SPT.HasFramePointer)) {
+    if (BC.MIA->escapesVariable(Inst, SPT.HasFramePointer)) {
       DEBUG(dbgs() << "Leaked stack address, giving up on this function.\n");
       DEBUG(dbgs() << "Blame insn: ");
       DEBUG(Inst.dump());

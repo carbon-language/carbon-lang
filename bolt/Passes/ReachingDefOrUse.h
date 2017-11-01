@@ -45,7 +45,7 @@ public:
       if (Def) {
         RA.getInstClobberList(**I, BV);
       } else {
-        this->BC.MIA->getTouchedRegs(**I, BV, *this->BC.MRI);
+        this->BC.MIA->getTouchedRegs(**I, BV);
       }
       if (BV[Reg])
         return true;
@@ -101,7 +101,7 @@ protected:
     if (Def)
       RA.getInstClobberList(*Y, YClobbers);
     else
-      this->BC.MIA->getTouchedRegs(*Y, YClobbers, *this->BC.MRI);
+      this->BC.MIA->getTouchedRegs(*Y, YClobbers);
     // X kills Y if it clobbers Y completely -- this is a conservative approach.
     // In practice, we may produce use-def links that may not exist.
     XClobbers &= YClobbers;

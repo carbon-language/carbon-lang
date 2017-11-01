@@ -585,7 +585,7 @@ createBinaryContext(ELFObjectFileBase *File, DataReader &DR,
   }
 
   std::unique_ptr<const MCInstrAnalysis> MIA(
-      TheTarget->createMCInstrAnalysis(MII.get()));
+     TheTarget->createMCInstrAnalysis(MII.get(), MRI.get()));
   if (!MIA) {
     errs() << "BOLT-ERROR: failed to create instruction analysis for target"
            << TripleName << "\n";

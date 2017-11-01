@@ -165,8 +165,8 @@ void StokeInfo::runOnFunctions(
   DefaultDefInMask.resize(NumRegs, false);
   DefaultLiveOutMask.resize(NumRegs, false);
 
-  BC.MIA->getDefaultDefIn(DefaultDefInMask, *BC.MRI);
-  BC.MIA->getDefaultLiveOut(DefaultLiveOutMask, *BC.MRI);
+  BC.MIA->getDefaultDefIn(DefaultDefInMask);
+  BC.MIA->getDefaultLiveOut(DefaultLiveOutMask);
 
   getRegNameFromBitVec(BC, DefaultDefInMask);
   getRegNameFromBitVec(BC, DefaultLiveOutMask);

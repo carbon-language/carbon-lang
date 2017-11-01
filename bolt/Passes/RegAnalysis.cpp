@@ -93,7 +93,7 @@ void RegAnalysis::beConservative(BitVector &Result) const {
     Result.set();
   } else {
     BitVector BV(BC.MRI->getNumRegs(), false);
-    BC.MIA->getCalleeSavedRegs(BV, *BC.MRI);
+    BC.MIA->getCalleeSavedRegs(BV);
     BV.flip();
     Result |= BV;
   }
@@ -104,7 +104,7 @@ bool RegAnalysis::isConservative(BitVector &Vec) const {
     return Vec.all();
   } else {
     BitVector BV(BC.MRI->getNumRegs(), false);
-    BC.MIA->getCalleeSavedRegs(BV, *BC.MRI);
+    BC.MIA->getCalleeSavedRegs(BV);
     BV |= Vec;
     return BV.all();
   }
@@ -114,9 +114,9 @@ void RegAnalysis::getInstUsedRegsList(const MCInst &Inst, BitVector &RegSet,
                                       bool GetClobbers) const {
   if (!BC.MIA->isCall(Inst)) {
     if (GetClobbers)
-      BC.MIA->getClobberedRegs(Inst, RegSet, *BC.MRI);
+      BC.MIA->getClobberedRegs(Inst, RegSet);
     else
-      BC.MIA->getUsedRegs(Inst, RegSet, *BC.MRI);
+      BC.MIA->getUsedRegs(Inst, RegSet);
     return;
   }
 

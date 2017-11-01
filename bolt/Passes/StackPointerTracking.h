@@ -165,7 +165,7 @@ protected:
       }
 
       if (!HasFramePointer) {
-        if (MIA->escapesVariable(Point, *this->BC.MRI, false)) {
+        if (MIA->escapesVariable(Point, false)) {
           HasFramePointer = true;
         }
       }

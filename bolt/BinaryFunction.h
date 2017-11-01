@@ -461,8 +461,9 @@ private:
 
   /// Temporary holder of instructions before CFG is constructed.
   /// Map offset in the function to MCInst.
-  using InstrMapType = std::map<uint32_t, MCInst>;
-  InstrMapType Instructions;
+  using InstrMapType = std::map<uint32_t, size_t>;
+  InstrMapType InstructionOffsets;
+  std::vector<MCInst> Instructions;
 
   /// List of DWARF CFI instructions. Original CFI from the binary must be
   /// sorted w.r.t. offset that it appears. We rely on this to replay CFIs
@@ -736,7 +737,10 @@ private:
   }
 
   void addInstruction(uint64_t Offset, MCInst &&Instruction) {
-    Instructions.emplace(Offset, std::forward<MCInst>(Instruction));
+    assert(InstructionOffsets.size() == Instructions.size() &&
+           "There must be one instruction at every offset.");
+    Instructions.emplace_back(std::forward<MCInst>(Instruction));
+    InstructionOffsets[Offset] = Instructions.size() - 1; 
   }
 
   /// Return instruction at a given offset in the function. Valid before
@@ -744,22 +748,14 @@ private:
   MCInst *getInstructionAtOffset(uint64_t Offset) {
     assert(CurrentState == State::Disassembled &&
            "can only call function in Disassembled state");
-    auto II = Instructions.find(Offset);
-    return (II == Instructions.end()) ? nullptr : &II->second;
+    auto II = InstructionOffsets.find(Offset);
+    return (II == InstructionOffsets.end())
+       ? nullptr : &Instructions[II->second];
   }
 
-  /// Different types of indirect branches encountered during disassembly.
-  enum class IndirectBranchType : char {
-    UNKNOWN = 0,              /// Unable to determine type.
-    POSSIBLE_TAIL_CALL,       /// Possibly a tail call.
-    POSSIBLE_JUMP_TABLE,      /// Possibly a switch/jump table.
-    POSSIBLE_PIC_JUMP_TABLE,  /// Possibly a jump table for PIC.
-    POSSIBLE_GOTO             /// Possibly a gcc's computed goto.
-  };
-
-  /// Analyze indirect branch \p Instruction before it is added to
-  /// Instructions list.
-  IndirectBranchType analyzeIndirectBranch(MCInst &Instruction,
+  /// Analyze and process indirect branch \p Instruction before it is
+  /// added to Instructions list.
+  IndirectBranchType processIndirectBranch(MCInst &Instruction,
                                            unsigned Size,
                                            uint64_t Offset);
 
@@ -1439,22 +1435,23 @@ public:
     // harder for us to recover this information, since we can create empty BBs
     // with NOPs and then reorder it away.
     // We fix this by moving the CFI instruction just before any NOPs.
-    auto I = Instructions.lower_bound(Offset);
+    auto I = InstructionOffsets.lower_bound(Offset);
     if (Offset == getSize()) {
-      assert(I == Instructions.end() && "unexpected iterator value");
+      assert(I == InstructionOffsets.end() && "unexpected iterator value");
       // Sometimes compiler issues restore_state after all instructions
       // in the function (even after nop).
       --I;
       Offset = I->first;
     }
     assert(I->first == Offset && "CFI pointing to unknown instruction");
-    if (I == Instructions.begin()) {
+    if (I == InstructionOffsets.begin()) {
       CIEFrameInstructions.emplace_back(std::forward<MCCFIInstruction>(Inst));
       return;
     }
 
     --I;
-    while (I != Instructions.begin() && BC.MIA->isNoop(I->second)) {
+    while (I != InstructionOffsets.begin() &&
+           BC.MIA->isNoop(Instructions[I->second])) {
       Offset = I->first;
       --I;
     }

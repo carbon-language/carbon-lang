@@ -169,12 +169,6 @@ bool shouldPrint(const BinaryFunction &Function) {
 namespace llvm {
 namespace bolt {
 
-// Temporary constant.
-//
-// TODO: move to architecture-specific file together with the code that is
-// using it.
-constexpr unsigned NoRegister = 0;
-
 constexpr const char *DynoStats::Desc[];
 constexpr unsigned BinaryFunction::MinAlign;
 
@@ -430,9 +424,9 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   // Offset of the instruction in function.
   uint64_t Offset{0};
 
-  if (BasicBlocks.empty() && !Instructions.empty()) {
+  if (BasicBlocks.empty() && !InstructionOffsets.empty()) {
     // Print before CFG was built.
-    for (const auto &II : Instructions) {
+    for (const auto &II : InstructionOffsets) {
       Offset = II.first;
 
       // Print label if exists at this offset.
@@ -440,7 +434,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
       if (LI != Labels.end())
         OS << LI->second->getName() << ":\n";
 
-      BC.printInstruction(OS, II.second, Offset, this);
+      BC.printInstruction(OS, Instructions[II.second], Offset, this);
     }
   }
 
@@ -578,239 +572,38 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   OS << "End of Function \"" << *this << "\"\n\n";
 }
 
-BinaryFunction::IndirectBranchType
-BinaryFunction::analyzeIndirectBranch(MCInst &Instruction,
-                                      unsigned Size,
-                                      uint64_t Offset) {
-  auto &MIA = BC.MIA;
-
-  IndirectBranchType Type = IndirectBranchType::UNKNOWN;
+IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
+                                                         unsigned Size,
+                                                         uint64_t Offset) {
+  const auto PtrSize = BC.AsmInfo->getPointerSize();
 
   // An instruction referencing memory used by jump instruction (directly or
   // via register). This location could be an array of function pointers
   // in case of indirect tail call, or a jump table.
-  MCInst *MemLocInstr = nullptr;
+  const MCInst *MemLocInstr;
 
   // Address of the table referenced by MemLocInstr. Could be either an
   // array of function pointers, or a jump table.
   uint64_t ArrayStart = 0;
 
-  auto analyzePICJumpTable =
-      [&](InstrMapType::reverse_iterator II,
-          InstrMapType::reverse_iterator IE,
-          unsigned R1,
-          unsigned R2) {
-    // Analyze PIC-style jump table code template:
-    //
-    //    lea PIC_JUMP_TABLE(%rip), {%r1|%r2}     <- MemLocInstr
-    //    mov ({%r1|%r2}, %index, 4), {%r2|%r1}
-    //    add %r2, %r1
-    //    jmp *%r1
-    //
-    // (with any irrelevant instructions in-between)
-    //
-    // When we call this helper we've already determined %r1 and %r2, and
-    // reverse instruction iterator \p II is pointing to the ADD instruction.
-    //
-    // PIC jump table looks like following:
-    //
-    //   JT:  ----------
-    //    E1:| L1 - JT  |
-    //       |----------|
-    //    E2:| L2 - JT  |
-    //       |----------|
-    //       |          |
-    //          ......
-    //    En:| Ln - JT  |
-    //        ----------
-    //
-    // Where L1, L2, ..., Ln represent labels in the function.
-    //
-    // The actual relocations in the table will be of the form:
-    //
-    //   Ln - JT
-    //    = (Ln - En) + (En - JT)
-    //    = R_X86_64_PC32(Ln) + En - JT
-    //    = R_X86_64_PC32(Ln + offsetof(En))
-    //
-    DEBUG(dbgs() << "BOLT-DEBUG: checking for PIC jump table\n");
-    MCInst *MovInstr = nullptr;
-    while (++II != IE) {
-      auto &Instr = II->second;
-      const auto &InstrDesc = BC.MII->get(Instr.getOpcode());
-      if (!InstrDesc.hasDefOfPhysReg(Instr, R1, *BC.MRI) &&
-          !InstrDesc.hasDefOfPhysReg(Instr, R2, *BC.MRI)) {
-        // Ignore instructions that don't affect R1, R2 registers.
-        continue;
-      } else if (!MovInstr) {
-        // Expect to see MOV instruction.
-        if (!MIA->isMOVSX64rm32(Instr)) {
-          DEBUG(dbgs() << "BOLT-DEBUG: MOV instruction expected.\n");
-          break;
-        }
-
-        // Check if it's setting %r1 or %r2. In canonical form it sets %r2.
-        // If it sets %r1 - rename the registers so we have to only check
-        // a single form.
-        auto MovDestReg = Instr.getOperand(0).getReg();
-        if (MovDestReg != R2)
-          std::swap(R1, R2);
-        if (MovDestReg != R2) {
-          DEBUG(dbgs() << "BOLT-DEBUG: MOV instruction expected to set %r2\n");
-          break;
-        }
-
-        // Verify operands for MOV.
-        unsigned  BaseRegNum;
-        int64_t   ScaleValue;
-        unsigned  IndexRegNum;
-        int64_t   DispValue;
-        unsigned  SegRegNum;
-        if (!MIA->evaluateX86MemoryOperand(Instr, &BaseRegNum,
-                                           &ScaleValue, &IndexRegNum,
-                                           &DispValue, &SegRegNum))
-          break;
-        if (BaseRegNum != R1 ||
-            ScaleValue != 4 ||
-            IndexRegNum == bolt::NoRegister ||
-            DispValue != 0 ||
-            SegRegNum != bolt::NoRegister)
-          break;
-        MovInstr = &Instr;
-      } else {
-        assert(MovInstr && "MOV instruction expected to be set");
-        if (!InstrDesc.hasDefOfPhysReg(Instr, R1, *BC.MRI))
-          continue;
-        if (!MIA->isLEA64r(Instr)) {
-          DEBUG(dbgs() << "BOLT-DEBUG: LEA instruction expected\n");
-          break;
-        }
-        if (Instr.getOperand(0).getReg() != R1) {
-          DEBUG(dbgs() << "BOLT-DEBUG: LEA instruction expected to set %r1\n");
-          break;
-        }
-
-        // Verify operands for LEA.
-        unsigned      BaseRegNum;
-        int64_t       ScaleValue;
-        unsigned      IndexRegNum;
-        const MCExpr *DispExpr = nullptr;
-        unsigned      SegRegNum;
-        if (!MIA->evaluateX86MemoryOperand(Instr, &BaseRegNum,
-                                           &ScaleValue, &IndexRegNum,
-                                           nullptr, &SegRegNum, &DispExpr))
-          break;
-        if (BaseRegNum != BC.MRI->getProgramCounter() ||
-            IndexRegNum != bolt::NoRegister ||
-            SegRegNum != bolt::NoRegister ||
-            DispExpr == nullptr)
-          break;
-        MemLocInstr = &Instr;
-        break;
-      }
-    }
-
-    if (!MemLocInstr)
-      return IndirectBranchType::UNKNOWN;
-
-    DEBUG(dbgs() << "BOLT-DEBUG: checking potential PIC jump table\n");
-    return IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE;
-  };
-
-  // Try to find a (base) memory location from where the address for
-  // the indirect branch is loaded. For X86-64 the memory will be specified
-  // in the following format:
-  //
-  //   {%rip}/{%basereg} + Imm + IndexReg * Scale
-  //
-  // We are interested in the cases where Scale == sizeof(uintptr_t) and
-  // the contents of the memory are presumably a function array.
-  //
-  // Normal jump table:
-  //
-  //    jmp *(JUMP_TABLE, %index, Scale)
-  //
-  //    or
-  //
-  //    mov (JUMP_TABLE, %index, Scale), %r1
-  //    ...
-  //    jmp %r1
-  //
-  // We handle PIC-style jump tables separately.
-  //
-  if (Instruction.getNumPrimeOperands() == 1) {
-    // If the indirect jump is on register - try to detect if the
-    // register value is loaded from a memory location.
-    assert(Instruction.getOperand(0).isReg() && "register operand expected");
-    const auto R1 = Instruction.getOperand(0).getReg();
-    // Check if one of the previous instructions defines the jump-on register.
-    // We will check that this instruction belongs to the same basic block
-    // in postProcessIndirectBranches().
-    for (auto PrevII = Instructions.rbegin(); PrevII != Instructions.rend();
-         ++PrevII) {
-      auto &PrevInstr = PrevII->second;
-      const auto &PrevInstrDesc = BC.MII->get(PrevInstr.getOpcode());
-
-      if (!PrevInstrDesc.hasDefOfPhysReg(PrevInstr, R1, *BC.MRI))
-        continue;
-
-      if (MIA->isMoveMem2Reg(PrevInstr)) {
-        MemLocInstr = &PrevInstr;
-        break;
-      } else if (MIA->isADD64rr(PrevInstr)) {
-        auto R2 = PrevInstr.getOperand(2).getReg();
-        if (R1 == R2)
-          return IndirectBranchType::UNKNOWN;
-        Type = analyzePICJumpTable(PrevII, Instructions.rend(), R1, R2);
-        break;
-      }  else {
-        return IndirectBranchType::UNKNOWN;
-      }
-    }
-    if (!MemLocInstr) {
-      // No definition seen for the register in this function so far. Could be
-      // an input parameter - which means it is an external code reference.
-      // It also could be that the definition happens to be in the code that
-      // we haven't processed yet. Since we have to be conservative, return
-      // as UNKNOWN case.
-      return IndirectBranchType::UNKNOWN;
-    }
-  } else {
-    MemLocInstr = &Instruction;
-  }
-
-  const auto RIPRegister = BC.MRI->getProgramCounter();
-  auto PtrSize = BC.AsmInfo->getPointerSize();
-
-  // Analyze the memory location.
-  unsigned      BaseRegNum;
-  int64_t       ScaleValue;
-  unsigned      IndexRegNum;
-  int64_t       DispValue;
-  unsigned      SegRegNum;
+  unsigned BaseRegNum, IndexRegNum;
+  int64_t DispValue;
   const MCExpr *DispExpr;
-  if (!MIA->evaluateX86MemoryOperand(*MemLocInstr, &BaseRegNum,
-                                     &ScaleValue, &IndexRegNum,
-                                     &DispValue, &SegRegNum,
-                                     &DispExpr))
-    return IndirectBranchType::UNKNOWN;
 
-  // Do not set annotate with index reg if address was precomputed earlier
-  // and reg may not be live at the jump site.
+  auto Type = BC.MIA->analyzeIndirectBranch(Instruction,
+                                            Instructions,
+                                            PtrSize,
+                                            MemLocInstr,
+                                            BaseRegNum,
+                                            IndexRegNum,
+                                            DispValue,
+                                            DispExpr);
+
+  if (Type == IndirectBranchType::UNKNOWN && !MemLocInstr)
+    return Type;
+
   if (MemLocInstr != &Instruction)
     IndexRegNum = 0;
-
-  if ((BaseRegNum != bolt::NoRegister && BaseRegNum != RIPRegister) ||
-      SegRegNum != bolt::NoRegister)
-    return IndirectBranchType::UNKNOWN;
-
-  if (Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE &&
-      (ScaleValue != 1 || BaseRegNum != RIPRegister))
-    return IndirectBranchType::UNKNOWN;
-
-  if (Type != IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE &&
-      ScaleValue != PtrSize)
-    return IndirectBranchType::UNKNOWN;
 
   // RIP-relative addressing should be converted to symbol form by now
   // in processed instructions (but not in jump).
@@ -818,11 +611,13 @@ BinaryFunction::analyzeIndirectBranch(MCInst &Instruction,
     auto SI = BC.GlobalSymbols.find(DispExpr->getSymbol().getName());
     assert(SI != BC.GlobalSymbols.end() && "global symbol needs a value");
     ArrayStart = SI->second;
+    BaseRegNum = 0;
   } else {
     ArrayStart = static_cast<uint64_t>(DispValue);
-    if (BaseRegNum == RIPRegister)
-      ArrayStart += getAddress() + Offset + Size;
   }
+
+  if (BaseRegNum == BC.MRI->getProgramCounter())
+    ArrayStart += getAddress() + Offset + Size;
 
   DEBUG(dbgs() << "BOLT-DEBUG: addressed memory is 0x"
                << Twine::utohexstr(ArrayStart) << '\n');
@@ -857,7 +652,8 @@ BinaryFunction::analyzeIndirectBranch(MCInst &Instruction,
         LI = Result.first;
       }
 
-      BC.MIA->replaceMemOperandDisp(*MemLocInstr, LI->second, BC.Ctx.get());
+      BC.MIA->replaceMemOperandDisp(const_cast<MCInst &>(*MemLocInstr),
+                                    LI->second, BC.Ctx.get());
       BC.MIA->setJumpTable(BC.Ctx.get(), Instruction, ArrayStart, IndexRegNum);
 
       JTSites.emplace_back(Offset, ArrayStart);
@@ -886,7 +682,7 @@ BinaryFunction::analyzeIndirectBranch(MCInst &Instruction,
   // Extract the value at the start of the array.
   StringRef SectionContents;
   Section.getContents(SectionContents);
-  auto EntrySize =
+  const auto EntrySize =
     Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE ? 4 : PtrSize;
   DataExtractor DE(SectionContents, BC.AsmInfo->isLittleEndian(), EntrySize);
   auto ValueOffset = static_cast<uint32_t>(ArrayStart - Section.getAddress());
@@ -940,7 +736,8 @@ BinaryFunction::analyzeIndirectBranch(MCInst &Instruction,
                                              JumpTableType,
                                              std::move(JTOffsetCandidates),
                                              {{0, JTStartLabel}}});
-    BC.MIA->replaceMemOperandDisp(*MemLocInstr, JTStartLabel, BC.Ctx.get());
+    BC.MIA->replaceMemOperandDisp(const_cast<MCInst &>(*MemLocInstr),
+                                  JTStartLabel, BC.Ctx.get());
     BC.MIA->setJumpTable(BC.Ctx.get(), Instruction, ArrayStart, IndexRegNum);
 
     JTSites.emplace_back(Offset, ArrayStart);
@@ -1003,7 +800,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       BC.InstPrinter->printInst(&Instruction, errs(), "", *BC.STI);
       errs() << '\n';
       Instruction.dump_pretty(errs(), BC.InstPrinter.get());
-      errs() << '\n';;
+      errs() << '\n';
       return false;
     }
     if (TargetAddress == 0) {
@@ -1248,7 +1045,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         // indirect branch. Bail out on the latter case.
         MIA->addAnnotation(Ctx.get(), Instruction, "Offset", Offset);
         if (MIA->isIndirectBranch(Instruction)) {
-          auto Result = analyzeIndirectBranch(Instruction, Size, Offset);
+          auto Result = processIndirectBranch(Instruction, Size, Offset);
           switch (Result) {
           default:
             llvm_unreachable("unexpected result");
@@ -1534,9 +1331,10 @@ bool BinaryFunction::buildCFG() {
         }
       };
 
-  for (auto I = Instructions.begin(), E = Instructions.end(); I != E; ++I) {
+  for (auto I = InstructionOffsets.begin(),
+            E = InstructionOffsets.end(); I != E; ++I) {
     const auto Offset = I->first;
-    const auto &Instr = I->second;
+    const auto &Instr = Instructions[I->second];
 
     auto LI = Labels.find(Offset);
     if (LI != Labels.end()) {
@@ -1681,8 +1479,9 @@ bool BinaryFunction::buildCFG() {
     // basic block.
     auto *ToBB = getBasicBlockAtOffset(Branch.second);
     if (ToBB == nullptr) {
-      auto I = Instructions.find(Branch.second), E = Instructions.end();
-      while (ToBB == nullptr && I != E && MIA->isNoop(I->second)) {
+      auto I = InstructionOffsets.find(Branch.second);
+      auto E = InstructionOffsets.end();
+      while (ToBB == nullptr && I != E && MIA->isNoop(Instructions[I->second])) {
         ++I;
         if (I == E)
           break;
@@ -1840,6 +1639,7 @@ bool BinaryFunction::buildCFG() {
   //
   // NB: don't clear Labels list as we may need them if we mark the function
   //     as non-simple later in the process of discovering extra entry points.
+  clearList(InstructionOffsets);
   clearList(Instructions);
   clearList(OffsetToCFI);
   clearList(TakenBranches);
@@ -2120,18 +1920,18 @@ float BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
   // Eliminate recursive calls and returns from recursive calls from the list
   // of branches that have no match. They are not considered local branches.
   auto isRecursiveBranch = [&](std::pair<uint32_t, uint32_t> &Branch) {
-    auto SrcInstrI = Instructions.find(Branch.first);
-    if (SrcInstrI == Instructions.end())
+    auto SrcInstrI = InstructionOffsets.find(Branch.first);
+    if (SrcInstrI == InstructionOffsets.end())
       return false;
 
     // Check if it is a recursive call.
-    const auto &SrcInstr = SrcInstrI->second;
+    const auto &SrcInstr = Instructions[SrcInstrI->second];
     if ((BC.MIA->isCall(SrcInstr) || BC.MIA->isIndirectBranch(SrcInstr)) &&
         Branch.second == 0)
       return true;
 
-    auto DstInstrI = Instructions.find(Branch.second);
-    if (DstInstrI == Instructions.end())
+    auto DstInstrI = InstructionOffsets.find(Branch.second);
+    if (DstInstrI == InstructionOffsets.end())
       return false;
 
     // Check if it is a return from a recursive call.
@@ -2140,16 +1940,17 @@ float BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
     if (!IsSrcReturn && BC.MIA->isPrefix(SrcInstr)) {
       auto SrcInstrSuccessorI = SrcInstrI;
       ++SrcInstrSuccessorI;
-      assert(SrcInstrSuccessorI != Instructions.end() &&
+      assert(SrcInstrSuccessorI != InstructionOffsets.end() &&
              "unexpected prefix instruction at the end of function");
-      IsSrcReturn = BC.MIA->isReturn(SrcInstrSuccessorI->second);
+      IsSrcReturn = BC.MIA->isReturn(Instructions[SrcInstrSuccessorI->second]);
     }
     if (IsSrcReturn && Branch.second != 0) {
       // Make sure the destination follows the call instruction.
       auto DstInstrPredecessorI = DstInstrI;
       --DstInstrPredecessorI;
-      assert(DstInstrPredecessorI != Instructions.end() && "invalid iterator");
-      if (BC.MIA->isCall(DstInstrPredecessorI->second))
+      assert(DstInstrPredecessorI != InstructionOffsets.end() &&
+             "invalid iterator");
+      if (BC.MIA->isCall(Instructions[DstInstrPredecessorI->second]))
         return true;
     }
     return false;
@@ -2164,10 +1965,10 @@ float BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
                ExternProfileBranches.end(),
                std::back_inserter(OrphanBranches),
                [&](const std::pair<uint32_t, uint32_t> &Branch) {
-                 auto II = Instructions.find(Branch.first);
-                 if (II == Instructions.end())
+                 auto II = InstructionOffsets.find(Branch.first);
+                 if (II == InstructionOffsets.end())
                    return true;
-                 const auto &Instr = II->second;
+                 const auto &Instr = Instructions[II->second];
                  // Check for calls, tail calls, rets and indirect branches.
                  // When matching profiling info, we did not reach the stage
                  // when we identify tail calls, so they are still represented
@@ -2179,13 +1980,14 @@ float BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
                  // Check for "rep ret"
                  if (BC.MIA->isPrefix(Instr)) {
                    ++II;
-                   if (II != Instructions.end() && BC.MIA->isReturn(II->second))
+                   if (II != InstructionOffsets.end() &&
+                       BC.MIA->isReturn(Instructions[II->second]))
                      return false;
                  }
                  return true;
                });
 
-  float MatchRatio =
+  const float MatchRatio =
     (float) (ProfileBranches.size() - OrphanBranches.size()) /
     (float) ProfileBranches.size();
 
@@ -4225,7 +4027,7 @@ DWARFDebugLoc::LocationList BinaryFunction::translateInputToOutputLocationList(
   for(const auto &Entry : OutputLL.Entries) {
     if (Entry.Begin <= PrevEndAddress && *PrevLoc == Entry.Loc) {
       MergedLL.Entries.back().End = std::max(Entry.End,
-                                             MergedLL.Entries.back().End);;
+                                             MergedLL.Entries.back().End);
     } else {
       const auto Begin = std::max(Entry.Begin, PrevEndAddress);
       const auto End = std::max(Begin, Entry.End);
@@ -4424,12 +4226,12 @@ BinaryFunction::getFallthroughsInTrace(uint64_t From, uint64_t To) const {
     return NoneType();
 
   // Get iterators and validate trace start/end
-  auto FromIter = Instructions.find(From);
-  if (FromIter == Instructions.end())
+  auto FromIter = InstructionOffsets.find(From);
+  if (FromIter == InstructionOffsets.end())
     return NoneType();
 
-  auto ToIter = Instructions.find(To);
-  if (ToIter == Instructions.end())
+  auto ToIter = InstructionOffsets.find(To);
+  if (ToIter == InstructionOffsets.end())
     return NoneType();
 
   // Trace needs to go forward
@@ -4437,20 +4239,22 @@ BinaryFunction::getFallthroughsInTrace(uint64_t From, uint64_t To) const {
     return NoneType();
 
   // Trace needs to finish in a branch
-  if (!BC.MIA->isBranch(ToIter->second) && !BC.MIA->isCall(ToIter->second) &&
-      !BC.MIA->isReturn(ToIter->second))
+  auto &ToInst = Instructions[ToIter->second];
+  if (!BC.MIA->isBranch(ToInst) && !BC.MIA->isCall(ToInst) &&
+      !BC.MIA->isReturn(ToInst))
     return NoneType();
 
   // Analyze intermediate instructions
   for (; FromIter != ToIter; ++FromIter) {
     // This operates under an assumption that we collect all branches in LBR
     // No unconditional branches in the middle of the trace
-    if (BC.MIA->isUnconditionalBranch(FromIter->second) ||
-        BC.MIA->isReturn(FromIter->second) ||
-        BC.MIA->isCall(FromIter->second))
+    auto &FromInst = Instructions[FromIter->second];
+    if (BC.MIA->isUnconditionalBranch(FromInst) ||
+        BC.MIA->isReturn(FromInst) ||
+        BC.MIA->isCall(FromInst))
       return NoneType();
 
-    if (!BC.MIA->isConditionalBranch(FromIter->second))
+    if (!BC.MIA->isConditionalBranch(FromInst))
       continue;
 
     const uint64_t Src = FromIter->first;

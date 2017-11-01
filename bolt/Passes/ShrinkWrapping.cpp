@@ -603,9 +603,9 @@ void StackLayoutModifier::performChanges() {
       bool IsStoreFromReg{false};
       uint8_t Size{0};
       bool Success{false};
-      Success = BC.MIA->isStackAccess(*BC.MRI, Inst, IsLoad, IsStore,
-                                      IsStoreFromReg, Reg, SrcImm, StackPtrReg,
-                                      StackOffset, Size, IsSimple, IsIndexed);
+      Success = BC.MIA->isStackAccess(Inst, IsLoad, IsStore, IsStoreFromReg,
+                                      Reg, SrcImm, StackPtrReg, StackOffset,
+                                      Size, IsSimple, IsIndexed);
       assert(Success && IsSimple && !IsIndexed && (!IsStore || IsStoreFromReg));
       if (StackPtrReg != BC.MIA->getFramePointer())
         Adjustment = -Adjustment;
@@ -642,13 +642,13 @@ void ShrinkWrapping::classifyCSRUses() {
                                      BitVector(DA.NumInstrs, false));
 
   const BitVector &FPAliases =
-      BC.MIA->getAliases(BC.MIA->getFramePointer(), *BC.MRI);
+      BC.MIA->getAliases(BC.MIA->getFramePointer());
   for (auto &BB : BF) {
     for (auto &Inst : BB) {
       if (BC.MIA->isCFI(Inst))
         continue;
       auto BV = BitVector(BC.MRI->getNumRegs(), false);
-      BC.MIA->getTouchedRegs(Inst, BV, *BC.MRI);
+      BC.MIA->getTouchedRegs(Inst, BV);
       BV &= CSA.CalleeSaved;
       for (int I = BV.find_first(); I != -1; I = BV.find_next(I)) {
         if (I == 0)
@@ -668,7 +668,7 @@ void ShrinkWrapping::classifyCSRUses() {
 }
 
 void ShrinkWrapping::pruneUnwantedCSRs() {
-  BitVector ParamRegs = BC.MIA->getRegsUsedAsParams(*BC.MRI);
+  BitVector ParamRegs = BC.MIA->getRegsUsedAsParams();
   for (unsigned I = 0, E = BC.MRI->getNumRegs(); I != E; ++I) {
     if (!CSA.CalleeSaved[I])
       continue;
@@ -1080,7 +1080,7 @@ bool ShrinkWrapping::doesInstUsesCSR(const MCInst &Inst, uint16_t CSR) {
       CSA.getRestoredReg(Inst) == CSR)
     return false;
   BitVector BV = BitVector(BC.MRI->getNumRegs(), false);
-  BC.MIA->getTouchedRegs(Inst, BV, *BC.MRI);
+  BC.MIA->getTouchedRegs(Inst, BV);
   return BV[CSR];
 }
 
@@ -1389,9 +1389,9 @@ void ShrinkWrapping::insertUpdatedCFI(unsigned CSR, int SPValPush,
       bool IsSimple{false};
       bool IsStoreFromReg{false};
       uint8_t Size{0};
-      if (!BC.MIA->isStackAccess(*BC.MRI, *InstIter, IsLoad, IsStore,
-                                 IsStoreFromReg, Reg, SrcImm, StackPtrReg,
-                                 StackOffset, Size, IsSimple, IsIndexed))
+      if (!BC.MIA->isStackAccess(*InstIter, IsLoad, IsStore, IsStoreFromReg,
+                                 Reg, SrcImm, StackPtrReg, StackOffset,
+                                 Size, IsSimple, IsIndexed))
         continue;
       if (Reg != CSR || !IsStore || !IsSimple)
         continue;

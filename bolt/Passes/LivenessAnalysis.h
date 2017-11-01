@@ -44,7 +44,7 @@ public:
 
   bool isAlive(ProgramPoint PP, MCPhysReg Reg) const {
     BitVector BV = (*this->getStateAt(PP));
-    const BitVector &RegAliases = BC.MIA->getAliases(Reg, *BC.MRI);
+    const BitVector &RegAliases = BC.MIA->getAliases(Reg);
     BV &= RegAliases;
     return BV.any();
   }
@@ -60,7 +60,7 @@ public:
     BitVector BV = *this->getStateAt(P);
     BV.flip();
     BitVector GPRegs(NumRegs, false);
-    this->BC.MIA->getGPRegs(GPRegs, *this->BC.MRI);
+    this->BC.MIA->getGPRegs(GPRegs);
     BV &= GPRegs;
     int Reg = BV.find_first();
     return Reg != -1 ? Reg : 0;
@@ -91,7 +91,7 @@ protected:
     // Kill
     auto Written = BitVector(NumRegs, false);
     if (!IsCall) {
-      this->BC.MIA->getWrittenRegs(Point, Written, *this->BC.MRI);
+      this->BC.MIA->getWrittenRegs(Point, Written);
     } else {
       RA.getInstClobberList(Point, Written);
       // When clobber list is conservative, it is clobbering all/most registers,
@@ -100,7 +100,7 @@ protected:
       // because we don't really know what's going on.
       if (RA.isConservative(Written)) {
         Written.reset();
-        BC.MIA->getCalleeSavedRegs(Written, *this->BC.MRI);
+        BC.MIA->getCalleeSavedRegs(Written);
       }
     }
     Written.flip();

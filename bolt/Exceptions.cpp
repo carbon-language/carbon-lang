@@ -219,7 +219,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
     // Create a handler entry if necessary.
     MCSymbol *LPSymbol{nullptr};
     if (LandingPad) {
-      if (Instructions.find(LandingPad) == Instructions.end()) {
+      if (InstructionOffsets.find(LandingPad) == InstructionOffsets.end()) {
         if (opts::Verbosity >= 1) {
           errs() << "BOLT-WARNING: landing pad " << Twine::utohexstr(LandingPad)
                  << " not pointing to an instruction in function "
@@ -237,11 +237,11 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
     }
 
     // Mark all call instructions in the range.
-    auto II = Instructions.find(Start);
-    auto IE = Instructions.end();
+    auto II = InstructionOffsets.find(Start);
+    auto IE = InstructionOffsets.end();
     assert(II != IE && "exception range not pointing to an instruction");
     do {
-      auto &Instruction = II->second;
+      auto &Instruction = Instructions[II->second];
       if (BC.MIA->isCall(Instruction)) {
         assert(!BC.MIA->isInvoke(Instruction) &&
                "overlapping exception ranges detected");
