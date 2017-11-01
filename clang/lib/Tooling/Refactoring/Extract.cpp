@@ -15,6 +15,7 @@
 
 #include "clang/Tooling/Refactoring/Extract/Extract.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/Rewrite/Core/Rewriter.h"
@@ -44,8 +45,12 @@ bool isSimpleExpression(const Expr *E) {
 }
 
 SourceLocation computeFunctionExtractionLocation(const Decl *D) {
-  // FIXME (Alex L): Method -> function extraction should place function before
-  // C++ record if the method is defined inside the record.
+  if (isa<CXXMethodDecl>(D)) {
+    // Code from method that is defined in class body should be extracted to a
+    // function defined just before the class.
+    while (const auto *RD = dyn_cast<CXXRecordDecl>(D->getLexicalDeclContext()))
+      D = RD;
+  }
   return D->getLocStart();
 }
 
