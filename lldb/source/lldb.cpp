@@ -47,13 +47,9 @@ const char *lldb_private::GetVersion() {
   // as the clang tool.
   static std::string g_version_str;
   if (g_version_str.empty()) {
-
-#ifdef LLDB_VERSION_STRING
-    g_version_str += EXPAND_AND_QUOTE(LLDB_VERSION_STRING);
-#else
     g_version_str += "lldb version ";
     g_version_str += CLANG_VERSION_STRING;
-#endif
+
     const char *lldb_repo = GetLLDBRepository();
     const char *lldb_rev = GetLLDBRevision();
     if (lldb_repo || lldb_rev) {
