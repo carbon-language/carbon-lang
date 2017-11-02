@@ -2270,9 +2270,11 @@ void ASTRecordWriter::AddFunctionDefinition(const FunctionDecl *FD) {
     if (Writer->Context->getLangOpts().ModulesCodegen) {
       // Under -fmodules-codegen, codegen is performed for all non-internal,
       // non-always_inline functions.
-      if (!Linkage)
-        Linkage = Writer->Context->GetGVALinkageForFunction(FD);
-      ModulesCodegen = *Linkage != GVA_Internal;
+      if (!FD->hasAttr<AlwaysInlineAttr>()) {
+        if (!Linkage)
+          Linkage = Writer->Context->GetGVALinkageForFunction(FD);
+        ModulesCodegen = *Linkage != GVA_Internal;
+      }
     }
   }
   Record->push_back(ModulesCodegen);
