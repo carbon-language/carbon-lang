@@ -139,4 +139,4 @@ successfully. Otherwise, it returns 1.
 SEE ALSO
 --------
 
-:manpage:`dsymutil(1)`
+:manpage:`llvm-dsymutil(1)`
