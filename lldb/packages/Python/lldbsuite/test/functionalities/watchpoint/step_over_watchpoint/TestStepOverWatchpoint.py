@@ -16,8 +16,6 @@ class TestStepOverWatchpoint(TestBase):
     def getCategories(self):
         return ['basic_process']
 
-    # Watchpoints not supported
-    @expectedFailureAndroid(archs=['arm', 'aarch64'])
     @expectedFailureAll(
         oslist=["linux"],
         archs=[
