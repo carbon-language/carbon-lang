@@ -794,8 +794,13 @@ getIntelProcessorTypeAndSubtype(unsigned Family, unsigned Model,
         break;
       }
       if (Features2 & (1 << (FEATURE_EM64T - 32))) {
-        *Type = INTEL_X86_64;
-        break; // x86-64
+        *Type = INTEL_CORE2; // "core2"
+        *Subtype = INTEL_CORE2_65;
+        break;
+      }
+      if (Features & (1 << FEATURE_SSE3)) {
+        *Type = INTEL_CORE_DUO;
+        break;
       }
       if (Features & (1 << FEATURE_SSE2)) {
         *Type = INTEL_PENTIUM_M;
