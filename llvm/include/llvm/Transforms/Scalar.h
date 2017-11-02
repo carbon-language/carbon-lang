@@ -422,9 +422,15 @@ Pass *createLowerGuardIntrinsicPass();
 
 //===----------------------------------------------------------------------===//
 //
-// MergeICmps - Merge integer comparison chains
+// MergeICmps - Merge integer comparison chains into a memcmp
 //
 Pass *createMergeICmpsPass();
+
+//===----------------------------------------------------------------------===//
+//
+// ExpandMemCmp - Expand memcmp() to load/stores.
+//
+Pass *createExpandMemCmpPass();
 
 //===----------------------------------------------------------------------===//
 //
