@@ -67,11 +67,6 @@ public:
   ObjCRuntime(Kind kind, const VersionTuple &version)
     : TheKind(kind), Version(version) {}
 
-  void set(Kind kind, VersionTuple version) {
-    TheKind = kind;
-    Version = version;
-  }
-
   Kind getKind() const { return TheKind; }
   const VersionTuple &getVersion() const { return Version; }
 
