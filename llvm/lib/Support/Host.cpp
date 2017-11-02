@@ -344,6 +344,7 @@ enum ProcessorTypes {
   INTEL_i386,
   INTEL_i486,
   INTEL_PENTIUM,
+  INTEL_PENTIUM_MMX,
   INTEL_PENTIUM_PRO,
   INTEL_PENTIUM_II,
   INTEL_PENTIUM_III,
@@ -378,7 +379,6 @@ enum ProcessorSubtypes {
   INTEL_COREI7_SKYLAKE,
   INTEL_COREI7_SKYLAKE_AVX512,
   // Entries below this are not in libgcc/compiler-rt.
-  INTEL_PENTIUM_MMX,
   INTEL_CORE2_65,
   INTEL_CORE2_45,
   AMDPENTIUM_K6,
@@ -603,26 +603,11 @@ getIntelProcessorTypeAndSubtype(unsigned Family, unsigned Model,
     }
     break;
   case 5:
-    switch (Model) {
-    case 1: // Pentium OverDrive processor for Pentium processor (60, 66),
-            // Pentium processors (60, 66)
-    case 2: // Pentium OverDrive processor for Pentium processor (75, 90,
-            // 100, 120, 133), Pentium processors (75, 90, 100, 120, 133,
-            // 150, 166, 200)
-    case 3: // Pentium OverDrive processors for Intel486 processor-based
-            // systems
-      *Type = INTEL_PENTIUM;
-      break;
-    case 4: // Pentium OverDrive processor with MMX technology for Pentium
-            // processor (75, 90, 100, 120, 133), Pentium processor with
-            // MMX technology (166, 200)
-      *Type = INTEL_PENTIUM;
-      *Subtype = INTEL_PENTIUM_MMX;
-      break;
-    default:
-      *Type = INTEL_PENTIUM;
+    if (Features & (1 << FEATURE_MMX)) {
+      *Type = INTEL_PENTIUM_MMX;
       break;
     }
+    *Type = INTEL_PENTIUM;
     break;
   case 6:
     switch (Model) {
@@ -1118,9 +1103,9 @@ StringRef sys::getHostCPUName() {
     case INTEL_i486:
       return "i486";
     case INTEL_PENTIUM:
-      if (Subtype == INTEL_PENTIUM_MMX)
-        return "pentium-mmx";
       return "pentium";
+    case INTEL_PENTIUM_MMX:
+      return "pentium-mmx";
     case INTEL_PENTIUM_PRO:
       return "pentiumpro";
     case INTEL_PENTIUM_II:
