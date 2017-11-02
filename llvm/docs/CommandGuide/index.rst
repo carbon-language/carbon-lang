@@ -30,7 +30,7 @@ Basic Commands
    llvm-stress
    llvm-symbolizer
    llvm-dwarfdump
-   llvm-dsymutil
+   dsymutil
 
 Debugging Tools
 ~~~~~~~~~~~~~~~

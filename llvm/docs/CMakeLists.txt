@@ -113,7 +113,7 @@ if (LLVM_ENABLE_SPHINX)
     if (${SPHINX_OUTPUT_MAN})
       add_sphinx_target(man llvm)
       add_sphinx_target(man llvm-dwarfdump)
-      add_sphinx_target(man llvm-dsymutil)
+      add_sphinx_target(man dsymutil)
     endif()
 
   endif()
