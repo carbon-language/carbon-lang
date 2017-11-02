@@ -16,6 +16,7 @@
 #include "Passes/IndirectCallPromotion.h"
 #include "Passes/Inliner.h"
 #include "Passes/LongJmp.h"
+#include "Passes/JTFootprintReduction.h"
 #include "Passes/PLTCall.h"
 #include "Passes/ReorderFunctions.h"
 #include "Passes/StokeInfo.h"
@@ -59,6 +60,19 @@ ICF("icf",
 static cl::opt<bool>
 InlineSmallFunctions("inline-small-functions",
   cl::desc("inline functions with a single basic block"),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+JTFootprintReductionFlag("jt-footprint-reduction",
+  cl::desc("make jump tables size smaller at the cost of using more "
+           "instructions at jump sites"),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintJTFootprintReduction("print-after-jt-footprint-reduction",
+  cl::desc("print function after jt-footprint-reduction pass"),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -327,6 +341,10 @@ void BinaryFunctionPassManager::runAllPasses(
   Manager.registerPass(llvm::make_unique<IndirectCallPromotion>(PrintICP));
 
   Manager.registerPass(llvm::make_unique<Peepholes>(PrintPeepholes));
+
+  Manager.registerPass(
+      llvm::make_unique<JTFootprintReduction>(PrintJTFootprintReduction),
+      opts::JTFootprintReductionFlag);
 
   Manager.registerPass(llvm::make_unique<InlineSmallFunctions>(PrintInline),
                        opts::InlineSmallFunctions);

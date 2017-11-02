@@ -60,8 +60,13 @@ public:
     BitVector BV = *this->getStateAt(P);
     BV.flip();
     BitVector GPRegs(NumRegs, false);
-    this->BC.MIA->getGPRegs(GPRegs);
+    this->BC.MIA->getGPRegs(GPRegs, /*IncludeAlias=*/false);
+    // Ignore the register used for frame pointer even if it is not alive (it
+    // may be used by CFI which is not represented in our dataflow).
+    auto FP = BC.MIA->getAliases(BC.MIA->getFramePointer());
+    FP.flip();
     BV &= GPRegs;
+    BV &= FP;
     int Reg = BV.find_first();
     return Reg != -1 ? Reg : 0;
   }
@@ -74,6 +79,19 @@ protected:
   void preflight() {}
 
   BitVector getStartingStateAtBB(const BinaryBasicBlock &BB) {
+    // Entry points start with default live out (registers used as return
+    // values).
+    if (BB.succ_size() == 0) {
+      BitVector State(NumRegs, false);
+      if (opts::AssumeABI) {
+        BC.MIA->getDefaultLiveOut(State);
+        BC.MIA->getCalleeSavedRegs(State);
+      } else {
+        State.set();
+        State.reset(BC.MIA->getFlagsReg());
+      }
+      return State;
+    }
     return BitVector(NumRegs, false);
   }
 
@@ -100,7 +118,15 @@ protected:
       // because we don't really know what's going on.
       if (RA.isConservative(Written)) {
         Written.reset();
-        BC.MIA->getCalleeSavedRegs(Written);
+        BC.MIA->getDefaultLiveOut(Written);
+        // If ABI is respected, everything except CSRs should be dead after a
+        // call
+        if (opts::AssumeABI) {
+          auto CSR = BitVector(NumRegs, false);
+          BC.MIA->getCalleeSavedRegs(CSR);
+          CSR.flip();
+          Written |= CSR;
+        }
       }
     }
     Written.flip();
@@ -108,7 +134,26 @@ protected:
     // Gen
     if (!this->BC.MIA->isCFI(Point)) {
       auto Used = BitVector(NumRegs, false);
-      RA.getInstUsedRegsList(Point, Used, /*GetClobbers*/false);
+      if (IsCall) {
+        RA.getInstUsedRegsList(Point, Used, /*GetClobbers*/true);
+        if (RA.isConservative(Used)) {
+          Used = BC.MIA->getRegsUsedAsParams();
+          BC.MIA->getDefaultLiveOut(Used);
+        }
+      }
+      const auto InstInfo = BC.MII->get(Point.getOpcode());
+      for (unsigned I = 0, E = Point.getNumOperands(); I != E; ++I) {
+        if (!Point.getOperand(I).isReg() || I < InstInfo.getNumDefs())
+          continue;
+        Used |= BC.MIA->getAliases(Point.getOperand(I).getReg(),
+                                   /*OnlySmaller=*/false);
+      }
+      for (auto
+             I = InstInfo.getImplicitUses(),
+             E = InstInfo.getImplicitUses() + InstInfo.getNumImplicitUses();
+           I != E; ++I) {
+        Used |= BC.MIA->getAliases(*I, false);
+      }
       if (IsCall &&
           (!BC.MIA->isTailCall(Point) || !BC.MIA->isConditionalBranch(Point))) {
         // Never gen FLAGS from a non-conditional call... this is overly

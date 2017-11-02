@@ -13,6 +13,7 @@ add_llvm_library(LLVMBOLTPasses
   HFSortPlus.cpp
   IndirectCallPromotion.cpp
   Inliner.cpp
+  JTFootprintReduction.cpp
   LivenessAnalysis.cpp
   LongJmp.cpp
   MCF.cpp

@@ -538,6 +538,9 @@ public:
     /// Size of the entry used for storage.
     std::size_t EntrySize;
 
+    /// Size of the entry size we will write (we may use a more compact layout)
+    std::size_t OutputEntrySize;
+
     /// The type of this jump table.
     JumpTableType Type;
 
@@ -567,14 +570,11 @@ public:
     std::pair<size_t, size_t> getEntriesForAddress(const uint64_t Addr) const;
 
     /// Constructor.
-    JumpTable(uint64_t Address,
-              std::size_t EntrySize,
-              JumpTableType Type,
+    JumpTable(uint64_t Address, std::size_t EntrySize, JumpTableType Type,
               decltype(OffsetEntries) &&OffsetEntries,
               decltype(Labels) &&Labels)
-      : Address(Address), EntrySize(EntrySize), Type(Type),
-        OffsetEntries(OffsetEntries), Labels(Labels)
-    {}
+        : Address(Address), EntrySize(EntrySize), OutputEntrySize(EntrySize),
+          Type(Type), OffsetEntries(OffsetEntries), Labels(Labels) {}
 
     /// Dynamic number of times each entry in the table was referenced.
     /// Identical entries will have a shared count (identical for every
@@ -1271,6 +1271,11 @@ public:
   }
 
   const JumpTable *getJumpTable(const MCInst &Inst) const {
+    const auto Address = BC.MIA->getJumpTable(Inst);
+    return getJumpTableContainingAddress(Address);
+  }
+
+  JumpTable *getJumpTable(const MCInst &Inst) {
     const auto Address = BC.MIA->getJumpTable(Inst);
     return getJumpTableContainingAddress(Address);
   }

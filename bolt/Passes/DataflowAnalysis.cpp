@@ -37,6 +37,19 @@ void doForAllSuccs(const BinaryBasicBlock &BB,
 }
 
 void RegStatePrinter::print(raw_ostream &OS, const BitVector &State) const {
+  if (State.all()) {
+    OS << "(all)";
+    return;
+  }
+  if (State.count() > (State.size() >> 1)) {
+    OS << "all, except: ";
+    auto BV = State;
+    BV.flip();
+    for (auto I = BV.find_first(); I != -1; I = BV.find_next(I)) {
+      OS << BC.MRI->getName(I) << " ";
+    }
+    return;
+  }
   for (auto I = State.find_first(); I != -1; I = State.find_next(I)) {
     OS << BC.MRI->getName(I) << " ";
   }

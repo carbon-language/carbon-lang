@@ -3826,7 +3826,7 @@ uint64_t BinaryFunction::JumpTable::emit(MCStreamer *Streamer,
       LastLabel = LI->second;
     }
     if (Type == JTT_NORMAL) {
-      Streamer->EmitSymbolValue(Entry, EntrySize);
+      Streamer->EmitSymbolValue(Entry, OutputEntrySize);
     } else { // JTT_PIC
       auto JT = MCSymbolRefExpr::create(LastLabel, Streamer->getContext());
       auto E = MCSymbolRefExpr::create(Entry, Streamer->getContext());

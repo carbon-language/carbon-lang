@@ -1,0 +1,276 @@
+//===--- JTFootprintReduction.cpp -----------------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+//===----------------------------------------------------------------------===//
+
+#include "JTFootprintReduction.h"
+#include "llvm/Support/Options.h"
+
+#define DEBUG_TYPE "JT"
+
+using namespace llvm;
+using namespace bolt;
+
+namespace opts {
+
+extern cl::OptionCategory BoltOptCategory;
+
+extern cl::opt<unsigned> Verbosity;
+extern cl::opt<bool> Relocs;
+extern bool shouldProcess(const bolt::BinaryFunction &Function);
+
+extern cl::opt<JumpTableSupportLevel> JumpTables;
+} // namespace opts
+
+namespace llvm {
+namespace bolt {
+
+void JTFootprintReduction::checkOpportunities(BinaryContext &BC,
+                                              BinaryFunction &Function,
+                                              DataflowInfoManager &Info) {
+  std::map<BinaryFunction::JumpTable *, uint64_t> AllJTs;
+
+  for (auto &BB : Function) {
+    for (auto &Inst : BB) {
+      auto *JumpTable = Function.getJumpTable(Inst);
+      if (!JumpTable)
+        continue;
+
+      AllJTs[JumpTable] += BB.getKnownExecutionCount();
+      ++IndJmps;
+
+      if (BlacklistedJTs.count(JumpTable))
+        continue;
+
+      uint64_t Scale;
+      // Try a standard indirect jump matcher
+      auto IndJmpMatcher = BC.MIA->matchIndJmp(
+          BC.MIA->matchAnyOperand(), BC.MIA->matchImm(Scale),
+          BC.MIA->matchReg(), BC.MIA->matchAnyOperand());
+      if (IndJmpMatcher->match(*BC.MRI, *BC.MIA,
+                               MutableArrayRef<MCInst>(&*BB.begin(), &Inst + 1),
+                               -1) &&
+          Scale == 8) {
+        if (Info.getLivenessAnalysis().scavengeRegAfter(&Inst))
+          continue;
+        BlacklistedJTs.insert(JumpTable);
+        ++IndJmpsDenied;
+        ++NumJTsNoReg;
+        continue;
+      }
+
+      // Try a PIC matcher. The pattern we are looking for is a PIC JT ind jmp:
+      //    addq    %rdx, %rsi
+      //    addq    %rdx, %rdi
+      //    leaq    DATAat0x402450(%rip), %r11
+      //    movslq  (%r11,%rdx,4), %rcx
+      //    addq    %r11, %rcx
+      //    jmpq    *%rcx # JUMPTABLE @0x402450
+      MCPhysReg BaseReg1;
+      MCPhysReg BaseReg2;
+      uint64_t Offset;
+      auto PICIndJmpMatcher = BC.MIA->matchIndJmp(BC.MIA->matchAdd(
+          BC.MIA->matchReg(BaseReg1),
+          BC.MIA->matchLoad(BC.MIA->matchReg(BaseReg2), BC.MIA->matchImm(Scale),
+                            BC.MIA->matchReg(), BC.MIA->matchImm(Offset))));
+      auto PICBaseAddrMatcher = BC.MIA->matchIndJmp(
+          BC.MIA->matchAdd(BC.MIA->matchLoadAddr(BC.MIA->matchSymbol()),
+                           BC.MIA->matchAnyOperand()));
+      if (!PICIndJmpMatcher->match(
+              *BC.MRI, *BC.MIA,
+              MutableArrayRef<MCInst>(&*BB.begin(), &Inst + 1), -1) ||
+          Scale != 4 || BaseReg1 != BaseReg2 || Offset != 0 ||
+          !PICBaseAddrMatcher->match(
+              *BC.MRI, *BC.MIA,
+              MutableArrayRef<MCInst>(&*BB.begin(), &Inst + 1), -1)) {
+        BlacklistedJTs.insert(JumpTable);
+        ++IndJmpsDenied;
+        ++NumJTsBadMatch;
+        continue;
+      }
+    }
+  }
+
+  // Statistics only
+  for (const auto &JTFreq : AllJTs) {
+    auto *JT = JTFreq.first;
+    uint64_t CurScore = JTFreq.second;
+    TotalJTScore += CurScore;
+    if (!BlacklistedJTs.count(JT)) {
+      OptimizedScore += CurScore;
+      if (JT->EntrySize == 8)
+        BytesSaved += JT->getSize() >> 1;
+    }
+  }
+  TotalJTs += AllJTs.size();
+  TotalJTsDenied += BlacklistedJTs.size();
+}
+
+bool JTFootprintReduction::tryOptimizeNonPIC(
+    BinaryContext &BC, BinaryBasicBlock &BB, MCInst &Inst, uint64_t JTAddr,
+    BinaryFunction::JumpTable *JumpTable, DataflowInfoManager &Info) {
+
+  MCOperand Base;
+  uint64_t Scale;
+  MCPhysReg Index;
+  MCOperand Offset;
+  auto IndJmpMatcher = BC.MIA->matchIndJmp(
+      BC.MIA->matchAnyOperand(Base), BC.MIA->matchImm(Scale),
+      BC.MIA->matchReg(Index), BC.MIA->matchAnyOperand(Offset));
+  if (!IndJmpMatcher->match(*BC.MRI, *BC.MIA,
+                            MutableArrayRef<MCInst>(&*BB.begin(), &Inst + 1),
+                            -1)) {
+    return false;
+  }
+
+  assert(Scale == 8 && "Wrong scale");
+
+  Scale = 4;
+  IndJmpMatcher->annotate(*BC.MIA, *BC.Ctx.get(), "DeleteMe");
+
+  auto &LA = Info.getLivenessAnalysis();
+  MCPhysReg Reg = LA.scavengeRegAfter(&Inst);
+  assert(Reg != 0 && "Register scavenger failed!");
+  auto RegOp = MCOperand::createReg(Reg);
+  SmallVector<MCInst, 4> NewFrag;
+
+  BC.MIA->createIJmp32Frag(NewFrag, Base, MCOperand::createImm(Scale),
+                           MCOperand::createReg(Index), Offset, RegOp);
+  BC.MIA->setJumpTable(BC.Ctx.get(), NewFrag.back(), JTAddr, Index);
+
+  JumpTable->OutputEntrySize = 4;
+
+  BB.replaceInstruction(&Inst, NewFrag.begin(), NewFrag.end());
+  return true;
+}
+
+bool JTFootprintReduction::tryOptimizePIC(
+    BinaryContext &BC, BinaryBasicBlock &BB, MCInst &Inst, uint64_t JTAddr,
+    BinaryFunction::JumpTable *JumpTable, DataflowInfoManager &Info) {
+  MCPhysReg BaseReg;
+  uint64_t Scale;
+  MCPhysReg Index;
+  MCOperand Offset;
+  MCOperand JumpTableRef;
+  auto PICIndJmpMatcher = BC.MIA->matchIndJmp(BC.MIA->matchAdd(
+      BC.MIA->matchLoadAddr(BC.MIA->matchAnyOperand(JumpTableRef)),
+      BC.MIA->matchLoad(BC.MIA->matchReg(BaseReg), BC.MIA->matchImm(Scale),
+                        BC.MIA->matchReg(Index), BC.MIA->matchAnyOperand())));
+  if (!PICIndJmpMatcher->match(*BC.MRI, *BC.MIA,
+                               MutableArrayRef<MCInst>(&*BB.begin(), &Inst + 1),
+                               -1)) {
+    return false;
+  }
+
+  assert(Scale == 4 && "Wrong scale");
+
+  PICIndJmpMatcher->annotate(*BC.MIA, *BC.Ctx.get(), "DeleteMe");
+
+  auto RegOp = MCOperand::createReg(BaseReg);
+  SmallVector<MCInst, 4> NewFrag;
+
+  BC.MIA->createIJmp32Frag(NewFrag, MCOperand::createReg(0),
+                           MCOperand::createImm(Scale),
+                           MCOperand::createReg(Index), JumpTableRef, RegOp);
+  BC.MIA->setJumpTable(BC.Ctx.get(), NewFrag.back(), JTAddr, Index);
+
+  JumpTable->OutputEntrySize = 4;
+  // DePICify
+  JumpTable->Type = BinaryFunction::JumpTable::JTT_NORMAL;
+
+  BB.replaceInstruction(&Inst, NewFrag.begin(), NewFrag.end());
+  return true;
+}
+
+void JTFootprintReduction::optimizeFunction(BinaryContext &BC,
+                                            BinaryFunction &Function,
+                                            DataflowInfoManager &Info) {
+  for (auto &BB : Function) {
+    if (!BB.getNumNonPseudos())
+      continue;
+
+    MCInst &IndJmp = *BB.getLastNonPseudo();
+    uint64_t JTAddr = BC.MIA->getJumpTable(IndJmp);
+
+    if (!JTAddr)
+      continue;
+
+    auto *JumpTable = Function.getJumpTable(IndJmp);
+    if (BlacklistedJTs.count(JumpTable))
+      continue;
+
+    if (tryOptimizeNonPIC(BC, BB, IndJmp, JTAddr, JumpTable, Info)
+        || tryOptimizePIC(BC, BB, IndJmp, JTAddr, JumpTable, Info)) {
+      Modified.insert(&Function);
+      continue;
+    }
+
+    llvm_unreachable("Should either optimize PIC or NonPIC successfuly");
+  }
+
+  if (!Modified.count(&Function))
+    return;
+
+  for (auto &BB : Function) {
+    for (auto I = BB.rbegin(), E = BB.rend(); I != E; ++I) {
+      if (BC.MIA->hasAnnotation(*I, "DeleteMe"))
+        BB.eraseInstruction(&*I);
+    }
+  }
+}
+
+void JTFootprintReduction::runOnFunctions(
+  BinaryContext &BC,
+  std::map<uint64_t, BinaryFunction> &BFs,
+  std::set<uint64_t> &LargeFunctions
+) {
+  if (opts::JumpTables == JTS_BASIC && opts::Relocs)
+    return;
+
+  BinaryFunctionCallGraph CG(buildCallGraph(BC, BFs));
+  RegAnalysis RA(BC, BFs, CG);
+  for (auto &BFIt : BFs) {
+    auto &Function = BFIt.second;
+
+    if (!Function.isSimple() || !opts::shouldProcess(Function))
+      continue;
+
+    if (Function.getKnownExecutionCount() == 0)
+      continue;
+
+    DataflowInfoManager Info(BC, Function, &RA, nullptr);
+    BlacklistedJTs.clear();
+    checkOpportunities(BC, Function, Info);
+    optimizeFunction(BC, Function, Info);
+  }
+
+  if (TotalJTs == TotalJTsDenied) {
+    outs() << "BOLT-INFO: JT Footprint reduction: no changes were made.\n";
+    return;
+  }
+
+  outs() << "BOLT-INFO: JT Footprint reduction stats (simple funcs only):\n";
+  if (OptimizedScore) {
+    outs() << format("\t   %.2lf%%", (OptimizedScore * 100.0 / TotalJTScore))
+           << " of dynamic JT entries were reduced.\n";
+  }
+  outs() << "\t   " << TotalJTs - TotalJTsDenied << " of " << TotalJTs
+         << " jump tables affected.\n";
+  outs() << "\t   " << IndJmps - IndJmpsDenied << " of " << IndJmps
+         << " indirect jumps to JTs affected.\n";
+  outs() << "\t   " << NumJTsBadMatch
+         << " JTs discarded due to unsupported jump pattern.\n";
+  outs() << "\t   " << NumJTsNoReg
+         << " JTs discarded due to register unavailability.\n";
+  outs() << "\t   " << BytesSaved
+         << " bytes saved.\n";
+}
+
+} // namespace bolt
+} // namespace llvm
