@@ -15,11 +15,11 @@ using namespace lldb_private;
 #include "clang/Basic/Version.h"
 
 #ifdef HAVE_SVN_VERSION_INC
-#  include "SVNVersion.inc"
+#include "SVNVersion.inc"
 #endif
 
 #ifdef HAVE_APPLE_VERSION_INC
-#  include "AppleVersion.inc"
+#include "AppleVersion.inc"
 #endif
 
 static const char *GetLLDBRevision() {
@@ -37,7 +37,6 @@ static const char *GetLLDBRepository() {
   return NULL;
 #endif
 }
-
 
 #define QUOTE(str) #str
 #define EXPAND_AND_QUOTE(str) QUOTE(str)
@@ -73,7 +72,6 @@ const char *lldb_private::GetVersion() {
       g_version_str += "\n  llvm revision ";
       g_version_str += llvm_rev;
     }
-      
   }
   return g_version_str.c_str();
 }
