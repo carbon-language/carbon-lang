@@ -587,20 +587,7 @@ getIntelProcessorTypeAndSubtype(unsigned Family, unsigned Model,
     *Type = INTEL_i386;
     break;
   case 4:
-    switch (Model) {
-    case 0: // Intel486 DX processors
-    case 1: // Intel486 DX processors
-    case 2: // Intel486 SX processors
-    case 3: // Intel487 processors, IntelDX2 OverDrive processors,
-            // IntelDX2 processors
-    case 4: // Intel486 SL processor
-    case 5: // IntelSX2 processors
-    case 7: // Write-Back Enhanced IntelDX2 processors
-    case 8: // IntelDX4 OverDrive processors, IntelDX4 processors
-    default:
-      *Type = INTEL_i486;
-      break;
-    }
+    *Type = INTEL_i486;
     break;
   case 5:
     if (Features & (1 << FEATURE_MMX)) {
