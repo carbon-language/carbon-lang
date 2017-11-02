@@ -1451,7 +1451,8 @@ llvm::Value *CGOpenMPRuntime::getThreadID(CodeGenFunction &CGF,
       return ThreadID;
   }
   // If exceptions are enabled, do not use parameter to avoid possible crash.
-  if (!CGF.getInvokeDest() ||
+  if (!CGF.EHStack.requiresLandingPad() || !CGF.getLangOpts().Exceptions ||
+      !CGF.getLangOpts().CXXExceptions ||
       CGF.Builder.GetInsertBlock() == CGF.AllocaInsertPt->getParent()) {
     if (auto *OMPRegionInfo =
             dyn_cast_or_null<CGOpenMPRegionInfo>(CGF.CapturedStmtInfo)) {
