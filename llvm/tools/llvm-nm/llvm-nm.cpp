@@ -946,6 +946,10 @@ static char getSymbolNMTypeChar(COFFObjectFile &Obj, symbol_iterator I) {
     section_iterator SecI = *SecIOrErr;
     const coff_section *Section = Obj.getCOFFSection(*SecI);
     Characteristics = Section->Characteristics;
+    StringRef SectionName;
+    Obj.getSectionName(Section, SectionName);
+    if (SectionName.startswith(".idata"))
+      return 'i';
   }
 
   switch (Symb.getSectionNumber()) {
