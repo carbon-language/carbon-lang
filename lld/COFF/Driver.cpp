@@ -353,8 +353,8 @@ void LinkerDriver::addLibSearchPaths() {
   }
 }
 
-SymbolBody *LinkerDriver::addUndefined(StringRef Name) {
-  SymbolBody *B = Symtab->addUndefined(Name);
+Symbol *LinkerDriver::addUndefined(StringRef Name) {
+  Symbol *B = Symtab->addUndefined(Name);
   Config->GCRoot.insert(B);
   return B;
 }
@@ -1181,7 +1181,7 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
     for (auto Pair : Config->AlternateNames) {
       StringRef From = Pair.first;
       StringRef To = Pair.second;
-      SymbolBody *Sym = Symtab->find(From);
+      Symbol *Sym = Symtab->find(From);
       if (!Sym)
         continue;
       if (auto *U = dyn_cast<Undefined>(Sym))
@@ -1237,7 +1237,7 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
                       Args.hasArg(OPT_export_all_symbols))) {
     AutoExporter Exporter;
 
-    Symtab->forEachSymbol([=](SymbolBody *S) {
+    Symtab->forEachSymbol([=](Symbol *S) {
       auto *Def = dyn_cast<Defined>(S);
       if (!Exporter.shouldExport(Def))
         return;
@@ -1268,7 +1268,7 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
     StringRef Name = Pair.first;
     uint32_t Alignment = Pair.second;
 
-    SymbolBody *Sym = Symtab->find(Name);
+    Symbol *Sym = Symtab->find(Name);
     if (!Sym) {
       warn("/aligncomm symbol " + Name + " not found");
       continue;
