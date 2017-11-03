@@ -73,14 +73,6 @@ FunctionPass *createDeadCodeEliminationPass();
 //
 FunctionPass *createDeadStoreEliminationPass();
 
-
-//===----------------------------------------------------------------------===//
-//
-// CallSiteSplitting - This pass split call-site based on its known argument
-// values.
-FunctionPass *createCallSiteSplittingPass();
-
-
 //===----------------------------------------------------------------------===//
 //
 // AggressiveDCE - This pass uses the SSA based Aggressive DCE algorithm.  This
