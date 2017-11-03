@@ -1057,8 +1057,8 @@ StringRef sys::getHostCPUName() {
   detectX86FamilyModel(EAX, &Family, &Model);
   getAvailableFeatures(ECX, EDX, MaxLeaf, &Features, &Features2);
 
-  unsigned Type;
-  unsigned Subtype;
+  unsigned Type = 0;
+  unsigned Subtype = 0;
 
   if (Vendor == SIG_INTEL) {
     getIntelProcessorTypeAndSubtype(Family, Model, Brand_id, Features,
