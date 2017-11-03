@@ -801,7 +801,7 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
     Config->Force = true;
 
   // Handle /debug
-  if (Args.hasArg(OPT_debug)) {
+  if (Args.hasArg(OPT_debug) || Args.hasArg(OPT_debug_dwarf)) {
     Config->Debug = true;
     if (auto *Arg = Args.getLastArg(OPT_debugtype))
       Config->DebugTypes = parseDebugType(Arg->getValue());
@@ -1135,7 +1135,7 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   }
 
   // Disable PDB generation if the user requested it.
-  if (Args.hasArg(OPT_nopdb))
+  if (Args.hasArg(OPT_nopdb) || Args.hasArg(OPT_debug_dwarf))
     Config->PDBPath = "";
 
   // Set default image base if /base is not given.
