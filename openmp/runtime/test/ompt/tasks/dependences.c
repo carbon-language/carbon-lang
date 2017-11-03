@@ -16,7 +16,7 @@ int main()
       #pragma omp task depend(out:x)
       {
         x++;
-        usleep(100);
+        delay(100);
       }
       print_fuzzy_address(1);
     

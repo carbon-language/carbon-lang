@@ -18,7 +18,7 @@ int main()
     }
     else
     {
-      usleep(100);
+      delay(100);
       printf("%" PRIu64 ": fuzzy_address=0x%lx or 0x%lx\n", ompt_get_thread_data()->value, ((uint64_t)(char*)(&& ompt_label_2))/256-1, ((uint64_t)(char*)(&& ompt_label_2))/256);
       #pragma omp cancellation point parallel
       print_fuzzy_address(2); //does not actually print the address but provides a label

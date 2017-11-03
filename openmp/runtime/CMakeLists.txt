@@ -330,7 +330,7 @@ if(LIBOMP_OMPT_SUPPORT AND (NOT LIBOMP_HAVE_OMPT_SUPPORT))
   libomp_error_say("OpenMP Tools Interface requested but not available in this implementation")
 endif()
 if(LIBOMP_OMPT_SUPPORT AND (${LIBOMP_OMP_VERSION} LESS 50))
-  message( FATAL_ERROR "OMPT is only available with OpenMP 5.0, LIBOMP_OMP_VERSION is ${LIBOMP_OMP_VERSION}" )
+  libomp_error_say("OpenMP Tools Interface only available with OpenMP 5.0, LIBOMP_OMP_VERSION is ${LIBOMP_OMP_VERSION}")
 endif()
 
 # TSAN-support

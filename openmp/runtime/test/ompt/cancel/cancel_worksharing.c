@@ -27,7 +27,7 @@ int main()
       {
         x++;
         OMPT_WAIT(condition,1);
-        usleep(10000);
+        delay(10000);
         #pragma omp cancellation point for
       }
     }
@@ -44,7 +44,7 @@ int main()
       #pragma omp section
       {
         OMPT_WAIT(condition,2);
-        usleep(10000);
+        delay(10000);
         #pragma omp cancellation point sections
       }
     }
