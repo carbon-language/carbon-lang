@@ -435,7 +435,7 @@ static int setup_at_exit_wrapper(ThreadState *thr, uptr pc, void(*f)(),
   return res;
 }
 
-#if !SANITIZER_MAC
+#if !SANITIZER_MAC && !SANITIZER_NETBSD
 static void on_exit_wrapper(int status, void *arg) {
   ThreadState *thr = cur_thread();
   uptr pc = 0;
@@ -460,6 +460,9 @@ TSAN_INTERCEPTOR(int, on_exit, void(*f)(int, void*), void *arg) {
   ThreadIgnoreEnd(thr, pc);
   return res;
 }
+#define TSAN_MAYBE_INTERCEPT_ON_EXIT TSAN_INTERCEPT(on_exit)
+#else
+#define TSAN_MAYBE_INTERCEPT_ON_EXIT
 #endif
 
 // Cleanup old bufs.
@@ -2605,7 +2608,7 @@ void InitializeInterceptors() {
 #if !SANITIZER_ANDROID
   TSAN_INTERCEPT(dl_iterate_phdr);
 #endif
-  TSAN_INTERCEPT(on_exit);
+  TSAN_MAYBE_INTERCEPT_ON_EXIT;
   TSAN_INTERCEPT(__cxa_atexit);
   TSAN_INTERCEPT(_exit);
 
