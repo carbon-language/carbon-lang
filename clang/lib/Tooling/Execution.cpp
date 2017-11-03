@@ -54,10 +54,11 @@ llvm::Error ToolExecutor::execute(std::unique_ptr<FrontendActionFactory> Action,
   return execute(Actions);
 }
 
+namespace internal {
 llvm::Expected<std::unique_ptr<ToolExecutor>>
-createExecutorFromCommandLineArgs(int &argc, const char **argv,
-                                  llvm::cl::OptionCategory &Category,
-                                  const char *Overview) {
+createExecutorFromCommandLineArgsImpl(int &argc, const char **argv,
+                                      llvm::cl::OptionCategory &Category,
+                                      const char *Overview) {
   auto OptionsParser =
       CommonOptionsParser::create(argc, argv, Category, llvm::cl::ZeroOrMore,
                                   /*Overview=*/nullptr);
@@ -83,6 +84,15 @@ createExecutorFromCommandLineArgs(int &argc, const char **argv,
   return llvm::make_error<llvm::StringError>(
       llvm::Twine("Executor \"") + ExecutorName + "\" is not registered.",
       llvm::inconvertibleErrorCode());
+}
+} // end namespace internal
+
+llvm::Expected<std::unique_ptr<ToolExecutor>>
+createExecutorFromCommandLineArgs(int &argc, const char **argv,
+                                  llvm::cl::OptionCategory &Category,
+                                  const char *Overview) {
+  return internal::createExecutorFromCommandLineArgsImpl(argc, argv, Category,
+                                                         Overview);
 }
 
 } // end namespace tooling
