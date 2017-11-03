@@ -61,7 +61,7 @@ createExecutorFromCommandLineArgsImpl(int &argc, const char **argv,
                                       const char *Overview) {
   auto OptionsParser =
       CommonOptionsParser::create(argc, argv, Category, llvm::cl::ZeroOrMore,
-                                  /*Overview=*/nullptr);
+                                  /*Overview=*/Overview);
   if (!OptionsParser)
     return OptionsParser.takeError();
   for (auto I = ToolExecutorPluginRegistry::begin(),
@@ -94,6 +94,12 @@ createExecutorFromCommandLineArgs(int &argc, const char **argv,
   return internal::createExecutorFromCommandLineArgsImpl(argc, argv, Category,
                                                          Overview);
 }
+
+// This anchor is used to force the linker to link in the generated object file
+// and thus register the StandaloneToolExecutorPlugin.
+extern volatile int StandaloneToolExecutorAnchorSource;
+static int LLVM_ATTRIBUTE_UNUSED StandaloneToolExecutorAnchorDest =
+    StandaloneToolExecutorAnchorSource;
 
 } // end namespace tooling
 } // end namespace clang
