@@ -265,7 +265,7 @@ static ThreadSignalContext *SigCtx(ThreadState *thr) {
   return ctx;
 }
 
-#if !SANITIZER_MAC
+#if !SANITIZER_MAC && !SANITIZER_NETBSD
 static unsigned g_thread_finalize_key;
 #endif
 
@@ -869,7 +869,7 @@ void DestroyThreadState() {
 }
 }  // namespace __tsan
 
-#if !SANITIZER_MAC
+#if !SANITIZER_MAC && !SANITIZER_NETBSD
 static void thread_finalize(void *v) {
   uptr iter = (uptr)v;
   if (iter > 1) {
@@ -899,7 +899,7 @@ extern "C" void *__tsan_thread_start_func(void *arg) {
     ThreadState *thr = cur_thread();
     // Thread-local state is not initialized yet.
     ScopedIgnoreInterceptors ignore;
-#if !SANITIZER_MAC
+#if !SANITIZER_MAC && !SANITIZER_NETBSD
     ThreadIgnoreBegin(thr, 0);
     if (pthread_setspecific(g_thread_finalize_key,
                             (void *)GetPthreadDestructorIterations())) {
@@ -2448,6 +2448,17 @@ TSAN_INTERCEPTOR(void *, __tls_get_addr, void *arg) {
 }
 #endif
 
+#if SANITIZER_NETBSD
+TSAN_INTERCEPTOR(void, _lwp_exit) {
+  SCOPED_TSAN_INTERCEPTOR(_lwp_exit);
+  REAL(_lwp_exit)();
+  DestroyThreadState();
+}
+#define TSAN_MAYBE_INTERCEPT__LWP_EXIT TSAN_INTERCEPT(_lwp_exit)
+#else
+#define TSAN_MAYBE_INTERCEPT__LWP_EXIT
+#endif
+
 namespace __tsan {
 
 static void finalize(void *arg) {
@@ -2616,6 +2627,8 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(__tls_get_addr);
 #endif
 
+  TSAN_MAYBE_INTERCEPT__LWP_EXIT;
+
 #if !SANITIZER_MAC && !SANITIZER_ANDROID
   // Need to setup it, because interceptors check that the function is resolved.
   // But atexit is emitted directly into the module, so can't be resolved.
@@ -2627,7 +2640,7 @@ void InitializeInterceptors() {
     Die();
   }
 
-#if !SANITIZER_MAC
+#if !SANITIZER_MAC && !SANITIZER_NETBSD
   if (pthread_key_create(&g_thread_finalize_key, &thread_finalize)) {
     Printf("ThreadSanitizer: failed to create thread key\n");
     Die();
