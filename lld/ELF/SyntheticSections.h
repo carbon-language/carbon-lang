@@ -420,7 +420,7 @@ private:
 };
 
 struct SymbolTableEntry {
-  Symbol *Symbol;
+  Symbol *Sym;
   size_t StrTabOffset;
 };
 

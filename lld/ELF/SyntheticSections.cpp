@@ -1493,11 +1493,11 @@ static bool sortMipsSymbols(const SymbolTableEntry &L,
                             const SymbolTableEntry &R) {
   // Sort entries related to non-local preemptible symbols by GOT indexes.
   // All other entries go to the first part of GOT in arbitrary order.
-  bool LIsInLocalGot = !L.Symbol->IsInGlobalMipsGot;
-  bool RIsInLocalGot = !R.Symbol->IsInGlobalMipsGot;
+  bool LIsInLocalGot = !L.Sym->IsInGlobalMipsGot;
+  bool RIsInLocalGot = !R.Sym->IsInGlobalMipsGot;
   if (LIsInLocalGot || RIsInLocalGot)
     return !RIsInLocalGot;
-  return L.Symbol->GotIndex < R.Symbol->GotIndex;
+  return L.Sym->GotIndex < R.Sym->GotIndex;
 }
 
 void SymbolTableBaseSection::finalizeContents() {
@@ -1518,8 +1518,7 @@ void SymbolTableBaseSection::finalizeContents() {
     }
 
     size_t I = 0;
-    for (const SymbolTableEntry &S : Symbols)
-      S.Symbol->DynsymIndex = ++I;
+    for (const SymbolTableEntry &S : Symbols) S.Sym->DynsymIndex = ++I;
     return;
   }
 }
@@ -1533,7 +1532,7 @@ void SymbolTableBaseSection::postThunkContents() {
   // move all local symbols before global symbols.
   auto It = std::stable_partition(
       Symbols.begin(), Symbols.end(), [](const SymbolTableEntry &S) {
-        return S.Symbol->isLocal() || S.Symbol->computeBinding() == STB_LOCAL;
+        return S.Sym->isLocal() || S.Sym->computeBinding() == STB_LOCAL;
       });
   size_t NumLocals = It - Symbols.begin();
   getParent()->Info = NumLocals + 1;
@@ -1554,10 +1553,10 @@ size_t SymbolTableBaseSection::getSymbolIndex(Symbol *Body) {
     SymbolIndexMap.reserve(Symbols.size());
     size_t I = 0;
     for (const SymbolTableEntry &E : Symbols) {
-      if (E.Symbol->Type == STT_SECTION)
-        SectionIndexMap[E.Symbol->getOutputSection()] = ++I;
+      if (E.Sym->Type == STT_SECTION)
+        SectionIndexMap[E.Sym->getOutputSection()] = ++I;
       else
-        SymbolIndexMap[E.Symbol] = ++I;
+        SymbolIndexMap[E.Sym] = ++I;
     }
   });
 
@@ -1583,7 +1582,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
   auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
 
   for (SymbolTableEntry &Ent : Symbols) {
-    Symbol *Body = Ent.Symbol;
+    Symbol *Body = Ent.Sym;
 
     // Set st_info and st_other.
     ESym->st_other = 0;
@@ -1635,7 +1634,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
 
     for (SymbolTableEntry &Ent : Symbols) {
-      Symbol *Body = Ent.Symbol;
+      Symbol *Body = Ent.Sym;
       if (Body->isInPlt() && Body->NeedsPltAddr)
         ESym->st_other |= STO_MIPS_PLT;
 
@@ -1791,15 +1790,15 @@ void GnuHashTableSection::addSymbols(std::vector<SymbolTableEntry> &V) {
       std::stable_partition(V.begin(), V.end(), [](const SymbolTableEntry &S) {
         // Shared symbols that this executable preempts are special. The dynamic
         // linker has to look them up, so they have to be in the hash table.
-        if (auto *SS = dyn_cast<SharedSymbol>(S.Symbol))
+        if (auto *SS = dyn_cast<SharedSymbol>(S.Sym))
           return SS->CopyRelSec == nullptr && !SS->NeedsPltAddr;
-        return !S.Symbol->isInCurrentOutput();
+        return !S.Sym->isInCurrentOutput();
       });
   if (Mid == V.end())
     return;
 
   for (SymbolTableEntry &Ent : llvm::make_range(Mid, V.end())) {
-    Symbol *B = Ent.Symbol;
+    Symbol *B = Ent.Sym;
     Symbols.push_back({B, Ent.StrTabOffset, hashGnu(B->getName())});
   }
 
@@ -1841,7 +1840,7 @@ void HashTableSection::writeTo(uint8_t *Buf) {
   uint32_t *Chains = P + NumSymbols;
 
   for (const SymbolTableEntry &S : InX::DynSymTab->getSymbols()) {
-    Symbol *Body = S.Symbol;
+    Symbol *Body = S.Sym;
     StringRef Name = Body->getName();
     unsigned I = Body->DynsymIndex;
     uint32_t Hash = hashSysV(Name) % NumSymbols;
@@ -2283,7 +2282,7 @@ template <class ELFT> size_t VersionTableSection<ELFT>::getSize() const {
 template <class ELFT> void VersionTableSection<ELFT>::writeTo(uint8_t *Buf) {
   auto *OutVersym = reinterpret_cast<Elf_Versym *>(Buf) + 1;
   for (const SymbolTableEntry &S : InX::DynSymTab->getSymbols()) {
-    OutVersym->vs_index = S.Symbol->VersionId;
+    OutVersym->vs_index = S.Sym->VersionId;
     ++OutVersym;
   }
 }
