@@ -36,6 +36,7 @@
 #endif
 
 #if OMPT_SUPPORT
+#include "ompt-internal.h"
 #include "ompt-specific.h"
 #endif
 

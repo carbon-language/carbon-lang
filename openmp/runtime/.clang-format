@@ -2,4 +2,4 @@
 BasedOnStyle:  LLVM
 AlignTrailingComments: false
 SortIncludes:    false
-...
+---

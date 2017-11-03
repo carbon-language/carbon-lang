@@ -1097,9 +1097,10 @@ inline static void propagateFPControl(kmp_team_t *team) {
 
     // There is no point looking at t_fp_control_saved here.
     // If it is TRUE, we still have to update the values if they are different
-    // from those we now have. If it is FALSE we didn't save anything yet, but
-    // our objective is the same. We have to ensure that the values in the team
-    // are the same as those we have.
+    // from those we now have.
+    // If it is FALSE we didn't save anything yet, but our objective is the
+    // same. We have to ensure that the values in the team are the same as
+    // those we have.
     // So, this code achieves what we need whether or not t_fp_control_saved is
     // true. By checking whether the value needs updating we avoid unnecessary
     // writes that would put the cache-line into a written state, causing all

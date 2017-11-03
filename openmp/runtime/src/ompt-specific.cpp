@@ -3,6 +3,7 @@
 //******************************************************************************
 
 #include "kmp.h"
+#include "ompt-internal.h"
 #include "ompt-specific.h"
 
 #if KMP_OS_UNIX

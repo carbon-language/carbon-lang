@@ -31,6 +31,8 @@ typedef struct ompt_callbacks_active_s {
 #undef ompt_event_macro
 } ompt_callbacks_active_t;
 
+typedef struct kmp_taskdata kmp_taskdata_t;
+
 #define TASK_TYPE_DETAILS_FORMAT(info)                                         \
   ((info->td_flags.task_serial || info->td_flags.tasking_ser)                  \
        ? ompt_task_undeferred                                                  \
@@ -42,7 +44,7 @@ typedef struct ompt_callbacks_active_s {
 typedef struct {
   ompt_frame_t frame;
   ompt_data_t task_data;
-  struct kmp_taskdata *scheduling_parent;
+  kmp_taskdata_t *scheduling_parent;
 #if OMP_40_ENABLED
   int ndeps;
   ompt_task_dependence_t *deps;

@@ -20,6 +20,7 @@
 #include "kmp_stats.h"
 
 #if OMPT_SUPPORT
+#include "ompt-internal.h"
 #include "ompt-specific.h"
 #endif
 
