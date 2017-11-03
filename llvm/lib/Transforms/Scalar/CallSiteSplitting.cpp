@@ -126,8 +126,8 @@ static bool createCallSitesOnOrPredicatedArgument(
       Instruction *&CallUntakenFromHeader =
           IsCSInTakenPath ? NewCSTakenFromNextCond : NewCSTakenFromHeader;
 
-      assert(Pred == ICmpInst::ICMP_EQ ||
-             Pred == ICmpInst::ICMP_NE &&
+      assert((Pred == ICmpInst::ICMP_EQ ||
+             Pred == ICmpInst::ICMP_NE) &&
                  "Unexpected predicate in an OR condition");
 
       // Set the constant value for agruments in the call predicated based on
