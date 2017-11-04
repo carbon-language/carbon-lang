@@ -427,13 +427,6 @@ static OutputSection *findByName(ArrayRef<BaseCommand *> Vec,
   return nullptr;
 }
 
-static void reportOrphan(InputSectionBase *IS, StringRef Name) {
-  if (Config->OrphanHandling == OrphanHandlingPolicy::Error)
-    error(toString(IS) + " is being placed in '" + Name + "'");
-  else if (Config->OrphanHandling == OrphanHandlingPolicy::Warn)
-    warn(toString(IS) + " is being placed in '" + Name + "'");
-}
-
 static OutputSection *createSection(InputSectionBase *IS,
                                     StringRef OutsecName) {
   OutputSection *Sec = Script->createOutputSection(OutsecName, "<internal>");
@@ -542,7 +535,11 @@ void LinkerScript::addOrphanSections() {
       continue;
 
     StringRef Name = getOutputSectionName(S->Name);
-    reportOrphan(S, Name);
+
+    if (Config->OrphanHandling == OrphanHandlingPolicy::Error)
+      error(toString(S) + " is being placed in '" + Name + "'");
+    else if (Config->OrphanHandling == OrphanHandlingPolicy::Warn)
+      warn(toString(S) + " is being placed in '" + Name + "'");
 
     if (OutputSection *Sec =
             findByName(makeArrayRef(SectionCommands).slice(0, End), Name)) {
