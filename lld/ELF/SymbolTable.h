@@ -35,7 +35,6 @@ class SymbolTable {
 public:
   template <class ELFT> void addFile(InputFile *File);
   template <class ELFT> void addCombinedLTOObject();
-  template <class ELFT> void addSymbolAlias(StringRef Alias, StringRef Name);
   template <class ELFT> void addSymbolWrap(StringRef Name);
   void applySymbolRenames();
 

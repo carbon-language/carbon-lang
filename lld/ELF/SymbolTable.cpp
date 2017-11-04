@@ -162,21 +162,9 @@ template <class ELFT> void SymbolTable::addSymbolWrap(StringRef Name) {
   WrapSymbols.push_back({Wrap, Real});
 }
 
-// Creates alias for symbol. Used to implement --defsym=ALIAS=SYM.
-template <class ELFT>
-void SymbolTable::addSymbolAlias(StringRef Alias, StringRef Name) {
-  Symbol *B = find(Name);
-  if (!B) {
-    error("-defsym: undefined symbol: " + Name);
-    return;
-  }
-
-  defsym(addUndefined<ELFT>(Alias), B);
-}
-
-// Apply symbol renames created by -wrap and -defsym. The renames are created
-// before LTO in addSymbolWrap() and addSymbolAlias() to have a chance to inform
-// LTO (if LTO is running) not to include these symbols in IPO. Now that the
+// Apply symbol renames created by -wrap. The renames are created
+// before LTO in addSymbolWrap() to have a chance to inform LTO (if
+// LTO is running) not to include these symbols in IPO. Now that the
 // symbols are finalized, we can perform the replacement.
 void SymbolTable::applySymbolRenames() {
   // This function rotates 3 symbols:
@@ -815,11 +803,6 @@ template Symbol *SymbolTable::addUndefined<ELF64LE>(StringRef, bool, uint8_t,
 template Symbol *SymbolTable::addUndefined<ELF64BE>(StringRef, bool, uint8_t,
                                                     uint8_t, uint8_t, bool,
                                                     InputFile *);
-
-template void SymbolTable::addSymbolAlias<ELF32LE>(StringRef, StringRef);
-template void SymbolTable::addSymbolAlias<ELF32BE>(StringRef, StringRef);
-template void SymbolTable::addSymbolAlias<ELF64LE>(StringRef, StringRef);
-template void SymbolTable::addSymbolAlias<ELF64BE>(StringRef, StringRef);
 
 template void SymbolTable::addCombinedLTOObject<ELF32LE>();
 template void SymbolTable::addCombinedLTOObject<ELF32BE>();
