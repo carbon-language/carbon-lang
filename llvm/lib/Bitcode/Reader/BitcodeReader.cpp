@@ -889,9 +889,7 @@ static GlobalValueSummary::GVFlags getDecodedGVSummaryFlags(uint64_t RawFlags,
   // to work correctly on earlier versions, we must conservatively treat all
   // values as live.
   bool Live = (RawFlags & 0x2) || Version < 3;
-  bool Local = (RawFlags & 0x4);
-
-  return GlobalValueSummary::GVFlags(Linkage, NotEligibleToImport, Live, Local);
+  return GlobalValueSummary::GVFlags(Linkage, NotEligibleToImport, Live);
 }
 
 static GlobalValue::VisibilityTypes getDecodedVisibility(unsigned Val) {

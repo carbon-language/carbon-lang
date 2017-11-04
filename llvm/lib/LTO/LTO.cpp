@@ -630,9 +630,6 @@ LTO::addRegularLTO(BitcodeModule BM, ArrayRef<InputFile::Symbol> Syms,
           NonPrevailingComdats.insert(GV->getComdat());
         cast<GlobalObject>(GV)->setComdat(nullptr);
       }
-
-      // Set the 'local' flag based on the linker resolution for this symbol.
-      GV->setDSOLocal(Res.FinalDefinitionInLinkageUnit);
     }
     // Common resolution: collect the maximum size/alignment over all commons.
     // We also record if we see an instance of a common as prevailing, so that
@@ -646,6 +643,7 @@ LTO::addRegularLTO(BitcodeModule BM, ArrayRef<InputFile::Symbol> Syms,
       CommonRes.Prevailing |= Res.Prevailing;
     }
 
+    // FIXME: use proposed local attribute for FinalDefinitionInLinkageUnit.
   }
   if (!M.getComdatSymbolTable().empty())
     for (GlobalValue &GV : M.global_values())
@@ -700,10 +698,10 @@ Error LTO::addThinLTO(BitcodeModule BM, ArrayRef<InputFile::Symbol> Syms,
     assert(ResI != ResE);
     SymbolResolution Res = *ResI++;
 
-    if (!Sym.getIRName().empty()) {
-      auto GUID = GlobalValue::getGUID(GlobalValue::getGlobalIdentifier(
-          Sym.getIRName(), GlobalValue::ExternalLinkage, ""));
-      if (Res.Prevailing) {
+    if (Res.Prevailing) {
+      if (!Sym.getIRName().empty()) {
+        auto GUID = GlobalValue::getGUID(GlobalValue::getGlobalIdentifier(
+            Sym.getIRName(), GlobalValue::ExternalLinkage, ""));
         ThinLTO.PrevailingModuleForGUID[GUID] = BM.getModuleIdentifier();
 
         // For linker redefined symbols (via --wrap or --defsym) we want to
@@ -714,15 +712,6 @@ Error LTO::addThinLTO(BitcodeModule BM, ArrayRef<InputFile::Symbol> Syms,
           if (auto S = ThinLTO.CombinedIndex.findSummaryInModule(
                   GUID, BM.getModuleIdentifier()))
             S->setLinkage(GlobalValue::WeakAnyLinkage);
-      }
-
-      // If the linker resolved the symbol to a local definition then mark it
-      // as local in the summary for the module we are adding.
-      if (Res.FinalDefinitionInLinkageUnit) {
-        if (auto S = ThinLTO.CombinedIndex.findSummaryInModule(
-                GUID, BM.getModuleIdentifier())) {
-          S->setDSOLocal(true);
-        }
       }
     }
   }
