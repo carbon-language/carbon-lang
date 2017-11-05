@@ -7618,6 +7618,7 @@ multiclass avx512_sqrt_scalar<bits<8> opc, string OpcodeStr,X86VectorVTInfo _,
   }
   }
 
+let Predicates = [HasAVX512] in {
   def : Pat<(_.EltVT (OpNode _.FRC:$src)),
             (!cast<Instruction>(NAME#SUFF#Zr)
                 (_.EltVT (IMPLICIT_DEF)), _.FRC:$src)>;
@@ -7625,6 +7626,7 @@ multiclass avx512_sqrt_scalar<bits<8> opc, string OpcodeStr,X86VectorVTInfo _,
   def : Pat<(_.EltVT (OpNode (load addr:$src))),
             (!cast<Instruction>(NAME#SUFF#Zm)
                 (_.EltVT (IMPLICIT_DEF)), addr:$src)>, Requires<[HasAVX512, OptForSize]>;
+}
 }
 
 multiclass avx512_sqrt_scalar_all<bits<8> opc, string OpcodeStr> {
