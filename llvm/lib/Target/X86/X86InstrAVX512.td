@@ -7641,19 +7641,6 @@ defm VSQRT   : avx512_sqrt_packed_all<0x51, "vsqrt", fsqrt>,
 
 defm VSQRT   : avx512_sqrt_scalar_all<0x51, "vsqrt">, VEX_LIG;
 
-let Predicates = [HasAVX512] in {
-  def : Pat<(f32 (X86frsqrt FR32X:$src)),
-            (COPY_TO_REGCLASS (VRSQRT14SSrr (v4f32 (IMPLICIT_DEF)), (COPY_TO_REGCLASS FR32X:$src, VR128X)), VR128X)>;
-  def : Pat<(f32 (X86frsqrt (load addr:$src))),
-            (COPY_TO_REGCLASS (VRSQRT14SSrm (v4f32 (IMPLICIT_DEF)), addr:$src), VR128X)>,
-            Requires<[OptForSize]>;
-  def : Pat<(f32 (X86frcp FR32X:$src)),
-            (COPY_TO_REGCLASS (VRCP14SSrr (v4f32 (IMPLICIT_DEF)), (COPY_TO_REGCLASS FR32X:$src, VR128X)), VR128X )>;
-  def : Pat<(f32 (X86frcp (load addr:$src))),
-            (COPY_TO_REGCLASS (VRCP14SSrm (v4f32 (IMPLICIT_DEF)), addr:$src), VR128X)>,
-            Requires<[OptForSize]>;
-}
-
 multiclass
 avx512_rndscale_scalar<bits<8> opc, string OpcodeStr, X86VectorVTInfo _> {
 
