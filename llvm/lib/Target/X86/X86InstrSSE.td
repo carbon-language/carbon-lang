@@ -1899,7 +1899,7 @@ let Predicates = [HasAVX, NoVLX] in {
                                  (v4i32 (X86cvttp2si (loadv2f64 addr:$src)))))),
               (VCVTTPD2DQrm addr:$src)>;
   }
-} // Predicates = [HasAVX]
+} // Predicates = [HasAVX, NoVLX]
 
 def CVTTPD2DQrr : PDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                       "cvttpd2dq\t{$src, $dst|$dst, $src}",
