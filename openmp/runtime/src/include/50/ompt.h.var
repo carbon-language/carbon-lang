@@ -179,9 +179,9 @@ typedef void ompt_device_t;
  * ompt_frame_t
  *---------------------*/
 
-typedef struct ompt_frame_s {
-    void *exit_runtime_frame;    /* next frame is user code     */
-    void *reenter_runtime_frame; /* previous frame is user code */
+typedef struct ompt_frame_t {
+    void *exit_frame;    /* next frame is user code     */
+    void *enter_frame;   /* previous frame is user code */
 } ompt_frame_t;
 
 
