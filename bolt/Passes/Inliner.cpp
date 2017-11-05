@@ -246,7 +246,9 @@ InlineSmallFunctions::inlineCall(
         const MCSymbol *OldFTLabel = nullptr;
         MCInst *CondBranch = nullptr;
         MCInst *UncondBranch = nullptr;
-        const bool Result = BC.MIA->analyzeBranch(Instruction, OldTargetLabel,
+        const bool Result = BC.MIA->analyzeBranch(&Instruction,
+                                                  &Instruction + 1,
+                                                  OldTargetLabel,
                                                   OldFTLabel, CondBranch,
                                                   UncondBranch);
         (void)Result;

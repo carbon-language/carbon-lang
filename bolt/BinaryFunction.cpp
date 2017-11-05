@@ -438,9 +438,9 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   // Offset of the instruction in function.
   uint64_t Offset{0};
 
-  if (BasicBlocks.empty() && !InstructionOffsets.empty()) {
+  if (BasicBlocks.empty() && !Instructions.empty()) {
     // Print before CFG was built.
-    for (const auto &II : InstructionOffsets) {
+    for (const auto &II : Instructions) {
       Offset = II.first;
 
       // Print label if exists at this offset.
@@ -448,7 +448,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
       if (LI != Labels.end())
         OS << LI->second->getName() << ":\n";
 
-      BC.printInstruction(OS, Instructions[II.second], Offset, this);
+      BC.printInstruction(OS, II.second, Offset, this);
     }
   }
 
@@ -634,7 +634,8 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
   MCInst *PCRelBaseInstr;
   uint64_t PCRelAddr = 0;
 
-  MutableArrayRef<MCInst> BB = Instructions;
+  auto Begin = Instructions.begin();
+  auto End = Instructions.end();
 
   if (BC.TheTriple->getArch() == llvm::Triple::aarch64) {
     PreserveNops = opts::Relocs;
@@ -642,16 +643,17 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
     // This is a heuristic, since the full set of labels have yet to be
     // determined
     for (auto LI = Labels.rbegin(); LI != Labels.rend(); ++LI) {
-      auto II = InstructionOffsets.find(LI->first);
-      if (II != InstructionOffsets.end()) {
-        BB = BB.slice(II->second);
+      auto II = Instructions.find(LI->first);
+      if (II != Instructions.end()) {
+        Begin = II;
         break;
       }
     }
   }
 
   auto Type = BC.MIA->analyzeIndirectBranch(Instruction,
-                                            BB,
+                                            Begin,
+                                            End,
                                             PtrSize,
                                             MemLocInstr,
                                             BaseRegNum,
@@ -681,9 +683,8 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
       }
     }
     uint64_t InstrAddr = 0;
-    for (auto II = InstructionOffsets.rbegin(); II != InstructionOffsets.rend();
-         ++II) {
-      if (&Instructions[II->second] == PCRelBaseInstr) {
+    for (auto II = Instructions.rbegin(); II != Instructions.rend(); ++II) {
+      if (&II->second == PCRelBaseInstr) {
         InstrAddr = II->first + getAddress();
         break;
       }
@@ -1473,10 +1474,9 @@ bool BinaryFunction::buildCFG() {
         }
       };
 
-  for (auto I = InstructionOffsets.begin(),
-            E = InstructionOffsets.end(); I != E; ++I) {
+  for (auto I = Instructions.begin(), E = Instructions.end(); I != E; ++I) {
     const auto Offset = I->first;
-    const auto &Instr = Instructions[I->second];
+    const auto &Instr = I->second;
 
     auto LI = Labels.find(Offset);
     if (LI != Labels.end()) {
@@ -1621,9 +1621,8 @@ bool BinaryFunction::buildCFG() {
     // basic block.
     auto *ToBB = getBasicBlockAtOffset(Branch.second);
     if (ToBB == nullptr) {
-      auto I = InstructionOffsets.find(Branch.second);
-      auto E = InstructionOffsets.end();
-      while (ToBB == nullptr && I != E && MIA->isNoop(Instructions[I->second])) {
+      auto I = Instructions.find(Branch.second), E = Instructions.end();
+      while (ToBB == nullptr && I != E && MIA->isNoop(I->second)) {
         ++I;
         if (I == E)
           break;
@@ -1781,7 +1780,6 @@ bool BinaryFunction::buildCFG() {
   //
   // NB: don't clear Labels list as we may need them if we mark the function
   //     as non-simple later in the process of discovering extra entry points.
-  clearList(InstructionOffsets);
   clearList(Instructions);
   clearList(OffsetToCFI);
   clearList(TakenBranches);
@@ -2079,18 +2077,18 @@ float BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
   // Eliminate recursive calls and returns from recursive calls from the list
   // of branches that have no match. They are not considered local branches.
   auto isRecursiveBranch = [&](std::pair<uint32_t, uint32_t> &Branch) {
-    auto SrcInstrI = InstructionOffsets.find(Branch.first);
-    if (SrcInstrI == InstructionOffsets.end())
+    auto SrcInstrI = Instructions.find(Branch.first);
+    if (SrcInstrI == Instructions.end())
       return false;
 
     // Check if it is a recursive call.
-    const auto &SrcInstr = Instructions[SrcInstrI->second];
+    const auto &SrcInstr = SrcInstrI->second;
     if ((BC.MIA->isCall(SrcInstr) || BC.MIA->isIndirectBranch(SrcInstr)) &&
         Branch.second == 0)
       return true;
 
-    auto DstInstrI = InstructionOffsets.find(Branch.second);
-    if (DstInstrI == InstructionOffsets.end())
+    auto DstInstrI = Instructions.find(Branch.second);
+    if (DstInstrI == Instructions.end())
       return false;
 
     // Check if it is a return from a recursive call.
@@ -2099,17 +2097,16 @@ float BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
     if (!IsSrcReturn && BC.MIA->isPrefix(SrcInstr)) {
       auto SrcInstrSuccessorI = SrcInstrI;
       ++SrcInstrSuccessorI;
-      assert(SrcInstrSuccessorI != InstructionOffsets.end() &&
+      assert(SrcInstrSuccessorI != Instructions.end() &&
              "unexpected prefix instruction at the end of function");
-      IsSrcReturn = BC.MIA->isReturn(Instructions[SrcInstrSuccessorI->second]);
+      IsSrcReturn = BC.MIA->isReturn(SrcInstrSuccessorI->second);
     }
     if (IsSrcReturn && Branch.second != 0) {
       // Make sure the destination follows the call instruction.
       auto DstInstrPredecessorI = DstInstrI;
       --DstInstrPredecessorI;
-      assert(DstInstrPredecessorI != InstructionOffsets.end() &&
-             "invalid iterator");
-      if (BC.MIA->isCall(Instructions[DstInstrPredecessorI->second]))
+      assert(DstInstrPredecessorI != Instructions.end() && "invalid iterator");
+      if (BC.MIA->isCall(DstInstrPredecessorI->second))
         return true;
     }
     return false;
@@ -2124,10 +2121,10 @@ float BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
                ExternProfileBranches.end(),
                std::back_inserter(OrphanBranches),
                [&](const std::pair<uint32_t, uint32_t> &Branch) {
-                 auto II = InstructionOffsets.find(Branch.first);
-                 if (II == InstructionOffsets.end())
+                 auto II = Instructions.find(Branch.first);
+                 if (II == Instructions.end())
                    return true;
-                 const auto &Instr = Instructions[II->second];
+                 const auto &Instr = II->second;
                  // Check for calls, tail calls, rets and indirect branches.
                  // When matching profiling info, we did not reach the stage
                  // when we identify tail calls, so they are still represented
@@ -2139,8 +2136,7 @@ float BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
                  // Check for "rep ret"
                  if (BC.MIA->isPrefix(Instr)) {
                    ++II;
-                   if (II != InstructionOffsets.end() &&
-                       BC.MIA->isReturn(Instructions[II->second]))
+                   if (II != Instructions.end() && BC.MIA->isReturn(II->second))
                      return false;
                  }
                  return true;
@@ -4320,12 +4316,12 @@ BinaryFunction::getFallthroughsInTrace(uint64_t From, uint64_t To) const {
     return NoneType();
 
   // Get iterators and validate trace start/end
-  auto FromIter = InstructionOffsets.find(From);
-  if (FromIter == InstructionOffsets.end())
+  auto FromIter = Instructions.find(From);
+  if (FromIter == Instructions.end())
     return NoneType();
 
-  auto ToIter = InstructionOffsets.find(To);
-  if (ToIter == InstructionOffsets.end())
+  auto ToIter = Instructions.find(To);
+  if (ToIter == Instructions.end())
     return NoneType();
 
   // Trace needs to go forward
@@ -4333,22 +4329,20 @@ BinaryFunction::getFallthroughsInTrace(uint64_t From, uint64_t To) const {
     return NoneType();
 
   // Trace needs to finish in a branch
-  auto &ToInst = Instructions[ToIter->second];
-  if (!BC.MIA->isBranch(ToInst) && !BC.MIA->isCall(ToInst) &&
-      !BC.MIA->isReturn(ToInst))
+  if (!BC.MIA->isBranch(ToIter->second) && !BC.MIA->isCall(ToIter->second) &&
+      !BC.MIA->isReturn(ToIter->second))
     return NoneType();
 
   // Analyze intermediate instructions
   for (; FromIter != ToIter; ++FromIter) {
     // This operates under an assumption that we collect all branches in LBR
     // No unconditional branches in the middle of the trace
-    auto &FromInst = Instructions[FromIter->second];
-    if (BC.MIA->isUnconditionalBranch(FromInst) ||
-        BC.MIA->isReturn(FromInst) ||
-        BC.MIA->isCall(FromInst))
+    if (BC.MIA->isUnconditionalBranch(FromIter->second) ||
+        BC.MIA->isReturn(FromIter->second) ||
+        BC.MIA->isCall(FromIter->second))
       return NoneType();
 
-    if (!BC.MIA->isConditionalBranch(FromInst))
+    if (!BC.MIA->isConditionalBranch(FromIter->second))
       continue;
 
     const uint64_t Src = FromIter->first;

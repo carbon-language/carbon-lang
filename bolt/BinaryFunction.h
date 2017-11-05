@@ -456,10 +456,9 @@ private:
   LabelsMapType Labels;
 
   /// Temporary holder of instructions before CFG is constructed.
-  /// Map offset in the function to MCInst index.
-  using InstrMapType = std::map<uint32_t, size_t>;
-  InstrMapType InstructionOffsets;
-  std::vector<MCInst> Instructions;
+  /// Map offset in the function to MCInst.
+  using InstrMapType = std::map<uint32_t, MCInst>;
+  InstrMapType Instructions;
 
   /// List of DWARF CFI instructions. Original CFI from the binary must be
   /// sorted w.r.t. offset that it appears. We rely on this to replay CFIs
@@ -749,10 +748,7 @@ private:
   }
 
   void addInstruction(uint64_t Offset, MCInst &&Instruction) {
-    assert(InstructionOffsets.size() == Instructions.size() &&
-           "There must be one instruction at every offset.");
-    Instructions.emplace_back(std::forward<MCInst>(Instruction));
-    InstructionOffsets[Offset] = Instructions.size() - 1;
+    Instructions.emplace(Offset, std::forward<MCInst>(Instruction));
   }
 
   /// Return instruction at a given offset in the function. Valid before
@@ -760,9 +756,8 @@ private:
   MCInst *getInstructionAtOffset(uint64_t Offset) {
     assert(CurrentState == State::Disassembled &&
            "can only call function in Disassembled state");
-    auto II = InstructionOffsets.find(Offset);
-    return (II == InstructionOffsets.end())
-       ? nullptr : &Instructions[II->second];
+    auto II = Instructions.find(Offset);
+    return (II == Instructions.end()) ? nullptr : &II->second;
   }
 
   /// Analyze and process indirect branch \p Instruction before it is
@@ -1486,23 +1481,22 @@ public:
     // harder for us to recover this information, since we can create empty BBs
     // with NOPs and then reorder it away.
     // We fix this by moving the CFI instruction just before any NOPs.
-    auto I = InstructionOffsets.lower_bound(Offset);
+    auto I = Instructions.lower_bound(Offset);
     if (Offset == getSize()) {
-      assert(I == InstructionOffsets.end() && "unexpected iterator value");
+      assert(I == Instructions.end() && "unexpected iterator value");
       // Sometimes compiler issues restore_state after all instructions
       // in the function (even after nop).
       --I;
       Offset = I->first;
     }
     assert(I->first == Offset && "CFI pointing to unknown instruction");
-    if (I == InstructionOffsets.begin()) {
+    if (I == Instructions.begin()) {
       CIEFrameInstructions.emplace_back(std::forward<MCCFIInstruction>(Inst));
       return;
     }
 
     --I;
-    while (I != InstructionOffsets.begin() &&
-           BC.MIA->isNoop(Instructions[I->second])) {
+    while (I != Instructions.begin() && BC.MIA->isNoop(I->second)) {
       Offset = I->first;
       --I;
     }

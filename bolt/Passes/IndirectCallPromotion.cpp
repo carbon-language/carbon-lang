@@ -325,7 +325,8 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(
   const MCExpr *DispExpr;
   MutableArrayRef<MCInst> Insts(&BB->front(), &CallInst);
   const auto Type = BC.MIA->analyzeIndirectBranch(CallInst,
-                                                  Insts,
+                                                  Insts.begin(),
+                                                  Insts.end(),
                                                   BC.AsmInfo->getPointerSize(),
                                                   MemLocInstr,
                                                   BaseReg,
@@ -555,7 +556,8 @@ IndirectCallPromotion::maybeGetVtableAddrs(
     return MethodInfoType();
 
   MutableArrayRef<MCInst> Insts(&BB->front(), &Inst + 1);
-  if (!BC.MIA->analyzeVirtualMethodCall(Insts,
+  if (!BC.MIA->analyzeVirtualMethodCall(Insts.begin(),
+                                        Insts.end(),
                                         MethodFetchInsns,
                                         VtableReg,
                                         MethodReg,

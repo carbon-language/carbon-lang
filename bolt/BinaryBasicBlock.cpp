@@ -313,7 +313,12 @@ bool BinaryBasicBlock::analyzeBranch(const MCSymbol *&TBB,
                                      MCInst *&CondBranch,
                                      MCInst *&UncondBranch) {
   auto &MIA = Function->getBinaryContext().MIA;
-  return MIA->analyzeBranch(Instructions, TBB, FBB, CondBranch, UncondBranch);
+  return MIA->analyzeBranch(Instructions.begin(),
+                            Instructions.end(),
+                            TBB,
+                            FBB,
+                            CondBranch,
+                            UncondBranch);
 }
 
 MCInst *BinaryBasicBlock::getTerminatorBefore(MCInst *Pos) {
