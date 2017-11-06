@@ -291,14 +291,16 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
     setOperationAction(ISD::FROUND, MVT::f32, Legal);
   }
 
-  // PowerPC does not have BSWAP
+  // PowerPC does not have BSWAP, but we can use vector BSWAP instruction xxbrd
+  // to speed up scalar BSWAP64.
   // CTPOP or CTTZ were introduced in P8/P9 respectivelly
   setOperationAction(ISD::BSWAP, MVT::i32  , Expand);
-  setOperationAction(ISD::BSWAP, MVT::i64  , Expand);
   if (Subtarget.isISA3_0()) {
+    setOperationAction(ISD::BSWAP, MVT::i64  , Custom);
     setOperationAction(ISD::CTTZ , MVT::i32  , Legal);
     setOperationAction(ISD::CTTZ , MVT::i64  , Legal);
   } else {
+    setOperationAction(ISD::BSWAP, MVT::i64  , Expand);
     setOperationAction(ISD::CTTZ , MVT::i32  , Expand);
     setOperationAction(ISD::CTTZ , MVT::i64  , Expand);
   }
@@ -8675,6 +8677,23 @@ SDValue PPCTargetLowering::LowerREM(SDValue Op, SelectionDAG &DAG) const {
   return Op;
 }
 
+// Lower scalar BSWAP64 to xxbrd.
+SDValue PPCTargetLowering::LowerBSWAP(SDValue Op, SelectionDAG &DAG) const {
+  SDLoc dl(Op);
+  // MTVSRDD
+  Op = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v2i64, Op.getOperand(0),
+                   Op.getOperand(0));
+  // XXBRD
+  Op = DAG.getNode(PPCISD::XXREVERSE, dl, MVT::v2i64, Op);
+  // MFVSRD
+  int VectorIndex = 0;
+  if (Subtarget.isLittleEndian())
+    VectorIndex = 1;
+  Op = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i64, Op,
+                   DAG.getTargetConstant(VectorIndex, dl, MVT::i32));
+  return Op;
+}
+
 SDValue PPCTargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op,
                                                   SelectionDAG &DAG) const {
   SDLoc dl(Op);
@@ -9146,6 +9165,8 @@ SDValue PPCTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::SREM:
   case ISD::UREM:
     return LowerREM(Op, DAG);
+  case ISD::BSWAP:
+    return LowerBSWAP(Op, DAG);
   }
 }
 
