@@ -135,11 +135,11 @@ template <class ELFT> void SymbolTable::addCombinedLTOObject() {
 }
 
 template <class ELFT>
-DefinedRegular *SymbolTable::addAbsolute(StringRef Name, uint8_t Visibility,
-                                         uint8_t Binding) {
+Defined *SymbolTable::addAbsolute(StringRef Name, uint8_t Visibility,
+                                  uint8_t Binding) {
   Symbol *Sym = addRegular<ELFT>(Name, Visibility, STT_NOTYPE, 0, 0, Binding,
                                  nullptr, nullptr);
-  return cast<DefinedRegular>(Sym);
+  return cast<Defined>(Sym);
 }
 
 // Set a flag for --trace-symbol so that we can print out a log message
@@ -366,7 +366,7 @@ static int compareDefinedNonCommon(Symbol *S, bool WasInserted, uint8_t Binding,
       S->Binding = Binding;
     return Cmp;
   }
-  if (auto *R = dyn_cast<DefinedRegular>(S)) {
+  if (auto *R = dyn_cast<Defined>(S)) {
     if (R->Section && isa<BssSection>(R->Section)) {
       // Non-common symbols take precedence over common symbols.
       if (Config->WarnCommon)
@@ -395,10 +395,10 @@ Symbol *SymbolTable::addCommon(StringRef N, uint64_t Size, uint32_t Alignment,
     InputSections.push_back(Bss);
 
     S->Binding = Binding;
-    replaceSymbol<DefinedRegular>(S, File, N, /*IsLocal=*/false, StOther, Type,
-                                  0, Size, Bss);
+    replaceSymbol<Defined>(S, File, N, /*IsLocal=*/false, StOther, Type, 0,
+                           Size, Bss);
   } else if (Cmp == 0) {
-    auto *D = cast<DefinedRegular>(S);
+    auto *D = cast<Defined>(S);
     auto *Bss = dyn_cast_or_null<BssSection>(D->Section);
     if (!Bss) {
       // Non-common symbols take precedence over common symbols.
@@ -435,7 +435,7 @@ static void reportDuplicate(Symbol *Sym, InputFile *NewFile) {
 template <class ELFT>
 static void reportDuplicate(Symbol *Sym, InputSectionBase *ErrSec,
                             typename ELFT::uint ErrOffset) {
-  DefinedRegular *D = dyn_cast<DefinedRegular>(Sym);
+  Defined *D = dyn_cast<Defined>(Sym);
   if (!D || !D->Section || !ErrSec) {
     reportDuplicate(Sym, ErrSec ? ErrSec->File : nullptr);
     return;
@@ -475,8 +475,8 @@ Symbol *SymbolTable::addRegular(StringRef Name, uint8_t StOther, uint8_t Type,
   int Cmp = compareDefinedNonCommon(S, WasInserted, Binding, Section == nullptr,
                                     Value, Name);
   if (Cmp > 0)
-    replaceSymbol<DefinedRegular>(S, File, Name, /*IsLocal=*/false, StOther,
-                                  Type, Value, Size, Section);
+    replaceSymbol<Defined>(S, File, Name, /*IsLocal=*/false, StOther, Type,
+                           Value, Size, Section);
   else if (Cmp == 0)
     reportDuplicate<ELFT>(S, dyn_cast_or_null<InputSectionBase>(Section),
                           Value);
@@ -519,8 +519,8 @@ Symbol *SymbolTable::addBitcode(StringRef Name, uint8_t Binding,
   int Cmp = compareDefinedNonCommon(S, WasInserted, Binding,
                                     /*IsAbs*/ false, /*Value*/ 0, Name);
   if (Cmp > 0)
-    replaceSymbol<DefinedRegular>(S, F, Name, /*IsLocal=*/false, StOther, Type,
-                                  0, 0, nullptr);
+    replaceSymbol<Defined>(S, F, Name, /*IsLocal=*/false, StOther, Type, 0, 0,
+                           nullptr);
   else if (Cmp == 0)
     reportDuplicate(S, F);
   return S;
@@ -818,14 +818,14 @@ template Symbol *SymbolTable::addRegular<ELF64BE>(StringRef, uint8_t, uint8_t,
                                                   uint64_t, uint64_t, uint8_t,
                                                   SectionBase *, InputFile *);
 
-template DefinedRegular *SymbolTable::addAbsolute<ELF32LE>(StringRef, uint8_t,
-                                                           uint8_t);
-template DefinedRegular *SymbolTable::addAbsolute<ELF32BE>(StringRef, uint8_t,
-                                                           uint8_t);
-template DefinedRegular *SymbolTable::addAbsolute<ELF64LE>(StringRef, uint8_t,
-                                                           uint8_t);
-template DefinedRegular *SymbolTable::addAbsolute<ELF64BE>(StringRef, uint8_t,
-                                                           uint8_t);
+template Defined *SymbolTable::addAbsolute<ELF32LE>(StringRef, uint8_t,
+                                                    uint8_t);
+template Defined *SymbolTable::addAbsolute<ELF32BE>(StringRef, uint8_t,
+                                                    uint8_t);
+template Defined *SymbolTable::addAbsolute<ELF64LE>(StringRef, uint8_t,
+                                                    uint8_t);
+template Defined *SymbolTable::addAbsolute<ELF64BE>(StringRef, uint8_t,
+                                                    uint8_t);
 
 template Symbol *
 SymbolTable::addLazyArchive<ELF32LE>(StringRef, ArchiveFile *,

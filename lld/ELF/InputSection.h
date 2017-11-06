@@ -27,7 +27,7 @@ namespace elf {
 class Symbol;
 struct SectionPiece;
 
-class DefinedRegular;
+class Defined;
 class SyntheticSection;
 class MergeSyntheticSection;
 template <class ELFT> class ObjFile;
@@ -73,7 +73,7 @@ public:
   // section.
   uint64_t getOffset(uint64_t Offset) const;
 
-  uint64_t getOffset(const DefinedRegular &Sym) const;
+  uint64_t getOffset(const Defined &Sym) const;
 
 protected:
   SectionBase(Kind SectionKind, StringRef Name, uint64_t Flags,

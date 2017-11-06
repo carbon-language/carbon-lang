@@ -28,22 +28,22 @@ using namespace llvm::ELF;
 using namespace lld;
 using namespace lld::elf;
 
-DefinedRegular *ElfSym::Bss;
-DefinedRegular *ElfSym::Etext1;
-DefinedRegular *ElfSym::Etext2;
-DefinedRegular *ElfSym::Edata1;
-DefinedRegular *ElfSym::Edata2;
-DefinedRegular *ElfSym::End1;
-DefinedRegular *ElfSym::End2;
-DefinedRegular *ElfSym::GlobalOffsetTable;
-DefinedRegular *ElfSym::MipsGp;
-DefinedRegular *ElfSym::MipsGpDisp;
-DefinedRegular *ElfSym::MipsLocalGp;
+Defined *ElfSym::Bss;
+Defined *ElfSym::Etext1;
+Defined *ElfSym::Etext2;
+Defined *ElfSym::Edata1;
+Defined *ElfSym::Edata2;
+Defined *ElfSym::End1;
+Defined *ElfSym::End2;
+Defined *ElfSym::GlobalOffsetTable;
+Defined *ElfSym::MipsGp;
+Defined *ElfSym::MipsGpDisp;
+Defined *ElfSym::MipsLocalGp;
 
 static uint64_t getSymVA(const Symbol &Sym, int64_t &Addend) {
   switch (Sym.kind()) {
-  case Symbol::DefinedRegularKind: {
-    auto &D = cast<DefinedRegular>(Sym);
+  case Symbol::DefinedKind: {
+    auto &D = cast<Defined>(Sym);
     SectionBase *IS = D.Section;
     if (auto *ISB = dyn_cast_or_null<InputSectionBase>(IS))
       IS = ISB->Repl;
@@ -125,7 +125,7 @@ bool Symbol::isUndefWeak() const {
 
 InputFile *Symbol::getFile() const {
   if (isLocal()) {
-    const SectionBase *Sec = cast<DefinedRegular>(this)->Section;
+    const SectionBase *Sec = cast<Defined>(this)->Section;
     // Local absolute symbols actually have a file, but that is not currently
     // used. We could support that by having a mostly redundant InputFile in
     // Symbol, or having a special absolute section if needed.
@@ -180,7 +180,7 @@ uint64_t Symbol::getPltVA() const {
 }
 
 uint64_t Symbol::getSize() const {
-  if (const auto *DR = dyn_cast<DefinedRegular>(this))
+  if (const auto *DR = dyn_cast<Defined>(this))
     return DR->Size;
   if (const auto *S = dyn_cast<SharedSymbol>(this))
     return S->Size;
@@ -188,7 +188,7 @@ uint64_t Symbol::getSize() const {
 }
 
 OutputSection *Symbol::getOutputSection() const {
-  if (auto *S = dyn_cast<DefinedRegular>(this)) {
+  if (auto *S = dyn_cast<Defined>(this)) {
     if (S->Section)
       return S->Section->getOutputSection();
     return nullptr;
@@ -247,7 +247,7 @@ void Symbol::parseSymbolVersion() {
           Verstr);
 }
 
-template <class ELFT> bool DefinedRegular::isMipsPIC() const {
+template <class ELFT> bool Defined::isMipsPIC() const {
   typedef typename ELFT::Ehdr Elf_Ehdr;
   if (!Section || !isFunc())
     return false;
@@ -315,7 +315,7 @@ void elf::printTraceSymbol(Symbol *Sym) {
     S = ": lazy definition of ";
   else if (Sym->isShared())
     S = ": shared definition of ";
-  else if (dyn_cast_or_null<BssSection>(cast<DefinedRegular>(Sym)->Section))
+  else if (dyn_cast_or_null<BssSection>(cast<Defined>(Sym)->Section))
     S = ": common definition of ";
   else
     S = ": definition of ";
@@ -331,7 +331,7 @@ std::string lld::toString(const Symbol &B) {
   return B.getName();
 }
 
-template bool DefinedRegular::template isMipsPIC<ELF32LE>() const;
-template bool DefinedRegular::template isMipsPIC<ELF32BE>() const;
-template bool DefinedRegular::template isMipsPIC<ELF64LE>() const;
-template bool DefinedRegular::template isMipsPIC<ELF64BE>() const;
+template bool Defined::template isMipsPIC<ELF32LE>() const;
+template bool Defined::template isMipsPIC<ELF32BE>() const;
+template bool Defined::template isMipsPIC<ELF64LE>() const;
+template bool Defined::template isMipsPIC<ELF64BE>() const;

@@ -38,9 +38,7 @@ template <class ELFT> class SharedFile;
 class Symbol {
 public:
   enum Kind {
-    DefinedFirst,
-    DefinedRegularKind = DefinedFirst,
-    DefinedLast = DefinedRegularKind,
+    DefinedKind,
     SharedKind,
     UndefinedKind,
     LazyArchiveKind,
@@ -95,7 +93,7 @@ public:
   bool isWeak() const { return Binding == llvm::ELF::STB_WEAK; }
 
   bool isUndefined() const { return SymbolKind == UndefinedKind; }
-  bool isDefined() const { return SymbolKind <= DefinedLast; }
+  bool isDefined() const { return SymbolKind == DefinedKind; }
   bool isShared() const { return SymbolKind == SharedKind; }
   bool isLocal() const { return IsLocal; }
 
@@ -103,9 +101,7 @@ public:
     return SymbolKind == LazyArchiveKind || SymbolKind == LazyObjectKind;
   }
 
-  bool isInCurrentOutput() const {
-    return SymbolKind == DefinedRegularKind;
-  }
+  bool isInCurrentOutput() const { return isDefined(); }
 
   // True is this is an undefined weak symbol. This only works once
   // all input files have been added.
@@ -188,29 +184,18 @@ protected:
   StringRefZ Name;
 };
 
-// The base class for any defined symbols.
+// Represents a symbol that is defined in the current output file.
 class Defined : public Symbol {
 public:
-  Defined(Kind K, StringRefZ Name, bool IsLocal, uint8_t StOther, uint8_t Type)
-      : Symbol(K, Name, IsLocal, StOther, Type) {}
-
-  static bool classof(const Symbol *S) { return S->isDefined(); }
-};
-
-// Regular defined symbols read from object file symbol tables.
-class DefinedRegular : public Defined {
-public:
-  DefinedRegular(StringRefZ Name, bool IsLocal, uint8_t StOther, uint8_t Type,
-                 uint64_t Value, uint64_t Size, SectionBase *Section)
-      : Defined(DefinedRegularKind, Name, IsLocal, StOther, Type), Value(Value),
+  Defined(StringRefZ Name, bool IsLocal, uint8_t StOther, uint8_t Type,
+          uint64_t Value, uint64_t Size, SectionBase *Section)
+      : Symbol(DefinedKind, Name, IsLocal, StOther, Type), Value(Value),
         Size(Size), Section(Section) {}
 
   // Return true if the symbol is a PIC function.
   template <class ELFT> bool isMipsPIC() const;
 
-  static bool classof(const Symbol *S) {
-    return S->kind() == DefinedRegularKind;
-  }
+  static bool classof(const Symbol *S) { return S->isDefined(); }
 
   uint64_t Value;
   uint64_t Size;
@@ -323,39 +308,39 @@ public:
 };
 
 // Some linker-generated symbols need to be created as
-// DefinedRegular symbols.
+// Defined symbols.
 struct ElfSym {
   // __bss_start
-  static DefinedRegular *Bss;
+  static Defined *Bss;
 
   // etext and _etext
-  static DefinedRegular *Etext1;
-  static DefinedRegular *Etext2;
+  static Defined *Etext1;
+  static Defined *Etext2;
 
   // edata and _edata
-  static DefinedRegular *Edata1;
-  static DefinedRegular *Edata2;
+  static Defined *Edata1;
+  static Defined *Edata2;
 
   // end and _end
-  static DefinedRegular *End1;
-  static DefinedRegular *End2;
+  static Defined *End1;
+  static Defined *End2;
 
   // The _GLOBAL_OFFSET_TABLE_ symbol is defined by target convention to
   // be at some offset from the base of the .got section, usually 0 or
   // the end of the .got.
-  static DefinedRegular *GlobalOffsetTable;
+  static Defined *GlobalOffsetTable;
 
   // _gp, _gp_disp and __gnu_local_gp symbols. Only for MIPS.
-  static DefinedRegular *MipsGp;
-  static DefinedRegular *MipsGpDisp;
-  static DefinedRegular *MipsLocalGp;
+  static Defined *MipsGp;
+  static Defined *MipsGpDisp;
+  static Defined *MipsLocalGp;
 };
 
 // A buffer class that is large enough to hold any Symbol-derived
 // object. We allocate memory using this class and instantiate a symbol
 // using the placement new.
 union SymbolUnion {
-  alignas(DefinedRegular) char A[sizeof(DefinedRegular)];
+  alignas(Defined) char A[sizeof(Defined)];
   alignas(Undefined) char C[sizeof(Undefined)];
   alignas(SharedSymbol) char D[sizeof(SharedSymbol)];
   alignas(LazyArchive) char E[sizeof(LazyArchive)];

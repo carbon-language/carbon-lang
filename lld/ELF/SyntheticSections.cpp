@@ -275,8 +275,8 @@ InputSection *elf::createInterpSection() {
 
 Symbol *elf::addSyntheticLocal(StringRef Name, uint8_t Type, uint64_t Value,
                                uint64_t Size, InputSectionBase *Section) {
-  auto *S = make<DefinedRegular>(Name, /*IsLocal*/ true, STV_DEFAULT, Type,
-                                 Value, Size, Section);
+  auto *S = make<Defined>(Name, /*IsLocal*/ true, STV_DEFAULT, Type, Value,
+                          Size, Section);
   if (InX::SymTab)
     InX::SymTab->addSymbol(S);
   return S;
@@ -428,7 +428,7 @@ bool EhFrameSection::isFdeLive(EhSectionPiece &Fde, ArrayRef<RelTy> Rels) {
   Symbol &B = Sec->template getFile<ELFT>()->getRelocTargetSym(Rel);
 
   // FDEs for garbage-collected or merged-by-ICF sections are dead.
-  if (auto *D = dyn_cast<DefinedRegular>(&B))
+  if (auto *D = dyn_cast<Defined>(&B))
     if (auto *Sec = cast_or_null<InputSectionBase>(D->Section))
       return Sec->Live && (Sec == Sec->Repl);
   return false;
@@ -1576,13 +1576,13 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     // Set a section index.
     BssSection *CommonSec = nullptr;
     if (!Config->DefineCommon)
-      if (auto *D = dyn_cast<DefinedRegular>(Sym))
+      if (auto *D = dyn_cast<Defined>(Sym))
         CommonSec = dyn_cast_or_null<BssSection>(D->Section);
     if (CommonSec)
       ESym->st_shndx = SHN_COMMON;
     else if (const OutputSection *OutSec = Sym->getOutputSection())
       ESym->st_shndx = OutSec->SectionIndex;
-    else if (isa<DefinedRegular>(Sym))
+    else if (isa<Defined>(Sym))
       ESym->st_shndx = SHN_ABS;
     else
       ESym->st_shndx = SHN_UNDEF;
@@ -1621,7 +1621,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
         ESym->st_other |= STO_MIPS_PLT;
 
       if (Config->Relocatable)
-        if (auto *D = dyn_cast<DefinedRegular>(Sym))
+        if (auto *D = dyn_cast<Defined>(Sym))
           if (D->isMipsPIC<ELFT>())
             ESym->st_other |= STO_MIPS_PIC;
       ++ESym;

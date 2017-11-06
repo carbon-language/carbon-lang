@@ -41,9 +41,9 @@ public:
   ArrayRef<Symbol *> getSymbols() const { return SymVector; }
 
   template <class ELFT>
-  DefinedRegular *addAbsolute(StringRef Name,
-                              uint8_t Visibility = llvm::ELF::STV_HIDDEN,
-                              uint8_t Binding = llvm::ELF::STB_GLOBAL);
+  Defined *addAbsolute(StringRef Name,
+                       uint8_t Visibility = llvm::ELF::STV_HIDDEN,
+                       uint8_t Binding = llvm::ELF::STB_GLOBAL);
 
   template <class ELFT> Symbol *addUndefined(StringRef Name);
   template <class ELFT>
