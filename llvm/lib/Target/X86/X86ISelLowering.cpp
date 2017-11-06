@@ -30485,10 +30485,10 @@ static SDValue combineExtractWithShuffle(SDNode *N, SelectionDAG &DAG,
 static SDValue combineExtractVectorElt(SDNode *N, SelectionDAG &DAG,
                                        TargetLowering::DAGCombinerInfo &DCI,
                                        const X86Subtarget &Subtarget) {
-  if (SDValue NewOp = XFormVExtractWithShuffleIntoLoad(N, DAG, DCI))
+  if (SDValue NewOp = combineExtractWithShuffle(N, DAG, DCI, Subtarget))
     return NewOp;
 
-  if (SDValue NewOp = combineExtractWithShuffle(N, DAG, DCI, Subtarget))
+  if (SDValue NewOp = XFormVExtractWithShuffleIntoLoad(N, DAG, DCI))
     return NewOp;
 
   SDValue InputVector = N->getOperand(0);
