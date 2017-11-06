@@ -185,7 +185,7 @@ void SymbolTable::applySymbolWrap() {
   for (WrappedSymbol &W : WrappedSymbols) {
     // First, make a copy of __real_sym.
     Symbol *Real = nullptr;
-    if (W.Real->isInCurrentOutput()) {
+    if (W.Real->isDefined()) {
       Real = (Symbol *)make<SymbolUnion>();
       memcpy(Real, W.Real, sizeof(SymbolUnion));
     }
@@ -305,7 +305,7 @@ Symbol *SymbolTable::addUndefined(StringRef Name, bool IsLocal, uint8_t Binding,
     return S;
   }
   if (Binding != STB_WEAK) {
-    if (!S->isInCurrentOutput())
+    if (!S->isDefined())
       S->Binding = Binding;
     if (auto *SS = dyn_cast<SharedSymbol>(S))
       SS->getFile<ELFT>()->IsUsed = true;
@@ -344,7 +344,7 @@ static int compareDefined(Symbol *S, bool WasInserted, uint8_t Binding,
                           StringRef Name) {
   if (WasInserted)
     return 1;
-  if (!S->isInCurrentOutput())
+  if (!S->isDefined())
     return 1;
   if (int R = compareVersion(S, Name))
     return R;
@@ -633,7 +633,7 @@ StringMap<std::vector<Symbol *>> &SymbolTable::getDemangledSyms() {
   if (!DemangledSyms) {
     DemangledSyms.emplace();
     for (Symbol *Sym : SymVector) {
-      if (!Sym->isInCurrentOutput())
+      if (!Sym->isDefined())
         continue;
       if (Optional<std::string> S = demangle(Sym->getName()))
         (*DemangledSyms)[*S].push_back(Sym);
@@ -648,7 +648,7 @@ std::vector<Symbol *> SymbolTable::findByVersion(SymbolVersion Ver) {
   if (Ver.IsExternCpp)
     return getDemangledSyms().lookup(Ver.Name);
   if (Symbol *B = find(Ver.Name))
-    if (B->isInCurrentOutput())
+    if (B->isDefined())
       return {B};
   return {};
 }
@@ -665,7 +665,7 @@ std::vector<Symbol *> SymbolTable::findAllByVersion(SymbolVersion Ver) {
   }
 
   for (Symbol *Sym : SymVector)
-    if (Sym->isInCurrentOutput() && M.match(Sym->getName()))
+    if (Sym->isDefined() && M.match(Sym->getName()))
       Res.push_back(Sym);
   return Res;
 }

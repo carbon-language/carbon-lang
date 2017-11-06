@@ -738,7 +738,7 @@ static Defined *addOptionalRegular(StringRef Name, SectionBase *Sec,
                                    uint64_t Val, uint8_t StOther = STV_HIDDEN,
                                    uint8_t Binding = STB_GLOBAL) {
   Symbol *S = Symtab->find(Name);
-  if (!S || S->isInCurrentOutput())
+  if (!S || S->isDefined())
     return nullptr;
   Symbol *Sym = Symtab->addRegular<ELFT>(Name, StOther, STT_NOTYPE, Val,
                                          /*Size=*/0, Binding, Sec,
@@ -1191,7 +1191,7 @@ static bool computeIsPreemptible(const Symbol &B) {
 
   // At this point copy relocations have not been created yet, so any
   // symbol that is not defined locally is preemptible.
-  if (!B.isInCurrentOutput())
+  if (!B.isDefined())
     return true;
 
   // If we have a dynamic list it specifies which local symbols are preemptible.

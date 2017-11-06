@@ -101,8 +101,6 @@ public:
     return SymbolKind == LazyArchiveKind || SymbolKind == LazyObjectKind;
   }
 
-  bool isInCurrentOutput() const { return isDefined(); }
-
   // True is this is an undefined weak symbol. This only works once
   // all input files have been added.
   bool isUndefWeak() const;

@@ -1102,10 +1102,10 @@ template <class ELFT> void DynamicSection<ELFT>::finalizeContents() {
   }
 
   if (Symbol *B = Symtab->find(Config->Init))
-    if (B->isInCurrentOutput())
+    if (B->isDefined())
       add({DT_INIT, B});
   if (Symbol *B = Symtab->find(Config->Fini))
-    if (B->isInCurrentOutput())
+    if (B->isDefined())
       add({DT_FINI, B});
 
   bool HasVerNeed = In<ELFT>::VerNeed->getNeedNum() != 0;
@@ -1774,7 +1774,7 @@ void GnuHashTableSection::addSymbols(std::vector<SymbolTableEntry> &V) {
         // linker has to look them up, so they have to be in the hash table.
         if (auto *SS = dyn_cast<SharedSymbol>(S.Sym))
           return SS->CopyRelSec == nullptr && !SS->NeedsPltAddr;
-        return !S.Sym->isInCurrentOutput();
+        return !S.Sym->isDefined();
       });
   if (Mid == V.end())
     return;
