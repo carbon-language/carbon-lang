@@ -6751,8 +6751,8 @@ static SDValue lowerBuildVectorAsBroadcast(BuildVectorSDNode *BVOp,
 
   // Attempt to use VBROADCASTM
   // From this paterrn:
-  //  a. t0 = (zext_i64 (bitcast_i8 v2i1 X))
-  //  b. t1 = (build_vector t0 t0)
+  // a. t0 = (zext_i64 (bitcast_i8 v2i1 X))
+  // b. t1 = (build_vector t0 t0)
   //
   // Create (VBROADCASTM v2i1 X)
   if (Subtarget.hasCDI() && (VT.is512BitVector() || Subtarget.hasVLX())) {
