@@ -1080,6 +1080,11 @@ namespace llvm {
     /// from one vector into the other.
     SDValue lowerToVINSERTH(ShuffleVectorSDNode *N, SelectionDAG &DAG) const;
 
+    /// lowerToVINSERTB - Return the SDValue if this VECTOR_SHUFFLE can be
+    /// handled by the VINSERTB instruction introduced in ISA 3.0. This is
+    /// essentially v16i8 vector version of VINSERTH.
+    SDValue lowerToVINSERTB(ShuffleVectorSDNode *N, SelectionDAG &DAG) const;
+
   }; // end class PPCTargetLowering
 
   namespace PPC {
