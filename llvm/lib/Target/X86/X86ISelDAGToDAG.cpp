@@ -456,8 +456,8 @@ static bool isLegalMaskCompare(SDNode *N, const X86Subtarget *Subtarget) {
     // We can get 256-bit 8 element types here without VLX being enabled. When
     // this happens we will use 512-bit operations and the mask will not be
     // zero extended.
-    if (N->getOperand(0).getValueType() == MVT::v8i32 ||
-        N->getOperand(0).getValueType() == MVT::v8f32)
+    EVT OpVT = N->getOperand(0).getValueType();
+    if (OpVT == MVT::v8i32 || OpVT == MVT::v8f32)
       return Subtarget->hasVLX();
 
     return true;
