@@ -40,8 +40,7 @@ public:
   enum Kind {
     DefinedFirst,
     DefinedRegularKind = DefinedFirst,
-    DefinedCommonKind,
-    DefinedLast = DefinedCommonKind,
+    DefinedLast = DefinedRegularKind,
     SharedKind,
     UndefinedKind,
     LazyArchiveKind,
@@ -97,7 +96,6 @@ public:
 
   bool isUndefined() const { return SymbolKind == UndefinedKind; }
   bool isDefined() const { return SymbolKind <= DefinedLast; }
-  bool isCommon() const { return SymbolKind == DefinedCommonKind; }
   bool isShared() const { return SymbolKind == SharedKind; }
   bool isLocal() const { return IsLocal; }
 
@@ -106,7 +104,7 @@ public:
   }
 
   bool isInCurrentOutput() const {
-    return SymbolKind == DefinedRegularKind || SymbolKind == DefinedCommonKind;
+    return SymbolKind == DefinedRegularKind;
   }
 
   // True is this is an undefined weak symbol. This only works once
@@ -197,26 +195,6 @@ public:
       : Symbol(K, Name, IsLocal, StOther, Type) {}
 
   static bool classof(const Symbol *S) { return S->isDefined(); }
-};
-
-class DefinedCommon : public Defined {
-public:
-  DefinedCommon(StringRef Name, uint64_t Size, uint32_t Alignment,
-                uint8_t StOther, uint8_t Type)
-      : Defined(DefinedCommonKind, Name, /*IsLocal=*/false, StOther, Type),
-        Alignment(Alignment), Size(Size) {}
-
-  static bool classof(const Symbol *S) {
-    return S->kind() == DefinedCommonKind;
-  }
-
-  // The maximum alignment we have seen for this symbol.
-  uint32_t Alignment;
-
-  // The output offset of this common symbol in the output bss.
-  // Computed by the writer.
-  uint64_t Size;
-  BssSection *Section = nullptr;
 };
 
 // Regular defined symbols read from object file symbol tables.
@@ -378,7 +356,6 @@ struct ElfSym {
 // using the placement new.
 union SymbolUnion {
   alignas(DefinedRegular) char A[sizeof(DefinedRegular)];
-  alignas(DefinedCommon) char B[sizeof(DefinedCommon)];
   alignas(Undefined) char C[sizeof(Undefined)];
   alignas(SharedSymbol) char D[sizeof(SharedSymbol)];
   alignas(LazyArchive) char E[sizeof(LazyArchive)];

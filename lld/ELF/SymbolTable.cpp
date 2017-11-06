@@ -19,6 +19,7 @@
 #include "LinkerScript.h"
 #include "Memory.h"
 #include "Symbols.h"
+#include "SyntheticSections.h"
 #include "lld/Common/ErrorHandler.h"
 #include "llvm/ADT/STLExtras.h"
 
@@ -365,13 +366,13 @@ static int compareDefinedNonCommon(Symbol *S, bool WasInserted, uint8_t Binding,
       S->Binding = Binding;
     return Cmp;
   }
-  if (isa<DefinedCommon>(S)) {
-    // Non-common symbols take precedence over common symbols.
-    if (Config->WarnCommon)
-      warn("common " + S->getName() + " is overridden");
-    return 1;
-  }
   if (auto *R = dyn_cast<DefinedRegular>(S)) {
+    if (R->Section && isa<BssSection>(R->Section)) {
+      // Non-common symbols take precedence over common symbols.
+      if (Config->WarnCommon)
+        warn("common " + S->getName() + " is overridden");
+      return 1;
+    }
     if (R->Section == nullptr && Binding == STB_GLOBAL && IsAbsolute &&
         R->Value == Value)
       return -1;
@@ -388,11 +389,18 @@ Symbol *SymbolTable::addCommon(StringRef N, uint64_t Size, uint32_t Alignment,
                                     /*CanOmitFromDynSym*/ false, File);
   int Cmp = compareDefined(S, WasInserted, Binding, N);
   if (Cmp > 0) {
+    auto *Bss = make<BssSection>("COMMON", Size, Alignment);
+    Bss->File = File;
+    Bss->Live = !Config->GcSections;
+    InputSections.push_back(Bss);
+
     S->Binding = Binding;
-    replaceSymbol<DefinedCommon>(S, File, N, Size, Alignment, StOther, Type);
+    replaceSymbol<DefinedRegular>(S, File, N, /*IsLocal=*/false, StOther, Type,
+                                  0, Size, Bss);
   } else if (Cmp == 0) {
-    auto *C = dyn_cast<DefinedCommon>(S);
-    if (!C) {
+    auto *D = cast<DefinedRegular>(S);
+    auto *Bss = dyn_cast_or_null<BssSection>(D->Section);
+    if (!Bss) {
       // Non-common symbols take precedence over common symbols.
       if (Config->WarnCommon)
         warn("common " + S->getName() + " is overridden");
@@ -400,11 +408,13 @@ Symbol *SymbolTable::addCommon(StringRef N, uint64_t Size, uint32_t Alignment,
     }
 
     if (Config->WarnCommon)
-      warn("multiple common of " + S->getName());
+      warn("multiple common of " + D->getName());
 
-    Alignment = C->Alignment = std::max(C->Alignment, Alignment);
-    if (Size > C->Size)
-      replaceSymbol<DefinedCommon>(S, File, N, Size, Alignment, StOther, Type);
+    Bss->Alignment = std::max(Bss->Alignment, Alignment);
+    if (Size > Bss->Size) {
+      D->File = Bss->File = File;
+      D->Size = Bss->Size = Size;
+    }
   }
   return S;
 }

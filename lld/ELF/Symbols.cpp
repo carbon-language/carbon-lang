@@ -99,8 +99,6 @@ static uint64_t getSymVA(const Symbol &Sym, int64_t &Addend) {
     }
     return VA;
   }
-  case Symbol::DefinedCommonKind:
-    llvm_unreachable("common are converted to bss");
   case Symbol::SharedKind: {
     auto &SS = cast<SharedSymbol>(Sym);
     if (SS.CopyRelSec)
@@ -182,8 +180,6 @@ uint64_t Symbol::getPltVA() const {
 }
 
 uint64_t Symbol::getSize() const {
-  if (const auto *C = dyn_cast<DefinedCommon>(this))
-    return C->Size;
   if (const auto *DR = dyn_cast<DefinedRegular>(this))
     return DR->Size;
   if (const auto *S = dyn_cast<SharedSymbol>(this))
@@ -201,12 +197,6 @@ OutputSection *Symbol::getOutputSection() const {
   if (auto *S = dyn_cast<SharedSymbol>(this)) {
     if (S->CopyRelSec)
       return S->CopyRelSec->getParent();
-    return nullptr;
-  }
-
-  if (auto *S = dyn_cast<DefinedCommon>(this)) {
-    if (Config->DefineCommon)
-      return S->Section->getParent();
     return nullptr;
   }
 
@@ -321,12 +311,12 @@ void elf::printTraceSymbol(Symbol *Sym) {
   std::string S;
   if (Sym->isUndefined())
     S = ": reference to ";
-  else if (Sym->isCommon())
-    S = ": common definition of ";
   else if (Sym->isLazy())
     S = ": lazy definition of ";
   else if (Sym->isShared())
     S = ": shared definition of ";
+  else if (dyn_cast_or_null<BssSection>(cast<DefinedRegular>(Sym)->Section))
+    S = ": common definition of ";
   else
     S = ": definition of ";
 
