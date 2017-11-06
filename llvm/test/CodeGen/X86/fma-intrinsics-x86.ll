@@ -13,7 +13,7 @@ define <4 x float> @test_x86_fma_vfmadd_ss(<4 x float> %a0, <4 x float> %a1, <4 
 ;
 ; CHECK-AVX512VL-LABEL: test_x86_fma_vfmadd_ss:
 ; CHECK-AVX512VL:       # BB#0:
-; CHECK-AVX512VL-NEXT:    vfmadd213ss %xmm2, %xmm1, %xmm0 # encoding: [0xc4,0xe2,0x71,0xa9,0xc2]
+; CHECK-AVX512VL-NEXT:    vfmadd213ss %xmm2, %xmm1, %xmm0 # EVEX TO VEX Compression encoding: [0xc4,0xe2,0x71,0xa9,0xc2]
 ; CHECK-AVX512VL-NEXT:    retq # encoding: [0xc3]
 ;
 ; CHECK-FMA-WIN-LABEL: test_x86_fma_vfmadd_ss:
@@ -40,7 +40,7 @@ define <4 x float> @test_x86_fma_vfmadd_bac_ss(<4 x float> %a0, <4 x float> %a1,
 ;
 ; CHECK-AVX512VL-LABEL: test_x86_fma_vfmadd_bac_ss:
 ; CHECK-AVX512VL:       # BB#0:
-; CHECK-AVX512VL-NEXT:    vfmadd213ss %xmm2, %xmm0, %xmm1 # encoding: [0xc4,0xe2,0x79,0xa9,0xca]
+; CHECK-AVX512VL-NEXT:    vfmadd213ss %xmm2, %xmm0, %xmm1 # EVEX TO VEX Compression encoding: [0xc4,0xe2,0x79,0xa9,0xca]
 ; CHECK-AVX512VL-NEXT:    vmovaps %xmm1, %xmm0 # EVEX TO VEX Compression encoding: [0xc5,0xf8,0x28,0xc1]
 ; CHECK-AVX512VL-NEXT:    retq # encoding: [0xc3]
 ;
@@ -68,7 +68,7 @@ define <2 x double> @test_x86_fma_vfmadd_sd(<2 x double> %a0, <2 x double> %a1, 
 ;
 ; CHECK-AVX512VL-LABEL: test_x86_fma_vfmadd_sd:
 ; CHECK-AVX512VL:       # BB#0:
-; CHECK-AVX512VL-NEXT:    vfmadd213sd %xmm2, %xmm1, %xmm0 # encoding: [0xc4,0xe2,0xf1,0xa9,0xc2]
+; CHECK-AVX512VL-NEXT:    vfmadd213sd %xmm2, %xmm1, %xmm0 # EVEX TO VEX Compression encoding: [0xc4,0xe2,0xf1,0xa9,0xc2]
 ; CHECK-AVX512VL-NEXT:    retq # encoding: [0xc3]
 ;
 ; CHECK-FMA-WIN-LABEL: test_x86_fma_vfmadd_sd:
@@ -95,7 +95,7 @@ define <2 x double> @test_x86_fma_vfmadd_bac_sd(<2 x double> %a0, <2 x double> %
 ;
 ; CHECK-AVX512VL-LABEL: test_x86_fma_vfmadd_bac_sd:
 ; CHECK-AVX512VL:       # BB#0:
-; CHECK-AVX512VL-NEXT:    vfmadd213sd %xmm2, %xmm0, %xmm1 # encoding: [0xc4,0xe2,0xf9,0xa9,0xca]
+; CHECK-AVX512VL-NEXT:    vfmadd213sd %xmm2, %xmm0, %xmm1 # EVEX TO VEX Compression encoding: [0xc4,0xe2,0xf9,0xa9,0xca]
 ; CHECK-AVX512VL-NEXT:    vmovapd %xmm1, %xmm0 # EVEX TO VEX Compression encoding: [0xc5,0xf9,0x28,0xc1]
 ; CHECK-AVX512VL-NEXT:    retq # encoding: [0xc3]
 ;
@@ -232,7 +232,7 @@ define <4 x float> @test_x86_fma_vfmsub_ss(<4 x float> %a0, <4 x float> %a1, <4 
 ;
 ; CHECK-AVX512VL-LABEL: test_x86_fma_vfmsub_ss:
 ; CHECK-AVX512VL:       # BB#0:
-; CHECK-AVX512VL-NEXT:    vfmsub213ss %xmm2, %xmm1, %xmm0 # encoding: [0xc4,0xe2,0x71,0xab,0xc2]
+; CHECK-AVX512VL-NEXT:    vfmsub213ss %xmm2, %xmm1, %xmm0 # EVEX TO VEX Compression encoding: [0xc4,0xe2,0x71,0xab,0xc2]
 ; CHECK-AVX512VL-NEXT:    retq # encoding: [0xc3]
 ;
 ; CHECK-FMA-WIN-LABEL: test_x86_fma_vfmsub_ss:
@@ -259,7 +259,7 @@ define <4 x float> @test_x86_fma_vfmsub_bac_ss(<4 x float> %a0, <4 x float> %a1,
 ;
 ; CHECK-AVX512VL-LABEL: test_x86_fma_vfmsub_bac_ss:
 ; CHECK-AVX512VL:       # BB#0:
-; CHECK-AVX512VL-NEXT:    vfmsub213ss %xmm2, %xmm0, %xmm1 # encoding: [0xc4,0xe2,0x79,0xab,0xca]
+; CHECK-AVX512VL-NEXT:    vfmsub213ss %xmm2, %xmm0, %xmm1 # EVEX TO VEX Compression encoding: [0xc4,0xe2,0x79,0xab,0xca]
 ; CHECK-AVX512VL-NEXT:    vmovaps %xmm1, %xmm0 # EVEX TO VEX Compression encoding: [0xc5,0xf8,0x28,0xc1]
 ; CHECK-AVX512VL-NEXT:    retq # encoding: [0xc3]
 ;
@@ -287,7 +287,7 @@ define <2 x double> @test_x86_fma_vfmsub_sd(<2 x double> %a0, <2 x double> %a1, 
 ;
 ; CHECK-AVX512VL-LABEL: test_x86_fma_vfmsub_sd:
 ; CHECK-AVX512VL:       # BB#0:
-; CHECK-AVX512VL-NEXT:    vfmsub213sd %xmm2, %xmm1, %xmm0 # encoding: [0xc4,0xe2,0xf1,0xab,0xc2]
+; CHECK-AVX512VL-NEXT:    vfmsub213sd %xmm2, %xmm1, %xmm0 # EVEX TO VEX Compression encoding: [0xc4,0xe2,0xf1,0xab,0xc2]
 ; CHECK-AVX512VL-NEXT:    retq # encoding: [0xc3]
 ;
 ; CHECK-FMA-WIN-LABEL: test_x86_fma_vfmsub_sd:
@@ -314,7 +314,7 @@ define <2 x double> @test_x86_fma_vfmsub_bac_sd(<2 x double> %a0, <2 x double> %
 ;
 ; CHECK-AVX512VL-LABEL: test_x86_fma_vfmsub_bac_sd:
 ; CHECK-AVX512VL:       # BB#0:
-; CHECK-AVX512VL-NEXT:    vfmsub213sd %xmm2, %xmm0, %xmm1 # encoding: [0xc4,0xe2,0xf9,0xab,0xca]
+; CHECK-AVX512VL-NEXT:    vfmsub213sd %xmm2, %xmm0, %xmm1 # EVEX TO VEX Compression encoding: [0xc4,0xe2,0xf9,0xab,0xca]
 ; CHECK-AVX512VL-NEXT:    vmovapd %xmm1, %xmm0 # EVEX TO VEX Compression encoding: [0xc5,0xf9,0x28,0xc1]
 ; CHECK-AVX512VL-NEXT:    retq # encoding: [0xc3]
 ;
@@ -451,7 +451,7 @@ define <4 x float> @test_x86_fma_vfnmadd_ss(<4 x float> %a0, <4 x float> %a1, <4
 ;
 ; CHECK-AVX512VL-LABEL: test_x86_fma_vfnmadd_ss:
 ; CHECK-AVX512VL:       # BB#0:
-; CHECK-AVX512VL-NEXT:    vfnmadd213ss %xmm2, %xmm1, %xmm0 # encoding: [0xc4,0xe2,0x71,0xad,0xc2]
+; CHECK-AVX512VL-NEXT:    vfnmadd213ss %xmm2, %xmm1, %xmm0 # EVEX TO VEX Compression encoding: [0xc4,0xe2,0x71,0xad,0xc2]
 ; CHECK-AVX512VL-NEXT:    retq # encoding: [0xc3]
 ;
 ; CHECK-FMA-WIN-LABEL: test_x86_fma_vfnmadd_ss:
@@ -478,7 +478,7 @@ define <4 x float> @test_x86_fma_vfnmadd_bac_ss(<4 x float> %a0, <4 x float> %a1
 ;
 ; CHECK-AVX512VL-LABEL: test_x86_fma_vfnmadd_bac_ss:
 ; CHECK-AVX512VL:       # BB#0:
-; CHECK-AVX512VL-NEXT:    vfnmadd213ss %xmm2, %xmm0, %xmm1 # encoding: [0xc4,0xe2,0x79,0xad,0xca]
+; CHECK-AVX512VL-NEXT:    vfnmadd213ss %xmm2, %xmm0, %xmm1 # EVEX TO VEX Compression encoding: [0xc4,0xe2,0x79,0xad,0xca]
 ; CHECK-AVX512VL-NEXT:    vmovaps %xmm1, %xmm0 # EVEX TO VEX Compression encoding: [0xc5,0xf8,0x28,0xc1]
 ; CHECK-AVX512VL-NEXT:    retq # encoding: [0xc3]
 ;
@@ -506,7 +506,7 @@ define <2 x double> @test_x86_fma_vfnmadd_sd(<2 x double> %a0, <2 x double> %a1,
 ;
 ; CHECK-AVX512VL-LABEL: test_x86_fma_vfnmadd_sd:
 ; CHECK-AVX512VL:       # BB#0:
-; CHECK-AVX512VL-NEXT:    vfnmadd213sd %xmm2, %xmm1, %xmm0 # encoding: [0xc4,0xe2,0xf1,0xad,0xc2]
+; CHECK-AVX512VL-NEXT:    vfnmadd213sd %xmm2, %xmm1, %xmm0 # EVEX TO VEX Compression encoding: [0xc4,0xe2,0xf1,0xad,0xc2]
 ; CHECK-AVX512VL-NEXT:    retq # encoding: [0xc3]
 ;
 ; CHECK-FMA-WIN-LABEL: test_x86_fma_vfnmadd_sd:
@@ -533,7 +533,7 @@ define <2 x double> @test_x86_fma_vfnmadd_bac_sd(<2 x double> %a0, <2 x double> 
 ;
 ; CHECK-AVX512VL-LABEL: test_x86_fma_vfnmadd_bac_sd:
 ; CHECK-AVX512VL:       # BB#0:
-; CHECK-AVX512VL-NEXT:    vfnmadd213sd %xmm2, %xmm0, %xmm1 # encoding: [0xc4,0xe2,0xf9,0xad,0xca]
+; CHECK-AVX512VL-NEXT:    vfnmadd213sd %xmm2, %xmm0, %xmm1 # EVEX TO VEX Compression encoding: [0xc4,0xe2,0xf9,0xad,0xca]
 ; CHECK-AVX512VL-NEXT:    vmovapd %xmm1, %xmm0 # EVEX TO VEX Compression encoding: [0xc5,0xf9,0x28,0xc1]
 ; CHECK-AVX512VL-NEXT:    retq # encoding: [0xc3]
 ;
@@ -670,7 +670,7 @@ define <4 x float> @test_x86_fma_vfnmsub_ss(<4 x float> %a0, <4 x float> %a1, <4
 ;
 ; CHECK-AVX512VL-LABEL: test_x86_fma_vfnmsub_ss:
 ; CHECK-AVX512VL:       # BB#0:
-; CHECK-AVX512VL-NEXT:    vfnmsub213ss %xmm2, %xmm1, %xmm0 # encoding: [0xc4,0xe2,0x71,0xaf,0xc2]
+; CHECK-AVX512VL-NEXT:    vfnmsub213ss %xmm2, %xmm1, %xmm0 # EVEX TO VEX Compression encoding: [0xc4,0xe2,0x71,0xaf,0xc2]
 ; CHECK-AVX512VL-NEXT:    retq # encoding: [0xc3]
 ;
 ; CHECK-FMA-WIN-LABEL: test_x86_fma_vfnmsub_ss:
@@ -697,7 +697,7 @@ define <4 x float> @test_x86_fma_vfnmsub_bac_ss(<4 x float> %a0, <4 x float> %a1
 ;
 ; CHECK-AVX512VL-LABEL: test_x86_fma_vfnmsub_bac_ss:
 ; CHECK-AVX512VL:       # BB#0:
-; CHECK-AVX512VL-NEXT:    vfnmsub213ss %xmm2, %xmm0, %xmm1 # encoding: [0xc4,0xe2,0x79,0xaf,0xca]
+; CHECK-AVX512VL-NEXT:    vfnmsub213ss %xmm2, %xmm0, %xmm1 # EVEX TO VEX Compression encoding: [0xc4,0xe2,0x79,0xaf,0xca]
 ; CHECK-AVX512VL-NEXT:    vmovaps %xmm1, %xmm0 # EVEX TO VEX Compression encoding: [0xc5,0xf8,0x28,0xc1]
 ; CHECK-AVX512VL-NEXT:    retq # encoding: [0xc3]
 ;
@@ -725,7 +725,7 @@ define <2 x double> @test_x86_fma_vfnmsub_sd(<2 x double> %a0, <2 x double> %a1,
 ;
 ; CHECK-AVX512VL-LABEL: test_x86_fma_vfnmsub_sd:
 ; CHECK-AVX512VL:       # BB#0:
-; CHECK-AVX512VL-NEXT:    vfnmsub213sd %xmm2, %xmm1, %xmm0 # encoding: [0xc4,0xe2,0xf1,0xaf,0xc2]
+; CHECK-AVX512VL-NEXT:    vfnmsub213sd %xmm2, %xmm1, %xmm0 # EVEX TO VEX Compression encoding: [0xc4,0xe2,0xf1,0xaf,0xc2]
 ; CHECK-AVX512VL-NEXT:    retq # encoding: [0xc3]
 ;
 ; CHECK-FMA-WIN-LABEL: test_x86_fma_vfnmsub_sd:
@@ -752,7 +752,7 @@ define <2 x double> @test_x86_fma_vfnmsub_bac_sd(<2 x double> %a0, <2 x double> 
 ;
 ; CHECK-AVX512VL-LABEL: test_x86_fma_vfnmsub_bac_sd:
 ; CHECK-AVX512VL:       # BB#0:
-; CHECK-AVX512VL-NEXT:    vfnmsub213sd %xmm2, %xmm0, %xmm1 # encoding: [0xc4,0xe2,0xf9,0xaf,0xca]
+; CHECK-AVX512VL-NEXT:    vfnmsub213sd %xmm2, %xmm0, %xmm1 # EVEX TO VEX Compression encoding: [0xc4,0xe2,0xf9,0xaf,0xca]
 ; CHECK-AVX512VL-NEXT:    vmovapd %xmm1, %xmm0 # EVEX TO VEX Compression encoding: [0xc5,0xf9,0x28,0xc1]
 ; CHECK-AVX512VL-NEXT:    retq # encoding: [0xc3]
 ;
