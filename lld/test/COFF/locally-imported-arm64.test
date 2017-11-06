@@ -31,7 +31,7 @@ sections:
     Relocations:
       - VirtualAddress:  0
         SymbolName:      __imp_main
-        Type:            2
+        Type:            IMAGE_REL_ARM64_ADDR32NB
 symbols:
   - Name:            .text
     Value:           0
