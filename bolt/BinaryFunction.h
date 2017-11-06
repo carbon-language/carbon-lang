@@ -186,28 +186,6 @@ public:
     ST_ALL,           /// Split all functions
   };
 
-  /// Choose which strategy should the block layout heuristic prioritize when
-  /// facing conflicting goals.
-  enum LayoutType : char {
-    /// LT_NONE - do not change layout of basic blocks
-    LT_NONE = 0, /// no reordering
-    /// LT_REVERSE - reverse the order of basic blocks, meant for testing
-    /// purposes. The first basic block is left intact and the rest are
-    /// put in the reverse order.
-    LT_REVERSE,
-    /// LT_OPTIMIZE - optimize layout of basic blocks based on profile.
-    LT_OPTIMIZE,
-    /// LT_OPTIMIZE_BRANCH is an implementation of what is suggested in Pettis'
-    /// paper (PLDI '90) about block reordering, trying to minimize branch
-    /// mispredictions.
-    LT_OPTIMIZE_BRANCH,
-    /// LT_OPTIMIZE_CACHE piggybacks on the idea from Ispike paper (CGO '04)
-    /// that suggests putting frequently executed chains first in the layout.
-    LT_OPTIMIZE_CACHE,
-    /// Create clusters and use random order for them.
-    LT_OPTIMIZE_SHUFFLE,
-  };
-
   enum ReorderType : char {
     RT_NONE = 0,
     RT_EXEC_COUNT,
@@ -226,9 +204,6 @@ public:
 
   static constexpr uint64_t COUNT_NO_PROFILE =
     BinaryBasicBlock::COUNT_NO_PROFILE;
-  // Function size, in number of BBs, above which we fallback to a heuristic
-  // solution to the layout problem instead of seeking the optimal one.
-  static constexpr uint64_t FUNC_SIZE_THRESHOLD = 10;
 
   /// We have to use at least 2-byte alignment for functions because of C++ ABI.
   static constexpr unsigned MinAlign = 2;
@@ -279,10 +254,6 @@ private:
   /// flow graph.
   /// In relocation mode we still disassemble and re-assemble such functions.
   bool IsSimple{true};
-
-  /// True if this function needs to be emitted in two separate parts, one for
-  /// the hot basic blocks and another for the cold basic blocks.
-  bool IsSplit{false};
 
   /// Indicate if this function has associated exception handling metadata.
   bool HasEHRanges{false};
@@ -811,7 +782,7 @@ public:
   reverse_iterator        rend  ()       { return BasicBlocks.rend();   }
   const_reverse_iterator  rend  () const { return BasicBlocks.rend();   }
 
-  unsigned                  size() const { return (unsigned)BasicBlocks.size();}
+  size_t                    size() const { return BasicBlocks.size();}
   bool                     empty() const { return BasicBlocks.empty(); }
   const BinaryBasicBlock &front() const  { return *BasicBlocks.front(); }
         BinaryBasicBlock &front()        { return *BasicBlocks.front(); }
@@ -832,7 +803,7 @@ public:
                                          { return BasicBlocksLayout.rend(); }
   const_reverse_order_iterator layout_rend()   const
                                          { return BasicBlocksLayout.rend(); }
-  unsigned layout_size()  const { return (unsigned)BasicBlocksLayout.size(); }
+  size_t   layout_size()  const { return BasicBlocksLayout.size(); }
   bool     layout_empty() const { return BasicBlocksLayout.empty(); }
   const BinaryBasicBlock *layout_front() const
                                          { return BasicBlocksLayout.front(); }
@@ -864,13 +835,19 @@ public:
     return iterator_range<const_cfi_iterator>(cie_begin(), cie_end());
   }
 
+  /// Update layout of basic blocks used for output.
+  void updateBasicBlockLayout(BasicBlockOrderType &NewLayout,
+                              bool SavePrevLayout) {
+    if (SavePrevLayout)
+      BasicBlocksPreviousLayout = BasicBlocksLayout;
+
+    BasicBlocksLayout.clear();
+    BasicBlocksLayout.swap(NewLayout);
+  }
+
   /// Return a list of basic blocks sorted using DFS and update layout indices
   /// using the same order. Does not modify the current layout.
   BasicBlockOrderType dfs() const;
-
-  /// Modify code layout making necessary adjustments to instructions at the
-  /// end of basic blocks.
-  void modifyLayout(LayoutType Type, bool MinBranchClusters, bool Split);
 
   /// Find the loops in the CFG of the function and store information about
   /// them.
@@ -1197,7 +1174,8 @@ public:
 
   /// Return true if the function body is non-contiguous.
   bool isSplit() const {
-    return IsSplit;
+    return size() > 1 &&
+           layout_front()->isCold() != layout_back()->isCold();
   }
 
   /// Return true if the function has exception handling tables.
@@ -1360,10 +1338,6 @@ public:
   /// [Start->Index, Start->Index + NumNewBlocks) are inserted into the
   /// layout after the BB indicated by Start.
   void updateLayout(BinaryBasicBlock* Start, const unsigned NumNewBlocks);
-
-  /// Update the basic block layout for this function.  The layout is
-  /// computed from scratch using modifyLayout.
-  void updateLayout(LayoutType Type, bool MinBranchClusters, bool Split);
 
   /// Make sure basic blocks' indices match the current layout.
   void updateLayoutIndices() const {
@@ -1794,10 +1768,6 @@ public:
     CurrentState = State::Emitted;
   }
 
-  /// Split function in two: a part with warm or hot BBs and a part with never
-  /// executed BBs. The cold part is moved to a new BinaryFunction.
-  void splitFunction();
-
   /// Process LSDA information for the function.
   void parseLSDA(ArrayRef<uint8_t> LSDAData, uint64_t LSDAAddress);
 
@@ -1877,7 +1847,7 @@ public:
   /// after relaxation.
   size_t estimateHotSize(const bool UseSplitSize = true) const {
     size_t Estimate = 0;
-    if (UseSplitSize && IsSplit) {
+    if (UseSplitSize && isSplit()) {
       for (const auto *BB : BasicBlocksLayout) {
         if (!BB->isCold()) {
           Estimate += BC.computeCodeSize(BB->begin(), BB->end());

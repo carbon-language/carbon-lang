@@ -14,7 +14,6 @@
 #include "BinaryFunction.h"
 #include "DataReader.h"
 #include "Passes/MCF.h"
-#include "Passes/ReorderAlgorithm.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -53,18 +52,32 @@ extern cl::opt<bool> Relocs;
 extern cl::opt<bool> UpdateDebugSections;
 extern cl::opt<IndirectCallPromotionType> IndirectCallPromotion;
 extern cl::opt<unsigned> Verbosity;
-extern cl::opt<unsigned> PrintFuncStat;
-
-static cl::opt<bool>
-AggressiveSplitting("split-all-cold",
-  cl::desc("outline as many cold basic blocks as possible"),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 AlignBlocks("align-blocks",
   cl::desc("try to align BBs inserting nops"),
   cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<MCFCostFunction>
+DoMCF("mcf",
+  cl::desc("solve a min cost flow problem on the CFG to fix edge counts "
+           "(default=disable)"),
+  cl::init(MCF_DISABLE),
+  cl::values(
+    clEnumValN(MCF_DISABLE, "none",
+               "disable MCF"),
+    clEnumValN(MCF_LINEAR, "linear",
+               "cost function is inversely proportional to edge count"),
+    clEnumValN(MCF_QUADRATIC, "quadratic",
+               "cost function is inversely proportional to edge count squared"),
+    clEnumValN(MCF_LOG, "log",
+               "cost function is inversely proportional to log of edge count"),
+    clEnumValN(MCF_BLAMEFTS, "blamefts",
+               "tune cost to blame fall-through edges for surplus flow"),
+    clEnumValEnd),
+  cl::ZeroOrMore,
+  cl::Hidden,
   cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
@@ -122,34 +135,6 @@ PrintOnly("print-only",
   cl::value_desc("func1,func2,func3,..."),
   cl::Hidden,
   cl::cat(BoltCategory));
-
-static cl::opt<bool>
-SplitEH("split-eh",
-  cl::desc("split C++ exception handling code (experimental)"),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltOptCategory));
-
-cl::opt<MCFCostFunction>
-DoMCF("mcf",
-  cl::desc("solve a min cost flow problem on the CFG to fix edge counts "
-           "(default=disable)"),
-  cl::init(MCF_DISABLE),
-  cl::values(
-    clEnumValN(MCF_DISABLE, "none",
-               "disable MCF"),
-    clEnumValN(MCF_LINEAR, "linear",
-               "cost function is inversely proportional to edge count"),
-    clEnumValN(MCF_QUADRATIC, "quadratic",
-               "cost function is inversely proportional to edge count squared"),
-    clEnumValN(MCF_LOG, "log",
-               "cost function is inversely proportional to log of edge count"),
-    clEnumValN(MCF_BLAMEFTS, "blamefts",
-               "tune cost to blame fall-through edges for surplus flow"),
-    clEnumValEnd),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltOptCategory));
 
 bool shouldPrint(const BinaryFunction &Function) {
   if (PrintOnly.empty())
@@ -386,8 +371,8 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
      << "\n  Orc Section : "   << getCodeSectionName()
      << "\n  LSDA        : 0x" << Twine::utohexstr(getLSDAAddress())
      << "\n  IsSimple    : "   << IsSimple
-     << "\n  IsSplit     : "   << IsSplit
-     << "\n  BB Count    : "   << BasicBlocksLayout.size();
+     << "\n  IsSplit     : "   << isSplit()
+     << "\n  BB Count    : "   << size();
 
   if (hasCFG()) {
     OS << "\n  Hash        : "   << Twine::utohexstr(hash());
@@ -2415,68 +2400,6 @@ bool BinaryFunction::fixCFIState() {
   return true;
 }
 
-void BinaryFunction::modifyLayout(LayoutType Type, bool MinBranchClusters,
-                                  bool Split) {
-  if (BasicBlocksLayout.empty() || Type == LT_NONE)
-    return;
-
-  BasicBlockOrderType NewLayout;
-  std::unique_ptr<ReorderAlgorithm> Algo;
-
-  // Cannot do optimal layout without profile.
-  if (Type != LT_REVERSE && !hasValidProfile())
-    return;
-
-  if (Type == LT_REVERSE) {
-    Algo.reset(new ReverseReorderAlgorithm());
-  }
-  else if (BasicBlocksLayout.size() <= FUNC_SIZE_THRESHOLD &&
-           Type != LT_OPTIMIZE_SHUFFLE) {
-    // Work on optimal solution if problem is small enough
-    DEBUG(dbgs() << "finding optimal block layout for " << *this << "\n");
-    Algo.reset(new OptimalReorderAlgorithm());
-  }
-  else {
-    DEBUG(dbgs() << "running block layout heuristics on " << *this << "\n");
-
-    std::unique_ptr<ClusterAlgorithm> CAlgo;
-    if (MinBranchClusters)
-      CAlgo.reset(new MinBranchGreedyClusterAlgorithm());
-    else
-      CAlgo.reset(new PHGreedyClusterAlgorithm());
-
-    switch(Type) {
-    case LT_OPTIMIZE:
-      Algo.reset(new OptimizeReorderAlgorithm(std::move(CAlgo)));
-      break;
-
-    case LT_OPTIMIZE_BRANCH:
-      Algo.reset(new OptimizeBranchReorderAlgorithm(std::move(CAlgo)));
-      break;
-
-    case LT_OPTIMIZE_CACHE:
-      Algo.reset(new OptimizeCacheReorderAlgorithm(std::move(CAlgo)));
-      break;
-
-    case LT_OPTIMIZE_SHUFFLE:
-      Algo.reset(new RandomClusterReorderAlgorithm(std::move(CAlgo)));
-      break;
-
-    default:
-      llvm_unreachable("unexpected layout type");
-    }
-  }
-
-  Algo->reorderBasicBlocks(*this, NewLayout);
-  if (opts::PrintFuncStat > 0)
-    BasicBlocksPreviousLayout = BasicBlocksLayout;
-  BasicBlocksLayout.clear();
-  BasicBlocksLayout.swap(NewLayout);
-
-  if (Split)
-    splitFunction();
-}
-
 uint64_t BinaryFunction::getInstructionCount() const {
   uint64_t Count = 0;
   for (auto &Block : BasicBlocksLayout) {
@@ -2486,12 +2409,10 @@ uint64_t BinaryFunction::getInstructionCount() const {
 }
 
 bool BinaryFunction::hasLayoutChanged() const {
-  assert(opts::PrintFuncStat > 0 && "PrintFuncStat flag is not on");
   return BasicBlocksPreviousLayout != BasicBlocksLayout;
 }
 
 uint64_t BinaryFunction::getEditDistance() const {
-  assert(opts::PrintFuncStat > 0 && "PrintFuncStat flag is not on");
   const auto LayoutSize = BasicBlocksPreviousLayout.size();
   if (LayoutSize < 2) {
     return 0;
@@ -2897,83 +2818,6 @@ void BinaryFunction::fixBranches() {
     // instruction adjustments.
   }
   assert(validateCFG() && "Invalid CFG detected after fixing branches");
-}
-
-void BinaryFunction::splitFunction() {
-  bool AllCold = true;
-  for (BinaryBasicBlock *BB : BasicBlocksLayout) {
-    auto ExecCount = BB->getExecutionCount();
-    if (ExecCount == BinaryBasicBlock::COUNT_NO_PROFILE)
-      return;
-    if (ExecCount != 0)
-      AllCold = false;
-  }
-
-  if (AllCold)
-    return;
-
-  assert(BasicBlocksLayout.size() > 0);
-
-  // Never outline the first basic block.
-  BasicBlocks.front()->setCanOutline(false);
-  for (auto BB : BasicBlocks) {
-    if (!BB->canOutline())
-      continue;
-    if (BB->getExecutionCount() != 0) {
-      BB->setCanOutline(false);
-      continue;
-    }
-    if (hasEHRanges() && !opts::SplitEH) {
-      // We cannot move landing pads (or rather entry points for landing
-      // pads).
-      if (BB->isLandingPad()) {
-        BB->setCanOutline(false);
-        continue;
-      }
-      // We cannot move a block that can throw since exception-handling
-      // runtime cannot deal with split functions. However, if we can guarantee
-      // that the block never throws, it is safe to move the block to
-      // decrease the size of the function.
-      for (auto &Instr : *BB) {
-        if (BC.MIA->isInvoke(Instr)) {
-          BB->setCanOutline(false);
-          break;
-        }
-      }
-    }
-  }
-
-  if (opts::AggressiveSplitting) {
-    // All blocks with 0 count that we can move go to the end of the function.
-    // Even if they were natural to cluster formation and were seen in-between
-    // hot basic blocks.
-    std::stable_sort(BasicBlocksLayout.begin(), BasicBlocksLayout.end(),
-        [&] (BinaryBasicBlock *A, BinaryBasicBlock *B) {
-          return A->canOutline() < B->canOutline();
-        });
-  } else if (hasEHRanges() && !opts::SplitEH) {
-    // Typically functions with exception handling have landing pads at the end.
-    // We cannot move beginning of landing pads, but we can move 0-count blocks
-    // comprising landing pads to the end and thus facilitate splitting.
-    auto FirstLP = BasicBlocksLayout.begin();
-    while ((*FirstLP)->isLandingPad())
-      ++FirstLP;
-
-    std::stable_sort(FirstLP, BasicBlocksLayout.end(),
-        [&] (BinaryBasicBlock *A, BinaryBasicBlock *B) {
-          return A->canOutline() < B->canOutline();
-        });
-  }
-
-  // Separate hot from cold starting from the bottom.
-  for (auto I = BasicBlocksLayout.rbegin(), E = BasicBlocksLayout.rend();
-       I != E; ++I) {
-    BinaryBasicBlock *BB = *I;
-    if (!BB->canOutline())
-      break;
-    BB->setIsCold(true);
-    IsSplit = true;
-  }
 }
 
 void BinaryFunction::propagateGnuArgsSizeInfo() {
@@ -3440,15 +3284,6 @@ void BinaryFunction::updateLayout(BinaryBasicBlock* Start,
   auto Begin = &BasicBlocks[getIndex(Start) + 1];
   auto End = &BasicBlocks[getIndex(Start) + NumNewBlocks + 1];
   BasicBlocksLayout.insert(Pos + 1, Begin, End);
-  updateLayoutIndices();
-}
-
-void BinaryFunction::updateLayout(LayoutType Type,
-                                  bool MinBranchClusters,
-                                  bool Split) {
-  // Recompute layout with original parameters.
-  BasicBlocksLayout = BasicBlocks;
-  modifyLayout(Type, MinBranchClusters, Split);
   updateLayoutIndices();
 }
 

@@ -150,7 +150,7 @@ public:
   using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
   bool         empty()            const { return Instructions.empty(); }
-  unsigned     size()     const { return (unsigned)Instructions.size(); }
+  size_t       size()             const { return Instructions.size(); }
   MCInst       &front()                 { return Instructions.front();  }
   MCInst       &back()                  { return Instructions.back();   }
   const MCInst &front()           const { return Instructions.front();  }
@@ -176,9 +176,11 @@ public:
   using const_lp_iterator    = decltype(LandingPads)::const_iterator;
 
   using pred_reverse_iterator = std::reverse_iterator<pred_iterator>;
-  using const_pred_reverse_iterator = std::reverse_iterator<const_pred_iterator>;
+  using const_pred_reverse_iterator =
+    std::reverse_iterator<const_pred_iterator>;
   using succ_reverse_iterator = std::reverse_iterator<succ_iterator>;
-  using const_succ_reverse_iterator = std::reverse_iterator<const_succ_iterator>;
+  using const_succ_reverse_iterator =
+    std::reverse_iterator<const_succ_iterator>;
 
   pred_iterator        pred_begin()       { return Predecessors.begin(); }
   const_pred_iterator  pred_begin() const { return Predecessors.begin(); }
@@ -192,8 +194,8 @@ public:
                                           { return Predecessors.rend();  }
   const_pred_reverse_iterator  pred_rend()   const
                                           { return Predecessors.rend();  }
-  unsigned             pred_size()  const {
-    return (unsigned)Predecessors.size();
+  size_t               pred_size()  const {
+    return Predecessors.size();
   }
   bool                 pred_empty() const { return Predecessors.empty(); }
 
@@ -209,8 +211,8 @@ public:
                                           { return Successors.rend();    }
   const_succ_reverse_iterator  succ_rend()   const
                                           { return Successors.rend();    }
-  unsigned             succ_size()  const {
-    return (unsigned)Successors.size();
+  size_t               succ_size()  const {
+    return Successors.size();
   }
   bool                 succ_empty() const { return Successors.empty();   }
 
@@ -218,8 +220,8 @@ public:
   const_throw_iterator  throw_begin() const { return Throwers.begin(); }
   throw_iterator        throw_end()         { return Throwers.end();   }
   const_throw_iterator  throw_end()   const { return Throwers.end();   }
-  unsigned              throw_size()  const {
-    return (unsigned)Throwers.size();
+  size_t                throw_size()  const {
+    return Throwers.size();
   }
   bool                  throw_empty() const { return Throwers.empty(); }
   bool                  isLandingPad() const { return !Throwers.empty(); }
@@ -228,8 +230,8 @@ public:
   const_lp_iterator  lp_begin() const { return LandingPads.begin();   }
   lp_iterator        lp_end()         { return LandingPads.end();     }
   const_lp_iterator  lp_end()   const { return LandingPads.end();     }
-  unsigned           lp_size()  const {
-    return (unsigned)LandingPads.size();
+  size_t             lp_size()  const {
+    return LandingPads.size();
   }
   bool               lp_empty() const { return LandingPads.empty();   }
 
@@ -273,23 +275,28 @@ public:
   using const_branch_info_reverse_iterator =
                        std::reverse_iterator<const_branch_info_iterator>;
 
-  branch_info_iterator         branch_info_begin() { return BranchInfo.begin(); }
-  branch_info_iterator         branch_info_end()   { return BranchInfo.end();   }
-  const_branch_info_iterator   branch_info_begin() const
-                                                   { return BranchInfo.begin(); }
-  const_branch_info_iterator   branch_info_end()   const
-                                                   { return BranchInfo.end();   }
-  branch_info_reverse_iterator branch_info_rbegin()
-                                                   { return BranchInfo.rbegin(); }
-  branch_info_reverse_iterator branch_info_rend()
-                                                   { return BranchInfo.rend();   }
-  const_branch_info_reverse_iterator branch_info_rbegin() const
-                                                   { return BranchInfo.rbegin(); }
-  const_branch_info_reverse_iterator branch_info_rend()   const
-                                                   { return BranchInfo.rend();   }
-  unsigned                    branch_info_size()  const {
-    return (unsigned)BranchInfo.size();
+  branch_info_iterator branch_info_begin() { return BranchInfo.begin(); }
+  branch_info_iterator branch_info_end()   { return BranchInfo.end(); }
+  const_branch_info_iterator branch_info_begin() const {
+    return BranchInfo.begin();
   }
+  const_branch_info_iterator branch_info_end() const {
+    return BranchInfo.end();
+  }
+  branch_info_reverse_iterator branch_info_rbegin() {
+    return BranchInfo.rbegin();
+  }
+  branch_info_reverse_iterator branch_info_rend() {
+    return BranchInfo.rend();
+  }
+  const_branch_info_reverse_iterator branch_info_rbegin() const {
+    return BranchInfo.rbegin();
+  }
+  const_branch_info_reverse_iterator branch_info_rend() const {
+    return BranchInfo.rend();
+  }
+
+  size_t branch_info_size()  const { return BranchInfo.size(); }
   bool branch_info_empty() const { return BranchInfo.empty(); }
 
   inline iterator_range<branch_info_iterator> branch_info() {

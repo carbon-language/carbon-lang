@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BinaryPasses.h"
+#include "Passes/ReorderAlgorithm.h"
 #include "llvm/Support/Options.h"
 
 #define DEBUG_TYPE "bolt"
@@ -58,6 +59,12 @@ enum DynoStatsSortOrder : char {
   Descending
 };
 
+static cl::opt<bool>
+AggressiveSplitting("split-all-cold",
+  cl::desc("outline as many cold basic blocks as possible"),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
 static cl::opt<DynoStatsSortOrder>
 DynoStatsSortOrderOpt("print-sorted-by-order",
   cl::desc("use ascending or descending order when printing functions "
@@ -81,6 +88,13 @@ MinBranchClusters("min-branch-clusters",
   cl::Hidden,
   cl::cat(BoltOptCategory));
 
+static cl::opt<unsigned>
+PrintFuncStat("print-function-statistics",
+  cl::desc("print statistics about basic block ordering"),
+  cl::init(0),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
 static cl::list<bolt::DynoStats::Category>
 PrintSortedBy("print-sorted-by",
   cl::CommaSeparated,
@@ -97,36 +111,29 @@ PrintSortedBy("print-sorted-by",
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
-cl::opt<unsigned>
-PrintFuncStat("print-function-statistics",
-  cl::desc("print statistics about basic block ordering"),
-  cl::init(0),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
-static cl::opt<bolt::BinaryFunction::LayoutType>
+static cl::opt<bolt::ReorderBasicBlocks::LayoutType>
 ReorderBlocks("reorder-blocks",
   cl::desc("change layout of basic blocks in a function"),
-  cl::init(bolt::BinaryFunction::LT_NONE),
+  cl::init(bolt::ReorderBasicBlocks::LT_NONE),
   cl::values(
-    clEnumValN(bolt::BinaryFunction::LT_NONE,
+    clEnumValN(bolt::ReorderBasicBlocks::LT_NONE,
       "none",
       "do not reorder basic blocks"),
-    clEnumValN(bolt::BinaryFunction::LT_REVERSE,
+    clEnumValN(bolt::ReorderBasicBlocks::LT_REVERSE,
       "reverse",
       "layout blocks in reverse order"),
-    clEnumValN(bolt::BinaryFunction::LT_OPTIMIZE,
+    clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE,
       "normal",
       "perform optimal layout based on profile"),
-    clEnumValN(bolt::BinaryFunction::LT_OPTIMIZE_BRANCH,
+    clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE_BRANCH,
       "branch-predictor",
       "perform optimal layout prioritizing branch "
       "predictions"),
-    clEnumValN(bolt::BinaryFunction::LT_OPTIMIZE_CACHE,
+    clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE_CACHE,
       "cache",
       "perform optimal layout prioritizing I-cache "
       "behavior"),
-    clEnumValN(bolt::BinaryFunction::LT_OPTIMIZE_SHUFFLE,
+    clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE_SHUFFLE,
       "cluster-shuffle",
       "perform random layout of clusters"),
     clEnumValEnd),
@@ -153,6 +160,13 @@ SctcMode("sctc-mode",
       "use branch prediction data to control sctc"),
     clEnumValEnd),
   cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+SplitEH("split-eh",
+  cl::desc("split C++ exception handling code (experimental)"),
+  cl::ZeroOrMore,
+  cl::Hidden,
   cl::cat(BoltOptCategory));
 
 } // namespace opts
@@ -296,14 +310,14 @@ void EliminateUnreachableBlocks::runOnFunctions(
 
 bool ReorderBasicBlocks::shouldPrint(const BinaryFunction &BF) const {
   return (BinaryFunctionPass::shouldPrint(BF) &&
-          opts::ReorderBlocks != BinaryFunction::LT_NONE);
+          opts::ReorderBlocks != ReorderBasicBlocks::LT_NONE);
 }
 
 void ReorderBasicBlocks::runOnFunctions(
         BinaryContext &BC,
         std::map<uint64_t, BinaryFunction> &BFs,
         std::set<uint64_t> &LargeFunctions) {
-  if (opts::ReorderBlocks == BinaryFunction::LT_NONE)
+  if (opts::ReorderBlocks == ReorderBasicBlocks::LT_NONE)
     return;
 
   uint64_t ModifiedFuncCount = 0;
@@ -318,8 +332,8 @@ void ReorderBasicBlocks::runOnFunctions(
             (opts::SplitFunctions == BinaryFunction::ST_EH &&
              Function.hasEHRanges()) ||
             (LargeFunctions.find(It.first) != LargeFunctions.end());
-    Function.modifyLayout(opts::ReorderBlocks, opts::MinBranchClusters,
-                          ShouldSplit);
+    modifyFunctionLayout(Function, opts::ReorderBlocks, opts::MinBranchClusters,
+                         ShouldSplit);
 
     if (opts::PrintFuncStat > 0 && Function.hasLayoutChanged()) {
       ++ModifiedFuncCount;
@@ -358,6 +372,141 @@ void ReorderBasicBlocks::runOnFunctions(
       OS << "             The edit distance for this function is: "
          << Function.getEditDistance() << "\n\n";
     }
+  }
+}
+
+void ReorderBasicBlocks::modifyFunctionLayout(BinaryFunction &BF,
+    LayoutType Type, bool MinBranchClusters, bool Split) const {
+  if (BF.size() == 0 || Type == LT_NONE)
+    return;
+
+  BinaryFunction::BasicBlockOrderType NewLayout;
+  std::unique_ptr<ReorderAlgorithm> Algo;
+
+  // Cannot do optimal layout without profile.
+  if (Type != LT_REVERSE && !BF.hasValidProfile())
+    return;
+
+  if (Type == LT_REVERSE) {
+    Algo.reset(new ReverseReorderAlgorithm());
+  }
+  else if (BF.size() <= FUNC_SIZE_THRESHOLD && Type != LT_OPTIMIZE_SHUFFLE) {
+    // Work on optimal solution if problem is small enough
+    DEBUG(dbgs() << "finding optimal block layout for " << BF << "\n");
+    Algo.reset(new OptimalReorderAlgorithm());
+  } else {
+    DEBUG(dbgs() << "running block layout heuristics on " << BF << "\n");
+
+    std::unique_ptr<ClusterAlgorithm> CAlgo;
+    if (MinBranchClusters)
+      CAlgo.reset(new MinBranchGreedyClusterAlgorithm());
+    else
+      CAlgo.reset(new PHGreedyClusterAlgorithm());
+
+    switch(Type) {
+    case LT_OPTIMIZE:
+      Algo.reset(new OptimizeReorderAlgorithm(std::move(CAlgo)));
+      break;
+
+    case LT_OPTIMIZE_BRANCH:
+      Algo.reset(new OptimizeBranchReorderAlgorithm(std::move(CAlgo)));
+      break;
+
+    case LT_OPTIMIZE_CACHE:
+      Algo.reset(new OptimizeCacheReorderAlgorithm(std::move(CAlgo)));
+      break;
+
+    case LT_OPTIMIZE_SHUFFLE:
+      Algo.reset(new RandomClusterReorderAlgorithm(std::move(CAlgo)));
+      break;
+
+    default:
+      llvm_unreachable("unexpected layout type");
+    }
+  }
+
+  Algo->reorderBasicBlocks(BF, NewLayout);
+
+  BF.updateBasicBlockLayout(NewLayout, /*SavePrevLayout=*/opts::PrintFuncStat);
+
+  if (Split)
+    splitFunction(BF);
+}
+
+void ReorderBasicBlocks::splitFunction(BinaryFunction &BF) const {
+  if (!BF.size())
+    return;
+
+  bool AllCold = true;
+  for (auto *BB : BF.layout()) {
+    auto ExecCount = BB->getExecutionCount();
+    if (ExecCount == BinaryBasicBlock::COUNT_NO_PROFILE)
+      return;
+    if (ExecCount != 0)
+      AllCold = false;
+  }
+
+  if (AllCold)
+    return;
+
+  // Never outline the first basic block.
+  BF.layout_front()->setCanOutline(false);
+  for (auto *BB : BF.layout()) {
+    if (!BB->canOutline())
+      continue;
+    if (BB->getExecutionCount() != 0) {
+      BB->setCanOutline(false);
+      continue;
+    }
+    if (BF.hasEHRanges() && !opts::SplitEH) {
+      // We cannot move landing pads (or rather entry points for landing
+      // pads).
+      if (BB->isLandingPad()) {
+        BB->setCanOutline(false);
+        continue;
+      }
+      // We cannot move a block that can throw since exception-handling
+      // runtime cannot deal with split functions. However, if we can guarantee
+      // that the block never throws, it is safe to move the block to
+      // decrease the size of the function.
+      for (auto &Instr : *BB) {
+        if (BF.getBinaryContext().MIA->isInvoke(Instr)) {
+          BB->setCanOutline(false);
+          break;
+        }
+      }
+    }
+  }
+
+  if (opts::AggressiveSplitting) {
+    // All blocks with 0 count that we can move go to the end of the function.
+    // Even if they were natural to cluster formation and were seen in-between
+    // hot basic blocks.
+    std::stable_sort(BF.layout_begin(), BF.layout_end(),
+        [&] (BinaryBasicBlock *A, BinaryBasicBlock *B) {
+          return A->canOutline() < B->canOutline();
+        });
+  } else if (BF.hasEHRanges() && !opts::SplitEH) {
+    // Typically functions with exception handling have landing pads at the end.
+    // We cannot move beginning of landing pads, but we can move 0-count blocks
+    // comprising landing pads to the end and thus facilitate splitting.
+    auto FirstLP = BF.layout_begin();
+    while ((*FirstLP)->isLandingPad())
+      ++FirstLP;
+
+    std::stable_sort(FirstLP, BF.layout_end(),
+        [&] (BinaryBasicBlock *A, BinaryBasicBlock *B) {
+          return A->canOutline() < B->canOutline();
+        });
+  }
+
+  // Separate hot from cold starting from the bottom.
+  for (auto I = BF.layout_rbegin(), E = BF.layout_rend();
+       I != E; ++I) {
+    BinaryBasicBlock *BB = *I;
+    if (!BB->canOutline())
+      break;
+    BB->setIsCold(true);
   }
 }
 
@@ -976,7 +1125,7 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC,
     BF.updateLayoutIndices();
 
     // Pre-compute hash before pushing into hashtable.
-    BF.hash(/*Recompute=*/true, /*UseDFS*/UseDFS);
+    BF.hash(/*Recompute=*/true, /*UseDFS=*/UseDFS);
 
     CongruentBuckets[&BF].emplace(&BF);
   }

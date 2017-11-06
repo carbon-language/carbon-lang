@@ -150,7 +150,44 @@ class EliminateUnreachableBlocks : public BinaryFunctionPass {
 
 // Reorder the basic blocks for each function based on hotness.
 class ReorderBasicBlocks : public BinaryFunctionPass {
- public:
+public:
+  /// Choose which strategy should the block layout heuristic prioritize when
+  /// facing conflicting goals.
+  enum LayoutType : char {
+    /// LT_NONE - do not change layout of basic blocks
+    LT_NONE = 0, /// no reordering
+    /// LT_REVERSE - reverse the order of basic blocks, meant for testing
+    /// purposes. The first basic block is left intact and the rest are
+    /// put in the reverse order.
+    LT_REVERSE,
+    /// LT_OPTIMIZE - optimize layout of basic blocks based on profile.
+    LT_OPTIMIZE,
+    /// LT_OPTIMIZE_BRANCH is an implementation of what is suggested in Pettis'
+    /// paper (PLDI '90) about block reordering, trying to minimize branch
+    /// mispredictions.
+    LT_OPTIMIZE_BRANCH,
+    /// LT_OPTIMIZE_CACHE piggybacks on the idea from Ispike paper (CGO '04)
+    /// that suggests putting frequently executed chains first in the layout.
+    LT_OPTIMIZE_CACHE,
+    /// Create clusters and use random order for them.
+    LT_OPTIMIZE_SHUFFLE,
+  };
+
+private:
+  // Function size, in number of BBs, above which we fallback to a heuristic
+  // solution to the layout problem instead of seeking the optimal one.
+  static constexpr uint64_t FUNC_SIZE_THRESHOLD = 10;
+
+  void modifyFunctionLayout(BinaryFunction &Function,
+                            LayoutType Type,
+                            bool MinBranchClusters,
+                            bool Split) const;
+
+  /// Split function in two: a part with warm or hot BBs and a part with never
+  /// executed BBs. The cold part is moved to a new BinaryFunction.
+  void splitFunction(BinaryFunction &Function) const;
+
+public:
   explicit ReorderBasicBlocks(const cl::opt<bool> &PrintPass)
     : BinaryFunctionPass(PrintPass) { }
 
