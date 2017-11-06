@@ -14,9 +14,11 @@
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "LLVMContextImpl.h"
 #include "MetadataImpl.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
 
 using namespace llvm;
 
@@ -64,6 +66,31 @@ DILocation *DILocation::getImpl(LLVMContext &Context, unsigned Line,
   return storeImpl(new (Ops.size())
                        DILocation(Context, Storage, Line, Column, Ops),
                    Storage, Context.pImpl->DILocations);
+}
+
+const DILocation *
+DILocation::getMergedLocation(const DILocation *LocA, const DILocation *LocB,
+                              const Instruction *ForInst) {
+  if (!LocA || !LocB)
+    return nullptr;
+
+  if (LocA == LocB || !LocA->canDiscriminate(*LocB))
+    return LocA;
+
+  if (!dyn_cast_or_null<CallInst>(ForInst))
+    return nullptr;
+
+  SmallPtrSet<DILocation *, 5> InlinedLocationsA;
+  for (DILocation *L = LocA->getInlinedAt(); L; L = L->getInlinedAt())
+    InlinedLocationsA.insert(L);
+  const DILocation *Result = LocB;
+  for (DILocation *L = LocB->getInlinedAt(); L; L = L->getInlinedAt()) {
+    Result = L;
+    if (InlinedLocationsA.count(L))
+      break;
+  }
+  return DILocation::get(Result->getContext(), 0, 0, Result->getScope(),
+                         Result->getInlinedAt());
 }
 
 DINode::DIFlags DINode::getFlag(StringRef Flag) {
