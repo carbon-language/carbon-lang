@@ -6746,6 +6746,9 @@ static SDValue lowerBuildVectorAsBroadcast(BuildVectorSDNode *BVOp,
   assert((VT.is128BitVector() || VT.is256BitVector() || VT.is512BitVector()) &&
          "Unsupported vector type for broadcast.");
 
+  BitVector UndefElements;
+  SDValue Ld = BVOp->getSplatValue(&UndefElements);
+
   // Attempt to use VBROADCASTM
   // From this paterrn:
   //  a. t0 = (zext_i64 (bitcast_i8 v2i1 X))
@@ -6753,17 +6756,23 @@ static SDValue lowerBuildVectorAsBroadcast(BuildVectorSDNode *BVOp,
   //
   // Create (VBROADCASTM v2i1 X)
   if (Subtarget.hasCDI() && (VT.is512BitVector() || Subtarget.hasVLX())) {
-    MVT EltType;
-    unsigned NumElts;
+    MVT EltType = VT.getScalarType();
+    unsigned NumElts = VT.getVectorNumElements();
+    SDValue BOperand;
     SDValue ZeroExtended = isSplatZeroExtended(BVOp, NumElts, EltType);
-    if (ZeroExtended && ZeroExtended.getOpcode() == ISD::BITCAST) {
-      SDValue BOperand = ZeroExtended.getOperand(0);
+    if ((ZeroExtended && ZeroExtended.getOpcode() == ISD::BITCAST) ||
+        (Ld && Ld.getOpcode() == ISD::ZERO_EXTEND &&
+         Ld.getOperand(0).getOpcode() == ISD::BITCAST)) {
+      if (ZeroExtended)
+        BOperand = ZeroExtended.getOperand(0);
+      else
+        BOperand = Ld.getOperand(0).getOperand(0);
       if (BOperand.getValueType().isVector() &&
           BOperand.getSimpleValueType().getVectorElementType() == MVT::i1) {
-        if ((EltType == MVT::i64 &&
-             VT.getVectorElementType() == MVT::i8) || // for broadcastmb2q
-            (EltType == MVT::i32 &&
-             VT.getVectorElementType() == MVT::i16)) { // for broadcastmw2d
+        if ((EltType == MVT::i64 && (VT.getVectorElementType() == MVT::i8 ||
+                                     NumElts == 8)) || // for broadcastmb2q
+            (EltType == MVT::i32 && (VT.getVectorElementType() == MVT::i16 ||
+                                     NumElts == 16))) { // for broadcastmw2d
           SDValue Brdcst =
               DAG.getNode(X86ISD::VBROADCASTM, dl,
                           MVT::getVectorVT(EltType, NumElts), BOperand);
@@ -6772,9 +6781,6 @@ static SDValue lowerBuildVectorAsBroadcast(BuildVectorSDNode *BVOp,
       }
     }
   }
-
-  BitVector UndefElements;
-  SDValue Ld = BVOp->getSplatValue(&UndefElements);
 
   // We need a splat of a single value to use broadcast, and it doesn't
   // make any sense if the value is only in one element of the vector.
