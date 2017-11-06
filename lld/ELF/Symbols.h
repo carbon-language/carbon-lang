@@ -40,9 +40,9 @@ public:
   enum Kind {
     DefinedFirst,
     DefinedRegularKind = DefinedFirst,
-    SharedKind,
     DefinedCommonKind,
     DefinedLast = DefinedCommonKind,
+    SharedKind,
     UndefinedKind,
     LazyArchiveKind,
     LazyObjectKind,
@@ -247,13 +247,13 @@ public:
   static bool classof(const Symbol *S) { return S->kind() == UndefinedKind; }
 };
 
-class SharedSymbol : public Defined {
+class SharedSymbol : public Symbol {
 public:
   static bool classof(const Symbol *S) { return S->kind() == SharedKind; }
 
   SharedSymbol(StringRef Name, uint8_t StOther, uint8_t Type, uint64_t Value,
                uint64_t Size, uint32_t Alignment, const void *Verdef)
-      : Defined(SharedKind, Name, /*IsLocal=*/false, StOther, Type),
+      : Symbol(SharedKind, Name, /*IsLocal=*/false, StOther, Type),
         Verdef(Verdef), Value(Value), Size(Size), Alignment(Alignment) {
     // GNU ifunc is a mechanism to allow user-supplied functions to
     // resolve PLT slot values at load-time. This is contrary to the
