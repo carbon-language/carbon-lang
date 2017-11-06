@@ -7713,6 +7713,111 @@ static SDValue materializeVectorConstant(SDValue Op, SelectionDAG &DAG,
   return SDValue();
 }
 
+// Tries to lower a BUILD_VECTOR composed of extract-extract chains that can be
+// reasoned to be a permutation of a vector by indices in a non-constant vector.
+// (build_vector (extract_elt V, (extract_elt I, 0)),
+//               (extract_elt V, (extract_elt I, 1)),
+//                    ...
+// ->
+// (vpermv I, V)
+//
+// TODO: Handle undefs
+// TODO: Utilize pshufb and zero mask blending to support more efficient
+// construction of vectors with constant-0 elements.
+// TODO: Use smaller-element vectors of same width, and "interpolate" the indices,
+// when no native operation available.
+static SDValue
+LowerBUILD_VECTORAsVariablePermute(SDValue V, SelectionDAG &DAG,
+                                   const X86Subtarget &Subtarget) {
+  // Look for VPERMV and PSHUFB opportunities.
+  MVT VT = V.getSimpleValueType();
+  switch (VT.SimpleTy) {
+  default:
+    return SDValue();
+  case MVT::v16i8:
+    if (!Subtarget.hasSSE3())
+      return SDValue();
+    break;
+  case MVT::v8f32:
+  case MVT::v8i32:
+    if (!Subtarget.hasAVX2())
+      return SDValue();
+    break;
+  case MVT::v4i64:
+  case MVT::v4f64:
+    if (!Subtarget.hasVLX())
+      return SDValue();
+    break;
+  case MVT::v16f32:
+  case MVT::v8f64:
+  case MVT::v16i32:
+  case MVT::v8i64:
+    if (!Subtarget.hasAVX512())
+      return SDValue();
+    break;
+  case MVT::v32i16:
+    if (!Subtarget.hasBWI())
+      return SDValue();
+    break;
+  case MVT::v8i16:
+  case MVT::v16i16:
+    if (!Subtarget.hasVLX() || !Subtarget.hasBWI())
+      return SDValue();
+    break;
+  case MVT::v64i8:
+    if (!Subtarget.hasVBMI())
+      return SDValue();
+    break;
+  case MVT::v32i8:
+    if (!Subtarget.hasVLX() || !Subtarget.hasVBMI())
+      return SDValue();
+    break;
+  }
+  SDValue SrcVec, IndicesVec;
+  // Check for a match of the permute source vector and permute index elements.
+  // This is done by checking that the i-th build_vector operand is of the form:
+  // (extract_elt SrcVec, (extract_elt IndicesVec, i)).
+  for (unsigned Idx = 0, E = V.getNumOperands(); Idx != E; ++Idx) {
+    SDValue Op = V.getOperand(Idx);
+    if (Op.getOpcode() != ISD::EXTRACT_VECTOR_ELT)
+      return SDValue();
+
+    // If this is the first extract encountered in V, set the source vector,
+    // otherwise verify the extract is from the previously defined source
+    // vector.
+    if (!SrcVec)
+      SrcVec = Op.getOperand(0);
+    else if (SrcVec != Op.getOperand(0))
+      return SDValue();
+    SDValue ExtractedIndex = Op->getOperand(1);
+    // Peek through extends.
+    if (ExtractedIndex.getOpcode() == ISD::ZERO_EXTEND ||
+        ExtractedIndex.getOpcode() == ISD::SIGN_EXTEND)
+      ExtractedIndex = ExtractedIndex.getOperand(0);
+    if (ExtractedIndex.getOpcode() != ISD::EXTRACT_VECTOR_ELT)
+      return SDValue();
+
+    // If this is the first extract from the index vector candidate, set the
+    // indices vector, otherwise verify the extract is from the previously
+    // defined indices vector.
+    if (!IndicesVec)
+      IndicesVec = ExtractedIndex.getOperand(0);
+    else if (IndicesVec != ExtractedIndex.getOperand(0))
+      return SDValue();
+
+    auto *PermIdx = dyn_cast<ConstantSDNode>(ExtractedIndex.getOperand(1));
+    if (!PermIdx || PermIdx->getZExtValue() != Idx)
+      return SDValue();
+  }
+  MVT IndicesVT = VT;
+  if (VT.isFloatingPoint())
+    IndicesVT = MVT::getVectorVT(MVT::getIntegerVT(VT.getScalarSizeInBits()),
+                                 VT.getVectorNumElements());
+  IndicesVec = DAG.getZExtOrTrunc(IndicesVec, SDLoc(IndicesVec), IndicesVT);
+  return DAG.getNode(VT == MVT::v16i8 ? X86ISD::PSHUFB : X86ISD::VPERMV,
+                     SDLoc(V), VT, IndicesVec, SrcVec);
+}
+
 SDValue
 X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   SDLoc dl(Op);
@@ -7927,6 +8032,9 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   // handled, so this is best done with a single constant-pool load.
   if (IsAllConstants)
     return SDValue();
+
+  if (SDValue V = LowerBUILD_VECTORAsVariablePermute(Op, DAG, Subtarget))
+      return V;
 
   // See if we can use a vector load to get all of the elements.
   if (VT.is128BitVector() || VT.is256BitVector() || VT.is512BitVector()) {
