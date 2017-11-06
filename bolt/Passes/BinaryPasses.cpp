@@ -169,6 +169,15 @@ SplitEH("split-eh",
   cl::Hidden,
   cl::cat(BoltOptCategory));
 
+static cl::opt<unsigned>
+TSPThreshold("tsp-threshold",
+  cl::desc("maximum number of hot basic blocks in a function for which to use "
+           "a precise TSP solution while re-ordering basic blocks"),
+  cl::init(10),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
 } // namespace opts
 
 namespace llvm {
@@ -389,8 +398,7 @@ void ReorderBasicBlocks::modifyFunctionLayout(BinaryFunction &BF,
 
   if (Type == LT_REVERSE) {
     Algo.reset(new ReverseReorderAlgorithm());
-  }
-  else if (BF.size() <= FUNC_SIZE_THRESHOLD && Type != LT_OPTIMIZE_SHUFFLE) {
+  } else if (BF.size() <= opts::TSPThreshold && Type != LT_OPTIMIZE_SHUFFLE) {
     // Work on optimal solution if problem is small enough
     DEBUG(dbgs() << "finding optimal block layout for " << BF << "\n");
     Algo.reset(new OptimalReorderAlgorithm());

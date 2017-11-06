@@ -396,24 +396,26 @@ void MinBranchGreedyClusterAlgorithm::reset() {
 }
 
 void OptimalReorderAlgorithm::reorderBasicBlocks(
-      const BinaryFunction &BF, BasicBlockOrder &Order) const {
+    const BinaryFunction &BF, BasicBlockOrder &Order) const {
   std::vector<std::vector<uint64_t>> Weight;
-  std::unordered_map<const BinaryBasicBlock *, int> BBToIndex;
   std::vector<BinaryBasicBlock *> IndexToBB;
 
-  unsigned N = BF.layout_size();
+  const auto N = BF.layout_size();
+  assert(N <= std::numeric_limits<uint64_t>::digits &&
+         "cannot use TSP solution for sizes larger than bits in uint64_t");
+
   // Populating weight map and index map
-  for (auto BB : BF.layout()) {
-    BBToIndex[BB] = IndexToBB.size();
+  for (auto *BB : BF.layout()) {
+    BB->setLayoutIndex(IndexToBB.size());
     IndexToBB.push_back(BB);
   }
   Weight.resize(N);
-  for (auto BB : BF.layout()) {
+  for (auto *BB : BF.layout()) {
     auto BI = BB->branch_info_begin();
-    Weight[BBToIndex[BB]].resize(N);
-    for (auto I : BB->successors()) {
+    Weight[BB->getLayoutIndex()].resize(N);
+    for (auto *SuccBB : BB->successors()) {
       if (BI->Count != BinaryBasicBlock::COUNT_NO_PROFILE)
-        Weight[BBToIndex[BB]][BBToIndex[I]] = BI->Count;
+        Weight[BB->getLayoutIndex()][SuccBB->getLayoutIndex()] = BI->Count;
       ++BI;
     }
   }
@@ -427,26 +429,26 @@ void OptimalReorderAlgorithm::reorderBasicBlocks(
   DP[1][0] = 0;
   // Walk through TSP solutions using a bitmask to represent state (current set
   // of BBs in the layout)
-  unsigned BestSet = 1;
-  unsigned BestLast = 0;
+  uint64_t BestSet = 1;
+  uint64_t BestLast = 0;
   int64_t BestWeight = 0;
-  for (unsigned Set = 1; Set < (1U << N); ++Set) {
+  for (uint64_t Set = 1; Set < (1ULL << N); ++Set) {
     // Traverse each possibility of Last BB visited in this layout
-    for (unsigned Last = 0; Last < N; ++Last) {
+    for (uint64_t Last = 0; Last < N; ++Last) {
       // Case 1: There is no possible layout with this BB as Last
       if (DP[Set][Last] == -1)
         continue;
 
       // Case 2: There is a layout with this Set and this Last, and we try
       // to expand this set with New
-      for (unsigned New = 1; New < N; ++New) {
+      for (uint64_t New = 1; New < N; ++New) {
         // Case 2a: BB "New" is already in this Set
-        if ((Set & (1 << New)) != 0)
+        if ((Set & (1ULL << New)) != 0)
           continue;
 
         // Case 2b: BB "New" is not in this set and we add it to this Set and
         // record total weight of this layout with "New" as the last BB.
-        unsigned NewSet = (Set | (1 << New));
+        uint64_t NewSet = (Set | (1ULL << New));
         if (DP[NewSet][New] == -1)
           DP[NewSet][New] = DP[Set][Last] + (int64_t)Weight[Last][New];
         DP[NewSet][New] = std::max(DP[NewSet][New],
@@ -462,38 +464,42 @@ void OptimalReorderAlgorithm::reorderBasicBlocks(
   }
 
   // Define final function layout based on layout that maximizes weight
-  unsigned Last = BestLast;
-  unsigned Set = BestSet;
+  uint64_t Last = BestLast;
+  uint64_t Set = BestSet;
   std::vector<bool> Visited;
   Visited.resize(N);
   Visited[Last] = true;
   Order.push_back(IndexToBB[Last]);
-  Set = Set & ~(1U << Last);
+  Set = Set & ~(1ULL << Last);
   while (Set != 0) {
     int64_t Best = -1;
-    for (unsigned I = 0; I < N; ++I) {
+    uint64_t NewLast;
+    for (uint64_t I = 0; I < N; ++I) {
       if (DP[Set][I] == -1)
         continue;
-      if (DP[Set][I] > Best) {
-        Last = I;
-        Best = DP[Set][I];
+      int64_t AdjWeight = Weight[I][Last] > 0 ? Weight[I][Last] : 0;
+      if (DP[Set][I] + AdjWeight > Best) {
+        NewLast = I;
+        Best = DP[Set][I] + AdjWeight;
       }
     }
+    Last = NewLast;
     Visited[Last] = true;
     Order.push_back(IndexToBB[Last]);
-    Set = Set & ~(1U << Last);
+    Set = Set & ~(1ULL << Last);
   }
   std::reverse(Order.begin(), Order.end());
 
-  // Finalize layout with BBs that weren't assigned to the layout
-  for (auto BB : BF.layout()) {
-    if (Visited[BBToIndex[BB]] == false)
+  // Finalize layout with BBs that weren't assigned to the layout using the
+  // input layout.
+  for (auto *BB : BF.layout()) {
+    if (Visited[BB->getLayoutIndex()] == false)
       Order.push_back(BB);
   }
 }
 
 void OptimizeReorderAlgorithm::reorderBasicBlocks(
-      const BinaryFunction &BF, BasicBlockOrder &Order) const {
+    const BinaryFunction &BF, BasicBlockOrder &Order) const {
   if (BF.layout_empty())
     return;
 
@@ -509,7 +515,7 @@ void OptimizeReorderAlgorithm::reorderBasicBlocks(
 }
 
 void OptimizeBranchReorderAlgorithm::reorderBasicBlocks(
-      const BinaryFunction &BF, BasicBlockOrder &Order) const {
+    const BinaryFunction &BF, BasicBlockOrder &Order) const {
   if (BF.layout_empty())
     return;
 

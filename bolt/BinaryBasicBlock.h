@@ -90,7 +90,7 @@ private:
   unsigned Index{InvalidIndex};
 
   /// Index in the current layout.
-  unsigned LayoutIndex{InvalidIndex};
+  mutable unsigned LayoutIndex{InvalidIndex};
 
   /// Number of pseudo instructions in this block.
   uint32_t NumPseudos{0};
@@ -778,6 +778,19 @@ public:
   /// Returns an estimate of size of basic block during run time.
   uint64_t estimateSize() const;
 
+  /// Return index in the current layout. The user is responsible for
+  /// making sure the indices are up to date,
+  /// e.g. by calling BinaryFunction::updateLayoutIndices();
+  unsigned getLayoutIndex() const {
+    assert(isValid());
+    return LayoutIndex;
+  }
+
+  /// Set layout index. To be used by BinaryFunction.
+  void setLayoutIndex(unsigned Index) const {
+    LayoutIndex = Index;
+  }
+
 private:
   void adjustNumPseudos(const MCInst &Inst, int Sign);
 
@@ -814,19 +827,6 @@ private:
   /// Set the index of this basic block.
   void setIndex(unsigned I) {
     Index = I;
-  }
-
-  /// Return index in the current layout. The user is responsible for
-  /// making sure the indices are up to date,
-  /// e.g. by calling BinaryFunction::updateLayoutIndices();
-  unsigned getLayoutIndex() const {
-    assert(isValid());
-    return LayoutIndex;
-  }
-
-  /// Set layout index. To be used by BinaryFunction.
-  void setLayoutIndex(unsigned Index) {
-    LayoutIndex = Index;
   }
 };
 

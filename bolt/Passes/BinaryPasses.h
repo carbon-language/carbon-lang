@@ -174,10 +174,6 @@ public:
   };
 
 private:
-  // Function size, in number of BBs, above which we fallback to a heuristic
-  // solution to the layout problem instead of seeking the optimal one.
-  static constexpr uint64_t FUNC_SIZE_THRESHOLD = 10;
-
   void modifyFunctionLayout(BinaryFunction &Function,
                             LayoutType Type,
                             bool MinBranchClusters,
