@@ -4998,6 +4998,8 @@ static bool isMaskedZeroUpperBitsvXi1(unsigned int Opcode) {
   switch (Opcode) {
   default:
     return false;
+  case X86ISD::TESTM:
+  case X86ISD::TESTNM:
   case X86ISD::PCMPEQM:
   case X86ISD::PCMPGTM:
   case X86ISD::CMPM:
@@ -17469,6 +17471,20 @@ static SDValue LowerIntVSETCC_AVX512(SDValue Op, SelectionDAG &DAG) {
 
   if (Swap)
     std::swap(Op0, Op1);
+
+  //  See if it is the case of CMP(EQ|NEQ,AND(A,B),ZERO) and change it to TESTM|NM.
+  if ((!Opc && SSECC == 4) || Opc == X86ISD::PCMPEQM) {
+    SDValue A = peekThroughBitcasts(Op0);
+    if ((A.getOpcode() == ISD::AND || A.getOpcode() == X86ISD::FAND) &&
+        ISD::isBuildVectorAllZeros(Op1.getNode())) {
+      MVT VT0 = Op0.getSimpleValueType();
+      SDValue RHS = DAG.getBitcast(VT0, A.getOperand(0));
+      SDValue LHS = DAG.getBitcast(VT0, A.getOperand(1));
+      return DAG.getNode(Opc == X86ISD::PCMPEQM ? X86ISD::TESTNM : X86ISD::TESTM,
+                         dl, VT, RHS, LHS);
+    }
+  }
+
   if (Opc)
     return DAG.getNode(Opc, dl, VT, Op0, Op1);
   Opc = Unsigned ? X86ISD::CMPMU: X86ISD::CMPM;
