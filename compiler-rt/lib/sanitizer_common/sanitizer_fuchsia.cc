@@ -246,8 +246,12 @@ uptr ReservedAddressRange::Init(uptr init_size, const char* name,
 
 // Uses fixed_addr for now.
 // Will use offset instead once we've implemented this function for real.
-uptr ReservedAddressRange::Map(uptr fixed_addr, uptr map_size,
-                               bool tolerate_enomem) {
+uptr ReservedAddressRange::Map(uptr fixed_addr, uptr map_size) {
+  return reinterpret_cast<uptr>(MmapFixedOrDieOnFatalError(fixed_addr,
+                                                           map_size));
+}
+
+uptr ReservedAddressRange::MapOrDie(uptr fixed_addr, uptr map_size) {
   return reinterpret_cast<uptr>(MmapFixedOrDie(fixed_addr, map_size));
 }
 
