@@ -64,7 +64,7 @@ uptr GetMmapGranularity() {
   return si.dwAllocationGranularity;
 }
 
-uptr GetMaxVirtualAddress() {
+uptr GetMaxUserVirtualAddress() {
   SYSTEM_INFO si;
   GetSystemInfo(&si);
   return (uptr)si.lpMaximumApplicationAddress;
