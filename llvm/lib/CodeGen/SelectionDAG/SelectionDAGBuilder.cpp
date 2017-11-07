@@ -3862,7 +3862,7 @@ void SelectionDAGBuilder::visitMaskedStore(const CallInst &I,
 //
 // When the first GEP operand is a single pointer - it is the uniform base we
 // are looking for. If first operand of the GEP is a splat vector - we
-// extract the spalt value and use it as a uniform base.
+// extract the splat value and use it as a uniform base.
 // In all other cases the function returns 'false'.
 static bool getUniformBase(const Value* &Ptr, SDValue& Base, SDValue& Index,
                            SelectionDAGBuilder* SDB) {
