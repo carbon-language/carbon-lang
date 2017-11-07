@@ -71,7 +71,7 @@ public:
     , Title(Title) {
   }
 
-  const char *getName() const {
+  const char *getName() const override {
     return "print dyno-stats after optimizations";
   }
 

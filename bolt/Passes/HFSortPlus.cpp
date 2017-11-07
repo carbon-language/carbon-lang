@@ -116,10 +116,7 @@ public:
 
   void dump(const Cluster *A) const {
     outs() << "Cluster " << A->id() << ":";
-    forallAdjacent(A,
-                   [this,A](const Cluster *B) {
-                     outs() << " " << B->id();
-                   });
+    forallAdjacent(A, [](const Cluster *B) { outs() << " " << B->id(); });
   }
 
   void dump() const {
