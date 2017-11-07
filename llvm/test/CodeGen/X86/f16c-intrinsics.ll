@@ -29,6 +29,32 @@ define <4 x float> @test_x86_vcvtph2ps_128(<8 x i16> %a0) {
 }
 declare <4 x float> @llvm.x86.vcvtph2ps.128(<8 x i16>) nounwind readonly
 
+define <4 x float> @test_x86_vcvtph2ps_128_m(<8 x i16>* nocapture %a) {
+; X32-LABEL: test_x86_vcvtph2ps_128_m:
+; X32:       # BB#0:
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax # encoding: [0x8b,0x44,0x24,0x04]
+; X32-NEXT:    vcvtph2ps (%eax), %xmm0 # encoding: [0xc4,0xe2,0x79,0x13,0x00]
+; X32-NEXT:    retl # encoding: [0xc3]
+;
+; X64-LABEL: test_x86_vcvtph2ps_128_m:
+; X64:       # BB#0:
+; X64-NEXT:    vcvtph2ps (%rdi), %xmm0 # encoding: [0xc4,0xe2,0x79,0x13,0x07]
+; X64-NEXT:    retq # encoding: [0xc3]
+;
+; X32-AVX512VL-LABEL: test_x86_vcvtph2ps_128_m:
+; X32-AVX512VL:       # BB#0:
+; X32-AVX512VL-NEXT:    movl {{[0-9]+}}(%esp), %eax # encoding: [0x8b,0x44,0x24,0x04]
+; X32-AVX512VL-NEXT:    vcvtph2ps (%eax), %xmm0 # EVEX TO VEX Compression encoding: [0xc4,0xe2,0x79,0x13,0x00]
+; X32-AVX512VL-NEXT:    retl # encoding: [0xc3]
+;
+; X64-AVX512VL-LABEL: test_x86_vcvtph2ps_128_m:
+; X64-AVX512VL:       # BB#0:
+; X64-AVX512VL-NEXT:    vcvtph2ps (%rdi), %xmm0 # EVEX TO VEX Compression encoding: [0xc4,0xe2,0x79,0x13,0x07]
+; X64-AVX512VL-NEXT:    retq # encoding: [0xc3]
+  %load = load <8 x i16>, <8 x i16>* %a
+  %res = call <4 x float> @llvm.x86.vcvtph2ps.128(<8 x i16> %load) ; <<4 x float>> [#uses=1]
+  ret <4 x float> %res
+}
 
 define <8 x float> @test_x86_vcvtph2ps_256(<8 x i16> %a0) {
 ; X32-LABEL: test_x86_vcvtph2ps_256:
