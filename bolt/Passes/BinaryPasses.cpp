@@ -516,7 +516,7 @@ void FixupBranches::runOnFunctions(
   std::set<uint64_t> &) {
   for (auto &It : BFs) {
     auto &Function = It.second;
-    if (shouldOptimize(Function)) {
+    if (opts::Relocs || shouldOptimize(Function)) {
       Function.fixBranches();
     }
   }
