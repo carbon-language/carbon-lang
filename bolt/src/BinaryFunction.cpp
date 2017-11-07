@@ -55,9 +55,10 @@ extern bool shouldProcess(const BinaryFunction &);
 extern cl::opt<bool> UpdateDebugSections;
 extern cl::opt<unsigned> Verbosity;
 
-static cl::opt<bool>
+cl::opt<bool>
 AlignBlocks("align-blocks",
-  cl::desc("try to align BBs inserting nops"),
+  cl::desc("align basic blocks"),
+  cl::init(false),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -73,6 +74,13 @@ AlignMacroOpFusion("align-macro-fusion",
                "always align instructions to allow macro-fusion")),
   cl::ZeroOrMore,
   cl::cat(BoltRelocCategory));
+
+cl::opt<bool>
+PreserveBlocksAlignment("preserve-blocks-alignment",
+  cl::desc("try to preserve basic block alignment"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 DotToolTipCode("dot-tooltip-code",
@@ -1603,7 +1611,7 @@ bool BinaryFunction::buildCFG() {
       // Always create new BB at branch destination.
       PrevBB = InsertBB;
       InsertBB = addBasicBlock(LI->first, LI->second,
-                               /* DeriveAlignment = */ IsLastInstrNop);
+                               opts::PreserveBlocksAlignment && IsLastInstrNop);
       if (hasEntryPointAtOffset(Offset))
         InsertBB->setEntryPoint();
       if (PrevBB)
@@ -1631,7 +1639,8 @@ bool BinaryFunction::buildCFG() {
       } else {
         InsertBB = addBasicBlock(Offset,
                                  BC.Ctx->createTempSymbol("FT", true),
-                                 /* DeriveAlignment = */ IsLastInstrNop);
+                                 opts::PreserveBlocksAlignment &&
+                                   IsLastInstrNop);
         updateOffset(LastInstrOffset);
       }
     }
@@ -2195,8 +2204,11 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {
     if (EmitColdPart != BB->isCold())
       continue;
 
-    if (opts::AlignBlocks && BB->getAlignment() > 1)
-      Streamer.EmitCodeAlignment(BB->getAlignment());
+    if ((opts::AlignBlocks || opts::PreserveBlocksAlignment)
+        && BB->getAlignment() > 1) {
+      Streamer.EmitCodeAlignment(BB->getAlignment(),
+                                 BB->getAlignmentMaxBytes());
+    }
     Streamer.EmitLabel(BB->getLabel());
 
     // Check if special alignment for macro-fusion is needed.

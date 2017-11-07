@@ -18,7 +18,18 @@ namespace llvm {
 namespace bolt {
 
 class AlignerPass : public BinaryFunctionPass {
- public:
+private:
+
+  /// Stats for usage of max bytes for basic block alignment.
+  std::vector<uint32_t> AlignHistogram;
+
+  /// Stats: execution count of blocks that were aligned.
+  uint64_t AlignedBlocksCount{0};
+
+  /// Assign alignment to basic blocks based on profile.
+  void alignBlocks(BinaryFunction &Function);
+
+public:
   explicit AlignerPass() : BinaryFunctionPass(false) {}
 
   const char *getName() const override {

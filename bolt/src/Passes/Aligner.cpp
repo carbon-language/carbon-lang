@@ -11,16 +11,34 @@
 
 #include "Aligner.h"
 
+#define DEBUG_TYPE "bolt-aligner"
+
 using namespace llvm;
 
 namespace opts {
+
 extern cl::OptionCategory BoltOptCategory;
 
-cl::opt<bool>
-UseCompactAligner("use-compact-aligner",
-  cl::desc("Use compact approach for aligning functions"),
-  cl::init(false),
+extern cl::opt<bool> AlignBlocks;
+extern cl::opt<bool> PreserveBlocksAlignment;
+
+cl::opt<unsigned>
+AlignBlocksMinSize("align-blocks-min-size",
+  cl::desc("minimal size of the basic block that should be aligned"),
+  cl::init(0),
   cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+cl::opt<unsigned>
+AlignBlocksThreshold("align-blocks-threshold",
+  cl::desc("align only blocks with frequency larger than containing function "
+           "execution frequency specified in percent. E.g. 1000 means aligning "
+           "blocks that are 10 times more frequently executed than the "
+           "containing function."),
+  cl::init(800),
+  cl::ZeroOrMore,
+  cl::Hidden,
   cl::cat(BoltOptCategory));
 
 cl::opt<unsigned>
@@ -34,6 +52,20 @@ cl::opt<unsigned>
 AlignFunctionsMaxBytes("align-functions-max-bytes",
   cl::desc("maximum number of bytes to use to align functions"),
   cl::init(32),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+cl::opt<unsigned>
+BlockAlignment("block-alignment",
+  cl::desc("boundary to use for alignment of basic blocks"),
+  cl::init(16),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+cl::opt<bool>
+UseCompactAligner("use-compact-aligner",
+  cl::desc("Use compact approach for aligning functions"),
+  cl::init(false),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -56,9 +88,11 @@ void alignMaxBytes(BinaryFunction &Function) {
 // the fuction by not more than the minimum over
 // -- the size of the function
 // -- the specified number of bytes
-void alignCompact(BinaryContext &BC, BinaryFunction &Function) {
+void alignCompact(BinaryFunction &Function) {
+  const auto &BC = Function.getBinaryContext();
   size_t HotSize = 0;
   size_t ColdSize = 0;
+
   for (const auto *BB : Function.layout()) {
     if (BB->isCold())
       ColdSize += BC.computeCodeSize(BB->begin(), BB->end());
@@ -80,19 +114,74 @@ void alignCompact(BinaryContext &BC, BinaryFunction &Function) {
 
 } // end anonymous namespace
 
+void AlignerPass::alignBlocks(BinaryFunction &Function) {
+  if (!Function.hasValidProfile() || !Function.isSimple())
+    return;
+
+  const auto &BC = Function.getBinaryContext();
+
+  const auto FuncCount = std::max(1UL, Function.getKnownExecutionCount());
+  BinaryBasicBlock *PrevBB{nullptr};
+  for (auto *BB : Function.layout()) {
+    auto Count = BB->getKnownExecutionCount();
+
+    if (Count <= FuncCount * opts::AlignBlocksThreshold / 100) {
+      PrevBB = BB;
+      continue;
+    }
+
+    uint64_t FTCount = 0;
+    if (PrevBB && PrevBB->getFallthrough() == BB) {
+      FTCount = PrevBB->getBranchInfo(*BB).Count;
+    }
+    PrevBB = BB;
+
+    if (Count < FTCount * 2)
+      continue;
+
+    const auto BlockSize = BC.computeCodeSize(BB->begin(), BB->end());
+    const auto BytesToUse = std::min(opts::BlockAlignment - 1UL, BlockSize);
+
+    if (opts::AlignBlocksMinSize && BlockSize < opts::AlignBlocksMinSize)
+      continue;
+
+    BB->setAlignment(opts::BlockAlignment);
+    BB->setAlignmentMaxBytes(BytesToUse);
+
+    // Update stats.
+    AlignHistogram[BytesToUse]++;
+    AlignedBlocksCount += BB->getKnownExecutionCount();
+  }
+}
+
 void AlignerPass::runOnFunctions(BinaryContext &BC,
                                  std::map<uint64_t, BinaryFunction> &BFs,
                                  std::set<uint64_t> &LargeFunctions) {
   if (!BC.HasRelocations)
     return;
 
+  AlignHistogram.resize(opts::BlockAlignment);
+
   for (auto &It : BFs) {
     auto &Function = It.second;
+
     if (opts::UseCompactAligner)
-      alignCompact(BC, Function);
+      alignCompact(Function);
     else
       alignMaxBytes(Function);
+
+    if (opts::AlignBlocks && !opts::PreserveBlocksAlignment)
+      alignBlocks(Function);
   }
+
+  DEBUG(
+    dbgs() << "BOLT-DEBUG: max bytes per basic block alignment distribution:\n";
+    for (unsigned I = 1; I < AlignHistogram.size(); ++I) {
+      dbgs() << "  " << I << " : " << AlignHistogram[I] << '\n';
+    }
+    dbgs() << "BOLT-DEBUG: total execution count of aligned blocks: "
+           << AlignedBlocksCount << '\n';
+  );
 }
 
 } // end namespace bolt

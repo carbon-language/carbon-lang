@@ -80,7 +80,10 @@ private:
   std::pair<uint32_t, uint32_t> InputRange{INVALID_OFFSET, INVALID_OFFSET};
 
   /// Alignment requirements for the block.
-  uint64_t Alignment{1};
+  uint32_t Alignment{1};
+
+  /// Maximum number of bytes to use for alignment of the block.
+  uint32_t AlignmentMaxBytes{0};
 
   /// Number of times this basic block was executed.
   uint64_t ExecutionCount{COUNT_NO_PROFILE};
@@ -499,13 +502,23 @@ public:
   }
 
   /// Set minimum alignment for the basic block.
-  void setAlignment(uint64_t Align) {
+  void setAlignment(uint32_t Align) {
     Alignment = Align;
   }
 
   /// Return required alignment for the block.
-  uint64_t getAlignment() const {
+  uint32_t getAlignment() const {
     return Alignment;
+  }
+
+  /// Set the maximum number of bytes to use for the block alignment.
+  void setAlignmentMaxBytes(uint32_t Value) {
+    AlignmentMaxBytes = Value;
+  }
+
+  /// Return the maximum number of bytes to use for the block alignment.
+  uint32_t getAlignmentMaxBytes() const {
+    return AlignmentMaxBytes;
   }
 
   /// Adds block to successor list, and also updates predecessor list for
