@@ -783,6 +783,11 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
       setOperationAction(ISD::SRL, MVT::v1i128, Legal);
       setOperationAction(ISD::SRA, MVT::v1i128, Expand);
     }
+
+    if (Subtarget.hasP9Altivec()) {
+      setOperationAction(ISD::INSERT_VECTOR_ELT, MVT::v8i16, Custom);
+      setOperationAction(ISD::INSERT_VECTOR_ELT, MVT::v16i8, Custom);
+    }
   }
 
   if (Subtarget.hasQPX()) {
@@ -8842,11 +8847,29 @@ SDValue PPCTargetLowering::LowerINSERT_VECTOR_ELT(SDValue Op,
                                                   SelectionDAG &DAG) const {
   assert(Op.getOpcode() == ISD::INSERT_VECTOR_ELT &&
          "Should only be called for ISD::INSERT_VECTOR_ELT");
+
   ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(2));
   // We have legal lowering for constant indices but not for variable ones.
-  if (C)
-    return Op;
-  return SDValue();
+  if (!C)
+    return SDValue();
+
+  EVT VT = Op.getValueType();
+  SDLoc dl(Op);
+  SDValue V1 = Op.getOperand(0);
+  SDValue V2 = Op.getOperand(1);
+  // We can use MTVSRZ + VECINSERT for v8i16 and v16i8 types.
+  if (VT == MVT::v8i16 || VT == MVT::v16i8) {
+    SDValue Mtvsrz = DAG.getNode(PPCISD::MTVSRZ, dl, VT, V2);
+    unsigned BytesInEachElement = VT.getVectorElementType().getSizeInBits() / 8;
+    unsigned InsertAtElement = C->getZExtValue();
+    unsigned InsertAtByte = InsertAtElement * BytesInEachElement;
+    if (Subtarget.isLittleEndian()) {
+      InsertAtByte = (16 - BytesInEachElement) - InsertAtByte;
+    }
+    return DAG.getNode(PPCISD::VECINSERT, dl, VT, V1, Mtvsrz,
+                       DAG.getConstant(InsertAtByte, dl, MVT::i32));
+  }
+  return Op;
 }
 
 SDValue PPCTargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op,
