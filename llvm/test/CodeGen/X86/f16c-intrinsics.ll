@@ -77,7 +77,7 @@ define <8 x float> @test_x86_vcvtph2ps_256_m(<8 x i16>* nocapture %a) nounwind {
 ; X64-AVX512VL:       # BB#0:
 ; X64-AVX512VL-NEXT:    vcvtph2ps (%rdi), %ymm0 # EVEX TO VEX Compression encoding: [0xc4,0xe2,0x7d,0x13,0x07]
 ; X64-AVX512VL-NEXT:    retq # encoding: [0xc3]
-  %load = load <8 x i16>, <8 x i16>* %a, align 16
+  %load = load <8 x i16>, <8 x i16>* %a
   %res = tail call <8 x float> @llvm.x86.vcvtph2ps.256(<8 x i16> %load)
   ret <8 x float> %res
 }
