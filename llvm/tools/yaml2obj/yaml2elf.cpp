@@ -74,13 +74,6 @@ public:
     Idx = I->getValue();
     return false;
   }
-  /// asserts if name is not present in the map
-  unsigned get(StringRef Name) const {
-    unsigned Idx = 0;
-    assert(!lookup(Name, Idx) && "Expected section not found in index");
-    return Idx;
-  }
-  unsigned size() const { return Map.size(); }
 };
 } // end anonymous namespace
 
@@ -151,21 +144,19 @@ class ELFState {
                            ContiguousBlobAccumulator &CBA);
 
   // - SHT_NULL entry (placed first, i.e. 0'th entry)
-  // - symbol table (.symtab) (defaults to third to last)
-  // - string table (.strtab) (defaults to second to last)
-  // - section header string table (.shstrtab) (defaults to last)
-  unsigned getDotSymTabSecNo() const { return SN2I.get(".symtab"); }
-  unsigned getDotStrTabSecNo() const { return SN2I.get(".strtab"); }
-  unsigned getDotShStrTabSecNo() const { return SN2I.get(".shstrtab"); }
-  unsigned getSectionCount() const { return SN2I.size() + 1; }
+  // - symbol table (.symtab) (placed third to last)
+  // - string table (.strtab) (placed second to last)
+  // - section header string table (.shstrtab) (placed last)
+  unsigned getDotSymTabSecNo() const { return Doc.Sections.size() + 1; }
+  unsigned getDotStrTabSecNo() const { return Doc.Sections.size() + 2; }
+  unsigned getDotShStrTabSecNo() const { return Doc.Sections.size() + 3; }
+  unsigned getSectionCount() const { return Doc.Sections.size() + 4; }
 
   ELFState(const ELFYAML::Object &D) : Doc(D) {}
 
 public:
   static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc);
 };
-
-static const char * const ImplicitSecNames[] = {".symtab", ".strtab", ".shstrtab"};
 } // end anonymous namespace
 
 template <class ELFT>
@@ -219,6 +210,10 @@ bool ELFState<ELFT>::initSectionHeaders(std::vector<Elf_Shdr> &SHeaders,
   Elf_Shdr SHeader;
   zero(SHeader);
   SHeaders.push_back(SHeader);
+
+  for (const auto &Sec : Doc.Sections)
+    DotShStrtab.add(Sec->Name);
+  DotShStrtab.finalize();
 
   for (const auto &Sec : Doc.Sections) {
     zero(SHeader);
@@ -552,6 +547,10 @@ bool ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
 }
 
 template <class ELFT> bool ELFState<ELFT>::buildSectionIndex() {
+  SN2I.addName(".symtab", getDotSymTabSecNo());
+  SN2I.addName(".strtab", getDotStrTabSecNo());
+  SN2I.addName(".shstrtab", getDotShStrTabSecNo());
+
   for (unsigned i = 0, e = Doc.Sections.size(); i != e; ++i) {
     StringRef Name = Doc.Sections[i]->Name;
     if (Name.empty())
@@ -562,19 +561,7 @@ template <class ELFT> bool ELFState<ELFT>::buildSectionIndex() {
              << "' at YAML section number " << i << ".\n";
       return false;
     }
-    DotShStrtab.add(Name);
   }
-
-  auto SecNo = 1 + Doc.Sections.size();
-  // Add special sections after input sections, if necessary.
-  for (const auto &Name : ImplicitSecNames)
-    if (!SN2I.addName(Name, SecNo)) {
-      // Account for this section, since it wasn't in the Doc
-      ++SecNo;
-      DotShStrtab.add(Name);
-    }
-
-  DotShStrtab.finalize();
   return true;
 }
 
@@ -621,23 +608,32 @@ int ELFState<ELFT>::writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
                                            Header.e_shentsize * Header.e_shnum;
   ContiguousBlobAccumulator CBA(SectionContentBeginOffset);
 
+  // Doc might not contain .symtab, .strtab and .shstrtab sections,
+  // but we will emit them, so make sure to add them to ShStrTabSHeader.
+  State.DotShStrtab.add(".symtab");
+  State.DotShStrtab.add(".strtab");
+  State.DotShStrtab.add(".shstrtab");
+
   std::vector<Elf_Shdr> SHeaders;
-  SHeaders.reserve(State.SN2I.size());
   if(!State.initSectionHeaders(SHeaders, CBA))
     return 1;
 
-  // Populate SHeaders with implicit sections not present in the Doc
-  for (const auto &Name : ImplicitSecNames)
-    if (State.SN2I.get(Name) >= SHeaders.size())
-      SHeaders.push_back({});
+  // .symtab section.
+  Elf_Shdr SymtabSHeader;
+  State.initSymtabSectionHeader(SymtabSHeader, CBA);
+  SHeaders.push_back(SymtabSHeader);
 
-  // Initialize the implicit sections
-  auto Index = State.SN2I.get(".symtab");
-  State.initSymtabSectionHeader(SHeaders[Index], CBA);
-  Index = State.SN2I.get(".strtab");
-  State.initStrtabSectionHeader(SHeaders[Index], ".strtab", State.DotStrtab, CBA);
-  Index = State.SN2I.get(".shstrtab");
-  State.initStrtabSectionHeader(SHeaders[Index], ".shstrtab", State.DotShStrtab, CBA);
+  // .strtab string table header.
+  Elf_Shdr DotStrTabSHeader;
+  State.initStrtabSectionHeader(DotStrTabSHeader, ".strtab", State.DotStrtab,
+                                CBA);
+  SHeaders.push_back(DotStrTabSHeader);
+
+  // .shstrtab string table header.
+  Elf_Shdr ShStrTabSHeader;
+  State.initStrtabSectionHeader(ShStrTabSHeader, ".shstrtab", State.DotShStrtab,
+                                CBA);
+  SHeaders.push_back(ShStrTabSHeader);
 
   // Now we can decide segment offsets
   State.setProgramHeaderLayout(PHeaders, SHeaders);

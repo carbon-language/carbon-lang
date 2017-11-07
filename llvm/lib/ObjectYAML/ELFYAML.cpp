@@ -388,7 +388,7 @@ void ScalarEnumerationTraits<ELFYAML::ELF_SHT>::enumeration(
 #define ECase(X) IO.enumCase(Value, #X, ELF::X)
   ECase(SHT_NULL);
   ECase(SHT_PROGBITS);
-  ECase(SHT_SYMTAB);
+  // No SHT_SYMTAB. Use the top-level `Symbols` key instead.
   // FIXME: Issue a diagnostic with this information.
   ECase(SHT_STRTAB);
   ECase(SHT_RELA);
