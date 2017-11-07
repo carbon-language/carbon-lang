@@ -56,7 +56,7 @@ void elf::unlinkAsync(StringRef Path) {
   // Instead we open the file and unlink it on this thread. The unlink is fast
   // since the open fd guarantees that it is not removing the last reference.
   int FD;
-  if (std::error_code EC = sys::fs::openFileForRead(Path, FD))
+  if (sys::fs::openFileForRead(Path, FD))
     return;
 
   sys::fs::remove(Path);
