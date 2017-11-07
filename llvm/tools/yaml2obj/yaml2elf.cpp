@@ -76,7 +76,7 @@ public:
   }
   /// asserts if name is not present in the map
   unsigned get(StringRef Name) const {
-    unsigned Idx;
+    unsigned Idx = 0;
     assert(!lookup(Name, Idx) && "Expected section not found in index");
     return Idx;
   }
