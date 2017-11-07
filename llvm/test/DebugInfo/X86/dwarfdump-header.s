@@ -2,9 +2,8 @@
 # We have a representative set of units: v4 CU, v5 CU, v4 TU, v5 split TU.
 # We have v4 and v5 line-table headers.
 #
-# To generate the test object:
-# llvm-mc -triple x86_64-unknown-linux dwarfdump-header.s -filetype=obj \
-#         -o dwarfdump-header.elf-x86-64
+# RUN: llvm-mc -triple x86_64-unknown-linux %s -filetype=obj -o - | \
+# RUN: llvm-dwarfdump -v - | FileCheck %s
 
         .section .debug_str,"MS",@progbits,1
 str_producer:
@@ -81,6 +80,7 @@ dwo_TU_5:
         .byte 0x00  # EOM(3)
 
         .section .debug_info,"",@progbits
+# CHECK-LABEL: .debug_info contents:
 
 # DWARF v4 CU header. V4 CU headers all look the same so we do only one.
         .long  CU_4_end-CU_4_version  # Length of Unit
@@ -95,6 +95,9 @@ CU_4_version:
         .long LH_4_start
         .byte 0 # NULL
 CU_4_end:
+
+# CHECK: 0x00000000: Compile Unit: length = 0x00000015 version = 0x0004 abbr_offset = 0x0000 addr_size = 0x08 (next unit at 0x00000019)
+# CHECK: 0x0000000b: DW_TAG_compile_unit
 
 # DWARF v5 normal CU header.
         .long  CU_5_end-CU_5_version  # Length of Unit
@@ -111,7 +114,11 @@ CU_5_version:
         .byte 0 # NULL
 CU_5_end:
 
+# CHECK: 0x00000019: Compile Unit: length = 0x00000016 version = 0x0005 unit_type = DW_UT_compile abbr_offset = 0x0000 addr_size = 0x08 (next unit at 0x00000033)
+# CHECK: 0x00000025: DW_TAG_compile_unit
+
         .section .debug_types,"",@progbits
+# CHECK-LABEL: .debug_types contents:
 
 # DWARF v4 Type unit header. Normal/split are identical so we do only one.
 TU_4_start:
@@ -133,8 +140,12 @@ TU_4_type:
         .byte 0 # NULL
 TU_4_end:
 
+# CHECK: 0x00000000: Type Unit: length = 0x0000001f version = 0x0004 abbr_offset = 0x0000 addr_size = 0x08 name = 'V4_type_unit' type_signature = 0x0011223344556677 type_offset = 0x001c (next unit at 0x00000023)
+# CHECK: 0x00000017: DW_TAG_type_unit
+
         .section .debug_types.dwo,"",@progbits
 # FIXME: DWARF v5 wants type units in .debug_info[.dwo] not .debug_types[.dwo].
+# CHECK: .debug_types.dwo contents:
 
 # DWARF v5 split type unit header.
 TU_split_5_start:
@@ -157,7 +168,12 @@ TU_split_5_type:
         .byte 0 # NULL
 TU_split_5_end:
 
+# CHECK: 0x00000000: Type Unit: length = 0x00000020 version = 0x0005 unit_type = DW_UT_split_type abbr_offset = 0x0000 addr_size = 0x08 name = 'V5_split_type_unit' type_signature = 0x8899aabbccddeeff type_offset = 0x001d (next unit at 0x00000024)
+# CHECK: 0x00000018: DW_TAG_type_unit
+
         .section .debug_line,"",@progbits
+# CHECK-LABEL: .debug_line contents:
+
 # DWARF v4 line-table header.
 LH_4_start:
         .long   LH_4_end-LH_4_version   # Length of Unit
@@ -200,6 +216,18 @@ LH_4_params:
 LH_4_header_end:
         # Line number program, which is empty.
 LH_4_end:
+
+# CHECK: Line table prologue:
+# CHECK: version: 4
+# CHECK-NOT: address_size
+# CHECK-NOT: seg_select_size
+# CHECK: max_ops_per_inst: 1
+# CHECK: include_directories[  1] = 'Directory4a'
+# CHECK: include_directories[  2] = 'Directory4b'
+# CHECK-NOT: include_directories
+# CHECK: file_names[  1]    1 0x00000041 0x00000042 File4a{{$}}
+# CHECK: file_names[  2]    0 0x00000043 0x00000044 File4b{{$}}
+# CHECK-NOT: file_names
 
 # DWARF v5 line-table header.
 LH_5_start:
@@ -259,3 +287,15 @@ LH_5_params:
 LH_5_header_end:
         # Line number program, which is empty.
 LH_5_end:
+
+# CHECK: Line table prologue:
+# CHECK: version: 5
+# CHECK: address_size: 8
+# CHECK: seg_select_size: 0
+# CHECK: max_ops_per_inst: 1
+# CHECK: include_directories[  1] = 'Directory5a'
+# CHECK: include_directories[  2] = 'Directory5b'
+# CHECK-NOT: include_directories
+# CHECK: file_names[  1]    1 0x00000051 0x00000052 File5a{{$}}
+# CHECK: file_names[  2]    2 0x00000053 0x00000054 File5b{{$}}
+# CHECK-NOT: file_names
