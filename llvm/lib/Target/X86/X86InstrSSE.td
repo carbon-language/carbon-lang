@@ -7692,8 +7692,10 @@ multiclass f16c_ph2ps<RegisterClass RC, X86MemOperand x86memop> {
              T8PD, VEX, Sched<[WriteCvtF2F]>;
   let hasSideEffects = 0, mayLoad = 1 in
   def rm : I<0x13, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
-             "vcvtph2ps\t{$src, $dst|$dst, $src}", []>, T8PD, VEX,
-             Sched<[WriteCvtF2FLd]>;
+             "vcvtph2ps\t{$src, $dst|$dst, $src}",
+             [(set RC:$dst, (X86cvtph2ps (bc_v8i16
+                                          (loadv2i64 addr:$src))))]>,
+             T8PD, VEX, Sched<[WriteCvtF2FLd]>;
 }
 
 multiclass f16c_ps2ph<RegisterClass RC, X86MemOperand x86memop, Intrinsic Int> {
