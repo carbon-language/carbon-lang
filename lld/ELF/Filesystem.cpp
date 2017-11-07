@@ -20,6 +20,7 @@
 #if defined(HAVE_UNISTD_H)
 #include <unistd.h>
 #endif
+#include <thread>
 
 using namespace llvm;
 
@@ -61,7 +62,7 @@ void elf::unlinkAsync(StringRef Path) {
   sys::fs::remove(Path);
 
   // close and therefore remove TempPath in background.
-  runBackground([=] { ::close(FD); });
+  std::thread([=] { ::close(FD); }).detach();
 #endif
 }
 
