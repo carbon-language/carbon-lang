@@ -14,6 +14,7 @@
 #include "BinaryFunction.h"
 #include "DataReader.h"
 #include "Passes/MCF.h"
+#include "llvm/ADT/edit_distance.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -2510,32 +2511,8 @@ bool BinaryFunction::hasLayoutChanged() const {
 }
 
 uint64_t BinaryFunction::getEditDistance() const {
-  const auto LayoutSize = BasicBlocksPreviousLayout.size();
-  if (LayoutSize < 2) {
-    return 0;
-  }
-
-  std::vector<std::vector<uint64_t>> ChangeMatrix(
-      LayoutSize + 1, std::vector<uint64_t>(LayoutSize + 1));
-
-  for (uint64_t I = 0; I <= LayoutSize; ++I) {
-    ChangeMatrix[I][0] = I;
-    ChangeMatrix[0][I] = I;
-  }
-
-  for (uint64_t I = 1; I <= LayoutSize; ++I) {
-    for (uint64_t J = 1; J <= LayoutSize; ++J) {
-      if (BasicBlocksPreviousLayout[I] != BasicBlocksLayout[J]) {
-        ChangeMatrix[I][J] =
-            std::min(std::min(ChangeMatrix[I - 1][J], ChangeMatrix[I][J - 1]),
-                     ChangeMatrix[I - 1][J - 1]) + 1;
-      } else {
-        ChangeMatrix[I][J] = ChangeMatrix[I - 1][J - 1];
-      }
-    }
-  }
-
-  return ChangeMatrix[LayoutSize][LayoutSize];
+  return ComputeEditDistance<BinaryBasicBlock *>(BasicBlocksPreviousLayout,
+                                                 BasicBlocksLayout);
 }
 
 void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {

@@ -552,7 +552,7 @@ void RewriteInstance::updateGdbIndexSection() {
 
     OffsetToIndexMap[Offset] = Index;
   }
-  
+
   // Ignore old address table.
   const auto OldAddressTableSize = SymbolTableOffset - AddressTableOffset;
   Data += OldAddressTableSize;

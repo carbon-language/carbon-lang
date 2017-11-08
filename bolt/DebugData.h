@@ -113,8 +113,8 @@ public:
     return CUAddressRanges;
   }
 
-  SmallVectorImpl<char> *finalize() {
-    return RangesBuffer.release();
+  std::unique_ptr<SmallVectorImpl<char>> finalize() {
+    return std::unique_ptr<SmallVectorImpl<char>>(RangesBuffer.release());
   }
 
 private:
@@ -149,8 +149,8 @@ public:
 
   uint64_t getEmptyListOffset() const { return EmptyListOffset; }
 
-  SmallVectorImpl<char> *finalize() {
-    return LocBuffer.release();
+  std::unique_ptr<SmallVectorImpl<char>> finalize() {
+    return std::unique_ptr<SmallVectorImpl<char>>(LocBuffer.release());
   }
 
 private:
