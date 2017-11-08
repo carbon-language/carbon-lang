@@ -88,3 +88,9 @@ void RISCVRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 unsigned RISCVRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   return RISCV::X8;
 }
+
+const uint32_t *
+RISCVRegisterInfo::getCallPreservedMask(const MachineFunction & /*MF*/,
+                                        CallingConv::ID /*CC*/) const {
+  return CSR_RegMask;
+}

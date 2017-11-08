@@ -68,6 +68,9 @@ bool llvm::LowerRISCVMachineOperandToMCOperand(const MachineOperand &MO,
       return false;
     MCOp = MCOperand::createReg(MO.getReg());
     break;
+  case MachineOperand::MO_RegisterMask:
+    // Regmasks are like implicit defs.
+    return false;
   case MachineOperand::MO_Immediate:
     MCOp = MCOperand::createImm(MO.getImm());
     break;
