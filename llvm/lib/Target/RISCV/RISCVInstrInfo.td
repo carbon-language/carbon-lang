@@ -311,3 +311,31 @@ def : PatGprSimm12<setult, SLTIU>;
 let isBarrier = 1, isReturn = 1, isTerminator = 1 in
 def PseudoRET : Pseudo<(outs), (ins), [(RetFlag)]>,
                 PseudoInstExpansion<(JALR X0, X1, 0)>;
+
+/// Loads
+
+multiclass LdPat<PatFrag LoadOp, RVInst Inst> {
+  def : Pat<(LoadOp GPR:$rs1), (Inst GPR:$rs1, 0)>;
+  def : Pat<(LoadOp (add GPR:$rs1, simm12:$imm12)),
+            (Inst GPR:$rs1, simm12:$imm12)>;
+}
+
+defm : LdPat<sextloadi8, LB>;
+defm : LdPat<extloadi8, LB>;
+defm : LdPat<sextloadi16, LH>;
+defm : LdPat<extloadi16, LH>;
+defm : LdPat<load, LW>;
+defm : LdPat<zextloadi8, LBU>;
+defm : LdPat<zextloadi16, LHU>;
+
+/// Stores
+
+multiclass StPat<PatFrag StoreOp, RVInst Inst> {
+  def : Pat<(StoreOp GPR:$rs2, GPR:$rs1), (Inst GPR:$rs2, GPR:$rs1, 0)>;
+  def : Pat<(StoreOp GPR:$rs2, (add GPR:$rs1, simm12:$imm12)),
+            (Inst GPR:$rs2, GPR:$rs1, simm12:$imm12)>;
+}
+
+defm : StPat<truncstorei8, SB>;
+defm : StPat<truncstorei16, SH>;
+defm : StPat<store, SW>;
