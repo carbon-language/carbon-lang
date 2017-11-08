@@ -121,8 +121,8 @@ void WriteObjectFile(const Object<ELFT> &Obj, StringRef File) {
   else
     Buffer = std::move(*BufferOrErr);
   Obj.write(*Buffer);
-  if (auto EC = Buffer->commit())
-    reportError(File, EC);
+  if (auto E = Buffer->commit())
+    reportError(File, errorToErrorCode(std::move(E)));
 }
 
 template <class ELFT>
