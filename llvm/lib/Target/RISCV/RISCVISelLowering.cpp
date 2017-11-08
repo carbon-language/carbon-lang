@@ -55,6 +55,7 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
   // TODO: add all necessary setOperationAction calls.
   setOperationAction(ISD::GlobalAddress, XLenVT, Custom);
 
+  setOperationAction(ISD::BR_CC, XLenVT, Expand);
   setBooleanContents(ZeroOrOneBooleanContent);
 
   // Function alignments (log2).
