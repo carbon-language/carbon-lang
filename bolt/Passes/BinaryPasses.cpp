@@ -682,7 +682,11 @@ bool SimplifyConditionalTailCalls::shouldRewriteBranch(
     const BinaryBasicBlock *PredBB,
     const MCInst &CondBranch,
     const BinaryBasicBlock *BB,
-    const bool DirectionFlag) {
+    const bool DirectionFlag
+) {
+  if (BeenOptimized.count(PredBB))
+    return false;
+
   const bool IsForward = BinaryFunction::isForwardBranch(PredBB, BB);
 
   if (IsForward)
@@ -725,9 +729,8 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
   uint64_t NumLocalCTCs = 0;
   uint64_t LocalCTCTakenCount = 0;
   uint64_t LocalCTCExecCount = 0;
-  std::vector<std::tuple<BinaryBasicBlock *,
-                         BinaryBasicBlock *,
-                         const BinaryBasicBlock *>> NeedsUncondBranch;
+  std::vector<std::pair<BinaryBasicBlock *,
+                        const BinaryBasicBlock *>> NeedsUncondBranch;
 
   // Will block be deleted by UCE?
   auto isValid = [](const BinaryBasicBlock *BB) {
@@ -792,6 +795,9 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
       if (!shouldRewriteBranch(PredBB, *CondBranch, BB, DirectionFlag))
         continue;
 
+      // Record this block so that we don't try to optimize it twice.
+      BeenOptimized.insert(PredBB);
+
       if (CondSucc != BB) {
         // Patch the new target address into the conditional branch.
         MIA->reverseBranchCondition(*CondBranch, CalleeSymbol, BC.Ctx.get());
@@ -799,7 +805,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
         // the target for the unconditional branch or add a unconditional
         // branch to the old target.  This has to be done manually since
         // fixupBranches is not called after SCTC.
-        NeedsUncondBranch.emplace_back(std::make_tuple(BB, PredBB, CondSucc));
+        NeedsUncondBranch.emplace_back(std::make_pair(PredBB, CondSucc));
         // Swap branch statistics after swapping the branch targets.
         auto BI = PredBB->branch_info_begin();
         std::swap(*BI, *(BI + 1));
@@ -840,9 +846,8 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
   // Add unconditional branches at the end of BBs to new successors
   // as long as the successor is not a fallthrough.
   for (auto &Entry : NeedsUncondBranch) {
-    auto *BB = std::get<0>(Entry);
-    auto *PredBB = std::get<1>(Entry);
-    auto *CondSucc = std::get<2>(Entry);
+    auto *PredBB = Entry.first;
+    auto *CondSucc = Entry.second;
 
     const MCSymbol *TBB = nullptr;
     const MCSymbol *FBB = nullptr;
@@ -850,24 +855,30 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
     MCInst *UncondBranch = nullptr;
     PredBB->analyzeBranch(TBB, FBB, CondBranch, UncondBranch);
 
-    // Only add a new branch if the target is not the fall-through.
-    if (BF.getBasicBlockAfter(BB) != CondSucc || isValid(BB) ||
-        PredBB->isCold() != CondSucc->isCold()) {
-      if (UncondBranch) {
+    // Find the next valid block.  Invalid blocks will be deleted
+    // so they shouldn't be considered fallthrough targets.
+    const auto *NextBlock = BF.getBasicBlockAfter(PredBB, false);
+    while (NextBlock && !isValid(NextBlock)) {
+      NextBlock = BF.getBasicBlockAfter(NextBlock, false);
+    }
+
+    // Get the unconditional successor to this block.
+    const auto *PredSucc = PredBB->getSuccessor();
+    assert(PredSucc && "The other branch should be a tail call");
+
+    const bool HasFallthrough = (NextBlock && PredSucc == NextBlock);
+
+    if (UncondBranch) {
+      if (HasFallthrough)
+        PredBB->eraseInstruction(UncondBranch);
+      else
         MIA->replaceBranchTarget(*UncondBranch,
                                  CondSucc->getLabel(),
                                  BC.Ctx.get());
-      } else {
-        MCInst Branch;
-        auto Result = MIA->createUncondBranch(Branch,
-                                              CondSucc->getLabel(),
-                                              BC.Ctx.get());
-        (void)Result;
-        assert(Result);
-        PredBB->addInstruction(Branch);
-      }
-    } else if (UncondBranch) {
-      PredBB->eraseInstruction(UncondBranch);
+    } else if (!HasFallthrough) {
+      MCInst Branch;
+      MIA->createUncondBranch(Branch, CondSucc->getLabel(), BC.Ctx.get());
+      PredBB->addInstruction(Branch);
     }
   }
 

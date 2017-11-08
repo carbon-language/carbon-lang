@@ -276,6 +276,7 @@ class SimplifyConditionalTailCalls : public BinaryFunctionPass {
   uint64_t DeletedBlocks{0};
   uint64_t DeletedBytes{0};
   std::unordered_set<const BinaryFunction *> Modified;
+  std::set<const BinaryBasicBlock *> BeenOptimized;
 
   bool shouldRewriteBranch(const BinaryBasicBlock *PredBB,
                            const MCInst &CondBranch,
