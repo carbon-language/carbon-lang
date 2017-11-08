@@ -893,7 +893,7 @@ def PHI : Instruction {
   let OutOperandList = (outs unknown:$dst);
   let InOperandList = (ins variable_ops);
   let AsmString = "PHINODE";
-  let hasSideEffects = 1;
+  let hasSideEffects = 0;
 }
 def INLINEASM : Instruction {
   let OutOperandList = (outs);
