@@ -1238,7 +1238,7 @@ public:
 
   /// Return true if the function body is non-contiguous.
   bool isSplit() const {
-    return size() > 1 &&
+    return layout_size() &&
            layout_front()->isCold() != layout_back()->isCold();
   }
 
