@@ -1,4 +1,5 @@
 // Test coverage flag.
+// REQUIRES: system-windows
 //
 // RUN: %clang_cl -### -coverage %s -o foo/bar.o 2>&1 | FileCheck -check-prefix=CLANG-CL-COVERAGE %s
 // CLANG-CL-COVERAGE-NOT: error:
