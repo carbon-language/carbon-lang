@@ -4,6 +4,12 @@
 // RUN: not %run %t bad-alignment 2>&1 | FileCheck --check-prefix=CHECK-BAD-ALIGNMENT %s
 // RUN: %env_asan_opts=detect_container_overflow=0 %run %t crash
 //
+// RUN: %clangxx_asan -flto=thin -O %s -o %t.thinlto
+// RUN: not %run %t.thinlto crash 2>&1 | FileCheck --check-prefix=CHECK-CRASH %s
+// RUN: not %run %t.thinlto bad-bounds 2>&1 | FileCheck --check-prefix=CHECK-BAD-BOUNDS %s
+// RUN: not %run %t.thinlto bad-alignment 2>&1 | FileCheck --check-prefix=CHECK-BAD-ALIGNMENT %s
+// RUN: %env_asan_opts=detect_container_overflow=0 %run %t.thinlto crash
+//
 // Test crash due to __sanitizer_annotate_contiguous_container.
 
 #include <assert.h>
