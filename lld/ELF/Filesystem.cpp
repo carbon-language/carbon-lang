@@ -56,13 +56,12 @@ void elf::unlinkAsync(StringRef Path) {
   // Instead we open the file and unlink it on this thread. The unlink is fast
   // since the open fd guarantees that it is not removing the last reference.
   int FD;
-  if (sys::fs::openFileForRead(Path, FD))
-    return;
-
+  std::error_code EC = sys::fs::openFileForRead(Path, FD);
   sys::fs::remove(Path);
 
   // close and therefore remove TempPath in background.
-  std::thread([=] { ::close(FD); }).detach();
+  if (!EC)
+    std::thread([=] { ::close(FD); }).detach();
 #endif
 }
 
