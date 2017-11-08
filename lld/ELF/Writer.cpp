@@ -242,8 +242,8 @@ template <class ELFT> void Writer<ELFT>::run() {
   if (errorCount())
     return;
 
-  if (auto EC = Buffer->commit())
-    error("failed to write to the output file: " + EC.message());
+  if (auto E = Buffer->commit())
+    error("failed to write to the output file: " + toString(std::move(E)));
 }
 
 // Initialize Out members.

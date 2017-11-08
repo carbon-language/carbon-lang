@@ -1535,7 +1535,8 @@ llvm::Error MachOFileLayout::writeBinary(StringRef path) {
     return ec;
   writeSectionContent();
   writeLinkEditContent();
-  fob->commit();
+  if (Error E = fob->commit())
+    return E;
 
   return llvm::Error::success();
 }
