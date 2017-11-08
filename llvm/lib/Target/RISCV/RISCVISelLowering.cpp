@@ -53,6 +53,7 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
     setLoadExtAction(N, XLenVT, MVT::i1, Promote);
 
   // TODO: add all necessary setOperationAction calls.
+  setOperationAction(ISD::GlobalAddress, XLenVT, Custom);
 
   setBooleanContents(ZeroOrOneBooleanContent);
 
@@ -66,6 +67,30 @@ SDValue RISCVTargetLowering::LowerOperation(SDValue Op,
   switch (Op.getOpcode()) {
   default:
     report_fatal_error("unimplemented operand");
+  case ISD::GlobalAddress:
+    return lowerGlobalAddress(Op, DAG);
+  }
+}
+
+SDValue RISCVTargetLowering::lowerGlobalAddress(SDValue Op,
+                                                SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  EVT Ty = Op.getValueType();
+  GlobalAddressSDNode *N = cast<GlobalAddressSDNode>(Op);
+  const GlobalValue *GV = N->getGlobal();
+  int64_t Offset = N->getOffset();
+
+  if (!isPositionIndependent() && !Subtarget.is64Bit()) {
+    SDValue GAHi =
+        DAG.getTargetGlobalAddress(GV, DL, Ty, Offset, RISCVII::MO_HI);
+    SDValue GALo =
+        DAG.getTargetGlobalAddress(GV, DL, Ty, Offset, RISCVII::MO_LO);
+    SDValue MNHi = SDValue(DAG.getMachineNode(RISCV::LUI, DL, Ty, GAHi), 0);
+    SDValue MNLo =
+        SDValue(DAG.getMachineNode(RISCV::ADDI, DL, Ty, MNHi, GALo), 0);
+    return MNLo;
+  } else {
+    report_fatal_error("Unable to lowerGlobalAddress");
   }
 }
 
