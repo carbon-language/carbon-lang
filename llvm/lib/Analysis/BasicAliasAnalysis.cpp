@@ -1292,6 +1292,7 @@ AliasResult BasicAAResult::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
       if (V2Size != MemoryLocation::UnknownSize) {
         if ((uint64_t)GEP1BaseOffset < V2Size)
           return PartialAlias;
+        assert(V1Size != MemoryLocation::UnknownSize);
         return NoAlias;
       }
     } else {
