@@ -67,7 +67,7 @@ int real_sigaction(int signum, const void *act, void *oldact) {
 #define INIT_SIGACTION
 // We need to have defined REAL(sigaction) on other systems.
 DEFINE_REAL(int, sigaction, int signum, const __sanitizer_sigaction *act,
-            struct __sanitizer_sigaction *oldact)
+            __sanitizer_sigaction *oldact)
 #endif  // SANITIZER_INTERCEPT_SIGNAL_AND_SIGACTION
 
 static void InitializeSignalInterceptors() {
