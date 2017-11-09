@@ -19,6 +19,10 @@
 #include "interception/interception.h"
 #include "sanitizer_common/sanitizer_platform_interceptors.h"
 
+namespace __sanitizer {
+struct __sanitizer_sigaction;
+}
+
 namespace __asan {
 
 void InitializeAsanInterceptors();
@@ -106,8 +110,9 @@ DECLARE_REAL(char*, strncpy, char *to, const char *from, uptr size)
 DECLARE_REAL(uptr, strnlen, const char *s, uptr maxlen)
 DECLARE_REAL(char*, strstr, const char *s1, const char *s2)
 struct sigaction;
-DECLARE_REAL(int, sigaction, int signum, const struct sigaction *act,
-                             struct sigaction *oldact)
+DECLARE_REAL(int, sigaction, int signum,
+             const __sanitizer::__sanitizer_sigaction *act,
+             __sanitizer::__sanitizer_sigaction *oldact)
 
 #if !SANITIZER_MAC
 #define ASAN_INTERCEPT_FUNC(name)                                        \
