@@ -38,6 +38,17 @@ RUN: echo looooooooong > %tmp/T2/looooooooong
 RUN: %t-FullCoverageSetTest         -merge=1 %tmp/T1 %tmp/T2 -max_len=6 2>&1 | FileCheck %s --check-prefix=MAX_LEN
 MAX_LEN: MERGE-OUTER: 3 new files
 
+# Check that we respect -merge_control_file=FILE
+RUN: rm %tmp/T1/*
+RUN: cp %tmp/T0/* %tmp/T1/
+RUN: rm %tmp/MCF
+RUN: %t-FullCoverageSetTest -merge=1 -merge_control_file=%tmp/MCF %tmp/T1 %tmp/T2 2>&1 | FileCheck %s --check-prefix=MCF
+RUN: grep STARTED %tmp/MCF
+RUN: grep DONE %tmp/MCF
+MCF: MERGE-INNER: using the control file {{.*}}MCF
+MCF: MERGE-OUTER: 3 new files
+
+
 # Check that merge tolerates failures.
 RUN: rm %tmp/T1/*
 RUN: cp %tmp/T0/* %tmp/T1/
