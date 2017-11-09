@@ -1385,11 +1385,7 @@ struct FormatStyle {
   bool SortIncludes;
 
   /// \brief If ``true``, clang-format will sort using declarations.
-  /// \code
-  ///    false:                                 true:
-  ///    using std::cout;               vs.     using std::cin;
-  ///    using std::cin;                        using std::cout;
-  /// \endcode
+  ///
   /// The order of using declarations is defined as follows:
   /// Split the strings by "::" and discard any initial empty strings. The last
   /// element of each list is a non-namespace name; all others are namespace
@@ -1397,6 +1393,11 @@ struct FormatStyle {
   /// individual names is that all non-namespace names come before all namespace
   /// names, and within those groups, names are in case-insensitive
   /// lexicographic order.
+  /// \code
+  ///    false:                                 true:
+  ///    using std::cout;               vs.     using std::cin;
+  ///    using std::cin;                        using std::cout;
+  /// \endcode
   bool SortUsingDeclarations;
 
   /// \brief If ``true``, a space is inserted after C style casts.
