@@ -193,6 +193,40 @@ main_body:
   ret void
 }
 
+;CHECK-LABEL: {{^}}buffer_load_x1_offset_merged:
+;CHECK-NEXT: BB#
+;CHECK-NEXT: buffer_load_dwordx4 v[{{[0-9]}}:{{[0-9]}}], off, s[0:3], 0 offset:4
+;CHECK-NEXT: buffer_load_dwordx2 v[{{[0-9]}}:{{[0-9]}}], off, s[0:3], 0 offset:28
+;CHECK: s_waitcnt
+define amdgpu_ps void @buffer_load_x1_offset_merged(<4 x i32> inreg %rsrc) {
+main_body:
+  %r1 = call float @llvm.amdgcn.buffer.load.f32(<4 x i32> %rsrc, i32 0, i32 4, i1 0, i1 0)
+  %r2 = call float @llvm.amdgcn.buffer.load.f32(<4 x i32> %rsrc, i32 0, i32 8, i1 0, i1 0)
+  %r3 = call float @llvm.amdgcn.buffer.load.f32(<4 x i32> %rsrc, i32 0, i32 12, i1 0, i1 0)
+  %r4 = call float @llvm.amdgcn.buffer.load.f32(<4 x i32> %rsrc, i32 0, i32 16, i1 0, i1 0)
+  %r5 = call float @llvm.amdgcn.buffer.load.f32(<4 x i32> %rsrc, i32 0, i32 28, i1 0, i1 0)
+  %r6 = call float @llvm.amdgcn.buffer.load.f32(<4 x i32> %rsrc, i32 0, i32 32, i1 0, i1 0)
+  call void @llvm.amdgcn.exp.f32(i32 0, i32 15, float %r1, float %r2, float %r3, float %r4, i1 true, i1 true)
+  call void @llvm.amdgcn.exp.f32(i32 0, i32 15, float %r5, float %r6, float undef, float undef, i1 true, i1 true)
+  ret void
+}
+
+;CHECK-LABEL: {{^}}buffer_load_x2_offset_merged:
+;CHECK-NEXT: BB#
+;CHECK-NEXT: buffer_load_dwordx4 v[{{[0-9]}}:{{[0-9]}}], off, s[0:3], 0 offset:4
+;CHECK: s_waitcnt
+define amdgpu_ps void @buffer_load_x2_offset_merged(<4 x i32> inreg %rsrc) {
+main_body:
+  %vr1 = call <2 x float> @llvm.amdgcn.buffer.load.v2f32(<4 x i32> %rsrc, i32 0, i32 4, i1 0, i1 0)
+  %vr2 = call <2 x float> @llvm.amdgcn.buffer.load.v2f32(<4 x i32> %rsrc, i32 0, i32 12, i1 0, i1 0)
+  %r1 = extractelement <2 x float> %vr1, i32 0
+  %r2 = extractelement <2 x float> %vr1, i32 1
+  %r3 = extractelement <2 x float> %vr2, i32 0
+  %r4 = extractelement <2 x float> %vr2, i32 1
+  call void @llvm.amdgcn.exp.f32(i32 0, i32 15, float %r1, float %r2, float %r3, float %r4, i1 true, i1 true)
+  ret void
+}
+
 declare float @llvm.amdgcn.buffer.load.f32(<4 x i32>, i32, i32, i1, i1) #0
 declare <2 x float> @llvm.amdgcn.buffer.load.v2f32(<4 x i32>, i32, i32, i1, i1) #0
 declare <4 x float> @llvm.amdgcn.buffer.load.v4f32(<4 x i32>, i32, i32, i1, i1) #0
