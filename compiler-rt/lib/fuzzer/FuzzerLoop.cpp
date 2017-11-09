@@ -641,11 +641,12 @@ void Fuzzer::MutateAndTestOne() {
     assert(NewSize <= CurrentMaxMutationLen && "Mutator return oversized unit");
     Size = NewSize;
     II.NumExecutedMutations++;
-    if (RunOne(CurrentUnitData, Size, /*MayDeleteFile=*/true, &II))
-      ReportNewCoverage(&II, {CurrentUnitData, CurrentUnitData + Size});
 
+    bool NewCov = RunOne(CurrentUnitData, Size, /*MayDeleteFile=*/true, &II);
     TryDetectingAMemoryLeak(CurrentUnitData, Size,
                             /*DuringInitialCorpusExecution*/ false);
+    if (NewCov)
+      ReportNewCoverage(&II, {CurrentUnitData, CurrentUnitData + Size});
   }
 }
 
