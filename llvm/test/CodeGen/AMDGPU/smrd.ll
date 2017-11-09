@@ -191,6 +191,27 @@ main_body:
   ret float %r
 }
 
+; GCN-LABEL: {{^}}smrd_vgpr_offset_imm:
+; GCN-NEXT: BB#
+; GCN-NEXT: buffer_load_dword v{{[0-9]}}, v0, s[0:3], 0 offen offset:4095 ;
+define amdgpu_ps float @smrd_vgpr_offset_imm(<4 x i32> inreg %desc, i32 %offset) #0 {
+main_body:
+  %off = add i32 %offset, 4095
+  %r = call float @llvm.SI.load.const.v4i32(<4 x i32> %desc, i32 %off)
+  ret float %r
+}
+
+; GCN-LABEL: {{^}}smrd_vgpr_offset_imm_too_large:
+; GCN-NEXT: BB#
+; GCN-NEXT: v_add_i32_e32 v0, vcc, 0x1000, v0
+; GCN-NEXT: buffer_load_dword v{{[0-9]}}, v0, s[0:3], 0 offen ;
+define amdgpu_ps float @smrd_vgpr_offset_imm_too_large(<4 x i32> inreg %desc, i32 %offset) #0 {
+main_body:
+  %off = add i32 %offset, 4096
+  %r = call float @llvm.SI.load.const.v4i32(<4 x i32> %desc, i32 %off)
+  ret float %r
+}
+
 declare void @llvm.amdgcn.exp.f32(i32, i32, float, float, float, float, i1, i1) #0
 declare float @llvm.SI.load.const.v4i32(<4 x i32>, i32) #1
 
