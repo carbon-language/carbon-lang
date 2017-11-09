@@ -1390,6 +1390,13 @@ struct FormatStyle {
   ///    using std::cout;               vs.     using std::cin;
   ///    using std::cin;                        using std::cout;
   /// \endcode
+  /// The order of using declarations is defined as follows:
+  /// Split the strings by "::" and discard any initial empty strings. The last
+  /// element of each list is a non-namespace name; all others are namespace
+  /// names. Sort the lists of names lexicographically, where the sort order of
+  /// individual names is that all non-namespace names come before all namespace
+  /// names, and within those groups, names are in case-insensitive
+  /// lexicographic order.
   bool SortUsingDeclarations;
 
   /// \brief If ``true``, a space is inserted after C style casts.
