@@ -128,3 +128,6 @@ lw a4, a5, 111 # CHECK: :[[@LINE]]:8: error: immediate must be an integer in the
 # Too few operands
 ori a0, a1 # CHECK: :[[@LINE]]:1: error: too few operands for instruction
 xor s2, s2 # CHECK: :[[@LINE]]:1: error: too few operands for instruction
+
+# Instruction not in the base ISA
+mul a4, ra, s0 # CHECK: :[[@LINE]]:1: error: instruction use requires an option to be enabled

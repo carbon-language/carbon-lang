@@ -13,11 +13,16 @@ include "llvm/Target/Target.td"
 // RISC-V subtarget features and instruction predicates.
 //===----------------------------------------------------------------------===//
 
-def Feature64Bit : SubtargetFeature<"64bit", "HasRV64", "true",
-                                    "Implements RV64">;
+def FeatureStdExtM : SubtargetFeature<"m", "HasStdExtM", "true",
+                           "'M' (Integer Multiplication and Division)">;
+def HasStdExtM     : Predicate<"Subtarget->hasStdExtM()">,
+                           AssemblerPredicate<"FeatureStdExtM">;
 
-def RV64         : HwMode<"+64bit">;
-def RV32         : HwMode<"-64bit">;
+def Feature64Bit   : SubtargetFeature<"64bit", "HasRV64", "true",
+                           "Implements RV64">;
+
+def RV64           : HwMode<"+64bit">;
+def RV32           : HwMode<"-64bit">;
 
 //===----------------------------------------------------------------------===//
 // Registers, calling conventions, instruction descriptions.
