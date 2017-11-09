@@ -80,6 +80,8 @@ class SILoadStoreOptimizer : public MachineFunctionPass {
     S_BUFFER_LOAD_IMM,
     BUFFER_LOAD_OFFEN,
     BUFFER_LOAD_OFFSET,
+    BUFFER_STORE_OFFEN,
+    BUFFER_STORE_OFFSET,
   };
 
   struct CombineInfo {
@@ -114,6 +116,9 @@ private:
   MachineBasicBlock::iterator mergeWrite2Pair(CombineInfo &CI);
   MachineBasicBlock::iterator mergeSBufferLoadImmPair(CombineInfo &CI);
   MachineBasicBlock::iterator mergeBufferLoadPair(CombineInfo &CI);
+  unsigned promoteBufferStoreOpcode(const MachineInstr &I, bool &IsX2,
+                                    bool &IsOffen) const;
+  MachineBasicBlock::iterator mergeBufferStorePair(CombineInfo &CI);
 
 public:
   static char ID;
@@ -231,10 +236,8 @@ bool SILoadStoreOptimizer::offsetsCanBeCombined(CombineInfo &CI) {
   CI.UseST64 = false;
   CI.BaseOff = 0;
 
-  // SMEM offsets must be consecutive.
-  if (CI.InstClass == S_BUFFER_LOAD_IMM ||
-      CI.InstClass == BUFFER_LOAD_OFFEN ||
-      CI.InstClass == BUFFER_LOAD_OFFSET) {
+  // Handle SMEM and VMEM instructions.
+  if (CI.InstClass != DS_READ_WRITE) {
     unsigned Diff = CI.IsX2 ? 2 : 1;
     return (EltOffset0 + Diff == EltOffset1 ||
             EltOffset1 + Diff == EltOffset0) &&
@@ -297,11 +300,13 @@ bool SILoadStoreOptimizer::findMatchingInst(CombineInfo &CI) {
     AddrOpName[NumAddresses++] = AMDGPU::OpName::sbase;
     break;
   case BUFFER_LOAD_OFFEN:
+  case BUFFER_STORE_OFFEN:
     AddrOpName[NumAddresses++] = AMDGPU::OpName::srsrc;
     AddrOpName[NumAddresses++] = AMDGPU::OpName::vaddr;
     AddrOpName[NumAddresses++] = AMDGPU::OpName::soffset;
     break;
   case BUFFER_LOAD_OFFSET:
+  case BUFFER_STORE_OFFSET:
     AddrOpName[NumAddresses++] = AMDGPU::OpName::srsrc;
     AddrOpName[NumAddresses++] = AMDGPU::OpName::soffset;
     break;
@@ -680,6 +685,90 @@ MachineBasicBlock::iterator SILoadStoreOptimizer::mergeBufferLoadPair(
   return Next;
 }
 
+unsigned SILoadStoreOptimizer::promoteBufferStoreOpcode(
+  const MachineInstr &I, bool &IsX2, bool &IsOffen) const {
+  IsX2 = false;
+  IsOffen = false;
+
+  switch (I.getOpcode()) {
+  case AMDGPU::BUFFER_STORE_DWORD_OFFEN:
+    IsOffen = true;
+    return AMDGPU::BUFFER_STORE_DWORDX2_OFFEN;
+  case AMDGPU::BUFFER_STORE_DWORD_OFFEN_exact:
+    IsOffen = true;
+    return AMDGPU::BUFFER_STORE_DWORDX2_OFFEN_exact;
+  case AMDGPU::BUFFER_STORE_DWORDX2_OFFEN:
+    IsX2 = true;
+    IsOffen = true;
+    return AMDGPU::BUFFER_STORE_DWORDX4_OFFEN;
+  case AMDGPU::BUFFER_STORE_DWORDX2_OFFEN_exact:
+    IsX2 = true;
+    IsOffen = true;
+    return AMDGPU::BUFFER_STORE_DWORDX4_OFFEN_exact;
+  case AMDGPU::BUFFER_STORE_DWORD_OFFSET:
+    return AMDGPU::BUFFER_STORE_DWORDX2_OFFSET;
+  case AMDGPU::BUFFER_STORE_DWORD_OFFSET_exact:
+    return AMDGPU::BUFFER_STORE_DWORDX2_OFFSET_exact;
+  case AMDGPU::BUFFER_STORE_DWORDX2_OFFSET:
+    IsX2 = true;
+    return AMDGPU::BUFFER_STORE_DWORDX4_OFFSET;
+  case AMDGPU::BUFFER_STORE_DWORDX2_OFFSET_exact:
+    IsX2 = true;
+    return AMDGPU::BUFFER_STORE_DWORDX4_OFFSET_exact;
+  }
+  return 0;
+}
+
+MachineBasicBlock::iterator SILoadStoreOptimizer::mergeBufferStorePair(
+  CombineInfo &CI) {
+  MachineBasicBlock *MBB = CI.I->getParent();
+  DebugLoc DL = CI.I->getDebugLoc();
+  bool Unused1, Unused2;
+  unsigned Opcode = promoteBufferStoreOpcode(*CI.I, Unused1, Unused2);
+
+  unsigned SubRegIdx0 = CI.IsX2 ? AMDGPU::sub0_sub1 : AMDGPU::sub0;
+  unsigned SubRegIdx1 = CI.IsX2 ? AMDGPU::sub2_sub3 : AMDGPU::sub1;
+
+  // Handle descending offsets
+  if (CI.Offset0 > CI.Offset1)
+    std::swap(SubRegIdx0, SubRegIdx1);
+
+  // Copy to the new source register.
+  const TargetRegisterClass *SuperRC =
+    CI.IsX2 ? &AMDGPU::VReg_128RegClass : &AMDGPU::VReg_64RegClass;
+  unsigned SrcReg = MRI->createVirtualRegister(SuperRC);
+
+  const auto *Src0 = TII->getNamedOperand(*CI.I, AMDGPU::OpName::vdata);
+  const auto *Src1 = TII->getNamedOperand(*CI.Paired, AMDGPU::OpName::vdata);
+
+  BuildMI(*MBB, CI.Paired, DL, TII->get(AMDGPU::REG_SEQUENCE), SrcReg)
+      .add(*Src0)
+      .addImm(SubRegIdx0)
+      .add(*Src1)
+      .addImm(SubRegIdx1);
+
+  auto MIB = BuildMI(*MBB, CI.Paired, DL, TII->get(Opcode))
+      .addReg(SrcReg, RegState::Kill);
+
+  if (CI.InstClass == BUFFER_STORE_OFFEN)
+      MIB.add(*TII->getNamedOperand(*CI.I, AMDGPU::OpName::vaddr));
+
+  MIB.add(*TII->getNamedOperand(*CI.I, AMDGPU::OpName::srsrc))
+      .add(*TII->getNamedOperand(*CI.I, AMDGPU::OpName::soffset))
+      .addImm(std::min(CI.Offset0, CI.Offset1)) // offset
+      .addImm(CI.GLC0)      // glc
+      .addImm(CI.SLC0)      // slc
+      .addImm(0)            // tfe
+      .setMemRefs(CI.I->mergeMemRefsWith(*CI.Paired));
+
+  moveInstsAfter(MIB, CI.InstsToMove);
+
+  MachineBasicBlock::iterator Next = std::next(CI.I);
+  CI.I->eraseFromParent();
+  CI.Paired->eraseFromParent();
+  return Next;
+}
+
 // Scan through looking for adjacent LDS operations with constant offsets from
 // the same base register. We rely on the scheduler to do the hard work of
 // clustering nearby loads, and assume these are all adjacent.
@@ -755,6 +844,22 @@ bool SILoadStoreOptimizer::optimizeBlock(MachineBasicBlock &MBB) {
       if (findMatchingInst(CI)) {
         Modified = true;
         I = mergeBufferLoadPair(CI);
+        if (!CI.IsX2)
+          CreatedX2++;
+      } else {
+        ++I;
+      }
+      continue;
+    }
+
+    bool StoreIsX2, IsOffen;
+    if (promoteBufferStoreOpcode(*I, StoreIsX2, IsOffen)) {
+      CI.InstClass = IsOffen ? BUFFER_STORE_OFFEN : BUFFER_STORE_OFFSET;
+      CI.EltSize = 4;
+      CI.IsX2 = StoreIsX2;
+      if (findMatchingInst(CI)) {
+        Modified = true;
+        I = mergeBufferStorePair(CI);
         if (!CI.IsX2)
           CreatedX2++;
       } else {
