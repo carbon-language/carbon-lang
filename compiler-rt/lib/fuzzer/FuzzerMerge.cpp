@@ -254,6 +254,7 @@ void Fuzzer::CrashResistantMergeInternalStep(const std::string &CFPath) {
     for (size_t F : UniqFeatures)
       OF << " " << std::hex << F;
     OF << "\n";
+    OF.flush();
   }
 }
 
