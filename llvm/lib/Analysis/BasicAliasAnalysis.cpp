@@ -1289,8 +1289,7 @@ AliasResult BasicAAResult::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
   // greater, we know they do not overlap.
   if (GEP1BaseOffset != 0 && DecompGEP1.VarIndices.empty()) {
     if (GEP1BaseOffset >= 0) {
-      if (V1Size != MemoryLocation::UnknownSize &&
-          V2Size != MemoryLocation::UnknownSize) {
+      if (V2Size != MemoryLocation::UnknownSize) {
         if ((uint64_t)GEP1BaseOffset < V2Size)
           return PartialAlias;
         return NoAlias;
