@@ -216,6 +216,12 @@ void Fuzzer::StaticInterruptCallback() {
   F->InterruptCallback();
 }
 
+void Fuzzer::StaticGracefulExitCallback() {
+  assert(F);
+  F->GracefulExitRequested = true;
+  Printf("INFO: signal received, trying to exit gracefully\n");
+}
+
 void Fuzzer::StaticFileSizeExceedCallback() {
   Printf("==%lu== ERROR: libFuzzer: file size exceeded\n", GetPid());
   exit(1);
@@ -244,6 +250,13 @@ void Fuzzer::ExitCallback() {
   DumpCurrentUnit("crash-");
   PrintFinalStats();
   _Exit(Options.ErrorExitCode);
+}
+
+void Fuzzer::MaybeExitGracefully() {
+  if (!GracefulExitRequested) return;
+  Printf("==%lu== INFO: libFuzzer: exiting as requested\n", GetPid());
+  PrintFinalStats();
+  _Exit(0);
 }
 
 void Fuzzer::InterruptCallback() {
@@ -621,6 +634,7 @@ void Fuzzer::MutateAndTestOne() {
   for (int i = 0; i < Options.MutateDepth; i++) {
     if (TotalNumberOfRuns >= Options.MaxNumberOfRuns)
       break;
+    MaybeExitGracefully();
     size_t NewSize = 0;
     NewSize = MD.Mutate(CurrentUnitData, Size, CurrentMaxMutationLen);
     assert(NewSize > 0 && "Mutator returned empty unit");
