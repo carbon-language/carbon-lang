@@ -3298,15 +3298,15 @@ static void __kmp_stg_parse_schedule(char const *name, char const *value,
     if (length > INT_MAX) {
       KMP_WARNING(LongValue, name);
     } else {
-      char *semicolon;
+      const char *semicolon;
       if (value[length - 1] == '"' || value[length - 1] == '\'')
         KMP_WARNING(UnbalancedQuotes, name);
       do {
         char sentinel;
 
-        semicolon = CCAST(char *, strchr(value, ';'));
+        semicolon = strchr(value, ';');
         if (*value && semicolon != value) {
-          char *comma = CCAST(char *, strchr(value, ','));
+          const char *comma = strchr(value, ',');
 
           if (comma) {
             ++comma;
@@ -3371,7 +3371,7 @@ static void __kmp_stg_parse_omp_schedule(char const *name, char const *value,
   if (value) {
     length = KMP_STRLEN(value);
     if (length) {
-      char *comma = CCAST(char *, strchr(value, ','));
+      const char *comma = strchr(value, ',');
       if (value[length - 1] == '"' || value[length - 1] == '\'')
         KMP_WARNING(UnbalancedQuotes, name);
       /* get the specified scheduling style */
