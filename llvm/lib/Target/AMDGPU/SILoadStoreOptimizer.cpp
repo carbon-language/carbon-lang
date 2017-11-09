@@ -14,6 +14,12 @@
 // ==>
 //   ds_read2_b32 v[0:1], v2, offset0:4 offset1:8
 //
+// The same is done for certain SMEM opcodes, e.g.:
+//  s_buffer_load_dword s4, s[0:3], 4
+//  s_buffer_load_dword s5, s[0:3], 8
+// ==>
+//  s_buffer_load_dwordx2 s[4:5], s[0:3], 4
+//
 //
 // Future improvements:
 //
@@ -76,23 +82,28 @@ class SILoadStoreOptimizer : public MachineFunctionPass {
     unsigned Offset0;
     unsigned Offset1;
     unsigned BaseOff;
+    bool GLC0;
+    bool GLC1;
     bool UseST64;
+    bool IsSBufferLoadImm;
+    bool IsX2;
     SmallVector<MachineInstr*, 8> InstsToMove;
    };
 
 private:
+  const SISubtarget *STM = nullptr;
   const SIInstrInfo *TII = nullptr;
   const SIRegisterInfo *TRI = nullptr;
   MachineRegisterInfo *MRI = nullptr;
   AliasAnalysis *AA = nullptr;
+  unsigned CreatedX2;
 
   static bool offsetsCanBeCombined(CombineInfo &CI);
 
-  bool findMatchingDSInst(CombineInfo &CI);
-
+  bool findMatchingInst(CombineInfo &CI);
   MachineBasicBlock::iterator mergeRead2Pair(CombineInfo &CI);
-
   MachineBasicBlock::iterator mergeWrite2Pair(CombineInfo &CI);
+  MachineBasicBlock::iterator mergeSBufferLoadImmPair(CombineInfo &CI);
 
 public:
   static char ID;
@@ -210,6 +221,14 @@ bool SILoadStoreOptimizer::offsetsCanBeCombined(CombineInfo &CI) {
   CI.UseST64 = false;
   CI.BaseOff = 0;
 
+  // SMEM offsets must be consecutive.
+  if (CI.IsSBufferLoadImm) {
+    unsigned Diff = CI.IsX2 ? 2 : 1;
+    return (EltOffset0 + Diff == EltOffset1 ||
+            EltOffset1 + Diff == EltOffset0) &&
+           CI.GLC0 == CI.GLC1;
+  }
+
   // If the offset in elements doesn't fit in 8-bits, we might be able to use
   // the stride 64 versions.
   if ((EltOffset0 % 64 == 0) && (EltOffset1 % 64) == 0 &&
@@ -247,13 +266,18 @@ bool SILoadStoreOptimizer::offsetsCanBeCombined(CombineInfo &CI) {
   return false;
 }
 
-bool SILoadStoreOptimizer::findMatchingDSInst(CombineInfo &CI) {
+bool SILoadStoreOptimizer::findMatchingInst(CombineInfo &CI) {
   MachineBasicBlock *MBB = CI.I->getParent();
   MachineBasicBlock::iterator E = MBB->end();
   MachineBasicBlock::iterator MBBI = CI.I;
 
-  int AddrIdx = AMDGPU::getNamedOperandIdx(CI.I->getOpcode(),
-                                           AMDGPU::OpName::addr);
+  unsigned AddrOpName;
+  if (CI.IsSBufferLoadImm)
+    AddrOpName = AMDGPU::OpName::sbase;
+  else
+    AddrOpName = AMDGPU::OpName::addr;
+
+  int AddrIdx = AMDGPU::getNamedOperandIdx(CI.I->getOpcode(), AddrOpName);
   const MachineOperand &AddrReg0 = CI.I->getOperand(AddrIdx);
 
   // We only ever merge operations with the same base address register, so don't
@@ -319,9 +343,17 @@ bool SILoadStoreOptimizer::findMatchingDSInst(CombineInfo &CI) {
         AddrReg0.getSubReg() == AddrReg1.getSubReg()) {
       int OffsetIdx = AMDGPU::getNamedOperandIdx(CI.I->getOpcode(),
                                                  AMDGPU::OpName::offset);
-      CI.Offset0 = CI.I->getOperand(OffsetIdx).getImm() & 0xffff;
-      CI.Offset1 = MBBI->getOperand(OffsetIdx).getImm() & 0xffff;
+      CI.Offset0 = CI.I->getOperand(OffsetIdx).getImm();
+      CI.Offset1 = MBBI->getOperand(OffsetIdx).getImm();
       CI.Paired = MBBI;
+
+      if (CI.IsSBufferLoadImm) {
+        CI.GLC0 = TII->getNamedOperand(*CI.I, AMDGPU::OpName::glc)->getImm();
+        CI.GLC1 = TII->getNamedOperand(*MBBI, AMDGPU::OpName::glc)->getImm();
+      } else {
+        CI.Offset0 &= 0xffff;
+        CI.Offset1 &= 0xffff;
+      }
 
       // Check both offsets fit in the reduced range.
       // We also need to go through the list of instructions that we plan to
@@ -488,6 +520,51 @@ MachineBasicBlock::iterator SILoadStoreOptimizer::mergeWrite2Pair(
   return Next;
 }
 
+MachineBasicBlock::iterator SILoadStoreOptimizer::mergeSBufferLoadImmPair(
+  CombineInfo &CI) {
+  MachineBasicBlock *MBB = CI.I->getParent();
+  DebugLoc DL = CI.I->getDebugLoc();
+  unsigned Opcode = CI.IsX2 ? AMDGPU::S_BUFFER_LOAD_DWORDX4_IMM :
+                              AMDGPU::S_BUFFER_LOAD_DWORDX2_IMM;
+
+  const TargetRegisterClass *SuperRC =
+    CI.IsX2 ? &AMDGPU::SReg_128RegClass : &AMDGPU::SReg_64_XEXECRegClass;
+  unsigned DestReg = MRI->createVirtualRegister(SuperRC);
+  unsigned MergedOffset = std::min(CI.Offset0, CI.Offset1);
+
+  BuildMI(*MBB, CI.Paired, DL, TII->get(Opcode), DestReg)
+      .add(*TII->getNamedOperand(*CI.I, AMDGPU::OpName::sbase))
+      .addImm(MergedOffset) // offset
+      .addImm(CI.GLC0)      // glc
+      .setMemRefs(CI.I->mergeMemRefsWith(*CI.Paired));
+
+  unsigned SubRegIdx0 = CI.IsX2 ? AMDGPU::sub0_sub1 : AMDGPU::sub0;
+  unsigned SubRegIdx1 = CI.IsX2 ? AMDGPU::sub2_sub3 : AMDGPU::sub1;
+
+  // Handle descending offsets
+  if (CI.Offset0 > CI.Offset1)
+    std::swap(SubRegIdx0, SubRegIdx1);
+
+  // Copy to the old destination registers.
+  const MCInstrDesc &CopyDesc = TII->get(TargetOpcode::COPY);
+  const auto *Dest0 = TII->getNamedOperand(*CI.I, AMDGPU::OpName::sdst);
+  const auto *Dest1 = TII->getNamedOperand(*CI.Paired, AMDGPU::OpName::sdst);
+
+  BuildMI(*MBB, CI.Paired, DL, CopyDesc)
+      .add(*Dest0) // Copy to same destination including flags and sub reg.
+      .addReg(DestReg, 0, SubRegIdx0);
+  MachineInstr *Copy1 = BuildMI(*MBB, CI.Paired, DL, CopyDesc)
+                            .add(*Dest1)
+                            .addReg(DestReg, RegState::Kill, SubRegIdx1);
+
+  moveInstsAfter(Copy1, CI.InstsToMove);
+
+  MachineBasicBlock::iterator Next = std::next(CI.I);
+  CI.I->eraseFromParent();
+  CI.Paired->eraseFromParent();
+  return Next;
+}
+
 // Scan through looking for adjacent LDS operations with constant offsets from
 // the same base register. We rely on the scheduler to do the hard work of
 // clustering nearby loads, and assume these are all adjacent.
@@ -505,10 +582,11 @@ bool SILoadStoreOptimizer::optimizeBlock(MachineBasicBlock &MBB) {
 
     CombineInfo CI;
     CI.I = I;
+    CI.IsSBufferLoadImm = false;
     unsigned Opc = MI.getOpcode();
     if (Opc == AMDGPU::DS_READ_B32 || Opc == AMDGPU::DS_READ_B64) {
       CI.EltSize = (Opc == AMDGPU::DS_READ_B64) ? 8 : 4;
-      if (findMatchingDSInst(CI)) {
+      if (findMatchingInst(CI)) {
         Modified = true;
         I = mergeRead2Pair(CI);
       } else {
@@ -516,15 +594,33 @@ bool SILoadStoreOptimizer::optimizeBlock(MachineBasicBlock &MBB) {
       }
 
       continue;
-    } else if (Opc == AMDGPU::DS_WRITE_B32 || Opc == AMDGPU::DS_WRITE_B64) {
+    }
+    if (Opc == AMDGPU::DS_WRITE_B32 || Opc == AMDGPU::DS_WRITE_B64) {
       CI.EltSize = (Opc == AMDGPU::DS_WRITE_B64) ? 8 : 4;
-      if (findMatchingDSInst(CI)) {
+      if (findMatchingInst(CI)) {
         Modified = true;
         I = mergeWrite2Pair(CI);
       } else {
         ++I;
       }
 
+      continue;
+    }
+    if (STM->hasSBufferLoadStoreAtomicDwordxN() &&
+        (Opc == AMDGPU::S_BUFFER_LOAD_DWORD_IMM ||
+         Opc == AMDGPU::S_BUFFER_LOAD_DWORDX2_IMM)) {
+      // EltSize is in units of the offset encoding.
+      CI.EltSize = AMDGPU::getSMRDEncodedOffset(*STM, 4);
+      CI.IsSBufferLoadImm = true;
+      CI.IsX2 = Opc == AMDGPU::S_BUFFER_LOAD_DWORDX2_IMM;
+      if (findMatchingInst(CI)) {
+        Modified = true;
+        I = mergeSBufferLoadImmPair(CI);
+        if (!CI.IsX2)
+          CreatedX2++;
+      } else {
+        ++I;
+      }
       continue;
     }
 
@@ -538,11 +634,11 @@ bool SILoadStoreOptimizer::runOnMachineFunction(MachineFunction &MF) {
   if (skipFunction(*MF.getFunction()))
     return false;
 
-  const SISubtarget &STM = MF.getSubtarget<SISubtarget>();
-  if (!STM.loadStoreOptEnabled())
+  STM = &MF.getSubtarget<SISubtarget>();
+  if (!STM->loadStoreOptEnabled())
     return false;
 
-  TII = STM.getInstrInfo();
+  TII = STM->getInstrInfo();
   TRI = &TII->getRegisterInfo();
 
   MRI = &MF.getRegInfo();
@@ -553,9 +649,16 @@ bool SILoadStoreOptimizer::runOnMachineFunction(MachineFunction &MF) {
   DEBUG(dbgs() << "Running SILoadStoreOptimizer\n");
 
   bool Modified = false;
+  CreatedX2 = 0;
 
   for (MachineBasicBlock &MBB : MF)
     Modified |= optimizeBlock(MBB);
+
+  // Run again to convert x2 to x4.
+  if (CreatedX2 >= 1) {
+    for (MachineBasicBlock &MBB : MF)
+      Modified |= optimizeBlock(MBB);
+  }
 
   return Modified;
 }
