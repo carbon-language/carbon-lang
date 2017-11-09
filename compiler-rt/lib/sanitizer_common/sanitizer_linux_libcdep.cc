@@ -30,7 +30,6 @@
 #include <dlfcn.h>  // for dlsym()
 #include <link.h>
 #include <pthread.h>
-#include <sched.h>
 #include <signal.h>
 #include <sys/resource.h>
 #include <syslog.h>
@@ -38,12 +37,7 @@
 #if SANITIZER_FREEBSD
 #include <pthread_np.h>
 #include <osreldate.h>
-#include <sys/sysctl.h>
 #define pthread_getattr_np pthread_attr_get_np
-#endif
-
-#if SANITIZER_NETBSD
-#include <sys/sysctl.h>
 #endif
 
 #if SANITIZER_LINUX
@@ -542,23 +536,6 @@ uptr GetRSS() {
   while (*pos >= '0' && *pos <= '9')
     rss = rss * 10 + *pos++ - '0';
   return rss * GetPageSizeCached();
-}
-
-// sysconf(_SC_NPROCESSORS_{CONF,ONLN}) cannot be used as they allocate memory.
-u32 GetNumberOfCPUs() {
-#if SANITIZER_FREEBSD || SANITIZER_NETBSD
-  u32 ncpu;
-  int req[2];
-  size_t len = sizeof(ncpu);
-  req[0] = CTL_HW;
-  req[1] = HW_NCPU;
-  CHECK_EQ(sysctl(req, 2, &ncpu, &len, NULL, 0), 0);
-  return ncpu;
-#else
-  cpu_set_t CPUs;
-  CHECK_EQ(sched_getaffinity(0, sizeof(cpu_set_t), &CPUs), 0);
-  return CPU_COUNT(&CPUs);
-#endif
 }
 
 // 64-bit Android targets don't provide the deprecated __android_log_write.
