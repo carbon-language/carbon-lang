@@ -75,7 +75,7 @@ static void OnStackUnwind(const SignalContext &sig, const void *,
                                   common_flags()->fast_unwind_on_fatal);
 }
 
-void LsanOnDeadlySignal(int signo, void *siginfo, void *context) {
+static void LsanOnDeadlySignal(int signo, void *siginfo, void *context) {
   HandleDeadlySignal(siginfo, context, GetCurrentThread(), &OnStackUnwind,
                      nullptr);
 }
