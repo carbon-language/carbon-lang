@@ -12,6 +12,7 @@
 #include "BinaryPasses.h"
 #include "Passes/ReorderAlgorithm.h"
 #include "llvm/Support/Options.h"
+#include <numeric>
 
 #define DEBUG_TYPE "bolt"
 
@@ -176,6 +177,32 @@ TSPThreshold("tsp-threshold",
   cl::init(10),
   cl::ZeroOrMore,
   cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+enum PeepholeOpts : char {
+  PEEP_NONE             = 0x0,
+  PEEP_SHORTEN          = 0x1,
+  PEEP_DOUBLE_JUMPS     = 0x2,
+  PEEP_TAILCALL_TRAPS   = 0x4,
+  PEEP_USELESS_BRANCHES = 0x8,
+  PEEP_ALL              = 0xf
+};
+
+static cl::list<PeepholeOpts>
+Peepholes("peepholes",
+  cl::CommaSeparated,
+  cl::desc("enable peephole optimizations"),
+  cl::value_desc("opt1,opt2,opt3,..."),
+  cl::values(
+    clEnumValN(PEEP_SHORTEN, "shorten", "perform instruction shortening"),
+    clEnumValN(PEEP_DOUBLE_JUMPS, "double-jumps",
+               "remove double jumps when able"),
+    clEnumValN(PEEP_TAILCALL_TRAPS, "tailcall-traps", "insert tail call traps"),
+    clEnumValN(PEEP_USELESS_BRANCHES, "useless-branches",
+               "remove useless conditional branches"),
+    clEnumValN(PEEP_ALL, "all", "enable all peephole optimizations"),
+    clEnumValEnd),
+  cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
 } // namespace opts
@@ -986,13 +1013,27 @@ void Peepholes::removeUselessCondBranches(BinaryContext &BC,
 void Peepholes::runOnFunctions(BinaryContext &BC,
                                std::map<uint64_t, BinaryFunction> &BFs,
                                std::set<uint64_t> &LargeFunctions) {
+  const char Opts =
+    std::accumulate(opts::Peepholes.begin(),
+                    opts::Peepholes.end(),
+                    0,
+                    [](const char A, const opts::PeepholeOpts B) {
+                      return A | B;
+                    });
+  if (Opts == opts::PEEP_NONE)
+    return;
+
   for (auto &It : BFs) {
     auto &Function = It.second;
     if (shouldOptimize(Function)) {
-      shortenInstructions(BC, Function);
-      NumDoubleJumps += fixDoubleJumps(BC, Function, false);
-      addTailcallTraps(BC, Function);
-      removeUselessCondBranches(BC, Function);
+      if (Opts & opts::PEEP_SHORTEN)
+        shortenInstructions(BC, Function);
+      if (Opts & opts::PEEP_DOUBLE_JUMPS)
+        NumDoubleJumps += fixDoubleJumps(BC, Function, false);
+      if (Opts & opts::PEEP_TAILCALL_TRAPS)
+        addTailcallTraps(BC, Function);
+      if (Opts & opts::PEEP_USELESS_BRANCHES)
+        removeUselessCondBranches(BC, Function);
     }
   }
   outs() << "BOLT-INFO: Peephole: " << NumDoubleJumps

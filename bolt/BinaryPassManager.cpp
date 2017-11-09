@@ -77,12 +77,6 @@ OptimizeBodylessFunctions("optimize-bodyless-functions",
   cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
-Peepholes("peepholes",
-  cl::desc("run peephole optimizations"),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
-static cl::opt<bool>
 PrintAfterBranchFixup("print-after-branch-fixup",
   cl::desc("print function after fixing local branches"),
   cl::Hidden,
@@ -332,8 +326,7 @@ void BinaryFunctionPassManager::runAllPasses(
 
   Manager.registerPass(llvm::make_unique<IndirectCallPromotion>(PrintICP));
 
-  Manager.registerPass(llvm::make_unique<Peepholes>(PrintPeepholes),
-                       opts::Peepholes);
+  Manager.registerPass(llvm::make_unique<Peepholes>(PrintPeepholes));
 
   Manager.registerPass(llvm::make_unique<InlineSmallFunctions>(PrintInline),
                        opts::InlineSmallFunctions);
@@ -353,8 +346,7 @@ void BinaryFunctionPassManager::runAllPasses(
 
   Manager.registerPass(llvm::make_unique<ReorderBasicBlocks>(PrintReordered));
 
-  Manager.registerPass(llvm::make_unique<Peepholes>(PrintPeepholes),
-                       opts::Peepholes);
+  Manager.registerPass(llvm::make_unique<Peepholes>(PrintPeepholes));
 
   Manager.registerPass(
     llvm::make_unique<EliminateUnreachableBlocks>(PrintUCE),
