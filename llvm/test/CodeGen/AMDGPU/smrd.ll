@@ -238,6 +238,29 @@ main_body:
   ret void
 }
 
+; GCN-LABEL: {{^}}smrd_vgpr_merged:
+; GCN-NEXT: BB#
+; GCN-NEXT: buffer_load_dwordx4 v[{{[0-9]}}:{{[0-9]}}], v0, s[0:3], 0 offen offset:4
+; GCN-NEXT: buffer_load_dwordx2 v[{{[0-9]}}:{{[0-9]}}], v0, s[0:3], 0 offen offset:28
+define amdgpu_ps void @smrd_vgpr_merged(<4 x i32> inreg %desc, i32 %a) #0 {
+main_body:
+  %a1 = add i32 %a, 4
+  %a2 = add i32 %a, 8
+  %a3 = add i32 %a, 12
+  %a4 = add i32 %a, 16
+  %a5 = add i32 %a, 28
+  %a6 = add i32 %a, 32
+  %r1 = call float @llvm.SI.load.const.v4i32(<4 x i32> %desc, i32 %a1)
+  %r2 = call float @llvm.SI.load.const.v4i32(<4 x i32> %desc, i32 %a2)
+  %r3 = call float @llvm.SI.load.const.v4i32(<4 x i32> %desc, i32 %a3)
+  %r4 = call float @llvm.SI.load.const.v4i32(<4 x i32> %desc, i32 %a4)
+  %r5 = call float @llvm.SI.load.const.v4i32(<4 x i32> %desc, i32 %a5)
+  %r6 = call float @llvm.SI.load.const.v4i32(<4 x i32> %desc, i32 %a6)
+  call void @llvm.amdgcn.exp.f32(i32 0, i32 15, float %r1, float %r2, float %r3, float %r4, i1 true, i1 true) #0
+  call void @llvm.amdgcn.exp.f32(i32 0, i32 15, float %r5, float %r6, float undef, float undef, i1 true, i1 true) #0
+  ret void
+}
+
 declare void @llvm.amdgcn.exp.f32(i32, i32, float, float, float, float, i1, i1) #0
 declare float @llvm.SI.load.const.v4i32(<4 x i32>, i32) #1
 
