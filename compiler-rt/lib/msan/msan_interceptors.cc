@@ -1006,8 +1006,22 @@ static void read_sigaction(const __sanitizer_sigaction *act) {
   CHECK_UNPOISONED(&act->sa_mask, sizeof(act->sa_mask));
 }
 
+static int sigaction_impl(int signo, const __sanitizer_sigaction *act,
+                          __sanitizer_sigaction *oldact);
+static uptr signal_impl(int signo, uptr cb);
+
 INTERCEPTOR(int, sigaction, int signo, const __sanitizer_sigaction *act,
             __sanitizer_sigaction *oldact) {
+  return sigaction_impl(signo, act, oldact);
+}
+
+INTERCEPTOR(int, signal, int signo, uptr cb) {
+  cb = signal_impl(signo, cb);
+  return REAL(signal)(signo, cb);
+}
+
+static int sigaction_impl(int signo, const __sanitizer_sigaction *act,
+                          __sanitizer_sigaction *oldact) {
   ENSURE_MSAN_INITED();
   if (act) read_sigaction(act);
   int res;
@@ -1045,19 +1059,17 @@ INTERCEPTOR(int, sigaction, int signo, const __sanitizer_sigaction *act,
   return res;
 }
 
-INTERCEPTOR(int, signal, int signo, uptr cb) {
+static uptr signal_impl(int signo, uptr cb) {
   ENSURE_MSAN_INITED();
   if (flags()->wrap_signals) {
     CHECK_LT(signo, kMaxSignals);
     SpinMutexLock lock(&sigactions_mu);
     if (cb != __sanitizer::sig_ign && cb != __sanitizer::sig_dfl) {
       atomic_store(&sigactions[signo], cb, memory_order_relaxed);
-      cb = (uptr) SignalHandler;
+      cb = (uptr)&SignalHandler;
     }
-    return REAL(signal)(signo, cb);
-  } else {
-    return REAL(signal)(signo, cb);
   }
+  return cb;
 }
 
 extern "C" int pthread_attr_init(void *attr);
