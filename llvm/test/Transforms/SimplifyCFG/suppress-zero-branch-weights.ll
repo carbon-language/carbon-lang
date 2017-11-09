@@ -14,6 +14,7 @@ define i1 @repeated_signbits(i8 %condition) {
 ; CHECK-DAG:     i32  0, label %a
 ; CHECK-DAG:     i32  127, label %a
 ; CHECK-NEXT:    ]
+; CHECK-NOT:    , !prof
 ;
 entry:
   %sext = sext i8 %condition to i32
@@ -35,5 +36,5 @@ default:
   ret i1 0
 }
 
-!1 = !{!"branch_weights", i32 1, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0}
+!1 = !{!"branch_weights", i32 0, i32 1, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0}
 
