@@ -1020,58 +1020,6 @@ INTERCEPTOR(int, signal, int signo, uptr cb) {
   return REAL(signal)(signo, cb);
 }
 
-static int sigaction_impl(int signo, const __sanitizer_sigaction *act,
-                          __sanitizer_sigaction *oldact) {
-  ENSURE_MSAN_INITED();
-  if (act) read_sigaction(act);
-  int res;
-  if (flags()->wrap_signals) {
-    SpinMutexLock lock(&sigactions_mu);
-    CHECK_LT(signo, kMaxSignals);
-    uptr old_cb = atomic_load(&sigactions[signo], memory_order_relaxed);
-    __sanitizer_sigaction new_act;
-    __sanitizer_sigaction *pnew_act = act ? &new_act : nullptr;
-    if (act) {
-      REAL(memcpy)(pnew_act, act, sizeof(__sanitizer_sigaction));
-      uptr cb = (uptr)pnew_act->sigaction;
-      uptr new_cb = (pnew_act->sa_flags & __sanitizer::sa_siginfo)
-                        ? (uptr)SignalAction
-                        : (uptr)SignalHandler;
-      if (cb != __sanitizer::sig_ign && cb != __sanitizer::sig_dfl) {
-        atomic_store(&sigactions[signo], cb, memory_order_relaxed);
-        pnew_act->sigaction = (void (*)(int, void *, void *))new_cb;
-      }
-    }
-    res = REAL(sigaction)(signo, pnew_act, oldact);
-    if (res == 0 && oldact) {
-      uptr cb = (uptr)oldact->sigaction;
-      if (cb != __sanitizer::sig_ign && cb != __sanitizer::sig_dfl) {
-        oldact->sigaction = (void (*)(int, void *, void *))old_cb;
-      }
-    }
-  } else {
-    res = REAL(sigaction)(signo, act, oldact);
-  }
-
-  if (res == 0 && oldact) {
-    __msan_unpoison(oldact, sizeof(__sanitizer_sigaction));
-  }
-  return res;
-}
-
-static uptr signal_impl(int signo, uptr cb) {
-  ENSURE_MSAN_INITED();
-  if (flags()->wrap_signals) {
-    CHECK_LT(signo, kMaxSignals);
-    SpinMutexLock lock(&sigactions_mu);
-    if (cb != __sanitizer::sig_ign && cb != __sanitizer::sig_dfl) {
-      atomic_store(&sigactions[signo], cb, memory_order_relaxed);
-      cb = (uptr)&SignalHandler;
-    }
-  }
-  return cb;
-}
-
 extern "C" int pthread_attr_init(void *attr);
 extern "C" int pthread_attr_destroy(void *attr);
 
@@ -1326,6 +1274,59 @@ int OnExit() {
 
 #include "sanitizer_common/sanitizer_platform_interceptors.h"
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
+
+
+static int sigaction_impl(int signo, const __sanitizer_sigaction *act,
+                          __sanitizer_sigaction *oldact) {
+  ENSURE_MSAN_INITED();
+  if (act) read_sigaction(act);
+  int res;
+  if (flags()->wrap_signals) {
+    SpinMutexLock lock(&sigactions_mu);
+    CHECK_LT(signo, kMaxSignals);
+    uptr old_cb = atomic_load(&sigactions[signo], memory_order_relaxed);
+    __sanitizer_sigaction new_act;
+    __sanitizer_sigaction *pnew_act = act ? &new_act : nullptr;
+    if (act) {
+      REAL(memcpy)(pnew_act, act, sizeof(__sanitizer_sigaction));
+      uptr cb = (uptr)pnew_act->sigaction;
+      uptr new_cb = (pnew_act->sa_flags & __sanitizer::sa_siginfo)
+                        ? (uptr)SignalAction
+                        : (uptr)SignalHandler;
+      if (cb != __sanitizer::sig_ign && cb != __sanitizer::sig_dfl) {
+        atomic_store(&sigactions[signo], cb, memory_order_relaxed);
+        pnew_act->sigaction = (void (*)(int, void *, void *))new_cb;
+      }
+    }
+    res = REAL(sigaction)(signo, pnew_act, oldact);
+    if (res == 0 && oldact) {
+      uptr cb = (uptr)oldact->sigaction;
+      if (cb != __sanitizer::sig_ign && cb != __sanitizer::sig_dfl) {
+        oldact->sigaction = (void (*)(int, void *, void *))old_cb;
+      }
+    }
+  } else {
+    res = REAL(sigaction)(signo, act, oldact);
+  }
+
+  if (res == 0 && oldact) {
+    __msan_unpoison(oldact, sizeof(__sanitizer_sigaction));
+  }
+  return res;
+}
+
+static uptr signal_impl(int signo, uptr cb) {
+  ENSURE_MSAN_INITED();
+  if (flags()->wrap_signals) {
+    CHECK_LT(signo, kMaxSignals);
+    SpinMutexLock lock(&sigactions_mu);
+    if (cb != __sanitizer::sig_ign && cb != __sanitizer::sig_dfl) {
+      atomic_store(&sigactions[signo], cb, memory_order_relaxed);
+      cb = (uptr)&SignalHandler;
+    }
+  }
+  return cb;
+}
 
 #define COMMON_SYSCALL_PRE_READ_RANGE(p, s) CHECK_UNPOISONED(p, s)
 #define COMMON_SYSCALL_PRE_WRITE_RANGE(p, s) \
