@@ -11,6 +11,10 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -print-schedule -mcpu=btver2 | FileCheck %s --check-prefix=CHECK --check-prefix=BTVER2
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -print-schedule -mcpu=znver1 | FileCheck %s --check-prefix=CHECK --check-prefix=ZNVER1
 
+; TODO - test_adc
+; TODO - test_add
+; TODO - test_and
+
 define i16 @test_bsf16(i16 %a0, i16* %a1) optsize {
 ; GENERIC-LABEL: test_bsf16:
 ; GENERIC:       # BB#0:
@@ -735,3 +739,185 @@ define i64 @test_bswap64(i64 %a0) optsize {
   %1 = tail call i64 asm "bswap $0", "=r,0"(i64 %a0) nounwind
   ret i64 %1
 }
+
+; TODO - test_bt
+; TODO - test_btc
+; TODO - test_btr
+; TODO - test_bts
+
+; TODO - test_call
+
+; TODO - test_cbw
+; TODO - test_cwde
+; TODO - test_cdqe
+; TODO - test_cwd
+; TODO - test_cdq
+; TODO - test_cqo
+
+; TODO - test_clc
+; TODO - test_cld
+; TODO - test_cmc
+
+; TODO - test_cmovcc
+; TODO - test_cmp
+
+; TODO - test_cmps
+; TODO - test_cmpsb
+; TODO - test_cmpsw
+; TODO - test_cmpsd
+; TODO - test_cmpsq
+
+; TODO - test_cmpxchg
+; TODO - test_cmpxchg8b
+; TODO - test_cmpxchg16b
+
+; TODO - test_cpuid
+
+; TODO - test_dec
+; TODO - test_div
+
+; TODO - test_enter
+
+; TODO - test_idiv
+; TODO - test_imul
+
+; TODO - test_in
+
+; TODO - test_inc
+
+; TODO - test_ins
+; TODO - test_insb
+; TODO - test_insw
+; TODO - test_insd
+
+; TODO - test_int
+; TODO - test_into
+
+; TODO - test_jcc
+; TODO - test_jcxz
+; TODO - test_jwcxz
+; TODO - test_jrcxz
+
+; TODO - test_jmp
+
+; TODO - test_lahf
+
+; TODO - test_lds
+; TODO - test_les
+; TODO - test_lfs
+; TODO - test_lgs
+; TODO - test_lss
+
+; TODO - test_lea
+
+; TODO - test_leave
+
+; TODO - test_lods
+; TODO - test_lodsb
+; TODO - test_lodsw
+; TODO - test_lodsd
+; TODO - test_lodsq
+
+; TODO - test_loop
+; TODO - test_loope
+; TODO - test_loopne
+; TODO - test_loopnz
+; TODO - test_loopz
+
+; TODO - test_mov
+; TODO - test_movnti
+
+; TODO - test_movs
+; TODO - test_movsb
+; TODO - test_movsw
+; TODO - test_movsd
+; TODO - test_movsq
+
+; TODO - test_movsx
+; TODO - test_movsxd
+; TODO - test_movzx
+
+; TODO - test_mul
+; TODO - test_neg
+; TODO - test_nop
+; TODO - test_not
+; TODO - test_or
+
+; TODO - test_out
+
+; TODO - test_outs
+; TODO - test_outsb
+; TODO - test_outsw
+; TODO - test_outsd
+
+; TODO - test_pause
+
+; TODO - test_pop
+; TODO - test_popa
+; TODO - test_popf
+; TODO - test_popfd
+; TODO - test_popfq
+
+; TODO - test_prefetch
+; TODO - test_prefetchw
+; TODO - test_prefetchX
+
+; TODO - test_push
+; TODO - test_pusha
+; TODO - test_pushad
+; TODO - test_pushf
+; TODO - test_pushfd
+; TODO - test_pushfq
+
+; TODO - test_rcl
+; TODO - test_rcr
+
+; TODO - test_rdfsbase
+; TODO - test_rdgsbase
+
+; TODO - test_ret
+
+; TODO - test_rol
+; TODO - test_ror
+
+; TODO - test_sahf
+
+; TODO - test_sal
+; TODO - test_shl
+; TODO - test_sar
+
+; TODO - test_sbb
+
+; TODO - test_scas
+; TODO - test_scasb
+; TODO - test_scasw
+; TODO - test_scasd
+; TODO - test_scasq
+
+; TODO - test_setcc
+
+; TODO - test_shld
+; TODO - test_shr
+; TODO - test_shrd
+
+; TODO - test_stc
+; TODO - test_std
+
+; TODO - test_stos
+; TODO - test_stosb
+; TODO - test_stosw
+; TODO - test_stosd
+; TODO - test_stosq
+
+; TODO - test_sub
+; TODO - test_test
+
+; TODO - test_wrfsbase
+; TODO - test_wrgsbase
+
+; TODO - test_xadd
+; TODO - test_xchg
+; TODO - test_xlat
+; TODO - test_xlatb
+
+; TODO - test_xor
