@@ -126,6 +126,7 @@ math/native_log.cl
 math/native_log10.cl
 math/native_log2.cl
 math/native_sin.cl
+math/native_sqrt.cl
 math/tables.cl
 math/clc_nextafter.cl
 math/nextafter.cl
