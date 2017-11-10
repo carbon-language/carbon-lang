@@ -3884,10 +3884,11 @@ static bool getUniformBase(const Value* &Ptr, SDValue& Base, SDValue& Index,
   Value *IndexVal = GEP->getOperand(FinalIndex);
 
   // Ensure all the other indices are 0.
-  for (unsigned i = 1; i < FinalIndex; ++i)
-    if (auto *C = dyn_cast<ConstantInt>(GEP->getOperand(i)))
-      if (!C->isZero())
-        return false;
+  for (unsigned i = 1; i < FinalIndex; ++i) {
+    auto *C = dyn_cast<ConstantInt>(GEP->getOperand(i));
+    if (!C || !C->isZero())
+      return false;
+  }
 
   // The operands of the GEP may be defined in another basic block.
   // In this case we'll not find nodes for the operands.
