@@ -1950,8 +1950,17 @@ static void rtl_sigaction(int sig, __sanitizer_siginfo *info, void *ctx) {
   rtl_generic_sighandler(true, sig, info, ctx);
 }
 
+static int sigaction_impl(int sig, __sanitizer_sigaction *act,
+                          __sanitizer_sigaction *old);
+static sighandler_t signal_impl(int sig, sighandler_t h);
+
 TSAN_INTERCEPTOR(int, sigaction, int sig, __sanitizer_sigaction *act,
                  __sanitizer_sigaction *old) {
+  return sigaction_impl(sig, act, old);
+}
+
+int sigaction_impl(int sig, __sanitizer_sigaction *act,
+                   __sanitizer_sigaction *old) {
   // Note: if we call REAL(sigaction) directly for any reason without proxying
   // the signal handler through rtl_sigaction, very bad things will happen.
   // The handler will run synchronously and corrupt tsan per-thread state.
@@ -1989,6 +1998,10 @@ TSAN_INTERCEPTOR(int, sigaction, int sig, __sanitizer_sigaction *act,
 }
 
 TSAN_INTERCEPTOR(sighandler_t, signal, int sig, sighandler_t h) {
+  return signal_impl(sig, h);
+}
+
+static sighandler_t signal_impl(int sig, sighandler_t h) {
   __sanitizer_sigaction act;
   act.handler = h;
   internal_memset(&act.sa_mask, -1, sizeof(act.sa_mask));
