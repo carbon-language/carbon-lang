@@ -83,6 +83,10 @@ class LongJmpPass : public BinaryFunctionPass {
   tentativeLayoutRelocMode(const BinaryContext &BC,
                            std::vector<BinaryFunction *> &SortedFunctions,
                            uint64_t DotAddress);
+  uint64_t
+  tentativeLayoutRelocColdPart(const BinaryContext &BC,
+                              std::vector<BinaryFunction *> &SortedFunctions,
+                              uint64_t DotAddress);
   void tentativeBBLayout(const BinaryContext &BC, const BinaryFunction &Func);
 
    /// Helper to identify whether \p Inst is branching to a stub
@@ -92,7 +96,8 @@ class LongJmpPass : public BinaryFunctionPass {
   /// Helper to resolve a symbol address according to our tentative layout
   uint64_t getSymbolAddress(const BinaryContext &BC, const MCSymbol *Target,
                             const BinaryBasicBlock *TgtBB) const;
-  /// Change \p Inst to not use a stub anymore, back to its original form
+
+  /// Change \p Inst to do not use a stub anymore, back to its original form
   void removeStubRef(const BinaryContext &BC,
                      BinaryBasicBlock *BB, MCInst &Inst,
                      BinaryBasicBlock *StubBB,

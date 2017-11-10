@@ -913,6 +913,10 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         isInConstantIsland(TargetAddress)) {
       TargetSymbol = BC.getOrCreateGlobalSymbol(TargetAddress, "ISLANDat");
       IslandSymbols[TargetAddress - getAddress()] = TargetSymbol;
+      if (!ColdIslandSymbols.count(TargetSymbol)) {
+        ColdIslandSymbols[TargetSymbol] =
+            Ctx->getOrCreateSymbol(TargetSymbol->getName() + ".cold");
+      }
     }
 
     // Note that the address does not necessarily have to reside inside
@@ -2033,6 +2037,9 @@ uint64_t BinaryFunction::getEditDistance() const {
 }
 
 void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {
+  if (EmitColdPart && hasConstantIsland())
+    duplicateConstantIslands();
+
   int64_t CurrentGnuArgsSize = 0;
   for (auto BB : layout()) {
     if (EmitColdPart != BB->isCold())
@@ -2078,8 +2085,7 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {
     }
   }
 
-  if (!EmitColdPart)
-    emitConstantIslands(Streamer);
+  emitConstantIslands(Streamer, EmitColdPart);
 }
 
 void BinaryFunction::emitBodyRaw(MCStreamer *Streamer) {
@@ -2140,11 +2146,15 @@ void BinaryFunction::emitBodyRaw(MCStreamer *Streamer) {
   }
 }
 
-void BinaryFunction::emitConstantIslands(MCStreamer &Streamer) {
+void BinaryFunction::emitConstantIslands(MCStreamer &Streamer,
+                                         bool EmitColdPart) {
   if (DataOffsets.empty())
     return;
 
-  Streamer.EmitLabel(getFunctionConstantIslandLabel());
+  if (!EmitColdPart)
+    Streamer.EmitLabel(getFunctionConstantIslandLabel());
+  else
+    Streamer.EmitLabel(getFunctionColdConstantIslandLabel());
   // Raw contents of the function.
   StringRef SectionContents;
   Section.getContents(SectionContents);
@@ -2196,7 +2206,10 @@ void BinaryFunction::emitConstantIslands(MCStreamer &Streamer) {
       if (IS != IslandSymbols.end() && FunctionOffset == IS->first) {
         DEBUG(dbgs() << "BOLT-DEBUG: emitted label " << IS->second->getName()
                      << " at offset 0x" << Twine::utohexstr(IS->first) << '\n');
-        Streamer.EmitLabel(IS->second);
+        if (!EmitColdPart)
+          Streamer.EmitLabel(IS->second);
+        else
+          Streamer.EmitLabel(ColdIslandSymbols[IS->second]);
         ++IS;
       }
       if (RI != MoveRelocations.end() && FunctionOffset == RI->first) {
@@ -2216,6 +2229,33 @@ void BinaryFunction::emitConstantIslands(MCStreamer &Streamer) {
   }
 
   assert(IS == IslandSymbols.end() && "some symbols were not emitted!");
+}
+
+void BinaryFunction::duplicateConstantIslands() {
+  for (auto BB : layout()) {
+    if (!BB->isCold())
+      continue;
+
+    for (auto &Inst : *BB) {
+      int OpNum = 0;
+      for (auto &Operand : Inst) {
+        if (!Operand.isExpr()) {
+          ++OpNum;
+          continue;
+        }
+        const auto *Symbol = BC.MIA->getTargetSymbol(Inst, OpNum);
+        auto ISym = ColdIslandSymbols.find(Symbol);
+        if (ISym == ColdIslandSymbols.end())
+          continue;
+        Operand = MCOperand::createExpr(BC.MIA->getTargetExprFor(
+            Inst,
+            MCSymbolRefExpr::create(ISym->second, MCSymbolRefExpr::VK_None,
+                                    *BC.Ctx),
+            *BC.Ctx, 0));
+        ++OpNum;
+      }
+    }
+  }
 }
 
 namespace {
@@ -2480,7 +2520,8 @@ void BinaryFunction::fixBranches() {
       assert(CondBranch && "conditional branch expected");
       const auto *TSuccessor = BB->getConditionalSuccessor(true);
       const auto *FSuccessor = BB->getConditionalSuccessor(false);
-      if (NextBB && NextBB == TSuccessor) {
+      if (NextBB && NextBB == TSuccessor &&
+          !BC.MIA->hasAnnotation(*CondBranch, "DoNotChangeTarget")) {
         std::swap(TSuccessor, FSuccessor);
         MIA->reverseBranchCondition(*CondBranch, TSuccessor->getLabel(), Ctx);
         BB->swapConditionalSuccessors();
@@ -2490,7 +2531,10 @@ void BinaryFunction::fixBranches() {
       if (TSuccessor == FSuccessor) {
         BB->removeDuplicateConditionalSuccessor(CondBranch);
       }
-      if (!NextBB || (NextBB != TSuccessor && NextBB != FSuccessor)) {
+      if (!NextBB ||
+          ((NextBB != TSuccessor ||
+            BC.MIA->hasAnnotation(*CondBranch, "DoNotChangeTarget")) &&
+           NextBB != FSuccessor)) {
         BB->addBranchInstruction(FSuccessor);
       }
     }

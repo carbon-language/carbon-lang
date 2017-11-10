@@ -1846,7 +1846,10 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     uint64_t RefFunctionOffset = 0;
     MCSymbol *ReferencedSymbol = nullptr;
     if (ForceRelocation) {
-      ReferencedSymbol = BC->registerNameAtAddress(SymbolName, 0);
+      if (Relocation::isGOT(Rel.getType()))
+        ReferencedSymbol = BC->getOrCreateGlobalSymbol(0, "Zero");
+      else
+        ReferencedSymbol = BC->registerNameAtAddress(SymbolName, 0);
       Addend = Address;
       DEBUG(dbgs() << "BOLT-DEBUG: creating relocations for huge pages against"
                       " symbol " << SymbolName << " with addend " << Addend
@@ -2633,6 +2636,11 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
         const auto ColdEndOffset = Layout.getSymbolOffset(*ColdEndSymbol);
         Function.cold().setAddress(BaseAddress + ColdStartOffset);
         Function.cold().setImageSize(ColdEndOffset - ColdStartOffset);
+        if (Function.hasConstantIsland()) {
+          const auto DataOffset = Layout.getSymbolOffset(
+              *Function.getFunctionColdConstantIslandLabel());
+          Function.setOutputColdDataAddress(BaseAddress + DataOffset);
+        }
       }
     } else {
       Function.setOutputAddress(Function.getAddress());
@@ -3363,6 +3371,25 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
         }
         if (!PatchExisting && Function->hasConstantIsland()) {
           auto DataMark = Function->getOutputDataAddress();
+          auto CISize = Function->estimateConstantIslandSize();
+          auto CodeMark = DataMark + CISize;
+          auto DataMarkSym = NewSymbol;
+          DataMarkSym.st_name = AddToStrTab("$d");
+          DataMarkSym.st_value = DataMark;
+          DataMarkSym.st_size = 0;
+          DataMarkSym.setType(ELF::STT_NOTYPE);
+          DataMarkSym.setBinding(ELF::STB_LOCAL);
+          auto CodeMarkSym = DataMarkSym;
+          CodeMarkSym.st_name = AddToStrTab("$x");
+          CodeMarkSym.st_value = CodeMark;
+          Write(0, reinterpret_cast<const char *>(&DataMarkSym),
+                sizeof(DataMarkSym));
+          Write(0, reinterpret_cast<const char *>(&CodeMarkSym),
+                sizeof(CodeMarkSym));
+        }
+        if (!PatchExisting && Function->hasConstantIsland() &&
+            Function->isSplit()) {
+          auto DataMark = Function->getOutputColdDataAddress();
           auto CISize = Function->estimateConstantIslandSize();
           auto CodeMark = DataMark + CISize;
           auto DataMarkSym = NewSymbol;

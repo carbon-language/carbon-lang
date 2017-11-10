@@ -82,9 +82,20 @@ LongJmpPass::replaceTargetWithStub(const BinaryContext &BC,
 
   BinaryBasicBlock::BinaryBranchInfo BI{0, 0};
   auto *TgtBB = BB.getSuccessor(TgtSym, BI);
-  // Do not issue a long jmp for blocks in the same region
-  if (TgtBB && TgtBB->isCold() == BB.isCold())
-    return nullptr;
+  // Do not issue a long jmp for blocks in the same region, except if
+  // the region is too large to fit in this branch
+  if (TgtBB && TgtBB->isCold() == BB.isCold()) {
+    // Suppose we have half the available space to account for increase in the
+    // function size due to extra blocks being inserted (conservative estimate)
+    auto BitsAvail = BC.MIA->getPCRelEncodingSize(Inst) - 2;
+    uint64_t Mask = ~((1ULL << BitsAvail) - 1);
+    if (!(Func.getMaxSize() & Mask))
+      return nullptr;
+    // This is a special case for fixBranches, which is usually free to swap
+    // targets when a block has two successors. The other successor may not
+    // fit in this instruction as well.
+    BC.MIA->addAnnotation(BC.Ctx.get(), Inst, "DoNotChangeTarget", true);
+  }
 
   BinaryBasicBlock *StubBB =
       BB.isCold() ? ColdStubs[&Func][TgtSym] : HotStubs[&Func][TgtSym];
@@ -155,8 +166,12 @@ void LongJmpPass::insertStubs(const BinaryContext &BC, BinaryFunction &Func) {
       // Insert stubs close to the patched BB if call, but far away from the
       // hot path if a branch, since this branch target is the cold region
       BinaryBasicBlock *InsertionPoint = &BB;
-      if (!BC.MIA->isCall(Inst) && Frontier && !BB.isCold())
-        InsertionPoint = Frontier;
+      if (!BC.MIA->isCall(Inst) && Frontier && !BB.isCold()) {
+        auto BitsAvail = BC.MIA->getPCRelEncodingSize(Inst) - 2;
+        uint64_t Mask = ~((1ULL << BitsAvail) - 1);
+        if (!(Func.getMaxSize() & Mask))
+          InsertionPoint = Frontier;
+      }
       // Create a stub to handle a far-away target
       Insertions.emplace_back(std::make_pair(
           InsertionPoint, replaceTargetWithStub(BC, Func, BB, Inst)));
@@ -190,12 +205,49 @@ void LongJmpPass::tentativeBBLayout(const BinaryContext &BC,
   }
 }
 
+uint64_t LongJmpPass::tentativeLayoutRelocColdPart(
+  const BinaryContext &BC, std::vector<BinaryFunction *> &SortedFunctions,
+  uint64_t DotAddress) {
+  for (auto Func : SortedFunctions) {
+    if (!Func->isSplit())
+      continue;
+    DotAddress = RoundUpToAlignment(DotAddress, BinaryFunction::MinAlign);
+    auto Pad = OffsetToAlignment(DotAddress, opts::AlignFunctions);
+    if (Pad <= opts::AlignFunctionsMaxBytes)
+      DotAddress += Pad;
+    ColdAddresses[Func] = DotAddress;
+    DEBUG(dbgs() << Func->getPrintName() << " cold tentative: "
+                 << Twine::utohexstr(DotAddress) << "\n");
+    DotAddress += Func->estimateColdSize();
+    DotAddress += Func->estimateConstantIslandSize();
+  }
+  return DotAddress;
+}
+
 uint64_t LongJmpPass::tentativeLayoutRelocMode(
   const BinaryContext &BC, std::vector<BinaryFunction *> &SortedFunctions,
   uint64_t DotAddress) {
 
+  // Compute hot cold frontier
+  uint32_t LastHotIndex = -1u;
+  uint32_t CurrentIndex = 0;
+  for (auto *BF : SortedFunctions) {
+    if (!BF->hasValidIndex() && LastHotIndex == -1u) {
+      LastHotIndex = CurrentIndex;
+    }
+    ++CurrentIndex;
+  }
+
   // Hot
+  CurrentIndex = 0;
+  bool ColdLayoutDone = false;
   for (auto Func : SortedFunctions) {
+    if (!ColdLayoutDone && CurrentIndex >= LastHotIndex){
+      DotAddress =
+          tentativeLayoutRelocColdPart(BC, SortedFunctions, DotAddress);
+      ColdLayoutDone = true;
+    }
+
     DotAddress = RoundUpToAlignment(DotAddress, BinaryFunction::MinAlign);
     auto Pad = OffsetToAlignment(DotAddress, opts::AlignFunctions);
     if (Pad <= opts::AlignFunctionsMaxBytes)
@@ -203,30 +255,17 @@ uint64_t LongJmpPass::tentativeLayoutRelocMode(
     HotAddresses[Func] = DotAddress;
     DEBUG(dbgs() << Func->getPrintName()
                  << " tentative: " << Twine::utohexstr(DotAddress) << "\n");
-    if (!Func->isSimple()) {
-      DotAddress += Func->getMaxSize();
-    } else {
-      if (!Func->isSplit()) {
-        DotAddress += Func->estimateSize();
-      } else {
-        DotAddress += Func->estimateHotSize();
-        DotAddress += Func->estimateConstantIslandSize();
-      }
-    }
+    if (!Func->isSplit())
+      DotAddress += Func->estimateSize();
+    else
+      DotAddress += Func->estimateHotSize();
+    DotAddress += Func->estimateConstantIslandSize();
+    ++CurrentIndex;
   }
-  // Cold
-  for (auto Func : SortedFunctions) {
-    DotAddress = RoundUpToAlignment(DotAddress, BinaryFunction::MinAlign);
-    auto Pad = OffsetToAlignment(DotAddress, opts::AlignFunctions);
-    if (Pad <= opts::AlignFunctionsMaxBytes)
-      DotAddress += Pad;
-    HotAddresses[Func] = Func->getAddress();
-    DotAddress = RoundUpToAlignment(DotAddress, ColdFragAlign);
-    ColdAddresses[Func] = DotAddress;
-    if (Func->isSplit())
-      DotAddress += Func->estimateColdSize();
+  // BBs
+  for (auto Func : SortedFunctions)
     tentativeBBLayout(BC, *Func);
-  }
+
   return DotAddress;
 }
 
@@ -335,6 +374,30 @@ bool LongJmpPass::removeOrShrinkStubs(const BinaryContext &BC,
       if (!shouldInsertStub(BC, Inst) || !usesStub(BC, Func, Inst)) {
         DotAddress += InsnSize;
         continue;
+      }
+
+      // Compute DoNotChangeTarget annotation, when fixBranches cannot swap
+      // targets
+      if (BC.MIA->isConditionalBranch(Inst) && BB.succ_size() == 2) {
+        auto *SuccBB = BB.getConditionalSuccessor(false);
+        bool IsStub = false;
+        auto Iter = Stubs.find(&Func);
+        if (Iter != Stubs.end())
+          IsStub = Iter->second.count(SuccBB);
+        auto *RealTargetSym =
+            IsStub ? BC.MIA->getTargetSymbol(*SuccBB->begin()) : nullptr;
+        if (IsStub)
+          SuccBB = Func.getBasicBlockForLabel(RealTargetSym);
+        uint64_t Offset = getSymbolAddress(BC, RealTargetSym, SuccBB);
+        auto BitsAvail = BC.MIA->getPCRelEncodingSize(Inst) - 1;
+        uint64_t Mask = ~((1ULL << BitsAvail) - 1);
+        if ((Offset & Mask) &&
+            !BC.MIA->hasAnnotation(Inst, "DoNotChangeTarget")) {
+          BC.MIA->addAnnotation(BC.Ctx.get(), Inst, "DoNotChangeTarget", true);
+        } else if ((!(Offset & Mask)) &&
+                   BC.MIA->hasAnnotation(Inst, "DoNotChangeTarget")) {
+          BC.MIA->removeAnnotation(Inst, "DoNotChangeTarget");
+        }
       }
 
       auto StubSym = BC.MIA->getTargetSymbol(Inst);

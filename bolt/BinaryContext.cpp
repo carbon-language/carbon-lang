@@ -565,7 +565,11 @@ size_t Relocation::getSizeForType(uint64_t Type) {
   case ELF::R_AARCH64_LDST16_ABS_LO12_NC:
   case ELF::R_AARCH64_LDST8_ABS_LO12_NC:
   case ELF::R_AARCH64_ADR_GOT_PAGE:
+  case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
   case ELF::R_AARCH64_LD64_GOT_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_LD64_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_ADD_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_CALL:
   case ELF::R_AARCH64_JUMP26:
   case ELF::R_AARCH64_PREL32:
     return 4;
@@ -585,12 +589,14 @@ uint64_t Relocation::extractValue(uint64_t Type, uint64_t Contents,
     return Contents;
   case ELF::R_AARCH64_PREL32:
     return static_cast<int64_t>(PC) + SignExtend64<32>(Contents & 0xffffffff);
+  case ELF::R_AARCH64_TLSDESC_CALL:
   case ELF::R_AARCH64_JUMP26:
   case ELF::R_AARCH64_CALL26:
     // Immediate goes in bits 25:0 of B and BL.
     Contents &= ~0xfffffffffc000000ULL;
     return static_cast<int64_t>(PC) + SignExtend64<28>(Contents << 2);
   case ELF::R_AARCH64_ADR_GOT_PAGE:
+  case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
   case ELF::R_AARCH64_ADR_PREL_PG_HI21: {
     // Bits 32:12 of Symbol address goes in bits 30:29 + 23:5 of ADRP
     // instruction
@@ -602,6 +608,7 @@ uint64_t Relocation::extractValue(uint64_t Type, uint64_t Contents,
     Contents &= ~0xfffUll;
     return Contents;
   }
+  case ELF::R_AARCH64_TLSDESC_LD64_LO12_NC:
   case ELF::R_AARCH64_LD64_GOT_LO12_NC:
   case ELF::R_AARCH64_LDST64_ABS_LO12_NC: {
     // Immediate goes in bits 21:10 of LD/ST instruction, taken
@@ -609,6 +616,7 @@ uint64_t Relocation::extractValue(uint64_t Type, uint64_t Contents,
     Contents &= ~0xffffffffffc003ffU;
     return Contents >> (10 - 3);
   }
+  case ELF::R_AARCH64_TLSDESC_ADD_LO12_NC:
   case ELF::R_AARCH64_ADD_ABS_LO12_NC: {
     // Immediate goes in bits 21:10 of ADD instruction
     Contents &= ~0xffffffffffc003ffU;
@@ -647,6 +655,10 @@ bool Relocation::isGOT(uint64_t Type) {
     return false;
   case ELF::R_AARCH64_ADR_GOT_PAGE:
   case ELF::R_AARCH64_LD64_GOT_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
+  case ELF::R_AARCH64_TLSDESC_LD64_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_ADD_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_CALL:
     return true;
   }
 }
@@ -668,6 +680,8 @@ bool Relocation::isPCRelative(uint64_t Type) {
   case ELF::R_AARCH64_LDST16_ABS_LO12_NC:
   case ELF::R_AARCH64_LDST8_ABS_LO12_NC:
   case ELF::R_AARCH64_LD64_GOT_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_LD64_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_ADD_LO12_NC:
     return false;
 
   case ELF::R_X86_64_PC8:
@@ -677,9 +691,11 @@ bool Relocation::isPCRelative(uint64_t Type) {
   case ELF::R_X86_64_GOTTPOFF:
   case ELF::R_X86_64_GOTPCRELX:
   case ELF::R_X86_64_REX_GOTPCRELX:
+  case ELF::R_AARCH64_TLSDESC_CALL:
   case ELF::R_AARCH64_CALL26:
   case ELF::R_AARCH64_ADR_PREL_PG_HI21:
   case ELF::R_AARCH64_ADR_GOT_PAGE:
+  case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
   case ELF::R_AARCH64_JUMP26:
   case ELF::R_AARCH64_PREL32:
     return true;

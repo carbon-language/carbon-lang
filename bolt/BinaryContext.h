@@ -340,7 +340,7 @@ public:
       SmallString<256> Code;
       SmallVector<MCFixup, 4> Fixups;
       raw_svector_ostream VecOS(Code);
-      if (MIA->isCFI(*Beg)) {
+      if (MIA->isCFI(*Beg) || MIA->isEHLabel(*Beg)) {
         ++Beg;
         continue;
       }

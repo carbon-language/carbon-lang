@@ -227,6 +227,20 @@ class FinalizeFunctions : public BinaryFunctionPass {
                       std::set<uint64_t> &LargeFunctions) override;
 };
 
+/// Strip all BOLT-related annotations before LLVM code emission
+class StripAnnotations : public BinaryFunctionPass {
+ public:
+  explicit StripAnnotations(const cl::opt<bool> &PrintPass)
+    : BinaryFunctionPass(PrintPass) { }
+
+  const char *getName() const override {
+    return "strip-annotations";
+  }
+  void runOnFunctions(BinaryContext &BC,
+                      std::map<uint64_t, BinaryFunction> &BFs,
+                      std::set<uint64_t> &LargeFunctions) override;
+};
+
 /// An optimization to simplify conditional tail calls by removing
 /// unnecessary branches.
 ///

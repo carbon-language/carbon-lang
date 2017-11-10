@@ -431,6 +431,7 @@ private:
   /// The address offset where we emitted the constant island, that is, the
   /// chunk of data in the function code area (AArch only)
   int64_t OutputDataOffset;
+  int64_t OutputColdDataOffset;
 
   /// Map labels to corresponding basic blocks.
   std::unordered_map<const MCSymbol *, BinaryBasicBlock *> LabelToBB;
@@ -639,6 +640,7 @@ private:
   /// Offsets in function that are data values in a constant island identified
   /// after disassembling
   std::map<uint64_t, MCSymbol *> IslandSymbols;
+  std::map<const MCSymbol *, MCSymbol *> ColdIslandSymbols;
 
   // Blocks are kept sorted in the layout order. If we need to change the
   // layout (if BasicBlocksLayout stores a different order than BasicBlocks),
@@ -677,6 +679,7 @@ private:
   mutable MCSymbol *FunctionColdEndLabel{nullptr};
 
   mutable MCSymbol *FunctionConstantIslandLabel{nullptr};
+  mutable MCSymbol *FunctionColdConstantIslandLabel{nullptr};
 
   /// Unique number associated with the function.
   uint64_t  FunctionNumber;
@@ -1137,6 +1140,14 @@ public:
     return FunctionConstantIslandLabel;
   }
 
+  MCSymbol *getFunctionColdConstantIslandLabel() const {
+    if (!FunctionColdConstantIslandLabel) {
+      FunctionColdConstantIslandLabel =
+          BC.Ctx->createTempSymbol("func_cold_const_island", true);
+    }
+    return FunctionColdConstantIslandLabel;
+  }
+
   /// Return true if this is a function representing a PLT entry.
   bool isPLTFunction() const {
     return PLTSymbol != nullptr;
@@ -1168,13 +1179,16 @@ public:
     case ELF::R_X86_64_64:
     case ELF::R_AARCH64_ABS64:
     case ELF::R_AARCH64_LDST64_ABS_LO12_NC:
+    case ELF::R_AARCH64_TLSDESC_LD64_LO12_NC:
     case ELF::R_AARCH64_LD64_GOT_LO12_NC:
+    case ELF::R_AARCH64_TLSDESC_ADD_LO12_NC:
     case ELF::R_AARCH64_ADD_ABS_LO12_NC:
     case ELF::R_AARCH64_LDST16_ABS_LO12_NC:
     case ELF::R_AARCH64_LDST32_ABS_LO12_NC:
     case ELF::R_AARCH64_LDST8_ABS_LO12_NC:
     case ELF::R_AARCH64_LDST128_ABS_LO12_NC:
     case ELF::R_AARCH64_ADR_GOT_PAGE:
+    case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
     case ELF::R_AARCH64_ADR_PREL_PG_HI21:
       Relocations.emplace(Offset,
                           Relocation{Offset, Symbol, RelType, Addend, Value});
@@ -1186,6 +1200,7 @@ public:
     case ELF::R_X86_64_REX_GOTPCRELX:
     case ELF::R_AARCH64_JUMP26:
     case ELF::R_AARCH64_CALL26:
+    case ELF::R_AARCH64_TLSDESC_CALL:
       break;
 
     // The following relocations are ignored.
@@ -1714,6 +1729,14 @@ public:
     return OutputDataOffset;
   }
 
+  void setOutputColdDataAddress(uint64_t Address) {
+    OutputColdDataOffset = Address;
+  }
+
+  uint64_t getOutputColdDataAddress() const {
+    return OutputColdDataOffset;
+  }
+
   /// Detects whether \p Address is inside a data region in this function
   /// (constant islands).
   bool isInConstantIsland(uint64_t Address) const {
@@ -1969,7 +1992,12 @@ public:
   void emitBodyRaw(MCStreamer *Streamer);
 
   /// Helper for emitBody to write data inside a function (used for AArch64)
-  void emitConstantIslands(MCStreamer &Streamer);
+  void emitConstantIslands(MCStreamer &Streamer, bool EmitColdPart);
+
+  /// Traverse cold basic blocks and replace references to constants in islands
+  /// with a proxy symbol for the duplicated constant island that is going to be
+  /// emitted in the cold region.
+  void duplicateConstantIslands();
 
   /// Merge profile data of this function into those of the given
   /// function. The functions should have been proven identical with

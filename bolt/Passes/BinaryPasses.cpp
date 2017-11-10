@@ -591,13 +591,6 @@ void FinalizeFunctions::runOnFunctions(
     auto &Function = It.second;
     const auto ShouldOptimize = shouldOptimize(Function);
 
-    // Strip all annotations.
-    for (auto &BB : Function) {
-      for (auto &Inst : BB) {
-        BC.MIA->removeAllAnnotations(Inst);
-      }
-    }
-
     // Always fix functions in relocation mode.
     if (!BC.HasRelocations && !ShouldOptimize)
       continue;
@@ -617,6 +610,22 @@ void FinalizeFunctions::runOnFunctions(
 
     // Update exception handling information.
     Function.updateEHRanges();
+  }
+}
+
+void StripAnnotations::runOnFunctions(
+  BinaryContext &BC,
+  std::map<uint64_t, BinaryFunction> &BFs,
+  std::set<uint64_t> &
+) {
+  for (auto &It : BFs) {
+    auto &Function = It.second;
+
+    for (auto &BB : Function) {
+      for (auto &Inst : BB) {
+        BC.MIA->removeAllAnnotations(Inst);
+      }
+    }
   }
 }
 
