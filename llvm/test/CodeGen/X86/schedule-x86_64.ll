@@ -747,16 +747,223 @@ define i64 @test_bswap64(i64 %a0) optsize {
 
 ; TODO - test_call
 
-; TODO - test_cbw
-; TODO - test_cwde
-; TODO - test_cdqe
-; TODO - test_cwd
-; TODO - test_cdq
-; TODO - test_cqo
+define void @test_cbw_cdq_cdqe_cqo_cwd_cwde() optsize {
+; GENERIC-LABEL: test_cbw_cdq_cdqe_cqo_cwd_cwde:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    cbtw # sched: [1:0.33]
+; GENERIC-NEXT:    cltd # sched: [1:0.50]
+; GENERIC-NEXT:    cltq # sched: [1:0.50]
+; GENERIC-NEXT:    cqto # sched: [1:0.50]
+; GENERIC-NEXT:    cwtd
+; GENERIC-NEXT:    cwtl # sched: [1:0.33]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_cbw_cdq_cdqe_cqo_cwd_cwde:
+; ATOM:       # BB#0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    cbtw # sched: [4:2.00]
+; ATOM-NEXT:    cltd # sched: [4:2.00]
+; ATOM-NEXT:    cltq # sched: [4:2.00]
+; ATOM-NEXT:    cqto # sched: [4:2.00]
+; ATOM-NEXT:    cwtd # sched: [4:2.00]
+; ATOM-NEXT:    cwtl # sched: [4:2.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_cbw_cdq_cdqe_cqo_cwd_cwde:
+; SLM:       # BB#0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    cbtw
+; SLM-NEXT:    cltd
+; SLM-NEXT:    cltq
+; SLM-NEXT:    cqto
+; SLM-NEXT:    cwtd
+; SLM-NEXT:    cwtl
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_cbw_cdq_cdqe_cqo_cwd_cwde:
+; SANDY:       # BB#0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    cbtw # sched: [1:0.33]
+; SANDY-NEXT:    cltd # sched: [1:0.50]
+; SANDY-NEXT:    cltq # sched: [1:0.50]
+; SANDY-NEXT:    cqto # sched: [1:0.50]
+; SANDY-NEXT:    cwtd
+; SANDY-NEXT:    cwtl # sched: [1:0.33]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_cbw_cdq_cdqe_cqo_cwd_cwde:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    cbtw # sched: [1:0.25]
+; HASWELL-NEXT:    cltd # sched: [1:0.50]
+; HASWELL-NEXT:    cltq # sched: [1:0.50]
+; HASWELL-NEXT:    cqto # sched: [1:0.50]
+; HASWELL-NEXT:    cwtd # sched: [2:0.50]
+; HASWELL-NEXT:    cwtl # sched: [1:0.25]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; BROADWELL-LABEL: test_cbw_cdq_cdqe_cqo_cwd_cwde:
+; BROADWELL:       # BB#0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    cbtw # sched: [1:0.25]
+; BROADWELL-NEXT:    cltd # sched: [1:0.50]
+; BROADWELL-NEXT:    cltq # sched: [1:0.50]
+; BROADWELL-NEXT:    cqto # sched: [1:0.50]
+; BROADWELL-NEXT:    cwtd # sched: [2:0.50]
+; BROADWELL-NEXT:    cwtl # sched: [1:0.25]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_cbw_cdq_cdqe_cqo_cwd_cwde:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    cbtw # sched: [1:0.25]
+; SKYLAKE-NEXT:    cltd # sched: [1:0.50]
+; SKYLAKE-NEXT:    cltq # sched: [1:0.50]
+; SKYLAKE-NEXT:    cqto # sched: [1:0.50]
+; SKYLAKE-NEXT:    cwtd # sched: [2:0.50]
+; SKYLAKE-NEXT:    cwtl # sched: [1:0.25]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_cbw_cdq_cdqe_cqo_cwd_cwde:
+; SKX:       # BB#0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    cbtw # sched: [1:0.25]
+; SKX-NEXT:    cltd # sched: [1:0.50]
+; SKX-NEXT:    cltq # sched: [1:0.50]
+; SKX-NEXT:    cqto # sched: [1:0.50]
+; SKX-NEXT:    cwtd # sched: [2:0.50]
+; SKX-NEXT:    cwtl # sched: [1:0.25]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_cbw_cdq_cdqe_cqo_cwd_cwde:
+; BTVER2:       # BB#0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    cbtw
+; BTVER2-NEXT:    cltd
+; BTVER2-NEXT:    cltq
+; BTVER2-NEXT:    cqto
+; BTVER2-NEXT:    cwtd
+; BTVER2-NEXT:    cwtl
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_cbw_cdq_cdqe_cqo_cwd_cwde:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    cbtw
+; ZNVER1-NEXT:    cltd
+; ZNVER1-NEXT:    cltq
+; ZNVER1-NEXT:    cqto
+; ZNVER1-NEXT:    cwtd
+; ZNVER1-NEXT:    cwtl
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  tail call void asm "cbw \0A\09 cdq \0A\09 cdqe \0A\09 cqo \0A\09 cwd \0A\09 cwde", ""() nounwind
+  ret void
+}
 
-; TODO - test_clc
-; TODO - test_cld
-; TODO - test_cmc
+define void @test_clc_cld_cmc() optsize {
+; GENERIC-LABEL: test_clc_cld_cmc:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    clc # sched: [1:0.33]
+; GENERIC-NEXT:    cld # sched: [1:0.33]
+; GENERIC-NEXT:    cmc # sched: [1:0.33]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_clc_cld_cmc:
+; ATOM:       # BB#0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    clc # sched: [1:0.50]
+; ATOM-NEXT:    cld # sched: [3:1.50]
+; ATOM-NEXT:    cmc # sched: [1:0.50]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_clc_cld_cmc:
+; SLM:       # BB#0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    clc # sched: [1:0.50]
+; SLM-NEXT:    cld # sched: [1:0.50]
+; SLM-NEXT:    cmc # sched: [1:0.50]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_clc_cld_cmc:
+; SANDY:       # BB#0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    clc # sched: [1:0.33]
+; SANDY-NEXT:    cld # sched: [1:0.33]
+; SANDY-NEXT:    cmc # sched: [1:0.33]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_clc_cld_cmc:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    clc # sched: [1:0.25]
+; HASWELL-NEXT:    cld # sched: [3:1.00]
+; HASWELL-NEXT:    cmc # sched: [1:0.25]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; BROADWELL-LABEL: test_clc_cld_cmc:
+; BROADWELL:       # BB#0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    clc # sched: [1:0.25]
+; BROADWELL-NEXT:    cld # sched: [3:1.00]
+; BROADWELL-NEXT:    cmc # sched: [1:0.25]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_clc_cld_cmc:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    clc # sched: [1:0.25]
+; SKYLAKE-NEXT:    cld # sched: [3:1.00]
+; SKYLAKE-NEXT:    cmc # sched: [1:0.25]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_clc_cld_cmc:
+; SKX:       # BB#0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    clc # sched: [1:0.25]
+; SKX-NEXT:    cld # sched: [3:1.00]
+; SKX-NEXT:    cmc # sched: [1:0.25]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_clc_cld_cmc:
+; BTVER2:       # BB#0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    clc # sched: [1:0.50]
+; BTVER2-NEXT:    cld # sched: [1:0.50]
+; BTVER2-NEXT:    cmc # sched: [1:0.50]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_clc_cld_cmc:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    clc # sched: [1:0.25]
+; ZNVER1-NEXT:    cld # sched: [1:0.25]
+; ZNVER1-NEXT:    cmc # sched: [1:0.25]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  tail call void asm "clc \0A\09 cld \0A\09 cmc", ""() nounwind
+  ret void
+}
 
 ; TODO - test_cmovcc
 ; TODO - test_cmp
@@ -771,7 +978,79 @@ define i64 @test_bswap64(i64 %a0) optsize {
 ; TODO - test_cmpxchg8b
 ; TODO - test_cmpxchg16b
 
-; TODO - test_cpuid
+define void @test_cpuid() optsize {
+; GENERIC-LABEL: test_cpuid:
+; GENERIC:       # BB#0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    cpuid # sched: [100:0.33]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_cpuid:
+; ATOM:       # BB#0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    cpuid # sched: [121:60.50]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_cpuid:
+; SLM:       # BB#0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    cpuid # sched: [100:1.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_cpuid:
+; SANDY:       # BB#0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    cpuid # sched: [100:0.33]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_cpuid:
+; HASWELL:       # BB#0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    cpuid # sched: [18:2.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [2:1.00]
+;
+; BROADWELL-LABEL: test_cpuid:
+; BROADWELL:       # BB#0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    cpuid # sched: [18:2.00]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_cpuid:
+; SKYLAKE:       # BB#0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    cpuid # sched: [18:2.00]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_cpuid:
+; SKX:       # BB#0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    cpuid # sched: [18:2.00]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_cpuid:
+; BTVER2:       # BB#0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    cpuid # sched: [100:0.17]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_cpuid:
+; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    cpuid # sched: [100:?]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  tail call void asm "cpuid", ""() nounwind
+  ret void
+}
 
 ; TODO - test_dec
 ; TODO - test_div
