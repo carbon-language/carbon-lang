@@ -18,10 +18,6 @@
 
 using namespace __sanitizer;
 
-namespace __sanitizer {
-struct __sanitizer_sigaction;
-}
-
 #ifndef SIGNAL_INTERCEPTOR_SIGNAL_IMPL
 #define SIGNAL_INTERCEPTOR_SIGNAL_IMPL(func, signum, handler) \
   { return REAL(func)(signum, handler); }

@@ -19,10 +19,6 @@
 #include "interception/interception.h"
 #include "sanitizer_common/sanitizer_platform_interceptors.h"
 
-namespace __sanitizer {
-struct __sanitizer_sigaction;
-}
-
 namespace __asan {
 
 void InitializeAsanInterceptors();
