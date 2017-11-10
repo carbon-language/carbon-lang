@@ -34,7 +34,9 @@ struct CommonFlags {
 };
 
 // Functions to get/set global CommonFlags shared by all sanitizer runtimes:
-extern CommonFlags common_flags_dont_use;
+// FIXME: hidden needed for asan_premap_shadow. Consider building with
+// -fvisibility=hidden.
+extern CommonFlags common_flags_dont_use __attribute__((visibility("hidden")));
 inline const CommonFlags *common_flags() {
   return &common_flags_dont_use;
 }
