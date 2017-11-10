@@ -1295,14 +1295,14 @@ static int sigaction_impl(int signo, const __sanitizer_sigaction *act,
                         : (uptr)SignalHandler;
       if (cb != __sanitizer::sig_ign && cb != __sanitizer::sig_dfl) {
         atomic_store(&sigactions[signo], cb, memory_order_relaxed);
-        pnew_act->sigaction = (void (*)(int, void *, void *))new_cb;
+        pnew_act->sigaction = (decltype(pnew_act->sigaction))new_cb;
       }
     }
     res = REAL(sigaction)(signo, pnew_act, oldact);
     if (res == 0 && oldact) {
       uptr cb = (uptr)oldact->sigaction;
       if (cb != __sanitizer::sig_ign && cb != __sanitizer::sig_dfl) {
-        oldact->sigaction = (void (*)(int, void *, void *))old_cb;
+        oldact->sigaction = (decltype(oldact->sigaction))old_cb;
       }
     }
   } else {
