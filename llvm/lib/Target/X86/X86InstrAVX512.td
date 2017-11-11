@@ -7656,58 +7656,74 @@ multiclass
 avx512_rndscale_scalar<bits<8> opc, string OpcodeStr, X86VectorVTInfo _> {
 
   let ExeDomain = _.ExeDomain in {
-  defm r : AVX512_maskable_scalar<opc, MRMSrcReg, _, (outs _.RC:$dst),
+  defm r_Int : AVX512_maskable_scalar<opc, MRMSrcReg, _, (outs _.RC:$dst),
                            (ins _.RC:$src1, _.RC:$src2, i32u8imm:$src3), OpcodeStr,
                            "$src3, $src2, $src1", "$src1, $src2, $src3",
                            (_.VT (X86RndScales (_.VT _.RC:$src1), (_.VT _.RC:$src2),
                             (i32 imm:$src3), (i32 FROUND_CURRENT)))>;
 
-  defm rb : AVX512_maskable_scalar<opc, MRMSrcReg, _, (outs _.RC:$dst),
+  defm rb_Int : AVX512_maskable_scalar<opc, MRMSrcReg, _, (outs _.RC:$dst),
                          (ins _.RC:$src1, _.RC:$src2, i32u8imm:$src3), OpcodeStr,
                          "$src3, {sae}, $src2, $src1", "$src1, $src2, {sae}, $src3",
                          (_.VT (X86RndScales (_.VT _.RC:$src1), (_.VT _.RC:$src2),
                          (i32 imm:$src3), (i32 FROUND_NO_EXC)))>, EVEX_B;
 
-  defm m : AVX512_maskable_scalar<opc, MRMSrcMem, _, (outs _.RC:$dst),
+  defm m_Int : AVX512_maskable_scalar<opc, MRMSrcMem, _, (outs _.RC:$dst),
                          (ins _.RC:$src1, _.ScalarMemOp:$src2, i32u8imm:$src3),
                          OpcodeStr,
                          "$src3, $src2, $src1", "$src1, $src2, $src3",
                          (_.VT (X86RndScales (_.VT _.RC:$src1),
                           (_.VT (scalar_to_vector (_.ScalarLdFrag addr:$src2))),
                           (i32 imm:$src3), (i32 FROUND_CURRENT)))>;
-  }
-  let Predicates = [HasAVX512] in {
-  def : Pat<(ffloor _.FRC:$src), (COPY_TO_REGCLASS
-             (_.VT (!cast<Instruction>(NAME##r) (_.VT (IMPLICIT_DEF)),
-             (_.VT (COPY_TO_REGCLASS _.FRC:$src, _.RC)), (i32 0x9))), _.FRC)>;
-  def : Pat<(fceil _.FRC:$src), (COPY_TO_REGCLASS
-             (_.VT (!cast<Instruction>(NAME##r) (_.VT (IMPLICIT_DEF)),
-             (_.VT (COPY_TO_REGCLASS _.FRC:$src, _.RC)), (i32 0xa))), _.FRC)>;
-  def : Pat<(ftrunc _.FRC:$src), (COPY_TO_REGCLASS
-             (_.VT (!cast<Instruction>(NAME##r) (_.VT (IMPLICIT_DEF)),
-             (_.VT (COPY_TO_REGCLASS _.FRC:$src, _.RC)), (i32 0xb))), _.FRC)>;
-  def : Pat<(frint _.FRC:$src), (COPY_TO_REGCLASS
-             (_.VT (!cast<Instruction>(NAME##r) (_.VT (IMPLICIT_DEF)),
-             (_.VT (COPY_TO_REGCLASS _.FRC:$src, _.RC)), (i32 0x4))), _.FRC)>;
-  def : Pat<(fnearbyint _.FRC:$src), (COPY_TO_REGCLASS
-             (_.VT (!cast<Instruction>(NAME##r) (_.VT (IMPLICIT_DEF)),
-             (_.VT (COPY_TO_REGCLASS _.FRC:$src, _.RC)), (i32 0xc))), _.FRC)>;
 
-  def : Pat<(ffloor (_.ScalarLdFrag addr:$src)), (COPY_TO_REGCLASS
-             (_.VT (!cast<Instruction>(NAME##m) (_.VT (IMPLICIT_DEF)),
-             addr:$src, (i32 0x9))), _.FRC)>;
-  def : Pat<(fceil (_.ScalarLdFrag addr:$src)), (COPY_TO_REGCLASS
-             (_.VT (!cast<Instruction>(NAME##m) (_.VT (IMPLICIT_DEF)),
-             addr:$src, (i32 0xa))), _.FRC)>;
-  def : Pat<(ftrunc (_.ScalarLdFrag addr:$src)), (COPY_TO_REGCLASS
-             (_.VT (!cast<Instruction>(NAME##m) (_.VT (IMPLICIT_DEF)),
-             addr:$src, (i32 0xb))), _.FRC)>;
-  def : Pat<(frint (_.ScalarLdFrag addr:$src)), (COPY_TO_REGCLASS
-             (_.VT (!cast<Instruction>(NAME##m) (_.VT (IMPLICIT_DEF)),
-             addr:$src, (i32 0x4))), _.FRC)>;
-  def : Pat<(fnearbyint (_.ScalarLdFrag addr:$src)), (COPY_TO_REGCLASS
-             (_.VT (!cast<Instruction>(NAME##m) (_.VT (IMPLICIT_DEF)),
-             addr:$src, (i32 0xc))), _.FRC)>;
+  let isCodeGenOnly = 1, hasSideEffects = 0 in {
+    def r : I<opc, MRMSrcReg, (outs _.FRC:$dst),
+               (ins _.FRC:$src1, _.FRC:$src2, i32u8imm:$src3),
+               OpcodeStr#"\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
+               []>;
+
+    let mayLoad = 1 in
+      def m : I<opc, MRMSrcMem, (outs _.FRC:$dst),
+                 (ins _.FRC:$src1, _.ScalarMemOp:$src2, i32u8imm:$src3),
+                 OpcodeStr#"\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
+                 []>;
+  }
+  }
+
+  let Predicates = [HasAVX512] in {
+    def : Pat<(ffloor _.FRC:$src),
+              (_.EltVT (!cast<Instruction>(NAME##r) (_.EltVT (IMPLICIT_DEF)),
+               _.FRC:$src, (i32 0x9)))>;
+    def : Pat<(fceil _.FRC:$src),
+              (_.EltVT (!cast<Instruction>(NAME##r) (_.EltVT (IMPLICIT_DEF)),
+               _.FRC:$src, (i32 0xa)))>;
+    def : Pat<(ftrunc _.FRC:$src),
+              (_.EltVT (!cast<Instruction>(NAME##r) (_.EltVT (IMPLICIT_DEF)),
+               _.FRC:$src, (i32 0xb)))>;
+    def : Pat<(frint _.FRC:$src),
+              (_.EltVT (!cast<Instruction>(NAME##r) (_.EltVT (IMPLICIT_DEF)),
+               _.FRC:$src, (i32 0x4)))>;
+    def : Pat<(fnearbyint _.FRC:$src),
+              (_.EltVT (!cast<Instruction>(NAME##r) (_.EltVT (IMPLICIT_DEF)),
+               _.FRC:$src, (i32 0xc)))>;
+  }
+
+  let Predicates = [HasAVX512, OptForSize] in {
+    def : Pat<(ffloor (_.ScalarLdFrag addr:$src)),
+              (_.EltVT (!cast<Instruction>(NAME##m) (_.EltVT (IMPLICIT_DEF)),
+               addr:$src, (i32 0x9)))>;
+    def : Pat<(fceil (_.ScalarLdFrag addr:$src)),
+              (_.EltVT (!cast<Instruction>(NAME##m) (_.EltVT (IMPLICIT_DEF)),
+               addr:$src, (i32 0xa)))>;
+    def : Pat<(ftrunc (_.ScalarLdFrag addr:$src)),
+              (_.EltVT (!cast<Instruction>(NAME##m) (_.EltVT (IMPLICIT_DEF)),
+               addr:$src, (i32 0xb)))>;
+    def : Pat<(frint (_.ScalarLdFrag addr:$src)),
+              (_.EltVT (!cast<Instruction>(NAME##m) (_.EltVT (IMPLICIT_DEF)),
+               addr:$src, (i32 0x4)))>;
+    def : Pat<(fnearbyint (_.ScalarLdFrag addr:$src)),
+              (_.EltVT (!cast<Instruction>(NAME##m) (_.EltVT (IMPLICIT_DEF)),
+               addr:$src, (i32 0xc)))>;
   }
 }
 

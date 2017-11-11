@@ -124,6 +124,18 @@ declare float @llvm.floor.f32(float %p)
 define float @floor_f32m(float* %aptr) {
 ; CHECK-LABEL: floor_f32m:
 ; CHECK:       ## BB#0:
+; CHECK-NEXT:    vmovss (%rdi), %xmm0 ## EVEX TO VEX Compression encoding: [0xc5,0xfa,0x10,0x07]
+; CHECK-NEXT:    ## xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    vrndscaless $9, %xmm0, %xmm0, %xmm0 ## encoding: [0x62,0xf3,0x7d,0x08,0x0a,0xc0,0x09]
+; CHECK-NEXT:    retq ## encoding: [0xc3]
+  %a = load float, float* %aptr, align 4
+  %res = call float @llvm.floor.f32(float %a)
+  ret float %res
+}
+
+define float @floor_f32m_optsize(float* %aptr) optsize {
+; CHECK-LABEL: floor_f32m_optsize:
+; CHECK:       ## BB#0:
 ; CHECK-NEXT:    vrndscaless $9, (%rdi), %xmm0, %xmm0 ## encoding: [0x62,0xf3,0x7d,0x08,0x0a,0x07,0x09]
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
   %a = load float, float* %aptr, align 4
