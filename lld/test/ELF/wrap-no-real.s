@@ -15,7 +15,7 @@
 // CHECK-NEXT: movl $0x11010, %edx
 // CHECK-NEXT: movl $0x11000, %edx
 
-// RUN: llvm-readobj -t -s %t | FileCheck -check-prefix=SYM %s
+// RUN: llvm-readobj -t %t | FileCheck -check-prefix=SYM %s
 // SYM-NOT:  Name: __real_foo
 // SYM:      Name: foo
 // SYM-NEXT: Value: 0x11000
