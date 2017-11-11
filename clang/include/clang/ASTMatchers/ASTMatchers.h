@@ -1265,7 +1265,7 @@ const internal::VariadicDynCastAllOfMatcher<
   Decl,
   ObjCPropertyDecl> objcPropertyDecl;
 
-/// \brief Matches Objective-C @try statements.
+/// \brief Matches Objective-C @throw statements.
 ///
 /// Example matches @throw
 /// \code
