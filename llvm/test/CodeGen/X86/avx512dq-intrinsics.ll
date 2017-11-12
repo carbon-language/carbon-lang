@@ -293,7 +293,7 @@ define <4 x float>@test_int_x86_avx512_mask_range_ss(<4 x float> %x0, <4 x float
 ; AVX512DQVL-NEXT:    vrangess $4, {sae}, %xmm1, %xmm0, %xmm2 {%k1}
 ; AVX512DQVL-NEXT:    vrangess $4, {sae}, %xmm1, %xmm0, %xmm3
 ; AVX512DQVL-NEXT:    vaddps %xmm3, %xmm2, %xmm2
-; AVX512DQVL-NEXT:    vrangeps $4, %xmm1, %xmm0, %xmm0
+; AVX512DQVL-NEXT:    vrangess $4, %xmm1, %xmm0, %xmm0
 ; AVX512DQVL-NEXT:    vaddps %xmm2, %xmm0, %xmm0
 ; AVX512DQVL-NEXT:    retq
   %res = call <4 x float> @llvm.x86.avx512.mask.range.ss(<4 x float> %x0, <4 x float> %x1, <4 x float> %x3, i8 %x4, i32 4, i32 8)
@@ -323,25 +323,15 @@ define <2 x double>@test_int_x86_avx512_mask_reduce_sd(<2 x double> %x0, <2 x do
 declare <2 x double> @llvm.x86.avx512.mask.range.sd(<2 x double>, <2 x double>,<2 x double>, i8, i32, i32)
 
 define <2 x double>@test_int_x86_avx512_mask_range_sd(<2 x double> %x0, <2 x double> %x1, <2 x double> %x3, i8 %x4) {
-; AVX512DQ-LABEL: test_int_x86_avx512_mask_range_sd:
-; AVX512DQ:       ## BB#0:
-; AVX512DQ-NEXT:    vrangesd $4, %xmm1, %xmm0, %xmm3
-; AVX512DQ-NEXT:    kmovw %edi, %k1
-; AVX512DQ-NEXT:    vrangesd $4, %xmm1, %xmm0, %xmm2 {%k1}
-; AVX512DQ-NEXT:    vrangesd $4, {sae}, %xmm1, %xmm0, %xmm0
-; AVX512DQ-NEXT:    vaddpd %xmm0, %xmm2, %xmm0
-; AVX512DQ-NEXT:    vaddpd %xmm0, %xmm3, %xmm0
-; AVX512DQ-NEXT:    retq
-;
-; AVX512DQVL-LABEL: test_int_x86_avx512_mask_range_sd:
-; AVX512DQVL:       ## BB#0:
-; AVX512DQVL-NEXT:    vrangepd $4, %xmm1, %xmm0, %xmm3
-; AVX512DQVL-NEXT:    kmovw %edi, %k1
-; AVX512DQVL-NEXT:    vrangesd $4, %xmm1, %xmm0, %xmm2 {%k1}
-; AVX512DQVL-NEXT:    vrangesd $4, {sae}, %xmm1, %xmm0, %xmm0
-; AVX512DQVL-NEXT:    vaddpd %xmm0, %xmm2, %xmm0
-; AVX512DQVL-NEXT:    vaddpd %xmm0, %xmm3, %xmm0
-; AVX512DQVL-NEXT:    retq
+; CHECK-LABEL: test_int_x86_avx512_mask_range_sd:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vrangesd $4, %xmm1, %xmm0, %xmm3
+; CHECK-NEXT:    kmovw %edi, %k1
+; CHECK-NEXT:    vrangesd $4, %xmm1, %xmm0, %xmm2 {%k1}
+; CHECK-NEXT:    vrangesd $4, {sae}, %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vaddpd %xmm0, %xmm2, %xmm0
+; CHECK-NEXT:    vaddpd %xmm0, %xmm3, %xmm0
+; CHECK-NEXT:    retq
   %res = call <2 x double> @llvm.x86.avx512.mask.range.sd(<2 x double> %x0, <2 x double> %x1, <2 x double> %x3, i8 %x4, i32 4, i32 4)
   %res1 = call <2 x double> @llvm.x86.avx512.mask.range.sd(<2 x double> %x0, <2 x double> %x1, <2 x double> %x3, i8 -1, i32 4, i32 8)
   %res2 = call <2 x double> @llvm.x86.avx512.mask.range.sd(<2 x double> %x0, <2 x double> %x1, <2 x double> %x3, i8 -1, i32 4, i32 4)
