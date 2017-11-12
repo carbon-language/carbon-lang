@@ -4,7 +4,6 @@
 // RUN: %clangxx %s -o %t
 // RUN:                              not --crash %run %t 2>&1 | FileCheck --check-prefix=CHECK0 %s
 // RUN: %env_tool_opts=handle_abort=0 not --crash %run %t 2>&1 | FileCheck --check-prefix=CHECK0 %s
-// RUN: %env_tool_opts=handle_abort=1 not         %run %t
 // RUN: %env_tool_opts=handle_abort=1 not         %run %t 2>&1 | FileCheck --check-prefix=CHECK1 %s
 // clang-format on
 
@@ -26,6 +25,7 @@ int main(int argc, char **argv) {
 
 // CHECK0-NOT: Sanitizer:DEADLYSIGNAL
 // CHECK1: ERROR: {{.*}}Sanitizer: ABRT
-// CHECK1: {{#[0-9]+.* main .*assert\.cc}}:[[@LINE-5]]
+// CHECK1-NEXT: {{ #0 }}
+// CHECK1-NEXT: {{ #1 }}
 // CHECK1: DEATH CALLBACK
 // CHECK0-NOT: Sanitizer
