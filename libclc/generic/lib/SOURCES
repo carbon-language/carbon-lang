@@ -120,6 +120,7 @@ math/logb.cl
 math/mad.cl
 math/modf.cl
 math/native_cos.cl
+math/native_divide.cl
 math/native_exp.cl
 math/native_exp10.cl
 math/native_exp2.cl
