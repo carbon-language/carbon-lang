@@ -2344,6 +2344,7 @@ void BinaryFunction::annotateCFIState() {
       switch (CFI->getOperation()) {
       case MCCFIInstruction::OpRememberState:
         StateStack.push(EffectiveState);
+        EffectiveState = State;
         break;
       case MCCFIInstruction::OpRestoreState:
         assert(!StateStack.empty() && "corrupt CFI stack");
