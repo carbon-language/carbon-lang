@@ -5229,7 +5229,12 @@ SDValue SITargetLowering::performSHLPtrCombine(SDNode *N,
   SDValue ShlX = DAG.getNode(ISD::SHL, SL, VT, N0.getOperand(0), N1);
   SDValue COffset = DAG.getConstant(Offset, SL, MVT::i32);
 
-  return DAG.getNode(ISD::ADD, SL, VT, ShlX, COffset);
+  SDNodeFlags Flags;
+  Flags.setNoUnsignedWrap(N->getFlags().hasNoUnsignedWrap() &&
+                          (N0.getOpcode() == ISD::OR ||
+                           N0->getFlags().hasNoUnsignedWrap()));
+
+  return DAG.getNode(ISD::ADD, SL, VT, ShlX, COffset, Flags);
 }
 
 SDValue SITargetLowering::performMemSDNodeCombine(MemSDNode *N,
