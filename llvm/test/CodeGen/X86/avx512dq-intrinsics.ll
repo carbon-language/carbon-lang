@@ -399,8 +399,7 @@ define i8 @test_int_x86_avx512_mask_fpclass_sd(<2 x double> %x0, i8 %x1) {
 define i8 @test_int_x86_avx512_mask_fpclass_sd_load(<2 x double>* %x0ptr) {
 ; CHECK-LABEL: test_int_x86_avx512_mask_fpclass_sd_load:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    vmovapd (%rdi), %xmm0
-; CHECK-NEXT:    vfpclasssd $4, %xmm0, %k0
+; CHECK-NEXT:    vfpclasssd $4, (%rdi), %k0
 ; CHECK-NEXT:    kmovw %k0, %eax
 ; CHECK-NEXT:    ## kill: %AL<def> %AL<kill> %EAX<kill>
 ; CHECK-NEXT:    retq
@@ -431,8 +430,7 @@ define i8 @test_int_x86_avx512_mask_fpclass_ss(<4 x float> %x0, i8 %x1) {
 define i8 @test_int_x86_avx512_mask_fpclass_ss_load(<4 x float>* %x0ptr, i8 %x1) {
 ; CHECK-LABEL: test_int_x86_avx512_mask_fpclass_ss_load:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    vmovaps (%rdi), %xmm0
-; CHECK-NEXT:    vfpclassss $4, %xmm0, %k0
+; CHECK-NEXT:    vfpclassss $4, (%rdi), %k0
 ; CHECK-NEXT:    kmovw %k0, %eax
 ; CHECK-NEXT:    ## kill: %AL<def> %AL<kill> %EAX<kill>
 ; CHECK-NEXT:    retq

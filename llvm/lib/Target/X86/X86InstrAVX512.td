@@ -2365,18 +2365,18 @@ multiclass avx512_scalar_fpclass<bits<8> opc, string OpcodeStr, SDNode OpNode,
                                       (OpNode (_.VT _.RC:$src1),
                                       (i32 imm:$src2))))], NoItinerary>, EVEX_K;
     def rm : AVX512<opc, MRMSrcMem, (outs _.KRC:$dst),
-                    (ins _.ScalarMemOp:$src1, i32u8imm:$src2),
+                    (ins _.IntScalarMemOp:$src1, i32u8imm:$src2),
                     OpcodeStr##_.Suffix##
                               "\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set _.KRC:$dst,
-                          (OpNode (_.VT (scalar_to_vector (_.ScalarLdFrag addr:$src1))),
+                          (OpNode _.ScalarIntMemCPat:$src1,
                                   (i32 imm:$src2)))], NoItinerary>;
     def rmk : AVX512<opc, MRMSrcMem, (outs _.KRC:$dst),
-                    (ins _.KRCWM:$mask, _.ScalarMemOp:$src1, i32u8imm:$src2),
+                    (ins _.KRCWM:$mask, _.IntScalarMemOp:$src1, i32u8imm:$src2),
                     OpcodeStr##_.Suffix##
                     "\t{$src2, $src1, $dst {${mask}}|$dst {${mask}}, $src1, $src2}",
                     [(set _.KRC:$dst,(or _.KRCWM:$mask,
-                        (OpNode (_.VT (scalar_to_vector (_.ScalarLdFrag addr:$src1))),
+                        (OpNode _.ScalarIntMemCPat:$src1,
                             (i32 imm:$src2))))], NoItinerary>, EVEX_K;
   }
 }
