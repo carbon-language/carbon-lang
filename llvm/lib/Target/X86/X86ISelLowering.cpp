@@ -19771,7 +19771,7 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       // (1) With suppress-all-exceptions (sae) or rounding mode- 6 operands
       // (2) With rounding mode and sae - 7 operands.
       bool HasRounding = IntrWithRoundingModeOpcode != 0;
-      if (Op.getNumOperands() == (5 + HasRounding)) {
+      if (Op.getNumOperands() == (5U + HasRounding)) {
         if (HasRounding) {
           SDValue Rnd = Op.getOperand(5);
           if (!isRoundModeCurDirection(Rnd))
@@ -19784,7 +19784,7 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                                     Mask, passThru, Subtarget, DAG);
       }
 
-      assert(Op.getNumOperands() == (6 + HasRounding) &&
+      assert(Op.getNumOperands() == (6U + HasRounding) &&
              "Unexpected intrinsic form");
       SDValue RoundingMode = Op.getOperand(5);
       if (HasRounding) {
