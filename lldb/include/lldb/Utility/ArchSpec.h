@@ -23,7 +23,7 @@
 namespace lldb_private {
 
 //----------------------------------------------------------------------
-/// @class ArchSpec ArchSpec.h "lldb/Core/ArchSpec.h"
+/// @class ArchSpec ArchSpec.h "lldb/Utility/ArchSpec.h"
 /// @brief An architecture specification class.
 ///
 /// A class designed to be created from a cpu type and subtype, a
