@@ -7672,9 +7672,8 @@ avx512_rndscale_scalar<bits<8> opc, string OpcodeStr, X86VectorVTInfo _> {
                          (ins _.RC:$src1, _.ScalarMemOp:$src2, i32u8imm:$src3),
                          OpcodeStr,
                          "$src3, $src2, $src1", "$src1, $src2, $src3",
-                         (_.VT (X86RndScales (_.VT _.RC:$src1),
-                          (_.VT (scalar_to_vector (_.ScalarLdFrag addr:$src2))),
-                          (i32 imm:$src3)))>;
+                         (_.VT (X86RndScales _.RC:$src1,
+                                _.ScalarIntMemCPat:$src2, (i32 imm:$src3)))>;
 
   let isCodeGenOnly = 1, hasSideEffects = 0 in {
     def r : I<opc, MRMSrcReg, (outs _.FRC:$dst),

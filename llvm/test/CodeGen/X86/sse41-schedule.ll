@@ -3152,8 +3152,7 @@ define <2 x double> @test_roundsd(<2 x double> %a0, <2 x double> %a1, <2 x doubl
 ; SKX-LABEL: test_roundsd:
 ; SKX:       # BB#0:
 ; SKX-NEXT:    vrndscalesd $7, %xmm1, %xmm0, %xmm1 # sched: [8:0.67]
-; SKX-NEXT:    vmovapd (%rdi), %xmm2 # sched: [6:0.50]
-; SKX-NEXT:    vrndscalesd $7, %xmm2, %xmm0, %xmm0 # sched: [8:0.67]
+; SKX-NEXT:    vrndscalesd $7, (%rdi), %xmm0, %xmm0 # sched: [14:0.67]
 ; SKX-NEXT:    vaddpd %xmm0, %xmm1, %xmm0 # sched: [4:0.33]
 ; SKX-NEXT:    retq # sched: [7:1.00]
 ;
@@ -3226,8 +3225,7 @@ define <4 x float> @test_roundss(<4 x float> %a0, <4 x float> %a1, <4 x float> *
 ; SKX-LABEL: test_roundss:
 ; SKX:       # BB#0:
 ; SKX-NEXT:    vrndscaless $7, %xmm1, %xmm0, %xmm1 # sched: [8:0.67]
-; SKX-NEXT:    vmovaps (%rdi), %xmm2 # sched: [6:0.50]
-; SKX-NEXT:    vrndscaless $7, %xmm2, %xmm0, %xmm0 # sched: [8:0.67]
+; SKX-NEXT:    vrndscaless $7, (%rdi), %xmm0, %xmm0 # sched: [14:0.67]
 ; SKX-NEXT:    vaddps %xmm0, %xmm1, %xmm0 # sched: [4:0.33]
 ; SKX-NEXT:    retq # sched: [7:1.00]
 ;

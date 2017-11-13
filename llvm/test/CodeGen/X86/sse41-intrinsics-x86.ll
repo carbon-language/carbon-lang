@@ -524,8 +524,7 @@ define <2 x double> @test_x86_sse41_round_sd_load(<2 x double> %a0, <2 x double>
 ; SKX-LABEL: test_x86_sse41_round_sd_load:
 ; SKX:       ## BB#0:
 ; SKX-NEXT:    movl {{[0-9]+}}(%esp), %eax ## encoding: [0x8b,0x44,0x24,0x04]
-; SKX-NEXT:    vmovapd (%eax), %xmm1 ## EVEX TO VEX Compression encoding: [0xc5,0xf9,0x28,0x08]
-; SKX-NEXT:    vrndscalesd $7, %xmm1, %xmm0, %xmm0 ## encoding: [0x62,0xf3,0xfd,0x08,0x0b,0xc1,0x07]
+; SKX-NEXT:    vrndscalesd $7, (%eax), %xmm0, %xmm0 ## encoding: [0x62,0xf3,0xfd,0x08,0x0b,0x00,0x07]
 ; SKX-NEXT:    retl ## encoding: [0xc3]
   %a1b = load <2 x double>, <2 x double>* %a1
   %res = call <2 x double> @llvm.x86.sse41.round.sd(<2 x double> %a0, <2 x double> %a1b, i32 7) ; <<2 x double>> [#uses=1]
