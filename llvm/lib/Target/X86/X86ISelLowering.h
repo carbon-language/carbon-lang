@@ -430,6 +430,8 @@ namespace llvm {
       // Reduce - Perform Reduction Transformation on scalar\packed FP.
       VREDUCE, VREDUCE_RND, VREDUCES, VREDUCES_RND,
       // RndScale - Round FP Values To Include A Given Number Of Fraction Bits.
+      // Also used by the legacy (V)ROUND intrinsics where we mask out the
+      // scaling part of the immediate.
       VRNDSCALE, VRNDSCALE_RND, VRNDSCALES, VRNDSCALES_RND,
       // Tests Types Of a FP Values for packed types.
       VFPCLASS,

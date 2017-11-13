@@ -20336,6 +20336,26 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                                 DAG.getIntPtrConstant(0, dl));
       return DAG.getBitcast(Op.getValueType(), Res);
     }
+    case ROUNDP: {
+      assert(IntrData->Opc0 == X86ISD::VRNDSCALE && "Unexpected opcode");
+      // Clear the upper bits of the rounding immediate so that the legacy
+      // intrinsic can't trigger the scaling behavior of VRNDSCALE.
+      SDValue RoundingMode = DAG.getNode(ISD::AND, dl, MVT::i32,
+                                         Op.getOperand(2),
+                                         DAG.getConstant(0xf, dl, MVT::i32));
+      return DAG.getNode(IntrData->Opc0, dl, Op.getValueType(),
+                         Op.getOperand(1), RoundingMode);
+    }
+    case ROUNDS: {
+      assert(IntrData->Opc0 == X86ISD::VRNDSCALES && "Unexpected opcode");
+      // Clear the upper bits of the rounding immediate so that the legacy
+      // intrinsic can't trigger the scaling behavior of VRNDSCALE.
+      SDValue RoundingMode = DAG.getNode(ISD::AND, dl, MVT::i32,
+                                         Op.getOperand(3),
+                                         DAG.getConstant(0xf, dl, MVT::i32));
+      return DAG.getNode(IntrData->Opc0, dl, Op.getValueType(),
+                         Op.getOperand(1), Op.getOperand(2), RoundingMode);
+    }
     default:
       break;
     }
