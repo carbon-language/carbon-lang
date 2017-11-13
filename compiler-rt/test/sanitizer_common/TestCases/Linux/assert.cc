@@ -23,6 +23,5 @@ int main(int argc, char **argv) {
 // CHECK0-NOT: Sanitizer:DEADLYSIGNAL
 // CHECK1: ERROR: {{.*}}Sanitizer: ABRT
 // CHECK1: {{ #0 }}
-// CHECK1-NEXT: {{ #1 }}
 // CHECK1: DEATH CALLBACK
 // CHECK0-NOT: Sanitizer
