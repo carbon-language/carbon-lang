@@ -2276,7 +2276,8 @@ int sigaction_impl(int sig, const __sanitizer_sigaction *act,
   // The handler will run synchronously and corrupt tsan per-thread state.
   SCOPED_INTERCEPTOR_RAW(sigaction, sig, act, old);
   __sanitizer_sigaction *sigactions = interceptor_ctx()->sigactions;
-  if (old) internal_memcpy(old, &sigactions[sig], sizeof(*old));
+  __sanitizer_sigaction old_stored;
+  internal_memcpy(&old_stored, &sigactions[sig], sizeof(old_stored));
   if (act == 0) return 0;
   // Copy act into sigactions[sig].
   // Can't use struct copy, because compiler can emit call to memcpy.
@@ -2302,7 +2303,13 @@ int sigaction_impl(int sig, const __sanitizer_sigaction *act,
       newact.handler = rtl_sighandler;
   }
   ReleaseStore(thr, pc, (uptr)&sigactions[sig]);
-  int res = REAL(sigaction)(sig, &newact, 0);
+  int res = REAL(sigaction)(sig, &newact, old);
+  if (res == 0 && old) {
+    uptr cb = (uptr)old->sigaction;
+    if (cb == (uptr)rtl_sigaction || cb == (uptr)rtl_sighandler) {
+      internal_memcpy(old, &old_stored, sizeof(*old));
+    }
+  }
   return res;
 }
 
