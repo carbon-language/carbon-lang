@@ -2607,11 +2607,9 @@ bool llvm::CannotBeNegativeZero(const Value *V, const TargetLibraryInfo *TLI,
     if (FPO->hasNoSignedZeros())
       return true;
 
-  // (add x, 0.0) is guaranteed to return +0.0, not -0.0.
-  if (I->getOpcode() == Instruction::FAdd)
-    if (ConstantFP *CFP = dyn_cast<ConstantFP>(I->getOperand(1)))
-      if (CFP->isNullValue())
-        return true;
+  // (fadd x, 0.0) is guaranteed to return +0.0, not -0.0.
+  if (match(I, m_FAdd(m_Value(), m_Zero())))
+    return true;
 
   // sitofp and uitofp turn into +0.0 for zero.
   if (isa<SIToFPInst>(I) || isa<UIToFPInst>(I))
