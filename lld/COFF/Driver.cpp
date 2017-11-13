@@ -355,7 +355,10 @@ void LinkerDriver::addLibSearchPaths() {
 
 Symbol *LinkerDriver::addUndefined(StringRef Name) {
   Symbol *B = Symtab->addUndefined(Name);
-  Config->GCRoot.insert(B);
+  if (!B->IsGCRoot) {
+    B->IsGCRoot = true;
+    Config->GCRoot.push_back(B);
+  }
   return B;
 }
 
