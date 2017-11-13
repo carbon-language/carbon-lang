@@ -7588,11 +7588,10 @@ multiclass avx512_sqrt_scalar<bits<8> opc, string OpcodeStr,X86VectorVTInfo _,
                                     (_.VT _.RC:$src2),
                                     (i32 FROUND_CURRENT))>;
   defm m_Int : AVX512_maskable_scalar<opc, MRMSrcMem, _, (outs _.RC:$dst),
-                       (ins _.RC:$src1, _.ScalarMemOp:$src2), OpcodeStr,
+                       (ins _.RC:$src1, _.IntScalarMemOp:$src2), OpcodeStr,
                        "$src2, $src1", "$src1, $src2",
                        (X86fsqrtRnds (_.VT _.RC:$src1),
-                                  (_.VT (scalar_to_vector
-                                            (_.ScalarLdFrag addr:$src2))),
+                                  _.ScalarIntMemCPat:$src2,
                                   (i32 FROUND_CURRENT))>;
 
   defm rb_Int : AVX512_maskable_scalar<opc, MRMSrcReg, _, (outs _.RC:$dst),
@@ -7630,7 +7629,7 @@ let Predicates = [HasAVX512, OptForSize] in {
             (!cast<Instruction>(NAME#SUFF#Zm)
                 (_.EltVT (IMPLICIT_DEF)), addr:$src)>;
 
-  def : Pat<(Intr (scalar_to_vector (_.EltVT (load addr:$src2)))),
+  def : Pat<(Intr _.ScalarIntMemCPat:$src2),
             (!cast<Instruction>(NAME#SUFF#Zm_Int)
                   (_.VT (IMPLICIT_DEF)), addr:$src2)>;
 }
