@@ -75,10 +75,11 @@ static cl::opt<std::string> InputFilename(cl::Positional, cl::desc("<input>"));
 static cl::opt<std::string> OutputFilename(cl::Positional, cl::desc("<output>"),
                                     cl::init("-"));
 static cl::opt<std::string>
-    OutputFormat("O", cl::desc("set output format to one of the following:"
+    OutputFormat("O", cl::desc("Set output format to one of the following:"
                                "\n\tbinary"));
 static cl::list<std::string> ToRemove("remove-section",
-                                      cl::desc("Remove a specific section"));
+                                      cl::desc("Remove <section>"),
+                                      cl::value_desc("section"));
 static cl::alias ToRemoveA("R", cl::desc("Alias for remove-section"),
                            cl::aliasopt(ToRemove));
 static cl::opt<bool> StripAll("strip-all",
@@ -90,13 +91,13 @@ static cl::opt<bool> StripSections("strip-sections",
 static cl::opt<bool> StripNonAlloc("strip-non-alloc",
                                    cl::desc("Remove all non-allocated sections"));
 static cl::opt<bool>
-    StripDWO("strip-dwo", cl::desc("remove all DWARF .dwo sections from file"));
+    StripDWO("strip-dwo", cl::desc("Remove all DWARF .dwo sections from file"));
 static cl::opt<bool> ExtractDWO(
     "extract-dwo",
-    cl::desc("remove all sections that are not DWARF .dwo sections from file"));
+    cl::desc("Remove all sections that are not DWARF .dwo sections from file"));
 static cl::opt<std::string>
     SplitDWO("split-dwo",
-             cl::desc("equivalent to extract-dwo on the input file to "
+             cl::desc("Equivalent to extract-dwo on the input file to "
                       "<dwo-file>, then strip-dwo on the input file"),
              cl::value_desc("dwo-file"));
 
