@@ -6,12 +6,8 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file implements a pass that instruments the code to perform run-time
-// bounds checking on loads, stores, and other memory intrinsics.
-//
-//===----------------------------------------------------------------------===//
 
+#include "llvm/Transforms/Instrumentation/BoundsChecking.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
@@ -34,7 +30,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/Instrumentation.h"
 #include <cstdint>
 #include <vector>
 
@@ -50,29 +45,6 @@ STATISTIC(ChecksSkipped, "Bounds checks skipped");
 STATISTIC(ChecksUnable, "Bounds checks unable to add");
 
 using BuilderTy = IRBuilder<TargetFolder>;
-
-namespace {
-
-  struct BoundsChecking : public FunctionPass {
-    static char ID;
-
-    BoundsChecking() : FunctionPass(ID) {
-      initializeBoundsCheckingPass(*PassRegistry::getPassRegistry());
-    }
-
-    bool runOnFunction(Function &F) override;
-
-    void getAnalysisUsage(AnalysisUsage &AU) const override {
-      AU.addRequired<TargetLibraryInfoWrapperPass>();
-    }
- };
-
-} // end anonymous namespace
-
-char BoundsChecking::ID = 0;
-
-INITIALIZE_PASS(BoundsChecking, "bounds-checking", "Run-time bounds checking",
-                false, false)
 
 /// Adds run-time bounds checks to memory accessing instructions.
 ///
@@ -151,10 +123,8 @@ static bool instrumentMemAccess(Value *Ptr, Value *InstVal,
   return true;
 }
 
-bool BoundsChecking::runOnFunction(Function &F) {
+static bool addBoundsChecking(Function &F, TargetLibraryInfo &TLI) {
   const DataLayout &DL = F.getParent()->getDataLayout();
-  auto &TLI = getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
-
   ObjectSizeOffsetEvaluator ObjSizeEval(DL, &TLI, F.getContext(),
                                            /*RoundToAlign=*/true);
 
@@ -218,6 +188,41 @@ bool BoundsChecking::runOnFunction(Function &F) {
   return MadeChange;
 }
 
-FunctionPass *llvm::createBoundsCheckingPass() {
-  return new BoundsChecking();
+PreservedAnalyses BoundsCheckingPass::run(Function &F, FunctionAnalysisManager &AM) {
+  auto &TLI = AM.getResult<TargetLibraryAnalysis>(F);
+
+  if (!addBoundsChecking(F, TLI))
+    return PreservedAnalyses::all();
+
+  return PreservedAnalyses::none();
+}
+
+namespace {
+struct BoundsCheckingLegacyPass : public FunctionPass {
+  static char ID;
+
+  BoundsCheckingLegacyPass() : FunctionPass(ID) {
+    initializeBoundsCheckingLegacyPassPass(*PassRegistry::getPassRegistry());
+  }
+
+  bool runOnFunction(Function &F) override {
+    auto &TLI = getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
+    return addBoundsChecking(F, TLI);
+  }
+
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addRequired<TargetLibraryInfoWrapperPass>();
+  }
+};
+} // namespace
+
+char BoundsCheckingLegacyPass::ID = 0;
+INITIALIZE_PASS_BEGIN(BoundsCheckingLegacyPass, "bounds-checking",
+                      "Run-time bounds checking", false, false)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
+INITIALIZE_PASS_END(BoundsCheckingLegacyPass, "bounds-checking",
+                    "Run-time bounds checking", false, false)
+
+FunctionPass *llvm::createBoundsCheckingLegacyPass() {
+  return new BoundsCheckingLegacyPass();
 }
