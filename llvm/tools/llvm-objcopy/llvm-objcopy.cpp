@@ -87,6 +87,8 @@ static cl::opt<bool> StripDebug("strip-debug",
                                 cl::desc("Removes all debug information"));
 static cl::opt<bool> StripSections("strip-sections",
                                    cl::desc("Remove all section headers"));
+static cl::opt<bool> StripNonAlloc("strip-non-alloc",
+                                   cl::desc("Remove all non-allocated sections"));
 static cl::opt<bool>
     StripDWO("strip-dwo", cl::desc("remove all DWARF .dwo sections from file"));
 static cl::opt<bool> ExtractDWO(
@@ -205,6 +207,15 @@ void CopyBinary(const ELFObjectFile<ELFT> &ObjFile) {
       return RemovePred(Sec) || Sec.Name.startswith(".debug");
     };
   }
+
+  if (StripNonAlloc)
+    RemovePred = [RemovePred, &Obj](const SectionBase &Sec) {
+      if (RemovePred(Sec))
+        return true;
+      if (&Sec == Obj->getSectionHeaderStrTab())
+        return false;
+      return (Sec.Flags & SHF_ALLOC) == 0;
+    };
 
   Obj->removeSections(RemovePred);
   Obj->finalize();
