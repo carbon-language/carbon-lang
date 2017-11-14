@@ -5199,8 +5199,8 @@ SDValue SITargetLowering::performSHLPtrCombine(SDNode *N,
 
   // We only do this to handle cases where it's profitable when there are
   // multiple uses of the add, so defer to the standard combine.
-  // TODO: Support or
-  if (N0.getOpcode() != ISD::ADD || N0->hasOneUse())
+  if ((N0.getOpcode() != ISD::ADD && N0.getOpcode() != ISD::OR) ||
+      N0->hasOneUse())
     return SDValue();
 
   const ConstantSDNode *CN1 = dyn_cast<ConstantSDNode>(N1);
