@@ -83,10 +83,6 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
     endif()
   endif()
 
-  # Handle common options used by all runtimes.
-  include(AddLLVM)
-  include(HandleLLVMOptions)
-
   set(CMAKE_REQUIRED_FLAGS ${SAFE_CMAKE_REQUIRED_FLAGS})
   set(CMAKE_REQUIRED_LIBRARIES ${SAFE_CMAKE_REQUIRED_LIBRARIES})
 
