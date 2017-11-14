@@ -142,18 +142,19 @@ void SplitDWOToFile(const ELFObjectFile<ELFT> &ObjFile, StringRef File) {
   WriteObjectFile(DWOFile, File);
 }
 
-void CopyBinary(const ELFObjectFile<ELF64LE> &ObjFile) {
-  std::unique_ptr<Object<ELF64LE>> Obj;
+template <class ELFT>
+void CopyBinary(const ELFObjectFile<ELFT> &ObjFile) {
+  std::unique_ptr<Object<ELFT>> Obj;
 
   if (!OutputFormat.empty() && OutputFormat != "binary")
     error("invalid output format '" + OutputFormat + "'");
   if (!OutputFormat.empty() && OutputFormat == "binary")
-    Obj = llvm::make_unique<BinaryObject<ELF64LE>>(ObjFile);
+    Obj = llvm::make_unique<BinaryObject<ELFT>>(ObjFile);
   else
-    Obj = llvm::make_unique<ELFObject<ELF64LE>>(ObjFile);
+    Obj = llvm::make_unique<ELFObject<ELFT>>(ObjFile);
 
   if (!SplitDWO.empty())
-    SplitDWOToFile<ELF64LE>(ObjFile, SplitDWO.getValue());
+    SplitDWOToFile<ELFT>(ObjFile, SplitDWO.getValue());
 
   SectionPred RemovePred = [](const SectionBase &) { return false; };
 
@@ -225,7 +226,19 @@ int main(int argc, char **argv) {
   if (!BinaryOrErr)
     reportError(InputFilename, BinaryOrErr.takeError());
   Binary &Binary = *BinaryOrErr.get().getBinary();
-  if (ELFObjectFile<ELF64LE> *o = dyn_cast<ELFObjectFile<ELF64LE>>(&Binary)) {
+  if (auto *o = dyn_cast<ELFObjectFile<ELF64LE>>(&Binary)) {
+    CopyBinary(*o);
+    return 0;
+  }
+  if (auto *o = dyn_cast<ELFObjectFile<ELF32LE>>(&Binary)) {
+    CopyBinary(*o);
+    return 0;
+  }
+  if (auto *o = dyn_cast<ELFObjectFile<ELF64BE>>(&Binary)) {
+    CopyBinary(*o);
+    return 0;
+  }
+  if (auto *o = dyn_cast<ELFObjectFile<ELF32BE>>(&Binary)) {
     CopyBinary(*o);
     return 0;
   }
