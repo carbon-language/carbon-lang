@@ -145,6 +145,10 @@ public:
   // flow instruction in this file.
   CFIProtectionStatus validateCFIProtection(const GraphResult &Graph) const;
 
+  // Prints an instruction to the provided stream using this object's pretty-
+  // printers.
+  void printInstruction(const Instr &InstrMeta, raw_ostream &OS) const;
+
 protected:
   // Construct a blank object with the provided triple and features. Used in
   // testing, where a sub class will dependency inject protected methods to

@@ -273,6 +273,11 @@ FileAnalysis::validateCFIProtection(const GraphResult &Graph) const {
   return CFIProtectionStatus::PROTECTED;
 }
 
+void FileAnalysis::printInstruction(const Instr &InstrMeta,
+                                    raw_ostream &OS) const {
+  Printer->printInst(&InstrMeta.Instruction, OS, "", *SubtargetInfo.get());
+}
+
 Error FileAnalysis::initialiseDisassemblyMembers() {
   std::string TripleName = ObjectTriple.getTriple();
   ArchName = "";
