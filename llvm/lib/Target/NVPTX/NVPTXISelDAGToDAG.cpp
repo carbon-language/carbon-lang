@@ -1075,7 +1075,6 @@ void NVPTXDAGToDAGISel::SelectTexSurfHandle(SDNode *N) {
 
 void NVPTXDAGToDAGISel::SelectMatchAll(SDNode *N) {
   SDLoc DL(N);
-  SDValue Chain = N->getOperand(0);
   enum { IS_I64 = 4, HAS_CONST_VALUE = 2, HAS_CONST_MASK = 1 };
   unsigned IID = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
   unsigned OpcodeIndex =
