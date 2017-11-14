@@ -383,10 +383,12 @@ bool CodeRangeASTSelection::isInFunctionLikeBodyOfCode() const {
     if (const auto *D = Node.get<Decl>()) {
       if (isFunctionLikeDeclaration(D))
         return IsPrevCompound;
-      // FIXME (Alex L): We should return false on top-level decls in functions
-      // e.g. we don't want to extract:
+      // Stop the search at any type declaration to avoid returning true for
+      // expressions in type declarations in functions, like:
       // function foo() { struct X {
       //   int m = /*selection:*/ 1 + 2 /*selection end*/; }; };
+      if (isa<TypeDecl>(D))
+        return false;
     }
     IsPrevCompound = Node.get<CompoundStmt>() != nullptr;
   }
