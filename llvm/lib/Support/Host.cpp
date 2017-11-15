@@ -661,8 +661,9 @@ getIntelProcessorTypeAndSubtype(unsigned Family, unsigned Model,
       *Type = X86::INTEL_SILVERMONT;
       break; // "silvermont"
     // Goldmont:
-    case 0x5c:
-    case 0x5f:
+    case 0x5c: // Apollo Lake
+    case 0x5f: // Denverton
+    case 0x7a: // Gemini Lake
       *Type = X86::INTEL_GOLDMONT;
       break; // "goldmont"
     case 0x57:
