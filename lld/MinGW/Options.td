@@ -47,6 +47,8 @@ def Xlink : J<"Xlink=">, MetaVarName<"<arg>">,
 def Bdynamic: F<"Bdynamic">, HelpText<"Link against shared libraries">;
 def Bstatic: F<"Bstatic">, HelpText<"Do not link against shared libraries">;
 def O: Joined<["-"], "O">, HelpText<"Optimize output file size">;
+def build_id: F<"build-id">;
+def disable_auto_image_base: F<"disable-auto-image-base">;
 def enable_auto_image_base: F<"enable-auto-image-base">;
 def enable_auto_import: F<"enable-auto-import">;
 def full_shutdown: Flag<["--"], "full-shutdown">;
@@ -54,6 +56,7 @@ def high_entropy_va: F<"high-entropy-va">, HelpText<"Enable 64-bit ASLR">;
 def major_image_version: S<"major-image-version">;
 def minor_image_version: S<"minor-image-version">;
 def nxcompat: F<"nxcompat">, HelpText<"Enable data execution prevention">;
+def pic_executable: F<"pic-executable">;
 def sysroot: J<"sysroot">, HelpText<"Sysroot">;
 def tsaware: F<"tsaware">, HelpText<"Create Terminal Server aware executable">;
 def v: Flag<["-"], "v">, HelpText<"Display the version number">;
