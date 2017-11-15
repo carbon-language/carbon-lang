@@ -161,6 +161,23 @@ bool mingw::link(ArrayRef<const char *> ArgsArr, raw_ostream &Diag) {
 
   Add(Args.hasArg(OPT_dynamicbase) ? "-dynamicbase" : "-dynamicbase:no");
 
+  if (Args.hasFlag(OPT_gc_sections, OPT_no_gc_sections, false))
+    Add("-opt:ref");
+  else
+    Add("-opt:noref");
+
+  if (auto *A = Args.getLastArg(OPT_icf)) {
+    StringRef S = A->getValue();
+    if (S == "all")
+      Add("-opt:icf");
+    else if (S == "safe" || S == "none")
+      Add("-opt:noicf");
+    else
+      error("unknown parameter: --icf=" + S);
+  } else {
+    Add("-opt:noicf");
+  }
+
   if (auto *A = Args.getLastArg(OPT_m)) {
     StringRef S = A->getValue();
     if (S == "i386pe")

@@ -105,3 +105,22 @@ DYNAMICBASE: -dynamicbase -
 RUN: ld.lld -### -m i386pep foo.o --image-base 0x1230000 | FileCheck -check-prefix IMAGE-BASE %s
 RUN: ld.lld -### -m i386pep foo.o -image-base 0x1230000 | FileCheck -check-prefix IMAGE-BASE %s
 IMAGE-BASE: -base:0x1230000
+
+RUN: ld.lld -### -m i386pep foo.o | FileCheck -check-prefix NO-GC-SECTIONS %s
+RUN: ld.lld -### -m i386pep foo.o --gc-sections --no-gc-sections | FileCheck -check-prefix NO-GC-SECTIONS %s
+NO-GC-SECTIONS: -opt:noref
+
+RUN: ld.lld -### -m i386pep foo.o --gc-sections | FileCheck -check-prefix GC-SECTIONS %s
+RUN: ld.lld -### -m i386pep foo.o -gc-sections | FileCheck -check-prefix GC-SECTIONS %s
+GC-SECTIONS: -opt:ref
+
+RUN: ld.lld -### -m i386pep foo.o | FileCheck -check-prefix ICF-NONE %s
+RUN: ld.lld -### -m i386pep foo.o --icf=none | FileCheck -check-prefix ICF-NONE %s
+RUN: ld.lld -### -m i386pep foo.o -icf=none | FileCheck -check-prefix ICF-NONE %s
+RUN: ld.lld -### -m i386pep foo.o --icf=safe | FileCheck -check-prefix ICF-NONE %s
+RUN: ld.lld -### -m i386pep foo.o -icf=safe | FileCheck -check-prefix ICF-NONE %s
+ICF-NONE: -opt:noicf
+
+RUN: ld.lld -### -m i386pep foo.o --icf=all | FileCheck -check-prefix ICF %s
+RUN: ld.lld -### -m i386pep foo.o -icf=all | FileCheck -check-prefix ICF %s
+ICF: -opt:icf
