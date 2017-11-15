@@ -46,7 +46,7 @@ using namespace llvm;
 using namespace bolt;
 
 namespace opts {
-extern cl::OptionCategory BoltCategory;
+
 extern cl::OptionCategory BoltOptCategory;
 extern cl::opt<bool> Verbosity;
 
@@ -91,17 +91,6 @@ int32_t ITLBPageSize;
 // Capacity of the iTLB cache: Larger values yield more iTLB-friendly result,
 // while smaller values result in better i-cache performance
 int32_t ITLBEntries;
-
-const char* cacheKindString(bool UseGainCache, bool UseShortCallCache) {
-  if (UseGainCache && UseShortCallCache)
-    return "gain + short call cache";
-  else if (UseGainCache)
-    return "gain cache";
-  else if (UseShortCallCache)
-    return "short call cache";
-  else
-    return "no cache";
-}
 
 // This class maintains adjacency information for all Clusters being
 // processed.  It is used to invalidate cache entries when merging
@@ -215,17 +204,16 @@ class PrecomputedResults {
     Valid[Index] = true;
   }
 
-  void invalidate(const AdjacencyMatrix &Adjacent, const Cluster *C) {
-    invalidate(C);
-    Adjacent.forallAdjacent(C, [&](const Cluster *A) { invalidate(A); });
-  }
- private:
   void invalidate(const Cluster *C) {
     Valid.reset(C->id() * Size, (C->id() + 1) * Size);
+    for (size_t Id = 0; Id < Size; Id++) {
+      Valid.reset(Id * Size + C->id());
+    }
   }
 
+ private:
   size_t index(const Cluster *First, const Cluster *Second) const {
-    return (First->id() * Size) + Second->id();
+    return First->id() * Size + Second->id();
   }
 
   size_t Size;
@@ -347,12 +335,6 @@ public:
    * the same cache page
    */
   double shortCalls(const Cluster *Cluster) const {
-    if (UseShortCallCache) {
-      auto Itr = ShortCallCache.find(Cluster);
-      if (Itr != ShortCallCache.end())
-        return Itr->second;
-    }
-
     double Calls = 0;
     for (auto TargetId : Cluster->targets()) {
       for (auto Succ : Cg.successors(TargetId)) {
@@ -367,10 +349,6 @@ public:
       }
     }
 
-    if (UseShortCallCache) {
-      ShortCallCache[Cluster] = Calls;
-    }
-
     return Calls;
   }
 
@@ -380,11 +358,6 @@ public:
    */
   double shortCalls(const Cluster *ClusterPred,
                     const Cluster *ClusterSucc) const {
-    if (UseShortCallCache &&
-        ShortCallPairCache.contains(ClusterPred, ClusterSucc)) {
-      return ShortCallPairCache.get(ClusterPred, ClusterSucc);
-    }
-
     double Calls = 0;
     for (auto TargetId : ClusterPred->targets()) {
       for (auto Succ : Cg.successors(TargetId)) {
@@ -413,10 +386,6 @@ public:
       }
     }
 
-    if (UseShortCallCache) {
-      ShortCallPairCache.set(ClusterPred, ClusterSucc, Calls);
-    }
-
     return Calls;
   }
 
@@ -434,8 +403,8 @@ public:
    */
   double mergeGain(const Cluster *ClusterPred,
                    const Cluster *ClusterSucc) const {
-    if (UseGainCache && Cache.contains(ClusterPred, ClusterSucc)) {
-      return Cache.get(ClusterPred, ClusterSucc);
+    if (UseGainCache && GainCache.contains(ClusterPred, ClusterSucc)) {
+      return GainCache.get(ClusterPred, ClusterSucc);
     }
 
     // cache misses on the first cluster
@@ -460,7 +429,7 @@ public:
     Gain /= std::min(ClusterPred->size(), ClusterSucc->size());
 
     if (UseGainCache) {
-      Cache.set(ClusterPred, ClusterSucc, Gain);
+      GainCache.set(ClusterPred, ClusterSucc, Gain);
     }
 
     return Gain;
@@ -513,7 +482,7 @@ public:
           const double ProbOut =
             CallsFromPred > 0 ? CallsPredSucc / CallsFromPred : 0;
           assert(0.0 <= ProbOut && ProbOut <= 1.0 && "incorrect probability");
-          
+
           // probability that the second cluster is called from the first one
           const double ProbIn =
             CallsToSucc > 0 ? CallsPredSucc / CallsToSucc : 0;
@@ -601,12 +570,11 @@ public:
    */
   std::vector<Cluster> run() {
     DEBUG(dbgs() << "Starting hfsort+ w/"
-                 << cacheKindString(UseGainCache, UseShortCallCache)
+                 << (UseGainCache ? "gain cache" : "no cache")
                  << " for " << Clusters.size() << " clusters "
                  << "with ITLBPageSize = " << ITLBPageSize << ", "
                  << "ITLBEntries = " << ITLBEntries << ", "
                  << "and MergeProbability = " << opts::MergeProbability << "\n");
-
 
     // Pass 1
     runPassOne();
@@ -628,9 +596,7 @@ public:
     return Result;
   }
 
-  HFSortPlus(const CallGraph &Cg,
-             bool UseGainCache,
-             bool UseShortCallCache)
+  HFSortPlus(const CallGraph &Cg, bool UseGainCache)
   : Cg(Cg),
     FuncCluster(Cg.numNodes(), nullptr),
     Addr(Cg.numNodes(), InvalidAddr),
@@ -638,9 +604,7 @@ public:
     Clusters(initializeClusters()),
     Adjacent(Cg, Clusters, FuncCluster),
     UseGainCache(UseGainCache),
-    UseShortCallCache(UseShortCallCache),
-    Cache(Clusters.size()),
-    ShortCallPairCache(Clusters.size()) {
+    GainCache(Clusters.size()) {
   }
 private:
 
@@ -696,29 +660,14 @@ private:
       CurAddr = ((CurAddr + Align - 1) / Align) * Align;
     }
 
-    // Update caches
-    invalidateCaches(Into);
+    // Invalidate all cache entries associated with cluster Into
+    if (UseGainCache) {
+      GainCache.invalidate(Into);
+    }
 
     // Remove cluster From from the list of active clusters
     auto Iter = std::remove(Clusters.begin(), Clusters.end(), From);
     Clusters.erase(Iter, Clusters.end());
-  }
-
-  /*
-   * Invalidate all cache entries associated with cluster C and its neighbors.
-   */
-  void invalidateCaches(const Cluster *C) {
-    if (UseShortCallCache) {
-      maybeErase(ShortCallCache, C);
-      Adjacent.forallAdjacent(C,
-        [this](const Cluster *A) {
-          maybeErase(ShortCallCache, A);
-        });
-      ShortCallPairCache.invalidate(Adjacent, C);
-    }
-    if (UseGainCache) {
-      Cache.invalidate(Adjacent, C);
-    }
   }
 
   // The call graph
@@ -746,32 +695,21 @@ private:
   // Use cache for mergeGain results
   bool UseGainCache;
 
-  // Use caches for shortCalls results
-  bool UseShortCallCache;
-
   // A cache that keeps precomputed values of mergeGain for pairs of clusters;
   // when a pair of clusters (x,y) gets merged, we need to invalidate the pairs
   // containing both x and y and all clusters adjacent to x and y (and recompute
   // them on the next iteration).
-  mutable PrecomputedResults Cache;
-
-  // Cache for shortCalls for a single cluster.
-  mutable std::unordered_map<const Cluster *, double> ShortCallCache;
-
-  // Cache for shortCalls for a pair of Clusters
-  mutable PrecomputedResults ShortCallPairCache;
+  mutable PrecomputedResults GainCache;
 };
 
 }
 
-std::vector<Cluster> hfsortPlus(CallGraph &Cg,
-                                bool UseGainCache,
-                                bool UseShortCallCache) {
+std::vector<Cluster> hfsortPlus(CallGraph &Cg, bool UseGainCache) {
   // It is required that the sum of incoming arc weights is not greater
   // than the number of samples for every function.
   // Ensuring the call graph obeys the property before running the algorithm.
   Cg.adjustArcWeights();
-  return HFSortPlus(Cg, UseGainCache, UseShortCallCache).run();
+  return HFSortPlus(Cg, UseGainCache).run();
 }
 
 }}
