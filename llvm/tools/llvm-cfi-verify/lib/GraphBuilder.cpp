@@ -301,6 +301,7 @@ void GraphBuilder::buildFlowGraphImpl(const FileAnalysis &Analysis,
     BranchNode.Target = 0;
     BranchNode.Fallthrough = 0;
     BranchNode.CFIProtection = false;
+    BranchNode.IndirectCFIsOnTargetPath = (BranchTarget == Address);
 
     if (BranchTarget == Address)
       BranchNode.Target = Address;

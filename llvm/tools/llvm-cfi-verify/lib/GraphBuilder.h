@@ -59,6 +59,7 @@ struct ConditionalBranchNode {
   //    is a CFI trap, and...
   //  - The exit point of the other basic block is an undirect CF instruction.
   bool CFIProtection;
+  bool IndirectCFIsOnTargetPath;
 };
 
 // The canonical graph result structure returned by GraphBuilder. The members
