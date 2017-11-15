@@ -675,7 +675,7 @@ void RewriteInstance::aggregateData() {
 
 void RewriteInstance::discoverStorage() {
   NamedRegionTimer T("discover storage", TimerGroupName, opts::TimeRewrite);
-  
+
   // Stubs are harmful because RuntimeDyld may try to increase the size of
   // sections accounting for stubs when we need those sections to match the
   // same size seen in the input binary, in case this section is a copy
@@ -1952,7 +1952,7 @@ void RewriteInstance::disassembleFunctions() {
     }
 
     auto FunctionData = BC->getFunctionData(Function);
-    
+
     if (!FunctionData) {
       // When could it happen?
       errs() << "BOLT-ERROR: corresponding section is non-executable or "
@@ -2464,7 +2464,7 @@ void RewriteInstance::emitFunctions() {
   OLT.emitAndFinalize(ObjectsHandle);
 
   if (opts::PrintCacheMetrics) {
-    outs() << "BOLT-INFO: cache metrics after optimization\n";
+    outs() << "BOLT-INFO: cache metrics after emitting functions:\n";
     CacheMetrics::printAll(SortedFunctions);
   }
 

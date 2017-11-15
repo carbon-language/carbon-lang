@@ -11,13 +11,13 @@
 #define LLVM_TOOLS_LLVM_BOLT_CACHEMETRICS_H
 
 #include "BinaryFunction.h"
-#include <map>
+#include <vector>
 
 namespace llvm {
 namespace bolt {
 namespace CacheMetrics {
 
-/// Calculate and print various metrics related to instruction cache performance
+/// Calculate various metrics related to instruction cache performance.
 void printAll(const std::vector<BinaryFunction *> &BinaryFunctions);
 
 } // namespace CacheMetrics
