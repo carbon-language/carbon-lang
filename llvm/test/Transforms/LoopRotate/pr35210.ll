@@ -1,4 +1,5 @@
 ;RUN: opt %s -passes='adce,loop(rotate),adce' -S -debug-pass-manager -debug-only=loop-rotate 2>&1 | FileCheck %s
+;REQUIRES: asserts
 
 ; This test is to make sure we invalidate the post dominator pass after loop rotate simplifies the loop latch.
 ; The adce passes are here to make sure post dominator analysis is required.
