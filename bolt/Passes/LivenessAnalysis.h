@@ -133,6 +133,9 @@ protected:
     Next &= Written;
     // Gen
     if (!this->BC.MIA->isCFI(Point)) {
+      if (BC.MIA->isCleanRegXOR(Point))
+        return Next;
+
       auto Used = BitVector(NumRegs, false);
       if (IsCall) {
         RA.getInstUsedRegsList(Point, Used, /*GetClobbers*/true);

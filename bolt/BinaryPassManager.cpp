@@ -18,6 +18,7 @@
 #include "Passes/LongJmp.h"
 #include "Passes/JTFootprintReduction.h"
 #include "Passes/PLTCall.h"
+#include "Passes/RegReAssign.h"
 #include "Passes/ReorderFunctions.h"
 #include "Passes/StokeInfo.h"
 #include "llvm/Support/Timer.h"
@@ -137,6 +138,13 @@ PrintICP("print-icp",
   cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
+PrintRegReAssign("print-regreassign",
+  cl::desc("print functions after regreassign pass"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
 PrintInline("print-inline",
   cl::desc("print functions after inlining optimization"),
   cl::ZeroOrMore,
@@ -210,6 +218,13 @@ static cl::opt<bool>
 SimplifyRODataLoads("simplify-rodata-loads",
   cl::desc("simplify loads from read-only sections by replacing the memory "
            "operand with the constant found in the corresponding section"),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+RegReAssign("reg-reassign",
+  cl::desc("reassign registers so as to avoid using REX prefixes in hot code"),
+  cl::init(false),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -356,6 +371,9 @@ void BinaryFunctionPassManager::runAllPasses(
   Manager.registerPass(
     llvm::make_unique<SimplifyRODataLoads>(PrintSimplifyROLoads),
     opts::SimplifyRODataLoads);
+
+  Manager.registerPass(llvm::make_unique<RegReAssign>(PrintRegReAssign),
+                       opts::RegReAssign);
 
   Manager.registerPass(llvm::make_unique<IdenticalCodeFolding>(PrintICF),
                        opts::ICF);

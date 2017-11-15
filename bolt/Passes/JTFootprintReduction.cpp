@@ -26,6 +26,15 @@ extern cl::opt<bool> Relocs;
 extern bool shouldProcess(const bolt::BinaryFunction &Function);
 
 extern cl::opt<JumpTableSupportLevel> JumpTables;
+
+static cl::opt<bool>
+JTFootprintOnlyPIC("jt-footprint-optimize-for-icache",
+  cl::desc("with jt-footprint-reduction, only process PIC jumptables and turn"
+           " off other transformations that increase code size"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
 } // namespace opts
 
 namespace llvm {
@@ -45,15 +54,18 @@ void JTFootprintReduction::checkOpportunities(BinaryContext &BC,
       AllJTs[JumpTable] += BB.getKnownExecutionCount();
       ++IndJmps;
 
-      if (BlacklistedJTs.count(JumpTable))
+      if (BlacklistedJTs.count(JumpTable)) {
+        ++IndJmpsDenied;
         continue;
+      }
 
       uint64_t Scale;
       // Try a standard indirect jump matcher
       auto IndJmpMatcher = BC.MIA->matchIndJmp(
           BC.MIA->matchAnyOperand(), BC.MIA->matchImm(Scale),
           BC.MIA->matchReg(), BC.MIA->matchAnyOperand());
-      if (IndJmpMatcher->match(*BC.MRI, *BC.MIA,
+      if (!opts::JTFootprintOnlyPIC &&
+          IndJmpMatcher->match(*BC.MRI, *BC.MIA,
                                MutableArrayRef<MCInst>(&*BB.begin(), &Inst + 1),
                                -1) &&
           Scale == 8) {
@@ -115,6 +127,8 @@ void JTFootprintReduction::checkOpportunities(BinaryContext &BC,
 bool JTFootprintReduction::tryOptimizeNonPIC(
     BinaryContext &BC, BinaryBasicBlock &BB, MCInst &Inst, uint64_t JTAddr,
     BinaryFunction::JumpTable *JumpTable, DataflowInfoManager &Info) {
+  if (opts::JTFootprintOnlyPIC)
+    return false;
 
   MCOperand Base;
   uint64_t Scale;
@@ -233,8 +247,12 @@ void JTFootprintReduction::runOnFunctions(
   if (opts::JumpTables == JTS_BASIC && opts::Relocs)
     return;
 
-  BinaryFunctionCallGraph CG(buildCallGraph(BC, BFs));
-  RegAnalysis RA(BC, BFs, CG);
+  std::unique_ptr<RegAnalysis> RA;
+  std::unique_ptr<BinaryFunctionCallGraph> CG;
+  if (!opts::JTFootprintOnlyPIC) {
+    CG.reset(new BinaryFunctionCallGraph(buildCallGraph(BC, BFs)));
+    RA.reset(new RegAnalysis(BC, BFs, *CG));
+  }
   for (auto &BFIt : BFs) {
     auto &Function = BFIt.second;
 
@@ -244,7 +262,7 @@ void JTFootprintReduction::runOnFunctions(
     if (Function.getKnownExecutionCount() == 0)
       continue;
 
-    DataflowInfoManager Info(BC, Function, &RA, nullptr);
+    DataflowInfoManager Info(BC, Function, RA.get(), nullptr);
     BlacklistedJTs.clear();
     checkOpportunities(BC, Function, Info);
     optimizeFunction(BC, Function, Info);

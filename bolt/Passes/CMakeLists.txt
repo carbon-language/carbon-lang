@@ -20,6 +20,7 @@ add_llvm_library(LLVMBOLTPasses
   PettisAndHansen.cpp
   PLTCall.cpp
   RegAnalysis.cpp
+  RegReAssign.cpp
   ReorderAlgorithm.cpp
   ReorderFunctions.cpp
   ShrinkWrapping.cpp
