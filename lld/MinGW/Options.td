@@ -6,6 +6,7 @@ class S<string name>: Separate<["--", "-"], name>;
 
 def L: JoinedOrSeparate<["-"], "L">, MetaVarName<"<dir>">,
   HelpText<"Add a directory to the library search path">;
+def dynamicbase: F<"dynamicbase">, HelpText<"Enable ASLR">;
 def entry: S<"entry">, MetaVarName<"<entry>">,
   HelpText<"Name of entry point symbol">;
 def export_all_symbols: F<"export-all-symbols">,
@@ -45,9 +46,12 @@ def O: Joined<["-"], "O">, HelpText<"Optimize output file size">;
 def enable_auto_image_base: F<"enable-auto-image-base">;
 def enable_auto_import: F<"enable-auto-import">;
 def full_shutdown: Flag<["--"], "full-shutdown">;
+def high_entropy_va: F<"high-entropy-va">, HelpText<"Enable 64-bit ASLR">;
 def major_image_version: S<"major-image-version">;
 def minor_image_version: S<"minor-image-version">;
+def nxcompat: F<"nxcompat">, HelpText<"Enable data execution prevention">;
 def sysroot: J<"sysroot">, HelpText<"Sysroot">;
+def tsaware: F<"tsaware">, HelpText<"Create Terminal Server aware executable">;
 def v: Flag<["-"], "v">, HelpText<"Display the version number">;
 def version: F<"version">, HelpText<"Display the version number and exit">;
 

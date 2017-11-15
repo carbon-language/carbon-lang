@@ -157,6 +157,8 @@ bool mingw::link(ArrayRef<const char *> ArgsArr, raw_ostream &Diag) {
   if (Args.hasArg(OPT_large_address_aware))
     Add("-largeaddressaware");
 
+  Add(Args.hasArg(OPT_dynamicbase) ? "-dynamicbase" : "-dynamicbase:no");
+
   if (auto *A = Args.getLastArg(OPT_m)) {
     StringRef S = A->getValue();
     if (S == "i386pe")
