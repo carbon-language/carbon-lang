@@ -11,6 +11,7 @@ def entry: S<"entry">, MetaVarName<"<entry>">,
   HelpText<"Name of entry point symbol">;
 def export_all_symbols: F<"export-all-symbols">,
     HelpText<"Export all symbols even if a def file or dllexport attributes are used">;
+def image_base: S<"image-base">, HelpText<"Base address of the program">;
 def l: JoinedOrSeparate<["-"], "l">, MetaVarName<"<libName>">,
   HelpText<"Root name of library to use">;
 def m: JoinedOrSeparate<["-"], "m">, HelpText<"Set target emulation">;

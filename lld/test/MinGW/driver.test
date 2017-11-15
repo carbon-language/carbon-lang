@@ -101,3 +101,7 @@ DEFAULT-DISABLE-FLAGS: -dynamicbase:no
 RUN: ld.lld -### -m i386pep foo.o --dynamicbase | FileCheck -check-prefix DYNAMICBASE %s
 RUN: ld.lld -### -m i386pep foo.o -dynamicbase | FileCheck -check-prefix DYNAMICBASE %s
 DYNAMICBASE: -dynamicbase -
+
+RUN: ld.lld -### -m i386pep foo.o --image-base 0x1230000 | FileCheck -check-prefix IMAGE-BASE %s
+RUN: ld.lld -### -m i386pep foo.o -image-base 0x1230000 | FileCheck -check-prefix IMAGE-BASE %s
+IMAGE-BASE: -base:0x1230000
