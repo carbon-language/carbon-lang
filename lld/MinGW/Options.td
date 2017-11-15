@@ -15,6 +15,8 @@ def l: JoinedOrSeparate<["-"], "l">, MetaVarName<"<libName>">,
 def m: JoinedOrSeparate<["-"], "m">, HelpText<"Set target emulation">;
 def no_whole_archive: F<"no-whole-archive">,
     HelpText<"No longer include all object files for following archives">;
+def large_address_aware: Flag<["--"], "large-address-aware">,
+    HelpText<"Enable large addresses">;
 def o: JoinedOrSeparate<["-"], "o">, MetaVarName<"<path>">,
   HelpText<"Path to file to write output">;
 def out_implib: Separate<["--"], "out-implib">, HelpText<"Import library name">;
