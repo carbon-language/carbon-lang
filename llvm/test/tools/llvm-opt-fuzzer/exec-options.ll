@@ -1,6 +1,7 @@
 ; If the binary looks up libraries using an rpath, we can't test this
 ; without copying the whole lib dir or polluting the build dir.
 ; REQUIRES: static-libs
+; REQUIRES: x86-registered-target
 
 ; Temporary bitcode file
 ; RUN: opt -o %t.input %s
