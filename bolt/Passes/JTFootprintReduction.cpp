@@ -42,7 +42,7 @@ namespace bolt {
 void JTFootprintReduction::checkOpportunities(BinaryContext &BC,
                                               BinaryFunction &Function,
                                               DataflowInfoManager &Info) {
-  std::map<BinaryFunction::JumpTable *, uint64_t> AllJTs;
+  std::map<JumpTable *, uint64_t> AllJTs;
 
   for (auto &BB : Function) {
     for (auto &Inst : BB) {
@@ -125,7 +125,7 @@ void JTFootprintReduction::checkOpportunities(BinaryContext &BC,
 
 bool JTFootprintReduction::tryOptimizeNonPIC(
     BinaryContext &BC, BinaryBasicBlock &BB, MCInst &Inst, uint64_t JTAddr,
-    BinaryFunction::JumpTable *JumpTable, DataflowInfoManager &Info) {
+    JumpTable *JumpTable, DataflowInfoManager &Info) {
   if (opts::JTFootprintOnlyPIC)
     return false;
 
@@ -165,7 +165,7 @@ bool JTFootprintReduction::tryOptimizeNonPIC(
 
 bool JTFootprintReduction::tryOptimizePIC(
     BinaryContext &BC, BinaryBasicBlock &BB, MCInst &Inst, uint64_t JTAddr,
-    BinaryFunction::JumpTable *JumpTable, DataflowInfoManager &Info) {
+    JumpTable *JumpTable, DataflowInfoManager &Info) {
   MCPhysReg BaseReg;
   uint64_t Scale;
   MCPhysReg Index;
@@ -195,7 +195,7 @@ bool JTFootprintReduction::tryOptimizePIC(
 
   JumpTable->OutputEntrySize = 4;
   // DePICify
-  JumpTable->Type = BinaryFunction::JumpTable::JTT_NORMAL;
+  JumpTable->Type = JumpTable::JTT_NORMAL;
 
   BB.replaceInstruction(&Inst, NewFrag.begin(), NewFrag.end());
   return true;

@@ -269,9 +269,8 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
           assert(PointerOrErr && "failed to decode indirect address");
           TypeAddress = *PointerOrErr;
         }
-        auto NI = BC.GlobalAddresses.find(TypeAddress);
-        if (NI != BC.GlobalAddresses.end()) {
-          OS << NI->second;
+        if (auto *TypeSymBD = BC.getBinaryDataAtAddress(TypeAddress)) {
+          OS << TypeSymBD->getName();
         } else {
           OS << "0x" << Twine::utohexstr(TypeAddress);
         }
@@ -507,9 +506,10 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer, bool EmitColdPart) {
 
   const auto TTypeEncoding = BC.MOFI->getTTypeEncoding();
   const auto TTypeEncodingSize = getEncodingSize(TTypeEncoding, BC);
+  const auto TTypeAlignment = 4;
 
   // Type tables have to be aligned at 4 bytes.
-  Streamer->EmitValueToAlignment(4);
+  Streamer->EmitValueToAlignment(TTypeAlignment);
 
   // Emit the LSDA label.
   auto LSDASymbol = EmitColdPart ? getColdLSDASymbol() : getLSDASymbol();
@@ -635,7 +635,11 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer, bool EmitColdPart) {
       break;
     case dwarf::DW_EH_PE_pcrel: {
       if (TypeAddress) {
-        const auto *TypeSymbol = BC.getOrCreateGlobalSymbol(TypeAddress, "TI");
+        const auto *TypeSymbol =
+          BC.getOrCreateGlobalSymbol(TypeAddress,
+                                     TTypeEncodingSize,
+                                     TTypeAlignment,
+                                     "TI");
         auto *DotSymbol = BC.Ctx->createTempSymbol();
         Streamer->EmitLabel(DotSymbol);
         const auto *SubDotExpr = MCBinaryExpr::createSub(

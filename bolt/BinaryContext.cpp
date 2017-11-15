@@ -11,6 +11,7 @@
 
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
+#include "DataReader.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
 #include "llvm/DebugInfo/DWARF/DWARFUnit.h"
@@ -19,6 +20,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/CommandLine.h"
+#include <iterator>
 
 using namespace llvm;
 using namespace bolt;
@@ -57,6 +59,7 @@ BinaryContext::~BinaryContext() {
   for (auto *Section : Sections) {
     delete Section;
   }
+  clearBinaryData();
 }
 
 std::unique_ptr<MCObjectWriter>
@@ -69,47 +72,224 @@ BinaryContext::createObjectWriter(raw_pwrite_stream &OS) {
   return MAB->createObjectWriter(OS);
 }
 
-MCSymbol *BinaryContext::getOrCreateGlobalSymbol(uint64_t Address,
-                                                 Twine Prefix) {
-  MCSymbol *Symbol{nullptr};
-  std::string Name;
-  auto NI = GlobalAddresses.find(Address);
-  if (NI != GlobalAddresses.end()) {
-    // Even though there could be multiple names registered at the address,
-    // we only use the first one.
-    Name = NI->second;
-  } else {
-    Name = (Prefix + "0x" + Twine::utohexstr(Address)).str();
-    assert(GlobalSymbols.find(Name) == GlobalSymbols.end() &&
-           "created name is not unique");
-    GlobalAddresses.emplace(std::make_pair(Address, Name));
+bool BinaryContext::validateObjectNesting() const {
+  auto Itr = BinaryDataMap.begin();
+  auto End = BinaryDataMap.end();
+  bool Valid = true;
+  while (Itr != End) {
+    auto Next = std::next(Itr);
+    while (Next != End &&
+           Itr->second->getSection() == Next->second->getSection() &&
+           Itr->second->containsRange(Next->second->getAddress(),
+                                      Next->second->getSize())) {
+      if (Next->second->Parent != Itr->second) {
+        errs() << "BOLT-WARNING: object nesting incorrect for:\n"
+               << "BOLT-WARNING:  " << *Itr->second << "\n"
+               << "BOLT-WARNING:  " << *Next->second << "\n";
+        Valid = false;
+      }
+      ++Next;
+    }
+    Itr = Next;
+  }
+  return Valid;
+}
+
+bool BinaryContext::validateHoles() const {
+  bool Valid = true;
+  for (auto &Section : sections()) {
+    for (const auto &Rel : Section.relocations()) {
+      auto RelAddr = Rel.Offset + Section.getAddress();
+      auto *BD = getBinaryDataContainingAddress(RelAddr);
+      if (!BD) {
+        errs() << "BOLT-WARNING: no BinaryData found for relocation at address"
+               << " 0x" << Twine::utohexstr(RelAddr) << " in "
+               << Section.getName() << "\n";
+        Valid = false;
+      } else if (!BD->getAtomicRoot()) {
+        errs() << "BOLT-WARNING: no atomic BinaryData found for relocation at "
+               << "address 0x" << Twine::utohexstr(RelAddr) << " in "
+               << Section.getName() << "\n";
+        Valid = false;
+      }
+    }
+  }
+  return Valid;
+}
+
+void BinaryContext::updateObjectNesting(BinaryDataMapType::iterator GAI) {
+  const auto Address = GAI->second->getAddress();
+  const auto Size = GAI->second->getSize();
+
+  auto fixParents =
+    [&](BinaryDataMapType::iterator Itr, BinaryData *NewParent) {
+      auto *OldParent = Itr->second->Parent;
+      Itr->second->Parent = NewParent;
+      ++Itr;
+      while (Itr != BinaryDataMap.end() && OldParent &&
+             Itr->second->Parent == OldParent) {
+        Itr->second->Parent = NewParent;
+        ++Itr;
+      }
+  };
+
+  // Check if the previous symbol contains the newly added symbol.
+  if (GAI != BinaryDataMap.begin()) {
+    auto *Prev = std::prev(GAI)->second;
+    while (Prev) {
+      if (Prev->getSection() == GAI->second->getSection() &&
+          Prev->containsRange(Address, Size)) {
+        fixParents(GAI, Prev);
+      } else {
+        fixParents(GAI, nullptr);
+      }
+      Prev = Prev->Parent;
+    }
   }
 
-  Symbol = Ctx->lookupSymbol(Name);
-  if (Symbol)
-    return Symbol;
+  // Check if the newly added symbol contains any subsequent symbols.
+  if (Size != 0) {
+    auto *BD = GAI->second->Parent ? GAI->second->Parent : GAI->second;
+    auto Itr = std::next(GAI);
+    while (Itr != BinaryDataMap.end() &&
+           BD->containsRange(Itr->second->getAddress(),
+                                   Itr->second->getSize())) {
+      Itr->second->Parent = BD;
+      ++Itr;
+    }
+  }
+}
 
-  Symbol = Ctx->getOrCreateSymbol(Name);
-  GlobalSymbols[Name] = Address;
+MCSymbol *BinaryContext::getOrCreateGlobalSymbol(uint64_t Address,
+                                                 uint64_t Size,
+                                                 uint16_t Alignment,
+                                                 Twine Prefix) {
+  auto Itr = BinaryDataMap.find(Address);
+  if (Itr != BinaryDataMap.end()) {
+    assert(Itr->second->getSize() == Size || !Size);
+    return Itr->second->getSymbol();
+  }
 
+  std::string Name = (Prefix + "0x" + Twine::utohexstr(Address)).str();
+  assert(!GlobalSymbols.count(Name) && "created name is not unique");
+  return registerNameAtAddress(Name, Address, Size, Alignment);
+}
+
+MCSymbol *BinaryContext::registerNameAtAddress(StringRef Name,
+                                               uint64_t Address,
+                                               uint64_t Size,
+                                               uint16_t Alignment) {
+  auto SectionOrErr = getSectionForAddress(Address);
+  auto &Section = SectionOrErr ? SectionOrErr.get() : absoluteSection();
+  auto GAI = BinaryDataMap.find(Address);
+  BinaryData *BD;
+  if (GAI == BinaryDataMap.end()) {
+    BD = new BinaryData(Name,
+                        Address,
+                        Size,
+                        Alignment ? Alignment : 1,
+                        Section);
+  } else {
+    BD = GAI->second;
+  }
+  return registerNameAtAddress(Name, Address, BD);
+}
+
+MCSymbol *BinaryContext::registerNameAtAddress(StringRef Name,
+                                               uint64_t Address,
+                                               BinaryData *BD) {
+  auto GAI = BinaryDataMap.find(Address);
+  if (GAI != BinaryDataMap.end()) {
+    if (BD != GAI->second) {
+      // Note: this could be a source of bugs if client code holds
+      // on to BinaryData*'s in data structures for any length of time.
+      auto *OldBD = GAI->second;
+      BD->merge(GAI->second);
+      delete OldBD;
+      GAI->second = BD;
+      for (auto &Name : BD->names()) {
+        GlobalSymbols[Name] = BD;
+      }
+      updateObjectNesting(GAI);
+    } else if (!GAI->second->hasName(Name)) {
+      GAI->second->Names.push_back(Name);
+      GlobalSymbols[Name] = GAI->second;
+    }
+    BD = nullptr;
+  } else {
+    GAI = BinaryDataMap.emplace(Address, BD).first;
+    GlobalSymbols[Name] = BD;
+    updateObjectNesting(GAI);
+  }
+
+  // Register the name with MCContext.
+  auto *Symbol = Ctx->getOrCreateSymbol(Name);
+  if (BD) {
+    BD->Symbols.push_back(Symbol);
+    assert(BD->Symbols.size() == BD->Names.size());
+  }
   return Symbol;
 }
 
-MCSymbol *BinaryContext::getGlobalSymbolAtAddress(uint64_t Address) const {
-  auto NI = GlobalAddresses.find(Address);
-  if (NI == GlobalAddresses.end())
-    return nullptr;
+const BinaryData *
+BinaryContext::getBinaryDataContainingAddressImpl(uint64_t Address,
+                                                  bool IncludeEnd,
+                                                  bool BestFit) const {
+  auto NI = BinaryDataMap.lower_bound(Address);
+  auto End = BinaryDataMap.end();
+  if ((NI != End && Address == NI->first) ||
+      (NI-- != BinaryDataMap.begin())) {
+    if (NI->second->containsAddress(Address) ||
+        (IncludeEnd && NI->second->getEndAddress() == Address)) {
+      while (BestFit &&
+             std::next(NI) != End &&
+             (std::next(NI)->second->containsAddress(Address) ||
+              (IncludeEnd && std::next(NI)->second->getEndAddress() == Address))) {
+        ++NI;
+      }
+      return NI->second;
+    }
 
-  auto *Symbol = Ctx->lookupSymbol(NI->second);
-  assert(Symbol && "symbol cannot be NULL at this point");
-
-  return Symbol;
+    // If this is a sub-symbol, see if a parent data contains the address.
+    auto *BD = NI->second->getParent();
+    while (BD) {
+      if (BD->containsAddress(Address) ||
+          (IncludeEnd && NI->second->getEndAddress() == Address))
+        return BD;
+      BD = BD->getParent();
+    }
+  }
+  return nullptr;
 }
 
-MCSymbol *BinaryContext::getGlobalSymbolByName(const std::string &Name) const {
-  auto Itr = GlobalSymbols.find(Name);
-  return Itr == GlobalSymbols.end()
-    ? nullptr : getGlobalSymbolAtAddress(Itr->second);
+bool BinaryContext::setBinaryDataSize(uint64_t Address, uint64_t Size) {
+  auto NI = BinaryDataMap.find(Address);
+  assert(NI != BinaryDataMap.end());
+  if (NI == BinaryDataMap.end())
+    return false;
+  assert(!NI->second->Size || NI->second->Size == Size);
+  NI->second->Size = Size;
+  updateObjectNesting(NI);
+  return true;
+}
+
+void BinaryContext::postProcessSymbolTable() {
+  fixBinaryDataHoles();
+  bool Valid = true;
+  for (auto &Entry : BinaryDataMap) {
+    auto *BD = Entry.second;
+    if ((BD->getName().startswith("SYMBOLat") ||
+         BD->getName().startswith("DATAat")) &&
+        !BD->getParent() &&
+        !BD->getSize() &&
+        !BD->isAbsolute() &&
+        BD->getSection()) {
+      outs() << "BOLT-WARNING: zero sized top level symbol: " << *BD << "\n";
+      Valid = false;
+    }
+  }
+  assert(Valid);
+  assignMemData();
 }
 
 void BinaryContext::foldFunction(BinaryFunction &ChildBF,
@@ -126,7 +306,7 @@ void BinaryContext::foldFunction(BinaryFunction &ChildBF,
     assert(Symbol && "symbol cannot be NULL at this point");
     SymbolToFunctionMap[Symbol] = &ParentBF;
 
-    // NB: there's no need to update GlobalAddresses and GlobalSymbols.
+    // NB: there's no need to update BinaryDataMap and GlobalSymbols.
   }
 
   // Merge execution counts of ChildBF into those of ParentBF.
@@ -148,10 +328,138 @@ void BinaryContext::foldFunction(BinaryFunction &ChildBF,
   }
 }
 
+void BinaryContext::fixBinaryDataHoles() {
+  assert(validateObjectNesting() && "object nesting inconsitency detected");
+
+  for (auto &Section : allocatableSections()) {
+    std::vector<std::pair<uint64_t, uint64_t>> Holes;
+
+    auto isNotHole = [&Section](const binary_data_iterator &Itr) {
+      auto *BD = Itr->second;
+      bool isHole = (!BD->getParent() &&
+                     !BD->getSize() &&
+                     BD->isObject() &&
+                     (BD->getName().startswith("SYMBOLat0x") ||
+                      BD->getName().startswith("DATAat0x") ||
+                      BD->getName().startswith("ANONYMOUS")));
+      return !isHole && BD->getSection() == Section && !BD->getParent();
+    };
+
+    auto BDStart = BinaryDataMap.begin();
+    auto BDEnd = BinaryDataMap.end();
+    auto Itr = FilteredBinaryDataIterator(isNotHole, BDStart, BDEnd);
+    auto End = FilteredBinaryDataIterator(isNotHole, BDEnd, BDEnd);
+
+    uint64_t EndAddress = Section.getAddress();
+
+    while (Itr != End) {
+      auto Gap = Itr->second->getAddress() - EndAddress;
+      if (Gap > 0) {
+        assert(EndAddress < Itr->second->getAddress());
+        Holes.push_back(std::make_pair(EndAddress, Gap));
+      }
+      EndAddress = Itr->second->getEndAddress();
+      ++Itr;
+    }
+
+    if (EndAddress < Section.getEndAddress()) {
+      Holes.push_back(std::make_pair(EndAddress,
+                                     Section.getEndAddress() - EndAddress));
+    }
+
+    // If there is already a symbol at the start of the hole, grow that symbol
+    // to cover the rest.  Otherwise, create a new symbol to cover the hole.
+    for (auto &Hole : Holes) {
+      auto *BD = getBinaryDataAtAddress(Hole.first);
+      if (BD) {
+        // BD->getSection() can be != Section if there are sections that
+        // overlap.  In this case it is probably safe to just skip the holes
+        // since the overlapping section will not(?) have any symbols in it.
+        if (BD->getSection() == Section)
+          setBinaryDataSize(Hole.first, Hole.second);
+      } else {
+        getOrCreateGlobalSymbol(Hole.first, Hole.second, 1, "HOLEat");
+      }
+    }
+  }
+
+  assert(validateObjectNesting() && "object nesting inconsitency detected");
+  assert(validateHoles() && "top level hole detected in object map");
+}
+
 void BinaryContext::printGlobalSymbols(raw_ostream& OS) const {
-  for (auto &Entry : GlobalSymbols) {
-    OS << "(" << Entry.first << " -> 0x"
-       << Twine::utohexstr(Entry.second) << ")\n";
+  const BinarySection* CurrentSection = nullptr;
+  bool FirstSection = true;
+
+  for (auto &Entry : BinaryDataMap) {
+    const auto *BD = Entry.second;
+    const auto &Section = BD->getSection();
+    if (FirstSection || Section != *CurrentSection) {
+      uint64_t Address, Size;
+      StringRef Name = Section.getName();
+      if (Section) {
+        Address = Section.getAddress();
+        Size = Section.getSize();
+      } else {
+        Address = BD->getAddress();
+        Size = BD->getSize();
+      }
+      OS << "BOLT-INFO: Section " << Name << ", "
+         << "0x" + Twine::utohexstr(Address) << ":"
+         << "0x" + Twine::utohexstr(Address + Size) << "/"
+         << Size << "\n";
+      CurrentSection = &Section;
+      FirstSection = false;
+    }
+
+    OS << "BOLT-INFO: ";
+    auto *P = BD->getParent();
+    while (P) {
+      OS << "  ";
+      P = P->getParent();
+    }
+    OS << *BD << "\n";
+  }
+}
+
+void BinaryContext::assignMemData() {
+  auto getAddress = [&](const MemInfo &MI) {
+    if (!MI.Addr.IsSymbol)
+      return MI.Addr.Offset;
+
+    if (auto *BD = getBinaryDataByName(MI.Addr.Name))
+      return BD->getAddress() + MI.Addr.Offset;
+
+    return 0ul;
+  };
+
+  // Map of sections (or heap/stack) to count/size.
+  std::map<StringRef, uint64_t> Counts;
+
+  uint64_t TotalCount = 0;
+  for (auto &Entry : DR.getAllFuncsMemData()) {
+    for (auto &MI : Entry.second.Data) {
+      const auto Addr = getAddress(MI);
+      auto *BD = getBinaryDataContainingAddress(Addr);
+      if (BD) {
+        BD->getAtomicRoot()->addMemData(MI);
+        Counts[BD->getSectionName()] += MI.Count;
+      } else {
+        Counts["Heap/stack"] += MI.Count;
+      }
+      TotalCount += MI.Count;
+    }
+  }
+
+  if (!Counts.empty()) {
+    outs() << "BOLT-INFO: Memory stats breakdown:\n";
+    for (auto &Entry : Counts) {
+      const auto Section = Entry.first;
+      const auto Count = Entry.second;
+      outs() << "BOLT-INFO:   " << Section << " = " << Count
+             << format(" (%.1f%%)\n", 100.0*Count/TotalCount);
+    }
+    outs() << "BOLT-INFO: Total memory events: " << TotalCount << "\n";
   }
 }
 
@@ -484,6 +792,14 @@ BinaryContext::getSectionForAddress(uint64_t Address) const {
   return std::make_error_code(std::errc::bad_address);
 }
 
+ErrorOr<StringRef>
+BinaryContext::getSectionNameForAddress(uint64_t Address) const {
+  if (auto Section = getSectionForAddress(Address)) {
+    return Section->getName();
+  }
+  return std::make_error_code(std::errc::bad_address);
+}
+
 BinarySection &BinaryContext::registerSection(BinarySection *Section) {
   assert(!Section->getName().empty() &&
          "can't register sections without a name");
@@ -560,6 +876,12 @@ void BinaryContext::printSections(raw_ostream &OS) const {
   for (auto &Section : Sections) {
     OS << "BOLT-INFO: " << *Section << "\n";
   }
+}
+
+BinarySection &BinaryContext::absoluteSection() {
+  if (auto Section = getUniqueSectionByName("<absolute>"))
+    return *Section;
+  return registerOrUpdateSection("<absolute>", ELF::SHT_NULL, 0u);
 }
 
 ErrorOr<uint64_t>

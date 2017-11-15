@@ -809,12 +809,10 @@ std::error_code DataAggregator::parseMemEvents() {
     if (MemFunc) {
       MemName = MemFunc->getNames()[0];
       Addr -= MemFunc->getAddress();
-    } else {
-      // TODO: global symbol size?
-      auto Sym = BC->getGlobalSymbolAtAddress(Addr);
-      if (Sym) {
-        MemName = Sym->getName();
-        Addr = 0;
+    } else if (Addr) {  // TODO: filter heap/stack/nulls here?
+      if (auto *BD = BC->getBinaryDataContainingAddress(Addr)) {
+        MemName = BD->getName();
+        Addr -= BD->getAddress();
       }
     }
 

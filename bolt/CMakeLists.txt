@@ -62,6 +62,7 @@ add_llvm_tool(llvm-bolt
   llvm-bolt.cpp
   BinaryBasicBlock.cpp
   BinaryContext.cpp
+  BinaryData.cpp
   BinaryFunction.cpp
   BinaryFunctionProfile.cpp
   BinaryPassManager.cpp
@@ -72,8 +73,10 @@ add_llvm_tool(llvm-bolt
   DebugData.cpp
   DWARFRewriter.cpp
   Exceptions.cpp
+  JumpTable.cpp
   ProfileReader.cpp
   ProfileWriter.cpp
+  Relocation.cpp
   RewriteInstance.cpp
 
   DEPENDS

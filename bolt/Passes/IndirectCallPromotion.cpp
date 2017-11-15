@@ -147,7 +147,10 @@ IndirectCallPromotion::Callsite::Callsite(BinaryFunction &BF,
     Mispreds(ICP.Mispreds),
     Branches(ICP.Count) {
   if (ICP.IsFunction) {
-    To.Sym = BF.getBinaryContext().getGlobalSymbolByName(ICP.Name);
+    if (auto *BD = BF.getBinaryContext().getBinaryDataByName(ICP.Name)) {
+      To.Sym = BD->getSymbol();
+      To.Addr = 0;
+    }
   }
 }
 
@@ -163,16 +166,15 @@ IndirectCallPromotion::getCallTargets(
 
   if (const auto *JT = BF.getJumpTable(Inst)) {
     // Don't support PIC jump tables for now
-    if (!opts::ICPJumpTablesByTarget &&
-        JT->Type == BinaryFunction::JumpTable::JTT_PIC)
+    if (!opts::ICPJumpTablesByTarget && JT->Type == JumpTable::JTT_PIC)
       return Targets;
     const Location From(BF.getSymbol());
     const auto Range = JT->getEntriesForAddress(BC.MIA->getJumpTable(Inst));
     assert(JT->Counts.empty() || JT->Counts.size() >= Range.second);
-    BinaryFunction::JumpInfo DefaultJI;
+    JumpTable::JumpInfo DefaultJI;
     const auto *JI = JT->Counts.empty() ? &DefaultJI : &JT->Counts[Range.first];
     const size_t JIAdj = JT->Counts.empty() ? 0 : 1;
-    assert(JT->Type == BinaryFunction::JumpTable::JTT_PIC ||
+    assert(JT->Type == JumpTable::JTT_PIC ||
            JT->EntrySize == BC.AsmInfo->getCodePointerSize());
     for (size_t I = Range.first; I < Range.second; ++I, JI += JIAdj) {
       auto *Entry = JT->Entries[I];
@@ -290,7 +292,7 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(
    BinaryBasicBlock *BB,
    MCInst &CallInst,
    MCInst *&TargetFetchInst,
-   const BinaryFunction::JumpTable *JT
+   const JumpTable *JT
 ) const {
   const auto *MemData = Function.getMemData();
   JumpTableInfoType HotTargets;
@@ -349,9 +351,9 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(
 
   uint64_t ArrayStart;
   if (DispExpr) {
-    auto SI = BC.GlobalSymbols.find(DispExpr->getSymbol().getName());
-    assert(SI != BC.GlobalSymbols.end() && "global symbol needs a value");
-    ArrayStart = SI->second;
+    auto *BD = BC.getBinaryDataByName(DispExpr->getSymbol().getName());
+    assert(BD && "global symbol needs a value");
+    ArrayStart = BD->getAddress();
   } else {
     ArrayStart = static_cast<uint64_t>(DispValue);
   }
@@ -388,12 +390,8 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(
 
     if (MI.Addr.IsSymbol) {
       // Deal with bad/stale data
-      if (MI.Addr.Name != (std::string("JUMP_TABLEat0x") +
-                           Twine::utohexstr(JT->Address).str()) &&
-          MI.Addr.Name != (std::string("JUMP_TABLEat0x") +
-                           Twine::utohexstr(ArrayStart).str())) {
+      if (!MI.Addr.Name.startswith("JUMP_TABLE/" + Function.getNames().front()))
         return JumpTableInfoType();
-      }
       Index = MI.Addr.Offset / JT->EntrySize;
     } else {
       Index = (MI.Addr.Offset - ArrayStart) / JT->EntrySize;
@@ -602,26 +600,31 @@ IndirectCallPromotion::maybeGetVtableAddrs(
   std::map<const MCSymbol *, uint64_t> MethodToVtable;
 
   for (auto &MI : MemData->getMemInfoRange(DataOffset.get())) {
-    ErrorOr<uint64_t> Address = MI.Addr.IsSymbol
-                              ? BC.getAddressForGlobalSymbol(MI.Addr.Name)
-                              : MI.Addr.Offset;
+    uint64_t Address;
+
+    if (MI.Addr.IsSymbol) {
+      auto *BD = BC.getBinaryDataByName(MI.Addr.Name);
+      Address = BD ? BD->getAddress() + MI.Addr.Offset : 0;
+    } else {
+      Address = MI.Addr.Offset;
+    }
 
     // Ignore bogus data.
     if (!Address)
       continue;
 
-    if (MI.Addr.IsSymbol)
-      Address = Address.get() + MI.Addr.Offset;
-
-    const auto VtableBase = Address.get() - MethodOffset;
+    const auto VtableBase = Address - MethodOffset;
 
     DEBUG_VERBOSE(1, dbgs() << "BOLT-INFO: ICP vtable = "
                             << Twine::utohexstr(VtableBase)
                             << "+" << MethodOffset << "/" << MI.Count
                             << "\n");
 
-    if (auto MethodAddr = BC.extractPointerAtAddress(Address.get())) {
-      auto *MethodSym = BC.getGlobalSymbolAtAddress(MethodAddr.get());
+    if (auto MethodAddr = BC.extractPointerAtAddress(Address)) {
+      auto *MethodBD = BC.getBinaryDataAtAddress(MethodAddr.get());
+      if (!MethodBD)  // skip unknown methods
+        continue;
+      auto *MethodSym = MethodBD->getSymbol();
       MethodToVtable[MethodSym] = VtableBase;
       DEBUG_VERBOSE(1,
         const auto *Method = BC.getFunctionForSymbol(MethodSym);

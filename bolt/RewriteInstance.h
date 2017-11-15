@@ -367,7 +367,9 @@ private:
                                        BinarySection &Section,
                                        uint64_t Address,
                                        uint64_t Size,
-                                       bool IsSimple);
+                                       bool IsSimple,
+                                       uint64_t SymbolSize = 0,
+                                       uint16_t Alignment = 0);
 
 public:
   /// When updating debug info, these are the sections we overwrite.
@@ -393,6 +395,10 @@ private:
 
   /// Alignment value used for .eh_frame_hdr.
   static constexpr uint64_t EHFrameHdrAlign = 4;
+
+  // TODO: these are platform (x86, aarch64) specific.
+  static constexpr uint64_t PLTSize = 16;
+  static constexpr uint16_t PLTAlignment = 16;
 
   /// An instance of the input binary we are processing, externally owned.
   llvm::object::ELFObjectFileBase *InputFile;
@@ -509,6 +515,10 @@ private:
   static const std::string OrgSecPrefix;
 
   static const std::string BOLTSecPrefix;
+
+  /// Number of processed to data relocations.  Used to implement the
+  /// -max-relocations debugging option.
+  uint64_t NumDataRelocations{0};
 };
 
 } // namespace bolt

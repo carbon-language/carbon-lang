@@ -22,6 +22,7 @@
 #include "BinaryLoop.h"
 #include "DataReader.h"
 #include "DebugData.h"
+#include "JumpTable.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/iterator.h"
@@ -50,8 +51,6 @@ class DWARFUnit;
 class DWARFDebugInfoEntryMinimal;
 
 namespace bolt {
-
-struct SectionInfo;
 
 using DWARFUnitLineTable = std::pair<DWARFUnit *,
                                      const DWARFDebugLine::LineTable *>;
@@ -150,14 +149,6 @@ inline raw_ostream &operator<<(raw_ostream &OS, const DynoStats &Stats) {
 
 DynoStats operator+(const DynoStats &A, const DynoStats &B);
 
-enum JumpTableSupportLevel : char {
-  JTS_NONE = 0,       /// Disable jump tables support.
-  JTS_BASIC = 1,      /// Enable basic jump tables support (in-place).
-  JTS_MOVE = 2,       /// Move jump tables to a separate section.
-  JTS_SPLIT = 3,      /// Enable hot/cold splitting of jump tables.
-  JTS_AGGRESSIVE = 4, /// Aggressive splitting of jump tables.
-};
-
 enum IndirectCallPromotionType : char {
   ICP_NONE,        /// Don't perform ICP.
   ICP_CALLS,       /// Perform ICP on indirect calls.
@@ -229,12 +220,6 @@ public:
     ST_LARGE,         /// Split functions that exceed maximum size in addition
                       /// to landing pads.
     ST_ALL,           /// Split all functions
-  };
-
-  /// Branch statistics for jump table entries.
-  struct JumpInfo {
-    uint64_t Mispreds{0};
-    uint64_t Count{0};
   };
 
   static constexpr uint64_t COUNT_NO_PROFILE =
@@ -567,90 +552,17 @@ private:
   /// function and that apply before the entry basic block).
   CFIInstrMapType CIEFrameInstructions;
 
-public:
-  /// Representation of a jump table.
-  ///
-  /// The jump table may include other jump tables that are referenced by
-  /// a different label at a different offset in this jump table.
-  struct JumpTable {
-    enum JumpTableType : char {
-      JTT_NORMAL,
-      JTT_PIC,
-    };
-
-    /// Original address.
-    uint64_t Address;
-
-    /// Size of the entry used for storage.
-    std::size_t EntrySize;
-
-    /// Size of the entry size we will write (we may use a more compact layout)
-    std::size_t OutputEntrySize;
-
-    /// The type of this jump table.
-    JumpTableType Type;
-
-    /// All the entries as labels.
-    std::vector<MCSymbol *> Entries;
-
-    /// All the entries as offsets into a function. Invalid after CFG is built.
-    std::vector<uint64_t> OffsetEntries;
-
-    /// Map <Offset> -> <Label> used for embedded jump tables. Label at 0 offset
-    /// is the main label for the jump table.
-    std::map<unsigned, MCSymbol *> Labels;
-
-    /// Corresponding section if any.
-    ErrorOr<BinarySection &> Section{std::errc::bad_address};
-
-    /// Corresponding section name if any.
-    std::string SectionName;
-
-    /// Return the size of the jump table.
-    uint64_t getSize() const {
-      return std::max(OffsetEntries.size(), Entries.size()) * EntrySize;
-    }
-
-    /// Get the indexes for symbol entries that correspond to the jump table
-    /// starting at (or containing) 'Addr'.
-    std::pair<size_t, size_t> getEntriesForAddress(const uint64_t Addr) const;
-
-    /// Constructor.
-    JumpTable(uint64_t Address, std::size_t EntrySize, JumpTableType Type,
-              decltype(OffsetEntries) &&OffsetEntries,
-              decltype(Labels) &&Labels)
-        : Address(Address), EntrySize(EntrySize), OutputEntrySize(EntrySize),
-          Type(Type), OffsetEntries(OffsetEntries), Labels(Labels) {}
-
-    /// Dynamic number of times each entry in the table was referenced.
-    /// Identical entries will have a shared count (identical for every
-    /// entry in the set).
-    std::vector<JumpInfo> Counts;
-
-    /// Total number of times this jump table was used.
-    uint64_t Count{0};
-
-    /// Change all entries of the jump table in \p JTAddress pointing to
-    /// \p OldDest to \p NewDest. Return false if unsuccessful.
-    bool replaceDestination(uint64_t JTAddress, const MCSymbol *OldDest,
-                            MCSymbol *NewDest);
-
-    /// Update jump table at its original location.
-    void updateOriginal(BinaryContext &BC);
-
-    /// Emit jump table data. Callee supplies sections for the data.
-    /// Return the number of total bytes emitted.
-    uint64_t emit(MCStreamer *Streamer, MCSection *HotSection,
-                  MCSection *ColdSection);
-
-    /// Print for debugging purposes.
-    void print(raw_ostream &OS) const;
-  };
-private:
-
   /// All compound jump tables for this function.
-  /// <OriginalAddress> -> <JumpTable>
-  std::map<uint64_t, JumpTable> JumpTables;
+  /// <OriginalAddress> -> <JumpTable *>
+  std::map<uint64_t, JumpTable *> JumpTables;
+
+  /// A map from jump table address to insertion order.  Used for generating
+  /// jump table names.
+  mutable std::map<uint64_t, size_t> JumpTableIds;
+
+  /// Generate a unique name for this jump table at the given address that should
+  /// be repeatable no matter what the start address of the table is.
+  std::string generateJumpTableName(uint64_t Address) const;
 
   /// Return jump table that covers a given \p Address in memory.
   JumpTable *getJumpTableContainingAddress(uint64_t Address) {
@@ -658,8 +570,8 @@ private:
     if (JTI == JumpTables.begin())
       return nullptr;
     --JTI;
-    if (JTI->first + JTI->second.getSize() > Address) {
-      return &JTI->second;
+    if (JTI->first + JTI->second->getSize() > Address) {
+      return JTI->second;
     }
     return nullptr;
   }
@@ -669,10 +581,16 @@ private:
     if (JTI == JumpTables.begin())
       return nullptr;
     --JTI;
-    if (JTI->first + JTI->second.getSize() > Address) {
-      return &JTI->second;
+    if (JTI->first + JTI->second->getSize() > Address) {
+      return JTI->second;
     }
     return nullptr;
+  }
+
+  /// Iterate over all jump tables associated with this function.
+  iterator_range<std::map<uint64_t, JumpTable *>::const_iterator>
+  jumpTables() const {
+    return make_range(JumpTables.begin(), JumpTables.end());
   }
 
   /// Compare two jump tables in 2 functions. The function relies on consistent
@@ -1227,6 +1145,8 @@ public:
            "address is outside of the function");
     auto Offset = Address - getAddress();
     switch (RelType) {
+    case ELF::R_X86_64_8:
+    case ELF::R_X86_64_16:
     case ELF::R_X86_64_32:
     case ELF::R_X86_64_32S:
     case ELF::R_X86_64_64:
@@ -1247,8 +1167,7 @@ public:
     case ELF::R_AARCH64_ADR_GOT_PAGE:
     case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
     case ELF::R_AARCH64_ADR_PREL_PG_HI21:
-      Relocations.emplace(Offset,
-                          Relocation{Offset, Symbol, RelType, Addend, Value});
+      Relocations[Offset] = Relocation{Offset, Symbol, RelType, Addend, Value};
       break;
     case ELF::R_X86_64_PC32:
     case ELF::R_X86_64_PC8:
@@ -1332,7 +1251,7 @@ public:
 
   /// Return true if the function uses jump tables.
   bool hasJumpTables() const {
-    return JumpTables.size();
+    return !JumpTables.empty();
   }
 
   const JumpTable *getJumpTable(const MCInst &Inst) const {
@@ -1661,7 +1580,8 @@ public:
   }
 
   BinaryFunction &setPersonalityFunction(uint64_t Addr) {
-    PersonalityFunction = BC.getOrCreateGlobalSymbol(Addr, "FUNCat");
+    assert(!PersonalityFunction && "can't set personality function twice");
+    PersonalityFunction = BC.getOrCreateGlobalSymbol(Addr, 0, 0, "FUNCat");
     return *this;
   }
 
@@ -1815,7 +1735,7 @@ public:
       return std::make_pair(nullptr, nullptr);
 
     // Register our island at global namespace
-    Symbol = BC.getOrCreateGlobalSymbol(Address, "ISLANDat");
+    Symbol = BC.getOrCreateGlobalSymbol(Address, 0, 0, "ISLANDat");
     // Internal bookkeeping
     const auto Offset = Address - getAddress();
     assert((!IslandSymbols.count(Offset) || IslandSymbols[Offset] == Symbol) &&

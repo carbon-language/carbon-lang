@@ -197,7 +197,7 @@ class IndirectCallPromotion : public BinaryFunctionPass {
                               BinaryBasicBlock *BB,
                               MCInst &Inst,
                               MCInst *&TargetFetchInst,
-                              const BinaryFunction::JumpTable *JT) const;
+                              const JumpTable *JT) const;
 
   SymTargetsType findCallTargetSymbols(BinaryContext &BC,
                                        std::vector<Callsite> &Targets,

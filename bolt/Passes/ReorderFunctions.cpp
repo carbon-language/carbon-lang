@@ -358,20 +358,21 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC,
       for (const auto &Function : readFunctionOrderFile()) {
         std::vector<uint64_t> FuncAddrs;
 
-        auto Itr = BC.GlobalSymbols.find(Function);
-        if (Itr == BC.GlobalSymbols.end()) {
+        auto *BD = BC.getBinaryDataByName(Function);
+        if (!BD) {
           uint32_t LocalID = 1;
           while(1) {
             // If we can't find the main symbol name, look for alternates.
-            Itr = BC.GlobalSymbols.find(Function + "/" + std::to_string(LocalID));
-            if (Itr != BC.GlobalSymbols.end())
-              FuncAddrs.push_back(Itr->second);
+            const auto FuncName = Function + "/" + std::to_string(LocalID);
+            BD = BC.getBinaryDataByName(FuncName);
+            if (BD)
+              FuncAddrs.push_back(BD->getAddress());
             else
               break;
             LocalID++;
           }
         } else {
-          FuncAddrs.push_back(Itr->second);
+          FuncAddrs.push_back(BD->getAddress());
         }
 
         if (FuncAddrs.empty()) {
@@ -381,10 +382,10 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC,
         }
 
         for (const auto FuncAddr : FuncAddrs) {
-          const auto *FuncSym = BC.getOrCreateGlobalSymbol(FuncAddr, "FUNCat");
-          assert(FuncSym);
+          const auto *FuncBD = BC.getBinaryDataAtAddress(FuncAddr);
+          assert(FuncBD);
 
-          auto *BF = BC.getFunctionForSymbol(FuncSym);
+          auto *BF = BC.getFunctionForSymbol(FuncBD->getSymbol());
           if (!BF) {
             errs() << "BOLT-WARNING: Reorder functions: can't find function for "
                    << Function << ".\n";

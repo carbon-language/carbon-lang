@@ -391,7 +391,7 @@ void BinaryFunction::postProcessProfile() {
     if (JT->Counts.empty())
       JT->Counts.resize(JT->Entries.size());
     auto EI = JT->Entries.begin();
-    auto Delta = (JTAddress - JT->Address) / JT->EntrySize;
+    auto Delta = (JTAddress - JT->getAddress()) / JT->EntrySize;
     EI += Delta;
     while (EI != JT->Entries.end()) {
       const auto *TargetBB = getBasicBlockForLabel(*EI);
@@ -728,14 +728,8 @@ bool BinaryFunction::fetchProfileForOtherEntryPoints() {
     if (BB->isEntryPoint()) {
       uint64_t EntryAddress = BB->getOffset() + getAddress();
       // Look for branch data associated with this entry point
-      std::vector<std::string> Names;
-      std::multimap<uint64_t, std::string>::iterator I, E;
-      for (std::tie(I, E) = BC.GlobalAddresses.equal_range(EntryAddress);
-           I != E; ++I) {
-        Names.push_back(I->second);
-      }
-      if (!Names.empty()) {
-        if (FuncBranchData *Data = BC.DR.getFuncBranchData(Names)) {
+      if (auto *BD = BC.getBinaryDataAtAddress(EntryAddress)) {
+        if (FuncBranchData *Data = BC.DR.getFuncBranchData(BD->getNames())) {
           BranchData->appendFrom(*Data, BB->getOffset());
           Data->Used = true;
           Updated = true;

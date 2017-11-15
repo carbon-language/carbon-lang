@@ -129,7 +129,7 @@ PrintOnlyRegex("print-only-regex",
   cl::Hidden,
   cl::cat(BoltCategory));
 
-cl::opt<bool>
+static cl::opt<bool>
 TimeBuild("time-build",
   cl::desc("print time spent constructing binary functions"),
   cl::ZeroOrMore,
@@ -364,9 +364,9 @@ bool BinaryFunction::isForwardCall(const MCSymbol *CalleeSymbol) const {
     }
   } else {
     // Absolute symbol.
-    auto const CalleeSI = BC.GlobalSymbols.find(CalleeSymbol->getName());
-    assert(CalleeSI != BC.GlobalSymbols.end() && "unregistered symbol found");
-    return CalleeSI->second > getAddress();
+    auto *CalleeSI = BC.getBinaryDataByName(CalleeSymbol->getName());
+    assert(CalleeSI && "unregistered symbol found");
+    return CalleeSI->getAddress() > getAddress();
   }
 }
 
@@ -563,7 +563,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
 
   // Print all jump tables.
   for (auto &JTI : JumpTables) {
-    JTI.second.print(OS);
+    JTI.second->print(OS);
   }
 
   OS << "DWARF CFI Instructions:\n";
@@ -675,9 +675,8 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
   if (BC.TheTriple->getArch() == llvm::Triple::aarch64) {
     const auto *Sym = BC.MIA->getTargetSymbol(*PCRelBaseInstr, 1);
     assert (Sym && "Symbol extraction failed");
-    auto SI = BC.GlobalSymbols.find(Sym->getName());
-    if (SI != BC.GlobalSymbols.end()) {
-      PCRelAddr = SI->second;
+    if (auto *BD = BC.getBinaryDataByName(Sym->getName())) {
+      PCRelAddr = BD->getAddress();
     } else {
       for (auto &Elmt : Labels) {
         if (Elmt.second == Sym) {
@@ -708,10 +707,12 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
   // RIP-relative addressing should be converted to symbol form by now
   // in processed instructions (but not in jump).
   if (DispExpr) {
-    auto SI =
-        BC.GlobalSymbols.find(BC.MIA->getTargetSymbol(DispExpr)->getName());
-    assert(SI != BC.GlobalSymbols.end() && "global symbol needs a value");
-    ArrayStart = SI->second;
+    const MCSymbol *TargetSym;
+    uint64_t TargetOffset;
+    std::tie(TargetSym, TargetOffset) = BC.MIA->getTargetSymbolInfo(DispExpr);
+    auto *BD = BC.getBinaryDataByName(TargetSym->getName());
+    assert(BD && "global symbol needs a value");
+    ArrayStart = BD->getAddress() + TargetOffset;
     BaseRegNum = 0;
     if (BC.TheTriple->getArch() == llvm::Triple::aarch64) {
       ArrayStart &= ~0xFFFULL;
@@ -729,13 +730,13 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
 
   // Check if there's already a jump table registered at this address.
   if (auto *JT = getJumpTableContainingAddress(ArrayStart)) {
-    auto JTOffset = ArrayStart - JT->Address;
+    auto JTOffset = ArrayStart - JT->getAddress();
     if (Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE && JTOffset != 0) {
         // Adjust the size of this jump table and create a new one if necessary.
         // We cannot re-use the entries since the offsets are relative to the
         // table start.
         DEBUG(dbgs() << "BOLT-DEBUG: adjusting size of jump table at 0x"
-                     << Twine::utohexstr(JT->Address) << '\n');
+                     << Twine::utohexstr(JT->getAddress()) << '\n');
         JT->OffsetEntries.resize(JTOffset / JT->EntrySize);
     } else {
       // Re-use an existing jump table. Perhaps parts of it.
@@ -750,8 +751,10 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
       // Get or create a new label for the table.
       auto LI = JT->Labels.find(JTOffset);
       if (LI == JT->Labels.end()) {
-        auto *JTStartLabel = BC.getOrCreateGlobalSymbol(ArrayStart,
-                                                        "JUMP_TABLEat");
+        auto *JTStartLabel = BC.registerNameAtAddress(generateJumpTableName(ArrayStart),
+                                                      ArrayStart,
+                                                      0,
+                                                      JT->EntrySize);
         auto Result = JT->Labels.emplace(JTOffset, JTStartLabel);
         assert(Result.second && "error adding jump table label");
         LI = Result.first;
@@ -827,20 +830,33 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
       Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE) {
     assert(JTOffsetCandidates.size() > 2 &&
            "expected more than 2 jump table entries");
-    auto *JTStartLabel = BC.getOrCreateGlobalSymbol(ArrayStart, "JUMP_TABLEat");
-    DEBUG(dbgs() << "BOLT-DEBUG: creating jump table "
-                 << JTStartLabel->getName()
-                 << " in function " << *this << " with "
-                 << JTOffsetCandidates.size() << " entries.\n");
+
+    auto JumpTableName = generateJumpTableName(ArrayStart);
     auto JumpTableType =
       Type == IndirectBranchType::POSSIBLE_JUMP_TABLE
         ? JumpTable::JTT_NORMAL
         : JumpTable::JTT_PIC;
-    JumpTables.emplace(ArrayStart, JumpTable{ArrayStart,
-                                             EntrySize,
-                                             JumpTableType,
-                                             std::move(JTOffsetCandidates),
-                                             {{0, JTStartLabel}}});
+
+    auto *JTStartLabel = BC.Ctx->getOrCreateSymbol(JumpTableName);
+    
+    auto JT = llvm::make_unique<JumpTable>(JumpTableName,
+                                           ArrayStart,
+                                           EntrySize,
+                                           JumpTableType,
+                                           std::move(JTOffsetCandidates),
+                                           JumpTable::LabelMapType{{0, JTStartLabel}},
+                                           *BC.getSectionForAddress(ArrayStart));
+
+    auto *JTLabel = BC.registerNameAtAddress(JumpTableName,
+                                             ArrayStart,
+                                             JT.get());
+    assert(JTLabel == JTStartLabel);
+
+    DEBUG(dbgs() << "BOLT-DEBUG: creating jump table "
+                 << JTStartLabel->getName()
+                 << " in function " << *this << " with "
+                 << JTOffsetCandidates.size() << " entries.\n");
+    JumpTables.emplace(ArrayStart, JT.release());
     BC.MIA->replaceMemOperandDisp(const_cast<MCInst &>(*MemLocInstr),
                                   JTStartLabel, BC.Ctx.get());
     BC.MIA->setJumpTable(BC.Ctx.get(), Instruction, ArrayStart, IndexRegNum);
@@ -849,6 +865,7 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
 
     return Type;
   }
+  assert(!Value || BC.getSectionForAddress(Value));
   BC.InterproceduralReferences.insert(Value);
   return IndirectBranchType::POSSIBLE_TAIL_CALL;
 }
@@ -865,9 +882,9 @@ MCSymbol *BinaryFunction::getOrCreateLocalLabel(uint64_t Address,
   // Check if there's a global symbol registered at given address.
   // If so - reuse it since we want to keep the symbol value updated.
   if (Offset != 0) {
-    if (auto *Symbol = BC.getGlobalSymbolAtAddress(Address)) {
-      Labels[Offset] = Symbol;
-      return Symbol;
+    if (auto *BD = BC.getBinaryDataAtAddress(Address)) {
+      Labels[Offset] = BD->getSymbol();
+      return BD->getSymbol();
     }
   }
 
@@ -903,6 +920,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   auto handlePCRelOperand =
       [&](MCInst &Instruction, uint64_t Address, uint64_t Size) {
     uint64_t TargetAddress{0};
+    uint64_t TargetOffset{0};
     MCSymbol *TargetSymbol{nullptr};
     if (!MIA->evaluateMemOperandTarget(Instruction, TargetAddress, Address,
                                        Size)) {
@@ -970,13 +988,31 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         BC.InterproceduralReferences.insert(TargetAddress);
       }
     }
-    if (!TargetSymbol)
-      TargetSymbol = BC.getOrCreateGlobalSymbol(TargetAddress, "DATAat");
+    if (!TargetSymbol) {
+      auto *BD = BC.getBinaryDataContainingAddress(TargetAddress);
+      if (BD) {
+        TargetSymbol = BD->getSymbol();
+        TargetOffset = TargetAddress - BD->getAddress();
+      } else {
+        // TODO: use DWARF info to get size/alignment here?
+        TargetSymbol = BC.getOrCreateGlobalSymbol(TargetAddress, 0, 0, "DATAat");
+        DEBUG(if (opts::Verbosity >= 2) {
+            dbgs() << "Created DATAat sym: " << TargetSymbol->getName()
+                   << " in section " << BD->getSectionName() << "\n";
+          });
+      }
+    }
+    const MCExpr *Expr = MCSymbolRefExpr::create(TargetSymbol,
+                                                 MCSymbolRefExpr::VK_None,
+                                                 *BC.Ctx);
+    if (TargetOffset) {
+      auto *Offset = MCConstantExpr::create(TargetOffset, *BC.Ctx);
+      Expr = MCBinaryExpr::createAdd(Expr, Offset, *BC.Ctx);
+    }
     MIA->replaceMemOperandDisp(
         Instruction, MCOperand::createExpr(BC.MIA->getTargetExprFor(
                          Instruction,
-                         MCSymbolRefExpr::create(
-                             TargetSymbol, MCSymbolRefExpr::VK_None, *BC.Ctx),
+                         Expr,
                          *BC.Ctx, 0)));
     return true;
   };
@@ -1050,33 +1086,39 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
 
     // Check if there's a relocation associated with this instruction.
     bool UsedReloc{false};
-    if (!Relocations.empty()) {
-      auto RI = Relocations.lower_bound(Offset);
-      if (RI != Relocations.end() && RI->first < Offset + Size) {
-        const auto &Relocation = RI->second;
-        DEBUG(dbgs() << "BOLT-DEBUG: replacing immediate with relocation"
-                     " against " << Relocation.Symbol->getName()
-                     << " in function " << *this
-                     << " for instruction at offset 0x"
-                     << Twine::utohexstr(Offset) << '\n');
-        int64_t Value;
-        const auto Result = BC.MIA->replaceImmWithSymbol(
-            Instruction, Relocation.Symbol, Relocation.Addend, Ctx.get(), Value,
-            Relocation.Type);
-        (void)Result;
-        assert(Result && "cannot replace immediate with relocation");
-        // For aarch, if we replaced an immediate with a symbol from a
-        // relocation, we mark it so we do not try to further process a
-        // pc-relative operand. All we need is the symbol.
-        if (BC.TheTriple->getArch() == llvm::Triple::aarch64)
-          UsedReloc = true;
+    for (auto Itr = Relocations.lower_bound(Offset);
+         Itr != Relocations.upper_bound(Offset + Size);
+         ++Itr) {
+      const auto &Relocation = Itr->second;
+      if (Relocation.Offset >= Offset + Size)
+        continue;
 
-        // Make sure we replaced the correct immediate (instruction
-        // can have multiple immediate operands).
-        assert((BC.TheTriple->getArch() == llvm::Triple::aarch64 ||
-                static_cast<uint64_t>(Value) == Relocation.Value) &&
-               "immediate value mismatch in function");
-      }
+      DEBUG(dbgs() << "BOLT-DEBUG: replacing immediate with relocation"
+            " against " << Relocation.Symbol->getName()
+            << "+" << Relocation.Addend
+            << " in function " << *this
+            << " for instruction at offset 0x"
+            << Twine::utohexstr(Offset) << '\n');
+      int64_t Value = Relocation.Value;
+      const auto Result = BC.MIA->replaceImmWithSymbol(Instruction,
+                                                       Relocation.Symbol,
+                                                       Relocation.Addend,
+                                                       Ctx.get(),
+                                                       Value,
+                                                       Relocation.Type);
+      (void)Result;
+      assert(Result && "cannot replace immediate with relocation");
+      // For aarch, if we replaced an immediate with a symbol from a
+      // relocation, we mark it so we do not try to further process a
+      // pc-relative operand. All we need is the symbol.
+      if (BC.TheTriple->getArch() == llvm::Triple::aarch64)
+        UsedReloc = true;
+
+      // Make sure we replaced the correct immediate (instruction
+      // can have multiple immediate operands).
+      assert((BC.TheTriple->getArch() == llvm::Triple::aarch64 ||
+              static_cast<uint64_t>(Value) == Relocation.Value) &&
+             "immediate value mismatch in function");
     }
 
     // Convert instruction to a shorter version that could be relaxed if needed.
@@ -1157,6 +1199,8 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             }
 
             TargetSymbol = BC.getOrCreateGlobalSymbol(TargetAddress,
+                                                      0,
+                                                      0,
                                                       "FUNCat");
             if (TargetAddress == 0) {
               // We actually see calls to address 0 in presence of weak symbols
@@ -1288,12 +1332,13 @@ add_instruction:
 void BinaryFunction::postProcessJumpTables() {
   // Create labels for all entries.
   for (auto &JTI : JumpTables) {
-    auto &JT = JTI.second;
+    auto &JT = *JTI.second;
     for (auto Offset : JT.OffsetEntries) {
       auto *Label = getOrCreateLocalLabel(getAddress() + Offset,
                                           /*CreatePastEnd*/ true);
       JT.Entries.push_back(Label);
     }
+    BC.setBinaryDataSize(JT.getAddress(), JT.getSize());
   }
 
   // Add TakenBranches from JumpTables.
@@ -1305,7 +1350,7 @@ void BinaryFunction::postProcessJumpTables() {
     const auto JTAddress = JTSite.second;
     const auto *JT = getJumpTableContainingAddress(JTAddress);
     assert(JT && "cannot find jump table for address");
-    auto EntryOffset = JTAddress - JT->Address;
+    auto EntryOffset = JTAddress - JT->getAddress();
     while (EntryOffset < JT->getSize()) {
       auto TargetOffset = JT->OffsetEntries[EntryOffset / JT->EntrySize];
       if (TargetOffset < getSize())
@@ -1313,7 +1358,7 @@ void BinaryFunction::postProcessJumpTables() {
 
       // Take ownership of jump table relocations.
       if (BC.HasRelocations) {
-        auto EntryAddress = JT->Address + EntryOffset;
+        auto EntryAddress = JT->getAddress() + EntryOffset;
         auto Res = BC.removeRelocationAt(EntryAddress);
         (void)Res;
         DEBUG(
@@ -1335,7 +1380,7 @@ void BinaryFunction::postProcessJumpTables() {
 
   // Free memory used by jump table offsets.
   for (auto &JTI : JumpTables) {
-    auto &JT = JTI.second;
+    auto &JT = *JTI.second;
     clearList(JT.OffsetEntries);
   }
 
@@ -1755,7 +1800,8 @@ void BinaryFunction::addEntryPoint(uint64_t Address) {
                << " at offset 0x" << Twine::utohexstr(Address - getAddress())
                << '\n');
 
-  auto *EntrySymbol = BC.getGlobalSymbolAtAddress(Address);
+  auto *EntryBD = BC.getBinaryDataAtAddress(Address);
+  auto *EntrySymbol = EntryBD ? EntryBD->getSymbol() : nullptr;
 
   // If we haven't disassembled the function yet we can add a new entry point
   // even if it doesn't have an associated entry in the symbol table.
@@ -2905,26 +2951,28 @@ bool BinaryFunction::isIdenticalWith(const BinaryFunction &OtherBF,
           }
 
           // Check if symbols are jump tables.
-          auto SIA = BC.GlobalSymbols.find(A->getName());
-          if (SIA == BC.GlobalSymbols.end())
+          auto *SIA = BC.getBinaryDataByName(A->getName());
+          if (!SIA)
             return false;
-          auto SIB = BC.GlobalSymbols.find(B->getName());
-          if (SIB == BC.GlobalSymbols.end())
+          auto *SIB = BC.getBinaryDataByName(B->getName());
+          if (!SIB)
             return false;
 
-          assert((SIA->second != SIB->second) &&
+          assert((SIA->getAddress() != SIB->getAddress()) &&
                  "different symbols should not have the same value");
 
-          const auto *JumpTableA = getJumpTableContainingAddress(SIA->second);
+          const auto *JumpTableA =
+             getJumpTableContainingAddress(SIA->getAddress());
           if (!JumpTableA)
             return false;
+
           const auto *JumpTableB =
-            OtherBF.getJumpTableContainingAddress(SIB->second);
+             OtherBF.getJumpTableContainingAddress(SIB->getAddress());
           if (!JumpTableB)
             return false;
 
-          if ((SIA->second - JumpTableA->Address) !=
-              (SIB->second - JumpTableB->Address))
+          if ((SIA->getAddress() - JumpTableA->getAddress()) !=
+              (SIB->getAddress() - JumpTableB->getAddress()))
             return false;
 
           return equalJumpTables(JumpTableA, JumpTableB, OtherBF);
@@ -2953,6 +3001,24 @@ bool BinaryFunction::isIdenticalWith(const BinaryFunction &OtherBF,
   }
 
   return true;
+}
+
+std::string BinaryFunction::generateJumpTableName(uint64_t Address) const {
+  auto *JT = getJumpTableContainingAddress(Address);
+  size_t Id;
+  uint64_t Offset = 0;
+  if (JT) {
+    Offset = Address - JT->getAddress();
+    auto Itr = JT->Labels.find(Offset);
+    if (Itr != JT->Labels.end()) {
+      return Itr->second->getName();
+    }
+    Id = JumpTableIds.at(JT->getAddress());
+  } else {
+    Id = JumpTableIds[Address] = JumpTables.size();
+  }
+  return ("JUMP_TABLE/" + Names[0] + "." + std::to_string(Id) +
+          (Offset ? ("." + std::to_string(Offset)) : ""));
 }
 
 bool BinaryFunction::equalJumpTables(const JumpTable *JumpTableA,
@@ -3282,17 +3348,18 @@ void BinaryFunction::emitJumpTables(MCStreamer *Streamer) {
     outs() << "BOLT-INFO: jump tables for function " << *this << ":\n";
   }
   for (auto &JTI : JumpTables) {
-    auto &JT = JTI.second;
+    auto &JT = *JTI.second;
     if (opts::PrintJumpTables)
       JT.print(outs());
     if (opts::JumpTables == JTS_BASIC && BC.HasRelocations) {
-      JT.updateOriginal(BC);
+      JT.updateOriginal();
     } else {
       MCSection *HotSection, *ColdSection;
       if (opts::JumpTables == JTS_BASIC) {
-        JT.SectionName =
-                  ".local.JUMP_TABLEat0x" + Twine::utohexstr(JT.Address).str();
-        HotSection = BC.Ctx->getELFSection(JT.SectionName,
+        std::string Name = JT.Labels[0]->getName().str();
+        std::replace(Name.begin(), Name.end(), '/', '.');
+        JT.setOutputSection(".local." + Name);
+        HotSection = BC.Ctx->getELFSection(JT.getOutputSection(),
                                            ELF::SHT_PROGBITS,
                                            ELF::SHF_ALLOC);
         ColdSection = HotSection;
@@ -3309,157 +3376,6 @@ void BinaryFunction::emitJumpTables(MCStreamer *Streamer) {
       JT.emit(Streamer, HotSection, ColdSection);
     }
   }
-}
-
-std::pair<size_t, size_t>
-BinaryFunction::JumpTable::getEntriesForAddress(const uint64_t Addr) const {
-  const uint64_t InstOffset = Addr - Address;
-  size_t StartIndex = 0, EndIndex = 0;
-  uint64_t Offset = 0;
-
-  for (size_t I = 0; I < Entries.size(); ++I) {
-    auto LI = Labels.find(Offset);
-    if (LI != Labels.end()) {
-      const auto NextLI = std::next(LI);
-      const auto NextOffset =
-        NextLI == Labels.end() ? getSize() : NextLI->first;
-      if (InstOffset >= LI->first && InstOffset < NextOffset) {
-        StartIndex = I;
-        EndIndex = I;
-        while (Offset < NextOffset) {
-          ++EndIndex;
-          Offset += EntrySize;
-        }
-        break;
-      }
-    }
-    Offset += EntrySize;
-  }
-
-  return std::make_pair(StartIndex, EndIndex);
-}
-
-bool BinaryFunction::JumpTable::replaceDestination(uint64_t JTAddress,
-                                                   const MCSymbol *OldDest,
-                                                   MCSymbol *NewDest) {
-  bool Patched{false};
-  const auto Range = getEntriesForAddress(JTAddress);
-  for (auto I = &Entries[Range.first], E = &Entries[Range.second];
-       I != E; ++I) {
-    auto &Entry = *I;
-    if (Entry == OldDest) {
-      Patched = true;
-      Entry = NewDest;
-    }
-  }
-  return Patched;
-}
-
-void BinaryFunction::JumpTable::updateOriginal(BinaryContext &BC) {
-  // In non-relocation mode we have to emit jump tables in local sections.
-  // This way we only overwrite them when a corresponding function is
-  // overwritten.
-  assert(BC.HasRelocations && "relocation mode expected");
-  auto Section = BC.getSectionForAddress(Address);
-  assert(Section && "section not found for jump table");
-  uint64_t Offset = Address - Section->getAddress();
-  StringRef SectionName = Section->getName();
-  for (auto *Entry : Entries) {
-    const auto RelType = (Type == JTT_NORMAL) ? ELF::R_X86_64_64
-                                              : ELF::R_X86_64_PC32;
-    const uint64_t RelAddend = (Type == JTT_NORMAL)
-        ? 0 : Offset - (Address - Section->getAddress());
-    DEBUG(dbgs() << "adding relocation to section " << SectionName
-                 << " at offset " << Twine::utohexstr(Offset) << " for symbol "
-                 << Entry->getName() << " with addend "
-                 << Twine::utohexstr(RelAddend) << '\n');
-    Section->addRelocation(Offset, Entry, RelType, RelAddend);
-    Offset += EntrySize;
-  }
-}
-
-uint64_t BinaryFunction::JumpTable::emit(MCStreamer *Streamer,
-                                         MCSection *HotSection,
-                                         MCSection *ColdSection) {
-  // Pre-process entries for aggressive splitting.
-  // Each label represents a separate switch table and gets its own count
-  // determining its destination.
-  std::map<MCSymbol *, uint64_t> LabelCounts;
-  if (opts::JumpTables > JTS_SPLIT && !Counts.empty()) {
-    MCSymbol *CurrentLabel = Labels[0];
-    uint64_t CurrentLabelCount = 0;
-    for (unsigned Index = 0; Index < Entries.size(); ++Index) {
-      auto LI = Labels.find(Index * EntrySize);
-      if (LI != Labels.end()) {
-        LabelCounts[CurrentLabel] = CurrentLabelCount;
-        CurrentLabel = LI->second;
-        CurrentLabelCount = 0;
-      }
-      CurrentLabelCount += Counts[Index].Count;
-    }
-    LabelCounts[CurrentLabel] = CurrentLabelCount;
-  } else {
-    Streamer->SwitchSection(Count > 0 ? HotSection : ColdSection);
-    Streamer->EmitValueToAlignment(EntrySize);
-  }
-  MCSymbol *LastLabel = nullptr;
-  uint64_t Offset = 0;
-  for (auto *Entry : Entries) {
-    auto LI = Labels.find(Offset);
-    if (LI != Labels.end()) {
-      DEBUG(dbgs() << "BOLT-DEBUG: emitting jump table "
-                   << LI->second->getName() << " (originally was at address 0x"
-                   << Twine::utohexstr(Address + Offset)
-                   << (Offset ? "as part of larger jump table\n" : "\n"));
-      if (!LabelCounts.empty()) {
-        DEBUG(dbgs() << "BOLT-DEBUG: jump table count: "
-                     << LabelCounts[LI->second] << '\n');
-        if (LabelCounts[LI->second] > 0) {
-          Streamer->SwitchSection(HotSection);
-        } else {
-          Streamer->SwitchSection(ColdSection);
-        }
-        Streamer->EmitValueToAlignment(EntrySize);
-      }
-      Streamer->EmitLabel(LI->second);
-      LastLabel = LI->second;
-    }
-    if (Type == JTT_NORMAL) {
-      Streamer->EmitSymbolValue(Entry, OutputEntrySize);
-    } else { // JTT_PIC
-      auto JT = MCSymbolRefExpr::create(LastLabel, Streamer->getContext());
-      auto E = MCSymbolRefExpr::create(Entry, Streamer->getContext());
-      auto Value = MCBinaryExpr::createSub(E, JT, Streamer->getContext());
-      Streamer->EmitValue(Value, EntrySize);
-    }
-    Offset += EntrySize;
-  }
-
-  return Offset;
-}
-
-void BinaryFunction::JumpTable::print(raw_ostream &OS) const {
-  uint64_t Offset = 0;
-  for (const auto *Entry : Entries) {
-    auto LI = Labels.find(Offset);
-    if (LI != Labels.end()) {
-      OS << "Jump Table " << LI->second->getName() << " at @0x"
-         << Twine::utohexstr(Address+Offset);
-      if (Offset) {
-        OS << " (possibly part of larger jump table):\n";
-      } else {
-        OS << " with total count of " << Count << ":\n";
-      }
-    }
-    OS << format("  0x%04" PRIx64 " : ", Offset) << Entry->getName();
-    if (!Counts.empty()) {
-      OS << " : " << Counts[Offset / EntrySize].Mispreds
-         << "/" << Counts[Offset / EntrySize].Count;
-    }
-    OS << '\n';
-    Offset += EntrySize;
-  }
-  OS << "\n\n";
 }
 
 void BinaryFunction::calculateLoopInfo() {

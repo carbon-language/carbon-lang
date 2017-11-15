@@ -446,7 +446,7 @@ void RewriteInstance::updateLineTableOffsets() {
 
     auto DbgInfoSection = BC->getUniqueSectionByName(".debug_info");
     assert(DbgInfoSection && ".debug_info section must exist");
-    auto *Zero = BC->registerNameAtAddress("Zero", 0);
+    auto *Zero = BC->registerNameAtAddress("Zero", 0, 0, 0);
     DbgInfoSection->addRelocation(LTOffset,
                                   Zero,
                                   ELF::R_X86_64_32,

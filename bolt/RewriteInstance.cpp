@@ -199,6 +199,13 @@ MaxFunctions("max-funcs",
   cl::Hidden,
   cl::cat(BoltCategory));
 
+static cl::opt<unsigned>
+MaxDataRelocations("max-data-relocations",
+  cl::desc("maximum number of data relocations to process"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
 cl::opt<bool>
 PrintAll("print-all",
   cl::desc("print functions after each stage"),
@@ -216,6 +223,13 @@ PrintCFG("print-cfg",
 static cl::opt<bool>
 PrintDisasm("print-disasm",
   cl::desc("print function after disassembly"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+static cl::opt<bool>
+PrintGlobals("print-globals",
+  cl::desc("print global symbols after disassembly"),
   cl::ZeroOrMore,
   cl::Hidden,
   cl::cat(BoltCategory));
@@ -453,6 +467,15 @@ void check_error(std::error_code EC, StringRef Message) {
   report_error(Message, EC);
 }
 
+}
+}
+
+namespace {
+std::string uniquifyName(BinaryContext &BC, std::string NamePrefix) {
+  unsigned LocalID = 1;
+  while (BC.getBinaryDataByName(NamePrefix + std::to_string(LocalID)))
+    ++LocalID;
+  return NamePrefix + std::to_string(LocalID);
 }
 }
 
@@ -980,7 +1003,7 @@ void RewriteInstance::discoverFileObjects() {
 
   FileSymRefs.clear();
   BinaryFunctions.clear();
-  BC->GlobalAddresses.clear();
+  BC->clearBinaryData();
 
   // For local symbols we want to keep track of associated FILE symbol name for
   // disambiguation by combined name.
@@ -1053,7 +1076,37 @@ void RewriteInstance::discoverFileObjects() {
         });
   }
 
+  auto getNextAddress = [&](std::vector<SymbolRef>::const_iterator Itr) {
+    auto Section = cantFail(Itr->getSection());
+    const auto SymbolEndAddress =
+        (cantFail(Itr->getAddress()) + ELFSymbolRef(*Itr).getSize());
+
+    // absolute sym
+    if (Section == InputFile->section_end())
+      return SymbolEndAddress;
+
+    while (Itr != MarkersBegin - 1 &&
+           cantFail(std::next(Itr)->getSection()) == Section &&
+           cantFail(std::next(Itr)->getAddress()) ==
+               cantFail(Itr->getAddress())) {
+      ++Itr;
+    }
+
+    if (Itr != MarkersBegin - 1 &&
+        cantFail(std::next(Itr)->getSection()) == Section)
+      return cantFail(std::next(Itr)->getAddress());
+
+    const auto SectionEndAddress = Section->getAddress() + Section->getSize();
+    if ((ELFSectionRef(*Section).getFlags() & ELF::SHF_TLS) ||
+        SymbolEndAddress > SectionEndAddress)
+      return SymbolEndAddress;
+
+    return SectionEndAddress;
+  };
+
   BinaryFunction *PreviousFunction = nullptr;
+  unsigned AnonymousId = 0;
+
   for (auto ISym = SortedFileSymbols.begin(); ISym != MarkersBegin; ++ISym) {
     const auto &Symbol = *ISym;
     // Keep undefined symbols for pretty printing?
@@ -1075,11 +1128,6 @@ void RewriteInstance::discoverFileObjects() {
 
     FileSymRefs[Address] = Symbol;
 
-    // There's nothing horribly wrong with anonymous symbols, but let's
-    // ignore them for now.
-    if (SymName.empty())
-      continue;
-
     /// It is possible we are seeing a globalized local. LLVM might treat it as
     /// a local if it has a "private global" prefix, e.g. ".L". Thus we have to
     /// change the prefix to enforce global scope of the symbol.
@@ -1095,9 +1143,14 @@ void RewriteInstance::discoverFileObjects() {
     //       the one we use for profile data.
     std::string UniqueName;
     std::string AlternativeName;
-    if (Symbol.getFlags() & SymbolRef::SF_Global) {
-      assert(BC->GlobalSymbols.find(Name) == BC->GlobalSymbols.end() &&
-             "global name not unique");
+    if (Name.empty()) {
+      if (PLTSection && PLTSection->getAddress() == Address) {
+        // Don't register BOLT_PLT_PSEUDO twice.
+        continue;
+      }
+      UniqueName = "ANONYMOUS." + std::to_string(AnonymousId++);
+    } else if (Symbol.getFlags() & SymbolRef::SF_Global) {
+      assert(!BC->getBinaryDataByName(Name) && "global name not unique");
       UniqueName = Name;
     } else {
       // If we have a local file name, we should create 2 variants for the
@@ -1118,27 +1171,32 @@ void RewriteInstance::discoverFileObjects() {
         AltPrefix = Prefix + std::string(SFI->second) + "/";
       }
 
-      auto uniquifyName = [&] (std::string NamePrefix) {
-        unsigned LocalID = 1;
-        while (BC->GlobalSymbols.find(NamePrefix + std::to_string(LocalID))
-               != BC->GlobalSymbols.end())
-          ++LocalID;
-        return NamePrefix + std::to_string(LocalID);
-      };
-      UniqueName = uniquifyName(Prefix);
+      UniqueName = uniquifyName(*BC, Prefix);
       if (!AltPrefix.empty())
-        AlternativeName = uniquifyName(AltPrefix);
+        AlternativeName = uniquifyName(*BC, AltPrefix);
     }
 
-    // Register names even if it's not a function, e.g. for an entry point.
-    BC->registerNameAtAddress(UniqueName, Address);
-    if (!AlternativeName.empty())
-      BC->registerNameAtAddress(AlternativeName, Address);
+    uint64_t SymbolSize = ELFSymbolRef(Symbol).getSize();
+    uint64_t NextAddress = getNextAddress(ISym);
+    uint64_t TentativeSize = !SymbolSize ? NextAddress - Address : SymbolSize;
+    uint64_t SymbolAlignment = Symbol.getAlignment();
+
+    auto registerName = [&](uint64_t FinalSize) {
+      // Register names even if it's not a function, e.g. for an entry point.
+      BC->registerNameAtAddress(UniqueName, Address, FinalSize, SymbolAlignment);
+      if (!AlternativeName.empty())
+        BC->registerNameAtAddress(AlternativeName, Address, FinalSize,
+                                  SymbolAlignment);
+    };
 
     section_iterator Section =
         cantFail(Symbol.getSection(), "cannot get symbol section");
     if (Section == InputFile->section_end()) {
       // Could be an absolute symbol. Could record for pretty printing.
+      DEBUG(if (opts::Verbosity > 1) {
+          dbgs() << "BOLT-INFO: absolute sym " << UniqueName << "\n";
+        });
+      registerName(TentativeSize);
       continue;
     }
 
@@ -1149,10 +1207,9 @@ void RewriteInstance::discoverFileObjects() {
       assert(cantFail(Symbol.getType()) != SymbolRef::ST_Function &&
              "unexpected function inside non-code section");
       DEBUG(dbgs() << "BOLT-DEBUG: rejecting as symbol is not in code\n");
+      registerName(TentativeSize);
       continue;
     }
-
-    auto SymbolSize = ELFSymbolRef(Symbol).getSize();
 
     // Assembly functions could be ST_NONE with 0 size. Check that the
     // corresponding section is a code section and they are not inside any
@@ -1166,15 +1223,18 @@ void RewriteInstance::discoverFileObjects() {
         if (PreviousFunction->getSize() == 0) {
           if (PreviousFunction->isSymbolValidInScope(Symbol, SymbolSize)) {
             DEBUG(dbgs() << "BOLT-DEBUG: symbol is a function local symbol\n");
+            registerName(SymbolSize);
             continue;
           }
         } else if (PreviousFunction->containsAddress(Address)) {
           if (PreviousFunction->isSymbolValidInScope(Symbol, SymbolSize)) {
             DEBUG(dbgs() << "BOLT-DEBUG: symbol is a function local symbol\n");
+            registerName(SymbolSize);
             continue;
           } else {
             if (Address == PreviousFunction->getAddress() && SymbolSize == 0) {
               DEBUG(dbgs() << "BOLT-DEBUG: ignoring symbol as a marker\n");
+              registerName(SymbolSize);
               continue;
             }
             if (opts::Verbosity > 1) {
@@ -1182,6 +1242,7 @@ void RewriteInstance::discoverFileObjects() {
                      << " seen in the middle of function "
                      << *PreviousFunction << ". Could be a new entry.\n";
             }
+            registerName(SymbolSize);
             continue;
           }
         }
@@ -1213,6 +1274,7 @@ void RewriteInstance::discoverFileObjects() {
         assert(SI->second == Symbol && "wrong symbol found");
         FileSymRefs.erase(SI);
       }
+      registerName(SymbolSize);
       continue;
     }
 
@@ -1246,7 +1308,13 @@ void RewriteInstance::discoverFileObjects() {
                  << "; symbol table : " << SymbolSize << ". Using max size.\n";
         }
         SymbolSize = std::max(SymbolSize, FDE.getAddressRange());
+        if (BC->getBinaryDataAtAddress(Address)) {
+          BC->setBinaryDataSize(Address, SymbolSize);
+        } else {
+          DEBUG(dbgs() << "BOLT-DEBUG: No BD @ 0x" << Twine::utohexstr(Address) << "\n");
+        }
       }
+      TentativeSize = SymbolSize;
     }
 
     BinaryFunction *BF{nullptr};
@@ -1265,6 +1333,7 @@ void RewriteInstance::discoverFileObjects() {
                  << " old " << BF->getSize() << " new " << SymbolSize << "\n";
         }
         BF->setSize(std::max(SymbolSize, BF->getSize()));
+        BC->setBinaryDataSize(Address, BF->getSize());
       }
       BF->addAlternativeName(UniqueName);
     } else {
@@ -1276,6 +1345,7 @@ void RewriteInstance::discoverFileObjects() {
     if (!AlternativeName.empty())
       BF->addAlternativeName(AlternativeName);
 
+    registerName(SymbolSize);
     PreviousFunction = BF;
   }
 
@@ -1368,8 +1438,9 @@ void RewriteInstance::disassemblePLT() {
 
   // Pseudo function for the start of PLT. The table could have a matching
   // FDE that we want to match to pseudo function.
-  createBinaryFunction("__BOLT_PLT_PSEUDO", *PLTSection, PLTAddress, 0, false);
-  for (uint64_t Offset = 0; Offset < PLTSection->getSize(); Offset += 0x10) {
+  createBinaryFunction("__BOLT_PLT_PSEUDO", *PLTSection, PLTAddress, 0, false,
+                       PLTSize, PLTAlignment);
+  for (uint64_t Offset = 0; Offset < PLTSection->getSize(); Offset += PLTSize) {
     uint64_t InstrSize;
     MCInst Instruction;
     const uint64_t InstrAddr = PLTAddress + Offset;
@@ -1407,13 +1478,18 @@ void RewriteInstance::disassemblePLT() {
                "non-null symbol expected");
         const auto SymbolName = cantFail((*SymbolIter).getName());
         std::string Name = SymbolName.str() + "@PLT";
+        const auto PtrSize = BC->AsmInfo->getCodePointerSize();
         auto *BF = createBinaryFunction(Name,
                                         *PLTSection,
                                         InstrAddr,
                                         0,
-                                        /*IsSimple=*/false);
+                                        /*IsSimple=*/false,
+                                        PLTSize,
+                                        PLTAlignment);
         auto TargetSymbol = BC->registerNameAtAddress(SymbolName.str() + "@GOT",
-                                                      TargetAddress);
+                                                      TargetAddress,
+                                                      PtrSize,
+                                                      PLTAlignment);
         BF->setPLTSymbol(TargetSymbol);
         break;
       }
@@ -1428,7 +1504,8 @@ void RewriteInstance::disassemblePLT() {
                            *PLTGOTSection,
                            PLTGOTSection->getAddress(),
                            0,
-                           false);
+                           false,
+                           PLTAlignment);
     }
   }
 }
@@ -1538,17 +1615,19 @@ void RewriteInstance::relocateEHFrameSection() {
       break;
     }
 
-    auto *Symbol = BC->getGlobalSymbolAtAddress(Value);
+    auto *BD = BC->getBinaryDataContainingAddress(Value);
+    auto *Symbol = BD ? BD->getSymbol() : nullptr;
+    auto Addend = BD ? Value - BD->getAddress() : 0;
     if (!Symbol) {
       DEBUG(dbgs() << "BOLT-DEBUG: creating symbol for DWARF reference at 0x"
                    << Twine::utohexstr(Value) << '\n');
-      Symbol = BC->getOrCreateGlobalSymbol(Value, "FUNCat");
+      Symbol = BC->getOrCreateGlobalSymbol(Value, 0, 0, "FUNCat");
     }
 
     DEBUG(dbgs() << "BOLT-DEBUG: adding DWARF reference against symbol "
                  << Symbol->getName() << '\n');
 
-    EHFrameSection->addRelocation(Offset, Symbol, RelType, 0);
+    EHFrameSection->addRelocation(Offset, Symbol, RelType, Addend);
   };
 
   EHFrame.parse(DE, createReloc);
@@ -1556,13 +1635,16 @@ void RewriteInstance::relocateEHFrameSection() {
 
 BinaryFunction *RewriteInstance::createBinaryFunction(
     const std::string &Name, BinarySection &Section, uint64_t Address,
-    uint64_t Size, bool IsSimple) {
+    uint64_t Size, bool IsSimple, uint64_t SymbolSize, uint16_t Alignment) {
   auto Result = BinaryFunctions.emplace(
       Address, BinaryFunction(Name, Section, Address, Size, *BC, IsSimple));
   assert(Result.second == true && "unexpected duplicate function");
   auto *BF = &Result.first->second;
-  BC->registerNameAtAddress(Name, Address);
-  BC->SymbolToFunctionMap[BF->getSymbol()] = BF;
+  BC->registerNameAtAddress(Name,
+                            Address,
+                            SymbolSize ? SymbolSize : Size,
+                            Alignment);
+  BC->setSymbolToFunctionMap(BF->getSymbol(), BF);
   return BF;
 }
 
@@ -1607,6 +1689,11 @@ void RewriteInstance::readSpecialSections() {
 
   if (opts::PrintSections) {
     outs() << "BOLT-INFO: Sections from original binary:\n";
+    BC->printSections(outs());
+  }
+
+  if (opts::PrintSections) {
+    outs() << "BOLT-INFO: Sections:\n";
     BC->printSections(outs());
   }
 
@@ -1728,10 +1815,10 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
       // non-zero and the relocation is not pc-rel.  Using the previous logic,
       // the SymbolAddress would end up as a huge number.  Seen in
       // exceptions_pic.test.
-      DEBUG(dbgs() << "BOLT-DEBUG: relocation @ "
+      DEBUG(dbgs() << "BOLT-DEBUG: relocation @ 0x"
                    << Twine::utohexstr(Rel.getOffset())
                    << " value does not match addend for "
-                   << "relocation to undefined symbol.");
+                   << "relocation to undefined symbol.\n");
       SymbolAddress += PCRelOffset;
       return true;
     }
@@ -1849,6 +1936,35 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
   const bool IsAArch64 = BC->TheTriple->getArch() == llvm::Triple::aarch64;
   const bool IsFromCode = RelocatedSection.isText();
 
+  auto printRelocationInfo = [&](const RelocationRef &Rel,
+                                 StringRef SymbolName,
+                                 uint64_t SymbolAddress,
+                                 uint64_t Addend,
+                                 uint64_t ExtractedValue) {
+    SmallString<16> TypeName;
+    Rel.getTypeName(TypeName);
+    const auto Address = SymbolAddress + Addend;
+    auto Section = BC->getSectionForAddress(SymbolAddress);
+    dbgs() << "Relocation: offset = 0x"
+           << Twine::utohexstr(Rel.getOffset())
+           << "; type = " << Rel.getType()
+           << "; type name = " << TypeName
+           << "; value = 0x" << Twine::utohexstr(ExtractedValue)
+           << "; symbol = " << SymbolName
+           << " (" << (Section ? Section->getName() : "") << ")"
+           << "; symbol address = 0x" << Twine::utohexstr(SymbolAddress)
+           << "; addend = 0x" << Twine::utohexstr(Addend)
+           << "; address = 0x" << Twine::utohexstr(Address)
+           << "; in = ";
+    if (auto *Func = getBinaryFunctionContainingAddress(Rel.getOffset(),
+                                                        false,
+                                                        IsAArch64)) {
+      dbgs() << Func->getPrintName() << "\n";
+    } else {
+      dbgs() << BC->getSectionForAddress(Rel.getOffset())->getName() << "\n";
+    }
+  };
+
   for (const auto &Rel : Section.relocations()) {
     SmallString<16> TypeName;
     Rel.getTypeName(TypeName);
@@ -1877,16 +1993,13 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
                          SymbolName == "__hot_end"))
       || Rel.getType() == ELF::R_AARCH64_ADR_GOT_PAGE;
 
-    DEBUG(dbgs() << "BOLT-DEBUG: offset = 0x"
-                 << Twine::utohexstr(Rel.getOffset())
-                 << "; type = " << Rel.getType()
-                 << "; type name = " << TypeName
-                 << "; value = 0x" << Twine::utohexstr(ExtractedValue)
-                 << "; symbol = " << SymbolName
-                 << "; symbol address = 0x" << Twine::utohexstr(SymbolAddress)
-                 << "; addend = 0x" << Twine::utohexstr(Addend)
-                 << "; address = 0x" << Twine::utohexstr(Address)
-                 << '\n');
+    DEBUG(
+       dbgs() << "BOLT-DEBUG: ";
+       printRelocationInfo(Rel,
+                           SymbolName,
+                           SymbolAddress,
+                           Addend,
+                           ExtractedValue));
 
     BinaryFunction *ContainingBF = nullptr;
     if (IsFromCode) {
@@ -1895,8 +2008,6 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
                                            /*CheckPastEnd*/ false,
                                            /*UseMaxSize*/ IsAArch64);
       assert(ContainingBF && "cannot find function for address in code");
-      DEBUG(dbgs() << "BOLT-DEBUG: relocation belongs to " << *ContainingBF
-                   << '\n');
     }
 
     // PC-relative relocations from data to code are tricky since the original
@@ -1935,10 +2046,8 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     uint64_t RefFunctionOffset = 0;
     MCSymbol *ReferencedSymbol = nullptr;
     if (ForceRelocation) {
-      if (Relocation::isGOT(Rel.getType()))
-        ReferencedSymbol = BC->getOrCreateGlobalSymbol(0, "Zero");
-      else
-        ReferencedSymbol = BC->registerNameAtAddress(SymbolName, 0);
+      auto Name = Relocation::isGOT(Rel.getType()) ? "Zero" : SymbolName;
+      ReferencedSymbol = BC->registerNameAtAddress(Name, 0, 0, 0);
       SymbolAddress = 0;
       Addend = Address;
       DEBUG(dbgs() << "BOLT-DEBUG: creating relocations for huge pages against"
@@ -1965,12 +2074,66 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
         DEBUG(dbgs() << "BOLT-DEBUG: no corresponding function for "
                         "relocation against code\n");
       }
-      ReferencedSymbol = BC->getOrCreateGlobalSymbol(SymbolAddress, "SYMBOLat");
+
+      if (auto *BD = BC->getBinaryDataContainingAddress(SymbolAddress)) {
+        assert(cantFail(Rel.getSymbol()->getType()) == SymbolRef::ST_Debug ||
+               BD->nameStartsWith(SymbolName) ||
+               BD->nameStartsWith("PG" + SymbolName) ||
+               (BD->nameStartsWith("ANONYMOUS") &&
+                (BD->getSectionName().startswith(".plt") ||
+                 BD->getSectionName().endswith(".plt"))));
+        ReferencedSymbol = BD->getSymbol();
+        Addend += (SymbolAddress - BD->getAddress());
+        SymbolAddress = BD->getAddress();
+        assert(Address == SymbolAddress + Addend);
+      } else {
+        auto Symbol = *Rel.getSymbol();
+        // These are mostly local data symbols but undefined symbols
+        // in relocation sections can get through here too, from .plt.
+        assert(cantFail(Symbol.getType()) == SymbolRef::ST_Debug ||
+               BC->getSectionForAddress(SymbolAddress)->getName().startswith(".plt"));
+        const uint64_t SymbolSize = ELFSymbolRef(Symbol).getSize();
+        const uint64_t SymbolAlignment = Symbol.getAlignment();
+
+        if (cantFail(Symbol.getType()) != SymbolRef::ST_Debug) {
+          std::string Name;
+          if (Symbol.getFlags() & SymbolRef::SF_Global)
+            Name = SymbolName;
+          else // TODO: add PG prefix?
+            Name = uniquifyName(*BC, SymbolName + "/");
+          ReferencedSymbol = BC->registerNameAtAddress(Name,
+                                                       SymbolAddress,
+                                                       SymbolSize,
+                                                       SymbolAlignment);
+        } else {
+          ReferencedSymbol = BC->getOrCreateGlobalSymbol(SymbolAddress,
+                                                         SymbolSize,
+                                                         SymbolAlignment,
+                                                         "SYMBOLat");
+        }
+      }
     }
 
+    auto checkMaxDataRelocations = [&]() {
+      ++NumDataRelocations;
+      if (opts::MaxDataRelocations &&
+          NumDataRelocations + 1 == opts::MaxDataRelocations) {
+          dbgs() << "BOLT-DEBUG: processing ending on data relocation "
+                 << NumDataRelocations << ": ";
+          printRelocationInfo(Rel,
+                              ReferencedSymbol->getName(),
+                              SymbolAddress,
+                              Addend,
+                              ExtractedValue);
+      }
+
+      return (!opts::MaxDataRelocations ||
+              NumDataRelocations < opts::MaxDataRelocations);
+    };
+
     if (IsFromCode) {
-      if (ReferencedBF || ForceRelocation || opts::ForceToDataRelocations ||
-          IsAArch64) {
+      if (ReferencedBF || ForceRelocation || IsAArch64 ||
+          (opts::ForceToDataRelocations && checkMaxDataRelocations())) {
         ContainingBF->addRelocation(Rel.getOffset(),
                                     ReferencedSymbol,
                                     Rel.getType(),
@@ -1982,7 +2145,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
       }
     } else if (IsToCode) {
       BC->addRelocation(Rel.getOffset(), ReferencedSymbol, Rel.getType(), Addend);
-    } else if (opts::ForceToDataRelocations) {
+    } else if (opts::ForceToDataRelocations && checkMaxDataRelocations()) {
       BC->addRelocation(Rel.getOffset(),
                         ReferencedSymbol,
                         Rel.getType(),
@@ -2202,6 +2365,13 @@ void RewriteInstance::postProcessFunctions() {
 
     BC->TotalScore += Function.getFunctionScore();
     BC->SumExecutionCount += Function.getKnownExecutionCount();
+  }
+
+  BC->postProcessSymbolTable();
+
+  if (opts::PrintGlobals) {
+    outs() << "BOLT-INFO: Global symbols:\n";
+    BC->printGlobalSymbols(outs());
   }
 }
 
@@ -2486,10 +2656,9 @@ void RewriteInstance::emitFunctions() {
   auto Resolver = orc::createLambdaResolver(
           [&](const std::string &Name) -> JITSymbol {
             DEBUG(dbgs() << "BOLT: looking for " << Name << "\n");
-            auto I = BC->GlobalSymbols.find(Name);
-            if (I == BC->GlobalSymbols.end())
-              return JITSymbol(nullptr);
-            return JITSymbol(I->second, JITSymbolFlags());
+            if (auto *I = BC->getBinaryDataByName(Name))
+              return JITSymbol(I->getAddress(), JITSymbolFlags());
+            return JITSymbol(nullptr);
           },
           [](const std::string &S) {
             DEBUG(dbgs() << "BOLT: resolving " << S << "\n");
@@ -2605,15 +2774,16 @@ void RewriteInstance::mapFileSections(
       // Map jump tables if updating in-place.
       if (opts::JumpTables == JTS_BASIC) {
         for (auto &JTI : Function.JumpTables) {
-          auto &JT = JTI.second;
-          JT.Section = BC->getUniqueSectionByName(JT.SectionName);
-          assert(JT.Section && "cannot find section for jump table");
-          JT.Section->setFileAddress(JT.Address);
-          DEBUG(dbgs() << "BOLT-DEBUG: mapping " << JT.SectionName << " to 0x"
-                       << Twine::utohexstr(JT.Address) << '\n');
-          OLT->mapSectionAddress(ObjectsHandle,
-                                 JT.Section->getSectionID(),
-                                 JT.Address);
+          auto *JT = JTI.second;
+          auto Section = BC->getUniqueSectionByName(JT->getOutputSection());
+          assert(Section && "cannot find section for jump table");
+          JT->setSection(*Section);
+          Section->setFileAddress(JT->getAddress());
+          DEBUG(dbgs() << "BOLT-DEBUG: mapping " << Section->getName()
+                       << " to 0x" << Twine::utohexstr(JT->getAddress())
+                       << '\n');
+          OLT->mapSectionAddress(ObjectsHandle, Section->getSectionID(),
+                                 JT->getAddress());
         }
       }
 
@@ -2701,9 +2871,7 @@ void RewriteInstance::mapFileSections(
 
   // Handling for sections with relocations.
   for (const auto &Section : BC->sections()) {
-    if (!Section ||
-        !Section.hasRelocations() ||
-        !Section.hasSectionRef())
+    if (!Section.hasRelocations() || !Section.hasSectionRef())
       continue;
 
     StringRef SectionName = Section.getName();
@@ -2845,7 +3013,7 @@ void RewriteInstance::emitDataSection(MCStreamer *Streamer,
     assert(Relocation.Offset < Section.getSize() && "overflow detected");
     if (SectionOffset < Relocation.Offset) {
       Streamer->EmitBytes(
-          SectionContents.substr(SectionOffset,
+         SectionContents.substr(SectionOffset,
             Relocation.Offset - SectionOffset));
       SectionOffset = Relocation.Offset;
     }
@@ -2865,13 +3033,11 @@ void RewriteInstance::emitDataSection(MCStreamer *Streamer,
 
 void RewriteInstance::emitDataSections(MCStreamer *Streamer) {
   for (const auto &Section : BC->sections()) {
-    if (!Section || !Section.hasRelocations() || !Section.hasSectionRef())
+    if (!Section.hasRelocations() || !Section.hasSectionRef())
       continue;
 
     StringRef SectionName = Section.getName();
-
     assert(SectionName != ".eh_frame" && "should not emit .eh_frame as data");
-
     auto EmitName = OrgSecPrefix + std::string(SectionName);
     emitDataSection(Streamer, Section, EmitName);
   }
@@ -3100,11 +3266,8 @@ void RewriteInstance::rewriteNoteSections() {
   }
 
   // Write new note sections.
-  for (auto &Section : BC->sections()) {
-    if (!Section ||
-        Section.getFileOffset() ||
-        !Section.getAllocAddress() ||
-        Section.isAllocatable())
+  for (auto &Section : BC->nonAllocatableSections()) {
+    if (Section.getFileOffset() || !Section.getAllocAddress())
       continue;
 
     assert(!Section.hasPendingRelocations() && "cannot have pending relocs");
@@ -3138,10 +3301,8 @@ void RewriteInstance::finalizeSectionStringTable(ELFObjectFile<ELFT> *File) {
       SHStrTab.add(*AllSHStrTabStrings.back());
     }
   }
-  for (auto &Section : BC->sections()) {
-    if (Section) {
-      SHStrTab.add(Section.getName());
-    }
+  for (const auto &Section : BC->sections()) {
+    SHStrTab.add(Section.getName());
   }
   SHStrTab.finalize();
 
@@ -3272,8 +3433,8 @@ RewriteInstance::getOutputSections(ELFObjectFile<ELFT> *File,
   }
 
   // Process entries for all new allocatable sections.
-  for (auto &Section : BC->sections()) {
-    if (!Section || !Section.isAllocatable() || !Section.isFinalized())
+  for (auto &Section : BC->allocatableSections()) {
+    if (!Section.isFinalized())
       continue;
 
     // Ignore function sections.
@@ -3347,10 +3508,8 @@ RewriteInstance::getOutputSections(ELFObjectFile<ELFT> *File,
     return NewSectionIndex;
 
   // Create entries for new non-allocatable sections.
-  for (auto &Section : BC->sections()) {
-    if (!Section ||
-        Section.isAllocatable() ||
-        Section.getFileOffset() <= LastFileOffset)
+  for (auto &Section : BC->nonAllocatableSections()) {
+    if (Section.getFileOffset() <= LastFileOffset)
       continue;
 
     if (opts::Verbosity >= 1) {
@@ -3397,7 +3556,7 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
   auto &OS = Out->os();
   auto *Obj = File->getELFFile();
 
-  auto NewSectionIndex =  getOutputSections(File, &OutputSections);
+  auto NewSectionIndex = getOutputSections(File, &OutputSections);
 
   // Sort sections by their offset prior to writing. Only newly created sections
   // were unsorted, hence this wouldn't ruin indices in NewSectionIndex.
@@ -3468,6 +3627,14 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
     auto StringSection = cantFail(Obj->getStringTableForSymtab(*Section));
     unsigned IsHotTextUpdated = 0;
 
+    std::map<const BinaryFunction *, uint64_t> IslandSizes;
+    auto getConstantIslandSize = [&IslandSizes](const BinaryFunction *BF) {
+      auto Itr = IslandSizes.find(BF);
+      if (Itr != IslandSizes.end())
+        return Itr->second;
+      return IslandSizes[BF] = BF->estimateConstantIslandSize();
+    };
+
     for (const Elf_Sym &Symbol : cantFail(Obj->symbols(Section))) {
       auto NewSymbol = Symbol;
       const auto *Function = getBinaryFunctionAtAddress(Symbol.st_value);
@@ -3496,7 +3663,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
         }
         if (!PatchExisting && Function->hasConstantIsland()) {
           auto DataMark = Function->getOutputDataAddress();
-          auto CISize = Function->estimateConstantIslandSize();
+          auto CISize = getConstantIslandSize(Function);
           auto CodeMark = DataMark + CISize;
           auto DataMarkSym = NewSymbol;
           DataMarkSym.st_name = AddToStrTab("$d");
@@ -3515,7 +3682,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
         if (!PatchExisting && Function->hasConstantIsland() &&
             Function->isSplit()) {
           auto DataMark = Function->getOutputColdDataAddress();
-          auto CISize = Function->estimateConstantIslandSize();
+          auto CISize = getConstantIslandSize(Function);
           auto CodeMark = DataMark + CISize;
           auto DataMarkSym = NewSymbol;
           DataMarkSym.st_name = AddToStrTab("$d");
@@ -3877,13 +4044,13 @@ void RewriteInstance::rewriteFile() {
       // Write jump tables if updating in-place.
       if (opts::JumpTables == JTS_BASIC) {
         for (auto &JTI : Function.JumpTables) {
-          auto &JT = JTI.second;
-          assert(JT.Section && "section for jump table expected");
-          JT.Section->setFileOffset(getFileOffsetForAddress(JT.Address));
-          assert(JT.Section->getFileOffset() && "no matching offset in file");
-          OS.pwrite(reinterpret_cast<const char*>(JT.Section->getOutputData()),
-                    JT.Section->getOutputSize(),
-                    JT.Section->getFileOffset());
+          auto *JT = JTI.second;
+          auto &Section = JT->getSection();
+          Section.setFileOffset(getFileOffsetForAddress(JT->getAddress()));
+          assert(Section.getFileOffset() && "no matching offset in file");
+          OS.pwrite(reinterpret_cast<const char*>(Section.getOutputData()),
+                    Section.getOutputSize(),
+                    Section.getFileOffset());
         }
       }
 
@@ -3944,11 +4111,8 @@ void RewriteInstance::rewriteFile() {
   }
 
   // Write all non-local sections, i.e. those not emitted with the function.
-  for (auto &Section : BC->sections()) {
-    if (!Section ||
-        !Section.isAllocatable() ||
-        !Section.isFinalized() ||
-        Section.isLocal())
+  for (auto &Section : BC->allocatableSections()) {
+    if (!Section.isFinalized() || Section.isLocal())
       continue;
     if (opts::Verbosity >= 1) {
       outs() << "BOLT: writing new section " << Section.getName() << '\n';
@@ -4127,11 +4291,9 @@ RewriteInstance::getBinaryFunctionContainingAddress(uint64_t Address,
 
 const BinaryFunction *
 RewriteInstance::getBinaryFunctionAtAddress(uint64_t Address) const {
-  const auto *Symbol = BC->getGlobalSymbolAtAddress(Address);
-  if (!Symbol)
-    return nullptr;
-
-  return BC->getFunctionForSymbol(Symbol);
+  if (const auto *BD = BC->getBinaryDataAtAddress(Address))
+    return BC->getFunctionForSymbol(BD->getSymbol());
+  return nullptr;
 }
 
 DWARFAddressRangesVector RewriteInstance::translateModuleAddressRanges(

@@ -14,6 +14,7 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_BINARY_CONTEXT_H
 #define LLVM_TOOLS_LLVM_BOLT_BINARY_CONTEXT_H
 
+#include "BinaryData.h"
 #include "BinarySection.h"
 #include "DebugData.h"
 #include "llvm/ADT/iterator.h"
@@ -55,6 +56,50 @@ namespace bolt {
 class BinaryFunction;
 class DataReader;
 
+/// Filter iterator.
+template <typename ItrType,
+          typename PredType = std::function<bool (const ItrType &)>>
+class FilterIterator
+  : public std::iterator<std::bidirectional_iterator_tag,
+                         typename std::iterator_traits<ItrType>::value_type> {
+  using Iterator = FilterIterator;
+  using T = typename std::iterator_traits<ItrType>::reference;
+  using PointerT = typename std::iterator_traits<ItrType>::pointer;
+
+  PredType Pred;
+  ItrType Itr, End;
+
+  void prev() {
+    while (!Pred(--Itr))
+      ;
+  }
+  void next() {
+    ++Itr;
+    nextMatching();
+  }
+  void nextMatching() {
+    while (Itr != End && !Pred(Itr))
+      ++Itr;
+  }
+public:
+  Iterator &operator++() { next(); return *this; }
+  Iterator &operator--() { prev(); return *this; }
+  Iterator operator++(int) { auto Tmp(Itr); next(); return Tmp; }
+  Iterator operator--(int) { auto Tmp(Itr); prev(); return Tmp; }
+  bool operator==(const Iterator& Other) const {
+    return Itr == Other.Itr;
+  }
+  bool operator!=(const Iterator& Other) const {
+    return !operator==(Other);
+  }
+  T operator*() { return *Itr; }
+  PointerT operator->() { return &operator*(); }
+  FilterIterator(PredType Pred, ItrType Itr, ItrType End)
+    : Pred(Pred), Itr(Itr), End(End) {
+    nextMatching();
+  }
+};
+
 class BinaryContext {
   BinaryContext() = delete;
 
@@ -70,6 +115,9 @@ class BinaryContext {
   using SectionIterator = pointee_iterator<SectionSetType::iterator>;
   using SectionConstIterator = pointee_iterator<SectionSetType::const_iterator>;
 
+  using FilteredSectionIterator = FilterIterator<SectionIterator>;
+  using FilteredSectionConstIterator = FilterIterator<SectionConstIterator>;
+
   /// Map virtual address to a section.  It is possible to have more than one
   /// section mapped to the same address, e.g. non-allocatable sections.
   using AddressToSectionMapType = std::multimap<uint64_t, BinarySection *>;
@@ -84,13 +132,24 @@ class BinaryContext {
   BinarySection &registerSection(BinarySection *Section);
 public:
 
-  /// [name] -> [address] map used for global symbol resolution.
-  typedef std::map<std::string, uint64_t> SymbolMapType;
+  /// [name] -> [BinaryData*] map used for global symbol resolution.
+  using SymbolMapType = std::map<std::string, BinaryData *>;
   SymbolMapType GlobalSymbols;
 
-  /// [address] -> [name1], [name2], ...
-  /// Global addresses never change.
-  std::multimap<uint64_t, std::string> GlobalAddresses;
+  /// [address] -> [BinaryData], ...
+  /// Addresses never change.
+  /// Note: it is important that clients do not hold on to instances of
+  /// BinaryData* while the map is still being modified during BinaryFunction
+  /// disassembly.  This is because of the possibility that a regular
+  /// BinaryData is later discovered to be a JumpTable.
+  using BinaryDataMapType = std::map<uint64_t, BinaryData *>;
+  using binary_data_iterator = BinaryDataMapType::iterator;
+  using binary_data_const_iterator = BinaryDataMapType::const_iterator;
+  BinaryDataMapType BinaryDataMap;
+
+  using FilteredBinaryDataConstIterator =
+    FilterIterator<binary_data_const_iterator>;
+  using FilteredBinaryDataIterator = FilterIterator<binary_data_iterator>;
 
   /// [MCSymbol] -> [BinaryFunction]
   ///
@@ -99,6 +158,38 @@ public:
   std::unordered_map<const MCSymbol *,
                      BinaryFunction *> SymbolToFunctionMap;
 
+  /// Look up the symbol entry that contains the given \p Address (based on
+  /// the start address and size for each symbol).  Returns a pointer to
+  /// the BinaryData for that symbol.  If no data is found, nullptr is returned.
+  const BinaryData *getBinaryDataContainingAddressImpl(uint64_t Address,
+                                                       bool IncludeEnd,
+                                                       bool BestFit) const;
+
+  /// Update the Parent fields in BinaryDatas after adding a new entry into
+  /// \p BinaryDataMap.
+  void updateObjectNesting(BinaryDataMapType::iterator GAI);
+
+  /// Validate that if object address ranges overlap that the object with
+  /// the larger range is a parent of the object with the smaller range.
+  bool validateObjectNesting() const;
+
+  /// Validate that there are no top level "holes" in each section
+  /// and that all relocations with a section are mapped to a valid
+  /// top level BinaryData.
+  bool validateHoles() const;
+
+  /// Get a bogus "absolute" section that will be associated with all
+  /// absolute BinaryDatas.
+  BinarySection &absoluteSection();
+
+  /// Process "holes" in between known BinaryData objects.  For now,
+  /// symbols are padded with the space before the next BinaryData object.
+  void fixBinaryDataHoles();
+
+  /// Populate \p GlobalMemData.  This should be done after all symbol discovery
+  /// is complete, e.g. after building CFGs for all functions.
+  void assignMemData();
+public:
   /// Map address to a constant island owner (constant data in code section)
   std::map<uint64_t, BinaryFunction *> AddressToConstantIslandMap;
 
@@ -204,28 +295,122 @@ public:
 
   std::unique_ptr<MCObjectWriter> createObjectWriter(raw_pwrite_stream &OS);
 
-  /// Return a global symbol registered at a given \p Address. If no symbol
-  /// exists, create one with unique name using \p Prefix.
-  /// If there are multiple symbols registered at the \p Address, then
-  /// return the first one.
-  MCSymbol *getOrCreateGlobalSymbol(uint64_t Address, Twine Prefix);
-
-  /// Return MCSymbol registered at a given \p Address or nullptr if no
-  /// global symbol was registered at the location.
-  MCSymbol *getGlobalSymbolAtAddress(uint64_t Address) const;
-
-  /// Find the address of the global symbol with the given \p Name.
-  /// return an error if no such symbol exists.
-  ErrorOr<uint64_t> getAddressForGlobalSymbol(StringRef Name) const {
-    auto Itr = GlobalSymbols.find(Name);
-    if (Itr != GlobalSymbols.end())
-      return Itr->second;
-    return std::make_error_code(std::errc::bad_address);
+  /// Iterate over all BinaryData.
+  iterator_range<binary_data_const_iterator> getBinaryData() const {
+    return make_range(BinaryDataMap.begin(), BinaryDataMap.end());
   }
 
-  /// Return MCSymbol for the given \p Name or nullptr if no
+  /// Iterate over all BinaryData.
+  iterator_range<binary_data_iterator> getBinaryData() {
+    return make_range(BinaryDataMap.begin(), BinaryDataMap.end());
+  }
+
+  /// Iterate over all BinaryData associated with the given \p Section.
+  iterator_range<FilteredBinaryDataConstIterator>
+  getBinaryDataForSection(StringRef SectionName) const {
+    auto Begin = BinaryDataMap.begin();
+    auto End = BinaryDataMap.end();
+    auto pred =
+      [&SectionName](const binary_data_const_iterator &Itr) -> bool {
+        return Itr->second->getSection().getName() == SectionName;
+      };
+    return make_range(FilteredBinaryDataConstIterator(pred, Begin, End),
+                      FilteredBinaryDataConstIterator(pred, End, End));
+  }
+
+  /// Iterate over all BinaryData associated with the given \p Section.
+  iterator_range<FilteredBinaryDataIterator>
+  getBinaryDataForSection(StringRef SectionName) {
+    auto Begin = BinaryDataMap.begin();
+    auto End = BinaryDataMap.end();
+    auto pred = [&SectionName](const binary_data_iterator &Itr) -> bool {
+      return Itr->second->getSection().getName() == SectionName;
+    };
+    return make_range(FilteredBinaryDataIterator(pred, Begin, End),
+                      FilteredBinaryDataIterator(pred, End, End));
+  }
+
+  /// Clear the global symbol address -> name(s) map.
+  void clearBinaryData() {
+    GlobalSymbols.clear();
+    for (auto &Entry : BinaryDataMap) {
+      delete Entry.second;
+    }
+    BinaryDataMap.clear();
+  }
+
+
+  /// Return a global symbol registered at a given \p Address and \p Size.
+  /// If no symbol exists, create one with unique name using \p Prefix.
+  /// If there are multiple symbols registered at the \p Address, then
+  /// return the first one.
+  MCSymbol *getOrCreateGlobalSymbol(uint64_t Address,
+                                    uint64_t Size,
+                                    uint16_t Alignment,
+                                    Twine Prefix);
+
+  /// Register a symbol with \p Name at a given \p Address and \p Size.
+  MCSymbol *registerNameAtAddress(StringRef Name,
+                                  uint64_t Address,
+                                  BinaryData* BD);
+
+  /// Register a symbol with \p Name at a given \p Address and \p Size.
+  MCSymbol *registerNameAtAddress(StringRef Name,
+                                  uint64_t Address,
+                                  uint64_t Size,
+                                  uint16_t Alignment);
+
+  /// Return BinaryData registered at a given \p Address or nullptr if no
+  /// global symbol was registered at the location.
+  const BinaryData *getBinaryDataAtAddress(uint64_t Address) const {
+    auto NI = BinaryDataMap.find(Address);
+    return NI != BinaryDataMap.end() ? NI->second : nullptr;
+  }
+
+  BinaryData *getBinaryDataAtAddress(uint64_t Address) {
+    auto NI = BinaryDataMap.find(Address);
+    return NI != BinaryDataMap.end() ? NI->second : nullptr;
+  }
+
+  /// Look up the symbol entry that contains the given \p Address (based on
+  /// the start address and size for each symbol).  Returns a pointer to
+  /// the BinaryData for that symbol.  If no data is found, nullptr is returned.
+  const BinaryData *getBinaryDataContainingAddress(uint64_t Address,
+                                                   bool IncludeEnd = false,
+                                                   bool BestFit = false) const {
+    return getBinaryDataContainingAddressImpl(Address, IncludeEnd, BestFit);
+  }
+
+  BinaryData *getBinaryDataContainingAddress(uint64_t Address,
+                                             bool IncludeEnd = false,
+                                             bool BestFit = false) {
+    return const_cast<BinaryData *>(getBinaryDataContainingAddressImpl(Address,
+                                                                       IncludeEnd,
+                                                                       BestFit));
+  }
+
+  /// Return BinaryData for the given \p Name or nullptr if no
   /// global symbol with that name exists.
-  MCSymbol *getGlobalSymbolByName(const std::string &Name) const;
+  const BinaryData *getBinaryDataByName(StringRef Name) const {
+    auto Itr = GlobalSymbols.find(Name);
+    return Itr != GlobalSymbols.end() ? Itr->second : nullptr;
+  }
+
+  BinaryData *getBinaryDataByName(StringRef Name) {
+    auto Itr = GlobalSymbols.find(Name);
+    return Itr != GlobalSymbols.end() ? Itr->second : nullptr;
+  }
+
+  /// Perform any necessary post processing on the symbol table after
+  /// function disassembly is complete.  This processing fixes top
+  /// level data holes and makes sure the symbol table is valid.
+  /// It also assigns all memory profiling info to the appropriate
+  /// BinaryData objects.
+  void postProcessSymbolTable();
+
+  /// Set the size of the global symbol located at \p Address.  Return
+  /// false if no symbol exists, true otherwise.
+  bool setBinaryDataSize(uint64_t Address, uint64_t Size);
 
   /// Print the global symbol table.
   void printGlobalSymbols(raw_ostream& OS) const;
@@ -269,14 +454,61 @@ public:
   bool deregisterSection(BinarySection &Section);
 
   /// Iterate over all registered sections.
-  iterator_range<SectionIterator> sections() {
-    return make_range(Sections.begin(), Sections.end());
+  iterator_range<FilteredSectionIterator> sections() {
+    auto notNull = [](const SectionIterator &Itr) {
+      return (bool)*Itr;
+    };
+    return make_range(FilteredSectionIterator(notNull,
+                                              Sections.begin(),
+                                              Sections.end()),
+                      FilteredSectionIterator(notNull,
+                                              Sections.end(),
+                                              Sections.end()));
   }
 
   /// Iterate over all registered sections.
-  iterator_range<SectionConstIterator> sections() const {
-    return make_range(Sections.begin(), Sections.end());
+  iterator_range<FilteredSectionConstIterator> sections() const {
+    return const_cast<BinaryContext *>(this)->sections();
   }
+
+  /// Iterate over all registered allocatable sections.
+  iterator_range<FilteredSectionIterator> allocatableSections() {
+    auto isAllocatable = [](const SectionIterator &Itr) {
+      return *Itr && Itr->isAllocatable();
+    };
+    return make_range(FilteredSectionIterator(isAllocatable,
+                                              Sections.begin(),
+                                              Sections.end()),
+                      FilteredSectionIterator(isAllocatable,
+                                              Sections.end(),
+                                              Sections.end()));
+  }
+
+  /// Iterate over all registered allocatable sections.
+  iterator_range<FilteredSectionConstIterator> allocatableSections() const {
+    return const_cast<BinaryContext *>(this)->allocatableSections();
+  }
+
+  /// Iterate over all registered non-allocatable sections.
+  iterator_range<FilteredSectionIterator> nonAllocatableSections() {
+    auto notAllocated = [](const SectionIterator &Itr) {
+      return *Itr && !Itr->isAllocatable();
+    };
+    return make_range(FilteredSectionIterator(notAllocated,
+                                              Sections.begin(),
+                                              Sections.end()),
+                      FilteredSectionIterator(notAllocated,
+                                              Sections.end(),
+                                              Sections.end()));
+  }
+
+  /// Iterate over all registered non-allocatable sections.
+  iterator_range<FilteredSectionConstIterator> nonAllocatableSections() const {
+    return const_cast<BinaryContext *>(this)->nonAllocatableSections();
+  }
+
+  /// Return section name containing the given \p Address.
+  ErrorOr<StringRef> getSectionNameForAddress(uint64_t Address) const;
 
   /// Print all sections.
   void printSections(raw_ostream& OS) const;
@@ -321,28 +553,6 @@ public:
   /// the binary.
   ErrorOr<uint64_t> extractPointerAtAddress(uint64_t Address) const;
 
-  /// Register a symbol with \p Name at a given \p Address.
-  MCSymbol *registerNameAtAddress(const std::string &Name, uint64_t Address) {
-    // Check if the Name was already registered.
-    const auto GSI = GlobalSymbols.find(Name);
-    if (GSI != GlobalSymbols.end()) {
-      assert(GSI->second == Address && "addresses do not match");
-      auto *Symbol = Ctx->lookupSymbol(Name);
-      assert(Symbol && "symbol should be registered with MCContext");
-
-      return Symbol;
-    }
-
-    // Add the name to global symbols map.
-    GlobalSymbols[Name] = Address;
-
-    // Add to the reverse map. There could multiple names at the same address.
-    GlobalAddresses.emplace(std::make_pair(Address, Name));
-
-    // Register the name with MCContext.
-    return Ctx->getOrCreateSymbol(Name);
-  }
-
   /// Replaces all references to \p ChildBF with \p ParentBF. \p ChildBF is then
   /// removed from the list of functions \p BFs. The profile data of \p ChildBF
   /// is merged into that of \p ParentBF.
@@ -369,6 +579,12 @@ public:
   BinaryFunction *getFunctionForSymbol(const MCSymbol *Symbol) {
     auto BFI = SymbolToFunctionMap.find(Symbol);
     return BFI == SymbolToFunctionMap.end() ? nullptr : BFI->second;
+  }
+
+  /// Associate the symbol \p Sym with the function \p BF for lookups with
+  /// getFunctionForSymbol().
+  void setSymbolToFunctionMap(const MCSymbol *Sym, BinaryFunction *BF) {
+    SymbolToFunctionMap[Sym] = BF;
   }
 
   /// Populate some internal data structures with debug info.

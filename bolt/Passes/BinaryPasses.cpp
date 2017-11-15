@@ -1139,17 +1139,21 @@ bool SimplifyRODataLoads::simplifyRODataLoads(
               "found PC-relative with non-symbolic displacement");
 
         // Get displacement symbol.
-        const MCSymbolRefExpr *DisplExpr;
-        if (!(DisplExpr = dyn_cast<MCSymbolRefExpr>(DispOpI->getExpr())))
+        const MCSymbol *DisplSymbol;
+        uint64_t DisplOffset;
+
+        std::tie(DisplSymbol, DisplOffset) =
+          BC.MIA->getTargetSymbolInfo(DispOpI->getExpr());
+
+        if (!DisplSymbol)
           continue;
-        const MCSymbol &DisplSymbol = DisplExpr->getSymbol();
 
         // Look up the symbol address in the global symbols map of the binary
         // context object.
-        auto GI = BC.GlobalSymbols.find(DisplSymbol.getName());
-        if (GI == BC.GlobalSymbols.end())
+        auto *BD = BC.getBinaryDataByName(DisplSymbol->getName());
+        if (!BD)
           continue;
-        TargetAddress = GI->second;
+        TargetAddress = BD->getAddress() + DisplOffset;
       } else if (!MIA->evaluateMemOperandTarget(Inst, TargetAddress)) {
         continue;
       }

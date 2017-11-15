@@ -35,7 +35,7 @@ class JTFootprintReduction : public BinaryFunctionPass {
   uint64_t NumJTsBadMatch{0};
   uint64_t NumJTsNoReg{0};
   uint64_t BytesSaved{0};
-  DenseSet<BinaryFunction::JumpTable *> BlacklistedJTs;
+  DenseSet<JumpTable *> BlacklistedJTs;
   DenseSet<const BinaryFunction *> Modified;
 
   /// Check if \p Function presents jump tables where all jump locations can
@@ -50,13 +50,13 @@ class JTFootprintReduction : public BinaryFunctionPass {
   /// instructions that depend on the availability of an extra register.
   /// This saves dcache/dTLB at the expense of icache.
   bool tryOptimizeNonPIC(BinaryContext &BC, BinaryBasicBlock &BB, MCInst &Inst,
-                         uint64_t JTAddr, BinaryFunction::JumpTable *JumpTable,
+                         uint64_t JTAddr, JumpTable *JumpTable,
                          DataflowInfoManager &Info);
 
   /// The PIC jump table optimization consists of "de-pic-ifying" it, since the
   /// PIC jump sequence is larger than its non-PIC counterpart, saving icache.
   bool tryOptimizePIC(BinaryContext &BC, BinaryBasicBlock &BB, MCInst &Inst,
-                      uint64_t JTAddr, BinaryFunction::JumpTable *JumpTable,
+                      uint64_t JTAddr, JumpTable *JumpTable,
                       DataflowInfoManager &Info);
 
   /// Run a pass for \p Function

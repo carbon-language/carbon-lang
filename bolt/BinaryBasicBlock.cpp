@@ -78,13 +78,22 @@ bool BinaryBasicBlock::validateSuccessorInvariants() {
         // Work on the assumption that jump table blocks don't
         // have a conditional successor.
         Valid = false;
+        errs() << "BOLT-WARNING: Jump table successor "
+               << Succ->getName()
+               << " not contained in the jump table.\n";
       }
     }
     // If there are any leftover entries in the jump table, they
     // must be one of the function end labels.
-    for (auto *Sym : UniqueSyms) {
-      Valid &= (Sym == Function->getFunctionEndLabel() ||
-                Sym == Function->getFunctionColdEndLabel());
+    if (Valid) {
+      for (auto *Sym : UniqueSyms) {
+        Valid &= (Sym == Function->getFunctionEndLabel() ||
+                  Sym == Function->getFunctionColdEndLabel());
+        if (!Valid) {
+          errs() << "BOLT-WARNING: Jump table contains illegal entry: "
+                 << Sym->getName() << "\n";
+        }
+      }
     }
   } else {
     const MCSymbol *TBB = nullptr;

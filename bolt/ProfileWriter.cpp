@@ -78,9 +78,10 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
           CSI.DestId = 0; // designated for unknown functions
           CSI.EntryDiscriminator = 0;
           if (CSP.IsFunction) {
-            const auto *CalleeSymbol = BC.getGlobalSymbolByName(CSP.Name);
-            if (CalleeSymbol) {
-              const auto *Callee = BC.getFunctionForSymbol(CalleeSymbol);
+            const auto *CalleeBD = BC.getBinaryDataByName(CSP.Name);
+            if (CalleeBD) {
+              const auto *Callee =
+                BC.getFunctionForSymbol(CalleeBD->getSymbol());
               if (Callee) {
                 CSI.DestId = Callee->getFunctionNumber();
               }

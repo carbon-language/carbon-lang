@@ -180,8 +180,8 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
         for (const auto &CSI : ICSP) {
           if (!CSI.IsFunction)
             continue;
-          if (auto DstSym = BC.getGlobalSymbolByName(CSI.Name)) {
-            Counts.push_back(std::make_pair(DstSym, CSI.Count));
+          if (auto *DstBD = BC.getBinaryDataByName(CSI.Name)) {
+            Counts.push_back(std::make_pair(DstBD->getSymbol(), CSI.Count));
           }
         }
       } else {
@@ -207,8 +207,8 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
         if (!CSI.IsFunction)
           continue;
 
-        auto *DstSym = BC.getGlobalSymbolByName(CSI.Name);
-        if (!DstSym)
+        auto *DstBD = BC.getBinaryDataByName(CSI.Name);
+        if (!DstBD)
           continue;
 
         // The computed offset may exceed the hot part of the function; hence,
@@ -217,7 +217,7 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
         if (Offset > Size)
           Offset = Size;
 
-        if (!recordCall(DstSym, CSI.Count)) {
+        if (!recordCall(DstBD->getSymbol(), CSI.Count)) {
           ++NotProcessed;
         }
       }
