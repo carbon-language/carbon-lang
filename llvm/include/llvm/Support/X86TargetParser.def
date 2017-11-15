@@ -94,6 +94,7 @@ X86_CPU_SUBTYPE_COMPAT("haswell",        INTEL_COREI7_HASWELL,        "haswell")
 X86_CPU_SUBTYPE_COMPAT("broadwell",      INTEL_COREI7_BROADWELL,      "broadwell")
 X86_CPU_SUBTYPE_COMPAT("skylake",        INTEL_COREI7_SKYLAKE,        "skylake")
 X86_CPU_SUBTYPE_COMPAT("skylake-avx512", INTEL_COREI7_SKYLAKE_AVX512, "skylake-avx512")
+X86_CPU_SUBTYPE_COMPAT("cannonlake",     INTEL_COREI7_CANNONLAKE,     "cannonlake")
 // Entries below this are not in libgcc/compiler-rt.
 X86_CPU_SUBTYPE       ("core2",          INTEL_CORE2_65)
 X86_CPU_SUBTYPE       ("penryn",         INTEL_CORE2_45)
