@@ -3902,13 +3902,6 @@ static bool getUniformBase(const Value* &Ptr, SDValue& Base, SDValue& Index,
   Base = SDB->getValue(Ptr);
   Index = SDB->getValue(IndexVal);
 
-  // Suppress sign extension.
-  if (SExtInst* Sext = dyn_cast<SExtInst>(IndexVal)) {
-    if (SDB->findValue(Sext->getOperand(0))) {
-      IndexVal = Sext->getOperand(0);
-      Index = SDB->getValue(IndexVal);
-    }
-  }
   if (!Index.getValueType().isVector()) {
     unsigned GEPWidth = GEP->getType()->getVectorNumElements();
     EVT VT = EVT::getVectorVT(Context, Index.getValueType(), GEPWidth);
