@@ -271,26 +271,23 @@ Error BugDriver::initializeExecutionEnvironment() {
 ///
 Error BugDriver::compileProgram(Module *M) const {
   // Emit the program to a bitcode file...
-  SmallString<128> BitcodeFile;
-  int BitcodeFD;
-  std::error_code EC = sys::fs::createUniqueFile(
-      OutputPrefix + "-test-program-%%%%%%%.bc", BitcodeFD, BitcodeFile);
-  if (EC) {
-    errs() << ToolName << ": Error making unique filename: " << EC.message()
+  auto Temp =
+      sys::fs::TempFile::create(OutputPrefix + "-test-program-%%%%%%%.bc");
+  if (!Temp) {
+    errs() << ToolName
+           << ": Error making unique filename: " << toString(Temp.takeError())
            << "\n";
     exit(1);
   }
-  if (writeProgramToFile(BitcodeFile.str(), BitcodeFD, M)) {
-    errs() << ToolName << ": Error emitting bitcode to file '" << BitcodeFile
+  DiscardTemp Discard{*Temp};
+  if (writeProgramToFile(Temp->FD, M)) {
+    errs() << ToolName << ": Error emitting bitcode to file '" << Temp->TmpName
            << "'!\n";
     exit(1);
   }
 
-  // Remove the temporary bitcode file when we are done.
-  FileRemover BitcodeFileRemover(BitcodeFile.str(), !SaveTemps);
-
   // Actually compile the program!
-  return Interpreter->compileProgram(BitcodeFile.str(), Timeout, MemoryLimit);
+  return Interpreter->compileProgram(Temp->TmpName, Timeout, MemoryLimit);
 }
 
 /// executeProgram - This method runs "Program", capturing the output of the
