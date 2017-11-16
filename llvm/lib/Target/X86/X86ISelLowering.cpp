@@ -36032,7 +36032,7 @@ static SDValue combineSBB(SDNode *N, SelectionDAG &DAG) {
 
 // Optimize RES, EFLAGS = X86ISD::ADC LHS, RHS, EFLAGS
 static SDValue combineADC(SDNode *N, SelectionDAG &DAG,
-                          X86TargetLowering::DAGCombinerInfo &DCI) {
+                          TargetLowering::DAGCombinerInfo &DCI) {
   // If the LHS and RHS of the ADC node are zero, then it can't overflow and
   // the result is either zero or one (depending on the input carry bit).
   // Strength reduce this down to a "set on carry" aka SETCC_CARRY&1.
