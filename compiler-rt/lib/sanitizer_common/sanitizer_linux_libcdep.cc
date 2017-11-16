@@ -312,7 +312,7 @@ uptr ThreadSelf() {
 }
 #endif  // (x86_64 || i386 || MIPS) && SANITIZER_LINUX
 
-#if SANITIZER_FREEBSD
+#if SANITIZER_FREEBSD || SANITIZER_NETBSD
 static void **ThreadSelfSegbase() {
   void **segbase = 0;
 # if defined(__i386__)
@@ -322,7 +322,7 @@ static void **ThreadSelfSegbase() {
   // sysarch(AMD64_GET_FSBASE, segbase);
   __asm __volatile("movq %%fs:0, %0" : "=r" (segbase));
 # else
-#  error "unsupported CPU arch for FreeBSD platform"
+#  error "unsupported CPU arch"
 # endif
   return segbase;
 }
@@ -330,9 +330,7 @@ static void **ThreadSelfSegbase() {
 uptr ThreadSelf() {
   return (uptr)ThreadSelfSegbase()[2];
 }
-#elif SANITIZER_NETBSD
-uptr ThreadSelf() { return (uptr)pthread_self(); }
-#endif  // SANITIZER_NETBSD
+#endif  // SANITIZER_FREEBSD || SANITIZER_NETBSD
 
 #if !SANITIZER_GO
 static void GetTls(uptr *addr, uptr *size) {
@@ -350,7 +348,7 @@ static void GetTls(uptr *addr, uptr *size) {
   *addr = 0;
   *size = 0;
 # endif
-#elif SANITIZER_FREEBSD
+#elif SANITIZER_FREEBSD || SANITIZER_NETBSD
   void** segbase = ThreadSelfSegbase();
   *addr = 0;
   *size = 0;
@@ -363,7 +361,7 @@ static void GetTls(uptr *addr, uptr *size) {
     *addr = (uptr) dtv[2];
     *size = (*addr == 0) ? 0 : ((uptr) segbase[0] - (uptr) dtv[2]);
   }
-#elif SANITIZER_ANDROID || SANITIZER_NETBSD
+#elif SANITIZER_ANDROID
   *addr = 0;
   *size = 0;
 #else
