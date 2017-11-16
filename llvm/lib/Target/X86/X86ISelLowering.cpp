@@ -35836,13 +35836,34 @@ static SDValue combineGatherScatter(SDNode *N, SelectionDAG &DAG,
   // Pre-shrink oversized index elements to avoid triggering scalarization.
   if (DCI.isBeforeLegalize()) {
     SDValue Index = N->getOperand(4);
-    if (Index.getValueType().getScalarSizeInBits() > 64) {
+    if (Index.getScalarValueSizeInBits() > 64) {
       EVT IndexVT = EVT::getVectorVT(*DAG.getContext(), MVT::i64,
                                    Index.getValueType().getVectorNumElements());
       SDValue Trunc = DAG.getNode(ISD::TRUNCATE, DL, IndexVT, Index);
       SmallVector<SDValue, 5> NewOps(N->op_begin(), N->op_end());
       NewOps[4] = Trunc;
       DAG.UpdateNodeOperands(N, NewOps);
+      DCI.AddToWorklist(N);
+      return SDValue(N, 0);
+    }
+  }
+
+  // Try to remove sign extends from i32 to i64 on the index.
+  // Only do this before legalize in case we are relying on it for
+  // legalization.
+  // TODO: We should maybe remove any sign extend once we learn how to sign
+  // extend narrow index during lowering.
+  if (DCI.isBeforeLegalizeOps()) {
+    SDValue Index = N->getOperand(4);
+    if (Index.getScalarValueSizeInBits() == 64 &&
+        Index.getOpcode() == ISD::SIGN_EXTEND &&
+        Index.getOperand(0).getScalarValueSizeInBits() == 32) {
+      SmallVector<SDValue, 5> NewOps(N->op_begin(), N->op_end());
+      NewOps[4] = Index.getOperand(0);
+      DAG.UpdateNodeOperands(N, NewOps);
+      // The original sign extend has less users, add back to worklist in case
+      // it needs to be removed.
+      DCI.AddToWorklist(Index.getNode());
       DCI.AddToWorklist(N);
       return SDValue(N, 0);
     }
