@@ -222,7 +222,7 @@ FunctionPass *llvm::createSIWholeQuadModePass() {
 }
 
 #ifndef NDEBUG
-LLVM_DEBUG_METHOD void SIWholeQuadMode::printInfo() {
+LLVM_DUMP_METHOD void SIWholeQuadMode::printInfo() {
   for (const auto &BII : Blocks) {
     dbgs() << "\nBB#" << BII.first->getNumber() << ":\n"
            << "  InNeeds = " << PrintState(BII.second.InNeeds)
