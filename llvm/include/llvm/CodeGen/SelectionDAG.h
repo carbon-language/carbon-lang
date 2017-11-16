@@ -1195,10 +1195,9 @@ public:
                                     unsigned O);
 
   /// Transfer debug values from one node to another, while optionally
-  /// generating fragment expressions for split-up values. If \p InvalidateDbg
-  /// is set, debug values are invalidated after they are transferred.
+  /// generating fragment expressions for split-up values.
   void transferDbgValues(SDValue From, SDValue To, unsigned OffsetInBits = 0,
-                         unsigned SizeInBits = 0, bool InvalidateDbg = true);
+                         unsigned SizeInBits = 0);
 
   /// Remove the specified node from the system. If any of its
   /// operands then becomes dead, remove them as well. Inform UpdateListener
@@ -1279,6 +1278,10 @@ public:
   ArrayRef<SDDbgValue*> GetDbgValues(const SDNode* SD) {
     return DbgInfo->getSDDbgValues(SD);
   }
+
+private:
+  /// Transfer SDDbgValues. Called via ReplaceAllUses{OfValue}?With
+  void TransferDbgValues(SDValue From, SDValue To);
 
 public:
   /// Return true if there are any SDDbgValue nodes associated

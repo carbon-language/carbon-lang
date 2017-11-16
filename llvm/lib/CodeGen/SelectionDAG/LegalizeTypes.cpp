@@ -845,14 +845,13 @@ void DAGTypeLegalizer::SetExpandedInteger(SDValue Op, SDValue Lo,
   AnalyzeNewValue(Lo);
   AnalyzeNewValue(Hi);
 
-  // Transfer debug values. Don't invalidate the source debug value until it's
-  // been transferred to the high and low bits.
+  // Transfer debug values.
   if (DAG.getDataLayout().isBigEndian()) {
-    DAG.transferDbgValues(Op, Hi, 0, Hi.getValueSizeInBits(), false);
+    DAG.transferDbgValues(Op, Hi, 0, Hi.getValueSizeInBits());
     DAG.transferDbgValues(Op, Lo, Hi.getValueSizeInBits(),
                           Lo.getValueSizeInBits());
   } else {
-    DAG.transferDbgValues(Op, Lo, 0, Lo.getValueSizeInBits(), false);
+    DAG.transferDbgValues(Op, Lo, 0, Lo.getValueSizeInBits());
     DAG.transferDbgValues(Op, Hi, Lo.getValueSizeInBits(),
                           Hi.getValueSizeInBits());
   }
