@@ -151,7 +151,13 @@ endif()
 
 # Build the static library.
 if (LIBCXXABI_ENABLE_STATIC)
-  add_library(cxxabi_static STATIC $<TARGET_OBJECTS:cxxabi_objects>)
+  set(cxxabi_static_sources $<TARGET_OBJECTS:cxxabi_objects>)
+  if (LIBCXXABI_USE_LLVM_UNWINDER AND LIBCXXABI_ENABLE_STATIC_UNWINDER)
+    if (TARGET unwind_static OR HAVE_LIBUNWIND)
+      list(APPEND cxxabi_static_sources $<TARGET_OBJECTS:unwind_objects>)
+    endif()
+  endif()
+  add_library(cxxabi_static STATIC ${cxxabi_static_sources})
   target_link_libraries(cxxabi_static ${LIBCXXABI_LIBRARIES})
   set_target_properties(cxxabi_static
                         PROPERTIES
