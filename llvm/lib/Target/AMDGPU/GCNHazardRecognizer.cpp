@@ -341,16 +341,7 @@ int GCNHazardRecognizer::checkSMRDHazards(MachineInstr *SMRD) {
   auto IsHazardDefFn = [this] (MachineInstr *MI) { return TII.isVALU(*MI); };
   auto IsBufferHazardDefFn = [this] (MachineInstr *MI) { return TII.isSALU(*MI); };
 
-  bool IsBufferSMRD = SMRD->getOpcode() == AMDGPU::S_BUFFER_LOAD_DWORD_IMM ||
-                      SMRD->getOpcode() == AMDGPU::S_BUFFER_LOAD_DWORDX2_IMM ||
-                      SMRD->getOpcode() == AMDGPU::S_BUFFER_LOAD_DWORDX4_IMM ||
-                      SMRD->getOpcode() == AMDGPU::S_BUFFER_LOAD_DWORDX8_IMM ||
-                      SMRD->getOpcode() == AMDGPU::S_BUFFER_LOAD_DWORDX16_IMM ||
-                      SMRD->getOpcode() == AMDGPU::S_BUFFER_LOAD_DWORD_SGPR ||
-                      SMRD->getOpcode() == AMDGPU::S_BUFFER_LOAD_DWORDX2_SGPR ||
-                      SMRD->getOpcode() == AMDGPU::S_BUFFER_LOAD_DWORDX4_SGPR ||
-                      SMRD->getOpcode() == AMDGPU::S_BUFFER_LOAD_DWORDX8_SGPR ||
-                      SMRD->getOpcode() == AMDGPU::S_BUFFER_LOAD_DWORDX16_SGPR;
+  bool IsBufferSMRD = TII.isBufferSMRD(*SMRD);
 
   for (const MachineOperand &Use : SMRD->uses()) {
     if (!Use.isReg())
