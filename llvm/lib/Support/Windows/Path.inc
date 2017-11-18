@@ -344,20 +344,15 @@ std::error_code is_local(const Twine &path, bool &result) {
   return is_local_internal(WidePath, result);
 }
 
+static std::error_code realPathFromHandle(HANDLE H,
+                                          SmallVectorImpl<wchar_t> &Buffer);
+
 std::error_code is_local(int FD, bool &Result) {
   SmallVector<wchar_t, 128> FinalPath;
   HANDLE Handle = reinterpret_cast<HANDLE>(_get_osfhandle(FD));
 
-  size_t Len = 128;
-  do {
-    FinalPath.reserve(Len);
-    Len = ::GetFinalPathNameByHandleW(Handle, FinalPath.data(),
-                                      FinalPath.capacity() - 1, VOLUME_NAME_NT);
-    if (Len == 0)
-      return mapWindowsError(::GetLastError());
-  } while (Len > FinalPath.capacity());
-
-  FinalPath.set_size(Len);
+  if (std::error_code EC = realPathFromHandle(Handle, FinalPath))
+    return EC;
 
   return is_local_internal(FinalPath, Result);
 }
@@ -917,9 +912,7 @@ ErrorOr<basic_file_status> directory_entry::status() const {
 }
 
 static std::error_code realPathFromHandle(HANDLE H,
-                                          SmallVectorImpl<char> &RealPath) {
-  RealPath.clear();
-  llvm::SmallVector<wchar_t, MAX_PATH> Buffer;
+                                          SmallVectorImpl<wchar_t> &Buffer) {
   DWORD CountChars = ::GetFinalPathNameByHandleW(
       H, Buffer.begin(), Buffer.capacity() - 1, FILE_NAME_NORMALIZED);
   if (CountChars > Buffer.capacity()) {
@@ -931,8 +924,19 @@ static std::error_code realPathFromHandle(HANDLE H,
   }
   if (CountChars == 0)
     return mapWindowsError(GetLastError());
+  Buffer.set_size(CountChars);
+  return std::error_code();
+}
+
+static std::error_code realPathFromHandle(HANDLE H,
+                                          SmallVectorImpl<char> &RealPath) {
+  RealPath.clear();
+  SmallVector<wchar_t, MAX_PATH> Buffer;
+  if (std::error_code EC = realPathFromHandle(H, Buffer))
+    return EC;
 
   const wchar_t *Data = Buffer.data();
+  DWORD CountChars = Buffer.size();
   if (CountChars >= 4) {
     if (0 == ::memcmp(Data, L"\\\\?\\", 8)) {
       CountChars -= 4;
