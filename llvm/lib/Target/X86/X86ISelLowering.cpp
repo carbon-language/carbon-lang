@@ -34482,6 +34482,7 @@ static SDValue combineTruncatedArithmetic(SDNode *N, SelectionDAG &DAG,
       return TruncateArithmetic(Src.getOperand(0), Src.getOperand(1));
     LLVM_FALLTHROUGH;
   case ISD::ADD: {
+    // TODO: ISD::SUB should be here but interferes with combineSubToSubus.
     SDValue Op0 = Src.getOperand(0);
     SDValue Op1 = Src.getOperand(1);
     if (TLI.isOperationLegal(Opcode, VT) &&
