@@ -1228,7 +1228,7 @@ bool sys::getHostCPUFeatures(StringMap<bool> &Features) {
   Features["mwaitx"] = HasExtLeaf1 && ((ECX >> 29) & 1);
 
   bool HasExtLeaf8 = MaxExtLevel >= 0x80000008 &&
-                     !getX86CpuIDAndInfoEx(0x80000008,0x0, &EAX, &EBX, &ECX, &EDX);
+                     !getX86CpuIDAndInfo(0x80000008, &EAX, &EBX, &ECX, &EDX);
   Features["clzero"] = HasExtLeaf8 && ((EBX >> 0) & 1);
 
   bool HasLeaf7 =
