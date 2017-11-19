@@ -330,13 +330,6 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // Likewise ExternalSymbol -> TargetExternalSymbol.
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     auto GV = G->getGlobal();
-    fail(CLI.DL, DAG,
-         "A call to global function '" + StringRef(GV->getName())
-         + "' is not supported. "
-         + (GV->isDeclaration() ?
-           "Only calls to predefined BPF helpers are allowed." :
-           "Please use __attribute__((always_inline) to make sure"
-           " this function is inlined."));
     Callee = DAG.getTargetGlobalAddress(G->getGlobal(), CLI.DL, PtrVT,
                                         G->getOffset(), 0);
   } else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee)) {
