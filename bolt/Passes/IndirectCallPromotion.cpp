@@ -103,15 +103,6 @@ EliminateLoads(
     cl::ZeroOrMore,
     cl::cat(BoltOptCategory));
 
-static cl::opt<bool>
-ICPAlwaysOn(
-    "icp-always-on",
-    cl::desc("enable ICP for all eligible callsites"),
-    cl::init(false),
-    cl::Hidden,
-    cl::ZeroOrMore,
-    cl::cat(BoltOptCategory));
-
 static cl::opt<unsigned>
 ICPTopCallsites(
     "icp-top-callsites",
@@ -917,9 +908,6 @@ IndirectCallPromotion::canPromoteCallsite(const BinaryBasicBlock *BB,
   }
   const auto TrialN = std::min(TopN, Targets.size());
 
-  if (opts::ICPAlwaysOn)
-    return TrialN;
-
   if (opts::ICPTopCallsites > 0) {
     auto &BC = BB->getFunction()->getBinaryContext();
     return BC.MIA->hasAnnotation(Inst, "DoICP") ? TrialN : 0;
@@ -1146,7 +1134,7 @@ void IndirectCallPromotion::runOnFunctions(
   // calls and then optimize the hottest callsites that contribute to that
   // total.
   if (opts::ICPTopCallsites > 0) {
-    using IndirectCallsite = std::pair<const BinaryBasicBlock *, MCInst *>;
+    using IndirectCallsite = std::pair<uint64_t, MCInst *>;
     std::vector<IndirectCallsite> IndirectCalls;
     size_t TotalIndirectCalls = 0;
 
@@ -1166,23 +1154,28 @@ void IndirectCallPromotion::runOnFunctions(
           continue;
 
         for (auto &Inst : BB) {
-          if ((BC.MIA->isIndirectCall(Inst) && OptimizeCalls) ||
-              (Function.getJumpTable(Inst) && OptimizeJumpTables)) {
-            IndirectCalls.push_back(std::make_pair(&BB, &Inst));
-            TotalIndirectCalls += BB.getKnownExecutionCount();
+          const bool IsJumpTable = Function.getJumpTable(Inst);
+          const bool HasBranchData = BC.MIA->hasAnnotation(Inst, "Offset");
+          const bool IsDirectCall = (BC.MIA->isCall(Inst) &&
+                                     BC.MIA->getTargetSymbol(Inst, 0));
+
+          if (!IsDirectCall &&
+              ((HasBranchData && !IsJumpTable && OptimizeCalls) ||
+               (IsJumpTable && OptimizeJumpTables))) {
+            uint64_t NumCalls = 0;
+            for (const auto &BInfo : getCallTargets(Function, Inst)) {
+              NumCalls += BInfo.Branches;
+            }
+            
+            IndirectCalls.push_back(std::make_pair(NumCalls, &Inst));
+            TotalIndirectCalls += NumCalls;
           }
         }
       }
     }
 
     // Sort callsites by execution count.
-    std::sort(IndirectCalls.begin(),
-              IndirectCalls.end(),
-              [](const IndirectCallsite &A, const IndirectCallsite &B) {
-                const auto CountA = A.first->getKnownExecutionCount();
-                const auto CountB = B.first->getKnownExecutionCount();
-                return CountA > CountB;
-              });
+    std::sort(IndirectCalls.rbegin(), IndirectCalls.rend());
 
     // Find callsites that contribute to the top "opts::ICPTopCallsites"%
     // number of calls.
@@ -1192,7 +1185,7 @@ void IndirectCallPromotion::runOnFunctions(
     for (auto &IC : IndirectCalls) {
       if (MaxCalls <= 0)
         break;
-      MaxCalls -= IC.first->getKnownExecutionCount();
+      MaxCalls -= IC.first;
       ++Num;
     }
     outs() << "BOLT-INFO: ICP Total indirect calls = " << TotalIndirectCalls
@@ -1201,8 +1194,8 @@ void IndirectCallPromotion::runOnFunctions(
 
     // Mark sites to optimize with "DoICP" annotation.
     for (size_t I = 0; I < Num; ++I) {
-      auto &Inst = *IndirectCalls[I].second;
-      BC.MIA->addAnnotation(BC.Ctx.get(), Inst, "DoICP", true);
+      auto *Inst = IndirectCalls[I].second;
+      BC.MIA->addAnnotation(BC.Ctx.get(), *Inst, "DoICP", true);
     }
   }
 
