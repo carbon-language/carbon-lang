@@ -892,11 +892,11 @@
 // CHECK_SKX_M32: #define __XSAVEOPT__ 1
 // CHECK_SKX_M32: #define __XSAVES__ 1
 // CHECK_SKX_M32: #define __XSAVE__ 1
+// CHECK_SKX_M32: #define __corei7 1
+// CHECK_SKX_M32: #define __corei7__ 1
 // CHECK_SKX_M32: #define __i386 1
 // CHECK_SKX_M32: #define __i386__ 1
-// CHECK_SKX_M32: #define __skx 1
-// CHECK_SKX_M32: #define __skx__ 1
-// CHECK_SKX_M32: #define __tune_skx__ 1
+// CHECK_SKX_M32: #define __tune_corei7__ 1
 // CHECK_SKX_M32: #define i386 1
 
 // RUN: %clang -march=skylake-avx512 -m64 -E -dM %s -o - 2>&1 \
@@ -938,9 +938,9 @@
 // CHECK_SKX_M64: #define __XSAVE__ 1
 // CHECK_SKX_M64: #define __amd64 1
 // CHECK_SKX_M64: #define __amd64__ 1
-// CHECK_SKX_M64: #define __skx 1
-// CHECK_SKX_M64: #define __skx__ 1
-// CHECK_SKX_M64: #define __tune_skx__ 1
+// CHECK_SKX_M64: #define __corei7 1
+// CHECK_SKX_M64: #define __corei7__ 1
+// CHECK_SKX_M64: #define __tune_corei7__ 1
 // CHECK_SKX_M64: #define __x86_64 1
 // CHECK_SKX_M64: #define __x86_64__ 1
 //
@@ -981,8 +981,11 @@
 // CHECK_CNL_M32: #define __XSAVEOPT__ 1
 // CHECK_CNL_M32: #define __XSAVES__ 1
 // CHECK_CNL_M32: #define __XSAVE__ 1
+// CHECK_CNL_M32: #define __corei7 1
+// CHECK_CNL_M32: #define __corei7__ 1
 // CHECK_CNL_M32: #define __i386 1
 // CHECK_CNL_M32: #define __i386__ 1
+// CHECK_CNL_M32: #define __tune_corei7__ 1
 // CHECK_CNL_M32: #define i386 1
 //
 // RUN: %clang -march=cannonlake -m64 -E -dM %s -o - 2>&1 \
@@ -1024,6 +1027,9 @@
 // CHECK_CNL_M64: #define __XSAVE__ 1
 // CHECK_CNL_M64: #define __amd64 1
 // CHECK_CNL_M64: #define __amd64__ 1
+// CHECK_CNL_M64: #define __corei7 1
+// CHECK_CNL_M64: #define __corei7__ 1
+// CHECK_CNL_M64: #define __tune_corei7__ 1
 // CHECK_CNL_M64: #define __x86_64 1
 // CHECK_CNL_M64: #define __x86_64__ 1
 
