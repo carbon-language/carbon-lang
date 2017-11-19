@@ -32,8 +32,9 @@ define double @pow_libcall_half_approx(double %x) {
 
 define <2 x double> @pow_intrinsic_neghalf_fast(<2 x double> %x) {
 ; CHECK-LABEL: @pow_intrinsic_neghalf_fast(
-; CHECK-NEXT:    [[POW:%.*]] = call fast <2 x double> @llvm.pow.v2f64(<2 x double> %x, <2 x double> <double -5.000000e-01, double -5.000000e-01>)
-; CHECK-NEXT:    ret <2 x double> [[POW]]
+; CHECK-NEXT:    [[TMP1:%.*]] = call fast <2 x double> @llvm.sqrt.v2f64(<2 x double> %x)
+; CHECK-NEXT:    [[TMP2:%.*]] = fdiv fast <2 x double> <double 1.000000e+00, double 1.000000e+00>, [[TMP1]]
+; CHECK-NEXT:    ret <2 x double> [[TMP2]]
 ;
   %pow = call fast <2 x double> @llvm.pow.v2f64(<2 x double> %x, <2 x double> <double -5.0e-01, double -5.0e-01>)
   ret <2 x double> %pow

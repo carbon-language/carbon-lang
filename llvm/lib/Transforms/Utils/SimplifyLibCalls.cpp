@@ -1081,11 +1081,10 @@ Value *LibCallSimplifier::replacePowWithSqrt(CallInst *Pow, IRBuilder<> &B) {
   if (!Pow->isFast())
     return nullptr;
 
-  // TODO: This should use m_APFloat to allow vector splats.
-  ConstantFP *Op2C = dyn_cast<ConstantFP>(Pow->getArgOperand(1));
-  if (!Op2C)
+  const APFloat *Arg1C;
+  if (!match(Pow->getArgOperand(1), m_APFloat(Arg1C)))
     return nullptr;
-  if (!Op2C->isExactlyValue(0.5) && !Op2C->isExactlyValue(-0.5))
+  if (!Arg1C->isExactlyValue(0.5) && !Arg1C->isExactlyValue(-0.5))
     return nullptr;
 
   // Fast-math flags from the pow() are propagated to all replacement ops.
@@ -1114,7 +1113,7 @@ Value *LibCallSimplifier::replacePowWithSqrt(CallInst *Pow, IRBuilder<> &B) {
   }
 
   // If this is pow(x, -0.5), get the reciprocal.
-  if (Op2C->isExactlyValue(-0.5))
+  if (Arg1C->isExactlyValue(-0.5))
     Sqrt = B.CreateFDiv(ConstantFP::get(Ty, 1.0), Sqrt);
 
   return Sqrt;
@@ -1170,15 +1169,15 @@ Value *LibCallSimplifier::optimizePow(CallInst *CI, IRBuilder<> &B) {
     }
   }
 
+  if (Value *Sqrt = replacePowWithSqrt(CI, B))
+    return Sqrt;
+
   ConstantFP *Op2C = dyn_cast<ConstantFP>(Op2);
   if (!Op2C)
     return Ret;
 
   if (Op2C->getValueAPF().isZero()) // pow(x, 0.0) -> 1.0
     return ConstantFP::get(CI->getType(), 1.0);
-
-  if (Value *Sqrt = replacePowWithSqrt(CI, B))
-    return Sqrt;
 
   // FIXME: Correct the transforms and pull this into replacePowWithSqrt().
   if (Op2C->isExactlyValue(0.5) &&
