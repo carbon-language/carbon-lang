@@ -658,7 +658,7 @@ def CNLFeatures : ProcessorFeatures<SKXFeatures.Value, [
   FeatureSHA
 ]>;
 
-class CannonlakeProc<string Name> : ProcModel<Name, HaswellModel,
+class CannonlakeProc<string Name> : ProcModel<Name, SkylakeServerModel,
                                               CNLFeatures.Value, [
   ProcIntelCNL
 ]>;
