@@ -317,6 +317,8 @@ def ProcIntelSKX  : SubtargetFeature<"skx", "X86ProcFamily",
                     "IntelSKX", "Intel Skylake Server processors">;
 def ProcIntelCNL  : SubtargetFeature<"cannonlake", "X86ProcFamily",
                     "IntelCannonlake", "Intel Cannonlake processors">;
+def ProcIntelICL  : SubtargetFeature<"icelake", "X86ProcFamily",
+                    "IntelIcelake", "Intel Icelake processors">;
 
 class Proc<string Name, list<SubtargetFeature> Features>
  : ProcessorModel<Name, GenericModel, Features>;
@@ -661,6 +663,16 @@ class CannonlakeProc<string Name> : ProcModel<Name, HaswellModel,
   ProcIntelCNL
 ]>;
 def : CannonlakeProc<"cannonlake">;
+
+def ICLFeatures : ProcessorFeatures<CNLFeatures.Value, [
+  // TODO: Insert features here.
+]>;
+
+class IcelakeProc<string Name> : ProcModel<Name, SkylakeServerModel,
+                                           ICLFeatures.Value, [
+  ProcIntelICL
+]>;
+def : IcelakeProc<"icelake">;
 
 // AMD CPUs.
 
