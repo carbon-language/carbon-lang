@@ -130,6 +130,9 @@ bool X86TargetInfo::initFeatureMap(
     setFeatureEnabledImpl(Features, "mmx", true);
     break;
 
+  case CK_Icelake:
+    // TODO: Add icelake features here.
+    LLVM_FALLTHROUGH;
   case CK_Cannonlake:
     setFeatureEnabledImpl(Features, "avx512ifma", true);
     setFeatureEnabledImpl(Features, "avx512vbmi", true);
@@ -838,6 +841,7 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   case CK_SkylakeClient:
   case CK_SkylakeServer:
   case CK_Cannonlake:
+  case CK_Icelake:
     // FIXME: Historically, we defined this legacy name, it would be nice to
     // remove it at some point. We've never exposed fine-grained names for
     // recent primary x86 CPUs, and we should keep it that way.
