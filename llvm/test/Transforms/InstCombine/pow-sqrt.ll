@@ -2,8 +2,8 @@
 
 define double @pow_intrinsic_half_fast(double %x) {
 ; CHECK-LABEL: @pow_intrinsic_half_fast(
-; CHECK-NEXT:    [[SQRT:%.*]] = call fast double @sqrt(double %x) #1
-; CHECK-NEXT:    ret double [[SQRT]]
+; CHECK-NEXT:    [[TMP1:%.*]] = call fast double @llvm.sqrt.f64(double %x)
+; CHECK-NEXT:    ret double [[TMP1]]
 ;
   %pow = call fast double @llvm.pow.f64(double %x, double 5.000000e-01)
   ret double %pow
@@ -51,8 +51,8 @@ define double @pow_intrinsic_neghalf_approx(double %x) {
 define float @pow_libcall_neghalf_fast(float %x) {
 ; CHECK-LABEL: @pow_libcall_neghalf_fast(
 ; CHECK-NEXT:    [[SQRTF:%.*]] = call fast float @sqrtf(float %x)
-; CHECK-NEXT:    [[SQRTRECIP:%.*]] = fdiv fast float 1.000000e+00, [[SQRTF]]
-; CHECK-NEXT:    ret float [[SQRTRECIP]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fdiv fast float 1.000000e+00, [[SQRTF]]
+; CHECK-NEXT:    ret float [[TMP1]]
 ;
   %pow = call fast float @powf(float %x, float -5.0e-01)
   ret float %pow
