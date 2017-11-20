@@ -2594,10 +2594,6 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
   for (const Arg *A : Args.filtered(OPT_chain_include))
     Opts.ChainedIncludes.emplace_back(A->getValue());
 
-  // Add the ordered list of -fsystem-include-if-exists.
-  for (const Arg *A : Args.filtered(OPT_fsystem_include_if_exists))
-    Opts.FSystemIncludeIfExists.emplace_back(A->getValue());
-
   for (const Arg *A : Args.filtered(OPT_remap_file)) {
     std::pair<StringRef, StringRef> Split = StringRef(A->getValue()).split(';');
 

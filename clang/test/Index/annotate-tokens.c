@@ -68,7 +68,7 @@ void test() {
   reg.field = 1;
 }
 
-// RUN: c-index-test -test-annotate-tokens=%s:4:1:37:1 -ffreestanding %s | FileCheck %s
+// RUN: c-index-test -test-annotate-tokens=%s:4:1:37:1 %s | FileCheck %s
 // CHECK: Identifier: "T" [4:3 - 4:4] TypeRef=T:1:13
 // CHECK: Punctuation: "*" [4:4 - 4:5] VarDecl=t_ptr:4:6 (Definition)
 // CHECK: Identifier: "t_ptr" [4:6 - 4:11] VarDecl=t_ptr:4:6 (Definition)
@@ -191,10 +191,10 @@ void test() {
 // CHECK: Punctuation: ")" [36:97 - 36:98] FunctionDecl=test:36:63 (unavailable)  (always unavailable: "")
 // CHECK: Punctuation: ";" [36:98 - 36:99]
 
-// RUN: c-index-test -test-annotate-tokens=%s:4:1:165:32 -ffreestanding %s | FileCheck %s
-// RUN: c-index-test -test-annotate-tokens=%s:4:1:165:38 -ffreestanding %s | FileCheck %s
+// RUN: c-index-test -test-annotate-tokens=%s:4:1:165:32 %s | FileCheck %s
+// RUN: c-index-test -test-annotate-tokens=%s:4:1:165:38 %s | FileCheck %s
 
-// RUN: c-index-test -test-annotate-tokens=%s:50:1:55:1 -ffreestanding %s | FileCheck %s -check-prefix=CHECK-RANGE1
+// RUN: c-index-test -test-annotate-tokens=%s:50:1:55:1 %s | FileCheck %s -check-prefix=CHECK-RANGE1
 // CHECK-RANGE1: Keyword: "void" [50:1 - 50:5] FunctionDecl=func1:50:6
 // CHECK-RANGE1: Identifier: "func1" [50:6 - 50:11] FunctionDecl=func1:50:6
 // CHECK-RANGE1: Punctuation: "(" [50:11 - 50:12] FunctionDecl=func1:50:6
@@ -216,7 +216,7 @@ void test() {
 // CHECK-RANGE1: Literal: "1" [54:10 - 54:11] IntegerLiteral=
 // CHECK-RANGE1: Punctuation: "," [54:11 - 54:12] InitListExpr=
 
-// RUN: c-index-test -test-annotate-tokens=%s:54:1:70:1 -ffreestanding %s | FileCheck %s -check-prefix=CHECK-RANGE2
+// RUN: c-index-test -test-annotate-tokens=%s:54:1:70:1 %s | FileCheck %s -check-prefix=CHECK-RANGE2
 // CHECK-RANGE2: Punctuation: "." [54:5 - 54:6] UnexposedExpr=
 // CHECK-RANGE2: Identifier: "y" [54:6 - 54:7] MemberRef=y:52:1
 // CHECK-RANGE2: Punctuation: "=" [54:8 - 54:9] UnexposedExpr=
@@ -240,6 +240,6 @@ void test() {
 // CHECK-RANGE2: Punctuation: "." [68:6 - 68:7] MemberRefExpr=field:62:9
 // CHECK-RANGE2: Identifier: "field" [68:7 - 68:12] MemberRefExpr=field:62:9
 
-// RUN: c-index-test -test-annotate-tokens=%s:68:15:68:16 -ffreestanding %s | FileCheck %s -check-prefix=CHECK-RANGE3
+// RUN: c-index-test -test-annotate-tokens=%s:68:15:68:16 %s | FileCheck %s -check-prefix=CHECK-RANGE3
 // CHECK-RANGE3: Literal: "1" [68:15 - 68:16] IntegerLiteral=
 // CHECK-RANGE3-NOT: Punctuation: ";"

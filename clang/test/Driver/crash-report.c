@@ -2,7 +2,7 @@
 // RUN: mkdir %t
 // RUN: not env TMPDIR=%t TEMP=%t TMP=%t RC_DEBUG_OPTIONS=1              \
 // RUN:  CC_PRINT_HEADERS=1 CC_LOG_DIAGNOSTICS=1                         \
-// RUN:  %clang -fsyntax-only -ffreestanding %s                          \
+// RUN:  %clang -fsyntax-only %s                                         \
 // RUN:  -F/tmp/ -I /tmp/ -idirafter /tmp/ -iquote /tmp/ -isystem /tmp/  \
 // RUN:  -iprefix /the/prefix -iwithprefix /tmp -iwithprefixbefore /tmp/ \
 // RUN:  -Xclang -internal-isystem -Xclang /tmp/                         \
@@ -42,6 +42,5 @@ FOO
 // CHECKSH-NOT: "-iwithprefixbefore" "/tmp/"
 // CHECKSH-NOT: "-internal-isystem" "/tmp/"
 // CHECKSH-NOT: "-internal-externc-isystem" "/tmp/"
-// CHECKSH-NOT: "-fsystem-include-if-exists" "/tmp/"
 // CHECKSH-NOT: "-dwarf-debug-flags"
 // CHECKSH: "crash-report-{{[^ ]*}}.c"
