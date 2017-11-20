@@ -38,6 +38,7 @@
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/BranchProbability.h"
 #include "llvm/Support/CommandLine.h"
@@ -867,6 +868,16 @@ bool MachineSinking::SinkInstruction(MachineInstr &MI, bool &SawStore,
   // collect matching debug values.
   SmallVector<MachineInstr *, 2> DbgValuesToSink;
   collectDebugValues(MI, DbgValuesToSink);
+
+  // Merge or erase debug location to ensure consistent stepping in profilers
+  // and debuggers.
+  if (!SuccToSinkTo->empty()) {
+    MI.setDebugLoc(DILocation::getMergedLocation(MI.getDebugLoc(),
+                                                 InsertPos->getDebugLoc()));
+  } else {
+    MI.setDebugLoc(DebugLoc());
+  }
+
 
   // Move the instruction.
   SuccToSinkTo->splice(InsertPos, ParentBlock, MI,
