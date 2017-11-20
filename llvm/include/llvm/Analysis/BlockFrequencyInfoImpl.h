@@ -1191,8 +1191,7 @@ bool BlockFrequencyInfoImpl<BT>::computeMassInLoop(LoopData &Loop) {
       MinHeaderWeight = 1;
     for (uint32_t H : HeadersWithoutWeight) {
       auto &HeaderNode = Loop.Nodes[H];
-      const BlockT *Block = getBlock(HeaderNode);
-      assert(!Block->getIrrLoopHeaderWeight() &&
+      assert(!getBlock(HeaderNode)->getIrrLoopHeaderWeight() &&
              "Shouldn't have a weight metadata");
       uint64_t MinWeight = MinHeaderWeight.getValue();
       DEBUG(dbgs() << "Giving weight " << MinWeight
