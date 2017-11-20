@@ -5,10 +5,10 @@
 }
 @end
 
-// RUN: c-index-test -cursor-at=%s:4:24 %s | FileCheck -check-prefix=CHECK-CURSOR %s
+// RUN: c-index-test -cursor-at=%s:4:24 -ffreestanding %s | FileCheck -check-prefix=CHECK-CURSOR %s
 // CHECK-CURSOR: ObjCClassRef=Test:3:12
 
-// RUN: c-index-test -test-annotate-tokens=%s:4:1:5:1 %s | FileCheck -check-prefix=CHECK-TOK %s
+// RUN: c-index-test -test-annotate-tokens=%s:4:1:5:1 -ffreestanding %s | FileCheck -check-prefix=CHECK-TOK %s
 // CHECK-TOK: Identifier: "IBOutletCollection" [4:3 - 4:21] macro expansion=IBOutletCollection:1:9
 // FIXME: The following token should belong to the macro expansion cursor.
 // CHECK-TOK: Punctuation: "(" [4:21 - 4:22] attribute(iboutletcollection)= [IBOutletCollection=ObjCInterface]

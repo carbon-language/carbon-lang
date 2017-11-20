@@ -60,6 +60,9 @@ public:
   /// \brief Headers that will be converted to chained PCHs in memory.
   std::vector<std::string> ChainedIncludes;
 
+  /// \brief System Headers that are pre-included if they exist.
+  std::vector<std::string> FSystemIncludeIfExists;
+
   /// \brief When true, disables most of the normal validation performed on
   /// precompiled headers.
   bool DisablePCHValidation;
@@ -190,6 +193,7 @@ public:
     DumpDeserializedPCHDecls = false;
     ImplicitPCHInclude.clear();
     ImplicitPTHInclude.clear();
+    FSystemIncludeIfExists.clear();
     TokenCache.clear();
     SingleFileParseMode = false;
     LexEditorPlaceholders = true;
