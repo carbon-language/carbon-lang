@@ -1897,7 +1897,7 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
           // -mthumb has already been processed in ComputeLLVMTriple()
           // recognize but skip over here.
           continue;
-
+        break;
       case llvm::Triple::mips:
       case llvm::Triple::mipsel:
       case llvm::Triple::mips64:
