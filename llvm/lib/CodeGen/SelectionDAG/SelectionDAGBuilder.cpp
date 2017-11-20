@@ -9350,10 +9350,12 @@ bool SelectionDAGBuilder::buildBitTests(CaseClusterVector &Clusters,
 
   BitTestInfo BTI;
   std::sort(CBV.begin(), CBV.end(), [](const CaseBits &a, const CaseBits &b) {
-    // Sort by probability first, number of bits second.
+    // Sort by probability first, number of bits second, bit mask third.
     if (a.ExtraProb != b.ExtraProb)
       return a.ExtraProb > b.ExtraProb;
-    return a.Bits > b.Bits;
+    if (a.Bits != b.Bits)
+      return a.Bits > b.Bits;
+    return a.Mask < b.Mask;
   });
 
   for (auto &CB : CBV) {
@@ -9542,10 +9544,13 @@ void SelectionDAGBuilder::lowerWorkItem(SwitchWorkListItem W, Value *Cond,
   }
 
   if (TM.getOptLevel() != CodeGenOpt::None) {
-    // Order cases by probability so the most likely case will be checked first.
+    // Here, we order cases by probability so the most likely case will be
+    // checked first. However, two clusters can have the same probability in
+    // which case their relative ordering is non-deterministic. So we use Low
+    // as a tie-breaker as clusters are guaranteed to never overlap.
     std::sort(W.FirstCluster, W.LastCluster + 1,
               [](const CaseCluster &a, const CaseCluster &b) {
-      return a.Prob > b.Prob;
+      return a.Prob != b.Prob ? a.Prob > b.Prob : a.Low < b.Low;
     });
 
     // Rearrange the case blocks so that the last one falls through if possible
