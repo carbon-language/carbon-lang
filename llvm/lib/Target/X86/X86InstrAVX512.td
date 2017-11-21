@@ -10013,3 +10013,30 @@ defm : AVX512_scalar_math_f64_patterns<fadd, "ADD">;
 defm : AVX512_scalar_math_f64_patterns<fsub, "SUB">;
 defm : AVX512_scalar_math_f64_patterns<fmul, "MUL">;
 defm : AVX512_scalar_math_f64_patterns<fdiv, "DIV">;
+
+//===----------------------------------------------------------------------===//
+// AES instructions
+//===----------------------------------------------------------------------===//
+multiclass avx512_vaes<bits<8> Op, string OpStr, string IntPrefix> {
+  let Predicates = [HasVLX, HasVAES] in {
+    defm Z128 : AESI_binop_rm_int<Op, OpStr,
+                                  !cast<Intrinsic>(IntPrefix),
+                                  loadv2i64, 0, VR128X, i128mem>,
+                  EVEX_4V, EVEX_CD8<64, CD8VF>, EVEX_V128, VEX_WIG;
+    defm Z256 : AESI_binop_rm_int<Op, OpStr,
+                                  !cast<Intrinsic>(IntPrefix##"_256"),
+                                  loadv4i64, 0, VR256X, i256mem>,
+                  EVEX_4V, EVEX_CD8<64, CD8VF>, EVEX_V256, VEX_WIG;
+    }
+    let Predicates = [HasAVX512, HasVAES] in
+    defm Z    : AESI_binop_rm_int<Op, OpStr,
+                                  !cast<Intrinsic>(IntPrefix##"_512"),
+                                  loadv8i64, 0, VR512, i512mem>,
+                  EVEX_4V, EVEX_CD8<64, CD8VF>, EVEX_V512, VEX_WIG;
+}
+
+defm VAESENC      : avx512_vaes<0xDC, "vaesenc", "int_x86_aesni_aesenc">;
+defm VAESENCLAST  : avx512_vaes<0xDD, "vaesenclast", "int_x86_aesni_aesenclast">;
+defm VAESDEC      : avx512_vaes<0xDE, "vaesdec", "int_x86_aesni_aesdec">;
+defm VAESDECLAST  : avx512_vaes<0xDF, "vaesdeclast", "int_x86_aesni_aesdeclast">;
+

@@ -7129,46 +7129,60 @@ def : InstAlias<"sha256rnds2\t{$src2, $dst|$dst, $src2}",
 // AES-NI Instructions
 //===----------------------------------------------------------------------===//
 
-multiclass AESI_binop_rm_int<bits<8> opc, string OpcodeStr, Intrinsic IntId128,
-                             PatFrag ld_frag, bit Is2Addr = 1> {
-  def rr : AES8I<opc, MRMSrcReg, (outs VR128:$dst),
-       (ins VR128:$src1, VR128:$src2),
-       !if(Is2Addr,
-           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set VR128:$dst, (IntId128 VR128:$src1, VR128:$src2))]>,
-       Sched<[WriteAESDecEnc]>;
-  def rm : AES8I<opc, MRMSrcMem, (outs VR128:$dst),
-       (ins VR128:$src1, i128mem:$src2),
-       !if(Is2Addr,
-           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set VR128:$dst,
-         (IntId128 VR128:$src1, (ld_frag addr:$src2)))]>,
-       Sched<[WriteAESDecEncLd, ReadAfterLd]>;
+multiclass AESI_binop_rm_int<bits<8> opc, string OpcodeStr,
+                             Intrinsic IntId, PatFrag ld_frag,
+                             bit Is2Addr = 0, RegisterClass RC = VR128,
+                             X86MemOperand MemOp = i128mem> {
+  let AsmString = OpcodeStr##
+                  !if(Is2Addr, "\t{$src2, $dst|$dst, $src2}",
+                               "\t{$src2, $src1, $dst|$dst, $src1, $src2}") in {
+    def rr : AES8I<opc, MRMSrcReg, (outs RC:$dst),
+                   (ins RC:$src1, RC:$src2), "",
+                   [(set RC:$dst, (IntId RC:$src1, RC:$src2))]>,
+                   Sched<[WriteAESDecEnc]>;
+    def rm : AES8I<opc, MRMSrcMem, (outs RC:$dst),
+                   (ins RC:$src1, MemOp:$src2), "",
+                   [(set RC:$dst, (IntId RC:$src1, (ld_frag addr:$src2)))]>,
+                   Sched<[WriteAESDecEncLd, ReadAfterLd]>;
+  }
 }
 
 // Perform One Round of an AES Encryption/Decryption Flow
-let Predicates = [HasAVX, HasAES] in {
+let Predicates = [HasAVX, NoVLX_Or_NoVAES, HasAES] in {
   defm VAESENC          : AESI_binop_rm_int<0xDC, "vaesenc",
-                         int_x86_aesni_aesenc, loadv2i64, 0>, VEX_4V, VEX_WIG;
+                         int_x86_aesni_aesenc, loadv2i64>, VEX_4V, VEX_WIG;
   defm VAESENCLAST      : AESI_binop_rm_int<0xDD, "vaesenclast",
-                         int_x86_aesni_aesenclast, loadv2i64, 0>, VEX_4V, VEX_WIG;
+                         int_x86_aesni_aesenclast, loadv2i64>, VEX_4V, VEX_WIG;
   defm VAESDEC          : AESI_binop_rm_int<0xDE, "vaesdec",
-                         int_x86_aesni_aesdec, loadv2i64, 0>, VEX_4V, VEX_WIG;
+                         int_x86_aesni_aesdec, loadv2i64>, VEX_4V, VEX_WIG;
   defm VAESDECLAST      : AESI_binop_rm_int<0xDF, "vaesdeclast",
-                         int_x86_aesni_aesdeclast, loadv2i64, 0>, VEX_4V, VEX_WIG;
+                         int_x86_aesni_aesdeclast, loadv2i64>, VEX_4V, VEX_WIG;
+}
+
+let Predicates = [NoVLX, HasVAES] in {
+  defm VAESENCY         : AESI_binop_rm_int<0xDC, "vaesenc",
+                         int_x86_aesni_aesenc_256, loadv4i64, 0, VR256,
+                         i256mem>, VEX_4V, VEX_L, VEX_WIG;
+  defm VAESENCLASTY     : AESI_binop_rm_int<0xDD, "vaesenclast",
+                         int_x86_aesni_aesenclast_256, loadv4i64, 0, VR256,
+                         i256mem>, VEX_4V, VEX_L, VEX_WIG;
+  defm VAESDECY         : AESI_binop_rm_int<0xDE, "vaesdec",
+                         int_x86_aesni_aesdec_256, loadv4i64, 0, VR256,
+                         i256mem>, VEX_4V, VEX_L, VEX_WIG;
+  defm VAESDECLASTY     : AESI_binop_rm_int<0xDF, "vaesdeclast",
+                         int_x86_aesni_aesdeclast_256, loadv4i64, 0, VR256,
+                         i256mem>, VEX_4V, VEX_L, VEX_WIG;
 }
 
 let Constraints = "$src1 = $dst" in {
   defm AESENC          : AESI_binop_rm_int<0xDC, "aesenc",
-                         int_x86_aesni_aesenc, memopv2i64>;
+                         int_x86_aesni_aesenc, memopv2i64, 1>;
   defm AESENCLAST      : AESI_binop_rm_int<0xDD, "aesenclast",
-                         int_x86_aesni_aesenclast, memopv2i64>;
+                         int_x86_aesni_aesenclast, memopv2i64, 1>;
   defm AESDEC          : AESI_binop_rm_int<0xDE, "aesdec",
-                         int_x86_aesni_aesdec, memopv2i64>;
+                         int_x86_aesni_aesdec, memopv2i64, 1>;
   defm AESDECLAST      : AESI_binop_rm_int<0xDF, "aesdeclast",
-                         int_x86_aesni_aesdeclast, memopv2i64>;
+                         int_x86_aesni_aesdeclast, memopv2i64, 1>;
 }
 
 // Perform the AES InvMixColumn Transformation
