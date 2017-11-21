@@ -10204,3 +10204,14 @@ defm VPDPBUSDS  : VNNI_common<0x51, "vpdpbusds", X86Vpdpbusds>;
 defm VPDPWSSD   : VNNI_common<0x52, "vpdpwssd", X86Vpdpwssd>;
 defm VPDPWSSDS  : VNNI_common<0x53, "vpdpwssds", X86Vpdpwssds>;
 
+//===----------------------------------------------------------------------===//
+// Bit Algorithms
+//===----------------------------------------------------------------------===//
+
+defm VPOPCNTB : avx512_unary_rm_vl<0x54, "vpopcntb", ctpop,
+                                   avx512vl_i8_info, HasBITALG>,
+                avx512_unary_lowering<ctpop, avx512vl_i8_info, HasBITALG>;
+defm VPOPCNTW : avx512_unary_rm_vl<0x54, "vpopcntw", ctpop,
+                                   avx512vl_i16_info, HasBITALG>,
+                avx512_unary_lowering<ctpop, avx512vl_i16_info, HasBITALG>, VEX_W;
+

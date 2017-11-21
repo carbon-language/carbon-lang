@@ -1269,6 +1269,9 @@ bool sys::getHostCPUFeatures(StringMap<bool> &Features) {
   // Enable Vector Neural Network Instructions
   Features["avx512vnni"] = HasLeaf7 && ((ECX >> 11) & 1) && HasAVX512Save;
 
+  // Enable Bit Algorithms
+  Features["avx512bitalg"] = HasLeaf7 && ((ECX >> 12) & 1) && HasAVX512Save;
+
   bool HasLeafD = MaxLevel >= 0xd &&
                   !getX86CpuIDAndInfoEx(0xd, 0x1, &EAX, &EBX, &ECX, &EDX);
 

@@ -307,6 +307,9 @@ protected:
   /// Processor has AVX-512 Vector Neural Network Instructions
   bool HasVNNI;
 
+  /// Processor has AVX-512 Bit Algorithms instructions
+  bool HasBITALG;
+
   /// Processor supports MPX - Memory Protection Extensions
   bool HasMPX;
 
@@ -534,6 +537,7 @@ public:
   bool hasVLX() const { return HasVLX; }
   bool hasPKU() const { return HasPKU; }
   bool hasVNNI() const { return HasVNNI; }
+  bool hasBITALG() const { return HasBITALG; }
   bool hasMPX() const { return HasMPX; }
   bool hasCLFLUSHOPT() const { return HasCLFLUSHOPT; }
   bool hasCLWB() const { return HasCLWB; }

@@ -163,6 +163,9 @@ def FeaturePKU   : SubtargetFeature<"pku", "HasPKU", "true",
 def FeatureVNNI    : SubtargetFeature<"avx512vnni", "HasVNNI", "true",
                           "Enable AVX-512 Vector Neural Network Instructions",
                                       [FeatureAVX512]>;
+def FeatureBITALG  : SubtargetFeature<"avx512bitalg", "HasBITALG", "true",
+                       "Enable AVX-512 Bit Algorithms",
+                        [FeatureBWI]>;
 def FeaturePCLMUL  : SubtargetFeature<"pclmul", "HasPCLMUL", "true",
                          "Enable packed carry-less multiplication instructions",
                                [FeatureSSE2]>;

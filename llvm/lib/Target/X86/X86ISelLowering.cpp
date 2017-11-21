@@ -1556,6 +1556,11 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     }
   }
 
+  if (Subtarget.hasBITALG())
+    for (auto VT : { MVT::v64i8, MVT::v32i16, MVT::v32i8,
+                     MVT::v16i16, MVT::v16i8, MVT::v8i16 })
+      setOperationAction(ISD::CTPOP, VT, Legal);
+
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
   setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::Other, Custom);

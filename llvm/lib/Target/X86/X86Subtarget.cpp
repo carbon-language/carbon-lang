@@ -326,6 +326,7 @@ void X86Subtarget::initializeEnvironment() {
   HasADX = false;
   HasPKU = false;
   HasVNNI = false;
+  HasBITALG = false;
   HasSHA = false;
   HasPRFCHW = false;
   HasRDSEED = false;
