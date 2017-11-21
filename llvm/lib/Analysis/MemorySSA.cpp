@@ -260,10 +260,10 @@ static bool instructionClobbersQuery(MemoryDef *MD,
     }
   }
 
-  if (UseCS) {
+  /*if (UseCS) {
     ModRefInfo I = AA.getModRefInfo(DefInst, UseCS);
     return I != MRI_NoModRef;
-  }
+  }*/
 
   if (auto *DefLoad = dyn_cast<LoadInst>(DefInst)) {
     if (auto *UseLoad = dyn_cast<LoadInst>(UseInst)) {
@@ -892,7 +892,6 @@ class MemorySSA::CachingWalker final : public MemorySSAWalker {
   bool AutoResetWalker = true;
 
   MemoryAccess *getClobberingMemoryAccess(MemoryAccess *, UpwardsMemoryQuery &);
-  void verifyRemoved(MemoryAccess *);
 
 public:
   CachingWalker(MemorySSA *, AliasAnalysis *, DominatorTree *);
