@@ -5310,12 +5310,15 @@ void OffloadBundler::ConstructJob(Compilation &C, const JobAction &JA,
     if (I)
       Triples += ',';
 
+    // Find ToolChain for this input.
     Action::OffloadKind CurKind = Action::OFK_Host;
     const ToolChain *CurTC = &getToolChain();
     const Action *CurDep = JA.getInputs()[I];
 
     if (const auto *OA = dyn_cast<OffloadAction>(CurDep)) {
+      CurTC = nullptr;
       OA->doOnEachDependence([&](Action *A, const ToolChain *TC, const char *) {
+        assert(CurTC == nullptr && "Expected one dependence!");
         CurKind = A->getOffloadingDeviceKind();
         CurTC = TC;
       });
@@ -5336,7 +5339,17 @@ void OffloadBundler::ConstructJob(Compilation &C, const JobAction &JA,
   for (unsigned I = 0; I < Inputs.size(); ++I) {
     if (I)
       UB += ',';
-    UB += Inputs[I].getFilename();
+
+    // Find ToolChain for this input.
+    const ToolChain *CurTC = &getToolChain();
+    if (const auto *OA = dyn_cast<OffloadAction>(JA.getInputs()[I])) {
+      CurTC = nullptr;
+      OA->doOnEachDependence([&](Action *, const ToolChain *TC, const char *) {
+        assert(CurTC == nullptr && "Expected one dependence!");
+        CurTC = TC;
+      });
+    }
+    UB += CurTC->getInputFilename(Inputs[I]);
   }
   CmdArgs.push_back(TCArgs.MakeArgString(UB));
 
@@ -5396,13 +5409,7 @@ void OffloadBundler::ConstructJobMultipleOutputs(
   for (unsigned I = 0; I < Outputs.size(); ++I) {
     if (I)
       UB += ',';
-    SmallString<256> OutputFileName(Outputs[I].getFilename());
-    // Change extension of target files for OpenMP offloading
-    // to NVIDIA GPUs.
-    if (DepInfo[I].DependentToolChain->getTriple().isNVPTX() &&
-        JA.isOffloading(Action::OFK_OpenMP))
-      llvm::sys::path::replace_extension(OutputFileName, "cubin");
-    UB += OutputFileName;
+    UB += DepInfo[I].DependentToolChain->getInputFilename(Outputs[I]);
   }
   CmdArgs.push_back(TCArgs.MakeArgString(UB));
   CmdArgs.push_back("-unbundle");
