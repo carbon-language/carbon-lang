@@ -26,7 +26,7 @@ void test_ds(){
 // CK1: [[SHAREDARGS:%.+]] = alloca i8**
 // CK1: call i1 @__kmpc_kernel_parallel(i8** %work_fn, i8*** [[SHAREDARGS]])
 // CK1: [[SHARGSTMP:%.+]] = load i8**, i8*** [[SHAREDARGS]]
-// CK1: call void @__omp_outlined___wrapper{{.*}}({{.*}}, i8** %5)
+// CK1: call void @__omp_outlined___wrapper{{.*}}({{.*}}, i8** [[SHARGSTMP]])
 
 /// ========= In the kernel function ========= ///
 
