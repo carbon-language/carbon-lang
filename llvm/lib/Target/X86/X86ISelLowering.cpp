@@ -25090,6 +25090,10 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PACKUS:             return "X86ISD::PACKUS";
   case X86ISD::PALIGNR:            return "X86ISD::PALIGNR";
   case X86ISD::VALIGN:             return "X86ISD::VALIGN";
+  case X86ISD::VSHLD:              return "X86ISD::VSHLD";
+  case X86ISD::VSHRD:              return "X86ISD::VSHRD";
+  case X86ISD::VSHLDV:             return "X86ISD::VSHLDV";
+  case X86ISD::VSHRDV:             return "X86ISD::VSHRDV";
   case X86ISD::PSHUFD:             return "X86ISD::PSHUFD";
   case X86ISD::PSHUFHW:            return "X86ISD::PSHUFHW";
   case X86ISD::PSHUFLW:            return "X86ISD::PSHUFLW";

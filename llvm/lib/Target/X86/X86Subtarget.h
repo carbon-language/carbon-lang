@@ -167,6 +167,9 @@ protected:
   /// Processor has VBMI instructions.
   bool HasVBMI;
 
+  /// Processor has VBMI2 instructions.
+  bool HasVBMI2;
+
   /// Processor has Integer Fused Multiply Add
   bool HasIFMA;
 
@@ -483,6 +486,7 @@ public:
   bool hasBMI() const { return HasBMI; }
   bool hasBMI2() const { return HasBMI2; }
   bool hasVBMI() const { return HasVBMI; }
+  bool hasVBMI2() const { return HasVBMI2; }
   bool hasIFMA() const { return HasIFMA; }
   bool hasRTM() const { return HasRTM; }
   bool hasADX() const { return HasADX; }
