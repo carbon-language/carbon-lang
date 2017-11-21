@@ -10168,6 +10168,7 @@ ARMAsmParser::FilterNearMisses(SmallVectorImpl<NearMissInfo> &NearMissesIn,
   // to only report the widest one.
   std::multimap<unsigned, unsigned> OperandMissesSeen;
   SmallSet<uint64_t, 4> FeatureMissesSeen;
+  bool ReportedTooFewOperands = false;
 
   // Process the near-misses in reverse order, so that we see more general ones
   // first, and so can avoid emitting more specific ones.
@@ -10288,9 +10289,12 @@ ARMAsmParser::FilterNearMisses(SmallVectorImpl<NearMissInfo> &NearMissesIn,
       break;
     }
     case NearMissInfo::NearMissTooFewOperands: {
-      SMLoc EndLoc = ((ARMOperand &)*Operands.back()).getEndLoc();
-      NearMissesOut.emplace_back(
-          NearMissMessage{ EndLoc, StringRef("too few operands for instruction") });
+      if (!ReportedTooFewOperands) {
+        SMLoc EndLoc = ((ARMOperand &)*Operands.back()).getEndLoc();
+        NearMissesOut.emplace_back(NearMissMessage{
+            EndLoc, StringRef("too few operands for instruction")});
+        ReportedTooFewOperands = true;
+      }
       break;
     }
     case NearMissInfo::NoNearMiss:
