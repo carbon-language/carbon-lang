@@ -10137,6 +10137,9 @@ ARMAsmParser::getCustomOperandDiag(ARMMatchResultTy MatchError) {
   case Match_DPR:
     return hasD16() ? "operand must be a register in range [d0, d15]"
                     : "operand must be a register in range [d0, d31]";
+  case Match_DPR_RegList:
+    return hasD16() ? "operand must be a list of registers in range [d0, d15]"
+                    : "operand must be a list of registers in range [d0, d31]";
 
   // For all other diags, use the static string from tablegen.
   default:
