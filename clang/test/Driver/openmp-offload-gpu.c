@@ -47,7 +47,8 @@
 
 /// Check unbundlink of assembly file, cubin file generation and usage by nvlink
 // RUN:   touch %t.s
-// RUN:   %clang -### -no-canonical-prefixes -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda -save-temps %t.s 2>&1 \
+// RUN:   %clang -### -target powerpc64le-unknown-linux-gnu -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda \
+// RUN:          -no-canonical-prefixes -save-temps %t.s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHK-UNBUNDLING-PTXAS-CUBIN-NVLINK %s
 
 /// Use DAG to ensure that assembly file has been unbundled.
@@ -59,7 +60,8 @@
 /// ###########################################################################
 
 /// Check cubin file generation and bundling
-// RUN:   %clang -### -no-canonical-prefixes -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda -save-temps %s -c 2>&1 \
+// RUN:   %clang -### -target powerpc64le-unknown-linux-gnu -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda \
+// RUN:          -no-canonical-prefixes -save-temps %s -c 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHK-PTXAS-CUBIN-BUNDLING %s
 
 // CHK-PTXAS-CUBIN-BUNDLING: clang{{.*}}" "-o" "[[PTX:.*\.s]]"
@@ -70,7 +72,8 @@
 
 /// Check cubin file unbundling and usage by nvlink
 // RUN:   touch %t.o
-// RUN:   %clang -### -no-canonical-prefixes -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda -save-temps %t.o 2>&1 \
+// RUN:   %clang -### -target powerpc64le-unknown-linux-gnu -fopenmp=libomp -fopenmp-targets=nvptx64-nvidia-cuda \
+// RUN:          -no-canonical-prefixes -save-temps %t.o 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHK-CUBIN-UNBUNDLING-NVLINK %s
 
 /// Use DAG to ensure that cubin file has been unbundled.
