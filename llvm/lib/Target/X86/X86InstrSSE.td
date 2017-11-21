@@ -7242,40 +7242,84 @@ def AESKEYGENASSIST128rm : AESAI<0xDF, MRMSrcMem, (outs VR128:$dst),
 // PCLMUL Instructions
 //===----------------------------------------------------------------------===//
 
+// SSE carry-less Multiplication instructions
+let Constraints = "$src1 = $dst", Predicates = [NoAVX, HasPCLMUL] in {
+  let isCommutable = 1 in
+  def PCLMULQDQrr : PCLMULIi8<0x44, MRMSrcReg, (outs VR128:$dst),
+            (ins VR128:$src1, VR128:$src2, u8imm:$src3),
+            "pclmulqdq\t{$src3, $src2, $dst|$dst, $src2, $src3}",
+            [(set VR128:$dst,
+              (int_x86_pclmulqdq VR128:$src1, VR128:$src2, imm:$src3))],
+            IIC_SSE_PCLMULQDQ_RR>, Sched<[WriteCLMul]>;
+
+  def PCLMULQDQrm : PCLMULIi8<0x44, MRMSrcMem, (outs VR128:$dst),
+            (ins VR128:$src1, i128mem:$src2, u8imm:$src3),
+            "pclmulqdq\t{$src3, $src2, $dst|$dst, $src2, $src3}",
+            [(set VR128:$dst,
+               (int_x86_pclmulqdq VR128:$src1, (memopv2i64 addr:$src2),
+                imm:$src3))],
+            IIC_SSE_PCLMULQDQ_RR>, Sched<[WriteCLMulLd, ReadAfterLd]>;
+}
+
+// SSE aliases
+foreach HI = ["hq","lq"] in
+foreach LO = ["hq","lq"] in {
+  def : InstAlias<"pclmul" # HI # LO # "dq\t{$src, $dst|$dst, $src}",
+                  (PCLMULQDQrr VR128:$dst, VR128:$src,
+                   !add(!shl(!eq(LO,"hq"),4),!eq(HI,"hq"))), 0>;
+  def : InstAlias<"pclmul" # HI # LO # "dq\t{$src, $dst|$dst, $src}",
+                  (PCLMULQDQrm VR128:$dst, i128mem:$src,
+                   !add(!shl(!eq(LO,"hq"),4),!eq(HI,"hq"))), 0>;
+}
+
 // AVX carry-less Multiplication instructions
-let isCommutable = 1 in
-def VPCLMULQDQrr : AVXPCLMULIi8<0x44, MRMSrcReg, (outs VR128:$dst),
-           (ins VR128:$src1, VR128:$src2, u8imm:$src3),
-           "vpclmulqdq\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
-           [(set VR128:$dst,
-             (int_x86_pclmulqdq VR128:$src1, VR128:$src2, imm:$src3))]>,
-           Sched<[WriteCLMul]>, VEX_WIG;
+multiclass vpclmulqdq<RegisterClass RC, X86MemOperand MemOp,
+                      PatFrag LdFrag, Intrinsic IntId> {
+  let isCommutable = 1 in
+  def rr : PCLMULIi8<0x44, MRMSrcReg, (outs RC:$dst),
+            (ins RC:$src1, RC:$src2, u8imm:$src3),
+            "vpclmulqdq\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
+            [(set RC:$dst,
+              (IntId RC:$src1, RC:$src2, imm:$src3))]>,
+            Sched<[WriteCLMul]>;
 
-def VPCLMULQDQrm : AVXPCLMULIi8<0x44, MRMSrcMem, (outs VR128:$dst),
-           (ins VR128:$src1, i128mem:$src2, u8imm:$src3),
-           "vpclmulqdq\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
-           [(set VR128:$dst, (int_x86_pclmulqdq VR128:$src1,
-                              (loadv2i64 addr:$src2), imm:$src3))]>,
-           Sched<[WriteCLMulLd, ReadAfterLd]>, VEX_WIG;
+  def rm : PCLMULIi8<0x44, MRMSrcMem, (outs RC:$dst),
+            (ins RC:$src1, MemOp:$src2, u8imm:$src3),
+            "vpclmulqdq\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
+            [(set RC:$dst,
+               (IntId RC:$src1, (LdFrag addr:$src2), imm:$src3))]>,
+            Sched<[WriteCLMulLd, ReadAfterLd]>;
+}
 
-// Carry-less Multiplication instructions
-let Constraints = "$src1 = $dst" in {
-let isCommutable = 1 in
-def PCLMULQDQrr : PCLMULIi8<0x44, MRMSrcReg, (outs VR128:$dst),
-           (ins VR128:$src1, VR128:$src2, u8imm:$src3),
-           "pclmulqdq\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-           [(set VR128:$dst,
-             (int_x86_pclmulqdq VR128:$src1, VR128:$src2, imm:$src3))],
-             IIC_SSE_PCLMULQDQ_RR>, Sched<[WriteCLMul]>;
+let Predicates = [HasAVX, NoVLX_Or_NoVPCLMULQDQ, HasPCLMUL] in
+defm VPCLMULQDQ : vpclmulqdq<VR128, i128mem, loadv2i64,
+                             int_x86_pclmulqdq>, VEX_4V, VEX_WIG;
 
-def PCLMULQDQrm : PCLMULIi8<0x44, MRMSrcMem, (outs VR128:$dst),
-           (ins VR128:$src1, i128mem:$src2, u8imm:$src3),
-           "pclmulqdq\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-           [(set VR128:$dst, (int_x86_pclmulqdq VR128:$src1,
-                              (memopv2i64 addr:$src2), imm:$src3))],
-                              IIC_SSE_PCLMULQDQ_RM>,
-           Sched<[WriteCLMulLd, ReadAfterLd]>;
-} // Constraints = "$src1 = $dst"
+let Predicates = [NoVLX, HasVPCLMULQDQ] in
+defm VPCLMULQDQY : vpclmulqdq<VR256, i256mem, loadv4i64,
+                              int_x86_pclmulqdq_256>, VEX_4V, VEX_L, VEX_WIG;
+
+multiclass vpclmulqdq_aliases_impl<string InstStr, RegisterClass RC,
+                                   X86MemOperand MemOp, string Hi, string Lo> {
+  def : InstAlias<"vpclmul"##Hi##Lo##"dq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                  (!cast<Instruction>(InstStr # "rr") RC:$dst, RC:$src1, RC:$src2,
+                        !add(!shl(!eq(Lo,"hq"),4),!eq(Hi,"hq"))), 0>;
+  def : InstAlias<"vpclmul"##Hi##Lo##"dq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                  (!cast<Instruction>(InstStr # "rm") RC:$dst, RC:$src1, MemOp:$src2,
+                        !add(!shl(!eq(Lo,"hq"),4),!eq(Hi,"hq"))), 0>;
+}
+
+multiclass vpclmulqdq_aliases<string InstStr, RegisterClass RC,
+                              X86MemOperand MemOp> {
+  defm : vpclmulqdq_aliases_impl<InstStr, RC, MemOp, "hq", "hq">;
+  defm : vpclmulqdq_aliases_impl<InstStr, RC, MemOp, "hq", "lq">;
+  defm : vpclmulqdq_aliases_impl<InstStr, RC, MemOp, "lq", "hq">;
+  defm : vpclmulqdq_aliases_impl<InstStr, RC, MemOp, "lq", "lq">;
+}
+
+// AVX aliases
+defm : vpclmulqdq_aliases<"VPCLMULQDQ", VR128, i128mem>;
+defm : vpclmulqdq_aliases<"VPCLMULQDQY", VR256, i256mem>;
 
 // Immediate transform to help with commuting.
 def PCLMULCommuteImm : SDNodeXForm<imm, [{
@@ -7298,28 +7342,6 @@ let Predicates = [NoAVX, HasPCLMUL] in {
             (PCLMULQDQrm VR128:$src1, addr:$src2,
                           (PCLMULCommuteImm imm:$src3))>;
 }
-
-multiclass pclmul_alias<string asm, int immop> {
-  def : InstAlias<!strconcat("pclmul", asm, "dq {$src, $dst|$dst, $src}"),
-                  (PCLMULQDQrr VR128:$dst, VR128:$src, immop), 0>;
-
-  def : InstAlias<!strconcat("pclmul", asm, "dq {$src, $dst|$dst, $src}"),
-                  (PCLMULQDQrm VR128:$dst, i128mem:$src, immop), 0>;
-
-  def : InstAlias<!strconcat("vpclmul", asm,
-                             "dq {$src2, $src1, $dst|$dst, $src1, $src2}"),
-                  (VPCLMULQDQrr VR128:$dst, VR128:$src1, VR128:$src2, immop),
-                  0>;
-
-  def : InstAlias<!strconcat("vpclmul", asm,
-                             "dq {$src2, $src1, $dst|$dst, $src1, $src2}"),
-                  (VPCLMULQDQrm VR128:$dst, VR128:$src1, i128mem:$src2, immop),
-                  0>;
-}
-defm : pclmul_alias<"hqhq", 0x11>;
-defm : pclmul_alias<"hqlq", 0x01>;
-defm : pclmul_alias<"lqhq", 0x10>;
-defm : pclmul_alias<"lqlq", 0x00>;
 
 //===----------------------------------------------------------------------===//
 // SSE4A Instructions

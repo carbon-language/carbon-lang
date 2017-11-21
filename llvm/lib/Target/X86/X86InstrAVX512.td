@@ -10017,6 +10017,7 @@ defm : AVX512_scalar_math_f64_patterns<fdiv, "DIV">;
 //===----------------------------------------------------------------------===//
 // AES instructions
 //===----------------------------------------------------------------------===//
+
 multiclass avx512_vaes<bits<8> Op, string OpStr, string IntPrefix> {
   let Predicates = [HasVLX, HasVAES] in {
     defm Z128 : AESI_binop_rm_int<Op, OpStr,
@@ -10039,4 +10040,26 @@ defm VAESENC      : avx512_vaes<0xDC, "vaesenc", "int_x86_aesni_aesenc">;
 defm VAESENCLAST  : avx512_vaes<0xDD, "vaesenclast", "int_x86_aesni_aesenclast">;
 defm VAESDEC      : avx512_vaes<0xDE, "vaesdec", "int_x86_aesni_aesdec">;
 defm VAESDECLAST  : avx512_vaes<0xDF, "vaesdeclast", "int_x86_aesni_aesdeclast">;
+
+//===----------------------------------------------------------------------===//
+// PCLMUL instructions - Carry less multiplication
+//===----------------------------------------------------------------------===//
+
+let Predicates = [HasAVX512, HasVPCLMULQDQ] in
+defm VPCLMULQDQZ : vpclmulqdq<VR512, i512mem, loadv8i64, int_x86_pclmulqdq_512>,
+                              EVEX_4V, EVEX_V512, EVEX_CD8<64, CD8VF>, VEX_WIG;
+
+let Predicates = [HasVLX, HasVPCLMULQDQ] in {
+defm VPCLMULQDQZ128 : vpclmulqdq<VR128X, i128mem, loadv2i64, int_x86_pclmulqdq>,
+                              EVEX_4V, EVEX_V128, EVEX_CD8<64, CD8VF>, VEX_WIG;
+
+defm VPCLMULQDQZ256: vpclmulqdq<VR256X, i256mem, loadv4i64,
+                                int_x86_pclmulqdq_256>, EVEX_4V, EVEX_V256,
+                                EVEX_CD8<64, CD8VF>, VEX_WIG;
+}
+
+// Aliases
+defm : vpclmulqdq_aliases<"VPCLMULQDQZ", VR512, i512mem>;
+defm : vpclmulqdq_aliases<"VPCLMULQDQZ128", VR128X, i128mem>;
+defm : vpclmulqdq_aliases<"VPCLMULQDQZ256", VR256X, i256mem>;
 

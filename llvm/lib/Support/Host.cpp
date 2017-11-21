@@ -1262,6 +1262,9 @@ bool sys::getHostCPUFeatures(StringMap<bool> &Features) {
   Features["pku"]             = HasLeaf7 && ((ECX >> 4) & 1);
   Features["vaes"] = HasLeaf7 && ((ECX >> 9) & 1) && HasAVXSave;
 
+  // VPCLMULQDQ (carry-less multiplication quadword)
+  Features["vpclmulqdq"] = HasLeaf7 && ((ECX >> 10) & 1) && HasAVXSave;
+
   bool HasLeafD = MaxLevel >= 0xd &&
                   !getX86CpuIDAndInfoEx(0xd, 0x1, &EAX, &EBX, &ECX, &EDX);
 

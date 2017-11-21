@@ -126,6 +126,7 @@ protected:
 
   /// Target has carry-less multiplication
   bool HasPCLMUL;
+  bool HasVPCLMULQDQ;
 
   /// Target has 3-operand fused multiply-add
   bool HasFMA;
@@ -465,6 +466,7 @@ public:
   bool hasXSAVEC() const { return HasXSAVEC; }
   bool hasXSAVES() const { return HasXSAVES; }
   bool hasPCLMUL() const { return HasPCLMUL; }
+  bool hasVPCLMULQDQ() const { return HasVPCLMULQDQ; }
   // Prefer FMA4 to FMA - its better for commutation/memory folding and
   // has equal or better performance on all supported targets.
   bool hasFMA() const { return HasFMA && !HasFMA4; }
