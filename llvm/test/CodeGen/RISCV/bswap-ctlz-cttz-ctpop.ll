@@ -86,8 +86,7 @@ define i8 @test_cttz_i8(i8 %a) nounwind {
 ; RV32I-NEXT:    addi a1, a0, 0
 ; RV32I-NEXT:    addi a0, zero, 8
 ; RV32I-NEXT:    andi a2, a1, 255
-; RV32I-NEXT:    addi a3, zero, 0
-; RV32I-NEXT:    beq a2, a3, .LBB3_2
+; RV32I-NEXT:    beq a2, zero, .LBB3_2
 ; RV32I-NEXT:    jal zero, .LBB3_1
 ; RV32I-NEXT:  .LBB3_1: # %cond.false
 ; RV32I-NEXT:    addi a0, a1, -1
@@ -131,8 +130,7 @@ define i16 @test_cttz_i16(i16 %a) nounwind {
 ; RV32I-NEXT:    lui a2, 16
 ; RV32I-NEXT:    addi a2, a2, -1
 ; RV32I-NEXT:    and a2, a1, a2
-; RV32I-NEXT:    addi a3, zero, 0
-; RV32I-NEXT:    beq a2, a3, .LBB4_2
+; RV32I-NEXT:    beq a2, zero, .LBB4_2
 ; RV32I-NEXT:    jal zero, .LBB4_1
 ; RV32I-NEXT:  .LBB4_1: # %cond.false
 ; RV32I-NEXT:    addi a0, a1, -1
@@ -173,8 +171,7 @@ define i32 @test_cttz_i32(i32 %a) nounwind {
 ; RV32I-NEXT:    sw ra, 12(s0)
 ; RV32I-NEXT:    addi a1, a0, 0
 ; RV32I-NEXT:    addi a0, zero, 32
-; RV32I-NEXT:    addi a2, zero, 0
-; RV32I-NEXT:    beq a1, a2, .LBB5_2
+; RV32I-NEXT:    beq a1, zero, .LBB5_2
 ; RV32I-NEXT:    jal zero, .LBB5_1
 ; RV32I-NEXT:  .LBB5_1: # %cond.false
 ; RV32I-NEXT:    addi a0, a1, -1
@@ -215,8 +212,7 @@ define i32 @test_ctlz_i32(i32 %a) nounwind {
 ; RV32I-NEXT:    sw ra, 12(s0)
 ; RV32I-NEXT:    addi a1, a0, 0
 ; RV32I-NEXT:    addi a0, zero, 32
-; RV32I-NEXT:    addi a2, zero, 0
-; RV32I-NEXT:    beq a1, a2, .LBB6_2
+; RV32I-NEXT:    beq a1, zero, .LBB6_2
 ; RV32I-NEXT:    jal zero, .LBB6_1
 ; RV32I-NEXT:  .LBB6_1: # %cond.false
 ; RV32I-NEXT:    srli a0, a1, 1
@@ -314,13 +310,13 @@ define i64 @test_cttz_i64(i64 %a) nounwind {
 ; RV32I-NEXT:    addi a0, a1, 0
 ; RV32I-NEXT:    addi a1, s3, 0
 ; RV32I-NEXT:    jalr ra, s6, 0
-; RV32I-NEXT:    addi a1, zero, 0
-; RV32I-NEXT:    bne s2, a1, .LBB7_2
+; RV32I-NEXT:    bne s2, zero, .LBB7_2
 ; RV32I-NEXT:  # BB#1:
 ; RV32I-NEXT:    srli a0, a0, 24
 ; RV32I-NEXT:    addi s1, a0, 32
 ; RV32I-NEXT:  .LBB7_2:
 ; RV32I-NEXT:    addi a0, s1, 0
+; RV32I-NEXT:    addi a1, zero, 0
 ; RV32I-NEXT:    lw s7, 0(s0)
 ; RV32I-NEXT:    lw s6, 4(s0)
 ; RV32I-NEXT:    lw s5, 8(s0)
@@ -494,13 +490,13 @@ define i64 @test_cttz_i64_zero_undef(i64 %a) nounwind {
 ; RV32I-NEXT:    addi a0, a1, 0
 ; RV32I-NEXT:    addi a1, s3, 0
 ; RV32I-NEXT:    jalr ra, s6, 0
-; RV32I-NEXT:    addi a1, zero, 0
-; RV32I-NEXT:    bne s2, a1, .LBB11_2
+; RV32I-NEXT:    bne s2, zero, .LBB11_2
 ; RV32I-NEXT:  # BB#1:
 ; RV32I-NEXT:    srli a0, a0, 24
 ; RV32I-NEXT:    addi s1, a0, 32
 ; RV32I-NEXT:  .LBB11_2:
 ; RV32I-NEXT:    addi a0, s1, 0
+; RV32I-NEXT:    addi a1, zero, 0
 ; RV32I-NEXT:    lw s7, 0(s0)
 ; RV32I-NEXT:    lw s6, 4(s0)
 ; RV32I-NEXT:    lw s5, 8(s0)

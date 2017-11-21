@@ -2,52 +2,41 @@
 ; RUN: llc -mtriple=riscv32 -verify-machineinstrs < %s \
 ; RUN:   | FileCheck %s -check-prefix=RV32I
 
-; FIXME: an unncessary register is allocated just to store 0. X0 should be
-; used instead
-
 define i8 @sext_i1_to_i8(i1 %a) {
-; TODO: the addi that stores 0 in t1 is unnecessary
 ; RV32I-LABEL: sext_i1_to_i8:
 ; RV32I:       # BB#0:
 ; RV32I-NEXT:    andi a0, a0, 1
-; RV32I-NEXT:    addi a1, zero, 0
-; RV32I-NEXT:    sub a0, a1, a0
+; RV32I-NEXT:    sub a0, zero, a0
 ; RV32I-NEXT:    jalr zero, ra, 0
   %1 = sext i1 %a to i8
   ret i8 %1
 }
 
 define i16 @sext_i1_to_i16(i1 %a) {
-; TODO: the addi that stores 0 in t1 is unnecessary
 ; RV32I-LABEL: sext_i1_to_i16:
 ; RV32I:       # BB#0:
 ; RV32I-NEXT:    andi a0, a0, 1
-; RV32I-NEXT:    addi a1, zero, 0
-; RV32I-NEXT:    sub a0, a1, a0
+; RV32I-NEXT:    sub a0, zero, a0
 ; RV32I-NEXT:    jalr zero, ra, 0
   %1 = sext i1 %a to i16
   ret i16 %1
 }
 
 define i32 @sext_i1_to_i32(i1 %a) {
-; TODO: the addi that stores 0 in t1 is unnecessary
 ; RV32I-LABEL: sext_i1_to_i32:
 ; RV32I:       # BB#0:
 ; RV32I-NEXT:    andi a0, a0, 1
-; RV32I-NEXT:    addi a1, zero, 0
-; RV32I-NEXT:    sub a0, a1, a0
+; RV32I-NEXT:    sub a0, zero, a0
 ; RV32I-NEXT:    jalr zero, ra, 0
   %1 = sext i1 %a to i32
   ret i32 %1
 }
 
 define i64 @sext_i1_to_i64(i1 %a) {
-; TODO: the addi that stores 0 in t1 is unnecessary
 ; RV32I-LABEL: sext_i1_to_i64:
 ; RV32I:       # BB#0:
 ; RV32I-NEXT:    andi a0, a0, 1
-; RV32I-NEXT:    addi a1, zero, 0
-; RV32I-NEXT:    sub a0, a1, a0
+; RV32I-NEXT:    sub a0, zero, a0
 ; RV32I-NEXT:    addi a1, a0, 0
 ; RV32I-NEXT:    jalr zero, ra, 0
   %1 = sext i1 %a to i64
