@@ -25250,6 +25250,10 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::CVTS2UI_RND:        return "X86ISD::CVTS2UI_RND";
   case X86ISD::LWPINS:             return "X86ISD::LWPINS";
   case X86ISD::MGATHER:            return "X86ISD::MGATHER";
+  case X86ISD::VPDPBUSD:           return "X86ISD::VPDPBUSD";
+  case X86ISD::VPDPBUSDS:          return "X86ISD::VPDPBUSDS";
+  case X86ISD::VPDPWSSD:           return "X86ISD::VPDPWSSD";
+  case X86ISD::VPDPWSSDS:          return "X86ISD::VPDPWSSDS";
   }
   return nullptr;
 }

@@ -304,6 +304,9 @@ protected:
   /// Processor has PKU extenstions
   bool HasPKU;
 
+  /// Processor has AVX-512 Vector Neural Network Instructions
+  bool HasVNNI;
+
   /// Processor supports MPX - Memory Protection Extensions
   bool HasMPX;
 
@@ -530,6 +533,7 @@ public:
   bool hasBWI() const { return HasBWI; }
   bool hasVLX() const { return HasVLX; }
   bool hasPKU() const { return HasPKU; }
+  bool hasVNNI() const { return HasVNNI; }
   bool hasMPX() const { return HasMPX; }
   bool hasCLFLUSHOPT() const { return HasCLFLUSHOPT; }
   bool hasCLWB() const { return HasCLWB; }

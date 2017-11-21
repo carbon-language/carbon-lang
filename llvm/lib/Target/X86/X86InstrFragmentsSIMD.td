@@ -533,6 +533,15 @@ def x86vpmadd52h     : SDNode<"X86ISD::VPMADD52H",     SDTIFma, [SDNPCommutative
 
 def X86rsqrt14   : SDNode<"X86ISD::RSQRT14",  SDTFPUnaryOp>;
 def X86rcp14     : SDNode<"X86ISD::RCP14",    SDTFPUnaryOp>;
+
+// VNNI
+def SDTVnni : SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisSameAs<0,1>,
+                                   SDTCisSameAs<1,2>, SDTCisSameAs<1,3>]>;
+def X86Vpdpbusd  : SDNode<"X86ISD::VPDPBUSD", SDTVnni>;
+def X86Vpdpbusds : SDNode<"X86ISD::VPDPBUSDS", SDTVnni>;
+def X86Vpdpwssd  : SDNode<"X86ISD::VPDPWSSD", SDTVnni>;
+def X86Vpdpwssds : SDNode<"X86ISD::VPDPWSSDS", SDTVnni>;
+
 def X86rsqrt28   : SDNode<"X86ISD::RSQRT28",  SDTFPUnaryOpRound>;
 def X86rcp28     : SDNode<"X86ISD::RCP28",    SDTFPUnaryOpRound>;
 def X86exp2      : SDNode<"X86ISD::EXP2",     SDTFPUnaryOpRound>;

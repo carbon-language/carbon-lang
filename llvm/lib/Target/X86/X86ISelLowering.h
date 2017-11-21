@@ -481,6 +481,12 @@ namespace llvm {
       // op0 x op1 + op2.
       VPMADD52L, VPMADD52H,
 
+      // VNNI
+      VPDPBUSD,
+      VPDPBUSDS,
+      VPDPWSSD,
+      VPDPWSSDS,
+
       // FMA nodes.
       // We use the target independent ISD::FMA for the non-inverted case.
       FNMADD,

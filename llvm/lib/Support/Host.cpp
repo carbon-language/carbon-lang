@@ -1266,6 +1266,9 @@ bool sys::getHostCPUFeatures(StringMap<bool> &Features) {
   // VPCLMULQDQ (carry-less multiplication quadword)
   Features["vpclmulqdq"] = HasLeaf7 && ((ECX >> 10) & 1) && HasAVXSave;
 
+  // Enable Vector Neural Network Instructions
+  Features["avx512vnni"] = HasLeaf7 && ((ECX >> 11) & 1) && HasAVX512Save;
+
   bool HasLeafD = MaxLevel >= 0xd &&
                   !getX86CpuIDAndInfoEx(0xd, 0x1, &EAX, &EBX, &ECX, &EDX);
 
