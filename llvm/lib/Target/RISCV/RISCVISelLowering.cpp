@@ -56,11 +56,53 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::GlobalAddress, XLenVT, Custom);
 
   setOperationAction(ISD::BR_CC, XLenVT, Expand);
+  setOperationAction(ISD::SELECT, XLenVT, Custom);
+  setOperationAction(ISD::SELECT_CC, XLenVT, Expand);
+
   setBooleanContents(ZeroOrOneBooleanContent);
 
   // Function alignments (log2).
   setMinFunctionAlignment(3);
   setPrefFunctionAlignment(3);
+}
+
+// Changes the condition code and swaps operands if necessary, so the SetCC
+// operation matches one of the comparisons supported directly in the RISC-V
+// ISA.
+static void normaliseSetCC(SDValue &LHS, SDValue &RHS, ISD::CondCode &CC) {
+  switch (CC) {
+  default:
+    break;
+  case ISD::SETGT:
+  case ISD::SETLE:
+  case ISD::SETUGT:
+  case ISD::SETULE:
+    CC = ISD::getSetCCSwappedOperands(CC);
+    std::swap(LHS, RHS);
+    break;
+  }
+}
+
+// Return the RISC-V branch opcode that matches the given DAG integer
+// condition code. The CondCode must be one of those supported by the RISC-V
+// ISA (see normaliseSetCC).
+static unsigned getBranchOpcodeForIntCondCode(ISD::CondCode CC) {
+  switch (CC) {
+  default:
+    llvm_unreachable("Unsupported CondCode");
+  case ISD::SETEQ:
+    return RISCV::BEQ;
+  case ISD::SETNE:
+    return RISCV::BNE;
+  case ISD::SETLT:
+    return RISCV::BLT;
+  case ISD::SETGE:
+    return RISCV::BGE;
+  case ISD::SETULT:
+    return RISCV::BLTU;
+  case ISD::SETUGE:
+    return RISCV::BGEU;
+  }
 }
 
 SDValue RISCVTargetLowering::LowerOperation(SDValue Op,
@@ -70,6 +112,8 @@ SDValue RISCVTargetLowering::LowerOperation(SDValue Op,
     report_fatal_error("unimplemented operand");
   case ISD::GlobalAddress:
     return lowerGlobalAddress(Op, DAG);
+  case ISD::SELECT:
+    return lowerSELECT(Op, DAG);
   }
 }
 
@@ -93,6 +137,112 @@ SDValue RISCVTargetLowering::lowerGlobalAddress(SDValue Op,
   } else {
     report_fatal_error("Unable to lowerGlobalAddress");
   }
+}
+
+SDValue RISCVTargetLowering::lowerSELECT(SDValue Op, SelectionDAG &DAG) const {
+  SDValue CondV = Op.getOperand(0);
+  SDValue TrueV = Op.getOperand(1);
+  SDValue FalseV = Op.getOperand(2);
+  SDLoc DL(Op);
+  MVT XLenVT = Subtarget.getXLenVT();
+
+  // If the result type is XLenVT and CondV is the output of a SETCC node
+  // which also operated on XLenVT inputs, then merge the SETCC node into the
+  // lowered RISCVISD::SELECT_CC to take advantage of the integer
+  // compare+branch instructions. i.e.:
+  // (select (setcc lhs, rhs, cc), truev, falsev)
+  // -> (riscvisd::select_cc lhs, rhs, cc, truev, falsev)
+  if (Op.getSimpleValueType() == XLenVT && CondV.getOpcode() == ISD::SETCC &&
+      CondV.getOperand(0).getSimpleValueType() == XLenVT) {
+    SDValue LHS = CondV.getOperand(0);
+    SDValue RHS = CondV.getOperand(1);
+    auto CC = cast<CondCodeSDNode>(CondV.getOperand(2));
+    ISD::CondCode CCVal = CC->get();
+
+    normaliseSetCC(LHS, RHS, CCVal);
+
+    SDValue TargetCC = DAG.getConstant(CCVal, DL, XLenVT);
+    SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Glue);
+    SDValue Ops[] = {LHS, RHS, TargetCC, TrueV, FalseV};
+    return DAG.getNode(RISCVISD::SELECT_CC, DL, VTs, Ops);
+  }
+
+  // Otherwise:
+  // (select condv, truev, falsev)
+  // -> (riscvisd::select_cc condv, zero, setne, truev, falsev)
+  SDValue Zero = DAG.getConstant(0, DL, XLenVT);
+  SDValue SetNE = DAG.getConstant(ISD::SETNE, DL, XLenVT);
+
+  SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Glue);
+  SDValue Ops[] = {CondV, Zero, SetNE, TrueV, FalseV};
+
+  return DAG.getNode(RISCVISD::SELECT_CC, DL, VTs, Ops);
+}
+
+MachineBasicBlock *
+RISCVTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
+                                                 MachineBasicBlock *BB) const {
+  const TargetInstrInfo &TII = *BB->getParent()->getSubtarget().getInstrInfo();
+  DebugLoc DL = MI.getDebugLoc();
+
+  assert(MI.getOpcode() == RISCV::Select_GPR_Using_CC_GPR &&
+         "Unexpected instr type to insert");
+
+  // To "insert" a SELECT instruction, we actually have to insert the triangle
+  // control-flow pattern.  The incoming instruction knows the destination vreg
+  // to set, the condition code register to branch on, the true/false values to
+  // select between, and the condcode to use to select the appropriate branch.
+  //
+  // We produce the following control flow:
+  //     HeadMBB
+  //     |  \
+  //     |  IfFalseMBB
+  //     | /
+  //    TailMBB
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  MachineFunction::iterator I = ++BB->getIterator();
+
+  MachineBasicBlock *HeadMBB = BB;
+  MachineFunction *F = BB->getParent();
+  MachineBasicBlock *TailMBB = F->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *IfFalseMBB = F->CreateMachineBasicBlock(LLVM_BB);
+
+  F->insert(I, IfFalseMBB);
+  F->insert(I, TailMBB);
+  // Move all remaining instructions to TailMBB.
+  TailMBB->splice(TailMBB->begin(), HeadMBB,
+                  std::next(MachineBasicBlock::iterator(MI)), HeadMBB->end());
+  // Update machine-CFG edges by transferring all successors of the current
+  // block to the new block which will contain the Phi node for the select.
+  TailMBB->transferSuccessorsAndUpdatePHIs(HeadMBB);
+  // Set the successors for HeadMBB.
+  HeadMBB->addSuccessor(IfFalseMBB);
+  HeadMBB->addSuccessor(TailMBB);
+
+  // Insert appropriate branch.
+  unsigned LHS = MI.getOperand(1).getReg();
+  unsigned RHS = MI.getOperand(2).getReg();
+  auto CC = static_cast<ISD::CondCode>(MI.getOperand(3).getImm());
+  unsigned Opcode = getBranchOpcodeForIntCondCode(CC);
+
+  BuildMI(HeadMBB, DL, TII.get(Opcode))
+    .addReg(LHS)
+    .addReg(RHS)
+    .addMBB(TailMBB);
+
+  // IfFalseMBB just falls through to TailMBB.
+  IfFalseMBB->addSuccessor(TailMBB);
+
+  // %Result = phi [ %TrueValue, HeadMBB ], [ %FalseValue, IfFalseMBB ]
+  BuildMI(*TailMBB, TailMBB->begin(), DL, TII.get(RISCV::PHI),
+          MI.getOperand(0).getReg())
+      .addReg(MI.getOperand(4).getReg())
+      .addMBB(HeadMBB)
+      .addReg(MI.getOperand(5).getReg())
+      .addMBB(IfFalseMBB);
+
+  MI.eraseFromParent(); // The pseudo instruction is gone now.
+  return TailMBB;
 }
 
 // Calling Convention Implementation.
@@ -326,6 +476,8 @@ const char *RISCVTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "RISCVISD::RET_FLAG";
   case RISCVISD::CALL:
     return "RISCVISD::CALL";
+  case RISCVISD::SELECT_CC:
+    return "RISCVISD::SELECT_CC";
   }
   return nullptr;
 }

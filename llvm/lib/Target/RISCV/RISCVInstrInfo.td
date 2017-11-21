@@ -22,6 +22,9 @@ def SDT_RISCVCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i32>,
                                             SDTCisVT<1, i32>]>;
 def SDT_RISCVCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>,
                                           SDTCisVT<1, i32>]>;
+def SDT_RISCVSelectCC     : SDTypeProfile<1, 5, [SDTCisSameAs<1, 2>,
+                                                 SDTCisSameAs<0, 4>,
+                                                 SDTCisSameAs<4, 5>]>;
 
 
 def Call         : SDNode<"RISCVISD::CALL", SDT_RISCVCall,
@@ -33,6 +36,8 @@ def CallSeqEnd   : SDNode<"ISD::CALLSEQ_END", SDT_RISCVCallSeqEnd,
                           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 def RetFlag      : SDNode<"RISCVISD::RET_FLAG", SDTNone,
                           [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
+def SelectCC     : SDNode<"RISCVISD::SELECT_CC", SDT_RISCVSelectCC,
+                          [SDNPInGlue]>;
 
 //===----------------------------------------------------------------------===//
 // Operand and SDNode transformation definitions.
@@ -99,6 +104,9 @@ def simm21_lsb0 : Operand<OtherVT> {
   let EncoderMethod = "getImmOpValueAsr1";
   let DecoderMethod = "decodeSImmOperandAndLsl1<21>";
 }
+
+// A parameterized register class alternative to i32imm/i64imm from Target.td.
+def ixlenimm : Operand<XLenVT>;
 
 // Standalone (codegen-only) immleaf patterns.
 def simm32 : ImmLeaf<XLenVT, [{return isInt<32>(Imm);}]>;
@@ -319,6 +327,13 @@ def : PatGprGpr<setlt, SLT>;
 def : PatGprSimm12<setlt, SLTI>;
 def : PatGprGpr<setult, SLTU>;
 def : PatGprSimm12<setult, SLTIU>;
+
+let usesCustomInserter = 1 in
+def Select_GPR_Using_CC_GPR
+    : Pseudo<(outs GPR:$dst),
+             (ins GPR:$lhs, GPR:$rhs, ixlenimm:$imm, GPR:$src, GPR:$src2),
+             [(set XLenVT:$dst, (SelectCC GPR:$lhs, GPR:$rhs,
+              (XLenVT imm:$imm), GPR:$src, GPR:$src2))]>;
 
 /// Branches and jumps
 
