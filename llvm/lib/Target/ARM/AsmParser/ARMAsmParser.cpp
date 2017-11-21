@@ -5843,25 +5843,6 @@ static bool doesIgnoreDataTypeSuffix(StringRef Mnemonic, StringRef DT) {
 static void applyMnemonicAliases(StringRef &Mnemonic, uint64_t Features,
                                  unsigned VariantID);
 
-static bool RequiresVFPRegListValidation(StringRef Inst,
-                                         bool &AcceptSinglePrecisionOnly,
-                                         bool &AcceptDoublePrecisionOnly) {
-  if (Inst.size() < 7)
-    return false;
-
-  if (Inst.startswith("fldm") || Inst.startswith("fstm")) {
-    StringRef AddressingMode = Inst.substr(4, 2);
-    if (AddressingMode == "ia" || AddressingMode == "db" ||
-        AddressingMode == "ea" || AddressingMode == "fd") {
-      AcceptSinglePrecisionOnly = Inst[6] == 's';
-      AcceptDoublePrecisionOnly = Inst[6] == 'd' || Inst[6] == 'x';
-      return true;
-    }
-  }
-
-  return false;
-}
-
 // The GNU assembler has aliases of ldrd and strd with the second register
 // omitted. We don't have a way to do that in tablegen, so fix it up here.
 //
@@ -5911,13 +5892,6 @@ void ARMAsmParser::fixupGNULDRDAlias(StringRef Mnemonic,
 bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                                     SMLoc NameLoc, OperandVector &Operands) {
   MCAsmParser &Parser = getParser();
-  // FIXME: Can this be done via tablegen in some fashion?
-  bool RequireVFPRegisterListCheck;
-  bool AcceptSinglePrecisionOnly;
-  bool AcceptDoublePrecisionOnly;
-  RequireVFPRegisterListCheck =
-    RequiresVFPRegListValidation(Name, AcceptSinglePrecisionOnly,
-                                 AcceptDoublePrecisionOnly);
 
   // Apply mnemonic aliases before doing anything else, as the destination
   // mnemonic may include suffices and we want to handle them normally.
@@ -6074,16 +6048,6 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
 
   if (parseToken(AsmToken::EndOfStatement, "unexpected token in argument list"))
     return true;
-
-  if (RequireVFPRegisterListCheck) {
-    ARMOperand &Op = static_cast<ARMOperand &>(*Operands.back());
-    if (AcceptSinglePrecisionOnly && !Op.isSPRRegList())
-      return Error(Op.getStartLoc(),
-                   "VFP/Neon single precision register expected");
-    if (AcceptDoublePrecisionOnly && !Op.isDPRRegList())
-      return Error(Op.getStartLoc(),
-                   "VFP/Neon double precision register expected");
-  }
 
   tryConvertingToTwoOperandForm(Mnemonic, CarrySetting, Operands);
 
