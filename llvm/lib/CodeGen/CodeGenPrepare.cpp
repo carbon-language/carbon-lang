@@ -190,7 +190,7 @@ EnableTypePromotionMerge("cgp-type-promotion-merge", cl::Hidden,
     " the other."), cl::init(true));
 
 static cl::opt<bool> DisableComplexAddrModes(
-    "disable-complex-addr-modes", cl::Hidden, cl::init(false),
+    "disable-complex-addr-modes", cl::Hidden, cl::init(true),
     cl::desc("Disables combining addressing modes with different parts "
              "in optimizeMemoryInst."));
 
