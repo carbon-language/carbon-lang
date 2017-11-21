@@ -53,17 +53,54 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
     setLoadExtAction(N, XLenVT, MVT::i1, Promote);
 
   // TODO: add all necessary setOperationAction calls.
-  setOperationAction(ISD::GlobalAddress, XLenVT, Custom);
-
+  setOperationAction(ISD::BR_JT, MVT::Other, Expand);
   setOperationAction(ISD::BR_CC, XLenVT, Expand);
   setOperationAction(ISD::SELECT, XLenVT, Custom);
   setOperationAction(ISD::SELECT_CC, XLenVT, Expand);
+
+  for (auto VT : {MVT::i1, MVT::i8, MVT::i16})
+    setOperationAction(ISD::SIGN_EXTEND_INREG, VT, Expand);
+
+  setOperationAction(ISD::ADDC, XLenVT, Expand);
+  setOperationAction(ISD::ADDE, XLenVT, Expand);
+  setOperationAction(ISD::SUBC, XLenVT, Expand);
+  setOperationAction(ISD::SUBE, XLenVT, Expand);
+
+  setOperationAction(ISD::SREM, XLenVT, Expand);
+  setOperationAction(ISD::SDIVREM, XLenVT, Expand);
+  setOperationAction(ISD::SDIV, XLenVT, Expand);
+  setOperationAction(ISD::UREM, XLenVT, Expand);
+  setOperationAction(ISD::UDIVREM, XLenVT, Expand);
+  setOperationAction(ISD::UDIV, XLenVT, Expand);
+
+  setOperationAction(ISD::MUL, XLenVT, Expand);
+  setOperationAction(ISD::SMUL_LOHI, XLenVT, Expand);
+  setOperationAction(ISD::UMUL_LOHI, XLenVT, Expand);
+  setOperationAction(ISD::MULHS, XLenVT, Expand);
+  setOperationAction(ISD::MULHU, XLenVT, Expand);
+
+  setOperationAction(ISD::SHL_PARTS, XLenVT, Expand);
+  setOperationAction(ISD::SRL_PARTS, XLenVT, Expand);
+  setOperationAction(ISD::SRA_PARTS, XLenVT, Expand);
+
+  setOperationAction(ISD::ROTL, XLenVT, Expand);
+  setOperationAction(ISD::ROTR, XLenVT, Expand);
+  setOperationAction(ISD::BSWAP, XLenVT, Expand);
+  setOperationAction(ISD::CTTZ, XLenVT, Expand);
+  setOperationAction(ISD::CTLZ, XLenVT, Expand);
+  setOperationAction(ISD::CTPOP, XLenVT, Expand);
+
+  setOperationAction(ISD::GlobalAddress, XLenVT, Custom);
+  setOperationAction(ISD::BlockAddress, XLenVT, Custom);
 
   setBooleanContents(ZeroOrOneBooleanContent);
 
   // Function alignments (log2).
   setMinFunctionAlignment(3);
   setPrefFunctionAlignment(3);
+
+  // Effectively disable jump table generation.
+  setMinimumJumpTableEntries(INT_MAX);
 }
 
 // Changes the condition code and swaps operands if necessary, so the SetCC
@@ -112,6 +149,8 @@ SDValue RISCVTargetLowering::LowerOperation(SDValue Op,
     report_fatal_error("unimplemented operand");
   case ISD::GlobalAddress:
     return lowerGlobalAddress(Op, DAG);
+  case ISD::BlockAddress:
+    return lowerBlockAddress(Op, DAG);
   case ISD::SELECT:
     return lowerSELECT(Op, DAG);
   }
@@ -125,18 +164,56 @@ SDValue RISCVTargetLowering::lowerGlobalAddress(SDValue Op,
   const GlobalValue *GV = N->getGlobal();
   int64_t Offset = N->getOffset();
 
-  if (!isPositionIndependent() && !Subtarget.is64Bit()) {
-    SDValue GAHi =
-        DAG.getTargetGlobalAddress(GV, DL, Ty, Offset, RISCVII::MO_HI);
-    SDValue GALo =
-        DAG.getTargetGlobalAddress(GV, DL, Ty, Offset, RISCVII::MO_LO);
-    SDValue MNHi = SDValue(DAG.getMachineNode(RISCV::LUI, DL, Ty, GAHi), 0);
-    SDValue MNLo =
-        SDValue(DAG.getMachineNode(RISCV::ADDI, DL, Ty, MNHi, GALo), 0);
-    return MNLo;
-  } else {
+  if (isPositionIndependent() || Subtarget.is64Bit())
     report_fatal_error("Unable to lowerGlobalAddress");
-  }
+
+  SDValue GAHi =
+    DAG.getTargetGlobalAddress(GV, DL, Ty, Offset, RISCVII::MO_HI);
+  SDValue GALo =
+    DAG.getTargetGlobalAddress(GV, DL, Ty, Offset, RISCVII::MO_LO);
+  SDValue MNHi = SDValue(DAG.getMachineNode(RISCV::LUI, DL, Ty, GAHi), 0);
+  SDValue MNLo =
+    SDValue(DAG.getMachineNode(RISCV::ADDI, DL, Ty, MNHi, GALo), 0);
+  return MNLo;
+}
+
+SDValue RISCVTargetLowering::lowerBlockAddress(SDValue Op,
+                                               SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  EVT Ty = Op.getValueType();
+  BlockAddressSDNode *N = cast<BlockAddressSDNode>(Op);
+  const BlockAddress *BA = N->getBlockAddress();
+  int64_t Offset = N->getOffset();
+
+  if (isPositionIndependent() || Subtarget.is64Bit())
+    report_fatal_error("Unable to lowerBlockAddress");
+
+  SDValue BAHi = DAG.getTargetBlockAddress(BA, Ty, Offset, RISCVII::MO_HI);
+  SDValue BALo = DAG.getTargetBlockAddress(BA, Ty, Offset, RISCVII::MO_LO);
+  SDValue MNHi = SDValue(DAG.getMachineNode(RISCV::LUI, DL, Ty, BAHi), 0);
+  SDValue MNLo =
+    SDValue(DAG.getMachineNode(RISCV::ADDI, DL, Ty, MNHi, BALo), 0);
+  return MNLo;
+}
+
+SDValue RISCVTargetLowering::lowerExternalSymbol(SDValue Op,
+                                                 SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  EVT Ty = Op.getValueType();
+  ExternalSymbolSDNode *N = cast<ExternalSymbolSDNode>(Op);
+  const char *Sym = N->getSymbol();
+
+  // TODO: should also handle gp-relative loads.
+
+  if (isPositionIndependent() || Subtarget.is64Bit())
+    report_fatal_error("Unable to lowerExternalSymbol");
+
+  SDValue GAHi = DAG.getTargetExternalSymbol(Sym, Ty, RISCVII::MO_HI);
+  SDValue GALo = DAG.getTargetExternalSymbol(Sym, Ty, RISCVII::MO_LO);
+  SDValue MNHi = SDValue(DAG.getMachineNode(RISCV::LUI, DL, Ty, GAHi), 0);
+  SDValue MNLo =
+    SDValue(DAG.getMachineNode(RISCV::ADDI, DL, Ty, MNHi, GALo), 0);
+  return MNLo;
 }
 
 SDValue RISCVTargetLowering::lowerSELECT(SDValue Op, SelectionDAG &DAG) const {
@@ -369,8 +446,7 @@ SDValue RISCVTargetLowering::LowerCall(CallLoweringInfo &CLI,
   if (isa<GlobalAddressSDNode>(Callee)) {
     Callee = lowerGlobalAddress(Callee, DAG);
   } else if (isa<ExternalSymbolSDNode>(Callee)) {
-    report_fatal_error(
-        "lowerExternalSymbol, needed for lowerCall, not yet handled");
+    Callee = lowerExternalSymbol(Callee, DAG);
   }
 
   // The first call operand is the chain and the second is the target address.
