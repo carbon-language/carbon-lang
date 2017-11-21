@@ -418,13 +418,12 @@ static std::error_code rename_internal(HANDLE FromHandle, const Twine &To,
   return std::error_code();
 }
 
+static std::error_code rename_handle(HANDLE Handle, const Twine &To);
+
 std::error_code rename(const Twine &From, const Twine &To) {
   // Convert to utf-16.
   SmallVector<wchar_t, 128> WideFrom;
-  SmallVector<wchar_t, 128> WideTo;
   if (std::error_code EC = widenPath(From, WideFrom))
-    return EC;
-  if (std::error_code EC = widenPath(To, WideTo))
     return EC;
 
   ScopedFileHandle FromHandle;
@@ -442,6 +441,14 @@ std::error_code rename(const Twine &From, const Twine &To) {
   if (!FromHandle)
     return mapWindowsError(GetLastError());
 
+  return rename_handle(FromHandle, To);
+}
+
+static std::error_code rename_handle(HANDLE FromHandle, const Twine &To) {
+  SmallVector<wchar_t, 128> WideTo;
+  if (std::error_code EC = widenPath(To, WideTo))
+    return EC;
+
   // We normally expect this loop to succeed after a few iterations. If it
   // requires more than 200 tries, it's more likely that the failures are due to
   // a true error, so stop trying.
@@ -452,6 +459,9 @@ std::error_code rename(const Twine &From, const Twine &To) {
         std::error_code(ERROR_CALL_NOT_IMPLEMENTED, std::system_category())) {
       // Wine doesn't support SetFileInformationByHandle in rename_internal.
       // Fall back to MoveFileEx.
+      SmallVector<wchar_t, MAX_PATH> WideFrom;
+      if (std::error_code EC2 = realPathFromHandle(FromHandle, WideFrom))
+        return EC2;
       if (::MoveFileExW(WideFrom.begin(), WideTo.begin(),
                         MOVEFILE_REPLACE_EXISTING))
         return std::error_code();
