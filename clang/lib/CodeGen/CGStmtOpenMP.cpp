@@ -2008,13 +2008,24 @@ emitInnerParallelForWhenCombined(CodeGenFunction &CGF,
                                  CodeGenFunction::JumpDest LoopExit) {
   auto &&CGInlinedWorksharingLoop = [&S](CodeGenFunction &CGF,
                                          PrePostActionTy &) {
+    bool HasCancel = false;
+    if (!isOpenMPSimdDirective(S.getDirectiveKind())) {
+      if (const auto *D = dyn_cast<OMPTeamsDistributeParallelForDirective>(&S))
+        HasCancel = D->hasCancel();
+      else if (const auto *D = dyn_cast<OMPDistributeParallelForDirective>(&S))
+        HasCancel = D->hasCancel();
+    }
+    CodeGenFunction::OMPCancelStackRAII CancelRegion(CGF, S.getDirectiveKind(),
+                                                     HasCancel);
     CGF.EmitOMPWorksharingLoop(S, S.getPrevEnsureUpperBound(),
                                emitDistributeParallelForInnerBounds,
                                emitDistributeParallelForDispatchBounds);
   };
 
   emitCommonOMPParallelDirective(
-      CGF, S, OMPD_for, CGInlinedWorksharingLoop,
+      CGF, S,
+      isOpenMPSimdDirective(S.getDirectiveKind()) ? OMPD_for_simd : OMPD_for,
+      CGInlinedWorksharingLoop,
       emitDistributeParallelForDistributeInnerBoundParams);
 }
 
@@ -2025,10 +2036,8 @@ void CodeGenFunction::EmitOMPDistributeParallelForDirective(
                               S.getDistInc());
   };
   OMPLexicalScope Scope(*this, S, /*AsInlined=*/true);
-  OMPCancelStackRAII CancelRegion(*this, OMPD_distribute_parallel_for,
-                                  /*HasCancel=*/false);
   CGM.getOpenMPRuntime().emitInlinedDirective(*this, OMPD_distribute, CodeGen,
-                                              /*HasCancel=*/false);
+                                              S.hasCancel());
 }
 
 void CodeGenFunction::EmitOMPDistributeParallelForSimdDirective(
@@ -3903,8 +3912,8 @@ void CodeGenFunction::EmitOMPTeamsDistributeParallelForDirective(
     OMPPrivateScope PrivateScope(CGF);
     CGF.EmitOMPReductionClauseInit(S, PrivateScope);
     (void)PrivateScope.Privatize();
-    CGF.CGM.getOpenMPRuntime().emitInlinedDirective(CGF, OMPD_distribute,
-                                                    CodeGenDistribute);
+    CGF.CGM.getOpenMPRuntime().emitInlinedDirective(
+        CGF, OMPD_distribute, CodeGenDistribute, S.hasCancel());
     CGF.EmitOMPReductionClauseFinal(S, /*ReductionKind=*/OMPD_teams);
   };
   emitCommonOMPTeamsDirective(*this, S, OMPD_distribute_parallel_for, CodeGen);
@@ -3939,7 +3948,8 @@ CodeGenFunction::getOMPCancelDestination(OpenMPDirectiveKind Kind) {
   assert(Kind == OMPD_for || Kind == OMPD_section || Kind == OMPD_sections ||
          Kind == OMPD_parallel_sections || Kind == OMPD_parallel_for ||
          Kind == OMPD_distribute_parallel_for ||
-         Kind == OMPD_target_parallel_for);
+         Kind == OMPD_target_parallel_for ||
+         Kind == OMPD_teams_distribute_parallel_for);
   return OMPCancelStack.getExitBlock();
 }
 
