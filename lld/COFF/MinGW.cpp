@@ -109,14 +109,11 @@ bool AutoExporter::shouldExport(Defined *Sym) const {
 
   // Drop the file extension.
   LibName = LibName.substr(0, LibName.rfind('.'));
-
-  if (ExcludeLibs.count(LibName))
-    return false;
+  if (!LibName.empty())
+    return !ExcludeLibs.count(LibName);
 
   StringRef FileName = sys::path::filename(Sym->getFile()->getName());
-  if (LibName.empty() && ExcludeObjects.count(FileName))
-    return false;
-  return true;
+  return !ExcludeObjects.count(FileName);
 }
 
 void coff::writeDefFile(StringRef Name) {
