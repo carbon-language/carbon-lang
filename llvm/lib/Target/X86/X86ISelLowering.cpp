@@ -971,8 +971,11 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   }
 
   // Special handling for masked gather of 2 elements
-  if (Subtarget.hasAVX2() && !Subtarget.hasAVX512())
-    setOperationAction(ISD::MGATHER, MVT::v2i64, Custom);
+  if (Subtarget.hasAVX2()) {
+    for (auto VT : { MVT::v4i32, MVT::v8i32, MVT::v2i64, MVT::v4i64,
+                     MVT::v4f32, MVT::v8f32, MVT::v2f64, MVT::v4f64 })
+      setOperationAction(ISD::MGATHER,  VT, Custom);
+  }
 
   if (!Subtarget.useSoftFloat() && Subtarget.hasFp256()) {
     bool HasInt256 = Subtarget.hasInt256();
@@ -1381,10 +1384,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
 
     // Custom lower several nodes.
     for (auto VT : { MVT::v4i32, MVT::v8i32, MVT::v2i64, MVT::v4i64,
-                     MVT::v4f32, MVT::v8f32, MVT::v2f64, MVT::v4f64 }) {
-      setOperationAction(ISD::MGATHER,  VT, Custom);
+                     MVT::v4f32, MVT::v8f32, MVT::v2f64, MVT::v4f64 })
       setOperationAction(ISD::MSCATTER, VT, Custom);
-    }
 
     setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v1i1, Legal);
 
@@ -1408,7 +1409,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::INSERT_SUBVECTOR,    VT, Legal);
       setOperationAction(ISD::MLOAD,               VT, Legal);
       setOperationAction(ISD::MSTORE,              VT, Legal);
-      setOperationAction(ISD::MGATHER,             VT, Legal);
+      setOperationAction(ISD::MGATHER,             VT, Custom);
       setOperationAction(ISD::MSCATTER,            VT, Custom);
     }
     for (auto VT : { MVT::v64i8, MVT::v32i16, MVT::v16i32 }) {
@@ -24332,10 +24333,11 @@ static SDValue LowerMGATHER(SDValue Op, const X86Subtarget &Subtarget,
     // the vector contains 8 elements, we just sign-extend the index
     if (NumElts == 8) {
       Index = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::v8i64, Index);
-      SDValue Ops[] = { N->getOperand(0), N->getOperand(1),  N->getOperand(2),
-                        N->getOperand(3), Index };
-      DAG.UpdateNodeOperands(N, Ops);
-      return Op;
+      SDValue Ops[] = { N->getChain(), Src0, Mask, N->getBasePtr(), Index };
+      SDValue NewGather = DAG.getTargetMemSDNode<X86MaskedGatherSDNode>(
+          DAG.getVTList(VT, MaskVT, MVT::Other), Ops, dl, N->getMemoryVT(),
+          N->getMemOperand());
+      return DAG.getMergeValues({NewGather, NewGather.getValue(2)}, dl);
     }
 
     // Minimal number of elements in Gather
@@ -24359,13 +24361,13 @@ static SDValue LowerMGATHER(SDValue Op, const X86Subtarget &Subtarget,
     Src0 = ExtendToType(Src0, NewVT, DAG);
 
     SDValue Ops[] = { N->getChain(), Src0, Mask, N->getBasePtr(), Index };
-    SDValue NewGather = DAG.getMaskedGather(DAG.getVTList(NewVT, MVT::Other),
-                                            N->getMemoryVT(), dl, Ops,
-                                            N->getMemOperand());
+    SDValue NewGather = DAG.getTargetMemSDNode<X86MaskedGatherSDNode>(
+        DAG.getVTList(NewVT, MaskBitVT, MVT::Other), Ops, dl, N->getMemoryVT(),
+        N->getMemOperand());
     SDValue Extract = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT,
                                   NewGather.getValue(0),
                                   DAG.getIntPtrConstant(0, dl));
-    SDValue RetOps[] = {Extract, NewGather.getValue(1)};
+    SDValue RetOps[] = {Extract, NewGather.getValue(2)};
     return DAG.getMergeValues(RetOps, dl);
   }
   if (N->getMemoryVT() == MVT::v2i32) {
@@ -24386,23 +24388,27 @@ static SDValue LowerMGATHER(SDValue Op, const X86Subtarget &Subtarget,
     if (Subtarget.hasVLX()) {
       Mask = ExtendToType(Mask, MVT::v4i1, DAG, false);
       VTList = DAG.getVTList(MVT::v4i32, MVT::v2i1, MVT::Other);
-    }  
-    else {
+    } else {
       Mask =
           DAG.getVectorShuffle(MVT::v4i32, dl, DAG.getBitcast(MVT::v4i32, Mask),
                                DAG.getUNDEF(MVT::v4i32), {0, 2, -1, -1});
-      VTList = DAG.getVTList(MVT::v4i32, MVT::Other);                               
-    }                               
+      VTList = DAG.getVTList(MVT::v4i32, MVT::v4i32, MVT::Other);
+    }
     SDValue Ops[] = { N->getChain(), Src0, Mask, N->getBasePtr(), Index };
     SDValue NewGather = DAG.getTargetMemSDNode<X86MaskedGatherSDNode>(
       VTList, Ops, dl, N->getMemoryVT(), N->getMemOperand());
 
     SDValue Sext = getExtendInVec(X86ISD::VSEXT, dl, MVT::v2i64,
                                   NewGather.getValue(0), DAG);
-    SDValue RetOps[] = { Sext, NewGather.getValue(1) };
+    SDValue RetOps[] = { Sext, NewGather.getValue(2) };
     return DAG.getMergeValues(RetOps, dl);
   }
-  return Op;
+
+  SDValue Ops[] = { N->getChain(), Src0, Mask, N->getBasePtr(), Index };
+  SDValue NewGather = DAG.getTargetMemSDNode<X86MaskedGatherSDNode>(
+      DAG.getVTList(VT, MaskVT, MVT::Other), Ops, dl, N->getMemoryVT(),
+      N->getMemOperand());
+  return DAG.getMergeValues({NewGather, NewGather.getValue(2)}, dl);
 }
 
 SDValue X86TargetLowering::LowerGC_TRANSITION_START(SDValue Op,
