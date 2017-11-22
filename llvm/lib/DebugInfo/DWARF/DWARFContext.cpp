@@ -379,9 +379,11 @@ void DWARFContext::dump(
       if (It != LineToUnit.end())
         U = It->second;
       DWARFDebugLine::LineTable LineTable;
+      unsigned OldOffset = Offset;
       if (!LineTable.Prologue.parse(LineData, &Offset, U))
         break;
-      LineTable.dump(OS);
+      if (!DumpOffset || OldOffset == *DumpOffset)
+        LineTable.dump(OS);
     }
   }
 
