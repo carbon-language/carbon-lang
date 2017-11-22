@@ -1522,6 +1522,12 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     for (auto ExtType : {ISD::ZEXTLOAD, ISD::SEXTLOAD}) {
       setLoadExtAction(ExtType, MVT::v32i16, MVT::v32i8, Legal);
     }
+
+    if (Subtarget.hasBITALG()) {
+      for (auto VT : { MVT::v64i8, MVT::v32i16, MVT::v32i8,
+                       MVT::v16i16, MVT::v16i8, MVT::v8i16 })
+        setOperationAction(ISD::CTPOP, VT, Legal);
+    }
   }
 
   if (!Subtarget.useSoftFloat() && Subtarget.hasVLX()) {
@@ -1555,11 +1561,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::UMIN, VT, Legal);
     }
   }
-
-  if (Subtarget.hasBITALG())
-    for (auto VT : { MVT::v64i8, MVT::v32i16, MVT::v32i8,
-                     MVT::v16i16, MVT::v16i8, MVT::v8i16 })
-      setOperationAction(ISD::CTPOP, VT, Legal);
 
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
