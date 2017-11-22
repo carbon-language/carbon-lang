@@ -2323,9 +2323,17 @@ CGOpenMPRuntimeNVPTX::translateParameter(const FieldDecl *FD,
   enum { NVPTX_local_addr = 5 };
   QC.addAddressSpace(getLangASFromTargetAS(NVPTX_local_addr));
   ArgType = QC.apply(CGM.getContext(), ArgType);
-  return ImplicitParamDecl::Create(
-      CGM.getContext(), /*DC=*/nullptr, NativeParam->getLocation(),
-      NativeParam->getIdentifier(), ArgType, ImplicitParamDecl::Other);
+  if (isa<ImplicitParamDecl>(NativeParam)) {
+    return ImplicitParamDecl::Create(
+        CGM.getContext(), /*DC=*/nullptr, NativeParam->getLocation(),
+        NativeParam->getIdentifier(), ArgType, ImplicitParamDecl::Other);
+  }
+  return ParmVarDecl::Create(
+      CGM.getContext(),
+      const_cast<DeclContext *>(NativeParam->getDeclContext()),
+      NativeParam->getLocStart(), NativeParam->getLocation(),
+      NativeParam->getIdentifier(), ArgType,
+      /*TInfo=*/nullptr, SC_None, /*DefArg=*/nullptr);
 }
 
 Address
