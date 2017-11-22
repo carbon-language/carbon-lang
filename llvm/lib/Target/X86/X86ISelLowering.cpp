@@ -24112,19 +24112,12 @@ static SDValue LowerMSCATTER(SDValue Op, const X86Subtarget &Subtarget,
   assert(Subtarget.hasAVX512() &&
          "MGATHER/MSCATTER are supported on AVX-512 arch only");
 
-  // X86 scatter kills mask register, so its type should be added to
-  // the list of return values.
-  // If the "scatter" has 2 return values, it is already handled.
-  if (Op.getNode()->getNumValues() == 2)
-    return Op;
-
   MaskedScatterSDNode *N = cast<MaskedScatterSDNode>(Op.getNode());
   SDValue Src = N->getValue();
   MVT VT = Src.getSimpleValueType();
   assert(VT.getScalarSizeInBits() >= 32 && "Unsupported scatter op");
   SDLoc dl(Op);
 
-  SDValue NewScatter;
   SDValue Index = N->getIndex();
   SDValue Mask = N->getMask();
   SDValue Chain = N->getChain();
@@ -24195,8 +24188,8 @@ static SDValue LowerMSCATTER(SDValue Op, const X86Subtarget &Subtarget,
   // The mask is killed by scatter, add it to the values
   SDVTList VTs = DAG.getVTList(BitMaskVT, MVT::Other);
   SDValue Ops[] = {Chain, Src, Mask, BasePtr, Index};
-  NewScatter = DAG.getMaskedScatter(VTs, N->getMemoryVT(), dl, Ops,
-                                    N->getMemOperand());
+  SDValue NewScatter = DAG.getTargetMemSDNode<X86MaskedScatterSDNode>(
+      VTs, Ops, dl, N->getMemoryVT(), N->getMemOperand());
   DAG.ReplaceAllUsesWith(Op, SDValue(NewScatter.getNode(), 1));
   return SDValue(NewScatter.getNode(), 1);
 }
@@ -25261,6 +25254,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::CVTS2UI_RND:        return "X86ISD::CVTS2UI_RND";
   case X86ISD::LWPINS:             return "X86ISD::LWPINS";
   case X86ISD::MGATHER:            return "X86ISD::MGATHER";
+  case X86ISD::MSCATTER:           return "X86ISD::MSCATTER";
   case X86ISD::VPDPBUSD:           return "X86ISD::VPDPBUSD";
   case X86ISD::VPDPBUSDS:          return "X86ISD::VPDPBUSDS";
   case X86ISD::VPDPWSSD:           return "X86ISD::VPDPWSSD";
