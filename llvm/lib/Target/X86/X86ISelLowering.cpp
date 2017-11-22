@@ -970,13 +970,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::BITREVERSE, VT, Custom);
   }
 
-  // Special handling for masked gather of 2 elements
-  if (Subtarget.hasAVX2()) {
-    for (auto VT : { MVT::v4i32, MVT::v8i32, MVT::v2i64, MVT::v4i64,
-                     MVT::v4f32, MVT::v8f32, MVT::v2f64, MVT::v4f64 })
-      setOperationAction(ISD::MGATHER,  VT, Custom);
-  }
-
   if (!Subtarget.useSoftFloat() && Subtarget.hasFp256()) {
     bool HasInt256 = Subtarget.hasInt256();
 
@@ -1138,6 +1131,12 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationPromotedToType(ISD::XOR,    VT, MVT::v4i64);
       setOperationPromotedToType(ISD::LOAD,   VT, MVT::v4i64);
       setOperationPromotedToType(ISD::SELECT, VT, MVT::v4i64);
+    }
+
+    if (HasInt256) {
+      for (auto VT : { MVT::v4i32, MVT::v8i32, MVT::v2i64, MVT::v4i64,
+                       MVT::v4f32, MVT::v8f32, MVT::v2f64, MVT::v4f64 })
+        setOperationAction(ISD::MGATHER,  VT, Custom);
     }
   }
 
