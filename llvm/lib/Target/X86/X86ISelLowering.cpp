@@ -17898,20 +17898,7 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
         return Op0;
 
       CCode = X86::GetOppositeBranchCondition(CCode);
-      SDValue SetCC = getSETCC(CCode, Op0.getOperand(1), dl, DAG);
-      if (VT == MVT::i1)
-        return DAG.getNode(ISD::TRUNCATE, dl, MVT::i1, SetCC);
-      return SetCC;
-    }
-  }
-  if (Op0.getValueType() == MVT::i1 && (CC == ISD::SETEQ || CC == ISD::SETNE)) {
-    if (isOneConstant(Op1)) {
-      ISD::CondCode NewCC = ISD::getSetCCInverse(CC, true);
-      return DAG.getSetCC(dl, VT, Op0, DAG.getConstant(0, dl, MVT::i1), NewCC);
-    }
-    if (!isNullConstant(Op1)) {
-      SDValue Xor = DAG.getNode(ISD::XOR, dl, MVT::i1, Op0, Op1);
-      return DAG.getSetCC(dl, VT, Xor, DAG.getConstant(0, dl, MVT::i1), CC);
+      return getSETCC(CCode, Op0.getOperand(1), dl, DAG);
     }
   }
 
@@ -17922,10 +17909,7 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
 
   SDValue EFLAGS = EmitCmp(Op0, Op1, X86CC, dl, DAG);
   EFLAGS = ConvertCmpIfNecessary(EFLAGS, DAG);
-  SDValue SetCC = getSETCC(X86CC, EFLAGS, dl, DAG);
-  if (VT == MVT::i1)
-    return DAG.getNode(ISD::TRUNCATE, dl, MVT::i1, SetCC);
-  return SetCC;
+  return getSETCC(X86CC, EFLAGS, dl, DAG);
 }
 
 SDValue X86TargetLowering::LowerSETCCCARRY(SDValue Op, SelectionDAG &DAG) const {
@@ -17946,10 +17930,7 @@ SDValue X86TargetLowering::LowerSETCCCARRY(SDValue Op, SelectionDAG &DAG) const 
 
   SDVTList VTs = DAG.getVTList(LHS.getValueType(), MVT::i32);
   SDValue Cmp = DAG.getNode(X86ISD::SBB, DL, VTs, LHS, RHS, Carry.getValue(1));
-  SDValue SetCC = getSETCC(CC, Cmp.getValue(1), DL, DAG);
-  if (Op.getSimpleValueType() == MVT::i1)
-    return DAG.getNode(ISD::TRUNCATE, DL, MVT::i1, SetCC);
-  return SetCC;
+  return getSETCC(CC, Cmp.getValue(1), DL, DAG);
 }
 
 /// Return true if opcode is a X86 logical comparison.
