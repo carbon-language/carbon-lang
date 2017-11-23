@@ -1,5 +1,0 @@
-# Check error on an internal shell error (file's contexts are different)
-#
-# RUN: echo "hello-first" > %t
-# RUN: echo "hello-second" > %t1
-# RUN: diff %t %t1

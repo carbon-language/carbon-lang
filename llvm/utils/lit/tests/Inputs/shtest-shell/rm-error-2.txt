@@ -1,3 +1,0 @@
-# Check error on a unsupported rm (only supports -f option and in combination with -r).
-#
-# RUN: rm -r hello
