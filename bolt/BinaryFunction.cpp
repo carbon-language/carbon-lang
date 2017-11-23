@@ -909,13 +909,29 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       }
     }
 
-    if (BC.TheTriple->getArch() == llvm::Triple::aarch64 &&
-        isInConstantIsland(TargetAddress)) {
-      TargetSymbol = BC.getOrCreateGlobalSymbol(TargetAddress, "ISLANDat");
-      IslandSymbols[TargetAddress - getAddress()] = TargetSymbol;
-      if (!ColdIslandSymbols.count(TargetSymbol)) {
-        ColdIslandSymbols[TargetSymbol] =
-            Ctx->getOrCreateSymbol(TargetSymbol->getName() + ".cold");
+    if (BC.TheTriple->getArch() == llvm::Triple::aarch64) {
+      // Check if this is an access to a constant island and create bookkeeping
+      // to keep track of it and emit it later as part of this function
+      if (MCSymbol *IslandSym = getOrCreateIslandAccess(TargetAddress).first) {
+        TargetSymbol = IslandSym;
+      } else {
+        // Detect custom code written in assembly that refers to arbitrary
+        // constant islands from other functions. Write this reference so we
+        // can pull this constant island and emit it as part of this function
+        // too.
+        auto IslandIter =
+            BC.AddressToConstantIslandMap.lower_bound(TargetAddress);
+        if (IslandIter != BC.AddressToConstantIslandMap.end()) {
+          MCSymbol *IslandSym, *ColdIslandSym;
+          std::tie(IslandSym, ColdIslandSym) =
+              IslandIter->second->getOrCreateProxyIslandAccess(TargetAddress,
+                                                               this);
+          if (IslandSym) {
+            TargetSymbol = IslandSym;
+            addConstantIslandDependency(IslandIter->second, IslandSym,
+                                        ColdIslandSym);
+          }
+        }
       }
     }
 
@@ -1732,6 +1748,10 @@ void BinaryFunction::addEntryPoint(uint64_t Address) {
 }
 
 void BinaryFunction::removeConditionalTailCalls() {
+  // Don't touch code if non-simple ARM
+  if (BC.TheTriple->getArch() == llvm::Triple::aarch64 && !isSimple())
+    return;
+
   // Blocks to be appended at the end.
   std::vector<std::unique_ptr<BinaryBasicBlock>> NewBlocks;
 
@@ -1780,6 +1800,8 @@ void BinaryFunction::removeConditionalTailCalls() {
 
     // Add execution count for the block.
     TailCallBB->setExecutionCount(CTCTakenCount);
+
+    BC.MIA->convertTailCallToJmp(*CTCInstr);
 
     // In attempt to preserve the direction of the original conditional jump,
     // we will either create an unconditional jump in a separate basic block
@@ -2151,15 +2173,33 @@ void BinaryFunction::emitBodyRaw(MCStreamer *Streamer) {
   }
 }
 
-void BinaryFunction::emitConstantIslands(MCStreamer &Streamer,
-                                         bool EmitColdPart) {
-  if (DataOffsets.empty())
+void BinaryFunction::addConstantIslandDependency(BinaryFunction *OtherBF,
+                                                 MCSymbol *HotSymbol,
+                                                 MCSymbol *ColdSymbol) {
+  IslandDependency.insert(OtherBF);
+  if (!ColdIslandSymbols.count(HotSymbol)) {
+    ColdIslandSymbols[HotSymbol] = ColdSymbol;
+  }
+  DEBUG(dbgs() << "BOLT-DEBUG: Constant island dependency added! "
+               << getPrintName() << " refers to " << OtherBF->getPrintName()
+               << "\n");
+}
+
+void BinaryFunction::emitConstantIslands(
+    MCStreamer &Streamer, bool EmitColdPart,
+    BinaryFunction *OnBehalfOf) {
+  if (DataOffsets.empty() && IslandDependency.empty())
     return;
 
-  if (!EmitColdPart)
-    Streamer.EmitLabel(getFunctionConstantIslandLabel());
-  else
-    Streamer.EmitLabel(getFunctionColdConstantIslandLabel());
+  if (!OnBehalfOf) {
+    if (!EmitColdPart)
+      Streamer.EmitLabel(getFunctionConstantIslandLabel());
+    else
+      Streamer.EmitLabel(getFunctionColdConstantIslandLabel());
+  }
+
+  assert((!OnBehalfOf || IslandProxies[OnBehalfOf].size() > 0) &&
+         "spurious OnBehalfOf constant island emission");
   // Raw contents of the function.
   StringRef SectionContents;
   Section.getContents(SectionContents);
@@ -2169,7 +2209,7 @@ void BinaryFunction::emitConstantIslands(MCStreamer &Streamer,
       SectionContents.substr(getAddress() - Section.getAddress(),
                              getMaxSize());
 
-  if (opts::Verbosity)
+  if (opts::Verbosity && !OnBehalfOf)
     outs() << "BOLT-INFO: emitting constant island for function " << *this
            << "\n";
 
@@ -2209,12 +2249,36 @@ void BinaryFunction::emitConstantIslands(MCStreamer &Streamer,
         FunctionOffset = NextStop;
       }
       if (IS != IslandSymbols.end() && FunctionOffset == IS->first) {
-        DEBUG(dbgs() << "BOLT-DEBUG: emitted label " << IS->second->getName()
-                     << " at offset 0x" << Twine::utohexstr(IS->first) << '\n');
-        if (!EmitColdPart)
-          Streamer.EmitLabel(IS->second);
-        else
-          Streamer.EmitLabel(ColdIslandSymbols[IS->second]);
+        // This is a slightly complex code to decide which label to emit. We
+        // have 4 cases to handle: regular symbol, cold symbol, regular or cold
+        // symbol being emitted on behalf of an external function.
+        if (!OnBehalfOf) {
+          if (!EmitColdPart) {
+            DEBUG(dbgs() << "BOLT-DEBUG: emitted label "
+                         << IS->second->getName() << " at offset 0x"
+                         << Twine::utohexstr(IS->first) << '\n');
+            Streamer.EmitLabel(IS->second);
+          } else {
+            DEBUG(dbgs() << "BOLT-DEBUG: emitted label "
+                         << ColdIslandSymbols[IS->second]->getName() << '\n');
+            Streamer.EmitLabel(ColdIslandSymbols[IS->second]);
+          }
+        } else {
+          if (!EmitColdPart) {
+            if (MCSymbol *Sym = IslandProxies[OnBehalfOf][IS->second]) {
+              DEBUG(dbgs() << "BOLT-DEBUG: emitted label " << Sym->getName()
+                           << '\n');
+              Streamer.EmitLabel(Sym);
+            }
+          } else {
+            if (MCSymbol *Sym =
+                    IslandProxies[OnBehalfOf][ColdIslandSymbols[IS->second]]) {
+              DEBUG(dbgs() << "BOLT-DEBUG: emitted label " << Sym->getName()
+                           << '\n');
+              Streamer.EmitLabel(Sym);
+            }
+          }
+        }
         ++IS;
       }
       if (RI != MoveRelocations.end() && FunctionOffset == RI->first) {
@@ -2232,8 +2296,16 @@ void BinaryFunction::emitConstantIslands(MCStreamer &Streamer,
       Streamer.EmitBytes(FunctionContents.slice(FunctionOffset, EndOffset));
     }
   }
-
   assert(IS == IslandSymbols.end() && "some symbols were not emitted!");
+
+  if (OnBehalfOf)
+    return;
+  // Now emit constant islands from other functions that we may have used in
+  // this function.
+  for (auto *ExternalFunc : IslandDependency) {
+    ExternalFunc->emitConstantIslands(Streamer, EmitColdPart, this);
+  }
+
 }
 
 void BinaryFunction::duplicateConstantIslands() {

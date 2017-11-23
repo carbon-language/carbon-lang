@@ -115,6 +115,9 @@ public:
   std::unordered_map<const MCSymbol *,
                      BinaryFunction *> SymbolToFunctionMap;
 
+  /// Map address to a constant island owner (constant data in code section)
+  std::map<uint64_t, BinaryFunction *> AddressToConstantIslandMap;
+
   /// Map virtual address to a section.
   std::map<uint64_t, SectionRef> AllocatableSections;
 

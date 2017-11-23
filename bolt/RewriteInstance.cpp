@@ -873,9 +873,6 @@ void RewriteInstance::run() {
     if (opts::RelocationMode != cl::BOU_TRUE) {
       errs() << "BOLT-WARNING: non-relocation mode for AArch64 is not fully "
                 "supported\n";
-    } else if (opts::UseOldText) {
-      opts::UseOldText = false;
-      outs() << "BOLT-INFO: disabling -use-old-text for AArch64\n";
     }
   }
 
@@ -1010,8 +1007,22 @@ void RewriteInstance::discoverFileObjects() {
                      return *(A.getAddress()) < *(B.getAddress());
                    });
 
+  // For aarch64, the ABI defines mapping symbols so we identify data in the
+  // code section (see IHI0056B). $d identifies data contents.
+  auto MarkersBegin = SortedFileSymbols.end();
+  if (BC->TheTriple->getArch() == llvm::Triple::aarch64) {
+    MarkersBegin = std::stable_partition(
+        SortedFileSymbols.begin(), SortedFileSymbols.end(),
+        [](const SymbolRef &Symbol) {
+          ErrorOr<StringRef> NameOrError = Symbol.getName();
+          return !(Symbol.getType() == SymbolRef::ST_Unknown &&
+                   (*NameOrError == "$d" || *NameOrError == "$x"));
+        });
+  }
+
   BinaryFunction *PreviousFunction = nullptr;
-  for (const auto &Symbol : SortedFileSymbols) {
+  for (auto ISym = SortedFileSymbols.begin(); ISym != MarkersBegin; ++ISym) {
+    const auto &Symbol = *ISym;
     // Keep undefined symbols for pretty printing?
     if (Symbol.getFlags() & SymbolRef::SF_Undefined)
       continue;
@@ -1031,30 +1042,11 @@ void RewriteInstance::discoverFileObjects() {
       continue;
     }
 
-    // In aarch, make $x symbols be replaceable by a more meaningful one
-    // whenever possible
-    if (BC->TheTriple->getArch() != llvm::Triple::aarch64 ||
-        FileSymRefs.find(Address) == FileSymRefs.end()) {
-      FileSymRefs[Address] = Symbol;
-    } else {
-      if (FileSymRefs[Address].getType() == SymbolRef::ST_Unknown &&
-          *FileSymRefs[Address].getName() == "$x")
-        FileSymRefs[Address] = Symbol;
-      else if (Symbol.getType() != SymbolRef::ST_Unknown ||
-               *NameOrError != "$x")
-        FileSymRefs[Address] = Symbol;
-    }
+    FileSymRefs[Address] = Symbol;
 
     // There's nothing horribly wrong with anonymous symbols, but let's
     // ignore them for now.
     if (NameOrError->empty())
-      continue;
-
-    // For aarch64, the ABI defines mapping symbols so we identify data in the
-    // code section (see IHI0056B). $d identifies data contents.
-    if (BC->TheTriple->getArch() == llvm::Triple::aarch64 &&
-        Symbol.getType() == SymbolRef::ST_Unknown &&
-        (*NameOrError == "$d" || *NameOrError == "$x"))
       continue;
 
     /// It is possible we are seeing a globalized local. LLVM might treat it as
@@ -1298,6 +1290,31 @@ void RewriteInstance::discoverFileObjects() {
   // Now that all the functions were created - adjust their boundaries.
   adjustFunctionBoundaries();
 
+  // Annotate functions with code/data markers in AArch64
+  for (auto ISym = MarkersBegin; ISym != SortedFileSymbols.end(); ++ISym) {
+    const auto &Symbol = *ISym;
+    ErrorOr<uint64_t> AddressOrErr = Symbol.getAddress();
+    check_error(AddressOrErr.getError(), "cannot get symbol address");
+    auto SymbolSize = ELFSymbolRef(Symbol).getSize();
+    uint64_t Address = *AddressOrErr;
+    auto *BF = getBinaryFunctionContainingAddress(Address, true, true);
+    if (!BF) {
+      // Stray marker
+      continue;
+    }
+    const auto EntryOffset = Address - BF->getAddress();
+    if (BF->isCodeMarker(Symbol, SymbolSize)) {
+      BF->markCodeAtOffset(EntryOffset);
+      continue;
+    }
+    if (BF->isDataMarker(Symbol, SymbolSize)) {
+      BF->markDataAtOffset(EntryOffset);
+      BC->AddressToConstantIslandMap[Address] = BF;
+      continue;
+    }
+    llvm_unreachable("Unknown marker");
+  }
+
   if (!BC->HasRelocations)
     return;
 
@@ -1406,21 +1423,14 @@ void RewriteInstance::adjustFunctionBoundaries() {
 
       // This is potentially another entry point into the function.
       auto EntryOffset = NextSymRefI->first - Function.getAddress();
-      if (Function.isDataMarker(Symbol, SymbolSize)) {
-        Function.markDataAtOffset(EntryOffset);
-      } else if (Function.isCodeMarker(Symbol, SymbolSize)) {
-        Function.markCodeAtOffset(EntryOffset);
-      } else {
-        DEBUG(dbgs() << "BOLT-DEBUG: adding entry point to function "
-                     << Function << " at offset 0x"
-                     << Twine::utohexstr(EntryOffset) << '\n');
-        Function.addEntryPointAtOffset(EntryOffset);
-        // In non-relocation mode there's potentially an external undetectable
-        // reference to the entry point and hence we cannot move this entry
-        // point. Optimizing without moving could be difficult.
-        if (!BC->HasRelocations)
-          Function.setSimple(false);
-      }
+      DEBUG(dbgs() << "BOLT-DEBUG: adding entry point to function " << Function
+                   << " at offset 0x" << Twine::utohexstr(EntryOffset) << '\n');
+      Function.addEntryPointAtOffset(EntryOffset);
+      // In non-relocation mode there's potentially an external undetectable
+      // reference to the entry point and hence we cannot move this entry
+      // point. Optimizing without moving could be difficult.
+      if (!BC->HasRelocations)
+        Function.setSimple(false);
 
       ++NextSymRefI;
     }

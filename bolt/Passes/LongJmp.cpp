@@ -164,7 +164,7 @@ void LongJmpPass::insertStubs(const BinaryContext &BC, BinaryFunction &Func) {
         continue;
 
       // Insert stubs close to the patched BB if call, but far away from the
-      // hot path if a branch, since this branch target is the cold region
+      // hot path if a branch, since this branch target is the cold region.
       BinaryBasicBlock *InsertionPoint = &BB;
       if (!BC.MIA->isCall(Inst) && Frontier && !BB.isCold()) {
         auto BitsAvail = BC.MIA->getPCRelEncodingSize(Inst) - 2;
@@ -172,6 +172,11 @@ void LongJmpPass::insertStubs(const BinaryContext &BC, BinaryFunction &Func) {
         if (!(Func.getMaxSize() & Mask))
           InsertionPoint = Frontier;
       }
+      // Always put stubs at the end of the function if non-simple. We can't
+      // change the layout of non-simple functions because it has jump tables
+      // that we do not control.
+      if (!Func.isSimple())
+        InsertionPoint = &*std::prev(Func.end());
       // Create a stub to handle a far-away target
       Insertions.emplace_back(std::make_pair(
           InsertionPoint, replaceTargetWithStub(BC, Func, BB, Inst)));
@@ -277,7 +282,7 @@ void LongJmpPass::tentativeLayout(
   if (!BC.HasRelocations) {
     for (auto Func : SortedFunctions) {
       HotAddresses[Func] = Func->getAddress();
-      DotAddress = RoundUpToAlignment(DotAddress, 16);
+      DotAddress = RoundUpToAlignment(DotAddress, ColdFragAlign);
       ColdAddresses[Func] = DotAddress;
       if (Func->isSplit())
         DotAddress += Func->estimateColdSize();
@@ -474,7 +479,10 @@ void LongJmpPass::runOnFunctions(BinaryContext &BC,
       BB.markValid(true);
     }
     insertStubs(BC, *Func);
-    Func->fixBranches();
+    // Don't ruin non-simple functions, they can't afford to have the layout
+    // changed.
+    if (Func->isSimple())
+      Func->fixBranches();
   }
 
   bool Modified;
@@ -484,7 +492,8 @@ void LongJmpPass::runOnFunctions(BinaryContext &BC,
     for (auto Func : Sorted) {
       if (removeOrShrinkStubs(BC, *Func)) {
         Func->eraseInvalidBBs();
-        Func->fixBranches();
+        if (Func->isSimple())
+          Func->fixBranches();
         Modified = true;
       }
     }

@@ -577,6 +577,9 @@ void FixupBranches::runOnFunctions(
   for (auto &It : BFs) {
     auto &Function = It.second;
     if (BC.HasRelocations || shouldOptimize(Function)) {
+      if (BC.TheTriple->getArch() == llvm::Triple::aarch64 &&
+          !Function.isSimple())
+        continue;
       Function.fixBranches();
     }
   }
