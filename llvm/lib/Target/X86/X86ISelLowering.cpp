@@ -8140,57 +8140,56 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     return DAG.getVectorShuffle(VT, dl, Ops[0], Ops[1], MaskVec);
   }
 
-  if (Values.size() > 1) {
-    // Check for a build vector from mostly shuffle plus few inserting.
-    if (SDValue Sh = buildFromShuffleMostly(Op, DAG))
-      return Sh;
+  assert(Values.size() > 1 && "Expected non-undef and non-splat vector");
 
-    // For SSE 4.1, use insertps to put the high elements into the low element.
-    if (Subtarget.hasSSE41()) {
-      SDValue Result;
-      if (!Op.getOperand(0).isUndef())
-        Result = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Op.getOperand(0));
-      else
-        Result = DAG.getUNDEF(VT);
+  // Check for a build vector from mostly shuffle plus few inserting.
+  if (SDValue Sh = buildFromShuffleMostly(Op, DAG))
+    return Sh;
 
-      for (unsigned i = 1; i < NumElems; ++i) {
-        if (Op.getOperand(i).isUndef()) continue;
-        Result = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VT, Result,
-                             Op.getOperand(i), DAG.getIntPtrConstant(i, dl));
-      }
-      return Result;
+  // For SSE 4.1, use insertps to put the high elements into the low element.
+  if (Subtarget.hasSSE41()) {
+    SDValue Result;
+    if (!Op.getOperand(0).isUndef())
+      Result = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Op.getOperand(0));
+    else
+      Result = DAG.getUNDEF(VT);
+
+    for (unsigned i = 1; i < NumElems; ++i) {
+      if (Op.getOperand(i).isUndef()) continue;
+      Result = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VT, Result,
+                           Op.getOperand(i), DAG.getIntPtrConstant(i, dl));
     }
-
-    // Otherwise, expand into a number of unpckl*, start by extending each of
-    // our (non-undef) elements to the full vector width with the element in the
-    // bottom slot of the vector (which generates no code for SSE).
-    SmallVector<SDValue, 8> Ops(NumElems);
-    for (unsigned i = 0; i < NumElems; ++i) {
-      if (!Op.getOperand(i).isUndef())
-        Ops[i] = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Op.getOperand(i));
-      else
-        Ops[i] = DAG.getUNDEF(VT);
-    }
-
-    // Next, we iteratively mix elements, e.g. for v4f32:
-    //   Step 1: unpcklps 0, 1 ==> X: <?, ?, 1, 0>
-    //         : unpcklps 2, 3 ==> Y: <?, ?, 3, 2>
-    //   Step 2: unpcklpd X, Y ==>    <3, 2, 1, 0>
-    for (unsigned Scale = 1; Scale < NumElems; Scale *= 2) {
-      // Generate scaled UNPCKL shuffle mask.
-      SmallVector<int, 16> Mask;
-      for(unsigned i = 0; i != Scale; ++i)
-        Mask.push_back(i);
-      for (unsigned i = 0; i != Scale; ++i)
-        Mask.push_back(NumElems+i);
-      Mask.append(NumElems - Mask.size(), SM_SentinelUndef);
-
-      for (unsigned i = 0, e = NumElems / (2 * Scale); i != e; ++i)
-        Ops[i] = DAG.getVectorShuffle(VT, dl, Ops[2*i], Ops[(2*i)+1], Mask);
-    }
-    return Ops[0];
+    return Result;
   }
-  return SDValue();
+
+  // Otherwise, expand into a number of unpckl*, start by extending each of
+  // our (non-undef) elements to the full vector width with the element in the
+  // bottom slot of the vector (which generates no code for SSE).
+  SmallVector<SDValue, 8> Ops(NumElems);
+  for (unsigned i = 0; i < NumElems; ++i) {
+    if (!Op.getOperand(i).isUndef())
+      Ops[i] = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Op.getOperand(i));
+    else
+      Ops[i] = DAG.getUNDEF(VT);
+  }
+
+  // Next, we iteratively mix elements, e.g. for v4f32:
+  //   Step 1: unpcklps 0, 1 ==> X: <?, ?, 1, 0>
+  //         : unpcklps 2, 3 ==> Y: <?, ?, 3, 2>
+  //   Step 2: unpcklpd X, Y ==>    <3, 2, 1, 0>
+  for (unsigned Scale = 1; Scale < NumElems; Scale *= 2) {
+    // Generate scaled UNPCKL shuffle mask.
+    SmallVector<int, 16> Mask;
+    for(unsigned i = 0; i != Scale; ++i)
+      Mask.push_back(i);
+    for (unsigned i = 0; i != Scale; ++i)
+      Mask.push_back(NumElems+i);
+    Mask.append(NumElems - Mask.size(), SM_SentinelUndef);
+
+    for (unsigned i = 0, e = NumElems / (2 * Scale); i != e; ++i)
+      Ops[i] = DAG.getVectorShuffle(VT, dl, Ops[2*i], Ops[(2*i)+1], Mask);
+  }
+  return Ops[0];
 }
 
 // 256-bit AVX can use the vinsertf128 instruction
