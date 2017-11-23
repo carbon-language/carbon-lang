@@ -8112,8 +8112,8 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     }
 
     for (unsigned i = 0; i < 2; ++i) {
-      switch ((NonZeros & (0x3 << i*2)) >> (i*2)) {
-        default: break;
+      switch ((NonZeros >> (i*2)) & 0x3) {
+        default: llvm_unreachable("Unexpected NonZero count");
         case 0:
           Ops[i] = Ops[i*2];  // Must be a zero vector.
           break;
