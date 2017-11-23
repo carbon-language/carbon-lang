@@ -291,7 +291,7 @@ public:
   Node *getValue();
 
   void skip() override {
-    if (Node *Val = getKey()) {
+    if (Node *Key = getKey()) {
       Key->skip();
       if (Node *Val = getValue())
         Val->skip();
