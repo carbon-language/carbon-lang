@@ -5013,6 +5013,7 @@ static bool isMaskedZeroUpperBitsvXi1(unsigned int Opcode) {
   case X86ISD::PCMPGTM:
   case X86ISD::CMPM:
   case X86ISD::CMPMU:
+  case X86ISD::CMPM_RND:
     return true;
   }
 }
