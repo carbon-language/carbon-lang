@@ -2433,8 +2433,9 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
       return false;
     if (Right.is(TT_JsNonNullAssertion))
       return false;
-    if (Left.is(TT_JsNonNullAssertion) && Right.is(Keywords.kw_as))
-      return true; // "x! as string"
+    if (Left.is(TT_JsNonNullAssertion) &&
+        Right.isOneOf(Keywords.kw_as, Keywords.kw_in))
+      return true; // "x! as string", "x! in y"
   } else if (Style.Language == FormatStyle::LK_Java) {
     if (Left.is(tok::r_square) && Right.is(tok::l_brace))
       return true;
