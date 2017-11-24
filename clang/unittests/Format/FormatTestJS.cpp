@@ -1426,6 +1426,8 @@ TEST_F(FormatTestJS, TypeAnnotations) {
   verifyFormat(
       "var someValue = (v as aaaaaaaaaaaaaaaaaaaa<T>[])\n"
       "                    .someFunction(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
+  verifyFormat("const xIsALongIdent:\n""    YJustBarelyFitsLinex[];",
+      getGoogleJSStyleWithColumns(20));
 }
 
 TEST_F(FormatTestJS, UnionIntersectionTypes) {

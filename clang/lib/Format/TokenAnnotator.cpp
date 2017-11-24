@@ -2706,6 +2706,9 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
                             Keywords.kw_readonly, Keywords.kw_abstract,
                             Keywords.kw_get, Keywords.kw_set))
       return false; // Otherwise automatic semicolon insertion would trigger.
+    if (Left.Tok.getIdentifierInfo() &&
+        Right.startsSequence(tok::l_square, tok::r_square))
+      return false;  // breaking in "foo[]" creates illegal TS type syntax.
     if (Left.is(TT_JsFatArrow) && Right.is(tok::l_brace))
       return false;
     if (Left.is(TT_JsTypeColon))
