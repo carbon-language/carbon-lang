@@ -323,6 +323,11 @@ TEST_F(FormatTestJS, ReservedWords) {
                "  case: string;\n"
                "  default: string;\n"
                "}\n");
+  verifyFormat("const Axis = {\n"
+               "  for: 'for',\n"
+               "  x: 'x'\n"
+               "};",
+               "const Axis = {for: 'for', x:   'x'};");
 }
 
 TEST_F(FormatTestJS, ReservedWordsMethods) {
