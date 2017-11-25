@@ -32967,6 +32967,16 @@ static SDValue combineAndMaskToShift(SDNode *N, SelectionDAG &DAG,
 static SDValue combineAnd(SDNode *N, SelectionDAG &DAG,
                           TargetLowering::DAGCombinerInfo &DCI,
                           const X86Subtarget &Subtarget) {
+  EVT VT = N->getValueType(0);
+
+  // If this is SSE1 only convert to FAND to avoid scalarization.
+  if (Subtarget.hasSSE1() && !Subtarget.hasSSE2() && VT == MVT::v4i32) {
+    return DAG.getBitcast(
+        MVT::v4i32, DAG.getNode(X86ISD::FAND, SDLoc(N), MVT::v4f32,
+                                DAG.getBitcast(MVT::v4f32, N->getOperand(0)),
+                                DAG.getBitcast(MVT::v4f32, N->getOperand(1))));
+  }
+
   if (DCI.isBeforeLegalizeOps())
     return SDValue();
 
@@ -32981,8 +32991,6 @@ static SDValue combineAnd(SDNode *N, SelectionDAG &DAG,
 
   if (SDValue ShiftRight = combineAndMaskToShift(N, DAG, Subtarget))
     return ShiftRight;
-
-  EVT VT = N->getValueType(0);
 
   // Attempt to recursively combine a bitmask AND with shuffles.
   if (VT.isVector() && (VT.getScalarSizeInBits() % 8) == 0) {
@@ -33266,6 +33274,18 @@ static SDValue combineOrCmpEqZeroToCtlzSrl(SDNode *N, SelectionDAG &DAG,
 static SDValue combineOr(SDNode *N, SelectionDAG &DAG,
                          TargetLowering::DAGCombinerInfo &DCI,
                          const X86Subtarget &Subtarget) {
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  EVT VT = N->getValueType(0);
+
+  // If this is SSE1 only convert to FOR to avoid scalarization.
+  if (Subtarget.hasSSE1() && !Subtarget.hasSSE2() && VT == MVT::v4i32) {
+    return DAG.getBitcast(MVT::v4i32,
+                          DAG.getNode(X86ISD::FOR, SDLoc(N), MVT::v4f32,
+                                      DAG.getBitcast(MVT::v4f32, N0),
+                                      DAG.getBitcast(MVT::v4f32, N1)));
+  }
+
   if (DCI.isBeforeLegalizeOps())
     return SDValue();
 
@@ -33277,10 +33297,6 @@ static SDValue combineOr(SDNode *N, SelectionDAG &DAG,
 
   if (SDValue R = combineLogicBlendIntoPBLENDV(N, DAG, Subtarget))
     return R;
-
-  SDValue N0 = N->getOperand(0);
-  SDValue N1 = N->getOperand(1);
-  EVT VT = N->getValueType(0);
 
   if (VT != MVT::i16 && VT != MVT::i32 && VT != MVT::i64)
     return SDValue();
@@ -34957,6 +34973,15 @@ static SDValue foldXor1SetCC(SDNode *N, SelectionDAG &DAG) {
 static SDValue combineXor(SDNode *N, SelectionDAG &DAG,
                           TargetLowering::DAGCombinerInfo &DCI,
                           const X86Subtarget &Subtarget) {
+  // If this is SSE1 only convert to FXOR to avoid scalarization.
+  if (Subtarget.hasSSE1() && !Subtarget.hasSSE2() &&
+      N->getValueType(0) == MVT::v4i32) {
+    return DAG.getBitcast(
+        MVT::v4i32, DAG.getNode(X86ISD::FXOR, SDLoc(N), MVT::v4f32,
+                                DAG.getBitcast(MVT::v4f32, N->getOperand(0)),
+                                DAG.getBitcast(MVT::v4f32, N->getOperand(1))));
+  }
+
   if (SDValue Cmp = foldVectorXorShiftIntoCmp(N, DAG, Subtarget))
     return Cmp;
 
