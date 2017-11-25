@@ -1414,6 +1414,7 @@ TEST_F(FormatTestJS, TypeAnnotations) {
   verifyFormat("function x(y: {a?: number;} = {}): number {\n"
                "  return 12;\n"
                "}");
+  verifyFormat("const x: Array<{a: number; b: string;}> = [];");
   verifyFormat("((a: string, b: number): string => a + b);");
   verifyFormat("var x: (y: number) => string;");
   verifyFormat("var x: P<string, (a: number) => string>;");
