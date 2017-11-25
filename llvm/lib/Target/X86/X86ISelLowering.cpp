@@ -35033,10 +35033,13 @@ static SDValue combineFAndFNotToFAndn(SDNode *N, SelectionDAG &DAG,
 
   // Vector types are handled in combineANDXORWithAllOnesIntoANDNP().
   if (!((VT == MVT::f32 && Subtarget.hasSSE1()) ||
-        (VT == MVT::f64 && Subtarget.hasSSE2())))
+        (VT == MVT::f64 && Subtarget.hasSSE2()) ||
+        (VT == MVT::v4f32 && Subtarget.hasSSE1() && !Subtarget.hasSSE2())))
     return SDValue();
 
   auto isAllOnesConstantFP = [](SDValue V) {
+    if (V.getSimpleValueType().isVector())
+      return ISD::isBuildVectorAllOnes(V.getNode());
     auto *C = dyn_cast<ConstantFPSDNode>(V);
     return C && C->getConstantFPValue()->isAllOnesValue();
   };

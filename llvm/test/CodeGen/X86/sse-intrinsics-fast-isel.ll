@@ -55,14 +55,12 @@ define <4 x float> @test_mm_and_ps(<4 x float> %a0, <4 x float> %a1) nounwind {
 define <4 x float> @test_mm_andnot_ps(<4 x float> %a0, <4 x float> %a1) nounwind {
 ; X32-LABEL: test_mm_andnot_ps:
 ; X32:       # BB#0:
-; X32-NEXT:    xorps {{\.LCPI.*}}, %xmm0
-; X32-NEXT:    andps %xmm1, %xmm0
+; X32-NEXT:    andnps %xmm1, %xmm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: test_mm_andnot_ps:
 ; X64:       # BB#0:
-; X64-NEXT:    xorps {{.*}}(%rip), %xmm0
-; X64-NEXT:    andps %xmm1, %xmm0
+; X64-NEXT:    andnps %xmm1, %xmm0
 ; X64-NEXT:    retq
   %arg0 = bitcast <4 x float> %a0 to <4 x i32>
   %arg1 = bitcast <4 x float> %a1 to <4 x i32>
