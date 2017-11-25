@@ -35904,20 +35904,16 @@ static SDValue combineSetCC(SDNode *N, SelectionDAG &DAG,
 
   if (VT.isVector() && VT.getVectorElementType() == MVT::i1 &&
       (CC == ISD::SETNE || CC == ISD::SETEQ || ISD::isSignedIntSetCC(CC))) {
+    // Put build_vectors on the right.
+    if (LHS.getOpcode() == ISD::BUILD_VECTOR) {
+      std::swap(LHS, RHS);
+      CC = ISD::getSetCCSwappedOperands(CC);
+    }
+
     bool IsSEXT0 =
         (LHS.getOpcode() == ISD::SIGN_EXTEND) &&
         (LHS.getOperand(0).getValueType().getVectorElementType() == MVT::i1);
     bool IsVZero1 = ISD::isBuildVectorAllZeros(RHS.getNode());
-
-    if (!IsSEXT0 || !IsVZero1) {
-      // Swap the operands and update the condition code.
-      std::swap(LHS, RHS);
-      CC = ISD::getSetCCSwappedOperands(CC);
-
-      IsSEXT0 = (LHS.getOpcode() == ISD::SIGN_EXTEND) &&
-                (LHS.getOperand(0).getValueType().getScalarType() == MVT::i1);
-      IsVZero1 = ISD::isBuildVectorAllZeros(RHS.getNode());
-    }
 
     if (IsSEXT0 && IsVZero1) {
       assert(VT == LHS.getOperand(0).getValueType() &&
