@@ -35902,11 +35902,11 @@ static SDValue combineSetCC(SDNode *N, SelectionDAG &DAG,
       return V;
   }
 
-  if (VT.getScalarType() == MVT::i1 &&
+  if (VT.isVector() && VT.getVectorElementType() == MVT::i1 &&
       (CC == ISD::SETNE || CC == ISD::SETEQ || ISD::isSignedIntSetCC(CC))) {
     bool IsSEXT0 =
         (LHS.getOpcode() == ISD::SIGN_EXTEND) &&
-        (LHS.getOperand(0).getValueType().getScalarType() == MVT::i1);
+        (LHS.getOperand(0).getValueType().getVectorElementType() == MVT::i1);
     bool IsVZero1 = ISD::isBuildVectorAllZeros(RHS.getNode());
 
     if (!IsSEXT0 || !IsVZero1) {
