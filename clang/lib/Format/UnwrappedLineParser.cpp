@@ -18,6 +18,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include <algorithm>
+
 #define DEBUG_TYPE "format-parser"
 
 namespace clang {
@@ -891,11 +893,14 @@ void UnwrappedLineParser::readTokenWithJavaScriptASI() {
   bool PreviousMustBeValue = mustBeJSIdentOrValue(Keywords, Previous);
   bool PreviousStartsTemplateExpr =
       Previous->is(TT_TemplateString) && Previous->TokenText.endswith("${");
-  if (PreviousMustBeValue && Line && Line->Tokens.size() > 1) {
-    // If the token before the previous one is an '@', the previous token is an
-    // annotation and can precede another identifier/value.
-    const FormatToken *PrePrevious = std::prev(Line->Tokens.end(), 2)->Tok;
-    if (PrePrevious->is(tok::at))
+  if (PreviousMustBeValue || Previous->is(tok::r_paren)) {
+    // If the line contains an '@' sign, the previous token might be an
+    // annotation, which can precede another identifier/value.
+    bool HasAt = std::find_if(Line->Tokens.begin(), Line->Tokens.end(),
+                              [](UnwrappedLineNode &LineNode) {
+                                return LineNode.Tok->is(tok::at);
+                              }) != Line->Tokens.end();
+    if (HasAt)
       return;
   }
   if (Next->is(tok::exclaim) && PreviousMustBeValue)

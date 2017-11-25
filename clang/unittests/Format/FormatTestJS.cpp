@@ -1197,6 +1197,8 @@ TEST_F(FormatTestJS, AutomaticSemicolonInsertionHeuristic) {
                                       "String");
   verifyFormat("function f(@Foo bar) {}", "function f(@Foo\n"
                                           "  bar) {}");
+  verifyFormat("function f(@Foo(Param) bar) {}", "function f(@Foo(Param)\n"
+                                                 "  bar) {}");
   verifyFormat("a = true\n"
                "return 1",
                "a = true\n"
@@ -1564,7 +1566,7 @@ TEST_F(FormatTestJS, EnumDeclarations) {
                "}");
 }
 
-TEST_F(FormatTestJS, MetadataAnnotations) {
+TEST_F(FormatTestJS, Decorators) {
   verifyFormat("@A\nclass C {\n}");
   verifyFormat("@A({arg: 'value'})\nclass C {\n}");
   verifyFormat("@A\n@B\nclass C {\n}");
