@@ -229,6 +229,10 @@ protected:
   /// of a YMM or ZMM register without clearing the upper part.
   bool HasFastPartialYMMorZMMWrite;
 
+  /// True if gather is reasonably fast. This is true for Skylake client and
+  /// all AVX-512 CPUs.
+  bool HasFastGather;
+
   /// True if hardware SQRTSS instruction is at least as fast (latency) as
   /// RSQRTSS followed by a Newton-Raphson iteration.
   bool HasFastScalarFSQRT;
@@ -514,6 +518,7 @@ public:
   bool hasFastPartialYMMorZMMWrite() const {
     return HasFastPartialYMMorZMMWrite;
   }
+  bool hasFastGather() const { return HasFastGather; }
   bool hasFastScalarFSQRT() const { return HasFastScalarFSQRT; }
   bool hasFastVectorFSQRT() const { return HasFastVectorFSQRT; }
   bool hasFastLZCNT() const { return HasFastLZCNT; }
