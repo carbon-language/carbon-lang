@@ -7522,97 +7522,100 @@ let Predicates = [HasERI] in {
 defm VGETEXP   : avx512_eri<0x42, "vgetexp", X86fgetexpRnd>,
                  avx512_fp_unaryop_packed<0x42, "vgetexp", X86fgetexpRnd> , EVEX;
 
-multiclass avx512_sqrt_packed_round<bits<8> opc, string OpcodeStr,
+multiclass avx512_sqrt_packed_round<bits<8> opc, string OpcodeStr, OpndItins itins,
                                     X86VectorVTInfo _>{
   let ExeDomain = _.ExeDomain in
   defm rb: AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
                          (ins _.RC:$src, AVX512RC:$rc), OpcodeStr, "$rc, $src", "$src, $rc",
-                         (_.VT (X86fsqrtRnd _.RC:$src, (i32 imm:$rc)))>,
-                         EVEX, EVEX_B, EVEX_RC;
+                         (_.VT (X86fsqrtRnd _.RC:$src, (i32 imm:$rc))), itins.rr>,
+                         EVEX, EVEX_B, EVEX_RC, Sched<[itins.Sched]>;
 }
 
-multiclass avx512_sqrt_packed<bits<8> opc, string OpcodeStr,
+multiclass avx512_sqrt_packed<bits<8> opc, string OpcodeStr, OpndItins itins,
                               X86VectorVTInfo _>{
   let ExeDomain = _.ExeDomain in {
   defm r: AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
                          (ins _.RC:$src), OpcodeStr, "$src", "$src",
-                         (_.FloatVT (fsqrt _.RC:$src))>, EVEX;
+                         (_.FloatVT (fsqrt _.RC:$src)), itins.rr>, EVEX,
+                         Sched<[itins.Sched]>;
   defm m: AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
                          (ins _.MemOp:$src), OpcodeStr, "$src", "$src",
                          (fsqrt (_.FloatVT
-                           (bitconvert (_.LdFrag addr:$src))))>, EVEX;
-
+                           (bitconvert (_.LdFrag addr:$src)))), itins.rm>, EVEX,
+                           Sched<[itins.Sched.Folded, ReadAfterLd]>;
   defm mb: AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
                           (ins _.ScalarMemOp:$src), OpcodeStr,
                           "${src}"##_.BroadcastStr, "${src}"##_.BroadcastStr,
                           (fsqrt (_.FloatVT
-                            (X86VBroadcast (_.ScalarLdFrag addr:$src))))>,
-                          EVEX, EVEX_B;
+                            (X86VBroadcast (_.ScalarLdFrag addr:$src)))), itins.rm>,
+                          EVEX, EVEX_B, Sched<[itins.Sched.Folded, ReadAfterLd]>;
   }
 }
 
 multiclass avx512_sqrt_packed_all<bits<8> opc, string OpcodeStr> {
-  defm PSZ : avx512_sqrt_packed<opc, !strconcat(OpcodeStr, "ps"), v16f32_info>,
+  defm PSZ : avx512_sqrt_packed<opc, !strconcat(OpcodeStr, "ps"), SSE_SQRTPS, v16f32_info>,
                                 EVEX_V512, PS, EVEX_CD8<32, CD8VF>;
-  defm PDZ : avx512_sqrt_packed<opc, !strconcat(OpcodeStr, "pd"), v8f64_info>,
+  defm PDZ : avx512_sqrt_packed<opc, !strconcat(OpcodeStr, "pd"), SSE_SQRTPD, v8f64_info>,
                                 EVEX_V512, VEX_W, PD, EVEX_CD8<64, CD8VF>;
   // Define only if AVX512VL feature is present.
   let Predicates = [HasVLX] in {
     defm PSZ128 : avx512_sqrt_packed<opc, !strconcat(OpcodeStr, "ps"),
-                                     v4f32x_info>,
+                                     SSE_SQRTPS, v4f32x_info>,
                                      EVEX_V128, PS, EVEX_CD8<32, CD8VF>;
     defm PSZ256 : avx512_sqrt_packed<opc, !strconcat(OpcodeStr, "ps"),
-                                     v8f32x_info>,
+                                     SSE_SQRTPS, v8f32x_info>,
                                      EVEX_V256, PS, EVEX_CD8<32, CD8VF>;
     defm PDZ128 : avx512_sqrt_packed<opc, !strconcat(OpcodeStr, "pd"),
-                                     v2f64x_info>,
+                                     SSE_SQRTPD, v2f64x_info>,
                                      EVEX_V128, VEX_W, PD, EVEX_CD8<64, CD8VF>;
     defm PDZ256 : avx512_sqrt_packed<opc, !strconcat(OpcodeStr, "pd"),
-                                     v4f64x_info>,
+                                     SSE_SQRTPD, v4f64x_info>,
                                      EVEX_V256, VEX_W, PD, EVEX_CD8<64, CD8VF>;
   }
 }
 
 multiclass avx512_sqrt_packed_all_round<bits<8> opc, string OpcodeStr> {
-  defm PSZ : avx512_sqrt_packed_round<opc, !strconcat(OpcodeStr, "ps"),
+  defm PSZ : avx512_sqrt_packed_round<opc, !strconcat(OpcodeStr, "ps"), SSE_SQRTPS,
                                 v16f32_info>, EVEX_V512, PS, EVEX_CD8<32, CD8VF>;
-  defm PDZ : avx512_sqrt_packed_round<opc, !strconcat(OpcodeStr, "pd"),
+  defm PDZ : avx512_sqrt_packed_round<opc, !strconcat(OpcodeStr, "pd"), SSE_SQRTPD,
                                 v8f64_info>, EVEX_V512, VEX_W, PD, EVEX_CD8<64, CD8VF>;
 }
 
-multiclass avx512_sqrt_scalar<bits<8> opc, string OpcodeStr,X86VectorVTInfo _,
-                              string SUFF, Intrinsic Intr> {
+multiclass avx512_sqrt_scalar<bits<8> opc, string OpcodeStr, OpndItins itins,
+                              X86VectorVTInfo _, string SUFF, Intrinsic Intr> {
   let ExeDomain = _.ExeDomain in {
   defm r_Int : AVX512_maskable_scalar<opc, MRMSrcReg, _, (outs _.RC:$dst),
                          (ins _.RC:$src1, _.RC:$src2), OpcodeStr,
                          "$src2, $src1", "$src1, $src2",
                          (X86fsqrtRnds (_.VT _.RC:$src1),
                                     (_.VT _.RC:$src2),
-                                    (i32 FROUND_CURRENT))>;
+                                    (i32 FROUND_CURRENT)), itins.rr>,
+                         Sched<[itins.Sched]>;
   defm m_Int : AVX512_maskable_scalar<opc, MRMSrcMem, _, (outs _.RC:$dst),
                        (ins _.RC:$src1, _.IntScalarMemOp:$src2), OpcodeStr,
                        "$src2, $src1", "$src1, $src2",
                        (X86fsqrtRnds (_.VT _.RC:$src1),
                                   _.ScalarIntMemCPat:$src2,
-                                  (i32 FROUND_CURRENT))>;
-
+                                  (i32 FROUND_CURRENT)), itins.rm>,
+                       Sched<[itins.Sched.Folded, ReadAfterLd]>;
   defm rb_Int : AVX512_maskable_scalar<opc, MRMSrcReg, _, (outs _.RC:$dst),
                          (ins _.RC:$src1, _.RC:$src2, AVX512RC:$rc), OpcodeStr,
                          "$rc, $src2, $src1", "$src1, $src2, $rc",
                          (X86fsqrtRnds (_.VT _.RC:$src1),
                                      (_.VT _.RC:$src2),
-                                     (i32 imm:$rc))>,
-                         EVEX_B, EVEX_RC;
+                                     (i32 imm:$rc)), itins.rr>,
+                         EVEX_B, EVEX_RC, Sched<[itins.Sched.Folded, ReadAfterLd]>;
 
   let isCodeGenOnly = 1, hasSideEffects = 0 in {
     def r : I<opc, MRMSrcReg, (outs _.FRC:$dst),
                (ins _.FRC:$src1, _.FRC:$src2),
-               OpcodeStr#"\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>;
-
+               OpcodeStr#"\t{$src2, $src1, $dst|$dst, $src1, $src2}", [], itins.rr>,
+               Sched<[itins.Sched]>;
     let mayLoad = 1 in
       def m : I<opc, MRMSrcMem, (outs _.FRC:$dst),
                  (ins _.FRC:$src1, _.ScalarMemOp:$src2),
-                 OpcodeStr#"\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>;
+                 OpcodeStr#"\t{$src2, $src1, $dst|$dst, $src1, $src2}", [], itins.rm>,
+                 Sched<[itins.Sched.Folded, ReadAfterLd]>;
   }
   }
 
@@ -7639,10 +7642,10 @@ let Predicates = [HasAVX512, OptForSize] in {
 }
 
 multiclass avx512_sqrt_scalar_all<bits<8> opc, string OpcodeStr> {
-  defm SSZ : avx512_sqrt_scalar<opc, OpcodeStr#"ss", f32x_info, "SS",
+  defm SSZ : avx512_sqrt_scalar<opc, OpcodeStr#"ss", SSE_SQRTPS, f32x_info, "SS",
                         int_x86_sse_sqrt_ss>,
                         EVEX_CD8<32, CD8VT1>, EVEX_4V, XS, NotMemoryFoldable;
-  defm SDZ : avx512_sqrt_scalar<opc, OpcodeStr#"sd", f64x_info, "SD",
+  defm SDZ : avx512_sqrt_scalar<opc, OpcodeStr#"sd", SSE_SQRTPD, f64x_info, "SD",
                         int_x86_sse2_sqrt_sd>,
                         EVEX_CD8<64, CD8VT1>, EVEX_4V, XD, VEX_W,
                         NotMemoryFoldable;
