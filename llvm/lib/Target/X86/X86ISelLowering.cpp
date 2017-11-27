@@ -1716,25 +1716,22 @@ EVT X86TargetLowering::getSetCCResultType(const DataLayout &DL,
   if (!VT.isVector())
     return MVT::i8;
 
+  if (VT.getSizeInBits() >= 512) {
+    EVT EltVT = VT.getVectorElementType();
+    const unsigned NumElts = VT.getVectorNumElements();
+    if (Subtarget.hasAVX512())
+      if (EltVT == MVT::i32 || EltVT == MVT::i64 ||
+          EltVT == MVT::f32 || EltVT == MVT::f64)
+        return EVT::getVectorVT(Context, MVT::i1, NumElts);
+    if (Subtarget.hasBWI())
+      if (EltVT == MVT::i8 || EltVT == MVT::i16)
+        return EVT::getVectorVT(Context, MVT::i1, NumElts);
+  }
+
   if (VT.isSimple()) {
     MVT VVT = VT.getSimpleVT();
     const unsigned NumElts = VVT.getVectorNumElements();
     MVT EltVT = VVT.getVectorElementType();
-    if (VVT.getSizeInBits() >= 512) {
-      if (Subtarget.hasAVX512())
-        if (EltVT == MVT::i32 || EltVT == MVT::i64 ||
-            EltVT == MVT::f32 || EltVT == MVT::f64)
-          switch(NumElts) {
-          case  8: return MVT::v8i1;
-          case 16: return MVT::v16i1;
-        }
-      if (Subtarget.hasBWI())
-        if (EltVT == MVT::i8 || EltVT == MVT::i16)
-          switch(NumElts) {
-          case 32: return MVT::v32i1;
-          case 64: return MVT::v64i1;
-        }
-    }
 
     if (Subtarget.hasBWI() && Subtarget.hasVLX())
       return MVT::getVectorVT(MVT::i1, NumElts);
