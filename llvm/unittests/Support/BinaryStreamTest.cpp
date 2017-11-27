@@ -279,13 +279,13 @@ TEST_F(BinaryStreamTest, StreamRefDynamicSize) {
   // When the stream is empty, it should report a 0 length and we should get an
   // error trying to read even 1 byte from it.
   BinaryStreamRef ConstRef(Stream);
-  EXPECT_EQ(0, ConstRef.getLength());
+  EXPECT_EQ(0U, ConstRef.getLength());
   EXPECT_THAT_ERROR(Reader.readObject(Byte), Failed());
 
   // But if we write to it, its size should increase and we should be able to
   // read not just a byte, but the string that was written.
   EXPECT_THAT_ERROR(Writer.writeCString(Strings[0]), Succeeded());
-  EXPECT_EQ(2, ConstRef.getLength());
+  EXPECT_EQ(2U, ConstRef.getLength());
   EXPECT_THAT_ERROR(Reader.readObject(Byte), Succeeded());
 
   Reader.setOffset(0);
@@ -296,25 +296,25 @@ TEST_F(BinaryStreamTest, StreamRefDynamicSize) {
   // the
   // underlying stream grows.
   BinaryStreamRef Dropped = ConstRef.drop_front(1);
-  EXPECT_EQ(1, Dropped.getLength());
+  EXPECT_EQ(1U, Dropped.getLength());
 
   EXPECT_THAT_ERROR(Writer.writeCString(Strings[1]), Succeeded());
-  EXPECT_EQ(4, ConstRef.getLength());
-  EXPECT_EQ(3, Dropped.getLength());
+  EXPECT_EQ(4U, ConstRef.getLength());
+  EXPECT_EQ(3U, Dropped.getLength());
 
   // If we drop zero bytes from the back, we should continue tracking the
   // length.
   Dropped = Dropped.drop_back(0);
   EXPECT_THAT_ERROR(Writer.writeCString(Strings[2]), Succeeded());
-  EXPECT_EQ(6, ConstRef.getLength());
-  EXPECT_EQ(5, Dropped.getLength());
+  EXPECT_EQ(6U, ConstRef.getLength());
+  EXPECT_EQ(5U, Dropped.getLength());
 
   // If we drop non-zero bytes from the back, we should stop tracking the
   // length.
   Dropped = Dropped.drop_back(1);
   EXPECT_THAT_ERROR(Writer.writeCString(Strings[3]), Succeeded());
-  EXPECT_EQ(8, ConstRef.getLength());
-  EXPECT_EQ(4, Dropped.getLength());
+  EXPECT_EQ(8U, ConstRef.getLength());
+  EXPECT_EQ(4U, Dropped.getLength());
 }
 
 TEST_F(BinaryStreamTest, DropOperations) {
@@ -397,7 +397,7 @@ TEST_F(BinaryStreamTest, MutableBinaryByteStreamBounds) {
 
 TEST_F(BinaryStreamTest, AppendingStream) {
   AppendingBinaryByteStream Stream(llvm::support::little);
-  EXPECT_EQ(0, Stream.getLength());
+  EXPECT_EQ(0U, Stream.getLength());
 
   std::vector<uint8_t> InputData = {'T', 'e', 's', 't', 'T', 'e', 's', 't'};
   auto Test = makeArrayRef(InputData).take_front(4);
