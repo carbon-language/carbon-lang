@@ -145,7 +145,7 @@ Defined *SymbolTable::addAbsolute(StringRef Name, uint8_t Visibility,
 // Set a flag for --trace-symbol so that we can print out a log message
 // if a new symbol with the same name is inserted into the symbol table.
 void SymbolTable::trace(StringRef Name) {
-  Symtab.insert({CachedHashStringRef(Name), -1});
+  SymMap.insert({CachedHashStringRef(Name), -1});
 }
 
 // Rename SYM as __wrap_SYM. The original symbol is preserved as __real_SYM.
@@ -222,7 +222,7 @@ std::pair<Symbol *, bool> SymbolTable::insert(StringRef Name) {
   if (Pos != StringRef::npos && Pos + 1 < Name.size() && Name[Pos + 1] == '@')
     Name = Name.take_front(Pos);
 
-  auto P = Symtab.insert({CachedHashStringRef(Name), (int)SymVector.size()});
+  auto P = SymMap.insert({CachedHashStringRef(Name), (int)SymVector.size()});
   int &SymIndex = P.first->second;
   bool IsNew = P.second;
   bool Traced = false;
@@ -524,8 +524,8 @@ Symbol *SymbolTable::addBitcode(StringRef Name, uint8_t Binding,
 }
 
 Symbol *SymbolTable::find(StringRef Name) {
-  auto It = Symtab.find(CachedHashStringRef(Name));
-  if (It == Symtab.end())
+  auto It = SymMap.find(CachedHashStringRef(Name));
+  if (It == SymMap.end())
     return nullptr;
   if (It->second == -1)
     return nullptr;

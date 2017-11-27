@@ -100,7 +100,7 @@ public:
 
   // Iterates symbols in non-determinstic hash table order.
   template <typename T> void forEachSymbol(T Callback) {
-    for (auto &Pair : Symtab)
+    for (auto &Pair : SymMap)
       Callback(Pair.second);
   }
 
@@ -108,7 +108,7 @@ private:
   std::pair<Symbol *, bool> insert(StringRef Name);
   StringRef findByPrefix(StringRef Prefix);
 
-  llvm::DenseMap<llvm::CachedHashStringRef, Symbol *> Symtab;
+  llvm::DenseMap<llvm::CachedHashStringRef, Symbol *> SymMap;
   std::unique_ptr<BitcodeCompiler> LTO;
 };
 

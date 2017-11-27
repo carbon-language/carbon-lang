@@ -94,7 +94,7 @@ static void errorOrWarn(const Twine &S) {
 void SymbolTable::reportRemainingUndefines() {
   SmallPtrSet<Symbol *, 8> Undefs;
 
-  for (auto &I : Symtab) {
+  for (auto &I : SymMap) {
     Symbol *Sym = I.second;
     auto *Undef = dyn_cast<Undefined>(Sym);
     if (!Undef)
@@ -153,7 +153,7 @@ void SymbolTable::reportRemainingUndefines() {
 }
 
 std::pair<Symbol *, bool> SymbolTable::insert(StringRef Name) {
-  Symbol *&Sym = Symtab[CachedHashStringRef(Name)];
+  Symbol *&Sym = SymMap[CachedHashStringRef(Name)];
   if (Sym)
     return {Sym, false};
   Sym = (Symbol *)make<SymbolUnion>();
@@ -318,8 +318,8 @@ std::vector<Chunk *> SymbolTable::getChunks() {
 }
 
 Symbol *SymbolTable::find(StringRef Name) {
-  auto It = Symtab.find(CachedHashStringRef(Name));
-  if (It == Symtab.end())
+  auto It = SymMap.find(CachedHashStringRef(Name));
+  if (It == SymMap.end())
     return nullptr;
   return It->second;
 }
@@ -331,7 +331,7 @@ Symbol *SymbolTable::findUnderscore(StringRef Name) {
 }
 
 StringRef SymbolTable::findByPrefix(StringRef Prefix) {
-  for (auto Pair : Symtab) {
+  for (auto Pair : SymMap) {
     StringRef Name = Pair.first.val();
     if (Name.startswith(Prefix))
       return Name;
