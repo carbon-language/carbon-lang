@@ -192,6 +192,7 @@ defm : JWriteResIntPair<WriteJump,  JALU01, 1>;
 
 defm : JWriteResFpuPair<WriteFAdd,        JFPU0,  3>;
 defm : JWriteResFpuPair<WriteFMul,        JFPU1,  2>;
+defm : JWriteResFpuPair<WriteFMA,         JFPU1,  2>; // NOTE: Doesn't exist on Jaguar.
 defm : JWriteResFpuPair<WriteFRcp,        JFPU1,  2>;
 defm : JWriteResFpuPair<WriteFRsqrt,      JFPU1,  2>;
 defm : JWriteResFpuPair<WriteFShuffle,   JFPU01,  1>;
