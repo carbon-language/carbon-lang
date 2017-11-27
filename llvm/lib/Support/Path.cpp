@@ -160,10 +160,11 @@ enum FSEntity {
   FS_Name
 };
 
-static std::error_code createUniqueEntity(const Twine &Model, int &ResultFD,
-                                          SmallVectorImpl<char> &ResultPath,
-                                          bool MakeAbsolute, unsigned Mode,
-                                          FSEntity Type) {
+static std::error_code
+createUniqueEntity(const Twine &Model, int &ResultFD,
+                   SmallVectorImpl<char> &ResultPath, bool MakeAbsolute,
+                   unsigned Mode, FSEntity Type,
+                   sys::fs::OpenFlags Flags = sys::fs::F_None) {
   SmallString<128> ModelStorage;
   Model.toVector(ModelStorage);
 
@@ -196,7 +197,7 @@ retry_random_path:
   case FS_File: {
     if (std::error_code EC =
             sys::fs::openFileForWrite(Twine(ResultPath.begin()), ResultFD,
-                                      sys::fs::F_RW | sys::fs::F_Excl, Mode)) {
+                                      Flags | sys::fs::F_Excl, Mode)) {
       if (EC == errc::file_exists)
         goto retry_random_path;
       return EC;
@@ -750,8 +751,9 @@ std::error_code getUniqueID(const Twine Path, UniqueID &Result) {
 
 std::error_code createUniqueFile(const Twine &Model, int &ResultFd,
                                  SmallVectorImpl<char> &ResultPath,
-                                 unsigned Mode) {
-  return createUniqueEntity(Model, ResultFd, ResultPath, false, Mode, FS_File);
+                                 unsigned Mode, sys::fs::OpenFlags Flags) {
+  return createUniqueEntity(Model, ResultFd, ResultPath, false, Mode, FS_File,
+                            Flags);
 }
 
 std::error_code createUniqueFile(const Twine &Model,
@@ -845,28 +847,32 @@ Expected<TempFile> TempFile::create(const Twine &Model, unsigned Mode) {
 
 static std::error_code
 createTemporaryFile(const Twine &Model, int &ResultFD,
-                    llvm::SmallVectorImpl<char> &ResultPath, FSEntity Type) {
+                    llvm::SmallVectorImpl<char> &ResultPath, FSEntity Type,
+                    sys::fs::OpenFlags Flags) {
   SmallString<128> Storage;
   StringRef P = Model.toNullTerminatedStringRef(Storage);
   assert(P.find_first_of(separators(Style::native)) == StringRef::npos &&
          "Model must be a simple filename.");
   // Use P.begin() so that createUniqueEntity doesn't need to recreate Storage.
-  return createUniqueEntity(P.begin(), ResultFD, ResultPath,
-                            true, owner_read | owner_write, Type);
+  return createUniqueEntity(P.begin(), ResultFD, ResultPath, true,
+                            owner_read | owner_write, Type, Flags);
 }
 
 static std::error_code
 createTemporaryFile(const Twine &Prefix, StringRef Suffix, int &ResultFD,
-                    llvm::SmallVectorImpl<char> &ResultPath, FSEntity Type) {
+                    llvm::SmallVectorImpl<char> &ResultPath, FSEntity Type,
+                    sys::fs::OpenFlags Flags = sys::fs::F_None) {
   const char *Middle = Suffix.empty() ? "-%%%%%%" : "-%%%%%%.";
   return createTemporaryFile(Prefix + Middle + Suffix, ResultFD, ResultPath,
-                             Type);
+                             Type, Flags);
 }
 
 std::error_code createTemporaryFile(const Twine &Prefix, StringRef Suffix,
                                     int &ResultFD,
-                                    SmallVectorImpl<char> &ResultPath) {
-  return createTemporaryFile(Prefix, Suffix, ResultFD, ResultPath, FS_File);
+                                    SmallVectorImpl<char> &ResultPath,
+                                    sys::fs::OpenFlags Flags) {
+  return createTemporaryFile(Prefix, Suffix, ResultFD, ResultPath, FS_File,
+                             Flags);
 }
 
 std::error_code createTemporaryFile(const Twine &Prefix, StringRef Suffix,
