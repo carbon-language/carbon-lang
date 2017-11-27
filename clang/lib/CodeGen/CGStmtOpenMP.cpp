@@ -2039,8 +2039,7 @@ void CodeGenFunction::EmitOMPDistributeParallelForDirective(
                               S.getDistInc());
   };
   OMPLexicalScope Scope(*this, S, /*AsInlined=*/true);
-  CGM.getOpenMPRuntime().emitInlinedDirective(*this, OMPD_distribute, CodeGen,
-                                              S.hasCancel());
+  CGM.getOpenMPRuntime().emitInlinedDirective(*this, OMPD_distribute, CodeGen);
 }
 
 void CodeGenFunction::EmitOMPDistributeParallelForSimdDirective(
@@ -3201,8 +3200,7 @@ void CodeGenFunction::EmitOMPDistributeDirective(
     CGF.EmitOMPDistributeLoop(S, emitOMPLoopBodyWithStopPoint, S.getInc());
   };
   OMPLexicalScope Scope(*this, S, /*AsInlined=*/true);
-  CGM.getOpenMPRuntime().emitInlinedDirective(*this, OMPD_distribute, CodeGen,
-                                              false);
+  CGM.getOpenMPRuntime().emitInlinedDirective(*this, OMPD_distribute, CodeGen);
 }
 
 static llvm::Function *emitOutlinedOrderedFunction(CodeGenModule &CGM,
@@ -3915,8 +3913,8 @@ void CodeGenFunction::EmitOMPTeamsDistributeParallelForDirective(
     OMPPrivateScope PrivateScope(CGF);
     CGF.EmitOMPReductionClauseInit(S, PrivateScope);
     (void)PrivateScope.Privatize();
-    CGF.CGM.getOpenMPRuntime().emitInlinedDirective(
-        CGF, OMPD_distribute, CodeGenDistribute, S.hasCancel());
+    CGF.CGM.getOpenMPRuntime().emitInlinedDirective(CGF, OMPD_distribute,
+                                                    CodeGenDistribute);
     CGF.EmitOMPReductionClauseFinal(S, /*ReductionKind=*/OMPD_teams);
   };
   emitCommonOMPTeamsDirective(*this, S, OMPD_distribute_parallel_for, CodeGen);
