@@ -243,7 +243,7 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_UnaryOp(SDNode *N) {
   // For instance, this happens on AArch64: v1i1 is illegal but v1i{8,16,32}
   // are widened to v8i8, v4i16, and v2i32, which is legal, because v1i64 is
   // legal and was not scalarized.
-  // See the similar logic in ScalarizeVecRes_VSETCC
+  // See the similar logic in ScalarizeVecRes_SETCC
   if (getTypeAction(OpVT) == TargetLowering::TypeScalarizeVector) {
     Op = GetScalarizedVector(Op);
   } else {
@@ -307,7 +307,7 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_VSELECT(SDNode *N) {
   SDLoc DL(N);
   // The vselect result and true/value operands needs scalarizing, but it's
   // not a given that the Cond does. For instance, in AVX512 v1i1 is legal.
-  // See the similar logic in ScalarizeVecRes_VSETCC
+  // See the similar logic in ScalarizeVecRes_SETCC
   if (getTypeAction(OpVT) == TargetLowering::TypeScalarizeVector) {
     Cond = GetScalarizedVector(Cond);
   } else {
