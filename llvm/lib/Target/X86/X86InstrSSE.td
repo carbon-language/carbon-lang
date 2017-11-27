@@ -5765,18 +5765,6 @@ let ExeDomain = SSEPackedSingle in {
     defm INSERTPS : SS41I_insertf32<0x21, "insertps", 1, SSE_INSERT_ITINS>;
 }
 
-let Predicates = [UseSSE41] in {
-  // If we're inserting an element from a load or a null pshuf of a load,
-  // fold the load into the insertps instruction.
-  def : Pat<(v4f32 (X86insertps (v4f32 VR128:$src1), (X86PShufd (v4f32
-                       (scalar_to_vector (loadf32 addr:$src2))), (i8 0)),
-                   imm:$src3)),
-            (INSERTPSrm VR128:$src1, addr:$src2, imm:$src3)>;
-  def : Pat<(v4f32 (X86insertps (v4f32 VR128:$src1), (X86PShufd
-                      (loadv4f32 addr:$src2), (i8 0)), imm:$src3)),
-            (INSERTPSrm VR128:$src1, addr:$src2, imm:$src3)>;
-}
-
 let Predicates = [UseAVX] in {
   // If we're inserting an element from a vbroadcast of a load, fold the
   // load into the X86insertps instruction.
