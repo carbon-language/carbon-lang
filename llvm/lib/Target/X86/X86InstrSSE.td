@@ -199,6 +199,11 @@ def SSE_INTALU_ITINS_SHUFF_P : OpndItins<
   IIC_SSE_INTALU_P_RR, IIC_SSE_INTALU_P_RM
 >;
 
+let Sched = WriteShuffle in
+def SSE_PACK : OpndItins<
+  IIC_SSE_PACK, IIC_SSE_PACK
+>;
+
 let Sched = WriteMPSAD in
 def DEFAULT_ITINS_MPSADSCHED :  OpndItins<
   IIC_ALU_NONMEM, IIC_ALU_MEM
