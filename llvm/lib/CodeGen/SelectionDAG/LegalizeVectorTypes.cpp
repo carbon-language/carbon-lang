@@ -1269,10 +1269,19 @@ void DAGTypeLegalizer::SplitVecRes_SETCC(SDNode *N, SDValue &Lo, SDValue &Hi) {
   SDLoc DL(N);
   std::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(N->getValueType(0));
 
-  // Split the input.
+  // If the input also splits, handle it directly. Otherwise split it by hand.
   SDValue LL, LH, RL, RH;
-  std::tie(LL, LH) = DAG.SplitVectorOperand(N, 0);
-  std::tie(RL, RH) = DAG.SplitVectorOperand(N, 1);
+  if (getTypeAction(N->getOperand(0).getValueType()) ==
+      TargetLowering::TypeSplitVector)
+    GetSplitVector(N->getOperand(0), LL, LH);
+  else
+    std::tie(LL, LH) = DAG.SplitVectorOperand(N, 0);
+
+  if (getTypeAction(N->getOperand(1).getValueType()) ==
+      TargetLowering::TypeSplitVector)
+    GetSplitVector(N->getOperand(1), RL, RH);
+  else
+    std::tie(RL, RH) = DAG.SplitVectorOperand(N, 1);
 
   Lo = DAG.getNode(N->getOpcode(), DL, LoVT, LL, RL, N->getOperand(2));
   Hi = DAG.getNode(N->getOpcode(), DL, HiVT, LH, RH, N->getOperand(2));
