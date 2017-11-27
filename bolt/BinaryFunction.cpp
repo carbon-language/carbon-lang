@@ -179,7 +179,7 @@ template <typename R>
 bool emptyRange(const R &Range) {
   return Range.begin() == Range.end();
 }
-  
+
 /// Gets debug line information for the instruction located at the given
 /// address in the original binary. The SMLoc's pointer is used
 /// to point to this information, which is represented by a
@@ -254,7 +254,7 @@ bool BinaryFunction::hasNameRegex(const std::string &NameRegex) const {
       return true;
   return false;
 }
-  
+
 BinaryBasicBlock *
 BinaryFunction::getBasicBlockContainingOffset(uint64_t Offset) {
   if (Offset > Size)
@@ -610,7 +610,7 @@ void BinaryFunction::printRelocations(raw_ostream &OS,
     OS << Sep << "(pcrel)";
   }
 }
-  
+
 IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
                                                          unsigned Size,
                                                          uint64_t Offset) {
@@ -4330,8 +4330,16 @@ BinaryFunction::getFallthroughsInTrace(uint64_t From, uint64_t To) const {
 
   // Trace needs to finish in a branch
   if (!BC.MIA->isBranch(ToIter->second) && !BC.MIA->isCall(ToIter->second) &&
-      !BC.MIA->isReturn(ToIter->second))
-    return NoneType();
+      !BC.MIA->isReturn(ToIter->second)) {
+    // Check for "rep ret"
+    if (!BC.MIA->isPrefix(ToIter->second)) {
+      return NoneType();
+    } else {
+      ++ToIter;
+      if (!BC.MIA->isReturn(ToIter->second))
+        return NoneType();
+    }
+  }
 
   // Analyze intermediate instructions
   for (; FromIter != ToIter; ++FromIter) {
