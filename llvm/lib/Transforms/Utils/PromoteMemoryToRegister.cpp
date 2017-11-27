@@ -185,7 +185,7 @@ public:
   unsigned Start;
   unsigned End;
 
-  GuaranteedExecutionRange(unsigned S, unsigned E): Start(S), End(E) {}
+  GuaranteedExecutionRange(unsigned S, unsigned E) : Start(S), End(E) {}
 };
 
 /// \brief This assigns and keeps a per-bb relative ordering of load/store
@@ -204,11 +204,11 @@ class LargeBlockInfo {
   /// \brief For each basic block we track, keep track of the intervals
   /// of instruction numbers of instructions that transfer control
   /// to their successors, for propagating metadata.
-  DenseMap<const BasicBlock *, Optional<SmallVector<GuaranteedExecutionRange, 4>>>
-    GuaranteedExecutionIntervals;
+  DenseMap<const BasicBlock *,
+           Optional<SmallVector<GuaranteedExecutionRange, 4>>>
+      GuaranteedExecutionIntervals;
 
 public:
-
   /// This code looks for stores to allocas, and for loads both for
   /// allocas and for transferring metadata.
   static bool isInterestingInstruction(const Instruction *I) {
@@ -241,7 +241,8 @@ public:
         }
       } else {
         if (InRange) {
-          assert(FirstInstInRange < InstNo && "Can't push an empty range here.");
+          assert(FirstInstInRange < InstNo &&
+                 "Can't push an empty range here.");
           GuaranteedExecutionIntervals.emplace_back(FirstInstInRange, InstNo);
         }
         InRange = false;
@@ -249,8 +250,7 @@ public:
 
       if (isInterestingInstruction(&BBI)) {
         auto It = InstNumbers.find(&BBI);
-        assert(It != InstNumbers.end() &&
-               InstNo <= It->second &&
+        assert(It != InstNumbers.end() && InstNo <= It->second &&
                "missing number for interesting instruction");
         InstNo = It->second + 1;
       }
@@ -283,7 +283,7 @@ public:
     unsigned Index1 = getInstructionIndex(CxtI);
     unsigned Index2 = getInstructionIndex(I);
 
-    auto& BBGEI = GuaranteedExecutionIntervals[BB];
+    auto &BBGEI = GuaranteedExecutionIntervals[BB];
     if (!BBGEI.hasValue()) {
       BBGEI.emplace(computeGEI(BB));
     }
@@ -294,14 +294,13 @@ public:
     // we can check whether I and CxtI are both in it.
     GuaranteedExecutionRange Bound(Index1, Index1);
     auto R = std::upper_bound(
-      BBGEI->begin(), BBGEI->end(), Bound,
-      [](GuaranteedExecutionRange I_, GuaranteedExecutionRange R) {
-        return I_.End < R.End;
-      });
+        BBGEI->begin(), BBGEI->end(), Bound,
+        [](GuaranteedExecutionRange I_, GuaranteedExecutionRange R) {
+          return I_.End < R.End;
+        });
 
-    return R != BBGEI->end() &&
-      R->Start <= Index1 && Index1 < R->End &&
-      R->Start <= Index2 && Index2 < R->End;
+    return R != BBGEI->end() && R->Start <= Index1 && Index1 < R->End &&
+           R->Start <= Index2 && Index2 < R->End;
   }
 
   /// Get or calculate the index of the specified instruction.
@@ -413,8 +412,7 @@ private:
                            const SmallPtrSetImpl<BasicBlock *> &DefBlocks,
                            SmallPtrSetImpl<BasicBlock *> &LiveInBlocks);
   void RenamePass(BasicBlock *BB, BasicBlock *Pred,
-                  RenamePassData::ValVector &IncVals,
-                  LargeBlockInfo &LBI,
+                  RenamePassData::ValVector &IncVals, LargeBlockInfo &LBI,
                   std::vector<RenamePassData> &Worklist);
   bool QueuePhiNode(BasicBlock *BB, unsigned AllocaIdx, unsigned &Version);
 };
@@ -433,13 +431,10 @@ static void addAssumeNonNull(AssumptionCache *AC, LoadInst *LI) {
   AC->registerAssumption(CI);
 }
 
-static void addAssumptionsFromMetadata(LoadInst *LI,
-                                       Value *ReplVal,
-                                       DominatorTree &DT,
-                                       const DataLayout &DL,
-              LargeBlockInfo &LBI,
-                                       AssumptionCache *AC)
-{
+static void addAssumptionsFromMetadata(LoadInst *LI, Value *ReplVal,
+                                       DominatorTree &DT, const DataLayout &DL,
+                                       LargeBlockInfo &LBI,
+                                       AssumptionCache *AC) {
   if (LI->getMetadata(LLVMContext::MD_nonnull) &&
       !isKnownNonZero(ReplVal, DL, 0, AC, LI, &DT)) {
     addAssumeNonNull(AC, LI);
@@ -450,8 +445,8 @@ static void addAssumptionsFromMetadata(LoadInst *LI,
     // so don't try to add one, but *do* try to copy
     // the metadata to a load in the same BB.
     if (LoadInst *NewLI = dyn_cast<LoadInst>(ReplVal)) {
-      DEBUG(dbgs() << "trying to move !range metadata from" <<
-        *LI << " to" << *NewLI << "\n");
+      DEBUG(dbgs() << "trying to move !range metadata from" << *LI << " to"
+                   << *NewLI << "\n");
       if (LBI.isGuaranteedToBeExecuted(LI, NewLI)) {
         copyRangeMetadata(DL, *LI, N, *NewLI);
       }
@@ -1009,7 +1004,7 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
 /// predecessor block Pred.
 void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
                                 RenamePassData::ValVector &IncomingVals,
-       LargeBlockInfo &LBI,
+                                LargeBlockInfo &LBI,
                                 std::vector<RenamePassData> &Worklist) {
 NextIteration:
   // If we are inserting any phi nodes into this BB, they will already be in the
