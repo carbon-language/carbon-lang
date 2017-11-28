@@ -24,7 +24,17 @@ class ReorderFunctions : public BinaryFunctionPass {
 
   void reorder(std::vector<Cluster> &&Clusters,
                std::map<uint64_t, BinaryFunction> &BFs);
- public:
+public:
+  enum ReorderType : char {
+    RT_NONE = 0,
+    RT_EXEC_COUNT,
+    RT_HFSORT,
+    RT_HFSORT_PLUS,
+    RT_PETTIS_HANSEN,
+    RT_RANDOM,
+    RT_USER
+  };
+
   explicit ReorderFunctions(const cl::opt<bool> &PrintPass)
     : BinaryFunctionPass(PrintPass) { }
 

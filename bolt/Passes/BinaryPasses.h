@@ -382,17 +382,15 @@ public:
                       std::set<uint64_t> &LargeFunctions) override;
 };
 
-///
 /// Prints a list of the top 100 functions sorted by a set of
 /// dyno stats categories.
-///
-class PrintSortedBy : public BinaryFunctionPass {
+class PrintProgramStats : public BinaryFunctionPass {
  public:
-  explicit PrintSortedBy(const cl::opt<bool> &PrintPass)
+  explicit PrintProgramStats(const cl::opt<bool> &PrintPass)
     : BinaryFunctionPass(PrintPass) { }
 
   const char *getName() const override {
-    return "print-sorted-by";
+    return "print-stats";
   }
   bool shouldPrint(const BinaryFunction &) const override {
     return false;

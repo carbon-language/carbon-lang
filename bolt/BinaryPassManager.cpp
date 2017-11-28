@@ -345,7 +345,7 @@ void BinaryFunctionPassManager::runAllPasses(
   // order they're registered.
 
   // Run this pass first to use stats for the original functions.
-  Manager.registerPass(llvm::make_unique<PrintSortedBy>(NeverPrint));
+  Manager.registerPass(llvm::make_unique<PrintProgramStats>(NeverPrint));
 
   Manager.registerPass(llvm::make_unique<StripRepRet>(NeverPrint),
                        opts::StripRepRet);

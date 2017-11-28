@@ -31,6 +31,12 @@
 namespace llvm {
 namespace bolt {
 
+struct LBREntry {
+  uint64_t From;
+  uint64_t To;
+  bool Mispred;
+};
+
 /// LTO-generated function names take a form:
 ///
 ///   <function_name>.lto_priv.<decimal_number>/...

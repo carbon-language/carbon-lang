@@ -217,14 +217,6 @@ RelocationMode("relocs",
   cl::ZeroOrMore,
   cl::cat(BoltCategory));
 
-static cl::opt<bool>
-ReportStaleFuncs("report-stale",
-  cl::desc("print a list of functions with a stale profile"),
-  cl::init(false),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltCategory));
-
 static cl::list<std::string>
 SkipFunctionNames("skip-funcs",
   cl::CommaSeparated,
@@ -254,15 +246,6 @@ SplitFunctions("split-functions",
              clEnumValEnd),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
-
-static cl::opt<unsigned>
-TopCalledLimit("top-called-limit",
-  cl::desc("maximum number of functions to print in top called "
-           "functions section"),
-  cl::init(100),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltCategory));
 
 cl::opt<bool>
 TrapOldCode("trap-old-code",
@@ -572,7 +555,8 @@ createBinaryContext(ELFObjectFileBase *File, DataReader &DR,
 
   std::unique_ptr<const MCInstrInfo> MII(TheTarget->createMCInstrInfo());
   if (!MII) {
-    errs() << "BOLT-ERROR: no instruction info for target " << TripleName << "\n";
+    errs() << "BOLT-ERROR: no instruction info for target " << TripleName
+           << "\n";
     return nullptr;
   }
 
@@ -666,19 +650,6 @@ void RewriteInstance::reset() {
   FailedAddresses.clear();
   RangesSectionsWriter.reset();
   LocationListWriter.reset();
-  TotalScore = 0;
-}
-
-void RewriteInstance::aggregateData() {
-  NamedRegionTimer T("aggregate data", TimerGroupName, opts::TimeRewrite);
-  DA.aggregate(*BC.get(), BinaryFunctions);
-
-  if (!opts::AggregateOnly)
-    return;
-
-  if (std::error_code EC = DA.writeAggregatedFile()) {
-    check_error(EC, "cannot create output data file");
-  }
 }
 
 void RewriteInstance::discoverStorage() {
@@ -901,13 +872,11 @@ void RewriteInstance::run() {
     readSpecialSections();
     discoverFileObjects();
     readDebugInfo();
-    readProfileData();
     disassembleFunctions();
-    if (DA.started()) {
-      aggregateData();
-      if (opts::AggregateOnly)
-        return;
-    }
+    readProfileData();
+    if (opts::AggregateOnly)
+      return;
+    postProcessFunctions();
     for (uint64_t Address : NonSimpleFunctions) {
       auto FI = BinaryFunctions.find(Address);
       assert(FI != BinaryFunctions.end() && "bad non-simple function address");
@@ -1930,30 +1899,44 @@ void RewriteInstance::readDebugInfo() {
 }
 
 void RewriteInstance::readProfileData() {
-  NamedRegionTimer T("read profile data", TimerGroupName, opts::TimeRewrite);
-  if (BC->DR.getAllFuncsData().empty())
+  if (DA.started()) {
+    NamedRegionTimer T("aggregate data", TimerGroupName, opts::TimeRewrite);
+    DA.aggregate(*BC.get(), BinaryFunctions);
+
+    if (opts::AggregateOnly) {
+      if (std::error_code EC = DA.writeAggregatedFile()) {
+        check_error(EC, "cannot create output data file");
+      }
+    }
     return;
+  }
+
+  NamedRegionTimer T("read profile data", TimerGroupName, opts::TimeRewrite);
+  // Preliminary match profile data to functions.
+  if (!BC->DR.getAllFuncsData().empty()) {
+    for (auto &BFI : BinaryFunctions) {
+      auto &Function = BFI.second;
+      if (auto *MemData = BC->DR.getFuncMemData(Function.getNames())) {
+        Function.MemData = MemData;
+        MemData->Used = true;
+      }
+      if (auto *FuncData = BC->DR.getFuncBranchData(Function.getNames())) {
+        Function.BranchData = FuncData;
+        Function.ExecutionCount = FuncData->ExecutionCount;
+        FuncData->Used = true;
+      }
+    }
+  }
 
   for (auto &BFI : BinaryFunctions) {
     auto &Function = BFI.second;
-    if (auto *MemData = BC->DR.getFuncMemData(Function.getNames())) {
-      Function.MemData = MemData;
-      MemData->Used = true;
-    }
-    if (auto *FuncData = BC->DR.getFuncBranchData(Function.getNames())) {
-      Function.BranchData = FuncData;
-      Function.ExecutionCount = FuncData->ExecutionCount;
-      FuncData->Used = true;
-    }
+    Function.readProfile();
   }
 }
 
 void RewriteInstance::disassembleFunctions() {
   NamedRegionTimer T("disassemble functions", TimerGroupName,
                       opts::TimeRewrite);
-  // Disassemble every function and build it's control flow graph.
-  TotalScore = 0;
-  BC->SumExecutionCount = 0;
   for (auto &BFI : BinaryFunctions) {
     BinaryFunction &Function = BFI.second;
 
@@ -1965,7 +1948,6 @@ void RewriteInstance::disassembleFunctions() {
     }
 
     auto FunctionData = BC->getFunctionData(Function);
-
     if (!FunctionData) {
       // When could it happen?
       errs() << "BOLT-ERROR: corresponding section is non-executable or "
@@ -1980,7 +1962,7 @@ void RewriteInstance::disassembleFunctions() {
     }
 
     // Offset of the function in the file.
-    auto *FileBegin =
+    const auto *FileBegin =
       reinterpret_cast<const uint8_t*>(InputFile->getData().data());
     Function.setFileOffset(FunctionData->begin() - FileBegin);
 
@@ -2049,9 +2031,6 @@ void RewriteInstance::disassembleFunctions() {
     }
     BC->InterproceduralReferences.clear();
 
-    if (opts::AggregateOnly)
-      continue;
-
     // Fill in CFI information for this function
     if (Function.isSimple()) {
       if (!CFIRdWrt->fillCFIInfoFor(Function)) {
@@ -2071,6 +2050,23 @@ void RewriteInstance::disassembleFunctions() {
     if (!Function.buildCFG())
       continue;
 
+    if (opts::PrintAll)
+      Function.print(outs(), "while building cfg", true);
+
+  } // Iterate over all functions
+}
+
+void RewriteInstance::postProcessFunctions() {
+  BC->TotalScore = 0;
+  BC->SumExecutionCount = 0;
+  for (auto &BFI : BinaryFunctions) {
+    BinaryFunction &Function = BFI.second;
+
+    if (Function.empty())
+      continue;
+
+    Function.postProcessCFG();
+
     if (opts::PrintAll || opts::PrintCFG)
       Function.print(outs(), "after building cfg", true);
 
@@ -2082,95 +2078,8 @@ void RewriteInstance::disassembleFunctions() {
       Function.printLoopInfo(outs());
     }
 
-    TotalScore += Function.getFunctionScore();
+    BC->TotalScore += Function.getFunctionScore();
     BC->SumExecutionCount += Function.getKnownExecutionCount();
-
-  } // Iterate over all functions
-
-  if (opts::AggregateOnly)
-    return;
-
-  const char *StaleFuncsHeader = "BOLT-INFO: Functions with stale profile:\n";
-  uint64_t NumSimpleFunctions{0};
-  uint64_t NumStaleProfileFunctions{0};
-  std::vector<BinaryFunction *> ProfiledFunctions;
-  for (auto &BFI : BinaryFunctions) {
-    auto &Function = BFI.second;
-    if (!Function.isSimple())
-      continue;
-    ++NumSimpleFunctions;
-    if (Function.getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE)
-      continue;
-    if (Function.hasValidProfile()) {
-      ProfiledFunctions.push_back(&Function);
-    } else {
-      if (opts::ReportStaleFuncs) {
-        outs() << StaleFuncsHeader
-               << "  " << Function << '\n';
-        StaleFuncsHeader = "";
-      }
-      ++NumStaleProfileFunctions;
-    }
-  }
-  BC->NumProfiledFuncs = ProfiledFunctions.size();
-
-  const auto NumAllProfiledFunctions =
-                            ProfiledFunctions.size() + NumStaleProfileFunctions;
-  outs() << "BOLT-INFO: "
-         << NumAllProfiledFunctions
-         << " functions out of " << NumSimpleFunctions << " simple functions ("
-         << format("%.1f", NumAllProfiledFunctions /
-                                            (float) NumSimpleFunctions * 100.0f)
-         << "%) have non-empty execution profile.\n";
-  if (NumStaleProfileFunctions) {
-    outs() << "BOLT-INFO: " << NumStaleProfileFunctions
-           << format(" (%.1f%% of all profiled)",
-                     NumStaleProfileFunctions /
-                                      (float) NumAllProfiledFunctions * 100.0f)
-           << " function" << (NumStaleProfileFunctions == 1 ? "" : "s")
-           << " have invalid (possibly stale) profile.\n";
-  }
-
-  // Profile is marked as 'Used' if it either matches a function name
-  // exactly or if it 100% matches any of functions with matching common
-  // LTO names.
-  auto getUnusedObjects = [this]() -> Optional<std::vector<StringRef>> {
-    std::vector<StringRef> UnusedObjects;
-    for (const auto &Func : BC->DR.getAllFuncsData()) {
-      if (!Func.getValue().Used) {
-        UnusedObjects.emplace_back(Func.getKey());
-      }
-    }
-    if (UnusedObjects.empty())
-      return NoneType();
-    return UnusedObjects;
-  };
-
-  if (const auto UnusedObjects = getUnusedObjects()) {
-    outs() << "BOLT-INFO: profile for " << UnusedObjects->size()
-           << " objects was ignored\n";
-    if (opts::Verbosity >= 1) {
-      for (auto Name : *UnusedObjects) {
-        outs() << "  " << Name << '\n';
-      }
-    }
-  }
-
-  if (ProfiledFunctions.size() > 10) {
-    if (opts::Verbosity >= 1) {
-      outs() << "BOLT-INFO: top called functions are:\n";
-      std::sort(ProfiledFunctions.begin(), ProfiledFunctions.end(),
-                [](BinaryFunction *A, BinaryFunction *B) {
-                  return B->getExecutionCount() < A->getExecutionCount();
-                }
-                );
-      auto SFI = ProfiledFunctions.begin();
-      auto SFIend = ProfiledFunctions.end();
-      for (auto i = 0u; i < opts::TopCalledLimit && SFI != SFIend; ++SFI, ++i) {
-        outs() << "  " << **SFI << " : "
-               << (*SFI)->getExecutionCount() << '\n';
-      }
-    }
   }
 }
 
@@ -3861,8 +3770,8 @@ void RewriteInstance::rewriteFile() {
     outs() << "BOLT: " << CountOverwrittenFunctions
            << " out of " << BinaryFunctions.size()
            << " functions were overwritten.\n";
-    if (TotalScore != 0) {
-      double Coverage = OverwrittenScore / (double)TotalScore * 100.0;
+    if (BC->TotalScore != 0) {
+      double Coverage = OverwrittenScore / (double) BC->TotalScore * 100.0;
       outs() << format("BOLT: Rewritten functions cover %.2lf", Coverage)
              << "% of the execution count of simple functions of "
                 "this binary.\n";

@@ -27,8 +27,6 @@ namespace opts {
 
 extern cl::OptionCategory BoltCategory;
 
-extern cl::opt<BinaryFunction::ReorderType> ReorderFunctions;
-
 static cl::opt<bool>
 PrintDebugInfo("print-debug-info",
   cl::desc("print debug info when printing functions"),
@@ -215,16 +213,14 @@ std::vector<BinaryFunction *> BinaryContext::getSortedFunctions(
                    return &BFI.second;
                  });
 
-  if (opts::ReorderFunctions != BinaryFunction::RT_NONE) {
-    std::stable_sort(SortedFunctions.begin(), SortedFunctions.end(),
-                     [](const BinaryFunction *A, const BinaryFunction *B) {
-                       if (A->hasValidIndex() && B->hasValidIndex()) {
-                         return A->getIndex() < B->getIndex();
-                       } else {
-                         return A->hasValidIndex();
-                       }
-                     });
-  }
+  std::stable_sort(SortedFunctions.begin(), SortedFunctions.end(),
+                   [](const BinaryFunction *A, const BinaryFunction *B) {
+                     if (A->hasValidIndex() && B->hasValidIndex()) {
+                       return A->getIndex() < B->getIndex();
+                     } else {
+                       return A->hasValidIndex();
+                     }
+                   });
   return SortedFunctions;
 }
 

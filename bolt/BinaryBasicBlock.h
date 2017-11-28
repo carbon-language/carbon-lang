@@ -363,15 +363,14 @@ public:
     return BranchInfo[Condition == true ? 0 : 1];
   };
 
-  BinaryBranchInfo &getBranchInfo(const BinaryBasicBlock &Succ) {
-    auto BI = branch_info_begin();
-    for (auto BB : successors()) {
-      if (&Succ == BB)
-        return *BI;
-      ++BI;
-    }
-    llvm_unreachable("Invalid successor");
-    return *BI;
+  BinaryBranchInfo &getBranchInfo(const BinaryBasicBlock &Succ);
+
+  void setSuccessorBranchInfo(const BinaryBasicBlock &Succ,
+                              uint64_t Count,
+                              uint64_t MispredictedCount) {
+    auto &BI = getBranchInfo(Succ);
+    BI.Count = Count;
+    BI.MispredictedCount = MispredictedCount;
   }
 
   /// Try to compute the taken and misprediction frequencies for the given

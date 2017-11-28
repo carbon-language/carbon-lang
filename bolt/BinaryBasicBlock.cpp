@@ -97,11 +97,12 @@ bool BinaryBasicBlock::validateSuccessorInvariants() {
       case 0:
         Valid = !CondBranch && !UncondBranch;
         break;
-      case 1:
-        Valid = !CondBranch ||
-          (CondBranch &&
-           !Function->getBasicBlockForLabel(BC.MIA->getTargetSymbol(*CondBranch)));
+      case 1: {
+        const bool HasCondBlock = CondBranch &&
+          Function->getBasicBlockForLabel(BC.MIA->getTargetSymbol(*CondBranch));
+        Valid = !CondBranch || !HasCondBlock;
         break;
+      }
       case 2:
         Valid =
           (CondBranch &&
@@ -121,7 +122,7 @@ bool BinaryBasicBlock::validateSuccessorInvariants() {
              << Twine::utohexstr(BC.MIA->getJumpTable(*Inst)) << "\n";
       JT->print(errs());
     }
-    dump();
+    getFunction()->dump();
   }
   return Valid;
 }
@@ -450,6 +451,19 @@ void BinaryBasicBlock::dump() const {
 
 uint64_t BinaryBasicBlock::estimateSize() const {
   return Function->getBinaryContext().computeCodeSize(begin(), end());
+}
+
+BinaryBasicBlock::BinaryBranchInfo &
+BinaryBasicBlock::getBranchInfo(const BinaryBasicBlock &Succ) {
+  auto BI = branch_info_begin();
+  for (auto BB : successors()) {
+    if (&Succ == BB)
+      return *BI;
+    ++BI;
+  }
+
+  llvm_unreachable("Invalid successor");
+  return *BI;
 }
 
 } // namespace bolt

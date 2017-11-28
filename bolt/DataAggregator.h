@@ -28,12 +28,6 @@ namespace bolt {
 class BinaryFunction;
 class BinaryContext;
 
-struct LBREntry {
-  uint64_t From;
-  uint64_t To;
-  bool Mispred;
-};
-
 struct PerfBranchSample {
   SmallVector<LBREntry, 16> LBR;
 };
@@ -125,24 +119,19 @@ class DataAggregator : public DataReader {
   BinaryFunction *getBinaryFunctionContainingAddress(uint64_t Address);
 
   /// Semantic actions - parser hooks to interpret parsed perf samples
-  /// Register an intraprocedural branch in \p Func with offsets \p From and
-  /// \p To (relative to \p Func start address).
-  bool doIntraBranch(BinaryFunction *Func, uint64_t From, uint64_t To,
-                     bool Mispred);
+  /// Register an intraprocedural branch \p Branch.
+  bool doIntraBranch(BinaryFunction *Func, const LBREntry &Branch);
 
   /// Register an interprocedural branch from \p FromFunc to \p ToFunc with
   /// offsets \p From and \p To, respectively.
   bool doInterBranch(BinaryFunction *FromFunc, BinaryFunction *ToFunc,
-                     uint64_t From, uint64_t To, bool Mispred);
+                     const LBREntry &Branch);
 
-  /// Register a branch with raw addresses \p From and \p To extracted from the
-  /// LBR
-  bool doBranch(uint64_t From, uint64_t To, bool Mispred);
+  /// Register a \p Branch.
+  bool doBranch(const LBREntry &Branch);
 
-  /// Register a trace starting in raw address \p From and ending in \p To
-  /// This will add all intermediate conditional branches in this trace as not
-  /// taken.
-  bool doTrace(uint64_t From, uint64_t To);
+  /// Register a trace between two LBR entries supplied in execution order.
+  bool doTrace(const LBREntry &First, const LBREntry &Second);
 
   /// Parser helpers
   /// Return false if we exhausted our parser buffer and finished parsing

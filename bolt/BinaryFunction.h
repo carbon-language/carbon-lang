@@ -172,7 +172,7 @@ public:
   enum class State : char {
     Empty = 0,        /// Function body is empty.
     Disassembled,     /// Function have been disassembled.
-    CFG,              /// Control flow graph have been built.
+    CFG,              /// Control flow graph has been built.
     CFG_Finalized,    /// CFG is finalized. No optimizations allowed.
     Emitted,          /// Instructions have been emitted to output.
   };
@@ -184,16 +184,6 @@ public:
     ST_LARGE,         /// Split functions that exceed maximum size in addition
                       /// to landing pads.
     ST_ALL,           /// Split all functions
-  };
-
-  enum ReorderType : char {
-    RT_NONE = 0,
-    RT_EXEC_COUNT,
-    RT_HFSORT,
-    RT_HFSORT_PLUS,
-    RT_PETTIS_HANSEN,
-    RT_RANDOM,
-    RT_USER
   };
 
   /// Branch statistics for jump table entries.
@@ -447,7 +437,6 @@ private:
 
   using BranchListType = std::vector<std::pair<uint32_t, uint32_t>>;
   BranchListType TakenBranches;       /// All local taken branches.
-  BranchListType FTBranches;          /// All fall-through branches.
   BranchListType IgnoredBranches;     /// Branches ignored by CFG purposes.
 
   /// Map offset in the function to a label.
@@ -754,13 +743,8 @@ private:
   }
 
   /// Return instruction at a given offset in the function. Valid before
-  /// CFG is constructed.
-  MCInst *getInstructionAtOffset(uint64_t Offset) {
-    assert(CurrentState == State::Disassembled &&
-           "can only call function in Disassembled state");
-    auto II = Instructions.find(Offset);
-    return (II == Instructions.end()) ? nullptr : &II->second;
-  }
+  /// CFG is constructed or while instruction offsets are available in CFG.
+  MCInst *getInstructionAtOffset(uint64_t Offset);
 
   /// Analyze and process indirect branch \p Instruction before it is
   /// added to Instructions list.
@@ -1480,6 +1464,13 @@ public:
            ProfileMatchRatio == 1.0f;
   }
 
+  /// Mark this function as having a valid profile.
+  void markProfiled() {
+    if (ExecutionCount == COUNT_NO_PROFILE)
+      ExecutionCount = 0;
+    ProfileMatchRatio = 1.0f;
+  }
+
   void addCFIInstruction(uint64_t Offset, MCCFIInstruction &&Inst) {
     assert(!Instructions.empty());
 
@@ -1809,6 +1800,12 @@ public:
   /// State::CFG. Returns false if CFG cannot be built.
   bool buildCFG();
 
+  /// Read any kind of profile information available for the function.
+  void readProfile();
+
+  /// Perform post-processing of the CFG.
+  void postProcessCFG();
+
   /// Verify that any assumptions we've made about indirect branches were
   /// correct and also make any necessary changes to unknown indirect branches.
   ///
@@ -2022,9 +2019,41 @@ public:
     return UnitLineTable;
   }
 
-  /// Scan from - to offsets for conditional jumps
+  /// Update function execution profile with a recorded trace.
+  /// A trace is region of code executed between two LBR entries supplied in
+  /// execution order.
+  ///
+  /// Return true if the trace is valid, false otherwise.
+  bool recordTrace(
+      const LBREntry &First,
+      const LBREntry &Second,
+      uint64_t Count = 1,
+      SmallVector<std::pair<uint64_t, uint64_t>, 16> *Branches = nullptr);
+
+  /// Update function profile with a taken branch.
+  /// \p Count could be 0 if verification of the branch is required.
+  ///
+  /// Return true if the branch is valid, false otherwise.
+  bool recordBranch(uint64_t From, uint64_t To, uint64_t Count = 1,
+                    uint64_t Mispreds = 0);
+
+  /// Record external entry into the function.
+  ///
+  /// Return true if the entry is valid, false otherwise.
+  bool recordEntry(uint64_t To, bool Mispred, uint64_t Count = 1);
+
+  /// Record exit from a function via a call or return.
+  ///
+  /// Return true if the exit point is valid, false otherwise.
+  bool recordExit(uint64_t From, bool Mispred, uint64_t Count = 1);
+
+  /// Finalize profile for the function.
+  void postProcessProfile();
+
+  /// Return a vector of offsets corresponding to a trace in a function
+  /// (see recordTrace() above).
   Optional<SmallVector<std::pair<uint64_t, uint64_t>, 16>>
-  getFallthroughsInTrace(uint64_t From, uint64_t To) const;
+  getFallthroughsInTrace(const LBREntry &First, const LBREntry &Second);
 
   /// Returns an estimate of the function's hot part after splitting.
   /// This is a very rough estimate, as with C++ exceptions there are
@@ -2178,6 +2207,13 @@ inline raw_ostream &operator<<(raw_ostream &OS,
   case BinaryFunction::State::Emitted:      OS << "emitted";  break;
   }
 
+  return OS;
+}
+
+inline raw_ostream &operator<<(raw_ostream &OS,
+                               const LBREntry &LBR) {
+  OS << "0x" << Twine::utohexstr(LBR.From)
+     << " -> 0x" << Twine::utohexstr(LBR.To);
   return OS;
 }
 

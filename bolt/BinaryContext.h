@@ -169,6 +169,9 @@ public:
   /// Number of functions with profile information
   uint64_t NumProfiledFuncs{0};
 
+  /// Total hotness score according to profiling data for this binary.
+  uint64_t TotalScore{0};
+
   /// Track next available address for new allocatable sections. RewriteInstance
   /// sets this prior to running BOLT passes, so layout passes are aware of the
   /// final addresses functions will have.

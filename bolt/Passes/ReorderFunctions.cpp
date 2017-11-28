@@ -27,29 +27,29 @@ extern cl::opt<uint32_t> RandomSeed;
 extern bool shouldProcess(const bolt::BinaryFunction &Function);
 extern size_t padFunction(const bolt::BinaryFunction &Function);
 
-cl::opt<bolt::BinaryFunction::ReorderType>
+cl::opt<bolt::ReorderFunctions::ReorderType>
 ReorderFunctions("reorder-functions",
   cl::desc("reorder and cluster functions (works only with relocations)"),
-  cl::init(bolt::BinaryFunction::RT_NONE),
-  cl::values(clEnumValN(bolt::BinaryFunction::RT_NONE,
+  cl::init(bolt::ReorderFunctions::RT_NONE),
+  cl::values(clEnumValN(bolt::ReorderFunctions::RT_NONE,
       "none",
       "do not reorder functions"),
-    clEnumValN(bolt::BinaryFunction::RT_EXEC_COUNT,
+    clEnumValN(bolt::ReorderFunctions::RT_EXEC_COUNT,
       "exec-count",
       "order by execution count"),
-    clEnumValN(bolt::BinaryFunction::RT_HFSORT,
+    clEnumValN(bolt::ReorderFunctions::RT_HFSORT,
       "hfsort",
       "use hfsort algorithm"),
-    clEnumValN(bolt::BinaryFunction::RT_HFSORT_PLUS,
+    clEnumValN(bolt::ReorderFunctions::RT_HFSORT_PLUS,
       "hfsort+",
       "use hfsort+ algorithm"),
-    clEnumValN(bolt::BinaryFunction::RT_PETTIS_HANSEN,
+    clEnumValN(bolt::ReorderFunctions::RT_PETTIS_HANSEN,
       "pettis-hansen",
       "use Pettis-Hansen algorithm"),
-    clEnumValN(bolt::BinaryFunction::RT_RANDOM,
+    clEnumValN(bolt::ReorderFunctions::RT_RANDOM,
       "random",
       "reorder functions randomly"),
-    clEnumValN(bolt::BinaryFunction::RT_USER,
+    clEnumValN(bolt::ReorderFunctions::RT_USER,
       "user",
       "use function order specified by -function-order"),
     clEnumValEnd),
@@ -142,7 +142,7 @@ void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
     }
   }
 
-  if (opts::ReorderFunctions == BinaryFunction::RT_NONE)
+  if (opts::ReorderFunctions == RT_NONE)
     return;
 
   if (opts::Verbosity == 0) {
@@ -280,15 +280,15 @@ std::vector<std::string> readFunctionOrderFile() {
 void ReorderFunctions::runOnFunctions(BinaryContext &BC,
                                       std::map<uint64_t, BinaryFunction> &BFs,
                                       std::set<uint64_t> &LargeFunctions) {
-  if (!BC.HasRelocations && opts::ReorderFunctions != BinaryFunction::RT_NONE) {
+  if (!BC.HasRelocations && opts::ReorderFunctions != RT_NONE) {
     errs() << "BOLT-ERROR: Function reordering only works when "
            << "relocs are enabled.\n";
     exit(1);
   }
 
-  if (opts::ReorderFunctions != BinaryFunction::RT_NONE &&
-      opts::ReorderFunctions != BinaryFunction::RT_EXEC_COUNT &&
-      opts::ReorderFunctions != BinaryFunction::RT_USER) {
+  if (opts::ReorderFunctions != RT_NONE &&
+      opts::ReorderFunctions != RT_EXEC_COUNT &&
+      opts::ReorderFunctions != RT_USER) {
     Cg = buildCallGraph(BC,
                         BFs,
                         [this](const BinaryFunction &BF) {
@@ -306,9 +306,9 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC,
   std::vector<Cluster> Clusters;
 
   switch(opts::ReorderFunctions) {
-  case BinaryFunction::RT_NONE:
+  case RT_NONE:
     break;
-  case BinaryFunction::RT_EXEC_COUNT:
+  case RT_EXEC_COUNT:
     {
       std::vector<BinaryFunction *> SortedFunctions(BFs.size());
       uint32_t Index = 0;
@@ -340,20 +340,20 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC,
       }
     }
     break;
-  case BinaryFunction::RT_HFSORT:
+  case RT_HFSORT:
     Clusters = clusterize(Cg);
     break;
-  case BinaryFunction::RT_HFSORT_PLUS:
+  case RT_HFSORT_PLUS:
     Clusters = hfsortPlus(Cg, opts::UseGainCache);
     break;
-  case BinaryFunction::RT_PETTIS_HANSEN:
+  case RT_PETTIS_HANSEN:
     Clusters = pettisAndHansen(Cg);
     break;
-  case BinaryFunction::RT_RANDOM:
+  case RT_RANDOM:
     std::srand(opts::RandomSeed);
     Clusters = randomClusters(Cg);
     break;
-  case BinaryFunction::RT_USER:
+  case RT_USER:
     {
       uint32_t Index = 0;
       for (const auto &Function : readFunctionOrderFile()) {
@@ -394,7 +394,8 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC,
           if (!BF->hasValidIndex()) {
             BF->setIndex(Index++);
           } else if (opts::Verbosity > 0) {
-            errs() << "BOLT-WARNING: Duplicate reorder entry for " << Function << ".\n";
+            errs() << "BOLT-WARNING: Duplicate reorder entry for " << Function
+                   << ".\n";
           }
         }
       }

@@ -186,6 +186,8 @@ public:
   /// optimization.
   void disassembleFunctions();
 
+  void postProcessFunctions();
+
   /// Run optimizations that operate at the binary, or post-linker, level.
   void runOptimizationPasses();
 
@@ -276,9 +278,6 @@ private:
   /// Emit a single function.
   void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
                     bool EmitColdPart);
-
-  /// Perform a perf.data aggregation job instead of a binary rewriting one
-  void aggregateData();
 
   /// Detect addresses and offsets available in the binary for allocating
   /// new sections.
@@ -522,9 +521,6 @@ private:
   /// Keep track of which functions didn't fit in their original space in the
   /// last emission, so that we may either decide to split or not optimize them.
   std::set<uint64_t> LargeFunctions;
-
-  /// Total hotness score according to profiling data for this binary.
-  uint64_t TotalScore{0};
 
   /// Section header string table.
   StringTableBuilder SHStrTab;

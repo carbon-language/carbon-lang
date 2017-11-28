@@ -178,9 +178,8 @@ int main(int argc, char **argv) {
   if (!opts::PerfData.empty()) {
     if (!opts::AggregateOnly) {
       errs() << ToolName
-             << ": reading perf data directly is unsupported, please use "
-                "-aggregate-only or perf2bolt\n";
-      exit(1);
+        << ": WARNING: reading perf data directly is unsupported, please use "
+        "-aggregate-only or perf2bolt.\n!!! Proceed on your own risk. !!!\n";
     }
     DA->start(opts::PerfData);
   } else if (!opts::InputDataFilename.empty()) {

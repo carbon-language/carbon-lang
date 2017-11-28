@@ -48,6 +48,7 @@ const char* dynoStatsOptDesc(const bolt::DynoStats::Category C) {
 
 namespace opts {
 
+extern cl::OptionCategory BoltCategory;
 extern cl::OptionCategory BoltOptCategory;
 
 extern cl::opt<unsigned> Verbosity;
@@ -86,6 +87,33 @@ MinBranchClusters("min-branch-clusters",
            "branches"),
   cl::ZeroOrMore,
   cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+enum PeepholeOpts : char {
+  PEEP_NONE             = 0x0,
+  PEEP_SHORTEN          = 0x1,
+  PEEP_DOUBLE_JUMPS     = 0x2,
+  PEEP_TAILCALL_TRAPS   = 0x4,
+  PEEP_USELESS_BRANCHES = 0x8,
+  PEEP_ALL              = 0xf
+};
+
+static cl::list<PeepholeOpts>
+Peepholes("peepholes",
+  cl::CommaSeparated,
+  cl::desc("enable peephole optimizations"),
+  cl::value_desc("opt1,opt2,opt3,..."),
+  cl::values(
+    clEnumValN(PEEP_NONE, "none", "disable peepholes"),
+    clEnumValN(PEEP_SHORTEN, "shorten", "perform instruction shortening"),
+    clEnumValN(PEEP_DOUBLE_JUMPS, "double-jumps",
+               "remove double jumps when able"),
+    clEnumValN(PEEP_TAILCALL_TRAPS, "tailcall-traps", "insert tail call traps"),
+    clEnumValN(PEEP_USELESS_BRANCHES, "useless-branches",
+               "remove useless conditional branches"),
+    clEnumValN(PEEP_ALL, "all", "enable all peephole optimizations"),
+    clEnumValEnd),
+  cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
 static cl::opt<unsigned>
@@ -140,6 +168,14 @@ ReorderBlocks("reorder-blocks",
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
+static cl::opt<bool>
+ReportStaleFuncs("report-stale",
+  cl::desc("print the list of functions with stale profile"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
 enum SctcModes : char {
   SctcAlways,
   SctcPreserveDirection,
@@ -178,32 +214,14 @@ TSPThreshold("tsp-threshold",
   cl::Hidden,
   cl::cat(BoltOptCategory));
 
-enum PeepholeOpts : char {
-  PEEP_NONE             = 0x0,
-  PEEP_SHORTEN          = 0x1,
-  PEEP_DOUBLE_JUMPS     = 0x2,
-  PEEP_TAILCALL_TRAPS   = 0x4,
-  PEEP_USELESS_BRANCHES = 0x8,
-  PEEP_ALL              = 0xf
-};
-
-static cl::list<PeepholeOpts>
-Peepholes("peepholes",
-  cl::CommaSeparated,
-  cl::desc("enable peephole optimizations"),
-  cl::value_desc("opt1,opt2,opt3,..."),
-  cl::values(
-    clEnumValN(PEEP_NONE, "none", "disable peepholes"),
-    clEnumValN(PEEP_SHORTEN, "shorten", "perform instruction shortening"),
-    clEnumValN(PEEP_DOUBLE_JUMPS, "double-jumps",
-               "remove double jumps when able"),
-    clEnumValN(PEEP_TAILCALL_TRAPS, "tailcall-traps", "insert tail call traps"),
-    clEnumValN(PEEP_USELESS_BRANCHES, "useless-branches",
-               "remove useless conditional branches"),
-    clEnumValN(PEEP_ALL, "all", "enable all peephole optimizations"),
-    clEnumValEnd),
+static cl::opt<unsigned>
+TopCalledLimit("top-called-limit",
+  cl::desc("maximum number of functions to print in top called "
+           "functions section"),
+  cl::init(100),
   cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
+  cl::Hidden,
+  cl::cat(BoltCategory));
 
 } // namespace opts
 
@@ -861,6 +879,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
       MIA->setConditionalTailCall(*CondBranch);
       // Add info abount the conditional tail call frequency, otherwise this
       // info will be lost when we delete the associated BranchInfo entry
+      BC.MIA->removeAnnotation(*CondBranch, "CTCTakenCount");
       BC.MIA->addAnnotation(BC.Ctx.get(), *CondBranch, "CTCTakenCount",
                             CTCTakenFreq);
 
@@ -1315,11 +1334,93 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC,
   }
 }
 
-void PrintSortedBy::runOnFunctions(
-  BinaryContext &,
-  std::map<uint64_t, BinaryFunction> &BFs,
-  std::set<uint64_t> &
-) {
+void
+PrintProgramStats::runOnFunctions(BinaryContext &BC,
+                                  std::map<uint64_t, BinaryFunction> &BFs,
+                                  std::set<uint64_t> &) {
+  uint64_t NumSimpleFunctions{0};
+  uint64_t NumStaleProfileFunctions{0};
+  std::vector<BinaryFunction *> ProfiledFunctions;
+  const char *StaleFuncsHeader = "BOLT-INFO: Functions with stale profile:\n";
+  for (auto &BFI : BFs) {
+    auto &Function = BFI.second;
+    if (!Function.isSimple())
+      continue;
+    ++NumSimpleFunctions;
+    if (Function.getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE)
+      continue;
+    if (Function.hasValidProfile())
+      ProfiledFunctions.push_back(&Function);
+    else {
+      if (opts::ReportStaleFuncs) {
+        outs() << StaleFuncsHeader;
+        StaleFuncsHeader = "";
+        outs() << "  " << Function << '\n';
+      }
+      ++NumStaleProfileFunctions;
+    }
+  }
+  BC.NumProfiledFuncs = ProfiledFunctions.size();
+
+  const auto NumAllProfiledFunctions =
+                            ProfiledFunctions.size() + NumStaleProfileFunctions;
+  outs() << "BOLT-INFO: "
+         << NumAllProfiledFunctions
+         << " functions out of " << NumSimpleFunctions << " simple functions ("
+         << format("%.1f", NumAllProfiledFunctions /
+                                            (float) NumSimpleFunctions * 100.0f)
+         << "%) have non-empty execution profile.\n";
+  if (NumStaleProfileFunctions) {
+    outs() << "BOLT-INFO: " << NumStaleProfileFunctions
+           << format(" (%.1f%% of all profiled)",
+                     NumStaleProfileFunctions /
+                                      (float) NumAllProfiledFunctions * 100.0f)
+           << " function" << (NumStaleProfileFunctions == 1 ? "" : "s")
+           << " have invalid (possibly stale) profile.\n";
+  }
+
+  // Profile is marked as 'Used' if it either matches a function name
+  // exactly or if it 100% matches any of functions with matching common
+  // LTO names.
+  auto getUnusedObjects = [&]() -> Optional<std::vector<StringRef>> {
+    std::vector<StringRef> UnusedObjects;
+    for (const auto &Func : BC.DR.getAllFuncsData()) {
+      if (!Func.getValue().Used) {
+        UnusedObjects.emplace_back(Func.getKey());
+      }
+    }
+    if (UnusedObjects.empty())
+      return NoneType();
+    return UnusedObjects;
+  };
+
+  if (const auto UnusedObjects = getUnusedObjects()) {
+    outs() << "BOLT-INFO: profile for " << UnusedObjects->size()
+           << " objects was ignored\n";
+    if (opts::Verbosity >= 1) {
+      for (auto Name : *UnusedObjects) {
+        outs() << "  " << Name << '\n';
+      }
+    }
+  }
+
+  if (ProfiledFunctions.size() > 10) {
+    if (opts::Verbosity >= 1) {
+      outs() << "BOLT-INFO: top called functions are:\n";
+      std::sort(ProfiledFunctions.begin(), ProfiledFunctions.end(),
+                [](BinaryFunction *A, BinaryFunction *B) {
+                  return B->getExecutionCount() < A->getExecutionCount();
+                }
+                );
+      auto SFI = ProfiledFunctions.begin();
+      auto SFIend = ProfiledFunctions.end();
+      for (auto i = 0u; i < opts::TopCalledLimit && SFI != SFIend; ++SFI, ++i) {
+        outs() << "  " << **SFI << " : "
+               << (*SFI)->getExecutionCount() << '\n';
+      }
+    }
+  }
+
   if (!opts::PrintSortedBy.empty() &&
       std::find(opts::PrintSortedBy.begin(),
                 opts::PrintSortedBy.end(),

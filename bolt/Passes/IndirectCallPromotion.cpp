@@ -1295,7 +1295,8 @@ void IndirectCallPromotion::runOnFunctions(
         if (BC.MIA->isCall(Inst) && BC.MIA->getTargetSymbol(Inst, 0))
           continue;
 
-        assert(BC.MIA->isCall(Inst) || BC.MIA->isIndirectBranch(Inst));
+        assert((BC.MIA->isCall(Inst) || BC.MIA->isIndirectBranch(Inst))
+               && "expected a call or an indirect jump instruction");
 
         if (IsJumpTable)
           ++TotalJumpTableCallsites;
