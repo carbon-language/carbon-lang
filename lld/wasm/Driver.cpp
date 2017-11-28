@@ -26,7 +26,6 @@
 using namespace llvm;
 using namespace llvm::sys;
 using namespace llvm::wasm;
-using llvm::sys::Process;
 
 using namespace lld;
 using namespace lld::wasm;
