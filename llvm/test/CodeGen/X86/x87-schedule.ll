@@ -3778,21 +3778,21 @@ define void @test_ftst() optsize {
 ; ATOM-LABEL: test_ftst:
 ; ATOM:       # BB#0:
 ; ATOM-NEXT:    #APP
-; ATOM-NEXT:    ftst
+; ATOM-NEXT:    ftst # sched: [9:4.50]
 ; ATOM-NEXT:    #NO_APP
 ; ATOM-NEXT:    retl # sched: [79:39.50]
 ;
 ; SLM-LABEL: test_ftst:
 ; SLM:       # BB#0:
 ; SLM-NEXT:    #APP
-; SLM-NEXT:    ftst
+; SLM-NEXT:    ftst # sched: [3:1.00]
 ; SLM-NEXT:    #NO_APP
 ; SLM-NEXT:    retl # sched: [4:1.00]
 ;
 ; SANDY-LABEL: test_ftst:
 ; SANDY:       # BB#0:
 ; SANDY-NEXT:    #APP
-; SANDY-NEXT:    ftst
+; SANDY-NEXT:    ftst # sched: [3:1.00]
 ; SANDY-NEXT:    #NO_APP
 ; SANDY-NEXT:    retl # sched: [5:1.00]
 ;
@@ -3806,28 +3806,28 @@ define void @test_ftst() optsize {
 ; BROADWELL-LABEL: test_ftst:
 ; BROADWELL:       # BB#0:
 ; BROADWELL-NEXT:    #APP
-; BROADWELL-NEXT:    ftst
+; BROADWELL-NEXT:    ftst # sched: [3:1.00]
 ; BROADWELL-NEXT:    #NO_APP
 ; BROADWELL-NEXT:    retl # sched: [6:0.50]
 ;
 ; SKYLAKE-LABEL: test_ftst:
 ; SKYLAKE:       # BB#0:
 ; SKYLAKE-NEXT:    #APP
-; SKYLAKE-NEXT:    ftst
+; SKYLAKE-NEXT:    ftst # sched: [3:1.00]
 ; SKYLAKE-NEXT:    #NO_APP
 ; SKYLAKE-NEXT:    retl # sched: [6:0.50]
 ;
 ; SKX-LABEL: test_ftst:
 ; SKX:       # BB#0:
 ; SKX-NEXT:    #APP
-; SKX-NEXT:    ftst
+; SKX-NEXT:    ftst # sched: [3:1.00]
 ; SKX-NEXT:    #NO_APP
 ; SKX-NEXT:    retl # sched: [6:0.50]
 ;
 ; BTVER2-LABEL: test_ftst:
 ; BTVER2:       # BB#0:
 ; BTVER2-NEXT:    #APP
-; BTVER2-NEXT:    ftst
+; BTVER2-NEXT:    ftst # sched: [3:1.00]
 ; BTVER2-NEXT:    #NO_APP
 ; BTVER2-NEXT:    retl # sched: [4:1.00]
 ;

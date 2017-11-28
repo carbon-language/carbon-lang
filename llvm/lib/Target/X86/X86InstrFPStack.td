@@ -327,7 +327,8 @@ def TST_Fp64  : FpIf64<(outs), (ins RFP64:$src), OneArgFP, []>;
 def TST_Fp80  : FpI_<(outs), (ins RFP80:$src), OneArgFP, []>;
 } // hasSideEffects
 
-def TST_F  : FPI<0xD9, MRM_E4, (outs), (ins), "ftst">;
+let SchedRW = [WriteFAdd] in
+def TST_F  : FPI<0xD9, MRM_E4, (outs), (ins), "ftst", IIC_FCOMI>;
 } // Defs = [FPSW]
 
 // Versions of FP instructions that take a single memory operand.  Added for the
