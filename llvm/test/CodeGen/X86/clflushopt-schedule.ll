@@ -13,7 +13,7 @@ define void @clflushopt(i8* %p) nounwind {
 ;
 ; GLM-LABEL: clflushopt:
 ; GLM:       # BB#0:
-; GLM-NEXT:    clflushopt (%rdi)
+; GLM-NEXT:    clflushopt (%rdi) # sched: [3:1.00]
 ; GLM-NEXT:    retq # sched: [4:1.00]
 ;
 ; SKYLAKE-LABEL: clflushopt:
@@ -28,7 +28,7 @@ define void @clflushopt(i8* %p) nounwind {
 ;
 ; ZNVER1-LABEL: clflushopt:
 ; ZNVER1:       # BB#0:
-; ZNVER1-NEXT:    clflushopt (%rdi)
+; ZNVER1-NEXT:    clflushopt (%rdi) # sched: [8:0.50]
 ; ZNVER1-NEXT:    retq # sched: [1:0.50]
   tail call void @llvm.x86.clflushopt(i8* %p)
   ret void
