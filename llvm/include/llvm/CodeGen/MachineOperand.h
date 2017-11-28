@@ -371,7 +371,7 @@ public:
 
   /// substPhysReg - Substitute the current register with the physical register
   /// Reg, taking any existing SubReg into account. For instance,
-  /// substPhysReg(%EAX) will change %reg1024:sub_8bit to %AL.
+  /// substPhysReg(%eax) will change %reg1024:sub_8bit to %al.
   ///
   void substPhysReg(unsigned Reg, const TargetRegisterInfo&);
 
