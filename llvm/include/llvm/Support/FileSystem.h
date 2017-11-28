@@ -685,8 +685,7 @@ enum OpenFlags : unsigned {
   /// Open the file for read and write.
   F_RW = 8,
 
-  /// The returned handle can be used for deleting the file. Only makes a
-  /// difference on windows.
+  /// Delete the file on close. Only makes a difference on windows.
   F_Delete = 16
 };
 

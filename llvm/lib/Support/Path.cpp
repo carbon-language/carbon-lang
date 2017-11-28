@@ -1068,12 +1068,15 @@ TempFile::~TempFile() { assert(Done); }
 
 Error TempFile::discard() {
   Done = true;
-  // Always try to close and remove.
   std::error_code RemoveEC;
+// On windows closing will remove the file.
+#ifndef LLVM_ON_WIN32
+  // Always try to close and remove.
   if (!TmpName.empty()) {
     RemoveEC = fs::remove(TmpName);
     sys::DontRemoveFileOnSignal(TmpName);
   }
+#endif
 
   if (!RemoveEC)
     TmpName = "";
@@ -1091,8 +1094,15 @@ Error TempFile::keep(const Twine &Name) {
   assert(!Done);
   Done = true;
   // Always try to close and rename.
+#ifdef LLVM_ON_WIN32
+  // If we cant't cancel the delete don't rename.
+  std::error_code RenameEC = cancelDeleteOnClose(FD);
+  if (!RenameEC)
+    RenameEC = rename_fd(FD, Name);
+#else
   std::error_code RenameEC = fs::rename(TmpName, Name);
   sys::DontRemoveFileOnSignal(TmpName);
+#endif
 
   if (!RenameEC)
     TmpName = "";
@@ -1110,7 +1120,13 @@ Error TempFile::keep() {
   assert(!Done);
   Done = true;
 
+#ifdef LLVM_ON_WIN32
+  if (std::error_code EC = cancelDeleteOnClose(FD))
+    return errorCodeToError(EC);
+#else
   sys::DontRemoveFileOnSignal(TmpName);
+#endif
+
   TmpName = "";
 
   if (close(FD) == -1) {
@@ -1125,16 +1141,19 @@ Error TempFile::keep() {
 Expected<TempFile> TempFile::create(const Twine &Model, unsigned Mode) {
   int FD;
   SmallString<128> ResultPath;
-  if (std::error_code EC = createUniqueFile(Model, FD, ResultPath, Mode))
+  if (std::error_code EC = createUniqueFile(Model, FD, ResultPath, Mode,
+                                            sys::fs::F_RW | sys::fs::F_Delete))
     return errorCodeToError(EC);
 
-  // Make sure we delete the file when RemoveFileOnSignal fails.
   TempFile Ret(ResultPath, FD);
+#ifndef LLVM_ON_WIN32
   if (sys::RemoveFileOnSignal(ResultPath)) {
+    // Make sure we delete the file when RemoveFileOnSignal fails.
     consumeError(Ret.discard());
     std::error_code EC(errc::operation_not_permitted);
     return errorCodeToError(EC);
   }
+#endif
   return std::move(Ret);
 }
 }
