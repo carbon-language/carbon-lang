@@ -1085,14 +1085,14 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
       report("Two-address instruction operands must be identical", MO, MONum);
 
     // Check register classes.
-    if (MONum < MCID.getNumOperands() && !MO->isImplicit()) {
-      unsigned SubIdx = MO->getSubReg();
+    unsigned SubIdx = MO->getSubReg();
 
-      if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
-        if (SubIdx) {
-          report("Illegal subregister index for physical register", MO, MONum);
-          return;
-        }
+    if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
+      if (SubIdx) {
+        report("Illegal subregister index for physical register", MO, MONum);
+        return;
+      }
+      if (MONum < MCID.getNumOperands()) {
         if (const TargetRegisterClass *DRC =
               TII->getRegClass(MCID, MONum, TRI, *MF)) {
           if (!DRC->contains(Reg)) {
@@ -1101,85 +1101,88 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
                 << TRI->getRegClassName(DRC) << " register.\n";
           }
         }
-      } else {
-        // Virtual register.
-        const TargetRegisterClass *RC = MRI->getRegClassOrNull(Reg);
-        if (!RC) {
-          // This is a generic virtual register.
+      }
+    } else {
+      // Virtual register.
+      const TargetRegisterClass *RC = MRI->getRegClassOrNull(Reg);
+      if (!RC) {
+        // This is a generic virtual register.
 
-          // If we're post-Select, we can't have gvregs anymore.
-          if (isFunctionSelected) {
-            report("Generic virtual register invalid in a Selected function",
-                   MO, MONum);
-            return;
-          }
-
-          // The gvreg must have a type and it must not have a SubIdx.
-          LLT Ty = MRI->getType(Reg);
-          if (!Ty.isValid()) {
-            report("Generic virtual register must have a valid type", MO,
-                   MONum);
-            return;
-          }
-
-          const RegisterBank *RegBank = MRI->getRegBankOrNull(Reg);
-
-          // If we're post-RegBankSelect, the gvreg must have a bank.
-          if (!RegBank && isFunctionRegBankSelected) {
-            report("Generic virtual register must have a bank in a "
-                   "RegBankSelected function",
-                   MO, MONum);
-            return;
-          }
-
-          // Make sure the register fits into its register bank if any.
-          if (RegBank && Ty.isValid() &&
-              RegBank->getSize() < Ty.getSizeInBits()) {
-            report("Register bank is too small for virtual register", MO,
-                   MONum);
-            errs() << "Register bank " << RegBank->getName() << " too small("
-                   << RegBank->getSize() << ") to fit " << Ty.getSizeInBits()
-                   << "-bits\n";
-            return;
-          }
-          if (SubIdx)  {
-            report("Generic virtual register does not subregister index", MO,
-                   MONum);
-            return;
-          }
-
-          // If this is a target specific instruction and this operand
-          // has register class constraint, the virtual register must
-          // comply to it.
-          if (!isPreISelGenericOpcode(MCID.getOpcode()) &&
-              TII->getRegClass(MCID, MONum, TRI, *MF)) {
-            report("Virtual register does not match instruction constraint", MO,
-                   MONum);
-            errs() << "Expect register class "
-                   << TRI->getRegClassName(
-                          TII->getRegClass(MCID, MONum, TRI, *MF))
-                   << " but got nothing\n";
-            return;
-          }
-
-          break;
+        // If we're post-Select, we can't have gvregs anymore.
+        if (isFunctionSelected) {
+          report("Generic virtual register invalid in a Selected function",
+                 MO, MONum);
+          return;
         }
-        if (SubIdx) {
-          const TargetRegisterClass *SRC =
-            TRI->getSubClassWithSubReg(RC, SubIdx);
-          if (!SRC) {
-            report("Invalid subregister index for virtual register", MO, MONum);
-            errs() << "Register class " << TRI->getRegClassName(RC)
-                << " does not support subreg index " << SubIdx << "\n";
-            return;
-          }
-          if (RC != SRC) {
-            report("Invalid register class for subregister index", MO, MONum);
-            errs() << "Register class " << TRI->getRegClassName(RC)
-                << " does not fully support subreg index " << SubIdx << "\n";
-            return;
-          }
+
+        // The gvreg must have a type and it must not have a SubIdx.
+        LLT Ty = MRI->getType(Reg);
+        if (!Ty.isValid()) {
+          report("Generic virtual register must have a valid type", MO,
+                 MONum);
+          return;
         }
+
+        const RegisterBank *RegBank = MRI->getRegBankOrNull(Reg);
+
+        // If we're post-RegBankSelect, the gvreg must have a bank.
+        if (!RegBank && isFunctionRegBankSelected) {
+          report("Generic virtual register must have a bank in a "
+                 "RegBankSelected function",
+                 MO, MONum);
+          return;
+        }
+
+        // Make sure the register fits into its register bank if any.
+        if (RegBank && Ty.isValid() &&
+            RegBank->getSize() < Ty.getSizeInBits()) {
+          report("Register bank is too small for virtual register", MO,
+                 MONum);
+          errs() << "Register bank " << RegBank->getName() << " too small("
+                 << RegBank->getSize() << ") to fit " << Ty.getSizeInBits()
+                 << "-bits\n";
+          return;
+        }
+        if (SubIdx)  {
+          report("Generic virtual register does not subregister index", MO,
+                 MONum);
+          return;
+        }
+
+        // If this is a target specific instruction and this operand
+        // has register class constraint, the virtual register must
+        // comply to it.
+        if (!isPreISelGenericOpcode(MCID.getOpcode()) &&
+            MONum < MCID.getNumOperands() &&
+            TII->getRegClass(MCID, MONum, TRI, *MF)) {
+          report("Virtual register does not match instruction constraint", MO,
+                 MONum);
+          errs() << "Expect register class "
+                 << TRI->getRegClassName(
+                        TII->getRegClass(MCID, MONum, TRI, *MF))
+                 << " but got nothing\n";
+          return;
+        }
+
+        break;
+      }
+      if (SubIdx) {
+        const TargetRegisterClass *SRC =
+          TRI->getSubClassWithSubReg(RC, SubIdx);
+        if (!SRC) {
+          report("Invalid subregister index for virtual register", MO, MONum);
+          errs() << "Register class " << TRI->getRegClassName(RC)
+              << " does not support subreg index " << SubIdx << "\n";
+          return;
+        }
+        if (RC != SRC) {
+          report("Invalid register class for subregister index", MO, MONum);
+          errs() << "Register class " << TRI->getRegClassName(RC)
+              << " does not fully support subreg index " << SubIdx << "\n";
+          return;
+        }
+      }
+      if (MONum < MCID.getNumOperands()) {
         if (const TargetRegisterClass *DRC =
               TII->getRegClass(MCID, MONum, TRI, *MF)) {
           if (SubIdx) {
