@@ -96,21 +96,21 @@ define void @test_fabs() optsize {
 ; ATOM-LABEL: test_fabs:
 ; ATOM:       # BB#0:
 ; ATOM-NEXT:    #APP
-; ATOM-NEXT:    fabs
+; ATOM-NEXT:    fabs # sched: [1:1.00]
 ; ATOM-NEXT:    #NO_APP
 ; ATOM-NEXT:    retl # sched: [79:39.50]
 ;
 ; SLM-LABEL: test_fabs:
 ; SLM:       # BB#0:
 ; SLM-NEXT:    #APP
-; SLM-NEXT:    fabs
+; SLM-NEXT:    fabs # sched: [1:0.50]
 ; SLM-NEXT:    #NO_APP
 ; SLM-NEXT:    retl # sched: [4:1.00]
 ;
 ; SANDY-LABEL: test_fabs:
 ; SANDY:       # BB#0:
 ; SANDY-NEXT:    #APP
-; SANDY-NEXT:    fabs
+; SANDY-NEXT:    fabs # sched: [1:1.00]
 ; SANDY-NEXT:    #NO_APP
 ; SANDY-NEXT:    retl # sched: [5:1.00]
 ;
@@ -124,28 +124,28 @@ define void @test_fabs() optsize {
 ; BROADWELL-LABEL: test_fabs:
 ; BROADWELL:       # BB#0:
 ; BROADWELL-NEXT:    #APP
-; BROADWELL-NEXT:    fabs
+; BROADWELL-NEXT:    fabs # sched: [1:0.33]
 ; BROADWELL-NEXT:    #NO_APP
 ; BROADWELL-NEXT:    retl # sched: [6:0.50]
 ;
 ; SKYLAKE-LABEL: test_fabs:
 ; SKYLAKE:       # BB#0:
 ; SKYLAKE-NEXT:    #APP
-; SKYLAKE-NEXT:    fabs
+; SKYLAKE-NEXT:    fabs # sched: [1:0.33]
 ; SKYLAKE-NEXT:    #NO_APP
 ; SKYLAKE-NEXT:    retl # sched: [6:0.50]
 ;
 ; SKX-LABEL: test_fabs:
 ; SKX:       # BB#0:
 ; SKX-NEXT:    #APP
-; SKX-NEXT:    fabs
+; SKX-NEXT:    fabs # sched: [1:0.33]
 ; SKX-NEXT:    #NO_APP
 ; SKX-NEXT:    retl # sched: [6:0.50]
 ;
 ; BTVER2-LABEL: test_fabs:
 ; BTVER2:       # BB#0:
 ; BTVER2-NEXT:    #APP
-; BTVER2-NEXT:    fabs
+; BTVER2-NEXT:    fabs # sched: [1:0.50]
 ; BTVER2-NEXT:    #NO_APP
 ; BTVER2-NEXT:    retl # sched: [4:1.00]
 ;
@@ -421,21 +421,21 @@ define void @test_fchs() optsize {
 ; ATOM-LABEL: test_fchs:
 ; ATOM:       # BB#0:
 ; ATOM-NEXT:    #APP
-; ATOM-NEXT:    fchs
+; ATOM-NEXT:    fchs # sched: [1:1.00]
 ; ATOM-NEXT:    #NO_APP
 ; ATOM-NEXT:    retl # sched: [79:39.50]
 ;
 ; SLM-LABEL: test_fchs:
 ; SLM:       # BB#0:
 ; SLM-NEXT:    #APP
-; SLM-NEXT:    fchs
+; SLM-NEXT:    fchs # sched: [1:0.50]
 ; SLM-NEXT:    #NO_APP
 ; SLM-NEXT:    retl # sched: [4:1.00]
 ;
 ; SANDY-LABEL: test_fchs:
 ; SANDY:       # BB#0:
 ; SANDY-NEXT:    #APP
-; SANDY-NEXT:    fchs
+; SANDY-NEXT:    fchs # sched: [1:1.00]
 ; SANDY-NEXT:    #NO_APP
 ; SANDY-NEXT:    retl # sched: [5:1.00]
 ;
@@ -449,28 +449,28 @@ define void @test_fchs() optsize {
 ; BROADWELL-LABEL: test_fchs:
 ; BROADWELL:       # BB#0:
 ; BROADWELL-NEXT:    #APP
-; BROADWELL-NEXT:    fchs
+; BROADWELL-NEXT:    fchs # sched: [1:0.33]
 ; BROADWELL-NEXT:    #NO_APP
 ; BROADWELL-NEXT:    retl # sched: [6:0.50]
 ;
 ; SKYLAKE-LABEL: test_fchs:
 ; SKYLAKE:       # BB#0:
 ; SKYLAKE-NEXT:    #APP
-; SKYLAKE-NEXT:    fchs
+; SKYLAKE-NEXT:    fchs # sched: [1:0.33]
 ; SKYLAKE-NEXT:    #NO_APP
 ; SKYLAKE-NEXT:    retl # sched: [6:0.50]
 ;
 ; SKX-LABEL: test_fchs:
 ; SKX:       # BB#0:
 ; SKX-NEXT:    #APP
-; SKX-NEXT:    fchs
+; SKX-NEXT:    fchs # sched: [1:0.33]
 ; SKX-NEXT:    #NO_APP
 ; SKX-NEXT:    retl # sched: [6:0.50]
 ;
 ; BTVER2-LABEL: test_fchs:
 ; BTVER2:       # BB#0:
 ; BTVER2-NEXT:    #APP
-; BTVER2-NEXT:    fchs
+; BTVER2-NEXT:    fchs # sched: [1:0.50]
 ; BTVER2-NEXT:    #NO_APP
 ; BTVER2-NEXT:    retl # sched: [4:1.00]
 ;
@@ -1075,63 +1075,63 @@ define void @test_fcos() optsize {
 ; ATOM-LABEL: test_fcos:
 ; ATOM:       # BB#0:
 ; ATOM-NEXT:    #APP
-; ATOM-NEXT:    fcos
+; ATOM-NEXT:    fcos # sched: [174:87.00]
 ; ATOM-NEXT:    #NO_APP
 ; ATOM-NEXT:    retl # sched: [79:39.50]
 ;
 ; SLM-LABEL: test_fcos:
 ; SLM:       # BB#0:
 ; SLM-NEXT:    #APP
-; SLM-NEXT:    fcos
+; SLM-NEXT:    fcos # sched: [100:1.00]
 ; SLM-NEXT:    #NO_APP
 ; SLM-NEXT:    retl # sched: [4:1.00]
 ;
 ; SANDY-LABEL: test_fcos:
 ; SANDY:       # BB#0:
 ; SANDY-NEXT:    #APP
-; SANDY-NEXT:    fcos
+; SANDY-NEXT:    fcos # sched: [100:0.33]
 ; SANDY-NEXT:    #NO_APP
 ; SANDY-NEXT:    retl # sched: [5:1.00]
 ;
 ; HASWELL-LABEL: test_fcos:
 ; HASWELL:       # BB#0:
 ; HASWELL-NEXT:    #APP
-; HASWELL-NEXT:    fcos
+; HASWELL-NEXT:    fcos # sched: [100:0.25]
 ; HASWELL-NEXT:    #NO_APP
 ; HASWELL-NEXT:    retl # sched: [5:0.50]
 ;
 ; BROADWELL-LABEL: test_fcos:
 ; BROADWELL:       # BB#0:
 ; BROADWELL-NEXT:    #APP
-; BROADWELL-NEXT:    fcos
+; BROADWELL-NEXT:    fcos # sched: [100:0.25]
 ; BROADWELL-NEXT:    #NO_APP
 ; BROADWELL-NEXT:    retl # sched: [6:0.50]
 ;
 ; SKYLAKE-LABEL: test_fcos:
 ; SKYLAKE:       # BB#0:
 ; SKYLAKE-NEXT:    #APP
-; SKYLAKE-NEXT:    fcos
+; SKYLAKE-NEXT:    fcos # sched: [100:0.25]
 ; SKYLAKE-NEXT:    #NO_APP
 ; SKYLAKE-NEXT:    retl # sched: [6:0.50]
 ;
 ; SKX-LABEL: test_fcos:
 ; SKX:       # BB#0:
 ; SKX-NEXT:    #APP
-; SKX-NEXT:    fcos
+; SKX-NEXT:    fcos # sched: [100:0.25]
 ; SKX-NEXT:    #NO_APP
 ; SKX-NEXT:    retl # sched: [6:0.50]
 ;
 ; BTVER2-LABEL: test_fcos:
 ; BTVER2:       # BB#0:
 ; BTVER2-NEXT:    #APP
-; BTVER2-NEXT:    fcos
+; BTVER2-NEXT:    fcos # sched: [100:0.17]
 ; BTVER2-NEXT:    #NO_APP
 ; BTVER2-NEXT:    retl # sched: [4:1.00]
 ;
 ; ZNVER1-LABEL: test_fcos:
 ; ZNVER1:       # BB#0:
 ; ZNVER1-NEXT:    #APP
-; ZNVER1-NEXT:    fcos
+; ZNVER1-NEXT:    fcos # sched: [100:?]
 ; ZNVER1-NEXT:    #NO_APP
 ; ZNVER1-NEXT:    retl # sched: [1:0.50]
   tail call void asm sideeffect "fcos", ""() nounwind
@@ -3048,63 +3048,63 @@ define void @test_fsin() optsize {
 ; ATOM-LABEL: test_fsin:
 ; ATOM:       # BB#0:
 ; ATOM-NEXT:    #APP
-; ATOM-NEXT:    fsin
+; ATOM-NEXT:    fsin # sched: [174:87.00]
 ; ATOM-NEXT:    #NO_APP
 ; ATOM-NEXT:    retl # sched: [79:39.50]
 ;
 ; SLM-LABEL: test_fsin:
 ; SLM:       # BB#0:
 ; SLM-NEXT:    #APP
-; SLM-NEXT:    fsin
+; SLM-NEXT:    fsin # sched: [100:1.00]
 ; SLM-NEXT:    #NO_APP
 ; SLM-NEXT:    retl # sched: [4:1.00]
 ;
 ; SANDY-LABEL: test_fsin:
 ; SANDY:       # BB#0:
 ; SANDY-NEXT:    #APP
-; SANDY-NEXT:    fsin
+; SANDY-NEXT:    fsin # sched: [100:0.33]
 ; SANDY-NEXT:    #NO_APP
 ; SANDY-NEXT:    retl # sched: [5:1.00]
 ;
 ; HASWELL-LABEL: test_fsin:
 ; HASWELL:       # BB#0:
 ; HASWELL-NEXT:    #APP
-; HASWELL-NEXT:    fsin
+; HASWELL-NEXT:    fsin # sched: [100:0.25]
 ; HASWELL-NEXT:    #NO_APP
 ; HASWELL-NEXT:    retl # sched: [5:0.50]
 ;
 ; BROADWELL-LABEL: test_fsin:
 ; BROADWELL:       # BB#0:
 ; BROADWELL-NEXT:    #APP
-; BROADWELL-NEXT:    fsin
+; BROADWELL-NEXT:    fsin # sched: [100:0.25]
 ; BROADWELL-NEXT:    #NO_APP
 ; BROADWELL-NEXT:    retl # sched: [6:0.50]
 ;
 ; SKYLAKE-LABEL: test_fsin:
 ; SKYLAKE:       # BB#0:
 ; SKYLAKE-NEXT:    #APP
-; SKYLAKE-NEXT:    fsin
+; SKYLAKE-NEXT:    fsin # sched: [100:0.25]
 ; SKYLAKE-NEXT:    #NO_APP
 ; SKYLAKE-NEXT:    retl # sched: [6:0.50]
 ;
 ; SKX-LABEL: test_fsin:
 ; SKX:       # BB#0:
 ; SKX-NEXT:    #APP
-; SKX-NEXT:    fsin
+; SKX-NEXT:    fsin # sched: [100:0.25]
 ; SKX-NEXT:    #NO_APP
 ; SKX-NEXT:    retl # sched: [6:0.50]
 ;
 ; BTVER2-LABEL: test_fsin:
 ; BTVER2:       # BB#0:
 ; BTVER2-NEXT:    #APP
-; BTVER2-NEXT:    fsin
+; BTVER2-NEXT:    fsin # sched: [100:0.17]
 ; BTVER2-NEXT:    #NO_APP
 ; BTVER2-NEXT:    retl # sched: [4:1.00]
 ;
 ; ZNVER1-LABEL: test_fsin:
 ; ZNVER1:       # BB#0:
 ; ZNVER1-NEXT:    #APP
-; ZNVER1-NEXT:    fsin
+; ZNVER1-NEXT:    fsin # sched: [100:?]
 ; ZNVER1-NEXT:    #NO_APP
 ; ZNVER1-NEXT:    retl # sched: [1:0.50]
   tail call void asm sideeffect "fsin", ""() nounwind
@@ -3196,7 +3196,7 @@ define void @test_fsqrt() optsize {
 ; ATOM-LABEL: test_fsqrt:
 ; ATOM:       # BB#0:
 ; ATOM-NEXT:    #APP
-; ATOM-NEXT:    fsqrt
+; ATOM-NEXT:    fsqrt # sched: [71:35.50]
 ; ATOM-NEXT:    #NO_APP
 ; ATOM-NEXT:    retl # sched: [79:39.50]
 ;

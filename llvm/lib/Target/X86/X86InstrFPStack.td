@@ -118,10 +118,12 @@ let usesCustomInserter = 1 in {  // Expanded after instruction selection.
 // f32 instructions can use SSE1 and are predicated on FPStackf32 == !SSE1.
 // f64 instructions can use SSE2 and are predicated on FPStackf64 == !SSE2.
 // f80 instructions cannot use SSE and use neither of these.
-class FpIf32<dag outs, dag ins, FPFormat fp, list<dag> pattern> :
-  FpI_<outs, ins, fp, pattern>, Requires<[FPStackf32]>;
-class FpIf64<dag outs, dag ins, FPFormat fp, list<dag> pattern> :
-  FpI_<outs, ins, fp, pattern>, Requires<[FPStackf64]>;
+class FpIf32<dag outs, dag ins, FPFormat fp, list<dag> pattern,
+             InstrItinClass itin = NoItinerary> :
+             FpI_<outs, ins, fp, pattern, itin>, Requires<[FPStackf32]>;
+class FpIf64<dag outs, dag ins, FPFormat fp, list<dag> pattern,
+             InstrItinClass itin = NoItinerary> :
+             FpI_<outs, ins, fp, pattern, itin>, Requires<[FPStackf64]>;
 
 // Factoring for arithmetic.
 multiclass FPBinary_rr<SDNode OpNode> {
@@ -293,30 +295,38 @@ def COM_FST0r   : FPST0rInst <MRM2r, "fcom\t$op">;
 def COMP_FST0r  : FPST0rInst <MRM3r, "fcomp\t$op">;
 
 // Unary operations.
-multiclass FPUnary<SDNode OpNode, Format fp, string asmstring> {
+multiclass FPUnary<SDNode OpNode, Format fp, string asmstring,
+                   InstrItinClass itin> {
 def _Fp32  : FpIf32<(outs RFP32:$dst), (ins RFP32:$src), OneArgFPRW,
-                 [(set RFP32:$dst, (OpNode RFP32:$src))]>;
+                 [(set RFP32:$dst, (OpNode RFP32:$src))], itin>;
 def _Fp64  : FpIf64<(outs RFP64:$dst), (ins RFP64:$src), OneArgFPRW,
-                 [(set RFP64:$dst, (OpNode RFP64:$src))]>;
+                 [(set RFP64:$dst, (OpNode RFP64:$src))], itin>;
 def _Fp80  : FpI_<(outs RFP80:$dst), (ins RFP80:$src), OneArgFPRW,
-                 [(set RFP80:$dst, (OpNode RFP80:$src))]>;
-def _F     : FPI<0xD9, fp, (outs), (ins), asmstring>;
+                 [(set RFP80:$dst, (OpNode RFP80:$src))], itin>;
+def _F     : FPI<0xD9, fp, (outs), (ins), asmstring, itin>;
 }
 
 let Defs = [FPSW] in {
-defm CHS : FPUnary<fneg, MRM_E0, "fchs">;
-defm ABS : FPUnary<fabs, MRM_E1, "fabs">;
-let SchedRW = [WriteFSqrt] in {
-defm SQRT: FPUnary<fsqrt,MRM_FA, "fsqrt">;
+
+let SchedRW = [WriteVecLogic] in {
+defm CHS : FPUnary<fneg, MRM_E0, "fchs", IIC_FSIGN>;
+defm ABS : FPUnary<fabs, MRM_E1, "fabs", IIC_FSIGN>;
 }
-defm SIN : FPUnary<fsin, MRM_FE, "fsin">;
-defm COS : FPUnary<fcos, MRM_FF, "fcos">;
+
+let SchedRW = [WriteFSqrt] in
+defm SQRT: FPUnary<fsqrt,MRM_FA, "fsqrt", IIC_FSQRT>;
+
+let SchedRW = [WriteMicrocoded] in {
+defm SIN : FPUnary<fsin, MRM_FE, "fsin", IIC_FSINCOS>;
+defm COS : FPUnary<fcos, MRM_FF, "fcos", IIC_FSINCOS>;
+}
 
 let hasSideEffects = 0 in {
 def TST_Fp32  : FpIf32<(outs), (ins RFP32:$src), OneArgFP, []>;
 def TST_Fp64  : FpIf64<(outs), (ins RFP64:$src), OneArgFP, []>;
 def TST_Fp80  : FpI_<(outs), (ins RFP80:$src), OneArgFP, []>;
-}
+} // hasSideEffects
+
 def TST_F  : FPI<0xD9, MRM_E4, (outs), (ins), "ftst">;
 } // Defs = [FPSW]
 
