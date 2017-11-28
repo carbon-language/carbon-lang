@@ -1578,14 +1578,14 @@ define <16 x i32> @f32to16ui(<16 x float> %a) nounwind {
 define <16 x i8> @f32to16uc(<16 x float> %f) {
 ; GENERIC-LABEL: f32to16uc:
 ; GENERIC:       # BB#0:
-; GENERIC-NEXT:    vcvttps2udq %zmm0, %zmm0
+; GENERIC-NEXT:    vcvttps2dq %zmm0, %zmm0
 ; GENERIC-NEXT:    vpmovdb %zmm0, %xmm0
 ; GENERIC-NEXT:    vzeroupper
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: f32to16uc:
 ; SKX:       # BB#0:
-; SKX-NEXT:    vcvttps2udq %zmm0, %zmm0 # sched: [4:0.33]
+; SKX-NEXT:    vcvttps2dq %zmm0, %zmm0 # sched: [4:0.33]
 ; SKX-NEXT:    vpmovdb %zmm0, %xmm0 # sched: [4:2.00]
 ; SKX-NEXT:    vzeroupper # sched: [4:1.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
@@ -1596,13 +1596,13 @@ define <16 x i8> @f32to16uc(<16 x float> %f) {
 define <16 x i16> @f32to16us(<16 x float> %f) {
 ; GENERIC-LABEL: f32to16us:
 ; GENERIC:       # BB#0:
-; GENERIC-NEXT:    vcvttps2udq %zmm0, %zmm0
+; GENERIC-NEXT:    vcvttps2dq %zmm0, %zmm0
 ; GENERIC-NEXT:    vpmovdw %zmm0, %ymm0
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: f32to16us:
 ; SKX:       # BB#0:
-; SKX-NEXT:    vcvttps2udq %zmm0, %zmm0 # sched: [4:0.33]
+; SKX-NEXT:    vcvttps2dq %zmm0, %zmm0 # sched: [4:0.33]
 ; SKX-NEXT:    vpmovdw %zmm0, %ymm0 # sched: [4:2.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %res = fptoui <16 x float> %f to <16 x i16>
