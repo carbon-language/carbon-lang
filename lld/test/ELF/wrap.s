@@ -28,7 +28,9 @@
 // SYM2-NEXT: Size:
 // SYM2-NEXT: Binding: Weak
 // SYM2-NEXT: Type:    None
-// SYM2-NEXT: Other:   0
+// SYM2-NEXT: Other [
+// SYM2-NEXT:   STV_PROTECTED
+// SYM2-NEXT: ]
 // SYM3:      Name: __real_foo
 // SYM3-NEXT: Value: 0x11020
 // SYM3-NEXT: Size:
