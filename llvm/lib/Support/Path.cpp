@@ -762,89 +762,6 @@ std::error_code createUniqueFile(const Twine &Model,
   return createUniqueEntity(Model, Dummy, ResultPath, false, 0, FS_Name);
 }
 
-TempFile::TempFile(StringRef Name, int FD) : TmpName(Name), FD(FD) {}
-TempFile::TempFile(TempFile &&Other) { *this = std::move(Other); }
-TempFile &TempFile::operator=(TempFile &&Other) {
-  TmpName = std::move(Other.TmpName);
-  FD = Other.FD;
-  Other.Done = true;
-  return *this;
-}
-
-TempFile::~TempFile() { assert(Done); }
-
-Error TempFile::discard() {
-  Done = true;
-  // Always try to close and remove.
-  std::error_code RemoveEC;
-  if (!TmpName.empty()) {
-    RemoveEC = fs::remove(TmpName);
-    sys::DontRemoveFileOnSignal(TmpName);
-  }
-
-  if (!RemoveEC)
-    TmpName = "";
-
-  if (FD != -1 && close(FD) == -1) {
-    std::error_code EC = std::error_code(errno, std::generic_category());
-    return errorCodeToError(EC);
-  }
-  FD = -1;
-
-  return errorCodeToError(RemoveEC);
-}
-
-Error TempFile::keep(const Twine &Name) {
-  assert(!Done);
-  Done = true;
-  // Always try to close and rename.
-  std::error_code RenameEC = fs::rename(TmpName, Name);
-  sys::DontRemoveFileOnSignal(TmpName);
-
-  if (!RenameEC)
-    TmpName = "";
-
-  if (close(FD) == -1) {
-    std::error_code EC(errno, std::generic_category());
-    return errorCodeToError(EC);
-  }
-  FD = -1;
-
-  return errorCodeToError(RenameEC);
-}
-
-Error TempFile::keep() {
-  assert(!Done);
-  Done = true;
-
-  sys::DontRemoveFileOnSignal(TmpName);
-  TmpName = "";
-
-  if (close(FD) == -1) {
-    std::error_code EC(errno, std::generic_category());
-    return errorCodeToError(EC);
-  }
-  FD = -1;
-
-  return Error::success();
-}
-
-Expected<TempFile> TempFile::create(const Twine &Model, unsigned Mode) {
-  int FD;
-  SmallString<128> ResultPath;
-  if (std::error_code EC = createUniqueFile(Model, FD, ResultPath, Mode))
-    return errorCodeToError(EC);
-
-  // Make sure we delete the file when RemoveFileOnSignal fails.
-  TempFile Ret(ResultPath, FD);
-  if (sys::RemoveFileOnSignal(ResultPath)) {
-    consumeError(Ret.discard());
-    std::error_code EC(errc::operation_not_permitted);
-    return errorCodeToError(EC);
-  }
-  return std::move(Ret);
-}
-
 static std::error_code
 createTemporaryFile(const Twine &Model, int &ResultFD,
                     llvm::SmallVectorImpl<char> &ResultPath, FSEntity Type,
@@ -1137,6 +1054,91 @@ ErrorOr<perms> getPermissions(const Twine &Path) {
 
 namespace llvm {
 namespace sys {
+namespace fs {
+TempFile::TempFile(StringRef Name, int FD) : TmpName(Name), FD(FD) {}
+TempFile::TempFile(TempFile &&Other) { *this = std::move(Other); }
+TempFile &TempFile::operator=(TempFile &&Other) {
+  TmpName = std::move(Other.TmpName);
+  FD = Other.FD;
+  Other.Done = true;
+  return *this;
+}
+
+TempFile::~TempFile() { assert(Done); }
+
+Error TempFile::discard() {
+  Done = true;
+  // Always try to close and remove.
+  std::error_code RemoveEC;
+  if (!TmpName.empty()) {
+    RemoveEC = fs::remove(TmpName);
+    sys::DontRemoveFileOnSignal(TmpName);
+  }
+
+  if (!RemoveEC)
+    TmpName = "";
+
+  if (FD != -1 && close(FD) == -1) {
+    std::error_code EC = std::error_code(errno, std::generic_category());
+    return errorCodeToError(EC);
+  }
+  FD = -1;
+
+  return errorCodeToError(RemoveEC);
+}
+
+Error TempFile::keep(const Twine &Name) {
+  assert(!Done);
+  Done = true;
+  // Always try to close and rename.
+  std::error_code RenameEC = fs::rename(TmpName, Name);
+  sys::DontRemoveFileOnSignal(TmpName);
+
+  if (!RenameEC)
+    TmpName = "";
+
+  if (close(FD) == -1) {
+    std::error_code EC(errno, std::generic_category());
+    return errorCodeToError(EC);
+  }
+  FD = -1;
+
+  return errorCodeToError(RenameEC);
+}
+
+Error TempFile::keep() {
+  assert(!Done);
+  Done = true;
+
+  sys::DontRemoveFileOnSignal(TmpName);
+  TmpName = "";
+
+  if (close(FD) == -1) {
+    std::error_code EC(errno, std::generic_category());
+    return errorCodeToError(EC);
+  }
+  FD = -1;
+
+  return Error::success();
+}
+
+Expected<TempFile> TempFile::create(const Twine &Model, unsigned Mode) {
+  int FD;
+  SmallString<128> ResultPath;
+  if (std::error_code EC = createUniqueFile(Model, FD, ResultPath, Mode))
+    return errorCodeToError(EC);
+
+  // Make sure we delete the file when RemoveFileOnSignal fails.
+  TempFile Ret(ResultPath, FD);
+  if (sys::RemoveFileOnSignal(ResultPath)) {
+    consumeError(Ret.discard());
+    std::error_code EC(errc::operation_not_permitted);
+    return errorCodeToError(EC);
+  }
+  return std::move(Ret);
+}
+}
+
 namespace path {
 
 bool user_cache_directory(SmallVectorImpl<char> &Result, const Twine &Path1,
