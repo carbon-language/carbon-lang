@@ -4140,7 +4140,7 @@ void SelectionDAGBuilder::visitAtomicLoad(const LoadInst &I) {
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   EVT VT = TLI.getValueType(DAG.getDataLayout(), I.getType());
 
-  if (I.getAlignment() < VT.getSizeInBits() / 8)
+  if (I.getAlignment() < VT.getStoreSize())
     report_fatal_error("Cannot generate unaligned atomic load");
 
   MachineMemOperand *MMO =
@@ -4176,7 +4176,7 @@ void SelectionDAGBuilder::visitAtomicStore(const StoreInst &I) {
   EVT VT =
       TLI.getValueType(DAG.getDataLayout(), I.getValueOperand()->getType());
 
-  if (I.getAlignment() < VT.getSizeInBits() / 8)
+  if (I.getAlignment() < VT.getStoreSize())
     report_fatal_error("Cannot generate unaligned atomic store");
 
   SDValue OutChain =
