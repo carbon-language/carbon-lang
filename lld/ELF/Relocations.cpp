@@ -541,6 +541,7 @@ template <class ELFT> static void addCopyRelSymbol(SharedSymbol *SS) {
     Sym->CopyRelSec = Sec;
     Sym->IsPreemptible = false;
     Sym->IsUsedInRegularObj = true;
+    Sym->Used = true;
   }
 
   In<ELFT>::RelaDyn->addReloc({Target->CopyRel, Sec, 0, false, SS, 0});
