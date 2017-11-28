@@ -73,8 +73,8 @@ def fpimmneg1 : FPImmLeaf<fAny, [{
   return Imm.isExactlyValue(-1.0);
 }]>;
 
-// Some 'special' instructions
-let usesCustomInserter = 1 in {  // Expanded after instruction selection.
+// Some 'special' instructions - expanded after instruction selection.
+let usesCustomInserter = 1, hasNoSchedulingInfo = 1 in {
   def FP32_TO_INT16_IN_MEM : PseudoI<(outs), (ins i16mem:$dst, RFP32:$src),
                               [(X86fp_to_i16mem RFP32:$src, addr:$dst)]>;
   def FP32_TO_INT32_IN_MEM : PseudoI<(outs), (ins i32mem:$dst, RFP32:$src),
