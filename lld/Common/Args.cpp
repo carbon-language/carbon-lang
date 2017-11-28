@@ -34,8 +34,8 @@ std::vector<StringRef> lld::args::getStrings(opt::InputArgList &Args, int Id) {
   return V;
 }
 
-uint64_t lld::args::getZOptionValue(opt::InputArgList &Args, int Id, StringRef Key,
-                               uint64_t Default) {
+uint64_t lld::args::getZOptionValue(opt::InputArgList &Args, int Id,
+                                    StringRef Key, uint64_t Default) {
   for (auto *Arg : Args.filtered(Id)) {
     std::pair<StringRef, StringRef> KV = StringRef(Arg->getValue()).split('=');
     if (KV.first == Key) {
