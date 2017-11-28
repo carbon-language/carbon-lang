@@ -1241,13 +1241,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       }
     }
     if (Subtarget.hasVLX()) {
-      setOperationAction(ISD::SINT_TO_FP,       MVT::v8i32, Legal);
-      setOperationAction(ISD::UINT_TO_FP,       MVT::v8i32, Legal);
-      setOperationAction(ISD::FP_TO_SINT,       MVT::v8i32, Legal);
-      setOperationAction(ISD::FP_TO_UINT,       MVT::v8i32, Legal);
-      setOperationAction(ISD::SINT_TO_FP,       MVT::v4i32, Legal);
-      setOperationAction(ISD::FP_TO_SINT,       MVT::v4i32, Legal);
-      setOperationAction(ISD::FP_TO_UINT,       MVT::v4i32, Legal);
       setOperationAction(ISD::ZERO_EXTEND,      MVT::v4i32, Custom);
       setOperationAction(ISD::ZERO_EXTEND,      MVT::v2i64, Custom);
       setOperationAction(ISD::SIGN_EXTEND,      MVT::v4i32, Custom);
