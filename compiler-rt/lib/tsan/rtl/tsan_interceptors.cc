@@ -502,15 +502,17 @@ static void SetJmp(ThreadState *thr, uptr sp, uptr mangled_sp) {
 static void LongJmp(ThreadState *thr, uptr *env) {
 #ifdef __powerpc__
   uptr mangled_sp = env[0];
-#elif SANITIZER_FREEBSD || SANITIZER_NETBSD
+#elif SANITIZER_FREEBSD
   uptr mangled_sp = env[2];
+#elif SANITIZER_NETBSD
+  uptr mangled_sp = env[6];
 #elif SANITIZER_MAC
 # ifdef __aarch64__
     uptr mangled_sp = env[13];
 # else
     uptr mangled_sp = env[2];
 # endif
-#elif defined(SANITIZER_LINUX)
+#elif SANITIZER_LINUX
 # ifdef __aarch64__
   uptr mangled_sp = env[13];
 # elif defined(__mips64)
