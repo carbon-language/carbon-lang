@@ -1031,6 +1031,8 @@ std::error_code openFileForWrite(const Twine &Name, int &ResultFD,
   DWORD Access = GENERIC_WRITE;
   if (Flags & F_RW)
     Access |= GENERIC_READ;
+  if (Flags & F_Delete)
+    Access |= DELETE;
 
   HANDLE H =
       ::CreateFileW(PathUTF16.begin(), Access,

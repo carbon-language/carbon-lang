@@ -683,7 +683,11 @@ enum OpenFlags : unsigned {
   F_Text = 4,
 
   /// Open the file for read and write.
-  F_RW = 8
+  F_RW = 8,
+
+  /// The returned handle can be used for deleting the file. Only makes a
+  /// difference on windows.
+  F_Delete = 16
 };
 
 /// @brief Create a uniquely named file.
