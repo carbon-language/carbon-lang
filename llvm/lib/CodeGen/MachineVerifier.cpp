@@ -264,7 +264,7 @@ namespace {
 
     void markReachable(const MachineBasicBlock *MBB);
     void calcRegsPassed();
-    void checkPHIOps(const MachineBasicBlock *MBB);
+    void checkPHIOps(const MachineBasicBlock &MBB);
 
     void calcRegsRequired();
     void verifyLiveVariables();
@@ -1604,32 +1604,65 @@ void MachineVerifier::calcRegsRequired() {
 
 // Check PHI instructions at the beginning of MBB. It is assumed that
 // calcRegsPassed has been run so BBInfo::isLiveOut is valid.
-void MachineVerifier::checkPHIOps(const MachineBasicBlock *MBB) {
+void MachineVerifier::checkPHIOps(const MachineBasicBlock &MBB) {
+  BBInfo &MInfo = MBBInfoMap[&MBB];
+
   SmallPtrSet<const MachineBasicBlock*, 8> seen;
-  for (const auto &BBI : *MBB) {
-    if (!BBI.isPHI())
+  for (const MachineInstr &Phi : MBB) {
+    if (!Phi.isPHI())
       break;
     seen.clear();
 
-    for (unsigned i = 1, e = BBI.getNumOperands(); i != e; i += 2) {
-      unsigned Reg = BBI.getOperand(i).getReg();
-      const MachineBasicBlock *Pre = BBI.getOperand(i + 1).getMBB();
-      if (!Pre->isSuccessor(MBB))
+    const MachineOperand &MODef = Phi.getOperand(0);
+    if (!MODef.isReg() || !MODef.isDef()) {
+      report("Expected first PHI operand to be a register def", &MODef, 0);
+      continue;
+    }
+    if (MODef.isTied() || MODef.isImplicit() || MODef.isInternalRead() ||
+        MODef.isEarlyClobber() || MODef.isDebug())
+      report("Unexpected flag on PHI operand", &MODef, 0);
+    unsigned DefReg = MODef.getReg();
+    if (!TargetRegisterInfo::isVirtualRegister(DefReg))
+      report("Expected first PHI operand to be a virtual register", &MODef, 0);
+
+    for (unsigned I = 1, E = Phi.getNumOperands(); I != E; I += 2) {
+      const MachineOperand &MO0 = Phi.getOperand(I);
+      if (!MO0.isReg()) {
+        report("Expected PHI operand to be a register", &MO0, I);
         continue;
-      seen.insert(Pre);
-      BBInfo &PrInfo = MBBInfoMap[Pre];
-      if (PrInfo.reachable && !PrInfo.isLiveOut(Reg))
-        report("PHI operand is not live-out from predecessor",
-               &BBI.getOperand(i), i);
+      }
+      if (MO0.isImplicit() || MO0.isInternalRead() || MO0.isEarlyClobber() ||
+          MO0.isDebug() || MO0.isTied())
+        report("Unexpected flag on PHI operand", &MO0, I);
+
+      const MachineOperand &MO1 = Phi.getOperand(I + 1);
+      if (!MO1.isMBB()) {
+        report("Expected PHI operand to be a basic block", &MO1, I + 1);
+        continue;
+      }
+
+      const MachineBasicBlock &Pre = *MO1.getMBB();
+      if (!Pre.isSuccessor(&MBB)) {
+        report("PHI input is not a predecessor block", &MO1, I + 1);
+        continue;
+      }
+
+      if (MInfo.reachable) {
+        seen.insert(&Pre);
+        BBInfo &PrInfo = MBBInfoMap[&Pre];
+        if (PrInfo.reachable && !PrInfo.isLiveOut(MO0.getReg()))
+          report("PHI operand is not live-out from predecessor", &MO0, I);
+      }
     }
 
     // Did we see all predecessors?
-    for (MachineBasicBlock::const_pred_iterator PrI = MBB->pred_begin(),
-           PrE = MBB->pred_end(); PrI != PrE; ++PrI) {
-      if (!seen.count(*PrI)) {
-        report("Missing PHI operand", &BBI);
-        errs() << "BB#" << (*PrI)->getNumber()
-            << " is a predecessor according to the CFG.\n";
+    if (MInfo.reachable) {
+      for (MachineBasicBlock *Pred : MBB.predecessors()) {
+        if (!seen.count(Pred)) {
+          report("Missing PHI operand", &Phi);
+          errs() << "BB#" << Pred->getNumber()
+              << " is a predecessor according to the CFG.\n";
+        }
       }
     }
   }
@@ -1638,15 +1671,8 @@ void MachineVerifier::checkPHIOps(const MachineBasicBlock *MBB) {
 void MachineVerifier::visitMachineFunctionAfter() {
   calcRegsPassed();
 
-  for (const auto &MBB : *MF) {
-    BBInfo &MInfo = MBBInfoMap[&MBB];
-
-    // Skip unreachable MBBs.
-    if (!MInfo.reachable)
-      continue;
-
-    checkPHIOps(&MBB);
-  }
+  for (const MachineBasicBlock &MBB : *MF)
+    checkPHIOps(MBB);
 
   // Now check liveness info if available
   calcRegsRequired();
