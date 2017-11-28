@@ -230,7 +230,7 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
 
   // Parse and evaluate -mllvm options.
   std::vector<const char *> V;
-  V.push_back("lld-link (LLVM option parsing)");
+  V.push_back("wasm-ld (LLVM option parsing)");
   for (auto *Arg : Args.filtered(OPT_mllvm))
     V.push_back(Arg->getValue());
   cl::ParseCommandLineOptions(V.size(), V.data());
