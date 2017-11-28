@@ -1185,8 +1185,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::FP_TO_UINT,         MVT::v4i32, Legal);
     setOperationAction(ISD::FP_TO_UINT,         MVT::v2i32, Custom);
     setOperationAction(ISD::SINT_TO_FP,         MVT::v16i32, Legal);
-    setOperationAction(ISD::SINT_TO_FP,         MVT::v8i1,   Custom);
-    setOperationAction(ISD::SINT_TO_FP,         MVT::v16i1,  Custom);
     setOperationAction(ISD::SINT_TO_FP,         MVT::v16i8,  Promote);
     setOperationAction(ISD::SINT_TO_FP,         MVT::v16i16, Promote);
     setOperationAction(ISD::UINT_TO_FP,         MVT::v16i32, Legal);
