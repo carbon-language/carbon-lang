@@ -300,9 +300,9 @@ Symbol *SymbolTable::addUndefined(StringRef Name, uint8_t Binding,
     replaceSymbol<Undefined>(S, File, Name, Binding, StOther, Type);
     return S;
   }
+  if (S->isShared() || S->isLazy() || (S->isUndefined() && Binding != STB_WEAK))
+    S->Binding = Binding;
   if (Binding != STB_WEAK) {
-    if (!S->isDefined())
-      S->Binding = Binding;
     if (auto *SS = dyn_cast<SharedSymbol>(S))
       if (!Config->GcSections)
         SS->getFile<ELFT>()->IsNeeded = true;
@@ -310,12 +310,10 @@ Symbol *SymbolTable::addUndefined(StringRef Name, uint8_t Binding,
   if (auto *L = dyn_cast<Lazy>(S)) {
     // An undefined weak will not fetch archive members. See comment on Lazy in
     // Symbols.h for the details.
-    if (Binding == STB_WEAK) {
+    if (Binding == STB_WEAK)
       L->Type = Type;
-      L->Binding = STB_WEAK;
-    } else if (InputFile *F = L->fetch()) {
+    else if (InputFile *F = L->fetch())
       addFile<ELFT>(F);
-    }
   }
   return S;
 }
@@ -497,8 +495,9 @@ void SymbolTable::addShared(StringRef Name, SharedFile<ELFT> *File,
   if (WasInserted || ((S->isUndefined() || S->isLazy()) &&
                       S->getVisibility() == STV_DEFAULT)) {
     uint8_t Binding = S->Binding;
-    replaceSymbol<SharedSymbol>(S, File, Name, Sym.st_other, Sym.getType(),
-                                Sym.st_value, Sym.st_size, Alignment, Verdef);
+    replaceSymbol<SharedSymbol>(S, File, Name, Sym.getBinding(), Sym.st_other,
+                                Sym.getType(), Sym.st_value, Sym.st_size,
+                                Alignment, Verdef);
     if (!WasInserted) {
       S->Binding = Binding;
       if (!S->isWeak() && !Config->GcSections)
