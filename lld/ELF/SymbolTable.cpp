@@ -21,6 +21,7 @@
 #include "Symbols.h"
 #include "SyntheticSections.h"
 #include "lld/Common/ErrorHandler.h"
+#include "lld/Common/Strings.h"
 #include "llvm/ADT/STLExtras.h"
 
 using namespace llvm;
@@ -631,7 +632,7 @@ StringMap<std::vector<Symbol *>> &SymbolTable::getDemangledSyms() {
     for (Symbol *Sym : SymVector) {
       if (!Sym->isDefined())
         continue;
-      if (Optional<std::string> S = demangle(Sym->getName()))
+      if (Optional<std::string> S = demangleItanium(Sym->getName()))
         (*DemangledSyms)[*S].push_back(Sym);
       else
         (*DemangledSyms)[Sym->getName()].push_back(Sym);
