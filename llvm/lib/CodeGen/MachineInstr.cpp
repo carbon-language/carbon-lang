@@ -127,7 +127,6 @@ void MachineOperand::substPhysReg(unsigned Reg, const TargetRegisterInfo &TRI) {
   setReg(Reg);
 }
 
-/// Change a def to a use, or a use to a def.
 void MachineOperand::setIsDef(bool Val) {
   assert(isReg() && "Wrong MachineOperand accessor");
   assert((!Val || !isDebug()) && "Marking a debug operation as def");
@@ -146,8 +145,6 @@ void MachineOperand::setIsDef(bool Val) {
   IsDef = Val;
 }
 
-// If this operand is currently a register operand, and if this is in a
-// function, deregister the operand from the register's use/def list.
 void MachineOperand::removeRegFromUses() {
   if (!isReg() || !isOnRegUseList())
     return;
@@ -160,9 +157,6 @@ void MachineOperand::removeRegFromUses() {
   }
 }
 
-/// ChangeToImmediate - Replace this operand with a new immediate operand of
-/// the specified value.  If an operand is known to be an immediate already,
-/// the setImm method should be used.
 void MachineOperand::ChangeToImmediate(int64_t ImmVal) {
   assert((!isReg() || !isTied()) && "Cannot change a tied operand into an imm");
 
@@ -226,9 +220,6 @@ void MachineOperand::ChangeToTargetIndex(unsigned Idx, int64_t Offset,
   setTargetFlags(TargetFlags);
 }
 
-/// ChangeToRegister - Replace this operand with a new register operand of
-/// the specified value.  If an operand is known to be an register already,
-/// the setReg method should be used.
 void MachineOperand::ChangeToRegister(unsigned Reg, bool isDef, bool isImp,
                                       bool isKill, bool isDead, bool isUndef,
                                       bool isDebug) {
@@ -267,9 +258,6 @@ void MachineOperand::ChangeToRegister(unsigned Reg, bool isDef, bool isImp,
     RegInfo->addRegOperandToUseList(this);
 }
 
-/// isIdenticalTo - Return true if this operand is identical to the specified
-/// operand. Note that this should stay in sync with the hash_value overload
-/// below.
 bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
   if (getType() != Other.getType() ||
       getTargetFlags() != Other.getTargetFlags())
@@ -576,8 +564,6 @@ LLVM_DUMP_METHOD void MachineOperand::dump() const {
 // MachineMemOperand Implementation
 //===----------------------------------------------------------------------===//
 
-/// getAddrSpace - Return the LLVM IR address space number that this pointer
-/// points into.
 unsigned MachinePointerInfo::getAddrSpace() const {
   if (V.isNull()) return 0;
 
@@ -587,8 +573,6 @@ unsigned MachinePointerInfo::getAddrSpace() const {
   return cast<PointerType>(V.get<const Value*>()->getType())->getAddressSpace();
 }
 
-/// isDereferenceable - Return true if V is always dereferenceable for 
-/// Offset + Size byte.
 bool MachinePointerInfo::isDereferenceable(unsigned Size, LLVMContext &C,
                                            const DataLayout &DL) const {
   if (!V.is<const Value*>())
@@ -602,14 +586,10 @@ bool MachinePointerInfo::isDereferenceable(unsigned Size, LLVMContext &C,
       BasePtr, 1, APInt(DL.getPointerSizeInBits(), Offset + Size), DL);
 }
 
-/// getConstantPool - Return a MachinePointerInfo record that refers to the
-/// constant pool.
 MachinePointerInfo MachinePointerInfo::getConstantPool(MachineFunction &MF) {
   return MachinePointerInfo(MF.getPSVManager().getConstantPool());
 }
 
-/// getFixedStack - Return a MachinePointerInfo record that refers to the
-/// the specified FrameIndex.
 MachinePointerInfo MachinePointerInfo::getFixedStack(MachineFunction &MF,
                                                      int FI, int64_t Offset) {
   return MachinePointerInfo(MF.getPSVManager().getFixedStack(FI), Offset);
@@ -652,8 +632,6 @@ MachineMemOperand::MachineMemOperand(MachinePointerInfo ptrinfo, Flags f,
   assert(getFailureOrdering() == FailureOrdering && "Value truncated");
 }
 
-/// Profile - Gather unique data for the object.
-///
 void MachineMemOperand::Profile(FoldingSetNodeID &ID) const {
   ID.AddInteger(getOffset());
   ID.AddInteger(Size);
@@ -677,8 +655,6 @@ void MachineMemOperand::refineAlignment(const MachineMemOperand *MMO) {
   }
 }
 
-/// getAlignment - Return the minimum known alignment in bytes of the
-/// actual memory reference.
 uint64_t MachineMemOperand::getAlignment() const {
   return MinAlign(getBaseAlignment(), getOffset());
 }
