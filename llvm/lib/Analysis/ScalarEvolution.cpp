@@ -549,10 +549,10 @@ bool SCEVUnknown::isOffsetOf(Type *&CTy, Constant *&FieldNo) const {
 /// Since we do not continue running this routine on expression trees once we
 /// have seen unequal values, there is no need to track them in the cache.
 static int
-CompareValueComplexity(SmallSet<std::pair<Value *, Value *>, 8> &EqCache,
+CompareValueComplexity(EquivalenceClasses<Value *> &EqCache,
                        const LoopInfo *const LI, Value *LV, Value *RV,
                        unsigned Depth) {
-  if (Depth > MaxValueCompareDepth || EqCache.count({LV, RV}))
+  if (Depth > MaxValueCompareDepth || EqCache.isEquivalent(LV, RV))
     return 0;
 
   // Order pointer values after integer values. This helps SCEVExpander form
@@ -619,7 +619,7 @@ CompareValueComplexity(SmallSet<std::pair<Value *, Value *>, 8> &EqCache,
     }
   }
 
-  EqCache.insert({LV, RV});
+  EqCache.unionSets(LV, RV);
   return 0;
 }
 
@@ -649,7 +649,7 @@ static int CompareSCEVComplexity(
     const SCEVUnknown *LU = cast<SCEVUnknown>(LHS);
     const SCEVUnknown *RU = cast<SCEVUnknown>(RHS);
 
-    SmallSet<std::pair<Value *, Value *>, 8> EqCache;
+    EquivalenceClasses<Value *> EqCache;
     int X = CompareValueComplexity(EqCache, LI, LU->getValue(), RU->getValue(),
                                    Depth + 1);
     if (X == 0)
