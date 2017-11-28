@@ -19,7 +19,8 @@ set(arm_SOURCES
     xray_arm.cc
     xray_trampoline_arm.S)
 
-set(armhf_SOURCES)
+set(armhf_SOURCES
+    ${arm_SOURCES})
 
 set(aarch64_SOURCES
   xray_AArch64.cc
