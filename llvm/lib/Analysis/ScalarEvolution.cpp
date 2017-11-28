@@ -63,6 +63,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/EquivalenceClasses.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/None.h"
 #include "llvm/ADT/Optional.h"
@@ -626,7 +627,7 @@ CompareValueComplexity(SmallSet<std::pair<Value *, Value *>, 8> &EqCache,
 // than RHS, respectively. A three-way result allows recursive comparisons to be
 // more efficient.
 static int CompareSCEVComplexity(
-    SmallSet<std::pair<const SCEV *, const SCEV *>, 8> &EqCacheSCEV,
+    EquivalenceClasses<const SCEV *> &EqCacheSCEV,
     const LoopInfo *const LI, const SCEV *LHS, const SCEV *RHS,
     DominatorTree &DT, unsigned Depth = 0) {
   // Fast-path: SCEVs are uniqued so we can do a quick equality check.
@@ -638,7 +639,7 @@ static int CompareSCEVComplexity(
   if (LType != RType)
     return (int)LType - (int)RType;
 
-  if (Depth > MaxSCEVCompareDepth || EqCacheSCEV.count({LHS, RHS}))
+  if (Depth > MaxSCEVCompareDepth || EqCacheSCEV.isEquivalent(LHS, RHS))
     return 0;
   // Aside from the getSCEVType() ordering, the particular ordering
   // isn't very important except that it's beneficial to be consistent,
@@ -652,7 +653,7 @@ static int CompareSCEVComplexity(
     int X = CompareValueComplexity(EqCache, LI, LU->getValue(), RU->getValue(),
                                    Depth + 1);
     if (X == 0)
-      EqCacheSCEV.insert({LHS, RHS});
+      EqCacheSCEV.unionSets(LHS, RHS);
     return X;
   }
 
@@ -700,7 +701,7 @@ static int CompareSCEVComplexity(
       if (X != 0)
         return X;
     }
-    EqCacheSCEV.insert({LHS, RHS});
+    EqCacheSCEV.unionSets(LHS, RHS);
     return 0;
   }
 
@@ -724,7 +725,7 @@ static int CompareSCEVComplexity(
       if (X != 0)
         return X;
     }
-    EqCacheSCEV.insert({LHS, RHS});
+    EqCacheSCEV.unionSets(LHS, RHS);
     return 0;
   }
 
@@ -740,7 +741,7 @@ static int CompareSCEVComplexity(
     X = CompareSCEVComplexity(EqCacheSCEV, LI, LC->getRHS(), RC->getRHS(), DT,
                               Depth + 1);
     if (X == 0)
-      EqCacheSCEV.insert({LHS, RHS});
+      EqCacheSCEV.unionSets(LHS, RHS);
     return X;
   }
 
@@ -754,7 +755,7 @@ static int CompareSCEVComplexity(
     int X = CompareSCEVComplexity(EqCacheSCEV, LI, LC->getOperand(),
                                   RC->getOperand(), DT, Depth + 1);
     if (X == 0)
-      EqCacheSCEV.insert({LHS, RHS});
+      EqCacheSCEV.unionSets(LHS, RHS);
     return X;
   }
 
@@ -777,7 +778,7 @@ static void GroupByComplexity(SmallVectorImpl<const SCEV *> &Ops,
                               LoopInfo *LI, DominatorTree &DT) {
   if (Ops.size() < 2) return;  // Noop
 
-  SmallSet<std::pair<const SCEV *, const SCEV *>, 8> EqCache;
+  EquivalenceClasses<const SCEV *> EqCache;
   if (Ops.size() == 2) {
     // This is the common case, which also happens to be trivially simple.
     // Special case it.
