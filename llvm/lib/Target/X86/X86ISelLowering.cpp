@@ -36071,9 +36071,7 @@ static SDValue combineUIntToFP(SDNode *N, SelectionDAG &DAG,
                                  InVT.getVectorNumElements());
     SDValue P = DAG.getNode(ISD::ZERO_EXTEND, dl, DstVT, Op0);
 
-    if (TLI.isOperationLegal(ISD::UINT_TO_FP, DstVT))
-      return DAG.getNode(ISD::UINT_TO_FP, dl, VT, P);
-
+    // UINT_TO_FP isn't legal without AVX512 so use SINT_TO_FP.
     return DAG.getNode(ISD::SINT_TO_FP, dl, VT, P);
   }
 
