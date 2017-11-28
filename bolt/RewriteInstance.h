@@ -414,6 +414,8 @@ private:
     ".gdb_index",
   };
 
+  static const char TimerGroupName[];
+
   /// Huge page size used for alignment.
   static constexpr unsigned PageAlign = 0x200000;
 

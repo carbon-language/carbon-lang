@@ -208,6 +208,8 @@ public:
   /// We have to use at least 2-byte alignment for functions because of C++ ABI.
   static constexpr unsigned MinAlign = 2;
 
+  static const char TimerGroupName[];
+
   using BasicBlockOrderType = std::vector<BinaryBasicBlock *>;
 
 private:

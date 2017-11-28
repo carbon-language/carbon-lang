@@ -53,6 +53,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/Timer.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
@@ -316,6 +317,13 @@ IgnoreBuildID("ignore-build-id",
   cl::init(false),
   cl::cat(AggregatorCategory));
 
+static cl::opt<bool>
+TimeRewrite("time-rewrite",
+  cl::desc("print time spent in rewriting passes"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
 // Check against lists of functions from options if we should
 // optimize the function with a given name.
 bool shouldProcess(const BinaryFunction &Function) {
@@ -400,6 +408,8 @@ constexpr const char *RewriteInstance::SectionsToOverwrite[];
 const std::string RewriteInstance::OrgSecPrefix = ".bolt.org";
 
 const std::string RewriteInstance::BOLTSecPrefix = ".bolt";
+
+const char RewriteInstance::TimerGroupName[] = "Rewrite passes";
 
 namespace llvm {
 namespace bolt {
@@ -652,6 +662,7 @@ void RewriteInstance::reset() {
 }
 
 void RewriteInstance::aggregateData() {
+  NamedRegionTimer T("aggregate data", TimerGroupName, opts::TimeRewrite);
   DA.aggregate(*BC.get(), BinaryFunctions);
 
   if (!opts::AggregateOnly)
@@ -663,6 +674,8 @@ void RewriteInstance::aggregateData() {
 }
 
 void RewriteInstance::discoverStorage() {
+  NamedRegionTimer T("discover storage", TimerGroupName, opts::TimeRewrite);
+  
   // Stubs are harmful because RuntimeDyld may try to increase the size of
   // sections accounting for stubs when we need those sections to match the
   // same size seen in the input binary, in case this section is a copy
@@ -947,6 +960,8 @@ void RewriteInstance::run() {
 }
 
 void RewriteInstance::discoverFileObjects() {
+  NamedRegionTimer T("discover file objects", TimerGroupName, opts::TimeRewrite);
+
   FileSymRefs.clear();
   BinaryFunctions.clear();
   BC->GlobalAddresses.clear();
@@ -1532,6 +1547,8 @@ BinaryFunction *RewriteInstance::createBinaryFunction(
 }
 
 void RewriteInstance::readSpecialSections() {
+  NamedRegionTimer T("read special sections", TimerGroupName, opts::TimeRewrite);
+
   bool HasTextRelocations = false;
 
   // Process special sections.
@@ -1893,6 +1910,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
 }
 
 void RewriteInstance::readDebugInfo() {
+  NamedRegionTimer T("read debug info", TimerGroupName, opts::TimeRewrite);
   if (!opts::UpdateDebugSections)
     return;
 
@@ -1900,6 +1918,7 @@ void RewriteInstance::readDebugInfo() {
 }
 
 void RewriteInstance::readProfileData() {
+  NamedRegionTimer T("read profile data", TimerGroupName, opts::TimeRewrite);
   if (BC->DR.getAllFuncsData().empty())
     return;
 
@@ -1918,6 +1937,7 @@ void RewriteInstance::readProfileData() {
 }
 
 void RewriteInstance::disassembleFunctions() {
+  NamedRegionTimer T("disassemble functions", TimerGroupName, opts::TimeRewrite);
   // Disassemble every function and build it's control flow graph.
   TotalScore = 0;
   BC->SumExecutionCount = 0;
@@ -2135,6 +2155,7 @@ void RewriteInstance::disassembleFunctions() {
 }
 
 void RewriteInstance::runOptimizationPasses() {
+  NamedRegionTimer T("run optimization passes", TimerGroupName, opts::TimeRewrite);
   BinaryFunctionPassManager::runAllPasses(*BC, BinaryFunctions, LargeFunctions);
 }
 
@@ -2270,6 +2291,7 @@ std::vector<T> singletonSet(T t) {
 } // anonymous namespace
 
 void RewriteInstance::emitFunctions() {
+  NamedRegionTimer T("emit functions", TimerGroupName, opts::TimeRewrite);
   std::error_code EC;
 
   // This is an object file, which we keep for debugging purposes.

@@ -29,6 +29,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GraphWriter.h"
+#include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Regex.h"
 #include <limits>
@@ -146,6 +147,13 @@ PrintOnlyRegex("print-only-regex",
   cl::Hidden,
   cl::cat(BoltCategory));
 
+cl::opt<bool>
+TimeBuild("time-build",
+  cl::desc("print time spent constructing binary functions"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
 bool shouldPrint(const BinaryFunction &Function) {
   if (PrintOnly.empty() && PrintOnlyRegex.empty())
     return true;
@@ -172,6 +180,7 @@ namespace bolt {
 
 constexpr const char *DynoStats::Desc[];
 constexpr unsigned BinaryFunction::MinAlign;
+const char BinaryFunction::TimerGroupName[] = "Build binary functions";
 
 namespace {
 
@@ -880,6 +889,8 @@ MCSymbol *BinaryFunction::getOrCreateLocalLabel(uint64_t Address,
 }
 
 void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
+  NamedRegionTimer T("disassemble", TimerGroupName, opts::TimeBuild);
+
   assert(FunctionData.size() == getSize() &&
          "function size does not match raw data size");
 
@@ -1431,6 +1442,7 @@ void BinaryFunction::recomputeLandingPads() {
 }
 
 bool BinaryFunction::buildCFG() {
+  NamedRegionTimer T("build cfg", TimerGroupName, opts::TimeBuild);
   auto &MIA = BC.MIA;
 
   if (!isSimple()) {
