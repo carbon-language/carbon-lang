@@ -6808,17 +6808,6 @@ StmtResult Sema::ActOnOpenMPDistributeParallelForDirective(
   assert((CurContext->isDependentContext() || B.builtAll()) &&
          "omp for loop exprs were not built");
 
-  if (!CurContext->isDependentContext()) {
-    // Finalize the clauses that need pre-built expressions for CodeGen.
-    for (auto C : Clauses) {
-      if (auto *LC = dyn_cast<OMPLinearClause>(C))
-        if (FinishOpenMPLinearClause(*LC, cast<DeclRefExpr>(B.IterationVarRef),
-                                     B.NumIterations, *this, CurScope,
-                                     DSAStack))
-          return StmtError();
-    }
-  }
-
   getCurFunction()->setHasBranchProtectedScope();
   return OMPDistributeParallelForDirective::Create(
       Context, StartLoc, EndLoc, NestedLoopCount, Clauses, AStmt, B,
@@ -7223,17 +7212,6 @@ StmtResult Sema::ActOnOpenMPTeamsDistributeParallelForDirective(
   assert((CurContext->isDependentContext() || B.builtAll()) &&
          "omp for loop exprs were not built");
 
-  if (!CurContext->isDependentContext()) {
-    // Finalize the clauses that need pre-built expressions for CodeGen.
-    for (auto C : Clauses) {
-      if (auto *LC = dyn_cast<OMPLinearClause>(C))
-        if (FinishOpenMPLinearClause(*LC, cast<DeclRefExpr>(B.IterationVarRef),
-                                     B.NumIterations, *this, CurScope,
-                                     DSAStack))
-          return StmtError();
-    }
-  }
-
   getCurFunction()->setHasBranchProtectedScope();
   return OMPTeamsDistributeParallelForDirective::Create(
       Context, StartLoc, EndLoc, NestedLoopCount, Clauses, AStmt, B,
@@ -7333,17 +7311,6 @@ StmtResult Sema::ActOnOpenMPTargetTeamsDistributeParallelForDirective(
 
   assert((CurContext->isDependentContext() || B.builtAll()) &&
          "omp target teams distribute parallel for loop exprs were not built");
-
-  if (!CurContext->isDependentContext()) {
-    // Finalize the clauses that need pre-built expressions for CodeGen.
-    for (auto C : Clauses) {
-      if (auto *LC = dyn_cast<OMPLinearClause>(C))
-        if (FinishOpenMPLinearClause(*LC, cast<DeclRefExpr>(B.IterationVarRef),
-                                     B.NumIterations, *this, CurScope,
-                                     DSAStack))
-          return StmtError();
-    }
-  }
 
   getCurFunction()->setHasBranchProtectedScope();
   return OMPTargetTeamsDistributeParallelForDirective::Create(
@@ -10767,6 +10734,18 @@ static bool FinishOpenMPLinearClause(OMPLinearClause &Clause, DeclRefExpr *IV,
       continue;
     }
     auto &&Info = Stack->isLoopControlVariable(D);
+    // OpenMP [2.15.11, distribute simd Construct]
+    // A list item may not appear in a linear clause, unless it is the loop
+    // iteration variable.
+    if (isOpenMPDistributeDirective(Stack->getCurrentDirective()) &&
+        isOpenMPSimdDirective(Stack->getCurrentDirective()) && !Info.first) {
+      SemaRef.Diag(ELoc,
+                   diag::err_omp_linear_distribute_var_non_loop_iteration);
+      Updates.push_back(nullptr);
+      Finals.push_back(nullptr);
+      HasErrors = true;
+      continue;
+    }
     Expr *InitExpr = *CurInit;
 
     // Build privatized reference to the current linear var.
