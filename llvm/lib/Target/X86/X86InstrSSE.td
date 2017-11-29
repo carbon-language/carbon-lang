@@ -4695,6 +4695,12 @@ let Predicates = [UseSSE3] in {
 // SSE3 - Replicate Double FP - MOVDDUP
 //===---------------------------------------------------------------------===//
 
+// FIXME: Improve MOVDDUP/BROADCAST reg/mem scheduling itineraries. 
+let Sched = WriteFShuffle in
+def SSE_MOVDDUP : OpndItins<
+  IIC_SSE_MOV_LH, IIC_SSE_MOV_LH
+>;
+
 multiclass sse3_replicate_dfp<string OpcodeStr> {
 def rr  : S3DI<0x12, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
