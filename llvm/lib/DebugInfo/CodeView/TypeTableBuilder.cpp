@@ -31,7 +31,7 @@ using namespace llvm::codeview;
 namespace {
 
 struct HashedType {
-  unsigned Hash;
+  hash_code Hash;
   ArrayRef<uint8_t> Data;
   TypeIndex Index;
 };
