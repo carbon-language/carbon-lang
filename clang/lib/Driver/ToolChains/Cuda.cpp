@@ -77,7 +77,7 @@ CudaInstallationDetector::CudaInstallationDetector(
     for (const char *Ver : Versions)
       CudaPathCandidates.push_back(D.SysRoot + "/usr/local/cuda-" + Ver);
 
-    if (Distro(D.getVFS).IsDebian())
+    if (Distro(D.getVFS()).IsDebian())
       // Special case for Debian to have nvidia-cuda-toolkit work
       // out of the box. More info on http://bugs.debian.org/882505
       CudaPathCandidates.push_back(D.SysRoot + "/usr/lib/cuda");
