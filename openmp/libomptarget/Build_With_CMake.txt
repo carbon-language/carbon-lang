@@ -82,7 +82,7 @@ Specify the C++ compiler
 -DCMAKE_BUILD_TYPE=Release|Debug|RelWithDebInfo
 Build type can be Release, Debug, or RelWithDebInfo.
 
--DLIBOMPTARGET_ENABLE_WERROR=true|false
+-DOPENMP_ENABLE_WERROR=true|false
 Should consider warnings as errors.
 
 -DLIBOMPTARGET_LLVM_LIT_EXECUTABLE=""

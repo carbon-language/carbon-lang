@@ -32,14 +32,9 @@ if(${OPENMP_STANDALONE_BUILD})
   libomp_get_architecture(LIBOMP_DETECTED_ARCH)
   set(LIBOMP_ARCH ${LIBOMP_DETECTED_ARCH} CACHE STRING
     "The architecture to build for (x86_64/i386/arm/ppc64/ppc64le/aarch64/mic/mips/mips64).")
-  # Allow user to choose a suffix for the installation directory.
-  set(LIBOMP_LIBDIR_SUFFIX "" CACHE STRING
-    "suffix of lib installation directory e.g., 64 => lib64")
   # Should assertions be enabled?  They are on by default.
   set(LIBOMP_ENABLE_ASSERTIONS TRUE CACHE BOOL
     "enable assertions?")
-  set(LIBOMP_ENABLE_WERROR FALSE CACHE BOOL
-    "Enable -Werror flags to turn warnings into errors for supporting compilers.")
 else() # Part of LLVM build
   # Determine the native architecture from LLVM.
   string(TOLOWER "${LLVM_TARGET_ARCH}" LIBOMP_NATIVE_ARCH)
@@ -68,9 +63,7 @@ else() # Part of LLVM build
     # last ditch effort
     libomp_get_architecture(LIBOMP_ARCH)
   endif ()
-  set(LIBOMP_LIBDIR_SUFFIX ${LLVM_LIBDIR_SUFFIX})
   set(LIBOMP_ENABLE_ASSERTIONS ${LLVM_ENABLE_ASSERTIONS})
-  set(LIBOMP_ENABLE_WERROR ${LLVM_ENABLE_WERROR})
 endif()
 libomp_check_variable(LIBOMP_ARCH 32e x86_64 32 i386 arm ppc64 ppc64le aarch64 mic mips mips64)
 
