@@ -195,9 +195,8 @@ unsigned BreakableStringLiteral::getRangeLength(unsigned LineIndex,
                                                 unsigned Offset,
                                                 StringRef::size_type Length,
                                                 unsigned StartColumn) const {
-  assert(false &&
-         "Getting the length of a part of the string literal indicates that "
-         "the code tries to reflow it.");
+  llvm_unreachable("Getting the length of a part of the string literal "
+                   "indicates that the code tries to reflow it.");
 }
 
 unsigned
