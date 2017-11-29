@@ -1,6 +1,17 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
-set(OPENMP_LLVM_TOOLS_DIR "" CACHE PATH "Path to LLVM tools for testing")
+# llvm/runtimes/ will set OPENMP_STANDALONE_BUILD.
+if (OPENMP_STANDALONE_BUILD OR "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
+  set(OPENMP_STANDALONE_BUILD TRUE)
+  project(openmp C CXX)
+
+  # CMAKE_BUILD_TYPE was not set, default to Release.
+  if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+  endif()
+
+  set(OPENMP_LLVM_TOOLS_DIR "" CACHE PATH "Path to LLVM tools for testing.")
+endif()
 
 add_subdirectory(runtime)
 

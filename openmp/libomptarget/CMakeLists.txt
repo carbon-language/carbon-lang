@@ -11,28 +11,16 @@
 #
 ##===----------------------------------------------------------------------===##
 
-# CMAKE libomptarget
-cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
+  message(FATAL_ERROR "Direct configuration not supported, please use parent directory!")
+endif()
 
 # Add cmake directory to search for custom cmake functions.
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules ${CMAKE_MODULE_PATH})
 
-# Standalone build or part of LLVM?
-set(LIBOMPTARGET_STANDALONE_BUILD FALSE)
-if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}" OR
-   "${CMAKE_SOURCE_DIR}/libomptarget" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
-  project(libomptarget C CXX)
-  set(LIBOMPTARGET_STANDALONE_BUILD TRUE)
-endif()
-  
-  
-if(${LIBOMPTARGET_STANDALONE_BUILD})
+if(OPENMP_STANDALONE_BUILD)
   set(LIBOMPTARGET_ENABLE_WERROR FALSE CACHE BOOL
     "Enable -Werror flags to turn warnings into errors for supporting compilers.")
-  # CMAKE_BUILD_TYPE was not defined, set default to Release
-  if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
-  endif()
   set(LIBOMPTARGET_LIBDIR_SUFFIX "" CACHE STRING
     "suffix of lib installation directory, e.g. 64 => lib64")
 

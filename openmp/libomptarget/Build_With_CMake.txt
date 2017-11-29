@@ -51,7 +51,7 @@ How to call cmake initially, then repeatedly
 =====================
 Instructions to Build
 =====================
- $ cd libomptarget_top_level/ [ directory with plugins/ , deviceRTLs/ , etc. ]
+ $ cd openmp_top_level/ [ directory with runtime/, libomptarget/, etc. ]
  $ mkdir build
  $ cd build
 

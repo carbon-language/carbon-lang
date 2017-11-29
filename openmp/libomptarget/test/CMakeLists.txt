@@ -16,7 +16,7 @@ else()
   set(LIBOMPTARGET_DEBUG False)
 endif()
 
-if(${LIBOMPTARGET_STANDALONE_BUILD})
+if(${OPENMP_STANDALONE_BUILD})
   # Make sure we can use the console pool for recent cmake and ninja > 1.5
   if(CMAKE_VERSION VERSION_LESS 3.1.20141117)
     set(cmake_3_2_USES_TERMINAL)

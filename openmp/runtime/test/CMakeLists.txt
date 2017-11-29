@@ -41,7 +41,7 @@ pythonize_bool(LIBOMP_HAVE_LIBATOMIC)
 set(LIBOMP_TEST_CFLAGS "" CACHE STRING
   "Extra compiler flags to send to the test compiler")
 
-if(${LIBOMP_STANDALONE_BUILD})
+if(${OPENMP_STANDALONE_BUILD})
   # Make sure we can use the console pool for recent cmake and ninja > 1.5
   if(CMAKE_VERSION VERSION_LESS 3.1.20141117)
     set(cmake_3_2_USES_TERMINAL)

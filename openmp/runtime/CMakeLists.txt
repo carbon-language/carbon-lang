@@ -9,20 +9,12 @@
 #//===----------------------------------------------------------------------===//
 #
 
-# CMAKE libomp
-cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
+  message(FATAL_ERROR "Direct configuration not supported, please use parent directory!")
+endif()
 
 # Add cmake directory to search for custom cmake functions
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
-
-# Standalone build or part of LLVM?
-set(LIBOMP_STANDALONE_BUILD FALSE)
-if(OPENMP_STANDALONE_BUILD OR
-   "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}" OR
-   "${CMAKE_SOURCE_DIR}/runtime" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
-  project(libomp C CXX)
-  set(LIBOMP_STANDALONE_BUILD TRUE)
-endif()
 
 # Set libomp version
 set(LIBOMP_VERSION_MAJOR 5)
@@ -35,7 +27,7 @@ include(LibompHandleFlags)
 include(LibompDefinitions)
 
 # Determine the target architecture
-if(${LIBOMP_STANDALONE_BUILD})
+if(${OPENMP_STANDALONE_BUILD})
   # If adding a new architecture, take a look at cmake/LibompGetArchitecture.cmake
   libomp_get_architecture(LIBOMP_DETECTED_ARCH)
   set(LIBOMP_ARCH ${LIBOMP_DETECTED_ARCH} CACHE STRING
@@ -48,10 +40,6 @@ if(${LIBOMP_STANDALONE_BUILD})
     "enable assertions?")
   set(LIBOMP_ENABLE_WERROR FALSE CACHE BOOL
     "Enable -Werror flags to turn warnings into errors for supporting compilers.")
-  # CMAKE_BUILD_TYPE was not defined, set default to Release
-  if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
-  endif()
 else() # Part of LLVM build
   # Determine the native architecture from LLVM.
   string(TOLOWER "${LLVM_TARGET_ARCH}" LIBOMP_NATIVE_ARCH)
@@ -372,7 +360,7 @@ set(LIBOMP_INSTALL_ALIASES TRUE CACHE BOOL
   "Install libgomp and libiomp5 library aliases for backwards compatibility")
 
 # Print configuration after all variables are set.
-if(${LIBOMP_STANDALONE_BUILD})
+if(${OPENMP_STANDALONE_BUILD})
   libomp_say("Operating System     -- ${CMAKE_SYSTEM_NAME}")
   libomp_say("Target Architecture  -- ${LIBOMP_ARCH}")
   if(${MIC})
