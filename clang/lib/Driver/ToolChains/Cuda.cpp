@@ -13,6 +13,7 @@
 #include "clang/Basic/Cuda.h"
 #include "clang/Config/config.h"
 #include "clang/Basic/VirtualFileSystem.h"
+#include "clang/Driver/Distro.h"
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
