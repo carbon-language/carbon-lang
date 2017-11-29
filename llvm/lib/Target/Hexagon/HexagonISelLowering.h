@@ -51,7 +51,6 @@ namespace HexagonISD {
       CP,          // Constant pool.
 
       COMBINE,
-      PACKHL,
       VSPLAT,
       VASL,
       VASR,

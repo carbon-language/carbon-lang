@@ -2216,7 +2216,6 @@ const char* HexagonTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case HexagonISD::INSERT:        return "HexagonISD::INSERT";
   case HexagonISD::INSERTRP:      return "HexagonISD::INSERTRP";
   case HexagonISD::JT:            return "HexagonISD::JT";
-  case HexagonISD::PACKHL:        return "HexagonISD::PACKHL";
   case HexagonISD::RET_FLAG:      return "HexagonISD::RET_FLAG";
   case HexagonISD::TC_RETURN:     return "HexagonISD::TC_RETURN";
   case HexagonISD::VCOMBINE:      return "HexagonISD::VCOMBINE";
