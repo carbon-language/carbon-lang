@@ -52,7 +52,7 @@ static std::vector<Defined *> getSymbols() {
   for (InputFile *File : ObjectFiles)
     for (Symbol *B : File->getSymbols())
       if (auto *DR = dyn_cast<Defined>(B))
-        if (DR->getFile() == File && !DR->isSection() && DR->Section &&
+        if (DR->File == File && !DR->isSection() && DR->Section &&
             DR->Section->Live)
           V.push_back(DR);
   return V;
