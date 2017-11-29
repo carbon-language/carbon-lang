@@ -19,16 +19,37 @@ if (OPENMP_STANDALONE_BUILD OR "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_S
   set(OPENMP_LIBDIR_SUFFIX "" CACHE STRING
     "suffix of lib installation directory, e.g. 64 => lib64")
 
+  # Group test settings.
+  set(OPENMP_TEST_C_COMPILER ${CMAKE_C_COMPILER} CACHE STRING
+    "C compiler to use for testing OpenMP runtime libraries.")
+  set(OPENMP_TEST_CXX_COMPILER ${CMAKE_CXX_COMPILER} CACHE STRING
+    "C++ compiler to use for testing OpenMP runtime libraries.")
   set(OPENMP_LLVM_TOOLS_DIR "" CACHE PATH "Path to LLVM tools for testing.")
 else()
   set(OPENMP_ENABLE_WERROR ${LLVM_ENABLE_WERROR})
   # If building in tree, we honor the same install suffix LLVM uses.
   set(OPENMP_LIBDIR_SUFFIX ${LLVM_LIBDIR_SUFFIX})
+
+  if (NOT MSVC)
+    set(OPENMP_TEST_C_COMPILER ${LLVM_RUNTIME_OUTPUT_INTDIR}/clang)
+    set(OPENMP_TEST_CXX_COMPILER ${LLVM_RUNTIME_OUTPUT_INTDIR}/clang++)
+  else()
+    set(OPENMP_TEST_C_COMPILER ${LLVM_RUNTIME_OUTPUT_INTDIR}/clang.exe)
+    set(OPENMP_TEST_CXX_COMPILER ${LLVM_RUNTIME_OUTPUT_INTDIR}/clang++.exe)
+  endif()
 endif()
 
 # Check and set up common compiler flags.
 include(config-ix)
 include(HandleOpenMPOptions)
+
+# Set up testing infrastructure.
+include(OpenMPTesting)
+
+set(OPENMP_TEST_FLAGS "" CACHE STRING
+  "Extra compiler flags to send to the test compiler.")
+set(OPENMP_TEST_OPENMP_FLAGS "-fopenmp" CACHE STRING
+  "OpenMP compiler flag to use for testing OpenMP runtime libraries.")
 
 
 # Build host runtime library.
@@ -55,3 +76,6 @@ if (OPENMP_ENABLE_LIBOMPTARGET)
 
   add_subdirectory(libomptarget)
 endif()
+
+# Now that we have seen all testuites, create the check-openmp target.
+construct_check_openmp_target()
