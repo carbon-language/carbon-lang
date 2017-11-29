@@ -347,8 +347,8 @@ void MicroMipsThunk::addSymbols(ThunkSection &IS) {
 }
 
 InputSection *MicroMipsThunk::getTargetInputSection() const {
-  auto *DR = dyn_cast<Defined>(&Destination);
-  return dyn_cast<InputSection>(DR->Section);
+  auto &DR = cast<Defined>(Destination);
+  return dyn_cast<InputSection>(DR.Section);
 }
 
 // Write microMIPS R6 LA25 thunk code
