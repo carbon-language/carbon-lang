@@ -112,11 +112,17 @@ EHPersonality::MSVC_C_specific_handler = { "__C_specific_handler", nullptr };
 const EHPersonality
 EHPersonality::MSVC_CxxFrameHandler3 = { "__CxxFrameHandler3", nullptr };
 
+/// On Win64, use libgcc's SEH personality function. We fall back to dwarf on
+/// other platforms, unless the user asked for SjLj exceptions.
+static bool useLibGCCSEHPersonality(const llvm::Triple &T) {
+  return T.isOSWindows() && T.getArch() == llvm::Triple::x86_64;
+}
+
 static const EHPersonality &getCPersonality(const llvm::Triple &T,
                                             const LangOptions &L) {
   if (L.SjLjExceptions)
     return EHPersonality::GNU_C_SJLJ;
-  if (L.SEHExceptions)
+  else if (useLibGCCSEHPersonality(T))
     return EHPersonality::GNU_C_SEH;
   return EHPersonality::GNU_C;
 }
@@ -138,7 +144,7 @@ static const EHPersonality &getObjCPersonality(const llvm::Triple &T,
   case ObjCRuntime::ObjFW:
     if (L.SjLjExceptions)
       return EHPersonality::GNU_ObjC_SJLJ;
-    if (L.SEHExceptions)
+    else if (useLibGCCSEHPersonality(T))
       return EHPersonality::GNU_ObjC_SEH;
     return EHPersonality::GNU_ObjC;
   }
@@ -149,7 +155,7 @@ static const EHPersonality &getCXXPersonality(const llvm::Triple &T,
                                               const LangOptions &L) {
   if (L.SjLjExceptions)
     return EHPersonality::GNU_CPlusPlus_SJLJ;
-  if (L.SEHExceptions)
+  else if (useLibGCCSEHPersonality(T))
     return EHPersonality::GNU_CPlusPlus_SEH;
   return EHPersonality::GNU_CPlusPlus;
 }
@@ -205,10 +211,6 @@ const EHPersonality &EHPersonality::get(CodeGenModule &CGM,
   if (T.isWindowsMSVCEnvironment() && !L.ObjC1) {
     if (L.SjLjExceptions)
       return EHPersonality::GNU_CPlusPlus_SJLJ;
-    if (L.SEHExceptions)
-      return EHPersonality::GNU_CPlusPlus_SEH;
-    if (L.DWARFExceptions)
-      return EHPersonality::GNU_CPlusPlus;
     else
       return EHPersonality::MSVC_CxxFrameHandler3;
   }

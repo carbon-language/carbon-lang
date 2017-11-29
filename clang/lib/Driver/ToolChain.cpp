@@ -27,8 +27,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
-#include "llvm/MC/MCAsmInfo.h"
-#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Support/TargetParser.h"
 #include "llvm/Support/TargetRegistry.h"
 
@@ -449,13 +447,6 @@ bool ToolChain::isCrossCompiling() const {
 ObjCRuntime ToolChain::getDefaultObjCRuntime(bool isNonFragile) const {
   return ObjCRuntime(isNonFragile ? ObjCRuntime::GNUstep : ObjCRuntime::GCC,
                      VersionTuple());
-}
-
-llvm::ExceptionHandling
-ToolChain::GetExceptionModel(const llvm::opt::ArgList &Args) const {
-  if (Triple.isOSWindows())
-    return llvm::ExceptionHandling::WinEH;
-  return llvm::ExceptionHandling::None;
 }
 
 bool ToolChain::isThreadModelSupported(const StringRef Model) const {

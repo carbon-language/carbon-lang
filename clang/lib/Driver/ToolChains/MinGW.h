@@ -64,9 +64,7 @@ public:
   bool isPICDefault() const override;
   bool isPIEDefault() const override;
   bool isPICDefaultForced() const override;
-
-  llvm::ExceptionHandling GetExceptionModel(
-      const llvm::opt::ArgList &Args) const override;
+  bool UseSEHExceptions() const;
 
   void
   AddClangSystemIncludeArgs(const llvm::opt::ArgList &DriverArgs,

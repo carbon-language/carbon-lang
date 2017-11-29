@@ -397,9 +397,10 @@ public:
     return llvm::DebuggerKind::GDB;
   }
 
-  /// GetExceptionModel - Return the tool chain exception model.
-  virtual llvm::ExceptionHandling
-  GetExceptionModel(const llvm::opt::ArgList &Args) const;
+  /// UseSjLjExceptions - Does this tool chain use SjLj exceptions.
+  virtual bool UseSjLjExceptions(const llvm::opt::ArgList &Args) const {
+    return false;
+  }
 
   /// SupportsEmbeddedBitcode - Does this tool chain support embedded bitcode.
   virtual bool SupportsEmbeddedBitcode() const {
