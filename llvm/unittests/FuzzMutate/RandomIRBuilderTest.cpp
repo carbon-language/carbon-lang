@@ -130,4 +130,38 @@ TEST(RandomIRBuilderTest, InsertValueIndexes) {
   }
 }
 
+TEST(RandomIRBuilderTest, ShuffleVectorSink) {
+  // Check that we will never use shuffle vector mask as a sink form the
+  // unrelated operation.
+
+  LLVMContext Ctx;
+  const char *SourceCode =
+      "define void @test(<4 x i32> %a) {\n"
+      "  %S1 = shufflevector <4 x i32> %a, <4 x i32> %a, <4 x i32> undef\n"
+      "  %S2 = shufflevector <4 x i32> %a, <4 x i32> %a, <4 x i32> undef\n"
+      "  ret void\n"
+      "}";
+  auto M = parseAssembly(SourceCode, Ctx);
+
+  fuzzerop::OpDescriptor IVDescr = fuzzerop::insertValueDescriptor(1);
+
+  RandomIRBuilder IB(Seed, {});
+
+  // Get first basic block of the first function
+  Function &F = *M->begin();
+  BasicBlock &BB = *F.begin();
+
+  // Source is %S1
+  Instruction *Source = &*BB.begin();
+  // Sink is %S2
+  SmallVector<Instruction *, 1> Sinks = {&*std::next(BB.begin())};
+
+  // Loop to account for random decisions
+  for (int i = 0; i < 10; ++i) {
+    // Try to connect S1 to S2. We should always create new sink.
+    IB.connectToSink(BB, Sinks, Source);
+    ASSERT_TRUE(!verifyModule(*M, &errs()));
+  }
+}
+
 }

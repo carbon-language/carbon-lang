@@ -76,12 +76,13 @@ static bool isCompatibleReplacement(const Instruction *I, const Use &Operand,
   case Instruction::ExtractValue:
     // TODO: We could potentially validate these, but for now just leave indices
     // alone.
-    if (Operand.getOperandNo() > 1)
+    if (Operand.getOperandNo() >= 1)
       return false;
     break;
   case Instruction::InsertValue:
   case Instruction::InsertElement:
-    if (Operand.getOperandNo() > 2)
+  case Instruction::ShuffleVector:
+    if (Operand.getOperandNo() >= 2)
       return false;
     break;
   default:
