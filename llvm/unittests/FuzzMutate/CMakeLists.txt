@@ -9,4 +9,5 @@ add_llvm_unittest(FuzzMutateTests
   OperationsTest.cpp
   ReservoirSamplerTest.cpp
   StrategiesTest.cpp
+  RandomIRBuilderTest.cpp
   )
