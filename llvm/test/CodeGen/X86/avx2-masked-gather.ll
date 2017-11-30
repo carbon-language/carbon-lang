@@ -134,13 +134,12 @@ define <2 x float> @masked_gather_v2float(<2 x float*>* %ptr, <2 x i1> %masks, <
 ;
 ; X64-LABEL: masked_gather_v2float:
 ; X64:       # BB#0: # %entry
-; X64-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0,2],zero,zero
+; X64-NEXT:    vmovaps (%rdi), %xmm2
+; X64-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
 ; X64-NEXT:    vpslld $31, %xmm0, %xmm0
 ; X64-NEXT:    vpsrad $31, %xmm0, %xmm0
-; X64-NEXT:    vmovaps (%rdi), %xmm2
-; X64-NEXT:    vgatherqps %xmm0, (,%ymm2), %xmm1
+; X64-NEXT:    vgatherqps %xmm0, (,%xmm2), %xmm1
 ; X64-NEXT:    vmovaps %xmm1, %xmm0
-; X64-NEXT:    vzeroupper
 ; X64-NEXT:    retq
 ;
 ; NOGATHER-LABEL: masked_gather_v2float:
@@ -185,13 +184,12 @@ define <4 x float> @masked_gather_v2float_concat(<2 x float*>* %ptr, <2 x i1> %m
 ;
 ; X64-LABEL: masked_gather_v2float_concat:
 ; X64:       # BB#0: # %entry
-; X64-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0,2],zero,zero
+; X64-NEXT:    vmovaps (%rdi), %xmm2
+; X64-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
 ; X64-NEXT:    vpslld $31, %xmm0, %xmm0
 ; X64-NEXT:    vpsrad $31, %xmm0, %xmm0
-; X64-NEXT:    vmovaps (%rdi), %xmm2
-; X64-NEXT:    vgatherqps %xmm0, (,%ymm2), %xmm1
+; X64-NEXT:    vgatherqps %xmm0, (,%xmm2), %xmm1
 ; X64-NEXT:    vmovaps %xmm1, %xmm0
-; X64-NEXT:    vzeroupper
 ; X64-NEXT:    retq
 ;
 ; NOGATHER-LABEL: masked_gather_v2float_concat:
