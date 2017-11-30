@@ -295,8 +295,6 @@ public:
 
   void emitFrameAlloc(const MachineInstr &MI);
 
-  void emitStackSizeSection(const MachineFunction &MF);
-
   enum CFIMoveType { CFI_M_None, CFI_M_EH, CFI_M_Debug };
   CFIMoveType needsCFIMoves() const;
 
