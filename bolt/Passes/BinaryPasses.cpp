@@ -976,26 +976,21 @@ void SimplifyConditionalTailCalls::runOnFunctions(
 
 uint64_t Peepholes::shortenInstructions(BinaryContext &BC,
                                         BinaryFunction &Function) {
-  std::string DebugStr;
-  (void)DebugStr;
+  MCInst DebugInst;
   uint64_t Count = 0;
   for (auto &BB : Function) {
     for (auto &Inst : BB) {
-      DEBUG(
-        if (opts::Verbosity > 1) {
-          DebugStr.clear();
-          raw_string_ostream OS(DebugStr);
-          BC.printInstruction(OS, Inst, 0, &Function);
-          OS.str();
-        });
+      if (opts::Verbosity > 1) {
+        DebugInst = Inst;
+      }
       if (BC.MIA->shortenInstruction(Inst)) {
-        DEBUG(
-          if (opts::Verbosity > 1) {
-            dbgs() << "BOLT-INFO: peephole, shortening:\n"
-                   << "BOLT-INFO:    " << DebugStr
-                   << "BOLT-INFO: to:";
-            BC.printInstruction(dbgs(), Inst, 0, &Function);
-          });
+        if (opts::Verbosity > 1) {
+          outs() << "BOLT-INFO: peephole, shortening:\n"
+                 << "BOLT-INFO:    ";
+          BC.printInstruction(outs(), DebugInst, 0, &Function);
+          outs() << "BOLT-INFO: to:";
+          BC.printInstruction(outs(), Inst, 0, &Function);
+        }
         ++Count;
       }
     }
