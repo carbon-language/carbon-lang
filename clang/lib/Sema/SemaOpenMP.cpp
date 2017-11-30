@@ -1506,7 +1506,7 @@ public:
   explicit VarOrFuncDeclFilterCCC(Sema &S) : SemaRef(S) {}
   bool ValidateCandidate(const TypoCorrection &Candidate) override {
     NamedDecl *ND = Candidate.getCorrectionDecl();
-    if (isa<VarDecl>(ND) || isa<FunctionDecl>(ND)) {
+    if (ND && (isa<VarDecl>(ND) || isa<FunctionDecl>(ND))) {
       return SemaRef.isDeclInScope(ND, SemaRef.getCurLexicalContext(),
                                    SemaRef.getCurScope());
     }
