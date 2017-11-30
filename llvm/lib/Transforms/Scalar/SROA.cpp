@@ -30,6 +30,7 @@
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/SmallBitVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -4047,21 +4048,31 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &AS) {
   // First try to pre-split loads and stores.
   Changed |= presplitLoadsAndStores(AI, AS);
 
-  // Now that we have identified any pre-splitting opportunities, mark any
-  // splittable (non-whole-alloca) loads and stores as unsplittable. If we fail
-  // to split these during pre-splitting, we want to force them to be
-  // rewritten into a partition.
+  // Now that we have identified any pre-splitting opportunities,
+  // mark loads and stores unsplittable except for the following case.
+  // We leave a slice splittable if all other slices are disjoint or fully
+  // included in the slice, such as whole-alloca loads and stores.
+  // If we fail to split these during pre-splitting, we want to force them
+  // to be rewritten into a partition.
   bool IsSorted = true;
+
+  // If a byte boundary is included in any load or store, a slice starting or
+  // ending at the boundary is not splittable.
+  unsigned AllocaSize = DL.getTypeAllocSize(AI.getAllocatedType());
+  SmallBitVector SplittableOffset(AllocaSize+1, true);
+  for (Slice &S : AS)
+    for (unsigned O = S.beginOffset() + 1; O < S.endOffset() && O < AllocaSize;
+         O++)
+      SplittableOffset.reset(O);
+
   for (Slice &S : AS) {
     if (!S.isSplittable())
       continue;
-    // FIXME: We currently leave whole-alloca splittable loads and stores. This
-    // used to be the only splittable loads and stores and we need to be
-    // confident that the above handling of splittable loads and stores is
-    // completely sufficient before we forcibly disable the remaining handling.
-    if (S.beginOffset() == 0 &&
-        S.endOffset() >= DL.getTypeAllocSize(AI.getAllocatedType()))
+
+    if ((S.beginOffset() > AllocaSize || SplittableOffset[S.beginOffset()]) &&
+        (S.endOffset() > AllocaSize || SplittableOffset[S.endOffset()]))
       continue;
+
     if (isa<LoadInst>(S.getUse()->getUser()) ||
         isa<StoreInst>(S.getUse()->getUser())) {
       S.makeUnsplittable();
