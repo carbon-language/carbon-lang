@@ -164,4 +164,40 @@ TEST(RandomIRBuilderTest, ShuffleVectorSink) {
   }
 }
 
+TEST(RandomIRBuilderTest, InsertValueArray) {
+  // Check that we can generate insertvalue for the vector operations
+
+  LLVMContext Ctx;
+  const char *SourceCode =
+      "define void @test() {\n"
+      "  %A = alloca [8 x i32]\n"
+      "  %L = load [8 x i32], [8 x i32]* %A"
+      "  ret void\n"
+      "}";
+  auto M = parseAssembly(SourceCode, Ctx);
+
+  fuzzerop::OpDescriptor Descr = fuzzerop::insertValueDescriptor(1);
+
+  std::vector<Type *> Types =
+      {Type::getInt8Ty(Ctx), Type::getInt32Ty(Ctx), Type::getInt64Ty(Ctx)};
+  RandomIRBuilder IB(Seed, Types);
+
+  // Get first basic block of the first function
+  Function &F = *M->begin();
+  BasicBlock &BB = *F.begin();
+
+  // Pick first source
+  Instruction *Source = &*std::next(BB.begin());
+  ASSERT_TRUE(Descr.SourcePreds[0].matches({}, Source));
+
+  SmallVector<Value *, 2> Srcs(2);
+
+  // Check that we can always pick the last two operands.
+  for (int i = 0; i < 10; ++i) {
+    Srcs[0] = Source;
+    Srcs[1] = IB.findOrCreateSource(BB, {Source}, Srcs, Descr.SourcePreds[1]);
+    IB.findOrCreateSource(BB, {}, Srcs, Descr.SourcePreds[2]);
+  }
+}
+
 }

@@ -216,8 +216,9 @@ OpDescriptor llvm::fuzzerop::extractValueDescriptor(unsigned Weight) {
 
 static SourcePred matchScalarInAggregate() {
   auto Pred = [](ArrayRef<Value *> Cur, const Value *V) {
-    if (isa<ArrayType>(Cur[0]->getType()))
-      return V->getType() == Cur[0]->getType();
+    if (auto *ArrayT = dyn_cast<ArrayType>(Cur[0]->getType()))
+      return V->getType() == ArrayT->getElementType();
+
     auto *STy = cast<StructType>(Cur[0]->getType());
     for (int I = 0, E = STy->getNumElements(); I < E; ++I)
       if (STy->getTypeAtIndex(I) == V->getType())
@@ -225,8 +226,9 @@ static SourcePred matchScalarInAggregate() {
     return false;
   };
   auto Make = [](ArrayRef<Value *> Cur, ArrayRef<Type *>) {
-    if (isa<ArrayType>(Cur[0]->getType()))
-      return makeConstantsWithType(Cur[0]->getType());
+    if (auto *ArrayT = dyn_cast<ArrayType>(Cur[0]->getType()))
+      return makeConstantsWithType(ArrayT->getElementType());
+
     std::vector<Constant *> Result;
     auto *STy = cast<StructType>(Cur[0]->getType());
     for (int I = 0, E = STy->getNumElements(); I < E; ++I)
