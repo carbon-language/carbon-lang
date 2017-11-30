@@ -974,13 +974,33 @@ void SimplifyConditionalTailCalls::runOnFunctions(
          << ".\n";
 }
 
-void Peepholes::shortenInstructions(BinaryContext &BC,
-                                    BinaryFunction &Function) {
+uint64_t Peepholes::shortenInstructions(BinaryContext &BC,
+                                        BinaryFunction &Function) {
+  std::string DebugStr;
+  (void)DebugStr;
+  uint64_t Count = 0;
   for (auto &BB : Function) {
     for (auto &Inst : BB) {
-      BC.MIA->shortenInstruction(Inst);
+      DEBUG(
+        if (opts::Verbosity > 1) {
+          DebugStr.clear();
+          raw_string_ostream OS(DebugStr);
+          BC.printInstruction(OS, Inst, 0, &Function);
+          OS.str();
+        });
+      if (BC.MIA->shortenInstruction(Inst)) {
+        DEBUG(
+          if (opts::Verbosity > 1) {
+            dbgs() << "BOLT-INFO: peephole, shortening:\n"
+                   << "BOLT-INFO:    " << DebugStr
+                   << "BOLT-INFO: to:";
+            BC.printInstruction(dbgs(), Inst, 0, &Function);
+          });
+        ++Count;
+      }
     }
   }
+  return Count;
 }
 
 void Peepholes::addTailcallTraps(BinaryContext &BC,
@@ -1041,7 +1061,7 @@ void Peepholes::runOnFunctions(BinaryContext &BC,
     auto &Function = It.second;
     if (shouldOptimize(Function)) {
       if (Opts & opts::PEEP_SHORTEN)
-        shortenInstructions(BC, Function);
+        NumShortened += shortenInstructions(BC, Function);
       if (Opts & opts::PEEP_DOUBLE_JUMPS)
         NumDoubleJumps += fixDoubleJumps(BC, Function, false);
       if (Opts & opts::PEEP_TAILCALL_TRAPS)
@@ -1050,7 +1070,9 @@ void Peepholes::runOnFunctions(BinaryContext &BC,
         removeUselessCondBranches(BC, Function);
     }
   }
-  outs() << "BOLT-INFO: Peephole: " << NumDoubleJumps
+  outs() << "BOLT-INFO: Peephole: " << NumShortened
+         << " instructions shortened.\n"
+         << "BOLT-INFO: Peephole: " << NumDoubleJumps
          << " double jumps patched.\n"
          << "BOLT-INFO: Peephole: " << TailCallTraps
          << " tail call traps inserted.\n"

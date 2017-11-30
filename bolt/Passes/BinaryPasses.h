@@ -301,13 +301,14 @@ class SimplifyConditionalTailCalls : public BinaryFunctionPass {
 
 /// Perform simple peephole optimizations.
 class Peepholes : public BinaryFunctionPass {
+  uint64_t NumShortened{0};
   uint64_t NumDoubleJumps{0};
   uint64_t TailCallTraps{0};
   uint64_t NumUselessCondBranches{0};
 
   /// Attempt to use the minimum operand width for arithmetic, branch and
   /// move instructions.
-  void shortenInstructions(BinaryContext &BC, BinaryFunction &Function);
+  uint64_t shortenInstructions(BinaryContext &BC, BinaryFunction &Function);
 
   /// Add trap instructions immediately after indirect tail calls to prevent
   /// the processor from decoding instructions immediate following the
