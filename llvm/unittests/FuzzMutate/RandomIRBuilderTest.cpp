@@ -84,4 +84,50 @@ TEST(RandomIRBuilderTest, ShuffleVectorIncorrectOperands) {
   }
 }
 
+TEST(RandomIRBuilderTest, InsertValueIndexes) {
+  // Check that we will generate correct indexes for the insertvalue operation
+
+  LLVMContext Ctx;
+  const char *Source =
+      "%T = type {i8, i32, i64}\n"
+      "define void @test() {\n"
+      "  %A = alloca %T\n"
+      "  %L = load %T, %T* %A"
+      "  ret void\n"
+      "}";
+  auto M = parseAssembly(Source, Ctx);
+
+  fuzzerop::OpDescriptor IVDescr = fuzzerop::insertValueDescriptor(1);
+
+  std::vector<Type *> Types =
+      {Type::getInt8Ty(Ctx), Type::getInt32Ty(Ctx), Type::getInt64Ty(Ctx)};
+  RandomIRBuilder IB(Seed, Types);
+
+  // Get first basic block of the first function
+  Function &F = *M->begin();
+  BasicBlock &BB = *F.begin();
+
+  // Pick first source
+  Instruction *Src = &*std::next(BB.begin());
+
+  SmallVector<Value *, 2> Srcs(2);
+  ASSERT_TRUE(IVDescr.SourcePreds[0].matches({}, Src));
+  Srcs[0] = Src;
+
+  // Generate constants for each of the types and check that we pick correct
+  // index for the given type
+  for (auto *T: Types) {
+    // Loop to account for possible random decisions
+    for (int i = 0; i < 10; ++i) {
+      // Create value we want to insert. Only it's type matters.
+      Srcs[1] = ConstantInt::get(T, 5);
+
+      // Try to pick correct index
+      Value *Src = IB.findOrCreateSource(
+          BB, &*BB.begin(), Srcs, IVDescr.SourcePreds[2]);
+      ASSERT_TRUE(IVDescr.SourcePreds[2].matches(Srcs, Src));
+    }
+  }
+}
+
 }

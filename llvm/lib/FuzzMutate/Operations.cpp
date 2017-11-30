@@ -240,9 +240,9 @@ static SourcePred validInsertValueIndex() {
   auto Pred = [](ArrayRef<Value *> Cur, const Value *V) {
     auto *CTy = cast<CompositeType>(Cur[0]->getType());
     if (auto *CI = dyn_cast<ConstantInt>(V))
-      if (CI->getBitWidth() == 32)
-        if (CTy->getTypeAtIndex(CI->getZExtValue()) == V->getType())
-          return true;
+      if (CI->getBitWidth() == 32 &&
+          CTy->getTypeAtIndex(CI->getZExtValue()) == Cur[1]->getType())
+        return true;
     return false;
   };
   auto Make = [](ArrayRef<Value *> Cur, ArrayRef<Type *> Ts) {
