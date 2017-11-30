@@ -408,11 +408,6 @@ PartialInlinerImpl::computeOutliningColdRegionsInfo(Function *F) {
 
   auto &ORE = (*GetORE)(*F);
 
-  auto IsReturnBlock = [](BasicBlock *BB) {
-    TerminatorInst *TI = BB->getTerminator();
-    return isa<ReturnInst>(TI);
-  };
-
   // Return if we don't have profiling information.
   if (!PSI->hasInstrumentationProfile())
     return std::unique_ptr<FunctionOutliningMultiRegionInfo>();
@@ -427,8 +422,7 @@ PartialInlinerImpl::computeOutliningColdRegionsInfo(Function *F) {
   };
 
   auto IsSingleExit =
-      [IsReturnBlock,
-       &ORE](SmallVectorImpl<BasicBlock *> &BlockList) -> BasicBlock * {
+      [&ORE](SmallVectorImpl<BasicBlock *> &BlockList) -> BasicBlock * {
     BasicBlock *ExitBlock = nullptr;
     for (auto *Block : BlockList) {
       for (auto SI = succ_begin(Block); SI != succ_end(Block); ++SI) {
