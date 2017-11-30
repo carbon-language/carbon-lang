@@ -208,9 +208,15 @@ struct MemInfo {
   }
 
   void print(raw_ostream &OS) const;
+  void prettyPrint(raw_ostream &OS) const;
 
   MemInfo(const Location &Offset, const Location &Addr, uint64_t Count = 0)
     : Offset(Offset), Addr(Addr), Count(Count) {}
+
+  friend raw_ostream &operator<<(raw_ostream &OS, const MemInfo &MI) {
+    MI.prettyPrint(OS);
+    return OS;
+  }
 };
 
 /// Helper class to store memory load events recorded in the address space of

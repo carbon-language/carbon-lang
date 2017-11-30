@@ -304,6 +304,10 @@ void MemInfo::print(raw_ostream &OS) const {
      << Count << "\n";
 }
 
+void MemInfo::prettyPrint(raw_ostream &OS) const {
+  OS << "(PC: " << Offset << ", M: " << Addr << ", C: " << Count << ")";
+}
+
 iterator_range<FuncMemData::ContainerTy::const_iterator>
 FuncMemData::getMemInfoRange(uint64_t Offset) const {
   // Commented out because it can be expensive.
