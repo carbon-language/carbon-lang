@@ -214,10 +214,6 @@ void InputSectionBase::maybeUncompress() {
   this->Flags &= ~(uint64_t)SHF_COMPRESSED;
 }
 
-uint64_t SectionBase::getOffset(const Defined &Sym) const {
-  return getOffset(Sym.Value);
-}
-
 InputSection *InputSectionBase::getLinkOrderDep() const {
   if ((Flags & SHF_LINK_ORDER) && Link != 0) {
     InputSectionBase *L = File->getSections()[Link];
