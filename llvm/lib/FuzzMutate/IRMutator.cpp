@@ -147,7 +147,9 @@ void InstDeleterIRStrategy::mutate(Function &F, RandomIRBuilder &IB) {
   for (Instruction &Inst : instructions(F))
     if (!Inst.isTerminator())
       RS.sample(&Inst, /*Weight=*/1);
-  assert(!RS.isEmpty() && "No instructions to delete");
+  if (RS.isEmpty())
+    return;
+
   // Delete the instruction.
   mutate(*RS.getSelection(), IB);
   // Clean up any dead code that's left over after removing the instruction.
