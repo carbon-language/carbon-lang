@@ -4764,9 +4764,12 @@ SIInstrInfo::getAddNoCarry(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator I,
                            const DebugLoc &DL,
                            unsigned DestReg) const {
-  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+  if (ST.hasAddNoCarry())
+    return BuildMI(MBB, I, DL, get(AMDGPU::V_ADD_U32_e64), DestReg);
 
+  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
   unsigned UnusedCarry = MRI.createVirtualRegister(&AMDGPU::SReg_64RegClass);
+  MRI.setRegAllocationHint(UnusedCarry, 0, AMDGPU::VCC);
 
   return BuildMI(MBB, I, DL, get(AMDGPU::V_ADD_I32_e64), DestReg)
            .addReg(UnusedCarry, RegState::Define | RegState::Dead);
