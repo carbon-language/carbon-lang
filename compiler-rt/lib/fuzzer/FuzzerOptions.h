@@ -26,6 +26,7 @@ struct FuzzingOptions {
   int RssLimitMb = 0;
   bool DoCrossOver = true;
   int MutateDepth = 5;
+  bool ReduceDepth = false;
   bool UseCounters = false;
   bool UseIndirCalls = true;
   bool UseMemmem = true;
