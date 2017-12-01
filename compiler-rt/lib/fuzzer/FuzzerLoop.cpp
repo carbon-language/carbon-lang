@@ -647,7 +647,6 @@ void Fuzzer::MutateAndTestOne() {
     bool FoundUniqFeatures = false;
     bool NewCov = RunOne(CurrentUnitData, Size, /*MayDeleteFile=*/true, &II,
                          &FoundUniqFeatures);
-    // Printf("FUF[%d] %d\n", i, FoundUniqFeatures);
     TryDetectingAMemoryLeak(CurrentUnitData, Size,
                             /*DuringInitialCorpusExecution*/ false);
     if (NewCov) {

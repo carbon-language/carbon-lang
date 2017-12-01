@@ -66,7 +66,6 @@ FUZZER_FLAG_INT(cleanse_crash, 0, "If 1, tries to cleanse the provided"
   )
 FUZZER_FLAG_INT(minimize_crash_internal_step, 0, "internal flag")
 FUZZER_FLAG_INT(use_counters, 1, "Use coverage counters")
-FUZZER_FLAG_INT(use_indir_calls, 1, "Use indirect caller-callee counters")
 FUZZER_FLAG_INT(use_memmem, 1,
                 "Use hints from intercepting memmem, strstr, etc")
 FUZZER_FLAG_INT(use_value_profile, 0,
@@ -146,12 +145,3 @@ FUZZER_FLAG_STRING(use_equivalence_server, "Experimental")
 FUZZER_FLAG_INT(analyze_dict, 0, "Experimental")
 FUZZER_FLAG_INT(use_clang_coverage, 0, "Experimental")
 FUZZER_FLAG_INT(use_feature_frequency, 0, "Experimental/internal")
-
-FUZZER_DEPRECATED_FLAG(exit_on_first)
-FUZZER_DEPRECATED_FLAG(save_minimized_corpus)
-FUZZER_DEPRECATED_FLAG(sync_command)
-FUZZER_DEPRECATED_FLAG(sync_timeout)
-FUZZER_DEPRECATED_FLAG(test_single_input)
-FUZZER_DEPRECATED_FLAG(drill)
-FUZZER_DEPRECATED_FLAG(truncate_units)
-FUZZER_DEPRECATED_FLAG(output_csv)
