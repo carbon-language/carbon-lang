@@ -47,8 +47,9 @@ using namespace llvm;
 #include "X86GenInstrInfo.inc"
 
 static cl::opt<bool>
-NoFusing("disable-spill-fusing",
-         cl::desc("Disable fusing of spill code into instructions"));
+    NoFusing("disable-spill-fusing",
+             cl::desc("Disable fusing of spill code into instructions"),
+             cl::Hidden);
 static cl::opt<bool>
 PrintFailedFusing("print-failed-fuse-candidates",
                   cl::desc("Print instructions that the allocator wants to"
