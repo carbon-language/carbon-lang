@@ -10,7 +10,7 @@ namespace N {
 struct A {};
 void operator<=(A, A);
 #if __cplusplus > 201703L
-void operator<=>(A, A); // expected-error {{}}
+void operator<=>(A, A);
 #ifdef COMPAT
 // expected-warning@-2 {{'<=>' operator is incompatible with C++ standards before C++2a}}
 #endif
@@ -21,7 +21,7 @@ X<operator<=>
 #if __cplusplus <= 201703L
   // expected-warning@-2 {{'<=>' is a single token in C++2a; add a space to avoid a change in behavior}}
 #else
-  > // expected-error@-4 {{}}
+  >
 #endif
 #ifdef COMPAT
 // expected-warning@-7 {{'<=>' operator is incompatible with C++ standards before C++2a}}
