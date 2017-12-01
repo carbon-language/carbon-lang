@@ -87,7 +87,7 @@ def NormalVar : SubsetSubject<Var,
                               "local variables">;
 def NonParmVar : SubsetSubject<Var,
                                [{S->getKind() != Decl::ParmVar}],
-                               "variables and functions">;
+                               "variables">;
 def NonBitField : SubsetSubject<Field,
                                 [{!S->isBitField()}],
                                 "non-bit-field non-static data members">;
