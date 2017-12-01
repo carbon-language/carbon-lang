@@ -53,9 +53,10 @@ void MachineOptimizationRemarkEmitter::emit(
 
   LLVMContext &Ctx = MF.getFunction()->getContext();
 
-  // Only emit it if its hotness meets the threshold.
-  if (OptDiag.getHotness().getValueOr(0) <
-      Ctx.getDiagnosticsHotnessThreshold()) {
+  // If a diagnostic has a hotness value, then only emit it if its hotness
+  // meets the threshold.
+  if (OptDiag.getHotness() &&
+      *OptDiag.getHotness() < Ctx.getDiagnosticsHotnessThreshold()) {
     return;
   }
 
