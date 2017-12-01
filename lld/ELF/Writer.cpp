@@ -87,7 +87,9 @@ private:
 };
 } // anonymous namespace
 
-StringRef elf::getOutputSectionName(StringRef Name) {
+StringRef elf::getOutputSectionName(InputSectionBase *S) {
+  StringRef Name = S->Name;
+
   // ".zdebug_" is a prefix for ZLIB-compressed sections.
   // Because we decompressed input sections, we want to remove 'z'.
   if (Name.startswith(".zdebug_"))
@@ -96,13 +98,17 @@ StringRef elf::getOutputSectionName(StringRef Name) {
   if (Config->Relocatable)
     return Name;
 
-  // This is for --emit-relocs. If .text.foo is emitted as .text, we want to
-  // emit .rela.text.foo as .rel.text for consistency (this is not technically
-  // required, but not doing it is odd). This code guarantees that.
-  if (Name.startswith(".rel."))
-    return Saver.save(".rel" + getOutputSectionName(Name.substr(4)));
-  if (Name.startswith(".rela."))
-    return Saver.save(".rela" + getOutputSectionName(Name.substr(5)));
+  // This is for --emit-relocs. If .text.foo is emitted as .text.bar, we want
+  // to emit .rela.text.foo as .rela.text.bar for consistency (this is not
+  // technically required, but not doing it is odd). This code guarantees that.
+  if ((S->Type == SHT_REL || S->Type == SHT_RELA) &&
+      !isa<SyntheticSection>(S)) {
+    OutputSection *Out =
+        cast<InputSection>(S)->getRelocatedSection()->getOutputSection();
+    if (S->Type == SHT_RELA)
+      return Saver.save(".rela" + Out->Name);
+    return Saver.save(".rel" + Out->Name);
+  }
 
   for (StringRef V :
        {".text.", ".rodata.", ".data.rel.ro.", ".data.", ".bss.rel.ro.",
