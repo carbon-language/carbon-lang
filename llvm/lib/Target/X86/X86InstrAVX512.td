@@ -8530,27 +8530,39 @@ defm VPMOVQ2M : avx512_convert_vector_to_mask<0x39, "vpmovq2m",
 // AVX-512 - COMPRESS and EXPAND
 //
 
+// FIXME: Is there a better scheduler itinerary for VPCOMPRESS/VPEXPAND?
+let Sched = WriteShuffle256 in {
+def AVX512_COMPRESS : OpndItins<
+  IIC_SSE_INTALU_P_RR, IIC_SSE_INTALU_P_RM
+>;
+def AVX512_EXPAND : OpndItins<
+  IIC_SSE_INTALU_P_RR, IIC_SSE_INTALU_P_RM
+>;
+}
+
 multiclass compress_by_vec_width_common<bits<8> opc, X86VectorVTInfo _,
-                                 string OpcodeStr> {
+                                 string OpcodeStr, OpndItins itins> {
   defm rr : AVX512_maskable<opc, MRMDestReg, _, (outs _.RC:$dst),
               (ins _.RC:$src1), OpcodeStr, "$src1", "$src1",
-              (_.VT (X86compress _.RC:$src1))>, AVX5128IBase;
+              (_.VT (X86compress _.RC:$src1)), itins.rr>, AVX5128IBase,
+              Sched<[itins.Sched]>;
 
   let mayStore = 1, hasSideEffects = 0 in
   def mr : AVX5128I<opc, MRMDestMem, (outs),
               (ins _.MemOp:$dst, _.RC:$src),
               OpcodeStr # "\t{$src, $dst|$dst, $src}",
-              []>, EVEX_CD8<_.EltSize, CD8VT1>;
+              []>, EVEX_CD8<_.EltSize, CD8VT1>,
+              Sched<[itins.Sched.Folded]>;
 
   def mrk : AVX5128I<opc, MRMDestMem, (outs),
               (ins _.MemOp:$dst, _.KRCWM:$mask, _.RC:$src),
               OpcodeStr # "\t{$src, $dst {${mask}}|$dst {${mask}}, $src}",
               []>,
-              EVEX_K, EVEX_CD8<_.EltSize, CD8VT1>;
+              EVEX_K, EVEX_CD8<_.EltSize, CD8VT1>,
+              Sched<[itins.Sched.Folded]>;
 }
 
 multiclass compress_by_vec_width_lowering<X86VectorVTInfo _ > {
-
   def : Pat<(X86mCompressingStore addr:$dst, _.KRCWM:$mask,
                                                (_.VT _.RC:$src)),
             (!cast<Instruction>(NAME#_.ZSuffix##mrk)
@@ -8558,41 +8570,44 @@ multiclass compress_by_vec_width_lowering<X86VectorVTInfo _ > {
 }
 
 multiclass compress_by_elt_width<bits<8> opc, string OpcodeStr,
+                                 OpndItins itins,
                                  AVX512VLVectorVTInfo VTInfo,
                                  Predicate Pred = HasAVX512> {
   let Predicates = [Pred] in
-  defm Z : compress_by_vec_width_common<opc, VTInfo.info512, OpcodeStr>,
+  defm Z : compress_by_vec_width_common<opc, VTInfo.info512, OpcodeStr, itins>,
            compress_by_vec_width_lowering<VTInfo.info512>, EVEX_V512;
 
   let Predicates = [Pred, HasVLX] in {
-    defm Z256 : compress_by_vec_width_common<opc, VTInfo.info256, OpcodeStr>,
+    defm Z256 : compress_by_vec_width_common<opc, VTInfo.info256, OpcodeStr, itins>,
                 compress_by_vec_width_lowering<VTInfo.info256>, EVEX_V256;
-    defm Z128 : compress_by_vec_width_common<opc, VTInfo.info128, OpcodeStr>,
+    defm Z128 : compress_by_vec_width_common<opc, VTInfo.info128, OpcodeStr, itins>,
                 compress_by_vec_width_lowering<VTInfo.info128>, EVEX_V128;
   }
 }
 
-defm VPCOMPRESSD : compress_by_elt_width <0x8B, "vpcompressd", avx512vl_i32_info>,
-                                         EVEX;
-defm VPCOMPRESSQ : compress_by_elt_width <0x8B, "vpcompressq", avx512vl_i64_info>,
-                                         EVEX, VEX_W;
-defm VCOMPRESSPS : compress_by_elt_width <0x8A, "vcompressps", avx512vl_f32_info>,
-                                         EVEX;
-defm VCOMPRESSPD : compress_by_elt_width <0x8A, "vcompresspd", avx512vl_f64_info>,
-                                         EVEX, VEX_W;
+defm VPCOMPRESSD : compress_by_elt_width <0x8B, "vpcompressd", AVX512_COMPRESS,
+                                          avx512vl_i32_info>, EVEX;
+defm VPCOMPRESSQ : compress_by_elt_width <0x8B, "vpcompressq", AVX512_COMPRESS,
+                                          avx512vl_i64_info>, EVEX, VEX_W;
+defm VCOMPRESSPS : compress_by_elt_width <0x8A, "vcompressps", AVX512_COMPRESS,
+                                          avx512vl_f32_info>, EVEX;
+defm VCOMPRESSPD : compress_by_elt_width <0x8A, "vcompresspd", AVX512_COMPRESS,
+                                          avx512vl_f64_info>, EVEX, VEX_W;
 
 // expand
 multiclass expand_by_vec_width<bits<8> opc, X86VectorVTInfo _,
-                                 string OpcodeStr> {
+                                 string OpcodeStr, OpndItins itins> {
   defm rr : AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
               (ins _.RC:$src1), OpcodeStr, "$src1", "$src1",
-              (_.VT (X86expand _.RC:$src1))>, AVX5128IBase;
+              (_.VT (X86expand _.RC:$src1)), itins.rr>, AVX5128IBase,
+              Sched<[itins.Sched]>;
 
   defm rm : AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
               (ins _.MemOp:$src1), OpcodeStr, "$src1", "$src1",
               (_.VT (X86expand (_.VT (bitconvert
-                                      (_.LdFrag addr:$src1)))))>,
-            AVX5128IBase, EVEX_CD8<_.EltSize, CD8VT1>;
+                                      (_.LdFrag addr:$src1))))), itins.rm>,
+            AVX5128IBase, EVEX_CD8<_.EltSize, CD8VT1>,
+            Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
 multiclass expand_by_vec_width_lowering<X86VectorVTInfo _ > {
@@ -8608,28 +8623,29 @@ multiclass expand_by_vec_width_lowering<X86VectorVTInfo _ > {
 }
 
 multiclass expand_by_elt_width<bits<8> opc, string OpcodeStr,
+                               OpndItins itins,
                                AVX512VLVectorVTInfo VTInfo,
                                Predicate Pred = HasAVX512> {
   let Predicates = [Pred] in
-  defm Z : expand_by_vec_width<opc, VTInfo.info512, OpcodeStr>,
+  defm Z : expand_by_vec_width<opc, VTInfo.info512, OpcodeStr, itins>,
            expand_by_vec_width_lowering<VTInfo.info512>, EVEX_V512;
 
   let Predicates = [Pred, HasVLX] in {
-    defm Z256 : expand_by_vec_width<opc, VTInfo.info256, OpcodeStr>,
+    defm Z256 : expand_by_vec_width<opc, VTInfo.info256, OpcodeStr, itins>,
                 expand_by_vec_width_lowering<VTInfo.info256>, EVEX_V256;
-    defm Z128 : expand_by_vec_width<opc, VTInfo.info128, OpcodeStr>,
+    defm Z128 : expand_by_vec_width<opc, VTInfo.info128, OpcodeStr, itins>,
                 expand_by_vec_width_lowering<VTInfo.info128>, EVEX_V128;
   }
 }
 
-defm VPEXPANDD : expand_by_elt_width <0x89, "vpexpandd", avx512vl_i32_info>,
-                                         EVEX;
-defm VPEXPANDQ : expand_by_elt_width <0x89, "vpexpandq", avx512vl_i64_info>,
-                                         EVEX, VEX_W;
-defm VEXPANDPS : expand_by_elt_width <0x88, "vexpandps", avx512vl_f32_info>,
-                                         EVEX;
-defm VEXPANDPD : expand_by_elt_width <0x88, "vexpandpd", avx512vl_f64_info>,
-                                         EVEX, VEX_W;
+defm VPEXPANDD : expand_by_elt_width <0x89, "vpexpandd", AVX512_EXPAND,
+                                      avx512vl_i32_info>, EVEX;
+defm VPEXPANDQ : expand_by_elt_width <0x89, "vpexpandq", AVX512_EXPAND,
+                                      avx512vl_i64_info>, EVEX, VEX_W;
+defm VEXPANDPS : expand_by_elt_width <0x88, "vexpandps", AVX512_EXPAND,
+                                      avx512vl_f32_info>, EVEX;
+defm VEXPANDPD : expand_by_elt_width <0x88, "vexpandpd", AVX512_EXPAND,
+                                      avx512vl_f64_info>, EVEX, VEX_W;
 
 //handle instruction  reg_vec1 = op(reg_vec,imm)
 //                               op(mem_vec,imm)
@@ -10266,15 +10282,15 @@ defm VPSHLD      : VBMI2_shift_imm<0x70, 0x71, "vpshld", X86VShld, SSE_INTMUL_IT
 defm VPSHRD      : VBMI2_shift_imm<0x72, 0x73, "vpshrd", X86VShrd, SSE_INTMUL_ITINS_P>;
 
 // Compress
-defm VPCOMPRESSB : compress_by_elt_width <0x63, "vpcompressb", avx512vl_i8_info,
-                                          HasVBMI2>, EVEX;
-defm VPCOMPRESSW : compress_by_elt_width <0x63, "vpcompressw", avx512vl_i16_info,
-                                          HasVBMI2>, EVEX, VEX_W;
+defm VPCOMPRESSB : compress_by_elt_width<0x63, "vpcompressb", AVX512_COMPRESS,
+                                         avx512vl_i8_info, HasVBMI2>, EVEX;
+defm VPCOMPRESSW : compress_by_elt_width <0x63, "vpcompressw", AVX512_COMPRESS,
+                                          avx512vl_i16_info, HasVBMI2>, EVEX, VEX_W;
 // Expand
-defm VPEXPANDB : expand_by_elt_width <0x62, "vpexpandb", avx512vl_i8_info,
-                                      HasVBMI2>, EVEX;
-defm VPEXPANDW : expand_by_elt_width <0x62, "vpexpandw", avx512vl_i16_info,
-                                      HasVBMI2>, EVEX, VEX_W;
+defm VPEXPANDB : expand_by_elt_width <0x62, "vpexpandb", AVX512_EXPAND,
+                                      avx512vl_i8_info, HasVBMI2>, EVEX;
+defm VPEXPANDW : expand_by_elt_width <0x62, "vpexpandw", AVX512_EXPAND,
+                                      avx512vl_i16_info, HasVBMI2>, EVEX, VEX_W;
 
 //===----------------------------------------------------------------------===//
 // VNNI
