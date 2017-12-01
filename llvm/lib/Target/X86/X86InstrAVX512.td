@@ -10348,32 +10348,35 @@ defm VPOPCNTW : avx512_unary_rm_vl<0x54, "vpopcntw", ctpop, SSE_INTALU_ITINS_P,
                                    avx512vl_i16_info, HasBITALG>,
                 avx512_unary_lowering<ctpop, avx512vl_i16_info, HasBITALG>, VEX_W;
 
-multiclass VPSHUFBITQMB_rm<X86VectorVTInfo VTI> {
+multiclass VPSHUFBITQMB_rm<OpndItins itins, X86VectorVTInfo VTI> {
   defm rr : AVX512_maskable_cmp<0x8F, MRMSrcReg, VTI, (outs VTI.KRC:$dst),
                                 (ins VTI.RC:$src1, VTI.RC:$src2),
                                 "vpshufbitqmb",
                                 "$src2, $src1", "$src1, $src2",
                                 (X86Vpshufbitqmb (VTI.VT VTI.RC:$src1),
-                                 (VTI.VT VTI.RC:$src2))>, EVEX_4V, T8PD;
+                                (VTI.VT VTI.RC:$src2)), itins.rr>, EVEX_4V, T8PD,
+                                Sched<[itins.Sched]>;
   defm rm : AVX512_maskable_cmp<0x8F, MRMSrcMem, VTI, (outs VTI.KRC:$dst),
                                 (ins VTI.RC:$src1, VTI.MemOp:$src2),
                                 "vpshufbitqmb",
                                 "$src2, $src1", "$src1, $src2",
                                 (X86Vpshufbitqmb (VTI.VT VTI.RC:$src1),
-                                 (VTI.VT (bitconvert (VTI.LdFrag addr:$src2))))>,
-                                EVEX_4V, EVEX_CD8<8, CD8VF>, T8PD;
+                                (VTI.VT (bitconvert (VTI.LdFrag addr:$src2)))),
+                                itins.rm>, EVEX_4V, EVEX_CD8<8, CD8VF>, T8PD,
+                                Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
-multiclass VPSHUFBITQMB_common<AVX512VLVectorVTInfo VTI> {
+multiclass VPSHUFBITQMB_common<OpndItins itins, AVX512VLVectorVTInfo VTI> {
   let Predicates = [HasBITALG] in
-  defm Z      : VPSHUFBITQMB_rm<VTI.info512>, EVEX_V512;
+  defm Z      : VPSHUFBITQMB_rm<itins, VTI.info512>, EVEX_V512;
   let Predicates = [HasBITALG, HasVLX] in {
-    defm Z256 : VPSHUFBITQMB_rm<VTI.info256>, EVEX_V256;
-    defm Z128 : VPSHUFBITQMB_rm<VTI.info128>, EVEX_V128;
+    defm Z256 : VPSHUFBITQMB_rm<itins, VTI.info256>, EVEX_V256;
+    defm Z128 : VPSHUFBITQMB_rm<itins, VTI.info128>, EVEX_V128;
   }
 }
 
-defm VPSHUFBITQMB : VPSHUFBITQMB_common<avx512vl_i8_info>;
+// FIXME: Is there a better scheduler itinerary for VPSHUFBITQMB?
+defm VPSHUFBITQMB : VPSHUFBITQMB_common<SSE_INTMUL_ITINS_P, avx512vl_i8_info>;
 
 //===----------------------------------------------------------------------===//
 // GFNI
