@@ -281,7 +281,7 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   if (!Config->Relocatable) {
     if (Config->Entry.empty())
       Config->Entry = "_start";
-    static WasmSignature Signature = { {}, WASM_TYPE_NORESULT };
+    static WasmSignature Signature = {{}, WASM_TYPE_NORESULT};
     addSyntheticUndefinedFunction(Config->Entry, &Signature);
 
     addSyntheticGlobal("__stack_pointer", 0);
