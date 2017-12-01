@@ -11,7 +11,7 @@ define <2 x i32> @masked_gather_v2i32(<2 x i32*>* %ptr, <2 x i1> %masks, <2 x i3
 ; X86:       # BB#0: # %entry
 ; X86-NEXT:    vpsllq $63, %xmm0, %xmm0
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X86-NEXT:    vpmovzxdq {{.*#+}} xmm2 = mem[0],zero,mem[1],zero
+; X86-NEXT:    vpmovsxdq (%eax), %xmm2
 ; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[0,2,2,3]
 ; X86-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
 ; X86-NEXT:    vpgatherqd %xmm0, (,%xmm2), %xmm1
@@ -61,7 +61,7 @@ define <4 x i32> @masked_gather_v2i32_concat(<2 x i32*>* %ptr, <2 x i1> %masks, 
 ; X86:       # BB#0: # %entry
 ; X86-NEXT:    vpsllq $63, %xmm0, %xmm0
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X86-NEXT:    vpmovzxdq {{.*#+}} xmm2 = mem[0],zero,mem[1],zero
+; X86-NEXT:    vpmovsxdq (%eax), %xmm2
 ; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[0,2,2,3]
 ; X86-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
 ; X86-NEXT:    vpgatherqd %xmm0, (,%xmm2), %xmm1
@@ -719,7 +719,7 @@ define <2 x i64> @masked_gather_v2i64(<2 x i64*>* %ptr, <2 x i1> %masks, <2 x i6
 ; X86-LABEL: masked_gather_v2i64:
 ; X86:       # BB#0: # %entry
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X86-NEXT:    vpmovzxdq {{.*#+}} xmm2 = mem[0],zero,mem[1],zero
+; X86-NEXT:    vpmovsxdq (%eax), %xmm2
 ; X86-NEXT:    vpsllq $63, %xmm0, %xmm0
 ; X86-NEXT:    vpgatherqq %xmm0, (,%xmm2), %xmm1
 ; X86-NEXT:    vmovdqa %xmm1, %xmm0
@@ -766,7 +766,7 @@ define <2 x double> @masked_gather_v2double(<2 x double*>* %ptr, <2 x i1> %masks
 ; X86-LABEL: masked_gather_v2double:
 ; X86:       # BB#0: # %entry
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X86-NEXT:    vpmovzxdq {{.*#+}} xmm2 = mem[0],zero,mem[1],zero
+; X86-NEXT:    vpmovsxdq (%eax), %xmm2
 ; X86-NEXT:    vpsllq $63, %xmm0, %xmm0
 ; X86-NEXT:    vgatherqpd %xmm0, (,%xmm2), %xmm1
 ; X86-NEXT:    vmovapd %xmm1, %xmm0
