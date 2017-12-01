@@ -35991,6 +35991,21 @@ static SDValue combineGatherScatter(SDNode *N, SelectionDAG &DAG,
     NewOps[2] = Mask.getOperand(0);
     DAG.UpdateNodeOperands(N, NewOps);
   }
+
+  // With AVX2 we only demand the upper bit of the mask.
+  if (!Subtarget.hasAVX512()) {
+    const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+    TargetLowering::TargetLoweringOpt TLO(DAG, !DCI.isBeforeLegalize(),
+                                          !DCI.isBeforeLegalizeOps());
+    KnownBits Known;
+    APInt DemandedMask(APInt::getSignMask(Mask.getScalarValueSizeInBits()));
+    if (TLI.SimplifyDemandedBits(Mask, DemandedMask, Known, TLO)) {
+      DCI.AddToWorklist(Mask.getNode());
+      DCI.CommitTargetLoweringOpt(TLO);
+      return SDValue(N, 0);
+    }
+  }
+
   return SDValue();
 }
 
@@ -37097,6 +37112,8 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::FMSUBADD_RND:
   case X86ISD::FMADDSUB:
   case X86ISD::FMSUBADD:    return combineFMADDSUB(N, DAG, Subtarget);
+  case X86ISD::MGATHER:
+  case X86ISD::MSCATTER:
   case ISD::MGATHER:
   case ISD::MSCATTER:       return combineGatherScatter(N, DAG, DCI, Subtarget);
   case X86ISD::TESTM:       return combineTestM(N, DAG, Subtarget);
