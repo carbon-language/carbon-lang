@@ -88,15 +88,13 @@ private:
 } // anonymous namespace
 
 StringRef elf::getOutputSectionName(InputSectionBase *S) {
-  StringRef Name = S->Name;
-
   // ".zdebug_" is a prefix for ZLIB-compressed sections.
   // Because we decompressed input sections, we want to remove 'z'.
-  if (Name.startswith(".zdebug_"))
-    return Saver.save("." + Name.substr(2));
+  if (S->Name.startswith(".zdebug_"))
+    return Saver.save("." + S->Name.substr(2));
 
   if (Config->Relocatable)
-    return Name;
+    return S->Name;
 
   // This is for --emit-relocs. If .text.foo is emitted as .text.bar, we want
   // to emit .rela.text.foo as .rela.text.bar for consistency (this is not
@@ -115,16 +113,16 @@ StringRef elf::getOutputSectionName(InputSectionBase *S) {
         ".bss.", ".init_array.", ".fini_array.", ".ctors.", ".dtors.", ".tbss.",
         ".gcc_except_table.", ".tdata.", ".ARM.exidx.", ".ARM.extab."}) {
     StringRef Prefix = V.drop_back();
-    if (Name.startswith(V) || Name == Prefix)
+    if (S->Name.startswith(V) || S->Name == Prefix)
       return Prefix;
   }
 
   // CommonSection is identified as "COMMON" in linker scripts.
   // By default, it should go to .bss section.
-  if (Name == "COMMON")
+  if (S->Name == "COMMON")
     return ".bss";
 
-  return Name;
+  return S->Name;
 }
 
 static bool needsInterpSection() {
