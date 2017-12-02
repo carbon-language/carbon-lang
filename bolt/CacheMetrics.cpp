@@ -8,26 +8,65 @@
 //===----------------------------------------------------------------------===//
 
 #include "CacheMetrics.h"
+#include "llvm/Support/Options.h"
 
 using namespace llvm;
 using namespace bolt;
-using Traversal = std::vector<BinaryBasicBlock *>;
 
-// The weight of fallthrough jumps for ExtTSP metric
-constexpr double FallthroughWeight = 1.0;
-// The weight of forward jumps for ExtTSP metric
-constexpr double ForwardWeight = 1.0;
-// The weight of backward jumps for ExtTSP metric
-constexpr double BackwardWeight = 1.0;
-// The maximum distance (in bytes) of forward jumps for ExtTSP metric
-constexpr uint64_t ForwardDistance = 256;
-// The maximum distance (in bytes) of backward jumps for ExtTSP metric
-constexpr uint64_t BackwardDistance = 256;
+namespace opts {
 
-// The size of the i-TLB cache page
-constexpr uint64_t ITLBPageSize = 4096;
-// Capacity of the i-TLB cache
-constexpr uint64_t ITLBEntries = 16;
+extern cl::OptionCategory BoltOptCategory;
+
+cl::opt<double>
+FallthroughWeight("fallthrough-weight",
+  cl::desc("The weight of forward jumps for ExtTSP metric"),
+  cl::init(1),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+cl::opt<double>
+ForwardWeight("forward-weight",
+  cl::desc("The weight of forward jumps for ExtTSP metric"),
+  cl::init(0.4),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+cl::opt<double>
+BackwardWeight("backward-weight",
+  cl::desc("The weight of backward jumps for ExtTSP metric"),
+  cl::init(0.4),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+cl::opt<unsigned>
+ForwardDistance("forward-distance",
+  cl::desc("The maximum distance (in bytes) of forward jumps for ExtTSP metric"),
+  cl::init(768),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+cl::opt<unsigned>
+BackwardDistance("backward-distance",
+  cl::desc("The maximum distance (in bytes) of backward jumps for ExtTSP metric"),
+  cl::init(192),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+cl::opt<unsigned>
+ITLBPageSize("itlb-page-size",
+  cl::desc("The size of i-tlb cache page"),
+  cl::init(4096),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+cl::opt<unsigned>
+ITLBEntries("itlb-entries",
+  cl::desc("The number of entries in i-tlb cache"),
+  cl::init(16),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+}
 
 namespace {
 
@@ -44,104 +83,6 @@ void extractBasicBlockInfo(
       BBSize[BB] = BB->getOutputSize();
     }
   }
-}
-
-/// Initialize and return a vector of traversals for a given entry block
-std::vector<Traversal> getTraversals(BinaryBasicBlock *EntryBB) {
-  std::vector<Traversal> AllTraversals;
-  std::stack<std::pair<BinaryBasicBlock *, Traversal>> Stack;
-  Stack.push(std::make_pair(EntryBB, Traversal()));
-  std::unordered_set<BinaryBasicBlock *> BBSet;
-
-  while (!Stack.empty()) {
-    BinaryBasicBlock *CurrentBB = Stack.top().first;
-    Traversal PrevTraversal(Stack.top().second);
-    Stack.pop();
-
-    // Add current basic block into consideration
-    BBSet.insert(CurrentBB);
-    PrevTraversal.push_back(CurrentBB);
-
-    if (CurrentBB->succ_empty()) {
-      AllTraversals.push_back(PrevTraversal);
-      continue;
-    }
-
-    bool HaveSuccCount = false;
-    // Calculate total edges count of successors
-    for (auto BI = CurrentBB->branch_info_begin();
-         BI != CurrentBB->branch_info_end(); ++BI) {
-      if (BI->Count != BinaryBasicBlock::COUNT_NO_PROFILE && BI->Count > 0) {
-        HaveSuccCount = true;
-        break;
-      }
-    }
-    if (!HaveSuccCount) {
-      AllTraversals.push_back(PrevTraversal);
-      continue;
-    }
-
-    auto BI = CurrentBB->branch_info_begin();
-    for (auto *SuccBB : CurrentBB->successors()) {
-      // If we have never seen SuccBB, or SuccBB indicates the
-      // end of traversal, SuccBB will be added into stack for
-      // further exploring.
-      if ((BBSet.find(SuccBB) == BBSet.end() && BI->Count != 0 &&
-           BI->Count != BinaryBasicBlock::COUNT_NO_PROFILE) ||
-          SuccBB->succ_empty()) {
-        Stack.push(std::make_pair(SuccBB, PrevTraversal));
-      }
-      ++BI;
-    }
-  }
-
-  return AllTraversals;
-}
-
-/// Given a traversal, return the sum of block distances along this traversal.
-double getTraversalLength(
-  const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBAddr,
-  const Traversal &Path) {
-  double Length = 0;
-  for (size_t I = 0; I + 1 < Path.size(); I++) {
-    // Ignore calls between hot and cold parts
-    if (Path[I]->isCold() != Path[I + 1]->isCold())
-      continue;
-    double SrcAddr = BBAddr.at(Path[I]);
-    double DstAddr = BBAddr.at(Path[I + 1]);
-    Length += std::abs(SrcAddr - DstAddr);
-  }
-  return Length;
-}
-
-/// Calculate average number of call distance for every graph traversal
-double calcGraphDistance(
-  const std::vector<BinaryFunction *> &BinaryFunctions,
-  const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBAddr,
-  const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBSize) {
-
-  double TotalTraversalLength = 0;
-  double NumTraversals = 0;
-  for (auto BF : BinaryFunctions) {
-    // Only consider functions which are known to be executed
-    if (BF->getKnownExecutionCount() == 0)
-      continue;
-
-    for (auto BB : BF->layout()) {
-      if (BB->isEntryPoint()) {
-        auto AllTraversals = getTraversals(BB);
-        for (auto const &Path : AllTraversals) {
-          // Ignore short traversals
-          if (Path.size() <= 1)
-            continue;
-          TotalTraversalLength += getTraversalLength(BBAddr, Path);
-          NumTraversals++;
-        }
-      }
-    }
-  }
-
-  return TotalTraversalLength / NumTraversals;
 }
 
 /// Calculate TSP metric, which quantifies the number of fallthrough jumps in
@@ -166,22 +107,12 @@ double calcTSPScore(
   return Score;
 }
 
-/// Calculate Extended-TSP metric, which quantifies the expected number of
-/// i-cache misses for a given ordering of basic blocks. The parameters are:
-/// - FallthroughWeight is the impact of fallthrough jumps on the score
-/// - ForwardWeight is the impact of forward (but not fallthrough) jumps
-/// - BackwardWeight is the impact of backward jumps
-/// - ForwardDistance is the max distance of a forward jump affecting the score
-/// - BackwardDistance is the max distance of a backward jump affecting the score
+/// Calculate Ext-TSP metric, which quantifies the expected number of i-cache
+/// misses for a given ordering of basic blocks
 double calcExtTSPScore(
   const std::vector<BinaryFunction *> &BinaryFunctions,
   const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBAddr,
-  const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBSize,
-  double FallthroughWeight,
-  double ForwardWeight,
-  double BackwardWeight,
-  uint64_t ForwardDistance,
-  uint64_t BackwardDistance) {
+  const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBSize) {
 
   double Score = 0.0;
   for (auto BF : BinaryFunctions) {
@@ -189,33 +120,10 @@ double calcExtTSPScore(
       auto BI = SrcBB->branch_info_begin();
       for (auto DstBB : SrcBB->successors()) {
         if (DstBB != SrcBB) {
-          double Count = BI->Count == BinaryBasicBlock::COUNT_NO_PROFILE
-                         ? 0.0
-                         : double(BI->Count);
-          uint64_t SrcAddr = BBAddr.at(SrcBB);
-          uint64_t SrcSize = BBSize.at(SrcBB);
-          uint64_t DstAddr = BBAddr.at(DstBB);
-
-          if (SrcAddr <= DstAddr) {
-            if (SrcAddr + SrcSize == DstAddr) {
-              // fallthrough jump
-              Score += FallthroughWeight * Count;
-            } else {
-              // the distance of the forward jump
-              size_t Dist = DstAddr - (SrcAddr + SrcSize);
-              if (Dist <= ForwardDistance) {
-                double Prob = double(ForwardDistance - Dist) / ForwardDistance;
-                Score += ForwardWeight * Prob * Count;
-              }
-            }
-          } else {
-            // the distance of the backward jump
-            size_t Dist = SrcAddr + SrcSize - DstAddr;
-            if (Dist <= BackwardDistance) {
-              double Prob = double(BackwardDistance - Dist) / BackwardDistance;
-              Score += BackwardWeight * Prob * Count;
-            }
-          }
+          Score += CacheMetrics::extTSPScore(BBAddr.at(SrcBB),
+                                             BBSize.at(SrcBB),
+                                             BBAddr.at(DstBB),
+                                             BI->Count);
         }
         ++BI;
       }
@@ -277,10 +185,10 @@ extractFunctionCalls(const std::vector<BinaryFunction *> &BinaryFunctions) {
 double expectedCacheHitRatio(
   const std::vector<BinaryFunction *> &BinaryFunctions,
   const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBAddr,
-  const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBSize,
-  double PageSize,
-  uint64_t CacheEntries) {
+  const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBSize) {
 
+  const double PageSize = opts::ITLBPageSize;
+  const uint64_t CacheEntries = opts::ITLBEntries;
   auto Calls = extractFunctionCalls(BinaryFunctions);
   // Compute 'hotness' of the functions
   double TotalSamples = 0;
@@ -334,6 +242,34 @@ double expectedCacheHitRatio(
   return 100.0 * (1.0 - Misses / TotalSamples);
 }
 
+} // end namespace anonymous
+
+double CacheMetrics::extTSPScore(uint64_t SrcAddr,
+                                 uint64_t SrcSize,
+                                 uint64_t DstAddr,
+                                 uint64_t Count) {
+  assert(Count != BinaryBasicBlock::COUNT_NO_PROFILE);
+
+  // Fallthrough
+  if (SrcAddr + SrcSize == DstAddr) {
+    return opts::FallthroughWeight * Count;
+  }
+  // Forward
+  if (SrcAddr + SrcSize < DstAddr) {
+    const auto Dist = DstAddr - (SrcAddr + SrcSize);
+    if (Dist <= opts::ForwardDistance) {
+      double Prob = 1.0 - static_cast<double>(Dist) / opts::ForwardDistance;
+      return opts::ForwardWeight * Prob * Count;
+    }
+    return 0;
+  }
+  // Backward
+  const auto Dist = SrcAddr + SrcSize - DstAddr;
+  if (Dist <= opts::BackwardDistance) {
+    double Prob = 1.0 - static_cast<double>(Dist) / opts::BackwardDistance;
+    return opts::BackwardWeight * Prob * Count;
+  }
+  return 0;
 }
 
 void CacheMetrics::printAll(
@@ -356,10 +292,10 @@ void CacheMetrics::printAll(
   }
 
   outs() << format("  There are %zu functions;", NumFunctions)
-         << format(" %zu (%.2lf%%) have non-empty execution count\n",
+         << format(" %zu (%.2lf%%) have positive execution count\n",
                    NumHotFunctions, 100.0 * NumHotFunctions / NumFunctions);
   outs() << format("  There are %zu basic blocks;", NumBlocks)
-         << format(" %zu (%.2lf%%) have non-empty execution count\n",
+         << format(" %zu (%.2lf%%) have positive execution count\n",
                   NumHotBlocks, 100.0 * NumHotBlocks / NumBlocks);
 
   std::unordered_map<BinaryBasicBlock *, uint64_t> BBAddr;
@@ -377,35 +313,14 @@ void CacheMetrics::printAll(
   outs() << format("  Hot code takes %.2lf%% of binary (%zu bytes out of %zu)\n",
                    100.0 * HotCodeSize / TotalCodeSize, HotCodeSize, TotalCodeSize);
 
-  outs() << "  An average length of graph traversal: "
-         << format("%.0lf\n", calcGraphDistance(BinaryFunctions,
-                                                BBAddr,
-                                                BBSize));
-
-  outs() << "  Expected i-TLB cache hit ratio "
-         << format("(%zu, %zu): ", ITLBPageSize, ITLBEntries)
+  outs() << "  Expected i-TLB cache hit ratio: "
          << format("%.2lf%%\n", expectedCacheHitRatio(BinaryFunctions,
                                                       BBAddr,
-                                                      BBSize,
-                                                      ITLBPageSize,
-                                                      ITLBEntries));
+                                                      BBSize));
 
   outs() << "  TSP score: "
          << format("%.0lf\n", calcTSPScore(BinaryFunctions, BBAddr, BBSize));
 
-  outs() << "  ExtTSP score "
-         << format("(%.2lf, %.2lf, %.2lf, %zu, %zu): ", FallthroughWeight,
-                                                        ForwardWeight,
-                                                        BackwardWeight,
-                                                        ForwardDistance,
-                                                        BackwardDistance)
-         << format("%.0lf\n", calcExtTSPScore(BinaryFunctions,
-                                              BBAddr,
-                                              BBSize,
-                                              FallthroughWeight,
-                                              ForwardWeight,
-                                              BackwardWeight,
-                                              ForwardDistance,
-                                              BackwardDistance));
-
+  outs() << "  ExtTSP score: "
+         << format("%.0lf\n", calcExtTSPScore(BinaryFunctions, BBAddr, BBSize));
 }

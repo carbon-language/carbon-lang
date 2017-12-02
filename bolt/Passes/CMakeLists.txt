@@ -5,6 +5,7 @@ add_llvm_library(LLVMBOLTPasses
   BinaryFunctionCallGraph.cpp
   CallGraph.cpp
   CallGraphWalker.cpp
+  CachePlusReorderAlgorithm.cpp
   DataflowAnalysis.cpp
   DataflowInfoManager.cpp
   FrameAnalysis.cpp

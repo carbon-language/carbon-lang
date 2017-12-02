@@ -161,6 +161,9 @@ ReorderBlocks("reorder-blocks",
       "cache",
       "perform optimal layout prioritizing I-cache "
       "behavior"),
+    clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE_CACHE_PLUS,
+      "cache+",
+      "perform layout optimizing I-cache behavior"),
     clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE_SHUFFLE,
       "cluster-shuffle",
       "perform random layout of clusters"),
@@ -467,6 +470,10 @@ void ReorderBasicBlocks::modifyFunctionLayout(BinaryFunction &BF,
 
     case LT_OPTIMIZE_CACHE:
       Algo.reset(new OptimizeCacheReorderAlgorithm(std::move(CAlgo)));
+      break;
+
+    case LT_OPTIMIZE_CACHE_PLUS:
+      Algo.reset(new CachePlusReorderAlgorithm(std::move(CAlgo)));
       break;
 
     case LT_OPTIMIZE_SHUFFLE:

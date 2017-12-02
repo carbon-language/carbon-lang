@@ -243,6 +243,16 @@ public:
       const BinaryFunction &BF, BasicBlockOrder &Order) const override;
 };
 
+/// A new reordering algorithm for basic blocks, cache+
+class CachePlusReorderAlgorithm : public ReorderAlgorithm {
+public:
+  explicit CachePlusReorderAlgorithm(
+      std::unique_ptr<ClusterAlgorithm> CAlgo) :
+    ReorderAlgorithm(std::move(CAlgo)) { }
+
+  void reorderBasicBlocks(
+      const BinaryFunction &BF, BasicBlockOrder &Order) const override;
+};
 
 /// Toy example that simply reverses the original basic block order.
 class ReverseReorderAlgorithm : public ReorderAlgorithm {

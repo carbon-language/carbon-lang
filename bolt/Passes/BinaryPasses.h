@@ -169,6 +169,8 @@ public:
     /// LT_OPTIMIZE_CACHE piggybacks on the idea from Ispike paper (CGO '04)
     /// that suggests putting frequently executed chains first in the layout.
     LT_OPTIMIZE_CACHE,
+    /// Block reordering guided by the extended TSP metric.
+    LT_OPTIMIZE_CACHE_PLUS,
     /// Create clusters and use random order for them.
     LT_OPTIMIZE_SHUFFLE,
   };
