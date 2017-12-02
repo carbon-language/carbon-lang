@@ -1910,6 +1910,7 @@ public:
   MipsGOTParser(ELFDumper<ELFT> *Dumper, const ELFO *Obj,
                 Elf_Dyn_Range DynTable, ScopedPrinter &W);
 
+  void parseStaticGOT();
   void parseGOT();
   void parsePLT();
 
@@ -1926,6 +1927,7 @@ private:
   std::size_t getGOTTotal(ArrayRef<uint8_t> GOT) const;
   const GOTEntry *makeGOTIter(ArrayRef<uint8_t> GOT, std::size_t EntryNum);
 
+  void printLocalGOT(const Elf_Shdr *GOTShdr, size_t Num);
   void printGotEntry(uint64_t GotAddr, const GOTEntry *BeginIt,
                      const GOTEntry *It);
   void printGlobalGotEntry(uint64_t GotAddr, const GOTEntry *BeginIt,
@@ -1963,6 +1965,50 @@ MipsGOTParser<ELFT>::MipsGOTParser(ELFDumper<ELFT> *Dumper, const ELFO *Obj,
       break;
     }
   }
+}
+
+template <class ELFT>
+void MipsGOTParser<ELFT>::printLocalGOT(const Elf_Shdr *GOTShdr, size_t Num) {
+  ArrayRef<uint8_t> GOT = unwrapOrError(Obj->getSectionContents(GOTShdr));
+
+  const GOTEntry *GotBegin = makeGOTIter(GOT, 0);
+  const GOTEntry *GotEnd = makeGOTIter(GOT, Num);
+  const GOTEntry *It = GotBegin;
+
+  W.printHex("Canonical gp value", GOTShdr->sh_addr + 0x7ff0);
+  {
+    ListScope RS(W, "Reserved entries");
+
+    {
+      DictScope D(W, "Entry");
+      printGotEntry(GOTShdr->sh_addr, GotBegin, It++);
+      W.printString("Purpose", StringRef("Lazy resolver"));
+    }
+
+    if (It != GotEnd && (*It >> (sizeof(GOTEntry) * 8 - 1)) != 0) {
+      DictScope D(W, "Entry");
+      printGotEntry(GOTShdr->sh_addr, GotBegin, It++);
+      W.printString("Purpose", StringRef("Module pointer (GNU extension)"));
+    }
+  }
+  {
+    ListScope LS(W, "Local entries");
+    for (; It != GotEnd; ++It) {
+      DictScope D(W, "Entry");
+      printGotEntry(GOTShdr->sh_addr, GotBegin, It);
+    }
+  }
+}
+
+template <class ELFT> void MipsGOTParser<ELFT>::parseStaticGOT() {
+  const Elf_Shdr *GOTShdr = findSectionByName(*Obj, ".got");
+  if (!GOTShdr) {
+    W.startLine() << "Cannot find .got section.\n";
+    return;
+  }
+
+  DictScope GS(W, "Static GOT");
+  printLocalGOT(GOTShdr, GOTShdr->sh_size / sizeof(GOTEntry));
 }
 
 template <class ELFT> void MipsGOTParser<ELFT>::parseGOT() {
@@ -2007,42 +2053,17 @@ template <class ELFT> void MipsGOTParser<ELFT>::parseGOT() {
   if (*DtLocalGotNum + GlobalGotNum > getGOTTotal(GOT))
     report_fatal_error("Number of GOT entries exceeds the size of GOT section");
 
-  const GOTEntry *GotBegin = makeGOTIter(GOT, 0);
-  const GOTEntry *GotLocalEnd = makeGOTIter(GOT, *DtLocalGotNum);
-  const GOTEntry *It = GotBegin;
-
   DictScope GS(W, "Primary GOT");
+  printLocalGOT(GOTShdr, *DtLocalGotNum);
 
-  W.printHex("Canonical gp value", GOTShdr->sh_addr + 0x7ff0);
-  {
-    ListScope RS(W, "Reserved entries");
-
-    {
-      DictScope D(W, "Entry");
-      printGotEntry(GOTShdr->sh_addr, GotBegin, It++);
-      W.printString("Purpose", StringRef("Lazy resolver"));
-    }
-
-    if (It != GotLocalEnd && (*It >> (sizeof(GOTEntry) * 8 - 1)) != 0) {
-      DictScope D(W, "Entry");
-      printGotEntry(GOTShdr->sh_addr, GotBegin, It++);
-      W.printString("Purpose", StringRef("Module pointer (GNU extension)"));
-    }
-  }
-  {
-    ListScope LS(W, "Local entries");
-    for (; It != GotLocalEnd; ++It) {
-      DictScope D(W, "Entry");
-      printGotEntry(GOTShdr->sh_addr, GotBegin, It);
-    }
-  }
   {
     ListScope GS(W, "Global entries");
 
+    const GOTEntry *GotBegin = makeGOTIter(GOT, 0);
     const GOTEntry *GotGlobalEnd =
         makeGOTIter(GOT, *DtLocalGotNum + GlobalGotNum);
     const Elf_Sym *GotDynSym = DynSymBegin + *DtGotSym;
-    for (; It != GotGlobalEnd; ++It) {
+    for (auto It = makeGOTIter(GOT, *DtLocalGotNum); It != GotGlobalEnd; ++It) {
       DictScope D(W, "Entry");
       printGlobalGotEntry(GOTShdr->sh_addr, GotBegin, It, GotDynSym++,
                           StrTable);
@@ -2197,8 +2218,12 @@ template <class ELFT> void ELFDumper<ELFT>::printMipsPLTGOT() {
   }
 
   MipsGOTParser<ELFT> GOTParser(this, Obj, dynamic_table(), W);
-  GOTParser.parseGOT();
-  GOTParser.parsePLT();
+  if (dynamic_table().empty())
+    GOTParser.parseStaticGOT();
+  else {
+    GOTParser.parseGOT();
+    GOTParser.parsePLT();
+  }
 }
 
 static const EnumEntry<unsigned> ElfMipsISAExtType[] = {
