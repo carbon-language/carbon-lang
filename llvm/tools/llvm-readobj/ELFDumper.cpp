@@ -1930,7 +1930,7 @@ private:
                      const GOTEntry *It);
   void printGlobalGotEntry(uint64_t GotAddr, const GOTEntry *BeginIt,
                            const GOTEntry *It, const Elf_Sym *Sym,
-                           StringRef StrTable, bool IsDynamic);
+                           StringRef StrTable);
   void printPLTEntry(uint64_t PLTAddr, const GOTEntry *BeginIt,
                      const GOTEntry *It, StringRef Purpose);
   void printPLTEntry(uint64_t PLTAddr, const GOTEntry *BeginIt,
@@ -2044,8 +2044,8 @@ template <class ELFT> void MipsGOTParser<ELFT>::parseGOT() {
     const Elf_Sym *GotDynSym = DynSymBegin + *DtGotSym;
     for (; It != GotGlobalEnd; ++It) {
       DictScope D(W, "Entry");
-      printGlobalGotEntry(GOTShdr->sh_addr, GotBegin, It, GotDynSym++, StrTable,
-                          true);
+      printGlobalGotEntry(GOTShdr->sh_addr, GotBegin, It, GotDynSym++,
+                          StrTable);
     }
   }
 
@@ -2137,9 +2137,11 @@ void MipsGOTParser<ELFT>::printGotEntry(uint64_t GotAddr,
 }
 
 template <class ELFT>
-void MipsGOTParser<ELFT>::printGlobalGotEntry(
-    uint64_t GotAddr, const GOTEntry *BeginIt, const GOTEntry *It,
-    const Elf_Sym *Sym, StringRef StrTable, bool IsDynamic) {
+void MipsGOTParser<ELFT>::printGlobalGotEntry(uint64_t GotAddr,
+                                              const GOTEntry *BeginIt,
+                                              const GOTEntry *It,
+                                              const Elf_Sym *Sym,
+                                              StringRef StrTable) {
   printGotEntry(GotAddr, BeginIt, It);
 
   W.printHex("Value", Sym->st_value);
@@ -2151,8 +2153,7 @@ void MipsGOTParser<ELFT>::printGlobalGotEntry(
                       Dumper->getShndxTable(), SectionName, SectionIndex);
   W.printHex("Section", SectionName, SectionIndex);
 
-  std::string FullSymbolName =
-      Dumper->getFullSymbolName(Sym, StrTable, IsDynamic);
+  std::string FullSymbolName = Dumper->getFullSymbolName(Sym, StrTable, true);
   W.printNumber("Name", FullSymbolName, Sym->st_name);
 }
 
