@@ -74,8 +74,6 @@ void Symbol::update(Kind K, InputFile *F, const WasmSymbol *WasmSym,
 
 bool Symbol::isWeak() const { return Sym && Sym->isWeak(); }
 
-bool Symbol::isHidden() const { return Sym && Sym->isHidden(); }
-
 std::string lld::toString(wasm::Symbol &Sym) {
   return wasm::displayName(Sym.getName());
 }
