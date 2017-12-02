@@ -2028,10 +2028,7 @@ template <class ELFT> void MipsGOTParser<ELFT>::parseGOT() {
     return;
   }
 
-  StringRef StrTable = Dumper->getDynamicStringTable();
-  const Elf_Sym *DynSymBegin = Dumper->dynamic_symbols().begin();
-  const Elf_Sym *DynSymEnd = Dumper->dynamic_symbols().end();
-  std::size_t DynSymTotal = std::size_t(std::distance(DynSymBegin, DynSymEnd));
+  std::size_t DynSymTotal = Dumper->dynamic_symbols().size();
 
   if (*DtGotSym > DynSymTotal)
     report_fatal_error("MIPS_GOTSYM exceeds a number of dynamic symbols");
@@ -2060,13 +2057,12 @@ template <class ELFT> void MipsGOTParser<ELFT>::parseGOT() {
     ListScope GS(W, "Global entries");
 
     const GOTEntry *GotBegin = makeGOTIter(GOT, 0);
-    const GOTEntry *GotGlobalEnd =
-        makeGOTIter(GOT, *DtLocalGotNum + GlobalGotNum);
-    const Elf_Sym *GotDynSym = DynSymBegin + *DtGotSym;
-    for (auto It = makeGOTIter(GOT, *DtLocalGotNum); It != GotGlobalEnd; ++It) {
+    const GOTEntry *GotEnd = makeGOTIter(GOT, *DtLocalGotNum + GlobalGotNum);
+    const Elf_Sym *GotDynSym = Dumper->dynamic_symbols().begin() + *DtGotSym;
+    for (auto It = makeGOTIter(GOT, *DtLocalGotNum); It != GotEnd; ++It) {
       DictScope D(W, "Entry");
       printGlobalGotEntry(GOTShdr->sh_addr, GotBegin, It, GotDynSym++,
-                          StrTable);
+                          Dumper->getDynamicStringTable());
     }
   }
 
