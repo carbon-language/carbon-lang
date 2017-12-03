@@ -352,12 +352,13 @@ multiclass AVX512_maskable_in_asm<bits<8> O, Format F, X86VectorVTInfo _,
                                   dag Outs, dag Ins,
                                   string OpcodeStr,
                                   string AttSrcAsm, string IntelSrcAsm,
-                                  list<dag> Pattern> :
+                                  list<dag> Pattern,
+                                  InstrItinClass itin = NoItinerary> :
    AVX512_maskable_custom<O, F, Outs, Ins,
                           !con((ins _.RC:$src0, _.KRCWM:$mask), Ins),
                           !con((ins _.KRCWM:$mask), Ins),
                           OpcodeStr, AttSrcAsm, IntelSrcAsm, Pattern, [], [],
-                          "$src0 = $dst">;
+                          "$src0 = $dst", itin>;
 
 
 // Instruction with mask that puts result in mask register,
@@ -7333,37 +7334,45 @@ def : Pat<(v4f64 (uint_to_fp (v4i64 VR256X:$src1))),
 //===----------------------------------------------------------------------===//
 // Half precision conversion instructions
 //===----------------------------------------------------------------------===//
+
 multiclass avx512_cvtph2ps<X86VectorVTInfo _dest, X86VectorVTInfo _src,
-                           X86MemOperand x86memop, PatFrag ld_frag> {
+                           X86MemOperand x86memop, PatFrag ld_frag,
+                           OpndItins itins> {
   defm rr : AVX512_maskable<0x13, MRMSrcReg, _dest ,(outs _dest.RC:$dst),
                             (ins _src.RC:$src), "vcvtph2ps", "$src", "$src",
-                            (X86cvtph2ps (_src.VT _src.RC:$src))>, T8PD;
+                            (X86cvtph2ps (_src.VT _src.RC:$src)),itins.rr>,
+                            T8PD, Sched<[itins.Sched]>;
   defm rm : AVX512_maskable<0x13, MRMSrcMem, _dest, (outs _dest.RC:$dst),
                             (ins x86memop:$src), "vcvtph2ps", "$src", "$src",
                             (X86cvtph2ps (_src.VT
                                           (bitconvert
-                                           (ld_frag addr:$src))))>, T8PD;
+                                           (ld_frag addr:$src)))), itins.rm>,
+                            T8PD, Sched<[itins.Sched.Folded]>;
 }
 
-multiclass avx512_cvtph2ps_sae<X86VectorVTInfo _dest, X86VectorVTInfo _src> {
+multiclass avx512_cvtph2ps_sae<X86VectorVTInfo _dest, X86VectorVTInfo _src,
+                               OpndItins itins> {
   defm rb : AVX512_maskable<0x13, MRMSrcReg, _dest, (outs _dest.RC:$dst),
                             (ins _src.RC:$src), "vcvtph2ps",
                             "{sae}, $src", "$src, {sae}",
                             (X86cvtph2psRnd (_src.VT _src.RC:$src),
-                                            (i32 FROUND_NO_EXC))>, T8PD, EVEX_B;
-
+                                            (i32 FROUND_NO_EXC)), itins.rr>,
+                            T8PD, EVEX_B, Sched<[itins.Sched]>;
 }
 
 let Predicates = [HasAVX512] in
-  defm VCVTPH2PSZ : avx512_cvtph2ps<v16f32_info, v16i16x_info, f256mem, loadv4i64>,
-                    avx512_cvtph2ps_sae<v16f32_info, v16i16x_info>,
+  defm VCVTPH2PSZ : avx512_cvtph2ps<v16f32_info, v16i16x_info, f256mem, loadv4i64,
+                                    SSE_CVT_PH2PS>,
+                    avx512_cvtph2ps_sae<v16f32_info, v16i16x_info, SSE_CVT_PH2PS>,
                     EVEX, EVEX_V512, EVEX_CD8<32, CD8VH>;
 
 let Predicates = [HasVLX] in {
   defm VCVTPH2PSZ256 : avx512_cvtph2ps<v8f32x_info, v8i16x_info, f128mem,
-                       loadv2i64>,EVEX, EVEX_V256, EVEX_CD8<32, CD8VH>;
+                       loadv2i64, SSE_CVT_PH2PS>, EVEX, EVEX_V256,
+                       EVEX_CD8<32, CD8VH>;
   defm VCVTPH2PSZ128 : avx512_cvtph2ps<v4f32x_info, v8i16x_info, f64mem,
-                       loadv2i64>, EVEX, EVEX_V128, EVEX_CD8<32, CD8VH>;
+                       loadv2i64, SSE_CVT_PH2PS>, EVEX, EVEX_V128,
+                       EVEX_CD8<32, CD8VH>;
 
   // Pattern match vcvtph2ps of a scalar i64 load.
   def : Pat<(v4f32 (X86cvtph2ps (v8i16 (vzmovl_v2i64 addr:$src)))),
@@ -7376,41 +7385,48 @@ let Predicates = [HasVLX] in {
 }
 
 multiclass avx512_cvtps2ph<X86VectorVTInfo _dest, X86VectorVTInfo _src,
-                           X86MemOperand x86memop> {
+                           X86MemOperand x86memop, OpndItins itins> {
   defm rr : AVX512_maskable<0x1D, MRMDestReg, _dest ,(outs _dest.RC:$dst),
                    (ins _src.RC:$src1, i32u8imm:$src2),
                    "vcvtps2ph", "$src2, $src1", "$src1, $src2",
                    (X86cvtps2ph (_src.VT _src.RC:$src1),
                                 (i32 imm:$src2)),
-                   NoItinerary, 0, 0>, AVX512AIi8Base;
+                   itins.rr, 0, 0>, AVX512AIi8Base, Sched<[itins.Sched]>;
   let hasSideEffects = 0, mayStore = 1 in {
     def mr : AVX512AIi8<0x1D, MRMDestMem, (outs),
                (ins x86memop:$dst, _src.RC:$src1, i32u8imm:$src2),
                "vcvtps2ph\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-               []>;
+               [], itins.rm>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
     def mrk : AVX512AIi8<0x1D, MRMDestMem, (outs),
                (ins x86memop:$dst, _dest.KRCWM:$mask, _src.RC:$src1, i32u8imm:$src2),
                "vcvtps2ph\t{$src2, $src1, $dst {${mask}}|$dst {${mask}}, $src1, $src2}",
-                []>, EVEX_K;
+                [], itins.rm>, EVEX_K, Sched<[itins.Sched.Folded, ReadAfterLd]>;
   }
 }
-multiclass avx512_cvtps2ph_sae<X86VectorVTInfo _dest, X86VectorVTInfo _src> {
+
+multiclass avx512_cvtps2ph_sae<X86VectorVTInfo _dest, X86VectorVTInfo _src,
+                               OpndItins itins> {
   let hasSideEffects = 0 in
   defm rb : AVX512_maskable_in_asm<0x1D, MRMDestReg, _dest,
                    (outs _dest.RC:$dst),
                    (ins _src.RC:$src1, i32u8imm:$src2),
                    "vcvtps2ph", "$src2, {sae}, $src1", "$src1, {sae}, $src2",
-                   []>, EVEX_B, AVX512AIi8Base;
+                   [], itins.rr>, EVEX_B, AVX512AIi8Base, Sched<[itins.Sched]>;
 }
+
 let Predicates = [HasAVX512] in {
-  defm VCVTPS2PHZ : avx512_cvtps2ph<v16i16x_info, v16f32_info, f256mem>,
-                    avx512_cvtps2ph_sae<v16i16x_info, v16f32_info>,
-                      EVEX, EVEX_V512, EVEX_CD8<32, CD8VH>;
+  defm VCVTPS2PHZ : avx512_cvtps2ph<v16i16x_info, v16f32_info, f256mem,
+                                    SSE_CVT_PS2PH>,
+                    avx512_cvtps2ph_sae<v16i16x_info, v16f32_info,
+                                        SSE_CVT_PS2PH>, EVEX, EVEX_V512,
+                                        EVEX_CD8<32, CD8VH>;
   let Predicates = [HasVLX] in {
-    defm VCVTPS2PHZ256 : avx512_cvtps2ph<v8i16x_info, v8f32x_info, f128mem>,
-                        EVEX, EVEX_V256, EVEX_CD8<32, CD8VH>;
-    defm VCVTPS2PHZ128 : avx512_cvtps2ph<v8i16x_info, v4f32x_info, f64mem>,
-                        EVEX, EVEX_V128, EVEX_CD8<32, CD8VH>;
+    defm VCVTPS2PHZ256 : avx512_cvtps2ph<v8i16x_info, v8f32x_info, f128mem,
+                                         SSE_CVT_PS2PH>, EVEX, EVEX_V256,
+                                         EVEX_CD8<32, CD8VH>;
+    defm VCVTPS2PHZ128 : avx512_cvtps2ph<v8i16x_info, v4f32x_info, f64mem,
+                                         SSE_CVT_PS2PH>, EVEX, EVEX_V128,
+                                         EVEX_CD8<32, CD8VH>;
   }
 
   def : Pat<(store (f64 (extractelt
