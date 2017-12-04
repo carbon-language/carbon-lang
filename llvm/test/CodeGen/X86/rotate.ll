@@ -626,3 +626,22 @@ define void @rotr1_8_mem(i8* %Aptr) nounwind {
   store i8 %D, i8* %Aptr
   ret void
 }
+
+define i64 @truncated_rot(i64 %x, i32 %amt) {
+entry:
+  %sh_prom = zext i32 %amt to i64
+  %shl = shl i64 %x, %sh_prom
+  %sub = sub nsw i32 64, %amt
+  %sh_prom1 = zext i32 %sub to i64
+  %shr = lshr i64 %x, %sh_prom1
+  %or = or i64 %shr, %shl
+  %and = and i64 %or, 4294967295
+  ret i64 %and
+
+; 64-LABEL: truncated_rot:
+; 64:       # %bb.0:
+; 64-NEXT:    movl %esi, %ecx
+; 64-NEXT:    rolq %cl, %rdi
+; 64-NEXT:    movl %edi, %eax
+; 64-NEXT:    retq
+}
