@@ -28,8 +28,8 @@ public:
   // This command line flag is used to indicate that the remaining command line
   // is immutable, meaning this flag effectively marks the end of the mutable
   // argument list.
-  static inline const char *const ignoreRemainingArgs() {
-    static const char *const kIgnoreRemaining = "-ignore_remaining_args=1";
+  static inline const char *ignoreRemainingArgs() {
+    static const char *kIgnoreRemaining = "-ignore_remaining_args=1";
     return kIgnoreRemaining;
   }
 
