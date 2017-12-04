@@ -3275,6 +3275,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
     OS << "    NearMissInfo FeaturesNearMiss = NearMissInfo::getSuccess();\n";
     OS << "    NearMissInfo EarlyPredicateNearMiss = NearMissInfo::getSuccess();\n";
     OS << "    NearMissInfo LatePredicateNearMiss = NearMissInfo::getSuccess();\n";
+    OS << "    bool MultipleInvalidOperands = false;\n";
   }
 
   if (HasMnemonicFirst) {
@@ -3313,12 +3314,11 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
     OS << "            OperandNearMiss =\n";
     OS << "                NearMissInfo::getTooFewOperands(Formal, it->Opcode);\n";
     OS << "          } else if (OperandNearMiss.getKind() != NearMissInfo::NearMissTooFewOperands) {\n";
-    OS << "            // An invalid operand plus a missing one at the end are reported the\n";
-    OS << "            // same way as multiple invalid operands.\n";
+    OS << "            // If more than one operand is invalid, give up on this match entry.\n";
     OS << "            DEBUG_WITH_TYPE(\n";
     OS << "                \"asm-matcher\",\n";
     OS << "                dbgs() << \"second invalid operand, giving up on this opcode\\n\");\n";
-    OS << "            OperandNearMiss = NearMissInfo::getMissedMultipleOperands(it->Opcode);\n";
+    OS << "            MultipleInvalidOperands = true;\n";
     OS << "            break;\n";
     OS << "          }\n";
     OS << "        } else {\n";
@@ -3387,7 +3387,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
     OS << "        DEBUG_WITH_TYPE(\n";
     OS << "            \"asm-matcher\",\n";
     OS << "            dbgs() << \"second operand mismatch, skipping this opcode\\n\");\n";
-    OS << "        OperandNearMiss = NearMissInfo::getMissedMultipleOperands(it->Opcode);\n";
+    OS << "        MultipleInvalidOperands = true;\n";
     OS << "        break;\n";
     OS << "      }\n";
     OS << "    }\n\n";
@@ -3409,14 +3409,15 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
     OS << "    }\n\n";
   }
 
-  if (!ReportMultipleNearMisses) {
+  if (ReportMultipleNearMisses)
+    OS << "    if (MultipleInvalidOperands) {\n";
+  else
     OS << "    if (!OperandsValid) {\n";
-    OS << "      DEBUG_WITH_TYPE(\"asm-matcher\", dbgs() << \"Opcode result: multiple \"\n";
-    OS << "                                               \"operand mismatches, ignoring \"\n";
-    OS << "                                               \"this opcode\\n\");\n";
-    OS << "      continue;\n";
-    OS << "    }\n";
-  }
+  OS << "      DEBUG_WITH_TYPE(\"asm-matcher\", dbgs() << \"Opcode result: multiple \"\n";
+  OS << "                                               \"operand mismatches, ignoring \"\n";
+  OS << "                                               \"this opcode\\n\");\n";
+  OS << "      continue;\n";
+  OS << "    }\n";
 
   // Emit check that the required features are available.
   OS << "    if ((AvailableFeatures & it->RequiredFeatures) "

@@ -19,7 +19,7 @@
 // CHECK-NEXT: movs r0, pc
 // CHECK: note: invalid operand for instruction
 // CHECK-NEXT: movs r0, pc
-// CHECK: error: invalid operands for instruction
+// CHECK: error: invalid instruction
 // CHECK-NEXT: movs pc, pc
 
         // mov.w selects t2MOVr
@@ -32,7 +32,7 @@
 // CHECK-NEXT: mov.w r0, pc
 // CHECK: note: invalid operand for instruction
 // CHECK-NEXT: mov.w r0, pc
-// CHECK: error: invalid operands for instruction
+// CHECK: error: invalid instruction
 // CHECK-NEXT: mov.w pc, pc
 
         // movs.w selects t2MOVr
@@ -45,7 +45,7 @@
 // CHECK-NEXT: movs.w r0, pc
 // CHECK: note: invalid operand for instruction
 // CHECK-NEXT: movs.w r0, pc
-// CHECK: error: invalid operands for instruction
+// CHECK: error: invalid instruction
 // CHECK-NEXT: movs.w pc, pc
 
 
