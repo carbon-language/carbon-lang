@@ -6414,11 +6414,9 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
     SmallVector<Instruction *, 16> Worklist;
     PushLoopPHIs(L, Worklist);
 
-    SmallPtrSet<Instruction *, 8> Visited;
+    SmallPtrSet<Instruction *, 8> Discovered;
     while (!Worklist.empty()) {
       Instruction *I = Worklist.pop_back_val();
-      if (!Visited.insert(I).second)
-        continue;
 
       ValueExprMapType::iterator It =
         ValueExprMap.find_as(static_cast<Value *>(I));
@@ -6460,7 +6458,8 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
       for (auto *U : I->users())
         if (auto *I = dyn_cast<Instruction>(U)) {
           auto *LoopForUser = LI.getLoopFor(I->getParent());
-          if (LoopForUser && L->contains(LoopForUser))
+          if (LoopForUser && L->contains(LoopForUser) &&
+              Discovered.insert(I).second)
             Worklist.push_back(I);
         }
     }
