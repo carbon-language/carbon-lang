@@ -143,6 +143,7 @@ public:
   enum NearMissKind {
     NoNearMiss,
     NearMissOperand,
+    NearMissMultipleOperands,
     NearMissFeature,
     NearMissPredicate,
     NearMissTooFewOperands,
@@ -189,6 +190,13 @@ public:
     return Result;
   }
 
+  static NearMissInfo getMissedMultipleOperands(unsigned Opcode) {
+    NearMissInfo Result;
+    Result.Kind = NearMissMultipleOperands;
+    Result.MissedOperand.Opcode = Opcode;
+    return Result;
+  }
+
   // The instruction encoding is not valid because it expects more operands
   // than were parsed. OperandClass is the class of the expected operand that
   // was not provided. Opcode is the instruction encoding.
@@ -208,34 +216,41 @@ public:
   // Feature flags required by the instruction, that the current target does
   // not have.
   uint64_t getFeatures() const {
-    assert(Kind == NearMissFeature);
+    assert(Kind == NearMissFeature &&
+           "near-miss does not have an associated target feature");
     return Features;
   }
   // Error code returned by the target predicate when validating this
   // instruction encoding.
   unsigned getPredicateError() const {
-    assert(Kind == NearMissPredicate);
+    assert(Kind == NearMissPredicate &&
+           "near-miss does not have an associated predicate error");
     return PredicateError;
   }
   // MatchClassKind of the operand that we expected to see.
   unsigned getOperandClass() const {
-    assert(Kind == NearMissOperand || Kind == NearMissTooFewOperands);
+    assert((Kind == NearMissOperand || Kind == NearMissTooFewOperands) &&
+           "near-miss does not have an associated operand class");
     return MissedOperand.Class;
   }
   // Opcode of the encoding we were trying to match.
   unsigned getOpcode() const {
-    assert(Kind == NearMissOperand || Kind == NearMissTooFewOperands);
+    assert((Kind == NearMissOperand || Kind == NearMissTooFewOperands ||
+            Kind == NearMissMultipleOperands) &&
+           "near-miss does not have an associated opcode");
     return MissedOperand.Opcode;
   }
   // Error code returned when validating the operand.
   unsigned getOperandError() const {
-    assert(Kind == NearMissOperand);
+    assert(Kind == NearMissOperand &&
+           "near-miss does not have an associated operand error");
     return MissedOperand.Error;
   }
   // Index of the actual operand we were trying to match in the list of parsed
   // operands.
   unsigned getOperandIndex() const {
-    assert(Kind == NearMissOperand);
+    assert(Kind == NearMissOperand &&
+           "near-miss does not have an associated operand index");
     return MissedOperand.Index;
   }
 

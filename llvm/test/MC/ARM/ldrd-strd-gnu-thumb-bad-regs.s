@@ -2,10 +2,10 @@
 
 .text
 .thumb
-@ CHECK: error: invalid instruction
+@ CHECK: error: invalid operands for instruction
 @ CHECK:         ldrd    r12, [r0, #512]
         ldrd    r12, [r0, #512]
 
-@ CHECK: error: invalid instruction
+@ CHECK: error: invalid operands for instruction
 @ CHECK:         strd    r12, [r0, #512]
         strd    r12, [r0, #512]

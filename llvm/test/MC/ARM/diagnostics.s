@@ -1,4 +1,4 @@
-@ RUN: not llvm-mc -triple=armv7-apple-darwin < %s 2> %t
+ RUN: not llvm-mc -triple=armv7-apple-darwin < %s 2> %t
 @ RUN: FileCheck --check-prefix=CHECK-ERRORS --check-prefix=CHECK-ERRORS-V7 < %t %s
 @ RUN: not llvm-mc -triple=armv8 < %s 2> %t
 @ RUN: FileCheck --check-prefix=CHECK-ERRORS --check-prefix=CHECK-ERRORS-V8 < %t %s
@@ -164,7 +164,7 @@
 @ CHECK-ERRORS: operand must be an immediate in the range [0,7]
 @ CHECK-ERRORS-V7: operand must be an immediate in the range [0,7]
 @ CHECK-ERRORS-V7: operand must be an immediate in the range [0,7]
-@ CHECK-ERRORS-V8: invalid instruction
+@ CHECK-ERRORS-V8: error: invalid operands for instruction
 @ CHECK-ERRORS-V8: too many operands for instruction
 @ CHECK-ERRORS: operand must be an immediate in the range [0,15]
 @ CHECK-ERRORS-V7: operand must be an immediate in the range [0,15]
@@ -208,7 +208,7 @@
 @ CHECK-ERRORS: operand must be an immediate in the range [0,7]
 @ CHECK-ERRORS: operand must be an immediate in the range [0,7]
 @ CHECK-ERRORS-V7: operand must be an immediate in the range [0,7]
-@ CHECK-ERRORS-V8: invalid instruction
+@ CHECK-ERRORS-V8: error: invalid operands for instruction
 @ CHECK-ERRORS-V7: operand must be an immediate in the range [0,7]
 @ CHECK-ERRORS-V8: too many operands for instruction
 @ CHECK-ERRORS: operand must be an immediate in the range [0,15]

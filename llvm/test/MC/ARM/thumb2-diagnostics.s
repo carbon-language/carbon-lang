@@ -43,7 +43,7 @@
 @ CHECK-ERRORS: operand must be an immediate in the range [0,7]
 @ CHECK-ERRORS-V7: operand must be an immediate in the range [0,7]
 @ CHECK-ERRORS-V7: operand must be an immediate in the range [0,7]
-@ CHECK-ERRORS-V8: invalid instruction
+@ CHECK-ERRORS-V8: error: invalid operands for instruction
 @ CHECK-ERRORS-V8: too many operands for instruction
 @ CHECK-ERRORS: operand must be an immediate in the range [0,15]
 @ CHECK-ERRORS-V7: operand must be an immediate in the range [0,15]
@@ -91,8 +91,11 @@ foo2:
 
         and sp, r1, #80008000
         and pc, r1, #80008000
-@ CHECK-ERRORS: error: invalid instruction
-@ CHECK-ERRORS: error: invalid instruction
+@ CHECK-ERRORS-V7: error: invalid operands for instruction
+@ CHECK-ERRORS-V8: invalid instruction, any one of the following would fix this:
+@ CHECK-ERRORS-V8: note: invalid operand for instruction
+@ CHECK-ERRORS-V8: note: operand must be a register in range [r0, r14]
+@ CHECK-ERRORS: error: invalid operands for instruction
 
         ssat r0, #1, r0, asr #32
         usat r0, #1, r0, asr #32
@@ -129,7 +132,7 @@ foo2:
 @ CHECK-ERRORS: error: invalid instruction, any one of the following would fix this:
 @ CHECK-ERRORS: note: instruction requires: arm-mode
 @ CHECK-ERRORS: note: invalid operand for instruction
-@ CHECK-ERRORS: error: invalid instruction
+@ CHECK-ERRORS: error: invalid operands for instruction
 @ CHECK-ERRORS: error: invalid instruction, any one of the following would fix this:
 @ CHECK-ERRORS: note: invalid operand for instruction
 @ CHECK-ERRORS: note: instruction requires: arm-mode

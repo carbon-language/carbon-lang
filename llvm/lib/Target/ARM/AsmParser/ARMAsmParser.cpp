@@ -10134,6 +10134,7 @@ ARMAsmParser::FilterNearMisses(SmallVectorImpl<NearMissInfo> &NearMissesIn,
   std::multimap<unsigned, unsigned> OperandMissesSeen;
   SmallSet<uint64_t, 4> FeatureMissesSeen;
   bool ReportedTooFewOperands = false;
+  bool HaveMultipleBadOperands = false;
 
   // Process the near-misses in reverse order, so that we see more general ones
   // first, and so can avoid emitting more specific ones.
@@ -10253,6 +10254,12 @@ ARMAsmParser::FilterNearMisses(SmallVectorImpl<NearMissInfo> &NearMissesIn,
       NearMissesOut.emplace_back(Message);
       break;
     }
+    case NearMissInfo::NearMissMultipleOperands: {
+      // Just record the fact that we have seen this, we will use it as a
+      // fall-back if we don't find a better operand error to report.
+      HaveMultipleBadOperands = true;
+      break;
+    }
     case NearMissInfo::NearMissTooFewOperands: {
       if (!ReportedTooFewOperands) {
         SMLoc EndLoc = ((ARMOperand &)*Operands.back()).getEndLoc();
@@ -10267,6 +10274,16 @@ ARMAsmParser::FilterNearMisses(SmallVectorImpl<NearMissInfo> &NearMissesIn,
       llvm_unreachable("not a near-miss");
       break;
     }
+  }
+
+  // If there is an encoding that missed on multiple operands (but matched the
+  // target features and early predicate), but we haven't been able to emit a
+  // more specific error for any operands, emit a generic error. This lets the
+  // user know that the mnemonic exists, and that some combination of operands
+  // would work for the current target.
+  if (HaveMultipleBadOperands && NearMissesOut.empty()) {
+    NearMissesOut.emplace_back(NearMissMessage{
+        IDLoc, StringRef("invalid operands for instruction")});
   }
 }
 

@@ -10,9 +10,9 @@
   strd r0
 @ CHECK: error: too few operands for instruction
   ldrd r0
-@ CHECK: error: invalid instruction
+@ CHECK: error: invalid operands for instruction
   strd s0, [r0]
-@ CHECK: error: invalid instruction
+@ CHECK: error: invalid operands for instruction
   ldrd s0, [r0]
   .arm
 @ CHECK: error: too few operands for instruction
@@ -23,7 +23,7 @@
   strd r0
 @ CHECK: error: too few operands for instruction
   ldrd r0
-@ CHECK: error: invalid instruction
+@ CHECK: error: invalid operands for instruction
   strd s0, [r0]
-@ CHECK: error: invalid instruction
+@ CHECK: error: invalid operands for instruction
   ldrd s0, [r0]
