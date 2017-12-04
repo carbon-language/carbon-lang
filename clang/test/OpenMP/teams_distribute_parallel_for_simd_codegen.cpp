@@ -24,26 +24,26 @@ int teams_argument_global(int n){
   // CK1: [[TH_CAST:%.+]] = alloca i{{32|64}},
   // CK1: [[TE_PAR:%.+]] = load{{.+}}, {{.+}} [[TE_CAST]],
   // CK1: [[TH_PAR:%.+]] = load{{.+}}, {{.+}} [[TH_CAST]],
-  // CK1: call i32 @__tgt_target_teams(i64 -1, i8* @{{[^,]+}}, i32 4, i8** %{{[^,]+}}, i8** %{{[^,]+}}, i{{64|32}}* {{.+}}@{{[^,]+}}, i32 0, i32 0), i64* {{.+}}@{{[^,]+}}, i32 0, i32 0), i32 {{.+}}, i32 {{.+}})
+
+  // CK1: call i32 @__tgt_target_teams(i64 -1, i8* @{{[^,]+}}, i32 4, i8** %{{[^,]+}}, i8** %{{[^,]+}}, i{{64|32}}* {{.+}}@{{[^,]+}}, i32 0, i32 0), i64* {{.+}}@{{[^,]+}}, i32 0, i32 0)
 
   // CK1: call void @[[OFFL1:.+]](i{{32|64}} [[TE_PAR]], i{{32|64}} [[TH_PAR]],
   #pragma omp target
-  #pragma omp teams distribute parallel for num_teams(te), thread_limit(th)
+  #pragma omp teams distribute parallel for simd num_teams(te), thread_limit(th) simdlen(64)
   for(int i = 0; i < n; i++) {
     a[i] = 0;
-    #pragma omp cancel for
   }
 
-  // CK1: call i32 @__tgt_target_teams(i64 -1, i8* @{{[^,]+}}, i32 2, i8** %{{[^,]+}}, i8** %{{[^,]+}}, i{{64|32}}* {{.+}}@{{[^,]+}}, i32 0, i32 0), i64* {{.+}}@{{[^,]+}}, i32 0, i32 0), i32 0, i32 0)
-  // CK1: call void @[[OFFL2:.+]](i{{64|32}} %{{.+}})
+  int i;
+  // CK1: call i32 @__tgt_target_teams(i64 -1, i8* @{{[^,]+}}, i32 3, i8** %{{[^,]+}}, i8** %{{[^,]+}}, i{{64|32}}* {{.+}}@{{[^,]+}}, i32 0, i32 0), i64* {{.+}}@{{[^,]+}}, i32 0, i32 0)
+  // CK1: call void @[[OFFL2:.+]](
   #pragma omp target
   {{{
-  #pragma omp teams distribute parallel for
-  for(int i = 0; i < n; i++) {
+  #pragma omp teams distribute parallel for simd safelen(4) aligned(a) linear(i) 
+  for(i = 0; i < n; i++) {
     a[i] = 0;
   }
   }}}
-
   // outlined target regions
   // CK1: define internal void @[[OFFL1]](i{{32|64}} [[TE_ARG:%.+]], i{{32|64}} [[TH_ARG:%.+]], i{{32|64}} {{.+}}, {{.+}})
   // CK1: [[TE_ADDR:%.+]] = alloca i{{32|64}},
@@ -67,7 +67,7 @@ int teams_argument_global(int n){
   // CK1: ret void
 
   // CK1: define internal void @[[OFFL2]]({{.+}}, {{.+}})
-  // CK1: call void {{.+}} @__kmpc_fork_teams({{.+}}, i32 2, {{.+}} @[[OUTL2:.+]] to {{.+}}, {{.+}}, {{.+}})
+  // CK1: call void {{.+}} @__kmpc_fork_teams({{.+}}, i32 3, {{.+}} @[[OUTL2:.+]] to {{.+}}, {{.+}}, {{.+}})
   // CK1: ret void
 
   // CK1: define internal void @[[OUTL2]]({{.+}})
@@ -78,6 +78,10 @@ int teams_argument_global(int n){
 
   return a[0];
 }
+
+// CK1-DAG: !{!"llvm.loop.vectorize.enable", i1 true}
+// CK1-DAG: !{!"llvm.loop.vectorize.width", i32 4}
+// CK1-DAG: !{!"llvm.loop.vectorize.width", i32 64}
 
 #endif // CK1
 
@@ -93,19 +97,19 @@ int teams_argument_global(int n){
 // CK2: define {{.*}}i32 @{{.+}}teams_local_argv(
 int teams_local_arg(void) {
   int n = 100;
-  int a[n];
+  int a[n], i;
 
-  // CK2: call i32 @__tgt_target_teams(i64 -1, i8* @{{[^,]+}}, i32 3, i8** %{{[^,]+}}, i8** %{{[^,]+}}, i{{64|32}}* {{.+}}, i64* {{.+}}@{{[^,]+}}, i32 0, i32 0), i32 0, i32 0)
-  // CK2: call void @[[OFFL1:.+]](i{{64|32}} %{{.+}})
+  // CK2: call i32 @__tgt_target_teams(i64 -1, i8* @{{[^,]+}}, i32 4, i8** %{{[^,]+}}, i8** %{{[^,]+}}, i{{64|32}}* {{.+}}, i64* {{.+}}@{{[^,]+}}, i32 0, i32 0)
+  // CK2: call void @[[OFFL1:.+]](
   #pragma omp target
-  #pragma omp teams distribute parallel for
-  for(int i = 0; i < n; i++) {
+  #pragma omp teams distribute parallel for simd safelen(4) aligned(a) linear(i)
+  for(i = 0; i < n; i++) {
     a[i] = 0;
   }
 
   // outlined target region
   // CK2: define internal void @[[OFFL1]]({{.+}}, {{.+}})
-  // CK2: call void {{.+}} @__kmpc_fork_teams({{.+}}, i32 3, {{.+}} @[[OUTL1:.+]] to {{.+}}, {{.+}}, {{.+}})
+  // CK2: call void {{.+}} @__kmpc_fork_teams({{.+}}, i32 4, {{.+}} @[[OUTL1:.+]] to {{.+}}, {{.+}}, {{.+}})
   // CK2: ret void
 
   // CK2: define internal void @[[OUTL1]]({{.+}})
@@ -116,6 +120,10 @@ int teams_local_arg(void) {
 
   return a[0];
 }
+
+// CK2-DAG: !{!"llvm.loop.vectorize.enable", i1 true}
+// CK2-DAG: !{!"llvm.loop.vectorize.width", i32 4}
+
 #endif // CK2
 
 // Test host codegen.
@@ -135,18 +143,18 @@ struct SS{
   float b;
   // CK3: define {{.*}}i32 @{{.+}}foo{{.+}}(
   int foo(void) {
-
-  // CK3: call i32 @__tgt_target_teams(i64 -1, i8* @{{[^,]+}}, i32 1, i8** %{{[^,]+}}, i8** %{{[^,]+}}, i{{64|32}}* {{.+}}@{{[^,]+}}, i32 0, i32 0), i64* {{.+}}@{{[^,]+}}, i32 0, i32 0), i32 0, i32 0)
+    int i;
+  // CK3: call i32 @__tgt_target_teams(i64 -1, i8* @{{[^,]+}}, i32 2, i8** %{{[^,]+}}, i8** %{{[^,]+}}, i{{64|32}}* {{.+}}@{{[^,]+}}, i32 0, i32 0), i64* {{.+}}@{{[^,]+}}, i32 0, i32 0)
   // CK3: call void @[[OFFL1:.+]]([[SSI]]* %{{.+}})
     #pragma omp target
-    #pragma omp teams distribute parallel for
-    for(int i = 0; i < X; i++) {
+    #pragma omp teams distribute parallel for simd safelen(4) aligned(a) linear(i)
+    for(i = 0; i < X; i++) {
       a[i] = (T)0;
     }
 
       // outlined target region
   // CK3: define internal void @[[OFFL1]]([[SSI]]* {{.+}})
-  // CK3: call void {{.+}} @__kmpc_fork_teams({{.+}}, i32 1, {{.+}} @[[OUTL1:.+]] to {{.+}}, {{.+}}, {{.+}})
+  // CK3: call void {{.+}} @__kmpc_fork_teams({{.+}}, i32 2, {{.+}} @[[OUTL1:.+]] to {{.+}}, {{.+}}, {{.+}})
   // CK3: ret void
 
   // CK3: define internal void @[[OUTL1]]({{.+}})
@@ -164,6 +172,9 @@ int teams_template_struct(void) {
   return V.foo();
 
 }
+
+// CK3-DAG: !{!"llvm.loop.vectorize.enable", i1 true}
+// CK3-DAG: !{!"llvm.loop.vectorize.width", i32 4}
 #endif // CK3
 
 // Test host codegen.
@@ -182,7 +193,7 @@ int tmain(T argc) {
   int te = n/128;
   int th = 128;
 #pragma omp target
-#pragma omp teams distribute parallel for num_teams(te) thread_limit(th)
+#pragma omp teams distribute parallel for simd num_teams(te) thread_limit(th) simdlen(64)
   for(int i = 0; i < n; i++) {
     a[i] = (T)0;
   }
@@ -191,23 +202,23 @@ int tmain(T argc) {
 
 int main (int argc, char **argv) {
   int n = 100;
-  int a[n];
+  int a[n], i;
 #pragma omp target
-#pragma omp teams distribute parallel for
-  for(int i = 0; i < n; i++) {
+#pragma omp teams distribute parallel for simd safelen(4) aligned(a) linear(i)
+  for(i = 0; i < n; i++) {
     a[i] = 0;
   }
   return tmain<int, 10>(argc);
 }
 
 // CK4:  define {{.*}}i32 @{{[^,]+}}(i{{.+}}{{.+}} %[[ARGC:.+]], {{.+}})
-// CK4:   call i32 @__tgt_target_teams(i64 -1, i8* @{{[^,]+}}, i32 3, i8** %{{[^,]+}}, i8** %{{[^,]+}}, i{{64|32}}* {{.+}}, i64* {{.+}}@{{[^,]+}}, i32 0, i32 0), i32 0, i32 0)
+// CK4:   call i32 @__tgt_target_teams(i64 -1, i8* @{{[^,]+}}, i32 4, i8** %{{[^,]+}}, i8** %{{[^,]+}}, i{{64|32}}* {{.+}}, i64* {{.+}}@{{[^,]+}}, i32 0, i32 0)
 // CK4: call void @[[OFFL1:.+]]({{.+}})
 // CK4: {{%.+}} = call{{.*}} i32 @[[TMAIN:.+]]({{.+}})
 // CK4:  ret
 
 // CK4:  define {{.*}}void @[[OFFL1]]({{.+}})
-// CK4: call void {{.+}} @__kmpc_fork_teams({{.+}}, i32 3, {{.+}} @[[OUTL1:.+]] to {{.+}}, {{.+}}, {{.+}})
+// CK4: call void {{.+}} @__kmpc_fork_teams({{.+}}, i32 4, {{.+}} @[[OUTL1:.+]] to {{.+}}, {{.+}}, {{.+}})
 // CK4: ret void
 
 // CK4: define internal void @[[OUTL1]]({{.+}})
@@ -217,7 +228,7 @@ int main (int argc, char **argv) {
 // CK4: ret void
 
 // CK4:  define {{.*}}i32 @[[TMAIN]]({{.+}})
-// CK4:   call i32 @__tgt_target_teams(i64 -1, i8* @{{[^,]+}}, i32 3, i8** %{{[^,]+}}, i8** %{{[^,]+}}, i{{64|32}}* {{.+}}@{{[^,]+}}, i32 0, i32 0), i64* {{.+}}@{{[^,]+}}, i32 0, i32 0), i32 {{.+}}, i32 {{.+}})
+// CK4:   call i32 @__tgt_target_teams(i64 -1, i8* @{{[^,]+}}, i32 3, i8** %{{[^,]+}}, i8** %{{[^,]+}}, i{{64|32}}* {{.+}}@{{[^,]+}}, i32 0, i32 0), i64* {{.+}}@{{[^,]+}}, i32 0, i32 0)
 // CK4: call void @[[OFFLT:.+]]({{.+}})
 // CK4:  ret
 // CK4-NEXT: }
@@ -243,5 +254,10 @@ int main (int argc, char **argv) {
 // CK4: call void @__kmpc_for_static_fini(
 // CK4: ret void
 
+// CK4-DAG: !{!"llvm.loop.vectorize.enable", i1 true}
+// CK4-DAG: !{!"llvm.loop.vectorize.width", i32 4}
+// CK4-DAG: !{!"llvm.loop.vectorize.width", i32 64}
+
 #endif // CK4
 #endif
+
