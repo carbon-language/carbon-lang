@@ -76,7 +76,7 @@ protected:
   /// we are currently in.
   SmallVector<PPConditionalInfo, 4> ConditionalStack;
 
-  PreprocessorLexer() {}
+  PreprocessorLexer() : FID() {}
   PreprocessorLexer(Preprocessor *pp, FileID fid);
   virtual ~PreprocessorLexer() = default;
 
