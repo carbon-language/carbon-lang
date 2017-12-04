@@ -53,7 +53,7 @@ def : Processor<"cedar", R600_VLIW5_Itin,
 >;
 
 def : Processor<"cypress", R600_VLIW5_Itin,
-  [FeatureEvergreen, FeatureWavefrontSize64, FeatureVertexCache]
+  [FeatureEvergreen, FeatureWavefrontSize64, FeatureVertexCache, FeatureFMA]
 >;
 
 def : Processor<"juniper", R600_VLIW5_Itin,
@@ -82,7 +82,7 @@ def : Processor<"caicos", R600_VLIW5_Itin,
 >;
 
 def : Processor<"cayman", R600_VLIW4_Itin,
-  [FeatureNorthernIslands, FeatureCaymanISA]
+  [FeatureNorthernIslands, FeatureCaymanISA, FeatureFMA]
 >;
 
 def : Processor<"turks", R600_VLIW5_Itin,
