@@ -1652,7 +1652,8 @@ void MachineVerifier::checkPHIOps(const MachineBasicBlock &MBB) {
       if (MInfo.reachable) {
         seen.insert(&Pre);
         BBInfo &PrInfo = MBBInfoMap[&Pre];
-        if (PrInfo.reachable && !PrInfo.isLiveOut(MO0.getReg()))
+        if (!MO0.isUndef() && PrInfo.reachable &&
+            !PrInfo.isLiveOut(MO0.getReg()))
           report("PHI operand is not live-out from predecessor", &MO0, I);
       }
     }
