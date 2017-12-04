@@ -57,6 +57,7 @@ int main() {
     // LAMBDA: alloca i{{.+}},
     // LAMBDA: alloca i{{.+}},
     // LAMBDA: alloca i{{.+}},
+    // LAMBDA: alloca i{{.+}},
     // LAMBDA: [[SIVAR_PRIV:%.+]] = alloca i{{.+}},
     // LAMBDA: store{{.+}} [[SIVAR_ARG]], {{.+}} [[SIVAR_ADDR]],
     // LAMBDA: [[SIVAR_REF:%.+]] = load{{.+}}, {{.+}} [[SIVAR_ADDR]]
@@ -132,6 +133,7 @@ int main() {
 // CHECK: alloca i{{.+}},
 // CHECK: alloca i{{.+}},
 // CHECK: alloca i{{.+}},
+// CHECK: alloca i{{.+}},
 // CHECK: [[SIVAR_PRIV:%.+]] = alloca i{{.+}},
 // CHECK: store{{.+}} [[SIVAR_ARG]], {{.+}} [[SIVAR_ADDR]],
 // CHECK: [[SIVAR_REF:%.+]] = load{{.+}}, {{.+}} [[SIVAR_ADDR]]
@@ -171,6 +173,7 @@ int main() {
 // CHECK: {{.+}} = alloca i32*,
 // CHECK: {{.+}} = alloca i32*,
 // CHECK: [[TVAR_ADDR:%.+]] = alloca i{{.+}}*,
+// CHECK: alloca i{{.+}},
 // CHECK: alloca i{{.+}},
 // CHECK: alloca i{{.+}},
 // CHECK: alloca i{{.+}},

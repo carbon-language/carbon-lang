@@ -121,6 +121,9 @@ public:
 /// of used expression from loop statement.
 class OMPLoopScope : public CodeGenFunction::RunCleanupsScope {
   void emitPreInitStmt(CodeGenFunction &CGF, const OMPLoopDirective &S) {
+    CodeGenFunction::OMPPrivateScope PreCondScope(CGF);
+    CGF.EmitOMPPrivateLoopCounters(S, PreCondScope);
+    (void)PreCondScope.Privatize();
     if (auto *LD = dyn_cast<OMPLoopDirective>(&S)) {
       if (auto *PreInits = cast_or_null<DeclStmt>(LD->getPreInits())) {
         for (const auto *I : PreInits->decls())
