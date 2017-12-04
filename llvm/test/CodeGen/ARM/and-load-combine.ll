@@ -913,3 +913,54 @@ entry:
   %and = and i32 %or, 65535
   ret i32 %and
 }
+
+define arm_aapcscc i32 @test5(i32* %a, i32* %b, i32 %x, i16 zeroext %y) {
+; ARM-LABEL: test5:
+; ARM:       @ BB#0: @ %entry
+; ARM-NEXT:    ldr r1, [r1]
+; ARM-NEXT:    ldr r0, [r0]
+; ARM-NEXT:    mul r1, r2, r1
+; ARM-NEXT:    eor r0, r0, r3
+; ARM-NEXT:    orr r0, r0, r1
+; ARM-NEXT:    uxth r0, r0
+; ARM-NEXT:    bx lr
+;
+; ARMEB-LABEL: test5:
+; ARMEB:       @ BB#0: @ %entry
+; ARMEB-NEXT:    ldr r1, [r1]
+; ARMEB-NEXT:    ldr r0, [r0]
+; ARMEB-NEXT:    mul r1, r2, r1
+; ARMEB-NEXT:    eor r0, r0, r3
+; ARMEB-NEXT:    orr r0, r0, r1
+; ARMEB-NEXT:    uxth r0, r0
+; ARMEB-NEXT:    bx lr
+;
+; THUMB1-LABEL: test5:
+; THUMB1:       @ BB#0: @ %entry
+; THUMB1-NEXT:    ldr r1, [r1]
+; THUMB1-NEXT:    muls r1, r2, r1
+; THUMB1-NEXT:    ldr r0, [r0]
+; THUMB1-NEXT:    eors r0, r3
+; THUMB1-NEXT:    orrs r0, r1
+; THUMB1-NEXT:    uxth r0, r0
+; THUMB1-NEXT:    bx lr
+;
+; THUMB2-LABEL: test5:
+; THUMB2:       @ BB#0: @ %entry
+; THUMB2-NEXT:    ldr r1, [r1]
+; THUMB2-NEXT:    ldr r0, [r0]
+; THUMB2-NEXT:    muls r1, r2, r1
+; THUMB2-NEXT:    eors r0, r3
+; THUMB2-NEXT:    orrs r0, r1
+; THUMB2-NEXT:    uxth r0, r0
+; THUMB2-NEXT:    bx lr
+entry:
+  %0 = load i32, i32* %a, align 4
+  %1 = load i32, i32* %b, align 4
+  %mul = mul i32 %x, %1
+  %ext = zext i16 %y to i32
+  %xor = xor i32 %0, %ext
+  %or = or i32 %xor, %mul
+  %and = and i32 %or, 65535
+  ret i32 %and
+}
