@@ -356,9 +356,7 @@ SDNode *AMDGPUDAGToDAGISel::glueCopyToM0(SDNode *N) const {
      Ops.push_back(N->getOperand(i));
   }
   Ops.push_back(Glue);
-  CurDAG->MorphNodeTo(N, N->getOpcode(), N->getVTList(), Ops);
-
-  return N;
+  return CurDAG->MorphNodeTo(N, N->getOpcode(), N->getVTList(), Ops);
 }
 
 static unsigned selectSGPRVectorRegClassID(unsigned NumVectorElts) {
