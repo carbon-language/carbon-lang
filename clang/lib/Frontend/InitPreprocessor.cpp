@@ -1034,6 +1034,10 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
         LangOpts.OpenCLVersion)) \
       Builder.defineMacro(#Ext);
 #include "clang/Basic/OpenCLExtensions.def"
+
+    auto Arch = TI.getTriple().getArch();
+    if (Arch == llvm::Triple::spir || Arch == llvm::Triple::spir64)
+      Builder.defineMacro("__IMAGE_SUPPORT__");
   }
 
   if (TI.hasInt128Type() && LangOpts.CPlusPlus && LangOpts.GNUMode) {
