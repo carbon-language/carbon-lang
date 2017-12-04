@@ -102,6 +102,15 @@ int main() {
       // LAMBDA-32: call{{.+}} @__kmpc_fork_call({{.+}}, {{.+}}, {{.+}}[[OMP_PARFOR_OUTLINED:@.+]] to void ({{.+}})*), {{.+}}, {{.+}}, {{.+}} [[G_PRIVATE]], {{.+}} [[G1_PAR]], {{.+}} [[SVAR_PRIVATE]], {{.+}} [[SFVAR_PRIVATE]])
       // LAMBDA: call {{.*}}void @__kmpc_for_static_fini(
 
+      // linear counter
+      // LAMBDA: [[OMP_IS_LAST_VAL:%.+]] = load i{{[0-9]+}}, i{{[0-9]+}}* [[OMP_IS_LAST]],
+      // LAMBDA: [[IS_LAST_IT:%.+]] = icmp ne i{{[0-9]+}} [[OMP_IS_LAST_VAL]], 0
+      // LAMBDA: br i1 [[IS_LAST_IT]], label %[[OMP_COUNTER_BLOCK:.+]], label %[[OMP_COUNTER_DONE:.+]]
+      // LAMBDA: [[OMP_COUNTER_BLOCK]]:
+      // LAMBDA: store i{{[0-9]+}} 2, i{{[0-9]+}}* %
+      // LAMBDA: br label %[[OMP_COUNTER_DONE]]
+      // LAMBDA: [[OMP_COUNTER_DONE]]:
+
       // lastprivate
       // LAMBDA: [[OMP_IS_LAST_VAL:%.+]] = load i{{[0-9]+}}, i{{[0-9]+}}* [[OMP_IS_LAST]],
       // LAMBDA: [[IS_LAST_IT:%.+]] = icmp ne i{{[0-9]+}} [[OMP_IS_LAST_VAL]], 0
