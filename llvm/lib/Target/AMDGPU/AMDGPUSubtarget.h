@@ -261,7 +261,7 @@ public:
     return HasVOP3PInsts;
   }
 
-  bool hasHWFP64() const {
+  bool hasFP64() const {
     return FP64;
   }
 
