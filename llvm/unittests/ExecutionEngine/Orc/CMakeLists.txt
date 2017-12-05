@@ -24,4 +24,4 @@ add_llvm_unittest(OrcJITTests
   SymbolStringPoolTest.cpp
   )
 
-target_link_libraries(OrcJITTests ${LLVM_PTHREAD_LIB})
+target_link_libraries(OrcJITTests PRIVATE ${LLVM_PTHREAD_LIB})
