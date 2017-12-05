@@ -573,8 +573,6 @@ SDValue DAGTypeLegalizer::PromoteIntRes_VSELECT(SDNode *N) {
 
   SDValue LHS = GetPromotedInteger(N->getOperand(1));
   SDValue RHS = GetPromotedInteger(N->getOperand(2));
-  // Promote all the way up to the canonical SetCC type.
-  Mask = PromoteTargetBoolean(Mask, LHS.getValueType());
   return DAG.getNode(ISD::VSELECT, SDLoc(N),
                      LHS.getValueType(), Mask, LHS, RHS);
 }
