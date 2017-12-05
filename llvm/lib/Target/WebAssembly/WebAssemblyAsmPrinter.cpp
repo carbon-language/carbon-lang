@@ -91,7 +91,8 @@ void WebAssemblyAsmPrinter::EmitEndOfAsmFile(Module &M) {
   for (const auto &G : M.globals()) {
     if (!G.hasInitializer() && G.hasExternalLinkage()) {
       uint16_t Size = M.getDataLayout().getTypeAllocSize(G.getValueType());
-      getTargetStreamer()->emitGlobalImport(G.getGlobalIdentifier());
+      if (TM.getTargetTriple().isOSBinFormatELF())
+        getTargetStreamer()->emitGlobalImport(G.getGlobalIdentifier());
       OutStreamer->emitELFSize(getSymbol(&G),
                                MCConstantExpr::create(Size, OutContext));
     }
