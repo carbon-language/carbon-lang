@@ -8318,6 +8318,11 @@ static SDValue LowerCONCAT_VECTORSvXi1(SDValue Op,
          V1.getValueType().getVectorNumElements() == NumElems/2 &&
          "Unexpected operands in CONCAT_VECTORS");
 
+  // If this can be done with a subreg insert do that first.
+  SDValue ZeroIdx = DAG.getIntPtrConstant(0, dl);
+  if (V2.isUndef())
+    return DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ResVT, Undef, V1, ZeroIdx);
+
   if (ResVT.getSizeInBits() >= 16)
     return Op; // The operation is legal with KUNPCK
 
@@ -8327,9 +8332,6 @@ static SDValue LowerCONCAT_VECTORSvXi1(SDValue Op,
   if (IsZeroV1 && IsZeroV2)
     return ZeroVec;
 
-  SDValue ZeroIdx = DAG.getIntPtrConstant(0, dl);
-  if (V2.isUndef())
-    return DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ResVT, Undef, V1, ZeroIdx);
   if (IsZeroV2)
     return DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ResVT, ZeroVec, V1, ZeroIdx);
 
