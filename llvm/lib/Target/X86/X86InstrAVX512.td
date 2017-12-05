@@ -8482,6 +8482,7 @@ defm : AVX512_pmovx_patterns<"VPMOVZX", X86vzext, zext_invec, loadi16_anyext>;
 //===----------------------------------------------------------------------===//
 // GATHER - SCATTER Operations
 
+// FIXME: Improve scheduling of gather/scatter instructions.
 multiclass avx512_gather<bits<8> opc, string OpcodeStr, X86VectorVTInfo _,
                          X86MemOperand memop, PatFrag GatherNode,
                          RegisterClass MaskRC = _.KRCWM> {
@@ -8494,7 +8495,7 @@ multiclass avx512_gather<bits<8> opc, string OpcodeStr, X86VectorVTInfo _,
             [(set _.RC:$dst, MaskRC:$mask_wb,
               (GatherNode  (_.VT _.RC:$src1), MaskRC:$mask,
                      vectoraddr:$src2))]>, EVEX, EVEX_K,
-             EVEX_CD8<_.EltSize, CD8VT1>;
+             EVEX_CD8<_.EltSize, CD8VT1>, Sched<[WriteLoad]>;
 }
 
 multiclass avx512_gather_q_pd<bits<8> dopc, bits<8> qopc,
@@ -8552,7 +8553,8 @@ let mayStore = 1, Constraints = "$mask = $mask_wb", ExeDomain = _.ExeDomain in
             "\t{$src, ${dst} {${mask}}|${dst} {${mask}}, $src}"),
             [(set _.KRCWM:$mask_wb, (ScatterNode (_.VT _.RC:$src),
                                      _.KRCWM:$mask,  vectoraddr:$dst))]>,
-            EVEX, EVEX_K, EVEX_CD8<_.EltSize, CD8VT1>;
+            EVEX, EVEX_K, EVEX_CD8<_.EltSize, CD8VT1>,
+            Sched<[WriteStore]>;
 }
 
 multiclass avx512_scatter_q_pd<bits<8> dopc, bits<8> qopc,
@@ -8603,7 +8605,7 @@ multiclass avx512_gather_scatter_prefetch<bits<8> opc, Format F, string OpcodeSt
   let Predicates = [HasPFI], hasSideEffects = 1 in
   def m  : AVX5128I<opc, F, (outs), (ins KRC:$mask, memop:$src),
             !strconcat(OpcodeStr, "\t{$src {${mask}}|{${mask}}, $src}"),
-            []>, EVEX, EVEX_K;
+            [], IIC_SSE_PREFETCH>, EVEX, EVEX_K, Sched<[WriteLoad]>;
 }
 
 defm VGATHERPF0DPS: avx512_gather_scatter_prefetch<0xC6, MRM1m, "vgatherpf0dps",
