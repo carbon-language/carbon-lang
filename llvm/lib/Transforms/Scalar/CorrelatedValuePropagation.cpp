@@ -556,7 +556,7 @@ static bool runImpl(Function &F, LazyValueInfo *LVI, const SimplifyQuery &SQ) {
   // blocks before querying later blocks (which require us to analyze early
   // blocks).  Eagerly simplifying shallow blocks means there is strictly less
   // work to do for deep blocks.  This also means we don't visit unreachable
-  // blocks. 
+  // blocks.
   for (BasicBlock *BB : depth_first(&F.getEntryBlock())) {
     bool BBChanged = false;
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
