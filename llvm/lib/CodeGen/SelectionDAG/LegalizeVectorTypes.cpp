@@ -2911,16 +2911,12 @@ SDValue DAGTypeLegalizer::WidenVecRes_MLOAD(MaskedLoadSDNode *N) {
 
   EVT WidenVT = TLI.getTypeToTransformTo(*DAG.getContext(),N->getValueType(0));
   SDValue Mask = N->getMask();
-  EVT MaskVT = Mask.getValueType();
   SDValue Src0 = GetWidenedVector(N->getSrc0());
   ISD::LoadExtType ExtType = N->getExtensionType();
   SDLoc dl(N);
 
-  if (getTypeAction(MaskVT) == TargetLowering::TypeWidenVector)
-    Mask = GetWidenedVector(Mask);
-  else {
-    Mask = WidenTargetBoolean(Mask, WidenVT, true);
-  }
+  // The mask should be widened as well
+  Mask = WidenTargetBoolean(Mask, WidenVT, true);
 
   SDValue Res = DAG.getMaskedLoad(WidenVT, dl, N->getChain(), N->getBasePtr(),
                                   Mask, Src0, N->getMemoryVT(),
@@ -3532,20 +3528,17 @@ SDValue DAGTypeLegalizer::WidenVecOp_STORE(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::WidenVecOp_MSTORE(SDNode *N, unsigned OpNo) {
+  assert(OpNo == 3 && "Can widen only data operand of mstore");
   MaskedStoreSDNode *MST = cast<MaskedStoreSDNode>(N);
   SDValue Mask = MST->getMask();
-  EVT MaskVT = Mask.getValueType();
   SDValue StVal = MST->getValue();
   // Widen the value
   SDValue WideVal = GetWidenedVector(StVal);
   SDLoc dl(N);
 
-  if (OpNo == 2 || getTypeAction(MaskVT) == TargetLowering::TypeWidenVector)
-    Mask = GetWidenedVector(Mask);
-  else {
-    // The mask should be widened as well.
-    Mask = WidenTargetBoolean(Mask, WideVal.getValueType(), true);
-  }
+  // The mask should be widened as well.
+  Mask = WidenTargetBoolean(Mask, WideVal.getValueType(), true);
+
   assert(Mask.getValueType().getVectorNumElements() ==
          WideVal.getValueType().getVectorNumElements() &&
          "Mask and data vectors should have the same number of elements");
