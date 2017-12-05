@@ -2911,12 +2911,16 @@ SDValue DAGTypeLegalizer::WidenVecRes_MLOAD(MaskedLoadSDNode *N) {
 
   EVT WidenVT = TLI.getTypeToTransformTo(*DAG.getContext(),N->getValueType(0));
   SDValue Mask = N->getMask();
+  EVT MaskVT = Mask.getValueType();
   SDValue Src0 = GetWidenedVector(N->getSrc0());
   ISD::LoadExtType ExtType = N->getExtensionType();
   SDLoc dl(N);
 
   // The mask should be widened as well
-  Mask = WidenTargetBoolean(Mask, WidenVT, true);
+  EVT WideMaskVT = EVT::getVectorVT(*DAG.getContext(),
+                                    MaskVT.getVectorElementType(),
+                                    WidenVT.getVectorNumElements());
+  Mask = ModifyToType(Mask, WideMaskVT, true);
 
   SDValue Res = DAG.getMaskedLoad(WidenVT, dl, N->getChain(), N->getBasePtr(),
                                   Mask, Src0, N->getMemoryVT(),
@@ -2932,12 +2936,16 @@ SDValue DAGTypeLegalizer::WidenVecRes_MGATHER(MaskedGatherSDNode *N) {
 
   EVT WideVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
   SDValue Mask = N->getMask();
+  EVT MaskVT = Mask.getValueType();
   SDValue Src0 = GetWidenedVector(N->getValue());
   unsigned NumElts = WideVT.getVectorNumElements();
   SDLoc dl(N);
 
   // The mask should be widened as well
-  Mask = WidenTargetBoolean(Mask, WideVT, true);
+  EVT WideMaskVT = EVT::getVectorVT(*DAG.getContext(),
+                                    MaskVT.getVectorElementType(),
+                                    WideVT.getVectorNumElements());
+  Mask = ModifyToType(Mask, WideMaskVT, true);
 
   // Widen the Index operand
   SDValue Index = N->getIndex();
