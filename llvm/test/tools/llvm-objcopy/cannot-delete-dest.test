@@ -1,18 +1,14 @@
 # REQUIRES: system-windows
-# RUN: icacls %t /grant Everyone:(DC) || true
-# RUN: rm -rf %t
-# RUN: mkdir %t
-# RUN: cd %t
-# RUN: yaml2obj %s > test.o
-# RUN: cp test.o test2.o
-# RUN: icacls test2.o /deny Everyone:(D)
-# RUN: icacls . /deny Everyone:(DC)
+# RUN: yaml2obj %s > %t.o
+# RUN: rm -f %t2.o
+# RUN: cp %t.o %t2.o
+# RUN: attrib +r %t2.o
 
-# This fails because it cannot replace test2.o
-# RUN: not llvm-objcopy test.o test2.o
+# This fails because it cannot replace %t2.o
+# RUN: not llvm-objcopy %t.o %t2.o
 
 # But it doesn't leave any temporary files behind.
-# RUN: not ls test2.o.tmp*
+# RUN: not ls %t2.o.tmp*
 
 !ELF
 FileHeader:
