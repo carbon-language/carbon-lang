@@ -263,7 +263,7 @@ ModRefInfo AAResults::getModRefInfo(ImmutableCallSite CS1,
         // - If CS2 modifies location, dependence exists if CS1 reads or writes.
         // - If CS2 only reads location, dependence exists if CS1 writes.
         ModRefInfo ArgModRefCS2 = getArgModRefInfo(CS2, CS2ArgIdx);
-        ModRefInfo ArgMask;
+        ModRefInfo ArgMask = MRI_NoModRef;
         if (isModSet(ArgModRefCS2))
           ArgMask = MRI_ModRef;
         else if (isRefSet(ArgModRefCS2))
