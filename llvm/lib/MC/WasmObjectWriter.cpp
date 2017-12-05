@@ -115,6 +115,7 @@ struct WasmImport {
   StringRef FieldName;
   unsigned Kind;
   int32_t Type;
+  bool IsMutable;
 };
 
 // A wasm function to be written into the function section.
@@ -681,7 +682,7 @@ void WasmObjectWriter::writeImportSection(ArrayRef<WasmImport> Imports) {
       break;
     case wasm::WASM_EXTERNAL_GLOBAL:
       encodeSLEB128(int32_t(Import.Type), getStream());
-      encodeULEB128(0, getStream()); // mutability
+      encodeULEB128(int32_t(Import.IsMutable), getStream());
       break;
     default:
       llvm_unreachable("unsupported import kind");
@@ -1036,41 +1037,6 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
     }
   }
 
-  // Populate FunctionTypeIndices and Imports.
-  for (const MCSymbol &S : Asm.symbols()) {
-    const auto &WS = static_cast<const MCSymbolWasm &>(S);
-
-    // Register types for all functions, including those with private linkage
-    // (making them
-    // because wasm always needs a type signature.
-    if (WS.isFunction())
-      registerFunctionType(WS);
-
-    if (WS.isTemporary())
-      continue;
-
-    // If the symbol is not defined in this translation unit, import it.
-    if (!WS.isDefined(/*SetUsed=*/false)) {
-      WasmImport Import;
-      Import.ModuleName = WS.getModuleName();
-      Import.FieldName = WS.getName();
-
-      if (WS.isFunction()) {
-        Import.Kind = wasm::WASM_EXTERNAL_FUNCTION;
-        Import.Type = getFunctionType(WS);
-        SymbolIndices[&WS] = NumFuncImports;
-        ++NumFuncImports;
-      } else {
-        Import.Kind = wasm::WASM_EXTERNAL_GLOBAL;
-        Import.Type = int32_t(PtrType);
-        SymbolIndices[&WS] = NumGlobalImports;
-        ++NumGlobalImports;
-      }
-
-      Imports.push_back(Import);
-    }
-  }
-
   // In the special .global_variables section, we've encoded global
   // variables used by the function. Translate them into the Globals
   // list.
@@ -1144,6 +1110,51 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
       report_fatal_error("fixups not supported in .stack_pointer");
     const SmallVectorImpl<char> &Contents = DataFrag.getContents();
     StackPointerGlobalName = StringRef(Contents.data(), Contents.size());
+  }
+
+  // Populate FunctionTypeIndices and Imports.
+  for (const MCSymbol &S : Asm.symbols()) {
+    const auto &WS = static_cast<const MCSymbolWasm &>(S);
+
+    // Register types for all functions, including those with private linkage
+    // (making them
+    // because wasm always needs a type signature.
+    if (WS.isFunction())
+      registerFunctionType(WS);
+
+    if (WS.isTemporary())
+      continue;
+
+    // If the symbol is not defined in this translation unit, import it.
+    if (!WS.isDefined(/*SetUsed=*/false)) {
+      WasmImport Import;
+      Import.ModuleName = WS.getModuleName();
+      Import.FieldName = WS.getName();
+
+      if (WS.isFunction()) {
+        Import.Kind = wasm::WASM_EXTERNAL_FUNCTION;
+        Import.Type = getFunctionType(WS);
+        SymbolIndices[&WS] = NumFuncImports;
+        ++NumFuncImports;
+      } else {
+        Import.Kind = wasm::WASM_EXTERNAL_GLOBAL;
+        Import.Type = int32_t(PtrType);
+        Import.IsMutable = false;
+        SymbolIndices[&WS] = NumGlobalImports;
+
+        // If this global is the stack pointer, make it mutable and remember it
+        // so that we can emit metadata for it.
+        if (StackPointerGlobalName.hasValue() &&
+            WS.getName() == StackPointerGlobalName.getValue()) {
+          Import.IsMutable = true;
+          StackPointerGlobal = NumGlobalImports;
+        }
+
+        ++NumGlobalImports;
+      }
+
+      Imports.push_back(Import);
+    }
   }
 
   for (MCSection &Sec : Asm) {
@@ -1252,10 +1263,6 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
       SymbolIndices[&WS] = Index;
       DEBUG(dbgs() << "  -> global index: " << Index << "\n");
       Globals.push_back(Global);
-
-      if (StackPointerGlobalName.hasValue() &&
-          WS.getName() == StackPointerGlobalName.getValue())
-        StackPointerGlobal = Index;
     }
 
     // If the symbol is visible outside this translation unit, export it.
