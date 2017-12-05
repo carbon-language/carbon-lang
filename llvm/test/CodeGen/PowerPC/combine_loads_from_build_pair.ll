@@ -1,5 +1,7 @@
 ; RUN: llc -verify-machineinstrs -O0 -mcpu=g4 -mtriple=powerpc-apple-darwin8 < %s -debug -stop-after=machineverifier 2>&1 | FileCheck %s
 
+; REQUIRES: asserts
+
 define i64 @func1(i64 %p1, i64 %p2, i64 %p3, i64 %p4, { i64, i8* } %struct) {
 ; Verify that we get a combine on the build_pair, creating a LD8 load somewhere
 ; between "Initial selection DAG" and "Optimized lowered selection DAG".
