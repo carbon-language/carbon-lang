@@ -287,7 +287,7 @@ private:
   void writeLinkingMetaDataSection(
       ArrayRef<WasmDataSegment> Segments, uint32_t DataSize,
       SmallVector<std::pair<StringRef, uint32_t>, 4> SymbolFlags,
-      bool HasStackPointer, uint32_t StackPointerGlobal);
+      Optional<uint32_t> StackPointerGlobal);
 
   uint32_t getProvisionalValue(const WasmRelocationEntry &RelEntry);
   void applyRelocations(ArrayRef<WasmRelocationEntry> Relocations,
@@ -929,14 +929,14 @@ void WasmObjectWriter::writeDataRelocSection() {
 void WasmObjectWriter::writeLinkingMetaDataSection(
     ArrayRef<WasmDataSegment> Segments, uint32_t DataSize,
     SmallVector<std::pair<StringRef, uint32_t>, 4> SymbolFlags,
-    bool HasStackPointer, uint32_t StackPointerGlobal) {
+    Optional<uint32_t> StackPointerGlobal) {
   SectionBookkeeping Section;
   startSection(Section, wasm::WASM_SEC_CUSTOM, "linking");
   SectionBookkeeping SubSection;
 
-  if (HasStackPointer) {
+  if (StackPointerGlobal.hasValue()) {
     startSection(SubSection, wasm::WASM_STACK_POINTER);
-    encodeULEB128(StackPointerGlobal, getStream()); // id
+    encodeULEB128(StackPointerGlobal.getValue(), getStream()); // id
     endSection(SubSection);
   }
 
@@ -1010,9 +1010,9 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
   SmallPtrSet<const MCSymbolWasm *, 4> IsAddressTaken;
   unsigned NumFuncImports = 0;
   SmallVector<WasmDataSegment, 4> DataSegments;
-  uint32_t StackPointerGlobal = 0;
+  Optional<StringRef> StackPointerGlobalName;
+  Optional<uint32_t> StackPointerGlobal;
   uint32_t DataSize = 0;
-  bool HasStackPointer = false;
 
   // Populate the IsAddressTaken set.
   for (const WasmRelocationEntry &RelEntry : CodeRelocations) {
@@ -1143,10 +1143,7 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
     if (!DataFrag.getFixups().empty())
       report_fatal_error("fixups not supported in .stack_pointer");
     const SmallVectorImpl<char> &Contents = DataFrag.getContents();
-    if (Contents.size() != 4)
-      report_fatal_error("only one entry supported in .stack_pointer");
-    HasStackPointer = true;
-    StackPointerGlobal = NumGlobalImports + *(const int32_t *)Contents.data();
+    StackPointerGlobalName = StringRef(Contents.data(), Contents.size());
   }
 
   for (MCSection &Sec : Asm) {
@@ -1255,6 +1252,10 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
       SymbolIndices[&WS] = Index;
       DEBUG(dbgs() << "  -> global index: " << Index << "\n");
       Globals.push_back(Global);
+
+      if (StackPointerGlobalName.hasValue() &&
+          WS.getName() == StackPointerGlobalName.getValue())
+        StackPointerGlobal = Index;
     }
 
     // If the symbol is visible outside this translation unit, export it.
@@ -1331,7 +1332,7 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
   writeCodeRelocSection();
   writeDataRelocSection();
   writeLinkingMetaDataSection(DataSegments, DataSize, SymbolFlags,
-                              HasStackPointer, StackPointerGlobal);
+                              StackPointerGlobal);
 
   // TODO: Translate the .comment section to the output.
   // TODO: Translate debug sections to the output.
