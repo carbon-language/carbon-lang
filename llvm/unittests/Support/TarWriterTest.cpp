@@ -136,7 +136,7 @@ TEST_F(TarWriterTest, SingleFile) {
   uint64_t TarSize;
   EC = sys::fs::file_size(Path, TarSize);
   EXPECT_FALSE((bool)EC);
-  EXPECT_EQ(TarSize, 2048);
+  EXPECT_EQ(TarSize, 2048ULL);
 }
 
 TEST_F(TarWriterTest, NoDuplicate) {
@@ -155,7 +155,7 @@ TEST_F(TarWriterTest, NoDuplicate) {
   uint64_t TarSize;
   EC = sys::fs::file_size(Path, TarSize);
   EXPECT_FALSE((bool)EC);
-  EXPECT_EQ(TarSize, 3072);
+  EXPECT_EQ(TarSize, 3072ULL);
 }
 
 TEST_F(TarWriterTest, Duplicate) {
@@ -174,6 +174,6 @@ TEST_F(TarWriterTest, Duplicate) {
   uint64_t TarSize;
   EC = sys::fs::file_size(Path, TarSize);
   EXPECT_FALSE((bool)EC);
-  EXPECT_EQ(TarSize, 2048);
+  EXPECT_EQ(TarSize, 2048ULL);
 }
 } // namespace
