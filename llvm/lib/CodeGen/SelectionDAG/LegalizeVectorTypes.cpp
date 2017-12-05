@@ -1885,9 +1885,6 @@ SDValue DAGTypeLegalizer::SplitVecOp_MSTORE(MaskedStoreSDNode *N,
   else
     std::tie(MaskLo, MaskHi) = DAG.SplitVector(Mask, DL);
 
-  MaskLo = PromoteTargetBoolean(MaskLo, DataLo.getValueType());
-  MaskHi = PromoteTargetBoolean(MaskHi, DataHi.getValueType());
-
   // if Alignment is equal to the vector size,
   // take the half of it for the second part
   unsigned SecondHalfAlignment =
