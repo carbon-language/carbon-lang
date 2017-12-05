@@ -10503,43 +10503,46 @@ defm VPEXPANDW : expand_by_elt_width <0x62, "vpexpandw", AVX512_EXPAND,
 
 let Constraints = "$src1 = $dst" in
 multiclass VNNI_rmb<bits<8> Op, string OpStr, SDNode OpNode,
-                    X86VectorVTInfo VTI> {
+                    OpndItins itins, X86VectorVTInfo VTI> {
   defm r  :   AVX512_maskable_3src<Op, MRMSrcReg, VTI, (outs VTI.RC:$dst),
                                    (ins VTI.RC:$src2, VTI.RC:$src3), OpStr,
                                    "$src3, $src2", "$src2, $src3",
                                    (VTI.VT (OpNode VTI.RC:$src1,
-                                            VTI.RC:$src2, VTI.RC:$src3))>,
-              EVEX_4V, T8PD;
+                                            VTI.RC:$src2, VTI.RC:$src3)),
+                                   itins.rr>, EVEX_4V, T8PD, Sched<[itins.Sched]>;
   defm m  :   AVX512_maskable_3src<Op, MRMSrcMem, VTI, (outs VTI.RC:$dst),
                                    (ins VTI.RC:$src2, VTI.MemOp:$src3), OpStr,
                                    "$src3, $src2", "$src2, $src3",
                                    (VTI.VT (OpNode VTI.RC:$src1, VTI.RC:$src2,
                                             (VTI.VT (bitconvert
-                                                     (VTI.LdFrag addr:$src3)))))>,
-              EVEX_4V, EVEX_CD8<32, CD8VF>, T8PD;
+                                                     (VTI.LdFrag addr:$src3))))),
+                                   itins.rm>, EVEX_4V, EVEX_CD8<32, CD8VF>, T8PD,
+                                   Sched<[itins.Sched.Folded, ReadAfterLd]>;
   defm mb :   AVX512_maskable_3src<Op, MRMSrcMem, VTI, (outs VTI.RC:$dst),
                                    (ins VTI.RC:$src2, VTI.ScalarMemOp:$src3),
                                    OpStr, "${src3}"##VTI.BroadcastStr##", $src2",
                                    "$src2, ${src3}"##VTI.BroadcastStr,
                                    (OpNode VTI.RC:$src1, VTI.RC:$src2,
                                     (VTI.VT (X86VBroadcast
-                                             (VTI.ScalarLdFrag addr:$src3))))>,
-              EVEX_4V, EVEX_CD8<32, CD8VF>, EVEX_B, T8PD;
+                                             (VTI.ScalarLdFrag addr:$src3)))),
+                                   itins.rm>, EVEX_4V, EVEX_CD8<32, CD8VF>, EVEX_B,
+                                   T8PD, Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
-multiclass VNNI_common<bits<8> Op, string OpStr, SDNode OpNode> {
+multiclass VNNI_common<bits<8> Op, string OpStr, SDNode OpNode, OpndItins itins> {
   let Predicates = [HasVNNI] in
-  defm Z      :   VNNI_rmb<Op, OpStr, OpNode, v16i32_info>, EVEX_V512;
+  defm Z      :   VNNI_rmb<Op, OpStr, OpNode, itins, v16i32_info>, EVEX_V512;
   let Predicates = [HasVNNI, HasVLX] in {
-    defm Z256 :   VNNI_rmb<Op, OpStr, OpNode, v8i32x_info>, EVEX_V256;
-    defm Z128 :   VNNI_rmb<Op, OpStr, OpNode, v4i32x_info>, EVEX_V128;
+    defm Z256 :   VNNI_rmb<Op, OpStr, OpNode, itins, v8i32x_info>, EVEX_V256;
+    defm Z128 :   VNNI_rmb<Op, OpStr, OpNode, itins, v4i32x_info>, EVEX_V128;
   }
 }
 
-defm VPDPBUSD   : VNNI_common<0x50, "vpdpbusd", X86Vpdpbusd>;
-defm VPDPBUSDS  : VNNI_common<0x51, "vpdpbusds", X86Vpdpbusds>;
-defm VPDPWSSD   : VNNI_common<0x52, "vpdpwssd", X86Vpdpwssd>;
-defm VPDPWSSDS  : VNNI_common<0x53, "vpdpwssds", X86Vpdpwssds>;
+// FIXME: Is there a better scheduler itinerary for VPDP?
+defm VPDPBUSD   : VNNI_common<0x50, "vpdpbusd", X86Vpdpbusd, SSE_PMADD>;
+defm VPDPBUSDS  : VNNI_common<0x51, "vpdpbusds", X86Vpdpbusds, SSE_PMADD>;
+defm VPDPWSSD   : VNNI_common<0x52, "vpdpwssd", X86Vpdpwssd, SSE_PMADD>;
+defm VPDPWSSDS  : VNNI_common<0x53, "vpdpwssds", X86Vpdpwssds, SSE_PMADD>;
 
 //===----------------------------------------------------------------------===//
 // Bit Algorithms
