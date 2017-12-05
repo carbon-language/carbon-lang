@@ -2317,12 +2317,12 @@ define i32 @fptosi(float %a) nounwind {
 define i32 @fptoui(float %a) nounwind {
 ; GENERIC-LABEL: fptoui:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    vcvttss2usi %xmm0, %eax
+; GENERIC-NEXT:    vcvttss2usi %xmm0, %eax # sched: [3:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: fptoui:
 ; SKX:       # %bb.0:
-; SKX-NEXT:    vcvttss2usi %xmm0, %eax
+; SKX-NEXT:    vcvttss2usi %xmm0, %eax # sched: [3:1.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %b = fptoui float %a to i32
   ret i32 %b
@@ -2331,7 +2331,7 @@ define i32 @fptoui(float %a) nounwind {
 define float @uitof32(i32 %a) nounwind {
 ; GENERIC-LABEL: uitof32:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    vcvtusi2ssl %edi, %xmm0, %xmm0
+; GENERIC-NEXT:    vcvtusi2ssl %edi, %xmm0, %xmm0 # sched: [4:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: uitof32:
@@ -2345,7 +2345,7 @@ define float @uitof32(i32 %a) nounwind {
 define double @uitof64(i32 %a) nounwind {
 ; GENERIC-LABEL: uitof64:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    vcvtusi2sdl %edi, %xmm0, %xmm0
+; GENERIC-NEXT:    vcvtusi2sdl %edi, %xmm0, %xmm0 # sched: [4:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: uitof64:
