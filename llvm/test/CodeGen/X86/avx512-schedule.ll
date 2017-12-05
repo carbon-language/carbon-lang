@@ -7330,7 +7330,7 @@ define <64 x i8> @vmov_test16(i64 %x) {
 ; GENERIC-NEXT:    vpmovm2b %k0, %zmm1
 ; GENERIC-NEXT:    movl $32, %eax # sched: [1:0.33]
 ; GENERIC-NEXT:    kmovd %eax, %k1
-; GENERIC-NEXT:    vpblendmb %ymm0, %ymm1, %ymm0 {%k1}
+; GENERIC-NEXT:    vpblendmb %ymm0, %ymm1, %ymm0 {%k1} # sched: [2:1.00]
 ; GENERIC-NEXT:    vshufi64x2 {{.*#+}} zmm0 = zmm0[0,1,2,3],zmm1[4,5,6,7] sched: [1:1.00]
 ; GENERIC-NEXT:    vpmovb2m %zmm0, %k0
 ; GENERIC-NEXT:    vpmovm2b %k0, %zmm0
@@ -7370,7 +7370,7 @@ define <64 x i8> @vmov_test17(i64 %x, i32 %y, i32 %z) {
 ; GENERIC-NEXT:    vpmovm2b %k0, %zmm1
 ; GENERIC-NEXT:    movl $32, %eax # sched: [1:0.33]
 ; GENERIC-NEXT:    kmovd %eax, %k1
-; GENERIC-NEXT:    vpblendmb %ymm0, %ymm1, %ymm0 {%k1}
+; GENERIC-NEXT:    vpblendmb %ymm0, %ymm1, %ymm0 {%k1} # sched: [2:1.00]
 ; GENERIC-NEXT:    vshufi64x2 {{.*#+}} zmm0 = zmm0[0,1,2,3],zmm1[4,5,6,7] sched: [1:1.00]
 ; GENERIC-NEXT:    vpmovb2m %zmm0, %k0
 ; GENERIC-NEXT:    vpmovm2b %k0, %zmm0

@@ -1775,92 +1775,109 @@ defm VPERMT2PD : avx512_perm_t_sizes<0x7F, "vpermt2pd", AVX512_PERM2_F,
 //===----------------------------------------------------------------------===//
 // AVX-512 - BLEND using mask
 //
-multiclass avx512_blendmask<bits<8> opc, string OpcodeStr, X86VectorVTInfo _> {
+
+let Sched = WriteFVarBlend in
+def AVX512_BLENDM : OpndItins<
+  IIC_SSE_ALU_F32P_RR, IIC_SSE_ALU_F32P_RM
+>;
+
+let Sched = WriteVarBlend in
+def AVX512_PBLENDM : OpndItins<
+  IIC_SSE_INTALU_P_RR, IIC_SSE_INTALU_P_RM
+>;
+
+multiclass avx512_blendmask<bits<8> opc, string OpcodeStr, OpndItins itins,
+                            X86VectorVTInfo _> {
   let ExeDomain = _.ExeDomain, hasSideEffects = 0 in {
   def rr : AVX5128I<opc, MRMSrcReg, (outs _.RC:$dst),
              (ins _.RC:$src1, _.RC:$src2),
              !strconcat(OpcodeStr,
              "\t{$src2, $src1, ${dst}|${dst}, $src1, $src2}"),
-             []>, EVEX_4V;
+             [], itins.rr>, EVEX_4V, Sched<[itins.Sched]>;
   def rrk : AVX5128I<opc, MRMSrcReg, (outs _.RC:$dst),
              (ins _.KRCWM:$mask, _.RC:$src1, _.RC:$src2),
              !strconcat(OpcodeStr,
              "\t{$src2, $src1, ${dst} {${mask}}|${dst} {${mask}}, $src1, $src2}"),
-             []>, EVEX_4V, EVEX_K;
+             [], itins.rr>, EVEX_4V, EVEX_K, Sched<[itins.Sched]>;
   def rrkz : AVX5128I<opc, MRMSrcReg, (outs _.RC:$dst),
              (ins _.KRCWM:$mask, _.RC:$src1, _.RC:$src2),
              !strconcat(OpcodeStr,
              "\t{$src2, $src1, ${dst} {${mask}} {z}|${dst} {${mask}} {z}, $src1, $src2}"),
-             []>, EVEX_4V, EVEX_KZ;
+             [], itins.rr>, EVEX_4V, EVEX_KZ, Sched<[itins.Sched]>;
   let mayLoad = 1 in {
   def rm  : AVX5128I<opc, MRMSrcMem, (outs _.RC:$dst),
              (ins _.RC:$src1, _.MemOp:$src2),
              !strconcat(OpcodeStr,
              "\t{$src2, $src1, ${dst}|${dst}, $src1, $src2}"),
-             []>, EVEX_4V, EVEX_CD8<_.EltSize, CD8VF>;
+             [], itins.rm>, EVEX_4V, EVEX_CD8<_.EltSize, CD8VF>,
+             Sched<[itins.Sched.Folded, ReadAfterLd]>;
   def rmk : AVX5128I<opc, MRMSrcMem, (outs _.RC:$dst),
              (ins _.KRCWM:$mask, _.RC:$src1, _.MemOp:$src2),
              !strconcat(OpcodeStr,
              "\t{$src2, $src1, ${dst} {${mask}}|${dst} {${mask}}, $src1, $src2}"),
-             []>, EVEX_4V, EVEX_K, EVEX_CD8<_.EltSize, CD8VF>;
+             [], itins.rm>, EVEX_4V, EVEX_K, EVEX_CD8<_.EltSize, CD8VF>,
+             Sched<[itins.Sched.Folded, ReadAfterLd]>;
   def rmkz : AVX5128I<opc, MRMSrcMem, (outs _.RC:$dst),
              (ins _.KRCWM:$mask, _.RC:$src1, _.MemOp:$src2),
              !strconcat(OpcodeStr,
              "\t{$src2, $src1, ${dst} {${mask}} {z}|${dst} {${mask}} {z}, $src1, $src2}"),
-             []>, EVEX_4V, EVEX_KZ, EVEX_CD8<_.EltSize, CD8VF>;
+             [], itins.rm>, EVEX_4V, EVEX_KZ, EVEX_CD8<_.EltSize, CD8VF>,
+             Sched<[itins.Sched.Folded, ReadAfterLd]>;
   }
   }
 }
-multiclass avx512_blendmask_rmb<bits<8> opc, string OpcodeStr, X86VectorVTInfo _> {
-
+multiclass avx512_blendmask_rmb<bits<8> opc, string OpcodeStr, OpndItins itins,
+                                X86VectorVTInfo _> {
   let mayLoad = 1, hasSideEffects = 0 in {
   def rmbk : AVX5128I<opc, MRMSrcMem, (outs _.RC:$dst),
       (ins _.KRCWM:$mask, _.RC:$src1, _.ScalarMemOp:$src2),
        !strconcat(OpcodeStr,
             "\t{${src2}", _.BroadcastStr, ", $src1, $dst {${mask}}|",
             "$dst {${mask}}, $src1, ${src2}", _.BroadcastStr, "}"),
-      []>, EVEX_4V, EVEX_K, EVEX_B, EVEX_CD8<_.EltSize, CD8VF>;
+      [], itins.rm>, EVEX_4V, EVEX_K, EVEX_B, EVEX_CD8<_.EltSize, CD8VF>,
+      Sched<[itins.Sched.Folded, ReadAfterLd]>;
 
   def rmb : AVX5128I<opc, MRMSrcMem, (outs _.RC:$dst),
       (ins _.RC:$src1, _.ScalarMemOp:$src2),
        !strconcat(OpcodeStr,
             "\t{${src2}", _.BroadcastStr, ", $src1, $dst|",
             "$dst, $src1, ${src2}", _.BroadcastStr, "}"),
-      []>,  EVEX_4V, EVEX_B, EVEX_CD8<_.EltSize, CD8VF>;
+      [], itins.rm>,  EVEX_4V, EVEX_B, EVEX_CD8<_.EltSize, CD8VF>,
+      Sched<[itins.Sched.Folded, ReadAfterLd]>;
   }
 }
 
-multiclass blendmask_dq <bits<8> opc, string OpcodeStr,
+multiclass blendmask_dq <bits<8> opc, string OpcodeStr, OpndItins itins,
                                  AVX512VLVectorVTInfo VTInfo> {
-  defm Z : avx512_blendmask      <opc, OpcodeStr, VTInfo.info512>,
-           avx512_blendmask_rmb  <opc, OpcodeStr, VTInfo.info512>, EVEX_V512;
+  defm Z : avx512_blendmask      <opc, OpcodeStr, itins, VTInfo.info512>,
+           avx512_blendmask_rmb  <opc, OpcodeStr, itins, VTInfo.info512>, EVEX_V512;
 
   let Predicates = [HasVLX] in {
-    defm Z256 : avx512_blendmask<opc, OpcodeStr, VTInfo.info256>,
-                avx512_blendmask_rmb  <opc, OpcodeStr, VTInfo.info256>, EVEX_V256;
-    defm Z128 : avx512_blendmask<opc, OpcodeStr, VTInfo.info128>,
-                avx512_blendmask_rmb  <opc, OpcodeStr, VTInfo.info128>, EVEX_V128;
+    defm Z256 : avx512_blendmask<opc, OpcodeStr, itins, VTInfo.info256>,
+                avx512_blendmask_rmb<opc, OpcodeStr, itins, VTInfo.info256>, EVEX_V256;
+    defm Z128 : avx512_blendmask<opc, OpcodeStr, itins, VTInfo.info128>,
+                avx512_blendmask_rmb<opc, OpcodeStr, itins, VTInfo.info128>, EVEX_V128;
   }
 }
 
-multiclass blendmask_bw <bits<8> opc, string OpcodeStr,
+multiclass blendmask_bw <bits<8> opc, string OpcodeStr, OpndItins itins,
                          AVX512VLVectorVTInfo VTInfo> {
   let Predicates = [HasBWI] in
-    defm Z : avx512_blendmask    <opc, OpcodeStr, VTInfo.info512>, EVEX_V512;
+    defm Z : avx512_blendmask<opc, OpcodeStr, itins, VTInfo.info512>, EVEX_V512;
 
   let Predicates = [HasBWI, HasVLX] in {
-    defm Z256 : avx512_blendmask <opc, OpcodeStr, VTInfo.info256>, EVEX_V256;
-    defm Z128 : avx512_blendmask <opc, OpcodeStr, VTInfo.info128>, EVEX_V128;
+    defm Z256 : avx512_blendmask<opc, OpcodeStr, itins, VTInfo.info256>, EVEX_V256;
+    defm Z128 : avx512_blendmask<opc, OpcodeStr, itins, VTInfo.info128>, EVEX_V128;
   }
 }
 
 
-defm VBLENDMPS : blendmask_dq <0x65, "vblendmps", avx512vl_f32_info>;
-defm VBLENDMPD : blendmask_dq <0x65, "vblendmpd", avx512vl_f64_info>, VEX_W;
-defm VPBLENDMD : blendmask_dq <0x64, "vpblendmd", avx512vl_i32_info>;
-defm VPBLENDMQ : blendmask_dq <0x64, "vpblendmq", avx512vl_i64_info>, VEX_W;
-defm VPBLENDMB : blendmask_bw <0x66, "vpblendmb", avx512vl_i8_info>;
-defm VPBLENDMW : blendmask_bw <0x66, "vpblendmw", avx512vl_i16_info>, VEX_W;
+defm VBLENDMPS : blendmask_dq <0x65, "vblendmps", AVX512_BLENDM, avx512vl_f32_info>;
+defm VBLENDMPD : blendmask_dq <0x65, "vblendmpd", AVX512_BLENDM, avx512vl_f64_info>, VEX_W;
+defm VPBLENDMD : blendmask_dq <0x64, "vpblendmd", AVX512_PBLENDM, avx512vl_i32_info>;
+defm VPBLENDMQ : blendmask_dq <0x64, "vpblendmq", AVX512_PBLENDM, avx512vl_i64_info>, VEX_W;
+defm VPBLENDMB : blendmask_bw <0x66, "vpblendmb", AVX512_PBLENDM, avx512vl_i8_info>;
+defm VPBLENDMW : blendmask_bw <0x66, "vpblendmw", AVX512_PBLENDM, avx512vl_i16_info>, VEX_W;
 
 
 //===----------------------------------------------------------------------===//
