@@ -459,7 +459,7 @@ bool basicLogDynamicInitializer() XRAY_NEVER_INSTRUMENT {
                     sizeof(BasicLoggingOptions));
     static auto UNUSED Once = [] {
       static auto UNUSED &TLD = getThreadLocalData();
-      atexit(+[] { TLDDestructor(&TLD); });
+      __sanitizer::Atexit(+[] { TLDDestructor(&TLD); });
       return false;
     }();
   }
