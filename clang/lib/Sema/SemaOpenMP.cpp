@@ -38,7 +38,7 @@ using namespace clang;
 static Expr *CheckMapClauseExpressionBase(
     Sema &SemaRef, Expr *E,
     OMPClauseMappableExprCommon::MappableExprComponentList &CurComponents,
-    OpenMPClauseKind CKind);
+    OpenMPClauseKind CKind, bool NoDiagnose);
 
 namespace {
 /// \brief Default data sharing attributes, which can be applied to directive.
@@ -1932,10 +1932,10 @@ public:
         E->containsUnexpandedParameterPack() || E->isInstantiationDependent())
       return;
     auto *FD = dyn_cast<FieldDecl>(E->getMemberDecl());
-    if (!FD)
-      return;
     OpenMPDirectiveKind DKind = Stack->getCurrentDirective();
     if (isa<CXXThisExpr>(E->getBase()->IgnoreParens())) {
+      if (!FD)
+        return;
       auto DVar = Stack->getTopDSA(FD, false);
       // Check if the variable has explicit DSA set and stop analysis if it
       // so.
@@ -1958,12 +1958,8 @@ public:
         // OpenMP 4.5 [2.15.5.1, map Clause, Restrictions, C/C++, p.3]
         //  A bit-field cannot appear in a map clause.
         //
-        if (FD->isBitField()) {
-          SemaRef.Diag(E->getMemberLoc(),
-                       diag::err_omp_bit_fields_forbidden_in_clause)
-              << E->getSourceRange() << getOpenMPClauseName(OMPC_map);
+        if (FD->isBitField())
           return;
-        }
         ImplicitMap.emplace_back(E);
         return;
       }
@@ -1994,9 +1990,10 @@ public:
         ImplicitFirstprivate.push_back(E);
       return;
     }
-    if (isOpenMPTargetExecutionDirective(DKind) && !FD->isBitField()) {
+    if (isOpenMPTargetExecutionDirective(DKind)) {
       OMPClauseMappableExprCommon::MappableExprComponentList CurComponents;
-      if (!CheckMapClauseExpressionBase(SemaRef, E, CurComponents, OMPC_map))
+      if (!CheckMapClauseExpressionBase(SemaRef, E, CurComponents, OMPC_map,
+                                        /*NoDiagnose=*/true))
         return;
       auto *VD = cast<ValueDecl>(
           CurComponents.back().getAssociatedDeclaration()->getCanonicalDecl());
@@ -11418,7 +11415,7 @@ static bool CheckArrayExpressionDoesNotReferToUnitySize(Sema &SemaRef,
 static Expr *CheckMapClauseExpressionBase(
     Sema &SemaRef, Expr *E,
     OMPClauseMappableExprCommon::MappableExprComponentList &CurComponents,
-    OpenMPClauseKind CKind) {
+    OpenMPClauseKind CKind, bool NoDiagnose) {
   SourceLocation ELoc = E->getExprLoc();
   SourceRange ERange = E->getSourceRange();
 
@@ -11489,9 +11486,14 @@ static Expr *CheckMapClauseExpressionBase(
         E = BaseE;
 
       if (!isa<FieldDecl>(CurE->getMemberDecl())) {
-        SemaRef.Diag(ELoc, diag::err_omp_expected_access_to_data_field)
-            << CurE->getSourceRange();
-        return nullptr;
+        if (!NoDiagnose) {
+          SemaRef.Diag(ELoc, diag::err_omp_expected_access_to_data_field)
+              << CurE->getSourceRange();
+          return nullptr;
+        }
+        if (RelevantExpr)
+          return nullptr;
+        continue;
       }
 
       auto *FD = cast<FieldDecl>(CurE->getMemberDecl());
@@ -11500,9 +11502,14 @@ static Expr *CheckMapClauseExpressionBase(
       //  A bit-field cannot appear in a map clause.
       //
       if (FD->isBitField()) {
-        SemaRef.Diag(ELoc, diag::err_omp_bit_fields_forbidden_in_clause)
-            << CurE->getSourceRange() << getOpenMPClauseName(CKind);
-        return nullptr;
+        if (!NoDiagnose) {
+          SemaRef.Diag(ELoc, diag::err_omp_bit_fields_forbidden_in_clause)
+              << CurE->getSourceRange() << getOpenMPClauseName(CKind);
+          return nullptr;
+        }
+        if (RelevantExpr)
+          return nullptr;
+        continue;
       }
 
       // OpenMP 4.5 [2.15.5.1, map Clause, Restrictions, C++, p.1]
@@ -11514,12 +11521,16 @@ static Expr *CheckMapClauseExpressionBase(
       //  A list item cannot be a variable that is a member of a structure with
       //  a union type.
       //
-      if (auto *RT = CurType->getAs<RecordType>())
+      if (auto *RT = CurType->getAs<RecordType>()) {
         if (RT->isUnionType()) {
-          SemaRef.Diag(ELoc, diag::err_omp_union_type_not_allowed)
-              << CurE->getSourceRange();
-          return nullptr;
+          if (!NoDiagnose) {
+            SemaRef.Diag(ELoc, diag::err_omp_union_type_not_allowed)
+                << CurE->getSourceRange();
+            return nullptr;
+          }
+          continue;
         }
+      }
 
       // If we got a member expression, we should not expect any array section
       // before that:
@@ -11537,9 +11548,12 @@ static Expr *CheckMapClauseExpressionBase(
       E = CurE->getBase()->IgnoreParenImpCasts();
 
       if (!E->getType()->isAnyPointerType() && !E->getType()->isArrayType()) {
-        SemaRef.Diag(ELoc, diag::err_omp_expected_base_var_name)
-            << 0 << CurE->getSourceRange();
-        return nullptr;
+        if (!NoDiagnose) {
+          SemaRef.Diag(ELoc, diag::err_omp_expected_base_var_name)
+              << 0 << CurE->getSourceRange();
+          return nullptr;
+        }
+        continue;
       }
 
       // If we got an array subscript that express the whole dimension we
@@ -11552,6 +11566,7 @@ static Expr *CheckMapClauseExpressionBase(
       // Record the component - we don't have any declaration associated.
       CurComponents.emplace_back(CurE, nullptr);
     } else if (auto *CurE = dyn_cast<OMPArraySectionExpr>(E)) {
+      assert(!NoDiagnose && "Array sections cannot be implicitly mapped.");
       E = CurE->getBase()->IgnoreParenImpCasts();
 
       QualType CurType =
@@ -11597,10 +11612,12 @@ static Expr *CheckMapClauseExpressionBase(
       // Record the component - we don't have any declaration associated.
       CurComponents.emplace_back(CurE, nullptr);
     } else {
-      // If nothing else worked, this is not a valid map clause expression.
-      SemaRef.Diag(ELoc,
-                   diag::err_omp_expected_named_var_member_or_array_expression)
-          << ERange;
+      if (!NoDiagnose) {
+        // If nothing else worked, this is not a valid map clause expression.
+        SemaRef.Diag(
+            ELoc, diag::err_omp_expected_named_var_member_or_array_expression)
+            << ERange;
+      }
       return nullptr;
     }
   }
@@ -11893,8 +11910,8 @@ checkMappableExpressionList(Sema &SemaRef, DSAStackTy *DSAS,
 
     // Obtain the array or member expression bases if required. Also, fill the
     // components array with all the components identified in the process.
-    auto *BE =
-        CheckMapClauseExpressionBase(SemaRef, SimpleExpr, CurComponents, CKind);
+    auto *BE = CheckMapClauseExpressionBase(SemaRef, SimpleExpr, CurComponents,
+                                            CKind, /*NoDiagnose=*/false);
     if (!BE)
       continue;
 
