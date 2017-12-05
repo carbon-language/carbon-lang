@@ -2125,6 +2125,7 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, Scope *CurScope) {
   case OMPD_critical:
   case OMPD_taskgroup:
   case OMPD_distribute:
+  case OMPD_distribute_simd:
   case OMPD_ordered:
   case OMPD_atomic:
   case OMPD_target_data:
@@ -2199,7 +2200,6 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, Scope *CurScope) {
     break;
   }
   case OMPD_distribute_parallel_for_simd:
-  case OMPD_distribute_simd:
   case OMPD_distribute_parallel_for:
   case OMPD_teams_distribute_simd:
   case OMPD_target_teams_distribute:
@@ -2220,7 +2220,7 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, Scope *CurScope) {
                              Params);
     break;
   }
-  case OMPD_teams_distribute_parallel_for: 
+  case OMPD_teams_distribute_parallel_for:
   case OMPD_teams_distribute_parallel_for_simd: {
     QualType KmpInt32Ty = Context.getIntTypeForBitwidth(32, 1);
     QualType KmpInt32PtrTy =
