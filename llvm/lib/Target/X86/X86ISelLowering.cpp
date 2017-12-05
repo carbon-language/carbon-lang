@@ -16139,18 +16139,40 @@ static  SDValue LowerZERO_EXTEND_AVX512(SDValue Op,
   if (InVT.getVectorElementType() != MVT::i1)
     return SDValue();
 
-  // Extend VT if the target is 256 or 128bit vector and VLX is not supported.
+  // Extend VT if the scalar type is v8/v16 and BWI is not supported.
   MVT ExtVT = VT;
-  if (!VT.is512BitVector() && !Subtarget.hasVLX())
-    ExtVT = MVT::getVectorVT(MVT::getIntegerVT(512/NumElts), NumElts);
+  if (!Subtarget.hasBWI() &&
+      (VT.getVectorElementType().getSizeInBits() <= 16))
+    ExtVT = MVT::getVectorVT(MVT::i32, NumElts);
 
-  SDValue One = DAG.getConstant(1, DL, ExtVT);
-  SDValue Zero = getZeroVector(ExtVT, Subtarget, DAG, DL);
+  // Widen to 512-bits if VLX is not supported.
+  MVT WideVT = ExtVT;
+  if (!VT.is512BitVector() && !Subtarget.hasVLX()) {
+    NumElts *= 512 / ExtVT.getSizeInBits();
+    InVT = MVT::getVectorVT(MVT::i1, NumElts);
+    In = DAG.getNode(ISD::INSERT_SUBVECTOR, DL, InVT, DAG.getUNDEF(InVT),
+                     In, DAG.getIntPtrConstant(0, DL));
+    WideVT = MVT::getVectorVT(ExtVT.getVectorElementType(),
+                              NumElts);
+  }
 
-  SDValue SelectedVal = DAG.getSelect(DL, ExtVT, In, One, Zero);
-  if (VT == ExtVT)
-    return SelectedVal;
-  return DAG.getNode(X86ISD::VTRUNC, DL, VT, SelectedVal);
+  SDValue One = DAG.getConstant(1, DL, WideVT);
+  SDValue Zero = getZeroVector(WideVT, Subtarget, DAG, DL);
+
+  SDValue SelectedVal = DAG.getSelect(DL, WideVT, In, One, Zero);
+
+  // Truncate if we had to extend i16/i8 above.
+  if (VT != ExtVT) {
+    WideVT = MVT::getVectorVT(VT.getVectorElementType(), NumElts);
+    SelectedVal = DAG.getNode(X86ISD::VTRUNC, DL, WideVT, SelectedVal);
+  }
+
+  // Extract back to 128/256-bit if we widened.
+  if (WideVT != VT)
+    SelectedVal = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, VT, SelectedVal,
+                              DAG.getIntPtrConstant(0, DL));
+
+  return SelectedVal;
 }
 
 static SDValue LowerANY_EXTEND(SDValue Op, const X86Subtarget &Subtarget,
