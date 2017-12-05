@@ -269,6 +269,10 @@ void SAclient(int arg) {
   {}
   #pragma omp target map(u.B)  // expected-error {{mapped storage cannot be derived from a union}}
   {}
+  #pragma omp target
+  {
+    u.B = 0; // expected-error {{mapped storage cannot be derived from a union}}
+  }
 
   #pragma omp target data map(to: r.C) //expected-note {{used here}}
   {
