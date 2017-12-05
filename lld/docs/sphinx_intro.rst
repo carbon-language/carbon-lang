@@ -90,8 +90,8 @@ targets for invoking ``sphinx-build`` appropriately, the common ones are:
 Writing documentation
 ~~~~~~~~~~~~~~~~~~~~~
 
-The documentation itself is written in the reStructuredText (ReST) format, and Sphinx
-defines additional tags to support features like cross-referencing.
+The documentation itself is written in the reStructuredText (ReST) format, and
+Sphinx defines additional tags to support features like cross-referencing.
 
 The ReST format itself is organized around documents mostly being readable
 plaintext documents. You should generally be able to write new documentation
