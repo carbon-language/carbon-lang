@@ -334,13 +334,19 @@ void basicLoggingHandleArg0Empty(int32_t, XRayEntryType) XRAY_NEVER_INSTRUMENT {
 }
 
 bool basicLogDynamicInitializer() XRAY_NEVER_INSTRUMENT {
-  if (flags()->xray_naive_log) {
-    XRayLogImpl Impl{
-        basicLoggingInit,
-        basicLoggingFinalize,
-        basicLoggingHandleArg0Empty,
-        basicLoggingFlush,
-    };
+  XRayLogImpl Impl{
+      basicLoggingInit,
+      basicLoggingFinalize,
+      basicLoggingHandleArg0Empty,
+      basicLoggingFlush,
+  };
+  auto RegistrationResult = __xray_log_register_mode("xray-basic", Impl);
+  if (RegistrationResult != XRayLogRegisterStatus::XRAY_REGISTRATION_OK &&
+      __sanitizer::Verbosity())
+    Report("Cannot register XRay Basic Mode to 'xray-basic'; error = %d\n",
+           RegistrationResult);
+  if (flags()->xray_naive_log ||
+      !__sanitizer::internal_strcmp(flags()->xray_mode, "xray-basic")) {
     __xray_set_log_impl(Impl);
     BasicLoggingOptions Options;
     Options.DurationFilterMicros =
