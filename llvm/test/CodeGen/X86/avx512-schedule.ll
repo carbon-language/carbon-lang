@@ -5081,7 +5081,7 @@ define <16 x i32> @vpandd(<16 x i32> %a, <16 x i32> %b) nounwind uwtable readnon
 ; GENERIC-LABEL: vpandd:
 ; GENERIC:       # %bb.0: # %entry
 ; GENERIC-NEXT:    vpaddd {{.*}}(%rip){1to16}, %zmm0, %zmm0 # sched: [7:1.00]
-; GENERIC-NEXT:    vpandq %zmm1, %zmm0, %zmm0
+; GENERIC-NEXT:    vpandq %zmm1, %zmm0, %zmm0 # sched: [1:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: vpandd:
@@ -5101,7 +5101,7 @@ define <16 x i32> @vpandnd(<16 x i32> %a, <16 x i32> %b) nounwind uwtable readno
 ; GENERIC-LABEL: vpandnd:
 ; GENERIC:       # %bb.0: # %entry
 ; GENERIC-NEXT:    vpaddd {{.*}}(%rip){1to16}, %zmm0, %zmm0 # sched: [7:1.00]
-; GENERIC-NEXT:    vpandnq %zmm0, %zmm1, %zmm0
+; GENERIC-NEXT:    vpandnq %zmm0, %zmm1, %zmm0 # sched: [1:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: vpandnd:
@@ -5123,7 +5123,7 @@ define <16 x i32> @vpord(<16 x i32> %a, <16 x i32> %b) nounwind uwtable readnone
 ; GENERIC-LABEL: vpord:
 ; GENERIC:       # %bb.0: # %entry
 ; GENERIC-NEXT:    vpaddd {{.*}}(%rip){1to16}, %zmm0, %zmm0 # sched: [7:1.00]
-; GENERIC-NEXT:    vporq %zmm1, %zmm0, %zmm0
+; GENERIC-NEXT:    vporq %zmm1, %zmm0, %zmm0 # sched: [1:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: vpord:
@@ -5143,7 +5143,7 @@ define <16 x i32> @vpxord(<16 x i32> %a, <16 x i32> %b) nounwind uwtable readnon
 ; GENERIC-LABEL: vpxord:
 ; GENERIC:       # %bb.0: # %entry
 ; GENERIC-NEXT:    vpaddd {{.*}}(%rip){1to16}, %zmm0, %zmm0 # sched: [7:1.00]
-; GENERIC-NEXT:    vpxorq %zmm1, %zmm0, %zmm0
+; GENERIC-NEXT:    vpxorq %zmm1, %zmm0, %zmm0 # sched: [1:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: vpxord:
@@ -5163,7 +5163,7 @@ define <8 x i64> @vpandq(<8 x i64> %a, <8 x i64> %b) nounwind uwtable readnone s
 ; GENERIC-LABEL: vpandq:
 ; GENERIC:       # %bb.0: # %entry
 ; GENERIC-NEXT:    vpaddq {{.*}}(%rip){1to8}, %zmm0, %zmm0 # sched: [7:1.00]
-; GENERIC-NEXT:    vpandq %zmm1, %zmm0, %zmm0
+; GENERIC-NEXT:    vpandq %zmm1, %zmm0, %zmm0 # sched: [1:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: vpandq:
@@ -5182,7 +5182,7 @@ define <8 x i64> @vpandnq(<8 x i64> %a, <8 x i64> %b) nounwind uwtable readnone 
 ; GENERIC-LABEL: vpandnq:
 ; GENERIC:       # %bb.0: # %entry
 ; GENERIC-NEXT:    vpaddq {{.*}}(%rip){1to8}, %zmm0, %zmm0 # sched: [7:1.00]
-; GENERIC-NEXT:    vpandnq %zmm0, %zmm1, %zmm0
+; GENERIC-NEXT:    vpandnq %zmm0, %zmm1, %zmm0 # sched: [1:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: vpandnq:
@@ -5202,7 +5202,7 @@ define <8 x i64> @vporq(<8 x i64> %a, <8 x i64> %b) nounwind uwtable readnone ss
 ; GENERIC-LABEL: vporq:
 ; GENERIC:       # %bb.0: # %entry
 ; GENERIC-NEXT:    vpaddq {{.*}}(%rip){1to8}, %zmm0, %zmm0 # sched: [7:1.00]
-; GENERIC-NEXT:    vporq %zmm1, %zmm0, %zmm0
+; GENERIC-NEXT:    vporq %zmm1, %zmm0, %zmm0 # sched: [1:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: vporq:
@@ -5221,7 +5221,7 @@ define <8 x i64> @vpxorq(<8 x i64> %a, <8 x i64> %b) nounwind uwtable readnone s
 ; GENERIC-LABEL: vpxorq:
 ; GENERIC:       # %bb.0: # %entry
 ; GENERIC-NEXT:    vpaddq {{.*}}(%rip){1to8}, %zmm0, %zmm0 # sched: [7:1.00]
-; GENERIC-NEXT:    vpxorq %zmm1, %zmm0, %zmm0
+; GENERIC-NEXT:    vpxorq %zmm1, %zmm0, %zmm0 # sched: [1:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: vpxorq:
