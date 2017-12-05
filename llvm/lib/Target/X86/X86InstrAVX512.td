@@ -9832,36 +9832,47 @@ defm VSHUFPD: avx512_shufp<"vshufpd", avx512vl_i64_info, avx512vl_f64_info>, PD,
 // AVX-512 - Byte shift Left/Right
 //===----------------------------------------------------------------------===//
 
+let Sched = WriteVecShift in
+def AVX512_BYTESHIFT : OpndItins<
+  IIC_SSE_INTSHDQ_P_RI, IIC_SSE_INTSHDQ_P_RI
+>;
+
 multiclass avx512_shift_packed<bits<8> opc, SDNode OpNode, Format MRMr,
-                             Format MRMm, string OpcodeStr, X86VectorVTInfo _>{
+                               Format MRMm, string OpcodeStr,
+                               OpndItins itins, X86VectorVTInfo _>{
   def rr : AVX512<opc, MRMr,
              (outs _.RC:$dst), (ins _.RC:$src1, u8imm:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(set _.RC:$dst,(_.VT (OpNode _.RC:$src1, (i8 imm:$src2))))]>;
+             [(set _.RC:$dst,(_.VT (OpNode _.RC:$src1, (i8 imm:$src2))))],
+             itins.rr>, Sched<[itins.Sched]>;
   def rm : AVX512<opc, MRMm,
            (outs _.RC:$dst), (ins _.MemOp:$src1, u8imm:$src2),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
            [(set _.RC:$dst,(_.VT (OpNode
                                  (_.VT (bitconvert (_.LdFrag addr:$src1))),
-                                 (i8 imm:$src2))))]>;
+                                 (i8 imm:$src2))))], itins.rm>,
+           Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
 multiclass avx512_shift_packed_all<bits<8> opc, SDNode OpNode, Format MRMr,
-                                 Format MRMm, string OpcodeStr, Predicate prd>{
+                                   Format MRMm, string OpcodeStr,
+                                   OpndItins itins, Predicate prd>{
   let Predicates = [prd] in
     defm Z512 : avx512_shift_packed<opc, OpNode, MRMr, MRMm,
-                                    OpcodeStr, v64i8_info>, EVEX_V512;
+                                    OpcodeStr, itins, v64i8_info>, EVEX_V512;
   let Predicates = [prd, HasVLX] in {
     defm Z256 : avx512_shift_packed<opc, OpNode, MRMr, MRMm,
-                                    OpcodeStr, v32i8x_info>, EVEX_V256;
+                                    OpcodeStr, itins, v32i8x_info>, EVEX_V256;
     defm Z128 : avx512_shift_packed<opc, OpNode, MRMr, MRMm,
-                                    OpcodeStr, v16i8x_info>, EVEX_V128;
+                                    OpcodeStr, itins, v16i8x_info>, EVEX_V128;
   }
 }
 defm VPSLLDQ : avx512_shift_packed_all<0x73, X86vshldq, MRM7r, MRM7m, "vpslldq",
-                                       HasBWI>, AVX512PDIi8Base, EVEX_4V, VEX_WIG;
+                                       AVX512_BYTESHIFT, HasBWI>, AVX512PDIi8Base,
+                                       EVEX_4V, VEX_WIG;
 defm VPSRLDQ : avx512_shift_packed_all<0x73, X86vshrdq, MRM3r, MRM3m, "vpsrldq",
-                                       HasBWI>, AVX512PDIi8Base, EVEX_4V, VEX_WIG;
+                                       AVX512_BYTESHIFT, HasBWI>, AVX512PDIi8Base,
+                                       EVEX_4V, VEX_WIG;
 
 
 multiclass avx512_psadbw_packed<bits<8> opc, SDNode OpNode,
