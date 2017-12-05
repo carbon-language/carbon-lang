@@ -16142,10 +16142,8 @@ static  SDValue LowerZERO_EXTEND_AVX512(SDValue Op,
   if (!VT.is512BitVector() && !Subtarget.hasVLX())
     ExtVT = MVT::getVectorVT(MVT::getIntegerVT(512/NumElts), NumElts);
 
-  SDValue One =
-   DAG.getConstant(APInt(ExtVT.getScalarSizeInBits(), 1), DL, ExtVT);
-  SDValue Zero =
-   DAG.getConstant(APInt::getNullValue(ExtVT.getScalarSizeInBits()), DL, ExtVT);
+  SDValue One = DAG.getConstant(1, DL, ExtVT);
+  SDValue Zero = getZeroVector(ExtVT, Subtarget, DAG, DL);
 
   SDValue SelectedVal = DAG.getSelect(DL, ExtVT, In, One, Zero);
   if (VT == ExtVT)
