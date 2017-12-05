@@ -1869,8 +1869,8 @@ defm VPBLENDMW : blendmask_bw <0x66, "vpblendmw", avx512vl_i16_info>, VEX_W;
 
 // avx512_cmp_scalar - AVX512 CMPSS and CMPSD
 
-multiclass avx512_cmp_scalar<X86VectorVTInfo _, SDNode OpNode, SDNode OpNodeRnd>{
-
+multiclass avx512_cmp_scalar<X86VectorVTInfo _, SDNode OpNode, SDNode OpNodeRnd,
+                             OpndItins itins> {
   defm  rr_Int  : AVX512_maskable_cmp<0xC2, MRMSrcReg, _,
                       (outs _.KRC:$dst),
                       (ins _.RC:$src1, _.RC:$src2, AVXCC:$cc),
@@ -1878,7 +1878,7 @@ multiclass avx512_cmp_scalar<X86VectorVTInfo _, SDNode OpNode, SDNode OpNodeRnd>
                       "$src2, $src1", "$src1, $src2",
                       (OpNode (_.VT _.RC:$src1),
                               (_.VT _.RC:$src2),
-                              imm:$cc)>, EVEX_4V;
+                              imm:$cc), itins.rr>, EVEX_4V, Sched<[itins.Sched]>;
   let mayLoad = 1 in
   defm  rm_Int  : AVX512_maskable_cmp<0xC2, MRMSrcMem, _,
                     (outs _.KRC:$dst),
@@ -1886,7 +1886,8 @@ multiclass avx512_cmp_scalar<X86VectorVTInfo _, SDNode OpNode, SDNode OpNodeRnd>
                     "vcmp${cc}"#_.Suffix,
                     "$src2, $src1", "$src1, $src2",
                     (OpNode (_.VT _.RC:$src1), _.ScalarIntMemCPat:$src2,
-                        imm:$cc)>, EVEX_4V, EVEX_CD8<_.EltSize, CD8VT1>;
+                        imm:$cc), itins.rm>, EVEX_4V, EVEX_CD8<_.EltSize, CD8VT1>,
+                    Sched<[itins.Sched.Folded, ReadAfterLd]>;
 
   defm  rrb_Int  : AVX512_maskable_cmp<0xC2, MRMSrcReg, _,
                      (outs _.KRC:$dst),
@@ -1896,28 +1897,31 @@ multiclass avx512_cmp_scalar<X86VectorVTInfo _, SDNode OpNode, SDNode OpNodeRnd>
                      (OpNodeRnd (_.VT _.RC:$src1),
                                 (_.VT _.RC:$src2),
                                 imm:$cc,
-                                (i32 FROUND_NO_EXC))>, EVEX_4V, EVEX_B;
+                                (i32 FROUND_NO_EXC)), itins.rr>,
+                     EVEX_4V, EVEX_B, Sched<[itins.Sched]>;
   // Accept explicit immediate argument form instead of comparison code.
   let isAsmParserOnly = 1, hasSideEffects = 0 in {
     defm  rri_alt  : AVX512_maskable_cmp_alt<0xC2, MRMSrcReg, _,
                         (outs VK1:$dst),
                         (ins _.RC:$src1, _.RC:$src2, u8imm:$cc),
                         "vcmp"#_.Suffix,
-                        "$cc, $src2, $src1", "$src1, $src2, $cc">, EVEX_4V;
+                        "$cc, $src2, $src1", "$src1, $src2, $cc", itins.rr>, EVEX_4V,
+                        Sched<[itins.Sched]>;
   let mayLoad = 1 in
     defm  rmi_alt  : AVX512_maskable_cmp_alt<0xC2, MRMSrcMem, _,
                         (outs _.KRC:$dst),
                         (ins _.RC:$src1, _.ScalarMemOp:$src2, u8imm:$cc),
                         "vcmp"#_.Suffix,
-                        "$cc, $src2, $src1", "$src1, $src2, $cc">,
-                        EVEX_4V, EVEX_CD8<_.EltSize, CD8VT1>;
+                        "$cc, $src2, $src1", "$src1, $src2, $cc", itins.rm>,
+                        EVEX_4V, EVEX_CD8<_.EltSize, CD8VT1>,
+                        Sched<[itins.Sched.Folded, ReadAfterLd]>;
 
     defm  rrb_alt  : AVX512_maskable_cmp_alt<0xC2, MRMSrcReg, _,
                        (outs _.KRC:$dst),
                        (ins _.RC:$src1, _.RC:$src2, u8imm:$cc),
                        "vcmp"#_.Suffix,
-                       "$cc, {sae}, $src2, $src1","$src1, $src2, {sae}, $cc">,
-                       EVEX_4V, EVEX_B;
+                       "$cc, {sae}, $src2, $src1","$src1, $src2, {sae}, $cc", itins.rr>,
+                       EVEX_4V, EVEX_B, Sched<[itins.Sched]>;
   }// let isAsmParserOnly = 1, hasSideEffects = 0
 
   let isCodeGenOnly = 1 in {
@@ -1929,7 +1933,7 @@ multiclass avx512_cmp_scalar<X86VectorVTInfo _, SDNode OpNode, SDNode OpNodeRnd>
                 [(set _.KRC:$dst, (OpNode _.FRC:$src1,
                                           _.FRC:$src2,
                                           imm:$cc))],
-                IIC_SSE_ALU_F32S_RR>, EVEX_4V;
+                itins.rr>, EVEX_4V, Sched<[itins.Sched]>;
     def rm : AVX512Ii8<0xC2, MRMSrcMem,
               (outs _.KRC:$dst),
               (ins _.FRC:$src1, _.ScalarMemOp:$src2, AVXCC:$cc),
@@ -1938,17 +1942,18 @@ multiclass avx512_cmp_scalar<X86VectorVTInfo _, SDNode OpNode, SDNode OpNodeRnd>
               [(set _.KRC:$dst, (OpNode _.FRC:$src1,
                                         (_.ScalarLdFrag addr:$src2),
                                         imm:$cc))],
-              IIC_SSE_ALU_F32P_RM>, EVEX_4V, EVEX_CD8<_.EltSize, CD8VT1>;
+              itins.rm>, EVEX_4V, EVEX_CD8<_.EltSize, CD8VT1>,
+              Sched<[itins.Sched.Folded, ReadAfterLd]>;
   }
 }
 
 let Predicates = [HasAVX512] in {
   let ExeDomain = SSEPackedSingle in
-  defm VCMPSSZ : avx512_cmp_scalar<f32x_info, X86cmpms, X86cmpmsRnd>,
-                                   AVX512XSIi8Base;
+  defm VCMPSSZ : avx512_cmp_scalar<f32x_info, X86cmpms, X86cmpmsRnd,
+                                   SSE_ALU_F32S>, AVX512XSIi8Base;
   let ExeDomain = SSEPackedDouble in
-  defm VCMPSDZ : avx512_cmp_scalar<f64x_info, X86cmpms, X86cmpmsRnd>,
-                                   AVX512XDIi8Base, VEX_W;
+  defm VCMPSDZ : avx512_cmp_scalar<f64x_info, X86cmpms, X86cmpmsRnd,
+                                   SSE_ALU_F64S>, AVX512XDIi8Base, VEX_W;
 }
 
 multiclass avx512_icmp_packed<bits<8> opc, string OpcodeStr, SDNode OpNode,
