@@ -1,0 +1,22 @@
+# REQUIRES: system-windows
+# RUN: icacls %t /grant Everyone:(DC) || true
+# RUN: rm -rf %t
+# RUN: mkdir %t
+# RUN: cd %t
+# RUN: yaml2obj %s > test.o
+# RUN: cp test.o test2.o
+# RUN: icacls test2.o /deny Everyone:(D)
+# RUN: icacls . /deny Everyone:(DC)
+
+# This fails because it cannot replace test2.o
+# RUN: not llvm-objcopy test.o test2.o
+
+# But it doesn't leave any temporary files behind.
+# RUN: not ls test2.o.tmp*
+
+!ELF
+FileHeader:
+  Class:           ELFCLASS64
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_X86_64
