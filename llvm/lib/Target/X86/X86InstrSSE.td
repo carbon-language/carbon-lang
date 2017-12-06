@@ -25,9 +25,15 @@ class SizeItins<OpndItins arg_s, OpndItins arg_d> {
   OpndItins d = arg_d;
 }
 
+class MoveLoadStoreItins<InstrItinClass arg_rr, InstrItinClass arg_rm,
+                         InstrItinClass arg_mr> {
+  InstrItinClass rr = arg_rr;
+  InstrItinClass rm = arg_rm;
+  InstrItinClass mr = arg_mr;
+}
 
 class ShiftOpndItins<InstrItinClass arg_rr, InstrItinClass arg_rm,
-  InstrItinClass arg_ri> {
+                     InstrItinClass arg_ri> {
   InstrItinClass rr = arg_rr;
   InstrItinClass rm = arg_rm;
   InstrItinClass ri = arg_ri;
@@ -152,8 +158,16 @@ def SSE_MOVA_ITINS : OpndItins<
   IIC_SSE_MOVA_P_RR, IIC_SSE_MOVA_P_RM
 >;
 
+def SSE_MOVA : MoveLoadStoreItins<
+  IIC_SSE_MOVA_P_RR, IIC_SSE_MOVA_P_RM, IIC_SSE_MOVA_P_MR
+>;
+
 def SSE_MOVU_ITINS : OpndItins<
   IIC_SSE_MOVU_P_RR, IIC_SSE_MOVU_P_RM
+>;
+
+def SSE_MOVU : MoveLoadStoreItins<
+  IIC_SSE_MOVU_P_RR, IIC_SSE_MOVU_P_RM, IIC_SSE_MOVU_P_MR
 >;
 
 def SSE_DPPD_ITINS : OpndItins<
