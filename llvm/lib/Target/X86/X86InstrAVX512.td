@@ -8676,7 +8676,8 @@ defm VSCATTERPF1QPD: avx512_gather_scatter_prefetch<0xC7, MRM6m, "vscatterpf1qpd
 multiclass cvt_by_vec_width<bits<8> opc, X86VectorVTInfo Vec, string OpcodeStr > {
 def rr : AVX512XS8I<opc, MRMSrcReg, (outs Vec.RC:$dst), (ins Vec.KRC:$src),
                   !strconcat(OpcodeStr##Vec.Suffix, "\t{$src, $dst|$dst, $src}"),
-                  [(set Vec.RC:$dst, (Vec.VT (X86vsext Vec.KRC:$src)))]>, EVEX;
+                  [(set Vec.RC:$dst, (Vec.VT (X86vsext Vec.KRC:$src)))],
+                  IIC_SSE_MOV_S_RR>, EVEX, Sched<[WriteMove]>;
 }
 
 // Use 512bit version to implement 128/256 bit in case NoVLX.
@@ -8714,7 +8715,8 @@ defm VPMOVM2Q : cvt_mask_by_elt_width<0x38, avx512vl_i64_info, "vpmovm2", HasDQI
 multiclass convert_vector_to_mask_common<bits<8> opc, X86VectorVTInfo _, string OpcodeStr > {
     def rr : AVX512XS8I<opc, MRMSrcReg, (outs _.KRC:$dst), (ins _.RC:$src),
                         !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                        [(set _.KRC:$dst, (X86cvt2mask (_.VT _.RC:$src)))]>, EVEX;
+                        [(set _.KRC:$dst, (X86cvt2mask (_.VT _.RC:$src)))],
+                        IIC_SSE_MOV_S_RR>, EVEX, Sched<[WriteMove]>;
 }
 
 // Use 512bit version to implement 128/256 bit in case NoVLX.
