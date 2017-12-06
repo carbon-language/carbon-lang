@@ -115,7 +115,7 @@ class TwoLevelBitVector {
   // This structure allows O(kLevel1Size) time for clear() and empty(),
   // as well fast handling of sparse BVs.
  public:
-  enum SizeEnum { kSize = BV::kSize * BV::kSize * kLevel1Size };
+  enum SizeEnum : uptr { kSize = BV::kSize * BV::kSize * kLevel1Size };
   // No CTOR.
 
   uptr size() const { return kSize; }
