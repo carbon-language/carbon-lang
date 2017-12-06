@@ -1164,6 +1164,7 @@ OpRef HvxSelector::shuffs1(ShuffleMask SM, OpRef Va, ResultStack &Results) {
   DEBUG_WITH_TYPE("isel", {dbgs() << __func__ << '\n';});
   unsigned VecLen = SM.Mask.size();
   assert(HwLen == VecLen);
+  (void)VecLen;
   assert(all_of(SM.Mask, [this](int M) { return M == -1 || M < int(HwLen); }));
 
   if (isIdentity(SM.Mask))
