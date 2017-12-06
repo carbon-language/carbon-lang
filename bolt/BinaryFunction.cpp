@@ -125,6 +125,13 @@ PrintDynoStats("dyno-stats",
   cl::cat(BoltCategory));
 
 static cl::opt<bool>
+PrintDynoStatsOnly("print-dyno-stats-only",
+  cl::desc("while printing functions output dyno-stats and skip instructions"),
+  cl::init(false),
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+static cl::opt<bool>
 PrintJumpTables("print-jump-tables",
   cl::desc("print jump tables"),
   cl::ZeroOrMore,
@@ -441,7 +448,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
 
   OS << "\n}\n";
 
-  if (!PrintInstructions || !BC.InstPrinter)
+  if (opts::PrintDynoStatsOnly || !PrintInstructions || !BC.InstPrinter)
     return;
 
   // Offset of the instruction in function.

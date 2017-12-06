@@ -217,6 +217,14 @@ Relocs("relocs",
   cl::ZeroOrMore,
   cl::cat(BoltCategory));
 
+static cl::opt<bool>
+ReportStaleFuncs("report-stale",
+  cl::desc("print a list of functions with a stale profile"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
 static cl::list<std::string>
 SkipFunctionNames("skip-funcs",
   cl::CommaSeparated,
@@ -2077,6 +2085,7 @@ void RewriteInstance::disassembleFunctions() {
   if (opts::AggregateOnly)
     return;
 
+  const char *StaleFuncsHeader = "BOLT-INFO: Functions with stale profile:\n";
   uint64_t NumSimpleFunctions{0};
   uint64_t NumStaleProfileFunctions{0};
   std::vector<BinaryFunction *> ProfiledFunctions;
@@ -2087,10 +2096,16 @@ void RewriteInstance::disassembleFunctions() {
     ++NumSimpleFunctions;
     if (Function.getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE)
       continue;
-    if (Function.hasValidProfile())
+    if (Function.hasValidProfile()) {
       ProfiledFunctions.push_back(&Function);
-    else
+    } else {
+      if (opts::ReportStaleFuncs) {
+        outs() << StaleFuncsHeader
+               << "  " << Function << '\n';
+        StaleFuncsHeader = "";
+      }
       ++NumStaleProfileFunctions;
+    }
   }
   BC->NumProfiledFuncs = ProfiledFunctions.size();
 
