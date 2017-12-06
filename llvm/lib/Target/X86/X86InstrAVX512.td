@@ -252,9 +252,9 @@ multiclass AVX512_maskable_common<bits<8> O, Format F, X86VectorVTInfo _,
                                   string OpcodeStr,
                                   string AttSrcAsm, string IntelSrcAsm,
                                   dag RHS, dag MaskingRHS,
+                                  InstrItinClass itin,
                                   SDNode Select = vselect,
                                   string MaskingConstraint = "",
-                                  InstrItinClass itin = NoItinerary,
                                   bit IsCommutable = 0,
                                   bit IsKCommutable = 0> :
   AVX512_maskable_custom<O, F, Outs, Ins, MaskingIns, ZeroMaskingIns, OpcodeStr,
@@ -302,8 +302,8 @@ multiclass AVX512_maskable<bits<8> O, Format F, X86VectorVTInfo _,
                           !con((ins _.RC:$src0, _.KRCWM:$mask), Ins),
                           !con((ins _.KRCWM:$mask), Ins),
                           OpcodeStr, AttSrcAsm, IntelSrcAsm, RHS,
-                          (Select _.KRCWM:$mask, RHS, _.RC:$src0), Select,
-                          "$src0 = $dst", itin, IsCommutable, IsKCommutable>;
+                          (Select _.KRCWM:$mask, RHS, _.RC:$src0), itin,
+                          Select, "$src0 = $dst", IsCommutable, IsKCommutable>;
 
 // This multiclass generates the unconditional/non-masking, the masking and
 // the zero-masking variant of the scalar instruction.
@@ -323,7 +323,7 @@ multiclass AVX512_maskable_scalar<bits<8> O, Format F, X86VectorVTInfo _,
 multiclass AVX512_maskable_3src<bits<8> O, Format F, X86VectorVTInfo _,
                                 dag Outs, dag NonTiedIns, string OpcodeStr,
                                 string AttSrcAsm, string IntelSrcAsm,
-                                dag RHS, InstrItinClass itin = NoItinerary,
+                                dag RHS, InstrItinClass itin,
                                 bit IsCommutable = 0,
                                 bit IsKCommutable = 0,
                                 SDNode Select = vselect,
@@ -334,8 +334,8 @@ multiclass AVX512_maskable_3src<bits<8> O, Format F, X86VectorVTInfo _,
                           !con((ins _.RC:$src1, _.KRCWM:$mask), NonTiedIns),
                           OpcodeStr, AttSrcAsm, IntelSrcAsm,
                           !if(MaskOnly, (null_frag), RHS),
-                          (Select _.KRCWM:$mask, RHS, _.RC:$src1),
-                          Select, "", itin, IsCommutable, IsKCommutable>;
+                          (Select _.KRCWM:$mask, RHS, _.RC:$src1), itin,
+                          Select, "", IsCommutable, IsKCommutable>;
 
 multiclass AVX512_maskable_3src_scalar<bits<8> O, Format F, X86VectorVTInfo _,
                                      dag Outs, dag NonTiedIns, string OpcodeStr,
