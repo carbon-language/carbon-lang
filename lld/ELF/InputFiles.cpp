@@ -209,8 +209,10 @@ typename ELFT::SymRange ELFFileBase<ELFT>::getGlobalELFSyms() {
 
 template <class ELFT>
 uint32_t ELFFileBase<ELFT>::getSectionIndex(const Elf_Sym &Sym) const {
-  return check(getObj().getSectionIndex(&Sym, ELFSyms, SymtabSHNDX),
-               toString(this));
+  auto RetOrErr = getObj().getSectionIndex(&Sym, ELFSyms, SymtabSHNDX);
+  if (RetOrErr)
+    return *RetOrErr;
+  fatal(toString(this) + ": " + toString(RetOrErr.takeError()));
 }
 
 template <class ELFT>
