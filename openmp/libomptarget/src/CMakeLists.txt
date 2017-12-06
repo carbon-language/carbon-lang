@@ -14,6 +14,7 @@
 libomptarget_say("Building offloading runtime library libomptarget.")
 
 set(src_files
+  device.cpp
   rtl.cpp
   omptarget.cpp
 )

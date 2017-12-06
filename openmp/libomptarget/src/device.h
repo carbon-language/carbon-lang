@@ -15,6 +15,7 @@
 #define _OMPTARGET_DEVICE_H
 
 #include <cstddef>
+#include <climits>
 #include <list>
 #include <map>
 #include <mutex>
@@ -24,6 +25,9 @@
 struct RTLInfoTy;
 struct __tgt_bin_desc;
 struct __tgt_target_table;
+
+#define INF_REF_CNT (LONG_MAX>>1) // leave room for additions/subtractions
+#define CONSIDERED_INF(x) (x > (INF_REF_CNT>>1))
 
 /// Map between host data and target data.
 struct HostDataToTargetTy {
