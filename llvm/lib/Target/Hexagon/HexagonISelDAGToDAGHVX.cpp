@@ -1172,6 +1172,9 @@ OpRef HvxSelector::shuffs1(ShuffleMask SM, OpRef Va, ResultStack &Results) {
   if (isUndef(SM.Mask))
     return OpRef::undef(getSingleVT(MVT::i8));
 
+  OpRef P = perfect(SM, Va, Results);
+  if (P.isValid())
+    return P;
   return butterfly(SM, Va, Results);
 }
 
@@ -1417,7 +1420,7 @@ OpRef HvxSelector::contracting(ShuffleMask SM, OpRef Va, OpRef Vb,
     if (Strip.first != 0 && Strip.first != L)
       return OpRef::fail();
     // Examine the rest of the mask.
-    for (int I = L; I < N/2; I += L) {
+    for (int I = L; I < N; I += L) {
       auto S = findStrip(subm(SM.Mask,I), 1, N-I);
       // Check whether the mask element at the beginning of each strip
       // increases by 2L each time.
@@ -1540,6 +1543,11 @@ OpRef HvxSelector::perfect(ShuffleMask SM, OpRef Va, ResultStack &Results) {
   int VecLen = SM.Mask.size();
   assert(isPowerOf2_32(VecLen) && Log2_32(VecLen) <= 8);
   unsigned LogLen = Log2_32(VecLen);
+  unsigned HwLog = Log2_32(HwLen);
+  // The result length must be the same as the length of a single vector,
+  // or a vector pair.
+  assert(LogLen == HwLog || LogLen == HwLog+1);
+  bool Extend = (LogLen == HwLog);
 
   if (!isPermutation(SM.Mask))
     return OpRef::fail();
@@ -1725,9 +1733,11 @@ OpRef HvxSelector::perfect(ShuffleMask SM, OpRef Va, ResultStack &Results) {
       SwapElems.push_back(C[0]);
   }
 
-  const SDLoc &dl(Results.InpNode);
-  OpRef Arg = Va;
+  MVT SingleTy = getSingleVT(MVT::i8);
   MVT PairTy = getPairVT(MVT::i8);
+  const SDLoc &dl(Results.InpNode);
+  OpRef Arg = !Extend ? Va
+                      : concat(Va, OpRef::undef(SingleTy), Results);
 
   for (unsigned I = 0, E = SwapElems.size(); I != E; ) {
     bool IsInc = I == E-1 || SwapElems[I] < SwapElems[I+1];
@@ -1751,7 +1761,7 @@ OpRef HvxSelector::perfect(ShuffleMask SM, OpRef Va, ResultStack &Results) {
     Arg = OpRef::res(Results.top());
   }
 
-  return Arg;
+  return !Extend ? Arg : OpRef::lo(Arg);
 }
 
 OpRef HvxSelector::butterfly(ShuffleMask SM, OpRef Va, ResultStack &Results) {
@@ -1877,10 +1887,13 @@ void HvxSelector::selectShuffle(SDNode *N) {
                          : shuffp2(ShuffleMask(Mask), Va, Vb, Results);
 
   bool Done = Res.isValid();
-  if (Done)
+  if (Done) {
+    // Make sure that Res is on the stack before materializing.
+    Results.push(TargetOpcode::COPY, ResTy, {Res});
     materialize(Results);
-  else
+  } else {
     Done = scalarizeShuffle(Mask, SDLoc(N), ResTy, Vec0, Vec1, N);
+  }
 
   if (!Done) {
 #ifndef NDEBUG
