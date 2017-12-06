@@ -279,8 +279,9 @@ template <class ELFT>
 ArrayRef<typename ObjFile<ELFT>::Elf_Word>
 ObjFile<ELFT>::getShtGroupEntries(const Elf_Shdr &Sec) {
   const ELFFile<ELFT> &Obj = this->getObj();
-  ArrayRef<Elf_Word> Entries = check(
-      Obj.template getSectionContentsAsArray<Elf_Word>(&Sec), toString(this));
+  ArrayRef<Elf_Word> Entries =
+      checkLazy(Obj.template getSectionContentsAsArray<Elf_Word>(&Sec),
+                [=]() { return toString(this); });
   if (Entries.empty() || Entries[0] != GRP_COMDAT)
     fatal(toString(this) + ": unsupported SHT_GROUP format");
   return Entries.slice(1);
