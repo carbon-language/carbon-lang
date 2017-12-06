@@ -729,7 +729,9 @@ void NodeTemplate::print(raw_ostream &OS, const SelectionDAG &G) const {
 
 void ResultStack::print(raw_ostream &OS, const SelectionDAG &G) const {
   OS << "Input node:\n";
+#ifndef NDEBUG
   InpNode->dumpr(&G);
+#endif
   OS << "Result templates:\n";
   for (unsigned I = 0, E = List.size(); I != E; ++I) {
     OS << '[' << I << "] ";
