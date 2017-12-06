@@ -22,7 +22,7 @@ namespace __sanitizer {
 template <class basic_int_t = uptr>
 class BasicBitVector {
  public:
-  enum SizeEnum { kSize = sizeof(basic_int_t) * 8 };
+  enum SizeEnum : uptr { kSize = sizeof(basic_int_t) * 8 };
 
   uptr size() const { return kSize; }
   // No CTOR.
