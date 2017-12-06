@@ -923,12 +923,12 @@ static void buildDepSet(LazyRandomTypeCollection &Types,
 
 static void
 dumpFullTypeStream(LinePrinter &Printer, LazyRandomTypeCollection &Types,
-                   uint32_t NumHashBuckets,
+                   uint32_t NumTypeRecords, uint32_t NumHashBuckets,
                    FixedStreamArray<support::ulittle32_t> HashValues,
                    bool Bytes, bool Extras) {
 
-  Printer.formatLine("Showing {0:N} records", Types.size());
-  uint32_t Width = NumDigits(TypeIndex::FirstNonSimpleIndex + Types.size());
+  Printer.formatLine("Showing {0:N} records", NumTypeRecords);
+  uint32_t Width = NumDigits(TypeIndex::FirstNonSimpleIndex + NumTypeRecords);
 
   MinimalTypeDumpVisitor V(Printer, Width + 2, Bytes, Extras, Types,
                            NumHashBuckets, HashValues);
@@ -1002,7 +1002,7 @@ Error DumpOutputStyle::dumpTypesFromObjectFile() {
     Types.reset(Reader, 100);
 
     if (opts::dump::DumpTypes) {
-      dumpFullTypeStream(P, Types, 0, {}, opts::dump::DumpTypeData, false);
+      dumpFullTypeStream(P, Types, 0, 0, {}, opts::dump::DumpTypeData, false);
     } else if (opts::dump::DumpTypeExtras) {
       auto LocalHashes = LocallyHashedType::hashTypeCollection(Types);
       auto GlobalHashes = GloballyHashedType::hashTypeCollection(Types);
@@ -1073,8 +1073,9 @@ Error DumpOutputStyle::dumpTpiStream(uint32_t StreamIdx) {
 
   if (DumpTypes || !Indices.empty()) {
     if (Indices.empty())
-      dumpFullTypeStream(P, Types, Stream.getNumHashBuckets(),
-                         Stream.getHashValues(), DumpBytes, DumpExtras);
+      dumpFullTypeStream(P, Types, Stream.getNumTypeRecords(),
+                         Stream.getNumHashBuckets(), Stream.getHashValues(),
+                         DumpBytes, DumpExtras);
     else {
       std::vector<TypeIndex> TiList(Indices.begin(), Indices.end());
       dumpPartialTypeStream(P, Types, Stream, TiList, DumpBytes, DumpExtras,
