@@ -1085,6 +1085,11 @@ INTERCEPTOR(int, pthread_key_create, __sanitizer_pthread_key_t *key,
   return res;
 }
 
+#if SANITIZER_NETBSD
+INTERCEPTOR(void, __libc_thr_keycreate, void *m, void (*dtor)(void *value)) \
+  ALIAS(WRAPPER_NAME(pthread_key_create));
+#endif
+
 INTERCEPTOR(int, pthread_join, void *th, void **retval) {
   ENSURE_MSAN_INITED();
   int res = REAL(pthread_join)(th, retval);
@@ -1634,6 +1639,11 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(pthread_create);
 #endif
   INTERCEPT_FUNCTION(pthread_key_create);
+
+#if SANITIZER_NETBSD
+  INTERCEPT_FUNCTION(__libc_thr_keycreate);
+#endif
+
   INTERCEPT_FUNCTION(pthread_join);
   INTERCEPT_FUNCTION(tzset);
   INTERCEPT_FUNCTION(__cxa_atexit);
