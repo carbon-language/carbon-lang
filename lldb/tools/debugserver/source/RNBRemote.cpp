@@ -712,23 +712,27 @@ std::string RNBRemote::CompressString(const std::string &orig) {
 #if defined(HAVE_LIBCOMPRESSION)
       if (compression_type == compression_types::lz4) {
         compressed_size = compression_encode_buffer(
-            encoded_data.data(), encoded_data_buf_size, (uint8_t *)orig.c_str(),
-            orig.size(), nullptr, COMPRESSION_LZ4_RAW);
+            encoded_data.data(), encoded_data_buf_size,
+            (const uint8_t *)orig.c_str(), orig.size(), nullptr,
+            COMPRESSION_LZ4_RAW);
       }
       if (compression_type == compression_types::zlib_deflate) {
         compressed_size = compression_encode_buffer(
-            encoded_data.data(), encoded_data_buf_size, (uint8_t *)orig.c_str(),
-            orig.size(), nullptr, COMPRESSION_ZLIB);
+            encoded_data.data(), encoded_data_buf_size,
+            (const uint8_t *)orig.c_str(), orig.size(), nullptr,
+            COMPRESSION_ZLIB);
       }
       if (compression_type == compression_types::lzma) {
         compressed_size = compression_encode_buffer(
-            encoded_data.data(), encoded_data_buf_size, (uint8_t *)orig.c_str(),
-            orig.size(), nullptr, COMPRESSION_LZMA);
+            encoded_data.data(), encoded_data_buf_size,
+            (const uint8_t *)orig.c_str(), orig.size(), nullptr,
+            COMPRESSION_LZMA);
       }
       if (compression_type == compression_types::lzfse) {
         compressed_size = compression_encode_buffer(
-            encoded_data.data(), encoded_data_buf_size, (uint8_t *)orig.c_str(),
-            orig.size(), nullptr, COMPRESSION_LZFSE);
+            encoded_data.data(), encoded_data_buf_size,
+            (const uint8_t *)orig.c_str(), orig.size(), nullptr,
+            COMPRESSION_LZFSE);
       }
 #endif
 
@@ -2858,7 +2862,7 @@ rnb_err_t RNBRemote::SendStopReplyPacketForThread(nub_thread_t tid) {
       else {
         // the thread name contains special chars, send as hex bytes
         ostrm << std::hex << "hexname:";
-        uint8_t *u_thread_name = (uint8_t *)thread_name;
+        const uint8_t *u_thread_name = (const uint8_t *)thread_name;
         for (size_t i = 0; i < thread_name_len; i++)
           ostrm << RAWHEX8(u_thread_name[i]);
         ostrm << ';';
@@ -3663,7 +3667,7 @@ rnb_err_t RNBRemote::HandlePacket_v(const char *p) {
     return RNBRemote::HandlePacket_s("s");
   } else if (strstr(p, "vCont") == p) {
     DNBThreadResumeActions thread_actions;
-    char *c = (char *)(p += strlen("vCont"));
+    char *c = const_cast<char *>(p += strlen("vCont"));
     char *c_end = c + strlen(c);
     if (*c == '?')
       return SendPacket("vCont;c;C;s;S");

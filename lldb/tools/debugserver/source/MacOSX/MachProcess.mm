@@ -3147,7 +3147,8 @@ pid_t MachProcess::PosixSpawnChildForPTraceDebugging(
       ::chdir(working_directory);
 
     err.SetError(::posix_spawnp(&pid, path, &file_actions, &attr,
-                                (char *const *)argv, (char *const *)envp),
+                                const_cast<char *const *>(argv),
+                                const_cast<char *const *>(envp)),
                  DNBError::POSIX);
     if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
       err.LogThreaded("::posix_spawnp ( pid => %i, path = '%s', file_actions = "
@@ -3159,8 +3160,9 @@ pid_t MachProcess::PosixSpawnChildForPTraceDebugging(
     if (working_directory)
       ::chdir(working_directory);
 
-    err.SetError(::posix_spawnp(&pid, path, NULL, &attr, (char *const *)argv,
-                                (char *const *)envp),
+    err.SetError(::posix_spawnp(&pid, path, NULL, &attr,
+                                const_cast<char *const *>(argv),
+                                const_cast<char *const *>(envp)),
                  DNBError::POSIX);
     if (err.Fail() || DNBLogCheckLogBit(LOG_PROCESS))
       err.LogThreaded("::posix_spawnp ( pid => %i, path = '%s', file_actions = "
@@ -3257,7 +3259,7 @@ pid_t MachProcess::ForkChildForPTraceDebugging(const char *path,
       ::sleep(1);
 
       // Turn this process into
-      ::execv(path, (char *const *)argv);
+      ::execv(path, const_cast<char *const *>(argv));
     }
     // Exit with error code. Child process should have taken
     // over in above exec call and if the exec fails it will
