@@ -253,13 +253,15 @@ StringRef ObjFile<ELFT>::getShtGroupSignature(ArrayRef<Elf_Shdr> Sections,
   // Group signatures are stored as symbol names in object files.
   // sh_info contains a symbol index, so we fetch a symbol and read its name.
   if (this->ELFSyms.empty())
-    this->initSymtab(
-        Sections,
-        check(object::getSection<ELFT>(Sections, Sec.sh_link), toString(this)));
+    this->initSymtab(Sections,
+                     checkLazy(object::getSection<ELFT>(Sections, Sec.sh_link),
+                               [=]() { return toString(this); }));
 
-  const Elf_Sym *Sym = check(
-      object::getSymbol<ELFT>(this->ELFSyms, Sec.sh_info), toString(this));
-  StringRef Signature = check(Sym->getName(this->StringTable), toString(this));
+  const Elf_Sym *Sym =
+      checkLazy(object::getSymbol<ELFT>(this->ELFSyms, Sec.sh_info),
+                [=]() { return toString(this); });
+  StringRef Signature = checkLazy(Sym->getName(this->StringTable),
+                                  [=]() { return toString(this); });
 
   // As a special case, if a symbol is a section symbol and has no name,
   // we use a section name as a signature.
