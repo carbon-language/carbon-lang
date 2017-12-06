@@ -7665,21 +7665,23 @@ multiclass avx_movmask_rm<bits<8> opc_rm, bits<8> opc_mr, string OpcodeStr,
   def rm  : AVX8I<opc_rm, MRMSrcMem, (outs VR128:$dst),
              (ins VR128:$src1, f128mem:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(set VR128:$dst, (IntLd addr:$src2, VR128:$src1))]>,
-             VEX_4V;
+             [(set VR128:$dst, (IntLd addr:$src2, VR128:$src1))],
+             IIC_SSE_MASKMOV>, VEX_4V, Sched<[WriteLoad]>;
   def Yrm : AVX8I<opc_rm, MRMSrcMem, (outs VR256:$dst),
              (ins VR256:$src1, f256mem:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(set VR256:$dst, (IntLd256 addr:$src2, VR256:$src1))]>,
-             VEX_4V, VEX_L;
+             [(set VR256:$dst, (IntLd256 addr:$src2, VR256:$src1))],
+             IIC_SSE_MASKMOV>, VEX_4V, VEX_L, Sched<[WriteLoad]>;
   def mr  : AVX8I<opc_mr, MRMDestMem, (outs),
              (ins f128mem:$dst, VR128:$src1, VR128:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(IntSt addr:$dst, VR128:$src1, VR128:$src2)]>, VEX_4V;
+             [(IntSt addr:$dst, VR128:$src1, VR128:$src2)], IIC_SSE_MASKMOV>,
+             VEX_4V, Sched<[WriteStore]>;
   def Ymr : AVX8I<opc_mr, MRMDestMem, (outs),
              (ins f256mem:$dst, VR256:$src1, VR256:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(IntSt256 addr:$dst, VR256:$src1, VR256:$src2)]>, VEX_4V, VEX_L;
+             [(IntSt256 addr:$dst, VR256:$src1, VR256:$src2)], IIC_SSE_MASKMOV>,
+             VEX_4V, VEX_L, Sched<[WriteStore]>;
 }
 
 let ExeDomain = SSEPackedSingle in
@@ -8296,20 +8298,23 @@ multiclass avx2_pmovmask<string OpcodeStr,
   def rm  : AVX28I<0x8c, MRMSrcMem, (outs VR128:$dst),
              (ins VR128:$src1, i128mem:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(set VR128:$dst, (IntLd128 addr:$src2, VR128:$src1))]>, VEX_4V;
+             [(set VR128:$dst, (IntLd128 addr:$src2, VR128:$src1))],
+             IIC_SSE_MASKMOV>, VEX_4V, Sched<[WriteLoad]>;
   def Yrm : AVX28I<0x8c, MRMSrcMem, (outs VR256:$dst),
              (ins VR256:$src1, i256mem:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(set VR256:$dst, (IntLd256 addr:$src2, VR256:$src1))]>,
-             VEX_4V, VEX_L;
+             [(set VR256:$dst, (IntLd256 addr:$src2, VR256:$src1))],
+             IIC_SSE_MASKMOV>, VEX_4V, VEX_L, Sched<[WriteLoad]>;
   def mr  : AVX28I<0x8e, MRMDestMem, (outs),
              (ins i128mem:$dst, VR128:$src1, VR128:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(IntSt128 addr:$dst, VR128:$src1, VR128:$src2)]>, VEX_4V;
+             [(IntSt128 addr:$dst, VR128:$src1, VR128:$src2)], IIC_SSE_MASKMOV>,
+             VEX_4V, Sched<[WriteStore]>;
   def Ymr : AVX28I<0x8e, MRMDestMem, (outs),
              (ins i256mem:$dst, VR256:$src1, VR256:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(IntSt256 addr:$dst, VR256:$src1, VR256:$src2)]>, VEX_4V, VEX_L;
+             [(IntSt256 addr:$dst, VR256:$src1, VR256:$src2)], IIC_SSE_MASKMOV>,
+             VEX_4V, VEX_L, Sched<[WriteStore]>;
 }
 
 defm VPMASKMOVD : avx2_pmovmask<"vpmaskmovd",
