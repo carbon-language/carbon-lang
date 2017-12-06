@@ -624,7 +624,7 @@ INTERCEPTOR(char *, fcvt, double x, int a, int *b, int *c) {
   if (res) __msan_unpoison(res, REAL(strlen)(res) + 1);
   return res;
 }
-#define MSAN_MAYBE_INTERCEPT_FCVT INTERCEPT_FUNCTION(fcvr)
+#define MSAN_MAYBE_INTERCEPT_FCVT INTERCEPT_FUNCTION(fcvt)
 #else
 #define MSAN_MAYBE_INTERCEPT_FCVT
 #endif
