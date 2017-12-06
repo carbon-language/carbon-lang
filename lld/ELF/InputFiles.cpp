@@ -209,10 +209,8 @@ typename ELFT::SymRange ELFFileBase<ELFT>::getGlobalELFSyms() {
 
 template <class ELFT>
 uint32_t ELFFileBase<ELFT>::getSectionIndex(const Elf_Sym &Sym) const {
-  auto RetOrErr = getObj().getSectionIndex(&Sym, ELFSyms, SymtabSHNDX);
-  if (RetOrErr)
-    return *RetOrErr;
-  fatal(toString(this) + ": " + toString(RetOrErr.takeError()));
+  return checkLazy(getObj().getSectionIndex(&Sym, ELFSyms, SymtabSHNDX),
+                   [=]() { return toString(this); });
 }
 
 template <class ELFT>
@@ -642,10 +640,8 @@ template <class ELFT> Symbol *ObjFile<ELFT>::createSymbol(const Elf_Sym *Sym) {
     return make<Defined>(this, Name, Binding, StOther, Type, Value, Size, Sec);
   }
 
-  auto NameOrErr = Sym->getName(this->StringTable);
-  if (!NameOrErr)
-    fatal(toString(this) + ": " + toString(NameOrErr.takeError()));
-  StringRef Name = *NameOrErr;
+  StringRef Name = checkLazy(Sym->getName(this->StringTable),
+                             [=]() { return toString(this); });
 
   switch (Sym->st_shndx) {
   case SHN_UNDEF:
