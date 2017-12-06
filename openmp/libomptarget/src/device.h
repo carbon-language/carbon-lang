@@ -162,4 +162,6 @@ private:
 typedef std::vector<DeviceTy> DevicesTy;
 extern DevicesTy Devices;
 
+extern bool device_is_ready(int device_num);
+
 #endif

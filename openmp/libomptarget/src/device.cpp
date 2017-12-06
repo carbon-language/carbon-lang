@@ -332,3 +332,34 @@ int32_t DeviceTy::run_team_region(void *TgtEntryPtr, void **TgtVarsPtr,
   return RTL->run_team_region(RTLDeviceID, TgtEntryPtr, TgtVarsPtr, TgtOffsets,
       TgtVarsSize, NumTeams, ThreadLimit, LoopTripCount);
 }
+
+/// Check whether a device has an associated RTL and initialize it if it's not
+/// already initialized.
+bool device_is_ready(int device_num) {
+  DP("Checking whether device %d is ready.\n", device_num);
+  // Devices.size() can only change while registering a new
+  // library, so try to acquire the lock of RTLs' mutex.
+  RTLsMtx.lock();
+  size_t Devices_size = Devices.size();
+  RTLsMtx.unlock();
+  if (Devices_size <= (size_t)device_num) {
+    DP("Device ID  %d does not have a matching RTL\n", device_num);
+    return false;
+  }
+
+  // Get device info
+  DeviceTy &Device = Devices[device_num];
+
+  DP("Is the device %d (local ID %d) initialized? %d\n", device_num,
+       Device.RTLDeviceID, Device.IsInit);
+
+  // Init the device if not done before
+  if (!Device.IsInit && Device.initOnce() != OFFLOAD_SUCCESS) {
+    DP("Failed to init device %d\n", device_num);
+    return false;
+  }
+
+  DP("Device %d is ready to use.\n", device_num);
+
+  return true;
+}
