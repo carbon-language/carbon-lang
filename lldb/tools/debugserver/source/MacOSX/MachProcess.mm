@@ -190,7 +190,7 @@ static bool CallBoardSystemServiceOpenApplication(NSString *bundleIDNSStr,
 }
 #endif
 
-#if defined(WITH_FBS) || defined(WITH_FBS)
+#if defined(WITH_BKS) || defined(WITH_FBS)
 static void SplitEventData(const char *data, std::vector<std::string> &elements)
 {
   elements.clear();
