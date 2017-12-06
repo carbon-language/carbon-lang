@@ -18,9 +18,20 @@
 
 #include <cstdint>
 
+extern int target_data_begin(DeviceTy &Device, int32_t arg_num,
+    void **args_base, void **args, int64_t *arg_sizes, int64_t *arg_types);
+
+extern int target_data_end(DeviceTy &Device, int32_t arg_num, void **args_base,
+    void **args, int64_t *arg_sizes, int64_t *arg_types);
+
+extern void target_data_update(DeviceTy &Device, int32_t arg_num,
+    void **args_base, void **args, int64_t *arg_sizes, int64_t *arg_types);
+
 extern int target(int64_t device_id, void *host_ptr, int32_t arg_num,
     void **args_base, void **args, int64_t *arg_sizes, int64_t *arg_types,
     int32_t team_num, int32_t thread_limit, int IsTeamConstruct);
+
+extern int CheckDeviceAndCtors(int64_t device_id);
 
 #ifdef OMPTARGET_DEBUG
 extern int DebugLevel;
