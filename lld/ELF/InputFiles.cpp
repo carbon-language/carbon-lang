@@ -642,7 +642,10 @@ template <class ELFT> Symbol *ObjFile<ELFT>::createSymbol(const Elf_Sym *Sym) {
     return make<Defined>(this, Name, Binding, StOther, Type, Value, Size, Sec);
   }
 
-  StringRef Name = check(Sym->getName(this->StringTable), toString(this));
+  auto NameOrErr = Sym->getName(this->StringTable);
+  if (!NameOrErr)
+    fatal(toString(this) + ": " + toString(NameOrErr.takeError()));
+  StringRef Name = *NameOrErr;
 
   switch (Sym->st_shndx) {
   case SHN_UNDEF:
