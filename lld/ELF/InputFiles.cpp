@@ -595,8 +595,8 @@ InputSectionBase *ObjFile<ELFT>::createInputSection(const Elf_Shdr &Sec) {
 
 template <class ELFT>
 StringRef ObjFile<ELFT>::getSectionName(const Elf_Shdr &Sec) {
-  return check(this->getObj().getSectionName(&Sec, SectionStringTable),
-               toString(this));
+  return checkLazy(this->getObj().getSectionName(&Sec, SectionStringTable),
+                   [=]() { return toString(this); });
 }
 
 template <class ELFT> void ObjFile<ELFT>::initializeSymbols() {
