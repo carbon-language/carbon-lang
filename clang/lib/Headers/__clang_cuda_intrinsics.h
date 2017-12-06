@@ -206,6 +206,10 @@ inline __device__ unsigned int __ballot_sync(unsigned int mask, int pred) {
 
 inline __device__ unsigned int __activemask() { return __nvvm_vote_ballot(1); }
 
+inline __device__ unsigned int __fns(unsigned mask, unsigned base, int offset) {
+  return __nvvm_fns(mask, base, offset);
+}
+
 #endif // !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 300
 
 // Define __match* builtins CUDA-9 headers expect to see.
