@@ -54,7 +54,7 @@ void MachineOperand::setReg(unsigned Reg) {
     SmallContents.RegNo = Reg;
     MRI.addRegOperandToUseList(this);
     return;
-      }
+  }
 
   // Otherwise, just change the register, no problem.  :)
   SmallContents.RegNo = Reg;
