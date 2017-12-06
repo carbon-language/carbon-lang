@@ -1400,8 +1400,8 @@ Value *llvm::createSimpleTargetReduction(
   using RD = RecurrenceDescriptor;
   RD::MinMaxRecurrenceKind MinMaxKind = RD::MRK_Invalid;
   // TODO: Support creating ordered reductions.
-  FastMathFlags FMFUnsafe;
-  FMFUnsafe.setFast();
+  FastMathFlags FMFFast;
+  FMFFast.setFast();
 
   switch (Opcode) {
   case Instruction::Add:
@@ -1422,14 +1422,14 @@ Value *llvm::createSimpleTargetReduction(
   case Instruction::FAdd:
     BuildFunc = [&]() {
       auto Rdx = Builder.CreateFAddReduce(ScalarUdf, Src);
-      cast<CallInst>(Rdx)->setFastMathFlags(FMFUnsafe);
+      cast<CallInst>(Rdx)->setFastMathFlags(FMFFast);
       return Rdx;
     };
     break;
   case Instruction::FMul:
     BuildFunc = [&]() {
       auto Rdx = Builder.CreateFMulReduce(ScalarUdf, Src);
-      cast<CallInst>(Rdx)->setFastMathFlags(FMFUnsafe);
+      cast<CallInst>(Rdx)->setFastMathFlags(FMFFast);
       return Rdx;
     };
     break;
