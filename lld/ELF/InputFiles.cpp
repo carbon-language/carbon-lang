@@ -520,13 +520,14 @@ InputSectionBase *ObjFile<ELFT>::createInputSection(const Elf_Shdr &Sec) {
 
     size_t NumRelocations;
     if (Sec.sh_type == SHT_RELA) {
-      ArrayRef<Elf_Rela> Rels =
-          check(this->getObj().relas(&Sec), toString(this));
+      ArrayRef<Elf_Rela> Rels = checkLazy(this->getObj().relas(&Sec),
+                                          [=]() { return toString(this); });
       Target->FirstRelocation = Rels.begin();
       NumRelocations = Rels.size();
       Target->AreRelocsRela = true;
     } else {
-      ArrayRef<Elf_Rel> Rels = check(this->getObj().rels(&Sec), toString(this));
+      ArrayRef<Elf_Rel> Rels = checkLazy(this->getObj().rels(&Sec),
+                                         [=]() { return toString(this); });
       Target->FirstRelocation = Rels.begin();
       NumRelocations = Rels.size();
       Target->AreRelocsRela = false;
