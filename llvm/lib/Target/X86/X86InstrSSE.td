@@ -6172,6 +6172,11 @@ let Predicates = [UseSSE41] in {
 // SSE4.1 - Packed Bit Test
 //===----------------------------------------------------------------------===//
 
+let Sched = WriteVecLogic in 
+def SSE_PTEST : OpndItins<
+  IIC_SSE_INTALU_P_RR, IIC_SSE_INTALU_P_RM
+>;
+
 // ptest instruction we'll lower to this in X86ISelLowering primarily from
 // the intel intrinsic that corresponds to this.
 let Defs = [EFLAGS], Predicates = [HasAVX] in {
