@@ -351,7 +351,7 @@ INTERCEPTOR(char *, gcvt, double number, SIZE_T ndigit, char *buf) {
   __msan_unpoison(buf, n + 1);
   return res;
 }
-#define MSAN_MAYBE_INTERCEPT_GCVT INTERCEPT_FUNCTION(gcvr)
+#define MSAN_MAYBE_INTERCEPT_GCVT INTERCEPT_FUNCTION(gcvt)
 #else
 #define MSAN_MAYBE_INTERCEPT_GCVT
 #endif
