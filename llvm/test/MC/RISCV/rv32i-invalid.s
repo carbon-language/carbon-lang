@@ -111,8 +111,8 @@ slti a10, a2, 0x20 # CHECK: :[[@LINE]]:6: error: invalid operand for instruction
 slt x32, s0, s0 # CHECK: :[[@LINE]]:5: error: invalid operand for instruction
 
 # RV64I mnemonics
-addiw a0, sp, 100 # CHECK: :[[@LINE]]:1: error: unrecognized instruction mnemonic
-sraw t0, s2, zero # CHECK: :[[@LINE]]:1: error: unrecognized instruction mnemonic
+addiw a0, sp, 100 # CHECK: :[[@LINE]]:1: error: instruction use requires an option to be enabled
+sraw t0, s2, zero # CHECK: :[[@LINE]]:1: error: instruction use requires an option to be enabled
 
 # Invalid operand types
 xori sp, 22, 220 # CHECK: :[[@LINE]]:10: error: invalid operand for instruction

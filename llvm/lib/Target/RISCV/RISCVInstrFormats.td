@@ -188,6 +188,23 @@ class RVInstI<bits<3> funct3, RISCVOpcode opcode, dag outs, dag ins,
 class RVInstIShift<bit arithshift, bits<3> funct3, RISCVOpcode opcode,
                    dag outs, dag ins, string opcodestr, string argstr>
     : RVInst<outs, ins, opcodestr, argstr, [], InstFormatI> {
+  bits<6> shamt;
+  bits<5> rs1;
+  bits<5> rd;
+
+  let Inst{31} = 0;
+  let Inst{30} = arithshift;
+  let Inst{29-26} = 0;
+  let Inst{25-20} = shamt;
+  let Inst{19-15} = rs1;
+  let Inst{14-12} = funct3;
+  let Inst{11-7} = rd;
+  let Opcode = opcode.Value;
+}
+
+class RVInstIShiftW<bit arithshift, bits<3> funct3, RISCVOpcode opcode,
+                    dag outs, dag ins, string opcodestr, string argstr>
+    : RVInst<outs, ins, opcodestr, argstr, [], InstFormatI> {
   bits<5> shamt;
   bits<5> rs1;
   bits<5> rd;

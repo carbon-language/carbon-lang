@@ -40,6 +40,8 @@ def HasStdExtD : Predicate<"Subtarget->hasStdExtD()">,
 
 def Feature64Bit
     : SubtargetFeature<"64bit", "HasRV64", "true", "Implements RV64">;
+def IsRV64 : Predicate<"Subtarget->is64Bit()">,
+                       AssemblerPredicate<"Feature64Bit">;
 
 def RV64           : HwMode<"+64bit">;
 def RV32           : HwMode<"-64bit">;
