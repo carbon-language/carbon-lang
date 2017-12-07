@@ -1747,26 +1747,24 @@ void GnuHashTableSection::writeBloomFilter(uint8_t *Buf) {
 }
 
 void GnuHashTableSection::writeHashTable(uint8_t *Buf) {
-  // Write hash buckets. Hash buckets contain indices in the following
-  // hash value table.
   uint32_t *Buckets = reinterpret_cast<uint32_t *>(Buf);
   uint32_t OldBucket = -1;
-  for (auto I = Symbols.begin(), E = Symbols.end(); I != E; ++I) {
-    if (I->BucketIdx == OldBucket)
-      continue;
-    OldBucket = I->BucketIdx;
-    write32(Buckets + OldBucket, I->Sym->DynsymIndex);
-  }
-
-  // Write a hash value table. It represents a sequence of chains that
-  // share the same hash modulo value. The last element of each chain
-  // is terminated by LSB 1.
   uint32_t *Values = Buckets + NBuckets;
   for (auto I = Symbols.begin(), E = Symbols.end(); I != E; ++I) {
+    // Write a hash value. It represents a sequence of chains that share the
+    // same hash modulo value. The last element of each chain is terminated by
+    // LSB 1.
     uint32_t Hash = I->Hash;
     bool IsLastInChain = (I + 1) == E || I->BucketIdx != (I + 1)->BucketIdx;
     Hash = IsLastInChain ? Hash | 1 : Hash & ~1;
     write32(Values++, Hash);
+
+    if (I->BucketIdx == OldBucket)
+      continue;
+    // Write a hash bucket. Hash buckets contain indices in the following hash
+    // value table.
+    write32(Buckets + I->BucketIdx, I->Sym->DynsymIndex);
+    OldBucket = I->BucketIdx;
   }
 }
 
