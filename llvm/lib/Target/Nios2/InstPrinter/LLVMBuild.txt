@@ -1,4 +1,4 @@
-;===- ./lib/Target/Nios2/MCTargetDesc/LLVMBuild.txt ------------*- Conf -*--===;
+;===- ./lib/Target/Nios2/InstPrinter/LLVMBuild.txt -------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -17,10 +17,7 @@
 
 [component_0]
 type = Library
-name = Nios2Desc
+name = Nios2AsmPrinter
 parent = Nios2
-required_libraries = MC
-                     Nios2AsmPrinter
-                     Nios2Info
-                     Support
+required_libraries = MC Support
 add_to_library_groups = Nios2
