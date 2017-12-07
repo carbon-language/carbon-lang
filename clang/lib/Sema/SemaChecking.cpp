@@ -12399,8 +12399,9 @@ void Sema::DiscardMisalignedMemberAddress(const Type *T, Expr *E) {
                           MisalignedMember(Op));
       if (MA != MisalignedMembers.end() &&
           (T->isIntegerType() ||
-           (T->isPointerType() &&
-            Context.getTypeAlignInChars(T->getPointeeType()) <= MA->Alignment)))
+           (T->isPointerType() && (T->getPointeeType()->isIncompleteType() ||
+                                   Context.getTypeAlignInChars(
+                                       T->getPointeeType()) <= MA->Alignment))))
         MisalignedMembers.erase(MA);
     }
   }
