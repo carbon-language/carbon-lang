@@ -370,7 +370,9 @@ static void InitializeStandardPredefinedMacros(const TargetInfo &TI,
     Builder.defineMacro("__STDC_HOSTED__");
 
   if (!LangOpts.CPlusPlus) {
-    if (LangOpts.C11)
+    if (LangOpts.C17)
+      Builder.defineMacro("__STDC_VERSION__", "201710L");
+    else if (LangOpts.C11)
       Builder.defineMacro("__STDC_VERSION__", "201112L");
     else if (LangOpts.C99)
       Builder.defineMacro("__STDC_VERSION__", "199901L");
