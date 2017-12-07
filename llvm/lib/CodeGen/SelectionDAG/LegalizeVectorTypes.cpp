@@ -1754,7 +1754,8 @@ SDValue DAGTypeLegalizer::SplitVecOp_EXTRACT_VECTOR_ELT(SDNode *N) {
     for (unsigned i = 0; i < VecVT.getVectorNumElements(); ++i) {
       ElementOps.push_back(DAG.getAnyExtOrTrunc(
           DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, Vec,
-                      DAG.getConstant(i, dl, MVT::i8)),
+                      DAG.getConstant(i, dl,
+                                      TLI.getVectorIdxTy(DAG.getDataLayout()))),
           dl, MVT::i8));
     }
 
