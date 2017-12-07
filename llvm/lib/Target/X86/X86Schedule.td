@@ -508,6 +508,7 @@ def IIC_SLDT : InstrItinClass;
 def IIC_STR : InstrItinClass;
 def IIC_SKINIT : InstrItinClass;
 def IIC_SVM : InstrItinClass;
+def IIC_VMX : InstrItinClass;
 def IIC_CLGI : InstrItinClass;
 def IIC_STGI : InstrItinClass;
 def IIC_SWAPGS : InstrItinClass;
