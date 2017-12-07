@@ -34,6 +34,18 @@ class RVInst16<dag outs, dag ins, string opcodestr, string argstr,
   let TSFlags{4-0} = format.Value;
 }
 
+class RVInst16CR<bits<4> funct4, bits<2> opcode, dag outs, dag ins,
+                 string opcodestr, string argstr>
+    : RVInst16<outs, ins, opcodestr, argstr, [], InstFormatCR> {
+  bits<5> rs1;
+  bits<5> rs2;
+
+  let Inst{15-12} = funct4;
+  let Inst{11-7} = rs1;
+  let Inst{6-2} = rs2;
+  let Inst{1-0} = opcode;
+}
+
 // The immediate value encoding differs for each instruction, so each subclass
 // is responsible for setting the appropriate bits in the Inst field.
 // The bits Inst{6-2} must be set for each instruction.
@@ -92,5 +104,33 @@ class RVInst16CS<bits<3> funct3, bits<2> opcode, dag outs, dag ins,
   let Inst{15-13} = funct3;
   let Inst{9-7} = rs1;
   let Inst{4-2} = rs2;
+  let Inst{1-0} = opcode;
+}
+
+class RVInst16CB<bits<3> funct3, bits<2> opcode, dag outs, dag ins,
+                 string opcodestr, string argstr>
+    : RVInst16<outs, ins, opcodestr, argstr, [], InstFormatCB> {
+  bits<9> imm;
+  bits<3> rs1;
+
+  let Inst{15-13} = funct3;
+  let Inst{9-7} = rs1;
+  let Inst{1-0} = opcode;
+}
+
+class RVInst16CJ<bits<3> funct3, bits<2> opcode, dag outs, dag ins,
+                 string opcodestr, string argstr>
+    : RVInst16<outs, ins, opcodestr, argstr, [], InstFormatCJ> {
+  bits<11> offset;
+
+  let Inst{15-13} = funct3;
+  let Inst{12} = offset{10};
+  let Inst{11} = offset{3};
+  let Inst{10-9} = offset{8-7};
+  let Inst{8} = offset{9};
+  let Inst{7} = offset{5};
+  let Inst{6} = offset{6};
+  let Inst{5-3} = offset{2-0};
+  let Inst{2} = offset{4};
   let Inst{1-0} = opcode;
 }
