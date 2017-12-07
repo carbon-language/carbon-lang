@@ -1747,29 +1747,29 @@ void GnuHashTableSection::writeBloomFilter(uint8_t *Buf) {
 }
 
 void GnuHashTableSection::writeHashTable(uint8_t *Buf) {
-  // Group symbols by hash value.
-  std::vector<std::vector<Entry>> Syms(NBuckets);
-  for (const Entry &Ent : Symbols)
-    Syms[Ent.BucketIdx].push_back(Ent);
-
   // Write hash buckets. Hash buckets contain indices in the following
   // hash value table.
   uint32_t *Buckets = reinterpret_cast<uint32_t *>(Buf);
-  for (size_t I = 0; I < NBuckets; ++I)
-    if (!Syms[I].empty())
-      write32(Buckets + I, Syms[I][0].Sym->DynsymIndex);
+  auto SymI = Symbols.begin();
+  for (size_t I = 0; I < NBuckets; ++I) {
+    auto NewI = std::find_if(SymI, Symbols.end(), [=](const Entry &Ent) {
+      return Ent.BucketIdx == I;
+    });
+    if (NewI != Symbols.end()) {
+      write32(Buckets + I, NewI->Sym->DynsymIndex);
+      SymI = NewI;
+    }
+  }
 
   // Write a hash value table. It represents a sequence of chains that
   // share the same hash modulo value. The last element of each chain
   // is terminated by LSB 1.
   uint32_t *Values = Buckets + NBuckets;
-  size_t I = 0;
-  for (std::vector<Entry> &Vec : Syms) {
-    if (Vec.empty())
-      continue;
-    for (const Entry &Ent : makeArrayRef(Vec).drop_back())
-      write32(Values + I++, Ent.Hash & ~1);
-    write32(Values + I++, Vec.back().Hash | 1);
+  for (auto I = Symbols.begin(), E = Symbols.end(); I != E; ++I) {
+    uint32_t Hash = I->Hash;
+    bool IsLastInChain = (I + 1) == E || I->BucketIdx != (I + 1)->BucketIdx;
+    Hash = IsLastInChain ? Hash | 1 : Hash & ~1;
+    write32(Values++, Hash);
   }
 }
 
