@@ -225,6 +225,38 @@ public:
     return IsConstantImm && isUInt<5>(Imm) && VK == RISCVMCExpr::VK_RISCV_None;
   }
 
+  bool isUImm7Lsb00() const {
+    int64_t Imm;
+    RISCVMCExpr::VariantKind VK;
+    bool IsConstantImm = evaluateConstantImm(Imm, VK);
+    return IsConstantImm && isShiftedUInt<5, 2>(Imm) &&
+           VK == RISCVMCExpr::VK_RISCV_None;
+  }
+
+  bool isUImm8Lsb00() const {
+    int64_t Imm;
+    RISCVMCExpr::VariantKind VK;
+    bool IsConstantImm = evaluateConstantImm(Imm, VK);
+    return IsConstantImm && isShiftedUInt<6, 2>(Imm) &&
+           VK == RISCVMCExpr::VK_RISCV_None;
+  }
+
+  bool isUImm8Lsb000() const {
+    int64_t Imm;
+    RISCVMCExpr::VariantKind VK;
+    bool IsConstantImm = evaluateConstantImm(Imm, VK);
+    return IsConstantImm && isShiftedUInt<5, 3>(Imm) &&
+           VK == RISCVMCExpr::VK_RISCV_None;
+  }
+
+  bool isUImm9Lsb000() const {
+    int64_t Imm;
+    RISCVMCExpr::VariantKind VK;
+    bool IsConstantImm = evaluateConstantImm(Imm, VK);
+    return IsConstantImm && isShiftedUInt<6, 3>(Imm) &&
+           VK == RISCVMCExpr::VK_RISCV_None;
+  }
+
   bool isSImm12() const {
     RISCVMCExpr::VariantKind VK;
     int64_t Imm;
@@ -508,6 +540,22 @@ bool RISCVAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     return generateImmOutOfRangeError(Operands, ErrorInfo, 0, (1 << 5) - 1);
   case Match_InvalidUImm5:
     return generateImmOutOfRangeError(Operands, ErrorInfo, 0, (1 << 5) - 1);
+  case Match_InvalidUImm7Lsb00:
+    return generateImmOutOfRangeError(
+        Operands, ErrorInfo, 0, (1 << 7) - 4,
+        "immediate must be a multiple of 4 bytes in the range");
+  case Match_InvalidUImm8Lsb00:
+    return generateImmOutOfRangeError(
+        Operands, ErrorInfo, 0, (1 << 8) - 4,
+        "immediate must be a multiple of 4 bytes in the range");
+  case Match_InvalidUImm8Lsb000:
+    return generateImmOutOfRangeError(
+        Operands, ErrorInfo, 0, (1 << 8) - 8,
+        "immediate must be a multiple of 8 bytes in the range");
+  case Match_InvalidUImm9Lsb000:
+    return generateImmOutOfRangeError(
+        Operands, ErrorInfo, 0, (1 << 9) - 8,
+        "immediate must be a multiple of 8 bytes in the range");
   case Match_InvalidSImm12:
     return generateImmOutOfRangeError(Operands, ErrorInfo, -(1 << 11),
                                       (1 << 11) - 1);
