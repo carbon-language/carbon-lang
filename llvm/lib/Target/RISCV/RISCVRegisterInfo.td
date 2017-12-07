@@ -22,6 +22,18 @@ class RISCVReg32<bits<5> Enc, string n, list<string> alt = []> : Register<n> {
   let AltNames = alt;
 }
 
+// Because RISCVReg64 register have AsmName and AltNames that alias with their
+// 32-bit sub-register, RISCVAsmParser will need to coerce a register number
+// from a RISCVReg32 to the equivalent RISCVReg64 when appropriate.
+def sub_32 : SubRegIndex<32>;
+class RISCVReg64<RISCVReg32 subreg> : Register<""> {
+  let HWEncoding{4-0} = subreg.HWEncoding{4-0};
+  let SubRegs = [subreg];
+  let SubRegIndices = [sub_32];
+  let AsmName = subreg.AsmName;
+  let AltNames = subreg.AltNames;
+}
+
 def ABIRegAltName : RegAltNameIndex;
 } // Namespace = "RISCV"
 
@@ -113,6 +125,11 @@ let RegAltNameIndices = [ABIRegAltName] in {
   def F29_32 : RISCVReg32<29,"f29", ["ft9"]>, DwarfRegNum<[61]>;
   def F30_32 : RISCVReg32<30,"f30", ["ft10"]>, DwarfRegNum<[62]>;
   def F31_32 : RISCVReg32<31,"f31", ["ft11"]>, DwarfRegNum<[63]>;
+
+  foreach Index = 0-31 in {
+    def F#Index#_64 : RISCVReg64<!cast<RISCVReg32>("F"#Index#"_32")>,
+      DwarfRegNum<[!add(Index, 32)]>;
+  }
 }
 
 // The order of registers represents the preferred allocation sequence,
@@ -123,4 +140,14 @@ def FPR32 : RegisterClass<"RISCV", [f32], 32, (add
     (sequence "F%u_32", 28, 31),
     (sequence "F%u_32", 8, 9),
     (sequence "F%u_32", 18, 27)
+)>;
+
+// The order of registers represents the preferred allocation sequence,
+// meaning caller-save regs are listed before callee-save.
+def FPR64 : RegisterClass<"RISCV", [f64], 64, (add
+    (sequence "F%u_64", 0, 7),
+    (sequence "F%u_64", 10, 17),
+    (sequence "F%u_64", 28, 31),
+    (sequence "F%u_64", 8, 9),
+    (sequence "F%u_64", 18, 27)
 )>;

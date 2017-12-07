@@ -32,6 +32,9 @@ struct RISCVOperand;
 class RISCVAsmParser : public MCTargetAsmParser {
   SMLoc getLoc() const { return getParser().getTok().getLoc(); }
 
+  unsigned validateTargetOperandClass(MCParsedAsmOperand &Op,
+                                      unsigned Kind) override;
+
   bool generateImmOutOfRangeError(OperandVector &Operands, uint64_t ErrorInfo,
                                   int Lower, int Upper, Twine Msg);
 
@@ -380,6 +383,67 @@ public:
 #define GET_REGISTER_MATCHER
 #define GET_MATCHER_IMPLEMENTATION
 #include "RISCVGenAsmMatcher.inc"
+
+// Return the matching FPR64 register for the given FPR32.
+// FIXME: Ideally this function could be removed in favour of using
+// information from TableGen.
+unsigned convertFPR32ToFPR64(unsigned Reg) {
+  switch (Reg) {
+    default:
+      llvm_unreachable("Not a recognised FPR32 register");
+    case RISCV::F0_32: return RISCV::F0_64;
+    case RISCV::F1_32: return RISCV::F1_64;
+    case RISCV::F2_32: return RISCV::F2_64;
+    case RISCV::F3_32: return RISCV::F3_64;
+    case RISCV::F4_32: return RISCV::F4_64;
+    case RISCV::F5_32: return RISCV::F5_64;
+    case RISCV::F6_32: return RISCV::F6_64;
+    case RISCV::F7_32: return RISCV::F7_64;
+    case RISCV::F8_32: return RISCV::F8_64;
+    case RISCV::F9_32: return RISCV::F9_64;
+    case RISCV::F10_32: return RISCV::F10_64;
+    case RISCV::F11_32: return RISCV::F11_64;
+    case RISCV::F12_32: return RISCV::F12_64;
+    case RISCV::F13_32: return RISCV::F13_64;
+    case RISCV::F14_32: return RISCV::F14_64;
+    case RISCV::F15_32: return RISCV::F15_64;
+    case RISCV::F16_32: return RISCV::F16_64;
+    case RISCV::F17_32: return RISCV::F17_64;
+    case RISCV::F18_32: return RISCV::F18_64;
+    case RISCV::F19_32: return RISCV::F19_64;
+    case RISCV::F20_32: return RISCV::F20_64;
+    case RISCV::F21_32: return RISCV::F21_64;
+    case RISCV::F22_32: return RISCV::F22_64;
+    case RISCV::F23_32: return RISCV::F23_64;
+    case RISCV::F24_32: return RISCV::F24_64;
+    case RISCV::F25_32: return RISCV::F25_64;
+    case RISCV::F26_32: return RISCV::F26_64;
+    case RISCV::F27_32: return RISCV::F27_64;
+    case RISCV::F28_32: return RISCV::F28_64;
+    case RISCV::F29_32: return RISCV::F29_64;
+    case RISCV::F30_32: return RISCV::F30_64;
+    case RISCV::F31_32: return RISCV::F31_64;
+  }
+}
+
+unsigned RISCVAsmParser::validateTargetOperandClass(MCParsedAsmOperand &AsmOp,
+                                                    unsigned Kind) {
+  RISCVOperand &Op = static_cast<RISCVOperand &>(AsmOp);
+  if (!Op.isReg())
+    return Match_InvalidOperand;
+
+  unsigned Reg = Op.getReg();
+  bool IsRegFPR32 =
+      RISCVMCRegisterClasses[RISCV::FPR32RegClassID].contains(Reg);
+
+  // As the parser couldn't differentiate an FPR32 from an FPR64, coerce the
+  // register from FPR32 to FPR64 if necessary.
+  if (IsRegFPR32 && Kind == MCK_FPR64) {
+    Op.Reg.RegNum = convertFPR32ToFPR64(Reg);
+    return Match_Success;
+  }
+  return Match_InvalidOperand;
+}
 
 bool RISCVAsmParser::generateImmOutOfRangeError(
     OperandVector &Operands, uint64_t ErrorInfo, int Lower, int Upper,
