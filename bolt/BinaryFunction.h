@@ -338,7 +338,7 @@ private:
 
   /// Score of the function (estimated number of instructions executed,
   /// according to profile data). -1 if the score has not been calculated yet.
-  int64_t FunctionScore{-1};
+  mutable int64_t FunctionScore{-1};
 
   /// Original LSDA address for the function.
   uint64_t LSDAAddress{0};
@@ -955,6 +955,10 @@ public:
               Names.back() :
               (Names.back() + "(*" + std::to_string(Names.size()) + ")");
   }
+
+  /// Return the name of the function as getPrintName(), but also trying
+  /// to demangle it.
+  std::string getDemangledName() const;
 
   /// Check if (possibly one out of many) function name matches the given
   /// string. Use this member function instead of direct name comparison.
@@ -1986,7 +1990,7 @@ public:
 
   /// Computes a function hotness score: the sum of the products of BB frequency
   /// and size.
-  uint64_t getFunctionScore();
+  uint64_t getFunctionScore() const;
 
   /// Return true if the layout has been changed by basic block reordering,
   /// false otherwise.

@@ -34,6 +34,7 @@ using namespace bolt;
 namespace opts {
 
 cl::OptionCategory BoltCategory("BOLT generic options");
+cl::OptionCategory BoltDiffCategory("BOLTDIFF generic options");
 cl::OptionCategory BoltOptCategory("BOLT optimization options");
 cl::OptionCategory BoltRelocCategory("BOLT options in relocation mode");
 cl::OptionCategory BoltOutputCategory("Output options");
@@ -44,11 +45,14 @@ static cl::OptionCategory *BoltCategories[] = {&BoltCategory,
                                                &BoltRelocCategory,
                                                &BoltOutputCategory};
 
+static cl::OptionCategory *BoltDiffCategories[] = {&BoltDiffCategory};
+
 static cl::OptionCategory *Perf2BoltCategories[] = {&AggregatorCategory,
                                                     &BoltOutputCategory};
 
 extern cl::opt<std::string> OutputFilename;
 extern cl::opt<bool> AggregateOnly;
+extern cl::opt<bool> DiffOnly;
 
 static cl::opt<bool>
 DumpData("dump-data",
@@ -63,11 +67,24 @@ InputDataFilename("data",
   cl::cat(BoltCategory));
 
 static cl::opt<std::string>
+InputDataFilename2("data2",
+  cl::desc("<data file>"),
+  cl::Optional,
+  cl::cat(BoltCategory));
+
+static cl::opt<std::string>
 InputFilename(
   cl::Positional,
   cl::desc("<executable>"),
   cl::Required,
-  cl::cat(BoltCategory));
+  cl::cat(BoltDiffCategory));
+
+static cl::opt<std::string>
+InputFilename2(
+  cl::Positional,
+  cl::desc("<executable>"),
+  cl::Optional,
+  cl::cat(BoltDiffCategory));
 
 static cl::opt<std::string>
 PerfData("perfdata",
@@ -131,7 +148,36 @@ void perf2boltMode(int argc, char **argv) {
            << "': expected valid perf.data file.\n";
     exit(1);
   }
+  if (opts::OutputFilename.empty()) {
+    errs() << ToolName << ": expected -o=<output file> option.\n";
+    exit(1);
+  }
   opts::AggregateOnly = true;
+}
+
+void boltDiffMode(int argc, char **argv) {
+  cl::HideUnrelatedOptions(makeArrayRef(opts::BoltDiffCategories));
+  cl::ParseCommandLineOptions(
+      argc, argv,
+      "llvm-boltdiff - BOLT binary diff tool\n"
+      "\nEXAMPLE: llvm-boltdiff -data=a.fdata -data2=b.fdata exec1 exec2\n");
+  if (opts::InputDataFilename2.empty()) {
+    errs() << ToolName << ": expected -data2=<filename> option.\n";
+    exit(1);
+  }
+  if (opts::InputDataFilename.empty()) {
+    errs() << ToolName << ": expected -data=<filename> option.\n";
+    exit(1);
+  }
+  if (opts::InputFilename2.empty()) {
+    errs() << ToolName << ": expected second binary name.\n";
+    exit(1);
+  }
+  if (opts::InputFilename.empty()) {
+    errs() << ToolName << ": expected binary.\n";
+    exit(1);
+  }
+  opts::DiffOnly = true;
 }
 
 void boltMode(int argc, char **argv) {
@@ -142,6 +188,11 @@ void boltMode(int argc, char **argv) {
 
   cl::ParseCommandLineOptions(argc, argv,
                               "BOLT - Binary Optimization and Layout Tool\n");
+
+  if (opts::OutputFilename.empty()) {
+    errs() << ToolName << ": expected -o=<output file> option.\n";
+    exit(1);
+  }
 }
 
 int main(int argc, char **argv) {
@@ -164,6 +215,8 @@ int main(int argc, char **argv) {
 
   if (llvm::sys::path::filename(ToolName) == "perf2bolt")
     perf2boltMode(argc, argv);
+  else if (llvm::sys::path::filename(ToolName) == "llvm-boltdiff")
+    boltDiffMode(argc, argv);
   else
     boltMode(argc, argv);
 
@@ -205,15 +258,63 @@ int main(int argc, char **argv) {
   }
 
   // Attempt to open the binary.
-  Expected<OwningBinary<Binary>> BinaryOrErr =
-      createBinary(opts::InputFilename);
-  if (auto E = BinaryOrErr.takeError())
-    report_error(opts::InputFilename, std::move(E));
-  Binary &Binary = *BinaryOrErr.get().getBinary();
+  if (!opts::DiffOnly) {
+    Expected<OwningBinary<Binary>> BinaryOrErr =
+        createBinary(opts::InputFilename);
+    if (auto E = BinaryOrErr.takeError())
+      report_error(opts::InputFilename, std::move(E));
+    Binary &Binary = *BinaryOrErr.get().getBinary();
 
-  if (auto *e = dyn_cast<ELFObjectFileBase>(&Binary)) {
-    RewriteInstance RI(e, *DR.get(), *DA.get(), argc, argv);
-    RI.run();
+    if (auto *e = dyn_cast<ELFObjectFileBase>(&Binary)) {
+      RewriteInstance RI(e, *DR.get(), *DA.get(), argc, argv);
+      RI.run();
+    } else {
+      report_error(opts::InputFilename, object_error::invalid_file_type);
+    }
+
+    return EXIT_SUCCESS;
+  }
+
+  // Bolt-diff
+  std::unique_ptr<bolt::DataReader> DR2(new DataReader(errs()));
+  if (!sys::fs::exists(opts::InputDataFilename2))
+    report_error(opts::InputDataFilename2, errc::no_such_file_or_directory);
+
+  auto ReaderOrErr2 =
+    bolt::DataReader::readPerfData(opts::InputDataFilename2, errs());
+  if (std::error_code EC = ReaderOrErr2.getError())
+    report_error(opts::InputDataFilename2, EC);
+  DR2.reset(ReaderOrErr2.get().release());
+
+  Expected<OwningBinary<Binary>> BinaryOrErr1 =
+      createBinary(opts::InputFilename);
+  Expected<OwningBinary<Binary>> BinaryOrErr2 =
+      createBinary(opts::InputFilename2);
+  if (auto E = BinaryOrErr1.takeError())
+    report_error(opts::InputFilename, std::move(E));
+  if (auto E = BinaryOrErr2.takeError())
+    report_error(opts::InputFilename2, std::move(E));
+  Binary &Binary1 = *BinaryOrErr1.get().getBinary();
+  Binary &Binary2 = *BinaryOrErr2.get().getBinary();
+
+  if (auto *ELFObj1 = dyn_cast<ELFObjectFileBase>(&Binary1)) {
+    if (auto *ELFObj2 = dyn_cast<ELFObjectFileBase>(&Binary2)) {
+      RewriteInstance RI1(ELFObj1, *DR.get(), *DA.get(), argc, argv);
+      RewriteInstance RI2(ELFObj2, *DR2.get(), *DA.get(), argc, argv);
+      outs() << "BOLT-DIFF: *** Analyzing binary 1: " << opts::InputFilename
+             << "\n";
+      outs() << "BOLT-DIFF: *** Binary 1 fdata:     " << opts::InputDataFilename
+             << "\n";
+      RI1.run();
+      outs() << "BOLT-DIFF: *** Analyzing binary 2: " << opts::InputFilename2
+             << "\n";
+      outs() << "BOLT-DIFF: *** Binary 2 fdata:     "
+             << opts::InputDataFilename2 << "\n";
+      RI2.run();
+      RI1.compare(RI2);
+    } else {
+      report_error(opts::InputFilename2, object_error::invalid_file_type);
+    }
   } else {
     report_error(opts::InputFilename, object_error::invalid_file_type);
   }

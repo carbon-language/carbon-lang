@@ -75,6 +75,7 @@ using namespace bolt;
 namespace opts {
 
 extern cl::OptionCategory BoltCategory;
+extern cl::OptionCategory BoltDiffCategory;
 extern cl::OptionCategory BoltOptCategory;
 extern cl::OptionCategory BoltOutputCategory;
 extern cl::OptionCategory AggregatorCategory;
@@ -99,7 +100,7 @@ PrintCacheMetrics("print-cache-metrics",
 cl::opt<std::string>
 OutputFilename("o",
   cl::desc("<output file>"),
-  cl::Required,
+  cl::Optional,
   cl::cat(BoltOutputCategory));
 
 cl::opt<bool>
@@ -342,6 +343,12 @@ AggregateOnly("aggregate-only",
   cl::desc("exit after writing aggregated data file"),
   cl::Hidden,
   cl::cat(AggregatorCategory));
+
+cl::opt<bool>
+DiffOnly("diff-only",
+  cl::desc("stop processing once we have enough to compare two binaries"),
+  cl::Hidden,
+  cl::cat(BoltDiffCategory));
 
 static cl::opt<bool>
 IgnoreBuildID("ignore-build-id",
@@ -944,6 +951,8 @@ void RewriteInstance::run() {
       assert(FI != BinaryFunctions.end() && "bad non-simple function address");
       FI->second.setSimple(false);
     }
+    if (opts::DiffOnly)
+      return;
     runOptimizationPasses();
     emitFunctions();
   };
@@ -957,7 +966,7 @@ void RewriteInstance::run() {
     checkBuildID();
   unsigned PassNumber = 1;
   executeRewritePass({});
-  if (opts::AggregateOnly)
+  if (opts::AggregateOnly || opts::DiffOnly)
     return;
 
   if (opts::SplitFunctions == BinaryFunction::ST_LARGE &&

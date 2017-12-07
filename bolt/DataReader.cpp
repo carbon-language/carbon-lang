@@ -571,7 +571,7 @@ ErrorOr<MemInfo> DataReader::parseMemInfo() {
 
   return MemInfo(Offset, Addr, CountRes.get());
 }
-  
+
 ErrorOr<SampleInfo> DataReader::parseSampleInfo() {
   auto Res = parseLocation(FieldSeparator);
   if (std::error_code EC = Res.getError())

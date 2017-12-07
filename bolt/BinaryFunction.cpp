@@ -31,6 +31,7 @@
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Regex.h"
+#include <cxxabi.h>
 #include <limits>
 #include <queue>
 #include <string>
@@ -255,6 +256,18 @@ bool BinaryFunction::hasNameRegex(const std::string &NameRegex) const {
       return true;
   return false;
 }
+
+std::string BinaryFunction::getDemangledName() const {
+  StringRef MangledName = Names.back();
+  MangledName = MangledName.substr(0, MangledName.find_first_of('/'));
+  int Status = 0;
+  char *const Name =
+      abi::__cxa_demangle(MangledName.str().c_str(), 0, 0, &Status);
+  const std::string NameStr(Status == 0 ? Name : MangledName);
+  free(Name);
+  return NameStr;
+}
+
 
 BinaryBasicBlock *
 BinaryFunction::getBasicBlockContainingOffset(uint64_t Offset) {
@@ -838,7 +851,7 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
         : JumpTable::JTT_PIC;
 
     auto *JTStartLabel = BC.Ctx->getOrCreateSymbol(JumpTableName);
-    
+
     auto JT = llvm::make_unique<JumpTable>(JumpTableName,
                                            ArrayStart,
                                            EntrySize,
@@ -1916,7 +1929,7 @@ void BinaryFunction::removeConditionalTailCalls() {
                     /* UpdateCFIState */ false);
 }
 
-uint64_t BinaryFunction::getFunctionScore() {
+uint64_t BinaryFunction::getFunctionScore() const {
   if (FunctionScore != -1)
     return FunctionScore;
 
@@ -1930,7 +1943,6 @@ uint64_t BinaryFunction::getFunctionScore() {
     uint64_t BBExecCount = BB->getExecutionCount();
     if (BBExecCount == BinaryBasicBlock::COUNT_NO_PROFILE)
       continue;
-    BBExecCount *= BB->getNumNonPseudos();
     TotalScore += BBExecCount;
   }
   FunctionScore = TotalScore;

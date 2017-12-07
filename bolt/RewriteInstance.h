@@ -38,6 +38,7 @@ class BinaryContext;
 class CFIReaderWriter;
 class DataAggregator;
 class DataReader;
+class RewriteInstanceDiff;
 
 struct SegmentInfo {
   uint64_t Address;           /// Address of the segment in memory.
@@ -123,6 +124,10 @@ public:
   /// Check that binary build ID matches the one used in perf.data to collect
   /// profile
   void checkBuildID();
+
+  /// Diff this instance against another one. Non-const since we may run passes
+  /// to fold identical functions.
+  void compare(RewriteInstance &RI2);
 
   /// Populate array of binary functions and other objects of interest
   /// from meta data in the file.
@@ -235,6 +240,10 @@ public:
   /// Produce output address ranges based on input ranges for some module.
   DWARFAddressRangesVector translateModuleAddressRanges(
       const DWARFAddressRangesVector &InputRanges) const;
+
+  uint64_t getTotalScore() const {
+    return BC->TotalScore;
+  }
 
 private:
   /// Emit a single function.
@@ -519,6 +528,8 @@ private:
   /// Number of processed to data relocations.  Used to implement the
   /// -max-relocations debugging option.
   uint64_t NumDataRelocations{0};
+
+  friend class RewriteInstanceDiff;
 };
 
 } // namespace bolt

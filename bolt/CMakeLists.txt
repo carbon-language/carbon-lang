@@ -67,6 +67,7 @@ add_llvm_tool(llvm-bolt
   BinaryFunctionProfile.cpp
   BinaryPassManager.cpp
   BinarySection.cpp
+  BoltDiff.cpp
   CacheMetrics.cpp
   DataAggregator.cpp
   DataReader.cpp
@@ -84,3 +85,4 @@ add_llvm_tool(llvm-bolt
   )
 
 add_llvm_tool_symlink(perf2bolt llvm-bolt)
+add_llvm_tool_symlink(llvm-boltdiff llvm-bolt)

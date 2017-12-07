@@ -52,7 +52,7 @@ EliminateUnreachable("eliminate-unreachable",
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
-static cl::opt<bool>
+cl::opt<bool>
 ICF("icf",
   cl::desc("fold functions with identical code"),
   cl::ZeroOrMore,
@@ -77,7 +77,7 @@ PrintJTFootprintReduction("print-after-jt-footprint-reduction",
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
-static cl::opt<bool>
+cl::opt<bool>
 NeverPrint("never-print",
   cl::desc("never print"),
   cl::init(false),
