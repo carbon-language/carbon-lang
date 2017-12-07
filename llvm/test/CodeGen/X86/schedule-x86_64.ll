@@ -665,7 +665,7 @@ define i32 @test_bswap32(i32 %a0) optsize {
 ; BTVER2-LABEL: test_bswap32:
 ; BTVER2:       # %bb.0:
 ; BTVER2-NEXT:    bswapl %edi # sched: [1:0.50]
-; BTVER2-NEXT:    movl %edi, %eax # sched: [1:0.17]
+; BTVER2-NEXT:    movl %edi, %eax # sched: [1:0.50]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;
 ; ZNVER1-LABEL: test_bswap32:
@@ -728,7 +728,7 @@ define i64 @test_bswap64(i64 %a0) optsize {
 ; BTVER2-LABEL: test_bswap64:
 ; BTVER2:       # %bb.0:
 ; BTVER2-NEXT:    bswapq %rdi # sched: [1:0.50]
-; BTVER2-NEXT:    movq %rdi, %rax # sched: [1:0.17]
+; BTVER2-NEXT:    movq %rdi, %rax # sched: [1:0.50]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;
 ; ZNVER1-LABEL: test_bswap64:
