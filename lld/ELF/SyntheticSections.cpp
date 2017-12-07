@@ -1750,15 +1750,12 @@ void GnuHashTableSection::writeHashTable(uint8_t *Buf) {
   // Write hash buckets. Hash buckets contain indices in the following
   // hash value table.
   uint32_t *Buckets = reinterpret_cast<uint32_t *>(Buf);
-  auto SymI = Symbols.begin();
-  for (size_t I = 0; I < NBuckets; ++I) {
-    auto NewI = std::find_if(SymI, Symbols.end(), [=](const Entry &Ent) {
-      return Ent.BucketIdx == I;
-    });
-    if (NewI != Symbols.end()) {
-      write32(Buckets + I, NewI->Sym->DynsymIndex);
-      SymI = NewI;
-    }
+  uint32_t OldBucket = -1;
+  for (auto I = Symbols.begin(), E = Symbols.end(); I != E; ++I) {
+    if (I->BucketIdx == OldBucket)
+      continue;
+    OldBucket = I->BucketIdx;
+    write32(Buckets + OldBucket, I->Sym->DynsymIndex);
   }
 
   // Write a hash value table. It represents a sequence of chains that
