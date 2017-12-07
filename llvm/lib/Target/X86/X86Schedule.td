@@ -498,6 +498,8 @@ def IIC_IRET : InstrItinClass;
 def IIC_HLT : InstrItinClass;
 def IIC_LXS : InstrItinClass;
 def IIC_LTR : InstrItinClass;
+def IIC_RDRAND : InstrItinClass;
+def IIC_RDSEED : InstrItinClass;
 def IIC_RDTSC : InstrItinClass;
 def IIC_RSM : InstrItinClass;
 def IIC_SIDT : InstrItinClass;

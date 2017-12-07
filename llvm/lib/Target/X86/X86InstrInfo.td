@@ -2198,31 +2198,35 @@ let Predicates = [HasMOVBE] in {
 //===----------------------------------------------------------------------===//
 // RDRAND Instruction
 //
-let Predicates = [HasRDRAND], Defs = [EFLAGS] in {
+let Predicates = [HasRDRAND], Defs = [EFLAGS], SchedRW = [WriteSystem] in {
   def RDRAND16r : I<0xC7, MRM6r, (outs GR16:$dst), (ins),
                     "rdrand{w}\t$dst",
-                    [(set GR16:$dst, EFLAGS, (X86rdrand))]>, OpSize16, PS;
+                    [(set GR16:$dst, EFLAGS, (X86rdrand))], IIC_RDRAND>,
+                    OpSize16, PS;
   def RDRAND32r : I<0xC7, MRM6r, (outs GR32:$dst), (ins),
                     "rdrand{l}\t$dst",
-                    [(set GR32:$dst, EFLAGS, (X86rdrand))]>, OpSize32, PS;
+                    [(set GR32:$dst, EFLAGS, (X86rdrand))], IIC_RDRAND>,
+                    OpSize32, PS;
   def RDRAND64r : RI<0xC7, MRM6r, (outs GR64:$dst), (ins),
                      "rdrand{q}\t$dst",
-                     [(set GR64:$dst, EFLAGS, (X86rdrand))]>, PS;
+                     [(set GR64:$dst, EFLAGS, (X86rdrand))], IIC_RDRAND>, PS;
 }
 
 //===----------------------------------------------------------------------===//
 // RDSEED Instruction
 //
-let Predicates = [HasRDSEED], Defs = [EFLAGS] in {
+let Predicates = [HasRDSEED], Defs = [EFLAGS], SchedRW = [WriteSystem] in {
   def RDSEED16r : I<0xC7, MRM7r, (outs GR16:$dst), (ins),
                     "rdseed{w}\t$dst",
-                    [(set GR16:$dst, EFLAGS, (X86rdseed))]>, OpSize16, PS;
+                    [(set GR16:$dst, EFLAGS, (X86rdseed))], IIC_RDSEED>,
+                    OpSize16, PS;
   def RDSEED32r : I<0xC7, MRM7r, (outs GR32:$dst), (ins),
                     "rdseed{l}\t$dst",
-                    [(set GR32:$dst, EFLAGS, (X86rdseed))]>, OpSize32, PS;
+                    [(set GR32:$dst, EFLAGS, (X86rdseed))], IIC_RDSEED>,
+                    OpSize32, PS;
   def RDSEED64r : RI<0xC7, MRM7r, (outs GR64:$dst), (ins),
                      "rdseed{q}\t$dst",
-                     [(set GR64:$dst, EFLAGS, (X86rdseed))]>, PS;
+                     [(set GR64:$dst, EFLAGS, (X86rdseed))], IIC_RDSEED>, PS;
 }
 
 //===----------------------------------------------------------------------===//
