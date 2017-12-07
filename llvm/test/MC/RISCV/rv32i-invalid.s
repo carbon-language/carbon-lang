@@ -133,3 +133,7 @@ xor s2, s2 # CHECK: :[[@LINE]]:1: error: too few operands for instruction
 # Instruction not in the base ISA
 mul a4, ra, s0 # CHECK: :[[@LINE]]:1: error: instruction use requires an option to be enabled
 amomaxu.w s5, s4, (s3) # CHECK: :[[@LINE]]:1: error: instruction use requires an option to be enabled
+fadd.s ft0, ft1, ft2 # CHECK: :[[@LINE]]:1: error: instruction use requires an option to be enabled
+
+# Using floating point registers when integer registers are expected
+addi a2, ft0, 24 # CHECK: :[[@LINE]]:10: error: invalid operand for instruction
