@@ -139,6 +139,11 @@ Clang now supports the ...
 Attribute Changes in Clang
 --------------------------
 
+- Added the ``__has_c_attribute()`` builtin preprocessor macro which allows
+  users to dynamically detect whether a double square-bracket attribute is
+  supported in C mode. This attribute syntax can be enabled with the
+  ``-fdouble-square-bracket-attributes`` flag.
+  
 - The presence of __attribute__((availability(...))) on a declaration no longer
   implies default visibility for that declaration on macOS.
 
