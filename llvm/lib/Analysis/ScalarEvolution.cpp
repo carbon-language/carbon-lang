@@ -7074,6 +7074,7 @@ ScalarEvolution::computeExitLimitFromICmp(const Loop *L,
     Cond = ExitCond->getPredicate();
   else
     Cond = ExitCond->getInversePredicate();
+  const ICmpInst::Predicate OriginalCond = Cond;
 
   // Handle common loops like: for (X = "string"; *X; ++X)
   if (LoadInst *LI = dyn_cast<LoadInst>(ExitCond->getOperand(0)))
@@ -7157,7 +7158,7 @@ ScalarEvolution::computeExitLimitFromICmp(const Loop *L,
     return ExhaustiveCount;
 
   return computeShiftCompareExitLimit(ExitCond->getOperand(0),
-                                      ExitCond->getOperand(1), L, Cond);
+                                      ExitCond->getOperand(1), L, OriginalCond);
 }
 
 ScalarEvolution::ExitLimit
