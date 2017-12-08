@@ -76,7 +76,6 @@ private:
   void addStartEndSymbols();
   void addStartStopSymbols(OutputSection *Sec);
   uint64_t getEntryAddr();
-  OutputSection *findSection(StringRef Name);
 
   std::vector<PhdrEntry *> Phdrs;
 
@@ -325,6 +324,14 @@ template <class ELFT> void Writer<ELFT>::run() {
 
   if (auto E = Buffer->commit())
     error("failed to write to the output file: " + toString(std::move(E)));
+}
+
+static OutputSection *findSection(StringRef Name) {
+  for (BaseCommand *Base : Script->SectionCommands)
+    if (auto *Sec = dyn_cast<OutputSection>(Base))
+      if (Sec->Name == Name)
+        return Sec;
+  return nullptr;
 }
 
 // Initialize Out members.
@@ -1432,14 +1439,6 @@ void Writer<ELFT>::addStartStopSymbols(OutputSection *Sec) {
     return;
   addOptionalRegular<ELFT>(Saver.save("__start_" + S), Sec, 0, STV_DEFAULT);
   addOptionalRegular<ELFT>(Saver.save("__stop_" + S), Sec, -1, STV_DEFAULT);
-}
-
-template <class ELFT> OutputSection *Writer<ELFT>::findSection(StringRef Name) {
-  for (BaseCommand *Base : Script->SectionCommands)
-    if (auto *Sec = dyn_cast<OutputSection>(Base))
-      if (Sec->Name == Name)
-        return Sec;
-  return nullptr;
 }
 
 static bool needsPtLoad(OutputSection *Sec) {
