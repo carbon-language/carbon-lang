@@ -854,7 +854,8 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
   const MachineOperand &Op = MI.getOperand(OpIdx);
   printTargetFlags(Op);
   switch (Op.getType()) {
-  case MachineOperand::MO_Register: {
+  case MachineOperand::MO_Register:
+  case MachineOperand::MO_CImmediate: {
     unsigned TiedOperandIdx = 0;
     if (ShouldPrintRegisterTies && Op.isTied() && !Op.isDef())
       TiedOperandIdx = Op.getParent()->findTiedOperandIdx(OpIdx);
@@ -868,9 +869,6 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
       OS << "%subreg." << TRI->getSubRegIndexName(Op.getImm());
     else
       OS << Op.getImm();
-    break;
-  case MachineOperand::MO_CImmediate:
-    Op.getCImm()->printAsOperand(OS, /*PrintType=*/true, MST);
     break;
   case MachineOperand::MO_FPImmediate:
     Op.getFPImm()->printAsOperand(OS, /*PrintType=*/true, MST);
