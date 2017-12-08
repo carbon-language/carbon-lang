@@ -113,8 +113,7 @@ catch_mach_exception_raise(mach_port_t exc_port, mach_port_t thread_port,
     g_message->task_port = task_port;
     g_message->thread_port = thread_port;
     g_message->exc_type = exc_type;
-    for (mach_msg_type_number_t i=0; i<exc_data_count; ++i)
-      g_message->exc_data.push_back(exc_data[i]);
+    g_message->AppendExceptionData(exc_data, exc_data_count);
     return KERN_SUCCESS;
   } else if (!MachTask::IsValid(g_message->task_port)) {
     // Our original exception port isn't valid anymore check for a SIGTRAP
@@ -126,8 +125,7 @@ catch_mach_exception_raise(mach_port_t exc_port, mach_port_t thread_port,
       g_message->task_port = task_port;
       g_message->thread_port = thread_port;
       g_message->exc_type = exc_type;
-      for (mach_msg_type_number_t i=0; i<exc_data_count; ++i)
-        g_message->exc_data.push_back(exc_data[i]);
+      g_message->AppendExceptionData(exc_data, exc_data_count);
       return KERN_SUCCESS;
     }
   }
