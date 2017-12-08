@@ -47,13 +47,13 @@ extern "C" kern_return_t catch_mach_exception_raise_state_identity(
 extern "C" boolean_t mach_exc_server(mach_msg_header_t *InHeadP,
                                      mach_msg_header_t *OutHeadP);
 
-// Any access to the g_message variable should be done by locking the
-// g_message_mutex first, using the g_message variable, then unlocking
-// the g_message_mutex. See MachException::Message::CatchExceptionRaise()
-// for sample code.
-
+// Note: g_message points to the storage allocated to catch the data from
+// catching the current exception raise. It's populated when we catch a raised
+// exception which can't immediately be replied to.
+//
+// If it becomes possible to catch exceptions from multiple threads
+// simultaneously, accesses to g_message would need to be mutually exclusive.
 static MachException::Data *g_message = NULL;
-// static pthread_mutex_t g_message_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 extern "C" kern_return_t catch_mach_exception_raise_state(
     mach_port_t exc_port, exception_type_t exc_type,
@@ -272,9 +272,6 @@ kern_return_t MachException::Message::Receive(mach_port_t port,
 
 bool MachException::Message::CatchExceptionRaise(task_t task) {
   bool success = false;
-  // locker will keep a mutex locked until it goes out of scope
-  //    PThreadMutex::Locker locker(&g_message_mutex);
-  //    DNBLogThreaded("calling  mach_exc_server");
   state.task_port = task;
   g_message = &state;
   // The exc_server function is the MIG generated server handling function
