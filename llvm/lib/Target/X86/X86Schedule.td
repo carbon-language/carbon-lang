@@ -499,6 +499,7 @@ def IIC_IRET : InstrItinClass;
 def IIC_HLT : InstrItinClass;
 def IIC_LXS : InstrItinClass;
 def IIC_LTR : InstrItinClass;
+def IIC_MPX : InstrItinClass;
 def IIC_PKU : InstrItinClass;
 def IIC_PTWRITE : InstrItinClass;
 def IIC_RDPID : InstrItinClass;
