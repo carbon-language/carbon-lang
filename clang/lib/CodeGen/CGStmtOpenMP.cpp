@@ -122,7 +122,12 @@ public:
 class OMPLoopScope : public CodeGenFunction::RunCleanupsScope {
   void emitPreInitStmt(CodeGenFunction &CGF, const OMPLoopDirective &S) {
     CodeGenFunction::OMPPrivateScope PreCondScope(CGF);
-    CGF.EmitOMPPrivateLoopCounters(S, PreCondScope);
+    for (auto *E : S.counters()) {
+      const auto *VD = cast<VarDecl>(cast<DeclRefExpr>(E)->getDecl());
+      (void)PreCondScope.addPrivate(VD, [&CGF, VD]() {
+        return CGF.CreateMemTemp(VD->getType().getNonReferenceType());
+      });
+    }
     (void)PreCondScope.Privatize();
     if (auto *LD = dyn_cast<OMPLoopDirective>(&S)) {
       if (auto *PreInits = cast_or_null<DeclStmt>(LD->getPreInits())) {
