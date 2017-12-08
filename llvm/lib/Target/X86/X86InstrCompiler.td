@@ -540,7 +540,7 @@ multiclass CMOVrr_PSEUDO<RegisterClass RC, ValueType VT> {
                                                 EFLAGS)))]>;
 }
 
-let usesCustomInserter = 1, Uses = [EFLAGS] in {
+let usesCustomInserter = 1, hasNoSchedulingInfo = 1, Uses = [EFLAGS] in {
   // X86 doesn't have 8-bit conditional moves. Use a customInserter to
   // emit control flow. An alternative to this is to mark i8 SELECT as Promote,
   // however that requires promoting the operands, and can induce additional
@@ -578,7 +578,7 @@ let usesCustomInserter = 1, Uses = [EFLAGS] in {
   defm _V16I1  : CMOVrr_PSEUDO<VK16, v16i1>;
   defm _V32I1  : CMOVrr_PSEUDO<VK32, v32i1>;
   defm _V64I1  : CMOVrr_PSEUDO<VK64, v64i1>;
-} // usesCustomInserter = 1, Uses = [EFLAGS]
+} // usesCustomInserter = 1, hasNoSchedulingInfo = 1, Uses = [EFLAGS]
 
 //===----------------------------------------------------------------------===//
 // Normal-Instructions-With-Lock-Prefix Pseudo Instructions
