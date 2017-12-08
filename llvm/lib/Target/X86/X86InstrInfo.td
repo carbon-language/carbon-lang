@@ -2723,10 +2723,9 @@ def CLFLUSHOPT : I<0xAE, MRM7m, (outs), (ins i8mem:$src),
                    "clflushopt\t$src", [(int_x86_clflushopt addr:$src)],
                    IIC_SSE_PREFETCH>, PD;
 
-let Predicates = [HasCLWB] in
+let Predicates = [HasCLWB], SchedRW = [WriteLoad] in
 def CLWB       : I<0xAE, MRM6m, (outs), (ins i8mem:$src), "clwb\t$src",
-                   [(int_x86_clwb addr:$src)]>, PD;
-
+                   [(int_x86_clwb addr:$src)], IIC_SSE_PREFETCH>, PD;
 
 //===----------------------------------------------------------------------===//
 // Subsystems.
