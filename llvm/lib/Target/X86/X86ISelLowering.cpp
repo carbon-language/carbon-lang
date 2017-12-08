@@ -14747,9 +14747,9 @@ static SDValue InsertBitToMaskVector(SDValue Op, SelectionDAG &DAG,
                            DAG.getConstant(IdxVal, dl, MVT::i8));
     // Clean the last bit in the source vector.
     Vec = DAG.getNode(X86ISD::KSHIFTL, dl, VecVT, Vec,
-                           DAG.getConstant(1, dl, MVT::i8));
+                      DAG.getConstant(1, dl, MVT::i8));
     Vec = DAG.getNode(X86ISD::KSHIFTR, dl, VecVT, Vec,
-                           DAG.getConstant(1 , dl, MVT::i8));
+                      DAG.getConstant(1 , dl, MVT::i8));
 
     return DAG.getNode(ISD::OR, dl, VecVT, Vec, EltInVec);
   }
