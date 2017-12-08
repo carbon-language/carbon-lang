@@ -855,7 +855,8 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
   printTargetFlags(Op);
   switch (Op.getType()) {
   case MachineOperand::MO_Register:
-  case MachineOperand::MO_CImmediate: {
+  case MachineOperand::MO_CImmediate:
+  case MachineOperand::MO_MachineBasicBlock: {
     unsigned TiedOperandIdx = 0;
     if (ShouldPrintRegisterTies && Op.isTied() && !Op.isDef())
       TiedOperandIdx = Op.getParent()->findTiedOperandIdx(OpIdx);
@@ -872,9 +873,6 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
     break;
   case MachineOperand::MO_FPImmediate:
     Op.getFPImm()->printAsOperand(OS, /*PrintType=*/true, MST);
-    break;
-  case MachineOperand::MO_MachineBasicBlock:
-    OS << printMBBReference(*Op.getMBB());
     break;
   case MachineOperand::MO_FrameIndex:
     printStackObjectReference(Op.getIndex());
