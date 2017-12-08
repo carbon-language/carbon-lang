@@ -46,7 +46,6 @@ public:
   void run();
 
 private:
-  void createSyntheticSections();
   void copyLocalSymbols();
   void addSectionSymbols();
   void forEachRelSec(std::function<void(InputSectionBase &)> Fn);
@@ -233,99 +232,6 @@ template <class ELFT> static void addReservedSymbols() {
   ElfSym::Edata2 = Add("_edata", -1);
 }
 
-// The main function of the writer.
-template <class ELFT> void Writer<ELFT>::run() {
-  // Create linker-synthesized sections such as .got or .plt.
-  // Such sections are of type input section.
-  createSyntheticSections();
-
-  if (!Config->Relocatable)
-    combineEhFrameSections<ELFT>();
-
-  // We need to create some reserved symbols such as _end. Create them.
-  if (!Config->Relocatable)
-    addReservedSymbols<ELFT>();
-
-  // We want to process linker script commands. When SECTIONS command
-  // is given we let it create sections.
-  Script->processSectionCommands();
-
-  // Linker scripts controls how input sections are assigned to output sections.
-  // Input sections that were not handled by scripts are called "orphans", and
-  // they are assigned to output sections by the default rule. Process that.
-  Script->addOrphanSections();
-
-  if (Config->Discard != DiscardPolicy::All)
-    copyLocalSymbols();
-
-  if (Config->CopyRelocs)
-    addSectionSymbols();
-
-  // Now that we have a complete set of output sections. This function
-  // completes section contents. For example, we need to add strings
-  // to the string table, and add entries to .got and .plt.
-  // finalizeSections does that.
-  finalizeSections();
-  if (errorCount())
-    return;
-
-  // If -compressed-debug-sections is specified, we need to compress
-  // .debug_* sections. Do it right now because it changes the size of
-  // output sections.
-  parallelForEach(OutputSections,
-                  [](OutputSection *Sec) { Sec->maybeCompress<ELFT>(); });
-
-  Script->assignAddresses();
-  Script->allocateHeaders(Phdrs);
-
-  // Remove empty PT_LOAD to avoid causing the dynamic linker to try to mmap a
-  // 0 sized region. This has to be done late since only after assignAddresses
-  // we know the size of the sections.
-  removeEmptyPTLoad();
-
-  if (!Config->OFormatBinary)
-    assignFileOffsets();
-  else
-    assignFileOffsetsBinary();
-
-  setPhdrs();
-
-  if (Config->Relocatable) {
-    for (OutputSection *Sec : OutputSections)
-      Sec->Addr = 0;
-  }
-
-  // It does not make sense try to open the file if we have error already.
-  if (errorCount())
-    return;
-  // Write the result down to a file.
-  openFile();
-  if (errorCount())
-    return;
-
-  if (!Config->OFormatBinary) {
-    writeTrapInstr();
-    writeHeader();
-    writeSections();
-  } else {
-    writeSectionsBinary();
-  }
-
-  // Backfill .note.gnu.build-id section content. This is done at last
-  // because the content is usually a hash value of the entire output file.
-  writeBuildId();
-  if (errorCount())
-    return;
-
-  // Handle -Map option.
-  writeMapFile();
-  if (errorCount())
-    return;
-
-  if (auto E = Buffer->commit())
-    error("failed to write to the output file: " + toString(std::move(E)));
-}
-
 static OutputSection *findSection(StringRef Name) {
   for (BaseCommand *Base : Script->SectionCommands)
     if (auto *Sec = dyn_cast<OutputSection>(Base))
@@ -335,7 +241,7 @@ static OutputSection *findSection(StringRef Name) {
 }
 
 // Initialize Out members.
-template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
+template <class ELFT> static void createSyntheticSections() {
   // Initialize all pointers with NULL. This is needed because
   // you can call lld::elf::main more than once as a library.
   memset(&Out::First, 0, sizeof(Out));
@@ -354,7 +260,7 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
   InX::ShStrTab = make<StringTableSection>(".shstrtab", false);
 
   Out::ElfHeader = make<OutputSection>("", 0, SHF_ALLOC);
-  Out::ElfHeader->Size = sizeof(Elf_Ehdr);
+  Out::ElfHeader->Size = sizeof(typename ELFT::Ehdr);
   Out::ProgramHeaders = make<OutputSection>("", 0, SHF_ALLOC);
   Out::ProgramHeaders->Alignment = Config->Wordsize;
 
@@ -489,6 +395,99 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
   Add(InX::ShStrTab);
   if (InX::StrTab)
     Add(InX::StrTab);
+}
+
+// The main function of the writer.
+template <class ELFT> void Writer<ELFT>::run() {
+  // Create linker-synthesized sections such as .got or .plt.
+  // Such sections are of type input section.
+  createSyntheticSections<ELFT>();
+
+  if (!Config->Relocatable)
+    combineEhFrameSections<ELFT>();
+
+  // We need to create some reserved symbols such as _end. Create them.
+  if (!Config->Relocatable)
+    addReservedSymbols<ELFT>();
+
+  // We want to process linker script commands. When SECTIONS command
+  // is given we let it create sections.
+  Script->processSectionCommands();
+
+  // Linker scripts controls how input sections are assigned to output sections.
+  // Input sections that were not handled by scripts are called "orphans", and
+  // they are assigned to output sections by the default rule. Process that.
+  Script->addOrphanSections();
+
+  if (Config->Discard != DiscardPolicy::All)
+    copyLocalSymbols();
+
+  if (Config->CopyRelocs)
+    addSectionSymbols();
+
+  // Now that we have a complete set of output sections. This function
+  // completes section contents. For example, we need to add strings
+  // to the string table, and add entries to .got and .plt.
+  // finalizeSections does that.
+  finalizeSections();
+  if (errorCount())
+    return;
+
+  // If -compressed-debug-sections is specified, we need to compress
+  // .debug_* sections. Do it right now because it changes the size of
+  // output sections.
+  parallelForEach(OutputSections,
+                  [](OutputSection *Sec) { Sec->maybeCompress<ELFT>(); });
+
+  Script->assignAddresses();
+  Script->allocateHeaders(Phdrs);
+
+  // Remove empty PT_LOAD to avoid causing the dynamic linker to try to mmap a
+  // 0 sized region. This has to be done late since only after assignAddresses
+  // we know the size of the sections.
+  removeEmptyPTLoad();
+
+  if (!Config->OFormatBinary)
+    assignFileOffsets();
+  else
+    assignFileOffsetsBinary();
+
+  setPhdrs();
+
+  if (Config->Relocatable) {
+    for (OutputSection *Sec : OutputSections)
+      Sec->Addr = 0;
+  }
+
+  // It does not make sense try to open the file if we have error already.
+  if (errorCount())
+    return;
+  // Write the result down to a file.
+  openFile();
+  if (errorCount())
+    return;
+
+  if (!Config->OFormatBinary) {
+    writeTrapInstr();
+    writeHeader();
+    writeSections();
+  } else {
+    writeSectionsBinary();
+  }
+
+  // Backfill .note.gnu.build-id section content. This is done at last
+  // because the content is usually a hash value of the entire output file.
+  writeBuildId();
+  if (errorCount())
+    return;
+
+  // Handle -Map option.
+  writeMapFile();
+  if (errorCount())
+    return;
+
+  if (auto E = Buffer->commit())
+    error("failed to write to the output file: " + toString(std::move(E)));
 }
 
 static bool shouldKeepInSymtab(SectionBase *Sec, StringRef SymName,
