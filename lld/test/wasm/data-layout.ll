@@ -1,6 +1,6 @@
 ; RUN: llc -filetype=obj %p/Inputs/hello.ll -o %t.hello.o
 ; RUN: llc -filetype=obj %s -o %t.o
-; RUN: lld -flavor wasm --emit-relocs --allow-undefined -o %t.wasm %t.o %t.hello.o
+; RUN: lld -flavor wasm --emit-relocs --allow-undefined --no-entry -o %t.wasm %t.o %t.hello.o
 ; RUN: obj2yaml %t.wasm | FileCheck %s
 
 target datalayout = "e-m:e-p:32:32-i64:64-n32:64-S128"
