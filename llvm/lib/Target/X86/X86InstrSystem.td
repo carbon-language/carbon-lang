@@ -602,11 +602,12 @@ let Predicates = [HasXSAVES] in {
 
 //===----------------------------------------------------------------------===//
 // VIA PadLock crypto instructions
-let Defs = [RAX, RDI], Uses = [RDX, RDI] in
+let Defs = [RAX, RDI], Uses = [RDX, RDI], SchedRW = [WriteSystem] in
   def XSTORE : I<0xa7, MRM_C0, (outs), (ins), "xstore", []>, TB;
 
 def : InstAlias<"xstorerng", (XSTORE)>;
 
+let SchedRW = [WriteSystem] in {
 let Defs = [RSI, RDI], Uses = [RBX, RDX, RSI, RDI] in {
   def XCRYPTECB : I<0xa7, MRM_C8, (outs), (ins), "xcryptecb", []>, TB;
   def XCRYPTCBC : I<0xa7, MRM_D0, (outs), (ins), "xcryptcbc", []>, TB;
@@ -621,6 +622,7 @@ let Defs = [RAX, RSI, RDI], Uses = [RAX, RSI, RDI] in {
 }
 let Defs = [RAX, RDX, RSI], Uses = [RAX, RSI] in
   def MONTMUL : I<0xa6, MRM_C0, (outs), (ins), "montmul", []>, TB;
+} // SchedRW
 
 //==-----------------------------------------------------------------------===//
 // PKU  - enable protection key
