@@ -6656,6 +6656,8 @@ SDNode *SITargetLowering::adjustWritemask(MachineSDNode *&Node,
 
   MachineSDNode *NewNode = DAG.getMachineNode(NewOpcode, SDLoc(Node),
                                               NewVTList, Ops);
+  NewNode->setMemRefs(Node->memoperands_begin(), Node->memoperands_end());
+
   // Update chain.
   DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 1), SDValue(NewNode, 1));
 
