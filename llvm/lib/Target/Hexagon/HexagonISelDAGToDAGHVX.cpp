@@ -501,7 +501,7 @@ bool ReverseDeltaNetwork::route(ElemType *P, RowType *T, unsigned Size,
 
   // Reorder the working permutation according to the computed switch table
   // for the last step (i.e. Pets).
-  for (ElemType J = 0; J != Size/2; ++J) {
+  for (ElemType J = 0, E = Size / 2; J != E; ++J) {
     ElemType PJ = P[J];         // Current values of P[J]
     ElemType PC = P[J+Size/2];  // and P[conj(J)]
     ElemType QJ = PJ;           // New values of P[J]
