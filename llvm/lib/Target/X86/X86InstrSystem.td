@@ -154,13 +154,14 @@ def MOV64cr : I<0x22, MRMSrcReg, (outs CONTROL_REG:$dst), (ins GR64:$src),
 //===----------------------------------------------------------------------===//
 // Segment override instruction prefixes
 
-def CS_PREFIX : I<0x2E, RawFrm, (outs), (ins), "cs", []>;
-def SS_PREFIX : I<0x36, RawFrm, (outs), (ins), "ss", []>;
-def DS_PREFIX : I<0x3E, RawFrm, (outs), (ins), "ds", []>;
-def ES_PREFIX : I<0x26, RawFrm, (outs), (ins), "es", []>;
-def FS_PREFIX : I<0x64, RawFrm, (outs), (ins), "fs", []>;
-def GS_PREFIX : I<0x65, RawFrm, (outs), (ins), "gs", []>;
-
+let SchedRW = [WriteNop] in {
+def CS_PREFIX : I<0x2E, RawFrm, (outs), (ins), "cs", [], IIC_NOP>;
+def SS_PREFIX : I<0x36, RawFrm, (outs), (ins), "ss", [], IIC_NOP>;
+def DS_PREFIX : I<0x3E, RawFrm, (outs), (ins), "ds", [], IIC_NOP>;
+def ES_PREFIX : I<0x26, RawFrm, (outs), (ins), "es", [], IIC_NOP>;
+def FS_PREFIX : I<0x64, RawFrm, (outs), (ins), "fs", [], IIC_NOP>;
+def GS_PREFIX : I<0x65, RawFrm, (outs), (ins), "gs", [], IIC_NOP>;
+} // SchedRW
 
 //===----------------------------------------------------------------------===//
 // Moves to and from segment registers.
