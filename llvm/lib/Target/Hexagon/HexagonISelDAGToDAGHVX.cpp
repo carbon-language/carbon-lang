@@ -139,7 +139,7 @@ private:
 
   uint8_t getColor(Node N) {
     auto F = Colors.find(N);
-    return F != Colors.end() ? F->second : None;
+    return F != Colors.end() ? F->second : (uint8_t)None;
   }
 
   std::pair<bool,uint8_t> getUniqueColor(const NodeSet &Nodes);
