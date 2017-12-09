@@ -212,8 +212,8 @@ multiclass AVX512_maskable_custom<bits<8> O, Format F,
                                   list<dag> Pattern,
                                   list<dag> MaskingPattern,
                                   list<dag> ZeroMaskingPattern,
+                                  InstrItinClass itin,
                                   string MaskingConstraint = "",
-                                  InstrItinClass itin = NoItinerary,
                                   bit IsCommutable = 0,
                                   bit IsKCommutable = 0> {
   let isCommutable = IsCommutable in
@@ -263,7 +263,7 @@ multiclass AVX512_maskable_common<bits<8> O, Format F, X86VectorVTInfo _,
                          [(set _.RC:$dst, MaskingRHS)],
                          [(set _.RC:$dst,
                                (Select _.KRCWM:$mask, RHS, _.ImmAllZerosV))],
-                         MaskingConstraint, itin, IsCommutable,
+                         itin, MaskingConstraint, IsCommutable,
                          IsKCommutable>;
 
 // This multiclass generates the unconditional/non-masking, the masking and
@@ -286,7 +286,7 @@ multiclass AVX512_maskable_split<bits<8> O, Format F, X86VectorVTInfo _,
                               (Select _.KRCWM:$mask, MaskRHS, _.RC:$src0))],
                           [(set _.RC:$dst,
                               (Select _.KRCWM:$mask, MaskRHS, _.ImmAllZerosV))],
-                          "$src0 = $dst", itin, IsCommutable, IsKCommutable>;
+                          itin, "$src0 = $dst", IsCommutable, IsKCommutable>;
 
 // This multiclass generates the unconditional/non-masking, the masking and
 // the zero-masking variant of the vector instruction.  In the masking case, the
@@ -358,7 +358,7 @@ multiclass AVX512_maskable_in_asm<bits<8> O, Format F, X86VectorVTInfo _,
                           !con((ins _.RC:$src0, _.KRCWM:$mask), Ins),
                           !con((ins _.KRCWM:$mask), Ins),
                           OpcodeStr, AttSrcAsm, IntelSrcAsm, Pattern, [], [],
-                          "$src0 = $dst", itin>;
+                          itin, "$src0 = $dst">;
 
 
 // Instruction with mask that puts result in mask register,
@@ -434,7 +434,7 @@ multiclass AVX512_maskable_logic<bits<8> O, Format F, X86VectorVTInfo _,
                           [(set _.RC:$dst,
                                 (Select _.KRCWM:$mask, MaskedRHS,
                                         _.ImmAllZerosV))],
-                          "$src0 = $dst", itin, IsCommutable>;
+                          itin, "$src0 = $dst", IsCommutable>;
 
 
 // Alias instruction that maps zero vector to pxor / xorp* for AVX-512.
@@ -1284,7 +1284,7 @@ multiclass avx512_int_broadcastbw_reg<bits<8> opc, string Name, SchedWrite Sched
                         !con((ins _.RC:$src0, _.KRCWM:$mask), (ins GR32:$src)),
                         !con((ins _.KRCWM:$mask), (ins GR32:$src)),
                         "vpbroadcast"##_.Suffix, "$src", "$src", [], [], [],
-                        "$src0 = $dst", NoItinerary>, T8PD, EVEX, Sched<[SchedRR]>;
+                        NoItinerary, "$src0 = $dst">, T8PD, EVEX, Sched<[SchedRR]>;
 
   def : Pat <(_.VT (OpNode SrcRC:$src)),
              (!cast<Instruction>(Name#r)
