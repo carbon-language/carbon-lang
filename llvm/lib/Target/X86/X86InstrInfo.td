@@ -2036,19 +2036,23 @@ def CMPXCHG16B : RI<0xC7, MRM1m, (outs), (ins i128mem:$dst),
 
 
 // Lock instruction prefix
+let SchedRW = [WriteMicrocoded] in
 def LOCK_PREFIX : I<0xF0, RawFrm, (outs),  (ins), "lock", []>;
 
+let SchedRW = [WriteNop] in {
+
 // Rex64 instruction prefix
-def REX64_PREFIX : I<0x48, RawFrm, (outs),  (ins), "rex64", []>,
+def REX64_PREFIX : I<0x48, RawFrm, (outs),  (ins), "rex64", [], IIC_NOP>,
                      Requires<[In64BitMode]>;
 
 // Data16 instruction prefix
-def DATA16_PREFIX : I<0x66, RawFrm, (outs),  (ins), "data16", []>,
+def DATA16_PREFIX : I<0x66, RawFrm, (outs),  (ins), "data16", [], IIC_NOP>,
                      Requires<[Not16BitMode]>;
 
 // Data instruction prefix
-def DATA32_PREFIX : I<0x66, RawFrm, (outs),  (ins), "data32", []>,
+def DATA32_PREFIX : I<0x66, RawFrm, (outs),  (ins), "data32", [], IIC_NOP>,
                      Requires<[In16BitMode]>;
+} // SchedRW
 
 // Repeat string operation instruction prefixes
 // These use the DF flag in the EFLAGS register to inc or dec ECX
