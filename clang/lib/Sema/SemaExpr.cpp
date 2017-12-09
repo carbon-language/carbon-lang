@@ -11565,7 +11565,8 @@ CorrectDelayedTyposInBinOp(Sema &S, BinaryOperatorKind Opc, Expr *LHSExpr,
 static bool needsConversionOfHalfVec(bool OpRequiresConversion, ASTContext &Ctx,
                                      QualType SrcType) {
   return OpRequiresConversion && !Ctx.getLangOpts().NativeHalfType &&
-         Ctx.getLangOpts().HalfArgsAndReturns && isVector(SrcType, Ctx.HalfTy);
+         !Ctx.getTargetInfo().useFP16ConversionIntrinsics() &&
+         isVector(SrcType, Ctx.HalfTy);
 }
 
 /// CreateBuiltinBinOp - Creates a new built-in binary operation with
