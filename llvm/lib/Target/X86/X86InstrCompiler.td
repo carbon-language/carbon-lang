@@ -147,9 +147,11 @@ def WIN_ALLOCA_64 : I<0, Pseudo, (outs), (ins GR64:$size),
 // frame register after register allocation.
 let Constraints = "$src = $dst", isPseudo = 1, Defs = [EFLAGS] in {
   def XOR32_FP : I<0, Pseudo, (outs GR32:$dst), (ins GR32:$src),
-                  "xorl\t$$FP, $src", []>, Requires<[NotLP64]>;
+                  "xorl\t$$FP, $src", [], IIC_BIN_NONMEM>,
+                  Requires<[NotLP64]>, Sched<[WriteALU]>;
   def XOR64_FP : I<0, Pseudo, (outs GR64:$dst), (ins GR64:$src),
-                  "xorq\t$$FP $src", []>, Requires<[In64BitMode]>;
+                  "xorq\t$$FP $src", [], IIC_BIN_NONMEM>,
+                  Requires<[In64BitMode]>, Sched<[WriteALU]>;
 }
 
 //===----------------------------------------------------------------------===//
