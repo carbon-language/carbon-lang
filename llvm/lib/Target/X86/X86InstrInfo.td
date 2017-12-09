@@ -1155,7 +1155,8 @@ def LEAVE64  : I<0xC9, RawFrm,
 //  Miscellaneous Instructions.
 //
 
-let isBarrier = 1, hasSideEffects = 1, usesCustomInserter = 1 in
+let isBarrier = 1, hasSideEffects = 1, usesCustomInserter = 1,
+    SchedRW = [WriteSystem] in
   def Int_eh_sjlj_setup_dispatch
     : PseudoI<(outs), (ins), [(X86eh_sjlj_setup_dispatch)]>;
 
