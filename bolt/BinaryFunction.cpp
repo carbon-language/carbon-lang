@@ -486,7 +486,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
 
     uint64_t BBExecCount = BB->getExecutionCount();
     if (hasValidProfile()) {
-      OS << "  Exec Count : " << BBExecCount << "\n";
+      OS << "  Exec Count : " << BBExecCount << '\n';
     }
     if (BB->getCFIState() >= 0) {
       OS << "  CFI State : " << BB->getCFIState() << '\n';
@@ -1422,6 +1422,7 @@ void BinaryFunction::recomputeLandingPads() {
   }
 
   for (auto *BB : BasicBlocks) {
+    std::unordered_set<const BinaryBasicBlock *> BBLandingPads;
     for (auto &Instr : *BB) {
       if (!BC.MIA->isInvoke(Instr))
         continue;
@@ -1433,18 +1434,12 @@ void BinaryFunction::recomputeLandingPads() {
         continue;
 
       auto *LPBlock = getBasicBlockForLabel(LPLabel);
-      BB->LandingPads.emplace_back(LPBlock);
-      LPBlock->Throwers.emplace_back(BB);
+      if (!BBLandingPads.count(LPBlock)) {
+        BBLandingPads.insert(LPBlock);
+        BB->LandingPads.emplace_back(LPBlock);
+        LPBlock->Throwers.emplace_back(BB);
+      }
     }
-    std::sort(BB->lp_begin(), BB->lp_end());
-    auto NewEnd = std::unique(BB->lp_begin(), BB->lp_end());
-    BB->LandingPads.erase(NewEnd, BB->lp_end());
-  }
-
-  for (auto *BB : BasicBlocks) {
-    std::sort(BB->throw_begin(), BB->throw_end());
-    auto NewEnd = std::unique(BB->throw_begin(), BB->throw_end());
-    BB->Throwers.erase(NewEnd, BB->throw_end());
   }
 }
 
@@ -2973,35 +2968,44 @@ bool BinaryFunction::validateCFG() const {
   if (!Valid)
     return Valid;
 
-  for (auto *BB : BasicBlocks) {
-    if (!std::is_sorted(BB->lp_begin(), BB->lp_end())) {
-      errs() << "BOLT-ERROR: unsorted list of landing pads in "
-             << BB->getName() << " in function " << *this << '\n';
-      return false;
+  for (const auto *BB : BasicBlocks) {
+    std::unordered_set<const BinaryBasicBlock *> BBLandingPads;
+    for (const auto *LP : BB->landing_pads()) {
+      if (BBLandingPads.count(LP)) {
+        errs() << "BOLT-ERROR: duplicate landing pad detected in"
+               << BB->getName() << " in function " << *this << '\n';
+        return false;
+      }
+      BBLandingPads.insert(LP);
     }
-    if (std::unique(BB->lp_begin(), BB->lp_end()) != BB->lp_end()) {
-      errs() << "BOLT-ERROR: duplicate landing pad detected in"
-             << BB->getName() << " in function " << *this << '\n';
-      return false;
+
+    std::unordered_set<const BinaryBasicBlock *> BBThrowers;
+    for (const auto *Thrower : BB->throwers()) {
+      if (BBThrowers.count(Thrower)) {
+        errs() << "BOLT-ERROR: duplicate thrower detected in"
+               << BB->getName() << " in function " << *this << '\n';
+        return false;
+      }
+      BBThrowers.insert(Thrower);
     }
-    if (!std::is_sorted(BB->throw_begin(), BB->throw_end())) {
-      errs() << "BOLT-ERROR: unsorted list of throwers in "
-             << BB->getName() << " in function " << *this << '\n';
-      return false;
-    }
-    if (std::unique(BB->throw_begin(), BB->throw_end()) != BB->throw_end()) {
-      errs() << "BOLT-ERROR: duplicate thrower detected in"
-             << BB->getName() << " in function " << *this << '\n';
-      return false;
-    }
-    for (auto *LPBlock : BB->LandingPads) {
-      if (!std::binary_search(LPBlock->throw_begin(),
-                              LPBlock->throw_end(),
-                              BB)) {
+
+    for (const auto *LPBlock : BB->landing_pads()) {
+      if (std::find(LPBlock->throw_begin(), LPBlock->throw_end(), BB)
+            == LPBlock->throw_end()) {
         errs() << "BOLT-ERROR: inconsistent landing pad detected in "
                << *this << ": " << BB->getName()
                << " is in LandingPads but not in " << LPBlock->getName()
                << " Throwers\n";
+        return false;
+      }
+    }
+    for (const auto *Thrower : BB->throwers()) {
+      if (std::find(Thrower->lp_begin(), Thrower->lp_end(), BB)
+            == Thrower->lp_end()) {
+        errs() << "BOLT-ERROR: inconsistent thrower detected in "
+               << *this << ": " << BB->getName()
+               << " is in Throwers list but not in " << Thrower->getName()
+               << " LandingPads\n";
         return false;
       }
     }
