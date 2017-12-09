@@ -275,7 +275,7 @@ void TracePC::CollectFeatures(Callback HandleFeature) const {
   }
 
   if (auto MaxStackOffset = GetMaxStackOffset())
-    HandleFeature(FirstFeature + MaxStackOffset);
+    HandleFeature(FirstFeature + MaxStackOffset / 128);
 }
 
 extern TracePC TPC;
