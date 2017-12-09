@@ -7065,10 +7065,10 @@ X86TargetLowering::LowerBUILD_VECTORvXi1(SDValue Op, SelectionDAG &DAG) const {
 
   SDLoc dl(Op);
   if (ISD::isBuildVectorAllZeros(Op.getNode()))
-    return DAG.getTargetConstant(0, dl, VT);
+    return Op;
 
   if (ISD::isBuildVectorAllOnes(Op.getNode()))
-    return DAG.getTargetConstant(1, dl, VT);
+    return Op;
 
   if (ISD::isBuildVectorOfConstantSDNodes(Op.getNode())) {
     if (VT == MVT::v64i1 && !Subtarget.is64Bit()) {
@@ -19509,9 +19509,9 @@ static SDValue getMaskNode(SDValue Mask, MVT MaskVT,
                            const SDLoc &dl) {
 
   if (isAllOnesConstant(Mask))
-    return DAG.getTargetConstant(1, dl, MaskVT);
+    return DAG.getConstant(1, dl, MaskVT);
   if (X86::isZeroNode(Mask))
-    return DAG.getTargetConstant(0, dl, MaskVT);
+    return DAG.getConstant(0, dl, MaskVT);
 
   if (MaskVT.bitsGT(Mask.getSimpleValueType())) {
     // Mask should be extended
@@ -20099,7 +20099,7 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                                      Mask.getSimpleValueType().getSizeInBits());
        SDValue FPclass = DAG.getNode(IntrData->Opc0, dl, MaskVT, Src1, Imm);
        SDValue FPclassMask = getVectorMaskingNode(FPclass, Mask,
-                                                 DAG.getTargetConstant(0, dl, MaskVT),
+                                                 DAG.getConstant(0, dl, MaskVT),
                                                  Subtarget, DAG);
        SDValue Res = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, BitcastVT,
                                  DAG.getUNDEF(BitcastVT), FPclassMask,
@@ -20112,7 +20112,7 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       SDValue Mask = Op.getOperand(3);
       SDValue FPclass = DAG.getNode(IntrData->Opc0, dl, MVT::v1i1, Src1, Imm);
       SDValue FPclassMask = getScalarMaskingNode(FPclass, Mask,
-        DAG.getTargetConstant(0, dl, MVT::i1), Subtarget, DAG);
+        DAG.getConstant(0, dl, MVT::i1), Subtarget, DAG);
       return DAG.getNode(X86ISD::VEXTRACT, dl, MVT::i8, FPclassMask,
                          DAG.getIntPtrConstant(0, dl));
     }
@@ -20156,8 +20156,7 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                           Op.getOperand(2));
       }
       SDValue CmpMask = getVectorMaskingNode(Cmp, Mask,
-                                             DAG.getTargetConstant(0, dl,
-                                                                   MaskVT),
+                                             DAG.getConstant(0, dl, MaskVT),
                                              Subtarget, DAG);
       SDValue Res = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, BitcastVT,
                                 DAG.getUNDEF(BitcastVT), CmpMask,
@@ -20181,8 +20180,7 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
         Cmp = DAG.getNode(IntrData->Opc0, dl, MVT::v1i1, Src1, Src2, CC);
 
       SDValue CmpMask = getScalarMaskingNode(Cmp, Mask,
-                                             DAG.getTargetConstant(0, dl,
-                                                                   MVT::i1),
+                                             DAG.getConstant(0, dl, MVT::i1),
                                              Subtarget, DAG);
       return DAG.getNode(X86ISD::VEXTRACT, dl, MVT::i8, CmpMask,
                          DAG.getIntPtrConstant(0, dl));
