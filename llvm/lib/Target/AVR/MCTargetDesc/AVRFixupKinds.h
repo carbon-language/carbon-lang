@@ -115,9 +115,10 @@ enum Fixups {
   fixup_8_hi8,
   fixup_8_hlo8,
 
-  fixup_diff8,
-  fixup_diff16,
-  fixup_diff32,
+  /// Fixup to calculate the difference between two symbols.
+  /// Is the only stateful fixup. We do not support it yet.
+  fixup_sym_diff,
+  fixup_16_ldst,
 
   fixup_lds_sts_16,
 
