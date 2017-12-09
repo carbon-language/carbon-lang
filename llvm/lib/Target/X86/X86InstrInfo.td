@@ -2051,14 +2051,13 @@ def DATA32_PREFIX : I<0x66, RawFrm, (outs),  (ins), "data32", []>,
                      Requires<[In16BitMode]>;
 
 // Repeat string operation instruction prefixes
-// These uses the DF flag in the EFLAGS register to inc or dec ECX
-let Defs = [ECX], Uses = [ECX,EFLAGS] in {
+// These use the DF flag in the EFLAGS register to inc or dec ECX
+let Defs = [ECX], Uses = [ECX,EFLAGS], SchedRW = [WriteMicrocoded] in {
 // Repeat (used with INS, OUTS, MOVS, LODS and STOS)
 def REP_PREFIX : I<0xF3, RawFrm, (outs),  (ins), "rep", []>;
 // Repeat while not equal (used with CMPS and SCAS)
 def REPNE_PREFIX : I<0xF2, RawFrm, (outs),  (ins), "repne", []>;
 }
-
 
 // String manipulation instructions
 let SchedRW = [WriteMicrocoded] in {
