@@ -5099,7 +5099,8 @@ static SDValue insert1BitVector(SDValue Op, SelectionDAG &DAG,
     // Zero upper bits of the Vec
     WideSubVec = DAG.getNode(X86ISD::KSHIFTL, dl, WideOpVT, WideSubVec,
                              DAG.getConstant(IdxVal, dl, MVT::i8));
-    SDValue ShiftBits = DAG.getConstant(SubVecNumElems, dl, MVT::i8);
+    NumElems = WideOpVT.getVectorNumElements();
+    SDValue ShiftBits = DAG.getConstant(NumElems - IdxVal, dl, MVT::i8);
     Vec = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, WideOpVT, Undef, Vec, ZeroIdx);
     Vec = DAG.getNode(X86ISD::KSHIFTL, dl, WideOpVT, Vec, ShiftBits);
     Vec = DAG.getNode(X86ISD::KSHIFTR, dl, WideOpVT, Vec, ShiftBits);
