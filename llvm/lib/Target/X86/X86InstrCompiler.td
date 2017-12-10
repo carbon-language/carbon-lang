@@ -76,6 +76,7 @@ def ADJCALLSTACKUP64   : I<0, Pseudo, (outs), (ins i32imm:$amt1, i32imm:$amt2),
 def : Pat<(X86callseq_start timm:$amt1, timm:$amt2),
         (ADJCALLSTACKDOWN64 i32imm:$amt1, i32imm:$amt2, 0)>, Requires<[IsLP64]>;
 
+let SchedRW = [WriteSystem] in {
 
 // x86-64 va_start lowering magic.
 let usesCustomInserter = 1, Defs = [EFLAGS] in {
@@ -141,6 +142,7 @@ def WIN_ALLOCA_64 : I<0, Pseudo, (outs), (ins GR64:$size),
                      "# dynamic stack allocation",
                      [(X86WinAlloca GR64:$size)]>,
                      Requires<[In64BitMode]>;
+} // SchedRW
 
 // These instructions XOR the frame pointer into a GPR. They are used in some
 // stack protection schemes. These are post-RA pseudos because we only know the
