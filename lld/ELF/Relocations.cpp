@@ -803,7 +803,7 @@ private:
 
 template <class ELFT, class GotPltSection>
 static void addPltEntry(PltSection *Plt, GotPltSection *GotPlt,
-                        RelocationSection<ELFT> *Rel, RelType Type, Symbol &Sym,
+                        RelocationBaseSection *Rel, RelType Type, Symbol &Sym,
                         bool UseSymVA) {
   Plt->addEntry<ELFT>(Sym);
   GotPlt->addEntry(Sym);
@@ -947,11 +947,11 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
     // If a relocation needs PLT, we create PLT and GOTPLT slots for the symbol.
     if (needsPlt(Expr) && !Sym.isInPlt()) {
       if (Sym.isGnuIFunc() && !Preemptible)
-        addPltEntry(InX::Iplt, InX::IgotPlt, In<ELFT>::RelaIplt,
-                    Target->IRelativeRel, Sym, true);
+        addPltEntry<ELFT>(InX::Iplt, InX::IgotPlt, InX::RelaIplt,
+                          Target->IRelativeRel, Sym, true);
       else
-        addPltEntry(InX::Plt, InX::GotPlt, In<ELFT>::RelaPlt, Target->PltRel,
-                    Sym, !Preemptible);
+        addPltEntry<ELFT>(InX::Plt, InX::GotPlt, InX::RelaPlt, Target->PltRel,
+                          Sym, !Preemptible);
     }
 
     // Create a GOT slot if a relocation needs GOT.
