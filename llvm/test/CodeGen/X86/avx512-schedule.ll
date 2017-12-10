@@ -1450,7 +1450,7 @@ define <4 x float> @slto4f32_mem(<4 x i64>* %a) {
 ;
 ; SKX-LABEL: slto4f32_mem:
 ; SKX:       # %bb.0:
-; SKX-NEXT:    vcvtqq2psy (%rdi), %xmm0 # sched: [9:1.00]
+; SKX-NEXT:    vcvtqq2psy (%rdi), %xmm0 # sched: [11:0.50]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %a1 = load <4 x i64>, <4 x i64>* %a, align 8
   %b = sitofp <4 x i64> %a1 to <4 x float>
