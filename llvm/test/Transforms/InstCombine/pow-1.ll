@@ -124,12 +124,24 @@ define double @test_simplify12(double %x) {
 
 ; Check pow(x, 2.0) -> x*x.
 
-define float @test_simplify13(float %x) {
-; CHECK-LABEL: @test_simplify13(
-  %retval = call float @powf(float %x, float 2.0)
-; CHECK-NEXT: [[SQUARE:%[a-z0-9]+]] = fmul float %x, %x
-  ret float %retval
-; CHECK-NEXT: ret float [[SQUARE]]
+define float @pow2_strict(float %x) {
+; CHECK-LABEL: @pow2_strict(
+; CHECK-NEXT:    [[POW2:%.*]] = fmul float %x, %x
+; CHECK-NEXT:    ret float [[POW2]]
+;
+  %r = call float @powf(float %x, float 2.0)
+  ret float %r
+}
+
+; FIXME: Don't drop the FMF - PR35601 ( https://bugs.llvm.org/show_bug.cgi?id=35601 )
+
+define float @pow2_fast(float %x) {
+; CHECK-LABEL: @pow2_fast(
+; CHECK-NEXT:    [[POW2:%.*]] = fmul float %x, %x
+; CHECK-NEXT:    ret float [[POW2]]
+;
+  %r = call fast float @powf(float %x, float 2.0)
+  ret float %r
 }
 
 define double @test_simplify14(double %x) {
