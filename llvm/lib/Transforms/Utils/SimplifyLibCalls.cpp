@@ -1206,8 +1206,13 @@ Value *LibCallSimplifier::optimizePow(CallInst *CI, IRBuilder<> &B) {
 
   if (Op2C->isExactlyValue(1.0)) // pow(x, 1.0) -> x
     return Op1;
-  if (Op2C->isExactlyValue(2.0)) // pow(x, 2.0) -> x*x
+  if (Op2C->isExactlyValue(2.0)) {
+    // pow(x, 2.0) --> x * x
+    IRBuilder<>::FastMathFlagGuard Guard(B);
+    B.setFastMathFlags(CI->getFastMathFlags());
     return B.CreateFMul(Op1, Op1, "pow2");
+  }
+  // FIXME: This should propagate the FMF of the call to the fdiv.
   if (Op2C->isExactlyValue(-1.0)) // pow(x, -1.0) -> 1.0/x
     return B.CreateFDiv(ConstantFP::get(CI->getType(), 1.0), Op1, "powrecip");
 

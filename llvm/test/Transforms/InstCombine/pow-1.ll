@@ -133,11 +133,11 @@ define float @pow2_strict(float %x) {
   ret float %r
 }
 
-; FIXME: Don't drop the FMF - PR35601 ( https://bugs.llvm.org/show_bug.cgi?id=35601 )
+; Don't drop the FMF - PR35601 ( https://bugs.llvm.org/show_bug.cgi?id=35601 )
 
 define float @pow2_fast(float %x) {
 ; CHECK-LABEL: @pow2_fast(
-; CHECK-NEXT:    [[POW2:%.*]] = fmul float %x, %x
+; CHECK-NEXT:    [[POW2:%.*]] = fmul fast float %x, %x
 ; CHECK-NEXT:    ret float [[POW2]]
 ;
   %r = call fast float @powf(float %x, float 2.0)
