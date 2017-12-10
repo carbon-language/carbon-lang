@@ -9917,8 +9917,8 @@ multiclass avx512_shift_packed_all<bits<8> opc, SDNode OpNode, Format MRMr,
                                    Format MRMm, string OpcodeStr,
                                    OpndItins itins, Predicate prd>{
   let Predicates = [prd] in
-    defm Z512 : avx512_shift_packed<opc, OpNode, MRMr, MRMm,
-                                    OpcodeStr, itins, v64i8_info>, EVEX_V512;
+    defm Z : avx512_shift_packed<opc, OpNode, MRMr, MRMm,
+                                 OpcodeStr, itins, v64i8_info>, EVEX_V512;
   let Predicates = [prd, HasVLX] in {
     defm Z256 : avx512_shift_packed<opc, OpNode, MRMr, MRMm,
                                     OpcodeStr, itins, v32i8x_info>, EVEX_V256;
@@ -9958,8 +9958,8 @@ multiclass avx512_psadbw_packed_all<bits<8> opc, SDNode OpNode,
                                     string OpcodeStr, OpndItins itins,
                                     Predicate prd> {
   let Predicates = [prd] in
-    defm Z512 : avx512_psadbw_packed<opc, OpNode, OpcodeStr, itins, v8i64_info,
-                                    v64i8_info>, EVEX_V512;
+    defm Z : avx512_psadbw_packed<opc, OpNode, OpcodeStr, itins, v8i64_info,
+                                  v64i8_info>, EVEX_V512;
   let Predicates = [prd, HasVLX] in {
     defm Z256 : avx512_psadbw_packed<opc, OpNode, OpcodeStr, itins, v4i64x_info,
                                     v32i8x_info>, EVEX_V256;
