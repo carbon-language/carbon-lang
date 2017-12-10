@@ -6250,7 +6250,7 @@ let Constraints = "$src1 = $dst", hasSideEffects = 0 in {
          (ins _.RC:$src2, _.RC:$src3, AVX512RC:$rc),
          OpcodeStr, "$rc, $src3, $src2", "$src2, $src3, $rc", RHS_VEC_rb,
          NoItinerary, 1, 1>, AVX512FMA3Base, EVEX_B, EVEX_RC,
-         Sched<[WriteFMA, ReadAfterLd]>;
+         Sched<[WriteFMA]>;
 
   let isCodeGenOnly = 1, isCommutable = 1 in {
     def r     : AVX512FMA3S<opc, MRMSrcReg, (outs _.FRC:$dst),
@@ -6790,8 +6790,8 @@ multiclass avx512_cvt_fp_rc_scalar<bits<8> opc, string OpcodeStr, X86VectorVTInf
                         "$rc, $src2, $src1", "$src1, $src2, $rc",
                         (_.VT (OpNodeRnd (_.VT _.RC:$src1),
                                          (_Src.VT _Src.RC:$src2), (i32 imm:$rc))),
-                                         itins.rm>,
-                        EVEX_4V, VEX_LIG, Sched<[itins.Sched.Folded, ReadAfterLd]>,
+                                         itins.rr>,
+                        EVEX_4V, VEX_LIG, Sched<[itins.Sched]>,
                         EVEX_B, EVEX_RC;
 }
 multiclass avx512_cvt_fp_scalar_sd2ss<bits<8> opc, string OpcodeStr,
@@ -7743,7 +7743,7 @@ multiclass avx512_fp28_s<bits<8> opc, string OpcodeStr,X86VectorVTInfo _,
                             "{sae}, $src2, $src1", "$src1, $src2, {sae}",
                             (OpNode (_.VT _.RC:$src1), (_.VT _.RC:$src2),
                             (i32 FROUND_NO_EXC)), itins.rm>, EVEX_B,
-                            Sched<[itins.Sched.Folded, ReadAfterLd]>;
+                            Sched<[itins.Sched]>;
 
   defm m : AVX512_maskable_scalar<opc, MRMSrcMem, _, (outs _.RC:$dst),
                          (ins _.RC:$src1, _.IntScalarMemOp:$src2), OpcodeStr,
@@ -7923,7 +7923,7 @@ multiclass avx512_sqrt_scalar<bits<8> opc, string OpcodeStr, OpndItins itins,
                          (X86fsqrtRnds (_.VT _.RC:$src1),
                                      (_.VT _.RC:$src2),
                                      (i32 imm:$rc)), itins.rr>,
-                         EVEX_B, EVEX_RC, Sched<[itins.Sched.Folded, ReadAfterLd]>;
+                         EVEX_B, EVEX_RC, Sched<[itins.Sched]>;
 
   let isCodeGenOnly = 1, hasSideEffects = 0 in {
     def r : I<opc, MRMSrcReg, (outs _.FRC:$dst),
