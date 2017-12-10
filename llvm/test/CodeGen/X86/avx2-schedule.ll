@@ -178,7 +178,7 @@ define <4 x i32> @test_extracti128(<8 x i32> %a0, <8 x i32> %a1, <4 x i32> *%a2)
 ; GENERIC-NEXT:    vpsubd %ymm1, %ymm0, %ymm0 # sched: [3:1.00]
 ; GENERIC-NEXT:    vextracti128 $1, %ymm0, %xmm0 # sched: [1:1.00]
 ; GENERIC-NEXT:    vextracti128 $1, %ymm2, (%rdi) # sched: [1:1.00]
-; GENERIC-NEXT:    vzeroupper
+; GENERIC-NEXT:    vzeroupper # sched: [100:0.33]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_extracti128:
@@ -482,7 +482,7 @@ define <4 x float> @test_gatherqps_ymm(<4 x float> %a0, i8* %a1, <4 x i64> %a2, 
 ; GENERIC-LABEL: test_gatherqps_ymm:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vgatherqps %xmm2, (%rdi,%ymm1,4), %xmm0 # sched: [4:0.50]
-; GENERIC-NEXT:    vzeroupper
+; GENERIC-NEXT:    vzeroupper # sched: [100:0.33]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_gatherqps_ymm:
@@ -2926,7 +2926,7 @@ define <4 x i32> @test_pgatherqd_ymm(<4 x i32> %a0, i8* %a1, <4 x i64> %a2, <4 x
 ; GENERIC-LABEL: test_pgatherqd_ymm:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vpgatherqd %xmm2, (%rdi,%ymm1,2), %xmm0 # sched: [4:0.50]
-; GENERIC-NEXT:    vzeroupper
+; GENERIC-NEXT:    vzeroupper # sched: [100:0.33]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_pgatherqd_ymm:
@@ -4095,7 +4095,7 @@ define i32 @test_pmovmskb(<32 x i8> %a0) {
 ; GENERIC-LABEL: test_pmovmskb:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vpmovmskb %ymm0, %eax # sched: [1:1.00]
-; GENERIC-NEXT:    vzeroupper
+; GENERIC-NEXT:    vzeroupper # sched: [100:0.33]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_pmovmskb:
