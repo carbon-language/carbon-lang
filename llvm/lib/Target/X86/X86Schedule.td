@@ -692,13 +692,3 @@ def GenericPostRAModel : GenericX86Model {
   let PostRAScheduler = 1;
 }
 
-include "X86ScheduleAtom.td"
-include "X86SchedSandyBridge.td"
-include "X86SchedHaswell.td"
-include "X86SchedBroadwell.td"
-include "X86ScheduleSLM.td"
-include "X86ScheduleZnver1.td"
-include "X86ScheduleBtVer2.td"
-include "X86SchedSkylakeClient.td"
-include "X86SchedSkylakeServer.td"
-
