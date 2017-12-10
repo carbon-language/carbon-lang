@@ -1078,9 +1078,9 @@ template <class ELFT> void DynamicSection<ELFT>::finalizeContents() {
     return; // Already finalized.
 
   this->Link = InX::DynStrTab->getParent()->SectionIndex;
-  if (In<ELFT>::RelaDyn->getParent() && !In<ELFT>::RelaDyn->empty()) {
-    addInSec(In<ELFT>::RelaDyn->DynamicTag, In<ELFT>::RelaDyn);
-    addSize(In<ELFT>::RelaDyn->SizeDynamicTag, In<ELFT>::RelaDyn->getParent());
+  if (InX::RelaDyn->getParent() && !InX::RelaDyn->empty()) {
+    addInSec(InX::RelaDyn->DynamicTag, InX::RelaDyn);
+    addSize(InX::RelaDyn->SizeDynamicTag, InX::RelaDyn->getParent());
 
     bool IsRela = Config->IsRela;
     addInt(IsRela ? DT_RELAENT : DT_RELENT,
@@ -1090,7 +1090,7 @@ template <class ELFT> void DynamicSection<ELFT>::finalizeContents() {
     // The problem is in the tight relation between dynamic
     // relocations and GOT. So do not emit this tag on MIPS.
     if (Config->EMachine != EM_MIPS) {
-      size_t NumRelativeRels = In<ELFT>::RelaDyn->getRelativeRelocCount();
+      size_t NumRelativeRels = InX::RelaDyn->getRelativeRelocCount();
       if (Config->ZCombreloc && NumRelativeRels)
         addInt(IsRela ? DT_RELACOUNT : DT_RELCOUNT, NumRelativeRels);
     }
@@ -2633,6 +2633,7 @@ MipsGotSection *InX::MipsGot;
 MipsRldMapSection *InX::MipsRldMap;
 PltSection *InX::Plt;
 PltSection *InX::Iplt;
+RelocationBaseSection *InX::RelaDyn;
 StringTableSection *InX::ShStrTab;
 StringTableSection *InX::StrTab;
 SymbolTableBaseSection *InX::SymTab;

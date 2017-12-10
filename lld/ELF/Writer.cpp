@@ -252,10 +252,10 @@ template <class ELFT> static void createSyntheticSections() {
   InX::DynStrTab = make<StringTableSection>(".dynstr", true);
   InX::Dynamic = make<DynamicSection<ELFT>>();
   if (Config->AndroidPackDynRelocs) {
-    In<ELFT>::RelaDyn = make<AndroidPackedRelocationSection<ELFT>>(
+    InX::RelaDyn = make<AndroidPackedRelocationSection<ELFT>>(
         Config->IsRela ? ".rela.dyn" : ".rel.dyn");
   } else {
-    In<ELFT>::RelaDyn = make<RelocationSection<ELFT>>(
+    InX::RelaDyn = make<RelocationSection<ELFT>>(
         Config->IsRela ? ".rela.dyn" : ".rel.dyn", Config->ZCombreloc);
   }
   InX::ShStrTab = make<StringTableSection>(".shstrtab", false);
@@ -335,7 +335,7 @@ template <class ELFT> static void createSyntheticSections() {
 
     Add(InX::Dynamic);
     Add(InX::DynStrTab);
-    Add(In<ELFT>::RelaDyn);
+    Add(InX::RelaDyn);
   }
 
   // Add .got. MIPS' .got is so different from the other archs,
@@ -1343,15 +1343,14 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
 
   // Dynamic section must be the last one in this list and dynamic
   // symbol table section (DynSymTab) must be the first one.
-  applySynthetic({InX::DynSymTab,     InX::Bss,          InX::BssRelRo,
-                  InX::GnuHashTab,    InX::HashTab,      InX::SymTab,
-                  InX::ShStrTab,      InX::StrTab,       In<ELFT>::VerDef,
-                  InX::DynStrTab,     InX::Got,          InX::MipsGot,
-                  InX::IgotPlt,       InX::GotPlt,       In<ELFT>::RelaDyn,
-                  In<ELFT>::RelaIplt, In<ELFT>::RelaPlt, InX::Plt,
-                  InX::Iplt,          InX::EhFrameHdr,   In<ELFT>::VerSym,
-                  In<ELFT>::VerNeed,  InX::Dynamic},
-                 [](SyntheticSection *SS) { SS->finalizeContents(); });
+  applySynthetic(
+      {InX::DynSymTab,    InX::Bss,          InX::BssRelRo, InX::GnuHashTab,
+       InX::HashTab,      InX::SymTab,       InX::ShStrTab, InX::StrTab,
+       In<ELFT>::VerDef,  InX::DynStrTab,    InX::Got,      InX::MipsGot,
+       InX::IgotPlt,      InX::GotPlt,       InX::RelaDyn,  In<ELFT>::RelaIplt,
+       In<ELFT>::RelaPlt, InX::Plt,          InX::Iplt,     InX::EhFrameHdr,
+       In<ELFT>::VerSym,  In<ELFT>::VerNeed, InX::Dynamic},
+      [](SyntheticSection *SS) { SS->finalizeContents(); });
 
   if (!Script->HasSectionsCommand && !Config->Relocatable)
     fixSectionAlignments();
@@ -1376,7 +1375,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
       }
       if (InX::MipsGot)
         InX::MipsGot->updateAllocSize();
-      Changed |= In<ELFT>::RelaDyn->updateAllocSize();
+      Changed |= InX::RelaDyn->updateAllocSize();
     } while (Changed);
   }
 
