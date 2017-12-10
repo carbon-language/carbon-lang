@@ -934,7 +934,7 @@ multiclass RELEASE_BINOP_MI<SDNode op> {
         [(atomic_store_64 addr:$dst, (op
             (atomic_load_64 addr:$dst), GR64:$src))]>;
 }
-let Defs = [EFLAGS] in {
+let Defs = [EFLAGS], SchedRW = [WriteMicrocoded] in {
   defm RELEASE_ADD : RELEASE_BINOP_MI<add>;
   defm RELEASE_AND : RELEASE_BINOP_MI<and>;
   defm RELEASE_OR  : RELEASE_BINOP_MI<or>;
@@ -947,7 +947,7 @@ let Defs = [EFLAGS] in {
 // FIXME: imm version.
 // FIXME: Version that doesn't clobber $src, using AVX's VADDSS.
 // FIXME: This could also handle SIMD operations with *ps and *pd instructions.
-let usesCustomInserter = 1 in {
+let usesCustomInserter = 1, SchedRW = [WriteMicrocoded] in {
 multiclass RELEASE_FP_BINOP_MI<SDNode op> {
     def NAME#32mr : I<0, Pseudo, (outs), (ins i32mem:$dst, FR32:$src),
         "#BINOP "#NAME#"32mr PSEUDO!",
@@ -981,7 +981,7 @@ multiclass RELEASE_UNOP<dag dag8, dag dag16, dag dag32, dag dag64> {
         [(atomic_store_64 addr:$dst, dag64)]>;
 }
 
-let Defs = [EFLAGS], Predicates = [UseIncDec] in {
+let Defs = [EFLAGS], Predicates = [UseIncDec], SchedRW = [WriteMicrocoded] in {
   defm RELEASE_INC : RELEASE_UNOP<
       (add (atomic_load_8  addr:$dst), (i8 1)),
       (add (atomic_load_16 addr:$dst), (i16 1)),
@@ -1011,6 +1011,7 @@ defm RELEASE_NOT : RELEASE_UNOP<
     (not (atomic_load_64 addr:$dst))>;
 */
 
+let SchedRW = [WriteMicrocoded] in {
 def RELEASE_MOV8mi : I<0, Pseudo, (outs), (ins i8mem:$dst, i8imm:$src),
             "#RELEASE_MOV8mi PSEUDO!",
             [(atomic_store_8 addr:$dst, (i8 imm:$src))]>;
@@ -1049,6 +1050,7 @@ def ACQUIRE_MOV32rm : I<0, Pseudo, (outs GR32:$dst), (ins i32mem:$src),
 def ACQUIRE_MOV64rm : I<0, Pseudo, (outs GR64:$dst), (ins i64mem:$src),
                       "#ACQUIRE_MOV64rm PSEUDO!",
                       [(set GR64:$dst, (atomic_load_64 addr:$src))]>;
+} // SchedRW
 
 //===----------------------------------------------------------------------===//
 // DAG Pattern Matching Rules
