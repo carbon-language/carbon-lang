@@ -1814,7 +1814,339 @@ define void @test_cpuid() optsize {
   ret void
 }
 
-; TODO - test_dec
+define void @test_dec8(i8 %a0, i8* %a1) optsize {
+; GENERIC-LABEL: test_dec8:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    decb %dil # sched: [1:0.33]
+; GENERIC-NEXT:    decb (%rsi) # sched: [7:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_dec8:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    decb %dil # sched: [1:0.50]
+; ATOM-NEXT:    decb (%rsi) # sched: [1:1.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_dec8:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    decb %dil # sched: [1:0.50]
+; SLM-NEXT:    decb (%rsi) # sched: [4:2.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_dec8:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    decb %dil # sched: [1:0.33]
+; SANDY-NEXT:    decb (%rsi) # sched: [7:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_dec8:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    decb %dil # sched: [1:0.25]
+; HASWELL-NEXT:    decb (%rsi) # sched: [7:1.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_dec8:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    decb %dil # sched: [1:0.25]
+; BROADWELL-NEXT:    decb (%rsi) # sched: [6:1.00]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_dec8:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    decb %dil # sched: [1:0.25]
+; SKYLAKE-NEXT:    decb (%rsi) # sched: [6:1.00]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_dec8:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    decb %dil # sched: [1:0.25]
+; SKX-NEXT:    decb (%rsi) # sched: [6:1.00]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_dec8:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    decb %dil # sched: [1:0.50]
+; BTVER2-NEXT:    decb (%rsi) # sched: [4:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_dec8:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    decb %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    decb (%rsi) # sched: [5:0.50]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  tail call void asm "decb $0 \0A\09 decb $1", "r,*m"(i8 %a0, i8* %a1) nounwind
+  ret void
+}
+define void @test_dec16(i16 %a0, i16* %a1) optsize {
+; GENERIC-LABEL: test_dec16:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    decw %di # sched: [1:0.33]
+; GENERIC-NEXT:    decw (%rsi) # sched: [7:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_dec16:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    decw %di # sched: [1:0.50]
+; ATOM-NEXT:    decw (%rsi) # sched: [1:1.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_dec16:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    decw %di # sched: [1:0.50]
+; SLM-NEXT:    decw (%rsi) # sched: [4:2.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_dec16:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    decw %di # sched: [1:0.33]
+; SANDY-NEXT:    decw (%rsi) # sched: [7:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_dec16:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    decw %di # sched: [1:0.25]
+; HASWELL-NEXT:    decw (%rsi) # sched: [7:1.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_dec16:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    decw %di # sched: [1:0.25]
+; BROADWELL-NEXT:    decw (%rsi) # sched: [6:1.00]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_dec16:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    decw %di # sched: [1:0.25]
+; SKYLAKE-NEXT:    decw (%rsi) # sched: [6:1.00]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_dec16:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    decw %di # sched: [1:0.25]
+; SKX-NEXT:    decw (%rsi) # sched: [6:1.00]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_dec16:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    decw %di # sched: [1:0.50]
+; BTVER2-NEXT:    decw (%rsi) # sched: [4:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_dec16:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    decw %di # sched: [1:0.25]
+; ZNVER1-NEXT:    decw (%rsi) # sched: [5:0.50]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  tail call void asm "decw $0 \0A\09 decw $1", "r,*m"(i16 %a0, i16* %a1) nounwind
+  ret void
+}
+define void @test_dec32(i32 %a0, i32* %a1) optsize {
+; GENERIC-LABEL: test_dec32:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    decl %edi # sched: [1:0.33]
+; GENERIC-NEXT:    decl (%rsi) # sched: [7:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_dec32:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    decl %edi # sched: [1:0.50]
+; ATOM-NEXT:    decl (%rsi) # sched: [1:1.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_dec32:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    decl %edi # sched: [1:0.50]
+; SLM-NEXT:    decl (%rsi) # sched: [4:2.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_dec32:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    decl %edi # sched: [1:0.33]
+; SANDY-NEXT:    decl (%rsi) # sched: [7:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_dec32:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    decl %edi # sched: [1:0.25]
+; HASWELL-NEXT:    decl (%rsi) # sched: [7:1.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_dec32:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    decl %edi # sched: [1:0.25]
+; BROADWELL-NEXT:    decl (%rsi) # sched: [6:1.00]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_dec32:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    decl %edi # sched: [1:0.25]
+; SKYLAKE-NEXT:    decl (%rsi) # sched: [6:1.00]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_dec32:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    decl %edi # sched: [1:0.25]
+; SKX-NEXT:    decl (%rsi) # sched: [6:1.00]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_dec32:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    decl %edi # sched: [1:0.50]
+; BTVER2-NEXT:    decl (%rsi) # sched: [4:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_dec32:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    decl %edi # sched: [1:0.25]
+; ZNVER1-NEXT:    decl (%rsi) # sched: [5:0.50]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  tail call void asm "decl $0 \0A\09 decl $1", "r,*m"(i32 %a0, i32* %a1) nounwind
+  ret void
+}
+define void @test_dec64(i64 %a0, i64* %a1) optsize {
+; GENERIC-LABEL: test_dec64:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    decq %rdi # sched: [1:0.33]
+; GENERIC-NEXT:    decq (%rsi) # sched: [7:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_dec64:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    decq %rdi # sched: [1:0.50]
+; ATOM-NEXT:    decq (%rsi) # sched: [1:1.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_dec64:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    decq %rdi # sched: [1:0.50]
+; SLM-NEXT:    decq (%rsi) # sched: [4:2.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_dec64:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    decq %rdi # sched: [1:0.33]
+; SANDY-NEXT:    decq (%rsi) # sched: [7:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_dec64:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    decq %rdi # sched: [1:0.25]
+; HASWELL-NEXT:    decq (%rsi) # sched: [7:1.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_dec64:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    decq %rdi # sched: [1:0.25]
+; BROADWELL-NEXT:    decq (%rsi) # sched: [6:1.00]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_dec64:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    decq %rdi # sched: [1:0.25]
+; SKYLAKE-NEXT:    decq (%rsi) # sched: [6:1.00]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_dec64:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    decq %rdi # sched: [1:0.25]
+; SKX-NEXT:    decq (%rsi) # sched: [6:1.00]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_dec64:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    decq %rdi # sched: [1:0.50]
+; BTVER2-NEXT:    decq (%rsi) # sched: [4:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_dec64:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    decq %rdi # sched: [1:0.25]
+; ZNVER1-NEXT:    decq (%rsi) # sched: [5:0.50]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  tail call void asm "decq $0 \0A\09 decq $1", "r,*m"(i64 %a0, i64* %a1) nounwind
+  ret void
+}
+
 ; TODO - test_div
 
 ; TODO - test_enter
@@ -1824,7 +2156,338 @@ define void @test_cpuid() optsize {
 
 ; TODO - test_in
 
-; TODO - test_inc
+define void @test_inc8(i8 %a0, i8* %a1) optsize {
+; GENERIC-LABEL: test_inc8:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    incb %dil # sched: [1:0.33]
+; GENERIC-NEXT:    incb (%rsi) # sched: [7:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_inc8:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    incb %dil # sched: [1:0.50]
+; ATOM-NEXT:    incb (%rsi) # sched: [1:1.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_inc8:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    incb %dil # sched: [1:0.50]
+; SLM-NEXT:    incb (%rsi) # sched: [4:2.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_inc8:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    incb %dil # sched: [1:0.33]
+; SANDY-NEXT:    incb (%rsi) # sched: [7:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_inc8:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    incb %dil # sched: [1:0.25]
+; HASWELL-NEXT:    incb (%rsi) # sched: [7:1.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_inc8:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    incb %dil # sched: [1:0.25]
+; BROADWELL-NEXT:    incb (%rsi) # sched: [6:1.00]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_inc8:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    incb %dil # sched: [1:0.25]
+; SKYLAKE-NEXT:    incb (%rsi) # sched: [6:1.00]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_inc8:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    incb %dil # sched: [1:0.25]
+; SKX-NEXT:    incb (%rsi) # sched: [6:1.00]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_inc8:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    incb %dil # sched: [1:0.50]
+; BTVER2-NEXT:    incb (%rsi) # sched: [4:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_inc8:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    incb %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    incb (%rsi) # sched: [5:0.50]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  tail call void asm "incb $0 \0A\09 incb $1", "r,*m"(i8 %a0, i8* %a1) nounwind
+  ret void
+}
+define void @test_inc16(i16 %a0, i16* %a1) optsize {
+; GENERIC-LABEL: test_inc16:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    incw %di # sched: [1:0.33]
+; GENERIC-NEXT:    incw (%rsi) # sched: [7:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_inc16:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    incw %di # sched: [1:0.50]
+; ATOM-NEXT:    incw (%rsi) # sched: [1:1.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_inc16:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    incw %di # sched: [1:0.50]
+; SLM-NEXT:    incw (%rsi) # sched: [4:2.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_inc16:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    incw %di # sched: [1:0.33]
+; SANDY-NEXT:    incw (%rsi) # sched: [7:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_inc16:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    incw %di # sched: [1:0.25]
+; HASWELL-NEXT:    incw (%rsi) # sched: [7:1.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_inc16:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    incw %di # sched: [1:0.25]
+; BROADWELL-NEXT:    incw (%rsi) # sched: [6:1.00]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_inc16:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    incw %di # sched: [1:0.25]
+; SKYLAKE-NEXT:    incw (%rsi) # sched: [6:1.00]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_inc16:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    incw %di # sched: [1:0.25]
+; SKX-NEXT:    incw (%rsi) # sched: [6:1.00]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_inc16:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    incw %di # sched: [1:0.50]
+; BTVER2-NEXT:    incw (%rsi) # sched: [4:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_inc16:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    incw %di # sched: [1:0.25]
+; ZNVER1-NEXT:    incw (%rsi) # sched: [5:0.50]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  tail call void asm "incw $0 \0A\09 incw $1", "r,*m"(i16 %a0, i16* %a1) nounwind
+  ret void
+}
+define void @test_inc32(i32 %a0, i32* %a1) optsize {
+; GENERIC-LABEL: test_inc32:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    incl %edi # sched: [1:0.33]
+; GENERIC-NEXT:    incl (%rsi) # sched: [7:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_inc32:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    incl %edi # sched: [1:0.50]
+; ATOM-NEXT:    incl (%rsi) # sched: [1:1.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_inc32:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    incl %edi # sched: [1:0.50]
+; SLM-NEXT:    incl (%rsi) # sched: [4:2.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_inc32:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    incl %edi # sched: [1:0.33]
+; SANDY-NEXT:    incl (%rsi) # sched: [7:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_inc32:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    incl %edi # sched: [1:0.25]
+; HASWELL-NEXT:    incl (%rsi) # sched: [7:1.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_inc32:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    incl %edi # sched: [1:0.25]
+; BROADWELL-NEXT:    incl (%rsi) # sched: [6:1.00]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_inc32:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    incl %edi # sched: [1:0.25]
+; SKYLAKE-NEXT:    incl (%rsi) # sched: [6:1.00]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_inc32:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    incl %edi # sched: [1:0.25]
+; SKX-NEXT:    incl (%rsi) # sched: [6:1.00]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_inc32:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    incl %edi # sched: [1:0.50]
+; BTVER2-NEXT:    incl (%rsi) # sched: [4:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_inc32:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    incl %edi # sched: [1:0.25]
+; ZNVER1-NEXT:    incl (%rsi) # sched: [5:0.50]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  tail call void asm "incl $0 \0A\09 incl $1", "r,*m"(i32 %a0, i32* %a1) nounwind
+  ret void
+}
+define void @test_inc64(i64 %a0, i64* %a1) optsize {
+; GENERIC-LABEL: test_inc64:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    incq %rdi # sched: [1:0.33]
+; GENERIC-NEXT:    incq (%rsi) # sched: [7:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_inc64:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    incq %rdi # sched: [1:0.50]
+; ATOM-NEXT:    incq (%rsi) # sched: [1:1.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_inc64:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    incq %rdi # sched: [1:0.50]
+; SLM-NEXT:    incq (%rsi) # sched: [4:2.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_inc64:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    incq %rdi # sched: [1:0.33]
+; SANDY-NEXT:    incq (%rsi) # sched: [7:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_inc64:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    incq %rdi # sched: [1:0.25]
+; HASWELL-NEXT:    incq (%rsi) # sched: [7:1.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_inc64:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    incq %rdi # sched: [1:0.25]
+; BROADWELL-NEXT:    incq (%rsi) # sched: [6:1.00]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_inc64:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    incq %rdi # sched: [1:0.25]
+; SKYLAKE-NEXT:    incq (%rsi) # sched: [6:1.00]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_inc64:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    incq %rdi # sched: [1:0.25]
+; SKX-NEXT:    incq (%rsi) # sched: [6:1.00]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_inc64:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    incq %rdi # sched: [1:0.50]
+; BTVER2-NEXT:    incq (%rsi) # sched: [4:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_inc64:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    incq %rdi # sched: [1:0.25]
+; ZNVER1-NEXT:    incq (%rsi) # sched: [5:0.50]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  tail call void asm "incq $0 \0A\09 incq $1", "r,*m"(i64 %a0, i64* %a1) nounwind
+  ret void
+}
 
 define void @test_ins() optsize {
 ; GENERIC-LABEL: test_ins:
