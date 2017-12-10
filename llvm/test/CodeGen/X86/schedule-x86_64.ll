@@ -740,10 +740,675 @@ define i64 @test_bswap64(i64 %a0) optsize {
   ret i64 %1
 }
 
-; TODO - test_bt
-; TODO - test_btc
-; TODO - test_btr
-; TODO - test_bts
+define void @test_bt_btc_btr_bts_16(i16 %a0, i16 %a1, i16 *%a2) optsize {
+; GENERIC-LABEL: test_bt_btc_btr_bts_16:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    btw %si, %di # sched: [1:0.50]
+; GENERIC-NEXT:    btcw %si, %di # sched: [1:0.50]
+; GENERIC-NEXT:    btrw %si, %di # sched: [1:0.50]
+; GENERIC-NEXT:    btsw %si, %di # sched: [1:0.50]
+; GENERIC-NEXT:    btw %si, (%rdx) # sched: [9:1.00]
+; GENERIC-NEXT:    btcw %si, (%rdx) # sched: [9:1.00]
+; GENERIC-NEXT:    btrw %si, (%rdx) # sched: [9:1.00]
+; GENERIC-NEXT:    btsw %si, (%rdx) # sched: [9:1.00]
+; GENERIC-NEXT:    btw $7, %di # sched: [1:0.50]
+; GENERIC-NEXT:    btcw $7, %di # sched: [1:0.50]
+; GENERIC-NEXT:    btrw $7, %di # sched: [1:0.50]
+; GENERIC-NEXT:    btsw $7, %di # sched: [1:0.50]
+; GENERIC-NEXT:    btw $7, (%rdx) # sched: [6:0.50]
+; GENERIC-NEXT:    btcw $7, (%rdx) # sched: [7:1.00]
+; GENERIC-NEXT:    btrw $7, (%rdx) # sched: [7:1.00]
+; GENERIC-NEXT:    btsw $7, (%rdx) # sched: [7:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_bt_btc_btr_bts_16:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    btw %si, %di # sched: [1:1.00]
+; ATOM-NEXT:    btcw %si, %di # sched: [1:1.00]
+; ATOM-NEXT:    btrw %si, %di # sched: [1:1.00]
+; ATOM-NEXT:    btsw %si, %di # sched: [1:1.00]
+; ATOM-NEXT:    btw %si, (%rdx) # sched: [9:4.50]
+; ATOM-NEXT:    btcw %si, (%rdx) # sched: [11:5.50]
+; ATOM-NEXT:    btrw %si, (%rdx) # sched: [11:5.50]
+; ATOM-NEXT:    btsw %si, (%rdx) # sched: [11:5.50]
+; ATOM-NEXT:    btw $7, %di # sched: [1:1.00]
+; ATOM-NEXT:    btcw $7, %di # sched: [1:1.00]
+; ATOM-NEXT:    btrw $7, %di # sched: [1:1.00]
+; ATOM-NEXT:    btsw $7, %di # sched: [1:1.00]
+; ATOM-NEXT:    btw $7, (%rdx) # sched: [1:0.50]
+; ATOM-NEXT:    btcw $7, (%rdx) # sched: [2:1.00]
+; ATOM-NEXT:    btrw $7, (%rdx) # sched: [2:1.00]
+; ATOM-NEXT:    btsw $7, (%rdx) # sched: [2:1.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_bt_btc_btr_bts_16:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    btw %si, %di # sched: [1:0.50]
+; SLM-NEXT:    btcw %si, %di # sched: [1:0.50]
+; SLM-NEXT:    btrw %si, %di # sched: [1:0.50]
+; SLM-NEXT:    btsw %si, %di # sched: [1:0.50]
+; SLM-NEXT:    btw %si, (%rdx) # sched: [4:1.00]
+; SLM-NEXT:    btcw %si, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    btrw %si, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    btsw %si, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    btw $7, %di # sched: [1:0.50]
+; SLM-NEXT:    btcw $7, %di # sched: [1:0.50]
+; SLM-NEXT:    btrw $7, %di # sched: [1:0.50]
+; SLM-NEXT:    btsw $7, %di # sched: [1:0.50]
+; SLM-NEXT:    btw $7, (%rdx) # sched: [1:0.50]
+; SLM-NEXT:    btcw $7, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    btrw $7, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    btsw $7, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_bt_btc_btr_bts_16:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    btw %si, %di # sched: [1:0.50]
+; SANDY-NEXT:    btcw %si, %di # sched: [1:0.50]
+; SANDY-NEXT:    btrw %si, %di # sched: [1:0.50]
+; SANDY-NEXT:    btsw %si, %di # sched: [1:0.50]
+; SANDY-NEXT:    btw %si, (%rdx) # sched: [9:1.00]
+; SANDY-NEXT:    btcw %si, (%rdx) # sched: [9:1.00]
+; SANDY-NEXT:    btrw %si, (%rdx) # sched: [9:1.00]
+; SANDY-NEXT:    btsw %si, (%rdx) # sched: [9:1.00]
+; SANDY-NEXT:    btw $7, %di # sched: [1:0.50]
+; SANDY-NEXT:    btcw $7, %di # sched: [1:0.50]
+; SANDY-NEXT:    btrw $7, %di # sched: [1:0.50]
+; SANDY-NEXT:    btsw $7, %di # sched: [1:0.50]
+; SANDY-NEXT:    btw $7, (%rdx) # sched: [6:0.50]
+; SANDY-NEXT:    btcw $7, (%rdx) # sched: [7:1.00]
+; SANDY-NEXT:    btrw $7, (%rdx) # sched: [7:1.00]
+; SANDY-NEXT:    btsw $7, (%rdx) # sched: [7:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_bt_btc_btr_bts_16:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    btw %si, %di # sched: [1:0.50]
+; HASWELL-NEXT:    btcw %si, %di # sched: [1:0.50]
+; HASWELL-NEXT:    btrw %si, %di # sched: [1:0.50]
+; HASWELL-NEXT:    btsw %si, %di # sched: [1:0.50]
+; HASWELL-NEXT:    btw %si, (%rdx) # sched: [1:?]
+; HASWELL-NEXT:    btcw %si, (%rdx) # sched: [1:?]
+; HASWELL-NEXT:    btrw %si, (%rdx) # sched: [1:?]
+; HASWELL-NEXT:    btsw %si, (%rdx) # sched: [1:?]
+; HASWELL-NEXT:    btw $7, %di # sched: [1:0.50]
+; HASWELL-NEXT:    btcw $7, %di # sched: [1:0.50]
+; HASWELL-NEXT:    btrw $7, %di # sched: [1:0.50]
+; HASWELL-NEXT:    btsw $7, %di # sched: [1:0.50]
+; HASWELL-NEXT:    btw $7, (%rdx) # sched: [6:0.50]
+; HASWELL-NEXT:    btcw $7, (%rdx) # sched: [7:1.00]
+; HASWELL-NEXT:    btrw $7, (%rdx) # sched: [7:1.00]
+; HASWELL-NEXT:    btsw $7, (%rdx) # sched: [7:1.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_bt_btc_btr_bts_16:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    btw %si, %di # sched: [1:0.50]
+; BROADWELL-NEXT:    btcw %si, %di # sched: [1:0.50]
+; BROADWELL-NEXT:    btrw %si, %di # sched: [1:0.50]
+; BROADWELL-NEXT:    btsw %si, %di # sched: [1:0.50]
+; BROADWELL-NEXT:    btw %si, (%rdx) # sched: [6:0.50]
+; BROADWELL-NEXT:    btcw %si, (%rdx) # sched: [6:1.00]
+; BROADWELL-NEXT:    btrw %si, (%rdx) # sched: [6:1.00]
+; BROADWELL-NEXT:    btsw %si, (%rdx) # sched: [6:1.00]
+; BROADWELL-NEXT:    btw $7, %di # sched: [1:0.50]
+; BROADWELL-NEXT:    btcw $7, %di # sched: [1:0.50]
+; BROADWELL-NEXT:    btrw $7, %di # sched: [1:0.50]
+; BROADWELL-NEXT:    btsw $7, %di # sched: [1:0.50]
+; BROADWELL-NEXT:    btw $7, (%rdx) # sched: [6:0.50]
+; BROADWELL-NEXT:    btcw $7, (%rdx) # sched: [6:1.00]
+; BROADWELL-NEXT:    btrw $7, (%rdx) # sched: [6:1.00]
+; BROADWELL-NEXT:    btsw $7, (%rdx) # sched: [6:1.00]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_bt_btc_btr_bts_16:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    btw %si, %di # sched: [1:0.50]
+; SKYLAKE-NEXT:    btcw %si, %di # sched: [1:0.50]
+; SKYLAKE-NEXT:    btrw %si, %di # sched: [1:0.50]
+; SKYLAKE-NEXT:    btsw %si, %di # sched: [1:0.50]
+; SKYLAKE-NEXT:    btw %si, (%rdx) # sched: [6:0.50]
+; SKYLAKE-NEXT:    btcw %si, (%rdx) # sched: [6:1.00]
+; SKYLAKE-NEXT:    btrw %si, (%rdx) # sched: [6:1.00]
+; SKYLAKE-NEXT:    btsw %si, (%rdx) # sched: [6:1.00]
+; SKYLAKE-NEXT:    btw $7, %di # sched: [1:0.50]
+; SKYLAKE-NEXT:    btcw $7, %di # sched: [1:0.50]
+; SKYLAKE-NEXT:    btrw $7, %di # sched: [1:0.50]
+; SKYLAKE-NEXT:    btsw $7, %di # sched: [1:0.50]
+; SKYLAKE-NEXT:    btw $7, (%rdx) # sched: [6:0.50]
+; SKYLAKE-NEXT:    btcw $7, (%rdx) # sched: [6:1.00]
+; SKYLAKE-NEXT:    btrw $7, (%rdx) # sched: [6:1.00]
+; SKYLAKE-NEXT:    btsw $7, (%rdx) # sched: [6:1.00]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_bt_btc_btr_bts_16:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    btw %si, %di # sched: [1:0.50]
+; SKX-NEXT:    btcw %si, %di # sched: [1:0.50]
+; SKX-NEXT:    btrw %si, %di # sched: [1:0.50]
+; SKX-NEXT:    btsw %si, %di # sched: [1:0.50]
+; SKX-NEXT:    btw %si, (%rdx) # sched: [6:0.50]
+; SKX-NEXT:    btcw %si, (%rdx) # sched: [6:1.00]
+; SKX-NEXT:    btrw %si, (%rdx) # sched: [6:1.00]
+; SKX-NEXT:    btsw %si, (%rdx) # sched: [6:1.00]
+; SKX-NEXT:    btw $7, %di # sched: [1:0.50]
+; SKX-NEXT:    btcw $7, %di # sched: [1:0.50]
+; SKX-NEXT:    btrw $7, %di # sched: [1:0.50]
+; SKX-NEXT:    btsw $7, %di # sched: [1:0.50]
+; SKX-NEXT:    btw $7, (%rdx) # sched: [6:0.50]
+; SKX-NEXT:    btcw $7, (%rdx) # sched: [6:1.00]
+; SKX-NEXT:    btrw $7, (%rdx) # sched: [6:1.00]
+; SKX-NEXT:    btsw $7, (%rdx) # sched: [6:1.00]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_bt_btc_btr_bts_16:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    btw %si, %di # sched: [1:0.50]
+; BTVER2-NEXT:    btcw %si, %di # sched: [1:0.50]
+; BTVER2-NEXT:    btrw %si, %di # sched: [1:0.50]
+; BTVER2-NEXT:    btsw %si, %di # sched: [1:0.50]
+; BTVER2-NEXT:    btw %si, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    btcw %si, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    btrw %si, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    btsw %si, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    btw $7, %di # sched: [1:0.50]
+; BTVER2-NEXT:    btcw $7, %di # sched: [1:0.50]
+; BTVER2-NEXT:    btrw $7, %di # sched: [1:0.50]
+; BTVER2-NEXT:    btsw $7, %di # sched: [1:0.50]
+; BTVER2-NEXT:    btw $7, (%rdx) # sched: [1:0.50]
+; BTVER2-NEXT:    btcw $7, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    btrw $7, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    btsw $7, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_bt_btc_btr_bts_16:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    btw %si, %di # sched: [1:0.25]
+; ZNVER1-NEXT:    btcw %si, %di # sched: [2:0.25]
+; ZNVER1-NEXT:    btrw %si, %di # sched: [2:0.25]
+; ZNVER1-NEXT:    btsw %si, %di # sched: [2:0.25]
+; ZNVER1-NEXT:    btw %si, (%rdx) # sched: [5:0.50]
+; ZNVER1-NEXT:    btcw %si, (%rdx) # sched: [6:0.50]
+; ZNVER1-NEXT:    btrw %si, (%rdx) # sched: [6:0.50]
+; ZNVER1-NEXT:    btsw %si, (%rdx) # sched: [6:0.50]
+; ZNVER1-NEXT:    btw $7, %di # sched: [1:0.25]
+; ZNVER1-NEXT:    btcw $7, %di # sched: [2:0.25]
+; ZNVER1-NEXT:    btrw $7, %di # sched: [2:0.25]
+; ZNVER1-NEXT:    btsw $7, %di # sched: [2:0.25]
+; ZNVER1-NEXT:    btw $7, (%rdx) # sched: [5:0.50]
+; ZNVER1-NEXT:    btcw $7, (%rdx) # sched: [6:0.50]
+; ZNVER1-NEXT:    btrw $7, (%rdx) # sched: [6:0.50]
+; ZNVER1-NEXT:    btsw $7, (%rdx) # sched: [6:0.50]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  call void asm sideeffect "btw $1, $0 \0A\09  btcw $1, $0 \0A\09  btrw $1, $0 \0A\09 btsw $1, $0 \0A\09 btw $1, $2 \0A\09 btcw $1, $2 \0A\09 btrw $1, $2 \0A\09 btsw $1, $2 \0A\09 btw $3, $0 \0A\09 btcw $3, $0 \0A\09 btrw $3, $0 \0A\09 btsw $3, $0 \0A\09 btw $3, $2 \0A\09 btcw $3, $2 \0A\09 btrw $3, $2 \0A\09 btsw $3, $2", "r,r,*m,i"(i16 %a0, i16 %a1, i16 *%a2, i8 7)
+  ret void
+}
+define void @test_bt_btc_btr_bts_32(i32 %a0, i32 %a1, i32 *%a2) optsize {
+; GENERIC-LABEL: test_bt_btc_btr_bts_32:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    btl %esi, %edi # sched: [1:0.50]
+; GENERIC-NEXT:    btcl %esi, %edi # sched: [1:0.50]
+; GENERIC-NEXT:    btrl %esi, %edi # sched: [1:0.50]
+; GENERIC-NEXT:    btsl %esi, %edi # sched: [1:0.50]
+; GENERIC-NEXT:    btl %esi, (%rdx) # sched: [9:1.00]
+; GENERIC-NEXT:    btcl %esi, (%rdx) # sched: [9:1.00]
+; GENERIC-NEXT:    btrl %esi, (%rdx) # sched: [9:1.00]
+; GENERIC-NEXT:    btsl %esi, (%rdx) # sched: [9:1.00]
+; GENERIC-NEXT:    btl $7, %edi # sched: [1:0.50]
+; GENERIC-NEXT:    btcl $7, %edi # sched: [1:0.50]
+; GENERIC-NEXT:    btrl $7, %edi # sched: [1:0.50]
+; GENERIC-NEXT:    btsl $7, %edi # sched: [1:0.50]
+; GENERIC-NEXT:    btl $7, (%rdx) # sched: [6:0.50]
+; GENERIC-NEXT:    btcl $7, (%rdx) # sched: [7:1.00]
+; GENERIC-NEXT:    btrl $7, (%rdx) # sched: [7:1.00]
+; GENERIC-NEXT:    btsl $7, (%rdx) # sched: [7:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_bt_btc_btr_bts_32:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    btl %esi, %edi # sched: [1:1.00]
+; ATOM-NEXT:    btcl %esi, %edi # sched: [1:1.00]
+; ATOM-NEXT:    btrl %esi, %edi # sched: [1:1.00]
+; ATOM-NEXT:    btsl %esi, %edi # sched: [1:1.00]
+; ATOM-NEXT:    btl %esi, (%rdx) # sched: [9:4.50]
+; ATOM-NEXT:    btcl %esi, (%rdx) # sched: [11:5.50]
+; ATOM-NEXT:    btrl %esi, (%rdx) # sched: [11:5.50]
+; ATOM-NEXT:    btsl %esi, (%rdx) # sched: [11:5.50]
+; ATOM-NEXT:    btl $7, %edi # sched: [1:1.00]
+; ATOM-NEXT:    btcl $7, %edi # sched: [1:1.00]
+; ATOM-NEXT:    btrl $7, %edi # sched: [1:1.00]
+; ATOM-NEXT:    btsl $7, %edi # sched: [1:1.00]
+; ATOM-NEXT:    btl $7, (%rdx) # sched: [1:0.50]
+; ATOM-NEXT:    btcl $7, (%rdx) # sched: [2:1.00]
+; ATOM-NEXT:    btrl $7, (%rdx) # sched: [2:1.00]
+; ATOM-NEXT:    btsl $7, (%rdx) # sched: [2:1.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_bt_btc_btr_bts_32:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    btl %esi, %edi # sched: [1:0.50]
+; SLM-NEXT:    btcl %esi, %edi # sched: [1:0.50]
+; SLM-NEXT:    btrl %esi, %edi # sched: [1:0.50]
+; SLM-NEXT:    btsl %esi, %edi # sched: [1:0.50]
+; SLM-NEXT:    btl %esi, (%rdx) # sched: [4:1.00]
+; SLM-NEXT:    btcl %esi, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    btrl %esi, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    btsl %esi, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    btl $7, %edi # sched: [1:0.50]
+; SLM-NEXT:    btcl $7, %edi # sched: [1:0.50]
+; SLM-NEXT:    btrl $7, %edi # sched: [1:0.50]
+; SLM-NEXT:    btsl $7, %edi # sched: [1:0.50]
+; SLM-NEXT:    btl $7, (%rdx) # sched: [1:0.50]
+; SLM-NEXT:    btcl $7, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    btrl $7, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    btsl $7, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_bt_btc_btr_bts_32:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    btl %esi, %edi # sched: [1:0.50]
+; SANDY-NEXT:    btcl %esi, %edi # sched: [1:0.50]
+; SANDY-NEXT:    btrl %esi, %edi # sched: [1:0.50]
+; SANDY-NEXT:    btsl %esi, %edi # sched: [1:0.50]
+; SANDY-NEXT:    btl %esi, (%rdx) # sched: [9:1.00]
+; SANDY-NEXT:    btcl %esi, (%rdx) # sched: [9:1.00]
+; SANDY-NEXT:    btrl %esi, (%rdx) # sched: [9:1.00]
+; SANDY-NEXT:    btsl %esi, (%rdx) # sched: [9:1.00]
+; SANDY-NEXT:    btl $7, %edi # sched: [1:0.50]
+; SANDY-NEXT:    btcl $7, %edi # sched: [1:0.50]
+; SANDY-NEXT:    btrl $7, %edi # sched: [1:0.50]
+; SANDY-NEXT:    btsl $7, %edi # sched: [1:0.50]
+; SANDY-NEXT:    btl $7, (%rdx) # sched: [6:0.50]
+; SANDY-NEXT:    btcl $7, (%rdx) # sched: [7:1.00]
+; SANDY-NEXT:    btrl $7, (%rdx) # sched: [7:1.00]
+; SANDY-NEXT:    btsl $7, (%rdx) # sched: [7:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_bt_btc_btr_bts_32:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    btl %esi, %edi # sched: [1:0.50]
+; HASWELL-NEXT:    btcl %esi, %edi # sched: [1:0.50]
+; HASWELL-NEXT:    btrl %esi, %edi # sched: [1:0.50]
+; HASWELL-NEXT:    btsl %esi, %edi # sched: [1:0.50]
+; HASWELL-NEXT:    btl %esi, (%rdx) # sched: [1:?]
+; HASWELL-NEXT:    btcl %esi, (%rdx) # sched: [1:?]
+; HASWELL-NEXT:    btrl %esi, (%rdx) # sched: [1:?]
+; HASWELL-NEXT:    btsl %esi, (%rdx) # sched: [1:?]
+; HASWELL-NEXT:    btl $7, %edi # sched: [1:0.50]
+; HASWELL-NEXT:    btcl $7, %edi # sched: [1:0.50]
+; HASWELL-NEXT:    btrl $7, %edi # sched: [1:0.50]
+; HASWELL-NEXT:    btsl $7, %edi # sched: [1:0.50]
+; HASWELL-NEXT:    btl $7, (%rdx) # sched: [6:0.50]
+; HASWELL-NEXT:    btcl $7, (%rdx) # sched: [7:1.00]
+; HASWELL-NEXT:    btrl $7, (%rdx) # sched: [7:1.00]
+; HASWELL-NEXT:    btsl $7, (%rdx) # sched: [7:1.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_bt_btc_btr_bts_32:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    btl %esi, %edi # sched: [1:0.50]
+; BROADWELL-NEXT:    btcl %esi, %edi # sched: [1:0.50]
+; BROADWELL-NEXT:    btrl %esi, %edi # sched: [1:0.50]
+; BROADWELL-NEXT:    btsl %esi, %edi # sched: [1:0.50]
+; BROADWELL-NEXT:    btl %esi, (%rdx) # sched: [6:0.50]
+; BROADWELL-NEXT:    btcl %esi, (%rdx) # sched: [6:1.00]
+; BROADWELL-NEXT:    btrl %esi, (%rdx) # sched: [6:1.00]
+; BROADWELL-NEXT:    btsl %esi, (%rdx) # sched: [6:1.00]
+; BROADWELL-NEXT:    btl $7, %edi # sched: [1:0.50]
+; BROADWELL-NEXT:    btcl $7, %edi # sched: [1:0.50]
+; BROADWELL-NEXT:    btrl $7, %edi # sched: [1:0.50]
+; BROADWELL-NEXT:    btsl $7, %edi # sched: [1:0.50]
+; BROADWELL-NEXT:    btl $7, (%rdx) # sched: [6:0.50]
+; BROADWELL-NEXT:    btcl $7, (%rdx) # sched: [6:1.00]
+; BROADWELL-NEXT:    btrl $7, (%rdx) # sched: [6:1.00]
+; BROADWELL-NEXT:    btsl $7, (%rdx) # sched: [6:1.00]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_bt_btc_btr_bts_32:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    btl %esi, %edi # sched: [1:0.50]
+; SKYLAKE-NEXT:    btcl %esi, %edi # sched: [1:0.50]
+; SKYLAKE-NEXT:    btrl %esi, %edi # sched: [1:0.50]
+; SKYLAKE-NEXT:    btsl %esi, %edi # sched: [1:0.50]
+; SKYLAKE-NEXT:    btl %esi, (%rdx) # sched: [6:0.50]
+; SKYLAKE-NEXT:    btcl %esi, (%rdx) # sched: [6:1.00]
+; SKYLAKE-NEXT:    btrl %esi, (%rdx) # sched: [6:1.00]
+; SKYLAKE-NEXT:    btsl %esi, (%rdx) # sched: [6:1.00]
+; SKYLAKE-NEXT:    btl $7, %edi # sched: [1:0.50]
+; SKYLAKE-NEXT:    btcl $7, %edi # sched: [1:0.50]
+; SKYLAKE-NEXT:    btrl $7, %edi # sched: [1:0.50]
+; SKYLAKE-NEXT:    btsl $7, %edi # sched: [1:0.50]
+; SKYLAKE-NEXT:    btl $7, (%rdx) # sched: [6:0.50]
+; SKYLAKE-NEXT:    btcl $7, (%rdx) # sched: [6:1.00]
+; SKYLAKE-NEXT:    btrl $7, (%rdx) # sched: [6:1.00]
+; SKYLAKE-NEXT:    btsl $7, (%rdx) # sched: [6:1.00]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_bt_btc_btr_bts_32:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    btl %esi, %edi # sched: [1:0.50]
+; SKX-NEXT:    btcl %esi, %edi # sched: [1:0.50]
+; SKX-NEXT:    btrl %esi, %edi # sched: [1:0.50]
+; SKX-NEXT:    btsl %esi, %edi # sched: [1:0.50]
+; SKX-NEXT:    btl %esi, (%rdx) # sched: [6:0.50]
+; SKX-NEXT:    btcl %esi, (%rdx) # sched: [6:1.00]
+; SKX-NEXT:    btrl %esi, (%rdx) # sched: [6:1.00]
+; SKX-NEXT:    btsl %esi, (%rdx) # sched: [6:1.00]
+; SKX-NEXT:    btl $7, %edi # sched: [1:0.50]
+; SKX-NEXT:    btcl $7, %edi # sched: [1:0.50]
+; SKX-NEXT:    btrl $7, %edi # sched: [1:0.50]
+; SKX-NEXT:    btsl $7, %edi # sched: [1:0.50]
+; SKX-NEXT:    btl $7, (%rdx) # sched: [6:0.50]
+; SKX-NEXT:    btcl $7, (%rdx) # sched: [6:1.00]
+; SKX-NEXT:    btrl $7, (%rdx) # sched: [6:1.00]
+; SKX-NEXT:    btsl $7, (%rdx) # sched: [6:1.00]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_bt_btc_btr_bts_32:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    btl %esi, %edi # sched: [1:0.50]
+; BTVER2-NEXT:    btcl %esi, %edi # sched: [1:0.50]
+; BTVER2-NEXT:    btrl %esi, %edi # sched: [1:0.50]
+; BTVER2-NEXT:    btsl %esi, %edi # sched: [1:0.50]
+; BTVER2-NEXT:    btl %esi, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    btcl %esi, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    btrl %esi, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    btsl %esi, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    btl $7, %edi # sched: [1:0.50]
+; BTVER2-NEXT:    btcl $7, %edi # sched: [1:0.50]
+; BTVER2-NEXT:    btrl $7, %edi # sched: [1:0.50]
+; BTVER2-NEXT:    btsl $7, %edi # sched: [1:0.50]
+; BTVER2-NEXT:    btl $7, (%rdx) # sched: [1:0.50]
+; BTVER2-NEXT:    btcl $7, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    btrl $7, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    btsl $7, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_bt_btc_btr_bts_32:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    btl %esi, %edi # sched: [1:0.25]
+; ZNVER1-NEXT:    btcl %esi, %edi # sched: [2:0.25]
+; ZNVER1-NEXT:    btrl %esi, %edi # sched: [2:0.25]
+; ZNVER1-NEXT:    btsl %esi, %edi # sched: [2:0.25]
+; ZNVER1-NEXT:    btl %esi, (%rdx) # sched: [5:0.50]
+; ZNVER1-NEXT:    btcl %esi, (%rdx) # sched: [6:0.50]
+; ZNVER1-NEXT:    btrl %esi, (%rdx) # sched: [6:0.50]
+; ZNVER1-NEXT:    btsl %esi, (%rdx) # sched: [6:0.50]
+; ZNVER1-NEXT:    btl $7, %edi # sched: [1:0.25]
+; ZNVER1-NEXT:    btcl $7, %edi # sched: [2:0.25]
+; ZNVER1-NEXT:    btrl $7, %edi # sched: [2:0.25]
+; ZNVER1-NEXT:    btsl $7, %edi # sched: [2:0.25]
+; ZNVER1-NEXT:    btl $7, (%rdx) # sched: [5:0.50]
+; ZNVER1-NEXT:    btcl $7, (%rdx) # sched: [6:0.50]
+; ZNVER1-NEXT:    btrl $7, (%rdx) # sched: [6:0.50]
+; ZNVER1-NEXT:    btsl $7, (%rdx) # sched: [6:0.50]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  call void asm sideeffect "btl $1, $0 \0A\09  btcl $1, $0 \0A\09  btrl $1, $0 \0A\09 btsl $1, $0 \0A\09 btl $1, $2 \0A\09 btcl $1, $2 \0A\09 btrl $1, $2 \0A\09 btsl $1, $2 \0A\09 btl $3, $0 \0A\09 btcl $3, $0 \0A\09 btrl $3, $0 \0A\09 btsl $3, $0 \0A\09 btl $3, $2 \0A\09 btcl $3, $2 \0A\09 btrl $3, $2 \0A\09 btsl $3, $2", "r,r,*m,i"(i32 %a0, i32 %a1, i32 *%a2, i8 7)
+  ret void
+}
+define void @test_bt_btc_btr_bts_64(i64 %a0, i64 %a1, i64 *%a2) optsize {
+; GENERIC-LABEL: test_bt_btc_btr_bts_64:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    btq %rsi, %rdi # sched: [1:0.50]
+; GENERIC-NEXT:    btcq %rsi, %rdi # sched: [1:0.50]
+; GENERIC-NEXT:    btrq %rsi, %rdi # sched: [1:0.50]
+; GENERIC-NEXT:    btsq %rsi, %rdi # sched: [1:0.50]
+; GENERIC-NEXT:    btq %rsi, (%rdx) # sched: [9:1.00]
+; GENERIC-NEXT:    btcq %rsi, (%rdx) # sched: [9:1.00]
+; GENERIC-NEXT:    btrq %rsi, (%rdx) # sched: [9:1.00]
+; GENERIC-NEXT:    btsq %rsi, (%rdx) # sched: [9:1.00]
+; GENERIC-NEXT:    btq $7, %rdi # sched: [1:0.50]
+; GENERIC-NEXT:    btcq $7, %rdi # sched: [1:0.50]
+; GENERIC-NEXT:    btrq $7, %rdi # sched: [1:0.50]
+; GENERIC-NEXT:    btsq $7, %rdi # sched: [1:0.50]
+; GENERIC-NEXT:    btq $7, (%rdx) # sched: [6:0.50]
+; GENERIC-NEXT:    btcq $7, (%rdx) # sched: [7:1.00]
+; GENERIC-NEXT:    btrq $7, (%rdx) # sched: [7:1.00]
+; GENERIC-NEXT:    btsq $7, (%rdx) # sched: [7:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_bt_btc_btr_bts_64:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    btq %rsi, %rdi # sched: [1:1.00]
+; ATOM-NEXT:    btcq %rsi, %rdi # sched: [1:1.00]
+; ATOM-NEXT:    btrq %rsi, %rdi
+; ATOM-NEXT:    btsq %rsi, %rdi # sched: [1:1.00]
+; ATOM-NEXT:    btq %rsi, (%rdx) # sched: [9:4.50]
+; ATOM-NEXT:    btcq %rsi, (%rdx) # sched: [11:5.50]
+; ATOM-NEXT:    btrq %rsi, (%rdx) # sched: [11:5.50]
+; ATOM-NEXT:    btsq %rsi, (%rdx) # sched: [11:5.50]
+; ATOM-NEXT:    btq $7, %rdi # sched: [1:1.00]
+; ATOM-NEXT:    btcq $7, %rdi # sched: [1:1.00]
+; ATOM-NEXT:    btrq $7, %rdi # sched: [1:1.00]
+; ATOM-NEXT:    btsq $7, %rdi # sched: [1:1.00]
+; ATOM-NEXT:    btq $7, (%rdx) # sched: [1:0.50]
+; ATOM-NEXT:    btcq $7, (%rdx) # sched: [2:1.00]
+; ATOM-NEXT:    btrq $7, (%rdx) # sched: [2:1.00]
+; ATOM-NEXT:    btsq $7, (%rdx) # sched: [2:1.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_bt_btc_btr_bts_64:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    btq %rsi, %rdi # sched: [1:0.50]
+; SLM-NEXT:    btcq %rsi, %rdi # sched: [1:0.50]
+; SLM-NEXT:    btrq %rsi, %rdi # sched: [1:0.50]
+; SLM-NEXT:    btsq %rsi, %rdi # sched: [1:0.50]
+; SLM-NEXT:    btq %rsi, (%rdx) # sched: [4:1.00]
+; SLM-NEXT:    btcq %rsi, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    btrq %rsi, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    btsq %rsi, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    btq $7, %rdi # sched: [1:0.50]
+; SLM-NEXT:    btcq $7, %rdi # sched: [1:0.50]
+; SLM-NEXT:    btrq $7, %rdi # sched: [1:0.50]
+; SLM-NEXT:    btsq $7, %rdi # sched: [1:0.50]
+; SLM-NEXT:    btq $7, (%rdx) # sched: [1:0.50]
+; SLM-NEXT:    btcq $7, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    btrq $7, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    btsq $7, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_bt_btc_btr_bts_64:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    btq %rsi, %rdi # sched: [1:0.50]
+; SANDY-NEXT:    btcq %rsi, %rdi # sched: [1:0.50]
+; SANDY-NEXT:    btrq %rsi, %rdi # sched: [1:0.50]
+; SANDY-NEXT:    btsq %rsi, %rdi # sched: [1:0.50]
+; SANDY-NEXT:    btq %rsi, (%rdx) # sched: [9:1.00]
+; SANDY-NEXT:    btcq %rsi, (%rdx) # sched: [9:1.00]
+; SANDY-NEXT:    btrq %rsi, (%rdx) # sched: [9:1.00]
+; SANDY-NEXT:    btsq %rsi, (%rdx) # sched: [9:1.00]
+; SANDY-NEXT:    btq $7, %rdi # sched: [1:0.50]
+; SANDY-NEXT:    btcq $7, %rdi # sched: [1:0.50]
+; SANDY-NEXT:    btrq $7, %rdi # sched: [1:0.50]
+; SANDY-NEXT:    btsq $7, %rdi # sched: [1:0.50]
+; SANDY-NEXT:    btq $7, (%rdx) # sched: [6:0.50]
+; SANDY-NEXT:    btcq $7, (%rdx) # sched: [7:1.00]
+; SANDY-NEXT:    btrq $7, (%rdx) # sched: [7:1.00]
+; SANDY-NEXT:    btsq $7, (%rdx) # sched: [7:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_bt_btc_btr_bts_64:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    btq %rsi, %rdi # sched: [1:0.50]
+; HASWELL-NEXT:    btcq %rsi, %rdi # sched: [1:0.50]
+; HASWELL-NEXT:    btrq %rsi, %rdi # sched: [1:0.50]
+; HASWELL-NEXT:    btsq %rsi, %rdi # sched: [1:0.50]
+; HASWELL-NEXT:    btq %rsi, (%rdx) # sched: [1:?]
+; HASWELL-NEXT:    btcq %rsi, (%rdx) # sched: [1:?]
+; HASWELL-NEXT:    btrq %rsi, (%rdx) # sched: [1:?]
+; HASWELL-NEXT:    btsq %rsi, (%rdx) # sched: [1:?]
+; HASWELL-NEXT:    btq $7, %rdi # sched: [1:0.50]
+; HASWELL-NEXT:    btcq $7, %rdi # sched: [1:0.50]
+; HASWELL-NEXT:    btrq $7, %rdi # sched: [1:0.50]
+; HASWELL-NEXT:    btsq $7, %rdi # sched: [1:0.50]
+; HASWELL-NEXT:    btq $7, (%rdx) # sched: [6:0.50]
+; HASWELL-NEXT:    btcq $7, (%rdx) # sched: [7:1.00]
+; HASWELL-NEXT:    btrq $7, (%rdx) # sched: [7:1.00]
+; HASWELL-NEXT:    btsq $7, (%rdx) # sched: [7:1.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_bt_btc_btr_bts_64:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    btq %rsi, %rdi # sched: [1:0.50]
+; BROADWELL-NEXT:    btcq %rsi, %rdi # sched: [1:0.50]
+; BROADWELL-NEXT:    btrq %rsi, %rdi # sched: [1:0.50]
+; BROADWELL-NEXT:    btsq %rsi, %rdi # sched: [1:0.50]
+; BROADWELL-NEXT:    btq %rsi, (%rdx) # sched: [6:0.50]
+; BROADWELL-NEXT:    btcq %rsi, (%rdx) # sched: [6:1.00]
+; BROADWELL-NEXT:    btrq %rsi, (%rdx) # sched: [6:1.00]
+; BROADWELL-NEXT:    btsq %rsi, (%rdx) # sched: [6:1.00]
+; BROADWELL-NEXT:    btq $7, %rdi # sched: [1:0.50]
+; BROADWELL-NEXT:    btcq $7, %rdi # sched: [1:0.50]
+; BROADWELL-NEXT:    btrq $7, %rdi # sched: [1:0.50]
+; BROADWELL-NEXT:    btsq $7, %rdi # sched: [1:0.50]
+; BROADWELL-NEXT:    btq $7, (%rdx) # sched: [6:0.50]
+; BROADWELL-NEXT:    btcq $7, (%rdx) # sched: [6:1.00]
+; BROADWELL-NEXT:    btrq $7, (%rdx) # sched: [6:1.00]
+; BROADWELL-NEXT:    btsq $7, (%rdx) # sched: [6:1.00]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_bt_btc_btr_bts_64:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    btq %rsi, %rdi # sched: [1:0.50]
+; SKYLAKE-NEXT:    btcq %rsi, %rdi # sched: [1:0.50]
+; SKYLAKE-NEXT:    btrq %rsi, %rdi # sched: [1:0.50]
+; SKYLAKE-NEXT:    btsq %rsi, %rdi # sched: [1:0.50]
+; SKYLAKE-NEXT:    btq %rsi, (%rdx) # sched: [6:0.50]
+; SKYLAKE-NEXT:    btcq %rsi, (%rdx) # sched: [6:1.00]
+; SKYLAKE-NEXT:    btrq %rsi, (%rdx) # sched: [6:1.00]
+; SKYLAKE-NEXT:    btsq %rsi, (%rdx) # sched: [6:1.00]
+; SKYLAKE-NEXT:    btq $7, %rdi # sched: [1:0.50]
+; SKYLAKE-NEXT:    btcq $7, %rdi # sched: [1:0.50]
+; SKYLAKE-NEXT:    btrq $7, %rdi # sched: [1:0.50]
+; SKYLAKE-NEXT:    btsq $7, %rdi # sched: [1:0.50]
+; SKYLAKE-NEXT:    btq $7, (%rdx) # sched: [6:0.50]
+; SKYLAKE-NEXT:    btcq $7, (%rdx) # sched: [6:1.00]
+; SKYLAKE-NEXT:    btrq $7, (%rdx) # sched: [6:1.00]
+; SKYLAKE-NEXT:    btsq $7, (%rdx) # sched: [6:1.00]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_bt_btc_btr_bts_64:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    btq %rsi, %rdi # sched: [1:0.50]
+; SKX-NEXT:    btcq %rsi, %rdi # sched: [1:0.50]
+; SKX-NEXT:    btrq %rsi, %rdi # sched: [1:0.50]
+; SKX-NEXT:    btsq %rsi, %rdi # sched: [1:0.50]
+; SKX-NEXT:    btq %rsi, (%rdx) # sched: [6:0.50]
+; SKX-NEXT:    btcq %rsi, (%rdx) # sched: [6:1.00]
+; SKX-NEXT:    btrq %rsi, (%rdx) # sched: [6:1.00]
+; SKX-NEXT:    btsq %rsi, (%rdx) # sched: [6:1.00]
+; SKX-NEXT:    btq $7, %rdi # sched: [1:0.50]
+; SKX-NEXT:    btcq $7, %rdi # sched: [1:0.50]
+; SKX-NEXT:    btrq $7, %rdi # sched: [1:0.50]
+; SKX-NEXT:    btsq $7, %rdi # sched: [1:0.50]
+; SKX-NEXT:    btq $7, (%rdx) # sched: [6:0.50]
+; SKX-NEXT:    btcq $7, (%rdx) # sched: [6:1.00]
+; SKX-NEXT:    btrq $7, (%rdx) # sched: [6:1.00]
+; SKX-NEXT:    btsq $7, (%rdx) # sched: [6:1.00]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_bt_btc_btr_bts_64:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    btq %rsi, %rdi # sched: [1:0.50]
+; BTVER2-NEXT:    btcq %rsi, %rdi # sched: [1:0.50]
+; BTVER2-NEXT:    btrq %rsi, %rdi # sched: [1:0.50]
+; BTVER2-NEXT:    btsq %rsi, %rdi # sched: [1:0.50]
+; BTVER2-NEXT:    btq %rsi, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    btcq %rsi, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    btrq %rsi, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    btsq %rsi, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    btq $7, %rdi # sched: [1:0.50]
+; BTVER2-NEXT:    btcq $7, %rdi # sched: [1:0.50]
+; BTVER2-NEXT:    btrq $7, %rdi # sched: [1:0.50]
+; BTVER2-NEXT:    btsq $7, %rdi # sched: [1:0.50]
+; BTVER2-NEXT:    btq $7, (%rdx) # sched: [1:0.50]
+; BTVER2-NEXT:    btcq $7, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    btrq $7, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    btsq $7, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_bt_btc_btr_bts_64:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    btq %rsi, %rdi # sched: [1:0.25]
+; ZNVER1-NEXT:    btcq %rsi, %rdi # sched: [2:0.25]
+; ZNVER1-NEXT:    btrq %rsi, %rdi # sched: [2:0.25]
+; ZNVER1-NEXT:    btsq %rsi, %rdi # sched: [2:0.25]
+; ZNVER1-NEXT:    btq %rsi, (%rdx) # sched: [5:0.50]
+; ZNVER1-NEXT:    btcq %rsi, (%rdx) # sched: [6:0.50]
+; ZNVER1-NEXT:    btrq %rsi, (%rdx) # sched: [6:0.50]
+; ZNVER1-NEXT:    btsq %rsi, (%rdx) # sched: [6:0.50]
+; ZNVER1-NEXT:    btq $7, %rdi # sched: [1:0.25]
+; ZNVER1-NEXT:    btcq $7, %rdi # sched: [2:0.25]
+; ZNVER1-NEXT:    btrq $7, %rdi # sched: [2:0.25]
+; ZNVER1-NEXT:    btsq $7, %rdi # sched: [2:0.25]
+; ZNVER1-NEXT:    btq $7, (%rdx) # sched: [5:0.50]
+; ZNVER1-NEXT:    btcq $7, (%rdx) # sched: [6:0.50]
+; ZNVER1-NEXT:    btrq $7, (%rdx) # sched: [6:0.50]
+; ZNVER1-NEXT:    btsq $7, (%rdx) # sched: [6:0.50]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  call void asm sideeffect "btq $1, $0 \0A\09  btcq $1, $0 \0A\09  btrq $1, $0 \0A\09 btsq $1, $0 \0A\09 btq $1, $2 \0A\09 btcq $1, $2 \0A\09 btrq $1, $2 \0A\09 btsq $1, $2 \0A\09 btq $3, $0 \0A\09 btcq $3, $0 \0A\09 btrq $3, $0 \0A\09 btsq $3, $0 \0A\09 btq $3, $2 \0A\09 btcq $3, $2 \0A\09 btrq $3, $2 \0A\09 btsq $3, $2", "r,r,*m,i"(i64 %a0, i64 %a1, i64 *%a2, i8 7)
+  ret void
+}
 
 ; TODO - test_call
 
