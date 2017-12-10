@@ -4927,7 +4927,7 @@ multiclass avx512_fp_packed<bits<8> opc, string OpcodeStr, SDPatternOperator OpN
 multiclass avx512_fp_round_packed<bits<8> opc, string OpcodeStr, SDPatternOperator OpNodeRnd,
                                   OpndItins itins, X86VectorVTInfo _> {
   let ExeDomain = _.ExeDomain in
-  defm rb: AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
+  defm rrb: AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
                   (ins _.RC:$src1, _.RC:$src2, AVX512RC:$rc), OpcodeStr##_.Suffix,
                   "$rc, $src2, $src1", "$src1, $src2, $rc",
                   (_.VT (OpNodeRnd _.RC:$src1, _.RC:$src2, (i32 imm:$rc))), itins.rr>,
@@ -4937,7 +4937,7 @@ multiclass avx512_fp_round_packed<bits<8> opc, string OpcodeStr, SDPatternOperat
 multiclass avx512_fp_sae_packed<bits<8> opc, string OpcodeStr, SDPatternOperator OpNodeRnd,
                                 OpndItins itins, X86VectorVTInfo _> {
   let ExeDomain = _.ExeDomain in
-  defm rb: AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
+  defm rrb: AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
                   (ins _.RC:$src1, _.RC:$src2), OpcodeStr##_.Suffix,
                   "{sae}, $src2, $src1", "$src1, $src2, {sae}",
                   (_.VT (OpNodeRnd _.RC:$src1, _.RC:$src2, (i32 FROUND_NO_EXC))), itins.rr>,
@@ -7487,12 +7487,12 @@ multiclass avx512_cvtph2ps<X86VectorVTInfo _dest, X86VectorVTInfo _src,
 
 multiclass avx512_cvtph2ps_sae<X86VectorVTInfo _dest, X86VectorVTInfo _src,
                                OpndItins itins> {
-  defm rb : AVX512_maskable<0x13, MRMSrcReg, _dest, (outs _dest.RC:$dst),
-                            (ins _src.RC:$src), "vcvtph2ps",
-                            "{sae}, $src", "$src, {sae}",
-                            (X86cvtph2psRnd (_src.VT _src.RC:$src),
-                                            (i32 FROUND_NO_EXC)), itins.rr>,
-                            T8PD, EVEX_B, Sched<[itins.Sched]>;
+  defm rrb : AVX512_maskable<0x13, MRMSrcReg, _dest, (outs _dest.RC:$dst),
+                             (ins _src.RC:$src), "vcvtph2ps",
+                             "{sae}, $src", "$src, {sae}",
+                             (X86cvtph2psRnd (_src.VT _src.RC:$src),
+                                             (i32 FROUND_NO_EXC)), itins.rr>,
+                             T8PD, EVEX_B, Sched<[itins.Sched]>;
 }
 
 let Predicates = [HasAVX512] in
@@ -7602,10 +7602,10 @@ let Predicates = [HasVLX] in {
 multiclass avx512_ord_cmp_sae<bits<8> opc, X86VectorVTInfo _,
                             string OpcodeStr, OpndItins itins> {
   let hasSideEffects = 0 in
-  def rb: AVX512<opc, MRMSrcReg, (outs), (ins _.RC:$src1, _.RC:$src2),
-                 !strconcat(OpcodeStr, "\t{{sae}, $src2, $src1|$src1, $src2, {sae}}"),
-                 [], itins.rr>, EVEX, EVEX_B, VEX_LIG, EVEX_V128,
-                 Sched<[itins.Sched]>;
+  def rrb: AVX512<opc, MRMSrcReg, (outs), (ins _.RC:$src1, _.RC:$src2),
+                  !strconcat(OpcodeStr, "\t{{sae}, $src2, $src1|$src1, $src2, {sae}}"),
+                  [], itins.rr>, EVEX, EVEX_B, VEX_LIG, EVEX_V128,
+                  Sched<[itins.Sched]>;
 }
 
 let Defs = [EFLAGS], Predicates = [HasAVX512] in {

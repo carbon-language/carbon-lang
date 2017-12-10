@@ -10059,9 +10059,9 @@ bool X86InstrInfo::isHighLatencyDef(int opc) const {
   case X86::VDIVPDZ256rr:
   case X86::VDIVPDZ256rrk:
   case X86::VDIVPDZ256rrkz:
-  case X86::VDIVPDZrb:
-  case X86::VDIVPDZrbk:
-  case X86::VDIVPDZrbkz:
+  case X86::VDIVPDZrrb:
+  case X86::VDIVPDZrrbk:
+  case X86::VDIVPDZrrbkz:
   case X86::VDIVPDZrm:
   case X86::VDIVPDZrmb:
   case X86::VDIVPDZrmbk:
@@ -10089,9 +10089,9 @@ bool X86InstrInfo::isHighLatencyDef(int opc) const {
   case X86::VDIVPSZ256rr:
   case X86::VDIVPSZ256rrk:
   case X86::VDIVPSZ256rrkz:
-  case X86::VDIVPSZrb:
-  case X86::VDIVPSZrbk:
-  case X86::VDIVPSZrbkz:
+  case X86::VDIVPSZrrb:
+  case X86::VDIVPSZrrbk:
+  case X86::VDIVPSZrrbkz:
   case X86::VDIVPSZrm:
   case X86::VDIVPSZrmb:
   case X86::VDIVPSZrmbk:
