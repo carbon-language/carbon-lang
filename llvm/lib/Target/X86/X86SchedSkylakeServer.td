@@ -1562,9 +1562,9 @@ def: InstRW<[SKXWriteResGroup12], (instregex "MOVPQIto64rr")>;
 def: InstRW<[SKXWriteResGroup12], (instregex "PMOVMSKBrr")>;
 def: InstRW<[SKXWriteResGroup12], (instregex "UCOMISDrr")>;
 def: InstRW<[SKXWriteResGroup12], (instregex "UCOMISSrr")>;
-def: InstRW<[SKXWriteResGroup12], (instregex "VCOMISDZrrb")>;
+def: InstRW<[SKXWriteResGroup12], (instregex "VCOMISDZrr(b?)")>;
 def: InstRW<[SKXWriteResGroup12], (instregex "VCOMISDrr")>;
-def: InstRW<[SKXWriteResGroup12], (instregex "VCOMISSZrrb")>;
+def: InstRW<[SKXWriteResGroup12], (instregex "VCOMISSZrr(b?)")>;
 def: InstRW<[SKXWriteResGroup12], (instregex "VCOMISSrr")>;
 def: InstRW<[SKXWriteResGroup12], (instregex "VMOVMSKPDYrr")>;
 def: InstRW<[SKXWriteResGroup12], (instregex "VMOVMSKPDrr")>;
@@ -1580,9 +1580,9 @@ def: InstRW<[SKXWriteResGroup12], (instregex "VTESTPDYrr")>;
 def: InstRW<[SKXWriteResGroup12], (instregex "VTESTPDrr")>;
 def: InstRW<[SKXWriteResGroup12], (instregex "VTESTPSYrr")>;
 def: InstRW<[SKXWriteResGroup12], (instregex "VTESTPSrr")>;
-def: InstRW<[SKXWriteResGroup12], (instregex "VUCOMISDZrrb")>;
+def: InstRW<[SKXWriteResGroup12], (instregex "VUCOMISDZrr(b?)")>;
 def: InstRW<[SKXWriteResGroup12], (instregex "VUCOMISDrr")>;
-def: InstRW<[SKXWriteResGroup12], (instregex "VUCOMISSZrrb")>;
+def: InstRW<[SKXWriteResGroup12], (instregex "VUCOMISSZrr(b?)")>;
 def: InstRW<[SKXWriteResGroup12], (instregex "VUCOMISSrr")>;
 
 def SKXWriteResGroup13 : SchedWriteRes<[SKXPort5]> {
