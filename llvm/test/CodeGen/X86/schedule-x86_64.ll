@@ -1630,7 +1630,6 @@ define void @test_clc_cld_cmc() optsize {
   ret void
 }
 
-; TODO - test_cmovcc
 ; TODO - test_cmp
 
 ; TODO - test_cmps
