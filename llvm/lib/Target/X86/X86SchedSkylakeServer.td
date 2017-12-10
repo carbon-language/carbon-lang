@@ -3000,6 +3000,7 @@ def: InstRW<[SKXWriteResGroup53], (instregex "VPSRLQZ256rr(b?)(k?)(z?)")>;
 def: InstRW<[SKXWriteResGroup53], (instregex "VPSRLQZrr(b?)(k?)(z?)")>;
 def: InstRW<[SKXWriteResGroup53], (instregex "VPSRLWYrr")>;
 def: InstRW<[SKXWriteResGroup53], (instregex "VPSRLWZ256rr(b?)(k?)(z?)")>;
+def: InstRW<[SKXWriteResGroup53], (instregex "VPSRLWZrr(b?)(k?)(z?)")>;
 
 def SKXWriteResGroup54 : SchedWriteRes<[SKXPort4,SKXPort5,SKXPort237]> {
   let Latency = 4;
