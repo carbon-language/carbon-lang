@@ -1658,14 +1658,14 @@ define <4 x float> @test_extractf128(<8 x float> %a0, <8 x float> %a1, <4 x floa
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vextractf128 $1, %ymm0, %xmm0 # sched: [1:1.00]
 ; GENERIC-NEXT:    vextractf128 $1, %ymm1, (%rdi) # sched: [5:1.00]
-; GENERIC-NEXT:    vzeroupper
+; GENERIC-NEXT:    vzeroupper # sched: [100:0.33]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SANDY-LABEL: test_extractf128:
 ; SANDY:       # %bb.0:
 ; SANDY-NEXT:    vextractf128 $1, %ymm0, %xmm0 # sched: [1:1.00]
 ; SANDY-NEXT:    vextractf128 $1, %ymm1, (%rdi) # sched: [5:1.00]
-; SANDY-NEXT:    vzeroupper
+; SANDY-NEXT:    vzeroupper # sched: [100:0.33]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_extractf128:
@@ -2707,13 +2707,13 @@ define i32 @test_movmskpd(<4 x double> %a0) {
 ; GENERIC-LABEL: test_movmskpd:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vmovmskpd %ymm0, %eax # sched: [2:1.00]
-; GENERIC-NEXT:    vzeroupper
+; GENERIC-NEXT:    vzeroupper # sched: [100:0.33]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SANDY-LABEL: test_movmskpd:
 ; SANDY:       # %bb.0:
 ; SANDY-NEXT:    vmovmskpd %ymm0, %eax # sched: [2:1.00]
-; SANDY-NEXT:    vzeroupper
+; SANDY-NEXT:    vzeroupper # sched: [100:0.33]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_movmskpd:
@@ -2759,13 +2759,13 @@ define i32 @test_movmskps(<8 x float> %a0) {
 ; GENERIC-LABEL: test_movmskps:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vmovmskps %ymm0, %eax # sched: [2:1.00]
-; GENERIC-NEXT:    vzeroupper
+; GENERIC-NEXT:    vzeroupper # sched: [100:0.33]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SANDY-LABEL: test_movmskps:
 ; SANDY:       # %bb.0:
 ; SANDY-NEXT:    vmovmskps %ymm0, %eax # sched: [2:1.00]
-; SANDY-NEXT:    vzeroupper
+; SANDY-NEXT:    vzeroupper # sched: [100:0.33]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_movmskps:
@@ -2813,7 +2813,7 @@ define void @test_movntdq(<4 x i64> %a0, <4 x i64> *%a1) {
 ; GENERIC-NEXT:    #APP
 ; GENERIC-NEXT:    vmovntdq %ymm0, (%rdi) # sched: [5:1.00]
 ; GENERIC-NEXT:    #NO_APP
-; GENERIC-NEXT:    vzeroupper
+; GENERIC-NEXT:    vzeroupper # sched: [100:0.33]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SANDY-LABEL: test_movntdq:
@@ -2821,7 +2821,7 @@ define void @test_movntdq(<4 x i64> %a0, <4 x i64> *%a1) {
 ; SANDY-NEXT:    #APP
 ; SANDY-NEXT:    vmovntdq %ymm0, (%rdi) # sched: [5:1.00]
 ; SANDY-NEXT:    #NO_APP
-; SANDY-NEXT:    vzeroupper
+; SANDY-NEXT:    vzeroupper # sched: [100:0.33]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_movntdq:
@@ -4708,7 +4708,7 @@ define i32 @test_testpd_ymm(<4 x double> %a0, <4 x double> %a1, <4 x double> *%a
 ; GENERIC-NEXT:    setb %al # sched: [1:0.50]
 ; GENERIC-NEXT:    vtestpd (%rdi), %ymm0 # sched: [8:1.00]
 ; GENERIC-NEXT:    adcl $0, %eax # sched: [2:0.67]
-; GENERIC-NEXT:    vzeroupper
+; GENERIC-NEXT:    vzeroupper # sched: [100:0.33]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SANDY-LABEL: test_testpd_ymm:
@@ -4718,7 +4718,7 @@ define i32 @test_testpd_ymm(<4 x double> %a0, <4 x double> %a1, <4 x double> *%a
 ; SANDY-NEXT:    setb %al # sched: [1:0.50]
 ; SANDY-NEXT:    vtestpd (%rdi), %ymm0 # sched: [8:1.00]
 ; SANDY-NEXT:    adcl $0, %eax # sched: [2:0.67]
-; SANDY-NEXT:    vzeroupper
+; SANDY-NEXT:    vzeroupper # sched: [100:0.33]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_testpd_ymm:
@@ -4875,7 +4875,7 @@ define i32 @test_testps_ymm(<8 x float> %a0, <8 x float> %a1, <8 x float> *%a2) 
 ; GENERIC-NEXT:    setb %al # sched: [1:0.50]
 ; GENERIC-NEXT:    vtestps (%rdi), %ymm0 # sched: [8:1.00]
 ; GENERIC-NEXT:    adcl $0, %eax # sched: [2:0.67]
-; GENERIC-NEXT:    vzeroupper
+; GENERIC-NEXT:    vzeroupper # sched: [100:0.33]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SANDY-LABEL: test_testps_ymm:
@@ -4885,7 +4885,7 @@ define i32 @test_testps_ymm(<8 x float> %a0, <8 x float> %a1, <8 x float> *%a2) 
 ; SANDY-NEXT:    setb %al # sched: [1:0.50]
 ; SANDY-NEXT:    vtestps (%rdi), %ymm0 # sched: [8:1.00]
 ; SANDY-NEXT:    adcl $0, %eax # sched: [2:0.67]
-; SANDY-NEXT:    vzeroupper
+; SANDY-NEXT:    vzeroupper # sched: [100:0.33]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_testps_ymm:
@@ -5325,12 +5325,12 @@ define <8 x float> @test_xorps(<8 x float> %a0, <8 x float> %a1, <8 x float> *%a
 define void @test_zeroall() {
 ; GENERIC-LABEL: test_zeroall:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    vzeroall
+; GENERIC-NEXT:    vzeroall # sched: [100:0.33]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SANDY-LABEL: test_zeroall:
 ; SANDY:       # %bb.0:
-; SANDY-NEXT:    vzeroall
+; SANDY-NEXT:    vzeroall # sched: [100:0.33]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_zeroall:
@@ -5370,12 +5370,12 @@ declare void @llvm.x86.avx.vzeroall() nounwind
 define void @test_zeroupper() {
 ; GENERIC-LABEL: test_zeroupper:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    vzeroupper
+; GENERIC-NEXT:    vzeroupper # sched: [100:0.33]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SANDY-LABEL: test_zeroupper:
 ; SANDY:       # %bb.0:
-; SANDY-NEXT:    vzeroupper
+; SANDY-NEXT:    vzeroupper # sched: [100:0.33]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_zeroupper:
