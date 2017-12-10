@@ -10109,9 +10109,9 @@ bool X86InstrInfo::isHighLatencyDef(int opc) const {
   case X86::VDIVSDZrr_Int:
   case X86::VDIVSDZrr_Intk:
   case X86::VDIVSDZrr_Intkz:
-  case X86::VDIVSDZrrb:
-  case X86::VDIVSDZrrbk:
-  case X86::VDIVSDZrrbkz:
+  case X86::VDIVSDZrrb_Int:
+  case X86::VDIVSDZrrb_Intk:
+  case X86::VDIVSDZrrb_Intkz:
   case X86::VDIVSSZrm:
   case X86::VDIVSSZrr:
   case X86::VDIVSSZrm_Int:
@@ -10120,9 +10120,9 @@ bool X86InstrInfo::isHighLatencyDef(int opc) const {
   case X86::VDIVSSZrr_Int:
   case X86::VDIVSSZrr_Intk:
   case X86::VDIVSSZrr_Intkz:
-  case X86::VDIVSSZrrb:
-  case X86::VDIVSSZrrbk:
-  case X86::VDIVSSZrrbkz:
+  case X86::VDIVSSZrrb_Int:
+  case X86::VDIVSSZrrb_Intk:
+  case X86::VDIVSSZrrb_Intkz:
   case X86::VSQRTPDZ128m:
   case X86::VSQRTPDZ128mb:
   case X86::VSQRTPDZ128mbk:
