@@ -21,10 +21,6 @@ def BroadwellModel : SchedMachineModel {
 
   // Based on the LSD (loop-stream detector) queue size and benchmarking data.
   let LoopMicroOpBufferSize = 50;
-
-  // This flag is set to allow the scheduler to assign a default model to 
-  // unrecognized opcodes.
-  let CompleteModel = 0;
 }
 
 let SchedModel = BroadwellModel in {
@@ -119,6 +115,9 @@ def : WriteRes<WriteMove,  [BWPort0156]>;
 // Idioms that clear a register, like xorps %xmm0, %xmm0.
 // These can often bypass execution ports completely.
 def : WriteRes<WriteZero,  []>;
+
+// Treat misc copies as a move.
+def : InstRW<[WriteMove], (instrs COPY)>;
 
 // Branches don't produce values, so they have no latency, but they still
 // consume resources. Indirect branches can fold loads.

@@ -1761,8 +1761,8 @@ define <16 x i8> @test_pbroadcastb(<16 x i8> %a0, <16 x i8> *%a1) {
 ;
 ; BROADWELL-LABEL: test_pbroadcastb:
 ; BROADWELL:       # %bb.0:
-; BROADWELL-NEXT:    vpbroadcastb %xmm0, %xmm0 # sched: [3:1.00]
 ; BROADWELL-NEXT:    vpbroadcastb (%rdi), %xmm1 # sched: [9:1.00]
+; BROADWELL-NEXT:    vpbroadcastb %xmm0, %xmm0 # sched: [3:1.00]
 ; BROADWELL-NEXT:    vpaddb %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
 ; BROADWELL-NEXT:    retq # sched: [7:1.00]
 ;
@@ -1810,8 +1810,8 @@ define <32 x i8> @test_pbroadcastb_ymm(<32 x i8> %a0, <32 x i8> *%a1) {
 ;
 ; BROADWELL-LABEL: test_pbroadcastb_ymm:
 ; BROADWELL:       # %bb.0:
-; BROADWELL-NEXT:    vpbroadcastb %xmm0, %ymm0 # sched: [3:1.00]
 ; BROADWELL-NEXT:    vpbroadcastb (%rdi), %ymm1 # sched: [9:1.00]
+; BROADWELL-NEXT:    vpbroadcastb %xmm0, %ymm0 # sched: [3:1.00]
 ; BROADWELL-NEXT:    vpaddb %ymm1, %ymm0, %ymm0 # sched: [1:0.50]
 ; BROADWELL-NEXT:    retq # sched: [7:1.00]
 ;
@@ -2051,8 +2051,8 @@ define <8 x i16> @test_pbroadcastw(<8 x i16> %a0, <8 x i16> *%a1) {
 ;
 ; BROADWELL-LABEL: test_pbroadcastw:
 ; BROADWELL:       # %bb.0:
-; BROADWELL-NEXT:    vpbroadcastw %xmm0, %xmm0 # sched: [3:1.00]
 ; BROADWELL-NEXT:    vpbroadcastw (%rdi), %xmm1 # sched: [9:1.00]
+; BROADWELL-NEXT:    vpbroadcastw %xmm0, %xmm0 # sched: [3:1.00]
 ; BROADWELL-NEXT:    vpaddw %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
 ; BROADWELL-NEXT:    retq # sched: [7:1.00]
 ;
@@ -2100,8 +2100,8 @@ define <16 x i16> @test_pbroadcastw_ymm(<16 x i16> %a0, <16 x i16> *%a1) {
 ;
 ; BROADWELL-LABEL: test_pbroadcastw_ymm:
 ; BROADWELL:       # %bb.0:
-; BROADWELL-NEXT:    vpbroadcastw %xmm0, %ymm0 # sched: [3:1.00]
 ; BROADWELL-NEXT:    vpbroadcastw (%rdi), %ymm1 # sched: [9:1.00]
+; BROADWELL-NEXT:    vpbroadcastw %xmm0, %ymm0 # sched: [3:1.00]
 ; BROADWELL-NEXT:    vpaddw %ymm1, %ymm0, %ymm0 # sched: [1:0.50]
 ; BROADWELL-NEXT:    retq # sched: [7:1.00]
 ;

@@ -784,8 +784,8 @@ define i32 @test_cvtss2si(float %a0, float *%a1) {
 ;
 ; BROADWELL-LABEL: test_cvtss2si:
 ; BROADWELL:       # %bb.0:
-; BROADWELL-NEXT:    vcvtss2si %xmm0, %ecx # sched: [4:1.00]
 ; BROADWELL-NEXT:    vcvtss2si (%rdi), %eax # sched: [9:1.00]
+; BROADWELL-NEXT:    vcvtss2si %xmm0, %ecx # sched: [4:1.00]
 ; BROADWELL-NEXT:    addl %ecx, %eax # sched: [1:0.25]
 ; BROADWELL-NEXT:    retq # sched: [7:1.00]
 ;
@@ -864,8 +864,8 @@ define i64 @test_cvtss2siq(float %a0, float *%a1) {
 ;
 ; BROADWELL-LABEL: test_cvtss2siq:
 ; BROADWELL:       # %bb.0:
-; BROADWELL-NEXT:    vcvtss2si %xmm0, %rcx # sched: [4:1.00]
 ; BROADWELL-NEXT:    vcvtss2si (%rdi), %rax # sched: [9:1.00]
+; BROADWELL-NEXT:    vcvtss2si %xmm0, %rcx # sched: [4:1.00]
 ; BROADWELL-NEXT:    addq %rcx, %rax # sched: [1:0.25]
 ; BROADWELL-NEXT:    retq # sched: [7:1.00]
 ;
@@ -944,8 +944,8 @@ define i32 @test_cvttss2si(float %a0, float *%a1) {
 ;
 ; BROADWELL-LABEL: test_cvttss2si:
 ; BROADWELL:       # %bb.0:
-; BROADWELL-NEXT:    vcvttss2si %xmm0, %ecx # sched: [4:1.00]
 ; BROADWELL-NEXT:    vcvttss2si (%rdi), %eax # sched: [9:1.00]
+; BROADWELL-NEXT:    vcvttss2si %xmm0, %ecx # sched: [4:1.00]
 ; BROADWELL-NEXT:    addl %ecx, %eax # sched: [1:0.25]
 ; BROADWELL-NEXT:    retq # sched: [7:1.00]
 ;
@@ -1021,8 +1021,8 @@ define i64 @test_cvttss2siq(float %a0, float *%a1) {
 ;
 ; BROADWELL-LABEL: test_cvttss2siq:
 ; BROADWELL:       # %bb.0:
-; BROADWELL-NEXT:    vcvttss2si %xmm0, %rcx # sched: [4:1.00]
 ; BROADWELL-NEXT:    vcvttss2si (%rdi), %rax # sched: [9:1.00]
+; BROADWELL-NEXT:    vcvttss2si %xmm0, %rcx # sched: [4:1.00]
 ; BROADWELL-NEXT:    addq %rcx, %rax # sched: [1:0.25]
 ; BROADWELL-NEXT:    retq # sched: [7:1.00]
 ;
