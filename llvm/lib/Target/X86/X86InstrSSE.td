@@ -4781,7 +4781,7 @@ let Predicates = [UseSSE3] in {
 // SSE3 - Replicate Double FP - MOVDDUP
 //===---------------------------------------------------------------------===//
 
-// FIXME: Improve MOVDDUP/BROADCAST reg/mem scheduling itineraries. 
+// FIXME: Improve MOVDDUP/BROADCAST reg/mem scheduling itineraries.
 let Sched = WriteFShuffle in
 def SSE_MOVDDUP : OpndItins<
   IIC_SSE_MOV_LH, IIC_SSE_MOV_LH
@@ -6172,7 +6172,7 @@ let Predicates = [UseSSE41] in {
 // SSE4.1 - Packed Bit Test
 //===----------------------------------------------------------------------===//
 
-let Sched = WriteVecLogic in 
+let Sched = WriteVecLogic in
 def SSE_PTEST : OpndItins<
   IIC_SSE_INTALU_P_RR, IIC_SSE_INTALU_P_RM
 >;
@@ -8490,7 +8490,7 @@ let Predicates = [HasAVX2, NoVLX] in {
 
 // FIXME: Improve scheduling of gather instructions.
 multiclass avx2_gather<bits<8> opc, string OpcodeStr, ValueType VTx,
-                       ValueType VTy, PatFrag GatherNode128, 
+                       ValueType VTy, PatFrag GatherNode128,
                        PatFrag GatherNode256, RegisterClass RC256,
                        X86MemOperand memop128, X86MemOperand memop256,
                        ValueType MTx = VTx, ValueType MTy = VTy> {
