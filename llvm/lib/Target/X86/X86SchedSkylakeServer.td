@@ -632,6 +632,7 @@ def: InstRW<[SKXWriteResGroup3], (instregex "VPUNPCKLQDQrr")>;
 def: InstRW<[SKXWriteResGroup3], (instregex "VPUNPCKLWDYrr")>;
 def: InstRW<[SKXWriteResGroup3], (instregex "VPUNPCKLWDZ128rr(b?)(k?)(z?)")>;
 def: InstRW<[SKXWriteResGroup3], (instregex "VPUNPCKLWDZ256rr(b?)(k?)(z?)")>;
+def: InstRW<[SKXWriteResGroup3], (instregex "VPUNPCKLWDZrr(b?)(k?)(z?)")>;
 def: InstRW<[SKXWriteResGroup3], (instregex "VPUNPCKLWDrr")>;
 def: InstRW<[SKXWriteResGroup3], (instregex "VSHUFPDYrri")>;
 def: InstRW<[SKXWriteResGroup3], (instregex "VSHUFPDZ128rri(b?)(k?)(z?)")>;
