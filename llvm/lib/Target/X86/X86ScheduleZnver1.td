@@ -739,7 +739,7 @@ def : InstRW<[ZnWriteFILD], (instregex "ILD_F(16|32|64)m")>;
 def ZnWriteFIST : SchedWriteRes<[ZnAGU, ZnFPU23]> {
   let Latency = 12;
 }
-def : InstRW<[ZnWriteFIST], (instregex "IST_(F|FP)(16|32)m")>;
+def : InstRW<[ZnWriteFIST], (instregex "IS(T|TT)_(F|FP)(16|32|64)m")>;
 
 def ZnWriteFPU13 : SchedWriteRes<[ZnAGU, ZnFPU13]> {
   let Latency = 8;

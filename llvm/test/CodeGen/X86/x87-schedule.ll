@@ -2581,10 +2581,10 @@ define void @test_fist_fistp_fisttp(i16* %a0, i32* %a1, i64 *%a2) optsize {
 ; ZNVER1-NEXT:    fistl (%ecx) # sched: [12:0.50]
 ; ZNVER1-NEXT:    fistps (%edx) # sched: [12:0.50]
 ; ZNVER1-NEXT:    fistpl (%ecx) # sched: [12:0.50]
-; ZNVER1-NEXT:    fistpll (%eax) # sched: [1:0.50]
-; ZNVER1-NEXT:    fisttps (%edx) # sched: [1:0.50]
-; ZNVER1-NEXT:    fisttpl (%ecx) # sched: [1:0.50]
-; ZNVER1-NEXT:    fisttpll (%eax) # sched: [1:0.50]
+; ZNVER1-NEXT:    fistpll (%eax) # sched: [12:0.50]
+; ZNVER1-NEXT:    fisttps (%edx) # sched: [12:0.50]
+; ZNVER1-NEXT:    fisttpl (%ecx) # sched: [12:0.50]
+; ZNVER1-NEXT:    fisttpll (%eax) # sched: [12:0.50]
 ; ZNVER1-NEXT:    #NO_APP
 ; ZNVER1-NEXT:    retl # sched: [1:0.50]
   tail call void asm sideeffect "fists $0 \0A\09 fistl $1 \0A\09 fistps $0 \0A\09 fistpl $1 \0A\09 fistpll $2 \0A\09 fisttps $0 \0A\09 fisttpl $1 \0A\09 fisttpll $2", "*m,*m,*m"(i16* %a0, i32* %a1, i64 *%a2) nounwind
