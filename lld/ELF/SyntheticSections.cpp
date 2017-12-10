@@ -1220,10 +1220,10 @@ void RelocationBaseSection::finalizeContents() {
   // If all relocations are R_*_RELATIVE they don't refer to any
   // dynamic symbol and we don't need a dynamic symbol table. If that
   // is the case, just use 0 as the link.
-  this->Link = InX::DynSymTab ? InX::DynSymTab->getParent()->SectionIndex : 0;
+  Link = InX::DynSymTab ? InX::DynSymTab->getParent()->SectionIndex : 0;
 
   // Set required output section properties.
-  getParent()->Link = this->Link;
+  getParent()->Link = Link;
 }
 
 template <class ELFT>
