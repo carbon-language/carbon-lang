@@ -4391,8 +4391,8 @@ def HWWriteResGroup170 : SchedWriteRes<[HWPort5,HWPort6,HWPort23,HWPort06,HWPort
   let NumMicroOps = 23;
   let ResourceCycles = [1,5,3,4,10];
 }
-def: InstRW<[HWWriteResGroup170], (instregex "IN32ri")>;
-def: InstRW<[HWWriteResGroup170], (instregex "IN32rr")>;
+def: InstRW<[HWWriteResGroup170], (instregex "IN(16|32)ri")>;
+def: InstRW<[HWWriteResGroup170], (instregex "IN(16|32)rr")>;
 def: InstRW<[HWWriteResGroup170], (instregex "IN8ri")>;
 def: InstRW<[HWWriteResGroup170], (instregex "IN8rr")>;
 
@@ -4401,8 +4401,8 @@ def HWWriteResGroup171 : SchedWriteRes<[HWPort5,HWPort6,HWPort23,HWPort237,HWPor
   let NumMicroOps = 23;
   let ResourceCycles = [1,5,2,1,4,10];
 }
-def: InstRW<[HWWriteResGroup171], (instregex "OUT32ir")>;
-def: InstRW<[HWWriteResGroup171], (instregex "OUT32rr")>;
+def: InstRW<[HWWriteResGroup171], (instregex "OUT(16|32)ir")>;
+def: InstRW<[HWWriteResGroup171], (instregex "OUT(16|32)rr")>;
 def: InstRW<[HWWriteResGroup171], (instregex "OUT8ir")>;
 def: InstRW<[HWWriteResGroup171], (instregex "OUT8rr")>;
 

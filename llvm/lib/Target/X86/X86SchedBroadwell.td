@@ -3990,8 +3990,8 @@ def BWWriteResGroup191 : SchedWriteRes<[BWPort5,BWPort6,BWPort23,BWPort06,BWPort
   let NumMicroOps = 23;
   let ResourceCycles = [1,5,3,4,10];
 }
-def: InstRW<[BWWriteResGroup191], (instregex "IN32ri")>;
-def: InstRW<[BWWriteResGroup191], (instregex "IN32rr")>;
+def: InstRW<[BWWriteResGroup191], (instregex "IN(16|32)ri")>;
+def: InstRW<[BWWriteResGroup191], (instregex "IN(16|32)rr")>;
 def: InstRW<[BWWriteResGroup191], (instregex "IN8ri")>;
 def: InstRW<[BWWriteResGroup191], (instregex "IN8rr")>;
 
@@ -4008,8 +4008,8 @@ def BWWriteResGroup194 : SchedWriteRes<[BWPort5,BWPort6,BWPort23,BWPort237,BWPor
   let NumMicroOps = 23;
   let ResourceCycles = [1,5,2,1,4,10];
 }
-def: InstRW<[BWWriteResGroup194], (instregex "OUT32ir")>;
-def: InstRW<[BWWriteResGroup194], (instregex "OUT32rr")>;
+def: InstRW<[BWWriteResGroup194], (instregex "OUT(16|32)ir")>;
+def: InstRW<[BWWriteResGroup194], (instregex "OUT(16|32)rr")>;
 def: InstRW<[BWWriteResGroup194], (instregex "OUT8ir")>;
 def: InstRW<[BWWriteResGroup194], (instregex "OUT8rr")>;
 

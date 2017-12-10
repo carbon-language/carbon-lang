@@ -6801,8 +6801,8 @@ def SKXWriteResGroup247 : SchedWriteRes<[SKXPort5,SKXPort6,SKXPort23,SKXPort06,S
   let NumMicroOps = 23;
   let ResourceCycles = [1,5,3,4,10];
 }
-def: InstRW<[SKXWriteResGroup247], (instregex "IN32ri")>;
-def: InstRW<[SKXWriteResGroup247], (instregex "IN32rr")>;
+def: InstRW<[SKXWriteResGroup247], (instregex "IN(16|32)ri")>;
+def: InstRW<[SKXWriteResGroup247], (instregex "IN(16|32)rr")>;
 def: InstRW<[SKXWriteResGroup247], (instregex "IN8ri")>;
 def: InstRW<[SKXWriteResGroup247], (instregex "IN8rr")>;
 
@@ -6811,8 +6811,8 @@ def SKXWriteResGroup248 : SchedWriteRes<[SKXPort5,SKXPort6,SKXPort23,SKXPort237,
   let NumMicroOps = 23;
   let ResourceCycles = [1,5,2,1,4,10];
 }
-def: InstRW<[SKXWriteResGroup248], (instregex "OUT32ir")>;
-def: InstRW<[SKXWriteResGroup248], (instregex "OUT32rr")>;
+def: InstRW<[SKXWriteResGroup248], (instregex "OUT(16|32)ir")>;
+def: InstRW<[SKXWriteResGroup248], (instregex "OUT(16|32)rr")>;
 def: InstRW<[SKXWriteResGroup248], (instregex "OUT8ir")>;
 def: InstRW<[SKXWriteResGroup248], (instregex "OUT8rr")>;
 
