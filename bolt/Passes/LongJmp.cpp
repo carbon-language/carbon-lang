@@ -16,7 +16,6 @@
 using namespace llvm;
 
 namespace opts {
-extern cl::opt<bool> Relocs;
 extern cl::opt<bool> UseOldText;
 extern cl::opt<unsigned> AlignFunctions;
 extern cl::opt<unsigned> AlignFunctionsMaxBytes;
@@ -236,7 +235,7 @@ void LongJmpPass::tentativeLayout(
     std::vector<BinaryFunction *> &SortedFunctions) {
   uint64_t DotAddress = BC.LayoutStartAddress;
 
-  if (!opts::Relocs) {
+  if (!BC.HasRelocations) {
     for (auto Func : SortedFunctions) {
       HotAddresses[Func] = Func->getAddress();
       DotAddress = RoundUpToAlignment(DotAddress, 16);

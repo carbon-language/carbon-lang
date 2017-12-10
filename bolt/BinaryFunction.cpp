@@ -51,7 +51,6 @@ extern cl::OptionCategory BoltRelocCategory;
 
 extern bool shouldProcess(const BinaryFunction &);
 
-extern cl::opt<bool> Relocs;
 extern cl::opt<bool> UpdateDebugSections;
 extern cl::opt<IndirectCallPromotionType> IndirectCallPromotion;
 extern cl::opt<unsigned> Verbosity;
@@ -654,7 +653,7 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
   auto End = Instructions.end();
 
   if (BC.TheTriple->getArch() == llvm::Triple::aarch64) {
-    PreserveNops = opts::Relocs;
+    PreserveNops = BC.HasRelocations;
     // Start at the last label as an approximation of the current basic block.
     // This is a heuristic, since the full set of labels have yet to be
     // determined
@@ -1110,7 +1109,8 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
               goto add_instruction;
             }
             BC.InterproceduralReferences.insert(TargetAddress);
-            if (opts::Verbosity >= 2 && !IsCall && Size == 2 && !opts::Relocs) {
+            if (opts::Verbosity >= 2 && !IsCall && Size == 2 &&
+                !BC.HasRelocations) {
               errs() << "BOLT-WARNING: relaxed tail call detected at 0x"
                      << Twine::utohexstr(AbsoluteInstrAddr)
                      << " in function " << *this
@@ -1147,7 +1147,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
               }
             }
 
-            if (opts::Relocs) {
+            if (BC.HasRelocations) {
               // Check if we need to create relocation to move this function's
               // code without re-assembly.
               size_t RelSize = (Size < 5) ? 1 : 4;
@@ -1230,7 +1230,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             errs() << "BOLT-ERROR: cannot handle PC-relative operand at 0x"
                    << Twine::utohexstr(AbsoluteInstrAddr)
                    << ". Skipping function " << *this << ".\n";
-            if (opts::Relocs)
+            if (BC.HasRelocations)
               exit(1);
             IsSimple = false;
           }
@@ -1242,7 +1242,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           errs() << "BOLT-ERROR: cannot handle PC-relative operand at 0x"
                  << Twine::utohexstr(AbsoluteInstrAddr)
                  << ". Skipping function " << *this << ".\n";
-          if (opts::Relocs)
+          if (BC.HasRelocations)
             exit(1);
           IsSimple = false;
         }
@@ -1294,7 +1294,7 @@ void BinaryFunction::postProcessJumpTables() {
         TakenBranches.emplace_back(JTSiteOffset, TargetOffset);
 
       // Take ownership of jump table relocations.
-      if (opts::Relocs)
+      if (BC.HasRelocations)
         BC.removeRelocationAt(JT->Address + EntryOffset);
 
       EntryOffset += JT->EntrySize;
@@ -1448,7 +1448,7 @@ bool BinaryFunction::buildCFG() {
   auto &MIA = BC.MIA;
 
   if (!isSimple()) {
-    assert(!opts::Relocs &&
+    assert(!BC.HasRelocations &&
            "cannot process file with non-simple function in relocs mode");
     return false;
   }
@@ -1909,7 +1909,7 @@ void BinaryFunction::addEntryPoint(uint64_t Address) {
     auto *BB = getBasicBlockAtOffset(Offset);
     if (!BB) {
       // TODO #14762450: split basic block and process function.
-      if (opts::Verbosity || opts::Relocs) {
+      if (opts::Verbosity || BC.HasRelocations) {
         errs() << "BOLT-WARNING: no basic block at offset 0x"
                << Twine::utohexstr(Offset) << " in function " << *this
                << ". Marking non-simple.\n";
@@ -3701,7 +3701,7 @@ void BinaryFunction::emitJumpTables(MCStreamer *Streamer) {
     auto &JT = JTI.second;
     if (opts::PrintJumpTables)
       JT.print(outs());
-    if (opts::JumpTables == JTS_BASIC && opts::Relocs) {
+    if (opts::JumpTables == JTS_BASIC && BC.HasRelocations) {
       JT.updateOriginal(BC);
     } else {
       MCSection *HotSection, *ColdSection;
@@ -3769,7 +3769,7 @@ void BinaryFunction::JumpTable::updateOriginal(BinaryContext &BC) {
   // In non-relocation mode we have to emit jump tables in local sections.
   // This way we only overwrite them when a corresponding function is
   // overwritten.
-  assert(opts::Relocs && "relocation mode expected");
+  assert(BC.HasRelocations && "relocation mode expected");
   auto SectionOrError = BC.getSectionForAddress(Address);
   assert(SectionOrError && "section not found for jump table");
   auto Section = SectionOrError.get();
@@ -3961,7 +3961,7 @@ DWARFAddressRangesVector BinaryFunction::getOutputAddressRanges() const {
 
 uint64_t BinaryFunction::translateInputToOutputAddress(uint64_t Address) const {
   // If the function hasn't changed return the same address.
-  if (!isEmitted() && !opts::Relocs)
+  if (!isEmitted() && !BC.HasRelocations)
     return Address;
 
   if (Address < getAddress())
@@ -3986,7 +3986,7 @@ uint64_t BinaryFunction::translateInputToOutputAddress(uint64_t Address) const {
 DWARFAddressRangesVector BinaryFunction::translateInputToOutputRanges(
     const DWARFAddressRangesVector &InputRanges) const {
   // If the function hasn't changed return the same ranges.
-  if (!isEmitted() && !opts::Relocs)
+  if (!isEmitted() && !BC.HasRelocations)
     return InputRanges;
 
   // Even though we will merge ranges in a post-processing pass, we attempt to
@@ -4062,7 +4062,7 @@ DWARFDebugLoc::LocationList BinaryFunction::translateInputToOutputLocationList(
       const DWARFDebugLoc::LocationList &InputLL,
       uint64_t BaseAddress) const {
   // If the function wasn't changed - there's nothing to update.
-  if (!isEmitted() && !opts::Relocs) {
+  if (!isEmitted() && !BC.HasRelocations) {
     if (!BaseAddress) {
       return InputLL;
     } else {

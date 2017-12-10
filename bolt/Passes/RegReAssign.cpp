@@ -20,7 +20,6 @@ using namespace llvm;
 
 namespace opts {
 extern cl::OptionCategory BoltOptCategory;
-extern cl::opt<bool> Relocs;
 extern cl::opt<bool> UpdateDebugSections;
 extern bool shouldProcess(const bolt::BinaryFunction &Function);
 

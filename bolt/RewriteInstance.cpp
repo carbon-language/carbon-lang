@@ -211,9 +211,9 @@ PrintLoopInfo("print-loops",
   cl::Hidden,
   cl::cat(BoltCategory));
 
-cl::opt<bool>
-Relocs("relocs",
-  cl::desc("relocation mode - use relocations to move functions in the binary"),
+static cl::opt<cl::boolOrDefault>
+RelocationMode("relocs",
+  cl::desc("use relocations in the binary (default=autodetect)"),
   cl::ZeroOrMore,
   cl::cat(BoltCategory));
 
@@ -887,13 +887,12 @@ void RewriteInstance::run() {
       opts::BoostMacroops = false;
       outs() << "BOLT-INFO: disabling -boost-macroops for AArch64\n";
     }
-    if (opts::Relocs && opts::UseOldText) {
+    if (opts::RelocationMode != cl::BOU_TRUE) {
+      errs() << "BOLT-WARNING: non-relocation mode for AArch64 is not fully "
+                "supported\n";
+    } else if (opts::UseOldText) {
       opts::UseOldText = false;
       outs() << "BOLT-INFO: disabling -use-old-text for AArch64\n";
-    }
-    if (!opts::Relocs) {
-      outs() << "BOLT-WARNING: non-relocation mode for AArch64 is not fully "
-                "supported\n";
     }
   }
 
@@ -968,7 +967,8 @@ void RewriteInstance::run() {
 }
 
 void RewriteInstance::discoverFileObjects() {
-  NamedRegionTimer T("discover file objects", TimerGroupName, opts::TimeRewrite);
+  NamedRegionTimer T("discover file objects", TimerGroupName,
+                      opts::TimeRewrite);
 
   FileSymRefs.clear();
   BinaryFunctions.clear();
@@ -1201,7 +1201,7 @@ void RewriteInstance::discoverFileObjects() {
         PreviousFunction->
           addEntryPointAtOffset(Address - PreviousFunction->getAddress());
 
-        if (!opts::Relocs)
+        if (!BC->HasRelocations)
           PreviousFunction->setSimple(false);
 
         // Remove the symbol from FileSymRefs so that we can skip it from
@@ -1317,7 +1317,7 @@ void RewriteInstance::discoverFileObjects() {
   // Now that all the functions were created - adjust their boundaries.
   adjustFunctionBoundaries();
 
-  if (!opts::Relocs)
+  if (!BC->HasRelocations)
     return;
 
   // Read all relocations now that we have binary functions mapped.
@@ -1437,7 +1437,7 @@ void RewriteInstance::adjustFunctionBoundaries() {
         // In non-relocation mode there's potentially an external undetectable
         // reference to the entry point and hence we cannot move this entry
         // point. Optimizing without moving could be difficult.
-        if (!opts::Relocs)
+        if (!BC->HasRelocations)
           Function.setSimple(false);
       }
 
@@ -1555,7 +1555,8 @@ BinaryFunction *RewriteInstance::createBinaryFunction(
 }
 
 void RewriteInstance::readSpecialSections() {
-  NamedRegionTimer T("read special sections", TimerGroupName, opts::TimeRewrite);
+  NamedRegionTimer T("read special sections", TimerGroupName,
+                      opts::TimeRewrite);
 
   bool HasTextRelocations = false;
 
@@ -1602,11 +1603,14 @@ void RewriteInstance::readSpecialSections() {
     }
   }
 
-  if (opts::Relocs && !HasTextRelocations) {
+  if (opts::RelocationMode == cl::BOU_TRUE && !HasTextRelocations) {
     errs() << "BOLT-ERROR: relocations against code are missing from the input "
               "file. Cannot proceed in relocations mode (-relocs).\n";
     exit(1);
   }
+
+  BC->HasRelocations = HasTextRelocations &&
+                       (opts::RelocationMode != cl::BOU_FALSE);
 
   // Process debug sections.
   EHFrame = BC->DwCtx->getEHFrame();
@@ -1945,7 +1949,8 @@ void RewriteInstance::readProfileData() {
 }
 
 void RewriteInstance::disassembleFunctions() {
-  NamedRegionTimer T("disassemble functions", TimerGroupName, opts::TimeRewrite);
+  NamedRegionTimer T("disassemble functions", TimerGroupName,
+                      opts::TimeRewrite);
   // Disassemble every function and build it's control flow graph.
   TotalScore = 0;
   BC->SumExecutionCount = 0;
@@ -1953,7 +1958,7 @@ void RewriteInstance::disassembleFunctions() {
     BinaryFunction &Function = BFI.second;
 
     // If we have to relocate the code we have to disassemble all functions.
-    if (!opts::Relocs && !opts::shouldProcess(Function)) {
+    if (!BC->HasRelocations && !opts::shouldProcess(Function)) {
       DEBUG(dbgs() << "BOLT: skipping processing function "
                    << Function << " per user request.\n");
       continue;
@@ -1981,10 +1986,10 @@ void RewriteInstance::disassembleFunctions() {
 
     Function.disassemble(*FunctionData);
 
-    if (!Function.isSimple() && opts::Relocs) {
+    if (!Function.isSimple() && BC->HasRelocations) {
       errs() << "BOLT-ERROR: function " << Function << " cannot be properly "
              << "disassembled. Unable to continue in relocation mode.\n";
-      abort();
+      exit(1);
     }
 
     if (opts::PrintAll || opts::PrintDisasm)
@@ -1996,7 +2001,7 @@ void RewriteInstance::disassembleFunctions() {
       auto *ContainingFunction = getBinaryFunctionContainingAddress(Addr);
       if (ContainingFunction && ContainingFunction->getAddress() != Addr) {
         ContainingFunction->addEntryPoint(Addr);
-        if (!opts::Relocs) {
+        if (!BC->HasRelocations) {
           if (opts::Verbosity >= 1) {
             errs() << "BOLT-WARNING: Function " << *ContainingFunction
                    << " has internal BBs that are target of a reference located"
@@ -2019,7 +2024,7 @@ void RewriteInstance::disassembleFunctions() {
         if (SectionName == ".plt" || SectionName == ".plt.got")
           continue;
 
-        if (opts::Relocs) {
+        if (BC->HasRelocations) {
           errs() << "BOLT-ERROR: cannot process binaries with unmarked "
                  << "object in code at address 0x"
                  << Twine::utohexstr(Addr) << " belonging to section "
@@ -2052,8 +2057,8 @@ void RewriteInstance::disassembleFunctions() {
       if (!CFIRdWrt->fillCFIInfoFor(Function)) {
         errs() << "BOLT-ERROR: unable to fill CFI for function "
                << Function << ".\n";
-        if (opts::Relocs)
-          abort();
+        if (BC->HasRelocations)
+          exit(1);
         Function.setSimple(false);
         continue;
       }
@@ -2170,12 +2175,14 @@ void RewriteInstance::disassembleFunctions() {
 }
 
 void RewriteInstance::runOptimizationPasses() {
-  NamedRegionTimer T("run optimization passes", TimerGroupName, opts::TimeRewrite);
+  NamedRegionTimer T("run optimization passes", TimerGroupName,
+                     opts::TimeRewrite);
   BinaryFunctionPassManager::runAllPasses(*BC, BinaryFunctions, LargeFunctions);
 }
 
 // Helper function to emit the contents of a function via a MCStreamer object.
-void RewriteInstance::emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
+void RewriteInstance::emitFunction(MCStreamer &Streamer,
+                                   BinaryFunction &Function,
                                    bool EmitColdPart) {
   if (Function.getSize() == 0)
     return;
@@ -2184,7 +2191,7 @@ void RewriteInstance::emitFunction(MCStreamer &Streamer, BinaryFunction &Functio
     return;
 
   MCSection *Section;
-  if (opts::Relocs) {
+  if (BC->HasRelocations) {
     Section = BC->MOFI->getTextSection();
   } else {
     // Each fuction is emmitted into its own section.
@@ -2201,7 +2208,7 @@ void RewriteInstance::emitFunction(MCStreamer &Streamer, BinaryFunction &Functio
 
   Streamer.SwitchSection(Section);
 
-  if (opts::Relocs) {
+  if (BC->HasRelocations) {
     Streamer.EmitCodeAlignment(BinaryFunction::MinAlign);
     auto MaxAlignBytes = EmitColdPart
       ? Function.getMaxColdAlignmentBytes()
@@ -2227,7 +2234,7 @@ void RewriteInstance::emitFunction(MCStreamer &Streamer, BinaryFunction &Functio
   }
 
   // Emit CFI start
-  if (Function.hasCFI() && (opts::Relocs || Function.isSimple())) {
+  if (Function.hasCFI() && (BC->HasRelocations || Function.isSimple())) {
     Streamer.EmitCFIStartProc(/*IsSimple=*/false);
     if (Function.getPersonalityFunction() != nullptr) {
       Streamer.EmitCFIPersonality(Function.getPersonalityFunction(),
@@ -2279,7 +2286,7 @@ void RewriteInstance::emitFunction(MCStreamer &Streamer, BinaryFunction &Functio
   }
 
   // Emit CFI end
-  if (Function.hasCFI() && (opts::Relocs || Function.isSimple()))
+  if (Function.hasCFI() && (BC->HasRelocations || Function.isSimple()))
     Streamer.EmitCFIEndProc();
 
   Streamer.EmitLabel(EmitColdPart ? Function.getFunctionColdEndLabel()
@@ -2338,7 +2345,7 @@ void RewriteInstance::emitFunctions() {
   Streamer->InitSections(false);
 
   // Mark beginning of "hot text".
-  if (opts::Relocs && opts::HotText)
+  if (BC->HasRelocations && opts::HotText)
     Streamer->EmitLabel(BC->Ctx->getOrCreateSymbol("__hot_start"));
 
   // Sort functions for the output.
@@ -2346,7 +2353,7 @@ void RewriteInstance::emitFunctions() {
       BinaryContext::getSortedFunctions(BinaryFunctions);
 
   DEBUG(
-    if (!opts::Relocs) {
+    if (!BC->HasRelocations) {
       auto SortedIt = SortedFunctions.begin();
       for (auto &It : BinaryFunctions) {
         assert(&It.second == *SortedIt);
@@ -2375,7 +2382,8 @@ void RewriteInstance::emitFunctions() {
 
     // Emit all cold function split parts at the border of hot and
     // cold functions.
-    if (opts::Relocs && !ColdFunctionSeen && CurrentIndex >= LastHotIndex) {
+    if (BC->HasRelocations && !ColdFunctionSeen &&
+        CurrentIndex >= LastHotIndex) {
       // Mark the end of "hot" stuff.
       if (opts::HotText) {
         Streamer->SwitchSection(BC->MOFI->getTextSection());
@@ -2394,7 +2402,7 @@ void RewriteInstance::emitFunctions() {
       DEBUG(dbgs() << "BOLT-DEBUG: first cold function: " << Function << '\n');
     }
 
-    if (!opts::Relocs &&
+    if (!BC->HasRelocations &&
         (!Function.isSimple() || !opts::shouldProcess(Function))) {
       ++CurrentIndex;
       continue;
@@ -2406,7 +2414,7 @@ void RewriteInstance::emitFunctions() {
 
     emitFunction(*Streamer, Function, /*EmitColdPart=*/false);
 
-    if (!opts::Relocs && Function.isSplit())
+    if (!BC->HasRelocations && Function.isSplit())
       emitFunction(*Streamer, Function, /*EmitColdPart=*/true);
 
     ++CurrentIndex;
@@ -2417,7 +2425,7 @@ void RewriteInstance::emitFunctions() {
     Streamer->EmitLabel(BC->Ctx->getOrCreateSymbol("__hot_end"));
   }
 
-  if (!opts::Relocs && opts::UpdateDebugSections)
+  if (!BC->HasRelocations && opts::UpdateDebugSections)
     updateDebugLineInfoForNonSimpleFunctions();
 
   emitDataSections(Streamer.get());
@@ -2490,7 +2498,7 @@ void RewriteInstance::emitFunctions() {
 void RewriteInstance::mapFileSections(
     orc::ObjectLinkingLayer<>::ObjSetHandleT &ObjectsHandle) {
   NewTextSectionStartAddress = NextAvailableAddress;
-  if (opts::Relocs) {
+  if (BC->HasRelocations) {
     auto SMII = EFMM->SectionMapInfo.find(".text");
     assert(SMII != EFMM->SectionMapInfo.end() &&
            ".text not found in output");
@@ -2693,7 +2701,7 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
       continue;
     }
 
-    if (opts::Relocs) {
+    if (BC->HasRelocations) {
       const auto BaseAddress = NewTextSectionStartAddress;
       const auto StartOffset = Layout.getSymbolOffset(*Function.getSymbol());
       const auto EndOffset =
@@ -2728,7 +2736,7 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
       continue;
 
     // Output ranges should match the input if the body hasn't changed.
-    if (!Function.isSimple() && !opts::Relocs)
+    if (!Function.isSimple() && !BC->HasRelocations)
       continue;
 
     BinaryBasicBlock *PrevBB = nullptr;
@@ -2737,7 +2745,7 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
       auto *BB = *BBI;
       assert(BB->getLabel()->isDefined(false) && "symbol should be defined");
       uint64_t BaseAddress;
-      if (opts::Relocs) {
+      if (BC->HasRelocations) {
         BaseAddress = NewTextSectionStartAddress;
       } else {
         BaseAddress = BB->isCold() ? Function.cold().getAddress()
@@ -2831,7 +2839,7 @@ void RewriteInstance::emitDataSections(MCStreamer *Streamer) {
 }
 
 bool RewriteInstance::checkLargeFunctions() {
-  if (opts::Relocs)
+  if (BC->HasRelocations)
     return false;
 
   LargeFunctions.clear();
@@ -3382,7 +3390,7 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
   // Fix ELF header.
   auto NewEhdr = *Obj->getHeader();
 
-  if (opts::Relocs) {
+  if (BC->HasRelocations) {
     NewEhdr.e_entry = getNewFunctionAddress(NewEhdr.e_entry);
     assert(NewEhdr.e_entry && "cannot find new address for entry point");
   }
@@ -3429,7 +3437,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
           NewSymbol.getType() != ELF::STT_SECTION) {
         NewSymbol.st_value = Function->getOutputAddress();
         NewSymbol.st_size = Function->getOutputSize();
-        if (opts::Relocs)
+        if (BC->HasRelocations)
           NewSymbol.st_shndx = NewTextSectionIndex;
         else
           NewSymbol.st_shndx = NewSectionIndex[NewSymbol.st_shndx];
@@ -3694,7 +3702,7 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
       break;
     case ELF::DT_INIT:
     case ELF::DT_FINI:
-      if (opts::Relocs) {
+      if (BC->HasRelocations) {
         if (auto NewAddress = getNewFunctionAddress(DE->getPtr())) {
           DEBUG(dbgs() << "BOLT-DEBUG: patching dynamic entry of type "
                        << DE->getTag() << '\n');
@@ -3764,7 +3772,7 @@ void RewriteInstance::rewriteFile() {
   assert(Offset == getFileOffsetForAddress(NextAvailableAddress) &&
          "error resizing output file");
 
-  if (!opts::Relocs) {
+  if (!BC->HasRelocations) {
     // Overwrite functions in the output file.
     uint64_t CountOverwrittenFunctions = 0;
     uint64_t OverwrittenScore = 0;
@@ -3861,7 +3869,7 @@ void RewriteInstance::rewriteFile() {
     }
   }
 
-  if (opts::Relocs && opts::TrapOldCode) {
+  if (BC->HasRelocations && opts::TrapOldCode) {
     auto SavedPos = OS.tell();
     // Overwrite function body to make sure we never execute these instructions.
     for (auto &BFI : BinaryFunctions) {
@@ -3913,7 +3921,7 @@ void RewriteInstance::rewriteFile() {
   // Patch dynamic section/segment.
   patchELFDynamic();
 
-  if (opts::Relocs) {
+  if (BC->HasRelocations) {
     patchELFRelaPLT();
 
     patchELFGOT();

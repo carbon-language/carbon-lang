@@ -51,7 +51,6 @@ namespace opts {
 extern cl::OptionCategory BoltOptCategory;
 
 extern cl::opt<unsigned> Verbosity;
-extern cl::opt<bool> Relocs;
 extern cl::opt<bolt::BinaryFunction::SplittingType> SplitFunctions;
 extern bool shouldProcess(const bolt::BinaryFunction &Function);
 
@@ -552,7 +551,7 @@ void FixupBranches::runOnFunctions(
   std::set<uint64_t> &) {
   for (auto &It : BFs) {
     auto &Function = It.second;
-    if (opts::Relocs || shouldOptimize(Function)) {
+    if (BC.HasRelocations || shouldOptimize(Function)) {
       Function.fixBranches();
     }
   }
@@ -575,12 +574,12 @@ void FinalizeFunctions::runOnFunctions(
     }
 
     // Always fix functions in relocation mode.
-    if (!opts::Relocs && !ShouldOptimize)
+    if (!BC.HasRelocations && !ShouldOptimize)
       continue;
 
     // Fix the CFI state.
     if (ShouldOptimize && !Function.fixCFIState()) {
-      if (opts::Relocs) {
+      if (BC.HasRelocations) {
         errs() << "BOLT-ERROR: unable to fix CFI state for function "
                << Function << ". Exiting.\n";
         exit(1);

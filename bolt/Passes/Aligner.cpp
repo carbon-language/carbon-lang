@@ -16,8 +16,6 @@ using namespace llvm;
 namespace opts {
 extern cl::OptionCategory BoltOptCategory;
 
-extern cl::opt<bool> Relocs;
-
 cl::opt<bool>
 UseCompactAligner("use-compact-aligner",
   cl::desc("Use compact approach for aligning functions"),
@@ -85,7 +83,7 @@ void alignCompact(BinaryContext &BC, BinaryFunction &Function) {
 void AlignerPass::runOnFunctions(BinaryContext &BC,
                                  std::map<uint64_t, BinaryFunction> &BFs,
                                  std::set<uint64_t> &LargeFunctions) {
-  if (!opts::Relocs)
+  if (!BC.HasRelocations)
     return;
 
   for (auto &It : BFs) {

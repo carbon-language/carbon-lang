@@ -27,7 +27,6 @@ namespace opts {
 
 extern cl::OptionCategory BoltCategory;
 
-extern cl::opt<bool> Relocs;
 extern cl::opt<BinaryFunction::ReorderType> ReorderFunctions;
 
 static cl::opt<bool>
@@ -132,7 +131,7 @@ void BinaryContext::foldFunction(BinaryFunction &ChildBF,
   // Merge execution counts of ChildBF into those of ParentBF.
   ChildBF.mergeProfileDataInto(ParentBF);
 
-  if (opts::Relocs) {
+  if (HasRelocations) {
     // Remove ChildBF from the global set of functions in relocs mode.
     auto FI = BFs.find(ChildBF.getAddress());
     assert(FI != BFs.end() && "function not found");

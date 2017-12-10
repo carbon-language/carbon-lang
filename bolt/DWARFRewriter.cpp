@@ -49,7 +49,6 @@ namespace opts {
 
 extern cl::OptionCategory BoltCategory;
 extern cl::opt<unsigned> Verbosity;
-extern cl::opt<bool> Relocs;
 
 static cl::opt<bool>
 KeepARanges("keep-aranges",

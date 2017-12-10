@@ -22,7 +22,6 @@ namespace opts {
 
 extern cl::OptionCategory BoltOptCategory;
 extern cl::opt<unsigned> Verbosity;
-extern cl::opt<bool> Relocs;
 extern cl::opt<uint32_t> RandomSeed;
 
 extern bool shouldProcess(const bolt::BinaryFunction &Function);
@@ -281,7 +280,7 @@ std::vector<std::string> readFunctionOrderFile() {
 void ReorderFunctions::runOnFunctions(BinaryContext &BC,
                                       std::map<uint64_t, BinaryFunction> &BFs,
                                       std::set<uint64_t> &LargeFunctions) {
-  if (!opts::Relocs && opts::ReorderFunctions != BinaryFunction::RT_NONE) {
+  if (!BC.HasRelocations && opts::ReorderFunctions != BinaryFunction::RT_NONE) {
     errs() << "BOLT-ERROR: Function reordering only works when "
            << "relocs are enabled.\n";
     exit(1);

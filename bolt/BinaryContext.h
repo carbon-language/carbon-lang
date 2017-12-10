@@ -160,6 +160,9 @@ public:
 
   DataReader &DR;
 
+  /// Indicates if relocations are availabe for usage.
+  bool HasRelocations{false};
+
   /// Sum of execution count of all functions
   uint64_t SumExecutionCount{0};
 

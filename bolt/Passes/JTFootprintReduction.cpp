@@ -22,7 +22,6 @@ namespace opts {
 extern cl::OptionCategory BoltOptCategory;
 
 extern cl::opt<unsigned> Verbosity;
-extern cl::opt<bool> Relocs;
 extern bool shouldProcess(const bolt::BinaryFunction &Function);
 
 extern cl::opt<JumpTableSupportLevel> JumpTables;
@@ -244,7 +243,7 @@ void JTFootprintReduction::runOnFunctions(
   std::map<uint64_t, BinaryFunction> &BFs,
   std::set<uint64_t> &LargeFunctions
 ) {
-  if (opts::JumpTables == JTS_BASIC && opts::Relocs)
+  if (opts::JumpTables == JTS_BASIC && BC.HasRelocations)
     return;
 
   std::unique_ptr<RegAnalysis> RA;
