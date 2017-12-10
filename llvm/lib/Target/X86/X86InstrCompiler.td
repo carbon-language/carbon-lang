@@ -32,9 +32,10 @@ def GetLo8XForm : SDNodeXForm<imm, [{
 // PIC base construction.  This expands to code that looks like this:
 //     call  $next_inst
 //     popl %destreg"
-let hasSideEffects = 0, isNotDuplicable = 1, Uses = [ESP, SSP] in
+let hasSideEffects = 0, isNotDuplicable = 1, Uses = [ESP, SSP],
+    SchedRW = [WriteJump] in
   def MOVPC32r : Ii32<0xE8, Pseudo, (outs GR32:$reg), (ins i32imm:$label),
-                      "", []>;
+                      "", [], IIC_CALL_RI>;
 
 
 // ADJCALLSTACKDOWN/UP implicitly use/def ESP because they may be expanded into
