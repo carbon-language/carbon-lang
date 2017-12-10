@@ -1721,6 +1721,7 @@ def SKLWriteResGroup49 : SchedWriteRes<[SKLPort015]> {
 }
 def: InstRW<[SKLWriteResGroup49], (instregex "CMPPDrri")>;
 def: InstRW<[SKLWriteResGroup49], (instregex "CMPPSrri")>;
+def: InstRW<[SKLWriteResGroup49], (instregex "CMPSDrr")>;
 def: InstRW<[SKLWriteResGroup49], (instregex "CMPSSrr")>;
 def: InstRW<[SKLWriteResGroup49], (instregex "CVTDQ2PSrr")>;
 def: InstRW<[SKLWriteResGroup49], (instregex "CVTPS2DQrr")>;
@@ -3116,6 +3117,7 @@ def SKLWriteResGroup123 : SchedWriteRes<[SKLPort23,SKLPort015]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
+def: InstRW<[SKLWriteResGroup123], (instregex "CMPSDrm")>;
 def: InstRW<[SKLWriteResGroup123], (instregex "CMPSSrm")>;
 def: InstRW<[SKLWriteResGroup123], (instregex "CVTPS2PDrm")>;
 def: InstRW<[SKLWriteResGroup123], (instregex "MAX(C?)SDrm")>;

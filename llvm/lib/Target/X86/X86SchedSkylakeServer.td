@@ -2405,6 +2405,7 @@ def: InstRW<[SKXWriteResGroup50], (instregex "ADDSUBPDrr")>;
 def: InstRW<[SKXWriteResGroup50], (instregex "ADDSUBPSrr")>;
 def: InstRW<[SKXWriteResGroup50], (instregex "CMPPDrri")>;
 def: InstRW<[SKXWriteResGroup50], (instregex "CMPPSrri")>;
+def: InstRW<[SKXWriteResGroup50], (instregex "CMPSDrr")>;
 def: InstRW<[SKXWriteResGroup50], (instregex "CMPSSrr")>;
 def: InstRW<[SKXWriteResGroup50], (instregex "CVTDQ2PSrr")>;
 def: InstRW<[SKXWriteResGroup50], (instregex "CVTPS2DQrr")>;
@@ -5062,6 +5063,7 @@ def SKXWriteResGroup137 : SchedWriteRes<[SKXPort23,SKXPort015]> {
 }
 def: InstRW<[SKXWriteResGroup137], (instregex "ADDSDrm")>;
 def: InstRW<[SKXWriteResGroup137], (instregex "ADDSSrm")>;
+def: InstRW<[SKXWriteResGroup137], (instregex "CMPSDrm")>;
 def: InstRW<[SKXWriteResGroup137], (instregex "CMPSSrm")>;
 def: InstRW<[SKXWriteResGroup137], (instregex "CVTPS2PDrm")>;
 def: InstRW<[SKXWriteResGroup137], (instregex "MAX(C?)SDrm")>;
