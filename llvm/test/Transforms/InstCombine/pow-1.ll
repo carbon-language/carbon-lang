@@ -166,7 +166,7 @@ define float @pow_neg1_strict(float %x) {
 
 define double @pow_neg1_double_fast(double %x) {
 ; CHECK-LABEL: @pow_neg1_double_fast(
-; CHECK-NEXT:    [[POWRECIP:%.*]] = fdiv double 1.000000e+00, %x
+; CHECK-NEXT:    [[POWRECIP:%.*]] = fdiv fast double 1.000000e+00, %x
 ; CHECK-NEXT:    ret double [[POWRECIP]]
 ;
   %r = call fast double @pow(double %x, double -1.0)
