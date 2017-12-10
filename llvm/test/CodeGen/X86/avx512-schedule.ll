@@ -2322,7 +2322,7 @@ define i32 @fptoui(float %a) nounwind {
 ;
 ; SKX-LABEL: fptoui:
 ; SKX:       # %bb.0:
-; SKX-NEXT:    vcvttss2usi %xmm0, %eax # sched: [3:1.00]
+; SKX-NEXT:    vcvttss2usi %xmm0, %eax # sched: [6:1.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %b = fptoui float %a to i32
   ret i32 %b

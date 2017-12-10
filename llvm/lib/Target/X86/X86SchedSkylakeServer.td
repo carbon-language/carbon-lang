@@ -3369,13 +3369,13 @@ def: InstRW<[SKXWriteResGroup74], (instregex "VCVTSS2SI64rr")>;
 def: InstRW<[SKXWriteResGroup74], (instregex "VCVTSS2SIZrr(b?)(k?)(z?)")>;
 def: InstRW<[SKXWriteResGroup74], (instregex "VCVTSS2SIrr")>;
 def: InstRW<[SKXWriteResGroup74], (instregex "VCVTSS2USIZrr(b?)(k?)(z?)")>;
-def: InstRW<[SKXWriteResGroup74], (instregex "VCVTTSD2SI64Zrb")>;
+def: InstRW<[SKXWriteResGroup74], (instregex "VCVTTSD2SI64Zrr(b?)")>;
 def: InstRW<[SKXWriteResGroup74], (instregex "VCVTTSD2SI64rr")>;
-def: InstRW<[SKXWriteResGroup74], (instregex "VCVTTSD2SIZrb")>;
+def: InstRW<[SKXWriteResGroup74], (instregex "VCVTTSD2SIZrr(b?)")>;
 def: InstRW<[SKXWriteResGroup74], (instregex "VCVTTSD2SIrr")>;
-def: InstRW<[SKXWriteResGroup74], (instregex "VCVTTSD2USI64Zrb")>;
-def: InstRW<[SKXWriteResGroup74], (instregex "VCVTTSD2USIZrb")>;
-def: InstRW<[SKXWriteResGroup74], (instregex "VCVTTSS2USIZrb")>;
+def: InstRW<[SKXWriteResGroup74], (instregex "VCVTTSD2USI64Zrr(b?)")>;
+def: InstRW<[SKXWriteResGroup74], (instregex "VCVTTSD2USIZrr(b?)")>;
+def: InstRW<[SKXWriteResGroup74], (instregex "VCVTTSS2USIZrr(b?)")>;
 
 def SKXWriteResGroup75 : SchedWriteRes<[SKXPort5,SKXPort23]> {
   let Latency = 6;
@@ -4174,11 +4174,11 @@ def SKXWriteResGroup100 : SchedWriteRes<[SKXPort0,SKXPort5,SKXPort015]> {
 def: InstRW<[SKXWriteResGroup100], (instregex "CVTTSS2SI64rr")>;
 def: InstRW<[SKXWriteResGroup100], (instregex "CVTTSS2SIrr")>;
 def: InstRW<[SKXWriteResGroup100], (instregex "VCVTSS2USI64Zrr(b?)(k?)(z?)")>;
-def: InstRW<[SKXWriteResGroup100], (instregex "VCVTTSS2SI64Zrb")>;
+def: InstRW<[SKXWriteResGroup100], (instregex "VCVTTSS2SI64Zrr(b?)")>;
 def: InstRW<[SKXWriteResGroup100], (instregex "VCVTTSS2SI64rr")>;
-def: InstRW<[SKXWriteResGroup100], (instregex "VCVTTSS2SIZrb")>;
+def: InstRW<[SKXWriteResGroup100], (instregex "VCVTTSS2SIZrr(b?)")>;
 def: InstRW<[SKXWriteResGroup100], (instregex "VCVTTSS2SIrr")>;
-def: InstRW<[SKXWriteResGroup100], (instregex "VCVTTSS2USI64Zrb")>;
+def: InstRW<[SKXWriteResGroup100], (instregex "VCVTTSS2USI64Zrr(b?)")>;
 
 def SKXWriteResGroup101 : SchedWriteRes<[SKXPort0,SKXPort23,SKXPort05]> {
   let Latency = 7;
