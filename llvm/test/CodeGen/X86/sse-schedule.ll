@@ -377,7 +377,7 @@ define float @test_cmpss(float %a0, float %a1, float *%a2) {
 ; GENERIC-LABEL: test_cmpss:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    cmpeqss %xmm1, %xmm0 # sched: [3:1.00]
-; GENERIC-NEXT:    cmpeqss (%rdi), %xmm0 # sched: [7:1.00]
+; GENERIC-NEXT:    cmpeqss (%rdi), %xmm0 # sched: [9:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; ATOM-LABEL: test_cmpss:
@@ -395,7 +395,7 @@ define float @test_cmpss(float %a0, float %a1, float *%a2) {
 ; SANDY-LABEL: test_cmpss:
 ; SANDY:       # %bb.0:
 ; SANDY-NEXT:    vcmpeqss %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; SANDY-NEXT:    vcmpeqss (%rdi), %xmm0, %xmm0 # sched: [7:1.00]
+; SANDY-NEXT:    vcmpeqss (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_cmpss:
@@ -412,14 +412,14 @@ define float @test_cmpss(float %a0, float %a1, float *%a2) {
 ;
 ; SKYLAKE-LABEL: test_cmpss:
 ; SKYLAKE:       # %bb.0:
-; SKYLAKE-NEXT:    vcmpeqss %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; SKYLAKE-NEXT:    vcmpeqss (%rdi), %xmm0, %xmm0 # sched: [8:1.00]
+; SKYLAKE-NEXT:    vcmpeqss %xmm1, %xmm0, %xmm0 # sched: [4:0.33]
+; SKYLAKE-NEXT:    vcmpeqss (%rdi), %xmm0, %xmm0 # sched: [9:0.50]
 ; SKYLAKE-NEXT:    retq # sched: [7:1.00]
 ;
 ; SKX-LABEL: test_cmpss:
 ; SKX:       # %bb.0:
-; SKX-NEXT:    vcmpeqss %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; SKX-NEXT:    vcmpeqss (%rdi), %xmm0, %xmm0 # sched: [8:1.00]
+; SKX-NEXT:    vcmpeqss %xmm1, %xmm0, %xmm0 # sched: [4:0.33]
+; SKX-NEXT:    vcmpeqss (%rdi), %xmm0, %xmm0 # sched: [9:0.50]
 ; SKX-NEXT:    retq # sched: [7:1.00]
 ;
 ; BTVER2-LABEL: test_cmpss:

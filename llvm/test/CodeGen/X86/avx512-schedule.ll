@@ -1849,12 +1849,12 @@ define <4 x float> @f64to4f32_mask(<4 x double> %b, <4 x i1> %mask) {
 define <4 x float> @f64tof32_inreg(<2 x double> %a0, <4 x float> %a1) nounwind {
 ; GENERIC-LABEL: f64tof32_inreg:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    vcvtsd2ss %xmm0, %xmm1, %xmm0 # sched: [3:1.00]
+; GENERIC-NEXT:    vcvtsd2ss %xmm0, %xmm1, %xmm0 # sched: [4:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: f64tof32_inreg:
 ; SKX:       # %bb.0:
-; SKX-NEXT:    vcvtsd2ss %xmm0, %xmm1, %xmm0 # sched: [3:1.00]
+; SKX-NEXT:    vcvtsd2ss %xmm0, %xmm1, %xmm0 # sched: [5:1.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %ext = extractelement <2 x double> %a0, i32 0
   %cvt = fptrunc double %ext to float
@@ -1897,12 +1897,12 @@ define <4 x double> @f32to4f64_mask(<4 x float> %b, <4 x double> %b1, <4 x doubl
 define <2 x double> @f32tof64_inreg(<2 x double> %a0, <4 x float> %a1) nounwind {
 ; GENERIC-LABEL: f32tof64_inreg:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    vcvtss2sd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
+; GENERIC-NEXT:    vcvtss2sd %xmm1, %xmm0, %xmm0 # sched: [1:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: f32tof64_inreg:
 ; SKX:       # %bb.0:
-; SKX-NEXT:    vcvtss2sd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
+; SKX-NEXT:    vcvtss2sd %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %ext = extractelement <4 x float> %a1, i32 0
   %cvt = fpext float %ext to double

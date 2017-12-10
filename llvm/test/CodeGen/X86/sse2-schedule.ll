@@ -452,7 +452,7 @@ define double @test_cmpsd(double %a0, double %a1, double *%a2) {
 ; GENERIC-LABEL: test_cmpsd:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    cmpeqsd %xmm1, %xmm0 # sched: [3:1.00]
-; GENERIC-NEXT:    cmpeqsd (%rdi), %xmm0 # sched: [7:1.00]
+; GENERIC-NEXT:    cmpeqsd (%rdi), %xmm0 # sched: [9:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; ATOM-LABEL: test_cmpsd:
@@ -470,7 +470,7 @@ define double @test_cmpsd(double %a0, double %a1, double *%a2) {
 ; SANDY-LABEL: test_cmpsd:
 ; SANDY:       # %bb.0:
 ; SANDY-NEXT:    vcmpeqsd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; SANDY-NEXT:    vcmpeqsd (%rdi), %xmm0, %xmm0 # sched: [7:1.00]
+; SANDY-NEXT:    vcmpeqsd (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_cmpsd:
@@ -487,14 +487,14 @@ define double @test_cmpsd(double %a0, double %a1, double *%a2) {
 ;
 ; SKYLAKE-LABEL: test_cmpsd:
 ; SKYLAKE:       # %bb.0:
-; SKYLAKE-NEXT:    vcmpeqsd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; SKYLAKE-NEXT:    vcmpeqsd (%rdi), %xmm0, %xmm0 # sched: [8:1.00]
+; SKYLAKE-NEXT:    vcmpeqsd %xmm1, %xmm0, %xmm0 # sched: [4:0.33]
+; SKYLAKE-NEXT:    vcmpeqsd (%rdi), %xmm0, %xmm0 # sched: [9:0.50]
 ; SKYLAKE-NEXT:    retq # sched: [7:1.00]
 ;
 ; SKX-LABEL: test_cmpsd:
 ; SKX:       # %bb.0:
-; SKX-NEXT:    vcmpeqsd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; SKX-NEXT:    vcmpeqsd (%rdi), %xmm0, %xmm0 # sched: [8:1.00]
+; SKX-NEXT:    vcmpeqsd %xmm1, %xmm0, %xmm0 # sched: [4:0.33]
+; SKX-NEXT:    vcmpeqsd (%rdi), %xmm0, %xmm0 # sched: [9:0.50]
 ; SKX-NEXT:    retq # sched: [7:1.00]
 ;
 ; BTVER2-LABEL: test_cmpsd:
