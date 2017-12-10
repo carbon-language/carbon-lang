@@ -7258,7 +7258,7 @@ define <16 x i16> @test_masked_16xi16_perm_high_mem_mask0(<16 x i16>* %vp, <16 x
 ; SKX:       # %bb.0:
 ; SKX-NEXT:    vpxor %xmm2, %xmm2, %xmm2 # sched: [1:0.33]
 ; SKX-NEXT:    vpcmpeqw %ymm2, %ymm1, %k1 # sched: [3:1.00]
-; SKX-NEXT:    vpshufhw {{.*#+}} ymm0 {%k1} = mem[0,1,2,3,5,6,4,7,8,9,10,11,13,14,12,15] sched: [6:1.00]
+; SKX-NEXT:    vpshufhw {{.*#+}} ymm0 {%k1} = mem[0,1,2,3,5,6,4,7,8,9,10,11,13,14,12,15] sched: [8:1.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %vec = load <16 x i16>, <16 x i16>* %vp
   %shuf = shufflevector <16 x i16> %vec, <16 x i16> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 5, i32 6, i32 4, i32 7, i32 8, i32 9, i32 10, i32 11, i32 13, i32 14, i32 12, i32 15>
@@ -7279,7 +7279,7 @@ define <16 x i16> @test_masked_z_16xi16_perm_high_mem_mask0(<16 x i16>* %vp, <16
 ; SKX:       # %bb.0:
 ; SKX-NEXT:    vpxor %xmm1, %xmm1, %xmm1 # sched: [1:0.33]
 ; SKX-NEXT:    vpcmpeqw %ymm1, %ymm0, %k1 # sched: [3:1.00]
-; SKX-NEXT:    vpshufhw {{.*#+}} ymm0 {%k1} {z} = mem[0,1,2,3,5,6,4,7,8,9,10,11,13,14,12,15] sched: [6:1.00]
+; SKX-NEXT:    vpshufhw {{.*#+}} ymm0 {%k1} {z} = mem[0,1,2,3,5,6,4,7,8,9,10,11,13,14,12,15] sched: [8:1.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %vec = load <16 x i16>, <16 x i16>* %vp
   %shuf = shufflevector <16 x i16> %vec, <16 x i16> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 5, i32 6, i32 4, i32 7, i32 8, i32 9, i32 10, i32 11, i32 13, i32 14, i32 12, i32 15>
@@ -7300,7 +7300,7 @@ define <16 x i16> @test_masked_16xi16_perm_low_mem_mask1(<16 x i16>* %vp, <16 x 
 ; SKX:       # %bb.0:
 ; SKX-NEXT:    vpxor %xmm2, %xmm2, %xmm2 # sched: [1:0.33]
 ; SKX-NEXT:    vpcmpeqw %ymm2, %ymm1, %k1 # sched: [3:1.00]
-; SKX-NEXT:    vpshuflw {{.*#+}} ymm0 {%k1} = mem[1,3,3,0,4,5,6,7,9,11,11,8,12,13,14,15] sched: [6:1.00]
+; SKX-NEXT:    vpshuflw {{.*#+}} ymm0 {%k1} = mem[1,3,3,0,4,5,6,7,9,11,11,8,12,13,14,15] sched: [8:1.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %vec = load <16 x i16>, <16 x i16>* %vp
   %shuf = shufflevector <16 x i16> %vec, <16 x i16> undef, <16 x i32> <i32 1, i32 3, i32 3, i32 0, i32 4, i32 5, i32 6, i32 7, i32 9, i32 11, i32 11, i32 8, i32 12, i32 13, i32 14, i32 15>
@@ -7321,7 +7321,7 @@ define <16 x i16> @test_masked_z_16xi16_perm_low_mem_mask1(<16 x i16>* %vp, <16 
 ; SKX:       # %bb.0:
 ; SKX-NEXT:    vpxor %xmm1, %xmm1, %xmm1 # sched: [1:0.33]
 ; SKX-NEXT:    vpcmpeqw %ymm1, %ymm0, %k1 # sched: [3:1.00]
-; SKX-NEXT:    vpshuflw {{.*#+}} ymm0 {%k1} {z} = mem[1,3,3,0,4,5,6,7,9,11,11,8,12,13,14,15] sched: [6:1.00]
+; SKX-NEXT:    vpshuflw {{.*#+}} ymm0 {%k1} {z} = mem[1,3,3,0,4,5,6,7,9,11,11,8,12,13,14,15] sched: [8:1.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %vec = load <16 x i16>, <16 x i16>* %vp
   %shuf = shufflevector <16 x i16> %vec, <16 x i16> undef, <16 x i32> <i32 1, i32 3, i32 3, i32 0, i32 4, i32 5, i32 6, i32 7, i32 9, i32 11, i32 11, i32 8, i32 12, i32 13, i32 14, i32 15>
@@ -7342,7 +7342,7 @@ define <16 x i16> @test_masked_16xi16_perm_high_mem_mask2(<16 x i16>* %vp, <16 x
 ; SKX:       # %bb.0:
 ; SKX-NEXT:    vpxor %xmm2, %xmm2, %xmm2 # sched: [1:0.33]
 ; SKX-NEXT:    vpcmpeqw %ymm2, %ymm1, %k1 # sched: [3:1.00]
-; SKX-NEXT:    vpshufhw {{.*#+}} ymm0 {%k1} = mem[0,1,2,3,5,6,5,6,8,9,10,11,13,14,13,14] sched: [6:1.00]
+; SKX-NEXT:    vpshufhw {{.*#+}} ymm0 {%k1} = mem[0,1,2,3,5,6,5,6,8,9,10,11,13,14,13,14] sched: [8:1.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %vec = load <16 x i16>, <16 x i16>* %vp
   %shuf = shufflevector <16 x i16> %vec, <16 x i16> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 5, i32 6, i32 5, i32 6, i32 8, i32 9, i32 10, i32 11, i32 13, i32 14, i32 13, i32 14>
@@ -7363,7 +7363,7 @@ define <16 x i16> @test_masked_z_16xi16_perm_high_mem_mask2(<16 x i16>* %vp, <16
 ; SKX:       # %bb.0:
 ; SKX-NEXT:    vpxor %xmm1, %xmm1, %xmm1 # sched: [1:0.33]
 ; SKX-NEXT:    vpcmpeqw %ymm1, %ymm0, %k1 # sched: [3:1.00]
-; SKX-NEXT:    vpshufhw {{.*#+}} ymm0 {%k1} {z} = mem[0,1,2,3,5,6,5,6,8,9,10,11,13,14,13,14] sched: [6:1.00]
+; SKX-NEXT:    vpshufhw {{.*#+}} ymm0 {%k1} {z} = mem[0,1,2,3,5,6,5,6,8,9,10,11,13,14,13,14] sched: [8:1.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %vec = load <16 x i16>, <16 x i16>* %vp
   %shuf = shufflevector <16 x i16> %vec, <16 x i16> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 5, i32 6, i32 5, i32 6, i32 8, i32 9, i32 10, i32 11, i32 13, i32 14, i32 13, i32 14>
@@ -7398,7 +7398,7 @@ define <16 x i16> @test_masked_16xi16_perm_low_mem_mask3(<16 x i16>* %vp, <16 x 
 ; SKX:       # %bb.0:
 ; SKX-NEXT:    vpxor %xmm2, %xmm2, %xmm2 # sched: [1:0.33]
 ; SKX-NEXT:    vpcmpeqw %ymm2, %ymm1, %k1 # sched: [3:1.00]
-; SKX-NEXT:    vpshuflw {{.*#+}} ymm0 {%k1} = mem[3,2,3,0,4,5,6,7,11,10,11,8,12,13,14,15] sched: [6:1.00]
+; SKX-NEXT:    vpshuflw {{.*#+}} ymm0 {%k1} = mem[3,2,3,0,4,5,6,7,11,10,11,8,12,13,14,15] sched: [8:1.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %vec = load <16 x i16>, <16 x i16>* %vp
   %shuf = shufflevector <16 x i16> %vec, <16 x i16> undef, <16 x i32> <i32 3, i32 2, i32 3, i32 0, i32 4, i32 5, i32 6, i32 7, i32 11, i32 10, i32 11, i32 8, i32 12, i32 13, i32 14, i32 15>
@@ -7419,7 +7419,7 @@ define <16 x i16> @test_masked_z_16xi16_perm_low_mem_mask3(<16 x i16>* %vp, <16 
 ; SKX:       # %bb.0:
 ; SKX-NEXT:    vpxor %xmm1, %xmm1, %xmm1 # sched: [1:0.33]
 ; SKX-NEXT:    vpcmpeqw %ymm1, %ymm0, %k1 # sched: [3:1.00]
-; SKX-NEXT:    vpshuflw {{.*#+}} ymm0 {%k1} {z} = mem[3,2,3,0,4,5,6,7,11,10,11,8,12,13,14,15] sched: [6:1.00]
+; SKX-NEXT:    vpshuflw {{.*#+}} ymm0 {%k1} {z} = mem[3,2,3,0,4,5,6,7,11,10,11,8,12,13,14,15] sched: [8:1.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %vec = load <16 x i16>, <16 x i16>* %vp
   %shuf = shufflevector <16 x i16> %vec, <16 x i16> undef, <16 x i32> <i32 3, i32 2, i32 3, i32 0, i32 4, i32 5, i32 6, i32 7, i32 11, i32 10, i32 11, i32 8, i32 12, i32 13, i32 14, i32 15>
@@ -7440,7 +7440,7 @@ define <16 x i16> @test_masked_16xi16_perm_high_mem_mask4(<16 x i16>* %vp, <16 x
 ; SKX:       # %bb.0:
 ; SKX-NEXT:    vpxor %xmm2, %xmm2, %xmm2 # sched: [1:0.33]
 ; SKX-NEXT:    vpcmpeqw %ymm2, %ymm1, %k1 # sched: [3:1.00]
-; SKX-NEXT:    vpshufhw {{.*#+}} ymm0 {%k1} = mem[0,1,2,3,7,7,6,7,8,9,10,11,15,15,14,15] sched: [6:1.00]
+; SKX-NEXT:    vpshufhw {{.*#+}} ymm0 {%k1} = mem[0,1,2,3,7,7,6,7,8,9,10,11,15,15,14,15] sched: [8:1.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %vec = load <16 x i16>, <16 x i16>* %vp
   %shuf = shufflevector <16 x i16> %vec, <16 x i16> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 7, i32 7, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 15, i32 15, i32 14, i32 15>
@@ -7461,7 +7461,7 @@ define <16 x i16> @test_masked_z_16xi16_perm_high_mem_mask4(<16 x i16>* %vp, <16
 ; SKX:       # %bb.0:
 ; SKX-NEXT:    vpxor %xmm1, %xmm1, %xmm1 # sched: [1:0.33]
 ; SKX-NEXT:    vpcmpeqw %ymm1, %ymm0, %k1 # sched: [3:1.00]
-; SKX-NEXT:    vpshufhw {{.*#+}} ymm0 {%k1} {z} = mem[0,1,2,3,7,7,6,7,8,9,10,11,15,15,14,15] sched: [6:1.00]
+; SKX-NEXT:    vpshufhw {{.*#+}} ymm0 {%k1} {z} = mem[0,1,2,3,7,7,6,7,8,9,10,11,15,15,14,15] sched: [8:1.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %vec = load <16 x i16>, <16 x i16>* %vp
   %shuf = shufflevector <16 x i16> %vec, <16 x i16> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 7, i32 7, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 15, i32 15, i32 14, i32 15>
@@ -7482,7 +7482,7 @@ define <16 x i16> @test_masked_16xi16_perm_low_mem_mask5(<16 x i16>* %vp, <16 x 
 ; SKX:       # %bb.0:
 ; SKX-NEXT:    vpxor %xmm2, %xmm2, %xmm2 # sched: [1:0.33]
 ; SKX-NEXT:    vpcmpeqw %ymm2, %ymm1, %k1 # sched: [3:1.00]
-; SKX-NEXT:    vpshuflw {{.*#+}} ymm0 {%k1} = mem[1,3,3,2,4,5,6,7,9,11,11,10,12,13,14,15] sched: [6:1.00]
+; SKX-NEXT:    vpshuflw {{.*#+}} ymm0 {%k1} = mem[1,3,3,2,4,5,6,7,9,11,11,10,12,13,14,15] sched: [8:1.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %vec = load <16 x i16>, <16 x i16>* %vp
   %shuf = shufflevector <16 x i16> %vec, <16 x i16> undef, <16 x i32> <i32 1, i32 3, i32 3, i32 2, i32 4, i32 5, i32 6, i32 7, i32 9, i32 11, i32 11, i32 10, i32 12, i32 13, i32 14, i32 15>
@@ -7503,7 +7503,7 @@ define <16 x i16> @test_masked_z_16xi16_perm_low_mem_mask5(<16 x i16>* %vp, <16 
 ; SKX:       # %bb.0:
 ; SKX-NEXT:    vpxor %xmm1, %xmm1, %xmm1 # sched: [1:0.33]
 ; SKX-NEXT:    vpcmpeqw %ymm1, %ymm0, %k1 # sched: [3:1.00]
-; SKX-NEXT:    vpshuflw {{.*#+}} ymm0 {%k1} {z} = mem[1,3,3,2,4,5,6,7,9,11,11,10,12,13,14,15] sched: [6:1.00]
+; SKX-NEXT:    vpshuflw {{.*#+}} ymm0 {%k1} {z} = mem[1,3,3,2,4,5,6,7,9,11,11,10,12,13,14,15] sched: [8:1.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %vec = load <16 x i16>, <16 x i16>* %vp
   %shuf = shufflevector <16 x i16> %vec, <16 x i16> undef, <16 x i32> <i32 1, i32 3, i32 3, i32 2, i32 4, i32 5, i32 6, i32 7, i32 9, i32 11, i32 11, i32 10, i32 12, i32 13, i32 14, i32 15>
@@ -7538,7 +7538,7 @@ define <16 x i16> @test_masked_16xi16_perm_high_mem_mask6(<16 x i16>* %vp, <16 x
 ; SKX:       # %bb.0:
 ; SKX-NEXT:    vpxor %xmm2, %xmm2, %xmm2 # sched: [1:0.33]
 ; SKX-NEXT:    vpcmpeqw %ymm2, %ymm1, %k1 # sched: [3:1.00]
-; SKX-NEXT:    vpshufhw {{.*#+}} ymm0 {%k1} = mem[0,1,2,3,4,4,4,5,8,9,10,11,12,12,12,13] sched: [6:1.00]
+; SKX-NEXT:    vpshufhw {{.*#+}} ymm0 {%k1} = mem[0,1,2,3,4,4,4,5,8,9,10,11,12,12,12,13] sched: [8:1.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %vec = load <16 x i16>, <16 x i16>* %vp
   %shuf = shufflevector <16 x i16> %vec, <16 x i16> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 4, i32 4, i32 5, i32 8, i32 9, i32 10, i32 11, i32 12, i32 12, i32 12, i32 13>
@@ -7559,7 +7559,7 @@ define <16 x i16> @test_masked_z_16xi16_perm_high_mem_mask6(<16 x i16>* %vp, <16
 ; SKX:       # %bb.0:
 ; SKX-NEXT:    vpxor %xmm1, %xmm1, %xmm1 # sched: [1:0.33]
 ; SKX-NEXT:    vpcmpeqw %ymm1, %ymm0, %k1 # sched: [3:1.00]
-; SKX-NEXT:    vpshufhw {{.*#+}} ymm0 {%k1} {z} = mem[0,1,2,3,4,4,4,5,8,9,10,11,12,12,12,13] sched: [6:1.00]
+; SKX-NEXT:    vpshufhw {{.*#+}} ymm0 {%k1} {z} = mem[0,1,2,3,4,4,4,5,8,9,10,11,12,12,12,13] sched: [8:1.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %vec = load <16 x i16>, <16 x i16>* %vp
   %shuf = shufflevector <16 x i16> %vec, <16 x i16> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 4, i32 4, i32 5, i32 8, i32 9, i32 10, i32 11, i32 12, i32 12, i32 12, i32 13>
@@ -7580,7 +7580,7 @@ define <16 x i16> @test_masked_16xi16_perm_low_mem_mask7(<16 x i16>* %vp, <16 x 
 ; SKX:       # %bb.0:
 ; SKX-NEXT:    vpxor %xmm2, %xmm2, %xmm2 # sched: [1:0.33]
 ; SKX-NEXT:    vpcmpeqw %ymm2, %ymm1, %k1 # sched: [3:1.00]
-; SKX-NEXT:    vpshuflw {{.*#+}} ymm0 {%k1} = mem[3,1,3,2,4,5,6,7,11,9,11,10,12,13,14,15] sched: [6:1.00]
+; SKX-NEXT:    vpshuflw {{.*#+}} ymm0 {%k1} = mem[3,1,3,2,4,5,6,7,11,9,11,10,12,13,14,15] sched: [8:1.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %vec = load <16 x i16>, <16 x i16>* %vp
   %shuf = shufflevector <16 x i16> %vec, <16 x i16> undef, <16 x i32> <i32 3, i32 1, i32 3, i32 2, i32 4, i32 5, i32 6, i32 7, i32 11, i32 9, i32 11, i32 10, i32 12, i32 13, i32 14, i32 15>
@@ -7601,7 +7601,7 @@ define <16 x i16> @test_masked_z_16xi16_perm_low_mem_mask7(<16 x i16>* %vp, <16 
 ; SKX:       # %bb.0:
 ; SKX-NEXT:    vpxor %xmm1, %xmm1, %xmm1 # sched: [1:0.33]
 ; SKX-NEXT:    vpcmpeqw %ymm1, %ymm0, %k1 # sched: [3:1.00]
-; SKX-NEXT:    vpshuflw {{.*#+}} ymm0 {%k1} {z} = mem[3,1,3,2,4,5,6,7,11,9,11,10,12,13,14,15] sched: [6:1.00]
+; SKX-NEXT:    vpshuflw {{.*#+}} ymm0 {%k1} {z} = mem[3,1,3,2,4,5,6,7,11,9,11,10,12,13,14,15] sched: [8:1.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %vec = load <16 x i16>, <16 x i16>* %vp
   %shuf = shufflevector <16 x i16> %vec, <16 x i16> undef, <16 x i32> <i32 3, i32 1, i32 3, i32 2, i32 4, i32 5, i32 6, i32 7, i32 11, i32 9, i32 11, i32 10, i32 12, i32 13, i32 14, i32 15>
