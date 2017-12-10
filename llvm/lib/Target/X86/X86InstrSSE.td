@@ -7448,23 +7448,27 @@ def EXTRQI : Ii8<0x78, MRMXr, (outs VR128:$dst),
                  (ins VR128:$src, u8imm:$len, u8imm:$idx),
                  "extrq\t{$idx, $len, $src|$src, $len, $idx}",
                  [(set VR128:$dst, (X86extrqi VR128:$src, imm:$len,
-                                    imm:$idx))]>, PD;
+                                    imm:$idx))], IIC_SSE_INTALU_P_RR>,
+                 PD, Sched<[WriteVecALU]>;
 def EXTRQ  : I<0x79, MRMSrcReg, (outs VR128:$dst),
               (ins VR128:$src, VR128:$mask),
               "extrq\t{$mask, $src|$src, $mask}",
               [(set VR128:$dst, (int_x86_sse4a_extrq VR128:$src,
-                                 VR128:$mask))]>, PD;
+                                 VR128:$mask))], IIC_SSE_INTALU_P_RR>,
+              PD, Sched<[WriteVecALU]>;
 
 def INSERTQI : Ii8<0x78, MRMSrcReg, (outs VR128:$dst),
                    (ins VR128:$src, VR128:$src2, u8imm:$len, u8imm:$idx),
                    "insertq\t{$idx, $len, $src2, $src|$src, $src2, $len, $idx}",
                    [(set VR128:$dst, (X86insertqi VR128:$src, VR128:$src2,
-                                      imm:$len, imm:$idx))]>, XD;
+                                      imm:$len, imm:$idx))], IIC_SSE_INTALU_P_RR>,
+                   XD, Sched<[WriteVecALU]>;
 def INSERTQ  : I<0x79, MRMSrcReg, (outs VR128:$dst),
                  (ins VR128:$src, VR128:$mask),
                  "insertq\t{$mask, $src|$src, $mask}",
                  [(set VR128:$dst, (int_x86_sse4a_insertq VR128:$src,
-                                    VR128:$mask))]>, XD;
+                                    VR128:$mask))], IIC_SSE_INTALU_P_RR>,
+                 XD, Sched<[WriteVecALU]>;
 }
 } // ExeDomain = SSEPackedInt
 
