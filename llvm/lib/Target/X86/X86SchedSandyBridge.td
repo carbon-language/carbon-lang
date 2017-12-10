@@ -469,7 +469,7 @@ def SBWriteResGroup3 : SchedWriteRes<[SBPort01]> {
   let NumMicroOps = 1;
   let ResourceCycles = [1];
 }
-def: InstRW<[SBWriteResGroup3], (instregex "LEA(16|32|64)r")>;
+def: InstRW<[SBWriteResGroup3], (instregex "LEA(16|32|64)(_32)?r")>;
 
 def SBWriteResGroup4 : SchedWriteRes<[SBPort05]> {
   let Latency = 1;

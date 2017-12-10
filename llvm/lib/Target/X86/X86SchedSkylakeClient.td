@@ -821,7 +821,7 @@ def: InstRW<[SKLWriteResGroup8], (instregex "BLSR32rr")>;
 def: InstRW<[SKLWriteResGroup8], (instregex "BLSR64rr")>;
 def: InstRW<[SKLWriteResGroup8], (instregex "BZHI32rr")>;
 def: InstRW<[SKLWriteResGroup8], (instregex "BZHI64rr")>;
-def: InstRW<[SKLWriteResGroup8], (instregex "LEA(16|32|64)r")>;
+def: InstRW<[SKLWriteResGroup8], (instregex "LEA(16|32|64)(_32)?r")>;
 
 def SKLWriteResGroup9 : SchedWriteRes<[SKLPort015]> {
   let Latency = 1;

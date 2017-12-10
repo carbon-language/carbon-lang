@@ -1252,7 +1252,7 @@ def: InstRW<[HWWriteResGroup8], (instregex "BLSR32rr")>;
 def: InstRW<[HWWriteResGroup8], (instregex "BLSR64rr")>;
 def: InstRW<[HWWriteResGroup8], (instregex "BZHI32rr")>;
 def: InstRW<[HWWriteResGroup8], (instregex "BZHI64rr")>;
-def: InstRW<[HWWriteResGroup8], (instregex "LEA(16|32|64)r")>;
+def: InstRW<[HWWriteResGroup8], (instregex "LEA(16|32|64)(_32)?r")>;
 def: InstRW<[HWWriteResGroup8], (instregex "MMX_PABSBrr64")>;
 def: InstRW<[HWWriteResGroup8], (instregex "MMX_PABSDrr64")>;
 def: InstRW<[HWWriteResGroup8], (instregex "MMX_PABSWrr64")>;

@@ -708,7 +708,7 @@ def: InstRW<[BWWriteResGroup7], (instregex "BLSR32rr")>;
 def: InstRW<[BWWriteResGroup7], (instregex "BLSR64rr")>;
 def: InstRW<[BWWriteResGroup7], (instregex "BZHI32rr")>;
 def: InstRW<[BWWriteResGroup7], (instregex "BZHI64rr")>;
-def: InstRW<[BWWriteResGroup7], (instregex "LEA(16|32|64)r")>;
+def: InstRW<[BWWriteResGroup7], (instregex "LEA(16|32|64)(_32)?r")>;
 def: InstRW<[BWWriteResGroup7], (instregex "MMX_PABSBrr64")>;
 def: InstRW<[BWWriteResGroup7], (instregex "MMX_PABSDrr64")>;
 def: InstRW<[BWWriteResGroup7], (instregex "MMX_PABSWrr64")>;
