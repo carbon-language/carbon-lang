@@ -464,6 +464,7 @@ let Defs = [RCX,RDI], isCodeGenOnly = 1 in {
 //===----------------------------------------------------------------------===//
 // Thread Local Storage Instructions
 //
+let SchedRW = [WriteSystem] in {
 
 // ELF TLS Support
 // All calls clobber the non-callee saved registers. ESP is marked as
@@ -529,7 +530,7 @@ def TLSCall_64 : I<0, Pseudo, (outs), (ins i64mem:$sym),
                   "# TLSCall_64",
                   [(X86TLSCall addr:$sym)]>,
                   Requires<[In64BitMode]>;
-
+} // SchedRW
 
 //===----------------------------------------------------------------------===//
 // Conditional Move Pseudo Instructions
