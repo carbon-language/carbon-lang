@@ -394,6 +394,8 @@ def IIC_SSE_CVT_SS2SI64_RR : InstrItinClass;
 def IIC_SSE_CVT_SD2SI_RM : InstrItinClass;
 def IIC_SSE_CVT_SD2SI_RR : InstrItinClass;
 
+def IIC_AVX_ZERO : InstrItinClass;
+
 // MMX
 def IIC_MMX_MOV_MM_RM : InstrItinClass;
 def IIC_MMX_MOV_REG_MM : InstrItinClass;
