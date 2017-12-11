@@ -1,11 +1,11 @@
 // Test without PCH
-// RUN: c-index-test -test-annotate-tokens=%S/annotate-macro-args.h:9:1:10:1 %s -ffreestanding -include %S/annotate-macro-args.h | FileCheck -check-prefix=CHECK1 %s
-// RUN: c-index-test -test-annotate-tokens=%S/annotate-macro-args.h:15:1:16:1 %s -ffreestanding -include %S/annotate-macro-args.h | FileCheck -check-prefix=CHECK2 %s
+// RUN: c-index-test -test-annotate-tokens=%S/annotate-macro-args.h:9:1:10:1 %s -include %S/annotate-macro-args.h | FileCheck -check-prefix=CHECK1 %s
+// RUN: c-index-test -test-annotate-tokens=%S/annotate-macro-args.h:15:1:16:1 %s -include %S/annotate-macro-args.h | FileCheck -check-prefix=CHECK2 %s
 
 // Test with PCH
-// RUN: c-index-test -write-pch %t.pch -x objective-c-header %S/annotate-macro-args.h -ffreestanding -Xclang -detailed-preprocessing-record
-// RUN: c-index-test -test-annotate-tokens=%S/annotate-macro-args.h:9:1:10:1 %s -ffreestanding -include-pch %t.pch | FileCheck -check-prefix=CHECK1 %s
-// RUN: c-index-test -test-annotate-tokens=%S/annotate-macro-args.h:15:1:16:1 %s -ffreestanding -include-pch %t.pch | FileCheck -check-prefix=CHECK2 %s
+// RUN: c-index-test -write-pch %t.pch -x objective-c-header %S/annotate-macro-args.h -Xclang -detailed-preprocessing-record
+// RUN: c-index-test -test-annotate-tokens=%S/annotate-macro-args.h:9:1:10:1 %s -include-pch %t.pch | FileCheck -check-prefix=CHECK1 %s
+// RUN: c-index-test -test-annotate-tokens=%S/annotate-macro-args.h:15:1:16:1 %s -include-pch %t.pch | FileCheck -check-prefix=CHECK2 %s
 
 // CHECK1: Identifier: "MACRO" [9:3 - 9:8] macro expansion=MACRO:6:9
 // CHECK1: Punctuation: "(" [9:8 - 9:9]

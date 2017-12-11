@@ -52,7 +52,6 @@ public:
   /// \brief Runs the current AST visitor over the given code.
   bool runOver(StringRef Code, Language L = Lang_CXX) {
     std::vector<std::string> Args;
-    Args.push_back("-ffreestanding");
     switch (L) {
       case Lang_C:
         Args.push_back("-x");
