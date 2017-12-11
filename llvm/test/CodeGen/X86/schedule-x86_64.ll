@@ -6475,12 +6475,109 @@ define void @test_lahf_sahf() optsize {
 
 ; TODO - test_leave
 
-; TODO - test_lods
-; TODO - test_lodsb
-; TODO - test_lodsw
-; TODO - test_lodsd
-; TODO - test_lodsq
-
+define void @test_lods() optsize {
+; GENERIC-LABEL: test_lods:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    lodsb (%rsi), %al # sched: [7:0.67]
+; GENERIC-NEXT:    lodsw (%rsi), %ax # sched: [7:0.67]
+; GENERIC-NEXT:    lodsl (%rsi), %eax # sched: [6:0.50]
+; GENERIC-NEXT:    lodsq (%rsi), %rax # sched: [6:0.50]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_lods:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    lodsb (%rsi), %al # sched: [2:1.00]
+; ATOM-NEXT:    lodsw (%rsi), %ax # sched: [2:1.00]
+; ATOM-NEXT:    lodsl (%rsi), %eax # sched: [2:1.00]
+; ATOM-NEXT:    lodsq (%rsi), %rax # sched: [2:1.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_lods:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    lodsb (%rsi), %al # sched: [100:1.00]
+; SLM-NEXT:    lodsw (%rsi), %ax # sched: [100:1.00]
+; SLM-NEXT:    lodsl (%rsi), %eax # sched: [100:1.00]
+; SLM-NEXT:    lodsq (%rsi), %rax # sched: [100:1.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_lods:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    lodsb (%rsi), %al # sched: [7:0.67]
+; SANDY-NEXT:    lodsw (%rsi), %ax # sched: [7:0.67]
+; SANDY-NEXT:    lodsl (%rsi), %eax # sched: [6:0.50]
+; SANDY-NEXT:    lodsq (%rsi), %rax # sched: [6:0.50]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_lods:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    lodsb (%rsi), %al # sched: [1:0.50]
+; HASWELL-NEXT:    lodsw (%rsi), %ax # sched: [1:0.50]
+; HASWELL-NEXT:    lodsl (%rsi), %eax # sched: [1:0.50]
+; HASWELL-NEXT:    lodsq (%rsi), %rax # sched: [1:0.50]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_lods:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    lodsb (%rsi), %al # sched: [100:0.25]
+; BROADWELL-NEXT:    lodsw (%rsi), %ax # sched: [100:0.25]
+; BROADWELL-NEXT:    lodsl (%rsi), %eax # sched: [100:0.25]
+; BROADWELL-NEXT:    lodsq (%rsi), %rax # sched: [100:0.25]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_lods:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    lodsb (%rsi), %al # sched: [100:0.25]
+; SKYLAKE-NEXT:    lodsw (%rsi), %ax # sched: [100:0.25]
+; SKYLAKE-NEXT:    lodsl (%rsi), %eax # sched: [100:0.25]
+; SKYLAKE-NEXT:    lodsq (%rsi), %rax # sched: [100:0.25]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_lods:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    lodsb (%rsi), %al # sched: [100:0.25]
+; SKX-NEXT:    lodsw (%rsi), %ax # sched: [100:0.25]
+; SKX-NEXT:    lodsl (%rsi), %eax # sched: [100:0.25]
+; SKX-NEXT:    lodsq (%rsi), %rax # sched: [100:0.25]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_lods:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    lodsb (%rsi), %al # sched: [100:0.17]
+; BTVER2-NEXT:    lodsw (%rsi), %ax # sched: [100:0.17]
+; BTVER2-NEXT:    lodsl (%rsi), %eax # sched: [100:0.17]
+; BTVER2-NEXT:    lodsq (%rsi), %rax # sched: [100:0.17]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_lods:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    lodsb (%rsi), %al # sched: [100:?]
+; ZNVER1-NEXT:    lodsw (%rsi), %ax # sched: [100:?]
+; ZNVER1-NEXT:    lodsl (%rsi), %eax # sched: [100:?]
+; ZNVER1-NEXT:    lodsq (%rsi), %rax # sched: [100:?]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  call void asm sideeffect "lodsb \0A\09 lodsw \0A\09 lodsl \0A\09 lodsq", ""()
+  ret void
+}
 ; TODO - test_loop
 ; TODO - test_loope
 ; TODO - test_loopne
