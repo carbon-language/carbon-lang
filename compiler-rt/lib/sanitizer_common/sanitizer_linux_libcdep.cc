@@ -707,6 +707,35 @@ void LogMessageOnPrintf(const char *str) {
 
 #endif  // SANITIZER_LINUX
 
+// glibc cannot use clock_gettime from a preinit_array function as the vDSO
+// function pointers haven't been initialized yet. To prevent a crash, we check
+// for the presence of the glibc symbol __vdso_clock_gettime, and verify that it
+// is not null (it can be mangled so we can't use it directly). Bionic's
+// clock_gettime actually falls back to the syscall in the same situation.
+extern "C" SANITIZER_WEAK_ATTRIBUTE void *__vdso_clock_gettime;
+bool CanUseLibcClockGetTime() {
+  return !SANITIZER_FREEBSD && !SANITIZER_NETBSD &&
+      (SANITIZER_ANDROID || (&__vdso_clock_gettime && __vdso_clock_gettime));
+}
+
+// MonotonicNanoTime is a timing function that can leverage the vDSO by calling
+// clock_gettime. real_clock_gettime only exists if clock_gettime is
+// intercepted, so define it weakly and use it if available.
+extern "C" SANITIZER_WEAK_ATTRIBUTE
+int real_clock_gettime(u32 clk_id, void *tp);
+u64 MonotonicNanoTime() {
+  timespec ts;
+  if (CanUseLibcClockGetTime()) {
+    if (&real_clock_gettime)
+      real_clock_gettime(CLOCK_MONOTONIC, &ts);
+    else
+      clock_gettime(CLOCK_MONOTONIC, &ts);
+  } else {
+    internal_clock_gettime(CLOCK_MONOTONIC, &ts);
+  }
+  return (u64)ts.tv_sec * (1000ULL * 1000 * 1000) + ts.tv_nsec;
+}
+
 } // namespace __sanitizer
 
 #endif // SANITIZER_FREEBSD || SANITIZER_LINUX
