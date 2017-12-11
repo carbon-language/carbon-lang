@@ -53,10 +53,15 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
     setLoadExtAction(N, XLenVT, MVT::i1, Promote);
 
   // TODO: add all necessary setOperationAction calls.
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, XLenVT, Expand);
+
   setOperationAction(ISD::BR_JT, MVT::Other, Expand);
   setOperationAction(ISD::BR_CC, XLenVT, Expand);
   setOperationAction(ISD::SELECT, XLenVT, Custom);
   setOperationAction(ISD::SELECT_CC, XLenVT, Expand);
+
+  setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
+  setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
 
   for (auto VT : {MVT::i1, MVT::i8, MVT::i16})
     setOperationAction(ISD::SIGN_EXTEND_INREG, VT, Expand);
