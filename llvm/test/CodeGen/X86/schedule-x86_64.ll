@@ -2935,7 +2935,170 @@ define void @test_div(i8 %a0, i16 %a1, i32 %a2, i64 %a3, i8 *%p0, i16 *%p1, i32 
 
 ; TODO - test_enter
 
-; TODO - test_idiv
+define void @test_idiv(i8 %a0, i16 %a1, i32 %a2, i64 %a3, i8 *%p0, i16 *%p1, i32 *%p2, i64 *%p3) optsize {
+; GENERIC-LABEL: test_idiv:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    movq {{[0-9]+}}(%rsp), %r10 # sched: [5:0.50]
+; GENERIC-NEXT:    movq {{[0-9]+}}(%rsp), %rax # sched: [5:0.50]
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    idivb %dil # sched: [25:10.00]
+; GENERIC-NEXT:    idivb (%r8) # sched: [29:10.00]
+; GENERIC-NEXT:    idivw %si # sched: [25:10.00]
+; GENERIC-NEXT:    idivw (%r9) # sched: [29:10.00]
+; GENERIC-NEXT:    idivl %edx # sched: [25:10.00]
+; GENERIC-NEXT:    idivl (%rax) # sched: [29:10.00]
+; GENERIC-NEXT:    idivq %rcx # sched: [25:10.00]
+; GENERIC-NEXT:    idivq (%r10) # sched: [29:10.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_idiv:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    movq {{[0-9]+}}(%rsp), %r10 # sched: [1:1.00]
+; ATOM-NEXT:    movq {{[0-9]+}}(%rsp), %rax # sched: [1:1.00]
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    idivb %dil # sched: [62:31.00]
+; ATOM-NEXT:    idivb (%r8) # sched: [62:31.00]
+; ATOM-NEXT:    idivw %si # sched: [62:31.00]
+; ATOM-NEXT:    idivw (%r9) # sched: [62:31.00]
+; ATOM-NEXT:    idivl %edx # sched: [62:31.00]
+; ATOM-NEXT:    idivl (%rax) # sched: [62:31.00]
+; ATOM-NEXT:    idivq %rcx # sched: [130:65.00]
+; ATOM-NEXT:    idivq (%r10) # sched: [130:65.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_idiv:
+; SLM:       # %bb.0:
+; SLM-NEXT:    movq {{[0-9]+}}(%rsp), %r10 # sched: [3:1.00]
+; SLM-NEXT:    movq {{[0-9]+}}(%rsp), %rax # sched: [3:1.00]
+; SLM-NEXT:    #APP
+; SLM-NEXT:    idivb %dil # sched: [25:25.00]
+; SLM-NEXT:    idivb (%r8) # sched: [29:25.00]
+; SLM-NEXT:    idivw %si # sched: [25:25.00]
+; SLM-NEXT:    idivw (%r9) # sched: [29:25.00]
+; SLM-NEXT:    idivl %edx # sched: [25:25.00]
+; SLM-NEXT:    idivl (%rax) # sched: [29:25.00]
+; SLM-NEXT:    idivq %rcx # sched: [25:25.00]
+; SLM-NEXT:    idivq (%r10) # sched: [29:25.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_idiv:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    movq {{[0-9]+}}(%rsp), %r10 # sched: [5:0.50]
+; SANDY-NEXT:    movq {{[0-9]+}}(%rsp), %rax # sched: [5:0.50]
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    idivb %dil # sched: [25:10.00]
+; SANDY-NEXT:    idivb (%r8) # sched: [29:10.00]
+; SANDY-NEXT:    idivw %si # sched: [25:10.00]
+; SANDY-NEXT:    idivw (%r9) # sched: [29:10.00]
+; SANDY-NEXT:    idivl %edx # sched: [25:10.00]
+; SANDY-NEXT:    idivl (%rax) # sched: [29:10.00]
+; SANDY-NEXT:    idivq %rcx # sched: [25:10.00]
+; SANDY-NEXT:    idivq (%r10) # sched: [29:10.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_idiv:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    movq {{[0-9]+}}(%rsp), %r10 # sched: [5:0.50]
+; HASWELL-NEXT:    movq {{[0-9]+}}(%rsp), %rax # sched: [5:0.50]
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    idivb %dil # sched: [23:1.00]
+; HASWELL-NEXT:    idivb (%r8) # sched: [29:10.00]
+; HASWELL-NEXT:    idivw %si # sched: [112:16.50]
+; HASWELL-NEXT:    idivw (%r9) # sched: [29:10.00]
+; HASWELL-NEXT:    idivl %edx # sched: [112:16.50]
+; HASWELL-NEXT:    idivl (%rax) # sched: [29:10.00]
+; HASWELL-NEXT:    idivq %rcx # sched: [112:16.50]
+; HASWELL-NEXT:    idivq (%r10) # sched: [29:10.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_idiv:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    movq {{[0-9]+}}(%rsp), %r10 # sched: [5:0.50]
+; BROADWELL-NEXT:    movq {{[0-9]+}}(%rsp), %rax # sched: [5:0.50]
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    idivb %dil # sched: [25:10.00]
+; BROADWELL-NEXT:    idivb (%r8) # sched: [35:2.00]
+; BROADWELL-NEXT:    idivw %si # sched: [25:10.00]
+; BROADWELL-NEXT:    idivw (%r9) # sched: [35:2.00]
+; BROADWELL-NEXT:    idivl %edx # sched: [25:10.00]
+; BROADWELL-NEXT:    idivl (%rax) # sched: [35:2.00]
+; BROADWELL-NEXT:    idivq %rcx # sched: [25:10.00]
+; BROADWELL-NEXT:    idivq (%r10) # sched: [35:2.00]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_idiv:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    movq {{[0-9]+}}(%rsp), %r10 # sched: [5:0.50]
+; SKYLAKE-NEXT:    movq {{[0-9]+}}(%rsp), %rax # sched: [5:0.50]
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    idivb %dil # sched: [25:10.00]
+; SKYLAKE-NEXT:    idivb (%r8) # sched: [28:4.00]
+; SKYLAKE-NEXT:    idivw %si # sched: [102:16.50]
+; SKYLAKE-NEXT:    idivw (%r9) # sched: [28:4.00]
+; SKYLAKE-NEXT:    idivl %edx # sched: [102:16.50]
+; SKYLAKE-NEXT:    idivl (%rax) # sched: [28:4.00]
+; SKYLAKE-NEXT:    idivq %rcx # sched: [102:16.50]
+; SKYLAKE-NEXT:    idivq (%r10) # sched: [28:4.00]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_idiv:
+; SKX:       # %bb.0:
+; SKX-NEXT:    movq {{[0-9]+}}(%rsp), %r10 # sched: [5:0.50]
+; SKX-NEXT:    movq {{[0-9]+}}(%rsp), %rax # sched: [5:0.50]
+; SKX-NEXT:    #APP
+; SKX-NEXT:    idivb %dil # sched: [25:10.00]
+; SKX-NEXT:    idivb (%r8) # sched: [28:4.00]
+; SKX-NEXT:    idivw %si # sched: [102:16.50]
+; SKX-NEXT:    idivw (%r9) # sched: [28:4.00]
+; SKX-NEXT:    idivl %edx # sched: [102:16.50]
+; SKX-NEXT:    idivl (%rax) # sched: [28:4.00]
+; SKX-NEXT:    idivq %rcx # sched: [102:16.50]
+; SKX-NEXT:    idivq (%r10) # sched: [28:4.00]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_idiv:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    movq {{[0-9]+}}(%rsp), %r10 # sched: [5:1.00]
+; BTVER2-NEXT:    movq {{[0-9]+}}(%rsp), %rax # sched: [5:1.00]
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    idivb %dil # sched: [25:25.00]
+; BTVER2-NEXT:    idivb (%r8) # sched: [41:25.00]
+; BTVER2-NEXT:    idivw %si # sched: [25:25.00]
+; BTVER2-NEXT:    idivw (%r9) # sched: [41:25.00]
+; BTVER2-NEXT:    idivl %edx # sched: [25:25.00]
+; BTVER2-NEXT:    idivl (%rax) # sched: [41:25.00]
+; BTVER2-NEXT:    idivq %rcx # sched: [25:25.00]
+; BTVER2-NEXT:    idivq (%r10) # sched: [41:25.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_idiv:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    movq {{[0-9]+}}(%rsp), %r10 # sched: [8:0.50]
+; ZNVER1-NEXT:    movq {{[0-9]+}}(%rsp), %rax # sched: [8:0.50]
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    idivb %dil # sched: [15:1.00]
+; ZNVER1-NEXT:    idivb (%r8) # sched: [45:41.00]
+; ZNVER1-NEXT:    idivw %si # sched: [17:1.00]
+; ZNVER1-NEXT:    idivw (%r9) # sched: [45:41.00]
+; ZNVER1-NEXT:    idivl %edx # sched: [25:1.00]
+; ZNVER1-NEXT:    idivl (%rax) # sched: [45:41.00]
+; ZNVER1-NEXT:    idivq %rcx # sched: [41:1.00]
+; ZNVER1-NEXT:    idivq (%r10) # sched: [45:41.00]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  tail call void asm "idivb $0 \0A\09 idivb $4 \0A\09 idivw $1 \0A\09 idivw $5 \0A\09 idivl $2 \0A\09 idivl $6 \0A\09 idivq $3 \0A\09 idivq $7", "r,r,r,r,*m,*m,*m,*m"(i8 %a0, i16 %a1, i32 %a2, i64 %a3, i8 *%p0, i16 *%p1, i32 *%p2, i64 *%p3) nounwind
+  ret void
+}
+
 ; TODO - test_imul
 
 ; TODO - test_in
