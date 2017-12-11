@@ -434,8 +434,10 @@ TEST_F(LibclangParseTest, AllSkippedRanges) {
     "#ifdef KIWIS\n"
     "printf(\"mmm!!\");\n"
     "#endif");
+  const char *Args[] = { "-ffreestanding" };
+  int NumArgs = sizeof(Args) / sizeof(Args[0]);
 
-  ClangTU = clang_parseTranslationUnit(Index, Main.c_str(), nullptr, 0,
+  ClangTU = clang_parseTranslationUnit(Index, Main.c_str(), Args, NumArgs,
                                        nullptr, 0, TUFlags);
 
   CXSourceRangeList *Ranges = clang_getAllSkippedRanges(ClangTU);

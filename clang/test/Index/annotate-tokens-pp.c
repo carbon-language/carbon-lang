@@ -42,8 +42,8 @@ struct A
 #endif
 };
 
-// RUN: c-index-test -test-annotate-tokens=%s:2:1:44:1 -I%S/Inputs %s | FileCheck %s
-// RUN: env CINDEXTEST_EDITING=1 c-index-test -test-annotate-tokens=%s:2:1:44:1 -I%S/Inputs %s | FileCheck %s
+// RUN: c-index-test -test-annotate-tokens=%s:2:1:44:1 -I%S/Inputs -ffreestanding %s | FileCheck %s
+// RUN: env CINDEXTEST_EDITING=1 c-index-test -test-annotate-tokens=%s:2:1:44:1 -I%S/Inputs -ffreestanding %s | FileCheck %s
 // CHECK: Punctuation: "#" [2:1 - 2:2] preprocessing directive=
 // CHECK: Identifier: "define" [2:2 - 2:8] preprocessing directive=
 // CHECK: Identifier: "STILL_NOTHING" [2:9 - 2:22] macro definition=STILL_NOTHING
