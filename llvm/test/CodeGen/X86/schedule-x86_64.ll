@@ -3871,8 +3871,738 @@ define void @test_pause() optsize {
 ; TODO - test_pushfd
 ; TODO - test_pushfq
 
-; TODO - test_rcl
-; TODO - test_rcr
+define void @test_rcl_rcr_8(i8 %a0, i8 %a1, i8 *%a2) optsize {
+; GENERIC-LABEL: test_rcl_rcr_8:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    rclb %dil # sched: [1:0.50]
+; GENERIC-NEXT:    rcrb %dil # sched: [1:0.50]
+; GENERIC-NEXT:    rclb (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    rcrb (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    rclb $7, %dil # sched: [1:0.50]
+; GENERIC-NEXT:    rcrb $7, %dil # sched: [1:0.50]
+; GENERIC-NEXT:    rclb $7, (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    rcrb $7, (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    rclb %cl, %dil # sched: [1:0.50]
+; GENERIC-NEXT:    rcrb %cl, %dil # sched: [1:0.50]
+; GENERIC-NEXT:    rclb %cl, (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    rcrb %cl, (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_rcl_rcr_8:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    rclb %dil # sched: [1:1.00]
+; ATOM-NEXT:    rcrb %dil # sched: [1:1.00]
+; ATOM-NEXT:    rclb (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    rcrb (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    rclb $7, %dil # sched: [1:1.00]
+; ATOM-NEXT:    rcrb $7, %dil # sched: [1:1.00]
+; ATOM-NEXT:    rclb $7, (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    rcrb $7, (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    rclb %cl, %dil # sched: [1:1.00]
+; ATOM-NEXT:    rcrb %cl, %dil # sched: [1:1.00]
+; ATOM-NEXT:    rclb %cl, (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    rcrb %cl, (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_rcl_rcr_8:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    rclb %dil # sched: [1:1.00]
+; SLM-NEXT:    rcrb %dil # sched: [1:1.00]
+; SLM-NEXT:    rclb (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    rcrb (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    rclb $7, %dil # sched: [1:1.00]
+; SLM-NEXT:    rcrb $7, %dil # sched: [1:1.00]
+; SLM-NEXT:    rclb $7, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    rcrb $7, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    rclb %cl, %dil # sched: [1:1.00]
+; SLM-NEXT:    rcrb %cl, %dil # sched: [1:1.00]
+; SLM-NEXT:    rclb %cl, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    rcrb %cl, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_rcl_rcr_8:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    rclb %dil # sched: [1:0.50]
+; SANDY-NEXT:    rcrb %dil # sched: [1:0.50]
+; SANDY-NEXT:    rclb (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    rcrb (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    rclb $7, %dil # sched: [1:0.50]
+; SANDY-NEXT:    rcrb $7, %dil # sched: [1:0.50]
+; SANDY-NEXT:    rclb $7, (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    rcrb $7, (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    rclb %cl, %dil # sched: [1:0.50]
+; SANDY-NEXT:    rcrb %cl, %dil # sched: [1:0.50]
+; SANDY-NEXT:    rclb %cl, (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    rcrb %cl, (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_rcl_rcr_8:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    rclb %dil # sched: [3:0.75]
+; HASWELL-NEXT:    rcrb %dil # sched: [3:0.75]
+; HASWELL-NEXT:    rclb (%rdx) # sched: [9:0.75]
+; HASWELL-NEXT:    rcrb (%rdx) # sched: [9:0.75]
+; HASWELL-NEXT:    rclb $7, %dil # sched: [3:0.75]
+; HASWELL-NEXT:    rcrb $7, %dil # sched: [3:0.75]
+; HASWELL-NEXT:    rclb $7, (%rdx) # sched: [9:0.75]
+; HASWELL-NEXT:    rcrb $7, (%rdx) # sched: [9:0.75]
+; HASWELL-NEXT:    rclb %cl, %dil # sched: [11:2.25]
+; HASWELL-NEXT:    rcrb %cl, %dil # sched: [14:2.50]
+; HASWELL-NEXT:    rclb %cl, (%rdx) # sched: [16:2.00]
+; HASWELL-NEXT:    rcrb %cl, (%rdx) # sched: [19:2.25]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_rcl_rcr_8:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    rclb %dil # sched: [3:0.75]
+; BROADWELL-NEXT:    rcrb %dil # sched: [3:0.75]
+; BROADWELL-NEXT:    rclb (%rdx) # sched: [8:0.75]
+; BROADWELL-NEXT:    rcrb (%rdx) # sched: [8:0.75]
+; BROADWELL-NEXT:    rclb $7, %dil # sched: [3:0.75]
+; BROADWELL-NEXT:    rcrb $7, %dil # sched: [3:0.75]
+; BROADWELL-NEXT:    rclb $7, (%rdx) # sched: [8:0.75]
+; BROADWELL-NEXT:    rcrb $7, (%rdx) # sched: [8:0.75]
+; BROADWELL-NEXT:    rclb %cl, %dil # sched: [11:2.25]
+; BROADWELL-NEXT:    rcrb %cl, %dil # sched: [14:2.50]
+; BROADWELL-NEXT:    rclb %cl, (%rdx) # sched: [15:2.00]
+; BROADWELL-NEXT:    rcrb %cl, (%rdx) # sched: [18:2.25]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_rcl_rcr_8:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    rclb %dil # sched: [3:0.75]
+; SKYLAKE-NEXT:    rcrb %dil # sched: [3:0.75]
+; SKYLAKE-NEXT:    rclb (%rdx) # sched: [8:0.75]
+; SKYLAKE-NEXT:    rcrb (%rdx) # sched: [8:0.75]
+; SKYLAKE-NEXT:    rclb $7, %dil # sched: [3:0.75]
+; SKYLAKE-NEXT:    rcrb $7, %dil # sched: [3:0.75]
+; SKYLAKE-NEXT:    rclb $7, (%rdx) # sched: [8:0.75]
+; SKYLAKE-NEXT:    rcrb $7, (%rdx) # sched: [8:0.75]
+; SKYLAKE-NEXT:    rclb %cl, %dil # sched: [11:2.50]
+; SKYLAKE-NEXT:    rcrb %cl, %dil # sched: [14:2.50]
+; SKYLAKE-NEXT:    rclb %cl, (%rdx) # sched: [15:2.50]
+; SKYLAKE-NEXT:    rcrb %cl, (%rdx) # sched: [18:2.25]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_rcl_rcr_8:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    rclb %dil # sched: [3:0.75]
+; SKX-NEXT:    rcrb %dil # sched: [3:0.75]
+; SKX-NEXT:    rclb (%rdx) # sched: [8:0.75]
+; SKX-NEXT:    rcrb (%rdx) # sched: [8:0.75]
+; SKX-NEXT:    rclb $7, %dil # sched: [3:0.75]
+; SKX-NEXT:    rcrb $7, %dil # sched: [3:0.75]
+; SKX-NEXT:    rclb $7, (%rdx) # sched: [8:0.75]
+; SKX-NEXT:    rcrb $7, (%rdx) # sched: [8:0.75]
+; SKX-NEXT:    rclb %cl, %dil # sched: [11:2.50]
+; SKX-NEXT:    rcrb %cl, %dil # sched: [14:2.50]
+; SKX-NEXT:    rclb %cl, (%rdx) # sched: [15:2.50]
+; SKX-NEXT:    rcrb %cl, (%rdx) # sched: [18:2.25]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_rcl_rcr_8:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    rclb %dil # sched: [1:0.50]
+; BTVER2-NEXT:    rcrb %dil # sched: [1:0.50]
+; BTVER2-NEXT:    rclb (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    rcrb (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    rclb $7, %dil # sched: [1:0.50]
+; BTVER2-NEXT:    rcrb $7, %dil # sched: [1:0.50]
+; BTVER2-NEXT:    rclb $7, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    rcrb $7, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    rclb %cl, %dil # sched: [1:0.50]
+; BTVER2-NEXT:    rcrb %cl, %dil # sched: [1:0.50]
+; BTVER2-NEXT:    rclb %cl, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    rcrb %cl, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_rcl_rcr_8:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    rclb %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    rcrb %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    rclb (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    rcrb (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    rclb $7, %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    rcrb $7, %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    rclb $7, (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    rcrb $7, (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    rclb %cl, %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    rcrb %cl, %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    rclb %cl, (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    rcrb %cl, (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  call void asm sideeffect "rclb $0 \0A\09 rcrb $0 \0A\09 rclb $2 \0A\09 rcrb $2 \0A\09 rclb $3, $0 \0A\09 rcrb $3, $0 \0A\09 rclb $3, $2 \0A\09 rcrb $3, $2 \0A\09 rclb %CL, $0 \0A\09 rcrb %CL, $0 \0A\09 rclb %CL, $2 \0A\09 rcrb %CL, $2", "r,r,*m,i"(i8 %a0, i8 %a1, i8 *%a2, i8 7)
+  ret void
+}
+define void @test_rcl_rcr_16(i16 %a0, i16 %a1, i16 *%a2) optsize {
+; GENERIC-LABEL: test_rcl_rcr_16:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    rclw %di # sched: [1:0.50]
+; GENERIC-NEXT:    rcrw %di # sched: [1:0.50]
+; GENERIC-NEXT:    rclw (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    rcrw (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    rclw $7, %di # sched: [1:0.50]
+; GENERIC-NEXT:    rcrw $7, %di # sched: [1:0.50]
+; GENERIC-NEXT:    rclw $7, (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    rcrw $7, (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    rclw %cl, %di # sched: [1:0.50]
+; GENERIC-NEXT:    rcrw %cl, %di # sched: [1:0.50]
+; GENERIC-NEXT:    rclw %cl, (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    rcrw %cl, (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_rcl_rcr_16:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    rclw %di # sched: [1:1.00]
+; ATOM-NEXT:    rcrw %di # sched: [1:1.00]
+; ATOM-NEXT:    rclw (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    rcrw (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    rclw $7, %di # sched: [1:1.00]
+; ATOM-NEXT:    rcrw $7, %di # sched: [1:1.00]
+; ATOM-NEXT:    rclw $7, (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    rcrw $7, (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    rclw %cl, %di # sched: [1:1.00]
+; ATOM-NEXT:    rcrw %cl, %di # sched: [1:1.00]
+; ATOM-NEXT:    rclw %cl, (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    rcrw %cl, (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_rcl_rcr_16:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    rclw %di # sched: [1:1.00]
+; SLM-NEXT:    rcrw %di # sched: [1:1.00]
+; SLM-NEXT:    rclw (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    rcrw (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    rclw $7, %di # sched: [1:1.00]
+; SLM-NEXT:    rcrw $7, %di # sched: [1:1.00]
+; SLM-NEXT:    rclw $7, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    rcrw $7, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    rclw %cl, %di # sched: [1:1.00]
+; SLM-NEXT:    rcrw %cl, %di # sched: [1:1.00]
+; SLM-NEXT:    rclw %cl, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    rcrw %cl, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_rcl_rcr_16:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    rclw %di # sched: [1:0.50]
+; SANDY-NEXT:    rcrw %di # sched: [1:0.50]
+; SANDY-NEXT:    rclw (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    rcrw (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    rclw $7, %di # sched: [1:0.50]
+; SANDY-NEXT:    rcrw $7, %di # sched: [1:0.50]
+; SANDY-NEXT:    rclw $7, (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    rcrw $7, (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    rclw %cl, %di # sched: [1:0.50]
+; SANDY-NEXT:    rcrw %cl, %di # sched: [1:0.50]
+; SANDY-NEXT:    rclw %cl, (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    rcrw %cl, (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_rcl_rcr_16:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    rclw %di # sched: [3:0.75]
+; HASWELL-NEXT:    rcrw %di # sched: [3:0.75]
+; HASWELL-NEXT:    rclw (%rdx) # sched: [9:0.75]
+; HASWELL-NEXT:    rcrw (%rdx) # sched: [9:0.75]
+; HASWELL-NEXT:    rclw $7, %di # sched: [3:0.75]
+; HASWELL-NEXT:    rcrw $7, %di # sched: [3:0.75]
+; HASWELL-NEXT:    rclw $7, (%rdx) # sched: [9:0.75]
+; HASWELL-NEXT:    rcrw $7, (%rdx) # sched: [9:0.75]
+; HASWELL-NEXT:    rclw %cl, %di # sched: [11:2.00]
+; HASWELL-NEXT:    rcrw %cl, %di # sched: [11:2.00]
+; HASWELL-NEXT:    rclw %cl, (%rdx) # sched: [16:2.00]
+; HASWELL-NEXT:    rcrw %cl, (%rdx) # sched: [19:2.25]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_rcl_rcr_16:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    rclw %di # sched: [3:0.75]
+; BROADWELL-NEXT:    rcrw %di # sched: [3:0.75]
+; BROADWELL-NEXT:    rclw (%rdx) # sched: [8:0.75]
+; BROADWELL-NEXT:    rcrw (%rdx) # sched: [8:0.75]
+; BROADWELL-NEXT:    rclw $7, %di # sched: [3:0.75]
+; BROADWELL-NEXT:    rcrw $7, %di # sched: [3:0.75]
+; BROADWELL-NEXT:    rclw $7, (%rdx) # sched: [8:0.75]
+; BROADWELL-NEXT:    rcrw $7, (%rdx) # sched: [8:0.75]
+; BROADWELL-NEXT:    rclw %cl, %di # sched: [11:2.00]
+; BROADWELL-NEXT:    rcrw %cl, %di # sched: [11:2.00]
+; BROADWELL-NEXT:    rclw %cl, (%rdx) # sched: [15:2.00]
+; BROADWELL-NEXT:    rcrw %cl, (%rdx) # sched: [18:2.25]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_rcl_rcr_16:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    rclw %di # sched: [3:0.75]
+; SKYLAKE-NEXT:    rcrw %di # sched: [3:0.75]
+; SKYLAKE-NEXT:    rclw (%rdx) # sched: [8:0.75]
+; SKYLAKE-NEXT:    rcrw (%rdx) # sched: [8:0.75]
+; SKYLAKE-NEXT:    rclw $7, %di # sched: [3:0.75]
+; SKYLAKE-NEXT:    rcrw $7, %di # sched: [3:0.75]
+; SKYLAKE-NEXT:    rclw $7, (%rdx) # sched: [8:0.75]
+; SKYLAKE-NEXT:    rcrw $7, (%rdx) # sched: [8:0.75]
+; SKYLAKE-NEXT:    rclw %cl, %di # sched: [11:2.00]
+; SKYLAKE-NEXT:    rcrw %cl, %di # sched: [11:2.00]
+; SKYLAKE-NEXT:    rclw %cl, (%rdx) # sched: [15:2.50]
+; SKYLAKE-NEXT:    rcrw %cl, (%rdx) # sched: [18:2.25]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_rcl_rcr_16:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    rclw %di # sched: [3:0.75]
+; SKX-NEXT:    rcrw %di # sched: [3:0.75]
+; SKX-NEXT:    rclw (%rdx) # sched: [8:0.75]
+; SKX-NEXT:    rcrw (%rdx) # sched: [8:0.75]
+; SKX-NEXT:    rclw $7, %di # sched: [3:0.75]
+; SKX-NEXT:    rcrw $7, %di # sched: [3:0.75]
+; SKX-NEXT:    rclw $7, (%rdx) # sched: [8:0.75]
+; SKX-NEXT:    rcrw $7, (%rdx) # sched: [8:0.75]
+; SKX-NEXT:    rclw %cl, %di # sched: [11:2.00]
+; SKX-NEXT:    rcrw %cl, %di # sched: [11:2.00]
+; SKX-NEXT:    rclw %cl, (%rdx) # sched: [15:2.50]
+; SKX-NEXT:    rcrw %cl, (%rdx) # sched: [18:2.25]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_rcl_rcr_16:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    rclw %di # sched: [1:0.50]
+; BTVER2-NEXT:    rcrw %di # sched: [1:0.50]
+; BTVER2-NEXT:    rclw (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    rcrw (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    rclw $7, %di # sched: [1:0.50]
+; BTVER2-NEXT:    rcrw $7, %di # sched: [1:0.50]
+; BTVER2-NEXT:    rclw $7, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    rcrw $7, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    rclw %cl, %di # sched: [1:0.50]
+; BTVER2-NEXT:    rcrw %cl, %di # sched: [1:0.50]
+; BTVER2-NEXT:    rclw %cl, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    rcrw %cl, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_rcl_rcr_16:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    rclw %di # sched: [1:0.25]
+; ZNVER1-NEXT:    rcrw %di # sched: [1:0.25]
+; ZNVER1-NEXT:    rclw (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    rcrw (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    rclw $7, %di # sched: [1:0.25]
+; ZNVER1-NEXT:    rcrw $7, %di # sched: [1:0.25]
+; ZNVER1-NEXT:    rclw $7, (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    rcrw $7, (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    rclw %cl, %di # sched: [1:0.25]
+; ZNVER1-NEXT:    rcrw %cl, %di # sched: [1:0.25]
+; ZNVER1-NEXT:    rclw %cl, (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    rcrw %cl, (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  call void asm sideeffect "rclw $0 \0A\09 rcrw $0 \0A\09 rclw $2 \0A\09 rcrw $2 \0A\09 rclw $3, $0 \0A\09 rcrw $3, $0 \0A\09 rclw $3, $2 \0A\09 rcrw $3, $2 \0A\09 rclw %CL, $0 \0A\09 rcrw %CL, $0 \0A\09 rclw %CL, $2 \0A\09 rcrw %CL, $2", "r,r,*m,i"(i16 %a0, i16 %a1, i16 *%a2, i8 7)
+  ret void
+}
+define void @test_rcl_rcr_32(i32 %a0, i32 %a1, i32 *%a2) optsize {
+; GENERIC-LABEL: test_rcl_rcr_32:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    rcll %edi # sched: [1:0.50]
+; GENERIC-NEXT:    rcrl %edi # sched: [1:0.50]
+; GENERIC-NEXT:    rcll (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    rcrl (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    rcll $7, %edi # sched: [1:0.50]
+; GENERIC-NEXT:    rcrl $7, %edi # sched: [1:0.50]
+; GENERIC-NEXT:    rcll $7, (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    rcrl $7, (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    rcll %cl, %edi # sched: [1:0.50]
+; GENERIC-NEXT:    rcrl %cl, %edi # sched: [1:0.50]
+; GENERIC-NEXT:    rcll %cl, (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    rcrl %cl, (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_rcl_rcr_32:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    rcll %edi # sched: [1:1.00]
+; ATOM-NEXT:    rcrl %edi # sched: [1:1.00]
+; ATOM-NEXT:    rcll (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    rcrl (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    rcll $7, %edi # sched: [1:1.00]
+; ATOM-NEXT:    rcrl $7, %edi # sched: [1:1.00]
+; ATOM-NEXT:    rcll $7, (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    rcrl $7, (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    rcll %cl, %edi # sched: [1:1.00]
+; ATOM-NEXT:    rcrl %cl, %edi # sched: [1:1.00]
+; ATOM-NEXT:    rcll %cl, (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    rcrl %cl, (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_rcl_rcr_32:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    rcll %edi # sched: [1:1.00]
+; SLM-NEXT:    rcrl %edi # sched: [1:1.00]
+; SLM-NEXT:    rcll (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    rcrl (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    rcll $7, %edi # sched: [1:1.00]
+; SLM-NEXT:    rcrl $7, %edi # sched: [1:1.00]
+; SLM-NEXT:    rcll $7, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    rcrl $7, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    rcll %cl, %edi # sched: [1:1.00]
+; SLM-NEXT:    rcrl %cl, %edi # sched: [1:1.00]
+; SLM-NEXT:    rcll %cl, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    rcrl %cl, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_rcl_rcr_32:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    rcll %edi # sched: [1:0.50]
+; SANDY-NEXT:    rcrl %edi # sched: [1:0.50]
+; SANDY-NEXT:    rcll (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    rcrl (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    rcll $7, %edi # sched: [1:0.50]
+; SANDY-NEXT:    rcrl $7, %edi # sched: [1:0.50]
+; SANDY-NEXT:    rcll $7, (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    rcrl $7, (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    rcll %cl, %edi # sched: [1:0.50]
+; SANDY-NEXT:    rcrl %cl, %edi # sched: [1:0.50]
+; SANDY-NEXT:    rcll %cl, (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    rcrl %cl, (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_rcl_rcr_32:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    rcll %edi # sched: [3:0.75]
+; HASWELL-NEXT:    rcrl %edi # sched: [3:0.75]
+; HASWELL-NEXT:    rcll (%rdx) # sched: [9:0.75]
+; HASWELL-NEXT:    rcrl (%rdx) # sched: [9:0.75]
+; HASWELL-NEXT:    rcll $7, %edi # sched: [3:0.75]
+; HASWELL-NEXT:    rcrl $7, %edi # sched: [3:0.75]
+; HASWELL-NEXT:    rcll $7, (%rdx) # sched: [9:0.75]
+; HASWELL-NEXT:    rcrl $7, (%rdx) # sched: [9:0.75]
+; HASWELL-NEXT:    rcll %cl, %edi # sched: [11:2.00]
+; HASWELL-NEXT:    rcrl %cl, %edi # sched: [11:2.00]
+; HASWELL-NEXT:    rcll %cl, (%rdx) # sched: [16:2.00]
+; HASWELL-NEXT:    rcrl %cl, (%rdx) # sched: [19:2.25]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_rcl_rcr_32:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    rcll %edi # sched: [3:0.75]
+; BROADWELL-NEXT:    rcrl %edi # sched: [3:0.75]
+; BROADWELL-NEXT:    rcll (%rdx) # sched: [8:0.75]
+; BROADWELL-NEXT:    rcrl (%rdx) # sched: [8:0.75]
+; BROADWELL-NEXT:    rcll $7, %edi # sched: [3:0.75]
+; BROADWELL-NEXT:    rcrl $7, %edi # sched: [3:0.75]
+; BROADWELL-NEXT:    rcll $7, (%rdx) # sched: [8:0.75]
+; BROADWELL-NEXT:    rcrl $7, (%rdx) # sched: [8:0.75]
+; BROADWELL-NEXT:    rcll %cl, %edi # sched: [11:2.00]
+; BROADWELL-NEXT:    rcrl %cl, %edi # sched: [11:2.00]
+; BROADWELL-NEXT:    rcll %cl, (%rdx) # sched: [15:2.00]
+; BROADWELL-NEXT:    rcrl %cl, (%rdx) # sched: [18:2.25]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_rcl_rcr_32:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    rcll %edi # sched: [3:0.75]
+; SKYLAKE-NEXT:    rcrl %edi # sched: [3:0.75]
+; SKYLAKE-NEXT:    rcll (%rdx) # sched: [8:0.75]
+; SKYLAKE-NEXT:    rcrl (%rdx) # sched: [8:0.75]
+; SKYLAKE-NEXT:    rcll $7, %edi # sched: [3:0.75]
+; SKYLAKE-NEXT:    rcrl $7, %edi # sched: [3:0.75]
+; SKYLAKE-NEXT:    rcll $7, (%rdx) # sched: [8:0.75]
+; SKYLAKE-NEXT:    rcrl $7, (%rdx) # sched: [8:0.75]
+; SKYLAKE-NEXT:    rcll %cl, %edi # sched: [11:2.00]
+; SKYLAKE-NEXT:    rcrl %cl, %edi # sched: [11:2.00]
+; SKYLAKE-NEXT:    rcll %cl, (%rdx) # sched: [15:2.50]
+; SKYLAKE-NEXT:    rcrl %cl, (%rdx) # sched: [18:2.25]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_rcl_rcr_32:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    rcll %edi # sched: [3:0.75]
+; SKX-NEXT:    rcrl %edi # sched: [3:0.75]
+; SKX-NEXT:    rcll (%rdx) # sched: [8:0.75]
+; SKX-NEXT:    rcrl (%rdx) # sched: [8:0.75]
+; SKX-NEXT:    rcll $7, %edi # sched: [3:0.75]
+; SKX-NEXT:    rcrl $7, %edi # sched: [3:0.75]
+; SKX-NEXT:    rcll $7, (%rdx) # sched: [8:0.75]
+; SKX-NEXT:    rcrl $7, (%rdx) # sched: [8:0.75]
+; SKX-NEXT:    rcll %cl, %edi # sched: [11:2.00]
+; SKX-NEXT:    rcrl %cl, %edi # sched: [11:2.00]
+; SKX-NEXT:    rcll %cl, (%rdx) # sched: [15:2.50]
+; SKX-NEXT:    rcrl %cl, (%rdx) # sched: [18:2.25]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_rcl_rcr_32:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    rcll %edi # sched: [1:0.50]
+; BTVER2-NEXT:    rcrl %edi # sched: [1:0.50]
+; BTVER2-NEXT:    rcll (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    rcrl (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    rcll $7, %edi # sched: [1:0.50]
+; BTVER2-NEXT:    rcrl $7, %edi # sched: [1:0.50]
+; BTVER2-NEXT:    rcll $7, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    rcrl $7, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    rcll %cl, %edi # sched: [1:0.50]
+; BTVER2-NEXT:    rcrl %cl, %edi # sched: [1:0.50]
+; BTVER2-NEXT:    rcll %cl, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    rcrl %cl, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_rcl_rcr_32:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    rcll %edi # sched: [1:0.25]
+; ZNVER1-NEXT:    rcrl %edi # sched: [1:0.25]
+; ZNVER1-NEXT:    rcll (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    rcrl (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    rcll $7, %edi # sched: [1:0.25]
+; ZNVER1-NEXT:    rcrl $7, %edi # sched: [1:0.25]
+; ZNVER1-NEXT:    rcll $7, (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    rcrl $7, (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    rcll %cl, %edi # sched: [1:0.25]
+; ZNVER1-NEXT:    rcrl %cl, %edi # sched: [1:0.25]
+; ZNVER1-NEXT:    rcll %cl, (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    rcrl %cl, (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  call void asm sideeffect "rcll $0 \0A\09 rcrl $0 \0A\09 rcll $2 \0A\09 rcrl $2 \0A\09 rcll $3, $0 \0A\09 rcrl $3, $0 \0A\09 rcll $3, $2 \0A\09 rcrl $3, $2 \0A\09 rcll %CL, $0 \0A\09 rcrl %CL, $0 \0A\09 rcll %CL, $2 \0A\09 rcrl %CL, $2", "r,r,*m,i"(i32 %a0, i32 %a1, i32 *%a2, i8 7)
+  ret void
+}
+define void @test_rcl_rcr_64(i64 %a0, i64 %a1, i64 *%a2) optsize {
+; GENERIC-LABEL: test_rcl_rcr_64:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    rclq %rdi # sched: [1:0.50]
+; GENERIC-NEXT:    rcrq %rdi # sched: [1:0.50]
+; GENERIC-NEXT:    rclq (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    rcrq (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    rclq $7, %rdi # sched: [1:0.50]
+; GENERIC-NEXT:    rcrq $7, %rdi # sched: [1:0.50]
+; GENERIC-NEXT:    rclq $7, (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    rcrq $7, (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    rclq %cl, %rdi # sched: [1:0.50]
+; GENERIC-NEXT:    rcrq %cl, %rdi # sched: [1:0.50]
+; GENERIC-NEXT:    rclq %cl, (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    rcrq %cl, (%rdx) # sched: [5:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_rcl_rcr_64:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    rclq %rdi # sched: [1:1.00]
+; ATOM-NEXT:    rcrq %rdi # sched: [1:1.00]
+; ATOM-NEXT:    rclq (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    rcrq (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    rclq $7, %rdi # sched: [1:1.00]
+; ATOM-NEXT:    rcrq $7, %rdi # sched: [1:1.00]
+; ATOM-NEXT:    rclq $7, (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    rcrq $7, (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    rclq %cl, %rdi # sched: [1:1.00]
+; ATOM-NEXT:    rcrq %cl, %rdi # sched: [1:1.00]
+; ATOM-NEXT:    rclq %cl, (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    rcrq %cl, (%rdx) # sched: [1:1.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_rcl_rcr_64:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    rclq %rdi # sched: [1:1.00]
+; SLM-NEXT:    rcrq %rdi # sched: [1:1.00]
+; SLM-NEXT:    rclq (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    rcrq (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    rclq $7, %rdi # sched: [1:1.00]
+; SLM-NEXT:    rcrq $7, %rdi # sched: [1:1.00]
+; SLM-NEXT:    rclq $7, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    rcrq $7, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    rclq %cl, %rdi # sched: [1:1.00]
+; SLM-NEXT:    rcrq %cl, %rdi # sched: [1:1.00]
+; SLM-NEXT:    rclq %cl, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    rcrq %cl, (%rdx) # sched: [4:2.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_rcl_rcr_64:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    rclq %rdi # sched: [1:0.50]
+; SANDY-NEXT:    rcrq %rdi # sched: [1:0.50]
+; SANDY-NEXT:    rclq (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    rcrq (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    rclq $7, %rdi # sched: [1:0.50]
+; SANDY-NEXT:    rcrq $7, %rdi # sched: [1:0.50]
+; SANDY-NEXT:    rclq $7, (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    rcrq $7, (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    rclq %cl, %rdi # sched: [1:0.50]
+; SANDY-NEXT:    rcrq %cl, %rdi # sched: [1:0.50]
+; SANDY-NEXT:    rclq %cl, (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    rcrq %cl, (%rdx) # sched: [5:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_rcl_rcr_64:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    rclq %rdi # sched: [3:0.75]
+; HASWELL-NEXT:    rcrq %rdi # sched: [3:0.75]
+; HASWELL-NEXT:    rclq (%rdx) # sched: [9:0.75]
+; HASWELL-NEXT:    rcrq (%rdx) # sched: [9:0.75]
+; HASWELL-NEXT:    rclq $7, %rdi # sched: [3:0.75]
+; HASWELL-NEXT:    rcrq $7, %rdi # sched: [3:0.75]
+; HASWELL-NEXT:    rclq $7, (%rdx) # sched: [9:0.75]
+; HASWELL-NEXT:    rcrq $7, (%rdx) # sched: [9:0.75]
+; HASWELL-NEXT:    rclq %cl, %rdi # sched: [11:2.00]
+; HASWELL-NEXT:    rcrq %cl, %rdi # sched: [11:2.00]
+; HASWELL-NEXT:    rclq %cl, (%rdx) # sched: [16:2.00]
+; HASWELL-NEXT:    rcrq %cl, (%rdx) # sched: [19:2.25]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_rcl_rcr_64:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    rclq %rdi # sched: [3:0.75]
+; BROADWELL-NEXT:    rcrq %rdi # sched: [3:0.75]
+; BROADWELL-NEXT:    rclq (%rdx) # sched: [8:0.75]
+; BROADWELL-NEXT:    rcrq (%rdx) # sched: [8:0.75]
+; BROADWELL-NEXT:    rclq $7, %rdi # sched: [3:0.75]
+; BROADWELL-NEXT:    rcrq $7, %rdi # sched: [3:0.75]
+; BROADWELL-NEXT:    rclq $7, (%rdx) # sched: [8:0.75]
+; BROADWELL-NEXT:    rcrq $7, (%rdx) # sched: [8:0.75]
+; BROADWELL-NEXT:    rclq %cl, %rdi # sched: [11:2.00]
+; BROADWELL-NEXT:    rcrq %cl, %rdi # sched: [11:2.00]
+; BROADWELL-NEXT:    rclq %cl, (%rdx) # sched: [15:2.00]
+; BROADWELL-NEXT:    rcrq %cl, (%rdx) # sched: [18:2.25]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_rcl_rcr_64:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    rclq %rdi # sched: [3:0.75]
+; SKYLAKE-NEXT:    rcrq %rdi # sched: [3:0.75]
+; SKYLAKE-NEXT:    rclq (%rdx) # sched: [8:0.75]
+; SKYLAKE-NEXT:    rcrq (%rdx) # sched: [8:0.75]
+; SKYLAKE-NEXT:    rclq $7, %rdi # sched: [3:0.75]
+; SKYLAKE-NEXT:    rcrq $7, %rdi # sched: [3:0.75]
+; SKYLAKE-NEXT:    rclq $7, (%rdx) # sched: [8:0.75]
+; SKYLAKE-NEXT:    rcrq $7, (%rdx) # sched: [8:0.75]
+; SKYLAKE-NEXT:    rclq %cl, %rdi # sched: [11:2.00]
+; SKYLAKE-NEXT:    rcrq %cl, %rdi # sched: [11:2.00]
+; SKYLAKE-NEXT:    rclq %cl, (%rdx) # sched: [15:2.50]
+; SKYLAKE-NEXT:    rcrq %cl, (%rdx) # sched: [18:2.25]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_rcl_rcr_64:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    rclq %rdi # sched: [3:0.75]
+; SKX-NEXT:    rcrq %rdi # sched: [3:0.75]
+; SKX-NEXT:    rclq (%rdx) # sched: [8:0.75]
+; SKX-NEXT:    rcrq (%rdx) # sched: [8:0.75]
+; SKX-NEXT:    rclq $7, %rdi # sched: [3:0.75]
+; SKX-NEXT:    rcrq $7, %rdi # sched: [3:0.75]
+; SKX-NEXT:    rclq $7, (%rdx) # sched: [8:0.75]
+; SKX-NEXT:    rcrq $7, (%rdx) # sched: [8:0.75]
+; SKX-NEXT:    rclq %cl, %rdi # sched: [11:2.00]
+; SKX-NEXT:    rcrq %cl, %rdi # sched: [11:2.00]
+; SKX-NEXT:    rclq %cl, (%rdx) # sched: [15:2.50]
+; SKX-NEXT:    rcrq %cl, (%rdx) # sched: [18:2.25]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_rcl_rcr_64:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    rclq %rdi # sched: [1:0.50]
+; BTVER2-NEXT:    rcrq %rdi # sched: [1:0.50]
+; BTVER2-NEXT:    rclq (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    rcrq (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    rclq $7, %rdi # sched: [1:0.50]
+; BTVER2-NEXT:    rcrq $7, %rdi # sched: [1:0.50]
+; BTVER2-NEXT:    rclq $7, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    rcrq $7, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    rclq %cl, %rdi # sched: [1:0.50]
+; BTVER2-NEXT:    rcrq %cl, %rdi # sched: [1:0.50]
+; BTVER2-NEXT:    rclq %cl, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    rcrq %cl, (%rdx) # sched: [4:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_rcl_rcr_64:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    rclq %rdi # sched: [1:0.25]
+; ZNVER1-NEXT:    rcrq %rdi # sched: [1:0.25]
+; ZNVER1-NEXT:    rclq (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    rcrq (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    rclq $7, %rdi # sched: [1:0.25]
+; ZNVER1-NEXT:    rcrq $7, %rdi # sched: [1:0.25]
+; ZNVER1-NEXT:    rclq $7, (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    rcrq $7, (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    rclq %cl, %rdi # sched: [1:0.25]
+; ZNVER1-NEXT:    rcrq %cl, %rdi # sched: [1:0.25]
+; ZNVER1-NEXT:    rclq %cl, (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    rcrq %cl, (%rdx) # sched: [100:?]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  call void asm sideeffect "rclq $0 \0A\09 rcrq $0 \0A\09 rclq $2 \0A\09 rcrq $2 \0A\09 rclq $3, $0 \0A\09 rcrq $3, $0 \0A\09 rclq $3, $2 \0A\09 rcrq $3, $2 \0A\09 rclq %CL, $0 \0A\09 rcrq %CL, $0 \0A\09 rclq %CL, $2 \0A\09 rcrq %CL, $2", "r,r,*m,i"(i64 %a0, i64 %a1, i64 *%a2, i8 7)
+  ret void
+}
 
 ; TODO - test_ret
 
