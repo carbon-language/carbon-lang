@@ -239,10 +239,10 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   Config->CheckSignatures =
       Args.hasFlag(OPT_check_signatures, OPT_no_check_signatures, false);
   Config->EmitRelocs = Args.hasArg(OPT_emit_relocs);
-  Config->Relocatable = Args.hasArg(OPT_relocatable);
-  Config->Entry = getEntry(Args, Config->Relocatable ? "" : "_start");
+  Config->Entry = getEntry(Args, Args.hasArg(OPT_relocatable) ? "" : "_start");
   Config->ImportMemory = Args.hasArg(OPT_import_memory);
   Config->OutputFile = Args.getLastArgValue(OPT_o);
+  Config->Relocatable = Args.hasArg(OPT_relocatable);
   Config->SearchPaths = args::getStrings(Args, OPT_L);
   Config->StripAll = Args.hasArg(OPT_strip_all);
   Config->StripDebug = Args.hasArg(OPT_strip_debug);
