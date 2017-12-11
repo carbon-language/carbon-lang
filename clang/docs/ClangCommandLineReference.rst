@@ -2120,6 +2120,10 @@ Omit frame pointer setup for leaf functions
 
 Use copy relocations support for PIE builds
 
+.. option:: -mprefer-vector-width=<arg>
+
+Specifies preferred vector width for auto-vectorization. Defaults to 'none' which allows target specific decisions.
+
 .. option:: -mqdsp6-compat
 
 Enable hexagon-qdsp6 backward compatibility
