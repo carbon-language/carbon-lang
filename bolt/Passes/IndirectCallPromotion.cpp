@@ -1212,6 +1212,8 @@ void IndirectCallPromotion::runOnFunctions(
             }
             
             IndirectCalls.push_back(std::make_pair(NumCalls, &Inst));
+            dbgs() << "indirect call in " << Function << " : "
+                   << BB.getName() << " : " << NumCalls << '\n';
             TotalIndirectCalls += NumCalls;
           }
         }
