@@ -168,6 +168,9 @@ AVR::Fixups AVRMCExpr::getFixupKind() const {
   case VK_AVR_PM_HH8:
     Kind = isNegated() ? AVR::fixup_hh8_ldi_pm_neg : AVR::fixup_hh8_ldi_pm;
     break;
+  case VK_AVR_GS:
+    Kind = AVR::fixup_16_pm;
+    break;
   case VK_AVR_LO8_GS:
     Kind = AVR::fixup_lo8_ldi_gs;
     break;
