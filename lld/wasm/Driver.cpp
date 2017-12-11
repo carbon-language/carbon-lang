@@ -202,10 +202,10 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
     error("no input files");
 }
 
-static const char *getEntry(opt::InputArgList &Args, const char *def) {
+static StringRef getEntry(opt::InputArgList &Args, StringRef Default) {
   auto *Arg = Args.getLastArg(OPT_entry, OPT_no_entry);
   if (!Arg)
-    return def;
+    return Default;
   if (Arg->getOption().getID() == OPT_no_entry)
     return "";
   return Arg->getValue();
