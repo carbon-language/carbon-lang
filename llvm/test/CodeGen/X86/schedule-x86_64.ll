@@ -3874,9 +3874,6 @@ define void @test_pause() optsize {
 ; TODO - test_rcl
 ; TODO - test_rcr
 
-; TODO - test_rdfsbase
-; TODO - test_rdgsbase
-
 ; TODO - test_ret
 
 define void @test_rol_ror_8(i8 %a0, i8 %a1, i8 *%a2) optsize {
@@ -5263,9 +5260,6 @@ define void @test_stos() optsize {
 
 ; TODO - test_sub
 ; TODO - test_test
-
-; TODO - test_wrfsbase
-; TODO - test_wrgsbase
 
 ; TODO - test_xadd
 ; TODO - test_xchg
