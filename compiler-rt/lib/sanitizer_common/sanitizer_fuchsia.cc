@@ -51,8 +51,6 @@ unsigned int internal_sleep(unsigned int seconds) {
 
 u64 NanoTime() { return _zx_time_get(ZX_CLOCK_UTC); }
 
-u64 MonotonicNanoTime() { return _zx_time_get(ZX_CLOCK_MONOTONIC); }
-
 uptr internal_getpid() {
   zx_info_handle_basic_t info;
   zx_status_t status =

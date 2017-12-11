@@ -301,7 +301,7 @@ struct ScudoAllocator {
 
     CheckRssLimit = HardRssLimitMb || SoftRssLimitMb;
     if (CheckRssLimit)
-      atomic_store_relaxed(&RssLastCheckedAtNS, MonotonicNanoTime());
+      atomic_store_relaxed(&RssLastCheckedAtNS, NanoTime());
   }
 
   // Helper function that checks for a valid Scudo chunk. nullptr isn't.
@@ -319,7 +319,7 @@ struct ScudoAllocator {
   // it can, every 100ms, otherwise it will just return the current one.
   bool isRssLimitExceeded() {
     u64 LastCheck = atomic_load_relaxed(&RssLastCheckedAtNS);
-    const u64 CurrentCheck = MonotonicNanoTime();
+    const u64 CurrentCheck = NanoTime();
     if (LIKELY(CurrentCheck < LastCheck + (100ULL * 1000000ULL)))
       return atomic_load_relaxed(&RssLimitExceeded);
     if (!atomic_compare_exchange_weak(&RssLastCheckedAtNS, &LastCheck,
