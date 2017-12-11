@@ -6418,7 +6418,389 @@ define void @test_scas() optsize {
   ret void
 }
 
-; TODO - test_setcc
+define void @test_setcc(i8 %a0, i8 *%a1) optsize {
+; GENERIC-LABEL: test_setcc:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    seto %dil # sched: [1:0.50]
+; GENERIC-NEXT:    setno %dil # sched: [1:0.50]
+; GENERIC-NEXT:    setb %dil # sched: [1:0.50]
+; GENERIC-NEXT:    setae %dil # sched: [1:0.50]
+; GENERIC-NEXT:    sete %dil # sched: [1:0.50]
+; GENERIC-NEXT:    setne %dil # sched: [1:0.50]
+; GENERIC-NEXT:    setbe %dil # sched: [2:1.00]
+; GENERIC-NEXT:    seta %dil # sched: [2:1.00]
+; GENERIC-NEXT:    sets %dil # sched: [1:0.50]
+; GENERIC-NEXT:    setns %dil # sched: [1:0.50]
+; GENERIC-NEXT:    setp %dil # sched: [1:0.50]
+; GENERIC-NEXT:    setnp %dil # sched: [1:0.50]
+; GENERIC-NEXT:    setl %dil # sched: [1:0.50]
+; GENERIC-NEXT:    setge %dil # sched: [1:0.50]
+; GENERIC-NEXT:    setle %dil # sched: [1:0.50]
+; GENERIC-NEXT:    setg %dil # sched: [1:0.50]
+; GENERIC-NEXT:    seto (%rsi) # sched: [5:1.00]
+; GENERIC-NEXT:    setno (%rsi) # sched: [5:1.00]
+; GENERIC-NEXT:    setb (%rsi) # sched: [5:1.00]
+; GENERIC-NEXT:    setae (%rsi) # sched: [5:1.00]
+; GENERIC-NEXT:    sete (%rsi) # sched: [5:1.00]
+; GENERIC-NEXT:    setne (%rsi) # sched: [5:1.00]
+; GENERIC-NEXT:    setbe (%rsi) # sched: [5:1.00]
+; GENERIC-NEXT:    seta (%rsi) # sched: [5:1.00]
+; GENERIC-NEXT:    sets (%rsi) # sched: [5:1.00]
+; GENERIC-NEXT:    setns (%rsi) # sched: [5:1.00]
+; GENERIC-NEXT:    setp (%rsi) # sched: [5:1.00]
+; GENERIC-NEXT:    setnp (%rsi) # sched: [5:1.00]
+; GENERIC-NEXT:    setl (%rsi) # sched: [5:1.00]
+; GENERIC-NEXT:    setge (%rsi) # sched: [5:1.00]
+; GENERIC-NEXT:    setle (%rsi) # sched: [5:1.00]
+; GENERIC-NEXT:    setg (%rsi) # sched: [5:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_setcc:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    seto %dil # sched: [1:0.50]
+; ATOM-NEXT:    setno %dil # sched: [1:0.50]
+; ATOM-NEXT:    setb %dil # sched: [1:0.50]
+; ATOM-NEXT:    setae %dil # sched: [1:0.50]
+; ATOM-NEXT:    sete %dil # sched: [1:0.50]
+; ATOM-NEXT:    setne %dil # sched: [1:0.50]
+; ATOM-NEXT:    setbe %dil # sched: [1:0.50]
+; ATOM-NEXT:    seta %dil # sched: [1:0.50]
+; ATOM-NEXT:    sets %dil # sched: [1:0.50]
+; ATOM-NEXT:    setns %dil # sched: [1:0.50]
+; ATOM-NEXT:    setp %dil # sched: [1:0.50]
+; ATOM-NEXT:    setnp %dil # sched: [1:0.50]
+; ATOM-NEXT:    setl %dil # sched: [1:0.50]
+; ATOM-NEXT:    setge %dil # sched: [1:0.50]
+; ATOM-NEXT:    setle %dil # sched: [1:0.50]
+; ATOM-NEXT:    setg %dil # sched: [1:0.50]
+; ATOM-NEXT:    seto (%rsi) # sched: [2:1.00]
+; ATOM-NEXT:    setno (%rsi) # sched: [2:1.00]
+; ATOM-NEXT:    setb (%rsi) # sched: [2:1.00]
+; ATOM-NEXT:    setae (%rsi) # sched: [2:1.00]
+; ATOM-NEXT:    sete (%rsi) # sched: [2:1.00]
+; ATOM-NEXT:    setne (%rsi) # sched: [2:1.00]
+; ATOM-NEXT:    setbe (%rsi) # sched: [2:1.00]
+; ATOM-NEXT:    seta (%rsi) # sched: [2:1.00]
+; ATOM-NEXT:    sets (%rsi) # sched: [2:1.00]
+; ATOM-NEXT:    setns (%rsi) # sched: [2:1.00]
+; ATOM-NEXT:    setp (%rsi) # sched: [2:1.00]
+; ATOM-NEXT:    setnp (%rsi) # sched: [2:1.00]
+; ATOM-NEXT:    setl (%rsi) # sched: [2:1.00]
+; ATOM-NEXT:    setge (%rsi) # sched: [2:1.00]
+; ATOM-NEXT:    setle (%rsi) # sched: [2:1.00]
+; ATOM-NEXT:    setg (%rsi) # sched: [2:1.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_setcc:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    seto %dil # sched: [1:0.50]
+; SLM-NEXT:    setno %dil # sched: [1:0.50]
+; SLM-NEXT:    setb %dil # sched: [1:0.50]
+; SLM-NEXT:    setae %dil # sched: [1:0.50]
+; SLM-NEXT:    sete %dil # sched: [1:0.50]
+; SLM-NEXT:    setne %dil # sched: [1:0.50]
+; SLM-NEXT:    setbe %dil # sched: [1:0.50]
+; SLM-NEXT:    seta %dil # sched: [1:0.50]
+; SLM-NEXT:    sets %dil # sched: [1:0.50]
+; SLM-NEXT:    setns %dil # sched: [1:0.50]
+; SLM-NEXT:    setp %dil # sched: [1:0.50]
+; SLM-NEXT:    setnp %dil # sched: [1:0.50]
+; SLM-NEXT:    setl %dil # sched: [1:0.50]
+; SLM-NEXT:    setge %dil # sched: [1:0.50]
+; SLM-NEXT:    setle %dil # sched: [1:0.50]
+; SLM-NEXT:    setg %dil # sched: [1:0.50]
+; SLM-NEXT:    seto (%rsi) # sched: [1:1.00]
+; SLM-NEXT:    setno (%rsi) # sched: [1:1.00]
+; SLM-NEXT:    setb (%rsi) # sched: [1:1.00]
+; SLM-NEXT:    setae (%rsi) # sched: [1:1.00]
+; SLM-NEXT:    sete (%rsi) # sched: [1:1.00]
+; SLM-NEXT:    setne (%rsi) # sched: [1:1.00]
+; SLM-NEXT:    setbe (%rsi) # sched: [1:1.00]
+; SLM-NEXT:    seta (%rsi) # sched: [1:1.00]
+; SLM-NEXT:    sets (%rsi) # sched: [1:1.00]
+; SLM-NEXT:    setns (%rsi) # sched: [1:1.00]
+; SLM-NEXT:    setp (%rsi) # sched: [1:1.00]
+; SLM-NEXT:    setnp (%rsi) # sched: [1:1.00]
+; SLM-NEXT:    setl (%rsi) # sched: [1:1.00]
+; SLM-NEXT:    setge (%rsi) # sched: [1:1.00]
+; SLM-NEXT:    setle (%rsi) # sched: [1:1.00]
+; SLM-NEXT:    setg (%rsi) # sched: [1:1.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_setcc:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    seto %dil # sched: [1:0.50]
+; SANDY-NEXT:    setno %dil # sched: [1:0.50]
+; SANDY-NEXT:    setb %dil # sched: [1:0.50]
+; SANDY-NEXT:    setae %dil # sched: [1:0.50]
+; SANDY-NEXT:    sete %dil # sched: [1:0.50]
+; SANDY-NEXT:    setne %dil # sched: [1:0.50]
+; SANDY-NEXT:    setbe %dil # sched: [2:1.00]
+; SANDY-NEXT:    seta %dil # sched: [2:1.00]
+; SANDY-NEXT:    sets %dil # sched: [1:0.50]
+; SANDY-NEXT:    setns %dil # sched: [1:0.50]
+; SANDY-NEXT:    setp %dil # sched: [1:0.50]
+; SANDY-NEXT:    setnp %dil # sched: [1:0.50]
+; SANDY-NEXT:    setl %dil # sched: [1:0.50]
+; SANDY-NEXT:    setge %dil # sched: [1:0.50]
+; SANDY-NEXT:    setle %dil # sched: [1:0.50]
+; SANDY-NEXT:    setg %dil # sched: [1:0.50]
+; SANDY-NEXT:    seto (%rsi) # sched: [5:1.00]
+; SANDY-NEXT:    setno (%rsi) # sched: [5:1.00]
+; SANDY-NEXT:    setb (%rsi) # sched: [5:1.00]
+; SANDY-NEXT:    setae (%rsi) # sched: [5:1.00]
+; SANDY-NEXT:    sete (%rsi) # sched: [5:1.00]
+; SANDY-NEXT:    setne (%rsi) # sched: [5:1.00]
+; SANDY-NEXT:    setbe (%rsi) # sched: [5:1.00]
+; SANDY-NEXT:    seta (%rsi) # sched: [5:1.00]
+; SANDY-NEXT:    sets (%rsi) # sched: [5:1.00]
+; SANDY-NEXT:    setns (%rsi) # sched: [5:1.00]
+; SANDY-NEXT:    setp (%rsi) # sched: [5:1.00]
+; SANDY-NEXT:    setnp (%rsi) # sched: [5:1.00]
+; SANDY-NEXT:    setl (%rsi) # sched: [5:1.00]
+; SANDY-NEXT:    setge (%rsi) # sched: [5:1.00]
+; SANDY-NEXT:    setle (%rsi) # sched: [5:1.00]
+; SANDY-NEXT:    setg (%rsi) # sched: [5:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_setcc:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    seto %dil # sched: [1:0.50]
+; HASWELL-NEXT:    setno %dil # sched: [1:0.50]
+; HASWELL-NEXT:    setb %dil # sched: [1:0.50]
+; HASWELL-NEXT:    setae %dil # sched: [1:0.50]
+; HASWELL-NEXT:    sete %dil # sched: [1:0.50]
+; HASWELL-NEXT:    setne %dil # sched: [1:0.50]
+; HASWELL-NEXT:    setbe %dil # sched: [2:0.50]
+; HASWELL-NEXT:    seta %dil # sched: [2:0.50]
+; HASWELL-NEXT:    sets %dil # sched: [1:0.50]
+; HASWELL-NEXT:    setns %dil # sched: [1:0.50]
+; HASWELL-NEXT:    setp %dil # sched: [1:0.50]
+; HASWELL-NEXT:    setnp %dil # sched: [1:0.50]
+; HASWELL-NEXT:    setl %dil # sched: [1:0.50]
+; HASWELL-NEXT:    setge %dil # sched: [1:0.50]
+; HASWELL-NEXT:    setle %dil # sched: [1:0.50]
+; HASWELL-NEXT:    setg %dil # sched: [1:0.50]
+; HASWELL-NEXT:    seto (%rsi) # sched: [2:1.00]
+; HASWELL-NEXT:    setno (%rsi) # sched: [2:1.00]
+; HASWELL-NEXT:    setb (%rsi) # sched: [2:1.00]
+; HASWELL-NEXT:    setae (%rsi) # sched: [2:1.00]
+; HASWELL-NEXT:    sete (%rsi) # sched: [2:1.00]
+; HASWELL-NEXT:    setne (%rsi) # sched: [2:1.00]
+; HASWELL-NEXT:    setbe (%rsi) # sched: [3:1.00]
+; HASWELL-NEXT:    seta (%rsi) # sched: [3:1.00]
+; HASWELL-NEXT:    sets (%rsi) # sched: [2:1.00]
+; HASWELL-NEXT:    setns (%rsi) # sched: [2:1.00]
+; HASWELL-NEXT:    setp (%rsi) # sched: [2:1.00]
+; HASWELL-NEXT:    setnp (%rsi) # sched: [2:1.00]
+; HASWELL-NEXT:    setl (%rsi) # sched: [2:1.00]
+; HASWELL-NEXT:    setge (%rsi) # sched: [2:1.00]
+; HASWELL-NEXT:    setle (%rsi) # sched: [2:1.00]
+; HASWELL-NEXT:    setg (%rsi) # sched: [2:1.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_setcc:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    seto %dil # sched: [1:0.50]
+; BROADWELL-NEXT:    setno %dil # sched: [1:0.50]
+; BROADWELL-NEXT:    setb %dil # sched: [1:0.50]
+; BROADWELL-NEXT:    setae %dil # sched: [1:0.50]
+; BROADWELL-NEXT:    sete %dil # sched: [1:0.50]
+; BROADWELL-NEXT:    setne %dil # sched: [1:0.50]
+; BROADWELL-NEXT:    setbe %dil # sched: [2:0.50]
+; BROADWELL-NEXT:    seta %dil # sched: [2:0.50]
+; BROADWELL-NEXT:    sets %dil # sched: [1:0.50]
+; BROADWELL-NEXT:    setns %dil # sched: [1:0.50]
+; BROADWELL-NEXT:    setp %dil # sched: [1:0.50]
+; BROADWELL-NEXT:    setnp %dil # sched: [1:0.50]
+; BROADWELL-NEXT:    setl %dil # sched: [1:0.50]
+; BROADWELL-NEXT:    setge %dil # sched: [1:0.50]
+; BROADWELL-NEXT:    setle %dil # sched: [1:0.50]
+; BROADWELL-NEXT:    setg %dil # sched: [1:0.50]
+; BROADWELL-NEXT:    seto (%rsi) # sched: [2:1.00]
+; BROADWELL-NEXT:    setno (%rsi) # sched: [2:1.00]
+; BROADWELL-NEXT:    setb (%rsi) # sched: [2:1.00]
+; BROADWELL-NEXT:    setae (%rsi) # sched: [2:1.00]
+; BROADWELL-NEXT:    sete (%rsi) # sched: [2:1.00]
+; BROADWELL-NEXT:    setne (%rsi) # sched: [2:1.00]
+; BROADWELL-NEXT:    setbe (%rsi) # sched: [3:1.00]
+; BROADWELL-NEXT:    seta (%rsi) # sched: [3:1.00]
+; BROADWELL-NEXT:    sets (%rsi) # sched: [2:1.00]
+; BROADWELL-NEXT:    setns (%rsi) # sched: [2:1.00]
+; BROADWELL-NEXT:    setp (%rsi) # sched: [2:1.00]
+; BROADWELL-NEXT:    setnp (%rsi) # sched: [2:1.00]
+; BROADWELL-NEXT:    setl (%rsi) # sched: [2:1.00]
+; BROADWELL-NEXT:    setge (%rsi) # sched: [2:1.00]
+; BROADWELL-NEXT:    setle (%rsi) # sched: [2:1.00]
+; BROADWELL-NEXT:    setg (%rsi) # sched: [2:1.00]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_setcc:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    seto %dil # sched: [1:0.50]
+; SKYLAKE-NEXT:    setno %dil # sched: [1:0.50]
+; SKYLAKE-NEXT:    setb %dil # sched: [1:0.50]
+; SKYLAKE-NEXT:    setae %dil # sched: [1:0.50]
+; SKYLAKE-NEXT:    sete %dil # sched: [1:0.50]
+; SKYLAKE-NEXT:    setne %dil # sched: [1:0.50]
+; SKYLAKE-NEXT:    setbe %dil # sched: [2:1.00]
+; SKYLAKE-NEXT:    seta %dil # sched: [2:1.00]
+; SKYLAKE-NEXT:    sets %dil # sched: [1:0.50]
+; SKYLAKE-NEXT:    setns %dil # sched: [1:0.50]
+; SKYLAKE-NEXT:    setp %dil # sched: [1:0.50]
+; SKYLAKE-NEXT:    setnp %dil # sched: [1:0.50]
+; SKYLAKE-NEXT:    setl %dil # sched: [1:0.50]
+; SKYLAKE-NEXT:    setge %dil # sched: [1:0.50]
+; SKYLAKE-NEXT:    setle %dil # sched: [1:0.50]
+; SKYLAKE-NEXT:    setg %dil # sched: [1:0.50]
+; SKYLAKE-NEXT:    seto (%rsi) # sched: [2:1.00]
+; SKYLAKE-NEXT:    setno (%rsi) # sched: [2:1.00]
+; SKYLAKE-NEXT:    setb (%rsi) # sched: [2:1.00]
+; SKYLAKE-NEXT:    setae (%rsi) # sched: [2:1.00]
+; SKYLAKE-NEXT:    sete (%rsi) # sched: [2:1.00]
+; SKYLAKE-NEXT:    setne (%rsi) # sched: [2:1.00]
+; SKYLAKE-NEXT:    setbe (%rsi) # sched: [3:1.00]
+; SKYLAKE-NEXT:    seta (%rsi) # sched: [3:1.00]
+; SKYLAKE-NEXT:    sets (%rsi) # sched: [2:1.00]
+; SKYLAKE-NEXT:    setns (%rsi) # sched: [2:1.00]
+; SKYLAKE-NEXT:    setp (%rsi) # sched: [2:1.00]
+; SKYLAKE-NEXT:    setnp (%rsi) # sched: [2:1.00]
+; SKYLAKE-NEXT:    setl (%rsi) # sched: [2:1.00]
+; SKYLAKE-NEXT:    setge (%rsi) # sched: [2:1.00]
+; SKYLAKE-NEXT:    setle (%rsi) # sched: [2:1.00]
+; SKYLAKE-NEXT:    setg (%rsi) # sched: [2:1.00]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_setcc:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    seto %dil # sched: [1:0.50]
+; SKX-NEXT:    setno %dil # sched: [1:0.50]
+; SKX-NEXT:    setb %dil # sched: [1:0.50]
+; SKX-NEXT:    setae %dil # sched: [1:0.50]
+; SKX-NEXT:    sete %dil # sched: [1:0.50]
+; SKX-NEXT:    setne %dil # sched: [1:0.50]
+; SKX-NEXT:    setbe %dil # sched: [2:1.00]
+; SKX-NEXT:    seta %dil # sched: [2:1.00]
+; SKX-NEXT:    sets %dil # sched: [1:0.50]
+; SKX-NEXT:    setns %dil # sched: [1:0.50]
+; SKX-NEXT:    setp %dil # sched: [1:0.50]
+; SKX-NEXT:    setnp %dil # sched: [1:0.50]
+; SKX-NEXT:    setl %dil # sched: [1:0.50]
+; SKX-NEXT:    setge %dil # sched: [1:0.50]
+; SKX-NEXT:    setle %dil # sched: [1:0.50]
+; SKX-NEXT:    setg %dil # sched: [1:0.50]
+; SKX-NEXT:    seto (%rsi) # sched: [2:1.00]
+; SKX-NEXT:    setno (%rsi) # sched: [2:1.00]
+; SKX-NEXT:    setb (%rsi) # sched: [2:1.00]
+; SKX-NEXT:    setae (%rsi) # sched: [2:1.00]
+; SKX-NEXT:    sete (%rsi) # sched: [2:1.00]
+; SKX-NEXT:    setne (%rsi) # sched: [2:1.00]
+; SKX-NEXT:    setbe (%rsi) # sched: [3:1.00]
+; SKX-NEXT:    seta (%rsi) # sched: [3:1.00]
+; SKX-NEXT:    sets (%rsi) # sched: [2:1.00]
+; SKX-NEXT:    setns (%rsi) # sched: [2:1.00]
+; SKX-NEXT:    setp (%rsi) # sched: [2:1.00]
+; SKX-NEXT:    setnp (%rsi) # sched: [2:1.00]
+; SKX-NEXT:    setl (%rsi) # sched: [2:1.00]
+; SKX-NEXT:    setge (%rsi) # sched: [2:1.00]
+; SKX-NEXT:    setle (%rsi) # sched: [2:1.00]
+; SKX-NEXT:    setg (%rsi) # sched: [2:1.00]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_setcc:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    seto %dil # sched: [1:0.50]
+; BTVER2-NEXT:    setno %dil # sched: [1:0.50]
+; BTVER2-NEXT:    setb %dil # sched: [1:0.50]
+; BTVER2-NEXT:    setae %dil # sched: [1:0.50]
+; BTVER2-NEXT:    sete %dil # sched: [1:0.50]
+; BTVER2-NEXT:    setne %dil # sched: [1:0.50]
+; BTVER2-NEXT:    setbe %dil # sched: [1:0.50]
+; BTVER2-NEXT:    seta %dil # sched: [1:0.50]
+; BTVER2-NEXT:    sets %dil # sched: [1:0.50]
+; BTVER2-NEXT:    setns %dil # sched: [1:0.50]
+; BTVER2-NEXT:    setp %dil # sched: [1:0.50]
+; BTVER2-NEXT:    setnp %dil # sched: [1:0.50]
+; BTVER2-NEXT:    setl %dil # sched: [1:0.50]
+; BTVER2-NEXT:    setge %dil # sched: [1:0.50]
+; BTVER2-NEXT:    setle %dil # sched: [1:0.50]
+; BTVER2-NEXT:    setg %dil # sched: [1:0.50]
+; BTVER2-NEXT:    seto (%rsi) # sched: [1:1.00]
+; BTVER2-NEXT:    setno (%rsi) # sched: [1:1.00]
+; BTVER2-NEXT:    setb (%rsi) # sched: [1:1.00]
+; BTVER2-NEXT:    setae (%rsi) # sched: [1:1.00]
+; BTVER2-NEXT:    sete (%rsi) # sched: [1:1.00]
+; BTVER2-NEXT:    setne (%rsi) # sched: [1:1.00]
+; BTVER2-NEXT:    setbe (%rsi) # sched: [1:1.00]
+; BTVER2-NEXT:    seta (%rsi) # sched: [1:1.00]
+; BTVER2-NEXT:    sets (%rsi) # sched: [1:1.00]
+; BTVER2-NEXT:    setns (%rsi) # sched: [1:1.00]
+; BTVER2-NEXT:    setp (%rsi) # sched: [1:1.00]
+; BTVER2-NEXT:    setnp (%rsi) # sched: [1:1.00]
+; BTVER2-NEXT:    setl (%rsi) # sched: [1:1.00]
+; BTVER2-NEXT:    setge (%rsi) # sched: [1:1.00]
+; BTVER2-NEXT:    setle (%rsi) # sched: [1:1.00]
+; BTVER2-NEXT:    setg (%rsi) # sched: [1:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_setcc:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    seto %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    setno %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    setb %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    setae %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    sete %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    setne %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    setbe %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    seta %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    sets %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    setns %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    setp %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    setnp %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    setl %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    setge %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    setle %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    setg %dil # sched: [1:0.25]
+; ZNVER1-NEXT:    seto (%rsi) # sched: [1:0.25]
+; ZNVER1-NEXT:    setno (%rsi) # sched: [1:0.25]
+; ZNVER1-NEXT:    setb (%rsi) # sched: [1:0.25]
+; ZNVER1-NEXT:    setae (%rsi) # sched: [1:0.25]
+; ZNVER1-NEXT:    sete (%rsi) # sched: [1:0.25]
+; ZNVER1-NEXT:    setne (%rsi) # sched: [1:0.25]
+; ZNVER1-NEXT:    setbe (%rsi) # sched: [1:0.25]
+; ZNVER1-NEXT:    seta (%rsi) # sched: [1:0.25]
+; ZNVER1-NEXT:    sets (%rsi) # sched: [1:0.25]
+; ZNVER1-NEXT:    setns (%rsi) # sched: [1:0.25]
+; ZNVER1-NEXT:    setp (%rsi) # sched: [1:0.25]
+; ZNVER1-NEXT:    setnp (%rsi) # sched: [1:0.25]
+; ZNVER1-NEXT:    setl (%rsi) # sched: [1:0.25]
+; ZNVER1-NEXT:    setge (%rsi) # sched: [1:0.25]
+; ZNVER1-NEXT:    setle (%rsi) # sched: [1:0.25]
+; ZNVER1-NEXT:    setg (%rsi) # sched: [1:0.25]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  call void asm sideeffect "seto $0 \0A\09 setno $0 \0A\09 setb $0 \0A\09 setnb $0 \0A\09 setz $0 \0A\09 setnz $0 \0A\09 setbe $0 \0A\09 setnbe $0 \0A\09 sets $0 \0A\09 setns $0 \0A\09 setp $0 \0A\09 setnp $0 \0A\09 setl $0 \0A\09 setnl $0 \0A\09 setle $0 \0A\09 setnle $0 \0A\09 seto $1 \0A\09 setno $1 \0A\09 setb $1 \0A\09 setnb $1 \0A\09 setz $1 \0A\09 setnz $1 \0A\09 setbe $1 \0A\09 setnbe $1 \0A\09 sets $1 \0A\09 setns $1 \0A\09 setp $1 \0A\09 setnp $1 \0A\09 setl $1 \0A\09 setnl $1 \0A\09 setle $1 \0A\09 setnle $1", "r,*m"(i8 %a0, i8 *%a1)
+  ret void
+}
 
 define void @test_shld_shrd_16(i16 %a0, i16 %a1, i16 *%a2) optsize {
 ; GENERIC-LABEL: test_shld_shrd_16:
@@ -6850,8 +7232,89 @@ define void @test_shld_shrd_64(i64 %a0, i64 %a1, i64 *%a2) optsize {
   ret void
 }
 
-; TODO - test_stc
-; TODO - test_std
+define void @test_stc_std() optsize {
+; GENERIC-LABEL: test_stc_std:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    stc # sched: [1:0.33]
+; GENERIC-NEXT:    std # sched: [1:0.33]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_stc_std:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    stc # sched: [1:0.50]
+; ATOM-NEXT:    std # sched: [21:10.50]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_stc_std:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    stc # sched: [1:0.50]
+; SLM-NEXT:    std # sched: [1:0.50]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_stc_std:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    stc # sched: [1:0.33]
+; SANDY-NEXT:    std # sched: [1:0.33]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_stc_std:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    stc # sched: [1:0.25]
+; HASWELL-NEXT:    std # sched: [6:1.50]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_stc_std:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    stc # sched: [1:0.25]
+; BROADWELL-NEXT:    std # sched: [6:1.50]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_stc_std:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    stc # sched: [1:0.25]
+; SKYLAKE-NEXT:    std # sched: [6:1.50]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_stc_std:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    stc # sched: [1:0.25]
+; SKX-NEXT:    std # sched: [6:1.50]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_stc_std:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    stc # sched: [1:0.50]
+; BTVER2-NEXT:    std # sched: [1:0.50]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_stc_std:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    stc # sched: [1:0.25]
+; ZNVER1-NEXT:    std # sched: [1:0.25]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  call void asm sideeffect "stc \0A\09 std", ""()
+  ret void
+}
 
 define void @test_stos() optsize {
 ; GENERIC-LABEL: test_stos:
@@ -6959,6 +7422,81 @@ define void @test_stos() optsize {
 
 ; TODO - test_sub
 ; TODO - test_test
+
+; TODO: ud0, ud1
+define void @test_ud2() optsize {
+; GENERIC-LABEL: test_ud2:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    ud2 # sched: [100:0.33]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_ud2:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    ud2
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_ud2:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    ud2 # sched: [100:1.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_ud2:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    ud2 # sched: [100:0.33]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_ud2:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    ud2 # sched: [100:0.25]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_ud2:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    ud2 # sched: [100:0.25]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_ud2:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    ud2 # sched: [100:0.25]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_ud2:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    ud2 # sched: [100:0.25]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_ud2:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    ud2 # sched: [100:0.17]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_ud2:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    ud2 # sched: [100:?]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  call void asm sideeffect "ud2", ""()
+  ret void
+}
 
 ; TODO - test_xadd
 ; TODO - test_xchg
