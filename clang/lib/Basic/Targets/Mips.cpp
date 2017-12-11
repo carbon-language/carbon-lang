@@ -206,7 +206,7 @@ ArrayRef<Builtin::Info> MipsTargetInfo::getTargetBuiltins() const {
 }
 
 bool MipsTargetInfo::validateTarget(DiagnosticsEngine &Diags) const {
-  // microMIPS64R6 backend is removed
+  // microMIPS64R6 backend was removed.
   if ((getTriple().getArch() == llvm::Triple::mips64 ||
        getTriple().getArch() == llvm::Triple::mips64el) &&
        IsMicromips && (ABI == "n32" || ABI == "n64")) {
