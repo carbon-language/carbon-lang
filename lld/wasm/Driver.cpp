@@ -298,8 +298,6 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   // Make sure we have resolved all symbols.
   if (!Config->Relocatable && !Config->AllowUndefined) {
     Symtab->reportRemainingUndefines();
-    if (errorCount())
-      return;
   } else {
     // When we allow undefined symbols we cannot include those defined in
     // -u/--undefined since these undefined symbols have only names and no
@@ -311,6 +309,8 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
         error("function forced with --undefined not found: " + Sym->getName());
     }
   }
+  if (errorCount())
+    return;
 
   if (!Config->Entry.empty() && !Symtab->find(Config->Entry)->isDefined())
     error("entry point not found: " + Config->Entry);
