@@ -4031,8 +4031,104 @@ define void @test_movs() optsize {
 }
 
 ; TODO - test_movsx
-; TODO - test_movsxd
 ; TODO - test_movzx
+
+define i64 @test_movslq(i32 %a0, i32 *%a1) optsize {
+; GENERIC-LABEL: test_movslq:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    movslq %edi, %rax # sched: [1:0.33]
+; GENERIC-NEXT:    movslq (%rsi), %rcx # sched: [5:0.50]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    orq %rcx, %rax # sched: [1:0.33]
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_movslq:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    movslq %edi, %rax # sched: [1:1.00]
+; ATOM-NEXT:    movslq (%rsi), %rcx # sched: [1:1.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    orq %rcx, %rax # sched: [1:0.50]
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_movslq:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    movslq %edi, %rax # sched: [1:0.50]
+; SLM-NEXT:    movslq (%rsi), %rcx # sched: [4:1.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    orq %rcx, %rax # sched: [1:0.50]
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_movslq:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    movslq %edi, %rax # sched: [1:0.33]
+; SANDY-NEXT:    movslq (%rsi), %rcx # sched: [5:0.50]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    orq %rcx, %rax # sched: [1:0.33]
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_movslq:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    movslq %edi, %rax # sched: [1:0.25]
+; HASWELL-NEXT:    movslq (%rsi), %rcx # sched: [5:0.50]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    orq %rcx, %rax # sched: [1:0.25]
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_movslq:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    movslq %edi, %rax # sched: [1:0.25]
+; BROADWELL-NEXT:    movslq (%rsi), %rcx # sched: [5:0.50]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    orq %rcx, %rax # sched: [1:0.25]
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_movslq:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    movslq %edi, %rax # sched: [1:0.25]
+; SKYLAKE-NEXT:    movslq (%rsi), %rcx # sched: [5:0.50]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    orq %rcx, %rax # sched: [1:0.25]
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_movslq:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    movslq %edi, %rax # sched: [1:0.25]
+; SKX-NEXT:    movslq (%rsi), %rcx # sched: [5:0.50]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    orq %rcx, %rax # sched: [1:0.25]
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_movslq:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    movslq %edi, %rax # sched: [1:0.50]
+; BTVER2-NEXT:    movslq (%rsi), %rcx # sched: [4:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    orq %rcx, %rax # sched: [1:0.50]
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_movslq:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    movslq %edi, %rax # sched: [1:0.25]
+; ZNVER1-NEXT:    movslq (%rsi), %rcx # sched: [5:0.50]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    orq %rcx, %rax # sched: [1:0.25]
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  %1 = call { i64, i64 } asm sideeffect "movslq $2, $0 \0A\09 movslq $3, $1", "=r,=r,r,*m"(i32 %a0, i32 *%a1)
+  %2 = extractvalue { i64, i64 } %1, 0
+  %3 = extractvalue { i64, i64 } %1, 1
+  %4 = or i64 %2, %3
+  ret i64 %4
+}
 
 define void @test_mul(i8 %a0, i16 %a1, i32 %a2, i64 %a3, i8 *%p0, i16 *%p1, i32 *%p2, i64 *%p3) optsize {
 ; GENERIC-LABEL: test_mul:
