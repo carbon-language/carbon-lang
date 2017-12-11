@@ -143,8 +143,7 @@ static void addSyntheticUndefinedFunction(StringRef Name,
 }
 
 static void printHelp(const char *Argv0) {
-  WasmOptTable Table;
-  Table.PrintHelp(outs(), Argv0, "LLVM Linker", false);
+  WasmOptTable().PrintHelp(outs(), Argv0, "LLVM Linker", false);
 }
 
 WasmOptTable::WasmOptTable() : OptTable(OptInfo) {}
