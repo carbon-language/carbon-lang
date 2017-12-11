@@ -3182,14 +3182,14 @@ struct VarArgAMD64Helper : public VarArgHelper {
     // nonzero shadow.
   }
 
-  void visitVAStartInst(VAStartInst &I) {
+  void visitVAStartInst(VAStartInst &I) override {
     if (F.getCallingConv() == CallingConv::Win64)
       return;
     VAStartInstrumentationList.push_back(&I);
     unpoisonVAListTagForInst(I);
   }
 
-  void visitVACopyInst(VACopyInst &I) {
+  void visitVACopyInst(VACopyInst &I) override {
     if (F.getCallingConv() == CallingConv::Win64) return;
     unpoisonVAListTagForInst(I);
   }
