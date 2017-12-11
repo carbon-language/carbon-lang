@@ -614,15 +614,13 @@ void Writer::assignSymbolIndexes() {
   for (ObjFile *File : Symtab->ObjectFiles) {
     DEBUG(dbgs() << "assignSymbolIndexes: " << File->getName() << "\n");
     for (Symbol *Sym : File->getSymbols()) {
-      if (Sym->hasOutputIndex() || !Sym->isDefined())
+      // Assign indexes for symbols defined with this file.
+      if (!Sym->isDefined() || File != Sym->getFile())
         continue;
-
       if (Sym->isFunction()) {
-        if (Sym->getFile() && isa<ObjFile>(Sym->getFile())) {
-          auto *Obj = cast<ObjFile>(Sym->getFile());
-          Sym->setOutputIndex(Obj->FunctionIndexOffset +
-                              Sym->getFunctionIndex());
-        }
+        auto *Obj = cast<ObjFile>(Sym->getFile());
+        Sym->setOutputIndex(Obj->FunctionIndexOffset +
+                            Sym->getFunctionIndex());
       } else if (Config->EmitRelocs) {
         DefinedGlobals.emplace_back(Sym);
         Sym->setOutputIndex(GlobalIndex++);
