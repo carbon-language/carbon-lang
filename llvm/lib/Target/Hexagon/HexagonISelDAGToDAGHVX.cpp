@@ -1147,7 +1147,7 @@ OpRef HvxSelector::vmuxs(ArrayRef<uint8_t> Bytes, OpRef Va, OpRef Vb,
   SDValue B = getVectorConstant(Bytes, dl);
   Results.push(Hexagon::V6_vd0, ByteTy, {});
   Results.push(Hexagon::V6_veqb, BoolTy, {OpRef(B), OpRef::res(-1)});
-  Results.push(Hexagon::V6_vmux, ByteTy, {OpRef::res(-1), Va, Vb});
+  Results.push(Hexagon::V6_vmux, ByteTy, {OpRef::res(-1), Vb, Va});
   return OpRef::res(Results.top());
 }
 
