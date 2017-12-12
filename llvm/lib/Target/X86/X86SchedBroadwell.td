@@ -120,9 +120,6 @@ def : WriteRes<WriteMove,  [BWPort0156]>;
 // These can often bypass execution ports completely.
 def : WriteRes<WriteZero,  []>;
 
-// Treat misc copies as a move.
-def : InstRW<[WriteMove], (instrs COPY)>;
-
 // Branches don't produce values, so they have no latency, but they still
 // consume resources. Indirect branches can fold loads.
 defm : BWWriteResPair<WriteJump,  BWPort06,   1>;
