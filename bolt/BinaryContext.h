@@ -301,6 +301,10 @@ public:
   /// Remove registered relocation at a given \p Address.
   void removeRelocationAt(uint64_t Address);
 
+  /// Return a relocation registered at a given \p Address, or nullptr if there
+  /// is no relocation at such address.
+  const Relocation *getRelocationAt(uint64_t Address);
+
   const BinaryFunction *getFunctionForSymbol(const MCSymbol *Symbol) const {
     auto BFI = SymbolToFunctionMap.find(Symbol);
     return BFI == SymbolToFunctionMap.end() ? nullptr : BFI->second;

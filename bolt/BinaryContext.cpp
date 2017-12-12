@@ -525,6 +525,22 @@ void BinaryContext::removeRelocationAt(uint64_t Address) {
   Relocations.erase(RelocI);
 }
 
+const Relocation *BinaryContext::getRelocationAt(uint64_t Address) {
+  auto ContainingSection = getSectionForAddress(Address);
+  assert(ContainingSection && "cannot find section for address");
+  auto RI = SectionRelocations.find(*ContainingSection);
+  if (RI == SectionRelocations.end())
+    return nullptr;
+
+  auto &Relocations = RI->second;
+  auto RelocI = Relocations.find(
+            Relocation{Address - ContainingSection->getAddress(), 0, 0, 0, 0});
+  if (RelocI == Relocations.end())
+    return nullptr;
+
+  return &*RelocI;
+}
+
 size_t Relocation::getSizeForType(uint64_t Type) {
   switch (Type) {
   default:

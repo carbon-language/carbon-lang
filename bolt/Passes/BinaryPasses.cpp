@@ -1146,6 +1146,10 @@ bool SimplifyRODataLoads::simplifyRODataLoads(
       SectionRef DataSection = DataSectionOrErr.get();
       if (!DataSection.isReadOnly())
         continue;
+
+      if (BC.getRelocationAt(TargetAddress))
+        continue;
+
       uint32_t Offset = TargetAddress - DataSection.getAddress();
       StringRef ConstantData;
       if (std::error_code EC = DataSection.getContents(ConstantData)) {
