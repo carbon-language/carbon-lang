@@ -4958,7 +4958,7 @@ static bool EvaluateBinaryTypeTrait(Sema &Self, TypeTrait BTT, QualType LhsT,
     EnterExpressionEvaluationContext Unevaluated(
         Self, Sema::ExpressionEvaluationContext::Unevaluated);
     Sema::SFINAETrap SFINAE(Self, /*AccessCheckingSFINAE=*/true);
-    Sema::ContextRAII TUContext(Self, Self.Context.getTranslationUnitDecl());
+    Sema::ContextRAII TUContext(Self, Self.Context.getTranslationUnitDecl()); {
     ExprResult Result = Self.BuildBinOp(/*S=*/nullptr, KeyLoc, BO_Assign, &Lhs,
                                         &Rhs);
     if (Result.isInvalid() || SFINAE.hasErrorOccurred())
@@ -4981,6 +4981,7 @@ static bool EvaluateBinaryTypeTrait(Sema &Self, TypeTrait BTT, QualType LhsT,
 
     llvm_unreachable("unhandled type trait");
     return false;
+    }
   }
     default: llvm_unreachable("not a BTT");
   }
