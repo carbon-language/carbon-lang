@@ -1341,8 +1341,7 @@ static bool equivalentAddressValues(Value *A, Value *B) {
 /// select ((cmp load V1, load V2), V1, V2).
 bool removeBitcastsFromLoadStoreOnMinMax(InstCombiner &IC, StoreInst &SI) {
   // bitcast?
-  Value *StoreAddr;
-  if (!match(SI.getPointerOperand(), m_BitCast(m_Value(StoreAddr))))
+  if (!match(SI.getPointerOperand(), m_BitCast(m_Value())))
     return false;
   // load? integer?
   Value *LoadAddr;
@@ -1354,9 +1353,26 @@ bool removeBitcastsFromLoadStoreOnMinMax(InstCombiner &IC, StoreInst &SI) {
   if (!isMinMaxWithLoads(LoadAddr))
     return false;
 
+  if (!all_of(LI->users(), [LI, LoadAddr](User *U) {
+        auto *SI = dyn_cast<StoreInst>(U);
+        return SI && SI->getPointerOperand() != LI &&
+               peekThroughBitcast(SI->getPointerOperand()) != LoadAddr &&
+               !SI->getPointerOperand()->isSwiftError();
+      }))
+    return false;
+
+  IC.Builder.SetInsertPoint(LI);
   LoadInst *NewLI = combineLoadToNewType(
       IC, *LI, LoadAddr->getType()->getPointerElementType());
-  combineStoreToNewValue(IC, SI, NewLI);
+  // Replace all the stores with stores of the newly loaded value.
+  for (auto *UI : LI->users()) {
+    auto *SI = cast<StoreInst>(UI);
+    IC.Builder.SetInsertPoint(SI);
+    combineStoreToNewValue(IC, *SI, NewLI);
+    IC.eraseInstFromFunction(*SI);
+  }
+  IC.replaceInstUsesWith(*LI, UndefValue::get(LI->getType()));
+  IC.eraseInstFromFunction(*LI);
   return true;
 }
 
@@ -1385,7 +1401,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
     return eraseInstFromFunction(SI);
 
   if (removeBitcastsFromLoadStoreOnMinMax(*this, SI))
-    return eraseInstFromFunction(SI);
+    return nullptr;
 
   // Replace GEP indices if possible.
   if (Instruction *NewGEPI = replaceGEPIdxWithZero(*this, Ptr, SI)) {
