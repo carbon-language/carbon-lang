@@ -19,7 +19,7 @@ define <2 x double> @test_vfmadd213pd(<2 x double> %a0, <2 x double> %a1, <2 x d
 ; GENERIC-LABEL: test_vfmadd213pd:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfmadd213pd %xmm2, %xmm1, %xmm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfmadd213pd (%rdi), %xmm1, %xmm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfmadd213pd (%rdi), %xmm1, %xmm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfmadd213pd:
@@ -67,7 +67,7 @@ define <4 x double> @test_vfmadd213pd_ymm(<4 x double> %a0, <4 x double> %a1, <4
 ; GENERIC-LABEL: test_vfmadd213pd_ymm:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfmadd213pd %ymm2, %ymm1, %ymm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfmadd213pd (%rdi), %ymm1, %ymm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfmadd213pd (%rdi), %ymm1, %ymm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfmadd213pd_ymm:
@@ -115,7 +115,7 @@ define <4 x float> @test_vfmadd213ps(<4 x float> %a0, <4 x float> %a1, <4 x floa
 ; GENERIC-LABEL: test_vfmadd213ps:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfmadd213ps %xmm2, %xmm1, %xmm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfmadd213ps (%rdi), %xmm1, %xmm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfmadd213ps (%rdi), %xmm1, %xmm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfmadd213ps:
@@ -163,7 +163,7 @@ define <8 x float> @test_vfmadd213ps_ymm(<8 x float> %a0, <8 x float> %a1, <8 x 
 ; GENERIC-LABEL: test_vfmadd213ps_ymm:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfmadd213ps %ymm2, %ymm1, %ymm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfmadd213ps (%rdi), %ymm1, %ymm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfmadd213ps (%rdi), %ymm1, %ymm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfmadd213ps_ymm:
@@ -211,7 +211,7 @@ define <2 x double> @test_vfmadd213sd(<2 x double> %a0, <2 x double> %a1, <2 x d
 ; GENERIC-LABEL: test_vfmadd213sd:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfmadd213sd %xmm2, %xmm1, %xmm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfmadd213sd (%rdi), %xmm1, %xmm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfmadd213sd (%rdi), %xmm1, %xmm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfmadd213sd:
@@ -259,7 +259,7 @@ define <4 x float> @test_vfmadd213ss(<4 x float> %a0, <4 x float> %a1, <4 x floa
 ; GENERIC-LABEL: test_vfmadd213ss:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfmadd213ss %xmm2, %xmm1, %xmm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfmadd213ss (%rdi), %xmm1, %xmm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfmadd213ss (%rdi), %xmm1, %xmm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfmadd213ss:
@@ -319,7 +319,7 @@ define <2 x double> @test_vfmaddsubpd(<2 x double> %a0, <2 x double> %a1, <2 x d
 ; GENERIC-LABEL: test_vfmaddsubpd:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfmaddsub213pd %xmm2, %xmm1, %xmm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfmaddsub213pd (%rdi), %xmm1, %xmm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfmaddsub213pd (%rdi), %xmm1, %xmm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfmaddsubpd:
@@ -367,7 +367,7 @@ define <4 x double> @test_vfmaddsubpd_ymm(<4 x double> %a0, <4 x double> %a1, <4
 ; GENERIC-LABEL: test_vfmaddsubpd_ymm:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfmaddsub213pd %ymm2, %ymm1, %ymm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfmaddsub213pd (%rdi), %ymm1, %ymm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfmaddsub213pd (%rdi), %ymm1, %ymm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfmaddsubpd_ymm:
@@ -415,7 +415,7 @@ define <4 x float> @test_vfmaddsubps(<4 x float> %a0, <4 x float> %a1, <4 x floa
 ; GENERIC-LABEL: test_vfmaddsubps:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfmaddsub213ps %xmm2, %xmm1, %xmm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfmaddsub213ps (%rdi), %xmm1, %xmm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfmaddsub213ps (%rdi), %xmm1, %xmm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfmaddsubps:
@@ -463,7 +463,7 @@ define <8 x float> @test_vfmaddsubps_ymm(<8 x float> %a0, <8 x float> %a1, <8 x 
 ; GENERIC-LABEL: test_vfmaddsubps_ymm:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfmaddsub213ps %ymm2, %ymm1, %ymm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfmaddsub213ps (%rdi), %ymm1, %ymm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfmaddsub213ps (%rdi), %ymm1, %ymm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfmaddsubps_ymm:
@@ -523,7 +523,7 @@ define <2 x double> @test_vfmsubaddpd(<2 x double> %a0, <2 x double> %a1, <2 x d
 ; GENERIC-LABEL: test_vfmsubaddpd:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfmsubadd213pd %xmm2, %xmm1, %xmm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfmsubadd213pd (%rdi), %xmm1, %xmm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfmsubadd213pd (%rdi), %xmm1, %xmm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfmsubaddpd:
@@ -571,7 +571,7 @@ define <4 x double> @test_vfmsubaddpd_ymm(<4 x double> %a0, <4 x double> %a1, <4
 ; GENERIC-LABEL: test_vfmsubaddpd_ymm:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfmsubadd213pd %ymm2, %ymm1, %ymm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfmsubadd213pd (%rdi), %ymm1, %ymm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfmsubadd213pd (%rdi), %ymm1, %ymm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfmsubaddpd_ymm:
@@ -619,7 +619,7 @@ define <4 x float> @test_vfmsubaddps(<4 x float> %a0, <4 x float> %a1, <4 x floa
 ; GENERIC-LABEL: test_vfmsubaddps:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfmsubadd213ps %xmm2, %xmm1, %xmm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfmsubadd213ps (%rdi), %xmm1, %xmm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfmsubadd213ps (%rdi), %xmm1, %xmm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfmsubaddps:
@@ -667,7 +667,7 @@ define <8 x float> @test_vfmsubaddps_ymm(<8 x float> %a0, <8 x float> %a1, <8 x 
 ; GENERIC-LABEL: test_vfmsubaddps_ymm:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfmsubadd213ps %ymm2, %ymm1, %ymm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfmsubadd213ps (%rdi), %ymm1, %ymm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfmsubadd213ps (%rdi), %ymm1, %ymm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfmsubaddps_ymm:
@@ -727,7 +727,7 @@ define <2 x double> @test_vfmsub213pd(<2 x double> %a0, <2 x double> %a1, <2 x d
 ; GENERIC-LABEL: test_vfmsub213pd:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfmsub213pd %xmm2, %xmm1, %xmm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfmsub213pd (%rdi), %xmm1, %xmm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfmsub213pd (%rdi), %xmm1, %xmm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfmsub213pd:
@@ -775,7 +775,7 @@ define <4 x double> @test_vfmsub213pd_ymm(<4 x double> %a0, <4 x double> %a1, <4
 ; GENERIC-LABEL: test_vfmsub213pd_ymm:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfmsub213pd %ymm2, %ymm1, %ymm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfmsub213pd (%rdi), %ymm1, %ymm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfmsub213pd (%rdi), %ymm1, %ymm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfmsub213pd_ymm:
@@ -823,7 +823,7 @@ define <4 x float> @test_vfmsub213ps(<4 x float> %a0, <4 x float> %a1, <4 x floa
 ; GENERIC-LABEL: test_vfmsub213ps:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfmsub213ps %xmm2, %xmm1, %xmm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfmsub213ps (%rdi), %xmm1, %xmm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfmsub213ps (%rdi), %xmm1, %xmm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfmsub213ps:
@@ -871,7 +871,7 @@ define <8 x float> @test_vfmsub213ps_ymm(<8 x float> %a0, <8 x float> %a1, <8 x 
 ; GENERIC-LABEL: test_vfmsub213ps_ymm:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfmsub213ps %ymm2, %ymm1, %ymm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfmsub213ps (%rdi), %ymm1, %ymm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfmsub213ps (%rdi), %ymm1, %ymm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfmsub213ps_ymm:
@@ -919,7 +919,7 @@ define <2 x double> @test_vfmsub213sd(<2 x double> %a0, <2 x double> %a1, <2 x d
 ; GENERIC-LABEL: test_vfmsub213sd:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfmsub213sd %xmm2, %xmm1, %xmm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfmsub213sd (%rdi), %xmm1, %xmm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfmsub213sd (%rdi), %xmm1, %xmm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfmsub213sd:
@@ -967,7 +967,7 @@ define <4 x float> @test_vfmsub213ss(<4 x float> %a0, <4 x float> %a1, <4 x floa
 ; GENERIC-LABEL: test_vfmsub213ss:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfmsub213ss %xmm2, %xmm1, %xmm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfmsub213ss (%rdi), %xmm1, %xmm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfmsub213ss (%rdi), %xmm1, %xmm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfmsub213ss:
@@ -1027,7 +1027,7 @@ define <2 x double> @test_vfnmadd213pd(<2 x double> %a0, <2 x double> %a1, <2 x 
 ; GENERIC-LABEL: test_vfnmadd213pd:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfnmadd213pd %xmm2, %xmm1, %xmm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfnmadd213pd (%rdi), %xmm1, %xmm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfnmadd213pd (%rdi), %xmm1, %xmm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfnmadd213pd:
@@ -1075,7 +1075,7 @@ define <4 x double> @test_vfnmadd213pd_ymm(<4 x double> %a0, <4 x double> %a1, <
 ; GENERIC-LABEL: test_vfnmadd213pd_ymm:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfnmadd213pd %ymm2, %ymm1, %ymm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfnmadd213pd (%rdi), %ymm1, %ymm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfnmadd213pd (%rdi), %ymm1, %ymm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfnmadd213pd_ymm:
@@ -1123,7 +1123,7 @@ define <4 x float> @test_vfnmadd213ps(<4 x float> %a0, <4 x float> %a1, <4 x flo
 ; GENERIC-LABEL: test_vfnmadd213ps:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfnmadd213ps %xmm2, %xmm1, %xmm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfnmadd213ps (%rdi), %xmm1, %xmm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfnmadd213ps (%rdi), %xmm1, %xmm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfnmadd213ps:
@@ -1171,7 +1171,7 @@ define <8 x float> @test_vfnmadd213ps_ymm(<8 x float> %a0, <8 x float> %a1, <8 x
 ; GENERIC-LABEL: test_vfnmadd213ps_ymm:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfnmadd213ps %ymm2, %ymm1, %ymm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfnmadd213ps (%rdi), %ymm1, %ymm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfnmadd213ps (%rdi), %ymm1, %ymm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfnmadd213ps_ymm:
@@ -1219,7 +1219,7 @@ define <2 x double> @test_vfnmadd213sd(<2 x double> %a0, <2 x double> %a1, <2 x 
 ; GENERIC-LABEL: test_vfnmadd213sd:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfnmadd213sd %xmm2, %xmm1, %xmm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfnmadd213sd (%rdi), %xmm1, %xmm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfnmadd213sd (%rdi), %xmm1, %xmm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfnmadd213sd:
@@ -1267,7 +1267,7 @@ define <4 x float> @test_vfnmadd213ss(<4 x float> %a0, <4 x float> %a1, <4 x flo
 ; GENERIC-LABEL: test_vfnmadd213ss:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfnmadd213ss %xmm2, %xmm1, %xmm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfnmadd213ss (%rdi), %xmm1, %xmm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfnmadd213ss (%rdi), %xmm1, %xmm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfnmadd213ss:
@@ -1327,7 +1327,7 @@ define <2 x double> @test_vfnmsub213pd(<2 x double> %a0, <2 x double> %a1, <2 x 
 ; GENERIC-LABEL: test_vfnmsub213pd:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfnmsub213pd %xmm2, %xmm1, %xmm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfnmsub213pd (%rdi), %xmm1, %xmm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfnmsub213pd (%rdi), %xmm1, %xmm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfnmsub213pd:
@@ -1375,7 +1375,7 @@ define <4 x double> @test_vfnmsub213pd_ymm(<4 x double> %a0, <4 x double> %a1, <
 ; GENERIC-LABEL: test_vfnmsub213pd_ymm:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfnmsub213pd %ymm2, %ymm1, %ymm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfnmsub213pd (%rdi), %ymm1, %ymm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfnmsub213pd (%rdi), %ymm1, %ymm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfnmsub213pd_ymm:
@@ -1423,7 +1423,7 @@ define <4 x float> @test_vfnmsub213ps(<4 x float> %a0, <4 x float> %a1, <4 x flo
 ; GENERIC-LABEL: test_vfnmsub213ps:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfnmsub213ps %xmm2, %xmm1, %xmm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfnmsub213ps (%rdi), %xmm1, %xmm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfnmsub213ps (%rdi), %xmm1, %xmm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfnmsub213ps:
@@ -1471,7 +1471,7 @@ define <8 x float> @test_vfnmsub213ps_ymm(<8 x float> %a0, <8 x float> %a1, <8 x
 ; GENERIC-LABEL: test_vfnmsub213ps_ymm:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfnmsub213ps %ymm2, %ymm1, %ymm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfnmsub213ps (%rdi), %ymm1, %ymm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfnmsub213ps (%rdi), %ymm1, %ymm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfnmsub213ps_ymm:
@@ -1519,7 +1519,7 @@ define <2 x double> @test_vfnmsub213sd(<2 x double> %a0, <2 x double> %a1, <2 x 
 ; GENERIC-LABEL: test_vfnmsub213sd:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfnmsub213sd %xmm2, %xmm1, %xmm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfnmsub213sd (%rdi), %xmm1, %xmm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfnmsub213sd (%rdi), %xmm1, %xmm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfnmsub213sd:
@@ -1567,7 +1567,7 @@ define <4 x float> @test_vfnmsub213ss(<4 x float> %a0, <4 x float> %a1, <4 x flo
 ; GENERIC-LABEL: test_vfnmsub213ss:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vfnmsub213ss %xmm2, %xmm1, %xmm0 # sched: [5:0.50]
-; GENERIC-NEXT:    vfnmsub213ss (%rdi), %xmm1, %xmm0 # sched: [5:0.50]
+; GENERIC-NEXT:    vfnmsub213ss (%rdi), %xmm1, %xmm0 # sched: [9:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_vfnmsub213ss:
