@@ -273,20 +273,6 @@ template <class ELFT> void OutputSection::writeTo(uint8_t *Buf) {
       writeInt(Buf + Data->Offset, Data->Expression().getValue(), Data->Size);
 }
 
-static bool compareByFilePosition(InputSection *A, InputSection *B) {
-  // Synthetic doesn't have link order dependecy, stable_sort will keep it last
-  if (A->kind() == InputSectionBase::Synthetic ||
-      B->kind() == InputSectionBase::Synthetic)
-    return false;
-  InputSection *LA = A->getLinkOrderDep();
-  InputSection *LB = B->getLinkOrderDep();
-  OutputSection *AOut = LA->getParent();
-  OutputSection *BOut = LB->getParent();
-  if (AOut != BOut)
-    return AOut->SectionIndex < BOut->SectionIndex;
-  return LA->OutSecOff < LB->OutSecOff;
-}
-
 template <class ELFT>
 static void finalizeShtGroup(OutputSection *OS,
                              ArrayRef<InputSection *> Sections) {
@@ -304,26 +290,17 @@ static void finalizeShtGroup(OutputSection *OS,
 }
 
 template <class ELFT> void OutputSection::finalize() {
-  // Link order may be distributed across several InputSectionDescriptions
-  // but sort must consider them all at once.
-  std::vector<InputSection **> ScriptSections;
   std::vector<InputSection *> Sections;
   for (BaseCommand *Base : SectionCommands) {
     if (auto *ISD = dyn_cast<InputSectionDescription>(Base)) {
-      for (InputSection *&IS : ISD->Sections) {
-        ScriptSections.push_back(&IS);
+      for (InputSection *&IS : ISD->Sections)
         Sections.push_back(IS);
-      }
     }
     if (isa<ByteCommand>(Base) && Type == SHT_NOBITS)
       Type = SHT_PROGBITS;
   }
 
   if (Flags & SHF_LINK_ORDER) {
-    std::stable_sort(Sections.begin(), Sections.end(), compareByFilePosition);
-    for (int I = 0, N = Sections.size(); I < N; ++I)
-      *ScriptSections[I] = Sections[I];
-
     // We must preserve the link order dependency of sections with the
     // SHF_LINK_ORDER flag. The dependency is indicated by the sh_link field. We
     // need to translate the InputSection sh_link to the OutputSection sh_link,
