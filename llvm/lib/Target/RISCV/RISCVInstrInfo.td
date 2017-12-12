@@ -190,13 +190,13 @@ class ALU_rr<bits<7> funct7, bits<3> funct3, string opcodestr>
               opcodestr, "$rd, $rs1, $rs2">;
 
 let hasSideEffects = 1, mayLoad = 0, mayStore = 0 in
-class CSR_ir<bits<3> funct3, string opcodestr> :
-      RVInstI<funct3, OPC_SYSTEM, (outs GPR:$rd), (ins uimm12:$imm12, GPR:$rs1),
+class CSR_ir<bits<3> funct3, string opcodestr>
+    : RVInstI<funct3, OPC_SYSTEM, (outs GPR:$rd), (ins uimm12:$imm12, GPR:$rs1),
               opcodestr, "$rd, $imm12, $rs1">;
 
 let hasSideEffects = 1, mayLoad = 0, mayStore = 0 in
-class CSR_ii<bits<3> funct3, string opcodestr> :
-      RVInstI<funct3, OPC_SYSTEM, (outs GPR:$rd),
+class CSR_ii<bits<3> funct3, string opcodestr>
+    : RVInstI<funct3, OPC_SYSTEM, (outs GPR:$rd),
               (ins uimm12:$imm12, uimm5:$rs1),
               opcodestr, "$rd, $imm12, $rs1">;
 
