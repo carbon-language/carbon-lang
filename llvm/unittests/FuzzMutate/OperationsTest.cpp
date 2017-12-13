@@ -336,6 +336,7 @@ TEST(OperationsTest, ExtractAndInsertValue) {
 
   Type *StructTy = StructType::create(Ctx, {Int8PtrTy, Int32Ty});
   Type *OpaqueTy = StructType::create(Ctx, "OpaqueStruct");
+  Type *ZeroSizedArrayTy = ArrayType::get(Int64Ty, 0);
   Type *ArrayTy = ArrayType::get(Int64Ty, 4);
   Type *VectorTy = VectorType::get(Int32Ty, 2);
 
@@ -346,16 +347,21 @@ TEST(OperationsTest, ExtractAndInsertValue) {
   Constant *SVal = UndefValue::get(StructTy);
   Constant *OVal = UndefValue::get(OpaqueTy);
   Constant *AVal = UndefValue::get(ArrayTy);
+  Constant *ZAVal = UndefValue::get(ZeroSizedArrayTy);
   Constant *VVal = UndefValue::get(VectorTy);
 
   EXPECT_TRUE(EVOp.SourcePreds[0].matches({}, SVal));
-  EXPECT_TRUE(EVOp.SourcePreds[0].matches({}, OVal));
+  EXPECT_FALSE(EVOp.SourcePreds[0].matches({}, OVal));
   EXPECT_TRUE(EVOp.SourcePreds[0].matches({}, AVal));
   EXPECT_FALSE(EVOp.SourcePreds[0].matches({}, VVal));
   EXPECT_TRUE(IVOp.SourcePreds[0].matches({}, SVal));
-  EXPECT_TRUE(IVOp.SourcePreds[0].matches({}, OVal));
+  EXPECT_FALSE(IVOp.SourcePreds[0].matches({}, OVal));
   EXPECT_TRUE(IVOp.SourcePreds[0].matches({}, AVal));
   EXPECT_FALSE(IVOp.SourcePreds[0].matches({}, VVal));
+
+  // Don't consider zero sized arrays as viable sources
+  EXPECT_FALSE(EVOp.SourcePreds[0].matches({}, ZAVal));
+  EXPECT_FALSE(IVOp.SourcePreds[0].matches({}, ZAVal));
 
   // Make sure we're range checking appropriately.
   EXPECT_TRUE(
