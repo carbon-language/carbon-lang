@@ -181,4 +181,20 @@ TEST(MachineOperandTest, PrintTargetIndexName) {
   }
 }
 
+TEST(MachineOperandTest, PrintJumpTableIndex) {
+  // Create a MachineOperand with a jump-table index and print it.
+  MachineOperand MO = MachineOperand::CreateJTI(3);
+
+  // Checking some preconditions on the newly created
+  // MachineOperand.
+  ASSERT_TRUE(MO.isJTI());
+  ASSERT_TRUE(MO.getIndex() == 3);
+
+  // Print a MachineOperand containing a jump-table index.
+  std::string str;
+  raw_string_ostream OS(str);
+  MO.print(OS, /*TRI=*/nullptr, /*IntrinsicInfo=*/nullptr);
+  ASSERT_TRUE(OS.str() == "%jump-table.3");
+}
+
 } // end namespace

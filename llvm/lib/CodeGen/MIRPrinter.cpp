@@ -852,7 +852,8 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
   case MachineOperand::MO_CImmediate:
   case MachineOperand::MO_MachineBasicBlock:
   case MachineOperand::MO_ConstantPoolIndex:
-  case MachineOperand::MO_TargetIndex: {
+  case MachineOperand::MO_TargetIndex:
+  case MachineOperand::MO_JumpTableIndex: {
     unsigned TiedOperandIdx = 0;
     if (ShouldPrintRegisterTies && Op.isReg() && Op.isTied() && !Op.isDef())
       TiedOperandIdx = Op.getParent()->findTiedOperandIdx(OpIdx);
@@ -866,9 +867,6 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
     break;
   case MachineOperand::MO_FrameIndex:
     printStackObjectReference(Op.getIndex());
-    break;
-  case MachineOperand::MO_JumpTableIndex:
-    OS << "%jump-table." << Op.getIndex();
     break;
   case MachineOperand::MO_ExternalSymbol: {
     StringRef Name = Op.getSymbolName();

@@ -238,6 +238,8 @@ in the block's definition:
 The block's name should be identical to the name of the IR block that this
 machine block is based on.
 
+.. _block-references:
+
 Block References
 ^^^^^^^^^^^^^^^^
 
@@ -630,6 +632,39 @@ and the offset 8:
 
     %sgpr2 = S_ADD_U32 _, target-index(amdgpu-constdata-start) + 8, implicit-def _, implicit-def _
 
+Jump-table Index Operands
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A jump-table index operand with the index 0 is printed as following:
+
+.. code-block:: text
+
+    tBR_JTr killed %r0, %jump-table.0
+
+A machine jump-table entry contains a list of ``MachineBasicBlocks``. When serializing all the function's jump-table entries, the following format is used:
+
+.. code-block:: text
+
+    jumpTable:
+      kind:             <kind>
+      entries:
+        - id:             <index>
+          blocks:         [ <bbreference>, <bbreference>, ... ]
+
+where ``<kind>`` is describing how the jump table is represented and emitted (plain address, relocations, PIC, etc.), and each ``<index>`` is a 32-bit unsigned integer and ``blocks`` contains a list of :ref:`machine basic block references <block-references>`.
+
+Example:
+
+.. code-block:: text
+
+    jumpTable:
+      kind:             inline
+      entries:
+        - id:             0
+          blocks:         [ '%bb.3', '%bb.9', '%bb.4.d3' ]
+        - id:             1
+          blocks:         [ '%bb.7', '%bb.7', '%bb.4.d3', '%bb.5' ]
+
 .. TODO: Describe the parsers default behaviour when optional YAML attributes
    are missing.
 .. TODO: Describe the syntax for the bundled instructions.
@@ -639,8 +674,6 @@ and the offset 8:
    mask machine operands.
 .. TODO: Describe the frame information YAML mapping.
 .. TODO: Describe the syntax of the stack object machine operands and their
-   YAML definitions.
-.. TODO: Describe the syntax of the jump table machine operands and their
    YAML definitions.
 .. TODO: Describe the syntax of the block address machine operands.
 .. TODO: Describe the syntax of the CFI index machine operands.

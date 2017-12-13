@@ -14,6 +14,7 @@
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/Analysis/Loads.h"
 #include "llvm/CodeGen/MIRPrinter.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
@@ -523,7 +524,7 @@ void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
     break;
   }
   case MachineOperand::MO_JumpTableIndex:
-    OS << "<jt#" << getIndex() << '>';
+    OS << printJumpTableEntryReference(getIndex());
     break;
   case MachineOperand::MO_GlobalAddress:
     OS << "<ga:";
