@@ -101,32 +101,32 @@ def simm12_lsb0 : Operand<OtherVT> {
 
 let hasSideEffects = 0, mayLoad = 1, mayStore = 0 in
 class CStackLoad<bits<3> funct3, string OpcodeStr,
-                 RegisterClass cls, DAGOperand opnd> :
-      RVInst16CI<funct3, 0b10, (outs cls:$rd), (ins SP:$rs1, opnd:$imm),
+                 RegisterClass cls, DAGOperand opnd>
+    : RVInst16CI<funct3, 0b10, (outs cls:$rd), (ins SP:$rs1, opnd:$imm),
                  OpcodeStr, "$rd, ${imm}(${rs1})">;
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 1 in
 class CStackStore<bits<3> funct3, string OpcodeStr,
-                  RegisterClass cls, DAGOperand opnd> :
-      RVInst16CSS<funct3, 0b10, (outs), (ins cls:$rs2, SP:$rs1, opnd:$imm),
+                  RegisterClass cls, DAGOperand opnd>
+    : RVInst16CSS<funct3, 0b10, (outs), (ins cls:$rs2, SP:$rs1, opnd:$imm),
                   OpcodeStr, "$rs2, ${imm}(${rs1})">;
 
 let hasSideEffects = 0, mayLoad = 1, mayStore = 0 in
 class CLoad_ri<bits<3> funct3, string OpcodeStr,
-               RegisterClass cls, DAGOperand opnd> :
-      RVInst16CL<funct3, 0b00, (outs cls:$rd), (ins GPRC:$rs1, opnd:$imm),
+               RegisterClass cls, DAGOperand opnd>
+    : RVInst16CL<funct3, 0b00, (outs cls:$rd), (ins GPRC:$rs1, opnd:$imm),
                  OpcodeStr, "$rd, ${imm}(${rs1})">;
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 1 in
 class CStore_rri<bits<3> funct3, string OpcodeStr,
-                 RegisterClass cls, DAGOperand opnd> :
-      RVInst16CS<funct3, 0b00, (outs), (ins cls:$rs2, GPRC:$rs1, opnd:$imm),
+                 RegisterClass cls, DAGOperand opnd>
+    : RVInst16CS<funct3, 0b00, (outs), (ins cls:$rs2, GPRC:$rs1, opnd:$imm),
                  OpcodeStr, "$rs2, ${imm}(${rs1})">;
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
 class Bcz<bits<3> funct3, string OpcodeStr, PatFrag CondOp,
-          RegisterClass cls> :
-      RVInst16CB<funct3, 0b01, (outs), (ins cls:$rs1, simm9_lsb0:$imm),
+          RegisterClass cls>
+    : RVInst16CB<funct3, 0b01, (outs), (ins cls:$rs1, simm9_lsb0:$imm),
                  OpcodeStr, "$rs1, $imm"> {
   let isBranch = 1;
   let isTerminator = 1;
@@ -139,8 +139,8 @@ class Bcz<bits<3> funct3, string OpcodeStr, PatFrag CondOp,
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
 class Shift_right<bits<2> funct2, string OpcodeStr, RegisterClass cls,
-                  Operand ImmOpnd> :
-      RVInst16CB<0b100, 0b01, (outs cls:$rs1_wb), (ins cls:$rs1, ImmOpnd:$imm),
+                  Operand ImmOpnd>
+    : RVInst16CB<0b100, 0b01, (outs cls:$rs1_wb), (ins cls:$rs1, ImmOpnd:$imm),
                  OpcodeStr, "$rs1, $imm"> {
   let Constraints = "$rs1 = $rs1_wb";
   let Inst{12} = imm{5};
@@ -150,8 +150,8 @@ class Shift_right<bits<2> funct2, string OpcodeStr, RegisterClass cls,
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
 class CS_ALU<bits<2> funct2, string OpcodeStr, RegisterClass cls,
-             bit RV64only> :
-      RVInst16CS<0b100, 0b01, (outs cls:$rd_wb), (ins cls:$rd, cls:$rs2),
+             bit RV64only>
+    : RVInst16CS<0b100, 0b01, (outs cls:$rd_wb), (ins cls:$rd, cls:$rs2),
                  OpcodeStr, "$rd, $rs2"> {
   bits<3> rd;
   let Constraints = "$rd = $rd_wb";
@@ -168,9 +168,9 @@ class CS_ALU<bits<2> funct2, string OpcodeStr, RegisterClass cls,
 let Predicates = [HasStdExtC] in {
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
-def CADDI4SPN : RVInst16CIW<0b000, 0b00, (outs GPRC:$rd),
-                            (ins SP:$rs1, uimm10_lsb00nonzero:$imm),
-                            "c.addi4spn", "$rd, $rs1, $imm"> {
+def C_ADDI4SPN : RVInst16CIW<0b000, 0b00, (outs GPRC:$rd),
+                             (ins SP:$rs1, uimm10_lsb00nonzero:$imm),
+                             "c.addi4spn", "$rd, $rs1, $imm"> {
   bits<5> rs1;
   let Inst{12-11} = imm{5-4};
   let Inst{10-7} = imm{9-6};
@@ -178,14 +178,14 @@ def CADDI4SPN : RVInst16CIW<0b000, 0b00, (outs GPRC:$rd),
   let Inst{5} = imm{3};
 }
 
-def CFLD  : CLoad_ri<0b001, "c.fld", FPR64C, uimm8_lsb000>,
-            Requires<[HasStdExtD]> {
+def C_FLD  : CLoad_ri<0b001, "c.fld", FPR64C, uimm8_lsb000>,
+             Requires<[HasStdExtD]> {
   bits<8> imm;
   let Inst{12-10} = imm{5-3};
   let Inst{6-5} = imm{7-6};
 }
 
-def CLW : CLoad_ri<0b010, "c.lw", GPRC, uimm7_lsb00> {
+def C_LW : CLoad_ri<0b010, "c.lw", GPRC, uimm7_lsb00> {
   bits<7> imm;
   let Inst{12-10} = imm{5-3};
   let Inst{6} = imm{2};
@@ -193,29 +193,29 @@ def CLW : CLoad_ri<0b010, "c.lw", GPRC, uimm7_lsb00> {
 }
 
 let DecoderNamespace = "RISCV32Only_" in
-def CFLW  : CLoad_ri<0b011, "c.flw", FPR32C, uimm7_lsb00>,
-            Requires<[HasStdExtF, IsRV32]> {
+def C_FLW  : CLoad_ri<0b011, "c.flw", FPR32C, uimm7_lsb00>,
+             Requires<[HasStdExtF, IsRV32]> {
   bits<7> imm;
   let Inst{12-10} = imm{5-3};
   let Inst{6} = imm{2};
   let Inst{5} = imm{6};
 }
 
-def CLD : CLoad_ri<0b011, "c.ld", GPRC, uimm8_lsb000>,
-          Requires<[IsRV64]> {
+def C_LD : CLoad_ri<0b011, "c.ld", GPRC, uimm8_lsb000>,
+           Requires<[IsRV64]> {
   bits<8> imm;
   let Inst{12-10} = imm{5-3};
   let Inst{6-5} = imm{7-6};
 }
 
-def CFSD  : CStore_rri<0b101, "c.fsd", FPR64C, uimm8_lsb000>,
-            Requires<[HasStdExtD]> {
+def C_FSD  : CStore_rri<0b101, "c.fsd", FPR64C, uimm8_lsb000>,
+             Requires<[HasStdExtD]> {
   bits<8> imm;
   let Inst{12-10} = imm{5-3};
   let Inst{6-5} = imm{7-6};
 }
 
-def CSW : CStore_rri<0b110, "c.sw", GPRC, uimm7_lsb00> {
+def C_SW : CStore_rri<0b110, "c.sw", GPRC, uimm7_lsb00> {
   bits<7> imm;
   let Inst{12-10} = imm{5-3};
   let Inst{6} = imm{2};
@@ -223,57 +223,57 @@ def CSW : CStore_rri<0b110, "c.sw", GPRC, uimm7_lsb00> {
 }
 
 let DecoderNamespace = "RISCV32Only_" in
-def CFSW  : CStore_rri<0b111, "c.fsw", FPR32C, uimm7_lsb00>,
-            Requires<[HasStdExtF, IsRV32]> {
+def C_FSW  : CStore_rri<0b111, "c.fsw", FPR32C, uimm7_lsb00>,
+             Requires<[HasStdExtF, IsRV32]> {
   bits<7> imm;
   let Inst{12-10} = imm{5-3};
   let Inst{6} = imm{2};
   let Inst{5} = imm{6};
 }
 
-def CSD : CStore_rri<0b111, "c.sd", GPRC, uimm8_lsb000>,
-          Requires<[IsRV64]> {
+def C_SD : CStore_rri<0b111, "c.sd", GPRC, uimm8_lsb000>,
+           Requires<[IsRV64]> {
   bits<8> imm;
   let Inst{12-10} = imm{5-3};
   let Inst{6-5} = imm{7-6};
 }
 
 let rd = 0, imm = 0, hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
-def CNOP : RVInst16CI<0b000, 0b01, (outs), (ins), "c.nop", "">;
+def C_NOP : RVInst16CI<0b000, 0b01, (outs), (ins), "c.nop", "">;
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
-def CADDI : RVInst16CI<0b000, 0b01, (outs GPRNoX0:$rd_wb),
-                       (ins GPRNoX0:$rd, simm6:$imm),
-                       "c.addi", "$rd, $imm"> {
+def C_ADDI : RVInst16CI<0b000, 0b01, (outs GPRNoX0:$rd_wb),
+                        (ins GPRNoX0:$rd, simm6:$imm),
+                        "c.addi", "$rd, $imm"> {
   let Constraints = "$rd = $rd_wb";
   let Inst{6-2} = imm{4-0};
 }
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0, isCall = 1,
-DecoderNamespace = "RISCV32Only_" in
-def CJAL : RVInst16CJ<0b001, 0b01, (outs), (ins simm12_lsb0:$offset),
-                      "c.jal", "$offset">,
-           Requires<[IsRV32]>;
+    DecoderNamespace = "RISCV32Only_" in
+def C_JAL : RVInst16CJ<0b001, 0b01, (outs), (ins simm12_lsb0:$offset),
+                       "c.jal", "$offset">,
+            Requires<[IsRV32]>;
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
-def CADDIW : RVInst16CI<0b001, 0b01, (outs GPRNoX0:$rd_wb),
-                        (ins GPRNoX0:$rd, simm6:$imm),
-                        "c.addiw", "$rd, $imm">,
-             Requires<[IsRV64]> {
+def C_ADDIW : RVInst16CI<0b001, 0b01, (outs GPRNoX0:$rd_wb),
+                         (ins GPRNoX0:$rd, simm6:$imm),
+                         "c.addiw", "$rd, $imm">,
+              Requires<[IsRV64]> {
   let Constraints = "$rd = $rd_wb";
   let Inst{6-2} = imm{4-0};
 }
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
-def CLI : RVInst16CI<0b010, 0b01, (outs GPRNoX0:$rd), (ins simm6:$imm),
-                     "c.li", "$rd, $imm"> {
+def C_LI : RVInst16CI<0b010, 0b01, (outs GPRNoX0:$rd), (ins simm6:$imm),
+                      "c.li", "$rd, $imm"> {
   let Inst{6-2} = imm{4-0};
 }
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
-def CADDI16SP : RVInst16CI<0b011, 0b01, (outs SP:$rd_wb),
-                           (ins SP:$rd, simm10_lsb0000:$imm),
-                           "c.addi16sp", "$rd, $imm"> {
+def C_ADDI16SP : RVInst16CI<0b011, 0b01, (outs SP:$rd_wb),
+                            (ins SP:$rd, simm10_lsb0000:$imm),
+                            "c.addi16sp", "$rd, $imm"> {
   let Constraints = "$rd = $rd_wb";
   let Inst{12} = imm{9};
   let Inst{11-7} = 2;
@@ -284,78 +284,78 @@ def CADDI16SP : RVInst16CI<0b011, 0b01, (outs SP:$rd_wb),
 }
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
-def CLUI : RVInst16CI<0b011, 0b01, (outs GPRNoX0X2:$rd),
-                      (ins uimm6nonzero:$imm),
-                      "c.lui", "$rd, $imm"> {
+def C_LUI : RVInst16CI<0b011, 0b01, (outs GPRNoX0X2:$rd),
+                       (ins uimm6nonzero:$imm),
+                       "c.lui", "$rd, $imm"> {
   let Inst{6-2} = imm{4-0};
 }
 
-def CSRLI   : Shift_right<0b00, "c.srli", GPRC, uimm5nonzero>;
-def CSRAI   : Shift_right<0b01, "c.srai", GPRC, uimm5nonzero>;
+def C_SRLI : Shift_right<0b00, "c.srli", GPRC, uimm5nonzero>;
+def C_SRAI : Shift_right<0b01, "c.srai", GPRC, uimm5nonzero>;
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
-def CANDI : RVInst16CB<0b100, 0b01, (outs GPRC:$rs1_wb), (ins GPRC:$rs1, simm6:$imm),
-                       "c.andi", "$rs1, $imm"> {
+def C_ANDI : RVInst16CB<0b100, 0b01, (outs GPRC:$rs1_wb), (ins GPRC:$rs1, simm6:$imm),
+                        "c.andi", "$rs1, $imm"> {
   let Constraints = "$rs1 = $rs1_wb";
   let Inst{12} = imm{5};
   let Inst{11-10} = 0b10;
   let Inst{6-2} = imm{4-0};
 }
 
-def CSUB   : CS_ALU<0b00, "c.sub", GPRC, 0>;
-def CXOR   : CS_ALU<0b01, "c.xor", GPRC, 0>;
-def COR    : CS_ALU<0b10, "c.or" , GPRC, 0>;
-def CAND   : CS_ALU<0b11, "c.and", GPRC, 0>;
+def C_SUB  : CS_ALU<0b00, "c.sub", GPRC, 0>;
+def C_XOR  : CS_ALU<0b01, "c.xor", GPRC, 0>;
+def C_OR   : CS_ALU<0b10, "c.or" , GPRC, 0>;
+def C_AND  : CS_ALU<0b11, "c.and", GPRC, 0>;
 
-def CSUBW  : CS_ALU<0b00, "c.subw", GPRC, 1>, Requires<[IsRV64]>;
-def CADDW  : CS_ALU<0b01, "c.addw", GPRC, 1>, Requires<[IsRV64]>;
+def C_SUBW : CS_ALU<0b00, "c.subw", GPRC, 1>, Requires<[IsRV64]>;
+def C_ADDW : CS_ALU<0b01, "c.addw", GPRC, 1>, Requires<[IsRV64]>;
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
-def CJ : RVInst16CJ<0b101, 0b01, (outs), (ins simm12_lsb0:$offset),
-                    "c.j", "$offset"> {
+def C_J : RVInst16CJ<0b101, 0b01, (outs), (ins simm12_lsb0:$offset),
+                     "c.j", "$offset"> {
   let isBranch = 1;
   let isTerminator=1;
   let isBarrier=1;
 }
 
-def CBEQZ : Bcz<0b110, "c.beqz",  seteq, GPRC>;
-def CBNEZ : Bcz<0b111, "c.bnez",  setne, GPRC>;
+def C_BEQZ : Bcz<0b110, "c.beqz",  seteq, GPRC>;
+def C_BNEZ : Bcz<0b111, "c.bnez",  setne, GPRC>;
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
-def CSLLI : RVInst16CI<0b000, 0b10, (outs GPRNoX0:$rd_wb),
-                       (ins GPRNoX0:$rd, uimm5nonzero:$imm),
-                       "c.slli" ,"$rd, $imm"> {
+def C_SLLI : RVInst16CI<0b000, 0b10, (outs GPRNoX0:$rd_wb),
+                        (ins GPRNoX0:$rd, uimm5nonzero:$imm),
+                        "c.slli" ,"$rd, $imm"> {
   let Constraints = "$rd = $rd_wb";
   let Inst{6-2} = imm{4-0};
 }
 
-def CFLDSP  : CStackLoad<0b001, "c.fldsp", FPR64, uimm9_lsb000>,
-              Requires<[HasStdExtD]> {
+def C_FLDSP  : CStackLoad<0b001, "c.fldsp", FPR64, uimm9_lsb000>,
+               Requires<[HasStdExtD]> {
   let Inst{6-5} = imm{4-3};
   let Inst{4-2} = imm{8-6};
 }
 
-def CLWSP : CStackLoad<0b010, "c.lwsp", GPRNoX0, uimm8_lsb00> {
+def C_LWSP : CStackLoad<0b010, "c.lwsp", GPRNoX0, uimm8_lsb00> {
   let Inst{6-4} = imm{4-2};
   let Inst{3-2} = imm{7-6};
 }
 
 let DecoderNamespace = "RISCV32Only_" in
-def CFLWSP  : CStackLoad<0b011, "c.flwsp", FPR32, uimm8_lsb00>,
-              Requires<[HasStdExtF, IsRV32]> {
+def C_FLWSP  : CStackLoad<0b011, "c.flwsp", FPR32, uimm8_lsb00>,
+               Requires<[HasStdExtF, IsRV32]> {
   let Inst{6-4} = imm{4-2};
   let Inst{3-2} = imm{7-6};
 }
 
-def CLDSP : CStackLoad<0b011, "c.ldsp", GPRNoX0, uimm9_lsb000>,
-            Requires<[IsRV64]> {
+def C_LDSP : CStackLoad<0b011, "c.ldsp", GPRNoX0, uimm9_lsb000>,
+             Requires<[IsRV64]> {
   let Inst{6-5} = imm{4-3};
   let Inst{4-2} = imm{8-6};
 }
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
-def CJR : RVInst16CR<0b1000, 0b10, (outs), (ins GPRNoX0:$rs1),
-                     "c.jr", "$rs1"> {
+def C_JR : RVInst16CR<0b1000, 0b10, (outs), (ins GPRNoX0:$rs1),
+                      "c.jr", "$rs1"> {
   let isBranch = 1;
   let isBarrier = 1;
   let isTerminator = 1;
@@ -364,44 +364,44 @@ def CJR : RVInst16CR<0b1000, 0b10, (outs), (ins GPRNoX0:$rs1),
 }
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
-def CMV : RVInst16CR<0b1000, 0b10, (outs GPRNoX0:$rs1), (ins GPRNoX0:$rs2),
-                     "c.mv", "$rs1, $rs2">;
+def C_MV : RVInst16CR<0b1000, 0b10, (outs GPRNoX0:$rs1), (ins GPRNoX0:$rs2),
+                      "c.mv", "$rs1, $rs2">;
 
 let rs1 = 0, rs2 = 0, hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
-def CEBREAK : RVInst16CR<0b1001, 0b10, (outs), (ins), "c.ebreak", "">;
+def C_EBREAK : RVInst16CR<0b1001, 0b10, (outs), (ins), "c.ebreak", "">;
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0,
     isCall=1, Defs=[X1], rs2 = 0 in
-def CJALR : RVInst16CR<0b1001, 0b10, (outs), (ins GPRNoX0:$rs1),
-                       "c.jalr", "$rs1">;
+def C_JALR : RVInst16CR<0b1001, 0b10, (outs), (ins GPRNoX0:$rs1),
+                        "c.jalr", "$rs1">;
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
-def CADD : RVInst16CR<0b1001, 0b10, (outs GPRNoX0:$rs1_wb),
-                      (ins GPRNoX0:$rs1, GPRNoX0:$rs2),
-                      "c.add", "$rs1, $rs2"> {
+def C_ADD : RVInst16CR<0b1001, 0b10, (outs GPRNoX0:$rs1_wb),
+                       (ins GPRNoX0:$rs1, GPRNoX0:$rs2),
+                       "c.add", "$rs1, $rs2"> {
   let Constraints = "$rs1 = $rs1_wb";
 }
 
-def CFSDSP  : CStackStore<0b101, "c.fsdsp", FPR64, uimm9_lsb000>,
-              Requires<[HasStdExtD]> {
+def C_FSDSP  : CStackStore<0b101, "c.fsdsp", FPR64, uimm9_lsb000>,
+               Requires<[HasStdExtD]> {
   let Inst{12-10} = imm{5-3};
   let Inst{9-7}   = imm{8-6};
 }
 
-def CSWSP : CStackStore<0b110, "c.swsp", GPR, uimm8_lsb00> {
+def C_SWSP : CStackStore<0b110, "c.swsp", GPR, uimm8_lsb00> {
   let Inst{12-9} = imm{5-2};
   let Inst{8-7}  = imm{7-6};
 }
 
 let DecoderNamespace = "RISCV32Only_" in
-def CFSWSP  : CStackStore<0b111, "c.fswsp", FPR32, uimm8_lsb00>,
-              Requires<[HasStdExtF, IsRV32]> {
+def C_FSWSP  : CStackStore<0b111, "c.fswsp", FPR32, uimm8_lsb00>,
+               Requires<[HasStdExtF, IsRV32]> {
   let Inst{12-9} = imm{5-2};
   let Inst{8-7}  = imm{7-6};
 }
 
-def CSDSP : CStackStore<0b111, "c.sdsp", GPR, uimm9_lsb000>,
-            Requires<[IsRV64]> {
+def C_SDSP : CStackStore<0b111, "c.sdsp", GPR, uimm9_lsb000>,
+             Requires<[IsRV64]> {
   let Inst{12-10} = imm{5-3};
   let Inst{9-7}   = imm{8-6};
 }

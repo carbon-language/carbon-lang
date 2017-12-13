@@ -186,14 +186,16 @@ static DecodeStatus DecodeGPRCRegisterClass(MCInst &Inst, uint64_t RegNo,
 // Add implied SP operand for instructions *SP compressed instructions. The SP
 // operand isn't explicitly encoded in the instruction.
 static void addImplySP(MCInst &Inst, int64_t Address, const void *Decoder) {
-  if (Inst.getOpcode() == RISCV::CLWSP || Inst.getOpcode() == RISCV::CSWSP ||
-      Inst.getOpcode() == RISCV::CLDSP || Inst.getOpcode() == RISCV::CSDSP ||
-      Inst.getOpcode() == RISCV::CFLWSP || Inst.getOpcode() == RISCV::CFSWSP ||
-      Inst.getOpcode() == RISCV::CFLDSP || Inst.getOpcode() == RISCV::CFSDSP ||
-      Inst.getOpcode() == RISCV::CADDI4SPN) {
+  if (Inst.getOpcode() == RISCV::C_LWSP || Inst.getOpcode() == RISCV::C_SWSP ||
+      Inst.getOpcode() == RISCV::C_LDSP || Inst.getOpcode() == RISCV::C_SDSP ||
+      Inst.getOpcode() == RISCV::C_FLWSP ||
+      Inst.getOpcode() == RISCV::C_FSWSP ||
+      Inst.getOpcode() == RISCV::C_FLDSP ||
+      Inst.getOpcode() == RISCV::C_FSDSP ||
+      Inst.getOpcode() == RISCV::C_ADDI4SPN) {
     DecodeGPRRegisterClass(Inst, 2, Address, Decoder);
   }
-  if (Inst.getOpcode() == RISCV::CADDI16SP) {
+  if (Inst.getOpcode() == RISCV::C_ADDI16SP) {
     DecodeGPRRegisterClass(Inst, 2, Address, Decoder);
     DecodeGPRRegisterClass(Inst, 2, Address, Decoder);
   }
