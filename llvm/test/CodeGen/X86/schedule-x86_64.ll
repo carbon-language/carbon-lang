@@ -7303,6 +7303,7 @@ define void @test_lods() optsize {
   call void asm sideeffect "lodsb \0A\09 lodsw \0A\09 lodsl \0A\09 lodsq", ""()
   ret void
 }
+
 ; TODO - test_loop
 ; TODO - test_loope
 ; TODO - test_loopne
@@ -7310,7 +7311,90 @@ define void @test_lods() optsize {
 ; TODO - test_loopz
 
 ; TODO - test_mov
-; TODO - test_movnti
+
+define void @test_movnti(i32 %a0, i32 *%a1, i64 %a2, i64 *%a3) optsize {
+; GENERIC-LABEL: test_movnti:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    movntil %edi, (%rsi) # sched: [5:1.00]
+; GENERIC-NEXT:    movntiq %rdx, (%rcx) # sched: [5:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_movnti:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    movntil %edi, (%rsi) # sched: [1:1.00]
+; ATOM-NEXT:    movntiq %rdx, (%rcx) # sched: [1:1.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_movnti:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    movntil %edi, (%rsi) # sched: [1:1.00]
+; SLM-NEXT:    movntiq %rdx, (%rcx) # sched: [1:1.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_movnti:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    movntil %edi, (%rsi) # sched: [5:1.00]
+; SANDY-NEXT:    movntiq %rdx, (%rcx) # sched: [5:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_movnti:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    movntil %edi, (%rsi) # sched: [1:1.00]
+; HASWELL-NEXT:    movntiq %rdx, (%rcx) # sched: [1:1.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_movnti:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    movntil %edi, (%rsi) # sched: [1:1.00]
+; BROADWELL-NEXT:    movntiq %rdx, (%rcx) # sched: [1:1.00]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_movnti:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    movntil %edi, (%rsi) # sched: [1:1.00]
+; SKYLAKE-NEXT:    movntiq %rdx, (%rcx) # sched: [1:1.00]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_movnti:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    movntil %edi, (%rsi) # sched: [1:1.00]
+; SKX-NEXT:    movntiq %rdx, (%rcx) # sched: [1:1.00]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_movnti:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    movntil %edi, (%rsi) # sched: [1:1.00]
+; BTVER2-NEXT:    movntiq %rdx, (%rcx) # sched: [1:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_movnti:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    movntil %edi, (%rsi) # sched: [1:0.50]
+; ZNVER1-NEXT:    movntiq %rdx, (%rcx) # sched: [1:0.50]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  call void asm sideeffect "movnti $0, $1 \0A\09 movnti $2, $3", "r,*m,r,*m"(i32 %a0, i32 *%a1, i64 %a2, i64 *%a3)
+  ret void
+}
 
 define void @test_movs() optsize {
 ; GENERIC-LABEL: test_movs:
