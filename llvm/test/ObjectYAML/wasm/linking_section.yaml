@@ -31,15 +31,15 @@ Sections:
     DataSize:        999
     SymbolInfo:
       - Name:            bar
-        Flags:           1
+        Flags:           [ BINDING_WEAK ]
     SegmentInfo:
       - Index:       0
         Alignment:   4
-        Flags:       0
+        Flags:       [ ]
         Name:        mydata
       - Index:       1
         Alignment:   2
-        Flags:       1
+        Flags:       [ ]
         Name:        moredata
 ...
 # CHECK:       - Type:            CUSTOM
@@ -47,14 +47,14 @@ Sections:
 # CHECK-NEXT:    DataSize:        999
 # CHECK-NEXT:    SymbolInfo:
 # CHECK-NEXT:      - Name:            bar
-# CHECK-NEXT:        Flags:           1
+# CHECK-NEXT:        Flags:           [ BINDING_WEAK ]
 # CHECK-NEXT:    SegmentInfo:
 # CHECK-NEXT:      - Index:           0
 # CHECK-NEXT:        Name:            mydata
 # CHECK-NEXT:        Alignment:       4
-# CHECK-NEXT:        Flags:           0
+# CHECK-NEXT:        Flags:           [ ]
 # CHECK-NEXT:      - Index:           1
 # CHECK-NEXT:        Name:            moredata
 # CHECK-NEXT:        Alignment:       2
-# CHECK-NEXT:        Flags:           1
+# CHECK-NEXT:        Flags:           [ ]
 # CHECK-NEXT: ...
