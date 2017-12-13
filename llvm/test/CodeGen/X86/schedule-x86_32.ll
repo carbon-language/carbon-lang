@@ -1917,6 +1917,128 @@ define void @test_popa_popf_pusha_pushf() optsize {
   ret void
 }
 
+define void @test_ret() optsize {
+; GENERIC-LABEL: test_ret:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    retl
+; GENERIC-NEXT:    retl $4095 # imm = 0xFFF
+; GENERIC-NEXT:    lretl
+; GENERIC-NEXT:    lretl $4095 # imm = 0xFFF
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retl
+;
+; ATOM-LABEL: test_ret:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    retl # sched: [79:39.50]
+; ATOM-NEXT:    retl $4095 # imm = 0xFFF
+; ATOM-NEXT:    # sched: [1:1.00]
+; ATOM-NEXT:    lretl # sched: [79:39.50]
+; ATOM-NEXT:    lretl $4095 # imm = 0xFFF
+; ATOM-NEXT:    # sched: [79:39.50]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retl # sched: [79:39.50]
+;
+; SLM-LABEL: test_ret:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    retl # sched: [4:1.00]
+; SLM-NEXT:    retl $4095 # imm = 0xFFF
+; SLM-NEXT:    # sched: [4:1.00]
+; SLM-NEXT:    lretl # sched: [4:1.00]
+; SLM-NEXT:    lretl $4095 # imm = 0xFFF
+; SLM-NEXT:    # sched: [4:1.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retl # sched: [4:1.00]
+;
+; SANDY-LABEL: test_ret:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    retl # sched: [5:1.00]
+; SANDY-NEXT:    retl $4095 # imm = 0xFFF
+; SANDY-NEXT:    # sched: [5:1.00]
+; SANDY-NEXT:    lretl # sched: [5:1.00]
+; SANDY-NEXT:    lretl $4095 # imm = 0xFFF
+; SANDY-NEXT:    # sched: [5:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retl # sched: [5:1.00]
+;
+; HASWELL-LABEL: test_ret:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    retl # sched: [7:1.00]
+; HASWELL-NEXT:    retl $4095 # imm = 0xFFF
+; HASWELL-NEXT:    # sched: [1:2.00]
+; HASWELL-NEXT:    lretl # sched: [6:0.50]
+; HASWELL-NEXT:    lretl $4095 # imm = 0xFFF
+; HASWELL-NEXT:    # sched: [1:2.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retl # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_ret:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    retl # sched: [6:0.50]
+; BROADWELL-NEXT:    retl $4095 # imm = 0xFFF
+; BROADWELL-NEXT:    # sched: [6:0.50]
+; BROADWELL-NEXT:    lretl # sched: [6:0.50]
+; BROADWELL-NEXT:    lretl $4095 # imm = 0xFFF
+; BROADWELL-NEXT:    # sched: [6:0.50]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retl # sched: [6:0.50]
+;
+; SKYLAKE-LABEL: test_ret:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    retl # sched: [6:0.50]
+; SKYLAKE-NEXT:    retl $4095 # imm = 0xFFF
+; SKYLAKE-NEXT:    # sched: [6:0.50]
+; SKYLAKE-NEXT:    lretl # sched: [6:0.50]
+; SKYLAKE-NEXT:    lretl $4095 # imm = 0xFFF
+; SKYLAKE-NEXT:    # sched: [6:0.50]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retl # sched: [6:0.50]
+;
+; SKX-LABEL: test_ret:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    retl # sched: [6:0.50]
+; SKX-NEXT:    retl $4095 # imm = 0xFFF
+; SKX-NEXT:    # sched: [6:0.50]
+; SKX-NEXT:    lretl # sched: [6:0.50]
+; SKX-NEXT:    lretl $4095 # imm = 0xFFF
+; SKX-NEXT:    # sched: [6:0.50]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retl # sched: [6:0.50]
+;
+; BTVER2-LABEL: test_ret:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    retl # sched: [4:1.00]
+; BTVER2-NEXT:    retl $4095 # imm = 0xFFF
+; BTVER2-NEXT:    # sched: [4:1.00]
+; BTVER2-NEXT:    lretl # sched: [4:1.00]
+; BTVER2-NEXT:    lretl $4095 # imm = 0xFFF
+; BTVER2-NEXT:    # sched: [4:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retl # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_ret:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    retl # sched: [1:0.50]
+; ZNVER1-NEXT:    retl $4095 # imm = 0xFFF
+; ZNVER1-NEXT:    # sched: [5:0.50]
+; ZNVER1-NEXT:    lretl # sched: [1:0.50]
+; ZNVER1-NEXT:    lretl $4095 # imm = 0xFFF
+; ZNVER1-NEXT:    # sched: [5:0.50]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retl # sched: [1:0.50]
+  call void asm sideeffect "ret \0A\09 ret $0 \0A\09 lret \0A\09 lret $0", "i"(i16 4095)
+  ret void
+}
+
 define i8 @test_salc() optsize {
 ; GENERIC-LABEL: test_salc:
 ; GENERIC:       # %bb.0:

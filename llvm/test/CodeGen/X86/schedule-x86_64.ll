@@ -10590,7 +10590,129 @@ define void @test_rdtsc_rdtscp() optsize {
   ret void
 }
 
-; TODO - test_ret
+define void @test_ret() optsize {
+; GENERIC-LABEL: test_ret:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+; GENERIC-NEXT:    retq $4095 # imm = 0xFFF
+; GENERIC-NEXT:    # sched: [5:1.00]
+; GENERIC-NEXT:    lretl # sched: [5:1.00]
+; GENERIC-NEXT:    lretl $4095 # imm = 0xFFF
+; GENERIC-NEXT:    # sched: [5:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_ret:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+; ATOM-NEXT:    retq $4095 # imm = 0xFFF
+; ATOM-NEXT:    # sched: [1:1.00]
+; ATOM-NEXT:    lretl # sched: [79:39.50]
+; ATOM-NEXT:    lretl $4095 # imm = 0xFFF
+; ATOM-NEXT:    # sched: [79:39.50]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_ret:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+; SLM-NEXT:    retq $4095 # imm = 0xFFF
+; SLM-NEXT:    # sched: [4:1.00]
+; SLM-NEXT:    lretl # sched: [4:1.00]
+; SLM-NEXT:    lretl $4095 # imm = 0xFFF
+; SLM-NEXT:    # sched: [4:1.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_ret:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+; SANDY-NEXT:    retq $4095 # imm = 0xFFF
+; SANDY-NEXT:    # sched: [5:1.00]
+; SANDY-NEXT:    lretl # sched: [5:1.00]
+; SANDY-NEXT:    lretl $4095 # imm = 0xFFF
+; SANDY-NEXT:    # sched: [5:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_ret:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+; HASWELL-NEXT:    retq $4095 # imm = 0xFFF
+; HASWELL-NEXT:    # sched: [1:2.00]
+; HASWELL-NEXT:    lretl # sched: [6:0.50]
+; HASWELL-NEXT:    lretl $4095 # imm = 0xFFF
+; HASWELL-NEXT:    # sched: [1:2.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_ret:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+; BROADWELL-NEXT:    retq $4095 # imm = 0xFFF
+; BROADWELL-NEXT:    # sched: [6:0.50]
+; BROADWELL-NEXT:    lretl # sched: [6:0.50]
+; BROADWELL-NEXT:    lretl $4095 # imm = 0xFFF
+; BROADWELL-NEXT:    # sched: [6:0.50]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_ret:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+; SKYLAKE-NEXT:    retq $4095 # imm = 0xFFF
+; SKYLAKE-NEXT:    # sched: [6:0.50]
+; SKYLAKE-NEXT:    lretl # sched: [6:0.50]
+; SKYLAKE-NEXT:    lretl $4095 # imm = 0xFFF
+; SKYLAKE-NEXT:    # sched: [6:0.50]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_ret:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+; SKX-NEXT:    retq $4095 # imm = 0xFFF
+; SKX-NEXT:    # sched: [6:0.50]
+; SKX-NEXT:    lretl # sched: [6:0.50]
+; SKX-NEXT:    lretl $4095 # imm = 0xFFF
+; SKX-NEXT:    # sched: [6:0.50]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_ret:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+; BTVER2-NEXT:    retq $4095 # imm = 0xFFF
+; BTVER2-NEXT:    # sched: [4:1.00]
+; BTVER2-NEXT:    lretl # sched: [4:1.00]
+; BTVER2-NEXT:    lretl $4095 # imm = 0xFFF
+; BTVER2-NEXT:    # sched: [4:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_ret:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+; ZNVER1-NEXT:    retq $4095 # imm = 0xFFF
+; ZNVER1-NEXT:    # sched: [5:0.50]
+; ZNVER1-NEXT:    lretl # sched: [1:0.50]
+; ZNVER1-NEXT:    lretl $4095 # imm = 0xFFF
+; ZNVER1-NEXT:    # sched: [5:0.50]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  call void asm sideeffect "ret \0A\09 ret $0 \0A\09 lret \0A\09 lret $0", "i"(i16 4095)
+  ret void
+}
 
 define void @test_rol_ror_8(i8 %a0, i8 %a1, i8 *%a2) optsize {
 ; GENERIC-LABEL: test_rol_ror_8:
