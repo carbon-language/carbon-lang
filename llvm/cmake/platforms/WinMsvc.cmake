@@ -80,18 +80,9 @@
 #
 # IMPORTANT: In order for this to work, you will need a valid copy of the Windows
 # SDK and C++ STL headers and libraries on your host.  Additionally, since the
-# Windows libraries and headers are not case-correct, you will need to have these
-# mounted in a case-insensitive mount.  This requires one command to set up.
-#
-# ~/src: mkdir winsdk
-# ~/src: mkdir winsdk.icase
-# ~/src: ciopfs winsdk/ winsdk.icase
-#
-# Now copy or otherwise install your headers and libraries to the winsdk.icase folder
-# and use *that* folder as the path when configuring CMake.
-#
-# TODO: We could also provide a CMake option -DUSE_ICASE_VFS_OVERLAY=ON/OFF that would
-# make this optional.  For now, we require ciopfs.
+# Windows libraries and headers are not case-correct, this toolchain file sets
+# up a VFS overlay for the SDK headers and case-correcting symlinks for the
+# libraries when running on a case-sensitive filesystem.
 
 
 # When configuring CMake with a toolchain file against a top-level CMakeLists.txt,
@@ -108,6 +99,49 @@ function(init_user_prop prop)
   else()
     set(${prop} "$ENV{_${prop}}" PARENT_SCOPE)
   endif()
+endfunction()
+
+function(generate_winsdk_vfs_overlay winsdk_include_dir output_path)
+  set(include_dirs)
+  file(GLOB_RECURSE entries LIST_DIRECTORIES true "${winsdk_include_dir}/*")
+  foreach(entry ${entries})
+    if(IS_DIRECTORY "${entry}")
+      list(APPEND include_dirs "${entry}")
+    endif()
+  endforeach()
+
+  file(WRITE "${output_path}"  "version: 0\n")
+  file(APPEND "${output_path}" "case-sensitive: false\n")
+  file(APPEND "${output_path}" "roots:\n")
+
+  foreach(dir ${include_dirs})
+    file(GLOB headers RELATIVE "${dir}" "${dir}/*.h")
+    if(NOT headers)
+      continue()
+    endif()
+
+    file(APPEND "${output_path}" "  - name: \"${dir}\"\n")
+    file(APPEND "${output_path}" "    type: directory\n")
+    file(APPEND "${output_path}" "    contents:\n")
+
+    foreach(header ${headers})
+      file(APPEND "${output_path}" "      - name: \"${header}\"\n")
+      file(APPEND "${output_path}" "        type: file\n")
+      file(APPEND "${output_path}" "        external-contents: \"${dir}/${header}\"\n")
+    endforeach()
+  endforeach()
+endfunction()
+
+function(generate_winsdk_lib_symlinks winsdk_um_lib_dir output_dir)
+  execute_process(COMMAND "${CMAKE_COMMAND}" -E make_directory "${output_dir}")
+  file(GLOB libraries RELATIVE "${winsdk_um_lib_dir}" "${winsdk_um_lib_dir}/*")
+  foreach(library ${libraries})
+    string(TOLOWER "${library}" symlink_name)
+    execute_process(COMMAND "${CMAKE_COMMAND}"
+                            -E create_symlink
+                            "${winsdk_um_lib_dir}/${library}"
+                            "${output_dir}/${symlink_name}")
+  endforeach()
 endfunction()
 
 set(CMAKE_SYSTEM_NAME Windows)
@@ -170,6 +204,13 @@ if(NOT EXISTS "${WINSDK_BASE}" OR
           "Windows SDK installation")
 endif()
 
+if(NOT EXISTS "${WINSDK_INCLUDE}/um/Windows.h")
+  message(SEND_ERROR "Cannot find Windows.h")
+endif()
+if(NOT EXISTS "${WINSDK_INCLUDE}/um/WINDOWS.H")
+  set(case_sensitive_filesystem TRUE)
+endif()
+
 set(CMAKE_C_COMPILER "${LLVM_NATIVE_TOOLCHAIN}/bin/clang-cl" CACHE FILEPATH "")
 set(CMAKE_CXX_COMPILER "${LLVM_NATIVE_TOOLCHAIN}/bin/clang-cl" CACHE FILEPATH "")
 set(CMAKE_LINKER "${LLVM_NATIVE_TOOLCHAIN}/bin/lld-link" CACHE FILEPATH "")
@@ -195,6 +236,18 @@ set(COMPILE_FLAGS
     -imsvc "${WINSDK_INCLUDE}/um"
     -imsvc "${WINSDK_INCLUDE}/winrt")
 
+if(case_sensitive_filesystem)
+  # Ensure all sub-configures use the top-level VFS overlay instead of generating their own.
+  init_user_prop(winsdk_vfs_overlay_path)
+  if(NOT winsdk_vfs_overlay_path)
+    set(winsdk_vfs_overlay_path "${CMAKE_BINARY_DIR}/winsdk_vfs_overlay.yaml")
+    generate_winsdk_vfs_overlay("${WINSDK_BASE}/Include/${WINSDK_VER}" "${winsdk_vfs_overlay_path}")
+    init_user_prop(winsdk_vfs_overlay_path)
+  endif()
+  list(APPEND COMPILE_FLAGS
+       -Xclang -ivfsoverlay -Xclang "${winsdk_vfs_overlay_path}")
+endif()
+
 string(REPLACE ";" " " COMPILE_FLAGS "${COMPILE_FLAGS}")
 
 # We need to preserve any flags that were passed in by the user. However, we
@@ -216,6 +269,18 @@ set(LINK_FLAGS
     -libpath:"${MSVC_LIB}/${WINSDK_ARCH}"
     -libpath:"${WINSDK_LIB}/ucrt/${WINSDK_ARCH}"
     -libpath:"${WINSDK_LIB}/um/${WINSDK_ARCH}")
+
+if(case_sensitive_filesystem)
+  # Ensure all sub-configures use the top-level symlinks dir instead of generating their own.
+  init_user_prop(winsdk_lib_symlinks_dir)
+  if(NOT winsdk_lib_symlinks_dir)
+    set(winsdk_lib_symlinks_dir "${CMAKE_BINARY_DIR}/winsdk_lib_symlinks")
+    generate_winsdk_lib_symlinks("${WINSDK_BASE}/Lib/${WINSDK_VER}/um/${WINSDK_ARCH}" "${winsdk_lib_symlinks_dir}")
+    init_user_prop(winsdk_lib_symlinks_dir)
+  endif()
+  list(APPEND LINK_FLAGS
+       -libpath:"${winsdk_lib_symlinks_dir}")
+endif()
 
 string(REPLACE ";" " " LINK_FLAGS "${LINK_FLAGS}")
 
