@@ -1279,9 +1279,13 @@ bool Sema::IsOpenMPCapturedByRef(ValueDecl *D, unsigned Level) {
       // reference except if it is a pointer that is dereferenced somehow.
       IsByRef = !(Ty->isPointerType() && IsVariableAssociatedWithSection);
     } else {
-      // By default, all the data that has a scalar type is mapped by copy.
-      IsByRef = !Ty->isScalarType() ||
-                DSAStack->getDefaultDMAAtLevel(Level) == DMA_tofrom_scalar;
+      // By default, all the data that has a scalar type is mapped by copy
+      // (except for reduction variables).
+      IsByRef =
+          !Ty->isScalarType() ||
+          DSAStack->getDefaultDMAAtLevel(Level) == DMA_tofrom_scalar ||
+          DSAStack->hasExplicitDSA(
+              D, [](OpenMPClauseKind K) { return K == OMPC_reduction; }, Level);
     }
   }
 
