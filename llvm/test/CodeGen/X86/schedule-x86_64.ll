@@ -5663,7 +5663,578 @@ define void @test_idiv(i8 %a0, i16 %a1, i32 %a2, i64 %a3, i8 *%p0, i16 *%p1, i32
   ret void
 }
 
-; TODO - test_imul
+define void @test_imul_8(i8 %a0, i8* %a1) optsize {
+; GENERIC-LABEL: test_imul_8:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    imulb %dil # sched: [3:1.00]
+; GENERIC-NEXT:    imulb (%rsi) # sched: [7:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_imul_8:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    imulb %dil # sched: [7:3.50]
+; ATOM-NEXT:    imulb (%rsi) # sched: [7:3.50]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_imul_8:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    imulb %dil # sched: [3:1.00]
+; SLM-NEXT:    imulb (%rsi) # sched: [6:1.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_imul_8:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    imulb %dil # sched: [3:1.00]
+; SANDY-NEXT:    imulb (%rsi) # sched: [7:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_imul_8:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    imulb %dil # sched: [3:1.00]
+; HASWELL-NEXT:    imulb (%rsi) # sched: [8:1.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_imul_8:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    imulb %dil # sched: [3:1.00]
+; BROADWELL-NEXT:    imulb (%rsi) # sched: [8:1.00]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_imul_8:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    imulb %dil # sched: [3:1.00]
+; SKYLAKE-NEXT:    imulb (%rsi) # sched: [8:1.00]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_imul_8:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    imulb %dil # sched: [3:1.00]
+; SKX-NEXT:    imulb (%rsi) # sched: [8:1.00]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_imul_8:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    imulb %dil # sched: [3:1.00]
+; BTVER2-NEXT:    imulb (%rsi) # sched: [6:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_imul_8:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    imulb %dil # sched: [4:1.00]
+; ZNVER1-NEXT:    imulb (%rsi) # sched: [8:1.00]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  tail call void asm "imulb $0 \0A\09 imulb $1", "r,*m"(i8 %a0, i8* %a1) nounwind
+  ret void
+}
+define void @test_imul_16(i16 %a0, i16* %a1) optsize {
+; GENERIC-LABEL: test_imul_16:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    imulw %di # sched: [3:1.00]
+; GENERIC-NEXT:    imulw (%rsi) # sched: [7:1.00]
+; GENERIC-NEXT:    imulw %di, %di # sched: [3:1.00]
+; GENERIC-NEXT:    imulw (%rsi), %di # sched: [7:1.00]
+; GENERIC-NEXT:    imulw $511, %di, %di # imm = 0x1FF
+; GENERIC-NEXT:    # sched: [3:1.00]
+; GENERIC-NEXT:    imulw $511, (%rsi), %di # imm = 0x1FF
+; GENERIC-NEXT:    # sched: [7:1.00]
+; GENERIC-NEXT:    imulw $7, %di, %di # sched: [3:1.00]
+; GENERIC-NEXT:    imulw $7, (%rsi), %di # sched: [7:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_imul_16:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    imulw %di # sched: [6:3.00]
+; ATOM-NEXT:    imulw (%rsi) # sched: [8:4.00]
+; ATOM-NEXT:    imulw %di, %di # sched: [6:3.00]
+; ATOM-NEXT:    imulw (%rsi), %di # sched: [7:3.50]
+; ATOM-NEXT:    imulw $511, %di, %di # imm = 0x1FF
+; ATOM-NEXT:    # sched: [6:3.00]
+; ATOM-NEXT:    imulw $511, (%rsi), %di # imm = 0x1FF
+; ATOM-NEXT:    # sched: [7:3.50]
+; ATOM-NEXT:    imulw $7, %di, %di # sched: [6:3.00]
+; ATOM-NEXT:    imulw $7, (%rsi), %di # sched: [7:3.50]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_imul_16:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    imulw %di # sched: [3:1.00]
+; SLM-NEXT:    imulw (%rsi) # sched: [6:1.00]
+; SLM-NEXT:    imulw %di, %di # sched: [3:1.00]
+; SLM-NEXT:    imulw (%rsi), %di # sched: [6:1.00]
+; SLM-NEXT:    imulw $511, %di, %di # imm = 0x1FF
+; SLM-NEXT:    # sched: [3:1.00]
+; SLM-NEXT:    imulw $511, (%rsi), %di # imm = 0x1FF
+; SLM-NEXT:    # sched: [6:1.00]
+; SLM-NEXT:    imulw $7, %di, %di # sched: [3:1.00]
+; SLM-NEXT:    imulw $7, (%rsi), %di # sched: [6:1.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_imul_16:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    imulw %di # sched: [3:1.00]
+; SANDY-NEXT:    imulw (%rsi) # sched: [7:1.00]
+; SANDY-NEXT:    imulw %di, %di # sched: [3:1.00]
+; SANDY-NEXT:    imulw (%rsi), %di # sched: [7:1.00]
+; SANDY-NEXT:    imulw $511, %di, %di # imm = 0x1FF
+; SANDY-NEXT:    # sched: [3:1.00]
+; SANDY-NEXT:    imulw $511, (%rsi), %di # imm = 0x1FF
+; SANDY-NEXT:    # sched: [7:1.00]
+; SANDY-NEXT:    imulw $7, %di, %di # sched: [3:1.00]
+; SANDY-NEXT:    imulw $7, (%rsi), %di # sched: [7:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_imul_16:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    imulw %di # sched: [4:1.00]
+; HASWELL-NEXT:    imulw (%rsi) # sched: [8:1.00]
+; HASWELL-NEXT:    imulw %di, %di # sched: [3:1.00]
+; HASWELL-NEXT:    imulw (%rsi), %di # sched: [8:1.00]
+; HASWELL-NEXT:    imulw $511, %di, %di # imm = 0x1FF
+; HASWELL-NEXT:    # sched: [3:1.00]
+; HASWELL-NEXT:    imulw $511, (%rsi), %di # imm = 0x1FF
+; HASWELL-NEXT:    # sched: [8:1.00]
+; HASWELL-NEXT:    imulw $7, %di, %di # sched: [3:1.00]
+; HASWELL-NEXT:    imulw $7, (%rsi), %di # sched: [8:1.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_imul_16:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    imulw %di # sched: [4:1.00]
+; BROADWELL-NEXT:    imulw (%rsi) # sched: [8:1.00]
+; BROADWELL-NEXT:    imulw %di, %di # sched: [3:1.00]
+; BROADWELL-NEXT:    imulw (%rsi), %di # sched: [4:1.00]
+; BROADWELL-NEXT:    imulw $511, %di, %di # imm = 0x1FF
+; BROADWELL-NEXT:    # sched: [3:1.00]
+; BROADWELL-NEXT:    imulw $511, (%rsi), %di # imm = 0x1FF
+; BROADWELL-NEXT:    # sched: [4:1.00]
+; BROADWELL-NEXT:    imulw $7, %di, %di # sched: [3:1.00]
+; BROADWELL-NEXT:    imulw $7, (%rsi), %di # sched: [4:1.00]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_imul_16:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    imulw %di # sched: [4:1.00]
+; SKYLAKE-NEXT:    imulw (%rsi) # sched: [3:1.00]
+; SKYLAKE-NEXT:    imulw %di, %di # sched: [3:1.00]
+; SKYLAKE-NEXT:    imulw (%rsi), %di # sched: [4:1.00]
+; SKYLAKE-NEXT:    imulw $511, %di, %di # imm = 0x1FF
+; SKYLAKE-NEXT:    # sched: [3:1.00]
+; SKYLAKE-NEXT:    imulw $511, (%rsi), %di # imm = 0x1FF
+; SKYLAKE-NEXT:    # sched: [4:1.00]
+; SKYLAKE-NEXT:    imulw $7, %di, %di # sched: [3:1.00]
+; SKYLAKE-NEXT:    imulw $7, (%rsi), %di # sched: [4:1.00]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_imul_16:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    imulw %di # sched: [4:1.00]
+; SKX-NEXT:    imulw (%rsi) # sched: [8:1.00]
+; SKX-NEXT:    imulw %di, %di # sched: [3:1.00]
+; SKX-NEXT:    imulw (%rsi), %di # sched: [4:1.00]
+; SKX-NEXT:    imulw $511, %di, %di # imm = 0x1FF
+; SKX-NEXT:    # sched: [3:1.00]
+; SKX-NEXT:    imulw $511, (%rsi), %di # imm = 0x1FF
+; SKX-NEXT:    # sched: [4:1.00]
+; SKX-NEXT:    imulw $7, %di, %di # sched: [3:1.00]
+; SKX-NEXT:    imulw $7, (%rsi), %di # sched: [4:1.00]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_imul_16:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    imulw %di # sched: [3:1.00]
+; BTVER2-NEXT:    imulw (%rsi) # sched: [6:1.00]
+; BTVER2-NEXT:    imulw %di, %di # sched: [3:1.00]
+; BTVER2-NEXT:    imulw (%rsi), %di # sched: [6:1.00]
+; BTVER2-NEXT:    imulw $511, %di, %di # imm = 0x1FF
+; BTVER2-NEXT:    # sched: [3:1.00]
+; BTVER2-NEXT:    imulw $511, (%rsi), %di # imm = 0x1FF
+; BTVER2-NEXT:    # sched: [6:1.00]
+; BTVER2-NEXT:    imulw $7, %di, %di # sched: [3:1.00]
+; BTVER2-NEXT:    imulw $7, (%rsi), %di # sched: [6:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_imul_16:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    imulw %di # sched: [3:1.00]
+; ZNVER1-NEXT:    imulw (%rsi) # sched: [8:1.00]
+; ZNVER1-NEXT:    imulw %di, %di # sched: [3:1.00]
+; ZNVER1-NEXT:    imulw (%rsi), %di # sched: [3:1.00]
+; ZNVER1-NEXT:    imulw $511, %di, %di # imm = 0x1FF
+; ZNVER1-NEXT:    # sched: [3:1.00]
+; ZNVER1-NEXT:    imulw $511, (%rsi), %di # imm = 0x1FF
+; ZNVER1-NEXT:    # sched: [3:1.00]
+; ZNVER1-NEXT:    imulw $7, %di, %di # sched: [3:1.00]
+; ZNVER1-NEXT:    imulw $7, (%rsi), %di # sched: [3:1.00]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  tail call void asm "imulw $0 \0A\09 imulw $1 \0A\09 imulw $0, $0 \0A\09 imulw $1, $0 \0A\09 imulw $2, $0, $0 \0A\09 imulw $2, $1, $0 \0A\09 imulw $3, $0, $0 \0A\09 imulw $3, $1, $0", "r,*m,i,i"(i16 %a0, i16* %a1, i16 511, i8 7) nounwind
+  ret void
+}
+define void @test_imul_32(i32 %a0, i32* %a1) optsize {
+; GENERIC-LABEL: test_imul_32:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    imull %edi # sched: [3:1.00]
+; GENERIC-NEXT:    imull (%rsi) # sched: [7:1.00]
+; GENERIC-NEXT:    imull %edi, %edi # sched: [3:1.00]
+; GENERIC-NEXT:    imull (%rsi), %edi # sched: [7:1.00]
+; GENERIC-NEXT:    imull $665536, %edi, %edi # imm = 0xA27C0
+; GENERIC-NEXT:    # sched: [3:1.00]
+; GENERIC-NEXT:    imull $665536, (%rsi), %edi # imm = 0xA27C0
+; GENERIC-NEXT:    # sched: [7:1.00]
+; GENERIC-NEXT:    imull $7, %edi, %edi # sched: [3:1.00]
+; GENERIC-NEXT:    imull $7, (%rsi), %edi # sched: [7:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_imul_32:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    imull %edi # sched: [5:5.00]
+; ATOM-NEXT:    imull (%rsi) # sched: [7:3.50]
+; ATOM-NEXT:    imull %edi, %edi # sched: [5:5.00]
+; ATOM-NEXT:    imull (%rsi), %edi # sched: [5:5.00]
+; ATOM-NEXT:    imull $665536, %edi, %edi # imm = 0xA27C0
+; ATOM-NEXT:    # sched: [5:5.00]
+; ATOM-NEXT:    imull $665536, (%rsi), %edi # imm = 0xA27C0
+; ATOM-NEXT:    # sched: [5:5.00]
+; ATOM-NEXT:    imull $7, %edi, %edi # sched: [5:5.00]
+; ATOM-NEXT:    imull $7, (%rsi), %edi # sched: [5:5.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_imul_32:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    imull %edi # sched: [3:1.00]
+; SLM-NEXT:    imull (%rsi) # sched: [6:1.00]
+; SLM-NEXT:    imull %edi, %edi # sched: [3:1.00]
+; SLM-NEXT:    imull (%rsi), %edi # sched: [6:1.00]
+; SLM-NEXT:    imull $665536, %edi, %edi # imm = 0xA27C0
+; SLM-NEXT:    # sched: [3:1.00]
+; SLM-NEXT:    imull $665536, (%rsi), %edi # imm = 0xA27C0
+; SLM-NEXT:    # sched: [6:1.00]
+; SLM-NEXT:    imull $7, %edi, %edi # sched: [3:1.00]
+; SLM-NEXT:    imull $7, (%rsi), %edi # sched: [6:1.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_imul_32:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    imull %edi # sched: [3:1.00]
+; SANDY-NEXT:    imull (%rsi) # sched: [7:1.00]
+; SANDY-NEXT:    imull %edi, %edi # sched: [3:1.00]
+; SANDY-NEXT:    imull (%rsi), %edi # sched: [7:1.00]
+; SANDY-NEXT:    imull $665536, %edi, %edi # imm = 0xA27C0
+; SANDY-NEXT:    # sched: [3:1.00]
+; SANDY-NEXT:    imull $665536, (%rsi), %edi # imm = 0xA27C0
+; SANDY-NEXT:    # sched: [7:1.00]
+; SANDY-NEXT:    imull $7, %edi, %edi # sched: [3:1.00]
+; SANDY-NEXT:    imull $7, (%rsi), %edi # sched: [7:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_imul_32:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    imull %edi # sched: [4:1.00]
+; HASWELL-NEXT:    imull (%rsi) # sched: [8:1.00]
+; HASWELL-NEXT:    imull %edi, %edi # sched: [3:1.00]
+; HASWELL-NEXT:    imull (%rsi), %edi # sched: [8:1.00]
+; HASWELL-NEXT:    imull $665536, %edi, %edi # imm = 0xA27C0
+; HASWELL-NEXT:    # sched: [3:1.00]
+; HASWELL-NEXT:    imull $665536, (%rsi), %edi # imm = 0xA27C0
+; HASWELL-NEXT:    # sched: [8:1.00]
+; HASWELL-NEXT:    imull $7, %edi, %edi # sched: [3:1.00]
+; HASWELL-NEXT:    imull $7, (%rsi), %edi # sched: [8:1.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_imul_32:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    imull %edi # sched: [4:1.00]
+; BROADWELL-NEXT:    imull (%rsi) # sched: [8:1.00]
+; BROADWELL-NEXT:    imull %edi, %edi # sched: [3:1.00]
+; BROADWELL-NEXT:    imull (%rsi), %edi # sched: [4:1.00]
+; BROADWELL-NEXT:    imull $665536, %edi, %edi # imm = 0xA27C0
+; BROADWELL-NEXT:    # sched: [3:1.00]
+; BROADWELL-NEXT:    imull $665536, (%rsi), %edi # imm = 0xA27C0
+; BROADWELL-NEXT:    # sched: [4:1.00]
+; BROADWELL-NEXT:    imull $7, %edi, %edi # sched: [3:1.00]
+; BROADWELL-NEXT:    imull $7, (%rsi), %edi # sched: [4:1.00]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_imul_32:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    imull %edi # sched: [5:1.00]
+; SKYLAKE-NEXT:    imull (%rsi) # sched: [3:1.00]
+; SKYLAKE-NEXT:    imull %edi, %edi # sched: [3:1.00]
+; SKYLAKE-NEXT:    imull (%rsi), %edi # sched: [5:1.00]
+; SKYLAKE-NEXT:    imull $665536, %edi, %edi # imm = 0xA27C0
+; SKYLAKE-NEXT:    # sched: [3:1.00]
+; SKYLAKE-NEXT:    imull $665536, (%rsi), %edi # imm = 0xA27C0
+; SKYLAKE-NEXT:    # sched: [5:1.00]
+; SKYLAKE-NEXT:    imull $7, %edi, %edi # sched: [3:1.00]
+; SKYLAKE-NEXT:    imull $7, (%rsi), %edi # sched: [5:1.00]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_imul_32:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    imull %edi # sched: [4:1.00]
+; SKX-NEXT:    imull (%rsi) # sched: [8:1.00]
+; SKX-NEXT:    imull %edi, %edi # sched: [3:1.00]
+; SKX-NEXT:    imull (%rsi), %edi # sched: [4:1.00]
+; SKX-NEXT:    imull $665536, %edi, %edi # imm = 0xA27C0
+; SKX-NEXT:    # sched: [3:1.00]
+; SKX-NEXT:    imull $665536, (%rsi), %edi # imm = 0xA27C0
+; SKX-NEXT:    # sched: [4:1.00]
+; SKX-NEXT:    imull $7, %edi, %edi # sched: [3:1.00]
+; SKX-NEXT:    imull $7, (%rsi), %edi # sched: [4:1.00]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_imul_32:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    imull %edi # sched: [3:1.00]
+; BTVER2-NEXT:    imull (%rsi) # sched: [6:1.00]
+; BTVER2-NEXT:    imull %edi, %edi # sched: [3:1.00]
+; BTVER2-NEXT:    imull (%rsi), %edi # sched: [6:1.00]
+; BTVER2-NEXT:    imull $665536, %edi, %edi # imm = 0xA27C0
+; BTVER2-NEXT:    # sched: [3:1.00]
+; BTVER2-NEXT:    imull $665536, (%rsi), %edi # imm = 0xA27C0
+; BTVER2-NEXT:    # sched: [6:1.00]
+; BTVER2-NEXT:    imull $7, %edi, %edi # sched: [3:1.00]
+; BTVER2-NEXT:    imull $7, (%rsi), %edi # sched: [6:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_imul_32:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    imull %edi # sched: [3:1.00]
+; ZNVER1-NEXT:    imull (%rsi) # sched: [8:1.00]
+; ZNVER1-NEXT:    imull %edi, %edi # sched: [3:1.00]
+; ZNVER1-NEXT:    imull (%rsi), %edi # sched: [3:1.00]
+; ZNVER1-NEXT:    imull $665536, %edi, %edi # imm = 0xA27C0
+; ZNVER1-NEXT:    # sched: [3:1.00]
+; ZNVER1-NEXT:    imull $665536, (%rsi), %edi # imm = 0xA27C0
+; ZNVER1-NEXT:    # sched: [3:1.00]
+; ZNVER1-NEXT:    imull $7, %edi, %edi # sched: [3:1.00]
+; ZNVER1-NEXT:    imull $7, (%rsi), %edi # sched: [3:1.00]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  tail call void asm "imull $0 \0A\09 imull $1 \0A\09 imull $0, $0 \0A\09 imull $1, $0 \0A\09 imull $2, $0, $0 \0A\09 imull $2, $1, $0 \0A\09 imull $3, $0, $0 \0A\09 imull $3, $1, $0", "r,*m,i,i"(i32 %a0, i32* %a1, i32 665536, i8 7) nounwind
+  ret void
+}
+define void @test_imul_64(i64 %a0, i64* %a1) optsize {
+; GENERIC-LABEL: test_imul_64:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    imulq %rdi # sched: [3:1.00]
+; GENERIC-NEXT:    imulq (%rsi) # sched: [7:1.00]
+; GENERIC-NEXT:    imulq %rdi, %rdi # sched: [3:1.00]
+; GENERIC-NEXT:    imulq (%rsi), %rdi # sched: [7:1.00]
+; GENERIC-NEXT:    imulq $665536, %rdi, %rdi # imm = 0xA27C0
+; GENERIC-NEXT:    # sched: [3:1.00]
+; GENERIC-NEXT:    imulq $665536, (%rsi), %rdi # imm = 0xA27C0
+; GENERIC-NEXT:    # sched: [7:1.00]
+; GENERIC-NEXT:    imulq $7, %rdi, %rdi # sched: [3:1.00]
+; GENERIC-NEXT:    imulq $7, (%rsi), %rdi # sched: [7:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_imul_64:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:    imulq %rdi # sched: [12:6.00]
+; ATOM-NEXT:    imulq (%rsi) # sched: [12:6.00]
+; ATOM-NEXT:    imulq %rdi, %rdi # sched: [12:6.00]
+; ATOM-NEXT:    imulq (%rsi), %rdi # sched: [12:6.00]
+; ATOM-NEXT:    imulq $665536, %rdi, %rdi # imm = 0xA27C0
+; ATOM-NEXT:    # sched: [14:7.00]
+; ATOM-NEXT:    imulq $665536, (%rsi), %rdi # imm = 0xA27C0
+; ATOM-NEXT:    # sched: [14:7.00]
+; ATOM-NEXT:    imulq $7, %rdi, %rdi # sched: [14:7.00]
+; ATOM-NEXT:    imulq $7, (%rsi), %rdi # sched: [14:7.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_imul_64:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:    imulq %rdi # sched: [3:1.00]
+; SLM-NEXT:    imulq (%rsi) # sched: [6:1.00]
+; SLM-NEXT:    imulq %rdi, %rdi # sched: [3:1.00]
+; SLM-NEXT:    imulq (%rsi), %rdi # sched: [6:1.00]
+; SLM-NEXT:    imulq $665536, %rdi, %rdi # imm = 0xA27C0
+; SLM-NEXT:    # sched: [3:1.00]
+; SLM-NEXT:    imulq $665536, (%rsi), %rdi # imm = 0xA27C0
+; SLM-NEXT:    # sched: [6:1.00]
+; SLM-NEXT:    imulq $7, %rdi, %rdi # sched: [3:1.00]
+; SLM-NEXT:    imulq $7, (%rsi), %rdi # sched: [6:1.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_imul_64:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    imulq %rdi # sched: [3:1.00]
+; SANDY-NEXT:    imulq (%rsi) # sched: [7:1.00]
+; SANDY-NEXT:    imulq %rdi, %rdi # sched: [3:1.00]
+; SANDY-NEXT:    imulq (%rsi), %rdi # sched: [7:1.00]
+; SANDY-NEXT:    imulq $665536, %rdi, %rdi # imm = 0xA27C0
+; SANDY-NEXT:    # sched: [3:1.00]
+; SANDY-NEXT:    imulq $665536, (%rsi), %rdi # imm = 0xA27C0
+; SANDY-NEXT:    # sched: [7:1.00]
+; SANDY-NEXT:    imulq $7, %rdi, %rdi # sched: [3:1.00]
+; SANDY-NEXT:    imulq $7, (%rsi), %rdi # sched: [7:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_imul_64:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    imulq %rdi # sched: [4:1.00]
+; HASWELL-NEXT:    imulq (%rsi) # sched: [8:1.00]
+; HASWELL-NEXT:    imulq %rdi, %rdi # sched: [3:1.00]
+; HASWELL-NEXT:    imulq (%rsi), %rdi # sched: [8:1.00]
+; HASWELL-NEXT:    imulq $665536, %rdi, %rdi # imm = 0xA27C0
+; HASWELL-NEXT:    # sched: [3:1.00]
+; HASWELL-NEXT:    imulq $665536, (%rsi), %rdi # imm = 0xA27C0
+; HASWELL-NEXT:    # sched: [8:1.00]
+; HASWELL-NEXT:    imulq $7, %rdi, %rdi # sched: [3:1.00]
+; HASWELL-NEXT:    imulq $7, (%rsi), %rdi # sched: [8:1.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_imul_64:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    imulq %rdi # sched: [4:1.00]
+; BROADWELL-NEXT:    imulq (%rsi) # sched: [8:1.00]
+; BROADWELL-NEXT:    imulq %rdi, %rdi # sched: [3:1.00]
+; BROADWELL-NEXT:    imulq (%rsi), %rdi # sched: [4:1.00]
+; BROADWELL-NEXT:    imulq $665536, %rdi, %rdi # imm = 0xA27C0
+; BROADWELL-NEXT:    # sched: [3:1.00]
+; BROADWELL-NEXT:    imulq $665536, (%rsi), %rdi # imm = 0xA27C0
+; BROADWELL-NEXT:    # sched: [4:1.00]
+; BROADWELL-NEXT:    imulq $7, %rdi, %rdi # sched: [3:1.00]
+; BROADWELL-NEXT:    imulq $7, (%rsi), %rdi # sched: [4:1.00]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_imul_64:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    imulq %rdi # sched: [4:1.00]
+; SKYLAKE-NEXT:    imulq (%rsi) # sched: [8:1.00]
+; SKYLAKE-NEXT:    imulq %rdi, %rdi # sched: [3:1.00]
+; SKYLAKE-NEXT:    imulq (%rsi), %rdi # sched: [4:1.00]
+; SKYLAKE-NEXT:    imulq $665536, %rdi, %rdi # imm = 0xA27C0
+; SKYLAKE-NEXT:    # sched: [3:1.00]
+; SKYLAKE-NEXT:    imulq $665536, (%rsi), %rdi # imm = 0xA27C0
+; SKYLAKE-NEXT:    # sched: [4:1.00]
+; SKYLAKE-NEXT:    imulq $7, %rdi, %rdi # sched: [3:1.00]
+; SKYLAKE-NEXT:    imulq $7, (%rsi), %rdi # sched: [4:1.00]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_imul_64:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    imulq %rdi # sched: [4:1.00]
+; SKX-NEXT:    imulq (%rsi) # sched: [8:1.00]
+; SKX-NEXT:    imulq %rdi, %rdi # sched: [3:1.00]
+; SKX-NEXT:    imulq (%rsi), %rdi # sched: [4:1.00]
+; SKX-NEXT:    imulq $665536, %rdi, %rdi # imm = 0xA27C0
+; SKX-NEXT:    # sched: [3:1.00]
+; SKX-NEXT:    imulq $665536, (%rsi), %rdi # imm = 0xA27C0
+; SKX-NEXT:    # sched: [4:1.00]
+; SKX-NEXT:    imulq $7, %rdi, %rdi # sched: [3:1.00]
+; SKX-NEXT:    imulq $7, (%rsi), %rdi # sched: [4:1.00]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_imul_64:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    imulq %rdi # sched: [3:1.00]
+; BTVER2-NEXT:    imulq (%rsi) # sched: [6:1.00]
+; BTVER2-NEXT:    imulq %rdi, %rdi # sched: [3:1.00]
+; BTVER2-NEXT:    imulq (%rsi), %rdi # sched: [6:1.00]
+; BTVER2-NEXT:    imulq $665536, %rdi, %rdi # imm = 0xA27C0
+; BTVER2-NEXT:    # sched: [3:1.00]
+; BTVER2-NEXT:    imulq $665536, (%rsi), %rdi # imm = 0xA27C0
+; BTVER2-NEXT:    # sched: [6:1.00]
+; BTVER2-NEXT:    imulq $7, %rdi, %rdi # sched: [3:1.00]
+; BTVER2-NEXT:    imulq $7, (%rsi), %rdi # sched: [6:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_imul_64:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    imulq %rdi # sched: [4:1.00]
+; ZNVER1-NEXT:    imulq (%rsi) # sched: [9:1.00]
+; ZNVER1-NEXT:    imulq %rdi, %rdi # sched: [4:1.00]
+; ZNVER1-NEXT:    imulq (%rsi), %rdi # sched: [4:1.00]
+; ZNVER1-NEXT:    imulq $665536, %rdi, %rdi # imm = 0xA27C0
+; ZNVER1-NEXT:    # sched: [4:1.00]
+; ZNVER1-NEXT:    imulq $665536, (%rsi), %rdi # imm = 0xA27C0
+; ZNVER1-NEXT:    # sched: [4:1.00]
+; ZNVER1-NEXT:    imulq $7, %rdi, %rdi # sched: [4:1.00]
+; ZNVER1-NEXT:    imulq $7, (%rsi), %rdi # sched: [4:1.00]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  tail call void asm "imulq $0 \0A\09 imulq $1 \0A\09 imulq $0, $0 \0A\09 imulq $1, $0 \0A\09 imulq $2, $0, $0 \0A\09 imulq $2, $1, $0 \0A\09 imulq $3, $0, $0 \0A\09 imulq $3, $1, $0", "r,*m,i,i"(i64 %a0, i64* %a1, i32 665536, i8 7) nounwind
+  ret void
+}
 
 define void @test_in() optsize {
 ; GENERIC-LABEL: test_in:
