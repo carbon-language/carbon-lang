@@ -178,6 +178,10 @@ public:
   explicit DSAStackTy(Sema &S) : SemaRef(S) {}
 
   bool isClauseParsingMode() const { return ClauseKindMode != OMPC_unknown; }
+  OpenMPClauseKind getClauseParsingMode() const {
+    assert(isClauseParsingMode() && "Must be in clause parsing mode.");
+    return ClauseKindMode;
+  }
   void setClauseParsingMode(OpenMPClauseKind K) { ClauseKindMode = K; }
 
   bool isForceVarCapturing() const { return ForceCapturing; }
@@ -1102,8 +1106,6 @@ DSAStackTy::DSAVarData DSAStackTy::hasInnermostDSA(
 bool DSAStackTy::hasExplicitDSA(
     ValueDecl *D, const llvm::function_ref<bool(OpenMPClauseKind)> &CPred,
     unsigned Level, bool NotLastprivate) {
-  if (CPred(ClauseKindMode))
-    return true;
   if (isStackEmpty())
     return false;
   D = getCanonicalDecl(D);
@@ -1367,6 +1369,8 @@ bool Sema::isOpenMPPrivateDecl(ValueDecl *D, unsigned Level) {
   return DSAStack->hasExplicitDSA(
              D, [](OpenMPClauseKind K) -> bool { return K == OMPC_private; },
              Level) ||
+         (DSAStack->isClauseParsingMode() &&
+          DSAStack->getClauseParsingMode() == OMPC_private) ||
          // Consider taskgroup reduction descriptor variable a private to avoid
          // possible capture in the region.
          (DSAStack->hasExplicitDirective(
