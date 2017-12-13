@@ -157,7 +157,7 @@ struct ScudoChunk : UnpackedHeader {
   }
 };
 
-ScudoChunk *getScudoChunk(uptr UserBeg) {
+INLINE ScudoChunk *getScudoChunk(uptr UserBeg) {
   return reinterpret_cast<ScudoChunk *>(UserBeg - AlignedChunkHeaderSize);
 }
 
