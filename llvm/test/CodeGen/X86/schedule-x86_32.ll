@@ -1261,6 +1261,100 @@ define void @test_into() optsize {
   ret void
 }
 
+define void @test_jcxz_jecxz() optsize {
+; GENERIC-LABEL: test_jcxz_jecxz:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:  JXTGT:
+; GENERIC-NEXT:    jcxz JXTGT
+; GENERIC-NEXT:    jecxz JXTGT
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retl
+;
+; ATOM-LABEL: test_jcxz_jecxz:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:  JXTGT:
+; ATOM-NEXT:    jcxz JXTGT # sched: [4:2.00]
+; ATOM-NEXT:    jecxz JXTGT # sched: [4:2.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retl # sched: [79:39.50]
+;
+; SLM-LABEL: test_jcxz_jecxz:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:  JXTGT:
+; SLM-NEXT:    jcxz JXTGT # sched: [1:1.00]
+; SLM-NEXT:    jecxz JXTGT # sched: [1:1.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retl # sched: [4:1.00]
+;
+; SANDY-LABEL: test_jcxz_jecxz:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:  JXTGT:
+; SANDY-NEXT:    jcxz JXTGT # sched: [1:1.00]
+; SANDY-NEXT:    jecxz JXTGT # sched: [1:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retl # sched: [5:1.00]
+;
+; HASWELL-LABEL: test_jcxz_jecxz:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:  JXTGT:
+; HASWELL-NEXT:    jcxz JXTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jecxz JXTGT # sched: [1:0.50]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retl # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_jcxz_jecxz:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:  JXTGT:
+; BROADWELL-NEXT:    jcxz JXTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jecxz JXTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retl # sched: [6:0.50]
+;
+; SKYLAKE-LABEL: test_jcxz_jecxz:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:  JXTGT:
+; SKYLAKE-NEXT:    jcxz JXTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jecxz JXTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retl # sched: [6:0.50]
+;
+; SKX-LABEL: test_jcxz_jecxz:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:  JXTGT:
+; SKX-NEXT:    jcxz JXTGT # sched: [1:0.50]
+; SKX-NEXT:    jecxz JXTGT # sched: [1:0.50]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retl # sched: [6:0.50]
+;
+; BTVER2-LABEL: test_jcxz_jecxz:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:  JXTGT:
+; BTVER2-NEXT:    jcxz JXTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jecxz JXTGT # sched: [1:0.50]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retl # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_jcxz_jecxz:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:  JXTGT:
+; ZNVER1-NEXT:    jcxz JXTGT # sched: [1:0.50]
+; ZNVER1-NEXT:    jecxz JXTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retl # sched: [1:0.50]
+  call void asm sideeffect "JXTGT: \0A\09 jcxz JXTGT \0A\09 jecxz JXTGT", ""()
+  ret void
+}
+
 define void @test_leave() optsize {
 ; GENERIC-LABEL: test_leave:
 ; GENERIC:       # %bb.0:

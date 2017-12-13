@@ -7027,10 +7027,473 @@ define void @test_invlpg_invlpga(i8 *%a0) optsize {
   ret void
 }
 
-; TODO - test_jcc
-; TODO - test_jcxz
-; TODO - test_jwcxz
-; TODO - test_jrcxz
+define void @test_jcc() optsize {
+; GENERIC-LABEL: test_jcc:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:  JCCTGT:
+; GENERIC-NEXT:    jo JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jno JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jb JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jb JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jb JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jae JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jae JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jae JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    je JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    je JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jne JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jne JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jbe JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jbe JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    ja JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    ja JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    js JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jns JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jp JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jp JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jnp JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jnp JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jl JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jl JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jge JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jge JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jle JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jle JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jg JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jg JCCTGT # sched: [1:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_jcc:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:  JCCTGT:
+; ATOM-NEXT:    jo JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jno JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jb JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jb JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jb JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jae JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jae JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jae JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    je JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    je JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jne JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jne JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jbe JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jbe JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    ja JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    ja JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    js JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jns JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jp JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jp JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jnp JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jnp JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jl JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jl JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jge JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jge JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jle JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jle JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jg JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    jg JCCTGT # sched: [1:1.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_jcc:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:  JCCTGT:
+; SLM-NEXT:    jo JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jno JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jb JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jb JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jb JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jae JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jae JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jae JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    je JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    je JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jne JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jne JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jbe JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jbe JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    ja JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    ja JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    js JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jns JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jp JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jp JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jnp JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jnp JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jl JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jl JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jge JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jge JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jle JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jle JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jg JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    jg JCCTGT # sched: [1:1.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_jcc:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:  JCCTGT:
+; SANDY-NEXT:    jo JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jno JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jb JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jb JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jb JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jae JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jae JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jae JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    je JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    je JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jne JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jne JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jbe JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jbe JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    ja JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    ja JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    js JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jns JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jp JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jp JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jnp JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jnp JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jl JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jl JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jge JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jge JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jle JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jle JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jg JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    jg JCCTGT # sched: [1:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_jcc:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:  JCCTGT:
+; HASWELL-NEXT:    jo JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jno JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jb JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jb JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jb JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jae JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jae JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jae JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    je JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    je JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jne JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jne JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jbe JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jbe JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    ja JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    ja JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    js JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jns JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jp JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jp JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jnp JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jnp JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jl JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jl JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jge JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jge JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jle JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jle JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jg JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jg JCCTGT # sched: [1:0.50]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_jcc:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:  JCCTGT:
+; BROADWELL-NEXT:    jo JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jno JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jb JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jb JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jb JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jae JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jae JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jae JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    je JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    je JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jne JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jne JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jbe JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jbe JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    ja JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    ja JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    js JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jns JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jp JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jp JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jnp JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jnp JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jl JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jl JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jge JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jge JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jle JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jle JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jg JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jg JCCTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_jcc:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:  JCCTGT:
+; SKYLAKE-NEXT:    jo JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jno JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jb JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jb JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jb JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jae JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jae JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jae JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    je JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    je JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jne JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jne JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jbe JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jbe JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    ja JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    ja JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    js JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jns JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jp JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jp JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jnp JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jnp JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jl JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jl JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jge JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jge JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jle JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jle JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jg JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jg JCCTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_jcc:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:  JCCTGT:
+; SKX-NEXT:    jo JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jno JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jb JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jb JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jb JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jae JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jae JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jae JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    je JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    je JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jne JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jne JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jbe JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jbe JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    ja JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    ja JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    js JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jns JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jp JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jp JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jnp JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jnp JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jl JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jl JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jge JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jge JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jle JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jle JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jg JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    jg JCCTGT # sched: [1:0.50]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_jcc:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:  JCCTGT:
+; BTVER2-NEXT:    jo JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jno JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jb JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jb JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jb JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jae JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jae JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jae JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    je JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    je JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jne JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jne JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jbe JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jbe JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    ja JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    ja JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    js JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jns JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jp JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jp JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jnp JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jnp JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jl JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jl JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jge JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jge JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jle JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jle JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jg JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jg JCCTGT # sched: [1:0.50]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_jcc:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:  JCCTGT:
+; ZNVER1-NEXT:    jo JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jno JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jb JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jb JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jb JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jae JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jae JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jae JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    je JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    je JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jne JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jne JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jbe JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jbe JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    ja JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    ja JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    js JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jns JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jp JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jp JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jnp JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jnp JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jl JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jl JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jge JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jge JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jle JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jle JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jg JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jg JCCTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  call void asm sideeffect "JCCTGT: \0A\09 jo JCCTGT \0A\09 jno JCCTGT \0A\09 jb JCCTGT \0A\09 jc JCCTGT \0A\09 jnae JCCTGT \0A\09 jnb JCCTGT \0A\09 jnc JCCTGT \0A\09 jae JCCTGT \0A\09 jz JCCTGT \0A\09 je JCCTGT \0A\09 jnz JCCTGT \0A\09 jne JCCTGT \0A\09 jbe JCCTGT \0A\09 jna JCCTGT \0A\09 jnbe JCCTGT \0A\09 ja JCCTGT \0A\09 js JCCTGT \0A\09 jns JCCTGT \0A\09 jp JCCTGT \0A\09 jpe JCCTGT \0A\09 jnp JCCTGT \0A\09 jpo JCCTGT \0A\09 jl JCCTGT \0A\09 jnge JCCTGT \0A\09 jnl JCCTGT \0A\09 jge JCCTGT \0A\09 jle JCCTGT \0A\09 jng JCCTGT \0A\09 jnle JCCTGT \0A\09 jg JCCTGT", ""()
+  ret void
+}
+
+define void @test_jecxz_jrcxz() optsize {
+; GENERIC-LABEL: test_jecxz_jrcxz:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:  JXTGT:
+; GENERIC-NEXT:    jecxz JXTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jrcxz JXTGT # sched: [2:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_jecxz_jrcxz:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:  JXTGT:
+; ATOM-NEXT:    jecxz JXTGT # sched: [4:2.00]
+; ATOM-NEXT:    jrcxz JXTGT # sched: [4:2.00]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_jecxz_jrcxz:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:  JXTGT:
+; SLM-NEXT:    jecxz JXTGT # sched: [1:1.00]
+; SLM-NEXT:    jrcxz JXTGT # sched: [1:1.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_jecxz_jrcxz:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:  JXTGT:
+; SANDY-NEXT:    jecxz JXTGT # sched: [1:1.00]
+; SANDY-NEXT:    jrcxz JXTGT # sched: [2:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_jecxz_jrcxz:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:  JXTGT:
+; HASWELL-NEXT:    jecxz JXTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jrcxz JXTGT # sched: [2:0.50]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_jecxz_jrcxz:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:  JXTGT:
+; BROADWELL-NEXT:    jecxz JXTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jrcxz JXTGT # sched: [2:0.50]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_jecxz_jrcxz:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:  JXTGT:
+; SKYLAKE-NEXT:    jecxz JXTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jrcxz JXTGT # sched: [2:0.50]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_jecxz_jrcxz:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:  JXTGT:
+; SKX-NEXT:    jecxz JXTGT # sched: [1:0.50]
+; SKX-NEXT:    jrcxz JXTGT # sched: [2:0.50]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_jecxz_jrcxz:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:  JXTGT:
+; BTVER2-NEXT:    jecxz JXTGT # sched: [1:0.50]
+; BTVER2-NEXT:    jrcxz JXTGT # sched: [1:0.50]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_jecxz_jrcxz:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:  JXTGT:
+; ZNVER1-NEXT:    jecxz JXTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jrcxz JXTGT # sched: [1:0.50]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  call void asm sideeffect "JXTGT: \0A\09 jecxz JXTGT \0A\09 jrcxz JXTGT", ""()
+  ret void
+}
 
 ; TODO - test_jmp
 
@@ -7304,11 +7767,109 @@ define void @test_lods() optsize {
   ret void
 }
 
-; TODO - test_loop
-; TODO - test_loope
-; TODO - test_loopne
-; TODO - test_loopnz
-; TODO - test_loopz
+define void @test_loop() optsize {
+; GENERIC-LABEL: test_loop:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:  LTGT:
+; GENERIC-NEXT:    loop LTGT # sched: [1:1.00]
+; GENERIC-NEXT:    loope LTGT # sched: [1:1.00]
+; GENERIC-NEXT:    loopne LTGT # sched: [1:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; ATOM-LABEL: test_loop:
+; ATOM:       # %bb.0:
+; ATOM-NEXT:    #APP
+; ATOM-NEXT:  LTGT:
+; ATOM-NEXT:    loop LTGT # sched: [18:9.00]
+; ATOM-NEXT:    loope LTGT # sched: [8:4.00]
+; ATOM-NEXT:    loopne LTGT # sched: [17:8.50]
+; ATOM-NEXT:    #NO_APP
+; ATOM-NEXT:    retq # sched: [79:39.50]
+;
+; SLM-LABEL: test_loop:
+; SLM:       # %bb.0:
+; SLM-NEXT:    #APP
+; SLM-NEXT:  LTGT:
+; SLM-NEXT:    loop LTGT # sched: [1:1.00]
+; SLM-NEXT:    loope LTGT # sched: [1:1.00]
+; SLM-NEXT:    loopne LTGT # sched: [1:1.00]
+; SLM-NEXT:    #NO_APP
+; SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SANDY-LABEL: test_loop:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:  LTGT:
+; SANDY-NEXT:    loop LTGT # sched: [1:1.00]
+; SANDY-NEXT:    loope LTGT # sched: [1:1.00]
+; SANDY-NEXT:    loopne LTGT # sched: [1:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_loop:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:  LTGT:
+; HASWELL-NEXT:    loop LTGT # sched: [7:2.00]
+; HASWELL-NEXT:    loope LTGT # sched: [7:2.00]
+; HASWELL-NEXT:    loopne LTGT # sched: [7:2.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_loop:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:  LTGT:
+; BROADWELL-NEXT:    loop LTGT # sched: [7:2.00]
+; BROADWELL-NEXT:    loope LTGT # sched: [7:2.00]
+; BROADWELL-NEXT:    loopne LTGT # sched: [7:2.00]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_loop:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:  LTGT:
+; SKYLAKE-NEXT:    loop LTGT # sched: [7:2.00]
+; SKYLAKE-NEXT:    loope LTGT # sched: [7:2.00]
+; SKYLAKE-NEXT:    loopne LTGT # sched: [7:2.00]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_loop:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:  LTGT:
+; SKX-NEXT:    loop LTGT # sched: [7:2.00]
+; SKX-NEXT:    loope LTGT # sched: [7:2.00]
+; SKX-NEXT:    loopne LTGT # sched: [7:2.00]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_loop:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:  LTGT:
+; BTVER2-NEXT:    loop LTGT # sched: [1:0.50]
+; BTVER2-NEXT:    loope LTGT # sched: [1:0.50]
+; BTVER2-NEXT:    loopne LTGT # sched: [1:0.50]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_loop:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:  LTGT:
+; ZNVER1-NEXT:    loop LTGT # sched: [1:0.50]
+; ZNVER1-NEXT:    loope LTGT # sched: [1:0.50]
+; ZNVER1-NEXT:    loopne LTGT # sched: [1:0.50]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  call void asm sideeffect "LTGT: \0A\09 loop LTGT \0A\09 loope LTGT \0A\09 loopne LTGT", ""()
+  ret void
+}
 
 ; TODO - test_mov
 
