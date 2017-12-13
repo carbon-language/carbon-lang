@@ -549,6 +549,53 @@ lower bits from the 32-bit virtual register 0 to the 8-bit virtual register 1:
 The names of the subregister indices are target specific, and are typically
 defined in the target's ``*RegisterInfo.td`` file.
 
+Constant Pool Indices
+^^^^^^^^^^^^^^^^^^^^^
+
+A constant pool index (CPI) operand is printed using its index in the
+function's ``MachineConstantPool`` and an offset.
+
+For example, a CPI with the index 1 and offset 8:
+
+.. code-block:: text
+
+    %1:gr64 = MOV64ri %const.1 + 8
+
+For a CPI with the index 0 and offset -12:
+
+.. code-block:: text
+
+    %1:gr64 = MOV64ri %const.0 - 12
+
+A constant pool entry is bound to a LLVM IR ``Constant`` or a target-specific
+``MachineConstantPoolValue``. When serializing all the function's constants the
+following format is used:
+
+.. code-block:: text
+
+    constants:
+      - id:               <index>
+        value:            <value>
+        alignment:        <alignment>
+        isTargetSpecific: <target-specific>
+
+where ``<index>`` is a 32-bit unsigned integer, ``<value>`` is a `LLVM IR Constant
+<https://www.llvm.org/docs/LangRef.html#constants>`_, alignment is a 32-bit
+unsigned integer, and ``<target-specific>`` is either true or false.
+
+Example:
+
+.. code-block:: text
+
+    constants:
+      - id:               0
+        value:            'double 3.250000e+00'
+        alignment:        8
+      - id:               1
+        value:            'g-(LPC0+8)'
+        alignment:        4
+        isTargetSpecific: true
+
 Global Value Operands
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -577,8 +624,6 @@ the '@' prefix, like in the following examples: ``@0``, ``@989``.
    mask machine operands.
 .. TODO: Describe the frame information YAML mapping.
 .. TODO: Describe the syntax of the stack object machine operands and their
-   YAML definitions.
-.. TODO: Describe the syntax of the constant pool machine operands and their
    YAML definitions.
 .. TODO: Describe the syntax of the jump table machine operands and their
    YAML definitions.

@@ -119,4 +119,36 @@ TEST(MachineOperandTest, PrintSubRegIndex) {
   ASSERT_TRUE(OS.str() == "%subreg.3");
 }
 
+TEST(MachineOperandTest, PrintCPI) {
+  // Create a MachineOperand with a constant pool index and print it.
+  MachineOperand MO = MachineOperand::CreateCPI(0, 8);
+
+  // Checking some preconditions on the newly created
+  // MachineOperand.
+  ASSERT_TRUE(MO.isCPI());
+  ASSERT_TRUE(MO.getIndex() == 0);
+  ASSERT_TRUE(MO.getOffset() == 8);
+
+  // Print a MachineOperand containing a constant pool index and a positive
+  // offset.
+  std::string str;
+  {
+    raw_string_ostream OS(str);
+    MO.print(OS, /*TRI=*/nullptr, /*IntrinsicInfo=*/nullptr);
+    ASSERT_TRUE(OS.str() == "%const.0 + 8");
+  }
+
+  str.clear();
+
+  MO.setOffset(-12);
+
+  // Print a MachineOperand containing a constant pool index and a negative
+  // offset.
+  {
+    raw_string_ostream OS(str);
+    MO.print(OS, /*TRI=*/nullptr, /*IntrinsicInfo=*/nullptr);
+    ASSERT_TRUE(OS.str() == "%const.0 - 12");
+  }
+}
+
 } // end namespace

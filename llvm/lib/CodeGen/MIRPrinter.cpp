@@ -862,7 +862,8 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
     LLVM_FALLTHROUGH;
   case MachineOperand::MO_Register:
   case MachineOperand::MO_CImmediate:
-  case MachineOperand::MO_MachineBasicBlock: {
+  case MachineOperand::MO_MachineBasicBlock:
+  case MachineOperand::MO_ConstantPoolIndex: {
     unsigned TiedOperandIdx = 0;
     if (ShouldPrintRegisterTies && Op.isReg() && Op.isTied() && !Op.isDef())
       TiedOperandIdx = Op.getParent()->findTiedOperandIdx(OpIdx);
@@ -876,10 +877,6 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
     break;
   case MachineOperand::MO_FrameIndex:
     printStackObjectReference(Op.getIndex());
-    break;
-  case MachineOperand::MO_ConstantPoolIndex:
-    OS << "%const." << Op.getIndex();
-    printOffset(Op.getOffset());
     break;
   case MachineOperand::MO_TargetIndex:
     OS << "target-index(";

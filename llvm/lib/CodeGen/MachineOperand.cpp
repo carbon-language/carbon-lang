@@ -376,6 +376,16 @@ static void tryToGetTargetInfo(const MachineOperand &MO,
   }
 }
 
+static void printOffset(raw_ostream &OS, int64_t Offset) {
+  if (Offset == 0)
+    return;
+  if (Offset < 0) {
+    OS << " - " << -Offset;
+    return;
+  }
+  OS << " + " << Offset;
+}
+
 void MachineOperand::printSubregIdx(raw_ostream &OS, uint64_t Index,
                                     const TargetRegisterInfo *TRI) {
   OS << "%subreg.";
@@ -486,10 +496,8 @@ void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
     OS << "<fi#" << getIndex() << '>';
     break;
   case MachineOperand::MO_ConstantPoolIndex:
-    OS << "<cp#" << getIndex();
-    if (getOffset())
-      OS << "+" << getOffset();
-    OS << '>';
+    OS << "%const." << getIndex();
+    printOffset(OS, getOffset());
     break;
   case MachineOperand::MO_TargetIndex:
     OS << "<ti#" << getIndex();
