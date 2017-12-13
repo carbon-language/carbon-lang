@@ -151,4 +151,34 @@ TEST(MachineOperandTest, PrintCPI) {
   }
 }
 
+TEST(MachineOperandTest, PrintTargetIndexName) {
+  // Create a MachineOperand with a target index and print it.
+  MachineOperand MO = MachineOperand::CreateTargetIndex(0, 8);
+
+  // Checking some preconditions on the newly created
+  // MachineOperand.
+  ASSERT_TRUE(MO.isTargetIndex());
+  ASSERT_TRUE(MO.getIndex() == 0);
+  ASSERT_TRUE(MO.getOffset() == 8);
+
+  // Print a MachineOperand containing a target index and a positive offset.
+  std::string str;
+  {
+    raw_string_ostream OS(str);
+    MO.print(OS, /*TRI=*/nullptr, /*IntrinsicInfo=*/nullptr);
+    ASSERT_TRUE(OS.str() == "target-index(<unknown>) + 8");
+  }
+
+  str.clear();
+
+  MO.setOffset(-12);
+
+  // Print a MachineOperand containing a target index and a negative offset.
+  {
+    raw_string_ostream OS(str);
+    MO.print(OS, /*TRI=*/nullptr, /*IntrinsicInfo=*/nullptr);
+    ASSERT_TRUE(OS.str() == "target-index(<unknown>) - 12");
+  }
+}
+
 } // end namespace

@@ -615,6 +615,21 @@ If the identifier doesn't match the regular expression
 The unnamed global values are represented using an unsigned numeric value with
 the '@' prefix, like in the following examples: ``@0``, ``@989``.
 
+Target-dependent Index Operands
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A target index operand is a target-specific index and an offset. The
+target-specific index is printed using target-specific names and a positive or
+negative offset.
+
+For example, the ``amdgpu-constdata-start`` is associated with the index ``0``
+in the AMDGPU backend. So if we have a target index operand with the index 0
+and the offset 8:
+
+.. code-block:: text
+
+    %sgpr2 = S_ADD_U32 _, target-index(amdgpu-constdata-start) + 8, implicit-def _, implicit-def _
+
 .. TODO: Describe the parsers default behaviour when optional YAML attributes
    are missing.
 .. TODO: Describe the syntax for the bundled instructions.
@@ -631,6 +646,5 @@ the '@' prefix, like in the following examples: ``@0``, ``@989``.
 .. TODO: Describe the syntax of the CFI index machine operands.
 .. TODO: Describe the syntax of the metadata machine operands, and the
    instructions debug location attribute.
-.. TODO: Describe the syntax of the target index machine operands.
 .. TODO: Describe the syntax of the register live out machine operands.
 .. TODO: Describe the syntax of the machine memory operands.
