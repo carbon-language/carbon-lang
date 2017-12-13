@@ -9167,10 +9167,6 @@ define void @test_pause() optsize {
 ; TODO - test_popfd
 ; TODO - test_popfq
 
-; TODO - test_prefetch
-; TODO - test_prefetchw
-; TODO - test_prefetchX
-
 ; TODO - test_push
 ; TODO - test_pusha
 ; TODO - test_pushad
