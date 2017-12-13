@@ -224,9 +224,7 @@ define i8 @abs_swapped(i8 %a) {
 ; CHECK-NEXT:    [[CMP1:%.*]] = icmp sgt i8 %a, 0
 ; CHECK-NEXT:    [[CMP2:%.*]] = icmp slt i8 %a, 0
 ; CHECK-NEXT:    [[M1:%.*]] = select i1 [[CMP1]], i8 %a, i8 [[NEG]]
-; CHECK-NEXT:    [[M2:%.*]] = select i1 [[CMP2]], i8 [[NEG]], i8 %a
-; CHECK-NEXT:    [[R:%.*]] = or i8 [[M2]], [[M1]]
-; CHECK-NEXT:    ret i8 [[R]]
+; CHECK-NEXT:    ret i8 [[M1]]
 ;
   %neg = sub i8 0, %a
   %cmp1 = icmp sgt i8 %a, 0
@@ -243,9 +241,7 @@ define i8 @nabs_swapped(i8 %a) {
 ; CHECK-NEXT:    [[CMP1:%.*]] = icmp slt i8 %a, 0
 ; CHECK-NEXT:    [[CMP2:%.*]] = icmp sgt i8 %a, 0
 ; CHECK-NEXT:    [[M1:%.*]] = select i1 [[CMP1]], i8 %a, i8 [[NEG]]
-; CHECK-NEXT:    [[M2:%.*]] = select i1 [[CMP2]], i8 [[NEG]], i8 %a
-; CHECK-NEXT:    [[R:%.*]] = xor i8 [[M2]], [[M1]]
-; CHECK-NEXT:    ret i8 [[R]]
+; CHECK-NEXT:    ret i8 0
 ;
   %neg = sub i8 0, %a
   %cmp1 = icmp slt i8 %a, 0
