@@ -235,6 +235,19 @@ public:
            VK == RISCVMCExpr::VK_RISCV_None;
   }
 
+  bool isSImm6() const {
+    RISCVMCExpr::VariantKind VK;
+    int64_t Imm;
+    bool IsValid;
+    bool IsConstantImm = evaluateConstantImm(Imm, VK);
+    if (!IsConstantImm)
+      IsValid = RISCVAsmParser::classifySymbolRef(getImm(), VK, Imm);
+    else
+      IsValid = isInt<6>(Imm);
+    return IsValid &&
+           (VK == RISCVMCExpr::VK_RISCV_None || VK == RISCVMCExpr::VK_RISCV_LO);
+  }
+
   bool isUImm6NonZero() const {
     int64_t Imm;
     RISCVMCExpr::VariantKind VK;
@@ -283,19 +296,6 @@ public:
     bool IsConstantImm = evaluateConstantImm(Imm, VK);
     return IsConstantImm && isShiftedUInt<8, 2>(Imm) && (Imm != 0) &&
            VK == RISCVMCExpr::VK_RISCV_None;
-  }
-
-  bool isSImm6() const {
-    RISCVMCExpr::VariantKind VK;
-    int64_t Imm;
-    bool IsValid;
-    bool IsConstantImm = evaluateConstantImm(Imm, VK);
-    if (!IsConstantImm)
-      IsValid = RISCVAsmParser::classifySymbolRef(getImm(), VK, Imm);
-    else
-      IsValid = isInt<6>(Imm);
-    return IsValid &&
-           (VK == RISCVMCExpr::VK_RISCV_None || VK == RISCVMCExpr::VK_RISCV_LO);
   }
 
   bool isSImm12() const {
@@ -596,6 +596,9 @@ bool RISCVAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     return generateImmOutOfRangeError(Operands, ErrorInfo, 0, (1 << 5) - 1);
   case Match_InvalidUImm5NonZero:
     return generateImmOutOfRangeError(Operands, ErrorInfo, 1, (1 << 5) - 1);
+  case Match_InvalidSImm6:
+    return generateImmOutOfRangeError(Operands, ErrorInfo, -(1 << 5),
+                                      (1 << 5) - 1);
   case Match_InvalidUImm6NonZero:
     return generateImmOutOfRangeError(Operands, ErrorInfo, 1, (1 << 6) - 1);
   case Match_InvalidUImm7Lsb00:
@@ -622,9 +625,6 @@ bool RISCVAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     return generateImmOutOfRangeError(
         Operands, ErrorInfo, 4, (1 << 10) - 4,
         "immediate must be a multiple of 4 bytes in the range");
-  case Match_InvalidSImm6:
-    return generateImmOutOfRangeError(Operands, ErrorInfo, -(1 << 5),
-                                      (1 << 5) - 1);
   case Match_InvalidSImm10Lsb0000:
     return generateImmOutOfRangeError(
         Operands, ErrorInfo, -(1 << 9), (1 << 9) - 16,

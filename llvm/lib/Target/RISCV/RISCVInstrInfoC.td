@@ -13,16 +13,16 @@ include "RISCVInstrFormatsC.td"
 // Operand definitions.
 //===----------------------------------------------------------------------===//
 
-def simm6 : Operand<XLenVT>, ImmLeaf<XLenVT, [{return isInt<6>(Imm);}]> {
-  let ParserMatchClass = SImmAsmOperand<6>;
-  let EncoderMethod = "getImmOpValue";
-  let DecoderMethod = "decodeSImmOperand<6>";
-}
-
 def uimm5nonzero : Operand<XLenVT>,
                    ImmLeaf<XLenVT, [{return isUInt<5>(Imm) && (Imm != 0);}]> {
   let ParserMatchClass = UImmAsmOperand<5, "NonZero">;
   let DecoderMethod = "decodeUImmOperand<5>";
+}
+
+def simm6 : Operand<XLenVT>, ImmLeaf<XLenVT, [{return isInt<6>(Imm);}]> {
+  let ParserMatchClass = SImmAsmOperand<6>;
+  let EncoderMethod = "getImmOpValue";
+  let DecoderMethod = "decodeSImmOperand<6>";
 }
 
 def uimm6nonzero : Operand<XLenVT>,
