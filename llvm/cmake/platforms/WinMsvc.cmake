@@ -4,10 +4,14 @@
 # Usage:
 # cmake -G Ninja
 #    -DCMAKE_TOOLCHAIN_FILE=/path/to/this/file
+#    -DHOST_ARCH=[aarch64|arm64|armv7|arm|i686|x86|x86_64|x64]
 #    -DLLVM_NATIVE_TOOLCHAIN=/path/to/llvm/installation
 #    -DMSVC_BASE=/path/to/MSVC/system/libraries/and/includes
 #    -DWINSDK_BASE=/path/to/windows-sdk
 #    -DWINSDK_VER=windows sdk version folder name
+#
+# HOST_ARCH:
+#    The architecture to build for.
 #
 # LLVM_NATIVE_TOOLCHAIN:
 #   *Absolute path* to a folder containing the toolchain which will be used to
@@ -106,15 +110,34 @@ function(init_user_prop prop)
   endif()
 endfunction()
 
-# FIXME: We should support target architectures other than x64
 set(CMAKE_SYSTEM_NAME Windows)
 set(CMAKE_SYSTEM_VERSION 10.0)
 set(CMAKE_SYSTEM_PROCESSOR AMD64)
 
+init_user_prop(HOST_ARCH)
 init_user_prop(LLVM_NATIVE_TOOLCHAIN)
 init_user_prop(MSVC_BASE)
 init_user_prop(WINSDK_BASE)
 init_user_prop(WINSDK_VER)
+
+if(NOT HOST_ARCH)
+  set(HOST_ARCH x86_64)
+endif()
+if(HOST_ARCH STREQUAL "aarch64" OR HOST_ARCH STREQUAL "arm64")
+  set(TRIPLE_ARCH "aarch64")
+  set(WINSDK_ARCH "arm64")
+elseif(HOST_ARCH STREQUAL "armv7" OR HOST_ARCH STREQUAL "arm")
+  set(TRIPLE_ARCH "armv7")
+  set(WINSDK_ARCH "arm")
+elseif(HOST_ARCH STREQUAL "i686" OR HOST_ARCH STREQUAL "x86")
+  set(TRIPLE_ARCH "i686")
+  set(WINSDK_ARCH "x86")
+elseif(HOST_ARCH STREQUAL "x86_64" OR HOST_ARCH STREQUAL "x64")
+  set(TRIPLE_ARCH "x86_64")
+  set(WINSDK_ARCH "x64")
+else()
+  message(SEND_ERROR "Unknown host architecture ${HOST_ARCH}. Must be aarch64 (or arm64), armv7 (or arm), i686 (or x86), or x86_64 (or x64).")
+endif()
 
 set(MSVC_INCLUDE "${MSVC_BASE}/include")
 set(MSVC_LIB "${MSVC_BASE}/lib")
@@ -164,6 +187,7 @@ set(CROSS_TOOLCHAIN_FLAGS_NATIVE "${_CTF_NATIVE_DEFAULT}" CACHE STRING "")
 
 set(COMPILE_FLAGS
     -D_CRT_SECURE_NO_WARNINGS
+    --target=${TRIPLE_ARCH}-windows-msvc
     -fms-compatibility-version=19.11
     -imsvc "${MSVC_INCLUDE}"
     -imsvc "${WINSDK_INCLUDE}/ucrt"
@@ -189,10 +213,9 @@ set(LINK_FLAGS
     # Prevent CMake from attempting to invoke mt.exe. It only recognizes the slashed form and not the dashed form.
     /manifest:no
 
-    # FIXME: We should support target architectures other than x64.
-    -libpath:"${MSVC_LIB}/x64"
-    -libpath:"${WINSDK_LIB}/ucrt/x64"
-    -libpath:"${WINSDK_LIB}/um/x64")
+    -libpath:"${MSVC_LIB}/${WINSDK_ARCH}"
+    -libpath:"${WINSDK_LIB}/ucrt/${WINSDK_ARCH}"
+    -libpath:"${WINSDK_LIB}/um/${WINSDK_ARCH}")
 
 string(REPLACE ";" " " LINK_FLAGS "${LINK_FLAGS}")
 
