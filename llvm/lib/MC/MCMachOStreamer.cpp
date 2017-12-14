@@ -88,6 +88,8 @@ public:
   void EmitDataRegion(MCDataRegionType Kind) override;
   void EmitVersionMin(MCVersionMinType Kind, unsigned Major,
                       unsigned Minor, unsigned Update) override;
+  void EmitBuildVersion(unsigned Platform, unsigned Major,
+                        unsigned Minor, unsigned Update) override;
   void EmitThumbFunc(MCSymbol *Func) override;
   bool EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute) override;
   void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) override;
@@ -265,7 +267,13 @@ void MCMachOStreamer::EmitDataRegion(MCDataRegionType Kind) {
 
 void MCMachOStreamer::EmitVersionMin(MCVersionMinType Kind, unsigned Major,
                                      unsigned Minor, unsigned Update) {
-  getAssembler().setVersionMinInfo(Kind, Major, Minor, Update);
+  getAssembler().setVersionMin(Kind, Major, Minor, Update);
+}
+
+void MCMachOStreamer::EmitBuildVersion(unsigned Platform, unsigned Major,
+                                       unsigned Minor, unsigned Update) {
+  getAssembler().setBuildVersion((MachO::PlatformType)Platform, Major, Minor,
+                                 Update);
 }
 
 void MCMachOStreamer::EmitThumbFunc(MCSymbol *Symbol) {
