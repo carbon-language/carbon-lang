@@ -1222,6 +1222,9 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       }
     }
 
+    if (Subtarget.hasAVX512())
+      setOperationAction(ISD::SELECT, MVT::v1i1, Custom);
+
     if (Subtarget.hasDQI()) {
       for (auto VT : { MVT::v2i64, MVT::v4i64, MVT::v8i64 }) {
         setOperationAction(ISD::SINT_TO_FP,     VT, Legal);
