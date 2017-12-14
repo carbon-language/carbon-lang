@@ -242,7 +242,8 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
     assert(II != IE && "exception range not pointing to an instruction");
     do {
       auto &Instruction = II->second;
-      if (BC.MIA->isCall(Instruction)) {
+      if (BC.MIA->isCall(Instruction) &&
+          !BC.MIA->getConditionalTailCall(Instruction)) {
         assert(!BC.MIA->isInvoke(Instruction) &&
                "overlapping exception ranges detected");
         // Add extra operands to a call instruction making it an invoke from
@@ -553,7 +554,7 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer, bool EmitColdPart) {
       if (!LPSymbol) {
         Streamer->EmitIntValue(0, 4);
         return;
-      } 
+      }
       Streamer->EmitValue(MCBinaryExpr::createSub(
                               MCSymbolRefExpr::create(LPSymbol, *BC.Ctx.get()),
                               LPStartExpr,
@@ -566,7 +567,7 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer, bool EmitColdPart) {
       if (!LPSymbol) {
         Streamer->EmitIntValue(0, 4);
         return;
-      } 
+      }
       Streamer->emitAbsoluteSymbolDiff(LPSymbol, StartSymbol, 4);
     };
   }
