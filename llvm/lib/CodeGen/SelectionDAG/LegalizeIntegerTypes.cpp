@@ -3489,7 +3489,6 @@ SDValue DAGTypeLegalizer::PromoteIntRes_CONCAT_VECTORS(SDNode *N) {
   EVT NOutVT = TLI.getTypeToTransformTo(*DAG.getContext(), OutVT);
   assert(NOutVT.isVector() && "This type must be promoted to a vector type");
 
-  EVT InElemTy = OutVT.getVectorElementType();
   EVT OutElemTy = NOutVT.getVectorElementType();
 
   unsigned NumElem = N->getOperand(0).getValueType().getVectorNumElements();
@@ -3502,11 +3501,17 @@ SDValue DAGTypeLegalizer::PromoteIntRes_CONCAT_VECTORS(SDNode *N) {
   SmallVector<SDValue, 8> Ops(NumOutElem);
   for (unsigned i = 0; i < NumOperands; ++i) {
     SDValue Op = N->getOperand(i);
+    if (getTypeAction(Op.getValueType()) == TargetLowering::TypePromoteInteger)
+      Op = GetPromotedInteger(Op);
+    EVT SclrTy = Op.getValueType().getVectorElementType();
+    assert(NumElem == Op.getValueType().getVectorNumElements() &&
+           "Unexpected number of elements");
+
     for (unsigned j = 0; j < NumElem; ++j) {
       SDValue Ext = DAG.getNode(
-          ISD::EXTRACT_VECTOR_ELT, dl, InElemTy, Op,
+          ISD::EXTRACT_VECTOR_ELT, dl, SclrTy, Op,
           DAG.getConstant(j, dl, TLI.getVectorIdxTy(DAG.getDataLayout())));
-      Ops[i * NumElem + j] = DAG.getNode(ISD::ANY_EXTEND, dl, OutElemTy, Ext);
+      Ops[i * NumElem + j] = DAG.getAnyExtOrTrunc(Ext, dl, OutElemTy);
     }
   }
 
