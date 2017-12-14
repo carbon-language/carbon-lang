@@ -206,6 +206,7 @@ public:
   bool isRelocatableObject() const override;
 
 private:
+  bool isValidFunctionIndex(uint32_t Index) const;
   const WasmSection &getWasmSection(DataRefImpl Ref) const;
   const wasm::WasmRelocation &getWasmRelocation(DataRefImpl Ref) const;
 
