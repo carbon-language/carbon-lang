@@ -74,7 +74,7 @@ class PDBLinker {
 public:
   PDBLinker(SymbolTable *Symtab)
       : Alloc(), Symtab(Symtab), Builder(Alloc), GlobalTypeTable(Alloc),
-        GlobalIDTable(Alloc), TypeTable(Alloc), IDTable(Alloc) {}
+        TypeTable(Alloc), IDTable(Alloc), GlobalIDTable(Alloc) {}
 
   /// Emit the basic PDB structure: initial streams, headers, etc.
   void initialize(const llvm::codeview::DebugInfo &BuildId);
