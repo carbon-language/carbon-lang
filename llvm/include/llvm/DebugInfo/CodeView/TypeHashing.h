@@ -88,16 +88,37 @@ struct GloballyHashedType {
                                      ArrayRef<GloballyHashedType> PreviousTypes,
                                      ArrayRef<GloballyHashedType> PreviousIds);
 
+  /// Given a sequence of bytes representing a record, compute a global hash for
+  /// this record.  Due to the nature of global hashes incorporating the hashes
+  /// of referenced records, this function requires a list of types and ids
+  /// that RecordData might reference, indexable by TypeIndex.
+  static GloballyHashedType hashType(CVType Type,
+                                     ArrayRef<GloballyHashedType> PreviousTypes,
+                                     ArrayRef<GloballyHashedType> PreviousIds) {
+    return hashType(Type.RecordData, PreviousTypes, PreviousIds);
+  }
+
   /// Given a sequence of combined type and ID records, compute global hashes
   /// for each of them, returning the results in a vector of hashed types.
   template <typename Range>
   static std::vector<GloballyHashedType> hashTypes(Range &&Records) {
     std::vector<GloballyHashedType> Hashes;
-    Hashes.reserve(std::distance(std::begin(Records), std::end(Records)));
     for (const auto &R : Records)
       Hashes.push_back(hashType(R, Hashes, Hashes));
 
     return Hashes;
+  }
+
+  /// Given a sequence of combined type and ID records, compute global hashes
+  /// for each of them, returning the results in a vector of hashed types.
+  template <typename Range>
+  static std::vector<GloballyHashedType>
+  hashIds(Range &&Records, ArrayRef<GloballyHashedType> TypeHashes) {
+    std::vector<GloballyHashedType> IdHashes;
+    for (const auto &R : Records)
+      IdHashes.push_back(hashType(R, TypeHashes, IdHashes));
+
+    return IdHashes;
   }
 
   static std::vector<GloballyHashedType>
@@ -109,6 +130,11 @@ struct GloballyHashedType {
     return Hashes;
   }
 };
+static_assert(std::is_trivially_copyable<GloballyHashedType>::value,
+              "GloballyHashedType must be trivially copyable so that we can "
+              "reinterpret_cast arrays of hash data to arrays of "
+              "GloballyHashedType");
+
 } // namespace codeview
 
 template <> struct DenseMapInfo<codeview::LocallyHashedType> {
