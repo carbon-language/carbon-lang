@@ -2572,7 +2572,7 @@ void ARMExidxSentinelSection::writeTo(uint8_t *Buf) {
   // sentinel.
   OutputSection *C = getParent();
   InputSection *Highest = nullptr;
-  int Skip = 1;
+  unsigned Skip = 1;
   for (const BaseCommand *Base : llvm::reverse(C->SectionCommands)) {
     if (!isa<InputSectionDescription>(Base))
       continue;
