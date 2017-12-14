@@ -797,7 +797,8 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
   case MachineOperand::MO_TargetIndex:
   case MachineOperand::MO_JumpTableIndex:
   case MachineOperand::MO_ExternalSymbol:
-  case MachineOperand::MO_GlobalAddress: {
+  case MachineOperand::MO_GlobalAddress:
+  case MachineOperand::MO_RegisterLiveOut: {
     unsigned TiedOperandIdx = 0;
     if (ShouldPrintRegisterTies && Op.isReg() && Op.isTied() && !Op.isDef())
       TiedOperandIdx = Op.getParent()->findTiedOperandIdx(OpIdx);
@@ -827,21 +828,6 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
       OS << StringRef(TRI->getRegMaskNames()[RegMaskInfo->second]).lower();
     else
       printCustomRegMask(Op.getRegMask(), OS, TRI);
-    break;
-  }
-  case MachineOperand::MO_RegisterLiveOut: {
-    const uint32_t *RegMask = Op.getRegLiveOut();
-    OS << "liveout(";
-    bool IsCommaNeeded = false;
-    for (unsigned Reg = 0, E = TRI->getNumRegs(); Reg < E; ++Reg) {
-      if (RegMask[Reg / 32] & (1U << (Reg % 32))) {
-        if (IsCommaNeeded)
-          OS << ", ";
-        OS << printReg(Reg, TRI);
-        IsCommaNeeded = true;
-      }
-    }
-    OS << ")";
     break;
   }
   case MachineOperand::MO_Metadata:

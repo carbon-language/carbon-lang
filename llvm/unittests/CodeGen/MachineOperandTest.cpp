@@ -272,4 +272,21 @@ TEST(MachineOperandTest, PrintGlobalAddress) {
   }
 }
 
+TEST(MachineOperandTest, PrintRegisterLiveOut) {
+  // Create a MachineOperand with a register live out list and print it.
+  uint32_t Mask = 0;
+  MachineOperand MO = MachineOperand::CreateRegLiveOut(&Mask);
+
+  // Checking some preconditions on the newly created
+  // MachineOperand.
+  ASSERT_TRUE(MO.isRegLiveOut());
+  ASSERT_TRUE(MO.getRegLiveOut() == &Mask);
+
+  std::string str;
+  // Print a MachineOperand containing a register live out list without a TRI.
+  raw_string_ostream OS(str);
+  MO.print(OS, /*TRI=*/nullptr, /*IntrinsicInfo=*/nullptr);
+  ASSERT_TRUE(OS.str() == "liveout(<unknown>)");
+}
+
 } // end namespace

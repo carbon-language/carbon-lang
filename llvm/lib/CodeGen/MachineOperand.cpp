@@ -637,9 +637,25 @@ void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
     OS << ">";
     break;
   }
-  case MachineOperand::MO_RegisterLiveOut:
-    OS << "<regliveout>";
+  case MachineOperand::MO_RegisterLiveOut: {
+    const uint32_t *RegMask = getRegLiveOut();
+    OS << "liveout(";
+    if (!TRI) {
+      OS << "<unknown>";
+    } else {
+      bool IsCommaNeeded = false;
+      for (unsigned Reg = 0, E = TRI->getNumRegs(); Reg < E; ++Reg) {
+        if (RegMask[Reg / 32] & (1U << (Reg % 32))) {
+          if (IsCommaNeeded)
+            OS << ", ";
+          OS << printReg(Reg, TRI);
+          IsCommaNeeded = true;
+        }
+      }
+    }
+    OS << ")";
     break;
+  }
   case MachineOperand::MO_Metadata:
     OS << '<';
     getMetadata()->printAsOperand(OS, MST);
