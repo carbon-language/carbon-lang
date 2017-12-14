@@ -1256,8 +1256,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::ZERO_EXTEND,        MVT::v16i8, Custom);
     setOperationAction(ISD::SIGN_EXTEND,        MVT::v8i16, Custom);
     setOperationAction(ISD::ZERO_EXTEND,        MVT::v8i16, Custom);
-    setOperationAction(ISD::SIGN_EXTEND,        MVT::v16i16, Custom);
-    setOperationAction(ISD::ZERO_EXTEND,        MVT::v16i16, Custom);
 
     for (auto VT : { MVT::v16f32, MVT::v8f64 }) {
       setOperationAction(ISD::FFLOOR,           VT, Legal);
