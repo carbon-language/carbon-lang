@@ -20,6 +20,9 @@
 |*
 \*===----------------------------------------------------------------------===*/
 
+#include "InstrProfilingPort.h"
+#include "InstrProfilingUtil.h"
+
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -31,6 +34,12 @@
 #else
 #include <sys/mman.h>
 #include <sys/file.h>
+#ifndef MAP_FILE
+#define MAP_FILE 0
+#endif
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
 #endif
 
 #if defined(__FreeBSD__) && defined(__i386__)
@@ -55,9 +64,6 @@ typedef unsigned char uint8_t;
 typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
 #endif
-
-#include "InstrProfiling.h"
-#include "InstrProfilingUtil.h"
 
 /* #define DEBUG_GCDAPROFILING */
 
@@ -260,7 +266,7 @@ void llvm_gcda_start_file(const char *orig_filename, const char version[4],
    * same GCDA. This can fail if the filesystem doesn't support it, but in that
    * case we'll just carry on with the old racy behaviour and hope for the best.
    */
-  lprofLockFd(fd);
+  flock(fd, LOCK_EX);
   output_file = fdopen(fd, mode);
 
   /* Initialize the write buffer. */
@@ -459,7 +465,7 @@ void llvm_gcda_end_file() {
       unmap_file();
     }
 
-    lprofUnlockFd(fd);
+    flock(fd, LOCK_UN);
     fclose(output_file);
     output_file = NULL;
     write_buffer = NULL;

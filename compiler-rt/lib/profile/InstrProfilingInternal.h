@@ -10,9 +10,8 @@
 #ifndef PROFILE_INSTRPROFILING_INTERNALH_
 #define PROFILE_INSTRPROFILING_INTERNALH_
 
-#include <stddef.h>
-
 #include "InstrProfiling.h"
+#include "stddef.h"
 
 /*!
  * \brief Write instrumentation data to the given buffer, given explicit

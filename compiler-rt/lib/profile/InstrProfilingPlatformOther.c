@@ -7,12 +7,11 @@
 |*
 \*===----------------------------------------------------------------------===*/
 
-#if !defined(__APPLE__) && !defined(__linux__) && !defined(__FreeBSD__) && \
-    !(defined(__sun__) && defined(__svr4__))
+#include "InstrProfiling.h"
+
+#if !defined(__APPLE__) && !defined(__linux__) && !defined(__FreeBSD__)
 
 #include <stdlib.h>
-
-#include "InstrProfiling.h"
 
 static const __llvm_profile_data *DataFirst = NULL;
 static const __llvm_profile_data *DataLast = NULL;

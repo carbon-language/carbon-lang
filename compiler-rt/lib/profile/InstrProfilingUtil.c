@@ -7,6 +7,9 @@
 |*
 \*===----------------------------------------------------------------------===*/
 
+#include "InstrProfilingUtil.h"
+#include "InstrProfiling.h"
+
 #ifdef _WIN32
 #include <direct.h>
 #include <io.h>
@@ -30,9 +33,6 @@
 #include <signal.h>
 #include <sys/prctl.h>
 #endif
-
-#include "InstrProfiling.h"
-#include "InstrProfilingUtil.h"
 
 COMPILER_RT_VISIBILITY
 void __llvm_profile_recursive_mkdir(char *path) {
@@ -86,76 +86,38 @@ COMPILER_RT_VISIBILITY int lprofGetHostName(char *Name, int Len) {
 #elif defined(COMPILER_RT_HAS_UNAME)
 COMPILER_RT_VISIBILITY int lprofGetHostName(char *Name, int Len) {
   struct utsname N;
-  int R = uname(&N);
-  if (R >= 0) {
+  int R;
+  if (!(R = uname(&N)))
     strncpy(Name, N.nodename, Len);
-    return 0;
-  }
   return R;
 }
 #endif
-
-COMPILER_RT_VISIBILITY int lprofLockFd(int fd) {
-#ifdef COMPILER_RT_HAS_FCNTL_LCK
-  struct flock s_flock;
-
-  s_flock.l_whence = SEEK_SET;
-  s_flock.l_start = 0;
-  s_flock.l_len = 0; /* Until EOF.  */
-  s_flock.l_pid = getpid();
-  s_flock.l_type = F_WRLCK;
-
-  while (fcntl(fd, F_SETLKW, &s_flock) == -1) {
-    if (errno != EINTR) {
-      if (errno == ENOLCK) {
-        return -1;
-      }
-      break;
-    }
-  }
-  return 0;
-#else
-  flock(fd, LOCK_EX);
-  return 0;
-#endif
-}
-
-COMPILER_RT_VISIBILITY int lprofUnlockFd(int fd) {
-#ifdef COMPILER_RT_HAS_FCNTL_LCK
-  struct flock s_flock;
-
-  s_flock.l_whence = SEEK_SET;
-  s_flock.l_start = 0;
-  s_flock.l_len = 0; /* Until EOF.  */
-  s_flock.l_pid = getpid();
-  s_flock.l_type = F_UNLCK;
-
-  while (fcntl(fd, F_SETLKW, &s_flock) == -1) {
-    if (errno != EINTR) {
-      if (errno == ENOLCK) {
-        return -1;
-      }
-      break;
-    }
-  }
-  return 0;
-#else
-  flock(fd, LOCK_UN);
-  return 0;
-#endif
-}
 
 COMPILER_RT_VISIBILITY FILE *lprofOpenFileEx(const char *ProfileName) {
   FILE *f;
   int fd;
 #ifdef COMPILER_RT_HAS_FCNTL_LCK
+  struct flock s_flock;
+
+  s_flock.l_whence = SEEK_SET;
+  s_flock.l_start = 0;
+  s_flock.l_len = 0; /* Until EOF.  */
+  s_flock.l_pid = getpid();
+
+  s_flock.l_type = F_WRLCK;
   fd = open(ProfileName, O_RDWR | O_CREAT, 0666);
   if (fd < 0)
     return NULL;
 
-  if (lprofLockFd(fd) != 0)
-    PROF_WARN("Data may be corrupted during profile merging : %s\n",
-              "Fail to obtain file lock due to system limit.");
+  while (fcntl(fd, F_SETLKW, &s_flock) == -1) {
+    if (errno != EINTR) {
+      if (errno == ENOLCK) {
+        PROF_WARN("Data may be corrupted during profile merging : %s\n",
+                  "Fail to obtain file lock due to system limit.");
+      }
+      break;
+    }
+  }
 
   f = fdopen(fd, "r+b");
 #elif defined(_WIN32)

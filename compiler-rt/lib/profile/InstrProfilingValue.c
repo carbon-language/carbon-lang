@@ -7,15 +7,13 @@
 |*
 \*===----------------------------------------------------------------------===*/
 
+#include "InstrProfiling.h"
+#include "InstrProfilingInternal.h"
+#include "InstrProfilingUtil.h" /* For PS4 getenv shim. */
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "InstrProfiling.h"
-#include "InstrProfilingInternal.h"
-#include "InstrProfilingUtil.h"
-
 #define INSTR_PROF_VALUE_PROF_DATA
 #define INSTR_PROF_COMMON_API_IMPL
 #include "InstrProfData.inc"
