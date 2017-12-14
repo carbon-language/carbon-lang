@@ -73,8 +73,8 @@ struct CVIndexMap {
 class PDBLinker {
 public:
   PDBLinker(SymbolTable *Symtab)
-      : Alloc(), Symtab(Symtab), Builder(Alloc), GlobalTypeTable(Alloc),
-        TypeTable(Alloc), IDTable(Alloc), GlobalIDTable(Alloc) {}
+      : Alloc(), Symtab(Symtab), Builder(Alloc), TypeTable(Alloc),
+        IDTable(Alloc), GlobalTypeTable(Alloc), GlobalIDTable(Alloc) {}
 
   /// Emit the basic PDB structure: initial streams, headers, etc.
   void initialize(const llvm::codeview::DebugInfo &BuildId);
