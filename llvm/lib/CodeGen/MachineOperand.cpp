@@ -657,9 +657,7 @@ void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
     break;
   }
   case MachineOperand::MO_Metadata:
-    OS << '<';
     getMetadata()->printAsOperand(OS, MST);
-    OS << '>';
     break;
   case MachineOperand::MO_MCSymbol:
     OS << "<MCSym=" << *getMCSymbol() << '>';

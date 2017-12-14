@@ -289,4 +289,29 @@ TEST(MachineOperandTest, PrintRegisterLiveOut) {
   ASSERT_TRUE(OS.str() == "liveout(<unknown>)");
 }
 
+TEST(MachineOperandTest, PrintMetadata) {
+  LLVMContext Ctx;
+  Module M("MachineOperandMDNodeTest", Ctx);
+  NamedMDNode *MD = M.getOrInsertNamedMetadata("namedmd");
+  ModuleSlotTracker DummyMST(&M);
+  Metadata *MDS = MDString::get(Ctx, "foo");
+  MDNode *Node = MDNode::get(Ctx, MDS);
+  MD->addOperand(Node);
+
+  // Create a MachineOperand with a metadata and print it.
+  MachineOperand MO = MachineOperand::CreateMetadata(Node);
+
+  // Checking some preconditions on the newly created
+  // MachineOperand.
+  ASSERT_TRUE(MO.isMetadata());
+  ASSERT_TRUE(MO.getMetadata() == Node);
+
+  std::string str;
+  // Print a MachineOperand containing a metadata node.
+  raw_string_ostream OS(str);
+  MO.print(OS, DummyMST, LLT{}, false, false, 0, /*TRI=*/nullptr,
+           /*IntrinsicInfo=*/nullptr);
+  ASSERT_TRUE(OS.str() == "!0");
+}
+
 } // end namespace

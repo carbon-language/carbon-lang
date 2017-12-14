@@ -798,7 +798,8 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
   case MachineOperand::MO_JumpTableIndex:
   case MachineOperand::MO_ExternalSymbol:
   case MachineOperand::MO_GlobalAddress:
-  case MachineOperand::MO_RegisterLiveOut: {
+  case MachineOperand::MO_RegisterLiveOut:
+  case MachineOperand::MO_Metadata: {
     unsigned TiedOperandIdx = 0;
     if (ShouldPrintRegisterTies && Op.isReg() && Op.isTied() && !Op.isDef())
       TiedOperandIdx = Op.getParent()->findTiedOperandIdx(OpIdx);
@@ -830,9 +831,6 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
       printCustomRegMask(Op.getRegMask(), OS, TRI);
     break;
   }
-  case MachineOperand::MO_Metadata:
-    Op.getMetadata()->printAsOperand(OS, MST);
-    break;
   case MachineOperand::MO_MCSymbol:
     OS << "<mcsymbol " << *Op.getMCSymbol() << ">";
     break;
