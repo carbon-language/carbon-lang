@@ -430,6 +430,8 @@ public:
   virtual void EmitBuildVersion(unsigned Platform, unsigned Major,
                                 unsigned Minor, unsigned Update) {}
 
+  void EmitVersionForTarget(const Triple &Target);
+
   /// \brief Note in the output that the specified \p Func is a Thumb mode
   /// function (ARM target only).
   virtual void EmitThumbFunc(MCSymbol *Func);

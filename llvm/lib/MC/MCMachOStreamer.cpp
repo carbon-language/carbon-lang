@@ -502,26 +502,8 @@ MCStreamer *llvm::createMachOStreamer(MCContext &Context,
   MCMachOStreamer *S =
       new MCMachOStreamer(Context, std::move(MAB), OS, std::move(CE),
                           DWARFMustBeAtTheEnd, LabelSections);
-  const Triple &TT = Context.getObjectFileInfo()->getTargetTriple();
-  if (TT.isOSDarwin()) {
-    unsigned Major, Minor, Update;
-    TT.getOSVersion(Major, Minor, Update);
-    // If there is a version specified, Major will be non-zero.
-    if (Major) {
-      MCVersionMinType VersionType;
-      if (TT.isWatchOS())
-        VersionType = MCVM_WatchOSVersionMin;
-      else if (TT.isTvOS())
-        VersionType = MCVM_TvOSVersionMin;
-      else if (TT.isMacOSX())
-        VersionType = MCVM_OSXVersionMin;
-      else {
-        assert(TT.isiOS() && "Must only be iOS platform left");
-        VersionType = MCVM_IOSVersionMin;
-      }
-      S->EmitVersionMin(VersionType, Major, Minor, Update);
-    }
-  }
+  const Triple &Target = Context.getObjectFileInfo()->getTargetTriple();
+  S->EmitVersionForTarget(Target);
   if (RelaxAll)
     S->getAssembler().setRelaxAll(true);
   return S;
