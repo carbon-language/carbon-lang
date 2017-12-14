@@ -201,7 +201,7 @@ public:
   section_iterator section_end() const override;
   uint8_t getBytesInAddress() const override;
   StringRef getFileFormatName() const override;
-  unsigned getArch() const override;
+  Triple::ArchType getArch() const override;
   SubtargetFeatures getFeatures() const override;
   bool isRelocatableObject() const override;
 

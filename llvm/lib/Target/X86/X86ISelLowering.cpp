@@ -30276,7 +30276,7 @@ static SDValue matchBinOpReduction(SDNode *Extract, unsigned &BinOp,
 
   // Match against one of the candidate binary ops.
   if (llvm::none_of(CandidateBinOps, [Op](ISD::NodeType BinOp) {
-        return Op.getOpcode() == BinOp;
+        return Op.getOpcode() == unsigned(BinOp);
       }))
     return SDValue();
 

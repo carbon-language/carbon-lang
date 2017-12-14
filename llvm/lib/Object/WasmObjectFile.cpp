@@ -1038,7 +1038,7 @@ uint8_t WasmObjectFile::getBytesInAddress() const { return 4; }
 
 StringRef WasmObjectFile::getFileFormatName() const { return "WASM"; }
 
-unsigned WasmObjectFile::getArch() const { return Triple::wasm32; }
+Triple::ArchType WasmObjectFile::getArch() const { return Triple::wasm32; }
 
 SubtargetFeatures WasmObjectFile::getFeatures() const {
   return SubtargetFeatures();
