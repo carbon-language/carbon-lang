@@ -665,13 +665,26 @@ Example:
         - id:             1
           blocks:         [ '%bb.7', '%bb.7', '%bb.4.d3', '%bb.5' ]
 
+External Symbol Operands
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+An external symbol operand is represented using an identifier with the ``$``
+prefix. The identifier is surrounded with ""'s and escaped if it has any
+special non-printable characters in it.
+
+Example:
+
+.. code-block:: text
+
+    CALL64pcrel32 $__stack_chk_fail, csr_64, implicit %rsp, implicit-def %rsp
+
+
 .. TODO: Describe the parsers default behaviour when optional YAML attributes
    are missing.
 .. TODO: Describe the syntax for the bundled instructions.
 .. TODO: Describe the syntax for virtual register YAML definitions.
 .. TODO: Describe the machine function's YAML flag attributes.
-.. TODO: Describe the syntax for the external symbol and register
-   mask machine operands.
+.. TODO: Describe the syntax for the register mask machine operands.
 .. TODO: Describe the frame information YAML mapping.
 .. TODO: Describe the syntax of the stack object machine operands and their
    YAML definitions.

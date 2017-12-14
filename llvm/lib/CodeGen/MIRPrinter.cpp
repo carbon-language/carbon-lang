@@ -853,7 +853,8 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
   case MachineOperand::MO_MachineBasicBlock:
   case MachineOperand::MO_ConstantPoolIndex:
   case MachineOperand::MO_TargetIndex:
-  case MachineOperand::MO_JumpTableIndex: {
+  case MachineOperand::MO_JumpTableIndex:
+  case MachineOperand::MO_ExternalSymbol: {
     unsigned TiedOperandIdx = 0;
     if (ShouldPrintRegisterTies && Op.isReg() && Op.isTied() && !Op.isDef())
       TiedOperandIdx = Op.getParent()->findTiedOperandIdx(OpIdx);
@@ -868,17 +869,6 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
   case MachineOperand::MO_FrameIndex:
     printStackObjectReference(Op.getIndex());
     break;
-  case MachineOperand::MO_ExternalSymbol: {
-    StringRef Name = Op.getSymbolName();
-    OS << '$';
-    if (Name.empty()) {
-      OS << "\"\"";
-    } else {
-      printLLVMNameWithoutPrefix(OS, Name);
-    }
-    printOffset(Op.getOffset());
-    break;
-  }
   case MachineOperand::MO_GlobalAddress:
     Op.getGlobal()->printAsOperand(OS, /*PrintType=*/false, MST);
     printOffset(Op.getOffset());

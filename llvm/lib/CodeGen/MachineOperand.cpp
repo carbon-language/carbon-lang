@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/ModuleSlotTracker.h"
 #include "llvm/Target/TargetIntrinsicInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -533,12 +534,17 @@ void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
       OS << "+" << getOffset();
     OS << '>';
     break;
-  case MachineOperand::MO_ExternalSymbol:
-    OS << "<es:" << getSymbolName();
-    if (getOffset())
-      OS << "+" << getOffset();
-    OS << '>';
+  case MachineOperand::MO_ExternalSymbol: {
+    StringRef Name = getSymbolName();
+    OS << '$';
+    if (Name.empty()) {
+      OS << "\"\"";
+    } else {
+      printLLVMNameWithoutPrefix(OS, Name);
+    }
+    printOffset(OS, getOffset());
     break;
+  }
   case MachineOperand::MO_BlockAddress:
     OS << '<';
     getBlockAddress()->printAsOperand(OS, /*PrintType=*/false, MST);

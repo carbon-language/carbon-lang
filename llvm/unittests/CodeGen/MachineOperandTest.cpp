@@ -197,4 +197,42 @@ TEST(MachineOperandTest, PrintJumpTableIndex) {
   ASSERT_TRUE(OS.str() == "%jump-table.3");
 }
 
+TEST(MachineOperandTest, PrintExternalSymbol) {
+  // Create a MachineOperand with an external symbol and print it.
+  MachineOperand MO = MachineOperand::CreateES("foo");
+
+  // Checking some preconditions on the newly created
+  // MachineOperand.
+  ASSERT_TRUE(MO.isSymbol());
+  ASSERT_TRUE(MO.getSymbolName() == StringRef("foo"));
+
+  // Print a MachineOperand containing an external symbol and no offset.
+  std::string str;
+  {
+    raw_string_ostream OS(str);
+    MO.print(OS, /*TRI=*/nullptr, /*IntrinsicInfo=*/nullptr);
+    ASSERT_TRUE(OS.str() == "$foo");
+  }
+
+  str.clear();
+  MO.setOffset(12);
+
+  // Print a MachineOperand containing an external symbol and a positive offset.
+  {
+    raw_string_ostream OS(str);
+    MO.print(OS, /*TRI=*/nullptr, /*IntrinsicInfo=*/nullptr);
+    ASSERT_TRUE(OS.str() == "$foo + 12");
+  }
+
+  str.clear();
+  MO.setOffset(-12);
+
+  // Print a MachineOperand containing an external symbol and a negative offset.
+  {
+    raw_string_ostream OS(str);
+    MO.print(OS, /*TRI=*/nullptr, /*IntrinsicInfo=*/nullptr);
+    ASSERT_TRUE(OS.str() == "$foo - 12");
+  }
+}
+
 } // end namespace
