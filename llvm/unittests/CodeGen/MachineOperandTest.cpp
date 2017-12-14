@@ -7,10 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/ilist_node.h"
 #include "llvm/CodeGen/MachineOperand.h"
+#include "llvm/ADT/ilist_node.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
 #include "llvm/IR/ModuleSlotTracker.h"
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
@@ -232,6 +233,42 @@ TEST(MachineOperandTest, PrintExternalSymbol) {
     raw_string_ostream OS(str);
     MO.print(OS, /*TRI=*/nullptr, /*IntrinsicInfo=*/nullptr);
     ASSERT_TRUE(OS.str() == "$foo - 12");
+  }
+}
+
+TEST(MachineOperandTest, PrintGlobalAddress) {
+  LLVMContext Ctx;
+  Module M("MachineOperandGVTest", Ctx);
+  M.getOrInsertGlobal("foo", Type::getInt32Ty(Ctx));
+
+  GlobalValue *GV = M.getNamedValue("foo");
+
+  // Create a MachineOperand with a global address and a positive offset and
+  // print it.
+  MachineOperand MO = MachineOperand::CreateGA(GV, 12);
+
+  // Checking some preconditions on the newly created
+  // MachineOperand.
+  ASSERT_TRUE(MO.isGlobal());
+  ASSERT_TRUE(MO.getGlobal() == GV);
+  ASSERT_TRUE(MO.getOffset() == 12);
+
+  std::string str;
+  // Print a MachineOperand containing a global address and a positive offset.
+  {
+    raw_string_ostream OS(str);
+    MO.print(OS, /*TRI=*/nullptr, /*IntrinsicInfo=*/nullptr);
+    ASSERT_TRUE(OS.str() == "@foo + 12");
+  }
+
+  str.clear();
+  MO.setOffset(-12);
+
+  // Print a MachineOperand containing a global address and a negative offset.
+  {
+    raw_string_ostream OS(str);
+    MO.print(OS, /*TRI=*/nullptr, /*IntrinsicInfo=*/nullptr);
+    ASSERT_TRUE(OS.str() == "@foo - 12");
   }
 }
 

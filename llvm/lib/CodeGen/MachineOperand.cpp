@@ -401,6 +401,16 @@ static const char *getTargetIndexName(const MachineFunction &MF, int Index) {
   return nullptr;
 }
 
+static const char *getTargetFlagName(const TargetInstrInfo *TII, unsigned TF) {
+  auto Flags = TII->getSerializableDirectMachineOperandTargetFlags();
+  for (const auto &I : Flags) {
+    if (I.first == TF) {
+      return I.second;
+    }
+  }
+  return nullptr;
+}
+
 void MachineOperand::printSubregIdx(raw_ostream &OS, uint64_t Index,
                                     const TargetRegisterInfo *TRI) {
   OS << "%subreg.";
@@ -408,6 +418,58 @@ void MachineOperand::printSubregIdx(raw_ostream &OS, uint64_t Index,
     OS << TRI->getSubRegIndexName(Index);
   else
     OS << Index;
+}
+
+void MachineOperand::printTargetFlags(raw_ostream &OS,
+                                      const MachineOperand &Op) {
+  if (!Op.getTargetFlags())
+    return;
+  const MachineFunction *MF = getMFIfAvailable(Op);
+  if (!MF)
+    return;
+
+  const auto *TII = MF->getSubtarget().getInstrInfo();
+  assert(TII && "expected instruction info");
+  auto Flags = TII->decomposeMachineOperandsTargetFlags(Op.getTargetFlags());
+  OS << "target-flags(";
+  const bool HasDirectFlags = Flags.first;
+  const bool HasBitmaskFlags = Flags.second;
+  if (!HasDirectFlags && !HasBitmaskFlags) {
+    OS << "<unknown>) ";
+    return;
+  }
+  if (HasDirectFlags) {
+    if (const auto *Name = getTargetFlagName(TII, Flags.first))
+      OS << Name;
+    else
+      OS << "<unknown target flag>";
+  }
+  if (!HasBitmaskFlags) {
+    OS << ") ";
+    return;
+  }
+  bool IsCommaNeeded = HasDirectFlags;
+  unsigned BitMask = Flags.second;
+  auto BitMasks = TII->getSerializableBitmaskMachineOperandTargetFlags();
+  for (const auto &Mask : BitMasks) {
+    // Check if the flag's bitmask has the bits of the current mask set.
+    if ((BitMask & Mask.first) == Mask.first) {
+      if (IsCommaNeeded)
+        OS << ", ";
+      IsCommaNeeded = true;
+      OS << Mask.second;
+      // Clear the bits which were serialized from the flag's bitmask.
+      BitMask &= ~(Mask.first);
+    }
+  }
+  if (BitMask) {
+    // When the resulting flag's bitmask isn't zero, we know that we didn't
+    // serialize all of the bit flags.
+    if (IsCommaNeeded)
+      OS << ", ";
+    OS << "<unknown bitmask target flag>";
+  }
+  OS << ") ";
 }
 
 void MachineOperand::print(raw_ostream &OS, const TargetRegisterInfo *TRI,
@@ -425,6 +487,7 @@ void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
                            unsigned TiedOperandIdx,
                            const TargetRegisterInfo *TRI,
                            const TargetIntrinsicInfo *IntrinsicInfo) const {
+  printTargetFlags(OS, *this);
   switch (getType()) {
   case MachineOperand::MO_Register: {
     unsigned Reg = getReg();
@@ -528,11 +591,8 @@ void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
     OS << printJumpTableEntryReference(getIndex());
     break;
   case MachineOperand::MO_GlobalAddress:
-    OS << "<ga:";
     getGlobal()->printAsOperand(OS, /*PrintType=*/false, MST);
-    if (getOffset())
-      OS << "+" << getOffset();
-    OS << '>';
+    printOffset(OS, getOffset());
     break;
   case MachineOperand::MO_ExternalSymbol: {
     StringRef Name = getSymbolName();
@@ -608,8 +668,6 @@ void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
     break;
   }
   }
-  if (unsigned TF = getTargetFlags())
-    OS << "[TF=" << TF << ']';
 }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
