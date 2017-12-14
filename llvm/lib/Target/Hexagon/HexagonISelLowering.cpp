@@ -2282,9 +2282,9 @@ bool HexagonTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
     Info.ptrVal = I.getArgOperand(0);
     Info.offset = 0;
     Info.align = M.getDataLayout().getTypeAllocSizeInBits(VecTy) / 8;
-    Info.vol = true;
-    Info.readMem = true;
-    Info.writeMem = true;
+    Info.flags = MachineMemOperand::MOLoad |
+                 MachineMemOperand::MOStore |
+                 MachineMemOperand::MOVolatile;
     return true;
   }
   default:

@@ -4490,9 +4490,7 @@ bool X86TargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
     return false;
 
   Info.opc = ISD::INTRINSIC_W_CHAIN;
-  Info.readMem = false;
-  Info.writeMem = false;
-  Info.vol = false;
+  Info.flags = MachineMemOperand::MONone;
   Info.offset = 0;
 
   switch (IntrData->Type) {
@@ -4500,14 +4498,14 @@ bool X86TargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
     Info.ptrVal = I.getArgOperand(0);
     Info.memVT = MVT::getVT(I.getType());
     Info.align = 1;
-    Info.readMem = true;
+    Info.flags |= MachineMemOperand::MOLoad;
     break;
   }
   case COMPRESS_TO_MEM: {
     Info.ptrVal = I.getArgOperand(0);
     Info.memVT = MVT::getVT(I.getArgOperand(1)->getType());
     Info.align = 1;
-    Info.writeMem = true;
+    Info.flags |= MachineMemOperand::MOStore;
     break;
   }
   case TRUNCATE_TO_MEM_VI8:
@@ -4525,7 +4523,7 @@ bool X86TargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
 
     Info.memVT = MVT::getVectorVT(ScalarVT, VT.getVectorNumElements());
     Info.align = 1;
-    Info.writeMem = true;
+    Info.flags |= MachineMemOperand::MOStore;
     break;
   }
   default:
@@ -6660,8 +6658,7 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
           DAG.getMemIntrinsicNode(X86ISD::VZEXT_LOAD, DL, Tys, Ops, VecSVT,
                                   LDBase->getPointerInfo(),
                                   LDBase->getAlignment(),
-                                  false/*isVolatile*/, true/*ReadMem*/,
-                                  false/*WriteMem*/);
+                                  MachineMemOperand::MOLoad);
       for (auto *LD : Loads)
         DAG.makeEquivalentMemoryOrdering(LD, ResNode);
       return DAG.getBitcast(VT, ResNode);
@@ -19354,13 +19351,12 @@ SDValue X86TargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG) const {
                        DAG.getConstant(ArgMode, dl, MVT::i8),
                        DAG.getConstant(Align, dl, MVT::i32)};
   SDVTList VTs = DAG.getVTList(getPointerTy(DAG.getDataLayout()), MVT::Other);
-  SDValue VAARG = DAG.getMemIntrinsicNode(X86ISD::VAARG_64, dl,
-                                          VTs, InstOps, MVT::i64,
-                                          MachinePointerInfo(SV),
-                                          /*Align=*/0,
-                                          /*Volatile=*/false,
-                                          /*ReadMem=*/true,
-                                          /*WriteMem=*/true);
+  SDValue VAARG = DAG.getMemIntrinsicNode(
+    X86ISD::VAARG_64, dl,
+    VTs, InstOps, MVT::i64,
+    MachinePointerInfo(SV),
+    /*Align=*/0,
+    MachineMemOperand::MOLoad | MachineMemOperand::MOStore);
   Chain = VAARG.getValue(1);
 
   // Load the next argument and return it
