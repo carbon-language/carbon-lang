@@ -19,6 +19,8 @@
 
 #include "llvm/Support/FormatProviders.h"
 
+#include <type_traits>
+
 namespace llvm {
 namespace codeview {
 
