@@ -13,6 +13,8 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ModuleSlotTracker.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
 
@@ -312,6 +314,26 @@ TEST(MachineOperandTest, PrintMetadata) {
   MO.print(OS, DummyMST, LLT{}, false, false, 0, /*TRI=*/nullptr,
            /*IntrinsicInfo=*/nullptr);
   ASSERT_TRUE(OS.str() == "!0");
+}
+
+TEST(MachineOperandTest, PrintMCSymbol) {
+  MCAsmInfo MAI;
+  MCContext Ctx(&MAI, /*MRI=*/nullptr, /*MOFI=*/nullptr);
+  MCSymbol *Sym = Ctx.getOrCreateSymbol("foo");
+
+  // Create a MachineOperand with a metadata and print it.
+  MachineOperand MO = MachineOperand::CreateMCSymbol(Sym);
+
+  // Checking some preconditions on the newly created
+  // MachineOperand.
+  ASSERT_TRUE(MO.isMCSymbol());
+  ASSERT_TRUE(MO.getMCSymbol() == Sym);
+
+  std::string str;
+  // Print a MachineOperand containing a metadata node.
+  raw_string_ostream OS(str);
+  MO.print(OS, /*TRI=*/nullptr, /*IntrinsicInfo=*/nullptr);
+  ASSERT_TRUE(OS.str() == "<mcsymbol foo>");
 }
 
 } // end namespace

@@ -799,7 +799,8 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
   case MachineOperand::MO_ExternalSymbol:
   case MachineOperand::MO_GlobalAddress:
   case MachineOperand::MO_RegisterLiveOut:
-  case MachineOperand::MO_Metadata: {
+  case MachineOperand::MO_Metadata:
+  case MachineOperand::MO_MCSymbol: {
     unsigned TiedOperandIdx = 0;
     if (ShouldPrintRegisterTies && Op.isReg() && Op.isTied() && !Op.isDef())
       TiedOperandIdx = Op.getParent()->findTiedOperandIdx(OpIdx);
@@ -831,9 +832,6 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
       printCustomRegMask(Op.getRegMask(), OS, TRI);
     break;
   }
-  case MachineOperand::MO_MCSymbol:
-    OS << "<mcsymbol " << *Op.getMCSymbol() << ">";
-    break;
   case MachineOperand::MO_CFIIndex: {
     const MachineFunction &MF = *Op.getParent()->getMF();
     print(MF.getFrameInstructions()[Op.getCFIIndex()], TRI);

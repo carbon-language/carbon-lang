@@ -660,7 +660,7 @@ void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
     getMetadata()->printAsOperand(OS, MST);
     break;
   case MachineOperand::MO_MCSymbol:
-    OS << "<MCSym=" << *getMCSymbol() << '>';
+    OS << "<mcsymbol " << *getMCSymbol() << ">";
     break;
   case MachineOperand::MO_CFIIndex:
     OS << "<call frame instruction>";

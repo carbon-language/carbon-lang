@@ -121,6 +121,8 @@ Tests are more accessible and future proof when simplified:
   contains dummy functions (see above). The .mir loader will create the
   IR functions automatically in this case.
 
+.. _limitations:
+
 Limitations
 -----------
 
@@ -678,6 +680,17 @@ Example:
 
     CALL64pcrel32 $__stack_chk_fail, csr_64, implicit %rsp, implicit-def %rsp
 
+MCSymbol Operands
+^^^^^^^^^^^^^^^^^
+
+A MCSymbol operand is holding a pointer to a ``MCSymbol``. For the limitations
+of this operand in MIR, see :ref:`limitations <limitations>`.
+
+The syntax is:
+
+.. code-block:: text
+
+    EH_LABEL <mcsymbol Ltmp1>
 
 .. TODO: Describe the parsers default behaviour when optional YAML attributes
    are missing.
