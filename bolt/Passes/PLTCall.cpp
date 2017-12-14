@@ -85,7 +85,7 @@ void PLTCall::runOnFunctions(
   if (NumCallsOptimized) {
     BC.RequiresZNow = true;
     outs() << "BOLT-INFO: " << NumCallsOptimized
-           << " PLT calls in the binary were opitmized.\n";
+           << " PLT calls in the binary were optimized.\n";
   }
 }
 

@@ -1466,7 +1466,7 @@ bool BinaryFunction::buildCFG() {
 
   for (auto I = Instructions.begin(), E = Instructions.end(); I != E; ++I) {
     const auto Offset = I->first;
-    const auto &Instr = I->second;
+    auto &Instr = I->second;
 
     auto LI = Labels.find(Offset);
     if (LI != Labels.end()) {
@@ -1818,6 +1818,11 @@ void BinaryFunction::removeConditionalTailCalls() {
 uint64_t BinaryFunction::getFunctionScore() {
   if (FunctionScore != -1)
     return FunctionScore;
+
+  if (!isSimple() || !hasValidProfile()) {
+    FunctionScore = 0;
+    return FunctionScore;
+  }
 
   uint64_t TotalScore = 0ULL;
   for (auto BB : layout()) {
@@ -2620,6 +2625,41 @@ void BinaryFunction::postProcessBranches() {
   assert(validateCFG() && "invalid CFG");
 }
 
+const MCSymbol *BinaryFunction::getSymbolForEntry(uint64_t EntryNum) const {
+  if (EntryNum == 0)
+    return getSymbol();
+
+  if (!isMultiEntry())
+    return nullptr;
+
+  uint64_t NumEntries = 0;
+  for (auto *BB : BasicBlocks) {
+    if (!BB->isEntryPoint())
+      continue;
+    if (NumEntries == EntryNum)
+      return BB->getLabel();
+    ++NumEntries;
+  }
+
+  return nullptr;
+}
+
+uint64_t BinaryFunction::getEntryForSymbol(const MCSymbol *EntrySymbol) const {
+  if (getSymbol() == EntrySymbol)
+    return 0;
+
+  uint64_t NumEntries = 0;
+  for (const auto *BB : BasicBlocks) {
+    if (!BB->isEntryPoint())
+      continue;
+    if (BB->getLabel() == EntrySymbol)
+      return NumEntries;
+    ++NumEntries;
+  }
+
+  llvm_unreachable("no entry for symbol");
+}
+
 BinaryFunction::BasicBlockOrderType BinaryFunction::dfs() const {
   BasicBlockOrderType DFS;
   unsigned Index = 0;
@@ -2649,8 +2689,24 @@ BinaryFunction::BasicBlockOrderType BinaryFunction::dfs() const {
       Stack.push(SuccBB);
     }
 
-    for (auto *SuccBB : BB->successors()) {
-      Stack.push(SuccBB);
+    const MCSymbol *TBB = nullptr;
+    const MCSymbol *FBB = nullptr;
+    MCInst *CondBranch = nullptr;
+    MCInst *UncondBranch = nullptr;
+    if (BB->analyzeBranch(TBB, FBB, CondBranch, UncondBranch) &&
+        CondBranch && BB->succ_size() == 2) {
+      if (BC.MIA->getCanonicalBranchOpcode(CondBranch->getOpcode()) ==
+          CondBranch->getOpcode()) {
+        Stack.push(BB->getConditionalSuccessor(true));
+        Stack.push(BB->getConditionalSuccessor(false));
+      } else {
+        Stack.push(BB->getConditionalSuccessor(false));
+        Stack.push(BB->getConditionalSuccessor(true));
+      }
+    } else {
+      for (auto *SuccBB : BB->successors()) {
+        Stack.push(SuccBB);
+      }
     }
   }
 
@@ -2826,6 +2882,9 @@ bool BinaryFunction::equalJumpTables(const JumpTable *JumpTableA,
 }
 
 std::size_t BinaryFunction::hash(bool Recompute, bool UseDFS) const {
+  if (size() == 0)
+    return 0;
+
   assert(hasCFG() && "function is expected to have CFG");
 
   if (!Recompute)
@@ -3687,13 +3746,14 @@ DynoStats BinaryFunction::getDynoStats() const {
         Stats[DynoStats::INDIRECT_CALLS] += CallFreq;
       } else if (const auto *CallSymbol = BC.MIA->getTargetSymbol(Instr)) {
         const auto *BF = BC.getFunctionForSymbol(CallSymbol);
-        if (BF && BF->isPLTFunction())
+        if (BF && BF->isPLTFunction()) {
           Stats[DynoStats::PLT_CALLS] += CallFreq;
 
           // We don't process PLT functions and hence have to adjust
           // relevant dynostats here.
           Stats[DynoStats::LOADS] += CallFreq;
           Stats[DynoStats::INDIRECT_CALLS] += CallFreq;
+        }
       }
     }
 

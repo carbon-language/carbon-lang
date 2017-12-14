@@ -342,10 +342,15 @@ public:
   /// an unconditional branch) and thus has 2 successors, return a successor
   /// corresponding to a jump condition which could be true or false.
   /// Return nullptr if the basic block does not have a conditional jump.
-  const BinaryBasicBlock *getConditionalSuccessor(bool Condition) const {
+  BinaryBasicBlock *getConditionalSuccessor(bool Condition) {
     if (succ_size() != 2)
       return nullptr;
     return Successors[Condition == true ? 0 : 1];
+  }
+
+  const BinaryBasicBlock *getConditionalSuccessor(bool Condition) const {
+    return
+      const_cast<BinaryBasicBlock *>(this)->getConditionalSuccessor(Condition);
   }
 
   /// Find the fallthrough successor for a block, or nullptr if there is

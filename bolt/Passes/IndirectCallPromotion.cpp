@@ -142,21 +142,13 @@ namespace llvm {
 namespace bolt {
 
 IndirectCallPromotion::Callsite::Callsite(BinaryFunction &BF,
-                                          const BranchInfo &BI)
-: From(BF.getSymbol()),
-  To(uint64_t(BI.To.Offset)),
-  Mispreds{uint64_t(BI.Mispreds)},
-  Branches{uint64_t(BI.Branches)},
-  Histories{BI.Histories} {
-  if (BI.To.IsSymbol) {
-    auto &BC = BF.getBinaryContext();
-    auto Itr = BC.GlobalSymbols.find(BI.To.Name);
-    if (Itr != BC.GlobalSymbols.end()) {
-      To.IsSymbol = true;
-      To.Sym = BC.getOrCreateGlobalSymbol(Itr->second, "FUNCat");
-      To.Addr = 0;
-      assert(To.Sym);
-    }
+                                          const IndirectCallProfile &ICP)
+  : From(BF.getSymbol()),
+    To(ICP.Offset),
+    Mispreds(ICP.Mispreds),
+    Branches(ICP.Count) {
+  if (ICP.IsFunction) {
+    To.Sym = BF.getBinaryContext().getGlobalSymbolByName(ICP.Name);
   }
 }
 
@@ -192,20 +184,18 @@ IndirectCallPromotion::getCallTargets(
           Entry == BF.getFunctionColdEndLabel())
         continue;
       const Location To(Entry);
-      Callsite CS{
-          From, To, JI->Mispreds, JI->Count, BranchHistories(),
-          I - Range.first};
-      Targets.emplace_back(CS);
+      Targets.emplace_back(
+          From, To, JI->Mispreds, JI->Count, I - Range.first);
     }
 
     // Sort by symbol then addr.
     std::sort(Targets.begin(), Targets.end(),
               [](const Callsite &A, const Callsite &B) {
-                if (A.To.IsSymbol && B.To.IsSymbol)
+                if (A.To.Sym && B.To.Sym)
                   return A.To.Sym < B.To.Sym;
-                else if (A.To.IsSymbol && !B.To.IsSymbol)
+                else if (A.To.Sym && !B.To.Sym)
                   return true;
-                else if (!A.To.IsSymbol && B.To.IsSymbol)
+                else if (!A.To.Sym && B.To.Sym)
                   return false;
                 else
                   return A.To.Addr < B.To.Addr;
@@ -221,7 +211,7 @@ IndirectCallPromotion::getCallTargets(
     while (++First != Last) {
       auto &A = *Result;
       const auto &B = *First;
-      if (A.To.IsSymbol && B.To.IsSymbol && A.To.Sym == B.To.Sym) {
+      if (A.To.Sym && B.To.Sym && A.To.Sym == B.To.Sym) {
         A.JTIndex.insert(A.JTIndex.end(), B.JTIndex.begin(), B.JTIndex.end());
       } else {
         *(++Result) = *First;
@@ -241,13 +231,13 @@ IndirectCallPromotion::getCallTargets(
         Inst.getOperand(0).getReg() == BC.MRI->getProgramCounter()) {
       return Targets;
     }
-    const auto *BranchData = BF.getBranchData();
-    assert(BranchData && "expected initialized branch data");
-    auto Offset = BC.MIA->getAnnotationAs<uint64_t>(Inst, "Offset");
-    for (const auto &BI : BranchData->getBranchRange(Offset)) {
-      Callsite Site(BF, BI);
-      if (Site.isValid()) {
-        Targets.emplace_back(std::move(Site));
+    auto ICSP =
+      BC.MIA->tryGetAnnotationAs<IndirectCallSiteProfile>(Inst, "CallProfile");
+    if (ICSP) {
+      for (const auto &CSP : ICSP.get()) {
+        Callsite Site(BF, CSP);
+        if (Site.isValid())
+          Targets.emplace_back(std::move(Site));
       }
     }
   }
@@ -262,7 +252,7 @@ IndirectCallPromotion::getCallTargets(
   auto Last = std::remove_if(Targets.begin(),
                              Targets.end(),
                              [](const Callsite &CS) {
-                               return !CS.To.IsSymbol;
+                               return !CS.To.Sym;
                              });
   Targets.erase(Last, Targets.end());
 
@@ -540,7 +530,7 @@ IndirectCallPromotion::findCallTargetSymbols(
 
     for (size_t I = 0, TgtIdx = 0; I < N; ++TgtIdx) {
       auto &Target = Targets[TgtIdx];
-      assert(Target.To.IsSymbol && "All ICP targets must be to known symbols");
+      assert(Target.To.Sym && "All ICP targets must be to known symbols");
       assert(!Target.JTIndex.empty() && "Jump tables must have indices");
       for (auto Idx : Target.JTIndex) {
         SymTargets.push_back(std::make_pair(Target.To.Sym, Idx));
@@ -549,7 +539,7 @@ IndirectCallPromotion::findCallTargetSymbols(
     }
   } else {
     for (size_t I = 0; I < N; ++I) {
-      assert(Targets[I].To.IsSymbol &&
+      assert(Targets[I].To.Sym &&
              "All ICP targets must be to known symbols");
       assert(Targets[I].JTIndex.empty() &&
              "Can't have jump table indices for non-jump tables");
@@ -725,7 +715,7 @@ IndirectCallPromotion::rewriteCall(
     auto TBB = Function.createBasicBlock(0, Sym);
     for (auto &Inst : Insts) { // sanitize new instructions.
       if (BC.MIA->isCall(Inst))
-        BC.MIA->removeAnnotation(Inst, "Offset");
+        BC.MIA->removeAnnotation(Inst, "CallProfile");
     }
     TBB->addInstructions(Insts.begin(), Insts.end());
     NewBBs.emplace_back(std::move(TBB));
@@ -822,7 +812,7 @@ BinaryBasicBlock *IndirectCallPromotion::fixCFG(
 
     std::vector<MCSymbol*> SymTargets;
     for (size_t I = 0; I < Targets.size(); ++I) {
-      assert(Targets[I].To.IsSymbol);
+      assert(Targets[I].To.Sym);
       if (Targets[I].JTIndex.empty())
         SymTargets.push_back(Targets[I].To.Sym);
       else {
@@ -1089,7 +1079,7 @@ IndirectCallPromotion::printCallsiteInfo(const BinaryBasicBlock *BB,
     const auto Frequency = 100.0 * Targets[I].Branches / NumCalls;
     const auto MisFrequency = 100.0 * Targets[I].Mispreds / NumCalls;
     outs() << "BOLT-INFO:   ";
-    if (Targets[I].To.IsSymbol)
+    if (Targets[I].To.Sym)
       outs() << Targets[I].To.Sym->getName();
     else
       outs() << Targets[I].To.Addr;
@@ -1188,7 +1178,7 @@ void IndirectCallPromotion::runOnFunctions(
 
       if (!Function.isSimple() ||
           !opts::shouldProcess(Function) ||
-          !Function.getBranchData())
+          !Function.hasProfile())
         continue;
 
       const bool HasLayout = !Function.layout_empty();
@@ -1199,12 +1189,13 @@ void IndirectCallPromotion::runOnFunctions(
 
         for (auto &Inst : BB) {
           const bool IsJumpTable = Function.getJumpTable(Inst);
-          const bool HasBranchData = BC.MIA->hasAnnotation(Inst, "Offset");
+          const bool HasIndirectCallProfile =
+            BC.MIA->hasAnnotation(Inst, "CallProfile");
           const bool IsDirectCall = (BC.MIA->isCall(Inst) &&
                                      BC.MIA->getTargetSymbol(Inst, 0));
 
           if (!IsDirectCall &&
-              ((HasBranchData && !IsJumpTable && OptimizeCalls) ||
+              ((HasIndirectCallProfile && !IsJumpTable && OptimizeCalls) ||
                (IsJumpTable && OptimizeJumpTables))) {
             uint64_t NumCalls = 0;
             for (const auto &BInfo : getCallTargets(Function, Inst)) {
@@ -1233,8 +1224,8 @@ void IndirectCallPromotion::runOnFunctions(
       ++Num;
     }
     outs() << "BOLT-INFO: ICP Total indirect calls = " << TotalIndirectCalls
-           << ", " << Num << " callsites cover " << opts::ICPTopCallsites << "% "
-           << "of all indirect calls\n";
+           << ", " << Num << " callsites cover " << opts::ICPTopCallsites
+           << "% of all indirect calls\n";
 
     // Mark sites to optimize with "DoICP" annotation.
     for (size_t I = 0; I < Num; ++I) {
@@ -1249,8 +1240,7 @@ void IndirectCallPromotion::runOnFunctions(
     if (!Function.isSimple() || !opts::shouldProcess(Function))
       continue;
 
-    const auto *BranchData = Function.getBranchData();
-    if (!BranchData)
+    if (!Function.hasProfile())
       continue;
 
     const bool HasLayout = !Function.layout_empty();
@@ -1279,15 +1269,15 @@ void IndirectCallPromotion::runOnFunctions(
         auto &Inst = BB->getInstructionAtIndex(Idx);
         const auto InstIdx = &Inst - &(*BB->begin());
         const bool IsTailCall = BC.MIA->isTailCall(Inst);
-        const bool HasBranchData = Function.getBranchData() &&
-                                   BC.MIA->hasAnnotation(Inst, "Offset");
+        const bool HasIndirectCallProfile =
+          BC.MIA->hasAnnotation(Inst, "CallProfile");
         const bool IsJumpTable = Function.getJumpTable(Inst);
 
         if (BC.MIA->isCall(Inst)) {
           TotalCalls += BB->getKnownExecutionCount();
         }
 
-        if (!((HasBranchData && !IsJumpTable && OptimizeCalls) ||
+        if (!((HasIndirectCallProfile && !IsJumpTable && OptimizeCalls) ||
               (IsJumpTable && OptimizeJumpTables)))
           continue;
 
@@ -1458,7 +1448,7 @@ void IndirectCallPromotion::runOnFunctions(
     TotalIndirectJmps += FuncTotalIndirectJmps;
   }
 
-  outs() << "BOLT-INFO: ICP total indirect callsites = "
+  outs() << "BOLT-INFO: ICP total indirect callsites with profile = "
          << TotalIndirectCallsites
          << "\n"
          << "BOLT-INFO: ICP total jump table callsites = "
@@ -1475,7 +1465,8 @@ void IndirectCallPromotion::runOnFunctions(
          << format("%.1f", (100.0 * TotalNumFrequentCalls) /
                    std::max(TotalIndirectCalls, 1ul))
          << "%\n"
-         << "BOLT-INFO: ICP percentage of indirect calls that are optimized = "
+         << "BOLT-INFO: ICP percentage of indirect callsites that are "
+            "optimized = "
          << format("%.1f", (100.0 * TotalOptimizedIndirectCallsites) /
                    std::max(TotalIndirectCallsites, 1ul))
          << "%\n"

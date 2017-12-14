@@ -71,6 +71,8 @@ add_llvm_tool(llvm-bolt
   DebugData.cpp
   DWARFRewriter.cpp
   Exceptions.cpp
+  ProfileReader.cpp
+  ProfileWriter.cpp
   RewriteInstance.cpp
   )
 

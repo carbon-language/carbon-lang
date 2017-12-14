@@ -164,6 +164,40 @@ enum IndirectCallPromotionType : char {
   ICP_ALL          /// Perform ICP on calls and jump tables.
 };
 
+/// Information on a single indirect call to a particular callee.
+struct IndirectCallProfile {
+  bool IsFunction;
+  uint32_t Offset;
+  StringRef Name;
+  uint64_t Count;
+  uint64_t Mispreds;
+
+  IndirectCallProfile(bool IsFunction, StringRef Name, uint64_t Count,
+                      uint64_t Mispreds, uint32_t Offset = 0)
+    : IsFunction(IsFunction), Offset(Offset), Name(Name), Count(Count),
+      Mispreds(Mispreds) {}
+
+  bool operator==(const IndirectCallProfile &Other) const {
+    return IsFunction == Other.IsFunction &&
+           Name == Other.Name &&
+           Offset == Other.Offset;
+  }
+};
+
+/// Aggregated information for an indirect call site.
+using IndirectCallSiteProfile = SmallVector<IndirectCallProfile, 4>;
+
+inline raw_ostream &operator<<(raw_ostream &OS,
+                               const bolt::IndirectCallSiteProfile &ICSP) {
+  const char *Sep = "";
+  for (auto &CSP : ICSP) {
+    OS << Sep << "{ " << (CSP.IsFunction ? CSP.Name : "<unknown>") << ": "
+       << CSP.Count << " (" << CSP.Mispreds << " misses) }";
+    Sep = ", ";
+  }
+  return OS;
+}
+
 /// BinaryFunction is a representation of machine-level function.
 ///
 /// We use the term "Binary" as "Machine" was already taken.
@@ -293,6 +327,14 @@ private:
 
   /// Profile match ratio for BranchData.
   float ProfileMatchRatio{0.0f};
+
+  /// Indicates if function profile was collected using LBRs.
+  bool HasLBRProfile{true};
+
+  /// For functions with mismatched profile we store all call profile
+  /// information at a function level (as opposed to tying it to
+  /// specific call sites).
+  IndirectCallSiteProfile AllCallSites;
 
   /// Score of the function (estimated number of instructions executed,
   /// according to profile data). -1 if the score has not been calculated yet.
@@ -511,11 +553,11 @@ private:
   /// function and that apply before the entry basic block).
   CFIInstrMapType CIEFrameInstructions;
 
+public:
   /// Representation of a jump table.
   ///
   /// The jump table may include other jump tables that are referenced by
   /// a different label at a different offset in this jump table.
-public:
   struct JumpTable {
     enum JumpTableType : char {
       JTT_NORMAL,
@@ -744,10 +786,6 @@ private:
   void addInstruction(uint64_t Offset, MCInst &&Instruction) {
     Instructions.emplace(Offset, std::forward<MCInst>(Instruction));
   }
-
-  /// Return instruction at a given offset in the function. Valid before
-  /// CFG is constructed or while instruction offsets are available in CFG.
-  MCInst *getInstructionAtOffset(uint64_t Offset);
 
   /// Analyze and process indirect branch \p Instruction before it is
   /// added to Instructions list.
@@ -978,6 +1016,10 @@ public:
     return nullptr;
   }
 
+  /// Return instruction at a given offset in the function. Valid before
+  /// CFG is constructed or while instruction offsets are available in CFG.
+  MCInst *getInstructionAtOffset(uint64_t Offset);
+
   /// Return the name of the function as extracted from the binary file.
   /// If the function has multiple names - return the last one
   /// followed by "(*#<numnames>)".
@@ -1101,6 +1143,13 @@ public:
   const MCSymbol *getSymbol() const {
     return OutputSymbol;
   }
+
+  /// Return MC symbol corresponding to an enumerated entry for multiple-entry
+  /// functions.
+  const MCSymbol *getSymbolForEntry(uint64_t EntryNum) const;
+
+  /// Return an entry ID corresponding to a symbol.
+  uint64_t getEntryForSymbol(const MCSymbol *EntrySymbol) const;
 
   MCSymbol *getColdSymbol() {
     if (ColdSymbol)
@@ -1895,6 +1944,15 @@ public:
     MemData = Data;
   }
 
+  /// Return all call site profile info for this function.
+  IndirectCallSiteProfile &getAllCallSites() {
+    return AllCallSites;
+  }
+
+  const IndirectCallSiteProfile &getAllCallSites() const {
+    return AllCallSites;
+  }
+
   /// Walks the list of basic blocks filling in missing information about
   /// edge frequency for fall-throughs.
   ///
@@ -2003,6 +2061,9 @@ public:
   /// function. The functions should have been proven identical with
   /// isIdenticalWith.
   void mergeProfileDataInto(BinaryFunction &BF) const;
+
+  /// Convert function-level branch data into instruction annotations.
+  void convertBranchData();
 
   /// Returns true if this function has identical code and CFG with
   /// the given function \p BF.
@@ -2303,6 +2364,13 @@ template <> struct GraphTraits<Inverse<const bolt::BinaryFunction *>> :
   }
 };
 
+template <>
+class MCAnnotationPrinter<bolt::IndirectCallSiteProfile> {
+public:
+  void print(raw_ostream &OS, const bolt::IndirectCallSiteProfile &ICSP) const {
+    OS << ICSP;
+  }
+};
 
 } // namespace llvm
 

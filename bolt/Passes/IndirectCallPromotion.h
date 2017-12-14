@@ -22,7 +22,7 @@ namespace bolt {
 
 /// Optimize indirect calls.
 /// The indirect call promotion pass visits each indirect call and
-/// examines the BranchData for each. If the most frequent targets
+/// examines a branch profile for each. If the most frequent targets
 /// from that callsite exceed the specified threshold (default 90%),
 /// the call is promoted. Otherwise, it is ignored. By default,
 /// only one target is considered at each callsite.
@@ -103,14 +103,13 @@ class IndirectCallPromotion : public BinaryFunctionPass {
   using JumpTableInfoType = std::vector<std::pair<uint64_t, uint64_t>>;
   using SymTargetsType = std::vector<std::pair<MCSymbol *, uint64_t>>;
   struct Location {
-    bool IsSymbol{false};
     MCSymbol *Sym{nullptr};
     uint64_t Addr{0};
     bool isValid() const {
-      return (IsSymbol && Sym) || (!IsSymbol && Addr != 0);
+      return Sym || (!Sym && Addr != 0);
     }
     Location() { }
-    explicit Location(MCSymbol *Sym) : IsSymbol(true), Sym(Sym) { }
+    explicit Location(MCSymbol *Sym) : Sym(Sym) { }
     explicit Location(uint64_t Addr) : Addr(Addr) { }
   };
 
@@ -119,18 +118,17 @@ class IndirectCallPromotion : public BinaryFunctionPass {
     Location To;
     uint64_t Mispreds{0};
     uint64_t Branches{0};
-    BranchHistories Histories;
     // Indices in the jmp table (jt only)
     std::vector<uint64_t> JTIndex;
     bool isValid() const {
       return From.isValid() && To.isValid();
     }
-    Callsite(BinaryFunction &BF, const BranchInfo &BI);
+    Callsite(BinaryFunction &BF, const IndirectCallProfile &ICP);
     Callsite(const Location &From, const Location &To,
              uint64_t Mispreds, uint64_t Branches,
-             const BranchHistories &Histories, uint64_t JTIndex)
+             uint64_t JTIndex)
     : From(From), To(To), Mispreds(Mispreds), Branches(Branches),
-      Histories(Histories), JTIndex(1, JTIndex) { }
+      JTIndex(1, JTIndex) { }
   };
 
   std::unordered_set<const BinaryFunction *> Modified;

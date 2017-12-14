@@ -261,7 +261,8 @@ bool BinaryFunction::recordBranch(uint64_t From, uint64_t To,
 
   if (!FromBB->getSuccessor(ToBB->getLabel())) {
     // Check if this is a recursive call or a return from a recursive call.
-    if (ToBB->isEntryPoint()) {
+    if (ToBB->isEntryPoint() && (BC.MIA->isCall(*FromInstruction) ||
+                                 BC.MIA->isIndirectBranch(*FromInstruction))) {
       // Execution count is already accounted for.
       return true;
     }
@@ -289,8 +290,18 @@ bool BinaryFunction::recordEntry(uint64_t To, bool Mispred, uint64_t Count) {
   if (!hasProfile())
     ExecutionCount = 0;
 
-  if (To == 0)
+  BinaryBasicBlock *EntryBB = nullptr;
+  if (To == 0) {
     ExecutionCount += Count;
+    if (!empty())
+      EntryBB = &front();
+  } else if (auto *BB = getBasicBlockAtOffset(To)) {
+    if (BB->isEntryPoint())
+      EntryBB = BB;
+  }
+
+  if (EntryBB)
+    EntryBB->setExecutionCount(EntryBB->getKnownExecutionCount() + Count);
 
   return true;
 }
@@ -319,8 +330,7 @@ void BinaryFunction::postProcessProfile() {
     return;
   }
 
-  // Is we are using non-LBR sampling there's nothing left to do.
-  if (!BranchData)
+  if (!HasLBRProfile)
     return;
 
   // Bug compatibility with previous version - double accounting for conditional
@@ -339,7 +349,8 @@ void BinaryFunction::postProcessProfile() {
   }
 
   // Pre-sort branch data.
-  std::stable_sort(BranchData->Data.begin(), BranchData->Data.end());
+  if (BranchData)
+    std::stable_sort(BranchData->Data.begin(), BranchData->Data.end());
 
   // If we have at least some branch data for the function indicate that it
   // was executed.
@@ -347,36 +358,19 @@ void BinaryFunction::postProcessProfile() {
     ExecutionCount = 1;
   }
 
-  // Compute preliminary execution count for each basic block
+  // Compute preliminary execution count for each basic block.
   for (auto *BB : BasicBlocks) {
-    BB->ExecutionCount = 0;
+    if ((!BB->isEntryPoint() && !BB->isLandingPad()) ||
+        BB->ExecutionCount == BinaryBasicBlock::COUNT_NO_PROFILE)
+      BB->ExecutionCount = 0;
   }
   for (auto *BB : BasicBlocks) {
     auto SuccBIIter = BB->branch_info_begin();
     for (auto Succ : BB->successors()) {
-      if (SuccBIIter->Count != BinaryBasicBlock::COUNT_NO_PROFILE)
+      if (!Succ->isEntryPoint() &&
+          SuccBIIter->Count != BinaryBasicBlock::COUNT_NO_PROFILE)
         Succ->setExecutionCount(Succ->getExecutionCount() + SuccBIIter->Count);
       ++SuccBIIter;
-    }
-  }
-
-  // Set entry BBs to zero, we'll update their execution count next with entry
-  // data (we maintain a separate data structure for branches to function entry
-  // points)
-  for (auto *BB : BasicBlocks) {
-    if (BB->isEntryPoint())
-      BB->ExecutionCount = 0;
-  }
-
-  // Update execution counts of landing pad blocks and entry BBs
-  // There is a slight skew introduced here as branches originated from RETs
-  // may be accounted for in the execution count of an entry block if the last
-  // instruction in a predecessor fall-through block is a call. This situation
-  // should rarely happen because there are few multiple-entry functions.
-  for (const auto &I : BranchData->EntryData) {
-    BinaryBasicBlock *BB = getBasicBlockAtOffset(I.To.Offset);
-    if (BB && (BB->isEntryPoint() || BB->isLandingPad())) {
-      BB->setExecutionCount(BB->getExecutionCount() + I.Branches);
     }
   }
 
@@ -442,6 +436,7 @@ void BinaryFunction::readProfile() {
     return;
 
   if (!BC.DR.hasLBR()) {
+    HasLBRProfile = false;
     readSampleData();
     return;
   }
@@ -451,6 +446,23 @@ void BinaryFunction::readProfile() {
 
   if (!BranchData)
     return;
+
+  // Assign basic block counts to function entry points. These only include
+  // counts for outside entries.
+  //
+  // There is a slight skew introduced here as branches originated from RETs
+  // may be accounted for in the execution count of an entry block if the last
+  // instruction in a predecessor fall-through block is a call. This situation
+  // should rarely happen because there are few multiple-entry functions.
+  for (const auto &BI : BranchData->EntryData) {
+    BinaryBasicBlock *BB = getBasicBlockAtOffset(BI.To.Offset);
+    if (BB && (BB->isEntryPoint() || BB->isLandingPad())) {
+      auto Count = BB->getExecutionCount();
+      if (Count == BinaryBasicBlock::COUNT_NO_PROFILE)
+        Count = 0;
+      BB->setExecutionCount(Count + BI.Branches);
+    }
+  }
 
   uint64_t MismatchedBranches = 0;
   for (const auto &BI : BranchData->Data) {
@@ -466,25 +478,59 @@ void BinaryFunction::readProfile() {
     }
   }
 
-  // Special profile data propagation is required for conditional tail calls.
-  for (auto BB : BasicBlocks) {
-    auto *CTCInstr = BB->getLastNonPseudoInstr();
-    if (!CTCInstr || !BC.MIA->getConditionalTailCall(*CTCInstr))
+  // Convert branch data into annotations.
+  convertBranchData();
+}
+
+void BinaryFunction::convertBranchData() {
+  if (!BranchData || empty())
+    return;
+
+  // Profile information for calls.
+  //
+  // There are 3 cases that we annotate differently:
+  //   1) Conditional tail calls that could be mispredicted.
+  //   2) Indirect calls to multiple destinations with mispredictions.
+  //      Before we validate CFG we have to handle indirect branches here too.
+  //   3) Regular direct calls. The count could be different from containing
+  //      basic block count. Keep this data in case we find it useful.
+  //
+  for (auto &BI : BranchData->Data) {
+    // Ignore internal branches.
+    if (BI.To.IsSymbol && BI.To.Name == BI.From.Name && BI.To.Offset != 0)
       continue;
 
-    auto OffsetOrErr =
-      BC.MIA->tryGetAnnotationAs<uint64_t>(*CTCInstr, "Offset");
-    assert(OffsetOrErr && "offset not set for conditional tail call");
-
-    auto BranchInfoOrErr = BranchData->getDirectCallBranch(*OffsetOrErr);
-    if (!BranchInfoOrErr)
+    auto *Instr = getInstructionAtOffset(BI.From.Offset);
+    if (!Instr ||
+        (!BC.MIA->isCall(*Instr) && !BC.MIA->isIndirectBranch(*Instr)))
       continue;
 
-    BC.MIA->addAnnotation(BC.Ctx.get(), *CTCInstr, "CTCTakenCount",
-                          BranchInfoOrErr->Branches);
-    BC.MIA->addAnnotation(BC.Ctx.get(), *CTCInstr, "CTCMispredCount",
-                          BranchInfoOrErr->Mispreds);
+    auto setOrUpdateAnnotation = [&](StringRef Name, uint64_t Count) {
+      if (opts::Verbosity >= 1 && BC.MIA->hasAnnotation(*Instr, Name)) {
+        errs() << "BOLT-WARNING: duplicate " << Name << " info for offset 0x"
+               << Twine::utohexstr(BI.From.Offset)
+               << " in function " << *this << '\n';
+      }
+      auto &Value = BC.MIA->getOrCreateAnnotationAs<uint64_t>(BC.Ctx.get(),
+                                                              *Instr, Name);
+      Value += Count;
+    };
+
+    if (BC.MIA->isIndirectCall(*Instr) || BC.MIA->isIndirectBranch(*Instr)) {
+      IndirectCallSiteProfile &CSP =
+        BC.MIA->getOrCreateAnnotationAs<IndirectCallSiteProfile>(BC.Ctx.get(),
+            *Instr, "CallProfile");
+      CSP.emplace_back(BI.To.IsSymbol, BI.To.Name, BI.Branches,
+                       BI.Mispreds);
+    } else if (BC.MIA->getConditionalTailCall(*Instr)) {
+      setOrUpdateAnnotation("CTCTakenCount", BI.Branches);
+      setOrUpdateAnnotation("CTCMispredCount", BI.Mispreds);
+    } else {
+      setOrUpdateAnnotation("Count", BI.Branches);
+    }
   }
+
+  BranchData = nullptr;
 }
 
 void BinaryFunction::mergeProfileDataInto(BinaryFunction &BF) const {

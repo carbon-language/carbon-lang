@@ -746,8 +746,7 @@ std::error_code DataAggregator::parseBranchEvents() {
     ++NumSamples;
     NumEntries += Sample.LBR.size();
 
-    // Parser semantic actions
-    // LBRs are stored in reverse execution order. NextLBR refers to next
+    // LBRs are stored in reverse execution order. NextLBR refers to the next
     // executed branch record.
     const LBREntry *NextLBR{nullptr};
     for (const auto &LBR : Sample.LBR) {

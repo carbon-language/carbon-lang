@@ -134,7 +134,6 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
       continue;
     }
 
-    const auto *BranchData = Function->getBranchData();
     const auto SrcId = lookupNode(Function);
     // Offset of the current basic block from the beginning of the function
     uint64_t Offset = 0;
@@ -166,25 +165,6 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
       return false;
     };
 
-    auto getCallInfoFromBranchData = [&](const BranchInfo &BI, bool IsStale) {
-      MCSymbol *DstSym = nullptr;
-      uint64_t Count;
-      if (BI.To.IsSymbol && (DstSym = BC.getGlobalSymbolByName(BI.To.Name))) {
-        Count = BI.Branches;
-      } else {
-        Count = COUNT_NO_PROFILE;
-      }
-      // If we are using the perf data for a stale function we need to filter
-      // out data which comes from branches.  We'll assume that the To offset
-      // is non-zero for branches.
-      if (IsStale && BI.To.Offset != 0 &&
-          (!DstSym || Function == BC.getFunctionForSymbol(DstSym))) {
-        DstSym = nullptr;
-        Count = COUNT_NO_PROFILE;
-      }
-      return std::make_pair(DstSym, Count);
-    };
-
     // Get pairs of (symbol, count) for each target at this callsite.
     // If the call is to an unknown function the symbol will be nullptr.
     // If there is no profiling data the count will be COUNT_NO_PROFILE.
@@ -193,12 +173,15 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
       const auto *DstSym = BC.MIA->getTargetSymbol(Inst);
 
       // If this is an indirect call use perf data directly.
-      if (!DstSym && BranchData &&
-          BC.MIA->hasAnnotation(Inst, "Offset")) {
-        const auto InstrOffset =
-          BC.MIA->getAnnotationAs<uint64_t>(Inst, "Offset");
-        for (const auto &BI : BranchData->getBranchRange(InstrOffset)) {
-          Counts.push_back(getCallInfoFromBranchData(BI, false));
+      if (!DstSym && BC.MIA->hasAnnotation(Inst, "CallProfile")) {
+        const auto &ICSP =
+          BC.MIA->getAnnotationAs<IndirectCallSiteProfile>(Inst, "CallProfile");
+        for (const auto &CSI : ICSP) {
+          if (!CSI.IsFunction)
+            continue;
+          if (auto DstSym = BC.getGlobalSymbolByName(CSI.Name)) {
+            Counts.push_back(std::make_pair(DstSym, CSI.Count));
+          }
         }
       } else {
         const auto Count = BB->getExecutionCount();
@@ -211,23 +194,29 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
     // If the function has an invalid profile, try to use the perf data
     // directly (if requested).  If there is no perf data for this function,
     // fall back to the CFG walker which attempts to handle missing data.
-    if (!Function->hasValidProfile() && CgFromPerfData && BranchData) {
+    if (!Function->hasValidProfile() && CgFromPerfData &&
+        !Function->getAllCallSites().empty()) {
       DEBUG(dbgs() << "BOLT-DEBUG: buildCallGraph: Falling back to perf data"
                    << " for " << *Function << "\n");
       ++NumFallbacks;
       const auto Size = functionSize(Function);
-      for (const auto &BI : BranchData->Data) {
-        Offset = BI.From.Offset;
+      for (const auto &CSI : Function->getAllCallSites()) {
+        ++TotalCallsites;
+
+        if (!CSI.IsFunction)
+          continue;
+
+        auto *DstSym = BC.getGlobalSymbolByName(CSI.Name);
+        if (!DstSym)
+          continue;
+
         // The computed offset may exceed the hot part of the function; hence,
-        // bound it the size
+        // bound it by the size.
+        Offset = CSI.Offset;
         if (Offset > Size)
           Offset = Size;
 
-        const auto CI = getCallInfoFromBranchData(BI, true);
-        if (!CI.first && CI.second == COUNT_NO_PROFILE) // probably a branch
-          continue;
-        ++TotalCallsites;
-        if (!recordCall(CI.first, CI.second)) {
+        if (!recordCall(DstSym, CSI.Count)) {
           ++NotProcessed;
         }
       }

@@ -18,6 +18,8 @@
 #include "DataAggregator.h"
 #include "DataReader.h"
 #include "Exceptions.h"
+#include "ProfileReader.h"
+#include "ProfileWriter.h"
 #include "RewriteInstance.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
@@ -95,6 +97,11 @@ cl::opt<bool>
 AllowStripped("allow-stripped",
   cl::desc("allow processing of stripped binaries"),
   cl::Hidden,
+  cl::cat(BoltCategory));
+
+static cl::opt<std::string>
+BoltProfile("b",
+  cl::desc("<bolt profile>"),
   cl::cat(BoltCategory));
 
 cl::opt<bool>
@@ -216,6 +223,11 @@ RelocationMode("relocs",
   cl::desc("use relocations in the binary (default=autodetect)"),
   cl::ZeroOrMore,
   cl::cat(BoltCategory));
+
+static cl::opt<std::string>
+SaveProfile("w",
+  cl::desc("save recorded profile to a file"),
+  cl::cat(BoltOutputCategory));
 
 static cl::list<std::string>
 SkipFunctionNames("skip-funcs",
@@ -873,7 +885,7 @@ void RewriteInstance::run() {
     discoverFileObjects();
     readDebugInfo();
     disassembleFunctions();
-    readProfileData();
+    processProfileData();
     if (opts::AggregateOnly)
       return;
     postProcessFunctions();
@@ -1901,39 +1913,56 @@ void RewriteInstance::readDebugInfo() {
   BC->preprocessDebugInfo(BinaryFunctions);
 }
 
-void RewriteInstance::readProfileData() {
+void RewriteInstance::processProfileData() {
   if (DA.started()) {
     NamedRegionTimer T("aggregate data", TimerGroupName, opts::TimeRewrite);
     DA.aggregate(*BC.get(), BinaryFunctions);
+
+    for (auto &BFI : BinaryFunctions) {
+      auto &Function = BFI.second;
+      Function.convertBranchData();
+    }
 
     if (opts::AggregateOnly) {
       if (std::error_code EC = DA.writeAggregatedFile()) {
         check_error(EC, "cannot create output data file");
       }
     }
-    return;
-  }
+  } else {
+    NamedRegionTimer T("read profile data", TimerGroupName, opts::TimeRewrite);
 
-  NamedRegionTimer T("read profile data", TimerGroupName, opts::TimeRewrite);
-  // Preliminary match profile data to functions.
-  if (!BC->DR.getAllFuncsData().empty()) {
+    if (!opts::BoltProfile.empty()) {
+      ProfileReader PR;
+      PR.readProfile(opts::BoltProfile, BinaryFunctions);
+
+      return;
+    }
+
+    // Preliminary match profile data to functions.
+    if (!BC->DR.getAllFuncsData().empty()) {
+      for (auto &BFI : BinaryFunctions) {
+        auto &Function = BFI.second;
+        if (auto *MemData = BC->DR.getFuncMemData(Function.getNames())) {
+          Function.MemData = MemData;
+          MemData->Used = true;
+        }
+        if (auto *FuncData = BC->DR.getFuncBranchData(Function.getNames())) {
+          Function.BranchData = FuncData;
+          Function.ExecutionCount = FuncData->ExecutionCount;
+          FuncData->Used = true;
+        }
+      }
+    }
+
     for (auto &BFI : BinaryFunctions) {
       auto &Function = BFI.second;
-      if (auto *MemData = BC->DR.getFuncMemData(Function.getNames())) {
-        Function.MemData = MemData;
-        MemData->Used = true;
-      }
-      if (auto *FuncData = BC->DR.getFuncBranchData(Function.getNames())) {
-        Function.BranchData = FuncData;
-        Function.ExecutionCount = FuncData->ExecutionCount;
-        FuncData->Used = true;
-      }
+      Function.readProfile();
     }
   }
 
-  for (auto &BFI : BinaryFunctions) {
-    auto &Function = BFI.second;
-    Function.readProfile();
+  if (!opts::SaveProfile.empty()) {
+    ProfileWriter PW(opts::SaveProfile);
+    PW.writeProfile(BinaryFunctions);
   }
 }
 
