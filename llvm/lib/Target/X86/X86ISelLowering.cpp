@@ -4483,6 +4483,7 @@ static bool hasFPCMov(unsigned X86CC) {
 
 bool X86TargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
                                            const CallInst &I,
+                                           MachineFunction &MF,
                                            unsigned Intrinsic) const {
 
   const IntrinsicData* IntrData = getIntrinsicWithChain(Intrinsic);
