@@ -168,6 +168,8 @@ public:
 
     return Ty.getSizeInBits() < Other.Ty.getSizeInBits();
   }
+
+  bool operator==(const LLTCodeGen &B) const { return Ty == B.Ty; }
 };
 
 class InstructionMatcher;
@@ -819,6 +821,18 @@ public:
                                     RuleMatcher &Rule) const = 0;
 
   PredicateKind getKind() const { return Kind; }
+
+  virtual bool isIdentical(const PredicateMatcher &B) const {
+    if (InsnVarID != 0 || OpIdx != (unsigned)~0) {
+      // We currently don't hoist the record of instruction properly.
+      // Therefore we can only work on the orig instruction (InsnVarID
+      // == 0).
+      DEBUG(dbgs() << "Non-zero instr ID not supported yet\n");
+      return false;
+    }
+    return B.getKind() == getKind() && InsnVarID == B.InsnVarID &&
+           OpIdx == B.OpIdx;
+  }
 };
 
 /// Generates code to check a predicate of an operand.
@@ -890,6 +904,10 @@ public:
   static bool classof(const PredicateMatcher *P) {
     return P->getKind() == OPM_LLT;
   }
+  bool isIdentical(const PredicateMatcher &B) const override {
+    return OperandPredicateMatcher::isIdentical(B) &&
+           Ty == cast<LLTOperandMatcher>(&B)->Ty;
+  }
 
   void emitPredicateOpcodes(MatchTable &Table,
                             RuleMatcher &Rule) const override {
@@ -946,6 +964,8 @@ protected:
   unsigned getAllocatedTemporariesBaseID() const;
 
 public:
+  bool isIdentical(const PredicateMatcher &B) const override { return false; }
+
   ComplexPatternOperandMatcher(const OperandMatcher &Operand,
                                const Record &TheDef, unsigned InsnVarID,
                                unsigned OpIdx)
@@ -981,6 +1001,11 @@ public:
   RegisterBankOperandMatcher(const CodeGenRegisterClass &RC, unsigned InsnVarID,
                              unsigned OpIdx)
       : OperandPredicateMatcher(OPM_RegBank, InsnVarID, OpIdx), RC(RC) {}
+
+  bool isIdentical(const PredicateMatcher &B) const override {
+    return OperandPredicateMatcher::isIdentical(B) &&
+           RC.getDef() == cast<RegisterBankOperandMatcher>(&B)->RC.getDef();
+  }
 
   static bool classof(const PredicateMatcher *P) {
     return P->getKind() == OPM_RegBank;
@@ -1025,6 +1050,11 @@ public:
   ConstantIntOperandMatcher(int64_t Value, unsigned InsnVarID, unsigned OpIdx)
       : OperandPredicateMatcher(OPM_Int, InsnVarID, OpIdx), Value(Value) {}
 
+  bool isIdentical(const PredicateMatcher &B) const override {
+    return OperandPredicateMatcher::isIdentical(B) &&
+           Value == cast<ConstantIntOperandMatcher>(&B)->Value;
+  }
+
   static bool classof(const PredicateMatcher *P) {
     return P->getKind() == OPM_Int;
   }
@@ -1049,6 +1079,11 @@ public:
       : OperandPredicateMatcher(OPM_LiteralInt, InsnVarID, OpIdx),
         Value(Value) {}
 
+  bool isIdentical(const PredicateMatcher &B) const override {
+    return OperandPredicateMatcher::isIdentical(B) &&
+           Value == cast<LiteralIntOperandMatcher>(&B)->Value;
+  }
+
   static bool classof(const PredicateMatcher *P) {
     return P->getKind() == OPM_LiteralInt;
   }
@@ -1071,6 +1106,11 @@ public:
   IntrinsicIDOperandMatcher(const CodeGenIntrinsic *II, unsigned InsnVarID,
                             unsigned OpIdx)
       : OperandPredicateMatcher(OPM_IntrinsicID, InsnVarID, OpIdx), II(II) {}
+
+  bool isIdentical(const PredicateMatcher &B) const override {
+    return OperandPredicateMatcher::isIdentical(B) &&
+           II == cast<IntrinsicIDOperandMatcher>(&B)->II;
+  }
 
   static bool classof(const PredicateMatcher *P) {
     return P->getKind() == OPM_IntrinsicID;
@@ -1273,6 +1313,11 @@ public:
     return P->getKind() == IPM_Opcode;
   }
 
+  bool isIdentical(const PredicateMatcher &B) const override {
+    return InstructionPredicateMatcher::isIdentical(B) &&
+           I == cast<InstructionOpcodeMatcher>(&B)->I;
+  }
+
   void emitPredicateOpcodes(MatchTable &Table,
                             RuleMatcher &Rule) const override {
     Table << MatchTable::Opcode("GIM_CheckOpcode") << MatchTable::Comment("MI")
@@ -1341,6 +1386,13 @@ public:
                                  const TreePredicateFn &Predicate)
       : InstructionPredicateMatcher(IPM_ImmPredicate, InsnVarID),
         Predicate(Predicate) {}
+
+  bool isIdentical(const PredicateMatcher &B) const override {
+    return InstructionPredicateMatcher::isIdentical(B) &&
+           Predicate.getOrigPatFragRecord() ==
+               cast<InstructionImmPredicateMatcher>(&B)
+                   ->Predicate.getOrigPatFragRecord();
+  }
 
   static bool classof(const PredicateMatcher *P) {
     return P->getKind() == IPM_ImmPredicate;
