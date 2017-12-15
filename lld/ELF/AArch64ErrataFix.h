@@ -20,7 +20,7 @@ namespace elf {
 
 class Defined;
 class InputSection;
-class InputSectionDescription;
+struct InputSectionDescription;
 class OutputSection;
 class Patch843419Section;
 
