@@ -2415,6 +2415,7 @@ bool PPCInstrInfo::convertToImmediateForm(MachineInstr &MI,
       NewImm = Addend + SExtImm;
       break;
     }
+    return false;
   }
   case PPC::RLDICL:
   case PPC::RLDICLo:

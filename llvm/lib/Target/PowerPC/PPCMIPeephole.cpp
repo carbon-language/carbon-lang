@@ -774,7 +774,7 @@ bool PPCMIPeephole::simplifyCode(void) {
   // Eliminate all the TOC save instructions which are redundant.
   Simplified |= eliminateRedundantTOCSaves(TOCSaves);
   // We try to eliminate redundant compare instruction.
-  //Simplified |= eliminateRedundantCompare();
+  Simplified |= eliminateRedundantCompare();
 
   return Simplified;
 }
@@ -1025,6 +1025,9 @@ bool PPCMIPeephole::eliminateRedundantTOCSaves(
 //   bge    0, .LBB0_4
 
 bool PPCMIPeephole::eliminateRedundantCompare(void) {
+  // FIXME: this transformation is causing miscompiles. Disabling it for now
+  // until we can resolve the issue.
+  return false;
   bool Simplified = false;
 
   for (MachineBasicBlock &MBB2 : *MF) {
