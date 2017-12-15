@@ -161,6 +161,11 @@ private:
   /// regions.
   void checkFramePointerInitialization(MCInst &Point);
 
+  /// If \p Point is restoring the value with SP with FP plus offset,
+  /// add a slottag to this instruction as it needs to be updated when we
+  /// change the stack layout.
+  void checkStackPointerRestore(MCInst &Point);
+
   /// Make sense of each stack offsets we can freely change
   void classifyStackAccesses();
   void classifyCFIs();
@@ -470,7 +475,7 @@ public:
     }
   }
 
-  void perform();
+  bool perform();
 
   static void printStats();
 };

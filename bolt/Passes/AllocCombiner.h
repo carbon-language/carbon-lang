@@ -21,7 +21,7 @@ namespace bolt {
 class AllocCombinerPass : public BinaryFunctionPass {
   /// Stats aggregating variables
   uint64_t NumCombined{0};
-  uint64_t NumCoalesced{0};
+  DenseSet<const BinaryFunction *> FuncsChanged;
 
   void combineAdjustments(BinaryContext &BC, BinaryFunction &BF);
   void coalesceEmptySpace(BinaryContext &BC, BinaryFunction &BF,
@@ -33,6 +33,10 @@ public:
 
   const char *getName() const override {
     return "alloc-combiner";
+  }
+
+  bool shouldPrint(const BinaryFunction &BF) const override {
+    return BinaryFunctionPass::shouldPrint(BF) && FuncsChanged.count(&BF) > 0;
   }
 
   /// Pass entry point

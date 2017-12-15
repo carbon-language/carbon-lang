@@ -84,6 +84,8 @@ class FrameOptimizerPass : public BinaryFunctionPass {
   uint64_t NumLoadsChangedToImm{0};
   uint64_t NumLoadsDeleted{0};
 
+  DenseSet<const BinaryFunction *> FuncsChanged;
+
   /// Perform a dataflow analysis in \p BF to reveal unnecessary reloads from
   /// the frame. Use the analysis to convert memory loads to register moves or
   /// immediate loads. Delete redundant register moves.
@@ -109,6 +111,10 @@ public:
   void runOnFunctions(BinaryContext &BC,
                       std::map<uint64_t, BinaryFunction> &BFs,
                       std::set<uint64_t> &LargeFunctions) override;
+
+  bool shouldPrint(const BinaryFunction &BF) const override {
+    return BinaryFunctionPass::shouldPrint(BF) && FuncsChanged.count(&BF) > 0;
+  }
 };
 
 } // namespace bolt

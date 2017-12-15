@@ -265,7 +265,8 @@ void FrameOptimizerPass::runOnFunctions(BinaryContext &BC,
                           opts::TimeOpts);
       DataflowInfoManager Info(BC, I.second, &RA, &FA);
       ShrinkWrapping SW(FA, BC, I.second, Info);
-      SW.perform();
+      if (SW.perform())
+        FuncsChanged.insert(&I.second);
     }
   }
 

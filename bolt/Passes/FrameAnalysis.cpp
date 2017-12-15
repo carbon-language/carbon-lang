@@ -316,12 +316,11 @@ bool FrameAnalysis::updateArgsTouchedFor(const BinaryFunction &BF, MCInst &Inst,
   // If indirect call, we conservatively assume it accesses all stack positions
   if (TargetSymbol == nullptr) {
     addArgAccessesFor(Inst, ArgAccesses(/*AssumeEverything=*/true));
-    bool Updated{false};
     if (!FunctionsRequireAlignment.count(&BF)) {
-      Updated = true;
       FunctionsRequireAlignment.insert(&BF);
+      return true;
     }
-    return Updated;
+    return false;
   }
 
   const auto *Function = BC.getFunctionForSymbol(TargetSymbol);
@@ -329,20 +328,17 @@ bool FrameAnalysis::updateArgsTouchedFor(const BinaryFunction &BF, MCInst &Inst,
   // it accesses all stack positions
   if (Function == nullptr) {
     addArgAccessesFor(Inst, ArgAccesses(/*AssumeEverything=*/true));
-    bool Updated{false};
     if (!FunctionsRequireAlignment.count(&BF)) {
-      Updated = true;
       FunctionsRequireAlignment.insert(&BF);
+      return true;
     }
-    return Updated;
+    return false;
   }
 
   auto Iter = ArgsTouchedMap.find(Function);
-  if (Iter == ArgsTouchedMap.end())
-    return false;
 
   bool Changed = false;
-  if (BC.MIA->isTailCall(Inst)) {
+  if (BC.MIA->isTailCall(Inst) && Iter != ArgsTouchedMap.end()) {
     // Ignore checking CurOffset because we can't always reliably determine the
     // offset specially after an epilogue, where tailcalls happen. It should be
     // -8.
@@ -358,6 +354,8 @@ bool FrameAnalysis::updateArgsTouchedFor(const BinaryFunction &BF, MCInst &Inst,
     Changed = true;
     FunctionsRequireAlignment.insert(&BF);
   }
+  if (Iter == ArgsTouchedMap.end())
+    return false;
 
   if (CurOffset == StackPointerTracking::EMPTY ||
       CurOffset == StackPointerTracking::SUPERPOSITION) {
@@ -382,18 +380,18 @@ bool FrameAnalysis::updateArgsTouchedFor(const BinaryFunction &BF, MCInst &Inst,
 bool FrameAnalysis::computeArgsAccessed(BinaryFunction &BF) {
   if (!BF.isSimple() || !BF.hasCFG()) {
     DEBUG(dbgs() << "Treating " << BF.getPrintName() << " conservatively.\n");
-    bool Updated = false;
     ArgsTouchedMap[&BF].emplace(std::make_pair(-1, 0));
     if (!FunctionsRequireAlignment.count(&BF)) {
-      Updated = true;
       FunctionsRequireAlignment.insert(&BF);
+      return true;
     }
-    return Updated;
+    return false;
   }
 
   DEBUG(dbgs() << "Now computing args accessed for: " << BF.getPrintName()
                << "\n");
   bool UpdatedArgsTouched = false;
+  bool NoInfo = false;
   FrameAccessAnalysis FAA(BC, BF);
 
   for (auto BB : BF.layout()) {
@@ -402,6 +400,7 @@ bool FrameAnalysis::computeArgsAccessed(BinaryFunction &BF) {
     for (auto &Inst : *BB) {
       if (!FAA.doNext(*BB, Inst)) {
         ArgsTouchedMap[&BF].emplace(std::make_pair(-1, 0));
+        NoInfo = true;
         break;
       }
 
@@ -429,25 +428,26 @@ bool FrameAnalysis::computeArgsAccessed(BinaryFunction &BF) {
         BC.printInstruction(dbgs(), Inst, 0, &BF, true);
       });
     }
+    if (NoInfo)
+      break;
   }
   if (FunctionsRequireAlignment.count(&BF))
     return UpdatedArgsTouched;
 
-  bool UpdatedAlignedStatus = false;
+  if (NoInfo) {
+    FunctionsRequireAlignment.insert(&BF);
+    return true;
+  }
+
   for (auto &BB : BF) {
-    if (UpdatedAlignedStatus)
-      break;
     for (auto &Inst : BB) {
       if (BC.MIA->requiresAlignedAddress(Inst)) {
-        if (!FunctionsRequireAlignment.count(&BF)) {
-          UpdatedAlignedStatus = true;
-          FunctionsRequireAlignment.insert(&BF);
-          break;
-        }
+        FunctionsRequireAlignment.insert(&BF);
+        return true;
       }
     }
   }
-  return UpdatedArgsTouched || UpdatedAlignedStatus;
+  return UpdatedArgsTouched;
 }
 
 bool FrameAnalysis::restoreFrameIndex(BinaryFunction &BF) {

@@ -256,6 +256,63 @@ void StackLayoutModifier::checkFramePointerInitialization(MCInst &Point) {
     blacklistRegion(0, 0);
 }
 
+void StackLayoutModifier::checkStackPointerRestore(MCInst &Point) {
+  auto &SPT = Info.getStackPointerTracking();
+  if (!BC.MII->get(Point.getOpcode())
+      .hasDefOfPhysReg(Point, BC.MIA->getStackPointer(), *BC.MRI))
+    return;
+  // Check if the definition of SP comes from FP -- in this case, this
+  // value may need to be updated depending on our stack layout changes
+  const auto InstInfo = BC.MII->get(Point.getOpcode());
+  auto NumDefs = InstInfo.getNumDefs();
+  bool UsesFP{false};
+  for (unsigned I = NumDefs, E = Point.getNumPrimeOperands(); I < E; ++I) {
+    auto &Operand = Point.getOperand(I);
+    if (!Operand.isReg())
+      continue;
+    if (Operand.getReg() == BC.MIA->getFramePointer()) {
+      UsesFP = true;
+      break;
+    }
+  }
+  if (!UsesFP)
+    return;
+
+  // Setting up evaluation
+  int SPVal, FPVal;
+  std::tie(SPVal, FPVal) = *SPT.getStateBefore(Point);
+  std::pair<MCPhysReg, int64_t> FP;
+
+  if (FPVal != SPT.EMPTY && FPVal != SPT.SUPERPOSITION)
+    FP = std::make_pair(BC.MIA->getFramePointer(), FPVal);
+  else
+    FP = std::make_pair(0, 0);
+  std::pair<MCPhysReg, int64_t> SP;
+
+  if (SPVal != SPT.EMPTY && SPVal != SPT.SUPERPOSITION)
+    SP = std::make_pair(BC.MIA->getStackPointer(), SPVal);
+  else
+    SP = std::make_pair(0, 0);
+
+  int64_t Output;
+  if (!BC.MIA->evaluateSimple(Point, Output, SP, FP))
+    return;
+
+  // If the value is the same of FP, no need to adjust it
+  if (Output == FPVal)
+    return;
+
+  // If an allocation happened through FP, bail
+  if (Output <= SPVal) {
+    blacklistRegion(0, 0);
+    return;
+  }
+
+  // We are restoring SP to an old value based on FP. Mark it as a stack
+  // access to be fixed later.
+  BC.MIA->addAnnotation(BC.Ctx.get(), Point, getSlotTagName(), Output);
+}
+
 void StackLayoutModifier::classifyStackAccesses() {
   // Understand when stack slots are being used non-locally
   auto &SRU = Info.getStackReachingUses();
@@ -265,6 +322,7 @@ void StackLayoutModifier::classifyStackAccesses() {
     for (auto I = BB.rbegin(), E = BB.rend(); I != E; ++I) {
       auto &Inst = *I;
       checkFramePointerInitialization(Inst);
+      checkStackPointerRestore(Inst);
       auto FIEX = FA.getFIEFor(Inst);
       if (!FIEX) {
         Prev = &Inst;
@@ -441,6 +499,15 @@ bool StackLayoutModifier::collapseRegion(MCInst *Alloc, int64_t RegionAddr,
         scheduleChange(Inst, WorklistItem(WorklistItem::AdjustCFI, RegionSz));
         continue;
       }
+      auto FIE = FA.getFIEFor(Inst);
+      if (!FIE) {
+        if (Slot > RegionAddr)
+          continue;
+        // SP update based on frame pointer
+        scheduleChange(
+          Inst, WorklistItem(WorklistItem::AdjustLoadStoreOffset, RegionSz));
+        continue;
+      }
 
       if (Slot == RegionAddr) {
         BC.MIA->addAnnotation(BC.Ctx.get(), Inst, "AccessesDeletedPos", 0U);
@@ -450,8 +517,7 @@ bool StackLayoutModifier::collapseRegion(MCInst *Alloc, int64_t RegionAddr,
         continue;
       }
 
-      auto FIE = FA.getFIEFor(Inst);
-      assert(FIE);
+
       if (FIE->StackPtrReg == BC.MIA->getStackPointer() && Slot < RegionAddr)
         continue;
 
@@ -534,9 +600,15 @@ bool StackLayoutModifier::insertRegion(ProgramPoint P, int64_t RegionSz) {
         scheduleChange(Inst, WorklistItem(WorklistItem::AdjustCFI, -RegionSz));
         continue;
       }
-
       auto FIE = FA.getFIEFor(Inst);
-      assert(FIE);
+      if (!FIE) {
+        if (Slot >= RegionAddr)
+          continue;
+        scheduleChange(
+          Inst, WorklistItem(WorklistItem::AdjustLoadStoreOffset, -RegionSz));
+        continue;
+      }
+
       if (FIE->StackPtrReg == BC.MIA->getStackPointer() && Slot < RegionAddr)
         continue;
       if (FIE->StackPtrReg == BC.MIA->getFramePointer() && Slot >= RegionAddr)
@@ -606,6 +678,12 @@ void StackLayoutModifier::performChanges() {
       Success = BC.MIA->isStackAccess(Inst, IsLoad, IsStore, IsStoreFromReg,
                                       Reg, SrcImm, StackPtrReg, StackOffset,
                                       Size, IsSimple, IsIndexed);
+      if (!Success) {
+        // SP update based on FP value
+        Success = BC.MIA->addToImm(Inst, Adjustment, &*BC.Ctx);
+        assert(Success);
+        continue;
+      }
       assert(Success && IsSimple && !IsIndexed && (!IsStore || IsStoreFromReg));
       if (StackPtrReg != BC.MIA->getFramePointer())
         Adjustment = -Adjustment;
@@ -1282,6 +1360,7 @@ bool ShrinkWrapping::foldIdenticalSplitEdges() {
       BinaryBasicBlock *Pred = *RBB.pred_begin();
       uint64_t OrigCount{Pred->branch_info_begin()->Count};
       uint64_t OrigMispreds{Pred->branch_info_begin()->MispredictedCount};
+      BF.replaceJumpTableEntryIn(Pred, &RBB, &BB);
       Pred->replaceSuccessor(&RBB, &BB, OrigCount, OrigMispreds);
       Changed = true;
       // Remove the block from CFG
@@ -1807,7 +1886,7 @@ void ShrinkWrapping::rebuildCFI() {
   }
 }
 
-void ShrinkWrapping::perform() {
+bool ShrinkWrapping::perform() {
   HasDeletedOffsetCFIs = std::vector<bool>(BC.MRI->getNumRegs(), false);
   PushOffsetByReg = std::vector<int64_t>(BC.MRI->getNumRegs(), 0LL);
   PopOffsetByReg = std::vector<int64_t>(BC.MRI->getNumRegs(), 0LL);
@@ -1827,7 +1906,7 @@ void ShrinkWrapping::perform() {
   SLM.performChanges();
   // Early exit if processInsertions doesn't detect any todo items
   if (!processInsertions())
-    return;
+    return false;
   processDeletions();
   if (foldIdenticalSplitEdges()) {
     const auto Stats = BF.eraseInvalidBBs();
@@ -1842,6 +1921,7 @@ void ShrinkWrapping::perform() {
     dbgs() << "Func after shrink-wrapping: \n";
     BF.dump();
   });
+  return true;
 }
 
 void ShrinkWrapping::printStats() {

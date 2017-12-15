@@ -94,6 +94,7 @@ void AllocCombinerPass::combineAdjustments(BinaryContext &BC,
 
       BB.eraseInstruction(Prev);
       ++NumCombined;
+      FuncsChanged.insert(&BF);
       Prev = &Inst;
     }
   }
@@ -108,7 +109,7 @@ void AllocCombinerPass::runOnFunctions(BinaryContext &BC,
   runForAllWeCare(
       BFs, [&](BinaryFunction &Function) { combineAdjustments(BC, Function); });
 
-  outs() << "BOLT-INFO: Allocation combiner: " << NumCoalesced
+  outs() << "BOLT-INFO: Allocation combiner: " << NumCombined
          << " empty spaces coalesced.\n";
 }
 
