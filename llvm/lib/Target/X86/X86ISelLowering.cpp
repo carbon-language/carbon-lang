@@ -1566,7 +1566,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setTruncStoreAction(MVT::v4i32, MVT::v4i16, Legal);
 
     if (Subtarget.hasDQI()) {
-      // TODO: these shouldn't require VLX. We can widen to 512-bit with AVX512F.
       // Fast v2f32 SINT_TO_FP( v2i64 ) custom conversion.
       // v2f32 UINT_TO_FP is already custom under SSE2.
       setOperationAction(ISD::SINT_TO_FP,    MVT::v2f32, Custom);
