@@ -242,6 +242,9 @@ public:
   /// Print operand target flags.
   static void printTargetFlags(raw_ostream& OS, const MachineOperand &Op);
 
+  /// Print a MCSymbol as an operand.
+  static void printSymbol(raw_ostream &OS, MCSymbol &Sym);
+
   /// Print the MachineOperand to \p os.
   /// Providing a valid \p TRI and \p IntrinsicInfo results in a more
   /// target-specific printing. If \p TRI and \p IntrinsicInfo are null, the
