@@ -2571,17 +2571,17 @@ let Predicates = [HasLWP], SchedRW = [WriteSystem] in {
 
 def LLWPCB : I<0x12, MRM0r, (outs), (ins GR32:$src), "llwpcb\t$src",
                [(int_x86_llwpcb GR32:$src)], IIC_LWP>,
-               XOP, XOP9, Requires<[Not64BitMode]>;
+               XOP, XOP9;
 def SLWPCB : I<0x12, MRM1r, (outs GR32:$dst), (ins), "slwpcb\t$dst",
                [(set GR32:$dst, (int_x86_slwpcb))], IIC_LWP>,
-               XOP, XOP9, Requires<[Not64BitMode]>;
+               XOP, XOP9;
 
 def LLWPCB64 : I<0x12, MRM0r, (outs), (ins GR64:$src), "llwpcb\t$src",
                  [(int_x86_llwpcb GR64:$src)], IIC_LWP>,
-                 XOP, XOP9, VEX_W, Requires<[In64BitMode]>;
+                 XOP, XOP9, VEX_W;
 def SLWPCB64 : I<0x12, MRM1r, (outs GR64:$dst), (ins), "slwpcb\t$dst",
                  [(set GR64:$dst, (int_x86_slwpcb))], IIC_LWP>,
-                 XOP, XOP9, VEX_W, Requires<[In64BitMode]>;
+                 XOP, XOP9, VEX_W;
 
 multiclass lwpins_intr<RegisterClass RC> {
   def rri : Ii32<0x12, MRM0r, (outs), (ins RC:$src0, GR32:$src1, i32imm:$cntl),
