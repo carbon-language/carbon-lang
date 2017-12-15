@@ -817,7 +817,7 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
       Config->DebugTypes = getDefaultDebugType(Args);
   }
 
-  // Create a dummy PDB file to satisfy build sytem rules.
+  // Handle /pdb
   if (auto *Arg = Args.getLastArg(OPT_pdb))
     Config->PDBPath = Arg->getValue();
 
