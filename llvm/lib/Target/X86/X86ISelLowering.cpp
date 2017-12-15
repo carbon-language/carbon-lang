@@ -1271,6 +1271,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::SMUL_LOHI,          MVT::v16i32,  Custom);
 
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v1i1, Custom);
+    setOperationAction(ISD::INSERT_SUBVECTOR,   MVT::v8i1, Custom);
     setOperationAction(ISD::INSERT_SUBVECTOR,   MVT::v16i1, Custom);
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v1i1, Custom);
     setOperationAction(ISD::SELECT,             MVT::v8f64, Custom);
@@ -1521,7 +1522,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
 
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v8i1, Custom);
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v4i1, Custom);
-    setOperationAction(ISD::INSERT_SUBVECTOR,   MVT::v8i1, Custom);
     setOperationAction(ISD::INSERT_SUBVECTOR,   MVT::v4i1, Custom);
 
     // Extends from v2i1/v4i1 masks to 128-bit vectors.
