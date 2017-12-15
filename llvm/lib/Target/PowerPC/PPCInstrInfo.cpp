@@ -2217,8 +2217,13 @@ void PPCInstrInfo::replaceInstrWithLI(MachineInstr &MI,
     MI.RemoveOperand(i);
 
   // Replace the instruction.
-  if (LII.SetCR)
+  if (LII.SetCR) {
     MI.setDesc(get(LII.Is64Bit ? PPC::ANDIo8 : PPC::ANDIo));
+    // Set the immediate.
+    MachineInstrBuilder(*MI.getParent()->getParent(), MI)
+        .addImm(LII.Imm).addReg(PPC::CR0, RegState::ImplicitDefine);
+    return;
+  }
   else
     MI.setDesc(get(LII.Is64Bit ? PPC::LI8 : PPC::LI));
 
