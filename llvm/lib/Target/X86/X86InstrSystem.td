@@ -555,49 +555,47 @@ let Uses = [EDX, EAX, ECX] in
 } // HasXSAVE
 
 let Uses = [EDX, EAX] in {
-let Predicates = [HasXSAVE] in {
-  def XSAVE : I<0xAE, MRM4m, (outs), (ins opaque512mem:$dst),
-                "xsave\t$dst",
-                [(int_x86_xsave addr:$dst, EDX, EAX)]>, PS;
-  def XSAVE64 : RI<0xAE, MRM4m, (outs), (ins opaque512mem:$dst),
-                   "xsave64\t$dst",
-                   [(int_x86_xsave64 addr:$dst, EDX, EAX)]>, PS, Requires<[In64BitMode]>;
-  def XRSTOR : I<0xAE, MRM5m, (outs), (ins opaque512mem:$dst),
-                 "xrstor\t$dst",
-                 [(int_x86_xrstor addr:$dst, EDX, EAX)]>, PS;
-  def XRSTOR64 : RI<0xAE, MRM5m, (outs), (ins opaque512mem:$dst),
-                    "xrstor64\t$dst",
-                    [(int_x86_xrstor64 addr:$dst, EDX, EAX)]>, PS, Requires<[In64BitMode]>;
-}
+def XSAVE : I<0xAE, MRM4m, (outs), (ins opaque512mem:$dst),
+              "xsave\t$dst",
+              [(int_x86_xsave addr:$dst, EDX, EAX)]>, PS, Requires<[HasXSAVE]>;
+def XSAVE64 : RI<0xAE, MRM4m, (outs), (ins opaque512mem:$dst),
+                 "xsave64\t$dst",
+                 [(int_x86_xsave64 addr:$dst, EDX, EAX)]>, PS, Requires<[HasXSAVE, In64BitMode]>;
+def XRSTOR : I<0xAE, MRM5m, (outs), (ins opaque512mem:$dst),
+               "xrstor\t$dst",
+               [(int_x86_xrstor addr:$dst, EDX, EAX)]>, PS, Requires<[HasXSAVE]>;
+def XRSTOR64 : RI<0xAE, MRM5m, (outs), (ins opaque512mem:$dst),
+                  "xrstor64\t$dst",
+                  [(int_x86_xrstor64 addr:$dst, EDX, EAX)]>, PS, Requires<[HasXSAVE, In64BitMode]>;
 let Predicates = [HasXSAVEOPT] in {
   def XSAVEOPT : I<0xAE, MRM6m, (outs), (ins opaque512mem:$dst),
                    "xsaveopt\t$dst",
-                   [(int_x86_xsaveopt addr:$dst, EDX, EAX)]>, PS;
+                   [(int_x86_xsaveopt addr:$dst, EDX, EAX)]>, PS, Requires<[HasXSAVEOPT]>;
   def XSAVEOPT64 : RI<0xAE, MRM6m, (outs), (ins opaque512mem:$dst),
                       "xsaveopt64\t$dst",
-                      [(int_x86_xsaveopt64 addr:$dst, EDX, EAX)]>, PS, Requires<[In64BitMode]>;
+                      [(int_x86_xsaveopt64 addr:$dst, EDX, EAX)]>, PS, Requires<[HasXSAVEOPT, In64BitMode]>;
 }
 let Predicates = [HasXSAVEC] in {
   def XSAVEC : I<0xC7, MRM4m, (outs), (ins opaque512mem:$dst),
                  "xsavec\t$dst",
-                 [(int_x86_xsavec addr:$dst, EDX, EAX)]>, TB;
+                 [(int_x86_xsavec addr:$dst, EDX, EAX)]>, TB, Requires<[HasXSAVEC]>;
   def XSAVEC64 : RI<0xC7, MRM4m, (outs), (ins opaque512mem:$dst),
                    "xsavec64\t$dst",
-                   [(int_x86_xsavec64 addr:$dst, EDX, EAX)]>, TB, Requires<[In64BitMode]>;
+                   [(int_x86_xsavec64 addr:$dst, EDX, EAX)]>, TB, Requires<[HasXSAVEC, In64BitMode]>;
 }
 let Predicates = [HasXSAVES] in {
   def XSAVES : I<0xC7, MRM5m, (outs), (ins opaque512mem:$dst),
                  "xsaves\t$dst",
-                 [(int_x86_xsaves addr:$dst, EDX, EAX)]>, TB;
+                 [(int_x86_xsaves addr:$dst, EDX, EAX)]>, TB, Requires<[HasXSAVES]>;
   def XSAVES64 : RI<0xC7, MRM5m, (outs), (ins opaque512mem:$dst),
                     "xsaves64\t$dst",
-                    [(int_x86_xsaves64 addr:$dst, EDX, EAX)]>, TB, Requires<[In64BitMode]>;
+                    [(int_x86_xsaves64 addr:$dst, EDX, EAX)]>, TB, Requires<[HasXSAVE, In64BitMode]>;
   def XRSTORS : I<0xC7, MRM3m, (outs), (ins opaque512mem:$dst),
                   "xrstors\t$dst",
-                  [(int_x86_xrstors addr:$dst, EDX, EAX)]>, TB;
+                  [(int_x86_xrstors addr:$dst, EDX, EAX)]>, TB, Requires<[HasXSAVES]>;
   def XRSTORS64 : RI<0xC7, MRM3m, (outs), (ins opaque512mem:$dst),
                      "xrstors64\t$dst",
-                     [(int_x86_xrstors64 addr:$dst, EDX, EAX)]>, TB, Requires<[In64BitMode]>;
+                     [(int_x86_xrstors64 addr:$dst, EDX, EAX)]>, TB, Requires<[HasXSAVES, In64BitMode]>;
 }
 } // Uses
 } // SchedRW
