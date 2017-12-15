@@ -490,8 +490,7 @@ let SchedRW = [WriteSystem], Predicates = [HasSHSTK]  in{
       def INCSSPD : I<0xAE, MRM5r, (outs), (ins GR32:$src), "incsspd\t$src",
                        [(int_x86_incsspd GR32:$src)]>, XS;
       def INCSSPQ : RI<0xAE, MRM5r, (outs), (ins GR64:$src), "incsspq\t$src",
-                       [(int_x86_incsspq GR64:$src)]>, XS,
-                       Requires<[In64BitMode]>;
+                       [(int_x86_incsspq GR64:$src)]>, XS;
     } // Defs SSP
 
     let Constraints = "$src = $dst" in {
@@ -500,8 +499,7 @@ let SchedRW = [WriteSystem], Predicates = [HasSHSTK]  in{
                      [(set GR32:$dst, (int_x86_rdsspd GR32:$src))]>, XS;
       def RDSSPQ : RI<0x1E, MRM1r, (outs GR64:$dst), (ins GR64:$src),
                      "rdsspq\t$dst",
-                     [(set GR64:$dst, (int_x86_rdsspq GR64:$src))]>, XS,
-                     Requires<[In64BitMode]>;
+                     [(set GR64:$dst, (int_x86_rdsspq GR64:$src))]>, XS;
     }
 
     let Defs = [SSP] in {
@@ -515,18 +513,16 @@ let SchedRW = [WriteSystem], Predicates = [HasSHSTK]  in{
 
   def WRSSD : I<0xF6, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
                 "wrssd\t{$src, $dst|$dst, $src}",
-                [(int_x86_wrssd GR32:$src, addr:$dst)]>, T8;
+                [(int_x86_wrssd GR32:$src, addr:$dst)]>, T8PS;
   def WRSSQ : RI<0xF6, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
                  "wrssq\t{$src, $dst|$dst, $src}",
-                 [(int_x86_wrssq GR64:$src, addr:$dst)]>, T8,
-                 Requires<[In64BitMode]>;
+                 [(int_x86_wrssq GR64:$src, addr:$dst)]>, T8PS;
   def WRUSSD : I<0xF5, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
                  "wrussd\t{$src, $dst|$dst, $src}",
                  [(int_x86_wrussd GR32:$src, addr:$dst)]>, T8PD;
   def WRUSSQ : RI<0xF5, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
                   "wrussq\t{$src, $dst|$dst, $src}",
-                  [(int_x86_wrussq GR64:$src, addr:$dst)]>, T8PD,
-                  Requires<[In64BitMode]>;
+                  [(int_x86_wrussq GR64:$src, addr:$dst)]>, T8PD;
 
   let Defs = [SSP] in {
     let Uses = [SSP] in {
