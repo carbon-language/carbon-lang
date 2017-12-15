@@ -244,7 +244,7 @@ getOrCreateJumpTableInfo(unsigned EntryKind) {
 
 /// Should we be emitting segmented stack stuff for the function
 bool MachineFunction::shouldSplitStack() const {
-  return getFunction()->hasFnAttribute("split-stack");
+  return getFunction().hasFnAttribute("split-stack");
 }
 
 /// This discards all of the MachineBasicBlock numbers and recomputes them.
@@ -485,8 +485,7 @@ LLVM_DUMP_METHOD void MachineFunction::dump() const {
 #endif
 
 StringRef MachineFunction::getName() const {
-  assert(getFunction() && "No function!");
-  return getFunction()->getName();
+  return getFunction().getName();
 }
 
 void MachineFunction::print(raw_ostream &OS, const SlotIndexes *Indexes) const {
@@ -519,8 +518,8 @@ void MachineFunction::print(raw_ostream &OS, const SlotIndexes *Indexes) const {
     OS << '\n';
   }
 
-  ModuleSlotTracker MST(getFunction()->getParent());
-  MST.incorporateFunction(*getFunction());
+  ModuleSlotTracker MST(getFunction().getParent());
+  MST.incorporateFunction(getFunction());
   for (const auto &BB : *this) {
     OS << '\n';
     BB.print(OS, MST, Indexes);

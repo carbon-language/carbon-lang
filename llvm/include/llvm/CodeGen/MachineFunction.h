@@ -380,8 +380,8 @@ public:
   /// Return the DataLayout attached to the Module associated to this MF.
   const DataLayout &getDataLayout() const;
 
-  /// getFunction - Return the LLVM function that this machine code represents
-  const Function *getFunction() const { return &F; }
+  /// Return the LLVM function that this machine code represents
+  const Function &getFunction() const { return F; }
 
   /// getName - Return the name of the corresponding LLVM function.
   StringRef getName() const;
