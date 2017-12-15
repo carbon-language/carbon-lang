@@ -24676,12 +24676,21 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
       assert(Subtarget.hasSSE2() && "Requires at least SSE2!");
       SDValue Src = N->getOperand(0);
       if (Src.getValueType() == MVT::v2f64) {
-        SDValue Idx = DAG.getIntPtrConstant(0, dl);
-        SDValue Res = DAG.getNode(IsSigned ? X86ISD::CVTTP2SI
-                                           : X86ISD::CVTTP2UI,
-                                  dl, MVT::v4i32, Src);
-        if (!ExperimentalVectorWideningLegalization)
-          Res = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v2i32, Res, Idx);
+        MVT ResVT = MVT::v4i32;
+        unsigned Opc = IsSigned ? X86ISD::CVTTP2SI : X86ISD::CVTTP2UI;
+        if (!IsSigned && !Subtarget.hasVLX()) {
+          // Widen to 512-bits.
+          ResVT = MVT::v8i32;
+          Opc = ISD::FP_TO_UINT;
+          Src = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, MVT::v8f64,
+                            DAG.getUNDEF(MVT::v8f64),
+                            Src, DAG.getIntPtrConstant(0, dl));
+        }
+        SDValue Res = DAG.getNode(Opc, dl, ResVT, Src);
+        ResVT = ExperimentalVectorWideningLegalization ? MVT::v4i32
+                                                       : MVT::v2i32;
+        Res = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, ResVT, Res,
+                          DAG.getIntPtrConstant(0, dl));
         Results.push_back(Res);
         return;
       }
