@@ -3,7 +3,7 @@
 # RUN: llvm-objdump -s %t.exe | FileCheck %s
 # RUN: llvm-readobj -coff-basereloc %t.exe | FileCheck -check-prefix=BASEREL %s
 
-# WARN: warning: [[INPUT:[^:]+]]: locally defined symbol imported: main (defined in [[INPUT]])
+# WARN: warning: [[INPUT:.+]]: locally defined symbol imported: main (defined in [[INPUT]])
 
 # CHECK:      Contents of section .text:
 # CHECK-NEXT: 1000 00200000
