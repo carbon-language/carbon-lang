@@ -119,16 +119,16 @@ void ilist_alloc_traits<MachineBasicBlock>::deleteNode(MachineBasicBlock *MBB) {
 }
 
 static inline unsigned getFnStackAlignment(const TargetSubtargetInfo *STI,
-                                           const Function *Fn) {
-  if (Fn->hasFnAttribute(Attribute::StackAlignment))
-    return Fn->getFnStackAlignment();
+                                           const Function &F) {
+  if (F.hasFnAttribute(Attribute::StackAlignment))
+    return F.getFnStackAlignment();
   return STI->getFrameLowering()->getStackAlignment();
 }
 
-MachineFunction::MachineFunction(const Function *F, const TargetMachine &TM,
+MachineFunction::MachineFunction(const Function &F, const TargetMachine &Target,
+                                 const TargetSubtargetInfo &STI,
                                  unsigned FunctionNum, MachineModuleInfo &mmi)
-    : Fn(F), Target(TM), STI(TM.getSubtargetImpl(*F)), Ctx(mmi.getContext()),
-      MMI(mmi) {
+    : F(F), Target(Target), STI(&STI), Ctx(mmi.getContext()), MMI(mmi) {
   FunctionNumber = FunctionNum;
   init();
 }
@@ -146,21 +146,21 @@ void MachineFunction::init() {
   // We can realign the stack if the target supports it and the user hasn't
   // explicitly asked us not to.
   bool CanRealignSP = STI->getFrameLowering()->isStackRealignable() &&
-                      !Fn->hasFnAttribute("no-realign-stack");
+                      !F.hasFnAttribute("no-realign-stack");
   FrameInfo = new (Allocator) MachineFrameInfo(
-      getFnStackAlignment(STI, Fn), /*StackRealignable=*/CanRealignSP,
+      getFnStackAlignment(STI, F), /*StackRealignable=*/CanRealignSP,
       /*ForceRealign=*/CanRealignSP &&
-          Fn->hasFnAttribute(Attribute::StackAlignment));
+          F.hasFnAttribute(Attribute::StackAlignment));
 
-  if (Fn->hasFnAttribute(Attribute::StackAlignment))
-    FrameInfo->ensureMaxAlignment(Fn->getFnStackAlignment());
+  if (F.hasFnAttribute(Attribute::StackAlignment))
+    FrameInfo->ensureMaxAlignment(F.getFnStackAlignment());
 
   ConstantPool = new (Allocator) MachineConstantPool(getDataLayout());
   Alignment = STI->getTargetLowering()->getMinFunctionAlignment();
 
-  // FIXME: Shouldn't use pref alignment if explicit alignment is set on Fn.
+  // FIXME: Shouldn't use pref alignment if explicit alignment is set on F.
   // FIXME: Use Function::optForSize().
-  if (!Fn->hasFnAttribute(Attribute::OptimizeForSize))
+  if (!F.hasFnAttribute(Attribute::OptimizeForSize))
     Alignment = std::max(Alignment,
                          STI->getTargetLowering()->getPrefFunctionAlignment());
 
@@ -170,7 +170,7 @@ void MachineFunction::init() {
   JumpTableInfo = nullptr;
 
   if (isFuncletEHPersonality(classifyEHPersonality(
-          Fn->hasPersonalityFn() ? Fn->getPersonalityFn() : nullptr))) {
+          F.hasPersonalityFn() ? F.getPersonalityFn() : nullptr))) {
     WinEHInfo = new (Allocator) WinEHFuncInfo();
   }
 
@@ -228,7 +228,7 @@ void MachineFunction::clear() {
 }
 
 const DataLayout &MachineFunction::getDataLayout() const {
-  return Fn->getParent()->getDataLayout();
+  return F.getParent()->getDataLayout();
 }
 
 /// Get the JumpTableInfo for this function.
