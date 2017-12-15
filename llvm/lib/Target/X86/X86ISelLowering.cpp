@@ -14539,7 +14539,7 @@ static SDValue ExtractBitFromMaskVector(SDValue Op, SelectionDAG &DAG,
     // Extending v8i1/v16i1 to 512-bit get better performance on KNL
     // than extending to 128/256bit.
     unsigned VecSize = (NumElts <= 4 ? 128 : 512);
-    MVT ExtVT = MVT::getVectorVT(MVT::getIntegerVT(VecSize/NumElts), NumElts);
+    MVT ExtVT = MVT::getVectorVT(MVT::getIntegerVT(VecSize / NumElts), NumElts);
     SDValue Ext = DAG.getNode(ISD::SIGN_EXTEND, dl, ExtVT, Vec);
     SDValue Elt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
                               ExtVT.getVectorElementType(), Ext, Idx);
@@ -14725,8 +14725,10 @@ static SDValue InsertBitToMaskVector(SDValue Op, SelectionDAG &DAG,
   if (!isa<ConstantSDNode>(Idx)) {
     // Non constant index. Extend source and destination,
     // insert element and then truncate the result.
-    MVT ExtVecVT = (VecVT == MVT::v8i1 ?  MVT::v8i64 : MVT::v16i32);
-    MVT ExtEltVT = (VecVT == MVT::v8i1 ?  MVT::i64 : MVT::i32);
+    unsigned NumElts = VecVT.getVectorNumElements();
+    unsigned VecSize = (NumElts <= 4 ? 128 : 512);
+    MVT ExtVecVT = MVT::getVectorVT(MVT::getIntegerVT(VecSize/NumElts), NumElts);
+    MVT ExtEltVT = ExtVecVT.getVectorElementType();
     SDValue ExtOp = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, ExtVecVT,
       DAG.getNode(ISD::ZERO_EXTEND, dl, ExtVecVT, Vec),
       DAG.getNode(ISD::ZERO_EXTEND, dl, ExtEltVT, Elt), Idx);
