@@ -808,7 +808,7 @@ template <class ELFT> void SharedFile<ELFT>::parseRest() {
     }
 
     if (Sym.getBinding() == STB_LOCAL) {
-      warn("Found local symbol '" + Name +
+      warn("found local symbol '" + Name +
            "' in global part of symbol table in file " + toString(this));
       continue;
     }
