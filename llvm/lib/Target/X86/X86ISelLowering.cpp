@@ -1224,13 +1224,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::FP_TO_UINT,         MVT::v16i32, Legal);
     setOperationAction(ISD::FP_TO_UINT,         MVT::v16i8, Promote);
     setOperationAction(ISD::FP_TO_UINT,         MVT::v16i16, Promote);
-    setOperationAction(ISD::FP_TO_UINT,         MVT::v8i32, Legal);
-    setOperationAction(ISD::FP_TO_UINT,         MVT::v4i32, Legal);
-    setOperationAction(ISD::FP_TO_UINT,         MVT::v2i32, Custom);
     setOperationAction(ISD::SINT_TO_FP,         MVT::v16i32, Legal);
     setOperationAction(ISD::UINT_TO_FP,         MVT::v16i32, Legal);
-    setOperationAction(ISD::UINT_TO_FP,         MVT::v8i32, Legal);
-    setOperationAction(ISD::UINT_TO_FP,         MVT::v4i32, Legal);
 
     setTruncStoreAction(MVT::v8i64,   MVT::v8i8,   Legal);
     setTruncStoreAction(MVT::v8i64,   MVT::v8i16,  Legal);
@@ -1246,16 +1241,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
            MVT::v4f32, MVT::v8f32, MVT::v2f64, MVT::v4f64}) {
         setOperationAction(ISD::MLOAD,  VT, Custom);
         setOperationAction(ISD::MSTORE, VT, Custom);
-      }
-    }
-
-
-    if (Subtarget.hasDQI()) {
-      for (auto VT : { MVT::v2i64, MVT::v4i64, MVT::v8i64 }) {
-        setOperationAction(ISD::SINT_TO_FP,     VT, Legal);
-        setOperationAction(ISD::UINT_TO_FP,     VT, Legal);
-        setOperationAction(ISD::FP_TO_SINT,     VT, Legal);
-        setOperationAction(ISD::FP_TO_UINT,     VT, Legal);
       }
     }
 
@@ -1298,11 +1283,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::SELECT,             MVT::v8i64, Custom);
     setOperationAction(ISD::SELECT,             MVT::v16f32, Custom);
 
-
-    // NonVLX sub-targets extend 128/256 vectors to use the 512 version.
-    setOperationAction(ISD::ABS,                MVT::v4i64, Legal);
-    setOperationAction(ISD::ABS,                MVT::v2i64, Legal);
-
     for (auto VT : { MVT::v16i32, MVT::v8i64 }) {
       setOperationAction(ISD::SMAX,             VT, Legal);
       setOperationAction(ISD::UMAX,             VT, Legal);
@@ -1314,19 +1294,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::SRA,              VT, Custom);
       setOperationAction(ISD::CTPOP,            VT, Custom);
       setOperationAction(ISD::CTTZ,             VT, Custom);
-    }
-
-    // NonVLX sub-targets extend 128/256 vectors to use the 512 version.
-    for (auto VT : { MVT::v2i64, MVT::v4i64 }) {
-      setOperationAction(ISD::SMAX, VT, Legal);
-      setOperationAction(ISD::UMAX, VT, Legal);
-      setOperationAction(ISD::SMIN, VT, Legal);
-      setOperationAction(ISD::UMIN, VT, Legal);
-    }
-
-    // NonVLX sub-targets extend 128/256 vectors to use the 512 version.
-    for (auto VT : {MVT::v4i32, MVT::v8i32, MVT::v16i32, MVT::v2i64, MVT::v4i64,
-                    MVT::v8i64}) {
       setOperationAction(ISD::ROTL,             VT, Custom);
       setOperationAction(ISD::ROTR,             VT, Custom);
     }
@@ -1338,35 +1305,27 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationPromotedToType(ISD::OR,  MVT::v16i32, MVT::v8i64);
     setOperationPromotedToType(ISD::XOR, MVT::v16i32, MVT::v8i64);
 
+    if (Subtarget.hasDQI()) {
+      setOperationAction(ISD::SINT_TO_FP, MVT::v8i64, Legal);
+      setOperationAction(ISD::UINT_TO_FP, MVT::v8i64, Legal);
+      setOperationAction(ISD::FP_TO_SINT, MVT::v8i64, Legal);
+      setOperationAction(ISD::FP_TO_UINT, MVT::v8i64, Legal);
+
+      setOperationAction(ISD::MUL,        MVT::v8i64, Legal);
+    }
+
     if (Subtarget.hasCDI()) {
       // NonVLX sub-targets extend 128/256 vectors to use the 512 version.
-      for (auto VT : {MVT::v4i32, MVT::v8i32, MVT::v16i32, MVT::v2i64,
-                      MVT::v4i64, MVT::v8i64}) {
+      for (auto VT : { MVT::v16i32, MVT::v8i64} ) {
         setOperationAction(ISD::CTLZ,            VT, Legal);
         setOperationAction(ISD::CTTZ_ZERO_UNDEF, VT, Custom);
       }
     } // Subtarget.hasCDI()
 
-    if (Subtarget.hasDQI()) {
-      // NonVLX sub-targets extend 128/256 vectors to use the 512 version.
-      setOperationAction(ISD::MUL,             MVT::v2i64, Legal);
-      setOperationAction(ISD::MUL,             MVT::v4i64, Legal);
-      setOperationAction(ISD::MUL,             MVT::v8i64, Legal);
-    }
-
     if (Subtarget.hasVPOPCNTDQ()) {
-      // VPOPCNTDQ sub-targets extend 128/256 vectors to use the avx512
-      // version of popcntd/q.
-      for (auto VT : {MVT::v16i32, MVT::v8i64, MVT::v8i32, MVT::v4i64,
-                      MVT::v4i32, MVT::v2i64})
+      for (auto VT : { MVT::v16i32, MVT::v8i64 })
         setOperationAction(ISD::CTPOP, VT, Legal);
     }
-
-    // Custom lower several nodes.
-    for (auto VT : { MVT::v4i32, MVT::v8i32, MVT::v2i64, MVT::v4i64,
-                     MVT::v4f32, MVT::v8f32, MVT::v2f64, MVT::v4f64 })
-      setOperationAction(ISD::MSCATTER, VT, Custom);
-
 
     // Extract subvector is special because the value type
     // (result) is 256-bit but the source is 512-bit wide.
@@ -1393,6 +1352,59 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationPromotedToType(ISD::SELECT, VT, MVT::v8i64);
     }
   }// has  AVX-512
+
+  if (!Subtarget.useSoftFloat() &&
+      (Subtarget.hasAVX512() || Subtarget.hasVLX())) {
+    // These operations are handled on non-VLX by artificially widening in
+    // isel patterns.
+    // TODO: Custom widen in lowering on non-VLX and drop the isel patterns?
+
+    setOperationAction(ISD::FP_TO_UINT,         MVT::v8i32, Legal);
+    setOperationAction(ISD::FP_TO_UINT,         MVT::v4i32, Legal);
+    setOperationAction(ISD::FP_TO_UINT,         MVT::v2i32, Custom);
+    setOperationAction(ISD::UINT_TO_FP,         MVT::v8i32, Legal);
+    setOperationAction(ISD::UINT_TO_FP,         MVT::v4i32, Legal);
+
+    for (auto VT : { MVT::v2i64, MVT::v4i64 }) {
+      setOperationAction(ISD::SMAX, VT, Legal);
+      setOperationAction(ISD::UMAX, VT, Legal);
+      setOperationAction(ISD::SMIN, VT, Legal);
+      setOperationAction(ISD::UMIN, VT, Legal);
+      setOperationAction(ISD::ABS,  VT, Legal);
+    }
+
+    for (auto VT : { MVT::v4i32, MVT::v8i32, MVT::v2i64, MVT::v4i64 }) {
+      setOperationAction(ISD::ROTL,     VT, Custom);
+      setOperationAction(ISD::ROTR,     VT, Custom);
+    }
+
+    for (auto VT : { MVT::v4i32, MVT::v8i32, MVT::v2i64, MVT::v4i64,
+                     MVT::v4f32, MVT::v8f32, MVT::v2f64, MVT::v4f64 })
+      setOperationAction(ISD::MSCATTER, VT, Custom);
+
+    if (Subtarget.hasDQI()) {
+      for (auto VT : { MVT::v2i64, MVT::v4i64 }) {
+        setOperationAction(ISD::SINT_TO_FP,     VT, Legal);
+        setOperationAction(ISD::UINT_TO_FP,     VT, Legal);
+        setOperationAction(ISD::FP_TO_SINT,     VT, Legal);
+        setOperationAction(ISD::FP_TO_UINT,     VT, Legal);
+
+        setOperationAction(ISD::MUL,            VT, Legal);
+      }
+    }
+
+    if (Subtarget.hasCDI()) {
+      for (auto VT : { MVT::v4i32, MVT::v8i32, MVT::v2i64, MVT::v4i64 }) {
+        setOperationAction(ISD::CTLZ,            VT, Legal);
+        setOperationAction(ISD::CTTZ_ZERO_UNDEF, VT, Custom);
+      }
+    } // Subtarget.hasCDI()
+
+    if (Subtarget.hasVPOPCNTDQ()) {
+      for (auto VT : { MVT::v4i32, MVT::v8i32, MVT::v2i64, MVT::v4i64 })
+        setOperationAction(ISD::CTPOP, VT, Legal);
+    }
+  }
 
   if (!Subtarget.useSoftFloat() && Subtarget.hasBWI()) {
     addRegisterClass(MVT::v32i16, &X86::VR512RegClass);
@@ -1458,13 +1470,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
 
     setTruncStoreAction(MVT::v32i16,  MVT::v32i8, Legal);
 
-    // We can custom lower these using 512-bit vectors. If we have VLX,
-    // they will be made legal later.
-    for (auto VT : { MVT::v32i8, MVT::v16i8, MVT::v16i16, MVT::v8i16 }) {
-      setOperationAction(ISD::MLOAD,               VT, Custom);
-      setOperationAction(ISD::MSTORE,              VT, Custom);
-    }
-
     for (auto VT : { MVT::v64i8, MVT::v32i16 }) {
       setOperationAction(ISD::BUILD_VECTOR, VT, Custom);
       setOperationAction(ISD::VSELECT,      VT, Custom);
@@ -1492,8 +1497,24 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     }
 
     if (Subtarget.hasBITALG()) {
-      for (auto VT : { MVT::v64i8, MVT::v32i16, MVT::v32i8,
-                       MVT::v16i16, MVT::v16i8, MVT::v8i16 })
+      for (auto VT : { MVT::v64i8, MVT::v32i16 })
+        setOperationAction(ISD::CTPOP, VT, Legal);
+    }
+  }
+
+  if (!Subtarget.useSoftFloat() &&
+      (Subtarget.hasBWI() || Subtarget.hasVLX())) {
+    for (auto VT : { MVT::v32i8, MVT::v16i8, MVT::v16i16, MVT::v8i16 }) {
+      setOperationAction(ISD::MLOAD,  VT, Subtarget.hasVLX() ? Legal : Custom);
+      setOperationAction(ISD::MSTORE, VT, Subtarget.hasVLX() ? Legal : Custom);
+    }
+
+    // These operations are handled on non-VLX by artificially widening in
+    // isel patterns.
+    // TODO: Custom widen in lowering on non-VLX and drop the isel patterns?
+
+    if (Subtarget.hasBITALG()) {
+      for (auto VT : { MVT::v16i8, MVT::v32i8, MVT::v8i16, MVT::v16i16 })
         setOperationAction(ISD::CTPOP, VT, Legal);
     }
   }
@@ -1542,6 +1563,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setTruncStoreAction(MVT::v4i32, MVT::v4i16, Legal);
 
     if (Subtarget.hasDQI()) {
+      // TODO: these shouldn't require VLX. We can widen to 512-bit with AVX512F.
       // Fast v2f32 SINT_TO_FP( v2i64 ) custom conversion.
       // v2f32 UINT_TO_FP is already custom under SSE2.
       setOperationAction(ISD::SINT_TO_FP,    MVT::v2f32, Custom);
@@ -1555,11 +1577,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     if (Subtarget.hasBWI()) {
       setTruncStoreAction(MVT::v16i16,  MVT::v16i8, Legal);
       setTruncStoreAction(MVT::v8i16,   MVT::v8i8,  Legal);
-
-      for (auto VT : { MVT::v32i8, MVT::v16i8, MVT::v16i16, MVT::v8i16 }) {
-        setOperationAction(ISD::MLOAD,  VT, Legal);
-        setOperationAction(ISD::MSTORE, VT, Legal);
-      }
     }
   }
 
