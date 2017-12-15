@@ -758,13 +758,8 @@ void MIPrinter::printStackObjectReference(int FrameIndex) {
   assert(ObjectInfo != StackObjectOperandMapping.end() &&
          "Invalid frame index");
   const FrameIndexOperand &Operand = ObjectInfo->second;
-  if (Operand.IsFixed) {
-    OS << "%fixed-stack." << Operand.ID;
-    return;
-  }
-  OS << "%stack." << Operand.ID;
-  if (!Operand.Name.empty())
-    OS << '.' << Operand.Name;
+  MachineOperand::printStackObjectReference(OS, Operand.ID, Operand.IsFixed,
+                                            Operand.Name);
 }
 
 void MIPrinter::printOffset(int64_t Offset) {
