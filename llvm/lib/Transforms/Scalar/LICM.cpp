@@ -90,15 +90,14 @@ static cl::opt<uint32_t> MaxNumUsesTraversed(
              "invariance in loop using invariant start (default = 8)"));
 
 static bool inSubLoop(BasicBlock *BB, Loop *CurLoop, LoopInfo *LI);
-static bool isNotUsedOrFreeInLoop(const Instruction &I, const Loop *CurLoop,
-                                  const LoopSafetyInfo *SafetyInfo,
-                                  TargetTransformInfo *TTI, bool &FreeInLoop);
+static bool isNotUsedInLoop(const Instruction &I, const Loop *CurLoop,
+                            const LoopSafetyInfo *SafetyInfo);
 static bool hoist(Instruction &I, const DominatorTree *DT, const Loop *CurLoop,
                   const LoopSafetyInfo *SafetyInfo,
                   OptimizationRemarkEmitter *ORE);
 static bool sink(Instruction &I, LoopInfo *LI, DominatorTree *DT,
                  const Loop *CurLoop, const LoopSafetyInfo *SafetyInfo,
-                 OptimizationRemarkEmitter *ORE, bool FreeInLoop);
+                 OptimizationRemarkEmitter *ORE);
 static bool isSafeToExecuteUnconditionally(Instruction &Inst,
                                            const DominatorTree *DT,
                                            const Loop *CurLoop,
@@ -116,8 +115,7 @@ CloneInstructionInExitBlock(Instruction &I, BasicBlock &ExitBlock, PHINode &PN,
 namespace {
 struct LoopInvariantCodeMotion {
   bool runOnLoop(Loop *L, AliasAnalysis *AA, LoopInfo *LI, DominatorTree *DT,
-                 TargetLibraryInfo *TLI, TargetTransformInfo *TTI,
-                 ScalarEvolution *SE, MemorySSA *MSSA,
+                 TargetLibraryInfo *TLI, ScalarEvolution *SE, MemorySSA *MSSA,
                  OptimizationRemarkEmitter *ORE, bool DeleteAST);
 
   DenseMap<Loop *, AliasSetTracker *> &getLoopToAliasSetMap() {
@@ -161,8 +159,6 @@ struct LegacyLICMPass : public LoopPass {
                           &getAnalysis<LoopInfoWrapperPass>().getLoopInfo(),
                           &getAnalysis<DominatorTreeWrapperPass>().getDomTree(),
                           &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI(),
-                          &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(
-                              *L->getHeader()->getParent()),
                           SE ? &SE->getSE() : nullptr, MSSA, &ORE, false);
   }
 
@@ -174,7 +170,6 @@ struct LegacyLICMPass : public LoopPass {
     AU.addRequired<TargetLibraryInfoWrapperPass>();
     if (EnableMSSALoopDependency)
       AU.addRequired<MemorySSAWrapperPass>();
-    AU.addRequired<TargetTransformInfoWrapperPass>();
     getLoopAnalysisUsage(AU);
   }
 
@@ -215,8 +210,8 @@ PreservedAnalyses LICMPass::run(Loop &L, LoopAnalysisManager &AM,
                        "cached at a higher level");
 
   LoopInvariantCodeMotion LICM;
-  if (!LICM.runOnLoop(&L, &AR.AA, &AR.LI, &AR.DT, &AR.TLI, &AR.TTI, &AR.SE,
-                      AR.MSSA, ORE, true))
+  if (!LICM.runOnLoop(&L, &AR.AA, &AR.LI, &AR.DT, &AR.TLI, &AR.SE, AR.MSSA, ORE,
+                      true))
     return PreservedAnalyses::all();
 
   auto PA = getLoopPassPreservedAnalyses();
@@ -229,7 +224,6 @@ INITIALIZE_PASS_BEGIN(LegacyLICMPass, "licm", "Loop Invariant Code Motion",
                       false, false)
 INITIALIZE_PASS_DEPENDENCY(LoopPass)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(MemorySSAWrapperPass)
 INITIALIZE_PASS_END(LegacyLICMPass, "licm", "Loop Invariant Code Motion", false,
                     false)
@@ -242,10 +236,12 @@ Pass *llvm::createLICMPass() { return new LegacyLICMPass(); }
 /// We should delete AST for inner loops in the new pass manager to avoid
 /// memory leak.
 ///
-bool LoopInvariantCodeMotion::runOnLoop(
-    Loop *L, AliasAnalysis *AA, LoopInfo *LI, DominatorTree *DT,
-    TargetLibraryInfo *TLI, TargetTransformInfo *TTI, ScalarEvolution *SE,
-    MemorySSA *MSSA, OptimizationRemarkEmitter *ORE, bool DeleteAST) {
+bool LoopInvariantCodeMotion::runOnLoop(Loop *L, AliasAnalysis *AA,
+                                        LoopInfo *LI, DominatorTree *DT,
+                                        TargetLibraryInfo *TLI,
+                                        ScalarEvolution *SE, MemorySSA *MSSA,
+                                        OptimizationRemarkEmitter *ORE,
+                                        bool DeleteAST) {
   bool Changed = false;
 
   assert(L->isLCSSAForm(*DT) && "Loop is not in LCSSA form.");
@@ -270,7 +266,7 @@ bool LoopInvariantCodeMotion::runOnLoop(
   // instructions, we perform another pass to hoist them out of the loop.
   //
   if (L->hasDedicatedExits())
-    Changed |= sinkRegion(DT->getNode(L->getHeader()), AA, LI, DT, TLI, TTI, L,
+    Changed |= sinkRegion(DT->getNode(L->getHeader()), AA, LI, DT, TLI, L,
                           CurAST, &SafetyInfo, ORE);
   if (Preheader)
     Changed |= hoistRegion(DT->getNode(L->getHeader()), AA, LI, DT, TLI, L,
@@ -363,8 +359,7 @@ bool LoopInvariantCodeMotion::runOnLoop(
 /// definitions, allowing us to sink a loop body in one pass without iteration.
 ///
 bool llvm::sinkRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
-                      DominatorTree *DT, TargetLibraryInfo *TLI,
-                      TargetTransformInfo *TTI, Loop *CurLoop,
+                      DominatorTree *DT, TargetLibraryInfo *TLI, Loop *CurLoop,
                       AliasSetTracker *CurAST, LoopSafetyInfo *SafetyInfo,
                       OptimizationRemarkEmitter *ORE) {
 
@@ -405,15 +400,12 @@ bool llvm::sinkRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
       // outside of the loop.  In this case, it doesn't even matter if the
       // operands of the instruction are loop invariant.
       //
-      bool FreeInLoop = false;
-      if (isNotUsedOrFreeInLoop(I, CurLoop, SafetyInfo, TTI, FreeInLoop) &&
+      if (isNotUsedInLoop(I, CurLoop, SafetyInfo) &&
           canSinkOrHoistInst(I, AA, DT, CurLoop, CurAST, SafetyInfo, ORE)) {
-        if (sink(I, LI, DT, CurLoop, SafetyInfo, ORE, FreeInLoop)) {
-          if (!FreeInLoop) {
-            ++II;
-            CurAST->deleteValue(&I);
-            I.eraseFromParent();
-          }
+        if (sink(I, LI, DT, CurLoop, SafetyInfo, ORE)) {
+          ++II;
+          CurAST->deleteValue(&I);
+          I.eraseFromParent();
           Changed = true;
         }
       }
@@ -716,39 +708,13 @@ static bool isTriviallyReplacablePHI(const PHINode &PN, const Instruction &I) {
   return true;
 }
 
-/// Return true if the instruction is free in the loop.
-static bool isFreeInLoop(const Instruction &I, const Loop *CurLoop,
-                         const TargetTransformInfo *TTI) {
-  if (const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(&I)) {
-    if (TTI->getUserCost(&I) != TargetTransformInfo::TCC_Free)
-      return false;
-    // For a GEP, we cannot simply use getUserCost because currently it
-    // optimistically assume that a GEP will fold into addressing mode
-    // regardless of its users.
-    const BasicBlock *BB = I.getParent();
-    for (const User *U : I.users()) {
-      const Instruction *UI = cast<Instruction>(U);
-      if (CurLoop->contains(UI) &&
-          (BB != UI->getParent() ||
-           (!isa<StoreInst>(UI) && !isa<LoadInst>(UI))))
-        return false;
-    }
-    return true;
-  } else
-    return TTI->getUserCost(&I) == TargetTransformInfo::TCC_Free;
-}
-
 /// Return true if the only users of this instruction are outside of
 /// the loop. If this is true, we can sink the instruction to the exit
 /// blocks of the loop.
 ///
-/// We also return true if the instruction could be folded away in lowering.
-/// (e.g.,  a GEP can be folded into a load as an addressing mode in the loop).
-static bool isNotUsedOrFreeInLoop(const Instruction &I, const Loop *CurLoop,
-                                  const LoopSafetyInfo *SafetyInfo,
-                                  TargetTransformInfo *TTI, bool &FreeInLoop) {
+static bool isNotUsedInLoop(const Instruction &I, const Loop *CurLoop,
+                            const LoopSafetyInfo *SafetyInfo) {
   const auto &BlockColors = SafetyInfo->BlockColors;
-  bool IsFree = isFreeInLoop(I, CurLoop, TTI);
   for (const User *U : I.users()) {
     const Instruction *UI = cast<Instruction>(U);
     if (const PHINode *PN = dyn_cast<PHINode>(UI)) {
@@ -765,13 +731,8 @@ static bool isNotUsedOrFreeInLoop(const Instruction &I, const Loop *CurLoop,
           return false;
     }
 
-    if (CurLoop->contains(UI)) {
-      if (IsFree) {
-        FreeInLoop = true;
-        continue;
-      }
+    if (CurLoop->contains(UI))
       return false;
-    }
   }
   return true;
 }
@@ -927,7 +888,7 @@ static void splitPredecessorsOfLoopExit(PHINode *PN, DominatorTree *DT,
 ///
 static bool sink(Instruction &I, LoopInfo *LI, DominatorTree *DT,
                  const Loop *CurLoop, const LoopSafetyInfo *SafetyInfo,
-                 OptimizationRemarkEmitter *ORE, bool FreeInLoop) {
+                 OptimizationRemarkEmitter *ORE) {
   DEBUG(dbgs() << "LICM sinking instruction: " << I << "\n");
   ORE->emit([&]() {
     return OptimizationRemark(DEBUG_TYPE, "InstSunk", &I)
@@ -939,6 +900,7 @@ static bool sink(Instruction &I, LoopInfo *LI, DominatorTree *DT,
   else if (isa<CallInst>(I))
     ++NumMovedCalls;
   ++NumSunk;
+  Changed = true;
 
   // Iterate over users to be ready for actual sinking. Replace users via
   // unrechable blocks with undef and make all user PHIs trivially replcable.
@@ -948,12 +910,11 @@ static bool sink(Instruction &I, LoopInfo *LI, DominatorTree *DT,
     Use &U = UI.getUse();
     ++UI;
 
-    if (VisitedUsers.count(User) || CurLoop->contains(User))
+    if (VisitedUsers.count(User))
       continue;
 
     if (!DT->isReachableFromEntry(User->getParent())) {
       U = UndefValue::get(I.getType());
-      Changed = true;
       continue;
     }
 
@@ -966,7 +927,6 @@ static bool sink(Instruction &I, LoopInfo *LI, DominatorTree *DT,
     BasicBlock *BB = PN->getIncomingBlock(U);
     if (!DT->isReachableFromEntry(BB)) {
       U = UndefValue::get(I.getType());
-      Changed = true;
       continue;
     }
 
@@ -975,7 +935,7 @@ static bool sink(Instruction &I, LoopInfo *LI, DominatorTree *DT,
       continue;
 
     if (!canSplitPredecessors(PN))
-      return Changed;
+      return false;
 
     // Split predecessors of the PHI so that we can make users trivially
     // replacable.
@@ -986,9 +946,6 @@ static bool sink(Instruction &I, LoopInfo *LI, DominatorTree *DT,
     UI = I.user_begin();
     UE = I.user_end();
   }
-
-  if (VisitedUsers.empty())
-    return Changed;
 
 #ifndef NDEBUG
   SmallVector<BasicBlock *, 32> ExitBlocks;
@@ -1003,14 +960,9 @@ static bool sink(Instruction &I, LoopInfo *LI, DominatorTree *DT,
   // If this instruction is only used outside of the loop, then all users are
   // PHI nodes in exit blocks due to LCSSA form. Just RAUW them with clones of
   // the instruction.
-  SmallSetVector<User*, 8> Users(I.user_begin(), I.user_end());
-  for (auto *UI : Users) {
-    auto *User = cast<Instruction>(UI);
-
-    if (CurLoop->contains(User))
-      continue;
-
-    PHINode *PN = cast<PHINode>(User);
+  while (!I.use_empty()) {
+    Value::user_iterator UI = I.user_begin();
+    PHINode *PN = cast<PHINode>(*UI);
     assert(ExitBlockSet.count(PN->getParent()) &&
            "The LCSSA PHI is not in an exit block!");
     // The PHI must be trivially replacable.
@@ -1018,7 +970,6 @@ static bool sink(Instruction &I, LoopInfo *LI, DominatorTree *DT,
                                                          SafetyInfo, CurLoop);
     PN->replaceAllUsesWith(New);
     PN->eraseFromParent();
-    Changed = true;
   }
   return Changed;
 }
