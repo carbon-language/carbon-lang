@@ -1399,6 +1399,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   // alter InputSection addresses we must converge to a fixed point.
   if (Target->NeedsThunks || Config->AndroidPackDynRelocs) {
     ThunkCreator TC;
+    AArch64Err843419Patcher A64P;
     bool Changed;
     do {
       Script->assignAddresses();
@@ -1408,7 +1409,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
       if (Config->FixCortexA53Errata843419) {
         if (Changed)
           Script->assignAddresses();
-        reportA53Errata843419Fixes();
+        Changed |= A64P.createFixes();
       }
       if (InX::MipsGot)
         InX::MipsGot->updateAllocSize();
