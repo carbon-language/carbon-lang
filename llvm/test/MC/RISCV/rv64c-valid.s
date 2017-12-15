@@ -32,3 +32,13 @@ c.addiw  a3, -32
 # CHECK-INST: c.addiw  a3, 31
 # CHECK: encoding: [0xfd,0x26]
 c.addiw  a3, 31
+
+# CHECK-INST: c.slli  s0, 1
+# CHECK: encoding: [0x06,0x04]
+c.slli  s0, 1
+# CHECK-INST: c.srli  a3, 63
+# CHECK: encoding: [0xfd,0x92]
+c.srli  a3, 63
+# CHECK-INST: c.srai  a2, 63
+# CHECK: encoding: [0x7d,0x96]
+c.srai  a2, 63
