@@ -1202,19 +1202,11 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setTruncStoreAction(MVT::v8i64,   MVT::v8i32,  Legal);
     setTruncStoreAction(MVT::v16i32,  MVT::v16i8,  Legal);
     setTruncStoreAction(MVT::v16i32,  MVT::v16i16, Legal);
-    if (Subtarget.hasVLX()){
-      setTruncStoreAction(MVT::v4i64, MVT::v4i8,  Legal);
-      setTruncStoreAction(MVT::v4i64, MVT::v4i16, Legal);
-      setTruncStoreAction(MVT::v4i64, MVT::v4i32, Legal);
-      setTruncStoreAction(MVT::v8i32, MVT::v8i8,  Legal);
-      setTruncStoreAction(MVT::v8i32, MVT::v8i16, Legal);
 
-      setTruncStoreAction(MVT::v2i64, MVT::v2i8,  Legal);
-      setTruncStoreAction(MVT::v2i64, MVT::v2i16, Legal);
-      setTruncStoreAction(MVT::v2i64, MVT::v2i32, Legal);
-      setTruncStoreAction(MVT::v4i32, MVT::v4i8,  Legal);
-      setTruncStoreAction(MVT::v4i32, MVT::v4i16, Legal);
-    } else {
+    if (!Subtarget.hasVLX()) {
+      // With 512-bit vectors and no VLX, we prefer to widen MLOAD/MSTORE
+      // to 512-bit rather than use the AVX2 instructions so that we can use
+      // k-masks.
       for (auto VT : {MVT::v4i32, MVT::v8i32, MVT::v2i64, MVT::v4i64,
            MVT::v4f32, MVT::v8f32, MVT::v2f64, MVT::v4f64}) {
         setOperationAction(ISD::MLOAD,  VT, Custom);
@@ -1232,20 +1224,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
         setOperationAction(ISD::FP_TO_SINT,     VT, Legal);
         setOperationAction(ISD::FP_TO_UINT,     VT, Legal);
       }
-      if (Subtarget.hasVLX()) {
-        // Fast v2f32 SINT_TO_FP( v2i32 ) custom conversion.
-        setOperationAction(ISD::SINT_TO_FP,    MVT::v2f32, Custom);
-        setOperationAction(ISD::FP_TO_SINT,    MVT::v2f32, Custom);
-        setOperationAction(ISD::FP_TO_UINT,    MVT::v2f32, Custom);
-      }
-    }
-    if (Subtarget.hasVLX()) {
-      setOperationAction(ISD::ZERO_EXTEND,      MVT::v4i32, Custom);
-      setOperationAction(ISD::ZERO_EXTEND,      MVT::v2i64, Custom);
-      setOperationAction(ISD::SIGN_EXTEND,      MVT::v4i32, Custom);
-      setOperationAction(ISD::SIGN_EXTEND,      MVT::v2i64, Custom);
-      setOperationAction(ISD::ANY_EXTEND,       MVT::v4i32, Custom);
-      setOperationAction(ISD::ANY_EXTEND,       MVT::v2i64, Custom);
     }
 
     setOperationAction(ISD::TRUNCATE,           MVT::v8i32, Custom);
@@ -1257,6 +1235,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::SIGN_EXTEND,        MVT::v16i32, Custom);
     setOperationAction(ISD::SIGN_EXTEND,        MVT::v8i64, Custom);
 
+    // Extends of v16i1/v8i1 to 128-bit vectors.
     setOperationAction(ISD::SIGN_EXTEND,        MVT::v16i8, Custom);
     setOperationAction(ISD::ZERO_EXTEND,        MVT::v16i8, Custom);
     setOperationAction(ISD::ANY_EXTEND,         MVT::v16i8, Custom);
@@ -1480,15 +1459,12 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::SIGN_EXTEND_VECTOR_INREG, MVT::v32i16, Custom);
 
     setTruncStoreAction(MVT::v32i16,  MVT::v32i8, Legal);
-    if (Subtarget.hasVLX()) {
-      setTruncStoreAction(MVT::v16i16,  MVT::v16i8, Legal);
-      setTruncStoreAction(MVT::v8i16,   MVT::v8i8,  Legal);
-    }
 
-    LegalizeAction Action = Subtarget.hasVLX() ? Legal : Custom;
+    // We can custom lower these using 512-bit vectors. If we have VLX,
+    // they will be made legal later.
     for (auto VT : { MVT::v32i8, MVT::v16i8, MVT::v16i16, MVT::v8i16 }) {
-      setOperationAction(ISD::MLOAD,               VT, Action);
-      setOperationAction(ISD::MSTORE,              VT, Action);
+      setOperationAction(ISD::MLOAD,               VT, Custom);
+      setOperationAction(ISD::MSTORE,              VT, Custom);
     }
 
     for (auto VT : { MVT::v64i8, MVT::v32i16 }) {
@@ -1547,6 +1523,47 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v4i1, Custom);
     setOperationAction(ISD::INSERT_SUBVECTOR,   MVT::v8i1, Custom);
     setOperationAction(ISD::INSERT_SUBVECTOR,   MVT::v4i1, Custom);
+
+    // Extends from v2i1/v4i1 masks to 128-bit vectors.
+    setOperationAction(ISD::ZERO_EXTEND,      MVT::v4i32, Custom);
+    setOperationAction(ISD::ZERO_EXTEND,      MVT::v2i64, Custom);
+    setOperationAction(ISD::SIGN_EXTEND,      MVT::v4i32, Custom);
+    setOperationAction(ISD::SIGN_EXTEND,      MVT::v2i64, Custom);
+    setOperationAction(ISD::ANY_EXTEND,       MVT::v4i32, Custom);
+    setOperationAction(ISD::ANY_EXTEND,       MVT::v2i64, Custom);
+
+    setTruncStoreAction(MVT::v4i64, MVT::v4i8,  Legal);
+    setTruncStoreAction(MVT::v4i64, MVT::v4i16, Legal);
+    setTruncStoreAction(MVT::v4i64, MVT::v4i32, Legal);
+    setTruncStoreAction(MVT::v8i32, MVT::v8i8,  Legal);
+    setTruncStoreAction(MVT::v8i32, MVT::v8i16, Legal);
+
+    setTruncStoreAction(MVT::v2i64, MVT::v2i8,  Legal);
+    setTruncStoreAction(MVT::v2i64, MVT::v2i16, Legal);
+    setTruncStoreAction(MVT::v2i64, MVT::v2i32, Legal);
+    setTruncStoreAction(MVT::v4i32, MVT::v4i8,  Legal);
+    setTruncStoreAction(MVT::v4i32, MVT::v4i16, Legal);
+
+    if (Subtarget.hasDQI()) {
+      // Fast v2f32 SINT_TO_FP( v2i64 ) custom conversion.
+      // v2f32 UINT_TO_FP is already custom under SSE2.
+      setOperationAction(ISD::SINT_TO_FP,    MVT::v2f32, Custom);
+      assert(isOperationCustom(ISD::UINT_TO_FP, MVT::v2f32) &&
+             "Unexpected operation action!");
+      // v2i64 FP_TO_S/UINT(v2f32) custom conversion.
+      setOperationAction(ISD::FP_TO_SINT,    MVT::v2f32, Custom);
+      setOperationAction(ISD::FP_TO_UINT,    MVT::v2f32, Custom);
+    }
+
+    if (Subtarget.hasBWI()) {
+      setTruncStoreAction(MVT::v16i16,  MVT::v16i8, Legal);
+      setTruncStoreAction(MVT::v8i16,   MVT::v8i8,  Legal);
+
+      for (auto VT : { MVT::v32i8, MVT::v16i8, MVT::v16i16, MVT::v8i16 }) {
+        setOperationAction(ISD::MLOAD,  VT, Legal);
+        setOperationAction(ISD::MSTORE, VT, Legal);
+      }
+    }
   }
 
   // We want to custom lower some of our intrinsics.
