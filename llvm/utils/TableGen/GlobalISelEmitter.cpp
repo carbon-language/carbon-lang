@@ -2226,6 +2226,7 @@ RuleMatcher::getOperandMatcher(StringRef Name) const {
 void RuleMatcher::emitCaptureOpcodes(MatchTable &Table) {
   assert(Matchers.size() == 1 && "Cannot handle multi-root matchers yet");
   unsigned InsnVarID = implicitlyDefineInsnVar(*Matchers.front());
+  (void)InsnVarID;
   assert(Matchers.front()->getVarID() == InsnVarID &&
          "IDs differ between build and emit");
   Matchers.front()->emitCaptureOpcodes(Table, *this);
