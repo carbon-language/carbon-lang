@@ -805,12 +805,11 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   errorHandler().Verbose = Config->Verbose;
 
   // Handle /force or /force:unresolved
-  if (Args.hasArg(OPT_force) || Args.hasArg(OPT_force_unresolved))
+  if (Args.hasArg(OPT_force, OPT_force_unresolved))
     Config->Force = true;
 
   // Handle /debug
-  if (Args.hasArg(OPT_debug) || Args.hasArg(OPT_debug_dwarf) ||
-      Args.hasArg(OPT_debug_ghash)) {
+  if (Args.hasArg(OPT_debug, OPT_debug_dwarf, OPT_debug_ghash)) {
     Config->Debug = true;
     if (auto *Arg = Args.getLastArg(OPT_debugtype))
       Config->DebugTypes = parseDebugType(Arg->getValue());
@@ -1152,7 +1151,7 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   }
 
   // Disable PDB generation if the user requested it.
-  if (Args.hasArg(OPT_nopdb) || Args.hasArg(OPT_debug_dwarf))
+  if (Args.hasArg(OPT_nopdb, OPT_debug_dwarf))
     Config->PDBPath = "";
 
   // Set default image base if /base is not given.
