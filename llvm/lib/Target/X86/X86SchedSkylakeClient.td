@@ -3786,42 +3786,28 @@ def SKLWriteResGroup196_1 : SchedWriteRes<[SKLPort0, SKLPort23, SKLPort5, SKLPor
   let NumMicroOps = 5;
   let ResourceCycles = [1,2,1,1];
 }
-def: InstRW<[SKLWriteResGroup196_1], (instregex "VGATHERDPSrm")>;
-def: InstRW<[SKLWriteResGroup196_1], (instregex "VGATHERDPDrm")>;
-def: InstRW<[SKLWriteResGroup196_1], (instregex "VGATHERQPDrm")>;
-def: InstRW<[SKLWriteResGroup196_1], (instregex "VGATHERQPSrm")>;
-def: InstRW<[SKLWriteResGroup196_1], (instregex "VPGATHERDDrm")>;
-def: InstRW<[SKLWriteResGroup196_1], (instregex "VPGATHERDQrm")>;
-def: InstRW<[SKLWriteResGroup196_1], (instregex "VPGATHERQDrm")>;
-def: InstRW<[SKLWriteResGroup196_1], (instregex "VPGATHERQQrm")>;
-def: InstRW<[SKLWriteResGroup196_1], (instregex "VPGATHERDDrm")>;
-def: InstRW<[SKLWriteResGroup196_1], (instregex "VPGATHERQDrm")>;
-def: InstRW<[SKLWriteResGroup196_1], (instregex "VPGATHERDQrm")>;
-def: InstRW<[SKLWriteResGroup196_1], (instregex "VPGATHERQQrm")>;
-def: InstRW<[SKLWriteResGroup196_1], (instregex "VGATHERDPSrm")>;
-def: InstRW<[SKLWriteResGroup196_1], (instregex "VGATHERQPSrm")>;
-def: InstRW<[SKLWriteResGroup196_1], (instregex "VGATHERDPDrm")>;
-def: InstRW<[SKLWriteResGroup196_1], (instregex "VGATHERQPDrm")>;
+def: InstRW<[SKLWriteResGroup196_1], (instrs VGATHERDPSrm,
+                                             VGATHERDPDrm,
+                                             VGATHERQPDrm,
+                                             VGATHERQPSrm,
+                                             VPGATHERDDrm,
+                                             VPGATHERDQrm,
+                                             VPGATHERQDrm,
+                                             VPGATHERQQrm)>;
 
 def SKLWriteResGroup196_2 : SchedWriteRes<[SKLPort0, SKLPort23, SKLPort5, SKLPort015]> {
   let Latency = 25;
   let NumMicroOps = 5;
   let ResourceCycles = [1,2,1,1];
 }
-def: InstRW<[SKLWriteResGroup196_2], (instregex "VGATHERDPSYrm")>;
-def: InstRW<[SKLWriteResGroup196_2], (instregex "VGATHERQPDYrm")>;
-def: InstRW<[SKLWriteResGroup196_2], (instregex "VGATHERQPSYrm")>;
-def: InstRW<[SKLWriteResGroup196_2], (instregex "VPGATHERDDYrm")>;
-def: InstRW<[SKLWriteResGroup196_2], (instregex "VPGATHERDQYrm")>;
-def: InstRW<[SKLWriteResGroup196_2], (instregex "VPGATHERQDYrm")>;
-def: InstRW<[SKLWriteResGroup196_2], (instregex "VPGATHERQQYrm")>;
-def: InstRW<[SKLWriteResGroup196_2], (instregex "VPGATHERDDYrm")>;
-def: InstRW<[SKLWriteResGroup196_2], (instregex "VPGATHERQDYrm")>;
-def: InstRW<[SKLWriteResGroup196_2], (instregex "VPGATHERDQYrm")>;
-def: InstRW<[SKLWriteResGroup196_2], (instregex "VPGATHERQQYrm")>;
-def: InstRW<[SKLWriteResGroup196_2], (instregex "VGATHERDPSYrm")>;
-def: InstRW<[SKLWriteResGroup196_2], (instregex "VGATHERQPSYrm")>;
-def: InstRW<[SKLWriteResGroup196_2], (instregex "VGATHERDPDYrm")>;
+def: InstRW<[SKLWriteResGroup196_2], (instrs VGATHERDPSYrm,
+                                             VGATHERQPDYrm,
+                                             VGATHERQPSYrm,
+                                             VPGATHERDDYrm,
+                                             VPGATHERDQYrm,
+                                             VPGATHERQDYrm,
+                                             VPGATHERQQYrm,
+                                             VGATHERDPDYrm)>;
 
 def SKLWriteResGroup197 : SchedWriteRes<[SKLPort0,SKLPort23]> {
   let Latency = 23;
