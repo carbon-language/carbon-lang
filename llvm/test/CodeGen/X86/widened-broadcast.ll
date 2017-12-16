@@ -526,22 +526,10 @@ define <32 x i8> @load_splat_32i8_32i8_01230123012301230123012301230123(<32 x i8
 ; SSE-NEXT:    movdqa %xmm0, %xmm1
 ; SSE-NEXT:    retq
 ;
-; AVX1-LABEL: load_splat_32i8_32i8_01230123012301230123012301230123:
-; AVX1:       # %bb.0: # %entry
-; AVX1-NEXT:    vbroadcastss (%rdi), %ymm0
-; AVX1-NEXT:    retq
-;
-; AVX2-LABEL: load_splat_32i8_32i8_01230123012301230123012301230123:
-; AVX2:       # %bb.0: # %entry
-; AVX2-NEXT:    vmovaps (%rdi), %ymm0
-; AVX2-NEXT:    vbroadcastss %xmm0, %ymm0
-; AVX2-NEXT:    retq
-;
-; AVX512-LABEL: load_splat_32i8_32i8_01230123012301230123012301230123:
-; AVX512:       # %bb.0: # %entry
-; AVX512-NEXT:    vmovaps (%rdi), %ymm0
-; AVX512-NEXT:    vbroadcastss %xmm0, %ymm0
-; AVX512-NEXT:    retq
+; AVX-LABEL: load_splat_32i8_32i8_01230123012301230123012301230123:
+; AVX:       # %bb.0: # %entry
+; AVX-NEXT:    vbroadcastss (%rdi), %ymm0
+; AVX-NEXT:    retq
 entry:
   %ld = load <32 x i8>, <32 x i8>* %ptr
   %ret = shufflevector <32 x i8> %ld, <32 x i8> undef, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 0, i32 1, i32 2, i32 3, i32 0, i32 1, i32 2, i32 3, i32 0, i32 1, i32 2, i32 3, i32 0, i32 1, i32 2, i32 3, i32 0, i32 1, i32 2, i32 3, i32 0, i32 1, i32 2, i32 3, i32 0, i32 1, i32 2, i32 3>
