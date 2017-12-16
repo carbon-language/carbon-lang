@@ -23765,14 +23765,13 @@ static SDValue LowerVectorCTPOP(SDValue Op, const X86Subtarget &Subtarget,
 
   // TRUNC(CTPOP(ZEXT(X))) to make use of vXi32/vXi64 VPOPCNT instructions.
   if (Subtarget.hasVPOPCNTDQ()) {
-    if (VT == MVT::v8i16) {
-      Op = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::v8i64, Op0);
-      Op = DAG.getNode(ISD::CTPOP, DL, MVT::v8i64, Op);
-      return DAG.getNode(ISD::TRUNCATE, DL, VT, Op);
-    }
-    if (VT == MVT::v16i8 || VT == MVT::v16i16) {
-      Op = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::v16i32, Op0);
-      Op = DAG.getNode(ISD::CTPOP, DL, MVT::v16i32, Op);
+    unsigned NumElems = VT.getVectorNumElements();
+    assert((VT.getVectorElementType() == MVT::i8 ||
+            VT.getVectorElementType() == MVT::i16) && "Unexpected type");
+    if (NumElems <= 16) {
+      MVT NewVT = MVT::getVectorVT(MVT::i32, NumElems);
+      Op = DAG.getNode(ISD::ZERO_EXTEND, DL, NewVT, Op0);
+      Op = DAG.getNode(ISD::CTPOP, DL, NewVT, Op);
       return DAG.getNode(ISD::TRUNCATE, DL, VT, Op);
     }
   }
