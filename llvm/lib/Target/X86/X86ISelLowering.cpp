@@ -10450,10 +10450,7 @@ static SDValue lowerVectorShuffleAsBroadcast(const SDLoc &DL, MVT VT,
            "Unexpected vector element size");
     assert((SrcVT.is256BitVector() || SrcVT.is512BitVector()) &&
            "Unexpected vector size");
-
-    MVT ExtVT = MVT::getVectorVT(SrcVT.getScalarType(), 128 / EltSize);
-    V = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, ExtVT, V,
-                    DAG.getIntPtrConstant(BroadcastIdx, DL));
+    V = extract128BitVector(V, BroadcastIdx, DAG, DL);
   }
 
   if (Opcode == X86ISD::MOVDDUP && !V.getValueType().isVector())
