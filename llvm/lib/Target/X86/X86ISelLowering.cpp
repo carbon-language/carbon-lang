@@ -19631,6 +19631,7 @@ static SDValue getVectorMaskingNode(SDValue Op, SDValue Mask,
   case X86ISD::CMPM:
   case X86ISD::CMPM_RND:
   case X86ISD::CMPMU:
+  case X86ISD::VPSHUFBITQMB:
     return DAG.getNode(ISD::AND, dl, VT, Op, VMask);
   case X86ISD::VFPCLASS:
     return DAG.getNode(ISD::OR, dl, VT, Op, VMask);
