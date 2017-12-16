@@ -818,8 +818,10 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   }
 
   // Handle /pdb
-  if (auto *Arg = Args.getLastArg(OPT_pdb))
-    Config->PDBPath = Arg->getValue();
+  bool ShouldCreatePDB = Args.hasArg(OPT_debug, OPT_debug_ghash);
+  if (ShouldCreatePDB)
+    if (auto *Arg = Args.getLastArg(OPT_pdb))
+      Config->PDBPath = Arg->getValue();
 
   // Handle /noentry
   if (Args.hasArg(OPT_noentry)) {
@@ -1145,14 +1147,10 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   }
 
   // Put the PDB next to the image if no /pdb flag was passed.
-  if (Config->Debug && Config->PDBPath.empty()) {
+  if (ShouldCreatePDB && Config->PDBPath.empty()) {
     Config->PDBPath = Config->OutputFile;
     sys::path::replace_extension(Config->PDBPath, ".pdb");
   }
-
-  // Disable PDB generation if the user requested it.
-  if (Args.hasArg(OPT_nopdb, OPT_debug_dwarf))
-    Config->PDBPath = "";
 
   // Set default image base if /base is not given.
   if (Config->ImageBase == uint64_t(-1))
