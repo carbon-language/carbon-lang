@@ -444,8 +444,8 @@ static void dumpImportListForModule(StringRef ModulePath,
     DEBUG(dbgs() << " - " << Src.second.size() << " functions imported from "
                  << SrcModName << "\n");
   }
-#endif
 }
+#endif
 
 /// Compute all the imports for the given module in the Index.
 void llvm::ComputeCrossModuleImportForModule(
