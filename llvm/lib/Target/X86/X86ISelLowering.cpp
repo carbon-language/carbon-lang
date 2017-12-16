@@ -10346,9 +10346,16 @@ static SDValue lowerVectorShuffleAsBroadcast(const SDLoc &DL, MVT VT,
   for (;;) {
     switch (V.getOpcode()) {
     case ISD::BITCAST: {
+      // Peek through bitcasts as long as BroadcastIdx can be adjusted.
       SDValue VSrc = V.getOperand(0);
-      MVT SrcVT = VSrc.getSimpleValueType();
-      if (VT.getScalarSizeInBits() != SrcVT.getScalarSizeInBits())
+      unsigned NumEltBits = V.getScalarValueSizeInBits();
+      unsigned NumSrcBits = VSrc.getScalarValueSizeInBits();
+      if ((NumEltBits % NumSrcBits) == 0)
+        BroadcastIdx *= (NumEltBits / NumSrcBits);
+      else if ((NumSrcBits % NumEltBits) == 0 &&
+               (BroadcastIdx % (NumSrcBits / NumEltBits)) == 0)
+        BroadcastIdx /= (NumSrcBits / NumEltBits);
+      else
         break;
       V = VSrc;
       continue;
@@ -10378,6 +10385,23 @@ static SDValue lowerVectorShuffleAsBroadcast(const SDLoc &DL, MVT VT,
     }
     }
     break;
+  }
+
+  // Ensure the source vector and BroadcastIdx are for a suitable type.
+  if (VT.getScalarSizeInBits() != V.getScalarValueSizeInBits()) {
+    unsigned NumEltBits = VT.getScalarSizeInBits();
+    unsigned NumSrcBits = V.getScalarValueSizeInBits();
+    if ((NumSrcBits % NumEltBits) == 0)
+      BroadcastIdx *= (NumSrcBits / NumEltBits);
+    else if ((NumEltBits % NumSrcBits) == 0 &&
+             (BroadcastIdx % (NumEltBits / NumSrcBits)) == 0)
+      BroadcastIdx /= (NumEltBits / NumSrcBits);
+    else
+      return SDValue();
+
+    unsigned NumSrcElts = V.getValueSizeInBits() / NumEltBits;
+    MVT SrcVT = MVT::getVectorVT(VT.getScalarType(), NumSrcElts);
+    V = DAG.getBitcast(SrcVT, V);
   }
 
   // Check if this is a broadcast of a scalar. We special case lowering
