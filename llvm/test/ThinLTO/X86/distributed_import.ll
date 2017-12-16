@@ -15,7 +15,7 @@
 ; RUN:     -r=%t2.bc,g,px \
 ; RUN:     -r=%t2.bc,analias,px \
 ; RUN:     -r=%t2.bc,aliasee,px
-; RUN: opt -function-import -import-all-index -summary-file %t1.bc.thinlto.bc %t1.bc -o %t1.out
+; RUN: opt -function-import -import-all-index -enable-import-metadata -summary-file %t1.bc.thinlto.bc %t1.bc -o %t1.out
 ; RUN: opt -function-import -import-all-index -summary-file %t2.bc.thinlto.bc %t2.bc -o %t2.out
 ; RUN: llvm-dis -o - %t1.out | FileCheck %s --check-prefix=IMPORT
 ; RUN: llvm-dis -o - %t2.out | FileCheck %s --check-prefix=EXPORT
