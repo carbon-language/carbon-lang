@@ -20194,7 +20194,7 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       SDValue FPclass = DAG.getNode(IntrData->Opc0, dl, MVT::v1i1, Src1, Imm);
       SDValue FPclassMask = getScalarMaskingNode(FPclass, Mask, SDValue(),
                                                  Subtarget, DAG);
-      return DAG.getNode(X86ISD::VEXTRACT, dl, MVT::i8, FPclassMask,
+      return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i8, FPclassMask,
                          DAG.getIntPtrConstant(0, dl));
     }
     case CMP_MASK:
@@ -20261,7 +20261,7 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
 
       SDValue CmpMask = getScalarMaskingNode(Cmp, Mask, SDValue(),
                                              Subtarget, DAG);
-      return DAG.getNode(X86ISD::VEXTRACT, dl, MVT::i8, CmpMask,
+      return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i8, CmpMask,
                          DAG.getIntPtrConstant(0, dl));
     }
     case COMI: { // Comparison intrinsics
@@ -20315,7 +20315,7 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       else
         FCmp = DAG.getNode(X86ISD::FSETCCM_RND, dl, MVT::v1i1, LHS, RHS,
                            DAG.getConstant(CondVal, dl, MVT::i8), Sae);
-      return DAG.getNode(X86ISD::VEXTRACT, dl, MVT::i32, FCmp,
+      return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i32, FCmp,
                          DAG.getIntPtrConstant(0, dl));
     }
     case VSHIFT:
@@ -32911,8 +32911,9 @@ static SDValue combineCompareEqual(SDNode *N, SelectionDAG &DAG,
             SDValue FSetCC =
                 DAG.getNode(X86ISD::FSETCCM, DL, MVT::v1i1, CMP00, CMP01,
                             DAG.getConstant(x86cc, DL, MVT::i8));
-            return DAG.getNode(X86ISD::VEXTRACT, DL, N->getSimpleValueType(0),
-                               FSetCC, DAG.getIntPtrConstant(0, DL));
+            return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL,
+                               N->getSimpleValueType(0), FSetCC,
+                               DAG.getIntPtrConstant(0, DL));
           }
           SDValue OnesOrZeroesF = DAG.getNode(X86ISD::FSETCC, DL,
                                               CMP00.getValueType(), CMP00, CMP01,
