@@ -2773,12 +2773,6 @@ let Predicates = [HasAVX512] in {
 
     def : Pat<(maskVT (scalar_to_vector GR8:$src)),
               (COPY_TO_REGCLASS (INSERT_SUBREG (i32 (IMPLICIT_DEF)), GR8:$src, sub_8bit), maskRC)>;
-
-    def : Pat<(i8 (X86Vextract maskRC:$src, (iPTR 0))),
-              (EXTRACT_SUBREG (i32 (COPY_TO_REGCLASS maskRC:$src, GR32)), sub_8bit)>;
-
-    def : Pat<(i32 (anyext (i8 (X86Vextract maskRC:$src, (iPTR 0))))),
-              (COPY_TO_REGCLASS maskRC:$src, GR32)>;
   }
 
   defm : operation_gpr_mask_copy_lowering<VK1,  v1i1>;
