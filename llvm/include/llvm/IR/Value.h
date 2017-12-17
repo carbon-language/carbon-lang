@@ -570,7 +570,7 @@ public:
   ///
   /// If CanBeNull is set by this function the pointer can either be null or be
   /// dereferenceable up to the returned number of bytes.
-  uint64_t getPointerDereferenceableBytes(const DataLayout &DL,
+  unsigned getPointerDereferenceableBytes(const DataLayout &DL,
                                           bool &CanBeNull) const;
 
   /// \brief Returns an alignment of the pointer value.

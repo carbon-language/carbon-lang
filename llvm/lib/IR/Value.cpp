@@ -619,11 +619,11 @@ const Value *Value::stripInBoundsOffsets() const {
   return stripPointerCastsAndOffsets<PSK_InBounds>(this);
 }
 
-uint64_t Value::getPointerDereferenceableBytes(const DataLayout &DL,
+unsigned Value::getPointerDereferenceableBytes(const DataLayout &DL,
                                                bool &CanBeNull) const {
   assert(getType()->isPointerTy() && "must be pointer");
 
-  uint64_t DerefBytes = 0;
+  unsigned DerefBytes = 0;
   CanBeNull = false;
   if (const Argument *A = dyn_cast<Argument>(this)) {
     DerefBytes = A->getDereferenceableBytes();
@@ -655,10 +655,8 @@ uint64_t Value::getPointerDereferenceableBytes(const DataLayout &DL,
       CanBeNull = true;
     }
   } else if (auto *AI = dyn_cast<AllocaInst>(this)) {
-    const ConstantInt *ArraySize = dyn_cast<ConstantInt>(AI->getArraySize());
-    if (ArraySize && AI->getAllocatedType()->isSized()) {
-      DerefBytes = DL.getTypeStoreSize(AI->getAllocatedType()) *
-        ArraySize->getZExtValue();
+    if (AI->getAllocatedType()->isSized()) {
+      DerefBytes = DL.getTypeStoreSize(AI->getAllocatedType());
       CanBeNull = false;
     }
   } else if (auto *GV = dyn_cast<GlobalVariable>(this)) {
