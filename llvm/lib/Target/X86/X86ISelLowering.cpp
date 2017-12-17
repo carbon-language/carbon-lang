@@ -14575,6 +14575,12 @@ static SDValue ExtractBitFromMaskVector(SDValue Op, SelectionDAG &DAG,
     return DAG.getAnyExtOrTrunc(Extract, dl, EltVT);
   }
 
+  unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
+
+  // Extracts from element 0 are always allowed.
+  if (IdxVal == 0)
+    return Op;
+
   // If the kshift instructions of the correct width aren't natively supported
   // then we need to promote the vector to the native size to get the correct
   // zeroing behavior.
@@ -14587,12 +14593,10 @@ static SDValue ExtractBitFromMaskVector(SDValue Op, SelectionDAG &DAG,
                       DAG.getIntPtrConstant(0, dl));
   }
 
-  // Use kshiftlw/rw instruction.
-  unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
-  if (IdxVal != 0)
-    Vec = DAG.getNode(X86ISD::KSHIFTR, dl, VecVT, Vec,
-                      DAG.getConstant(IdxVal, dl, MVT::i8));
-  return DAG.getNode(X86ISD::VEXTRACT, dl, Op.getSimpleValueType(), Vec,
+  // Use kshiftr instruction to move to the lower element.
+  Vec = DAG.getNode(X86ISD::KSHIFTR, dl, VecVT, Vec,
+                    DAG.getConstant(IdxVal, dl, MVT::i8));
+  return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i32, Vec,
                      DAG.getIntPtrConstant(0, dl));
 }
 
@@ -25217,7 +25221,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::VBROADCAST:         return "X86ISD::VBROADCAST";
   case X86ISD::VBROADCASTM:        return "X86ISD::VBROADCASTM";
   case X86ISD::SUBV_BROADCAST:     return "X86ISD::SUBV_BROADCAST";
-  case X86ISD::VEXTRACT:           return "X86ISD::VEXTRACT";
   case X86ISD::VPERMILPV:          return "X86ISD::VPERMILPV";
   case X86ISD::VPERMILPI:          return "X86ISD::VPERMILPI";
   case X86ISD::VPERM2X128:         return "X86ISD::VPERM2X128";
