@@ -127,4 +127,273 @@ entry:
   ret <16 x float> %Addsub
 }
 
+define <4 x float> @buildvector_mul_addsub_ps128(<4 x float> %C, <4 x float> %D, <4 x float> %B) #0 {
+; FMA3-LABEL: buildvector_mul_addsub_ps128:
+; FMA3:       # %bb.0: # %bb
+; FMA3-NEXT:    vfmaddsub213ps %xmm2, %xmm1, %xmm0
+; FMA3-NEXT:    retq
+;
+; FMA4-LABEL: buildvector_mul_addsub_ps128:
+; FMA4:       # %bb.0: # %bb
+; FMA4-NEXT:    vfmaddsubps %xmm2, %xmm1, %xmm0, %xmm0
+; FMA4-NEXT:    retq
+bb:
+  %A = fmul <4 x float> %C, %D
+  %A0 = extractelement <4 x float> %A, i32 0
+  %B0 = extractelement <4 x float> %B, i32 0
+  %sub0 = fsub float %A0, %B0
+  %A2 = extractelement <4 x float> %A, i32 2
+  %B2 = extractelement <4 x float> %B, i32 2
+  %sub2 = fsub float %A2, %B2
+  %A1 = extractelement <4 x float> %A, i32 1
+  %B1 = extractelement <4 x float> %B, i32 1
+  %add1 = fadd float %A1, %B1
+  %A3 = extractelement <4 x float> %A, i32 3
+  %B3 = extractelement <4 x float> %B, i32 3
+  %add3 = fadd float %A3, %B3
+  %vecinsert1 = insertelement <4 x float> undef, float %sub0, i32 0
+  %vecinsert2 = insertelement <4 x float> %vecinsert1, float %add1, i32 1
+  %vecinsert3 = insertelement <4 x float> %vecinsert2, float %sub2, i32 2
+  %vecinsert4 = insertelement <4 x float> %vecinsert3, float %add3, i32 3
+  ret <4 x float> %vecinsert4
+}
+
+define <2 x double> @buildvector_mul_addsub_pd128(<2 x double> %C, <2 x double> %D, <2 x double> %B) #0 {
+; FMA3-LABEL: buildvector_mul_addsub_pd128:
+; FMA3:       # %bb.0: # %bb
+; FMA3-NEXT:    vfmaddsub213pd %xmm2, %xmm1, %xmm0
+; FMA3-NEXT:    retq
+;
+; FMA4-LABEL: buildvector_mul_addsub_pd128:
+; FMA4:       # %bb.0: # %bb
+; FMA4-NEXT:    vfmaddsubpd %xmm2, %xmm1, %xmm0, %xmm0
+; FMA4-NEXT:    retq
+bb:
+  %A = fmul <2 x double> %C, %D
+  %A0 = extractelement <2 x double> %A, i32 0
+  %B0 = extractelement <2 x double> %B, i32 0
+  %sub0 = fsub double %A0, %B0
+  %A1 = extractelement <2 x double> %A, i32 1
+  %B1 = extractelement <2 x double> %B, i32 1
+  %add1 = fadd double %A1, %B1
+  %vecinsert1 = insertelement <2 x double> undef, double %sub0, i32 0
+  %vecinsert2 = insertelement <2 x double> %vecinsert1, double %add1, i32 1
+  ret <2 x double> %vecinsert2
+}
+
+define <8 x float> @buildvector_mul_addsub_ps256(<8 x float> %C, <8 x float> %D, <8 x float> %B) #0 {
+; FMA3-LABEL: buildvector_mul_addsub_ps256:
+; FMA3:       # %bb.0: # %bb
+; FMA3-NEXT:    vfmaddsub213ps %ymm2, %ymm1, %ymm0
+; FMA3-NEXT:    retq
+;
+; FMA4-LABEL: buildvector_mul_addsub_ps256:
+; FMA4:       # %bb.0: # %bb
+; FMA4-NEXT:    vfmaddsubps %ymm2, %ymm1, %ymm0, %ymm0
+; FMA4-NEXT:    retq
+bb:
+  %A = fmul <8 x float> %C, %D
+  %A0 = extractelement <8 x float> %A, i32 0
+  %B0 = extractelement <8 x float> %B, i32 0
+  %sub0 = fsub float %A0, %B0
+  %A2 = extractelement <8 x float> %A, i32 2
+  %B2 = extractelement <8 x float> %B, i32 2
+  %sub2 = fsub float %A2, %B2
+  %A4 = extractelement <8 x float> %A, i32 4
+  %B4 = extractelement <8 x float> %B, i32 4
+  %sub4 = fsub float %A4, %B4
+  %A6 = extractelement <8 x float> %A, i32 6
+  %B6 = extractelement <8 x float> %B, i32 6
+  %sub6 = fsub float %A6, %B6
+  %A1 = extractelement <8 x float> %A, i32 1
+  %B1 = extractelement <8 x float> %B, i32 1
+  %add1 = fadd float %A1, %B1
+  %A3 = extractelement <8 x float> %A, i32 3
+  %B3 = extractelement <8 x float> %B, i32 3
+  %add3 = fadd float %A3, %B3
+  %A5 = extractelement <8 x float> %A, i32 5
+  %B5 = extractelement <8 x float> %B, i32 5
+  %add5 = fadd float %A5, %B5
+  %A7 = extractelement <8 x float> %A, i32 7
+  %B7 = extractelement <8 x float> %B, i32 7
+  %add7 = fadd float %A7, %B7
+  %vecinsert1 = insertelement <8 x float> undef, float %sub0, i32 0
+  %vecinsert2 = insertelement <8 x float> %vecinsert1, float %add1, i32 1
+  %vecinsert3 = insertelement <8 x float> %vecinsert2, float %sub2, i32 2
+  %vecinsert4 = insertelement <8 x float> %vecinsert3, float %add3, i32 3
+  %vecinsert5 = insertelement <8 x float> %vecinsert4, float %sub4, i32 4
+  %vecinsert6 = insertelement <8 x float> %vecinsert5, float %add5, i32 5
+  %vecinsert7 = insertelement <8 x float> %vecinsert6, float %sub6, i32 6
+  %vecinsert8 = insertelement <8 x float> %vecinsert7, float %add7, i32 7
+  ret <8 x float> %vecinsert8
+}
+
+define <4 x double> @buildvector_mul_addsub_pd256(<4 x double> %C, <4 x double> %D, <4 x double> %B) #0 {
+; FMA3-LABEL: buildvector_mul_addsub_pd256:
+; FMA3:       # %bb.0: # %bb
+; FMA3-NEXT:    vfmaddsub213pd %ymm2, %ymm1, %ymm0
+; FMA3-NEXT:    retq
+;
+; FMA4-LABEL: buildvector_mul_addsub_pd256:
+; FMA4:       # %bb.0: # %bb
+; FMA4-NEXT:    vfmaddsubpd %ymm2, %ymm1, %ymm0, %ymm0
+; FMA4-NEXT:    retq
+bb:
+  %A = fmul <4 x double> %C, %D
+  %A0 = extractelement <4 x double> %A, i32 0
+  %B0 = extractelement <4 x double> %B, i32 0
+  %sub0 = fsub double %A0, %B0
+  %A2 = extractelement <4 x double> %A, i32 2
+  %B2 = extractelement <4 x double> %B, i32 2
+  %sub2 = fsub double %A2, %B2
+  %A1 = extractelement <4 x double> %A, i32 1
+  %B1 = extractelement <4 x double> %B, i32 1
+  %add1 = fadd double %A1, %B1
+  %A3 = extractelement <4 x double> %A, i32 3
+  %B3 = extractelement <4 x double> %B, i32 3
+  %add3 = fadd double %A3, %B3
+  %vecinsert1 = insertelement <4 x double> undef, double %sub0, i32 0
+  %vecinsert2 = insertelement <4 x double> %vecinsert1, double %add1, i32 1
+  %vecinsert3 = insertelement <4 x double> %vecinsert2, double %sub2, i32 2
+  %vecinsert4 = insertelement <4 x double> %vecinsert3, double %add3, i32 3
+  ret <4 x double> %vecinsert4
+}
+
+define <16 x float> @buildvector_mul_addsub_ps512(<16 x float> %C, <16 x float> %D, <16 x float> %B) #0 {
+; FMA3_256-LABEL: buildvector_mul_addsub_ps512:
+; FMA3_256:       # %bb.0: # %bb
+; FMA3_256-NEXT:    vfmaddsub213ps %ymm4, %ymm2, %ymm0
+; FMA3_256-NEXT:    vfmaddsub213ps %ymm5, %ymm3, %ymm1
+; FMA3_256-NEXT:    retq
+;
+; FMA3_512-LABEL: buildvector_mul_addsub_ps512:
+; FMA3_512:       # %bb.0: # %bb
+; FMA3_512-NEXT:    vfmaddsub213ps %zmm2, %zmm1, %zmm0
+; FMA3_512-NEXT:    retq
+;
+; FMA4-LABEL: buildvector_mul_addsub_ps512:
+; FMA4:       # %bb.0: # %bb
+; FMA4-NEXT:    vfmaddsubps %ymm4, %ymm2, %ymm0, %ymm0
+; FMA4-NEXT:    vfmaddsubps %ymm5, %ymm3, %ymm1, %ymm1
+; FMA4-NEXT:    retq
+bb:
+  %A = fmul <16 x float> %C, %D
+  %A0 = extractelement <16 x float> %A, i32 0
+  %B0 = extractelement <16 x float> %B, i32 0
+  %sub0 = fsub float %A0, %B0
+  %A2 = extractelement <16 x float> %A, i32 2
+  %B2 = extractelement <16 x float> %B, i32 2
+  %sub2 = fsub float %A2, %B2
+  %A4 = extractelement <16 x float> %A, i32 4
+  %B4 = extractelement <16 x float> %B, i32 4
+  %sub4 = fsub float %A4, %B4
+  %A6 = extractelement <16 x float> %A, i32 6
+  %B6 = extractelement <16 x float> %B, i32 6
+  %sub6 = fsub float %A6, %B6
+  %A8 = extractelement <16 x float> %A, i32 8
+  %B8 = extractelement <16 x float> %B, i32 8
+  %sub8 = fsub float %A8, %B8
+  %A10 = extractelement <16 x float> %A, i32 10
+  %B10 = extractelement <16 x float> %B, i32 10
+  %sub10 = fsub float %A10, %B10
+  %A12 = extractelement <16 x float> %A, i32 12
+  %B12 = extractelement <16 x float> %B, i32 12
+  %sub12 = fsub float %A12, %B12
+  %A14 = extractelement <16 x float> %A, i32 14
+  %B14 = extractelement <16 x float> %B, i32 14
+  %sub14 = fsub float %A14, %B14
+  %A1 = extractelement <16 x float> %A, i32 1
+  %B1 = extractelement <16 x float> %B, i32 1
+  %add1 = fadd float %A1, %B1
+  %A3 = extractelement <16 x float> %A, i32 3
+  %B3 = extractelement <16 x float> %B, i32 3
+  %add3 = fadd float %A3, %B3
+  %A5 = extractelement <16 x float> %A, i32 5
+  %B5 = extractelement <16 x float> %B, i32 5
+  %add5 = fadd float %A5, %B5
+  %A7 = extractelement <16 x float> %A, i32 7
+  %B7 = extractelement <16 x float> %B, i32 7
+  %add7 = fadd float %A7, %B7
+  %A9 = extractelement <16 x float> %A, i32 9
+  %B9 = extractelement <16 x float> %B, i32 9
+  %add9 = fadd float %A9, %B9
+  %A11 = extractelement <16 x float> %A, i32 11
+  %B11 = extractelement <16 x float> %B, i32 11
+  %add11 = fadd float %A11, %B11
+  %A13 = extractelement <16 x float> %A, i32 13
+  %B13 = extractelement <16 x float> %B, i32 13
+  %add13 = fadd float %A13, %B13
+  %A15 = extractelement <16 x float> %A, i32 15
+  %B15 = extractelement <16 x float> %B, i32 15
+  %add15 = fadd float %A15, %B15
+  %vecinsert1 = insertelement <16 x float> undef, float %sub0, i32 0
+  %vecinsert2 = insertelement <16 x float> %vecinsert1, float %add1, i32 1
+  %vecinsert3 = insertelement <16 x float> %vecinsert2, float %sub2, i32 2
+  %vecinsert4 = insertelement <16 x float> %vecinsert3, float %add3, i32 3
+  %vecinsert5 = insertelement <16 x float> %vecinsert4, float %sub4, i32 4
+  ; element 5 is undef
+  %vecinsert7 = insertelement <16 x float> %vecinsert5, float %sub6, i32 6
+  %vecinsert8 = insertelement <16 x float> %vecinsert7, float %add7, i32 7
+  %vecinsert9 = insertelement <16 x float> %vecinsert8, float %sub8, i32 8
+  %vecinsert10 = insertelement <16 x float> %vecinsert9, float %add9, i32 9
+  %vecinsert11 = insertelement <16 x float> %vecinsert10, float %sub10, i32 10
+  %vecinsert12 = insertelement <16 x float> %vecinsert11, float %add11, i32 11
+  ; element 12 is undef
+  %vecinsert14 = insertelement <16 x float> %vecinsert12, float %add13, i32 13
+  %vecinsert15 = insertelement <16 x float> %vecinsert14, float %sub14, i32 14
+  %vecinsert16 = insertelement <16 x float> %vecinsert15, float %add15, i32 15
+  ret <16 x float> %vecinsert16
+}
+
+define <8 x double> @buildvector_mul_addsub_pd512(<8 x double> %C, <8 x double> %D, <8 x double> %B) #0 {
+; FMA3_256-LABEL: buildvector_mul_addsub_pd512:
+; FMA3_256:       # %bb.0: # %bb
+; FMA3_256-NEXT:    vfmaddsub213pd %ymm4, %ymm2, %ymm0
+; FMA3_256-NEXT:    vfmaddsub213pd %ymm5, %ymm3, %ymm1
+; FMA3_256-NEXT:    retq
+;
+; FMA3_512-LABEL: buildvector_mul_addsub_pd512:
+; FMA3_512:       # %bb.0: # %bb
+; FMA3_512-NEXT:    vfmaddsub213pd %zmm2, %zmm1, %zmm0
+; FMA3_512-NEXT:    retq
+;
+; FMA4-LABEL: buildvector_mul_addsub_pd512:
+; FMA4:       # %bb.0: # %bb
+; FMA4-NEXT:    vfmaddsubpd %ymm4, %ymm2, %ymm0, %ymm0
+; FMA4-NEXT:    vfmaddsubpd %ymm5, %ymm3, %ymm1, %ymm1
+; FMA4-NEXT:    retq
+bb:
+  %A = fmul <8 x double> %C, %D
+  %A0 = extractelement <8 x double> %A, i32 0
+  %B0 = extractelement <8 x double> %B, i32 0
+  %sub0 = fsub double %A0, %B0
+  %A2 = extractelement <8 x double> %A, i32 2
+  %B2 = extractelement <8 x double> %B, i32 2
+  %sub2 = fsub double %A2, %B2
+  %A4 = extractelement <8 x double> %A, i32 4
+  %B4 = extractelement <8 x double> %B, i32 4
+  %sub4 = fsub double %A4, %B4
+  %A6 = extractelement <8 x double> %A, i32 6
+  %B6 = extractelement <8 x double> %B, i32 6
+  %sub6 = fsub double %A6, %B6
+  %A1 = extractelement <8 x double> %A, i32 1
+  %B1 = extractelement <8 x double> %B, i32 1
+  %add1 = fadd double %A1, %B1
+  %A3 = extractelement <8 x double> %A, i32 3
+  %B3 = extractelement <8 x double> %B, i32 3
+  %add3 = fadd double %A3, %B3
+  %A7 = extractelement <8 x double> %A, i32 7
+  %B7 = extractelement <8 x double> %B, i32 7
+  %add7 = fadd double %A7, %B7
+  %vecinsert1 = insertelement <8 x double> undef, double %sub0, i32 0
+  %vecinsert2 = insertelement <8 x double> %vecinsert1, double %add1, i32 1
+  %vecinsert3 = insertelement <8 x double> %vecinsert2, double %sub2, i32 2
+  %vecinsert4 = insertelement <8 x double> %vecinsert3, double %add3, i32 3
+  %vecinsert5 = insertelement <8 x double> %vecinsert4, double %sub4, i32 4
+  ; element 5 is undef
+  %vecinsert7 = insertelement <8 x double> %vecinsert5, double %sub6, i32 6
+  %vecinsert8 = insertelement <8 x double> %vecinsert7, double %add7, i32 7
+  ret <8 x double> %vecinsert8
+}
+
 attributes #0 = { nounwind "unsafe-fp-math"="true" }
