@@ -18,9 +18,6 @@
 
 #include "sanitizer_common/sanitizer_common.h"
 
-#include <cstring>
-#include <typeinfo>
-
 using namespace __sanitizer;
 using namespace __ubsan;
 
@@ -464,50 +461,14 @@ void __ubsan::__ubsan_handle_invalid_builtin_abort(InvalidBuiltinData *Data) {
   Die();
 }
 
-// Check that TI2 represents the same function type as TI1, except that TI2 has
-// "noexcept" and TI1 does not.
-static bool checkForAddedNoexcept(const std::type_info *TI1,
-                                  const std::type_info *TI2) {
-  const char *Mangled1 = TI1->name();
-  const char *Mangled2 = TI2->name();
-
-  // Skip <CV-qualifiers>.
-  if (*Mangled1 == 'V') {
-    if (*Mangled2 != 'V')
-      return false;
-    ++Mangled1;
-    ++Mangled2;
-  }
-  if (*Mangled1 == 'K') {
-    if (*Mangled2 != 'K')
-      return false;
-    ++Mangled1;
-    ++Mangled2;
-  }
-
-  // Check for "Do" <exception-spec>.
-  if (*Mangled2++ != 'D' || *Mangled2++ != 'o')
-    return false;
-
-  // Check remainder is identical.
-  return std::strcmp(Mangled1, Mangled2) == 0;
-}
-
-static bool handleFunctionTypeMismatch(FunctionTypeMismatchData *Data,
-                                       ValueHandle Function, ValueHandle RTTI,
+static void handleFunctionTypeMismatch(FunctionTypeMismatchData *Data,
+                                       ValueHandle Function,
                                        ReportOptions Opts) {
-  if (Data->NonNoexceptRTTI &&
-      checkForAddedNoexcept(
-          reinterpret_cast<std::type_info *>(Data->NonNoexceptRTTI),
-          reinterpret_cast<std::type_info *>(RTTI))) {
-    return false;
-  }
-
   SourceLocation CallLoc = Data->Loc.acquire();
   ErrorType ET = ErrorType::FunctionTypeMismatch;
 
   if (ignoreReport(CallLoc, Opts, ET))
-    return true;
+    return;
 
   ScopedReport R(Opts, CallLoc, ET);
 
@@ -520,21 +481,20 @@ static bool handleFunctionTypeMismatch(FunctionTypeMismatchData *Data,
        "call to function %0 through pointer to incorrect function type %1")
       << FName << Data->Type;
   Diag(FLoc, DL_Note, "%0 defined here") << FName;
-  return true;
 }
 
 void
 __ubsan::__ubsan_handle_function_type_mismatch(FunctionTypeMismatchData *Data,
-                                               ValueHandle Function, ValueHandle RTTI) {
+                                               ValueHandle Function) {
   GET_REPORT_OPTIONS(false);
-  handleFunctionTypeMismatch(Data, Function, RTTI, Opts);
+  handleFunctionTypeMismatch(Data, Function, Opts);
 }
 
 void __ubsan::__ubsan_handle_function_type_mismatch_abort(
-    FunctionTypeMismatchData *Data, ValueHandle Function, ValueHandle RTTI) {
+    FunctionTypeMismatchData *Data, ValueHandle Function) {
   GET_REPORT_OPTIONS(true);
-  if (handleFunctionTypeMismatch(Data, Function, RTTI, Opts))
-    Die();
+  handleFunctionTypeMismatch(Data, Function, Opts);
+  Die();
 }
 
 static void handleNonNullReturn(NonNullReturnData *Data, SourceLocation *LocPtr,
