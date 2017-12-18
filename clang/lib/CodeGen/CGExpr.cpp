@@ -4504,14 +4504,10 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, const CGCallee &OrigCallee
           Builder.CreateICmpEQ(CalleeRTTI, FTRTTIConst);
       llvm::Constant *StaticData[] = {
         EmitCheckSourceLocation(E->getLocStart()),
-        EmitCheckTypeDescriptor(CalleeType),
-        cast<FunctionProtoType>(FnType)->isNothrow(getContext())
-          ? llvm::Constant::getNullValue(FTRTTIConst->getType())
-          : FTRTTIConst
+        EmitCheckTypeDescriptor(CalleeType)
       };
       EmitCheck(std::make_pair(CalleeRTTIMatch, SanitizerKind::Function),
-                SanitizerHandler::FunctionTypeMismatch, StaticData,
-                {CalleePtr, CalleeRTTI});
+                SanitizerHandler::FunctionTypeMismatch, StaticData, CalleePtr);
 
       Builder.CreateBr(Cont);
       EmitBlock(Cont);
