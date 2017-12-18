@@ -2438,6 +2438,9 @@ private:
   /// Stores the CallingConv that should be used for each libcall.
   CallingConv::ID LibcallCallingConvs[RTLIB::UNKNOWN_LIBCALL];
 
+  /// Set default libcall names and calling conventions.
+  void InitLibcalls(const Triple &TT);
+
 protected:
   /// Return true if the extension represented by \p I is free.
   /// \pre \p I is a sign, zero, or fp extension and

@@ -174,15 +174,6 @@ X86Subtarget::classifyGlobalFunctionReference(const GlobalValue *GV,
   return X86II::MO_NO_FLAG;
 }
 
-bool X86Subtarget::hasSinCos() const {
-  if (getTargetTriple().isMacOSX()) {
-    return !getTargetTriple().isMacOSXVersionLT(10, 9) && is64Bit();
-  } else if (getTargetTriple().isOSFuchsia()) {
-    return true;
-  }
-  return false;
-}
-
 /// Return true if the subtarget allows calls to immediate address.
 bool X86Subtarget::isLegalToCallImmediateAddr() const {
   // FIXME: I386 PE/COFF supports PC relative calls using IMAGE_REL_I386_REL32
