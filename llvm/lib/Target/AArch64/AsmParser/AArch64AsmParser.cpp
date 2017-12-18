@@ -3034,9 +3034,12 @@ AArch64AsmParser::tryParseGPR64sp0Operand(OperandVector &Operands) {
 bool AArch64AsmParser::parseOperand(OperandVector &Operands, bool isCondCode,
                                   bool invertCondCode) {
   MCAsmParser &Parser = getParser();
+
+  OperandMatchResultTy ResTy =
+      MatchOperandParserImpl(Operands, Mnemonic, /*ParseForAllFeatures=*/ true);
+
   // Check if the current operand has a custom associated parser, if so, try to
   // custom parse the operand, or fallback to the general approach.
-  OperandMatchResultTy ResTy = MatchOperandParserImpl(Operands, Mnemonic);
   if (ResTy == MatchOperand_Success)
     return false;
   // If there wasn't a custom match, try the generic matcher below. Otherwise,

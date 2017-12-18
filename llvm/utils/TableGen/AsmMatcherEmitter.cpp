@@ -2764,7 +2764,8 @@ static void emitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
   // a better error handling.
   OS << "OperandMatchResultTy " << Target.getName() << ClassName << "::\n"
      << "MatchOperandParserImpl(OperandVector"
-     << " &Operands,\n                       StringRef Mnemonic) {\n";
+     << " &Operands,\n                       StringRef Mnemonic,\n"
+     << "                       bool ParseForAllFeatures) {\n";
 
   // Emit code to get the available features.
   OS << "  // Get the current feature set.\n";
@@ -2802,10 +2803,9 @@ static void emitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
 
   // Emit check that the required features are available.
   OS << "    // check if the available features match\n";
-  OS << "    if ((AvailableFeatures & it->RequiredFeatures) "
-     << "!= it->RequiredFeatures) {\n";
-  OS << "      continue;\n";
-  OS << "    }\n\n";
+  OS << "    if (!ParseForAllFeatures && (AvailableFeatures & "
+        "it->RequiredFeatures) != it->RequiredFeatures)\n";
+  OS << "        continue;\n\n";
 
   // Emit check to ensure the operand number matches.
   OS << "    // check if the operand in question has a custom parser.\n";
@@ -2993,7 +2993,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   if (!Info.OperandMatchInfo.empty()) {
     OS << "  OperandMatchResultTy MatchOperandParserImpl(\n";
     OS << "    OperandVector &Operands,\n";
-    OS << "    StringRef Mnemonic);\n";
+    OS << "    StringRef Mnemonic,\n";
+    OS << "    bool ParseForAllFeatures = false);\n";
 
     OS << "  OperandMatchResultTy tryCustomParseOperand(\n";
     OS << "    OperandVector &Operands,\n";
