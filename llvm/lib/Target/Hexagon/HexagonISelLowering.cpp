@@ -2323,6 +2323,18 @@ bool HexagonTargetLowering::isShuffleMaskLegal(ArrayRef<int> Mask,
   return true;
 }
 
+TargetLoweringBase::LegalizeTypeAction
+HexagonTargetLowering::getPreferredVectorAction(EVT VT) const {
+  if (Subtarget.useHVXOps()) {
+    // If the size of VT is at least half of the vector length,
+    // widen the vector. Note: the threshold was not selected in
+    // any scientific way.
+    if (VT.getSizeInBits() >= Subtarget.getVectorLength()*8/2)
+      return TargetLoweringBase::TypeWidenVector;
+  }
+  return TargetLowering::getPreferredVectorAction(VT);
+}
+
 // Lower a vector shuffle (V1, V2, V3).  V1 and V2 are the two vectors
 // to select data from, V3 is the permutation.
 SDValue
