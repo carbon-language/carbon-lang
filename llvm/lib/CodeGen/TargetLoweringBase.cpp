@@ -91,12 +91,13 @@ static cl::opt<unsigned> OptsizeJumpTableDensity(
 
 static bool darwinHasSinCos(const Triple &TT) {
   assert(TT.isOSDarwin() && "should be called with darwin triple");
-  // macos < 10.9 has no sincos_stret and we don't bother for 32bit code.
+  // Macos < 10.9 has no sincos_stret and we don't bother for 32bit code.
   if (TT.isMacOSX())
     return !TT.isMacOSXVersionLT(10, 9) && TT.isArch64Bit();
-  // ios < 7.0 has no sincos_stret (watchos reports version 2.0 but is fine).
+  // iOS < 7.0 has no sincos_stret.
   if (TT.isiOS())
-    return !TT.isOSVersionLT(7, 0) || TT.isWatchOS();
+    return !TT.isOSVersionLT(7, 0);
+  // Any other darwin such as WatchOS/TvOS is new enough.
   return true;
 }
 
