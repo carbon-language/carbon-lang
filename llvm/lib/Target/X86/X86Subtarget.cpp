@@ -174,19 +174,6 @@ X86Subtarget::classifyGlobalFunctionReference(const GlobalValue *GV,
   return X86II::MO_NO_FLAG;
 }
 
-/// This function returns the name of a function which has an interface like
-/// the non-standard bzero function, if such a function exists on the
-/// current subtarget and it is considered preferable over memset with zero
-/// passed as the second argument. Otherwise it returns null.
-const char *X86Subtarget::getBZeroEntry() const {
-  // Darwin 10 has a __bzero entry point for this purpose.
-  if (getTargetTriple().isMacOSX() &&
-      !getTargetTriple().isMacOSXVersionLT(10, 6))
-    return "__bzero";
-
-  return nullptr;
-}
-
 bool X86Subtarget::hasSinCos() const {
   if (getTargetTriple().isMacOSX()) {
     return !getTargetTriple().isMacOSXVersionLT(10, 9) && is64Bit();

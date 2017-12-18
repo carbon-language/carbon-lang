@@ -114,6 +114,10 @@ static void InitLibcallNames(const char **Names, const Triple &TT) {
     // FIXME: What about other targets?
     Names[RTLIB::FPEXT_F16_F32] = "__extendhfsf2";
     Names[RTLIB::FPROUND_F32_F16] = "__truncsfhf2";
+
+    // Darwin 10 and higher has an optimized __bzero.
+    if (!TT.isMacOSX() || !TT.isMacOSXVersionLT(10, 6))
+      Names[RTLIB::BZERO] = "__bzero";
   } else {
     Names[RTLIB::FPEXT_F16_F32] = "__gnu_h2f_ieee";
     Names[RTLIB::FPROUND_F32_F16] = "__gnu_f2h_ieee";
