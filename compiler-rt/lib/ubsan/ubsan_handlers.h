@@ -140,11 +140,12 @@ RECOVERABLE(invalid_builtin, InvalidBuiltinData *Data)
 struct FunctionTypeMismatchData {
   SourceLocation Loc;
   const TypeDescriptor &Type;
+  ValueHandle NonNoexceptRTTI;
 };
 
 RECOVERABLE(function_type_mismatch,
             FunctionTypeMismatchData *Data,
-            ValueHandle Val)
+            ValueHandle Val, ValueHandle RTTI)
 
 struct NonNullReturnData {
   SourceLocation AttrLoc;
