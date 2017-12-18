@@ -2014,7 +2014,6 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
       setOperationAction(ISD::SUB,     T, Legal);
       setOperationAction(ISD::VSELECT, T, Legal);
       if (T != ByteV) {
-        setOperationAction(ISD::ANY_EXTEND_VECTOR_INREG,  T, Legal);
         setOperationAction(ISD::SIGN_EXTEND_VECTOR_INREG, T, Legal);
         setOperationAction(ISD::ZERO_EXTEND_VECTOR_INREG, T, Legal);
       }
@@ -2026,6 +2025,8 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
       setOperationAction(ISD::INSERT_VECTOR_ELT,  T, Custom);
       setOperationAction(ISD::EXTRACT_SUBVECTOR,  T, Custom);
       setOperationAction(ISD::EXTRACT_VECTOR_ELT, T, Custom);
+      if (T != ByteV)
+        setOperationAction(ISD::ANY_EXTEND_VECTOR_INREG, T, Custom);
     }
 
     for (MVT T : LegalV) {
