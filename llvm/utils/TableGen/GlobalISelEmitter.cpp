@@ -574,6 +574,7 @@ class Matcher {
 public:
   virtual ~Matcher() = default;
   virtual void emit(MatchTable &Table) = 0;
+  virtual std::unique_ptr<PredicateMatcher> forgetFirstCondition() = 0;
 };
 
 class GroupMatcher : public Matcher {
@@ -595,6 +596,15 @@ public:
     Rules.clear();
   }
   void emit(MatchTable &Table) override;
+
+  std::unique_ptr<PredicateMatcher> forgetFirstCondition() override {
+    // We shouldn't need to mess up with groups, since we
+    // should have merged everything shareable upfront.
+    // If we start to look into reordering predicates,
+    // we may want to reconsider this.
+    assert(0 && "Groups should be formed maximal for now");
+    llvm_unreachable("No need for this for now");
+  }
 };
 
 /// Generates code to check that a match rule matches.
@@ -749,7 +759,7 @@ public:
   /// matcher.
   unsigned countRendererFns() const;
 
-  std::unique_ptr<PredicateMatcher> forgetFirstCondition();
+  std::unique_ptr<PredicateMatcher> forgetFirstCondition() override;
 
   // FIXME: Remove this as soon as possible
   InstructionMatcher &insnmatchers_front() const { return *Matchers.front(); }
@@ -2615,7 +2625,7 @@ private:
   ///   # predicate C
   /// \endverbatim
   std::vector<Matcher *> optimizeRules(
-      std::vector<RuleMatcher> &Rules,
+      const std::vector<Matcher *> &Rules,
       std::vector<std::unique_ptr<GroupMatcher>> &StorageGroupMatcher);
 };
 
@@ -3552,15 +3562,15 @@ void GlobalISelEmitter::emitImmPredicates(
 }
 
 std::vector<Matcher *> GlobalISelEmitter::optimizeRules(
-    std::vector<RuleMatcher> &Rules,
+    const std::vector<Matcher *> &Rules,
     std::vector<std::unique_ptr<GroupMatcher>> &StorageGroupMatcher) {
   std::vector<Matcher *> OptRules;
   // Start with a stupid grouping for now.
   std::unique_ptr<GroupMatcher> CurrentGroup = make_unique<GroupMatcher>();
   assert(CurrentGroup->conditions_empty());
   unsigned NbGroup = 0;
-  for (RuleMatcher &Rule : Rules) {
-    std::unique_ptr<PredicateMatcher> Predicate = Rule.forgetFirstCondition();
+  for (Matcher *Rule : Rules) {
+    std::unique_ptr<PredicateMatcher> Predicate = Rule->forgetFirstCondition();
     if (!CurrentGroup->conditions_empty() &&
         !CurrentGroup->lastConditionMatches(*Predicate)) {
       // Start a new group.
@@ -3572,7 +3582,7 @@ std::vector<Matcher *> GlobalISelEmitter::optimizeRules(
     }
     if (CurrentGroup->conditions_empty())
       CurrentGroup->addCondition(std::move(Predicate));
-    CurrentGroup->addRule(Rule);
+    CurrentGroup->addRule(*Rule);
   }
   if (!CurrentGroup->conditions_empty()) {
     ++NbGroup;
@@ -3823,12 +3833,13 @@ void GlobalISelEmitter::run(raw_ostream &OS) {
   });
   std::vector<std::unique_ptr<GroupMatcher>> StorageGroupMatcher;
 
-  std::vector<Matcher *> OptRules;
-  if (OptimizeMatchTable)
-    OptRules = optimizeRules(Rules, StorageGroupMatcher);
-  else
-    for (Matcher &Rule : Rules)
-      OptRules.push_back(&Rule);
+  std::vector<Matcher *> InputRules;
+  for (Matcher &Rule : Rules)
+    InputRules.push_back(&Rule);
+
+  std::vector<Matcher *> OptRules =
+      OptimizeMatchTable ? optimizeRules(InputRules, StorageGroupMatcher)
+                         : InputRules;
 
   MatchTable Table(0);
   for (Matcher *Rule : OptRules) {
