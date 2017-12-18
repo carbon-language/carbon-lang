@@ -1,7 +1,7 @@
-# RUN: not llc -march=mips64 -mcpu=mips64r2 -start-after=expand-isel-pseudos -stop-after=expand-isel-pseudos \
-# RUN:         -verify-machineinstrs %s -o - 2>&1 | FileCheck %s
+# RUN: llc -march=mips64 -mcpu=mips64r2 -start-after=expand-isel-pseudos -stop-after=expand-isel-pseudos \
+# RUN:     -verify-machineinstrs %s -o - 2>&1 | FileCheck %s
 
-# CHECK: Size operand is out of range!
+# CHECK-NOT: Size operand is out of range!
 
 # Check that the machine verifier checks the size operand is in the range 1..32
 ---
@@ -42,7 +42,7 @@ body:             |
     liveins: %a0_64
 
     %0 = COPY %a0_64
-    %1 = DEXTU %0, 33, 67
+    %1 = DEXTU %0, 63, 1
     %v0_64 = COPY %1
     RetRA implicit %v0_64
 
