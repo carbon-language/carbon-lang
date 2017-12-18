@@ -1,10 +1,10 @@
 # RUN: llvm-mc %s -o %t.o -filetype=obj -triple=i386-pc-linux
 # RUN: ld.lld %t.o -o %t.so -shared
-# RUN: llvm-readobj --relocations --symbols --sections --section-data %t.so | FileCheck %s
+# RUN: llvm-readobj --relocations --sections --section-data %t.so | FileCheck %s
 
-# Check that the value of a preemptible symbol is written to the got
-# entry when using Elf_Rel. It is not clear why that is required, but
-# freebsd i386 seems to depend on it.
+# Check that the value of a preemptible symbol is not written to the
+# got entry when using Elf_Rel. It is not needed since the dynamic
+# linker will write the final value.
 
 # CHECK:      Name: .got
 # CHECK-NEXT: Type: SHT_PROGBITS
@@ -20,13 +20,10 @@
 # CHECK-NEXT: AddressAlignment:
 # CHECK-NEXT: EntrySize:
 # CHECK-NEXT: SectionData (
-# CHECK-NEXT:   0000: 00200000
+# CHECK-NEXT:   0000: 00000000
 # CHECK-NEXT: )
 
 # CHECK: R_386_GLOB_DAT bar 0x0
-
-# CHECK:      Name: bar
-# CHECK-NEXT: Value: 0x2000
 
         movl    bar@GOT(%eax), %eax
 
