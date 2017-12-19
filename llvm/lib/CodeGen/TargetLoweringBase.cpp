@@ -117,6 +117,9 @@ void TargetLoweringBase::InitLibcalls(const Triple &TT) {
   setLibcallName(RTLIB::code, name);
 #include "llvm/CodeGen/RuntimeLibcalls.def"
 #undef HANDLE_LIBCALL
+  // Initialize calling conventions to their default.
+  for (int LC = 0; LC < RTLIB::UNKNOWN_LIBCALL; ++LC)
+    setLibcallCallingConv((RTLIB::Libcall)LC, CallingConv::C);
 
   // A few names are different on particular architectures or environments.
   if (TT.isOSDarwin()) {
@@ -156,12 +159,6 @@ void TargetLoweringBase::InitLibcalls(const Triple &TT) {
   if (TT.isOSOpenBSD()) {
     setLibcallName(RTLIB::STACKPROTECTOR_CHECK_FAIL, nullptr);
   }
-}
-
-/// Set default libcall CallingConvs.
-static void InitLibcallCallingConvs(CallingConv::ID *CCs) {
-  for (int LC = 0; LC < RTLIB::UNKNOWN_LIBCALL; ++LC)
-    CCs[LC] = CallingConv::C;
 }
 
 /// getFPEXT - Return the FPEXT_*_* value for the given types, or
@@ -552,7 +549,6 @@ TargetLoweringBase::TargetLoweringBase(const TargetMachine &tm) : TM(tm) {
 
   InitLibcalls(TM.getTargetTriple());
   InitCmpLibcallCCs(CmpLibcallCCs);
-  InitLibcallCallingConvs(LibcallCallingConvs);
 }
 
 void TargetLoweringBase::initActions() {
