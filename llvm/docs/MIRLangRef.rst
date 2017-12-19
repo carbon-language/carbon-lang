@@ -713,6 +713,17 @@ which may be emitted later in the MC layer as:
 
     .cfi_offset w30, -16
 
+IntrinsicID Operands
+^^^^^^^^^^^^^^^^^^^^
+
+An Intrinsic ID operand contains a generic intrinsic ID or a target-specific ID.
+
+The syntax for the ``returnaddress`` intrinsic is:
+
+.. code-block:: text
+
+   %x0 = COPY intrinsic(@llvm.returnaddress)
+
 .. TODO: Describe the parsers default behaviour when optional YAML attributes
    are missing.
 .. TODO: Describe the syntax for the bundled instructions.

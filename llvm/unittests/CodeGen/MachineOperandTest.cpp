@@ -353,4 +353,33 @@ TEST(MachineOperandTest, PrintCFI) {
   ASSERT_TRUE(OS.str() == "<cfi directive>");
 }
 
+TEST(MachineOperandTest, PrintIntrinsicID) {
+  // Create a MachineOperand with a generic intrinsic ID.
+  MachineOperand MO = MachineOperand::CreateIntrinsicID(Intrinsic::bswap);
+
+  // Checking some preconditions on the newly created
+  // MachineOperand.
+  ASSERT_TRUE(MO.isIntrinsicID());
+  ASSERT_TRUE(MO.getIntrinsicID() == Intrinsic::bswap);
+
+  std::string str;
+  {
+    // Print a MachineOperand containing a generic intrinsic ID.
+    raw_string_ostream OS(str);
+    MO.print(OS, /*TRI=*/nullptr, /*IntrinsicInfo=*/nullptr);
+    ASSERT_TRUE(OS.str() == "intrinsic(@llvm.bswap)");
+  }
+
+  str.clear();
+  // Set a target-specific intrinsic.
+  MO = MachineOperand::CreateIntrinsicID((Intrinsic::ID)-1);
+  {
+    // Print a MachineOperand containing a target-specific intrinsic ID but not
+    // IntrinsicInfo.
+    raw_string_ostream OS(str);
+    MO.print(OS, /*TRI=*/nullptr, /*IntrinsicInfo=*/nullptr);
+    ASSERT_TRUE(OS.str() == "intrinsic(4294967295)");
+  }
+}
+
 } // end namespace

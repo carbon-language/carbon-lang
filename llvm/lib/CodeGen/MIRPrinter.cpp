@@ -784,7 +784,8 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
   case MachineOperand::MO_RegisterLiveOut:
   case MachineOperand::MO_Metadata:
   case MachineOperand::MO_MCSymbol:
-  case MachineOperand::MO_CFIIndex: {
+  case MachineOperand::MO_CFIIndex:
+  case MachineOperand::MO_IntrinsicID: {
     unsigned TiedOperandIdx = 0;
     if (ShouldPrintRegisterTies && Op.isReg() && Op.isTied() && !Op.isDef())
       TiedOperandIdx = Op.getParent()->findTiedOperandIdx(OpIdx);
@@ -811,17 +812,6 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
       OS << StringRef(TRI->getRegMaskNames()[RegMaskInfo->second]).lower();
     else
       printCustomRegMask(Op.getRegMask(), OS, TRI);
-    break;
-  }
-  case MachineOperand::MO_IntrinsicID: {
-    Intrinsic::ID ID = Op.getIntrinsicID();
-    if (ID < Intrinsic::num_intrinsics)
-      OS << "intrinsic(@" << Intrinsic::getName(ID, None) << ')';
-    else {
-      const MachineFunction &MF = *Op.getParent()->getMF();
-      const TargetIntrinsicInfo *TII = MF.getTarget().getIntrinsicInfo();
-      OS << "intrinsic(@" << TII->getName(ID) << ')';
-    }
     break;
   }
   case MachineOperand::MO_Predicate: {
