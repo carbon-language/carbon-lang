@@ -163,8 +163,7 @@ uint64_t DebugHandlerBase::getBaseTypeSize(const DITypeRef TyRef) {
 
   DIType *BaseType = DDTy->getBaseType().resolve();
 
-  if (!BaseType)
-    return 0;
+  assert(BaseType && "Unexpected invalid base type");
 
   // If this is a derived type, go ahead and get the base type, unless it's a
   // reference then it's just the size of the field. Pointer types have no need
