@@ -22984,7 +22984,9 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
       (Subtarget.hasAVX512() && VT == MVT::v16i16) ||
       (Subtarget.hasAVX512() && VT == MVT::v16i8) ||
       (Subtarget.hasBWI() && VT == MVT::v32i8)) {
-    MVT EvtSVT = (VT == MVT::v32i8 ? MVT::i16 : MVT::i32);
+    assert((!Subtarget.hasBWI() || VT == MVT::v32i8 || VT == MVT::v16i8) &&
+           "Unexpected vector type");
+    MVT EvtSVT = Subtarget.hasBWI() ? MVT::i16 : MVT::i32;
     MVT ExtVT = MVT::getVectorVT(EvtSVT, VT.getVectorNumElements());
     unsigned ExtOpc =
         Op.getOpcode() == ISD::SRA ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
