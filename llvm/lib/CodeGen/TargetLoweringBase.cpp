@@ -130,8 +130,9 @@ void TargetLoweringBase::InitLibcalls(const Triple &TT) {
     setLibcallName(RTLIB::FPROUND_F32_F16, "__truncsfhf2");
 
     // Darwin 10 and higher has an optimized __bzero.
-    if (!TT.isMacOSX() || !TT.isMacOSXVersionLT(10, 6) || TT.isArch64Bit())
-      setLibcallName(RTLIB::BZERO, "__bzero");
+    if (!TT.isMacOSX() || !TT.isMacOSXVersionLT(10, 6) || TT.isArch64Bit()) {
+      setLibcallName(RTLIB::BZERO, TT.isAArch64() ? "bzero" : "__bzero");
+    }
 
     if (darwinHasSinCos(TT)) {
       setLibcallName(RTLIB::SINCOS_STRET_F32, "__sincosf_stret");
