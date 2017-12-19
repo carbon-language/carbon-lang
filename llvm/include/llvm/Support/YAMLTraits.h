@@ -551,7 +551,7 @@ inline QuotingType needsQuotes(StringRef S) {
         return QuotingType::Double;
 
       // Always double quote UTF-8.
-      if (C & 0x80 != 0)
+      if ((C & 0x80) != 0)
         return QuotingType::Double;
 
       // The character is not safe, at least simple quoting needed.
