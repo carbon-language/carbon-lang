@@ -678,29 +678,7 @@ void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
     getCImm()->printAsOperand(OS, /*PrintType=*/true, MST);
     break;
   case MachineOperand::MO_FPImmediate:
-    if (getFPImm()->getType()->isFloatTy()) {
-      OS << getFPImm()->getValueAPF().convertToFloat();
-    } else if (getFPImm()->getType()->isHalfTy()) {
-      APFloat APF = getFPImm()->getValueAPF();
-      bool Unused;
-      APF.convert(APFloat::IEEEsingle(), APFloat::rmNearestTiesToEven, &Unused);
-      OS << "half " << APF.convertToFloat();
-    } else if (getFPImm()->getType()->isFP128Ty()) {
-      APFloat APF = getFPImm()->getValueAPF();
-      SmallString<16> Str;
-      getFPImm()->getValueAPF().toString(Str);
-      OS << "quad " << Str;
-    } else if (getFPImm()->getType()->isX86_FP80Ty()) {
-      APFloat APF = getFPImm()->getValueAPF();
-      OS << "x86_fp80 0xK";
-      APInt API = APF.bitcastToAPInt();
-      OS << format_hex_no_prefix(API.getHiBits(16).getZExtValue(), 4,
-                                 /*Upper=*/true);
-      OS << format_hex_no_prefix(API.getLoBits(64).getZExtValue(), 16,
-                                 /*Upper=*/true);
-    } else {
-      OS << getFPImm()->getValueAPF().convertToDouble();
-    }
+    getFPImm()->printAsOperand(OS, /*PrintType=*/true, MST);
     break;
   case MachineOperand::MO_MachineBasicBlock:
     OS << printMBBReference(*getMBB());

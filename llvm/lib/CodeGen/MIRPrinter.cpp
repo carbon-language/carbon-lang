@@ -774,6 +774,7 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
     LLVM_FALLTHROUGH;
   case MachineOperand::MO_Register:
   case MachineOperand::MO_CImmediate:
+  case MachineOperand::MO_FPImmediate:
   case MachineOperand::MO_MachineBasicBlock:
   case MachineOperand::MO_ConstantPoolIndex:
   case MachineOperand::MO_TargetIndex:
@@ -792,9 +793,6 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
              TiedOperandIdx, TRI, TII);
     break;
   }
-  case MachineOperand::MO_FPImmediate:
-    Op.getFPImm()->printAsOperand(OS, /*PrintType=*/true, MST);
-    break;
   case MachineOperand::MO_FrameIndex:
     printStackObjectReference(Op.getIndex());
     break;
