@@ -160,15 +160,12 @@ public:
   void printIRBlockReference(const BasicBlock &BB);
   void printIRValueReference(const Value &V);
   void printStackObjectReference(int FrameIndex);
-  void printOffset(int64_t Offset);
   void print(const MachineInstr &MI, unsigned OpIdx,
              const TargetRegisterInfo *TRI, bool ShouldPrintRegisterTies,
              LLT TypeToPrint, bool PrintDef = true);
   void print(const LLVMContext &Context, const TargetInstrInfo &TII,
              const MachineMemOperand &Op);
   void printSyncScope(const LLVMContext &Context, SyncScope::ID SSID);
-
-  void print(const MCCFIInstruction &CFI, const TargetRegisterInfo *TRI);
 };
 
 } // end namespace llvm
@@ -762,16 +759,6 @@ void MIPrinter::printStackObjectReference(int FrameIndex) {
                                             Operand.Name);
 }
 
-void MIPrinter::printOffset(int64_t Offset) {
-  if (Offset == 0)
-    return;
-  if (Offset < 0) {
-    OS << " - " << -Offset;
-    return;
-  }
-  OS << " + " << Offset;
-}
-
 void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
                       const TargetRegisterInfo *TRI,
                       bool ShouldPrintRegisterTies, LLT TypeToPrint,
@@ -818,7 +805,7 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
     OS << ", ";
     printIRBlockReference(*Op.getBlockAddress()->getBasicBlock());
     OS << ')';
-    printOffset(Op.getOffset());
+    MachineOperand::printOperandOffset(Op.getOffset());
     break;
   case MachineOperand::MO_RegisterMask: {
     auto RegMaskInfo = RegisterMaskIds.find(Op.getRegMask());
@@ -934,7 +921,7 @@ void MIPrinter::print(const LLVMContext &Context, const TargetInstrInfo &TII,
       break;
     }
   }
-  printOffset(Op.getOffset());
+  MachineOperand::printOperandOffset(OS, Op.getOffset());
   if (Op.getBaseAlignment() != Op.getSize())
     OS << ", align " << Op.getBaseAlignment();
   auto AAInfo = Op.getAAInfo();

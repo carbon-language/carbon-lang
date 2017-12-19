@@ -380,16 +380,6 @@ static void tryToGetTargetInfo(const MachineOperand &MO,
   }
 }
 
-static void printOffset(raw_ostream &OS, int64_t Offset) {
-  if (Offset == 0)
-    return;
-  if (Offset < 0) {
-    OS << " - " << -Offset;
-    return;
-  }
-  OS << " + " << Offset;
-}
-
 static const char *getTargetIndexName(const MachineFunction &MF, int Index) {
   const auto *TII = MF.getSubtarget().getInstrInfo();
   assert(TII && "expected instruction info");
@@ -503,6 +493,16 @@ void MachineOperand::printStackObjectReference(raw_ostream &OS,
   OS << "%stack." << FrameIndex;
   if (!Name.empty())
     OS << '.' << Name;
+}
+
+void MachineOperand::printOperandOffset(raw_ostream &OS, int64_t Offset) {
+  if (Offset == 0)
+    return;
+  if (Offset < 0) {
+    OS << " - " << -Offset;
+    return;
+  }
+  OS << " + " << Offset;
 }
 
 static void printCFI(raw_ostream &OS, const MCCFIInstruction &CFI,
@@ -723,7 +723,7 @@ void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
   }
   case MachineOperand::MO_ConstantPoolIndex:
     OS << "%const." << getIndex();
-    printOffset(OS, getOffset());
+    printOperandOffset(OS, getOffset());
     break;
   case MachineOperand::MO_TargetIndex: {
     OS << "target-index(";
@@ -732,7 +732,7 @@ void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
       if (const auto *TargetIndexName = getTargetIndexName(*MF, getIndex()))
         Name = TargetIndexName;
     OS << Name << ')';
-    printOffset(OS, getOffset());
+    printOperandOffset(OS, getOffset());
     break;
   }
   case MachineOperand::MO_JumpTableIndex:
@@ -740,7 +740,7 @@ void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
     break;
   case MachineOperand::MO_GlobalAddress:
     getGlobal()->printAsOperand(OS, /*PrintType=*/false, MST);
-    printOffset(OS, getOffset());
+    printOperandOffset(OS, getOffset());
     break;
   case MachineOperand::MO_ExternalSymbol: {
     StringRef Name = getSymbolName();
@@ -750,7 +750,7 @@ void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
     } else {
       printLLVMNameWithoutPrefix(OS, Name);
     }
-    printOffset(OS, getOffset());
+    printOperandOffset(OS, getOffset());
     break;
   }
   case MachineOperand::MO_BlockAddress:
