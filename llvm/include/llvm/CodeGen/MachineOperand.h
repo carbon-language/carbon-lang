@@ -254,6 +254,9 @@ public:
   /// Print the offset with explicit +/- signs.
   static void printOperandOffset(raw_ostream &OS, int64_t Offset);
 
+  /// Print an IRSlotNumber.
+  static void printIRSlotNumber(raw_ostream &OS, int Slot);
+
   /// Print the MachineOperand to \p os.
   /// Providing a valid \p TRI and \p IntrinsicInfo results in a more
   /// target-specific printing. If \p TRI and \p IntrinsicInfo are null, the

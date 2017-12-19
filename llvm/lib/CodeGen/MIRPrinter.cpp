@@ -157,7 +157,6 @@ public:
   void print(const MachineBasicBlock &MBB);
 
   void print(const MachineInstr &MI);
-  void printIRBlockReference(const BasicBlock &BB);
   void printIRValueReference(const Value &V);
   void printStackObjectReference(int FrameIndex);
   void print(const MachineInstr &MI, unsigned OpIdx,
@@ -704,32 +703,6 @@ void MIPrinter::print(const MachineInstr &MI) {
   }
 }
 
-static void printIRSlotNumber(raw_ostream &OS, int Slot) {
-  if (Slot == -1)
-    OS << "<badref>";
-  else
-    OS << Slot;
-}
-
-void MIPrinter::printIRBlockReference(const BasicBlock &BB) {
-  OS << "%ir-block.";
-  if (BB.hasName()) {
-    printLLVMNameWithoutPrefix(OS, BB.getName());
-    return;
-  }
-  const Function *F = BB.getParent();
-  int Slot;
-  if (F == MST.getCurrentFunction()) {
-    Slot = MST.getLocalSlot(&BB);
-  } else {
-    ModuleSlotTracker CustomMST(F->getParent(),
-                                /*ShouldInitializeAllMetadata=*/false);
-    CustomMST.incorporateFunction(*F);
-    Slot = CustomMST.getLocalSlot(&BB);
-  }
-  printIRSlotNumber(OS, Slot);
-}
-
 void MIPrinter::printIRValueReference(const Value &V) {
   if (isa<GlobalValue>(V)) {
     V.printAsOperand(OS, /*PrintType=*/false, MST);
@@ -747,7 +720,7 @@ void MIPrinter::printIRValueReference(const Value &V) {
     printLLVMNameWithoutPrefix(OS, V.getName());
     return;
   }
-  printIRSlotNumber(OS, MST.getLocalSlot(&V));
+  MachineOperand::printIRSlotNumber(OS, MST.getLocalSlot(&V));
 }
 
 void MIPrinter::printStackObjectReference(int FrameIndex) {
@@ -786,7 +759,8 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
   case MachineOperand::MO_MCSymbol:
   case MachineOperand::MO_CFIIndex:
   case MachineOperand::MO_IntrinsicID:
-  case MachineOperand::MO_Predicate: {
+  case MachineOperand::MO_Predicate:
+  case MachineOperand::MO_BlockAddress: {
     unsigned TiedOperandIdx = 0;
     if (ShouldPrintRegisterTies && Op.isReg() && Op.isTied() && !Op.isDef())
       TiedOperandIdx = Op.getParent()->findTiedOperandIdx(OpIdx);
@@ -797,15 +771,6 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
   }
   case MachineOperand::MO_FrameIndex:
     printStackObjectReference(Op.getIndex());
-    break;
-  case MachineOperand::MO_BlockAddress:
-    OS << "blockaddress(";
-    Op.getBlockAddress()->getFunction()->printAsOperand(OS, /*PrintType=*/false,
-                                                        MST);
-    OS << ", ";
-    printIRBlockReference(*Op.getBlockAddress()->getBasicBlock());
-    OS << ')';
-    MachineOperand::printOperandOffset(Op.getOffset());
     break;
   case MachineOperand::MO_RegisterMask: {
     auto RegMaskInfo = RegisterMaskIds.find(Op.getRegMask());

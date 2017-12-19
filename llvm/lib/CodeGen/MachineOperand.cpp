@@ -417,6 +417,29 @@ static void printCFIRegister(unsigned DwarfReg, raw_ostream &OS,
   OS << printReg(Reg, TRI);
 }
 
+static void printIRBlockReference(raw_ostream &OS, const BasicBlock &BB,
+                                  ModuleSlotTracker &MST) {
+  OS << "%ir-block.";
+  if (BB.hasName()) {
+    printLLVMNameWithoutPrefix(OS, BB.getName());
+    return;
+  }
+  Optional<int> Slot;
+  if (const Function *F = BB.getParent()) {
+    if (F == MST.getCurrentFunction()) {
+      Slot = MST.getLocalSlot(&BB);
+    } else if (const Module *M = F->getParent()) {
+      ModuleSlotTracker CustomMST(M, /*ShouldInitializeAllMetadata=*/false);
+      CustomMST.incorporateFunction(*F);
+      Slot = CustomMST.getLocalSlot(&BB);
+    }
+  }
+  if (Slot)
+    MachineOperand::printIRSlotNumber(OS, *Slot);
+  else
+    OS << "<unknown>";
+}
+
 void MachineOperand::printSubregIdx(raw_ostream &OS, uint64_t Index,
                                     const TargetRegisterInfo *TRI) {
   OS << "%subreg.";
@@ -503,6 +526,13 @@ void MachineOperand::printOperandOffset(raw_ostream &OS, int64_t Offset) {
     return;
   }
   OS << " + " << Offset;
+}
+
+void MachineOperand::printIRSlotNumber(raw_ostream &OS, int Slot) {
+  if (Slot == -1)
+    OS << "<badref>";
+  else
+    OS << Slot;
 }
 
 static void printCFI(raw_ostream &OS, const MCCFIInstruction &CFI,
@@ -731,13 +761,16 @@ void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
     printOperandOffset(OS, getOffset());
     break;
   }
-  case MachineOperand::MO_BlockAddress:
-    OS << '<';
-    getBlockAddress()->printAsOperand(OS, /*PrintType=*/false, MST);
-    if (getOffset())
-      OS << "+" << getOffset();
-    OS << '>';
+  case MachineOperand::MO_BlockAddress: {
+    OS << "blockaddress(";
+    getBlockAddress()->getFunction()->printAsOperand(OS, /*PrintType=*/false,
+                                                     MST);
+    OS << ", ";
+    printIRBlockReference(OS, *getBlockAddress()->getBasicBlock(), MST);
+    OS << ')';
+    MachineOperand::printOperandOffset(OS, getOffset());
     break;
+  }
   case MachineOperand::MO_RegisterMask: {
     OS << "<regmask";
     if (TRI) {
