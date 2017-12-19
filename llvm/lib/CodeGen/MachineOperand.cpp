@@ -807,8 +807,8 @@ void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
   }
   case MachineOperand::MO_Predicate: {
     auto Pred = static_cast<CmpInst::Predicate>(getPredicate());
-    OS << '<' << (CmpInst::isIntPredicate(Pred) ? "intpred" : "floatpred")
-       << CmpInst::getPredicateName(Pred) << '>';
+    OS << (CmpInst::isIntPredicate(Pred) ? "int" : "float") << "pred("
+       << CmpInst::getPredicateName(Pred) << ')';
     break;
   }
   }

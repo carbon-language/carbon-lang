@@ -10,6 +10,7 @@
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ModuleSlotTracker.h"
@@ -380,6 +381,22 @@ TEST(MachineOperandTest, PrintIntrinsicID) {
     MO.print(OS, /*TRI=*/nullptr, /*IntrinsicInfo=*/nullptr);
     ASSERT_TRUE(OS.str() == "intrinsic(4294967295)");
   }
+}
+
+TEST(MachineOperandTest, PrintPredicate) {
+  // Create a MachineOperand with a generic intrinsic ID.
+  MachineOperand MO = MachineOperand::CreatePredicate(CmpInst::ICMP_EQ);
+
+  // Checking some preconditions on the newly created
+  // MachineOperand.
+  ASSERT_TRUE(MO.isPredicate());
+  ASSERT_TRUE(MO.getPredicate() == CmpInst::ICMP_EQ);
+
+  std::string str;
+  // Print a MachineOperand containing a int predicate ICMP_EQ.
+  raw_string_ostream OS(str);
+  MO.print(OS, /*TRI=*/nullptr, /*IntrinsicInfo=*/nullptr);
+  ASSERT_TRUE(OS.str() == "intpred(eq)");
 }
 
 } // end namespace

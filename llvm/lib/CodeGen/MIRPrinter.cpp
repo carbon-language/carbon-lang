@@ -785,7 +785,8 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
   case MachineOperand::MO_Metadata:
   case MachineOperand::MO_MCSymbol:
   case MachineOperand::MO_CFIIndex:
-  case MachineOperand::MO_IntrinsicID: {
+  case MachineOperand::MO_IntrinsicID:
+  case MachineOperand::MO_Predicate: {
     unsigned TiedOperandIdx = 0;
     if (ShouldPrintRegisterTies && Op.isReg() && Op.isTied() && !Op.isDef())
       TiedOperandIdx = Op.getParent()->findTiedOperandIdx(OpIdx);
@@ -812,12 +813,6 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
       OS << StringRef(TRI->getRegMaskNames()[RegMaskInfo->second]).lower();
     else
       printCustomRegMask(Op.getRegMask(), OS, TRI);
-    break;
-  }
-  case MachineOperand::MO_Predicate: {
-    auto Pred = static_cast<CmpInst::Predicate>(Op.getPredicate());
-    OS << (CmpInst::isIntPredicate(Pred) ? "int" : "float") << "pred("
-       << CmpInst::getPredicateName(Pred) << ')';
     break;
   }
   }

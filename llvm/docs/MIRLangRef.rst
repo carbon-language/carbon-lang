@@ -724,6 +724,18 @@ The syntax for the ``returnaddress`` intrinsic is:
 
    %x0 = COPY intrinsic(@llvm.returnaddress)
 
+Predicate Operands
+^^^^^^^^^^^^^^^^^^
+
+A Predicate operand contains an IR predicate from ``CmpInst::Predicate``, like
+``ICMP_EQ``, etc.
+
+For an int eq predicate ``ICMP_EQ``, the syntax is:
+
+.. code-block:: text
+
+   %2:gpr(s32) = G_ICMP intpred(eq), %0, %1
+
 .. TODO: Describe the parsers default behaviour when optional YAML attributes
    are missing.
 .. TODO: Describe the syntax for the bundled instructions.
