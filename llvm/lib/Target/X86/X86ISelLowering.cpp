@@ -22226,6 +22226,8 @@ static SDValue LowerMULH(SDValue Op, const X86Subtarget &Subtarget,
                          DAG.getVectorShuffle(MVT::v16i16, dl, Lo, Hi, HiMask));
     }
 
+    assert(VT == MVT::v16i8 && "Unexpected VT");
+
     SDValue ExA = DAG.getNode(ExAVX, dl, MVT::v16i16, A);
     SDValue ExB = DAG.getNode(ExAVX, dl, MVT::v16i16, B);
     SDValue Mul = DAG.getNode(ISD::MUL, dl, MVT::v16i16, ExA, ExB);
