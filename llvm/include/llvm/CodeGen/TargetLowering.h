@@ -2429,7 +2429,7 @@ private:
     PromoteToType;
 
   /// Stores the name each libcall.
-  const char *LibcallRoutineNames[RTLIB::UNKNOWN_LIBCALL];
+  const char *LibcallRoutineNames[RTLIB::UNKNOWN_LIBCALL + 1];
 
   /// The ISD::CondCode that should be used to test the result of each of the
   /// comparison libcall against zero.
