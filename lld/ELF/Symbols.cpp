@@ -236,9 +236,9 @@ InputFile *LazyArchive::fetch() {
   return createObjectFile(MBInfo.first, getFile()->getName(), MBInfo.second);
 }
 
-LazyObjFile *LazyObject::getFile() { return cast<LazyObjFile>(File); }
+LazyObjFile &LazyObject::getFile() { return *cast<LazyObjFile>(File); }
 
-InputFile *LazyObject::fetch() { return getFile()->fetch(); }
+InputFile *LazyObject::fetch() { return getFile().fetch(); }
 
 uint8_t Symbol::computeBinding() const {
   if (Config->Relocatable)

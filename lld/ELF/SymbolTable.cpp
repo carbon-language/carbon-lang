@@ -563,7 +563,7 @@ void SymbolTable::addLazyObject(StringRef Name, LazyObjFile &Obj) {
   bool WasInserted;
   std::tie(S, WasInserted) = insert(Name);
   if (WasInserted) {
-    replaceSymbol<LazyObject>(S, &Obj, Name, Symbol::UnknownType);
+    replaceSymbol<LazyObject>(S, Obj, Name, Symbol::UnknownType);
     return;
   }
   if (!S->isUndefined())
@@ -571,7 +571,7 @@ void SymbolTable::addLazyObject(StringRef Name, LazyObjFile &Obj) {
 
   // See comment for addLazyArchive above.
   if (S->isWeak())
-    replaceSymbol<LazyObject>(S, &Obj, Name, S->Type);
+    replaceSymbol<LazyObject>(S, Obj, Name, S->Type);
   else if (InputFile *F = Obj.fetch())
     addFile<ELFT>(F);
 }

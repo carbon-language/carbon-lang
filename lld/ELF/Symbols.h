@@ -295,12 +295,12 @@ private:
 // --start-lib and --end-lib options.
 class LazyObject : public Lazy {
 public:
-  LazyObject(InputFile *File, StringRef Name, uint8_t Type)
-      : Lazy(LazyObjectKind, File, Name, Type) {}
+  LazyObject(InputFile &File, StringRef Name, uint8_t Type)
+      : Lazy(LazyObjectKind, &File, Name, Type) {}
 
   static bool classof(const Symbol *S) { return S->kind() == LazyObjectKind; }
 
-  LazyObjFile *getFile();
+  LazyObjFile &getFile();
   InputFile *fetch();
 };
 
