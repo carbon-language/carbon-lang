@@ -636,7 +636,7 @@ template <class ELFT> Symbol *ObjFile<ELFT>::createSymbol(const Elf_Sym *Sym) {
     if (Value == 0 || Value >= UINT32_MAX)
       fatal(toString(this) + ": common symbol '" + Name +
             "' has invalid alignment: " + Twine(Value));
-    return Symtab->addCommon(Name, Size, Value, Binding, StOther, Type, this);
+    return Symtab->addCommon(Name, Size, Value, Binding, StOther, Type, *this);
   }
 
   switch (Binding) {
@@ -945,7 +945,7 @@ static Symbol *createBitcodeSymbol(const std::vector<bool> &KeptComdats,
   if (ObjSym.isCommon())
     return Symtab->addCommon(NameRef, ObjSym.getCommonSize(),
                              ObjSym.getCommonAlignment(), Binding, Visibility,
-                             STT_OBJECT, &F);
+                             STT_OBJECT, F);
 
   return Symtab->addBitcode(NameRef, Binding, Visibility, Type,
                             CanOmitFromDynSym, F);

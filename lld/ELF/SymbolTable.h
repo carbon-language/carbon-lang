@@ -72,7 +72,7 @@ public:
 
   Symbol *addCommon(StringRef Name, uint64_t Size, uint32_t Alignment,
                     uint8_t Binding, uint8_t StOther, uint8_t Type,
-                    InputFile *File);
+                    InputFile &File);
 
   std::pair<Symbol *, bool> insert(StringRef Name);
   std::pair<Symbol *, bool> insert(StringRef Name, uint8_t Type,

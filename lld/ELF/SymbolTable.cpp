@@ -377,19 +377,19 @@ static int compareDefinedNonCommon(Symbol *S, bool WasInserted, uint8_t Binding,
 
 Symbol *SymbolTable::addCommon(StringRef N, uint64_t Size, uint32_t Alignment,
                                uint8_t Binding, uint8_t StOther, uint8_t Type,
-                               InputFile *File) {
+                               InputFile &File) {
   Symbol *S;
   bool WasInserted;
   std::tie(S, WasInserted) = insert(N, Type, getVisibility(StOther),
-                                    /*CanOmitFromDynSym*/ false, File);
+                                    /*CanOmitFromDynSym*/ false, &File);
   int Cmp = compareDefined(S, WasInserted, Binding, N);
   if (Cmp > 0) {
     auto *Bss = make<BssSection>("COMMON", Size, Alignment);
-    Bss->File = File;
+    Bss->File = &File;
     Bss->Live = !Config->GcSections;
     InputSections.push_back(Bss);
 
-    replaceSymbol<Defined>(S, File, N, Binding, StOther, Type, 0, Size, Bss);
+    replaceSymbol<Defined>(S, &File, N, Binding, StOther, Type, 0, Size, Bss);
   } else if (Cmp == 0) {
     auto *D = cast<Defined>(S);
     auto *Bss = dyn_cast_or_null<BssSection>(D->Section);
@@ -405,7 +405,7 @@ Symbol *SymbolTable::addCommon(StringRef N, uint64_t Size, uint32_t Alignment,
 
     Bss->Alignment = std::max(Bss->Alignment, Alignment);
     if (Size > Bss->Size) {
-      D->File = Bss->File = File;
+      D->File = Bss->File = &File;
       D->Size = Bss->Size = Size;
     }
   }
