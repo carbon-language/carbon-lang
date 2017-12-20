@@ -36258,6 +36258,7 @@ static SDValue combineGatherScatter(SDNode *N, SelectionDAG &DAG,
     SmallVector<SDValue, 5> NewOps(N->op_begin(), N->op_end());
     NewOps[2] = Mask.getOperand(0);
     DAG.UpdateNodeOperands(N, NewOps);
+    return SDValue(N, 0);
   }
 
   // With AVX2 we only demand the upper bit of the mask.
