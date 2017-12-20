@@ -140,21 +140,23 @@ declare <2 x double> @llvm.x86.avx512.mask.vfmadd.sd(<2 x double> %a, <2 x doubl
 define <4 x float> @test11(<4 x float> %a, <4 x float> %b, <4 x float> %c, i8 zeroext %mask) local_unnamed_addr #0 {
 ; SKX-LABEL: test11:
 ; SKX:       # %bb.0: # %entry
-; SKX-NEXT:    vxorps {{.*}}(%rip){1to4}, %xmm2, %xmm0
+; SKX-NEXT:    vxorps {{.*}}(%rip){1to4}, %xmm2, %xmm2
 ; SKX-NEXT:    kmovd %edi, %k1
-; SKX-NEXT:    vfmadd231ss %xmm1, %xmm1, %xmm0 {%k1}
+; SKX-NEXT:    vfmadd231ss %xmm1, %xmm0, %xmm2 {%k1}
+; SKX-NEXT:    vmovaps %xmm2, %xmm0
 ; SKX-NEXT:    retq
 ;
 ; KNL-LABEL: test11:
 ; KNL:       # %bb.0: # %entry
-; KNL-NEXT:    vbroadcastss {{.*#+}} xmm0 = [-0,-0,-0,-0]
-; KNL-NEXT:    vxorps %xmm0, %xmm2, %xmm0
+; KNL-NEXT:    vbroadcastss {{.*#+}} xmm3 = [-0,-0,-0,-0]
+; KNL-NEXT:    vxorps %xmm3, %xmm2, %xmm2
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vfmadd231ss %xmm1, %xmm1, %xmm0 {%k1}
+; KNL-NEXT:    vfmadd231ss %xmm1, %xmm0, %xmm2 {%k1}
+; KNL-NEXT:    vmovaps %xmm2, %xmm0
 ; KNL-NEXT:    retq
 entry:
   %sub.i = fsub <4 x float> <float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00>, %c
-  %0 = tail call <4 x float> @llvm.x86.avx512.mask3.vfmadd.ss(<4 x float> %b, <4 x float> %b, <4 x float> %sub.i, i8 %mask, i32 4) #10
+  %0 = tail call <4 x float> @llvm.x86.avx512.mask3.vfmadd.ss(<4 x float> %a, <4 x float> %b, <4 x float> %sub.i, i8 %mask, i32 4) #10
   ret <4 x float> %0
 }
 
@@ -164,19 +166,17 @@ define <4 x float> @test11b(<4 x float> %a, <4 x float> %b, <4 x float> %c, i8 z
 ; SKX-LABEL: test11b:
 ; SKX:       # %bb.0: # %entry
 ; SKX-NEXT:    kmovd %edi, %k1
-; SKX-NEXT:    vfmsub213ss %xmm2, %xmm1, %xmm1 {%k1}
-; SKX-NEXT:    vmovaps %xmm1, %xmm0
+; SKX-NEXT:    vfmsub213ss %xmm2, %xmm1, %xmm0 {%k1}
 ; SKX-NEXT:    retq
 ;
 ; KNL-LABEL: test11b:
 ; KNL:       # %bb.0: # %entry
 ; KNL-NEXT:    kmovw %edi, %k1
-; KNL-NEXT:    vfmsub213ss %xmm2, %xmm1, %xmm1 {%k1}
-; KNL-NEXT:    vmovaps %xmm1, %xmm0
+; KNL-NEXT:    vfmsub213ss %xmm2, %xmm1, %xmm0 {%k1}
 ; KNL-NEXT:    retq
 entry:
   %sub.i = fsub <4 x float> <float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00>, %c
-  %0 = tail call <4 x float> @llvm.x86.avx512.mask.vfmadd.ss(<4 x float> %b, <4 x float> %b, <4 x float> %sub.i, i8 %mask, i32 4) #10
+  %0 = tail call <4 x float> @llvm.x86.avx512.mask.vfmadd.ss(<4 x float> %a, <4 x float> %b, <4 x float> %sub.i, i8 %mask, i32 4) #10
   ret <4 x float> %0
 }
 
