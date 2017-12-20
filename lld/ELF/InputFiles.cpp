@@ -925,7 +925,7 @@ static uint8_t mapVisibility(GlobalValue::VisibilityTypes GvVisibility) {
 template <class ELFT>
 static Symbol *createBitcodeSymbol(const std::vector<bool> &KeptComdats,
                                    const lto::InputFile::Symbol &ObjSym,
-                                   BitcodeFile *F) {
+                                   BitcodeFile &F) {
   StringRef NameRef = Saver.save(ObjSym.getName());
   uint32_t Binding = ObjSym.isWeak() ? STB_WEAK : STB_GLOBAL;
 
@@ -936,16 +936,16 @@ static Symbol *createBitcodeSymbol(const std::vector<bool> &KeptComdats,
   int C = ObjSym.getComdatIndex();
   if (C != -1 && !KeptComdats[C])
     return Symtab->addUndefined<ELFT>(NameRef, Binding, Visibility, Type,
-                                      CanOmitFromDynSym, F);
+                                      CanOmitFromDynSym, &F);
 
   if (ObjSym.isUndefined())
     return Symtab->addUndefined<ELFT>(NameRef, Binding, Visibility, Type,
-                                      CanOmitFromDynSym, F);
+                                      CanOmitFromDynSym, &F);
 
   if (ObjSym.isCommon())
     return Symtab->addCommon(NameRef, ObjSym.getCommonSize(),
                              ObjSym.getCommonAlignment(), Binding, Visibility,
-                             STT_OBJECT, F);
+                             STT_OBJECT, &F);
 
   return Symtab->addBitcode(NameRef, Binding, Visibility, Type,
                             CanOmitFromDynSym, F);
@@ -958,7 +958,7 @@ void BitcodeFile::parse(DenseSet<CachedHashStringRef> &ComdatGroups) {
     KeptComdats.push_back(ComdatGroups.insert(CachedHashStringRef(S)).second);
 
   for (const lto::InputFile::Symbol &ObjSym : Obj->symbols())
-    Symbols.push_back(createBitcodeSymbol<ELFT>(KeptComdats, ObjSym, this));
+    Symbols.push_back(createBitcodeSymbol<ELFT>(KeptComdats, ObjSym, *this));
 }
 
 static ELFKind getELFKind(MemoryBufferRef MB) {

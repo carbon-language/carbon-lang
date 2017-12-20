@@ -68,7 +68,7 @@ public:
   template <class ELFT> void addLazyObject(StringRef Name, LazyObjFile &Obj);
 
   Symbol *addBitcode(StringRef Name, uint8_t Binding, uint8_t StOther,
-                     uint8_t Type, bool CanOmitFromDynSym, BitcodeFile *File);
+                     uint8_t Type, bool CanOmitFromDynSym, BitcodeFile &File);
 
   Symbol *addCommon(StringRef Name, uint64_t Size, uint32_t Alignment,
                     uint8_t Binding, uint8_t StOther, uint8_t Type,

@@ -508,17 +508,17 @@ void SymbolTable::addShared(StringRef Name, SharedFile<ELFT> *File,
 
 Symbol *SymbolTable::addBitcode(StringRef Name, uint8_t Binding,
                                 uint8_t StOther, uint8_t Type,
-                                bool CanOmitFromDynSym, BitcodeFile *F) {
+                                bool CanOmitFromDynSym, BitcodeFile &F) {
   Symbol *S;
   bool WasInserted;
   std::tie(S, WasInserted) =
-      insert(Name, Type, getVisibility(StOther), CanOmitFromDynSym, F);
+      insert(Name, Type, getVisibility(StOther), CanOmitFromDynSym, &F);
   int Cmp = compareDefinedNonCommon(S, WasInserted, Binding,
                                     /*IsAbs*/ false, /*Value*/ 0, Name);
   if (Cmp > 0)
-    replaceSymbol<Defined>(S, F, Name, Binding, StOther, Type, 0, 0, nullptr);
+    replaceSymbol<Defined>(S, &F, Name, Binding, StOther, Type, 0, 0, nullptr);
   else if (Cmp == 0)
-    reportDuplicate(S, F);
+    reportDuplicate(S, &F);
   return S;
 }
 
