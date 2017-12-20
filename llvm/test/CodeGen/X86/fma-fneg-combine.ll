@@ -305,3 +305,147 @@ define <8 x double> @test17(<8 x double> %a, <8 x double> %b, <8 x double> %c, i
   ret <8 x double> %res
 }
 declare <8 x double> @llvm.x86.avx512.mask.vfmaddsub.pd.512(<8 x double>, <8 x double>, <8 x double>, i8, i32)
+
+define <4 x float> @test18(<4 x float> %a, <4 x float> %b, <4 x float> %c, i8 zeroext %mask) local_unnamed_addr #0 {
+; SKX-LABEL: test18:
+; SKX:       # %bb.0: # %entry
+; SKX-NEXT:    kmovd %edi, %k1
+; SKX-NEXT:    vfnmadd213ss %xmm2, %xmm1, %xmm0 {%k1}
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: test18:
+; KNL:       # %bb.0: # %entry
+; KNL-NEXT:    kmovw %edi, %k1
+; KNL-NEXT:    vfnmadd213ss %xmm2, %xmm1, %xmm0 {%k1}
+; KNL-NEXT:    retq
+entry:
+  %sub.i = fsub <4 x float> <float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00>, %b
+  %0 = tail call <4 x float> @llvm.x86.avx512.mask.vfmadd.ss(<4 x float> %a, <4 x float> %sub.i, <4 x float> %c, i8 %mask, i32 4) #10
+  ret <4 x float> %0
+}
+
+define <4 x float> @test19(<4 x float> %a, <4 x float> %b, <4 x float> %c, i8 zeroext %mask) local_unnamed_addr #0 {
+; SKX-LABEL: test19:
+; SKX:       # %bb.0: # %entry
+; SKX-NEXT:    kmovd %edi, %k1
+; SKX-NEXT:    vfnmsub213ss %xmm2, %xmm1, %xmm0 {%k1}
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: test19:
+; KNL:       # %bb.0: # %entry
+; KNL-NEXT:    kmovw %edi, %k1
+; KNL-NEXT:    vfnmsub213ss %xmm2, %xmm1, %xmm0 {%k1}
+; KNL-NEXT:    retq
+entry:
+  %sub.i = fsub <4 x float> <float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00>, %b
+  %sub.i.2 = fsub <4 x float> <float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00>, %c
+  %0 = tail call <4 x float> @llvm.x86.avx512.mask.vfmadd.ss(<4 x float> %a, <4 x float> %sub.i, <4 x float> %sub.i.2, i8 %mask, i32 4) #10
+  ret <4 x float> %0
+}
+
+define <4 x float> @test20(<4 x float> %a, <4 x float> %b, <4 x float> %c, i8 zeroext %mask) local_unnamed_addr #0 {
+; SKX-LABEL: test20:
+; SKX:       # %bb.0: # %entry
+; SKX-NEXT:    kmovd %edi, %k1
+; SKX-NEXT:    vfnmadd231ss %xmm1, %xmm0, %xmm2 {%k1}
+; SKX-NEXT:    vmovaps %xmm2, %xmm0
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: test20:
+; KNL:       # %bb.0: # %entry
+; KNL-NEXT:    kmovw %edi, %k1
+; KNL-NEXT:    vfnmadd231ss %xmm1, %xmm0, %xmm2 {%k1}
+; KNL-NEXT:    vmovaps %xmm2, %xmm0
+; KNL-NEXT:    retq
+entry:
+  %sub.i = fsub <4 x float> <float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00>, %b
+  %0 = tail call <4 x float> @llvm.x86.avx512.mask3.vfmadd.ss(<4 x float> %a, <4 x float> %sub.i, <4 x float> %c, i8 %mask, i32 4) #10
+  ret <4 x float> %0
+}
+
+define <4 x float> @test21(<4 x float> %a, <4 x float> %b, <4 x float> %c, i8 zeroext %mask) local_unnamed_addr #0 {
+; SKX-LABEL: test21:
+; SKX:       # %bb.0: # %entry
+; SKX-NEXT:    kmovd %edi, %k1
+; SKX-NEXT:    vfnmadd213ss {rn-sae}, %xmm2, %xmm1, %xmm0 {%k1}
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: test21:
+; KNL:       # %bb.0: # %entry
+; KNL-NEXT:    kmovw %edi, %k1
+; KNL-NEXT:    vfnmadd213ss {rn-sae}, %xmm2, %xmm1, %xmm0 {%k1}
+; KNL-NEXT:    retq
+entry:
+  %sub.i = fsub <4 x float> <float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00>, %b
+  %0 = tail call <4 x float> @llvm.x86.avx512.mask.vfmadd.ss(<4 x float> %a, <4 x float> %sub.i, <4 x float> %c, i8 %mask, i32 8) #10
+  ret <4 x float> %0
+}
+
+define <4 x float> @test22(<4 x float> %a, <4 x float> %b, <4 x float> %c, i8 zeroext %mask) local_unnamed_addr #0 {
+; SKX-LABEL: test22:
+; SKX:       # %bb.0: # %entry
+; SKX-NEXT:    kmovd %edi, %k1
+; SKX-NEXT:    vfnmsub213ss {rn-sae}, %xmm2, %xmm1, %xmm0 {%k1}
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: test22:
+; KNL:       # %bb.0: # %entry
+; KNL-NEXT:    kmovw %edi, %k1
+; KNL-NEXT:    vfnmsub213ss {rn-sae}, %xmm2, %xmm1, %xmm0 {%k1}
+; KNL-NEXT:    retq
+entry:
+  %sub.i = fsub <4 x float> <float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00>, %b
+  %sub.i.2 = fsub <4 x float> <float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00>, %c
+  %0 = tail call <4 x float> @llvm.x86.avx512.mask.vfmadd.ss(<4 x float> %a, <4 x float> %sub.i, <4 x float> %sub.i.2, i8 %mask, i32 8) #10
+  ret <4 x float> %0
+}
+
+define <4 x float> @test23(<4 x float> %a, <4 x float> %b, <4 x float> %c, i8 zeroext %mask) local_unnamed_addr #0 {
+; SKX-LABEL: test23:
+; SKX:       # %bb.0: # %entry
+; SKX-NEXT:    kmovd %edi, %k1
+; SKX-NEXT:    vfnmadd231ss {rn-sae}, %xmm1, %xmm0, %xmm2 {%k1}
+; SKX-NEXT:    vmovaps %xmm2, %xmm0
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: test23:
+; KNL:       # %bb.0: # %entry
+; KNL-NEXT:    kmovw %edi, %k1
+; KNL-NEXT:    vfnmadd231ss {rn-sae}, %xmm1, %xmm0, %xmm2 {%k1}
+; KNL-NEXT:    vmovaps %xmm2, %xmm0
+; KNL-NEXT:    retq
+entry:
+  %sub.i = fsub <4 x float> <float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00>, %b
+  %0 = tail call <4 x float> @llvm.x86.avx512.mask3.vfmadd.ss(<4 x float> %a, <4 x float> %sub.i, <4 x float> %c, i8 %mask, i32 8) #10
+  ret <4 x float> %0
+}
+
+define <4 x float> @test24(<4 x float> %a, <4 x float> %b, <4 x float> %c, i8 zeroext %mask) local_unnamed_addr #0 {
+; SKX-LABEL: test24:
+; SKX:       # %bb.0: # %entry
+; SKX-NEXT:    kmovd %edi, %k1
+; SKX-NEXT:    vfmsub213ss {rn-sae}, %xmm2, %xmm1, %xmm0 {%k1}
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: test24:
+; KNL:       # %bb.0: # %entry
+; KNL-NEXT:    kmovw %edi, %k1
+; KNL-NEXT:    vfmsub213ss {rn-sae}, %xmm2, %xmm1, %xmm0 {%k1}
+; KNL-NEXT:    retq
+entry:
+  %sub.i = fsub <4 x float> <float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00>, %c
+  %0 = tail call <4 x float> @llvm.x86.avx512.mask.vfmadd.ss(<4 x float> %a, <4 x float> %b, <4 x float> %sub.i, i8 %mask, i32 8) #10
+  ret <4 x float> %0
+}
+
+define <16 x float> @test25(<16 x float> %a, <16 x float> %b, <16 x float> %c)  {
+; CHECK-LABEL: test25:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    vfnmsub213ps {rn-sae}, %zmm2, %zmm1, %zmm0
+; CHECK-NEXT:    retq
+entry:
+  %sub.i = fsub <16 x float> <float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00>, %b
+  %sub.i.2 = fsub <16 x float> <float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00>, %c
+  %0 = tail call <16 x float> @llvm.x86.avx512.mask.vfmadd.ps.512(<16 x float> %a, <16 x float> %sub.i, <16 x float> %sub.i.2, i16 -1, i32 8) #2
+  ret <16 x float> %0
+}
