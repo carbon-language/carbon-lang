@@ -278,13 +278,13 @@ protected:
 // symbol.
 class LazyArchive : public Lazy {
 public:
-  LazyArchive(InputFile *File, const llvm::object::Archive::Symbol S,
+  LazyArchive(InputFile &File, const llvm::object::Archive::Symbol S,
               uint8_t Type)
-      : Lazy(LazyArchiveKind, File, S.getName(), Type), Sym(S) {}
+      : Lazy(LazyArchiveKind, &File, S.getName(), Type), Sym(S) {}
 
   static bool classof(const Symbol *S) { return S->kind() == LazyArchiveKind; }
 
-  ArchiveFile *getFile();
+  ArchiveFile &getFile();
   InputFile *fetch();
 
 private:

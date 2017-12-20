@@ -538,7 +538,7 @@ Symbol *SymbolTable::addLazyArchive(StringRef Name, ArchiveFile &F,
   bool WasInserted;
   std::tie(S, WasInserted) = insert(Name);
   if (WasInserted) {
-    replaceSymbol<LazyArchive>(S, &F, Sym, Symbol::UnknownType);
+    replaceSymbol<LazyArchive>(S, F, Sym, Symbol::UnknownType);
     return S;
   }
   if (!S->isUndefined())
@@ -547,7 +547,7 @@ Symbol *SymbolTable::addLazyArchive(StringRef Name, ArchiveFile &F,
   // An undefined weak will not fetch archive members. See comment on Lazy in
   // Symbols.h for the details.
   if (S->isWeak()) {
-    replaceSymbol<LazyArchive>(S, &F, Sym, S->Type);
+    replaceSymbol<LazyArchive>(S, F, Sym, S->Type);
     S->Binding = STB_WEAK;
     return S;
   }
