@@ -43,7 +43,7 @@ struct Invalid {
 //CHECK: {{^}}[[Blue]]|     |-[[RESET]][[Blue]]HTMLEndTagComment[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]col:13[[RESET]], [[Yellow]]col:16[[RESET]]> Name="a"{{$}}
 //CHECK: {{^}}[[Blue]]|     |-[[RESET]][[Blue]]TextComment[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]line:5:4[[RESET]]> Text=" "{{$}}
 //CHECK: {{^}}[[Blue]]|     `-[[RESET]][[Blue]]HTMLStartTagComment[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]col:5[[RESET]], [[Yellow]]col:8[[RESET]]> Name="br" SelfClosing{{$}}
-//CHECK: {{^}}[[Blue]]|-[[RESET]][[GREEN]]FunctionDecl[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]line:9:1[[RESET]], [[Yellow]]line:16:1[[RESET]]> [[Yellow]]line:9:6[[RESET]][[CYAN]] TestAttributedStmt[[RESET]] [[Green]]'void (void)'[[RESET]]{{$}}
+//CHECK: {{^}}[[Blue]]|-[[RESET]][[GREEN]]FunctionDecl[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]line:9:1[[RESET]], [[Yellow]]line:16:1[[RESET]]> [[Yellow]]line:9:6[[RESET]][[CYAN]] TestAttributedStmt[[RESET]] [[Green]]'void ()'[[RESET]]{{$}}
 //CHECK: {{^}}[[Blue]]| |-[[RESET]][[MAGENTA:.\[0;1;35m]]CompoundStmt[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]col:27[[RESET]], [[Yellow]]line:16:1[[RESET]]>{{$}}
 //CHECK: {{^}}[[Blue]]| | `-[[RESET]][[MAGENTA]]SwitchStmt[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]line:10:3[[RESET]], [[Yellow]]line:15:3[[RESET]]>{{$}}
 //CHECK: {{^}}[[Blue]]| |   |-[[RESET]][[Blue:.\[0;34m]]<<<NULL>>>[[RESET]]{{$}}
