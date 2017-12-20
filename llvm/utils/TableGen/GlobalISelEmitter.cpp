@@ -3551,8 +3551,10 @@ void GlobalISelEmitter::emitImmPredicates(
   }
 
   OS << "bool " << Target.getName() << "InstructionSelector::testImmPredicate_"
-     << TypeIdentifier << "(unsigned PredicateID, " << Type << " Imm) const {\n"
-     << "  switch (PredicateID) {\n";
+     << TypeIdentifier << "(unsigned PredicateID, " << Type
+     << " Imm) const {\n";
+  if (!MatchedRecords.empty())
+    OS << "  switch (PredicateID) {\n";
   for (const auto *Record : MatchedRecords) {
     OS << "  case GIPFP_" << TypeIdentifier << "_Predicate_"
        << Record->getName() << ": {\n"
@@ -3561,8 +3563,9 @@ void GlobalISelEmitter::emitImmPredicates(
        << "    return false;\n"
        << "  }\n";
   }
-  OS << "  }\n"
-     << "  llvm_unreachable(\"Unknown predicate\");\n"
+  if (!MatchedRecords.empty())
+    OS << "  }\n";
+  OS << "  llvm_unreachable(\"Unknown predicate\");\n"
      << "  return false;\n"
      << "}\n";
 }
