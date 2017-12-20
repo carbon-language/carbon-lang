@@ -36273,6 +36273,23 @@ static SDValue combineGatherScatter(SDNode *N, SelectionDAG &DAG,
       DCI.AddToWorklist(N);
       return SDValue(N, 0);
     }
+
+    // Try to remove zero extends from 32->64 if we know the sign bit of
+    // the input is zero.
+    if (Index.getOpcode() == ISD::ZERO_EXTEND &&
+        Index.getScalarValueSizeInBits() == 64 &&
+        Index.getOperand(0).getScalarValueSizeInBits() == 32) {
+      if (DAG.SignBitIsZero(Index.getOperand(0))) {
+        SmallVector<SDValue, 5> NewOps(N->op_begin(), N->op_end());
+        NewOps[4] = Index.getOperand(0);
+        DAG.UpdateNodeOperands(N, NewOps);
+        // The original zero extend has less users, add back to worklist in case
+        // it needs to be removed
+        DCI.AddToWorklist(Index.getNode());
+        DCI.AddToWorklist(N);
+        return SDValue(N, 0);
+      }
+    }
   }
 
   // Gather and Scatter instructions use k-registers for masks. The type of
