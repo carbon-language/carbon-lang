@@ -841,14 +841,14 @@ template <class ELFT> void SharedFile<ELFT>::parseRest() {
       error(toString(this) + ": alignment too large: " + Name);
 
     if (!Hidden)
-      Symtab->addShared(Name, this, Sym, Alignment, VersymIndex);
+      Symtab->addShared(Name, *this, Sym, Alignment, VersymIndex);
 
     // Also add the symbol with the versioned name to handle undefined symbols
     // with explicit versions.
     if (Ver) {
       StringRef VerName = this->StringTable.data() + Ver->getAux()->vda_name;
       Name = Saver.save(Name + "@" + VerName);
-      Symtab->addShared(Name, this, Sym, Alignment, VersymIndex);
+      Symtab->addShared(Name, *this, Sym, Alignment, VersymIndex);
     }
   }
 }

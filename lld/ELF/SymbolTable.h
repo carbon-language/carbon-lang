@@ -57,7 +57,7 @@ public:
                      SectionBase *Section, InputFile *File);
 
   template <class ELFT>
-  void addShared(StringRef Name, SharedFile<ELFT> *F,
+  void addShared(StringRef Name, SharedFile<ELFT> &F,
                  const typename ELFT::Sym &Sym, uint32_t Alignment,
                  uint32_t VerdefIndex);
 
