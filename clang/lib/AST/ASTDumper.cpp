@@ -219,8 +219,8 @@ namespace  {
     ASTDumper(raw_ostream &OS, const CommandTraits *Traits,
               const SourceManager *SM, bool ShowColors,
               const PrintingPolicy &PrintPolicy)
-        : OS(OS), Traits(Traits), SM(SM), ShowColors(ShowColors),
-          PrintPolicy(PrintPolicy) {}
+        : OS(OS), Traits(Traits), SM(SM), PrintPolicy(PrintPolicy),
+          ShowColors(ShowColors) {}
 
     void setDeserialize(bool D) { Deserialize = D; }
 
