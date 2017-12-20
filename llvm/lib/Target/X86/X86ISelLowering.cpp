@@ -35848,14 +35848,8 @@ static SDValue combineSext(SDNode *N, SelectionDAG &DAG,
   if (SDValue NewCMov = combineToExtendCMOV(N, DAG))
     return NewCMov;
 
-  if (!DCI.isBeforeLegalizeOps()) {
-    if (InVT == MVT::i1) {
-      SDValue Zero = DAG.getConstant(0, DL, VT);
-      SDValue AllOnes = DAG.getAllOnesConstant(DL, VT);
-      return DAG.getSelect(DL, VT, N0, AllOnes, Zero);
-    }
+  if (!DCI.isBeforeLegalizeOps())
     return SDValue();
-  }
 
   if (InVT == MVT::i1 && N0.getOpcode() == ISD::XOR &&
       isAllOnesConstant(N0.getOperand(1)) && N0.hasOneUse()) {
