@@ -2317,7 +2317,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
 
       // If we have the trivial case, handle it with no muss and fuss.
       if (!isa<llvm::StructType>(ArgI.getCoerceToType()) &&
-          ArgI.getCoerceToType() == ConvertType(Ty) &&
+          ArgI.getCoerceToType() == ConvertType(Arg->getType()) &&
           ArgI.getDirectOffset() == 0) {
         assert(NumIRArgs == 1);
         llvm::Value *V = FnArgs[FirstIRArg];
@@ -2414,8 +2414,8 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         break;
       }
 
-      Address Alloca = CreateMemTemp(Ty, getContext().getDeclAlign(Arg),
-                                     Arg->getName());
+      Address Alloca = CreateMemTemp(
+          Arg->getType(), getContext().getDeclAlign(Arg), Arg->getName());
 
       // Pointer to store into.
       Address Ptr = emitAddressAtOffset(*this, Alloca, ArgI);
@@ -2461,9 +2461,9 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       }
 
       // Match to what EmitParmDecl is expecting for this type.
-      if (CodeGenFunction::hasScalarEvaluationKind(Ty)) {
+      if (CodeGenFunction::hasScalarEvaluationKind(Arg->getType())) {
         llvm::Value *V =
-          EmitLoadOfScalar(Alloca, false, Ty, Arg->getLocStart());
+            EmitLoadOfScalar(Alloca, false, Arg->getType(), Arg->getLocStart());
         if (isPromoted)
           V = emitArgumentDemotion(*this, Arg, V);
         ArgVals.push_back(ParamValue::forDirect(V));
