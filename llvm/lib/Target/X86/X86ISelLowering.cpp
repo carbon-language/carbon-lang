@@ -14219,7 +14219,9 @@ static SDValue lower1BitVectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
     ExtVT = MVT::v4i32;
     break;
   case MVT::v8i1:
-    ExtVT = MVT::v8i64; // Take 512-bit type, more shuffles on KNL
+    // Take 512-bit type, more shuffles on KNL. If we have VLX use a 256-bit
+    // shuffle.
+    ExtVT = Subtarget.hasVLX() ? MVT::v8i32 : MVT::v8i64;
     break;
   case MVT::v16i1:
     ExtVT = MVT::v16i32;
