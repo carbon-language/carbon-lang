@@ -3334,10 +3334,10 @@ static Value *EmitTargetArchBuiltinExpr(CodeGenFunction *CGF,
   case llvm::Triple::armeb:
   case llvm::Triple::thumb:
   case llvm::Triple::thumbeb:
-    return CGF->EmitARMBuiltinExpr(BuiltinID, E);
+    return CGF->EmitARMBuiltinExpr(BuiltinID, E, Arch);
   case llvm::Triple::aarch64:
   case llvm::Triple::aarch64_be:
-    return CGF->EmitAArch64BuiltinExpr(BuiltinID, E);
+    return CGF->EmitAArch64BuiltinExpr(BuiltinID, E, Arch);
   case llvm::Triple::x86:
   case llvm::Triple::x86_64:
     return CGF->EmitX86BuiltinExpr(BuiltinID, E);
@@ -3378,6 +3378,7 @@ Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,
 
 static llvm::VectorType *GetNeonType(CodeGenFunction *CGF,
                                      NeonTypeFlags TypeFlags,
+                                     llvm::Triple::ArchType Arch,
                                      bool V1Ty=false) {
   int IsQuad = TypeFlags.isQuad();
   switch (TypeFlags.getEltType()) {
@@ -3388,7 +3389,12 @@ static llvm::VectorType *GetNeonType(CodeGenFunction *CGF,
   case NeonTypeFlags::Poly16:
     return llvm::VectorType::get(CGF->Int16Ty, V1Ty ? 1 : (4 << IsQuad));
   case NeonTypeFlags::Float16:
-    return llvm::VectorType::get(CGF->HalfTy, V1Ty ? 1 : (4 << IsQuad));
+    // FIXME: Only AArch64 backend can so far properly handle half types.
+    // Remove else part once ARM backend support for half is complete.
+    if (Arch == llvm::Triple::aarch64)
+      return llvm::VectorType::get(CGF->HalfTy, V1Ty ? 1 : (4 << IsQuad));
+    else
+      return llvm::VectorType::get(CGF->Int16Ty, V1Ty ? 1 : (4 << IsQuad));
   case NeonTypeFlags::Int32:
     return llvm::VectorType::get(CGF->Int32Ty, V1Ty ? 1 : (2 << IsQuad));
   case NeonTypeFlags::Int64:
@@ -4226,7 +4232,8 @@ static Value *EmitCommonNeonSISDBuiltinExpr(CodeGenFunction &CGF,
 Value *CodeGenFunction::EmitCommonNeonBuiltinExpr(
     unsigned BuiltinID, unsigned LLVMIntrinsic, unsigned AltLLVMIntrinsic,
     const char *NameHint, unsigned Modifier, const CallExpr *E,
-    SmallVectorImpl<llvm::Value *> &Ops, Address PtrOp0, Address PtrOp1) {
+    SmallVectorImpl<llvm::Value *> &Ops, Address PtrOp0, Address PtrOp1,
+    llvm::Triple::ArchType Arch) {
   // Get the last argument, which specifies the vector type.
   llvm::APSInt NeonTypeConst;
   const Expr *Arg = E->getArg(E->getNumArgs() - 1);
@@ -4238,7 +4245,7 @@ Value *CodeGenFunction::EmitCommonNeonBuiltinExpr(
   bool Usgn = Type.isUnsigned();
   bool Quad = Type.isQuad();
 
-  llvm::VectorType *VTy = GetNeonType(this, Type);
+  llvm::VectorType *VTy = GetNeonType(this, Type, Arch);
   llvm::Type *Ty = VTy;
   if (!Ty)
     return nullptr;
@@ -4312,13 +4319,13 @@ Value *CodeGenFunction::EmitCommonNeonBuiltinExpr(
   case NEON::BI__builtin_neon_vcvt_f32_v:
   case NEON::BI__builtin_neon_vcvtq_f32_v:
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
-    Ty = GetNeonType(this, NeonTypeFlags(NeonTypeFlags::Float32, false, Quad));
+    Ty = GetNeonType(this, NeonTypeFlags(NeonTypeFlags::Float32, false, Quad), Arch);
     return Usgn ? Builder.CreateUIToFP(Ops[0], Ty, "vcvt")
                 : Builder.CreateSIToFP(Ops[0], Ty, "vcvt");
   case NEON::BI__builtin_neon_vcvt_f16_v:
   case NEON::BI__builtin_neon_vcvtq_f16_v:
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
-    Ty = GetNeonType(this, NeonTypeFlags(NeonTypeFlags::Float16, false, Quad));
+    Ty = GetNeonType(this, NeonTypeFlags(NeonTypeFlags::Float16, false, Quad), Arch);
     return Usgn ? Builder.CreateUIToFP(Ops[0], Ty, "vcvt")
                 : Builder.CreateSIToFP(Ops[0], Ty, "vcvt");
   case NEON::BI__builtin_neon_vcvt_n_f16_v:
@@ -4887,7 +4894,8 @@ static bool HasExtraNeonArgument(unsigned BuiltinID) {
 }
 
 Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
-                                           const CallExpr *E) {
+                                           const CallExpr *E,
+                                           llvm::Triple::ArchType Arch) {
   if (auto Hint = GetValueForARMHint(BuiltinID))
     return Hint;
 
@@ -5426,7 +5434,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   bool usgn = Type.isUnsigned();
   bool rightShift = false;
 
-  llvm::VectorType *VTy = GetNeonType(this, Type);
+  llvm::VectorType *VTy = GetNeonType(this, Type, Arch);
   llvm::Type *Ty = VTy;
   if (!Ty)
     return nullptr;
@@ -5439,7 +5447,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   if (Builtin)
     return EmitCommonNeonBuiltinExpr(
         Builtin->BuiltinID, Builtin->LLVMIntrinsic, Builtin->AltLLVMIntrinsic,
-        Builtin->NameHint, Builtin->TypeModifier, E, Ops, PtrOp0, PtrOp1);
+        Builtin->NameHint, Builtin->TypeModifier, E, Ops, PtrOp0, PtrOp1, Arch);
 
   unsigned Int;
   switch (BuiltinID) {
@@ -5626,7 +5634,8 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
 
 static Value *EmitAArch64TblBuiltinExpr(CodeGenFunction &CGF, unsigned BuiltinID,
                                       const CallExpr *E,
-                                      SmallVectorImpl<Value *> &Ops) {
+                                      SmallVectorImpl<Value *> &Ops,
+                                      llvm::Triple::ArchType Arch) {
   unsigned int Int = 0;
   const char *s = nullptr;
 
@@ -5671,7 +5680,7 @@ static Value *EmitAArch64TblBuiltinExpr(CodeGenFunction &CGF, unsigned BuiltinID
 
   // Determine the type of this overloaded NEON intrinsic.
   NeonTypeFlags Type(Result.getZExtValue());
-  llvm::VectorType *Ty = GetNeonType(&CGF, Type);
+  llvm::VectorType *Ty = GetNeonType(&CGF, Type, Arch);
   if (!Ty)
     return nullptr;
 
@@ -5781,7 +5790,8 @@ Value *CodeGenFunction::vectorWrapScalar16(Value *Op) {
 }
 
 Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
-                                               const CallExpr *E) {
+                                               const CallExpr *E,
+                                               llvm::Triple::ArchType Arch) {
   unsigned HintID = static_cast<unsigned>(-1);
   switch (BuiltinID) {
   default: break;
@@ -6524,7 +6534,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   }
   }
 
-  llvm::VectorType *VTy = GetNeonType(this, Type);
+  llvm::VectorType *VTy = GetNeonType(this, Type, Arch);
   llvm::Type *Ty = VTy;
   if (!Ty)
     return nullptr;
@@ -6538,9 +6548,9 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     return EmitCommonNeonBuiltinExpr(
         Builtin->BuiltinID, Builtin->LLVMIntrinsic, Builtin->AltLLVMIntrinsic,
         Builtin->NameHint, Builtin->TypeModifier, E, Ops,
-        /*never use addresses*/ Address::invalid(), Address::invalid());
+        /*never use addresses*/ Address::invalid(), Address::invalid(), Arch);
 
-  if (Value *V = EmitAArch64TblBuiltinExpr(*this, BuiltinID, E, Ops))
+  if (Value *V = EmitAArch64TblBuiltinExpr(*this, BuiltinID, E, Ops, Arch))
     return V;
 
   unsigned Int;
@@ -6589,7 +6599,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
       Ops[0] = Builder.CreateBitCast(Ops[0], DoubleTy);
       Ops[1] = Builder.CreateBitCast(Ops[1], DoubleTy);
       llvm::Type *VTy = GetNeonType(this,
-        NeonTypeFlags(NeonTypeFlags::Float64, false, true));
+        NeonTypeFlags(NeonTypeFlags::Float64, false, true), Arch);
       Ops[2] = Builder.CreateBitCast(Ops[2], VTy);
       Ops[2] = Builder.CreateExtractElement(Ops[2], Ops[3], "extract");
       Value *F = CGM.getIntrinsic(Intrinsic::fma, DoubleTy);
@@ -6772,14 +6782,14 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   case NEON::BI__builtin_neon_vcvt_f64_v:
   case NEON::BI__builtin_neon_vcvtq_f64_v:
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
-    Ty = GetNeonType(this, NeonTypeFlags(NeonTypeFlags::Float64, false, quad));
+    Ty = GetNeonType(this, NeonTypeFlags(NeonTypeFlags::Float64, false, quad), Arch);
     return usgn ? Builder.CreateUIToFP(Ops[0], Ty, "vcvt")
                 : Builder.CreateSIToFP(Ops[0], Ty, "vcvt");
   case NEON::BI__builtin_neon_vcvt_f64_f32: {
     assert(Type.getEltType() == NeonTypeFlags::Float64 && quad &&
            "unexpected vcvt_f64_f32 builtin");
     NeonTypeFlags SrcFlag = NeonTypeFlags(NeonTypeFlags::Float32, false, false);
-    Ops[0] = Builder.CreateBitCast(Ops[0], GetNeonType(this, SrcFlag));
+    Ops[0] = Builder.CreateBitCast(Ops[0], GetNeonType(this, SrcFlag, Arch));
 
     return Builder.CreateFPExt(Ops[0], Ty, "vcvt");
   }
@@ -6787,7 +6797,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     assert(Type.getEltType() == NeonTypeFlags::Float32 &&
            "unexpected vcvt_f32_f64 builtin");
     NeonTypeFlags SrcFlag = NeonTypeFlags(NeonTypeFlags::Float64, false, true);
-    Ops[0] = Builder.CreateBitCast(Ops[0], GetNeonType(this, SrcFlag));
+    Ops[0] = Builder.CreateBitCast(Ops[0], GetNeonType(this, SrcFlag, Arch));
 
     return Builder.CreateFPTrunc(Ops[0], Ty, "vcvt");
   }
@@ -6884,7 +6894,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
       Quad = true;
     Ops[0] = Builder.CreateBitCast(Ops[0], DoubleTy);
     llvm::Type *VTy = GetNeonType(this,
-      NeonTypeFlags(NeonTypeFlags::Float64, false, Quad));
+      NeonTypeFlags(NeonTypeFlags::Float64, false, Quad), Arch);
     Ops[1] = Builder.CreateBitCast(Ops[1], VTy);
     Ops[1] = Builder.CreateExtractElement(Ops[1], Ops[2], "extract");
     Value *Result = Builder.CreateFMul(Ops[0], Ops[1]);
