@@ -79,7 +79,7 @@ entry:
 ; CHECK-NEXT:       - Offset:          
 ; CHECK-NEXT:           Opcode:          I32_CONST
 ; CHECK-NEXT:           Value:           1
-; CHECK-NEXT:         Functions:       [ 0 ]
+; CHECK-NEXT:         Functions:       [ 2 ]
 ; CHECK-NEXT:   - Type:            CODE
 ; CHECK-NEXT:     Functions:
 ; CHECK-NEXT:       - Locals:
@@ -89,7 +89,7 @@ entry:
 ; CHECK-NEXT:       - Locals:
 ; CHECK-NEXT:         Body:            41000B
 ; CHECK-NEXT:       - Locals:
-; CHECK-NEXT:         Body:            1080808080000B
+; CHECK-NEXT:         Body:            1082808080000B
 ; CHECK-NEXT:       - Locals:
 ; CHECK-NEXT:         Body:            1080808080000B
 ; CHECK-NEXT:       - Locals:          
@@ -97,7 +97,7 @@ entry:
 ; CHECK-NEXT:       - Locals:          
 ; CHECK-NEXT:           - Type:            I32
 ; CHECK-NEXT:             Count:           2
-; CHECK-NEXT:         Body:            23808080800041106B220024808080800020004181808080003602081080808080002101200041106A24808080800020010B
+; CHECK-NEXT:         Body:            23808080800041106B220024808080800020004181808080003602081082808080002101200041106A24808080800020010B
 ; CHECK-NEXT:   - Type:            CUSTOM
 ; CHECK-NEXT:     Name:            linking
 ; CHECK-NEXT:     DataSize:        0
