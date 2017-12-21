@@ -14080,6 +14080,10 @@ static SDValue lowerV32I16VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
                                                 Zeroable, Subtarget, DAG))
     return Blend;
 
+  if (SDValue PSHUFB = lowerVectorShuffleWithPSHUFB(
+          DL, MVT::v32i16, Mask, V1, V2, Zeroable, Subtarget, DAG))
+    return PSHUFB;
+
   return lowerVectorShuffleWithPERMV(DL, MVT::v32i16, Mask, V1, V2, DAG);
 }
 
