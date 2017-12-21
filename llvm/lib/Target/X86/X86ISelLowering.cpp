@@ -16449,7 +16449,8 @@ static SDValue LowerTruncateVecI1(SDValue Op, SelectionDAG &DAG,
     assert((InVT.is256BitVector() || InVT.is128BitVector()) &&
            "Unexpected vector type.");
     unsigned NumElts = InVT.getVectorNumElements();
-    MVT ExtVT = MVT::getVectorVT(MVT::getIntegerVT(512/NumElts), NumElts);
+    MVT EltVT = Subtarget.hasVLX() ? MVT::i32 : MVT::getIntegerVT(512/NumElts);
+    MVT ExtVT = MVT::getVectorVT(EltVT, NumElts);
     In = DAG.getNode(ISD::SIGN_EXTEND, DL, ExtVT, In);
     InVT = ExtVT;
     ShiftInx = InVT.getScalarSizeInBits() - 1;

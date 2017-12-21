@@ -537,9 +537,9 @@ define i8 @shuf8i1_9_6_1_10_3_7_7_0_all_ones(<8 x i1> %a) {
 ;
 ; AVX512VL-LABEL: shuf8i1_9_6_1_10_3_7_7_0_all_ones:
 ; AVX512VL:       # %bb.0:
-; AVX512VL-NEXT:    vpmovsxwq %xmm0, %zmm0
-; AVX512VL-NEXT:    vpsllq $63, %zmm0, %zmm0
-; AVX512VL-NEXT:    vptestmq %zmm0, %zmm0, %k1
+; AVX512VL-NEXT:    vpmovsxwd %xmm0, %ymm0
+; AVX512VL-NEXT:    vpslld $31, %ymm0, %ymm0
+; AVX512VL-NEXT:    vptestmd %ymm0, %ymm0, %k1
 ; AVX512VL-NEXT:    vpcmpeqd %ymm0, %ymm0, %ymm0
 ; AVX512VL-NEXT:    vmovdqa32 %ymm0, %ymm1 {%k1} {z}
 ; AVX512VL-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[1,1,2,3]
