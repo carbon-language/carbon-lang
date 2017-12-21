@@ -3998,10 +3998,12 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
   if (SDValue RAND = ReassociateOps(ISD::AND, SDLoc(N), N0, N1))
     return RAND;
   // fold (and (or x, C), D) -> D if (C & D) == D
-  if (N1C && N0.getOpcode() == ISD::OR)
-    if (ConstantSDNode *ORI = isConstOrConstSplat(N0.getOperand(1)))
-      if (N1C->getAPIntValue().isSubsetOf(ORI->getAPIntValue()))
-        return N1;
+  auto MatchSubset = [](ConstantSDNode *LHS, ConstantSDNode *RHS) {
+    return RHS->getAPIntValue().isSubsetOf(LHS->getAPIntValue());
+  };
+  if (N0.getOpcode() == ISD::OR &&
+      matchBinaryPredicate(N0.getOperand(1), N1, MatchSubset))
+    return N1;
   // fold (and (any_ext V), c) -> (zero_ext V) if 'and' only clears top bits.
   if (N1C && N0.getOpcode() == ISD::ANY_EXTEND) {
     SDValue N0Op0 = N0.getOperand(0);
