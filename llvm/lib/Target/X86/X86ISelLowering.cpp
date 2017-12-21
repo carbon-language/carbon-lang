@@ -33897,16 +33897,6 @@ static SDValue detectAVGPattern(SDValue In, EVT VT, SelectionDAG &DAG,
 
   if (!Subtarget.hasSSE2())
     return SDValue();
-  if (Subtarget.hasBWI()) {
-    if (VT.getSizeInBits() > 512)
-      return SDValue();
-  } else if (Subtarget.hasAVX2()) {
-    if (VT.getSizeInBits() > 256)
-      return SDValue();
-  } else {
-    if (VT.getSizeInBits() > 128)
-      return SDValue();
-  }
 
   // Detect the following pattern:
   //
@@ -33918,7 +33908,6 @@ static SDValue detectAVGPattern(SDValue In, EVT VT, SelectionDAG &DAG,
   //   %6 = trunc <N x i32> %5 to <N x i8>
   //
   // In AVX512, the last instruction can also be a trunc store.
-
   if (In.getOpcode() != ISD::SRL)
     return SDValue();
 
@@ -33937,6 +33926,35 @@ static SDValue detectAVGPattern(SDValue In, EVT VT, SelectionDAG &DAG,
         return false;
     }
     return true;
+  };
+
+  // Split vectors to legal target size and apply AVG.
+  auto LowerToAVG = [&](SDValue Op0, SDValue Op1) {
+    unsigned NumSubs = 1;
+    if (Subtarget.hasBWI()) {
+      if (VT.getSizeInBits() > 512)
+        NumSubs = VT.getSizeInBits() / 512;
+    } else if (Subtarget.hasAVX2()) {
+      if (VT.getSizeInBits() > 256)
+        NumSubs = VT.getSizeInBits() / 256;
+    } else {
+      if (VT.getSizeInBits() > 128)
+        NumSubs = VT.getSizeInBits() / 128;
+    }
+
+    if (NumSubs == 1)
+      return DAG.getNode(X86ISD::AVG, DL, VT, Op0, Op1);
+
+    SmallVector<SDValue, 4> Subs;
+    EVT SubVT = EVT::getVectorVT(*DAG.getContext(), VT.getScalarType(),
+                                 VT.getVectorNumElements() / NumSubs);
+    for (unsigned i = 0; i != NumSubs; ++i) {
+      unsigned Idx = i * SubVT.getVectorNumElements();
+      SDValue LHS = extractSubVector(Op0, Idx, DAG, DL, SubVT.getSizeInBits());
+      SDValue RHS = extractSubVector(Op1, Idx, DAG, DL, SubVT.getSizeInBits());
+      Subs.push_back(DAG.getNode(X86ISD::AVG, DL, SubVT, LHS, RHS));
+    }
+    return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, Subs);
   };
 
   // Check if each element of the vector is left-shifted by one.
@@ -33962,8 +33980,7 @@ static SDValue detectAVGPattern(SDValue In, EVT VT, SelectionDAG &DAG,
     SDValue VecOnes = DAG.getConstant(1, DL, InVT);
     Operands[1] = DAG.getNode(ISD::SUB, DL, InVT, Operands[1], VecOnes);
     Operands[1] = DAG.getNode(ISD::TRUNCATE, DL, VT, Operands[1]);
-    return DAG.getNode(X86ISD::AVG, DL, VT, Operands[0].getOperand(0),
-                       Operands[1]);
+    return LowerToAVG(Operands[0].getOperand(0), Operands[1]);
   }
 
   if (Operands[0].getOpcode() == ISD::ADD)
@@ -33987,8 +34004,7 @@ static SDValue detectAVGPattern(SDValue In, EVT VT, SelectionDAG &DAG,
         return SDValue();
 
     // The pattern is detected, emit X86ISD::AVG instruction.
-    return DAG.getNode(X86ISD::AVG, DL, VT, Operands[0].getOperand(0),
-                       Operands[1].getOperand(0));
+    return LowerToAVG(Operands[0].getOperand(0), Operands[1].getOperand(0));
   }
 
   return SDValue();
