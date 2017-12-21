@@ -856,25 +856,14 @@ CodeGenModule::getFunctionLinkage(GlobalDecl GD) {
   GVALinkage Linkage = getContext().GetGVALinkageForFunction(D);
 
   if (isa<CXXDestructorDecl>(D) &&
-      Context.getTargetInfo().getCXXABI().isMicrosoft()) {
-    switch (GD.getDtorType()) {
-    case CXXDtorType::Dtor_Base:
-      break;
-    case CXXDtorType::Dtor_Comdat:
-    case CXXDtorType::Dtor_Complete:
-      if (D->hasAttr<DLLImportAttr>() &&
-	  (cast<CXXDestructorDecl>(D)->getParent()->getNumVBases() ||
-	   (Linkage == GVA_AvailableExternally ||
-	    Linkage == GVA_StrongExternal)))
-	return llvm::Function::AvailableExternallyLinkage;
-      else
-        return Linkage == GVA_Internal ? llvm::GlobalValue::InternalLinkage
-                                       : llvm::GlobalValue::LinkOnceODRLinkage;
-    case CXXDtorType::Dtor_Deleting:
-      return Linkage == GVA_Internal ? llvm::GlobalValue::InternalLinkage
-                                     : llvm::GlobalValue::LinkOnceODRLinkage;
-    }
+      getCXXABI().useThunkForDtorVariant(cast<CXXDestructorDecl>(D),
+                                         GD.getDtorType())) {
+    // Destructor variants in the Microsoft C++ ABI are always internal or
+    // linkonce_odr thunks emitted on an as-needed basis.
+    return Linkage == GVA_Internal ? llvm::GlobalValue::InternalLinkage
+                                   : llvm::GlobalValue::LinkOnceODRLinkage;
   }
+
   if (isa<CXXConstructorDecl>(D) &&
       cast<CXXConstructorDecl>(D)->isInheritingConstructor() &&
       Context.getTargetInfo().getCXXABI().isMicrosoft()) {
@@ -890,24 +879,11 @@ CodeGenModule::getFunctionLinkage(GlobalDecl GD) {
 void CodeGenModule::setFunctionDLLStorageClass(GlobalDecl GD, llvm::Function *F) {
   const auto *FD = cast<FunctionDecl>(GD.getDecl());
 
-  if (dyn_cast_or_null<CXXDestructorDecl>(FD)) {
-    switch (GD.getDtorType()) {
-    case CXXDtorType::Dtor_Comdat:
-    case CXXDtorType::Dtor_Deleting: {
+  if (const auto *Dtor = dyn_cast_or_null<CXXDestructorDecl>(FD)) {
+    if (getCXXABI().useThunkForDtorVariant(Dtor, GD.getDtorType())) {
       // Don't dllexport/import destructor thunks.
       F->setDLLStorageClass(llvm::GlobalValue::DefaultStorageClass);
       return;
-    }
-    case CXXDtorType::Dtor_Complete:
-      if (FD->hasAttr<DLLImportAttr>())
-        F->setDLLStorageClass(llvm::GlobalVariable::DLLImportStorageClass);
-      else if (FD->hasAttr<DLLExportAttr>())
-        F->setDLLStorageClass(llvm::GlobalVariable::DLLExportStorageClass);
-      else
-        F->setDLLStorageClass(llvm::GlobalVariable::DefaultStorageClass);
-      return;
-    case CXXDtorType::Dtor_Base:
-      break;
     }
   }
 
