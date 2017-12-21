@@ -4127,7 +4127,7 @@ void LLVMStyle<ELFT>::printMipsGOT(const MipsGOTParser<ELFT> &Parser) {
   }
 
   W.printNumber("Number of TLS and multi-GOT entries",
-                Parser.getOtherEntries().size());
+                uint64_t(Parser.getOtherEntries().size()));
 }
 
 template <class ELFT>
