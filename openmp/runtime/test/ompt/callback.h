@@ -64,6 +64,17 @@ do {\
   printf("%" PRIu64 ": __builtin_frame_address(%d)=%p\n", ompt_get_thread_data()->value, level, __builtin_frame_address(level));\
 } while(0)
 
+// clang (version 5.0 and above) adds an intermediate function call with debug flag (-g)
+#if defined(TEST_NEED_PRINT_FRAME_FROM_OUTLINED_FN)
+  #if defined(DEBUG) && defined(__clang__) && __clang_major__ >= 5
+    #define print_frame_from_outlined_fn(level) print_frame(level+1)
+  #else
+    #define print_frame_from_outlined_fn(level) print_frame(level)
+  #endif
+
+  #warning "Clang 5.0 and later add an additional wrapper function for tasks when compiling with debug information."
+  #warning "Please define -DDEBUG iff you manually pass in -g!"
+#endif
 
 // This macro helps to define a label at the current position that can be used
 // to get the current address in the code.
