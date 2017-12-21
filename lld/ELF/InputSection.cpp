@@ -73,11 +73,11 @@ DenseMap<SectionBase *, int> elf::buildSectionOrder() {
 }
 
 template <class ELFT>
-static ArrayRef<uint8_t> getSectionContents(ObjFile<ELFT> *File,
-                                            const typename ELFT::Shdr *Hdr) {
-  if (!File || Hdr->sh_type == SHT_NOBITS)
-    return makeArrayRef<uint8_t>(nullptr, Hdr->sh_size);
-  return check(File->getObj().getSectionContents(Hdr));
+static ArrayRef<uint8_t> getSectionContents(ObjFile<ELFT> &File,
+                                            const typename ELFT::Shdr &Hdr) {
+  if (Hdr.sh_type == SHT_NOBITS)
+    return makeArrayRef<uint8_t>(nullptr, Hdr.sh_size);
+  return check(File.getObj().getSectionContents(&Hdr));
 }
 
 InputSectionBase::InputSectionBase(InputFile *File, uint64_t Flags,
@@ -134,18 +134,18 @@ static uint64_t getType(uint64_t Type, StringRef Name) {
 }
 
 template <class ELFT>
-InputSectionBase::InputSectionBase(ObjFile<ELFT> *File,
-                                   const typename ELFT::Shdr *Hdr,
+InputSectionBase::InputSectionBase(ObjFile<ELFT> &File,
+                                   const typename ELFT::Shdr &Hdr,
                                    StringRef Name, Kind SectionKind)
-    : InputSectionBase(File, getFlags(Hdr->sh_flags),
-                       getType(Hdr->sh_type, Name), Hdr->sh_entsize,
-                       Hdr->sh_link, Hdr->sh_info, Hdr->sh_addralign,
+    : InputSectionBase(&File, getFlags(Hdr.sh_flags),
+                       getType(Hdr.sh_type, Name), Hdr.sh_entsize, Hdr.sh_link,
+                       Hdr.sh_info, Hdr.sh_addralign,
                        getSectionContents(File, Hdr), Name, SectionKind) {
   // We reject object files having insanely large alignments even though
   // they are allowed by the spec. I think 4GB is a reasonable limitation.
   // We might want to relax this in the future.
-  if (Hdr->sh_addralign > UINT32_MAX)
-    fatal(toString(File) + ": section sh_addralign is too large");
+  if (Hdr.sh_addralign > UINT32_MAX)
+    fatal(toString(&File) + ": section sh_addralign is too large");
 }
 
 size_t InputSectionBase::getSize() const {
@@ -338,7 +338,7 @@ InputSection::InputSection(uint64_t Flags, uint32_t Type, uint32_t Alignment,
                        Name, K) {}
 
 template <class ELFT>
-InputSection::InputSection(ObjFile<ELFT> *F, const typename ELFT::Shdr *Header,
+InputSection::InputSection(ObjFile<ELFT> &F, const typename ELFT::Shdr &Header,
                            StringRef Name)
     : InputSectionBase(F, Header, Name, InputSectionBase::Regular) {}
 
@@ -810,8 +810,8 @@ void InputSection::replace(InputSection *Other) {
 }
 
 template <class ELFT>
-EhInputSection::EhInputSection(ObjFile<ELFT> *F,
-                               const typename ELFT::Shdr *Header,
+EhInputSection::EhInputSection(ObjFile<ELFT> &F,
+                               const typename ELFT::Shdr &Header,
                                StringRef Name)
     : InputSectionBase(F, Header, Name, InputSectionBase::EHFrame) {}
 
@@ -914,8 +914,8 @@ void MergeInputSection::splitNonStrings(ArrayRef<uint8_t> Data,
 }
 
 template <class ELFT>
-MergeInputSection::MergeInputSection(ObjFile<ELFT> *F,
-                                     const typename ELFT::Shdr *Header,
+MergeInputSection::MergeInputSection(ObjFile<ELFT> &F,
+                                     const typename ELFT::Shdr &Header,
                                      StringRef Name)
     : InputSectionBase(F, Header, Name, InputSectionBase::Merge) {}
 
@@ -1004,13 +1004,13 @@ uint64_t MergeInputSection::getOffset(uint64_t Offset) const {
   return Piece.OutputOff + Addend;
 }
 
-template InputSection::InputSection(ObjFile<ELF32LE> *, const ELF32LE::Shdr *,
+template InputSection::InputSection(ObjFile<ELF32LE> &, const ELF32LE::Shdr &,
                                     StringRef);
-template InputSection::InputSection(ObjFile<ELF32BE> *, const ELF32BE::Shdr *,
+template InputSection::InputSection(ObjFile<ELF32BE> &, const ELF32BE::Shdr &,
                                     StringRef);
-template InputSection::InputSection(ObjFile<ELF64LE> *, const ELF64LE::Shdr *,
+template InputSection::InputSection(ObjFile<ELF64LE> &, const ELF64LE::Shdr &,
                                     StringRef);
-template InputSection::InputSection(ObjFile<ELF64BE> *, const ELF64BE::Shdr *,
+template InputSection::InputSection(ObjFile<ELF64BE> &, const ELF64BE::Shdr &,
                                     StringRef);
 
 template std::string InputSectionBase::getLocation<ELF32LE>(uint64_t);
@@ -1032,23 +1032,23 @@ template void InputSection::writeTo<ELF32BE>(uint8_t *);
 template void InputSection::writeTo<ELF64LE>(uint8_t *);
 template void InputSection::writeTo<ELF64BE>(uint8_t *);
 
-template MergeInputSection::MergeInputSection(ObjFile<ELF32LE> *,
-                                              const ELF32LE::Shdr *, StringRef);
-template MergeInputSection::MergeInputSection(ObjFile<ELF32BE> *,
-                                              const ELF32BE::Shdr *, StringRef);
-template MergeInputSection::MergeInputSection(ObjFile<ELF64LE> *,
-                                              const ELF64LE::Shdr *, StringRef);
-template MergeInputSection::MergeInputSection(ObjFile<ELF64BE> *,
-                                              const ELF64BE::Shdr *, StringRef);
+template MergeInputSection::MergeInputSection(ObjFile<ELF32LE> &,
+                                              const ELF32LE::Shdr &, StringRef);
+template MergeInputSection::MergeInputSection(ObjFile<ELF32BE> &,
+                                              const ELF32BE::Shdr &, StringRef);
+template MergeInputSection::MergeInputSection(ObjFile<ELF64LE> &,
+                                              const ELF64LE::Shdr &, StringRef);
+template MergeInputSection::MergeInputSection(ObjFile<ELF64BE> &,
+                                              const ELF64BE::Shdr &, StringRef);
 
-template EhInputSection::EhInputSection(ObjFile<ELF32LE> *,
-                                        const ELF32LE::Shdr *, StringRef);
-template EhInputSection::EhInputSection(ObjFile<ELF32BE> *,
-                                        const ELF32BE::Shdr *, StringRef);
-template EhInputSection::EhInputSection(ObjFile<ELF64LE> *,
-                                        const ELF64LE::Shdr *, StringRef);
-template EhInputSection::EhInputSection(ObjFile<ELF64BE> *,
-                                        const ELF64BE::Shdr *, StringRef);
+template EhInputSection::EhInputSection(ObjFile<ELF32LE> &,
+                                        const ELF32LE::Shdr &, StringRef);
+template EhInputSection::EhInputSection(ObjFile<ELF32BE> &,
+                                        const ELF32BE::Shdr &, StringRef);
+template EhInputSection::EhInputSection(ObjFile<ELF64LE> &,
+                                        const ELF64LE::Shdr &, StringRef);
+template EhInputSection::EhInputSection(ObjFile<ELF64BE> &,
+                                        const ELF64BE::Shdr &, StringRef);
 
 template void EhInputSection::split<ELF32LE>();
 template void EhInputSection::split<ELF32BE>();
