@@ -218,6 +218,9 @@ public:
   template <class ELFT>
   MergeInputSection(ObjFile<ELFT> *F, const typename ELFT::Shdr *Header,
                     StringRef Name);
+  MergeInputSection(uint64_t Flags, uint32_t Type, uint64_t Entsize,
+                    ArrayRef<uint8_t> Data, StringRef Name);
+
   static bool classof(const SectionBase *S) { return S->kind() == Merge; }
   void splitIntoPieces();
 

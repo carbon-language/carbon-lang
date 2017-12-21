@@ -88,6 +88,12 @@ InputSectionBase::InputSectionBase(InputFile *File, uint64_t Flags,
     : SectionBase(SectionKind, Name, Flags, Entsize, Alignment, Type, Info,
                   Link),
       File(File), Data(Data) {
+  // In order to reduce memory allocation, we assume that mergeable
+  // sections are smaller than 4 GiB, which is not an unreasonable
+  // assumption as of 2017.
+  if (SectionKind == SectionBase::Merge && Data.size() > UINT32_MAX)
+    error(toString(this) + ": section too large");
+
   NumRelocations = 0;
   AreRelocsRela = false;
 
@@ -911,13 +917,13 @@ template <class ELFT>
 MergeInputSection::MergeInputSection(ObjFile<ELFT> *F,
                                      const typename ELFT::Shdr *Header,
                                      StringRef Name)
-    : InputSectionBase(F, Header, Name, InputSectionBase::Merge) {
-  // In order to reduce memory allocation, we assume that mergeable
-  // sections are smaller than 4 GiB, which is not an unreasonable
-  // assumption as of 2017.
-  if (Data.size() > UINT32_MAX)
-    error(toString(this) + ": section too large");
-}
+    : InputSectionBase(F, Header, Name, InputSectionBase::Merge) {}
+
+MergeInputSection::MergeInputSection(uint64_t Flags, uint32_t Type,
+                                     uint64_t Entsize, ArrayRef<uint8_t> Data,
+                                     StringRef Name)
+    : InputSectionBase(nullptr, Flags, Type, Entsize, /*Link*/ 0, /*Info*/ 0,
+                       /*Alignment*/ Entsize, Data, Name, SectionBase::Merge) {}
 
 // This function is called after we obtain a complete list of input sections
 // that need to be linked. This is responsible to split section contents
