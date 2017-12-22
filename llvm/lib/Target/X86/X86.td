@@ -639,7 +639,8 @@ def : HaswellProc<"core-avx2">; // Legacy alias.
 
 def BDWFeatures : ProcessorFeatures<HSWFeatures.Value, [
   FeatureADX,
-  FeatureRDSEED
+  FeatureRDSEED,
+  FeaturePRFCHW
 ]>;
 class BroadwellProc<string Name> : ProcModel<Name, BroadwellModel,
                                              BDWFeatures.Value, [
@@ -676,7 +677,8 @@ def KNLFeatures : ProcessorFeatures<IVBFeatures.Value, [
   FeatureLZCNT,
   FeatureBMI,
   FeatureBMI2,
-  FeatureFMA
+  FeatureFMA,
+  FeaturePRFCHW
 ]>;
 
 // FIXME: define KNL model
