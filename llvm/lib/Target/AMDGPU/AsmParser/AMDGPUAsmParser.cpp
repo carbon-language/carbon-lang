@@ -1760,6 +1760,11 @@ AMDGPUAsmParser::parseImm(OperandVector &Operands, bool AbsMod) {
   // TODO: add syntactic sugar for 1/(2*PI)
   bool Minus = false;
   if (getLexer().getKind() == AsmToken::Minus) {
+    const AsmToken NextToken = getLexer().peekTok();
+    if (!NextToken.is(AsmToken::Integer) &&
+        !NextToken.is(AsmToken::Real)) {
+        return MatchOperand_NoMatch;
+    }
     Minus = true;
     Parser.Lex();
   }
@@ -1789,7 +1794,7 @@ AMDGPUAsmParser::parseImm(OperandVector &Operands, bool AbsMod) {
     return MatchOperand_Success;
   }
   default:
-    return Minus ? MatchOperand_ParseFail : MatchOperand_NoMatch;
+    return MatchOperand_NoMatch;
   }
 }
 
