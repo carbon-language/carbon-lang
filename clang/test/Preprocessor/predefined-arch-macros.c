@@ -1234,7 +1234,11 @@
 // RUN: %clang -march=slm -m32 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck -match-full-lines %s -check-prefix=CHECK_SLM_M32
+// CHECK_SLM_M32: #define __AES__ 1
+// CHECK_SLM_M32: #define __FXSR__ 1
 // CHECK_SLM_M32: #define __MMX__ 1
+// CHECK_SLM_M32: #define __PCLMUL__ 1
+// CHECK_SLM_M32: #define __POPCNT__ 1
 // CHECK_SLM_M32: #define __PRFCHW__ 1
 // CHECK_SLM_M32: #define __SSE2__ 1
 // CHECK_SLM_M32: #define __SSE3__ 1
@@ -1251,7 +1255,11 @@
 // RUN: %clang -march=slm -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck -match-full-lines %s -check-prefix=CHECK_SLM_M64
+// CHECK_SLM_M64: #define __AES__ 1
+// CHECK_SLM_M64: #define __FXSR__ 1
 // CHECK_SLM_M64: #define __MMX__ 1
+// CHECK_SLM_M64: #define __PCLMUL__ 1
+// CHECK_SLM_M64: #define __POPCNT__ 1
 // CHECK_SLM_M64: #define __PRFCHW__ 1
 // CHECK_SLM_M64: #define __SSE2_MATH__ 1
 // CHECK_SLM_M64: #define __SSE2__ 1
