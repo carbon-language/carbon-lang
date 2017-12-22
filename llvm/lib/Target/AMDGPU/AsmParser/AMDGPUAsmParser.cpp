@@ -1495,6 +1495,8 @@ static int getRegClass(RegisterKind Is, unsigned RegWidth) {
       case 1: return AMDGPU::TTMP_32RegClassID;
       case 2: return AMDGPU::TTMP_64RegClassID;
       case 4: return AMDGPU::TTMP_128RegClassID;
+      case 8: return AMDGPU::TTMP_256RegClassID;
+      case 16: return AMDGPU::TTMP_512RegClassID;
     }
   } else if (Is == IS_SGPR) {
     switch (RegWidth) {
@@ -1502,8 +1504,8 @@ static int getRegClass(RegisterKind Is, unsigned RegWidth) {
       case 1: return AMDGPU::SGPR_32RegClassID;
       case 2: return AMDGPU::SGPR_64RegClassID;
       case 4: return AMDGPU::SGPR_128RegClassID;
-      case 8: return AMDGPU::SReg_256RegClassID;
-      case 16: return AMDGPU::SReg_512RegClassID;
+      case 8: return AMDGPU::SGPR_256RegClassID;
+      case 16: return AMDGPU::SGPR_512RegClassID;
     }
   }
   return -1;
