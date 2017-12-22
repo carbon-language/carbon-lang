@@ -161,6 +161,10 @@ llvm::MDNode *CodeGenTBAA::getTypeInfoHelper(const Type *Ty) {
   if (Ty->isPointerType() || Ty->isReferenceType())
     return createScalarTypeNode("any pointer", getChar(), Size);
 
+  // Accesses to arrays are accesses to objects of their element types.
+  if (CodeGenOpts.NewStructPathTBAA && Ty->isArrayType())
+    return getTypeInfo(cast<ArrayType>(Ty)->getElementType());
+
   // Enum types are distinct types. In C++ they have "underlying types",
   // however they aren't related for TBAA.
   if (const EnumType *ETy = dyn_cast<EnumType>(Ty)) {
