@@ -139,6 +139,7 @@ ARMLegalizerInfo::ARMLegalizerInfo(const ARMSubtarget &ST) {
   setAction({G_BRCOND, s1}, Legal);
 
   setAction({G_CONSTANT, s32}, Legal);
+  setAction({G_CONSTANT, p0}, Legal);
   setLegalizeScalarToDifferentSizeStrategy(G_CONSTANT, 0, widen_1_8_16);
 
   setAction({G_ICMP, s1}, Legal);

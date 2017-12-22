@@ -826,6 +826,7 @@ registers:
   - { id: 2, class: _ }
   - { id: 3, class: _ }
   - { id: 4, class: _ }
+  - { id: 5, class: _ }
 body:             |
   bb.0:
     liveins: %r0
@@ -855,6 +856,10 @@ body:             |
     ; CHECK: [[EXT:%[0-9]+]]:_(s32) = G_CONSTANT i32 -1
     ; CHECK: {{%[0-9]+}}:_(s1) = G_TRUNC [[EXT]](s32)
     ; CHECK-NOT: G_CONSTANT i1
+
+    %5(p0) = G_CONSTANT 0
+    G_STORE %5(p0), %4(p0) :: (store 4)
+    ; CHECK: {{%[0-9]+}}:_(p0) = G_CONSTANT 0
 
     %r0 = COPY %0(s32)
     BX_RET 14, %noreg, implicit %r0

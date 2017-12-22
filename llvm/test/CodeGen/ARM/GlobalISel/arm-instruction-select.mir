@@ -47,6 +47,7 @@
   define void @test_gep() { ret void }
   define void @test_constant_imm() { ret void }
   define void @test_constant_cimm() { ret void }
+  define void @test_pointer_constant() { ret void }
 
   define void @test_select_s32() { ret void }
   define void @test_select_ptr() { ret void }
@@ -1103,6 +1104,23 @@ body:             |
     ; CHECK: %[[C:[0-9]+]]:gpr = MOVi 42, 14, %noreg, %noreg
 
     %r0 = COPY %0(s32)
+    BX_RET 14, %noreg, implicit %r0
+...
+---
+name:            test_pointer_constant
+# CHECK-LABEL: name: test_pointer_constant
+legalized:       true
+regBankSelected: true
+selected:        false
+# CHECK: selected: true
+registers:
+  - { id: 0, class: gprb }
+body:             |
+  bb.0:
+    %0(p0) = G_CONSTANT i32 0
+    ; CHECK: %[[C:[0-9]+]]:gpr = MOVi 0, 14, %noreg, %noreg
+
+    %r0 = COPY %0(p0)
     BX_RET 14, %noreg, implicit %r0
 ...
 ---

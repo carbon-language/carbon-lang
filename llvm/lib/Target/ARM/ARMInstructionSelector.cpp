@@ -669,13 +669,22 @@ bool ARMInstructionSelector::select(MachineInstr &I,
     return true;
   }
 
+  using namespace TargetOpcode;
+  if (I.getOpcode() == G_CONSTANT) {
+    // Pointer constants should be treated the same as 32-bit integer constants.
+    // Change the type and let TableGen handle it.
+    unsigned ResultReg = I.getOperand(0).getReg();
+    LLT Ty = MRI.getType(ResultReg);
+    if (Ty.isPointer())
+      MRI.setType(ResultReg, LLT::scalar(32));
+  }
+
   if (selectImpl(I, CoverageInfo))
     return true;
 
   MachineInstrBuilder MIB{MF, I};
   bool isSExt = false;
 
-  using namespace TargetOpcode;
   switch (I.getOpcode()) {
   case G_SEXT:
     isSExt = true;
