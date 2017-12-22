@@ -788,6 +788,28 @@ bool ARMInstructionSelector::select(MachineInstr &I,
     I.setDesc(TII.get(COPY));
     return selectCopy(I, TII, MRI, TRI, RBI);
   }
+  case G_INTTOPTR:
+  case G_PTRTOINT: {
+    auto SrcReg = I.getOperand(1).getReg();
+    auto DstReg = I.getOperand(0).getReg();
+
+    const auto &SrcRegBank = *RBI.getRegBank(SrcReg, MRI, TRI);
+    const auto &DstRegBank = *RBI.getRegBank(DstReg, MRI, TRI);
+
+    if (SrcRegBank.getID() != DstRegBank.getID()) {
+      DEBUG(dbgs()
+            << "G_INTTOPTR/G_PTRTOINT operands on different register banks\n");
+      return false;
+    }
+
+    if (SrcRegBank.getID() != ARM::GPRRegBankID) {
+      DEBUG(dbgs() << "G_INTTOPTR/G_PTRTOINT on non-GPR not supported yet\n");
+      return false;
+    }
+
+    I.setDesc(TII.get(COPY));
+    return selectCopy(I, TII, MRI, TRI, RBI);
+  }
   case G_SELECT:
     return selectSelect(MIB, MRI);
   case G_ICMP: {

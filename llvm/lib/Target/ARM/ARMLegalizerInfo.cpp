@@ -126,6 +126,12 @@ ARMLegalizerInfo::ARMLegalizerInfo(const ARMSubtarget &ST) {
     setAction({Op, s32}, Legal);
   }
 
+  setAction({G_INTTOPTR, p0}, Legal);
+  setAction({G_INTTOPTR, 1, s32}, Legal);
+
+  setAction({G_PTRTOINT, s32}, Legal);
+  setAction({G_PTRTOINT, 1, p0}, Legal);
+
   for (unsigned Op : {G_ASHR, G_LSHR, G_SHL})
     setAction({Op, s32}, Legal);
 
