@@ -3852,7 +3852,9 @@ AMDGPUAsmParser::parseSwizzleOp(OperandVector &Operands) {
 
     return Ok? MatchOperand_Success : MatchOperand_ParseFail;
   } else {
-    return MatchOperand_NoMatch;
+    // Swizzle "offset" operand is optional.
+    // If it is omitted, try parsing other optional operands.
+    return parseOptionalOperand(Operands);
   }
 }
 
