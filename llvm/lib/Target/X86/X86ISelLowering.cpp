@@ -33073,20 +33073,14 @@ static SDValue WidenMaskArithmetic(SDNode *N, SelectionDAG &DAG,
   SDValue Op = DAG.getNode(Narrow->getOpcode(), DL, WideVT, N0, N1);
   unsigned Opcode = N->getOpcode();
   switch (Opcode) {
+  default: llvm_unreachable("Unexpected opcode");
   case ISD::ANY_EXTEND:
     return Op;
-  case ISD::ZERO_EXTEND: {
-    unsigned InBits = NarrowVT.getScalarSizeInBits();
-    APInt Mask = APInt::getAllOnesValue(InBits);
-    Mask = Mask.zext(VT.getScalarSizeInBits());
-    return DAG.getNode(ISD::AND, DL, VT,
-                       Op, DAG.getConstant(Mask, DL, VT));
-  }
+  case ISD::ZERO_EXTEND:
+    return DAG.getZeroExtendInReg(Op, DL, VT.getScalarType());
   case ISD::SIGN_EXTEND:
     return DAG.getNode(ISD::SIGN_EXTEND_INREG, DL, VT,
                        Op, DAG.getValueType(NarrowVT));
-  default:
-    llvm_unreachable("Unexpected opcode");
   }
 }
 
