@@ -375,7 +375,7 @@ Parser::ParseTemplateParameterList(unsigned Depth,
     
     if (NamedDecl *TmpParam
           = ParseTemplateParameter(Depth, TemplateParams.size())) {
-      TemplateParams.push_back(dyn_cast<NamedDecl>(TmpParam));
+      TemplateParams.push_back(TmpParam);
     } else {
       // If we failed to parse a template parameter, skip until we find
       // a comma or closing brace.
