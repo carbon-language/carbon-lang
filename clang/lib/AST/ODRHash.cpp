@@ -476,6 +476,9 @@ void ODRHash::AddFunctionDecl(const FunctionDecl *Function) {
   if (!Function->hasBody()) return;
   if (!Function->getBody()) return;
 
+  // TODO: Fix hashing for class methods.
+  if (isa<CXXMethodDecl>(Function)) return;
+
   // Skip functions that are specializations or in specialization context.
   const DeclContext *DC = Function;
   while (DC) {
