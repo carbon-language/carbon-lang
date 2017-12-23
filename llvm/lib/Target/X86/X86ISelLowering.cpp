@@ -33042,8 +33042,7 @@ static SDValue WidenMaskArithmetic(SDNode *N, SelectionDAG &DAG,
     return SDValue();
 
   // The type of the truncated inputs.
-  EVT WideVT = N0->getOperand(0).getValueType();
-  if (WideVT != VT)
+  if (N0->getOperand(0).getValueType() != VT)
     return SDValue();
 
   // The right side has to be a 'trunc' or a constant vector.
@@ -33056,21 +33055,21 @@ static SDValue WidenMaskArithmetic(SDNode *N, SelectionDAG &DAG,
 
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
-  if (!TLI.isOperationLegalOrPromote(Narrow->getOpcode(), WideVT))
+  if (!TLI.isOperationLegalOrPromote(Narrow->getOpcode(), VT))
     return SDValue();
 
   // Set N0 and N1 to hold the inputs to the new wide operation.
   N0 = N0->getOperand(0);
   if (RHSConstSplat) {
-    N1 = DAG.getNode(ISD::ZERO_EXTEND, DL, WideVT.getVectorElementType(),
+    N1 = DAG.getNode(ISD::ZERO_EXTEND, DL, VT.getVectorElementType(),
                      SDValue(RHSConstSplat, 0));
-    N1 = DAG.getSplatBuildVector(WideVT, DL, N1);
+    N1 = DAG.getSplatBuildVector(VT, DL, N1);
   } else if (RHSTrunc) {
     N1 = N1->getOperand(0);
   }
 
   // Generate the wide operation.
-  SDValue Op = DAG.getNode(Narrow->getOpcode(), DL, WideVT, N0, N1);
+  SDValue Op = DAG.getNode(Narrow->getOpcode(), DL, VT, N0, N1);
   unsigned Opcode = N->getOpcode();
   switch (Opcode) {
   default: llvm_unreachable("Unexpected opcode");
