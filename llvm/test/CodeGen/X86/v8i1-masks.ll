@@ -160,7 +160,6 @@ define <8 x i32> @and_mask_constant(<8 x i32> %v0, <8 x i32> %v1) {
 ; X32-AVX2-NEXT:    vpxor %xmm1, %xmm1, %xmm1
 ; X32-AVX2-NEXT:    vpcmpeqd %ymm1, %ymm0, %ymm0
 ; X32-AVX2-NEXT:    vpand LCPI2_0, %ymm0, %ymm0
-; X32-AVX2-NEXT:    vpblendw {{.*#+}} ymm0 = ymm0[0],ymm1[1],ymm0[2],ymm1[3],ymm0[4],ymm1[5],ymm0[6],ymm1[7],ymm0[8],ymm1[9],ymm0[10],ymm1[11],ymm0[12],ymm1[13],ymm0[14],ymm1[15]
 ; X32-AVX2-NEXT:    retl
 ;
 ; X64-AVX2-LABEL: and_mask_constant:
@@ -168,7 +167,6 @@ define <8 x i32> @and_mask_constant(<8 x i32> %v0, <8 x i32> %v1) {
 ; X64-AVX2-NEXT:    vpxor %xmm1, %xmm1, %xmm1
 ; X64-AVX2-NEXT:    vpcmpeqd %ymm1, %ymm0, %ymm0
 ; X64-AVX2-NEXT:    vpand {{.*}}(%rip), %ymm0, %ymm0
-; X64-AVX2-NEXT:    vpblendw {{.*#+}} ymm0 = ymm0[0],ymm1[1],ymm0[2],ymm1[3],ymm0[4],ymm1[5],ymm0[6],ymm1[7],ymm0[8],ymm1[9],ymm0[10],ymm1[11],ymm0[12],ymm1[13],ymm0[14],ymm1[15]
 ; X64-AVX2-NEXT:    retq
   %m = icmp eq <8 x i32> %v0, zeroinitializer
   %mand = and <8 x i1> %m, <i1 true, i1 false, i1 false, i1 true, i1 false, i1 true, i1 true, i1 false>
