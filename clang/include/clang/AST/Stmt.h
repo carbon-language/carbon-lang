@@ -875,8 +875,11 @@ public:
 ///
 /// Represents an attribute applied to a statement. For example:
 ///   [[omp::for(...)]] for (...) { ... }
-class AttributedStmt : public Stmt {
+class AttributedStmt final
+    : public Stmt,
+      private llvm::TrailingObjects<AttributedStmt, const Attr *> {
   friend class ASTStmtReader;
+  friend TrailingObjects;
 
   Stmt *SubStmt;
   SourceLocation AttrLoc;
@@ -894,11 +897,9 @@ class AttributedStmt : public Stmt {
   }
 
   const Attr *const *getAttrArrayPtr() const {
-    return reinterpret_cast<const Attr *const *>(this + 1);
+    return getTrailingObjects<const Attr *>();
   }
-  const Attr **getAttrArrayPtr() {
-    return reinterpret_cast<const Attr **>(this + 1);
-  }
+  const Attr **getAttrArrayPtr() { return getTrailingObjects<const Attr *>(); }
 
 public:
   static AttributedStmt *Create(const ASTContext &C, SourceLocation Loc,
