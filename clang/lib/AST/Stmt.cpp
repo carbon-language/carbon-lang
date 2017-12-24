@@ -299,31 +299,34 @@ SourceLocation Stmt::getLocEnd() const {
   llvm_unreachable("unknown statement kind");
 }
 
-CompoundStmt::CompoundStmt(const ASTContext &C, ArrayRef<Stmt*> Stmts,
-                           SourceLocation LB, SourceLocation RB)
-  : Stmt(CompoundStmtClass), LBraceLoc(LB), RBraceLoc(RB) {
+CompoundStmt::CompoundStmt(ArrayRef<Stmt *> Stmts, SourceLocation LB,
+                           SourceLocation RB)
+    : Stmt(CompoundStmtClass), LBraceLoc(LB), RBraceLoc(RB) {
   CompoundStmtBits.NumStmts = Stmts.size();
-  assert(CompoundStmtBits.NumStmts == Stmts.size() &&
-         "NumStmts doesn't fit in bits of CompoundStmtBits.NumStmts!");
-
-  if (Stmts.empty()) {
-    Body = nullptr;
-    return;
-  }
-
-  Body = new (C) Stmt*[Stmts.size()];
-  std::copy(Stmts.begin(), Stmts.end(), Body);
+  setStmts(Stmts);
 }
 
-void CompoundStmt::setStmts(const ASTContext &C, ArrayRef<Stmt *> Stmts) {
-  if (Body)
-    C.Deallocate(Body);
-  CompoundStmtBits.NumStmts = Stmts.size();
+void CompoundStmt::setStmts(ArrayRef<Stmt *> Stmts) {
   assert(CompoundStmtBits.NumStmts == Stmts.size() &&
          "NumStmts doesn't fit in bits of CompoundStmtBits.NumStmts!");
 
-  Body = new (C) Stmt*[Stmts.size()];
-  std::copy(Stmts.begin(), Stmts.end(), Body);
+  std::copy(Stmts.begin(), Stmts.end(), body_begin());
+}
+
+CompoundStmt *CompoundStmt::Create(const ASTContext &C, ArrayRef<Stmt *> Stmts,
+                                   SourceLocation LB, SourceLocation RB) {
+  void *Mem =
+      C.Allocate(totalSizeToAlloc<Stmt *>(Stmts.size()), alignof(CompoundStmt));
+  return new (Mem) CompoundStmt(Stmts, LB, RB);
+}
+
+CompoundStmt *CompoundStmt::CreateEmpty(const ASTContext &C,
+                                        unsigned NumStmts) {
+  void *Mem =
+      C.Allocate(totalSizeToAlloc<Stmt *>(NumStmts), alignof(CompoundStmt));
+  CompoundStmt *New = new (Mem) CompoundStmt(EmptyShell());
+  New->CompoundStmtBits.NumStmts = NumStmts;
+  return New;
 }
 
 const char *LabelStmt::getName() const {
