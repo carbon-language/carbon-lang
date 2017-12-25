@@ -15,32 +15,14 @@ define <2 x i64> @combine_shuffle_sext_pmuldq(<4 x i32> %a0, <4 x i32> %a1) {
 ; SSE-NEXT:    pmuldq %xmm2, %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX2-LABEL: combine_shuffle_sext_pmuldq:
-; AVX2:       # %bb.0:
-; AVX2-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
-; AVX2-NEXT:    vpmovsxdq %xmm0, %xmm0
-; AVX2-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[0,2,2,3]
-; AVX2-NEXT:    vpmovsxdq %xmm1, %xmm1
-; AVX2-NEXT:    vpmuldq %xmm1, %xmm0, %xmm0
-; AVX2-NEXT:    retq
-;
-; AVX512VL-LABEL: combine_shuffle_sext_pmuldq:
-; AVX512VL:       # %bb.0:
-; AVX512VL-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
-; AVX512VL-NEXT:    vpmovsxdq %xmm0, %xmm0
-; AVX512VL-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[0,2,2,3]
-; AVX512VL-NEXT:    vpmovsxdq %xmm1, %xmm1
-; AVX512VL-NEXT:    vpmuldq %xmm1, %xmm0, %xmm0
-; AVX512VL-NEXT:    retq
-;
-; AVX512DQVL-LABEL: combine_shuffle_sext_pmuldq:
-; AVX512DQVL:       # %bb.0:
-; AVX512DQVL-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
-; AVX512DQVL-NEXT:    vpmovsxdq %xmm0, %xmm0
-; AVX512DQVL-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[0,2,2,3]
-; AVX512DQVL-NEXT:    vpmovsxdq %xmm1, %xmm1
-; AVX512DQVL-NEXT:    vpmullq %xmm1, %xmm0, %xmm0
-; AVX512DQVL-NEXT:    retq
+; AVX-LABEL: combine_shuffle_sext_pmuldq:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
+; AVX-NEXT:    vpmovsxdq %xmm0, %xmm0
+; AVX-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[0,2,2,3]
+; AVX-NEXT:    vpmovsxdq %xmm1, %xmm1
+; AVX-NEXT:    vpmuldq %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
   %1 = shufflevector <4 x i32> %a0, <4 x i32> undef, <2 x i32> <i32 0, i32 2>
   %2 = shufflevector <4 x i32> %a1, <4 x i32> undef, <2 x i32> <i32 0, i32 2>
   %3 = sext <2 x i32> %1 to <2 x i64>
@@ -60,32 +42,14 @@ define <2 x i64> @combine_shuffle_zext_pmuludq(<4 x i32> %a0, <4 x i32> %a1) {
 ; SSE-NEXT:    pmuludq %xmm2, %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX2-LABEL: combine_shuffle_zext_pmuludq:
-; AVX2:       # %bb.0:
-; AVX2-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
-; AVX2-NEXT:    vpmovzxdq {{.*#+}} xmm0 = xmm0[0],zero,xmm0[1],zero
-; AVX2-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[0,2,2,3]
-; AVX2-NEXT:    vpmovzxdq {{.*#+}} xmm1 = xmm1[0],zero,xmm1[1],zero
-; AVX2-NEXT:    vpmuludq %xmm1, %xmm0, %xmm0
-; AVX2-NEXT:    retq
-;
-; AVX512VL-LABEL: combine_shuffle_zext_pmuludq:
-; AVX512VL:       # %bb.0:
-; AVX512VL-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
-; AVX512VL-NEXT:    vpmovzxdq {{.*#+}} xmm0 = xmm0[0],zero,xmm0[1],zero
-; AVX512VL-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[0,2,2,3]
-; AVX512VL-NEXT:    vpmovzxdq {{.*#+}} xmm1 = xmm1[0],zero,xmm1[1],zero
-; AVX512VL-NEXT:    vpmuludq %xmm1, %xmm0, %xmm0
-; AVX512VL-NEXT:    retq
-;
-; AVX512DQVL-LABEL: combine_shuffle_zext_pmuludq:
-; AVX512DQVL:       # %bb.0:
-; AVX512DQVL-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
-; AVX512DQVL-NEXT:    vpmovzxdq {{.*#+}} xmm0 = xmm0[0],zero,xmm0[1],zero
-; AVX512DQVL-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[0,2,2,3]
-; AVX512DQVL-NEXT:    vpmovzxdq {{.*#+}} xmm1 = xmm1[0],zero,xmm1[1],zero
-; AVX512DQVL-NEXT:    vpmullq %xmm1, %xmm0, %xmm0
-; AVX512DQVL-NEXT:    retq
+; AVX-LABEL: combine_shuffle_zext_pmuludq:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
+; AVX-NEXT:    vpmovzxdq {{.*#+}} xmm0 = xmm0[0],zero,xmm0[1],zero
+; AVX-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[0,2,2,3]
+; AVX-NEXT:    vpmovzxdq {{.*#+}} xmm1 = xmm1[0],zero,xmm1[1],zero
+; AVX-NEXT:    vpmuludq %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
   %1 = shufflevector <4 x i32> %a0, <4 x i32> undef, <2 x i32> <i32 0, i32 2>
   %2 = shufflevector <4 x i32> %a1, <4 x i32> undef, <2 x i32> <i32 0, i32 2>
   %3 = zext <2 x i32> %1 to <2 x i64>
