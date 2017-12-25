@@ -549,7 +549,7 @@ bool CFI_Parser<A>::parseInstructions(A &addressSpace, pint_t instructions,
     case DW_CFA_expression:
       reg = addressSpace.getULEB128(p, instructionsEnd);
       if (reg > kMaxRegisterNumber) {
-        _LIBUNWIND_LOG(
+        _LIBUNWIND_LOG0(
                 "malformed DW_CFA_expression DWARF unwind, reg too big");
         return false;
       }
