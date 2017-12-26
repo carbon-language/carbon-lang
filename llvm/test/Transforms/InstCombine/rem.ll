@@ -594,11 +594,12 @@ define <2 x i32> @test23(<2 x i32> %A) {
   ret <2 x i32> %mul
 }
 
-; FIXME: FP division-by-zero is not UB.
+; FP division-by-zero is not UB.
 
 define double @PR34870(i1 %cond, double %x, double %y) {
 ; CHECK-LABEL: @PR34870(
-; CHECK-NEXT:    [[FMOD:%.*]] = frem double %x, %y
+; CHECK-NEXT:    [[SEL:%.*]] = select i1 %cond, double %y, double 0.000000e+00
+; CHECK-NEXT:    [[FMOD:%.*]] = frem double %x, [[SEL]]
 ; CHECK-NEXT:    ret double [[FMOD]]
 ;
   %sel = select i1 %cond, double %y, double 0.0
