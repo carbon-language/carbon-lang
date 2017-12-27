@@ -1934,6 +1934,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       if (Power->isMinusOne())
         return BinaryOperator::CreateFDiv(ConstantFP::get(CI.getType(), 1.0),
                                           II->getArgOperand(0));
+      // powi(x, 2) -> x*x
+      if (Power->equalsInt(2))
+        return BinaryOperator::CreateFMul(II->getArgOperand(0),
+                                          II->getArgOperand(0));
     }
     break;
 
