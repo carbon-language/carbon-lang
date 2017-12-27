@@ -118,6 +118,10 @@ _mm256_cvtph_ps(__m128i __a)
 }
 #endif /* __AVX2__ */
 
+#if !defined(_MSC_VER) || __has_feature(modules) || defined(__VPCLMULQDQ__)
+#include <vpclmulqdqintrin.h>
+#endif
+
 #if !defined(_MSC_VER) || __has_feature(modules) || defined(__BMI__)
 #include <bmiintrin.h>
 #endif

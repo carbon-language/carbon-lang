@@ -1081,6 +1081,7 @@
 // CHECK_ICL_M32: #define __SSE__ 1
 // CHECK_ICL_M32: #define __SSSE3__ 1
 // CHECK_ICL_M32: #define __VAES__ 1
+// CHECK_ICL_M32: #define __VPCLMULQDQ__ 1
 // CHECK_ICL_M32: #define __XSAVEC__ 1
 // CHECK_ICL_M32: #define __XSAVEOPT__ 1
 // CHECK_ICL_M32: #define __XSAVES__ 1
@@ -1128,6 +1129,7 @@
 // CHECK_ICL_M64: #define __SSE__ 1
 // CHECK_ICL_M64: #define __SSSE3__ 1
 // CHECK_ICL_M64: #define __VAES__ 1
+// CHECK_ICL_M64: #define __VPCLMULQDQ__ 1
 // CHECK_ICL_M64: #define __XSAVEC__ 1
 // CHECK_ICL_M64: #define __XSAVEOPT__ 1
 // CHECK_ICL_M64: #define __XSAVES__ 1

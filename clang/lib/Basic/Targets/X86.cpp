@@ -134,6 +134,7 @@ bool X86TargetInfo::initFeatureMap(
   case CK_Icelake:
     setFeatureEnabledImpl(Features, "vaes", true);
     setFeatureEnabledImpl(Features, "gfni", true);
+    setFeatureEnabledImpl(Features, "vpclmulqdq", true);
     // TODO: Add icelake features here.
     LLVM_FALLTHROUGH;
   case CK_Cannonlake:
@@ -462,7 +463,7 @@ void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
     LLVM_FALLTHROUGH;
   case AVX:
     Features["fma"] = Features["avx"] = Features["f16c"] = Features["xsave"] =
-        Features["xsaveopt"] = Features["vaes"] = false;
+        Features["xsaveopt"] = Features["vaes"] = Features["vpclmulqdq"] = false;
     setXOPLevel(Features, FMA4, false);
     LLVM_FALLTHROUGH;
   case AVX2:
@@ -584,6 +585,13 @@ void X86TargetInfo::setFeatureEnabledImpl(llvm::StringMap<bool> &Features,
   } else if (Name == "pclmul") {
     if (Enabled)
       setSSELevel(Features, SSE2, Enabled);
+    else
+      Features["vpclmulqdq"] = false;
+  } else if (Name == "vpclmulqdq") {
+    if (Enabled) {
+      setSSELevel(Features, AVX, Enabled);
+      Features["pclmul"] = true;
+    }
   } else if (Name == "gfni") {
      if (Enabled)
       setSSELevel(Features, SSE2, Enabled);
@@ -652,6 +660,8 @@ bool X86TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
       HasVAES = true;
     } else if (Feature == "+pclmul") {
       HasPCLMUL = true;
+    } else if (Feature == "+vpclmulqdq") {
+      HasVPCLMULQDQ = true;
     } else if (Feature == "+lzcnt") {
       HasLZCNT = true;
     } else if (Feature == "+rdrnd") {
@@ -956,6 +966,9 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   if (HasPCLMUL)
     Builder.defineMacro("__PCLMUL__");
 
+  if (HasVPCLMULQDQ)
+    Builder.defineMacro("__VPCLMULQDQ__");
+
   if (HasLZCNT)
     Builder.defineMacro("__LZCNT__");
 
@@ -1209,6 +1222,7 @@ bool X86TargetInfo::isValidFeatureName(StringRef Name) const {
       .Case("sse4a", true)
       .Case("tbm", true)
       .Case("vaes", true)
+      .Case("vpclmulqdq", true)
       .Case("x87", true)
       .Case("xop", true)
       .Case("xsave", true)
@@ -1275,6 +1289,7 @@ bool X86TargetInfo::hasFeature(StringRef Feature) const {
       .Case("sse4a", XOPLevel >= SSE4A)
       .Case("tbm", HasTBM)
       .Case("vaes", HasVAES)
+      .Case("vpclmulqdq", HasVPCLMULQDQ)
       .Case("x86", true)
       .Case("x86_32", getTriple().getArch() == llvm::Triple::x86)
       .Case("x86_64", getTriple().getArch() == llvm::Triple::x86_64)

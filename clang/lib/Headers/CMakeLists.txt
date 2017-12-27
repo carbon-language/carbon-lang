@@ -86,6 +86,7 @@ set(files
   vaesintrin.h
   varargs.h
   vecintrin.h
+  vpclmulqdqintrin.h
   wmmintrin.h
   __wmmintrin_aes.h
   __wmmintrin_pclmul.h

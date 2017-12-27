@@ -453,6 +453,10 @@ TARGET_BUILTIN(__builtin_ia32_vgf2p8mulb_v64qi, "V64cV64cV64c", "", "avx512bw,gf
 // CLMUL
 TARGET_BUILTIN(__builtin_ia32_pclmulqdq128, "V2LLiV2LLiV2LLiIc", "", "pclmul")
 
+// VPCLMULQDQ
+TARGET_BUILTIN(__builtin_ia32_pclmulqdq256, "V4LLiV4LLiV4LLiIc", "", "vpclmulqdq")
+TARGET_BUILTIN(__builtin_ia32_pclmulqdq512, "V8LLiV8LLiV8LLiIc", "", "avx512f,vpclmulqdq")
+
 // AVX
 TARGET_BUILTIN(__builtin_ia32_addsubpd256, "V4dV4dV4d", "", "avx")
 TARGET_BUILTIN(__builtin_ia32_addsubps256, "V8fV8fV8f", "", "avx")

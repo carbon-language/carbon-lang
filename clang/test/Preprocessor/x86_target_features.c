@@ -384,3 +384,12 @@
 // GFNI: #define __GFNI__ 1
 // GFNI: #define __SSE2__ 1
 
+// RUN: %clang -target i386-unknown-unknown -march=atom -mvpclmulqdq -x c -E -dM -o - %s | FileCheck -match-full-lines --check-prefix=VPCLMULQDQ %s
+
+// VPCLMULQDQ: #define __PCLMUL__ 1
+// VPCLMULQDQ: #define __VPCLMULQDQ__ 1
+
+// RUN: %clang -target i386-unknown-unknown -march=atom -mvpclmulqdq -mno-pclmul -x c -E -dM -o - %s | FileCheck -match-full-lines --check-prefix=VPCLMULQDQNOPCLMUL %s
+// VPCLMULQDQNOPCLMUL-NOT: #define __PCLMUL__ 1
+// VPCLMULQDQNOPCLMUL-NOT: #define __VPCLMULQDQ__ 1
+
