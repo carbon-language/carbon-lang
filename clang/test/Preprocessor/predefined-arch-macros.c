@@ -886,6 +886,7 @@
 // CHECK_SKX_M32: #define __MMX__ 1
 // CHECK_SKX_M32: #define __MPX__ 1
 // CHECK_SKX_M32: #define __PCLMUL__ 1
+// CHECK_SKX_M32: #define __PKU__ 1
 // CHECK_SKX_M32: #define __POPCNT__ 1
 // CHECK_SKX_M32: #define __PRFCHW__ 1
 // CHECK_SKX_M32: #define __RDRND__ 1
@@ -929,6 +930,7 @@
 // CHECK_SKX_M64: #define __MMX__ 1
 // CHECK_SKX_M64: #define __MPX__ 1
 // CHECK_SKX_M64: #define __PCLMUL__ 1
+// CHECK_SKX_M64: #define __PKU__ 1
 // CHECK_SKX_M64: #define __POPCNT__ 1
 // CHECK_SKX_M64: #define __PRFCHW__ 1
 // CHECK_SKX_M64: #define __RDRND__ 1
