@@ -24,6 +24,8 @@ set(files
   avx512vldqintrin.h
   avx512vlintrin.h
   avx512vpopcntdqvlintrin.h
+  avx512vnniintrin.h
+  avx512vlvnniintrin.h
   avxintrin.h
   bmi2intrin.h
   bmiintrin.h

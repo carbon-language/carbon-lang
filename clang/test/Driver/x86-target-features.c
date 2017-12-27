@@ -115,3 +115,8 @@
 // BITALG: "-target-feature" "+avx512bitalg"
 // NO-BITALG: "-target-feature" "-avx512bitalg"
 
+// RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mavx512vnni %s -### -o %t.o 2>&1 | FileCheck -check-prefix=VNNI %s
+// RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mno-avx512vnni %s -### -o %t.o 2>&1 | FileCheck -check-prefix=NO-VNNI %s
+// VNNI: "-target-feature" "+avx512vnni"
+// NO-VNNI: "-target-feature" "-avx512vnni"
+

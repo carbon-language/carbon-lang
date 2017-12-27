@@ -167,6 +167,15 @@ _mm256_cvtph_ps(__m128i __a)
 #include <avx512vpopcntdqvlintrin.h>
 #endif
 
+#if !defined(_MSC_VER) || __has_feature(modules) || defined(__AVX512VNNI__)
+#include <avx512vnniintrin.h>
+#endif
+
+#if !defined(_MSC_VER) || __has_feature(modules) || \
+    (defined(__AVX512VL__) && defined(__AVX512VNNI__))
+#include <avx512vlvnniintrin.h>
+#endif
+
 #if !defined(_MSC_VER) || __has_feature(modules) || defined(__AVX512DQ__)
 #include <avx512dqintrin.h>
 #endif
