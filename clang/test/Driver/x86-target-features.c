@@ -94,3 +94,9 @@
 // RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mno-clzero %s -### -o %t.o 2>&1 | FileCheck -check-prefix=NO-CLZERO %s
 // CLZERO: "-target-feature" "+clzero"
 // NO-CLZERO: "-target-feature" "-clzero"
+
+// RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mvaes %s -### -o %t.o 2>&1 | FileCheck -check-prefix=VAES %s
+// RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mno-vaes %s -### -o %t.o 2>&1 | FileCheck -check-prefix=NO-VAES %s
+// VAES: "-target-feature" "+vaes"
+// NO-VAES: "-target-feature" "-vaes"
+

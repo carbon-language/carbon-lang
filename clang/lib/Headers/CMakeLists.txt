@@ -82,6 +82,7 @@ set(files
   tmmintrin.h
   unwind.h
   vadefs.h
+  vaesintrin.h
   varargs.h
   vecintrin.h
   wmmintrin.h

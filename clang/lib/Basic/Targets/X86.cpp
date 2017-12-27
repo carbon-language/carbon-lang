@@ -132,6 +132,7 @@ bool X86TargetInfo::initFeatureMap(
     break;
 
   case CK_Icelake:
+    setFeatureEnabledImpl(Features, "vaes", true);
     // TODO: Add icelake features here.
     LLVM_FALLTHROUGH;
   case CK_Cannonlake:
@@ -460,7 +461,7 @@ void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
     LLVM_FALLTHROUGH;
   case AVX:
     Features["fma"] = Features["avx"] = Features["f16c"] = Features["xsave"] =
-        Features["xsaveopt"] = false;
+        Features["xsaveopt"] = Features["vaes"] = false;
     setXOPLevel(Features, FMA4, false);
     LLVM_FALLTHROUGH;
   case AVX2:
@@ -572,6 +573,13 @@ void X86TargetInfo::setFeatureEnabledImpl(llvm::StringMap<bool> &Features,
   } else if (Name == "aes") {
     if (Enabled)
       setSSELevel(Features, SSE2, Enabled);
+    else
+      Features["vaes"] = false;
+  } else if (Name == "vaes") {
+    if (Enabled) {
+      setSSELevel(Features, AVX, Enabled);
+      Features["aes"] = true;
+    }
   } else if (Name == "pclmul") {
     if (Enabled)
       setSSELevel(Features, SSE2, Enabled);
@@ -636,6 +644,8 @@ bool X86TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
 
     if (Feature == "+aes") {
       HasAES = true;
+    } else if (Feature == "+vaes") {
+      HasVAES = true;
     } else if (Feature == "+pclmul") {
       HasPCLMUL = true;
     } else if (Feature == "+lzcnt") {
@@ -934,6 +944,9 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   if (HasAES)
     Builder.defineMacro("__AES__");
 
+  if (HasVAES)
+    Builder.defineMacro("__VAES__");
+
   if (HasPCLMUL)
     Builder.defineMacro("__PCLMUL__");
 
@@ -1185,6 +1198,7 @@ bool X86TargetInfo::isValidFeatureName(StringRef Name) const {
       .Case("sse4.2", true)
       .Case("sse4a", true)
       .Case("tbm", true)
+      .Case("vaes", true)
       .Case("x87", true)
       .Case("xop", true)
       .Case("xsave", true)
@@ -1249,6 +1263,7 @@ bool X86TargetInfo::hasFeature(StringRef Feature) const {
       .Case("sse4.2", SSELevel >= SSE42)
       .Case("sse4a", XOPLevel >= SSE4A)
       .Case("tbm", HasTBM)
+      .Case("vaes", HasVAES)
       .Case("x86", true)
       .Case("x86_32", getTriple().getArch() == llvm::Triple::x86)
       .Case("x86_64", getTriple().getArch() == llvm::Triple::x86_64)

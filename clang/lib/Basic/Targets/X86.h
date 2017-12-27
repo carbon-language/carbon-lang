@@ -48,6 +48,7 @@ class LLVM_LIBRARY_VISIBILITY X86TargetInfo : public TargetInfo {
   enum XOPEnum { NoXOP, SSE4A, FMA4, XOP } XOPLevel = NoXOP;
 
   bool HasAES = false;
+  bool HasVAES = false;
   bool HasPCLMUL = false;
   bool HasLZCNT = false;
   bool HasRDRND = false;

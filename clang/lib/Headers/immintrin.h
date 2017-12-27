@@ -208,6 +208,10 @@ _mm256_cvtph_ps(__m128i __a)
 #include <pkuintrin.h>
 #endif
 
+#if !defined(_MSC_VER) || __has_feature(modules) || defined(__VAES__)
+#include <vaesintrin.h>
+#endif
+
 #if !defined(_MSC_VER) || __has_feature(modules) || defined(__RDRND__)
 static __inline__ int __attribute__((__always_inline__, __nodebug__, __target__("rdrnd")))
 _rdrand16_step(unsigned short *__p)

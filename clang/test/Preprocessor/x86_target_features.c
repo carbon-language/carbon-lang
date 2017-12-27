@@ -368,3 +368,14 @@
 // RUN: %clang -target i386-unknown-unknown -march=atom -mclflushopt -x c -E -dM -o - %s | FileCheck -match-full-lines --check-prefix=CLFLUSHOPT %s
 
 // CLFLUSHOPT: #define __CLFLUSHOPT__ 1
+
+// RUN: %clang -target i386-unknown-unknown -march=atom -mvaes -x c -E -dM -o - %s | FileCheck -match-full-lines --check-prefix=VAES %s
+
+// VAES: #define __AES__ 1
+// VAES: #define __VAES__ 1
+
+// RUN: %clang -target i386-unknown-unknown -march=atom -mvaes -mno-aes -x c -E -dM -o - %s | FileCheck -match-full-lines --check-prefix=VAESNOAES %s
+
+// VAESNOAES-NOT: #define __AES__ 1
+// VAESNOAES-NOT: #define __VAES__ 1
+

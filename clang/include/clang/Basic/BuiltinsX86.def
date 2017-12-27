@@ -429,6 +429,16 @@ TARGET_BUILTIN(__builtin_ia32_aesdeclast128, "V2LLiV2LLiV2LLi", "", "aes")
 TARGET_BUILTIN(__builtin_ia32_aesimc128, "V2LLiV2LLi", "", "aes")
 TARGET_BUILTIN(__builtin_ia32_aeskeygenassist128, "V2LLiV2LLiIc", "", "aes")
 
+// VAES
+TARGET_BUILTIN(__builtin_ia32_aesenc256, "V4LLiV4LLiV4LLi", "", "vaes")
+TARGET_BUILTIN(__builtin_ia32_aesenc512, "V8LLiV8LLiV8LLi", "", "avx512f,vaes")
+TARGET_BUILTIN(__builtin_ia32_aesenclast256, "V4LLiV4LLiV4LLi", "", "vaes")
+TARGET_BUILTIN(__builtin_ia32_aesenclast512, "V8LLiV8LLiV8LLi", "", "avx512f,vaes")
+TARGET_BUILTIN(__builtin_ia32_aesdec256, "V4LLiV4LLiV4LLi", "", "vaes")
+TARGET_BUILTIN(__builtin_ia32_aesdec512, "V8LLiV8LLiV8LLi", "", "avx512f,vaes")
+TARGET_BUILTIN(__builtin_ia32_aesdeclast256, "V4LLiV4LLiV4LLi", "", "vaes")
+TARGET_BUILTIN(__builtin_ia32_aesdeclast512, "V8LLiV8LLiV8LLi", "", "avx512f,vaes")
+
 // CLMUL
 TARGET_BUILTIN(__builtin_ia32_pclmulqdq128, "V2LLiV2LLiV2LLiIc", "", "pclmul")
 
