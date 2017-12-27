@@ -102,17 +102,11 @@
 
 // RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mgfni %s -### -o %t.o 2>&1 | FileCheck -check-prefix=GFNI %s
 // RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mno-gfni %s -### -o %t.o 2>&1 | FileCheck -check-prefix=NO-GFNI %s
-<<<<<<<
 // GFNI: "-target-feature" "+gfni"
 // NO-GFNI: "-target-feature" "-gfni
-
-=======
-// RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mno-clzero %s -### -o %t.o 2>&1 | FileCheck -check-prefix=NO-CLZERO %s
-// CLZERO: "-target-feature" "+clzero"
-// NO-CLZERO: "-target-feature" "-clzero"
 
 // RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mvpclmulqdq %s -### -o %t.o 2>&1 | FileCheck -check-prefix=VPCLMULQDQ %s
 // RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mno-vpclmulqdq %s -### -o %t.o 2>&1 | FileCheck -check-prefix=NO-VPCLMULQDQ %s
 // VPCLMULQDQ: "-target-feature" "+vpclmulqdq"
 // NO-VPCLMULQDQ: "-target-feature" "-vpclmulqdq"
->>>>>>>
+
