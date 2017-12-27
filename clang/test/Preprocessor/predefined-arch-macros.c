@@ -1060,10 +1060,12 @@
 // CHECK_ICL_M32: #define __AVX512VBMI__ 1
 // CHECK_ICL_M32: #define __AVX512VL__ 1
 // CHECK_ICL_M32: #define __AVX512VNNI__ 1
+// CHECK_ICL_M32: #define __AVX512VPOPCNTDQ__ 1
 // CHECK_ICL_M32: #define __AVX__ 1
 // CHECK_ICL_M32: #define __BMI2__ 1
 // CHECK_ICL_M32: #define __BMI__ 1
 // CHECK_ICL_M32: #define __CLFLUSHOPT__ 1
+// CHECK_ICL_M32: #define __CLWB__ 1
 // CHECK_ICL_M32: #define __F16C__ 1
 // CHECK_ICL_M32: #define __FMA__ 1
 // CHECK_ICL_M32: #define __GFNI__ 1
@@ -1111,10 +1113,12 @@
 // CHECK_ICL_M64: #define __AVX512VBMI__ 1
 // CHECK_ICL_M64: #define __AVX512VL__ 1
 // CHECK_ICL_M64: #define __AVX512VNNI__ 1
+// CHECK_ICL_M64: #define __AVX512VPOPCNTDQ__ 1
 // CHECK_ICL_M64: #define __AVX__ 1
 // CHECK_ICL_M64: #define __BMI2__ 1
 // CHECK_ICL_M64: #define __BMI__ 1
 // CHECK_ICL_M64: #define __CLFLUSHOPT__ 1
+// CHECK_ICL_M64: #define __CLWB__ 1
 // CHECK_ICL_M64: #define __F16C__ 1
 // CHECK_ICL_M64: #define __FMA__ 1
 // CHECK_ICL_M64: #define __GFNI__ 1

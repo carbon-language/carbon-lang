@@ -132,13 +132,14 @@ bool X86TargetInfo::initFeatureMap(
     break;
 
   case CK_Icelake:
-    // TODO: Add icelake features here.
     setFeatureEnabledImpl(Features, "vaes", true);
     setFeatureEnabledImpl(Features, "gfni", true);
     setFeatureEnabledImpl(Features, "vpclmulqdq", true);
     setFeatureEnabledImpl(Features, "avx512bitalg", true);
     setFeatureEnabledImpl(Features, "avx512vnni", true);
     setFeatureEnabledImpl(Features, "avx512vbmi2", true);
+    setFeatureEnabledImpl(Features, "avx512vpopcntdq", true);
+    setFeatureEnabledImpl(Features, "clwb", true);
     LLVM_FALLTHROUGH;
   case CK_Cannonlake:
     setFeatureEnabledImpl(Features, "avx512ifma", true);
