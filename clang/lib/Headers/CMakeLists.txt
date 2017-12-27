@@ -7,6 +7,8 @@ set(files
   arm64intr.h
   avx2intrin.h
   avx512bwintrin.h
+  avx512bitalgintrin.h
+  avx512vlbitalgintrin.h
   avx512cdintrin.h
   avx512vpopcntdqintrin.h
   avx512dqintrin.h

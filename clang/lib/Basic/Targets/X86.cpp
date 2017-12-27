@@ -135,6 +135,7 @@ bool X86TargetInfo::initFeatureMap(
     setFeatureEnabledImpl(Features, "vaes", true);
     setFeatureEnabledImpl(Features, "gfni", true);
     setFeatureEnabledImpl(Features, "vpclmulqdq", true);
+    setFeatureEnabledImpl(Features, "avx512bitalg", true);
     // TODO: Add icelake features here.
     LLVM_FALLTHROUGH;
   case CK_Cannonlake:
@@ -473,7 +474,8 @@ void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
     Features["avx512f"] = Features["avx512cd"] = Features["avx512er"] =
         Features["avx512pf"] = Features["avx512dq"] = Features["avx512bw"] =
             Features["avx512vl"] = Features["avx512vbmi"] =
-                Features["avx512ifma"] = Features["avx512vpopcntdq"] = false;
+                Features["avx512ifma"] = Features["avx512vpopcntdq"] =
+                    Features["avx512bitalg"] = false;
     break;
   }
 }
@@ -604,15 +606,15 @@ void X86TargetInfo::setFeatureEnabledImpl(llvm::StringMap<bool> &Features,
   } else if (Name == "avx512cd" || Name == "avx512er" || Name == "avx512pf" ||
              Name == "avx512dq" || Name == "avx512bw" || Name == "avx512vl" ||
              Name == "avx512vbmi" || Name == "avx512ifma" ||
-             Name == "avx512vpopcntdq") {
+             Name == "avx512vpopcntdq" || Name == "avx512bitalg") {
     if (Enabled)
       setSSELevel(Features, AVX512F, Enabled);
-    // Enable BWI instruction if VBMI is being enabled.
-    if (Name == "avx512vbmi" && Enabled)
+    // Enable BWI instruction if VBMI / BITALG is being enabled.
+    if ((Name == "avx512vbmi" || Name == "avx512bitalg") && Enabled)
       Features["avx512bw"] = true;
-    // Also disable VBMI if BWI is being disabled.
+    // Also disable VBMI / BITALG if BWI is being disabled.
     if (Name == "avx512bw" && !Enabled)
-      Features["avx512vbmi"] = false;
+      Features["avx512vbmi"] = Features["avx512bitalg"] = false;
   } else if (Name == "fma") {
     if (Enabled)
       setSSELevel(Features, AVX, Enabled);
@@ -702,6 +704,8 @@ bool X86TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
       HasAVX512PF = true;
     } else if (Feature == "+avx512dq") {
       HasAVX512DQ = true;
+    } else if (Feature == "+avx512bitalg") {
+      HasAVX512BITALG = true;
     } else if (Feature == "+avx512bw") {
       HasAVX512BW = true;
     } else if (Feature == "+avx512vl") {
@@ -1041,6 +1045,8 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     Builder.defineMacro("__AVX512PF__");
   if (HasAVX512DQ)
     Builder.defineMacro("__AVX512DQ__");
+  if (HasAVX512BITALG)
+    Builder.defineMacro("__AVX512BITALG__");
   if (HasAVX512BW)
     Builder.defineMacro("__AVX512BW__");
   if (HasAVX512VL)
@@ -1179,6 +1185,7 @@ bool X86TargetInfo::isValidFeatureName(StringRef Name) const {
       .Case("avx512er", true)
       .Case("avx512pf", true)
       .Case("avx512dq", true)
+      .Case("avx512bitalg", true)
       .Case("avx512bw", true)
       .Case("avx512vl", true)
       .Case("avx512vbmi", true)
@@ -1244,6 +1251,7 @@ bool X86TargetInfo::hasFeature(StringRef Feature) const {
       .Case("avx512er", HasAVX512ER)
       .Case("avx512pf", HasAVX512PF)
       .Case("avx512dq", HasAVX512DQ)
+      .Case("avx512bitalg", HasAVX512BITALG)
       .Case("avx512bw", HasAVX512BW)
       .Case("avx512vl", HasAVX512VL)
       .Case("avx512vbmi", HasAVX512VBMI)

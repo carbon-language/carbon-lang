@@ -1050,6 +1050,7 @@
 // RUN:   | FileCheck -match-full-lines %s -check-prefix=CHECK_ICL_M32
 // CHECK_ICL_M32: #define __AES__ 1
 // CHECK_ICL_M32: #define __AVX2__ 1
+// CHECK_ICL_M32: #define __AVX512BITALG__ 1
 // CHECK_ICL_M32: #define __AVX512BW__ 1
 // CHECK_ICL_M32: #define __AVX512CD__ 1
 // CHECK_ICL_M32: #define __AVX512DQ__ 1
@@ -1098,6 +1099,7 @@
 // RUN:   | FileCheck -match-full-lines %s -check-prefix=CHECK_ICL_M64
 // CHECK_ICL_M64: #define __AES__ 1
 // CHECK_ICL_M64: #define __AVX2__ 1
+// CHECK_ICL_M64: #define __AVX512BITALG__ 1
 // CHECK_ICL_M64: #define __AVX512BW__ 1
 // CHECK_ICL_M64: #define __AVX512CD__ 1
 // CHECK_ICL_M64: #define __AVX512DQ__ 1

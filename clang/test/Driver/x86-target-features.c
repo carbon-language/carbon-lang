@@ -110,3 +110,8 @@
 // VPCLMULQDQ: "-target-feature" "+vpclmulqdq"
 // NO-VPCLMULQDQ: "-target-feature" "-vpclmulqdq"
 
+// RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mavx512bitalg %s -### -o %t.o 2>&1 | FileCheck -check-prefix=BITALG %s
+// RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mno-avx512bitalg %s -### -o %t.o 2>&1 | FileCheck -check-prefix=NO-BITALG %s
+// BITALG: "-target-feature" "+avx512bitalg"
+// NO-BITALG: "-target-feature" "-avx512bitalg"
+
