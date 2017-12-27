@@ -7624,6 +7624,8 @@ static OpenMPDirectiveKind getOpenMPCaptureRegionForClause(
       CaptureRegion = OMPD_teams;
       break;
     case OMPD_target_update:
+    case OMPD_target_enter_data:
+    case OMPD_target_exit_data:
       CaptureRegion = OMPD_task;
       break;
     case OMPD_cancel:
@@ -7642,8 +7644,6 @@ static OpenMPDirectiveKind getOpenMPCaptureRegionForClause(
     case OMPD_taskloop:
     case OMPD_taskloop_simd:
     case OMPD_target_data:
-    case OMPD_target_enter_data:
-    case OMPD_target_exit_data:
       // Do not capture if-clause expressions.
       break;
     case OMPD_threadprivate:
@@ -8005,6 +8005,8 @@ static OpenMPDirectiveKind getOpenMPCaptureRegionForClause(
   case OMPC_device:
     switch (DKind) {
     case OMPD_target_update:
+    case OMPD_target_enter_data:
+    case OMPD_target_exit_data:
       CaptureRegion = OMPD_task;
       break;
     case OMPD_target_teams:
@@ -8013,8 +8015,6 @@ static OpenMPDirectiveKind getOpenMPCaptureRegionForClause(
     case OMPD_target_teams_distribute_parallel_for:
     case OMPD_target_teams_distribute_parallel_for_simd:
     case OMPD_target_data:
-    case OMPD_target_enter_data:
-    case OMPD_target_exit_data:
     case OMPD_target:
     case OMPD_target_simd:
     case OMPD_target_parallel:
