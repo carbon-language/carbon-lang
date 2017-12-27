@@ -1056,6 +1056,7 @@
 // CHECK_ICL_M32: #define __AVX512DQ__ 1
 // CHECK_ICL_M32: #define __AVX512F__ 1
 // CHECK_ICL_M32: #define __AVX512IFMA__ 1
+// CHECK_ICL_M32: #define __AVX512VBMI2__ 1
 // CHECK_ICL_M32: #define __AVX512VBMI__ 1
 // CHECK_ICL_M32: #define __AVX512VL__ 1
 // CHECK_ICL_M32: #define __AVX512VNNI__ 1
@@ -1106,6 +1107,7 @@
 // CHECK_ICL_M64: #define __AVX512DQ__ 1
 // CHECK_ICL_M64: #define __AVX512F__ 1
 // CHECK_ICL_M64: #define __AVX512IFMA__ 1
+// CHECK_ICL_M64: #define __AVX512VBMI2__ 1
 // CHECK_ICL_M64: #define __AVX512VBMI__ 1
 // CHECK_ICL_M64: #define __AVX512VL__ 1
 // CHECK_ICL_M64: #define __AVX512VNNI__ 1
