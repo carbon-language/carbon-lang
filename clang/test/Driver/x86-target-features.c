@@ -100,3 +100,8 @@
 // VAES: "-target-feature" "+vaes"
 // NO-VAES: "-target-feature" "-vaes"
 
+// RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mgfni %s -### -o %t.o 2>&1 | FileCheck -check-prefix=GFNI %s
+// RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mno-gfni %s -### -o %t.o 2>&1 | FileCheck -check-prefix=NO-GFNI %s
+// GFNI: "-target-feature" "+gfni"
+// NO-GFNI: "-target-feature" "-gfni
+

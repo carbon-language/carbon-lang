@@ -133,6 +133,7 @@ bool X86TargetInfo::initFeatureMap(
 
   case CK_Icelake:
     setFeatureEnabledImpl(Features, "vaes", true);
+    setFeatureEnabledImpl(Features, "gfni", true);
     // TODO: Add icelake features here.
     LLVM_FALLTHROUGH;
   case CK_Cannonlake:
@@ -444,7 +445,7 @@ void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
     LLVM_FALLTHROUGH;
   case SSE2:
     Features["sse2"] = Features["pclmul"] = Features["aes"] = Features["sha"] =
-        false;
+        Features["gfni"] = false;
     LLVM_FALLTHROUGH;
   case SSE3:
     Features["sse3"] = false;
@@ -583,6 +584,9 @@ void X86TargetInfo::setFeatureEnabledImpl(llvm::StringMap<bool> &Features,
   } else if (Name == "pclmul") {
     if (Enabled)
       setSSELevel(Features, SSE2, Enabled);
+  } else if (Name == "gfni") {
+     if (Enabled)
+      setSSELevel(Features, SSE2, Enabled);
   } else if (Name == "avx") {
     setSSELevel(Features, AVX, Enabled);
   } else if (Name == "avx2") {
@@ -676,6 +680,8 @@ bool X86TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
       HasFMA = true;
     } else if (Feature == "+f16c") {
       HasF16C = true;
+    } else if (Feature == "+gfni") {
+      HasGFNI = true;
     } else if (Feature == "+avx512cd") {
       HasAVX512CD = true;
     } else if (Feature == "+avx512vpopcntdq") {
@@ -1009,6 +1015,9 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   if (HasF16C)
     Builder.defineMacro("__F16C__");
 
+  if (HasGFNI)
+    Builder.defineMacro("__GFNI__");
+
   if (HasAVX512CD)
     Builder.defineMacro("__AVX512CD__");
   if (HasAVX512VPOPCNTDQ)
@@ -1172,6 +1181,7 @@ bool X86TargetInfo::isValidFeatureName(StringRef Name) const {
       .Case("fma4", true)
       .Case("fsgsbase", true)
       .Case("fxsr", true)
+      .Case("gfni", true)
       .Case("lwp", true)
       .Case("lzcnt", true)
       .Case("mmx", true)
@@ -1235,6 +1245,7 @@ bool X86TargetInfo::hasFeature(StringRef Feature) const {
       .Case("fma4", XOPLevel >= FMA4)
       .Case("fsgsbase", HasFSGSBASE)
       .Case("fxsr", HasFXSR)
+      .Case("gfni", HasGFNI)
       .Case("ibt", HasIBT)
       .Case("lwp", HasLWP)
       .Case("lzcnt", HasLZCNT)

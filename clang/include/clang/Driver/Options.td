@@ -2511,6 +2511,8 @@ def mfsgsbase : Flag<["-"], "mfsgsbase">, Group<m_x86_Features_Group>;
 def mno_fsgsbase : Flag<["-"], "mno-fsgsbase">, Group<m_x86_Features_Group>;
 def mfxsr : Flag<["-"], "mfxsr">, Group<m_x86_Features_Group>;
 def mno_fxsr : Flag<["-"], "mno-fxsr">, Group<m_x86_Features_Group>;
+def mgfni : Flag<["-"], "mgfni">, Group<m_x86_Features_Group>;
+def mno_gfni : Flag<["-"], "mno-gfni">, Group<m_x86_Features_Group>;
 def mlwp : Flag<["-"], "mlwp">, Group<m_x86_Features_Group>;
 def mno_lwp : Flag<["-"], "mno-lwp">, Group<m_x86_Features_Group>;
 def mlzcnt : Flag<["-"], "mlzcnt">, Group<m_x86_Features_Group>;

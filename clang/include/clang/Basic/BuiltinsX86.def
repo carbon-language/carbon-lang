@@ -439,6 +439,17 @@ TARGET_BUILTIN(__builtin_ia32_aesdec512, "V8LLiV8LLiV8LLi", "", "avx512f,vaes")
 TARGET_BUILTIN(__builtin_ia32_aesdeclast256, "V4LLiV4LLiV4LLi", "", "vaes")
 TARGET_BUILTIN(__builtin_ia32_aesdeclast512, "V8LLiV8LLiV8LLi", "", "avx512f,vaes")
 
+// GFNI
+TARGET_BUILTIN(__builtin_ia32_vgf2p8affineinvqb_v16qi, "V16cV16cV16cIc", "", "gfni")
+TARGET_BUILTIN(__builtin_ia32_vgf2p8affineinvqb_v32qi, "V32cV32cV32cIc", "", "avx,gfni")
+TARGET_BUILTIN(__builtin_ia32_vgf2p8affineinvqb_v64qi, "V64cV64cV64cIc", "", "avx512bw,gfni")
+TARGET_BUILTIN(__builtin_ia32_vgf2p8affineqb_v16qi, "V16cV16cV16cIc", "", "gfni")
+TARGET_BUILTIN(__builtin_ia32_vgf2p8affineqb_v32qi, "V32cV32cV32cIc", "", "avx,gfni")
+TARGET_BUILTIN(__builtin_ia32_vgf2p8affineqb_v64qi, "V64cV64cV64cIc", "", "avx512bw,gfni")
+TARGET_BUILTIN(__builtin_ia32_vgf2p8mulb_v16qi, "V16cV16cV16c", "", "gfni")
+TARGET_BUILTIN(__builtin_ia32_vgf2p8mulb_v32qi, "V32cV32cV32c", "", "avx,gfni")
+TARGET_BUILTIN(__builtin_ia32_vgf2p8mulb_v64qi, "V64cV64cV64c", "", "avx512bw,gfni")
+
 // CLMUL
 TARGET_BUILTIN(__builtin_ia32_pclmulqdq128, "V2LLiV2LLiV2LLiIc", "", "pclmul")
 

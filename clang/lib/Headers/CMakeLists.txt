@@ -42,6 +42,7 @@ set(files
   fma4intrin.h
   fmaintrin.h
   fxsrintrin.h
+  gfniintrin.h
   htmintrin.h
   htmxlintrin.h
   ia32intrin.h

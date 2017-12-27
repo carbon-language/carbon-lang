@@ -379,3 +379,8 @@
 // VAESNOAES-NOT: #define __AES__ 1
 // VAESNOAES-NOT: #define __VAES__ 1
 
+// RUN: %clang -target i386-unknown-unknown -march=atom -mgfni -x c -E -dM -o - %s | FileCheck -match-full-lines --check-prefix=GFNI %s
+
+// GFNI: #define __GFNI__ 1
+// GFNI: #define __SSE2__ 1
+

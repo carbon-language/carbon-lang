@@ -50,6 +50,7 @@ class LLVM_LIBRARY_VISIBILITY X86TargetInfo : public TargetInfo {
   bool HasAES = false;
   bool HasVAES = false;
   bool HasPCLMUL = false;
+  bool HasGFNI = false;
   bool HasLZCNT = false;
   bool HasRDRND = false;
   bool HasFSGSBASE = false;
