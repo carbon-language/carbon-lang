@@ -1802,9 +1802,7 @@ Instruction *InstCombiner::visitVACopyInst(VACopyInst &I) {
 /// instructions. For normal calls, it allows visitCallSite to do the heavy
 /// lifting.
 Instruction *InstCombiner::visitCallInst(CallInst &CI) {
-  auto Args = CI.arg_operands();
-  if (Value *V = SimplifyCall(&CI, CI.getCalledValue(), Args.begin(),
-                              Args.end(), SQ.getWithInstruction(&CI)))
+  if (Value *V = SimplifyCall(&CI, SQ.getWithInstruction(&CI)))
     return replaceInstUsesWith(CI, V);
 
   if (isFreeCall(&CI, &TLI))

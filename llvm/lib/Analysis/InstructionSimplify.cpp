@@ -4617,6 +4617,12 @@ Value *llvm::SimplifyCall(ImmutableCallSite CS, Value *V,
   return ::SimplifyCall(CS, V, Args.begin(), Args.end(), Q, RecursionLimit);
 }
 
+Value *llvm::SimplifyCall(ImmutableCallSite ICS, const SimplifyQuery &Q) {
+  CallSite CS(const_cast<Instruction*>(ICS.getInstruction()));
+  return ::SimplifyCall(CS, CS.getCalledValue(), CS.arg_begin(), CS.arg_end(),
+                        Q, RecursionLimit);
+}
+
 /// See if we can compute a simplified version of this instruction.
 /// If not, this returns null.
 
@@ -4751,8 +4757,7 @@ Value *llvm::SimplifyInstruction(Instruction *I, const SimplifyQuery &SQ,
     break;
   case Instruction::Call: {
     CallSite CS(cast<CallInst>(I));
-    Result = SimplifyCall(CS, CS.getCalledValue(), CS.arg_begin(), CS.arg_end(),
-                          Q);
+    Result = SimplifyCall(CS, Q);
     break;
   }
 #define HANDLE_CAST_INST(num, opc, clas) case Instruction::opc:
