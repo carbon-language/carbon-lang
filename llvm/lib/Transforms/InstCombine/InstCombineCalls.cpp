@@ -1901,15 +1901,9 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
             lowerObjectSizeCall(II, DL, &TLI, /*MustSucceed=*/false))
       return replaceInstUsesWith(CI, N);
     return nullptr;
-
   case Intrinsic::bswap: {
     Value *IIOperand = II->getArgOperand(0);
     Value *X = nullptr;
-
-    // TODO should this be in InstSimplify?
-    // bswap(bswap(x)) -> x
-    if (match(IIOperand, m_BSwap(m_Value(X))))
-      return replaceInstUsesWith(CI, X);
 
     // bswap(trunc(bswap(x))) -> trunc(lshr(x, c))
     if (match(IIOperand, m_Trunc(m_BSwap(m_Value(X))))) {
@@ -1921,18 +1915,6 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     }
     break;
   }
-
-  case Intrinsic::bitreverse: {
-    Value *IIOperand = II->getArgOperand(0);
-    Value *X = nullptr;
-
-    // TODO should this be in InstSimplify?
-    // bitreverse(bitreverse(x)) -> x
-    if (match(IIOperand, m_BitReverse(m_Value(X))))
-      return replaceInstUsesWith(CI, X);
-    break;
-  }
-
   case Intrinsic::masked_load:
     if (Value *SimplifiedMaskedOp = simplifyMaskedLoad(*II, Builder))
       return replaceInstUsesWith(CI, SimplifiedMaskedOp);
@@ -1946,12 +1928,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
   case Intrinsic::powi:
     if (ConstantInt *Power = dyn_cast<ConstantInt>(II->getArgOperand(1))) {
-      // powi(x, 0) -> 1.0
-      if (Power->isZero())
-        return replaceInstUsesWith(CI, ConstantFP::get(CI.getType(), 1.0));
-      // powi(x, 1) -> x
-      if (Power->isOne())
-        return replaceInstUsesWith(CI, II->getArgOperand(0));
+      // 0 and 1 are handled in instsimplify
+
       // powi(x, -1) -> 1/x
       if (Power->isMinusOne())
         return BinaryOperator::CreateFDiv(ConstantFP::get(CI.getType(), 1.0),

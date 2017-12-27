@@ -4495,6 +4495,22 @@ static Value *SimplifyIntrinsic(Function *F, IterTy ArgBegin, IterTy ArgEnd,
         return *ArgBegin;
       return nullptr;
     }
+    case Intrinsic::bswap: {
+      Value *IIOperand = *ArgBegin;
+      Value *X = nullptr;
+      // bswap(bswap(x)) -> x
+      if (match(IIOperand, m_BSwap(m_Value(X))))
+        return X;
+      return nullptr;
+    }
+    case Intrinsic::bitreverse: {
+      Value *IIOperand = *ArgBegin;
+      Value *X = nullptr;
+      // bitreverse(bitreverse(x)) -> x
+      if (match(IIOperand, m_BitReverse(m_Value(X))))
+        return X;
+      return nullptr;
+    }
     default:
       return nullptr;
     }
@@ -4549,6 +4565,16 @@ static Value *SimplifyIntrinsic(Function *F, IterTy ArgBegin, IterTy ArgEnd,
         return SimplifyRelativeLoad(C0, C1, Q.DL);
       return nullptr;
     }
+    case Intrinsic::powi:
+      if (ConstantInt *Power = dyn_cast<ConstantInt>(RHS)) {
+        // powi(x, 0) -> 1.0
+        if (Power->isZero())
+          return ConstantFP::get(LHS->getType(), 1.0);
+        // powi(x, 1) -> x
+        if (Power->isOne())
+          return LHS;
+      }
+      return nullptr;
     default:
       return nullptr;
     }
