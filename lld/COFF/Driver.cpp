@@ -245,6 +245,13 @@ void LinkerDriver::parseDirectives(StringRef S) {
       Config->Entry = addUndefined(mangle(Arg->getValue()));
       break;
     case OPT_export: {
+      // If a common header file contains dllexported function
+      // declarations, many object files may end up with having the
+      // same /EXPORT options. In order to save cost of parsing them,
+      // we dedup them first.
+      if (!DirectivesExports.insert(Arg->getValue()).second)
+        break;
+
       Export E = parseExport(Arg->getValue());
       if (Config->Machine == I386 && Config->MinGW) {
         if (!isDecorated(E.Name))
