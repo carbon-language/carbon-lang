@@ -18679,6 +18679,14 @@ static SDValue LowerExtended1BitVectorLoad(SDValue Op,
       // Replace chain users with the new chain.
       assert(Load->getNumValues() == 2 && "Loads must carry a chain!");
       DAG.ReplaceAllUsesOfValueWith(SDValue(Ld, 1), Load.getValue(1));
+      if (Subtarget.hasVLX()) {
+        // Extract to v4i1/v2i1.
+        SDValue Extract = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MemVT, Load,
+                                      DAG.getIntPtrConstant(0, dl));
+        // Finally, do a normal sign-extend to the desired register.
+        return DAG.getNode(ExtOpcode, dl, Op.getValueType(), Extract);
+      }
+
       MVT ExtVT = MVT::getVectorVT(VT.getScalarType(), 8);
       SDValue ExtVec = DAG.getNode(ExtOpcode, dl, ExtVT, Load);
 
@@ -18698,22 +18706,25 @@ static SDValue LowerExtended1BitVectorLoad(SDValue Op,
 
   if (NumElts <= 8) {
     // A subset, assume that we have only AVX-512F
-    unsigned NumBitsToLoad = 8;
-    MVT TypeToLoad = MVT::getIntegerVT(NumBitsToLoad);
-    SDValue Load = DAG.getLoad(TypeToLoad, dl, Ld->getChain(),
+    SDValue Load = DAG.getLoad(MVT::i8, dl, Ld->getChain(),
                               Ld->getBasePtr(),
                               Ld->getMemOperand());
     // Replace chain users with the new chain.
     assert(Load->getNumValues() == 2 && "Loads must carry a chain!");
     DAG.ReplaceAllUsesOfValueWith(SDValue(Ld, 1), Load.getValue(1));
 
-    MVT MaskVT = MVT::getVectorVT(MVT::i1, NumBitsToLoad);
-    SDValue BitVec = DAG.getBitcast(MaskVT, Load);
+    SDValue BitVec = DAG.getBitcast(MVT::v8i1, Load);
 
     if (NumElts == 8)
       return DAG.getNode(ExtOpcode, dl, VT, BitVec);
 
-      // we should take care to v4i1 and v2i1
+    if (Subtarget.hasVLX()) {
+      // Extract to v4i1/v2i1.
+      SDValue Extract = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MemVT, BitVec,
+                                    DAG.getIntPtrConstant(0, dl));
+      // Finally, do a normal sign-extend to the desired register.
+      return DAG.getNode(ExtOpcode, dl, Op.getValueType(), Extract);
+    }
 
     MVT ExtVT = MVT::getVectorVT(VT.getScalarType(), 8);
     SDValue ExtVec = DAG.getNode(ExtOpcode, dl, ExtVT, BitVec);
