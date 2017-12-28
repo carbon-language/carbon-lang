@@ -18728,13 +18728,12 @@ static SDValue LowerExtended1BitVectorLoad(SDValue Op,
                                Ld->getBasePtr(),
                                Ld->getMemOperand());
 
-  SDValue BasePtrHi =
-    DAG.getNode(ISD::ADD, dl, BasePtr.getValueType(), BasePtr,
-                DAG.getConstant(2, dl, BasePtr.getValueType()));
+  SDValue BasePtrHi = DAG.getMemBasePlusOffset(BasePtr, 2, dl);
 
-  SDValue LoadHi = DAG.getLoad(MVT::v16i1, dl, Ld->getChain(),
-                               BasePtrHi,
-                               Ld->getMemOperand());
+  SDValue LoadHi = DAG.getLoad(MVT::v16i1, dl, Ld->getChain(), BasePtrHi,
+                               Ld->getPointerInfo().getWithOffset(2),
+                               MinAlign(Ld->getAlignment(), 2U),
+                               Ld->getMemOperand()->getFlags());
 
   SDValue NewChain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
                                  LoadLo.getValue(1), LoadHi.getValue(1));
@@ -34051,8 +34050,9 @@ static SDValue combineLoad(SDNode *N, SelectionDAG &DAG,
 
     Ptr = DAG.getMemBasePlusOffset(Ptr, 16, dl);
     SDValue Load2 =
-        DAG.getLoad(HalfVT, dl, Ld->getChain(), Ptr, Ld->getPointerInfo(),
-                    std::min(16U, Alignment), Ld->getMemOperand()->getFlags());
+        DAG.getLoad(HalfVT, dl, Ld->getChain(), Ptr,
+                    Ld->getPointerInfo().getWithOffset(16),
+                    MinAlign(Alignment, 16U), Ld->getMemOperand()->getFlags());
     SDValue TF = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
                              Load1.getValue(1),
                              Load2.getValue(1));
@@ -34465,8 +34465,9 @@ static SDValue combineStore(SDNode *N, SelectionDAG &DAG,
         DAG.getStore(St->getChain(), dl, Value0, Ptr0, St->getPointerInfo(),
                      Alignment, St->getMemOperand()->getFlags());
     SDValue Ch1 =
-        DAG.getStore(St->getChain(), dl, Value1, Ptr1, St->getPointerInfo(),
-                     std::min(16U, Alignment), St->getMemOperand()->getFlags());
+        DAG.getStore(St->getChain(), dl, Value1, Ptr1,
+                     St->getPointerInfo().getWithOffset(16),
+                     MinAlign(Alignment, 16U), St->getMemOperand()->getFlags());
     return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Ch0, Ch1);
   }
 
