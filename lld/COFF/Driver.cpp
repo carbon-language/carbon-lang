@@ -795,6 +795,13 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
     SearchPaths.push_back(Arg->getValue());
   addLibSearchPaths();
 
+  // Handle /ignore
+  for (auto *Arg : Args.filtered(OPT_ignore)) {
+    if (StringRef(Arg->getValue()) == "4217")
+      Config->WarnLocallyDefinedImported = false;
+    // Other warning numbers are ignored.
+  }
+
   // Handle /out
   if (auto *Arg = Args.getLastArg(OPT_out))
     Config->OutputFile = Arg->getValue();
