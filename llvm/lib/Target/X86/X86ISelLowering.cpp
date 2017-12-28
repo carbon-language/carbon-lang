@@ -34057,9 +34057,7 @@ static SDValue combineLoad(SDNode *N, SelectionDAG &DAG,
                              Load1.getValue(1),
                              Load2.getValue(1));
 
-    SDValue NewVec = DAG.getUNDEF(RegVT);
-    NewVec = insert128BitVector(NewVec, Load1, 0, DAG, dl);
-    NewVec = insert128BitVector(NewVec, Load2, NumElems / 2, DAG, dl);
+    SDValue NewVec = DAG.getNode(ISD::CONCAT_VECTORS, dl, RegVT, Load1, Load2);
     return DCI.CombineTo(N, NewVec, TF, true);
   }
 
