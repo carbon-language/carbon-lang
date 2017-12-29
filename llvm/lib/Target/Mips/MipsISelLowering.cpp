@@ -3867,11 +3867,13 @@ MipsTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
         return std::make_pair((unsigned)Mips::T9_64, &Mips::GPR64RegClass);
       // This will generate an error message
       return std::make_pair(0U, nullptr);
-    case 'l': // register suitable for indirect jump
+    case 'l': // use the `lo` register to store values
+              // that are no bigger than a word
       if (VT == MVT::i32)
         return std::make_pair((unsigned)Mips::LO0, &Mips::LO32RegClass);
       return std::make_pair((unsigned)Mips::LO0_64, &Mips::LO64RegClass);
-    case 'x': // register suitable for indirect jump
+    case 'x': // use the concatenated `hi` and `lo` registers
+              // to store doubleword values
       // Fixme: Not triggering the use of both hi and low
       // This will generate an error message
       return std::make_pair(0U, nullptr);
