@@ -1,10 +1,12 @@
 // Test that by default -fnoopenmp-use-tls is passed to frontend.
 //
 // RUN: %clang %s -### -o %t.o 2>&1 -fopenmp=libomp | FileCheck --check-prefix=CHECK-DEFAULT %s
+
 // CHECK-DEFAULT: -cc1
 // CHECK-DEFAULT-NOT: -fnoopenmp-use-tls
 //
 // RUN: %clang %s -### -o %t.o 2>&1 -fopenmp=libomp -fnoopenmp-use-tls | FileCheck --check-prefix=CHECK-NO-TLS %s
+
 // CHECK-NO-TLS: -cc1
 // CHECK-NO-TLS-SAME: -fnoopenmp-use-tls
 //
@@ -13,6 +15,7 @@
 // RUN: %clang %s -c -E -dM -fopenmp=libomp -fopenmp-version=0 | FileCheck --check-prefix=CHECK-DEFAULT-VERSION %s
 // RUN: %clang %s -c -E -dM -fopenmp=libomp -fopenmp-version=100 | FileCheck --check-prefix=CHECK-DEFAULT-VERSION %s
 // RUN: %clang %s -c -E -dM -fopenmp=libomp -fopenmp-version=31 | FileCheck --check-prefix=CHECK-DEFAULT-VERSION %s
+
 // CHECK-DEFAULT-VERSION: #define _OPENMP 201107
 
 // RUN: %clang %s -c -E -dM -fopenmp-simd | FileCheck --check-prefix=CHECK-SIMD-DEFAULT-VERSION %s
