@@ -28,7 +28,6 @@ using namespace llvm;
 
 SIMachineFunctionInfo::SIMachineFunctionInfo(const MachineFunction &MF)
   : AMDGPUMachineFunction(MF),
-    BufferPSV(*(MF.getSubtarget().getInstrInfo())),
     PrivateSegmentBuffer(false),
     DispatchPtr(false),
     QueuePtr(false),

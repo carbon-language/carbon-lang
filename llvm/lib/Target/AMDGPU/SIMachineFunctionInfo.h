@@ -137,11 +137,10 @@ class SIMachineFunctionInfo final : public AMDGPUMachineFunction {
   // Stack object indices for work item IDs.
   std::array<int, 3> DebuggerWorkItemIDStackObjectIndices = {{0, 0, 0}};
 
-  AMDGPUBufferPseudoSourceValue BufferPSV;
-
+  DenseMap<const Value *,
+           std::unique_ptr<const AMDGPUBufferPseudoSourceValue>> BufferPSVs;
   DenseMap<const Value *,
            std::unique_ptr<const AMDGPUImagePseudoSourceValue>> ImagePSVs;
-
 
 private:
   unsigned LDSWaveSpillSize = 0;
@@ -634,9 +633,13 @@ public:
     return LDSWaveSpillSize;
   }
 
-  // FIXME: These should be unique
-  const AMDGPUBufferPseudoSourceValue *getBufferPSV() const {
-    return &BufferPSV;
+  const AMDGPUBufferPseudoSourceValue *getBufferPSV(const SIInstrInfo &TII,
+                                                    const Value *BufferRsrc) {
+    assert(BufferRsrc);
+    auto PSV = BufferPSVs.try_emplace(
+      BufferRsrc,
+      llvm::make_unique<AMDGPUBufferPseudoSourceValue>(TII));
+    return PSV.first->second.get();
   }
 
   const AMDGPUImagePseudoSourceValue *getImagePSV(const SIInstrInfo &TII,

@@ -462,7 +462,7 @@ class AMDGPUBufferLoad : Intrinsic <
    llvm_i32_ty,       // offset(SGPR/VGPR/imm)
    llvm_i1_ty,        // glc(imm)
    llvm_i1_ty],       // slc(imm)
-  [IntrReadMem]>;
+  [IntrReadMem], "", [SDNPMemOperand]>;
 def int_amdgcn_buffer_load_format : AMDGPUBufferLoad;
 def int_amdgcn_buffer_load : AMDGPUBufferLoad;
 
@@ -474,7 +474,7 @@ class AMDGPUBufferStore : Intrinsic <
    llvm_i32_ty,       // offset(SGPR/VGPR/imm)
    llvm_i1_ty,        // glc(imm)
    llvm_i1_ty],       // slc(imm)
-  [IntrWriteMem]>;
+  [IntrWriteMem], "", [SDNPMemOperand]>;
 def int_amdgcn_buffer_store_format : AMDGPUBufferStore;
 def int_amdgcn_buffer_store : AMDGPUBufferStore;
 
@@ -489,7 +489,7 @@ def int_amdgcn_tbuffer_load : Intrinsic <
      llvm_i32_ty,     // nfmt(imm)
      llvm_i1_ty,     // glc(imm)
      llvm_i1_ty],    // slc(imm)
-    []>;
+    [IntrReadMem], "", [SDNPMemOperand]>;
 
 def int_amdgcn_tbuffer_store : Intrinsic <
     [],
@@ -503,7 +503,7 @@ def int_amdgcn_tbuffer_store : Intrinsic <
      llvm_i32_ty,    // nfmt(imm)
      llvm_i1_ty,     // glc(imm)
      llvm_i1_ty],    // slc(imm)
-    []>;
+    [IntrWriteMem], "", [SDNPMemOperand]>;
 
 class AMDGPUBufferAtomic : Intrinsic <
   [llvm_i32_ty],
@@ -512,7 +512,7 @@ class AMDGPUBufferAtomic : Intrinsic <
    llvm_i32_ty,       // vindex(VGPR)
    llvm_i32_ty,       // offset(SGPR/VGPR/imm)
    llvm_i1_ty],       // slc(imm)
-  []>;
+  [], "", [SDNPMemOperand]>;
 def int_amdgcn_buffer_atomic_swap : AMDGPUBufferAtomic;
 def int_amdgcn_buffer_atomic_add : AMDGPUBufferAtomic;
 def int_amdgcn_buffer_atomic_sub : AMDGPUBufferAtomic;
@@ -531,7 +531,7 @@ def int_amdgcn_buffer_atomic_cmpswap : Intrinsic<
    llvm_i32_ty,       // vindex(VGPR)
    llvm_i32_ty,       // offset(SGPR/VGPR/imm)
    llvm_i1_ty],       // slc(imm)
-  []>;
+  [], "", [SDNPMemOperand]>;
 
 // Uses that do not set the done bit should set IntrWriteMem on the
 // call site.
