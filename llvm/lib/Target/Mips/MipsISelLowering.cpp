@@ -3863,8 +3863,10 @@ MipsTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
     case 'c': // register suitable for indirect jump
       if (VT == MVT::i32)
         return std::make_pair((unsigned)Mips::T9, &Mips::GPR32RegClass);
-      assert(VT == MVT::i64 && "Unexpected type.");
-      return std::make_pair((unsigned)Mips::T9_64, &Mips::GPR64RegClass);
+      if (VT == MVT::i64)
+        return std::make_pair((unsigned)Mips::T9_64, &Mips::GPR64RegClass);
+      // This will generate an error message
+      return std::make_pair(0U, nullptr);
     case 'l': // register suitable for indirect jump
       if (VT == MVT::i32)
         return std::make_pair((unsigned)Mips::LO0, &Mips::LO32RegClass);
