@@ -304,7 +304,8 @@ class AMDGPUImageLoad<bit NoMem = 0> : Intrinsic <
    llvm_i1_ty,        // slc(imm)
    llvm_i1_ty,        // lwe(imm)
    llvm_i1_ty],       // da(imm)
-  !if(NoMem, [IntrNoMem], [IntrReadMem])>;
+  !if(NoMem, [IntrNoMem], [IntrReadMem]), "",
+  !if(NoMem, [], [SDNPMemOperand])>;
 
 def int_amdgcn_image_load : AMDGPUImageLoad;
 def int_amdgcn_image_load_mip : AMDGPUImageLoad;
@@ -320,7 +321,7 @@ class AMDGPUImageStore : Intrinsic <
    llvm_i1_ty,        // slc(imm)
    llvm_i1_ty,        // lwe(imm)
    llvm_i1_ty],       // da(imm)
-  []>;
+  [IntrWriteMem], "", [SDNPMemOperand]>;
 
 def int_amdgcn_image_store : AMDGPUImageStore;
 def int_amdgcn_image_store_mip : AMDGPUImageStore;
@@ -336,7 +337,8 @@ class AMDGPUImageSample<bit NoMem = 0> : Intrinsic <
      llvm_i1_ty,        // slc(imm)
      llvm_i1_ty,        // lwe(imm)
      llvm_i1_ty],       // da(imm)
-     !if(NoMem, [IntrNoMem], [IntrReadMem])>;
+     !if(NoMem, [IntrNoMem], [IntrReadMem]), "",
+     !if(NoMem, [], [SDNPMemOperand])>;
 
 // Basic sample
 def int_amdgcn_image_sample : AMDGPUImageSample;
@@ -428,7 +430,7 @@ class AMDGPUImageAtomic : Intrinsic <
    llvm_i1_ty,        // r128(imm)
    llvm_i1_ty,        // da(imm)
    llvm_i1_ty],       // slc(imm)
-  []>;
+  [], "", [SDNPMemOperand]>;
 
 def int_amdgcn_image_atomic_swap : AMDGPUImageAtomic;
 def int_amdgcn_image_atomic_add : AMDGPUImageAtomic;
@@ -451,7 +453,7 @@ def int_amdgcn_image_atomic_cmpswap : Intrinsic <
    llvm_i1_ty,        // r128(imm)
    llvm_i1_ty,        // da(imm)
    llvm_i1_ty],       // slc(imm)
-  []>;
+  [], "", [SDNPMemOperand]>;
 
 class AMDGPUBufferLoad : Intrinsic <
   [llvm_anyfloat_ty],

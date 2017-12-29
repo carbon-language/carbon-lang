@@ -34,12 +34,14 @@ namespace llvm {
 
 class MachineFrameInfo;
 class MachineFunction;
+class SIInstrInfo;
 class TargetRegisterClass;
 
 class AMDGPUImagePseudoSourceValue : public PseudoSourceValue {
 public:
+  // TODO: Is the img rsrc useful?
   explicit AMDGPUImagePseudoSourceValue(const TargetInstrInfo &TII) :
-    PseudoSourceValue(PseudoSourceValue::TargetCustom, TII) { }
+    PseudoSourceValue(PseudoSourceValue::TargetCustom, TII) {}
 
   bool isConstant(const MachineFrameInfo *) const override {
     // This should probably be true for most images, but we will start by being
@@ -136,7 +138,10 @@ class SIMachineFunctionInfo final : public AMDGPUMachineFunction {
   std::array<int, 3> DebuggerWorkItemIDStackObjectIndices = {{0, 0, 0}};
 
   AMDGPUBufferPseudoSourceValue BufferPSV;
-  AMDGPUImagePseudoSourceValue ImagePSV;
+
+  DenseMap<const Value *,
+           std::unique_ptr<const AMDGPUImagePseudoSourceValue>> ImagePSVs;
+
 
 private:
   unsigned LDSWaveSpillSize = 0;
@@ -629,12 +634,18 @@ public:
     return LDSWaveSpillSize;
   }
 
+  // FIXME: These should be unique
   const AMDGPUBufferPseudoSourceValue *getBufferPSV() const {
     return &BufferPSV;
   }
 
-  const AMDGPUImagePseudoSourceValue *getImagePSV() const {
-    return &ImagePSV;
+  const AMDGPUImagePseudoSourceValue *getImagePSV(const SIInstrInfo &TII,
+                                                  const Value *ImgRsrc) {
+    assert(ImgRsrc);
+    auto PSV = ImagePSVs.try_emplace(
+      ImgRsrc,
+      llvm::make_unique<AMDGPUImagePseudoSourceValue>(TII));
+    return PSV.first->second.get();
   }
 };
 
