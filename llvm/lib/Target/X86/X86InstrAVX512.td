@@ -3087,23 +3087,6 @@ defm : operation_subvector_mask_lowering<VK16, v16i1, VK64, v64i1>;
 
 defm : operation_subvector_mask_lowering<VK32, v32i1, VK64, v64i1>;
 
-// Patterns for kmask shift
-multiclass mask_shift_lowering<RegisterClass RC, ValueType VT> {
-  def : Pat<(VT (X86kshiftl RC:$src, (i8 imm:$imm))),
-            (VT (COPY_TO_REGCLASS
-                   (KSHIFTLWri (COPY_TO_REGCLASS RC:$src, VK16),
-                               (I8Imm $imm)),
-                   RC))>;
-  def : Pat<(VT (X86kshiftr RC:$src, (i8 imm:$imm))),
-            (VT (COPY_TO_REGCLASS
-                   (KSHIFTRWri (COPY_TO_REGCLASS RC:$src, VK16),
-                               (I8Imm $imm)),
-                   RC))>;
-}
-
-defm : mask_shift_lowering<VK8, v8i1>, Requires<[HasAVX512, NoDQI]>;
-defm : mask_shift_lowering<VK4, v4i1>, Requires<[HasAVX512]>;
-defm : mask_shift_lowering<VK2, v2i1>, Requires<[HasAVX512]>;
 //===----------------------------------------------------------------------===//
 // AVX-512 - Aligned and unaligned load and store
 //
