@@ -9,3 +9,12 @@ define i32 @extractelement_out_of_range(<2 x i32> %x) {
   %E1 = extractelement <2 x i32> %x, i8 16
   ret i32 %E1
 }
+
+define i32 @extractelement_type_out_of_range(<2 x i32> %x) {
+; CHECK-LABEL: @extractelement_type_out_of_range(
+; CHECK-NEXT:    [[E1:%.*]] = extractelement <2 x i32> [[X:%.*]], i128 0
+; CHECK-NEXT:    ret i32 [[E1]]
+;
+  %E1 = extractelement <2 x i32> %x, i128 0
+  ret i32 %E1
+}
