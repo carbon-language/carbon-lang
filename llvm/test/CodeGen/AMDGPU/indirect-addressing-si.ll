@@ -146,6 +146,7 @@ entry:
 }
 
 ; GCN-LABEL: {{^}}extract_undef_offset_sgpr:
+; undefined behavior, but shouldn't crash compiler
 define amdgpu_kernel void @extract_undef_offset_sgpr(i32 addrspace(1)* %out, <4 x i32> addrspace(1)* %in) {
 entry:
   %ld = load volatile <4 x i32>, <4  x i32> addrspace(1)* %in
@@ -155,9 +156,7 @@ entry:
 }
 
 ; GCN-LABEL: {{^}}insert_undef_offset_sgpr_vector_src:
-; GCN-DAG: buffer_load_dwordx4
-; MOVREL-DAG: s_mov_b32 m0,
-; MOVREL: v_movreld_b32
+; undefined behavior, but shouldn't crash compiler
 define amdgpu_kernel void @insert_undef_offset_sgpr_vector_src(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in) {
 entry:
   %ld = load <4 x i32>, <4  x i32> addrspace(1)* %in
