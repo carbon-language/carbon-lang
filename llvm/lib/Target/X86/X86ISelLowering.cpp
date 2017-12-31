@@ -18718,6 +18718,7 @@ static SDValue LowerTruncatingStore(SDValue StOp, const X86Subtarget &Subtarget,
                         DAG.getUNDEF(ExtVT), Op, DAG.getIntPtrConstant(0, dl));
     }
     Op = DAG.getNode(ISD::TRUNCATE, dl, MVT::v8i1, Op);
+    Op = DAG.getBitcast(MVT::i8, Op);
     return DAG.getStore(St->getChain(), dl, Op, St->getBasePtr(),
                         St->getMemOperand());
   }
@@ -18734,12 +18735,12 @@ static SDValue LowerTruncatingStore(SDValue StOp, const X86Subtarget &Subtarget,
                             DAG.getIntPtrConstant(16, dl));
   Hi = DAG.getNode(ISD::TRUNCATE, dl, MVT::v16i1, Hi);
 
-  SDValue BasePtrHi =
-    DAG.getNode(ISD::ADD, dl, BasePtr.getValueType(), BasePtr,
-                DAG.getConstant(2, dl, BasePtr.getValueType()));
+  SDValue BasePtrHi = DAG.getMemBasePlusOffset(BasePtr, 2, dl);
 
   SDValue StHi = DAG.getStore(St->getChain(), dl, Hi,
-                              BasePtrHi, St->getMemOperand());
+                              BasePtrHi, St->getPointerInfo().getWithOffset(2),
+                              MinAlign(St->getAlignment(), 2U),
+                              St->getMemOperand()->getFlags());
   return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, StLo, StHi);
 }
 
