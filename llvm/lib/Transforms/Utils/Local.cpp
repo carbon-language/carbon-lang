@@ -116,10 +116,6 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB, bool DeleteDeadConditions,
       BasicBlock *Destination = Cond->getZExtValue() ? Dest1 : Dest2;
       BasicBlock *OldDest     = Cond->getZExtValue() ? Dest2 : Dest1;
 
-      //cerr << "Function: " << T->getParent()->getParent()
-      //     << "\nRemoving branch from " << T->getParent()
-      //     << "\n\nTo: " << OldDest << endl;
-
       // Let the basic block know that we are letting go of it.  Based on this,
       // it will adjust it's PHI nodes.
       OldDest->removePredecessor(BB);
