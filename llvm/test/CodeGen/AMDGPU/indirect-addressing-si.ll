@@ -470,32 +470,6 @@ bb2:
 
 
 ; GCN-LABEL: {{^}}insert_adjacent_blocks:
-; GCN: s_load_dword [[ARG:s[0-9]+]]
-; GCN: s_cmp_lg_u32
-; GCN: s_cbranch_scc0 [[BB4:BB[0-9]+_[0-9]+]]
-
-; GCN: buffer_load_dwordx4
-; MOVREL: s_mov_b32 m0,
-; MOVREL: v_movreld_b32_e32
-
-; IDXMODE: s_set_gpr_idx_on s{{[0-9]+}}, dst
-; IDXMODE: v_mov_b32_e32
-; IDXMODE: s_set_gpr_idx_off
-
-; GCN: s_branch [[ENDBB:BB[0-9]+_[0-9]+]]
-
-; GCN: [[BB4]]:
-; GCN: buffer_load_dwordx4
-; MOVREL: s_mov_b32 m0,
-; MOVREL: v_movreld_b32_e32
-
-; IDXMODE: s_set_gpr_idx_on s{{[0-9]+}}, dst
-; IDXMODE: v_mov_b32_e32
-; IDXMODE: s_set_gpr_idx_off
-
-; GCN: [[ENDBB]]:
-; GCN: buffer_store_dword
-; GCN: s_endpgm
 define amdgpu_kernel void @insert_adjacent_blocks(i32 %arg, float %val0) #0 {
 bb:
   %tmp = icmp eq i32 %arg, 0
