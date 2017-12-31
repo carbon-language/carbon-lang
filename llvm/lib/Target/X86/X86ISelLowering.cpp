@@ -4632,6 +4632,14 @@ bool X86TargetLowering::isCheapToSpeculateCtlz() const {
   return Subtarget.hasLZCNT();
 }
 
+bool X86TargetLowering::isLoadBitCastBeneficial(EVT LoadVT,
+                                                EVT BitcastVT) const {
+  if (!Subtarget.hasDQI() && BitcastVT == MVT::v8i1)
+    return false;
+
+  return TargetLowering::isLoadBitCastBeneficial(LoadVT, BitcastVT);
+}
+
 bool X86TargetLowering::canMergeStoresTo(unsigned AddressSpace, EVT MemVT,
                                          const SelectionDAG &DAG) const {
   // Do not merge to float value size (128 bytes) if no implicit

@@ -2742,6 +2742,8 @@ let Predicates = [HasAVX512, NoDQI] in {
 let Predicates = [HasAVX512] in {
   def : Pat<(v1i1 (load addr:$src)),
             (COPY_TO_REGCLASS (MOVZX32rm8 addr:$src), VK1)>;
+  def : Pat<(v8i1 (bitconvert (i8 (load addr:$src)))),
+            (COPY_TO_REGCLASS (MOVZX32rm8 addr:$src), VK8)>;
 }
 
 let Predicates = [HasAVX512] in {
