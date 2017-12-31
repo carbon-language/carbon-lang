@@ -1285,7 +1285,7 @@ static bool HoistThenElseCodeToIf(BranchInst *BI,
     auto *C2 = dyn_cast<CallInst>(I2);
     if (C1 && C2)
       if (C1->isMustTailCall() != C2->isMustTailCall())
-        return false;
+        return Changed;
 
     if (!TTI.isProfitableToHoist(I1) || !TTI.isProfitableToHoist(I2))
       return Changed;
