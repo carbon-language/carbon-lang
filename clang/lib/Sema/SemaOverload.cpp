@@ -5145,8 +5145,7 @@ Sema::PerformObjectArgumentInitialization(Expr *From,
       *this, From->getLocStart(), From->getType(), FromClassification, Method,
       Method->getParent());
   if (ICS.isBad()) {
-    switch (ICS.Bad.Kind) {
-    case BadConversionSequence::bad_qualifiers: {
+    if (ICS.Bad.Kind == BadConversionSequence::bad_qualifiers) {
       Qualifiers FromQs = FromRecordType.getQualifiers();
       Qualifiers ToQs = DestType.getQualifiers();
       unsigned CVR = FromQs.getCVRQualifiers() & ~ToQs.getCVRQualifiers();
@@ -5159,28 +5158,10 @@ Sema::PerformObjectArgumentInitialization(Expr *From,
           << Method->getDeclName();
         return ExprError();
       }
-      break;
-    }
-
-    case BadConversionSequence::lvalue_ref_to_rvalue:
-    case BadConversionSequence::rvalue_ref_to_lvalue: {
-      bool IsRValueQualified =
-        Method->getRefQualifier() == RefQualifierKind::RQ_RValue;
-      Diag(From->getLocStart(), diag::err_member_function_call_bad_ref)
-        << Method->getDeclName() << FromClassification.isRValue()
-        << IsRValueQualified;
-      Diag(Method->getLocation(), diag::note_previous_decl)
-        << Method->getDeclName();
-      return ExprError();
-    }
-
-    case BadConversionSequence::no_conversion:
-    case BadConversionSequence::unrelated_class:
-      break;
     }
 
     return Diag(From->getLocStart(),
-                diag::err_member_function_call_bad_type)
+                diag::err_implicit_object_parameter_init)
        << ImplicitParamRecordType << FromRecordType << From->getSourceRange();
   }
 
