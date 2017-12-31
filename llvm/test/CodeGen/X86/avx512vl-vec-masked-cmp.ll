@@ -37177,8 +37177,7 @@ entry:
 define zeroext i8 @test_masked_vcmpoeqps_v4i1_v8i1_mask(i4 zeroext %__u, <2 x i64> %__a, <2 x i64> %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqps_v4i1_v8i1_mask:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqps %xmm1, %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    # kill: def %al killed %al killed %eax
@@ -37236,8 +37235,7 @@ entry:
 define zeroext i8 @test_masked_vcmpoeqps_v4i1_v8i1_mask_mem(i4 zeroext %__u, <2 x i64> %__a, <2 x i64>* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqps_v4i1_v8i1_mask_mem:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqps (%rsi), %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    # kill: def %al killed %al killed %eax
@@ -37296,8 +37294,7 @@ entry:
 define zeroext i8 @test_masked_vcmpoeqps_v4i1_v8i1_mask_mem_b(i4 zeroext %__u, <2 x i64> %__a, float* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqps_v4i1_v8i1_mask_mem_b:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqps (%rsi){1to4}, %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    # kill: def %al killed %al killed %eax
@@ -37517,8 +37514,7 @@ entry:
 define zeroext i16 @test_masked_vcmpoeqps_v4i1_v16i1_mask(i4 zeroext %__u, <2 x i64> %__a, <2 x i64> %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqps_v4i1_v16i1_mask:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqps %xmm1, %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    # kill: def %ax killed %ax killed %eax
@@ -37576,8 +37572,7 @@ entry:
 define zeroext i16 @test_masked_vcmpoeqps_v4i1_v16i1_mask_mem(i4 zeroext %__u, <2 x i64> %__a, <2 x i64>* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqps_v4i1_v16i1_mask_mem:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqps (%rsi), %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    # kill: def %ax killed %ax killed %eax
@@ -37636,8 +37631,7 @@ entry:
 define zeroext i16 @test_masked_vcmpoeqps_v4i1_v16i1_mask_mem_b(i4 zeroext %__u, <2 x i64> %__a, float* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqps_v4i1_v16i1_mask_mem_b:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqps (%rsi){1to4}, %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    # kill: def %ax killed %ax killed %eax
@@ -37827,8 +37821,7 @@ entry:
 define zeroext i32 @test_masked_vcmpoeqps_v4i1_v32i1_mask(i4 zeroext %__u, <2 x i64> %__a, <2 x i64> %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqps_v4i1_v32i1_mask:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqps %xmm1, %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    retq
@@ -37875,8 +37868,7 @@ entry:
 define zeroext i32 @test_masked_vcmpoeqps_v4i1_v32i1_mask_mem(i4 zeroext %__u, <2 x i64> %__a, <2 x i64>* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqps_v4i1_v32i1_mask_mem:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqps (%rsi), %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    retq
@@ -37924,8 +37916,7 @@ entry:
 define zeroext i32 @test_masked_vcmpoeqps_v4i1_v32i1_mask_mem_b(i4 zeroext %__u, <2 x i64> %__a, float* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqps_v4i1_v32i1_mask_mem_b:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqps (%rsi){1to4}, %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    retq
@@ -38122,8 +38113,7 @@ entry:
 define zeroext i64 @test_masked_vcmpoeqps_v4i1_v64i1_mask(i4 zeroext %__u, <2 x i64> %__a, <2 x i64> %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqps_v4i1_v64i1_mask:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqps %xmm1, %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovq %k0, %rax
 ; VLX-NEXT:    retq
@@ -38176,8 +38166,7 @@ entry:
 define zeroext i64 @test_masked_vcmpoeqps_v4i1_v64i1_mask_mem(i4 zeroext %__u, <2 x i64> %__a, <2 x i64>* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqps_v4i1_v64i1_mask_mem:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqps (%rsi), %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovq %k0, %rax
 ; VLX-NEXT:    retq
@@ -38231,8 +38220,7 @@ entry:
 define zeroext i64 @test_masked_vcmpoeqps_v4i1_v64i1_mask_mem_b(i4 zeroext %__u, <2 x i64> %__a, float* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqps_v4i1_v64i1_mask_mem_b:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqps (%rsi){1to4}, %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovq %k0, %rax
 ; VLX-NEXT:    retq
@@ -40054,8 +40042,7 @@ entry:
 define zeroext i4 @test_masked_vcmpoeqpd_v2i1_v4i1_mask(i2 zeroext %__u, <2 x i64> %__a, <2 x i64> %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v2i1_v4i1_mask:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd %xmm1, %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovb %k0, -{{[0-9]+}}(%rsp)
 ; VLX-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
@@ -40089,8 +40076,7 @@ entry:
 define zeroext i4 @test_masked_vcmpoeqpd_v2i1_v4i1_mask_mem(i2 zeroext %__u, <2 x i64> %__a, <2 x i64>* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v2i1_v4i1_mask_mem:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd (%rsi), %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovb %k0, -{{[0-9]+}}(%rsp)
 ; VLX-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
@@ -40125,8 +40111,7 @@ entry:
 define zeroext i4 @test_masked_vcmpoeqpd_v2i1_v4i1_mask_mem_b(i2 zeroext %__u, <2 x i64> %__a, double* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v2i1_v4i1_mask_mem_b:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd (%rsi){1to2}, %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovb %k0, -{{[0-9]+}}(%rsp)
 ; VLX-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
@@ -40280,8 +40265,7 @@ entry:
 define zeroext i8 @test_masked_vcmpoeqpd_v2i1_v8i1_mask(i2 zeroext %__u, <2 x i64> %__a, <2 x i64> %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v2i1_v8i1_mask:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd %xmm1, %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    # kill: def %al killed %al killed %eax
@@ -40325,8 +40309,7 @@ entry:
 define zeroext i8 @test_masked_vcmpoeqpd_v2i1_v8i1_mask_mem(i2 zeroext %__u, <2 x i64> %__a, <2 x i64>* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v2i1_v8i1_mask_mem:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd (%rsi), %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    # kill: def %al killed %al killed %eax
@@ -40371,8 +40354,7 @@ entry:
 define zeroext i8 @test_masked_vcmpoeqpd_v2i1_v8i1_mask_mem_b(i2 zeroext %__u, <2 x i64> %__a, double* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v2i1_v8i1_mask_mem_b:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd (%rsi){1to2}, %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    # kill: def %al killed %al killed %eax
@@ -40536,8 +40518,7 @@ entry:
 define zeroext i16 @test_masked_vcmpoeqpd_v2i1_v16i1_mask(i2 zeroext %__u, <2 x i64> %__a, <2 x i64> %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v2i1_v16i1_mask:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd %xmm1, %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    # kill: def %ax killed %ax killed %eax
@@ -40581,8 +40562,7 @@ entry:
 define zeroext i16 @test_masked_vcmpoeqpd_v2i1_v16i1_mask_mem(i2 zeroext %__u, <2 x i64> %__a, <2 x i64>* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v2i1_v16i1_mask_mem:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd (%rsi), %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    # kill: def %ax killed %ax killed %eax
@@ -40627,8 +40607,7 @@ entry:
 define zeroext i16 @test_masked_vcmpoeqpd_v2i1_v16i1_mask_mem_b(i2 zeroext %__u, <2 x i64> %__a, double* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v2i1_v16i1_mask_mem_b:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd (%rsi){1to2}, %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    # kill: def %ax killed %ax killed %eax
@@ -40804,8 +40783,7 @@ entry:
 define zeroext i32 @test_masked_vcmpoeqpd_v2i1_v32i1_mask(i2 zeroext %__u, <2 x i64> %__a, <2 x i64> %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v2i1_v32i1_mask:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd %xmm1, %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    retq
@@ -40852,8 +40830,7 @@ entry:
 define zeroext i32 @test_masked_vcmpoeqpd_v2i1_v32i1_mask_mem(i2 zeroext %__u, <2 x i64> %__a, <2 x i64>* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v2i1_v32i1_mask_mem:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd (%rsi), %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    retq
@@ -40901,8 +40878,7 @@ entry:
 define zeroext i32 @test_masked_vcmpoeqpd_v2i1_v32i1_mask_mem_b(i2 zeroext %__u, <2 x i64> %__a, double* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v2i1_v32i1_mask_mem_b:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd (%rsi){1to2}, %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    retq
@@ -41099,8 +41075,7 @@ entry:
 define zeroext i64 @test_masked_vcmpoeqpd_v2i1_v64i1_mask(i2 zeroext %__u, <2 x i64> %__a, <2 x i64> %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v2i1_v64i1_mask:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd %xmm1, %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovq %k0, %rax
 ; VLX-NEXT:    retq
@@ -41153,8 +41128,7 @@ entry:
 define zeroext i64 @test_masked_vcmpoeqpd_v2i1_v64i1_mask_mem(i2 zeroext %__u, <2 x i64> %__a, <2 x i64>* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v2i1_v64i1_mask_mem:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd (%rsi), %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovq %k0, %rax
 ; VLX-NEXT:    retq
@@ -41208,8 +41182,7 @@ entry:
 define zeroext i64 @test_masked_vcmpoeqpd_v2i1_v64i1_mask_mem_b(i2 zeroext %__u, <2 x i64> %__a, double* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v2i1_v64i1_mask_mem_b:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd (%rsi){1to2}, %xmm0, %k0 {%k1}
 ; VLX-NEXT:    kmovq %k0, %rax
 ; VLX-NEXT:    retq
@@ -41433,8 +41406,7 @@ entry:
 define zeroext i8 @test_masked_vcmpoeqpd_v4i1_v8i1_mask(i4 zeroext %__u, <4 x i64> %__a, <4 x i64> %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v4i1_v8i1_mask:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd %ymm1, %ymm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    # kill: def %al killed %al killed %eax
@@ -41494,8 +41466,7 @@ entry:
 define zeroext i8 @test_masked_vcmpoeqpd_v4i1_v8i1_mask_mem(i4 zeroext %__u, <4 x i64> %__a, <4 x i64>* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v4i1_v8i1_mask_mem:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd (%rsi), %ymm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    # kill: def %al killed %al killed %eax
@@ -41556,8 +41527,7 @@ entry:
 define zeroext i8 @test_masked_vcmpoeqpd_v4i1_v8i1_mask_mem_b(i4 zeroext %__u, <4 x i64> %__a, double* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v4i1_v8i1_mask_mem_b:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd (%rsi){1to4}, %ymm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    # kill: def %al killed %al killed %eax
@@ -41788,8 +41758,7 @@ entry:
 define zeroext i16 @test_masked_vcmpoeqpd_v4i1_v16i1_mask(i4 zeroext %__u, <4 x i64> %__a, <4 x i64> %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v4i1_v16i1_mask:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd %ymm1, %ymm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    # kill: def %ax killed %ax killed %eax
@@ -41849,8 +41818,7 @@ entry:
 define zeroext i16 @test_masked_vcmpoeqpd_v4i1_v16i1_mask_mem(i4 zeroext %__u, <4 x i64> %__a, <4 x i64>* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v4i1_v16i1_mask_mem:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd (%rsi), %ymm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    # kill: def %ax killed %ax killed %eax
@@ -41911,8 +41879,7 @@ entry:
 define zeroext i16 @test_masked_vcmpoeqpd_v4i1_v16i1_mask_mem_b(i4 zeroext %__u, <4 x i64> %__a, double* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v4i1_v16i1_mask_mem_b:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd (%rsi){1to4}, %ymm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    # kill: def %ax killed %ax killed %eax
@@ -42110,8 +42077,7 @@ entry:
 define zeroext i32 @test_masked_vcmpoeqpd_v4i1_v32i1_mask(i4 zeroext %__u, <4 x i64> %__a, <4 x i64> %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v4i1_v32i1_mask:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd %ymm1, %ymm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    vzeroupper
@@ -42160,8 +42126,7 @@ entry:
 define zeroext i32 @test_masked_vcmpoeqpd_v4i1_v32i1_mask_mem(i4 zeroext %__u, <4 x i64> %__a, <4 x i64>* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v4i1_v32i1_mask_mem:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd (%rsi), %ymm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    vzeroupper
@@ -42211,8 +42176,7 @@ entry:
 define zeroext i32 @test_masked_vcmpoeqpd_v4i1_v32i1_mask_mem_b(i4 zeroext %__u, <4 x i64> %__a, double* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v4i1_v32i1_mask_mem_b:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd (%rsi){1to4}, %ymm0, %k0 {%k1}
 ; VLX-NEXT:    kmovd %k0, %eax
 ; VLX-NEXT:    vzeroupper
@@ -42417,8 +42381,7 @@ entry:
 define zeroext i64 @test_masked_vcmpoeqpd_v4i1_v64i1_mask(i4 zeroext %__u, <4 x i64> %__a, <4 x i64> %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v4i1_v64i1_mask:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd %ymm1, %ymm0, %k0 {%k1}
 ; VLX-NEXT:    kmovq %k0, %rax
 ; VLX-NEXT:    vzeroupper
@@ -42473,8 +42436,7 @@ entry:
 define zeroext i64 @test_masked_vcmpoeqpd_v4i1_v64i1_mask_mem(i4 zeroext %__u, <4 x i64> %__a, <4 x i64>* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v4i1_v64i1_mask_mem:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd (%rsi), %ymm0, %k0 {%k1}
 ; VLX-NEXT:    kmovq %k0, %rax
 ; VLX-NEXT:    vzeroupper
@@ -42530,8 +42492,7 @@ entry:
 define zeroext i64 @test_masked_vcmpoeqpd_v4i1_v64i1_mask_mem_b(i4 zeroext %__u, <4 x i64> %__a, double* %__b) local_unnamed_addr {
 ; VLX-LABEL: test_masked_vcmpoeqpd_v4i1_v64i1_mask_mem_b:
 ; VLX:       # %bb.0: # %entry
-; VLX-NEXT:    movb %dil, -{{[0-9]+}}(%rsp)
-; VLX-NEXT:    kmovb -{{[0-9]+}}(%rsp), %k1
+; VLX-NEXT:    kmovd %edi, %k1
 ; VLX-NEXT:    vcmpeqpd (%rsi){1to4}, %ymm0, %k0 {%k1}
 ; VLX-NEXT:    kmovq %k0, %rax
 ; VLX-NEXT:    vzeroupper

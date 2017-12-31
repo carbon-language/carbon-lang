@@ -30412,9 +30412,22 @@ static SDValue combineBitcast(SDNode *N, SelectionDAG &DAG,
   // (i16 movmsk (16i8 sext (v16i1 x)))
   // before the setcc result is scalarized on subtargets that don't have legal
   // vxi1 types.
-  if (DCI.isBeforeLegalize())
+  if (DCI.isBeforeLegalize()) {
     if (SDValue V = combineBitcastvxi1(DAG, SDValue(N, 0), Subtarget))
       return V;
+
+    // If this is a bitcast between a MVT::v4i1/v2i1 and an illegal integer
+    // type, widen both sides to avoid a trip through memory.
+    if ((VT == MVT::v4i1 || VT == MVT::v2i1) && SrcVT.isScalarInteger() &&
+        Subtarget.hasVLX()) {
+      SDLoc dl(N);
+      N0 = DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i8, N0);
+      N0 = DAG.getBitcast(MVT::v8i1, N0);
+      return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, N0,
+                         DAG.getIntPtrConstant(0, dl));
+    }
+  }
+
   // Since MMX types are special and don't usually play with other vector types,
   // it's better to handle them early to be sure we emit efficient code by
   // avoiding store-load conversions.
