@@ -2143,6 +2143,10 @@ static SDValue lowerMasksToReg(const SDValue &ValArg, const EVT &ValLoc,
                                const SDLoc &Dl, SelectionDAG &DAG) {
   EVT ValVT = ValArg.getValueType();
 
+  if (ValVT == MVT::v1i1)
+    return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, Dl, ValLoc, ValArg,
+                       DAG.getIntPtrConstant(0, Dl));
+
   if ((ValVT == MVT::v8i1 && (ValLoc == MVT::i8 || ValLoc == MVT::i32)) ||
       (ValVT == MVT::v16i1 && (ValLoc == MVT::i16 || ValLoc == MVT::i32))) {
     // Two stage lowering might be required

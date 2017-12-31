@@ -410,3 +410,22 @@ define i32 @test12(i32 %a1, i32 %a2, i32 %b1) {
   %res1 = select i1 %cond, i32 %res, i32 0
   ret i32 %res1
 }
+
+define <1 x i1> @test13(<1 x i1>* %foo) {
+; ALL_X64-LABEL: test13:
+; ALL_X64:       ## %bb.0:
+; ALL_X64-NEXT:    movzbl (%rdi), %eax
+; ALL_X64-NEXT:    andl $1, %eax
+; ALL_X64-NEXT:    ## kill: def %al killed %al killed %eax
+; ALL_X64-NEXT:    retq
+;
+; KNL_X32-LABEL: test13:
+; KNL_X32:       ## %bb.0:
+; KNL_X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; KNL_X32-NEXT:    movzbl (%eax), %eax
+; KNL_X32-NEXT:    andl $1, %eax
+; KNL_X32-NEXT:    ## kill: def %al killed %al killed %eax
+; KNL_X32-NEXT:    retl
+  %bar = load <1 x i1>, <1 x i1>* %foo
+  ret <1 x i1> %bar
+}
