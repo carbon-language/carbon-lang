@@ -4561,7 +4561,7 @@ multiclass avx512_min_max_lowering<Instruction Instr, SDNode OpNode> {
              sub_xmm)>;
 }
 
-let Predicates = [HasAVX512] in {
+let Predicates = [HasAVX512, NoVLX] in {
   defm : avx512_min_max_lowering<VPMAXUQZrr, umax>;
   defm : avx512_min_max_lowering<VPMINUQZrr, umin>;
   defm : avx512_min_max_lowering<VPMAXSQZrr, smax>;
