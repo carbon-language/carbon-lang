@@ -1112,7 +1112,7 @@ void DeclSpec::Finish(Sema &S, const PrintingPolicy &Policy) {
   }
 
   // Validate the width of the type.
-  switch (TypeSpecWidth) {
+  switch (static_cast<TypeSpecifierWidth>(TypeSpecWidth)) {
   case TSW_unspecified: break;
   case TSW_short:    // short int
   case TSW_longlong: // long long int
