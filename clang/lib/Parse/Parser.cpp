@@ -174,7 +174,7 @@ bool Parser::ExpectAndConsumeSemi(unsigned DiagID) {
   return ExpectAndConsume(tok::semi, DiagID);
 }
 
-void Parser::ConsumeExtraSemi(ExtraSemiKind Kind, TypeSpecifierType TST) {
+void Parser::ConsumeExtraSemi(ExtraSemiKind Kind, unsigned TST) {
   if (!Tok.is(tok::semi)) return;
 
   bool HadMultipleSemis = false;

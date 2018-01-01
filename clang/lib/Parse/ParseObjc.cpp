@@ -1699,9 +1699,8 @@ void Parser::parseObjCTypeArgsOrProtocolQualifiers(
       DeclSpec DS(AttrFactory);
       const char *prevSpec = nullptr;
       unsigned diagID;
-      DS.SetTypeSpecType(TypeSpecifierType::TST_typename, identifierLocs[i],
-                         prevSpec, diagID, typeArg,
-                         Actions.getASTContext().getPrintingPolicy());
+      DS.SetTypeSpecType(TST_typename, identifierLocs[i], prevSpec, diagID,
+                         typeArg, Actions.getASTContext().getPrintingPolicy());
 
       // Form a declarator to turn this into a type.
       Declarator D(DS, DeclaratorContext::TypeNameContext);

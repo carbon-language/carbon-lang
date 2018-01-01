@@ -2436,41 +2436,29 @@ bool Type::isSpecifierType() const {
 }
 
 ElaboratedTypeKeyword
-TypeWithKeyword::getKeywordForTypeSpec(TypeSpecifierType TypeSpec) {
+TypeWithKeyword::getKeywordForTypeSpec(unsigned TypeSpec) {
   switch (TypeSpec) {
-  default:
-    return ETK_None;
-  case TypeSpecifierType::TST_typename:
-    return ETK_Typename;
-  case TypeSpecifierType::TST_class:
-    return ETK_Class;
-  case TypeSpecifierType::TST_struct:
-    return ETK_Struct;
-  case TypeSpecifierType::TST_interface:
-    return ETK_Interface;
-  case TypeSpecifierType::TST_union:
-    return ETK_Union;
-  case TypeSpecifierType::TST_enum:
-    return ETK_Enum;
+  default: return ETK_None;
+  case TST_typename: return ETK_Typename;
+  case TST_class: return ETK_Class;
+  case TST_struct: return ETK_Struct;
+  case TST_interface: return ETK_Interface;
+  case TST_union: return ETK_Union;
+  case TST_enum: return ETK_Enum;
   }
 }
 
 TagTypeKind
-TypeWithKeyword::getTagTypeKindForTypeSpec(TypeSpecifierType TypeSpec) {
-  switch (TypeSpec) {
-  default:
-    llvm_unreachable("Type specifier is not a tag type kind.");
-  case TypeSpecifierType::TST_class:
-    return TTK_Class;
-  case TypeSpecifierType::TST_struct:
-    return TTK_Struct;
-  case TypeSpecifierType::TST_interface:
-    return TTK_Interface;
-  case TypeSpecifierType::TST_union:
-    return TTK_Union;
-  case TypeSpecifierType::TST_enum:
-    return TTK_Enum;
+TypeWithKeyword::getTagTypeKindForTypeSpec(unsigned TypeSpec) {
+  switch(TypeSpec) {
+  case TST_class: return TTK_Class;
+  case TST_struct: return TTK_Struct;
+  case TST_interface: return TTK_Interface;
+  case TST_union: return TTK_Union;
+  case TST_enum: return TTK_Enum;
   }
+  
+  llvm_unreachable("Type specifier is not a tag type kind.");
 }
 
 ElaboratedTypeKeyword

@@ -1433,10 +1433,8 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
     // If the type is deprecated or unavailable, diagnose it.
     S.DiagnoseUseOfDecl(D, DS.getTypeSpecTypeNameLoc());
 
-    assert(DS.getTypeSpecWidth() == TypeSpecifierWidth::TSW_unspecified &&
-           DS.getTypeSpecComplex() == 0 &&
-           DS.getTypeSpecSign() == TypeSpecifierSign::TSS_unspecified &&
-           "No qualifiers on tag names!");
+    assert(DS.getTypeSpecWidth() == 0 && DS.getTypeSpecComplex() == 0 &&
+           DS.getTypeSpecSign() == 0 && "No qualifiers on tag names!");
 
     // TypeQuals handled by caller.
     Result = Context.getTypeDeclType(D);
@@ -1448,9 +1446,8 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
     break;
   }
   case DeclSpec::TST_typename: {
-    assert(DS.getTypeSpecWidth() == TypeSpecifierWidth::TSW_unspecified &&
-           DS.getTypeSpecComplex() == 0 &&
-           DS.getTypeSpecSign() == TypeSpecifierSign::TSS_unspecified &&
+    assert(DS.getTypeSpecWidth() == 0 && DS.getTypeSpecComplex() == 0 &&
+           DS.getTypeSpecSign() == 0 &&
            "Can't handle qualifiers on typedef names yet!");
     Result = S.GetTypeFromParser(DS.getRepAsType());
     if (Result.isNull()) {
@@ -4986,7 +4983,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
   TypeProcessingState state(*this, D);
 
   TypeSourceInfo *ReturnTypeInfo = nullptr;
-   QualType T = GetDeclSpecTypeForDeclarator(state, ReturnTypeInfo);
+  QualType T = GetDeclSpecTypeForDeclarator(state, ReturnTypeInfo);
   if (D.isPrototypeContext() && getLangOpts().ObjCAutoRefCount)
     inferARCWriteback(state, T);
 
@@ -5311,16 +5308,16 @@ namespace {
         // Set info for the written builtin specifiers.
         TL.getWrittenBuiltinSpecs() = DS.getWrittenBuiltinSpecs();
         // Try to have a meaningful source location.
-        if (TL.getWrittenSignSpec() != TypeSpecifierSign::TSS_unspecified)
+        if (TL.getWrittenSignSpec() != TSS_unspecified)
           TL.expandBuiltinRange(DS.getTypeSpecSignLoc());
-        if (TL.getWrittenWidthSpec() != TypeSpecifierWidth::TSW_unspecified)
+        if (TL.getWrittenWidthSpec() != TSW_unspecified)
           TL.expandBuiltinRange(DS.getTypeSpecWidthRange());
       }
     }
     void VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
       ElaboratedTypeKeyword Keyword
         = TypeWithKeyword::getKeywordForTypeSpec(DS.getTypeSpecType());
-      if (DS.getTypeSpecType() == TypeSpecifierType::TST_typename) {
+      if (DS.getTypeSpecType() == TST_typename) {
         TypeSourceInfo *TInfo = nullptr;
         Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
         if (TInfo) {
@@ -5336,7 +5333,7 @@ namespace {
       Visit(TL.getNextTypeLoc().getUnqualifiedLoc());
     }
     void VisitDependentNameTypeLoc(DependentNameTypeLoc TL) {
-      assert(DS.getTypeSpecType() == TypeSpecifierType::TST_typename);
+      assert(DS.getTypeSpecType() == TST_typename);
       TypeSourceInfo *TInfo = nullptr;
       Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
       assert(TInfo);
@@ -5344,7 +5341,7 @@ namespace {
     }
     void VisitDependentTemplateSpecializationTypeLoc(
                                  DependentTemplateSpecializationTypeLoc TL) {
-      assert(DS.getTypeSpecType() == TypeSpecifierType::TST_typename);
+      assert(DS.getTypeSpecType() == TST_typename);
       TypeSourceInfo *TInfo = nullptr;
       Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
       assert(TInfo);

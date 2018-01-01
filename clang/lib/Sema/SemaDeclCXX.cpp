@@ -3775,9 +3775,9 @@ Sema::BuildMemInitializer(Decl *ConstructorD,
 
   if (TemplateTypeTy) {
     BaseType = GetTypeFromParser(TemplateTypeTy, &TInfo);
-  } else if (DS.getTypeSpecType() == TypeSpecifierType::TST_decltype) {
+  } else if (DS.getTypeSpecType() == TST_decltype) {
     BaseType = BuildDecltypeType(DS.getRepAsExpr(), DS.getTypeSpecTypeLoc());
-  } else if (DS.getTypeSpecType() == TypeSpecifierType::TST_decltype_auto) {
+  } else if (DS.getTypeSpecType() == TST_decltype_auto) {
     Diag(DS.getTypeSpecTypeLoc(), diag::err_decltype_auto_invalid);
     return true;
   } else {
@@ -13480,10 +13480,11 @@ FriendDecl *Sema::CheckFriendTypeDecl(SourceLocation LocStart,
 /// Handle a friend tag declaration where the scope specifier was
 /// templated.
 Decl *Sema::ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
-                                    TypeSpecifierType TagSpec,
-                                    SourceLocation TagLoc, CXXScopeSpec &SS,
+                                    unsigned TagSpec, SourceLocation TagLoc,
+                                    CXXScopeSpec &SS,
                                     IdentifierInfo *Name,
-                                    SourceLocation NameLoc, AttributeList *Attr,
+                                    SourceLocation NameLoc,
+                                    AttributeList *Attr,
                                     MultiTemplateParamsArg TempParamLists) {
   TagTypeKind Kind = TypeWithKeyword::getTagTypeKindForTypeSpec(TagSpec);
 

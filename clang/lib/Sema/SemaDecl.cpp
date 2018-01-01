@@ -12786,11 +12786,11 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
   //   class type (or enum type) for linkage purposes only.
   // We need to check whether the type was declared in the declaration.
   switch (D.getDeclSpec().getTypeSpecType()) {
-  case TypeSpecifierType::TST_enum:
-  case TypeSpecifierType::TST_struct:
-  case TypeSpecifierType::TST_interface:
-  case TypeSpecifierType::TST_union:
-  case TypeSpecifierType::TST_class: {
+  case TST_enum:
+  case TST_struct:
+  case TST_interface:
+  case TST_union:
+  case TST_class: {
     TagDecl *tagFromDeclSpec = cast<TagDecl>(D.getDeclSpec().getRepAsDecl());
     setTagNameForLinkagePurposes(tagFromDeclSpec, NewTD);
     break;
@@ -13074,7 +13074,7 @@ static bool isAcceptableTagRedeclContext(Sema &S, DeclContext *OldDC,
 ///
 /// \param SkipBody If non-null, will be set to indicate if the caller should
 /// skip the definition of this tag and treat it as if it were a declaration.
-Decl *Sema::ActOnTag(Scope *S, TypeSpecifierType TagSpec, TagUseKind TUK,
+Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
                      SourceLocation KWLoc, CXXScopeSpec &SS,
                      IdentifierInfo *Name, SourceLocation NameLoc,
                      AttributeList *Attr, AccessSpecifier AS,
