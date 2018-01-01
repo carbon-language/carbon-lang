@@ -4088,7 +4088,7 @@ void Sema::CodeCompleteObjCClassPropertyRefExpr(Scope *S,
                             Results.data(), Results.size());
 }
 
-void Sema::CodeCompleteTag(Scope *S, unsigned TagSpec) {
+void Sema::CodeCompleteTag(Scope *S, TypeSpecifierType TagSpec) {
   if (!CodeCompleter)
     return;
 

@@ -598,11 +598,11 @@ public:
     if (needsExtraLocalData())
       return static_cast<TypeSpecifierSign>(getWrittenBuiltinSpecs().Sign);
     else
-      return TSS_unspecified;
+      return TypeSpecifierSign::TSS_unspecified;
   }
 
   bool hasWrittenSignSpec() const {
-    return getWrittenSignSpec() != TSS_unspecified;
+    return getWrittenSignSpec() != TypeSpecifierSign::TSS_unspecified;
   }
 
   void setWrittenSignSpec(TypeSpecifierSign written) {
@@ -614,11 +614,11 @@ public:
     if (needsExtraLocalData())
       return static_cast<TypeSpecifierWidth>(getWrittenBuiltinSpecs().Width);
     else
-      return TSW_unspecified;
+      return TypeSpecifierWidth::TSW_unspecified;
   }
 
   bool hasWrittenWidthSpec() const {
-    return getWrittenWidthSpec() != TSW_unspecified;
+    return getWrittenWidthSpec() != TypeSpecifierWidth::TSW_unspecified;
   }
 
   void setWrittenWidthSpec(TypeSpecifierWidth written) {
@@ -629,7 +629,7 @@ public:
   TypeSpecifierType getWrittenTypeSpec() const;
 
   bool hasWrittenTypeSpec() const {
-    return getWrittenTypeSpec() != TST_unspecified;
+    return getWrittenTypeSpec() != TypeSpecifierType::TST_unspecified;
   }
 
   void setWrittenTypeSpec(TypeSpecifierType written) {
@@ -653,9 +653,9 @@ public:
     setBuiltinLoc(Loc);
     if (needsExtraLocalData()) {
       WrittenBuiltinSpecs &wbs = getWrittenBuiltinSpecs();
-      wbs.Sign = TSS_unspecified;
-      wbs.Width = TSW_unspecified;
-      wbs.Type = TST_unspecified;
+      wbs.Sign = TypeSpecifierSign::TSS_unspecified;
+      wbs.Width = TypeSpecifierWidth::TSW_unspecified;
+      wbs.Type = TypeSpecifierType::TST_unspecified;
       wbs.ModeAttr = false;
     }
   }

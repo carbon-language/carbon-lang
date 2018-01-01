@@ -1011,10 +1011,12 @@ void Parser::AnnotateExistingDecltypeSpecifier(const DeclSpec& DS,
     PP.EnterToken(Tok);
 
   Tok.setKind(tok::annot_decltype);
-  setExprAnnotation(Tok,
-                    DS.getTypeSpecType() == TST_decltype ? DS.getRepAsExpr() :
-                    DS.getTypeSpecType() == TST_decltype_auto ? ExprResult() :
-                    ExprError());
+  setExprAnnotation(Tok, DS.getTypeSpecType() == TypeSpecifierType::TST_decltype
+                             ? DS.getRepAsExpr()
+                             : DS.getTypeSpecType() ==
+                                       TypeSpecifierType::TST_decltype_auto
+                                   ? ExprResult()
+                                   : ExprError());
   Tok.setAnnotationEndLoc(EndLoc);
   Tok.setLocation(StartLoc);
   PP.AnnotateCachedTokens(Tok);
@@ -1194,8 +1196,8 @@ TypeResult Parser::ParseBaseTypeSpecifier(SourceLocation &BaseLoc,
 
   const char *PrevSpec = nullptr;
   unsigned DiagID;
-  DS.SetTypeSpecType(TST_typename, IdLoc, PrevSpec, DiagID, Type,
-                     Actions.getASTContext().getPrintingPolicy());
+  DS.SetTypeSpecType(TypeSpecifierType::TST_typename, IdLoc, PrevSpec, DiagID,
+                     Type, Actions.getASTContext().getPrintingPolicy());
 
   Declarator DeclaratorInfo(DS, DeclaratorContext::TypeNameContext);
   return Actions.ActOnTypeName(getCurScope(), DeclaratorInfo);
@@ -2952,7 +2954,8 @@ ExprResult Parser::ParseCXXMemberInitializer(Decl *D, bool IsFunction,
 
 void Parser::SkipCXXMemberSpecification(SourceLocation RecordLoc,
                                         SourceLocation AttrFixitLoc,
-                                        unsigned TagType, Decl *TagDecl) {
+                                        TypeSpecifierType TagType,
+                                        Decl *TagDecl) {
   // Skip the optional 'final' keyword.
   if (getLangOpts().CPlusPlus && Tok.is(tok::identifier)) {
     assert(isCXX11FinalKeyword() && "not a class definition");
@@ -3104,11 +3107,12 @@ Parser::DeclGroupPtrTy Parser::ParseCXXClassMemberDeclarationWithPragmas(
 void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
                                          SourceLocation AttrFixitLoc,
                                          ParsedAttributesWithRange &Attrs,
-                                         unsigned TagType, Decl *TagDecl) {
+                                         TypeSpecifierType TagType,
+                                         Decl *TagDecl) {
   assert((TagType == DeclSpec::TST_struct ||
-         TagType == DeclSpec::TST_interface ||
-         TagType == DeclSpec::TST_union  ||
-         TagType == DeclSpec::TST_class) && "Invalid TagType!");
+          TagType == DeclSpec::TST_interface ||
+          TagType == DeclSpec::TST_union || TagType == DeclSpec::TST_class) &&
+         "Invalid TagType!");
 
   PrettyDeclStackTraceEntry CrashInfo(Actions, TagDecl, RecordLoc,
                                       "parsing struct/union/class body");

@@ -3139,7 +3139,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       //   static const bool __is_signed;
       //
       // then treat __is_signed as an identifier rather than as a keyword.
-      if (DS.getTypeSpecType() == TST_bool &&
+      if (DS.getTypeSpecType() == TypeSpecifierType::TST_bool &&
           DS.getTypeQualifiers() == DeclSpec::TQ_const &&
           DS.getStorageClassSpec() == DeclSpec::SCS_static)
         TryKeywordIdentFallback(true);
@@ -3614,7 +3614,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     break;
 #include "clang/Basic/OpenCLImageTypes.def"
     case tok::kw___unknown_anytype:
-      isInvalid = DS.SetTypeSpecType(TST_unknown_anytype, Loc,
+      isInvalid = DS.SetTypeSpecType(TypeSpecifierType::TST_unknown_anytype, Loc,
                                      PrevSpec, DiagID, Policy);
       break;
 
@@ -3888,7 +3888,7 @@ void Parser::ParseStructDeclaration(
 /// [OBC]   '@' 'defs' '(' class-name ')'
 ///
 void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
-                                  unsigned TagType, Decl *TagDecl) {
+                                  TypeSpecifierType TagType, Decl *TagDecl) {
   PrettyDeclStackTraceEntry CrashInfo(Actions, TagDecl, RecordLoc,
                                       "parsing struct/union body");
   assert(!getLangOpts().CPlusPlus && "C++ declarations not supported");
@@ -5527,7 +5527,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
           NextToken().is(tok::r_paren) &&
           !D.hasGroupingParens() &&
           !Actions.containsUnexpandedParameterPacks(D) &&
-          D.getDeclSpec().getTypeSpecType() != TST_auto)) {
+          D.getDeclSpec().getTypeSpecType() != TypeSpecifierType::TST_auto)) {
       SourceLocation EllipsisLoc = ConsumeToken();
       if (isPtrOperatorToken(Tok.getKind(), getLangOpts(), D.getContext())) {
         // The ellipsis was put in the wrong place. Recover, and explain to
@@ -6107,7 +6107,7 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
       LocalEndLoc = EndLoc;
       if (getLangOpts().CPlusPlus11 && Tok.is(tok::arrow)) {
         Diag(Tok, diag::warn_cxx98_compat_trailing_return_type);
-        if (D.getDeclSpec().getTypeSpecType() == TST_auto)
+        if (D.getDeclSpec().getTypeSpecType() == TypeSpecifierType::TST_auto)
           StartLoc = D.getDeclSpec().getTypeSpecTypeLoc();
         LocalEndLoc = Tok.getLocation();
         SourceRange Range;
