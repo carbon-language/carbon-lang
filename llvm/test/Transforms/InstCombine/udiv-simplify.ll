@@ -25,10 +25,10 @@ define i64 @test2(i32 %x) nounwind {
 
 define i64 @test1_PR2274(i32 %x, i32 %g) nounwind {
 ; CHECK-LABEL: @test1_PR2274(
-; CHECK-NEXT:    [[Y:%.*]] = lshr i32 %x, 30
-; CHECK-NEXT:    [[R:%.*]] = udiv i32 [[Y]], %g
-; CHECK-NEXT:    [[Z1:%.*]] = zext i32 [[R]] to i64
-; CHECK-NEXT:    ret i64 [[Z1]]
+; CHECK-NEXT:    [[Y:%.*]] = lshr i32 [[X:%.*]], 30
+; CHECK-NEXT:    [[R:%.*]] = udiv i32 [[Y]], [[G:%.*]]
+; CHECK-NEXT:    [[TMP1:%.*]] = zext i32 [[R]] to i64
+; CHECK-NEXT:    ret i64 [[TMP1]]
 ;
   %y = lshr i32 %x, 30
   %r = udiv i32 %y, %g
@@ -37,10 +37,10 @@ define i64 @test1_PR2274(i32 %x, i32 %g) nounwind {
 }
 define i64 @test2_PR2274(i32 %x, i32 %v) nounwind {
 ; CHECK-LABEL: @test2_PR2274(
-; CHECK-NEXT:    [[Y:%.*]] = lshr i32 %x, 31
-; CHECK-NEXT:    [[R:%.*]] = udiv i32 [[Y]], %v
-; CHECK-NEXT:    [[Z1:%.*]] = zext i32 [[R]] to i64
-; CHECK-NEXT:    ret i64 [[Z1]]
+; CHECK-NEXT:    [[Y:%.*]] = lshr i32 [[X:%.*]], 31
+; CHECK-NEXT:    [[R:%.*]] = udiv i32 [[Y]], [[V:%.*]]
+; CHECK-NEXT:    [[TMP1:%.*]] = zext i32 [[R]] to i64
+; CHECK-NEXT:    ret i64 [[TMP1]]
 ;
   %y = lshr i32 %x, 31
   %r = udiv i32 %y, %v
@@ -54,7 +54,7 @@ define i64 @test2_PR2274(i32 %x, i32 %v) nounwind {
 
 define i32 @PR30366(i1 %a) {
 ; CHECK-LABEL: @PR30366(
-; CHECK-NEXT:    [[Z:%.*]] = zext i1 %a to i32
+; CHECK-NEXT:    [[Z:%.*]] = zext i1 [[A:%.*]] to i32
 ; CHECK-NEXT:    [[D:%.*]] = lshr i32 [[Z]], zext (i16 ptrtoint ([1 x i16]* @b to i16) to i32)
 ; CHECK-NEXT:    ret i32 [[D]]
 ;
