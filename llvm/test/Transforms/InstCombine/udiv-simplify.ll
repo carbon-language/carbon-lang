@@ -62,3 +62,24 @@ define i32 @PR30366(i1 %a) {
   %d = udiv i32 %z, zext (i16 shl (i16 1, i16 ptrtoint ([1 x i16]* @b to i16)) to i32)
   ret i32 %d
 }
+
+; OSS-Fuzz #4857
+; https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=4857
+define i177 @ossfuzz_4857(i177 %X, i177 %Y) {
+; CHECK-LABEL: @ossfuzz_4857(
+; CHECK-NEXT:    store i1 false, i1* undef, align 1
+; CHECK-NEXT:    ret i177 0
+;
+  %B5 = udiv i177 %Y, -1
+  %B4 = add i177 %B5, -1
+  %B2 = add i177 %B4, -1
+  %B6 = mul i177 %B5, %B2
+  %B3 = add i177 %B2, %B2
+  %B9 = xor i177 %B4, %B3
+  %B13 = ashr i177 %Y, %B2
+  %B22 = add i177 %B9, %B13
+  %B1 = udiv i177 %B5, %B6
+  %C9 = icmp ult i177 %Y, %B22
+  store i1 %C9, i1* undef
+  ret i177 %B1
+}
