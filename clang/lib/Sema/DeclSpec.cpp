@@ -972,9 +972,9 @@ bool DeclSpec::SetConstexprSpec(SourceLocation Loc, const char *&PrevSpec,
 }
 
 void DeclSpec::SaveWrittenBuiltinSpecs() {
-  writtenBS.Sign = getTypeSpecSign();
-  writtenBS.Width = getTypeSpecWidth();
-  writtenBS.Type = getTypeSpecType();
+  writtenBS.Sign = static_cast<unsigned char>(getTypeSpecSign());
+  writtenBS.Width = static_cast<unsigned char>(getTypeSpecWidth());
+  writtenBS.Type = static_cast<unsigned char>(getTypeSpecType());
   // Search the list of attributes for the presence of a mode attribute.
   writtenBS.ModeAttr = false;
   AttributeList* attrs = getAttributes().getList();

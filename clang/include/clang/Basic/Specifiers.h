@@ -26,16 +26,18 @@ namespace clang {
     TSW_unspecified,
     TSW_short,
     TSW_long,
-    TSW_longlong
+    TSW_longlong // This must be the last enumerator (see struct
+                 // WrittenBuiltinSpecs below prior to reordering).
   };
   
   /// \brief Specifies the signedness of a type, e.g., signed or unsigned.
   enum class TypeSpecifierSign : unsigned char {
     TSS_unspecified,
     TSS_signed,
-    TSS_unsigned
+    TSS_unsigned // This must be the last enumerator (see struct
+                 // WrittenBuiltinSpecs below prior to reordering).
   };
-  
+
   enum TypeSpecifiersPipe {
     TSP_unspecified,
     TSP_pipe
@@ -46,49 +48,61 @@ namespace clang {
     TST_unspecified,
     TST_void,
     TST_char,
-    TST_wchar,        // C++ wchar_t
-    TST_char16,       // C++11 char16_t
-    TST_char32,       // C++11 char32_t
+    TST_wchar,  // C++ wchar_t
+    TST_char16, // C++11 char16_t
+    TST_char32, // C++11 char32_t
     TST_int,
     TST_int128,
-    TST_half,         // OpenCL half, ARM NEON __fp16
-    TST_Float16,      // C11 extension ISO/IEC TS 18661-3
+    TST_half,    // OpenCL half, ARM NEON __fp16
+    TST_Float16, // C11 extension ISO/IEC TS 18661-3
     TST_float,
     TST_double,
     TST_float128,
-    TST_bool,         // _Bool
-    TST_decimal32,    // _Decimal32
-    TST_decimal64,    // _Decimal64
-    TST_decimal128,   // _Decimal128
+    TST_bool,       // _Bool
+    TST_decimal32,  // _Decimal32
+    TST_decimal64,  // _Decimal64
+    TST_decimal128, // _Decimal128
     TST_enum,
     TST_union,
     TST_struct,
-    TST_class,        // C++ class type
-    TST_interface,    // C++ (Microsoft-specific) __interface type
-    TST_typename,     // Typedef, C++ class-name or enum name, etc.
+    TST_class,     // C++ class type
+    TST_interface, // C++ (Microsoft-specific) __interface type
+    TST_typename,  // Typedef, C++ class-name or enum name, etc.
     TST_typeofType,
     TST_typeofExpr,
-    TST_decltype,         // C++11 decltype
-    TST_underlyingType,   // __underlying_type for C++11
-    TST_auto,             // C++11 auto
-    TST_decltype_auto,    // C++1y decltype(auto)
-    TST_auto_type,        // __auto_type extension
-    TST_unknown_anytype,  // __unknown_anytype extension
-    TST_atomic,           // C11 _Atomic
+    TST_decltype,        // C++11 decltype
+    TST_underlyingType,  // __underlying_type for C++11
+    TST_auto,            // C++11 auto
+    TST_decltype_auto,   // C++1y decltype(auto)
+    TST_auto_type,       // __auto_type extension
+    TST_unknown_anytype, // __unknown_anytype extension
+    TST_atomic,          // C11 _Atomic
 #define GENERIC_IMAGE_TYPE(ImgType, Id) TST_##ImgType##_t, // OpenCL image types
 #include "clang/Basic/OpenCLImageTypes.def"
-    TST_error // erroneous type
+    TST_error // erroneous type -- Additionally, this must be the last
+              // enumerator (see struct WrittenBuiltinSpecs below prior to
+              // reordering).
   };
 
   /// \brief Structure that packs information about the type specifiers that
   /// were written in a particular type specifier sequence.
   struct WrittenBuiltinSpecs {
+
     static_assert(static_cast<unsigned int>(TypeSpecifierType::TST_error) <
                       (1 << 6),
                   "Type bitfield not wide enough for TST");
-    /*DeclSpec::TST*/ TypeSpecifierType Type  : 6;
-    /*DeclSpec::TSS*/ TypeSpecifierSign Sign  : 2;
-    /*DeclSpec::TSW*/ TypeSpecifierWidth Width : 2;
+    /*DeclSpec::TST*/ unsigned Type : 6;
+
+    static_assert(static_cast<unsigned int>(TypeSpecifierSign::TSS_unsigned) <
+                      (1 << 2),
+                  "Type bitfield not wide enough for TSS");
+    /*DeclSpec::TSS*/ unsigned Sign : 2;
+
+    static_assert(static_cast<unsigned int>(TypeSpecifierWidth::TSW_longlong) <
+                      (1 << 2),
+                  "Type bitfield not wide enough for TSW");
+    /*DeclSpec::TSW*/ unsigned Width : 2;
+
     unsigned ModeAttr : 1;
   };
 

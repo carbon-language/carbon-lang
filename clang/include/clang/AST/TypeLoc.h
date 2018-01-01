@@ -607,7 +607,7 @@ public:
 
   void setWrittenSignSpec(TypeSpecifierSign written) {
     if (needsExtraLocalData())
-      getWrittenBuiltinSpecs().Sign = written;
+      getWrittenBuiltinSpecs().Sign = static_cast<unsigned char>(written);
   }
 
   TypeSpecifierWidth getWrittenWidthSpec() const {
@@ -623,7 +623,7 @@ public:
 
   void setWrittenWidthSpec(TypeSpecifierWidth written) {
     if (needsExtraLocalData())
-      getWrittenBuiltinSpecs().Width = written;
+      getWrittenBuiltinSpecs().Width = static_cast<unsigned char>(written);
   }
 
   TypeSpecifierType getWrittenTypeSpec() const;
@@ -634,7 +634,7 @@ public:
 
   void setWrittenTypeSpec(TypeSpecifierType written) {
     if (needsExtraLocalData())
-      getWrittenBuiltinSpecs().Type = written;
+      getWrittenBuiltinSpecs().Type = static_cast<unsigned char>(written);
   }
 
   bool hasModeAttr() const {
@@ -653,9 +653,10 @@ public:
     setBuiltinLoc(Loc);
     if (needsExtraLocalData()) {
       WrittenBuiltinSpecs &wbs = getWrittenBuiltinSpecs();
-      wbs.Sign = TypeSpecifierSign::TSS_unspecified;
-      wbs.Width = TypeSpecifierWidth::TSW_unspecified;
-      wbs.Type = TypeSpecifierType::TST_unspecified;
+      wbs.Sign = static_cast<unsigned char>(TypeSpecifierSign::TSS_unspecified);
+      wbs.Width =
+          static_cast<unsigned char>(TypeSpecifierWidth::TSW_unspecified);
+      wbs.Type = static_cast<unsigned char>(TypeSpecifierType::TST_unspecified);
       wbs.ModeAttr = false;
     }
   }
