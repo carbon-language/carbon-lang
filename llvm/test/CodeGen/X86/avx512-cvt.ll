@@ -2018,3 +2018,3683 @@ define <2 x double> @ubto2f64(<2 x i32> %a) {
   %1 = uitofp <2 x i1> %mask to <2 x double>
   ret <2 x double> %1
 }
+
+define <2 x i64> @test_2f64toub(<2 x double> %a, <2 x i64> %passthru) {
+; NOVLDQ-LABEL: test_2f64toub:
+; NOVLDQ:       # %bb.0:
+; NOVLDQ-NEXT:    vcvttsd2usi %xmm0, %rax
+; NOVLDQ-NEXT:    vmovq %rax, %xmm2
+; NOVLDQ-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,0]
+; NOVLDQ-NEXT:    vcvttsd2usi %xmm0, %rax
+; NOVLDQ-NEXT:    vmovq %rax, %xmm0
+; NOVLDQ-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm2[0],xmm0[0]
+; NOVLDQ-NEXT:    vpsllq $63, %xmm0, %xmm0
+; NOVLDQ-NEXT:    vpsraq $63, %zmm0, %zmm0
+; NOVLDQ-NEXT:    vpand %xmm1, %xmm0, %xmm0
+; NOVLDQ-NEXT:    vzeroupper
+; NOVLDQ-NEXT:    retq
+;
+; VLBW-LABEL: test_2f64toub:
+; VLBW:       # %bb.0:
+; VLBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; VLBW-NEXT:    vcvttsd2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k0
+; VLBW-NEXT:    vcvttsd2si %xmm0, %eax
+; VLBW-NEXT:    andl $1, %eax
+; VLBW-NEXT:    kmovw %eax, %k1
+; VLBW-NEXT:    kshiftrw $1, %k0, %k2
+; VLBW-NEXT:    kshiftlw $1, %k2, %k2
+; VLBW-NEXT:    korw %k1, %k2, %k1
+; VLBW-NEXT:    kshiftrw $1, %k1, %k2
+; VLBW-NEXT:    kxorw %k0, %k2, %k0
+; VLBW-NEXT:    kshiftlw $15, %k0, %k0
+; VLBW-NEXT:    kshiftrw $14, %k0, %k0
+; VLBW-NEXT:    kxorw %k1, %k0, %k1
+; VLBW-NEXT:    vmovdqa64 %xmm1, %xmm0 {%k1} {z}
+; VLBW-NEXT:    retq
+;
+; VLNOBW-LABEL: test_2f64toub:
+; VLNOBW:       # %bb.0:
+; VLNOBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; VLNOBW-NEXT:    vcvttsd2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k0
+; VLNOBW-NEXT:    vcvttsd2si %xmm0, %eax
+; VLNOBW-NEXT:    andl $1, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k1
+; VLNOBW-NEXT:    kshiftrw $1, %k0, %k2
+; VLNOBW-NEXT:    kshiftlw $1, %k2, %k2
+; VLNOBW-NEXT:    korw %k1, %k2, %k1
+; VLNOBW-NEXT:    kshiftrw $1, %k1, %k2
+; VLNOBW-NEXT:    kxorw %k0, %k2, %k0
+; VLNOBW-NEXT:    kshiftlw $15, %k0, %k0
+; VLNOBW-NEXT:    kshiftrw $14, %k0, %k0
+; VLNOBW-NEXT:    kxorw %k1, %k0, %k1
+; VLNOBW-NEXT:    vmovdqa64 %xmm1, %xmm0 {%k1} {z}
+; VLNOBW-NEXT:    retq
+;
+; AVX512DQ-LABEL: test_2f64toub:
+; AVX512DQ:       # %bb.0:
+; AVX512DQ-NEXT:    # kill: def %xmm0 killed %xmm0 def %zmm0
+; AVX512DQ-NEXT:    vcvttpd2uqq %zmm0, %zmm0
+; AVX512DQ-NEXT:    vpsllq $63, %xmm0, %xmm0
+; AVX512DQ-NEXT:    vpsraq $63, %zmm0, %zmm0
+; AVX512DQ-NEXT:    vpand %xmm1, %xmm0, %xmm0
+; AVX512DQ-NEXT:    vzeroupper
+; AVX512DQ-NEXT:    retq
+  %mask = fptoui <2 x double> %a to <2 x i1>
+  %select = select <2 x i1> %mask, <2 x i64> %passthru, <2 x i64> zeroinitializer
+  ret <2 x i64> %select
+}
+
+define <4 x i64> @test_4f64toub(<4 x double> %a, <4 x i64> %passthru) {
+; NOVL-LABEL: test_4f64toub:
+; NOVL:       # %bb.0:
+; NOVL-NEXT:    # kill: def %ymm0 killed %ymm0 def %zmm0
+; NOVL-NEXT:    vcvttpd2udq %zmm0, %ymm0
+; NOVL-NEXT:    vpslld $31, %xmm0, %xmm0
+; NOVL-NEXT:    vpsrad $31, %xmm0, %xmm0
+; NOVL-NEXT:    vpmovsxdq %xmm0, %ymm0
+; NOVL-NEXT:    vpand %ymm1, %ymm0, %ymm0
+; NOVL-NEXT:    retq
+;
+; VLBW-LABEL: test_4f64toub:
+; VLBW:       # %bb.0:
+; VLBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; VLBW-NEXT:    vcvttsd2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k0
+; VLBW-NEXT:    vcvttsd2si %xmm0, %eax
+; VLBW-NEXT:    andl $1, %eax
+; VLBW-NEXT:    kmovw %eax, %k1
+; VLBW-NEXT:    kshiftrw $1, %k0, %k2
+; VLBW-NEXT:    kshiftlw $1, %k2, %k2
+; VLBW-NEXT:    korw %k1, %k2, %k1
+; VLBW-NEXT:    kshiftrw $1, %k1, %k2
+; VLBW-NEXT:    kxorw %k0, %k2, %k0
+; VLBW-NEXT:    kshiftlw $15, %k0, %k0
+; VLBW-NEXT:    kshiftrw $14, %k0, %k0
+; VLBW-NEXT:    kxorw %k1, %k0, %k0
+; VLBW-NEXT:    kshiftrw $2, %k0, %k1
+; VLBW-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; VLBW-NEXT:    vcvttsd2si %xmm0, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $13, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $3, %k0, %k1
+; VLBW-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,0]
+; VLBW-NEXT:    vcvttsd2si %xmm0, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $12, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k1
+; VLBW-NEXT:    vmovdqa64 %ymm1, %ymm0 {%k1} {z}
+; VLBW-NEXT:    retq
+;
+; VLNOBW-LABEL: test_4f64toub:
+; VLNOBW:       # %bb.0:
+; VLNOBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; VLNOBW-NEXT:    vcvttsd2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k0
+; VLNOBW-NEXT:    vcvttsd2si %xmm0, %eax
+; VLNOBW-NEXT:    andl $1, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k1
+; VLNOBW-NEXT:    kshiftrw $1, %k0, %k2
+; VLNOBW-NEXT:    kshiftlw $1, %k2, %k2
+; VLNOBW-NEXT:    korw %k1, %k2, %k1
+; VLNOBW-NEXT:    kshiftrw $1, %k1, %k2
+; VLNOBW-NEXT:    kxorw %k0, %k2, %k0
+; VLNOBW-NEXT:    kshiftlw $15, %k0, %k0
+; VLNOBW-NEXT:    kshiftrw $14, %k0, %k0
+; VLNOBW-NEXT:    kxorw %k1, %k0, %k0
+; VLNOBW-NEXT:    kshiftrw $2, %k0, %k1
+; VLNOBW-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; VLNOBW-NEXT:    vcvttsd2si %xmm0, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $13, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $3, %k0, %k1
+; VLNOBW-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,0]
+; VLNOBW-NEXT:    vcvttsd2si %xmm0, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $12, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k1
+; VLNOBW-NEXT:    vmovdqa64 %ymm1, %ymm0 {%k1} {z}
+; VLNOBW-NEXT:    retq
+  %mask = fptoui <4 x double> %a to <4 x i1>
+  %select = select <4 x i1> %mask, <4 x i64> %passthru, <4 x i64> zeroinitializer
+  ret <4 x i64> %select
+}
+
+define <8 x i64> @test_8f64toub(<8 x double> %a, <8 x i64> %passthru) {
+; KNL-LABEL: test_8f64toub:
+; KNL:       # %bb.0:
+; KNL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; KNL-NEXT:    vcvttsd2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k0
+; KNL-NEXT:    vcvttsd2si %xmm0, %eax
+; KNL-NEXT:    andl $1, %eax
+; KNL-NEXT:    kmovw %eax, %k1
+; KNL-NEXT:    kshiftrw $1, %k0, %k2
+; KNL-NEXT:    kshiftlw $1, %k2, %k2
+; KNL-NEXT:    korw %k1, %k2, %k1
+; KNL-NEXT:    kshiftrw $1, %k1, %k2
+; KNL-NEXT:    kxorw %k0, %k2, %k0
+; KNL-NEXT:    kshiftlw $15, %k0, %k0
+; KNL-NEXT:    kshiftrw $14, %k0, %k0
+; KNL-NEXT:    kxorw %k1, %k0, %k0
+; KNL-NEXT:    kshiftrw $2, %k0, %k1
+; KNL-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; KNL-NEXT:    vcvttsd2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $13, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $3, %k0, %k1
+; KNL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; KNL-NEXT:    vcvttsd2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $12, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $4, %k0, %k1
+; KNL-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; KNL-NEXT:    vcvttsd2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $11, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $5, %k0, %k1
+; KNL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; KNL-NEXT:    vcvttsd2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $10, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $6, %k0, %k1
+; KNL-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; KNL-NEXT:    vcvttsd2si %xmm0, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $9, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $7, %k0, %k1
+; KNL-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,0]
+; KNL-NEXT:    vcvttsd2si %xmm0, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $8, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k1
+; KNL-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_8f64toub:
+; SKX:       # %bb.0:
+; SKX-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; SKX-NEXT:    vcvttsd2si %xmm2, %eax
+; SKX-NEXT:    kmovd %eax, %k0
+; SKX-NEXT:    vcvttsd2si %xmm0, %eax
+; SKX-NEXT:    kmovd %eax, %k1
+; SKX-NEXT:    kshiftrb $1, %k1, %k2
+; SKX-NEXT:    kxorb %k0, %k2, %k0
+; SKX-NEXT:    kshiftlb $7, %k0, %k0
+; SKX-NEXT:    kshiftrb $6, %k0, %k0
+; SKX-NEXT:    kxorb %k1, %k0, %k0
+; SKX-NEXT:    kshiftrb $2, %k0, %k1
+; SKX-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; SKX-NEXT:    vcvttsd2si %xmm2, %eax
+; SKX-NEXT:    kmovd %eax, %k2
+; SKX-NEXT:    kxorb %k2, %k1, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    kshiftrb $5, %k1, %k1
+; SKX-NEXT:    kxorb %k0, %k1, %k0
+; SKX-NEXT:    kshiftrb $3, %k0, %k1
+; SKX-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; SKX-NEXT:    vcvttsd2si %xmm2, %eax
+; SKX-NEXT:    kmovd %eax, %k2
+; SKX-NEXT:    kxorb %k2, %k1, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    kshiftrb $4, %k1, %k1
+; SKX-NEXT:    kxorb %k0, %k1, %k0
+; SKX-NEXT:    kshiftrb $4, %k0, %k1
+; SKX-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; SKX-NEXT:    vcvttsd2si %xmm2, %eax
+; SKX-NEXT:    kmovd %eax, %k2
+; SKX-NEXT:    kxorb %k2, %k1, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    kshiftrb $3, %k1, %k1
+; SKX-NEXT:    kxorb %k0, %k1, %k0
+; SKX-NEXT:    kshiftrb $5, %k0, %k1
+; SKX-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; SKX-NEXT:    vcvttsd2si %xmm2, %eax
+; SKX-NEXT:    kmovd %eax, %k2
+; SKX-NEXT:    kxorb %k2, %k1, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    kshiftrb $2, %k1, %k1
+; SKX-NEXT:    kxorb %k0, %k1, %k0
+; SKX-NEXT:    kshiftrb $6, %k0, %k1
+; SKX-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; SKX-NEXT:    vcvttsd2si %xmm0, %eax
+; SKX-NEXT:    kmovd %eax, %k2
+; SKX-NEXT:    kxorb %k2, %k1, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    kshiftrb $1, %k1, %k1
+; SKX-NEXT:    kxorb %k0, %k1, %k0
+; SKX-NEXT:    kshiftlb $1, %k0, %k0
+; SKX-NEXT:    kshiftrb $1, %k0, %k0
+; SKX-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,0]
+; SKX-NEXT:    vcvttsd2si %xmm0, %eax
+; SKX-NEXT:    kmovd %eax, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    korb %k1, %k0, %k1
+; SKX-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; SKX-NEXT:    retq
+;
+; AVX512VL-LABEL: test_8f64toub:
+; AVX512VL:       # %bb.0:
+; AVX512VL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512VL-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k0
+; AVX512VL-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512VL-NEXT:    andl $1, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k1
+; AVX512VL-NEXT:    kshiftrw $1, %k0, %k2
+; AVX512VL-NEXT:    kshiftlw $1, %k2, %k2
+; AVX512VL-NEXT:    korw %k1, %k2, %k1
+; AVX512VL-NEXT:    kshiftrw $1, %k1, %k2
+; AVX512VL-NEXT:    kxorw %k0, %k2, %k0
+; AVX512VL-NEXT:    kshiftlw $15, %k0, %k0
+; AVX512VL-NEXT:    kshiftrw $14, %k0, %k0
+; AVX512VL-NEXT:    kxorw %k1, %k0, %k0
+; AVX512VL-NEXT:    kshiftrw $2, %k0, %k1
+; AVX512VL-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; AVX512VL-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $13, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VL-NEXT:    kshiftrw $3, %k0, %k1
+; AVX512VL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; AVX512VL-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $12, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VL-NEXT:    kshiftrw $4, %k0, %k1
+; AVX512VL-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; AVX512VL-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $11, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VL-NEXT:    kshiftrw $5, %k0, %k1
+; AVX512VL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; AVX512VL-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $10, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VL-NEXT:    kshiftrw $6, %k0, %k1
+; AVX512VL-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; AVX512VL-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $9, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VL-NEXT:    kshiftrw $7, %k0, %k1
+; AVX512VL-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,0]
+; AVX512VL-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $8, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k1
+; AVX512VL-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; AVX512VL-NEXT:    retq
+;
+; AVX512DQ-LABEL: test_8f64toub:
+; AVX512DQ:       # %bb.0:
+; AVX512DQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512DQ-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k0
+; AVX512DQ-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k1
+; AVX512DQ-NEXT:    kshiftrb $1, %k1, %k2
+; AVX512DQ-NEXT:    kxorb %k0, %k2, %k0
+; AVX512DQ-NEXT:    kshiftlb $7, %k0, %k0
+; AVX512DQ-NEXT:    kshiftrb $6, %k0, %k0
+; AVX512DQ-NEXT:    kxorb %k1, %k0, %k0
+; AVX512DQ-NEXT:    kshiftrb $2, %k0, %k1
+; AVX512DQ-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; AVX512DQ-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrb $5, %k1, %k1
+; AVX512DQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrb $3, %k0, %k1
+; AVX512DQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; AVX512DQ-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrb $4, %k1, %k1
+; AVX512DQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrb $4, %k0, %k1
+; AVX512DQ-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; AVX512DQ-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrb $3, %k1, %k1
+; AVX512DQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrb $5, %k0, %k1
+; AVX512DQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; AVX512DQ-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrb $2, %k1, %k1
+; AVX512DQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrb $6, %k0, %k1
+; AVX512DQ-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; AVX512DQ-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrb $1, %k1, %k1
+; AVX512DQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftlb $1, %k0, %k0
+; AVX512DQ-NEXT:    kshiftrb $1, %k0, %k0
+; AVX512DQ-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,0]
+; AVX512DQ-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    korb %k1, %k0, %k1
+; AVX512DQ-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; AVX512DQ-NEXT:    retq
+;
+; AVX512BW-LABEL: test_8f64toub:
+; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512BW-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k0
+; AVX512BW-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512BW-NEXT:    andl $1, %eax
+; AVX512BW-NEXT:    kmovw %eax, %k1
+; AVX512BW-NEXT:    kshiftrw $1, %k0, %k2
+; AVX512BW-NEXT:    kshiftlw $1, %k2, %k2
+; AVX512BW-NEXT:    korw %k1, %k2, %k1
+; AVX512BW-NEXT:    kshiftrw $1, %k1, %k2
+; AVX512BW-NEXT:    kxorw %k0, %k2, %k0
+; AVX512BW-NEXT:    kshiftlw $15, %k0, %k0
+; AVX512BW-NEXT:    kshiftrw $14, %k0, %k0
+; AVX512BW-NEXT:    kxorw %k1, %k0, %k0
+; AVX512BW-NEXT:    kshiftrw $2, %k0, %k1
+; AVX512BW-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; AVX512BW-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $13, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $3, %k0, %k1
+; AVX512BW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; AVX512BW-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $12, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $4, %k0, %k1
+; AVX512BW-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; AVX512BW-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $11, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $5, %k0, %k1
+; AVX512BW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; AVX512BW-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $10, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $6, %k0, %k1
+; AVX512BW-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; AVX512BW-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $9, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $7, %k0, %k1
+; AVX512BW-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,0]
+; AVX512BW-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $8, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k1
+; AVX512BW-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; AVX512BW-NEXT:    retq
+;
+; AVX512VLDQ-LABEL: test_8f64toub:
+; AVX512VLDQ:       # %bb.0:
+; AVX512VLDQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512VLDQ-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k0
+; AVX512VLDQ-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $1, %k1, %k2
+; AVX512VLDQ-NEXT:    kxorb %k0, %k2, %k0
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k0, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $6, %k0, %k0
+; AVX512VLDQ-NEXT:    kxorb %k1, %k0, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $2, %k0, %k1
+; AVX512VLDQ-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; AVX512VLDQ-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k2
+; AVX512VLDQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $5, %k1, %k1
+; AVX512VLDQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $3, %k0, %k1
+; AVX512VLDQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; AVX512VLDQ-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k2
+; AVX512VLDQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $4, %k1, %k1
+; AVX512VLDQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $4, %k0, %k1
+; AVX512VLDQ-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; AVX512VLDQ-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k2
+; AVX512VLDQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $3, %k1, %k1
+; AVX512VLDQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $5, %k0, %k1
+; AVX512VLDQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; AVX512VLDQ-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k2
+; AVX512VLDQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $2, %k1, %k1
+; AVX512VLDQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $6, %k0, %k1
+; AVX512VLDQ-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; AVX512VLDQ-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k2
+; AVX512VLDQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $1, %k1, %k1
+; AVX512VLDQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512VLDQ-NEXT:    kshiftlb $1, %k0, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $1, %k0, %k0
+; AVX512VLDQ-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,0]
+; AVX512VLDQ-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    korb %k1, %k0, %k1
+; AVX512VLDQ-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; AVX512VLDQ-NEXT:    retq
+;
+; AVX512VLBW-LABEL: test_8f64toub:
+; AVX512VLBW:       # %bb.0:
+; AVX512VLBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512VLBW-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k0
+; AVX512VLBW-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512VLBW-NEXT:    andl $1, %eax
+; AVX512VLBW-NEXT:    kmovw %eax, %k1
+; AVX512VLBW-NEXT:    kshiftrw $1, %k0, %k2
+; AVX512VLBW-NEXT:    kshiftlw $1, %k2, %k2
+; AVX512VLBW-NEXT:    korw %k1, %k2, %k1
+; AVX512VLBW-NEXT:    kshiftrw $1, %k1, %k2
+; AVX512VLBW-NEXT:    kxorw %k0, %k2, %k0
+; AVX512VLBW-NEXT:    kshiftlw $15, %k0, %k0
+; AVX512VLBW-NEXT:    kshiftrw $14, %k0, %k0
+; AVX512VLBW-NEXT:    kxorw %k1, %k0, %k0
+; AVX512VLBW-NEXT:    kshiftrw $2, %k0, %k1
+; AVX512VLBW-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; AVX512VLBW-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $13, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VLBW-NEXT:    kshiftrw $3, %k0, %k1
+; AVX512VLBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; AVX512VLBW-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $12, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VLBW-NEXT:    kshiftrw $4, %k0, %k1
+; AVX512VLBW-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; AVX512VLBW-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $11, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VLBW-NEXT:    kshiftrw $5, %k0, %k1
+; AVX512VLBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; AVX512VLBW-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $10, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VLBW-NEXT:    kshiftrw $6, %k0, %k1
+; AVX512VLBW-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; AVX512VLBW-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $9, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VLBW-NEXT:    kshiftrw $7, %k0, %k1
+; AVX512VLBW-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,0]
+; AVX512VLBW-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $8, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k1
+; AVX512VLBW-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; AVX512VLBW-NEXT:    retq
+  %mask = fptoui <8 x double> %a to <8 x i1>
+  %select = select <8 x i1> %mask, <8 x i64> %passthru, <8 x i64> zeroinitializer
+  ret <8 x i64> %select
+}
+
+define <2 x i64> @test_2f32toub(<2 x float> %a, <2 x i64> %passthru) {
+; NOVL-LABEL: test_2f32toub:
+; NOVL:       # %bb.0:
+; NOVL-NEXT:    vcvttss2usi %xmm0, %rax
+; NOVL-NEXT:    vmovq %rax, %xmm2
+; NOVL-NEXT:    vmovshdup {{.*#+}} xmm0 = xmm0[1,1,3,3]
+; NOVL-NEXT:    vcvttss2usi %xmm0, %rax
+; NOVL-NEXT:    vmovq %rax, %xmm0
+; NOVL-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm2[0],xmm0[0]
+; NOVL-NEXT:    vpsllq $63, %xmm0, %xmm0
+; NOVL-NEXT:    vpsraq $63, %zmm0, %zmm0
+; NOVL-NEXT:    vpand %xmm1, %xmm0, %xmm0
+; NOVL-NEXT:    vzeroupper
+; NOVL-NEXT:    retq
+;
+; VLBW-LABEL: test_2f32toub:
+; VLBW:       # %bb.0:
+; VLBW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k0
+; VLBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLBW-NEXT:    andl $1, %eax
+; VLBW-NEXT:    kmovw %eax, %k1
+; VLBW-NEXT:    kshiftrw $1, %k0, %k2
+; VLBW-NEXT:    kshiftlw $1, %k2, %k2
+; VLBW-NEXT:    korw %k1, %k2, %k1
+; VLBW-NEXT:    kshiftrw $1, %k1, %k2
+; VLBW-NEXT:    kxorw %k0, %k2, %k0
+; VLBW-NEXT:    kshiftlw $15, %k0, %k0
+; VLBW-NEXT:    kshiftrw $14, %k0, %k0
+; VLBW-NEXT:    kxorw %k1, %k0, %k1
+; VLBW-NEXT:    vmovdqa64 %xmm1, %xmm0 {%k1} {z}
+; VLBW-NEXT:    retq
+;
+; VLNOBW-LABEL: test_2f32toub:
+; VLNOBW:       # %bb.0:
+; VLNOBW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k0
+; VLNOBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLNOBW-NEXT:    andl $1, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k1
+; VLNOBW-NEXT:    kshiftrw $1, %k0, %k2
+; VLNOBW-NEXT:    kshiftlw $1, %k2, %k2
+; VLNOBW-NEXT:    korw %k1, %k2, %k1
+; VLNOBW-NEXT:    kshiftrw $1, %k1, %k2
+; VLNOBW-NEXT:    kxorw %k0, %k2, %k0
+; VLNOBW-NEXT:    kshiftlw $15, %k0, %k0
+; VLNOBW-NEXT:    kshiftrw $14, %k0, %k0
+; VLNOBW-NEXT:    kxorw %k1, %k0, %k1
+; VLNOBW-NEXT:    vmovdqa64 %xmm1, %xmm0 {%k1} {z}
+; VLNOBW-NEXT:    retq
+  %mask = fptoui <2 x float> %a to <2 x i1>
+  %select = select <2 x i1> %mask, <2 x i64> %passthru, <2 x i64> zeroinitializer
+  ret <2 x i64> %select
+}
+
+define <4 x i64> @test_4f32toub(<4 x float> %a, <4 x i64> %passthru) {
+; NOVL-LABEL: test_4f32toub:
+; NOVL:       # %bb.0:
+; NOVL-NEXT:    # kill: def %xmm0 killed %xmm0 def %zmm0
+; NOVL-NEXT:    vcvttps2udq %zmm0, %zmm0
+; NOVL-NEXT:    vpslld $31, %xmm0, %xmm0
+; NOVL-NEXT:    vpsrad $31, %xmm0, %xmm0
+; NOVL-NEXT:    vpmovsxdq %xmm0, %ymm0
+; NOVL-NEXT:    vpand %ymm1, %ymm0, %ymm0
+; NOVL-NEXT:    retq
+;
+; VLBW-LABEL: test_4f32toub:
+; VLBW:       # %bb.0:
+; VLBW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k0
+; VLBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLBW-NEXT:    andl $1, %eax
+; VLBW-NEXT:    kmovw %eax, %k1
+; VLBW-NEXT:    kshiftrw $1, %k0, %k2
+; VLBW-NEXT:    kshiftlw $1, %k2, %k2
+; VLBW-NEXT:    korw %k1, %k2, %k1
+; VLBW-NEXT:    kshiftrw $1, %k1, %k2
+; VLBW-NEXT:    kxorw %k0, %k2, %k0
+; VLBW-NEXT:    kshiftlw $15, %k0, %k0
+; VLBW-NEXT:    kshiftrw $14, %k0, %k0
+; VLBW-NEXT:    kxorw %k1, %k0, %k0
+; VLBW-NEXT:    kshiftrw $2, %k0, %k1
+; VLBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $13, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $3, %k0, %k1
+; VLBW-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; VLBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $12, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k1
+; VLBW-NEXT:    vmovdqa64 %ymm1, %ymm0 {%k1} {z}
+; VLBW-NEXT:    retq
+;
+; VLNOBW-LABEL: test_4f32toub:
+; VLNOBW:       # %bb.0:
+; VLNOBW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k0
+; VLNOBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLNOBW-NEXT:    andl $1, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k1
+; VLNOBW-NEXT:    kshiftrw $1, %k0, %k2
+; VLNOBW-NEXT:    kshiftlw $1, %k2, %k2
+; VLNOBW-NEXT:    korw %k1, %k2, %k1
+; VLNOBW-NEXT:    kshiftrw $1, %k1, %k2
+; VLNOBW-NEXT:    kxorw %k0, %k2, %k0
+; VLNOBW-NEXT:    kshiftlw $15, %k0, %k0
+; VLNOBW-NEXT:    kshiftrw $14, %k0, %k0
+; VLNOBW-NEXT:    kxorw %k1, %k0, %k0
+; VLNOBW-NEXT:    kshiftrw $2, %k0, %k1
+; VLNOBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $13, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $3, %k0, %k1
+; VLNOBW-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; VLNOBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $12, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k1
+; VLNOBW-NEXT:    vmovdqa64 %ymm1, %ymm0 {%k1} {z}
+; VLNOBW-NEXT:    retq
+  %mask = fptoui <4 x float> %a to <4 x i1>
+  %select = select <4 x i1> %mask, <4 x i64> %passthru, <4 x i64> zeroinitializer
+  ret <4 x i64> %select
+}
+
+define <8 x i64> @test_8f32toub(<8 x float> %a, <8 x i64> %passthru) {
+; KNL-LABEL: test_8f32toub:
+; KNL:       # %bb.0:
+; KNL-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k0
+; KNL-NEXT:    vcvttss2si %xmm0, %eax
+; KNL-NEXT:    andl $1, %eax
+; KNL-NEXT:    kmovw %eax, %k1
+; KNL-NEXT:    kshiftrw $1, %k0, %k2
+; KNL-NEXT:    kshiftlw $1, %k2, %k2
+; KNL-NEXT:    korw %k1, %k2, %k1
+; KNL-NEXT:    kshiftrw $1, %k1, %k2
+; KNL-NEXT:    kxorw %k0, %k2, %k0
+; KNL-NEXT:    kshiftlw $15, %k0, %k0
+; KNL-NEXT:    kshiftrw $14, %k0, %k0
+; KNL-NEXT:    kxorw %k1, %k0, %k0
+; KNL-NEXT:    kshiftrw $2, %k0, %k1
+; KNL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $13, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $3, %k0, %k1
+; KNL-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $12, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $4, %k0, %k1
+; KNL-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; KNL-NEXT:    vcvttss2si %xmm0, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $11, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $5, %k0, %k1
+; KNL-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $10, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $6, %k0, %k1
+; KNL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $9, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $7, %k0, %k1
+; KNL-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; KNL-NEXT:    vcvttss2si %xmm0, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $8, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k1
+; KNL-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_8f32toub:
+; SKX:       # %bb.0:
+; SKX-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; SKX-NEXT:    vcvttss2si %xmm2, %eax
+; SKX-NEXT:    kmovd %eax, %k0
+; SKX-NEXT:    vcvttss2si %xmm0, %eax
+; SKX-NEXT:    kmovd %eax, %k1
+; SKX-NEXT:    kshiftrb $1, %k1, %k2
+; SKX-NEXT:    kxorb %k0, %k2, %k0
+; SKX-NEXT:    kshiftlb $7, %k0, %k0
+; SKX-NEXT:    kshiftrb $6, %k0, %k0
+; SKX-NEXT:    kxorb %k1, %k0, %k0
+; SKX-NEXT:    kshiftrb $2, %k0, %k1
+; SKX-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; SKX-NEXT:    vcvttss2si %xmm2, %eax
+; SKX-NEXT:    kmovd %eax, %k2
+; SKX-NEXT:    kxorb %k2, %k1, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    kshiftrb $5, %k1, %k1
+; SKX-NEXT:    kxorb %k0, %k1, %k0
+; SKX-NEXT:    kshiftrb $3, %k0, %k1
+; SKX-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; SKX-NEXT:    vcvttss2si %xmm2, %eax
+; SKX-NEXT:    kmovd %eax, %k2
+; SKX-NEXT:    kxorb %k2, %k1, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    kshiftrb $4, %k1, %k1
+; SKX-NEXT:    kxorb %k0, %k1, %k0
+; SKX-NEXT:    kshiftrb $4, %k0, %k1
+; SKX-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; SKX-NEXT:    vcvttss2si %xmm0, %eax
+; SKX-NEXT:    kmovd %eax, %k2
+; SKX-NEXT:    kxorb %k2, %k1, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    kshiftrb $3, %k1, %k1
+; SKX-NEXT:    kxorb %k0, %k1, %k0
+; SKX-NEXT:    kshiftrb $5, %k0, %k1
+; SKX-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; SKX-NEXT:    vcvttss2si %xmm2, %eax
+; SKX-NEXT:    kmovd %eax, %k2
+; SKX-NEXT:    kxorb %k2, %k1, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    kshiftrb $2, %k1, %k1
+; SKX-NEXT:    kxorb %k0, %k1, %k0
+; SKX-NEXT:    kshiftrb $6, %k0, %k1
+; SKX-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; SKX-NEXT:    vcvttss2si %xmm2, %eax
+; SKX-NEXT:    kmovd %eax, %k2
+; SKX-NEXT:    kxorb %k2, %k1, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    kshiftrb $1, %k1, %k1
+; SKX-NEXT:    kxorb %k0, %k1, %k0
+; SKX-NEXT:    kshiftlb $1, %k0, %k0
+; SKX-NEXT:    kshiftrb $1, %k0, %k0
+; SKX-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; SKX-NEXT:    vcvttss2si %xmm0, %eax
+; SKX-NEXT:    kmovd %eax, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    korb %k1, %k0, %k1
+; SKX-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; SKX-NEXT:    retq
+;
+; AVX512VL-LABEL: test_8f32toub:
+; AVX512VL:       # %bb.0:
+; AVX512VL-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512VL-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k0
+; AVX512VL-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512VL-NEXT:    andl $1, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k1
+; AVX512VL-NEXT:    kshiftrw $1, %k0, %k2
+; AVX512VL-NEXT:    kshiftlw $1, %k2, %k2
+; AVX512VL-NEXT:    korw %k1, %k2, %k1
+; AVX512VL-NEXT:    kshiftrw $1, %k1, %k2
+; AVX512VL-NEXT:    kxorw %k0, %k2, %k0
+; AVX512VL-NEXT:    kshiftlw $15, %k0, %k0
+; AVX512VL-NEXT:    kshiftrw $14, %k0, %k0
+; AVX512VL-NEXT:    kxorw %k1, %k0, %k0
+; AVX512VL-NEXT:    kshiftrw $2, %k0, %k1
+; AVX512VL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512VL-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $13, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VL-NEXT:    kshiftrw $3, %k0, %k1
+; AVX512VL-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; AVX512VL-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $12, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VL-NEXT:    kshiftrw $4, %k0, %k1
+; AVX512VL-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; AVX512VL-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $11, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VL-NEXT:    kshiftrw $5, %k0, %k1
+; AVX512VL-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512VL-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $10, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VL-NEXT:    kshiftrw $6, %k0, %k1
+; AVX512VL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512VL-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $9, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VL-NEXT:    kshiftrw $7, %k0, %k1
+; AVX512VL-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; AVX512VL-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $8, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k1
+; AVX512VL-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; AVX512VL-NEXT:    retq
+;
+; AVX512DQ-LABEL: test_8f32toub:
+; AVX512DQ:       # %bb.0:
+; AVX512DQ-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k0
+; AVX512DQ-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k1
+; AVX512DQ-NEXT:    kshiftrb $1, %k1, %k2
+; AVX512DQ-NEXT:    kxorb %k0, %k2, %k0
+; AVX512DQ-NEXT:    kshiftlb $7, %k0, %k0
+; AVX512DQ-NEXT:    kshiftrb $6, %k0, %k0
+; AVX512DQ-NEXT:    kxorb %k1, %k0, %k0
+; AVX512DQ-NEXT:    kshiftrb $2, %k0, %k1
+; AVX512DQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrb $5, %k1, %k1
+; AVX512DQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrb $3, %k0, %k1
+; AVX512DQ-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrb $4, %k1, %k1
+; AVX512DQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrb $4, %k0, %k1
+; AVX512DQ-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; AVX512DQ-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrb $3, %k1, %k1
+; AVX512DQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrb $5, %k0, %k1
+; AVX512DQ-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrb $2, %k1, %k1
+; AVX512DQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrb $6, %k0, %k1
+; AVX512DQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrb $1, %k1, %k1
+; AVX512DQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftlb $1, %k0, %k0
+; AVX512DQ-NEXT:    kshiftrb $1, %k0, %k0
+; AVX512DQ-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    korb %k1, %k0, %k1
+; AVX512DQ-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; AVX512DQ-NEXT:    retq
+;
+; AVX512BW-LABEL: test_8f32toub:
+; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k0
+; AVX512BW-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512BW-NEXT:    andl $1, %eax
+; AVX512BW-NEXT:    kmovw %eax, %k1
+; AVX512BW-NEXT:    kshiftrw $1, %k0, %k2
+; AVX512BW-NEXT:    kshiftlw $1, %k2, %k2
+; AVX512BW-NEXT:    korw %k1, %k2, %k1
+; AVX512BW-NEXT:    kshiftrw $1, %k1, %k2
+; AVX512BW-NEXT:    kxorw %k0, %k2, %k0
+; AVX512BW-NEXT:    kshiftlw $15, %k0, %k0
+; AVX512BW-NEXT:    kshiftrw $14, %k0, %k0
+; AVX512BW-NEXT:    kxorw %k1, %k0, %k0
+; AVX512BW-NEXT:    kshiftrw $2, %k0, %k1
+; AVX512BW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $13, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $3, %k0, %k1
+; AVX512BW-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $12, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $4, %k0, %k1
+; AVX512BW-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; AVX512BW-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $11, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $5, %k0, %k1
+; AVX512BW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $10, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $6, %k0, %k1
+; AVX512BW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $9, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $7, %k0, %k1
+; AVX512BW-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $8, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k1
+; AVX512BW-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; AVX512BW-NEXT:    retq
+;
+; AVX512VLDQ-LABEL: test_8f32toub:
+; AVX512VLDQ:       # %bb.0:
+; AVX512VLDQ-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512VLDQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k0
+; AVX512VLDQ-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $1, %k1, %k2
+; AVX512VLDQ-NEXT:    kxorb %k0, %k2, %k0
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k0, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $6, %k0, %k0
+; AVX512VLDQ-NEXT:    kxorb %k1, %k0, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $2, %k0, %k1
+; AVX512VLDQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512VLDQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k2
+; AVX512VLDQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $5, %k1, %k1
+; AVX512VLDQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $3, %k0, %k1
+; AVX512VLDQ-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; AVX512VLDQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k2
+; AVX512VLDQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $4, %k1, %k1
+; AVX512VLDQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $4, %k0, %k1
+; AVX512VLDQ-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; AVX512VLDQ-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k2
+; AVX512VLDQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $3, %k1, %k1
+; AVX512VLDQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $5, %k0, %k1
+; AVX512VLDQ-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512VLDQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k2
+; AVX512VLDQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $2, %k1, %k1
+; AVX512VLDQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $6, %k0, %k1
+; AVX512VLDQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512VLDQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k2
+; AVX512VLDQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $1, %k1, %k1
+; AVX512VLDQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512VLDQ-NEXT:    kshiftlb $1, %k0, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $1, %k0, %k0
+; AVX512VLDQ-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; AVX512VLDQ-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    korb %k1, %k0, %k1
+; AVX512VLDQ-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; AVX512VLDQ-NEXT:    retq
+;
+; AVX512VLBW-LABEL: test_8f32toub:
+; AVX512VLBW:       # %bb.0:
+; AVX512VLBW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k0
+; AVX512VLBW-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512VLBW-NEXT:    andl $1, %eax
+; AVX512VLBW-NEXT:    kmovw %eax, %k1
+; AVX512VLBW-NEXT:    kshiftrw $1, %k0, %k2
+; AVX512VLBW-NEXT:    kshiftlw $1, %k2, %k2
+; AVX512VLBW-NEXT:    korw %k1, %k2, %k1
+; AVX512VLBW-NEXT:    kshiftrw $1, %k1, %k2
+; AVX512VLBW-NEXT:    kxorw %k0, %k2, %k0
+; AVX512VLBW-NEXT:    kshiftlw $15, %k0, %k0
+; AVX512VLBW-NEXT:    kshiftrw $14, %k0, %k0
+; AVX512VLBW-NEXT:    kxorw %k1, %k0, %k0
+; AVX512VLBW-NEXT:    kshiftrw $2, %k0, %k1
+; AVX512VLBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $13, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VLBW-NEXT:    kshiftrw $3, %k0, %k1
+; AVX512VLBW-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; AVX512VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $12, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VLBW-NEXT:    kshiftrw $4, %k0, %k1
+; AVX512VLBW-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; AVX512VLBW-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $11, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VLBW-NEXT:    kshiftrw $5, %k0, %k1
+; AVX512VLBW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $10, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VLBW-NEXT:    kshiftrw $6, %k0, %k1
+; AVX512VLBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $9, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VLBW-NEXT:    kshiftrw $7, %k0, %k1
+; AVX512VLBW-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; AVX512VLBW-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $8, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k1
+; AVX512VLBW-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; AVX512VLBW-NEXT:    retq
+  %mask = fptoui <8 x float> %a to <8 x i1>
+  %select = select <8 x i1> %mask, <8 x i64> %passthru, <8 x i64> zeroinitializer
+  ret <8 x i64> %select
+}
+
+define <16 x i32> @test_16f32toub(<16 x float> %a, <16 x i32> %passthru) {
+; KNL-LABEL: test_16f32toub:
+; KNL:       # %bb.0:
+; KNL-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k0
+; KNL-NEXT:    vcvttss2si %xmm0, %eax
+; KNL-NEXT:    kmovw %eax, %k1
+; KNL-NEXT:    kshiftrw $1, %k1, %k2
+; KNL-NEXT:    kxorw %k0, %k2, %k0
+; KNL-NEXT:    kshiftlw $15, %k0, %k0
+; KNL-NEXT:    kshiftrw $14, %k0, %k0
+; KNL-NEXT:    kxorw %k1, %k0, %k0
+; KNL-NEXT:    kshiftrw $2, %k0, %k1
+; KNL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $13, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $3, %k0, %k1
+; KNL-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $12, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $4, %k0, %k1
+; KNL-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $11, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $5, %k0, %k1
+; KNL-NEXT:    vmovshdup {{.*#+}} xmm3 = xmm2[1,1,3,3]
+; KNL-NEXT:    vcvttss2si %xmm3, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $10, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $6, %k0, %k1
+; KNL-NEXT:    vpermilpd {{.*#+}} xmm3 = xmm2[1,0]
+; KNL-NEXT:    vcvttss2si %xmm3, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $9, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $7, %k0, %k1
+; KNL-NEXT:    vpermilps {{.*#+}} xmm2 = xmm2[3,1,2,3]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $8, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $8, %k0, %k1
+; KNL-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $7, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $9, %k0, %k1
+; KNL-NEXT:    vmovshdup {{.*#+}} xmm3 = xmm2[1,1,3,3]
+; KNL-NEXT:    vcvttss2si %xmm3, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $6, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $10, %k0, %k1
+; KNL-NEXT:    vpermilpd {{.*#+}} xmm3 = xmm2[1,0]
+; KNL-NEXT:    vcvttss2si %xmm3, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $5, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $11, %k0, %k1
+; KNL-NEXT:    vpermilps {{.*#+}} xmm2 = xmm2[3,1,2,3]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $4, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $12, %k0, %k1
+; KNL-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; KNL-NEXT:    vcvttss2si %xmm0, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $3, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $13, %k0, %k1
+; KNL-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $2, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $14, %k0, %k1
+; KNL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $1, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftlw $1, %k0, %k0
+; KNL-NEXT:    kshiftrw $1, %k0, %k0
+; KNL-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; KNL-NEXT:    vcvttss2si %xmm0, %eax
+; KNL-NEXT:    kmovw %eax, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    korw %k1, %k0, %k1
+; KNL-NEXT:    vmovdqa32 %zmm1, %zmm0 {%k1} {z}
+; KNL-NEXT:    retq
+;
+; VLBW-LABEL: test_16f32toub:
+; VLBW:       # %bb.0:
+; VLBW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k0
+; VLBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLBW-NEXT:    kmovd %eax, %k1
+; VLBW-NEXT:    kshiftrw $1, %k1, %k2
+; VLBW-NEXT:    kxorw %k0, %k2, %k0
+; VLBW-NEXT:    kshiftlw $15, %k0, %k0
+; VLBW-NEXT:    kshiftrw $14, %k0, %k0
+; VLBW-NEXT:    kxorw %k1, %k0, %k0
+; VLBW-NEXT:    kshiftrw $2, %k0, %k1
+; VLBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $13, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $3, %k0, %k1
+; VLBW-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $12, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $4, %k0, %k1
+; VLBW-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $11, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $5, %k0, %k1
+; VLBW-NEXT:    vmovshdup {{.*#+}} xmm3 = xmm2[1,1,3,3]
+; VLBW-NEXT:    vcvttss2si %xmm3, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $10, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $6, %k0, %k1
+; VLBW-NEXT:    vpermilpd {{.*#+}} xmm3 = xmm2[1,0]
+; VLBW-NEXT:    vcvttss2si %xmm3, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $9, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $7, %k0, %k1
+; VLBW-NEXT:    vpermilps {{.*#+}} xmm2 = xmm2[3,1,2,3]
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $8, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $8, %k0, %k1
+; VLBW-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $7, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $9, %k0, %k1
+; VLBW-NEXT:    vmovshdup {{.*#+}} xmm3 = xmm2[1,1,3,3]
+; VLBW-NEXT:    vcvttss2si %xmm3, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $6, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $10, %k0, %k1
+; VLBW-NEXT:    vpermilpd {{.*#+}} xmm3 = xmm2[1,0]
+; VLBW-NEXT:    vcvttss2si %xmm3, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $5, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $11, %k0, %k1
+; VLBW-NEXT:    vpermilps {{.*#+}} xmm2 = xmm2[3,1,2,3]
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $4, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $12, %k0, %k1
+; VLBW-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; VLBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $3, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $13, %k0, %k1
+; VLBW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $2, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $14, %k0, %k1
+; VLBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $1, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftlw $1, %k0, %k0
+; VLBW-NEXT:    kshiftrw $1, %k0, %k0
+; VLBW-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; VLBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLBW-NEXT:    kmovd %eax, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    korw %k1, %k0, %k1
+; VLBW-NEXT:    vmovdqa32 %zmm1, %zmm0 {%k1} {z}
+; VLBW-NEXT:    retq
+;
+; VLNOBW-LABEL: test_16f32toub:
+; VLNOBW:       # %bb.0:
+; VLNOBW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k0
+; VLNOBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k1
+; VLNOBW-NEXT:    kshiftrw $1, %k1, %k2
+; VLNOBW-NEXT:    kxorw %k0, %k2, %k0
+; VLNOBW-NEXT:    kshiftlw $15, %k0, %k0
+; VLNOBW-NEXT:    kshiftrw $14, %k0, %k0
+; VLNOBW-NEXT:    kxorw %k1, %k0, %k0
+; VLNOBW-NEXT:    kshiftrw $2, %k0, %k1
+; VLNOBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $13, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $3, %k0, %k1
+; VLNOBW-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $12, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $4, %k0, %k1
+; VLNOBW-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $11, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $5, %k0, %k1
+; VLNOBW-NEXT:    vmovshdup {{.*#+}} xmm3 = xmm2[1,1,3,3]
+; VLNOBW-NEXT:    vcvttss2si %xmm3, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $10, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $6, %k0, %k1
+; VLNOBW-NEXT:    vpermilpd {{.*#+}} xmm3 = xmm2[1,0]
+; VLNOBW-NEXT:    vcvttss2si %xmm3, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $9, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $7, %k0, %k1
+; VLNOBW-NEXT:    vpermilps {{.*#+}} xmm2 = xmm2[3,1,2,3]
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $8, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $8, %k0, %k1
+; VLNOBW-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $7, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $9, %k0, %k1
+; VLNOBW-NEXT:    vmovshdup {{.*#+}} xmm3 = xmm2[1,1,3,3]
+; VLNOBW-NEXT:    vcvttss2si %xmm3, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $6, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $10, %k0, %k1
+; VLNOBW-NEXT:    vpermilpd {{.*#+}} xmm3 = xmm2[1,0]
+; VLNOBW-NEXT:    vcvttss2si %xmm3, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $5, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $11, %k0, %k1
+; VLNOBW-NEXT:    vpermilps {{.*#+}} xmm2 = xmm2[3,1,2,3]
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $4, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $12, %k0, %k1
+; VLNOBW-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; VLNOBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $3, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $13, %k0, %k1
+; VLNOBW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $2, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $14, %k0, %k1
+; VLNOBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $1, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftlw $1, %k0, %k0
+; VLNOBW-NEXT:    kshiftrw $1, %k0, %k0
+; VLNOBW-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; VLNOBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    korw %k1, %k0, %k1
+; VLNOBW-NEXT:    vmovdqa32 %zmm1, %zmm0 {%k1} {z}
+; VLNOBW-NEXT:    retq
+;
+; AVX512DQ-LABEL: test_16f32toub:
+; AVX512DQ:       # %bb.0:
+; AVX512DQ-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k0
+; AVX512DQ-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k1
+; AVX512DQ-NEXT:    kshiftrw $1, %k1, %k2
+; AVX512DQ-NEXT:    kxorw %k0, %k2, %k0
+; AVX512DQ-NEXT:    kshiftlw $15, %k0, %k0
+; AVX512DQ-NEXT:    kshiftrw $14, %k0, %k0
+; AVX512DQ-NEXT:    kxorw %k1, %k0, %k0
+; AVX512DQ-NEXT:    kshiftrw $2, %k0, %k1
+; AVX512DQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $13, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $3, %k0, %k1
+; AVX512DQ-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $12, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $4, %k0, %k1
+; AVX512DQ-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $11, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $5, %k0, %k1
+; AVX512DQ-NEXT:    vmovshdup {{.*#+}} xmm3 = xmm2[1,1,3,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm3, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $10, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $6, %k0, %k1
+; AVX512DQ-NEXT:    vpermilpd {{.*#+}} xmm3 = xmm2[1,0]
+; AVX512DQ-NEXT:    vcvttss2si %xmm3, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $9, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $7, %k0, %k1
+; AVX512DQ-NEXT:    vpermilps {{.*#+}} xmm2 = xmm2[3,1,2,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $8, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $8, %k0, %k1
+; AVX512DQ-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $7, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $9, %k0, %k1
+; AVX512DQ-NEXT:    vmovshdup {{.*#+}} xmm3 = xmm2[1,1,3,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm3, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $6, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $10, %k0, %k1
+; AVX512DQ-NEXT:    vpermilpd {{.*#+}} xmm3 = xmm2[1,0]
+; AVX512DQ-NEXT:    vcvttss2si %xmm3, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $5, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $11, %k0, %k1
+; AVX512DQ-NEXT:    vpermilps {{.*#+}} xmm2 = xmm2[3,1,2,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $4, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $12, %k0, %k1
+; AVX512DQ-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; AVX512DQ-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $3, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $13, %k0, %k1
+; AVX512DQ-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $2, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $14, %k0, %k1
+; AVX512DQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $1, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftlw $1, %k0, %k0
+; AVX512DQ-NEXT:    kshiftrw $1, %k0, %k0
+; AVX512DQ-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    korw %k1, %k0, %k1
+; AVX512DQ-NEXT:    vmovdqa32 %zmm1, %zmm0 {%k1} {z}
+; AVX512DQ-NEXT:    retq
+;
+; AVX512BW-LABEL: test_16f32toub:
+; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k0
+; AVX512BW-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k1
+; AVX512BW-NEXT:    kshiftrw $1, %k1, %k2
+; AVX512BW-NEXT:    kxorw %k0, %k2, %k0
+; AVX512BW-NEXT:    kshiftlw $15, %k0, %k0
+; AVX512BW-NEXT:    kshiftrw $14, %k0, %k0
+; AVX512BW-NEXT:    kxorw %k1, %k0, %k0
+; AVX512BW-NEXT:    kshiftrw $2, %k0, %k1
+; AVX512BW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $13, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $3, %k0, %k1
+; AVX512BW-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $12, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $4, %k0, %k1
+; AVX512BW-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $11, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $5, %k0, %k1
+; AVX512BW-NEXT:    vmovshdup {{.*#+}} xmm3 = xmm2[1,1,3,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm3, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $10, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $6, %k0, %k1
+; AVX512BW-NEXT:    vpermilpd {{.*#+}} xmm3 = xmm2[1,0]
+; AVX512BW-NEXT:    vcvttss2si %xmm3, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $9, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $7, %k0, %k1
+; AVX512BW-NEXT:    vpermilps {{.*#+}} xmm2 = xmm2[3,1,2,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $8, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $8, %k0, %k1
+; AVX512BW-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $7, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $9, %k0, %k1
+; AVX512BW-NEXT:    vmovshdup {{.*#+}} xmm3 = xmm2[1,1,3,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm3, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $6, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $10, %k0, %k1
+; AVX512BW-NEXT:    vpermilpd {{.*#+}} xmm3 = xmm2[1,0]
+; AVX512BW-NEXT:    vcvttss2si %xmm3, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $5, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $11, %k0, %k1
+; AVX512BW-NEXT:    vpermilps {{.*#+}} xmm2 = xmm2[3,1,2,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $4, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $12, %k0, %k1
+; AVX512BW-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; AVX512BW-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $3, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $13, %k0, %k1
+; AVX512BW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $2, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $14, %k0, %k1
+; AVX512BW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $1, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftlw $1, %k0, %k0
+; AVX512BW-NEXT:    kshiftrw $1, %k0, %k0
+; AVX512BW-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    korw %k1, %k0, %k1
+; AVX512BW-NEXT:    vmovdqa32 %zmm1, %zmm0 {%k1} {z}
+; AVX512BW-NEXT:    retq
+  %mask = fptoui <16 x float> %a to <16 x i1>
+  %select = select <16 x i1> %mask, <16 x i32> %passthru, <16 x i32> zeroinitializer
+  ret <16 x i32> %select
+}
+
+define <2 x i64> @test_2f64tosb(<2 x double> %a, <2 x i64> %passthru) {
+; NOVLDQ-LABEL: test_2f64tosb:
+; NOVLDQ:       # %bb.0:
+; NOVLDQ-NEXT:    vcvttsd2si %xmm0, %rax
+; NOVLDQ-NEXT:    vmovq %rax, %xmm2
+; NOVLDQ-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,0]
+; NOVLDQ-NEXT:    vcvttsd2si %xmm0, %rax
+; NOVLDQ-NEXT:    vmovq %rax, %xmm0
+; NOVLDQ-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm2[0],xmm0[0]
+; NOVLDQ-NEXT:    vpand %xmm1, %xmm0, %xmm0
+; NOVLDQ-NEXT:    retq
+;
+; VLBW-LABEL: test_2f64tosb:
+; VLBW:       # %bb.0:
+; VLBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; VLBW-NEXT:    vcvttsd2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k0
+; VLBW-NEXT:    vcvttsd2si %xmm0, %eax
+; VLBW-NEXT:    andl $1, %eax
+; VLBW-NEXT:    kmovw %eax, %k1
+; VLBW-NEXT:    kshiftrw $1, %k0, %k2
+; VLBW-NEXT:    kshiftlw $1, %k2, %k2
+; VLBW-NEXT:    korw %k1, %k2, %k1
+; VLBW-NEXT:    kshiftrw $1, %k1, %k2
+; VLBW-NEXT:    kxorw %k0, %k2, %k0
+; VLBW-NEXT:    kshiftlw $15, %k0, %k0
+; VLBW-NEXT:    kshiftrw $14, %k0, %k0
+; VLBW-NEXT:    kxorw %k1, %k0, %k1
+; VLBW-NEXT:    vmovdqa64 %xmm1, %xmm0 {%k1} {z}
+; VLBW-NEXT:    retq
+;
+; VLNOBW-LABEL: test_2f64tosb:
+; VLNOBW:       # %bb.0:
+; VLNOBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; VLNOBW-NEXT:    vcvttsd2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k0
+; VLNOBW-NEXT:    vcvttsd2si %xmm0, %eax
+; VLNOBW-NEXT:    andl $1, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k1
+; VLNOBW-NEXT:    kshiftrw $1, %k0, %k2
+; VLNOBW-NEXT:    kshiftlw $1, %k2, %k2
+; VLNOBW-NEXT:    korw %k1, %k2, %k1
+; VLNOBW-NEXT:    kshiftrw $1, %k1, %k2
+; VLNOBW-NEXT:    kxorw %k0, %k2, %k0
+; VLNOBW-NEXT:    kshiftlw $15, %k0, %k0
+; VLNOBW-NEXT:    kshiftrw $14, %k0, %k0
+; VLNOBW-NEXT:    kxorw %k1, %k0, %k1
+; VLNOBW-NEXT:    vmovdqa64 %xmm1, %xmm0 {%k1} {z}
+; VLNOBW-NEXT:    retq
+;
+; AVX512DQ-LABEL: test_2f64tosb:
+; AVX512DQ:       # %bb.0:
+; AVX512DQ-NEXT:    # kill: def %xmm0 killed %xmm0 def %zmm0
+; AVX512DQ-NEXT:    vcvttpd2qq %zmm0, %zmm0
+; AVX512DQ-NEXT:    vandps %xmm1, %xmm0, %xmm0
+; AVX512DQ-NEXT:    vzeroupper
+; AVX512DQ-NEXT:    retq
+  %mask = fptosi <2 x double> %a to <2 x i1>
+  %select = select <2 x i1> %mask, <2 x i64> %passthru, <2 x i64> zeroinitializer
+  ret <2 x i64> %select
+}
+
+define <4 x i64> @test_4f64tosb(<4 x double> %a, <4 x i64> %passthru) {
+; NOVL-LABEL: test_4f64tosb:
+; NOVL:       # %bb.0:
+; NOVL-NEXT:    vcvttpd2dq %ymm0, %xmm0
+; NOVL-NEXT:    vpmovsxdq %xmm0, %ymm0
+; NOVL-NEXT:    vpand %ymm1, %ymm0, %ymm0
+; NOVL-NEXT:    retq
+;
+; VLBW-LABEL: test_4f64tosb:
+; VLBW:       # %bb.0:
+; VLBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; VLBW-NEXT:    vcvttsd2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k0
+; VLBW-NEXT:    vcvttsd2si %xmm0, %eax
+; VLBW-NEXT:    andl $1, %eax
+; VLBW-NEXT:    kmovw %eax, %k1
+; VLBW-NEXT:    kshiftrw $1, %k0, %k2
+; VLBW-NEXT:    kshiftlw $1, %k2, %k2
+; VLBW-NEXT:    korw %k1, %k2, %k1
+; VLBW-NEXT:    kshiftrw $1, %k1, %k2
+; VLBW-NEXT:    kxorw %k0, %k2, %k0
+; VLBW-NEXT:    kshiftlw $15, %k0, %k0
+; VLBW-NEXT:    kshiftrw $14, %k0, %k0
+; VLBW-NEXT:    kxorw %k1, %k0, %k0
+; VLBW-NEXT:    kshiftrw $2, %k0, %k1
+; VLBW-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; VLBW-NEXT:    vcvttsd2si %xmm0, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $13, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $3, %k0, %k1
+; VLBW-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,0]
+; VLBW-NEXT:    vcvttsd2si %xmm0, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $12, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k1
+; VLBW-NEXT:    vmovdqa64 %ymm1, %ymm0 {%k1} {z}
+; VLBW-NEXT:    retq
+;
+; VLNOBW-LABEL: test_4f64tosb:
+; VLNOBW:       # %bb.0:
+; VLNOBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; VLNOBW-NEXT:    vcvttsd2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k0
+; VLNOBW-NEXT:    vcvttsd2si %xmm0, %eax
+; VLNOBW-NEXT:    andl $1, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k1
+; VLNOBW-NEXT:    kshiftrw $1, %k0, %k2
+; VLNOBW-NEXT:    kshiftlw $1, %k2, %k2
+; VLNOBW-NEXT:    korw %k1, %k2, %k1
+; VLNOBW-NEXT:    kshiftrw $1, %k1, %k2
+; VLNOBW-NEXT:    kxorw %k0, %k2, %k0
+; VLNOBW-NEXT:    kshiftlw $15, %k0, %k0
+; VLNOBW-NEXT:    kshiftrw $14, %k0, %k0
+; VLNOBW-NEXT:    kxorw %k1, %k0, %k0
+; VLNOBW-NEXT:    kshiftrw $2, %k0, %k1
+; VLNOBW-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; VLNOBW-NEXT:    vcvttsd2si %xmm0, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $13, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $3, %k0, %k1
+; VLNOBW-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,0]
+; VLNOBW-NEXT:    vcvttsd2si %xmm0, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $12, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k1
+; VLNOBW-NEXT:    vmovdqa64 %ymm1, %ymm0 {%k1} {z}
+; VLNOBW-NEXT:    retq
+  %mask = fptosi <4 x double> %a to <4 x i1>
+  %select = select <4 x i1> %mask, <4 x i64> %passthru, <4 x i64> zeroinitializer
+  ret <4 x i64> %select
+}
+
+define <8 x i64> @test_8f64tosb(<8 x double> %a, <8 x i64> %passthru) {
+; KNL-LABEL: test_8f64tosb:
+; KNL:       # %bb.0:
+; KNL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; KNL-NEXT:    vcvttsd2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k0
+; KNL-NEXT:    vcvttsd2si %xmm0, %eax
+; KNL-NEXT:    andl $1, %eax
+; KNL-NEXT:    kmovw %eax, %k1
+; KNL-NEXT:    kshiftrw $1, %k0, %k2
+; KNL-NEXT:    kshiftlw $1, %k2, %k2
+; KNL-NEXT:    korw %k1, %k2, %k1
+; KNL-NEXT:    kshiftrw $1, %k1, %k2
+; KNL-NEXT:    kxorw %k0, %k2, %k0
+; KNL-NEXT:    kshiftlw $15, %k0, %k0
+; KNL-NEXT:    kshiftrw $14, %k0, %k0
+; KNL-NEXT:    kxorw %k1, %k0, %k0
+; KNL-NEXT:    kshiftrw $2, %k0, %k1
+; KNL-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; KNL-NEXT:    vcvttsd2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $13, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $3, %k0, %k1
+; KNL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; KNL-NEXT:    vcvttsd2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $12, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $4, %k0, %k1
+; KNL-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; KNL-NEXT:    vcvttsd2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $11, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $5, %k0, %k1
+; KNL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; KNL-NEXT:    vcvttsd2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $10, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $6, %k0, %k1
+; KNL-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; KNL-NEXT:    vcvttsd2si %xmm0, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $9, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $7, %k0, %k1
+; KNL-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,0]
+; KNL-NEXT:    vcvttsd2si %xmm0, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $8, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k1
+; KNL-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_8f64tosb:
+; SKX:       # %bb.0:
+; SKX-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; SKX-NEXT:    vcvttsd2si %xmm2, %eax
+; SKX-NEXT:    kmovd %eax, %k0
+; SKX-NEXT:    vcvttsd2si %xmm0, %eax
+; SKX-NEXT:    kmovd %eax, %k1
+; SKX-NEXT:    kshiftrb $1, %k1, %k2
+; SKX-NEXT:    kxorb %k0, %k2, %k0
+; SKX-NEXT:    kshiftlb $7, %k0, %k0
+; SKX-NEXT:    kshiftrb $6, %k0, %k0
+; SKX-NEXT:    kxorb %k1, %k0, %k0
+; SKX-NEXT:    kshiftrb $2, %k0, %k1
+; SKX-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; SKX-NEXT:    vcvttsd2si %xmm2, %eax
+; SKX-NEXT:    kmovd %eax, %k2
+; SKX-NEXT:    kxorb %k2, %k1, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    kshiftrb $5, %k1, %k1
+; SKX-NEXT:    kxorb %k0, %k1, %k0
+; SKX-NEXT:    kshiftrb $3, %k0, %k1
+; SKX-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; SKX-NEXT:    vcvttsd2si %xmm2, %eax
+; SKX-NEXT:    kmovd %eax, %k2
+; SKX-NEXT:    kxorb %k2, %k1, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    kshiftrb $4, %k1, %k1
+; SKX-NEXT:    kxorb %k0, %k1, %k0
+; SKX-NEXT:    kshiftrb $4, %k0, %k1
+; SKX-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; SKX-NEXT:    vcvttsd2si %xmm2, %eax
+; SKX-NEXT:    kmovd %eax, %k2
+; SKX-NEXT:    kxorb %k2, %k1, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    kshiftrb $3, %k1, %k1
+; SKX-NEXT:    kxorb %k0, %k1, %k0
+; SKX-NEXT:    kshiftrb $5, %k0, %k1
+; SKX-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; SKX-NEXT:    vcvttsd2si %xmm2, %eax
+; SKX-NEXT:    kmovd %eax, %k2
+; SKX-NEXT:    kxorb %k2, %k1, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    kshiftrb $2, %k1, %k1
+; SKX-NEXT:    kxorb %k0, %k1, %k0
+; SKX-NEXT:    kshiftrb $6, %k0, %k1
+; SKX-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; SKX-NEXT:    vcvttsd2si %xmm0, %eax
+; SKX-NEXT:    kmovd %eax, %k2
+; SKX-NEXT:    kxorb %k2, %k1, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    kshiftrb $1, %k1, %k1
+; SKX-NEXT:    kxorb %k0, %k1, %k0
+; SKX-NEXT:    kshiftlb $1, %k0, %k0
+; SKX-NEXT:    kshiftrb $1, %k0, %k0
+; SKX-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,0]
+; SKX-NEXT:    vcvttsd2si %xmm0, %eax
+; SKX-NEXT:    kmovd %eax, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    korb %k1, %k0, %k1
+; SKX-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; SKX-NEXT:    retq
+;
+; AVX512VL-LABEL: test_8f64tosb:
+; AVX512VL:       # %bb.0:
+; AVX512VL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512VL-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k0
+; AVX512VL-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512VL-NEXT:    andl $1, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k1
+; AVX512VL-NEXT:    kshiftrw $1, %k0, %k2
+; AVX512VL-NEXT:    kshiftlw $1, %k2, %k2
+; AVX512VL-NEXT:    korw %k1, %k2, %k1
+; AVX512VL-NEXT:    kshiftrw $1, %k1, %k2
+; AVX512VL-NEXT:    kxorw %k0, %k2, %k0
+; AVX512VL-NEXT:    kshiftlw $15, %k0, %k0
+; AVX512VL-NEXT:    kshiftrw $14, %k0, %k0
+; AVX512VL-NEXT:    kxorw %k1, %k0, %k0
+; AVX512VL-NEXT:    kshiftrw $2, %k0, %k1
+; AVX512VL-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; AVX512VL-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $13, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VL-NEXT:    kshiftrw $3, %k0, %k1
+; AVX512VL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; AVX512VL-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $12, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VL-NEXT:    kshiftrw $4, %k0, %k1
+; AVX512VL-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; AVX512VL-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $11, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VL-NEXT:    kshiftrw $5, %k0, %k1
+; AVX512VL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; AVX512VL-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $10, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VL-NEXT:    kshiftrw $6, %k0, %k1
+; AVX512VL-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; AVX512VL-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $9, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VL-NEXT:    kshiftrw $7, %k0, %k1
+; AVX512VL-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,0]
+; AVX512VL-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $8, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k1
+; AVX512VL-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; AVX512VL-NEXT:    retq
+;
+; AVX512DQ-LABEL: test_8f64tosb:
+; AVX512DQ:       # %bb.0:
+; AVX512DQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512DQ-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k0
+; AVX512DQ-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k1
+; AVX512DQ-NEXT:    kshiftrb $1, %k1, %k2
+; AVX512DQ-NEXT:    kxorb %k0, %k2, %k0
+; AVX512DQ-NEXT:    kshiftlb $7, %k0, %k0
+; AVX512DQ-NEXT:    kshiftrb $6, %k0, %k0
+; AVX512DQ-NEXT:    kxorb %k1, %k0, %k0
+; AVX512DQ-NEXT:    kshiftrb $2, %k0, %k1
+; AVX512DQ-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; AVX512DQ-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrb $5, %k1, %k1
+; AVX512DQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrb $3, %k0, %k1
+; AVX512DQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; AVX512DQ-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrb $4, %k1, %k1
+; AVX512DQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrb $4, %k0, %k1
+; AVX512DQ-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; AVX512DQ-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrb $3, %k1, %k1
+; AVX512DQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrb $5, %k0, %k1
+; AVX512DQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; AVX512DQ-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrb $2, %k1, %k1
+; AVX512DQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrb $6, %k0, %k1
+; AVX512DQ-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; AVX512DQ-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrb $1, %k1, %k1
+; AVX512DQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftlb $1, %k0, %k0
+; AVX512DQ-NEXT:    kshiftrb $1, %k0, %k0
+; AVX512DQ-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,0]
+; AVX512DQ-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    korb %k1, %k0, %k1
+; AVX512DQ-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; AVX512DQ-NEXT:    retq
+;
+; AVX512BW-LABEL: test_8f64tosb:
+; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512BW-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k0
+; AVX512BW-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512BW-NEXT:    andl $1, %eax
+; AVX512BW-NEXT:    kmovw %eax, %k1
+; AVX512BW-NEXT:    kshiftrw $1, %k0, %k2
+; AVX512BW-NEXT:    kshiftlw $1, %k2, %k2
+; AVX512BW-NEXT:    korw %k1, %k2, %k1
+; AVX512BW-NEXT:    kshiftrw $1, %k1, %k2
+; AVX512BW-NEXT:    kxorw %k0, %k2, %k0
+; AVX512BW-NEXT:    kshiftlw $15, %k0, %k0
+; AVX512BW-NEXT:    kshiftrw $14, %k0, %k0
+; AVX512BW-NEXT:    kxorw %k1, %k0, %k0
+; AVX512BW-NEXT:    kshiftrw $2, %k0, %k1
+; AVX512BW-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; AVX512BW-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $13, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $3, %k0, %k1
+; AVX512BW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; AVX512BW-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $12, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $4, %k0, %k1
+; AVX512BW-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; AVX512BW-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $11, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $5, %k0, %k1
+; AVX512BW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; AVX512BW-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $10, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $6, %k0, %k1
+; AVX512BW-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; AVX512BW-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $9, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $7, %k0, %k1
+; AVX512BW-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,0]
+; AVX512BW-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $8, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k1
+; AVX512BW-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; AVX512BW-NEXT:    retq
+;
+; AVX512VLDQ-LABEL: test_8f64tosb:
+; AVX512VLDQ:       # %bb.0:
+; AVX512VLDQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512VLDQ-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k0
+; AVX512VLDQ-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $1, %k1, %k2
+; AVX512VLDQ-NEXT:    kxorb %k0, %k2, %k0
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k0, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $6, %k0, %k0
+; AVX512VLDQ-NEXT:    kxorb %k1, %k0, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $2, %k0, %k1
+; AVX512VLDQ-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; AVX512VLDQ-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k2
+; AVX512VLDQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $5, %k1, %k1
+; AVX512VLDQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $3, %k0, %k1
+; AVX512VLDQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; AVX512VLDQ-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k2
+; AVX512VLDQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $4, %k1, %k1
+; AVX512VLDQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $4, %k0, %k1
+; AVX512VLDQ-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; AVX512VLDQ-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k2
+; AVX512VLDQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $3, %k1, %k1
+; AVX512VLDQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $5, %k0, %k1
+; AVX512VLDQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; AVX512VLDQ-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k2
+; AVX512VLDQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $2, %k1, %k1
+; AVX512VLDQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $6, %k0, %k1
+; AVX512VLDQ-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; AVX512VLDQ-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k2
+; AVX512VLDQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $1, %k1, %k1
+; AVX512VLDQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512VLDQ-NEXT:    kshiftlb $1, %k0, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $1, %k0, %k0
+; AVX512VLDQ-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,0]
+; AVX512VLDQ-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    korb %k1, %k0, %k1
+; AVX512VLDQ-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; AVX512VLDQ-NEXT:    retq
+;
+; AVX512VLBW-LABEL: test_8f64tosb:
+; AVX512VLBW:       # %bb.0:
+; AVX512VLBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512VLBW-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k0
+; AVX512VLBW-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512VLBW-NEXT:    andl $1, %eax
+; AVX512VLBW-NEXT:    kmovw %eax, %k1
+; AVX512VLBW-NEXT:    kshiftrw $1, %k0, %k2
+; AVX512VLBW-NEXT:    kshiftlw $1, %k2, %k2
+; AVX512VLBW-NEXT:    korw %k1, %k2, %k1
+; AVX512VLBW-NEXT:    kshiftrw $1, %k1, %k2
+; AVX512VLBW-NEXT:    kxorw %k0, %k2, %k0
+; AVX512VLBW-NEXT:    kshiftlw $15, %k0, %k0
+; AVX512VLBW-NEXT:    kshiftrw $14, %k0, %k0
+; AVX512VLBW-NEXT:    kxorw %k1, %k0, %k0
+; AVX512VLBW-NEXT:    kshiftrw $2, %k0, %k1
+; AVX512VLBW-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; AVX512VLBW-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $13, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VLBW-NEXT:    kshiftrw $3, %k0, %k1
+; AVX512VLBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; AVX512VLBW-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $12, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VLBW-NEXT:    kshiftrw $4, %k0, %k1
+; AVX512VLBW-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; AVX512VLBW-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $11, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VLBW-NEXT:    kshiftrw $5, %k0, %k1
+; AVX512VLBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm2[1,0]
+; AVX512VLBW-NEXT:    vcvttsd2si %xmm2, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $10, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VLBW-NEXT:    kshiftrw $6, %k0, %k1
+; AVX512VLBW-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; AVX512VLBW-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $9, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VLBW-NEXT:    kshiftrw $7, %k0, %k1
+; AVX512VLBW-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,0]
+; AVX512VLBW-NEXT:    vcvttsd2si %xmm0, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $8, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k1
+; AVX512VLBW-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; AVX512VLBW-NEXT:    retq
+  %mask = fptosi <8 x double> %a to <8 x i1>
+  %select = select <8 x i1> %mask, <8 x i64> %passthru, <8 x i64> zeroinitializer
+  ret <8 x i64> %select
+}
+
+define <2 x i64> @test_2f32tosb(<2 x float> %a, <2 x i64> %passthru) {
+; NOVL-LABEL: test_2f32tosb:
+; NOVL:       # %bb.0:
+; NOVL-NEXT:    vcvttss2si %xmm0, %rax
+; NOVL-NEXT:    vmovq %rax, %xmm2
+; NOVL-NEXT:    vmovshdup {{.*#+}} xmm0 = xmm0[1,1,3,3]
+; NOVL-NEXT:    vcvttss2si %xmm0, %rax
+; NOVL-NEXT:    vmovq %rax, %xmm0
+; NOVL-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm2[0],xmm0[0]
+; NOVL-NEXT:    vpand %xmm1, %xmm0, %xmm0
+; NOVL-NEXT:    retq
+;
+; VLBW-LABEL: test_2f32tosb:
+; VLBW:       # %bb.0:
+; VLBW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k0
+; VLBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLBW-NEXT:    andl $1, %eax
+; VLBW-NEXT:    kmovw %eax, %k1
+; VLBW-NEXT:    kshiftrw $1, %k0, %k2
+; VLBW-NEXT:    kshiftlw $1, %k2, %k2
+; VLBW-NEXT:    korw %k1, %k2, %k1
+; VLBW-NEXT:    kshiftrw $1, %k1, %k2
+; VLBW-NEXT:    kxorw %k0, %k2, %k0
+; VLBW-NEXT:    kshiftlw $15, %k0, %k0
+; VLBW-NEXT:    kshiftrw $14, %k0, %k0
+; VLBW-NEXT:    kxorw %k1, %k0, %k1
+; VLBW-NEXT:    vmovdqa64 %xmm1, %xmm0 {%k1} {z}
+; VLBW-NEXT:    retq
+;
+; VLNOBW-LABEL: test_2f32tosb:
+; VLNOBW:       # %bb.0:
+; VLNOBW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k0
+; VLNOBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLNOBW-NEXT:    andl $1, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k1
+; VLNOBW-NEXT:    kshiftrw $1, %k0, %k2
+; VLNOBW-NEXT:    kshiftlw $1, %k2, %k2
+; VLNOBW-NEXT:    korw %k1, %k2, %k1
+; VLNOBW-NEXT:    kshiftrw $1, %k1, %k2
+; VLNOBW-NEXT:    kxorw %k0, %k2, %k0
+; VLNOBW-NEXT:    kshiftlw $15, %k0, %k0
+; VLNOBW-NEXT:    kshiftrw $14, %k0, %k0
+; VLNOBW-NEXT:    kxorw %k1, %k0, %k1
+; VLNOBW-NEXT:    vmovdqa64 %xmm1, %xmm0 {%k1} {z}
+; VLNOBW-NEXT:    retq
+  %mask = fptosi <2 x float> %a to <2 x i1>
+  %select = select <2 x i1> %mask, <2 x i64> %passthru, <2 x i64> zeroinitializer
+  ret <2 x i64> %select
+}
+
+define <4 x i64> @test_4f32tosb(<4 x float> %a, <4 x i64> %passthru) {
+; NOVL-LABEL: test_4f32tosb:
+; NOVL:       # %bb.0:
+; NOVL-NEXT:    vcvttps2dq %xmm0, %xmm0
+; NOVL-NEXT:    vpmovsxdq %xmm0, %ymm0
+; NOVL-NEXT:    vpand %ymm1, %ymm0, %ymm0
+; NOVL-NEXT:    retq
+;
+; VLBW-LABEL: test_4f32tosb:
+; VLBW:       # %bb.0:
+; VLBW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k0
+; VLBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLBW-NEXT:    andl $1, %eax
+; VLBW-NEXT:    kmovw %eax, %k1
+; VLBW-NEXT:    kshiftrw $1, %k0, %k2
+; VLBW-NEXT:    kshiftlw $1, %k2, %k2
+; VLBW-NEXT:    korw %k1, %k2, %k1
+; VLBW-NEXT:    kshiftrw $1, %k1, %k2
+; VLBW-NEXT:    kxorw %k0, %k2, %k0
+; VLBW-NEXT:    kshiftlw $15, %k0, %k0
+; VLBW-NEXT:    kshiftrw $14, %k0, %k0
+; VLBW-NEXT:    kxorw %k1, %k0, %k0
+; VLBW-NEXT:    kshiftrw $2, %k0, %k1
+; VLBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $13, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $3, %k0, %k1
+; VLBW-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; VLBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $12, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k1
+; VLBW-NEXT:    vmovdqa64 %ymm1, %ymm0 {%k1} {z}
+; VLBW-NEXT:    retq
+;
+; VLNOBW-LABEL: test_4f32tosb:
+; VLNOBW:       # %bb.0:
+; VLNOBW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k0
+; VLNOBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLNOBW-NEXT:    andl $1, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k1
+; VLNOBW-NEXT:    kshiftrw $1, %k0, %k2
+; VLNOBW-NEXT:    kshiftlw $1, %k2, %k2
+; VLNOBW-NEXT:    korw %k1, %k2, %k1
+; VLNOBW-NEXT:    kshiftrw $1, %k1, %k2
+; VLNOBW-NEXT:    kxorw %k0, %k2, %k0
+; VLNOBW-NEXT:    kshiftlw $15, %k0, %k0
+; VLNOBW-NEXT:    kshiftrw $14, %k0, %k0
+; VLNOBW-NEXT:    kxorw %k1, %k0, %k0
+; VLNOBW-NEXT:    kshiftrw $2, %k0, %k1
+; VLNOBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $13, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $3, %k0, %k1
+; VLNOBW-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; VLNOBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $12, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k1
+; VLNOBW-NEXT:    vmovdqa64 %ymm1, %ymm0 {%k1} {z}
+; VLNOBW-NEXT:    retq
+  %mask = fptosi <4 x float> %a to <4 x i1>
+  %select = select <4 x i1> %mask, <4 x i64> %passthru, <4 x i64> zeroinitializer
+  ret <4 x i64> %select
+}
+
+define <8 x i64> @test_8f32tosb(<8 x float> %a, <8 x i64> %passthru) {
+; KNL-LABEL: test_8f32tosb:
+; KNL:       # %bb.0:
+; KNL-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k0
+; KNL-NEXT:    vcvttss2si %xmm0, %eax
+; KNL-NEXT:    andl $1, %eax
+; KNL-NEXT:    kmovw %eax, %k1
+; KNL-NEXT:    kshiftrw $1, %k0, %k2
+; KNL-NEXT:    kshiftlw $1, %k2, %k2
+; KNL-NEXT:    korw %k1, %k2, %k1
+; KNL-NEXT:    kshiftrw $1, %k1, %k2
+; KNL-NEXT:    kxorw %k0, %k2, %k0
+; KNL-NEXT:    kshiftlw $15, %k0, %k0
+; KNL-NEXT:    kshiftrw $14, %k0, %k0
+; KNL-NEXT:    kxorw %k1, %k0, %k0
+; KNL-NEXT:    kshiftrw $2, %k0, %k1
+; KNL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $13, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $3, %k0, %k1
+; KNL-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $12, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $4, %k0, %k1
+; KNL-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; KNL-NEXT:    vcvttss2si %xmm0, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $11, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $5, %k0, %k1
+; KNL-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $10, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $6, %k0, %k1
+; KNL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $9, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $7, %k0, %k1
+; KNL-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; KNL-NEXT:    vcvttss2si %xmm0, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $8, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k1
+; KNL-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: test_8f32tosb:
+; SKX:       # %bb.0:
+; SKX-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; SKX-NEXT:    vcvttss2si %xmm2, %eax
+; SKX-NEXT:    kmovd %eax, %k0
+; SKX-NEXT:    vcvttss2si %xmm0, %eax
+; SKX-NEXT:    kmovd %eax, %k1
+; SKX-NEXT:    kshiftrb $1, %k1, %k2
+; SKX-NEXT:    kxorb %k0, %k2, %k0
+; SKX-NEXT:    kshiftlb $7, %k0, %k0
+; SKX-NEXT:    kshiftrb $6, %k0, %k0
+; SKX-NEXT:    kxorb %k1, %k0, %k0
+; SKX-NEXT:    kshiftrb $2, %k0, %k1
+; SKX-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; SKX-NEXT:    vcvttss2si %xmm2, %eax
+; SKX-NEXT:    kmovd %eax, %k2
+; SKX-NEXT:    kxorb %k2, %k1, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    kshiftrb $5, %k1, %k1
+; SKX-NEXT:    kxorb %k0, %k1, %k0
+; SKX-NEXT:    kshiftrb $3, %k0, %k1
+; SKX-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; SKX-NEXT:    vcvttss2si %xmm2, %eax
+; SKX-NEXT:    kmovd %eax, %k2
+; SKX-NEXT:    kxorb %k2, %k1, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    kshiftrb $4, %k1, %k1
+; SKX-NEXT:    kxorb %k0, %k1, %k0
+; SKX-NEXT:    kshiftrb $4, %k0, %k1
+; SKX-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; SKX-NEXT:    vcvttss2si %xmm0, %eax
+; SKX-NEXT:    kmovd %eax, %k2
+; SKX-NEXT:    kxorb %k2, %k1, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    kshiftrb $3, %k1, %k1
+; SKX-NEXT:    kxorb %k0, %k1, %k0
+; SKX-NEXT:    kshiftrb $5, %k0, %k1
+; SKX-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; SKX-NEXT:    vcvttss2si %xmm2, %eax
+; SKX-NEXT:    kmovd %eax, %k2
+; SKX-NEXT:    kxorb %k2, %k1, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    kshiftrb $2, %k1, %k1
+; SKX-NEXT:    kxorb %k0, %k1, %k0
+; SKX-NEXT:    kshiftrb $6, %k0, %k1
+; SKX-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; SKX-NEXT:    vcvttss2si %xmm2, %eax
+; SKX-NEXT:    kmovd %eax, %k2
+; SKX-NEXT:    kxorb %k2, %k1, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    kshiftrb $1, %k1, %k1
+; SKX-NEXT:    kxorb %k0, %k1, %k0
+; SKX-NEXT:    kshiftlb $1, %k0, %k0
+; SKX-NEXT:    kshiftrb $1, %k0, %k0
+; SKX-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; SKX-NEXT:    vcvttss2si %xmm0, %eax
+; SKX-NEXT:    kmovd %eax, %k1
+; SKX-NEXT:    kshiftlb $7, %k1, %k1
+; SKX-NEXT:    korb %k1, %k0, %k1
+; SKX-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; SKX-NEXT:    retq
+;
+; AVX512VL-LABEL: test_8f32tosb:
+; AVX512VL:       # %bb.0:
+; AVX512VL-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512VL-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k0
+; AVX512VL-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512VL-NEXT:    andl $1, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k1
+; AVX512VL-NEXT:    kshiftrw $1, %k0, %k2
+; AVX512VL-NEXT:    kshiftlw $1, %k2, %k2
+; AVX512VL-NEXT:    korw %k1, %k2, %k1
+; AVX512VL-NEXT:    kshiftrw $1, %k1, %k2
+; AVX512VL-NEXT:    kxorw %k0, %k2, %k0
+; AVX512VL-NEXT:    kshiftlw $15, %k0, %k0
+; AVX512VL-NEXT:    kshiftrw $14, %k0, %k0
+; AVX512VL-NEXT:    kxorw %k1, %k0, %k0
+; AVX512VL-NEXT:    kshiftrw $2, %k0, %k1
+; AVX512VL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512VL-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $13, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VL-NEXT:    kshiftrw $3, %k0, %k1
+; AVX512VL-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; AVX512VL-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $12, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VL-NEXT:    kshiftrw $4, %k0, %k1
+; AVX512VL-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; AVX512VL-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $11, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VL-NEXT:    kshiftrw $5, %k0, %k1
+; AVX512VL-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512VL-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $10, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VL-NEXT:    kshiftrw $6, %k0, %k1
+; AVX512VL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512VL-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $9, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VL-NEXT:    kshiftrw $7, %k0, %k1
+; AVX512VL-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; AVX512VL-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512VL-NEXT:    kmovw %eax, %k2
+; AVX512VL-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VL-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VL-NEXT:    kshiftrw $8, %k1, %k1
+; AVX512VL-NEXT:    kxorw %k0, %k1, %k1
+; AVX512VL-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; AVX512VL-NEXT:    retq
+;
+; AVX512DQ-LABEL: test_8f32tosb:
+; AVX512DQ:       # %bb.0:
+; AVX512DQ-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k0
+; AVX512DQ-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k1
+; AVX512DQ-NEXT:    kshiftrb $1, %k1, %k2
+; AVX512DQ-NEXT:    kxorb %k0, %k2, %k0
+; AVX512DQ-NEXT:    kshiftlb $7, %k0, %k0
+; AVX512DQ-NEXT:    kshiftrb $6, %k0, %k0
+; AVX512DQ-NEXT:    kxorb %k1, %k0, %k0
+; AVX512DQ-NEXT:    kshiftrb $2, %k0, %k1
+; AVX512DQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrb $5, %k1, %k1
+; AVX512DQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrb $3, %k0, %k1
+; AVX512DQ-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrb $4, %k1, %k1
+; AVX512DQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrb $4, %k0, %k1
+; AVX512DQ-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; AVX512DQ-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrb $3, %k1, %k1
+; AVX512DQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrb $5, %k0, %k1
+; AVX512DQ-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrb $2, %k1, %k1
+; AVX512DQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrb $6, %k0, %k1
+; AVX512DQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrb $1, %k1, %k1
+; AVX512DQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftlb $1, %k0, %k0
+; AVX512DQ-NEXT:    kshiftrb $1, %k0, %k0
+; AVX512DQ-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k1
+; AVX512DQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512DQ-NEXT:    korb %k1, %k0, %k1
+; AVX512DQ-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; AVX512DQ-NEXT:    retq
+;
+; AVX512BW-LABEL: test_8f32tosb:
+; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k0
+; AVX512BW-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512BW-NEXT:    andl $1, %eax
+; AVX512BW-NEXT:    kmovw %eax, %k1
+; AVX512BW-NEXT:    kshiftrw $1, %k0, %k2
+; AVX512BW-NEXT:    kshiftlw $1, %k2, %k2
+; AVX512BW-NEXT:    korw %k1, %k2, %k1
+; AVX512BW-NEXT:    kshiftrw $1, %k1, %k2
+; AVX512BW-NEXT:    kxorw %k0, %k2, %k0
+; AVX512BW-NEXT:    kshiftlw $15, %k0, %k0
+; AVX512BW-NEXT:    kshiftrw $14, %k0, %k0
+; AVX512BW-NEXT:    kxorw %k1, %k0, %k0
+; AVX512BW-NEXT:    kshiftrw $2, %k0, %k1
+; AVX512BW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $13, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $3, %k0, %k1
+; AVX512BW-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $12, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $4, %k0, %k1
+; AVX512BW-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; AVX512BW-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $11, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $5, %k0, %k1
+; AVX512BW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $10, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $6, %k0, %k1
+; AVX512BW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $9, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $7, %k0, %k1
+; AVX512BW-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $8, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k1
+; AVX512BW-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; AVX512BW-NEXT:    retq
+;
+; AVX512VLDQ-LABEL: test_8f32tosb:
+; AVX512VLDQ:       # %bb.0:
+; AVX512VLDQ-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512VLDQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k0
+; AVX512VLDQ-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $1, %k1, %k2
+; AVX512VLDQ-NEXT:    kxorb %k0, %k2, %k0
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k0, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $6, %k0, %k0
+; AVX512VLDQ-NEXT:    kxorb %k1, %k0, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $2, %k0, %k1
+; AVX512VLDQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512VLDQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k2
+; AVX512VLDQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $5, %k1, %k1
+; AVX512VLDQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $3, %k0, %k1
+; AVX512VLDQ-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; AVX512VLDQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k2
+; AVX512VLDQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $4, %k1, %k1
+; AVX512VLDQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $4, %k0, %k1
+; AVX512VLDQ-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; AVX512VLDQ-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k2
+; AVX512VLDQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $3, %k1, %k1
+; AVX512VLDQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $5, %k0, %k1
+; AVX512VLDQ-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512VLDQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k2
+; AVX512VLDQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $2, %k1, %k1
+; AVX512VLDQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $6, %k0, %k1
+; AVX512VLDQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512VLDQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k2
+; AVX512VLDQ-NEXT:    kxorb %k2, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    kshiftrb $1, %k1, %k1
+; AVX512VLDQ-NEXT:    kxorb %k0, %k1, %k0
+; AVX512VLDQ-NEXT:    kshiftlb $1, %k0, %k0
+; AVX512VLDQ-NEXT:    kshiftrb $1, %k0, %k0
+; AVX512VLDQ-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; AVX512VLDQ-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512VLDQ-NEXT:    kmovw %eax, %k1
+; AVX512VLDQ-NEXT:    kshiftlb $7, %k1, %k1
+; AVX512VLDQ-NEXT:    korb %k1, %k0, %k1
+; AVX512VLDQ-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; AVX512VLDQ-NEXT:    retq
+;
+; AVX512VLBW-LABEL: test_8f32tosb:
+; AVX512VLBW:       # %bb.0:
+; AVX512VLBW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k0
+; AVX512VLBW-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512VLBW-NEXT:    andl $1, %eax
+; AVX512VLBW-NEXT:    kmovw %eax, %k1
+; AVX512VLBW-NEXT:    kshiftrw $1, %k0, %k2
+; AVX512VLBW-NEXT:    kshiftlw $1, %k2, %k2
+; AVX512VLBW-NEXT:    korw %k1, %k2, %k1
+; AVX512VLBW-NEXT:    kshiftrw $1, %k1, %k2
+; AVX512VLBW-NEXT:    kxorw %k0, %k2, %k0
+; AVX512VLBW-NEXT:    kshiftlw $15, %k0, %k0
+; AVX512VLBW-NEXT:    kshiftrw $14, %k0, %k0
+; AVX512VLBW-NEXT:    kxorw %k1, %k0, %k0
+; AVX512VLBW-NEXT:    kshiftrw $2, %k0, %k1
+; AVX512VLBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $13, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VLBW-NEXT:    kshiftrw $3, %k0, %k1
+; AVX512VLBW-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; AVX512VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $12, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VLBW-NEXT:    kshiftrw $4, %k0, %k1
+; AVX512VLBW-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; AVX512VLBW-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $11, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VLBW-NEXT:    kshiftrw $5, %k0, %k1
+; AVX512VLBW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $10, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VLBW-NEXT:    kshiftrw $6, %k0, %k1
+; AVX512VLBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $9, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512VLBW-NEXT:    kshiftrw $7, %k0, %k1
+; AVX512VLBW-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; AVX512VLBW-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512VLBW-NEXT:    kmovd %eax, %k2
+; AVX512VLBW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512VLBW-NEXT:    kshiftrw $8, %k1, %k1
+; AVX512VLBW-NEXT:    kxorw %k0, %k1, %k1
+; AVX512VLBW-NEXT:    vmovdqa64 %zmm1, %zmm0 {%k1} {z}
+; AVX512VLBW-NEXT:    retq
+  %mask = fptosi <8 x float> %a to <8 x i1>
+  %select = select <8 x i1> %mask, <8 x i64> %passthru, <8 x i64> zeroinitializer
+  ret <8 x i64> %select
+}
+
+define <16 x i32> @test_16f32tosb(<16 x float> %a, <16 x i32> %passthru) {
+; KNL-LABEL: test_16f32tosb:
+; KNL:       # %bb.0:
+; KNL-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k0
+; KNL-NEXT:    vcvttss2si %xmm0, %eax
+; KNL-NEXT:    kmovw %eax, %k1
+; KNL-NEXT:    kshiftrw $1, %k1, %k2
+; KNL-NEXT:    kxorw %k0, %k2, %k0
+; KNL-NEXT:    kshiftlw $15, %k0, %k0
+; KNL-NEXT:    kshiftrw $14, %k0, %k0
+; KNL-NEXT:    kxorw %k1, %k0, %k0
+; KNL-NEXT:    kshiftrw $2, %k0, %k1
+; KNL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $13, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $3, %k0, %k1
+; KNL-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $12, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $4, %k0, %k1
+; KNL-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $11, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $5, %k0, %k1
+; KNL-NEXT:    vmovshdup {{.*#+}} xmm3 = xmm2[1,1,3,3]
+; KNL-NEXT:    vcvttss2si %xmm3, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $10, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $6, %k0, %k1
+; KNL-NEXT:    vpermilpd {{.*#+}} xmm3 = xmm2[1,0]
+; KNL-NEXT:    vcvttss2si %xmm3, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $9, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $7, %k0, %k1
+; KNL-NEXT:    vpermilps {{.*#+}} xmm2 = xmm2[3,1,2,3]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $8, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $8, %k0, %k1
+; KNL-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $7, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $9, %k0, %k1
+; KNL-NEXT:    vmovshdup {{.*#+}} xmm3 = xmm2[1,1,3,3]
+; KNL-NEXT:    vcvttss2si %xmm3, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $6, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $10, %k0, %k1
+; KNL-NEXT:    vpermilpd {{.*#+}} xmm3 = xmm2[1,0]
+; KNL-NEXT:    vcvttss2si %xmm3, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $5, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $11, %k0, %k1
+; KNL-NEXT:    vpermilps {{.*#+}} xmm2 = xmm2[3,1,2,3]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $4, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $12, %k0, %k1
+; KNL-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; KNL-NEXT:    vcvttss2si %xmm0, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $3, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $13, %k0, %k1
+; KNL-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $2, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftrw $14, %k0, %k1
+; KNL-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; KNL-NEXT:    vcvttss2si %xmm2, %eax
+; KNL-NEXT:    kmovw %eax, %k2
+; KNL-NEXT:    kxorw %k2, %k1, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    kshiftrw $1, %k1, %k1
+; KNL-NEXT:    kxorw %k0, %k1, %k0
+; KNL-NEXT:    kshiftlw $1, %k0, %k0
+; KNL-NEXT:    kshiftrw $1, %k0, %k0
+; KNL-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; KNL-NEXT:    vcvttss2si %xmm0, %eax
+; KNL-NEXT:    kmovw %eax, %k1
+; KNL-NEXT:    kshiftlw $15, %k1, %k1
+; KNL-NEXT:    korw %k1, %k0, %k1
+; KNL-NEXT:    vmovdqa32 %zmm1, %zmm0 {%k1} {z}
+; KNL-NEXT:    retq
+;
+; VLBW-LABEL: test_16f32tosb:
+; VLBW:       # %bb.0:
+; VLBW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k0
+; VLBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLBW-NEXT:    kmovd %eax, %k1
+; VLBW-NEXT:    kshiftrw $1, %k1, %k2
+; VLBW-NEXT:    kxorw %k0, %k2, %k0
+; VLBW-NEXT:    kshiftlw $15, %k0, %k0
+; VLBW-NEXT:    kshiftrw $14, %k0, %k0
+; VLBW-NEXT:    kxorw %k1, %k0, %k0
+; VLBW-NEXT:    kshiftrw $2, %k0, %k1
+; VLBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $13, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $3, %k0, %k1
+; VLBW-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $12, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $4, %k0, %k1
+; VLBW-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $11, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $5, %k0, %k1
+; VLBW-NEXT:    vmovshdup {{.*#+}} xmm3 = xmm2[1,1,3,3]
+; VLBW-NEXT:    vcvttss2si %xmm3, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $10, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $6, %k0, %k1
+; VLBW-NEXT:    vpermilpd {{.*#+}} xmm3 = xmm2[1,0]
+; VLBW-NEXT:    vcvttss2si %xmm3, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $9, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $7, %k0, %k1
+; VLBW-NEXT:    vpermilps {{.*#+}} xmm2 = xmm2[3,1,2,3]
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $8, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $8, %k0, %k1
+; VLBW-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $7, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $9, %k0, %k1
+; VLBW-NEXT:    vmovshdup {{.*#+}} xmm3 = xmm2[1,1,3,3]
+; VLBW-NEXT:    vcvttss2si %xmm3, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $6, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $10, %k0, %k1
+; VLBW-NEXT:    vpermilpd {{.*#+}} xmm3 = xmm2[1,0]
+; VLBW-NEXT:    vcvttss2si %xmm3, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $5, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $11, %k0, %k1
+; VLBW-NEXT:    vpermilps {{.*#+}} xmm2 = xmm2[3,1,2,3]
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $4, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $12, %k0, %k1
+; VLBW-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; VLBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $3, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $13, %k0, %k1
+; VLBW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $2, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftrw $14, %k0, %k1
+; VLBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; VLBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLBW-NEXT:    kmovd %eax, %k2
+; VLBW-NEXT:    kxorw %k2, %k1, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    kshiftrw $1, %k1, %k1
+; VLBW-NEXT:    kxorw %k0, %k1, %k0
+; VLBW-NEXT:    kshiftlw $1, %k0, %k0
+; VLBW-NEXT:    kshiftrw $1, %k0, %k0
+; VLBW-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; VLBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLBW-NEXT:    kmovd %eax, %k1
+; VLBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLBW-NEXT:    korw %k1, %k0, %k1
+; VLBW-NEXT:    vmovdqa32 %zmm1, %zmm0 {%k1} {z}
+; VLBW-NEXT:    retq
+;
+; VLNOBW-LABEL: test_16f32tosb:
+; VLNOBW:       # %bb.0:
+; VLNOBW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k0
+; VLNOBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k1
+; VLNOBW-NEXT:    kshiftrw $1, %k1, %k2
+; VLNOBW-NEXT:    kxorw %k0, %k2, %k0
+; VLNOBW-NEXT:    kshiftlw $15, %k0, %k0
+; VLNOBW-NEXT:    kshiftrw $14, %k0, %k0
+; VLNOBW-NEXT:    kxorw %k1, %k0, %k0
+; VLNOBW-NEXT:    kshiftrw $2, %k0, %k1
+; VLNOBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $13, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $3, %k0, %k1
+; VLNOBW-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $12, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $4, %k0, %k1
+; VLNOBW-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $11, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $5, %k0, %k1
+; VLNOBW-NEXT:    vmovshdup {{.*#+}} xmm3 = xmm2[1,1,3,3]
+; VLNOBW-NEXT:    vcvttss2si %xmm3, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $10, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $6, %k0, %k1
+; VLNOBW-NEXT:    vpermilpd {{.*#+}} xmm3 = xmm2[1,0]
+; VLNOBW-NEXT:    vcvttss2si %xmm3, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $9, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $7, %k0, %k1
+; VLNOBW-NEXT:    vpermilps {{.*#+}} xmm2 = xmm2[3,1,2,3]
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $8, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $8, %k0, %k1
+; VLNOBW-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $7, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $9, %k0, %k1
+; VLNOBW-NEXT:    vmovshdup {{.*#+}} xmm3 = xmm2[1,1,3,3]
+; VLNOBW-NEXT:    vcvttss2si %xmm3, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $6, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $10, %k0, %k1
+; VLNOBW-NEXT:    vpermilpd {{.*#+}} xmm3 = xmm2[1,0]
+; VLNOBW-NEXT:    vcvttss2si %xmm3, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $5, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $11, %k0, %k1
+; VLNOBW-NEXT:    vpermilps {{.*#+}} xmm2 = xmm2[3,1,2,3]
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $4, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $12, %k0, %k1
+; VLNOBW-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; VLNOBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $3, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $13, %k0, %k1
+; VLNOBW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $2, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftrw $14, %k0, %k1
+; VLNOBW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; VLNOBW-NEXT:    vcvttss2si %xmm2, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k2
+; VLNOBW-NEXT:    kxorw %k2, %k1, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    kshiftrw $1, %k1, %k1
+; VLNOBW-NEXT:    kxorw %k0, %k1, %k0
+; VLNOBW-NEXT:    kshiftlw $1, %k0, %k0
+; VLNOBW-NEXT:    kshiftrw $1, %k0, %k0
+; VLNOBW-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; VLNOBW-NEXT:    vcvttss2si %xmm0, %eax
+; VLNOBW-NEXT:    kmovw %eax, %k1
+; VLNOBW-NEXT:    kshiftlw $15, %k1, %k1
+; VLNOBW-NEXT:    korw %k1, %k0, %k1
+; VLNOBW-NEXT:    vmovdqa32 %zmm1, %zmm0 {%k1} {z}
+; VLNOBW-NEXT:    retq
+;
+; AVX512DQ-LABEL: test_16f32tosb:
+; AVX512DQ:       # %bb.0:
+; AVX512DQ-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k0
+; AVX512DQ-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k1
+; AVX512DQ-NEXT:    kshiftrw $1, %k1, %k2
+; AVX512DQ-NEXT:    kxorw %k0, %k2, %k0
+; AVX512DQ-NEXT:    kshiftlw $15, %k0, %k0
+; AVX512DQ-NEXT:    kshiftrw $14, %k0, %k0
+; AVX512DQ-NEXT:    kxorw %k1, %k0, %k0
+; AVX512DQ-NEXT:    kshiftrw $2, %k0, %k1
+; AVX512DQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $13, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $3, %k0, %k1
+; AVX512DQ-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $12, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $4, %k0, %k1
+; AVX512DQ-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $11, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $5, %k0, %k1
+; AVX512DQ-NEXT:    vmovshdup {{.*#+}} xmm3 = xmm2[1,1,3,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm3, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $10, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $6, %k0, %k1
+; AVX512DQ-NEXT:    vpermilpd {{.*#+}} xmm3 = xmm2[1,0]
+; AVX512DQ-NEXT:    vcvttss2si %xmm3, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $9, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $7, %k0, %k1
+; AVX512DQ-NEXT:    vpermilps {{.*#+}} xmm2 = xmm2[3,1,2,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $8, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $8, %k0, %k1
+; AVX512DQ-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $7, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $9, %k0, %k1
+; AVX512DQ-NEXT:    vmovshdup {{.*#+}} xmm3 = xmm2[1,1,3,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm3, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $6, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $10, %k0, %k1
+; AVX512DQ-NEXT:    vpermilpd {{.*#+}} xmm3 = xmm2[1,0]
+; AVX512DQ-NEXT:    vcvttss2si %xmm3, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $5, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $11, %k0, %k1
+; AVX512DQ-NEXT:    vpermilps {{.*#+}} xmm2 = xmm2[3,1,2,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $4, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $12, %k0, %k1
+; AVX512DQ-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; AVX512DQ-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $3, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $13, %k0, %k1
+; AVX512DQ-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $2, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftrw $14, %k0, %k1
+; AVX512DQ-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512DQ-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k2
+; AVX512DQ-NEXT:    kxorw %k2, %k1, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    kshiftrw $1, %k1, %k1
+; AVX512DQ-NEXT:    kxorw %k0, %k1, %k0
+; AVX512DQ-NEXT:    kshiftlw $1, %k0, %k0
+; AVX512DQ-NEXT:    kshiftrw $1, %k0, %k0
+; AVX512DQ-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; AVX512DQ-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512DQ-NEXT:    kmovw %eax, %k1
+; AVX512DQ-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512DQ-NEXT:    korw %k1, %k0, %k1
+; AVX512DQ-NEXT:    vmovdqa32 %zmm1, %zmm0 {%k1} {z}
+; AVX512DQ-NEXT:    retq
+;
+; AVX512BW-LABEL: test_16f32tosb:
+; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k0
+; AVX512BW-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k1
+; AVX512BW-NEXT:    kshiftrw $1, %k1, %k2
+; AVX512BW-NEXT:    kxorw %k0, %k2, %k0
+; AVX512BW-NEXT:    kshiftlw $15, %k0, %k0
+; AVX512BW-NEXT:    kshiftrw $14, %k0, %k0
+; AVX512BW-NEXT:    kxorw %k1, %k0, %k0
+; AVX512BW-NEXT:    kshiftrw $2, %k0, %k1
+; AVX512BW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $13, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $3, %k0, %k1
+; AVX512BW-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[3,1,2,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $12, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $4, %k0, %k1
+; AVX512BW-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $11, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $5, %k0, %k1
+; AVX512BW-NEXT:    vmovshdup {{.*#+}} xmm3 = xmm2[1,1,3,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm3, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $10, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $6, %k0, %k1
+; AVX512BW-NEXT:    vpermilpd {{.*#+}} xmm3 = xmm2[1,0]
+; AVX512BW-NEXT:    vcvttss2si %xmm3, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $9, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $7, %k0, %k1
+; AVX512BW-NEXT:    vpermilps {{.*#+}} xmm2 = xmm2[3,1,2,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $8, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $8, %k0, %k1
+; AVX512BW-NEXT:    vextractf32x4 $2, %zmm0, %xmm2
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $7, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $9, %k0, %k1
+; AVX512BW-NEXT:    vmovshdup {{.*#+}} xmm3 = xmm2[1,1,3,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm3, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $6, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $10, %k0, %k1
+; AVX512BW-NEXT:    vpermilpd {{.*#+}} xmm3 = xmm2[1,0]
+; AVX512BW-NEXT:    vcvttss2si %xmm3, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $5, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $11, %k0, %k1
+; AVX512BW-NEXT:    vpermilps {{.*#+}} xmm2 = xmm2[3,1,2,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $4, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $12, %k0, %k1
+; AVX512BW-NEXT:    vextractf32x4 $3, %zmm0, %xmm0
+; AVX512BW-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $3, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $13, %k0, %k1
+; AVX512BW-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $2, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftrw $14, %k0, %k1
+; AVX512BW-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512BW-NEXT:    vcvttss2si %xmm2, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k2
+; AVX512BW-NEXT:    kxorw %k2, %k1, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    kshiftrw $1, %k1, %k1
+; AVX512BW-NEXT:    kxorw %k0, %k1, %k0
+; AVX512BW-NEXT:    kshiftlw $1, %k0, %k0
+; AVX512BW-NEXT:    kshiftrw $1, %k0, %k0
+; AVX512BW-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; AVX512BW-NEXT:    vcvttss2si %xmm0, %eax
+; AVX512BW-NEXT:    kmovd %eax, %k1
+; AVX512BW-NEXT:    kshiftlw $15, %k1, %k1
+; AVX512BW-NEXT:    korw %k1, %k0, %k1
+; AVX512BW-NEXT:    vmovdqa32 %zmm1, %zmm0 {%k1} {z}
+; AVX512BW-NEXT:    retq
+  %mask = fptosi <16 x float> %a to <16 x i1>
+  %select = select <16 x i1> %mask, <16 x i32> %passthru, <16 x i32> zeroinitializer
+  ret <16 x i32> %select
+}
