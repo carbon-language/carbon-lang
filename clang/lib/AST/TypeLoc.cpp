@@ -311,19 +311,19 @@ TypeSpecifierType BuiltinTypeLoc::getWrittenTypeSpec() const {
     return static_cast<TypeSpecifierType>(getWrittenBuiltinSpecs().Type);
   switch (getTypePtr()->getKind()) {
   case BuiltinType::Void:
-    return TypeSpecifierType::TST_void;
+    return TST_void;
   case BuiltinType::Bool:
-    return TypeSpecifierType::TST_bool;
+    return TST_bool;
   case BuiltinType::Char_U:
   case BuiltinType::Char_S:
-    return TypeSpecifierType::TST_char;
+    return TST_char;
   case BuiltinType::Char16:
-    return TypeSpecifierType::TST_char16;
+    return TST_char16;
   case BuiltinType::Char32:
-    return TypeSpecifierType::TST_char32;
+    return TST_char32;
   case BuiltinType::WChar_S:
   case BuiltinType::WChar_U:
-    return TypeSpecifierType::TST_wchar;
+    return TST_wchar;
   case BuiltinType::UChar:
   case BuiltinType::UShort:
   case BuiltinType::UInt:
@@ -365,7 +365,7 @@ TypeSpecifierType BuiltinTypeLoc::getWrittenTypeSpec() const {
   case BuiltinType::OCLReserveID:
   case BuiltinType::BuiltinFn:
   case BuiltinType::OMPArraySection:
-    return TypeSpecifierType::TST_unspecified;
+    return TST_unspecified;
   }
 
   llvm_unreachable("Invalid BuiltinType Kind!");

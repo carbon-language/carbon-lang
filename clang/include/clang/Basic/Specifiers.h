@@ -22,7 +22,7 @@
 
 namespace clang {
   /// \brief Specifies the width of a type, e.g., short, long, or long long.
-  enum class TypeSpecifierWidth {
+  enum TypeSpecifierWidth {
     TSW_unspecified,
     TSW_short,
     TSW_long,
@@ -30,7 +30,7 @@ namespace clang {
   };
   
   /// \brief Specifies the signedness of a type, e.g., signed or unsigned.
-  enum class TypeSpecifierSign {
+  enum TypeSpecifierSign {
     TSS_unspecified,
     TSS_signed,
     TSS_unsigned
@@ -42,7 +42,7 @@ namespace clang {
   };
 
   /// \brief Specifies the kind of type.
-  enum class TypeSpecifierType {
+  enum TypeSpecifierType {
     TST_unspecified,
     TST_void,
     TST_char,
@@ -83,11 +83,10 @@ namespace clang {
   /// \brief Structure that packs information about the type specifiers that
   /// were written in a particular type specifier sequence.
   struct WrittenBuiltinSpecs {
-    static_assert(static_cast<int>(TypeSpecifierType::TST_error) < (1 << 6),
-                  "Type bitfield not wide enough for TST");
-    /*DeclSpec::TST*/ TypeSpecifierType Type  : 6;
-    /*DeclSpec::TSS*/ TypeSpecifierSign Sign  : 2;
-    /*DeclSpec::TSW*/ TypeSpecifierWidth Width : 2;
+    static_assert(TST_error < 1 << 6, "Type bitfield not wide enough for TST");
+    /*DeclSpec::TST*/ unsigned Type  : 6;
+    /*DeclSpec::TSS*/ unsigned Sign  : 2;
+    /*DeclSpec::TSW*/ unsigned Width : 2;
     unsigned ModeAttr : 1;
   };
 

@@ -250,10 +250,10 @@ public:
 
   // Import type specifier width enumeration and constants.
   typedef TypeSpecifierWidth TSW;
-  static const TSW TSW_unspecified = TypeSpecifierWidth::TSW_unspecified;
-  static const TSW TSW_short = TypeSpecifierWidth::TSW_short;
-  static const TSW TSW_long = TypeSpecifierWidth::TSW_long;
-  static const TSW TSW_longlong = TypeSpecifierWidth::TSW_longlong;
+  static const TSW TSW_unspecified = clang::TSW_unspecified;
+  static const TSW TSW_short = clang::TSW_short;
+  static const TSW TSW_long = clang::TSW_long;
+  static const TSW TSW_longlong = clang::TSW_longlong;
   
   enum TSC {
     TSC_unspecified,
@@ -263,48 +263,48 @@ public:
 
   // Import type specifier sign enumeration and constants.
   typedef TypeSpecifierSign TSS;
-  static const TSS TSS_unspecified = TypeSpecifierSign::TSS_unspecified;
-  static const TSS TSS_signed = TypeSpecifierSign::TSS_signed;
-  static const TSS TSS_unsigned = TypeSpecifierSign::TSS_unsigned;
+  static const TSS TSS_unspecified = clang::TSS_unspecified;
+  static const TSS TSS_signed = clang::TSS_signed;
+  static const TSS TSS_unsigned = clang::TSS_unsigned;
 
   // Import type specifier type enumeration and constants.
   typedef TypeSpecifierType TST;
-  static const TST TST_unspecified = TypeSpecifierType::TST_unspecified;
-  static const TST TST_void = TypeSpecifierType::TST_void;
-  static const TST TST_char = TypeSpecifierType::TST_char;
-  static const TST TST_wchar = TypeSpecifierType::TST_wchar;
-  static const TST TST_char16 = TypeSpecifierType::TST_char16;
-  static const TST TST_char32 = TypeSpecifierType::TST_char32;
-  static const TST TST_int = TypeSpecifierType::TST_int;
-  static const TST TST_int128 = TypeSpecifierType::TST_int128;
-  static const TST TST_half = TypeSpecifierType::TST_half;
-  static const TST TST_float = TypeSpecifierType::TST_float;
-  static const TST TST_double = TypeSpecifierType::TST_double;
-  static const TST TST_float16 = TypeSpecifierType::TST_Float16;
-  static const TST TST_float128 = TypeSpecifierType::TST_float128;
-  static const TST TST_bool = TypeSpecifierType::TST_bool;
-  static const TST TST_decimal32 = TypeSpecifierType::TST_decimal32;
-  static const TST TST_decimal64 = TypeSpecifierType::TST_decimal64;
-  static const TST TST_decimal128 = TypeSpecifierType::TST_decimal128;
-  static const TST TST_enum = TypeSpecifierType::TST_enum;
-  static const TST TST_union = TypeSpecifierType::TST_union;
-  static const TST TST_struct = TypeSpecifierType::TST_struct;
-  static const TST TST_interface = TypeSpecifierType::TST_interface;
-  static const TST TST_class = TypeSpecifierType::TST_class;
-  static const TST TST_typename = TypeSpecifierType::TST_typename;
-  static const TST TST_typeofType = TypeSpecifierType::TST_typeofType;
-  static const TST TST_typeofExpr = TypeSpecifierType::TST_typeofExpr;
-  static const TST TST_decltype = TypeSpecifierType::TST_decltype;
-  static const TST TST_decltype_auto = TypeSpecifierType::TST_decltype_auto;
-  static const TST TST_underlyingType = TypeSpecifierType::TST_underlyingType;
-  static const TST TST_auto = TypeSpecifierType::TST_auto;
-  static const TST TST_auto_type = TypeSpecifierType::TST_auto_type;
-  static const TST TST_unknown_anytype = TypeSpecifierType::TST_unknown_anytype;
-  static const TST TST_atomic = TypeSpecifierType::TST_atomic;
+  static const TST TST_unspecified = clang::TST_unspecified;
+  static const TST TST_void = clang::TST_void;
+  static const TST TST_char = clang::TST_char;
+  static const TST TST_wchar = clang::TST_wchar;
+  static const TST TST_char16 = clang::TST_char16;
+  static const TST TST_char32 = clang::TST_char32;
+  static const TST TST_int = clang::TST_int;
+  static const TST TST_int128 = clang::TST_int128;
+  static const TST TST_half = clang::TST_half;
+  static const TST TST_float = clang::TST_float;
+  static const TST TST_double = clang::TST_double;
+  static const TST TST_float16 = clang::TST_Float16;
+  static const TST TST_float128 = clang::TST_float128;
+  static const TST TST_bool = clang::TST_bool;
+  static const TST TST_decimal32 = clang::TST_decimal32;
+  static const TST TST_decimal64 = clang::TST_decimal64;
+  static const TST TST_decimal128 = clang::TST_decimal128;
+  static const TST TST_enum = clang::TST_enum;
+  static const TST TST_union = clang::TST_union;
+  static const TST TST_struct = clang::TST_struct;
+  static const TST TST_interface = clang::TST_interface;
+  static const TST TST_class = clang::TST_class;
+  static const TST TST_typename = clang::TST_typename;
+  static const TST TST_typeofType = clang::TST_typeofType;
+  static const TST TST_typeofExpr = clang::TST_typeofExpr;
+  static const TST TST_decltype = clang::TST_decltype;
+  static const TST TST_decltype_auto = clang::TST_decltype_auto;
+  static const TST TST_underlyingType = clang::TST_underlyingType;
+  static const TST TST_auto = clang::TST_auto;
+  static const TST TST_auto_type = clang::TST_auto_type;
+  static const TST TST_unknown_anytype = clang::TST_unknown_anytype;
+  static const TST TST_atomic = clang::TST_atomic;
 #define GENERIC_IMAGE_TYPE(ImgType, Id) \
-  static const TST TST_##ImgType##_t = TypeSpecifierType::TST_##ImgType##_t;
+  static const TST TST_##ImgType##_t = clang::TST_##ImgType##_t;
 #include "clang/Basic/OpenCLImageTypes.def"
-  static const TST TST_error = TypeSpecifierType::TST_error;
+  static const TST TST_error = clang::TST_error;
 
   // type-qualifiers
   enum TQ {   // NOTE: These flags must be kept in sync with Qualifiers::TQ.
@@ -335,10 +335,10 @@ private:
   unsigned SCS_extern_in_linkage_spec : 1;
 
   // type-specifier
-  /*TSW*/TypeSpecifierWidth TypeSpecWidth : 2;
+  /*TSW*/unsigned TypeSpecWidth : 2;
   /*TSC*/unsigned TypeSpecComplex : 2;
-  /*TSS*/TypeSpecifierSign TypeSpecSign : 2;
-  /*TST*/TypeSpecifierType TypeSpecType : 6;
+  /*TSS*/unsigned TypeSpecSign : 2;
+  /*TST*/unsigned TypeSpecType : 6;
   unsigned TypeAltiVecVector : 1;
   unsigned TypeAltiVecPixel : 1;
   unsigned TypeAltiVecBool : 1;
