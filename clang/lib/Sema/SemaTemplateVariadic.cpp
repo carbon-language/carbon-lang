@@ -791,52 +791,53 @@ Optional<unsigned> Sema::getNumArgumentsInExpansion(QualType T,
 bool Sema::containsUnexpandedParameterPacks(Declarator &D) {
   const DeclSpec &DS = D.getDeclSpec();
   switch (DS.getTypeSpecType()) {
-  case TST_typename:
-  case TST_typeofType:
-  case TST_underlyingType:
-  case TST_atomic: {
+  case TypeSpecifierType::TST_typename:
+  case TypeSpecifierType::TST_typeofType:
+  case TypeSpecifierType::TST_underlyingType:
+  case TypeSpecifierType::TST_atomic: {
     QualType T = DS.getRepAsType().get();
     if (!T.isNull() && T->containsUnexpandedParameterPack())
       return true;
     break;
   }
       
-  case TST_typeofExpr:
-  case TST_decltype:
+  case TypeSpecifierType::TST_typeofExpr:
+  case TypeSpecifierType::TST_decltype:
     if (DS.getRepAsExpr() && 
         DS.getRepAsExpr()->containsUnexpandedParameterPack())
       return true;
     break;
       
-  case TST_unspecified:
-  case TST_void:
-  case TST_char:
-  case TST_wchar:
-  case TST_char16:
-  case TST_char32:
-  case TST_int:
-  case TST_int128:
-  case TST_half:
-  case TST_float:
-  case TST_double:
-  case TST_Float16:
-  case TST_float128:
-  case TST_bool:
-  case TST_decimal32:
-  case TST_decimal64:
-  case TST_decimal128:
-  case TST_enum:
-  case TST_union:
-  case TST_struct:
-  case TST_interface:
-  case TST_class:
-  case TST_auto:
-  case TST_auto_type:
-  case TST_decltype_auto:
-#define GENERIC_IMAGE_TYPE(ImgType, Id) case TST_##ImgType##_t:
+  case TypeSpecifierType::TST_unspecified:
+  case TypeSpecifierType::TST_void:
+  case TypeSpecifierType::TST_char:
+  case TypeSpecifierType::TST_wchar:
+  case TypeSpecifierType::TST_char16:
+  case TypeSpecifierType::TST_char32:
+  case TypeSpecifierType::TST_int:
+  case TypeSpecifierType::TST_int128:
+  case TypeSpecifierType::TST_half:
+  case TypeSpecifierType::TST_float:
+  case TypeSpecifierType::TST_double:
+  case TypeSpecifierType::TST_Float16:
+  case TypeSpecifierType::TST_float128:
+  case TypeSpecifierType::TST_bool:
+  case TypeSpecifierType::TST_decimal32:
+  case TypeSpecifierType::TST_decimal64:
+  case TypeSpecifierType::TST_decimal128:
+  case TypeSpecifierType::TST_enum:
+  case TypeSpecifierType::TST_union:
+  case TypeSpecifierType::TST_struct:
+  case TypeSpecifierType::TST_interface:
+  case TypeSpecifierType::TST_class:
+  case TypeSpecifierType::TST_auto:
+  case TypeSpecifierType::TST_auto_type:
+  case TypeSpecifierType::TST_decltype_auto:
+#define GENERIC_IMAGE_TYPE(ImgType, Id)                                        \
+  case TypeSpecifierType::TST_##ImgType##_t:
 #include "clang/Basic/OpenCLImageTypes.def"
-  case TST_unknown_anytype:
-  case TST_error:
+  case TypeSpecifierType::TST_unknown_anytype:
+  case TypeSpecifierType::TST_error:
     break;
   }
 

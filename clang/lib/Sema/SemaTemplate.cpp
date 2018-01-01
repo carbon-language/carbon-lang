@@ -1152,7 +1152,7 @@ static void SetNestedNameSpecifier(TagDecl *T, const CXXScopeSpec &SS) {
 }
 
 DeclResult
-Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
+Sema::CheckClassTemplate(Scope *S, TypeSpecifierType TagSpec, TagUseKind TUK,
                          SourceLocation KWLoc, CXXScopeSpec &SS,
                          IdentifierInfo *Name, SourceLocation NameLoc,
                          AttributeList *Attr,
@@ -7336,7 +7336,7 @@ bool Sema::CheckTemplatePartialSpecializationArgs(
 }
 
 DeclResult
-Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
+Sema::ActOnClassTemplateSpecialization(Scope *S, TypeSpecifierType TagSpec,
                                        TagUseKind TUK,
                                        SourceLocation KWLoc,
                                        SourceLocation ModulePrivateLoc,
@@ -8506,7 +8506,7 @@ DeclResult
 Sema::ActOnExplicitInstantiation(Scope *S,
                                  SourceLocation ExternLoc,
                                  SourceLocation TemplateLoc,
-                                 unsigned TagSpec,
+                                 TypeSpecifierType TagSpec,
                                  SourceLocation KWLoc,
                                  const CXXScopeSpec &SS,
                                  TemplateTy TemplateD,
@@ -8794,7 +8794,7 @@ DeclResult
 Sema::ActOnExplicitInstantiation(Scope *S,
                                  SourceLocation ExternLoc,
                                  SourceLocation TemplateLoc,
-                                 unsigned TagSpec,
+                                 TypeSpecifierType TagSpec,
                                  SourceLocation KWLoc,
                                  CXXScopeSpec &SS,
                                  IdentifierInfo *Name,
@@ -9310,7 +9310,7 @@ DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
 }
 
 TypeResult
-Sema::ActOnDependentTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
+Sema::ActOnDependentTag(Scope *S, TypeSpecifierType TagSpec, TagUseKind TUK,
                         const CXXScopeSpec &SS, IdentifierInfo *Name,
                         SourceLocation TagLoc, SourceLocation NameLoc) {
   // This has to hold, because SS is expected to be defined.

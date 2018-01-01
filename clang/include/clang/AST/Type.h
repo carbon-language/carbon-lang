@@ -4747,11 +4747,11 @@ public:
   }
 
   /// Converts a type specifier (DeclSpec::TST) into an elaborated type keyword.
-  static ElaboratedTypeKeyword getKeywordForTypeSpec(unsigned TypeSpec);
+  static ElaboratedTypeKeyword getKeywordForTypeSpec(TypeSpecifierType TypeSpec);
 
   /// Converts a type specifier (DeclSpec::TST) into a tag type kind.
   /// It is an error to provide a type specifier which *isn't* a tag kind here.
-  static TagTypeKind getTagTypeKindForTypeSpec(unsigned TypeSpec);
+  static TagTypeKind getTagTypeKindForTypeSpec(TypeSpecifierType TypeSpec);
 
   /// Converts a TagTypeKind into an elaborated type keyword.
   static ElaboratedTypeKeyword getKeywordForTagTypeKind(TagTypeKind Tag);
