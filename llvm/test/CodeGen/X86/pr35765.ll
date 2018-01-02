@@ -17,8 +17,9 @@ define void @PR35765() {
 ; CHECK-NEXT:    movzwl {{.*}}(%rip), %ecx
 ; CHECK-NEXT:    movzwl {{.*}}(%rip), %edx
 ; CHECK-NEXT:    notl %edx
+; CHECK-NEXT:    orl $63488, %edx # imm = 0xF800
+; CHECK-NEXT:    movzwl %dx, %edx
 ; CHECK-NEXT:    orl %ecx, %edx
-; CHECK-NEXT:    orl $-2048, %edx # imm = 0xF800
 ; CHECK-NEXT:    xorl %eax, %edx
 ; CHECK-NEXT:    movslq %edx, %rax
 ; CHECK-NEXT:    movq %rax, {{.*}}(%rip)
