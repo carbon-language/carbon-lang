@@ -7,7 +7,7 @@ namespace std {
   std::nothrow_t nothrow;
 }
 void *operator new[](size_t, const std::nothrow_t &) throw();
-void *operator new[](size_t, char *);
+void *operator new[](size_t, void *);
 
 struct C {
   int x;
@@ -53,3 +53,11 @@ C *CallPlacementNew() {
 }
 // ASAN-LABEL: CallPlacementNew
 // ASAN-NOT: __asan_poison_cxx_array_cookie
+
+void *operator new[](size_t n, int);
+
+C *CallNewWithArgs() {
+// ASAN-LABEL: CallNewWithArgs
+// ASAN: call void @__asan_poison_cxx_array_cookie
+  return new (123) C[20];
+}
