@@ -1847,7 +1847,8 @@ Address ItaniumCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
   llvm::Instruction *SI = CGF.Builder.CreateStore(NumElements, NumElementsPtr);
 
   // Handle the array cookie specially in ASan.
-  if (CGM.getLangOpts().Sanitize.has(SanitizerKind::Address) && AS == 0) {
+  if (CGM.getLangOpts().Sanitize.has(SanitizerKind::Address) && AS == 0 &&
+      expr->getOperatorNew()->isReplaceableGlobalAllocationFunction()) {
     // The store to the CookiePtr does not need to be instrumented.
     CGM.getSanitizerMetadata()->disableSanitizerForInstruction(SI);
     llvm::FunctionType *FTy =
