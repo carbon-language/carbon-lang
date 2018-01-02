@@ -16,9 +16,7 @@
 #ifndef UNWIND_ASSEMBLY_H
 #define UNWIND_ASSEMBLY_H
 
-#if defined(__powerpc64__)
-#define SEPARATOR ;
-#elif defined(__POWERPC__) || defined(__powerpc__) || defined(__ppc__)
+#if defined(__POWERPC__) || defined(__powerpc__) || defined(__ppc__)
 #define SEPARATOR @
 #elif defined(__arm64__)
 #define SEPARATOR %%
