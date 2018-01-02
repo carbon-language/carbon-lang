@@ -2,8 +2,8 @@
 ; RUN: llc < %s -mtriple=aarch64-unknown-unknown | FileCheck %s
 
 ; There are 4 commuted variants (abbc/abcb/bcab/bcba) *
-;           4 predicate variants ([*][lg][te] *
-;           4 min/max flavors (smin/smax/umin/max)
+;           4 predicate variants ([*][lg][te]) *
+;           4 min/max flavors (smin/smax/umin/umax)
 ;           = 64 tests
 
 define <4 x i32> @smin_ab_bc(<4 x i32> %a, <4 x i32> %b, <4 x i32> %c) {
