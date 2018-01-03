@@ -381,8 +381,6 @@ public:
   }
 
   /// createMCAsmBackend - Create a target specific assembly parser.
-  ///
-  /// \param TheTriple The target triple string.
   MCAsmBackend *createMCAsmBackend(const MCSubtargetInfo &STI,
                                    const MCRegisterInfo &MRI,
                                    const MCTargetOptions &Options) const {
