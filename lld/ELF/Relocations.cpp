@@ -410,13 +410,16 @@ static RelExpr toPlt(RelExpr Expr) {
 static RelExpr fromPlt(RelExpr Expr) {
   // We decided not to use a plt. Optimize a reference to the plt to a
   // reference to the symbol itself.
-  if (Expr == R_PLT_PC)
+  switch (Expr) {
+  case R_PLT_PC:
     return R_PC;
-  if (Expr == R_PPC_PLT_OPD)
+  case R_PPC_PLT_OPD:
     return R_PPC_OPD;
-  if (Expr == R_PLT)
+  case R_PLT:
     return R_ABS;
-  return Expr;
+  default:
+    return Expr;
+  }
 }
 
 // Returns true if a given shared symbol is in a read-only segment in a DSO.
