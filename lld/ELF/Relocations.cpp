@@ -908,7 +908,7 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
 
     bool Preemptible = Sym.IsPreemptible;
 
-    // Strenghten or relax a PLT access.
+    // Strenghten or relax relocations.
     //
     // GNU ifunc symbols must be accessed via PLT because their addresses
     // are determined by runtime.
