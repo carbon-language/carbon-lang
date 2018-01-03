@@ -27551,16 +27551,6 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
 
   switch (MI.getOpcode()) {
   default: llvm_unreachable("Unexpected instr type to insert");
-  case X86::TAILJMPd64:
-  case X86::TAILJMPr64:
-  case X86::TAILJMPm64:
-  case X86::TAILJMPr64_REX:
-  case X86::TAILJMPm64_REX:
-    llvm_unreachable("TAILJMP64 would not be touched here.");
-  case X86::TCRETURNdi64:
-  case X86::TCRETURNri64:
-  case X86::TCRETURNmi64:
-    return BB;
   case X86::TLS_addr32:
   case X86::TLS_addr64:
   case X86::TLS_base_addr32:
