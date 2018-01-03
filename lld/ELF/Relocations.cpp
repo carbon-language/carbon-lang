@@ -396,15 +396,18 @@ static bool isStaticLinkTimeConstant(RelExpr E, RelType Type, const Symbol &Sym,
 }
 
 static RelExpr toPlt(RelExpr Expr) {
-  if (Expr == R_PPC_OPD)
+  switch (Expr) {
+  case R_PPC_OPD:
     return R_PPC_PLT_OPD;
-  if (Expr == R_PC)
+  case R_PC:
     return R_PLT_PC;
-  if (Expr == R_PAGE_PC)
+  case R_PAGE_PC:
     return R_PLT_PAGE_PC;
-  if (Expr == R_ABS)
+  case R_ABS:
     return R_PLT;
-  return Expr;
+  default:
+    return Expr;
+  }
 }
 
 static RelExpr fromPlt(RelExpr Expr) {
