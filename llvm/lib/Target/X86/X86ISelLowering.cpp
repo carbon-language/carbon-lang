@@ -2174,7 +2174,7 @@ static SDValue lowerMasksToReg(const SDValue &ValArg, const EVT &ValLoc,
     // bitcast:   v32i1 -> i32 / v64i1 -> i64
     return DAG.getBitcast(ValLoc, ValArg);
   } else
-    return DAG.getNode(ISD::SIGN_EXTEND, Dl, ValLoc, ValArg);
+    return DAG.getNode(ISD::ANY_EXTEND, Dl, ValLoc, ValArg);
 }
 
 /// Breaks v64i1 value into two registers and adds the new node to the DAG
