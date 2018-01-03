@@ -2168,13 +2168,16 @@ static SDValue lowerMasksToReg(const SDValue &ValArg, const EVT &ValLoc,
     if (ValLoc == MVT::i32)
       ValToCopy = DAG.getNode(ISD::ANY_EXTEND, Dl, ValLoc, ValToCopy);
     return ValToCopy;
-  } else if ((ValVT == MVT::v32i1 && ValLoc == MVT::i32) ||
-             (ValVT == MVT::v64i1 && ValLoc == MVT::i64)) {
+  }
+
+  if ((ValVT == MVT::v32i1 && ValLoc == MVT::i32) ||
+      (ValVT == MVT::v64i1 && ValLoc == MVT::i64)) {
     // One stage lowering is required
     // bitcast:   v32i1 -> i32 / v64i1 -> i64
     return DAG.getBitcast(ValLoc, ValArg);
-  } else
-    return DAG.getNode(ISD::ANY_EXTEND, Dl, ValLoc, ValArg);
+  }
+
+  return DAG.getNode(ISD::ANY_EXTEND, Dl, ValLoc, ValArg);
 }
 
 /// Breaks v64i1 value into two registers and adds the new node to the DAG
