@@ -80,27 +80,6 @@ static std::string getLocation(InputSectionBase &S, const Symbol &Sym,
   return Msg + S.getObjMsg(Off);
 }
 
-// This is a MIPS-specific rule.
-//
-// In case of MIPS GP-relative relocations always resolve to a definition
-// in a regular input file, ignoring the one-definition rule. So we,
-// for example, should not attempt to create a dynamic relocation even
-// if the target symbol is preemptible. There are two two MIPS GP-relative
-// relocations R_MIPS_GPREL16 and R_MIPS_GPREL32. But only R_MIPS_GPREL16
-// can be against a preemptible symbol.
-//
-// To get MIPS relocation type we apply 0xff mask. In case of O32 ABI all
-// relocation types occupy eight bit. In case of N64 ABI we extract first
-// relocation from 3-in-1 packet because only the first relocation can
-// be against a real symbol.
-static bool isMipsGprel(RelType Type) {
-  if (Config->EMachine != EM_MIPS)
-    return false;
-  Type &= 0xff;
-  return Type == R_MIPS_GPREL16 || Type == R_MICROMIPS_GPREL16 ||
-         Type == R_MICROMIPS_GPREL7_S2;
-}
-
 // This function is similar to the `handleTlsRelocation`. MIPS does not
 // support any relaxations for TLS relocations so by factoring out MIPS
 // handling in to the separate function we can simplify the code and do not
@@ -909,8 +888,13 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
     if (isRelExprOneOf<R_HINT, R_NONE>(Expr))
       continue;
 
-    // Handle yet another MIPS-ness.
-    if (isMipsGprel(Type)) {
+    // In case of MIPS GP-relative relocations always resolve to a definition
+    // in a regular input file, ignoring the one-definition rule. So we,
+    // for example, should not attempt to create a dynamic relocation even
+    // if the target symbol is preemptible. There are two two MIPS GP-relative
+    // relocations R_MIPS_GPREL16 and R_MIPS_GPREL32. But only R_MIPS_GPREL16
+    // can be against a preemptible symbol.
+    if (Expr == R_MIPS_GOTREL) {
       int64_t Addend = computeAddend<ELFT>(Rel, End, Sec, Expr, Sym.isLocal());
       Sec.Relocations.push_back({R_MIPS_GOTREL, Type, Offset, Addend, &Sym});
       continue;
