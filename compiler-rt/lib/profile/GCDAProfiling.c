@@ -459,6 +459,7 @@ void llvm_gcda_end_file() {
       unmap_file();
     }
 
+    fflush(output_file);
     lprofUnlockFd(fd);
     fclose(output_file);
     output_file = NULL;
