@@ -884,8 +884,8 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
     if (maybeReportUndefined(Sym, Sec, Rel.r_offset))
       continue;
 
-    RelExpr Expr =
-        Target->getRelExpr(Type, Sym, Sec.Data.begin() + Rel.r_offset);
+    const uint8_t *RelocatedAddr = Sec.Data.begin() + Rel.r_offset;
+    RelExpr Expr = Target->getRelExpr(Type, Sym, RelocatedAddr);
 
     // Ignore "hint" relocations because they are only markers for relaxation.
     if (isRelExprOneOf<R_HINT, R_NONE>(Expr))
@@ -919,8 +919,7 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
     if (Sym.isGnuIFunc())
       Expr = toPlt(Expr);
     else if (!Preemptible && Expr == R_GOT_PC && !isAbsoluteValue(Sym))
-      Expr =
-          Target->adjustRelaxExpr(Type, Sec.Data.data() + Rel.r_offset, Expr);
+      Expr = Target->adjustRelaxExpr(Type, RelocatedAddr, Expr);
     else if (!Preemptible)
       Expr = fromPlt(Expr);
 
