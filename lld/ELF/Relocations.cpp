@@ -640,8 +640,8 @@ static RelExpr adjustExpr(Symbol &Sym, RelExpr Expr, RelType Type,
   if (Sym.isFunc())
     return getPltExpr(Sym, Expr, IsConstant);
 
-  errorOrWarn("symbol '" + toString(Sym) + "' defined in " +
-              toString(Sym.File) + " has no type");
+  errorOrWarn("symbol '" + toString(Sym) + "' has no type" +
+              getLocation(S, Sym, RelOff));
   return Expr;
 }
 
