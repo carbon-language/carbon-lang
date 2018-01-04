@@ -10,16 +10,16 @@
 ;}
 
 ; CHECK: .file   1 "/some/directory{{.+}}debug-info.cu"
-; CHECK: .file   2 "/some/directory{{.+}}clang/include/__clang_cuda_math_forward_declares.h"
-; CHECK: .file   3 "/usr/include/mathcalls.h"
-; CHECK: .file   4 "/usr/include/stdlib.h"
-; CHECK: .file   5 "/usr/include/stdlib-float.h"
-; CHECK: .file   6 "/usr/include/stdlib-bsearch.h"
-; CHECK: .file   7 "/usr/lib/gcc/4.8/../../../../include/c++/4.8/cstdlib"
-; CHECK: .file   8 "/usr/local/cuda/include/math_functions.hpp"
-; CHECK: .file   9 "/usr/local/cuda/include/device_functions.hpp"
-; CHECK: .file   10 "/some/directory{{.+}}clang/include/__clang_cuda_builtin_vars.h"
-; CHECK: .file   11 "/usr/local/cuda/include/vector_types.h"
+; CHECK: .file   2 "/some/directory{{.+}}clang/include{{.+}}__clang_cuda_math_forward_declares.h"
+; CHECK: .file   3 "/usr/include{{.+}}mathcalls.h"
+; CHECK: .file   4 "/usr/include{{.+}}stdlib.h"
+; CHECK: .file   5 "/usr/include{{.+}}stdlib-float.h"
+; CHECK: .file   6 "/usr/include{{.+}}stdlib-bsearch.h"
+; CHECK: .file   7 "/usr/lib/gcc/4.8/../../../../include/c++/4.8{{.+}}cstdlib"
+; CHECK: .file   8 "/usr/local/cuda/include{{.+}}math_functions.hpp"
+; CHECK: .file   9 "/usr/local/cuda/include{{.+}}device_functions.hpp"
+; CHECK: .file   10 "/some/directory{{.+}}clang/include{{.+}}__clang_cuda_builtin_vars.h"
+; CHECK: .file   11 "/usr/local/cuda/include{{.+}}vector_types.h"
 ; CHECK: .visible .entry _Z5saxpyifPfS_(
 ; CHECK: .param .u32 {{.+}},
 ; CHECK: .param .f32 {{.+}},
