@@ -1059,19 +1059,41 @@ void CGOpenMPRuntimeNVPTX::emitSpmdParallelCall(
   emitOutlinedFunctionCall(CGF, Loc, OutlinedFn, OutlinedFnArgs);
 }
 
+/// Cast value to the specified type.
+static llvm::Value *
+castValueToType(CodeGenFunction &CGF, llvm::Value *Val, llvm::Type *CastTy,
+                llvm::Optional<bool> IsSigned = llvm::None) {
+  if (Val->getType() == CastTy)
+    return Val;
+  if (Val->getType()->getPrimitiveSizeInBits() > 0 &&
+      CastTy->getPrimitiveSizeInBits() > 0 &&
+      Val->getType()->getPrimitiveSizeInBits() ==
+          CastTy->getPrimitiveSizeInBits())
+    return CGF.Builder.CreateBitCast(Val, CastTy);
+  if (IsSigned.hasValue() && CastTy->isIntegerTy() &&
+      Val->getType()->isIntegerTy())
+    return CGF.Builder.CreateIntCast(Val, CastTy, *IsSigned);
+  Address CastItem = CGF.CreateTempAlloca(
+      CastTy,
+      CharUnits::fromQuantity(
+          CGF.CGM.getDataLayout().getPrefTypeAlignment(Val->getType())));
+  Address ValCastItem = CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
+      CastItem, Val->getType()->getPointerTo(CastItem.getAddressSpace()));
+  CGF.Builder.CreateStore(Val, ValCastItem);
+  return CGF.Builder.CreateLoad(CastItem);
+}
+
 /// This function creates calls to one of two shuffle functions to copy
 /// variables between lanes in a warp.
 static llvm::Value *createRuntimeShuffleFunction(CodeGenFunction &CGF,
-                                                 QualType ElemTy,
                                                  llvm::Value *Elem,
                                                  llvm::Value *Offset) {
   auto &CGM = CGF.CGM;
-  auto &C = CGM.getContext();
   auto &Bld = CGF.Builder;
   CGOpenMPRuntimeNVPTX &RT =
       *(static_cast<CGOpenMPRuntimeNVPTX *>(&CGM.getOpenMPRuntime()));
 
-  unsigned Size = CGM.getContext().getTypeSizeInChars(ElemTy).getQuantity();
+  unsigned Size = CGM.getDataLayout().getTypeStoreSize(Elem->getType());
   assert(Size <= 8 && "Unsupported bitwidth in shuffle instruction.");
 
   OpenMPRTLFunctionNVPTX ShuffleFn = Size <= 4
@@ -1079,17 +1101,16 @@ static llvm::Value *createRuntimeShuffleFunction(CodeGenFunction &CGF,
                                          : OMPRTL_NVPTX__kmpc_shuffle_int64;
 
   // Cast all types to 32- or 64-bit values before calling shuffle routines.
-  auto CastTy = Size <= 4 ? CGM.Int32Ty : CGM.Int64Ty;
-  auto *ElemCast = Bld.CreateSExtOrBitCast(Elem, CastTy);
-  auto *WarpSize = CGF.EmitScalarConversion(
-      getNVPTXWarpSize(CGF), C.getIntTypeForBitwidth(32, /* Signed */ true),
-      C.getIntTypeForBitwidth(16, /* Signed */ true), SourceLocation());
+  llvm::Type *CastTy = Size <= 4 ? CGM.Int32Ty : CGM.Int64Ty;
+  llvm::Value *ElemCast = castValueToType(CGF, Elem, CastTy, /*isSigned=*/true);
+  auto *WarpSize =
+      Bld.CreateIntCast(getNVPTXWarpSize(CGF), CGM.Int16Ty, /*isSigned=*/true);
 
   auto *ShuffledVal =
       CGF.EmitRuntimeCall(RT.createNVPTXRuntimeFunction(ShuffleFn),
                           {ElemCast, Offset, WarpSize});
 
-  return Bld.CreateTruncOrBitCast(ShuffledVal, CGF.ConvertTypeForMem(ElemTy));
+  return castValueToType(CGF, ShuffledVal, Elem->getType(), /*isSigned=*/true);
 }
 
 namespace {
@@ -1151,10 +1172,9 @@ static void emitReductionListCopy(
       // Step 1.1: Get the address for the src element in the Reduce list.
       Address SrcElementPtrAddr =
           Bld.CreateConstArrayGEP(SrcBase, Idx, CGF.getPointerSize());
-      llvm::Value *SrcElementPtrPtr = CGF.EmitLoadOfScalar(
-          SrcElementPtrAddr, /*Volatile=*/false, C.VoidPtrTy, SourceLocation());
-      SrcElementAddr =
-          Address(SrcElementPtrPtr, C.getTypeAlignInChars(Private->getType()));
+      SrcElementAddr = CGF.EmitLoadOfPointer(
+          SrcElementPtrAddr,
+          C.getPointerType(Private->getType())->castAs<PointerType>());
 
       // Step 1.2: Create a temporary to store the element in the destination
       // Reduce list.
@@ -1170,32 +1190,26 @@ static void emitReductionListCopy(
       // Step 1.1: Get the address for the src element in the Reduce list.
       Address SrcElementPtrAddr =
           Bld.CreateConstArrayGEP(SrcBase, Idx, CGF.getPointerSize());
-      llvm::Value *SrcElementPtrPtr = CGF.EmitLoadOfScalar(
-          SrcElementPtrAddr, /*Volatile=*/false, C.VoidPtrTy, SourceLocation());
-      SrcElementAddr =
-          Address(SrcElementPtrPtr, C.getTypeAlignInChars(Private->getType()));
+      SrcElementAddr = CGF.EmitLoadOfPointer(
+          SrcElementPtrAddr,
+          C.getPointerType(Private->getType())->castAs<PointerType>());
 
       // Step 1.2: Get the address for dest element.  The destination
       // element has already been created on the thread's stack.
       DestElementPtrAddr =
           Bld.CreateConstArrayGEP(DestBase, Idx, CGF.getPointerSize());
-      llvm::Value *DestElementPtr =
-          CGF.EmitLoadOfScalar(DestElementPtrAddr, /*Volatile=*/false,
-                               C.VoidPtrTy, SourceLocation());
-      Address DestElemAddr =
-          Address(DestElementPtr, C.getTypeAlignInChars(Private->getType()));
-      DestElementAddr = Bld.CreateElementBitCast(
-          DestElemAddr, CGF.ConvertTypeForMem(Private->getType()));
+      DestElementAddr = CGF.EmitLoadOfPointer(
+          DestElementPtrAddr,
+          C.getPointerType(Private->getType())->castAs<PointerType>());
       break;
     }
     case ThreadToScratchpad: {
       // Step 1.1: Get the address for the src element in the Reduce list.
       Address SrcElementPtrAddr =
           Bld.CreateConstArrayGEP(SrcBase, Idx, CGF.getPointerSize());
-      llvm::Value *SrcElementPtrPtr = CGF.EmitLoadOfScalar(
-          SrcElementPtrAddr, /*Volatile=*/false, C.VoidPtrTy, SourceLocation());
-      SrcElementAddr =
-          Address(SrcElementPtrPtr, C.getTypeAlignInChars(Private->getType()));
+      SrcElementAddr = CGF.EmitLoadOfPointer(
+          SrcElementPtrAddr,
+          C.getPointerType(Private->getType())->castAs<PointerType>());
 
       // Step 1.2: Get the address for dest element:
       // address = base + index * ElementSizeInChars.
@@ -1208,11 +1222,8 @@ static void emitReductionListCopy(
           Bld.CreateAdd(DestBase.getPointer(), CurrentOffset);
       ScratchPadElemAbsolutePtrVal =
           Bld.CreateIntToPtr(ScratchPadElemAbsolutePtrVal, CGF.VoidPtrTy);
-      Address ScratchpadPtr =
-          Address(ScratchPadElemAbsolutePtrVal,
-                  C.getTypeAlignInChars(Private->getType()));
-      DestElementAddr = Bld.CreateElementBitCast(
-          ScratchpadPtr, CGF.ConvertTypeForMem(Private->getType()));
+      DestElementAddr = Address(ScratchPadElemAbsolutePtrVal,
+                                C.getTypeAlignInChars(Private->getType()));
       IncrScratchpadDest = true;
       break;
     }
@@ -1253,10 +1264,11 @@ static void emitReductionListCopy(
 
     // Now that all active lanes have read the element in the
     // Reduce list, shuffle over the value from the remote lane.
-    if (ShuffleInElement) {
-      Elem = createRuntimeShuffleFunction(CGF, Private->getType(), Elem,
-                                          RemoteLaneOffset);
-    }
+    if (ShuffleInElement)
+      Elem = createRuntimeShuffleFunction(CGF, Elem, RemoteLaneOffset);
+
+    DestElementAddr = Bld.CreateElementBitCast(DestElementAddr,
+                                               SrcElementAddr.getElementType());
 
     // Store the source element value to the dest element address.
     CGF.EmitStoreOfScalar(Elem, DestElementAddr, /*Volatile=*/false,
