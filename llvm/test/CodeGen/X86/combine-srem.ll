@@ -119,7 +119,7 @@ define <4 x i32> @combine_vec_srem_by_pos0(<4 x i32> %x) {
 ;
 ; AVX2-LABEL: combine_vec_srem_by_pos0:
 ; AVX2:       # %bb.0:
-; AVX2-NEXT:    vbroadcastss {{.*}}(%rip), %xmm1
+; AVX2-NEXT:    vbroadcastss {{.*#+}} xmm1 = [3,3,3,3]
 ; AVX2-NEXT:    vandps %xmm1, %xmm0, %xmm0
 ; AVX2-NEXT:    retq
   %1 = and <4 x i32> %x, <i32 255, i32 255, i32 255, i32 255>
