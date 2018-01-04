@@ -38,6 +38,24 @@ define <4 x i32> @combine_vec_udiv_undef1(<4 x i32> %x) {
   ret <4 x i32> %1
 }
 
+; fold (udiv x, 1) -> x
+define i32 @combine_udiv_by_one(i32 %x) {
+; CHECK-LABEL: combine_udiv_by_one:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    movl %edi, %eax
+; CHECK-NEXT:    retq
+  %1 = udiv i32 %x, 1
+  ret i32 %1
+}
+
+define <4 x i32> @combine_vec_udiv_by_one(<4 x i32> %x) {
+; CHECK-LABEL: combine_vec_udiv_by_one:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    retq
+  %1 = udiv <4 x i32> %x, <i32 1, i32 1, i32 1, i32 1>
+  ret <4 x i32> %1
+}
+
 ; TODO fold (udiv x, x) -> 1
 define i32 @combine_udiv_dupe(i32 %x) {
 ; CHECK-LABEL: combine_udiv_dupe:

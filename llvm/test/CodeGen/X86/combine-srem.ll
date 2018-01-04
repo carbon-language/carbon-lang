@@ -38,6 +38,30 @@ define <4 x i32> @combine_vec_srem_undef1(<4 x i32> %x) {
   ret <4 x i32> %1
 }
 
+; fold (srem x, 1) -> 0
+define i32 @combine_srem_by_one(i32 %x) {
+; CHECK-LABEL: combine_srem_by_one:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    xorl %eax, %eax
+; CHECK-NEXT:    retq
+  %1 = srem i32 %x, 1
+  ret i32 %1
+}
+
+define <4 x i32> @combine_vec_srem_by_one(<4 x i32> %x) {
+; SSE-LABEL: combine_vec_srem_by_one:
+; SSE:       # %bb.0:
+; SSE-NEXT:    xorps %xmm0, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: combine_vec_srem_by_one:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vxorps %xmm0, %xmm0, %xmm0
+; AVX-NEXT:    retq
+  %1 = srem <4 x i32> %x, <i32 1, i32 1, i32 1, i32 1>
+  ret <4 x i32> %1
+}
+
 ; TODO fold (srem x, x) -> 0
 define i32 @combine_srem_dupe(i32 %x) {
 ; CHECK-LABEL: combine_srem_dupe:
