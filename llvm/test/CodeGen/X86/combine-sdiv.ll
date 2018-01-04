@@ -60,6 +60,80 @@ define <4 x i32> @combine_vec_sdiv_by_negone(<4 x i32> %x) {
   ret <4 x i32> %1
 }
 
+; TODO fold (sdiv x, x) -> 1
+define i32 @combine_sdiv_dupe(i32 %x) {
+; SSE-LABEL: combine_sdiv_dupe:
+; SSE:       # %bb.0:
+; SSE-NEXT:    movl %edi, %eax
+; SSE-NEXT:    cltd
+; SSE-NEXT:    idivl %edi
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: combine_sdiv_dupe:
+; AVX:       # %bb.0:
+; AVX-NEXT:    movl %edi, %eax
+; AVX-NEXT:    cltd
+; AVX-NEXT:    idivl %edi
+; AVX-NEXT:    retq
+  %1 = sdiv i32 %x, %x
+  ret i32 %1
+}
+
+define <4 x i32> @combine_vec_sdiv_dupe(<4 x i32> %x) {
+; SSE-LABEL: combine_vec_sdiv_dupe:
+; SSE:       # %bb.0:
+; SSE-NEXT:    pextrd $1, %xmm0, %ecx
+; SSE-NEXT:    movl %ecx, %eax
+; SSE-NEXT:    cltd
+; SSE-NEXT:    idivl %ecx
+; SSE-NEXT:    movl %eax, %ecx
+; SSE-NEXT:    movd %xmm0, %esi
+; SSE-NEXT:    movl %esi, %eax
+; SSE-NEXT:    cltd
+; SSE-NEXT:    idivl %esi
+; SSE-NEXT:    movd %eax, %xmm1
+; SSE-NEXT:    pinsrd $1, %ecx, %xmm1
+; SSE-NEXT:    pextrd $2, %xmm0, %ecx
+; SSE-NEXT:    movl %ecx, %eax
+; SSE-NEXT:    cltd
+; SSE-NEXT:    idivl %ecx
+; SSE-NEXT:    pinsrd $2, %eax, %xmm1
+; SSE-NEXT:    pextrd $3, %xmm0, %ecx
+; SSE-NEXT:    movl %ecx, %eax
+; SSE-NEXT:    cltd
+; SSE-NEXT:    idivl %ecx
+; SSE-NEXT:    pinsrd $3, %eax, %xmm1
+; SSE-NEXT:    movdqa %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: combine_vec_sdiv_dupe:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vpextrd $1, %xmm0, %ecx
+; AVX-NEXT:    movl %ecx, %eax
+; AVX-NEXT:    cltd
+; AVX-NEXT:    idivl %ecx
+; AVX-NEXT:    movl %eax, %ecx
+; AVX-NEXT:    vmovd %xmm0, %esi
+; AVX-NEXT:    movl %esi, %eax
+; AVX-NEXT:    cltd
+; AVX-NEXT:    idivl %esi
+; AVX-NEXT:    vmovd %eax, %xmm1
+; AVX-NEXT:    vpinsrd $1, %ecx, %xmm1, %xmm1
+; AVX-NEXT:    vpextrd $2, %xmm0, %ecx
+; AVX-NEXT:    movl %ecx, %eax
+; AVX-NEXT:    cltd
+; AVX-NEXT:    idivl %ecx
+; AVX-NEXT:    vpinsrd $2, %eax, %xmm1, %xmm1
+; AVX-NEXT:    vpextrd $3, %xmm0, %ecx
+; AVX-NEXT:    movl %ecx, %eax
+; AVX-NEXT:    cltd
+; AVX-NEXT:    idivl %ecx
+; AVX-NEXT:    vpinsrd $3, %eax, %xmm1, %xmm0
+; AVX-NEXT:    retq
+  %1 = sdiv <4 x i32> %x, %x
+  ret <4 x i32> %1
+}
+
 ; fold (sdiv x, y) -> (udiv x, y) iff x and y are positive
 define <4 x i32> @combine_vec_sdiv_by_pos0(<4 x i32> %x) {
 ; SSE-LABEL: combine_vec_sdiv_by_pos0:

@@ -29,6 +29,72 @@ define <4 x i32> @combine_vec_udiv_undef1(<4 x i32> %x) {
   ret <4 x i32> %1
 }
 
+; TODO fold (udiv x, x) -> 1
+define i32 @combine_udiv_dupe(i32 %x) {
+; SSE-LABEL: combine_udiv_dupe:
+; SSE:       # %bb.0:
+; SSE-NEXT:    xorl %edx, %edx
+; SSE-NEXT:    movl %edi, %eax
+; SSE-NEXT:    divl %edi
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: combine_udiv_dupe:
+; AVX:       # %bb.0:
+; AVX-NEXT:    xorl %edx, %edx
+; AVX-NEXT:    movl %edi, %eax
+; AVX-NEXT:    divl %edi
+; AVX-NEXT:    retq
+  %1 = udiv i32 %x, %x
+  ret i32 %1
+}
+
+define <4 x i32> @combine_vec_udiv_dupe(<4 x i32> %x) {
+; SSE-LABEL: combine_vec_udiv_dupe:
+; SSE:       # %bb.0:
+; SSE-NEXT:    pextrd $1, %xmm0, %eax
+; SSE-NEXT:    xorl %edx, %edx
+; SSE-NEXT:    divl %eax
+; SSE-NEXT:    movl %eax, %ecx
+; SSE-NEXT:    movd %xmm0, %eax
+; SSE-NEXT:    xorl %edx, %edx
+; SSE-NEXT:    divl %eax
+; SSE-NEXT:    movd %eax, %xmm1
+; SSE-NEXT:    pinsrd $1, %ecx, %xmm1
+; SSE-NEXT:    pextrd $2, %xmm0, %eax
+; SSE-NEXT:    xorl %edx, %edx
+; SSE-NEXT:    divl %eax
+; SSE-NEXT:    pinsrd $2, %eax, %xmm1
+; SSE-NEXT:    pextrd $3, %xmm0, %eax
+; SSE-NEXT:    xorl %edx, %edx
+; SSE-NEXT:    divl %eax
+; SSE-NEXT:    pinsrd $3, %eax, %xmm1
+; SSE-NEXT:    movdqa %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: combine_vec_udiv_dupe:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vpextrd $1, %xmm0, %eax
+; AVX-NEXT:    xorl %edx, %edx
+; AVX-NEXT:    divl %eax
+; AVX-NEXT:    movl %eax, %ecx
+; AVX-NEXT:    vmovd %xmm0, %eax
+; AVX-NEXT:    xorl %edx, %edx
+; AVX-NEXT:    divl %eax
+; AVX-NEXT:    vmovd %eax, %xmm1
+; AVX-NEXT:    vpinsrd $1, %ecx, %xmm1, %xmm1
+; AVX-NEXT:    vpextrd $2, %xmm0, %eax
+; AVX-NEXT:    xorl %edx, %edx
+; AVX-NEXT:    divl %eax
+; AVX-NEXT:    vpinsrd $2, %eax, %xmm1, %xmm1
+; AVX-NEXT:    vpextrd $3, %xmm0, %eax
+; AVX-NEXT:    xorl %edx, %edx
+; AVX-NEXT:    divl %eax
+; AVX-NEXT:    vpinsrd $3, %eax, %xmm1, %xmm0
+; AVX-NEXT:    retq
+  %1 = udiv <4 x i32> %x, %x
+  ret <4 x i32> %1
+}
+
 ; fold (udiv x, (1 << c)) -> x >>u c
 define <4 x i32> @combine_vec_udiv_by_pow2a(<4 x i32> %x) {
 ; SSE-LABEL: combine_vec_udiv_by_pow2a:
