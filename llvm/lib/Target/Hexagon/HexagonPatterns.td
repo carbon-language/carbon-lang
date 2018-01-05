@@ -3019,4 +3019,9 @@ let Predicates = [UseHVX] in {
     def: Pat<(VecI32 (sext_inreg HVI32:$Vs, v32i16)),
              (V6_vasrh (V6_vaslh HVI32:$Vs, (A2_tfrsi 16)), (A2_tfrsi 16))>;
   }
+
+  def: Pat<(VecI8 (trunc HWI16:$Vss)),
+           (V6_vpackeb (HiVec $Vss), (LoVec $Vss))>;
+  def: Pat<(VecI16 (trunc HWI32:$Vss)),
+           (V6_vpackeh (HiVec $Vss), (LoVec $Vss))>;
 }
