@@ -440,6 +440,8 @@ recordStringTableReferences(SymbolKind Kind, MutableArrayRef<uint8_t> Contents,
     log("Not fixing up string table reference in S_DEFRANGE / "
         "S_DEFRANGE_SUBFIELD record");
     break;
+  default:
+    break;
   }
 }
 
