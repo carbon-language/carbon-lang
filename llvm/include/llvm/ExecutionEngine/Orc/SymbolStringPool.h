@@ -92,6 +92,8 @@ public:
     return S->getValue() < Other.S->getValue();
   }
 
+  StringRef operator*() const { return S->first(); }
+
 private:
 
   SymbolStringPtr(SymbolStringPool::PoolMapEntry *S)
