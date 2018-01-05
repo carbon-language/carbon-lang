@@ -932,6 +932,11 @@ def: Pat<(v2i32 (HexagonVSPLAT s8_0ImmPred:$s8)),
          (A2_combineii imm:$s8, imm:$s8)>;
 def: Pat<(v2i32 (HexagonVSPLAT I32:$Rs)), (Combinew I32:$Rs, I32:$Rs)>;
 
+let AddedComplexity = 10 in
+def: Pat<(v8i8 (HexagonVSPLAT I32:$Rs)), (S6_vsplatrbp I32:$Rs)>,
+     Requires<[HasV62T]>;
+def: Pat<(v8i8 (HexagonVSPLAT I32:$Rs)),
+         (Combinew (S2_vsplatrb I32:$Rs), (S2_vsplatrb I32:$Rs))>;
 
 // --(8) Shift/permute ---------------------------------------------------
 //
