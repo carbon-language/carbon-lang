@@ -48,9 +48,7 @@ public:
     Weak = 1U << 1,
     Common = 1U << 2,
     Absolute = 1U << 3,
-    Exported = 1U << 4,
-    NotMaterialized = 1U << 5,
-    Materializing = 1U << 6
+    Exported = 1U << 4
   };
 
   /// @brief Default-construct a JITSymbolFlags instance.
@@ -68,15 +66,6 @@ public:
   bool hasError() const {
     return (Flags & HasError) == HasError;
   }
-
-  /// @brief Returns true if this symbol has been fully materialized (i.e. is
-  ///        callable).
-  bool isMaterialized() const { return !(Flags & NotMaterialized); }
-
-  /// @brief Returns true if this symbol is in the process of being
-  ///        materialized. This is generally only of interest as an
-  ///        implementation detail to JIT infrastructure.
-  bool isMaterializing() const { return Flags & Materializing; }
 
   /// @brief Returns true if the Weak flag is set.
   bool isWeak() const {
