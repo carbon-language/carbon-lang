@@ -40,14 +40,28 @@ void AsynchronousSymbolQuery::setDefinition(SymbolStringPtr Name,
   if (OutstandingResolutions == 0)
     return;
 
+  assert(NotifySymbolsResolved && "Notify callback not set");
+
+  errs()
+    << "OutstandingResolutions = " << OutstandingResolutions << "\n"
+    << "OutstandingFinalizations = " << OutstandingFinalizations << "\n"
+    << "Symbols.size() = " << Symbols.size() << "\n"
+    << "Symbols.count(Name) = " << Symbols.count(Name) << "\n";
+
   assert(!Symbols.count(Name) &&
          "Symbol has already been assigned an address");
+  errs() << "Past assert\n";
   Symbols.insert(std::make_pair(std::move(Name), std::move(Sym)));
+  errs() << "Past insert\n";
   --OutstandingResolutions;
+  errs() << "Past subtract\n";
   if (OutstandingResolutions == 0) {
+    errs() << "Past test\n";
     NotifySymbolsResolved(std::move(Symbols));
     // Null out NotifySymbolsResolved to indicate that we've already called it.
+    errs() << "Past callback\n";
     NotifySymbolsResolved = {};
+    errs() << "Past callback-reset\n";
   }
 }
 
