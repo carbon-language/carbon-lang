@@ -6616,12 +6616,13 @@ let Predicates = [HasAVX512] in {
             [(set _DstRC.RC:$dst, (OpNodeRnd (_SrcRC.VT _SrcRC.RC:$src),
                                   (i32 FROUND_NO_EXC)))], itins.rr>,
                                   EVEX,VEX_LIG , EVEX_B, Sched<[itins.Sched]>;
-  let mayLoad = 1, hasSideEffects = 0 in
-    def rm_Int : AVX512<opc, MRMSrcMem, (outs _DstRC.RC:$dst),
-                (ins _SrcRC.IntScalarMemOp:$src),
-                !strconcat(asm,"\t{$src, $dst|$dst, $src}"),
-                [], itins.rm>, EVEX, VEX_LIG,
-                Sched<[itins.Sched.Folded, ReadAfterLd]>;
+  def rm_Int : AVX512<opc, MRMSrcMem, (outs _DstRC.RC:$dst),
+              (ins _SrcRC.IntScalarMemOp:$src),
+              !strconcat(asm,"\t{$src, $dst|$dst, $src}"),
+              [(set _DstRC.RC:$dst, (OpNodeRnd
+                                     (_SrcRC.VT _SrcRC.ScalarIntMemCPat:$src),
+                                     (i32 FROUND_CURRENT)))], itins.rm>,
+              EVEX, VEX_LIG, Sched<[itins.Sched.Folded, ReadAfterLd]>;
 
   def : InstAlias<asm # aliasStr # "\t{$src, $dst|$dst, $src}",
           (!cast<Instruction>(NAME # "rr_Int") _DstRC.RC:$dst, _SrcRC.RC:$src), 0>;
