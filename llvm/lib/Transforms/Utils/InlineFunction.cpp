@@ -1500,10 +1500,9 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
   IFI.reset();
 
   Function *CalledFunc = CS.getCalledFunction();
-  if (!CalledFunc ||              // Can't inline external function or indirect
-      CalledFunc->isDeclaration() ||
-      (!ForwardVarArgsTo && CalledFunc->isVarArg())) // call, or call to a vararg function!
-      return false;
+  if (!CalledFunc ||               // Can't inline external function or indirect
+      CalledFunc->isDeclaration()) // call!
+    return false;
 
   // The inliner does not know how to inline through calls with operand bundles
   // in general ...
@@ -1629,9 +1628,6 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
     SmallVector<std::pair<Value*, Value*>, 4> ByValInit;
 
     auto &DL = Caller->getParent()->getDataLayout();
-
-    assert((CalledFunc->arg_size() == CS.arg_size() || ForwardVarArgsTo) &&
-           "Varargs calls can only be inlined if the Varargs are forwarded!");
 
     // Calculate the vector of arguments to pass into the function cloner, which
     // matches up the formal to the actual argument values.
@@ -1833,6 +1829,23 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
         if (!CI)
           continue;
 
+        // Forward varargs from inlined call site to calls to the
+        // ForwardVarArgsTo function, if requested, and to musttail calls.
+        if (!VarArgsToForward.empty() &&
+            ((ForwardVarArgsTo &&
+              CI->getCalledFunction() == ForwardVarArgsTo) ||
+             CI->isMustTailCall())) {
+          SmallVector<Value *, 6> Params(CI->arg_operands());
+          Params.append(VarArgsToForward.begin(), VarArgsToForward.end());
+          CallInst *Call =
+              CallInst::Create(CI->getCalledFunction() ? CI->getCalledFunction()
+                                                       : CI->getCalledValue(),
+                               Params, "", CI);
+          Call->setDebugLoc(CI->getDebugLoc());
+          CI->replaceAllUsesWith(Call);
+          CI->eraseFromParent();
+        }
+
         if (Function *F = CI->getCalledFunction())
           InlinedDeoptimizeCalls |=
               F->getIntrinsicID() == Intrinsic::experimental_deoptimize;
@@ -1860,16 +1873,6 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
         // 'nounwind'.
         if (MarkNoUnwind)
           CI->setDoesNotThrow();
-
-        if (ForwardVarArgsTo && !VarArgsToForward.empty() &&
-            CI->getCalledFunction() == ForwardVarArgsTo) {
-          SmallVector<Value*, 6> Params(CI->arg_operands());
-          Params.append(VarArgsToForward.begin(), VarArgsToForward.end());
-          CallInst *Call = CallInst::Create(CI->getCalledFunction(), Params, "", CI);
-          Call->setDebugLoc(CI->getDebugLoc());
-          CI->replaceAllUsesWith(Call);
-          CI->eraseFromParent();
-        }
       }
     }
   }
