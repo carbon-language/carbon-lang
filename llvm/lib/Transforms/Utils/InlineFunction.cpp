@@ -1860,6 +1860,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
                                Params, "", CI);
           NewCI->setDebugLoc(CI->getDebugLoc());
           NewCI->setAttributes(Attrs);
+          NewCI->setCallingConv(CI->getCallingConv());
           CI->replaceAllUsesWith(NewCI);
           CI->eraseFromParent();
           CI = NewCI;

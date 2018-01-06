@@ -3,6 +3,7 @@
 
 declare void @ext_method(i8*, i32)
 declare signext i16 @vararg_fn(...) #0
+declare "cc 9" void @vararg_fn_cc9(i8* %p, ...)
 
 define linkonce_odr void @thunk(i8* %this, ...) {
   %this_adj = getelementptr i8, i8* %this, i32 4
@@ -40,6 +41,18 @@ define void @test_caller_3(i8* %p, i8* %q) {
 }
 ; CHECK-LABEL: define void @test_caller_3
 ; CHECK: call signext i16 (...) @vararg_fn()
+
+define void @test_preserve_cc(i8* %p, ...) {
+  musttail call "cc 9" void (i8*, ...) @vararg_fn_cc9(i8* %p, ...)
+  ret void
+}
+
+define void @test_caller_preserve_cc(i8* %p, i8* %q) {
+  call void (i8*, ...) @test_preserve_cc(i8* %p, i8* %q)
+  ret void
+}
+; CHECK-LABEL: define void @test_caller_preserve_cc
+; CHECK: call "cc 9" void (i8*, ...) @vararg_fn_cc9(i8* %p, i8* %q)
 
 define internal i32 @varg_accessed(...) {
 entry:
