@@ -6593,7 +6593,8 @@ def : Pat<(v2f64 (X86Movsd
 // Convert float/double to signed/unsigned int 32/64 with truncation
 multiclass avx512_cvt_s_all<bits<8> opc, string asm, X86VectorVTInfo _SrcRC,
                             X86VectorVTInfo _DstRC, SDNode OpNode,
-                            SDNode OpNodeRnd, OpndItins itins, string aliasStr>{
+                            SDNode OpNodeRnd, OpndItins itins, string aliasStr,
+                            bit CodeGenOnly = 1>{
 let Predicates = [HasAVX512] in {
   let isCodeGenOnly = 1 in {
   def rr : AVX512<opc, MRMSrcReg, (outs _DstRC.RC:$dst), (ins _SrcRC.FRC:$src),
@@ -6616,6 +6617,7 @@ let Predicates = [HasAVX512] in {
             [(set _DstRC.RC:$dst, (OpNodeRnd (_SrcRC.VT _SrcRC.RC:$src),
                                   (i32 FROUND_NO_EXC)))], itins.rr>,
                                   EVEX,VEX_LIG , EVEX_B, Sched<[itins.Sched]>;
+  let isCodeGenOnly = CodeGenOnly, ForceDisassemble = CodeGenOnly in
   def rm_Int : AVX512<opc, MRMSrcMem, (outs _DstRC.RC:$dst),
               (ins _SrcRC.IntScalarMemOp:$src),
               !strconcat(asm,"\t{$src, $dst|$dst, $src}"),
@@ -6628,12 +6630,22 @@ let Predicates = [HasAVX512] in {
           (!cast<Instruction>(NAME # "rr_Int") _DstRC.RC:$dst, _SrcRC.RC:$src), 0>;
   def : InstAlias<asm # aliasStr # "\t{{sae}, $src, $dst|$dst, $src, {sae}}",
           (!cast<Instruction>(NAME # "rrb_Int") _DstRC.RC:$dst, _SrcRC.RC:$src), 0>;
-  def : InstAlias<asm # aliasStr # "\t{$src, $dst|$dst, $src}",
-          (!cast<Instruction>(NAME # "rm_Int") _DstRC.RC:$dst,
-                                          _SrcRC.IntScalarMemOp:$src), 0>;
 } //HasAVX512
 }
 
+multiclass avx512_cvt_s_all_unsigned<bits<8> opc, string asm,
+                                     X86VectorVTInfo _SrcRC,
+                                     X86VectorVTInfo _DstRC, SDNode OpNode,
+                                     SDNode OpNodeRnd, OpndItins itins,
+                                     string aliasStr> :
+  avx512_cvt_s_all<opc, asm, _SrcRC, _DstRC, OpNode, OpNodeRnd, itins,
+                   aliasStr, 0> {
+let Predicates = [HasAVX512] in {
+  def : InstAlias<asm # aliasStr # "\t{$src, $dst|$dst, $src}",
+          (!cast<Instruction>(NAME # "rm_Int") _DstRC.RC:$dst,
+                                          _SrcRC.IntScalarMemOp:$src), 0>;
+}
+}
 
 defm VCVTTSS2SIZ: avx512_cvt_s_all<0x2C, "vcvttss2si", f32x_info, i32x_info,
                         fp_to_sint, X86cvtts2IntRnd, SSE_CVT_SS2SI_32, "{l}">,
@@ -6648,18 +6660,19 @@ defm VCVTTSD2SI64Z: avx512_cvt_s_all<0x2C, "vcvttsd2si", f64x_info, i64x_info,
                         fp_to_sint, X86cvtts2IntRnd, SSE_CVT_SD2SI, "{q}">,
                         VEX_W, XD, EVEX_CD8<64, CD8VT1>;
 
-defm VCVTTSS2USIZ: avx512_cvt_s_all<0x78, "vcvttss2usi", f32x_info, i32x_info,
+defm VCVTTSS2USIZ: avx512_cvt_s_all_unsigned<0x78, "vcvttss2usi", f32x_info, i32x_info,
                         fp_to_uint, X86cvtts2UIntRnd, SSE_CVT_SS2SI_32, "{l}">,
                         XS, EVEX_CD8<32, CD8VT1>;
-defm VCVTTSS2USI64Z: avx512_cvt_s_all<0x78, "vcvttss2usi", f32x_info, i64x_info,
+defm VCVTTSS2USI64Z: avx512_cvt_s_all_unsigned<0x78, "vcvttss2usi", f32x_info, i64x_info,
                         fp_to_uint, X86cvtts2UIntRnd, SSE_CVT_SS2SI_64, "{q}">,
                         XS,VEX_W, EVEX_CD8<32, CD8VT1>;
-defm VCVTTSD2USIZ: avx512_cvt_s_all<0x78, "vcvttsd2usi", f64x_info, i32x_info,
+defm VCVTTSD2USIZ: avx512_cvt_s_all_unsigned<0x78, "vcvttsd2usi", f64x_info, i32x_info,
                         fp_to_uint, X86cvtts2UIntRnd, SSE_CVT_SD2SI, "{l}">,
                         XD, EVEX_CD8<64, CD8VT1>;
-defm VCVTTSD2USI64Z: avx512_cvt_s_all<0x78, "vcvttsd2usi", f64x_info, i64x_info,
+defm VCVTTSD2USI64Z: avx512_cvt_s_all_unsigned<0x78, "vcvttsd2usi", f64x_info, i64x_info,
                         fp_to_uint, X86cvtts2UIntRnd, SSE_CVT_SD2SI, "{q}">,
                         XD, VEX_W, EVEX_CD8<64, CD8VT1>;
+
 let Predicates = [HasAVX512] in {
   def : Pat<(i32 (int_x86_sse_cvttss2si (v4f32 VR128X:$src))),
             (VCVTTSS2SIZrr_Int VR128X:$src)>;
