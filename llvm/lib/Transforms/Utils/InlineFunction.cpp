@@ -1811,9 +1811,12 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
   }
 
   SmallVector<Value*,4> VarArgsToForward;
+  SmallVector<AttributeSet, 4> VarArgsAttrs;
   for (unsigned i = CalledFunc->getFunctionType()->getNumParams();
-       i < CS.getNumArgOperands(); i++)
+       i < CS.getNumArgOperands(); i++) {
     VarArgsToForward.push_back(CS.getArgOperand(i));
+    VarArgsAttrs.push_back(CS.getAttributes().getParamAttributes(i));
+  }
 
   bool InlinedMustTailCalls = false, InlinedDeoptimizeCalls = false;
   if (InlinedFunctionInfo.ContainsCalls) {
@@ -1835,15 +1838,31 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
             ((ForwardVarArgsTo &&
               CI->getCalledFunction() == ForwardVarArgsTo) ||
              CI->isMustTailCall())) {
+          // Collect attributes for non-vararg parameters.
+          AttributeList Attrs = CI->getAttributes();
+          SmallVector<AttributeSet, 8> ArgAttrs;
+          if (!Attrs.isEmpty()) {
+            for (unsigned ArgNo = 0;
+                 ArgNo < CI->getFunctionType()->getNumParams(); ++ArgNo)
+              ArgAttrs.push_back(Attrs.getParamAttributes(ArgNo));
+          }
+
+          // Add VarArg attributes.
+          ArgAttrs.append(VarArgsAttrs.begin(), VarArgsAttrs.end());
+          Attrs = AttributeList::get(CI->getContext(), Attrs.getFnAttributes(),
+                                     Attrs.getRetAttributes(), ArgAttrs);
+          // Add VarArgs to existing parameters.
           SmallVector<Value *, 6> Params(CI->arg_operands());
           Params.append(VarArgsToForward.begin(), VarArgsToForward.end());
-          CallInst *Call =
+          CallInst *NewCI =
               CallInst::Create(CI->getCalledFunction() ? CI->getCalledFunction()
                                                        : CI->getCalledValue(),
                                Params, "", CI);
-          Call->setDebugLoc(CI->getDebugLoc());
-          CI->replaceAllUsesWith(Call);
+          NewCI->setDebugLoc(CI->getDebugLoc());
+          NewCI->setAttributes(Attrs);
+          CI->replaceAllUsesWith(NewCI);
           CI->eraseFromParent();
+          CI = NewCI;
         }
 
         if (Function *F = CI->getCalledFunction())

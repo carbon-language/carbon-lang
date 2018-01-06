@@ -2,11 +2,11 @@
 ; RUN: opt < %s -passes='cgscc(inline,function(instcombine))' -S | FileCheck %s
 
 declare void @ext_method(i8*, i32)
-declare void @vararg_fn(i8*, ...)
+declare signext i16 @vararg_fn(...) #0
 
 define linkonce_odr void @thunk(i8* %this, ...) {
   %this_adj = getelementptr i8, i8* %this, i32 4
-  musttail call void (i8*, ...) bitcast (void (i8*, i32)* @ext_method to void (i8*, ...)*)(i8* %this_adj, ...)
+  musttail call void (i8*, ...) bitcast (void (i8*, i32)* @ext_method to void (i8*, ...)*)(i8* nonnull %this_adj, ...)
   ret void
 }
 
@@ -15,21 +15,31 @@ define void @thunk_caller(i8* %p) {
   ret void
 }
 ; CHECK-LABEL: define void @thunk_caller(i8* %p)
-; CHECK: call void (i8*, ...) bitcast (void (i8*, i32)* @ext_method to void (i8*, ...)*)(i8* %this_adj.i, i32 42)
+; CHECK: call void (i8*, ...) bitcast (void (i8*, i32)* @ext_method to void (i8*, ...)*)(i8* nonnull %this_adj.i, i32 42)
 
-define void @test_callee_2(i8* %this, ...) {
-  %this_adj = getelementptr i8, i8* %this, i32 4
-  musttail call void (i8*, ...) @vararg_fn(i8* %this_adj, ...)
+define signext i16 @test_callee_2(...) {
+  %res = musttail call signext i16 (...) @vararg_fn(...) #0
+  ret i16 %res
+}
+
+define void @test_caller_2(i8* %p, i8* %q, i16 %r) {
+  call signext i16 (...) @test_callee_2(i8* %p, i8* byval %q, i16 signext %r)
+  ret void
+}
+; CHECK-LABEL: define void @test_caller_2
+; CHECK: call signext i16 (...) @vararg_fn(i8* %p, i8* byval %q, i16 signext %r) [[FN_ATTRS:#[0-9]+]]
+
+define void @test_callee_3(i8* %p, ...) {
+  call signext i16 (...) @vararg_fn()
   ret void
 }
 
-define void @test_caller_2(i8* %p) {
-  call void (i8*, ...) @test_callee_2(i8* %p)
+define void @test_caller_3(i8* %p, i8* %q) {
+  call void (i8*, ...) @test_callee_3(i8* nonnull %p, i8* %q)
   ret void
 }
-; CHECK-LABEL: define void @test_caller_2(i8* %p)
-; CHECK: call void (i8*, ...) @vararg_fn(i8* %this_adj.i)
-
+; CHECK-LABEL: define void @test_caller_3
+; CHECK: call signext i16 (...) @vararg_fn()
 
 define internal i32 @varg_accessed(...) {
 entry:
@@ -50,3 +60,6 @@ define i32 @call_vargs() {
 
 declare void @llvm.va_start(i8*)
 declare void @llvm.va_end(i8*)
+
+; CHECK: attributes [[FN_ATTRS]] = { "foo"="bar" }
+attributes #0 = { "foo"="bar" }
