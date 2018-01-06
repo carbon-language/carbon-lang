@@ -6595,45 +6595,41 @@ multiclass avx512_cvt_s_all<bits<8> opc, string asm, X86VectorVTInfo _SrcRC,
                             X86VectorVTInfo _DstRC, SDNode OpNode,
                             SDNode OpNodeRnd, OpndItins itins, string aliasStr>{
 let Predicates = [HasAVX512] in {
+  let isCodeGenOnly = 1 in {
   def rr : AVX512<opc, MRMSrcReg, (outs _DstRC.RC:$dst), (ins _SrcRC.FRC:$src),
               !strconcat(asm,"\t{$src, $dst|$dst, $src}"),
               [(set _DstRC.RC:$dst, (OpNode _SrcRC.FRC:$src))], itins.rr>,
               EVEX, Sched<[itins.Sched]>;
-  let hasSideEffects = 0 in
-  def rrb : AVX512<opc, MRMSrcReg, (outs _DstRC.RC:$dst), (ins _SrcRC.FRC:$src),
-                !strconcat(asm,"\t{{sae}, $src, $dst|$dst, $src, {sae}}"),
-                [], itins.rr>, EVEX, EVEX_B, Sched<[itins.Sched]>;
   def rm : AVX512<opc, MRMSrcMem, (outs _DstRC.RC:$dst), (ins _SrcRC.ScalarMemOp:$src),
               !strconcat(asm,"\t{$src, $dst|$dst, $src}"),
               [(set _DstRC.RC:$dst, (OpNode (_SrcRC.ScalarLdFrag addr:$src)))],
               itins.rm>, EVEX, Sched<[itins.Sched.Folded, ReadAfterLd]>;
+  }
+
+  def rr_Int : AVX512<opc, MRMSrcReg, (outs _DstRC.RC:$dst), (ins _SrcRC.RC:$src),
+            !strconcat(asm,"\t{$src, $dst|$dst, $src}"),
+           [(set _DstRC.RC:$dst, (OpNodeRnd (_SrcRC.VT _SrcRC.RC:$src),
+                                 (i32 FROUND_CURRENT)))], itins.rr>,
+           EVEX, VEX_LIG, Sched<[itins.Sched]>;
+  def rrb_Int : AVX512<opc, MRMSrcReg, (outs _DstRC.RC:$dst), (ins _SrcRC.RC:$src),
+            !strconcat(asm,"\t{{sae}, $src, $dst|$dst, $src, {sae}}"),
+            [(set _DstRC.RC:$dst, (OpNodeRnd (_SrcRC.VT _SrcRC.RC:$src),
+                                  (i32 FROUND_NO_EXC)))], itins.rr>,
+                                  EVEX,VEX_LIG , EVEX_B, Sched<[itins.Sched]>;
+  let mayLoad = 1, hasSideEffects = 0 in
+    def rm_Int : AVX512<opc, MRMSrcMem, (outs _DstRC.RC:$dst),
+                (ins _SrcRC.IntScalarMemOp:$src),
+                !strconcat(asm,"\t{$src, $dst|$dst, $src}"),
+                [], itins.rm>, EVEX, VEX_LIG,
+                Sched<[itins.Sched.Folded, ReadAfterLd]>;
 
   def : InstAlias<asm # aliasStr # "\t{$src, $dst|$dst, $src}",
-          (!cast<Instruction>(NAME # "rr") _DstRC.RC:$dst, _SrcRC.FRC:$src), 0>;
+          (!cast<Instruction>(NAME # "rr_Int") _DstRC.RC:$dst, _SrcRC.RC:$src), 0>;
   def : InstAlias<asm # aliasStr # "\t{{sae}, $src, $dst|$dst, $src, {sae}}",
-          (!cast<Instruction>(NAME # "rrb") _DstRC.RC:$dst, _SrcRC.FRC:$src), 0>;
+          (!cast<Instruction>(NAME # "rrb_Int") _DstRC.RC:$dst, _SrcRC.RC:$src), 0>;
   def : InstAlias<asm # aliasStr # "\t{$src, $dst|$dst, $src}",
-          (!cast<Instruction>(NAME # "rm") _DstRC.RC:$dst,
-                                          _SrcRC.ScalarMemOp:$src), 0>;
-
-  let isCodeGenOnly = 1 in {
-    def rr_Int : AVX512<opc, MRMSrcReg, (outs _DstRC.RC:$dst), (ins _SrcRC.RC:$src),
-              !strconcat(asm,"\t{$src, $dst|$dst, $src}"),
-             [(set _DstRC.RC:$dst, (OpNodeRnd (_SrcRC.VT _SrcRC.RC:$src),
-                                   (i32 FROUND_CURRENT)))], itins.rr>,
-             EVEX, VEX_LIG, Sched<[itins.Sched]>;
-    def rrb_Int : AVX512<opc, MRMSrcReg, (outs _DstRC.RC:$dst), (ins _SrcRC.RC:$src),
-              !strconcat(asm,"\t{{sae}, $src, $dst|$dst, $src, {sae}}"),
-              [(set _DstRC.RC:$dst, (OpNodeRnd (_SrcRC.VT _SrcRC.RC:$src),
-                                    (i32 FROUND_NO_EXC)))], itins.rr>,
-                                    EVEX,VEX_LIG , EVEX_B, Sched<[itins.Sched]>;
-    let mayLoad = 1, hasSideEffects = 0 in
-      def rm_Int : AVX512<opc, MRMSrcMem, (outs _DstRC.RC:$dst),
-                  (ins _SrcRC.IntScalarMemOp:$src),
-                  !strconcat(asm,"\t{$src, $dst|$dst, $src}"),
-                  [], itins.rm>, EVEX, VEX_LIG,
-                  Sched<[itins.Sched.Folded, ReadAfterLd]>;
-  } // isCodeGenOnly = 1
+          (!cast<Instruction>(NAME # "rm_Int") _DstRC.RC:$dst,
+                                          _SrcRC.IntScalarMemOp:$src), 0>;
 } //HasAVX512
 }
 
