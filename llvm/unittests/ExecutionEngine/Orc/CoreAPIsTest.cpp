@@ -36,7 +36,7 @@ TEST(CoreAPIsTest, AsynchronousSymbolQuerySuccessfulResolutionOnly) {
   auto OnReady = 
     [&](Error Err) {
       cantFail(std::move(Err));
-      OnResolutionRun = true;
+      OnReadyRun = true;
     };
 
   AsynchronousSymbolQuery Q(Names, OnResolution, OnReady);
