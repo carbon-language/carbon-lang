@@ -47,9 +47,9 @@ declare void @extra_use(i8)
 define i8 @umin_not_1_extra_use(i8 %x, i8 %y) {
 ; CHECK-LABEL: @umin_not_1_extra_use(
 ; CHECK-NEXT:    [[NX:%.*]] = xor i8 %x, -1
-; CHECK-NEXT:    [[NY:%.*]] = xor i8 %y, -1
-; CHECK-NEXT:    [[CMPXY:%.*]] = icmp ult i8 [[NX]], [[NY]]
-; CHECK-NEXT:    [[MINXY:%.*]] = select i1 [[CMPXY]], i8 [[NX]], i8 [[NY]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ugt i8 %x, %y
+; CHECK-NEXT:    [[TMP2:%.*]] = select i1 [[TMP1]], i8 %x, i8 %y
+; CHECK-NEXT:    [[MINXY:%.*]] = xor i8 [[TMP2]], -1
 ; CHECK-NEXT:    call void @extra_use(i8 [[NX]])
 ; CHECK-NEXT:    ret i8 [[MINXY]]
 ;
@@ -84,15 +84,13 @@ define i8 @umin_not_2_extra_use(i8 %x, i8 %y) {
 
 define i8 @umin3_not(i8 %x, i8 %y, i8 %z) {
 ; CHECK-LABEL: @umin3_not(
-; CHECK-NEXT:    [[NX:%.*]] = xor i8 %x, -1
-; CHECK-NEXT:    [[NY:%.*]] = xor i8 %y, -1
-; CHECK-NEXT:    [[NZ:%.*]] = xor i8 %z, -1
 ; CHECK-NEXT:    [[CMPYX:%.*]] = icmp ult i8 %y, %x
-; CHECK-NEXT:    [[CMPXZ:%.*]] = icmp ult i8 [[NX]], [[NZ]]
-; CHECK-NEXT:    [[MINXZ:%.*]] = select i1 [[CMPXZ]], i8 [[NX]], i8 [[NZ]]
-; CHECK-NEXT:    [[CMPYZ:%.*]] = icmp ult i8 [[NY]], [[NZ]]
-; CHECK-NEXT:    [[MINYZ:%.*]] = select i1 [[CMPYZ]], i8 [[NY]], i8 [[NZ]]
-; CHECK-NEXT:    [[R:%.*]] = select i1 [[CMPYX]], i8 [[MINXZ]], i8 [[MINYZ]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ugt i8 %x, %z
+; CHECK-NEXT:    [[TMP2:%.*]] = select i1 [[TMP1]], i8 %x, i8 %z
+; CHECK-NEXT:    [[TMP3:%.*]] = icmp ugt i8 %y, %z
+; CHECK-NEXT:    [[TMP4:%.*]] = select i1 [[TMP3]], i8 %y, i8 %z
+; CHECK-NEXT:    [[R_V:%.*]] = select i1 [[CMPYX]], i8 [[TMP2]], i8 [[TMP4]]
+; CHECK-NEXT:    [[R:%.*]] = xor i8 [[R:%.*]].v, -1
 ; CHECK-NEXT:    ret i8 [[R]]
 ;
   %nx = xor i8 %x, -1
