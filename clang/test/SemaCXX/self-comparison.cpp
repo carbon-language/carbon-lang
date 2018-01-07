@@ -21,3 +21,7 @@ struct A {
     return a == c; // expected-warning {{array comparison always evaluates to false}}
   }
 };
+
+namespace NA { extern "C" int x[3]; }
+namespace NB { extern "C" int x[3]; }
+bool k = NA::x == NB::x; // expected-warning {{self-comparison always evaluates to true}}

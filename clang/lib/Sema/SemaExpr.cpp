@@ -9627,7 +9627,8 @@ static void diagnoseTautologicalComparison(Sema &S, SourceLocation Loc,
   // result.
   ValueDecl *DL = getCompareDecl(LHSStripped);
   ValueDecl *DR = getCompareDecl(RHSStripped);
-  if (DL && DR && DL == DR && !IsWithinTemplateSpecialization(DL)) {
+  if (DL && DR && declaresSameEntity(DL, DR) &&
+      !IsWithinTemplateSpecialization(DL)) {
     StringRef Result;
     switch (Opc) {
     case BO_EQ: case BO_LE: case BO_GE:
@@ -9648,10 +9649,9 @@ static void diagnoseTautologicalComparison(Sema &S, SourceLocation Loc,
                               << Result);
   } else if (DL && DR && LHSType->isArrayType() && RHSType->isArrayType() &&
              !DL->getType()->isReferenceType() &&
-             !DR->getType()->isReferenceType()) {
+             !DR->getType()->isReferenceType() &&
+             !DL->isWeak() && !DR->isWeak()) {
     // What is it always going to evaluate to?
-    // FIXME: This is wrong if DL and DR are different Decls for the same
-    // entity. It's also wrong if DL and/or DR are weak declarations.
     StringRef Result;
     switch(Opc) {
     case BO_EQ: // e.g. array1 == array2
