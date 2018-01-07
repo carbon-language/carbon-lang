@@ -350,6 +350,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::BT16ri8,     X86::BT16mi8,       TB_FOLDED_LOAD },
     { X86::BT32ri8,     X86::BT32mi8,       TB_FOLDED_LOAD },
     { X86::BT64ri8,     X86::BT64mi8,       TB_FOLDED_LOAD },
+    { X86::CALL16r,     X86::CALL16m,       TB_FOLDED_LOAD },
     { X86::CALL32r,     X86::CALL32m,       TB_FOLDED_LOAD },
     { X86::CALL64r,     X86::CALL64m,       TB_FOLDED_LOAD },
     { X86::CMP16ri,     X86::CMP16mi,       TB_FOLDED_LOAD },
@@ -377,6 +378,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::IMUL32r,     X86::IMUL32m,       TB_FOLDED_LOAD },
     { X86::IMUL64r,     X86::IMUL64m,       TB_FOLDED_LOAD },
     { X86::IMUL8r,      X86::IMUL8m,        TB_FOLDED_LOAD },
+    { X86::JMP16r,      X86::JMP16m,        TB_FOLDED_LOAD },
     { X86::JMP32r,      X86::JMP32m,        TB_FOLDED_LOAD },
     { X86::JMP64r,      X86::JMP64m,        TB_FOLDED_LOAD },
     { X86::MOV16ri,     X86::MOV16mi,       TB_FOLDED_STORE },
@@ -1120,8 +1122,10 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
   }
 
   static const X86MemoryFoldTableEntry MemoryFoldTable2[] = {
+    { X86::ADC16rr,         X86::ADC16rm,       0 },
     { X86::ADC32rr,         X86::ADC32rm,       0 },
     { X86::ADC64rr,         X86::ADC64rm,       0 },
+    { X86::ADC8rr,          X86::ADC8rm,        0 },
     { X86::ADD16rr,         X86::ADD16rm,       0 },
     { X86::ADD16rr_DB,      X86::ADD16rm,       TB_NO_REVERSE },
     { X86::ADD32rr,         X86::ADD32rm,       0 },
@@ -1352,8 +1356,10 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::PXORrr,          X86::PXORrm,        TB_ALIGN_16 },
     { X86::ROUNDSDr_Int,    X86::ROUNDSDm_Int,  TB_NO_REVERSE },
     { X86::ROUNDSSr_Int,    X86::ROUNDSSm_Int,  TB_NO_REVERSE },
+    { X86::SBB16rr,         X86::SBB16rm,       0 },
     { X86::SBB32rr,         X86::SBB32rm,       0 },
     { X86::SBB64rr,         X86::SBB64rm,       0 },
+    { X86::SBB8rr,          X86::SBB8rm,        0 },
     { X86::SHUFPDrri,       X86::SHUFPDrmi,     TB_ALIGN_16 },
     { X86::SHUFPSrri,       X86::SHUFPSrmi,     TB_ALIGN_16 },
     { X86::SUB16rr,         X86::SUB16rm,       0 },
