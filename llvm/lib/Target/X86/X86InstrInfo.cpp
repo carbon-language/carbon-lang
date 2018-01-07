@@ -3394,6 +3394,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VPSUBSWZrrk,        X86::VPSUBSWZrmk,          0 },
     { X86::VPSUBUSBZrrk,       X86::VPSUBUSBZrmk,         0 },
     { X86::VPSUBUSWZrrk,       X86::VPSUBUSWZrmk,         0 },
+    { X86::VPSUBWZrrk,         X86::VPSUBWZrmk,           0 },
     { X86::VPTERNLOGDZrrik,    X86::VPTERNLOGDZrmik,      0 },
     { X86::VPTERNLOGQZrrik,    X86::VPTERNLOGQZrmik,      0 },
     { X86::VPUNPCKHBWZrrk,     X86::VPUNPCKHBWZrmk,       0 },
