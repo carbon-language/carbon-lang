@@ -672,11 +672,11 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::UCOMISSrr,       X86::UCOMISSrm,           0 },
 
     // MMX version of foldable instructions
-    { X86::MMX_CVTPD2PIirr,   X86::MMX_CVTPD2PIirm,   0 },
+    { X86::MMX_CVTPD2PIirr,   X86::MMX_CVTPD2PIirm,   TB_ALIGN_16 },
     { X86::MMX_CVTPI2PDirr,   X86::MMX_CVTPI2PDirm,   0 },
-    { X86::MMX_CVTPS2PIirr,   X86::MMX_CVTPS2PIirm,   0 },
-    { X86::MMX_CVTTPD2PIirr,  X86::MMX_CVTTPD2PIirm,  0 },
-    { X86::MMX_CVTTPS2PIirr,  X86::MMX_CVTTPS2PIirm,  0 },
+    { X86::MMX_CVTPS2PIirr,   X86::MMX_CVTPS2PIirm,   TB_NO_REVERSE },
+    { X86::MMX_CVTTPD2PIirr,  X86::MMX_CVTTPD2PIirm,  TB_ALIGN_16 },
+    { X86::MMX_CVTTPS2PIirr,  X86::MMX_CVTTPS2PIirm,  TB_NO_REVERSE },
     { X86::MMX_MOVD64to64rr,  X86::MMX_MOVQ64rm,      0 },
     { X86::MMX_PABSBrr64,     X86::MMX_PABSBrm64,     0 },
     { X86::MMX_PABSDrr64,     X86::MMX_PABSDrm64,     0 },
