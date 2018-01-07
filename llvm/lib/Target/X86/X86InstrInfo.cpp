@@ -540,8 +540,9 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VMOVDQU64Z128rr,    X86::VMOVDQU64Z128mr,  TB_FOLDED_STORE },
 
     // F16C foldable instructions
-    { X86::VCVTPS2PHrr,        X86::VCVTPS2PHmr,      TB_FOLDED_STORE },
-    { X86::VCVTPS2PHYrr,       X86::VCVTPS2PHYmr,     TB_FOLDED_STORE }
+    { X86::VCVTPS2PHYrr,       X86::VCVTPS2PHYmr,     TB_FOLDED_STORE },
+    { X86::VCVTPS2PHZ256rr,    X86::VCVTPS2PHZ256mr,  TB_FOLDED_STORE },
+    { X86::VCVTPS2PHZrr,       X86::VCVTPS2PHZmr,     TB_FOLDED_STORE },
   };
 
   for (X86MemoryFoldTableEntry Entry : MemoryFoldTable0) {

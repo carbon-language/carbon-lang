@@ -208,6 +208,15 @@ define <8 x float> @stack_fold_cvtpd2ps(<8 x double> %a0) {
   ret <8 x float> %2
 }
 
+define <16 x i16> @stack_fold_cvtps2ph(<16 x float> %a0) {
+  ;CHECK-LABEL: stack_fold_cvtps2ph
+  ;CHECK:   vcvtps2ph $0, {{%zmm[0-9][0-9]*}}, {{-?[0-9]*}}(%rsp) {{.*#+}} 32-byte Folded Spill
+  %1 = call <16 x i16> @llvm.x86.avx512.mask.vcvtps2ph.512(<16 x float> %a0, i32 0, <16 x i16> undef, i16 -1)
+  %2 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  ret <16 x i16> %1
+}
+declare <16 x i16> @llvm.x86.avx512.mask.vcvtps2ph.512(<16 x float>, i32, <16 x i16>, i16) nounwind readonly
+
 define <4 x float> @stack_fold_insertps(<4 x float> %a0, <4 x float> %a1) {
   ;CHECK-LABEL: stack_fold_insertps
   ;CHECK:       vinsertps $17, {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}}, {{%xmm[0-9][0-9]*}} {{.*#+}} 16-byte Folded Reload
