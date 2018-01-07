@@ -1099,8 +1099,11 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VPSRLWZ128ri,         X86::VPSRLWZ128mi,         0 },
 
     // F16C foldable instructions
-    { X86::VCVTPH2PSrr,        X86::VCVTPH2PSrm,            0 },
+    { X86::VCVTPH2PSrr,        X86::VCVTPH2PSrm,            TB_NO_REVERSE },
     { X86::VCVTPH2PSYrr,       X86::VCVTPH2PSYrm,           0 },
+    { X86::VCVTPH2PSZ128rr,    X86::VCVTPH2PSZ128rm,        TB_NO_REVERSE },
+    { X86::VCVTPH2PSZ256rr,    X86::VCVTPH2PSZ256rm,        0 },
+    { X86::VCVTPH2PSZrr,       X86::VCVTPH2PSZrm,           0 },
 
     // AES foldable instructions
     { X86::AESIMCrr,              X86::AESIMCrm,              TB_ALIGN_16 },
