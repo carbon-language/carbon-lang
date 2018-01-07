@@ -362,6 +362,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::CMP64ri8,    X86::CMP64mi8,      TB_FOLDED_LOAD },
     { X86::CMP64rr,     X86::CMP64mr,       TB_FOLDED_LOAD },
     { X86::CMP8ri,      X86::CMP8mi,        TB_FOLDED_LOAD },
+    { X86::CMP8ri8,     X86::CMP8mi8,       TB_FOLDED_LOAD },
     { X86::CMP8rr,      X86::CMP8mr,        TB_FOLDED_LOAD },
     { X86::DIV16r,      X86::DIV16m,        TB_FOLDED_LOAD },
     { X86::DIV32r,      X86::DIV32m,        TB_FOLDED_LOAD },
