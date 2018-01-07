@@ -36479,22 +36479,12 @@ static SDValue combineGatherScatter(SDNode *N, SelectionDAG &DAG,
     }
   }
 
-  // Gather and Scatter instructions use k-registers for masks. The type of
-  // the masks is v*i1. So the mask will be truncated anyway.
-  // The SIGN_EXTEND_INREG my be dropped.
-  SDValue Mask = N->getOperand(2);
-  if (Subtarget.hasAVX512() && Mask.getOpcode() == ISD::SIGN_EXTEND_INREG) {
-    SmallVector<SDValue, 5> NewOps(N->op_begin(), N->op_end());
-    NewOps[2] = Mask.getOperand(0);
-    DAG.UpdateNodeOperands(N, NewOps);
-    return SDValue(N, 0);
-  }
-
   // With AVX2 we only demand the upper bit of the mask.
   if (!Subtarget.hasAVX512()) {
     const TargetLowering &TLI = DAG.getTargetLoweringInfo();
     TargetLowering::TargetLoweringOpt TLO(DAG, !DCI.isBeforeLegalize(),
                                           !DCI.isBeforeLegalizeOps());
+    SDValue Mask = N->getOperand(2);
     KnownBits Known;
     APInt DemandedMask(APInt::getSignMask(Mask.getScalarValueSizeInBits()));
     if (TLI.SimplifyDemandedBits(Mask, DemandedMask, Known, TLO)) {
