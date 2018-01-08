@@ -1,3 +1,5 @@
+// REQUIRES: x86-registered-target
+
 // RUN: %clang_cc1 -triple x86_64-unknown-unknown %s -S -o - | FileCheck %s --check-prefix=CHECK-ABSENT
 // CHECK-ABSENT-NOT: section .stack_sizes
 
