@@ -499,9 +499,6 @@ public:
 
   virtual void EmitCOFFSafeSEH(MCSymbol const *Symbol);
 
-  /// \brief Emits the symbol table index of a Symbol into the current section.
-  virtual void EmitCOFFSymbolIndex(MCSymbol const *Symbol);
-
   /// \brief Emits a COFF section index.
   ///
   /// \param Symbol - Symbol the section number relocation should point to.
