@@ -17840,12 +17840,7 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget &Subtarget,
     // In AVX-512 architecture setcc returns mask with i1 elements,
     // But there is no compare instruction for i8 and i16 elements in KNL.
     // In this case use SSE compare
-    bool UseAVX512Inst =
-      (OpVT.is512BitVector() ||
-       OpVT.getScalarSizeInBits() >= 32 ||
-       (Subtarget.hasBWI() && Subtarget.hasVLX()));
-
-    if (UseAVX512Inst)
+    if (OpVT.getScalarSizeInBits() >= 32 || Subtarget.hasBWI())
       return LowerIntVSETCC_AVX512(Op, DAG);
 
     return DAG.getNode(ISD::TRUNCATE, dl, VT,
