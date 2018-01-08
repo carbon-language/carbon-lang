@@ -8751,7 +8751,7 @@ defm VPMOVM2Q : cvt_mask_by_elt_width<0x38, avx512vl_i64_info, "vpmovm2", HasDQI
 multiclass convert_vector_to_mask_common<bits<8> opc, X86VectorVTInfo _, string OpcodeStr > {
     def rr : AVX512XS8I<opc, MRMSrcReg, (outs _.KRC:$dst), (ins _.RC:$src),
                         !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                        [(set _.KRC:$dst, (X86cvt2mask (_.VT _.RC:$src)))],
+                        [(set _.KRC:$dst, (X86pcmpgtm _.ImmAllZerosV, (_.VT _.RC:$src)))],
                         IIC_SSE_MOV_S_RR>, EVEX, Sched<[WriteMove]>;
 }
 
@@ -8759,7 +8759,7 @@ multiclass convert_vector_to_mask_common<bits<8> opc, X86VectorVTInfo _, string 
 multiclass convert_vector_to_mask_lowering<X86VectorVTInfo ExtendInfo,
                                                             X86VectorVTInfo _> {
 
-  def : Pat<(_.KVT (X86cvt2mask (_.VT _.RC:$src))),
+  def : Pat<(_.KVT (X86pcmpgtm _.ImmAllZerosV, (_.VT _.RC:$src))),
             (_.KVT (COPY_TO_REGCLASS
                      (!cast<Instruction>(NAME#"Zrr")
                        (INSERT_SUBREG (ExtendInfo.VT (IMPLICIT_DEF)),
