@@ -151,6 +151,7 @@ public:
   void EmitCOFFSymbolType(int Type) override;
   void EndCOFFSymbolDef() override;
   void EmitCOFFSafeSEH(MCSymbol const *Symbol) override;
+  void EmitCOFFSymbolIndex(MCSymbol const *Symbol) override;
   void EmitCOFFSectionIndex(MCSymbol const *Symbol) override;
   void EmitCOFFSecRel32(MCSymbol const *Symbol, uint64_t Offset) override;
   void emitELFSize(MCSymbol *Symbol, const MCExpr *Value) override;
@@ -649,6 +650,12 @@ void MCAsmStreamer::EndCOFFSymbolDef() {
 
 void MCAsmStreamer::EmitCOFFSafeSEH(MCSymbol const *Symbol) {
   OS << "\t.safeseh\t";
+  Symbol->print(OS, MAI);
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitCOFFSymbolIndex(MCSymbol const *Symbol) {
+  OS << "\t.symidx\t";
   Symbol->print(OS, MAI);
   EmitEOL();
 }

@@ -804,6 +804,8 @@ void MCStreamer::EmitWinCFIEndProlog(SMLoc Loc) {
 void MCStreamer::EmitCOFFSafeSEH(MCSymbol const *Symbol) {
 }
 
+void MCStreamer::EmitCOFFSymbolIndex(MCSymbol const *Symbol) {}
+
 void MCStreamer::EmitCOFFSectionIndex(MCSymbol const *Symbol) {
 }
 
