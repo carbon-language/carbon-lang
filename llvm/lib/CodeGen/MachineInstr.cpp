@@ -1320,13 +1320,7 @@ void MachineInstr::print(raw_ostream &OS, ModuleSlotTracker &MST,
 
     if (FirstOp) FirstOp = false; else OS << ",";
     OS << " ";
-    if (i < getDesc().NumOperands) {
-      const MCOperandInfo &MCOI = getDesc().OpInfo[i];
-      if (MCOI.isPredicate())
-        OS << "pred:";
-      if (MCOI.isOptionalDef())
-        OS << "opt:";
-    }
+
     if (isDebugValue() && MO.isMetadata()) {
       // Pretty print DBG_VALUE instructions.
       auto *DIV = dyn_cast<DILocalVariable>(MO.getMetadata());
