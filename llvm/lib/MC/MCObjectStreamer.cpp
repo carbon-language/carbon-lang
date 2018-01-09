@@ -612,7 +612,13 @@ void MCObjectStreamer::emitFill(const MCExpr &NumValues, int64_t Size,
     return;
   }
 
-  MCStreamer::emitFill(IntNumValues, Size, Expr);
+  int64_t NonZeroSize = Size > 4 ? 4 : Size;
+  Expr &= ~0ULL >> (64 - NonZeroSize * 8);
+  for (uint64_t i = 0, e = IntNumValues; i != e; ++i) {
+    EmitIntValue(Expr, NonZeroSize);
+    if (NonZeroSize < Size)
+      EmitIntValue(0, Size - NonZeroSize);
+  }
 }
 
 void MCObjectStreamer::EmitFileDirective(StringRef Filename) {

@@ -195,8 +195,6 @@ public:
   void emitFill(const MCExpr &NumBytes, uint64_t FillValue,
                 SMLoc Loc = SMLoc()) override;
 
-  void emitFill(uint64_t NumValues, int64_t Size, int64_t Expr) override;
-
   void emitFill(const MCExpr &NumValues, int64_t Size, int64_t Expr,
                 SMLoc Loc = SMLoc()) override;
 
@@ -979,14 +977,6 @@ void MCAsmStreamer::emitFill(const MCExpr &NumBytes, uint64_t FillValue,
   }
 
   MCStreamer::emitFill(NumBytes, FillValue);
-}
-
-void MCAsmStreamer::emitFill(uint64_t NumValues, int64_t Size, int64_t Expr) {
-  if (NumValues == 0)
-    return;
-
-  const MCExpr *E = MCConstantExpr::create(NumValues, getContext());
-  emitFill(*E, Size, Expr);
 }
 
 void MCAsmStreamer::emitFill(const MCExpr &NumValues, int64_t Size,

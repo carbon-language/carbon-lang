@@ -187,16 +187,6 @@ void MCStreamer::emitFill(uint64_t NumBytes, uint8_t FillValue) {
   emitFill(*MCConstantExpr::create(NumBytes, getContext()), FillValue);
 }
 
-void MCStreamer::emitFill(uint64_t NumValues, int64_t Size, int64_t Expr) {
-  int64_t NonZeroSize = Size > 4 ? 4 : Size;
-  Expr &= ~0ULL >> (64 - NonZeroSize * 8);
-  for (uint64_t i = 0, e = NumValues; i != e; ++i) {
-    EmitIntValue(Expr, NonZeroSize);
-    if (NonZeroSize < Size)
-      EmitIntValue(0, Size - NonZeroSize);
-  }
-}
-
 /// The implementation in this class just redirects to emitFill.
 void MCStreamer::EmitZeros(uint64_t NumBytes) {
   emitFill(NumBytes, 0);

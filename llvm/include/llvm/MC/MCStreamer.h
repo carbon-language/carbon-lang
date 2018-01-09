@@ -682,7 +682,6 @@ public:
   /// \param NumValues - The number of copies of \p Size bytes to emit.
   /// \param Size - The size (in bytes) of each repeated value.
   /// \param Expr - The expression from which \p Size bytes are used.
-  virtual void emitFill(uint64_t NumValues, int64_t Size, int64_t Expr);
   virtual void emitFill(const MCExpr &NumValues, int64_t Size, int64_t Expr,
                         SMLoc Loc = SMLoc());
 
