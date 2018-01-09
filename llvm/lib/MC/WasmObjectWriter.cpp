@@ -138,6 +138,14 @@ struct WasmGlobal {
   uint32_t ImportIndex;
 };
 
+// Information about a single item which is part of a COMDAT.  For each data
+// segment or function which is in the COMDAT, there is a corresponding
+// WasmComdatEntry.
+struct WasmComdatEntry {
+  unsigned Kind;
+  uint32_t Index;
+};
+
 // Information about a single relocation.
 struct WasmRelocationEntry {
   uint64_t Offset;                  // Where is the relocation.
@@ -284,8 +292,9 @@ private:
   void writeDataRelocSection();
   void writeLinkingMetaDataSection(
       ArrayRef<WasmDataSegment> Segments, uint32_t DataSize,
-      const SmallVector<std::pair<StringRef, uint32_t>, 4> &SymbolFlags,
-      const SmallVector<std::pair<uint16_t, uint32_t>, 2> &InitFuncs);
+      ArrayRef<std::pair<StringRef, uint32_t>> SymbolFlags,
+      ArrayRef<std::pair<uint16_t, uint32_t>> InitFuncs,
+      const std::map<StringRef, std::vector<WasmComdatEntry>>& Comdats);
 
   uint32_t getProvisionalValue(const WasmRelocationEntry &RelEntry);
   void applyRelocations(ArrayRef<WasmRelocationEntry> Relocations,
@@ -913,8 +922,9 @@ void WasmObjectWriter::writeDataRelocSection() {
 
 void WasmObjectWriter::writeLinkingMetaDataSection(
     ArrayRef<WasmDataSegment> Segments, uint32_t DataSize,
-    const SmallVector<std::pair<StringRef, uint32_t>, 4> &SymbolFlags,
-    const SmallVector<std::pair<uint16_t, uint32_t>, 2> &InitFuncs) {
+    ArrayRef<std::pair<StringRef, uint32_t>> SymbolFlags,
+    ArrayRef<std::pair<uint16_t, uint32_t>> InitFuncs,
+    const std::map<StringRef, std::vector<WasmComdatEntry>>& Comdats) {
   SectionBookkeeping Section;
   startSection(Section, wasm::WASM_SEC_CUSTOM, "linking");
   SectionBookkeeping SubSection;
@@ -952,6 +962,21 @@ void WasmObjectWriter::writeLinkingMetaDataSection(
     for (auto &StartFunc : InitFuncs) {
       encodeULEB128(StartFunc.first, getStream()); // priority
       encodeULEB128(StartFunc.second, getStream()); // function index
+    }
+    endSection(SubSection);
+  }
+
+  if (Comdats.size()) {
+    startSection(SubSection, wasm::WASM_COMDAT_INFO);
+    encodeULEB128(Comdats.size(), getStream());
+    for (const auto &C : Comdats) {
+      writeString(C.first);
+      encodeULEB128(0, getStream()); // flags for future use
+      encodeULEB128(C.second.size(), getStream());
+      for (const WasmComdatEntry &Entry : C.second) {
+        encodeULEB128(Entry.Kind, getStream());
+        encodeULEB128(Entry.Index, getStream());
+      }
     }
     endSection(SubSection);
   }
@@ -997,6 +1022,7 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
   SmallVector<WasmExport, 4> Exports;
   SmallVector<std::pair<StringRef, uint32_t>, 4> SymbolFlags;
   SmallVector<std::pair<uint16_t, uint32_t>, 2> InitFuncs;
+  std::map<StringRef, std::vector<WasmComdatEntry>> Comdats;
   unsigned NumFuncImports = 0;
   SmallVector<WasmDataSegment, 4> DataSegments;
   uint32_t DataSize = 0;
@@ -1143,6 +1169,12 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
     Segment.Flags = 0;
     DataSize += Segment.Data.size();
     Section.setMemoryOffset(Segment.Offset);
+
+    if (const MCSymbolWasm *C = Section.getGroup()) {
+      Comdats[C->getName()].emplace_back(
+          WasmComdatEntry{wasm::WASM_COMDAT_DATA,
+                          static_cast<uint32_t>(DataSegments.size()) - 1});
+    }
   }
 
   // Handle regular defined and undefined symbols.
@@ -1216,6 +1248,7 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
       // address.  For externals these will also be named exports.
       Index = NumGlobalImports + Globals.size();
       auto &DataSection = static_cast<MCSectionWasm &>(WS.getSection());
+      assert(DataSection.isWasmData());
 
       WasmGlobal Global;
       Global.Type = PtrType;
@@ -1239,8 +1272,16 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
         Export.Kind = wasm::WASM_EXTERNAL_GLOBAL;
       DEBUG(dbgs() << "  -> export " << Exports.size() << "\n");
       Exports.push_back(Export);
+
       if (!WS.isExternal())
         SymbolFlags.emplace_back(WS.getName(), wasm::WASM_SYMBOL_BINDING_LOCAL);
+
+      if (WS.isFunction()) {
+        auto &Section = static_cast<MCSectionWasm &>(WS.getSection(false));
+        if (const MCSymbolWasm *C = Section.getGroup())
+          Comdats[C->getName()].emplace_back(
+              WasmComdatEntry{wasm::WASM_COMDAT_FUNCTION, Index});
+      }
     }
   }
 
@@ -1372,7 +1413,7 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
   writeCodeRelocSection();
   writeDataRelocSection();
   writeLinkingMetaDataSection(DataSegments, DataSize, SymbolFlags,
-                              InitFuncs);
+                              InitFuncs, Comdats);
 
   // TODO: Translate the .comment section to the output.
   // TODO: Translate debug sections to the output.
