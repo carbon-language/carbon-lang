@@ -492,9 +492,9 @@ uint32_t
 WasmObjectWriter::getProvisionalValue(const WasmRelocationEntry &RelEntry) {
   const MCSymbolWasm *Sym = ResolveSymbol(*RelEntry.Symbol);
 
-  // For undefined symbols, use a hopefully invalid value.
+  // For undefined symbols, use zero
   if (!Sym->isDefined(/*SetUsed=*/false))
-    return UINT32_MAX;
+    return 0;
 
   uint32_t GlobalIndex = SymbolIndices[Sym];
   const WasmGlobal& Global = Globals[GlobalIndex - NumGlobalImports];
