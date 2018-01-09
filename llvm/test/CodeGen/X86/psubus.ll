@@ -4,7 +4,7 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+sse4.1 | FileCheck %s --check-prefix=SSE --check-prefix=SSE41
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx | FileCheck %s --check-prefix=AVX --check-prefix=AVX1
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx2 | FileCheck %s --check-prefix=AVX --check-prefix=AVX2
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx512bw,+avx512vl | FileCheck %s --check-prefix=AVX512
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx512bw,+avx512vl | FileCheck %s --check-prefixes=AVX,AVX512
 
 define <8 x i16> @test1(<8 x i16> %x) nounwind {
 ; SSE-LABEL: test1:
@@ -16,11 +16,6 @@ define <8 x i16> @test1(<8 x i16> %x) nounwind {
 ; AVX:       # %bb.0: # %vector.ph
 ; AVX-NEXT:    vpsubusw {{.*}}(%rip), %xmm0, %xmm0
 ; AVX-NEXT:    retq
-;
-; AVX512-LABEL: test1:
-; AVX512:       # %bb.0: # %vector.ph
-; AVX512-NEXT:    vpsubusw {{.*}}(%rip), %xmm0, %xmm0
-; AVX512-NEXT:    retq
 vector.ph:
   %0 = icmp slt <8 x i16> %x, zeroinitializer
   %1 = xor <8 x i16> %x, <i16 -32768, i16 -32768, i16 -32768, i16 -32768, i16 -32768, i16 -32768, i16 -32768, i16 -32768>
@@ -38,11 +33,6 @@ define <8 x i16> @test2(<8 x i16> %x) nounwind {
 ; AVX:       # %bb.0: # %vector.ph
 ; AVX-NEXT:    vpsubusw {{.*}}(%rip), %xmm0, %xmm0
 ; AVX-NEXT:    retq
-;
-; AVX512-LABEL: test2:
-; AVX512:       # %bb.0: # %vector.ph
-; AVX512-NEXT:    vpsubusw {{.*}}(%rip), %xmm0, %xmm0
-; AVX512-NEXT:    retq
 vector.ph:
   %0 = icmp ugt <8 x i16> %x, <i16 32766, i16 32766, i16 32766, i16 32766, i16 32766, i16 32766, i16 32766, i16 32766>
   %1 = add <8 x i16> %x, <i16 -32767, i16 -32767, i16 -32767, i16 -32767, i16 -32767, i16 -32767, i16 -32767, i16 -32767>
@@ -98,11 +88,6 @@ define <16 x i8> @test4(<16 x i8> %x) nounwind {
 ; AVX:       # %bb.0: # %vector.ph
 ; AVX-NEXT:    vpsubusb {{.*}}(%rip), %xmm0, %xmm0
 ; AVX-NEXT:    retq
-;
-; AVX512-LABEL: test4:
-; AVX512:       # %bb.0: # %vector.ph
-; AVX512-NEXT:    vpsubusb {{.*}}(%rip), %xmm0, %xmm0
-; AVX512-NEXT:    retq
 vector.ph:
   %0 = icmp slt <16 x i8> %x, zeroinitializer
   %1 = xor <16 x i8> %x, <i8 -128, i8 -128, i8 -128, i8 -128, i8 -128, i8 -128, i8 -128, i8 -128, i8 -128, i8 -128, i8 -128, i8 -128, i8 -128, i8 -128, i8 -128, i8 -128>
@@ -120,11 +105,6 @@ define <16 x i8> @test5(<16 x i8> %x) nounwind {
 ; AVX:       # %bb.0: # %vector.ph
 ; AVX-NEXT:    vpsubusb {{.*}}(%rip), %xmm0, %xmm0
 ; AVX-NEXT:    retq
-;
-; AVX512-LABEL: test5:
-; AVX512:       # %bb.0: # %vector.ph
-; AVX512-NEXT:    vpsubusb {{.*}}(%rip), %xmm0, %xmm0
-; AVX512-NEXT:    retq
 vector.ph:
   %0 = icmp ugt <16 x i8> %x, <i8 126, i8 126, i8 126, i8 126, i8 126, i8 126, i8 126, i8 126, i8 126, i8 126, i8 126, i8 126, i8 126, i8 126, i8 126, i8 126>
   %1 = add <16 x i8> %x, <i8 -127, i8 -127, i8 -127, i8 -127, i8 -127, i8 -127, i8 -127, i8 -127, i8 -127, i8 -127, i8 -127, i8 -127, i8 -127, i8 -127, i8 -127, i8 -127>
@@ -1150,11 +1130,6 @@ define <8 x i16> @psubus_8i16_max(<8 x i16> %x, <8 x i16> %y) nounwind {
 ; AVX:       # %bb.0: # %vector.ph
 ; AVX-NEXT:    vpsubusw %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    retq
-;
-; AVX512-LABEL: psubus_8i16_max:
-; AVX512:       # %bb.0: # %vector.ph
-; AVX512-NEXT:    vpsubusw %xmm1, %xmm0, %xmm0
-; AVX512-NEXT:    retq
 vector.ph:
   %cmp = icmp ult <8 x i16> %x, %y
   %max = select <8 x i1> %cmp, <8 x i16> %y, <8 x i16> %x
@@ -1172,11 +1147,6 @@ define <16 x i8> @psubus_16i8_max(<16 x i8> %x, <16 x i8> %y) nounwind {
 ; AVX:       # %bb.0: # %vector.ph
 ; AVX-NEXT:    vpsubusb %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    retq
-;
-; AVX512-LABEL: psubus_16i8_max:
-; AVX512:       # %bb.0: # %vector.ph
-; AVX512-NEXT:    vpsubusb %xmm1, %xmm0, %xmm0
-; AVX512-NEXT:    retq
 vector.ph:
   %cmp = icmp ult <16 x i8> %x, %y
   %max = select <16 x i1> %cmp, <16 x i8> %y, <16 x i8> %x
