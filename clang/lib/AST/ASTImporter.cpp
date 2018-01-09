@@ -2857,9 +2857,13 @@ Decl *ASTNodeImporter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
     ToParams[I]->setOwningFunction(ToMethod);
     ToMethod->addDeclInternal(ToParams[I]);
   }
+
   SmallVector<SourceLocation, 12> SelLocs;
   D->getSelectorLocs(SelLocs);
-  ToMethod->setMethodParams(Importer.getToContext(), ToParams, SelLocs); 
+  for (SourceLocation &Loc : SelLocs)
+    Loc = Importer.Import(Loc);
+
+  ToMethod->setMethodParams(Importer.getToContext(), ToParams, SelLocs);
 
   ToMethod->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, ToMethod);
