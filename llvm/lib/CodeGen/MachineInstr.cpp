@@ -1265,6 +1265,11 @@ void MachineInstr::print(raw_ostream &OS, ModuleSlotTracker &MST,
   if (StartOp != 0)
     OS << " = ";
 
+  if (getFlag(MachineInstr::FrameSetup))
+    OS << "frame-setup ";
+  else if (getFlag(MachineInstr::FrameDestroy))
+    OS << "frame-destroy ";
+
   // Print the opcode name.
   if (TII)
     OS << TII->getName(getOpcode());
@@ -1406,21 +1411,6 @@ void MachineInstr::print(raw_ostream &OS, ModuleSlotTracker &MST,
   }
 
   bool HaveSemi = false;
-  const unsigned PrintableFlags = FrameSetup | FrameDestroy;
-  if (Flags & PrintableFlags) {
-    if (!HaveSemi) {
-      OS << ";";
-      HaveSemi = true;
-    }
-    OS << " flags: ";
-
-    if (Flags & FrameSetup)
-      OS << "FrameSetup";
-
-    if (Flags & FrameDestroy)
-      OS << "FrameDestroy";
-  }
-
   if (!memoperands_empty()) {
     if (!HaveSemi) {
       OS << ";";
