@@ -577,11 +577,6 @@ bool MCObjectStreamer::EmitRelocDirective(const MCExpr &Offset, StringRef Name,
   return false;
 }
 
-void MCObjectStreamer::emitFill(uint64_t NumBytes, uint8_t FillValue) {
-  assert(getCurrentSectionOnly() && "need a section");
-  insert(new MCFillFragment(FillValue, NumBytes));
-}
-
 void MCObjectStreamer::emitFill(const MCExpr &NumBytes, uint64_t FillValue,
                                 SMLoc Loc) {
   MCDataFragment *DF = getOrCreateDataFragment();
@@ -593,12 +588,13 @@ void MCObjectStreamer::emitFill(const MCExpr &NumBytes, uint64_t FillValue,
     return;
   }
 
-  if (IntNumBytes <= 0) {
+  if (IntNumBytes < 0) {
     getContext().reportError(Loc, "invalid number of bytes");
     return;
   }
 
-  emitFill(IntNumBytes, FillValue);
+  assert(getCurrentSectionOnly() && "need a section");
+  insert(new MCFillFragment(FillValue, IntNumBytes));
 }
 
 void MCObjectStreamer::emitFill(const MCExpr &NumValues, int64_t Size,
