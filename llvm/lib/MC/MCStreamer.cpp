@@ -194,8 +194,10 @@ void MCStreamer::EmitZeros(uint64_t NumBytes) {
 
 unsigned MCStreamer::EmitDwarfFileDirective(unsigned FileNo,
                                             StringRef Directory,
-                                            StringRef Filename, unsigned CUID) {
-  return getContext().getDwarfFile(Directory, Filename, FileNo, CUID);
+                                            StringRef Filename,
+                                            MD5::MD5Result *Checksum,
+                                            unsigned CUID) {
+  return getContext().getDwarfFile(Directory, Filename, FileNo, Checksum, CUID);
 }
 
 void MCStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
