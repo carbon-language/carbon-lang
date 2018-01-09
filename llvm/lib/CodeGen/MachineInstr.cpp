@@ -1237,8 +1237,6 @@ void MachineInstr::print(raw_ostream &OS, ModuleSlotTracker &MST,
     }
   }
 
-  // Save a list of virtual registers.
-  SmallVector<unsigned, 8> VirtRegs;
 
   SmallBitVector PrintedTypes(8);
   bool ShouldPrintRegisterTies = hasComplexRegisterTies();
@@ -1262,9 +1260,6 @@ void MachineInstr::print(raw_ostream &OS, ModuleSlotTracker &MST,
     getOperand(StartOp).print(OS, MST, TypeToPrint, /*PrintDef=*/false,
                               ShouldPrintRegisterTies, TiedOperandIdx, TRI,
                               IntrinsicInfo);
-    unsigned Reg = getOperand(StartOp).getReg();
-    if (TargetRegisterInfo::isVirtualRegister(Reg))
-      VirtRegs.push_back(Reg);
   }
 
   if (StartOp != 0)
@@ -1317,9 +1312,6 @@ void MachineInstr::print(raw_ostream &OS, ModuleSlotTracker &MST,
 
   for (unsigned i = StartOp, e = getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = getOperand(i);
-
-    if (MO.isReg() && TargetRegisterInfo::isVirtualRegister(MO.getReg()))
-      VirtRegs.push_back(MO.getReg());
 
     if (FirstOp) FirstOp = false; else OS << ",";
     OS << " ";
@@ -1441,35 +1433,6 @@ void MachineInstr::print(raw_ostream &OS, ModuleSlotTracker &MST,
       (*i)->print(OS, MST);
       if (std::next(i) != e)
         OS << " ";
-    }
-  }
-
-  // Print the regclass of any virtual registers encountered.
-  if (MRI && !VirtRegs.empty()) {
-    if (!HaveSemi) {
-      OS << ";";
-      HaveSemi = true;
-    }
-    for (unsigned i = 0; i != VirtRegs.size(); ++i) {
-      const RegClassOrRegBank &RC = MRI->getRegClassOrRegBank(VirtRegs[i]);
-      if (!RC)
-        continue;
-      // Generic virtual registers do not have register classes.
-      if (RC.is<const RegisterBank *>())
-        OS << " " << RC.get<const RegisterBank *>()->getName();
-      else
-        OS << " "
-           << TRI->getRegClassName(RC.get<const TargetRegisterClass *>());
-      OS << ':' << printReg(VirtRegs[i]);
-      for (unsigned j = i+1; j != VirtRegs.size();) {
-        if (MRI->getRegClassOrRegBank(VirtRegs[j]) != RC) {
-          ++j;
-          continue;
-        }
-        if (VirtRegs[i] != VirtRegs[j])
-          OS << "," << printReg(VirtRegs[j]);
-        VirtRegs.erase(VirtRegs.begin()+j);
-      }
     }
   }
 
