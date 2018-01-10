@@ -571,9 +571,12 @@ void Writer::calculateImports() {
 }
 
 uint32_t Writer::lookupType(const WasmSignature &Sig) {
-  if (TypeIndices.count(Sig) == 0)
+  auto It = TypeIndices.find(Sig);
+  if (It == TypeIndices.end()) {
     error("type not found: " + toString(Sig));
-  return TypeIndices.lookup(Sig);
+    return 0;
+  }
+  return It->second;
 }
 
 uint32_t Writer::registerType(const WasmSignature &Sig) {
