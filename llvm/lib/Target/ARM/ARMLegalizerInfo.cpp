@@ -59,7 +59,7 @@ widen_8_16(const LegalizerInfo::SizeAndActionsVec &v) {
 }
 
 static LegalizerInfo::SizeAndActionsVec
-widen_1_8_16(const LegalizerInfo::SizeAndActionsVec &v) {
+widen_1_8_16_narrowToLargest(const LegalizerInfo::SizeAndActionsVec &v) {
   assert(v.size() >= 1);
   assert(v[0].first > 17);
   LegalizerInfo::SizeAndActionsVec result = {
@@ -68,7 +68,7 @@ widen_1_8_16(const LegalizerInfo::SizeAndActionsVec &v) {
       {16, LegalizerInfo::WidenScalar}, {17, LegalizerInfo::Unsupported}};
   addAndInterleaveWithUnsupported(result, v);
   auto Largest = result.back().first;
-  result.push_back({Largest + 1, LegalizerInfo::Unsupported});
+  result.push_back({Largest + 1, LegalizerInfo::NarrowScalar});
   return result;
 }
 
@@ -151,7 +151,8 @@ ARMLegalizerInfo::ARMLegalizerInfo(const ARMSubtarget &ST) {
 
   setAction({G_CONSTANT, s32}, Legal);
   setAction({G_CONSTANT, p0}, Legal);
-  setLegalizeScalarToDifferentSizeStrategy(G_CONSTANT, 0, widen_1_8_16);
+  setLegalizeScalarToDifferentSizeStrategy(G_CONSTANT, 0,
+                                           widen_1_8_16_narrowToLargest);
 
   setAction({G_ICMP, s1}, Legal);
   setLegalizeScalarToDifferentSizeStrategy(G_ICMP, 1,
