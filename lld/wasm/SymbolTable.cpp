@@ -10,7 +10,7 @@
 #include "SymbolTable.h"
 
 #include "Config.h"
-#include "InputFunction.h"
+#include "InputChunks.h"
 #include "WriterUtils.h"
 #include "lld/Common/ErrorHandler.h"
 #include "lld/Common/Memory.h"

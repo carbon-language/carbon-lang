@@ -10,8 +10,7 @@
 #include "InputFiles.h"
 
 #include "Config.h"
-#include "InputFunction.h"
-#include "InputSegment.h"
+#include "InputChunks.h"
 #include "SymbolTable.h"
 #include "lld/Common/ErrorHandler.h"
 #include "lld/Common/Memory.h"
@@ -126,14 +125,6 @@ InputSegment *ObjFile::getSegment(const WasmSymbol &WasmSym) const {
   return nullptr;
 }
 
-static void copyRelocationsRange(std::vector<WasmRelocation> &To,
-                                 ArrayRef<WasmRelocation> From, size_t Start,
-                                 size_t Size) {
-  for (const WasmRelocation &R : From)
-    if (R.Offset >= Start && R.Offset < Start + Size)
-      To.push_back(R);
-}
-
 // Get the value stored in the wasm global represented by this symbol.
 // This represents the virtual address of the symbol in the input file.
 uint32_t ObjFile::getGlobalValue(const WasmSymbol &Sym) const {
@@ -175,8 +166,7 @@ void ObjFile::initializeSymbols() {
 
   for (const WasmSegment &S : WasmObj->dataSegments()) {
     InputSegment *Seg = make<InputSegment>(S, *this);
-    copyRelocationsRange(Seg->Relocations, DataSection->Relocations,
-                         Seg->getInputSectionOffset(), Seg->getSize());
+    Seg->copyRelocations(*DataSection);
     Segments.emplace_back(Seg);
   }
 
@@ -186,10 +176,9 @@ void ObjFile::initializeSymbols() {
   for (size_t I = 0; I < Funcs.size(); ++I) {
     const WasmFunction &Func = Funcs[I];
     const WasmSignature &Sig = Types[FuncTypes[I]];
-    InputFunction *Function = make<InputFunction>(Sig, Func, *this);
-    copyRelocationsRange(Function->Relocations, CodeSection->Relocations,
-                         Func.CodeSectionOffset, Func.Size);
-    Functions.emplace_back(Function);
+    InputFunction *F = make<InputFunction>(Sig, Func, *this);
+    F->copyRelocations(*CodeSection);
+    Functions.emplace_back(F);
   }
 
   // Populate `FunctionSymbols` and `GlobalSymbols` based on the WasmSymbols

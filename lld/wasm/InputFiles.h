@@ -98,6 +98,7 @@ public:
   uint32_t getRelocatedAddress(uint32_t Index) const;
 
   const WasmSection *CodeSection = nullptr;
+  const WasmSection *DataSection = nullptr;
 
   std::vector<uint32_t> TypeMap;
   std::vector<InputSegment *> Segments;
@@ -131,7 +132,6 @@ private:
   // List of all indirect symbols indexed by table index space.
   std::vector<Symbol *> TableSymbols;
 
-  const WasmSection *DataSection = nullptr;
   uint32_t NumGlobalImports = 0;
   uint32_t NumFunctionImports = 0;
   std::unique_ptr<WasmObjectFile> WasmObj;

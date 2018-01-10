@@ -10,9 +10,8 @@
 #include "Symbols.h"
 
 #include "Config.h"
+#include "InputChunks.h"
 #include "InputFiles.h"
-#include "InputFunction.h"
-#include "InputSegment.h"
 #include "lld/Common/ErrorHandler.h"
 #include "lld/Common/Strings.h"
 
