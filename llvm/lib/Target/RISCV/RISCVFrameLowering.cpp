@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "RISCVFrameLowering.h"
+#include "RISCVMachineFunctionInfo.h"
 #include "RISCVSubtarget.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -91,6 +92,7 @@ void RISCVFrameLowering::emitPrologue(MachineFunction &MF,
   }
 
   MachineFrameInfo &MFI = MF.getFrameInfo();
+  auto *RVFI = MF.getInfo<RISCVMachineFunctionInfo>();
   MachineBasicBlock::iterator MBBI = MBB.begin();
 
   unsigned FPReg = getFPReg(STI);
@@ -124,7 +126,8 @@ void RISCVFrameLowering::emitPrologue(MachineFunction &MF,
   std::advance(MBBI, CSI.size());
 
   // Generate new FP.
-  adjustReg(MBB, MBBI, DL, FPReg, SPReg, StackSize, MachineInstr::FrameSetup);
+  adjustReg(MBB, MBBI, DL, FPReg, SPReg, StackSize - RVFI->getVarArgsSaveSize(),
+            MachineInstr::FrameSetup);
 }
 
 void RISCVFrameLowering::emitEpilogue(MachineFunction &MF,
@@ -137,6 +140,7 @@ void RISCVFrameLowering::emitEpilogue(MachineFunction &MF,
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   const RISCVRegisterInfo *RI = STI.getRegisterInfo();
   MachineFrameInfo &MFI = MF.getFrameInfo();
+  auto *RVFI = MF.getInfo<RISCVMachineFunctionInfo>();
   DebugLoc DL = MBBI->getDebugLoc();
   unsigned FPReg = getFPReg(STI);
   unsigned SPReg = getSPReg(STI);
@@ -153,7 +157,8 @@ void RISCVFrameLowering::emitEpilogue(MachineFunction &MF,
   // necessary if the stack pointer was modified, meaning the stack size is
   // unknown.
   if (RI->needsStackRealignment(MF) || MFI.hasVarSizedObjects()) {
-    adjustReg(MBB, LastFrameDestroy, DL, SPReg, FPReg, -StackSize,
+    adjustReg(MBB, LastFrameDestroy, DL, SPReg, FPReg,
+              -StackSize + RVFI->getVarArgsSaveSize(),
               MachineInstr::FrameDestroy);
   }
 
@@ -166,6 +171,7 @@ int RISCVFrameLowering::getFrameIndexReference(const MachineFunction &MF,
                                                unsigned &FrameReg) const {
   const MachineFrameInfo &MFI = MF.getFrameInfo();
   const TargetRegisterInfo *RI = MF.getSubtarget().getRegisterInfo();
+  const auto *RVFI = MF.getInfo<RISCVMachineFunctionInfo>();
 
   // Callee-saved registers should be referenced relative to the stack
   // pointer (positive offset), otherwise use the frame pointer (negative
@@ -182,10 +188,13 @@ int RISCVFrameLowering::getFrameIndexReference(const MachineFunction &MF,
     MaxCSFI = CSI[CSI.size() - 1].getFrameIdx();
   }
 
-  FrameReg = RI->getFrameRegister(MF);
   if (FI >= MinCSFI && FI <= MaxCSFI) {
     FrameReg = RISCV::X2;
     Offset += MF.getFrameInfo().getStackSize();
+  } else {
+    FrameReg = RI->getFrameRegister(MF);
+    assert(hasFP(MF) && "Offset calculation incorrect if !hasFP");
+    Offset += RVFI->getVarArgsSaveSize();
   }
   return Offset;
 }
