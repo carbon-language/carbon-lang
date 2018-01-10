@@ -11,9 +11,9 @@ import re
 import lldb
 from lldbsuite.test.decorators import *
 import lldbsuite.test.lldbutil as lldbutil
+import lldbsuite.test.lldbplatformutil as lldbplatformutil
 from lldbsuite.test.lldbtest import *
 
-@decorators.skipUnlessDarwin
 class FindAppInMacOSAppBundle(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
@@ -46,17 +46,18 @@ class FindAppInMacOSAppBundle(TestBase):
         bkpt = target.BreakpointCreateBySourceRegex("Set a breakpoint here", self.main_source_file)
         self.assertTrue(bkpt.GetNumLocations() == 1, "Couldn't set a breakpoint in the main app")
 
-        launch_info = lldb.SBLaunchInfo(None)
-        launch_info.SetWorkingDirectory(self.get_process_working_directory())
+        if lldbplatformutil.getPlatform() == "macosx":
+            launch_info = lldb.SBLaunchInfo(None)
+            launch_info.SetWorkingDirectory(self.get_process_working_directory())
 
-        error = lldb.SBError()
-        process = target.Launch(launch_info, error)
-
-        self.assertTrue(process, "Could not create a valid process for TestApp: %s"%(error.GetCString()))
-
-        # Frame #0 should be at our breakpoint.
-        threads = lldbutil.get_threads_stopped_at_breakpoint(process, bkpt)
-
-        self.assertTrue(len(threads) == 1, "Expected 1 thread to stop at breakpoint, %d did."%(len(threads)))
+            error = lldb.SBError()
+            process = target.Launch(launch_info, error)
+            
+            self.assertTrue(process, "Could not create a valid process for TestApp: %s"%(error.GetCString()))
+            
+            # Frame #0 should be at our breakpoint.
+            threads = lldbutil.get_threads_stopped_at_breakpoint(process, bkpt)
+            
+            self.assertTrue(len(threads) == 1, "Expected 1 thread to stop at breakpoint, %d did."%(len(threads)))
 
 
