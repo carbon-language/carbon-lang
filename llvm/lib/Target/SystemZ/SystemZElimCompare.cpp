@@ -86,11 +86,9 @@ private:
                      SmallVectorImpl<MachineInstr *> &CCUsers);
   bool convertToLoadAndTrap(MachineInstr &MI, MachineInstr &Compare,
                             SmallVectorImpl<MachineInstr *> &CCUsers);
-  bool convertToLoadAndTest(MachineInstr &MI, MachineInstr &Compare,
-                            SmallVectorImpl<MachineInstr *> &CCUsers);
+  bool convertToLoadAndTest(MachineInstr &MI);
   bool adjustCCMasksForInstr(MachineInstr &MI, MachineInstr &Compare,
-                             SmallVectorImpl<MachineInstr *> &CCUsers,
-                             unsigned ConvOpc = 0);
+                             SmallVectorImpl<MachineInstr *> &CCUsers);
   bool optimizeCompareZero(MachineInstr &Compare,
                            SmallVectorImpl<MachineInstr *> &CCUsers);
   bool fuseCompareOperations(MachineInstr &Compare,
@@ -284,13 +282,9 @@ bool SystemZElimCompare::convertToLoadAndTrap(
 
 // If MI is a load instruction, try to convert it into a LOAD AND TEST.
 // Return true on success.
-bool SystemZElimCompare::convertToLoadAndTest(
-    MachineInstr &MI, MachineInstr &Compare,
-    SmallVectorImpl<MachineInstr *> &CCUsers) {
-
-  // Try to adjust CC masks for a LOAD AND TEST opcode that could replace MI.
+bool SystemZElimCompare::convertToLoadAndTest(MachineInstr &MI) {
   unsigned Opcode = TII->getLoadAndTest(MI.getOpcode());
-  if (!Opcode || !adjustCCMasksForInstr(MI, Compare, CCUsers, Opcode))
+  if (!Opcode)
     return false;
 
   MI.setDesc(TII->get(Opcode));
@@ -300,16 +294,14 @@ bool SystemZElimCompare::convertToLoadAndTest(
 }
 
 // The CC users in CCUsers are testing the result of a comparison of some
-// value X against zero and we know that any CC value produced by MI would
-// also reflect the value of X.  ConvOpc may be used to pass the transfomed
-// opcode MI will have if this succeeds.  Try to adjust CCUsers so that they
-// test the result of MI directly, returning true on success.  Leave
-// everything unchanged on failure.
+// value X against zero and we know that any CC value produced by MI
+// would also reflect the value of X.  Try to adjust CCUsers so that
+// they test the result of MI directly, returning true on success.
+// Leave everything unchanged on failure.
 bool SystemZElimCompare::adjustCCMasksForInstr(
     MachineInstr &MI, MachineInstr &Compare,
-    SmallVectorImpl<MachineInstr *> &CCUsers,
-    unsigned ConvOpc) {
-  int Opcode = (ConvOpc ? ConvOpc : MI.getOpcode());
+    SmallVectorImpl<MachineInstr *> &CCUsers) {
+  int Opcode = MI.getOpcode();
   const MCInstrDesc &Desc = TII->get(Opcode);
   unsigned MIFlags = Desc.TSFlags;
 
@@ -366,11 +358,9 @@ bool SystemZElimCompare::adjustCCMasksForInstr(
   }
 
   // CC is now live after MI.
-  if (!ConvOpc) {
-    int CCDef = MI.findRegisterDefOperandIdx(SystemZ::CC, false, true, TRI);
-    assert(CCDef >= 0 && "Couldn't find CC set");
-    MI.getOperand(CCDef).setIsDead(false);
-  }
+  int CCDef = MI.findRegisterDefOperandIdx(SystemZ::CC, false, true, TRI);
+  assert(CCDef >= 0 && "Couldn't find CC set");
+  MI.getOperand(CCDef).setIsDead(false);
 
   // Clear any intervening kills of CC.
   MachineBasicBlock::iterator MBBI = MI, MBBE = Compare;
@@ -429,7 +419,7 @@ bool SystemZElimCompare::optimizeCompareZero(
         }
       }
       // Try to eliminate Compare by reusing a CC result from MI.
-      if ((!CCRefs && convertToLoadAndTest(MI, Compare, CCUsers)) ||
+      if ((!CCRefs && convertToLoadAndTest(MI)) ||
           (!CCRefs.Def && adjustCCMasksForInstr(MI, Compare, CCUsers))) {
         EliminatedComparisons += 1;
         return true;
@@ -451,7 +441,7 @@ bool SystemZElimCompare::optimizeCompareZero(
     MachineInstr &MI = *MBBI;
     if (preservesValueOf(MI, SrcReg)) {
       // Try to eliminate Compare by reusing a CC result from MI.
-      if (convertToLoadAndTest(MI, Compare, CCUsers)) {
+      if (convertToLoadAndTest(MI)) {
         EliminatedComparisons += 1;
         return true;
       }
