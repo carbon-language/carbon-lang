@@ -62,18 +62,34 @@ void RISCVFrameLowering::adjustReg(MachineBasicBlock &MBB,
                                    const DebugLoc &DL, unsigned DestReg,
                                    unsigned SrcReg, int64_t Val,
                                    MachineInstr::MIFlag Flag) const {
+  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
   const RISCVInstrInfo *TII = STI.getInstrInfo();
 
   if (DestReg == SrcReg && Val == 0)
     return;
 
-  if (!isInt<12>(Val))
-    report_fatal_error("adjustReg cannot yet handle adjustments >12 bits");
+  if (isInt<12>(Val)) {
+    BuildMI(MBB, MBBI, DL, TII->get(RISCV::ADDI), DestReg)
+        .addReg(SrcReg)
+        .addImm(Val)
+        .setMIFlag(Flag);
+  } else if (isInt<32>(Val)) {
+    unsigned Opc = RISCV::ADD;
+    bool isSub = Val < 0;
+    if (isSub) {
+      Val = -Val;
+      Opc = RISCV::SUB;
+    }
 
-  BuildMI(MBB, MBBI, DL, TII->get(RISCV::ADDI), DestReg)
-      .addReg(SrcReg)
-      .addImm(Val)
-      .setMIFlag(Flag);
+    unsigned ScratchReg = MRI.createVirtualRegister(&RISCV::GPRRegClass);
+    TII->movImm32(MBB, MBBI, DL, ScratchReg, Val, Flag);
+    BuildMI(MBB, MBBI, DL, TII->get(Opc), DestReg)
+        .addReg(SrcReg)
+        .addReg(ScratchReg, RegState::Kill)
+        .setMIFlag(Flag);
+  } else {
+    report_fatal_error("adjustReg cannot yet handle adjustments >32 bits");
+  }
 }
 
 // Returns the register used to hold the frame pointer.
