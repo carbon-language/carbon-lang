@@ -2727,7 +2727,7 @@ static void __kmp_enable_tasking(kmp_task_team_t *task_team,
 static kmp_task_team_t *__kmp_free_task_teams =
     NULL; // Free list for task_team data structures
 // Lock for task team data structures
-static kmp_bootstrap_lock_t __kmp_task_team_lock =
+kmp_bootstrap_lock_t __kmp_task_team_lock =
     KMP_BOOTSTRAP_LOCK_INITIALIZER(__kmp_task_team_lock);
 
 // __kmp_alloc_task_deque:

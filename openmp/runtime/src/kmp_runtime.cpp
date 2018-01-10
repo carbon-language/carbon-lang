@@ -94,7 +94,7 @@ static int __kmp_unregister_root_other_thread(int gtid);
 #endif
 static void __kmp_unregister_library(void); // called by __kmp_internal_end()
 static void __kmp_reap_thread(kmp_info_t *thread, int is_root);
-static kmp_info_t *__kmp_thread_pool_insert_pt = NULL;
+kmp_info_t *__kmp_thread_pool_insert_pt = NULL;
 
 /* Calculate the identifier of the current thread */
 /* fast (and somewhat portable) way to get unique identifier of executing
