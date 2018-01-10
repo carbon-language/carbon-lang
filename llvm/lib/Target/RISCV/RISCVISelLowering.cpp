@@ -166,6 +166,10 @@ SDValue RISCVTargetLowering::LowerOperation(SDValue Op,
     return lowerSELECT(Op, DAG);
   case ISD::VASTART:
     return lowerVASTART(Op, DAG);
+  case ISD::FRAMEADDR:
+    return LowerFRAMEADDR(Op, DAG);
+  case ISD::RETURNADDR:
+    return LowerRETURNADDR(Op, DAG);
   }
 }
 
@@ -282,6 +286,59 @@ SDValue RISCVTargetLowering::lowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
   return DAG.getStore(Op.getOperand(0), DL, FI, Op.getOperand(1),
                       MachinePointerInfo(SV));
+}
+
+SDValue RISCVTargetLowering::LowerFRAMEADDR(SDValue Op,
+                                            SelectionDAG &DAG) const {
+  const RISCVRegisterInfo &RI = *Subtarget.getRegisterInfo();
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineFrameInfo &MFI = MF.getFrameInfo();
+  MFI.setFrameAddressIsTaken(true);
+  unsigned FrameReg = RI.getFrameRegister(MF);
+  int XLenInBytes = Subtarget.getXLen() / 8;
+
+  EVT VT = Op.getValueType();
+  SDLoc DL(Op);
+  SDValue FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), DL, FrameReg, VT);
+  unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+  while (Depth--) {
+    int Offset = -(XLenInBytes * 2);
+    SDValue Ptr = DAG.getNode(ISD::ADD, DL, VT, FrameAddr,
+                              DAG.getIntPtrConstant(Offset, DL));
+    FrameAddr =
+        DAG.getLoad(VT, DL, DAG.getEntryNode(), Ptr, MachinePointerInfo());
+  }
+  return FrameAddr;
+}
+
+SDValue RISCVTargetLowering::LowerRETURNADDR(SDValue Op,
+                                             SelectionDAG &DAG) const {
+  const RISCVRegisterInfo &RI = *Subtarget.getRegisterInfo();
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineFrameInfo &MFI = MF.getFrameInfo();
+  MFI.setReturnAddressIsTaken(true);
+  MVT XLenVT = Subtarget.getXLenVT();
+  int XLenInBytes = Subtarget.getXLen() / 8;
+
+  if (verifyReturnAddressArgumentIsConstant(Op, DAG))
+    return SDValue();
+
+  EVT VT = Op.getValueType();
+  SDLoc DL(Op);
+  unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+  if (Depth) {
+    int Off = -XLenInBytes;
+    SDValue FrameAddr = LowerFRAMEADDR(Op, DAG);
+    SDValue Offset = DAG.getConstant(Off, DL, VT);
+    return DAG.getLoad(VT, DL, DAG.getEntryNode(),
+                       DAG.getNode(ISD::ADD, DL, VT, FrameAddr, Offset),
+                       MachinePointerInfo());
+  }
+
+  // Return the value of the return address register, marking it an implicit
+  // live-in.
+  unsigned Reg = MF.addLiveIn(RI.getRARegister(), getRegClassFor(XLenVT));
+  return DAG.getCopyFromReg(DAG.getEntryNode(), DL, Reg, XLenVT);
 }
 
 MachineBasicBlock *
