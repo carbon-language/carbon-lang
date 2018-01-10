@@ -5528,6 +5528,14 @@ void __kmp_free_thread(kmp_info_t *this_th) {
   TCW_PTR(this_th->th.th_root, NULL);
   TCW_PTR(this_th->th.th_dispatch, NULL); /* NOT NEEDED */
 
+  /* If the implicit task assigned to this thread can be used by other threads
+   * -> multiple threads can share the data and try to free the task at
+   * __kmp_reap_thread at exit. This duplicate use of the task data can happen
+   * with higher probability when hot team is disabled but can occurs even when
+   * the hot team is enabled */
+  __kmp_free_implicit_task(this_th);
+  this_th->th.th_current_task = NULL;
+
   // If the __kmp_thread_pool_insert_pt is already past the new insert
   // point, then we need to re-scan the entire list.
   gtid = this_th->th.th_info.ds.ds_gtid;
