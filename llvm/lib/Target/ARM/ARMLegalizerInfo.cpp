@@ -161,7 +161,7 @@ ARMLegalizerInfo::ARMLegalizerInfo(const ARMSubtarget &ST) {
     setAction({G_ICMP, 1, Ty}, Legal);
 
   if (!ST.useSoftFloat() && ST.hasVFP2()) {
-    for (unsigned BinOp : {G_FADD, G_FSUB, G_FMUL, G_FDIV})
+    for (unsigned BinOp : {G_FADD, G_FSUB, G_FMUL, G_FDIV, G_FCONSTANT})
       for (auto Ty : {s32, s64})
         setAction({BinOp, Ty}, Legal);
 
@@ -182,6 +182,10 @@ ARMLegalizerInfo::ARMLegalizerInfo(const ARMSubtarget &ST) {
     for (unsigned BinOp : {G_FADD, G_FSUB, G_FMUL, G_FDIV})
       for (auto Ty : {s32, s64})
         setAction({BinOp, Ty}, Libcall);
+
+    for (auto Ty : {s32, s64}) {
+      setAction({G_FCONSTANT, Ty}, Custom);
+    }
 
     setAction({G_FCMP, s1}, Legal);
     setAction({G_FCMP, 1, s32}, Custom);
@@ -313,6 +317,7 @@ bool ARMLegalizerInfo::legalizeCustom(MachineInstr &MI,
   using namespace TargetOpcode;
 
   MIRBuilder.setInstr(MI);
+  LLVMContext &Ctx = MIRBuilder.getMF().getFunction().getContext();
 
   switch (MI.getOpcode()) {
   default:
@@ -329,7 +334,6 @@ bool ARMLegalizerInfo::legalizeCustom(MachineInstr &MI,
 
     // Our divmod libcalls return a struct containing the quotient and the
     // remainder. We need to create a virtual register for it.
-    auto &Ctx = MIRBuilder.getMF().getFunction().getContext();
     Type *ArgTy = Type::getInt32Ty(Ctx);
     StructType *RetTy = StructType::get(Ctx, {ArgTy, ArgTy}, /* Packed */ true);
     auto RetVal = MRI.createGenericVirtualRegister(
@@ -370,7 +374,6 @@ bool ARMLegalizerInfo::legalizeCustom(MachineInstr &MI,
       return true;
     }
 
-    auto &Ctx = MIRBuilder.getMF().getFunction().getContext();
     assert((OpSize == 32 || OpSize == 64) && "Unsupported operand size");
     auto *ArgTy = OpSize == 32 ? Type::getFloatTy(Ctx) : Type::getDoubleTy(Ctx);
     auto *RetTy = Type::getInt32Ty(Ctx);
@@ -413,6 +416,14 @@ bool ARMLegalizerInfo::legalizeCustom(MachineInstr &MI,
       assert(Results.size() == 2 && "Unexpected number of results");
       MIRBuilder.buildOr(OriginalResult, Results[0], Results[1]);
     }
+    break;
+  }
+  case G_FCONSTANT: {
+    // Convert to integer constants, while preserving the binary representation.
+    auto AsInteger =
+        MI.getOperand(1).getFPImm()->getValueAPF().bitcastToAPInt();
+    MIRBuilder.buildConstant(MI.getOperand(0).getReg(),
+                             *ConstantInt::get(Ctx, AsInteger));
     break;
   }
   }
