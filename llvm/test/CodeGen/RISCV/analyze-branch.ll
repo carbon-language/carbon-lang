@@ -58,8 +58,8 @@ define void @test_bcc_fallthrough_nottaken(i32 %in) nounwind {
 ; RV32I-NEXT:    sw s0, 8(sp)
 ; RV32I-NEXT:    addi s0, sp, 16
 ; RV32I-NEXT:    addi a1, zero, 42
-; RV32I-NEXT:    beq a0, a1, .LBB1_1
-; RV32I-NEXT:  # %bb.3: # %false
+; RV32I-NEXT:    beq a0, a1, .LBB1_3
+; RV32I-NEXT:  # %bb.1: # %false
 ; RV32I-NEXT:    lui a0, %hi(test_false)
 ; RV32I-NEXT:    addi a0, a0, %lo(test_false)
 ; RV32I-NEXT:  .LBB1_2: # %true
@@ -68,7 +68,7 @@ define void @test_bcc_fallthrough_nottaken(i32 %in) nounwind {
 ; RV32I-NEXT:    lw ra, 12(sp)
 ; RV32I-NEXT:    addi sp, sp, 16
 ; RV32I-NEXT:    ret
-; RV32I-NEXT:  .LBB1_1: # %true
+; RV32I-NEXT:  .LBB1_3: # %true
 ; RV32I-NEXT:    lui a0, %hi(test_true)
 ; RV32I-NEXT:    addi a0, a0, %lo(test_true)
 ; RV32I-NEXT:    j .LBB1_2

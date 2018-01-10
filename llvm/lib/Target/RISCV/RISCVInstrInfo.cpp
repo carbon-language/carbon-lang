@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 
@@ -199,7 +200,8 @@ bool RISCVInstrInfo::analyzeBranch(MachineBasicBlock &MBB,
 
 unsigned RISCVInstrInfo::removeBranch(MachineBasicBlock &MBB,
                                       int *BytesRemoved) const {
-  assert(!BytesRemoved && "Code size not handled");
+  if (BytesRemoved)
+    *BytesRemoved = 0;
   MachineBasicBlock::iterator I = MBB.getLastNonDebugInstr();
   if (I == MBB.end())
     return 0;
@@ -210,6 +212,8 @@ unsigned RISCVInstrInfo::removeBranch(MachineBasicBlock &MBB,
 
   // Remove the branch.
   I->eraseFromParent();
+  if (BytesRemoved)
+    *BytesRemoved += getInstSizeInBytes(*I);
 
   I = MBB.end();
 
@@ -221,6 +225,8 @@ unsigned RISCVInstrInfo::removeBranch(MachineBasicBlock &MBB,
 
   // Remove the branch.
   I->eraseFromParent();
+  if (BytesRemoved)
+    *BytesRemoved += getInstSizeInBytes(*I);
   return 2;
 }
 
@@ -229,7 +235,8 @@ unsigned RISCVInstrInfo::removeBranch(MachineBasicBlock &MBB,
 unsigned RISCVInstrInfo::insertBranch(
     MachineBasicBlock &MBB, MachineBasicBlock *TBB, MachineBasicBlock *FBB,
     ArrayRef<MachineOperand> Cond, const DebugLoc &DL, int *BytesAdded) const {
-  assert(!BytesAdded && "Code size not handled.");
+  if (BytesAdded)
+    *BytesAdded = 0;
 
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
@@ -238,21 +245,71 @@ unsigned RISCVInstrInfo::insertBranch(
 
   // Unconditional branch.
   if (Cond.empty()) {
-    BuildMI(&MBB, DL, get(RISCV::PseudoBR)).addMBB(TBB);
+    MachineInstr &MI = *BuildMI(&MBB, DL, get(RISCV::PseudoBR)).addMBB(TBB);
+    if (BytesAdded)
+      *BytesAdded += getInstSizeInBytes(MI);
     return 1;
   }
 
   // Either a one or two-way conditional branch.
   unsigned Opc = Cond[0].getImm();
-  BuildMI(&MBB, DL, get(Opc)).add(Cond[1]).add(Cond[2]).addMBB(TBB);
+  MachineInstr &CondMI =
+      *BuildMI(&MBB, DL, get(Opc)).add(Cond[1]).add(Cond[2]).addMBB(TBB);
+  if (BytesAdded)
+    *BytesAdded += getInstSizeInBytes(CondMI);
 
   // One-way conditional branch.
   if (!FBB)
     return 1;
 
   // Two-way conditional branch.
-  BuildMI(&MBB, DL, get(RISCV::PseudoBR)).addMBB(FBB);
+  MachineInstr &MI = *BuildMI(&MBB, DL, get(RISCV::PseudoBR)).addMBB(FBB);
+  if (BytesAdded)
+    *BytesAdded += getInstSizeInBytes(MI);
   return 2;
+}
+
+unsigned RISCVInstrInfo::insertIndirectBranch(MachineBasicBlock &MBB,
+                                              MachineBasicBlock &DestBB,
+                                              const DebugLoc &DL,
+                                              int64_t BrOffset,
+                                              RegScavenger *RS) const {
+  assert(RS && "RegScavenger required for long branching");
+  assert(MBB.empty() &&
+         "new block should be inserted for expanding unconditional branch");
+  assert(MBB.pred_size() == 1);
+
+  MachineFunction *MF = MBB.getParent();
+  MachineRegisterInfo &MRI = MF->getRegInfo();
+  const auto &TM = static_cast<const RISCVTargetMachine &>(MF->getTarget());
+  const auto &STI = MF->getSubtarget<RISCVSubtarget>();
+
+  if (TM.isPositionIndependent() || STI.is64Bit())
+    report_fatal_error("Unable to insert indirect branch");
+
+  if (!isInt<32>(BrOffset))
+    report_fatal_error(
+        "Branch offsets outside of the signed 32-bit range not supported");
+
+  // FIXME: A virtual register must be used initially, as the register
+  // scavenger won't work with empty blocks (SIInstrInfo::insertIndirectBranch
+  // uses the same workaround).
+  unsigned ScratchReg = MRI.createVirtualRegister(&RISCV::GPRRegClass);
+  auto II = MBB.end();
+
+  MachineInstr &LuiMI = *BuildMI(MBB, II, DL, get(RISCV::LUI), ScratchReg)
+                             .addMBB(&DestBB, RISCVII::MO_HI);
+  BuildMI(MBB, II, DL, get(RISCV::PseudoBRIND))
+      .addReg(ScratchReg, RegState::Kill)
+      .addMBB(&DestBB, RISCVII::MO_LO);
+
+  RS->enterBasicBlockEnd(MBB);
+  unsigned Scav = RS->scavengeRegisterBackwards(
+      RISCV::GPRRegClass, MachineBasicBlock::iterator(LuiMI), false, 0);
+  MRI.replaceRegWith(ScratchReg, Scav);
+  MRI.clearVirtRegs();
+  RS->setRegUsed(Scav);
+  return 8;
 }
 
 bool RISCVInstrInfo::reverseBranchCondition(
@@ -260,4 +317,52 @@ bool RISCVInstrInfo::reverseBranchCondition(
   assert((Cond.size() == 3) && "Invalid branch condition!");
   Cond[0].setImm(getOppositeBranchOpcode(Cond[0].getImm()));
   return false;
+}
+
+MachineBasicBlock *
+RISCVInstrInfo::getBranchDestBlock(const MachineInstr &MI) const {
+  assert(MI.getDesc().isBranch() && "Unexpected opcode!");
+  // The branch target is always the last operand.
+  int NumOp = MI.getNumExplicitOperands();
+  return MI.getOperand(NumOp - 1).getMBB();
+}
+
+bool RISCVInstrInfo::isBranchOffsetInRange(unsigned BranchOp,
+                                           int64_t BrOffset) const {
+  // Ideally we could determine the supported branch offset from the
+  // RISCVII::FormMask, but this can't be used for Pseudo instructions like
+  // PseudoBR.
+  switch (BranchOp) {
+  default:
+    llvm_unreachable("Unexpected opcode!");
+  case RISCV::BEQ:
+  case RISCV::BNE:
+  case RISCV::BLT:
+  case RISCV::BGE:
+  case RISCV::BLTU:
+  case RISCV::BGEU:
+    return isIntN(13, BrOffset);
+  case RISCV::JAL:
+  case RISCV::PseudoBR:
+    return isIntN(21, BrOffset);
+  }
+}
+
+unsigned RISCVInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
+  unsigned Opcode = MI.getOpcode();
+
+  switch (Opcode) {
+  default: { return get(Opcode).getSize(); }
+  case TargetOpcode::EH_LABEL:
+  case TargetOpcode::IMPLICIT_DEF:
+  case TargetOpcode::KILL:
+  case TargetOpcode::DBG_VALUE:
+    return 0;
+  case TargetOpcode::INLINEASM: {
+    const MachineFunction &MF = *MI.getParent()->getParent();
+    const auto &TM = static_cast<const RISCVTargetMachine &>(MF.getTarget());
+    return getInlineAsmLength(MI.getOperand(0).getSymbolName(),
+                              *TM.getMCAsmInfo());
+  }
+  }
 }
