@@ -24369,7 +24369,6 @@ static SDValue LowerMSCATTER(SDValue Op, const X86Subtarget &Subtarget,
   }
 
   MVT IndexVT = Index.getSimpleValueType();
-  MVT MaskVT = Mask.getSimpleValueType();
 
   // If the index is v2i32, we're being called by type legalization and we
   // should just let the default handling take care of it.
@@ -24397,7 +24396,8 @@ static SDValue LowerMSCATTER(SDValue Op, const X86Subtarget &Subtarget,
 
       // Mask
       // At this point we have promoted mask operand
-      assert(MaskVT.getScalarType() == MVT::i1 && "unexpected mask type");
+      assert(Mask.getValueType().getScalarType() == MVT::i1 &&
+             "unexpected mask type");
       MVT ExtMaskVT = MVT::getVectorVT(MVT::i1, NumElts);
       // Use the original mask here, do not modify the mask twice
       Mask = ExtendToType(N->getMask(), ExtMaskVT, DAG, true);
