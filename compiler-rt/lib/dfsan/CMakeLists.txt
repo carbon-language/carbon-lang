@@ -32,7 +32,7 @@ foreach(arch ${DFSAN_SUPPORTED_ARCH})
     clang_rt.dfsan-${arch}-symbols)
 endforeach()
 
-set(dfsan_abilist_filename ${COMPILER_RT_OUTPUT_DIR}/share/dfsan_abilist.txt)
+set(dfsan_abilist_filename ${COMPILER_RT_OUTPUT_DIR}/dfsan_abilist.txt)
 add_custom_target(dfsan_abilist ALL
   DEPENDS ${dfsan_abilist_filename})
 add_custom_command(OUTPUT ${dfsan_abilist_filename}
@@ -44,4 +44,4 @@ add_custom_command(OUTPUT ${dfsan_abilist_filename}
                    DEPENDS done_abilist.txt libc_ubuntu1404_abilist.txt)
 add_dependencies(dfsan dfsan_abilist)
 install(FILES ${dfsan_abilist_filename}
-        DESTINATION ${COMPILER_RT_INSTALL_PATH}/share)
+        DESTINATION ${COMPILER_RT_INSTALL_PATH})
