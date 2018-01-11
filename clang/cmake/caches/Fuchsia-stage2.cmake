@@ -20,10 +20,6 @@ if(NOT APPLE)
   set(CLANG_DEFAULT_OBJCOPY llvm-objcopy CACHE STRING "")
 endif()
 
-if(APPLE)
-  set(LLDB_CODESIGN_IDENTITY "" CACHE STRING "")
-endif()
-
 set(LLVM_ENABLE_ASSERTIONS ON CACHE BOOL "")
 set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "-O3 -gline-tables-only -DNDEBUG" CACHE STRING "")
@@ -84,8 +80,6 @@ set(LLVM_TOOLCHAIN_TOOLS
 set(LLVM_DISTRIBUTION_COMPONENTS
   clang
   lld
-  lldb
-  liblldb
   LTO
   clang-format
   clang-headers
