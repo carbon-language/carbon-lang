@@ -4704,7 +4704,7 @@ InitializeUniqueCases(SwitchInst *SI, PHINode *&PHI, BasicBlock *&CommonDest,
                         DL, TTI))
       return false;
 
-    // Only one value per case is permitted
+    // Only one value per case is permitted.
     if (Results.size() > 1)
       return false;
 
