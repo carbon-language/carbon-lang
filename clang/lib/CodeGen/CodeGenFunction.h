@@ -434,7 +434,7 @@ public:
   };
 
   /// i32s containing the indexes of the cleanup destinations.
-  llvm::AllocaInst *NormalCleanupDest;
+  Address NormalCleanupDest;
 
   unsigned NextCleanupDestIndex;
 
