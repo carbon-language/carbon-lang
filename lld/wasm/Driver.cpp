@@ -291,15 +291,16 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
     error("undefined symbols specified for relocatable output file");
 
   if (!Config->Relocatable) {
-    if (!Config->Entry.empty()) {
-      static WasmSignature Signature = {{}, WASM_TYPE_NORESULT};
+    static WasmSignature Signature = {{}, WASM_TYPE_NORESULT};
+    if (!Config->Entry.empty())
       addSyntheticUndefinedFunction(Config->Entry, &Signature);
-    }
 
     // Handle the `--undefined <sym>` options.
     for (StringRef S : args::getStrings(Args, OPT_undefined))
       addSyntheticUndefinedFunction(S, nullptr);
 
+    Config->CtorSymbol = Symtab->addDefinedFunction(
+        "__wasm_call_ctors", &Signature, WASM_SYMBOL_VISIBILITY_HIDDEN);
     Config->StackPointerSymbol = Symtab->addDefinedGlobal("__stack_pointer");
   }
 
