@@ -2980,10 +2980,10 @@ def : InstAlias<"bts\t{$imm, $mem|$mem, $imm}",
                 (BTS32mi8 i32mem:$mem, i32i8imm:$imm), 0>;
 
 // clr aliases.
-def : InstAlias<"clrb\t$reg", (XOR8rr  GR8 :$reg, GR8 :$reg), 0>;
-def : InstAlias<"clrw\t$reg", (XOR16rr GR16:$reg, GR16:$reg), 0>;
-def : InstAlias<"clrl\t$reg", (XOR32rr GR32:$reg, GR32:$reg), 0>;
-def : InstAlias<"clrq\t$reg", (XOR64rr GR64:$reg, GR64:$reg), 0>;
+def : InstAlias<"clr{b}\t$reg", (XOR8rr  GR8 :$reg, GR8 :$reg), 0>;
+def : InstAlias<"clr{w}\t$reg", (XOR16rr GR16:$reg, GR16:$reg), 0>;
+def : InstAlias<"clr{l}\t$reg", (XOR32rr GR32:$reg, GR32:$reg), 0>;
+def : InstAlias<"clr{q}\t$reg", (XOR64rr GR64:$reg, GR64:$reg), 0>;
 
 // lods aliases. Accept the destination being omitted because it's implicit
 // in the mnemonic, or the mnemonic suffix being omitted because it's implicit
