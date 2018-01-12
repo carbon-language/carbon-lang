@@ -47,6 +47,9 @@ public:
 
   uint32_t getOutputOffset() const { return OutputOffset; }
 
+  virtual StringRef getComdat() const = 0;
+
+  bool Discarded = false;
   std::vector<OutputRelocation> OutRelocations;
 
 protected:
@@ -93,6 +96,7 @@ public:
   uint32_t startVA() const { return Segment.Data.Offset.Value.Int32; }
   uint32_t endVA() const { return startVA() + getSize(); }
   StringRef getName() const { return Segment.Data.Name; }
+  StringRef getComdat() const override { return Segment.Data.Comdat; }
 
   int32_t OutputSegmentOffset = 0;
 
@@ -100,6 +104,7 @@ protected:
   uint32_t getInputSectionOffset() const override {
     return Segment.SectionOffset;
   }
+
   const WasmSegment &Segment;
   const OutputSegment *OutputSeg = nullptr;
 };
@@ -116,7 +121,7 @@ public:
   const uint8_t *getData() const override {
     return File->CodeSection->Content.data() + getInputSectionOffset();
   }
-
+  StringRef getComdat() const override { return Function->Comdat; }
   uint32_t getOutputIndex() const { return OutputIndex.getValue(); };
   bool hasOutputIndex() const { return OutputIndex.hasValue(); };
   void setOutputIndex(uint32_t Index);
