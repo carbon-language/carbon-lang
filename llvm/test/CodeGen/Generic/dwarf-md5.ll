@@ -11,8 +11,8 @@
 
 ; FIXME: Need to convey the MD5 for the primary source file.
 ; ASM: .file "t.c"{{$}}
-; ASM: .file 1 "./t1.h" md5 "11111111111111111111111111111111"
-; ASM: .file 2 "./t2.h" md5 "22222222222222222222222222222222"
+; ASM: .file 1 ".{{/|\\\\}}t1.h" md5 "11111111111111111111111111111111"
+; ASM: .file 2 ".{{/|\\\\}}t2.h" md5 "22222222222222222222222222222222"
 
 ; OBJ-4: Dir Mod Time File Len File Name
 ; OBJ-4: file_names[ 1] 1 0x00000000 0x00000000 t1.h
