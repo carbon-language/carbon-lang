@@ -44,7 +44,7 @@ template <class ELFT> struct Elf_Chdr_Impl;
 template <endianness E, bool Is64> struct ELFType {
 private:
   template <typename Ty>
-  using packed = support::detail::packed_endian_specific_integral<Ty, E, 2>;
+  using packed = support::detail::packed_endian_specific_integral<Ty, E, 1>;
 
 public:
   static const endianness TargetEndianness = E;
