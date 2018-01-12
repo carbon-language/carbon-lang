@@ -10,7 +10,6 @@
 ; RUN: llvm-dwarfdump -debug-line %t5.o | FileCheck %s --check-prefix=OBJ-5
 
 ; FIXME: Need to convey the MD5 for the primary source file.
-; ASM: .file "t.c"{{$}}
 ; ASM: .file 1 ".{{/|\\\\}}t1.h" md5 "11111111111111111111111111111111"
 ; ASM: .file 2 ".{{/|\\\\}}t2.h" md5 "22222222222222222222222222222222"
 
