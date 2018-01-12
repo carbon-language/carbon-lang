@@ -1776,11 +1776,10 @@ void ELFDumper<ELFT>::printUnwindInfo() {
 
 namespace {
 
-template <> void ELFDumper<ELFType<support::little, false>>::printUnwindInfo() {
+template <> void ELFDumper<ELF32LE>::printUnwindInfo() {
   const unsigned Machine = Obj->getHeader()->e_machine;
   if (Machine == EM_ARM) {
-    ARM::EHABI::PrinterContext<ELFType<support::little, false>> Ctx(
-        W, Obj, DotSymtabSec);
+    ARM::EHABI::PrinterContext<ELF32LE> Ctx(W, Obj, DotSymtabSec);
     return Ctx.PrintUnwindInformation();
   }
   W.startLine() << "UnwindInfo not implemented.\n";
@@ -1886,7 +1885,7 @@ void ELFDumper<ELFT>::printAttributes() {
 
 namespace {
 
-template <> void ELFDumper<ELFType<support::little, false>>::printAttributes() {
+template <> void ELFDumper<ELF32LE>::printAttributes() {
   if (Obj->getHeader()->e_machine != EM_ARM) {
     W.startLine() << "Attributes not implemented.\n";
     return;

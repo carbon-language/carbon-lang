@@ -692,20 +692,15 @@ static bool isLittleEndian(const ELFYAML::Object &Doc) {
 }
 
 int yaml2elf(llvm::ELFYAML::Object &Doc, raw_ostream &Out) {
-  using object::ELFType;
-  typedef ELFType<support::little, true> LE64;
-  typedef ELFType<support::big, true> BE64;
-  typedef ELFType<support::little, false> LE32;
-  typedef ELFType<support::big, false> BE32;
   if (is64Bit(Doc)) {
     if (isLittleEndian(Doc))
-      return ELFState<LE64>::writeELF(Out, Doc);
+      return ELFState<object::ELF64LE>::writeELF(Out, Doc);
     else
-      return ELFState<BE64>::writeELF(Out, Doc);
+      return ELFState<object::ELF64BE>::writeELF(Out, Doc);
   } else {
     if (isLittleEndian(Doc))
-      return ELFState<LE32>::writeELF(Out, Doc);
+      return ELFState<object::ELF32LE>::writeELF(Out, Doc);
     else
-      return ELFState<BE32>::writeELF(Out, Doc);
+      return ELFState<object::ELF32BE>::writeELF(Out, Doc);
   }
 }

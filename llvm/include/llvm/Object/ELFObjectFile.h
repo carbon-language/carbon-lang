@@ -404,10 +404,10 @@ public:
   bool isRelocatableObject() const override;
 };
 
-using ELF32LEObjectFile = ELFObjectFile<ELFType<support::little, false>>;
-using ELF64LEObjectFile = ELFObjectFile<ELFType<support::little, true>>;
-using ELF32BEObjectFile = ELFObjectFile<ELFType<support::big, false>>;
-using ELF64BEObjectFile = ELFObjectFile<ELFType<support::big, true>>;
+using ELF32LEObjectFile = ELFObjectFile<ELF32LE>;
+using ELF64LEObjectFile = ELFObjectFile<ELF64LE>;
+using ELF32BEObjectFile = ELFObjectFile<ELF32BE>;
+using ELF64BEObjectFile = ELFObjectFile<ELF64BE>;
 
 template <class ELFT>
 void ELFObjectFile<ELFT>::moveSymbolNext(DataRefImpl &Sym) const {
