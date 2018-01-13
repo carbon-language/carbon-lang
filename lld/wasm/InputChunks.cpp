@@ -130,4 +130,4 @@ void InputFunction::setOutputIndex(uint32_t Index) {
   DEBUG(dbgs() << "InputFunction::setOutputIndex: " << Index << "\n");
   assert(!hasOutputIndex());
   OutputIndex = Index;
-};
+}
