@@ -439,7 +439,12 @@ void Writer::createLinkingSection() {
           ComdatEntry{WASM_COMDAT_FUNCTION, F->getOutputIndex()});
   }
   for (uint32_t I = 0; I < Segments.size(); ++I) {
-    StringRef Comdat = Segments[I]->getComdat();
+    const auto &InputSegments = Segments[I]->InputSegments;
+    if (InputSegments.empty())
+      continue;
+    StringRef Comdat = InputSegments[0]->getComdat();
+    for (const InputSegment *IS : InputSegments)
+      assert(IS->getComdat() == Comdat);
     if (!Comdat.empty())
       Comdats[Comdat].emplace_back(ComdatEntry{WASM_COMDAT_DATA, I});
   }

@@ -25,17 +25,11 @@ public:
 
   void addInputSegment(InputSegment *Segment) {
     Alignment = std::max(Alignment, Segment->getAlignment());
-    if (InputSegments.empty())
-      Comdat = Segment->getComdat();
-    else
-      assert(Comdat == Segment->getComdat());
     InputSegments.push_back(Segment);
     Size = llvm::alignTo(Size, Segment->getAlignment());
     Segment->setOutputSegment(this, Size);
     Size += Segment->getSize();
   }
-
-  StringRef getComdat() const { return Comdat; }
 
   uint32_t getSectionOffset() const { return SectionOffset; }
 
@@ -53,7 +47,6 @@ public:
   std::string Header;
 
 private:
-  StringRef Comdat;
   uint32_t SectionOffset = 0;
 };
 
