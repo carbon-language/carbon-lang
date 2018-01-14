@@ -327,6 +327,20 @@ define <2 x double> @shuffle_v2f64_u2(<2 x double> %a, <2 x double> %b) {
   %shuffle = shufflevector <2 x double> %a, <2 x double> %b, <2 x i32> <i32 undef, i32 2>
   ret <2 x double> %shuffle
 }
+define <2 x double> @shuffle_v2f64_3u(<2 x double> %a, <2 x double> %b) {
+; SSE-LABEL: shuffle_v2f64_3u:
+; SSE:       # %bb.0:
+; SSE-NEXT:    movhlps {{.*#+}} xmm1 = xmm1[1,1]
+; SSE-NEXT:    movaps %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: shuffle_v2f64_3u:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm1[1,0]
+; AVX-NEXT:    retq
+  %shuffle = shufflevector <2 x double> %a, <2 x double> %b, <2 x i32> <i32 3, i32 undef>
+  ret <2 x double> %shuffle
+}
 
 define <2 x i64> @shuffle_v2i64_02(<2 x i64> %a, <2 x i64> %b) {
 ; SSE-LABEL: shuffle_v2i64_02:
