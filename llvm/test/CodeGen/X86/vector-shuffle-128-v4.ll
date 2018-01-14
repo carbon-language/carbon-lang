@@ -1554,7 +1554,7 @@ define <4 x i32> @shuffle_v4i32_2345(<4 x i32> %a, <4 x i32> %b) {
 }
 
 ; PR22391
-define <4 x i32> @shuffle_v4i32_2456(<4 x i32> %a, <4 x i32> %b) #0 {
+define <4 x i32> @shuffle_v4i32_2456(<4 x i32> %a, <4 x i32> %b) {
 ; SSE2-LABEL: shuffle_v4i32_2456:
 ; SSE2:       # %bb.0:
 ; SSE2-NEXT:    shufps {{.*#+}} xmm0 = xmm0[2,0],xmm1[0,0]
@@ -2379,6 +2379,7 @@ define <4 x float> @insert_mem_hi_v4f32(<2 x float>* %ptr, <4 x float> %b) {
   ret <4 x float> %shuffle
 }
 
+; PR21137
 define <4 x float> @shuffle_mem_v4f32_3210(<4 x float>* %ptr) {
 ; SSE-LABEL: shuffle_mem_v4f32_3210:
 ; SSE:       # %bb.0:
