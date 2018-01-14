@@ -961,10 +961,12 @@ define <16 x i8> @test47(<16 x i32> %a, <16 x i8> %b, <16 x i8> %c) {
 ;
 ; AVX512BW-LABEL: test47:
 ; AVX512BW:       ## %bb.0:
+; AVX512BW-NEXT:    ## kill: def %xmm2 killed %xmm2 def %zmm2
+; AVX512BW-NEXT:    ## kill: def %xmm1 killed %xmm1 def %zmm1
 ; AVX512BW-NEXT:    vpxor %xmm3, %xmm3, %xmm3
-; AVX512BW-NEXT:    vpcmpeqd %zmm3, %zmm0, %k0
-; AVX512BW-NEXT:    vpmovm2b %k0, %zmm0
-; AVX512BW-NEXT:    vpblendvb %xmm0, %xmm1, %xmm2, %xmm0
+; AVX512BW-NEXT:    vpcmpeqd %zmm3, %zmm0, %k1
+; AVX512BW-NEXT:    vpblendmb %zmm1, %zmm2, %zmm0 {%k1}
+; AVX512BW-NEXT:    ## kill: def %xmm0 killed %xmm0 killed %zmm0
 ; AVX512BW-NEXT:    vzeroupper
 ; AVX512BW-NEXT:    retq
 ;
@@ -992,10 +994,12 @@ define <16 x i16> @test48(<16 x i32> %a, <16 x i16> %b, <16 x i16> %c) {
 ;
 ; AVX512BW-LABEL: test48:
 ; AVX512BW:       ## %bb.0:
+; AVX512BW-NEXT:    ## kill: def %ymm2 killed %ymm2 def %zmm2
+; AVX512BW-NEXT:    ## kill: def %ymm1 killed %ymm1 def %zmm1
 ; AVX512BW-NEXT:    vpxor %xmm3, %xmm3, %xmm3
-; AVX512BW-NEXT:    vpcmpeqd %zmm3, %zmm0, %k0
-; AVX512BW-NEXT:    vpmovm2w %k0, %zmm0
-; AVX512BW-NEXT:    vpblendvb %ymm0, %ymm1, %ymm2, %ymm0
+; AVX512BW-NEXT:    vpcmpeqd %zmm3, %zmm0, %k1
+; AVX512BW-NEXT:    vpblendmw %zmm1, %zmm2, %zmm0 {%k1}
+; AVX512BW-NEXT:    ## kill: def %ymm0 killed %ymm0 killed %zmm0
 ; AVX512BW-NEXT:    retq
 ;
 ; SKX-LABEL: test48:
@@ -1022,10 +1026,12 @@ define <8 x i16> @test49(<8 x i64> %a, <8 x i16> %b, <8 x i16> %c) {
 ;
 ; AVX512BW-LABEL: test49:
 ; AVX512BW:       ## %bb.0:
+; AVX512BW-NEXT:    ## kill: def %xmm2 killed %xmm2 def %zmm2
+; AVX512BW-NEXT:    ## kill: def %xmm1 killed %xmm1 def %zmm1
 ; AVX512BW-NEXT:    vpxor %xmm3, %xmm3, %xmm3
-; AVX512BW-NEXT:    vpcmpeqq %zmm3, %zmm0, %k0
-; AVX512BW-NEXT:    vpmovm2w %k0, %zmm0
-; AVX512BW-NEXT:    vpblendvb %xmm0, %xmm1, %xmm2, %xmm0
+; AVX512BW-NEXT:    vpcmpeqq %zmm3, %zmm0, %k1
+; AVX512BW-NEXT:    vpblendmw %zmm1, %zmm2, %zmm0 {%k1}
+; AVX512BW-NEXT:    ## kill: def %xmm0 killed %xmm0 killed %zmm0
 ; AVX512BW-NEXT:    vzeroupper
 ; AVX512BW-NEXT:    retq
 ;
