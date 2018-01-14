@@ -27837,6 +27837,18 @@ void X86TargetLowering::computeKnownBitsForTargetNode(const SDValue Op,
     Known.Zero.setBitsFrom(InBitWidth);
     break;
   }
+  case X86ISD::VTRUNC: {
+    // TODO: Add DemandedElts support.
+    SDValue N0 = Op.getOperand(0);
+    // We can only handle cases with the same number of elements. Otherwise
+    // the truncate fills with zero elements.
+    // TODO: Maybe we could just discard any 1s we found instead of skipping?
+    if (VT.getVectorNumElements() != N0.getValueType().getVectorNumElements())
+      break;
+    DAG.computeKnownBits(N0, Known, Depth+1);
+    Known = Known.trunc(BitWidth);
+    break;
+  }
   case X86ISD::CMOV: {
     DAG.computeKnownBits(Op.getOperand(1), Known, Depth+1);
     // If we don't know any bits, early out.
