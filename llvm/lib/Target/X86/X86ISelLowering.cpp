@@ -16543,9 +16543,9 @@ SDValue X86TargetLowering::LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
   if (Subtarget.hasAVX512()) {
     // word to byte only under BWI
     if (InVT == MVT::v16i16 && !Subtarget.hasBWI()) // v16i16 -> v16i8
-      return DAG.getNode(X86ISD::VTRUNC, DL, VT,
+      return DAG.getNode(ISD::TRUNCATE, DL, VT,
                          getExtendInVec(X86ISD::VSEXT, DL, MVT::v16i32, In, DAG));
-    return DAG.getNode(X86ISD::VTRUNC, DL, VT, In);
+    return Op;
   }
 
   // Truncate with PACKSS if we are truncating a vector with sign-bits that
@@ -19808,6 +19808,7 @@ static SDValue getVectorMaskingNode(SDValue Op, SDValue Mask,
     return DAG.getNode(ISD::AND, dl, VT, Op, VMask);
   case X86ISD::VFPCLASS:
     return DAG.getNode(ISD::OR, dl, VT, Op, VMask);
+  case ISD::TRUNCATE:
   case X86ISD::VTRUNC:
   case X86ISD::VTRUNCS:
   case X86ISD::VTRUNCUS:
@@ -27835,18 +27836,6 @@ void X86TargetLowering::computeKnownBitsForTargetNode(const SDValue Op,
     DAG.computeKnownBits(N0, Known, DemandedSrcElts, Depth + 1);
     Known = Known.zext(BitWidth);
     Known.Zero.setBitsFrom(InBitWidth);
-    break;
-  }
-  case X86ISD::VTRUNC: {
-    // TODO: Add DemandedElts support.
-    SDValue N0 = Op.getOperand(0);
-    // We can only handle cases with the same number of elements. Otherwise
-    // the truncate fills with zero elements.
-    // TODO: Maybe we could just discard any 1s we found instead of skipping?
-    if (VT.getVectorNumElements() != N0.getValueType().getVectorNumElements())
-      break;
-    DAG.computeKnownBits(N0, Known, Depth+1);
-    Known = Known.trunc(BitWidth);
     break;
   }
   case X86ISD::CMOV: {
@@ -37793,6 +37782,11 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
 bool X86TargetLowering::isTypeDesirableForOp(unsigned Opc, EVT VT) const {
   if (!isTypeLegal(VT))
     return false;
+
+  // There are no vXi8 shifts.
+  if (Opc == ISD::SHL && VT.isVector() && VT.getVectorElementType() == MVT::i8)
+    return false;
+
   if (VT != MVT::i16)
     return true;
 

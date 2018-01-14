@@ -498,8 +498,7 @@ define void @trunc_wb_256_mem(<16 x i16> %i, <16 x i8>* %res) #0 {
 ; KNL-LABEL: trunc_wb_256_mem:
 ; KNL:       ## %bb.0:
 ; KNL-NEXT:    vpmovsxwd %ymm0, %zmm0
-; KNL-NEXT:    vpmovdb %zmm0, %xmm0
-; KNL-NEXT:    vmovdqa %xmm0, (%rdi)
+; KNL-NEXT:    vpmovdb %zmm0, (%rdi)
 ; KNL-NEXT:    vzeroupper
 ; KNL-NEXT:    retq
 ;
@@ -543,8 +542,7 @@ define void @usat_trunc_wb_256_mem(<16 x i16> %i, <16 x i8>* %res) {
 ; KNL:       ## %bb.0:
 ; KNL-NEXT:    vpminuw {{.*}}(%rip), %ymm0, %ymm0
 ; KNL-NEXT:    vpmovsxwd %ymm0, %zmm0
-; KNL-NEXT:    vpmovdb %zmm0, %xmm0
-; KNL-NEXT:    vmovdqu %xmm0, (%rdi)
+; KNL-NEXT:    vpmovdb %zmm0, (%rdi)
 ; KNL-NEXT:    vzeroupper
 ; KNL-NEXT:    retq
 ;
