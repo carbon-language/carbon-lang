@@ -301,8 +301,7 @@ define <2 x double> @shuffle_v2f64_21(<2 x double> %a, <2 x double> %b) {
 define <2 x double> @shuffle_v2f64_u2(<2 x double> %a, <2 x double> %b) {
 ; SSE2-LABEL: shuffle_v2f64_u2:
 ; SSE2:       # %bb.0:
-; SSE2-NEXT:    movlhps {{.*#+}} xmm1 = xmm1[0,0]
-; SSE2-NEXT:    movaps %xmm1, %xmm0
+; SSE2-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; SSE2-NEXT:    retq
 ;
 ; SSE3-LABEL: shuffle_v2f64_u2:
