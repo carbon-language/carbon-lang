@@ -10157,9 +10157,9 @@ X86InstrInfo::getExecutionDomain(const MachineInstr &MI) const {
   uint16_t validDomains = 0;
   if (domain) {
     // Attempt to match for custom instructions.
-    if (validDomains = getExecutionDomainCustom(MI)) {
+    validDomains = getExecutionDomainCustom(MI);
+    if (validDomains)
       return std::make_pair(domain, validDomains);
-    }
 
     if (lookup(opcode, domain, ReplaceableInstrs)) {
       validDomains = 0xe;
