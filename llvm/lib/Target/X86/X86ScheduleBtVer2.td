@@ -599,10 +599,10 @@ def : InstRW<[WriteVCVTYLd, ReadAfterLd], (instregex "VROUNDYP(S|D)m")>;
 def : InstRW<[WriteVCVTYLd, ReadAfterLd], (instregex "VCVTPS2DQYrm")>;
 def : InstRW<[WriteVCVTYLd, ReadAfterLd], (instregex "VCVTTPS2DQYrm")>;
 
-def WriteVMOVTDQSt: SchedWriteRes<[JSTC, JSAGU]> {
+def WriteVMOVNTDQSt: SchedWriteRes<[JSTC, JSAGU]> {
   let Latency = 2;
 }
-def : InstRW<[WriteVMOVTDQSt], (instregex "VMOVNTDQmr")>;
+def : InstRW<[WriteVMOVNTDQSt], (instregex "VMOVNTDQmr")>;
 
 def WriteMOVNTSt: SchedWriteRes<[JSTC, JSAGU]> {
   let Latency = 3;
@@ -610,12 +610,12 @@ def WriteMOVNTSt: SchedWriteRes<[JSTC, JSAGU]> {
 def : InstRW<[WriteMOVNTSt], (instregex "VMOVNTP(S|D)mr")>;
 def : InstRW<[WriteMOVNTSt], (instregex "MOVNTS(S|D)")>;
 
-def WriteVMONTPYSt: SchedWriteRes<[JSTC, JSAGU]> {
+def WriteVMOVNTPYSt: SchedWriteRes<[JSTC, JSAGU]> {
   let Latency = 3;
   let ResourceCycles = [2,1];
 }
-def : InstRW<[WriteVMONTPYSt], (instregex "VMOVNTP(S|D)Ymr")>;
-def : InstRW<[WriteVMONTPYSt], (instregex "VMOVNTDQYmr")>;
+def : InstRW<[WriteVMOVNTPYSt], (instregex "VMOVNTP(S|D)Ymr")>;
+def : InstRW<[WriteVMOVNTPYSt], (instregex "VMOVNTDQYmr")>;
 
 def WriteFCmp: SchedWriteRes<[JFPU0]> {
   let Latency = 2;
