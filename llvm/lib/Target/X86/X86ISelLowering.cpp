@@ -7946,13 +7946,13 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   // supported, we assume that we will fall back to a shuffle to get the scalar
   // blended with the constants. Insertion into a zero vector is handled as a
   // special-case somewhere below here.
-  LLVMContext &Context = *DAG.getContext();
   if (NumConstants == NumElems - 1 && NumNonZero != 1 &&
       (isOperationLegalOrCustom(ISD::INSERT_VECTOR_ELT, VT) ||
        isOperationLegalOrCustom(ISD::VECTOR_SHUFFLE, VT))) {
     // Create an all-constant vector. The variable element in the old
     // build vector is replaced by undef in the constant vector. Save the
     // variable scalar element and its index for use in the insertelement.
+    LLVMContext &Context = *DAG.getContext();
     Type *EltType = Op.getValueType().getScalarType().getTypeForEVT(Context);
     SmallVector<Constant *, 16> ConstVecOps(NumElems, UndefValue::get(EltType));
     SDValue VarElt;
@@ -8114,7 +8114,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   // For AVX-length vectors, build the individual 128-bit pieces and use
   // shuffles to put them in place.
   if (VT.getSizeInBits() > 128) {
-    EVT HVT = EVT::getVectorVT(Context, ExtVT, NumElems/2);
+    MVT HVT = MVT::getVectorVT(ExtVT, NumElems/2);
 
     // Build both the lower and upper subvector.
     SDValue Lower =
