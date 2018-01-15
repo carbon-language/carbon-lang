@@ -2095,6 +2095,8 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
       }
 
       setOperationAction(ISD::MUL,                T, Custom);
+      setOperationAction(ISD::MULHS,              T, Custom);
+      setOperationAction(ISD::MULHU,              T, Custom);
       setOperationAction(ISD::SETCC,              T, Custom);
       setOperationAction(ISD::BUILD_VECTOR,       T, Custom);
       setOperationAction(ISD::INSERT_SUBVECTOR,   T, Custom);
@@ -3017,6 +3019,11 @@ HexagonTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     case ISD::MUL:
       if (Subtarget.useHVXOps())
         return LowerHvxMul(Op, DAG);
+      break;
+    case ISD::MULHS:
+    case ISD::MULHU:
+      if (Subtarget.useHVXOps())
+        return LowerHvxMulh(Op, DAG);
       break;
   }
   return SDValue();
