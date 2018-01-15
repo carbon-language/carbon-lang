@@ -8097,7 +8097,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
       return V;
 
   // See if we can use a vector load to get all of the elements.
-  if (VT.is128BitVector() || VT.is256BitVector() || VT.is512BitVector()) {
+  {
     SmallVector<SDValue, 64> Ops(Op->op_begin(), Op->op_begin() + NumElems);
     if (SDValue LD =
             EltsFromConsecutiveLoads(VT, Ops, dl, DAG, Subtarget, false))
