@@ -7910,6 +7910,8 @@ bool X86InstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
     return Expand2AddrUndef(MIB, get(X86::SBB32rr));
   case X86::SETB_C64r:
     return Expand2AddrUndef(MIB, get(X86::SBB64rr));
+  case X86::MMX_SET0:
+    return Expand2AddrUndef(MIB, get(X86::MMX_PXORirr));
   case X86::V_SET0:
   case X86::FsFLD0SS:
   case X86::FsFLD0SD:
@@ -8877,6 +8879,7 @@ MachineInstr *X86InstrInfo::foldMemoryOperandImpl(
     case X86::AVX512_128_SET0:
       Alignment = 16;
       break;
+    case X86::MMX_SET0:
     case X86::FsFLD0SD:
     case X86::AVX512_FsFLD0SD:
       Alignment = 8;
@@ -8910,6 +8913,7 @@ MachineInstr *X86InstrInfo::foldMemoryOperandImpl(
 
   SmallVector<MachineOperand,X86::AddrNumOperands> MOs;
   switch (LoadMI.getOpcode()) {
+  case X86::MMX_SET0:
   case X86::V_SET0:
   case X86::V_SETALLONES:
   case X86::AVX2_SETALLONES:
@@ -8957,6 +8961,8 @@ MachineInstr *X86InstrInfo::foldMemoryOperandImpl(
     else if (Opc == X86::AVX2_SETALLONES || Opc == X86::AVX_SET0 ||
              Opc == X86::AVX512_256_SET0 || Opc == X86::AVX1_SETALLONES)
       Ty = VectorType::get(Type::getInt32Ty(MF.getFunction().getContext()), 8);
+    else if (Opc == X86::MMX_SET0)
+      Ty = VectorType::get(Type::getInt32Ty(MF.getFunction().getContext()), 2);
     else
       Ty = VectorType::get(Type::getInt32Ty(MF.getFunction().getContext()), 4);
 
