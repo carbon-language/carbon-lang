@@ -592,6 +592,9 @@ TEST_F(LibclangReparseTest, PreprocessorSkippedRanges) {
     if (i == 2)
       flags |= CXTranslationUnit_CreatePreambleOnFirstParse;
 
+    if (i != 0)
+       clang_disposeTranslationUnit(ClangTU);  // dispose from previous iter
+
     // parse once
     ClangTU = clang_parseTranslationUnit(Index, Main.c_str(), nullptr, 0,
                                          nullptr, 0, flags);
