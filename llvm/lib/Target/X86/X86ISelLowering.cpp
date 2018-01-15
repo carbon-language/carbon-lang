@@ -5184,6 +5184,13 @@ static SDValue concat256BitVectors(SDValue V1, SDValue V2, EVT VT,
   return insert256BitVector(V, V2, NumElems / 2, DAG, dl);
 }
 
+static SDValue concatSubVectors(SDValue V1, SDValue V2, EVT VT,
+                                unsigned NumElems, SelectionDAG &DAG,
+                                const SDLoc &dl, unsigned VectorWidth) {
+  SDValue V = insertSubVector(DAG.getUNDEF(VT), V1, 0, DAG, dl, VectorWidth);
+  return insertSubVector(V, V2, NumElems / 2, DAG, dl, VectorWidth);
+}
+
 /// Returns a vector of specified type with all bits set.
 /// Always build ones vectors as <4 x i32>, <8 x i32> or <16 x i32>.
 /// Then bitcast to their original type, ensuring they get CSE'd.
@@ -8106,7 +8113,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
 
   // For AVX-length vectors, build the individual 128-bit pieces and use
   // shuffles to put them in place.
-  if (VT.is256BitVector() || VT.is512BitVector()) {
+  if (VT.getSizeInBits() > 128) {
     EVT HVT = EVT::getVectorVT(Context, ExtVT, NumElems/2);
 
     // Build both the lower and upper subvector.
@@ -8116,9 +8123,8 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
         HVT, dl, Op->ops().slice(NumElems / 2, NumElems /2));
 
     // Recreate the wider vector with the lower and upper part.
-    if (VT.is256BitVector())
-      return concat128BitVectors(Lower, Upper, VT, NumElems, DAG, dl);
-    return concat256BitVectors(Lower, Upper, VT, NumElems, DAG, dl);
+    return concatSubVectors(Lower, Upper, VT, NumElems, DAG, dl,
+                            VT.getSizeInBits() / 2);
   }
 
   // Let legalizer expand 2-wide build_vectors.
