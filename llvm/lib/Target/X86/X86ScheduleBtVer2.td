@@ -414,28 +414,28 @@ def WriteDPPS: SchedWriteRes<[JFPU0, JFPU1]> {
   let ResourceCycles = [3,3];
   let NumMicroOps = 5;
 }
-def : InstRW<[WriteDPPS], (instregex "(V)?DPPSrri")>;
+def : InstRW<[WriteDPPS], (instrs DPPSrri, VDPPSrri)>;
 
 def WriteDPPSLd: SchedWriteRes<[JLAGU, JFPU0, JFPU1]> {
   let Latency = 16;
   let ResourceCycles = [1,3,3];
   let NumMicroOps = 6;
 }
-def : InstRW<[WriteDPPSLd], (instregex "(V)?DPPSrmi")>;
+def : InstRW<[WriteDPPSLd], (instrs DPPSrmi, VDPPSrmi)>;
 
 def WriteDPPD: SchedWriteRes<[JFPU0, JFPU1]> {
   let Latency = 9;
   let ResourceCycles = [3,3];
   let NumMicroOps = 3;
 }
-def : InstRW<[WriteDPPD], (instregex "(V)?DPPDrri")>;
+def : InstRW<[WriteDPPD], (instrs DPPDrri, VDPPDrri)>;
 
 def WriteDPPDLd: SchedWriteRes<[JLAGU, JFPU0, JFPU1]> {
   let Latency = 14;
   let ResourceCycles = [1,3,3];
   let NumMicroOps = 3;
 }
-def : InstRW<[WriteDPPDLd], (instregex "(V)?DPPDrmi")>;
+def : InstRW<[WriteDPPDLd], (instrs DPPDrmi, VDPPDrmi)>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // SSE4A instructions.
@@ -536,13 +536,13 @@ def WriteFDivY: SchedWriteRes<[JFPU1]> {
   let Latency = 38;
   let ResourceCycles = [38];
 }
-def : InstRW<[WriteFDivY], (instregex "VDIVP(D|S)Yrr")>;
+def : InstRW<[WriteFDivY], (instrs VDIVPDYrr, VDIVPSYrr)>;
 
 def WriteFDivYLd: SchedWriteRes<[JLAGU, JFPU1]> {
   let Latency = 43;
   let ResourceCycles = [1, 38];
 }
-def : InstRW<[WriteFDivYLd, ReadAfterLd], (instregex "VDIVP(S|D)Yrm")>;
+def : InstRW<[WriteFDivYLd, ReadAfterLd], (instrs VDIVPDYrm, VDIVPSYrm)>;
 
 def WriteVMULYPD: SchedWriteRes<[JFPU1]> {
   let Latency = 4;
@@ -604,15 +604,13 @@ def : InstRW<[WriteVMOVNTDQSt], (instrs MOVNTDQmr, VMOVNTDQmr)>;
 def WriteMOVNTSt: SchedWriteRes<[JSTC, JSAGU]> {
   let Latency = 3;
 }
-def : InstRW<[WriteMOVNTSt], (instregex "VMOVNTP(S|D)mr")>;
-def : InstRW<[WriteMOVNTSt], (instregex "MOVNTS(S|D)")>;
+def : InstRW<[WriteMOVNTSt], (instrs MOVNTPDmr, MOVNTPSmr, MOVNTSD, MOVNTSS, VMOVNTPDmr, VMOVNTPSmr)>;
 
 def WriteVMOVNTPYSt: SchedWriteRes<[JSTC, JSAGU]> {
   let Latency = 3;
   let ResourceCycles = [2,1];
 }
-def : InstRW<[WriteVMOVNTPYSt], (instregex "VMOVNTP(S|D)Ymr")>;
-def : InstRW<[WriteVMOVNTPYSt], (instrs VMOVNTDQYmr)>;
+def : InstRW<[WriteVMOVNTPYSt], (instrs VMOVNTDQYmr, VMOVNTPDYmr, VMOVNTPSYmr)>;
 
 def WriteFCmp: SchedWriteRes<[JFPU0]> {
   let Latency = 2;
@@ -634,33 +632,31 @@ def WriteVCVTPDY: SchedWriteRes<[JSTC, JFPU01]> {
   let Latency = 6;
   let ResourceCycles = [2, 4];
 }
-def : InstRW<[WriteVCVTPDY], (instregex "VCVTPD2(DQ|PS)Yrr")>;
-def : InstRW<[WriteVCVTPDY], (instrs VCVTTPD2DQYrr)>;
+def : InstRW<[WriteVCVTPDY], (instrs VCVTPD2DQYrr, VCVTTPD2DQYrr, VCVTPD2PSYrr)>;
 
 def WriteVCVTPDYLd: SchedWriteRes<[JLAGU, JSTC, JFPU01]> {
   let Latency = 11;
   let ResourceCycles = [1, 2, 4];
 }
-def : InstRW<[WriteVCVTPDYLd, ReadAfterLd], (instregex "VCVTPD2(DQ|PS)Yrm")>;
-def : InstRW<[WriteVCVTPDYLd, ReadAfterLd], (instrs VCVTTPD2DQYrm)>;
+def : InstRW<[WriteVCVTPDYLd, ReadAfterLd], (instrs VCVTPD2DQYrm, VCVTTPD2DQYrm, VCVTPD2PSYrm)>;
 
 def WriteVBlendVPY: SchedWriteRes<[JFPU01]> {
   let Latency = 3;
   let ResourceCycles = [6];
 }
-def : InstRW<[WriteVBlendVPY], (instregex "VBLENDVP(S|D)Yrr", "VPERMILP(D|S)Yrr")>;
+def : InstRW<[WriteVBlendVPY], (instrs VBLENDVPDYrr, VBLENDVPSYrr, VPERMILPDYrr, VPERMILPSYrr)>;
 
 def WriteVBlendVPYLd: SchedWriteRes<[JLAGU, JFPU01]> {
   let Latency = 8;
   let ResourceCycles = [1, 6];
 }
-def : InstRW<[WriteVBlendVPYLd, ReadAfterLd], (instregex "VBLENDVP(S|D)Yrm")>;
+def : InstRW<[WriteVBlendVPYLd, ReadAfterLd], (instrs VBLENDVPDYrm, VBLENDVPSYrm)>;
 
 def WriteVBROADCASTYLd: SchedWriteRes<[JLAGU, JFPU01]> {
   let Latency = 6;
   let ResourceCycles = [1, 4];
 }
-def : InstRW<[WriteVBROADCASTYLd, ReadAfterLd], (instregex "VBROADCASTS(S|D)Yrm")>;
+def : InstRW<[WriteVBROADCASTYLd, ReadAfterLd], (instrs VBROADCASTSDYrm, VBROADCASTSSYrm)>;
 
 def WriteFPAY22: SchedWriteRes<[JFPU0]> {
   let Latency = 2;
@@ -690,25 +686,25 @@ def WriteVMaskMovLd: SchedWriteRes<[JLAGU,JFPU01]> {
   let Latency = 6;
   let ResourceCycles = [1, 2];
 }
-def : InstRW<[WriteVMaskMovLd], (instregex "VMASKMOVP(D|S)rm")>;
+def : InstRW<[WriteVMaskMovLd], (instrs VMASKMOVPDrm, VMASKMOVPSrm)>;
 
 def WriteVMaskMovYLd: SchedWriteRes<[JLAGU,JFPU01]> {
   let Latency = 6;
   let ResourceCycles = [1, 4];
 }
-def : InstRW<[WriteVMaskMovYLd], (instregex "VMASKMOVP(D|S)Yrm")>;
+def : InstRW<[WriteVMaskMovYLd], (instrs VMASKMOVPDYrm, VMASKMOVPSYrm)>;
 
 def WriteVMaskMovSt: SchedWriteRes<[JFPU01,JSAGU]> {
   let Latency = 6;
   let ResourceCycles = [4, 1];
 }
-def : InstRW<[WriteVMaskMovSt], (instregex "VMASKMOVP(D|S)mr")>;
+def : InstRW<[WriteVMaskMovSt], (instrs VMASKMOVPDmr, VMASKMOVPSmr)>;
 
 def WriteVMaskMovYSt: SchedWriteRes<[JFPU01,JSAGU]> {
   let Latency = 6;
   let ResourceCycles = [4, 1];
 }
-def : InstRW<[WriteVMaskMovYSt], (instregex "VMASKMOVP(D|S)Ymr")>;
+def : InstRW<[WriteVMaskMovYSt], (instrs VMASKMOVPDYmr, VMASKMOVPSYmr)>;
 
 // TODO: In fact we have latency '2+i'. The +i represents an additional 1 cycle transfer
 // operation which moves the floating point result to the integer unit. During this
@@ -717,7 +713,7 @@ def : InstRW<[WriteVMaskMovYSt], (instregex "VMASKMOVP(D|S)Ymr")>;
 def WriteVMOVMSK: SchedWriteRes<[JFPU0]> {
   let Latency = 3;
 }
-def : InstRW<[WriteVMOVMSK], (instregex "VMOVMSKP(D|S)(Y)?rr")>;
+def : InstRW<[WriteVMOVMSK], (instregex "(V)?MOVMSKP(D|S)(Y)?rr")>;
 
 // TODO: In fact we have latency '3+i'. The +i represents an additional 1 cycle transfer
 // operation which moves the floating point result to the integer unit. During this
@@ -728,28 +724,24 @@ def WriteVTESTY: SchedWriteRes<[JFPU01, JFPU0]> {
   let ResourceCycles = [2, 2];
   let NumMicroOps = 3;
 }
-def : InstRW<[WriteVTESTY], (instregex "VTESTP(S|D)Yrr")>;
-def : InstRW<[WriteVTESTY], (instrs VPTESTYrr)>;
+def : InstRW<[WriteVTESTY], (instrs VPTESTYrr, VTESTPDYrr, VTESTPSYrr)>;
 
 def WriteVTESTYLd: SchedWriteRes<[JLAGU, JFPU01, JFPU0]> {
   let Latency = 9;
   let ResourceCycles = [1, 2, 2];
   let NumMicroOps = 3;
 }
-def : InstRW<[WriteVTESTYLd], (instregex "VTESTP(S|D)Yrm")>;
-def : InstRW<[WriteVTESTYLd], (instrs VPTESTYrm)>;
+def : InstRW<[WriteVTESTYLd], (instrs VPTESTYrm, VTESTPDYrm, VTESTPSYrm)>;
 
 def WriteVTEST: SchedWriteRes<[JFPU0]> {
   let Latency = 3;
 }
-def : InstRW<[WriteVTEST], (instregex "VTESTP(S|D)rr")>;
-def : InstRW<[WriteVTEST], (instrs PTESTrr, VPTESTrr)>;
+def : InstRW<[WriteVTEST], (instrs PTESTrr, VPTESTrr, VTESTPDrr, VTESTPSrr)>;
 
 def WriteVTESTLd: SchedWriteRes<[JLAGU, JFPU0]> {
   let Latency = 8;
 }
-def : InstRW<[WriteVTESTLd], (instregex "VTESTP(S|D)rm")>;
-def : InstRW<[WriteVTESTLd], (instrs PTESTrm, VPTESTrm)>;
+def : InstRW<[WriteVTESTLd], (instrs PTESTrm, VPTESTrm, VTESTPDrm, VTESTPSrm)>;
 
 def WriteVSQRTYPD: SchedWriteRes<[JFPU1]> {
   let Latency = 54;
