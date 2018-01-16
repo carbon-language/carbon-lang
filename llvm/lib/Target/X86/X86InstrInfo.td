@@ -3310,6 +3310,10 @@ def : InstAlias<"xchg{l}\t{%eax, $src|$src, eax}",
                 (XCHG32ar64 GR32_NOAX:$src), 0>, Requires<[In64BitMode]>;
 def : InstAlias<"xchg{q}\t{%rax, $src|$src, rax}", (XCHG64ar GR64:$src), 0>;
 
+// xchg %rax, %rax is a nop in x86-64 and can be encoded as such. Without this
+// we emit an unneeded REX.w prefix.
+def : InstAlias<"xchg{q}\t{%rax, %rax|rax, rax}", (NOOP), 0>;
+
 // These aliases exist to get the parser to prioritize matching 8-bit
 // immediate encodings over matching the implicit ax/eax/rax encodings. By
 // explicitly mentioning the A register here, these entries will be ordered
