@@ -8156,12 +8156,12 @@ static OpenMPDirectiveKind getOpenMPCaptureRegionForClause(
     case OMPD_target_parallel:
     case OMPD_target_teams_distribute:
     case OMPD_target_teams_distribute_simd:
+    case OMPD_target_parallel_for:
       CaptureRegion = OMPD_task;
       break;
     case OMPD_target_teams_distribute_parallel_for:
     case OMPD_target_teams_distribute_parallel_for_simd:
     case OMPD_target_data:
-    case OMPD_target_parallel_for:
     case OMPD_target_parallel_for_simd:
       // Do not capture device-clause expressions.
       break;
