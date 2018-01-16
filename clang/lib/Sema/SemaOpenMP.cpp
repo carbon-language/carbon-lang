@@ -8146,6 +8146,7 @@ static OpenMPDirectiveKind getOpenMPCaptureRegionForClause(
     case OMPD_target_enter_data:
     case OMPD_target_exit_data:
     case OMPD_target:
+    case OMPD_target_simd:
       CaptureRegion = OMPD_task;
       break;
     case OMPD_target_teams:
@@ -8154,7 +8155,6 @@ static OpenMPDirectiveKind getOpenMPCaptureRegionForClause(
     case OMPD_target_teams_distribute_parallel_for:
     case OMPD_target_teams_distribute_parallel_for_simd:
     case OMPD_target_data:
-    case OMPD_target_simd:
     case OMPD_target_parallel:
     case OMPD_target_parallel_for:
     case OMPD_target_parallel_for_simd:
