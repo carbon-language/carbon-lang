@@ -729,8 +729,7 @@ static CXString CursorToText(CXCursor Cursor) {
     return clang_getCursorSpelling(Cursor);
   case DisplayType_DisplayName:
     return clang_getCursorDisplayName(Cursor);
-  case DisplayType_Pretty:
-  default: {
+  case DisplayType_Pretty: {
     CXString text;
     CXPrintingPolicy Policy = clang_getCursorPrintingPolicy(Cursor);
     ModifyPrintingPolicyAccordingToEnv(Policy);
