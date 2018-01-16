@@ -618,7 +618,7 @@ def WriteFCmp: SchedWriteRes<[JFPU0]> {
 
 def : InstRW<[WriteFCmp], (instregex "VMAXP(D|S)rr", "VMAXS(D|S)rr")>;
 def : InstRW<[WriteFCmp], (instregex "VMINP(D|S)rr", "VMINS(D|S)rr")>;
-def : InstRW<[WriteFCmp], (instregex "VCMPP(S|D)rri", "VCMPS(S|D)rri")>;
+def : InstRW<[WriteFCmp], (instregex "VCMPP(S|D)rri", "VCMPS(S|D)rr")>;
 
 def WriteFCmpLd: SchedWriteRes<[JLAGU, JFPU0]> {
   let Latency = 7;
@@ -626,7 +626,7 @@ def WriteFCmpLd: SchedWriteRes<[JLAGU, JFPU0]> {
 
 def : InstRW<[WriteFCmpLd], (instregex "VMAXP(D|S)rm", "VMAXS(D|S)rm")>;
 def : InstRW<[WriteFCmpLd], (instregex "VMINP(D|S)rm", "VMINS(D|S)rm")>;
-def : InstRW<[WriteFCmpLd], (instregex "VCMPP(S|D)rmi", "VCMPS(S|D)rmi")>;
+def : InstRW<[WriteFCmpLd], (instregex "VCMPP(S|D)rmi", "VCMPS(S|D)rm")>;
 
 def WriteVCVTPDY: SchedWriteRes<[JSTC, JFPU01]> {
   let Latency = 6;
