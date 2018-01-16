@@ -4136,16 +4136,16 @@ enum CXPrintingPolicyProperty {
 /**
  * \brief Get a property value for the given printing policy.
  */
-unsigned
+CINDEX_LINKAGE unsigned
 clang_PrintingPolicy_getProperty(CXPrintingPolicy Policy,
                                  enum CXPrintingPolicyProperty Property);
 
 /**
  * \brief Set a property value for the given printing policy.
  */
-void clang_PrintingPolicy_setProperty(CXPrintingPolicy Policy,
-                                      enum CXPrintingPolicyProperty Property,
-                                      unsigned Value);
+CINDEX_LINKAGE void clang_PrintingPolicy_setProperty(CXPrintingPolicy Policy,
+                                                     enum CXPrintingPolicyProperty Property,
+                                                     unsigned Value);
 
 /**
  * \brief Retrieve the default policy for the cursor.
