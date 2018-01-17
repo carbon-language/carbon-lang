@@ -738,8 +738,8 @@ static CXString CursorToText(CXCursor Cursor) {
     return text;
   }
   }
-  assert(0 && "unknown display type"); // no llvm_unreachable in C.
-  return text;                         // garbage
+  assert(0 && "unknown display type"); /* no llvm_unreachable in C. */
+  return /*garbage*/ text;
 }
 
 static void PrintCursor(CXCursor Cursor, const char *CommentSchemaFile) {
