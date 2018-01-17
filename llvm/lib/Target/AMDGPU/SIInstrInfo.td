@@ -46,6 +46,22 @@ def SIatomic_dec : SDNode<"AMDGPUISD::ATOMIC_DEC", SDTAtomic2,
   [SDNPMayLoad, SDNPMayStore, SDNPMemOperand, SDNPHasChain]
 >;
 
+def SDTAtomic2_f32 : SDTypeProfile<1, 2, [
+  SDTCisSameAs<0,2>, SDTCisFP<0>, SDTCisPtrTy<1>
+]>;
+
+def SIatomic_fadd : SDNode<"AMDGPUISD::ATOMIC_LOAD_FADD", SDTAtomic2_f32,
+  [SDNPMayLoad, SDNPMayStore, SDNPMemOperand, SDNPHasChain]
+>;
+
+def SIatomic_fmin : SDNode<"AMDGPUISD::ATOMIC_LOAD_FMIN", SDTAtomic2_f32,
+  [SDNPMayLoad, SDNPMayStore, SDNPMemOperand, SDNPHasChain]
+>;
+
+def SIatomic_fmax : SDNode<"AMDGPUISD::ATOMIC_LOAD_FMAX", SDTAtomic2_f32,
+  [SDNPMayLoad, SDNPMayStore, SDNPMemOperand, SDNPHasChain]
+>;
+
 def SDTbuffer_load : SDTypeProfile<1, 9,
   [                     // vdata
    SDTCisVT<1, v4i32>,  // rsrc
@@ -207,6 +223,9 @@ defm atomic_dec_global : global_binary_atomic_op<SIatomic_dec>;
 
 def atomic_inc_local : local_binary_atomic_op<SIatomic_inc>;
 def atomic_dec_local : local_binary_atomic_op<SIatomic_dec>;
+def atomic_load_fadd_local : local_binary_atomic_op<SIatomic_fadd>;
+def atomic_load_fmin_local : local_binary_atomic_op<SIatomic_fmin>;
+def atomic_load_fmax_local : local_binary_atomic_op<SIatomic_fmax>;
 
 //===----------------------------------------------------------------------===//
 // SDNodes PatFrags for loads/stores with a glue input.
@@ -341,10 +360,11 @@ def lshl_rev : PatFrag <
   (shl $src0, $src1)
 >;
 
-multiclass SIAtomicM0Glue2 <string op_name, bit is_amdgpu = 0> {
+multiclass SIAtomicM0Glue2 <string op_name, bit is_amdgpu = 0,
+                            SDTypeProfile tc = SDTAtomic2> {
 
   def _glue : SDNode <
-    !if(is_amdgpu, "AMDGPUISD", "ISD")#"::ATOMIC_"#op_name, SDTAtomic2,
+    !if(is_amdgpu, "AMDGPUISD", "ISD")#"::ATOMIC_"#op_name, tc,
     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand, SDNPInGlue]
   >;
 
@@ -363,6 +383,9 @@ defm atomic_load_xor : SIAtomicM0Glue2 <"LOAD_XOR">;
 defm atomic_load_umin : SIAtomicM0Glue2 <"LOAD_UMIN">;
 defm atomic_load_umax : SIAtomicM0Glue2 <"LOAD_UMAX">;
 defm atomic_swap : SIAtomicM0Glue2 <"SWAP">;
+defm atomic_load_fadd : SIAtomicM0Glue2 <"LOAD_FADD", 1, SDTAtomic2_f32>;
+defm atomic_load_fmin : SIAtomicM0Glue2 <"LOAD_FMIN", 1, SDTAtomic2_f32>;
+defm atomic_load_fmax : SIAtomicM0Glue2 <"LOAD_FMAX", 1, SDTAtomic2_f32>;
 
 def atomic_cmp_swap_glue : SDNode <"ISD::ATOMIC_CMP_SWAP", SDTAtomic3,
   [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand, SDNPInGlue]
