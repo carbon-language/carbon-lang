@@ -128,7 +128,7 @@ static void *HwasanAllocate(StackTrace *stack, uptr size, uptr alignment,
   if (size > kMaxAllowedMallocSize) {
     Report("WARNING: HWAddressSanitizer failed to allocate %p bytes\n",
            (void *)size);
-    return Allocator::FailureHandler::OnBadRequest();
+    return ReturnNullOrDieOnFailure::OnBadRequest();
   }
   HwasanThread *t = GetCurrentThread();
   void *allocated;
@@ -140,6 +140,8 @@ static void *HwasanAllocate(StackTrace *stack, uptr size, uptr alignment,
     AllocatorCache *cache = &fallback_allocator_cache;
     allocated = allocator.Allocate(cache, size, alignment);
   }
+  if (UNLIKELY(!allocated))
+    return ReturnNullOrDieOnFailure::OnOOM();
   Metadata *meta =
       reinterpret_cast<Metadata *>(allocator.GetMetaData(allocated));
   meta->state = CHUNK_ALLOCATED;
