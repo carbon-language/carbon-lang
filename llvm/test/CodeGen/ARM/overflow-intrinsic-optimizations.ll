@@ -76,6 +76,44 @@ cont:
 
 }
 
+define i32 @smul(i32 %a, i32 %b) local_unnamed_addr #0 {
+; CHECK-LABEL: smul:
+; CHECK: smull r0, r[[RHI:[0-9]+]], {{r[0-9]+}}, {{r[0-9]+}}
+; CHECK-NEXT: cmp r[[RHI]], r0, asr #31
+; CHECK-NEXT: moveq pc, lr
+entry:
+  %0 = tail call { i32, i1 } @llvm.smul.with.overflow.i32(i32 %a, i32 %b)
+  %1 = extractvalue { i32, i1 } %0, 1
+  br i1 %1, label %trap, label %cont
+
+trap:
+  tail call void @llvm.trap() #2
+  unreachable
+
+cont:
+  %2 = extractvalue { i32, i1 } %0, 0
+  ret i32 %2
+}
+
+define i32 @umul(i32 %a, i32 %b) local_unnamed_addr #0 {
+; CHECK-LABEL: umul:
+; CHECK: umull r0, r[[RHI:[0-9]+]], {{r[0-9]+}}, {{r[0-9]+}}
+; CHECK-NEXT: cmp r[[RHI]], #0
+; CHECK-NEXT: moveq pc, lr
+entry:
+  %0 = tail call { i32, i1 } @llvm.umul.with.overflow.i32(i32 %a, i32 %b)
+  %1 = extractvalue { i32, i1 } %0, 1
+  br i1 %1, label %trap, label %cont
+
+trap:
+  tail call void @llvm.trap() #2
+  unreachable
+
+cont:
+  %2 = extractvalue { i32, i1 } %0, 0
+  ret i32 %2
+}
+
 define void @sum(i32* %a, i32* %b, i32 %n) local_unnamed_addr #0 {
 ; CHECK-LABEL: sum:
 ; CHECK:    ldr [[R0:r[0-9]+]],
@@ -164,3 +202,5 @@ declare { i32, i1 } @llvm.sadd.with.overflow.i32(i32, i32) #1
 declare { i32, i1 } @llvm.uadd.with.overflow.i32(i32, i32) #1
 declare { i32, i1 } @llvm.ssub.with.overflow.i32(i32, i32) #1
 declare { i32, i1 } @llvm.usub.with.overflow.i32(i32, i32) #1
+declare { i32, i1 } @llvm.smul.with.overflow.i32(i32, i32) #1
+declare { i32, i1 } @llvm.umul.with.overflow.i32(i32, i32) #1
