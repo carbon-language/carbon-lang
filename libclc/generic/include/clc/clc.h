@@ -91,6 +91,7 @@
 #include <clc/math/pown.h>
 #include <clc/math/powr.h>
 #include <clc/math/rint.h>
+#include <clc/math/rootn.h>
 #include <clc/math/round.h>
 #include <clc/math/sin.h>
 #include <clc/math/sincos.h>
