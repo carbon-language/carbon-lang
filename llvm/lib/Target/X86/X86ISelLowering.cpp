@@ -8117,6 +8117,32 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
       return LD;
   }
 
+  // If this is a splat of pairs of 32-bit elements, we can use a narrower
+  // build_vector and broadcast it.
+  // TODO: We could probably generalize this more.
+  if (Subtarget.hasAVX2() && EVTBits == 32 && Values.size() == 2) {
+    SDValue Ops[4] = { Op.getOperand(0), Op.getOperand(1),
+                       DAG.getUNDEF(EltVT), DAG.getUNDEF(EltVT) };
+    auto CanSplat = [](SDValue Op, unsigned NumElems, ArrayRef<SDValue> Ops) {
+      // Make sure all the even/odd operands match.
+      for (unsigned i = 2; i != NumElems; ++i)
+        if (Ops[i % 2] != Op.getOperand(i))
+          return false;
+      return true;
+    };
+    if (CanSplat(Op, NumElems, Ops)) {
+      MVT WideEltVT = VT.isFloatingPoint() ? MVT::f64 : MVT::i64;
+      MVT NarrowVT = MVT::getVectorVT(EltVT, 4);
+      // Create a new build vector and cast to v2i64/v2f64.
+      SDValue NewBV = DAG.getBitcast(MVT::getVectorVT(WideEltVT, 2),
+                                     DAG.getBuildVector(NarrowVT, dl, Ops));
+      // Broadcast from v2i64/v2f64 and cast to final VT.
+      MVT BcastVT = MVT::getVectorVT(WideEltVT, NumElems/2);
+      return DAG.getBitcast(VT, DAG.getNode(X86ISD::VBROADCAST, dl, BcastVT,
+                                            NewBV));
+    }
+  }
+
   // For AVX-length vectors, build the individual 128-bit pieces and use
   // shuffles to put them in place.
   if (VT.getSizeInBits() > 128) {
