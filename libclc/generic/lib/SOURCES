@@ -142,6 +142,8 @@ math/clc_pow.cl
 math/pow.cl
 math/clc_pown.cl
 math/pown.cl
+math/clc_powr.cl
+math/powr.cl
 math/sin.cl
 math/sincos.cl
 math/sincos_helpers.cl
