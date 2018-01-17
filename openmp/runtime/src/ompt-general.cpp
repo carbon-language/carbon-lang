@@ -44,8 +44,8 @@ typedef struct {
 
 typedef struct {
   const char *name;
-  ompt_mutex_impl_t id;
-} ompt_mutex_impl_info_t;
+  kmp_mutex_impl_t id;
+} kmp_mutex_impl_info_t;
 
 enum tool_setting_e {
   omp_tool_error,
@@ -66,10 +66,10 @@ omp_state_info_t omp_state_info[] = {
 #undef omp_state_macro
 };
 
-ompt_mutex_impl_info_t ompt_mutex_impl_info[] = {
-#define ompt_mutex_impl_macro(name, id) {#name, name},
-    FOREACH_OMPT_MUTEX_IMPL(ompt_mutex_impl_macro)
-#undef ompt_mutex_impl_macro
+kmp_mutex_impl_info_t kmp_mutex_impl_info[] = {
+#define kmp_mutex_impl_macro(name, id) {#name, name},
+    FOREACH_KMP_MUTEX_IMPL(kmp_mutex_impl_macro)
+#undef kmp_mutex_impl_macro
 };
 
 ompt_callbacks_internal_t ompt_callbacks;
@@ -387,13 +387,13 @@ OMPT_API_ROUTINE int ompt_enumerate_mutex_impls(int current_impl,
                                                 int *next_impl,
                                                 const char **next_impl_name) {
   const static int len =
-      sizeof(ompt_mutex_impl_info) / sizeof(ompt_mutex_impl_info_t);
+      sizeof(kmp_mutex_impl_info) / sizeof(kmp_mutex_impl_info_t);
   int i = 0;
   for (i = 0; i < len - 1; i++) {
-    if (ompt_mutex_impl_info[i].id != current_impl)
+    if (kmp_mutex_impl_info[i].id != current_impl)
       continue;
-    *next_impl = ompt_mutex_impl_info[i + 1].id;
-    *next_impl_name = ompt_mutex_impl_info[i + 1].name;
+    *next_impl = kmp_mutex_impl_info[i + 1].id;
+    *next_impl_name = kmp_mutex_impl_info[i + 1].name;
     return 1;
   }
   return 0;
