@@ -376,9 +376,7 @@ define i32 @and_zext_demanded(i16 %x, i32 %y) {
 ; CHECK-LABEL: @and_zext_demanded(
 ; CHECK-NEXT:    [[S:%.*]] = lshr i16 %x, 8
 ; CHECK-NEXT:    [[Z:%.*]] = zext i16 [[S]] to i32
-; CHECK-NEXT:    [[O:%.*]] = or i32 %y, 255
-; CHECK-NEXT:    [[A:%.*]] = and i32 [[O]], [[Z]]
-; CHECK-NEXT:    ret i32 [[A]]
+; CHECK-NEXT:    ret i32 [[Z]]
 ;
   %s = lshr i16 %x, 8
   %z = zext i16 %s to i32
