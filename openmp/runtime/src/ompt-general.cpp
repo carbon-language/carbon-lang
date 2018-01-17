@@ -553,6 +553,9 @@ OMPT_API_ROUTINE int ompt_get_place_num(void) {
 #if !KMP_AFFINITY_SUPPORTED
   return -1;
 #else
+  if (__kmp_get_gtid() < 0)
+    return -1;
+
   int gtid;
   kmp_info_t *thread;
   if (!KMP_AFFINITY_CAPABLE())
@@ -571,6 +574,9 @@ OMPT_API_ROUTINE int ompt_get_partition_place_nums(int place_nums_size,
 #if !KMP_AFFINITY_SUPPORTED
   return 0;
 #else
+  if (__kmp_get_gtid() < 0)
+    return 0;
+
   int i, gtid, place_num, first_place, last_place, start, end;
   kmp_info_t *thread;
   if (!KMP_AFFINITY_CAPABLE())
@@ -604,6 +610,9 @@ OMPT_API_ROUTINE int ompt_get_partition_place_nums(int place_nums_size,
 
 OMPT_API_ROUTINE int ompt_get_proc_id(void) {
 #if KMP_OS_LINUX
+  if (__kmp_get_gtid() < 0)
+    return -1;
+
   return sched_getcpu();
 #else
   return -1;
