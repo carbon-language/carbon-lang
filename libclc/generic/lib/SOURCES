@@ -140,6 +140,7 @@ math/clc_nextafter.cl
 math/nextafter.cl
 math/clc_pow.cl
 math/pow.cl
+math/clc_pown.cl
 math/pown.cl
 math/sin.cl
 math/sincos.cl
