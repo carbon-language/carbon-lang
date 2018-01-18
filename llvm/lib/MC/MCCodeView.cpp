@@ -268,11 +268,35 @@ std::vector<MCCVLineEntry>
 CodeViewContext::getFunctionLineEntries(unsigned FuncId) {
   std::vector<MCCVLineEntry> FilteredLines;
   auto I = MCCVLineStartStop.find(FuncId);
-  if (I != MCCVLineStartStop.end())
+  if (I != MCCVLineStartStop.end()) {
+    MCCVFunctionInfo *SiteInfo = getCVFunctionInfo(FuncId);
     for (size_t Idx = I->second.first, End = I->second.second; Idx != End;
-         ++Idx)
-      if (MCCVLines[Idx].getFunctionId() == FuncId)
+         ++Idx) {
+      unsigned LocationFuncId = MCCVLines[Idx].getFunctionId();
+      if (LocationFuncId == FuncId) {
+        // This was a .cv_loc directly for FuncId, so record it.
         FilteredLines.push_back(MCCVLines[Idx]);
+      } else {
+        // Check if the current location is inlined in this function. If it is,
+        // synthesize a statement .cv_loc at the original inlined call site.
+        auto I = SiteInfo->InlinedAtMap.find(LocationFuncId);
+        if (I != SiteInfo->InlinedAtMap.end()) {
+          MCCVFunctionInfo::LineInfo &IA = I->second;
+          // Only add the location if it differs from the previous location.
+          // Large inlined calls will have many .cv_loc entries and we only need
+          // one line table entry in the parent function.
+          if (FilteredLines.empty() ||
+              FilteredLines.back().getFileNum() != IA.File ||
+              FilteredLines.back().getLine() != IA.Line ||
+              FilteredLines.back().getColumn() != IA.Col) {
+            FilteredLines.push_back(MCCVLineEntry(
+                MCCVLines[Idx].getLabel(),
+                MCCVLoc(FuncId, IA.File, IA.Line, IA.Col, false, false)));
+          }
+        }
+      }
+    }
+  }
   return FilteredLines;
 }
 
