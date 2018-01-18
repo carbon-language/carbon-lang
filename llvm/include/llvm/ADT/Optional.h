@@ -23,7 +23,6 @@
 #include <algorithm>
 #include <cassert>
 #include <new>
-#include <cstring>
 #include <utility>
 
 namespace llvm {
@@ -111,6 +110,7 @@ template <typename T, bool IsPodLike> struct OptionalStorage {
   }
 };
 
+#if !defined(__GNUC__) || defined(__clang__) // GCC up to GCC7 miscompiles this.
 /// Storage for trivially copyable types only.
 template <typename T> struct OptionalStorage<T, true> {
   AlignedCharArrayUnion<T> storage;
@@ -118,21 +118,16 @@ template <typename T> struct OptionalStorage<T, true> {
 
   OptionalStorage() = default;
 
-  OptionalStorage(const T &y) : hasVal(true) {
-    // We use memmove here because we know that T is trivially copyable and GCC
-    // up to 7 miscompiles placement new.
-    std::memmove(storage.buffer, &y, sizeof(y));
-  }
+  OptionalStorage(const T &y) : hasVal(true) { new (storage.buffer) T(y); }
   OptionalStorage &operator=(const T &y) {
+    *reinterpret_cast<T *>(storage.buffer) = y;
     hasVal = true;
-    // We use memmove here because we know that T is trivially copyable and GCC
-    // up to 7 miscompiles placement new.
-    std::memmove(storage.buffer, &y, sizeof(y));
     return *this;
   }
 
   void reset() { hasVal = false; }
 };
+#endif
 } // namespace optional_detail
 
 template <typename T> class Optional {
