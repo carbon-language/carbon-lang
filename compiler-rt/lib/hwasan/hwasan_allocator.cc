@@ -247,7 +247,7 @@ void *hwasan_malloc(uptr size, StackTrace *stack) {
 
 void *hwasan_calloc(uptr nmemb, uptr size, StackTrace *stack) {
   if (UNLIKELY(CheckForCallocOverflow(size, nmemb)))
-    return SetErrnoOnNull(Allocator::FailureHandler::OnBadRequest());
+    return SetErrnoOnNull(ReturnNullOrDieOnFailure::OnBadRequest());
   return SetErrnoOnNull(HwasanAllocate(stack, nmemb * size, sizeof(u64), true));
 }
 
@@ -269,7 +269,7 @@ void *hwasan_pvalloc(uptr size, StackTrace *stack) {
   uptr PageSize = GetPageSizeCached();
   if (UNLIKELY(CheckForPvallocOverflow(size, PageSize))) {
     errno = errno_ENOMEM;
-    return Allocator::FailureHandler::OnBadRequest();
+    return ReturnNullOrDieOnFailure::OnBadRequest();
   }
   // pvalloc(0) should allocate one page.
   size = size ? RoundUpTo(size, PageSize) : PageSize;
@@ -279,7 +279,7 @@ void *hwasan_pvalloc(uptr size, StackTrace *stack) {
 void *hwasan_aligned_alloc(uptr alignment, uptr size, StackTrace *stack) {
   if (UNLIKELY(!CheckAlignedAllocAlignmentAndSize(alignment, size))) {
     errno = errno_EINVAL;
-    return Allocator::FailureHandler::OnBadRequest();
+    return ReturnNullOrDieOnFailure::OnBadRequest();
   }
   return SetErrnoOnNull(HwasanAllocate(stack, size, alignment, false));
 }
@@ -287,7 +287,7 @@ void *hwasan_aligned_alloc(uptr alignment, uptr size, StackTrace *stack) {
 void *hwasan_memalign(uptr alignment, uptr size, StackTrace *stack) {
   if (UNLIKELY(!IsPowerOfTwo(alignment))) {
     errno = errno_EINVAL;
-    return Allocator::FailureHandler::OnBadRequest();
+    return ReturnNullOrDieOnFailure::OnBadRequest();
   }
   return SetErrnoOnNull(HwasanAllocate(stack, size, alignment, false));
 }
@@ -295,7 +295,7 @@ void *hwasan_memalign(uptr alignment, uptr size, StackTrace *stack) {
 int hwasan_posix_memalign(void **memptr, uptr alignment, uptr size,
                         StackTrace *stack) {
   if (UNLIKELY(!CheckPosixMemalignAlignment(alignment))) {
-    Allocator::FailureHandler::OnBadRequest();
+    ReturnNullOrDieOnFailure::OnBadRequest();
     return errno_EINVAL;
   }
   void *ptr = HwasanAllocate(stack, size, alignment, false);
