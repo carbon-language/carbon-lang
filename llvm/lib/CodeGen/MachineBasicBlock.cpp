@@ -260,7 +260,7 @@ std::string MachineBasicBlock::getFullName() const {
 }
 
 void MachineBasicBlock::print(raw_ostream &OS, const SlotIndexes *Indexes,
-                              bool IsVerbose) const {
+                              bool IsStandalone) const {
   const MachineFunction *MF = getParent();
   if (!MF) {
     OS << "Can't print out MachineBasicBlock because parent MachineFunction"
@@ -270,12 +270,12 @@ void MachineBasicBlock::print(raw_ostream &OS, const SlotIndexes *Indexes,
   const Function &F = MF->getFunction();
   const Module *M = F.getParent();
   ModuleSlotTracker MST(M);
-  print(OS, MST, Indexes, IsVerbose);
+  print(OS, MST, Indexes, IsStandalone);
 }
 
 void MachineBasicBlock::print(raw_ostream &OS, ModuleSlotTracker &MST,
                               const SlotIndexes *Indexes,
-                              bool IsVerbose) const {
+                              bool IsStandalone) const {
   const MachineFunction *MF = getParent();
   if (!MF) {
     OS << "Can't print out MachineBasicBlock because parent MachineFunction"
@@ -331,7 +331,7 @@ void MachineBasicBlock::print(raw_ostream &OS, ModuleSlotTracker &MST,
     OS << '\t';
     if (I.isInsideBundle())
       OS << "  * ";
-    I.print(OS, MST, IsVerbose);
+    I.print(OS, MST, IsStandalone);
   }
 
   // Print the successors of this block according to the CFG.

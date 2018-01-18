@@ -726,9 +726,9 @@ public:
   // Debugging methods.
   void dump() const;
   void print(raw_ostream &OS, const SlotIndexes * = nullptr,
-             bool IsVerbose = true) const;
+             bool IsStandalone = true) const;
   void print(raw_ostream &OS, ModuleSlotTracker &MST,
-             const SlotIndexes * = nullptr, bool IsVerbose = true) const;
+             const SlotIndexes * = nullptr, bool IsStandalone = true) const;
 
   // Printing method used by LoopInfo.
   void printAsOperand(raw_ostream &OS, bool PrintType = true) const;

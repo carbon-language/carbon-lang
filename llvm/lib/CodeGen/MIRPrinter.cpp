@@ -768,7 +768,7 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
     if (ShouldPrintRegisterTies && Op.isReg() && Op.isTied() && !Op.isDef())
       TiedOperandIdx = Op.getParent()->findTiedOperandIdx(OpIdx);
     const TargetIntrinsicInfo *TII = MI.getMF()->getTarget().getIntrinsicInfo();
-    Op.print(OS, MST, TypeToPrint, PrintDef, /*IsVerbose=*/false,
+    Op.print(OS, MST, TypeToPrint, PrintDef, /*IsStandalone=*/false,
              ShouldPrintRegisterTies, TiedOperandIdx, TRI, TII);
     break;
   }

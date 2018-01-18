@@ -524,7 +524,7 @@ void MachineFunction::print(raw_ostream &OS, const SlotIndexes *Indexes) const {
     OS << '\n';
     // If we print the whole function, don't print any verbose information,
     // since that information is already present.
-    BB.print(OS, MST, Indexes, /*IsVerbose=*/false);
+    BB.print(OS, MST, Indexes, /*IsStandalone=*/false);
   }
 
   OS << "\n# End machine code for function " << getName() << ".\n\n";

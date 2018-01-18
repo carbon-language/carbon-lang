@@ -270,7 +270,7 @@ public:
   /// \param PrintDef - whether we want to print `def` on an operand which
   /// isDef. Sometimes, if the operand is printed before '=', we don't print
   /// `def`.
-  /// \param IsVerbose - whether we want a verbose output of the MO. This
+  /// \param IsStandalone - whether we want a verbose output of the MO. This
   /// prints extra information that can be easily inferred when printing the
   /// whole function, but not when printing only a fragment of it.
   /// \param ShouldPrintRegisterTies - whether we want to print register ties.
@@ -283,7 +283,7 @@ public:
   /// information from it's parent.
   /// \param IntrinsicInfo - same as \p TRI.
   void print(raw_ostream &os, ModuleSlotTracker &MST, LLT TypeToPrint,
-             bool PrintDef, bool IsVerbose, bool ShouldPrintRegisterTies,
+             bool PrintDef, bool IsStandalone, bool ShouldPrintRegisterTies,
              unsigned TiedOperandIdx, const TargetRegisterInfo *TRI,
              const TargetIntrinsicInfo *IntrinsicInfo) const;
 
