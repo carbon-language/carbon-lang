@@ -19,6 +19,7 @@
 #include "polly/ScopDetection.h"
 #include "polly/ScopDetectionDiagnostic.h"
 #include "polly/ScopInfo.h"
+#include "polly/Support/GICHelper.h"
 #include "polly/Support/SCEVValidator.h"
 #include "polly/Support/ScopHelper.h"
 #include "polly/Support/VirtualInstruction.h"
@@ -688,6 +689,28 @@ bool ScopBuilder::shouldModelInst(Instruction *Inst, Loop *L) {
          !canSynthesize(Inst, *scop, &SE, L);
 }
 
+/// Generate a name for a statement.
+///
+/// @param S     The parent SCoP.
+/// @param BB    The basic block the statement will represent.
+/// @param Count The index of the created statement in @p BB.
+static std::string makeStmtName(Scop *S, BasicBlock *BB, int Count) {
+  std::string Suffix = "";
+  if (Count != 0)
+    Suffix += std::to_string(Count);
+  return getIslCompatibleName("Stmt", BB, S->getNextStmtIdx(), Suffix,
+                              UseInstructionNames);
+}
+
+/// Generate a name for a statement that represents a non-affine subregion.
+///
+/// @param S The parent SCoP.
+/// @param R The region the statement will represent.
+static std::string makeStmtName(Scop *S, Region *R) {
+  return getIslCompatibleName("Stmt", R->getNameStr(), S->getNextStmtIdx(), "",
+                              UseInstructionNames);
+}
+
 void ScopBuilder::buildSequentialBlockStmts(BasicBlock *BB, bool SplitOnStore) {
   Loop *SurroundingLoop = LI.getLoopFor(BB);
 
@@ -698,13 +721,15 @@ void ScopBuilder::buildSequentialBlockStmts(BasicBlock *BB, bool SplitOnStore) {
       Instructions.push_back(&Inst);
     if (Inst.getMetadata("polly_split_after") ||
         (SplitOnStore && isa<StoreInst>(Inst))) {
-      scop->addScopStmt(BB, SurroundingLoop, Instructions, Count);
+      std::string Name = makeStmtName(scop.get(), BB, Count);
+      scop->addScopStmt(BB, Name, SurroundingLoop, Instructions);
       Count++;
       Instructions.clear();
     }
   }
 
-  scop->addScopStmt(BB, SurroundingLoop, Instructions, Count);
+  std::string Name = makeStmtName(scop.get(), BB, Count);
+  scop->addScopStmt(BB, Name, SurroundingLoop, Instructions);
 }
 
 /// Is @p Inst an ordered instruction?
@@ -874,7 +899,8 @@ void ScopBuilder::buildEqivClassBlockStmts(BasicBlock *BB) {
   for (auto &Instructions : reverse(LeaderToInstList)) {
     std::vector<Instruction *> &InstList = Instructions.second;
     std::reverse(InstList.begin(), InstList.end());
-    scop->addScopStmt(BB, L, std::move(InstList), Count);
+    std::string Name = makeStmtName(scop.get(), BB, Count);
+    scop->addScopStmt(BB, Name, L, std::move(InstList));
     Count += 1;
   }
 }
@@ -887,7 +913,8 @@ void ScopBuilder::buildStmts(Region &SR) {
     for (Instruction &Inst : *SR.getEntry())
       if (shouldModelInst(&Inst, SurroundingLoop))
         Instructions.push_back(&Inst);
-    scop->addScopStmt(&SR, SurroundingLoop, Instructions);
+    std::string Name = makeStmtName(scop.get(), &SR);
+    scop->addScopStmt(&SR, Name, SurroundingLoop, Instructions);
     return;
   }
 
