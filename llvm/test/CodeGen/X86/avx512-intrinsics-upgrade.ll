@@ -313,7 +313,7 @@ define void@test_int_x86_avx512_mask_storeu_d_512(i8* %ptr1, i8* %ptr2, <16 x i3
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    kmovw %edx, %k1
 ; CHECK-NEXT:    vmovdqu32 %zmm0, (%rdi) {%k1}
-; CHECK-NEXT:    vmovdqu32 %zmm0, (%rsi)
+; CHECK-NEXT:    vmovdqu64 %zmm0, (%rsi)
 ; CHECK-NEXT:    retq
   call void @llvm.x86.avx512.mask.storeu.d.512(i8* %ptr1, <16 x i32> %x1, i16 %x2)
   call void @llvm.x86.avx512.mask.storeu.d.512(i8* %ptr2, <16 x i32> %x1, i16 -1)
