@@ -691,23 +691,31 @@ bool ScopBuilder::shouldModelInst(Instruction *Inst, Loop *L) {
 
 /// Generate a name for a statement.
 ///
-/// @param S     The parent SCoP.
-/// @param BB    The basic block the statement will represent.
-/// @param Count The index of the created statement in @p BB.
-static std::string makeStmtName(Scop *S, BasicBlock *BB, int Count) {
-  std::string Suffix = "";
-  if (Count != 0)
-    Suffix += std::to_string(Count);
-  return getIslCompatibleName("Stmt", BB, S->getNextStmtIdx(), Suffix,
-                              UseInstructionNames);
+/// @param BB     The basic block the statement will represent.
+/// @param BBIdx  The index of the @p BB relative to other BBs/regions.
+/// @param Count  The index of the created statement in @p BB.
+/// @param IsMain Whether this is the main of all statement for @p BB. If true,
+///               no suffix will be added.
+static std::string makeStmtName(BasicBlock *BB, long BBIdx, int Count,
+                                bool IsMain) {
+  std::string Suffix;
+  if (!IsMain) {
+    if (UseInstructionNames)
+      Suffix = '_';
+    if (Count < 26)
+      Suffix += 'a' + Count;
+    else
+      Suffix += std::to_string(Count);
+  }
+  return getIslCompatibleName("Stmt", BB, BBIdx, Suffix, UseInstructionNames);
 }
 
 /// Generate a name for a statement that represents a non-affine subregion.
 ///
-/// @param S The parent SCoP.
-/// @param R The region the statement will represent.
-static std::string makeStmtName(Scop *S, Region *R) {
-  return getIslCompatibleName("Stmt", R->getNameStr(), S->getNextStmtIdx(), "",
+/// @param R    The region the statement will represent.
+/// @param RIdx The index of the @p R relative to other BBs/regions.
+static std::string makeStmtName(Region *R, long RIdx) {
+  return getIslCompatibleName("Stmt", R->getNameStr(), RIdx, "",
                               UseInstructionNames);
 }
 
@@ -715,20 +723,21 @@ void ScopBuilder::buildSequentialBlockStmts(BasicBlock *BB, bool SplitOnStore) {
   Loop *SurroundingLoop = LI.getLoopFor(BB);
 
   int Count = 0;
+  long BBIdx = scop->getNextStmtIdx();
   std::vector<Instruction *> Instructions;
   for (Instruction &Inst : *BB) {
     if (shouldModelInst(&Inst, SurroundingLoop))
       Instructions.push_back(&Inst);
     if (Inst.getMetadata("polly_split_after") ||
         (SplitOnStore && isa<StoreInst>(Inst))) {
-      std::string Name = makeStmtName(scop.get(), BB, Count);
+      std::string Name = makeStmtName(BB, BBIdx, Count, Count == 0);
       scop->addScopStmt(BB, Name, SurroundingLoop, Instructions);
       Count++;
       Instructions.clear();
     }
   }
 
-  std::string Name = makeStmtName(scop.get(), BB, Count);
+  std::string Name = makeStmtName(BB, BBIdx, Count, Count == 0);
   scop->addScopStmt(BB, Name, SurroundingLoop, Instructions);
 }
 
@@ -853,11 +862,21 @@ void ScopBuilder::buildEqivClassBlockStmts(BasicBlock *BB) {
   // shouldModelInst() repeatedly.
   SmallVector<Instruction *, 32> ModeledInsts;
   EquivalenceClasses<Instruction *> UnionFind;
+  Instruction *MainInst = nullptr;
   for (Instruction &Inst : *BB) {
     if (!shouldModelInst(&Inst, L))
       continue;
     ModeledInsts.push_back(&Inst);
     UnionFind.insert(&Inst);
+
+    // When a BB is split into multiple statements, the main statement is the
+    // one containing the 'main' instruction. We select the first instruction
+    // that is unlikely to be removed (because it has side-effects) as the main
+    // one. It is used to ensure that at least one statement from the bb has the
+    // same name as with -polly-stmt-granularity=bb.
+    if (!MainInst && (isa<StoreInst>(Inst) ||
+                      (isa<CallInst>(Inst) && !isa<IntrinsicInst>(Inst))))
+      MainInst = &Inst;
   }
 
   // 'nullptr' represents the last statement for a basic block. It contains no
@@ -896,10 +915,20 @@ void ScopBuilder::buildEqivClassBlockStmts(BasicBlock *BB) {
 
   // Finally build the statements.
   int Count = 0;
+  long BBIdx = scop->getNextStmtIdx();
   for (auto &Instructions : reverse(LeaderToInstList)) {
     std::vector<Instruction *> &InstList = Instructions.second;
+
+    // If there is no main instruction, make the first statement the main.
+    bool IsMain;
+    if (MainInst)
+      IsMain = std::find(InstList.begin(), InstList.end(), MainInst) !=
+               InstList.end();
+    else
+      IsMain = (Count == 0);
+
     std::reverse(InstList.begin(), InstList.end());
-    std::string Name = makeStmtName(scop.get(), BB, Count);
+    std::string Name = makeStmtName(BB, BBIdx, Count, IsMain);
     scop->addScopStmt(BB, Name, L, std::move(InstList));
     Count += 1;
   }
@@ -913,7 +942,8 @@ void ScopBuilder::buildStmts(Region &SR) {
     for (Instruction &Inst : *SR.getEntry())
       if (shouldModelInst(&Inst, SurroundingLoop))
         Instructions.push_back(&Inst);
-    std::string Name = makeStmtName(scop.get(), &SR);
+    long RIdx = scop->getNextStmtIdx();
+    std::string Name = makeStmtName(&SR, RIdx);
     scop->addScopStmt(&SR, Name, SurroundingLoop, Instructions);
     return;
   }
