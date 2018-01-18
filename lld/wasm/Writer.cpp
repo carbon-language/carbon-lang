@@ -659,9 +659,12 @@ void Writer::calculateExports() {
   }
 
   for (const Symbol *Sym : DefinedGlobals) {
-    // Can't export the SP right now because it's mutable and mutable globals
-    // cannot be exported.
-    if (Sym == Config->StackPointerSymbol)
+    // Can't export the SP right now because its mutable, and mutuable globals
+    // are yet supported in the official binary format.  However, for
+    // intermediate output we need to export it in case it is the target of any
+    // relocations.
+    // TODO(sbc): Remove this if/when the "mutable global" proposal is accepted.
+    if (Sym == Config->StackPointerSymbol && !Config->EmitRelocs)
       continue;
     ExportedSymbols.emplace_back(WasmExportEntry{Sym, BudgeLocalName(Sym)});
   }
