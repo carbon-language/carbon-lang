@@ -81,6 +81,7 @@
 #include <clc/math/half_rsqrt.h>
 #include <clc/math/half_sin.h>
 #include <clc/math/half_sqrt.h>
+#include <clc/math/half_tan.h>
 #include <clc/math/hypot.h>
 #include <clc/math/ilogb.h>
 #include <clc/math/ldexp.h>
