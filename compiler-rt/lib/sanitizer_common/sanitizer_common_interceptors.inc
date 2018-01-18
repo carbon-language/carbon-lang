@@ -6588,7 +6588,8 @@ INTERCEPTOR(int, getgroupmembership, const char *name, u32 basegid, u32 *groups,
             int maxgrp, int *ngroups) {
   void *ctx;
   int res;
-  COMMON_INTERCEPTOR_ENTER(ctx, getgroupmembership, name, basegid, groups, maxgrp, ngroups);
+  COMMON_INTERCEPTOR_ENTER(ctx, getgroupmembership, name, basegid, groups,
+                           maxgrp, ngroups);
   if (name)
     COMMON_INTERCEPTOR_READ_RANGE(ctx, name, REAL(strlen)(name) + 1);
   res = REAL(getgroupmembership)(name, basegid, groups, maxgrp, ngroups);
