@@ -106,6 +106,7 @@ math/fract.cl
 math/frexp.cl
 math/half_cos.cl
 math/half_exp.cl
+math/half_exp10.cl
 math/half_exp2.cl
 math/half_rsqrt.cl
 math/half_sqrt.cl
