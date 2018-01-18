@@ -72,6 +72,7 @@
 #include <clc/math/frexp.h>
 #include <clc/math/half_cos.h>
 #include <clc/math/half_exp.h>
+#include <clc/math/half_exp2.h>
 #include <clc/math/half_rsqrt.h>
 #include <clc/math/half_sqrt.h>
 #include <clc/math/hypot.h>
