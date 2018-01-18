@@ -1229,8 +1229,8 @@ LLVM_DUMP_METHOD void MachineInstr::dump() const {
 }
 #endif
 
-void MachineInstr::print(raw_ostream &OS, bool SkipOpers, bool SkipDebugLoc,
-                         const TargetInstrInfo *TII) const {
+void MachineInstr::print(raw_ostream &OS, bool IsVerbose, bool SkipOpers,
+                         bool SkipDebugLoc, const TargetInstrInfo *TII) const {
   const Module *M = nullptr;
   const Function *F = nullptr;
   if (const MachineFunction *MF = getMFIfAvailable(*this)) {
@@ -1241,11 +1241,11 @@ void MachineInstr::print(raw_ostream &OS, bool SkipOpers, bool SkipDebugLoc,
   ModuleSlotTracker MST(M);
   if (F)
     MST.incorporateFunction(*F);
-  print(OS, MST, SkipOpers, SkipDebugLoc, TII);
+  print(OS, MST, IsVerbose, SkipOpers, SkipDebugLoc, TII);
 }
 
 void MachineInstr::print(raw_ostream &OS, ModuleSlotTracker &MST,
-                         bool SkipOpers, bool SkipDebugLoc,
+                         bool IsVerbose, bool SkipOpers, bool SkipDebugLoc,
                          const TargetInstrInfo *TII) const {
   // We can be a bit tidier if we know the MachineFunction.
   const MachineFunction *MF = nullptr;
@@ -1281,8 +1281,8 @@ void MachineInstr::print(raw_ostream &OS, ModuleSlotTracker &MST,
 
     LLT TypeToPrint = MRI ? getTypeToPrint(StartOp, PrintedTypes, *MRI) : LLT{};
     unsigned TiedOperandIdx = getTiedOperandIdx(StartOp);
-    MO.print(OS, MST, TypeToPrint, /*PrintDef=*/false, ShouldPrintRegisterTies,
-             TiedOperandIdx, TRI, IntrinsicInfo);
+    MO.print(OS, MST, TypeToPrint, /*PrintDef=*/false, IsVerbose,
+             ShouldPrintRegisterTies, TiedOperandIdx, TRI, IntrinsicInfo);
     ++StartOp;
   }
 
@@ -1314,7 +1314,7 @@ void MachineInstr::print(raw_ostream &OS, ModuleSlotTracker &MST,
     const unsigned OpIdx = InlineAsm::MIOp_AsmString;
     LLT TypeToPrint = MRI ? getTypeToPrint(OpIdx, PrintedTypes, *MRI) : LLT{};
     unsigned TiedOperandIdx = getTiedOperandIdx(OpIdx);
-    getOperand(OpIdx).print(OS, MST, TypeToPrint, /*PrintDef=*/true,
+    getOperand(OpIdx).print(OS, MST, TypeToPrint, /*PrintDef=*/true, IsVerbose,
                             ShouldPrintRegisterTies, TiedOperandIdx, TRI,
                             IntrinsicInfo);
 
@@ -1353,7 +1353,7 @@ void MachineInstr::print(raw_ostream &OS, ModuleSlotTracker &MST,
       else {
         LLT TypeToPrint = MRI ? getTypeToPrint(i, PrintedTypes, *MRI) : LLT{};
         unsigned TiedOperandIdx = getTiedOperandIdx(i);
-        MO.print(OS, MST, TypeToPrint, /*PrintDef=*/true,
+        MO.print(OS, MST, TypeToPrint, /*PrintDef=*/true, IsVerbose,
                  ShouldPrintRegisterTies, TiedOperandIdx, TRI, IntrinsicInfo);
       }
     } else if (i == AsmDescOp && MO.isImm()) {
@@ -1420,7 +1420,7 @@ void MachineInstr::print(raw_ostream &OS, ModuleSlotTracker &MST,
       if (MO.isImm() && isOperandSubregIdx(i))
         MachineOperand::printSubRegIdx(OS, MO.getImm(), TRI);
       else
-        MO.print(OS, MST, TypeToPrint, /*PrintDef=*/true,
+        MO.print(OS, MST, TypeToPrint, /*PrintDef=*/true, IsVerbose,
                  ShouldPrintRegisterTies, TiedOperandIdx, TRI, IntrinsicInfo);
     }
   }
