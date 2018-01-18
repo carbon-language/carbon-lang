@@ -3192,19 +3192,20 @@ multiclass avx512_load<bits<8> opc, string OpcodeStr, MoveLoadStoreItins itins,
 
 multiclass avx512_alignedload_vl<bits<8> opc, string OpcodeStr,
                                   AVX512VLVectorVTInfo _,
-                                  Predicate prd> {
+                                  Predicate prd,
+                                  bit NoRMPattern = 0> {
   let Predicates = [prd] in
   defm Z : avx512_load<opc, OpcodeStr, SSE_MOVA, _.info512,
-                       _.info512.AlignedLdFrag, masked_load_aligned512>,
-                       EVEX_V512;
+                       _.info512.AlignedLdFrag, masked_load_aligned512,
+                       NoRMPattern>, EVEX_V512;
 
   let Predicates = [prd, HasVLX] in {
   defm Z256 : avx512_load<opc, OpcodeStr, SSE_MOVA, _.info256,
-                          _.info256.AlignedLdFrag, masked_load_aligned256>,
-                          EVEX_V256;
+                          _.info256.AlignedLdFrag, masked_load_aligned256,
+                          NoRMPattern>, EVEX_V256;
   defm Z128 : avx512_load<opc, OpcodeStr, SSE_MOVA, _.info128,
-                          _.info128.AlignedLdFrag, masked_load_aligned128>,
-                          EVEX_V128;
+                          _.info128.AlignedLdFrag, masked_load_aligned128,
+                          NoRMPattern>, EVEX_V128;
   }
 }
 
@@ -3324,7 +3325,7 @@ defm VMOVUPD : avx512_load_vl<0x10, "vmovupd", avx512vl_f64_info, HasAVX512,
                PD, VEX_W, EVEX_CD8<64, CD8VF>;
 
 defm VMOVDQA32 : avx512_alignedload_vl<0x6F, "vmovdqa32", avx512vl_i32_info,
-                                       HasAVX512>,
+                                       HasAVX512, 1>,
                  avx512_alignedstore_vl<0x7F, "vmovdqa32", avx512vl_i32_info,
                                        HasAVX512, "VMOVDQA32">,
                  PD, EVEX_CD8<32, CD8VF>;
@@ -3346,7 +3347,7 @@ defm VMOVDQU16 : avx512_load_vl<0x6F, "vmovdqu16", avx512vl_i16_info, HasBWI, 1>
                  XD, VEX_W, EVEX_CD8<16, CD8VF>;
 
 defm VMOVDQU32 : avx512_load_vl<0x6F, "vmovdqu32", avx512vl_i32_info, HasAVX512,
-                                0, null_frag>,
+                                1, null_frag>,
                  avx512_store_vl<0x7F, "vmovdqu32", avx512vl_i32_info,
                                  HasAVX512, "VMOVDQU32">,
                  XS, EVEX_CD8<32, CD8VF>;
