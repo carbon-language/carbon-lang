@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <cassert>
 #include <new>
+#include <cstring>
 #include <utility>
 
 namespace llvm {
@@ -117,10 +118,16 @@ template <typename T> struct OptionalStorage<T, true> {
 
   OptionalStorage() = default;
 
-  OptionalStorage(const T &y) : hasVal(true) { new (storage.buffer) T(y); }
+  OptionalStorage(const T &y) : hasVal(true) {
+    // We use memmove here because we know that T is trivially copyable and GCC
+    // up to 7 miscompiles placement new.
+    std::memmove(storage.buffer, &y, sizeof(y));
+  }
   OptionalStorage &operator=(const T &y) {
-    new (storage.buffer) T(y);
     hasVal = true;
+    // We use memmove here because we know that T is trivially copyable and GCC
+    // up to 7 miscompiles placement new.
+    std::memmove(storage.buffer, &y, sizeof(y));
     return *this;
   }
 
