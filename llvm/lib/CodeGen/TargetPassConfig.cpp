@@ -711,16 +711,11 @@ bool TargetPassConfig::addCoreISelPasses() {
     TM->setFastISel(true);
 
   // Ask the target for an instruction selector.
-  bool EnableGlobalISel = TM->Options.EnableGlobalISel;
   // Explicitly enabling fast-isel should override implicitly enabled
   // global-isel.
-  if (EnableGlobalISel && (EnableGlobalISelOption == cl::BOU_UNSET) &&
-      (EnableFastISelOption == cl::BOU_TRUE))
-    EnableGlobalISel = false;
-  if (EnableGlobalISelOption == cl::BOU_TRUE)
-    EnableGlobalISel = true;
-
-  if (EnableGlobalISel) {
+  if (EnableGlobalISelOption == cl::BOU_TRUE ||
+      (EnableGlobalISelOption == cl::BOU_UNSET &&
+       TM->Options.EnableGlobalISel && EnableFastISelOption != cl::BOU_TRUE)) {
     if (addIRTranslator())
       return true;
 
