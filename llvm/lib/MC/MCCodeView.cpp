@@ -76,6 +76,14 @@ bool CodeViewContext::addFile(MCStreamer &OS, unsigned FileNumber,
   return true;
 }
 
+MCCVFunctionInfo *CodeViewContext::getCVFunctionInfo(unsigned FuncId) {
+  if (FuncId >= Functions.size())
+    return nullptr;
+  if (Functions[FuncId].isUnallocatedFunctionInfo())
+    return nullptr;
+  return &Functions[FuncId];
+}
+
 bool CodeViewContext::recordFunctionId(unsigned FuncId) {
   if (FuncId >= Functions.size())
     Functions.resize(FuncId + 1);
@@ -245,6 +253,43 @@ void CodeViewContext::emitFileChecksumOffset(MCObjectStreamer &OS,
       MCSymbolRefExpr::create(Files[Idx].ChecksumTableOffset, OS.getContext());
 
   OS.EmitValueImpl(SRE, 4);
+}
+
+void CodeViewContext::addLineEntry(const MCCVLineEntry &LineEntry) {
+  size_t Offset = MCCVLines.size();
+  auto I = MCCVLineStartStop.insert(
+      {LineEntry.getFunctionId(), {Offset, Offset + 1}});
+  if (!I.second)
+    I.first->second.second = Offset + 1;
+  MCCVLines.push_back(LineEntry);
+}
+
+std::vector<MCCVLineEntry>
+CodeViewContext::getFunctionLineEntries(unsigned FuncId) {
+  std::vector<MCCVLineEntry> FilteredLines;
+  auto I = MCCVLineStartStop.find(FuncId);
+  if (I != MCCVLineStartStop.end())
+    for (size_t Idx = I->second.first, End = I->second.second; Idx != End;
+         ++Idx)
+      if (MCCVLines[Idx].getFunctionId() == FuncId)
+        FilteredLines.push_back(MCCVLines[Idx]);
+  return FilteredLines;
+}
+
+std::pair<size_t, size_t> CodeViewContext::getLineExtent(unsigned FuncId) {
+  auto I = MCCVLineStartStop.find(FuncId);
+  // Return an empty extent if there are no cv_locs for this function id.
+  if (I == MCCVLineStartStop.end())
+    return {~0ULL, 0};
+  return I->second;
+}
+
+ArrayRef<MCCVLineEntry> CodeViewContext::getLinesForExtent(size_t L, size_t R) {
+  if (R <= L)
+    return None;
+  if (L >= MCCVLines.size())
+    return None;
+  return makeArrayRef(&MCCVLines[L], R - L);
 }
 
 void CodeViewContext::emitLineTableForFunction(MCObjectStreamer &OS,
