@@ -467,6 +467,9 @@ template <class ELFT>
 void MIPS<ELFT>::relocateOne(uint8_t *Loc, RelType Type, uint64_t Val) const {
   const endianness E = ELFT::TargetEndianness;
 
+  if (ELFT::Is64Bits || Config->MipsN32Abi)
+    std::tie(Type, Val) = calculateMipsRelChain(Loc, Type, Val);
+
   // Thread pointer and DRP offsets from the start of TLS data area.
   // https://www.linux-mips.org/wiki/NPTL
   if (Type == R_MIPS_TLS_DTPREL_HI16 || Type == R_MIPS_TLS_DTPREL_LO16 ||
@@ -480,9 +483,6 @@ void MIPS<ELFT>::relocateOne(uint8_t *Loc, RelType Type, uint64_t Val) const {
              Type == R_MICROMIPS_TLS_TPREL_LO16) {
     Val -= 0x7000;
   }
-
-  if (ELFT::Is64Bits || Config->MipsN32Abi)
-    std::tie(Type, Val) = calculateMipsRelChain(Loc, Type, Val);
 
   switch (Type) {
   case R_MIPS_32:
