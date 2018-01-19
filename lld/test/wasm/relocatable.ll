@@ -229,6 +229,8 @@ entry:
 ; CHECK-NEXT:     Name:            linking
 ; CHECK-NEXT:     DataSize:        31
 ; CHECK-NEXT:     SymbolInfo:
+; CHECK-NEXT:       - Name:            bar_import
+; CHECK-NEXT:         Flags:           [ BINDING_WEAK ]
 ; CHECK-NEXT:       - Name:            hello
 ; CHECK-NEXT:         Flags:           [ VISIBILITY_HIDDEN ]
 ; CHECK-NEXT:       - Name:            my_func
