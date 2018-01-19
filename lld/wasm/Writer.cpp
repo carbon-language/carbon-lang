@@ -596,7 +596,7 @@ void Writer::createSections() {
 
 void Writer::calculateImports() {
   for (Symbol *Sym : Symtab->getSymbols()) {
-    if (!Sym->isUndefined() || Sym->isWeak())
+    if (!Sym->isUndefined() || (Sym->isWeak() && !Config->EmitRelocs))
       continue;
 
     if (Sym->isFunction()) {
