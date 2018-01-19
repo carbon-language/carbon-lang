@@ -440,9 +440,8 @@ namespace {
     }
 
     bool foldLoadStoreIntoMemOperand(SDNode *Node);
-
     bool matchBEXTRFromAnd(SDNode *Node);
-
+    bool shrinkAndImmediate(SDNode *N);
     bool isMaskZeroExtended(SDNode *N) const;
   };
 }
@@ -2460,6 +2459,60 @@ bool X86DAGToDAGISel::matchBEXTRFromAnd(SDNode *Node) {
   return true;
 }
 
+/// If the high bits of an 'and' operand are known zero, try setting the
+/// high bits of an 'and' constant operand to produce a smaller encoding by
+/// creating a small, sign-extended negative immediate rather than a large
+/// positive one. This reverses a transform in SimplifyDemandedBits that
+/// shrinks mask constants by clearing bits. There is also a possibility that
+/// the 'and' mask can be made -1, so the 'and' itself is unnecessary. In that
+/// case, just replace the 'and'. Return 'true' if the node is replaced.
+bool X86DAGToDAGISel::shrinkAndImmediate(SDNode *And) {
+  // i8 is unshrinkable, i16 should be promoted to i32, and vector ops don't
+  // have immediate operands.
+  MVT VT = And->getSimpleValueType(0);
+  if (VT != MVT::i32 && VT != MVT::i64)
+    return false;
+
+  auto *And1C = dyn_cast<ConstantSDNode>(And->getOperand(1));
+  if (!And1C)
+    return false;
+
+  // Bail out if the mask constant is already negative. It can't shrink more.
+  APInt MaskVal = And1C->getAPIntValue();
+  unsigned MaskLZ = MaskVal.countLeadingZeros();
+  if (!MaskLZ)
+    return false;
+
+  SDValue And0 = And->getOperand(0);
+  APInt HighZeros = APInt::getHighBitsSet(VT.getSizeInBits(), MaskLZ);
+  APInt NegMaskVal = MaskVal | HighZeros;
+
+  // If a negative constant would not allow a smaller encoding, there's no need
+  // to continue. Only change the constant when we know it's a win.
+  unsigned MinWidth = NegMaskVal.getMinSignedBits();
+  if (MinWidth > 32 || (MinWidth > 8 && MaskVal.getMinSignedBits() <= 32))
+    return false;
+
+  // The variable operand must be all zeros in the top bits to allow using the
+  // new, negative constant as the mask.
+  if (!CurDAG->MaskedValueIsZero(And0, HighZeros))
+    return false;
+
+  // Check if the mask is -1. In that case, this is an unnecessary instruction
+  // that escaped earlier analysis.
+  if (NegMaskVal.isAllOnesValue()) {
+    ReplaceNode(And, And0.getNode());
+    return true;
+  }
+
+  // A negative mask allows a smaller encoding. Create a new 'and' node.
+  SDValue NewMask = CurDAG->getConstant(NegMaskVal, SDLoc(And), VT);
+  SDValue NewAnd = CurDAG->getNode(ISD::AND, SDLoc(And), VT, And0, NewMask);
+  ReplaceNode(And, NewAnd.getNode());
+  SelectCode(NewAnd.getNode());
+  return true;
+}
+
 void X86DAGToDAGISel::Select(SDNode *Node) {
   MVT NVT = Node->getSimpleValueType(0);
   unsigned Opc, MOpc;
@@ -2514,8 +2567,9 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
   }
 
   case ISD::AND:
-    // Try to match BEXTR/BEXTRI instruction.
     if (matchBEXTRFromAnd(Node))
+      return;
+    if (shrinkAndImmediate(Node))
       return;
 
     LLVM_FALLTHROUGH;
