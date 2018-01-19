@@ -196,7 +196,7 @@ public:
     return mapError(IndirectStubsMgr->updatePointer(Name, Addr));
   }
 
-  std::shared_ptr<LegacyJITSymbolResolver>
+  std::shared_ptr<JITSymbolResolver>
   createResolver(LLVMOrcSymbolResolverFn ExternalResolver,
                  void *ExternalResolverCtx) {
     return orc::createLambdaResolver(

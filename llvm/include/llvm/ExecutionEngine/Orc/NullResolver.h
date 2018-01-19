@@ -22,7 +22,7 @@ namespace orc {
 
 /// SymbolResolver impliementation that rejects all resolution requests.
 /// Useful for clients that have no cross-object fixups.
-class NullResolver : public LegacyJITSymbolResolver {
+class NullResolver : public JITSymbolResolver {
 public:
   JITSymbol findSymbol(const std::string &Name) final;
 
