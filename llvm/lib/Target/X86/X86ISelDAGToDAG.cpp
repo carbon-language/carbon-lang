@@ -2177,7 +2177,9 @@ bool X86DAGToDAGISel::foldLoadStoreIntoMemOperand(SDNode *Node) {
   case X86ISD::INC:
   case X86ISD::DEC:
   case X86ISD::ADD:
+  case X86ISD::ADC:
   case X86ISD::SUB:
+  case X86ISD::SBB:
   case X86ISD::AND:
   case X86ISD::OR:
   case X86ISD::XOR:
@@ -2225,7 +2227,9 @@ bool X86DAGToDAGISel::foldLoadStoreIntoMemOperand(SDNode *Node) {
     break;
   }
   case X86ISD::ADD:
+  case X86ISD::ADC:
   case X86ISD::SUB:
+  case X86ISD::SBB:
   case X86ISD::AND:
   case X86ISD::OR:
   case X86ISD::XOR: {
@@ -2234,9 +2238,15 @@ bool X86DAGToDAGISel::foldLoadStoreIntoMemOperand(SDNode *Node) {
       case X86ISD::ADD:
         return SelectOpcode(X86::ADD64mr, X86::ADD32mr, X86::ADD16mr,
                             X86::ADD8mr);
+      case X86ISD::ADC:
+        return SelectOpcode(X86::ADC64mr, X86::ADC32mr, X86::ADC16mr,
+                            X86::ADC8mr);
       case X86ISD::SUB:
         return SelectOpcode(X86::SUB64mr, X86::SUB32mr, X86::SUB16mr,
                             X86::SUB8mr);
+      case X86ISD::SBB:
+        return SelectOpcode(X86::SBB64mr, X86::SBB32mr, X86::SBB16mr,
+                            X86::SBB8mr);
       case X86ISD::AND:
         return SelectOpcode(X86::AND64mr, X86::AND32mr, X86::AND16mr,
                             X86::AND8mr);
@@ -2253,8 +2263,12 @@ bool X86DAGToDAGISel::foldLoadStoreIntoMemOperand(SDNode *Node) {
       switch (Opc) {
       case X86ISD::ADD:
         return SelectOpcode(X86::ADD64mi8, X86::ADD32mi8, X86::ADD16mi8, 0);
+      case X86ISD::ADC:
+        return SelectOpcode(X86::ADC64mi8, X86::ADC32mi8, X86::ADC16mi8, 0);
       case X86ISD::SUB:
         return SelectOpcode(X86::SUB64mi8, X86::SUB32mi8, X86::SUB16mi8, 0);
+      case X86ISD::SBB:
+        return SelectOpcode(X86::SBB64mi8, X86::SBB32mi8, X86::SBB16mi8, 0);
       case X86ISD::AND:
         return SelectOpcode(X86::AND64mi8, X86::AND32mi8, X86::AND16mi8, 0);
       case X86ISD::OR:
@@ -2270,9 +2284,15 @@ bool X86DAGToDAGISel::foldLoadStoreIntoMemOperand(SDNode *Node) {
       case X86ISD::ADD:
         return SelectOpcode(X86::ADD64mi32, X86::ADD32mi, X86::ADD16mi,
                             X86::ADD8mi);
+      case X86ISD::ADC:
+        return SelectOpcode(X86::ADC64mi32, X86::ADC32mi, X86::ADC16mi,
+                            X86::ADC8mi);
       case X86ISD::SUB:
         return SelectOpcode(X86::SUB64mi32, X86::SUB32mi, X86::SUB16mi,
                             X86::SUB8mi);
+      case X86ISD::SBB:
+        return SelectOpcode(X86::SBB64mi32, X86::SBB32mi, X86::SBB16mi,
+                            X86::SBB8mi);
       case X86ISD::AND:
         return SelectOpcode(X86::AND64mi32, X86::AND32mi, X86::AND16mi,
                             X86::AND8mi);
@@ -2320,10 +2340,21 @@ bool X86DAGToDAGISel::foldLoadStoreIntoMemOperand(SDNode *Node) {
       }
     }
 
-    const SDValue Ops[] = {Base,    Scale,   Index,     Disp,
-                           Segment, Operand, InputChain};
-    Result =
-        CurDAG->getMachineNode(NewOpc, SDLoc(Node), MVT::i32, MVT::Other, Ops);
+    if (Opc == X86ISD::ADC || Opc == X86ISD::SBB) {
+      SDValue CopyTo =
+          CurDAG->getCopyToReg(InputChain, SDLoc(Node), X86::EFLAGS,
+                               StoredVal.getOperand(2), SDValue());
+
+      const SDValue Ops[] = {Base,    Scale,   Index,  Disp,
+                             Segment, Operand, CopyTo, CopyTo.getValue(1)};
+      Result = CurDAG->getMachineNode(NewOpc, SDLoc(Node), MVT::i32, MVT::Other,
+                                      Ops);
+    } else {
+      const SDValue Ops[] = {Base,    Scale,   Index,     Disp,
+                             Segment, Operand, InputChain};
+      Result = CurDAG->getMachineNode(NewOpc, SDLoc(Node), MVT::i32, MVT::Other,
+                                      Ops);
+    }
     break;
   }
   default:
