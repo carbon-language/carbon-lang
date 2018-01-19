@@ -5496,6 +5496,30 @@ SDValue SystemZTargetLowering::PerformDAGCombine(SDNode *N,
   return SDValue();
 }
 
+void
+SystemZTargetLowering::computeKnownBitsForTargetNode(const SDValue Op,
+                                                     KnownBits &Known,
+                                                     const APInt &DemandedElts,
+                                                     const SelectionDAG &DAG,
+                                                     unsigned Depth) const {
+  unsigned BitWidth = Known.getBitWidth();
+
+  Known.resetAll();
+  switch (Op.getOpcode()) {
+  case SystemZISD::SELECT_CCMASK: {
+    KnownBits TrueKnown(BitWidth), FalseKnown(BitWidth);
+    DAG.computeKnownBits(Op.getOperand(0), TrueKnown, Depth + 1);
+    DAG.computeKnownBits(Op.getOperand(1), FalseKnown, Depth + 1);
+    Known.Zero = TrueKnown.Zero & FalseKnown.Zero;
+    Known.One = TrueKnown.One & FalseKnown.One;
+    break;
+  }
+
+  default:
+    break;
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // Custom insertion
 //===----------------------------------------------------------------------===//
