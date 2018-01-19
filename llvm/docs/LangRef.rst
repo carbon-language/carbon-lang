@@ -10365,7 +10365,7 @@ pointer to the source. The third argument is an integer argument
 specifying the number of bytes to copy, and the fourth is a
 boolean indicating a volatile access.
 
-The :ref:`align <_attr_align>` parameter attribute can be provided
+The :ref:`align <attr_align>` parameter attribute can be provided
 for the first and second arguments.
 
 If the ``isvolatile`` parameter is ``true``, the ``llvm.memcpy`` call is
