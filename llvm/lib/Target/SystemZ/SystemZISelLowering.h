@@ -571,7 +571,9 @@ private:
                          bool Force) const;
   SDValue combineTruncateExtract(const SDLoc &DL, EVT TruncVT, SDValue Op,
                                  DAGCombinerInfo &DCI) const;
+  SDValue combineZERO_EXTEND(SDNode *N, DAGCombinerInfo &DCI) const;
   SDValue combineSIGN_EXTEND(SDNode *N, DAGCombinerInfo &DCI) const;
+  SDValue combineSIGN_EXTEND_INREG(SDNode *N, DAGCombinerInfo &DCI) const;
   SDValue combineMERGE(SDNode *N, DAGCombinerInfo &DCI) const;
   SDValue combineSTORE(SDNode *N, DAGCombinerInfo &DCI) const;
   SDValue combineEXTRACT_VECTOR_ELT(SDNode *N, DAGCombinerInfo &DCI) const;
