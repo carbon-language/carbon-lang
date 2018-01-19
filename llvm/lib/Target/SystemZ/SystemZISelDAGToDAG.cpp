@@ -1583,6 +1583,11 @@ SDValue SystemZDAGToDAGISel::expandSelectBoolean(SDNode *Node) {
 }
 
 void SystemZDAGToDAGISel::PreprocessISelDAG() {
+  // If we have conditional immediate loads, we always prefer
+  // using those over an IPM sequence.
+  if (Subtarget->hasLoadStoreOnCond2())
+    return;
+
   bool MadeChange = false;
 
   for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
