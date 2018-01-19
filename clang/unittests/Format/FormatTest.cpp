@@ -10429,13 +10429,15 @@ TEST_F(FormatTest, ParsesConfiguration) {
           FormatStyle::LK_TextProto,
           {"pb", "proto"},
           {"PARSE_TEXT_PROTO"},
+          /*CanonicalDelimiter=*/"",
           "llvm",
       },
       {
           FormatStyle::LK_Cpp,
           {"cc", "cpp"},
           {"C_CODEBLOCK", "CPPEVAL"},
-          "",
+          /*CanonicalDelimiter=*/"cc",
+          /*BasedOnStyle=*/"",
       },
   };
 
@@ -10453,7 +10455,8 @@ TEST_F(FormatTest, ParsesConfiguration) {
               "      - 'cpp'\n"
               "    EnclosingFunctions:\n"
               "      - 'C_CODEBLOCK'\n"
-              "      - 'CPPEVAL'\n",
+              "      - 'CPPEVAL'\n"
+              "    CanonicalDelimiter: 'cc'",
               RawStringFormats, ExpectedRawStringFormats);
 }
 
