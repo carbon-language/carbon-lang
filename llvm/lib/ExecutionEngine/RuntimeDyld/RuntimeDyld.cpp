@@ -216,7 +216,6 @@ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
       uint32_t Flags = Sym.getFlags();
       if ((Flags & SymbolRef::SF_Common) || (Flags & SymbolRef::SF_Weak)) {
         // Get symbol name.
-        StringRef Name;
         if (auto NameOrErr = Sym.getName())
           Symbols.insert(*NameOrErr);
         else
