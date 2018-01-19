@@ -2161,6 +2161,24 @@ static void adjustForTestUnderMask(SelectionDAG &DAG, const SDLoc &DL,
   C.CCMask = NewCCMask;
 }
 
+// See whether the comparison argument contains a redundant AND
+// and remove it if so.  This sometimes happens due to the generic
+// BRCOND expansion.
+static void adjustForRedundantAnd(SelectionDAG &DAG, const SDLoc &DL,
+                                  Comparison &C) {
+  if (C.Op0.getOpcode() != ISD::AND)
+    return;
+  auto *Mask = dyn_cast<ConstantSDNode>(C.Op0.getOperand(1));
+  if (!Mask)
+    return;
+  KnownBits Known;
+  DAG.computeKnownBits(C.Op0.getOperand(0), Known);
+  if ((~Known.Zero).getZExtValue() & ~Mask->getZExtValue())
+    return;
+
+  C.Op0 = C.Op0.getOperand(0);
+}
+
 // Return a Comparison that tests the condition-code result of intrinsic
 // node Call against constant integer CC using comparison code Cond.
 // Opcode is the opcode of the SystemZISD operation for the intrinsic
@@ -2235,6 +2253,7 @@ static Comparison getCmp(SelectionDAG &DAG, SDValue CmpOp0, SDValue CmpOp1,
     else
       C.ICmpType = SystemZICMP::SignedOnly;
     C.CCMask &= ~SystemZ::CCMASK_CMP_UO;
+    adjustForRedundantAnd(DAG, DL, C);
     adjustZeroCmp(DAG, DL, C);
     adjustSubwordCmp(DAG, DL, C);
     adjustForSubtraction(DAG, DL, C);
@@ -5409,6 +5428,109 @@ SDValue SystemZTargetLowering::combineSHIFTROT(
   return SDValue();
 }
 
+static bool combineCCMask(SDValue &Glue, int &CCValid, int &CCMask) {
+  // We have a SELECT_CCMASK or BR_CCMASK comparing the condition code
+  // set by the glued instruction using the CCValid / CCMask masks,
+  // If the glued instruction is itself a (ICMP (SELECT_CCMASK)) testing
+  // the condition code set by some other instruction, see whether we
+  // can directly use that condition code.
+  bool Invert = false;
+
+  // Verify that we have an appropriate mask for a EQ or NE comparison.
+  if (CCValid != SystemZ::CCMASK_ICMP)
+    return false;
+  if (CCMask == SystemZ::CCMASK_CMP_NE)
+    Invert = !Invert;
+  else if (CCMask != SystemZ::CCMASK_CMP_EQ)
+    return false;
+
+  // Verify that we have an ICMP that is the single user of a SELECT_CCMASK.
+  SDNode *ICmp = Glue.getNode();
+  if (ICmp->getOpcode() != SystemZISD::ICMP)
+    return false;
+  SDNode *Select = ICmp->getOperand(0).getNode();
+  if (Select->getOpcode() != SystemZISD::SELECT_CCMASK)
+    return false;
+  if (!Select->hasOneUse())
+    return false;
+
+  // Verify that the ICMP compares against one of select values.
+  auto *CompareVal = dyn_cast<ConstantSDNode>(ICmp->getOperand(1));
+  if (!CompareVal)
+    return false;
+  auto *TrueVal = dyn_cast<ConstantSDNode>(Select->getOperand(0));
+  if (!TrueVal)
+    return false;
+  auto *FalseVal = dyn_cast<ConstantSDNode>(Select->getOperand(1));
+  if (!FalseVal)
+    return false;
+  if (CompareVal->getZExtValue() == FalseVal->getZExtValue())
+    Invert = !Invert;
+  else if (CompareVal->getZExtValue() != TrueVal->getZExtValue())
+    return false;
+
+  // Compute the effective CC mask for the new branch or select.
+  auto *NewCCValid = dyn_cast<ConstantSDNode>(Select->getOperand(2));
+  auto *NewCCMask = dyn_cast<ConstantSDNode>(Select->getOperand(3));
+  if (!NewCCValid || !NewCCMask)
+    return false;
+  CCValid = NewCCValid->getZExtValue();
+  CCMask = NewCCMask->getZExtValue();
+  if (Invert)
+    CCMask ^= CCValid;
+
+  // Return the updated Glue link.
+  Glue = Select->getOperand(4);
+  return true;
+}
+
+SDValue SystemZTargetLowering::combineBR_CCMASK(
+    SDNode *N, DAGCombinerInfo &DCI) const {
+  SelectionDAG &DAG = DCI.DAG;
+
+  // Combine BR_CCMASK (ICMP (SELECT_CCMASK)) into a single BR_CCMASK.
+  auto *CCValid = dyn_cast<ConstantSDNode>(N->getOperand(1));
+  auto *CCMask = dyn_cast<ConstantSDNode>(N->getOperand(2));
+  if (!CCValid || !CCMask)
+    return SDValue();
+
+  int CCValidVal = CCValid->getZExtValue();
+  int CCMaskVal = CCMask->getZExtValue();
+  SDValue Glue = N->getOperand(4);
+
+  if (combineCCMask(Glue, CCValidVal, CCMaskVal))
+    return DAG.getNode(SystemZISD::BR_CCMASK, SDLoc(N), N->getValueType(0),
+                       N->getOperand(0),
+                       DAG.getConstant(CCValidVal, SDLoc(N), MVT::i32),
+                       DAG.getConstant(CCMaskVal, SDLoc(N), MVT::i32),
+                       N->getOperand(3), Glue);
+  return SDValue();
+}
+
+SDValue SystemZTargetLowering::combineSELECT_CCMASK(
+    SDNode *N, DAGCombinerInfo &DCI) const {
+  SelectionDAG &DAG = DCI.DAG;
+
+  // Combine SELECT_CCMASK (ICMP (SELECT_CCMASK)) into a single SELECT_CCMASK.
+  auto *CCValid = dyn_cast<ConstantSDNode>(N->getOperand(2));
+  auto *CCMask = dyn_cast<ConstantSDNode>(N->getOperand(3));
+  if (!CCValid || !CCMask)
+    return SDValue();
+
+  int CCValidVal = CCValid->getZExtValue();
+  int CCMaskVal = CCMask->getZExtValue();
+  SDValue Glue = N->getOperand(4);
+
+  if (combineCCMask(Glue, CCValidVal, CCMaskVal))
+    return DAG.getNode(SystemZISD::SELECT_CCMASK, SDLoc(N), N->getValueType(0),
+                       N->getOperand(0),
+                       N->getOperand(1),
+                       DAG.getConstant(CCValidVal, SDLoc(N), MVT::i32),
+                       DAG.getConstant(CCMaskVal, SDLoc(N), MVT::i32),
+                       Glue);
+  return SDValue();
+}
+
 SDValue SystemZTargetLowering::PerformDAGCombine(SDNode *N,
                                                  DAGCombinerInfo &DCI) const {
   switch(N->getOpcode()) {
@@ -5427,6 +5549,8 @@ SDValue SystemZTargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::SRA:
   case ISD::SRL:
   case ISD::ROTL:               return combineSHIFTROT(N, DCI);
+  case SystemZISD::BR_CCMASK:   return combineBR_CCMASK(N, DCI);
+  case SystemZISD::SELECT_CCMASK: return combineSELECT_CCMASK(N, DCI);
   }
 
   return SDValue();

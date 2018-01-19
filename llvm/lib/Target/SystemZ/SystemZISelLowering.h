@@ -581,6 +581,8 @@ private:
   SDValue combineFP_ROUND(SDNode *N, DAGCombinerInfo &DCI) const;
   SDValue combineBSWAP(SDNode *N, DAGCombinerInfo &DCI) const;
   SDValue combineSHIFTROT(SDNode *N, DAGCombinerInfo &DCI) const;
+  SDValue combineBR_CCMASK(SDNode *N, DAGCombinerInfo &DCI) const;
+  SDValue combineSELECT_CCMASK(SDNode *N, DAGCombinerInfo &DCI) const;
 
   // If the last instruction before MBBI in MBB was some form of COMPARE,
   // try to replace it with a COMPARE AND BRANCH just before MBBI.
