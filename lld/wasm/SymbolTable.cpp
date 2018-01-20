@@ -187,6 +187,7 @@ Symbol *SymbolTable::addDefined(StringRef Name, Symbol::Kind Kind,
 
 Symbol *SymbolTable::addUndefinedFunction(StringRef Name,
                                           const WasmSignature *Type) {
+  DEBUG(dbgs() << "addUndefinedFunction: " << Name << "\n");
   Symbol *S;
   bool WasInserted;
   std::tie(S, WasInserted) = insert(Name);
