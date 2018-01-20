@@ -282,10 +282,11 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   if (Config->Relocatable && Args.hasArg(OPT_undefined))
     error("undefined symbols specified for relocatable output file");
 
+  Symbol *EntrySym = nullptr;
   if (!Config->Relocatable) {
     static WasmSignature Signature = {{}, WASM_TYPE_NORESULT};
     if (!Config->Entry.empty())
-      Symtab->addUndefinedFunction(Config->Entry, &Signature);
+      EntrySym = Symtab->addUndefinedFunction(Config->Entry, &Signature);
 
     // Handle the `--undefined <sym>` options.
     for (auto* Arg : Args.filtered(OPT_undefined))
@@ -340,6 +341,9 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
     else
       Sym->setHidden(false);
   }
+
+  if (EntrySym)
+    EntrySym->setHidden(false);
 
   if (errorCount())
     return;
