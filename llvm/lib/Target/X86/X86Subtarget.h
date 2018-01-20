@@ -597,6 +597,17 @@ public:
 
   unsigned getPreferVectorWidth() const { return PreferVectorWidth; }
 
+  // Helper functions to determine when we should allow widening to 512-bit
+  // during codegen.
+  // TODO: Currently we're always allowing widening on CPUs without VLX,
+  // because for many cases we don't have a better option.
+  bool canExtendTo512DQ() const {
+    return hasAVX512() && (!hasVLX() || getPreferVectorWidth() >= 512);
+  }
+  bool canExtendTo512BW() const  {
+    return hasBWI() && canExtendTo512DQ();
+  }
+
   bool isXRaySupported() const override { return is64Bit(); }
 
   X86ProcFamilyEnum getProcFamily() const { return X86ProcFamily; }
