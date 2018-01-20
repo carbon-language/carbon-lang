@@ -1109,8 +1109,6 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     Builder.defineMacro("__XSAVES__");
   if (HasPKU)
     Builder.defineMacro("__PKU__");
-  if (HasCX16)
-    Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_16");
   if (HasCLFLUSHOPT)
     Builder.defineMacro("__CLFLUSHOPT__");
   if (HasCLWB)
@@ -1204,6 +1202,8 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   }
   if (CPU >= CK_i586)
     Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8");
+  if (HasCX16)
+    Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_16");
 
   if (HasFloat128)
     Builder.defineMacro("__SIZEOF_FLOAT128__", "16");
