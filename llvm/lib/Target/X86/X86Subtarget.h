@@ -359,6 +359,9 @@ protected:
   ///
   unsigned MaxInlineSizeThreshold;
 
+  /// Indicates target prefers 256 bit instructions.
+  bool Prefer256Bit;
+
   /// What processor and OS we're targeting.
   Triple TargetTriple;
 
@@ -374,6 +377,13 @@ protected:
 private:
   /// Override the stack alignment.
   unsigned StackAlignOverride;
+
+  /// Preferred vector width from function attribute.
+  unsigned PreferVectorWidthOverride;
+
+  /// Resolved preferred vector width from function attribute and subtarget
+  /// features.
+  unsigned PreferVectorWidth;
 
   /// True if compiling for 64-bit, false for 16-bit or 32-bit.
   bool In64BitMode;
@@ -400,7 +410,8 @@ public:
   /// of the specified triple.
   ///
   X86Subtarget(const Triple &TT, StringRef CPU, StringRef FS,
-               const X86TargetMachine &TM, unsigned StackAlignOverride);
+               const X86TargetMachine &TM, unsigned StackAlignOverride,
+               unsigned PreferVectorWidthOverride);
 
   const X86TargetLowering *getTargetLowering() const override {
     return &TLInfo;
@@ -583,6 +594,8 @@ public:
   bool hasCLFLUSHOPT() const { return HasCLFLUSHOPT; }
   bool hasCLWB() const { return HasCLWB; }
   bool hasRDPID() const { return HasRDPID; }
+
+  unsigned getPreferVectorWidth() const { return PreferVectorWidth; }
 
   bool isXRaySupported() const override { return is64Bit(); }
 
