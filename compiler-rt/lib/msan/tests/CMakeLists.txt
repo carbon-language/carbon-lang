@@ -128,8 +128,7 @@ if(COMPILER_RT_CAN_EXECUTE_TESTS AND COMPILER_RT_LIBCXX_PATH)
     set(LIBCXX_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/../libcxx_msan_${arch})
     add_custom_libcxx(libcxx_msan_${arch} ${LIBCXX_PREFIX}
       DEPS ${MSAN_RUNTIME_LIBRARIES}
-      CFLAGS ${MSAN_LIBCXX_CFLAGS} ${TARGET_CFLAGS}
-      USE_TOOLCHAIN)
+      CFLAGS ${MSAN_LIBCXX_CFLAGS} ${TARGET_CFLAGS})
     set(MSAN_LIBCXX_SO ${LIBCXX_PREFIX}/lib/libc++.so)
 
     add_msan_tests_for_arch(${arch} "" "")

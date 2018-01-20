@@ -469,40 +469,29 @@ macro(add_custom_libcxx name prefix)
     message(FATAL_ERROR "libcxx not found!")
   endif()
 
-  cmake_parse_arguments(LIBCXX "USE_TOOLCHAIN;NO_INSTALL" "" "DEPS;CFLAGS;CMAKE_ARGS" ${ARGN})
+  cmake_parse_arguments(LIBCXX "" "" "DEPS;CFLAGS;CMAKE_ARGS" ${ARGN})
   foreach(flag ${LIBCXX_CFLAGS})
     set(flagstr "${flagstr} ${flag}")
   endforeach()
   set(LIBCXX_CFLAGS ${flagstr})
 
-  if(LIBCXX_USE_TOOLCHAIN)
-    set(compiler_args -DCMAKE_C_COMPILER=${COMPILER_RT_TEST_COMPILER}
-                      -DCMAKE_CXX_COMPILER=${COMPILER_RT_TEST_CXX_COMPILER})
-    if(NOT COMPILER_RT_STANDALONE_BUILD)
-      set(force_deps DEPENDS clang)
-    endif()
-  endif()
-
-  if(CMAKE_SYSROOT)
-    set(sysroot_arg -DCMAKE_SYSROOT=${CMAKE_SYSROOT})
+  if(NOT COMPILER_RT_STANDALONE_BUILD)
+    list(APPEND LIBCXX_DEPS clang)
   endif()
 
   ExternalProject_Add(${name}
-    DEPENDS ${LIBCXX_DEPS}
     PREFIX ${prefix}
     SOURCE_DIR ${COMPILER_RT_LIBCXX_PATH}
-    CMAKE_ARGS -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}
-               ${compiler_args}
-               ${sysroot_arg}
+    CMAKE_ARGS -DCMAKE_MAKE_PROGRAM:STRING=${CMAKE_MAKE_PROGRAM}
+               -DCMAKE_C_COMPILER=${COMPILER_RT_TEST_COMPILER}
+               -DCMAKE_CXX_COMPILER=${COMPILER_RT_TEST_CXX_COMPILER}
                -DCMAKE_C_FLAGS=${LIBCXX_CFLAGS}
                -DCMAKE_CXX_FLAGS=${LIBCXX_CFLAGS}
                -DCMAKE_BUILD_TYPE=Release
-               -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
                -DLLVM_PATH=${LLVM_MAIN_SRC_DIR}
                -DLIBCXX_STANDALONE_BUILD=On
                ${LIBCXX_CMAKE_ARGS}
-    INSTALL_COMMAND ""
-    STEP_TARGETS configure build
     LOG_BUILD 1
     LOG_CONFIGURE 1
     LOG_INSTALL 1
@@ -519,19 +508,8 @@ macro(add_custom_libcxx name prefix)
     COMMAND ${CMAKE_COMMAND} -E make_directory <BINARY_DIR>
     COMMENT "Clobberring ${name} build directory..."
     DEPENDERS configure
-    ${force_deps}
+    DEPENDS ${LIBCXX_DEPS}
     )
-
-  if(NOT LIBCXX_NO_INSTALL)
-    install(CODE "execute_process\(COMMAND \${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=\${CMAKE_INSTALL_PREFIX} -P ${BINARY_DIR}/cmake_install.cmake \)"
-      COMPONENT ${name})
-    add_custom_target(install-${name}
-                      DEPENDS ${name}
-                      COMMAND "${CMAKE_COMMAND}"
-                              -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-                              -P "${CMAKE_BINARY_DIR}/cmake_install.cmake"
-                      USES_TERMINAL)
-  endif()
 endmacro()
 
 function(rt_externalize_debuginfo name)
