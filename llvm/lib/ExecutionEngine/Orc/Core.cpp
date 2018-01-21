@@ -287,6 +287,26 @@ void VSO::finalize(SymbolNameSet SymbolsToFinalize) {
   }
 }
 
+VSO::LookupFlagsResult VSO::lookupFlags(SymbolNameSet Names) {
+  SymbolFlagsMap FlagsFound;
+
+  for (SymbolNameSet::iterator I = Names.begin(), E = Names.end(); I != E;) {
+    auto Tmp = I++;
+    auto SymI = Symbols.find(*Tmp);
+
+    // If the symbol isn't in this dylib then just continue.
+    if (SymI == Symbols.end())
+      continue;
+
+    Names.erase(Tmp);
+
+    FlagsFound[SymI->first] =
+        JITSymbolFlags::stripTransientFlags(SymI->second.getFlags());
+  }
+
+  return {std::move(FlagsFound), std::move(Names)};
+}
+
 VSO::LookupResult VSO::lookup(AsynchronousSymbolQuery &Query,
                               SymbolNameSet Names) {
   SourceWorkMap MaterializationWork;
