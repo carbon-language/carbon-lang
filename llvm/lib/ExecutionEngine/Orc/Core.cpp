@@ -292,8 +292,7 @@ VSO::LookupResult VSO::lookup(AsynchronousSymbolQuery &Query,
   SourceWorkMap MaterializationWork;
 
   for (SymbolNameSet::iterator I = Names.begin(), E = Names.end(); I != E;) {
-    auto Tmp = I;
-    ++I;
+    auto Tmp = I++;
     auto SymI = Symbols.find(*Tmp);
 
     // If the symbol isn't in this dylib then just continue.
