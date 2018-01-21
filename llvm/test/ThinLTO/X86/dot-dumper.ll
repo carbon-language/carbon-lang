@@ -16,27 +16,27 @@
 
 ; CHECK-LABEL:     subgraph cluster_0
 ; Node definitions can appear in any order, but they should go before edge list.
-; CHECK-DAG:         M0_[[MAIN_ALIAS:[0-9]+]] [{{.*}}main_alias{{.*}}]; // alias, dead
-; CHECK-DAG:         M0_[[MAIN:[0-9]+]] [{{.*}}main|extern{{.*}}]; // function
+; CHECK:             M0_[[MAIN_ALIAS:[0-9]+]] [{{.*}}main_alias{{.*}}]; // alias, dead
+; CHECK:             M0_[[MAIN:[0-9]+]] [{{.*}}main|extern{{.*}}]; // function
 ; CHECK:             // Edges:
 ; CHECK-NEXT:        M0_[[MAIN_ALIAS]] -> M0_[[MAIN]] [{{.*}}]; // alias
 
 ; CHECK-LABEL:     subgraph cluster_1 {
 ; CHECK:             M1_[[A:[0-9]+]] [{{.*}}A|extern{{.*}}]; // variable
 
-; CHECK-DAG:         M1_[[FOO:[0-9]+]] [{{.*}}foo|extern{{.*}}]; // function, not eligible to import
-; CHECK-DAG:         M1_[[B:[0-9]+]] [{{.*}}B|extern{{.*}}]; // variable
-; CHECK-DAG:         M1_[[BAR:[0-9]+]] [{{.*}}bar|extern{{.*}}]; // function, dead
+; CHECK:             M1_[[FOO:[0-9]+]] [{{.*}}foo|extern{{.*}}]; // function, not eligible to import
+; CHECK:             M1_[[B:[0-9]+]] [{{.*}}B|extern{{.*}}]; // variable
+; CHECK:             M1_[[BAR:[0-9]+]] [{{.*}}bar|extern{{.*}}]; // function, dead
 ; CHECK:             Edges:
 
 ; Order of edges in dot file is undefined
-; CHECK-DAG:         M1_[[FOO]] -> M1_[[B]] [{{.*}}]; // ref
-; CHECK-DAG:         M1_[[FOO]] -> M1_[[A]] [{{.*}}]; // ref
+; CHECK:             M1_[[FOO]] -> M1_[[B]] [{{.*}}]; // ref
+; CHECK:             M1_[[FOO]] -> M1_[[A]] [{{.*}}]; // ref
 ; CHECK:           }
 
 ; Cross-module edges
-; CHECK-DAG:       M0_[[MAIN]] -> M1_[[FOO]] // call
-; CHECK-DAG:       M0_[[MAIN]] -> M1_[[A]] [{{.*}}]; // ref
+; CHECK:           M0_[[MAIN]] -> M1_[[A]] [{{.*}}]; // ref
+; CHECK:           M0_[[MAIN]] -> M1_[[FOO]] // call
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
