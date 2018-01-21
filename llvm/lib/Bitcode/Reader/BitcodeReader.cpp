@@ -4813,12 +4813,8 @@ void ModuleSummaryIndexBitcodeReader::setValueGUID(
   if (PrintSummaryGUIDs)
     dbgs() << "GUID " << ValueGUID << "(" << OriginalNameID << ") is "
            << ValueName << "\n";
-  
-  // UseStrtab is false for legacy summary formats and value names are
-  // created on stack. We can't use them outside of parseValueSymbolTable.
-  ValueIdToValueInfoMap[ValueID] = std::make_pair(
-      TheIndex.getOrInsertValueInfo(ValueGUID, UseStrtab ? ValueName : ""),
-      OriginalNameID);
+  ValueIdToValueInfoMap[ValueID] =
+      std::make_pair(TheIndex.getOrInsertValueInfo(ValueGUID), OriginalNameID);
 }
 
 // Specialized value symbol table parser used when reading module index
@@ -5683,8 +5679,7 @@ Expected<std::unique_ptr<ModuleSummaryIndex>> BitcodeModule::getSummary() {
   BitstreamCursor Stream(Buffer);
   Stream.JumpToBit(ModuleBit);
 
-  auto Index =
-      llvm::make_unique<ModuleSummaryIndex>(/*IsPerformingAnalysis=*/false);
+  auto Index = llvm::make_unique<ModuleSummaryIndex>();
   ModuleSummaryIndexBitcodeReader R(std::move(Stream), Strtab, *Index,
                                     ModuleIdentifier, 0);
 

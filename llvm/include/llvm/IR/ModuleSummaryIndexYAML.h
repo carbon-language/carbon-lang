@@ -207,8 +207,7 @@ template <> struct CustomMappingTraits<GlobalValueSummaryMapTy> {
       io.setError("key not an integer");
       return;
     }
-    auto P = V.emplace(KeyInt, /*IsAnalysis=*/false);
-    auto &Elem = (*P.first).second;
+    auto &Elem = V[KeyInt];
     for (auto &FSum : FSums) {
       Elem.SummaryList.push_back(llvm::make_unique<FunctionSummary>(
           GlobalValueSummary::GVFlags(

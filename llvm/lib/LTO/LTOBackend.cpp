@@ -103,12 +103,6 @@ Error Config::addSaveTemps(std::string OutputFileName,
     if (EC)
       reportOpenError(Path, EC.message());
     WriteIndexToFile(Index, OS);
-
-    Path = OutputFileName + "index.dot";
-    raw_fd_ostream OSDot(Path, EC, sys::fs::OpenFlags::F_None);
-    if (EC)
-      reportOpenError(Path, EC.message());
-    Index.exportToDot(OSDot);
     return true;
   };
 
