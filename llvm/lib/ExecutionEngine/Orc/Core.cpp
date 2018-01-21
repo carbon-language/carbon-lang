@@ -296,11 +296,11 @@ VSO::LookupResult VSO::lookup(AsynchronousSymbolQuery &Query,
     auto SymI = Symbols.find(*Tmp);
 
     // If the symbol isn't in this dylib then just continue.
-    // If it is, erase it from Names and proceed.
     if (SymI == Symbols.end())
       continue;
-    else
-      Names.erase(Tmp);
+
+    // The symbol is in the dylib. Erase it from Names and proceed.
+    Names.erase(Tmp);
 
     // Forward the query to the given SymbolTableEntry, and if it return a
     // layer to perform materialization with, add that to the
