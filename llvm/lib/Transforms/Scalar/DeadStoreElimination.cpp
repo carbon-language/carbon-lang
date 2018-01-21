@@ -146,7 +146,8 @@ deleteDeadInstruction(Instruction *I, BasicBlock::iterator *BBI,
 
 /// Does this instruction write some memory?  This only returns true for things
 /// that we can analyze with other helpers below.
-static bool hasMemoryWrite(Instruction *I, const TargetLibraryInfo &TLI) {
+static bool hasAnalyzableMemoryWrite(Instruction *I,
+                                     const TargetLibraryInfo &TLI) {
   if (isa<StoreInst>(I))
     return true;
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
@@ -181,6 +182,7 @@ static bool hasMemoryWrite(Instruction *I, const TargetLibraryInfo &TLI) {
 /// returns true, this function and getLocForRead completely describe the memory
 /// operations for this instruction.
 static MemoryLocation getLocForWrite(Instruction *Inst, AliasAnalysis &AA) {
+  
   if (StoreInst *SI = dyn_cast<StoreInst>(Inst))
     return MemoryLocation::get(SI);
 
@@ -208,11 +210,11 @@ static MemoryLocation getLocForWrite(Instruction *Inst, AliasAnalysis &AA) {
   }
 }
 
-/// Return the location read by the specified "hasMemoryWrite" instruction if
-/// any.
+/// Return the location read by the specified "hasAnalyzableMemoryWrite"
+/// instruction if any.
 static MemoryLocation getLocForRead(Instruction *Inst,
                                     const TargetLibraryInfo &TLI) {
-  assert(hasMemoryWrite(Inst, TLI) && "Unknown instruction case");
+  assert(hasAnalyzableMemoryWrite(Inst, TLI) && "Unknown instruction case");
 
   // The only instructions that both read and write are the mem transfer
   // instructions (memcpy/memmove).
@@ -230,7 +232,7 @@ static bool isRemovable(Instruction *I) {
 
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
     switch (II->getIntrinsicID()) {
-    default: llvm_unreachable("doesn't pass 'hasMemoryWrite' predicate");
+    default: llvm_unreachable("doesn't pass 'hasAnalyzableMemoryWrite' predicate");
     case Intrinsic::lifetime_end:
       // Never remove dead lifetime_end's, e.g. because it is followed by a
       // free.
@@ -246,6 +248,7 @@ static bool isRemovable(Instruction *I) {
     }
   }
 
+  // note: only get here for calls with analyzable writes - i.e. libcalls
   if (auto CS = CallSite(I))
     return CS.getInstruction()->use_empty();
 
@@ -286,6 +289,8 @@ static bool isShortenableAtTheBeginning(Instruction *I) {
 
 /// Return the pointer that is being written to.
 static Value *getStoredPointerOperand(Instruction *I) {
+  //TODO: factor this to reuse getLocForWrite
+  
   if (StoreInst *SI = dyn_cast<StoreInst>(I))
     return SI->getPointerOperand();
   if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(I))
@@ -650,7 +655,8 @@ static bool handleFree(CallInst *F, AliasAnalysis *AA,
         MD->getPointerDependencyFrom(Loc, false, InstPt->getIterator(), BB);
     while (Dep.isDef() || Dep.isClobber()) {
       Instruction *Dependency = Dep.getInst();
-      if (!hasMemoryWrite(Dependency, *TLI) || !isRemovable(Dependency))
+      if (!hasAnalyzableMemoryWrite(Dependency, *TLI) ||
+          !isRemovable(Dependency))
         break;
 
       Value *DepPointer =
@@ -754,7 +760,7 @@ static bool handleEndBlock(BasicBlock &BB, AliasAnalysis *AA,
     --BBI;
 
     // If we find a store, check to see if it points into a dead stack value.
-    if (hasMemoryWrite(&*BBI, *TLI) && isRemovable(&*BBI)) {
+    if (hasAnalyzableMemoryWrite(&*BBI, *TLI) && isRemovable(&*BBI)) {
       // See through pointer-to-pointer bitcasts
       SmallVector<Value *, 4> Pointers;
       GetUnderlyingObjects(getStoredPointerOperand(&*BBI), Pointers, DL);
@@ -1067,7 +1073,7 @@ static bool eliminateDeadStores(BasicBlock &BB, AliasAnalysis *AA,
     }
 
     // Check to see if Inst writes to memory.  If not, continue.
-    if (!hasMemoryWrite(Inst, *TLI))
+    if (!hasAnalyzableMemoryWrite(Inst, *TLI))
       continue;
 
     // eliminateNoopStore will update in iterator, if necessary.
