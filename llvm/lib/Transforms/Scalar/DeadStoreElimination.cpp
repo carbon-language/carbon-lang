@@ -181,7 +181,7 @@ static bool hasAnalyzableMemoryWrite(Instruction *I,
 /// Return a Location stored to by the specified instruction. If isRemovable
 /// returns true, this function and getLocForRead completely describe the memory
 /// operations for this instruction.
-static MemoryLocation getLocForWrite(Instruction *Inst, AliasAnalysis &AA) {
+static MemoryLocation getLocForWrite(Instruction *Inst) {
   
   if (StoreInst *SI = dyn_cast<StoreInst>(Inst))
     return MemoryLocation::get(SI);
@@ -192,22 +192,23 @@ static MemoryLocation getLocForWrite(Instruction *Inst, AliasAnalysis &AA) {
     return Loc;
   }
 
-  IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst);
-  if (!II)
-    return MemoryLocation();
-
-  switch (II->getIntrinsicID()) {
-  default:
-    return MemoryLocation(); // Unhandled intrinsic.
-  case Intrinsic::init_trampoline:
-    // FIXME: We don't know the size of the trampoline, so we can't really
-    // handle it here.
-    return MemoryLocation(II->getArgOperand(0));
-  case Intrinsic::lifetime_end: {
-    uint64_t Len = cast<ConstantInt>(II->getArgOperand(0))->getZExtValue();
-    return MemoryLocation(II->getArgOperand(1), Len);
+  if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
+    switch (II->getIntrinsicID()) {
+    default:
+      return MemoryLocation(); // Unhandled intrinsic.
+    case Intrinsic::init_trampoline:
+      return MemoryLocation(II->getArgOperand(0));
+    case Intrinsic::lifetime_end: {
+      uint64_t Len = cast<ConstantInt>(II->getArgOperand(0))->getZExtValue();
+      return MemoryLocation(II->getArgOperand(1), Len);
+    }
+    }
   }
-  }
+  if (auto CS = CallSite(Inst))
+    // All the supported TLI functions so far happen to have dest as their
+    // first argument.
+    return MemoryLocation(CS.getArgument(0));
+  return MemoryLocation();
 }
 
 /// Return the location read by the specified "hasAnalyzableMemoryWrite"
@@ -290,24 +291,11 @@ static bool isShortenableAtTheBeginning(Instruction *I) {
 /// Return the pointer that is being written to.
 static Value *getStoredPointerOperand(Instruction *I) {
   //TODO: factor this to reuse getLocForWrite
-  
-  if (StoreInst *SI = dyn_cast<StoreInst>(I))
-    return SI->getPointerOperand();
-  if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(I))
-    return MI->getDest();
-
-  if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
-    switch (II->getIntrinsicID()) {
-    default: llvm_unreachable("Unexpected intrinsic!");
-    case Intrinsic::init_trampoline:
-      return II->getArgOperand(0);
-    }
-  }
-
-  CallSite CS(I);
-  // All the supported functions so far happen to have dest as their first
-  // argument.
-  return CS.getArgument(0);
+  MemoryLocation Loc = getLocForWrite(I);
+  assert(Loc.Ptr &&
+         "unable to find pointer writen for analyzable instruction?");
+  // TODO: most APIs don't expect const Value *
+  return const_cast<Value*>(Loc.Ptr);
 }
 
 static uint64_t getPointerSize(const Value *V, const DataLayout &DL,
@@ -972,7 +960,7 @@ static bool removePartiallyOverlappedStores(AliasAnalysis *AA,
   bool Changed = false;
   for (auto OI : IOL) {
     Instruction *EarlierWrite = OI.first;
-    MemoryLocation Loc = getLocForWrite(EarlierWrite, *AA);
+    MemoryLocation Loc = getLocForWrite(EarlierWrite);
     assert(isRemovable(EarlierWrite) && "Expect only removable instruction");
     assert(Loc.Size != MemoryLocation::UnknownSize && "Unexpected mem loc");
 
@@ -1091,7 +1079,7 @@ static bool eliminateDeadStores(BasicBlock &BB, AliasAnalysis *AA,
       continue;
 
     // Figure out what location is being stored to.
-    MemoryLocation Loc = getLocForWrite(Inst, *AA);
+    MemoryLocation Loc = getLocForWrite(Inst);
 
     // If we didn't get a useful location, fail.
     if (!Loc.Ptr)
@@ -1113,7 +1101,9 @@ static bool eliminateDeadStores(BasicBlock &BB, AliasAnalysis *AA,
       //
       // Find out what memory location the dependent instruction stores.
       Instruction *DepWrite = InstDep.getInst();
-      MemoryLocation DepLoc = getLocForWrite(DepWrite, *AA);
+      if (!hasAnalyzableMemoryWrite(DepWrite, *TLI))
+        break;
+      MemoryLocation DepLoc = getLocForWrite(DepWrite);
       // If we didn't get a useful location, or if it isn't a size, bail out.
       if (!DepLoc.Ptr)
         break;
