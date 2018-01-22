@@ -131,24 +131,13 @@ struct LiveReg {
   int Def;
 };
 
-class ExecutionDepsFix : public MachineFunctionPass {
-  SpecificBumpPtrAllocator<DomainValue> Allocator;
-  SmallVector<DomainValue*,16> Avail;
-
-  const TargetRegisterClass *const RC;
-  MachineFunction *MF;
-  const TargetInstrInfo *TII;
-  const TargetRegisterInfo *TRI;
-  RegisterClassInfo RegClassInfo;
-  std::vector<SmallVector<int, 1>> AliasMap;
-  const unsigned NumRegs;
-  LiveReg *LiveRegs;
+/// This class provides the basic blocks traversal order used by passes like
+/// ReachingDefAnalysis and ExecutionDomainFix.
+/// It identifies basic blocks that are part of loops and should to be visited twice 
+/// and returns efficient traversal order for all the blocks.
+class LoopTraversal {
+private:
   struct MBBInfo {
-    // Keeps clearance and domain information for all registers. Note that this
-    // is different from the usual definition notion of liveness. The CPU
-    // doesn't care whether or not we consider a register killed.
-    LiveReg *OutRegs = nullptr;
-
     // Whether we have gotten to this block in primary processing yet.
     bool PrimaryCompleted = false;
 
@@ -166,22 +155,118 @@ class ExecutionDepsFix : public MachineFunctionPass {
   using MBBInfoMap = DenseMap<MachineBasicBlock *, MBBInfo>;
   MBBInfoMap MBBInfos;
 
-  /// List of undefined register reads in this block in forward order.
-  std::vector<std::pair<MachineInstr *, unsigned>> UndefReads;
+public:
+  struct TraversedMBBInfo {
+    MachineBasicBlock *MBB = nullptr;
+    bool PrimaryPass = true;
+    bool IsDone = true;
 
-  /// Storage for register unit liveness.
-  LivePhysRegs LiveRegSet;
+    TraversedMBBInfo(MachineBasicBlock *BB = nullptr, bool Primary = true,
+                     bool Done = true)
+        : MBB(BB), PrimaryPass(Primary), IsDone(Done) {}
+  };
+  LoopTraversal() {}
+
+  SmallVector<TraversedMBBInfo, 4> traverse(MachineFunction &MF);
+
+private:
+  bool isBlockDone(MachineBasicBlock *MBB);
+
+};
+
+/// This class provides the reaching def analysis.
+class ReachingDefAnalysis : public MachineFunctionPass {
+private:
+  MachineFunction *MF;
+  const TargetInstrInfo *TII;
+  const TargetRegisterInfo *TRI;
+  RegisterClassInfo RegClassInfo;
+  unsigned NumRegUnits;
+  LiveReg *LiveRegs;
+
+  // Keeps clearance information for all registers. Note that this
+  // is different from the usual definition notion of liveness. The CPU
+  // doesn't care whether or not we consider a register killed.
+  using OutRegsInfoMap = DenseMap<MachineBasicBlock *, LiveReg *>;
+  OutRegsInfoMap MBBOutRegsInfos;
 
   /// Current instruction number.
   /// The first instruction in each basic block is 0.
   int CurInstr;
 
+  /// Maps instructions to their instruction Ids, relative to the begining of
+  /// their basic blocks.
+  DenseMap<MachineInstr *, int> InstIds;
+
+  /// All reaching defs of a given RegUnit for a given MBB.
+  using MBBRegUnitDefs = SmallVector<int, 1>;
+  /// All reaching defs of all reg units for a given MBB
+  using MBBDefsInfo = std::vector<MBBRegUnitDefs>;
+  /// All reaching defs of all reg units for a all MBBs
+  using MBBReachingDefsInfo = SmallVector<MBBDefsInfo, 4>;
+  MBBReachingDefsInfo MBBReachingDefs;
+
 public:
-  ExecutionDepsFix(char &PassID, const TargetRegisterClass &RC)
+  static char ID; // Pass identification, replacement for typeid
+
+  ReachingDefAnalysis() : MachineFunctionPass(ID) {
+    initializeReachingDefAnalysisPass(*PassRegistry::getPassRegistry());
+  }
+  void releaseMemory() override;
+
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.setPreservesAll();
+    MachineFunctionPass::getAnalysisUsage(AU);
+  }
+
+  bool runOnMachineFunction(MachineFunction &MF) override;
+
+  MachineFunctionProperties getRequiredProperties() const override {
+    return MachineFunctionProperties().set(
+        MachineFunctionProperties::Property::NoVRegs);
+  }
+
+  /// Provides the instruction id of the closest reaching def instruction of
+  /// PhysReg that reaches MI, relative to the begining of MI's basic block.
+  int getReachingDef(MachineInstr *MI, int PhysReg);
+  /// Provides the clearance - the number of instructions since the closest
+  /// reaching def instuction of PhysReg that reaches MI.
+  int getClearance(MachineInstr *MI, MCPhysReg PhysReg);
+
+private:
+  void enterBasicBlock(const LoopTraversal::TraversedMBBInfo &TraversedMBB);
+  void leaveBasicBlock(const LoopTraversal::TraversedMBBInfo &TraversedMBB);
+  void processBasicBlock(const LoopTraversal::TraversedMBBInfo &TraversedMBB);
+  void processDefs(MachineInstr *);
+};
+
+class ExecutionDomainFix : public MachineFunctionPass {
+  SpecificBumpPtrAllocator<DomainValue> Allocator;
+  SmallVector<DomainValue*,16> Avail;
+
+  const TargetRegisterClass *const RC;
+  MachineFunction *MF;
+  const TargetInstrInfo *TII;
+  const TargetRegisterInfo *TRI;
+  RegisterClassInfo RegClassInfo;
+  std::vector<SmallVector<int, 1>> AliasMap;
+  const unsigned NumRegs;
+  LiveReg *LiveRegs;
+  // Keeps domain information for all registers. Note that this
+  // is different from the usual definition notion of liveness. The CPU
+  // doesn't care whether or not we consider a register killed.
+  using OutRegsInfoMap = DenseMap<MachineBasicBlock *, LiveReg *>;
+  OutRegsInfoMap MBBOutRegsInfos;
+
+  ReachingDefAnalysis *RDA;
+
+public:
+  ExecutionDomainFix(char &PassID, const TargetRegisterClass &RC)
     : MachineFunctionPass(PassID), RC(&RC), NumRegs(RC.getNumRegs()) {}
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
+    AU.addRequired<ReachingDefAnalysis>();
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 
@@ -211,14 +296,53 @@ private:
   void collapse(DomainValue *dv, unsigned domain);
   bool merge(DomainValue *A, DomainValue *B);
 
-  void enterBasicBlock(MachineBasicBlock*);
-  void leaveBasicBlock(MachineBasicBlock*);
-  bool isBlockDone(MachineBasicBlock *);
-  void processBasicBlock(MachineBasicBlock *MBB, bool PrimaryPass);
+  void enterBasicBlock(const LoopTraversal::TraversedMBBInfo &TraversedMBB);
+  void leaveBasicBlock(const LoopTraversal::TraversedMBBInfo &TraversedMBB);
+  void processBasicBlock(const LoopTraversal::TraversedMBBInfo &TraversedMBB);
   bool visitInstr(MachineInstr *);
-  void processDefs(MachineInstr *, bool breakDependency, bool Kill);
+  void processDefs(MachineInstr *, bool Kill);
   void visitSoftInstr(MachineInstr*, unsigned mask);
   void visitHardInstr(MachineInstr*, unsigned domain);
+};
+
+class BreakFalseDeps : public MachineFunctionPass {
+private:
+  MachineFunction *MF;
+  const TargetInstrInfo *TII;
+  const TargetRegisterInfo *TRI;
+  RegisterClassInfo RegClassInfo;
+
+  /// List of undefined register reads in this block in forward order.
+  std::vector<std::pair<MachineInstr *, unsigned>> UndefReads;
+
+  /// Storage for register unit liveness.
+  LivePhysRegs LiveRegSet;
+
+  ReachingDefAnalysis *RDA;
+
+public:
+  static char ID; // Pass identification, replacement for typeid
+
+  BreakFalseDeps() : MachineFunctionPass(ID) {
+    initializeBreakFalseDepsPass(*PassRegistry::getPassRegistry());
+  }
+
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.setPreservesAll();
+    AU.addRequired<ReachingDefAnalysis>();
+    MachineFunctionPass::getAnalysisUsage(AU);
+  }
+
+  bool runOnMachineFunction(MachineFunction &MF) override;
+
+  MachineFunctionProperties getRequiredProperties() const override {
+    return MachineFunctionProperties().set(
+        MachineFunctionProperties::Property::NoVRegs);
+  }
+
+private:
+  void processBasicBlock(MachineBasicBlock *MBB);
+  void processDefs(MachineInstr *MI);
   bool pickBestRegisterForUndef(MachineInstr *MI, unsigned OpIdx,
                                 unsigned Pref);
   bool shouldBreakDependence(MachineInstr*, unsigned OpIdx, unsigned Pref);

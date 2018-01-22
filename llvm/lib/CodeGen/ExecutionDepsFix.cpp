@@ -25,16 +25,27 @@ using namespace llvm;
 
 #define DEBUG_TYPE "execution-deps-fix"
 
+char ReachingDefAnalysis::ID = 0;
+INITIALIZE_PASS(ReachingDefAnalysis, "reaching-deps-analysis",
+                "ReachingDefAnalysis", false, true)
+
+char BreakFalseDeps::ID = 0;
+INITIALIZE_PASS_BEGIN(BreakFalseDeps, "break-false-deps", "BreakFalseDeps",
+                      false, false)
+INITIALIZE_PASS_DEPENDENCY(ReachingDefAnalysis)
+INITIALIZE_PASS_END(BreakFalseDeps, "break-false-deps", "BreakFalseDeps", false,
+                    false)
+
 /// Translate TRI register number to a list of indices into our smaller tables
 /// of interesting registers.
 iterator_range<SmallVectorImpl<int>::const_iterator>
-ExecutionDepsFix::regIndices(unsigned Reg) const {
+ExecutionDomainFix::regIndices(unsigned Reg) const {
   assert(Reg < AliasMap.size() && "Invalid register");
   const auto &Entry = AliasMap[Reg];
   return make_range(Entry.begin(), Entry.end());
 }
 
-DomainValue *ExecutionDepsFix::alloc(int domain) {
+DomainValue *ExecutionDomainFix::alloc(int domain) {
   DomainValue *dv = Avail.empty() ?
                       new(Allocator.Allocate()) DomainValue :
                       Avail.pop_back_val();
@@ -47,7 +58,7 @@ DomainValue *ExecutionDepsFix::alloc(int domain) {
 
 /// Release a reference to DV.  When the last reference is released,
 /// collapse if needed.
-void ExecutionDepsFix::release(DomainValue *DV) {
+void ExecutionDomainFix::release(DomainValue *DV) {
   while (DV) {
     assert(DV->Refs && "Bad DomainValue");
     if (--DV->Refs)
@@ -67,7 +78,7 @@ void ExecutionDepsFix::release(DomainValue *DV) {
 
 /// Follow the chain of dead DomainValues until a live DomainValue is reached.
 /// Update the referenced pointer when necessary.
-DomainValue *ExecutionDepsFix::resolve(DomainValue *&DVRef) {
+DomainValue *ExecutionDomainFix::resolve(DomainValue *&DVRef) {
   DomainValue *DV = DVRef;
   if (!DV || !DV->Next)
     return DV;
@@ -84,7 +95,7 @@ DomainValue *ExecutionDepsFix::resolve(DomainValue *&DVRef) {
 }
 
 /// Set LiveRegs[rx] = dv, updating reference counts.
-void ExecutionDepsFix::setLiveReg(int rx, DomainValue *dv) {
+void ExecutionDomainFix::setLiveReg(int rx, DomainValue *dv) {
   assert(unsigned(rx) < NumRegs && "Invalid index");
   assert(LiveRegs && "Must enter basic block first.");
 
@@ -96,7 +107,7 @@ void ExecutionDepsFix::setLiveReg(int rx, DomainValue *dv) {
 }
 
 // Kill register rx, recycle or collapse any DomainValue.
-void ExecutionDepsFix::kill(int rx) {
+void ExecutionDomainFix::kill(int rx) {
   assert(unsigned(rx) < NumRegs && "Invalid index");
   assert(LiveRegs && "Must enter basic block first.");
   if (!LiveRegs[rx].Value)
@@ -107,7 +118,7 @@ void ExecutionDepsFix::kill(int rx) {
 }
 
 /// Force register rx into domain.
-void ExecutionDepsFix::force(int rx, unsigned domain) {
+void ExecutionDomainFix::force(int rx, unsigned domain) {
   assert(unsigned(rx) < NumRegs && "Invalid index");
   assert(LiveRegs && "Must enter basic block first.");
   if (DomainValue *dv = LiveRegs[rx].Value) {
@@ -130,7 +141,7 @@ void ExecutionDepsFix::force(int rx, unsigned domain) {
 
 /// Collapse open DomainValue into given domain. If there are multiple
 /// registers using dv, they each get a unique collapsed DomainValue.
-void ExecutionDepsFix::collapse(DomainValue *dv, unsigned domain) {
+void ExecutionDomainFix::collapse(DomainValue *dv, unsigned domain) {
   assert(dv->hasDomain(domain) && "Cannot collapse");
 
   // Collapse all the instructions.
@@ -146,7 +157,7 @@ void ExecutionDepsFix::collapse(DomainValue *dv, unsigned domain) {
 }
 
 /// All instructions and registers in B are moved to A, and B is released.
-bool ExecutionDepsFix::merge(DomainValue *A, DomainValue *B) {
+bool ExecutionDomainFix::merge(DomainValue *A, DomainValue *B) {
   assert(!A->isCollapsed() && "Cannot merge into collapsed");
   assert(!B->isCollapsed() && "Cannot merge from collapsed");
   if (A == B)
@@ -172,32 +183,34 @@ bool ExecutionDepsFix::merge(DomainValue *A, DomainValue *B) {
 }
 
 /// Set up LiveRegs by merging predecessor live-out values.
-void ExecutionDepsFix::enterBasicBlock(MachineBasicBlock *MBB) {
+void ReachingDefAnalysis::enterBasicBlock(
+    const LoopTraversal::TraversedMBBInfo &TraversedMBB) {
+
+  MachineBasicBlock *MBB = TraversedMBB.MBB;
+  int MBBNumber = MBB->getNumber();
+  MBBReachingDefs[MBBNumber].resize(NumRegUnits);
+
   // Reset instruction counter in each basic block.
   CurInstr = 0;
 
-  // Set up UndefReads to track undefined register reads.
-  UndefReads.clear();
-  LiveRegSet.clear();
-
   // Set up LiveRegs to represent registers entering MBB.
   if (!LiveRegs)
-    LiveRegs = new LiveReg[NumRegs];
+    LiveRegs = new LiveReg[NumRegUnits];
 
   // Default values are 'nothing happened a long time ago'.
-  for (unsigned rx = 0; rx != NumRegs; ++rx) {
-    LiveRegs[rx].Value = nullptr;
+  for (unsigned rx = 0; rx != NumRegUnits; ++rx) {
     LiveRegs[rx].Def = -(1 << 20);
   }
 
   // This is the entry block.
   if (MBB->pred_empty()) {
     for (const auto &LI : MBB->liveins()) {
-      for (int rx : regIndices(LI.PhysReg)) {
+      for (MCRegUnitIterator rx(LI.PhysReg, TRI); rx.isValid(); ++rx) {
         // Treat function live-ins as if they were defined just before the first
         // instruction.  Usually, function arguments are set up immediately
         // before the call.
-        LiveRegs[rx].Def = -1;
+        LiveRegs[*rx].Def = -1;
+        MBBReachingDefs[MBBNumber][*rx].push_back(LiveRegs[*rx].Def);
       }
     }
     DEBUG(dbgs() << printMBBReference(*MBB) << ": entry\n");
@@ -207,10 +220,57 @@ void ExecutionDepsFix::enterBasicBlock(MachineBasicBlock *MBB) {
   // Try to coalesce live-out registers from predecessors.
   for (MachineBasicBlock::const_pred_iterator pi = MBB->pred_begin(),
        pe = MBB->pred_end(); pi != pe; ++pi) {
-    auto fi = MBBInfos.find(*pi);
-    assert(fi != MBBInfos.end() &&
+    auto fi = MBBOutRegsInfos.find(*pi);
+    assert(fi != MBBOutRegsInfos.end() &&
            "Should have pre-allocated MBBInfos for all MBBs");
-    LiveReg *Incoming = fi->second.OutRegs;
+    LiveReg *Incoming = fi->second;
+    // Incoming is null if this is a backedge from a BB
+    // we haven't processed yet
+    if (Incoming == nullptr) {
+      continue;
+    }
+
+    for (unsigned rx = 0; rx != NumRegUnits; ++rx) {
+      // Use the most recent predecessor def for each register.
+      LiveRegs[rx].Def = std::max(LiveRegs[rx].Def, Incoming[rx].Def);
+      if ((LiveRegs[rx].Def  != -(1 << 20))) 
+        MBBReachingDefs[MBBNumber][rx].push_back(LiveRegs[rx].Def);
+    }
+  }
+
+  DEBUG(
+      dbgs() << printMBBReference(*MBB)
+             << (!TraversedMBB.IsDone ? ": incomplete\n" : ": all preds known\n"));
+}
+
+/// Set up LiveRegs by merging predecessor live-out values.
+void ExecutionDomainFix::enterBasicBlock(
+    const LoopTraversal::TraversedMBBInfo &TraversedMBB) {
+
+  MachineBasicBlock *MBB = TraversedMBB.MBB;
+
+  // Set up LiveRegs to represent registers entering MBB.
+  if (!LiveRegs)
+    LiveRegs = new LiveReg[NumRegs];
+
+  // Default values are 'nothing happened a long time ago'.
+  for (unsigned rx = 0; rx != NumRegs; ++rx) {
+    LiveRegs[rx].Value = nullptr;
+  }
+
+  // This is the entry block.
+  if (MBB->pred_empty()) {
+    DEBUG(dbgs() << printMBBReference(*MBB) << ": entry\n");
+    return;
+  }
+
+  // Try to coalesce live-out registers from predecessors.
+  for (MachineBasicBlock::const_pred_iterator pi = MBB->pred_begin(),
+       pe = MBB->pred_end(); pi != pe; ++pi) {
+    auto fi = MBBOutRegsInfos.find(*pi);
+    assert(fi != MBBOutRegsInfos.end() &&
+      "Should have pre-allocated MBBInfos for all MBBs");
+    LiveReg *Incoming = fi->second;
     // Incoming is null if this is a backedge from a BB
     // we haven't processed yet
     if (Incoming == nullptr) {
@@ -218,9 +278,6 @@ void ExecutionDepsFix::enterBasicBlock(MachineBasicBlock *MBB) {
     }
 
     for (unsigned rx = 0; rx != NumRegs; ++rx) {
-      // Use the most recent predecessor def for each register.
-      LiveRegs[rx].Def = std::max(LiveRegs[rx].Def, Incoming[rx].Def);
-
       DomainValue *pdv = resolve(Incoming[rx].Value);
       if (!pdv)
         continue;
@@ -247,21 +304,30 @@ void ExecutionDepsFix::enterBasicBlock(MachineBasicBlock *MBB) {
   }
   DEBUG(
       dbgs() << printMBBReference(*MBB)
-             << (!isBlockDone(MBB) ? ": incomplete\n" : ": all preds known\n"));
+             << (!TraversedMBB.IsDone ? ": incomplete\n" : ": all preds known\n"));
 }
 
-void ExecutionDepsFix::leaveBasicBlock(MachineBasicBlock *MBB) {
+void ReachingDefAnalysis::leaveBasicBlock(
+    const LoopTraversal::TraversedMBBInfo &TraversedMBB) {
   assert(LiveRegs && "Must enter basic block first.");
-  LiveReg *OldOutRegs = MBBInfos[MBB].OutRegs;
   // Save register clearances at end of MBB - used by enterBasicBlock().
-  MBBInfos[MBB].OutRegs = LiveRegs;
+  MBBOutRegsInfos[TraversedMBB.MBB] = LiveRegs;
 
   // While processing the basic block, we kept `Def` relative to the start
   // of the basic block for convenience. However, future use of this information
   // only cares about the clearance from the end of the block, so adjust
   // everything to be relative to the end of the basic block.
-  for (unsigned i = 0, e = NumRegs; i != e; ++i)
+  for (unsigned i = 0, e = NumRegUnits; i != e; ++i)
     LiveRegs[i].Def -= CurInstr;
+  LiveRegs = nullptr;
+}
+
+void ExecutionDomainFix::leaveBasicBlock(
+    const LoopTraversal::TraversedMBBInfo &TraversedMBB) {
+  assert(LiveRegs && "Must enter basic block first.");
+  LiveReg *OldOutRegs = MBBOutRegsInfos[TraversedMBB.MBB];
+  // Save register clearances at end of MBB - used by enterBasicBlock().
+  MBBOutRegsInfos[TraversedMBB.MBB] = LiveRegs;
   if (OldOutRegs) {
     // This must be the second pass.
     // Release all the DomainValues instead of keeping them.
@@ -272,7 +338,7 @@ void ExecutionDepsFix::leaveBasicBlock(MachineBasicBlock *MBB) {
   LiveRegs = nullptr;
 }
 
-bool ExecutionDepsFix::visitInstr(MachineInstr *MI) {
+bool ExecutionDomainFix::visitInstr(MachineInstr *MI) {
   // Update instructions with explicit execution domains.
   std::pair<uint16_t, uint16_t> DomP = TII->getExecutionDomain(*MI);
   if (DomP.first) {
@@ -290,16 +356,22 @@ bool ExecutionDepsFix::visitInstr(MachineInstr *MI) {
 /// is truly dependent on, or use a register with clearance higher than Pref.
 /// Returns true if it was able to find a true dependency, thus not requiring
 /// a dependency breaking instruction regardless of clearance.
-bool ExecutionDepsFix::pickBestRegisterForUndef(MachineInstr *MI,
+bool BreakFalseDeps::pickBestRegisterForUndef(MachineInstr *MI,
                                                 unsigned OpIdx, unsigned Pref) {
   MachineOperand &MO = MI->getOperand(OpIdx);
   assert(MO.isUndef() && "Expected undef machine operand");
 
   unsigned OriginalReg = MO.getReg();
 
-  // Update only undef operands that are mapped to one register.
-  if (AliasMap[OriginalReg].size() != 1)
-    return false;
+  // Update only undef operands that have reg units that are mapped to one root.
+  for (MCRegUnitIterator Unit(OriginalReg, TRI); Unit.isValid(); ++Unit) {
+    unsigned NumRoots = 0;
+    for (MCRegUnitRootIterator Root(*Unit, TRI); Root.isValid(); ++Root) {
+      NumRoots++;
+      if (NumRoots > 1)
+        return false;
+    }
+  }
 
   // Get the undef operand's register class
   const TargetRegisterClass *OpRC =
@@ -323,10 +395,7 @@ bool ExecutionDepsFix::pickBestRegisterForUndef(MachineInstr *MI,
   unsigned MaxClearanceReg = OriginalReg;
   ArrayRef<MCPhysReg> Order = RegClassInfo.getOrder(OpRC);
   for (auto Reg : Order) {
-    assert(AliasMap[Reg].size() == 1 &&
-           "Reg is expected to be mapped to a single index");
-    int RCrx = *regIndices(Reg).begin();
-    unsigned Clearance = CurInstr - LiveRegs[RCrx].Def;
+    unsigned Clearance = RDA->getClearance(MI, Reg);
     if (Clearance <= MaxClearance)
       continue;
     MaxClearance = Clearance;
@@ -345,44 +414,26 @@ bool ExecutionDepsFix::pickBestRegisterForUndef(MachineInstr *MI,
 
 /// \brief Return true to if it makes sense to break dependence on a partial def
 /// or undef use.
-bool ExecutionDepsFix::shouldBreakDependence(MachineInstr *MI, unsigned OpIdx,
-                                             unsigned Pref) {
+bool BreakFalseDeps::shouldBreakDependence(MachineInstr *MI, unsigned OpIdx,
+                                           unsigned Pref) {
   unsigned reg = MI->getOperand(OpIdx).getReg();
-  for (int rx : regIndices(reg)) {
-    unsigned Clearance = CurInstr - LiveRegs[rx].Def;
-    DEBUG(dbgs() << "Clearance: " << Clearance << ", want " << Pref);
+  unsigned Clearance = RDA->getClearance(MI, reg);
+  DEBUG(dbgs() << "Clearance: " << Clearance << ", want " << Pref);
 
-    if (Pref > Clearance) {
-      DEBUG(dbgs() << ": Break dependency.\n");
-      continue;
-    }
-    DEBUG(dbgs() << ": OK .\n");
-    return false;
+  if (Pref > Clearance) {
+    DEBUG(dbgs() << ": Break dependency.\n");
+    return true;
   }
-  return true;
+  DEBUG(dbgs() << ": OK .\n");
+  return false;
 }
 
 // Update def-ages for registers defined by MI.
 // If Kill is set, also kill off DomainValues clobbered by the defs.
 //
 // Also break dependencies on partial defs and undef uses.
-void ExecutionDepsFix::processDefs(MachineInstr *MI, bool breakDependency,
-                                   bool Kill) {
+void ExecutionDomainFix::processDefs(MachineInstr *MI, bool Kill) {
   assert(!MI->isDebugValue() && "Won't process debug values");
-
-  // Break dependence on undef uses. Do this before updating LiveRegs below.
-  unsigned OpNum;
-  if (breakDependency) {
-    unsigned Pref = TII->getUndefRegClearance(*MI, OpNum, TRI);
-    if (Pref) {
-      bool HadTrueDependency = pickBestRegisterForUndef(MI, OpNum, Pref);
-      // We don't need to bother trying to break a dependency if this
-      // instruction has a true dependency on that register through another
-      // operand - we'll have to wait for it to be available regardless.
-      if (!HadTrueDependency && shouldBreakDependence(MI, OpNum, Pref))
-        UndefReads.push_back(std::make_pair(MI, OpNum));
-    }
-  }
   const MCInstrDesc &MCID = MI->getDesc();
   for (unsigned i = 0,
          e = MI->isVariadic() ? MI->getNumOperands() : MCID.getNumDefs();
@@ -394,26 +445,76 @@ void ExecutionDepsFix::processDefs(MachineInstr *MI, bool breakDependency,
       continue;
     for (int rx : regIndices(MO.getReg())) {
       // This instruction explicitly defines rx.
-      DEBUG(dbgs() << printReg(RC->getRegister(rx), TRI) << ":\t" << CurInstr
-                   << '\t' << *MI);
-
-      if (breakDependency) {
-        // Check clearance before partial register updates.
-        // Call breakDependence before setting LiveRegs[rx].Def.
-        unsigned Pref = TII->getPartialRegUpdateClearance(*MI, i, TRI);
-        if (Pref && shouldBreakDependence(MI, i, Pref))
-          TII->breakPartialRegDependency(*MI, i, TRI);
-      }
-
-      // How many instructions since rx was last written?
-      LiveRegs[rx].Def = CurInstr;
+      DEBUG(dbgs() << printReg(RC->getRegister(rx), TRI) << ":\t" << *MI);
 
       // Kill off domains redefined by generic instructions.
       if (Kill)
         kill(rx);
     }
   }
+}
+
+// Update def-ages for registers defined by MI.
+// Also break dependencies on partial defs and undef uses.
+void ReachingDefAnalysis::processDefs(MachineInstr *MI) {
+  assert(!MI->isDebugValue() && "Won't process debug values");
+
+  int MBBNumber = MI->getParent()->getNumber();
+  const MCInstrDesc &MCID = MI->getDesc();
+  for (unsigned i = 0,
+         e = MI->isVariadic() ? MI->getNumOperands() : MCID.getNumDefs();
+         i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg() || !MO.getReg())
+      continue;
+    if (MO.isUse())
+      continue;
+    for (MCRegUnitIterator rx(MO.getReg(), TRI); rx.isValid(); ++rx) {
+      // This instruction explicitly defines rx.
+      DEBUG(dbgs() << printReg(MO.getReg(), TRI) << ":\t" << CurInstr << '\t'
+                   << *MI);
+
+      // How many instructions since this reg unit was last written?
+      LiveRegs[*rx].Def = CurInstr;
+      MBBReachingDefs[MBBNumber][*rx].push_back(CurInstr);
+    }
+  }
+  InstIds[MI] = CurInstr;
   ++CurInstr;
+}
+
+// Update def-ages for registers defined by MI.
+// Also break dependencies on partial defs and undef uses.
+void BreakFalseDeps::processDefs(MachineInstr *MI) {
+  assert(!MI->isDebugValue() && "Won't process debug values");
+
+  // Break dependence on undef uses. Do this before updating LiveRegs below.
+  unsigned OpNum;
+  unsigned Pref = TII->getUndefRegClearance(*MI, OpNum, TRI);
+  if (Pref) {
+    bool HadTrueDependency = pickBestRegisterForUndef(MI, OpNum, Pref);
+    // We don't need to bother trying to break a dependency if this
+    // instruction has a true dependency on that register through another
+    // operand - we'll have to wait for it to be available regardless.
+    if (!HadTrueDependency && shouldBreakDependence(MI, OpNum, Pref))
+      UndefReads.push_back(std::make_pair(MI, OpNum));
+  }
+
+  const MCInstrDesc &MCID = MI->getDesc();
+  for (unsigned i = 0,
+         e = MI->isVariadic() ? MI->getNumOperands() : MCID.getNumDefs();
+         i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg() || !MO.getReg())
+      continue;
+    if (MO.isUse())
+      continue;
+    // Check clearance before partial register updates.
+    // Call breakDependence before setting LiveRegs[rx].Def.
+    unsigned Pref = TII->getPartialRegUpdateClearance(*MI, i, TRI);
+    if (Pref && shouldBreakDependence(MI, i, Pref))
+      TII->breakPartialRegDependency(*MI, i, TRI);
+  }
 }
 
 /// \break Break false dependencies on undefined register reads.
@@ -422,7 +523,7 @@ void ExecutionDepsFix::processDefs(MachineInstr *MI, bool breakDependency,
 /// only do it on demand. Note that the occurrence of undefined register reads
 /// that should be broken is very rare, but when they occur we may have many in
 /// a single block.
-void ExecutionDepsFix::processUndefReads(MachineBasicBlock *MBB) {
+void BreakFalseDeps::processUndefReads(MachineBasicBlock *MBB) {
   if (UndefReads.empty())
     return;
 
@@ -455,7 +556,7 @@ void ExecutionDepsFix::processUndefReads(MachineBasicBlock *MBB) {
 
 // A hard instruction only works in one domain. All input registers will be
 // forced into that domain.
-void ExecutionDepsFix::visitHardInstr(MachineInstr *mi, unsigned domain) {
+void ExecutionDomainFix::visitHardInstr(MachineInstr *mi, unsigned domain) {
   // Collapse all uses.
   for (unsigned i = mi->getDesc().getNumDefs(),
                 e = mi->getDesc().getNumOperands(); i != e; ++i) {
@@ -478,7 +579,7 @@ void ExecutionDepsFix::visitHardInstr(MachineInstr *mi, unsigned domain) {
 }
 
 // A soft instruction can be changed to work in other domains given by mask.
-void ExecutionDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
+void ExecutionDomainFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
   // Bitmask of available domains for this instruction after taking collapsed
   // operands into account.
   unsigned available = mask;
@@ -525,7 +626,8 @@ void ExecutionDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
   SmallVector<const LiveReg *, 4> Regs;
   for (int rx : used) {
     assert(LiveRegs && "no space allocated for live registers");
-    const LiveReg &LR = LiveRegs[rx];
+    LiveReg &LR = LiveRegs[rx];
+    LR.Def = RDA->getReachingDef(mi, RC->getRegister(rx));
     // This useless DomainValue could have been missed above.
     if (!LR.Value->getCommonDomains(available)) {
       kill(rx);
@@ -589,71 +691,58 @@ void ExecutionDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
   }
 }
 
-void ExecutionDepsFix::processBasicBlock(MachineBasicBlock *MBB,
-                                         bool PrimaryPass) {
-  enterBasicBlock(MBB);
+void ExecutionDomainFix::processBasicBlock(
+    const LoopTraversal::TraversedMBBInfo &TraversedMBB) {
+  enterBasicBlock(TraversedMBB);
   // If this block is not done, it makes little sense to make any decisions
   // based on clearance information. We need to make a second pass anyway,
   // and by then we'll have better information, so we can avoid doing the work
   // to try and break dependencies now.
-  bool breakDependency = isBlockDone(MBB);
-  for (MachineInstr &MI : *MBB) {
+  for (MachineInstr &MI : *TraversedMBB.MBB) {
     if (!MI.isDebugValue()) {
       bool Kill = false;
-      if (PrimaryPass)
+      if (TraversedMBB.PrimaryPass)
         Kill = visitInstr(&MI);
-      processDefs(&MI, breakDependency, Kill);
+      processDefs(&MI, Kill);
     }
   }
-  if (breakDependency)
-    processUndefReads(MBB);
-  leaveBasicBlock(MBB);
+  leaveBasicBlock(TraversedMBB);
 }
 
-bool ExecutionDepsFix::isBlockDone(MachineBasicBlock *MBB) {
+void ReachingDefAnalysis::processBasicBlock(
+    const LoopTraversal::TraversedMBBInfo &TraversedMBB) {
+  enterBasicBlock(TraversedMBB);
+  for (MachineInstr &MI : *TraversedMBB.MBB) {
+    if (!MI.isDebugValue())
+      processDefs(&MI);
+  }
+  leaveBasicBlock(TraversedMBB);
+}
+
+void BreakFalseDeps::processBasicBlock(MachineBasicBlock* MBB) {
+  UndefReads.clear();
+  // If this block is not done, it makes little sense to make any decisions
+  // based on clearance information. We need to make a second pass anyway,
+  // and by then we'll have better information, so we can avoid doing the work
+  // to try and break dependencies now.
+  for (MachineInstr &MI : *MBB) {
+    if (!MI.isDebugValue()) {
+      processDefs(&MI);
+    }
+  }
+  processUndefReads(MBB);
+}
+
+bool LoopTraversal::isBlockDone(MachineBasicBlock *MBB) {
   return MBBInfos[MBB].PrimaryCompleted &&
          MBBInfos[MBB].IncomingCompleted == MBBInfos[MBB].PrimaryIncoming &&
          MBBInfos[MBB].IncomingProcessed == MBB->pred_size();
 }
 
-bool ExecutionDepsFix::runOnMachineFunction(MachineFunction &mf) {
-  if (skipFunction(mf.getFunction()))
-    return false;
-  MF = &mf;
-  TII = MF->getSubtarget().getInstrInfo();
-  TRI = MF->getSubtarget().getRegisterInfo();
-  RegClassInfo.runOnMachineFunction(mf);
-  LiveRegs = nullptr;
-  assert(NumRegs == RC->getNumRegs() && "Bad regclass");
-
-  DEBUG(dbgs() << "********** FIX EXECUTION DEPENDENCIES: "
-               << TRI->getRegClassName(RC) << " **********\n");
-
-  // If no relevant registers are used in the function, we can skip it
-  // completely.
-  bool anyregs = false;
-  const MachineRegisterInfo &MRI = mf.getRegInfo();
-  for (unsigned Reg : *RC) {
-    if (MRI.isPhysRegUsed(Reg)) {
-      anyregs = true;
-      break;
-    }
-  }
-  if (!anyregs) return false;
-
-  // Initialize the AliasMap on the first use.
-  if (AliasMap.empty()) {
-    // Given a PhysReg, AliasMap[PhysReg] returns a list of indices into RC and
-    // therefore the LiveRegs array.
-    AliasMap.resize(TRI->getNumRegs());
-    for (unsigned i = 0, e = RC->getNumRegs(); i != e; ++i)
-      for (MCRegAliasIterator AI(RC->getRegister(i), TRI, true);
-           AI.isValid(); ++AI)
-        AliasMap[*AI].push_back(i);
-  }
-
+SmallVector<LoopTraversal::TraversedMBBInfo, 4>
+LoopTraversal::traverse(MachineFunction &MF) {
   // Initialize the MMBInfos
-  for (auto &MBB : mf) {
+  for (auto &MBB : MF) {
     MBBInfo InitialInfo;
     MBBInfos.insert(std::make_pair(&MBB, InitialInfo));
   }
@@ -686,9 +775,10 @@ bool ExecutionDepsFix::runOnMachineFunction(MachineFunction &mf) {
    *  any successors that are now done.
    */
 
-  MachineBasicBlock *Entry = &*MF->begin();
+  MachineBasicBlock *Entry = &*MF.begin();
   ReversePostOrderTraversal<MachineBasicBlock*> RPOT(Entry);
   SmallVector<MachineBasicBlock *, 4> Workqueue;
+  SmallVector<TraversedMBBInfo, 4> MBBTraversalOrder;
   for (ReversePostOrderTraversal<MachineBasicBlock*>::rpo_iterator
          MBBI = RPOT.begin(), MBBE = RPOT.end(); MBBI != MBBE; ++MBBI) {
     MachineBasicBlock *MBB = *MBBI;
@@ -701,8 +791,8 @@ bool ExecutionDepsFix::runOnMachineFunction(MachineFunction &mf) {
     while (!Workqueue.empty()) {
       MachineBasicBlock *ActiveMBB = &*Workqueue.back();
       Workqueue.pop_back();
-      processBasicBlock(ActiveMBB, Primary);
       bool Done = isBlockDone(ActiveMBB);
+      MBBTraversalOrder.push_back(TraversedMBBInfo(ActiveMBB, Primary, Done));
       for (auto *Succ : ActiveMBB->successors()) {
         if (!isBlockDone(Succ)) {
           if (Primary) {
@@ -729,27 +819,166 @@ bool ExecutionDepsFix::runOnMachineFunction(MachineFunction &mf) {
        MBBI != MBBE; ++MBBI) {
     MachineBasicBlock *MBB = *MBBI;
     if (!isBlockDone(MBB)) {
-      processBasicBlock(MBB, false);
+      MBBTraversalOrder.push_back(TraversedMBBInfo(MBB, false, true));
       // Don't update successors here. We'll get to them anyway through this
       // loop.
     }
   }
 
-  // Clear the LiveOuts vectors and collapse any remaining DomainValues.
-  for (ReversePostOrderTraversal<MachineBasicBlock*>::rpo_iterator
-         MBBI = RPOT.begin(), MBBE = RPOT.end(); MBBI != MBBE; ++MBBI) {
-    auto FI = MBBInfos.find(*MBBI);
-    if (FI == MBBInfos.end() || !FI->second.OutRegs)
+  MBBInfos.clear();
+
+  return MBBTraversalOrder;
+}
+
+bool ExecutionDomainFix::runOnMachineFunction(MachineFunction &mf) {
+  if (skipFunction(mf.getFunction()))
+    return false;
+  MF = &mf;
+  TII = MF->getSubtarget().getInstrInfo();
+  TRI = MF->getSubtarget().getRegisterInfo();
+  LiveRegs = nullptr;
+  assert(NumRegs == RC->getNumRegs() && "Bad regclass");
+
+  RDA = &getAnalysis<ReachingDefAnalysis>();
+
+  DEBUG(dbgs() << "********** FIX EXECUTION DOMAIN: "
+               << TRI->getRegClassName(RC) << " **********\n");
+
+  // If no relevant registers are used in the function, we can skip it
+  // completely.
+  bool anyregs = false;
+  const MachineRegisterInfo &MRI = mf.getRegInfo();
+  for (unsigned Reg : *RC) {
+    if (MRI.isPhysRegUsed(Reg)) {
+      anyregs = true;
+      break;
+    }
+  }
+  if (!anyregs) return false;
+
+  // Initialize the AliasMap on the first use.
+  if (AliasMap.empty()) {
+    // Given a PhysReg, AliasMap[PhysReg] returns a list of indices into RC and
+    // therefore the LiveRegs array.
+    AliasMap.resize(TRI->getNumRegs());
+    for (unsigned i = 0, e = RC->getNumRegs(); i != e; ++i)
+      for (MCRegAliasIterator AI(RC->getRegister(i), TRI, true);
+           AI.isValid(); ++AI)
+        AliasMap[*AI].push_back(i);
+  }
+
+  // Initialize the MBBOutRegsInfos
+  for (auto &MBB : mf) {
+    MBBOutRegsInfos.insert(std::make_pair(&MBB, nullptr));
+  }
+
+  // Traverse the basic blocks.
+  LoopTraversal Traversal;
+  SmallVector<LoopTraversal::TraversedMBBInfo, 4> TraversedMBBInfoOrder =
+      Traversal.traverse(mf);
+  for (auto TraversedMBB : TraversedMBBInfoOrder) {
+    processBasicBlock(TraversedMBB);
+  }
+
+  for (auto MBBOutRegs : MBBOutRegsInfos) {
+    if (!MBBOutRegs.second)
       continue;
     for (unsigned i = 0, e = NumRegs; i != e; ++i)
-      if (FI->second.OutRegs[i].Value)
-        release(FI->second.OutRegs[i].Value);
-    delete[] FI->second.OutRegs;
+      if (MBBOutRegs.second[i].Value)
+        release(MBBOutRegs.second[i].Value);
+    delete[] MBBOutRegs.second;
   }
-  MBBInfos.clear();
-  UndefReads.clear();
+  MBBOutRegsInfos.clear();
   Avail.clear();
   Allocator.DestroyAll();
 
   return false;
+}
+
+bool ReachingDefAnalysis::runOnMachineFunction(MachineFunction &mf) {
+  if (skipFunction(mf.getFunction()))
+    return false;
+  MF = &mf;
+  TII = MF->getSubtarget().getInstrInfo();
+  TRI = MF->getSubtarget().getRegisterInfo();
+
+  LiveRegs = nullptr;
+  NumRegUnits = TRI->getNumRegUnits();
+
+  MBBReachingDefs.resize(mf.getNumBlockIDs());
+
+  DEBUG(dbgs() << "********** REACHING DEFINITION ANALYSIS **********\n");
+
+  // Initialize the MBBOutRegsInfos
+  for (auto &MBB : mf) {
+    MBBOutRegsInfos.insert(std::make_pair(&MBB, nullptr));
+  }
+
+  // Traverse the basic blocks.
+  LoopTraversal Traversal;
+  SmallVector<LoopTraversal::TraversedMBBInfo, 4> TraversedMBBInfoOrder =
+      Traversal.traverse(mf);
+  for (auto TraversedMBB : TraversedMBBInfoOrder) {
+    processBasicBlock(TraversedMBB);
+  }
+
+  // Sorting all reaching defs found for a ceartin reg unit in a given BB.
+  for (MBBDefsInfo &MBBDefs : MBBReachingDefs) {
+    for (MBBRegUnitDefs &RegUnitDefs : MBBDefs)
+      std::sort(RegUnitDefs.begin(), RegUnitDefs.end());
+  }
+
+  return false;
+}
+
+void ReachingDefAnalysis::releaseMemory() {
+  // Clear the LiveOuts vectors and collapse any remaining DomainValues.
+  for (auto MBBOutRegs : MBBOutRegsInfos) {
+    if (!MBBOutRegs.second)
+      continue;
+    delete[] MBBOutRegs.second;
+  }
+  MBBOutRegsInfos.clear();
+  MBBReachingDefs.clear();
+  InstIds.clear();
+}
+
+bool BreakFalseDeps::runOnMachineFunction(MachineFunction &mf) {
+  if (skipFunction(mf.getFunction()))
+    return false;
+  MF = &mf;
+  TII = MF->getSubtarget().getInstrInfo();
+  TRI = MF->getSubtarget().getRegisterInfo();
+  RDA = &getAnalysis<ReachingDefAnalysis>();
+
+  RegClassInfo.runOnMachineFunction(mf);
+
+  DEBUG(dbgs() << "********** BREAK FALSE DEPENDENCIES **********\n");
+
+  // Traverse the basic blocks.
+  for (MachineBasicBlock &MBB : mf) {
+    processBasicBlock(&MBB);
+  }
+
+  return false;
+}
+
+int ReachingDefAnalysis::getReachingDef(MachineInstr *MI, int PhysReg) {
+  int InstId = InstIds[MI];
+  int DefRes = -(1 << 20);
+  int MBBNumber = MI->getParent()->getNumber();
+  int LatestDef = -(1 << 20);
+  for (MCRegUnitIterator Unit(PhysReg, TRI); Unit.isValid(); ++Unit) {
+    for (int Def : MBBReachingDefs[MBBNumber][*Unit]) {
+      if (Def >= InstId)
+        break;
+      DefRes = Def;
+    }
+    LatestDef = std::max(LatestDef, DefRes);
+  }
+  return LatestDef;
+}
+
+int ReachingDefAnalysis::getClearance(MachineInstr *MI, MCPhysReg PhysReg) {
+  return InstIds[MI] - getReachingDef(MI, PhysReg);
 }
