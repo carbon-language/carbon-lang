@@ -90,29 +90,29 @@ void ExecutionDomainFix::setLiveReg(int rx, DomainValue *dv) {
   assert(unsigned(rx) < NumRegs && "Invalid index");
   assert(!LiveRegs.empty() && "Must enter basic block first.");
 
-  if (LiveRegs[rx].Value == dv)
+  if (LiveRegs[rx] == dv)
     return;
-  if (LiveRegs[rx].Value)
-    release(LiveRegs[rx].Value);
-  LiveRegs[rx].Value = retain(dv);
+  if (LiveRegs[rx])
+    release(LiveRegs[rx]);
+  LiveRegs[rx] = retain(dv);
 }
 
 // Kill register rx, recycle or collapse any DomainValue.
 void ExecutionDomainFix::kill(int rx) {
   assert(unsigned(rx) < NumRegs && "Invalid index");
   assert(!LiveRegs.empty() && "Must enter basic block first.");
-  if (!LiveRegs[rx].Value)
+  if (!LiveRegs[rx])
     return;
 
-  release(LiveRegs[rx].Value);
-  LiveRegs[rx].Value = nullptr;
+  release(LiveRegs[rx]);
+  LiveRegs[rx] = nullptr;
 }
 
 /// Force register rx into domain.
 void ExecutionDomainFix::force(int rx, unsigned domain) {
   assert(unsigned(rx) < NumRegs && "Invalid index");
   assert(!LiveRegs.empty() && "Must enter basic block first.");
-  if (DomainValue *dv = LiveRegs[rx].Value) {
+  if (DomainValue *dv = LiveRegs[rx]) {
     if (dv->isCollapsed())
       dv->addDomain(domain);
     else if (dv->hasDomain(domain))
@@ -121,8 +121,8 @@ void ExecutionDomainFix::force(int rx, unsigned domain) {
       // This is an incompatible open DomainValue. Collapse it to whatever and
       // force the new value into domain. This costs a domain crossing.
       collapse(dv, dv->getFirstDomain());
-      assert(LiveRegs[rx].Value && "Not live after collapse?");
-      LiveRegs[rx].Value->addDomain(domain);
+      assert(LiveRegs[rx] && "Not live after collapse?");
+      LiveRegs[rx]->addDomain(domain);
     }
   } else {
     // Set up basic collapsed DomainValue.
@@ -143,7 +143,7 @@ void ExecutionDomainFix::collapse(DomainValue *dv, unsigned domain) {
   // If there are multiple users, give them new, unique DomainValues.
   if (!LiveRegs.empty() && dv->Refs > 1)
     for (unsigned rx = 0; rx != NumRegs; ++rx)
-      if (LiveRegs[rx].Value == dv)
+      if (LiveRegs[rx] == dv)
         setLiveReg(rx, alloc(domain));
 }
 
@@ -167,7 +167,7 @@ bool ExecutionDomainFix::merge(DomainValue *A, DomainValue *B) {
 
   for (unsigned rx = 0; rx != NumRegs; ++rx) {
     assert(!LiveRegs.empty() && "no space allocated for live registers");
-    if (LiveRegs[rx].Value == B)
+    if (LiveRegs[rx] == B)
       setLiveReg(rx, A);
   }
   return true;
@@ -186,12 +186,9 @@ void ReachingDefAnalysis::enterBasicBlock(
   CurInstr = 0;
 
   // Set up LiveRegs to represent registers entering MBB.
+  // Default values are 'nothing happened a long time ago'.
   if (LiveRegs.empty())
-    LiveRegs.resize(NumRegUnits);
-
-  for (LiveReg &LiveRegDef : LiveRegs) {
-    LiveRegDef.Def = ReachingDedDefaultVal;
-  }
+    LiveRegs.assign(NumRegUnits, ReachingDedDefaultVal);
 
   // This is the entry block.
   if (MBB->pred_empty()) {
@@ -200,8 +197,8 @@ void ReachingDefAnalysis::enterBasicBlock(
         // Treat function live-ins as if they were defined just before the first
         // instruction.  Usually, function arguments are set up immediately
         // before the call.
-        LiveRegs[*Unit].Def = -1;
-        MBBReachingDefs[MBBNumber][*Unit].push_back(LiveRegs[*Unit].Def);
+        LiveRegs[*Unit] = -1;
+        MBBReachingDefs[MBBNumber][*Unit].push_back(LiveRegs[*Unit]);
       }
     }
     DEBUG(dbgs() << printMBBReference(*MBB) << ": entry\n");
@@ -220,9 +217,9 @@ void ReachingDefAnalysis::enterBasicBlock(
 
     for (unsigned Unit = 0; Unit != NumRegUnits; ++Unit) {
       // Use the most recent predecessor def for each register.
-      LiveRegs[Unit].Def = std::max(LiveRegs[Unit].Def, Incoming[Unit].Def);
-      if ((LiveRegs[Unit].Def  != ReachingDedDefaultVal))
-        MBBReachingDefs[MBBNumber][Unit].push_back(LiveRegs[Unit].Def);
+      LiveRegs[Unit] = std::max(LiveRegs[Unit], Incoming[Unit]);
+      if ((LiveRegs[Unit]  != ReachingDedDefaultVal))
+        MBBReachingDefs[MBBNumber][Unit].push_back(LiveRegs[Unit]);
     }
   }
 
@@ -238,12 +235,9 @@ void ExecutionDomainFix::enterBasicBlock(
   MachineBasicBlock *MBB = TraversedMBB.MBB;
 
   // Set up LiveRegs to represent registers entering MBB.
+  // Set default domain values to 'no domain' (nullptr)
   if (LiveRegs.empty())
-    LiveRegs.resize(NumRegs);
-
-  for (LiveReg &LiveRegDef : LiveRegs) {
-    LiveRegDef.Value = nullptr;
-  }
+    LiveRegs.assign(NumRegs, nullptr);
 
   // This is the entry block.
   if (MBB->pred_empty()) {
@@ -262,18 +256,18 @@ void ExecutionDomainFix::enterBasicBlock(
       continue;
 
     for (unsigned rx = 0; rx != NumRegs; ++rx) {
-      DomainValue *pdv = resolve(Incoming[rx].Value);
+      DomainValue *pdv = resolve(Incoming[rx]);
       if (!pdv)
         continue;
-      if (!LiveRegs[rx].Value) {
+      if (!LiveRegs[rx]) {
         setLiveReg(rx, pdv);
         continue;
       }
 
       // We have a live DomainValue from more than one predecessor.
-      if (LiveRegs[rx].Value->isCollapsed()) {
+      if (LiveRegs[rx]->isCollapsed()) {
         // We are already collapsed, but predecessor is not. Force it.
-        unsigned Domain = LiveRegs[rx].Value->getFirstDomain();
+        unsigned Domain = LiveRegs[rx]->getFirstDomain();
         if (!pdv->isCollapsed() && pdv->hasDomain(Domain))
           collapse(pdv, Domain);
         continue;
@@ -281,7 +275,7 @@ void ExecutionDomainFix::enterBasicBlock(
 
       // Currently open, merge in predecessor.
       if (!pdv->isCollapsed())
-        merge(LiveRegs[rx].Value, pdv);
+        merge(LiveRegs[rx], pdv);
       else
         force(rx, pdv->getFirstDomain());
     }
@@ -303,8 +297,8 @@ void ReachingDefAnalysis::leaveBasicBlock(
   // of the basic block for convenience. However, future use of this information
   // only cares about the clearance from the end of the block, so adjust
   // everything to be relative to the end of the basic block.
-  for (LiveReg &OutLiveReg : MBBOutRegsInfos[MBBNumber])
-    OutLiveReg.Def -= CurInstr;
+  for (int &OutLiveReg : MBBOutRegsInfos[MBBNumber])
+    OutLiveReg -= CurInstr;
   LiveRegs.clear();
 }
 
@@ -313,13 +307,11 @@ void ExecutionDomainFix::leaveBasicBlock(
   assert(!LiveRegs.empty() && "Must enter basic block first.");
   int MBBNumber = TraversedMBB.MBB->getNumber();
   assert(MBBNumber < MBBOutRegsInfos.size() && "Unexpected basic block number.");
-  LiveRegsDVInfo OldOutRegs = MBBOutRegsInfos[MBBNumber];
   // Save register clearances at end of MBB - used by enterBasicBlock().
-  MBBOutRegsInfos[MBBNumber] = LiveRegs;
-  for (LiveReg &OldLiveReg : OldOutRegs) {
-    release(OldLiveReg.Value);
+  for (DomainValue *OldLiveReg : MBBOutRegsInfos[MBBNumber]) {
+    release(OldLiveReg);
   }
-  OldOutRegs.clear();
+  MBBOutRegsInfos[MBBNumber] = LiveRegs;
   LiveRegs.clear();
 }
 
@@ -461,7 +453,7 @@ void ReachingDefAnalysis::processDefs(MachineInstr *MI) {
                    << *MI);
 
       // How many instructions since this reg unit was last written?
-      LiveRegs[*Unit].Def = CurInstr;
+      LiveRegs[*Unit] = CurInstr;
       MBBReachingDefs[MBBNumber][*Unit].push_back(CurInstr);
     }
   }
@@ -577,7 +569,7 @@ void ExecutionDomainFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
       MachineOperand &mo = mi->getOperand(i);
       if (!mo.isReg()) continue;
       for (int rx : regIndices(mo.getReg())) {
-        DomainValue *dv = LiveRegs[rx].Value;
+        DomainValue *dv = LiveRegs[rx];
         if (dv == nullptr)
           continue;
         // Bitmask of domains that dv and available have in common.
@@ -608,22 +600,23 @@ void ExecutionDomainFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
 
   // Kill off any remaining uses that don't match available, and build a list of
   // incoming DomainValues that we want to merge.
-  SmallVector<const LiveReg *, 4> Regs;
+  SmallVector<int, 4> Regs;
   for (int rx : used) {
     assert(!LiveRegs.empty() && "no space allocated for live registers");
-    LiveReg &LR = LiveRegs[rx];
-    LR.Def = RDA->getReachingDef(mi, RC->getRegister(rx));
+    DomainValue *&LR = LiveRegs[rx];
     // This useless DomainValue could have been missed above.
-    if (!LR.Value->getCommonDomains(available)) {
+    if (!LR->getCommonDomains(available)) {
       kill(rx);
       continue;
     }
     // Sorted insertion.
-    auto I = std::upper_bound(Regs.begin(), Regs.end(), &LR,
-                              [](const LiveReg *LHS, const LiveReg *RHS) {
-                                return LHS->Def < RHS->Def;
+    // Enables giving priority to the latest domains during merging.
+    auto I = std::upper_bound(Regs.begin(), Regs.end(), rx,
+                              [&](int LHS, const int RHS) {
+                                return RDA->getReachingDef(mi, RC->getRegister(LHS)) <
+                                  RDA->getReachingDef(mi, RC->getRegister(RHS));
                               });
-    Regs.insert(I, &LR);
+    Regs.insert(I, rx);
   }
 
   // doms are now sorted in order of appearance. Try to merge them all, giving
@@ -631,14 +624,14 @@ void ExecutionDomainFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
   DomainValue *dv = nullptr;
   while (!Regs.empty()) {
     if (!dv) {
-      dv = Regs.pop_back_val()->Value;
+      dv = LiveRegs[Regs.pop_back_val()];
       // Force the first dv to match the current instruction.
       dv->AvailableDomains = dv->getCommonDomains(available);
       assert(dv->AvailableDomains && "Domain should have been filtered");
       continue;
     }
 
-    DomainValue *Latest = Regs.pop_back_val()->Value;
+    DomainValue *Latest = LiveRegs[Regs.pop_back_val()];
     // Skip already merged values.
     if (Latest == dv || Latest->Next)
       continue;
@@ -648,7 +641,7 @@ void ExecutionDomainFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
     // If latest didn't merge, it is useless now. Kill all registers using it.
     for (int i : used) {
       assert(!LiveRegs.empty() && "no space allocated for live registers");
-      if (LiveRegs[i].Value == Latest)
+      if (LiveRegs[i] == Latest)
         kill(i);
     }
   }
@@ -665,7 +658,7 @@ void ExecutionDomainFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
   for (MachineOperand &mo : mi->operands()) {
     if (!mo.isReg()) continue;
     for (int rx : regIndices(mo.getReg())) {
-      if (!LiveRegs[rx].Value || (mo.isDef() && LiveRegs[rx].Value != dv)) {
+      if (!LiveRegs[rx] || (mo.isDef() && LiveRegs[rx] != dv)) {
         kill(rx);
         setLiveReg(rx, dv);
       }
@@ -852,9 +845,9 @@ bool ExecutionDomainFix::runOnMachineFunction(MachineFunction &mf) {
   }
 
   for (LiveRegsDVInfo OutLiveRegs: MBBOutRegsInfos) {
-    for (LiveReg OutLiveReg : OutLiveRegs) {
-      if (OutLiveReg.Value)
-        release(OutLiveReg.Value);
+    for (DomainValue *OutLiveReg : OutLiveRegs) {
+      if (OutLiveReg)
+        release(OutLiveReg);
     }
   }
   MBBOutRegsInfos.clear();

@@ -110,19 +110,6 @@ struct DomainValue {
   }
 };
 
-/// Information about a live register.
-struct LiveReg {
-  /// Value currently in this register, or NULL when no value is being tracked.
-  /// This counts as a DomainValue reference.
-  DomainValue *Value;
-
-  /// Instruction that defined this register, relative to the beginning of the
-  /// current basic block.  When a LiveReg is used to represent a live-out
-  /// register, this value is relative to the end of the basic block, so it
-  /// will be a negative number.
-  int Def;
-};
-
 /// This class provides the basic blocks traversal order used by passes like
 /// ReachingDefAnalysis and ExecutionDomainFix.
 /// It identifies basic blocks that are part of loops and should to be visited twice 
@@ -174,7 +161,11 @@ private:
   const TargetInstrInfo *TII;
   const TargetRegisterInfo *TRI;
   unsigned NumRegUnits;
-  using LiveRegsDefInfo = std::vector<LiveReg>;
+  /// Instruction that defined each register, relative to the beginning of the
+  /// current basic block.  When a LiveRegsDefInfo is used to represent a live-out
+  /// register, this value is relative to the end of the basic block, so it
+  /// will be a negative number.
+  using LiveRegsDefInfo = std::vector<int>;
   LiveRegsDefInfo LiveRegs;
 
   // Keeps clearance information for all registers. Note that this
@@ -246,7 +237,9 @@ class ExecutionDomainFix : public MachineFunctionPass {
   const TargetRegisterInfo *TRI;
   std::vector<SmallVector<int, 1>> AliasMap;
   const unsigned NumRegs;
-  using LiveRegsDVInfo = std::vector<LiveReg>;
+  /// Value currently in each register, or NULL when no value is being tracked.
+  /// This counts as a DomainValue reference.
+  using LiveRegsDVInfo = std::vector<DomainValue *>;
   LiveRegsDVInfo LiveRegs;
   // Keeps domain information for all registers. Note that this
   // is different from the usual definition notion of liveness. The CPU
