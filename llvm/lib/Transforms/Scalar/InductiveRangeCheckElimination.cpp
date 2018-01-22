@@ -934,9 +934,9 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE,
         return None;
       }
 
-      if (!SE.isAvailableAtLoopEntry(RightSCEV, &L) ||
-          !SE.isLoopEntryGuardedByCond(&L, BoundPred, IndVarStart,
-                                       SE.getAddExpr(RightSCEV, Step))) {
+      if (!SE.isLoopEntryGuardedByCond(
+              &L, BoundPred, IndVarStart,
+              SE.getAddExpr(RightSCEV, Step))) {
         FailureReason = "Induction variable start not bounded by upper limit";
         return None;
       }
@@ -948,8 +948,7 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE,
         RightValue = B.CreateAdd(RightValue, One);
       }
     } else {
-      if (!SE.isAvailableAtLoopEntry(RightSCEV, &L) ||
-          !SE.isLoopEntryGuardedByCond(&L, BoundPred, IndVarStart, RightSCEV)) {
+      if (!SE.isLoopEntryGuardedByCond(&L, BoundPred, IndVarStart, RightSCEV)) {
         FailureReason = "Induction variable start not bounded by upper limit";
         return None;
       }
@@ -1015,10 +1014,9 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE,
         return None;
       }
 
-      if (!SE.isAvailableAtLoopEntry(RightSCEV, &L) ||
-          !SE.isLoopEntryGuardedByCond(
-               &L, BoundPred, IndVarStart,
-               SE.getMinusSCEV(RightSCEV, SE.getOne(RightSCEV->getType())))) {
+      if (!SE.isLoopEntryGuardedByCond(
+              &L, BoundPred, IndVarStart,
+              SE.getMinusSCEV(RightSCEV, SE.getOne(RightSCEV->getType())))) {
         FailureReason = "Induction variable start not bounded by lower limit";
         return None;
       }
@@ -1030,8 +1028,7 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE,
         RightValue = B.CreateSub(RightValue, One);
       }
     } else {
-      if (!SE.isAvailableAtLoopEntry(RightSCEV, &L) ||
-          !SE.isLoopEntryGuardedByCond(&L, BoundPred, IndVarStart, RightSCEV)) {
+      if (!SE.isLoopEntryGuardedByCond(&L, BoundPred, IndVarStart, RightSCEV)) {
         FailureReason = "Induction variable start not bounded by lower limit";
         return None;
       }
