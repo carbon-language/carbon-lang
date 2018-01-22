@@ -52,29 +52,29 @@ class TargetInstrInfo;
 /// keep track of the fact that the register is now available in multiple
 /// domains.
 struct DomainValue {
-  // Basic reference counting.
+  /// Basic reference counting.
   unsigned Refs = 0;
 
-  // Bitmask of available domains. For an open DomainValue, it is the still
-  // possible domains for collapsing. For a collapsed DomainValue it is the
-  // domains where the register is available for free.
+  /// Bitmask of available domains. For an open DomainValue, it is the still
+  /// possible domains for collapsing. For a collapsed DomainValue it is the
+  /// domains where the register is available for free.
   unsigned AvailableDomains;
 
-  // Pointer to the next DomainValue in a chain.  When two DomainValues are
-  // merged, Victim.Next is set to point to Victor, so old DomainValue
-  // references can be updated by following the chain.
+  /// Pointer to the next DomainValue in a chain.  When two DomainValues are
+  /// merged, Victim.Next is set to point to Victor, so old DomainValue
+  /// references can be updated by following the chain.
   DomainValue *Next;
 
-  // Twiddleable instructions using or defining these registers.
+  /// Twiddleable instructions using or defining these registers.
   SmallVector<MachineInstr*, 8> Instrs;
 
   DomainValue() { clear(); }
 
-  // A collapsed DomainValue has no instructions to twiddle - it simply keeps
-  // track of the domains where the registers are already available.
+  /// A collapsed DomainValue has no instructions to twiddle - it simply keeps
+  /// track of the domains where the registers are already available.
   bool isCollapsed() const { return Instrs.empty(); }
 
-  // Is domain available?
+  /// Is domain available?
   bool hasDomain(unsigned domain) const {
     assert(domain <
                static_cast<unsigned>(std::numeric_limits<unsigned>::digits) &&
@@ -82,7 +82,7 @@ struct DomainValue {
     return AvailableDomains & (1u << domain);
   }
 
-  // Mark domain as available.
+  /// Mark domain as available.
   void addDomain(unsigned domain) {
     AvailableDomains |= 1u << domain;
   }
@@ -92,17 +92,17 @@ struct DomainValue {
     AvailableDomains = 1u << domain;
   }
 
-  // Return bitmask of domains that are available and in mask.
+  /// Return bitmask of domains that are available and in mask.
   unsigned getCommonDomains(unsigned mask) const {
     return AvailableDomains & mask;
   }
 
-  // First domain available.
+  /// First domain available.
   unsigned getFirstDomain() const {
     return countTrailingZeros(AvailableDomains);
   }
 
-  // Clear this DomainValue and point to next which has all its data.
+  /// Clear this DomainValue and point to next which has all its data.
   void clear() {
     AvailableDomains = 0;
     Next = nullptr;
@@ -114,30 +114,69 @@ struct DomainValue {
 /// ReachingDefAnalysis and ExecutionDomainFix.
 /// It identifies basic blocks that are part of loops and should to be visited twice 
 /// and returns efficient traversal order for all the blocks.
+///
+/// We want to visit every instruction in every basic block in order to update
+/// it's execution domain or collect clearance information. However, for the
+/// clearance calculation, we need to know clearances from all predecessors
+/// (including any backedges), therfore we need to visit some blocks twice. 
+/// As an example, consider the following loop.
+/// 
+/// 
+///    PH -> A -> B (xmm<Undef> -> xmm<Def>) -> C -> D -> EXIT
+///          ^                                  |
+///          +----------------------------------+
+/// 
+/// The iteration order this pass will return is as follows:
+/// Optimized: PH A B C A' B' C' D
+///
+/// The basic block order is constructed as follows:
+/// Once we finish processing some block, we update the counters in MBBInfos
+/// and re-process any successors that are now 'done'.
+/// We call a block that is ready for its final round of processing `done`
+/// (isBlockDone), e.g. when all predecessor information is known.
+///
+/// Note that a naive traversal order would be to do two complete passes over
+/// all basic blocks/instructions, the first for recording clearances, the
+/// second for updating clearance based on backedges.
+/// However, for functions without backedges, or functions with a lot of
+/// straight-line code, and a small loop, that would be a lot of unnecessary
+/// work (since only the BBs that are part of the loop require two passes).
+///
+/// E.g., the naive iteration order for the above exmple is as follows:
+/// Naive: PH A B C D A' B' C' D'
+///
+/// In the optimized approach we avoid processing D twice, because we
+/// can entirely process the predecessors before getting to D.
 class LoopTraversal {
 private:
   struct MBBInfo {
-    // Whether we have gotten to this block in primary processing yet.
+    /// Whether we have gotten to this block in primary processing yet.
     bool PrimaryCompleted = false;
 
-    // The number of predecessors for which primary processing has completed
+    /// The number of predecessors for which primary processing has completed
     unsigned IncomingProcessed = 0;
 
-    // The value of `IncomingProcessed` at the start of primary processing
+    /// The value of `IncomingProcessed` at the start of primary processing
     unsigned PrimaryIncoming = 0;
 
-    // The number of predecessors for which all processing steps are done.
+    /// The number of predecessors for which all processing steps are done.
     unsigned IncomingCompleted = 0;
 
     MBBInfo() = default;
   };
   using MBBInfoMap = SmallVector<MBBInfo, 4>;
+  /// Helps keep track if we proccessed this block and all its predecessors.
   MBBInfoMap MBBInfos;
 
 public:
   struct TraversedMBBInfo {
+    /// The basic block.
     MachineBasicBlock *MBB = nullptr;
+    
+    /// True if this is the first time we process the basic block.
     bool PrimaryPass = true;
+    
+    /// True if the block that is ready for its final round of processing.
     bool IsDone = true;
 
     TraversedMBBInfo(MachineBasicBlock *BB = nullptr, bool Primary = true,
@@ -146,10 +185,13 @@ public:
   };
   LoopTraversal() {}
 
+  /// \brief Identifies basic blocks that are part of loops and should to be 
+  ///  visited twise and returns efficient traversal order for all the blocks.
   typedef SmallVector<TraversedMBBInfo, 4> TraversalOrder;
   TraversalOrder traverse(MachineFunction &MF);
 
 private:
+  /// Returens true if the block is ready for its final round of processing.
   bool isBlockDone(MachineBasicBlock *MBB);
 
 };
@@ -168,9 +210,9 @@ private:
   using LiveRegsDefInfo = std::vector<int>;
   LiveRegsDefInfo LiveRegs;
 
-  // Keeps clearance information for all registers. Note that this
-  // is different from the usual definition notion of liveness. The CPU
-  // doesn't care whether or not we consider a register killed.
+  /// Keeps clearance information for all registers. Note that this
+  /// is different from the usual definition notion of liveness. The CPU
+  /// doesn't care whether or not we consider a register killed.
   using OutRegsInfoMap = SmallVector<LiveRegsDefInfo, 4>;
   OutRegsInfoMap MBBOutRegsInfos;
 
@@ -190,7 +232,7 @@ private:
   using MBBReachingDefsInfo = SmallVector<MBBDefsInfo, 4>;
   MBBReachingDefsInfo MBBReachingDefs;
 
-  // Default values are 'nothing happened a long time ago'.
+  /// Default values are 'nothing happened a long time ago'.
   const int ReachingDedDefaultVal = -(1 << 20);
 
 public:
@@ -216,14 +258,23 @@ public:
   /// Provides the instruction id of the closest reaching def instruction of
   /// PhysReg that reaches MI, relative to the begining of MI's basic block.
   int getReachingDef(MachineInstr *MI, int PhysReg);
+  
   /// Provides the clearance - the number of instructions since the closest
   /// reaching def instuction of PhysReg that reaches MI.
   int getClearance(MachineInstr *MI, MCPhysReg PhysReg);
 
 private:
+  /// Set up LiveRegs by merging predecessor live-out values.
   void enterBasicBlock(const LoopTraversal::TraversedMBBInfo &TraversedMBB);
+
+  /// Update live-out values.
   void leaveBasicBlock(const LoopTraversal::TraversedMBBInfo &TraversedMBB);
+
+  /// Process he given basic block.
   void processBasicBlock(const LoopTraversal::TraversedMBBInfo &TraversedMBB);
+
+  /// Update def-ages for registers defined by MI.
+  /// Also break dependencies on partial defs and undef uses.
   void processDefs(MachineInstr *);
 };
 
@@ -241,9 +292,9 @@ class ExecutionDomainFix : public MachineFunctionPass {
   /// This counts as a DomainValue reference.
   using LiveRegsDVInfo = std::vector<DomainValue *>;
   LiveRegsDVInfo LiveRegs;
-  // Keeps domain information for all registers. Note that this
-  // is different from the usual definition notion of liveness. The CPU
-  // doesn't care whether or not we consider a register killed.
+  /// Keeps domain information for all registers. Note that this
+  /// is different from the usual definition notion of liveness. The CPU
+  /// doesn't care whether or not we consider a register killed.
   using OutRegsInfoMap = SmallVector<LiveRegsDVInfo, 4>;
   OutRegsInfoMap MBBOutRegsInfos;
 
@@ -267,30 +318,65 @@ public:
   }
 
 private:
+  /// Translate TRI register number to a list of indices into our smaller tables
+  /// of interesting registers.
   iterator_range<SmallVectorImpl<int>::const_iterator>
   regIndices(unsigned Reg) const;
-  // DomainValue allocation.
+
+  /// DomainValue allocation.
   DomainValue *alloc(int domain = -1);
+
+  /// Add reference to DV.
   DomainValue *retain(DomainValue *DV) {
     if (DV) ++DV->Refs;
     return DV;
   }
+
+  /// Release a reference to DV.  When the last reference is released,
+  /// collapse if needed.
   void release(DomainValue*);
+
+  /// Follow the chain of dead DomainValues until a live DomainValue is reached.
+  /// Update the referenced pointer when necessary.
   DomainValue *resolve(DomainValue*&);
 
-  // LiveRegs manipulations.
+  /// Set LiveRegs[rx] = dv, updating reference counts.
   void setLiveReg(int rx, DomainValue *DV);
+  
+  /// Kill register rx, recycle or collapse any DomainValue.
   void kill(int rx);
+
+  /// Force register rx into domain.
   void force(int rx, unsigned domain);
+
+  /// Collapse open DomainValue into given domain. If there are multiple
+  /// registers using dv, they each get a unique collapsed DomainValue.
   void collapse(DomainValue *dv, unsigned domain);
+  
+  /// All instructions and registers in B are moved to A, and B is released.
   bool merge(DomainValue *A, DomainValue *B);
 
+  /// Set up LiveRegs by merging predecessor live-out values.
   void enterBasicBlock(const LoopTraversal::TraversedMBBInfo &TraversedMBB);
+  
+  /// Update live-out values.
   void leaveBasicBlock(const LoopTraversal::TraversedMBBInfo &TraversedMBB);
+  
+  /// Process he given basic block.
   void processBasicBlock(const LoopTraversal::TraversedMBBInfo &TraversedMBB);
+  
+  /// Visit given insturcion.
   bool visitInstr(MachineInstr *);
+
+  /// Update def-ages for registers defined by MI.
+  /// If Kill is set, also kill off DomainValues clobbered by the defs.
   void processDefs(MachineInstr *, bool Kill);
+
+  /// A soft instruction can be changed to work in other domains given by mask.
   void visitSoftInstr(MachineInstr*, unsigned mask);
+
+  /// A hard instruction only works in one domain. All input registers will be
+  /// forced into that domain.
   void visitHardInstr(MachineInstr*, unsigned domain);
 };
 
@@ -330,11 +416,30 @@ public:
   }
 
 private:
+  /// Process he given basic block.
   void processBasicBlock(MachineBasicBlock *MBB);
+
+  /// Update def-ages for registers defined by MI.
+  /// Also break dependencies on partial defs and undef uses.
   void processDefs(MachineInstr *MI);
+
+  /// \brief Helps avoid false dependencies on undef registers by updating the
+  /// machine instructions' undef operand to use a register that the instruction
+  /// is truly dependent on, or use a register with clearance higher than Pref.
+  /// Returns true if it was able to find a true dependency, thus not requiring
+  /// a dependency breaking instruction regardless of clearance.
   bool pickBestRegisterForUndef(MachineInstr *MI, unsigned OpIdx,
                                 unsigned Pref);
+
+  /// \brief Return true to if it makes sense to break dependence on a partial def
+  /// or undef use.
   bool shouldBreakDependence(MachineInstr*, unsigned OpIdx, unsigned Pref);
+
+  /// \brief Break false dependencies on undefined register reads.
+  /// Walk the block backward computing precise liveness. This is expensive, so we
+  /// only do it on demand. Note that the occurrence of undefined register reads
+  /// that should be broken is very rare, but when they occur we may have many in
+  /// a single block.
   void processUndefReads(MachineBasicBlock*);
 };
 

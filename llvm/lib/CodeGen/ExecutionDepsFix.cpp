@@ -27,8 +27,6 @@ INITIALIZE_PASS_DEPENDENCY(ReachingDefAnalysis)
 INITIALIZE_PASS_END(BreakFalseDeps, "break-false-deps", "BreakFalseDeps", false,
                     false)
 
-/// Translate TRI register number to a list of indices into our smaller tables
-/// of interesting registers.
 iterator_range<SmallVectorImpl<int>::const_iterator>
 ExecutionDomainFix::regIndices(unsigned Reg) const {
   assert(Reg < AliasMap.size() && "Invalid register");
@@ -47,8 +45,6 @@ DomainValue *ExecutionDomainFix::alloc(int domain) {
   return dv;
 }
 
-/// Release a reference to DV.  When the last reference is released,
-/// collapse if needed.
 void ExecutionDomainFix::release(DomainValue *DV) {
   while (DV) {
     assert(DV->Refs && "Bad DomainValue");
@@ -67,8 +63,6 @@ void ExecutionDomainFix::release(DomainValue *DV) {
   }
 }
 
-/// Follow the chain of dead DomainValues until a live DomainValue is reached.
-/// Update the referenced pointer when necessary.
 DomainValue *ExecutionDomainFix::resolve(DomainValue *&DVRef) {
   DomainValue *DV = DVRef;
   if (!DV || !DV->Next)
@@ -85,7 +79,6 @@ DomainValue *ExecutionDomainFix::resolve(DomainValue *&DVRef) {
   return DV;
 }
 
-/// Set LiveRegs[rx] = dv, updating reference counts.
 void ExecutionDomainFix::setLiveReg(int rx, DomainValue *dv) {
   assert(unsigned(rx) < NumRegs && "Invalid index");
   assert(!LiveRegs.empty() && "Must enter basic block first.");
@@ -97,7 +90,6 @@ void ExecutionDomainFix::setLiveReg(int rx, DomainValue *dv) {
   LiveRegs[rx] = retain(dv);
 }
 
-// Kill register rx, recycle or collapse any DomainValue.
 void ExecutionDomainFix::kill(int rx) {
   assert(unsigned(rx) < NumRegs && "Invalid index");
   assert(!LiveRegs.empty() && "Must enter basic block first.");
@@ -108,7 +100,6 @@ void ExecutionDomainFix::kill(int rx) {
   LiveRegs[rx] = nullptr;
 }
 
-/// Force register rx into domain.
 void ExecutionDomainFix::force(int rx, unsigned domain) {
   assert(unsigned(rx) < NumRegs && "Invalid index");
   assert(!LiveRegs.empty() && "Must enter basic block first.");
@@ -130,8 +121,6 @@ void ExecutionDomainFix::force(int rx, unsigned domain) {
   }
 }
 
-/// Collapse open DomainValue into given domain. If there are multiple
-/// registers using dv, they each get a unique collapsed DomainValue.
 void ExecutionDomainFix::collapse(DomainValue *dv, unsigned domain) {
   assert(dv->hasDomain(domain) && "Cannot collapse");
 
@@ -147,7 +136,6 @@ void ExecutionDomainFix::collapse(DomainValue *dv, unsigned domain) {
         setLiveReg(rx, alloc(domain));
 }
 
-/// All instructions and registers in B are moved to A, and B is released.
 bool ExecutionDomainFix::merge(DomainValue *A, DomainValue *B) {
   assert(!A->isCollapsed() && "Cannot merge into collapsed");
   assert(!B->isCollapsed() && "Cannot merge from collapsed");
@@ -173,7 +161,6 @@ bool ExecutionDomainFix::merge(DomainValue *A, DomainValue *B) {
   return true;
 }
 
-/// Set up LiveRegs by merging predecessor live-out values.
 void ReachingDefAnalysis::enterBasicBlock(
     const LoopTraversal::TraversedMBBInfo &TraversedMBB) {
 
@@ -228,7 +215,6 @@ void ReachingDefAnalysis::enterBasicBlock(
              << (!TraversedMBB.IsDone ? ": incomplete\n" : ": all preds known\n"));
 }
 
-/// Set up LiveRegs by merging predecessor live-out values.
 void ExecutionDomainFix::enterBasicBlock(
     const LoopTraversal::TraversedMBBInfo &TraversedMBB) {
 
@@ -328,11 +314,6 @@ bool ExecutionDomainFix::visitInstr(MachineInstr *MI) {
   return !DomP.first;
 }
 
-/// \brief Helps avoid false dependencies on undef registers by updating the
-/// machine instructions' undef operand to use a register that the instruction
-/// is truly dependent on, or use a register with clearance higher than Pref.
-/// Returns true if it was able to find a true dependency, thus not requiring
-/// a dependency breaking instruction regardless of clearance.
 bool BreakFalseDeps::pickBestRegisterForUndef(MachineInstr *MI,
                                                 unsigned OpIdx, unsigned Pref) {
   MachineOperand &MO = MI->getOperand(OpIdx);
@@ -389,8 +370,6 @@ bool BreakFalseDeps::pickBestRegisterForUndef(MachineInstr *MI,
   return false;
 }
 
-/// \brief Return true to if it makes sense to break dependence on a partial def
-/// or undef use.
 bool BreakFalseDeps::shouldBreakDependence(MachineInstr *MI, unsigned OpIdx,
                                            unsigned Pref) {
   unsigned reg = MI->getOperand(OpIdx).getReg();
@@ -405,10 +384,6 @@ bool BreakFalseDeps::shouldBreakDependence(MachineInstr *MI, unsigned OpIdx,
   return false;
 }
 
-// Update def-ages for registers defined by MI.
-// If Kill is set, also kill off DomainValues clobbered by the defs.
-//
-// Also break dependencies on partial defs and undef uses.
 void ExecutionDomainFix::processDefs(MachineInstr *MI, bool Kill) {
   assert(!MI->isDebugValue() && "Won't process debug values");
   const MCInstrDesc &MCID = MI->getDesc();
@@ -431,8 +406,6 @@ void ExecutionDomainFix::processDefs(MachineInstr *MI, bool Kill) {
   }
 }
 
-// Update def-ages for registers defined by MI.
-// Also break dependencies on partial defs and undef uses.
 void ReachingDefAnalysis::processDefs(MachineInstr *MI) {
   assert(!MI->isDebugValue() && "Won't process debug values");
 
@@ -461,8 +434,6 @@ void ReachingDefAnalysis::processDefs(MachineInstr *MI) {
   ++CurInstr;
 }
 
-// Update def-ages for registers defined by MI.
-// Also break dependencies on partial defs and undef uses.
 void BreakFalseDeps::processDefs(MachineInstr *MI) {
   assert(!MI->isDebugValue() && "Won't process debug values");
 
@@ -494,12 +465,6 @@ void BreakFalseDeps::processDefs(MachineInstr *MI) {
   }
 }
 
-/// \break Break false dependencies on undefined register reads.
-///
-/// Walk the block backward computing precise liveness. This is expensive, so we
-/// only do it on demand. Note that the occurrence of undefined register reads
-/// that should be broken is very rare, but when they occur we may have many in
-/// a single block.
 void BreakFalseDeps::processUndefReads(MachineBasicBlock *MBB) {
   if (UndefReads.empty())
     return;
@@ -531,8 +496,6 @@ void BreakFalseDeps::processUndefReads(MachineBasicBlock *MBB) {
   }
 }
 
-// A hard instruction only works in one domain. All input registers will be
-// forced into that domain.
 void ExecutionDomainFix::visitHardInstr(MachineInstr *mi, unsigned domain) {
   // Collapse all uses.
   for (unsigned i = mi->getDesc().getNumDefs(),
@@ -555,7 +518,6 @@ void ExecutionDomainFix::visitHardInstr(MachineInstr *mi, unsigned domain) {
   }
 }
 
-// A soft instruction can be changed to work in other domains given by mask.
 void ExecutionDomainFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
   // Bitmask of available domains for this instruction after taking collapsed
   // operands into account.
@@ -719,34 +681,6 @@ LoopTraversal::TraversalOrder
 LoopTraversal::traverse(MachineFunction &MF) {
   // Initialize the MMBInfos
   MBBInfos.assign(MF.getNumBlockIDs(), MBBInfo());
-
-  /*
-   *  We want to visit every instruction in every basic block in order to update
-   *  it's execution domain or break any false dependencies. However, for the
-   *  dependency breaking, we need to know clearances from all predecessors
-   *  (including any backedges). One way to do so would be to do two complete
-   *  passes over all basic blocks/instructions, the first for recording
-   *  clearances, the second to break the dependencies. However, for functions
-   *  without backedges, or functions with a lot of straight-line code, and
-   *  a small loop, that would be a lot of unnecessary work (since only the
-   *  BBs that are part of the loop require two passes). As an example,
-   *  consider the following loop.
-   *
-   *
-   *     PH -> A -> B (xmm<Undef> -> xmm<Def>) -> C -> D -> EXIT
-   *           ^                                  |
-   *           +----------------------------------+
-   *
-   *  The iteration order is as follows:
-   *  Naive: PH A B C D A' B' C' D'
-   *  Optimized: PH A B C A' B' C' D
-   *
-   *  Note that we avoid processing D twice, because we can entirely process
-   *  the predecessors before getting to D. We call a block that is ready
-   *  for its second round of processing `done` (isBlockDone). Once we finish
-   *  processing some block, we update the counters in MBBInfos and re-process
-   *  any successors that are now done.
-   */
 
   MachineBasicBlock *Entry = &*MF.begin();
   ReversePostOrderTraversal<MachineBasicBlock*> RPOT(Entry);
