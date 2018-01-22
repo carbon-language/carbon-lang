@@ -1,4 +1,4 @@
-//===- ExecutionDepsFix.cpp - Fix execution domain issues ----*- C++ -*-===//
+//===- ExecutionDomainFix.cpp - Fix execution domain issues ----*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,24 +8,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/ExecutionDomainFix.h"
-#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 
 using namespace llvm;
 
 #define DEBUG_TYPE "execution-deps-fix"
-
-char ReachingDefAnalysis::ID = 0;
-INITIALIZE_PASS(ReachingDefAnalysis, "reaching-deps-analysis",
-                "ReachingDefAnalysis", false, true)
-
-char BreakFalseDeps::ID = 0;
-INITIALIZE_PASS_BEGIN(BreakFalseDeps, "break-false-deps", "BreakFalseDeps",
-                      false, false)
-INITIALIZE_PASS_DEPENDENCY(ReachingDefAnalysis)
-INITIALIZE_PASS_END(BreakFalseDeps, "break-false-deps", "BreakFalseDeps", false,
-                    false)
 
 iterator_range<SmallVectorImpl<int>::const_iterator>
 ExecutionDomainFix::regIndices(unsigned Reg) const {
@@ -161,61 +149,6 @@ bool ExecutionDomainFix::merge(DomainValue *A, DomainValue *B) {
   return true;
 }
 
-void ReachingDefAnalysis::enterBasicBlock(
-    const LoopTraversal::TraversedMBBInfo &TraversedMBB) {
-
-  MachineBasicBlock *MBB = TraversedMBB.MBB;
-  int MBBNumber = MBB->getNumber();
-  assert(MBBNumber < MBBReachingDefs.size() &&
-         "Unexpected basic block number.");
-  MBBReachingDefs[MBBNumber].resize(NumRegUnits);
-
-  // Reset instruction counter in each basic block.
-  CurInstr = 0;
-
-  // Set up LiveRegs to represent registers entering MBB.
-  // Default values are 'nothing happened a long time ago'.
-  if (LiveRegs.empty())
-    LiveRegs.assign(NumRegUnits, ReachingDedDefaultVal);
-
-  // This is the entry block.
-  if (MBB->pred_empty()) {
-    for (const auto &LI : MBB->liveins()) {
-      for (MCRegUnitIterator Unit(LI.PhysReg, TRI); Unit.isValid(); ++Unit) {
-        // Treat function live-ins as if they were defined just before the first
-        // instruction.  Usually, function arguments are set up immediately
-        // before the call.
-        LiveRegs[*Unit] = -1;
-        MBBReachingDefs[MBBNumber][*Unit].push_back(LiveRegs[*Unit]);
-      }
-    }
-    DEBUG(dbgs() << printMBBReference(*MBB) << ": entry\n");
-    return;
-  }
-
-  // Try to coalesce live-out registers from predecessors.
-  for (MachineBasicBlock *pred : MBB->predecessors()) {
-    assert(pred->getNumber() < MBBOutRegsInfos.size() &&
-           "Should have pre-allocated MBBInfos for all MBBs");
-    const LiveRegsDefInfo &Incoming = MBBOutRegsInfos[pred->getNumber()];
-    // Incoming is null if this is a backedge from a BB
-    // we haven't processed yet
-    if (Incoming.empty())
-      continue;
-
-    for (unsigned Unit = 0; Unit != NumRegUnits; ++Unit) {
-      // Use the most recent predecessor def for each register.
-      LiveRegs[Unit] = std::max(LiveRegs[Unit], Incoming[Unit]);
-      if ((LiveRegs[Unit] != ReachingDedDefaultVal))
-        MBBReachingDefs[MBBNumber][Unit].push_back(LiveRegs[Unit]);
-    }
-  }
-
-  DEBUG(dbgs() << printMBBReference(*MBB)
-               << (!TraversedMBB.IsDone ? ": incomplete\n"
-                                        : ": all preds known\n"));
-}
-
 void ExecutionDomainFix::enterBasicBlock(
     const LoopTraversal::TraversedMBBInfo &TraversedMBB) {
 
@@ -272,24 +205,6 @@ void ExecutionDomainFix::enterBasicBlock(
                                         : ": all preds known\n"));
 }
 
-void ReachingDefAnalysis::leaveBasicBlock(
-    const LoopTraversal::TraversedMBBInfo &TraversedMBB) {
-  assert(!LiveRegs.empty() && "Must enter basic block first.");
-  int MBBNumber = TraversedMBB.MBB->getNumber();
-  assert(MBBNumber < MBBOutRegsInfos.size() &&
-         "Unexpected basic block number.");
-  // Save register clearances at end of MBB - used by enterBasicBlock().
-  MBBOutRegsInfos[MBBNumber] = LiveRegs;
-
-  // While processing the basic block, we kept `Def` relative to the start
-  // of the basic block for convenience. However, future use of this information
-  // only cares about the clearance from the end of the block, so adjust
-  // everything to be relative to the end of the basic block.
-  for (int &OutLiveReg : MBBOutRegsInfos[MBBNumber])
-    OutLiveReg -= CurInstr;
-  LiveRegs.clear();
-}
-
 void ExecutionDomainFix::leaveBasicBlock(
     const LoopTraversal::TraversedMBBInfo &TraversedMBB) {
   assert(!LiveRegs.empty() && "Must enter basic block first.");
@@ -317,76 +232,6 @@ bool ExecutionDomainFix::visitInstr(MachineInstr *MI) {
   return !DomP.first;
 }
 
-bool BreakFalseDeps::pickBestRegisterForUndef(MachineInstr *MI, unsigned OpIdx,
-                                              unsigned Pref) {
-  MachineOperand &MO = MI->getOperand(OpIdx);
-  assert(MO.isUndef() && "Expected undef machine operand");
-
-  unsigned OriginalReg = MO.getReg();
-
-  // Update only undef operands that have reg units that are mapped to one root.
-  for (MCRegUnitIterator Unit(OriginalReg, TRI); Unit.isValid(); ++Unit) {
-    unsigned NumRoots = 0;
-    for (MCRegUnitRootIterator Root(*Unit, TRI); Root.isValid(); ++Root) {
-      NumRoots++;
-      if (NumRoots > 1)
-        return false;
-    }
-  }
-
-  // Get the undef operand's register class
-  const TargetRegisterClass *OpRC =
-      TII->getRegClass(MI->getDesc(), OpIdx, TRI, *MF);
-
-  // If the instruction has a true dependency, we can hide the false depdency
-  // behind it.
-  for (MachineOperand &CurrMO : MI->operands()) {
-    if (!CurrMO.isReg() || CurrMO.isDef() || CurrMO.isUndef() ||
-        !OpRC->contains(CurrMO.getReg()))
-      continue;
-    // We found a true dependency - replace the undef register with the true
-    // dependency.
-    MO.setReg(CurrMO.getReg());
-    return true;
-  }
-
-  // Go over all registers in the register class and find the register with
-  // max clearance or clearance higher than Pref.
-  unsigned MaxClearance = 0;
-  unsigned MaxClearanceReg = OriginalReg;
-  ArrayRef<MCPhysReg> Order = RegClassInfo.getOrder(OpRC);
-  for (MCPhysReg Reg : Order) {
-    unsigned Clearance = RDA->getClearance(MI, Reg);
-    if (Clearance <= MaxClearance)
-      continue;
-    MaxClearance = Clearance;
-    MaxClearanceReg = Reg;
-
-    if (MaxClearance > Pref)
-      break;
-  }
-
-  // Update the operand if we found a register with better clearance.
-  if (MaxClearanceReg != OriginalReg)
-    MO.setReg(MaxClearanceReg);
-
-  return false;
-}
-
-bool BreakFalseDeps::shouldBreakDependence(MachineInstr *MI, unsigned OpIdx,
-                                           unsigned Pref) {
-  unsigned reg = MI->getOperand(OpIdx).getReg();
-  unsigned Clearance = RDA->getClearance(MI, reg);
-  DEBUG(dbgs() << "Clearance: " << Clearance << ", want " << Pref);
-
-  if (Pref > Clearance) {
-    DEBUG(dbgs() << ": Break dependency.\n");
-    return true;
-  }
-  DEBUG(dbgs() << ": OK .\n");
-  return false;
-}
-
 void ExecutionDomainFix::processDefs(MachineInstr *MI, bool Kill) {
   assert(!MI->isDebugValue() && "Won't process debug values");
   const MCInstrDesc &MCID = MI->getDesc();
@@ -405,97 +250,6 @@ void ExecutionDomainFix::processDefs(MachineInstr *MI, bool Kill) {
       // Kill off domains redefined by generic instructions.
       if (Kill)
         kill(rx);
-    }
-  }
-}
-
-void ReachingDefAnalysis::processDefs(MachineInstr *MI) {
-  assert(!MI->isDebugValue() && "Won't process debug values");
-
-  int MBBNumber = MI->getParent()->getNumber();
-  assert(MBBNumber < MBBReachingDefs.size() &&
-         "Unexpected basic block number.");
-  const MCInstrDesc &MCID = MI->getDesc();
-  for (unsigned i = 0,
-                e = MI->isVariadic() ? MI->getNumOperands() : MCID.getNumDefs();
-       i != e; ++i) {
-    MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg() || !MO.getReg())
-      continue;
-    if (MO.isUse())
-      continue;
-    for (MCRegUnitIterator Unit(MO.getReg(), TRI); Unit.isValid(); ++Unit) {
-      // This instruction explicitly defines the current reg unit.
-      DEBUG(dbgs() << printReg(MO.getReg(), TRI) << ":\t" << CurInstr << '\t'
-                   << *MI);
-
-      // How many instructions since this reg unit was last written?
-      LiveRegs[*Unit] = CurInstr;
-      MBBReachingDefs[MBBNumber][*Unit].push_back(CurInstr);
-    }
-  }
-  InstIds[MI] = CurInstr;
-  ++CurInstr;
-}
-
-void BreakFalseDeps::processDefs(MachineInstr *MI) {
-  assert(!MI->isDebugValue() && "Won't process debug values");
-
-  // Break dependence on undef uses. Do this before updating LiveRegs below.
-  unsigned OpNum;
-  unsigned Pref = TII->getUndefRegClearance(*MI, OpNum, TRI);
-  if (Pref) {
-    bool HadTrueDependency = pickBestRegisterForUndef(MI, OpNum, Pref);
-    // We don't need to bother trying to break a dependency if this
-    // instruction has a true dependency on that register through another
-    // operand - we'll have to wait for it to be available regardless.
-    if (!HadTrueDependency && shouldBreakDependence(MI, OpNum, Pref))
-      UndefReads.push_back(std::make_pair(MI, OpNum));
-  }
-
-  const MCInstrDesc &MCID = MI->getDesc();
-  for (unsigned i = 0,
-                e = MI->isVariadic() ? MI->getNumOperands() : MCID.getNumDefs();
-       i != e; ++i) {
-    MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg() || !MO.getReg())
-      continue;
-    if (MO.isUse())
-      continue;
-    // Check clearance before partial register updates.
-    unsigned Pref = TII->getPartialRegUpdateClearance(*MI, i, TRI);
-    if (Pref && shouldBreakDependence(MI, i, Pref))
-      TII->breakPartialRegDependency(*MI, i, TRI);
-  }
-}
-
-void BreakFalseDeps::processUndefReads(MachineBasicBlock *MBB) {
-  if (UndefReads.empty())
-    return;
-
-  // Collect this block's live out register units.
-  LiveRegSet.init(*TRI);
-  // We do not need to care about pristine registers as they are just preserved
-  // but not actually used in the function.
-  LiveRegSet.addLiveOutsNoPristines(*MBB);
-
-  MachineInstr *UndefMI = UndefReads.back().first;
-  unsigned OpIdx = UndefReads.back().second;
-
-  for (MachineInstr &I : make_range(MBB->rbegin(), MBB->rend())) {
-    // Update liveness, including the current instruction's defs.
-    LiveRegSet.stepBackward(I);
-
-    if (UndefMI == &I) {
-      if (!LiveRegSet.contains(UndefMI->getOperand(OpIdx).getReg()))
-        TII->breakPartialRegDependency(*UndefMI, OpIdx, TRI);
-
-      UndefReads.pop_back();
-      if (UndefReads.empty())
-        return;
-
-      UndefMI = UndefReads.back().first;
-      OpIdx = UndefReads.back().second;
     }
   }
 }
@@ -657,92 +411,6 @@ void ExecutionDomainFix::processBasicBlock(
   leaveBasicBlock(TraversedMBB);
 }
 
-void ReachingDefAnalysis::processBasicBlock(
-    const LoopTraversal::TraversedMBBInfo &TraversedMBB) {
-  enterBasicBlock(TraversedMBB);
-  for (MachineInstr &MI : *TraversedMBB.MBB) {
-    if (!MI.isDebugValue())
-      processDefs(&MI);
-  }
-  leaveBasicBlock(TraversedMBB);
-}
-
-void BreakFalseDeps::processBasicBlock(MachineBasicBlock *MBB) {
-  UndefReads.clear();
-  // If this block is not done, it makes little sense to make any decisions
-  // based on clearance information. We need to make a second pass anyway,
-  // and by then we'll have better information, so we can avoid doing the work
-  // to try and break dependencies now.
-  for (MachineInstr &MI : *MBB) {
-    if (!MI.isDebugValue())
-      processDefs(&MI);
-  }
-  processUndefReads(MBB);
-}
-
-bool LoopTraversal::isBlockDone(MachineBasicBlock *MBB) {
-  int MBBNumber = MBB->getNumber();
-  assert(MBBNumber < MBBInfos.size() && "Unexpected basic block number.");
-  return MBBInfos[MBBNumber].PrimaryCompleted &&
-         MBBInfos[MBBNumber].IncomingCompleted ==
-             MBBInfos[MBBNumber].PrimaryIncoming &&
-         MBBInfos[MBBNumber].IncomingProcessed == MBB->pred_size();
-}
-
-LoopTraversal::TraversalOrder LoopTraversal::traverse(MachineFunction &MF) {
-  // Initialize the MMBInfos
-  MBBInfos.assign(MF.getNumBlockIDs(), MBBInfo());
-
-  MachineBasicBlock *Entry = &*MF.begin();
-  ReversePostOrderTraversal<MachineBasicBlock *> RPOT(Entry);
-  SmallVector<MachineBasicBlock *, 4> Workqueue;
-  SmallVector<TraversedMBBInfo, 4> MBBTraversalOrder;
-  for (MachineBasicBlock *MBB : RPOT) {
-    // N.B: IncomingProcessed and IncomingCompleted were already updated while
-    // processing this block's predecessors.
-    int MBBNumber = MBB->getNumber();
-    assert(MBBNumber < MBBInfos.size() && "Unexpected basic block number.");
-    MBBInfos[MBBNumber].PrimaryCompleted = true;
-    MBBInfos[MBBNumber].PrimaryIncoming = MBBInfos[MBBNumber].IncomingProcessed;
-    bool Primary = true;
-    Workqueue.push_back(MBB);
-    while (!Workqueue.empty()) {
-      MachineBasicBlock *ActiveMBB = &*Workqueue.back();
-      Workqueue.pop_back();
-      bool Done = isBlockDone(ActiveMBB);
-      MBBTraversalOrder.push_back(TraversedMBBInfo(ActiveMBB, Primary, Done));
-      for (MachineBasicBlock *Succ : ActiveMBB->successors()) {
-        int SuccNumber = Succ->getNumber();
-        assert(SuccNumber < MBBInfos.size() &&
-               "Unexpected basic block number.");
-        if (!isBlockDone(Succ)) {
-          if (Primary)
-            MBBInfos[SuccNumber].IncomingProcessed++;
-          if (Done)
-            MBBInfos[SuccNumber].IncomingCompleted++;
-          if (isBlockDone(Succ))
-            Workqueue.push_back(Succ);
-        }
-      }
-      Primary = false;
-    }
-  }
-
-  // We need to go through again and finalize any blocks that are not done yet.
-  // This is possible if blocks have dead predecessors, so we didn't visit them
-  // above.
-  for (MachineBasicBlock *MBB : RPOT) {
-    if (!isBlockDone(MBB))
-      MBBTraversalOrder.push_back(TraversedMBBInfo(MBB, false, true));
-    // Don't update successors here. We'll get to them anyway through this
-    // loop.
-  }
-
-  MBBInfos.clear();
-
-  return MBBTraversalOrder;
-}
-
 bool ExecutionDomainFix::runOnMachineFunction(MachineFunction &mf) {
   if (skipFunction(mf.getFunction()))
     return false;
@@ -802,88 +470,4 @@ bool ExecutionDomainFix::runOnMachineFunction(MachineFunction &mf) {
   Allocator.DestroyAll();
 
   return false;
-}
-
-bool ReachingDefAnalysis::runOnMachineFunction(MachineFunction &mf) {
-  if (skipFunction(mf.getFunction()))
-    return false;
-  MF = &mf;
-  TII = MF->getSubtarget().getInstrInfo();
-  TRI = MF->getSubtarget().getRegisterInfo();
-
-  LiveRegs.clear();
-  NumRegUnits = TRI->getNumRegUnits();
-
-  MBBReachingDefs.resize(mf.getNumBlockIDs());
-
-  DEBUG(dbgs() << "********** REACHING DEFINITION ANALYSIS **********\n");
-
-  // Initialize the MBBOutRegsInfos
-  MBBOutRegsInfos.resize(mf.getNumBlockIDs());
-
-  // Traverse the basic blocks.
-  LoopTraversal Traversal;
-  LoopTraversal::TraversalOrder TraversedMBBOrder = Traversal.traverse(mf);
-  for (LoopTraversal::TraversedMBBInfo TraversedMBB : TraversedMBBOrder) {
-    processBasicBlock(TraversedMBB);
-  }
-
-  // Sorting all reaching defs found for a ceartin reg unit in a given BB.
-  for (MBBDefsInfo &MBBDefs : MBBReachingDefs) {
-    for (MBBRegUnitDefs &RegUnitDefs : MBBDefs)
-      std::sort(RegUnitDefs.begin(), RegUnitDefs.end());
-  }
-
-  return false;
-}
-
-void ReachingDefAnalysis::releaseMemory() {
-  // Clear the internal vectors.
-  MBBOutRegsInfos.clear();
-  MBBReachingDefs.clear();
-  InstIds.clear();
-}
-
-bool BreakFalseDeps::runOnMachineFunction(MachineFunction &mf) {
-  if (skipFunction(mf.getFunction()))
-    return false;
-  MF = &mf;
-  TII = MF->getSubtarget().getInstrInfo();
-  TRI = MF->getSubtarget().getRegisterInfo();
-  RDA = &getAnalysis<ReachingDefAnalysis>();
-
-  RegClassInfo.runOnMachineFunction(mf);
-
-  DEBUG(dbgs() << "********** BREAK FALSE DEPENDENCIES **********\n");
-
-  // Traverse the basic blocks.
-  for (MachineBasicBlock &MBB : mf) {
-    processBasicBlock(&MBB);
-  }
-
-  return false;
-}
-
-int ReachingDefAnalysis::getReachingDef(MachineInstr *MI, int PhysReg) {
-  assert(InstIds.count(MI) && "Unexpected machine instuction.");
-  int InstId = InstIds[MI];
-  int DefRes = ReachingDedDefaultVal;
-  int MBBNumber = MI->getParent()->getNumber();
-  assert(MBBNumber < MBBReachingDefs.size() &&
-         "Unexpected basic block number.");
-  int LatestDef = ReachingDedDefaultVal;
-  for (MCRegUnitIterator Unit(PhysReg, TRI); Unit.isValid(); ++Unit) {
-    for (int Def : MBBReachingDefs[MBBNumber][*Unit]) {
-      if (Def >= InstId)
-        break;
-      DefRes = Def;
-    }
-    LatestDef = std::max(LatestDef, DefRes);
-  }
-  return LatestDef;
-}
-
-int ReachingDefAnalysis::getClearance(MachineInstr *MI, MCPhysReg PhysReg) {
-  assert(InstIds.count(MI) && "Unexpected machine instuction.");
-  return InstIds[MI] - getReachingDef(MI, PhysReg);
 }

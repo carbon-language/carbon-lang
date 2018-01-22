@@ -446,7 +446,7 @@ void X86PassConfig::addPreSched2() { addPass(createX86ExpandPseudoPass()); }
 void X86PassConfig::addPreEmitPass() {
   if (getOptLevel() != CodeGenOpt::None) {
     addPass(new X86ExecutionDomainFix());
-    addPass(new BreakFalseDeps());
+    addPass(createBreakFalseDeps());
   }
 
   addPass(createX86IndirectBranchTrackingPass());

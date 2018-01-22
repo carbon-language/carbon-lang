@@ -466,7 +466,7 @@ void ARMPassConfig::addPreSched2() {
       addPass(createARMLoadStoreOptimizationPass());
 
     addPass(new ARMExecutionDomainFix());
-    addPass(new BreakFalseDeps());
+    addPass(createBreakFalseDeps());
   }
 
   // Expand some pseudo instructions into multiple instructions to allow

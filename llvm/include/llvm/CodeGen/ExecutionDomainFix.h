@@ -1,4 +1,4 @@
-//==--- llvm/CodeGen/ExecutionDepsFix.h - Execution Domain Fix -*- C++ -*---==//
+//==-- llvm/CodeGen/ExecutionDomainFix.h - Execution Domain Fix -*- C++ -*--==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -20,15 +20,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_EXECUTIONDEPSFIX_H
-#define LLVM_CODEGEN_EXECUTIONDEPSFIX_H
+#ifndef LLVM_CODEGEN_EXECUTIONDOMAINFIX_H
+#define LLVM_CODEGEN_EXECUTIONDOMAINFIX_H
 
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/iterator_range.h"
-#include "llvm/CodeGen/LivePhysRegs.h"
+#include "llvm/CodeGen/LoopTraversal.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/RegisterClassInfo.h"
+#include "llvm/CodeGen/ReachingDefAnalysis.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 
 namespace llvm {
 
@@ -104,173 +103,6 @@ struct DomainValue {
     Next = nullptr;
     Instrs.clear();
   }
-};
-
-/// This class provides the basic blocks traversal order used by passes like
-/// ReachingDefAnalysis and ExecutionDomainFix.
-/// It identifies basic blocks that are part of loops and should to be visited
-/// twice and returns efficient traversal order for all the blocks.
-///
-/// We want to visit every instruction in every basic block in order to update
-/// it's execution domain or collect clearance information. However, for the
-/// clearance calculation, we need to know clearances from all predecessors
-/// (including any backedges), therfore we need to visit some blocks twice.
-/// As an example, consider the following loop.
-///
-///
-///    PH -> A -> B (xmm<Undef> -> xmm<Def>) -> C -> D -> EXIT
-///          ^                                  |
-///          +----------------------------------+
-///
-/// The iteration order this pass will return is as follows:
-/// Optimized: PH A B C A' B' C' D
-///
-/// The basic block order is constructed as follows:
-/// Once we finish processing some block, we update the counters in MBBInfos
-/// and re-process any successors that are now 'done'.
-/// We call a block that is ready for its final round of processing `done`
-/// (isBlockDone), e.g. when all predecessor information is known.
-///
-/// Note that a naive traversal order would be to do two complete passes over
-/// all basic blocks/instructions, the first for recording clearances, the
-/// second for updating clearance based on backedges.
-/// However, for functions without backedges, or functions with a lot of
-/// straight-line code, and a small loop, that would be a lot of unnecessary
-/// work (since only the BBs that are part of the loop require two passes).
-///
-/// E.g., the naive iteration order for the above exmple is as follows:
-/// Naive: PH A B C D A' B' C' D'
-///
-/// In the optimized approach we avoid processing D twice, because we
-/// can entirely process the predecessors before getting to D.
-class LoopTraversal {
-private:
-  struct MBBInfo {
-    /// Whether we have gotten to this block in primary processing yet.
-    bool PrimaryCompleted = false;
-
-    /// The number of predecessors for which primary processing has completed
-    unsigned IncomingProcessed = 0;
-
-    /// The value of `IncomingProcessed` at the start of primary processing
-    unsigned PrimaryIncoming = 0;
-
-    /// The number of predecessors for which all processing steps are done.
-    unsigned IncomingCompleted = 0;
-
-    MBBInfo() = default;
-  };
-  using MBBInfoMap = SmallVector<MBBInfo, 4>;
-  /// Helps keep track if we proccessed this block and all its predecessors.
-  MBBInfoMap MBBInfos;
-
-public:
-  struct TraversedMBBInfo {
-    /// The basic block.
-    MachineBasicBlock *MBB = nullptr;
-
-    /// True if this is the first time we process the basic block.
-    bool PrimaryPass = true;
-
-    /// True if the block that is ready for its final round of processing.
-    bool IsDone = true;
-
-    TraversedMBBInfo(MachineBasicBlock *BB = nullptr, bool Primary = true,
-                     bool Done = true)
-        : MBB(BB), PrimaryPass(Primary), IsDone(Done) {}
-  };
-  LoopTraversal() {}
-
-  /// \brief Identifies basic blocks that are part of loops and should to be
-  ///  visited twise and returns efficient traversal order for all the blocks.
-  typedef SmallVector<TraversedMBBInfo, 4> TraversalOrder;
-  TraversalOrder traverse(MachineFunction &MF);
-
-private:
-  /// Returens true if the block is ready for its final round of processing.
-  bool isBlockDone(MachineBasicBlock *MBB);
-};
-
-/// This class provides the reaching def analysis.
-class ReachingDefAnalysis : public MachineFunctionPass {
-private:
-  MachineFunction *MF;
-  const TargetInstrInfo *TII;
-  const TargetRegisterInfo *TRI;
-  unsigned NumRegUnits;
-  /// Instruction that defined each register, relative to the beginning of the
-  /// current basic block.  When a LiveRegsDefInfo is used to represent a
-  /// live-out register, this value is relative to the end of the basic block,
-  /// so it will be a negative number.
-  using LiveRegsDefInfo = std::vector<int>;
-  LiveRegsDefInfo LiveRegs;
-
-  /// Keeps clearance information for all registers. Note that this
-  /// is different from the usual definition notion of liveness. The CPU
-  /// doesn't care whether or not we consider a register killed.
-  using OutRegsInfoMap = SmallVector<LiveRegsDefInfo, 4>;
-  OutRegsInfoMap MBBOutRegsInfos;
-
-  /// Current instruction number.
-  /// The first instruction in each basic block is 0.
-  int CurInstr;
-
-  /// Maps instructions to their instruction Ids, relative to the begining of
-  /// their basic blocks.
-  DenseMap<MachineInstr *, int> InstIds;
-
-  /// All reaching defs of a given RegUnit for a given MBB.
-  using MBBRegUnitDefs = SmallVector<int, 1>;
-  /// All reaching defs of all reg units for a given MBB
-  using MBBDefsInfo = std::vector<MBBRegUnitDefs>;
-  /// All reaching defs of all reg units for a all MBBs
-  using MBBReachingDefsInfo = SmallVector<MBBDefsInfo, 4>;
-  MBBReachingDefsInfo MBBReachingDefs;
-
-  /// Default values are 'nothing happened a long time ago'.
-  const int ReachingDedDefaultVal = -(1 << 20);
-
-public:
-  static char ID; // Pass identification, replacement for typeid
-
-  ReachingDefAnalysis() : MachineFunctionPass(ID) {
-    initializeReachingDefAnalysisPass(*PassRegistry::getPassRegistry());
-  }
-  void releaseMemory() override;
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.setPreservesAll();
-    MachineFunctionPass::getAnalysisUsage(AU);
-  }
-
-  bool runOnMachineFunction(MachineFunction &MF) override;
-
-  MachineFunctionProperties getRequiredProperties() const override {
-    return MachineFunctionProperties().set(
-        MachineFunctionProperties::Property::NoVRegs);
-  }
-
-  /// Provides the instruction id of the closest reaching def instruction of
-  /// PhysReg that reaches MI, relative to the begining of MI's basic block.
-  int getReachingDef(MachineInstr *MI, int PhysReg);
-
-  /// Provides the clearance - the number of instructions since the closest
-  /// reaching def instuction of PhysReg that reaches MI.
-  int getClearance(MachineInstr *MI, MCPhysReg PhysReg);
-
-private:
-  /// Set up LiveRegs by merging predecessor live-out values.
-  void enterBasicBlock(const LoopTraversal::TraversedMBBInfo &TraversedMBB);
-
-  /// Update live-out values.
-  void leaveBasicBlock(const LoopTraversal::TraversedMBBInfo &TraversedMBB);
-
-  /// Process he given basic block.
-  void processBasicBlock(const LoopTraversal::TraversedMBBInfo &TraversedMBB);
-
-  /// Update def-ages for registers defined by MI.
-  /// Also break dependencies on partial defs and undef uses.
-  void processDefs(MachineInstr *);
 };
 
 class ExecutionDomainFix : public MachineFunctionPass {
@@ -376,69 +208,6 @@ private:
   void visitHardInstr(MachineInstr *, unsigned domain);
 };
 
-class BreakFalseDeps : public MachineFunctionPass {
-private:
-  MachineFunction *MF;
-  const TargetInstrInfo *TII;
-  const TargetRegisterInfo *TRI;
-  RegisterClassInfo RegClassInfo;
-
-  /// List of undefined register reads in this block in forward order.
-  std::vector<std::pair<MachineInstr *, unsigned>> UndefReads;
-
-  /// Storage for register unit liveness.
-  LivePhysRegs LiveRegSet;
-
-  ReachingDefAnalysis *RDA;
-
-public:
-  static char ID; // Pass identification, replacement for typeid
-
-  BreakFalseDeps() : MachineFunctionPass(ID) {
-    initializeBreakFalseDepsPass(*PassRegistry::getPassRegistry());
-  }
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.setPreservesAll();
-    AU.addRequired<ReachingDefAnalysis>();
-    MachineFunctionPass::getAnalysisUsage(AU);
-  }
-
-  bool runOnMachineFunction(MachineFunction &MF) override;
-
-  MachineFunctionProperties getRequiredProperties() const override {
-    return MachineFunctionProperties().set(
-        MachineFunctionProperties::Property::NoVRegs);
-  }
-
-private:
-  /// Process he given basic block.
-  void processBasicBlock(MachineBasicBlock *MBB);
-
-  /// Update def-ages for registers defined by MI.
-  /// Also break dependencies on partial defs and undef uses.
-  void processDefs(MachineInstr *MI);
-
-  /// \brief Helps avoid false dependencies on undef registers by updating the
-  /// machine instructions' undef operand to use a register that the instruction
-  /// is truly dependent on, or use a register with clearance higher than Pref.
-  /// Returns true if it was able to find a true dependency, thus not requiring
-  /// a dependency breaking instruction regardless of clearance.
-  bool pickBestRegisterForUndef(MachineInstr *MI, unsigned OpIdx,
-                                unsigned Pref);
-
-  /// \brief Return true to if it makes sense to break dependence on a partial
-  /// def or undef use.
-  bool shouldBreakDependence(MachineInstr *, unsigned OpIdx, unsigned Pref);
-
-  /// \brief Break false dependencies on undefined register reads.
-  /// Walk the block backward computing precise liveness. This is expensive, so
-  /// we only do it on demand. Note that the occurrence of undefined register
-  /// reads that should be broken is very rare, but when they occur we may have
-  /// many in a single block.
-  void processUndefReads(MachineBasicBlock *);
-};
-
 } // namespace llvm
 
-#endif // LLVM_CODEGEN_EXECUTIONDEPSFIX_H
+#endif // LLVM_CODEGEN_EXECUTIONDOMAINFIX_H
