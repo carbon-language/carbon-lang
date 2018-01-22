@@ -1,4 +1,4 @@
-//===- ExecutionDepsFix.cpp - Fix execution dependecy issues ----*- C++ -*-===//
+//===- ExecutionDepsFix.cpp - Fix execution domain issues ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/ExecutionDepsFix.h"
+#include "llvm/CodeGen/ExecutionDomainFix.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"

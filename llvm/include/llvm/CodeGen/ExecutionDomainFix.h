@@ -1,4 +1,4 @@
-//==- llvm/CodeGen/ExecutionDepsFix.h - Execution Dependency Fix -*- C++ -*-==//
+//==--- llvm/CodeGen/ExecutionDepsFix.h - Execution Domain Fix -*- C++ -*---==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-/// \file Execution Dependency Fix pass.
+/// \file Execution Domain Fix pass.
 ///
 /// Some X86 SSE instructions like mov, and, or, xor are available in different
 /// variants for different operand types. These variant instructions are

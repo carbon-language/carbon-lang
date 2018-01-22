@@ -18,7 +18,7 @@ add_llvm_library(LLVMCodeGen
   DwarfEHPrepare.cpp
   EarlyIfConversion.cpp
   EdgeBundles.cpp
-  ExecutionDepsFix.cpp
+  ExecutionDomainFix.cpp
   ExpandISelPseudos.cpp
   ExpandMemCmp.cpp
   ExpandPostRAPseudos.cpp
