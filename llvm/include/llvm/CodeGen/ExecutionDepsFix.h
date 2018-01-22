@@ -24,19 +24,11 @@
 #define LLVM_CODEGEN_EXECUTIONDEPSFIX_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/iterator_range.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
-#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/RegisterClassInfo.h"
-#include "llvm/Pass.h"
-#include "llvm/Support/Allocator.h"
-#include "llvm/Support/MathExtras.h"
-#include <cassert>
-#include <limits>
-#include <utility>
-#include <vector>
 
 namespace llvm {
 
@@ -167,7 +159,8 @@ public:
   };
   LoopTraversal() {}
 
-  SmallVector<TraversedMBBInfo, 4> traverse(MachineFunction &MF);
+  typedef SmallVector<TraversedMBBInfo, 4> TraversalOrder;
+  TraversalOrder traverse(MachineFunction &MF);
 
 private:
   bool isBlockDone(MachineBasicBlock *MBB);
@@ -180,7 +173,6 @@ private:
   MachineFunction *MF;
   const TargetInstrInfo *TII;
   const TargetRegisterInfo *TRI;
-  RegisterClassInfo RegClassInfo;
   unsigned NumRegUnits;
   LiveReg *LiveRegs;
 
@@ -205,6 +197,9 @@ private:
   /// All reaching defs of all reg units for a all MBBs
   using MBBReachingDefsInfo = SmallVector<MBBDefsInfo, 4>;
   MBBReachingDefsInfo MBBReachingDefs;
+
+  // Default values are 'nothing happened a long time ago'.
+  const int ReachingDedDefaultVal = -(1 << 20);
 
 public:
   static char ID; // Pass identification, replacement for typeid
@@ -248,7 +243,6 @@ class ExecutionDomainFix : public MachineFunctionPass {
   MachineFunction *MF;
   const TargetInstrInfo *TII;
   const TargetRegisterInfo *TRI;
-  RegisterClassInfo RegClassInfo;
   std::vector<SmallVector<int, 1>> AliasMap;
   const unsigned NumRegs;
   LiveReg *LiveRegs;
