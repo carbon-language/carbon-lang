@@ -5893,6 +5893,19 @@ AST_MATCHER(EnumDecl, isScoped) {
   return Node.isScoped();
 }
 
+/// \brief Matches a function declared with a trailing return type.
+///
+/// Example matches Y (matcher = functionDecl(hasTrailingReturn()))
+/// \code
+/// int X() {}
+/// auto Y() -> int {}
+/// \endcode
+AST_MATCHER(FunctionDecl, hasTrailingReturn) {
+  if (const auto *F = Node.getType()->getAs<FunctionProtoType>())
+    return F->hasTrailingReturn();
+  return false;
+}
+
 } // namespace ast_matchers
 } // namespace clang
 
