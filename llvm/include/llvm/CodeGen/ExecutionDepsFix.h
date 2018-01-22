@@ -144,7 +144,7 @@ private:
 
     MBBInfo() = default;
   };
-  using MBBInfoMap = DenseMap<MachineBasicBlock *, MBBInfo>;
+  using MBBInfoMap = SmallVector<MBBInfo, 4>;
   MBBInfoMap MBBInfos;
 
 public:
@@ -179,7 +179,7 @@ private:
   // Keeps clearance information for all registers. Note that this
   // is different from the usual definition notion of liveness. The CPU
   // doesn't care whether or not we consider a register killed.
-  using OutRegsInfoMap = DenseMap<MachineBasicBlock *, LiveReg *>;
+  using OutRegsInfoMap = SmallVector<LiveReg *, 4>;
   OutRegsInfoMap MBBOutRegsInfos;
 
   /// Current instruction number.
@@ -249,7 +249,7 @@ class ExecutionDomainFix : public MachineFunctionPass {
   // Keeps domain information for all registers. Note that this
   // is different from the usual definition notion of liveness. The CPU
   // doesn't care whether or not we consider a register killed.
-  using OutRegsInfoMap = DenseMap<MachineBasicBlock *, LiveReg *>;
+  using OutRegsInfoMap = SmallVector<LiveReg *, 4>;
   OutRegsInfoMap MBBOutRegsInfos;
 
   ReachingDefAnalysis *RDA;

@@ -179,6 +179,7 @@ void ReachingDefAnalysis::enterBasicBlock(
 
   MachineBasicBlock *MBB = TraversedMBB.MBB;
   int MBBNumber = MBB->getNumber();
+  assert(MBBNumber < MBBReachingDefs.size() && "Unexpected basic block number.");
   MBBReachingDefs[MBBNumber].resize(NumRegUnits);
 
   // Reset instruction counter in each basic block.
@@ -209,10 +210,9 @@ void ReachingDefAnalysis::enterBasicBlock(
 
   // Try to coalesce live-out registers from predecessors.
   for (MachineBasicBlock* pred : MBB->predecessors()) {
-    auto fi = MBBOutRegsInfos.find(pred);
-    assert(fi != MBBOutRegsInfos.end() &&
+    assert(pred->getNumber() < MBBOutRegsInfos.size() &&
            "Should have pre-allocated MBBInfos for all MBBs");
-    LiveReg *Incoming = fi->second;
+    LiveReg *Incoming = MBBOutRegsInfos[pred->getNumber()];
     // Incoming is null if this is a backedge from a BB
     // we haven't processed yet
     if (Incoming == nullptr)
@@ -253,10 +253,9 @@ void ExecutionDomainFix::enterBasicBlock(
 
   // Try to coalesce live-out registers from predecessors.
   for (MachineBasicBlock* pred : MBB->predecessors()) {
-    auto fi = MBBOutRegsInfos.find(pred);
-    assert(fi != MBBOutRegsInfos.end() &&
+    assert(pred->getNumber() < MBBOutRegsInfos.size() &&
       "Should have pre-allocated MBBInfos for all MBBs");
-    LiveReg *Incoming = fi->second;
+    LiveReg *Incoming = MBBOutRegsInfos[pred->getNumber()];
     // Incoming is null if this is a backedge from a BB
     // we haven't processed yet
     if (Incoming == nullptr)
@@ -295,8 +294,10 @@ void ExecutionDomainFix::enterBasicBlock(
 void ReachingDefAnalysis::leaveBasicBlock(
     const LoopTraversal::TraversedMBBInfo &TraversedMBB) {
   assert(LiveRegs && "Must enter basic block first.");
+  int MBBNumber = TraversedMBB.MBB->getNumber();
+  assert(MBBNumber < MBBOutRegsInfos.size() && "Unexpected basic block number.");
   // Save register clearances at end of MBB - used by enterBasicBlock().
-  MBBOutRegsInfos[TraversedMBB.MBB] = LiveRegs;
+  MBBOutRegsInfos[MBBNumber] = LiveRegs;
 
   // While processing the basic block, we kept `Def` relative to the start
   // of the basic block for convenience. However, future use of this information
@@ -310,9 +311,11 @@ void ReachingDefAnalysis::leaveBasicBlock(
 void ExecutionDomainFix::leaveBasicBlock(
     const LoopTraversal::TraversedMBBInfo &TraversedMBB) {
   assert(LiveRegs && "Must enter basic block first.");
-  LiveReg *OldOutRegs = MBBOutRegsInfos[TraversedMBB.MBB];
+  int MBBNumber = TraversedMBB.MBB->getNumber();
+  assert(MBBNumber < MBBOutRegsInfos.size() && "Unexpected basic block number.");
+  LiveReg *OldOutRegs = MBBOutRegsInfos[MBBNumber];
   // Save register clearances at end of MBB - used by enterBasicBlock().
-  MBBOutRegsInfos[TraversedMBB.MBB] = LiveRegs;
+  MBBOutRegsInfos[MBBNumber] = LiveRegs;
   if (OldOutRegs) {
     // This must be the second pass.
     // Release all the DomainValues instead of keeping them.
@@ -445,6 +448,7 @@ void ReachingDefAnalysis::processDefs(MachineInstr *MI) {
   assert(!MI->isDebugValue() && "Won't process debug values");
 
   int MBBNumber = MI->getParent()->getNumber();
+  assert(MBBNumber < MBBReachingDefs.size() && "Unexpected basic block number.");
   const MCInstrDesc &MCID = MI->getDesc();
   for (unsigned i = 0,
          e = MI->isVariadic() ? MI->getNumOperands() : MCID.getNumDefs();
@@ -714,18 +718,17 @@ void BreakFalseDeps::processBasicBlock(MachineBasicBlock* MBB) {
 }
 
 bool LoopTraversal::isBlockDone(MachineBasicBlock *MBB) {
-  return MBBInfos[MBB].PrimaryCompleted &&
-         MBBInfos[MBB].IncomingCompleted == MBBInfos[MBB].PrimaryIncoming &&
-         MBBInfos[MBB].IncomingProcessed == MBB->pred_size();
+  int MBBNumber = MBB->getNumber();
+  assert(MBBNumber < MBBInfos.size() && "Unexpected basic block number.");
+  return MBBInfos[MBBNumber].PrimaryCompleted &&
+         MBBInfos[MBBNumber].IncomingCompleted == MBBInfos[MBBNumber].PrimaryIncoming &&
+         MBBInfos[MBBNumber].IncomingProcessed == MBB->pred_size();
 }
 
 LoopTraversal::TraversalOrder
 LoopTraversal::traverse(MachineFunction &MF) {
   // Initialize the MMBInfos
-  for (MachineBasicBlock &MBB : MF) {
-    MBBInfo InitialInfo;
-    MBBInfos.insert(std::make_pair(&MBB, InitialInfo));
-  }
+  MBBInfos.assign(MF.getNumBlockIDs(), MBBInfo());
 
   /*
    *  We want to visit every instruction in every basic block in order to update
@@ -762,8 +765,10 @@ LoopTraversal::traverse(MachineFunction &MF) {
   for (MachineBasicBlock *MBB : RPOT) {
     // N.B: IncomingProcessed and IncomingCompleted were already updated while
     // processing this block's predecessors.
-    MBBInfos[MBB].PrimaryCompleted = true;
-    MBBInfos[MBB].PrimaryIncoming = MBBInfos[MBB].IncomingProcessed;
+    int MBBNumber = MBB->getNumber();
+    assert(MBBNumber < MBBInfos.size() && "Unexpected basic block number.");
+    MBBInfos[MBBNumber].PrimaryCompleted = true;
+    MBBInfos[MBBNumber].PrimaryIncoming = MBBInfos[MBBNumber].IncomingProcessed;
     bool Primary = true;
     Workqueue.push_back(MBB);
     while (!Workqueue.empty()) {
@@ -772,11 +777,13 @@ LoopTraversal::traverse(MachineFunction &MF) {
       bool Done = isBlockDone(ActiveMBB);
       MBBTraversalOrder.push_back(TraversedMBBInfo(ActiveMBB, Primary, Done));
       for (MachineBasicBlock *Succ : ActiveMBB->successors()) {
+        int SuccNumber = Succ->getNumber();
+        assert(SuccNumber < MBBInfos.size() && "Unexpected basic block number.");
         if (!isBlockDone(Succ)) {
           if (Primary)
-            MBBInfos[Succ].IncomingProcessed++;
+            MBBInfos[SuccNumber].IncomingProcessed++;
           if (Done)
-            MBBInfos[Succ].IncomingCompleted++;
+            MBBInfos[SuccNumber].IncomingCompleted++;
           if (isBlockDone(Succ))
             Workqueue.push_back(Succ);
         }
@@ -838,9 +845,7 @@ bool ExecutionDomainFix::runOnMachineFunction(MachineFunction &mf) {
   }
 
   // Initialize the MBBOutRegsInfos
-  for (MachineBasicBlock &MBB : mf) {
-    MBBOutRegsInfos.insert(std::make_pair(&MBB, nullptr));
-  }
+  MBBOutRegsInfos.assign(mf.getNumBlockIDs(), nullptr);
 
   // Traverse the basic blocks.
   LoopTraversal Traversal;
@@ -850,12 +855,12 @@ bool ExecutionDomainFix::runOnMachineFunction(MachineFunction &mf) {
   }
 
   for (auto MBBOutRegs : MBBOutRegsInfos) {
-    if (!MBBOutRegs.second)
+    if (!MBBOutRegs)
       continue;
     for (unsigned i = 0, e = NumRegs; i != e; ++i)
-      if (MBBOutRegs.second[i].Value)
-        release(MBBOutRegs.second[i].Value);
-    delete[] MBBOutRegs.second;
+      if (MBBOutRegs[i].Value)
+        release(MBBOutRegs[i].Value);
+    delete[] MBBOutRegs;
   }
   MBBOutRegsInfos.clear();
   Avail.clear();
@@ -879,9 +884,7 @@ bool ReachingDefAnalysis::runOnMachineFunction(MachineFunction &mf) {
   DEBUG(dbgs() << "********** REACHING DEFINITION ANALYSIS **********\n");
 
   // Initialize the MBBOutRegsInfos
-  for (MachineBasicBlock &MBB : mf) {
-    MBBOutRegsInfos.insert(std::make_pair(&MBB, nullptr));
-  }
+  MBBOutRegsInfos.assign(mf.getNumBlockIDs(), nullptr);
 
   // Traverse the basic blocks.
   LoopTraversal Traversal;
@@ -902,9 +905,9 @@ bool ReachingDefAnalysis::runOnMachineFunction(MachineFunction &mf) {
 void ReachingDefAnalysis::releaseMemory() {
   // Clear the LiveOuts vectors and collapse any remaining DomainValues.
   for (auto MBBOutRegs : MBBOutRegsInfos) {
-    if (!MBBOutRegs.second)
+    if (!MBBOutRegs)
       continue;
-    delete[] MBBOutRegs.second;
+    delete[] MBBOutRegs;
   }
   MBBOutRegsInfos.clear();
   MBBReachingDefs.clear();
@@ -932,9 +935,11 @@ bool BreakFalseDeps::runOnMachineFunction(MachineFunction &mf) {
 }
 
 int ReachingDefAnalysis::getReachingDef(MachineInstr *MI, int PhysReg) {
+  assert(InstIds.count(MI) && "Unexpected machine instuction.");
   int InstId = InstIds[MI];
   int DefRes = ReachingDedDefaultVal;
   int MBBNumber = MI->getParent()->getNumber();
+  assert(MBBNumber < MBBReachingDefs.size() && "Unexpected basic block number.");
   int LatestDef = ReachingDedDefaultVal;
   for (MCRegUnitIterator Unit(PhysReg, TRI); Unit.isValid(); ++Unit) {
     for (int Def : MBBReachingDefs[MBBNumber][*Unit]) {
@@ -948,5 +953,6 @@ int ReachingDefAnalysis::getReachingDef(MachineInstr *MI, int PhysReg) {
 }
 
 int ReachingDefAnalysis::getClearance(MachineInstr *MI, MCPhysReg PhysReg) {
+  assert(InstIds.count(MI) && "Unexpected machine instuction.");
   return InstIds[MI] - getReachingDef(MI, PhysReg);
 }
