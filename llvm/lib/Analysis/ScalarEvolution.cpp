@@ -8669,7 +8669,8 @@ bool ScalarEvolution::isKnownPredicate(ICmpInst::Predicate Pred,
   bool RightGuarded = false;
   if (LAR) {
     const Loop *L = LAR->getLoop();
-    if (isLoopEntryGuardedByCond(L, Pred, LAR->getStart(), RHS) &&
+    if (isAvailableAtLoopEntry(RHS, L) &&
+        isLoopEntryGuardedByCond(L, Pred, LAR->getStart(), RHS) &&
         isLoopBackedgeGuardedByCond(L, Pred, LAR->getPostIncExpr(*this), RHS)) {
       if (!RAR) return true;
       LeftGuarded = true;
@@ -8677,7 +8678,8 @@ bool ScalarEvolution::isKnownPredicate(ICmpInst::Predicate Pred,
   }
   if (RAR) {
     const Loop *L = RAR->getLoop();
-    if (isLoopEntryGuardedByCond(L, Pred, LHS, RAR->getStart()) &&
+    if (isAvailableAtLoopEntry(LHS, L) &&
+        isLoopEntryGuardedByCond(L, Pred, LHS, RAR->getStart()) &&
         isLoopBackedgeGuardedByCond(L, Pred, LHS, RAR->getPostIncExpr(*this))) {
       if (!LAR) return true;
       RightGuarded = true;
@@ -9058,6 +9060,12 @@ bool
 ScalarEvolution::isLoopEntryGuardedByCond(const Loop *L,
                                           ICmpInst::Predicate Pred,
                                           const SCEV *LHS, const SCEV *RHS) {
+  // Both LHS and RHS must be available at loop entry.
+  assert(isAvailableAtLoopEntry(LHS, L) &&
+         "LHS is not available at Loop Entry");
+  assert(isAvailableAtLoopEntry(RHS, L) &&
+         "RHS is not available at Loop Entry");
+
   // Interpret a null as meaning no loop, where there is obviously no guard
   // (interprocedural conditions notwithstanding).
   if (!L) return false;
