@@ -66,7 +66,7 @@ struct DomainValue {
   DomainValue *Next;
 
   /// Twiddleable instructions using or defining these registers.
-  SmallVector<MachineInstr*, 8> Instrs;
+  SmallVector<MachineInstr *, 8> Instrs;
 
   DomainValue() { clear(); }
 
@@ -83,14 +83,10 @@ struct DomainValue {
   }
 
   /// Mark domain as available.
-  void addDomain(unsigned domain) {
-    AvailableDomains |= 1u << domain;
-  }
+  void addDomain(unsigned domain) { AvailableDomains |= 1u << domain; }
 
   // Restrict to a single domain available.
-  void setSingleDomain(unsigned domain) {
-    AvailableDomains = 1u << domain;
-  }
+  void setSingleDomain(unsigned domain) { AvailableDomains = 1u << domain; }
 
   /// Return bitmask of domains that are available and in mask.
   unsigned getCommonDomains(unsigned mask) const {
@@ -112,20 +108,20 @@ struct DomainValue {
 
 /// This class provides the basic blocks traversal order used by passes like
 /// ReachingDefAnalysis and ExecutionDomainFix.
-/// It identifies basic blocks that are part of loops and should to be visited twice 
-/// and returns efficient traversal order for all the blocks.
+/// It identifies basic blocks that are part of loops and should to be visited
+/// twice and returns efficient traversal order for all the blocks.
 ///
 /// We want to visit every instruction in every basic block in order to update
 /// it's execution domain or collect clearance information. However, for the
 /// clearance calculation, we need to know clearances from all predecessors
-/// (including any backedges), therfore we need to visit some blocks twice. 
+/// (including any backedges), therfore we need to visit some blocks twice.
 /// As an example, consider the following loop.
-/// 
-/// 
+///
+///
 ///    PH -> A -> B (xmm<Undef> -> xmm<Def>) -> C -> D -> EXIT
 ///          ^                                  |
 ///          +----------------------------------+
-/// 
+///
 /// The iteration order this pass will return is as follows:
 /// Optimized: PH A B C A' B' C' D
 ///
@@ -172,10 +168,10 @@ public:
   struct TraversedMBBInfo {
     /// The basic block.
     MachineBasicBlock *MBB = nullptr;
-    
+
     /// True if this is the first time we process the basic block.
     bool PrimaryPass = true;
-    
+
     /// True if the block that is ready for its final round of processing.
     bool IsDone = true;
 
@@ -185,7 +181,7 @@ public:
   };
   LoopTraversal() {}
 
-  /// \brief Identifies basic blocks that are part of loops and should to be 
+  /// \brief Identifies basic blocks that are part of loops and should to be
   ///  visited twise and returns efficient traversal order for all the blocks.
   typedef SmallVector<TraversedMBBInfo, 4> TraversalOrder;
   TraversalOrder traverse(MachineFunction &MF);
@@ -193,7 +189,6 @@ public:
 private:
   /// Returens true if the block is ready for its final round of processing.
   bool isBlockDone(MachineBasicBlock *MBB);
-
 };
 
 /// This class provides the reaching def analysis.
@@ -204,9 +199,9 @@ private:
   const TargetRegisterInfo *TRI;
   unsigned NumRegUnits;
   /// Instruction that defined each register, relative to the beginning of the
-  /// current basic block.  When a LiveRegsDefInfo is used to represent a live-out
-  /// register, this value is relative to the end of the basic block, so it
-  /// will be a negative number.
+  /// current basic block.  When a LiveRegsDefInfo is used to represent a
+  /// live-out register, this value is relative to the end of the basic block,
+  /// so it will be a negative number.
   using LiveRegsDefInfo = std::vector<int>;
   LiveRegsDefInfo LiveRegs;
 
@@ -258,7 +253,7 @@ public:
   /// Provides the instruction id of the closest reaching def instruction of
   /// PhysReg that reaches MI, relative to the begining of MI's basic block.
   int getReachingDef(MachineInstr *MI, int PhysReg);
-  
+
   /// Provides the clearance - the number of instructions since the closest
   /// reaching def instuction of PhysReg that reaches MI.
   int getClearance(MachineInstr *MI, MCPhysReg PhysReg);
@@ -280,7 +275,7 @@ private:
 
 class ExecutionDomainFix : public MachineFunctionPass {
   SpecificBumpPtrAllocator<DomainValue> Allocator;
-  SmallVector<DomainValue*,16> Avail;
+  SmallVector<DomainValue *, 16> Avail;
 
   const TargetRegisterClass *const RC;
   MachineFunction *MF;
@@ -302,7 +297,7 @@ class ExecutionDomainFix : public MachineFunctionPass {
 
 public:
   ExecutionDomainFix(char &PassID, const TargetRegisterClass &RC)
-    : MachineFunctionPass(PassID), RC(&RC), NumRegs(RC.getNumRegs()) {}
+      : MachineFunctionPass(PassID), RC(&RC), NumRegs(RC.getNumRegs()) {}
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
@@ -328,21 +323,22 @@ private:
 
   /// Add reference to DV.
   DomainValue *retain(DomainValue *DV) {
-    if (DV) ++DV->Refs;
+    if (DV)
+      ++DV->Refs;
     return DV;
   }
 
   /// Release a reference to DV.  When the last reference is released,
   /// collapse if needed.
-  void release(DomainValue*);
+  void release(DomainValue *);
 
   /// Follow the chain of dead DomainValues until a live DomainValue is reached.
   /// Update the referenced pointer when necessary.
-  DomainValue *resolve(DomainValue*&);
+  DomainValue *resolve(DomainValue *&);
 
   /// Set LiveRegs[rx] = dv, updating reference counts.
   void setLiveReg(int rx, DomainValue *DV);
-  
+
   /// Kill register rx, recycle or collapse any DomainValue.
   void kill(int rx);
 
@@ -352,19 +348,19 @@ private:
   /// Collapse open DomainValue into given domain. If there are multiple
   /// registers using dv, they each get a unique collapsed DomainValue.
   void collapse(DomainValue *dv, unsigned domain);
-  
+
   /// All instructions and registers in B are moved to A, and B is released.
   bool merge(DomainValue *A, DomainValue *B);
 
   /// Set up LiveRegs by merging predecessor live-out values.
   void enterBasicBlock(const LoopTraversal::TraversedMBBInfo &TraversedMBB);
-  
+
   /// Update live-out values.
   void leaveBasicBlock(const LoopTraversal::TraversedMBBInfo &TraversedMBB);
-  
+
   /// Process he given basic block.
   void processBasicBlock(const LoopTraversal::TraversedMBBInfo &TraversedMBB);
-  
+
   /// Visit given insturcion.
   bool visitInstr(MachineInstr *);
 
@@ -373,11 +369,11 @@ private:
   void processDefs(MachineInstr *, bool Kill);
 
   /// A soft instruction can be changed to work in other domains given by mask.
-  void visitSoftInstr(MachineInstr*, unsigned mask);
+  void visitSoftInstr(MachineInstr *, unsigned mask);
 
   /// A hard instruction only works in one domain. All input registers will be
   /// forced into that domain.
-  void visitHardInstr(MachineInstr*, unsigned domain);
+  void visitHardInstr(MachineInstr *, unsigned domain);
 };
 
 class BreakFalseDeps : public MachineFunctionPass {
@@ -431,18 +427,18 @@ private:
   bool pickBestRegisterForUndef(MachineInstr *MI, unsigned OpIdx,
                                 unsigned Pref);
 
-  /// \brief Return true to if it makes sense to break dependence on a partial def
-  /// or undef use.
-  bool shouldBreakDependence(MachineInstr*, unsigned OpIdx, unsigned Pref);
+  /// \brief Return true to if it makes sense to break dependence on a partial
+  /// def or undef use.
+  bool shouldBreakDependence(MachineInstr *, unsigned OpIdx, unsigned Pref);
 
   /// \brief Break false dependencies on undefined register reads.
-  /// Walk the block backward computing precise liveness. This is expensive, so we
-  /// only do it on demand. Note that the occurrence of undefined register reads
-  /// that should be broken is very rare, but when they occur we may have many in
-  /// a single block.
-  void processUndefReads(MachineBasicBlock*);
+  /// Walk the block backward computing precise liveness. This is expensive, so
+  /// we only do it on demand. Note that the occurrence of undefined register
+  /// reads that should be broken is very rare, but when they occur we may have
+  /// many in a single block.
+  void processUndefReads(MachineBasicBlock *);
 };
 
-} // end namepsace llvm
+} // namespace llvm
 
 #endif // LLVM_CODEGEN_EXECUTIONDEPSFIX_H
