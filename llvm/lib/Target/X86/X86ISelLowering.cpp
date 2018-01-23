@@ -7920,16 +7920,16 @@ LowerBUILD_VECTORAsVariablePermute(SDValue V, SelectionDAG &DAG,
     if (!PermIdx || PermIdx->getZExtValue() != Idx)
       return SDValue();
   }
-  MVT IndicesVT = VT;
-  if (VT.isFloatingPoint())
-    IndicesVT = MVT::getVectorVT(MVT::getIntegerVT(VT.getScalarSizeInBits()),
-                                 VT.getVectorNumElements());
+
+  MVT IndicesVT = EVT(VT).changeVectorElementTypeToInteger().getSimpleVT();
   IndicesVec = DAG.getZExtOrTrunc(IndicesVec, SDLoc(IndicesVec), IndicesVT);
+
   if (SrcVec.getValueSizeInBits() < IndicesVT.getSizeInBits()) {
     SrcVec =
         DAG.getNode(ISD::INSERT_SUBVECTOR, SDLoc(SrcVec), VT, DAG.getUNDEF(VT),
                     SrcVec, DAG.getIntPtrConstant(0, SDLoc(SrcVec)));
   }
+
   if (VT == MVT::v16i8)
     return DAG.getNode(X86ISD::PSHUFB, SDLoc(V), VT, SrcVec, IndicesVec);
   return DAG.getNode(X86ISD::VPERMV, SDLoc(V), VT, IndicesVec, SrcVec);
