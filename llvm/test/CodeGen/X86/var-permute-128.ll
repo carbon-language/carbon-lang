@@ -362,56 +362,7 @@ define <16 x i8> @var_shuffle_v16i8_from_v16i8_v32i8(<16 x i8> %v, <32 x i8> %in
 ;
 ; AVX-LABEL: var_shuffle_v16i8_from_v16i8_v32i8:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vpextrb $0, %xmm1, %eax
-; AVX-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
-; AVX-NEXT:    andl $15, %eax
-; AVX-NEXT:    movzbl -24(%rsp,%rax), %eax
-; AVX-NEXT:    vmovd %eax, %xmm0
-; AVX-NEXT:    vpextrb $1, %xmm1, %eax
-; AVX-NEXT:    andl $15, %eax
-; AVX-NEXT:    vpinsrb $1, -24(%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $2, %xmm1, %eax
-; AVX-NEXT:    andl $15, %eax
-; AVX-NEXT:    vpinsrb $2, -24(%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $3, %xmm1, %eax
-; AVX-NEXT:    andl $15, %eax
-; AVX-NEXT:    vpinsrb $3, -24(%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $4, %xmm1, %eax
-; AVX-NEXT:    andl $15, %eax
-; AVX-NEXT:    vpinsrb $4, -24(%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $5, %xmm1, %eax
-; AVX-NEXT:    andl $15, %eax
-; AVX-NEXT:    vpinsrb $5, -24(%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $6, %xmm1, %eax
-; AVX-NEXT:    andl $15, %eax
-; AVX-NEXT:    vpinsrb $6, -24(%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $7, %xmm1, %eax
-; AVX-NEXT:    andl $15, %eax
-; AVX-NEXT:    vpinsrb $7, -24(%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $8, %xmm1, %eax
-; AVX-NEXT:    andl $15, %eax
-; AVX-NEXT:    vpinsrb $8, -24(%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $9, %xmm1, %eax
-; AVX-NEXT:    andl $15, %eax
-; AVX-NEXT:    vpinsrb $9, -24(%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $10, %xmm1, %eax
-; AVX-NEXT:    andl $15, %eax
-; AVX-NEXT:    vpinsrb $10, -24(%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $11, %xmm1, %eax
-; AVX-NEXT:    andl $15, %eax
-; AVX-NEXT:    vpinsrb $11, -24(%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $12, %xmm1, %eax
-; AVX-NEXT:    andl $15, %eax
-; AVX-NEXT:    vpinsrb $12, -24(%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $13, %xmm1, %eax
-; AVX-NEXT:    andl $15, %eax
-; AVX-NEXT:    vpinsrb $13, -24(%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $14, %xmm1, %eax
-; AVX-NEXT:    andl $15, %eax
-; AVX-NEXT:    vpinsrb $14, -24(%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $15, %xmm1, %eax
-; AVX-NEXT:    andl $15, %eax
-; AVX-NEXT:    vpinsrb $15, -24(%rsp,%rax), %xmm0, %xmm0
+; AVX-NEXT:    vpshufb %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    vzeroupper
 ; AVX-NEXT:    retq
   %index0 = extractelement <32 x i8> %indices, i32 0

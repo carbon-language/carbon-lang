@@ -7913,21 +7913,25 @@ LowerBUILD_VECTORAsVariablePermute(SDValue V, SelectionDAG &DAG,
     else if (IndicesVec != ExtractedIndex.getOperand(0))
       return SDValue();
 
-    // The index vector must be the same size as the destination.
-    if (IndicesVec.getValueType().getVectorNumElements() != E)
-      return SDValue();
-
     auto *PermIdx = dyn_cast<ConstantSDNode>(ExtractedIndex.getOperand(1));
     if (!PermIdx || PermIdx->getZExtValue() != Idx)
       return SDValue();
   }
 
+  unsigned NumElts = VT.getVectorNumElements();
+  if (IndicesVec.getValueType().getVectorNumElements() < NumElts)
+    return SDValue();
+  else if (IndicesVec.getValueType().getVectorNumElements() > NumElts) {
+    IndicesVec = extractSubVector(IndicesVec, 0, DAG, SDLoc(IndicesVec),
+                                  NumElts * VT.getScalarSizeInBits());
+  }
+
   MVT IndicesVT = EVT(VT).changeVectorElementTypeToInteger().getSimpleVT();
   IndicesVec = DAG.getZExtOrTrunc(IndicesVec, SDLoc(IndicesVec), IndicesVT);
 
-  if (SrcVec.getValueSizeInBits() > IndicesVT.getSizeInBits())
+  if (SrcVec.getValueSizeInBits() > VT.getSizeInBits())
     return SDValue();
-  else if (SrcVec.getValueSizeInBits() < IndicesVT.getSizeInBits()) {
+  else if (SrcVec.getValueSizeInBits() < VT.getSizeInBits()) {
     SrcVec =
         DAG.getNode(ISD::INSERT_SUBVECTOR, SDLoc(SrcVec), VT, DAG.getUNDEF(VT),
                     SrcVec, DAG.getIntPtrConstant(0, SDLoc(SrcVec)));
