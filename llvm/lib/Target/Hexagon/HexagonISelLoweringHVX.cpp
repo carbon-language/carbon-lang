@@ -759,6 +759,7 @@ HexagonTargetLowering::LowerHvxConcatVectors(SDValue Op, SelectionDAG &DAG)
   unsigned HwLen = Subtarget.getVectorLength();
   unsigned NumOp = Op.getNumOperands();
   assert(isPowerOf2_32(NumOp) && HwLen % NumOp == 0);
+  (void)NumOp;
 
   // Count how many bytes (in a vector register) each bit in VecTy
   // corresponds to.
