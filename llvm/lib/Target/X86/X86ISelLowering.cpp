@@ -33110,6 +33110,14 @@ static SDValue combineShiftRightLogical(SDNode *N, SelectionDAG &DAG) {
   // transform should reduce code size. It may also enable secondary transforms
   // from improved known-bits analysis or instruction selection.
   APInt MaskVal = AndC->getAPIntValue();
+
+  // If this can be matched by a zero extend, don't optimize.
+  if (MaskVal.isMask()) {
+    unsigned TO = MaskVal.countTrailingOnes();
+    if (TO >= 8 && isPowerOf2_32(TO))
+      return SDValue();
+  }
+
   APInt NewMaskVal = MaskVal.lshr(ShiftC->getAPIntValue());
   unsigned OldMaskSize = MaskVal.getMinSignedBits();
   unsigned NewMaskSize = NewMaskVal.getMinSignedBits();
