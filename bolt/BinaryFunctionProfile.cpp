@@ -366,8 +366,10 @@ void BinaryFunction::postProcessProfile() {
   for (auto *BB : BasicBlocks) {
     auto SuccBIIter = BB->branch_info_begin();
     for (auto Succ : BB->successors()) {
-      if (!Succ->isEntryPoint() &&
-          SuccBIIter->Count != BinaryBasicBlock::COUNT_NO_PROFILE)
+      // All incoming edges to the primary entry have been accounted for, thus
+      // we skip the update here.
+      if (SuccBIIter->Count != BinaryBasicBlock::COUNT_NO_PROFILE &&
+          Succ != BasicBlocks.front())
         Succ->setExecutionCount(Succ->getExecutionCount() + SuccBIIter->Count);
       ++SuccBIIter;
     }
