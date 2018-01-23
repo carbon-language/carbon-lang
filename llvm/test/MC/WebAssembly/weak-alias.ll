@@ -1,6 +1,8 @@
-; RUN: llc -mtriple wasm32-unknown-unknown-wasm -filetype=obj %s -o %t.o
+; RUN: llc -filetype=obj %s -o %t.o
 ; RUN: obj2yaml %t.o | FileCheck %s
 ; RUN: llvm-objdump -t %t.o | FileCheck --check-prefix=CHECK-SYMS %s
+
+target triple = "wasm32-unknown-unknown-wasm"
 
 ; 'foo_alias()' is weak alias of function 'foo()'
 ; 'bar_alias' is weak alias of global variable 'bar'
