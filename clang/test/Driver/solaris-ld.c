@@ -4,6 +4,7 @@
 // Check sparc-sun-solaris2.11, 32bit
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     --target=sparc-sun-solaris2.11 \
+// RUN:     --gcc-toolchain="" \
 // RUN:     --sysroot=%S/Inputs/solaris_sparc_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-LD-SPARC32 %s
 // CHECK-LD-SPARC32-NOT: warning:
@@ -27,6 +28,7 @@
 // Check sparc-sun-solaris2.11, 64bit
 // RUN: %clang -no-canonical-prefixes -m64 %s -### -o %t.o 2>&1 \
 // RUN:     --target=sparc-sun-solaris2.11 \
+// RUN:     --gcc-toolchain="" \
 // RUN:     --sysroot=%S/Inputs/solaris_sparc_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-LD-SPARC64 %s
 // CHECK-LD-SPARC64-NOT: warning:
@@ -50,6 +52,7 @@
 // Check i386-pc-solaris2.11, 32bit
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     --target=i386-pc-solaris2.11 \
+// RUN:     --gcc-toolchain="" \
 // RUN:     --sysroot=%S/Inputs/solaris_x86_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-LD-X32 %s
 // CHECK-LD-X32-NOT: warning:
@@ -73,6 +76,7 @@
 // Check i386-pc-solaris2.11, 64bit
 // RUN: %clang -no-canonical-prefixes -m64 %s -### -o %t.o 2>&1 \
 // RUN:     --target=i386-pc-solaris2.11 \
+// RUN:     --gcc-toolchain="" \
 // RUN:     --sysroot=%S/Inputs/solaris_x86_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-LD-X64 %s
 // CHECK-LD-X64-NOT: warning:
@@ -96,6 +100,7 @@
 // Check the right -l flags are present with -shared
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o -shared 2>&1 \
 // RUN:     --target=sparc-sun-solaris2.11 \
+// RUN:     --gcc-toolchain="" \
 // RUN:     --sysroot=%S/Inputs/solaris_sparc_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-SPARC32-SHARED %s
 // CHECK-SPARC32-SHARED: {{.*/ld}}"
