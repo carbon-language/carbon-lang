@@ -189,8 +189,13 @@ entry:
 ; CHECK-NEXT:           Opcode:          I32_CONST
 ; CHECK-NEXT:           Value:           8
 ; CHECK-NEXT:         Content:         '01000000'
-
-; CHECK:        - Type:            CUSTOM
+; CHECK-NEXT:       - SectionOffset:   24
+; CHECK-NEXT:         MemoryIndex:     0
+; CHECK-NEXT:         Offset:          
+; CHECK-NEXT:           Opcode:          I32_CONST
+; CHECK-NEXT:           Value:           16
+; CHECK-NEXT:         Content:         '02000000'
+; CHECK-NEXT:   - Type:            CUSTOM
 ; CHECK-NEXT:     Name:            linking
 ; CHECK-NEXT:     DataSize:        20
 ; CHECK-NEXT:     SymbolInfo:      
