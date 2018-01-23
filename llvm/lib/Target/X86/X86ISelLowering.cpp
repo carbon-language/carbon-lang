@@ -14920,12 +14920,12 @@ static SDValue InsertBitToMaskVector(SDValue Op, SelectionDAG &DAG,
   }
 
   // Insertion of one bit into first position
-  if (IdxVal == 0 ) {
+  if (IdxVal == 0) {
     // Clean top bits of vector.
-    EltInVec = DAG.getNode(X86ISD::KSHIFTL, dl, VecVT, EltInVec,
-                           DAG.getConstant(NumElems - 1, dl, MVT::i8));
-    EltInVec = DAG.getNode(X86ISD::KSHIFTR, dl, VecVT, EltInVec,
-                           DAG.getConstant(NumElems - 1, dl, MVT::i8));
+    EltInVec = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v1i1, Elt);
+    EltInVec = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, VecVT,
+                           getZeroVector(VecVT, Subtarget, DAG, dl),
+                           EltInVec, DAG.getIntPtrConstant(0, dl));
     // Clean the first bit in source vector.
     Vec = DAG.getNode(X86ISD::KSHIFTR, dl, VecVT, Vec,
                       DAG.getConstant(1 , dl, MVT::i8));
