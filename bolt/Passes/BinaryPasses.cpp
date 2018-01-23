@@ -1158,24 +1158,15 @@ bool SimplifyRODataLoads::simplifyRODataLoads(
 
       // Get the contents of the section containing the target address of the
       // memory operand. We are only interested in read-only sections.
-      ErrorOr<SectionRef> DataSectionOrErr =
-        BC.getSectionForAddress(TargetAddress);
-      if (!DataSectionOrErr)
-        continue;
-      SectionRef DataSection = DataSectionOrErr.get();
-      if (!DataSection.isReadOnly())
+      auto DataSection = BC.getSectionForAddress(TargetAddress);
+      if (!DataSection || !DataSection->isReadOnly())
         continue;
 
       if (BC.getRelocationAt(TargetAddress))
         continue;
 
-      uint32_t Offset = TargetAddress - DataSection.getAddress();
-      StringRef ConstantData;
-      if (std::error_code EC = DataSection.getContents(ConstantData)) {
-        errs() << "BOLT-ERROR: 'cannot get section contents': "
-               << EC.message() << ".\n";
-        exit(1);
-      }
+      uint32_t Offset = TargetAddress - DataSection->getAddress();
+      StringRef ConstantData = DataSection->getContents();
 
       ++NumLocalLoadsFound;
       if (BB->hasProfile())

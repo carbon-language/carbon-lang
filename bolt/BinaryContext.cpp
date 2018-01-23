@@ -19,7 +19,6 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/CommandLine.h"
 
-
 using namespace llvm;
 using namespace bolt;
 
@@ -46,14 +45,6 @@ PrintMemData("print-mem-data",
   cl::cat(BoltCategory));
 
 } // namespace opts
-
-namespace llvm {
-namespace bolt {
-extern void check_error(std::error_code EC, StringRef Message);
-}
-}
-
-Triple::ArchType Relocation::Arch;
 
 BinaryContext::~BinaryContext() { }
 
@@ -438,19 +429,15 @@ void BinaryContext::printInstruction(raw_ostream &OS,
 
 ErrorOr<ArrayRef<uint8_t>>
 BinaryContext::getFunctionData(const BinaryFunction &Function) const {
-  auto Section = Function.getSection();
-  assert(Section.getAddress() <= Function.getAddress() &&
-         Section.getAddress() + Section.getSize()
-         >= Function.getAddress() + Function.getSize() &&
+  auto &Section = Function.getSection();
+  assert(Section.containsRange(Function.getAddress(), Function.getSize()) &&
          "wrong section for function");
 
   if (!Section.isText() || Section.isVirtual() || !Section.getSize()) {
     return std::make_error_code(std::errc::bad_address);
   }
 
-  StringRef SectionContents;
-  check_error(Section.getContents(SectionContents),
-              "cannot get section contents");
+  StringRef SectionContents = Section.getContents();
 
   assert(SectionContents.size() == Section.getSize() &&
          "section size mismatch");
@@ -461,7 +448,18 @@ BinaryContext::getFunctionData(const BinaryFunction &Function) const {
   return ArrayRef<uint8_t>(Bytes + FunctionOffset, Function.getSize());
 }
 
-ErrorOr<SectionRef> BinaryContext::getSectionForAddress(uint64_t Address) const{
+ErrorOr<BinarySection&> BinaryContext::getSectionForAddress(uint64_t Address) {
+  auto SI = AllocatableSections.upper_bound(Address);
+  if (SI != AllocatableSections.begin()) {
+    --SI;
+    if (SI->first + SI->second.getSize() > Address)
+      return SI->second;
+  }
+  return std::make_error_code(std::errc::bad_address);
+}
+
+ErrorOr<const BinarySection &>
+BinaryContext::getSectionForAddress(uint64_t Address) const {
   auto SI = AllocatableSections.upper_bound(Address);
   if (SI != AllocatableSections.begin()) {
     --SI;
@@ -475,10 +473,9 @@ ErrorOr<uint64_t>
 BinaryContext::extractPointerAtAddress(uint64_t Address) const {
   auto Section = getSectionForAddress(Address);
   if (!Section)
-    return Section.getError();
+    return std::make_error_code(std::errc::bad_address);
 
-  StringRef SectionContents;
-  Section->getContents(SectionContents);
+  StringRef SectionContents = Section->getContents();
   DataExtractor DE(SectionContents,
                    AsmInfo->isLittleEndian(),
                    AsmInfo->getPointerSize());
@@ -486,280 +483,31 @@ BinaryContext::extractPointerAtAddress(uint64_t Address) const {
   return DE.getAddress(&SectionOffset);
 }
 
-void BinaryContext::addSectionRelocation(SectionRef Section, uint64_t Offset,
-                                         MCSymbol *Symbol, uint64_t Type,
+void BinaryContext::addSectionRelocation(BinarySection &Section,
+                                         uint64_t Offset,
+                                         MCSymbol *Symbol,
+                                         uint64_t Type,
                                          uint64_t Addend) {
-  auto RI = SectionRelocations.find(Section);
-  if (RI == SectionRelocations.end()) {
-    auto Result =
-      SectionRelocations.emplace(Section, std::set<Relocation>());
-    RI = Result.first;
-  }
-  RI->second.emplace(Relocation{Offset, Symbol, Type, Addend, 0});
+  Section.addRelocation(Offset, Symbol, Type, Addend);
 }
 
-void BinaryContext::addRelocation(uint64_t Address, MCSymbol *Symbol,
-                                  uint64_t Type, uint64_t Addend) {
-  auto ContainingSection = getSectionForAddress(Address);
-  assert(ContainingSection && "cannot find section for address");
-  addSectionRelocation(*ContainingSection,
-                       Address - ContainingSection->getAddress(),
-                       Symbol,
-                       Type,
-                       Addend);
+void BinaryContext::addRelocation(uint64_t Address,
+                                  MCSymbol *Symbol,
+                                  uint64_t Type,
+                                  uint64_t Addend) {
+  auto Section = getSectionForAddress(Address);
+  assert(Section && "cannot find section for address");
+  Section->addRelocation(Address - Section->getAddress(), Symbol, Type, Addend);
 }
 
 void BinaryContext::removeRelocationAt(uint64_t Address) {
-  auto ContainingSection = getSectionForAddress(Address);
-  assert(ContainingSection && "cannot find section for address");
-  auto RI = SectionRelocations.find(*ContainingSection);
-  if (RI == SectionRelocations.end())
-    return;
-
-  auto &Relocations = RI->second;
-  auto RelocI = Relocations.find(
-            Relocation{Address - ContainingSection->getAddress(), 0, 0, 0, 0});
-  if (RelocI == Relocations.end())
-    return;
-
-  Relocations.erase(RelocI);
+  auto Section = getSectionForAddress(Address);
+  assert(Section && "cannot find section for address");
+  Section->removeRelocationAt(Address - Section->getAddress());
 }
 
 const Relocation *BinaryContext::getRelocationAt(uint64_t Address) {
-  auto ContainingSection = getSectionForAddress(Address);
-  assert(ContainingSection && "cannot find section for address");
-  auto RI = SectionRelocations.find(*ContainingSection);
-  if (RI == SectionRelocations.end())
-    return nullptr;
-
-  auto &Relocations = RI->second;
-  auto RelocI = Relocations.find(
-            Relocation{Address - ContainingSection->getAddress(), 0, 0, 0, 0});
-  if (RelocI == Relocations.end())
-    return nullptr;
-
-  return &*RelocI;
-}
-
-size_t Relocation::getSizeForType(uint64_t Type) {
-  switch (Type) {
-  default:
-    llvm_unreachable("unsupported relocation type");
-  case ELF::R_X86_64_PC8:
-    return 1;
-  case ELF::R_X86_64_PLT32:
-  case ELF::R_X86_64_PC32:
-  case ELF::R_X86_64_32S:
-  case ELF::R_X86_64_32:
-  case ELF::R_X86_64_GOTPCREL:
-  case ELF::R_X86_64_GOTTPOFF:
-  case ELF::R_X86_64_TPOFF32:
-  case ELF::R_X86_64_GOTPCRELX:
-  case ELF::R_X86_64_REX_GOTPCRELX:
-  case ELF::R_AARCH64_CALL26:
-  case ELF::R_AARCH64_ADR_PREL_PG_HI21:
-  case ELF::R_AARCH64_LDST64_ABS_LO12_NC:
-  case ELF::R_AARCH64_ADD_ABS_LO12_NC:
-  case ELF::R_AARCH64_LDST128_ABS_LO12_NC:
-  case ELF::R_AARCH64_LDST32_ABS_LO12_NC:
-  case ELF::R_AARCH64_LDST16_ABS_LO12_NC:
-  case ELF::R_AARCH64_LDST8_ABS_LO12_NC:
-  case ELF::R_AARCH64_ADR_GOT_PAGE:
-  case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
-  case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
-  case ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12:
-  case ELF::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
-  case ELF::R_AARCH64_LD64_GOT_LO12_NC:
-  case ELF::R_AARCH64_TLSDESC_LD64_LO12_NC:
-  case ELF::R_AARCH64_TLSDESC_ADD_LO12_NC:
-  case ELF::R_AARCH64_TLSDESC_CALL:
-  case ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
-  case ELF::R_AARCH64_JUMP26:
-  case ELF::R_AARCH64_PREL32:
-    return 4;
-  case ELF::R_X86_64_PC64:
-  case ELF::R_X86_64_64:
-  case ELF::R_AARCH64_ABS64:
-    return 8;
-  }
-}
-
-uint64_t Relocation::extractValue(uint64_t Type, uint64_t Contents,
-                                  uint64_t PC) {
-  switch (Type) {
-  default:
-    llvm_unreachable("unsupported relocation type");
-  case ELF::R_AARCH64_ABS64:
-    return Contents;
-  case ELF::R_AARCH64_PREL32:
-    return static_cast<int64_t>(PC) + SignExtend64<32>(Contents & 0xffffffff);
-  case ELF::R_AARCH64_TLSDESC_CALL:
-  case ELF::R_AARCH64_JUMP26:
-  case ELF::R_AARCH64_CALL26:
-    // Immediate goes in bits 25:0 of B and BL.
-    Contents &= ~0xfffffffffc000000ULL;
-    return static_cast<int64_t>(PC) + SignExtend64<28>(Contents << 2);
-  case ELF::R_AARCH64_ADR_GOT_PAGE:
-  case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
-  case ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
-  case ELF::R_AARCH64_ADR_PREL_PG_HI21: {
-    // Bits 32:12 of Symbol address goes in bits 30:29 + 23:5 of ADRP
-    // instruction
-    Contents &= ~0xffffffff9f00001fUll;
-    auto LowBits = (Contents >> 29) & 0x3;
-    auto HighBits = (Contents >> 5) & 0x7ffff;
-    Contents = LowBits | (HighBits << 2);
-    Contents = static_cast<int64_t>(PC) + SignExtend64<32>(Contents << 12);
-    Contents &= ~0xfffUll;
-    return Contents;
-  }
-  case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
-  case ELF::R_AARCH64_TLSDESC_LD64_LO12_NC:
-  case ELF::R_AARCH64_LD64_GOT_LO12_NC:
-  case ELF::R_AARCH64_LDST64_ABS_LO12_NC: {
-    // Immediate goes in bits 21:10 of LD/ST instruction, taken
-    // from bits 11:3 of Symbol address
-    Contents &= ~0xffffffffffc003ffU;
-    return Contents >> (10 - 3);
-  }
-  case ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12:
-  case ELF::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
-  case ELF::R_AARCH64_TLSDESC_ADD_LO12_NC:
-  case ELF::R_AARCH64_ADD_ABS_LO12_NC: {
-    // Immediate goes in bits 21:10 of ADD instruction
-    Contents &= ~0xffffffffffc003ffU;
-    return Contents >> (10 - 0);
-  }
-  case ELF::R_AARCH64_LDST128_ABS_LO12_NC: {
-    // Immediate goes in bits 21:10 of ADD instruction, taken
-    // from bits 11:4 of Symbol address
-    Contents &= ~0xffffffffffc003ffU;
-    return Contents >> (10 - 4);
-  }
-  case ELF::R_AARCH64_LDST32_ABS_LO12_NC: {
-    // Immediate goes in bits 21:10 of ADD instruction, taken
-    // from bits 11:2 of Symbol address
-    Contents &= ~0xffffffffffc003ffU;
-    return Contents >> (10 - 2);
-  }
-  case ELF::R_AARCH64_LDST16_ABS_LO12_NC: {
-    // Immediate goes in bits 21:10 of ADD instruction, taken
-    // from bits 11:1 of Symbol address
-    Contents &= ~0xffffffffffc003ffU;
-    return Contents >> (10 - 1);
-  }
-  case ELF::R_AARCH64_LDST8_ABS_LO12_NC: {
-    // Immediate goes in bits 21:10 of ADD instruction, taken
-    // from bits 11:0 of Symbol address
-    Contents &= ~0xffffffffffc003ffU;
-    return Contents >> (10 - 0);
-  }
-  }
-}
-
-bool Relocation::isGOT(uint64_t Type) {
-  switch (Type) {
-  default:
-    return false;
-  case ELF::R_AARCH64_ADR_GOT_PAGE:
-  case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
-  case ELF::R_AARCH64_LD64_GOT_LO12_NC:
-  case ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
-  case ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12:
-  case ELF::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
-  case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
-  case ELF::R_AARCH64_TLSDESC_LD64_LO12_NC:
-  case ELF::R_AARCH64_TLSDESC_ADD_LO12_NC:
-  case ELF::R_AARCH64_TLSDESC_CALL:
-    return true;
-  }
-}
-
-bool Relocation::isPCRelative(uint64_t Type) {
-  switch (Type) {
-  default:
-    llvm_unreachable("Unknown relocation type");
-
-  case ELF::R_X86_64_64:
-  case ELF::R_X86_64_32:
-  case ELF::R_X86_64_32S:
-  case ELF::R_X86_64_TPOFF32:
-  case ELF::R_AARCH64_ABS64:
-  case ELF::R_AARCH64_LDST64_ABS_LO12_NC:
-  case ELF::R_AARCH64_ADD_ABS_LO12_NC:
-  case ELF::R_AARCH64_LDST128_ABS_LO12_NC:
-  case ELF::R_AARCH64_LDST32_ABS_LO12_NC:
-  case ELF::R_AARCH64_LDST16_ABS_LO12_NC:
-  case ELF::R_AARCH64_LDST8_ABS_LO12_NC:
-  case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
-  case ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12:
-  case ELF::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
-  case ELF::R_AARCH64_LD64_GOT_LO12_NC:
-  case ELF::R_AARCH64_TLSDESC_LD64_LO12_NC:
-  case ELF::R_AARCH64_TLSDESC_ADD_LO12_NC:
-    return false;
-
-  case ELF::R_X86_64_PC8:
-  case ELF::R_X86_64_PC32:
-  case ELF::R_X86_64_GOTPCREL:
-  case ELF::R_X86_64_PLT32:
-  case ELF::R_X86_64_GOTTPOFF:
-  case ELF::R_X86_64_GOTPCRELX:
-  case ELF::R_X86_64_REX_GOTPCRELX:
-  case ELF::R_AARCH64_TLSDESC_CALL:
-  case ELF::R_AARCH64_CALL26:
-  case ELF::R_AARCH64_ADR_PREL_PG_HI21:
-  case ELF::R_AARCH64_ADR_GOT_PAGE:
-  case ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
-  case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
-  case ELF::R_AARCH64_JUMP26:
-  case ELF::R_AARCH64_PREL32:
-    return true;
-  }
-}
-
-size_t Relocation::emit(MCStreamer *Streamer) const {
-  const auto Size = getSizeForType(Type);
-  auto &Ctx = Streamer->getContext();
-  if (isPCRelative(Type)) {
-    auto *TempLabel = Ctx.createTempSymbol();
-    Streamer->EmitLabel(TempLabel);
-    auto Value =
-      MCBinaryExpr::createSub(MCSymbolRefExpr::create(Symbol, Ctx),
-                              MCSymbolRefExpr::create(TempLabel, Ctx),
-                              Ctx);
-    if (Addend) {
-      Value = MCBinaryExpr::createAdd(Value,
-                                      MCConstantExpr::create(Addend, Ctx),
-                                      Ctx);
-    }
-    Streamer->EmitValue(Value, Size);
-  } else {
-    Streamer->EmitSymbolValue(Symbol, Size);
-  }
-  return Size;
-}
-
-#define ELF_RELOC(name, value) #name,
-
-void Relocation::print(raw_ostream &OS) const {
-  static const char *X86RelocNames[] = {
-#include "llvm/Support/ELFRelocs/x86_64.def"
-  };
-  static const char *AArch64RelocNames[] = {
-#include "llvm/Support/ELFRelocs/AArch64.def"
-  };
-  if (Arch == Triple::aarch64)
-    OS << AArch64RelocNames[Type];
-  else
-    OS << X86RelocNames[Type];
-  OS << ", 0x" << Twine::utohexstr(Offset);
-  if (Symbol) {
-    OS << ", " << Symbol->getName();
-  }
-  if (int64_t(Addend) < 0)
-    OS << ", -0x" << Twine::utohexstr(-int64_t(Addend));
-  else
-    OS << ", 0x" << Twine::utohexstr(Addend);
-  OS << ", 0x" << Twine::utohexstr(Value);
+  auto Section = getSectionForAddress(Address);
+  assert(Section && "cannot find section for address");
+  return Section->getRelocationAt(Address - Section->getAddress());
 }

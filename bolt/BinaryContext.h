@@ -14,6 +14,7 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_BINARY_CONTEXT_H
 #define LLVM_TOOLS_LLVM_BOLT_BINARY_CONTEXT_H
 
+#include "BinarySection.h"
 #include "DebugData.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/DebugInfo/DWARF/DWARFCompileUnit.h"
@@ -53,51 +54,16 @@ namespace bolt {
 class BinaryFunction;
 class DataReader;
 
-/// Relocation class.
-struct Relocation {
-  static Triple::ArchType Arch; /// for printing, set by BinaryContext ctor.
-  uint64_t Offset;
-  mutable MCSymbol *Symbol; /// mutable to allow modification by emitter.
-  uint64_t Type;
-  uint64_t Addend;
-  uint64_t Value;
-
-  /// Return size of the given relocation \p Type.
-  static size_t getSizeForType(uint64_t Type);
-
-  /// Extract current relocated value from binary contents. This is used for
-  /// RISC architectures where values are encoded in specific bits depending
-  /// on the relocation value.
-  static uint64_t extractValue(uint64_t Type, uint64_t Contents, uint64_t PC);
-
-  /// Return true if relocation type is PC-relative. Return false otherwise.
-  static bool isPCRelative(uint64_t Type);
-
-  /// Return true if relocation type implies the creation of a GOT entry
-  static bool isGOT(uint64_t Type);
-
-  /// Emit relocation at a current \p Streamer' position. The caller is
-  /// responsible for setting the position correctly.
-  size_t emit(MCStreamer *Streamer) const;
-
-  /// Print a relocation to \p OS.
-  void print(raw_ostream &OS) const;
-};
-
-/// Relocation ordering by offset.
-inline bool operator<(const Relocation &A, const Relocation &B) {
-  return A.Offset < B.Offset;
-}
-
-inline raw_ostream &operator<<(raw_ostream &OS, const Relocation &Rel) {
-  Rel.print(OS);
-  return OS;
-}
-
 class BinaryContext {
 
   BinaryContext() = delete;
 
+  /// Map virtual address to a section.
+  using SectionMapType = std::map<uint64_t, BinarySection>;
+  SectionMapType AllocatableSections;
+
+  /// Map of section name to BinarySection object.
+  std::map<std::string, BinarySection *> NameToSection;
 public:
 
   /// [name] -> [address] map used for global symbol resolution.
@@ -118,16 +84,10 @@ public:
   /// Map address to a constant island owner (constant data in code section)
   std::map<uint64_t, BinaryFunction *> AddressToConstantIslandMap;
 
-  /// Map virtual address to a section.
-  std::map<uint64_t, SectionRef> AllocatableSections;
-
   /// Set of addresses in the code that are not a function start, and are
   /// referenced from outside of containing function. E.g. this could happen
   /// when a function has more than a single entry point.
   std::set<uint64_t> InterproceduralReferences;
-
-  /// Section relocations.
-  std::map<SectionRef, std::set<Relocation>> SectionRelocations;
 
   std::unique_ptr<MCContext> Ctx;
 
@@ -255,8 +215,43 @@ public:
   ErrorOr<ArrayRef<uint8_t>>
   getFunctionData(const BinaryFunction &Function) const;
 
+  BinarySection &registerSection(SectionRef Section) {
+    assert(!AllocatableSections.count(Section.getAddress()) &&
+           "can't register section twice");
+    StringRef Name;
+    Section.getName(Name);
+    assert(!NameToSection.count(Name) && "can't register section name twice");
+    auto Res = AllocatableSections.emplace(Section.getAddress(),
+                                           BinarySection(Section));
+    NameToSection[Name] = &Res.first->second;
+    return Res.first->second;
+  }
+
+  iterator_range<SectionMapType::iterator> sections() {
+    return make_range(AllocatableSections.begin(), AllocatableSections.end());
+  }
+
+  iterator_range<SectionMapType::const_iterator> sections() const {
+    return make_range(AllocatableSections.begin(), AllocatableSections.end());
+  }
+
   /// Return (allocatable) section containing the given \p Address.
-  ErrorOr<SectionRef> getSectionForAddress(uint64_t Address) const;
+  ErrorOr<BinarySection &> getSectionForAddress(uint64_t Address);
+  ErrorOr<const BinarySection &> getSectionForAddress(uint64_t Address) const;
+
+  /// Return (allocatable) section associated with given \p Name.
+  ErrorOr<BinarySection &> getSectionByName(StringRef Name) {
+    auto Itr = NameToSection.find(Name);
+    if (Itr != NameToSection.end())
+      return *Itr->second;
+    return std::make_error_code(std::errc::bad_address);
+  }
+  ErrorOr<const BinarySection &> getSectionByName(StringRef Name) const {
+    auto Itr = NameToSection.find(Name);
+    if (Itr != NameToSection.end())
+      return *Itr->second;
+    return std::make_error_code(std::errc::bad_address);
+  }
 
   /// Given \p Address in the binary, extract and return a pointer value at that
   /// address. The address has to be a valid statically allocated address for
@@ -293,7 +288,7 @@ public:
                     std::map<uint64_t, BinaryFunction> &BFs);
 
   /// Add relocation for \p Section at a given \p Offset.
-  void addSectionRelocation(SectionRef Section, uint64_t Offset,
+  void addSectionRelocation(BinarySection &Section, uint64_t Offset,
                             MCSymbol *Symbol, uint64_t Type,
                             uint64_t Addend = 0);
 

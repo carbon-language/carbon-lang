@@ -1143,7 +1143,7 @@ void IndirectCallPromotion::runOnFunctions(
                   PrintBB = true;
                   break;
                 }
-                if (auto Section = BC.getSectionForAddress(MI.Addr.Offset)) {
+                if (BC.getSectionForAddress(MI.Addr.Offset)) {
                   PrintBB = true;
                   break;
                 }

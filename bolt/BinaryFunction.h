@@ -245,7 +245,7 @@ private:
   std::vector<std::string> Names;
 
   /// Containing section
-  SectionRef Section;
+  BinarySection &Section;
 
   /// Address of the function in memory. Also could be an offset from
   /// base address for position independent binaries.
@@ -814,7 +814,7 @@ private:
   friend class BinaryContext;
 
   /// Creation should be handled by RewriteInstance::createBinaryFunction().
-  BinaryFunction(const std::string &Name, SectionRef Section, uint64_t Address,
+  BinaryFunction(const std::string &Name, BinarySection &Section, uint64_t Address,
                  uint64_t Size, BinaryContext &BC, bool IsSimple) :
       Names({Name}), Section(Section), Address(Address),
       Size(Size), BC(BC), IsSimple(IsSimple),
@@ -1075,7 +1075,7 @@ public:
   }
 
   /// Return containing file section.
-  SectionRef getSection() const {
+  BinarySection &getSection() const {
     return Section;
   }
 

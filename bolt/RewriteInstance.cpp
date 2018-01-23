@@ -639,11 +639,11 @@ createBinaryContext(ELFObjectFileBase *File, DataReader &DR,
 RewriteInstance::RewriteInstance(ELFObjectFileBase *File, DataReader &DR,
                                  DataAggregator &DA, const int Argc,
                                  const char *const *Argv)
-    : InputFile(File), Argc(Argc), Argv(Argv), DA(DA),
-      BC(createBinaryContext(
-          File, DR,
-          std::unique_ptr<DWARFContext>(
-              new DWARFContextInMemory(*InputFile, nullptr, true)))) {}
+  : InputFile(File), Argc(Argc), Argv(Argv), DA(DA),
+    BC(createBinaryContext(
+        File, DR,
+        std::unique_ptr<DWARFContext>(
+            new DWARFContextInMemory(*InputFile, nullptr, true)))) {}
 
 RewriteInstance::~RewriteInstance() {}
 
@@ -1239,8 +1239,9 @@ void RewriteInstance::discoverFileObjects() {
       }
       BF->addAlternativeName(UniqueName);
     } else {
-      BF = createBinaryFunction(UniqueName, *Section, Address, SymbolSize,
-                                IsSimple);
+      auto BS = BC->getSectionForAddress(Address);
+      assert(BS && "section for functions must be registered.");
+      BF = createBinaryFunction(UniqueName, *BS, Address, SymbolSize, IsSimple);
     }
     if (!AlternativeName.empty())
       BF->addAlternativeName(AlternativeName);
@@ -1327,20 +1328,19 @@ void RewriteInstance::discoverFileObjects() {
 }
 
 void RewriteInstance::disassemblePLT() {
-  if (!PLTSection.getObject())
+  if (!PLTSection)
     return;
 
-  const auto PLTAddress = PLTSection.getAddress();
-  StringRef PLTContents;
-  PLTSection.getContents(PLTContents);
+  const auto PLTAddress = PLTSection->getAddress();
+  StringRef PLTContents = PLTSection->getContents();
   ArrayRef<uint8_t> PLTData(
       reinterpret_cast<const uint8_t *>(PLTContents.data()),
-      PLTSection.getSize());
+      PLTSection->getSize());
 
   // Pseudo function for the start of PLT. The table could have a matching
   // FDE that we want to match to pseudo function.
-  createBinaryFunction("__BOLT_PLT_PSEUDO" , PLTSection, PLTAddress, 0, false);
-  for (uint64_t Offset = 0; Offset < PLTSection.getSize(); Offset += 0x10) {
+  createBinaryFunction("__BOLT_PLT_PSEUDO", *PLTSection, PLTAddress, 0, false);
+  for (uint64_t Offset = 0; Offset < PLTSection->getSize(); Offset += 0x10) {
     uint64_t InstrSize;
     MCInst Instruction;
     const uint64_t InstrAddr = PLTAddress + Offset;
@@ -1369,7 +1369,7 @@ void RewriteInstance::disassemblePLT() {
     }
 
     // To get the name we have to read a relocation against the address.
-    for (const auto &Rel : RelaPLTSection.relocations()) {
+    for (const auto &Rel : RelaPLTSection->getSectionRef().relocations()) {
       if (Rel.getType() != ELF::R_X86_64_JUMP_SLOT)
         continue;
       if (Rel.getOffset() == TargetAddress) {
@@ -1379,7 +1379,7 @@ void RewriteInstance::disassemblePLT() {
         const auto SymbolName = *(*SymbolIter).getName();
         std::string Name = SymbolName.str() + "@PLT";
         auto *BF = createBinaryFunction(Name,
-                                        PLTSection,
+                                        *PLTSection,
                                         InstrAddr,
                                         0,
                                         /*IsSimple=*/false);
@@ -1391,12 +1391,15 @@ void RewriteInstance::disassemblePLT() {
     }
   }
 
-  if (PLTGOTSection.getObject()) {
+  if (PLTGOTSection) {
     // Check if we need to create a function for .plt.got. Some linkers
     // (depending on the version) would mark it with FDE while others wouldn't.
-    if (!getBinaryFunctionAtAddress(PLTGOTSection.getAddress())) {
-      createBinaryFunction("__BOLT_PLT_GOT_PSEUDO" , PLTGOTSection,
-                           PLTGOTSection.getAddress(), 0, false);
+    if (!getBinaryFunctionAtAddress(PLTGOTSection->getAddress())) {
+      createBinaryFunction("__BOLT_PLT_GOT_PSEUDO",
+                           *PLTGOTSection,
+                           PLTGOTSection->getAddress(),
+                           0,
+                           false);
     }
   }
 }
@@ -1439,8 +1442,7 @@ void RewriteInstance::adjustFunctionBoundaries() {
       : NextSymRefI->second.getSection();
 
     // Function runs at most till the end of the containing section.
-    uint64_t NextObjectAddress = Function.getSection().getAddress() +
-                                 Function.getSection().getSize();
+    uint64_t NextObjectAddress = Function.getSection().getEndAddress();
     // Or till the next object marked by a symbol.
     if (NextSymRefI != FileSymRefs.end()) {
       NextObjectAddress = std::min(NextSymRefI->first, NextObjectAddress);
@@ -1474,12 +1476,10 @@ void RewriteInstance::adjustFunctionBoundaries() {
 }
 
 void RewriteInstance::relocateEHFrameSection() {
-  assert(EHFrameSection.getObject() != nullptr &&
-         "non-empty .eh_frame section expected");
+  assert(EHFrameSection && "non-empty .eh_frame section expected");
 
-  DWARFFrame EHFrame(EHFrameSection.getAddress());
-  StringRef EHFrameSectionContents;
-  EHFrameSection.getContents(EHFrameSectionContents);
+  DWARFFrame EHFrame(EHFrameSection->getAddress());
+  StringRef EHFrameSectionContents = EHFrameSection->getContents();
   DataExtractor DE(EHFrameSectionContents,
                    BC->AsmInfo->isLittleEndian(),
                    BC->AsmInfo->getPointerSize());
@@ -1521,7 +1521,7 @@ void RewriteInstance::relocateEHFrameSection() {
     DEBUG(dbgs() << "BOLT-DEBUG: adding DWARF reference against symbol "
                  << Symbol->getName() << '\n');
 
-    BC->addSectionRelocation(EHFrameSection, Offset, Symbol, RelType);
+    BC->addSectionRelocation(*EHFrameSection, Offset, Symbol, RelType);
   };
 
   EHFrame.parse(DE, createReloc);
@@ -1534,7 +1534,7 @@ void RewriteInstance::relocateEHFrameSection() {
 }
 
 BinaryFunction *RewriteInstance::createBinaryFunction(
-    const std::string &Name, SectionRef Section, uint64_t Address,
+    const std::string &Name, BinarySection &Section, uint64_t Address,
     uint64_t Size, bool IsSimple) {
   auto Result = BinaryFunctions.emplace(
       Address, BinaryFunction(Name, Section, Address, Size, *BC, IsSimple));
@@ -1567,20 +1567,8 @@ void RewriteInstance::readSpecialSections() {
       LSDAAddress = Section.getAddress();
     } else if (SectionName == ".debug_loc") {
       DebugLocSize = Section.getSize();
-    } else if (SectionName == ".eh_frame") {
-      EHFrameSection = Section;
     } else if (SectionName == ".rela.text") {
       HasTextRelocations = true;
-    } else if (SectionName == ".gdb_index") {
-      GdbIndexSection = Section;
-    } else if (SectionName == ".plt") {
-      PLTSection = Section;
-    } else if (SectionName == ".got.plt") {
-      GOTPLTSection = Section;
-    } else if (SectionName == ".plt.got") {
-      PLTGOTSection = Section;
-    } else if (SectionName == ".rela.plt") {
-      RelaPLTSection = Section;
     }
 
     // Ignore zero-size allocatable sections as they present no interest to us.
@@ -1589,10 +1577,16 @@ void RewriteInstance::readSpecialSections() {
     if ((ELFSectionRef(Section).getFlags() & ELF::SHF_ALLOC) &&
         Section.getSize() > 0 &&
         SectionName != ".tbss") {
-      BC->AllocatableSections.emplace(std::make_pair(Section.getAddress(),
-                                                     Section));
+      BC->registerSection(Section);
     }
   }
+
+  EHFrameSection = BC->getSectionByName(".eh_frame");
+  GdbIndexSection = BC->getSectionByName(".gdb_index");
+  PLTSection = BC->getSectionByName(".plt");
+  GOTPLTSection = BC->getSectionByName(".got.plt");
+  PLTGOTSection = BC->getSectionByName(".plt.got");
+  RelaPLTSection = BC->getSectionByName(".rela.plt");
 
   if (opts::RelocationMode == cl::BOU_TRUE && !HasTextRelocations) {
     errs() << "BOLT-ERROR: relocations against code are missing from the input "
@@ -2043,8 +2037,7 @@ void RewriteInstance::disassembleFunctions() {
           continue;
 
         // PLT requires special handling and could be ignored in this context.
-        StringRef SectionName;
-        Section->getName(SectionName);
+        StringRef SectionName = Section->getName();
         if (SectionName == ".plt" || SectionName == ".plt.got")
           continue;
 
@@ -2382,9 +2375,9 @@ void RewriteInstance::emitFunctions() {
   emitDataSections(Streamer.get());
 
   // Relocate .eh_frame to .eh_frame_old.
-  if (EHFrameSection.getObject() != nullptr) {
+  if (EHFrameSection) {
     relocateEHFrameSection();
-    emitDataSection(Streamer.get(), EHFrameSection, ".eh_frame_old");
+    emitDataSection(Streamer.get(), *EHFrameSection, ".eh_frame_old");
   }
 
   Streamer->Finish();
@@ -2610,10 +2603,12 @@ void RewriteInstance::mapFileSections(
   }
 
   // Handling for sections with relocations.
-  for (auto &SRI : BC->SectionRelocations) {
-    auto &Section = SRI.first;
-    StringRef SectionName;
-    Section.getName(SectionName);
+  for (auto &SRI : BC->sections()) {
+    auto &Section = SRI.second;
+    if (!Section.hasRelocations())
+      continue;
+
+    StringRef SectionName = Section.getName();
     auto SMII = EFMM->SectionMapInfo.find(OrgSecPrefix +
                                           std::string(SectionName));
     if (SMII == EFMM->SectionMapInfo.end())
@@ -2636,8 +2631,7 @@ void RewriteInstance::mapFileSections(
                           Section.getAddress());
     SI.FileAddress = Section.getAddress();
 
-    StringRef SectionContents;
-    Section.getContents(SectionContents);
+    StringRef SectionContents = Section.getContents();
     SI.FileOffset = SectionContents.data() - InputFile->getData().data();
   }
 }
@@ -2726,22 +2720,16 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
   }
 }
 
-void RewriteInstance::emitDataSection(MCStreamer *Streamer, SectionRef Section,
+void RewriteInstance::emitDataSection(MCStreamer *Streamer,
+                                      const BinarySection &Section,
                                       std::string Name) {
-  StringRef SectionName;
-  if (!Name.empty())
-    SectionName = Name;
-  else
-    Section.getName(SectionName);
-
-  const auto SectionFlags = ELFSectionRef(Section).getFlags();
-  const auto SectionType = ELFSectionRef(Section).getType();
+  StringRef SectionName = !Name.empty() ? StringRef(Name) : Section.getName();
+  const auto SectionFlags = Section.getFlags();
+  const auto SectionType = Section.getType();
+  StringRef SectionContents = Section.getContents();
   auto *ELFSection = BC->Ctx->getELFSection(SectionName,
                                             SectionType,
                                             SectionFlags);
-
-  StringRef SectionContents;
-  Section.getContents(SectionContents);
 
   Streamer->SwitchSection(ELFSection);
   Streamer->EmitValueToAlignment(Section.getAlignment());
@@ -2750,15 +2738,13 @@ void RewriteInstance::emitDataSection(MCStreamer *Streamer, SectionRef Section,
                << (SectionFlags & ELF::SHF_ALLOC ? "" : "non-")
                << "allocatable data section " << SectionName << '\n');
 
-  auto SRI = BC->SectionRelocations.find(Section);
-  if (SRI == BC->SectionRelocations.end()) {
+  if (!Section.hasRelocations()) {
     Streamer->EmitBytes(SectionContents);
     return;
   }
 
-  auto &Relocations = SRI->second;
   uint64_t SectionOffset = 0;
-  for (auto &Relocation : Relocations) {
+  for (auto &Relocation : Section.relocations()) {
     assert(Relocation.Offset < Section.getSize() && "overflow detected");
     if (SectionOffset < Relocation.Offset) {
       Streamer->EmitBytes(
@@ -2781,11 +2767,12 @@ void RewriteInstance::emitDataSection(MCStreamer *Streamer, SectionRef Section,
 }
 
 void RewriteInstance::emitDataSections(MCStreamer *Streamer) {
-  for (auto &SRI : BC->SectionRelocations) {
-    auto &Section = SRI.first;
+  for (auto &SRI : BC->sections()) {
+    auto &Section = SRI.second;
+    if (!Section.hasRelocations())
+      continue;
 
-    StringRef SectionName;
-    Section.getName(SectionName);
+    StringRef SectionName = Section.getName();
 
     assert(SectionName != ".eh_frame" && "should not emit .eh_frame as data");
 
@@ -3583,12 +3570,12 @@ template <typename ELFT>
 void RewriteInstance::patchELFRelaPLT(ELFObjectFile<ELFT> *File) {
   auto &OS = Out->os();
 
-  if (!RelaPLTSection.getObject()) {
+  if (!RelaPLTSection) {
     errs() << "BOLT-INFO: no .rela.plt section found\n";
     return;
   }
 
-  for (const auto &Rel : RelaPLTSection.relocations()) {
+  for (const auto &Rel : RelaPLTSection->getSectionRef().relocations()) {
     if (Rel.getType() == ELF::R_X86_64_IRELATIVE) {
       DataRefImpl DRI = Rel.getRawDataRefImpl();
       const auto *RelA = File->getRela(DRI);

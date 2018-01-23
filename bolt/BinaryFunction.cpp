@@ -371,8 +371,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   if (!opts::shouldProcess(*this) || !opts::shouldPrint(*this))
     return;
 
-  StringRef SectionName;
-  Section.getName(SectionName);
+  StringRef SectionName = Section.getName();
   OS << "Binary Function \"" << *this << "\" " << Annotation << " {";
   if (Names.size() > 1) {
     OS << "\n  Other names : ";
@@ -755,8 +754,8 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
     }
   }
 
-  auto SectionOrError = BC.getSectionForAddress(ArrayStart);
-  if (!SectionOrError) {
+  auto Section = BC.getSectionForAddress(ArrayStart);
+  if (!Section) {
     // No section - possibly an absolute address. Since we don't allow
     // internal function addresses to escape the function scope - we
     // consider it a tail call.
@@ -767,25 +766,23 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
     }
     return IndirectBranchType::POSSIBLE_TAIL_CALL;
   }
-  auto &Section = *SectionOrError;
-  if (Section.isVirtual()) {
+  if (Section->isVirtual()) {
     // The contents are filled at runtime.
     return IndirectBranchType::POSSIBLE_TAIL_CALL;
   }
   // Extract the value at the start of the array.
-  StringRef SectionContents;
-  Section.getContents(SectionContents);
+  StringRef SectionContents = Section->getContents();
   const auto EntrySize =
     Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE ? 4 : PtrSize;
   DataExtractor DE(SectionContents, BC.AsmInfo->isLittleEndian(), EntrySize);
-  auto ValueOffset = static_cast<uint32_t>(ArrayStart - Section.getAddress());
+  auto ValueOffset = static_cast<uint32_t>(ArrayStart - Section->getAddress());
   uint64_t Value = 0;
   std::vector<uint64_t> JTOffsetCandidates;
-  while (ValueOffset <= Section.getSize() - EntrySize) {
+  while (ValueOffset <= Section->getSize() - EntrySize) {
     DEBUG(dbgs() << "BOLT-DEBUG: indirect jmp at 0x"
                  << Twine::utohexstr(getAddress() + Offset)
                  << " is referencing address 0x"
-                 << Twine::utohexstr(Section.getAddress() + ValueOffset));
+                 << Twine::utohexstr(Section->getAddress() + ValueOffset));
     // Extract the value and increment the offset.
     if (BC.TheTriple->getArch() == llvm::Triple::aarch64) {
       Value = PCRelAddr + DE.getSigned(&ValueOffset, EntrySize);
@@ -2122,8 +2119,7 @@ void BinaryFunction::emitBodyRaw(MCStreamer *Streamer) {
          "cannot emit raw body unless relocation accuracy is guaranteed");
 
   // Raw contents of the function.
-  StringRef SectionContents;
-  Section.getContents(SectionContents);
+  StringRef SectionContents = Section.getContents();
 
   // Raw contents of the function.
   StringRef FunctionContents =
@@ -2201,8 +2197,7 @@ void BinaryFunction::emitConstantIslands(
   assert((!OnBehalfOf || IslandProxies[OnBehalfOf].size() > 0) &&
          "spurious OnBehalfOf constant island emission");
   // Raw contents of the function.
-  StringRef SectionContents;
-  Section.getContents(SectionContents);
+  StringRef SectionContents = Section.getContents();
 
   // Raw contents of the function.
   StringRef FunctionContents =
@@ -3314,22 +3309,20 @@ void BinaryFunction::JumpTable::updateOriginal(BinaryContext &BC) {
   // This way we only overwrite them when a corresponding function is
   // overwritten.
   assert(BC.HasRelocations && "relocation mode expected");
-  auto SectionOrError = BC.getSectionForAddress(Address);
-  assert(SectionOrError && "section not found for jump table");
-  auto Section = SectionOrError.get();
-  uint64_t Offset = Address - Section.getAddress();
-  StringRef SectionName;
-  Section.getName(SectionName);
+  auto Section = BC.getSectionForAddress(Address);
+  assert(Section && "section not found for jump table");
+  uint64_t Offset = Address - Section->getAddress();
+  StringRef SectionName = Section->getName();
   for (auto *Entry : Entries) {
     const auto RelType = (Type == JTT_NORMAL) ? ELF::R_X86_64_64
                                               : ELF::R_X86_64_PC32;
     const uint64_t RelAddend = (Type == JTT_NORMAL)
-        ? 0 : Offset - (Address - Section.getAddress());
+        ? 0 : Offset - (Address - Section->getAddress());
     DEBUG(dbgs() << "adding relocation to section " << SectionName
                  << " at offset " << Twine::utohexstr(Offset) << " for symbol "
                  << Entry->getName() << " with addend "
                  << Twine::utohexstr(RelAddend) << '\n');
-    BC.addSectionRelocation(Section, Offset, Entry, RelType, RelAddend);
+    BC.addSectionRelocation(*Section, Offset, Entry, RelType, RelAddend);
     Offset += EntrySize;
   }
 }

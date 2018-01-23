@@ -456,7 +456,7 @@ void RewriteInstance::updateLineTableOffsets() {
 
 void RewriteInstance::finalizeDebugSections() {
   // Skip .debug_aranges if we are re-generating .gdb_index.
-  if (opts::KeepARanges || !GdbIndexSection.getObject()) {
+  if (opts::KeepARanges || !GdbIndexSection) {
     SmallVector<char, 16> ARangesBuffer;
     raw_svector_ostream OS(ARangesBuffer);
 
@@ -505,11 +505,10 @@ void RewriteInstance::finalizeDebugSections() {
 }
 
 void RewriteInstance::updateGdbIndexSection() {
-  if (!GdbIndexSection.getObject())
+  if (!GdbIndexSection)
     return;
 
-  StringRef GdbIndexContents;
-  GdbIndexSection.getContents(GdbIndexContents);
+  StringRef GdbIndexContents = GdbIndexSection->getContents();
 
   const auto *Data = GdbIndexContents.data();
 
