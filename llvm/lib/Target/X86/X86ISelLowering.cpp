@@ -7924,7 +7924,9 @@ LowerBUILD_VECTORAsVariablePermute(SDValue V, SelectionDAG &DAG,
   MVT IndicesVT = EVT(VT).changeVectorElementTypeToInteger().getSimpleVT();
   IndicesVec = DAG.getZExtOrTrunc(IndicesVec, SDLoc(IndicesVec), IndicesVT);
 
-  if (SrcVec.getValueSizeInBits() < IndicesVT.getSizeInBits()) {
+  if (SrcVec.getValueSizeInBits() > IndicesVT.getSizeInBits())
+    return SDValue();
+  else if (SrcVec.getValueSizeInBits() < IndicesVT.getSizeInBits()) {
     SrcVec =
         DAG.getNode(ISD::INSERT_SUBVECTOR, SDLoc(SrcVec), VT, DAG.getUNDEF(VT),
                     SrcVec, DAG.getIntPtrConstant(0, SDLoc(SrcVec)));
