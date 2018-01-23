@@ -333,7 +333,18 @@ void UnwrappedLineParser::parseLevel(bool HasOpeningBrace) {
       nextToken();
       addUnwrappedLine();
       break;
-    case tok::kw_default:
+    case tok::kw_default: {
+      unsigned StoredPosition = Tokens->getPosition();
+      FormatToken *Next = Tokens->getNextToken();
+      FormatTok = Tokens->setPosition(StoredPosition);
+      if (Next && Next->isNot(tok::colon)) {
+        // default not followed by ':' is not a case label; treat it like
+        // an identifier.
+        parseStructuralElement();
+        break;
+      }
+      // Else, if it is 'default:', fall through to the case handling.
+    }
     case tok::kw_case:
       if (Style.Language == FormatStyle::LK_JavaScript &&
           Line->MustBeDeclaration) {
@@ -1032,8 +1043,12 @@ void UnwrappedLineParser::parseStructuralElement() {
       // 'default: string' field declaration.
       break;
     nextToken();
-    parseLabel();
-    return;
+    if (FormatTok->is(tok::colon)) {
+      parseLabel();
+      return;
+    }
+    // e.g. "default void f() {}" in a Java interface.
+    break;
   case tok::kw_case:
     if (Style.Language == FormatStyle::LK_JavaScript && Line->MustBeDeclaration)
       // 'case: string' field declaration.
