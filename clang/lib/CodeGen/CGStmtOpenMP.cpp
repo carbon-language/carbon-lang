@@ -265,8 +265,7 @@ void CodeGenFunction::GenerateOpenMPCapturedVars(
     } else if (CurCap->capturesThis())
       CapturedVars.push_back(CXXThisValue);
     else if (CurCap->capturesVariableByCopy()) {
-      llvm::Value *CV =
-          EmitLoadOfLValue(EmitLValue(*I), SourceLocation()).getScalarVal();
+      llvm::Value *CV = EmitLoadOfScalar(EmitLValue(*I), CurCap->getLocation());
 
       // If the field is not a pointer, we need to save the actual value
       // and load it as a void pointer.
@@ -287,7 +286,7 @@ void CodeGenFunction::GenerateOpenMPCapturedVars(
         EmitStoreThroughLValue(RValue::get(CV), SrcLV);
 
         // Load the value using the destination type pointer.
-        CV = EmitLoadOfLValue(DstLV, CurCap->getLocation()).getScalarVal();
+        CV = EmitLoadOfScalar(DstLV, CurCap->getLocation());
       }
       CapturedVars.push_back(CV);
     } else {
@@ -501,8 +500,7 @@ static llvm::Function *emitOutlinedFunctionPrologue(
                                  Args[Cnt]->getName(), ArgLVal),
             FD->getType(), AlignmentSource::Decl);
       }
-      auto *ExprArg =
-          CGF.EmitLoadOfLValue(ArgLVal, I->getLocation()).getScalarVal();
+      auto *ExprArg = CGF.EmitLoadOfScalar(ArgLVal, I->getLocation());
       auto VAT = FD->getCapturedVLAType();
       VLASizes.insert({Args[Cnt], {VAT->getSizeExpr(), ExprArg}});
     } else if (I->capturesVariable()) {
@@ -538,8 +536,7 @@ static llvm::Function *emitOutlinedFunctionPrologue(
     } else {
       // If 'this' is captured, load it into CXXThisValue.
       assert(I->capturesThis());
-      CXXThisValue =
-          CGF.EmitLoadOfLValue(ArgLVal, I->getLocation()).getScalarVal();
+      CXXThisValue = CGF.EmitLoadOfScalar(ArgLVal, I->getLocation());
       LocalAddrs.insert({Args[Cnt], {nullptr, ArgLVal.getAddress()}});
     }
     ++Cnt;

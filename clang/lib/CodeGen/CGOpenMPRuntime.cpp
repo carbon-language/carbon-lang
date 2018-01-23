@@ -1499,7 +1499,7 @@ llvm::Value *CGOpenMPRuntime::getThreadID(CodeGenFunction &CGF,
       if (OMPRegionInfo->getThreadIDVariable()) {
         // Check if this an outlined function with thread id passed as argument.
         auto LVal = OMPRegionInfo->getThreadIDVariableLValue(CGF);
-        ThreadID = CGF.EmitLoadOfLValue(LVal, Loc).getScalarVal();
+        ThreadID = CGF.EmitLoadOfScalar(LVal, Loc);
         // If value loaded in entry block, cache it and use it everywhere in
         // function.
         if (CGF.Builder.GetInsertBlock() == CGF.AllocaInsertPt->getParent()) {
@@ -3979,7 +3979,7 @@ emitProxyTaskFunction(CodeGenModule &CGM, SourceLocation Loc,
   auto SharedsFI = std::next(KmpTaskTQTyRD->field_begin(), KmpTaskTShareds);
   auto SharedsLVal = CGF.EmitLValueForField(Base, *SharedsFI);
   auto *SharedsParam = CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
-      CGF.EmitLoadOfLValue(SharedsLVal, Loc).getScalarVal(),
+      CGF.EmitLoadOfScalar(SharedsLVal, Loc),
       CGF.ConvertTypeForMem(SharedsPtrTy));
 
   auto PrivatesFI = std::next(KmpTaskTWithPrivatesQTyRD->field_begin(), 1);
@@ -4002,19 +4002,19 @@ emitProxyTaskFunction(CodeGenModule &CGM, SourceLocation Loc,
   if (isOpenMPTaskLoopDirective(Kind)) {
     auto LBFI = std::next(KmpTaskTQTyRD->field_begin(), KmpTaskTLowerBound);
     auto LBLVal = CGF.EmitLValueForField(Base, *LBFI);
-    auto *LBParam = CGF.EmitLoadOfLValue(LBLVal, Loc).getScalarVal();
+    auto *LBParam = CGF.EmitLoadOfScalar(LBLVal, Loc);
     auto UBFI = std::next(KmpTaskTQTyRD->field_begin(), KmpTaskTUpperBound);
     auto UBLVal = CGF.EmitLValueForField(Base, *UBFI);
-    auto *UBParam = CGF.EmitLoadOfLValue(UBLVal, Loc).getScalarVal();
+    auto *UBParam = CGF.EmitLoadOfScalar(UBLVal, Loc);
     auto StFI = std::next(KmpTaskTQTyRD->field_begin(), KmpTaskTStride);
     auto StLVal = CGF.EmitLValueForField(Base, *StFI);
-    auto *StParam = CGF.EmitLoadOfLValue(StLVal, Loc).getScalarVal();
+    auto *StParam = CGF.EmitLoadOfScalar(StLVal, Loc);
     auto LIFI = std::next(KmpTaskTQTyRD->field_begin(), KmpTaskTLastIter);
     auto LILVal = CGF.EmitLValueForField(Base, *LIFI);
-    auto *LIParam = CGF.EmitLoadOfLValue(LILVal, Loc).getScalarVal();
+    auto *LIParam = CGF.EmitLoadOfScalar(LILVal, Loc);
     auto RFI = std::next(KmpTaskTQTyRD->field_begin(), KmpTaskTReductions);
     auto RLVal = CGF.EmitLValueForField(Base, *RFI);
-    auto *RParam = CGF.EmitLoadOfLValue(RLVal, Loc).getScalarVal();
+    auto *RParam = CGF.EmitLoadOfScalar(RLVal, Loc);
     CallArgs.push_back(LBParam);
     CallArgs.push_back(UBParam);
     CallArgs.push_back(StParam);
@@ -6714,10 +6714,8 @@ public:
         // We didn't find any match in our map information - generate a zero
         // size array section.
         // FIXME: MSVC 2013 seems to require this-> to find member CGF.
-        llvm::Value *Ptr =
-            this->CGF
-                .EmitLoadOfLValue(this->CGF.EmitLValue(IE), IE->getExprLoc())
-                .getScalarVal();
+        llvm::Value *Ptr = this->CGF.EmitLoadOfScalar(this->CGF.EmitLValue(IE),
+                                                      IE->getExprLoc());
         BasePointers.push_back({Ptr, VD});
         Pointers.push_back(Ptr);
         Sizes.push_back(llvm::Constant::getNullValue(this->CGF.SizeTy));
