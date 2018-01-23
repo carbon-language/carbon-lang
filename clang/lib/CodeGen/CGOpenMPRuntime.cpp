@@ -147,7 +147,7 @@ public:
         auto PartIdLVal = CGF.EmitLoadOfPointerLValue(
             CGF.GetAddrOfLocalVar(PartIDVar),
             PartIDVar->getType()->castAs<PointerType>());
-        auto *Res = CGF.EmitLoadOfScalar(PartIdLVal, SourceLocation());
+        auto *Res = CGF.EmitLoadOfScalar(PartIdLVal, PartIDVar->getLocation());
         auto *DoneBB = CGF.createBasicBlock(".untied.done.");
         UntiedSwitch = CGF.Builder.CreateSwitch(Res, DoneBB);
         CGF.EmitBlock(DoneBB);
@@ -354,7 +354,7 @@ public:
       DeclRefExpr DRE(const_cast<VarDecl *>(VD),
                       /*RefersToEnclosingVariableOrCapture=*/false,
                       VD->getType().getNonReferenceType(), VK_LValue,
-                      SourceLocation());
+                      C.getLocation());
       PrivScope.addPrivate(VD, [&CGF, &DRE]() -> Address {
         return CGF.EmitLValue(&DRE).getAddress();
       });
@@ -787,17 +787,17 @@ static void emitInitWithReductionInitializer(CodeGenFunction &CGF,
     RValue InitRVal;
     switch (CGF.getEvaluationKind(Ty)) {
     case TEK_Scalar:
-      InitRVal = CGF.EmitLoadOfLValue(LV, SourceLocation());
+      InitRVal = CGF.EmitLoadOfLValue(LV, DRD->getLocation());
       break;
     case TEK_Complex:
       InitRVal =
-          RValue::getComplex(CGF.EmitLoadOfComplex(LV, SourceLocation()));
+          RValue::getComplex(CGF.EmitLoadOfComplex(LV, DRD->getLocation()));
       break;
     case TEK_Aggregate:
       InitRVal = RValue::getAggregate(LV.getAddress());
       break;
     }
-    OpaqueValueExpr OVE(SourceLocation(), Ty, VK_RValue);
+    OpaqueValueExpr OVE(DRD->getLocation(), Ty, VK_RValue);
     CodeGenFunction::OpaqueValueMapping OpaqueMap(CGF, &OVE, InitRVal);
     CGF.EmitAnyExprToMem(&OVE, Private, Ty.getQualifiers(),
                          /*IsInitializer=*/false);
@@ -4836,7 +4836,7 @@ void CGOpenMPRuntime::emitTaskLoopCall(CodeGenFunction &CGF, SourceLocation Loc,
       IfVal,
       LBLVal.getPointer(),
       UBLVal.getPointer(),
-      CGF.EmitLoadOfScalar(StLVal, SourceLocation()),
+      CGF.EmitLoadOfScalar(StLVal, Loc),
       llvm::ConstantInt::getNullValue(
           CGF.IntTy), // Always 0 because taskgroup emitted by the compiler
       llvm::ConstantInt::getSigned(
@@ -5399,9 +5399,8 @@ static llvm::Value *emitReduceInitFunction(CodeGenModule &CGM,
     Address SizeAddr = CGM.getOpenMPRuntime().getAddrOfArtificialThreadPrivate(
         CGF, CGM.getContext().getSizeType(),
         generateUniqueName("reduction_size", Loc, N));
-    Size =
-        CGF.EmitLoadOfScalar(SizeAddr, /*Volatile=*/false,
-                             CGM.getContext().getSizeType(), SourceLocation());
+    Size = CGF.EmitLoadOfScalar(SizeAddr, /*Volatile=*/false,
+                                CGM.getContext().getSizeType(), Loc);
   }
   RCG.emitAggregateType(CGF, N, Size);
   LValue SharedLVal;
@@ -5469,9 +5468,8 @@ static llvm::Value *emitReduceCombFunction(CodeGenModule &CGM,
     Address SizeAddr = CGM.getOpenMPRuntime().getAddrOfArtificialThreadPrivate(
         CGF, CGM.getContext().getSizeType(),
         generateUniqueName("reduction_size", Loc, N));
-    Size =
-        CGF.EmitLoadOfScalar(SizeAddr, /*Volatile=*/false,
-                             CGM.getContext().getSizeType(), SourceLocation());
+    Size = CGF.EmitLoadOfScalar(SizeAddr, /*Volatile=*/false,
+                                CGM.getContext().getSizeType(), Loc);
   }
   RCG.emitAggregateType(CGF, N, Size);
   // Remap lhs and rhs variables to the addresses of the function arguments.
@@ -5541,9 +5539,8 @@ static llvm::Value *emitReduceFiniFunction(CodeGenModule &CGM,
     Address SizeAddr = CGM.getOpenMPRuntime().getAddrOfArtificialThreadPrivate(
         CGF, CGM.getContext().getSizeType(),
         generateUniqueName("reduction_size", Loc, N));
-    Size =
-        CGF.EmitLoadOfScalar(SizeAddr, /*Volatile=*/false,
-                             CGM.getContext().getSizeType(), SourceLocation());
+    Size = CGF.EmitLoadOfScalar(SizeAddr, /*Volatile=*/false,
+                                CGM.getContext().getSizeType(), Loc);
   }
   RCG.emitAggregateType(CGF, N, Size);
   // Emit the finalizer body:
@@ -6719,7 +6716,7 @@ public:
         // FIXME: MSVC 2013 seems to require this-> to find member CGF.
         llvm::Value *Ptr =
             this->CGF
-                .EmitLoadOfLValue(this->CGF.EmitLValue(IE), SourceLocation())
+                .EmitLoadOfLValue(this->CGF.EmitLValue(IE), IE->getExprLoc())
                 .getScalarVal();
         BasePointers.push_back({Ptr, VD});
         Pointers.push_back(Ptr);
