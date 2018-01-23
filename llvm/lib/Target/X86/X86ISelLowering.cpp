@@ -1198,6 +1198,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v16i1, Custom);
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v8i1,  Custom);
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v4i1,  Custom);
+    setOperationAction(ISD::INSERT_SUBVECTOR,   MVT::v2i1,  Custom);
     setOperationAction(ISD::INSERT_SUBVECTOR,   MVT::v4i1,  Custom);
     setOperationAction(ISD::INSERT_SUBVECTOR,   MVT::v8i1,  Custom);
     setOperationAction(ISD::INSERT_SUBVECTOR,   MVT::v16i1, Custom);
@@ -14924,74 +14925,11 @@ static SDValue InsertBitToMaskVector(SDValue Op, SelectionDAG &DAG,
     return DAG.getNode(ISD::TRUNCATE, dl, VecVT, ExtOp);
   }
 
-  unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
-  unsigned NumElems = VecVT.getVectorNumElements();
+  // Copy into a k-register, extract to v1i1 and insert_subvector.
+  SDValue EltInVec = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v1i1, Elt);
 
-  // If the kshift instructions of the correct width aren't natively supported
-  // then we need to promote the vector to the native size to get the correct
-  // zeroing behavior.
-  if ((!Subtarget.hasDQI() && NumElems == 8) || (NumElems < 8)) {
-    // Need to promote to v16i1, do the insert, then extract back.
-    Vec = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, MVT::v16i1,
-                      DAG.getUNDEF(MVT::v16i1), Vec,
-                      DAG.getIntPtrConstant(0, dl));
-    Op = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, MVT::v16i1, Vec, Elt, Idx);
-    return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VecVT, Op,
-                       DAG.getIntPtrConstant(0, dl));
-  }
-
-  SDValue EltInVec = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VecVT, Elt);
-
-  if (Vec.isUndef()) {
-    if (IdxVal)
-      EltInVec = DAG.getNode(X86ISD::KSHIFTL, dl, VecVT, EltInVec,
-                             DAG.getConstant(IdxVal, dl, MVT::i8));
-    return EltInVec;
-  }
-
-  // Insertion of one bit into first position
-  if (IdxVal == 0) {
-    // Clean top bits of vector.
-    EltInVec = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v1i1, Elt);
-    EltInVec = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, VecVT,
-                           getZeroVector(VecVT, Subtarget, DAG, dl),
-                           EltInVec, DAG.getIntPtrConstant(0, dl));
-    // Clean the first bit in source vector.
-    Vec = DAG.getNode(X86ISD::KSHIFTR, dl, VecVT, Vec,
-                      DAG.getConstant(1 , dl, MVT::i8));
-    Vec = DAG.getNode(X86ISD::KSHIFTL, dl, VecVT, Vec,
-                      DAG.getConstant(1, dl, MVT::i8));
-
-    return DAG.getNode(ISD::OR, dl, VecVT, Vec, EltInVec);
-  }
-  // Insertion of one bit into last position
-  if (IdxVal == NumElems - 1) {
-    // Move the bit to the last position inside the vector.
-    EltInVec = DAG.getNode(X86ISD::KSHIFTL, dl, VecVT, EltInVec,
-                           DAG.getConstant(IdxVal, dl, MVT::i8));
-    // Clean the last bit in the source vector.
-    Vec = DAG.getNode(X86ISD::KSHIFTL, dl, VecVT, Vec,
-                      DAG.getConstant(1, dl, MVT::i8));
-    Vec = DAG.getNode(X86ISD::KSHIFTR, dl, VecVT, Vec,
-                      DAG.getConstant(1 , dl, MVT::i8));
-
-    return DAG.getNode(ISD::OR, dl, VecVT, Vec, EltInVec);
-  }
-
-  // Move the current value of the bit to be replace to bit 0.
-  SDValue Merged = DAG.getNode(X86ISD::KSHIFTR, dl, VecVT, Vec,
-                               DAG.getConstant(IdxVal, dl, MVT::i8));
-  // Xor with the new bit.
-  Merged = DAG.getNode(ISD::XOR, dl, VecVT, Merged, EltInVec);
-  // Shift to MSB, filling bottom bits with 0.
-  Merged = DAG.getNode(X86ISD::KSHIFTL, dl, VecVT, Merged,
-                       DAG.getConstant(NumElems - 1, dl, MVT::i8));
-  // Shift to the final position, filling upper bits with 0.
-  Merged = DAG.getNode(X86ISD::KSHIFTR, dl, VecVT, Merged,
-                       DAG.getConstant(NumElems - 1 - IdxVal, dl, MVT::i8));
-  // Xor with original vector to cancel out the original bit value that's still
-  // present.
-  return DAG.getNode(ISD::XOR, dl, VecVT, Merged, Vec);
+  return DAG.getNode(ISD::INSERT_SUBVECTOR, dl, VecVT, Vec, EltInVec,
+                     Op.getOperand(2));
 }
 
 SDValue X86TargetLowering::LowerINSERT_VECTOR_ELT(SDValue Op,
