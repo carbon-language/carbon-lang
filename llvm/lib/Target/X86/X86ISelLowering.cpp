@@ -7912,6 +7912,10 @@ LowerBUILD_VECTORAsVariablePermute(SDValue V, SelectionDAG &DAG,
     else if (IndicesVec != ExtractedIndex.getOperand(0))
       return SDValue();
 
+    // The index vector must be the same size as the destination.
+    if (IndicesVec.getValueType().getVectorNumElements() != E)
+      return SDValue();
+
     auto *PermIdx = dyn_cast<ConstantSDNode>(ExtractedIndex.getOperand(1));
     if (!PermIdx || PermIdx->getZExtValue() != Idx)
       return SDValue();

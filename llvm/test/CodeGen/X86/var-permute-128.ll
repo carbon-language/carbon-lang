@@ -353,3 +353,114 @@ define <4 x float> @var_shuffle_v4f32(<4 x float> %v, <4 x i32> %indices) nounwi
   %ret3 = insertelement <4 x float> %ret2, float %v3, i32 3
   ret <4 x float> %ret3
 }
+
+define <16 x i8> @var_shuffle_v16i8_from_v16i8_v32i8(<16 x i8> %v, <32 x i8> %indices) nounwind {
+; SSSE3-LABEL: var_shuffle_v16i8_from_v16i8_v32i8:
+; SSSE3:       # %bb.0:
+; SSSE3-NEXT:    pshufb %xmm1, %xmm0
+; SSSE3-NEXT:    retq
+;
+; AVX-LABEL: var_shuffle_v16i8_from_v16i8_v32i8:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vpextrb $0, %xmm1, %eax
+; AVX-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
+; AVX-NEXT:    andl $15, %eax
+; AVX-NEXT:    movzbl -24(%rsp,%rax), %eax
+; AVX-NEXT:    vmovd %eax, %xmm0
+; AVX-NEXT:    vpextrb $1, %xmm1, %eax
+; AVX-NEXT:    andl $15, %eax
+; AVX-NEXT:    vpinsrb $1, -24(%rsp,%rax), %xmm0, %xmm0
+; AVX-NEXT:    vpextrb $2, %xmm1, %eax
+; AVX-NEXT:    andl $15, %eax
+; AVX-NEXT:    vpinsrb $2, -24(%rsp,%rax), %xmm0, %xmm0
+; AVX-NEXT:    vpextrb $3, %xmm1, %eax
+; AVX-NEXT:    andl $15, %eax
+; AVX-NEXT:    vpinsrb $3, -24(%rsp,%rax), %xmm0, %xmm0
+; AVX-NEXT:    vpextrb $4, %xmm1, %eax
+; AVX-NEXT:    andl $15, %eax
+; AVX-NEXT:    vpinsrb $4, -24(%rsp,%rax), %xmm0, %xmm0
+; AVX-NEXT:    vpextrb $5, %xmm1, %eax
+; AVX-NEXT:    andl $15, %eax
+; AVX-NEXT:    vpinsrb $5, -24(%rsp,%rax), %xmm0, %xmm0
+; AVX-NEXT:    vpextrb $6, %xmm1, %eax
+; AVX-NEXT:    andl $15, %eax
+; AVX-NEXT:    vpinsrb $6, -24(%rsp,%rax), %xmm0, %xmm0
+; AVX-NEXT:    vpextrb $7, %xmm1, %eax
+; AVX-NEXT:    andl $15, %eax
+; AVX-NEXT:    vpinsrb $7, -24(%rsp,%rax), %xmm0, %xmm0
+; AVX-NEXT:    vpextrb $8, %xmm1, %eax
+; AVX-NEXT:    andl $15, %eax
+; AVX-NEXT:    vpinsrb $8, -24(%rsp,%rax), %xmm0, %xmm0
+; AVX-NEXT:    vpextrb $9, %xmm1, %eax
+; AVX-NEXT:    andl $15, %eax
+; AVX-NEXT:    vpinsrb $9, -24(%rsp,%rax), %xmm0, %xmm0
+; AVX-NEXT:    vpextrb $10, %xmm1, %eax
+; AVX-NEXT:    andl $15, %eax
+; AVX-NEXT:    vpinsrb $10, -24(%rsp,%rax), %xmm0, %xmm0
+; AVX-NEXT:    vpextrb $11, %xmm1, %eax
+; AVX-NEXT:    andl $15, %eax
+; AVX-NEXT:    vpinsrb $11, -24(%rsp,%rax), %xmm0, %xmm0
+; AVX-NEXT:    vpextrb $12, %xmm1, %eax
+; AVX-NEXT:    andl $15, %eax
+; AVX-NEXT:    vpinsrb $12, -24(%rsp,%rax), %xmm0, %xmm0
+; AVX-NEXT:    vpextrb $13, %xmm1, %eax
+; AVX-NEXT:    andl $15, %eax
+; AVX-NEXT:    vpinsrb $13, -24(%rsp,%rax), %xmm0, %xmm0
+; AVX-NEXT:    vpextrb $14, %xmm1, %eax
+; AVX-NEXT:    andl $15, %eax
+; AVX-NEXT:    vpinsrb $14, -24(%rsp,%rax), %xmm0, %xmm0
+; AVX-NEXT:    vpextrb $15, %xmm1, %eax
+; AVX-NEXT:    andl $15, %eax
+; AVX-NEXT:    vpinsrb $15, -24(%rsp,%rax), %xmm0, %xmm0
+; AVX-NEXT:    vzeroupper
+; AVX-NEXT:    retq
+  %index0 = extractelement <32 x i8> %indices, i32 0
+  %index1 = extractelement <32 x i8> %indices, i32 1
+  %index2 = extractelement <32 x i8> %indices, i32 2
+  %index3 = extractelement <32 x i8> %indices, i32 3
+  %index4 = extractelement <32 x i8> %indices, i32 4
+  %index5 = extractelement <32 x i8> %indices, i32 5
+  %index6 = extractelement <32 x i8> %indices, i32 6
+  %index7 = extractelement <32 x i8> %indices, i32 7
+  %index8 = extractelement <32 x i8> %indices, i32 8
+  %index9 = extractelement <32 x i8> %indices, i32 9
+  %index10 = extractelement <32 x i8> %indices, i32 10
+  %index11 = extractelement <32 x i8> %indices, i32 11
+  %index12 = extractelement <32 x i8> %indices, i32 12
+  %index13 = extractelement <32 x i8> %indices, i32 13
+  %index14 = extractelement <32 x i8> %indices, i32 14
+  %index15 = extractelement <32 x i8> %indices, i32 15
+  %v0 = extractelement <16 x i8> %v, i8 %index0
+  %v1 = extractelement <16 x i8> %v, i8 %index1
+  %v2 = extractelement <16 x i8> %v, i8 %index2
+  %v3 = extractelement <16 x i8> %v, i8 %index3
+  %v4 = extractelement <16 x i8> %v, i8 %index4
+  %v5 = extractelement <16 x i8> %v, i8 %index5
+  %v6 = extractelement <16 x i8> %v, i8 %index6
+  %v7 = extractelement <16 x i8> %v, i8 %index7
+  %v8 = extractelement <16 x i8> %v, i8 %index8
+  %v9 = extractelement <16 x i8> %v, i8 %index9
+  %v10 = extractelement <16 x i8> %v, i8 %index10
+  %v11 = extractelement <16 x i8> %v, i8 %index11
+  %v12 = extractelement <16 x i8> %v, i8 %index12
+  %v13 = extractelement <16 x i8> %v, i8 %index13
+  %v14 = extractelement <16 x i8> %v, i8 %index14
+  %v15 = extractelement <16 x i8> %v, i8 %index15
+  %ret0 = insertelement <16 x i8> undef, i8 %v0, i32 0
+  %ret1 = insertelement <16 x i8> %ret0, i8 %v1, i32 1
+  %ret2 = insertelement <16 x i8> %ret1, i8 %v2, i32 2
+  %ret3 = insertelement <16 x i8> %ret2, i8 %v3, i32 3
+  %ret4 = insertelement <16 x i8> %ret3, i8 %v4, i32 4
+  %ret5 = insertelement <16 x i8> %ret4, i8 %v5, i32 5
+  %ret6 = insertelement <16 x i8> %ret5, i8 %v6, i32 6
+  %ret7 = insertelement <16 x i8> %ret6, i8 %v7, i32 7
+  %ret8 = insertelement <16 x i8> %ret7, i8 %v8, i32 8
+  %ret9 = insertelement <16 x i8> %ret8, i8 %v9, i32 9
+  %ret10 = insertelement <16 x i8> %ret9, i8 %v10, i32 10
+  %ret11 = insertelement <16 x i8> %ret10, i8 %v11, i32 11
+  %ret12 = insertelement <16 x i8> %ret11, i8 %v12, i32 12
+  %ret13 = insertelement <16 x i8> %ret12, i8 %v13, i32 13
+  %ret14 = insertelement <16 x i8> %ret13, i8 %v14, i32 14
+  %ret15 = insertelement <16 x i8> %ret14, i8 %v15, i32 15
+  ret <16 x i8> %ret15
+}
