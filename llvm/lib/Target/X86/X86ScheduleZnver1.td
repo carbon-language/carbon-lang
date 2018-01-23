@@ -1431,22 +1431,10 @@ def ZnWriteCVSTSI2SILd: SchedWriteRes<[ZnAGU, ZnFPU3, ZnFPU2]> {
 }
 // CVTSD2SI.
 // r32/64
-def : InstRW<[ZnWriteCVSTSI2SIr], (instregex "CVT(T?)SD2SI(64)?rr")>;
+def : InstRW<[ZnWriteCVSTSI2SIr], (instregex "(V?)CVT(T?)SD2SI(64)?rr")>;
 // r32,m32.
-def : InstRW<[ZnWriteCVSTSI2SILd], (instregex "CVT(T?)SD2SI(64)?rm")>;
+def : InstRW<[ZnWriteCVSTSI2SILd], (instregex "(V?)CVT(T?)SD2SI(64)?rm")>;
 
-
-def ZnWriteVCVSTSI2SIr: SchedWriteRes<[ZnFPU3]> {
-  let Latency = 5;
-}
-def ZnWriteVCVSTSI2SILd: SchedWriteRes<[ZnFPU3, ZnAGU]> {
-  let Latency = 12;
-}
-// VCVTSD2SI.
-// r32/64
-def : InstRW<[ZnWriteCVSTSI2SIr], (instregex "VCVT(T?)SD2SI(64)?rr")>;
-// r32,m32.
-def : InstRW<[ZnWriteCVSTSI2SILd], (instregex "VCVT(T?)SD2SI(64)?rm")>;
 
 // VCVTPS2PH.
 // x,v,i.
