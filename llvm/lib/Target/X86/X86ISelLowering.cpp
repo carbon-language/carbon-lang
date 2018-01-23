@@ -1720,12 +1720,35 @@ SDValue X86TargetLowering::emitStackGuardXorFP(SelectionDAG &DAG, SDValue Val,
 
 TargetLoweringBase::LegalizeTypeAction
 X86TargetLowering::getPreferredVectorAction(EVT VT) const {
+  if (VT == MVT::v32i1 && Subtarget.hasAVX512() && !Subtarget.hasBWI())
+    return TypeSplitVector;
+
   if (ExperimentalVectorWideningLegalization &&
       VT.getVectorNumElements() != 1 &&
       VT.getVectorElementType().getSimpleVT() != MVT::i1)
     return TypeWidenVector;
 
   return TargetLoweringBase::getPreferredVectorAction(VT);
+}
+
+MVT X86TargetLowering::getRegisterTypeForCallingConv(MVT VT) const {
+  if (VT == MVT::v32i1 && Subtarget.hasAVX512() && !Subtarget.hasBWI())
+    return MVT::v32i8;
+  return TargetLowering::getRegisterTypeForCallingConv(VT);
+}
+
+MVT X86TargetLowering::getRegisterTypeForCallingConv(LLVMContext &Context,
+                                                     EVT VT) const {
+  if (VT == MVT::v32i1 && Subtarget.hasAVX512() && !Subtarget.hasBWI())
+    return MVT::v32i8;
+  return TargetLowering::getRegisterTypeForCallingConv(Context, VT);
+}
+
+unsigned X86TargetLowering::getNumRegistersForCallingConv(LLVMContext &Context,
+                                                          EVT VT) const {
+  if (VT == MVT::v32i1 && Subtarget.hasAVX512() && !Subtarget.hasBWI())
+    return 1;
+  return TargetLowering::getNumRegistersForCallingConv(Context, VT);
 }
 
 EVT X86TargetLowering::getSetCCResultType(const DataLayout &DL,
