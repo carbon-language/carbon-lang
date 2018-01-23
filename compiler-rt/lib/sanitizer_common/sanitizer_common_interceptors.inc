@@ -2778,7 +2778,8 @@ INTERCEPTOR(int, accept4, int fd, void *addr, unsigned *addrlen, int f) {
 #endif
 
 #if SANITIZER_INTERCEPT_PACCEPT
-INTERCEPTOR(int, paccept, int fd, void *addr, unsigned *addrlen, __sanitizer_sigset_t *set, int f) {
+INTERCEPTOR(int, paccept, int fd, void *addr, unsigned *addrlen,
+            __sanitizer_sigset_t *set, int f) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, paccept, fd, addr, addrlen, set, f);
   unsigned addrlen0 = 0;
