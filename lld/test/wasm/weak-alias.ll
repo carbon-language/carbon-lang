@@ -164,8 +164,8 @@ entry:
 ; RELOC-NEXT:       - ElemType:        ANYFUNC
 ; RELOC-NEXT:         Limits:
 ; RELOC-NEXT:           Flags:           [ HAS_MAX ]
-; RELOC-NEXT:           Initial:         0x00000002
-; RELOC-NEXT:           Maximum:         0x00000002
+; RELOC-NEXT:           Initial:         0x00000003
+; RELOC-NEXT:           Maximum:         0x00000003
 ; RELOC-NEXT:   - Type:            MEMORY
 ; RELOC-NEXT:     Memories:
 ; RELOC-NEXT:       - Initial:         0x00000000
@@ -196,7 +196,7 @@ entry:
 ; RELOC-NEXT:     Segments:
 ; RELOC-NEXT:       - Offset:
 ; RELOC-NEXT:           Opcode:          I32_CONST
-; RELOC-NEXT:           Value:           0
+; RELOC-NEXT:           Value:           1
 ; RELOC-NEXT:         Functions:       [ 1, 1 ]
 ; RELOC-NEXT:   - Type:            CODE
 ; RELOC-NEXT:     Relocations:
@@ -256,12 +256,12 @@ entry:
 ; RELOC-NEXT:         Locals:
 ; RELOC-NEXT:           - Type:            I32
 ; RELOC-NEXT:             Count:           2
-; RELOC-NEXT:         Body:            23808080800041106B220024808080800020004180808080003602081081808080002101200041106A24808080800020010B
+; RELOC-NEXT:         Body:            23808080800041106B220024808080800020004181808080003602081081808080002101200041106A24808080800020010B
 ; RELOC-NEXT:       - Index:           5
 ; RELOC-NEXT:         Locals:
 ; RELOC-NEXT:           - Type:            I32
 ; RELOC-NEXT:             Count:           2
-; RELOC-NEXT:         Body:            23808080800041106B220024808080800020004181808080003602081081808080002101200041106A24808080800020010B
+; RELOC-NEXT:         Body:            23808080800041106B220024808080800020004182808080003602081081808080002101200041106A24808080800020010B
 ; RELOC-NEXT:   - Type:            CUSTOM
 ; RELOC-NEXT:     Name:            linking
 ; RELOC-NEXT:     DataSize:        0
