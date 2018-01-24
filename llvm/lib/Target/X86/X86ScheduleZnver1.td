@@ -1383,7 +1383,6 @@ def : InstRW<[ZnWriteCVTPD2DQLd], (instregex "(V?)CVT(T?)PD2DQrm")>;
 def : InstRW<[ZnWriteCVTPD2DQr], (instregex "VCVT(T?)PD2DQYrr")>;
 // x,m256.
 def : InstRW<[ZnWriteCVTPD2DQLd], (instregex "VCVT(T?)PD2DQYrm")>;
-def : InstRW<[ZnWriteCVTPD2DQLd], (instregex "VCVT(T?)PD2DQ(64)?rm")>;
 
 def ZnWriteCVTPS2PIr: SchedWriteRes<[ZnFPU3]> {
   let Latency = 4;
