@@ -18,12 +18,58 @@ using namespace bolt;
 
 Triple::ArchType Relocation::Arch;
 
+bool Relocation::isSupported(uint64_t Type) {
+  switch (Type) {
+  default:
+    return false;
+  case ELF::R_X86_64_8:
+  case ELF::R_X86_64_16:
+  case ELF::R_X86_64_32:
+  case ELF::R_X86_64_32S:
+  case ELF::R_X86_64_64:
+  case ELF::R_X86_64_PC8:
+  case ELF::R_X86_64_PC32:
+  case ELF::R_X86_64_PC64:
+  case ELF::R_X86_64_PLT32:
+  case ELF::R_X86_64_GOTPCREL:
+  case ELF::R_X86_64_GOTTPOFF:
+  case ELF::R_X86_64_TPOFF32:
+  case ELF::R_X86_64_GOTPCRELX:
+  case ELF::R_X86_64_REX_GOTPCRELX:
+  case ELF::R_AARCH64_CALL26:
+  case ELF::R_AARCH64_ADR_PREL_PG_HI21:
+  case ELF::R_AARCH64_LDST64_ABS_LO12_NC:
+  case ELF::R_AARCH64_ADD_ABS_LO12_NC:
+  case ELF::R_AARCH64_LDST128_ABS_LO12_NC:
+  case ELF::R_AARCH64_LDST32_ABS_LO12_NC:
+  case ELF::R_AARCH64_LDST16_ABS_LO12_NC:
+  case ELF::R_AARCH64_LDST8_ABS_LO12_NC:
+  case ELF::R_AARCH64_ADR_GOT_PAGE:
+  case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
+  case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
+  case ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12:
+  case ELF::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
+  case ELF::R_AARCH64_LD64_GOT_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_LD64_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_ADD_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_CALL:
+  case ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
+  case ELF::R_AARCH64_JUMP26:
+  case ELF::R_AARCH64_PREL32:
+  case ELF::R_AARCH64_ABS64:
+    return true;
+  }
+}
+
 size_t Relocation::getSizeForType(uint64_t Type) {
   switch (Type) {
   default:
     llvm_unreachable("unsupported relocation type");
+  case ELF::R_X86_64_8:
   case ELF::R_X86_64_PC8:
     return 1;
+  case ELF::R_X86_64_16:
+    return 2;
   case ELF::R_X86_64_PLT32:
   case ELF::R_X86_64_PC32:
   case ELF::R_X86_64_32S:
@@ -43,10 +89,14 @@ size_t Relocation::getSizeForType(uint64_t Type) {
   case ELF::R_AARCH64_LDST8_ABS_LO12_NC:
   case ELF::R_AARCH64_ADR_GOT_PAGE:
   case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
+  case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
+  case ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12:
+  case ELF::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
   case ELF::R_AARCH64_LD64_GOT_LO12_NC:
   case ELF::R_AARCH64_TLSDESC_LD64_LO12_NC:
   case ELF::R_AARCH64_TLSDESC_ADD_LO12_NC:
   case ELF::R_AARCH64_TLSDESC_CALL:
+  case ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
   case ELF::R_AARCH64_JUMP26:
   case ELF::R_AARCH64_PREL32:
     return 4;
@@ -74,6 +124,7 @@ uint64_t Relocation::extractValue(uint64_t Type, uint64_t Contents,
     return static_cast<int64_t>(PC) + SignExtend64<28>(Contents << 2);
   case ELF::R_AARCH64_ADR_GOT_PAGE:
   case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
+  case ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
   case ELF::R_AARCH64_ADR_PREL_PG_HI21: {
     // Bits 32:12 of Symbol address goes in bits 30:29 + 23:5 of ADRP
     // instruction
@@ -85,6 +136,7 @@ uint64_t Relocation::extractValue(uint64_t Type, uint64_t Contents,
     Contents &= ~0xfffUll;
     return Contents;
   }
+  case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
   case ELF::R_AARCH64_TLSDESC_LD64_LO12_NC:
   case ELF::R_AARCH64_LD64_GOT_LO12_NC:
   case ELF::R_AARCH64_LDST64_ABS_LO12_NC: {
@@ -93,6 +145,8 @@ uint64_t Relocation::extractValue(uint64_t Type, uint64_t Contents,
     Contents &= ~0xffffffffffc003ffU;
     return Contents >> (10 - 3);
   }
+  case ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12:
+  case ELF::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
   case ELF::R_AARCH64_TLSDESC_ADD_LO12_NC:
   case ELF::R_AARCH64_ADD_ABS_LO12_NC: {
     // Immediate goes in bits 21:10 of ADD instruction
@@ -130,12 +184,47 @@ bool Relocation::isGOT(uint64_t Type) {
   switch (Type) {
   default:
     return false;
+  case ELF::R_X86_64_GOT32:
+  case ELF::R_X86_64_GOTPCREL:
+  case ELF::R_X86_64_GOTTPOFF:
+  case ELF::R_X86_64_GOTOFF64:
+  case ELF::R_X86_64_GOTPC32:
+  case ELF::R_X86_64_GOT64:
+  case ELF::R_X86_64_GOTPCREL64:
+  case ELF::R_X86_64_GOTPC64:
+  case ELF::R_X86_64_GOTPLT64:
+  case ELF::R_X86_64_GOTPC32_TLSDESC:
+  case ELF::R_X86_64_GOTPCRELX:
+  case ELF::R_X86_64_REX_GOTPCRELX:
   case ELF::R_AARCH64_ADR_GOT_PAGE:
+  case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
   case ELF::R_AARCH64_LD64_GOT_LO12_NC:
+  case ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
+  case ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12:
+  case ELF::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
   case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
   case ELF::R_AARCH64_TLSDESC_LD64_LO12_NC:
   case ELF::R_AARCH64_TLSDESC_ADD_LO12_NC:
   case ELF::R_AARCH64_TLSDESC_CALL:
+    return true;
+  }
+}
+
+bool Relocation::isTLS(uint64_t Type) {
+  switch (Type) {
+  default:
+    return false;
+  case ELF::R_X86_64_TPOFF32:
+  case ELF::R_X86_64_TPOFF64:
+  case ELF::R_X86_64_GOTTPOFF:
+  case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
+  case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
+  case ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12:
+  case ELF::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_LD64_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_ADD_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_CALL:
+  case ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
     return true;
   }
 }
@@ -148,6 +237,8 @@ bool Relocation::isPCRelative(uint64_t Type) {
   case ELF::R_X86_64_64:
   case ELF::R_X86_64_32:
   case ELF::R_X86_64_32S:
+  case ELF::R_X86_64_16:
+  case ELF::R_X86_64_8:
   case ELF::R_X86_64_TPOFF32:
   case ELF::R_AARCH64_ABS64:
   case ELF::R_AARCH64_LDST64_ABS_LO12_NC:
@@ -156,6 +247,9 @@ bool Relocation::isPCRelative(uint64_t Type) {
   case ELF::R_AARCH64_LDST32_ABS_LO12_NC:
   case ELF::R_AARCH64_LDST16_ABS_LO12_NC:
   case ELF::R_AARCH64_LDST8_ABS_LO12_NC:
+  case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
+  case ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12:
+  case ELF::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
   case ELF::R_AARCH64_LD64_GOT_LO12_NC:
   case ELF::R_AARCH64_TLSDESC_LD64_LO12_NC:
   case ELF::R_AARCH64_TLSDESC_ADD_LO12_NC:
@@ -195,6 +289,11 @@ size_t Relocation::emit(MCStreamer *Streamer) const {
                                       MCConstantExpr::create(Addend, Ctx),
                                       Ctx);
     }
+    Streamer->EmitValue(Value, Size);
+  } else if (Addend) {
+    auto Value = MCBinaryExpr::createAdd(MCSymbolRefExpr::create(Symbol, Ctx),
+                                         MCConstantExpr::create(Addend, Ctx),
+                                         Ctx);
     Streamer->EmitValue(Value, Size);
   } else {
     Streamer->EmitSymbolValue(Symbol, Size);

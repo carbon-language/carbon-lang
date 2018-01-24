@@ -137,8 +137,9 @@ void BinaryContext::foldFunction(BinaryFunction &ChildBF,
 }
 
 void BinaryContext::printGlobalSymbols(raw_ostream& OS) const {
-  for (auto &entry : GlobalSymbols) {
-    OS << "(" << entry.first << " -> " << entry.second << ")\n";
+  for (auto &Entry : GlobalSymbols) {
+    OS << "(" << Entry.first << " -> 0x"
+       << Twine::utohexstr(Entry.second) << ")\n";
   }
 }
 

@@ -81,6 +81,14 @@ extern cl::OptionCategory AggregatorCategory;
 extern cl::opt<JumpTableSupportLevel> JumpTables;
 
 static cl::opt<bool>
+ForceToDataRelocations("force-data-relocations",
+  cl::desc("force relocations to data sections to always be processed"),
+  cl::init(false),
+  cl::Hidden,
+  cl::ZeroOrMore,
+  cl::cat(BoltCategory));
+
+static cl::opt<bool>
 PrintCacheMetrics("print-cache-metrics",
   cl::desc("calculate and print various metrics for instruction cache"),
   cl::init(false),
@@ -513,6 +521,12 @@ ExecutableFileMemoryManager::~ExecutableFileMemoryManager() {
 }
 
 namespace {
+
+StringRef getSectionName(SectionRef Section) {
+  StringRef SectionName;
+  Section.getName(SectionName);
+  return SectionName;
+}
 
 /// Create BinaryContext for a given architecture \p ArchName and
 /// triple \p TripleName.
@@ -1578,6 +1592,10 @@ void RewriteInstance::readSpecialSections() {
         Section.getSize() > 0 &&
         SectionName != ".tbss") {
       BC->registerSection(Section);
+      DEBUG(dbgs() << "BOLT-DEBUG: registering section " << SectionName
+                   << " @ 0x" << Twine::utohexstr(Section.getAddress()) << ":0x"
+                   << Twine::utohexstr(Section.getAddress() + Section.getSize())
+                   << "\n");
     }
   }
 
@@ -1646,6 +1664,151 @@ int64_t getRelocationAddend(const ELFObjectFileBase *Obj,
 }
 } // anonymous namespace
 
+bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
+                                        SectionRef RelocatedSection,
+                                        std::string &SymbolName,
+                                        uint64_t &SymbolAddress,
+                                        int64_t &Addend,
+                                        uint64_t &ExtractedValue) const {
+  if (!Relocation::isSupported(Rel.getType()))
+    return false;
+
+  const bool IsAArch64 = BC->TheTriple->getArch() == llvm::Triple::aarch64;
+  const bool IsFromCode = RelocatedSection.isText();
+  
+  // For value extraction.
+  StringRef RelocatedSectionContents;
+  RelocatedSection.getContents(RelocatedSectionContents);
+  DataExtractor DE(RelocatedSectionContents,
+                   BC->AsmInfo->isLittleEndian(),
+                   BC->AsmInfo->getPointerSize());
+
+  const bool IsPCRelative = Relocation::isPCRelative(Rel.getType());
+  auto SymbolIter = Rel.getSymbol();
+  assert(SymbolIter != InputFile->symbol_end() &&
+         "relocation symbol must exist");
+  auto Symbol = *SymbolIter;
+  SymbolName = *(Symbol.getName());
+  SymbolAddress = *(Symbol.getAddress());
+  Addend = getRelocationAddend(InputFile, Rel);
+
+  uint32_t RelocationOffset =
+    Rel.getOffset() - RelocatedSection.getAddress();
+  const auto RelSize = Relocation::getSizeForType(Rel.getType());
+  ExtractedValue =
+    static_cast<uint64_t>(DE.getSigned(&RelocationOffset, RelSize));
+
+  if (IsAArch64) {
+    ExtractedValue = Relocation::extractValue(Rel.getType(),
+                                              ExtractedValue,
+                                              Rel.getOffset());
+  }
+
+  // Weird stuff - section symbols are marked as ST_Debug.
+  const bool SymbolIsSection = (Symbol.getType() == SymbolRef::ST_Debug);
+  const auto PCRelOffset =
+    IsPCRelative && !IsAArch64 ? Rel.getOffset() : 0;
+
+  // If no symbol has been found or if it is a relocation requiring the
+  // creation of a GOT entry, do not link against the symbol but against
+  // whatever address was extracted from the instruction itself. We are
+  // not creating a GOT entry as this was already processed by the linker.
+  if (!SymbolAddress || Relocation::isGOT(Rel.getType())) {
+    assert(!SymbolIsSection);
+    if (ExtractedValue) {
+      SymbolAddress = ExtractedValue - Addend + PCRelOffset;
+    } else {
+      // This is weird case.  The extracted value is zero but the addend is
+      // non-zero and the relocation is not pc-rel.  Using the previous logic,
+      // the SymbolAddress would end up as a huge number.  Seen in
+      // exceptions_pic.test.
+      DEBUG(dbgs() << "BOLT-DEBUG: relocation @ "
+                   << Twine::utohexstr(Rel.getOffset())
+                   << " value does not match addend for "
+                   << "relocation to undefined symbol.");
+      SymbolAddress += PCRelOffset;
+      return true;
+    }
+  } else if (SymbolIsSection) {
+    auto Section = Symbol.getSection();
+    if (Section && *Section != InputFile->section_end()) {
+      SymbolName = "section " + std::string(getSectionName(**Section));
+      if (!IsAArch64) {
+        assert(SymbolAddress == (*Section)->getAddress() &&
+               "section symbol address must be the same as section address");
+        // Convert section symbol relocations to regular relocations inside
+        // non-section symbols.
+        if (IsPCRelative) {
+          Addend = ExtractedValue - (SymbolAddress - PCRelOffset);
+        } else {
+          SymbolAddress = ExtractedValue;
+          Addend = 0;
+        }
+      }
+    }
+  }
+
+  if (!IsPCRelative && Addend != 0 && IsFromCode && !SymbolIsSection) {
+    // TODO: RefSection should be the same as **(Symbol.getSection()).
+    auto RefSection = BC->getSectionForAddress(SymbolAddress);
+    if (RefSection && RefSection->isText()) {
+      if (opts::Verbosity > 1) {
+        SmallString<16> TypeName;
+        Rel.getTypeName(TypeName);
+        errs() << "BOLT-WARNING: detected absolute reference from code into "
+               << "a middle of a function:\n"
+               << " offset = 0x" << Twine::utohexstr(Rel.getOffset())
+               << "; type = " << Rel.getType()
+               << "; type name = " << TypeName
+               << "; value = 0x" << Twine::utohexstr(ExtractedValue)
+               << "; symbol = " << SymbolName
+               << "; symbol address = 0x" << Twine::utohexstr(SymbolAddress)
+               << "; symbol section = " << RefSection->getName()
+               << "; addend = 0x" << Twine::utohexstr(Addend)
+               << "; address = 0x" << Twine::utohexstr(SymbolAddress + Addend)
+               << '\n';
+      }
+      assert(ExtractedValue == SymbolAddress + Addend && "value mismatch");
+    }
+  }
+
+  DEBUG(
+    if (!Relocation::isTLS(Rel.getType()) &&
+        SymbolName != "__hot_start" &&
+        SymbolName != "__hot_end" &&
+        ExtractedValue != SymbolAddress + Addend - PCRelOffset) {
+      auto Section = Symbol.getSection();
+      SmallString<16> TypeName;
+      Rel.getTypeName(TypeName);
+      dbgs() << "BOLT-DEBUG: Mismatch between extracted value and relocation "
+             << "data:\n"
+             << "BOLT-DEBUG: offset = 0x"
+             << Twine::utohexstr(Rel.getOffset())
+             << "; type = " << Rel.getType()
+             << "; type name = " << TypeName
+             << "; value = 0x" << Twine::utohexstr(ExtractedValue)
+             << "; symbol = " << SymbolName
+             << "; symbol type = " << Symbol.getType()
+             << "; symbol address = 0x" << Twine::utohexstr(SymbolAddress)
+             << "; orig symbol address = 0x"
+             << Twine::utohexstr(*(Symbol.getAddress()))
+             << "; symbol section = " << getSectionName(**Section)
+             << "; addend = 0x" << Twine::utohexstr(Addend)
+             << "; original addend = 0x"
+             << Twine::utohexstr(getRelocationAddend(InputFile, Rel))
+             << '\n';
+    });
+
+  assert((IsAArch64 ||
+          Relocation::isTLS(Rel.getType()) ||
+          SymbolName == "__hot_start" ||
+          SymbolName == "__hot_end" ||
+          ExtractedValue == SymbolAddress + Addend - PCRelOffset) &&
+         "extracted relocation value should match relocation components");
+
+  return true;
+}
+
 void RewriteInstance::readRelocations(const SectionRef &Section) {
   StringRef SectionName;
   Section.getName(SectionName);
@@ -1677,153 +1840,54 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     return;
   }
 
-  // For value extraction.
-  StringRef RelocatedSectionContents;
-  RelocatedSection.getContents(RelocatedSectionContents);
-  DataExtractor DE(RelocatedSectionContents,
-                   BC->AsmInfo->isLittleEndian(),
-                   BC->AsmInfo->getPointerSize());
+  const bool IsAArch64 = BC->TheTriple->getArch() == llvm::Triple::aarch64;
+  const bool IsFromCode = RelocatedSection.isText();
 
-  bool IsFromCode = RelocatedSection.isText();
   for (const auto &Rel : Section.relocations()) {
     SmallString<16> TypeName;
     Rel.getTypeName(TypeName);
-    DEBUG(dbgs() << "BOLT-DEBUG: offset = 0x"
+
+    std::string SymbolName;
+    uint64_t SymbolAddress;
+    int64_t Addend;
+    uint64_t ExtractedValue;
+
+    if (!analyzeRelocation(Rel,
+                           RelocatedSection,
+                           SymbolName,
+                           SymbolAddress,
+                           Addend,
+                           ExtractedValue)) {
+      DEBUG(dbgs() << "BOLT-DEBUG: skipping relocation @ offset = 0x"
                  << Twine::utohexstr(Rel.getOffset())
                  << "; type name = " << TypeName
                  << '\n');
-
-    if (Rel.getType() == ELF::R_X86_64_TLSGD ||
-        Rel.getType() == ELF::R_X86_64_TLSLD ||
-        Rel.getType() == ELF::R_X86_64_DTPOFF32) {
-      DEBUG(dbgs() << "skipping relocation\n");
       continue;
     }
 
-    // Extract value.
-    uint32_t RelocationOffset =
-        Rel.getOffset() - RelocatedSection.getAddress();
-    auto ExtractedValue = static_cast<uint64_t>(
-      DE.getSigned(&RelocationOffset,
-                   Relocation::getSizeForType(Rel.getType())));
-
-    if (BC->TheTriple->getArch() == llvm::Triple::aarch64)
-      ExtractedValue = Relocation::extractValue(Rel.getType(), ExtractedValue,
-                                                Rel.getOffset());
-
-    bool IsPCRelative = Relocation::isPCRelative(Rel.getType());
-    auto Addend = getRelocationAddend(InputFile, Rel);
-    uint64_t Address = 0;
-    uint64_t SymbolAddress = 0;
-    auto SymbolIter = Rel.getSymbol();
-    std::string SymbolName = "<no symbol>";
-    SymbolAddress = *SymbolIter->getAddress();
-    // If no symbol has been found or if it is a relocation requiring the
-    // creation of a GOT entry, do not link against the symbol but against
-    // whatever address was extracted from the instruction itself. We are
-    // not creating a GOT entry as this was already processed by the linker.
-    if (!SymbolAddress || Relocation::isGOT(Rel.getType())) {
-      Address = ExtractedValue;
-      // For aarch, pc address has already been added in extractValue
-      if (IsPCRelative && BC->TheTriple->getArch() != llvm::Triple::aarch64) {
-        Address += Rel.getOffset();
-      }
-    } else {
-      Address = SymbolAddress + Addend;
-    }
-    bool SymbolIsSection = false;
-    if (SymbolIter != InputFile->symbol_end()) {
-      SymbolName = (*(*SymbolIter).getName());
-      if (SymbolIter->getType() == SymbolRef::ST_Debug) {
-        // Weird stuff - section symbols are marked as ST_Debug.
-        SymbolIsSection = true;
-        auto SymbolSection = SymbolIter->getSection();
-        if (SymbolSection && *SymbolSection != InputFile->section_end()) {
-          StringRef SymbolSectionName;
-          (*SymbolSection)->getName(SymbolSectionName);
-          SymbolName = "section " + std::string(SymbolSectionName);
-          if (BC->TheTriple->getArch() != llvm::Triple::aarch64)
-            Address = Addend;
-        }
-      }
-    }
-
-    bool ForceRelocation = false;
-    if (opts::HotText &&
-        (SymbolName == "__hot_start" || SymbolName == "__hot_end")) {
-      ForceRelocation = true;
-    }
-
-    bool IsAbsoluteCodeRefWithAddend = false;
-    if (!IsPCRelative && Addend != 0 && IsFromCode && !SymbolIsSection) {
-      auto RefSection = BC->getSectionForAddress(SymbolAddress);
-      if (RefSection && RefSection->isText()) {
-        if (opts::Verbosity > 1) {
-          errs() << "BOLT-WARNING: detected absolute reference from code into "
-                 << "a middle of a function:\n"
-                 << " offset = 0x" << Twine::utohexstr(Rel.getOffset())
-                 << "; symbol = " << SymbolName
-                 << "; symbol address = 0x" << Twine::utohexstr(SymbolAddress)
-                 << "; addend = 0x" << Twine::utohexstr(Addend)
-                 << "; address = 0x" << Twine::utohexstr(Address)
-                 << "; type = " << Rel.getType()
-                 << "; type name = " << TypeName
-                 << '\n';
-        }
-        assert(ExtractedValue == SymbolAddress + Addend && "value mismatch");
-        Address = SymbolAddress;
-        IsAbsoluteCodeRefWithAddend = true;
-      } else if (BC->TheTriple->getArch() == llvm::Triple::aarch64) {
-        Addend = 0; // TODO: check if should apply for x86 as well
-      }
-    } else if (Addend < 0 && IsPCRelative) {
-      Address -= Addend;
-    } else {
-      Addend = 0;
-    }
+    const auto Address = SymbolAddress + Addend;
+    const bool ForceRelocation =
+      (opts::HotText && (SymbolName == "__hot_start" ||
+                         SymbolName == "__hot_end"))
+      || Rel.getType() == ELF::R_AARCH64_ADR_GOT_PAGE;
 
     DEBUG(dbgs() << "BOLT-DEBUG: offset = 0x"
                  << Twine::utohexstr(Rel.getOffset())
+                 << "; type = " << Rel.getType()
+                 << "; type name = " << TypeName
+                 << "; value = 0x" << Twine::utohexstr(ExtractedValue)
                  << "; symbol = " << SymbolName
                  << "; symbol address = 0x" << Twine::utohexstr(SymbolAddress)
                  << "; addend = 0x" << Twine::utohexstr(Addend)
                  << "; address = 0x" << Twine::utohexstr(Address)
-                 << "; type = " << Rel.getType()
-                 << "; type name = " << TypeName
                  << '\n');
-
-    if (Rel.getType() == ELF::R_AARCH64_ADR_GOT_PAGE)
-      ForceRelocation = true;
-
-    if (Rel.getType() != ELF::R_X86_64_TPOFF32 &&
-        Rel.getType() != ELF::R_X86_64_GOTTPOFF &&
-        Rel.getType() != ELF::R_X86_64_GOTPCREL &&
-        BC->TheTriple->getArch() != llvm::Triple::aarch64) {
-      if (!IsPCRelative) {
-        if (!IsAbsoluteCodeRefWithAddend) {
-          if (opts::Verbosity > 2 &&
-              ExtractedValue != Address) {
-            errs() << "BOLT-WARNING: mismatch ExtractedValue = 0x"
-                   << Twine::utohexstr(ExtractedValue) << '\n';
-          }
-          Address = ExtractedValue;
-        }
-      } else {
-        if (opts::Verbosity > 2 &&
-            ExtractedValue != Address - Rel.getOffset() + Addend) {
-          errs() << "BOLT-WARNING: PC-relative mismatch ExtractedValue = 0x"
-                 << Twine::utohexstr(ExtractedValue) << '\n';
-        }
-        Address = ExtractedValue - Addend;
-      }
-    }
 
     BinaryFunction *ContainingBF = nullptr;
     if (IsFromCode) {
-      ContainingBF = getBinaryFunctionContainingAddress(
-          Rel.getOffset(),
-          /*CheckPastEnd*/ false,
-          /*UseMaxSize*/ BC->TheTriple->getArch() == llvm::Triple::aarch64);
+      ContainingBF =
+        getBinaryFunctionContainingAddress(Rel.getOffset(),
+                                           /*CheckPastEnd*/ false,
+                                           /*UseMaxSize*/ IsAArch64);
       assert(ContainingBF && "cannot find function for address in code");
       DEBUG(dbgs() << "BOLT-DEBUG: relocation belongs to " << *ContainingBF
                    << '\n');
@@ -1836,24 +1900,27 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     // between the two. If we blindly apply the relocation it will appear
     // that it references an arbitrary location in the code, possibly even
     // in a different function from that containing the jump table.
-    if (BC->TheTriple->getArch() != llvm::Triple::aarch64 && IsPCRelative) {
+    if (!IsAArch64 && Relocation::isPCRelative(Rel.getType())) {
       // Just register the fact that we have PC-relative relocation at a given
       // address. The actual referenced label/address cannot be determined
       // from linker data alone.
       if (IsFromCode) {
         ContainingBF->addPCRelativeRelocationAddress(Rel.getOffset());
       }
-      DEBUG(dbgs() << "BOLT-DEBUG: not creating PC-relative relocation\n");
+      DEBUG(dbgs() << "BOLT-DEBUG: not creating PC-relative relocation at 0x"
+                   << Twine::utohexstr(Rel.getOffset())
+                   << "\n");
       continue;
     }
 
-    auto RefSection = BC->getSectionForAddress(Address);
+    // TODO: RefSection should be the same as **Rel.getSymbol().getSection()
+    auto RefSection = BC->getSectionForAddress(SymbolAddress);
     if (!RefSection && !ForceRelocation) {
       DEBUG(dbgs() << "BOLT-DEBUG: cannot determine referenced section.\n");
       continue;
     }
 
-    bool ToCode = RefSection && RefSection->isText();
+    const bool IsToCode = RefSection && RefSection->isText();
 
     // Occasionally we may see a reference past the last byte of the function
     // typically as a result of __builtin_unreachable(). Check it here.
@@ -1866,6 +1933,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
         ReferencedSymbol = BC->getOrCreateGlobalSymbol(0, "Zero");
       else
         ReferencedSymbol = BC->registerNameAtAddress(SymbolName, 0);
+      SymbolAddress = 0;
       Addend = Address;
       DEBUG(dbgs() << "BOLT-DEBUG: creating relocations for huge pages against"
                       " symbol " << SymbolName << " with addend " << Addend
@@ -1880,6 +1948,8 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
       if (RefFunctionOffset) {
         ReferencedSymbol =
           ReferencedBF->getOrCreateLocalLabel(Address, /*CreatePastEnd*/ true);
+        SymbolAddress = Address;
+        Addend = 0;
       } else {
         ReferencedSymbol = ReferencedBF->getSymbol();
       }
@@ -1889,20 +1959,28 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
         DEBUG(dbgs() << "BOLT-DEBUG: no corresponding function for "
                         "relocation against code\n");
       }
-      ReferencedSymbol = BC->getOrCreateGlobalSymbol(Address, "SYMBOLat");
+      ReferencedSymbol = BC->getOrCreateGlobalSymbol(SymbolAddress, "SYMBOLat");
     }
 
     if (IsFromCode) {
-      if (ReferencedBF || ForceRelocation ||
-          BC->TheTriple->getArch() == llvm::Triple::aarch64) {
-        ContainingBF->addRelocation(Rel.getOffset(), ReferencedSymbol,
-                                    Rel.getType(), Addend, ExtractedValue);
+      if (ReferencedBF || ForceRelocation || opts::ForceToDataRelocations ||
+          IsAArch64) {
+        ContainingBF->addRelocation(Rel.getOffset(),
+                                    ReferencedSymbol,
+                                    Rel.getType(),
+                                    Addend,
+                                    ExtractedValue);
       } else {
-        DEBUG(dbgs() << "BOLT-DEBUG: ignoring relocation from code to data\n");
+        DEBUG(dbgs() << "BOLT-DEBUG: ignoring relocation from code to data "
+                     << ReferencedSymbol->getName() << "\n");
       }
-    } else if (ToCode) {
-      assert(Addend == 0 && "did not expect addend");
-      BC->addRelocation(Rel.getOffset(), ReferencedSymbol, Rel.getType());
+    } else if (IsToCode) {
+      BC->addRelocation(Rel.getOffset(), ReferencedSymbol, Rel.getType(), Addend);
+    } else if (opts::ForceToDataRelocations) {
+      BC->addRelocation(Rel.getOffset(),
+                        ReferencedSymbol,
+                        Rel.getType(),
+                        Addend);
     } else {
       DEBUG(dbgs() << "BOLT-DEBUG: ignoring relocation from data to data\n");
     }

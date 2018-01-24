@@ -30,10 +30,22 @@ namespace bolt {
 /// Relocation class.
 struct Relocation {
   static Triple::ArchType Arch; /// for printing, set by BinaryContext ctor.
+
+  /// The offset of this relocation in the object it is contained in.
   uint64_t Offset;
-  mutable MCSymbol *Symbol; /// mutable to allow modification by emitter.
+
+  /// The symbol this relocation is referring to.
+  MCSymbol *Symbol;
+
+  /// Relocation type.
   uint64_t Type;
+
+  /// The offset from the \p Symbol base used to compute the final
+  /// value of this relocation.
   uint64_t Addend;
+
+  /// The computed relocation value extracted from the binary file.
+  /// Used to validate relocation correctness.
   uint64_t Value;
 
   /// Return size of the given relocation \p Type.
@@ -47,8 +59,19 @@ struct Relocation {
   /// Return true if relocation type is PC-relative. Return false otherwise.
   static bool isPCRelative(uint64_t Type);
 
+  /// Check if \p Type is a supported relocation type.
+  static bool isSupported(uint64_t Type);
+
   /// Return true if relocation type implies the creation of a GOT entry
   static bool isGOT(uint64_t Type);
+
+  /// Return true if relocation type is for thread local storage.
+  static bool isTLS(uint64_t Type);
+
+  /// Return true if this relocation is PC-relative. Return false otherwise.
+  bool isPCRelative() const {
+    return isPCRelative(Type);
+  }
 
   /// Emit relocation at a current \p Streamer' position. The caller is
   /// responsible for setting the position correctly.

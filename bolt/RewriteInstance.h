@@ -294,6 +294,17 @@ private:
   /// Make .eh_frame section relocatable.
   void relocateEHFrameSection();
 
+  /// Analyze relocation \p Rel contained in section \p RelocatedSection.
+  /// Return true if the relocation was successfully processed, false otherwise.
+  /// The \p SymbolName, \p SymbolAddress, \p Addend and \p ExtractedValue
+  /// parameters will be set on success.
+  bool analyzeRelocation(const RelocationRef &Rel,
+                         SectionRef RelocatedSection,
+                         std::string &SymbolName,
+                         uint64_t &SymbolAddress,
+                         int64_t &Addend,
+                         uint64_t &ExtractedValue) const;
+
   /// Rewrite non-allocatable sections with modifications.
   void rewriteNoteSections();
 
