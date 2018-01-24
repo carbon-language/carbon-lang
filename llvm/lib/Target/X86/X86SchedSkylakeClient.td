@@ -1026,15 +1026,15 @@ def SKLWriteResGroup13 : SchedWriteRes<[SKLPort5]> {
   let ResourceCycles = [2];
 }
 def: InstRW<[SKLWriteResGroup13], (instregex "MMX_MOVQ2DQrr")>;
-def: InstRW<[SKLWriteResGroup13], (instregex "MMX_PINSRWirri")>;
+def: InstRW<[SKLWriteResGroup13], (instregex "MMX_PINSRWrr")>;
 def: InstRW<[SKLWriteResGroup13], (instregex "PINSRBrr")>;
 def: InstRW<[SKLWriteResGroup13], (instregex "PINSRDrr")>;
 def: InstRW<[SKLWriteResGroup13], (instregex "PINSRQrr")>;
-def: InstRW<[SKLWriteResGroup13], (instregex "PINSRWrri")>;
+def: InstRW<[SKLWriteResGroup13], (instregex "PINSRWrr")>;
 def: InstRW<[SKLWriteResGroup13], (instregex "VPINSRBrr")>;
 def: InstRW<[SKLWriteResGroup13], (instregex "VPINSRDrr")>;
 def: InstRW<[SKLWriteResGroup13], (instregex "VPINSRQrr")>;
-def: InstRW<[SKLWriteResGroup13], (instregex "VPINSRWrri")>;
+def: InstRW<[SKLWriteResGroup13], (instregex "VPINSRWrr")>;
 
 def SKLWriteResGroup14 : SchedWriteRes<[SKLPort05]> {
   let Latency = 2;
@@ -1296,19 +1296,17 @@ def SKLWriteResGroup31 : SchedWriteRes<[SKLPort0,SKLPort5]> {
   let ResourceCycles = [1,1];
 }
 def: InstRW<[SKLWriteResGroup31], (instregex "EXTRACTPSrr")>;
-def: InstRW<[SKLWriteResGroup31], (instregex "MMX_PEXTRWirri")>;
+def: InstRW<[SKLWriteResGroup31], (instregex "MMX_PEXTRWrr")>;
 def: InstRW<[SKLWriteResGroup31], (instregex "PEXTRBrr")>;
 def: InstRW<[SKLWriteResGroup31], (instregex "PEXTRDrr")>;
 def: InstRW<[SKLWriteResGroup31], (instregex "PEXTRQrr")>;
-def: InstRW<[SKLWriteResGroup31], (instregex "PEXTRWri")>;
-def: InstRW<[SKLWriteResGroup31], (instregex "PEXTRWrr_REV")>;
+def: InstRW<[SKLWriteResGroup31], (instregex "PEXTRWrr")>;
 def: InstRW<[SKLWriteResGroup31], (instregex "PTESTrr")>;
 def: InstRW<[SKLWriteResGroup31], (instregex "VEXTRACTPSrr")>;
 def: InstRW<[SKLWriteResGroup31], (instregex "VPEXTRBrr")>;
 def: InstRW<[SKLWriteResGroup31], (instregex "VPEXTRDrr")>;
 def: InstRW<[SKLWriteResGroup31], (instregex "VPEXTRQrr")>;
-def: InstRW<[SKLWriteResGroup31], (instregex "VPEXTRWri")>;
-def: InstRW<[SKLWriteResGroup31], (instregex "VPEXTRWrr_REV")>;
+def: InstRW<[SKLWriteResGroup31], (instregex "VPEXTRWrr")>;
 def: InstRW<[SKLWriteResGroup31], (instregex "VPTESTYrr")>;
 def: InstRW<[SKLWriteResGroup31], (instregex "VPTESTrr")>;
 
@@ -1902,7 +1900,7 @@ def SKLWriteResGroup71 : SchedWriteRes<[SKLPort5,SKLPort23]> {
   let ResourceCycles = [1,1];
 }
 def: InstRW<[SKLWriteResGroup71], (instregex "MMX_PALIGNR64irm")>;
-def: InstRW<[SKLWriteResGroup71], (instregex "MMX_PINSRWirmi")>;
+def: InstRW<[SKLWriteResGroup71], (instregex "MMX_PINSRWrm")>;
 def: InstRW<[SKLWriteResGroup71], (instregex "MMX_PSHUFBrm64")>;
 def: InstRW<[SKLWriteResGroup71], (instregex "MMX_PSHUFWmi")>;
 def: InstRW<[SKLWriteResGroup71], (instregex "MMX_PUNPCKHBWirm")>;
@@ -1918,7 +1916,7 @@ def: InstRW<[SKLWriteResGroup71], (instregex "MOVLPSrm")>;
 def: InstRW<[SKLWriteResGroup71], (instregex "PINSRBrm")>;
 def: InstRW<[SKLWriteResGroup71], (instregex "PINSRDrm")>;
 def: InstRW<[SKLWriteResGroup71], (instregex "PINSRQrm")>;
-def: InstRW<[SKLWriteResGroup71], (instregex "PINSRWrmi")>;
+def: InstRW<[SKLWriteResGroup71], (instregex "PINSRWrm")>;
 def: InstRW<[SKLWriteResGroup71], (instregex "PMOVSXBDrm")>;
 def: InstRW<[SKLWriteResGroup71], (instregex "PMOVSXBQrm")>;
 def: InstRW<[SKLWriteResGroup71], (instregex "PMOVSXBWrm")>;
@@ -1938,7 +1936,7 @@ def: InstRW<[SKLWriteResGroup71], (instregex "VMOVLPSrm")>;
 def: InstRW<[SKLWriteResGroup71], (instregex "VPINSRBrm")>;
 def: InstRW<[SKLWriteResGroup71], (instregex "VPINSRDrm")>;
 def: InstRW<[SKLWriteResGroup71], (instregex "VPINSRQrm")>;
-def: InstRW<[SKLWriteResGroup71], (instregex "VPINSRWrmi")>;
+def: InstRW<[SKLWriteResGroup71], (instregex "VPINSRWrm")>;
 def: InstRW<[SKLWriteResGroup71], (instregex "VPMOVSXBDrm")>;
 def: InstRW<[SKLWriteResGroup71], (instregex "VPMOVSXBQrm")>;
 def: InstRW<[SKLWriteResGroup71], (instregex "VPMOVSXBWrm")>;
