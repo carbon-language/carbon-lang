@@ -743,8 +743,7 @@ private:
   std::vector<ValueInfo> makeRefList(ArrayRef<uint64_t> Record);
   std::vector<FunctionSummary::EdgeTy> makeCallList(ArrayRef<uint64_t> Record,
                                                     bool IsOldProfileFormat,
-                                                    bool HasProfile,
-                                                    bool HasRelBF);
+                                                    bool HasProfile);
   Error parseEntireSummary(unsigned ID);
   Error parseModuleStringTable();
 
@@ -5048,15 +5047,12 @@ ModuleSummaryIndexBitcodeReader::makeRefList(ArrayRef<uint64_t> Record) {
   return Ret;
 }
 
-std::vector<FunctionSummary::EdgeTy>
-ModuleSummaryIndexBitcodeReader::makeCallList(ArrayRef<uint64_t> Record,
-                                              bool IsOldProfileFormat,
-                                              bool HasProfile, bool HasRelBF) {
+std::vector<FunctionSummary::EdgeTy> ModuleSummaryIndexBitcodeReader::makeCallList(
+    ArrayRef<uint64_t> Record, bool IsOldProfileFormat, bool HasProfile) {
   std::vector<FunctionSummary::EdgeTy> Ret;
   Ret.reserve(Record.size());
   for (unsigned I = 0, E = Record.size(); I != E; ++I) {
     CalleeInfo::HotnessType Hotness = CalleeInfo::HotnessType::Unknown;
-    uint64_t RelBF = 0;
     ValueInfo Callee = getValueInfoFromValueId(Record[I]).first;
     if (IsOldProfileFormat) {
       I += 1; // Skip old callsitecount field
@@ -5064,9 +5060,7 @@ ModuleSummaryIndexBitcodeReader::makeCallList(ArrayRef<uint64_t> Record,
         I += 1; // Skip old profilecount field
     } else if (HasProfile)
       Hotness = static_cast<CalleeInfo::HotnessType>(Record[++I]);
-    else if (HasRelBF)
-      RelBF = Record[++I];
-    Ret.push_back(FunctionSummary::EdgeTy{Callee, CalleeInfo(Hotness, RelBF)});
+    Ret.push_back(FunctionSummary::EdgeTy{Callee, CalleeInfo{Hotness}});
   }
   return Ret;
 }
@@ -5145,11 +5139,7 @@ Error ModuleSummaryIndexBitcodeReader::parseEntireSummary(unsigned ID) {
     // FS_PERMODULE_PROFILE: [valueid, flags, instcount, fflags, numrefs,
     //                        numrefs x valueid,
     //                        n x (valueid, hotness)]
-    // FS_PERMODULE_RELBF: [valueid, flags, instcount, fflags, numrefs,
-    //                      numrefs x valueid,
-    //                      n x (valueid, relblockfreq)]
     case bitc::FS_PERMODULE:
-    case bitc::FS_PERMODULE_RELBF:
     case bitc::FS_PERMODULE_PROFILE: {
       unsigned ValueID = Record[0];
       uint64_t RawFlags = Record[1];
@@ -5175,10 +5165,9 @@ Error ModuleSummaryIndexBitcodeReader::parseEntireSummary(unsigned ID) {
       std::vector<ValueInfo> Refs = makeRefList(
           ArrayRef<uint64_t>(Record).slice(RefListStartIndex, NumRefs));
       bool HasProfile = (BitCode == bitc::FS_PERMODULE_PROFILE);
-      bool HasRelBF = (BitCode == bitc::FS_PERMODULE_RELBF);
       std::vector<FunctionSummary::EdgeTy> Calls = makeCallList(
           ArrayRef<uint64_t>(Record).slice(CallGraphEdgeStartIndex),
-          IsOldProfileFormat, HasProfile, HasRelBF);
+          IsOldProfileFormat, HasProfile);
       auto FS = llvm::make_unique<FunctionSummary>(
           Flags, InstCount, getDecodedFFlags(RawFunFlags), std::move(Refs),
           std::move(Calls), std::move(PendingTypeTests),
@@ -5270,7 +5259,7 @@ Error ModuleSummaryIndexBitcodeReader::parseEntireSummary(unsigned ID) {
       bool HasProfile = (BitCode == bitc::FS_COMBINED_PROFILE);
       std::vector<FunctionSummary::EdgeTy> Edges = makeCallList(
           ArrayRef<uint64_t>(Record).slice(CallGraphEdgeStartIndex),
-          IsOldProfileFormat, HasProfile, false);
+          IsOldProfileFormat, HasProfile);
       ValueInfo VI = getValueInfoFromValueId(ValueID).first;
       auto FS = llvm::make_unique<FunctionSummary>(
           Flags, InstCount, getDecodedFFlags(RawFunFlags), std::move(Refs),
