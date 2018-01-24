@@ -147,21 +147,38 @@ public:
 
   /// Run cache+ algorithm and return a basic block ordering
   std::vector<BinaryBasicBlock *> run() {
+    // Merge blocks with their fallthrough successors
+    for (auto BB : BF.layout()) {
+      if (FallthroughPred[BB->getLayoutIndex()] == nullptr &&
+          FallthroughSucc[BB->getLayoutIndex()] != nullptr) {
+        auto CurBB = BB;
+        while (FallthroughSucc[CurBB->getLayoutIndex()] != nullptr) {
+          const auto NextBB = FallthroughSucc[CurBB->getLayoutIndex()];
+          mergeClusters(&AllClusters[BB->getLayoutIndex()],
+                        &AllClusters[NextBB->getLayoutIndex()],
+                        0);
+          CurBB = NextBB;
+        }
+      }
+    }
+
     // Merge pairs of clusters while there is an improvement in ExtTSP metric
     while (Clusters.size() > 1) {
       Cluster *BestClusterPred = nullptr;
       Cluster *BestClusterSucc = nullptr;
       std::pair<double, size_t> BestGain(-1, 0);
       for (auto ClusterPred : Clusters) {
+        // Do not merge cold blocks
+        if (ClusterPred->isCold())
+          continue;
+
         // Get candidates for merging with the current cluster
         Adjacent.forAllAdjacent(
           ClusterPred,
           // Find the best candidate
           [&](Cluster *ClusterSucc) {
             assert(ClusterPred != ClusterSucc && "loop edges are not supported");
-            // Do not merge cold blocks
-            if (ClusterPred->isCold() || ClusterSucc->isCold())
-              return;
+            assert(!ClusterSucc->isCold() && "cannot merge cold clusters");
 
             // Compute the gain of merging two clusters
             auto Gain = mergeGain(ClusterPred, ClusterSucc);
@@ -261,11 +278,62 @@ private:
     // Initialize adjacency matrix
     Adjacent.initialize(Clusters);
     for (auto BB : BF.layout()) {
+      auto BI = BB->branch_info_begin();
       for (auto I : BB->successors()) {
-        if (BB != I)
+        if (BB != I && BI->Count > 0) {
           Adjacent.set(Clusters[BB->getLayoutIndex()],
                        Clusters[I->getLayoutIndex()]);
+        }
+        ++BI;
       }
+    }
+
+    // Initialize fallthrough successors
+    findFallthroughBlocks(InWeight, OutWeight);
+  }
+
+  /// For a pair of blocks, A and B, block B is the fallthrough successor of A,
+  /// if (i) all jumps (based on profile) from A goes to B and (ii) all jumps
+  /// to B are from A. Such blocks should be adjacent in an optimal ordering,
+  /// and the method finds such pairs of blocks.
+  void findFallthroughBlocks(const std::vector<uint64_t> &InWeight,
+                             const std::vector<uint64_t> &OutWeight) {
+    FallthroughSucc = std::vector<BinaryBasicBlock *>(BF.size(), nullptr);
+    FallthroughPred = std::vector<BinaryBasicBlock *>(BF.size(), nullptr);
+    // Find fallthroughs based on edge weights
+    for (auto BB : BF.layout()) {
+      if (OutWeight[BB->getLayoutIndex()] == 0)
+        continue;
+      for (auto Edge : OutEdges[BB->getLayoutIndex()]) {
+        const auto SuccBB = Edge.first;
+        // Successor cannot be the first BB, which is pinned
+        if (OutWeight[BB->getLayoutIndex()] == Edge.second &&
+            InWeight[SuccBB->getLayoutIndex()] == Edge.second &&
+            SuccBB->getLayoutIndex() != 0) {
+          FallthroughSucc[BB->getLayoutIndex()] = SuccBB;
+          FallthroughPred[SuccBB->getLayoutIndex()] = BB;
+          break;
+        }
+      }
+    }
+
+    // There might be 'cycles' in the fallthrough dependencies (since profile
+    // data isn't 100% accurate).
+    // Break the cycles by choosing the block with smallest index as the tail
+    for (auto BB : BF.layout()) {
+      const auto Idx = BB->getLayoutIndex();
+      if (FallthroughSucc[Idx] == nullptr || FallthroughPred[Idx] == nullptr)
+        continue;
+
+      auto SuccBB = FallthroughSucc[Idx];
+      while (SuccBB != nullptr && SuccBB != BB) {
+        SuccBB = FallthroughSucc[SuccBB->getLayoutIndex()];
+      }
+      if (SuccBB == nullptr)
+        continue;
+      // break the cycle
+      FallthroughSucc[FallthroughPred[Idx]->getLayoutIndex()] = nullptr;
+      FallthroughPred[Idx] = nullptr;
     }
   }
 
@@ -335,10 +403,17 @@ private:
     };
 
     std::pair<double, size_t> Gain = std::make_pair(-1, 0);
-    // Try to simply concatenate two clusters
+    // Try to concatenate two clusters w/o splitting
     Gain = computeMergeGain(Gain, ClusterPred, ClusterSucc, 0);
     // Try to split ClusterPred into two and merge with ClusterSucc
     for (size_t Offset = 1; Offset < ClusterPred->blocks().size(); Offset++) {
+      // Make sure the splitting does not break FT successors
+      auto BB = ClusterPred->blocks()[Offset - 1];
+      if (FallthroughSucc[BB->getLayoutIndex()] != nullptr) {
+        assert(FallthroughSucc[BB->getLayoutIndex()] == ClusterPred->blocks()[Offset]);
+        continue;
+      }
+
       for (size_t Type = 0; Type < 4; Type++) {
         size_t MergeType = 1 + Type + Offset * 4;
         Gain = computeMergeGain(Gain, ClusterPred, ClusterSucc, MergeType);
@@ -400,7 +475,9 @@ private:
   /// adjacency information, and the corresponding cache.
   void mergeClusters(Cluster *Into, Cluster *From, size_t MergeType) {
     assert(Into != From && "Cluster cannot be merged with itself");
-    // Merge the clusters
+    assert(!Into->isCold() && !From->isCold() && "Merging cold clusters");
+
+    // Merge the blocks of clusters
     auto MergedBlocks = mergeBlocks(Into->blocks(), From->blocks(), MergeType);
     Into->merge(From, MergedBlocks, score(MergedBlocks));
 
@@ -432,6 +509,11 @@ private:
 
   // Cluster adjacency matrix
   AdjacencyMatrix<Cluster> Adjacent;
+
+  // Fallthrough successor of the block
+  std::vector<BinaryBasicBlock *> FallthroughSucc;
+  // Fallthrough predecessor of the block
+  std::vector<BinaryBasicBlock *> FallthroughPred;
 
   // A cache that keeps precomputed values of mergeGain for pairs of clusters;
   // when a pair of clusters (x,y) gets merged, we invalidate the pairs
