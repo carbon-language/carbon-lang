@@ -14,6 +14,7 @@
 #ifndef LLVM_CODEGEN_GLOBALISEL_COMBINER_INFO_H
 #define LLVM_CODEGEN_GLOBALISEL_COMBINER_INFO_H
 
+#include <cassert>
 namespace llvm {
 
 class LegalizerInfo;
