@@ -1067,12 +1067,12 @@ def : InstRW<[WriteMicrocoded], (instregex "VPGATHER(Q|D)(Q|D)(Y?)rm")>;
 
 // HADD, HSUB PS/PD
 // PHADD|PHSUB (S) W/D.
-def : InstRW<[WriteMicrocoded], (instregex "MMX_PHADD(W?)r(r|m)64",
-                               "MMX_PHADDSWr(r|m)64",
-                               "MMX_PHSUB(W|D)r(r|m)64",
-                               "MMX_PHSUBSWrr64",
+def : InstRW<[WriteMicrocoded], (instregex "MMX_PHADD(W?)r(r|m)",
+                               "MMX_PHADDSWr(r|m)",
+                               "MMX_PHSUB(W|D)r(r|m)",
+                               "MMX_PHSUBSWrr",
                                "(V?)PH(ADD|SUB)(W|D)(Y?)r(r|m)",
-                               "(V?)PH(ADD|SUB)SWr(r|m)(256)?")>;
+                               "(V?)PH(ADD|SUB)SW(Y?)r(r|m)")>;
 
 
 // PCMPGTQ.
