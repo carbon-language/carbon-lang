@@ -1043,9 +1043,9 @@ def SBWriteResGroup24 : SchedWriteRes<[SBPort15]> {
   let NumMicroOps = 3;
   let ResourceCycles = [3];
 }
+def: InstRW<[SBWriteResGroup24], (instregex "MMX_PHADDDrr")>;
 def: InstRW<[SBWriteResGroup24], (instregex "MMX_PHADDSWrr")>;
 def: InstRW<[SBWriteResGroup24], (instregex "MMX_PHADDWrr")>;
-def: InstRW<[SBWriteResGroup24], (instregex "MMX_PHADDrr")>;
 def: InstRW<[SBWriteResGroup24], (instregex "MMX_PHSUBDrr")>;
 def: InstRW<[SBWriteResGroup24], (instregex "MMX_PHSUBSWrr")>;
 def: InstRW<[SBWriteResGroup24], (instregex "MMX_PHSUBWrr")>;
@@ -2066,9 +2066,9 @@ def SBWriteResGroup80 : SchedWriteRes<[SBPort23,SBPort15]> {
   let NumMicroOps = 4;
   let ResourceCycles = [1,3];
 }
+def: InstRW<[SBWriteResGroup80], (instregex "MMX_PHADDDrm")>;
 def: InstRW<[SBWriteResGroup80], (instregex "MMX_PHADDSWrm")>;
 def: InstRW<[SBWriteResGroup80], (instregex "MMX_PHADDWrm")>;
-def: InstRW<[SBWriteResGroup80], (instregex "MMX_PHADDrm")>;
 def: InstRW<[SBWriteResGroup80], (instregex "MMX_PHSUBDrm")>;
 def: InstRW<[SBWriteResGroup80], (instregex "MMX_PHSUBSWrm")>;
 def: InstRW<[SBWriteResGroup80], (instregex "MMX_PHSUBWrm")>;

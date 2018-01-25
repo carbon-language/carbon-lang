@@ -2173,8 +2173,8 @@ def SKXWriteResGroup39 : SchedWriteRes<[SKXPort5,SKXPort05]> {
   let NumMicroOps = 3;
   let ResourceCycles = [2,1];
 }
+def: InstRW<[SKXWriteResGroup39], (instregex "MMX_PHADDDrr")>;
 def: InstRW<[SKXWriteResGroup39], (instregex "MMX_PHADDWrr")>;
-def: InstRW<[SKXWriteResGroup39], (instregex "MMX_PHADDrr")>;
 def: InstRW<[SKXWriteResGroup39], (instregex "MMX_PHSUBDrr")>;
 def: InstRW<[SKXWriteResGroup39], (instregex "MMX_PHSUBWrr")>;
 
@@ -4534,8 +4534,8 @@ def SKXWriteResGroup124 : SchedWriteRes<[SKXPort5,SKXPort23,SKXPort05]> {
   let NumMicroOps = 4;
   let ResourceCycles = [2,1,1];
 }
+def: InstRW<[SKXWriteResGroup124], (instregex "MMX_PHADDDrm")>;
 def: InstRW<[SKXWriteResGroup124], (instregex "MMX_PHADDWrm")>;
-def: InstRW<[SKXWriteResGroup124], (instregex "MMX_PHADDrm")>;
 def: InstRW<[SKXWriteResGroup124], (instregex "MMX_PHSUBDrm")>;
 def: InstRW<[SKXWriteResGroup124], (instregex "MMX_PHSUBWrm")>;
 

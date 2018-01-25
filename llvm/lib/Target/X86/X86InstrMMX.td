@@ -388,7 +388,7 @@ defm MMX_PADDUSW : MMXI_binop_rm_int<0xDD, "paddusw", int_x86_mmx_paddus_w,
 
 defm MMX_PHADDW  : SS3I_binop_rm_int_mm<0x01, "phaddw", int_x86_ssse3_phadd_w,
                                    MMX_PHADDSUBW>;
-defm MMX_PHADD   : SS3I_binop_rm_int_mm<0x02, "phaddd", int_x86_ssse3_phadd_d,
+defm MMX_PHADDD  : SS3I_binop_rm_int_mm<0x02, "phaddd", int_x86_ssse3_phadd_d,
                                    MMX_PHADDSUBD>;
 defm MMX_PHADDSW : SS3I_binop_rm_int_mm<0x03, "phaddsw",int_x86_ssse3_phadd_sw,
                                    MMX_PHADDSUBW>;
