@@ -617,9 +617,8 @@ MemoryRegion *LinkerScript::findMemoryRegion(OutputSection *Sec) {
   // If a memory region name was specified in the output section command,
   // then try to find that region first.
   if (!Sec->MemoryRegionName.empty()) {
-    auto It = MemoryRegions.find(Sec->MemoryRegionName);
-    if (It != MemoryRegions.end())
-      return It->second;
+    if (MemoryRegion *M = MemoryRegions.lookup(Sec->MemoryRegionName))
+      return M;
     error("memory region '" + Sec->MemoryRegionName + "' not declared");
     return nullptr;
   }
