@@ -1439,7 +1439,7 @@ def: InstRW<[HWWriteResGroup10], (instregex "INC(16|32|64)r")>;
 def: InstRW<[HWWriteResGroup10], (instregex "INC8r")>;
 def: InstRW<[HWWriteResGroup10], (instregex "LAHF")>;
 def: InstRW<[HWWriteResGroup10], (instregex "MOV(16|32|64)rr")>;
-def: InstRW<[HWWriteResGroup10], (instregex "MOV8ri(_alt)?")>;
+def: InstRW<[HWWriteResGroup10], (instregex "MOV8ri")>;
 def: InstRW<[HWWriteResGroup10], (instregex "MOV8rr")>;
 def: InstRW<[HWWriteResGroup10], (instregex "MOVSX(16|32|64)rr16")>;
 def: InstRW<[HWWriteResGroup10], (instregex "MOVSX(16|32|64)rr32")>;

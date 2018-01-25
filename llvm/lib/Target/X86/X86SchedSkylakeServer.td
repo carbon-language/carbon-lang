@@ -1308,7 +1308,7 @@ def: InstRW<[SKXWriteResGroup10], (instregex "INC(16|32|64)r")>;
 def: InstRW<[SKXWriteResGroup10], (instregex "INC8r")>;
 def: InstRW<[SKXWriteResGroup10], (instregex "LAHF")>;
 def: InstRW<[SKXWriteResGroup10], (instregex "MOV(16|32|64)rr")>;
-def: InstRW<[SKXWriteResGroup10], (instregex "MOV8ri(_alt)?")>;
+def: InstRW<[SKXWriteResGroup10], (instregex "MOV8ri")>;
 def: InstRW<[SKXWriteResGroup10], (instregex "MOV8rr")>;
 def: InstRW<[SKXWriteResGroup10], (instregex "MOVSX(16|32|64)rr16")>;
 def: InstRW<[SKXWriteResGroup10], (instregex "MOVSX(16|32|64)rr32")>;

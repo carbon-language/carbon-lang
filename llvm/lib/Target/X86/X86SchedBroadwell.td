@@ -880,7 +880,7 @@ def: InstRW<[BWWriteResGroup9], (instregex "INC(16|32|64)r")>;
 def: InstRW<[BWWriteResGroup9], (instregex "INC8r")>;
 def: InstRW<[BWWriteResGroup9], (instregex "LAHF")>;
 def: InstRW<[BWWriteResGroup9], (instregex "MOV(16|32|64)rr")>;
-def: InstRW<[BWWriteResGroup9], (instregex "MOV8ri(_alt)?")>;
+def: InstRW<[BWWriteResGroup9], (instregex "MOV8ri")>;
 def: InstRW<[BWWriteResGroup9], (instregex "MOV8rr")>;
 def: InstRW<[BWWriteResGroup9], (instregex "MOVSX(16|32|64)rr16")>;
 def: InstRW<[BWWriteResGroup9], (instregex "MOVSX(16|32|64)rr32")>;
@@ -1217,7 +1217,7 @@ def: InstRW<[BWWriteResGroup27], (instregex "COMISSrr")>;
 def: InstRW<[BWWriteResGroup27], (instregex "CVTDQ2PSrr")>;
 def: InstRW<[BWWriteResGroup27], (instregex "CVTPS2DQrr")>;
 def: InstRW<[BWWriteResGroup27], (instregex "CVTTPS2DQrr")>;
-def: InstRW<[BWWriteResGroup27], (instregex "IMUL(32|64)rr(i8)?")>;
+def: InstRW<[BWWriteResGroup27], (instregex "IMUL(32|64)rr")>;
 def: InstRW<[BWWriteResGroup27], (instregex "IMUL8r")>;
 def: InstRW<[BWWriteResGroup27], (instregex "LZCNT(16|32|64)rr")>;
 def: InstRW<[BWWriteResGroup27], (instregex "MAX(C?)PDrr")>;
@@ -1298,7 +1298,7 @@ def BWWriteResGroup27_16 : SchedWriteRes<[BWPort1, BWPort0156]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[BWWriteResGroup27_16], (instregex "IMUL16rr(i8)?")>;
+def: InstRW<[BWWriteResGroup27_16], (instregex "IMUL16rr")>;
 
 def BWWriteResGroup28 : SchedWriteRes<[BWPort5]> {
   let Latency = 3;
