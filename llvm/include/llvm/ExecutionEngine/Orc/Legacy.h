@@ -80,11 +80,11 @@ SymbolNameSet lookupWithLegacyFn(AsynchronousSymbolQuery &Query,
         Query.notifySymbolFinalized();
       } else {
         Query.setFailed(Addr.takeError());
-        return {};
+        return SymbolNameSet();
       }
     } else if (auto Err = Sym.takeError()) {
       Query.setFailed(std::move(Err));
-      return {};
+      return SymbolNameSet();
     } else
       SymbolsNotFound.insert(S);
   }
