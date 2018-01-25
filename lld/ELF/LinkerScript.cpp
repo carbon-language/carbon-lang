@@ -661,13 +661,9 @@ void LinkerScript::assignOffsets(OutputSection *Sec) {
     Ctx->LMAOffset = [=] { return Sec->LMAExpr().getValue() - D; };
   }
 
-  if (!Sec->LMARegionName.empty()) {
-    if (MemoryRegion *MR = MemoryRegions.lookup(Sec->LMARegionName)) {
-      uint64_t Offset = MR->Origin - Dot;
-      Ctx->LMAOffset = [=] { return Offset; };
-    } else {
-      error("memory region '" + Sec->LMARegionName + "' not declared");
-    }
+  if (MemoryRegion *MR = Sec->LMARegion) {
+    uint64_t Offset = MR->Origin - Dot;
+    Ctx->LMAOffset = [=] { return Offset; };
   }
 
   // If neither AT nor AT> is specified for an allocatable section, the linker
@@ -796,6 +792,12 @@ void LinkerScript::adjustSectionsAfterSorting() {
     if (auto *Sec = dyn_cast<OutputSection>(Base)) {
       if (!Sec->Live)
         continue;
+      if (!Sec->LMARegionName.empty()) {
+        if (MemoryRegion *M = MemoryRegions.lookup(Sec->LMARegionName))
+          Sec->LMARegion = M;
+        else
+          error("memory region '" + Sec->LMARegionName + "' not declared");
+      }
       Sec->MemRegion = findMemoryRegion(Sec);
       // Handle align (e.g. ".foo : ALIGN(16) { ... }").
       if (Sec->AlignExpr)
