@@ -5,11 +5,17 @@
 ; PR35792 - https://bugs.llvm.org/show_bug.cgi?id=35792
 
 define i16 @zext_add(i8 %x) {
-; ALL-LABEL: @zext_add(
-; ALL-NEXT:    [[Z:%.*]] = zext i8 [[X:%.*]] to i16
-; ALL-NEXT:    [[B:%.*]] = add nuw nsw i16 [[Z]], 44
-; ALL-NEXT:    [[R:%.*]] = and i16 [[B]], [[Z]]
-; ALL-NEXT:    ret i16 [[R]]
+; LEGAL8-LABEL: @zext_add(
+; LEGAL8-NEXT:    [[TMP1:%.*]] = add i8 [[X:%.*]], 44
+; LEGAL8-NEXT:    [[TMP2:%.*]] = and i8 [[TMP1]], [[X]]
+; LEGAL8-NEXT:    [[R:%.*]] = zext i8 [[TMP2]] to i16
+; LEGAL8-NEXT:    ret i16 [[R]]
+;
+; LEGAL16-LABEL: @zext_add(
+; LEGAL16-NEXT:    [[Z:%.*]] = zext i8 [[X:%.*]] to i16
+; LEGAL16-NEXT:    [[B:%.*]] = add nuw nsw i16 [[Z]], 44
+; LEGAL16-NEXT:    [[R:%.*]] = and i16 [[B]], [[Z]]
+; LEGAL16-NEXT:    ret i16 [[R]]
 ;
   %z = zext i8 %x to i16
   %b = add i16 %z, 44
@@ -18,11 +24,17 @@ define i16 @zext_add(i8 %x) {
 }
 
 define i16 @zext_sub(i8 %x) {
-; ALL-LABEL: @zext_sub(
-; ALL-NEXT:    [[Z:%.*]] = zext i8 [[X:%.*]] to i16
-; ALL-NEXT:    [[B:%.*]] = sub nsw i16 251, [[Z]]
-; ALL-NEXT:    [[R:%.*]] = and i16 [[B]], [[Z]]
-; ALL-NEXT:    ret i16 [[R]]
+; LEGAL8-LABEL: @zext_sub(
+; LEGAL8-NEXT:    [[TMP1:%.*]] = sub i8 -5, [[X:%.*]]
+; LEGAL8-NEXT:    [[TMP2:%.*]] = and i8 [[TMP1]], [[X]]
+; LEGAL8-NEXT:    [[R:%.*]] = zext i8 [[TMP2]] to i16
+; LEGAL8-NEXT:    ret i16 [[R]]
+;
+; LEGAL16-LABEL: @zext_sub(
+; LEGAL16-NEXT:    [[Z:%.*]] = zext i8 [[X:%.*]] to i16
+; LEGAL16-NEXT:    [[B:%.*]] = sub nsw i16 251, [[Z]]
+; LEGAL16-NEXT:    [[R:%.*]] = and i16 [[B]], [[Z]]
+; LEGAL16-NEXT:    ret i16 [[R]]
 ;
   %z = zext i8 %x to i16
   %b = sub i16 -5, %z
@@ -31,11 +43,17 @@ define i16 @zext_sub(i8 %x) {
 }
 
 define i16 @zext_mul(i8 %x) {
-; ALL-LABEL: @zext_mul(
-; ALL-NEXT:    [[Z:%.*]] = zext i8 [[X:%.*]] to i16
-; ALL-NEXT:    [[B:%.*]] = mul nuw nsw i16 [[Z]], 3
-; ALL-NEXT:    [[R:%.*]] = and i16 [[B]], [[Z]]
-; ALL-NEXT:    ret i16 [[R]]
+; LEGAL8-LABEL: @zext_mul(
+; LEGAL8-NEXT:    [[TMP1:%.*]] = mul i8 [[X:%.*]], 3
+; LEGAL8-NEXT:    [[TMP2:%.*]] = and i8 [[TMP1]], [[X]]
+; LEGAL8-NEXT:    [[R:%.*]] = zext i8 [[TMP2]] to i16
+; LEGAL8-NEXT:    ret i16 [[R]]
+;
+; LEGAL16-LABEL: @zext_mul(
+; LEGAL16-NEXT:    [[Z:%.*]] = zext i8 [[X:%.*]] to i16
+; LEGAL16-NEXT:    [[B:%.*]] = mul nuw nsw i16 [[Z]], 3
+; LEGAL16-NEXT:    [[R:%.*]] = and i16 [[B]], [[Z]]
+; LEGAL16-NEXT:    ret i16 [[R]]
 ;
   %z = zext i8 %x to i16
   %b = mul i16 %z, 3
@@ -44,11 +62,17 @@ define i16 @zext_mul(i8 %x) {
 }
 
 define i16 @zext_lshr(i8 %x) {
-; ALL-LABEL: @zext_lshr(
-; ALL-NEXT:    [[Z:%.*]] = zext i8 [[X:%.*]] to i16
-; ALL-NEXT:    [[B:%.*]] = lshr i16 [[Z]], 4
-; ALL-NEXT:    [[R:%.*]] = and i16 [[B]], [[Z]]
-; ALL-NEXT:    ret i16 [[R]]
+; LEGAL8-LABEL: @zext_lshr(
+; LEGAL8-NEXT:    [[TMP1:%.*]] = lshr i8 [[X:%.*]], 4
+; LEGAL8-NEXT:    [[TMP2:%.*]] = and i8 [[TMP1]], [[X]]
+; LEGAL8-NEXT:    [[R:%.*]] = zext i8 [[TMP2]] to i16
+; LEGAL8-NEXT:    ret i16 [[R]]
+;
+; LEGAL16-LABEL: @zext_lshr(
+; LEGAL16-NEXT:    [[Z:%.*]] = zext i8 [[X:%.*]] to i16
+; LEGAL16-NEXT:    [[B:%.*]] = lshr i16 [[Z]], 4
+; LEGAL16-NEXT:    [[R:%.*]] = and i16 [[B]], [[Z]]
+; LEGAL16-NEXT:    ret i16 [[R]]
 ;
   %z = zext i8 %x to i16
   %b = lshr i16 %z, 4
@@ -57,11 +81,17 @@ define i16 @zext_lshr(i8 %x) {
 }
 
 define i16 @zext_ashr(i8 %x) {
-; ALL-LABEL: @zext_ashr(
-; ALL-NEXT:    [[Z:%.*]] = zext i8 [[X:%.*]] to i16
-; ALL-NEXT:    [[TMP1:%.*]] = lshr i16 [[Z]], 2
-; ALL-NEXT:    [[R:%.*]] = and i16 [[TMP1]], [[Z]]
-; ALL-NEXT:    ret i16 [[R]]
+; LEGAL8-LABEL: @zext_ashr(
+; LEGAL8-NEXT:    [[TMP1:%.*]] = lshr i8 [[X:%.*]], 2
+; LEGAL8-NEXT:    [[TMP2:%.*]] = and i8 [[TMP1]], [[X]]
+; LEGAL8-NEXT:    [[R:%.*]] = zext i8 [[TMP2]] to i16
+; LEGAL8-NEXT:    ret i16 [[R]]
+;
+; LEGAL16-LABEL: @zext_ashr(
+; LEGAL16-NEXT:    [[Z:%.*]] = zext i8 [[X:%.*]] to i16
+; LEGAL16-NEXT:    [[TMP1:%.*]] = lshr i16 [[Z]], 2
+; LEGAL16-NEXT:    [[R:%.*]] = and i16 [[TMP1]], [[Z]]
+; LEGAL16-NEXT:    ret i16 [[R]]
 ;
   %z = zext i8 %x to i16
   %b = ashr i16 %z, 2
@@ -70,11 +100,17 @@ define i16 @zext_ashr(i8 %x) {
 }
 
 define i16 @zext_shl(i8 %x) {
-; ALL-LABEL: @zext_shl(
-; ALL-NEXT:    [[Z:%.*]] = zext i8 [[X:%.*]] to i16
-; ALL-NEXT:    [[B:%.*]] = shl nuw nsw i16 [[Z]], 3
-; ALL-NEXT:    [[R:%.*]] = and i16 [[B]], [[Z]]
-; ALL-NEXT:    ret i16 [[R]]
+; LEGAL8-LABEL: @zext_shl(
+; LEGAL8-NEXT:    [[TMP1:%.*]] = shl i8 [[X:%.*]], 3
+; LEGAL8-NEXT:    [[TMP2:%.*]] = and i8 [[TMP1]], [[X]]
+; LEGAL8-NEXT:    [[R:%.*]] = zext i8 [[TMP2]] to i16
+; LEGAL8-NEXT:    ret i16 [[R]]
+;
+; LEGAL16-LABEL: @zext_shl(
+; LEGAL16-NEXT:    [[Z:%.*]] = zext i8 [[X:%.*]] to i16
+; LEGAL16-NEXT:    [[B:%.*]] = shl nuw nsw i16 [[Z]], 3
+; LEGAL16-NEXT:    [[R:%.*]] = and i16 [[B]], [[Z]]
+; LEGAL16-NEXT:    ret i16 [[R]]
 ;
   %z = zext i8 %x to i16
   %b = shl i16 %z, 3
@@ -84,9 +120,9 @@ define i16 @zext_shl(i8 %x) {
 
 define <2 x i16> @zext_add_vec(<2 x i8> %x) {
 ; ALL-LABEL: @zext_add_vec(
-; ALL-NEXT:    [[Z:%.*]] = zext <2 x i8> [[X:%.*]] to <2 x i16>
-; ALL-NEXT:    [[B:%.*]] = add nuw nsw <2 x i16> [[Z]], <i16 44, i16 42>
-; ALL-NEXT:    [[R:%.*]] = and <2 x i16> [[B]], [[Z]]
+; ALL-NEXT:    [[TMP1:%.*]] = add <2 x i8> [[X:%.*]], <i8 44, i8 42>
+; ALL-NEXT:    [[TMP2:%.*]] = and <2 x i8> [[TMP1]], [[X]]
+; ALL-NEXT:    [[R:%.*]] = zext <2 x i8> [[TMP2]] to <2 x i16>
 ; ALL-NEXT:    ret <2 x i16> [[R]]
 ;
   %z = zext <2 x i8> %x to <2 x i16>
@@ -97,9 +133,9 @@ define <2 x i16> @zext_add_vec(<2 x i8> %x) {
 
 define <2 x i16> @zext_sub_vec(<2 x i8> %x) {
 ; ALL-LABEL: @zext_sub_vec(
-; ALL-NEXT:    [[Z:%.*]] = zext <2 x i8> [[X:%.*]] to <2 x i16>
-; ALL-NEXT:    [[B:%.*]] = sub nuw nsw <2 x i16> <i16 -5, i16 -4>, [[Z]]
-; ALL-NEXT:    [[R:%.*]] = and <2 x i16> [[B]], [[Z]]
+; ALL-NEXT:    [[TMP1:%.*]] = sub <2 x i8> <i8 -5, i8 -4>, [[X:%.*]]
+; ALL-NEXT:    [[TMP2:%.*]] = and <2 x i8> [[TMP1]], [[X]]
+; ALL-NEXT:    [[R:%.*]] = zext <2 x i8> [[TMP2]] to <2 x i16>
 ; ALL-NEXT:    ret <2 x i16> [[R]]
 ;
   %z = zext <2 x i8> %x to <2 x i16>
@@ -110,9 +146,9 @@ define <2 x i16> @zext_sub_vec(<2 x i8> %x) {
 
 define <2 x i16> @zext_mul_vec(<2 x i8> %x) {
 ; ALL-LABEL: @zext_mul_vec(
-; ALL-NEXT:    [[Z:%.*]] = zext <2 x i8> [[X:%.*]] to <2 x i16>
-; ALL-NEXT:    [[B:%.*]] = mul nsw <2 x i16> [[Z]], <i16 3, i16 -2>
-; ALL-NEXT:    [[R:%.*]] = and <2 x i16> [[B]], [[Z]]
+; ALL-NEXT:    [[TMP1:%.*]] = mul <2 x i8> [[X:%.*]], <i8 3, i8 -2>
+; ALL-NEXT:    [[TMP2:%.*]] = and <2 x i8> [[TMP1]], [[X]]
+; ALL-NEXT:    [[R:%.*]] = zext <2 x i8> [[TMP2]] to <2 x i16>
 ; ALL-NEXT:    ret <2 x i16> [[R]]
 ;
   %z = zext <2 x i8> %x to <2 x i16>
@@ -123,9 +159,9 @@ define <2 x i16> @zext_mul_vec(<2 x i8> %x) {
 
 define <2 x i16> @zext_lshr_vec(<2 x i8> %x) {
 ; ALL-LABEL: @zext_lshr_vec(
-; ALL-NEXT:    [[Z:%.*]] = zext <2 x i8> [[X:%.*]] to <2 x i16>
-; ALL-NEXT:    [[B:%.*]] = lshr <2 x i16> [[Z]], <i16 4, i16 2>
-; ALL-NEXT:    [[R:%.*]] = and <2 x i16> [[B]], [[Z]]
+; ALL-NEXT:    [[TMP1:%.*]] = lshr <2 x i8> [[X:%.*]], <i8 4, i8 2>
+; ALL-NEXT:    [[TMP2:%.*]] = and <2 x i8> [[TMP1]], [[X]]
+; ALL-NEXT:    [[R:%.*]] = zext <2 x i8> [[TMP2]] to <2 x i16>
 ; ALL-NEXT:    ret <2 x i16> [[R]]
 ;
   %z = zext <2 x i8> %x to <2 x i16>
@@ -136,9 +172,9 @@ define <2 x i16> @zext_lshr_vec(<2 x i8> %x) {
 
 define <2 x i16> @zext_ashr_vec(<2 x i8> %x) {
 ; ALL-LABEL: @zext_ashr_vec(
-; ALL-NEXT:    [[Z:%.*]] = zext <2 x i8> [[X:%.*]] to <2 x i16>
-; ALL-NEXT:    [[B:%.*]] = lshr <2 x i16> [[Z]], <i16 2, i16 3>
-; ALL-NEXT:    [[R:%.*]] = and <2 x i16> [[B]], [[Z]]
+; ALL-NEXT:    [[TMP1:%.*]] = lshr <2 x i8> [[X:%.*]], <i8 2, i8 3>
+; ALL-NEXT:    [[TMP2:%.*]] = and <2 x i8> [[TMP1]], [[X]]
+; ALL-NEXT:    [[R:%.*]] = zext <2 x i8> [[TMP2]] to <2 x i16>
 ; ALL-NEXT:    ret <2 x i16> [[R]]
 ;
   %z = zext <2 x i8> %x to <2 x i16>
@@ -149,9 +185,9 @@ define <2 x i16> @zext_ashr_vec(<2 x i8> %x) {
 
 define <2 x i16> @zext_shl_vec(<2 x i8> %x) {
 ; ALL-LABEL: @zext_shl_vec(
-; ALL-NEXT:    [[Z:%.*]] = zext <2 x i8> [[X:%.*]] to <2 x i16>
-; ALL-NEXT:    [[B:%.*]] = shl <2 x i16> [[Z]], <i16 3, i16 2>
-; ALL-NEXT:    [[R:%.*]] = and <2 x i16> [[B]], [[Z]]
+; ALL-NEXT:    [[TMP1:%.*]] = shl <2 x i8> [[X:%.*]], <i8 3, i8 2>
+; ALL-NEXT:    [[TMP2:%.*]] = and <2 x i8> [[TMP1]], [[X]]
+; ALL-NEXT:    [[R:%.*]] = zext <2 x i8> [[TMP2]] to <2 x i16>
 ; ALL-NEXT:    ret <2 x i16> [[R]]
 ;
   %z = zext <2 x i8> %x to <2 x i16>
