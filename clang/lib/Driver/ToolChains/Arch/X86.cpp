@@ -43,19 +43,20 @@ const char *x86::getX86TargetCPU(const ArgList &Args,
   if (const Arg *A = Args.getLastArgNoClaim(options::OPT__SLASH_arch)) {
     // Mapping built by looking at lib/Basic's X86TargetInfo::initFeatureMap().
     StringRef Arch = A->getValue();
-    const char *CPU;
-    if (Triple.getArch() == llvm::Triple::x86) {
+    const char *CPU = nullptr;
+    if (Triple.getArch() == llvm::Triple::x86) {  // 32-bit-only /arch: flags.
       CPU = llvm::StringSwitch<const char *>(Arch)
                 .Case("IA32", "i386")
                 .Case("SSE", "pentium3")
                 .Case("SSE2", "pentium4")
-                .Case("AVX", "sandybridge")
-                .Case("AVX2", "haswell")
                 .Default(nullptr);
-    } else {
+    }
+    if (CPU == nullptr) {  // 32-bit and 64-bit /arch: flags.
       CPU = llvm::StringSwitch<const char *>(Arch)
                 .Case("AVX", "sandybridge")
                 .Case("AVX2", "haswell")
+                .Case("AVX512F", "knl")
+                .Case("AVX512", "skylake-avx512")
                 .Default(nullptr);
     }
     if (CPU) {
