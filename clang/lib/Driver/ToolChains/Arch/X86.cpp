@@ -40,8 +40,8 @@ const char *x86::getX86TargetCPU(const ArgList &Args,
       return Args.MakeArgString(CPU);
   }
 
-  if (const Arg *A = Args.getLastArg(options::OPT__SLASH_arch)) {
-    // Mapping built by referring to X86TargetInfo::getDefaultFeatures().
+  if (const Arg *A = Args.getLastArgNoClaim(options::OPT__SLASH_arch)) {
+    // Mapping built by looking at lib/Basic's X86TargetInfo::initFeatureMap().
     StringRef Arch = A->getValue();
     const char *CPU;
     if (Triple.getArch() == llvm::Triple::x86) {
@@ -58,8 +58,10 @@ const char *x86::getX86TargetCPU(const ArgList &Args,
                 .Case("AVX2", "haswell")
                 .Default(nullptr);
     }
-    if (CPU)
+    if (CPU) {
+      A->claim();
       return CPU;
+    }
   }
 
   // Select the default CPU if none was given (or detection failed).
@@ -139,30 +141,6 @@ void x86::getX86TargetFeatures(const Driver &D, const llvm::Triple &Triple,
       Features.push_back("+popcnt");
     } else
       Features.push_back("+ssse3");
-  }
-
-  // Set features according to the -arch flag on MSVC.
-  if (Arg *A = Args.getLastArg(options::OPT__SLASH_arch)) {
-    StringRef Arch = A->getValue();
-    bool ArchUsed = false;
-    // First, look for flags that are shared in x86 and x86-64.
-    if (ArchType == llvm::Triple::x86_64 || ArchType == llvm::Triple::x86) {
-      if (Arch == "AVX" || Arch == "AVX2") {
-        ArchUsed = true;
-        Features.push_back(Args.MakeArgString("+" + Arch.lower()));
-      }
-    }
-    // Then, look for x86-specific flags.
-    if (ArchType == llvm::Triple::x86) {
-      if (Arch == "IA32") {
-        ArchUsed = true;
-      } else if (Arch == "SSE" || Arch == "SSE2") {
-        ArchUsed = true;
-        Features.push_back(Args.MakeArgString("+" + Arch.lower()));
-      }
-    }
-    if (!ArchUsed)
-      D.Diag(clang::diag::warn_drv_unused_argument) << A->getAsString(Args);
   }
 
   // Now add any that the user explicitly requested on the command line,
