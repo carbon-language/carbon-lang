@@ -2079,7 +2079,7 @@ bool ASTNodeImporter::ImportTemplateInformation(FunctionDecl *FromFD,
   switch (FromFD->getTemplatedKind()) {
   case FunctionDecl::TK_NonTemplate:
   case FunctionDecl::TK_FunctionTemplate:
-    break;
+    return false;
 
   case FunctionDecl::TK_MemberSpecialization: {
     auto *InstFD = cast_or_null<FunctionDecl>(
@@ -2092,7 +2092,7 @@ bool ASTNodeImporter::ImportTemplateInformation(FunctionDecl *FromFD,
           FromFD->getMemberSpecializationInfo()->getPointOfInstantiation());
     ToFD->setInstantiationOfMemberFunction(InstFD, TSK);
     ToFD->getMemberSpecializationInfo()->setPointOfInstantiation(POI);
-    break;
+    return false;
   }
 
   case FunctionDecl::TK_FunctionTemplateSpecialization: {
@@ -2127,7 +2127,7 @@ bool ASTNodeImporter::ImportTemplateInformation(FunctionDecl *FromFD,
     ToFD->setFunctionTemplateSpecialization(
         Template, ToTAList, /* InsertPos= */ nullptr,
         TSK, FromTAArgsAsWritten ? &ToTAInfo : nullptr, POI);
-    break;
+    return false;
   }
 
   case FunctionDecl::TK_DependentFunctionTemplateSpecialization: {
@@ -2153,13 +2153,10 @@ bool ASTNodeImporter::ImportTemplateInformation(FunctionDecl *FromFD,
 
     ToFD->setDependentTemplateSpecialization(Importer.getToContext(),
                                              TemplDecls, ToTAInfo);
-    break;
+    return false;
   }
-  default:
-    llvm_unreachable("All cases should be covered!");
   }
-
-  return false;
+  llvm_unreachable("All cases should be covered!");
 }
 
 Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {

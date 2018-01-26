@@ -408,6 +408,7 @@ bool ExternalASTMerger::FindExternalVisibleDeclsByName(const DeclContext *DC,
     bool IsSpecImportFailed =
         importSpecializationsIfNeeded(LookupRes, Importer);
     assert(!IsSpecImportFailed);
+    (void)IsSpecImportFailed;
     Decls.push_back(ND);
   }
   SetExternalVisibleDeclsForName(DC, Name, Decls);
