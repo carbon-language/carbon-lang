@@ -17851,19 +17851,6 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget &Subtarget,
     assert(EltVT == MVT::f32 || EltVT == MVT::f64);
 #endif
 
-    // Custom widen MVT::v2f32 to prevent the default widening
-    // from getting a result type of v4i32, extracting it to v2i32 and then
-    // trying to sign extend that to v2i1.
-    if (VT == MVT::v2i1 && Op1.getValueType() == MVT::v2f32) {
-      Op0 = DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v4f32, Op0,
-                        DAG.getUNDEF(MVT::v2f32));
-      Op1 = DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v4f32, Op1,
-                        DAG.getUNDEF(MVT::v2f32));
-      SDValue NewOp = DAG.getNode(ISD::SETCC, dl, MVT::v4i1, Op0, Op1, CC);
-      return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v2i1, NewOp,
-                         DAG.getIntPtrConstant(0, dl));
-    }
-
     unsigned Opc;
     if (Subtarget.hasAVX512() && VT.getVectorElementType() == MVT::i1) {
       assert(VT.getVectorNumElements() <= 16);
