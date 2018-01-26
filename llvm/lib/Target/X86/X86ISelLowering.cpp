@@ -34122,7 +34122,8 @@ static SDValue detectSSatPattern(SDValue In, EVT VT) {
   unsigned NumSrcBits = In.getScalarValueSizeInBits();
   assert(NumSrcBits > NumDstBits && "Unexpected types for truncate operation");
 
-  auto MatchMinMax = [](SDValue V, unsigned Opcode, const APInt &Limit) {
+  auto MatchMinMax = [](SDValue V, unsigned Opcode,
+                        const APInt &Limit) -> SDValue {
     APInt C;
     if (V.getOpcode() == Opcode &&
         ISD::isConstantSplatVector(V.getOperand(1).getNode(), C) && C == Limit)
