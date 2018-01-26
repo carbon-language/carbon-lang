@@ -698,13 +698,13 @@ ELFReader::ELFReader(StringRef File) {
 }
 
 ElfType ELFReader::getElfType() const {
-  if (auto *o = dyn_cast<ELFObjectFile<ELF32LE>>(Binary.get()))
+  if (isa<ELFObjectFile<ELF32LE>>(Binary.get()))
     return ELFT_ELF32LE;
-  if (auto *o = dyn_cast<ELFObjectFile<ELF64LE>>(Binary.get()))
+  if (isa<ELFObjectFile<ELF64LE>>(Binary.get()))
     return ELFT_ELF64LE;
-  if (auto *o = dyn_cast<ELFObjectFile<ELF32BE>>(Binary.get()))
+  if (isa<ELFObjectFile<ELF32BE>>(Binary.get()))
     return ELFT_ELF32BE;
-  if (auto *o = dyn_cast<ELFObjectFile<ELF64BE>>(Binary.get()))
+  if (isa<ELFObjectFile<ELF64BE>>(Binary.get()))
     return ELFT_ELF64BE;
   llvm_unreachable("Invalid ELFType");
 }
