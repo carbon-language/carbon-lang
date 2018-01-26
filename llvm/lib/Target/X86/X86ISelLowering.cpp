@@ -8073,27 +8073,6 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     unsigned Idx = countTrailingZeros(NonZeros);
     SDValue Item = Op.getOperand(Idx);
 
-    // If this is an insertion of an i64 value on x86-32, and if the top bits of
-    // the value are obviously zero, truncate the value to i32 and do the
-    // insertion that way.  Only do this if the value is non-constant or if the
-    // value is a constant being inserted into element 0.  It is cheaper to do
-    // a constant pool load than it is to do a movd + shuffle.
-    if (EltVT == MVT::i64 && !Subtarget.is64Bit() &&
-        (!IsAllConstants || Idx == 0)) {
-      if (DAG.MaskedValueIsZero(Item, APInt::getHighBitsSet(64, 32))) {
-        // Handle SSE only.
-        assert(VT == MVT::v2i64 && "Expected an SSE value type!");
-        MVT VecVT = MVT::v4i32;
-
-        // Truncate the value (which may itself be a constant) to i32, and
-        // convert it to a vector with movd (S2V+shuffle to zero extend).
-        Item = DAG.getNode(ISD::TRUNCATE, dl, MVT::i32, Item);
-        Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VecVT, Item);
-        return DAG.getBitcast(VT, getShuffleVectorZeroOrUndef(
-                                      Item, Idx * 2, true, Subtarget, DAG));
-      }
-    }
-
     // If we have a constant or non-constant insertion into the low element of
     // a vector, we can do this with SCALAR_TO_VECTOR + shuffle of zero into
     // the rest of the elements.  This will be matched as movd/movq/movss/movsd
