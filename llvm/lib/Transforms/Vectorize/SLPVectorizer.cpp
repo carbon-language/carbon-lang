@@ -2853,7 +2853,7 @@ Value *BoUpSLP::vectorizeTree(ArrayRef<Value *> VL) {
         if (VL.size() == E->Scalars.size() && !E->ReuseShuffleIndices.empty()) {
           // We need to get the vectorized value but without shuffle.
           if (auto *SV = dyn_cast<ShuffleVectorInst>(V)) {
-            V = cast<ShuffleVectorInst>(V)->getOperand(0);
+            V = SV->getOperand(0);
           } else {
             // Reshuffle to get only unique values.
             SmallVector<unsigned, 4> UniqueIdxs;
