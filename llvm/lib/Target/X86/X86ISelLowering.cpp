@@ -17950,8 +17950,7 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget &Subtarget,
   }
 
   // Lower using XOP integer comparisons.
-  if ((VT == MVT::v16i8 || VT == MVT::v8i16 ||
-       VT == MVT::v4i32 || VT == MVT::v2i64) && Subtarget.hasXOP()) {
+  if (VT.is128BitVector() && Subtarget.hasXOP()) {
     // Translate compare code to XOP PCOM compare mode.
     unsigned CmpMode = 0;
     switch (Cond) {
