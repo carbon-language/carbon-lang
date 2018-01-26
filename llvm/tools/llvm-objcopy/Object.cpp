@@ -1004,6 +1004,8 @@ void BinaryWriter::write() {
       continue;
     Section.accept(*SecWriter);
   }
+  if (auto E = BufPtr->commit())
+    reportError(File, errorToErrorCode(std::move(E)));
 }
 
 void BinaryWriter::finalize() {
