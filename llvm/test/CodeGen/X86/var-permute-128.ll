@@ -60,19 +60,7 @@ define <4 x i32> @var_shuffle_v4i32(<4 x i32> %v, <4 x i32> %indices) nounwind {
 ;
 ; AVX-LABEL: var_shuffle_v4i32:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vmovd %xmm1, %eax
-; AVX-NEXT:    vpextrd $1, %xmm1, %ecx
-; AVX-NEXT:    vpextrd $2, %xmm1, %edx
-; AVX-NEXT:    vpextrd $3, %xmm1, %esi
-; AVX-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
-; AVX-NEXT:    andl $3, %eax
-; AVX-NEXT:    andl $3, %ecx
-; AVX-NEXT:    andl $3, %edx
-; AVX-NEXT:    andl $3, %esi
-; AVX-NEXT:    vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX-NEXT:    vpinsrd $1, -24(%rsp,%rcx,4), %xmm0, %xmm0
-; AVX-NEXT:    vpinsrd $2, -24(%rsp,%rdx,4), %xmm0, %xmm0
-; AVX-NEXT:    vpinsrd $3, -24(%rsp,%rsi,4), %xmm0, %xmm0
+; AVX-NEXT:    vpermilps %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %index0 = extractelement <4 x i32> %indices, i32 0
   %index1 = extractelement <4 x i32> %indices, i32 1
@@ -308,19 +296,7 @@ define <4 x float> @var_shuffle_v4f32(<4 x float> %v, <4 x i32> %indices) nounwi
 ;
 ; AVX-LABEL: var_shuffle_v4f32:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vmovd %xmm1, %eax
-; AVX-NEXT:    vpextrd $1, %xmm1, %ecx
-; AVX-NEXT:    vpextrd $2, %xmm1, %edx
-; AVX-NEXT:    vpextrd $3, %xmm1, %esi
-; AVX-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
-; AVX-NEXT:    andl $3, %eax
-; AVX-NEXT:    andl $3, %ecx
-; AVX-NEXT:    andl $3, %edx
-; AVX-NEXT:    andl $3, %esi
-; AVX-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0],mem[0],xmm0[2,3]
-; AVX-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0,1],mem[0],xmm0[3]
-; AVX-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0,1,2],mem[0]
+; AVX-NEXT:    vpermilps %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %index0 = extractelement <4 x i32> %indices, i32 0
   %index1 = extractelement <4 x i32> %indices, i32 1

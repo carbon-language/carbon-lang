@@ -7847,6 +7847,13 @@ LowerBUILD_VECTORAsVariablePermute(SDValue V, SelectionDAG &DAG,
       if (Subtarget.hasSSE3())
         Opcode = X86ISD::PSHUFB;
       break;
+    case MVT::v4f32:
+    case MVT::v4i32:
+      if (Subtarget.hasAVX()) {
+        Opcode = X86ISD::VPERMILPV;
+        ShuffleVT = MVT::v4f32;
+      }
+      break;
     case MVT::v2f64:
     case MVT::v2i64:
       if (Subtarget.hasAVX()) {
