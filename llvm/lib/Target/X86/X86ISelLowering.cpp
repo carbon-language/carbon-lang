@@ -38877,7 +38877,7 @@ int X86TargetLowering::getScalingFactorCost(const DataLayout &DL,
   // will take 2 allocations in the out of order engine instead of 1
   // for plain addressing mode, i.e. inst (reg1).
   // E.g.,
-  // vaddps (%rsi,%drx), %ymm0, %ymm1
+  // vaddps (%rsi,%rdx), %ymm0, %ymm1
   // Requires two allocations (one for the load, one for the computation)
   // whereas:
   // vaddps (%rsi), %ymm0, %ymm1
