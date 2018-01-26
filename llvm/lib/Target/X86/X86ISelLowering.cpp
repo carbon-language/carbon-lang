@@ -22262,13 +22262,6 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget &Subtarget,
     assert(Subtarget.hasSSE2() && !Subtarget.hasSSE41() &&
            "Should not custom lower when pmulld is available!");
 
-    // If the upper 17 bits of each element are zero then we can use PMADDWD.
-    APInt Mask17 = APInt::getHighBitsSet(32, 17);
-    if (DAG.MaskedValueIsZero(A, Mask17) && DAG.MaskedValueIsZero(B, Mask17))
-      return DAG.getNode(X86ISD::VPMADDWD, dl, VT,
-                         DAG.getBitcast(MVT::v8i16, A),
-                         DAG.getBitcast(MVT::v8i16, B));
-
     // Extract the odd parts.
     static const int UnpackMask[] = { 1, -1, 3, -1 };
     SDValue Aodds = DAG.getVectorShuffle(VT, dl, A, A, UnpackMask);
