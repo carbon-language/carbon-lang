@@ -34216,9 +34216,9 @@ static SDValue detectAVX512USatPattern(SDValue In, EVT VT,
   return detectUSatPattern(In, VT);
 }
 
-static SDValue
-combineTruncateWithUSat(SDValue In, EVT VT, SDLoc &DL, SelectionDAG &DAG,
-                        const X86Subtarget &Subtarget) {
+static SDValue combineTruncateWithUSat(SDValue In, EVT VT, const SDLoc &DL,
+                                       SelectionDAG &DAG,
+                                       const X86Subtarget &Subtarget) {
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   if (!TLI.isTypeLegal(In.getValueType()) || !TLI.isTypeLegal(VT))
     return SDValue();
@@ -34238,8 +34238,8 @@ combineTruncateWithUSat(SDValue In, EVT VT, SDLoc &DL, SelectionDAG &DAG,
 // SDValue Builder(SelectionDAG&G, SDLoc, SDValue, SDValue)
 template <typename F>
 SDValue SplitBinaryOpsAndApply(SelectionDAG &DAG, const X86Subtarget &Subtarget,
-                               SDLoc DL, EVT VT, SDValue Op0, SDValue Op1,
-                               F Builder) {
+                               const SDLoc &DL, EVT VT, SDValue Op0,
+                               SDValue Op1, F Builder) {
   assert(Subtarget.hasSSE2() && "Target assumed to support at least SSE2");
   unsigned NumSubs = 1;
   if (Subtarget.hasBWI()) {
@@ -37341,7 +37341,8 @@ static SDValue combineIncDecVector(SDNode *N, SelectionDAG &DAG) {
 }
 
 static SDValue matchPMADDWD(SelectionDAG &DAG, SDValue Op0, SDValue Op1,
-                            SDLoc DL, EVT VT, const X86Subtarget &Subtarget) {
+                            const SDLoc &DL, EVT VT,
+                            const X86Subtarget &Subtarget) {
   // Example of pattern we try to detect:
   // t := (v8i32 mul (sext (v8i16 x0), (sext (v8i16 x1))))
   //(add (build_vector (extract_elt t, 0),
