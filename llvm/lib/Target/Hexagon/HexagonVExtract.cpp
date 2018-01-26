@@ -140,9 +140,8 @@ bool HexagonVExtract::runOnMachineFunction(MachineFunction &MF) {
 
     for (MachineInstr *ExtI : P.second) {
       assert(ExtI->getOpcode() == Hexagon::V6_extractw);
-      unsigned VR = ExtI->getOperand(1).getReg();
       unsigned SR = ExtI->getOperand(1).getSubReg();
-      assert(VR == VecR);
+      assert(ExtI->getOperand(1).getReg() == VecR);
 
       MachineBasicBlock &ExtB = *ExtI->getParent();
       DebugLoc DL = ExtI->getDebugLoc();
