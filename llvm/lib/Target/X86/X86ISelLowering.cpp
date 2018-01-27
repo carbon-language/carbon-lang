@@ -17777,6 +17777,13 @@ static SDValue LowerIntVSETCC_AVX512(SDValue Op, SelectionDAG &DAG) {
       return DAG.getNode(SSECC == 0 ? X86ISD::TESTNM : X86ISD::TESTM,
                          dl, VT, RHS, LHS);
     }
+
+    // If this is just a comparison with 0 without an AND, we can just use
+    // the same input twice to avoid creating a zero vector.
+    if (ISD::isBuildVectorAllZeros(Op1.getNode())) {
+      return DAG.getNode(SSECC == 0 ? X86ISD::TESTNM : X86ISD::TESTM,
+                         dl, VT, Op0, Op0);
+    }
   }
 
   unsigned Opc = ISD::isUnsignedIntSetCC(SetCCOpcode) ? X86ISD::CMPMU

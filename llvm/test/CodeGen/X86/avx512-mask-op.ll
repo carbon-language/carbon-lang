@@ -2413,8 +2413,7 @@ define void @store_64i1(<64 x i1>* %a, <64 x i1> %v) {
 define i32 @test_bitcast_v8i1_zext(<16 x i32> %a) {
 ; KNL-LABEL: test_bitcast_v8i1_zext:
 ; KNL:       ## %bb.0:
-; KNL-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; KNL-NEXT:    vpcmpeqd %zmm1, %zmm0, %k0
+; KNL-NEXT:    vptestnmd %zmm0, %zmm0, %k0
 ; KNL-NEXT:    kmovw %k0, %eax
 ; KNL-NEXT:    movzbl %al, %eax
 ; KNL-NEXT:    addl %eax, %eax
@@ -2423,8 +2422,7 @@ define i32 @test_bitcast_v8i1_zext(<16 x i32> %a) {
 ;
 ; SKX-LABEL: test_bitcast_v8i1_zext:
 ; SKX:       ## %bb.0:
-; SKX-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; SKX-NEXT:    vpcmpeqd %zmm1, %zmm0, %k0
+; SKX-NEXT:    vptestnmd %zmm0, %zmm0, %k0
 ; SKX-NEXT:    kmovb %k0, %eax
 ; SKX-NEXT:    addl %eax, %eax
 ; SKX-NEXT:    vzeroupper
@@ -2432,8 +2430,7 @@ define i32 @test_bitcast_v8i1_zext(<16 x i32> %a) {
 ;
 ; AVX512BW-LABEL: test_bitcast_v8i1_zext:
 ; AVX512BW:       ## %bb.0:
-; AVX512BW-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; AVX512BW-NEXT:    vpcmpeqd %zmm1, %zmm0, %k0
+; AVX512BW-NEXT:    vptestnmd %zmm0, %zmm0, %k0
 ; AVX512BW-NEXT:    kmovd %k0, %eax
 ; AVX512BW-NEXT:    movzbl %al, %eax
 ; AVX512BW-NEXT:    addl %eax, %eax
@@ -2442,8 +2439,7 @@ define i32 @test_bitcast_v8i1_zext(<16 x i32> %a) {
 ;
 ; AVX512DQ-LABEL: test_bitcast_v8i1_zext:
 ; AVX512DQ:       ## %bb.0:
-; AVX512DQ-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; AVX512DQ-NEXT:    vpcmpeqd %zmm1, %zmm0, %k0
+; AVX512DQ-NEXT:    vptestnmd %zmm0, %zmm0, %k0
 ; AVX512DQ-NEXT:    kmovb %k0, %eax
 ; AVX512DQ-NEXT:    addl %eax, %eax
 ; AVX512DQ-NEXT:    vzeroupper
@@ -2459,8 +2455,7 @@ define i32 @test_bitcast_v8i1_zext(<16 x i32> %a) {
 define i32 @test_bitcast_v16i1_zext(<16 x i32> %a) {
 ; CHECK-LABEL: test_bitcast_v16i1_zext:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; CHECK-NEXT:    vpcmpeqd %zmm1, %zmm0, %k0
+; CHECK-NEXT:    vptestnmd %zmm0, %zmm0, %k0
 ; CHECK-NEXT:    kmovw %k0, %eax
 ; CHECK-NEXT:    addl %eax, %eax
 ; CHECK-NEXT:    vzeroupper
