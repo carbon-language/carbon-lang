@@ -5045,8 +5045,6 @@ static bool isMaskedZeroUpperBitsvXi1(unsigned int Opcode) {
     return false;
   case X86ISD::TESTM:
   case X86ISD::TESTNM:
-  case X86ISD::PCMPEQM:
-  case X86ISD::PCMPGTM:
   case X86ISD::CMPM:
   case X86ISD::CMPMU:
   case X86ISD::CMPM_RND:
@@ -14408,8 +14406,8 @@ static SDValue lower1BitVectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   int NumElems = VT.getVectorNumElements();
   if ((Subtarget.hasBWI() && (NumElems >= 32)) ||
       (Subtarget.hasDQI() && (NumElems < 32)))
-    return DAG.getNode(X86ISD::PCMPGTM, DL, VT, DAG.getConstant(0, DL, ExtVT),
-                       Shuffle);
+    return DAG.getNode(X86ISD::CMPM, DL, VT, DAG.getConstant(0, DL, ExtVT),
+                       Shuffle, DAG.getConstant(6, DL, MVT::i8));
 
   return DAG.getNode(ISD::TRUNCATE, DL, VT, Shuffle);
 }
@@ -16565,8 +16563,8 @@ static SDValue LowerTruncateVecI1(SDValue Op, SelectionDAG &DAG,
                          DAG.getConstant(ShiftInx, DL, ExtVT));
         In = DAG.getBitcast(InVT, In);
       }
-      return DAG.getNode(X86ISD::PCMPGTM, DL, VT, DAG.getConstant(0, DL, InVT),
-                         In);
+      return DAG.getNode(X86ISD::CMPM, DL, VT, DAG.getConstant(0, DL, InVT),
+                         In, DAG.getConstant(6, DL, MVT::i8));
     }
     // Use TESTD/Q, extended vector to packed dword/qword.
     assert((InVT.is256BitVector() || InVT.is128BitVector()) &&
@@ -17750,43 +17748,39 @@ static SDValue LowerIntVSETCC_AVX512(SDValue Op, SelectionDAG &DAG) {
          "Cannot set masked compare for this operation");
 
   ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
-  unsigned  Opc = 0;
-  bool Unsigned = false;
   bool Swap = false;
   unsigned SSECC;
   switch (SetCCOpcode) {
   default: llvm_unreachable("Unexpected SETCC condition");
   case ISD::SETNE:  SSECC = 4; break;
-  case ISD::SETEQ:  Opc = X86ISD::PCMPEQM; break;
-  case ISD::SETUGT: SSECC = 6; Unsigned = true; break;
+  case ISD::SETEQ:  SSECC = 0; break;
+  case ISD::SETULT: SSECC = 1; break;
   case ISD::SETLT:  Swap = true; LLVM_FALLTHROUGH;
-  case ISD::SETGT:  Opc = X86ISD::PCMPGTM; break;
-  case ISD::SETULT: SSECC = 1; Unsigned = true; break;
-  case ISD::SETUGE: SSECC = 5; Unsigned = true; break; //NLT
-  case ISD::SETGE:  Swap = true; SSECC = 2; break; // LE + swap
-  case ISD::SETULE: Unsigned = true; LLVM_FALLTHROUGH;
+  case ISD::SETUGT:
+  case ISD::SETGT:  SSECC = 6; break;
+  case ISD::SETUGE: SSECC = 5; break;
+  case ISD::SETGE:  Swap = true; LLVM_FALLTHROUGH;
+  case ISD::SETULE:
   case ISD::SETLE:  SSECC = 2; break;
   }
-
   if (Swap)
     std::swap(Op0, Op1);
 
   //  See if it is the case of CMP(EQ|NEQ,AND(A,B),ZERO) and change it to TESTM|NM.
-  if ((!Opc && SSECC == 4) || Opc == X86ISD::PCMPEQM) {
+  if (SSECC == 4 || SSECC == 0) {
     SDValue A = peekThroughBitcasts(Op0);
     if ((A.getOpcode() == ISD::AND || A.getOpcode() == X86ISD::FAND) &&
         ISD::isBuildVectorAllZeros(Op1.getNode())) {
       MVT VT0 = Op0.getSimpleValueType();
       SDValue RHS = DAG.getBitcast(VT0, A.getOperand(0));
       SDValue LHS = DAG.getBitcast(VT0, A.getOperand(1));
-      return DAG.getNode(Opc == X86ISD::PCMPEQM ? X86ISD::TESTNM : X86ISD::TESTM,
+      return DAG.getNode(SSECC == 0 ? X86ISD::TESTNM : X86ISD::TESTM,
                          dl, VT, RHS, LHS);
     }
   }
 
-  if (Opc)
-    return DAG.getNode(Opc, dl, VT, Op0, Op1);
-  Opc = Unsigned ? X86ISD::CMPMU: X86ISD::CMPM;
+  unsigned Opc = ISD::isUnsignedIntSetCC(SetCCOpcode) ? X86ISD::CMPMU
+                                                      : X86ISD::CMPM;
   return DAG.getNode(Opc, dl, VT, Op0, Op1,
                      DAG.getConstant(SSECC, dl, MVT::i8));
 }
@@ -22767,7 +22761,8 @@ static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,
           SDValue Zeros = getZeroVector(VT, Subtarget, DAG, dl);
           if (VT.is512BitVector()) {
             assert(VT == MVT::v64i8 && "Unexpected element type!");
-            SDValue CMP = DAG.getNode(X86ISD::PCMPGTM, dl, MVT::v64i1, Zeros, R);
+            SDValue CMP = DAG.getNode(X86ISD::CMPM, dl, MVT::v64i1, Zeros, R,
+                                      DAG.getConstant(6, dl, MVT::i8));
             return DAG.getNode(ISD::SIGN_EXTEND, dl, VT, CMP);
           }
           return DAG.getNode(X86ISD::PCMPGT, dl, VT, Zeros, R);
@@ -23214,8 +23209,9 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
         V0 = DAG.getBitcast(VT, V0);
         V1 = DAG.getBitcast(VT, V1);
         Sel = DAG.getBitcast(VT, Sel);
-        Sel = DAG.getNode(X86ISD::PCMPGTM, dl, MaskVT,
-                          DAG.getConstant(0, dl, VT), Sel);
+        Sel = DAG.getNode(X86ISD::CMPM, dl, MaskVT,
+                          DAG.getConstant(0, dl, VT), Sel,
+                          DAG.getConstant(6, dl, MVT::i8));
         return DAG.getBitcast(SelVT, DAG.getSelect(dl, VT, Sel, V0, V1));
       } else if (Subtarget.hasSSE41()) {
         // On SSE41 targets we make use of the fact that VSELECT lowers
@@ -25342,8 +25338,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::CMPP:               return "X86ISD::CMPP";
   case X86ISD::PCMPEQ:             return "X86ISD::PCMPEQ";
   case X86ISD::PCMPGT:             return "X86ISD::PCMPGT";
-  case X86ISD::PCMPEQM:            return "X86ISD::PCMPEQM";
-  case X86ISD::PCMPGTM:            return "X86ISD::PCMPGTM";
   case X86ISD::PHMINPOS:           return "X86ISD::PHMINPOS";
   case X86ISD::ADD:                return "X86ISD::ADD";
   case X86ISD::SUB:                return "X86ISD::SUB";
