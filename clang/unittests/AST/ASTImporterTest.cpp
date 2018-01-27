@@ -40,10 +40,10 @@ static RunOptions getRunOptionsForLanguage(Language Lang) {
     BasicArgs = {"-x", "c", "-std=c89"};
     break;
   case Lang_CXX:
-    BasicArgs = {"-std=c++98"};
+    BasicArgs = {"-std=c++98", "-frtti"};
     break;
   case Lang_CXX11:
-    BasicArgs = {"-std=c++11"};
+    BasicArgs = {"-std=c++11", "-frtti"};
     break;
   case Lang_OpenCL:
   case Lang_OBJCXX:
