@@ -28242,6 +28242,14 @@ static bool matchUnaryVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
   unsigned NumMaskElts = Mask.size();
   unsigned MaskEltSize = MaskVT.getScalarSizeInBits();
 
+  // Match against a VZEXT_MOVL vXi32 zero-extending instruction.
+  if (MaskEltSize == 32 && isUndefOrEqual(Mask[0], 0) &&
+      isUndefOrZero(Mask[1]) && isUndefInRange(Mask, 2, NumMaskElts - 2)) {
+    Shuffle = X86ISD::VZEXT_MOVL;
+    SrcVT = DstVT = !Subtarget.hasSSE2() ? MVT::v4f32 : MaskVT;
+    return true;
+  }
+
   // Match against a ZERO_EXTEND_VECTOR_INREG/VZEXT instruction.
   // TODO: Add 512-bit vector support (split AVX512F and AVX512BW).
   if (AllowIntDomain && ((MaskVT.is128BitVector() && Subtarget.hasSSE41()) ||
@@ -29790,6 +29798,28 @@ static SDValue combineTargetShuffle(SDValue N, SelectionDAG &DAG,
   }
 
   switch (Opcode) {
+  case X86ISD::VBROADCAST: {
+    // If broadcasting from another shuffle, attempt to simplify it.
+    // TODO - we really need a general SimplifyDemandedVectorElts mechanism.
+    SDValue Src = N.getOperand(0);
+    SDValue BC = peekThroughBitcasts(Src);
+    EVT SrcVT = Src.getValueType();
+    EVT BCVT = BC.getValueType();
+    if (isTargetShuffle(BC.getOpcode()) &&
+        VT.getScalarSizeInBits() % BCVT.getScalarSizeInBits() == 0) {
+      unsigned Scale = VT.getScalarSizeInBits() / BCVT.getScalarSizeInBits();
+      SmallVector<int, 16> DemandedMask(BCVT.getVectorNumElements(),
+                                        SM_SentinelUndef);
+      for (unsigned i = 0; i != Scale; ++i)
+        DemandedMask[i] = i;
+      if (SDValue Res = combineX86ShufflesRecursively(
+              {BC}, 0, BC, DemandedMask, {}, /*Depth*/ 1,
+              /*HasVarMask*/ false, DAG, DCI, Subtarget))
+        return DAG.getNode(X86ISD::VBROADCAST, DL, VT,
+                           DAG.getBitcast(SrcVT, Res));
+    }
+    return SDValue();
+  }
   case X86ISD::PSHUFD:
   case X86ISD::PSHUFLW:
   case X86ISD::PSHUFHW:
