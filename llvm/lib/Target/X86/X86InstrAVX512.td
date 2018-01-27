@@ -2958,19 +2958,19 @@ defm KSHIFTR : avx512_mask_shiftop_w<0x30, 0x31, "kshiftr", X86kshiftr, SSE_PSHU
 multiclass axv512_icmp_packed_no_vlx_lowering<PatFrag Frag, string InstStr,
                                               X86VectorVTInfo Narrow,
                                               X86VectorVTInfo Wide> {
-def : Pat<(Narrow.KVT (Frag (Narrow.VT Narrow.RC:$src1),
+  def : Pat<(Narrow.KVT (Frag (Narrow.VT Narrow.RC:$src1),
                               (Narrow.VT Narrow.RC:$src2))),
           (COPY_TO_REGCLASS
-           (!cast<Instruction>(InstStr##Zrr)
+           (!cast<Instruction>(InstStr#"Zrr")
             (Wide.VT (INSERT_SUBREG (IMPLICIT_DEF), Narrow.RC:$src1, Narrow.SubRegIdx)),
             (Wide.VT (INSERT_SUBREG (IMPLICIT_DEF), Narrow.RC:$src2, Narrow.SubRegIdx))),
            Narrow.KRC)>;
 
-def : Pat<(Narrow.KVT (and Narrow.KRC:$mask,
-                           (Frag (Narrow.VT Narrow.RC:$src1),
+  def : Pat<(Narrow.KVT (and Narrow.KRC:$mask,
+                             (Frag (Narrow.VT Narrow.RC:$src1),
                                    (Narrow.VT Narrow.RC:$src2)))),
           (COPY_TO_REGCLASS
-           (!cast<Instruction>(InstStr##Zrrk)
+           (!cast<Instruction>(InstStr#"Zrrk")
             (COPY_TO_REGCLASS Narrow.KRC:$mask, Wide.KRC),
             (Wide.VT (INSERT_SUBREG (IMPLICIT_DEF), Narrow.RC:$src1, Narrow.SubRegIdx)),
             (Wide.VT (INSERT_SUBREG (IMPLICIT_DEF), Narrow.RC:$src2, Narrow.SubRegIdx))),
@@ -5232,14 +5232,25 @@ multiclass avx512_vptest_mb<bits<8> opc, string OpcodeStr, SDNode OpNode,
 // Use 512bit version to implement 128/256 bit in case NoVLX.
 multiclass avx512_vptest_lowering<SDNode OpNode, X86VectorVTInfo ExtendInfo,
                                   X86VectorVTInfo _, string Suffix> {
-    def : Pat<(_.KVT (OpNode (_.VT _.RC:$src1), (_.VT _.RC:$src2))),
-              (_.KVT (COPY_TO_REGCLASS
-                       (!cast<Instruction>(NAME # Suffix # "Zrr")
-                         (INSERT_SUBREG (ExtendInfo.VT (IMPLICIT_DEF)),
-                                        _.RC:$src1, _.SubRegIdx),
-                         (INSERT_SUBREG (ExtendInfo.VT (IMPLICIT_DEF)),
-                                        _.RC:$src2, _.SubRegIdx)),
-                     _.KRC))>;
+  def : Pat<(_.KVT (OpNode (_.VT _.RC:$src1), (_.VT _.RC:$src2))),
+            (_.KVT (COPY_TO_REGCLASS
+                     (!cast<Instruction>(NAME # Suffix # "Zrr")
+                       (INSERT_SUBREG (ExtendInfo.VT (IMPLICIT_DEF)),
+                                      _.RC:$src1, _.SubRegIdx),
+                       (INSERT_SUBREG (ExtendInfo.VT (IMPLICIT_DEF)),
+                                      _.RC:$src2, _.SubRegIdx)),
+                   _.KRC))>;
+
+  def : Pat<(_.KVT (and _.KRC:$mask,
+                        (OpNode (_.VT _.RC:$src1), (_.VT _.RC:$src2)))),
+            (COPY_TO_REGCLASS
+             (!cast<Instruction>(NAME # Suffix # "Zrrk")
+              (COPY_TO_REGCLASS _.KRC:$mask, ExtendInfo.KRC),
+              (INSERT_SUBREG (ExtendInfo.VT (IMPLICIT_DEF)),
+                             _.RC:$src1, _.SubRegIdx),
+              (INSERT_SUBREG (ExtendInfo.VT (IMPLICIT_DEF)),
+                             _.RC:$src2, _.SubRegIdx)),
+             _.KRC)>;
 }
 
 multiclass avx512_vptest_dq_sizes<bits<8> opc, string OpcodeStr, SDNode OpNode,
