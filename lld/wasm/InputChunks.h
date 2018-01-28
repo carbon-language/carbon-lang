@@ -122,7 +122,9 @@ public:
                 const ObjFile *F)
       : InputChunk(F, InputChunk::Function), Signature(S), Function(Func) {}
 
-  static bool classof(const InputChunk *C) { return C->kind() == InputChunk::Function; }
+  static bool classof(const InputChunk *C) {
+    return C->kind() == InputChunk::Function;
+  }
 
   virtual StringRef getName() const { return Function->Name; }
   StringRef getComdat() const override { return Function->Comdat; }

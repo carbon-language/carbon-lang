@@ -121,8 +121,8 @@ static void checkSymbolTypes(const Symbol &Existing, const InputFile &F,
 
 static void checkSymbolTypes(const Symbol &Existing, const InputFile &F,
                              Symbol::Kind Kind, const InputChunk *Chunk) {
-  const WasmSignature* Sig = nullptr;
-  if (auto* F = dyn_cast_or_null<InputFunction>(Chunk))
+  const WasmSignature *Sig = nullptr;
+  if (auto *F = dyn_cast_or_null<InputFunction>(Chunk))
     Sig = &F->Signature;
   return checkSymbolTypes(Existing, F, Kind, Sig);
 }
@@ -163,8 +163,8 @@ Symbol *SymbolTable::addDefinedGlobal(StringRef Name) {
 }
 
 Symbol *SymbolTable::addDefined(StringRef Name, Symbol::Kind Kind,
-                                uint32_t Flags, InputFile *F,
-                                InputChunk *Chunk, uint32_t Address) {
+                                uint32_t Flags, InputFile *F, InputChunk *Chunk,
+                                uint32_t Address) {
   DEBUG(dbgs() << "addDefined: " << Name << " addr:" << Address << "\n");
   Symbol *S;
   bool WasInserted;

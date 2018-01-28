@@ -39,17 +39,18 @@ void Symbol::setFunctionType(const WasmSignature *Type) {
 uint32_t Symbol::getVirtualAddress() const {
   assert(isGlobal());
   DEBUG(dbgs() << "getVirtualAddress: " << getName() << "\n");
-  return Chunk ? dyn_cast<InputSegment>(Chunk)->translateVA(VirtualAddress) : VirtualAddress;
+  return Chunk ? dyn_cast<InputSegment>(Chunk)->translateVA(VirtualAddress)
+               : VirtualAddress;
 }
 
 bool Symbol::hasOutputIndex() const {
-  if (auto* F = dyn_cast_or_null<InputFunction>(Chunk))
+  if (auto *F = dyn_cast_or_null<InputFunction>(Chunk))
     return F->hasOutputIndex();
   return OutputIndex.hasValue();
 }
 
 uint32_t Symbol::getOutputIndex() const {
-  if (auto* F = dyn_cast_or_null<InputFunction>(Chunk))
+  if (auto *F = dyn_cast_or_null<InputFunction>(Chunk))
     return F->getOutputIndex();
   return OutputIndex.getValue();
 }
@@ -68,13 +69,13 @@ void Symbol::setOutputIndex(uint32_t Index) {
 }
 
 uint32_t Symbol::getTableIndex() const {
-  if (auto* F = dyn_cast_or_null<InputFunction>(Chunk))
+  if (auto *F = dyn_cast_or_null<InputFunction>(Chunk))
     return F->getTableIndex();
   return TableIndex.getValue();
 }
 
 bool Symbol::hasTableIndex() const {
-  if (auto* F = dyn_cast_or_null<InputFunction>(Chunk))
+  if (auto *F = dyn_cast_or_null<InputFunction>(Chunk))
     return F->hasTableIndex();
   return TableIndex.hasValue();
 }
@@ -83,7 +84,7 @@ void Symbol::setTableIndex(uint32_t Index) {
   // For imports, we set the table index here on the Symbol; for defined
   // functions we set the index on the InputFunction so that we don't export
   // the same thing twice (keeps the table size down).
-  if (auto* F = dyn_cast_or_null<InputFunction>(Chunk)) {
+  if (auto *F = dyn_cast_or_null<InputFunction>(Chunk)) {
     F->setTableIndex(Index);
     return;
   }
@@ -92,8 +93,7 @@ void Symbol::setTableIndex(uint32_t Index) {
   TableIndex = Index;
 }
 
-void Symbol::update(Kind K, InputFile *F, uint32_t Flags_,
-                    InputChunk *Chunk_,
+void Symbol::update(Kind K, InputFile *F, uint32_t Flags_, InputChunk *Chunk_,
                     uint32_t Address) {
   SymbolKind = K;
   File = F;

@@ -259,8 +259,8 @@ void ObjFile::initializeSymbols() {
     case WasmSymbol::SymbolType::GLOBAL_EXPORT: {
       InputSegment *Segment = getSegment(WasmSym);
       if (!isExcludedByComdat(Segment)) {
-        S = createDefined(WasmSym, Symbol::Kind::DefinedGlobalKind,
-                          Segment, getGlobalValue(WasmSym));
+        S = createDefined(WasmSym, Symbol::Kind::DefinedGlobalKind, Segment,
+                          getGlobalValue(WasmSym));
         break;
       } else {
         Segment->Discarded = true;
@@ -306,8 +306,7 @@ Symbol *ObjFile::createDefined(const WasmSymbol &Sym, Symbol::Kind Kind,
     S->update(Kind, this, Sym.Flags, Chunk, Address);
     return S;
   }
-  return Symtab->addDefined(Sym.Name, Kind, Sym.Flags, this, Chunk,
-                            Address);
+  return Symtab->addDefined(Sym.Name, Kind, Sym.Flags, this, Chunk, Address);
 }
 
 void ArchiveFile::parse() {

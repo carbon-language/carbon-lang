@@ -92,8 +92,7 @@ public:
   void setVirtualAddress(uint32_t VA);
 
   void update(Kind K, InputFile *F = nullptr, uint32_t Flags = 0,
-              InputChunk *chunk = nullptr,
-              uint32_t Address = UINT32_MAX);
+              InputChunk *chunk = nullptr, uint32_t Address = UINT32_MAX);
 
   void setArchiveSymbol(const Archive::Symbol &Sym) { ArchiveSymbol = Sym; }
   const Archive::Symbol &getArchiveSymbol() { return ArchiveSymbol; }
