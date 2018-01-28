@@ -34,6 +34,10 @@ class OutputSegment;
 
 class InputChunk {
 public:
+  enum Kind { DataSegment, Function };
+
+  Kind kind() const { return SectionKind; };
+
   uint32_t getSize() const { return data().size(); }
 
   void copyRelocations(const WasmSection &Section);
@@ -54,7 +58,7 @@ public:
   std::vector<OutputRelocation> OutRelocations;
 
 protected:
-  InputChunk(const ObjFile *F) : File(F) {}
+  InputChunk(const ObjFile *F, Kind K) : File(F), SectionKind(K) {}
   virtual ~InputChunk() = default;
   void calcRelocations();
   virtual ArrayRef<uint8_t> data() const = 0;
@@ -63,6 +67,7 @@ protected:
   std::vector<WasmRelocation> Relocations;
   int32_t OutputOffset = 0;
   const ObjFile *File;
+  Kind SectionKind;
 };
 
 // Represents a WebAssembly data segment which can be included as part of
@@ -76,7 +81,9 @@ protected:
 class InputSegment : public InputChunk {
 public:
   InputSegment(const WasmSegment &Seg, const ObjFile *F)
-      : InputChunk(F), Segment(Seg) {}
+      : InputChunk(F, InputChunk::DataSegment), Segment(Seg) {}
+
+  static bool classof(const InputChunk *C) { return C->kind() == DataSegment; }
 
   // Translate an offset in the input segment to an offset in the output
   // segment.
@@ -113,7 +120,9 @@ class InputFunction : public InputChunk {
 public:
   InputFunction(const WasmSignature &S, const WasmFunction *Func,
                 const ObjFile *F)
-      : InputChunk(F), Signature(S), Function(Func) {}
+      : InputChunk(F, InputChunk::Function), Signature(S), Function(Func) {}
+
+  static bool classof(const InputChunk *C) { return C->kind() == InputChunk::Function; }
 
   virtual StringRef getName() const { return Function->Name; }
   StringRef getComdat() const override { return Function->Comdat; }

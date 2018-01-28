@@ -245,8 +245,7 @@ void ObjFile::initializeSymbols() {
     case WasmSymbol::SymbolType::FUNCTION_EXPORT: {
       InputFunction *Function = getFunction(WasmSym);
       if (!isExcludedByComdat(Function)) {
-        S = createDefined(WasmSym, Symbol::Kind::DefinedFunctionKind, nullptr,
-                          Function);
+        S = createDefined(WasmSym, Symbol::Kind::DefinedFunctionKind, Function);
         break;
       } else {
         Function->Discarded = true;
@@ -261,7 +260,7 @@ void ObjFile::initializeSymbols() {
       InputSegment *Segment = getSegment(WasmSym);
       if (!isExcludedByComdat(Segment)) {
         S = createDefined(WasmSym, Symbol::Kind::DefinedGlobalKind,
-                          Segment, nullptr, getGlobalValue(WasmSym));
+                          Segment, getGlobalValue(WasmSym));
         break;
       } else {
         Segment->Discarded = true;
@@ -300,15 +299,14 @@ Symbol *ObjFile::createUndefined(const WasmSymbol &Sym, Symbol::Kind Kind,
 }
 
 Symbol *ObjFile::createDefined(const WasmSymbol &Sym, Symbol::Kind Kind,
-                               const InputSegment *Segment,
-                               InputFunction *Function, uint32_t Address) {
+                               InputChunk *Chunk, uint32_t Address) {
   Symbol *S;
   if (Sym.isLocal()) {
     S = make<Symbol>(Sym.Name, true);
-    S->update(Kind, this, Sym.Flags, Segment, Function, Address);
+    S->update(Kind, this, Sym.Flags, Chunk, Address);
     return S;
   }
-  return Symtab->addDefined(Sym.Name, Kind, Sym.Flags, this, Segment, Function,
+  return Symtab->addDefined(Sym.Name, Kind, Sym.Flags, this, Chunk,
                             Address);
 }
 
