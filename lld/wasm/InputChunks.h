@@ -51,8 +51,10 @@ public:
 
   uint32_t getOutputOffset() const { return OutputOffset; }
   ArrayRef<WasmRelocation> getRelocations() const { return Relocations; }
+  StringRef getFileName() const { return File->getName(); }
 
   virtual StringRef getComdat() const = 0;
+  virtual StringRef getName() const = 0;
 
   bool Discarded = false;
   std::vector<OutputRelocation> OutRelocations;
@@ -99,7 +101,7 @@ public:
   uint32_t getAlignment() const { return Segment.Data.Alignment; }
   uint32_t startVA() const { return Segment.Data.Offset.Value.Int32; }
   uint32_t endVA() const { return startVA() + getSize(); }
-  StringRef getName() const { return Segment.Data.Name; }
+  StringRef getName() const override { return Segment.Data.Name; }
   StringRef getComdat() const override { return Segment.Data.Comdat; }
 
   int32_t OutputSegmentOffset = 0;
@@ -126,7 +128,7 @@ public:
     return C->kind() == InputChunk::Function;
   }
 
-  virtual StringRef getName() const { return Function->Name; }
+  StringRef getName() const override { return Function->Name; }
   StringRef getComdat() const override { return Function->Comdat; }
   uint32_t getOutputIndex() const { return OutputIndex.getValue(); }
   bool hasOutputIndex() const { return OutputIndex.hasValue(); }
