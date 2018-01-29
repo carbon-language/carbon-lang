@@ -307,9 +307,8 @@ bool BinaryFunction::recordEntry(uint64_t To, bool Mispred, uint64_t Count) {
 }
 
 bool BinaryFunction::recordExit(uint64_t From, bool Mispred, uint64_t Count) {
-  if (!isSimple())
+  if (!isSimple() || From > getSize())
     return false;
-  assert(From <= getSize() && "wrong From address");
 
   if (!hasProfile())
     ExecutionCount = 0;
