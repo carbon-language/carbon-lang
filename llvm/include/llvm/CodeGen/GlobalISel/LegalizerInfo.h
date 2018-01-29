@@ -34,6 +34,57 @@ class MachineInstr;
 class MachineIRBuilder;
 class MachineRegisterInfo;
 
+namespace LegalizeActions {
+enum LegalizeAction : std::uint8_t {
+  /// The operation is expected to be selectable directly by the target, and
+  /// no transformation is necessary.
+  Legal,
+
+  /// The operation should be synthesized from multiple instructions acting on
+  /// a narrower scalar base-type. For example a 64-bit add might be
+  /// implemented in terms of 32-bit add-with-carry.
+  NarrowScalar,
+
+  /// The operation should be implemented in terms of a wider scalar
+  /// base-type. For example a <2 x s8> add could be implemented as a <2
+  /// x s32> add (ignoring the high bits).
+  WidenScalar,
+
+  /// The (vector) operation should be implemented by splitting it into
+  /// sub-vectors where the operation is legal. For example a <8 x s64> add
+  /// might be implemented as 4 separate <2 x s64> adds.
+  FewerElements,
+
+  /// The (vector) operation should be implemented by widening the input
+  /// vector and ignoring the lanes added by doing so. For example <2 x i8> is
+  /// rarely legal, but you might perform an <8 x i8> and then only look at
+  /// the first two results.
+  MoreElements,
+
+  /// The operation itself must be expressed in terms of simpler actions on
+  /// this target. E.g. a SREM replaced by an SDIV and subtraction.
+  Lower,
+
+  /// The operation should be implemented as a call to some kind of runtime
+  /// support library. For example this usually happens on machines that don't
+  /// support floating-point operations natively.
+  Libcall,
+
+  /// The target wants to do something special with this combination of
+  /// operand and type. A callback will be issued when it is needed.
+  Custom,
+
+  /// This operation is completely unsupported on the target. A programming
+  /// error has occurred.
+  Unsupported,
+
+  /// Sentinel value for when no action was found in the specified table.
+  NotFound,
+};
+} // end namespace LegalizeActions
+
+using LegalizeActions::LegalizeAction;
+
 /// Legalization is decided based on an instruction's opcode, which type slot
 /// we're considering, and what the existing type is. These aspects are gathered
 /// together for convenience in the InstrAspect class.
@@ -62,53 +113,6 @@ struct LegalityQuery {
 
 class LegalizerInfo {
 public:
-  enum LegalizeAction : std::uint8_t {
-    /// The operation is expected to be selectable directly by the target, and
-    /// no transformation is necessary.
-    Legal,
-
-    /// The operation should be synthesized from multiple instructions acting on
-    /// a narrower scalar base-type. For example a 64-bit add might be
-    /// implemented in terms of 32-bit add-with-carry.
-    NarrowScalar,
-
-    /// The operation should be implemented in terms of a wider scalar
-    /// base-type. For example a <2 x s8> add could be implemented as a <2
-    /// x s32> add (ignoring the high bits).
-    WidenScalar,
-
-    /// The (vector) operation should be implemented by splitting it into
-    /// sub-vectors where the operation is legal. For example a <8 x s64> add
-    /// might be implemented as 4 separate <2 x s64> adds.
-    FewerElements,
-
-    /// The (vector) operation should be implemented by widening the input
-    /// vector and ignoring the lanes added by doing so. For example <2 x i8> is
-    /// rarely legal, but you might perform an <8 x i8> and then only look at
-    /// the first two results.
-    MoreElements,
-
-    /// The operation itself must be expressed in terms of simpler actions on
-    /// this target. E.g. a SREM replaced by an SDIV and subtraction.
-    Lower,
-
-    /// The operation should be implemented as a call to some kind of runtime
-    /// support library. For example this usually happens on machines that don't
-    /// support floating-point operations natively.
-    Libcall,
-
-    /// The target wants to do something special with this combination of
-    /// operand and type. A callback will be issued when it is needed.
-    Custom,
-
-    /// This operation is completely unsupported on the target. A programming
-    /// error has occurred.
-    Unsupported,
-
-    /// Sentinel value for when no action was found in the specified table.
-    NotFound,
-  };
-
   /// The result of a query. It either indicates a final answer of Legal or
   /// Unsupported or describes an action that must be taken to make an operation
   /// more legal.
@@ -139,6 +143,7 @@ public:
   void computeTables();
 
   static bool needsLegalizingToDifferentSize(const LegalizeAction Action) {
+    using namespace LegalizeActions;
     switch (Action) {
     case NarrowScalar:
     case WidenScalar:
@@ -216,8 +221,9 @@ public:
   /// and Unsupported for all other scalar types T.
   static SizeAndActionsVec
   unsupportedForDifferentSizes(const SizeAndActionsVec &v) {
+    using namespace LegalizeActions;
     return increaseToLargerTypesAndDecreaseToLargest(v, Unsupported,
-                                                        Unsupported);
+                                                     Unsupported);
   }
 
   /// A SizeChangeStrategy for the common case where legalization for a
@@ -226,32 +232,36 @@ public:
   /// largest legal type.
   static SizeAndActionsVec
   widenToLargerTypesAndNarrowToLargest(const SizeAndActionsVec &v) {
+    using namespace LegalizeActions;
     assert(v.size() > 0 &&
            "At least one size that can be legalized towards is needed"
            " for this SizeChangeStrategy");
     return increaseToLargerTypesAndDecreaseToLargest(v, WidenScalar,
-                                                        NarrowScalar);
+                                                     NarrowScalar);
   }
 
   static SizeAndActionsVec
   widenToLargerTypesUnsupportedOtherwise(const SizeAndActionsVec &v) {
+    using namespace LegalizeActions;
     return increaseToLargerTypesAndDecreaseToLargest(v, WidenScalar,
-                                                        Unsupported);
+                                                     Unsupported);
   }
 
   static SizeAndActionsVec
   narrowToSmallerAndUnsupportedIfTooSmall(const SizeAndActionsVec &v) {
+    using namespace LegalizeActions;
     return decreaseToSmallerTypesAndIncreaseToSmallest(v, NarrowScalar,
-                                                          Unsupported);
+                                                       Unsupported);
   }
 
   static SizeAndActionsVec
   narrowToSmallerAndWidenToSmallest(const SizeAndActionsVec &v) {
+    using namespace LegalizeActions;
     assert(v.size() > 0 &&
            "At least one size that can be legalized towards is needed"
            " for this SizeChangeStrategy");
     return decreaseToSmallerTypesAndIncreaseToSmallest(v, NarrowScalar,
-                                                          WidenScalar);
+                                                       WidenScalar);
   }
 
   /// A SizeChangeStrategy for the common case where legalization for a
@@ -274,8 +284,9 @@ public:
   ///       (FewerElements, vector(4,32)).
   static SizeAndActionsVec
   moreToWiderTypesAndLessToWidest(const SizeAndActionsVec &v) {
+    using namespace LegalizeActions;
     return increaseToLargerTypesAndDecreaseToLargest(v, MoreElements,
-                                                        FewerElements);
+                                                     FewerElements);
   }
 
   /// Helper function to implement many typical SizeChangeStrategy functions.
@@ -385,6 +396,7 @@ private:
   /// A partial SizeAndActionsVec potentially doesn't cover all bit sizes,
   /// i.e. it's OK if it doesn't start from size 1.
   static void checkPartialSizeAndActionsVector(const SizeAndActionsVec& v) {
+    using namespace LegalizeActions;
 #ifndef NDEBUG
     // The sizes should be in increasing order
     int prev_size = -1;

@@ -29,7 +29,9 @@
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
 #include <map>
+
 using namespace llvm;
+using namespace LegalizeActions;
 
 LegalizerInfo::LegalizerInfo() : TablesInitialized(false) {
   // Set defaults.
@@ -162,7 +164,7 @@ void LegalizerInfo::computeTables() {
 // probably going to need specialized lookup structures for various types before
 // we have any hope of doing well with something like <13 x i3>. Even the common
 // cases should do better than what we have now.
-std::pair<LegalizerInfo::LegalizeAction, LLT>
+std::pair<LegalizeAction, LLT>
 LegalizerInfo::getAspectAction(const InstrAspect &Aspect) const {
   assert(TablesInitialized && "backend forgot to call computeTables");
   // These *have* to be implemented for now, they're the fundamental basis of
@@ -326,7 +328,7 @@ LegalizerInfo::findAction(const SizeAndActionsVec &Vec, const uint32_t Size) {
   llvm_unreachable("Action has an unknown enum value");
 }
 
-std::pair<LegalizerInfo::LegalizeAction, LLT>
+std::pair<LegalizeAction, LLT>
 LegalizerInfo::findScalarLegalAction(const InstrAspect &Aspect) const {
   assert(Aspect.Type.isScalar() || Aspect.Type.isPointer());
   if (Aspect.Opcode < FirstOp || Aspect.Opcode > LastOp)
@@ -355,7 +357,7 @@ LegalizerInfo::findScalarLegalAction(const InstrAspect &Aspect) const {
                                                 SizeAndAction.first)};
 }
 
-std::pair<LegalizerInfo::LegalizeAction, LLT>
+std::pair<LegalizeAction, LLT>
 LegalizerInfo::findVectorLegalAction(const InstrAspect &Aspect) const {
   assert(Aspect.Type.isVector());
   // First legalize the vector element size, then legalize the number of
