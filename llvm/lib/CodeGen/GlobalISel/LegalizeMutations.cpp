@@ -15,7 +15,7 @@
 
 using namespace llvm;
 
-LegalizeMutation LegalizeMutations::identity(unsigned TypeIdx, LLT Ty) {
+LegalizeMutation LegalizeMutations::changeTo(unsigned TypeIdx, LLT Ty) {
   return
       [=](const LegalityQuery &Query) { return std::make_pair(TypeIdx, Ty); };
 }

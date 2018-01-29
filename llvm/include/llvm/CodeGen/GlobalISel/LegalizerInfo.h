@@ -158,7 +158,7 @@ LegalityPredicate numElementsNotPow2(unsigned TypeIdx);
 } // end namespace LegalityPredicates
 
 namespace LegalizeMutations {
-LegalizeMutation identity(unsigned TypeIdx, LLT Ty);
+LegalizeMutation changeTo(unsigned TypeIdx, LLT Ty);
 LegalizeMutation widenScalarToNextPow2(unsigned TypeIdx, unsigned Min = 0);
 LegalizeMutation moreElementsToNextPow2(unsigned TypeIdx, unsigned Min = 0);
 } // end namespace LegalizeMutations
@@ -339,14 +339,14 @@ public:
     using namespace LegalityPredicates;
     using namespace LegalizeMutations;
     return widenScalarIf(narrowerThan(TypeIdx, Ty.getSizeInBits()),
-                         LegalizeMutations::identity(TypeIdx, Ty));
+                         changeTo(TypeIdx, Ty));
   }
 
   LegalizeRuleSet &maxScalar(unsigned TypeIdx, const LLT &Ty) {
     using namespace LegalityPredicates;
     using namespace LegalizeMutations;
     return narrowScalarIf(widerThan(TypeIdx, Ty.getSizeInBits()),
-                          LegalizeMutations::identity(TypeIdx, Ty));
+                          changeTo(TypeIdx, Ty));
   }
 
   LegalizeRuleSet &maxScalarIf(LegalityPredicate Predicate, unsigned TypeIdx, const LLT &Ty) {
@@ -357,7 +357,7 @@ public:
           return widerThan(TypeIdx, Ty.getSizeInBits()) &&
                  Predicate(Query);
         },
-        LegalizeMutations::identity(TypeIdx, Ty));
+        changeTo(TypeIdx, Ty));
   }
 
   LegalizeRuleSet &clampScalar(unsigned TypeIdx, const LLT &MinTy, const LLT &MaxTy) {
