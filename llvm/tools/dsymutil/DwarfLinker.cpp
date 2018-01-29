@@ -3344,7 +3344,7 @@ void DwarfLinker::patchLineTableForUnit(CompileUnit &Unit,
   DWARFDataExtractor LineExtractor(
       OrigDwarf.getDWARFObj(), OrigDwarf.getDWARFObj().getLineSection(),
       OrigDwarf.isLittleEndian(), Unit.getOrigUnit().getAddressByteSize());
-  LineTable.parse(LineExtractor, &StmtOffset, &Unit.getOrigUnit());
+  LineTable.parse(LineExtractor, &StmtOffset, OrigDwarf, &Unit.getOrigUnit());
 
   // This vector is the output line table.
   std::vector<DWARFDebugLine::Row> NewRows;
