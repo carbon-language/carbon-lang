@@ -7,7 +7,6 @@
 #include <memory>
 #include <set>
 #include <utility>
-#include <iostream>  // TODO pmk rm
 
 namespace Fortran {
 
@@ -243,12 +242,7 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
       for (; count-- > 0; ++at) {
         actual.push_back(input.GetText(at), input.GetBytes(at));
       }
-      TokenSequence arg;
-      if (true /*pmk?*/ || !MacroReplacement(actual, &arg)) {
-        args.emplace_back(std::move(actual));
-      } else {
-        args.emplace_back(std::move(arg));
-      }
+      args.emplace_back(std::move(actual));
     }
     TokenSequence repl{def.Apply(args)};
     def.set_isDisabled(true);
