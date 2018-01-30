@@ -255,7 +255,7 @@ LLVM emits the following options:
     be looked up in the default and any specified library search paths
     (specified to this point).
 
-  - path
+  - libpath
 
     The paramter identifies an additional library search path to be considered
     when looking up libraries after the inclusion of this option.
