@@ -676,8 +676,7 @@ bool AArch64InstrInfo::isAsCheapAsAMove(const MachineInstr &MI) const {
   if (!Subtarget.hasCustomCheapAsMoveHandling())
     return MI.isAsCheapAsAMove();
 
-  if (Subtarget.getProcFamily() == AArch64Subtarget::ExynosM1 ||
-      Subtarget.getProcFamily() == AArch64Subtarget::ExynosM3) {
+  if (Subtarget.hasExynosCheapAsMoveHandling()) {
     if (isExynosResetFast(MI) || isExynosShiftLeftFast(MI))
       return true;
     else
