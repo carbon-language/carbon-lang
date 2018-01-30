@@ -48,6 +48,7 @@ public:
     CortexA75,
     Cyclone,
     ExynosM1,
+    ExynosM3,
     Falkor,
     Kryo,
     Saphira,

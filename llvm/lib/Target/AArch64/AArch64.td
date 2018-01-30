@@ -200,6 +200,7 @@ include "AArch64SchedCyclone.td"
 include "AArch64SchedFalkor.td"
 include "AArch64SchedKryo.td"
 include "AArch64SchedExynosM1.td"
+include "AArch64SchedExynosM3.td"
 include "AArch64SchedThunderX.td"
 include "AArch64SchedThunderX2T99.td"
 
@@ -334,7 +335,7 @@ def ProcExynosM2 : SubtargetFeature<"exynosm2", "ARMProcFamily", "ExynosM1",
                                      FeatureSlowMisaligned128Store,
                                      FeatureZCZeroing]>;
 
-def ProcExynosM3 : SubtargetFeature<"exynosm3", "ARMProcFamily", "ExynosM1",
+def ProcExynosM3 : SubtargetFeature<"exynosm3", "ARMProcFamily", "ExynosM3",
                                     "Samsung Exynos-M3 processors",
                                     [FeatureCRC,
                                      FeatureCrypto,
@@ -342,11 +343,11 @@ def ProcExynosM3 : SubtargetFeature<"exynosm3", "ARMProcFamily", "ExynosM1",
                                      FeatureFPARMv8,
                                      FeatureFuseAES,
                                      FeatureFuseLiterals,
+                                     FeatureLSLFast,
                                      FeatureNEON,
                                      FeaturePerfMon,
                                      FeaturePostRAScheduler,
-                                     FeatureSlowMisaligned128Store,
-                                     FeatureSlowPaired128,
+                                     FeaturePredictableSelectIsExpensive,
                                      FeatureZCZeroing]>;
 
 def ProcKryo    : SubtargetFeature<"kryo", "ARMProcFamily", "Kryo",
@@ -470,7 +471,7 @@ def : ProcessorModel<"cortex-a75", CortexA57Model, [ProcA75]>;
 def : ProcessorModel<"cyclone", CycloneModel, [ProcCyclone]>;
 def : ProcessorModel<"exynos-m1", ExynosM1Model, [ProcExynosM1]>;
 def : ProcessorModel<"exynos-m2", ExynosM1Model, [ProcExynosM2]>;
-def : ProcessorModel<"exynos-m3", ExynosM1Model, [ProcExynosM3]>;
+def : ProcessorModel<"exynos-m3", ExynosM3Model, [ProcExynosM3]>;
 def : ProcessorModel<"falkor", FalkorModel, [ProcFalkor]>;
 def : ProcessorModel<"saphira", FalkorModel, [ProcSaphira]>;
 def : ProcessorModel<"kryo", KryoModel, [ProcKryo]>;

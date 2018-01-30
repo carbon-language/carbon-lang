@@ -82,6 +82,12 @@ void AArch64Subtarget::initializeProperties() {
     PrefFunctionAlignment = 4;
     PrefLoopAlignment = 3;
     break;
+  case ExynosM3:
+    MaxInterleaveFactor = 4;
+    MaxJumpTableSize = 20;
+    PrefFunctionAlignment = 5;
+    PrefLoopAlignment = 4;
+    break;
   case Falkor:
     MaxInterleaveFactor = 4;
     // FIXME: remove this to enable 64-bit SLP if performance looks good.
