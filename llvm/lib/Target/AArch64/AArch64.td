@@ -120,6 +120,10 @@ def FeatureArithmeticCbzFusion : SubtargetFeature<
     "arith-cbz-fusion", "HasArithmeticCbzFusion", "true",
     "CPU fuses arithmetic + cbz/cbnz operations">;
 
+def FeatureFuseAddress : SubtargetFeature<
+    "fuse-address", "HasFuseAddress", "true",
+    "CPU fuses address generation and memory operations">;
+
 def FeatureFuseAES : SubtargetFeature<
     "fuse-aes", "HasFuseAES", "true",
     "CPU fuses AES crypto operations">;
@@ -346,6 +350,7 @@ def ProcExynosM3 : SubtargetFeature<"exynosm3", "ARMProcFamily", "ExynosM3",
                                      FeatureCrypto,
                                      FeatureExynosCheapAsMoveHandling,
                                      FeatureFPARMv8,
+                                     FeatureFuseAddress,
                                      FeatureFuseAES,
                                      FeatureFuseLiterals,
                                      FeatureLSLFast,

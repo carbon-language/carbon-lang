@@ -111,6 +111,7 @@ protected:
   bool UseAlternateSExtLoadCVTF32Pattern = false;
   bool HasArithmeticBccFusion = false;
   bool HasArithmeticCbzFusion = false;
+  bool HasFuseAddress = false;
   bool HasFuseAES = false;
   bool HasFuseLiterals = false;
   bool DisableLatencySchedHeuristic = false;
@@ -236,6 +237,7 @@ public:
   }
   bool hasArithmeticBccFusion() const { return HasArithmeticBccFusion; }
   bool hasArithmeticCbzFusion() const { return HasArithmeticCbzFusion; }
+  bool hasFuseAddress() const { return HasFuseAddress; }
   bool hasFuseAES() const { return HasFuseAES; }
   bool hasFuseLiterals() const { return HasFuseLiterals; }
 
