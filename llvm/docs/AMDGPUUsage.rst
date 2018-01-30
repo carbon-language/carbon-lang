@@ -561,12 +561,13 @@ The AMDGPU backend uses the following ELF header:
      ``EF_AMDGPU_MACH_AMDGCN_GFX702``  36         ``gfx702``
      ``EF_AMDGPU_MACH_AMDGCN_GFX703``  37         ``gfx703``
      ``EF_AMDGPU_MACH_AMDGCN_GFX704``  38         ``gfx704``
-     ``EF_AMDGPU_MACH_AMDGCN_GFX801``  39         ``gfx801``
-     ``EF_AMDGPU_MACH_AMDGCN_GFX802``  40         ``gfx802``
-     ``EF_AMDGPU_MACH_AMDGCN_GFX803``  41         ``gfx803``
-     ``EF_AMDGPU_MACH_AMDGCN_GFX810``  42         ``gfx810``
-     ``EF_AMDGPU_MACH_AMDGCN_GFX900``  43         ``gfx900``
-     ``EF_AMDGPU_MACH_AMDGCN_GFX902``  44         ``gfx902``
+     *reserved*                        39         Reserved.
+     ``EF_AMDGPU_MACH_AMDGCN_GFX801``  40         ``gfx801``
+     ``EF_AMDGPU_MACH_AMDGCN_GFX802``  41         ``gfx802``
+     ``EF_AMDGPU_MACH_AMDGCN_GFX803``  42         ``gfx803``
+     ``EF_AMDGPU_MACH_AMDGCN_GFX810``  43         ``gfx810``
+     ``EF_AMDGPU_MACH_AMDGCN_GFX900``  44         ``gfx900``
+     ``EF_AMDGPU_MACH_AMDGCN_GFX902``  45         ``gfx902``
      ================================= ========== =============================
 
 Sections
@@ -773,24 +774,24 @@ The following relocation types are supported:
   .. table:: AMDGPU ELF Relocation Records
      :name: amdgpu-elf-relocation-records-table
 
-     ==========================  =====  ==========  ==============================
-     Relocation Type             Value  Field       Calculation
-     ==========================  =====  ==========  ==============================
-     ``R_AMDGPU_NONE``           0      *none*      *none*
-     ``R_AMDGPU_ABS32_LO``       1      ``word32``  (S + A) & 0xFFFFFFFF
-     ``R_AMDGPU_ABS32_HI``       2      ``word32``  (S + A) >> 32
-     ``R_AMDGPU_ABS64``          3      ``word64``  S + A
-     ``R_AMDGPU_REL32``          4      ``word32``  S + A - P
-     ``R_AMDGPU_REL64``          5      ``word64``  S + A - P
-     ``R_AMDGPU_ABS32``          6      ``word32``  S + A
-     ``R_AMDGPU_GOTPCREL``       7      ``word32``  G + GOT + A - P
-     ``R_AMDGPU_GOTPCREL32_LO``  8      ``word32``  (G + GOT + A - P) & 0xFFFFFFFF
-     ``R_AMDGPU_GOTPCREL32_HI``  9      ``word32``  (G + GOT + A - P) >> 32
-     ``R_AMDGPU_REL32_LO``       10     ``word32``  (S + A - P) & 0xFFFFFFFF
-     ``R_AMDGPU_REL32_HI``       11     ``word32``  (S + A - P) >> 32
-     *reserved*                  12
-     ``R_AMDGPU_RELATIVE64``     13     ``word64``  B + A
-     ==========================  =====  ==========  ==============================
+     ========================== ======= =====  ==========  ==============================
+     Relocation Type            Kind    Value  Field       Calculation
+     ========================== ======= =====  ==========  ==============================
+     ``R_AMDGPU_NONE``                  0      *none*      *none*
+     ``R_AMDGPU_ABS32_LO``      Dynamic 1      ``word32``  (S + A) & 0xFFFFFFFF
+     ``R_AMDGPU_ABS32_HI``      Dynamic 2      ``word32``  (S + A) >> 32
+     ``R_AMDGPU_ABS64``         Dynamic 3      ``word64``  S + A
+     ``R_AMDGPU_REL32``         Static  4      ``word32``  S + A - P
+     ``R_AMDGPU_REL64``         Static  5      ``word64``  S + A - P
+     ``R_AMDGPU_ABS32``         Static  6      ``word32``  S + A
+     ``R_AMDGPU_GOTPCREL``      Static  7      ``word32``  G + GOT + A - P
+     ``R_AMDGPU_GOTPCREL32_LO`` Static  8      ``word32``  (G + GOT + A - P) & 0xFFFFFFFF
+     ``R_AMDGPU_GOTPCREL32_HI`` Static  9      ``word32``  (G + GOT + A - P) >> 32
+     ``R_AMDGPU_REL32_LO``      Static  10     ``word32``  (S + A - P) & 0xFFFFFFFF
+     ``R_AMDGPU_REL32_HI``      Static  11     ``word32``  (S + A - P) >> 32
+     *reserved*                         12
+     ``R_AMDGPU_RELATIVE64``    Dynamic 13     ``word64``  B + A
+     ========================== ======= =====  ==========  ==============================
 
 .. _amdgpu-dwarf:
 
