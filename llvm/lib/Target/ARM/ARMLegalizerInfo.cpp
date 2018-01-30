@@ -192,6 +192,12 @@ ARMLegalizerInfo::ARMLegalizerInfo(const ARMSubtarget &ST) {
       for (auto Ty : {s32, s64})
         setAction({Op, 1, Ty}, Legal);
     }
+
+    for (unsigned Op : {G_SITOFP, G_UITOFP}) {
+      setAction({Op, 1, s32}, Legal);
+      for (auto Ty : {s32, s64})
+        setAction({Op, Ty}, Legal);
+    }
   } else {
     for (unsigned BinOp : {G_FADD, G_FSUB, G_FMUL, G_FDIV})
       for (auto Ty : {s32, s64})
@@ -216,6 +222,11 @@ ARMLegalizerInfo::ARMLegalizerInfo(const ARMSubtarget &ST) {
       setAction({Op, s32}, Legal);
       setAction({Op, 1, s32}, Libcall);
       setAction({Op, 1, s64}, Libcall);
+    }
+
+    for (unsigned Op : {G_SITOFP, G_UITOFP}) {
+      for (auto Ty : {s32, s64})
+        setAction({Op, Ty}, Libcall);
     }
 
     if (AEABI(ST))
