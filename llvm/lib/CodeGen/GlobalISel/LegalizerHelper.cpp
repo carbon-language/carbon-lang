@@ -150,6 +150,10 @@ static RTLIB::Libcall getConvRTLibDesc(unsigned Opcode, Type *ToType,
     return RTLIB::getFPEXT(FromMVT, ToMVT);
   case TargetOpcode::G_FPTRUNC:
     return RTLIB::getFPROUND(FromMVT, ToMVT);
+  case TargetOpcode::G_FPTOSI:
+    return RTLIB::getFPTOSINT(FromMVT, ToMVT);
+  case TargetOpcode::G_FPTOUI:
+    return RTLIB::getFPTOUINT(FromMVT, ToMVT);
   }
   llvm_unreachable("Unsupported libcall function");
 }
@@ -216,6 +220,20 @@ LegalizerHelper::libcall(MachineInstr &MI) {
       return UnableToLegalize;
     LegalizeResult Status = conversionLibcall(
         MI, MIRBuilder, Type::getFloatTy(Ctx), Type::getDoubleTy(Ctx));
+    if (Status != Legalized)
+      return Status;
+    break;
+  }
+  case TargetOpcode::G_FPTOSI:
+  case TargetOpcode::G_FPTOUI: {
+    // FIXME: Support other types
+    unsigned FromSize = MRI.getType(MI.getOperand(1).getReg()).getSizeInBits();
+    unsigned ToSize = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
+    if (ToSize != 32 || (FromSize != 32 && FromSize != 64))
+      return UnableToLegalize;
+    LegalizeResult Status = conversionLibcall(
+        MI, MIRBuilder, Type::getInt32Ty(Ctx),
+        FromSize == 64 ? Type::getDoubleTy(Ctx) : Type::getFloatTy(Ctx));
     if (Status != Legalized)
       return Status;
     break;
