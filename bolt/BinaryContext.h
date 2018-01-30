@@ -62,8 +62,10 @@ class BinaryContext {
   using SectionMapType = std::map<uint64_t, BinarySection>;
   SectionMapType AllocatableSections;
 
-  /// Map of section name to BinarySection object.
-  std::map<std::string, BinarySection *> NameToSection;
+  /// multimap of section name to BinarySection object.  Some binaries
+  /// have multiple sections with the same name.
+  using NameToSectionMapType = std::multimap<std::string, BinarySection *>;
+  NameToSectionMapType NameToSection;
 public:
 
   /// [name] -> [address] map used for global symbol resolution.
@@ -220,10 +222,9 @@ public:
            "can't register section twice");
     StringRef Name;
     Section.getName(Name);
-    assert(!NameToSection.count(Name) && "can't register section name twice");
     auto Res = AllocatableSections.emplace(Section.getAddress(),
                                            BinarySection(Section));
-    NameToSection[Name] = &Res.first->second;
+    NameToSection.insert(std::make_pair(Name, &Res.first->second));
     return Res.first->second;
   }
 
@@ -239,17 +240,32 @@ public:
   ErrorOr<BinarySection &> getSectionForAddress(uint64_t Address);
   ErrorOr<const BinarySection &> getSectionForAddress(uint64_t Address) const;
 
-  /// Return (allocatable) section associated with given \p Name.
-  ErrorOr<BinarySection &> getSectionByName(StringRef Name) {
-    auto Itr = NameToSection.find(Name);
-    if (Itr != NameToSection.end())
-      return *Itr->second;
+  /// Return (allocatable) section(s) associated with given \p Name.
+  iterator_range<NameToSectionMapType::iterator>
+  getSectionByName(StringRef Name) {
+    return make_range(NameToSection.equal_range(Name));
+  }
+  iterator_range<NameToSectionMapType::const_iterator>
+  getSectionByName(StringRef Name) const {
+    return make_range(NameToSection.equal_range(Name));
+  }
+
+  /// Return the unique (allocatable) section associated with given \p Name.
+  /// If there is more than one section with the same name, return an error
+  /// object.
+  ErrorOr<BinarySection &> getUniqueSectionByName(StringRef SectionName) {
+    auto Sections = getSectionByName(SectionName);
+    if (Sections.begin() != Sections.end() &&
+        std::next(Sections.begin()) == Sections.end())
+      return *Sections.begin()->second;
     return std::make_error_code(std::errc::bad_address);
   }
-  ErrorOr<const BinarySection &> getSectionByName(StringRef Name) const {
-    auto Itr = NameToSection.find(Name);
-    if (Itr != NameToSection.end())
-      return *Itr->second;
+  ErrorOr<const BinarySection &>
+  getUniqueSectionByName(StringRef SectionName) const {
+    auto Sections = getSectionByName(SectionName);
+    if (Sections.begin() != Sections.end() &&
+        std::next(Sections.begin()) == Sections.end())
+      return *Sections.begin()->second;
     return std::make_error_code(std::errc::bad_address);
   }
 

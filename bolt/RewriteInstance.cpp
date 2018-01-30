@@ -1599,12 +1599,12 @@ void RewriteInstance::readSpecialSections() {
     }
   }
 
-  EHFrameSection = BC->getSectionByName(".eh_frame");
-  GdbIndexSection = BC->getSectionByName(".gdb_index");
-  PLTSection = BC->getSectionByName(".plt");
-  GOTPLTSection = BC->getSectionByName(".got.plt");
-  PLTGOTSection = BC->getSectionByName(".plt.got");
-  RelaPLTSection = BC->getSectionByName(".rela.plt");
+  EHFrameSection = BC->getUniqueSectionByName(".eh_frame");
+  GdbIndexSection = BC->getUniqueSectionByName(".gdb_index");
+  PLTSection = BC->getUniqueSectionByName(".plt");
+  GOTPLTSection = BC->getUniqueSectionByName(".got.plt");
+  PLTGOTSection = BC->getUniqueSectionByName(".plt.got");
+  RelaPLTSection = BC->getUniqueSectionByName(".rela.plt");
 
   if (opts::RelocationMode == cl::BOU_TRUE && !HasTextRelocations) {
     errs() << "BOLT-ERROR: relocations against code are missing from the input "
