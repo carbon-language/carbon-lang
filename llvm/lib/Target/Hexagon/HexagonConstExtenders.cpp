@@ -57,7 +57,6 @@ namespace {
       return *this;
     }
     OffsetRange &shift(int32_t S) {
-      assert(alignTo(std::abs(S), Align) == uint64_t(std::abs(S)));
       Min += S;
       Max += S;
       return *this;
