@@ -1,0 +1,100 @@
+#ifndef FORTRAN_PRESCAN_H_
+#define FORTRAN_PRESCAN_H_
+
+// Defines a fast Fortran source prescanning phase that implements some
+// character-level features of the language that can be inefficient to
+// support directly in a backtracking parser.  This phase handles Fortran
+// line continuation, comment removal, card image margins, padding out
+// fixed form character literals on truncated card images, and drives the
+// Fortran source preprocessor.
+//
+// It is possible to run the Fortran parser without running this prescan
+// phase, using only the parsers defined in cooked-chars.h, so long as
+// preprocessing and INCLUDE lines need not be handled.
+
+#include "char-buffer.h"
+#include "preprocessor.h"
+#include "source.h"
+#include <optional>
+#include <sstream>
+
+namespace Fortran {
+
+class Prescanner {
+ public:
+  explicit Prescanner(std::stringstream *err)
+    : error_{err}, preprocessor_{this} {}
+
+  Prescanner &set_fixedForm(bool yes) {
+    inFixedForm_ = yes;
+    return *this;
+  }
+  Prescanner &set_enableOldDebugLines(bool yes) {
+    enableOldDebugLines_ = yes;
+    return *this;
+  }
+  Prescanner &set_enableBackslashEscapesInCharLiterals(bool yes) {
+    enableBackslashEscapesInCharLiterals_ = yes;
+    return *this;
+  }
+  Prescanner &set_fixedFormColumnLimit(int limit) {
+    fixedFormColumnLimit_ = limit;
+    return *this;
+  }
+
+  CharBuffer Prescan(const SourceFile &source);
+  std::optional<TokenSequence> NextTokenizedLine();
+
+ private:
+  void BeginSourceLine(const char *at, int column = 1) {
+    at_ = at;
+    column_ = column;
+    tabInCurrentLine_ = false;
+    preventHollerith_ = false;
+  }
+
+  void BeginSourceLineAndAdvance() {
+    BeginSourceLine(lineStart_);
+    NextLine();
+  }
+
+  char EmitCharAndAdvance(TokenSequence *tokens, char ch) {
+    tokens->AddChar(ch);
+    NextChar();
+    return *at_;
+  }
+
+  void NextLine();
+  void LabelField(CharBuffer *);
+  void NextChar();
+  void SkipSpaces();
+  bool NextToken(TokenSequence *);
+  bool ExponentAndKind(TokenSequence *);
+  void QuotedCharacterLiteral(TokenSequence *);
+  bool PadOutCharacterLiteral();
+  void CommentLinesAndPreprocessorDirectives();
+  bool IsFixedFormCommentLine(const char *);
+  bool IsFreeFormComment(const char *);
+  bool IsPreprocessorDirectiveLine(const char *);
+  const char *FixedFormContinuationLine();
+  bool FixedFormContinuation();
+  bool FreeFormContinuation();
+
+  std::stringstream *error_;
+  const char *lineStart_{nullptr};  // next line to process; <= limit_
+  const char *at_{nullptr};  // next character to process; < lineStart_
+  int column_{1};  // card image column position of next character
+  const char *limit_{nullptr};  // first address after end of source
+  int newlineDebt_{0};  // newline characters consumed but not yet emitted
+  bool inCharLiteral_{false};
+  bool inPreprocessorDirective_{false};
+  bool inFixedForm_{true};
+  int fixedFormColumnLimit_{72};
+  bool tabInCurrentLine_{false};
+  bool preventHollerith_{false};
+  bool enableOldDebugLines_{false};
+  bool enableBackslashEscapesInCharLiterals_{true};
+  Preprocessor preprocessor_;
+};
+}  // namespace Fortran
+#endif  // FORTRAN_PRESCAN_H_
