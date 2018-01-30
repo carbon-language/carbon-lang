@@ -103,19 +103,27 @@ class TokenSequence {
   void AddChar(char ch) {
     char_.emplace_back(ch);
   }
+
   void EndToken() {
     // CHECK(char_.size() > nextStart_);
     start_.emplace_back(nextStart_);
     nextStart_ = char_.size();
   }
 
+  void ReopenLastToken() {
+    nextStart_ = start_.back();
+    start_.pop_back();
+  }
+
   void Append(const TokenSequence &);
 
-  void Emit(CharBuffer *);
+  void EmitWithCaseConversion(CharBuffer *);
 
   bool empty() const { return start_.empty(); }
 
   size_t size() const { return start_.size(); }
+
+  const char *data() const { return &char_[0]; }
 
   void clear() {
     start_.clear();

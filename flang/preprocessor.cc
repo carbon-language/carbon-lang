@@ -2,10 +2,12 @@
 #include "char-buffer.h"
 #include "idioms.h"
 #include "prescan.h"
+#include <cctype>
 #include <map>
 #include <memory>
 #include <set>
 #include <utility>
+#include <iostream>  // TODO pmk rm
 
 namespace Fortran {
 
@@ -21,8 +23,21 @@ void TokenSequence::Append(const TokenSequence &that) {
   nextStart_ = char_.size();
 }
 
-void TokenSequence::Emit(CharBuffer *out) {
-  out->Put(char_);
+void TokenSequence::EmitWithCaseConversion(CharBuffer *out) {
+  size_t tokens{start_.size()};
+  size_t chars{char_.size()};
+  size_t atToken{0};
+  for (size_t j{0}; j < chars; ) {
+    size_t nextStart{atToken + 1 < tokens ? start_[++atToken] : chars};
+    if (isalpha(char_[j])) {
+      for (; j < nextStart; ++j) {
+        out->Put(tolower(char_[j]));
+      }
+    } else {
+      out->Put(&char_[j], nextStart - j);
+      j = nextStart;
+    }
+  }
 }
 
 Definition::Definition(const TokenSequence &repl, size_t firstToken,
@@ -51,35 +66,17 @@ TokenSequence Definition::Tokenize(const std::vector<std::string> &argNames,
     args[arg] = "~"s + argIndex++;
   }
   TokenSequence result;
-  bool pasting{false};
   for (size_t j{0}; j < tokens; ++j) {
     size_t bytes{token.GetBytes(firstToken + j)};
     if (bytes == 0) {
       continue;
     }
     const char *text{token.GetText(firstToken + j)};
-    if (bytes == 2 && text[0] == '#' && text[1] == '#') {
-      for (size_t rtc{result.size()};
-           rtc > 0 && (result.GetBytes(rtc-1) == 0 ||
-                       *result.GetText(rtc-1) == ' ');
-           --rtc) {
-        result.pop_back();
-      }
-      pasting = true;
-      continue;
-    }
-    if (*text == ' ') {
-      if (pasting) {
+    if (bytes > 0 && (*text == '_' || isalpha(*text))) {
+      auto it = args.find(token.GetString(firstToken + j));
+      if (it != args.end()) {
+        result.push_back(it->second);
         continue;
-      }
-    } else {
-      pasting = false;
-      if (bytes > 0 && (*text == '_' || isalpha(*text))) {
-        auto it = args.find(token.GetString(firstToken + j));
-        if (it != args.end()) {
-          result.push_back(it->second);
-          continue;
-        }
       }
     }
     result.push_back(text, bytes);
@@ -89,7 +86,7 @@ TokenSequence Definition::Tokenize(const std::vector<std::string> &argNames,
 
 TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
   TokenSequence result;
-  bool stringify{false};
+  bool stringify{false}, pasting{false};
   size_t tokens{replacement_.size()};
   for (size_t j{0}; j < tokens; ++j) {
     size_t bytes{replacement_.GetBytes(j)};
@@ -118,12 +115,34 @@ TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
         result.push_back(strung);
       } else {
         for (size_t k{0}; k < argTokens; ++k) {
-          result.push_back(args[index].GetText(k), args[index].GetBytes(k));
+          const char *text{args[index].GetText(k)};
+          size_t bytes{args[index].GetBytes(k)};
+          if (pasting && (bytes == 0 || *text == ' ' || *text == '\t')) {
+          } else {
+            result.push_back(text, bytes);
+            pasting = false;
+          }
         }
       }
+    } else if (bytes == 2 && text[0] == '#' && text[1] == '#') {
+      // Token pasting operator in body (not expanded argument); discard any
+      // immediately preceding white space, then reopen the last token.
+      while (!result.empty() &&
+             (result.GetBytes(result.size() - 1) == 0 ||
+              *result.GetText(result.size() - 1) == ' ' ||
+              *result.GetText(result.size() - 1) == '\t')) {
+        result.pop_back();
+      }
+      if (!result.empty()) {
+        result.ReopenLastToken();
+        pasting = true;
+      }
+    } else if (pasting && (bytes == 0 || *text == ' ' || *text == '\t')) {
+      // Delete whitespace immediately following ## in the body.
     } else {
       stringify = bytes == 1 && *text == '#';
       result.push_back(text, bytes);
+      pasting = false;
     }
   }
   return result;
@@ -225,7 +244,7 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
         actual.push_back(input.GetText(at), input.GetBytes(at));
       }
       TokenSequence arg;
-      if (!MacroReplacement(actual, &arg)) {
+      if (true /*pmk?*/ || !MacroReplacement(actual, &arg)) {
         args.emplace_back(std::move(actual));
       } else {
         args.emplace_back(std::move(arg));
@@ -279,6 +298,9 @@ std::string Preprocessor::Directive(const TokenSequence &dir) {
     return ""s;  // TODO: treat as #line
   }
   std::string dirName{dir.GetString(j)};
+  for (char &ch : dirName) {
+    ch = tolower(ch);
+  }
   j = SkipBlanks(dir, j + 1);
   std::string nameString;
   CharPointerWithLength nameToken;
@@ -331,7 +353,6 @@ std::string Preprocessor::Directive(const TokenSequence &dir) {
       definitions_.emplace(
         std::make_pair(nameToken, Definition{argName, dir, j, tokens - j}));
     } else {
-      j = SkipBlanks(dir, j + 1);
       definitions_.emplace(
         std::make_pair(nameToken, Definition{dir, j, tokens - j}));
     }

@@ -40,17 +40,6 @@ void CharBuffer::Put(const std::string &str) {
   Put(str.data(), str.size());
 }
 
-void CharBuffer::Put(const std::vector<char> &data) {
-  size_t n{data.size()};
-  size_t chunk;
-  for (size_t at{0}; at < n; at += chunk) {
-    char *to{FreeSpace(&chunk)};
-    chunk = std::min(n - at, chunk);
-    Claim(chunk);
-    std::memcpy(to, &data[at], chunk);
-  }
-}
-
 void CharBuffer::CopyToContiguous(char *data) {
   char *to{data};
   for (char ch : *this) {

@@ -41,7 +41,6 @@ class CharBuffer {
   void Claim(size_t);
   void Put(const char *data, size_t n);
   void Put(const std::string &);
-  void Put(const std::vector<char> &);
   void Put(char x) { Put(&x, 1); }
   void CopyToContiguous(char *data);
 

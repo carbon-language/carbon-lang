@@ -51,6 +51,7 @@ class Prescanner {
     column_ = column;
     tabInCurrentLine_ = false;
     preventHollerith_ = false;
+    delimiterNesting_ = 0;
   }
 
   void BeginSourceLineAndAdvance() {
@@ -65,20 +66,22 @@ class Prescanner {
   }
 
   void NextLine();
-  void LabelField(CharBuffer *);
+  void LabelField(TokenSequence *);
   void NextChar();
   void SkipSpaces();
   bool NextToken(TokenSequence *);
   bool ExponentAndKind(TokenSequence *);
   void QuotedCharacterLiteral(TokenSequence *);
   bool PadOutCharacterLiteral();
-  void CommentLinesAndPreprocessorDirectives();
+  bool CommentLines();
+  bool CommentLinesAndPreprocessorDirectives();
   bool IsFixedFormCommentLine(const char *);
   bool IsFreeFormComment(const char *);
   bool IsPreprocessorDirectiveLine(const char *);
   const char *FixedFormContinuationLine();
   bool FixedFormContinuation();
   bool FreeFormContinuation();
+  void PayNewlineDebt(CharBuffer *);
 
   std::stringstream *error_;
   const char *lineStart_{nullptr};  // next line to process; <= limit_
@@ -94,6 +97,7 @@ class Prescanner {
   bool preventHollerith_{false};
   bool enableOldDebugLines_{false};
   bool enableBackslashEscapesInCharLiterals_{true};
+  int delimiterNesting_{0};
   Preprocessor preprocessor_;
 };
 }  // namespace Fortran

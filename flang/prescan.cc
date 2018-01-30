@@ -12,32 +12,40 @@ namespace Fortran {
 CharBuffer Prescanner::Prescan(const SourceFile &source) {
   lineStart_ = source.content();
   limit_ = lineStart_ + source.bytes();
-  CommentLinesAndPreprocessorDirectives();
   CharBuffer out;
   TokenSequence tokens, preprocessed;
   while (lineStart_ < limit_) {
+    if (CommentLinesAndPreprocessorDirectives() &&
+        lineStart_ >= limit_) {
+      break;
+    }
     BeginSourceLineAndAdvance();
     if (inFixedForm_) {
-      LabelField(&out);
+      LabelField(&tokens);
     } else {
       SkipSpaces();
     }
     while (NextToken(&tokens)) {
     }
     if (preprocessor_.MacroReplacement(tokens, &preprocessed)) {
-      // TODO: include label field
-      // TODO: recheck for comments, &c.; just retokenize?
-      preprocessed.Emit(&out);
+      preprocessed.AddChar('\n');
+      preprocessed.EndToken();
+      if (IsFixedFormCommentLine(preprocessed.data()) ||
+          IsFreeFormComment(preprocessed.data())) {
+        ++newlineDebt_;
+      } else {
+        preprocessed.pop_back();  // clip the newline added above
+        preprocessed.EmitWithCaseConversion(&out);
+      }
       preprocessed.clear();
     } else {
-      tokens.Emit(&out);
+      tokens.EmitWithCaseConversion(&out);
     }
     tokens.clear();
     out.Put('\n');
-    for (; newlineDebt_ > 0; --newlineDebt_) {
-      out.Put('\n');
-    }
+    PayNewlineDebt(&out);
   }
+  PayNewlineDebt(&out);
   return std::move(out);
 }
 
@@ -66,23 +74,28 @@ void Prescanner::NextLine() {
   }
 }
 
-void Prescanner::LabelField(CharBuffer *out) {
+void Prescanner::LabelField(TokenSequence *token) {
   int outCol{1};
-  while (*at_ != '\n' && column_ <= 6) {
+  for (; *at_ != '\n' && column_ <= 6; ++at_, ++column_) {
     if (*at_ == '\t') {
-      NextChar();
+      ++at_;
+      column_ = 7;
       break;
     }
     if (*at_ != ' ' &&
         (*at_ != '0' || column_ != 6)) {  // '0' in column 6 becomes space
-      out->Put(*at_);
+      token->AddChar(*at_);
       ++outCol;
     }
-    NextChar();
   }
-  while (outCol < 7) {
-    out->Put(' ');
-    ++outCol;
+  if (outCol > 1) {
+    token->EndToken();
+  }
+  if (outCol < 7) {
+    for (; outCol < 7; ++outCol) {
+      token->AddChar(' ');
+    }
+    token->EndToken();
   }
 }
 
@@ -94,7 +107,8 @@ void Prescanner::NextChar() {
     while (*at_ == '/' && at_[1] == '*') {
       char star{' '}, slash{' '};
       for (at_ += 2, column_ += 2;
-           *at_ != '\n' && (star != '*' || slash != '/');
+           (*at_ != '\n' || slash == '\\') &&
+           (star != '*' || slash != '/');
            ++at_, ++column_) {
         star = slash;
         slash = *at_;
@@ -189,7 +203,7 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
     } else if (isalpha(*at_)) {
       // Handles FORMAT(3I9HHOLLERITH) by skipping over the first I so that
       // we don't misrecognize I9HOLLERITH as an identifier in the next case.
-      EmitCharAndAdvance(tokens, tolower(*at_));
+      EmitCharAndAdvance(tokens, *at_);
     }
     preventHollerith_ = false;
   } else if (*at_ == '.') {
@@ -197,16 +211,10 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
       while (isdigit(EmitCharAndAdvance(tokens, *at_))) {
       }
       ExponentAndKind(tokens);
-    } else if (isalpha(*at_)) {
-      while (IsNameChar(EmitCharAndAdvance(tokens, tolower(*at_)))) {
-      }
-      if (*at_ == '.') {
-        EmitCharAndAdvance(tokens, '.');
-      }
     }
     preventHollerith_ = false;
   } else if (IsNameChar(*at_)) {
-    while (IsNameChar(EmitCharAndAdvance(tokens, tolower(*at_)))) {
+    while (IsNameChar(EmitCharAndAdvance(tokens, *at_))) {
     }
     if (*at_ == '\'' || *at_ == '"') {
       QuotedCharacterLiteral(tokens);
@@ -219,7 +227,13 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
       preventHollerith_ = true;  // ambiguity: CHARACTER*2H
     }
   } else {
-    char ch{*at_}, nch{EmitCharAndAdvance(tokens, ch)};
+    char ch{*at_};
+    if (ch == '(' || ch == '[') {
+      ++delimiterNesting_;
+    } else if ((ch == ')' || ch == ']') && delimiterNesting_ > 0) {
+      --delimiterNesting_;
+    }
+    char nch{EmitCharAndAdvance(tokens, ch)};
     preventHollerith_ = false;
     if ((nch == '=' && (ch == '<' || ch == '>' || ch == '/' || ch == '=')) ||
         (ch == nch && (ch == '/' || ch == ':' || ch == '#')) ||
@@ -244,7 +258,7 @@ bool Prescanner::ExponentAndKind(TokenSequence *tokens) {
     EmitCharAndAdvance(tokens, *at_);
   }
   if (*at_ == '_') {
-    while (IsNameChar(EmitCharAndAdvance(tokens, tolower(*at_)))) {
+    while (IsNameChar(EmitCharAndAdvance(tokens, *at_))) {
     }
   }
   return true;
@@ -348,7 +362,23 @@ bool Prescanner::IsPreprocessorDirectiveLine(const char *start) {
   return *p == '#';
 }
 
-void Prescanner::CommentLinesAndPreprocessorDirectives() {
+bool Prescanner::CommentLines() {
+  bool any{false};
+  while (lineStart_ < limit_) {
+    if (IsFixedFormCommentLine(lineStart_) ||
+        IsFreeFormComment(lineStart_)) {
+      NextLine();
+      ++newlineDebt_;
+      any = true;
+    } else {
+      break;
+    }
+  }
+  return any;
+}
+
+bool Prescanner::CommentLinesAndPreprocessorDirectives() {
+  bool any{false};
   while (lineStart_ < limit_) {
     if (IsFixedFormCommentLine(lineStart_) ||
         IsFreeFormComment(lineStart_)) {
@@ -366,7 +396,9 @@ void Prescanner::CommentLinesAndPreprocessorDirectives() {
       break;
     }
     ++newlineDebt_;
+    any = true;
   }
+  return any;
 }
 
 const char *Prescanner::FixedFormContinuationLine() {
@@ -389,11 +421,14 @@ const char *Prescanner::FixedFormContinuationLine() {
       return p + 6;
     }
   }
+  if (delimiterNesting_ > 0) {
+    return p;
+  }
   return nullptr;  // not a continuation line
 }
 
 bool Prescanner::FixedFormContinuation() {
-  CommentLinesAndPreprocessorDirectives();
+  CommentLines();
   const char *cont{FixedFormContinuationLine()};
   if (cont == nullptr) {
     return false;
@@ -417,7 +452,7 @@ bool Prescanner::FreeFormContinuation() {
   if (*p != '\n' && (inCharLiteral_ || *p != '!')) {
     return false;
   }
-  CommentLinesAndPreprocessorDirectives();
+  CommentLines();
   p = lineStart_;
   if (p >= limit_) {
     return false;
@@ -429,7 +464,7 @@ bool Prescanner::FreeFormContinuation() {
   if (*p == '&') {
     ++p;
     ++column;
-  } else if (ampersand) {
+  } else if (ampersand || delimiterNesting_ > 0) {
     if (p > lineStart_) {
       --p;
       --column;
@@ -437,9 +472,17 @@ bool Prescanner::FreeFormContinuation() {
   } else {
     return false;  // not a continuation
   }
-  BeginSourceLine(p, column);
+  at_ = p;
+  column_ = column;
+  tabInCurrentLine_ = false;
   ++newlineDebt_;
   NextLine();
   return true;
+}
+
+void Prescanner::PayNewlineDebt(CharBuffer *out) {
+  for (; newlineDebt_ > 0; --newlineDebt_) {
+    out->Put('\n');
+  }
 }
 }  // namespace Fortran
