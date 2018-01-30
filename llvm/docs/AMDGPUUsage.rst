@@ -991,9 +991,11 @@ non-AMD key names should be prefixed by "*vendor-name*.".
      =================== ============== ========= ==============================
      String Key          Value Type     Required? Description
      =================== ============== ========= ==============================
-     "ReqdWorkGroupSize" sequence of              The dispatch work-group size
-                         3 integers               X, Y, Z must correspond to the
-                                                  specified values.
+     "ReqdWorkGroupSize" sequence of              If not 0, 0, 0 then all values
+                         3 integers               must be >=1 and the dispatch
+                                                  work-group size X, Y, Z must
+                                                  correspond to the specified
+                                                  values. Defaults to 0, 0, 0.
 
                                                   Corresponds to the OpenCL
                                                   ``reqd_work_group_size``
@@ -1286,19 +1288,9 @@ non-AMD key names should be prefixed by "*vendor-name*.".
                                                            supported by the
                                                            kernel in work-items.
                                                            Must be >=1 and
-                                                           consistent with any
-                                                           non-0 values in
-                                                           FixedWorkGroupSize.
-     "FixedWorkGroupSize"         sequence of              Corresponds to the
-                                  3 integers               dispatch work-group
-                                                           size X, Y, Z. If
-                                                           omitted, defaults to
-                                                           0, 0, 0. If an
-                                                           element is non-0 then
-                                                           the kernel must only
-                                                           be launched with a
-                                                           matching corresponding
-                                                           work-group size.
+                                                           consistent with
+                                                           ReqdWorkGroupSize if
+                                                           not 0, 0, 0.
      "NumSpilledSGPRs"            integer                  Number of stores from
                                                            a scalar register to
                                                            a register allocator
@@ -1530,30 +1522,7 @@ CP microcode requires the Kernel descritor to be allocated on 64 byte alignment.
                                                      entry point instruction
                                                      which must be 256 byte
                                                      aligned.
-     223:192 4 bytes MaxFlatWorkGroupSize            Maximum flat work-group
-                                                     size supported by the
-                                                     kernel in work-items. If
-                                                     an exact work-group size
-                                                     is required then must be
-                                                     omitted or 0 and
-                                                     ReqdWorkGroupSize* must
-                                                     be set to non-0.
-     239:224 2 bytes ReqdWorkGroupSizeX              If present and non-0 then
-                                                     the kernel
-                                                     must be executed with the
-                                                     specified work-group size
-                                                     for X.
-     255:240 2 bytes ReqdWorkGroupSizeY              If present and non-0 then
-                                                     the kernel
-                                                     must be executed with the
-                                                     specified work-group size
-                                                     for Y.
-     271:256 2 bytes ReqdWorkGroupSizeZ              If present and non-0 then
-                                                     the kernel
-                                                     must be executed with the
-                                                     specified work-group size
-                                                     for Z.
-     383:272 14                                      Reserved, must be 0.
+     383:192 24                                      Reserved, must be 0.
              bytes
      415:384 4 bytes ComputePgmRsrc1                 Compute Shader (CS)
                                                      program settings used by
