@@ -1,5 +1,7 @@
 ; RUN: llc < %s -march=x86 -regalloc=greedy --debug-only=regalloc 2>&1 | FileCheck %s
 
+; REQUIRES: asserts
+
 ; This test is meant to make sure that the weight of local intervals that are
 ; created during split is taken into account when choosing the best candidate
 ; register.
