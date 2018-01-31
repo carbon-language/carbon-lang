@@ -55,12 +55,16 @@ class BinaryFunction;
 class DataReader;
 
 class BinaryContext {
-
   BinaryContext() = delete;
 
-  /// Map virtual address to a section.
-  using SectionMapType = std::map<uint64_t, BinarySection>;
-  SectionMapType AllocatableSections;
+  /// Set of all sections.
+  using SectionSetType = std::set<BinarySection>;
+  SectionSetType Sections;
+
+  /// Map virtual address to a section.  It is possible to have more than one
+  /// section mapped to the same address, e.g. non-allocatable sections.
+  using AddressToSectionMapType = std::multimap<uint64_t, BinarySection *>;
+  AddressToSectionMapType AddressToSection;
 
   /// multimap of section name to BinarySection object.  Some binaries
   /// have multiple sections with the same name.
@@ -217,30 +221,25 @@ public:
   ErrorOr<ArrayRef<uint8_t>>
   getFunctionData(const BinaryFunction &Function) const;
 
-  BinarySection &registerSection(SectionRef Section) {
-    assert(!AllocatableSections.count(Section.getAddress()) &&
-           "can't register section twice");
-    StringRef Name;
-    Section.getName(Name);
-    auto Res = AllocatableSections.emplace(Section.getAddress(),
-                                           BinarySection(Section));
-    NameToSection.insert(std::make_pair(Name, &Res.first->second));
-    return Res.first->second;
+  /// Register information about the given section so we can look up
+  /// sections for addresses.
+  BinarySection &registerSection(SectionRef Section);
+
+  iterator_range<SectionSetType::iterator> sections() {
+    return make_range(Sections.begin(), Sections.end());
   }
 
-  iterator_range<SectionMapType::iterator> sections() {
-    return make_range(AllocatableSections.begin(), AllocatableSections.end());
+  iterator_range<SectionSetType::const_iterator> sections() const {
+    return make_range(Sections.begin(), Sections.end());
   }
 
-  iterator_range<SectionMapType::const_iterator> sections() const {
-    return make_range(AllocatableSections.begin(), AllocatableSections.end());
-  }
-
-  /// Return (allocatable) section containing the given \p Address.
+  /// Return largest section containing the given \p Address.  These
+  /// functions only work for allocatable sections, i.e. ones with non-zero
+  /// addresses.
   ErrorOr<BinarySection &> getSectionForAddress(uint64_t Address);
   ErrorOr<const BinarySection &> getSectionForAddress(uint64_t Address) const;
 
-  /// Return (allocatable) section(s) associated with given \p Name.
+  /// Return section(s) associated with given \p Name.
   iterator_range<NameToSectionMapType::iterator>
   getSectionByName(StringRef Name) {
     return make_range(NameToSection.equal_range(Name));

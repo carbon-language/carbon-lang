@@ -450,24 +450,40 @@ BinaryContext::getFunctionData(const BinaryFunction &Function) const {
 }
 
 ErrorOr<BinarySection&> BinaryContext::getSectionForAddress(uint64_t Address) {
-  auto SI = AllocatableSections.upper_bound(Address);
-  if (SI != AllocatableSections.begin()) {
+  auto SI = AddressToSection.upper_bound(Address);
+  if (SI != AddressToSection.begin()) {
     --SI;
-    if (SI->first + SI->second.getSize() > Address)
-      return SI->second;
+    if (SI->first + SI->second->getSize() > Address)
+      return *SI->second;
   }
   return std::make_error_code(std::errc::bad_address);
 }
 
 ErrorOr<const BinarySection &>
 BinaryContext::getSectionForAddress(uint64_t Address) const {
-  auto SI = AllocatableSections.upper_bound(Address);
-  if (SI != AllocatableSections.begin()) {
+  auto SI = AddressToSection.upper_bound(Address);
+  if (SI != AddressToSection.begin()) {
     --SI;
-    if (SI->first + SI->second.getSize() > Address)
-      return SI->second;
+    if (SI->first + SI->second->getSize() > Address)
+      return *SI->second;
   }
   return std::make_error_code(std::errc::bad_address);
+}
+
+BinarySection &BinaryContext::registerSection(SectionRef Section) {
+  StringRef Name;
+  Section.getName(Name);
+  auto Res = Sections.insert(BinarySection(Section));
+  assert(Res.second && "can't register the same section twice.");
+  // Cast away const here because std::set always stores values by
+  // const.  It's ok to do this because we can never change the
+  // BinarySection properties that affect set ordering.
+  auto *BS = const_cast<BinarySection *>(&*Res.first);
+  // Only register sections with addresses in the AddressToSection map.
+  if (Section.getAddress())
+    AddressToSection.insert(std::make_pair(Section.getAddress(), BS));
+  NameToSection.insert(std::make_pair(Name, BS));
+  return *BS;
 }
 
 ErrorOr<uint64_t>

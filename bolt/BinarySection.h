@@ -163,6 +163,14 @@ public:
     auto Itr = Relocations.find(Key);
     return Itr != Relocations.end() ? &*Itr : nullptr;
   }
+
+  bool operator<(const BinarySection &Other) const {
+    return (getAddress() < Other.getAddress() ||
+            (getAddress() == Other.getAddress() &&
+             (getSize() < Other.getSize() ||
+              (getSize() == Other.getSize() &&
+               getName() < Other.getName()))));
+  }
 };
 
 } // namespace bolt

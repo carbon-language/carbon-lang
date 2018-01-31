@@ -1585,18 +1585,11 @@ void RewriteInstance::readSpecialSections() {
       HasTextRelocations = true;
     }
 
-    // Ignore zero-size allocatable sections as they present no interest to us.
-    // Note that .tbss is marked as having a positive size while in reality it
-    // is not taking any allocatable space.
-    if ((ELFSectionRef(Section).getFlags() & ELF::SHF_ALLOC) &&
-        Section.getSize() > 0 &&
-        SectionName != ".tbss") {
-      BC->registerSection(Section);
-      DEBUG(dbgs() << "BOLT-DEBUG: registering section " << SectionName
-                   << " @ 0x" << Twine::utohexstr(Section.getAddress()) << ":0x"
-                   << Twine::utohexstr(Section.getAddress() + Section.getSize())
-                   << "\n");
-    }
+    BC->registerSection(Section);
+    DEBUG(dbgs() << "BOLT-DEBUG: registering section " << SectionName
+                 << " @ 0x" << Twine::utohexstr(Section.getAddress()) << ":0x"
+                 << Twine::utohexstr(Section.getAddress() + Section.getSize())
+                 << "\n");
   }
 
   EHFrameSection = BC->getUniqueSectionByName(".eh_frame");
@@ -2681,8 +2674,7 @@ void RewriteInstance::mapFileSections(
   }
 
   // Handling for sections with relocations.
-  for (auto &SRI : BC->sections()) {
-    auto &Section = SRI.second;
+  for (const auto &Section : BC->sections()) {
     if (!Section.hasRelocations())
       continue;
 
@@ -2845,8 +2837,7 @@ void RewriteInstance::emitDataSection(MCStreamer *Streamer,
 }
 
 void RewriteInstance::emitDataSections(MCStreamer *Streamer) {
-  for (auto &SRI : BC->sections()) {
-    auto &Section = SRI.second;
+  for (const auto &Section : BC->sections()) {
     if (!Section.hasRelocations())
       continue;
 
