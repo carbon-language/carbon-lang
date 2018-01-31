@@ -508,6 +508,9 @@ void RewriteInstance::updateGdbIndexSection() {
   if (!GdbIndexSection)
     return;
 
+  // See https://sourceware.org/gdb/onlinedocs/gdb/Index-Section-Format.html for
+  // .gdb_index section format.
+
   StringRef GdbIndexContents = GdbIndexSection->getContents();
 
   const auto *Data = GdbIndexContents.data();
@@ -528,9 +531,6 @@ void RewriteInstance::updateGdbIndexSection() {
   const auto SymbolTableOffset = read32le(Data + 16);
   const auto ConstantPoolOffset = read32le(Data + 20);
   Data += 24;
-
-  assert(CUTypesOffset == AddressTableOffset &&
-         "CU types in .gdb_index should be empty");
 
   // Map CUs offsets to indices and verify existing index table.
   std::map<uint32_t, uint32_t> OffsetToIndexMap;
@@ -553,7 +553,8 @@ void RewriteInstance::updateGdbIndexSection() {
 
   // Ignore old address table.
   const auto OldAddressTableSize = SymbolTableOffset - AddressTableOffset;
-  Data += OldAddressTableSize;
+  // Move Data to the beginning of symbol table.
+  Data += SymbolTableOffset - CUTypesOffset;
 
   // Calculate the size of the new address table.
   uint32_t NewAddressTableSize = 0;
@@ -580,9 +581,10 @@ void RewriteInstance::updateGdbIndexSection() {
   write32le(Buffer + 20, ConstantPoolOffset + Delta);
   Buffer += 24;
 
-  // Copy over CU list.
-  memcpy(Buffer, GdbIndexContents.data() + 24, CUListSize);
-  Buffer += CUListSize;
+  // Copy over CU list and types CU list.
+  memcpy(Buffer, GdbIndexContents.data() + 24,
+         AddressTableOffset - CUListOffset);
+  Buffer += AddressTableOffset - CUListOffset;
 
   // Generate new address table.
   for (const auto &CURangesPair : RangesSectionsWriter->getCUAddressRanges()) {
