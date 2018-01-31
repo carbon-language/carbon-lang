@@ -2139,6 +2139,9 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
       // independent) handling of it would convert it to a load, which is
       // not always the optimal choice.
       setOperationAction(ISD::BUILD_VECTOR, T, Custom);
+      // Custom-lower SETCC for pairs. Expand it into a concat of SETCCs
+      // for individual vectors.
+      setOperationAction(ISD::SETCC,        T, Custom);
 
       if (T == ByteW)
         continue;

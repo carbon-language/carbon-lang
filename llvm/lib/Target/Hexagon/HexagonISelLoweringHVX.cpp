@@ -1014,9 +1014,22 @@ SDValue
 HexagonTargetLowering::LowerHvxSetCC(SDValue Op, SelectionDAG &DAG) const {
   MVT VecTy = ty(Op.getOperand(0));
   assert(VecTy == ty(Op.getOperand(1)));
+  unsigned HwLen = Subtarget.getVectorLength();
+  const SDLoc &dl(Op);
 
   SDValue Cmp = Op.getOperand(2);
   ISD::CondCode CC = cast<CondCodeSDNode>(Cmp)->get();
+
+  if (VecTy.getSizeInBits() == 16*HwLen) {
+    VectorPair P0 = opSplit(Op.getOperand(0), dl, DAG);
+    VectorPair P1 = opSplit(Op.getOperand(1), dl, DAG);
+    MVT HalfTy = typeSplit(VecTy).first;
+
+    SDValue V0 = DAG.getSetCC(dl, HalfTy, P0.first, P1.first, CC);
+    SDValue V1 = DAG.getSetCC(dl, HalfTy, P0.second, P1.second, CC);
+    return DAG.getNode(ISD::CONCAT_VECTORS, dl, ty(Op), V1, V0);
+  }
+
   bool Negate = false, Swap = false;
 
   // HVX has instructions for SETEQ, SETGT, SETUGT. The other comparisons
@@ -1077,7 +1090,6 @@ HexagonTargetLowering::LowerHvxSetCC(SDValue Op, SelectionDAG &DAG) const {
   unsigned CmpOpc = OpcTable[Log2_32(ElemWidth)-3][getIdx(CC)];
 
   MVT ResTy = ty(Op);
-  const SDLoc &dl(Op);
   SDValue OpL = Swap ? Op.getOperand(1) : Op.getOperand(0);
   SDValue OpR = Swap ? Op.getOperand(0) : Op.getOperand(1);
   SDValue CmpV = getNode(CmpOpc, dl, ResTy, {OpL, OpR}, DAG);
