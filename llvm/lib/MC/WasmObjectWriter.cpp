@@ -135,11 +135,8 @@ struct WasmExport {
 
 // A wasm global to be written into the global section.
 struct WasmGlobal {
-  wasm::ValType Type;
-  bool IsMutable;
-  bool HasImport;
+  wasm::WasmGlobalType Type;
   uint64_t InitialValue;
-  uint32_t ImportIndex;
 };
 
 // Information about a single item which is part of a COMDAT.  For each data
@@ -728,18 +725,11 @@ void WasmObjectWriter::writeGlobalSection() {
 
   encodeULEB128(Globals.size(), getStream());
   for (const WasmGlobal &Global : Globals) {
-    writeValueType(Global.Type);
-    write8(Global.IsMutable);
+    writeValueType(static_cast<wasm::ValType>(Global.Type.Type));
+    write8(Global.Type.Mutable);
 
-    if (Global.HasImport) {
-      assert(Global.InitialValue == 0);
-      write8(wasm::WASM_OPCODE_GET_GLOBAL);
-      encodeULEB128(Global.ImportIndex, getStream());
-    } else {
-      assert(Global.ImportIndex == 0);
-      write8(wasm::WASM_OPCODE_I32_CONST);
-      encodeSLEB128(Global.InitialValue, getStream()); // offset
-    }
+    write8(wasm::WASM_OPCODE_I32_CONST);
+    encodeSLEB128(Global.InitialValue, getStream());
     write8(wasm::WASM_OPCODE_END);
   }
 
@@ -968,7 +958,7 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
                                    const MCAsmLayout &Layout) {
   DEBUG(dbgs() << "WasmObjectWriter::writeObject\n");
   MCContext &Ctx = Asm.getContext();
-  wasm::ValType PtrType = is64Bit() ? wasm::ValType::I64 : wasm::ValType::I32;
+  int32_t PtrType = is64Bit() ? wasm::WASM_TYPE_I64 : wasm::WASM_TYPE_I32;
 
   // Collect information from the available symbols.
   SmallVector<WasmFunction, 4> Functions;
@@ -980,64 +970,6 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
   std::map<StringRef, std::vector<WasmComdatEntry>> Comdats;
   SmallVector<WasmDataSegment, 4> DataSegments;
   uint32_t DataSize = 0;
-
-  // In the special .global_variables section, we've encoded global
-  // variables used by the function. Translate them into the Globals
-  // list.
-  MCSectionWasm *GlobalVars =
-      Ctx.getWasmSection(".global_variables", SectionKind::getMetadata());
-  if (!GlobalVars->getFragmentList().empty()) {
-    if (GlobalVars->getFragmentList().size() != 1)
-      report_fatal_error("only one .global_variables fragment supported");
-    const MCFragment &Frag = *GlobalVars->begin();
-    if (Frag.hasInstructions() || Frag.getKind() != MCFragment::FT_Data)
-      report_fatal_error("only data supported in .global_variables");
-    const auto &DataFrag = cast<MCDataFragment>(Frag);
-    if (!DataFrag.getFixups().empty())
-      report_fatal_error("fixups not supported in .global_variables");
-    const SmallVectorImpl<char> &Contents = DataFrag.getContents();
-    for (const uint8_t *p = (const uint8_t *)Contents.data(),
-                     *end = (const uint8_t *)Contents.data() + Contents.size();
-         p != end; ) {
-      WasmGlobal G;
-      if (end - p < 3)
-        report_fatal_error("truncated global variable encoding");
-      G.Type = wasm::ValType(int8_t(*p++));
-      G.IsMutable = bool(*p++);
-      G.HasImport = bool(*p++);
-      if (G.HasImport) {
-        G.InitialValue = 0;
-
-        WasmImport Import;
-        Import.ModuleName = (const char *)p;
-        const uint8_t *nul = (const uint8_t *)memchr(p, '\0', end - p);
-        if (!nul)
-          report_fatal_error("global module name must be nul-terminated");
-        p = nul + 1;
-        nul = (const uint8_t *)memchr(p, '\0', end - p);
-        if (!nul)
-          report_fatal_error("global base name must be nul-terminated");
-        Import.FieldName = (const char *)p;
-        p = nul + 1;
-
-        Import.Kind = wasm::WASM_EXTERNAL_GLOBAL;
-        Import.Type = int32_t(G.Type);
-
-        G.ImportIndex = NumGlobalImports;
-        ++NumGlobalImports;
-
-        Imports.push_back(Import);
-      } else {
-        unsigned n;
-        G.InitialValue = decodeSLEB128(p, &n);
-        G.ImportIndex = 0;
-        if ((ptrdiff_t)n > end - p)
-          report_fatal_error("global initial value must be valid SLEB128");
-        p += n;
-      }
-      Globals.push_back(G);
-    }
-  }
 
   // For now, always emit the memory import, since loads and stores are not
   // valid without it. In the future, we could perhaps be more clever and omit
@@ -1088,7 +1020,7 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
         ++NumFunctionImports;
       } else {
         Import.Kind = wasm::WASM_EXTERNAL_GLOBAL;
-        Import.Type = int32_t(PtrType);
+        Import.Type = PtrType;
         Import.IsMutable = false;
         SymbolIndices[&WS] = NumGlobalImports;
 
@@ -1206,11 +1138,9 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
       assert(DataSection.isWasmData());
 
       WasmGlobal Global;
-      Global.Type = PtrType;
-      Global.IsMutable = false;
-      Global.HasImport = false;
+      Global.Type.Type = PtrType;
+      Global.Type.Mutable = false;
       Global.InitialValue = DataSection.getMemoryOffset() + Layout.getSymbolOffset(WS);
-      Global.ImportIndex = 0;
       SymbolIndices[&WS] = Index;
       DEBUG(dbgs() << "  -> global index: " << Index << "\n");
       Globals.push_back(Global);
