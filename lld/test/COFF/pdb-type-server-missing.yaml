@@ -4,7 +4,7 @@
 # RUN: yaml2obj %s -o %t.obj
 # RUN: lld-link %t.obj -out:%t.exe -debug -pdb:%t.pdb -nodefaultlib -entry:main 2>&1 | FileCheck %s
 
-# CHECK: warning: Type server PDB was not found
+# CHECK: warning: Type server PDB for {{.*}}.obj is invalid, ignoring debug info.
 
 --- !COFF
 header:
