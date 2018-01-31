@@ -125,12 +125,12 @@ ARMLegalizerInfo::ARMLegalizerInfo(const ARMSubtarget &ST) {
 
   // We're keeping these builders around because we'll want to add support for
   // floating point to them.
-  auto &LoadStoreBuilder = getActionDefinitionsBuilder({G_LOAD, G_STORE}).legalForCartesianProduct(
-      {s1, s8, s16, s32, p0}, {p0});
+  auto &LoadStoreBuilder =
+      getActionDefinitionsBuilder({G_LOAD, G_STORE})
+          .legalForCartesianProduct({s1, s8, s16, s32, p0}, {p0});
 
-  auto &PhiBuilder = getActionDefinitionsBuilder(G_PHI)
-    .legalFor({s32, p0})
-    .minScalar(0, s32);
+  auto &PhiBuilder =
+      getActionDefinitionsBuilder(G_PHI).legalFor({s32, p0}).minScalar(0, s32);
 
   if (!ST.useSoftFloat() && ST.hasVFP2()) {
     getActionDefinitionsBuilder(
