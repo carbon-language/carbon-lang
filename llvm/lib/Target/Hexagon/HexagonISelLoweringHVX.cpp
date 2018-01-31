@@ -1103,3 +1103,9 @@ HexagonTargetLowering::LowerHvxExtend(SDValue Op, SelectionDAG &DAG) const {
   assert(Op.getOpcode() == ISD::ANY_EXTEND_VECTOR_INREG);
   return DAG.getZeroExtendVectorInReg(Op.getOperand(0), SDLoc(Op), ty(Op));
 }
+
+SDValue
+HexagonTargetLowering::LowerHvxShift(SDValue Op, SelectionDAG &DAG) const {
+  return Op;
+}
+
