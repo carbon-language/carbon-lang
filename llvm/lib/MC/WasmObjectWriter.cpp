@@ -208,7 +208,7 @@ class WasmObjectWriter : public MCObjectWriter {
   DenseMap<const MCSymbolWasm *, uint32_t> TypeIndices;
   // Maps function symbols to the table element index space. Used
   // for TABLE_INDEX relocation types (i.e. address taken functions).
-  DenseMap<const MCSymbolWasm *, uint32_t> IndirectSymbolIndices;
+  DenseMap<const MCSymbolWasm *, uint32_t> TableIndices;
   // Maps function/global symbols to the function/global index space.
   DenseMap<const MCSymbolWasm *, uint32_t> SymbolIndices;
 
@@ -243,7 +243,7 @@ private:
     DataRelocations.clear();
     TypeIndices.clear();
     SymbolIndices.clear();
-    IndirectSymbolIndices.clear();
+    TableIndices.clear();
     FunctionTypeIndices.clear();
     FunctionTypes.clear();
     Globals.clear();
@@ -493,24 +493,23 @@ static const MCSymbolWasm* ResolveSymbol(const MCSymbolWasm& Symbol) {
 // useable.
 uint32_t
 WasmObjectWriter::getProvisionalValue(const WasmRelocationEntry &RelEntry) {
-
   switch (RelEntry.Type) {
   case wasm::R_WEBASSEMBLY_TABLE_INDEX_SLEB:
-  case wasm::R_WEBASSEMBLY_TABLE_INDEX_I32:
-    // Provitional value is the indirect symbol index
-    if (!IndirectSymbolIndices.count(RelEntry.Symbol))
-      report_fatal_error("symbol not found in table index space: " +
-                         RelEntry.Symbol->getName());
-    return IndirectSymbolIndices[RelEntry.Symbol];
+  case wasm::R_WEBASSEMBLY_TABLE_INDEX_I32: {
+    // Provisional value is table address of the resolved symbol itself
+    const MCSymbolWasm *Sym = ResolveSymbol(*RelEntry.Symbol);
+    assert(Sym->isFunction());
+    return TableIndices[Sym];
+  }
   case wasm::R_WEBASSEMBLY_FUNCTION_INDEX_LEB:
   case wasm::R_WEBASSEMBLY_TYPE_INDEX_LEB:
   case wasm::R_WEBASSEMBLY_GLOBAL_INDEX_LEB:
-    // Provitional value is function/type/global index itself
+    // Provisional value is function/type/global index itself
     return getRelocationIndexValue(RelEntry);
   case wasm::R_WEBASSEMBLY_MEMORY_ADDR_LEB:
   case wasm::R_WEBASSEMBLY_MEMORY_ADDR_I32:
   case wasm::R_WEBASSEMBLY_MEMORY_ADDR_SLEB: {
-    // Provitional value is address of the global
+    // Provisional value is address of the global
     const MCSymbolWasm *Sym = ResolveSymbol(*RelEntry.Symbol);
     // For undefined symbols, use zero
     if (!Sym->isDefined())
@@ -1274,26 +1273,21 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
 
   {
     auto HandleReloc = [&](const WasmRelocationEntry &Rel) {
-      // Functions referenced by a relocation need to prepared to be called
-      // indirectly.
-      const MCSymbolWasm& WS = *Rel.Symbol;
-      if (WS.isFunction() && IndirectSymbolIndices.count(&WS) == 0) {
-        switch (Rel.Type) {
-        case wasm::R_WEBASSEMBLY_TABLE_INDEX_I32:
-        case wasm::R_WEBASSEMBLY_TABLE_INDEX_SLEB:
-        case wasm::R_WEBASSEMBLY_MEMORY_ADDR_I32:
-        case wasm::R_WEBASSEMBLY_MEMORY_ADDR_SLEB: {
-          uint32_t Index = SymbolIndices.find(&WS)->second;
-          IndirectSymbolIndices[&WS] = TableElems.size() + kInitialTableOffset;
-          DEBUG(dbgs() << "  -> adding " << WS.getName()
-                       << " to table: " << TableElems.size() << "\n");
-          TableElems.push_back(Index);
-          registerFunctionType(WS);
-          break;
-        }
-        default:
-          break;
-        }
+      // Functions referenced by a relocation need to put in the table.  This is
+      // purely to make the object file's provisional values readable, and is
+      // ignored by the linker, which re-calculates the relocations itself.
+      if (Rel.Type != wasm::R_WEBASSEMBLY_TABLE_INDEX_I32 &&
+          Rel.Type != wasm::R_WEBASSEMBLY_TABLE_INDEX_SLEB)
+        return;
+      assert(Rel.Symbol->isFunction());
+      const MCSymbolWasm &WS = *ResolveSymbol(*Rel.Symbol);
+      uint32_t SymbolIndex = SymbolIndices.find(&WS)->second;
+      uint32_t TableIndex = TableElems.size() + kInitialTableOffset;
+      if (TableIndices.try_emplace(&WS, TableIndex).second) {
+        DEBUG(dbgs() << "  -> adding " << WS.getName()
+                     << " to table: " << TableIndex << "\n");
+        TableElems.push_back(SymbolIndex);
+        registerFunctionType(WS);
       }
     };
 
