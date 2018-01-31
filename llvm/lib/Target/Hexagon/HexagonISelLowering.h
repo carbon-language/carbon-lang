@@ -316,8 +316,8 @@ namespace HexagonISD {
         return Op.getMachineOpcode() == TargetOpcode::IMPLICIT_DEF;
       return Op.getOpcode() == ISD::UNDEF;
     }
-    SDValue getNode(unsigned MachineOpc, const SDLoc &dl, MVT Ty,
-                    ArrayRef<SDValue> Ops, SelectionDAG &DAG) const {
+    SDValue getInstr(unsigned MachineOpc, const SDLoc &dl, MVT Ty,
+                     ArrayRef<SDValue> Ops, SelectionDAG &DAG) const {
       SDNode *N = DAG.getMachineNode(MachineOpc, dl, Ty, Ops);
       return SDValue(N, 0);
     }

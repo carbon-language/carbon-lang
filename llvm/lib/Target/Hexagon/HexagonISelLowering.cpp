@@ -2481,16 +2481,16 @@ HexagonTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG)
     SDValue Concat10 = DAG.getNode(HexagonISD::COMBINE, dl,
                                    typeJoin({ty(Op1), ty(Op0)}), {Op1, Op0});
     if (MaskIdx == (0x06040200 | MaskUnd))
-      return getNode(Hexagon::S2_vtrunehb, dl, VecTy, {Concat10}, DAG);
+      return getInstr(Hexagon::S2_vtrunehb, dl, VecTy, {Concat10}, DAG);
     if (MaskIdx == (0x07050301 | MaskUnd))
-      return getNode(Hexagon::S2_vtrunohb, dl, VecTy, {Concat10}, DAG);
+      return getInstr(Hexagon::S2_vtrunohb, dl, VecTy, {Concat10}, DAG);
 
     SDValue Concat01 = DAG.getNode(HexagonISD::COMBINE, dl,
                                    typeJoin({ty(Op0), ty(Op1)}), {Op0, Op1});
     if (MaskIdx == (0x02000604 | MaskUnd))
-      return getNode(Hexagon::S2_vtrunehb, dl, VecTy, {Concat01}, DAG);
+      return getInstr(Hexagon::S2_vtrunehb, dl, VecTy, {Concat01}, DAG);
     if (MaskIdx == (0x03010705 | MaskUnd))
-      return getNode(Hexagon::S2_vtrunohb, dl, VecTy, {Concat01}, DAG);
+      return getInstr(Hexagon::S2_vtrunohb, dl, VecTy, {Concat01}, DAG);
   }
 
   if (ByteMask.size() == 8) {
@@ -2506,23 +2506,23 @@ HexagonTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG)
 
     // Halfword picks.
     if (MaskIdx == (0x0d0c050409080100ull | MaskUnd))
-      return getNode(Hexagon::S2_shuffeh, dl, VecTy, {Op1, Op0}, DAG);
+      return getInstr(Hexagon::S2_shuffeh, dl, VecTy, {Op1, Op0}, DAG);
     if (MaskIdx == (0x0f0e07060b0a0302ull | MaskUnd))
-      return getNode(Hexagon::S2_shuffoh, dl, VecTy, {Op1, Op0}, DAG);
+      return getInstr(Hexagon::S2_shuffoh, dl, VecTy, {Op1, Op0}, DAG);
     if (MaskIdx == (0x0d0c090805040100ull | MaskUnd))
-      return getNode(Hexagon::S2_vtrunewh, dl, VecTy, {Op1, Op0}, DAG);
+      return getInstr(Hexagon::S2_vtrunewh, dl, VecTy, {Op1, Op0}, DAG);
     if (MaskIdx == (0x0f0e0b0a07060302ull | MaskUnd))
-      return getNode(Hexagon::S2_vtrunowh, dl, VecTy, {Op1, Op0}, DAG);
+      return getInstr(Hexagon::S2_vtrunowh, dl, VecTy, {Op1, Op0}, DAG);
     if (MaskIdx == (0x0706030205040100ull | MaskUnd)) {
       VectorPair P = opSplit(Op0, dl, DAG);
-      return getNode(Hexagon::S2_packhl, dl, VecTy, {P.second, P.first}, DAG);
+      return getInstr(Hexagon::S2_packhl, dl, VecTy, {P.second, P.first}, DAG);
     }
 
     // Byte packs.
     if (MaskIdx == (0x0e060c040a020800ull | MaskUnd))
-      return getNode(Hexagon::S2_shuffeb, dl, VecTy, {Op1, Op0}, DAG);
+      return getInstr(Hexagon::S2_shuffeb, dl, VecTy, {Op1, Op0}, DAG);
     if (MaskIdx == (0x0f070d050b030901ull | MaskUnd))
-      return getNode(Hexagon::S2_shuffob, dl, VecTy, {Op1, Op0}, DAG);
+      return getInstr(Hexagon::S2_shuffob, dl, VecTy, {Op1, Op0}, DAG);
   }
 
   return SDValue();
@@ -2573,7 +2573,7 @@ HexagonTargetLowering::LowerBITCAST(SDValue Op, SelectionDAG &DAG) const {
   if (ResTy == MVT::v8i1) {
     SDValue Sc = DAG.getBitcast(tyScalar(InpTy), InpV);
     SDValue Ext = DAG.getZExtOrTrunc(Sc, dl, MVT::i32);
-    return getNode(Hexagon::C2_tfrrp, dl, ResTy, Ext, DAG);
+    return getInstr(Hexagon::C2_tfrrp, dl, ResTy, Ext, DAG);
   }
 
   return SDValue();
@@ -2664,8 +2664,8 @@ HexagonTargetLowering::buildVector32(ArrayRef<SDValue> Elem, const SDLoc &dl,
                    Consts[1]->getZExtValue() << 16;
       return DAG.getBitcast(MVT::v2i16, DAG.getConstant(V, dl, MVT::i32));
     }
-    SDValue N = getNode(Hexagon::A2_combine_ll, dl, MVT::i32,
-                        {Elem[1], Elem[0]}, DAG);
+    SDValue N = getInstr(Hexagon::A2_combine_ll, dl, MVT::i32,
+                         {Elem[1], Elem[0]}, DAG);
     return DAG.getBitcast(MVT::v2i16, N);
   }
 
@@ -2710,7 +2710,7 @@ HexagonTargetLowering::buildVector32(ArrayRef<SDValue> Elem, const SDLoc &dl,
     SDValue B0 = DAG.getNode(ISD::OR, dl, MVT::i32, {Vs[0], T0});
     SDValue B1 = DAG.getNode(ISD::OR, dl, MVT::i32, {Vs[2], T1});
 
-    SDValue R = getNode(Hexagon::A2_combine_ll, dl, MVT::i32, {B1, B0}, DAG);
+    SDValue R = getInstr(Hexagon::A2_combine_ll, dl, MVT::i32, {B1, B0}, DAG);
     return DAG.getBitcast(MVT::v4i8, R);
   }
 
@@ -2810,7 +2810,7 @@ HexagonTargetLowering::extractVector(SDValue VecV, SDValue IdxV,
 
     // If the value extracted is a single bit, use tstbit.
     if (ValWidth == 1) {
-      SDValue A0 = getNode(Hexagon::C2_tfrpr, dl, MVT::i32, {VecV}, DAG);
+      SDValue A0 = getInstr(Hexagon::C2_tfrpr, dl, MVT::i32, {VecV}, DAG);
       return DAG.getNode(HexagonISD::TSTBIT, dl, MVT::i1, A0, IdxV);
     }
 
@@ -2949,7 +2949,7 @@ HexagonTargetLowering::expandPredicate(SDValue Vec32, const SDLoc &dl,
   assert(ty(Vec32).getSizeInBits() == 32);
   if (isUndef(Vec32))
     return DAG.getUNDEF(MVT::i64);
-  return getNode(Hexagon::S2_vsxtbh, dl, MVT::i64, {Vec32}, DAG);
+  return getInstr(Hexagon::S2_vsxtbh, dl, MVT::i64, {Vec32}, DAG);
 }
 
 SDValue
@@ -2958,7 +2958,7 @@ HexagonTargetLowering::contractPredicate(SDValue Vec64, const SDLoc &dl,
   assert(ty(Vec64).getSizeInBits() == 64);
   if (isUndef(Vec64))
     return DAG.getUNDEF(MVT::i32);
-  return getNode(Hexagon::S2_vtrunehb, dl, MVT::i32, {Vec64}, DAG);
+  return getInstr(Hexagon::S2_vtrunehb, dl, MVT::i32, {Vec64}, DAG);
 }
 
 SDValue
@@ -3013,7 +3013,7 @@ HexagonTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
         Rs[i] = DAG.getNode(ISD::OR, dl, MVT::i32, Rs[2*i], Rs[2*i+1]);
     }
     // Move the value directly to a predicate register.
-    return getNode(Hexagon::C2_tfrrp, dl, VecTy, {Rs[0]}, DAG);
+    return getInstr(Hexagon::C2_tfrrp, dl, VecTy, {Rs[0]}, DAG);
   }
 
   return SDValue();
@@ -3248,8 +3248,8 @@ HexagonTargetLowering::ReplaceNodeResults(SDNode *N,
     case ISD::BITCAST:
       // Handle a bitcast from v8i1 to i8.
       if (N->getValueType(0) == MVT::i8) {
-        SDValue P = getNode(Hexagon::C2_tfrpr, dl, MVT::i32,
-                            N->getOperand(0), DAG);
+        SDValue P = getInstr(Hexagon::C2_tfrpr, dl, MVT::i32,
+                             N->getOperand(0), DAG);
         Results.push_back(P);
       }
       break;
