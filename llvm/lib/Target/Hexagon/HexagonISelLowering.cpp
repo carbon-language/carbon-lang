@@ -3261,6 +3261,10 @@ HexagonTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
       if (Subtarget.useHVXOps())
         return LowerHvxMulh(Op, DAG);
       break;
+    case ISD::ANY_EXTEND_VECTOR_INREG:
+      if (Subtarget.useHVXOps())
+        return LowerHvxExtend(Op, DAG);
+      break;
   }
   return SDValue();
 }
