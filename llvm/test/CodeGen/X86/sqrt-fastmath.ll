@@ -121,8 +121,8 @@ define float @sqrtf_check_denorms(float %x) #3 {
 ; SSE-NEXT:    mulss %xmm1, %xmm2
 ; SSE-NEXT:    addss {{.*}}(%rip), %xmm2
 ; SSE-NEXT:    mulss %xmm3, %xmm2
-; SSE-NEXT:    xorps %xmm1, %xmm1
-; SSE-NEXT:    cmpeqss %xmm1, %xmm0
+; SSE-NEXT:    andps {{.*}}(%rip), %xmm0
+; SSE-NEXT:    cmpltss {{.*}}(%rip), %xmm0
 ; SSE-NEXT:    andnps %xmm2, %xmm0
 ; SSE-NEXT:    retq
 ;
@@ -134,8 +134,8 @@ define float @sqrtf_check_denorms(float %x) #3 {
 ; AVX-NEXT:    vaddss {{.*}}(%rip), %xmm1, %xmm1
 ; AVX-NEXT:    vmulss {{.*}}(%rip), %xmm2, %xmm2
 ; AVX-NEXT:    vmulss %xmm1, %xmm2, %xmm1
-; AVX-NEXT:    vxorps %xmm2, %xmm2, %xmm2
-; AVX-NEXT:    vcmpeqss %xmm2, %xmm0, %xmm0
+; AVX-NEXT:    vandps {{.*}}(%rip), %xmm0, %xmm0
+; AVX-NEXT:    vcmpltss {{.*}}(%rip), %xmm0, %xmm0
 ; AVX-NEXT:    vandnps %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %call = tail call float @__sqrtf_finite(float %x) #2
@@ -145,17 +145,19 @@ define float @sqrtf_check_denorms(float %x) #3 {
 define <4 x float> @sqrt_v4f32_check_denorms(<4 x float> %x) #3 {
 ; SSE-LABEL: sqrt_v4f32_check_denorms:
 ; SSE:       # %bb.0:
-; SSE-NEXT:    rsqrtps %xmm0, %xmm1
-; SSE-NEXT:    movaps %xmm0, %xmm2
-; SSE-NEXT:    mulps %xmm1, %xmm2
+; SSE-NEXT:    rsqrtps %xmm0, %xmm2
+; SSE-NEXT:    movaps %xmm0, %xmm1
+; SSE-NEXT:    mulps %xmm2, %xmm1
 ; SSE-NEXT:    movaps {{.*#+}} xmm3 = [-5.000000e-01,-5.000000e-01,-5.000000e-01,-5.000000e-01]
-; SSE-NEXT:    mulps %xmm2, %xmm3
-; SSE-NEXT:    mulps %xmm1, %xmm2
-; SSE-NEXT:    addps {{.*}}(%rip), %xmm2
-; SSE-NEXT:    mulps %xmm3, %xmm2
-; SSE-NEXT:    xorps %xmm1, %xmm1
-; SSE-NEXT:    cmpneqps %xmm1, %xmm0
-; SSE-NEXT:    andps %xmm2, %xmm0
+; SSE-NEXT:    mulps %xmm1, %xmm3
+; SSE-NEXT:    mulps %xmm2, %xmm1
+; SSE-NEXT:    addps {{.*}}(%rip), %xmm1
+; SSE-NEXT:    mulps %xmm3, %xmm1
+; SSE-NEXT:    andps {{.*}}(%rip), %xmm0
+; SSE-NEXT:    movaps {{.*#+}} xmm2 = [1.175494e-38,1.175494e-38,1.175494e-38,1.175494e-38]
+; SSE-NEXT:    cmpleps %xmm0, %xmm2
+; SSE-NEXT:    andps %xmm2, %xmm1
+; SSE-NEXT:    movaps %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: sqrt_v4f32_check_denorms:
@@ -166,8 +168,9 @@ define <4 x float> @sqrt_v4f32_check_denorms(<4 x float> %x) #3 {
 ; AVX-NEXT:    vmulps %xmm1, %xmm2, %xmm1
 ; AVX-NEXT:    vaddps {{.*}}(%rip), %xmm1, %xmm1
 ; AVX-NEXT:    vmulps %xmm1, %xmm3, %xmm1
-; AVX-NEXT:    vxorps %xmm2, %xmm2, %xmm2
-; AVX-NEXT:    vcmpneqps %xmm2, %xmm0, %xmm0
+; AVX-NEXT:    vandps {{.*}}(%rip), %xmm0, %xmm0
+; AVX-NEXT:    vmovaps {{.*#+}} xmm2 = [1.175494e-38,1.175494e-38,1.175494e-38,1.175494e-38]
+; AVX-NEXT:    vcmpleps %xmm0, %xmm2, %xmm0
 ; AVX-NEXT:    vandps %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %call = tail call <4 x float> @llvm.sqrt.v4f32(<4 x float> %x) #2

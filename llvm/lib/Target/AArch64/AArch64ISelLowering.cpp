@@ -5007,7 +5007,9 @@ SDValue AArch64TargetLowering::getSqrtEstimate(SDValue Operand,
         Step = DAG.getNode(AArch64ISD::FRSQRTS, DL, VT, Operand, Step, Flags);
         Estimate = DAG.getNode(ISD::FMUL, DL, VT, Estimate, Step, Flags);
       }
-
+      // FIXME: This does not detect denorm inputs, so we might produce INF
+      // when we should produce 0.0. Try to refactor the code in DAGCombiner,
+      // so we don't have to duplicate it here.
       if (!Reciprocal) {
         EVT CCVT = getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(),
                                       VT);
