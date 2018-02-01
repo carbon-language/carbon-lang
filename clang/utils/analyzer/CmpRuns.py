@@ -28,6 +28,7 @@ Usage:
 
 import os
 import plistlib
+from math import log
 
 
 # Information about analysis run:
@@ -47,6 +48,7 @@ class AnalysisDiagnostic:
         self._loc = self._data['location']
         self._report = report
         self._htmlReport = htmlReport
+        self._reportSize = len(self._data['path'])
 
     def getFileName(self):
         root = self._report.run.root
@@ -60,6 +62,9 @@ class AnalysisDiagnostic:
 
     def getColumn(self):
         return self._loc['col']
+
+    def getPathLength(self):
+        return self._reportSize
 
     def getCategory(self):
         return self._data['category']
@@ -193,7 +198,7 @@ def cmpAnalysisDiagnostic(d):
     return d.getIssueIdentifier()
 
 
-def compareResults(A, B):
+def compareResults(A, B, opts):
     """
     compareResults - Generate a relation from diagnostics in run A to
     diagnostics in run B.
@@ -206,6 +211,9 @@ def compareResults(A, B):
 
     res = []
 
+    # Map size_before -> size_after
+    path_difference_data = []
+
     # Quickly eliminate equal elements.
     neqA = []
     neqB = []
@@ -217,6 +225,17 @@ def compareResults(A, B):
         a = eltsA.pop()
         b = eltsB.pop()
         if (a.getIssueIdentifier() == b.getIssueIdentifier()):
+            if a.getPathLength() != b.getPathLength():
+                if opts.relative_path_histogram:
+                    path_difference_data.append(
+                        float(a.getPathLength()) / b.getPathLength())
+                elif opts.relative_log_path_histogram:
+                    path_difference_data.append(
+                        log(float(a.getPathLength()) / b.getPathLength()))
+                elif opts.absolute_path_histogram:
+                    path_difference_data.append(
+                        a.getPathLength() - b.getPathLength())
+
             res.append((a, b, 0))
         elif a.getIssueIdentifier() > b.getIssueIdentifier():
             eltsB.append(b)
@@ -238,6 +257,12 @@ def compareResults(A, B):
     for b in neqB:
         res.append((None, b, None))
 
+    if opts.relative_log_path_histogram or opts.relative_path_histogram or \
+            opts.absolute_path_histogram:
+        from matplotlib import pyplot
+        pyplot.hist(path_difference_data, bins=100)
+        pyplot.show()
+
     return res
 
 
@@ -252,7 +277,7 @@ def dumpScanBuildResultsDiff(dirA, dirB, opts, deleteEmpty=True):
     else:
         auxLog = None
 
-    diff = compareResults(resultsA, resultsB)
+    diff = compareResults(resultsA, resultsB, opts)
     foundDiffs = 0
     totalAdded = 0
     totalRemoved = 0
@@ -314,6 +339,21 @@ def main():
                       [default=None]",
                       action="store", type=str, default=None,
                       metavar="LOG")
+    parser.add_option("--relative-path-differences-histogram",
+                      action="store_true", dest="relative_path_histogram",
+                      default=False,
+                      help="Show histogram of relative paths differences. \
+                      Requires matplotlib")
+    parser.add_option("--relative-log-path-differences-histogram",
+                      action="store_true", dest="relative_log_path_histogram",
+                      default=False,
+                      help="Show histogram of log relative paths differences. \
+                      Requires matplotlib")
+    parser.add_option("--absolute-path-differences-histogram",
+                      action="store_true", dest="absolute_path_histogram",
+                      default=False,
+                      help="Show histogram of absolute paths differences. \
+                      Requires matplotlib")
     (opts, args) = parser.parse_args()
 
     if len(args) != 2:
