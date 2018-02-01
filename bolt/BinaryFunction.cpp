@@ -1242,7 +1242,9 @@ add_instruction:
     }
 
     // Record offset of the instruction for profile matching.
-    MIA->addAnnotation(Ctx.get(), Instruction, "Offset", Offset);
+    if (BC.keepOffsetForInstruction(Instruction)) {
+      MIA->addAnnotation(Ctx.get(), Instruction, "Offset", Offset);
+    }
 
     if (MemData && !emptyRange(MemData->getMemInfoRange(Offset))) {
       MIA->addAnnotation(Ctx.get(), Instruction, "MemDataOffset", Offset);

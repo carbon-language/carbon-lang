@@ -363,7 +363,7 @@ public:
     return Size;
   }
 
-  /// Return a function execution count threshold for determining whether the
+  /// Return a function execution count threshold for determining whether
   /// the function is 'hot'. Consider it hot if count is above the average exec
   /// count of profiled functions.
   uint64_t getHotThreshold() const {
@@ -373,6 +373,16 @@ public:
           NumProfiledFuncs ? SumExecutionCount / (2 * NumProfiledFuncs) : 1;
     }
     return Threshold;
+  }
+
+  /// Return true if instruction \p Inst requires an offset for further
+  /// processing (e.g. assigning a profile).
+  bool keepOffsetForInstruction(const MCInst &Inst) const {
+    if (MIA->isCall(Inst) || MIA->isBranch(Inst) || MIA->isReturn(Inst) ||
+        MIA->isPrefix(Inst) || MIA->isIndirectBranch(Inst)) {
+      return true;
+    }
+    return false;
   }
 
   /// Print the string name for a CFI operation.
