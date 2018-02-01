@@ -203,10 +203,8 @@ def compareResults(A, B, opts):
     compareResults - Generate a relation from diagnostics in run A to
     diagnostics in run B.
 
-    The result is the relation as a list of triples (a, b, confidence) where
-    each element {a,b} is None or an element from the respective run, and
-    confidence is a measure of the match quality (where 0 indicates equality,
-    and None is used if either element is None).
+    The result is the relation as a list of triples (a, b) where
+    each element {a,b} is None or a matching element from the respective run
     """
 
     res = []
@@ -236,7 +234,7 @@ def compareResults(A, B, opts):
                     path_difference_data.append(
                         a.getPathLength() - b.getPathLength())
 
-            res.append((a, b, 0))
+            res.append((a, b))
         elif a.getIssueIdentifier() > b.getIssueIdentifier():
             eltsB.append(b)
             neqA.append(a)
@@ -253,9 +251,9 @@ def compareResults(A, B, opts):
     # in any way on the diagnostic format.
 
     for a in neqA:
-        res.append((a, None, None))
+        res.append((a, None))
     for b in neqB:
-        res.append((None, b, None))
+        res.append((None, b))
 
     if opts.relative_log_path_histogram or opts.relative_path_histogram or \
             opts.absolute_path_histogram:
@@ -281,9 +279,8 @@ def dumpScanBuildResultsDiff(dirA, dirB, opts, deleteEmpty=True):
     foundDiffs = 0
     totalAdded = 0
     totalRemoved = 0
-    totalChanged = 0
     for res in diff:
-        a, b, confidence = res
+        a, b = res
         if a is None:
             print "ADDED: %r" % b.getReadableName()
             foundDiffs += 1
@@ -298,17 +295,6 @@ def dumpScanBuildResultsDiff(dirA, dirB, opts, deleteEmpty=True):
             if auxLog:
                 print >>auxLog, ("('REMOVED', %r, %r)" % (a.getReadableName(),
                                                           a.getReport()))
-        elif confidence:
-            print "CHANGED: %r to %r" % (a.getReadableName(),
-                                         b.getReadableName())
-            foundDiffs += 1
-            totalChanged += 1
-            if auxLog:
-                print >>auxLog, ("('CHANGED', %r, %r, %r, %r)"
-                                 % (a.getReadableName(),
-                                    b.getReadableName(),
-                                    a.getReport(),
-                                    b.getReport()))
         else:
             pass
 
@@ -317,7 +303,6 @@ def dumpScanBuildResultsDiff(dirA, dirB, opts, deleteEmpty=True):
     print "TOTAL DIFFERENCES: %r" % foundDiffs
     print "TOTAL ADDED: %r" % totalAdded
     print "TOTAL REMOVED: %r" % totalRemoved
-    print "TOTAL CHANGED: %r" % totalChanged
     if auxLog:
         print >>auxLog, "('TOTAL NEW REPORTS', %r)" % TotalReports
         print >>auxLog, "('TOTAL DIFFERENCES', %r)" % foundDiffs
