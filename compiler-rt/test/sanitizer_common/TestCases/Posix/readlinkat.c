@@ -7,20 +7,14 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef __APPLE__
-#define LEN PATH_MAX
-#else
-#define LEN NAME_MAX
-#endif
-
 int main(int argc, char **argv) {
-  char symlink_path[LEN];
+  char symlink_path[PATH_MAX];
   snprintf(symlink_path, sizeof(symlink_path), "%s_%d.symlink", argv[0],
            getpid());
   int res = symlink(argv[0], symlink_path);
   assert(!res);
 
-  char readlinkat_path[LEN];
+  char readlinkat_path[PATH_MAX];
   int res2 = readlinkat(AT_FDCWD, symlink_path, readlinkat_path,
                         sizeof(readlinkat_path));
   assert(res2 >= 0);
