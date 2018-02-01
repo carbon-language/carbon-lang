@@ -1216,16 +1216,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setLoadExtAction(ExtType, MVT::v8i64,  MVT::v8i32,  Legal);
     }
 
-    for (MVT VT : {MVT::v2i64, MVT::v4i32, MVT::v8i32, MVT::v4i64, MVT::v8i16,
-                   MVT::v16i8, MVT::v16i16, MVT::v32i8, MVT::v16i32,
-                   MVT::v8i64, MVT::v32i16, MVT::v64i8}) {
-      MVT MaskVT = MVT::getVectorVT(MVT::i1, VT.getVectorNumElements());
-      setLoadExtAction(ISD::SEXTLOAD, VT, MaskVT, Custom);
-      setLoadExtAction(ISD::ZEXTLOAD, VT, MaskVT, Custom);
-      setLoadExtAction(ISD::EXTLOAD,  VT, MaskVT, Custom);
-      setTruncStoreAction(VT, MaskVT, Custom);
-    }
-
     for (MVT VT : { MVT::v16f32, MVT::v8f64 }) {
       setOperationAction(ISD::FNEG,  VT, Custom);
       setOperationAction(ISD::FABS,  VT, Custom);
@@ -18784,167 +18774,6 @@ static SDValue LowerSIGN_EXTEND(SDValue Op, const X86Subtarget &Subtarget,
   return DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, OpLo, OpHi);
 }
 
-// Lower truncating store. We need a special lowering to vXi1 vectors
-static SDValue LowerTruncatingStore(SDValue StOp, const X86Subtarget &Subtarget,
-                                    SelectionDAG &DAG) {
-  StoreSDNode *St = cast<StoreSDNode>(StOp.getNode());
-  SDLoc dl(St);
-  EVT MemVT = St->getMemoryVT();
-  assert(St->isTruncatingStore() && "We only custom truncating store.");
-  assert(MemVT.isVector() && MemVT.getVectorElementType() == MVT::i1 &&
-         "Expected truncstore of i1 vector");
-
-  SDValue Op = St->getValue();
-  MVT OpVT = Op.getValueType().getSimpleVT();
-  unsigned NumElts = OpVT.getVectorNumElements();
-  if ((Subtarget.hasVLX() && Subtarget.hasBWI() && Subtarget.hasDQI()) ||
-      NumElts == 16) {
-    // Truncate and store - everything is legal
-    Op = DAG.getNode(ISD::TRUNCATE, dl, MemVT, Op);
-    if (MemVT.getSizeInBits() < 8)
-      Op = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, MVT::v8i1,
-                       DAG.getUNDEF(MVT::v8i1), Op,
-                       DAG.getIntPtrConstant(0, dl));
-    return DAG.getStore(St->getChain(), dl, Op, St->getBasePtr(),
-                        St->getMemOperand());
-  }
-
-  // A subset, assume that we have only AVX-512F
-  if (NumElts <= 8) {
-    if (NumElts < 8) {
-      // Extend to 8-elts vector
-      MVT ExtVT = MVT::getVectorVT(OpVT.getScalarType(), 8);
-      Op = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ExtVT,
-                        DAG.getUNDEF(ExtVT), Op, DAG.getIntPtrConstant(0, dl));
-    }
-    Op = DAG.getNode(ISD::TRUNCATE, dl, MVT::v8i1, Op);
-    Op = DAG.getBitcast(MVT::i8, Op);
-    return DAG.getStore(St->getChain(), dl, Op, St->getBasePtr(),
-                        St->getMemOperand());
-  }
-  // v32i8
-  assert(OpVT == MVT::v32i8 && "Unexpected operand type");
-  // Divide the vector into 2 parts and store each part separately
-  SDValue Lo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v16i8, Op,
-                            DAG.getIntPtrConstant(0, dl));
-  Lo = DAG.getNode(ISD::TRUNCATE, dl, MVT::v16i1, Lo);
-  SDValue BasePtr = St->getBasePtr();
-  SDValue StLo = DAG.getStore(St->getChain(), dl, Lo, BasePtr,
-                              St->getMemOperand());
-  SDValue Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v16i8, Op,
-                            DAG.getIntPtrConstant(16, dl));
-  Hi = DAG.getNode(ISD::TRUNCATE, dl, MVT::v16i1, Hi);
-
-  SDValue BasePtrHi = DAG.getMemBasePlusOffset(BasePtr, 2, dl);
-
-  SDValue StHi = DAG.getStore(St->getChain(), dl, Hi,
-                              BasePtrHi, St->getPointerInfo().getWithOffset(2),
-                              MinAlign(St->getAlignment(), 2U),
-                              St->getMemOperand()->getFlags());
-  return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, StLo, StHi);
-}
-
-static SDValue LowerExtended1BitVectorLoad(SDValue Op,
-                                           const X86Subtarget &Subtarget,
-                                           SelectionDAG &DAG) {
-
-  LoadSDNode *Ld = cast<LoadSDNode>(Op.getNode());
-  SDLoc dl(Ld);
-  EVT MemVT = Ld->getMemoryVT();
-  assert(MemVT.isVector() && MemVT.getScalarType() == MVT::i1 &&
-         "Expected i1 vector load");
-  unsigned ExtOpcode = Ld->getExtensionType() == ISD::ZEXTLOAD ?
-    ISD::ZERO_EXTEND : ISD::SIGN_EXTEND;
-  MVT VT = Op.getValueType().getSimpleVT();
-  unsigned NumElts = VT.getVectorNumElements();
-
-  if ((Subtarget.hasBWI() && NumElts >= 32) ||
-      (Subtarget.hasDQI() && NumElts < 16) ||
-      NumElts == 16) {
-    // Load and extend - everything is legal
-    if (NumElts < 8) {
-      SDValue Load = DAG.getLoad(MVT::v8i1, dl, Ld->getChain(),
-                                 Ld->getBasePtr(),
-                                 Ld->getMemOperand());
-      // Replace chain users with the new chain.
-      assert(Load->getNumValues() == 2 && "Loads must carry a chain!");
-      DAG.ReplaceAllUsesOfValueWith(SDValue(Ld, 1), Load.getValue(1));
-      if (Subtarget.hasVLX()) {
-        // Extract to v4i1/v2i1.
-        SDValue Extract = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MemVT, Load,
-                                      DAG.getIntPtrConstant(0, dl));
-        // Finally, do a normal sign-extend to the desired register.
-        return DAG.getNode(ExtOpcode, dl, Op.getValueType(), Extract);
-      }
-
-      MVT ExtVT = MVT::getVectorVT(VT.getScalarType(), 8);
-      SDValue ExtVec = DAG.getNode(ExtOpcode, dl, ExtVT, Load);
-
-      return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, ExtVec,
-                                   DAG.getIntPtrConstant(0, dl));
-    }
-    SDValue Load = DAG.getLoad(MemVT, dl, Ld->getChain(),
-                               Ld->getBasePtr(),
-                               Ld->getMemOperand());
-    // Replace chain users with the new chain.
-    assert(Load->getNumValues() == 2 && "Loads must carry a chain!");
-    DAG.ReplaceAllUsesOfValueWith(SDValue(Ld, 1), Load.getValue(1));
-
-    // Finally, do a normal sign-extend to the desired register.
-    return DAG.getNode(ExtOpcode, dl, Op.getValueType(), Load);
-  }
-
-  if (NumElts <= 8) {
-    // A subset, assume that we have only AVX-512F
-    SDValue Load = DAG.getLoad(MVT::i8, dl, Ld->getChain(),
-                              Ld->getBasePtr(),
-                              Ld->getMemOperand());
-    // Replace chain users with the new chain.
-    assert(Load->getNumValues() == 2 && "Loads must carry a chain!");
-    DAG.ReplaceAllUsesOfValueWith(SDValue(Ld, 1), Load.getValue(1));
-
-    SDValue BitVec = DAG.getBitcast(MVT::v8i1, Load);
-
-    if (NumElts == 8)
-      return DAG.getNode(ExtOpcode, dl, VT, BitVec);
-
-    if (Subtarget.hasVLX()) {
-      // Extract to v4i1/v2i1.
-      SDValue Extract = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MemVT, BitVec,
-                                    DAG.getIntPtrConstant(0, dl));
-      // Finally, do a normal sign-extend to the desired register.
-      return DAG.getNode(ExtOpcode, dl, Op.getValueType(), Extract);
-    }
-
-    MVT ExtVT = MVT::getVectorVT(VT.getScalarType(), 8);
-    SDValue ExtVec = DAG.getNode(ExtOpcode, dl, ExtVT, BitVec);
-    return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, ExtVec,
-                        DAG.getIntPtrConstant(0, dl));
-  }
-
-  assert(VT == MVT::v32i8 && "Unexpected extload type");
-
-  SDValue BasePtr = Ld->getBasePtr();
-  SDValue LoadLo = DAG.getLoad(MVT::v16i1, dl, Ld->getChain(),
-                               Ld->getBasePtr(),
-                               Ld->getMemOperand());
-
-  SDValue BasePtrHi = DAG.getMemBasePlusOffset(BasePtr, 2, dl);
-
-  SDValue LoadHi = DAG.getLoad(MVT::v16i1, dl, Ld->getChain(), BasePtrHi,
-                               Ld->getPointerInfo().getWithOffset(2),
-                               MinAlign(Ld->getAlignment(), 2U),
-                               Ld->getMemOperand()->getFlags());
-
-  SDValue NewChain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
-                                 LoadLo.getValue(1), LoadHi.getValue(1));
-  DAG.ReplaceAllUsesOfValueWith(SDValue(Ld, 1), NewChain);
-
-  SDValue Lo = DAG.getNode(ExtOpcode, dl, MVT::v16i8, LoadLo);
-  SDValue Hi = DAG.getNode(ExtOpcode, dl, MVT::v16i8, LoadHi);
-  return DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v32i8, Lo, Hi);
-}
-
 // Lower vector extended loads using a shuffle. If SSSE3 is not available we
 // may emit an illegal shuffle but the expansion is still better than scalar
 // code. We generate X86ISD::VSEXT for SEXTLOADs if it's available, otherwise
@@ -18965,8 +18794,6 @@ static SDValue LowerExtendedLoad(SDValue Op, const X86Subtarget &Subtarget,
   LoadSDNode *Ld = cast<LoadSDNode>(Op.getNode());
   SDLoc dl(Ld);
   EVT MemVT = Ld->getMemoryVT();
-  if (MemVT.getScalarType() == MVT::i1)
-    return LowerExtended1BitVectorLoad(Op, Subtarget, DAG);
 
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   unsigned RegSz = RegVT.getSizeInBits();
@@ -24756,7 +24583,6 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::GC_TRANSITION_START:
                                 return LowerGC_TRANSITION_START(Op, DAG);
   case ISD::GC_TRANSITION_END:  return LowerGC_TRANSITION_END(Op, DAG);
-  case ISD::STORE:              return LowerTruncatingStore(Op, Subtarget, DAG);
   }
 }
 
