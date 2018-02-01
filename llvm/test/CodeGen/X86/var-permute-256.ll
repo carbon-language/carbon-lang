@@ -38,83 +38,44 @@ define <4 x i64> @var_shuffle_v4i64(<4 x i64> %v, <4 x i64> %indices) nounwind {
 ;
 ; AVX2-LABEL: var_shuffle_v4i64:
 ; AVX2:       # %bb.0:
-; AVX2-NEXT:    pushq %rbp
-; AVX2-NEXT:    movq %rsp, %rbp
-; AVX2-NEXT:    andq $-32, %rsp
-; AVX2-NEXT:    subq $64, %rsp
-; AVX2-NEXT:    vmovq %xmm1, %rax
-; AVX2-NEXT:    andl $3, %eax
-; AVX2-NEXT:    vpextrq $1, %xmm1, %rcx
-; AVX2-NEXT:    andl $3, %ecx
-; AVX2-NEXT:    vextracti128 $1, %ymm1, %xmm1
-; AVX2-NEXT:    vmovq %xmm1, %rdx
-; AVX2-NEXT:    andl $3, %edx
-; AVX2-NEXT:    vpextrq $1, %xmm1, %rsi
-; AVX2-NEXT:    andl $3, %esi
-; AVX2-NEXT:    vmovaps %ymm0, (%rsp)
-; AVX2-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX2-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX2-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm1[0],xmm0[0]
-; AVX2-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX2-NEXT:    vmovsd {{.*#+}} xmm2 = mem[0],zero
-; AVX2-NEXT:    vmovlhps {{.*#+}} xmm1 = xmm2[0],xmm1[0]
-; AVX2-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
-; AVX2-NEXT:    movq %rbp, %rsp
-; AVX2-NEXT:    popq %rbp
+; AVX2-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [2,2,2,2]
+; AVX2-NEXT:    vpmuludq %ymm2, %ymm1, %ymm2
+; AVX2-NEXT:    vpsrlq $32, %ymm1, %ymm3
+; AVX2-NEXT:    vpbroadcastq {{.*#+}} ymm4 = [8589934594,8589934594,8589934594,8589934594]
+; AVX2-NEXT:    vpmuludq %ymm4, %ymm3, %ymm3
+; AVX2-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
+; AVX2-NEXT:    vpsllq $32, %ymm2, %ymm2
+; AVX2-NEXT:    vpmuludq %ymm4, %ymm1, %ymm1
+; AVX2-NEXT:    vpbroadcastq {{.*#+}} ymm3 = [4294967296,4294967296,4294967296,4294967296]
+; AVX2-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
+; AVX2-NEXT:    vpaddq %ymm2, %ymm1, %ymm1
+; AVX2-NEXT:    vpermd %ymm0, %ymm1, %ymm0
 ; AVX2-NEXT:    retq
 ;
 ; AVX512F-LABEL: var_shuffle_v4i64:
 ; AVX512F:       # %bb.0:
-; AVX512F-NEXT:    pushq %rbp
-; AVX512F-NEXT:    movq %rsp, %rbp
-; AVX512F-NEXT:    andq $-32, %rsp
-; AVX512F-NEXT:    subq $64, %rsp
-; AVX512F-NEXT:    vmovq %xmm1, %rax
-; AVX512F-NEXT:    andl $3, %eax
-; AVX512F-NEXT:    vpextrq $1, %xmm1, %rcx
-; AVX512F-NEXT:    andl $3, %ecx
-; AVX512F-NEXT:    vextracti128 $1, %ymm1, %xmm1
-; AVX512F-NEXT:    vmovq %xmm1, %rdx
-; AVX512F-NEXT:    andl $3, %edx
-; AVX512F-NEXT:    vpextrq $1, %xmm1, %rsi
-; AVX512F-NEXT:    andl $3, %esi
-; AVX512F-NEXT:    vmovaps %ymm0, (%rsp)
-; AVX512F-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX512F-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512F-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm1[0],xmm0[0]
-; AVX512F-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512F-NEXT:    vmovsd {{.*#+}} xmm2 = mem[0],zero
-; AVX512F-NEXT:    vmovlhps {{.*#+}} xmm1 = xmm2[0],xmm1[0]
-; AVX512F-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
-; AVX512F-NEXT:    movq %rbp, %rsp
-; AVX512F-NEXT:    popq %rbp
+; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [2,2,2,2]
+; AVX512F-NEXT:    vpmuludq %ymm2, %ymm1, %ymm2
+; AVX512F-NEXT:    vpsrlq $32, %ymm1, %ymm3
+; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm4 = [8589934594,8589934594,8589934594,8589934594]
+; AVX512F-NEXT:    vpmuludq %ymm4, %ymm3, %ymm3
+; AVX512F-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
+; AVX512F-NEXT:    vpsllq $32, %ymm2, %ymm2
+; AVX512F-NEXT:    vpmuludq %ymm4, %ymm1, %ymm1
+; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm3 = [4294967296,4294967296,4294967296,4294967296]
+; AVX512F-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
+; AVX512F-NEXT:    vpaddq %ymm2, %ymm1, %ymm1
+; AVX512F-NEXT:    vpermd %ymm0, %ymm1, %ymm0
 ; AVX512F-NEXT:    retq
 ;
 ; AVX512DQ-LABEL: var_shuffle_v4i64:
 ; AVX512DQ:       # %bb.0:
-; AVX512DQ-NEXT:    pushq %rbp
-; AVX512DQ-NEXT:    movq %rsp, %rbp
-; AVX512DQ-NEXT:    andq $-32, %rsp
-; AVX512DQ-NEXT:    subq $64, %rsp
-; AVX512DQ-NEXT:    vmovq %xmm1, %rax
-; AVX512DQ-NEXT:    andl $3, %eax
-; AVX512DQ-NEXT:    vpextrq $1, %xmm1, %rcx
-; AVX512DQ-NEXT:    andl $3, %ecx
-; AVX512DQ-NEXT:    vextracti128 $1, %ymm1, %xmm1
-; AVX512DQ-NEXT:    vmovq %xmm1, %rdx
-; AVX512DQ-NEXT:    andl $3, %edx
-; AVX512DQ-NEXT:    vpextrq $1, %xmm1, %rsi
-; AVX512DQ-NEXT:    andl $3, %esi
-; AVX512DQ-NEXT:    vmovaps %ymm0, (%rsp)
-; AVX512DQ-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX512DQ-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512DQ-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm1[0],xmm0[0]
-; AVX512DQ-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512DQ-NEXT:    vmovsd {{.*#+}} xmm2 = mem[0],zero
-; AVX512DQ-NEXT:    vmovlhps {{.*#+}} xmm1 = xmm2[0],xmm1[0]
-; AVX512DQ-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
-; AVX512DQ-NEXT:    movq %rbp, %rsp
-; AVX512DQ-NEXT:    popq %rbp
+; AVX512DQ-NEXT:    # kill: def $ymm1 killed $ymm1 def $zmm1
+; AVX512DQ-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [8589934594,8589934594,8589934594,8589934594]
+; AVX512DQ-NEXT:    vpmullq %zmm2, %zmm1, %zmm1
+; AVX512DQ-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [4294967296,4294967296,4294967296,4294967296]
+; AVX512DQ-NEXT:    vpaddq %ymm2, %ymm1, %ymm1
+; AVX512DQ-NEXT:    vpermd %ymm0, %ymm1, %ymm0
 ; AVX512DQ-NEXT:    retq
 ;
 ; AVX512VL-LABEL: var_shuffle_v4i64:
@@ -1348,77 +1309,44 @@ define <4 x double> @var_shuffle_v4f64(<4 x double> %v, <4 x i64> %indices) noun
 ;
 ; AVX2-LABEL: var_shuffle_v4f64:
 ; AVX2:       # %bb.0:
-; AVX2-NEXT:    pushq %rbp
-; AVX2-NEXT:    movq %rsp, %rbp
-; AVX2-NEXT:    andq $-32, %rsp
-; AVX2-NEXT:    subq $64, %rsp
-; AVX2-NEXT:    vmovq %xmm1, %rax
-; AVX2-NEXT:    andl $3, %eax
-; AVX2-NEXT:    vpextrq $1, %xmm1, %rcx
-; AVX2-NEXT:    andl $3, %ecx
-; AVX2-NEXT:    vextracti128 $1, %ymm1, %xmm1
-; AVX2-NEXT:    vmovq %xmm1, %rdx
-; AVX2-NEXT:    andl $3, %edx
-; AVX2-NEXT:    vpextrq $1, %xmm1, %rsi
-; AVX2-NEXT:    andl $3, %esi
-; AVX2-NEXT:    vmovaps %ymm0, (%rsp)
-; AVX2-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX2-NEXT:    vmovhpd {{.*#+}} xmm0 = xmm0[0],mem[0]
-; AVX2-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX2-NEXT:    vmovhpd {{.*#+}} xmm1 = xmm1[0],mem[0]
-; AVX2-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
-; AVX2-NEXT:    movq %rbp, %rsp
-; AVX2-NEXT:    popq %rbp
+; AVX2-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [2,2,2,2]
+; AVX2-NEXT:    vpmuludq %ymm2, %ymm1, %ymm2
+; AVX2-NEXT:    vpsrlq $32, %ymm1, %ymm3
+; AVX2-NEXT:    vpbroadcastq {{.*#+}} ymm4 = [8589934594,8589934594,8589934594,8589934594]
+; AVX2-NEXT:    vpmuludq %ymm4, %ymm3, %ymm3
+; AVX2-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
+; AVX2-NEXT:    vpsllq $32, %ymm2, %ymm2
+; AVX2-NEXT:    vpmuludq %ymm4, %ymm1, %ymm1
+; AVX2-NEXT:    vpbroadcastq {{.*#+}} ymm3 = [4294967296,4294967296,4294967296,4294967296]
+; AVX2-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
+; AVX2-NEXT:    vpaddq %ymm2, %ymm1, %ymm1
+; AVX2-NEXT:    vpermd %ymm0, %ymm1, %ymm0
 ; AVX2-NEXT:    retq
 ;
 ; AVX512F-LABEL: var_shuffle_v4f64:
 ; AVX512F:       # %bb.0:
-; AVX512F-NEXT:    pushq %rbp
-; AVX512F-NEXT:    movq %rsp, %rbp
-; AVX512F-NEXT:    andq $-32, %rsp
-; AVX512F-NEXT:    subq $64, %rsp
-; AVX512F-NEXT:    vmovq %xmm1, %rax
-; AVX512F-NEXT:    andl $3, %eax
-; AVX512F-NEXT:    vpextrq $1, %xmm1, %rcx
-; AVX512F-NEXT:    andl $3, %ecx
-; AVX512F-NEXT:    vextracti128 $1, %ymm1, %xmm1
-; AVX512F-NEXT:    vmovq %xmm1, %rdx
-; AVX512F-NEXT:    andl $3, %edx
-; AVX512F-NEXT:    vpextrq $1, %xmm1, %rsi
-; AVX512F-NEXT:    andl $3, %esi
-; AVX512F-NEXT:    vmovaps %ymm0, (%rsp)
-; AVX512F-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX512F-NEXT:    vmovhpd {{.*#+}} xmm0 = xmm0[0],mem[0]
-; AVX512F-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512F-NEXT:    vmovhpd {{.*#+}} xmm1 = xmm1[0],mem[0]
-; AVX512F-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
-; AVX512F-NEXT:    movq %rbp, %rsp
-; AVX512F-NEXT:    popq %rbp
+; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [2,2,2,2]
+; AVX512F-NEXT:    vpmuludq %ymm2, %ymm1, %ymm2
+; AVX512F-NEXT:    vpsrlq $32, %ymm1, %ymm3
+; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm4 = [8589934594,8589934594,8589934594,8589934594]
+; AVX512F-NEXT:    vpmuludq %ymm4, %ymm3, %ymm3
+; AVX512F-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
+; AVX512F-NEXT:    vpsllq $32, %ymm2, %ymm2
+; AVX512F-NEXT:    vpmuludq %ymm4, %ymm1, %ymm1
+; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm3 = [4294967296,4294967296,4294967296,4294967296]
+; AVX512F-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
+; AVX512F-NEXT:    vpaddq %ymm2, %ymm1, %ymm1
+; AVX512F-NEXT:    vpermd %ymm0, %ymm1, %ymm0
 ; AVX512F-NEXT:    retq
 ;
 ; AVX512DQ-LABEL: var_shuffle_v4f64:
 ; AVX512DQ:       # %bb.0:
-; AVX512DQ-NEXT:    pushq %rbp
-; AVX512DQ-NEXT:    movq %rsp, %rbp
-; AVX512DQ-NEXT:    andq $-32, %rsp
-; AVX512DQ-NEXT:    subq $64, %rsp
-; AVX512DQ-NEXT:    vmovq %xmm1, %rax
-; AVX512DQ-NEXT:    andl $3, %eax
-; AVX512DQ-NEXT:    vpextrq $1, %xmm1, %rcx
-; AVX512DQ-NEXT:    andl $3, %ecx
-; AVX512DQ-NEXT:    vextracti128 $1, %ymm1, %xmm1
-; AVX512DQ-NEXT:    vmovq %xmm1, %rdx
-; AVX512DQ-NEXT:    andl $3, %edx
-; AVX512DQ-NEXT:    vpextrq $1, %xmm1, %rsi
-; AVX512DQ-NEXT:    andl $3, %esi
-; AVX512DQ-NEXT:    vmovaps %ymm0, (%rsp)
-; AVX512DQ-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX512DQ-NEXT:    vmovhpd {{.*#+}} xmm0 = xmm0[0],mem[0]
-; AVX512DQ-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512DQ-NEXT:    vmovhpd {{.*#+}} xmm1 = xmm1[0],mem[0]
-; AVX512DQ-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
-; AVX512DQ-NEXT:    movq %rbp, %rsp
-; AVX512DQ-NEXT:    popq %rbp
+; AVX512DQ-NEXT:    # kill: def $ymm1 killed $ymm1 def $zmm1
+; AVX512DQ-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [8589934594,8589934594,8589934594,8589934594]
+; AVX512DQ-NEXT:    vpmullq %zmm2, %zmm1, %zmm1
+; AVX512DQ-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [4294967296,4294967296,4294967296,4294967296]
+; AVX512DQ-NEXT:    vpaddq %ymm2, %ymm1, %ymm1
+; AVX512DQ-NEXT:    vpermd %ymm0, %ymm1, %ymm0
 ; AVX512DQ-NEXT:    retq
 ;
 ; AVX512VL-LABEL: var_shuffle_v4f64:
@@ -1542,65 +1470,47 @@ define <4 x i64> @var_shuffle_v4i64_from_v2i64(<2 x i64> %v, <4 x i64> %indices)
 ;
 ; AVX2-LABEL: var_shuffle_v4i64_from_v2i64:
 ; AVX2:       # %bb.0:
-; AVX2-NEXT:    vmovq %xmm1, %rax
-; AVX2-NEXT:    andl $1, %eax
-; AVX2-NEXT:    vpextrq $1, %xmm1, %rcx
-; AVX2-NEXT:    andl $1, %ecx
-; AVX2-NEXT:    vextracti128 $1, %ymm1, %xmm1
-; AVX2-NEXT:    vmovq %xmm1, %rdx
-; AVX2-NEXT:    andl $1, %edx
-; AVX2-NEXT:    vpextrq $1, %xmm1, %rsi
-; AVX2-NEXT:    andl $1, %esi
-; AVX2-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
-; AVX2-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX2-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX2-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm1[0],xmm0[0]
-; AVX2-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX2-NEXT:    vmovsd {{.*#+}} xmm2 = mem[0],zero
-; AVX2-NEXT:    vmovlhps {{.*#+}} xmm1 = xmm2[0],xmm1[0]
-; AVX2-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; AVX2-NEXT:    # kill: def $xmm0 killed $xmm0 def $ymm0
+; AVX2-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [2,2,2,2]
+; AVX2-NEXT:    vpmuludq %ymm2, %ymm1, %ymm2
+; AVX2-NEXT:    vpsrlq $32, %ymm1, %ymm3
+; AVX2-NEXT:    vpbroadcastq {{.*#+}} ymm4 = [8589934594,8589934594,8589934594,8589934594]
+; AVX2-NEXT:    vpmuludq %ymm4, %ymm3, %ymm3
+; AVX2-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
+; AVX2-NEXT:    vpsllq $32, %ymm2, %ymm2
+; AVX2-NEXT:    vpmuludq %ymm4, %ymm1, %ymm1
+; AVX2-NEXT:    vpbroadcastq {{.*#+}} ymm3 = [4294967296,4294967296,4294967296,4294967296]
+; AVX2-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
+; AVX2-NEXT:    vpaddq %ymm2, %ymm1, %ymm1
+; AVX2-NEXT:    vpermd %ymm0, %ymm1, %ymm0
 ; AVX2-NEXT:    retq
 ;
 ; AVX512F-LABEL: var_shuffle_v4i64_from_v2i64:
 ; AVX512F:       # %bb.0:
-; AVX512F-NEXT:    vmovq %xmm1, %rax
-; AVX512F-NEXT:    andl $1, %eax
-; AVX512F-NEXT:    vpextrq $1, %xmm1, %rcx
-; AVX512F-NEXT:    andl $1, %ecx
-; AVX512F-NEXT:    vextracti128 $1, %ymm1, %xmm1
-; AVX512F-NEXT:    vmovq %xmm1, %rdx
-; AVX512F-NEXT:    andl $1, %edx
-; AVX512F-NEXT:    vpextrq $1, %xmm1, %rsi
-; AVX512F-NEXT:    andl $1, %esi
-; AVX512F-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
-; AVX512F-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX512F-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512F-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm1[0],xmm0[0]
-; AVX512F-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512F-NEXT:    vmovsd {{.*#+}} xmm2 = mem[0],zero
-; AVX512F-NEXT:    vmovlhps {{.*#+}} xmm1 = xmm2[0],xmm1[0]
-; AVX512F-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; AVX512F-NEXT:    # kill: def $xmm0 killed $xmm0 def $ymm0
+; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [2,2,2,2]
+; AVX512F-NEXT:    vpmuludq %ymm2, %ymm1, %ymm2
+; AVX512F-NEXT:    vpsrlq $32, %ymm1, %ymm3
+; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm4 = [8589934594,8589934594,8589934594,8589934594]
+; AVX512F-NEXT:    vpmuludq %ymm4, %ymm3, %ymm3
+; AVX512F-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
+; AVX512F-NEXT:    vpsllq $32, %ymm2, %ymm2
+; AVX512F-NEXT:    vpmuludq %ymm4, %ymm1, %ymm1
+; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm3 = [4294967296,4294967296,4294967296,4294967296]
+; AVX512F-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
+; AVX512F-NEXT:    vpaddq %ymm2, %ymm1, %ymm1
+; AVX512F-NEXT:    vpermd %ymm0, %ymm1, %ymm0
 ; AVX512F-NEXT:    retq
 ;
 ; AVX512DQ-LABEL: var_shuffle_v4i64_from_v2i64:
 ; AVX512DQ:       # %bb.0:
-; AVX512DQ-NEXT:    vmovq %xmm1, %rax
-; AVX512DQ-NEXT:    andl $1, %eax
-; AVX512DQ-NEXT:    vpextrq $1, %xmm1, %rcx
-; AVX512DQ-NEXT:    andl $1, %ecx
-; AVX512DQ-NEXT:    vextracti128 $1, %ymm1, %xmm1
-; AVX512DQ-NEXT:    vmovq %xmm1, %rdx
-; AVX512DQ-NEXT:    andl $1, %edx
-; AVX512DQ-NEXT:    vpextrq $1, %xmm1, %rsi
-; AVX512DQ-NEXT:    andl $1, %esi
-; AVX512DQ-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
-; AVX512DQ-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX512DQ-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512DQ-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm1[0],xmm0[0]
-; AVX512DQ-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512DQ-NEXT:    vmovsd {{.*#+}} xmm2 = mem[0],zero
-; AVX512DQ-NEXT:    vmovlhps {{.*#+}} xmm1 = xmm2[0],xmm1[0]
-; AVX512DQ-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; AVX512DQ-NEXT:    # kill: def $ymm1 killed $ymm1 def $zmm1
+; AVX512DQ-NEXT:    # kill: def $xmm0 killed $xmm0 def $ymm0
+; AVX512DQ-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [8589934594,8589934594,8589934594,8589934594]
+; AVX512DQ-NEXT:    vpmullq %zmm2, %zmm1, %zmm1
+; AVX512DQ-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [4294967296,4294967296,4294967296,4294967296]
+; AVX512DQ-NEXT:    vpaddq %ymm2, %ymm1, %ymm1
+; AVX512DQ-NEXT:    vpermd %ymm0, %ymm1, %ymm0
 ; AVX512DQ-NEXT:    retq
 ;
 ; AVX512VL-LABEL: var_shuffle_v4i64_from_v2i64:
@@ -2768,59 +2678,47 @@ define <4 x double> @var_shuffle_v4f64_from_v2f64(<2 x double> %v, <4 x i64> %in
 ;
 ; AVX2-LABEL: var_shuffle_v4f64_from_v2f64:
 ; AVX2:       # %bb.0:
-; AVX2-NEXT:    vmovq %xmm1, %rax
-; AVX2-NEXT:    andl $1, %eax
-; AVX2-NEXT:    vpextrq $1, %xmm1, %rcx
-; AVX2-NEXT:    andl $1, %ecx
-; AVX2-NEXT:    vextracti128 $1, %ymm1, %xmm1
-; AVX2-NEXT:    vmovq %xmm1, %rdx
-; AVX2-NEXT:    andl $1, %edx
-; AVX2-NEXT:    vpextrq $1, %xmm1, %rsi
-; AVX2-NEXT:    andl $1, %esi
-; AVX2-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
-; AVX2-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX2-NEXT:    vmovhpd {{.*#+}} xmm0 = xmm0[0],mem[0]
-; AVX2-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX2-NEXT:    vmovhpd {{.*#+}} xmm1 = xmm1[0],mem[0]
-; AVX2-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; AVX2-NEXT:    # kill: def $xmm0 killed $xmm0 def $ymm0
+; AVX2-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [2,2,2,2]
+; AVX2-NEXT:    vpmuludq %ymm2, %ymm1, %ymm2
+; AVX2-NEXT:    vpsrlq $32, %ymm1, %ymm3
+; AVX2-NEXT:    vpbroadcastq {{.*#+}} ymm4 = [8589934594,8589934594,8589934594,8589934594]
+; AVX2-NEXT:    vpmuludq %ymm4, %ymm3, %ymm3
+; AVX2-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
+; AVX2-NEXT:    vpsllq $32, %ymm2, %ymm2
+; AVX2-NEXT:    vpmuludq %ymm4, %ymm1, %ymm1
+; AVX2-NEXT:    vpbroadcastq {{.*#+}} ymm3 = [4294967296,4294967296,4294967296,4294967296]
+; AVX2-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
+; AVX2-NEXT:    vpaddq %ymm2, %ymm1, %ymm1
+; AVX2-NEXT:    vpermd %ymm0, %ymm1, %ymm0
 ; AVX2-NEXT:    retq
 ;
 ; AVX512F-LABEL: var_shuffle_v4f64_from_v2f64:
 ; AVX512F:       # %bb.0:
-; AVX512F-NEXT:    vmovq %xmm1, %rax
-; AVX512F-NEXT:    andl $1, %eax
-; AVX512F-NEXT:    vpextrq $1, %xmm1, %rcx
-; AVX512F-NEXT:    andl $1, %ecx
-; AVX512F-NEXT:    vextracti128 $1, %ymm1, %xmm1
-; AVX512F-NEXT:    vmovq %xmm1, %rdx
-; AVX512F-NEXT:    andl $1, %edx
-; AVX512F-NEXT:    vpextrq $1, %xmm1, %rsi
-; AVX512F-NEXT:    andl $1, %esi
-; AVX512F-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
-; AVX512F-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX512F-NEXT:    vmovhpd {{.*#+}} xmm0 = xmm0[0],mem[0]
-; AVX512F-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512F-NEXT:    vmovhpd {{.*#+}} xmm1 = xmm1[0],mem[0]
-; AVX512F-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; AVX512F-NEXT:    # kill: def $xmm0 killed $xmm0 def $ymm0
+; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [2,2,2,2]
+; AVX512F-NEXT:    vpmuludq %ymm2, %ymm1, %ymm2
+; AVX512F-NEXT:    vpsrlq $32, %ymm1, %ymm3
+; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm4 = [8589934594,8589934594,8589934594,8589934594]
+; AVX512F-NEXT:    vpmuludq %ymm4, %ymm3, %ymm3
+; AVX512F-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
+; AVX512F-NEXT:    vpsllq $32, %ymm2, %ymm2
+; AVX512F-NEXT:    vpmuludq %ymm4, %ymm1, %ymm1
+; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm3 = [4294967296,4294967296,4294967296,4294967296]
+; AVX512F-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
+; AVX512F-NEXT:    vpaddq %ymm2, %ymm1, %ymm1
+; AVX512F-NEXT:    vpermd %ymm0, %ymm1, %ymm0
 ; AVX512F-NEXT:    retq
 ;
 ; AVX512DQ-LABEL: var_shuffle_v4f64_from_v2f64:
 ; AVX512DQ:       # %bb.0:
-; AVX512DQ-NEXT:    vmovq %xmm1, %rax
-; AVX512DQ-NEXT:    andl $1, %eax
-; AVX512DQ-NEXT:    vpextrq $1, %xmm1, %rcx
-; AVX512DQ-NEXT:    andl $1, %ecx
-; AVX512DQ-NEXT:    vextracti128 $1, %ymm1, %xmm1
-; AVX512DQ-NEXT:    vmovq %xmm1, %rdx
-; AVX512DQ-NEXT:    andl $1, %edx
-; AVX512DQ-NEXT:    vpextrq $1, %xmm1, %rsi
-; AVX512DQ-NEXT:    andl $1, %esi
-; AVX512DQ-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
-; AVX512DQ-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX512DQ-NEXT:    vmovhpd {{.*#+}} xmm0 = xmm0[0],mem[0]
-; AVX512DQ-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512DQ-NEXT:    vmovhpd {{.*#+}} xmm1 = xmm1[0],mem[0]
-; AVX512DQ-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; AVX512DQ-NEXT:    # kill: def $ymm1 killed $ymm1 def $zmm1
+; AVX512DQ-NEXT:    # kill: def $xmm0 killed $xmm0 def $ymm0
+; AVX512DQ-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [8589934594,8589934594,8589934594,8589934594]
+; AVX512DQ-NEXT:    vpmullq %zmm2, %zmm1, %zmm1
+; AVX512DQ-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [4294967296,4294967296,4294967296,4294967296]
+; AVX512DQ-NEXT:    vpaddq %ymm2, %ymm1, %ymm1
+; AVX512DQ-NEXT:    vpermd %ymm0, %ymm1, %ymm0
 ; AVX512DQ-NEXT:    retq
 ;
 ; AVX512VL-LABEL: var_shuffle_v4f64_from_v2f64:

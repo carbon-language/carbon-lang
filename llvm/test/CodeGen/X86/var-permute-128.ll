@@ -37,25 +37,15 @@ define <2 x i64> @var_shuffle_v2i64(<2 x i64> %v, <2 x i64> %indices) nounwind {
 define <4 x i32> @var_shuffle_v4i32(<4 x i32> %v, <4 x i32> %indices) nounwind {
 ; SSSE3-LABEL: var_shuffle_v4i32:
 ; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    movd %xmm1, %eax
-; SSSE3-NEXT:    pshufd {{.*#+}} xmm2 = xmm1[1,1,2,3]
-; SSSE3-NEXT:    movd %xmm2, %ecx
-; SSSE3-NEXT:    pshufd {{.*#+}} xmm2 = xmm1[2,3,0,1]
-; SSSE3-NEXT:    movd %xmm2, %edx
-; SSSE3-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[3,1,2,3]
-; SSSE3-NEXT:    movd %xmm1, %esi
-; SSSE3-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
-; SSSE3-NEXT:    andl $3, %eax
-; SSSE3-NEXT:    andl $3, %ecx
-; SSSE3-NEXT:    andl $3, %edx
-; SSSE3-NEXT:    andl $3, %esi
-; SSSE3-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; SSSE3-NEXT:    movss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; SSSE3-NEXT:    unpcklps {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1]
-; SSSE3-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; SSSE3-NEXT:    movss {{.*#+}} xmm2 = mem[0],zero,zero,zero
-; SSSE3-NEXT:    unpcklps {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1]
-; SSSE3-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; SSSE3-NEXT:    movdqa {{.*#+}} xmm2 = [67372036,67372036,67372036,67372036]
+; SSSE3-NEXT:    pshufd {{.*#+}} xmm3 = xmm1[1,1,3,3]
+; SSSE3-NEXT:    pmuludq %xmm2, %xmm1
+; SSSE3-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[0,2,2,3]
+; SSSE3-NEXT:    pmuludq %xmm2, %xmm3
+; SSSE3-NEXT:    pshufd {{.*#+}} xmm2 = xmm3[0,2,2,3]
+; SSSE3-NEXT:    punpckldq {{.*#+}} xmm1 = xmm1[0],xmm2[0],xmm1[1],xmm2[1]
+; SSSE3-NEXT:    paddd {{.*}}(%rip), %xmm1
+; SSSE3-NEXT:    pshufb %xmm1, %xmm0
 ; SSSE3-NEXT:    retq
 ;
 ; AVX-LABEL: var_shuffle_v4i32:
@@ -80,76 +70,16 @@ define <4 x i32> @var_shuffle_v4i32(<4 x i32> %v, <4 x i32> %indices) nounwind {
 define <8 x i16> @var_shuffle_v8i16(<8 x i16> %v, <8 x i16> %indices) nounwind {
 ; SSSE3-LABEL: var_shuffle_v8i16:
 ; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    movd %xmm1, %r8d
-; SSSE3-NEXT:    pextrw $1, %xmm1, %r9d
-; SSSE3-NEXT:    pextrw $2, %xmm1, %r10d
-; SSSE3-NEXT:    pextrw $3, %xmm1, %esi
-; SSSE3-NEXT:    pextrw $4, %xmm1, %edi
-; SSSE3-NEXT:    pextrw $5, %xmm1, %eax
-; SSSE3-NEXT:    pextrw $6, %xmm1, %ecx
-; SSSE3-NEXT:    pextrw $7, %xmm1, %edx
-; SSSE3-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
-; SSSE3-NEXT:    andl $7, %r8d
-; SSSE3-NEXT:    andl $7, %r9d
-; SSSE3-NEXT:    andl $7, %r10d
-; SSSE3-NEXT:    andl $7, %esi
-; SSSE3-NEXT:    andl $7, %edi
-; SSSE3-NEXT:    andl $7, %eax
-; SSSE3-NEXT:    andl $7, %ecx
-; SSSE3-NEXT:    andl $7, %edx
-; SSSE3-NEXT:    movzwl -24(%rsp,%rdx,2), %edx
-; SSSE3-NEXT:    movd %edx, %xmm0
-; SSSE3-NEXT:    movzwl -24(%rsp,%rcx,2), %ecx
-; SSSE3-NEXT:    movd %ecx, %xmm1
-; SSSE3-NEXT:    punpcklwd {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1],xmm1[2],xmm0[2],xmm1[3],xmm0[3]
-; SSSE3-NEXT:    movzwl -24(%rsp,%rax,2), %eax
-; SSSE3-NEXT:    movd %eax, %xmm0
-; SSSE3-NEXT:    movzwl -24(%rsp,%rdi,2), %eax
-; SSSE3-NEXT:    movd %eax, %xmm2
-; SSSE3-NEXT:    punpcklwd {{.*#+}} xmm2 = xmm2[0],xmm0[0],xmm2[1],xmm0[1],xmm2[2],xmm0[2],xmm2[3],xmm0[3]
-; SSSE3-NEXT:    punpckldq {{.*#+}} xmm2 = xmm2[0],xmm1[0],xmm2[1],xmm1[1]
-; SSSE3-NEXT:    movzwl -24(%rsp,%rsi,2), %eax
-; SSSE3-NEXT:    movd %eax, %xmm0
-; SSSE3-NEXT:    movzwl -24(%rsp,%r10,2), %eax
-; SSSE3-NEXT:    movd %eax, %xmm1
-; SSSE3-NEXT:    punpcklwd {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1],xmm1[2],xmm0[2],xmm1[3],xmm0[3]
-; SSSE3-NEXT:    movzwl -24(%rsp,%r9,2), %eax
-; SSSE3-NEXT:    movd %eax, %xmm3
-; SSSE3-NEXT:    movzwl -24(%rsp,%r8,2), %eax
-; SSSE3-NEXT:    movd %eax, %xmm0
-; SSSE3-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0],xmm3[0],xmm0[1],xmm3[1],xmm0[2],xmm3[2],xmm0[3],xmm3[3]
-; SSSE3-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
-; SSSE3-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm2[0]
+; SSSE3-NEXT:    pmullw {{.*}}(%rip), %xmm1
+; SSSE3-NEXT:    paddw {{.*}}(%rip), %xmm1
+; SSSE3-NEXT:    pshufb %xmm1, %xmm0
 ; SSSE3-NEXT:    retq
 ;
 ; AVXNOVLBW-LABEL: var_shuffle_v8i16:
 ; AVXNOVLBW:       # %bb.0:
-; AVXNOVLBW-NEXT:    vmovd %xmm1, %eax
-; AVXNOVLBW-NEXT:    vpextrw $1, %xmm1, %r10d
-; AVXNOVLBW-NEXT:    vpextrw $2, %xmm1, %ecx
-; AVXNOVLBW-NEXT:    vpextrw $3, %xmm1, %edx
-; AVXNOVLBW-NEXT:    vpextrw $4, %xmm1, %esi
-; AVXNOVLBW-NEXT:    vpextrw $5, %xmm1, %edi
-; AVXNOVLBW-NEXT:    vpextrw $6, %xmm1, %r8d
-; AVXNOVLBW-NEXT:    vpextrw $7, %xmm1, %r9d
-; AVXNOVLBW-NEXT:    vmovaps %xmm0, -{{[0-9]+}}(%rsp)
-; AVXNOVLBW-NEXT:    andl $7, %eax
-; AVXNOVLBW-NEXT:    andl $7, %r10d
-; AVXNOVLBW-NEXT:    andl $7, %ecx
-; AVXNOVLBW-NEXT:    andl $7, %edx
-; AVXNOVLBW-NEXT:    andl $7, %esi
-; AVXNOVLBW-NEXT:    andl $7, %edi
-; AVXNOVLBW-NEXT:    andl $7, %r8d
-; AVXNOVLBW-NEXT:    andl $7, %r9d
-; AVXNOVLBW-NEXT:    movzwl -24(%rsp,%rax,2), %eax
-; AVXNOVLBW-NEXT:    vmovd %eax, %xmm0
-; AVXNOVLBW-NEXT:    vpinsrw $1, -24(%rsp,%r10,2), %xmm0, %xmm0
-; AVXNOVLBW-NEXT:    vpinsrw $2, -24(%rsp,%rcx,2), %xmm0, %xmm0
-; AVXNOVLBW-NEXT:    vpinsrw $3, -24(%rsp,%rdx,2), %xmm0, %xmm0
-; AVXNOVLBW-NEXT:    vpinsrw $4, -24(%rsp,%rsi,2), %xmm0, %xmm0
-; AVXNOVLBW-NEXT:    vpinsrw $5, -24(%rsp,%rdi,2), %xmm0, %xmm0
-; AVXNOVLBW-NEXT:    vpinsrw $6, -24(%rsp,%r8,2), %xmm0, %xmm0
-; AVXNOVLBW-NEXT:    vpinsrw $7, -24(%rsp,%r9,2), %xmm0, %xmm0
+; AVXNOVLBW-NEXT:    vpmullw {{.*}}(%rip), %xmm1, %xmm1
+; AVXNOVLBW-NEXT:    vpaddw {{.*}}(%rip), %xmm1, %xmm1
+; AVXNOVLBW-NEXT:    vpshufb %xmm1, %xmm0, %xmm0
 ; AVXNOVLBW-NEXT:    retq
 ;
 ; AVX512VLBW-LABEL: var_shuffle_v8i16:
@@ -273,25 +203,15 @@ define <2 x double> @var_shuffle_v2f64(<2 x double> %v, <2 x i64> %indices) noun
 define <4 x float> @var_shuffle_v4f32(<4 x float> %v, <4 x i32> %indices) nounwind {
 ; SSSE3-LABEL: var_shuffle_v4f32:
 ; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    movd %xmm1, %eax
-; SSSE3-NEXT:    pshufd {{.*#+}} xmm2 = xmm1[1,1,2,3]
-; SSSE3-NEXT:    movd %xmm2, %ecx
-; SSSE3-NEXT:    pshufd {{.*#+}} xmm2 = xmm1[2,3,0,1]
-; SSSE3-NEXT:    movd %xmm2, %edx
-; SSSE3-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[3,1,2,3]
-; SSSE3-NEXT:    movd %xmm1, %esi
-; SSSE3-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
-; SSSE3-NEXT:    andl $3, %eax
-; SSSE3-NEXT:    andl $3, %ecx
-; SSSE3-NEXT:    andl $3, %edx
-; SSSE3-NEXT:    andl $3, %esi
-; SSSE3-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; SSSE3-NEXT:    movss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; SSSE3-NEXT:    unpcklps {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1]
-; SSSE3-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; SSSE3-NEXT:    movss {{.*#+}} xmm2 = mem[0],zero,zero,zero
-; SSSE3-NEXT:    unpcklps {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1]
-; SSSE3-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; SSSE3-NEXT:    movdqa {{.*#+}} xmm2 = [67372036,67372036,67372036,67372036]
+; SSSE3-NEXT:    pshufd {{.*#+}} xmm3 = xmm1[1,1,3,3]
+; SSSE3-NEXT:    pmuludq %xmm2, %xmm1
+; SSSE3-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[0,2,2,3]
+; SSSE3-NEXT:    pmuludq %xmm2, %xmm3
+; SSSE3-NEXT:    pshufd {{.*#+}} xmm2 = xmm3[0,2,2,3]
+; SSSE3-NEXT:    punpckldq {{.*#+}} xmm1 = xmm1[0],xmm2[0],xmm1[1],xmm2[1]
+; SSSE3-NEXT:    paddd {{.*}}(%rip), %xmm1
+; SSSE3-NEXT:    pshufb %xmm1, %xmm0
 ; SSSE3-NEXT:    retq
 ;
 ; AVX-LABEL: var_shuffle_v4f32:
