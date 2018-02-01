@@ -20,5 +20,3 @@ set(SOURCES
   source.cc
 )
 add_executable(f18 ${SOURCES})
-
-add_executable(type-test type.cc idioms.cc)
