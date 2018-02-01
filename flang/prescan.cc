@@ -10,6 +10,7 @@
 namespace Fortran {
 
 CharBuffer Prescanner::Prescan(const SourceFile &source) {
+  sourceFile_ = &source;
   lineStart_ = source.content();
   limit_ = lineStart_ + source.bytes();
   CharBuffer out;
@@ -46,6 +47,7 @@ CharBuffer Prescanner::Prescan(const SourceFile &source) {
     PayNewlineDebt(&out);
   }
   PayNewlineDebt(&out);
+  sourceFile_ = nullptr;
   return std::move(out);
 }
 

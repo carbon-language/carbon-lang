@@ -5,9 +5,11 @@
 #include <algorithm>
 #include <cctype>
 #include <cinttypes>
+#include <ctime>
 #include <map>
 #include <memory>
 #include <set>
+#include <sstream>
 #include <utility>
 
 namespace Fortran {
@@ -50,6 +52,9 @@ Definition::Definition(const std::vector<std::string> &argNames,
                        size_t tokens)
   : isFunctionLike_{true}, argumentCount_(argNames.size()),
     replacement_{Tokenize(argNames, repl, firstToken, tokens)} {}
+
+Definition::Definition(const std::string &predefined)
+  : isPredefined_{true}, replacement_{predefined} {}
 
 bool Definition::set_isDisabled(bool disable) {
   bool was{isDisabled_};
@@ -109,7 +114,7 @@ TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
   bool stringify{false}, pasting{false};
   size_t tokens{replacement_.size()};
   for (size_t j{0}; j < tokens; ++j) {
-    const CharPointerWithLength &token{replacement_.GetToken(j)};
+    const CharPointerWithLength &token{replacement_[j]};
     size_t bytes{token.size()};
     const char *text{token.data()};
     if (bytes == 2 && *text == '~') {
@@ -136,7 +141,7 @@ TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
         result.push_back(strung);
       } else {
         for (size_t k{0}; k < argTokens; ++k) {
-          const CharPointerWithLength &argToken{args[index].GetToken(k)};
+          const CharPointerWithLength &argToken{args[index][k]};
           if (pasting && IsBlank(argToken)) {
           } else {
             result.push_back(argToken);
@@ -147,8 +152,7 @@ TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
     } else if (bytes == 2 && text[0] == '#' && text[1] == '#') {
       // Token pasting operator in body (not expanded argument); discard any
       // immediately preceding white space, then reopen the last token.
-      while (!result.empty() &&
-             IsBlank(result.GetToken(result.size() - 1))) {
+      while (!result.empty() && IsBlank(result[result.size() - 1])) {
         result.pop_back();
       }
       if (!result.empty()) {
@@ -166,19 +170,36 @@ TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
   return result;
 }
 
+static std::string FormatTime(const std::time_t &now, const char *format) {
+  char buffer[16];
+  return {buffer,
+          std::strftime(buffer, sizeof buffer, format, std::localtime(&now))};
+}
+
+Preprocessor::Preprocessor(Prescanner &ps) : prescanner_{ps} {
+  // Capture current local date & time once now to avoid having the values
+  // of __DATE__ or __TIME__ change during compilation.
+  std::time_t now;
+  std::time(&now);
+  definitions_.emplace(SaveToken("__DATE__"s),  // e.g., "Jun 16 1904"
+                       Definition{FormatTime(now, "\"%h %e %Y\""), 0, 1});
+  definitions_.emplace(SaveToken("__TIME__"s),  // e.g., "23:59:60"
+                       Definition{FormatTime(now, "\"%T\""), 0, 1});
+  // The values of these predefined macros depend on their invocation sites.
+  definitions_.emplace(SaveToken("__FILE__"s), Definition{"__FILE__"s});
+  definitions_.emplace(SaveToken("__LINE__"s), Definition{"__LINE__"s});
+}
+
 bool Preprocessor::MacroReplacement(const TokenSequence &input,
                                     TokenSequence *result) {
   // Do quick scan for any use of a defined name.
-  if (definitions_.empty()) {
-    return false;
-  }
   size_t tokens{input.size()};
   size_t j;
   for (j = 0; j < tokens; ++j) {
     size_t bytes{input.GetBytes(j)};
     if (bytes > 0 &&
         IsIdentifierFirstCharacter(*input.GetText(j)) &&
-        IsNameDefined(input.GetToken(j))) {
+        IsNameDefined(input[j])) {
       break;
     }
   }
@@ -187,10 +208,10 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
   }
 
   for (size_t k{0}; k < j; ++k) {
-    result->push_back(input.GetToken(k));
+    result->push_back(input[k]);
   }
   for (; j < tokens; ++j) {
-    const CharPointerWithLength &token{input.GetToken(j)};
+    const CharPointerWithLength &token{input[j]};
     if (IsBlank(token) || !IsIdentifierFirstCharacter(token[0])) {
       result->push_back(token);
       continue;
@@ -206,10 +227,21 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
       continue;
     }
     if (!def.isFunctionLike()) {
+      if (def.isPredefined()) {
+        std::string name{def.replacement()[0].ToString()};
+        if (name == "__FILE__") {
+          result->Append("\""s + prescanner_.sourceFile().path() + '"');
+          continue;
+        }
+        if (name == "__LINE__") {
+          std::stringstream ss;
+          ss << prescanner_.position().lineNumber();
+          result->Append(ss.str());
+          continue;
+        }
+      }
       def.set_isDisabled(true);
-      TokenSequence repl;
-      result->Append(MacroReplacement(def.replacement(), &repl) ? repl
-                       : def.replacement());
+      result->Append(ReplaceMacros(def.replacement()));
       def.set_isDisabled(false);
       continue;
     }
@@ -218,7 +250,7 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
     size_t k{j};
     bool leftParen{false};
     while (++k < tokens) {
-      const CharPointerWithLength &lookAhead{input.GetToken(k)};
+      const CharPointerWithLength &lookAhead{input[k]};
       if (!IsBlank(lookAhead) && lookAhead[0] != '\n') {
         leftParen = lookAhead[0] == '(' && lookAhead.size() == 1;
         break;
@@ -260,19 +292,22 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
       }
       args.emplace_back(std::move(actual));
     }
-    TokenSequence repl{def.Apply(args)};
     def.set_isDisabled(true);
-    TokenSequence rescanned;
-    result->Append(MacroReplacement(repl, &rescanned) ? rescanned : repl);
+    result->Append(ReplaceMacros(def.Apply(args)));
     def.set_isDisabled(false);
   }
   return true;
 }
 
+TokenSequence Preprocessor::ReplaceMacros(const TokenSequence &tokens) {
+  TokenSequence repl;
+  return MacroReplacement(tokens, &repl) ? repl : tokens;
+}
+
 static size_t SkipBlanks(const TokenSequence &tokens, size_t at,
                          size_t lastToken) {
   for (; at < lastToken; ++at) {
-    if (!IsBlank(tokens.GetToken(at))) {
+    if (!IsBlank(tokens[at])) {
       break;
     }
   }
@@ -284,7 +319,7 @@ static TokenSequence StripBlanks(const TokenSequence &token, size_t first,
   TokenSequence noBlanks;
   for (size_t j{SkipBlanks(token, first, tokens)}; j < tokens;
        j = SkipBlanks(token, j + 1, tokens)) {
-    noBlanks.push_back(token.GetToken(j));
+    noBlanks.push_back(token[j]);
   }
   return noBlanks;
 }
@@ -331,11 +366,9 @@ std::string Preprocessor::Directive(const TokenSequence &dir) {
   }
   std::string dirName{ConvertToLowerCase(dir.GetString(j))};
   j = SkipBlanks(dir, j + 1, tokens);
-  std::string nameString;
   CharPointerWithLength nameToken;
   if (j < tokens && IsIdentifierFirstCharacter(*dir.GetText(j))) {
-    nameString = dir.GetString(j);
-    nameToken = dir.GetToken(j);
+    nameToken = dir[j];
   }
   if (dirName == "line") {
     // TODO
@@ -345,11 +378,7 @@ std::string Preprocessor::Directive(const TokenSequence &dir) {
     if (nameToken.empty()) {
       return "#define: missing or invalid name";
     }
-    // Get a pointer to a "permanent" copy of the name for use as the
-    // key in the definitions_ map.
-    names_.push_back(nameString);
-    nameToken = CharPointerWithLength{names_.back().data(),
-                                      names_.back().size()};
+    nameToken = SaveToken(nameToken);
     definitions_.erase(nameToken);
     if (++j < tokens && dir.GetBytes(j) == 1 && *dir.GetText(j) == '(') {
       j = SkipBlanks(dir, j + 1, tokens);
@@ -465,6 +494,11 @@ std::string Preprocessor::Directive(const TokenSequence &dir) {
   return "#"s + dirName + ": unknown or unimplemented directive";
 }
 
+CharPointerWithLength Preprocessor::SaveToken(const CharPointerWithLength &t) {
+  names_.push_back(t.ToString());
+  return {names_.back().data(), names_.back().size()};
+}
+
 bool Preprocessor::IsNameDefined(const CharPointerWithLength &token) {
   return definitions_.find(token) != definitions_.end();
 }
@@ -473,7 +507,7 @@ std::string
 Preprocessor::SkipDisabledConditionalCode(const std::string &dirName,
                                           IsElseActive isElseActive) {
   int nesting{0};
-  while (std::optional<TokenSequence> line{prescanner_->NextTokenizedLine()}) {
+  while (std::optional<TokenSequence> line{prescanner_.NextTokenizedLine()}) {
     size_t rest{0};
     std::string dn{GetDirectiveName(*line, &rest)};
     if (dn == "ifdef" || dn == "ifndef" || dn == "if") {
@@ -762,36 +796,32 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
 bool
 Preprocessor::IsIfPredicateTrue(const TokenSequence &expr, size_t first,
                                 size_t exprTokens, std::string *errors) {
-  TokenSequence noBlanks{StripBlanks(expr, first, first + exprTokens)};
+  TokenSequence expr1{StripBlanks(expr, first, first + exprTokens)};
   TokenSequence expr2;
-  for (size_t j{0}; j < noBlanks.size(); ++j) {
-    if (ConvertToLowerCase(noBlanks.GetString(j)) == "defined") {
+  for (size_t j{0}; j < expr1.size(); ++j) {
+    if (ConvertToLowerCase(expr1.GetString(j)) == "defined") {
       CharPointerWithLength name;
-      if (j + 3 < noBlanks.size() &&
-          noBlanks.GetString(j + 1) == "(" &&
-          noBlanks.GetString(j + 3) == ")") {
-        name = noBlanks.GetToken(j + 2);
+      if (j + 3 < expr1.size() &&
+          expr1.GetString(j + 1) == "(" &&
+          expr1.GetString(j + 3) == ")") {
+        name = expr1[j + 2];
         j += 3;
-      } else if (j + 1 < noBlanks.size() &&
-                 IsIdentifierFirstCharacter(noBlanks.GetToken(j + 1))) {
-        name = noBlanks.GetToken(j++);
+      } else if (j + 1 < expr1.size() &&
+                 IsIdentifierFirstCharacter(expr1[j + 1])) {
+        name = expr1[j++];
       }
       if (!name.empty()) {
         expr2.push_back(IsNameDefined(name) ? "1" : "0", 1);
         continue;
       }
     }
-    expr2.push_back(noBlanks.GetToken(j));
+    expr2.push_back(expr1[j]);
   }
-  TokenSequence repl;
-  if (MacroReplacement(expr2, &repl)) {
-    repl = StripBlanks(repl, 0, repl.size());
-  } else {
-    repl = std::move(expr2);
-  }
+  TokenSequence expr3{ReplaceMacros(expr2)};
+  TokenSequence expr4{StripBlanks(expr3, 0, expr3.size())};
   size_t atToken{0};
-  bool result{ExpressionValue(repl, 0, &atToken, errors) != 0};
-  if (atToken < repl.size() && errors->empty()) {
+  bool result{ExpressionValue(expr4, 0, &atToken, errors) != 0};
+  if (atToken < expr4.size() && errors->empty()) {
     *errors = atToken == 0 ? "could not parse any expression"
                            : "excess characters after expression";
   }

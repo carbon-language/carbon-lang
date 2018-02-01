@@ -16,6 +16,7 @@ class SourceFile {
   ~SourceFile();
   bool Open(std::string path, std::stringstream *error);
   void Close();
+  std::string path() const { return path_; }
   const char *content() const { return content_; }
   size_t bytes() const { return bytes_; }
  private:

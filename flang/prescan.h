@@ -24,7 +24,10 @@ namespace Fortran {
 class Prescanner {
  public:
   explicit Prescanner(std::stringstream *err)
-    : error_{err}, preprocessor_{this} {}
+    : error_{err}, preprocessor_{*this} {}
+
+  const SourceFile &sourceFile() const { return *sourceFile_; }
+  Position position() const { return atPosition_; }
 
   Prescanner &set_fixedForm(bool yes) {
     inFixedForm_ = yes;
@@ -90,6 +93,7 @@ class Prescanner {
   int column_{1};  // card image column position of next character
   const char *limit_{nullptr};  // first address after end of source
   int newlineDebt_{0};  // newline characters consumed but not yet emitted
+  const SourceFile *sourceFile_{nullptr};
   Position atPosition_, lineStartPosition_;
   bool inCharLiteral_{false};
   bool inPreprocessorDirective_{false};
