@@ -11,12 +11,17 @@ namespace Fortran {
 
 class Position {
  public:
-  constexpr Position() = default;
-  constexpr Position(int ln, int col)
-    : lineNumber_{ln}, column_{col} {}
+  constexpr Position() {}
+  constexpr Position(const Position &) = default;
+  constexpr Position(Position &&) = default;
+  constexpr Position(int ln, int col) : lineNumber_{ln}, column_{col} {}
+  constexpr Position &operator=(const Position &) = default;
+  constexpr Position &operator=(Position &&) = default;
 
   constexpr int lineNumber() const { return lineNumber_; }
   constexpr int column() const { return column_; }
+  Position &set_lineNumber(int line) { lineNumber_ = line; return *this; }
+  Position &set_column(int column) { column_ = column; return *this; }
 
   constexpr bool operator<(const Position &that) const {
     return lineNumber_ < that.lineNumber_ ||

@@ -115,7 +115,7 @@ int main(int argc, char *const argv[]) {
                Prescan(source)};
     std::string err{error.str()};
     if (!err.empty()) {
-      std::cerr << err << '\n';
+      std::cerr << err;
       return 1;
     }
     sourceBytes = buffer.bytes();

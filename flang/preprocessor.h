@@ -216,9 +216,17 @@ class Preprocessor {
   std::string Directive(const TokenSequence &);
 
  private:
+  enum class IsElseActive { No, Yes };
+  enum class CanDeadElseAppear { No, Yes };
+  bool IsNameDefined(const CharPointerWithLength &);
+  std::string SkipDisabledConditionalCode(const std::string &dirName,
+                                          IsElseActive);
+  bool IsIfPredicateTrue(const TokenSequence &expr, size_t first,
+                         size_t exprTokens, std::string *errors);
+
   std::list<std::string> names_;
   std::unordered_map<CharPointerWithLength, Definition> definitions_;
-  std::stack<bool> ifStack_;
+  std::stack<CanDeadElseAppear> ifStack_;
   Prescanner *prescanner_;
 };
 }  // namespace Fortran

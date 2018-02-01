@@ -2,7 +2,9 @@
 #include "char-buffer.h"
 #include "idioms.h"
 #include "prescan.h"
+#include <algorithm>
 #include <cctype>
+#include <cinttypes>
 #include <map>
 #include <memory>
 #include <set>
@@ -55,6 +57,14 @@ bool Definition::set_isDisabled(bool disable) {
   return was;
 }
 
+static bool IsIdentifierFirstCharacter(char ch) {
+  return ch == '_' || isalpha(ch);
+}
+
+static bool IsIdentifierFirstCharacter(const CharPointerWithLength &cpl) {
+  return cpl.size() > 0 && IsIdentifierFirstCharacter(cpl[0]);
+}
+
 TokenSequence Definition::Tokenize(const std::vector<std::string> &argNames,
                                    const TokenSequence &token,
                                    size_t firstToken, size_t tokens) {
@@ -71,7 +81,7 @@ TokenSequence Definition::Tokenize(const std::vector<std::string> &argNames,
       continue;
     }
     const char *text{token.GetText(firstToken + j)};
-    if (bytes > 0 && (*text == '_' || isalpha(*text))) {
+    if (bytes > 0 && IsIdentifierFirstCharacter(*text)) {
       auto it = args.find(token.GetString(firstToken + j));
       if (it != args.end()) {
         result.push_back(it->second);
@@ -83,13 +93,25 @@ TokenSequence Definition::Tokenize(const std::vector<std::string> &argNames,
   return result;
 }
 
+static bool IsBlank(const CharPointerWithLength &cpl) {
+  size_t bytes{cpl.size()};
+  for (size_t j{0}; j < bytes; ++j) {
+    char ch{cpl[j]};
+    if (ch != ' ' && ch != '\t') {
+      return false;
+    }
+  }
+  return true;
+}
+
 TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
   TokenSequence result;
   bool stringify{false}, pasting{false};
   size_t tokens{replacement_.size()};
   for (size_t j{0}; j < tokens; ++j) {
-    size_t bytes{replacement_.GetBytes(j)};
-    const char *text{replacement_.GetText(j)};
+    const CharPointerWithLength &token{replacement_.GetToken(j)};
+    size_t bytes{token.size()};
+    const char *text{token.data()};
     if (bytes == 2 && *text == '~') {
       size_t index = text[1] - 'A';
       if (index >= args.size()) {
@@ -114,11 +136,10 @@ TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
         result.push_back(strung);
       } else {
         for (size_t k{0}; k < argTokens; ++k) {
-          const char *text{args[index].GetText(k)};
-          size_t bytes{args[index].GetBytes(k)};
-          if (pasting && (bytes == 0 || *text == ' ' || *text == '\t')) {
+          const CharPointerWithLength &argToken{args[index].GetToken(k)};
+          if (pasting && IsBlank(argToken)) {
           } else {
-            result.push_back(text, bytes);
+            result.push_back(argToken);
             pasting = false;
           }
         }
@@ -127,16 +148,14 @@ TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
       // Token pasting operator in body (not expanded argument); discard any
       // immediately preceding white space, then reopen the last token.
       while (!result.empty() &&
-             (result.GetBytes(result.size() - 1) == 0 ||
-              *result.GetText(result.size() - 1) == ' ' ||
-              *result.GetText(result.size() - 1) == '\t')) {
+             IsBlank(result.GetToken(result.size() - 1))) {
         result.pop_back();
       }
       if (!result.empty()) {
         result.ReopenLastToken();
         pasting = true;
       }
-    } else if (pasting && (bytes == 0 || *text == ' ' || *text == '\t')) {
+    } else if (pasting && IsBlank(token)) {
       // Delete whitespace immediately following ## in the body.
     } else {
       stringify = bytes == 1 && *text == '#';
@@ -156,12 +175,10 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
   size_t tokens{input.size()};
   size_t j;
   for (j = 0; j < tokens; ++j) {
-    const char *text{input.GetText(j)};
     size_t bytes{input.GetBytes(j)};
     if (bytes > 0 &&
-        (*text == '_' || isalpha(*text)) &&
-        definitions_.find(CharPointerWithLength{text, bytes}) !=
-          definitions_.end()) {
+        IsIdentifierFirstCharacter(*input.GetText(j)) &&
+        IsNameDefined(input.GetToken(j))) {
       break;
     }
   }
@@ -173,20 +190,19 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
     result->push_back(input.GetToken(k));
   }
   for (; j < tokens; ++j) {
-    size_t bytes{input.GetBytes(j)};
-    const char *text{input.GetText(j)};
-    if (bytes == 0 || (!isalpha(*text) && *text != '_')) {
-      result->push_back(text, bytes);
+    const CharPointerWithLength &token{input.GetToken(j)};
+    if (IsBlank(token) || !IsIdentifierFirstCharacter(token[0])) {
+      result->push_back(token);
       continue;
     }
-    auto it = definitions_.find(CharPointerWithLength{text, bytes});
+    auto it = definitions_.find(token);
     if (it == definitions_.end()) {
-      result->push_back(text, bytes);
+      result->push_back(token);
       continue;
     }
     Definition &def{it->second};
     if (def.isDisabled()) {
-      result->push_back(text, bytes);
+      result->push_back(token);
       continue;
     }
     if (!def.isFunctionLike()) {
@@ -202,35 +218,35 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
     size_t k{j};
     bool leftParen{false};
     while (++k < tokens) {
-      size_t bytes{input.GetBytes(k)};
-      const char *text{input.GetText(k)};
-      if (bytes > 0 && *text != ' ' && *text != '\n') {
-        leftParen = bytes == 1 && *text == '(';
+      const CharPointerWithLength &lookAhead{input.GetToken(k)};
+      if (!IsBlank(lookAhead) && lookAhead[0] != '\n') {
+        leftParen = lookAhead[0] == '(' && lookAhead.size() == 1;
         break;
       }
     }
     if (!leftParen) {
-      result->push_back(text, bytes);
+      result->push_back(token);
       continue;
     }
     std::vector<size_t> argStart{++k};
     for (int nesting{0}; k < tokens; ++k) {
-      size_t bytes{input.GetBytes(k)};
-      const char *text{input.GetText(k)};
-      if (bytes == 1 && *text == '(') {
-        ++nesting;
-      } else if (bytes == 1 && *text == ')') {
-        if (nesting == 0) {
-          break;
+      if (input.GetBytes(k) == 1) {
+        char ch{*input.GetText(k)};
+        if (ch == '(') {
+          ++nesting;
+        } else if (ch == ')') {
+          if (nesting == 0) {
+            break;
+          }
+          --nesting;
+        } else if (ch == ',' && nesting == 0) {
+          argStart.push_back(k + 1);
         }
-        --nesting;
-      } else if (bytes == 1 && *text == ',' && nesting == 0) {
-        argStart.push_back(k + 1);
       }
     }
     if (k >= tokens ||
         argStart.size() != def.argumentCount()) {
-      result->push_back(text, bytes);
+      result->push_back(token);
       continue;
     }
     j = k;  // advance to the terminal ')'
@@ -253,58 +269,81 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
   return true;
 }
 
-static size_t SkipBlanks(const TokenSequence &token, size_t at) {
-  for (; at < token.size(); ++at) {
-    if (token.GetBytes(at) > 0 && *token.GetText(at) != ' ') {
+static size_t SkipBlanks(const TokenSequence &tokens, size_t at,
+                         size_t lastToken) {
+  for (; at < lastToken; ++at) {
+    if (!IsBlank(tokens.GetToken(at))) {
       break;
     }
   }
-  return at;
+  return std::min(at, lastToken);
 }
 
-static std::string GetDirectiveName(const TokenSequence &line) {
+static TokenSequence StripBlanks(const TokenSequence &token, size_t first,
+                                 size_t tokens) {
+  TokenSequence noBlanks;
+  for (size_t j{SkipBlanks(token, first, tokens)}; j < tokens;
+       j = SkipBlanks(token, j + 1, tokens)) {
+    noBlanks.push_back(token.GetToken(j));
+  }
+  return noBlanks;
+}
+
+static std::string ConvertToLowerCase(const std::string &str) {
+  std::string lowered{str};
+  for (char &ch : lowered) {
+    ch = tolower(ch);
+  }
+  return lowered;
+}
+
+static std::string GetDirectiveName(const TokenSequence &line, size_t *rest) {
   size_t tokens{line.size()};
-  size_t j{SkipBlanks(line, 0)};
+  size_t j{SkipBlanks(line, 0, tokens)};
   if (j == tokens || line.GetString(j) != "#") {
-    return ""s;
+    *rest = tokens;
+    return {};
   }
-  j = SkipBlanks(line, j + 1);
+  j = SkipBlanks(line, j + 1, tokens);
   if (j == tokens) {
-    return ""s;
+    *rest = tokens;
+    return {};
   }
-  return line.GetString(j);
+  *rest = SkipBlanks(line, j + 1, tokens);
+  return ConvertToLowerCase(line.GetString(j));
 }
 
 std::string Preprocessor::Directive(const TokenSequence &dir) {
   size_t tokens{dir.size()};
-  size_t j{SkipBlanks(dir, 0)};
+  size_t j{SkipBlanks(dir, 0, tokens)};
   if (j == tokens) {
-    return ""s;
+    return {};
   }
   if (dir.GetString(j) != "#") {
-    return "missing '#'"s;
+    return "missing '#'";
   }
-  j = SkipBlanks(dir, j + 1);
+  j = SkipBlanks(dir, j + 1, tokens);
   if (j == tokens) {
-    return ""s;
+    return {};
   }
   if (isdigit(*dir.GetText(j)) || *dir.GetText(j) == '"') {
-    return ""s;  // TODO: treat as #line
+    return {};  // TODO: treat as #line
   }
-  std::string dirName{dir.GetString(j)};
-  for (char &ch : dirName) {
-    ch = tolower(ch);
-  }
-  j = SkipBlanks(dir, j + 1);
+  std::string dirName{ConvertToLowerCase(dir.GetString(j))};
+  j = SkipBlanks(dir, j + 1, tokens);
   std::string nameString;
   CharPointerWithLength nameToken;
-  if (j < tokens && (isalpha(*dir.GetText(j)) || *dir.GetText(j) == '_')) {
+  if (j < tokens && IsIdentifierFirstCharacter(*dir.GetText(j))) {
     nameString = dir.GetString(j);
     nameToken = dir.GetToken(j);
   }
+  if (dirName == "line") {
+    // TODO
+    return {};
+  }
   if (dirName == "define") {
     if (nameToken.empty()) {
-      return "#define: missing or invalid name"s;
+      return "#define: missing or invalid name";
     }
     // Get a pointer to a "permanent" copy of the name for use as the
     // key in the definitions_ map.
@@ -313,124 +352,449 @@ std::string Preprocessor::Directive(const TokenSequence &dir) {
                                       names_.back().size()};
     definitions_.erase(nameToken);
     if (++j < tokens && dir.GetBytes(j) == 1 && *dir.GetText(j) == '(') {
-      j = SkipBlanks(dir, j + 1);
+      j = SkipBlanks(dir, j + 1, tokens);
       std::vector<std::string> argName;
       if (dir.GetString(j) != ")") {
         while (true) {
           std::string an{dir.GetString(j)};
-          if (an.empty() || (an[0] != '_' && !isalpha(an[0]))) {
-            return "#define: missing or invalid argument name"s;
+          if (an.empty() || !IsIdentifierFirstCharacter(an[0])) {
+            return "#define: missing or invalid argument name";
           }
           argName.push_back(an);
-          j = SkipBlanks(dir, j + 1);
+          j = SkipBlanks(dir, j + 1, tokens);
           if (j == tokens) {
-            return "#define: malformed argument list"s;
+            return "#define: malformed argument list";
           }
           std::string punc{dir.GetString(j)};
           if (punc == ")") {
             break;
           }
           if (punc != ",") {
-            return "#define: malformed argument list"s;
+            return "#define: malformed argument list";
           }
-          j = SkipBlanks(dir, j + 1);
+          j = SkipBlanks(dir, j + 1, tokens);
           if (j == tokens) {
-            return "#define: malformed argument list"s;
+            return "#define: malformed argument list";
           }
         }
         if (std::set<std::string>(argName.begin(), argName.end()).size() !=
             argName.size()) {
-          return "#define: argument names are not distinct"s;
+          return "#define: argument names are not distinct";
         }
       }
-      j = SkipBlanks(dir, j + 1);
+      j = SkipBlanks(dir, j + 1, tokens);
       definitions_.emplace(
         std::make_pair(nameToken, Definition{argName, dir, j, tokens - j}));
     } else {
       definitions_.emplace(
         std::make_pair(nameToken, Definition{dir, j, tokens - j}));
     }
-    return ""s;
+    return {};
   }
   if (dirName == "undef") {
     if (nameToken.empty()) {
-      return "#undef: missing or invalid name"s;
+      return "#undef: missing or invalid name";
     }
-    j = SkipBlanks(dir, j + 1);
+    j = SkipBlanks(dir, j + 1, tokens);
     if (j != tokens) {
-      return "#undef: excess tokens at end of directive"s;
+      return "#undef: excess tokens at end of directive";
     }
     definitions_.erase(nameToken);
-    return ""s;
+    return {};
   }
   if (dirName == "ifdef" || dirName == "ifndef") {
     if (nameToken.empty()) {
       return "#"s + dirName + ": missing name";
     }
-    j = SkipBlanks(dir, j + 1);
+    j = SkipBlanks(dir, j + 1, tokens);
     if (j != tokens) {
       return "#"s + dirName + ": excess tokens at end of directive";
     }
-    auto it = definitions_.find(nameToken);
-    if ((it != definitions_.end()) == (dirName == "ifdef")) {
-      ifStack_.push(true);  // #else / #elsif allowed
+    if (IsNameDefined(nameToken) == (dirName == "ifdef")) {
+      ifStack_.push(CanDeadElseAppear::Yes);
       return {};
     }
-    int nesting{0};
-    while (std::optional<TokenSequence>
-             line{prescanner_->NextTokenizedLine()}) {
-      std::string dn{GetDirectiveName(*line)};
-      if (dn == "ifdef" || dn == "ifndef" || dn == "if") {
-        ++nesting;
-      } else if (dn == "endif") {
-        if (nesting-- == 0) {
-          return ""s;
-        }
-      } else if (dn == "else" && nesting == 0) {
-        ifStack_.push(false);
-        return ""s;
-      } // TODO: #elsif
+    return SkipDisabledConditionalCode(dirName, IsElseActive::Yes);
+  }
+  if (dirName == "if") {
+    std::string errors;
+    if (IsIfPredicateTrue(dir, j, tokens - j, &errors) || !errors.empty()) {
+      ifStack_.push(CanDeadElseAppear::Yes);
+    } else {
+      errors = SkipDisabledConditionalCode(dirName, IsElseActive::Yes);
     }
-    return "#"s + dirName + ": missing #endif";
+    return errors.empty() ? ""s : "#if: "s + errors;
   }
   if (dirName == "else") {
-    j = SkipBlanks(dir, j);
     if (j != tokens) {
-      return "#else: excess tokens at end of directive"s;
+      return "#else: excess tokens at end of directive";
     }
     if (ifStack_.empty()) {
-      return "#else: no #if, #ifdef, or #ifndef"s;
+      return "#else: not nested within #if, #ifdef, or #ifndef";
     }
-    if (!ifStack_.top()) {
-      return "#else: already appeared in this #if, #ifdef, or #ifndef"s;
+    if (ifStack_.top() != CanDeadElseAppear::Yes) {
+      return "#else: already appeared within this #if, #ifdef, or #ifndef";
     }
     ifStack_.pop();
-    int nesting{0};
-    while (std::optional<TokenSequence>
-             line{prescanner_->NextTokenizedLine()}) {
-      std::string dn{GetDirectiveName(*line)};
-      if (dn == "ifdef" || dn == "ifndef" || dn == "if") {
-        ++nesting;
-      } else if (dn == "endif") {
-        if (nesting-- == 0) {
-          return ""s;
+    return SkipDisabledConditionalCode("else", IsElseActive::No);
+  }
+  if (dirName == "elif") {
+    if (ifStack_.empty()) {
+      return "#elif: not nested within #if, #ifdef, or #ifndef";
+    }
+    if (ifStack_.top() != CanDeadElseAppear::Yes) {
+      return "#elif: #else previously appeared within this "
+             "#if, #ifdef, or #ifndef";
+    }
+    ifStack_.pop();
+    return SkipDisabledConditionalCode("elif", IsElseActive::No);
+  }
+  if (dirName == "endif") {
+    if (j != tokens) {
+      return "#endif: excess tokens at end of directive";
+    }
+    if (ifStack_.empty()) {
+      return "#endif: no #if, #ifdef, or #ifndef";
+    }
+    ifStack_.pop();
+    return {};
+  }
+  if (dirName == "error" || dirName == "warning") {
+    return {dir.data(), dir.size()};
+  }
+  return "#"s + dirName + ": unknown or unimplemented directive";
+}
+
+bool Preprocessor::IsNameDefined(const CharPointerWithLength &token) {
+  return definitions_.find(token) != definitions_.end();
+}
+
+std::string
+Preprocessor::SkipDisabledConditionalCode(const std::string &dirName,
+                                          IsElseActive isElseActive) {
+  int nesting{0};
+  while (std::optional<TokenSequence> line{prescanner_->NextTokenizedLine()}) {
+    size_t rest{0};
+    std::string dn{GetDirectiveName(*line, &rest)};
+    if (dn == "ifdef" || dn == "ifndef" || dn == "if") {
+      ++nesting;
+    } else if (dn == "endif") {
+      if (nesting-- == 0) {
+        return {};
+      }
+    } else if (isElseActive == IsElseActive::Yes && nesting == 0) {
+      if (dn == "else") {
+        ifStack_.push(CanDeadElseAppear::No);
+        return {};
+      }
+      if (dn == "elif") {
+        std::string errors;
+        if (IsIfPredicateTrue(*line, rest, line->size() - rest, &errors) ||
+            !errors.empty()) {
+          ifStack_.push(CanDeadElseAppear::No);
+          return errors.empty() ? ""s : "#elif: "s + errors;
         }
       }
     }
-    return "#else: missing #endif"s;
   }
-  // TODO: #if, #elsif with macro replacement on expressions
-  if (dirName == "endif") {
-    j = SkipBlanks(dir, j);
-    if (j != tokens) {
-      return "#endif: excess tokens at end of directive"s;
-    }
-    if (ifStack_.empty()) {
-      return "#endif: no #if, #ifdef, or #ifndef"s;
-    }
-    ifStack_.pop();
-    return ""s;
+  return "#"s + dirName + ": missing #endif";
+}
+
+// Precedence level codes used here to accommodate mixed Fortran and C:
+// 13: parentheses and constants, logical !, bitwise ~
+// 12: unary + and -
+// 11: **
+// 10: *, /, % (modulus)
+//  9: + and -
+//  8: << and >>
+//  7: bitwise &
+//  6: bitwise ^
+//  5: bitwise |
+//  4: relations (.EQ., ==, &c.)
+//  3: .NOT.
+//  2: .AND., &&
+//  1: .OR., ||
+//  0: .EQV. and .NEQV. / .XOR.
+// TODO: Ternary and comma operators?
+static std::int64_t ExpressionValue(const TokenSequence &token,
+                                    int minimumPrecedence,
+                                    size_t *atToken, std::string *errors) {
+  enum Operator {
+    PARENS, CONST, NOTZERO /*!*/, COMPLEMENT /*~*/, UPLUS, UMINUS, POWER,
+    TIMES, DIVIDE, MODULUS, ADD, SUBTRACT, LEFTSHIFT, RIGHTSHIFT,
+    BITAND, BITXOR, BITOR,
+    LT, LE, EQ, NE, GE, GT,
+    NOT, AND, OR, EQV, NEQV
+  };
+  static const int precedence[]{
+    13, 13, 13, 13,  // (), 0, !, ~
+    12, 12,  // unary +, -
+    11, 10, 10, 10, 9, 9, 8, 8,  // **, *, /, %, +, -, <<, >>
+    7, 6, 5,  // &, ^, |
+    4, 4, 4, 4, 4, 4,  // relations
+    3, 2, 1, 0, 0  // .NOT., .AND., .OR., .EQV., .NEQV.
+  };
+  static const int operandPrecedence[]{
+    0, -1, 13, 13,
+    13, 13,
+    11, 10, 10, 10, 9, 9, 9, 9,
+    7, 6, 5,
+    5, 5, 5, 5, 5, 5,
+    4, 2, 1, 1, 1
+  };
+
+  static std::map<std::string, enum Operator> opNameMap;
+  if (opNameMap.empty()) {
+    opNameMap["("] = PARENS;
+    opNameMap["!"] = NOTZERO;
+    opNameMap["~"] = COMPLEMENT;
+    opNameMap["**"] = POWER;
+    opNameMap["*"] = TIMES;
+    opNameMap["/"] = DIVIDE;
+    opNameMap["%"] = MODULUS;
+    opNameMap["+"] = ADD;
+    opNameMap["-"] = SUBTRACT;
+    opNameMap["<<"] = LEFTSHIFT;
+    opNameMap[">>"] = RIGHTSHIFT;
+    opNameMap["&"] = BITAND;
+    opNameMap["^"] = BITXOR;
+    opNameMap["|"] = BITOR;
+    opNameMap[".lt."] = opNameMap["<"] = LT;
+    opNameMap[".le."] = opNameMap["<="] = LE;
+    opNameMap[".eq."] = opNameMap["=="] = EQ;
+    opNameMap[".ne."] = opNameMap["/="] = opNameMap["!="] = NE;
+    opNameMap[".ge."] = opNameMap[">="] = GE;
+    opNameMap[".gt."] = opNameMap[">"] = GT;
+    opNameMap[".not."] = NOT;
+    opNameMap[".and."] = opNameMap[".a."] = opNameMap["&&"] = AND;
+    opNameMap[".or."] = opNameMap[".o."] = opNameMap["||"] = OR;
+    opNameMap[".eqv."] = EQV;
+    opNameMap[".neqv."] = opNameMap[".xor."] = opNameMap[".x."] = NEQV;
   }
-  return "#"s + dirName + ": unknown or unimplemented directive";
+
+  size_t tokens{token.size()};
+  if (*atToken >= tokens) {
+    *errors = "incomplete expression";
+    return 0;
+  }
+  std::string t{token.GetString(*atToken)};
+  enum Operator op;
+
+  // Parse and evaluate a primary or a unary operator and its operand.
+  std::int64_t left{0};
+  if (t == "(") {
+    op = PARENS;
+  } else if (isdigit(t[0])) {
+    op = CONST;
+    size_t consumed{0};
+    left = std::stoll(t, &consumed);
+    if (consumed < t.size()) {
+      *errors = "uninterpretable numeric constant '"s + t + '\'';
+    }
+  } else if (IsIdentifierFirstCharacter(t[0])) {
+    // undefined macro name -> zero
+    // TODO: BOZ constants?
+    op = CONST;
+  } else if (t == "+") {
+    op = UPLUS;
+  } else if (t == "-") {
+    op = UMINUS;
+  } else if (t == "." && *atToken + 2 < tokens &&
+             ConvertToLowerCase(token.GetString(*atToken + 1)) == "not" &&
+             token.GetString(*atToken + 2) == ".") {
+    op = NOT;
+    *atToken += 2;
+  } else {
+    auto it = opNameMap.find(t);
+    if (it != opNameMap.end()) {
+      op = it->second;
+    } else {
+      *errors = "operand expected in expression";
+      return 0;
+    }
+  }
+  if (precedence[op] < minimumPrecedence && errors->empty()) {
+    *errors = "operator precedence error";
+  }
+  ++*atToken;
+  if (op != CONST && errors->empty()) {
+    left = ExpressionValue(token, operandPrecedence[op], atToken, errors);
+    switch (op) {
+    case PARENS:
+      if (*atToken < tokens && token.GetString(*atToken) == ")") {
+        ++*atToken;
+      } else if (errors->empty()) {
+        *errors = "')' missing from expression";
+      }
+      break;
+    case NOTZERO:
+      left = !left;
+      break;
+    case COMPLEMENT:
+      left = ~left;
+      break;
+    case UPLUS:
+      break;
+    case UMINUS:
+      left = -left;
+      break;
+    case NOT:
+      left = -!left;
+      break;
+    DEFAULT_CRASH;
+    }
+  }
+  if (!errors->empty() || *atToken >= tokens) {
+    return left;
+  }
+
+  // Parse and evaluate a binary operator and its second operand, if present.
+  int advance{1};
+  t = token.GetString(*atToken);
+  if (t == "." && *atToken + 2 < tokens &&
+      token.GetString(*atToken + 2) == ".") {
+    t += ConvertToLowerCase(token.GetString(*atToken + 1)) + '.';
+    advance = 3;
+  }
+  auto it = opNameMap.find(t);
+  if (it == opNameMap.end()) {
+    return left;
+  }
+  op = it->second;
+  if (precedence[op] < minimumPrecedence) {
+    return left;
+  }
+  *atToken += advance;
+  std::int64_t right{ExpressionValue(token, operandPrecedence[op],
+                                     atToken, errors)};
+  switch (op) {
+  case POWER:
+    if (left == 0 && right < 0) {
+      *errors = "0 ** negative power";
+    }
+    if (left == 0 || left == 1 || right == 1) {
+      return left;
+    }
+    if (right <= 0) {
+      return !right;
+    }
+    { std::int64_t power{1};
+      for (; right > 0; --right) {
+        if ((power * left) / left != power) {
+          *errors = "overflow in exponentation";
+          return 0;
+        }
+        power *= left;
+      }
+      return power;
+    }
+  case TIMES:
+    if (left == 0 || right == 0) {
+      return 0;
+    }
+    if ((left * right) / left != right) {
+      *errors = "overflow in multiplication";
+    }
+    return left * right;
+  case DIVIDE:
+    if (right == 0) {
+      *errors = "division by zero";
+      return 0;
+    }
+    return left / right;
+  case MODULUS:
+    if (right == 0) {
+      *errors = "modulus by zero";
+      return 0;
+    }
+    return left % right;
+  case ADD:
+    if ((left < 0) == (right < 0) &&
+        (left < 0) != (left + right < 0)) {
+      *errors = "overflow in addition";
+    }
+    return left + right;
+  case SUBTRACT:
+    if ((left < 0) != (right < 0) &&
+        (left < 0) == (left - right < 0)) {
+      *errors = "overflow in subtraction";
+    }
+    return left - right;
+  case LEFTSHIFT:
+    if (right < 0 || right > 64) {
+      *errors = "bad left shift count";
+    }
+    return right >= 64 ? 0 : left << right;
+  case RIGHTSHIFT:
+    if (right < 0 || right > 64) {
+      *errors = "bad right shift count";
+    }
+    return right >= 64 ? 0 : left >> right;
+  case BITAND:
+  case AND:
+    return left & right;
+  case BITXOR:
+    return left ^ right;
+  case BITOR:
+  case OR:
+    return left | right;
+  case LT:
+    return -(left < right);
+  case LE:
+    return -(left <= right);
+  case EQ:
+    return -(left == right);
+  case NE:
+    return -(left != right);
+  case GE:
+    return -(left >= right);
+  case GT:
+    return -(left > right);
+  case EQV:
+    return -(!left == !right);
+  case NEQV:
+    return -(!left != !right);
+  DEFAULT_CRASH;
+  }
+  return 0;  // silence compiler warning
+}
+
+bool
+Preprocessor::IsIfPredicateTrue(const TokenSequence &expr, size_t first,
+                                size_t exprTokens, std::string *errors) {
+  TokenSequence noBlanks{StripBlanks(expr, first, first + exprTokens)};
+  TokenSequence expr2;
+  for (size_t j{0}; j < noBlanks.size(); ++j) {
+    if (ConvertToLowerCase(noBlanks.GetString(j)) == "defined") {
+      CharPointerWithLength name;
+      if (j + 3 < noBlanks.size() &&
+          noBlanks.GetString(j + 1) == "(" &&
+          noBlanks.GetString(j + 3) == ")") {
+        name = noBlanks.GetToken(j + 2);
+        j += 3;
+      } else if (j + 1 < noBlanks.size() &&
+                 IsIdentifierFirstCharacter(noBlanks.GetToken(j + 1))) {
+        name = noBlanks.GetToken(j++);
+      }
+      if (!name.empty()) {
+        expr2.push_back(IsNameDefined(name) ? "1" : "0", 1);
+        continue;
+      }
+    }
+    expr2.push_back(noBlanks.GetToken(j));
+  }
+  TokenSequence repl;
+  if (MacroReplacement(expr2, &repl)) {
+    repl = StripBlanks(repl, 0, repl.size());
+  } else {
+    repl = std::move(expr2);
+  }
+  size_t atToken{0};
+  bool result{ExpressionValue(repl, 0, &atToken, errors) != 0};
+  if (atToken < repl.size() && errors->empty()) {
+    *errors = atToken == 0 ? "could not parse any expression"
+                           : "excess characters after expression";
+  }
+  return result;
 }
 }  // namespace Fortran

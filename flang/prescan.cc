@@ -54,12 +54,16 @@ std::optional<TokenSequence> Prescanner::NextTokenizedLine() {
     return {};
   }
   bool wasInPreprocessorDirective{inPreprocessorDirective_};
+  auto saveAt = at_;
+  auto saveAtPosition = atPosition_;
   inPreprocessorDirective_ = true;
   BeginSourceLineAndAdvance();
   TokenSequence tokens;
   while (NextToken(&tokens)) {
   }
   inPreprocessorDirective_ = wasInPreprocessorDirective;
+  at_ = saveAt;
+  atPosition_ = saveAtPosition;
   return {std::move(tokens)};
 }
 
@@ -72,21 +76,24 @@ void Prescanner::NextLine() {
     const char *nl{const_cast<const char *>(static_cast<char *>(v))};
     lineStart_ = nl + 1;
   }
+  lineStartPosition_.AdvanceLine();
 }
 
 void Prescanner::LabelField(TokenSequence *token) {
   int outCol{1};
-  for (; *at_ != '\n' && column_ <= 6; ++at_, ++column_) {
+  for (; *at_ != '\n' && atPosition_.column() <= 6; ++at_) {
     if (*at_ == '\t') {
       ++at_;
-      column_ = 7;
+      atPosition_.set_column(7);
       break;
     }
     if (*at_ != ' ' &&
-        (*at_ != '0' || column_ != 6)) {  // '0' in column 6 becomes space
+        (*at_ != '0' ||
+         atPosition_.column() != 6)) {  // '0' in column 6 becomes space
       token->AddChar(*at_);
       ++outCol;
     }
+    atPosition_.AdvanceColumn();
   }
   if (outCol > 1) {
     token->EndToken();
@@ -102,16 +109,16 @@ void Prescanner::LabelField(TokenSequence *token) {
 void Prescanner::NextChar() {
   // CHECK(*at_ != '\n');
   ++at_;
-  ++column_;
+  atPosition_.AdvanceColumn();
   if (inPreprocessorDirective_) {
     while (*at_ == '/' && at_[1] == '*') {
       char star{' '}, slash{' '};
-      for (at_ += 2, column_ += 2;
-           (*at_ != '\n' || slash == '\\') &&
-           (star != '*' || slash != '/');
-           ++at_, ++column_) {
+      at_ += 2;
+      atPosition_.set_column(atPosition_.column() + 2);
+      while ((*at_ != '\n' || slash == '\\') && (star != '*' || slash != '/')) {
         star = slash;
-        slash = *at_;
+        slash = *at_++;
+        atPosition_.AdvanceColumn();
       }
     }
     while (*at_ == '\\' && at_ + 2 < limit_ && at_[1] == '\n') {
@@ -119,7 +126,7 @@ void Prescanner::NextChar() {
       ++newlineDebt_;
     }
   } else {
-    if ((inFixedForm_ && column_ > fixedFormColumnLimit_ &&
+    if ((inFixedForm_ && atPosition_.column() > fixedFormColumnLimit_ &&
          !tabInCurrentLine_) ||
         (*at_ == '!' && !inCharLiteral_)) {
       while (*at_ != '\n') {
@@ -235,9 +242,14 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
     }
     char nch{EmitCharAndAdvance(tokens, ch)};
     preventHollerith_ = false;
-    if ((nch == '=' && (ch == '<' || ch == '>' || ch == '/' || ch == '=')) ||
-        (ch == nch && (ch == '/' || ch == ':' || ch == '#')) ||
+    if ((nch == '=' &&
+         (ch == '<' || ch == '>' || ch == '/' || ch == '=' ||
+          ch == '!')) ||
+        (ch == nch &&
+         (ch == '/' || ch == ':' || ch == '*' ||
+          ch == '#' || ch == '&' || ch == '|' || ch == '<' || ch == '>')) ||
         (ch == '=' && nch == '>')) {
+      // token comprises two characters
       EmitCharAndAdvance(tokens, nch);
     }
   }
@@ -296,8 +308,8 @@ bool Prescanner::PadOutCharacterLiteral() {
   if (inFixedForm_ &&
       !tabInCurrentLine_ &&
       *at_ == '\n' &&
-      column_ < fixedFormColumnLimit_) {
-    ++column_;
+      atPosition_.column() < fixedFormColumnLimit_) {
+    atPosition_.AdvanceColumn();
     return true;
   }
   return false;
@@ -384,14 +396,13 @@ bool Prescanner::CommentLinesAndPreprocessorDirectives() {
         IsFreeFormComment(lineStart_)) {
       NextLine();
     } else if (IsPreprocessorDirectiveLine(lineStart_)) {
-      const char *saveAt{at_};
+      auto here = lineStartPosition_;
       if (std::optional<TokenSequence> tokens{NextTokenizedLine()}) {
         std::string err{preprocessor_.Directive(*tokens)};
         if (!err.empty()) {
-          *error_ << err << '\n';
+          *error_ << here << ' ' << err << '\n';
         }
       }
-      at_ = saveAt;
     } else {
       break;
     }
@@ -433,7 +444,8 @@ bool Prescanner::FixedFormContinuation() {
   if (cont == nullptr) {
     return false;
   }
-  BeginSourceLine(cont, 7);
+  BeginSourceLine(cont);
+  atPosition_.set_column(7);
   ++newlineDebt_;
   NextLine();
   return true;
@@ -473,7 +485,7 @@ bool Prescanner::FreeFormContinuation() {
     return false;  // not a continuation
   }
   at_ = p;
-  column_ = column;
+  (atPosition_ = lineStartPosition_).set_column(column);
   tabInCurrentLine_ = false;
   ++newlineDebt_;
   NextLine();

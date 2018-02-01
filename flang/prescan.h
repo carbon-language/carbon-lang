@@ -13,6 +13,7 @@
 // preprocessing and INCLUDE lines need not be handled.
 
 #include "char-buffer.h"
+#include "position.h"
 #include "preprocessor.h"
 #include "source.h"
 #include <optional>
@@ -46,9 +47,9 @@ class Prescanner {
   std::optional<TokenSequence> NextTokenizedLine();
 
  private:
-  void BeginSourceLine(const char *at, int column = 1) {
+  void BeginSourceLine(const char *at) {
     at_ = at;
-    column_ = column;
+    atPosition_ = lineStartPosition_;
     tabInCurrentLine_ = false;
     preventHollerith_ = false;
     delimiterNesting_ = 0;
@@ -89,6 +90,7 @@ class Prescanner {
   int column_{1};  // card image column position of next character
   const char *limit_{nullptr};  // first address after end of source
   int newlineDebt_{0};  // newline characters consumed but not yet emitted
+  Position atPosition_, lineStartPosition_;
   bool inCharLiteral_{false};
   bool inPreprocessorDirective_{false};
   bool inFixedForm_{true};
