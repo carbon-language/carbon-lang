@@ -1,3 +1,9 @@
 Debug
 Release
 tags
+f18
+*.o
+*~
+CMakeCache.txt
+CMakeFiles/*
+cmake_install.cmake
