@@ -112,8 +112,9 @@ define <2 x i64> @trunc_sel_larger_sext_vec(<2 x i32> %a, <2 x i1> %cmp) {
 
 define i32 @trunc_sel_smaller_sext(i64 %a, i1 %cmp) {
 ; CHECK-LABEL: @trunc_sel_smaller_sext(
-; CHECK-NEXT:    [[TRUNC:%.*]] = trunc i64 %a to i16
-; CHECK-NEXT:    [[TMP1:%.*]] = sext i16 [[TRUNC]] to i32
+; CHECK-NEXT:    [[TRUNC:%.*]] = trunc i64 %a to i32
+; CHECK-NEXT:    [[SEXT:%.*]] = shl i32 [[TRUNC]], 16
+; CHECK-NEXT:    [[TMP1:%.*]] = ashr exact i32 [[SEXT]], 16
 ; CHECK-NEXT:    [[EXT:%.*]] = select i1 %cmp, i32 [[TMP1]], i32 42
 ; CHECK-NEXT:    ret i32 [[EXT]]
 ;
