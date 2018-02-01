@@ -875,6 +875,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
       // Record this block so that we don't try to optimize it twice.
       BeenOptimized.insert(PredBB);
 
+      bool BranchForStats;
       if (CondSucc != BB) {
         // Patch the new target address into the conditional branch.
         MIA->reverseBranchCondition(*CondBranch, CalleeSymbol, BC.Ctx.get());
@@ -883,17 +884,16 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
         // branch to the old target.  This has to be done manually since
         // fixupBranches is not called after SCTC.
         NeedsUncondBranch.emplace_back(std::make_pair(PredBB, CondSucc));
-        // Swap branch statistics after swapping the branch targets.
-        auto BI = PredBB->branch_info_begin();
-        std::swap(*BI, *(BI + 1));
+        BranchForStats = false;
       } else {
         // Change destination of the conditional branch.
         MIA->replaceBranchTarget(*CondBranch, CalleeSymbol, BC.Ctx.get());
+        BranchForStats = true;
       }
-      const uint64_t CTCTakenFreq = PredBB->getBranchInfo(true).Count ==
-                                            BinaryBasicBlock::COUNT_NO_PROFILE
-                                        ? 0
-                                        : PredBB->getBranchInfo(true).Count;
+      const auto Count = PredBB->getBranchInfo(BranchForStats).Count;
+      const uint64_t CTCTakenFreq =
+        Count == BinaryBasicBlock::COUNT_NO_PROFILE ? 0 : Count;
+
       // Annotate it, so "isCall" returns true for this jcc
       MIA->setConditionalTailCall(*CondBranch);
       // Add info abount the conditional tail call frequency, otherwise this
