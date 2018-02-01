@@ -17365,7 +17365,8 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, const SDLoc &dl,
       if (TLI.isOperationLegal(WideVal.getOpcode(), WideVT)) {
         SDValue V0 = DAG.getNode(ISD::TRUNCATE, dl, VT, WideVal.getOperand(0));
         SDValue V1 = DAG.getNode(ISD::TRUNCATE, dl, VT, WideVal.getOperand(1));
-        Op = DAG.getNode(ConvertedOp, dl, VT, V0, V1);
+        SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::i32);
+        Op = DAG.getNode(ConvertedOp, dl, VTs, V0, V1);
       }
     }
   }
@@ -17383,7 +17384,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, const SDLoc &dl,
   SmallVector<SDValue, 4> Ops(Op->op_begin(), Op->op_begin() + NumOperands);
 
   SDValue New = DAG.getNode(Opcode, dl, VTs, Ops);
-  DAG.ReplaceAllUsesWith(Op, New);
+  DAG.ReplaceAllUsesOfValueWith(SDValue(Op.getNode(), 0), New);
   return SDValue(New.getNode(), 1);
 }
 
