@@ -33,6 +33,29 @@ define float @fsqrt(float %a) #0 {
   ret float %1
 }
 
+define float @fsqrt_ieee_denorms(float %a) #1 {
+; FAULT-LABEL: fsqrt_ieee_denorms:
+; FAULT:       // %bb.0:
+; FAULT-NEXT:    fsqrt s0, s0
+; FAULT-NEXT:    ret
+;
+; CHECK-LABEL: fsqrt_ieee_denorms:
+; CHECK:       // %bb.0:
+; CHECK-NEXT:    frsqrte s1, s0
+; CHECK-NEXT:    fmul s2, s1, s1
+; CHECK-NEXT:    frsqrts s2, s0, s2
+; CHECK-NEXT:    fmul s1, s1, s2
+; CHECK-NEXT:    fmul s2, s1, s1
+; CHECK-NEXT:    frsqrts s2, s0, s2
+; CHECK-NEXT:    fmul s2, s2, s0
+; CHECK-NEXT:    fmul s1, s1, s2
+; CHECK-NEXT:    fcmp s0, #0.0
+; CHECK-NEXT:    fcsel s0, s0, s1, eq
+; CHECK-NEXT:    ret
+  %1 = tail call fast float @llvm.sqrt.f32(float %a)
+  ret float %1
+}
+
 define <2 x float> @f2sqrt(<2 x float> %a) #0 {
 ; FAULT-LABEL: f2sqrt:
 ; FAULT:       // %bb.0:
@@ -124,6 +147,32 @@ define double @dsqrt(double %a) #0 {
 ; FAULT-NEXT:    ret
 ;
 ; CHECK-LABEL: dsqrt:
+; CHECK:       // %bb.0:
+; CHECK-NEXT:    frsqrte d1, d0
+; CHECK-NEXT:    fmul d2, d1, d1
+; CHECK-NEXT:    frsqrts d2, d0, d2
+; CHECK-NEXT:    fmul d1, d1, d2
+; CHECK-NEXT:    fmul d2, d1, d1
+; CHECK-NEXT:    frsqrts d2, d0, d2
+; CHECK-NEXT:    fmul d1, d1, d2
+; CHECK-NEXT:    fmul d2, d1, d1
+; CHECK-NEXT:    frsqrts d2, d0, d2
+; CHECK-NEXT:    fmul d2, d2, d0
+; CHECK-NEXT:    fmul d1, d1, d2
+; CHECK-NEXT:    fcmp d0, #0.0
+; CHECK-NEXT:    fcsel d0, d0, d1, eq
+; CHECK-NEXT:    ret
+  %1 = tail call fast double @llvm.sqrt.f64(double %a)
+  ret double %1
+}
+
+define double @dsqrt_ieee_denorms(double %a) #1 {
+; FAULT-LABEL: dsqrt_ieee_denorms:
+; FAULT:       // %bb.0:
+; FAULT-NEXT:    fsqrt d0, d0
+; FAULT-NEXT:    ret
+;
+; CHECK-LABEL: dsqrt_ieee_denorms:
 ; CHECK:       // %bb.0:
 ; CHECK-NEXT:    frsqrte d1, d0
 ; CHECK-NEXT:    fmul d2, d1, d1
@@ -404,4 +453,5 @@ define <4 x double> @d4rsqrt(<4 x double> %a) #0 {
 }
 
 attributes #0 = { "unsafe-fp-math"="true" }
+attributes #1 = { "unsafe-fp-math"="true" "denormal-fp-math"="ieee" }
 
