@@ -19,6 +19,10 @@ using MessageContext = std::shared_ptr<Message>;
 
 class Message {
  public:
+  Message() {}
+  Message(const Message &) = default;
+  Message(Message &&) = default;
+
   Message(Position pos, const std::string &msg, MessageContext ctx = nullptr)
     : position_{pos}, message_{msg}, context_{ctx} {}
   Message(Position pos, std::string &&msg, MessageContext ctx = nullptr)
@@ -29,9 +33,6 @@ class Message {
     : position_{pos}, message_{"expected '"s + ch + '\''},
       context_{ctx} {}
 
-  Message() {}
-  Message(const Message &) = default;
-  Message(Message &&) = default;
   Message &operator=(const Message &that) = default;
   Message &operator=(Message &&that) = default;
 

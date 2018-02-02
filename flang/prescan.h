@@ -13,21 +13,23 @@
 // preprocessing and INCLUDE lines need not be handled.
 
 #include "char-buffer.h"
+#include "message.h"
 #include "position.h"
 #include "preprocessor.h"
 #include "source.h"
 #include <optional>
-#include <sstream>
 
 namespace Fortran {
 
 class Prescanner {
  public:
-  explicit Prescanner(std::stringstream *err)
-    : error_{err}, preprocessor_{*this} {}
+  explicit Prescanner(Messages &messages)
+    : messages_{messages}, preprocessor_{*this} {}
 
+  Messages &messages() const { return messages_; }
   const SourceFile &sourceFile() const { return *sourceFile_; }
   Position position() const { return atPosition_; }
+  bool anyFatalErrors() const { return anyFatalErrors_; }
 
   Prescanner &set_fixedForm(bool yes) {
     inFixedForm_ = yes;
@@ -87,7 +89,8 @@ class Prescanner {
   bool FreeFormContinuation();
   void PayNewlineDebt(CharBuffer *);
 
-  std::stringstream *error_;
+  Messages &messages_;
+  bool anyFatalErrors_{false};
   const char *lineStart_{nullptr};  // next line to process; <= limit_
   const char *at_{nullptr};  // next character to process; < lineStart_
   int column_{1};  // card image column position of next character

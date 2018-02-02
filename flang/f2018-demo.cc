@@ -5,6 +5,7 @@
 #include "cooked-chars.h"
 #include "grammar.h"
 #include "idioms.h"
+#include "message.h"
 #include "parse-tree.h"
 #include "prescan.h"
 #include "source.h"
@@ -95,8 +96,8 @@ int main(int argc, char *const argv[]) {
     }
   }
 
-  std::stringstream error;
   Fortran::SourceFile source;
+  std::stringstream error;
   if (!source.Open(path, &error)) {
     std::cerr << error.str() << '\n';
     return 1;
@@ -106,16 +107,17 @@ int main(int argc, char *const argv[]) {
   size_t sourceBytes{source.bytes()};
   std::unique_ptr<char[]> prescanned;
   if (prescan) {
+    Fortran::Messages messages;
+    Fortran::Prescanner prescanner{messages};
     Fortran::CharBuffer
-      buffer{Fortran::Prescanner{&error}.
+      buffer{prescanner.
                set_fixedForm(fixedForm).
                set_enableBackslashEscapesInCharLiterals(backslashEscapes).
                set_fixedFormColumnLimit(columns).
                set_enableOldDebugLines(enableOldDebugLines).
                Prescan(source)};
-    std::string err{error.str()};
-    if (!err.empty()) {
-      std::cerr << err;
+    std::cerr << messages;
+    if (prescanner.anyFatalErrors()) {
       return 1;
     }
     sourceBytes = buffer.bytes();

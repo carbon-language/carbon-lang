@@ -398,12 +398,8 @@ bool Prescanner::CommentLinesAndPreprocessorDirectives() {
         IsFreeFormComment(lineStart_)) {
       NextLine();
     } else if (IsPreprocessorDirectiveLine(lineStart_)) {
-      auto here = lineStartPosition_;
       if (std::optional<TokenSequence> tokens{NextTokenizedLine()}) {
-        std::string err{preprocessor_.Directive(*tokens)};
-        if (!err.empty()) {
-          *error_ << here << ' ' << err << '\n';
-        }
+        anyFatalErrors_ |= !preprocessor_.Directive(*tokens);
       }
     } else {
       break;

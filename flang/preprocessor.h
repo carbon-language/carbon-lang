@@ -12,8 +12,8 @@
 #include <cstring>
 #include <functional>
 #include <list>
-#include <sstream>
 #include <stack>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -44,6 +44,7 @@ class CharPointerWithLength {
   const char *data() const { return data_; }
   const char &operator[](size_t j) const { return data_[j]; }
 
+  bool IsBlank() const;
   std::string ToString() const { return std::string{data_, bytes_}; }
 
  private:
@@ -99,18 +100,10 @@ class TokenSequence {
     return *this;
   }
 
-  size_t GetBytes(size_t token) const {
-    return (token + 1 >= start_.size() ? char_.size() : start_[token + 1]) -
-           start_[token];
-  }
-  const char *GetText(size_t token) const {
-    return &char_[start_[token]];
-  }
-  std::string GetString(size_t token) const {
-    return std::string(GetText(token), GetBytes(token));
-  }
   CharPointerWithLength operator[](size_t token) const {
-    return {GetText(token), GetBytes(token)};
+    return {&char_[start_[token]],
+            (token + 1 >= start_.size() ? char_.size() : start_[token + 1]) -
+              start_[token]};
   }
 
   void AddChar(char ch) {
@@ -129,7 +122,8 @@ class TokenSequence {
   }
 
   void Append(const TokenSequence &);
-  void EmitWithCaseConversion(CharBuffer *);
+  void EmitWithCaseConversion(CharBuffer *) const;
+  std::string ToString() const;
 
   bool empty() const { return start_.empty(); }
   size_t size() const { return start_.size(); }
@@ -151,16 +145,6 @@ class TokenSequence {
   void push_back(const CharPointerWithLength &t) {
     push_back(t.data(), t.size());
   }
-
-#if 0
-  void push_back(const std::string &s) {
-    size_t bytes{s.size()};
-    for (size_t j{0}; j < bytes; ++j) {
-      AddChar(s[j]);
-    }
-    EndToken();
-  }
-#endif
 
   void push_back(const std::stringstream &ss) { push_back(ss.str()); }
 
@@ -224,21 +208,20 @@ class Preprocessor {
   // return value is false.
   bool MacroReplacement(const TokenSequence &, TokenSequence *);
 
-  // Implements a preprocessor directive; returns an error message, or an
-  // empty string when successful.
-  std::string Directive(const TokenSequence &);
+  // Implements a preprocessor directive; returns true when no fatal error.
+  bool Directive(const TokenSequence &);
 
  private:
   enum class IsElseActive { No, Yes };
   enum class CanDeadElseAppear { No, Yes };
 
+  void Complain(const std::string &);
   CharPointerWithLength SaveToken(const CharPointerWithLength &);
   bool IsNameDefined(const CharPointerWithLength &);
   TokenSequence ReplaceMacros(const TokenSequence &);
-  std::string SkipDisabledConditionalCode(const std::string &dirName,
-                                          IsElseActive);
+  bool SkipDisabledConditionalCode(const std::string &dirName, IsElseActive);
   bool IsIfPredicateTrue(const TokenSequence &expr, size_t first,
-                         size_t exprTokens, std::string *errors);
+                         size_t exprTokens);
 
   Prescanner &prescanner_;
   std::list<std::string> names_;
