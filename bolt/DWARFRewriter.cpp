@@ -444,9 +444,19 @@ void RewriteInstance::updateLineTableOffsets() {
     Offset += Label->getOffset() - CurrentOffset;
     CurrentOffset = Label->getOffset();
 
-    auto &SI = EFMM->NoteSectionInfo[".debug_info"];
-    SI.PendingRelocs.emplace_back(
-        SectionInfo::Reloc{LTOffset, 4, 0, Offset});
+    auto DbgInfoSection = BC->getUniqueSectionByName(".debug_info");
+    assert(DbgInfoSection && ".debug_info section must exist");
+    auto *Zero = BC->registerNameAtAddress("Zero", 0);
+    DbgInfoSection->addRelocation(LTOffset,
+                                  Zero,
+                                  ELF::R_X86_64_32,
+                                  Offset,
+                                  0,
+                                  /*Pending=*/true);
+    // Set .debug_info as finalized so it won't be skipped over when
+    // we process sections while writing out the new binary.  This ensures
+    // that the pending relocations will be processed and not ignored.
+    DbgInfoSection->setIsFinalized();
 
     DEBUG(dbgs() << "BOLT-DEBUG: CU " << CUIDLineTablePair.first
                 << " has line table at " << Offset << "\n");
@@ -466,41 +476,20 @@ void RewriteInstance::finalizeDebugSections() {
     RangesSectionsWriter->writeArangesSection(Writer.get());
     const auto &ARangesContents = OS.str();
 
-    // Freed by ExecutableFileMemoryManager.
-    uint8_t *SectionData = new uint8_t[ARangesContents.size()];
-    memcpy(SectionData, ARangesContents.data(), ARangesContents.size());
-    EFMM->NoteSectionInfo[".debug_aranges"] = SectionInfo(
-        reinterpret_cast<uint64_t>(SectionData),
-        ARangesContents.size(),
-        /*Alignment=*/0,
-        /*IsCode=*/false,
-        /*IsReadOnly=*/true,
-        /*IsLocal=*/false);
+    BC->registerOrUpdateNoteSection(".debug_aranges",
+                                    copyByteArray(ARangesContents),
+                                    ARangesContents.size());
   }
 
   auto RangesSectionContents = RangesSectionsWriter->finalize();
-  auto SectionSize = RangesSectionContents->size();
-  uint8_t *SectionData = new uint8_t[SectionSize];
-  memcpy(SectionData, RangesSectionContents->data(), SectionSize);
-  EFMM->NoteSectionInfo[".debug_ranges"] = SectionInfo(
-      reinterpret_cast<uint64_t>(SectionData),
-      SectionSize,
-      /*Alignment=*/1,
-      /*IsCode=*/false,
-      /*IsReadOnly=*/true,
-      /*IsLocal=*/false);
+  BC->registerOrUpdateNoteSection(".debug_ranges",
+                                  copyByteArray(*RangesSectionContents),
+                                  RangesSectionContents->size());
 
   auto LocationListSectionContents = LocationListWriter->finalize();
-  SectionSize = LocationListSectionContents->size();
-  SectionData = new uint8_t[SectionSize];
-  memcpy(SectionData, LocationListSectionContents->data(), SectionSize);
-  EFMM->NoteSectionInfo[".debug_loc"] = SectionInfo(
-      reinterpret_cast<uint64_t>(SectionData),
-      SectionSize,
-      /*Alignment=*/1,
-      /*IsCode=*/false,
-      /*IsReadOnly=*/true,
-      /*IsLocal=*/false);
+  BC->registerOrUpdateNoteSection(".debug_loc",
+                                  copyByteArray(*LocationListSectionContents),
+                                  LocationListSectionContents->size());
 }
 
 void RewriteInstance::updateGdbIndexSection() {
@@ -569,7 +558,7 @@ void RewriteInstance::updateGdbIndexSection() {
   size_t NewGdbIndexSize = GdbIndexContents.size() + Delta;
 
   // Free'd by ExecutableFileMemoryManager.
-  auto * const NewGdbIndexContents = new uint8_t[NewGdbIndexSize];
+  auto *NewGdbIndexContents = new uint8_t[NewGdbIndexSize];
   auto *Buffer = NewGdbIndexContents;
 
   write32le(Buffer, Version);
@@ -606,11 +595,7 @@ void RewriteInstance::updateGdbIndexSection() {
   memcpy(Buffer, Data, TrailingSize);
 
   // Register the new section.
-  EFMM->NoteSectionInfo[".gdb_index"] = SectionInfo(
-      reinterpret_cast<uint64_t>(NewGdbIndexContents),
-      NewGdbIndexSize,
-      /*Alignment=*/0,
-      /*IsCode=*/false,
-      /*IsReadOnly=*/true,
-      /*IsLocal=*/false);
+  BC->registerOrUpdateNoteSection(".gdb_index",
+                                  NewGdbIndexContents,
+                                  NewGdbIndexSize);
 }

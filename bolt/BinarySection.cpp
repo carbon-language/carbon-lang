@@ -12,9 +12,17 @@
 #include "BinarySection.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/Support/CommandLine.h"
+
+#undef  DEBUG_TYPE
+#define DEBUG_TYPE "bolt"
 
 using namespace llvm;
 using namespace bolt;
+
+namespace opts {
+extern cl::opt<bool> PrintRelocations;
+}
 
 Triple::ArchType Relocation::Arch;
 
@@ -323,4 +331,30 @@ void Relocation::print(raw_ostream &OS) const {
   else
     OS << ", 0x" << Twine::utohexstr(Addend);
   OS << ", 0x" << Twine::utohexstr(Value);
+}
+
+BinarySection::~BinarySection() {
+  if (!isAllocatable() &&
+      (!hasSectionRef() ||
+       OutputContents.data() != getContents(Section).data())) {
+    delete[] getOutputData();
+  }
+}
+
+void BinarySection::print(raw_ostream &OS) const {
+  OS << getName() << ", "
+     << "0x" << Twine::utohexstr(getAddress()) << ", "
+     << getSize()
+     << " (0x" << Twine::utohexstr(getFileAddress()) << ", "
+     << getOutputSize() << ")"
+     << ", data = " << getData()
+     << ", output data = " << getOutputData();
+
+  if (isAllocatable())
+    OS << " (allocatable)";
+
+  if (opts::PrintRelocations) {
+    for (auto &R : relocations())
+      OS << "\n  " << R;
+  }
 }

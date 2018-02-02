@@ -39,43 +39,6 @@ class CFIReaderWriter;
 class DataAggregator;
 class DataReader;
 
-/// Section information for mapping and re-writing.
-struct SectionInfo {
-  uint64_t AllocAddress{0};   /// Current location of the section in memory.
-  uint64_t Size{0};           /// Section size.
-  unsigned Alignment{0};      /// Alignment of the section.
-  bool     IsCode{false};     /// Does this section contain code?
-  bool     IsReadOnly{false}; /// Is the section read-only?
-  bool     IsLocal{false};    /// Is this section local to a function, and
-                              /// should only be emitted with the function?
-  bool     IsStrTab{false};   /// Is this a string table section.
-  uint64_t FileAddress{0};    /// Address for the output file (final address).
-  uint64_t FileOffset{0};     /// Offset in the output file.
-  unsigned SectionID{0};      /// Unique ID used for address mapping.
-  bool     IsELFNote{false};  /// Is ELF note section?
-
-  struct Reloc {
-    uint32_t Offset;
-    uint8_t  Size;
-    uint8_t  Type; // unused atm
-    uint32_t Value;
-  };
-
-  /// Pending relocations for the section.
-  std::vector<Reloc> PendingRelocs;
-
-  SectionInfo(uint64_t Address, uint64_t Size, unsigned Alignment, bool IsCode,
-              bool IsReadOnly, bool IsLocal, uint64_t FileAddress = 0,
-              uint64_t FileOffset = 0, unsigned SectionID = 0,
-              bool IsELFNote = false)
-
-      : AllocAddress(Address), Size(Size), Alignment(Alignment), IsCode(IsCode),
-        IsReadOnly(IsReadOnly), IsLocal(IsLocal), FileAddress(FileAddress),
-        FileOffset(FileOffset), SectionID(SectionID), IsELFNote(IsELFNote) {}
-
-  SectionInfo() {}
-};
-
 struct SegmentInfo {
   uint64_t Address;           /// Address of the segment in memory.
   uint64_t Size;              /// Size of the segment in memory.
@@ -105,20 +68,15 @@ private:
                            StringRef SectionName,
                            bool IsCode,
                            bool IsReadOnly);
-
+  BinaryContext &BC;
   bool AllowStubs;
 
 public:
   /// [start memory address] -> [segment info] mapping.
   std::map<uint64_t, SegmentInfo> SegmentMapInfo;
 
-  /// Keep [section name] -> [section info] map for later remapping.
-  std::map<std::string, SectionInfo> SectionMapInfo;
-
-  /// Information about non-allocatable sections.
-  std::map<std::string, SectionInfo> NoteSectionInfo;
-
-  ExecutableFileMemoryManager(bool AllowStubs) : AllowStubs(AllowStubs) {}
+  ExecutableFileMemoryManager(BinaryContext &BC, bool AllowStubs)
+    : BC(BC), AllowStubs(AllowStubs) {}
 
   ~ExecutableFileMemoryManager();
 
@@ -202,7 +160,7 @@ public:
   /// non-empty.
   void emitDataSection(MCStreamer *Streamer,
                        const BinarySection &Section,
-                       std::string Name = "");
+                       StringRef Name = StringRef());
 
   /// Emit data sections that have code references in them.
   void emitDataSections(MCStreamer *Streamer);
@@ -312,7 +270,7 @@ private:
   void rewriteNoteSections();
 
   /// Write .eh_frame_hdr.
-  void writeEHFrameHeader(SectionInfo &EHFrameSecInfo);
+  void writeEHFrameHeader();
 
   /// Disassemble and create function entries for PLT.
   void disassemblePLT();

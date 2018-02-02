@@ -1312,8 +1312,18 @@ void BinaryFunction::postProcessJumpTables() {
         TakenBranches.emplace_back(JTSiteOffset, TargetOffset);
 
       // Take ownership of jump table relocations.
-      if (BC.HasRelocations)
-        BC.removeRelocationAt(JT->Address + EntryOffset);
+      if (BC.HasRelocations) {
+        auto EntryAddress = JT->Address + EntryOffset;
+        auto Res = BC.removeRelocationAt(EntryAddress);
+        (void)Res;
+        DEBUG(
+          auto Section = BC.getSectionForAddress(EntryAddress);
+          auto Offset = EntryAddress - Section->getAddress();
+          dbgs() << "BOLT-DEBUG: removing relocation from section "
+                 << Section->getName() << " at offset 0x"
+                 << Twine::utohexstr(Offset) << " = "
+                 << Res << '\n');
+      }
 
       EntryOffset += JT->EntrySize;
 
@@ -3363,7 +3373,7 @@ void BinaryFunction::JumpTable::updateOriginal(BinaryContext &BC) {
                  << " at offset " << Twine::utohexstr(Offset) << " for symbol "
                  << Entry->getName() << " with addend "
                  << Twine::utohexstr(RelAddend) << '\n');
-    BC.addSectionRelocation(*Section, Offset, Entry, RelType, RelAddend);
+    Section->addRelocation(Offset, Entry, RelType, RelAddend);
     Offset += EntrySize;
   }
 }

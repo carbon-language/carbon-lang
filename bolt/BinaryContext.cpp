@@ -23,6 +23,9 @@
 using namespace llvm;
 using namespace bolt;
 
+#undef  DEBUG_TYPE
+#define DEBUG_TYPE "bolt"
+
 namespace opts {
 
 extern cl::OptionCategory BoltCategory;
@@ -31,23 +34,30 @@ static cl::opt<bool>
 PrintDebugInfo("print-debug-info",
   cl::desc("print debug info when printing functions"),
   cl::Hidden,
+  cl::ZeroOrMore,
   cl::cat(BoltCategory));
 
-static cl::opt<bool>
+cl::opt<bool>
 PrintRelocations("print-relocations",
-  cl::desc("print relocations when printing functions"),
+  cl::desc("print relocations when printing functions/objects"),
   cl::Hidden,
+  cl::ZeroOrMore,
   cl::cat(BoltCategory));
 
 static cl::opt<bool>
 PrintMemData("print-mem-data",
   cl::desc("print memory data annotations when printing functions"),
   cl::Hidden,
+  cl::ZeroOrMore,
   cl::cat(BoltCategory));
 
 } // namespace opts
 
-BinaryContext::~BinaryContext() { }
+BinaryContext::~BinaryContext() {
+  for (auto *Section : Sections) {
+    delete Section;
+  }
+}
 
 std::unique_ptr<MCObjectWriter>
 BinaryContext::createObjectWriter(raw_pwrite_stream &OS) {
@@ -474,20 +484,82 @@ BinaryContext::getSectionForAddress(uint64_t Address) const {
   return std::make_error_code(std::errc::bad_address);
 }
 
-BinarySection &BinaryContext::registerSection(SectionRef Section) {
-  StringRef Name;
-  Section.getName(Name);
-  auto Res = Sections.insert(BinarySection(Section));
+BinarySection &BinaryContext::registerSection(BinarySection *Section) {
+  assert(!Section->getName().empty() &&
+         "can't register sections without a name");
+  auto Res = Sections.insert(Section);
   assert(Res.second && "can't register the same section twice.");
-  // Cast away const here because std::set always stores values by
-  // const.  It's ok to do this because we can never change the
-  // BinarySection properties that affect set ordering.
-  auto *BS = const_cast<BinarySection *>(&*Res.first);
   // Only register sections with addresses in the AddressToSection map.
-  if (Section.getAddress())
-    AddressToSection.insert(std::make_pair(Section.getAddress(), BS));
-  NameToSection.insert(std::make_pair(Name, BS));
-  return *BS;
+  if (Section->getAddress())
+    AddressToSection.insert(std::make_pair(Section->getAddress(), Section));
+  NameToSection.insert(std::make_pair(Section->getName(), Section));
+  DEBUG(dbgs() << "BOLT-DEBUG: registering " << *Section << "\n");
+  return *Section;
+}
+
+BinarySection &BinaryContext::registerSection(SectionRef Section) {
+  return registerSection(new BinarySection(Section));
+}
+
+BinarySection &BinaryContext::registerOrUpdateSection(StringRef Name,
+                                                      unsigned ELFType,
+                                                      unsigned ELFFlags,
+                                                      uint8_t *Data,
+                                                      uint64_t Size,
+                                                      unsigned Alignment,
+                                                      bool IsLocal) {
+  auto NamedSections = getSectionByName(Name);
+  if (NamedSections.begin() != NamedSections.end()) {
+    assert(std::next(NamedSections.begin()) == NamedSections.end() &&
+           "can only update unique sections");
+    auto *Section = NamedSections.begin()->second;
+
+    DEBUG(dbgs() << "BOLT-DEBUG: updating " << *Section << " -> ");
+    const auto Flag = Section->isAllocatable();
+    Section->update(Data, Size, Alignment, ELFType, ELFFlags, IsLocal);
+    DEBUG(dbgs() << *Section << "\n");
+    assert(Flag == Section->isAllocatable() &&
+           "can't change section allocation status");
+    return *Section;
+  }
+
+  return registerSection(new BinarySection(Name, Data, Size, Alignment,
+                                           ELFType, ELFFlags, IsLocal));
+}
+
+bool BinaryContext::deregisterSection(BinarySection &Section) {
+  auto *SectionPtr = &Section;
+  auto Itr = Sections.find(SectionPtr);
+  if (Itr != Sections.end()) {
+    auto Range = AddressToSection.equal_range(SectionPtr->getAddress());
+    while (Range.first != Range.second) {
+      if (Range.first->second == SectionPtr) {
+        AddressToSection.erase(Range.first);
+        break;
+      }
+      ++Range.first;
+    }
+
+    auto NameRange = NameToSection.equal_range(SectionPtr->getName());
+    while (NameRange.first != NameRange.second) {
+      if (NameRange.first->second == SectionPtr) {
+        NameToSection.erase(NameRange.first);
+        break;
+      }
+      ++NameRange.first;
+    }
+
+    Sections.erase(Itr);
+    delete SectionPtr;
+    return true;
+  }
+  return false;
+}
+
+void BinaryContext::printSections(raw_ostream &OS) const {
+  for (auto &Section : Sections) {
+    OS << "BOLT-INFO: " << *Section << "\n";
+  }
 }
 
 ErrorOr<uint64_t>
@@ -504,27 +576,24 @@ BinaryContext::extractPointerAtAddress(uint64_t Address) const {
   return DE.getAddress(&SectionOffset);
 }
 
-void BinaryContext::addSectionRelocation(BinarySection &Section,
-                                         uint64_t Offset,
-                                         MCSymbol *Symbol,
-                                         uint64_t Type,
-                                         uint64_t Addend) {
-  Section.addRelocation(Offset, Symbol, Type, Addend);
-}
-
 void BinaryContext::addRelocation(uint64_t Address,
                                   MCSymbol *Symbol,
                                   uint64_t Type,
-                                  uint64_t Addend) {
+                                  uint64_t Addend,
+                                  uint64_t Value) {
   auto Section = getSectionForAddress(Address);
   assert(Section && "cannot find section for address");
-  Section->addRelocation(Address - Section->getAddress(), Symbol, Type, Addend);
+  Section->addRelocation(Address - Section->getAddress(),
+                         Symbol,
+                         Type,
+                         Addend,
+                         Value);
 }
 
-void BinaryContext::removeRelocationAt(uint64_t Address) {
+bool BinaryContext::removeRelocationAt(uint64_t Address) {
   auto Section = getSectionForAddress(Address);
   assert(Section && "cannot find section for address");
-  Section->removeRelocationAt(Address - Section->getAddress());
+  return Section->removeRelocationAt(Address - Section->getAddress());
 }
 
 const Relocation *BinaryContext::getRelocationAt(uint64_t Address) {

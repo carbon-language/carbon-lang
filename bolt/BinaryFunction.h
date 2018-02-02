@@ -24,6 +24,7 @@
 #include "DebugData.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ilist.h"
+#include "llvm/ADT/iterator.h"
 #include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
@@ -600,7 +601,7 @@ public:
     std::map<unsigned, MCSymbol *> Labels;
 
     /// Corresponding section if any.
-    SectionInfo *SecInfo{nullptr};
+    ErrorOr<BinarySection &> Section{std::errc::bad_address};
 
     /// Corresponding section name if any.
     std::string SectionName;
@@ -747,21 +748,6 @@ private:
   /// Count the number of functions created.
   static uint64_t Count;
 
-  template <typename Itr, typename T>
-  class Iterator : public std::iterator<std::bidirectional_iterator_tag, T> {
-   public:
-    Iterator &operator++() { ++itr; return *this; }
-    Iterator &operator--() { --itr; return *this; }
-    Iterator operator++(int) { auto tmp(itr); itr++; return tmp; }
-    Iterator operator--(int) { auto tmp(itr); itr--; return tmp; }
-    bool operator==(const Iterator& other) const { return itr == other.itr; }
-    bool operator!=(const Iterator& other) const { return itr != other.itr; }
-    T& operator*() { return **itr; }
-    Iterator(Itr itr) : itr(itr) { }
-   private:
-    Itr itr;
-  };
-
   /// Register alternative function name.
   void addAlternativeName(std::string NewName) {
     Names.emplace_back(NewName);
@@ -842,13 +828,12 @@ public:
 
   BinaryFunction(BinaryFunction &&) = default;
 
-  typedef Iterator<BasicBlockListType::iterator, BinaryBasicBlock> iterator;
-  typedef Iterator<BasicBlockListType::const_iterator,
-                   const BinaryBasicBlock> const_iterator;
-  typedef Iterator<BasicBlockListType::reverse_iterator,
-                   BinaryBasicBlock> reverse_iterator;
-  typedef Iterator<BasicBlockListType::const_reverse_iterator,
-                   const BinaryBasicBlock> const_reverse_iterator;
+  using iterator = pointee_iterator<BasicBlockListType::iterator>;
+  using const_iterator = pointee_iterator<BasicBlockListType::const_iterator>;
+  using reverse_iterator =
+    pointee_iterator<BasicBlockListType::reverse_iterator>;
+  using const_reverse_iterator =
+    pointee_iterator<BasicBlockListType::const_reverse_iterator>;
 
   typedef BasicBlockOrderType::iterator order_iterator;
   typedef BasicBlockOrderType::const_iterator const_order_iterator;

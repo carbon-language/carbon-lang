@@ -16,6 +16,7 @@
 
 #include "BinarySection.h"
 #include "DebugData.h"
+#include "llvm/ADT/iterator.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/DebugInfo/DWARF/DWARFCompileUnit.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
@@ -58,8 +59,16 @@ class BinaryContext {
   BinaryContext() = delete;
 
   /// Set of all sections.
-  using SectionSetType = std::set<BinarySection>;
+  struct CompareSections {
+    bool operator()(const BinarySection *A, const BinarySection *B) const {
+      return *A < *B;
+    }
+  };
+  using SectionSetType = std::set<BinarySection *, CompareSections>;
   SectionSetType Sections;
+
+  using SectionIterator = pointee_iterator<SectionSetType::iterator>;
+  using SectionConstIterator = pointee_iterator<SectionSetType::const_iterator>;
 
   /// Map virtual address to a section.  It is possible to have more than one
   /// section mapped to the same address, e.g. non-allocatable sections.
@@ -70,6 +79,9 @@ class BinaryContext {
   /// have multiple sections with the same name.
   using NameToSectionMapType = std::multimap<std::string, BinarySection *>;
   NameToSectionMapType NameToSection;
+
+  /// Low level section registration.
+  BinarySection &registerSection(BinarySection *Section);
 public:
 
   /// [name] -> [address] map used for global symbol resolution.
@@ -124,8 +136,6 @@ public:
   std::unique_ptr<MCDisassembler> DisAsm;
 
   std::unique_ptr<MCAsmBackend> MAB;
-
-  std::function<void(std::error_code)> ErrorCheck;
 
   DataReader &DR;
 
@@ -224,17 +234,52 @@ public:
   ErrorOr<ArrayRef<uint8_t>>
   getFunctionData(const BinaryFunction &Function) const;
 
-  /// Register information about the given section so we can look up
-  /// sections for addresses.
+  /// Register information about the given \p Section so we can look up
+  /// sections by address.
   BinarySection &registerSection(SectionRef Section);
 
-  iterator_range<SectionSetType::iterator> sections() {
+  /// Register or update the information for the section with the given
+  /// /p Name.  If the section already exists, the information in the
+  /// section will be updated with the new data.
+  BinarySection &registerOrUpdateSection(StringRef Name,
+                                         unsigned ELFType,
+                                         unsigned ELFFlags,
+                                         uint8_t *Data = nullptr,
+                                         uint64_t Size = 0,
+                                         unsigned Alignment = 1,
+                                         bool IsLocal = false);
+
+  /// Register the information for the note (non-allocatable) section
+  /// with the given /p Name.  If the section already exists, the
+  /// information in the section will be updated with the new data.
+  BinarySection &registerOrUpdateNoteSection(StringRef Name,
+                                             uint8_t *Data = nullptr,
+                                             uint64_t Size = 0,
+                                             unsigned Alignment = 1,
+                                             bool IsReadOnly = true,
+                                             unsigned ELFType = ELF::SHT_PROGBITS,
+                                             bool IsLocal = false) {
+    return registerOrUpdateSection(Name, ELFType,
+                                   BinarySection::getFlags(IsReadOnly),
+                                   Data, Size, Alignment, IsLocal);
+  }
+
+  /// Remove the given /p Section from the set of all sections.  Return
+  /// true if the section was removed (and deleted), otherwise false.
+  bool deregisterSection(BinarySection &Section);
+
+  /// Iterate over all registered sections.
+  iterator_range<SectionIterator> sections() {
     return make_range(Sections.begin(), Sections.end());
   }
 
-  iterator_range<SectionSetType::const_iterator> sections() const {
+  /// Iterate over all registered sections.
+  iterator_range<SectionConstIterator> sections() const {
     return make_range(Sections.begin(), Sections.end());
   }
+
+  /// Print all sections.
+  void printSections(raw_ostream& OS) const;
 
   /// Return largest section containing the given \p Address.  These
   /// functions only work for allocatable sections, i.e. ones with non-zero
@@ -305,17 +350,12 @@ public:
                     BinaryFunction &ParentBF,
                     std::map<uint64_t, BinaryFunction> &BFs);
 
-  /// Add relocation for \p Section at a given \p Offset.
-  void addSectionRelocation(BinarySection &Section, uint64_t Offset,
-                            MCSymbol *Symbol, uint64_t Type,
-                            uint64_t Addend = 0);
-
-  /// Add a relocation at a given \p Address.
+  /// Add a Section relocation at a given \p Address.
   void addRelocation(uint64_t Address, MCSymbol *Symbol, uint64_t Type,
-                     uint64_t Addend = 0);
+                     uint64_t Addend = 0, uint64_t Value = 0);
 
   /// Remove registered relocation at a given \p Address.
-  void removeRelocationAt(uint64_t Address);
+  bool removeRelocationAt(uint64_t Address);
 
   /// Return a relocation registered at a given \p Address, or nullptr if there
   /// is no relocation at such address.
