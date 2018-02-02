@@ -17,11 +17,12 @@ define i64 @test_mm512_kunpackd(<8 x i64> %__A, <8 x i64> %__B, <8 x i64> %__C, 
 ; X32-NEXT:    vmovdqa64 136(%ebp), %zmm3
 ; X32-NEXT:    vpcmpneqb %zmm0, %zmm1, %k0
 ; X32-NEXT:    vpcmpneqb 8(%ebp), %zmm2, %k1
-; X32-NEXT:    kunpckdq %k0, %k1, %k1
-; X32-NEXT:    vpcmpneqb 72(%ebp), %zmm3, %k0 {%k1}
-; X32-NEXT:    kmovq %k0, {{[0-9]+}}(%esp)
-; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    movl {{[0-9]+}}(%esp), %edx
+; X32-NEXT:    vpcmpneqb 72(%ebp), %zmm3, %k2
+; X32-NEXT:    kandd %k0, %k2, %k0
+; X32-NEXT:    kmovd %k0, %eax
+; X32-NEXT:    kshiftrq $32, %k2, %k0
+; X32-NEXT:    kandd %k1, %k0, %k0
+; X32-NEXT:    kmovd %k0, %edx
 ; X32-NEXT:    movl %ebp, %esp
 ; X32-NEXT:    popl %ebp
 ; X32-NEXT:    vzeroupper
@@ -1647,19 +1648,10 @@ define <8 x i64> @test_mm512_maskz_unpacklo_epi16(i32 %a0, <8 x i64> %a1, <8 x i
 define i64 @test_mm512_test_epi8_mask(<8 x i64> %__A, <8 x i64> %__B) {
 ; X32-LABEL: test_mm512_test_epi8_mask:
 ; X32:       # %bb.0: # %entry
-; X32-NEXT:    pushl %ebp
-; X32-NEXT:    .cfi_def_cfa_offset 8
-; X32-NEXT:    .cfi_offset %ebp, -8
-; X32-NEXT:    movl %esp, %ebp
-; X32-NEXT:    .cfi_def_cfa_register %ebp
-; X32-NEXT:    andl $-8, %esp
-; X32-NEXT:    subl $8, %esp
 ; X32-NEXT:    vptestmb %zmm0, %zmm1, %k0
-; X32-NEXT:    kmovq %k0, (%esp)
-; X32-NEXT:    movl (%esp), %eax
-; X32-NEXT:    movl {{[0-9]+}}(%esp), %edx
-; X32-NEXT:    movl %ebp, %esp
-; X32-NEXT:    popl %ebp
+; X32-NEXT:    kshiftrq $32, %k0, %k1
+; X32-NEXT:    kmovd %k0, %eax
+; X32-NEXT:    kmovd %k1, %edx
 ; X32-NEXT:    vzeroupper
 ; X32-NEXT:    retl
 ;
@@ -1680,18 +1672,13 @@ entry:
 define i64 @test_mm512_mask_test_epi8_mask(i64 %__U, <8 x i64> %__A, <8 x i64> %__B) {
 ; X32-LABEL: test_mm512_mask_test_epi8_mask:
 ; X32:       # %bb.0: # %entry
-; X32-NEXT:    pushl %ebp
-; X32-NEXT:    .cfi_def_cfa_offset 8
-; X32-NEXT:    .cfi_offset %ebp, -8
-; X32-NEXT:    movl %esp, %ebp
-; X32-NEXT:    .cfi_def_cfa_register %ebp
 ; X32-NEXT:    pushl %ebx
+; X32-NEXT:    .cfi_def_cfa_offset 8
 ; X32-NEXT:    pushl %esi
-; X32-NEXT:    andl $-8, %esp
-; X32-NEXT:    subl $8, %esp
-; X32-NEXT:    .cfi_offset %esi, -16
-; X32-NEXT:    .cfi_offset %ebx, -12
-; X32-NEXT:    movl 8(%ebp), %eax
+; X32-NEXT:    .cfi_def_cfa_offset 12
+; X32-NEXT:    .cfi_offset %esi, -12
+; X32-NEXT:    .cfi_offset %ebx, -8
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    kmovd %eax, %k0
 ; X32-NEXT:    kshiftrq $1, %k0, %k1
 ; X32-NEXT:    movl %eax, %ecx
@@ -1798,7 +1785,7 @@ define i64 @test_mm512_mask_test_epi8_mask(i64 %__U, <8 x i64> %__A, <8 x i64> %
 ; X32-NEXT:    movl %ecx, %ebx
 ; X32-NEXT:    shrb $2, %bl
 ; X32-NEXT:    kmovd %ebx, %k7
-; X32-NEXT:    movl 12(%ebp), %ebx
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %ebx
 ; X32-NEXT:    kshiftlq $63, %k1, %k1
 ; X32-NEXT:    kshiftrq $53, %k1, %k1
 ; X32-NEXT:    kxorq %k1, %k0, %k0
@@ -2211,13 +2198,11 @@ define i64 @test_mm512_mask_test_epi8_mask(i64 %__U, <8 x i64> %__A, <8 x i64> %
 ; X32-NEXT:    kshiftlq $63, %k1, %k1
 ; X32-NEXT:    korq %k1, %k0, %k1
 ; X32-NEXT:    vptestmb %zmm0, %zmm1, %k0 {%k1}
-; X32-NEXT:    kmovq %k0, (%esp)
-; X32-NEXT:    movl (%esp), %eax
-; X32-NEXT:    movl {{[0-9]+}}(%esp), %edx
-; X32-NEXT:    leal -8(%ebp), %esp
+; X32-NEXT:    kshiftrq $32, %k0, %k1
+; X32-NEXT:    kmovd %k0, %eax
+; X32-NEXT:    kmovd %k1, %edx
 ; X32-NEXT:    popl %esi
 ; X32-NEXT:    popl %ebx
-; X32-NEXT:    popl %ebp
 ; X32-NEXT:    vzeroupper
 ; X32-NEXT:    retl
 ;
@@ -2289,19 +2274,10 @@ entry:
 define i64 @test_mm512_testn_epi8_mask(<8 x i64> %__A, <8 x i64> %__B) {
 ; X32-LABEL: test_mm512_testn_epi8_mask:
 ; X32:       # %bb.0: # %entry
-; X32-NEXT:    pushl %ebp
-; X32-NEXT:    .cfi_def_cfa_offset 8
-; X32-NEXT:    .cfi_offset %ebp, -8
-; X32-NEXT:    movl %esp, %ebp
-; X32-NEXT:    .cfi_def_cfa_register %ebp
-; X32-NEXT:    andl $-8, %esp
-; X32-NEXT:    subl $8, %esp
 ; X32-NEXT:    vptestnmb %zmm0, %zmm1, %k0
-; X32-NEXT:    kmovq %k0, (%esp)
-; X32-NEXT:    movl (%esp), %eax
-; X32-NEXT:    movl {{[0-9]+}}(%esp), %edx
-; X32-NEXT:    movl %ebp, %esp
-; X32-NEXT:    popl %ebp
+; X32-NEXT:    kshiftrq $32, %k0, %k1
+; X32-NEXT:    kmovd %k0, %eax
+; X32-NEXT:    kmovd %k1, %edx
 ; X32-NEXT:    vzeroupper
 ; X32-NEXT:    retl
 ;
@@ -2322,18 +2298,13 @@ entry:
 define i64 @test_mm512_mask_testn_epi8_mask(i64 %__U, <8 x i64> %__A, <8 x i64> %__B) {
 ; X32-LABEL: test_mm512_mask_testn_epi8_mask:
 ; X32:       # %bb.0: # %entry
-; X32-NEXT:    pushl %ebp
-; X32-NEXT:    .cfi_def_cfa_offset 8
-; X32-NEXT:    .cfi_offset %ebp, -8
-; X32-NEXT:    movl %esp, %ebp
-; X32-NEXT:    .cfi_def_cfa_register %ebp
 ; X32-NEXT:    pushl %ebx
+; X32-NEXT:    .cfi_def_cfa_offset 8
 ; X32-NEXT:    pushl %esi
-; X32-NEXT:    andl $-8, %esp
-; X32-NEXT:    subl $8, %esp
-; X32-NEXT:    .cfi_offset %esi, -16
-; X32-NEXT:    .cfi_offset %ebx, -12
-; X32-NEXT:    movl 8(%ebp), %eax
+; X32-NEXT:    .cfi_def_cfa_offset 12
+; X32-NEXT:    .cfi_offset %esi, -12
+; X32-NEXT:    .cfi_offset %ebx, -8
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    kmovd %eax, %k0
 ; X32-NEXT:    kshiftrq $1, %k0, %k1
 ; X32-NEXT:    movl %eax, %ecx
@@ -2440,7 +2411,7 @@ define i64 @test_mm512_mask_testn_epi8_mask(i64 %__U, <8 x i64> %__A, <8 x i64> 
 ; X32-NEXT:    movl %ecx, %ebx
 ; X32-NEXT:    shrb $2, %bl
 ; X32-NEXT:    kmovd %ebx, %k7
-; X32-NEXT:    movl 12(%ebp), %ebx
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %ebx
 ; X32-NEXT:    kshiftlq $63, %k1, %k1
 ; X32-NEXT:    kshiftrq $53, %k1, %k1
 ; X32-NEXT:    kxorq %k1, %k0, %k0
@@ -2853,13 +2824,11 @@ define i64 @test_mm512_mask_testn_epi8_mask(i64 %__U, <8 x i64> %__A, <8 x i64> 
 ; X32-NEXT:    kshiftlq $63, %k1, %k1
 ; X32-NEXT:    korq %k1, %k0, %k1
 ; X32-NEXT:    vptestnmb %zmm0, %zmm1, %k0 {%k1}
-; X32-NEXT:    kmovq %k0, (%esp)
-; X32-NEXT:    movl (%esp), %eax
-; X32-NEXT:    movl {{[0-9]+}}(%esp), %edx
-; X32-NEXT:    leal -8(%ebp), %esp
+; X32-NEXT:    kshiftrq $32, %k0, %k1
+; X32-NEXT:    kmovd %k0, %eax
+; X32-NEXT:    kmovd %k1, %edx
 ; X32-NEXT:    popl %esi
 ; X32-NEXT:    popl %ebx
-; X32-NEXT:    popl %ebp
 ; X32-NEXT:    vzeroupper
 ; X32-NEXT:    retl
 ;

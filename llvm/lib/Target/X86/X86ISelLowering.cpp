@@ -24953,6 +24953,23 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     EVT DstVT = N->getValueType(0);
     EVT SrcVT = N->getOperand(0).getValueType();
 
+    // If this is a bitcast from a v64i1 k-register to a i64 on a 32-bit target
+    // we can split using the k-register rather than memory.
+    if (SrcVT == MVT::v64i1 && DstVT == MVT::i64 && Subtarget.hasBWI()) {
+      assert(!Subtarget.is64Bit() && "Expected 32-bit mode");
+      SDValue Lo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v32i1,
+                               N->getOperand(0),
+                               DAG.getIntPtrConstant(0, dl));
+      Lo = DAG.getBitcast(MVT::i32, Lo);
+      SDValue Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v32i1,
+                               N->getOperand(0),
+                               DAG.getIntPtrConstant(32, dl));
+      Hi = DAG.getBitcast(MVT::i32, Hi);
+      SDValue Res = DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, Lo, Hi);
+      Results.push_back(Res);
+      return;
+    }
+
     if (SrcVT != MVT::f64 ||
         (DstVT != MVT::v2i32 && DstVT != MVT::v4i16 && DstVT != MVT::v8i8))
       return;
