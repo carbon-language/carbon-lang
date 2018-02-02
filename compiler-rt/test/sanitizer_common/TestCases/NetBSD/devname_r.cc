@@ -1,4 +1,4 @@
-// RUN: %clangxx -O0 -g %s -o %t && %run %t 2>&1 | FileCheck
+// RUN: %clangxx -O0 -g %s -o %t && %run %t 2>&1 | FileCheck %s
 
 #include <sys/cdefs.h>
 #include <sys/stat.h>
