@@ -646,7 +646,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->Optimize = args::getInteger(Args, OPT_O, 1);
   Config->OrphanHandling = getOrphanHandling(Args);
   Config->OutputFile = Args.getLastArgValue(OPT_o);
-  Config->Pie = Args.hasFlag(OPT_pie, OPT_nopie, false);
+  Config->Pie = Args.hasFlag(OPT_pie, OPT_no_pie, false);
   Config->PrintIcfSections =
       Args.hasFlag(OPT_print_icf_sections, OPT_no_print_icf_sections, false);
   Config->PrintGcSections =
