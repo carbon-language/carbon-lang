@@ -402,9 +402,8 @@ Error lto::backend(Config &C, AddStreamFn AddStream,
 static void dropDeadSymbols(Module &Mod, const GVSummaryMapTy &DefinedGlobals,
                             const ModuleSummaryIndex &Index) {
   auto MaybeDrop = [&](GlobalValue &GV) {
-    auto It = DefinedGlobals.find(GV.getGUID());
-    if (It != DefinedGlobals.end())
-      if (!Index.isGlobalValueLive(It->second))
+    if (GlobalValueSummary *GVS = DefinedGlobals.lookup(GV.getGUID()))
+      if (!Index.isGlobalValueLive(GVS))
         convertToDeclaration(GV);
   };
 
