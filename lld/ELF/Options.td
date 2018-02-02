@@ -7,8 +7,8 @@ class J<string name>: Joined<["--", "-"], name>;
 class S<string name>: Separate<["--", "-"], name>;
 
 multiclass Eq<string name> {
-  def "": Separate<["--", "-"], name>;
-  def _eq: Joined<["--", "-"], name # "=">, Alias<!cast<Separate>(NAME)>;
+  def NAME: Separate<["--", "-"], name>;
+  def NAME # _eq: Joined<["--", "-"], name # "=">, Alias<!cast<Separate>(NAME)>;
 }
 
 multiclass B<string name, string help1, string help2> {
