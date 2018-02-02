@@ -717,6 +717,63 @@ void CodeGenModule::setGlobalVisibility(llvm::GlobalValue *GV,
     GV->setVisibility(GetLLVMVisibility(LV.getVisibility()));
 }
 
+static bool shouldAssumeDSOLocal(const CodeGenModule &CGM,
+                                 llvm::GlobalValue *GV, const NamedDecl *D,
+                                 ForDefinition_t IsForDefinition) {
+  const llvm::Triple &TT = CGM.getTriple();
+  // Only handle ELF for now.
+  if (!TT.isOSBinFormatELF())
+    return false;
+
+  // If this is not an executable, don't assume anything is local.
+  const auto &CGOpts = CGM.getCodeGenOpts();
+  llvm::Reloc::Model RM = CGOpts.RelocationModel;
+  const auto &LOpts = CGM.getLangOpts();
+  if (RM != llvm::Reloc::Static && !LOpts.PIE)
+    return false;
+
+  // A definition cannot be preempted from an executable.
+  if (IsForDefinition)
+    return true;
+
+  // Most PIC code sequences that assume that a symbol is local cannot produce a
+  // 0 if it turns out the symbol is undefined. While this is ABI and relocation
+  // depended, it seems worth it to handle it here.
+  if (RM == llvm::Reloc::PIC_ && GV->hasExternalWeakLinkage())
+    return false;
+
+  // PPC has no copy relocations and cannot use a plt entry as a symbol address.
+  llvm::Triple::ArchType Arch = TT.getArch();
+  if (Arch == llvm::Triple::ppc || Arch == llvm::Triple::ppc64 ||
+      Arch == llvm::Triple::ppc64le)
+    return false;
+
+  // If we can use copy relocations we can assume it is local.
+  if (isa<VarDecl>(D) &&
+      (RM == llvm::Reloc::Static || CGOpts.PIECopyRelocations))
+    return true;
+
+  // If we can use a plt entry as the symbol address we can assume it
+  // is local.
+  if (isa<FunctionDecl>(D) && !CGOpts.NoPLT)
+    return true;
+
+  // Otherwise don't assue it is local.
+  return false;
+}
+
+void CodeGenModule::setDSOLocal(llvm::GlobalValue *GV, const NamedDecl *D,
+                                ForDefinition_t IsForDefinition) const {
+  if (shouldAssumeDSOLocal(*this, GV, D, IsForDefinition))
+    GV->setDSOLocal(true);
+}
+
+void CodeGenModule::setGVProperties(llvm::GlobalValue *GV, const NamedDecl *D,
+                                    ForDefinition_t IsForDefinition) const {
+  setGlobalVisibility(GV, D, IsForDefinition);
+  setDSOLocal(GV, D, IsForDefinition);
+}
+
 static llvm::GlobalVariable::ThreadLocalMode GetLLVMTLSModel(StringRef S) {
   return llvm::StringSwitch<llvm::GlobalVariable::ThreadLocalMode>(S)
       .Case("global-dynamic", llvm::GlobalVariable::GeneralDynamicTLSModel)
@@ -1174,7 +1231,7 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
 void CodeGenModule::SetCommonAttributes(const Decl *D,
                                         llvm::GlobalValue *GV) {
   if (const auto *ND = dyn_cast_or_null<NamedDecl>(D))
-    setGlobalVisibility(GV, ND, ForDefinition);
+    setGVProperties(GV, ND, ForDefinition);
   else
     GV->setVisibility(llvm::GlobalValue::DefaultVisibility);
 
@@ -1316,7 +1373,7 @@ void CodeGenModule::SetFunctionAttributes(GlobalDecl GD, llvm::Function *F,
   // overridden by a definition.
 
   setLinkageForGV(F, FD);
-  setGlobalVisibility(F, FD, NotForDefinition);
+  setGVProperties(F, FD, NotForDefinition);
 
   if (FD->getAttr<PragmaClangTextSectionAttr>()) {
     F->addFnAttr("implicit-section-name");
@@ -2638,7 +2695,7 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
     GV->setAlignment(getContext().getDeclAlign(D).getQuantity());
 
     setLinkageForGV(GV, D);
-    setGlobalVisibility(GV, D, NotForDefinition);
+    setGVProperties(GV, D, NotForDefinition);
 
     if (D->getTLSKind()) {
       if (D->getTLSKind() == VarDecl::TLS_Dynamic)
@@ -3457,7 +3514,7 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD,
   setFunctionDLLStorageClass(GD, Fn);
 
   // FIXME: this is redundant with part of setFunctionDefinitionAttributes
-  setGlobalVisibility(Fn, D, ForDefinition);
+  setGVProperties(Fn, D, ForDefinition);
 
   MaybeHandleStaticInExternC(D, Fn);
 
@@ -4053,7 +4110,7 @@ ConstantAddress CodeGenModule::GetAddrOfGlobalTemporary(
       getModule(), Type, Constant, Linkage, InitialValue, Name.c_str(),
       /*InsertBefore=*/nullptr, llvm::GlobalVariable::NotThreadLocal, TargetAS);
   if (emitter) emitter->finalize(GV);
-  setGlobalVisibility(GV, VD, ForDefinition);
+  setGVProperties(GV, VD, ForDefinition);
   GV->setAlignment(Align.getQuantity());
   if (supportsCOMDAT() && GV->isWeakForLinker())
     GV->setComdat(TheModule.getOrInsertComdat(GV->getName()));

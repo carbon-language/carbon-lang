@@ -722,6 +722,12 @@ public:
   void setGlobalVisibility(llvm::GlobalValue *GV, const NamedDecl *D,
                            ForDefinition_t IsForDefinition) const;
 
+  void setDSOLocal(llvm::GlobalValue *GV, const NamedDecl *D,
+                   ForDefinition_t IsForDefinition) const;
+
+  void setGVProperties(llvm::GlobalValue *GV, const NamedDecl *D,
+                       ForDefinition_t IsForDefinition) const;
+
   /// Set the TLS mode for the given LLVM GlobalValue for the thread-local
   /// variable declaration D.
   void setTLSMode(llvm::GlobalValue *GV, const VarDecl &D) const;
