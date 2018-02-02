@@ -51,7 +51,7 @@ llvm::Constant *CodeGenModule::GetAddrOfThunk(GlobalDecl GD,
 
 static void setThunkVisibility(CodeGenModule &CGM, const CXXMethodDecl *MD,
                                const ThunkInfo &Thunk, llvm::Function *Fn) {
-  CGM.setGVProperties(Fn, MD, ForDefinition);
+  CGM.setGlobalVisibility(Fn, MD, ForDefinition);
 }
 
 static void setThunkProperties(CodeGenModule &CGM, const ThunkInfo &Thunk,
@@ -730,7 +730,7 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
   // Create the variable that will hold the construction vtable.
   llvm::GlobalVariable *VTable =
     CGM.CreateOrReplaceCXXRuntimeVariable(Name, VTType, Linkage);
-  CGM.setGVProperties(VTable, RD, ForDefinition);
+  CGM.setGlobalVisibility(VTable, RD, ForDefinition);
 
   // V-tables are always unnamed_addr.
   VTable->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Global);
