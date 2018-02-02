@@ -150,6 +150,10 @@ defm gdb_index: B<"gdb-index",
     "Generate .gdb_index section",
     "Do not generate .gdb_index section">;
 
+defm gnu_unique: B<"gnu-unique",
+  "Enable STB_GNU_UNIQUE symbol binding",
+  "Disable STB_GNU_UNIQUE symbol binding">;
+
 defm hash_style: Eq<"hash-style">,
   HelpText<"Specify hash style (sysv, gnu or both)">;
 
@@ -193,9 +197,6 @@ def no_color_diagnostics: F<"no-color-diagnostics">,
 def no_dynamic_linker: F<"no-dynamic-linker">,
   HelpText<"Inhibit output of .interp section">;
 
-def no_gnu_unique: F<"no-gnu-unique">,
-  HelpText<"Disable STB_GNU_UNIQUE symbol binding">;
-
 def noinhibit_exec: F<"noinhibit-exec">,
   HelpText<"Retain the executable output file whenever it is still usable">;
 
@@ -207,9 +208,6 @@ def no_rosegment: F<"no-rosegment">,
 
 def no_undefined: F<"no-undefined">,
   HelpText<"Report unresolved symbols even if the linker is creating a shared library">;
-
-def no_undefined_version: F<"no-undefined-version">,
-  HelpText<"Report version scripts that refer undefined symbols">;
 
 def o: JoinedOrSeparate<["-"], "o">, MetaVarName<"<path>">,
   HelpText<"Path to file to write output">;
@@ -297,6 +295,10 @@ defm undefined: Eq<"undefined">,
 
 defm unresolved_symbols: Eq<"unresolved-symbols">,
   HelpText<"Determine how to handle unresolved symbols">;
+
+defm undefined_version: B<"undefined-version",
+  "Allow unused version in version script",
+  "Report version scripts that refer undefined symbols">;
 
 defm rsp_quoting: Eq<"rsp-quoting">,
   HelpText<"Quoting style for response files. Values supported: windows|posix">;
