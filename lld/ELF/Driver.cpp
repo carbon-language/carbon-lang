@@ -228,11 +228,15 @@ void LinkerDriver::addFile(StringRef Path, bool WithLOption) {
     Files.push_back(
         createSharedFile(MBRef, WithLOption ? path::filename(Path) : Path));
     return;
-  default:
+  case file_magic::bitcode:
+  case file_magic::elf_relocatable:
     if (InLib)
       Files.push_back(make<LazyObjFile>(MBRef, "", 0));
     else
       Files.push_back(createObjectFile(MBRef));
+    break;
+  default:
+    error(Path + ": unknown file type");
   }
 }
 
