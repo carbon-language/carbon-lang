@@ -71,9 +71,9 @@ void printBlameContext(const DILineInfo &LineInfo, unsigned Context) {
   SmallVector<StringRef, 100> Lines;
   File->getBuffer().split(Lines, '\n');
 
-  for (unsigned i = std::max(1l, (long)LineInfo.Line - Context);
+  for (unsigned i = std::max<size_t>(1, LineInfo.Line - Context);
        i <
-       std::min(Lines.size() + 1, (unsigned long)LineInfo.Line + Context + 1);
+       std::min<size_t>(Lines.size() + 1, LineInfo.Line + Context + 1);
        ++i) {
     if (i == LineInfo.Line)
       outs() << ">";
