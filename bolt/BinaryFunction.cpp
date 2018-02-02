@@ -1627,6 +1627,14 @@ bool BinaryFunction::buildCFG() {
 
   updateLayoutIndices();
 
+  // Clean-up memory taken by intermediate structures.
+  //
+  // NB: don't clear Labels list as we may need them if we mark the function
+  //     as non-simple later in the process of discovering extra entry points.
+  clearList(Instructions);
+  clearList(OffsetToCFI);
+  clearList(TakenBranches);
+
   // Update the state.
   CurrentState = State::CFG;
 
@@ -1656,24 +1664,14 @@ void BinaryFunction::postProcessCFG() {
     }
   }
 
-  // Clean-up memory taken by instructions and labels.
-  //
-  // NB: don't clear Labels list as we may need them if we mark the function
-  //     as non-simple later in the process of discovering extra entry points.
-  clearList(Instructions);
-  clearList(OffsetToCFI);
-  clearList(TakenBranches);
+  // The final cleanup of intermediate structures.
   clearList(IgnoredBranches);
   clearList(EntryOffsets);
 
-  // Remove "Offset" annotations from instructions that don't need those.
-  for (auto *BB : layout()) {
-    for (auto &Inst : *BB) {
-      if (BC.MIA->isCall(Inst) || BC.MIA->isIndirectBranch(Inst))
-        continue;
+  // Remove "Offset" annotations.
+  for (auto *BB : layout())
+    for (auto &Inst : *BB)
       BC.MIA->removeAnnotation(Inst, "Offset");
-    }
-  }
 
   assert((!isSimple() || validateCFG())
          && "Invalid CFG detected after post-processing CFG");
