@@ -116,7 +116,7 @@ static cl::opt<GranularityChoice> StmtGranularity(
                           "Scalar independence heuristic"),
                clEnumValN(GranularityChoice::Stores, "store",
                           "Store-level granularity")),
-    cl::init(GranularityChoice::BasicBlocks), cl::cat(PollyCategory));
+    cl::init(GranularityChoice::ScalarIndependence), cl::cat(PollyCategory));
 
 void ScopBuilder::buildPHIAccesses(ScopStmt *PHIStmt, PHINode *PHI,
                                    Region *NonAffineSubRegion,
