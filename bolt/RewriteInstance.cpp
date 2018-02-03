@@ -2162,7 +2162,7 @@ void RewriteInstance::disassembleFunctions() {
     BC->InterproceduralReferences.clear();
 
     // Fill in CFI information for this function
-    if (Function.isSimple()) {
+    if (Function.isSimple() && !Function.trapsOnEntry()) {
       if (!CFIRdWrt->fillCFIInfoFor(Function)) {
         errs() << "BOLT-ERROR: unable to fill CFI for function "
                << Function << ".\n";

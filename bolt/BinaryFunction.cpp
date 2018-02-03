@@ -136,6 +136,15 @@ TimeBuild("time-build",
   cl::Hidden,
   cl::cat(BoltCategory));
 
+cl::opt<bool>
+TrapOnAVX512("trap-avx512",
+  cl::desc("in relocation mode trap upon entry to any function that uses "
+            "AVX-512 instructions (on by default)"),
+  cl::init(true),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
 bool shouldPrint(const BinaryFunction &Function) {
   if (PrintOnly.empty() && PrintOnlyRegex.empty())
     return true;
@@ -1005,7 +1014,14 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                << Twine::utohexstr(Offset) << " (address 0x"
                << Twine::utohexstr(AbsoluteInstrAddr) << ") in function "
                << *this << '\n';
-        IsSimple = false;
+        // Some AVX-512 instructions could not be disassembled at all.
+        if (BC.HasRelocations && opts::TrapOnAVX512 &&
+            BC.TheTriple->getArch() == llvm::Triple::x86_64) {
+          setTrapOnEntry();
+          BC.TrappedFunctions.push_back(this);
+        } else {
+          IsSimple = false;
+        }
       }
       break;
     }
@@ -1018,7 +1034,13 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                << Twine::utohexstr(Offset) << ". Disassembly could be wrong."
                " Skipping further processing.\n";
       }
-      IsSimple = false;
+
+      if (BC.HasRelocations && opts::TrapOnAVX512) {
+        setTrapOnEntry();
+        BC.TrappedFunctions.push_back(this);
+      } else {
+        IsSimple = false;
+      }
       break;
     }
 
@@ -2166,6 +2188,20 @@ void BinaryFunction::emitBodyRaw(MCStreamer *Streamer) {
   if (FunctionOffset < getSize()) {
     Streamer->EmitBytes(FunctionContents.substr(FunctionOffset));
   }
+}
+
+void BinaryFunction::setTrapOnEntry() {
+  clearList(Instructions);
+  clearList(IgnoredBranches);
+  clearList(TakenBranches);
+
+  for (const auto EntryOffset : EntryOffsets) {
+    MCInst TrapInstr;
+    BC.MIA->createTrap(TrapInstr);
+    addInstruction(EntryOffset, std::move(TrapInstr));
+  }
+
+  TrapsOnEntry = true;
 }
 
 void BinaryFunction::addConstantIslandDependency(BinaryFunction *OtherBF,

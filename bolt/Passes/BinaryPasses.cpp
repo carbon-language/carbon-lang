@@ -1512,6 +1512,18 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC,
       outs() << "\n";
     }
   }
+
+  if (!BC.TrappedFunctions.empty()) {
+    errs() << "BOLT-WARNING: " << BC.TrappedFunctions.size()
+           << " functions will trap on entry";
+    if (opts::Verbosity >= 1) {
+      errs() << ".\n";
+      for (const auto *Function : BC.TrappedFunctions)
+        errs() << "  " << *Function << '\n';
+    } else {
+      errs() << " (use -v=1 to see the list).\n";
+    }
+  }
 }
 
 void InstructionLowering::runOnFunctions(

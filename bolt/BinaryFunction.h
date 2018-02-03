@@ -305,6 +305,9 @@ private:
   /// for ICF optimization without relocations.
   bool IsFolded{false};
 
+  /// Execution halts whenever this function is entered.
+  bool TrapsOnEntry{false};
+
   /// The address for the code for this function in codegen memory.
   uint64_t ImageAddress{0};
 
@@ -814,8 +817,9 @@ private:
   friend class BinaryContext;
 
   /// Creation should be handled by RewriteInstance::createBinaryFunction().
-  BinaryFunction(const std::string &Name, BinarySection &Section, uint64_t Address,
-                 uint64_t Size, BinaryContext &BC, bool IsSimple) :
+  BinaryFunction(const std::string &Name, BinarySection &Section,
+                 uint64_t Address, uint64_t Size, BinaryContext &BC,
+                 bool IsSimple) :
       Names({Name}), Section(Section), Address(Address),
       Size(Size), BC(BC), IsSimple(IsSimple),
       CodeSectionName(".local.text." + Name),
@@ -1291,6 +1295,15 @@ public:
   StringRef getColdCodeSectionName() const {
     return StringRef(ColdCodeSectionName);
   }
+
+  /// Return true iif the function will halt execution on entry.
+  bool trapsOnEntry() const {
+    return TrapsOnEntry;
+  }
+
+  /// Make the function always trap on entry. Other than the trap instruction,
+  /// the function body will be empty.
+  void setTrapOnEntry();
 
   /// Return true if the function could be correctly processed.
   bool isSimple() const {

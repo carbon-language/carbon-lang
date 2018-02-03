@@ -154,6 +154,9 @@ public:
   /// True if the binary requires immediate relocation processing.
   bool RequiresZNow{false};
 
+  /// List of functions that always trap.
+  std::vector<const BinaryFunction *> TrappedFunctions;
+
   BinaryContext(std::unique_ptr<MCContext> Ctx,
                 std::unique_ptr<DWARFContext> DwCtx,
                 std::unique_ptr<Triple> TheTriple,
