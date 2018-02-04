@@ -81,3 +81,26 @@ bb:
   %res = tail call i32 (i32, ...) @vararg_not_legal(i32 %arg, i32 %arg)
   ret i32 %res
 }
+
+declare i32* @err(i32*)
+
+define signext i32 @vararg2(i32 * %l, ...) {
+entry:
+  br i1 undef, label %cleanup, label %cond.end
+
+cond.end:                                         ; preds = %entry
+  %call51 = call i32* @err(i32* nonnull %l)
+  unreachable
+
+cleanup:                                          ; preds = %entry
+  ret i32 0
+}
+
+define i32* @caller_with_signext(i32* %foo) {
+entry:
+  %call1 = tail call signext i32 (i32*, ...) @varargs2(i32* %foo, i32 signext 8)
+  unreachable
+}
+; CHECK-LABEL: @caller_with_signext
+; CHECK: codeRepl.i:
+; CHECK-NEXT: call void (i32*, ...) @callee.1_cond.end(i32* %foo, i32 signext 8)
