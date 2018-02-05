@@ -401,18 +401,14 @@ Error lto::backend(Config &C, AddStreamFn AddStream,
 
 static void dropDeadSymbols(Module &Mod, const GVSummaryMapTy &DefinedGlobals,
                             const ModuleSummaryIndex &Index) {
-  auto MaybeDrop = [&](GlobalValue &GV) {
+  std::vector<GlobalValue *> ReplacedGlobals;
+  for (auto &GV : Mod.global_values())
     if (GlobalValueSummary *GVS = DefinedGlobals.lookup(GV.getGUID()))
-      if (!Index.isGlobalValueLive(GVS))
-        convertToDeclaration(GV);
-  };
+      if (!Index.isGlobalValueLive(GVS) && !convertToDeclaration(GV))
+        ReplacedGlobals.push_back(&GV);
 
-  // Process functions and global now.
-  // FIXME: add support for aliases (needs support in convertToDeclaration).
-  for (auto &GV : Mod)
-    MaybeDrop(GV);
-  for (auto &GV : Mod.globals())
-    MaybeDrop(GV);
+  for (GlobalValue *GV : ReplacedGlobals)
+    GV->eraseFromParent();
 }
 
 Error lto::thinBackend(Config &Conf, unsigned Task, AddStreamFn AddStream,
