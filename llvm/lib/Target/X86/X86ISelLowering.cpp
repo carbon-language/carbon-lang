@@ -31382,17 +31382,6 @@ static bool combineBitcastForMaskedOp(SDValue OrigOp, SelectionDAG &DAG,
   MVT EltVT = VT.getVectorElementType();
   SDLoc DL(Op.getNode());
 
-  auto BitcastAndCombineShuffle = [&](unsigned Opcode, SDValue Op0, SDValue Op1,
-                                      SDValue Op2) {
-    Op0 = DAG.getBitcast(VT, Op0);
-    DCI.AddToWorklist(Op0.getNode());
-    Op1 = DAG.getBitcast(VT, Op1);
-    DCI.AddToWorklist(Op1.getNode());
-    DCI.CombineTo(OrigOp.getNode(),
-                  DAG.getNode(Opcode, DL, VT, Op0, Op1, Op2));
-    return true;
-  };
-
   unsigned Opcode = Op.getOpcode();
   switch (Opcode) {
   case X86ISD::SUBV_BROADCAST: {
