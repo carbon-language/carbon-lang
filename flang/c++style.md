@@ -11,10 +11,12 @@
 extension ".cc", not ".C" or ".cpp" or ".cxx".  Don't create needless
 source directory hierarchies.
 1. Header files should be idempotent:
+
   1. #ifndef FORTRAN_headername_H_
   1. #define FORTRAN_headername_H_
   1. // code
   1. #endif  // FORTRAN_headername_H_
+
 1. #include every header defining an entity that your project header or source
 file actually uses directly.  (Exception: when foo.cc starts, as it should,
 with #include "foo.h", and foo.h includes bar.h in order to define the
@@ -24,8 +26,8 @@ in foo.cc.)
   1. #include "foo.h"  // this module's interface comes first
   1. #include "armadillo.h"  // other modules in this project, alphabetically
   1. #include "zebra.h"
-  1. #include <<algorithm>>  // C++ standard headers, alphabetically
-  1. #include <<vector>>
+  1. #include <algorithm>  // C++ standard headers, alphabetically
+  1. #include <vector>
   1. #include <sys/types.h>  // C headers, alphabetically
 ### Naming
 1. C++ names that correspond to STL names should look like those STL names
