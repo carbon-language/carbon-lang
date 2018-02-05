@@ -88,3 +88,67 @@ define i32 @eval_sext_multi_use_in_one_inst(i32 %x) {
   ret i32 %r
 }
 
+; If we have a transform to shrink the above 3 cases, make sure it's not
+; also trying to look through multiple uses in this test and crashing.
+
+define void @PR36225(i32 %a, i32 %b) {
+; CHECK-LABEL: @PR36225(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    br label [[WHILE_BODY:%.*]]
+; CHECK:       while.body:
+; CHECK-NEXT:    br i1 undef, label [[FOR_BODY3_US:%.*]], label [[FOR_BODY3:%.*]]
+; CHECK:       for.body3.us:
+; CHECK-NEXT:    [[TOBOOL:%.*]] = icmp eq i32 [[B:%.*]], 0
+; CHECK-NEXT:    [[SPEC_SELECT:%.*]] = select i1 [[TOBOOL]], i8 0, i8 4
+; CHECK-NEXT:    switch i3 undef, label [[EXIT:%.*]] [
+; CHECK-NEXT:    i3 0, label [[FOR_END:%.*]]
+; CHECK-NEXT:    i3 -1, label [[FOR_END]]
+; CHECK-NEXT:    ]
+; CHECK:       for.body3:
+; CHECK-NEXT:    switch i3 undef, label [[EXIT]] [
+; CHECK-NEXT:    i3 0, label [[FOR_END]]
+; CHECK-NEXT:    i3 -1, label [[FOR_END]]
+; CHECK-NEXT:    ]
+; CHECK:       for.end:
+; CHECK-NEXT:    [[H:%.*]] = phi i8 [ [[SPEC_SELECT]], [[FOR_BODY3_US]] ], [ [[SPEC_SELECT]], [[FOR_BODY3_US]] ], [ 0, [[FOR_BODY3]] ], [ 0, [[FOR_BODY3]] ]
+; CHECK-NEXT:    [[TMP0:%.*]] = zext i8 [[H]] to i32
+; CHECK-NEXT:    [[CMP:%.*]] = icmp slt i32 [[TMP0]], [[A:%.*]]
+; CHECK-NEXT:    br i1 [[CMP]], label [[EXIT]], label [[EXIT2:%.*]]
+; CHECK:       exit2:
+; CHECK-NEXT:    unreachable
+; CHECK:       exit:
+; CHECK-NEXT:    unreachable
+;
+entry:
+  br label %while.body
+
+while.body:
+  %tobool = icmp eq i32 %b, 0
+  br i1 undef, label %for.body3.us, label %for.body3
+
+for.body3.us:
+  %spec.select = select i1 %tobool, i8 0, i8 4
+  switch i3 undef, label %exit [
+  i3 0, label %for.end
+  i3 -1, label %for.end
+  ]
+
+for.body3:
+  switch i3 undef, label %exit [
+  i3 0, label %for.end
+  i3 -1, label %for.end
+  ]
+
+for.end:
+  %h = phi i8 [ %spec.select, %for.body3.us ], [ %spec.select, %for.body3.us ], [ 0, %for.body3 ], [ 0, %for.body3 ]
+  %conv = sext i8 %h to i32
+  %cmp = icmp sgt i32 %a, %conv
+  br i1 %cmp, label %exit, label %exit2
+
+exit2:
+  unreachable
+
+exit:
+  unreachable
+}
+
