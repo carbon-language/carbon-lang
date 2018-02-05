@@ -6687,9 +6687,8 @@ define i32 @mask16_zext(i16 %x) {
 ;
 ; SKX-LABEL: mask16_zext:
 ; SKX:       # %bb.0:
-; SKX-NEXT:    movl $65535, %eax # imm = 0xFFFF
-; SKX-NEXT:    # sched: [1:0.25]
-; SKX-NEXT:    andnl %eax, %edi, %eax # sched: [1:0.50]
+; SKX-NEXT:    notl %edi # sched: [1:0.25]
+; SKX-NEXT:    movzwl %di, %eax # sched: [1:0.25]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %m0 = bitcast i16 %x to <16 x i1>
   %m1 = xor <16 x i1> %m0, <i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1>
