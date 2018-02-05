@@ -5733,12 +5733,9 @@ bool SimplifyCFGOpt::SimplifyUncondBranch(BranchInst *BI,
   // header. (This is for early invocations before loop simplify and
   // vectorization to keep canonical loop forms for nested loops. These blocks
   // can be eliminated when the pass is invoked later in the back-end.)
-  // Note that if BB has only one predecessor then we do not introduce new
-  // backedge, so we can eliminate BB.
   bool NeedCanonicalLoop =
       Options.NeedCanonicalLoop &&
-      (LoopHeaders && !BB->getSinglePredecessor() &&
-       (LoopHeaders->count(BB) || LoopHeaders->count(Succ)));
+      (LoopHeaders && (LoopHeaders->count(BB) || LoopHeaders->count(Succ)));
   BasicBlock::iterator I = BB->getFirstNonPHIOrDbg()->getIterator();
   if (I->isTerminator() && BB != &BB->getParent()->getEntryBlock() &&
       !NeedCanonicalLoop && TryToSimplifyUncondBranchFromEmptyBlock(BB))
