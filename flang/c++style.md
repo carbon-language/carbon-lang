@@ -10,25 +10,16 @@
 1. File names should use dashes, not underscores.  C++ sources have the
 extension ".cc", not ".C" or ".cpp" or ".cxx".  Don't create needless
 source directory hierarchies.
-1. Header files should be idempotent:
-
-  1. #ifndef FORTRAN_headername_H_
-  1. #define FORTRAN_headername_H_
-  1. // code
-  1. #endif  // FORTRAN_headername_H_
-
+1. Header files should be idempotent.  Use the usual "#ifndef FORTRAN_header_H_",
+"#define FORTRAN_header_H_", and "#endif  // FORTRAN_header_H_" technique.
 1. #include every header defining an entity that your project header or source
 file actually uses directly.  (Exception: when foo.cc starts, as it should,
 with #include "foo.h", and foo.h includes bar.h in order to define the
 interface to the module foo, you don't have to redundantly #include "bar.h"
 in foo.cc.)
-1. Order the #include directives for foo.cc as:
-  1. #include "foo.h"  // this module's interface comes first
-  1. #include "armadillo.h"  // other modules in this project, alphabetically
-  1. #include "zebra.h"
-  1. #include <algorithm>  // C++ standard headers, alphabetically
-  1. #include <vector>
-  1. #include <sys/types.h>  // C headers, alphabetically
+1. In the source file "foo.cc", put the #include of "foo.h" first.
+Then #include other project headers in alphabetic order; then C++ standard
+headers, also alphabetically; then C and system headers.
 ### Naming
 1. C++ names that correspond to STL names should look like those STL names
 (e.g., *clear()* and *size()* member functions in a class that implements
@@ -55,7 +46,11 @@ when creating names.
 well as you do and avoid distracting her by calling out usage of new
 features in comments.
 ### Layout
-Always run clang-format.  Here's what you can expect to see it do:
+Always run *clang-format* before committing code.  Other developers should
+be able to run "git pull", then *clang-format*, and see only their own
+changes.
+
+Here's what you can expect to see *clang-format* do:
 1. Indent with two spaces.
 1. Don't indent public:, protected:, and private:
 accessibility labels.
