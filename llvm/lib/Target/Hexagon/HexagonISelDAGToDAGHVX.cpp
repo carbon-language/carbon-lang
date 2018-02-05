@@ -1271,6 +1271,8 @@ OpRef HvxSelector::shuffp2(ShuffleMask SM, OpRef Va, OpRef Vb,
     return shuffp1(ShuffleMask(PackedMask), P, Results);
 
   SmallVector<int,256> MaskL(VecLen), MaskR(VecLen);
+  splitMask(SM.Mask, MaskL, MaskR);
+
   OpRef L = shuffp1(ShuffleMask(MaskL), Va, Results);
   OpRef R = shuffp1(ShuffleMask(MaskR), Vb, Results);
   if (!L.isValid() || !R.isValid())
