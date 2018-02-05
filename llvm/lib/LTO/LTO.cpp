@@ -192,8 +192,10 @@ static void computeCacheKey(
         UsedTypeIds.insert(TT.VFunc.GUID);
       for (auto &TT : FS->type_checked_load_const_vcalls())
         UsedTypeIds.insert(TT.VFunc.GUID);
-      for (auto &ET : FS->calls())
+      for (auto &ET : FS->calls()) {
+        AddUnsigned(ET.first.isDSOLocal());
         AddUsedCfiGlobal(ET.first.getGUID());
+      }
     }
   };
 
