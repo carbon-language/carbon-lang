@@ -1,6 +1,6 @@
-#include "preprocessor.h"
 #include "char-buffer.h"
 #include "idioms.h"
+#include "preprocessor.h"
 #include "prescan.h"
 #include <algorithm>
 #include <cctype>
@@ -40,7 +40,7 @@ void TokenSequence::EmitWithCaseConversion(CharBuffer *out) const {
   size_t tokens{start_.size()};
   size_t chars{char_.size()};
   size_t atToken{0};
-  for (size_t j{0}; j < chars; ) {
+  for (size_t j{0}; j < chars;) {
     size_t nextStart{atToken + 1 < tokens ? start_[++atToken] : chars};
     if (isalpha(char_[j])) {
       for (; j < nextStart; ++j) {
@@ -92,15 +92,15 @@ void TokenSequence::shrink_to_fit() {
   char_.shrink_to_fit();
 }
 
-Definition::Definition(const TokenSequence &repl, size_t firstToken,
-                       size_t tokens)
+Definition::Definition(
+    const TokenSequence &repl, size_t firstToken, size_t tokens)
   : replacement_{Tokenize({}, repl, firstToken, tokens)} {}
 
 Definition::Definition(const std::vector<std::string> &argNames,
-                       const TokenSequence &repl, size_t firstToken,
-                       size_t tokens, bool isVariadic)
-  : isFunctionLike_{true}, argumentCount_(argNames.size()),
-    isVariadic_{isVariadic},
+    const TokenSequence &repl, size_t firstToken, size_t tokens,
+    bool isVariadic)
+  : isFunctionLike_{true},
+    argumentCount_(argNames.size()), isVariadic_{isVariadic},
     replacement_{Tokenize(argNames, repl, firstToken, tokens)} {}
 
 Definition::Definition(const std::string &predefined)
@@ -121,8 +121,7 @@ static bool IsIdentifierFirstCharacter(const CharPointerWithLength &cpl) {
 }
 
 TokenSequence Definition::Tokenize(const std::vector<std::string> &argNames,
-                                   const TokenSequence &token,
-                                   size_t firstToken, size_t tokens) {
+    const TokenSequence &token, size_t firstToken, size_t tokens) {
   std::map<std::string, std::string> args;
   char argIndex{'A'};
   for (const std::string &arg : argNames) {
@@ -156,7 +155,7 @@ TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
     if (skipping) {
       if (bytes == 1) {
         if (token[0] == '(') {
-           ++parenthesesNesting;
+          ++parenthesesNesting;
         } else if (token[0] == ')') {
           skipping = --parenthesesNesting > 0;
         }
@@ -215,7 +214,7 @@ TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
     } else if (pasting && token.IsBlank()) {
       // Delete whitespace immediately following ## in the body.
     } else if (bytes == 11 && isVariadic_ &&
-               token.ToString() == "__VA_ARGS__") {
+        token.ToString() == "__VA_ARGS__") {
       for (size_t k{argumentCount_}; k < args.size(); ++k) {
         if (k > argumentCount_) {
           result.push_back(","s);
@@ -224,11 +223,9 @@ TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
           result.push_back(args[k][n]);
         }
       }
-    } else if (bytes == 10 && isVariadic_ &&
-               token.ToString() == "__VA_OPT__" &&
-               j + 2 < tokens &&
-               replacement_[j + 1].ToString() == "(" &&
-               parenthesesNesting == 0) {
+    } else if (bytes == 10 && isVariadic_ && token.ToString() == "__VA_OPT__" &&
+        j + 2 < tokens && replacement_[j + 1].ToString() == "(" &&
+        parenthesesNesting == 0) {
       parenthesesNesting = 1;
       skipping = args.size() == argumentCount_;
       ++j;
@@ -250,7 +247,7 @@ TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
 static std::string FormatTime(const std::time_t &now, const char *format) {
   char buffer[16];
   return {buffer,
-          std::strftime(buffer, sizeof buffer, format, std::localtime(&now))};
+      std::strftime(buffer, sizeof buffer, format, std::localtime(&now))};
 }
 
 Preprocessor::Preprocessor(Prescanner &ps) : prescanner_{ps} {
@@ -259,23 +256,22 @@ Preprocessor::Preprocessor(Prescanner &ps) : prescanner_{ps} {
   std::time_t now;
   std::time(&now);
   definitions_.emplace(SaveToken("__DATE__"s),  // e.g., "Jun 16 1904"
-                       Definition{FormatTime(now, "\"%h %e %Y\""), 0, 1});
+      Definition{FormatTime(now, "\"%h %e %Y\""), 0, 1});
   definitions_.emplace(SaveToken("__TIME__"s),  // e.g., "23:59:60"
-                       Definition{FormatTime(now, "\"%T\""), 0, 1});
+      Definition{FormatTime(now, "\"%T\""), 0, 1});
   // The values of these predefined macros depend on their invocation sites.
   definitions_.emplace(SaveToken("__FILE__"s), Definition{"__FILE__"s});
   definitions_.emplace(SaveToken("__LINE__"s), Definition{"__LINE__"s});
 }
 
-bool Preprocessor::MacroReplacement(const TokenSequence &input,
-                                    TokenSequence *result) {
+bool Preprocessor::MacroReplacement(
+    const TokenSequence &input, TokenSequence *result) {
   // Do quick scan for any use of a defined name.
   size_t tokens{input.size()};
   size_t j;
   for (j = 0; j < tokens; ++j) {
     size_t bytes{input[j].size()};
-    if (bytes > 0 &&
-        IsIdentifierFirstCharacter(input[j][0]) &&
+    if (bytes > 0 && IsIdentifierFirstCharacter(input[j][0]) &&
         IsNameDefined(input[j])) {
       break;
     }
@@ -353,8 +349,7 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
         }
       }
     }
-    if (k >= tokens ||
-        argStart.size() < def.argumentCount() ||
+    if (k >= tokens || argStart.size() < def.argumentCount() ||
         (argStart.size() > def.argumentCount() && !def.isVariadic())) {
       result->push_back(token);
       continue;
@@ -363,7 +358,7 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
     std::vector<TokenSequence> args;
     for (k = 0; k < argStart.size(); ++k) {
       size_t at{argStart[k]};
-      size_t count{(k + 1 == argStart.size() ? j : argStart[k+1] - 1) - at};
+      size_t count{(k + 1 == argStart.size() ? j : argStart[k + 1] - 1) - at};
       TokenSequence actual;
       for (; count-- > 0; ++at) {
         actual.push_back(input[at]);
@@ -382,8 +377,8 @@ TokenSequence Preprocessor::ReplaceMacros(const TokenSequence &tokens) {
   return MacroReplacement(tokens, &repl) ? repl : tokens;
 }
 
-static size_t SkipBlanks(const TokenSequence &tokens, size_t at,
-                         size_t lastToken) {
+static size_t SkipBlanks(
+    const TokenSequence &tokens, size_t at, size_t lastToken) {
   for (; at < lastToken; ++at) {
     if (!tokens[at].IsBlank()) {
       break;
@@ -392,8 +387,8 @@ static size_t SkipBlanks(const TokenSequence &tokens, size_t at,
   return std::min(at, lastToken);
 }
 
-static TokenSequence StripBlanks(const TokenSequence &token, size_t first,
-                                 size_t tokens) {
+static TokenSequence StripBlanks(
+    const TokenSequence &token, size_t first, size_t tokens) {
   TokenSequence noBlanks;
   for (size_t j{SkipBlanks(token, first, tokens)}; j < tokens;
        j = SkipBlanks(token, j + 1, tokens)) {
@@ -502,12 +497,11 @@ bool Preprocessor::Directive(const TokenSequence &dir) {
         }
       }
       j = SkipBlanks(dir, j + 1, tokens);
-      definitions_.emplace(
-        std::make_pair(nameToken,
-                       Definition{argName, dir, j, tokens - j, isVariadic}));
+      definitions_.emplace(std::make_pair(
+          nameToken, Definition{argName, dir, j, tokens - j, isVariadic}));
     } else {
       definitions_.emplace(
-        std::make_pair(nameToken, Definition{dir, j, tokens - j}));
+          std::make_pair(nameToken, Definition{dir, j, tokens - j}));
     }
     return true;
   }
@@ -605,9 +599,8 @@ bool Preprocessor::IsNameDefined(const CharPointerWithLength &token) {
   return definitions_.find(token) != definitions_.end();
 }
 
-bool
-Preprocessor::SkipDisabledConditionalCode(const std::string &dirName,
-                                          IsElseActive isElseActive) {
+bool Preprocessor::SkipDisabledConditionalCode(
+    const std::string &dirName, IsElseActive isElseActive) {
   int nesting{0};
   while (std::optional<TokenSequence> line{prescanner_.NextTokenizedLine()}) {
     size_t rest{0};
@@ -618,11 +611,10 @@ Preprocessor::SkipDisabledConditionalCode(const std::string &dirName,
       if (nesting-- == 0) {
         return true;
       }
-    } else if (isElseActive == IsElseActive::Yes &&
-               nesting == 0 &&
-               (dn == "else" ||
-                (dn == "elif" &&
-                 IsIfPredicateTrue(*line, rest, line->size() - rest)))) {
+    } else if (isElseActive == IsElseActive::Yes && nesting == 0 &&
+        (dn == "else" ||
+            (dn == "elif" &&
+                IsIfPredicateTrue(*line, rest, line->size() - rest)))) {
       ifStack_.push(CanDeadElseAppear::No);
       return true;
     }
@@ -653,34 +645,50 @@ void Preprocessor::Complain(const std::string &message) {
 //  1: ? :
 //  0: ,
 static std::int64_t ExpressionValue(const TokenSequence &token,
-                                    int minimumPrecedence,
-                                    size_t *atToken, std::string *errors) {
+    int minimumPrecedence, size_t *atToken, std::string *errors) {
   enum Operator {
-    PARENS, CONST, NOTZERO /*!*/, COMPLEMENT /*~*/, UPLUS, UMINUS, POWER,
-    TIMES, DIVIDE, MODULUS, ADD, SUBTRACT, LEFTSHIFT, RIGHTSHIFT,
-    BITAND, BITXOR, BITOR,
-    LT, LE, EQ, NE, GE, GT,
-    NOT, AND, OR, EQV, NEQV,
-    SELECT, COMMA
+    PARENS,
+    CONST,
+    NOTZERO /*!*/,
+    COMPLEMENT /*~*/,
+    UPLUS,
+    UMINUS,
+    POWER,
+    TIMES,
+    DIVIDE,
+    MODULUS,
+    ADD,
+    SUBTRACT,
+    LEFTSHIFT,
+    RIGHTSHIFT,
+    BITAND,
+    BITXOR,
+    BITOR,
+    LT,
+    LE,
+    EQ,
+    NE,
+    GE,
+    GT,
+    NOT,
+    AND,
+    OR,
+    EQV,
+    NEQV,
+    SELECT,
+    COMMA
   };
   static const int precedence[]{
-    15, 15, 15, 15,  // (), 0, !, ~
-    14, 14,  // unary +, -
-    13, 12, 12, 12, 11, 11, 10, 10,  // **, *, /, %, +, -, <<, >>
-    9, 8, 7,  // &, ^, |
-    6, 6, 6, 6, 6, 6,  // relations
-    5, 4, 3, 2, 2,  // .NOT., .AND., .OR., .EQV., .NEQV.
-    1, 0  // ?: and ,
+      15, 15, 15, 15,  // (), 0, !, ~
+      14, 14,  // unary +, -
+      13, 12, 12, 12, 11, 11, 10, 10,  // **, *, /, %, +, -, <<, >>
+      9, 8, 7,  // &, ^, |
+      6, 6, 6, 6, 6, 6,  // relations
+      5, 4, 3, 2, 2,  // .NOT., .AND., .OR., .EQV., .NEQV.
+      1, 0  // ?: and ,
   };
-  static const int operandPrecedence[]{
-    0, -1, 15, 15,
-    15, 15,
-    13, 12, 12, 12, 11, 11, 11, 11,
-    9, 8, 7,
-    7, 7, 7, 7, 7, 7,
-    6, 4, 3, 3, 3,
-    1, 0
-  };
+  static const int operandPrecedence[]{0, -1, 15, 15, 15, 15, 13, 12, 12, 12,
+      11, 11, 11, 11, 9, 8, 7, 7, 7, 7, 7, 7, 7, 6, 4, 3, 3, 3, 1, 0};
 
   static std::map<std::string, enum Operator> opNameMap;
   if (opNameMap.empty()) {
@@ -741,8 +749,8 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
   } else if (t == "-") {
     op = UMINUS;
   } else if (t == "." && *atToken + 2 < tokens &&
-             ConvertToLowerCase(token[*atToken + 1].ToString()) == "not" &&
-             token[*atToken + 2].ToString() == ".") {
+      ConvertToLowerCase(token[*atToken + 1].ToString()) == "not" &&
+      token[*atToken + 2].ToString() == ".") {
     op = NOT;
     *atToken += 2;
   } else {
@@ -768,20 +776,11 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
         *errors = "')' missing from expression";
       }
       break;
-    case NOTZERO:
-      left = !left;
-      break;
-    case COMPLEMENT:
-      left = ~left;
-      break;
-    case UPLUS:
-      break;
-    case UMINUS:
-      left = -left;
-      break;
-    case NOT:
-      left = -!left;
-      break;
+    case NOTZERO: left = !left; break;
+    case COMPLEMENT: left = ~left; break;
+    case UPLUS: break;
+    case UMINUS: left = -left; break;
+    case NOT: left = -!left; break;
     default: CRASH_NO_CASE;
     }
   }
@@ -806,8 +805,8 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
     return left;
   }
   *atToken += advance;
-  std::int64_t right{ExpressionValue(token, operandPrecedence[op],
-                                     atToken, errors)};
+  std::int64_t right{
+      ExpressionValue(token, operandPrecedence[op], atToken, errors)};
   switch (op) {
   case POWER:
     if (left == 0 && right < 0) {
@@ -819,7 +818,8 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
     if (right <= 0) {
       return !right;
     }
-    { std::int64_t power{1};
+    {
+      std::int64_t power{1};
       for (; right > 0; --right) {
         if ((power * left) / left != power) {
           *errors = "overflow in exponentation";
@@ -850,14 +850,12 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
     }
     return left % right;
   case ADD:
-    if ((left < 0) == (right < 0) &&
-        (left < 0) != (left + right < 0)) {
+    if ((left < 0) == (right < 0) && (left < 0) != (left + right < 0)) {
       *errors = "overflow in addition";
     }
     return left + right;
   case SUBTRACT:
-    if ((left < 0) != (right < 0) &&
-        (left < 0) == (left - right < 0)) {
+    if ((left < 0) != (right < 0) && (left < 0) == (left - right < 0)) {
       *errors = "overflow in subtraction";
     }
     return left - right;
@@ -872,61 +870,47 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
     }
     return right >= 64 ? 0 : left >> right;
   case BITAND:
-  case AND:
-    return left & right;
-  case BITXOR:
-    return left ^ right;
+  case AND: return left & right;
+  case BITXOR: return left ^ right;
   case BITOR:
-  case OR:
-    return left | right;
-  case LT:
-    return -(left < right);
-  case LE:
-    return -(left <= right);
-  case EQ:
-    return -(left == right);
-  case NE:
-    return -(left != right);
-  case GE:
-    return -(left >= right);
-  case GT:
-    return -(left > right);
-  case EQV:
-    return -(!left == !right);
-  case NEQV:
-    return -(!left != !right);
+  case OR: return left | right;
+  case LT: return -(left < right);
+  case LE: return -(left <= right);
+  case EQ: return -(left == right);
+  case NE: return -(left != right);
+  case GE: return -(left >= right);
+  case GT: return -(left > right);
+  case EQV: return -(!left == !right);
+  case NEQV: return -(!left != !right);
   case SELECT:
     if (*atToken >= tokens || token[*atToken].ToString() != ":") {
       *errors = "':' required in selection expression";
       return left;
     } else {
       ++*atToken;
-      std::int64_t third{ExpressionValue(token, operandPrecedence[op],
-                                         atToken, errors)};
+      std::int64_t third{
+          ExpressionValue(token, operandPrecedence[op], atToken, errors)};
       return left != 0 ? right : third;
     }
-  case COMMA:
-    return right;
+  case COMMA: return right;
   default: CRASH_NO_CASE;
   }
   return 0;  // silence compiler warning
 }
 
-bool
-Preprocessor::IsIfPredicateTrue(const TokenSequence &expr, size_t first,
-                                size_t exprTokens) {
+bool Preprocessor::IsIfPredicateTrue(
+    const TokenSequence &expr, size_t first, size_t exprTokens) {
   TokenSequence expr1{StripBlanks(expr, first, first + exprTokens)};
   TokenSequence expr2;
   for (size_t j{0}; j < expr1.size(); ++j) {
     if (ConvertToLowerCase(expr1[j].ToString()) == "defined") {
       CharPointerWithLength name;
-      if (j + 3 < expr1.size() &&
-          expr1[j + 1].ToString() == "(" &&
+      if (j + 3 < expr1.size() && expr1[j + 1].ToString() == "(" &&
           expr1[j + 3].ToString() == ")") {
         name = expr1[j + 2];
         j += 3;
       } else if (j + 1 < expr1.size() &&
-                 IsIdentifierFirstCharacter(expr1[j + 1])) {
+          IsIdentifierFirstCharacter(expr1[j + 1])) {
         name = expr1[j++];
       }
       if (!name.empty()) {

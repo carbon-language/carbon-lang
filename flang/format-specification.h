@@ -32,9 +32,9 @@ struct IntrinsicTypeDataEditDesc {
   IntrinsicTypeDataEditDesc(IntrinsicTypeDataEditDesc &&) = default;
   IntrinsicTypeDataEditDesc &operator=(IntrinsicTypeDataEditDesc &&) = default;
   IntrinsicTypeDataEditDesc(Kind &&k, std::optional<int> &&w,
-                            std::optional<int> &&d, std::optional<int> &&e)
-    : kind{k}, width{std::move(w)}, digits{std::move(d)},
-      exponentWidth{std::move(e)} {}
+      std::optional<int> &&d, std::optional<int> &&e)
+    : kind{k}, width{std::move(w)}, digits{std::move(d)}, exponentWidth{
+                                                              std::move(e)} {}
   Kind kind;
   std::optional<int> width;  // w
   std::optional<int> digits;  // m or d
@@ -64,8 +64,28 @@ struct DerivedTypeDataEditDesc {
 // R1319 round-edit-desc -> RU | RD | RZ | RN | RC | RP
 // R1320 decimal-edit-desc -> DC | DP
 struct ControlEditDesc {
-  enum class Kind { T, TL, TR, X, Slash, Colon, SS, SP, S, P, BN, BZ,
-                    RU, RD, RZ, RN, RC, RP, DC, DP };
+  enum class Kind {
+    T,
+    TL,
+    TR,
+    X,
+    Slash,
+    Colon,
+    SS,
+    SP,
+    S,
+    P,
+    BN,
+    BZ,
+    RU,
+    RD,
+    RZ,
+    RN,
+    RC,
+    RP,
+    DC,
+    DP
+  };
   ControlEditDesc() = delete;
   ControlEditDesc(ControlEditDesc &&) = default;
   ControlEditDesc &operator=(ControlEditDesc &&) = default;
@@ -85,12 +105,14 @@ struct FormatItem {
   FormatItem() = delete;
   FormatItem(FormatItem &&) = default;
   FormatItem &operator=(FormatItem &&) = default;
-  template<typename A> FormatItem(std::optional<int> &&r, A &&x)
+  template<typename A>
+  FormatItem(std::optional<int> &&r, A &&x)
     : repeatCount{std::move(r)}, u{std::move(x)} {}
   template<typename A> explicit FormatItem(A &&x) : u{std::move(x)} {}
   std::optional<int> repeatCount;
   std::variant<IntrinsicTypeDataEditDesc, DerivedTypeDataEditDesc,
-               ControlEditDesc, std::string, std::list<FormatItem>> u;
+      ControlEditDesc, std::string, std::list<FormatItem>>
+      u;
 };
 
 // R1302 format-specification ->

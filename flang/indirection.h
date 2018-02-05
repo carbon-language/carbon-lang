@@ -12,8 +12,7 @@
 
 namespace Fortran {
 
-template<typename A>
-class Indirection {
+template<typename A> class Indirection {
 public:
   using element_type = A;
   Indirection() = delete;
@@ -27,7 +26,7 @@ public:
   }
   Indirection(A &&p) : p_{new A(std::move(p))} {}
   template<typename... ARGS>
-    Indirection(ARGS &&...args) : p_{new A(std::forward<ARGS>(args)...)} {}
+  Indirection(ARGS &&... args) : p_{new A(std::forward<ARGS>(args)...)} {}
   Indirection(Indirection &&that) {
     CHECK(that.p_ && "constructing Indirection from null Indirection");
     p_ = that.p_;
@@ -46,6 +45,7 @@ public:
   }
   A &operator*() const { return *p_; }
   A *operator->() { return p_; }
+
 private:
   A *p_{nullptr};
 };

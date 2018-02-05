@@ -1,6 +1,6 @@
-#include "parse-tree.h"
 #include "idioms.h"
 #include "indirection.h"
+#include "parse-tree.h"
 #include <algorithm>
 
 namespace Fortran {
@@ -298,16 +298,16 @@ TUPLE_FORMATTER(AssignStmt)
 TUPLE_FORMATTER(AssignedGotoStmt)
 
 std::ostream &operator<<(std::ostream &o, const Rename::Names &x) {  // R1411
-  return o << "(Rename::Names " << std::get<0>(x.t) << ' '
-           << std::get<1>(x.t) << ')';
+  return o << "(Rename::Names " << std::get<0>(x.t) << ' ' << std::get<1>(x.t)
+           << ')';
 }
 
 #undef TUPLE_FORMATTER
 
 // R1302 format-specification
 std::ostream &operator<<(std::ostream &o, const FormatSpecification &x) {
-  return o << "(FormatSpecification " << x.items << ' '
-           << x.unlimitedItems << ')';
+  return o << "(FormatSpecification " << x.items << ' ' << x.unlimitedItems
+           << ')';
 }
 
 // Wrapper class formatting
@@ -436,9 +436,7 @@ WRAPPER_FORMATTER(PauseStmt)  // legacy
 #undef WRAPPER_FORMATTER
 
 #define EMPTY_TYPE_FORMATTER(TYPE) \
-  std::ostream &operator<<(std::ostream &o, const TYPE &) { \
-    return o << #TYPE; \
-  }
+  std::ostream &operator<<(std::ostream &o, const TYPE &) { return o << #TYPE; }
 
 EMPTY_TYPE_FORMATTER(ErrorRecovery)
 EMPTY_TYPE_FORMATTER(Star)  // R701, R1215, R1536
@@ -497,8 +495,8 @@ EMPTY_TYPE_FORMATTER(Map::EndMapStmt)
 #undef EMPTY_TYPE_FORMATTER
 
 // R609
-std::ostream &operator<<(std::ostream &o,
-                         DefinedOperator::IntrinsicOperator x) {
+std::ostream &operator<<(
+    std::ostream &o, DefinedOperator::IntrinsicOperator x) {
   switch (x) {
   case DefinedOperator::IntrinsicOperator::Power: return o << "Power";
   case DefinedOperator::IntrinsicOperator::Multiply: return o << "Multiply";
@@ -540,8 +538,8 @@ std::ostream &operator<<(std::ostream &o, const IntrinsicTypeSpec::Complex &x) {
   return o << "(Complex " << x.kind << ')';
 }
 
-std::ostream &operator<<(std::ostream &o,
-                         const IntrinsicTypeSpec::Character &x) {
+std::ostream &operator<<(
+    std::ostream &o, const IntrinsicTypeSpec::Character &x) {
   return o << "(Character " << x.selector << ')';
 }
 
@@ -576,24 +574,21 @@ static std::string charListToString(std::list<char> &&cs) {
 }
 
 RealLiteralConstant::RealLiteralConstant(std::list<char> &&i,
-                                         std::list<char> &&f,
-                                         std::optional<ExponentPart> &&expo,
-                                         std::optional<KindParam> &&k)
-  : intPart{charListToString(std::move(i))},
-    fraction{charListToString(std::move(f))},
+    std::list<char> &&f, std::optional<ExponentPart> &&expo,
+    std::optional<KindParam> &&k)
+  : intPart{charListToString(std::move(i))}, fraction{charListToString(
+                                                 std::move(f))},
     exponent(std::move(expo)), kind(std::move(k)) {}
 
 RealLiteralConstant::RealLiteralConstant(std::list<char> &&f,
-                                         std::optional<ExponentPart> &&expo,
-                                         std::optional<KindParam> &&k)
-  : fraction{charListToString(std::move(f))},
-    exponent(std::move(expo)), kind(std::move(k)) {}
+    std::optional<ExponentPart> &&expo, std::optional<KindParam> &&k)
+  : fraction{charListToString(std::move(f))}, exponent(std::move(expo)),
+    kind(std::move(k)) {}
 
-RealLiteralConstant::RealLiteralConstant(std::list<char> &&i,
-                                         ExponentPart &&expo,
-                                         std::optional<KindParam> &&k)
-  : intPart{charListToString(std::move(i))},
-    exponent(std::move(expo)), kind(std::move(k)) {}
+RealLiteralConstant::RealLiteralConstant(
+    std::list<char> &&i, ExponentPart &&expo, std::optional<KindParam> &&k)
+  : intPart{charListToString(std::move(i))}, exponent(std::move(expo)),
+    kind(std::move(k)) {}
 
 std::ostream &operator<<(std::ostream &o, const RealLiteralConstant &x) {
   return o << "(RealLiteralConstant " << x.intPart << ' ' << x.fraction << ' '
@@ -601,8 +596,8 @@ std::ostream &operator<<(std::ostream &o, const RealLiteralConstant &x) {
 }
 
 // R721 char-selector
-std::ostream &operator<<(std::ostream &o,
-                         const CharSelector::LengthAndKind &x) {
+std::ostream &operator<<(
+    std::ostream &o, const CharSelector::LengthAndKind &x) {
   return o << "(LengthAndKind " << x.length << ' ' << x.kind << ')';
 }
 
@@ -612,8 +607,8 @@ std::ostream &operator<<(std::ostream &o, const TypeAttrSpec::Extends &x) {
 }
 
 // R734 type-param-attr-spec
-std::ostream &operator<<(std::ostream &o,
-                         const TypeParamDefStmt::KindOrLength &x) {
+std::ostream &operator<<(
+    std::ostream &o, const TypeParamDefStmt::KindOrLength &x) {
   switch (x) {
   case TypeParamDefStmt::KindOrLength::Kind: o << "Kind"; break;
   case TypeParamDefStmt::KindOrLength::Length: o << "Length"; break;
@@ -623,16 +618,16 @@ std::ostream &operator<<(std::ostream &o,
 }
 
 // R749 type-bound-procedure-stmt
-std::ostream &operator<<(std::ostream &o,
-                         const TypeBoundProcedureStmt::WithoutInterface &x) {
-  return o << "(TypeBoundProcedureStmt () " << x.attributes << ' ' <<
-           x.declarations << ')';
+std::ostream &operator<<(
+    std::ostream &o, const TypeBoundProcedureStmt::WithoutInterface &x) {
+  return o << "(TypeBoundProcedureStmt () " << x.attributes << ' '
+           << x.declarations << ')';
 }
 
-std::ostream &operator<<(std::ostream &o,
-                         const TypeBoundProcedureStmt::WithInterface &x) {
-  return o << "(TypeBoundProcedureStmt " << x.interfaceName << ' ' <<
-           x.attributes << ' ' << x.bindingNames << ')';
+std::ostream &operator<<(
+    std::ostream &o, const TypeBoundProcedureStmt::WithInterface &x) {
+  return o << "(TypeBoundProcedureStmt " << x.interfaceName << ' '
+           << x.attributes << ' ' << x.bindingNames << ')';
 }
 
 // R770 ac-spec
@@ -664,17 +659,17 @@ std::ostream &operator<<(std::ostream &o, const IntentSpec &x) {
 // R863 implicit-stmt
 std::ostream &operator<<(std::ostream &o, const ImplicitStmt &x) {
   o << "(ImplicitStmt ";
-  if (std::holds_alternative<
-        std::list<ImplicitStmt::ImplicitNoneNameSpec>>(x.u)) {
+  if (std::holds_alternative<std::list<ImplicitStmt::ImplicitNoneNameSpec>>(
+          x.u)) {
     o << "NONE ";
   }
-  std::visit([&o](auto &&y){ o << y; }, x.u);
+  std::visit([&o](auto &&y) { o << y; }, x.u);
   return o << ')';
 }
 
 // R866
-std::ostream &operator<<(std::ostream &o,
-                         ImplicitStmt::ImplicitNoneNameSpec x) {
+std::ostream &operator<<(
+    std::ostream &o, ImplicitStmt::ImplicitNoneNameSpec x) {
   switch (x) {
   case ImplicitStmt::ImplicitNoneNameSpec::External: return o << "External";
   case ImplicitStmt::ImplicitNoneNameSpec::Type: return o << "Type";
@@ -685,21 +680,17 @@ std::ostream &operator<<(std::ostream &o,
 
 // R867
 ImportStmt::ImportStmt(Kind &&k, std::list<Name> &&n)
-    : kind{k}, names(std::move(n)) {
+  : kind{k}, names(std::move(n)) {
   CHECK(kind == Kind::Default || kind == Kind::Only || names.empty());
 }
 
 std::ostream &operator<<(std::ostream &o, const ImportStmt &x) {
   o << "(ImportStmt ";
   switch (x.kind) {
-  case ImportStmt::Kind::Default:
-    return o << x.names << ')';
-  case ImportStmt::Kind::Only:
-    return o << "Only " << x.names << ')';
-  case ImportStmt::Kind::None:
-    return o << "None)";
-  case ImportStmt::Kind::All:
-    return o << "All)";
+  case ImportStmt::Kind::Default: return o << x.names << ')';
+  case ImportStmt::Kind::Only: return o << "Only " << x.names << ')';
+  case ImportStmt::Kind::None: return o << "None)";
+  case ImportStmt::Kind::All: return o << "All)";
   default: CRASH_NO_CASE;
   }
   return o;
@@ -707,100 +698,102 @@ std::ostream &operator<<(std::ostream &o, const ImportStmt &x) {
 
 // R901 designator
 bool Designator::EndsInBareName() const {
-  return std::visit(visitors{
-      [](const ObjectName &){ return true; },
-      [](const DataReference &dr){
-        return std::holds_alternative<Name>(dr.u) ||
-               std::holds_alternative<Indirection<StructureComponent>>(dr.u);
-      },
-      [](const Substring &){ return false; }},
-    u);
+  return std::visit(
+      visitors{[](const ObjectName &) { return true; },
+          [](const DataReference &dr) {
+            return std::holds_alternative<Name>(dr.u) ||
+                std::holds_alternative<Indirection<StructureComponent>>(dr.u);
+          },
+          [](const Substring &) { return false; }},
+      u);
 }
 
 ProcedureDesignator Designator::ConvertToProcedureDesignator() {
-  return std::visit(visitors{
-      [](ObjectName &n) -> ProcedureDesignator { return {std::move(n)}; },
-      [](DataReference &dr) -> ProcedureDesignator {
-        if (Name *n = std::get_if<Name>(&dr.u)) {
-          return {std::move(*n)};
-        }
-        StructureComponent
-          &sc{*std::get<Indirection<StructureComponent>>(dr.u)};
-        return {ProcComponentRef{Scalar<Variable>{
-                    Indirection<Designator>{std::move(sc.base)}},
-                  std::move(sc.component)}};
-      },
-      [](Substring &) -> ProcedureDesignator {
-        CHECK(!"can't get here");
-        return {Name{""}};
-      }},
-    u);
+  return std::visit(
+      visitors{
+          [](ObjectName &n) -> ProcedureDesignator { return {std::move(n)}; },
+          [](DataReference &dr) -> ProcedureDesignator {
+            if (Name *n = std::get_if<Name>(&dr.u)) {
+              return {std::move(*n)};
+            }
+            StructureComponent &sc{
+                *std::get<Indirection<StructureComponent>>(dr.u)};
+            return {ProcComponentRef{
+                Scalar<Variable>{Indirection<Designator>{std::move(sc.base)}},
+                std::move(sc.component)}};
+          },
+          [](Substring &) -> ProcedureDesignator {
+            CHECK(!"can't get here");
+            return {Name{""}};
+          }},
+      u);
 }
 
 std::optional<Call> Designator::ConvertToCall() {
-  return std::visit(visitors{
-      [](ObjectName &n) -> std::optional<Call> {
-        return {Call{ProcedureDesignator{std:move(n)},
+  return std::visit(
+      visitors{[](ObjectName &n) -> std::optional<Call> {
+                 return {Call{ProcedureDesignator{std : move(n)},
                      std::list<ActualArgSpec>{}}};
-      },
-      [this](DataReference &dr) -> std::optional<Call> {
-        if (std::holds_alternative<Indirection<CoindexedNamedObject>>(dr.u)) {
-          return {};
-        }
-        if (Name *n = std::get_if<Name>(&dr.u)) {
-          return {Call{ProcedureDesignator{std::move(*n)},
-                       std::list<ActualArgSpec>{}}};
-        }
-        if (auto *isc = std::get_if<Indirection<StructureComponent>>(&dr.u)) {
-          StructureComponent &sc{**isc};
-          Variable var{Indirection<Designator>{std::move(sc.base)}};
-          ProcComponentRef pcr{Scalar<Variable>{std::move(var)},
-                               std::move(sc.component)};
-          return {Call{ProcedureDesignator{std::move(pcr)},
-                       std::list<ActualArgSpec>{}}};
-        }
-        ArrayElement &ae{*std::get<Indirection<ArrayElement>>(dr.u)};
-        if (std::any_of(ae.subscripts.begin(), ae.subscripts.end(),
-                        [](const SectionSubscript &ss){
-                          return !ss.CanConvertToActualArgument(); })) {
-          return {};
-        }
-        std::list<ActualArgSpec> args;
-        for (auto &ss : ae.subscripts) {
-          args.emplace_back(std::optional<Keyword>{},
-                            ss.ConvertToActualArgument());
-        }
-        if (Name *n{std::get_if<Name>(&ae.base.u)}) {
-          return {Call{ProcedureDesignator{std::move(*n)}, std::move(args)}};
-        }
-        StructureComponent
-          &bsc{*std::get<Indirection<StructureComponent>>(ae.base.u)};
-        Variable var{Indirection<Designator>{std::move(bsc.base)}};
-        ProcComponentRef pcr{Scalar<Variable>{std::move(var)},
-                             std::move(bsc.component)};
-        return {Call{ProcedureDesignator{std::move(pcr)},
-                     std::move(args)}};
-      },
-      [](const Substring &) -> std::optional<Call> { return {}; }},
-    u);
+               },
+          [this](DataReference &dr) -> std::optional<Call> {
+            if (std::holds_alternative<Indirection<CoindexedNamedObject>>(
+                    dr.u)) {
+              return {};
+            }
+            if (Name *n = std::get_if<Name>(&dr.u)) {
+              return {Call{ProcedureDesignator{std::move(*n)},
+                  std::list<ActualArgSpec>{}}};
+            }
+            if (auto *isc =
+                    std::get_if<Indirection<StructureComponent>>(&dr.u)) {
+              StructureComponent &sc{**isc};
+              Variable var{Indirection<Designator>{std::move(sc.base)}};
+              ProcComponentRef pcr{
+                  Scalar<Variable>{std::move(var)}, std::move(sc.component)};
+              return {Call{ProcedureDesignator{std::move(pcr)},
+                  std::list<ActualArgSpec>{}}};
+            }
+            ArrayElement &ae{*std::get<Indirection<ArrayElement>>(dr.u)};
+            if (std::any_of(ae.subscripts.begin(), ae.subscripts.end(),
+                    [](const SectionSubscript &ss) {
+                      return !ss.CanConvertToActualArgument();
+                    })) {
+              return {};
+            }
+            std::list<ActualArgSpec> args;
+            for (auto &ss : ae.subscripts) {
+              args.emplace_back(
+                  std::optional<Keyword>{}, ss.ConvertToActualArgument());
+            }
+            if (Name * n{std::get_if<Name>(&ae.base.u)}) {
+              return {
+                  Call{ProcedureDesignator{std::move(*n)}, std::move(args)}};
+            }
+            StructureComponent &bsc{
+                *std::get<Indirection<StructureComponent>>(ae.base.u)};
+            Variable var{Indirection<Designator>{std::move(bsc.base)}};
+            ProcComponentRef pcr{
+                Scalar<Variable>{std::move(var)}, std::move(bsc.component)};
+            return {Call{ProcedureDesignator{std::move(pcr)}, std::move(args)}};
+          },
+          [](const Substring &) -> std::optional<Call> { return {}; }},
+      u);
 }
 
 // R911 data-ref -> part-ref [% part-ref]...
 DataReference::DataReference(std::list<PartRef> &&prl)
-    : u{std::move(prl.front().name)} {
+  : u{std::move(prl.front().name)} {
   for (bool first{true}; !prl.empty(); first = false, prl.pop_front()) {
     PartRef &pr{prl.front()};
     if (!first) {
-      u = Indirection<StructureComponent>{
-            std::move(*this), std::move(pr.name)};
+      u = Indirection<StructureComponent>{std::move(*this), std::move(pr.name)};
     }
     if (!pr.subscripts.empty()) {
-      u = Indirection<ArrayElement>{
-            std::move(*this), std::move(pr.subscripts)};
+      u = Indirection<ArrayElement>{std::move(*this), std::move(pr.subscripts)};
     }
     if (pr.imageSelector.has_value()) {
       u = Indirection<CoindexedNamedObject>{
-            std::move(*this), std::move(*pr.imageSelector)};
+          std::move(*this), std::move(*pr.imageSelector)};
     }
   }
 }
@@ -812,8 +805,8 @@ std::ostream &operator<<(std::ostream &o, const StructureComponent &x) {
 
 // R914 coindexed-named-object -> data-ref
 std::ostream &operator<<(std::ostream &o, const CoindexedNamedObject &x) {
-  return o << "(CoindexedNamedObject " << x.base << ' '
-           << x.imageSelector << ')';
+  return o << "(CoindexedNamedObject " << x.base << ' ' << x.imageSelector
+           << ')';
 }
 
 // R912 part-ref
@@ -829,26 +822,24 @@ std::ostream &operator<<(std::ostream &o, const ArrayElement &x) {
 
 // R920 section-subscript
 bool SectionSubscript::CanConvertToActualArgument() const {
-  return std::visit(visitors{
-      [](const VectorSubscript &){ return true; },
-      [](const ScalarIntExpr &){ return true; },
-      [](const SubscriptTriplet &){ return false; }},
-    u);
+  return std::visit(visitors{[](const VectorSubscript &) { return true; },
+                        [](const ScalarIntExpr &) { return true; },
+                        [](const SubscriptTriplet &) { return false; }},
+      u);
 }
 
 ActualArg SectionSubscript::ConvertToActualArgument() {
-  return std::visit(visitors{
-      [](VectorSubscript &vs) -> ActualArg {
-        return vs.thing->ConvertToActualArgument();
-      },
-      [](ScalarIntExpr &vs) -> ActualArg {
-        return vs.thing.thing->ConvertToActualArgument();
-      },
-      [](SubscriptTriplet &) -> ActualArg {
-        CHECK(!"can't happen");
-        return {Name{"bad"}};
-      }},
-    u);
+  return std::visit(visitors{[](VectorSubscript &vs) -> ActualArg {
+                               return vs.thing->ConvertToActualArgument();
+                             },
+                        [](ScalarIntExpr &vs) -> ActualArg {
+                          return vs.thing.thing->ConvertToActualArgument();
+                        },
+                        [](SubscriptTriplet &) -> ActualArg {
+                          CHECK(!"can't happen");
+                          return {Name{"bad"}};
+                        }},
+      u);
 }
 
 // R1001 - R1022 expression
@@ -861,7 +852,7 @@ std::optional<Variable> Expr::ConvertToVariable() {
     return {Variable{std::move(*id)}};
   }
   if (Indirection<FunctionReference> *ifr =
-        std::get_if<Indirection<FunctionReference>>(&u)) {
+          std::get_if<Indirection<FunctionReference>>(&u)) {
     return {Variable{std::move(*ifr)}};
   }
   return {};
@@ -1049,7 +1040,7 @@ std::ostream &operator<<(std::ostream &o, const ControlEditDesc &x) {
 // R1304 format-item
 std::ostream &operator<<(std::ostream &o, const FormatItem &x) {
   o << "(FormatItem " << x.repeatCount;
-  std::visit([&o](const auto &y){ o << y; }, x.u);
+  std::visit([&o](const auto &y) { o << y; }, x.u);
   return o << ')';
 }
 
@@ -1058,22 +1049,20 @@ std::ostream &operator<<(std::ostream &o, const UseStmt &x) {
   o << "(UseStmt ";
   if (x.nature) {
     switch (*x.nature) {
-    case UseStmt::ModuleNature::Intrinsic:
-      o << "Intrinsic";
-      break;
-    case UseStmt::ModuleNature::Non_Intrinsic:
-      o << "Non_Intrinsic";
-      break;
+    case UseStmt::ModuleNature::Intrinsic: o << "Intrinsic"; break;
+    case UseStmt::ModuleNature::Non_Intrinsic: o << "Non_Intrinsic"; break;
     default: CRASH_NO_CASE;
     }
   } else {
     o << "()";
   }
   o << ' ' << x.moduleName << ' ';
-  std::visit(visitors{
-    [&o](const std::list<Rename> &y) -> void { o << "RENAME " << y; },
-    [&o](const std::list<Only> &y) -> void { o << "ONLY " << y; },
-  }, x.u);
+  std::visit(
+      visitors{
+          [&o](const std::list<Rename> &y) -> void { o << "RENAME " << y; },
+          [&o](const std::list<Only> &y) -> void { o << "ONLY " << y; },
+      },
+      x.u);
   return o << ')';
 }
 
@@ -1088,8 +1077,8 @@ std::ostream &operator<<(std::ostream &o, const ProcedureStmt::Kind &x) {
 }
 
 std::ostream &operator<<(std::ostream &o, const ProcedureStmt &x) {
-  return o << "(ProcedureStmt " << std::get<0>(x.t) << ' '
-           << std::get<1>(x.t) << ')';
+  return o << "(ProcedureStmt " << std::get<0>(x.t) << ' ' << std::get<1>(x.t)
+           << ')';
 }
 
 // R1532 suffix

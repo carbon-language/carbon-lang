@@ -25,6 +25,7 @@ public:
     std::cout << state->position() << ' ' << std::string{str_, length_} << '\n';
     return {Success{}};
   }
+
 private:
   const char *const str_;
   size_t length_;

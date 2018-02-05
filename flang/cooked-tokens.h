@@ -22,8 +22,8 @@ namespace Fortran {
 class CharPredicateGuardParser {
 public:
   using resultType = char;
-  constexpr CharPredicateGuardParser(const CharPredicateGuardParser &)
-    = default;
+  constexpr CharPredicateGuardParser(
+      const CharPredicateGuardParser &) = default;
   constexpr CharPredicateGuardParser(bool (*f)(char), const char *msg)
     : predicate_{f}, message_{msg} {}
   std::optional<char> Parse(ParseState *state) const {
@@ -36,14 +36,13 @@ public:
     state->messages()->Add(Message{at, message_, state->context()});
     return {};
   }
+
 private:
   bool (*const predicate_)(char);
   const char *const message_;
 };
 
-static inline constexpr bool IsDecimalDigit(char ch) {
-  return isdigit(ch);
-}
+static inline constexpr bool IsDecimalDigit(char ch) { return isdigit(ch); }
 
 static inline constexpr bool IsOctalDigit(char ch) {
   return ch >= '0' && ch <= '7';
@@ -53,22 +52,16 @@ static inline constexpr bool IsHexadecimalDigit(char ch) {
   return isxdigit(ch);
 }
 
-static inline constexpr bool IsLetter(char ch) {
-  return isalpha(ch);
-}
+static inline constexpr bool IsLetter(char ch) { return isalpha(ch); }
 
-static inline constexpr char ToLower(char &&ch) {
-  return tolower(ch);
-}
+static inline constexpr char ToLower(char &&ch) { return tolower(ch); }
 
 constexpr CharPredicateGuardParser digit{IsDecimalDigit, "expected digit"};
 
-constexpr auto letter =
-  applyFunction(ToLower,
-                CharPredicateGuardParser{IsLetter, "expected letter"});
+constexpr auto letter = applyFunction(
+    ToLower, CharPredicateGuardParser{IsLetter, "expected letter"});
 
-template<char good>
-class CharMatch {
+template<char good> class CharMatch {
 public:
   using resultType = char;
   constexpr CharMatch() {}
@@ -136,13 +129,14 @@ public:
       } else if (*ch == tolower(*p)) {
         ch.reset();
       } else {
-        state->messages()->Add(Message{at, "expected '"s + str_ + '\'',
-                               state->context()});
+        state->messages()->Add(
+            Message{at, "expected '"s + str_ + '\'', state->context()});
         return {};
       }
     }
     return spaces.Parse(state);
   }
+
 private:
   const char *const str_;
   const size_t length_{std::numeric_limits<size_t>::max()};
@@ -153,27 +147,27 @@ constexpr TokenStringMatch operator""_tok(const char str[], size_t n) {
 }
 
 template<class PA, std::enable_if_t<std::is_class<PA>::value, int> = 0>
-inline constexpr SequenceParser<TokenStringMatch, PA>
-operator>>(const char *str, const PA &p) {
+inline constexpr SequenceParser<TokenStringMatch, PA> operator>>(
+    const char *str, const PA &p) {
   return SequenceParser<TokenStringMatch, PA>{TokenStringMatch{str}, p};
 }
 
 template<class PA, std::enable_if_t<std::is_class<PA>::value, int> = 0>
-inline constexpr InvertedSequenceParser<PA, TokenStringMatch>
-operator/(const PA &p, const char *str) {
+inline constexpr InvertedSequenceParser<PA, TokenStringMatch> operator/(
+    const PA &p, const char *str) {
   return InvertedSequenceParser<PA, TokenStringMatch>{p, TokenStringMatch{str}};
 }
 
 template<class PA>
 inline constexpr SequenceParser<TokenStringMatch,
-                                InvertedSequenceParser<PA, TokenStringMatch>>
+    InvertedSequenceParser<PA, TokenStringMatch>>
 parenthesized(const PA &p) {
   return "(" >> p / ")";
 }
 
 template<class PA>
 inline constexpr SequenceParser<TokenStringMatch,
-                                InvertedSequenceParser<PA, TokenStringMatch>>
+    InvertedSequenceParser<PA, TokenStringMatch>>
 bracketed(const PA &p) {
   return "[" >> p / "]";
 }
@@ -203,8 +197,8 @@ struct CharLiteralChar {
     }
     char ch{*och};
     if (ch == '\n') {
-      state->messages()->Add(Message{at, "unclosed character constant",
-                                     state->context()});
+      state->messages()->Add(
+          Message{at, "unclosed character constant", state->context()});
       return {};
     }
     if (ch != '\\' || !state->enableBackslashEscapesInCharLiterals()) {
@@ -223,19 +217,17 @@ struct CharLiteralChar {
     case 'v': return {Result::Escaped('\v')};
     case '"':
     case '\'':
-    case '\\':
-      return {Result::Escaped(ch)};
+    case '\\': return {Result::Escaped(ch)};
     case '\n':
-      state->messages()->Add(Message{at, "unclosed character constant",
-                                     state->context()});
+      state->messages()->Add(
+          Message{at, "unclosed character constant", state->context()});
       return {};
     default:
       if (IsOctalDigit(ch)) {
         ch -= '0';
         for (int j = (ch > 3 ? 1 : 2); j-- > 0;) {
-          static constexpr auto octalDigit =
-            attempt(CharPredicateGuardParser{IsOctalDigit,
-                                             "expected octal digit"});
+          static constexpr auto octalDigit = attempt(
+              CharPredicateGuardParser{IsOctalDigit, "expected octal digit"});
           if ((och = octalDigit.Parse(state)).has_value()) {
             ch = 8 * ch + *och - '0';
           }
@@ -243,24 +235,22 @@ struct CharLiteralChar {
       } else if (ch == 'x' || ch == 'X') {
         ch = 0;
         for (int j = 0; j++ < 2;) {
-          static constexpr auto hexDigit =
-            attempt(CharPredicateGuardParser{IsHexadecimalDigit,
-                                             "expected hexadecimal digit"});
+          static constexpr auto hexDigit = attempt(CharPredicateGuardParser{
+              IsHexadecimalDigit, "expected hexadecimal digit"});
           if ((och = hexDigit.Parse(state)).has_value()) {
             ch = 16 * ch + HexadecimalDigitValue(*och);
           }
         }
       } else {
-        state->messages()->Add(Message{at, "bad escaped character",
-                                       state->context()});
+        state->messages()->Add(
+            Message{at, "bad escaped character", state->context()});
       }
       return {Result::Escaped(ch)};
     }
   }
 };
 
-template<char quote>
-struct CharLiteral {
+template<char quote> struct CharLiteral {
   using resultType = std::string;
   static std::optional<std::string> Parse(ParseState *state) {
     std::string str;
@@ -340,8 +330,8 @@ struct BOZLiteral {
     }
 
     if (content.empty()) {
-      state->messages()->Add(Message{at, "no digit in BOZ literal",
-                                     state->context()});
+      state->messages()->Add(
+          Message{at, "no digit in BOZ literal", state->context()});
       return {};
     }
 
@@ -349,15 +339,15 @@ struct BOZLiteral {
     for (auto digit : content) {
       digit = HexadecimalDigitValue(digit);
       if ((digit >> *shift) > 0) {
-        state->messages()->Add(Message{at, "bad digit in BOZ literal",
-                                       state->context()});
+        state->messages()->Add(
+            Message{at, "bad digit in BOZ literal", state->context()});
         return {};
       }
       std::uint64_t was{value};
       value <<= *shift;
       if ((value >> *shift) != was) {
-        state->messages()->Add(Message{at, "excessive digits in BOZ literal",
-                                       state->context()});
+        state->messages()->Add(
+            Message{at, "excessive digits in BOZ literal", state->context()});
         return {};
       }
       value |= digit;
@@ -390,8 +380,8 @@ struct DigitString {
       value += digitValue;
     }
     if (overflow) {
-      state->messages()->Add(Message{at, "overflow in decimal literal",
-                                     state->context()});
+      state->messages()->Add(
+          Message{at, "overflow in decimal literal", state->context()});
     }
     return {value};
   }
@@ -409,18 +399,17 @@ struct HollerithLiteral {
     if (!charCount || *charCount < 1) {
       return {};
     }
-    std::optional<char> h {letter.Parse(state)};
+    std::optional<char> h{letter.Parse(state)};
     if (!h || (*h != 'h' && *h != 'H')) {
       return {};
     }
     std::string content;
     CHECK(!state->set_inCharLiteral(true));
-    for (auto j = *charCount; j-- > 0; ) {
+    for (auto j = *charCount; j-- > 0;) {
       std::optional<char> ch{cookedNextChar.Parse(state)};
       if (!ch || !isprint(*ch)) {
         state->messages()->Add(Message{at,
-          "insufficient or bad characters in Hollerith",
-          state->context()});
+            "insufficient or bad characters in Hollerith", state->context()});
         state->set_inCharLiteral(false);
         return {};
       }
@@ -437,11 +426,9 @@ struct HollerithLiteral {
 // not appear, and the doubled colons are optional.
 //   [[, xyz] ::]     is  optionalBeforeColons(xyz)
 //   [[, xyz]... ::]  is  optionalBeforeColons(nonemptyList(xyz))
-template<typename PA>
-inline constexpr auto optionalBeforeColons(const PA &p) {
-  return "," >> p / "::" ||
-         "::" >> construct<typename PA::resultType>{} ||
-         !","_tok >> construct<typename PA::resultType>{};
+template<typename PA> inline constexpr auto optionalBeforeColons(const PA &p) {
+  return "," >> p / "::" || "::" >> construct<typename PA::resultType>{} ||
+      !","_tok >> construct<typename PA::resultType>{};
 }
 }  // namespace Fortran
 #endif  // FORTRAN_COOKED_TOKENS_H_

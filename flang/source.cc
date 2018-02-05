@@ -1,23 +1,21 @@
-#include "source.h"
 #include "char-buffer.h"
 #include "idioms.h"
+#include "source.h"
 #include <algorithm>
 #include <cerrno>
 #include <cstring>
-#include <memory>
 #include <fcntl.h>
-#include <unistd.h>
+#include <memory>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 // TODO: Port to Windows &c.
 
 namespace Fortran {
 
-SourceFile::~SourceFile() {
-  Close();
-}
+SourceFile::~SourceFile() { Close(); }
 
 bool SourceFile::Open(std::string path, std::stringstream *error) {
   Close();
@@ -31,8 +29,8 @@ bool SourceFile::Open(std::string path, std::stringstream *error) {
     error_path = "'"s + path + "'";
     fileDescriptor_ = open(path.c_str(), O_RDONLY);
     if (fileDescriptor_ < 0) {
-      *error << "could not open '" << error_path << "': "
-             << std::strerror(errno);
+      *error << "could not open '" << error_path
+             << "': " << std::strerror(errno);
       return false;
     }
   }
@@ -111,7 +109,7 @@ bool SourceFile::Open(std::string path, std::stringstream *error) {
 
 void SourceFile::Close() {
   if (isMemoryMapped_) {
-    munmap(reinterpret_cast<void*>(const_cast<char*>(content_)), bytes_);
+    munmap(reinterpret_cast<void *>(const_cast<char *>(content_)), bytes_);
     isMemoryMapped_ = false;
   } else if (content_ != nullptr) {
     delete[] content_;

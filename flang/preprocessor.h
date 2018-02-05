@@ -12,8 +12,8 @@
 #include <cstring>
 #include <functional>
 #include <list>
-#include <stack>
 #include <sstream>
+#include <stack>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -65,11 +65,10 @@ template<> struct std::hash<Fortran::CharPointerWithLength> {
 
 template<> struct std::equal_to<Fortran::CharPointerWithLength> {
   bool operator()(const Fortran::CharPointerWithLength &x,
-                  const Fortran::CharPointerWithLength &y) const {
+      const Fortran::CharPointerWithLength &y) const {
     return x.size() == y.size() &&
-           std::memcmp(static_cast<const void *>(&x[0]),
-                       static_cast<const void *>(&y[0]),
-                       x.size()) == 0;
+        std::memcmp(static_cast<const void *>(&x[0]),
+            static_cast<const void *>(&y[0]), x.size()) == 0;
   }
 };
 
@@ -82,8 +81,8 @@ public:
   TokenSequence() {}
   TokenSequence(const TokenSequence &that) { Append(that); }
   TokenSequence(TokenSequence &&that)
-    : start_{std::move(that.start_)}, nextStart_{that.nextStart_},
-      char_{std::move(that.char_)} {}
+    : start_{std::move(that.start_)},
+      nextStart_{that.nextStart_}, char_{std::move(that.char_)} {}
   TokenSequence(const std::string &s) { push_back(s); }
 
   TokenSequence &operator=(const TokenSequence &that) {
@@ -100,13 +99,11 @@ public:
 
   CharPointerWithLength operator[](size_t token) const {
     return {&char_[start_[token]],
-            (token + 1 >= start_.size() ? char_.size() : start_[token + 1]) -
-              start_[token]};
+        (token + 1 >= start_.size() ? char_.size() : start_[token + 1]) -
+            start_[token]};
   }
 
-  void AddChar(char ch) {
-    char_.emplace_back(ch);
-  }
+  void AddChar(char ch) { char_.emplace_back(ch); }
 
   void EndToken() {
     // CHECK(char_.size() > nextStart_);
@@ -145,7 +142,7 @@ class Definition {
 public:
   Definition(const TokenSequence &, size_t firstToken, size_t tokens);
   Definition(const std::vector<std::string> &argNames, const TokenSequence &,
-             size_t firstToken, size_t tokens, bool isVariadic = false);
+      size_t firstToken, size_t tokens, bool isVariadic = false);
   explicit Definition(const std::string &predefined);
 
   bool isFunctionLike() const { return isFunctionLike_; }
@@ -161,8 +158,7 @@ public:
 
 private:
   static TokenSequence Tokenize(const std::vector<std::string> &argNames,
-                                const TokenSequence &token, size_t firstToken,
-                                size_t tokens);
+      const TokenSequence &token, size_t firstToken, size_t tokens);
 
   bool isFunctionLike_{false};
   size_t argumentCount_{0};
@@ -195,8 +191,8 @@ private:
   bool IsNameDefined(const CharPointerWithLength &);
   TokenSequence ReplaceMacros(const TokenSequence &);
   bool SkipDisabledConditionalCode(const std::string &dirName, IsElseActive);
-  bool IsIfPredicateTrue(const TokenSequence &expr, size_t first,
-                         size_t exprTokens);
+  bool IsIfPredicateTrue(
+      const TokenSequence &expr, size_t first, size_t exprTokens);
 
   Prescanner &prescanner_;
   std::list<std::string> names_;

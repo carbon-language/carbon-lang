@@ -6,13 +6,13 @@
 // exposed elsewhere.
 
 #ifndef __cplusplus
-# error this is a C++ program
+#error this is a C++ program
 #endif
 #if __cplusplus < 201703L
-# error this is a C++17 program
+#error this is a C++17 program
 #endif
 #if defined __GNUC__ && __GNUC__ < 7
-# error G++ >= 7.0 is required
+#error G++ >= 7.0 is required
 #endif
 
 #include <list>
@@ -43,13 +43,11 @@ namespace Fortran {
 //         ...
 //       }, structure.unionMember);
 
-template<typename... LAMBDAS>
-struct visitors : LAMBDAS... {
+template<typename... LAMBDAS> struct visitors : LAMBDAS... {
   using LAMBDAS::operator()...;
 };
 
-template<typename... LAMBDAS>
-visitors(LAMBDAS... x) -> visitors<LAMBDAS...>;
+template<typename... LAMBDAS> visitors(LAMBDAS... x)->visitors<LAMBDAS...>;
 
 // Calls std::fprintf(stderr, ...), then abort().
 [[noreturn]] void die(const char *, ...);
@@ -62,8 +60,7 @@ template<typename A> bool operator!(const std::optional<A> &x) {
 }  // namespace Fortran
 
 // For switch statements without default: labels.
-#define CRASH_NO_CASE \
-  die("no case at " __FILE__ "(%d)", __LINE__)
+#define CRASH_NO_CASE die("no case at " __FILE__ "(%d)", __LINE__)
 
 // For cheap assertions that should be applied in production.
 #define CHECK(x) \
@@ -98,15 +95,15 @@ std::ostream &operator<<(std::ostream &o, const std::list<A> &xs) {
 }
 
 template<int J, char C, typename T>
-typename std::enable_if<J+1 == std::tuple_size_v<T>, std::ostream &>::type
+typename std::enable_if<J + 1 == std::tuple_size_v<T>, std::ostream &>::type
 formatTuple(std::ostream &o, const T &x) {
   return o << C << std::get<J>(x) << '}';
 }
 
 template<int J, char C, typename T>
-typename std::enable_if<J+1 != std::tuple_size_v<T>, std::ostream &>::type
+typename std::enable_if<J + 1 != std::tuple_size_v<T>, std::ostream &>::type
 formatTuple(std::ostream &o, const T &x) {
-  return formatTuple<J+1,' '>(o << C << std::get<J>(x), x);
+  return formatTuple<J + 1, ' '>(o << C << std::get<J>(x), x);
 }
 
 template<typename... As>
@@ -116,7 +113,8 @@ std::ostream &operator<<(std::ostream &o, const std::tuple<As...> &xs) {
 
 template<typename... As>
 std::ostream &operator<<(std::ostream &o, const std::variant<As...> &x) {
-  return std::visit([&o](const auto &y)->std::ostream &{ return o << y; }, x);
+  return std::visit(
+      [&o](const auto &y) -> std::ostream & { return o << y; }, x);
 }
 }  // namespace Fortran
 #endif  // FORTRAN_IDIOMS_H_

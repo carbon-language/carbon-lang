@@ -10,8 +10,7 @@
 
 namespace Fortran {
 
-template<char goal>
-struct ExactRaw {
+template<char goal> struct ExactRaw {
   using resultType = char;
   constexpr ExactRaw() {}
   constexpr ExactRaw(const ExactRaw &) {}
@@ -26,11 +25,10 @@ struct ExactRaw {
   }
 };
 
-template<char a, char z>
-struct ExactRawRange {
+template<char a, char z> struct ExactRawRange {
   using resultType = char;
   constexpr ExactRawRange() {}
-  constexpr ExactRawRange(const ExactRawRange &) {};
+  constexpr ExactRawRange(const ExactRawRange &){};
   static std::optional<char> Parse(ParseState *state) {
     if (std::optional<char> ch{state->GetNextRawChar()}) {
       if (*ch >= a && *ch <= z) {
@@ -42,8 +40,7 @@ struct ExactRawRange {
   }
 };
 
-template<char unwanted>
-struct AnyCharExcept {
+template<char unwanted> struct AnyCharExcept {
   using resultType = char;
   constexpr AnyCharExcept() {}
   constexpr AnyCharExcept(const AnyCharExcept &) {}
@@ -58,8 +55,7 @@ struct AnyCharExcept {
   }
 };
 
-template<char goal>
-struct SkipPast {
+template<char goal> struct SkipPast {
   using resultType = Success;
   constexpr SkipPast() {}
   constexpr SkipPast(const SkipPast &) {}
@@ -102,6 +98,7 @@ public:
     }
     return {Success{}};
   }
+
 private:
   const char *const str_;
   const size_t length_;

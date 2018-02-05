@@ -20,24 +20,27 @@ public:
 
   constexpr int lineNumber() const { return lineNumber_; }
   constexpr int column() const { return column_; }
-  Position &set_lineNumber(int line) { lineNumber_ = line; return *this; }
-  Position &set_column(int column) { column_ = column; return *this; }
+  Position &set_lineNumber(int line) {
+    lineNumber_ = line;
+    return *this;
+  }
+  Position &set_column(int column) {
+    column_ = column;
+    return *this;
+  }
 
   constexpr bool operator<(const Position &that) const {
     return lineNumber_ < that.lineNumber_ ||
-           (lineNumber_ == that.lineNumber_ &&
-            column_ < that.column_);
+        (lineNumber_ == that.lineNumber_ && column_ < that.column_);
   }
 
   constexpr bool operator<=(const Position &that) const {
     return lineNumber_ < that.lineNumber_ ||
-           (lineNumber_ == that.lineNumber_ &&
-            column_ <= that.column_);
+        (lineNumber_ == that.lineNumber_ && column_ <= that.column_);
   }
 
   constexpr bool operator==(const Position &that) const {
-    return lineNumber_ == that.lineNumber_ &&
-           column_ == that.column_;
+    return lineNumber_ == that.lineNumber_ && column_ == that.column_;
   }
 
   constexpr bool operator!=(const Position &that) const {
@@ -52,13 +55,9 @@ public:
     return !operator<(that);
   }
 
-  void AdvanceColumn() {
-    ++column_;
-  }
+  void AdvanceColumn() { ++column_; }
 
-  void TabAdvanceColumn() {
-    column_ = ((column_ + 7) & -8) + 1;
-  }
+  void TabAdvanceColumn() { column_ = ((column_ + 7) & -8) + 1; }
 
   void AdvanceLine() {
     ++lineNumber_;

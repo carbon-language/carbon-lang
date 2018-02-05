@@ -30,8 +30,7 @@ public:
   Message(Position pos, const char *msg, MessageContext ctx = nullptr)
     : position_{pos}, message_{msg}, context_{ctx} {}
   Message(Position pos, char ch, MessageContext ctx = nullptr)
-    : position_{pos}, message_{"expected '"s + ch + '\''},
-      context_{ctx} {}
+    : position_{pos}, message_{"expected '"s + ch + '\''}, context_{ctx} {}
 
   Message &operator=(const Message &that) = default;
   Message &operator=(Message &&that) = default;
@@ -52,6 +51,7 @@ private:
 
 class Messages {
   using list_type = std::forward_list<Message>;
+
 public:
   using iterator = list_type::iterator;
   using const_iterator = list_type::const_iterator;

@@ -6,15 +6,15 @@ AlignEscapedNewlines: DontAlign
 AllowShortCaseLabelsOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true
 ConstructorInitializerIndentWidth: 2
-AlignAfterOpenBracket: AlwaysBreak
+AlignAfterOpenBracket: DontAlign
 AlignOperands: false
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
 AlignTrailingComments: false
 SpaceAfterTemplateKeyword: false
-BreakBeforeBinaryOperators: All
+BreakBeforeBinaryOperators: None
 BreakBeforeTernaryOperators: true
-ContinuationIndentWidth: 2
+ContinuationIndentWidth: 4
 ...
 
 # vim:set filetype=yaml:

@@ -19,6 +19,7 @@ public:
   std::string path() const { return path_; }
   const char *content() const { return content_; }
   size_t bytes() const { return bytes_; }
+
 private:
   std::string path_;
   int fileDescriptor_{-1};

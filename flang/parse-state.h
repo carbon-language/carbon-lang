@@ -27,35 +27,33 @@ public:
   ParseState(const char *str, size_t bytes) : p_{str}, remaining_{bytes} {}
   ParseState(const ParseState &that)
     : p_{that.p_}, remaining_{that.remaining_}, position_{that.position_},
-      userState_{that.userState_},
-      inCharLiteral_{that.inCharLiteral_}, inFortran_{that.inFortran_},
-      inFixedForm_{that.inFixedForm_},
+      userState_{that.userState_}, inCharLiteral_{that.inCharLiteral_},
+      inFortran_{that.inFortran_}, inFixedForm_{that.inFixedForm_},
       enableOldDebugLines_{that.enableOldDebugLines_}, columns_{that.columns_},
-      enableBackslashEscapesInCharLiterals_
-        {that.enableBackslashEscapesInCharLiterals_},
+      enableBackslashEscapesInCharLiterals_{
+          that.enableBackslashEscapesInCharLiterals_},
       strictConformance_{that.strictConformance_},
       warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
       warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
       skippedNewLines_{that.skippedNewLines_},
       tabInCurrentLine_{that.tabInCurrentLine_},
-      anyErrorRecovery_{that.anyErrorRecovery_},
-      prescanned_{that.prescanned_} {}
+      anyErrorRecovery_{that.anyErrorRecovery_}, prescanned_{that.prescanned_} {
+  }
   ParseState(ParseState &&that)
     : p_{that.p_}, remaining_{that.remaining_}, position_{that.position_},
       messages_{std::move(that.messages_)}, context_{std::move(that.context_)},
-      userState_{that.userState_},
-      inCharLiteral_{that.inCharLiteral_}, inFortran_{that.inFortran_},
-      inFixedForm_{that.inFixedForm_},
+      userState_{that.userState_}, inCharLiteral_{that.inCharLiteral_},
+      inFortran_{that.inFortran_}, inFixedForm_{that.inFixedForm_},
       enableOldDebugLines_{that.enableOldDebugLines_}, columns_{that.columns_},
-      enableBackslashEscapesInCharLiterals_
-        {that.enableBackslashEscapesInCharLiterals_},
+      enableBackslashEscapesInCharLiterals_{
+          that.enableBackslashEscapesInCharLiterals_},
       strictConformance_{that.strictConformance_},
       warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
       warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
       skippedNewLines_{that.skippedNewLines_},
       tabInCurrentLine_{that.tabInCurrentLine_},
-      anyErrorRecovery_{that.anyErrorRecovery_},
-      prescanned_{that.prescanned_} {}
+      anyErrorRecovery_{that.anyErrorRecovery_}, prescanned_{that.prescanned_} {
+  }
   ParseState &operator=(ParseState &&that) {
     swap(that);
     return *this;
@@ -199,9 +197,7 @@ public:
     ++p_;
   }
 
-  void AdvancePositionForPadding() {
-    position_.AdvanceColumn();
-  }
+  void AdvancePositionForPadding() { position_.AdvanceColumn(); }
 
 private:
   // Text remaining to be parsed

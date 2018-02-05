@@ -15,8 +15,8 @@ class CharBuffer {
 public:
   CharBuffer() {}
   CharBuffer(CharBuffer &&that)
-    : blocks_(std::move(that.blocks_)), last_{that.last_},
-      bytes_{that.bytes_}, lastBlockEmpty_{that.lastBlockEmpty_} {
+    : blocks_(std::move(that.blocks_)), last_{that.last_}, bytes_{that.bytes_},
+      lastBlockEmpty_{that.lastBlockEmpty_} {
     that.clear();
   }
   CharBuffer &operator=(CharBuffer &&that) {
@@ -91,6 +91,7 @@ public:
     bool operator!=(const iterator &that) const {
       return block_ != that.block_ || offset_ != that.offset_;
     }
+
   private:
     std::forward_list<Block>::const_iterator block_;
     int offset_;

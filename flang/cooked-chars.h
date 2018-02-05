@@ -22,16 +22,14 @@ namespace Fortran {
 constexpr struct FixedFormPadding {
   using resultType = char;
   static std::optional<char> Parse(ParseState *state) {
-    if (state->inCharLiteral() &&
-        state->inFortran() &&
-        state->inFixedForm() &&
+    if (state->inCharLiteral() && state->inFortran() && state->inFixedForm() &&
         state->position().column() <= state->columns()) {
-       if (std::optional<char> ch{state->GetNextRawChar()}) {
-         if (*ch == '\n') {
-           state->AdvancePositionForPadding();
-           return {' '};
-         }
-       }
+      if (std::optional<char> ch{state->GetNextRawChar()}) {
+        if (*ch == '\n') {
+          state->AdvancePositionForPadding();
+          return {' '};
+        }
+      }
     }
     return {};
   }
@@ -44,8 +42,7 @@ static inline void IncrementSkippedNewLines(ParseState *state) {
 constexpr StateUpdateParser noteSkippedNewLine{IncrementSkippedNewLines};
 
 static inline bool InRightMargin(const ParseState &state) {
-  if (state.inFortran() &&
-      state.inFixedForm() &&
+  if (state.inFortran() && state.inFixedForm() &&
       state.position().column() > state.columns() &&
       !state.tabInCurrentLine()) {
     if (std::optional<char> ch{state.GetNextRawChar()}) {
@@ -57,15 +54,12 @@ static inline bool InRightMargin(const ParseState &state) {
 
 constexpr StatePredicateGuardParser inRightMargin{InRightMargin};
 
-template<int col>
-struct AtFixedFormColumn {
+template<int col> struct AtFixedFormColumn {
   using resultType = Success;
   constexpr AtFixedFormColumn() {}
   constexpr AtFixedFormColumn(const AtFixedFormColumn &) {}
   static std::optional<Success> Parse(ParseState *state) {
-    if (state->inFortran() &&
-        state->inFixedForm() &&
-        !state->IsAtEnd() &&
+    if (state->inFortran() && state->inFixedForm() && !state->IsAtEnd() &&
         state->position().column() == col) {
       return {Success{}};
     }
@@ -73,14 +67,12 @@ struct AtFixedFormColumn {
   }
 };
 
-template<int col>
-struct AtColumn {
+template<int col> struct AtColumn {
   using resultType = Success;
   constexpr AtColumn() {}
   constexpr AtColumn(const AtColumn &) {}
   static std::optional<Success> Parse(ParseState *state) {
-    if (!state->IsAtEnd() &&
-        state->position().column() == col) {
+    if (!state->IsAtEnd() && state->position().column() == col) {
       return {Success{}};
     }
     return {};
@@ -88,8 +80,7 @@ struct AtColumn {
 };
 
 static inline bool AtOldDebugLineMarker(const ParseState &state) {
-  if (state.inFortran() &&
-      state.inFixedForm() &&
+  if (state.inFortran() && state.inFixedForm() &&
       state.position().column() == 1) {
     if (std::optional<char> ch{state.GetNextRawChar()}) {
       return toupper(*ch) == 'D';
@@ -106,9 +97,9 @@ static inline bool AtEnabledOldDebugLine(const ParseState &state) {
   return AtOldDebugLineMarker(state) && state.enableOldDebugLines();
 }
 
-static constexpr StatePredicateGuardParser
-  atDisabledOldDebugLine{AtDisabledOldDebugLine},
-  atEnabledOldDebugLine{AtEnabledOldDebugLine};
+static constexpr StatePredicateGuardParser atDisabledOldDebugLine{
+    AtDisabledOldDebugLine},
+    atEnabledOldDebugLine{AtEnabledOldDebugLine};
 
 constexpr auto skipPastNewLine = SkipPast<'\n'>{} / noteSkippedNewLine;
 
@@ -122,11 +113,9 @@ constexpr struct FastRawSpaceParser {
   static std::optional<Success> Parse(ParseState *state) {
     if (std::optional<char> ch{state->GetNextRawChar()}) {
       if (*ch == ' ' || *ch == '\t' ||
-          (toupper(*ch) == 'D' &&
-           state->position().column() == 1 &&
-           state->enableOldDebugLines() &&
-           state->inFortran() &&
-           state->inFixedForm())) {
+          (toupper(*ch) == 'D' && state->position().column() == 1 &&
+              state->enableOldDebugLines() && state->inFortran() &&
+              state->inFixedForm())) {
         state->Advance();
         return {Success{}};
       }
@@ -138,23 +127,20 @@ constexpr struct FastRawSpaceParser {
 constexpr auto skipAnyRawSpaces = skipManyFast(rawSpace);
 
 constexpr auto commentBang =
-  !inCharLiteral >> !AtFixedFormColumn<6>{} >> ExactRaw<'!'>{} >> ok;
+    !inCharLiteral >> !AtFixedFormColumn<6>{} >> ExactRaw<'!'>{} >> ok;
 
-constexpr auto fixedComment =
-  AtFixedFormColumn<1>{} >>
-  ((ExactRaw<'*'>{} || ExactRaw<'C'>{} || ExactRaw<'c'>{}) >> ok ||
-   atDisabledOldDebugLine ||
-   extension(ExactRaw<'%'>{} /* VAX %list, %eject, &c. */) >> ok);
+constexpr auto fixedComment = AtFixedFormColumn<1>{} >>
+    ((ExactRaw<'*'>{} || ExactRaw<'C'>{} || ExactRaw<'c'>{}) >> ok ||
+        atDisabledOldDebugLine ||
+        extension(ExactRaw<'%'>{} /* VAX %list, %eject, &c. */) >> ok);
 
 constexpr auto comment =
-  (skipAnyRawSpaces >> (commentBang || inRightMargin) || fixedComment) >>
+    (skipAnyRawSpaces >> (commentBang || inRightMargin) || fixedComment) >>
     skipPastNewLine;
 
 constexpr auto blankLine = skipAnyRawSpaces >> eoln >> ok;
 
-inline bool InFortran(const ParseState &state) {
-  return state.inFortran();
-}
+inline bool InFortran(const ParseState &state) { return state.inFortran(); }
 
 constexpr StatePredicateGuardParser inFortran{InFortran};
 
@@ -174,48 +160,40 @@ constexpr auto lineEnd = comment || blankLine;
 constexpr auto skippedLineEnd = lineEnd / noteSkippedNewLine;
 constexpr auto someSkippedLineEnds = skippedLineEnd >> skipMany(skippedLineEnd);
 
-constexpr auto fixedFormContinuation =
-  fixedFormFortran >>
-  someSkippedLineEnds >>
-  (extension(AtColumn<1>{} >>
-             (ExactRaw<'&'>{} ||  // extension: & in column 1
-              (ExactRaw<'\t'>{} >> // VAX Fortran: tab and then 1-9
-               ExactRawRange<'1', '9'>{}))) ||
-   (skipAnyRawSpaces >> AtColumn<6>{} >> AnyCharExcept<'0'>{})) >> ok;
-
-constexpr auto freeFormContinuation =
-  freeFormFortran >>
-  ((ExactRaw<'&'>{} >> blankLine >>
-    skipMany(skippedLineEnd) >>
-    skipAnyRawSpaces >> ExactRaw<'&'>{} >> ok) ||
-   (ExactRaw<'&'>{} >> !inCharLiteral >>
+constexpr auto fixedFormContinuation = fixedFormFortran >>
     someSkippedLineEnds >>
-    maybe(skipAnyRawSpaces >> ExactRaw<'&'>{}) >> ok) ||
-   // PGI-only extension: don't need '&' on initial line if it's on later one
-   extension(eoln >> skipMany(skippedLineEnd) >>
-             skipAnyRawSpaces >> ExactRaw<'&'>{} >> ok));
+    (extension(AtColumn<1>{} >>
+         (ExactRaw<'&'>{} ||  // extension: & in column 1
+             (ExactRaw<'\t'>{} >>  // VAX Fortran: tab and then 1-9
+                 ExactRawRange<'1', '9'>{}))) ||
+        (skipAnyRawSpaces >> AtColumn<6>{} >> AnyCharExcept<'0'>{})) >>
+    ok;
 
-constexpr auto skippable =
-  freeFormContinuation ||
-  fixedFormFortran >>
-    (fixedFormContinuation ||
-     !inCharLiteral >> rawSpace ||
-     AtColumn<6>{} >> ExactRaw<'0'>{} >> ok);
+constexpr auto freeFormContinuation = freeFormFortran >>
+    ((ExactRaw<'&'>{} >> blankLine >> skipMany(skippedLineEnd) >>
+         skipAnyRawSpaces >> ExactRaw<'&'>{} >> ok) ||
+        (ExactRaw<'&'>{} >> !inCharLiteral >> someSkippedLineEnds >>
+            maybe(skipAnyRawSpaces >> ExactRaw<'&'>{}) >> ok) ||
+        // PGI-only extension: don't need '&' on initial line if it's on later
+        // one
+        extension(eoln >> skipMany(skippedLineEnd) >> skipAnyRawSpaces >>
+            ExactRaw<'&'>{} >> ok));
+
+constexpr auto skippable = freeFormContinuation ||
+    fixedFormFortran >> (fixedFormContinuation || !inCharLiteral >> rawSpace ||
+                            AtColumn<6>{} >> ExactRaw<'0'>{} >> ok);
 
 char toLower(char &&ch) { return tolower(ch); }
 
 // TODO: skip \\ \n in C mode, increment skipped newline count;
 // drain skipped newlines.
 
-constexpr auto slowCookedNextChar =
-  fixedFormPadding ||
-  skipMany(skippable) >>
-  (inCharLiteral >> rawNextChar ||
-   lineEnd >> pure('\n') ||
-   rawSpace >> skipAnyRawSpaces >> pure(' ') ||
-   // TODO: detect and report non-digit in fixed form label field
-   inFortran >> applyFunction(toLower, rawNextChar) ||
-   rawNextChar);
+constexpr auto slowCookedNextChar = fixedFormPadding ||
+    skipMany(skippable) >>
+        (inCharLiteral >> rawNextChar || lineEnd >> pure('\n') ||
+            rawSpace >> skipAnyRawSpaces >> pure(' ') ||
+            // TODO: detect and report non-digit in fixed form label field
+            inFortran >> applyFunction(toLower, rawNextChar) || rawNextChar);
 
 constexpr struct CookedChar {
   using resultType = char;

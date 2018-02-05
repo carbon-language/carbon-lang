@@ -35,21 +35,22 @@ namespace Fortran {
 // template class.  This usage requires that their Parse() member functions
 // be defined separately, typically with a parsing expression wrapped up
 // in an TYPE_PARSER() macro call.
-template<typename A>
-struct Parser {
+template<typename A> struct Parser {
   using resultType = A;
   constexpr Parser() {}
   static inline std::optional<A> Parse(ParseState *);
 };
 
 #define TYPE_PARSER(pexpr) \
-  template<> inline std::optional<typename decltype(pexpr)::resultType> \
+  template<> \
+  inline std::optional<typename decltype(pexpr)::resultType> \
   Parser<typename decltype(pexpr)::resultType>::Parse(ParseState *state) { \
     return (pexpr).Parse(state); \
   }
 
 #define TYPE_CONTEXT_PARSER(contextString, pexpr) \
-  template<> inline std::optional<typename decltype(pexpr)::resultType> \
+  template<> \
+  inline std::optional<typename decltype(pexpr)::resultType> \
   Parser<typename decltype(pexpr)::resultType>::Parse(ParseState *state) { \
     return inContext((contextString), (pexpr)).Parse(state); \
   }
@@ -72,13 +73,13 @@ constexpr Parser<TypeParamValue> typeParamValue;  // R701
 constexpr Parser<TypeSpec> typeSpec;  // R702
 constexpr Parser<DeclarationTypeSpec> declarationTypeSpec;  // R703
 constexpr Parser<IntrinsicTypeSpec> intrinsicTypeSpec;  // R704
-constexpr Parser<IntegerTypeSpec> integerTypeSpec; // R705
-constexpr Parser<KindSelector> kindSelector; // R706
-constexpr Parser<SignedIntLiteralConstant> signedIntLiteralConstant; // R707
-constexpr Parser<IntLiteralConstant> intLiteralConstant; // R708
-constexpr Parser<KindParam> kindParam; // R709
-constexpr Parser<RealLiteralConstant> realLiteralConstant; // R714
-constexpr Parser<ExponentPart> exponentPart; // R717
+constexpr Parser<IntegerTypeSpec> integerTypeSpec;  // R705
+constexpr Parser<KindSelector> kindSelector;  // R706
+constexpr Parser<SignedIntLiteralConstant> signedIntLiteralConstant;  // R707
+constexpr Parser<IntLiteralConstant> intLiteralConstant;  // R708
+constexpr Parser<KindParam> kindParam;  // R709
+constexpr Parser<RealLiteralConstant> realLiteralConstant;  // R714
+constexpr Parser<ExponentPart> exponentPart;  // R717
 constexpr Parser<CharLength> charLength;  // R723
 constexpr Parser<CharLiteralConstant> charLiteralConstant;  // R724
 constexpr Parser<Initialization> initialization;  // R743 & R805
@@ -151,8 +152,7 @@ constexpr Parser<ContainsStmt> containsStmt;  // R1543
 
 // For a parser p, indirect(p) returns a parser that builds an indirect
 // reference to p's return type.
-template<typename PA>
-inline constexpr auto indirect(const PA &p) {
+template<typename PA> inline constexpr auto indirect(const PA &p) {
   return construct<Indirection<typename PA::resultType>>{}(p);
 }
 
@@ -171,29 +171,25 @@ static inline bool isColumnOkForFixedFormLabel(int &&column) {
   return column < 6;
 }
 
-constexpr auto isLabelOk =
-  inFixedForm >> applyFunction(isColumnOkForFixedFormLabel, getColumn) ||
-  pure(true);
+constexpr auto isLabelOk = inFixedForm >>
+        applyFunction(isColumnOkForFixedFormLabel, getColumn) ||
+    pure(true);
 
 template<typename PA>
 using statementConstructor = construct<Statement<typename PA::resultType>>;
 
-template<typename PA>
-inline constexpr auto unterminatedStatement(const PA &p) {
-  return skipMany("\n"_tok) >>
-         statementConstructor<PA>{}(getPosition, maybe(label), isLabelOk,
-                                    spaces >> p);
+template<typename PA> inline constexpr auto unterminatedStatement(const PA &p) {
+  return skipMany("\n"_tok) >> statementConstructor<PA>{}(getPosition,
+                                   maybe(label), isLabelOk, spaces >> p);
 }
 
 constexpr auto endOfLine =
-  CharMatch<'\n'>{} || fail<char>("expected end of line");
+    CharMatch<'\n'>{} || fail<char>("expected end of line");
 
-constexpr auto endOfStmt =
-  spaces >> CharMatch<';'>{} / skipMany(";"_tok) ||
-  endOfLine;
+constexpr auto
+    endOfStmt = spaces >> CharMatch<';'>{} / skipMany(";"_tok) || endOfLine;
 
-template<typename PA>
-inline constexpr auto statement(const PA &p) {
+template<typename PA> inline constexpr auto statement(const PA &p) {
   return unterminatedStatement(p) / endOfStmt;
 }
 
@@ -201,31 +197,32 @@ inline constexpr auto statement(const PA &p) {
 //        specification-construct | data-stmt | format-stmt |
 //        entry-stmt | stmt-function-stmt
 TYPE_CONTEXT_PARSER("declaration construct",
-  construct<DeclarationConstruct>{}(specificationConstruct) ||
-  construct<DeclarationConstruct>{}(statement(indirect(dataStmt))) ||
-  construct<DeclarationConstruct>{}(statement(indirect(formatStmt))) ||
-  construct<DeclarationConstruct>{}(statement(indirect(entryStmt))) ||
-  construct<DeclarationConstruct>{}(statement(indirect(
-    Parser<StmtFunctionStmt>{}))))
+    construct<DeclarationConstruct>{}(specificationConstruct) ||
+        construct<DeclarationConstruct>{}(statement(indirect(dataStmt))) ||
+        construct<DeclarationConstruct>{}(statement(indirect(formatStmt))) ||
+        construct<DeclarationConstruct>{}(statement(indirect(entryStmt))) ||
+        construct<DeclarationConstruct>{}(
+            statement(indirect(Parser<StmtFunctionStmt>{}))))
 
 // R508 specification-construct ->
 //        derived-type-def | enum-def | generic-stmt | interface-block |
 //        parameter-stmt | procedure-declaration-stmt |
 //        other-specification-stmt | type-declaration-stmt
 TYPE_CONTEXT_PARSER("specification construct",
-  construct<SpecificationConstruct>{}(indirect(Parser<DerivedTypeDef>{})) ||
-  construct<SpecificationConstruct>{}(indirect(Parser<EnumDef>{})) ||
-  construct<SpecificationConstruct>{}(statement(indirect(
-    Parser<GenericStmt>{}))) ||
-  construct<SpecificationConstruct>{}(indirect(interfaceBlock)) ||
-  construct<SpecificationConstruct>{}(statement(indirect(parameterStmt))) ||
-  construct<SpecificationConstruct>{}(statement(indirect(
-    Parser<ProcedureDeclarationStmt>{}))) ||
-  construct<SpecificationConstruct>{}(
-    statement(Parser<OtherSpecificationStmt>{})) ||
-  construct<SpecificationConstruct>{}(
-    statement(indirect(typeDeclarationStmt))) ||
-  construct<SpecificationConstruct>{}(indirect(Parser<StructureDef>{})))
+    construct<SpecificationConstruct>{}(indirect(Parser<DerivedTypeDef>{})) ||
+        construct<SpecificationConstruct>{}(indirect(Parser<EnumDef>{})) ||
+        construct<SpecificationConstruct>{}(
+            statement(indirect(Parser<GenericStmt>{}))) ||
+        construct<SpecificationConstruct>{}(indirect(interfaceBlock)) ||
+        construct<SpecificationConstruct>{}(
+            statement(indirect(parameterStmt))) ||
+        construct<SpecificationConstruct>{}(
+            statement(indirect(Parser<ProcedureDeclarationStmt>{}))) ||
+        construct<SpecificationConstruct>{}(
+            statement(Parser<OtherSpecificationStmt>{})) ||
+        construct<SpecificationConstruct>{}(
+            statement(indirect(typeDeclarationStmt))) ||
+        construct<SpecificationConstruct>{}(indirect(Parser<StructureDef>{})))
 
 // R513 other-specification-stmt ->
 //        access-stmt | allocatable-stmt | asynchronous-stmt | bind-stmt |
@@ -234,86 +231,82 @@ TYPE_CONTEXT_PARSER("specification construct",
 //        pointer-stmt | protected-stmt | save-stmt | target-stmt |
 //        volatile-stmt | value-stmt | common-stmt | equivalence-stmt
 TYPE_PARSER(
-  construct<OtherSpecificationStmt>{}(indirect(Parser<AccessStmt>{})) ||
-  construct<OtherSpecificationStmt>{}(indirect(Parser<AllocatableStmt>{})) ||
-  construct<OtherSpecificationStmt>{}(indirect(Parser<AsynchronousStmt>{})) ||
-  construct<OtherSpecificationStmt>{}(indirect(Parser<BindStmt>{})) ||
-  construct<OtherSpecificationStmt>{}(indirect(Parser<CodimensionStmt>{})) ||
-  construct<OtherSpecificationStmt>{}(indirect(Parser<ContiguousStmt>{})) ||
-  construct<OtherSpecificationStmt>{}(indirect(Parser<DimensionStmt>{})) ||
-  construct<OtherSpecificationStmt>{}(indirect(Parser<ExternalStmt>{})) ||
-  construct<OtherSpecificationStmt>{}(indirect(Parser<IntentStmt>{})) ||
-  construct<OtherSpecificationStmt>{}(indirect(Parser<IntrinsicStmt>{})) ||
-  construct<OtherSpecificationStmt>{}(indirect(Parser<NamelistStmt>{})) ||
-  construct<OtherSpecificationStmt>{}(indirect(Parser<OptionalStmt>{})) ||
-  construct<OtherSpecificationStmt>{}(indirect(Parser<PointerStmt>{})) ||
-  construct<OtherSpecificationStmt>{}(indirect(Parser<ProtectedStmt>{})) ||
-  construct<OtherSpecificationStmt>{}(indirect(Parser<SaveStmt>{})) ||
-  construct<OtherSpecificationStmt>{}(indirect(Parser<TargetStmt>{})) ||
-  construct<OtherSpecificationStmt>{}(indirect(Parser<ValueStmt>{})) ||
-  construct<OtherSpecificationStmt>{}(indirect(Parser<VolatileStmt>{})) ||
-  construct<OtherSpecificationStmt>{}(indirect(Parser<CommonStmt>{})) ||
-  construct<OtherSpecificationStmt>{}(indirect(Parser<EquivalenceStmt>{})) ||
-  construct<OtherSpecificationStmt>{}(indirect(Parser<BasedPointerStmt>{})))
+    construct<OtherSpecificationStmt>{}(indirect(Parser<AccessStmt>{})) ||
+    construct<OtherSpecificationStmt>{}(indirect(Parser<AllocatableStmt>{})) ||
+    construct<OtherSpecificationStmt>{}(indirect(Parser<AsynchronousStmt>{})) ||
+    construct<OtherSpecificationStmt>{}(indirect(Parser<BindStmt>{})) ||
+    construct<OtherSpecificationStmt>{}(indirect(Parser<CodimensionStmt>{})) ||
+    construct<OtherSpecificationStmt>{}(indirect(Parser<ContiguousStmt>{})) ||
+    construct<OtherSpecificationStmt>{}(indirect(Parser<DimensionStmt>{})) ||
+    construct<OtherSpecificationStmt>{}(indirect(Parser<ExternalStmt>{})) ||
+    construct<OtherSpecificationStmt>{}(indirect(Parser<IntentStmt>{})) ||
+    construct<OtherSpecificationStmt>{}(indirect(Parser<IntrinsicStmt>{})) ||
+    construct<OtherSpecificationStmt>{}(indirect(Parser<NamelistStmt>{})) ||
+    construct<OtherSpecificationStmt>{}(indirect(Parser<OptionalStmt>{})) ||
+    construct<OtherSpecificationStmt>{}(indirect(Parser<PointerStmt>{})) ||
+    construct<OtherSpecificationStmt>{}(indirect(Parser<ProtectedStmt>{})) ||
+    construct<OtherSpecificationStmt>{}(indirect(Parser<SaveStmt>{})) ||
+    construct<OtherSpecificationStmt>{}(indirect(Parser<TargetStmt>{})) ||
+    construct<OtherSpecificationStmt>{}(indirect(Parser<ValueStmt>{})) ||
+    construct<OtherSpecificationStmt>{}(indirect(Parser<VolatileStmt>{})) ||
+    construct<OtherSpecificationStmt>{}(indirect(Parser<CommonStmt>{})) ||
+    construct<OtherSpecificationStmt>{}(indirect(Parser<EquivalenceStmt>{})) ||
+    construct<OtherSpecificationStmt>{}(indirect(Parser<BasedPointerStmt>{})))
 
 // R516 keyword -> name
 constexpr auto keyword = name;
 
 // R604 constant ->  literal-constant | named-constant
 // Used only via R607 int-constant and R845 data-stmt-constant.
-TYPE_PARSER(
-  construct<ConstantValue>{}(literalConstant) ||
-  construct<ConstantValue>{}(namedConstant))
+TYPE_PARSER(construct<ConstantValue>{}(literalConstant) ||
+    construct<ConstantValue>{}(namedConstant))
 
 // R608 intrinsic-operator ->
 //        power-op | mult-op | add-op | concat-op | rel-op |
 //        not-op | and-op | or-op | equiv-op
 // R610 extended-intrinsic-op -> intrinsic-operator
 // These parsers must be ordered carefully to avoid misrecognition.
-constexpr auto namedIntrinsicOperator =
-  ".LT." >> pure(DefinedOperator::IntrinsicOperator::LT) ||
-  ".LE." >> pure(DefinedOperator::IntrinsicOperator::LE) ||
-  ".EQ." >> pure(DefinedOperator::IntrinsicOperator::EQ) ||
-  ".NE." >> pure(DefinedOperator::IntrinsicOperator::NE) ||
-  ".GE." >> pure(DefinedOperator::IntrinsicOperator::GE) ||
-  ".GT." >> pure(DefinedOperator::IntrinsicOperator::GT) ||
-  ".NOT." >> pure(DefinedOperator::IntrinsicOperator::NOT) ||
-  ".AND." >> pure(DefinedOperator::IntrinsicOperator::AND) ||
-  ".OR." >> pure(DefinedOperator::IntrinsicOperator::OR) ||
-  ".EQV." >> pure(DefinedOperator::IntrinsicOperator::EQV) ||
-  ".NEQV." >> pure(DefinedOperator::IntrinsicOperator::NEQV);
-  // Cray and ifort also have .XOR.; Cray has .N./.A./.O./.X. abbreviations
+constexpr auto namedIntrinsicOperator = ".LT." >>
+        pure(DefinedOperator::IntrinsicOperator::LT) ||
+    ".LE." >> pure(DefinedOperator::IntrinsicOperator::LE) ||
+    ".EQ." >> pure(DefinedOperator::IntrinsicOperator::EQ) ||
+    ".NE." >> pure(DefinedOperator::IntrinsicOperator::NE) ||
+    ".GE." >> pure(DefinedOperator::IntrinsicOperator::GE) ||
+    ".GT." >> pure(DefinedOperator::IntrinsicOperator::GT) ||
+    ".NOT." >> pure(DefinedOperator::IntrinsicOperator::NOT) ||
+    ".AND." >> pure(DefinedOperator::IntrinsicOperator::AND) ||
+    ".OR." >> pure(DefinedOperator::IntrinsicOperator::OR) ||
+    ".EQV." >> pure(DefinedOperator::IntrinsicOperator::EQV) ||
+    ".NEQV." >> pure(DefinedOperator::IntrinsicOperator::NEQV);
+// Cray and ifort also have .XOR.; Cray has .N./.A./.O./.X. abbreviations
 
-constexpr auto intrinsicOperator =
-  "**" >> pure(DefinedOperator::IntrinsicOperator::Power) ||
-  "*" >> pure(DefinedOperator::IntrinsicOperator::Multiply) ||
-  "//" >> pure(DefinedOperator::IntrinsicOperator::Concat) ||
-  "/=" >> pure(DefinedOperator::IntrinsicOperator::NE) ||
-  "/" >> pure(DefinedOperator::IntrinsicOperator::Divide) ||
-  "+" >> pure(DefinedOperator::IntrinsicOperator::Add) ||
-  "-" >> pure(DefinedOperator::IntrinsicOperator::Subtract) ||
-  "<=" >> pure(DefinedOperator::IntrinsicOperator::LE) ||
-  extension("<>" >> pure(DefinedOperator::IntrinsicOperator::NE)) ||
-  "<" >> pure(DefinedOperator::IntrinsicOperator::LT) ||
-  "==" >> pure(DefinedOperator::IntrinsicOperator::EQ) ||
-  ">=" >> pure(DefinedOperator::IntrinsicOperator::GE) ||
-  ">" >> pure(DefinedOperator::IntrinsicOperator::GT) ||
-  namedIntrinsicOperator;
+constexpr auto intrinsicOperator = "**" >>
+        pure(DefinedOperator::IntrinsicOperator::Power) ||
+    "*" >> pure(DefinedOperator::IntrinsicOperator::Multiply) ||
+    "//" >> pure(DefinedOperator::IntrinsicOperator::Concat) ||
+    "/=" >> pure(DefinedOperator::IntrinsicOperator::NE) ||
+    "/" >> pure(DefinedOperator::IntrinsicOperator::Divide) ||
+    "+" >> pure(DefinedOperator::IntrinsicOperator::Add) ||
+    "-" >> pure(DefinedOperator::IntrinsicOperator::Subtract) ||
+    "<=" >> pure(DefinedOperator::IntrinsicOperator::LE) ||
+    extension("<>" >> pure(DefinedOperator::IntrinsicOperator::NE)) ||
+    "<" >> pure(DefinedOperator::IntrinsicOperator::LT) ||
+    "==" >> pure(DefinedOperator::IntrinsicOperator::EQ) ||
+    ">=" >> pure(DefinedOperator::IntrinsicOperator::GE) ||
+    ">" >> pure(DefinedOperator::IntrinsicOperator::GT) ||
+    namedIntrinsicOperator;
 
 // R609 defined-operator ->
 //        defined-unary-op | defined-binary-op | extended-intrinsic-op
-TYPE_PARSER(
-  construct<DefinedOperator>{}(intrinsicOperator) ||
-  construct<DefinedOperator>{}(definedOpName))
+TYPE_PARSER(construct<DefinedOperator>{}(intrinsicOperator) ||
+    construct<DefinedOperator>{}(definedOpName))
 
 // R401 xzy-list -> xzy [, xzy]...
-template<typename PA>
-inline constexpr auto nonemptyList(const PA &p) {
+template<typename PA> inline constexpr auto nonemptyList(const PA &p) {
   return nonemptySeparated(p, ","_tok);  // p-list
 }
 
-template<typename PA>
-inline constexpr auto optionalList(const PA &p) {
+template<typename PA> inline constexpr auto optionalList(const PA &p) {
   return defaulted(nonemptySeparated(p, ","_tok));  // [p-list]
 }
 
@@ -321,29 +314,25 @@ inline constexpr auto optionalList(const PA &p) {
 
 // R403 scalar-xyz -> xyz
 // Also define constant-xyz, int-xyz, default-char-xyz.
-template<typename PA>
-inline constexpr auto scalar(const PA &p) {
+template<typename PA> inline constexpr auto scalar(const PA &p) {
   return construct<Scalar<typename PA::resultType>>{}(p);  // scalar-p
 }
 
-template<typename PA>
-inline constexpr auto constant(const PA &p) {
+template<typename PA> inline constexpr auto constant(const PA &p) {
   return construct<Constant<typename PA::resultType>>{}(p);  // constant-p
 }
 
-template<typename PA>
-inline constexpr auto integer(const PA &p) {
+template<typename PA> inline constexpr auto integer(const PA &p) {
   return construct<Integer<typename PA::resultType>>{}(p);  // int-p
 }
 
-template<typename PA>
-inline constexpr auto logical(const PA &p) {
+template<typename PA> inline constexpr auto logical(const PA &p) {
   return construct<Logical<typename PA::resultType>>{}(p);  // logical-p
 }
 
-template<typename PA>
-inline constexpr auto defaultChar(const PA &p) {
-  return construct<DefaultChar<typename PA::resultType>>{}(p); // default-char-p
+template<typename PA> inline constexpr auto defaultChar(const PA &p) {
+  return construct<DefaultChar<typename PA::resultType>>{}(
+      p);  // default-char-p
 }
 
 // R1024 logical-expr -> expr
@@ -363,7 +352,7 @@ constexpr auto constantExpr = constant(indirect(expr));
 
 // R1030 default-char-constant-expr -> default-char-expr
 constexpr auto scalarDefaultCharConstantExpr =
-  scalar(defaultChar(constantExpr));
+    scalar(defaultChar(constantExpr));
 
 // R1031 int-constant-expr -> int-expr
 constexpr auto intConstantExpr = integer(constantExpr);
@@ -381,58 +370,53 @@ struct StartNewSubprogram {
   }
 } startNewSubprogram;
 
-TYPE_PARSER(
-  construct<Program>{}(
-    some(startNewSubprogram >> Parser<ProgramUnit>{} / endOfLine)) /
-  skipMany(endOfLine) /
-  consumedAllInput)
+TYPE_PARSER(construct<Program>{}(
+                some(startNewSubprogram >> Parser<ProgramUnit>{} / endOfLine)) /
+    skipMany(endOfLine) / consumedAllInput)
 
 // R502 program-unit ->
 //        main-program | external-subprogram | module | submodule | block-data
 // R503 external-subprogram -> function-subprogram | subroutine-subprogram
-TYPE_PARSER(
-  construct<ProgramUnit>{}(indirect(functionSubprogram)) ||
-  construct<ProgramUnit>{}(indirect(subroutineSubprogram)) ||
-  construct<ProgramUnit>{}(indirect(Parser<Module>{})) ||
-  construct<ProgramUnit>{}(indirect(Parser<Submodule>{})) ||
-  construct<ProgramUnit>{}(indirect(Parser<BlockData>{})) ||
-  construct<ProgramUnit>{}(indirect(Parser<MainProgram>{})))
+TYPE_PARSER(construct<ProgramUnit>{}(indirect(functionSubprogram)) ||
+    construct<ProgramUnit>{}(indirect(subroutineSubprogram)) ||
+    construct<ProgramUnit>{}(indirect(Parser<Module>{})) ||
+    construct<ProgramUnit>{}(indirect(Parser<Submodule>{})) ||
+    construct<ProgramUnit>{}(indirect(Parser<BlockData>{})) ||
+    construct<ProgramUnit>{}(indirect(Parser<MainProgram>{})))
 
 // R504 specification-part ->
 //         [use-stmt]... [import-stmt]... [implicit-part]
 //         [declaration-construct]...
-TYPE_CONTEXT_PARSER("specification part", construct<SpecificationPart>{}(
-  many(statement(indirect(Parser<UseStmt>{}))),
-  many(statement(indirect(Parser<ImportStmt>{}))),
-  implicitPart,
-  many(declarationConstruct)))
+TYPE_CONTEXT_PARSER("specification part",
+    construct<SpecificationPart>{}(many(statement(indirect(Parser<UseStmt>{}))),
+        many(statement(indirect(Parser<ImportStmt>{}))), implicitPart,
+        many(declarationConstruct)))
 
 // R505 implicit-part -> [implicit-part-stmt]... implicit-stmt
 // TODO: Can overshoot; any trailing PARAMETER, FORMAT, & ENTRY
 // statements after the last IMPLICIT should be transferred to the
 // list of declaration-constructs.
 TYPE_CONTEXT_PARSER("implicit part",
-  construct<ImplicitPart>{}(many(Parser<ImplicitPartStmt>{})))
+    construct<ImplicitPart>{}(many(Parser<ImplicitPartStmt>{})))
 
 // R506 implicit-part-stmt ->
 //         implicit-stmt | parameter-stmt | format-stmt | entry-stmt
-TYPE_PARSER(
-  construct<ImplicitPartStmt>{}(statement(indirect(Parser<ImplicitStmt>{}))) ||
-  construct<ImplicitPartStmt>{}(statement(indirect(parameterStmt))) ||
-  construct<ImplicitPartStmt>{}(statement(indirect(formatStmt))) ||
-  construct<ImplicitPartStmt>{}(statement(indirect(entryStmt))))
+TYPE_PARSER(construct<ImplicitPartStmt>{}(
+                statement(indirect(Parser<ImplicitStmt>{}))) ||
+    construct<ImplicitPartStmt>{}(statement(indirect(parameterStmt))) ||
+    construct<ImplicitPartStmt>{}(statement(indirect(formatStmt))) ||
+    construct<ImplicitPartStmt>{}(statement(indirect(entryStmt))))
 
 // R512 internal-subprogram -> function-subprogram | subroutine-subprogram
 constexpr auto internalSubprogram =
-  (construct<InternalSubprogram>{}(indirect(functionSubprogram)) ||
-   construct<InternalSubprogram>{}(indirect(subroutineSubprogram))) /
+    (construct<InternalSubprogram>{}(indirect(functionSubprogram)) ||
+        construct<InternalSubprogram>{}(indirect(subroutineSubprogram))) /
     endOfStmt;
 
 // R511 internal-subprogram-part -> contains-stmt [internal-subprogram]...
 TYPE_CONTEXT_PARSER("internal subprogram part",
-  construct<InternalSubprogramPart>{}(
-    statement(containsStmt),
-    many(startNewSubprogram >> internalSubprogram)))
+    construct<InternalSubprogramPart>{}(statement(containsStmt),
+        many(startNewSubprogram >> internalSubprogram)))
 
 // R515 action-stmt ->
 //        allocate-stmt | assignment-stmt | backspace-stmt | call-stmt |
@@ -446,49 +430,50 @@ TYPE_CONTEXT_PARSER("internal subprogram part",
 //        wait-stmt | where-stmt | write-stmt | computed-goto-stmt | forall-stmt
 // R1159 continue-stmt -> CONTINUE
 // R1163 fail-image-stmt -> FAIL IMAGE
-constexpr auto actionStmt =
-  construct<ActionStmt>{}(indirect(Parser<AllocateStmt>{})) ||
-  construct<ActionStmt>{}(indirect(assignmentStmt)) ||
-  construct<ActionStmt>{}(indirect(Parser<BackspaceStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<CallStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<CloseStmt>{})) ||
-  "CONTINUE" >> construct<ActionStmt>{}(construct<ContinueStmt>{}) ||
-  construct<ActionStmt>{}(indirect(Parser<CycleStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<DeallocateStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<EndfileStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<EventPostStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<EventWaitStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<ExitStmt>{})) ||
-  "FAIL IMAGE" >> construct<ActionStmt>{}(construct<FailImageStmt>{}) ||
-  construct<ActionStmt>{}(indirect(Parser<FlushStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<FormTeamStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<GotoStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<IfStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<InquireStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<LockStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<NullifyStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<OpenStmt>{})) ||
-  construct<ActionStmt>{}(indirect(pointerAssignmentStmt)) ||
-  construct<ActionStmt>{}(indirect(Parser<PrintStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<ReadStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<ReturnStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<RewindStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<StopStmt>{})) ||  // & error-stop-stmt
-  construct<ActionStmt>{}(indirect(Parser<SyncAllStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<SyncImagesStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<SyncMemoryStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<SyncTeamStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<UnlockStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<WaitStmt>{})) ||
-  construct<ActionStmt>{}(indirect(whereStmt)) ||
-  construct<ActionStmt>{}(indirect(Parser<WriteStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<ComputedGotoStmt>{})) ||
-  construct<ActionStmt>{}(indirect(forallStmt)) ||
-  construct<ActionStmt>{}(indirect(Parser<RedimensionStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<ArithmeticIfStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<AssignStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<AssignedGotoStmt>{})) ||
-  construct<ActionStmt>{}(indirect(Parser<PauseStmt>{}));
+constexpr auto actionStmt = construct<ActionStmt>{}(
+                                indirect(Parser<AllocateStmt>{})) ||
+    construct<ActionStmt>{}(indirect(assignmentStmt)) ||
+    construct<ActionStmt>{}(indirect(Parser<BackspaceStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<CallStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<CloseStmt>{})) ||
+    "CONTINUE" >> construct<ActionStmt>{}(construct<ContinueStmt>{}) ||
+    construct<ActionStmt>{}(indirect(Parser<CycleStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<DeallocateStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<EndfileStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<EventPostStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<EventWaitStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<ExitStmt>{})) ||
+    "FAIL IMAGE" >> construct<ActionStmt>{}(construct<FailImageStmt>{}) ||
+    construct<ActionStmt>{}(indirect(Parser<FlushStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<FormTeamStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<GotoStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<IfStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<InquireStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<LockStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<NullifyStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<OpenStmt>{})) ||
+    construct<ActionStmt>{}(indirect(pointerAssignmentStmt)) ||
+    construct<ActionStmt>{}(indirect(Parser<PrintStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<ReadStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<ReturnStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<RewindStmt>{})) ||
+    construct<ActionStmt>{}(
+        indirect(Parser<StopStmt>{})) ||  // & error-stop-stmt
+    construct<ActionStmt>{}(indirect(Parser<SyncAllStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<SyncImagesStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<SyncMemoryStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<SyncTeamStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<UnlockStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<WaitStmt>{})) ||
+    construct<ActionStmt>{}(indirect(whereStmt)) ||
+    construct<ActionStmt>{}(indirect(Parser<WriteStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<ComputedGotoStmt>{})) ||
+    construct<ActionStmt>{}(indirect(forallStmt)) ||
+    construct<ActionStmt>{}(indirect(Parser<RedimensionStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<ArithmeticIfStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<AssignStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<AssignedGotoStmt>{})) ||
+    construct<ActionStmt>{}(indirect(Parser<PauseStmt>{}));
 
 // Fortran allows the statement with the corresponding label at the end of
 // a do-construct that begins with an old-style label-do-stmt to be a
@@ -534,44 +519,44 @@ struct EndDoStmtForCapturedLabelDoStmt {
 //        do-construct | if-construct | select-rank-construct |
 //        select-type-construct | where-construct | forall-construct
 constexpr auto executableConstruct =
-  construct<ExecutableConstruct>{}(statement(actionStmt)) ||
-  construct<ExecutableConstruct>{}(indirect(Parser<AssociateConstruct>{})) ||
-  construct<ExecutableConstruct>{}(indirect(Parser<BlockConstruct>{})) ||
-  construct<ExecutableConstruct>{}(indirect(Parser<CaseConstruct>{})) ||
-  construct<ExecutableConstruct>{}(indirect(Parser<ChangeTeamConstruct>{})) ||
-  construct<ExecutableConstruct>{}(indirect(Parser<CriticalConstruct>{})) ||
-  construct<ExecutableConstruct>{}(capturedLabelDoStmt) ||
-  construct<ExecutableConstruct>{}(endDoStmtForCapturedLabelDoStmt) ||
-  construct<ExecutableConstruct>{}(indirect(Parser<DoConstruct>{})) ||
-  construct<ExecutableConstruct>{}(indirect(Parser<IfConstruct>{})) ||
-  construct<ExecutableConstruct>{}(indirect(Parser<SelectRankConstruct>{})) ||
-  construct<ExecutableConstruct>{}(indirect(Parser<SelectTypeConstruct>{})) ||
-  construct<ExecutableConstruct>{}(indirect(whereConstruct)) ||
-  construct<ExecutableConstruct>{}(indirect(forallConstruct));
+    construct<ExecutableConstruct>{}(statement(actionStmt)) ||
+    construct<ExecutableConstruct>{}(indirect(Parser<AssociateConstruct>{})) ||
+    construct<ExecutableConstruct>{}(indirect(Parser<BlockConstruct>{})) ||
+    construct<ExecutableConstruct>{}(indirect(Parser<CaseConstruct>{})) ||
+    construct<ExecutableConstruct>{}(indirect(Parser<ChangeTeamConstruct>{})) ||
+    construct<ExecutableConstruct>{}(indirect(Parser<CriticalConstruct>{})) ||
+    construct<ExecutableConstruct>{}(capturedLabelDoStmt) ||
+    construct<ExecutableConstruct>{}(endDoStmtForCapturedLabelDoStmt) ||
+    construct<ExecutableConstruct>{}(indirect(Parser<DoConstruct>{})) ||
+    construct<ExecutableConstruct>{}(indirect(Parser<IfConstruct>{})) ||
+    construct<ExecutableConstruct>{}(indirect(Parser<SelectRankConstruct>{})) ||
+    construct<ExecutableConstruct>{}(indirect(Parser<SelectTypeConstruct>{})) ||
+    construct<ExecutableConstruct>{}(indirect(whereConstruct)) ||
+    construct<ExecutableConstruct>{}(indirect(forallConstruct));
 
-constexpr auto executionPartErrorRecovery =
-  skipMany("\n"_tok) >> maybe(label) >>
-  !"END"_tok >> !"ELSE"_tok >> !"CONTAINS"_tok >> !"CASE"_tok >>
-    !"TYPE IS"_tok >> !"CLASS"_tok >> !"RANK"_tok >>
-  skipPastNewLine >>
-  construct<ErrorRecovery>{};
+constexpr auto executionPartErrorRecovery = skipMany("\n"_tok) >>
+    maybe(label) >> !"END"_tok >> !"ELSE"_tok >> !"CONTAINS"_tok >>
+    !"CASE"_tok >> !"TYPE IS"_tok >> !"CLASS"_tok >>
+    !"RANK"_tok >> skipPastNewLine >> construct<ErrorRecovery>{};
 
 // R510 execution-part-construct ->
 //        executable-construct | format-stmt | entry-stmt | data-stmt
 // Extension (PGI/Intel): also accept NAMELIST in execution part
 TYPE_CONTEXT_PARSER("execution part construct",
-  recovery(
-    construct<ExecutionPartConstruct>{}(executableConstruct) ||
-    construct<ExecutionPartConstruct>{}(statement(indirect(formatStmt))) ||
-    construct<ExecutionPartConstruct>{}(statement(indirect(entryStmt))) ||
-    construct<ExecutionPartConstruct>{}(statement(indirect(dataStmt))) ||
-    extension(construct<ExecutionPartConstruct>{}(
-      statement(indirect(Parser<NamelistStmt>{})))),
-    construct<ExecutionPartConstruct>{}(executionPartErrorRecovery)));
+    recovery(construct<ExecutionPartConstruct>{}(executableConstruct) ||
+            construct<ExecutionPartConstruct>{}(
+                statement(indirect(formatStmt))) ||
+            construct<ExecutionPartConstruct>{}(
+                statement(indirect(entryStmt))) ||
+            construct<ExecutionPartConstruct>{}(
+                statement(indirect(dataStmt))) ||
+            extension(construct<ExecutionPartConstruct>{}(
+                statement(indirect(Parser<NamelistStmt>{})))),
+        construct<ExecutionPartConstruct>{}(executionPartErrorRecovery)));
 
 // R509 execution-part -> executable-construct [execution-part-construct]...
 constexpr auto executionPart =
-  inContext("execution part", many(executionPartConstruct));
+    inContext("execution part", many(executionPartConstruct));
 
 // R602 underscore -> _
 constexpr CharMatch<'_'> underscore;
@@ -580,12 +565,12 @@ constexpr CharMatch<'_'> underscore;
 // N.B. Don't accept an underscore if it is immediately followed by a
 // quotation mark, so that kindParameter_"character literal" is parsed properly.
 constexpr auto otherIdCharacter =
-  underscore / !(CharMatch<'\''>{} || CharMatch<'"'>{}) ||
-  extension(CharMatch<'$'>{});  // PGI/ifort (and Cray/gfortran, but not first)
-  // Cray also allows '@'.
+    underscore / !(CharMatch<'\''>{} || CharMatch<'"'>{}) ||
+    extension(
+        CharMatch<'$'>{});  // PGI/ifort (and Cray/gfortran, but not first)
+// Cray also allows '@'.
 
-constexpr auto nonDigitIdCharacter =
-  letter || otherIdCharacter;
+constexpr auto nonDigitIdCharacter = letter || otherIdCharacter;
 
 // R603 name -> letter [alphanumeric-character]...
 static inline Name listToString(std::list<char> &&chlist) {
@@ -596,11 +581,9 @@ static inline Name listToString(std::list<char> &&chlist) {
   return result;
 }
 
-constexpr auto rawName =
-  applyFunction(listToString,
-    applyFunction(prepend<char>,
-                  nonDigitIdCharacter,
-                  many(nonDigitIdCharacter || digit)));
+constexpr auto rawName = applyFunction(listToString,
+    applyFunction(prepend<char>, nonDigitIdCharacter,
+        many(nonDigitIdCharacter || digit)));
 
 TYPE_PARSER(spaces >> rawName)
 
@@ -608,24 +591,22 @@ TYPE_PARSER(spaces >> rawName)
 //        int-literal-constant | real-literal-constant |
 //        complex-literal-constant | logical-literal-constant |
 //        char-literal-constant | boz-literal-constant
-TYPE_PARSER(
-  construct<LiteralConstant>{}(Parser<HollerithLiteralConstant>{}) ||
-  construct<LiteralConstant>{}(spaces >> realLiteralConstant) ||
-  construct<LiteralConstant>{}(intLiteralConstant) ||
-  construct<LiteralConstant>{}(Parser<ComplexLiteralConstant>{}) ||
-  construct<LiteralConstant>{}(Parser<BOZLiteralConstant>{}) ||
-  construct<LiteralConstant>{}(charLiteralConstant) ||
-  construct<LiteralConstant>{}(Parser<LogicalLiteralConstant>{}))
+TYPE_PARSER(construct<LiteralConstant>{}(Parser<HollerithLiteralConstant>{}) ||
+    construct<LiteralConstant>{}(spaces >> realLiteralConstant) ||
+    construct<LiteralConstant>{}(intLiteralConstant) ||
+    construct<LiteralConstant>{}(Parser<ComplexLiteralConstant>{}) ||
+    construct<LiteralConstant>{}(Parser<BOZLiteralConstant>{}) ||
+    construct<LiteralConstant>{}(charLiteralConstant) ||
+    construct<LiteralConstant>{}(Parser<LogicalLiteralConstant>{}))
 
 // R606 named-constant -> name
 TYPE_PARSER(construct<NamedConstant>{}(name))
 
 // R701 type-param-value -> scalar-int-expr | * | :
 constexpr auto star = "*" >> construct<Star>{};
-TYPE_PARSER(
-  construct<TypeParamValue>{}(scalarIntExpr) ||
-  construct<TypeParamValue>{}(star) ||
-  construct<TypeParamValue>{}(":" >> construct<TypeParamValue::Deferred>{}))
+TYPE_PARSER(construct<TypeParamValue>{}(scalarIntExpr) ||
+    construct<TypeParamValue>{}(star) ||
+    construct<TypeParamValue>{}(":" >> construct<TypeParamValue::Deferred>{}))
 
 // R702 type-spec -> intrinsic-type-spec | derived-type-spec
 // N.B. This type-spec production is one of two instances in the Fortran
@@ -634,8 +615,8 @@ TYPE_PARSER(
 // to disambiguate the cases where a derived type name begins with the name
 // of an intrinsic type, e.g., REALITY.
 TYPE_CONTEXT_PARSER("type spec",
-  construct<TypeSpec>{}(intrinsicTypeSpec / lookAhead("::"_tok || ")"_tok)) ||
-  construct<TypeSpec>{}(derivedTypeSpec))
+    construct<TypeSpec>{}(intrinsicTypeSpec / lookAhead("::"_tok || ")"_tok)) ||
+        construct<TypeSpec>{}(derivedTypeSpec))
 
 // R703 declaration-type-spec ->
 //        intrinsic-type-spec | TYPE ( intrinsic-type-spec ) |
@@ -646,20 +627,23 @@ TYPE_CONTEXT_PARSER("type spec",
 // would fail on "TYPE(real_derived)" with a misrecognition of "real" as an
 // intrinsic-type-spec.
 TYPE_CONTEXT_PARSER("declaration type spec",
-  construct<DeclarationTypeSpec>{}(intrinsicTypeSpec) ||
-  "TYPE" >> (
-    parenthesized(construct<DeclarationTypeSpec>{}(intrinsicTypeSpec)) ||
-    parenthesized(construct<DeclarationTypeSpec>{}(
-       construct<DeclarationTypeSpec::Type>{}(derivedTypeSpec))) ||
-    "( * )" >> construct<DeclarationTypeSpec>{}(
-      construct<DeclarationTypeSpec::TypeStar>{})) ||
-  "CLASS" >> parenthesized(
-    construct<DeclarationTypeSpec>{}(
-      construct<DeclarationTypeSpec::Class>{}(derivedTypeSpec)) ||
-    "*" >> construct<DeclarationTypeSpec>{}(
-      construct<DeclarationTypeSpec::ClassStar>{})) ||
-  extension("RECORD /" >> construct<DeclarationTypeSpec>{}(
-    construct<DeclarationTypeSpec::Record>{}(name / "/"))))
+    construct<DeclarationTypeSpec>{}(intrinsicTypeSpec) ||
+        "TYPE" >>
+            (parenthesized(
+                 construct<DeclarationTypeSpec>{}(intrinsicTypeSpec)) ||
+                parenthesized(construct<DeclarationTypeSpec>{}(
+                    construct<DeclarationTypeSpec::Type>{}(derivedTypeSpec))) ||
+                "( * )" >> construct<DeclarationTypeSpec>{}(
+                               construct<DeclarationTypeSpec::TypeStar>{})) ||
+        "CLASS" >>
+            parenthesized(
+                construct<DeclarationTypeSpec>{}(
+                    construct<DeclarationTypeSpec::Class>{}(derivedTypeSpec)) ||
+                "*" >> construct<DeclarationTypeSpec>{}(
+                           construct<DeclarationTypeSpec::ClassStar>{})) ||
+        extension("RECORD /" >>
+            construct<DeclarationTypeSpec>{}(
+                construct<DeclarationTypeSpec::Record>{}(name / "/"))))
 
 // R704 intrinsic-type-spec ->
 //        integer-type-spec | REAL [kind-selector] | DOUBLE PRECISION |
@@ -667,44 +651,47 @@ TYPE_CONTEXT_PARSER("declaration type spec",
 //        LOGICAL [kind-selector]
 // Extensions: DOUBLE COMPLEX, NCHARACTER, BYTE
 TYPE_CONTEXT_PARSER("intrinsic type spec",
-  construct<IntrinsicTypeSpec>{}(integerTypeSpec) ||
-  "REAL" >> construct<IntrinsicTypeSpec>{}(
-    construct<IntrinsicTypeSpec::Real>{}(maybe(kindSelector))) ||
-  "DOUBLE PRECISION" >> construct<IntrinsicTypeSpec>{}(
-    construct<IntrinsicTypeSpec::DoublePrecision>{}) ||
-  "COMPLEX" >> construct<IntrinsicTypeSpec>{}(
-    construct<IntrinsicTypeSpec::Complex>{}(maybe(kindSelector))) ||
-  "CHARACTER" >>construct<IntrinsicTypeSpec>{}(
-    construct<IntrinsicTypeSpec::Character>{}(maybe(Parser<CharSelector>{}))) ||
-  "LOGICAL" >> construct<IntrinsicTypeSpec>{}(
-    construct<IntrinsicTypeSpec::Logical>{}(maybe(kindSelector))) ||
-  "DOUBLE COMPLEX" >> construct<IntrinsicTypeSpec>{}(
-    extension(construct<IntrinsicTypeSpec::DoubleComplex>{})) ||
-  "NCHARACTER" >> construct<IntrinsicTypeSpec>{}(
-    extension(construct<IntrinsicTypeSpec::NCharacter>{}(
-      maybe(Parser<LengthSelector>{})))) ||
-  extension("BYTE" >> construct<IntrinsicTypeSpec>{}(
-    construct<IntegerTypeSpec>{}(construct<std::optional<KindSelector>>{}(
-      pure(1))))))
+    construct<IntrinsicTypeSpec>{}(integerTypeSpec) ||
+        "REAL" >>
+            construct<IntrinsicTypeSpec>{}(
+                construct<IntrinsicTypeSpec::Real>{}(maybe(kindSelector))) ||
+        "DOUBLE PRECISION" >>
+            construct<IntrinsicTypeSpec>{}(
+                construct<IntrinsicTypeSpec::DoublePrecision>{}) ||
+        "COMPLEX" >>
+            construct<IntrinsicTypeSpec>{}(
+                construct<IntrinsicTypeSpec::Complex>{}(maybe(kindSelector))) ||
+        "CHARACTER" >> construct<IntrinsicTypeSpec>{}(
+                           construct<IntrinsicTypeSpec::Character>{}(
+                               maybe(Parser<CharSelector>{}))) ||
+        "LOGICAL" >>
+            construct<IntrinsicTypeSpec>{}(
+                construct<IntrinsicTypeSpec::Logical>{}(maybe(kindSelector))) ||
+        "DOUBLE COMPLEX" >>
+            construct<IntrinsicTypeSpec>{}(
+                extension(construct<IntrinsicTypeSpec::DoubleComplex>{})) ||
+        "NCHARACTER" >> construct<IntrinsicTypeSpec>{}(extension(
+                            construct<IntrinsicTypeSpec::NCharacter>{}(
+                                maybe(Parser<LengthSelector>{})))) ||
+        extension("BYTE" >>
+            construct<IntrinsicTypeSpec>{}(construct<IntegerTypeSpec>{}(
+                construct<std::optional<KindSelector>>{}(pure(1))))))
 
 // R705 integer-type-spec -> INTEGER [kind-selector]
-TYPE_PARSER(construct<IntegerTypeSpec>{}(
-  "INTEGER" >> maybe(kindSelector)))
+TYPE_PARSER(construct<IntegerTypeSpec>{}("INTEGER" >> maybe(kindSelector)))
 
 // R706 kind-selector -> ( [KIND =] scalar-int-constant-expr )
 // Extension:
 //   kind-selector -> * digit-string
-constexpr auto extStarKindExpr =
-  extension("*"_tok >>
-    (scalar(integer(constant(indirect(
-       construct<Expr>{}(construct<LiteralConstant>{}(
-         construct<IntLiteralConstant>{}(
-           spaces >> digitString,
-           construct<std::optional<KindParam>>{})))))))));
+constexpr auto extStarKindExpr = extension("*"_tok >>
+    (scalar(integer(
+        constant(indirect(construct<Expr>{}(construct<LiteralConstant>{}(
+            construct<IntLiteralConstant>{}(spaces >> digitString,
+                construct<std::optional<KindParam>>{})))))))));
 
 TYPE_PARSER(construct<KindSelector>{}(
-  parenthesized(maybe("KIND ="_tok) >> scalarIntConstantExpr) ||
-  extStarKindExpr))
+    parenthesized(maybe("KIND ="_tok) >> scalarIntConstantExpr) ||
+    extStarKindExpr))
 
 // R707 signed-int-literal-constant -> [sign] int-literal-constant
 static inline std::int64_t negate(std::uint64_t &&n) {
@@ -715,37 +702,33 @@ static inline std::int64_t castToSigned(std::uint64_t &&n) {
   return n;  // TODO: check for overflow
 }
 
-TYPE_PARSER(
-  spaces >> construct<SignedIntLiteralConstant>{}(
-    CharMatch<'-'>{} >> applyFunction(negate, digitString) ||
-      maybe(CharMatch<'+'>{}) >> applyFunction(castToSigned, digitString),
-    maybe(underscore >> kindParam)))
+TYPE_PARSER(spaces >>
+    construct<SignedIntLiteralConstant>{}(
+        CharMatch<'-'>{} >> applyFunction(negate, digitString) ||
+            maybe(CharMatch<'+'>{}) >> applyFunction(castToSigned, digitString),
+        maybe(underscore >> kindParam)))
 
 // R708 int-literal-constant -> digit-string [_ kind-param]
-TYPE_PARSER(
-  construct<IntLiteralConstant>{}(spaces >> digitString,
-                                  maybe(underscore >> kindParam)))
+TYPE_PARSER(construct<IntLiteralConstant>{}(
+    spaces >> digitString, maybe(underscore >> kindParam)))
 
 // R709 kind-param -> digit-string | scalar-int-constant-name
-TYPE_PARSER(
-  construct<KindParam>{}(digitString) ||
-  construct<KindParam>{}(scalar(integer(constant(name)))))
+TYPE_PARSER(construct<KindParam>{}(digitString) ||
+    construct<KindParam>{}(scalar(integer(constant(name)))))
 
 // R710 signed-digit-string -> [sign] digit-string
 // N.B. Not a complete token -- no spaces are skipped.
-constexpr auto signedDigitString =
-  CharMatch<'-'>{} >> applyFunction(negate, digitString) ||
-  maybe(CharMatch<'+'>{}) >> digitString;
+constexpr auto signedDigitString = CharMatch<'-'>{} >>
+        applyFunction(negate, digitString) ||
+    maybe(CharMatch<'+'>{}) >> digitString;
 
 // R712 sign -> + | -
 // Not a complete token.
-constexpr auto sign =
-  CharMatch<'+'>{} >> pure(Sign::Positive) ||
-  CharMatch<'-'>{} >> pure(Sign::Negative);
+constexpr auto sign = CharMatch<'+'>{} >> pure(Sign::Positive) ||
+    CharMatch<'-'>{} >> pure(Sign::Negative);
 
 // R713 signed-real-literal-constant -> [sign] real-literal-constant
-constexpr auto signedRealLiteralConstant =
-  spaces >>
+constexpr auto signedRealLiteralConstant = spaces >>
     construct<SignedRealLiteralConstant>{}(maybe(sign), realLiteralConstant);
 
 // R714 real-literal-constant ->
@@ -754,21 +737,15 @@ constexpr auto signedRealLiteralConstant =
 // R715 significand -> digit-string . [digit-string] | . digit-string
 // N.B. Preceding spaces are not skipped.
 TYPE_CONTEXT_PARSER("REAL literal constant",
-  construct<RealLiteralConstant>{}(
-    some(digit),
-    CharMatch<'.'>{} >>
-      !(some(letter) >> CharMatch<'.'>{}) >>  // don't misinterpret 1.AND.
-      many(digit),
-    maybe(exponentPart),
-    maybe(underscore >> kindParam)) ||
-  construct<RealLiteralConstant>{}(
-    CharMatch<'.'>{} >> some(digit),
-    maybe(exponentPart),
-    maybe(underscore >> kindParam)) ||
-  construct<RealLiteralConstant>{}(
-    some(digit),
-    exponentPart,
-    maybe(underscore >> kindParam)))
+    construct<RealLiteralConstant>{}(some(digit),
+        CharMatch<'.'>{} >>
+            !(some(letter) >> CharMatch<'.'>{}) >>  // don't misinterpret 1.AND.
+            many(digit),
+        maybe(exponentPart), maybe(underscore >> kindParam)) ||
+        construct<RealLiteralConstant>{}(CharMatch<'.'>{} >> some(digit),
+            maybe(exponentPart), maybe(underscore >> kindParam)) ||
+        construct<RealLiteralConstant>{}(
+            some(digit), exponentPart, maybe(underscore >> kindParam)))
 
 // R716 exponent-letter -> E | D
 // Extension: Q
@@ -780,26 +757,23 @@ inline constexpr bool isEorD(char ch) {
 
 inline constexpr bool isQ(char ch) { return tolower(ch) == 'q'; }
 
-constexpr CharPredicateGuardParser
-  exponentEorD{isEorD, "expected exponent letter"},
-  exponentQ{isQ, "expected exponent letter"};
+constexpr CharPredicateGuardParser exponentEorD{
+    isEorD, "expected exponent letter"},
+    exponentQ{isQ, "expected exponent letter"};
 
 // R717 exponent -> signed-digit-string
 // Not a complete token.
 TYPE_PARSER(construct<ExponentPart>{}(
-  extension(exponentQ) || exponentEorD,
-  signedDigitString))
+    extension(exponentQ) || exponentEorD, signedDigitString))
 
 // R718 complex-literal-constant -> ( real-part , imag-part )
 TYPE_CONTEXT_PARSER("COMPLEX literal constant",
-  parenthesized(construct<ComplexLiteralConstant>{}(
-    Parser<ComplexPart>{} / ",",
-    Parser<ComplexPart>{})))
+    parenthesized(construct<ComplexLiteralConstant>{}(
+        Parser<ComplexPart>{} / ",", Parser<ComplexPart>{})))
 
 // PGI/Intel extension: signed complex literal constant
 TYPE_PARSER(construct<SignedComplexLiteralConstant>{}(
-  spaces >> sign,
-  Parser<ComplexLiteralConstant>{}))
+    spaces >> sign, Parser<ComplexLiteralConstant>{}))
 
 // R719 real-part ->
 //        signed-int-literal-constant | signed-real-literal-constant |
@@ -807,42 +781,35 @@ TYPE_PARSER(construct<SignedComplexLiteralConstant>{}(
 // R720 imag-part ->
 //        signed-int-literal-constant | signed-real-literal-constant |
 //        named-constant
-TYPE_PARSER(
-  construct<ComplexPart>{}(signedRealLiteralConstant) ||
-  construct<ComplexPart>{}(signedIntLiteralConstant) ||
-  construct<ComplexPart>{}(namedConstant))
+TYPE_PARSER(construct<ComplexPart>{}(signedRealLiteralConstant) ||
+    construct<ComplexPart>{}(signedIntLiteralConstant) ||
+    construct<ComplexPart>{}(namedConstant))
 
 // R721 char-selector ->
 //        length-selector |
 //        ( LEN = type-param-value , KIND = scalar-int-constant-expr ) |
 //        ( type-param-value , [KIND =] scalar-int-constant-expr ) |
 //        ( KIND = scalar-int-constant-expr [, LEN = type-param-value] )
-TYPE_PARSER(
-  construct<CharSelector>{}(Parser<LengthSelector>{}) ||
-  parenthesized(construct<CharSelector>{}(
-    "LEN =" >> typeParamValue,
-    ", KIND =" >> scalarIntConstantExpr)) ||
-  parenthesized(construct<CharSelector>{}(
-    typeParamValue / ",",
-    maybe("KIND ="_tok) >> scalarIntConstantExpr)) ||
-  parenthesized(construct<CharSelector>{}(
-    "KIND =" >> scalarIntConstantExpr,
-    maybe(", LEN =" >> typeParamValue))))
+TYPE_PARSER(construct<CharSelector>{}(Parser<LengthSelector>{}) ||
+    parenthesized(construct<CharSelector>{}(
+        "LEN =" >> typeParamValue, ", KIND =" >> scalarIntConstantExpr)) ||
+    parenthesized(construct<CharSelector>{}(
+        typeParamValue / ",", maybe("KIND ="_tok) >> scalarIntConstantExpr)) ||
+    parenthesized(construct<CharSelector>{}(
+        "KIND =" >> scalarIntConstantExpr, maybe(", LEN =" >> typeParamValue))))
 
 // R722 length-selector -> ( [LEN =] type-param-value ) | * char-length [,]
 // N.B. The trailing [,] in the production is permitted by the Standard
 // only in the context of a type-declaration-stmt, but even with that
 // limitation, it would seem to be unnecessary and buggy to consume the comma
 // here.
-TYPE_PARSER(
-  construct<LengthSelector>{}(
-    parenthesized(maybe("LEN ="_tok) >> typeParamValue)) ||
-  construct<LengthSelector>{}("*" >> charLength /* / maybe(","_tok) */))
+TYPE_PARSER(construct<LengthSelector>{}(
+                parenthesized(maybe("LEN ="_tok) >> typeParamValue)) ||
+    construct<LengthSelector>{}("*" >> charLength /* / maybe(","_tok) */))
 
 // R723 char-length -> ( type-param-value ) | digit-string
-TYPE_PARSER(
-  construct<CharLength>{}(parenthesized(typeParamValue)) ||
-  construct<CharLength>{}(spaces >> digitString))
+TYPE_PARSER(construct<CharLength>{}(parenthesized(typeParamValue)) ||
+    construct<CharLength>{}(spaces >> digitString))
 
 // R724 char-literal-constant ->
 //        [kind-param _] ' [rep-char]... ' |
@@ -853,72 +820,64 @@ TYPE_PARSER(
 // N.B. charLiteralConstantWithoutKind does not skip preceding spaces.
 // N.B. the parsing of "name" in takes care to not consume the '_'.
 constexpr auto charLiteralConstantWithoutKind =
-  CharMatch<'\''>{} >> CharLiteral<'\''>{} ||
-  CharMatch<'"'>{} >> CharLiteral<'"'>{};
+    CharMatch<'\''>{} >> CharLiteral<'\''>{} ||
+    CharMatch<'"'>{} >> CharLiteral<'"'>{};
 
 TYPE_CONTEXT_PARSER("CHARACTER literal constant",
-  construct<CharLiteralConstant>{}(
-    kindParam / underscore,
-    charLiteralConstantWithoutKind) ||
-  construct<CharLiteralConstant>{}(
-    construct<std::optional<KindParam>>{},
-    spaces >> charLiteralConstantWithoutKind) ||
-  construct<CharLiteralConstant>{}(
-    "NC" >> construct<std::optional<KindParam>>{}(construct<KindParam>{}(
-      construct<KindParam::Kanji>{})),
-    charLiteralConstantWithoutKind))
+    construct<CharLiteralConstant>{}(
+        kindParam / underscore, charLiteralConstantWithoutKind) ||
+        construct<CharLiteralConstant>{}(construct<std::optional<KindParam>>{},
+            spaces >> charLiteralConstantWithoutKind) ||
+        construct<CharLiteralConstant>{}(
+            "NC" >> construct<std::optional<KindParam>>{}(
+                        construct<KindParam>{}(construct<KindParam::Kanji>{})),
+            charLiteralConstantWithoutKind))
 
 // deprecated: Hollerith literals
 constexpr auto rawHollerithLiteral = deprecated(HollerithLiteral{});
 
-TYPE_CONTEXT_PARSER("Hollerith",
-  construct<HollerithLiteralConstant>{}(rawHollerithLiteral))
+TYPE_CONTEXT_PARSER(
+    "Hollerith", construct<HollerithLiteralConstant>{}(rawHollerithLiteral))
 
 // R725 logical-literal-constant -> .TRUE. | .FALSE.
 // Also accept .T. and .F. as extensions.
-TYPE_PARSER(
-  ".TRUE." >> construct<LogicalLiteralConstant>{}(pure(true)) ||
-  ".FALSE." >> construct<LogicalLiteralConstant>{}(pure(false)) ||
-  // PGI/Cray extensions
-  extension(".T."_tok >> construct<LogicalLiteralConstant>{}(pure(true))) ||
-  extension(".F."_tok >> construct<LogicalLiteralConstant>{}(pure(false))))
+TYPE_PARSER(".TRUE." >> construct<LogicalLiteralConstant>{}(pure(true)) ||
+    ".FALSE." >> construct<LogicalLiteralConstant>{}(pure(false)) ||
+    // PGI/Cray extensions
+    extension(".T."_tok >> construct<LogicalLiteralConstant>{}(pure(true))) ||
+    extension(".F."_tok >> construct<LogicalLiteralConstant>{}(pure(false))))
 
 // R726 derived-type-def ->
 //        derived-type-stmt [type-param-def-stmt]... [private-or-sequence]...
 //        [component-part] [type-bound-procedure-part] end-type-stmt
 // R735 component-part -> [component-def-stmt]...
-TYPE_CONTEXT_PARSER("derived type definition", construct<DerivedTypeDef>{}(
-  statement(Parser<DerivedTypeStmt>{}),
-  many(statement(Parser<TypeParamDefStmt>{})),
-  many(statement(Parser<PrivateOrSequence>{})),
-  many(statement(Parser<ComponentDefStmt>{})),
-  maybe(Parser<TypeBoundProcedurePart>{}),
-  statement(Parser<EndTypeStmt>{})))
+TYPE_CONTEXT_PARSER("derived type definition",
+    construct<DerivedTypeDef>{}(statement(Parser<DerivedTypeStmt>{}),
+        many(statement(Parser<TypeParamDefStmt>{})),
+        many(statement(Parser<PrivateOrSequence>{})),
+        many(statement(Parser<ComponentDefStmt>{})),
+        maybe(Parser<TypeBoundProcedurePart>{}),
+        statement(Parser<EndTypeStmt>{})))
 
 // R727 derived-type-stmt ->
 //        TYPE [[, type-attr-spec-list] ::] type-name [( type-param-name-list )]
 TYPE_CONTEXT_PARSER("TYPE statement",
-  "TYPE" >>
-    construct<DerivedTypeStmt>{}(
-      optionalBeforeColons(nonemptyList(Parser<TypeAttrSpec>{})),
-      name,
-      defaulted(parenthesized(nonemptyList(name)))))
+    "TYPE" >> construct<DerivedTypeStmt>{}(
+                  optionalBeforeColons(nonemptyList(Parser<TypeAttrSpec>{})),
+                  name, defaulted(parenthesized(nonemptyList(name)))))
 
 // R728 type-attr-spec ->
 //        ABSTRACT | access-spec | BIND(C) | EXTENDS ( parent-type-name )
-TYPE_PARSER(
-  construct<TypeAttrSpec>{}(
-    "ABSTRACT" >> construct<Abstract>{}) ||
-  construct<TypeAttrSpec>{}(
-    "BIND ( C )" >> construct<TypeAttrSpec::BindC>{}) ||
-  construct<TypeAttrSpec>{}(
-    "EXTENDS" >> construct<TypeAttrSpec::Extends>{}(parenthesized(name))) ||
-  construct<TypeAttrSpec>{}(accessSpec))
+TYPE_PARSER(construct<TypeAttrSpec>{}("ABSTRACT" >> construct<Abstract>{}) ||
+    construct<TypeAttrSpec>{}(
+        "BIND ( C )" >> construct<TypeAttrSpec::BindC>{}) ||
+    construct<TypeAttrSpec>{}(
+        "EXTENDS" >> construct<TypeAttrSpec::Extends>{}(parenthesized(name))) ||
+    construct<TypeAttrSpec>{}(accessSpec))
 
 // R729 private-or-sequence -> private-components-stmt | sequence-stmt
-TYPE_PARSER(
-  construct<PrivateOrSequence>{}(Parser<PrivateStmt>{}) ||
-  construct<PrivateOrSequence>{}(Parser<SequenceStmt>{}))
+TYPE_PARSER(construct<PrivateOrSequence>{}(Parser<PrivateStmt>{}) ||
+    construct<PrivateOrSequence>{}(Parser<SequenceStmt>{}))
 
 // R730 end-type-stmt -> END TYPE [type-name]
 TYPE_PARSER("END TYPE" >> construct<EndTypeStmt>{}(maybe(name)))
@@ -929,32 +888,27 @@ TYPE_PARSER("SEQUENCE" >> construct<SequenceStmt>{})
 // R732 type-param-def-stmt ->
 //        integer-type-spec , type-param-attr-spec :: type-param-decl-list
 // R734 type-param-attr-spec -> KIND | LEN
-TYPE_PARSER(
-  construct<TypeParamDefStmt>{}(
-    integerTypeSpec / ",",
+TYPE_PARSER(construct<TypeParamDefStmt>{}(integerTypeSpec / ",",
     "KIND" >> pure(TypeParamDefStmt::KindOrLength::Kind) ||
-      "LEN" >> pure(TypeParamDefStmt::KindOrLength::Length),
+        "LEN" >> pure(TypeParamDefStmt::KindOrLength::Length),
     "::" >> nonemptyList(Parser<TypeParamDecl>{})))
 
 // R733 type-param-decl -> type-param-name [= scalar-int-constant-expr]
-TYPE_PARSER(construct<TypeParamDecl>{}(
-  name,
-  maybe("=" >> scalarIntConstantExpr)))
+TYPE_PARSER(
+    construct<TypeParamDecl>{}(name, maybe("=" >> scalarIntConstantExpr)))
 
 // R736 component-def-stmt -> data-component-def-stmt | proc-component-def-stmt
-TYPE_PARSER(
-  construct<ComponentDefStmt>{}(Parser<DataComponentDefStmt>{}) ||
-  construct<ComponentDefStmt>{}(Parser<ProcComponentDefStmt>{})
-  // Accidental extension: PGI accepts type-param-def-stmt in
-  // component-part of derived-type-def.  Not enabled here.
-  //  || extension(construct<ComponentDefStmt>{}(Parser<TypeParamDefStmt>{})
+TYPE_PARSER(construct<ComponentDefStmt>{}(Parser<DataComponentDefStmt>{}) ||
+    construct<ComponentDefStmt>{}(Parser<ProcComponentDefStmt>{})
+    // Accidental extension: PGI accepts type-param-def-stmt in
+    // component-part of derived-type-def.  Not enabled here.
+    //  || extension(construct<ComponentDefStmt>{}(Parser<TypeParamDefStmt>{})
 )
 
 // R737 data-component-def-stmt ->
 //        declaration-type-spec [[, component-attr-spec-list] ::]
 //        component-decl-list
-TYPE_PARSER(construct<DataComponentDefStmt>{}(
-    declarationTypeSpec,
+TYPE_PARSER(construct<DataComponentDefStmt>{}(declarationTypeSpec,
     optionalBeforeColons(nonemptyList(Parser<ComponentAttrSpec>{})),
     nonemptyList(Parser<ComponentDecl>{})))
 
@@ -965,54 +919,46 @@ TYPE_PARSER(construct<DataComponentDefStmt>{}(
 constexpr auto allocatable = "ALLOCATABLE" >> construct<Allocatable>{};
 constexpr auto contiguous = "CONTIGUOUS" >> construct<Contiguous>{};
 constexpr auto pointer = "POINTER" >> construct<Pointer>{};
-TYPE_PARSER(
-  construct<ComponentAttrSpec>{}(accessSpec) ||
-  construct<ComponentAttrSpec>{}(allocatable) ||
-  "CODIMENSION" >> construct<ComponentAttrSpec>{}(coarraySpec) ||
-  construct<ComponentAttrSpec>{}(contiguous) ||
-  "DIMENSION" >> construct<ComponentAttrSpec>{}(Parser<ComponentArraySpec>{}) ||
-  construct<ComponentAttrSpec>{}(pointer))
+TYPE_PARSER(construct<ComponentAttrSpec>{}(accessSpec) ||
+    construct<ComponentAttrSpec>{}(allocatable) ||
+    "CODIMENSION" >> construct<ComponentAttrSpec>{}(coarraySpec) ||
+    construct<ComponentAttrSpec>{}(contiguous) ||
+    "DIMENSION" >>
+        construct<ComponentAttrSpec>{}(Parser<ComponentArraySpec>{}) ||
+    construct<ComponentAttrSpec>{}(pointer))
 
 // R739 component-decl ->
 //        component-name [( component-array-spec )]
 //        [lbracket coarray-spec rbracket] [* char-length]
 //        [component-initialization]
 TYPE_CONTEXT_PARSER("component declaration",
-  construct<ComponentDecl>{}(
-    name,
-    maybe(Parser<ComponentArraySpec>{}),
-    maybe(coarraySpec),
-    maybe("*" >> charLength),
-    maybe(initialization)))
+    construct<ComponentDecl>{}(name, maybe(Parser<ComponentArraySpec>{}),
+        maybe(coarraySpec), maybe("*" >> charLength), maybe(initialization)))
 
 // R740 component-array-spec ->
 //        explicit-shape-spec-list | deferred-shape-spec-list
 // N.B. Parenthesized here rather than around references to this production.
-TYPE_PARSER(
-  construct<ComponentArraySpec>{}(
-    parenthesized(nonemptyList(explicitShapeSpec))) ||
-  construct<ComponentArraySpec>{}(
-    parenthesized(deferredShapeSpecList)))
+TYPE_PARSER(construct<ComponentArraySpec>{}(
+                parenthesized(nonemptyList(explicitShapeSpec))) ||
+    construct<ComponentArraySpec>{}(parenthesized(deferredShapeSpecList)))
 
 // R741 proc-component-def-stmt ->
 //        PROCEDURE ( [proc-interface] ) , proc-component-attr-spec-list
 //          :: proc-decl-list
 TYPE_CONTEXT_PARSER("PROCEDURE component definition statement",
-  "PROCEDURE" >>
-    construct<ProcComponentDefStmt>{}(
-      parenthesized(maybe(procInterface)),
-      "," >> nonemptyList(Parser<ProcComponentAttrSpec>{}) / "::",
-      nonemptyList(procDecl)))
+    "PROCEDURE" >>
+        construct<ProcComponentDefStmt>{}(parenthesized(maybe(procInterface)),
+            "," >> nonemptyList(Parser<ProcComponentAttrSpec>{}) / "::",
+            nonemptyList(procDecl)))
 
 // R742 proc-component-attr-spec ->
 //        access-spec | NOPASS | PASS [(arg-name)] | POINTER
 constexpr auto noPass = "NOPASS" >> construct<NoPass>{};
 constexpr auto pass = "PASS" >> construct<Pass>{}(maybe(parenthesized(name)));
-TYPE_PARSER(
-  construct<ProcComponentAttrSpec>{}(accessSpec) ||
-  construct<ProcComponentAttrSpec>{}(noPass) ||
-  construct<ProcComponentAttrSpec>{}(pass) ||
-  construct<ProcComponentAttrSpec>{}(pointer))
+TYPE_PARSER(construct<ProcComponentAttrSpec>{}(accessSpec) ||
+    construct<ProcComponentAttrSpec>{}(noPass) ||
+    construct<ProcComponentAttrSpec>{}(pass) ||
+    construct<ProcComponentAttrSpec>{}(pointer))
 
 // R744 initial-data-target -> designator
 constexpr auto initialDataTarget = indirect(designator);
@@ -1022,12 +968,12 @@ constexpr auto initialDataTarget = indirect(designator);
 // R805 initialization ->
 //        = constant-expr | => null-init | => initial-data-target
 // Universal extension: initialization -> / data-stmt-value-list /
-TYPE_PARSER(
-  "=>" >> construct<Initialization>{}(nullInit) ||
-  "=>" >> construct<Initialization>{}(initialDataTarget) ||
-  "=" >> construct<Initialization>{}(constantExpr) ||
-  extension("/" >> construct<Initialization>{}(
-    nonemptyList(indirect(Parser<DataStmtValue>{}))) / "/"))
+TYPE_PARSER("=>" >> construct<Initialization>{}(nullInit) ||
+    "=>" >> construct<Initialization>{}(initialDataTarget) ||
+    "=" >> construct<Initialization>{}(constantExpr) ||
+    extension("/" >> construct<Initialization>{}(
+                         nonemptyList(indirect(Parser<DataStmtValue>{}))) /
+            "/"))
 
 // R745 private-components-stmt -> PRIVATE
 // R747 binding-private-stmt -> PRIVATE
@@ -1036,33 +982,32 @@ TYPE_PARSER("PRIVATE" >> construct<PrivateStmt>{})
 // R746 type-bound-procedure-part ->
 //        contains-stmt [binding-private-stmt] [type-bound-proc-binding]...
 TYPE_CONTEXT_PARSER("type bound procedure part",
-  construct<TypeBoundProcedurePart>{}(
-    statement(containsStmt),
-    maybe(statement(Parser<PrivateStmt>{})),
-    many(statement(Parser<TypeBoundProcBinding>{}))))
+    construct<TypeBoundProcedurePart>{}(statement(containsStmt),
+        maybe(statement(Parser<PrivateStmt>{})),
+        many(statement(Parser<TypeBoundProcBinding>{}))))
 
 // R748 type-bound-proc-binding ->
 //        type-bound-procedure-stmt | type-bound-generic-stmt |
 //        final-procedure-stmt
 TYPE_PARSER(
-  construct<TypeBoundProcBinding>{}(Parser<TypeBoundProcedureStmt>{}) ||
-  construct<TypeBoundProcBinding>{}(Parser<TypeBoundGenericStmt>{}) ||
-  construct<TypeBoundProcBinding>{}(Parser<FinalProcedureStmt>{}))
+    construct<TypeBoundProcBinding>{}(Parser<TypeBoundProcedureStmt>{}) ||
+    construct<TypeBoundProcBinding>{}(Parser<TypeBoundGenericStmt>{}) ||
+    construct<TypeBoundProcBinding>{}(Parser<FinalProcedureStmt>{}))
 
 // R749 type-bound-procedure-stmt ->
 //        PROCEDURE [[, bind-attr-list] ::] type-bound-proc-decl-list |
 //        PROCEDURE ( interface-name ) , bind-attr-list :: binding-name-list
 TYPE_CONTEXT_PARSER("type bound PROCEDURE statement",
-  "PROCEDURE" >> (
-    construct<TypeBoundProcedureStmt>{}(
-      construct<TypeBoundProcedureStmt::WithInterface>{}(
-        parenthesized(name) / ",",
-        nonemptyList(Parser<BindAttr>{}) / "::",
-        nonemptyList(name))) ||
-    construct<TypeBoundProcedureStmt>{}(
-      construct<TypeBoundProcedureStmt::WithoutInterface>{}(
-        optionalBeforeColons(nonemptyList(Parser<BindAttr>{})),
-        nonemptyList(Parser<TypeBoundProcDecl>{})))))
+    "PROCEDURE" >>
+        (construct<TypeBoundProcedureStmt>{}(
+             construct<TypeBoundProcedureStmt::WithInterface>{}(
+                 parenthesized(name) / ",",
+                 nonemptyList(Parser<BindAttr>{}) / "::",
+                 nonemptyList(name))) ||
+            construct<TypeBoundProcedureStmt>{}(
+                construct<TypeBoundProcedureStmt::WithoutInterface>{}(
+                    optionalBeforeColons(nonemptyList(Parser<BindAttr>{})),
+                    nonemptyList(Parser<TypeBoundProcDecl>{})))))
 
 // R750 type-bound-proc-decl -> binding-name [=> procedure-name]
 TYPE_PARSER(construct<TypeBoundProcDecl>{}(name, maybe("=>" >> name)))
@@ -1070,49 +1015,42 @@ TYPE_PARSER(construct<TypeBoundProcDecl>{}(name, maybe("=>" >> name)))
 // R751 type-bound-generic-stmt ->
 //        GENERIC [, access-spec] :: generic-spec => binding-name-list
 TYPE_CONTEXT_PARSER("type bound GENERIC statement",
-  "GENERIC" >> construct<TypeBoundGenericStmt>{}(
-    maybe("," >> accessSpec),
-    "::" >> indirect(genericSpec),
-    "=>" >> nonemptyList(name)))
+    "GENERIC" >> construct<TypeBoundGenericStmt>{}(maybe("," >> accessSpec),
+                     "::" >> indirect(genericSpec), "=>" >> nonemptyList(name)))
 
 // R752 bind-attr ->
 //        access-spec | DEFERRED | NON_OVERRIDABLE | NOPASS | PASS [(arg-name)]
-TYPE_PARSER(
-  construct<BindAttr>{}(accessSpec) ||
-  "DEFERRED" >> construct<BindAttr>{}(construct<BindAttr::Deferred>{}) ||
-  "NON_OVERRIDABLE" >>
-    construct<BindAttr>{}(construct<BindAttr::Non_Overridable>{}) ||
-  construct<BindAttr>{}(noPass) ||
-  construct<BindAttr>{}(pass))
+TYPE_PARSER(construct<BindAttr>{}(accessSpec) ||
+    "DEFERRED" >> construct<BindAttr>{}(construct<BindAttr::Deferred>{}) ||
+    "NON_OVERRIDABLE" >>
+        construct<BindAttr>{}(construct<BindAttr::Non_Overridable>{}) ||
+    construct<BindAttr>{}(noPass) || construct<BindAttr>{}(pass))
 
 // R753 final-procedure-stmt -> FINAL [::] final-subroutine-name-list
 TYPE_CONTEXT_PARSER("FINAL statement",
-  "FINAL" >> maybe("::"_tok) >>
-    construct<FinalProcedureStmt>{}(nonemptyList(name)))
+    "FINAL" >> maybe("::"_tok) >>
+        construct<FinalProcedureStmt>{}(nonemptyList(name)))
 
 // R754 derived-type-spec -> type-name [(type-param-spec-list)]
 TYPE_PARSER(construct<DerivedTypeSpec>{}(
-  name,
-  defaulted(parenthesized(nonemptyList(Parser<TypeParamSpec>{})))))
+    name, defaulted(parenthesized(nonemptyList(Parser<TypeParamSpec>{})))))
 
 // R755 type-param-spec -> [keyword =] type-param-value
 TYPE_PARSER(construct<TypeParamSpec>{}(maybe(keyword / "="), typeParamValue))
 
 // R756 structure-constructor -> derived-type-spec ( [component-spec-list] )
-TYPE_PARSER(
-  construct<StructureConstructor>{}(
-    derivedTypeSpec,
-    parenthesized(optionalList(Parser<ComponentSpec>{}))) ||
-  // This alternative corrects misrecognition of the component-spec-list as
-  // the type-param-spec-list in derived-type-spec.
-  construct<StructureConstructor>{}(
-    construct<DerivedTypeSpec>{}(name, construct<std::list<TypeParamSpec>>{}),
-    parenthesized(optionalList(Parser<ComponentSpec>{}))))
+TYPE_PARSER(construct<StructureConstructor>{}(derivedTypeSpec,
+                parenthesized(optionalList(Parser<ComponentSpec>{}))) ||
+    // This alternative corrects misrecognition of the component-spec-list as
+    // the type-param-spec-list in derived-type-spec.
+    construct<StructureConstructor>{}(
+        construct<DerivedTypeSpec>{}(
+            name, construct<std::list<TypeParamSpec>>{}),
+        parenthesized(optionalList(Parser<ComponentSpec>{}))))
 
 // R757 component-spec -> [keyword =] component-data-source
 TYPE_PARSER(construct<ComponentSpec>{}(
-  maybe(keyword / "="),
-  Parser<ComponentDataSource>{}))
+    maybe(keyword / "="), Parser<ComponentDataSource>{}))
 
 // R758 component-data-source -> expr | data-target | proc-target
 TYPE_PARSER(construct<ComponentDataSource>{}(indirect(expr)))
@@ -1120,22 +1058,22 @@ TYPE_PARSER(construct<ComponentDataSource>{}(indirect(expr)))
 // R759 enum-def ->
 //        enum-def-stmt enumerator-def-stmt [enumerator-def-stmt]...
 //        end-enum-stmt
-TYPE_CONTEXT_PARSER("enum definition", construct<EnumDef>{}(
-  statement(Parser<EnumDefStmt>{}),
-  some(statement(Parser<EnumeratorDefStmt>{})),
-  statement(Parser<EndEnumStmt>{})))
+TYPE_CONTEXT_PARSER("enum definition",
+    construct<EnumDef>{}(statement(Parser<EnumDefStmt>{}),
+        some(statement(Parser<EnumeratorDefStmt>{})),
+        statement(Parser<EndEnumStmt>{})))
 
 // R760 enum-def-stmt -> ENUM, BIND(C)
 TYPE_PARSER("ENUM , BIND ( C )" >> construct<EnumDefStmt>{})
 
 // R761 enumerator-def-stmt -> ENUMERATOR [::] enumerator-list
-TYPE_CONTEXT_PARSER("ENUMERATOR statement", construct<EnumeratorDefStmt>{}(
-  "ENUMERATOR" >> maybe("::"_tok) >> nonemptyList(Parser<Enumerator>{})))
+TYPE_CONTEXT_PARSER("ENUMERATOR statement",
+    construct<EnumeratorDefStmt>{}(
+        "ENUMERATOR" >> maybe("::"_tok) >> nonemptyList(Parser<Enumerator>{})))
 
 // R762 enumerator -> named-constant [= scalar-int-constant-expr]
-TYPE_PARSER(construct<Enumerator>{}(
-  namedConstant,
-  maybe("=" >> scalarIntConstantExpr)))
+TYPE_PARSER(
+    construct<Enumerator>{}(namedConstant, maybe("=" >> scalarIntConstantExpr)))
 
 // R763 end-enum-stmt -> END ENUM
 TYPE_PARSER("END ENUM" >> construct<EndEnumStmt>{})
@@ -1152,57 +1090,50 @@ TYPE_PARSER(construct<BOZLiteralConstant>{}(BOZLiteral{}))
 // R1124 do-variable -> scalar-int-variable-name
 constexpr auto doVariable = scalar(integer(name));
 
-template<typename PA>
-inline constexpr auto loopBounds(const PA &p) {
+template<typename PA> inline constexpr auto loopBounds(const PA &p) {
   return construct<LoopBounds<typename PA::resultType>>{}(
-           doVariable / "=", p / ",", p, maybe("," >> p));
+      doVariable / "=", p / ",", p, maybe("," >> p));
 }
 
 // R769 array-constructor -> (/ ac-spec /) | lbracket ac-spec rbracket
-TYPE_CONTEXT_PARSER("array constructor", construct<ArrayConstructor>{}(
-  "(/" >> Parser<AcSpec>{} / "/)" ||
-  bracketed(Parser<AcSpec>{})))
+TYPE_CONTEXT_PARSER("array constructor",
+    construct<ArrayConstructor>{}(
+        "(/" >> Parser<AcSpec>{} / "/)" || bracketed(Parser<AcSpec>{})))
 
 // R770 ac-spec -> type-spec :: | [type-spec ::] ac-value-list
-TYPE_PARSER(
-  construct<AcSpec>{}(
-    maybe(indirect(typeSpec) / "::"),
-    nonemptyList(Parser<AcValue>{})) ||
-  construct<AcSpec>{}(indirect(typeSpec)))
+TYPE_PARSER(construct<AcSpec>{}(maybe(indirect(typeSpec) / "::"),
+                nonemptyList(Parser<AcValue>{})) ||
+    construct<AcSpec>{}(indirect(typeSpec)))
 
 // R773 ac-value -> expr | ac-implied-do
 TYPE_PARSER(
-  // PGI/Intel extension: accept triplets in array constructors
-  extension(construct<AcValue>{}(construct<AcValue::Triplet>{}(
-    scalarIntExpr, ":" >> scalarIntExpr, maybe(":" >> scalarIntExpr)))) ||
-  construct<AcValue>{}(indirect(expr)) ||
-  construct<AcValue>{}(indirect(Parser<AcImpliedDo>{})))
+    // PGI/Intel extension: accept triplets in array constructors
+    extension(construct<AcValue>{}(construct<AcValue::Triplet>{}(
+        scalarIntExpr, ":" >> scalarIntExpr, maybe(":" >> scalarIntExpr)))) ||
+    construct<AcValue>{}(indirect(expr)) ||
+    construct<AcValue>{}(indirect(Parser<AcImpliedDo>{})))
 
 // R774 ac-implied-do -> ( ac-value-list , ac-implied-do-control )
 TYPE_PARSER(parenthesized(construct<AcImpliedDo>{}(
-  nonemptyList(Parser<AcValue>{} / lookAhead(","_tok)),
-  "," >> Parser<AcImpliedDoControl>{})))
+    nonemptyList(Parser<AcValue>{} / lookAhead(","_tok)),
+    "," >> Parser<AcImpliedDoControl>{})))
 
 // R775 ac-implied-do-control ->
 //        [integer-type-spec ::] ac-do-variable = scalar-int-expr ,
 //        scalar-int-expr [, scalar-int-expr]
 // R776 ac-do-variable -> do-variable
 TYPE_PARSER(construct<AcImpliedDoControl>{}(
-  maybe(integerTypeSpec / "::"),
-  loopBounds(scalarIntExpr)))
+    maybe(integerTypeSpec / "::"), loopBounds(scalarIntExpr)))
 
 // R801 type-declaration-stmt ->
 //        declaration-type-spec [[, attr-spec]... ::] entity-decl-list
-TYPE_PARSER(
-  construct<TypeDeclarationStmt>{}(
-    declarationTypeSpec,
-    optionalBeforeColons(nonemptyList(Parser<AttrSpec>{})),
-    nonemptyList(entityDecl)) ||
-  // PGI-only extension: don't require the colons
-  extension(construct<TypeDeclarationStmt>{}(
-    declarationTypeSpec,
-    defaulted("," >> nonemptyList(Parser<AttrSpec>{})),
-    "," >> nonemptyList(entityDecl))))
+TYPE_PARSER(construct<TypeDeclarationStmt>{}(declarationTypeSpec,
+                optionalBeforeColons(nonemptyList(Parser<AttrSpec>{})),
+                nonemptyList(entityDecl)) ||
+    // PGI-only extension: don't require the colons
+    extension(construct<TypeDeclarationStmt>{}(declarationTypeSpec,
+        defaulted("," >> nonemptyList(Parser<AttrSpec>{})),
+        "," >> nonemptyList(entityDecl))))
 
 // R802 attr-spec ->
 //        access-spec | ALLOCATABLE | ASYNCHRONOUS |
@@ -1213,25 +1144,23 @@ TYPE_PARSER(
 constexpr auto optional = "OPTIONAL" >> construct<Optional>{};
 constexpr auto protectedAttr = "PROTECTED" >> construct<Protected>{};
 constexpr auto save = "SAVE" >> construct<Save>{};
-TYPE_PARSER(
-  construct<AttrSpec>{}(accessSpec) ||
-  construct<AttrSpec>{}(allocatable) ||
-  construct<AttrSpec>{}("ASYNCHRONOUS" >> construct<Asynchronous>{}) ||
-  construct<AttrSpec>{}("CODIMENSION" >> coarraySpec) ||
-  construct<AttrSpec>{}(contiguous) ||
-  construct<AttrSpec>{}("DIMENSION" >> arraySpec) ||
-  construct<AttrSpec>{}("EXTERNAL" >> construct<External>{}) ||
-  construct<AttrSpec>{}("INTENT" >> parenthesized(intentSpec)) ||
-  construct<AttrSpec>{}("INTRINSIC" >> construct<Intrinsic>{}) ||
-  construct<AttrSpec>{}(languageBindingSpec) ||
-  construct<AttrSpec>{}(optional) ||
-  construct<AttrSpec>{}("PARAMETER" >> construct<Parameter>{}) ||
-  construct<AttrSpec>{}(pointer) ||
-  construct<AttrSpec>{}(protectedAttr) ||
-  construct<AttrSpec>{}(save) ||
-  construct<AttrSpec>{}("TARGET" >> construct<Target>{}) ||
-  construct<AttrSpec>{}("VALUE" >> construct<Value>{}) ||
-  construct<AttrSpec>{}("VOLATILE" >> construct<Volatile>{}))
+TYPE_PARSER(construct<AttrSpec>{}(accessSpec) ||
+    construct<AttrSpec>{}(allocatable) ||
+    construct<AttrSpec>{}("ASYNCHRONOUS" >> construct<Asynchronous>{}) ||
+    construct<AttrSpec>{}("CODIMENSION" >> coarraySpec) ||
+    construct<AttrSpec>{}(contiguous) ||
+    construct<AttrSpec>{}("DIMENSION" >> arraySpec) ||
+    construct<AttrSpec>{}("EXTERNAL" >> construct<External>{}) ||
+    construct<AttrSpec>{}("INTENT" >> parenthesized(intentSpec)) ||
+    construct<AttrSpec>{}("INTRINSIC" >> construct<Intrinsic>{}) ||
+    construct<AttrSpec>{}(languageBindingSpec) ||
+    construct<AttrSpec>{}(optional) ||
+    construct<AttrSpec>{}("PARAMETER" >> construct<Parameter>{}) ||
+    construct<AttrSpec>{}(pointer) || construct<AttrSpec>{}(protectedAttr) ||
+    construct<AttrSpec>{}(save) ||
+    construct<AttrSpec>{}("TARGET" >> construct<Target>{}) ||
+    construct<AttrSpec>{}("VALUE" >> construct<Value>{}) ||
+    construct<AttrSpec>{}("VOLATILE" >> construct<Volatile>{}))
 
 // R804 object-name -> name
 constexpr auto objectName = name;
@@ -1240,12 +1169,8 @@ constexpr auto objectName = name;
 //        object-name [( array-spec )] [lbracket coarray-spec rbracket]
 //          [* char-length] [initialization] |
 //        function-name [* char-length]
-TYPE_PARSER(construct<EntityDecl>{}(
-  objectName,
-  maybe(arraySpec),
-  maybe(coarraySpec),
-  maybe("*" >> charLength),
-  maybe(initialization)))
+TYPE_PARSER(construct<EntityDecl>{}(objectName, maybe(arraySpec),
+    maybe(coarraySpec), maybe("*" >> charLength), maybe(initialization)))
 
 // R806 null-init -> function-reference
 // TODO: confirm that NULL still intrinsic
@@ -1253,40 +1178,35 @@ TYPE_PARSER("NULL ( )" >> construct<NullInit>{})
 
 // R807 access-spec -> PUBLIC | PRIVATE
 TYPE_PARSER(
-  "PUBLIC" >> construct<AccessSpec>{}(pure(AccessSpec::Kind::Public)) ||
-  "PRIVATE" >> construct<AccessSpec>{}(pure(AccessSpec::Kind::Private)))
+    "PUBLIC" >> construct<AccessSpec>{}(pure(AccessSpec::Kind::Public)) ||
+    "PRIVATE" >> construct<AccessSpec>{}(pure(AccessSpec::Kind::Private)))
 
 // R808 language-binding-spec ->
 //        BIND ( C [, NAME = scalar-default-char-constant-expr] )
 // R1528 proc-language-binding-spec -> language-binding-spec
 TYPE_PARSER(construct<LanguageBindingSpec>{}(
-  "BIND ( C" >>
-    maybe(", NAME =" >> scalarDefaultCharConstantExpr) /
-  ")"))
+    "BIND ( C" >> maybe(", NAME =" >> scalarDefaultCharConstantExpr) / ")"))
 
 // R809 coarray-spec -> deferred-coshape-spec-list | explicit-coshape-spec
 // N.B. Bracketed here rather than around references, for consistency with
 // array-spec.
 TYPE_PARSER(
-  construct<CoarraySpec>{}(bracketed(Parser<DeferredCoshapeSpecList>{})) ||
-  construct<CoarraySpec>{}(bracketed(Parser<ExplicitCoshapeSpec>{})))
+    construct<CoarraySpec>{}(bracketed(Parser<DeferredCoshapeSpecList>{})) ||
+    construct<CoarraySpec>{}(bracketed(Parser<ExplicitCoshapeSpec>{})))
 
 // R810 deferred-coshape-spec -> :
 // deferred-coshape-spec-list - just a list of colons
-int listLength(std::list<Success> &&xs) {
-  return xs.size();
-}
+int listLength(std::list<Success> &&xs) { return xs.size(); }
 
 TYPE_PARSER(construct<DeferredCoshapeSpecList>{}(
-  applyFunction(listLength, nonemptyList(":"_tok))))
+    applyFunction(listLength, nonemptyList(":"_tok))))
 
 // R811 explicit-coshape-spec ->
 //        [[lower-cobound :] upper-cobound ,]... [lower-cobound :] *
 // R812 lower-cobound -> specification-expr
 // R813 upper-cobound -> specification-expr
 TYPE_PARSER(construct<ExplicitCoshapeSpec>{}(
-  many(explicitShapeSpec / ","),
-  maybe(specificationExpr / ":") / "*"))
+    many(explicitShapeSpec / ","), maybe(specificationExpr / ":") / "*"))
 
 // R815 array-spec ->
 //        explicit-shape-spec-list | assumed-shape-spec-list |
@@ -1295,146 +1215,123 @@ TYPE_PARSER(construct<ExplicitCoshapeSpec>{}(
 // N.B. Parenthesized here rather than around references to avoid
 // a need for forced look-ahead.
 TYPE_PARSER(
-  construct<ArraySpec>{}(parenthesized(nonemptyList(explicitShapeSpec))) ||
-  construct<ArraySpec>{}(
-    parenthesized(nonemptyList(Parser<AssumedShapeSpec>{}))) ||
-  construct<ArraySpec>{}(parenthesized(deferredShapeSpecList)) ||
-  construct<ArraySpec>{}(parenthesized(Parser<AssumedSizeSpec>{})) ||
-  construct<ArraySpec>{}(parenthesized(Parser<ImpliedShapeSpec>{})) ||
-  construct<ArraySpec>{}(parenthesized(Parser<AssumedRankSpec>{})))
+    construct<ArraySpec>{}(parenthesized(nonemptyList(explicitShapeSpec))) ||
+    construct<ArraySpec>{}(
+        parenthesized(nonemptyList(Parser<AssumedShapeSpec>{}))) ||
+    construct<ArraySpec>{}(parenthesized(deferredShapeSpecList)) ||
+    construct<ArraySpec>{}(parenthesized(Parser<AssumedSizeSpec>{})) ||
+    construct<ArraySpec>{}(parenthesized(Parser<ImpliedShapeSpec>{})) ||
+    construct<ArraySpec>{}(parenthesized(Parser<AssumedRankSpec>{})))
 
 // R816 explicit-shape-spec -> [lower-bound :] upper-bound
 // R817 lower-bound -> specification-expr
 // R818 upper-bound -> specification-expr
-TYPE_PARSER(
-  construct<ExplicitShapeSpec>{}(
-    maybe(specificationExpr / ":"),
-    specificationExpr))
+TYPE_PARSER(construct<ExplicitShapeSpec>{}(
+    maybe(specificationExpr / ":"), specificationExpr))
 
 // R819 assumed-shape-spec -> [lower-bound] :
-TYPE_PARSER(construct<AssumedShapeSpec>{}(
-  maybe(specificationExpr) / ":"))
+TYPE_PARSER(construct<AssumedShapeSpec>{}(maybe(specificationExpr) / ":"))
 
 // R820 deferred-shape-spec -> :
 // deferred-shape-spec-list - just a list of colons
-TYPE_PARSER(
-  construct<DeferredShapeSpecList>{}(
+TYPE_PARSER(construct<DeferredShapeSpecList>{}(
     applyFunction(listLength, nonemptyList(":"_tok))))
 
 // R821 assumed-implied-spec -> [lower-bound :] *
-TYPE_PARSER(construct<AssumedImpliedSpec>{}(
-  maybe(specificationExpr / ":") / "*"))
+TYPE_PARSER(
+    construct<AssumedImpliedSpec>{}(maybe(specificationExpr / ":") / "*"))
 
 // R822 assumed-size-spec -> explicit-shape-spec-list , assumed-implied-spec
 TYPE_PARSER(construct<AssumedSizeSpec>{}(
-  nonemptyList(explicitShapeSpec) / ",",
-  assumedImpliedSpec))
+    nonemptyList(explicitShapeSpec) / ",", assumedImpliedSpec))
 
 // R823 implied-shape-or-assumed-size-spec -> assumed-implied-spec
 // R824 implied-shape-spec -> assumed-implied-spec , assumed-implied-spec-list
 // I.e., when the assumed-implied-spec-list has a single item, it constitutes an
 // implied-shape-or-assumed-size-spec; otherwise, an implied-shape-spec.
-TYPE_PARSER(construct<ImpliedShapeSpec>{}(
-  nonemptyList(assumedImpliedSpec)))
+TYPE_PARSER(construct<ImpliedShapeSpec>{}(nonemptyList(assumedImpliedSpec)))
 
 // R825 assumed-rank-spec -> ..
 TYPE_PARSER(".." >> construct<AssumedRankSpec>{})
 
 // R826 intent-spec -> IN | OUT | INOUT
-TYPE_PARSER(construct<IntentSpec>{}(
-  "IN OUT" >> pure(IntentSpec::Intent::InOut) ||
-  "IN" >> pure(IntentSpec::Intent::In) ||
-  "OUT" >> pure(IntentSpec::Intent::Out)))
+TYPE_PARSER(
+    construct<IntentSpec>{}("IN OUT" >> pure(IntentSpec::Intent::InOut) ||
+        "IN" >> pure(IntentSpec::Intent::In) ||
+        "OUT" >> pure(IntentSpec::Intent::Out)))
 
 // R827 access-stmt -> access-spec [[::] access-id-list]
-TYPE_PARSER(
-  construct<AccessStmt>{}(
-    accessSpec,
-    defaulted(maybe("::"_tok) >> nonemptyList(Parser<AccessId>{}))))
+TYPE_PARSER(construct<AccessStmt>{}(
+    accessSpec, defaulted(maybe("::"_tok) >> nonemptyList(Parser<AccessId>{}))))
 
 // R828 access-id -> access-name | generic-spec
-TYPE_PARSER(
-  construct<AccessId>{}(indirect(genericSpec)) ||
-  construct<AccessId>{}(name))  // initially ambiguous with genericSpec
+TYPE_PARSER(construct<AccessId>{}(indirect(genericSpec)) ||
+    construct<AccessId>{}(name))  // initially ambiguous with genericSpec
 
 // R829 allocatable-stmt -> ALLOCATABLE [::] allocatable-decl-list
-TYPE_PARSER(
-  "ALLOCATABLE" >> maybe("::"_tok) >>
+TYPE_PARSER("ALLOCATABLE" >> maybe("::"_tok) >>
     construct<AllocatableStmt>{}(nonemptyList(Parser<ObjectDecl>{})))
 
 // R830 allocatable-decl ->
 //        object-name [( array-spec )] [lbracket coarray-spec rbracket]
 // R860 target-decl ->
 //        object-name [( array-spec )] [lbracket coarray-spec rbracket]
-TYPE_PARSER(construct<ObjectDecl>{}(
-  objectName,
-  maybe(arraySpec),
-  maybe(coarraySpec)))
+TYPE_PARSER(
+    construct<ObjectDecl>{}(objectName, maybe(arraySpec), maybe(coarraySpec)))
 
 // R831 asynchronous-stmt -> ASYNCHRONOUS [::] object-name-list
-TYPE_PARSER(
-  "ASYNCHRONOUS" >> maybe("::"_tok) >>
+TYPE_PARSER("ASYNCHRONOUS" >> maybe("::"_tok) >>
     construct<AsynchronousStmt>{}(nonemptyList(objectName)))
 
 // R832 bind-stmt -> language-binding-spec [::] bind-entity-list
-TYPE_PARSER(
-  construct<BindStmt>{}(languageBindingSpec / maybe("::"_tok),
-                        nonemptyList(Parser<BindEntity>{})))
+TYPE_PARSER(construct<BindStmt>{}(
+    languageBindingSpec / maybe("::"_tok), nonemptyList(Parser<BindEntity>{})))
 
 // R833 bind-entity -> entity-name | / common-block-name /
-TYPE_PARSER(
-  construct<BindEntity>{}(name, pure(false)) ||
-  "/" >> construct<BindEntity>{}(name, pure(true /*COMMON*/)) / "/")
+TYPE_PARSER(construct<BindEntity>{}(name, pure(false)) ||
+    "/" >> construct<BindEntity>{}(name, pure(true /*COMMON*/)) / "/")
 
 // R834 codimension-stmt -> CODIMENSION [::] codimension-decl-list
-TYPE_PARSER(
-  "CODIMENSION" >> maybe("::"_tok) >>
+TYPE_PARSER("CODIMENSION" >> maybe("::"_tok) >>
     construct<CodimensionStmt>{}(nonemptyList(Parser<CodimensionDecl>{})))
 
 // R835 codimension-decl -> coarray-name lbracket coarray-spec rbracket
 TYPE_PARSER(construct<CodimensionDecl>{}(name, coarraySpec))
 
 // R836 contiguous-stmt -> CONTIGUOUS [::] object-name-list
-TYPE_PARSER(
-  "CONTIGUOUS" >> maybe("::"_tok) >>
+TYPE_PARSER("CONTIGUOUS" >> maybe("::"_tok) >>
     construct<ContiguousStmt>{}(nonemptyList(objectName)))
 
 // R837 data-stmt -> DATA data-stmt-set [[,] data-stmt-set]...
 TYPE_CONTEXT_PARSER("DATA statement",
-  "DATA" >> construct<DataStmt>{}(
-    nonemptySeparated(Parser<DataStmtSet>{}, maybe(","_tok))))
+    "DATA" >> construct<DataStmt>{}(
+                  nonemptySeparated(Parser<DataStmtSet>{}, maybe(","_tok))))
 
 // R838 data-stmt-set -> data-stmt-object-list / data-stmt-value-list /
-TYPE_PARSER(construct<DataStmtSet>{}(
-  nonemptyList(Parser<DataStmtObject>{}),
-  "/"_tok >> nonemptyList(Parser<DataStmtValue>{}) / "/"))
+TYPE_PARSER(construct<DataStmtSet>{}(nonemptyList(Parser<DataStmtObject>{}),
+    "/"_tok >> nonemptyList(Parser<DataStmtValue>{}) / "/"))
 
 // R839 data-stmt-object -> variable | data-implied-do
-TYPE_PARSER(
-  construct<DataStmtObject>{}(indirect(variable)) ||
-  construct<DataStmtObject>{}(dataImpliedDo))
+TYPE_PARSER(construct<DataStmtObject>{}(indirect(variable)) ||
+    construct<DataStmtObject>{}(dataImpliedDo))
 
 // R840 data-implied-do ->
 //        ( data-i-do-object-list , [integer-type-spec ::] data-i-do-variable
 //        = scalar-int-constant-expr , scalar-int-constant-expr
 //        [, scalar-int-constant-expr] )
 // R842 data-i-do-variable -> do-variable
-TYPE_PARSER(
-  parenthesized(construct<DataImpliedDo>{}(
+TYPE_PARSER(parenthesized(construct<DataImpliedDo>{}(
     nonemptyList(Parser<DataIDoObject>{} / lookAhead(","_tok)) / ",",
-    maybe(integerTypeSpec / "::"),
-    loopBounds(scalarIntConstantExpr))))
+    maybe(integerTypeSpec / "::"), loopBounds(scalarIntConstantExpr))))
 
 // R841 data-i-do-object ->
 //        array-element | scalar-structure-component | data-implied-do
-TYPE_PARSER(
-  construct<DataIDoObject>{}(scalar(indirect(designator))) ||
-  construct<DataIDoObject>{}(indirect(dataImpliedDo)))
+TYPE_PARSER(construct<DataIDoObject>{}(scalar(indirect(designator))) ||
+    construct<DataIDoObject>{}(indirect(dataImpliedDo)))
 
 // R843 data-stmt-value -> [data-stmt-repeat *] data-stmt-constant
 TYPE_PARSER(construct<DataStmtValue>{}(
-  maybe(Parser<DataStmtRepeat>{} / "*"),
-  Parser<DataStmtConstant>{}))
+    maybe(Parser<DataStmtRepeat>{} / "*"), Parser<DataStmtConstant>{}))
 
 // R847 constant-subobject -> designator
 // R846 int-constant-subobject -> constant-subobject
@@ -1445,112 +1342,100 @@ constexpr auto constantSubobject = constant(indirect(designator));
 // Factored into:
 //   constant -> literal-constant -> int-literal-constant   and
 //   constant -> named-constant
-TYPE_PARSER(
-  construct<DataStmtRepeat>{}(intLiteralConstant) ||
-  construct<DataStmtRepeat>{}(scalar(integer(constantSubobject))) ||
-  construct<DataStmtRepeat>{}(scalar(integer(namedConstant))))
+TYPE_PARSER(construct<DataStmtRepeat>{}(intLiteralConstant) ||
+    construct<DataStmtRepeat>{}(scalar(integer(constantSubobject))) ||
+    construct<DataStmtRepeat>{}(scalar(integer(namedConstant))))
 
 // R845 data-stmt-constant ->
 //        scalar-constant | scalar-constant-subobject |
 //        signed-int-literal-constant | signed-real-literal-constant |
 //        null-init | initial-data-target | structure-constructor
-TYPE_PARSER(
-  construct<DataStmtConstant>{}(Parser<StructureConstructor>{}) ||
-  construct<DataStmtConstant>{}(scalar(Parser<ConstantValue>{})) ||
-  construct<DataStmtConstant>{}(scalar(constantSubobject)) ||
-  construct<DataStmtConstant>{}(signedRealLiteralConstant) ||
-  construct<DataStmtConstant>{}(signedIntLiteralConstant) ||
-  extension(construct<DataStmtConstant>{}(
-    Parser<SignedComplexLiteralConstant>{})) ||
-  construct<DataStmtConstant>{}(nullInit) ||
-  construct<DataStmtConstant>{}(initialDataTarget))
+TYPE_PARSER(construct<DataStmtConstant>{}(Parser<StructureConstructor>{}) ||
+    construct<DataStmtConstant>{}(scalar(Parser<ConstantValue>{})) ||
+    construct<DataStmtConstant>{}(scalar(constantSubobject)) ||
+    construct<DataStmtConstant>{}(signedRealLiteralConstant) ||
+    construct<DataStmtConstant>{}(signedIntLiteralConstant) ||
+    extension(construct<DataStmtConstant>{}(
+        Parser<SignedComplexLiteralConstant>{})) ||
+    construct<DataStmtConstant>{}(nullInit) ||
+    construct<DataStmtConstant>{}(initialDataTarget))
 
 // R848 dimension-stmt ->
 //        DIMENSION [::] array-name ( array-spec )
 //        [, array-name ( array-spec )]...
 TYPE_CONTEXT_PARSER("DIMENSION statement",
-  "DIMENSION" >> maybe("::"_tok) >>
-    construct<DimensionStmt>{}(
-      nonemptyList(construct<DimensionStmt::Declaration>{}(name, arraySpec))))
+    "DIMENSION" >> maybe("::"_tok) >>
+        construct<DimensionStmt>{}(nonemptyList(
+            construct<DimensionStmt::Declaration>{}(name, arraySpec))))
 
 // R849 intent-stmt -> INTENT ( intent-spec ) [::] dummy-arg-name-list
 TYPE_CONTEXT_PARSER("INTENT statement",
-  "INTENT" >> construct<IntentStmt>{}(
-    parenthesized(intentSpec) / maybe("::"_tok),
-    nonemptyList(name)))
+    "INTENT" >>
+        construct<IntentStmt>{}(
+            parenthesized(intentSpec) / maybe("::"_tok), nonemptyList(name)))
 
 // R850 optional-stmt -> OPTIONAL [::] dummy-arg-name-list
-TYPE_PARSER(
-  "OPTIONAL" >> maybe("::"_tok) >>
+TYPE_PARSER("OPTIONAL" >> maybe("::"_tok) >>
     construct<OptionalStmt>{}(nonemptyList(name)))
 
 // R851 parameter-stmt -> PARAMETER ( named-constant-def-list )
 // Legacy extension: omitted parentheses
 TYPE_CONTEXT_PARSER("PARAMETER statement",
-  "PARAMETER" >> construct<ParameterStmt>{}(
-    parenthesized(nonemptyList(Parser<NamedConstantDef>{})) ||
-    extension(nonemptyList(Parser<NamedConstantDef>{}))))
+    "PARAMETER" >>
+        construct<ParameterStmt>{}(
+            parenthesized(nonemptyList(Parser<NamedConstantDef>{})) ||
+            extension(nonemptyList(Parser<NamedConstantDef>{}))))
 
 // R852 named-constant-def -> named-constant = constant-expr
-TYPE_PARSER(construct<NamedConstantDef>{}(
-  namedConstant,
-  "=" >> constantExpr))
+TYPE_PARSER(construct<NamedConstantDef>{}(namedConstant, "=" >> constantExpr))
 
 // R853 pointer-stmt -> POINTER [::] pointer-decl-list
-TYPE_PARSER(
-  "POINTER" >> maybe("::"_tok) >>
+TYPE_PARSER("POINTER" >> maybe("::"_tok) >>
     construct<PointerStmt>{}(nonemptyList(Parser<PointerDecl>{})))
 
 // R854 pointer-decl ->
 //        object-name [( deferred-shape-spec-list )] | proc-entity-name
-TYPE_PARSER(construct<PointerDecl>{}(
-  name,
-  maybe(parenthesized(deferredShapeSpecList))))
+TYPE_PARSER(
+    construct<PointerDecl>{}(name, maybe(parenthesized(deferredShapeSpecList))))
 
 // R855 protected-stmt -> PROTECTED [::] entity-name-list
-TYPE_PARSER(
-  "PROTECTED" >> maybe("::"_tok) >>
+TYPE_PARSER("PROTECTED" >> maybe("::"_tok) >>
     construct<ProtectedStmt>{}(nonemptyList(name)))
 
 // R856 save-stmt -> SAVE [[::] saved-entity-list]
-TYPE_PARSER(
-  "SAVE" >> construct<SaveStmt>{}(
-    defaulted(maybe("::"_tok) >> nonemptyList(Parser<SavedEntity>{}))))
+TYPE_PARSER("SAVE" >> construct<SaveStmt>{}(defaulted(maybe("::"_tok) >>
+                          nonemptyList(Parser<SavedEntity>{}))))
 
 // R857 saved-entity -> object-name | proc-pointer-name | / common-block-name /
 // R858 proc-pointer-name -> name
-TYPE_PARSER(
-  construct<SavedEntity>{}(name, pure(false)) ||
-  "/" >> construct<SavedEntity>{}(name, pure(true /*COMMON*/)) / "/")
+TYPE_PARSER(construct<SavedEntity>{}(name, pure(false)) ||
+    "/" >> construct<SavedEntity>{}(name, pure(true /*COMMON*/)) / "/")
 
 // R859 target-stmt -> TARGET [::] target-decl-list
-TYPE_PARSER(
-  "TARGET" >> maybe("::"_tok) >>
+TYPE_PARSER("TARGET" >> maybe("::"_tok) >>
     construct<TargetStmt>{}(nonemptyList(Parser<ObjectDecl>{})))
 
 // R861 value-stmt -> VALUE [::] dummy-arg-name-list
 TYPE_PARSER(
-  "VALUE" >> maybe("::"_tok) >>
-    construct<ValueStmt>{}(nonemptyList(name)))
+    "VALUE" >> maybe("::"_tok) >> construct<ValueStmt>{}(nonemptyList(name)))
 
 // R862 volatile-stmt -> VOLATILE [::] object-name-list
-TYPE_PARSER(
-  "VOLATILE" >> maybe("::"_tok) >>
+TYPE_PARSER("VOLATILE" >> maybe("::"_tok) >>
     construct<VolatileStmt>{}(nonemptyList(objectName)))
 
 // R866 implicit-name-spec -> EXTERNAL | TYPE
-constexpr auto implicitNameSpec =
-  "EXTERNAL" >> pure(ImplicitStmt::ImplicitNoneNameSpec::External) ||
-  "TYPE" >> pure(ImplicitStmt::ImplicitNoneNameSpec::External);
+constexpr auto implicitNameSpec = "EXTERNAL" >>
+        pure(ImplicitStmt::ImplicitNoneNameSpec::External) ||
+    "TYPE" >> pure(ImplicitStmt::ImplicitNoneNameSpec::External);
 
 // R863 implicit-stmt ->
 //        IMPLICIT implicit-spec-list |
 //        IMPLICIT NONE [( [implicit-name-spec-list] )]
 TYPE_CONTEXT_PARSER("IMPLICIT statement",
-  "IMPLICIT" >> (
-    construct<ImplicitStmt>{}(nonemptyList(Parser<ImplicitSpec>{})) ||
-    construct<ImplicitStmt>{}(
-      "NONE" >> defaulted(parenthesized(optionalList(implicitNameSpec))))))
+    "IMPLICIT" >>
+        (construct<ImplicitStmt>{}(nonemptyList(Parser<ImplicitSpec>{})) ||
+            construct<ImplicitStmt>{}("NONE" >>
+                defaulted(parenthesized(optionalList(implicitNameSpec))))))
 
 // R864 implicit-spec -> declaration-type-spec ( letter-spec-list )
 // The variant form of declarationTypeSpec is meant to avoid misrecognition
@@ -1561,62 +1446,56 @@ TYPE_CONTEXT_PARSER("IMPLICIT statement",
 // type specs, DOUBLE PRECISION, and DOUBLE COMPLEX need not be considered.
 constexpr auto noKindSelector = construct<std::optional<KindSelector>>{};
 constexpr auto implicitSpecDeclarationTypeSpecRetry =
-  construct<DeclarationTypeSpec>{}(
-    "INTEGER" >> construct<IntrinsicTypeSpec>{}(
-      construct<IntegerTypeSpec>{}(noKindSelector)) ||
-    "REAL" >> construct<IntrinsicTypeSpec>{}(
-      construct<IntrinsicTypeSpec::Real>{}(noKindSelector)) ||
-    "COMPLEX" >> construct<IntrinsicTypeSpec>{}(
-      construct<IntrinsicTypeSpec::Complex>{}(noKindSelector)) ||
-    "CHARACTER" >>construct<IntrinsicTypeSpec>{}(
-      construct<IntrinsicTypeSpec::Character>{}(
-        construct<std::optional<CharSelector>>{})) ||
-    "LOGICAL" >> construct<IntrinsicTypeSpec>{}(
-      construct<IntrinsicTypeSpec::Logical>{}(noKindSelector)));
+    construct<DeclarationTypeSpec>{}(
+        "INTEGER" >> construct<IntrinsicTypeSpec>{}(
+                         construct<IntegerTypeSpec>{}(noKindSelector)) ||
+        "REAL" >> construct<IntrinsicTypeSpec>{}(
+                      construct<IntrinsicTypeSpec::Real>{}(noKindSelector)) ||
+        "COMPLEX" >>
+            construct<IntrinsicTypeSpec>{}(
+                construct<IntrinsicTypeSpec::Complex>{}(noKindSelector)) ||
+        "CHARACTER" >> construct<IntrinsicTypeSpec>{}(
+                           construct<IntrinsicTypeSpec::Character>{}(
+                               construct<std::optional<CharSelector>>{})) ||
+        "LOGICAL" >>
+            construct<IntrinsicTypeSpec>{}(
+                construct<IntrinsicTypeSpec::Logical>{}(noKindSelector)));
 
-TYPE_PARSER(
-  construct<ImplicitSpec>{}(
-    declarationTypeSpec,
-    parenthesized(nonemptyList(Parser<LetterSpec>{}))) ||
-  construct<ImplicitSpec>{}(
-    implicitSpecDeclarationTypeSpecRetry,
-    parenthesized(nonemptyList(Parser<LetterSpec>{}))))
+TYPE_PARSER(construct<ImplicitSpec>{}(declarationTypeSpec,
+                parenthesized(nonemptyList(Parser<LetterSpec>{}))) ||
+    construct<ImplicitSpec>{}(implicitSpecDeclarationTypeSpecRetry,
+        parenthesized(nonemptyList(Parser<LetterSpec>{}))))
 
 // R865 letter-spec -> letter [- letter]
-TYPE_PARSER(
-  spaces >> (
-    construct<LetterSpec>{}(letter, maybe("-" >> letter)) ||
-    construct<LetterSpec>{}(extension(otherIdCharacter),
-                            construct<std::optional<char>>{})))
+TYPE_PARSER(spaces >> (construct<LetterSpec>{}(letter, maybe("-" >> letter)) ||
+                          construct<LetterSpec>{}(extension(otherIdCharacter),
+                              construct<std::optional<char>>{})))
 
 // R867 import-stmt ->
 //        IMPORT [[::] import-name-list] |
 //        IMPORT , ONLY : import-name-list | IMPORT , NONE | IMPORT , ALL
 TYPE_CONTEXT_PARSER("IMPORT statement",
-  "IMPORT" >> (
-    construct<ImportStmt>{}(", ONLY :" >> pure(ImportStmt::Kind::Only),
-                            nonemptyList(name)) ||
-    construct<ImportStmt>{}(", NONE" >> pure(ImportStmt::Kind::None)) ||
-    construct<ImportStmt>{}(", ALL" >> pure(ImportStmt::Kind::All)) ||
-    construct<ImportStmt>{}(maybe("::"_tok) >> optionalList(name))))
+    "IMPORT" >>
+        (construct<ImportStmt>{}(
+             ", ONLY :" >> pure(ImportStmt::Kind::Only), nonemptyList(name)) ||
+            construct<ImportStmt>{}(", NONE" >> pure(ImportStmt::Kind::None)) ||
+            construct<ImportStmt>{}(", ALL" >> pure(ImportStmt::Kind::All)) ||
+            construct<ImportStmt>{}(maybe("::"_tok) >> optionalList(name))))
 
 // R868 namelist-stmt ->
 //        NAMELIST / namelist-group-name / namelist-group-object-list
 //        [[,] / namelist-group-name / namelist-group-object-list]...
 // R869 namelist-group-object -> variable-name
-TYPE_PARSER(
-  "NAMELIST" >> construct<NamelistStmt>{}(
-    nonemptySeparated(
-      construct<NamelistStmt::Group>{}(
-        "/" >> name / "/",
-        nonemptyList(name)),
-      maybe(","_tok))))
+TYPE_PARSER("NAMELIST" >>
+    construct<NamelistStmt>{}(nonemptySeparated(
+        construct<NamelistStmt::Group>{}("/" >> name / "/", nonemptyList(name)),
+        maybe(","_tok))))
 
 // R870 equivalence-stmt -> EQUIVALENCE equivalence-set-list
 // R871 equivalence-set -> ( equivalence-object , equivalence-object-list )
-TYPE_PARSER(
-  "EQUIVALENCE" >> construct<EquivalenceStmt>{}(
-    nonemptyList(parenthesized(nonemptyList(Parser<EquivalenceObject>{})))))
+TYPE_PARSER("EQUIVALENCE" >>
+    construct<EquivalenceStmt>{}(
+        nonemptyList(parenthesized(nonemptyList(Parser<EquivalenceObject>{})))))
 
 // R872 equivalence-object -> variable-name | array-element | substring
 TYPE_PARSER(construct<EquivalenceObject>{}(indirect(designator)))
@@ -1625,16 +1504,14 @@ TYPE_PARSER(construct<EquivalenceObject>{}(indirect(designator)))
 //        COMMON [/ [common-block-name] /] common-block-object-list
 //        [[,] / [common-block-name] / common-block-object-list]...
 TYPE_PARSER(
-  "COMMON" >> construct<CommonStmt>{}(
-    maybe("/" >> maybe(name) / "/"),
-    nonemptyList(Parser<CommonBlockObject>{}),
-    many(maybe(","_tok) >>
-         construct<CommonStmt::Block>{}(
-           "/" >> maybe(name) / "/",
-           nonemptyList(Parser<CommonBlockObject>{})))))
+    "COMMON" >> construct<CommonStmt>{}(maybe("/" >> maybe(name) / "/"),
+                    nonemptyList(Parser<CommonBlockObject>{}),
+                    many(maybe(","_tok) >>
+                        construct<CommonStmt::Block>{}("/" >> maybe(name) / "/",
+                            nonemptyList(Parser<CommonBlockObject>{})))))
 
 // R874 common-block-object -> variable-name [( array-spec )]
-TYPE_PARSER(construct<CommonBlockObject>{}(name,maybe(arraySpec)))
+TYPE_PARSER(construct<CommonBlockObject>{}(name, maybe(arraySpec)))
 
 // R901 designator -> object-name | array-element | array-section |
 //                    coindexed-named-object | complex-part-designator |
@@ -1650,9 +1527,8 @@ TYPE_PARSER(construct<CommonBlockObject>{}(name,maybe(arraySpec)))
 //  each part is a name, maybe a (section-subscript-list), and
 //  maybe an [image-selector].
 //  If it's a substring, it ends with (substring-range).
-TYPE_PARSER(
-  construct<Designator>{}(substring) ||
-  construct<Designator>{}(dataReference))
+TYPE_PARSER(construct<Designator>{}(substring) ||
+    construct<Designator>{}(dataReference))
 
 // R902 variable -> designator | function-reference
 // This production is left-recursive in the case of a function reference
@@ -1673,8 +1549,7 @@ TYPE_PARSER(
 // Some function references with dummy arguments present will be
 // misrecognized as array element designators and need to be corrected
 // in semantic analysis.
-template<> std::optional<Variable>
-Parser<Variable>::Parse(ParseState *state) {
+template<> std::optional<Variable> Parser<Variable>::Parse(ParseState *state) {
   std::optional<Designator> desig{designator.Parse(state)};
   if (!desig.has_value()) {
     return {};
@@ -1693,7 +1568,7 @@ Parser<Variable>::Parse(ParseState *state) {
   // combine it with the actual arguments as a function-reference.
   ProcedureDesignator pd{desig.value().ConvertToProcedureDesignator()};
   Variable var{Indirection<FunctionReference>{
-                 Call{std::move(pd), std::move(args.value())}}};
+      Call{std::move(pd), std::move(args.value())}}};
 
   // Repeatedly accept additional function calls through components of
   // a derived type result.
@@ -1706,13 +1581,12 @@ Parser<Variable>::Parse(ParseState *state) {
     std::list<ActualArgSpec> args;
   };
   static constexpr auto resultComponentCall =
-    attempt("%" >> construct<ResultComponentCall>{}(name, argList));
+      attempt("%" >> construct<ResultComponentCall>{}(name, argList));
   while (auto more = resultComponentCall.Parse(state)) {
-    var = Variable{Indirection<FunctionReference>{
-                     Call{ProcedureDesignator{ProcComponentRef{
-                            Scalar<Variable>{std::move(var)},
-                            std::move(more.value().name)}},
-      std::move(more.value().args)}}};
+    var = Variable{Indirection<FunctionReference>{Call{
+        ProcedureDesignator{ProcComponentRef{
+            Scalar<Variable>{std::move(var)}, std::move(more.value().name)}},
+        std::move(more.value().args)}}};
   }
 
   return {std::move(var)};
@@ -1739,31 +1613,27 @@ constexpr auto scalarIntVariable = scalar(integer(variable));
 //        scalar-structure-component | scalar-char-literal-constant |
 //        scalar-named-constant
 TYPE_PARSER(construct<Substring>{}(
-  dataReference,
-  parenthesized(Parser<SubstringRange>{})))
+    dataReference, parenthesized(Parser<SubstringRange>{})))
 
 TYPE_PARSER(construct<CharLiteralConstantSubstring>{}(
-  charLiteralConstant,
-  parenthesized(Parser<SubstringRange>{})))
+    charLiteralConstant, parenthesized(Parser<SubstringRange>{})))
 
 // R910 substring-range -> [scalar-int-expr] : [scalar-int-expr]
 TYPE_PARSER(construct<SubstringRange>{}(
-  maybe(scalarIntExpr),
-  ":" >> maybe(scalarIntExpr)))
+    maybe(scalarIntExpr), ":" >> maybe(scalarIntExpr)))
 
 // R911 data-ref -> part-ref [% part-ref]...
 // R914 coindexed-named-object -> data-ref
 // R917 array-element -> data-ref
-constexpr auto percentOrDot =
-  "%"_tok ||
-  // legacy VAX extension for RECORD field access
-  // TODO: this clashes with user-defined operators in modern Fortran!
-  extension(!namedIntrinsicOperator >> "."_tok);
+constexpr auto percentOrDot = "%"_tok ||
+    // legacy VAX extension for RECORD field access
+    // TODO: this clashes with user-defined operators in modern Fortran!
+    extension(!namedIntrinsicOperator >> "."_tok);
 
-template<> std::optional<DataReference>
-Parser<DataReference>::Parse(ParseState *state) {
+template<>
+std::optional<DataReference> Parser<DataReference>::Parse(ParseState *state) {
   static constexpr auto partRefs =
-    nonemptySeparated(Parser<PartRef>{}, percentOrDot);
+      nonemptySeparated(Parser<PartRef>{}, percentOrDot);
   if (auto parts = partRefs.Parse(state)) {
     return {DataReference(std::move(*parts))};
   }
@@ -1771,20 +1641,18 @@ Parser<DataReference>::Parse(ParseState *state) {
 }
 
 // R912 part-ref -> part-name [( section-subscript-list )] [image-selector]
-TYPE_PARSER(construct<PartRef>{}(
-  name,
-  defaulted(parenthesized(nonemptyList(Parser<SectionSubscript>{}))),
-  maybe(Parser<ImageSelector>{})))
+TYPE_PARSER(construct<PartRef>{}(name,
+    defaulted(parenthesized(nonemptyList(Parser<SectionSubscript>{}))),
+    maybe(Parser<ImageSelector>{})))
 
 // R913 structure-component -> data-ref
 TYPE_PARSER(construct<StructureComponent>{}(
-  construct<DataReference>{}(some(Parser<PartRef>{} / percentOrDot)),
-  name))
+    construct<DataReference>{}(some(Parser<PartRef>{} / percentOrDot)), name))
 
 // R915 complex-part-designator -> designator % RE | designator % IM
 // %RE and %IM are initially recognized as structure components.
 constexpr auto complexPartDesignator =
-  construct<ComplexPartDesignator>{}(dataReference);
+    construct<ComplexPartDesignator>{}(dataReference);
 
 // R916 type-param-inquiry -> designator % type-param-name
 // Type parameter inquiries are initially recognized as structure components.
@@ -1792,8 +1660,7 @@ TYPE_PARSER(construct<TypeParamInquiry>{}(structureComponent))
 
 // R918 array-section ->
 //        data-ref [( substring-range )] | complex-part-designator
-constexpr auto arraySection =
-  construct<ArraySection>{}(designator);
+constexpr auto arraySection = construct<ArraySection>{}(designator);
 
 // R919 subscript -> scalar-int-expr
 constexpr auto subscript = scalarIntExpr;
@@ -1804,25 +1671,21 @@ constexpr auto vectorSubscript = intExpr;
 // R920 section-subscript -> subscript | subscript-triplet | vector-subscript
 // N.B. The distinction that needs to be made between "subscript" and
 // "vector-subscript" is deferred to semantic analysis.
-TYPE_PARSER(
-  construct<SectionSubscript>{}(Parser<SubscriptTriplet>{}) ||
-  construct<SectionSubscript>{}(vectorSubscript) ||
-  construct<SectionSubscript>{}(subscript));
+TYPE_PARSER(construct<SectionSubscript>{}(Parser<SubscriptTriplet>{}) ||
+    construct<SectionSubscript>{}(vectorSubscript) ||
+    construct<SectionSubscript>{}(subscript));
 
 // R921 subscript-triplet -> [subscript] : [subscript] [: stride]
 TYPE_PARSER(construct<SubscriptTriplet>{}(
-  maybe(subscript),
-  ":" >> maybe(subscript),
-  maybe(":" >> subscript)))
+    maybe(subscript), ":" >> maybe(subscript), maybe(":" >> subscript)))
 
 // R925 cosubscript -> scalar-int-expr
 constexpr auto cosubscript = scalarIntExpr;
 
 // R924 image-selector ->
 //        lbracket cosubscript-list [, image-selector-spec-list] rbracket
-TYPE_PARSER(bracketed(construct<ImageSelector>{}(
-  nonemptyList(cosubscript),
-  defaulted("," >> nonemptyList(Parser<ImageSelectorSpec>{})))))
+TYPE_PARSER(bracketed(construct<ImageSelector>{}(nonemptyList(cosubscript),
+    defaulted("," >> nonemptyList(Parser<ImageSelectorSpec>{})))))
 
 // R1115 team-variable -> scalar-variable
 constexpr auto teamVariable = scalar(indirect(variable));
@@ -1830,33 +1693,32 @@ constexpr auto teamVariable = scalar(indirect(variable));
 // R926 image-selector-spec ->
 //        STAT = stat-variable | TEAM = team-variable |
 //        TEAM_NUMBER = scalar-int-expr
-TYPE_PARSER(
-  "STAT =" >> construct<ImageSelectorSpec>{}(
-    construct<ImageSelectorSpec::Stat>{}(
-      scalar(integer(indirect(variable))))) ||
-  "TEAM =" >> construct<ImageSelectorSpec>{}(
-    construct<ImageSelectorSpec::Team>{}(teamVariable)) ||
-  "TEAM_NUMBER =" >> construct<ImageSelectorSpec>{}(
-    construct<ImageSelectorSpec::Team_Number>{}(scalarIntExpr)))
+TYPE_PARSER("STAT =" >>
+        construct<ImageSelectorSpec>{}(construct<ImageSelectorSpec::Stat>{}(
+            scalar(integer(indirect(variable))))) ||
+    "TEAM =" >> construct<ImageSelectorSpec>{}(
+                    construct<ImageSelectorSpec::Team>{}(teamVariable)) ||
+    "TEAM_NUMBER =" >>
+        construct<ImageSelectorSpec>{}(
+            construct<ImageSelectorSpec::Team_Number>{}(scalarIntExpr)))
 
 // R927 allocate-stmt ->
 //        ALLOCATE ( [type-spec ::] allocation-list [, alloc-opt-list] )
 TYPE_CONTEXT_PARSER("ALLOCATE statement",
-  "ALLOCATE" >> parenthesized(construct<AllocateStmt>{}(
-    maybe(typeSpec / "::"),
-    nonemptyList(Parser<Allocation>{}),
-    defaulted("," >> nonemptyList(Parser<AllocOpt>{})))))
+    "ALLOCATE" >>
+        parenthesized(construct<AllocateStmt>{}(maybe(typeSpec / "::"),
+            nonemptyList(Parser<Allocation>{}),
+            defaulted("," >> nonemptyList(Parser<AllocOpt>{})))))
 
 // R928 alloc-opt ->
 //        ERRMSG = errmsg-variable | MOLD = source-expr |
 //        SOURCE = source-expr | STAT = stat-variable
 // R931 source-expr -> expr
-TYPE_PARSER(
-  "MOLD =" >>
-    construct<AllocOpt>{}(construct<AllocOpt::Mold>{}(indirect(expr))) ||
-  "SOURCE =" >>
-    construct<AllocOpt>{}(construct<AllocOpt::Source>{}(indirect(expr))) ||
-  construct<AllocOpt>{}(statOrErrmsg))
+TYPE_PARSER("MOLD =" >>
+        construct<AllocOpt>{}(construct<AllocOpt::Mold>{}(indirect(expr))) ||
+    "SOURCE =" >>
+        construct<AllocOpt>{}(construct<AllocOpt::Source>{}(indirect(expr))) ||
+    construct<AllocOpt>{}(statOrErrmsg))
 
 // R929 stat-variable -> scalar-int-variable
 TYPE_PARSER(construct<StatVariable>{}(scalar(integer(variable))))
@@ -1864,22 +1726,20 @@ TYPE_PARSER(construct<StatVariable>{}(scalar(integer(variable))))
 // R930 errmsg-variable -> scalar-default-char-variable
 // R1207 iomsg-variable -> scalar-default-char-variable
 constexpr auto msgVariable =
-  construct<MsgVariable>{}(scalarDefaultCharVariable);
+    construct<MsgVariable>{}(scalarDefaultCharVariable);
 
 // R932 allocation ->
 //        allocate-object [( allocate-shape-spec-list )]
 //        [lbracket allocate-coarray-spec rbracket]
 // TODO: allocate-shape-spec-list might be misrecognized as
 // the final list of subscripts in allocate-object.
-TYPE_PARSER(construct<Allocation>{}(
-  Parser<AllocateObject>{},
-  defaulted(parenthesized(nonemptyList(Parser<AllocateShapeSpec>{}))),
-  maybe(bracketed(Parser<AllocateCoarraySpec>{}))))
+TYPE_PARSER(construct<Allocation>{}(Parser<AllocateObject>{},
+    defaulted(parenthesized(nonemptyList(Parser<AllocateShapeSpec>{}))),
+    maybe(bracketed(Parser<AllocateCoarraySpec>{}))))
 
 // R933 allocate-object -> variable-name | structure-component
-TYPE_PARSER(
-  construct<AllocateObject>{}(structureComponent) ||
-  construct<AllocateObject>{}(name / !"="_tok))
+TYPE_PARSER(construct<AllocateObject>{}(structureComponent) ||
+    construct<AllocateObject>{}(name / !"="_tok))
 
 // R935 lower-bound-expr -> scalar-int-expr
 // R936 upper-bound-expr -> scalar-int-expr
@@ -1887,76 +1747,70 @@ constexpr auto boundExpr = scalarIntExpr;
 
 // R934 allocate-shape-spec -> [lower-bound-expr :] upper-bound-expr
 // R938 allocate-coshape-spec -> [lower-bound-expr :] upper-bound-expr
-TYPE_PARSER(construct<AllocateShapeSpec>{}(
-  maybe(boundExpr / ":"),
-  boundExpr))
+TYPE_PARSER(construct<AllocateShapeSpec>{}(maybe(boundExpr / ":"), boundExpr))
 
 // R937 allocate-coarray-spec ->
 //      [allocate-coshape-spec-list ,] [lower-bound-expr :] *
 TYPE_PARSER(construct<AllocateCoarraySpec>{}(
-  defaulted(nonemptyList(Parser<AllocateShapeSpec>{}) / ","),
-  maybe(boundExpr / ":") / "*"))
+    defaulted(nonemptyList(Parser<AllocateShapeSpec>{}) / ","),
+    maybe(boundExpr / ":") / "*"))
 
 // R939 nullify-stmt -> NULLIFY ( pointer-object-list )
 TYPE_CONTEXT_PARSER("NULLIFY statement",
-  "NULLIFY" >> parenthesized(construct<NullifyStmt>{}(
-    nonemptyList(Parser<PointerObject>{}))))
+    "NULLIFY" >> parenthesized(construct<NullifyStmt>{}(
+                     nonemptyList(Parser<PointerObject>{}))))
 
 // R940 pointer-object ->
 //        variable-name | structure-component | proc-pointer-name
-TYPE_PARSER(
-  construct<PointerObject>{}(structureComponent) ||
-  construct<PointerObject>{}(name))
+TYPE_PARSER(construct<PointerObject>{}(structureComponent) ||
+    construct<PointerObject>{}(name))
 
 // R941 deallocate-stmt ->
 //        DEALLOCATE ( allocate-object-list [, dealloc-opt-list] )
 TYPE_CONTEXT_PARSER("DEALLOCATE statement",
-  "DEALLOCATE" >>
-    parenthesized(construct<DeallocateStmt>{}(
-      nonemptyList(Parser<AllocateObject>{}),
-      defaulted("," >> nonemptyList(statOrErrmsg)))))
+    "DEALLOCATE" >> parenthesized(construct<DeallocateStmt>{}(
+                        nonemptyList(Parser<AllocateObject>{}),
+                        defaulted("," >> nonemptyList(statOrErrmsg)))))
 
 // R942 dealloc-opt -> STAT = stat-variable | ERRMSG = errmsg-variable
 // R1165 sync-stat -> STAT = stat-variable | ERRMSG = errmsg-variable
-TYPE_PARSER(
-  "STAT =" >> construct<StatOrErrmsg>{}(statVariable) ||
-  "ERRMSG =" >> construct<StatOrErrmsg>{}(msgVariable))
+TYPE_PARSER("STAT =" >> construct<StatOrErrmsg>{}(statVariable) ||
+    "ERRMSG =" >> construct<StatOrErrmsg>{}(msgVariable))
 
 // R1001 primary ->
 //         literal-constant | designator | array-constructor |
 //         structure-constructor | function-reference | type-param-inquiry |
 //         type-param-name | ( expr )
 constexpr auto primary =
-  construct<Expr>{}(indirect(Parser<CharLiteralConstantSubstring>{})) ||
-  construct<Expr>{}(literalConstant) ||
-  construct<Expr>{}(construct<Expr::Parentheses>{}(parenthesized(expr))) ||
-  construct<Expr>{}(indirect(functionReference) / !"("_tok) ||
-  construct<Expr>{}(designator / !"("_tok) ||
-  construct<Expr>{}(Parser<StructureConstructor>{}) ||
-  construct<Expr>{}(Parser<ArrayConstructor>{}) ||
-  construct<Expr>{}(indirect(Parser<TypeParamInquiry>{})) ||  // occulted
-  // PGI/XLF extension: COMPLEX constructor (x,y)
-  extension(construct<Expr>{}(parenthesized(
-    construct<Expr::ComplexConstructor>{}(expr, "," >> expr)))) ||
-  extension(construct<Expr>{}(
-    "%LOC" >> parenthesized(construct<Expr::PercentLoc>{}(
-      indirect(variable)))));
+    construct<Expr>{}(indirect(Parser<CharLiteralConstantSubstring>{})) ||
+    construct<Expr>{}(literalConstant) ||
+    construct<Expr>{}(construct<Expr::Parentheses>{}(parenthesized(expr))) ||
+    construct<Expr>{}(indirect(functionReference) / !"("_tok) ||
+    construct<Expr>{}(designator / !"("_tok) ||
+    construct<Expr>{}(Parser<StructureConstructor>{}) ||
+    construct<Expr>{}(Parser<ArrayConstructor>{}) ||
+    construct<Expr>{}(indirect(Parser<TypeParamInquiry>{})) ||  // occulted
+    // PGI/XLF extension: COMPLEX constructor (x,y)
+    extension(construct<Expr>{}(parenthesized(
+        construct<Expr::ComplexConstructor>{}(expr, "," >> expr)))) ||
+    extension(construct<Expr>{}("%LOC" >>
+        parenthesized(construct<Expr::PercentLoc>{}(indirect(variable)))));
 
 // R1002 level-1-expr -> [defined-unary-op] primary
 // TODO: Reasonable extension: permit multiple defined-unary-ops
-constexpr auto level1Expr =
-  construct<Expr>{}(construct<Expr::DefinedUnary>{}(definedOpName, primary)) ||
-  primary ||
-  extension("+" >> construct<Expr>{}(construct<Expr::UnaryPlus>{}(primary))) ||
-  extension("-" >> construct<Expr>{}(construct<Expr::Negate>{}(primary)));
+constexpr auto level1Expr = construct<Expr>{}(construct<Expr::DefinedUnary>{}(
+                                definedOpName, primary)) ||
+    primary ||
+    extension(
+        "+" >> construct<Expr>{}(construct<Expr::UnaryPlus>{}(primary))) ||
+    extension("-" >> construct<Expr>{}(construct<Expr::Negate>{}(primary)));
 
 // R1003 defined-unary-op -> . letter [letter]... .
 // R1023 defined-binary-op -> . letter [letter]... .
 // R1414 local-defined-operator -> defined-unary-op | defined-binary-op
 // R1415 use-defined-operator -> defined-unary-op | defined-binary-op
-TYPE_PARSER(construct<DefinedOpName>{}(
-  applyFunction(listToString,
-                spaces >> CharMatch<'.'>{} >> some(letter) / CharMatch<'.'>{})))
+TYPE_PARSER(construct<DefinedOpName>{}(applyFunction(listToString,
+    spaces >> CharMatch<'.'>{} >> some(letter) / CharMatch<'.'>{})))
 
 // R1004 mult-operand -> level-1-expr [power-op mult-operand]
 // R1007 power-op -> **
@@ -1972,7 +1826,7 @@ std::optional<Expr> MultOperand::Parse(ParseState *state) {
   if (result) {
     static constexpr auto op = attempt("**"_tok);
     if (op.Parse(state)) {
-      std::function<Expr(Expr &&)> power{[&result](Expr &&right){
+      std::function<Expr(Expr &&)> power{[&result](Expr &&right) {
         return Expr{Expr::Power(std::move(result).value(), std::move(right))};
       }};
       return applyLambda(power, multOperand).Parse(state);  // right-recursive
@@ -1990,18 +1844,16 @@ constexpr struct AddOperand {
   static std::optional<Expr> Parse(ParseState *state) {
     std::optional<Expr> result{multOperand.Parse(state)};
     if (result) {
-      std::function<Expr(Expr &&)>
-        multiply{[&result](Expr &&right){
-          return Expr{Expr::Multiply(std::move(result).value(),
-                                     std::move(right))};
-        }},
-        divide{[&result](Expr &&right){
-          return Expr{Expr::Divide(std::move(result).value(),
-                                   std::move(right))};
-        }};
-      auto more =
-        "*" >> applyLambda(multiply, multOperand) ||
-        "/" >> applyLambda(divide, multOperand);
+      std::function<Expr(Expr &&)> multiply{[&result](Expr &&right) {
+        return Expr{
+            Expr::Multiply(std::move(result).value(), std::move(right))};
+      }},
+          divide{[&result](Expr &&right) {
+            return Expr{
+                Expr::Divide(std::move(result).value(), std::move(right))};
+          }};
+      auto more = "*" >> applyLambda(multiply, multOperand) ||
+          "/" >> applyLambda(divide, multOperand);
       while (std::optional<Expr> next{attempt(more).Parse(state)}) {
         result = std::move(next);
       }
@@ -2022,22 +1874,20 @@ constexpr struct Level2Expr {
   constexpr Level2Expr() {}
   static std::optional<Expr> Parse(ParseState *state) {
     static constexpr auto unary =
-      "+" >> construct<Expr>{}(construct<Expr::UnaryPlus>{}(addOperand)) ||
-      "-" >> construct<Expr>{}(construct<Expr::Negate>{}(addOperand)) ||
-      addOperand;
+        "+" >> construct<Expr>{}(construct<Expr::UnaryPlus>{}(addOperand)) ||
+        "-" >> construct<Expr>{}(construct<Expr::Negate>{}(addOperand)) ||
+        addOperand;
     std::optional<Expr> result{unary.Parse(state)};
     if (result) {
-      std::function<Expr(Expr &&)>
-        add{[&result](Expr &&right){
-          return Expr{Expr::Add(std::move(result).value(), std::move(right))};
-        }},
-        subtract{[&result](Expr &&right){
-          return Expr{Expr::Subtract(std::move(result).value(),
-                                     std::move(right))};
-        }};
-      auto more =
-        "+" >> applyLambda(add, addOperand) ||
-        "-" >> applyLambda(subtract, addOperand);
+      std::function<Expr(Expr &&)> add{[&result](Expr &&right) {
+        return Expr{Expr::Add(std::move(result).value(), std::move(right))};
+      }},
+          subtract{[&result](Expr &&right) {
+            return Expr{
+                Expr::Subtract(std::move(result).value(), std::move(right))};
+          }};
+      auto more = "+" >> applyLambda(add, addOperand) ||
+          "-" >> applyLambda(subtract, addOperand);
       while (std::optional<Expr> next{attempt(more).Parse(state)}) {
         result = std::move(next);
       }
@@ -2056,7 +1906,7 @@ constexpr struct Level3Expr {
   static std::optional<Expr> Parse(ParseState *state) {
     std::optional<Expr> result{level2Expr.Parse(state)};
     if (result) {
-      std::function<Expr(Expr &&)> concat{[&result](Expr &&right){
+      std::function<Expr(Expr &&)> concat{[&result](Expr &&right) {
         return Expr{Expr::Concat(std::move(result).value(), std::move(right))};
       }};
       auto more = "//" >> applyLambda(concat, level2Expr);
@@ -2079,34 +1929,33 @@ constexpr struct Level4Expr {
   static std::optional<Expr> Parse(ParseState *state) {
     std::optional<Expr> result{level3Expr.Parse(state)};
     if (result) {
-      std::function<Expr(Expr &&)>
-        lt{[&result](Expr &&right){
-          return Expr{Expr::LT(std::move(result).value(), std::move(right))};
-        }},
-        le{[&result](Expr &&right){
-          return Expr{Expr::LE(std::move(result).value(), std::move(right))};
-        }},
-        eq{[&result](Expr &&right){
-          return Expr{Expr::EQ(std::move(result).value(), std::move(right))};
-        }},
-        ne{[&result](Expr &&right){
-          return Expr{Expr::NE(std::move(result).value(), std::move(right))};
-        }},
-        ge{[&result](Expr &&right){
-          return Expr{Expr::GE(std::move(result).value(), std::move(right))};
-        }},
-        gt{[&result](Expr &&right){
-          return Expr{Expr::GT(std::move(result).value(), std::move(right))};
-        }};
-      auto more =
-        (".LT."_tok || "<"_tok) >> applyLambda(lt, level3Expr) ||
-        (".LE."_tok || "<="_tok) >> applyLambda(le, level3Expr) ||
-        (".EQ."_tok || "=="_tok) >> applyLambda(eq, level3Expr) ||
-        (".NE."_tok || "/="_tok ||
-         extension("<>"_tok /* PGI/Cray extension; Cray also has .LG. */))
-           >> applyLambda(ne, level3Expr) ||
-        (".GE."_tok || ">="_tok) >> applyLambda(ge, level3Expr) ||
-        (".GT."_tok || ">"_tok) >> applyLambda(gt, level3Expr);
+      std::function<Expr(Expr &&)> lt{[&result](Expr &&right) {
+        return Expr{Expr::LT(std::move(result).value(), std::move(right))};
+      }},
+          le{[&result](Expr &&right) {
+            return Expr{Expr::LE(std::move(result).value(), std::move(right))};
+          }},
+          eq{[&result](Expr &&right) {
+            return Expr{Expr::EQ(std::move(result).value(), std::move(right))};
+          }},
+          ne{[&result](Expr &&right) {
+            return Expr{Expr::NE(std::move(result).value(), std::move(right))};
+          }},
+          ge{[&result](Expr &&right) {
+            return Expr{Expr::GE(std::move(result).value(), std::move(right))};
+          }},
+          gt{[&result](Expr &&right) {
+            return Expr{Expr::GT(std::move(result).value(), std::move(right))};
+          }};
+      auto more = (".LT."_tok || "<"_tok) >> applyLambda(lt, level3Expr) ||
+          (".LE."_tok || "<="_tok) >> applyLambda(le, level3Expr) ||
+          (".EQ."_tok || "=="_tok) >> applyLambda(eq, level3Expr) ||
+          (".NE."_tok || "/="_tok ||
+              extension(
+                  "<>"_tok /* PGI/Cray extension; Cray also has .LG. */)) >>
+              applyLambda(ne, level3Expr) ||
+          (".GE."_tok || ">="_tok) >> applyLambda(ge, level3Expr) ||
+          (".GT."_tok || ">"_tok) >> applyLambda(gt, level3Expr);
       if (std::optional<Expr> next{attempt(more).Parse(state)}) {
         return next;
       }
@@ -2149,7 +1998,7 @@ constexpr struct OrOperand {
   static std::optional<Expr> Parse(ParseState *state) {
     std::optional<Expr> result{andOperand.Parse(state)};
     if (result) {
-      std::function<Expr(Expr &&)> logicalAnd{[&result](Expr &&right){
+      std::function<Expr(Expr &&)> logicalAnd{[&result](Expr &&right) {
         return Expr{Expr::AND(std::move(result).value(), std::move(right))};
       }};
       auto more = ".AND." >> applyLambda(logicalAnd, andOperand);
@@ -2170,7 +2019,7 @@ static constexpr struct EquivOperand {
   static std::optional<Expr> Parse(ParseState *state) {
     std::optional<Expr> result{orOperand.Parse(state)};
     if (result) {
-      std::function<Expr(Expr &&)> logicalOr{[&result](Expr &&right){
+      std::function<Expr(Expr &&)> logicalOr{[&result](Expr &&right) {
         return Expr{Expr::OR(std::move(result).value(), std::move(right))};
       }};
       auto more = ".OR." >> applyLambda(logicalOr, orOperand);
@@ -2191,16 +2040,15 @@ constexpr struct Level5Expr {
   static std::optional<Expr> Parse(ParseState *state) {
     std::optional<Expr> result{equivOperand.Parse(state)};
     if (result) {
-      std::function<Expr(Expr &&)>
-        eqv{[&result](Expr &&right){
-          return Expr{Expr::EQV(std::move(result).value(), std::move(right))};
-        }},
-        neqv{[&result](Expr &&right){
-          return Expr{Expr::NEQV(std::move(result).value(), std::move(right))};
-        }};
-      auto more =
-        ".EQV." >> applyLambda(eqv, equivOperand) ||
-        ".NEQV." >> applyLambda(neqv, equivOperand);
+      std::function<Expr(Expr &&)> eqv{[&result](Expr &&right) {
+        return Expr{Expr::EQV(std::move(result).value(), std::move(right))};
+      }},
+          neqv{[&result](Expr &&right) {
+            return Expr{
+                Expr::NEQV(std::move(result).value(), std::move(right))};
+          }};
+      auto more = ".EQV." >> applyLambda(eqv, equivOperand) ||
+          ".NEQV." >> applyLambda(neqv, equivOperand);
       // TODO: possible extensions: Cray has .XOR./.X.; ifort has .XOR.; PGI no
       while (std::optional<Expr> next{attempt(more).Parse(state)}) {
         result = std::move(next);
@@ -2212,16 +2060,14 @@ constexpr struct Level5Expr {
 
 // R1022 expr -> [expr defined-binary-op] level-5-expr
 // Defined binary operators associate leftwards.
-template<>
-std::optional<Expr> Parser<Expr>::Parse(ParseState *state) {
+template<> std::optional<Expr> Parser<Expr>::Parse(ParseState *state) {
   std::optional<Expr> result{level5Expr.Parse(state)};
   if (result) {
-    std::function<Expr(DefinedOpName &&, Expr &&)>
-      defBinOp{[&result](DefinedOpName &&op, Expr &&right){
-        return Expr{Expr::DefinedBinary(std::move(op),
-                                        std::move(result).value(),
-                                        std::move(right))};
-      }};
+    std::function<Expr(DefinedOpName &&, Expr &&)> defBinOp{
+        [&result](DefinedOpName &&op, Expr &&right) {
+          return Expr{Expr::DefinedBinary(
+              std::move(op), std::move(result).value(), std::move(right))};
+        }};
     auto more = applyLambda(defBinOp, definedOpName, level5Expr);
     while (std::optional<Expr> next{attempt(more).Parse(state)}) {
       result = std::move(next);
@@ -2234,8 +2080,8 @@ std::optional<Expr> Parser<Expr>::Parse(ParseState *state) {
 TYPE_PARSER(construct<SpecificationExpr>{}(scalarIntExpr))
 
 // R1032 assignment-stmt -> variable = expr
-TYPE_CONTEXT_PARSER("assignment statement",
-  construct<AssignmentStmt>{}(variable / "=", expr))
+TYPE_CONTEXT_PARSER(
+    "assignment statement", construct<AssignmentStmt>{}(variable / "=", expr))
 
 // R1033 pointer-assignment-stmt ->
 //         data-pointer-object [( bounds-spec-list )] => data-target |
@@ -2249,14 +2095,11 @@ TYPE_CONTEXT_PARSER("assignment statement",
 // data-pointer-object and proc-pointer-object, or between data-target
 // and proc-target.
 TYPE_CONTEXT_PARSER("pointer assignment statement",
-  construct<PointerAssignmentStmt>{}(
-    variable,
-    parenthesized(nonemptyList(Parser<BoundsRemapping>{})),
-    "=>" >> expr) ||
-  construct<PointerAssignmentStmt>{}(
-    variable,
-    defaulted(parenthesized(nonemptyList(Parser<BoundsSpec>{}))),
-    "=>" >> expr))
+    construct<PointerAssignmentStmt>{}(variable,
+        parenthesized(nonemptyList(Parser<BoundsRemapping>{})), "=>" >> expr) ||
+        construct<PointerAssignmentStmt>{}(variable,
+            defaulted(parenthesized(nonemptyList(Parser<BoundsSpec>{}))),
+            "=>" >> expr))
 
 // R1035 bounds-spec -> lower-bound-expr :
 TYPE_PARSER(construct<BoundsSpec>{}(boundExpr / ":"))
@@ -2272,125 +2115,113 @@ TYPE_PARSER(construct<BoundsRemapping>{}(boundExpr / ":", boundExpr))
 // R1045 where-assignment-stmt -> assignment-stmt
 // R1046 mask-expr -> logical-expr
 TYPE_CONTEXT_PARSER("WHERE statement",
-  "WHERE" >> construct<WhereStmt>{}(
-    parenthesized(logicalExpr),
-    assignmentStmt))
+    "WHERE" >>
+        construct<WhereStmt>{}(parenthesized(logicalExpr), assignmentStmt))
 
 // R1042 where-construct ->
 //         where-construct-stmt [where-body-construct]...
 //         [masked-elsewhere-stmt [where-body-construct]...]...
 //         [elsewhere-stmt [where-body-construct]...] end-where-stmt
-TYPE_CONTEXT_PARSER("WHERE construct", construct<WhereConstruct>{}(
-  statement(Parser<WhereConstructStmt>{}),
-  many(whereBodyConstruct),
-  many(construct<WhereConstruct::MaskedElsewhere>{}(
-         statement(Parser<MaskedElsewhereStmt>{}),
-         many(whereBodyConstruct))),
-  maybe(construct<WhereConstruct::Elsewhere>{}(
-          statement(Parser<ElsewhereStmt>{}),
-          many(whereBodyConstruct))),
-  statement(Parser<EndWhereStmt>{})))
+TYPE_CONTEXT_PARSER("WHERE construct",
+    construct<WhereConstruct>{}(statement(Parser<WhereConstructStmt>{}),
+        many(whereBodyConstruct),
+        many(construct<WhereConstruct::MaskedElsewhere>{}(
+            statement(Parser<MaskedElsewhereStmt>{}),
+            many(whereBodyConstruct))),
+        maybe(construct<WhereConstruct::Elsewhere>{}(
+            statement(Parser<ElsewhereStmt>{}), many(whereBodyConstruct))),
+        statement(Parser<EndWhereStmt>{})))
 
 // R1043 where-construct-stmt -> [where-construct-name :] WHERE ( mask-expr )
 TYPE_CONTEXT_PARSER("WHERE construct statement",
-  construct<WhereConstructStmt>{}(
-    maybe(name / ":"),
-    "WHERE" >> parenthesized(logicalExpr)))
+    construct<WhereConstructStmt>{}(
+        maybe(name / ":"), "WHERE" >> parenthesized(logicalExpr)))
 
 // R1044 where-body-construct ->
 //         where-assignment-stmt | where-stmt | where-construct
-TYPE_PARSER(
-  construct<WhereBodyConstruct>{}(statement(assignmentStmt)) ||
-  construct<WhereBodyConstruct>{}(statement(whereStmt)) ||
-  construct<WhereBodyConstruct>{}(indirect(whereConstruct)))
+TYPE_PARSER(construct<WhereBodyConstruct>{}(statement(assignmentStmt)) ||
+    construct<WhereBodyConstruct>{}(statement(whereStmt)) ||
+    construct<WhereBodyConstruct>{}(indirect(whereConstruct)))
 
 // R1047 masked-elsewhere-stmt ->
 //         ELSEWHERE ( mask-expr ) [where-construct-name]
 TYPE_CONTEXT_PARSER("masked ELSEWHERE statement",
-  "ELSEWHERE" >> construct<MaskedElsewhereStmt>{}(
-    parenthesized(logicalExpr),
-    maybe(name)))
+    "ELSEWHERE" >> construct<MaskedElsewhereStmt>{}(
+                       parenthesized(logicalExpr), maybe(name)))
 
 // R1048 elsewhere-stmt -> ELSEWHERE [where-construct-name]
 TYPE_CONTEXT_PARSER("ELSEWHERE statement",
-  "ELSEWHERE" >> construct<ElsewhereStmt>{}(maybe(name)))
+    "ELSEWHERE" >> construct<ElsewhereStmt>{}(maybe(name)))
 
 // R1049 end-where-stmt -> ENDWHERE [where-construct-name]
 TYPE_CONTEXT_PARSER("END WHERE statement",
-  "END WHERE" >> construct<EndWhereStmt>{}(maybe(name)))
+    "END WHERE" >> construct<EndWhereStmt>{}(maybe(name)))
 
 // R1050 forall-construct ->
 //         forall-construct-stmt [forall-body-construct]... end-forall-stmt
-TYPE_CONTEXT_PARSER("FORALL construct", construct<ForallConstruct>{}(
-  statement(Parser<ForallConstructStmt>{}),
-  many(Parser<ForallBodyConstruct>{}),
-  statement(Parser<EndForallStmt>{})))
+TYPE_CONTEXT_PARSER("FORALL construct",
+    construct<ForallConstruct>{}(statement(Parser<ForallConstructStmt>{}),
+        many(Parser<ForallBodyConstruct>{}),
+        statement(Parser<EndForallStmt>{})))
 
 // R1051 forall-construct-stmt ->
 //         [forall-construct-name :] FORALL concurrent-header
 TYPE_CONTEXT_PARSER("FORALL construct statement",
-  construct<ForallConstructStmt>{}(
-    maybe(name / ":"),
-    "FORALL" >> indirect(concurrentHeader)))
+    construct<ForallConstructStmt>{}(
+        maybe(name / ":"), "FORALL" >> indirect(concurrentHeader)))
 
 // R1052 forall-body-construct ->
 //         forall-assignment-stmt | where-stmt | where-construct |
 //         forall-construct | forall-stmt
-TYPE_PARSER(
-  construct<ForallBodyConstruct>{}(statement(forallAssignmentStmt)) ||
-  construct<ForallBodyConstruct>{}(statement(whereStmt)) ||
-  construct<ForallBodyConstruct>{}(whereConstruct) ||
-  construct<ForallBodyConstruct>{}(indirect(forallConstruct)) ||
-  construct<ForallBodyConstruct>{}(statement(forallStmt)))
+TYPE_PARSER(construct<ForallBodyConstruct>{}(statement(forallAssignmentStmt)) ||
+    construct<ForallBodyConstruct>{}(statement(whereStmt)) ||
+    construct<ForallBodyConstruct>{}(whereConstruct) ||
+    construct<ForallBodyConstruct>{}(indirect(forallConstruct)) ||
+    construct<ForallBodyConstruct>{}(statement(forallStmt)))
 
 // R1053 forall-assignment-stmt -> assignment-stmt | pointer-assignment-stmt
-TYPE_PARSER(
-  construct<ForallAssignmentStmt>{}(assignmentStmt) ||
-  construct<ForallAssignmentStmt>{}(pointerAssignmentStmt))
+TYPE_PARSER(construct<ForallAssignmentStmt>{}(assignmentStmt) ||
+    construct<ForallAssignmentStmt>{}(pointerAssignmentStmt))
 
 // R1054 end-forall-stmt -> END FORALL [forall-construct-name]
 TYPE_CONTEXT_PARSER("END FORALL statement",
-  "END FORALL" >> construct<EndForallStmt>{}(maybe(name)))
+    "END FORALL" >> construct<EndForallStmt>{}(maybe(name)))
 
 // R1055 forall-stmt -> FORALL concurrent-header forall-assignment-stmt
 TYPE_CONTEXT_PARSER("FORALL statement",
-  "FORALL" >> construct<ForallStmt>{}(
-    indirect(concurrentHeader),
-    forallAssignmentStmt))
+    "FORALL" >> construct<ForallStmt>{}(
+                    indirect(concurrentHeader), forallAssignmentStmt))
 
 // R1101 block -> [execution-part-construct]...
 constexpr auto block = many(executionPartConstruct);
 
 // R1102 associate-construct -> associate-stmt block end-associate-stmt
-TYPE_CONTEXT_PARSER("ASSOCIATE construct", construct<AssociateConstruct>{}(
-  statement(Parser<AssociateStmt>{}),
-  block,
-  statement(Parser<EndAssociateStmt>{})))
+TYPE_CONTEXT_PARSER("ASSOCIATE construct",
+    construct<AssociateConstruct>{}(statement(Parser<AssociateStmt>{}), block,
+        statement(Parser<EndAssociateStmt>{})))
 
 // R1103 associate-stmt ->
 //        [associate-construct-name :] ASSOCIATE ( association-list )
-TYPE_CONTEXT_PARSER("ASSOCIATE statement", construct<AssociateStmt>{}(
-  maybe(name / ":"),
-  "ASSOCIATE" >> parenthesized(nonemptyList(Parser<Association>{}))))
+TYPE_CONTEXT_PARSER("ASSOCIATE statement",
+    construct<AssociateStmt>{}(maybe(name / ":"),
+        "ASSOCIATE" >> parenthesized(nonemptyList(Parser<Association>{}))))
 
 // R1104 association -> associate-name => selector
 TYPE_PARSER(construct<Association>{}(name, "=>" >> selector))
 
 // R1105 selector -> expr | variable
-TYPE_PARSER(
-  construct<Selector>{}(variable) / lookAhead(","_tok || ")"_tok) ||
-  construct<Selector>{}(expr))
+TYPE_PARSER(construct<Selector>{}(variable) / lookAhead(","_tok || ")"_tok) ||
+    construct<Selector>{}(expr))
 
 // R1106 end-associate-stmt -> END ASSOCIATE [associate-construct-name]
 TYPE_PARSER("END ASSOCIATE" >> construct<EndAssociateStmt>{}(maybe(name)))
 
 // R1107 block-construct ->
 //         block-stmt [block-specification-part] block end-block-stmt
-TYPE_CONTEXT_PARSER("BLOCK construct", construct<BlockConstruct>{}(
-  statement(Parser<BlockStmt>{}),
-  Parser<BlockSpecificationPart>{},  // can be empty
-  block,
-  statement(Parser<EndBlockStmt>{})))
+TYPE_CONTEXT_PARSER("BLOCK construct",
+    construct<BlockConstruct>{}(statement(Parser<BlockStmt>{}),
+        Parser<BlockSpecificationPart>{},  // can be empty
+        block, statement(Parser<EndBlockStmt>{})))
 
 // R1108 block-stmt -> [block-construct-name :] BLOCK
 TYPE_PARSER(construct<BlockStmt>{}(maybe(name / ":") / "BLOCK"))
@@ -2411,43 +2242,41 @@ TYPE_PARSER(construct<BlockSpecificationPart>{}(specificationPart))
 TYPE_PARSER(construct<EndBlockStmt>{}("END BLOCK" >> maybe(name)))
 
 // R1111 change-team-construct -> change-team-stmt block end-change-team-stmt
-TYPE_CONTEXT_PARSER("CHANGE TEAM construct", construct<ChangeTeamConstruct>{}(
-  statement(Parser<ChangeTeamStmt>{}),
-  block,
-  statement(Parser<EndChangeTeamStmt>{})))
+TYPE_CONTEXT_PARSER("CHANGE TEAM construct",
+    construct<ChangeTeamConstruct>{}(statement(Parser<ChangeTeamStmt>{}), block,
+        statement(Parser<EndChangeTeamStmt>{})))
 
 // R1112 change-team-stmt ->
 //         [team-construct-name :] CHANGE TEAM
 //         ( team-variable [, coarray-association-list] [, sync-stat-list] )
-TYPE_CONTEXT_PARSER("CHANGE TEAM statement", construct<ChangeTeamStmt>{}(
-  maybe(name / ":"),
-  "CHANGE TEAM (" >> teamVariable,
-  defaulted("," >> nonemptyList(Parser<CoarrayAssociation>{})),
-  defaulted("," >> nonemptyList(statOrErrmsg))) / ")")
+TYPE_CONTEXT_PARSER("CHANGE TEAM statement",
+    construct<ChangeTeamStmt>{}(maybe(name / ":"),
+        "CHANGE TEAM (" >> teamVariable,
+        defaulted("," >> nonemptyList(Parser<CoarrayAssociation>{})),
+        defaulted("," >> nonemptyList(statOrErrmsg))) /
+        ")")
 
 // R1113 coarray-association -> codimension-decl => selector
 TYPE_PARSER(construct<CoarrayAssociation>{}(
-  Parser<CodimensionDecl>{},
-  "=>" >> selector))
+    Parser<CodimensionDecl>{}, "=>" >> selector))
 
 // R1114 end-change-team-stmt ->
 //         END TEAM [( [sync-stat-list] )] [team-construct-name]
 TYPE_CONTEXT_PARSER("END CHANGE TEAM statement",
-  "END TEAM" >> construct<EndChangeTeamStmt>{}(
-    defaulted(parenthesized(optionalList(statOrErrmsg))),
-    maybe(name)))
+    "END TEAM" >>
+        construct<EndChangeTeamStmt>{}(
+            defaulted(parenthesized(optionalList(statOrErrmsg))), maybe(name)))
 
 // R1117 critical-stmt ->
 //         [critical-construct-name :] CRITICAL [( [sync-stat-list] )]
-TYPE_CONTEXT_PARSER("CRITICAL statement", construct<CriticalStmt>{}(
-  maybe(name / ":"),
-  "CRITICAL" >> defaulted(parenthesized(optionalList(statOrErrmsg)))))
+TYPE_CONTEXT_PARSER("CRITICAL statement",
+    construct<CriticalStmt>{}(maybe(name / ":"),
+        "CRITICAL" >> defaulted(parenthesized(optionalList(statOrErrmsg)))))
 
 // R1116 critical-construct -> critical-stmt block end-critical-stmt
-TYPE_CONTEXT_PARSER("CRITICAL construct", construct<CriticalConstruct>{}(
-  statement(Parser<CriticalStmt>{}),
-  block,
-  statement(Parser<EndCriticalStmt>{})))
+TYPE_CONTEXT_PARSER("CRITICAL construct",
+    construct<CriticalConstruct>{}(statement(Parser<CriticalStmt>{}), block,
+        statement(Parser<EndCriticalStmt>{})))
 
 // R1118 end-critical-stmt -> END CRITICAL [critical-construct-name]
 TYPE_PARSER("END CRITICAL" >> construct<EndCriticalStmt>{}(maybe(name)))
@@ -2474,41 +2303,38 @@ constexpr struct LeaveDoConstruct {
   }
 } leaveDoConstruct;
 
-TYPE_CONTEXT_PARSER("DO construct", construct<DoConstruct>{}(
-  statement(Parser<NonLabelDoStmt>{}) / enterNonlabelDoConstruct,
-  block,
-  statement(endDoStmt) / leaveDoConstruct))
+TYPE_CONTEXT_PARSER("DO construct",
+    construct<DoConstruct>{}(
+        statement(Parser<NonLabelDoStmt>{}) / enterNonlabelDoConstruct, block,
+        statement(endDoStmt) / leaveDoConstruct))
 
 // R1125 concurrent-header ->
 //         ( [integer-type-spec ::] concurrent-control-list
 //         [, scalar-mask-expr] )
 TYPE_PARSER(parenthesized(construct<ConcurrentHeader>{}(
-  maybe(integerTypeSpec / "::"),
-  nonemptyList(Parser<ConcurrentControl>{}),
-  maybe("," >> scalarLogicalExpr))))
+    maybe(integerTypeSpec / "::"), nonemptyList(Parser<ConcurrentControl>{}),
+    maybe("," >> scalarLogicalExpr))))
 
 // R1126 concurrent-control ->
 //         index-name = concurrent-limit : concurrent-limit [: concurrent-step]
 // R1127 concurrent-limit -> scalar-int-expr
 // R1128 concurrent-step -> scalar-int-expr
-TYPE_PARSER(construct<ConcurrentControl>{}(
-  name / "=",
-  scalarIntExpr / ":",
-  scalarIntExpr,
-  maybe(":" >> scalarIntExpr)))
+TYPE_PARSER(construct<ConcurrentControl>{}(name / "=", scalarIntExpr / ":",
+    scalarIntExpr, maybe(":" >> scalarIntExpr)))
 
 // R1130 locality-spec ->
 //         LOCAL ( variable-name-list ) | LOCAL INIT ( variable-name-list ) |
 //         SHARED ( variable-name-list ) | DEFAULT ( NONE )
 TYPE_PARSER(
-  "LOCAL" >> construct<LocalitySpec>{}(
-    construct<LocalitySpec::Local>{}(parenthesized(nonemptyList(name)))) ||
-  "LOCAL INIT" >> construct<LocalitySpec>{}(
-    construct<LocalitySpec::LocalInit>{}(parenthesized(nonemptyList(name)))) ||
-  "SHARED" >> construct<LocalitySpec>{}(
-    construct<LocalitySpec::Shared>{}(parenthesized(nonemptyList(name)))) ||
-  "DEFAULT ( NONE )" >> construct<LocalitySpec>{}(
-    construct<LocalitySpec::DefaultNone>{}))
+    "LOCAL" >> construct<LocalitySpec>{}(construct<LocalitySpec::Local>{}(
+                   parenthesized(nonemptyList(name)))) ||
+    "LOCAL INIT" >>
+        construct<LocalitySpec>{}(construct<LocalitySpec::LocalInit>{}(
+            parenthesized(nonemptyList(name)))) ||
+    "SHARED" >> construct<LocalitySpec>{}(construct<LocalitySpec::Shared>{}(
+                    parenthesized(nonemptyList(name)))) ||
+    "DEFAULT ( NONE )" >>
+        construct<LocalitySpec>{}(construct<LocalitySpec::DefaultNone>{}))
 
 // R1123 loop-control ->
 //         [,] do-variable = scalar-int-expr , scalar-int-expr
@@ -2517,31 +2343,30 @@ TYPE_PARSER(
 //         [,] CONCURRENT concurrent-header concurrent-locality
 // R1129 concurrent-locality -> [locality-spec]...
 TYPE_CONTEXT_PARSER("loop control",
-  maybe(","_tok) >> (
-    construct<LoopControl>{}(loopBounds(scalarIntExpr)) ||
-    "WHILE" >> construct<LoopControl>{}(parenthesized(scalarLogicalExpr)) ||
-    "CONCURRENT" >> construct<LoopControl>{}(
-      construct<LoopControl::Concurrent>{}(
-        concurrentHeader, many(Parser<LocalitySpec>{})))))
+    maybe(","_tok) >>
+        (construct<LoopControl>{}(loopBounds(scalarIntExpr)) ||
+            "WHILE" >>
+                construct<LoopControl>{}(parenthesized(scalarLogicalExpr)) ||
+            "CONCURRENT" >>
+                construct<LoopControl>{}(construct<LoopControl::Concurrent>{}(
+                    concurrentHeader, many(Parser<LocalitySpec>{})))))
 
 // R1121 label-do-stmt -> [do-construct-name :] DO label [loop-control]
-TYPE_CONTEXT_PARSER("label DO statement", construct<LabelDoStmt>{}(
-  maybe(name / ":"),
-  "DO" >> label,
-  maybe(loopControl)))
+TYPE_CONTEXT_PARSER("label DO statement",
+    construct<LabelDoStmt>{}(
+        maybe(name / ":"), "DO" >> label, maybe(loopControl)))
 
 // R1122 nonlabel-do-stmt -> [do-construct-name :] DO [loop-control]
-TYPE_CONTEXT_PARSER("nonlabel DO statement", construct<NonLabelDoStmt>{}(
-  maybe(name / ":"),
-  "DO" >> maybe(loopControl)))
+TYPE_CONTEXT_PARSER("nonlabel DO statement",
+    construct<NonLabelDoStmt>{}(maybe(name / ":"), "DO" >> maybe(loopControl)))
 
 // R1132 end-do-stmt -> END DO [do-construct-name]
-TYPE_CONTEXT_PARSER("END DO statement",
-  "END DO" >> construct<EndDoStmt>{}(maybe(name)))
+TYPE_CONTEXT_PARSER(
+    "END DO statement", "END DO" >> construct<EndDoStmt>{}(maybe(name)))
 
 // R1133 cycle-stmt -> CYCLE [do-construct-name]
-TYPE_CONTEXT_PARSER("CYCLE statement",
-  "CYCLE" >> construct<CycleStmt>{}(maybe(name)))
+TYPE_CONTEXT_PARSER(
+    "CYCLE statement", "CYCLE" >> construct<CycleStmt>{}(maybe(name)))
 
 // R1134 if-construct ->
 //         if-then-stmt block [else-if-stmt block]...
@@ -2551,44 +2376,41 @@ TYPE_CONTEXT_PARSER("CYCLE statement",
 //         ELSE IF ( scalar-logical-expr ) THEN [if-construct-name]
 // R1137 else-stmt -> ELSE [if-construct-name]
 // R1138 end-if-stmt -> END IF [if-construct-name]
-TYPE_CONTEXT_PARSER("IF construct", construct<IfConstruct>{}(
-  statement(construct<IfThenStmt>{}(
-    maybe(name / ":"),
-    "IF" >> parenthesized(scalarLogicalExpr) / "THEN")),
-  block,
-  many(construct<IfConstruct::ElseIfBlock>{}(
-    statement(construct<ElseIfStmt>{}(
-      "ELSE IF" >> parenthesized(scalarLogicalExpr),
-      "THEN" >> maybe(name))),
-    block)),
-  maybe(construct<IfConstruct::ElseBlock>{}(
-    statement(construct<ElseStmt>{}(
-      "ELSE" >> maybe(name))),
-    block)),
-  statement(construct<EndIfStmt>{}("END IF" >> maybe(name)))))
+TYPE_CONTEXT_PARSER("IF construct",
+    construct<IfConstruct>{}(
+        statement(construct<IfThenStmt>{}(maybe(name / ":"),
+            "IF" >> parenthesized(scalarLogicalExpr) / "THEN")),
+        block,
+        many(construct<IfConstruct::ElseIfBlock>{}(
+            statement(construct<ElseIfStmt>{}(
+                "ELSE IF" >> parenthesized(scalarLogicalExpr),
+                "THEN" >> maybe(name))),
+            block)),
+        maybe(construct<IfConstruct::ElseBlock>{}(
+            statement(construct<ElseStmt>{}("ELSE" >> maybe(name))), block)),
+        statement(construct<EndIfStmt>{}("END IF" >> maybe(name)))))
 
 // R1139 if-stmt -> IF ( scalar-logical-expr ) action-stmt
 TYPE_CONTEXT_PARSER("IF statement",
-  "IF" >> construct<IfStmt>{}(
-    parenthesized(scalarLogicalExpr),
-    actionStmt))
+    "IF" >> construct<IfStmt>{}(parenthesized(scalarLogicalExpr), actionStmt))
 
 // R1140 case-construct ->
 //         select-case-stmt [case-stmt block]... end-select-stmt
-TYPE_CONTEXT_PARSER("SELECT CASE construct", construct<CaseConstruct>{}(
-  statement(Parser<SelectCaseStmt>{}),
-  many(construct<CaseConstruct::Case>{}(statement(Parser<CaseStmt>{}), block)),
-  statement(endSelectStmt)))
+TYPE_CONTEXT_PARSER("SELECT CASE construct",
+    construct<CaseConstruct>{}(statement(Parser<SelectCaseStmt>{}),
+        many(construct<CaseConstruct::Case>{}(
+            statement(Parser<CaseStmt>{}), block)),
+        statement(endSelectStmt)))
 
 // R1141 select-case-stmt -> [case-construct-name :] SELECT CASE ( case-expr )
 // R1144 case-expr -> scalar-expr
-TYPE_CONTEXT_PARSER("SELECT CASE statement", construct<SelectCaseStmt>{}(
-  maybe(name / ":"),
-  "SELECT CASE" >> parenthesized(scalar(expr))))
+TYPE_CONTEXT_PARSER("SELECT CASE statement",
+    construct<SelectCaseStmt>{}(
+        maybe(name / ":"), "SELECT CASE" >> parenthesized(scalar(expr))))
 
 // R1142 case-stmt -> CASE case-selector [case-construct-name]
 TYPE_CONTEXT_PARSER("CASE statement",
-  "CASE" >> construct<CaseStmt>{}(Parser<CaseSelector>{}, maybe(name)))
+    "CASE" >> construct<CaseStmt>{}(Parser<CaseSelector>{}, maybe(name)))
 
 // R1143 end-select-stmt -> END SELECT [case-construct-name]
 // R1151 end-select-rank-stmt -> END SELECT [select-construct-name]
@@ -2597,208 +2419,192 @@ TYPE_PARSER("END SELECT" >> construct<EndSelectStmt>{}(maybe(name)))
 
 // R1145 case-selector -> ( case-value-range-list ) | DEFAULT
 constexpr auto defaultKeyword = "DEFAULT" >> construct<Default>{};
-TYPE_PARSER(
-  parenthesized(construct<CaseSelector>{}(
-    nonemptyList(Parser<CaseValueRange>{}))) ||
-  construct<CaseSelector>{}(defaultKeyword))
+TYPE_PARSER(parenthesized(construct<CaseSelector>{}(
+                nonemptyList(Parser<CaseValueRange>{}))) ||
+    construct<CaseSelector>{}(defaultKeyword))
 
 // R1147 case-value -> scalar-constant-expr
 constexpr auto caseValue = scalar(constantExpr);
 
 // R1146 case-value-range ->
 //         case-value | case-value : | : case-value | case-value : case-value
-TYPE_PARSER(
-  construct<CaseValueRange>{}(construct<CaseValueRange::Range>{}(
-    construct<std::optional<CaseValue>>{}(caseValue),
-    ":" >> maybe(caseValue))) ||
-  construct<CaseValueRange>{}(construct<CaseValueRange::Range>{}(
-    construct<std::optional<CaseValue>>{},
-    ":" >> construct<std::optional<CaseValue>>{}(caseValue))) ||
-  construct<CaseValueRange>{}(caseValue))
+TYPE_PARSER(construct<CaseValueRange>{}(construct<CaseValueRange::Range>{}(
+                construct<std::optional<CaseValue>>{}(caseValue),
+                ":" >> maybe(caseValue))) ||
+    construct<CaseValueRange>{}(construct<CaseValueRange::Range>{}(
+        construct<std::optional<CaseValue>>{},
+        ":" >> construct<std::optional<CaseValue>>{}(caseValue))) ||
+    construct<CaseValueRange>{}(caseValue))
 
 // R1148 select-rank-construct ->
 //         select-rank-stmt [select-rank-case-stmt block]...
 //         end-select-rank-stmt
-TYPE_CONTEXT_PARSER("SELECT RANK construct", construct<SelectRankConstruct>{}(
-  statement(Parser<SelectRankStmt>{}),
-  many(construct<SelectRankConstruct::RankCase>{}(
-    statement(Parser<SelectRankCaseStmt>{}),
-    block)),
-  statement(endSelectStmt)))
+TYPE_CONTEXT_PARSER("SELECT RANK construct",
+    construct<SelectRankConstruct>{}(statement(Parser<SelectRankStmt>{}),
+        many(construct<SelectRankConstruct::RankCase>{}(
+            statement(Parser<SelectRankCaseStmt>{}), block)),
+        statement(endSelectStmt)))
 
 // R1149 select-rank-stmt ->
 //         [select-construct-name :] SELECT RANK
 //         ( [associate-name =>] selector )
-TYPE_CONTEXT_PARSER("SELECT RANK statement", construct<SelectRankStmt>{}(
-  maybe(name / ":"),
-  "SELECT RANK (" >> maybe(name / "=>"),
-  selector / ")"))
+TYPE_CONTEXT_PARSER("SELECT RANK statement",
+    construct<SelectRankStmt>{}(maybe(name / ":"),
+        "SELECT RANK (" >> maybe(name / "=>"), selector / ")"))
 
 // R1150 select-rank-case-stmt ->
 //         RANK ( scalar-int-constant-expr ) [select-construct-name] |
 //         RANK ( * ) [select-construct-name] |
 //         RANK DEFAULT [select-construct-name]
 TYPE_CONTEXT_PARSER("RANK case statement",
-  "RANK" >> (construct<SelectRankCaseStmt>{}(
-     parenthesized(
-       construct<SelectRankCaseStmt::Rank>{}(scalarIntConstantExpr) ||
-       construct<SelectRankCaseStmt::Rank>{}(star)) ||
-    construct<SelectRankCaseStmt::Rank>{}(defaultKeyword),
-    maybe(name))))
+    "RANK" >> (construct<SelectRankCaseStmt>{}(
+                  parenthesized(construct<SelectRankCaseStmt::Rank>{}(
+                                    scalarIntConstantExpr) ||
+                      construct<SelectRankCaseStmt::Rank>{}(star)) ||
+                      construct<SelectRankCaseStmt::Rank>{}(defaultKeyword),
+                  maybe(name))))
 
 // R1152 select-type-construct ->
 //         select-type-stmt [type-guard-stmt block]... end-select-type-stmt
-TYPE_CONTEXT_PARSER("SELECT TYPE construct", construct<SelectTypeConstruct>{}(
-  statement(Parser<SelectTypeStmt>{}),
-  many(construct<SelectTypeConstruct::TypeCase>{}(
-    statement(Parser<TypeGuardStmt>{}),
-    block)),
-  statement(endSelectStmt)))
+TYPE_CONTEXT_PARSER("SELECT TYPE construct",
+    construct<SelectTypeConstruct>{}(statement(Parser<SelectTypeStmt>{}),
+        many(construct<SelectTypeConstruct::TypeCase>{}(
+            statement(Parser<TypeGuardStmt>{}), block)),
+        statement(endSelectStmt)))
 
 // R1153 select-type-stmt ->
 //         [select-construct-name :] SELECT TYPE
 //         ( [associate-name =>] selector )
-TYPE_CONTEXT_PARSER("SELECT TYPE statement", construct<SelectTypeStmt>{}(
-  maybe(name / ":"),
-  "SELECT TYPE (" >> maybe(name / "=>"),
-  selector  / ")"))
+TYPE_CONTEXT_PARSER("SELECT TYPE statement",
+    construct<SelectTypeStmt>{}(maybe(name / ":"),
+        "SELECT TYPE (" >> maybe(name / "=>"), selector / ")"))
 
 // R1154 type-guard-stmt ->
 //         TYPE IS ( type-spec ) [select-construct-name] |
 //         CLASS IS ( derived-type-spec ) [select-construct-name] |
 //         CLASS DEFAULT [select-construct-name]
 TYPE_CONTEXT_PARSER("type guard statement",
-  construct<TypeGuardStmt>{}(
-    "TYPE IS" >> parenthesized(construct<TypeGuardStmt::Guard>{}(typeSpec)) ||
-    "CLASS IS" >> parenthesized(construct<TypeGuardStmt::Guard>{}(
-      derivedTypeSpec)) ||
-    "CLASS" >> construct<TypeGuardStmt::Guard>{}(defaultKeyword),
-    maybe(name)))
+    construct<TypeGuardStmt>{}("TYPE IS" >>
+                parenthesized(construct<TypeGuardStmt::Guard>{}(typeSpec)) ||
+            "CLASS IS" >> parenthesized(construct<TypeGuardStmt::Guard>{}(
+                              derivedTypeSpec)) ||
+            "CLASS" >> construct<TypeGuardStmt::Guard>{}(defaultKeyword),
+        maybe(name)))
 
 // R1156 exit-stmt -> EXIT [construct-name]
-TYPE_CONTEXT_PARSER("EXIT statement",
-  "EXIT" >> construct<ExitStmt>{}(maybe(name)))
+TYPE_CONTEXT_PARSER(
+    "EXIT statement", "EXIT" >> construct<ExitStmt>{}(maybe(name)))
 
 // R1157 goto-stmt -> GO TO label
-TYPE_CONTEXT_PARSER("GOTO statement",
-  "GO TO" >> construct<GotoStmt>{}(label))
+TYPE_CONTEXT_PARSER("GOTO statement", "GO TO" >> construct<GotoStmt>{}(label))
 
 // R1158 computed-goto-stmt -> GO TO ( label-list ) [,] scalar-int-expr
 TYPE_CONTEXT_PARSER("computed GOTO statement",
-  "GO TO" >> construct<ComputedGotoStmt>{}(
-    parenthesized(nonemptyList(label)),
-    maybe(","_tok) >> scalarIntExpr))
+    "GO TO" >> construct<ComputedGotoStmt>{}(parenthesized(nonemptyList(label)),
+                   maybe(","_tok) >> scalarIntExpr))
 
 // R1160 stop-stmt -> STOP [stop-code] [, QUIET = scalar-logical-expr]
 // R1161 error-stop-stmt ->
 //         ERROR STOP [stop-code] [, QUIET = scalar-logical-expr]
 TYPE_CONTEXT_PARSER("STOP statement",
-  construct<StopStmt>{}(
-    "STOP" >> pure(StopStmt::Kind::Stop) ||
-      "ERROR STOP" >> pure(StopStmt::Kind::ErrorStop),
-    maybe(Parser<StopCode>{}),
-    maybe(", QUIET =" >> scalarLogicalExpr)))
+    construct<StopStmt>{}("STOP" >> pure(StopStmt::Kind::Stop) ||
+            "ERROR STOP" >> pure(StopStmt::Kind::ErrorStop),
+        maybe(Parser<StopCode>{}), maybe(", QUIET =" >> scalarLogicalExpr)))
 
 // R1162 stop-code -> scalar-default-char-expr | scalar-int-expr
-TYPE_PARSER(
-  construct<StopCode>{}(scalarDefaultCharExpr) ||
-  construct<StopCode>{}(scalarIntExpr))
+TYPE_PARSER(construct<StopCode>{}(scalarDefaultCharExpr) ||
+    construct<StopCode>{}(scalarIntExpr))
 
 // R1164 sync-all-stmt -> SYNC ALL [( [sync-stat-list] )]
 TYPE_CONTEXT_PARSER("SYNC ALL statement",
-  "SYNC ALL" >> construct<SyncAllStmt>{}(
-    defaulted(parenthesized(optionalList(statOrErrmsg)))))
+    "SYNC ALL" >> construct<SyncAllStmt>{}(
+                      defaulted(parenthesized(optionalList(statOrErrmsg)))))
 
 // R1166 sync-images-stmt -> SYNC IMAGES ( image-set [, sync-stat-list] )
 // R1167 image-set -> int-expr | *
 TYPE_CONTEXT_PARSER("SYNC IMAGES statement",
-  "SYNC IMAGES" >> parenthesized(construct<SyncImagesStmt>{}(
-    construct<SyncImagesStmt::ImageSet>{}(intExpr) ||
-      construct<SyncImagesStmt::ImageSet>{}(star),
-    defaulted("," >> nonemptyList(statOrErrmsg)))))
+    "SYNC IMAGES" >> parenthesized(construct<SyncImagesStmt>{}(
+                         construct<SyncImagesStmt::ImageSet>{}(intExpr) ||
+                             construct<SyncImagesStmt::ImageSet>{}(star),
+                         defaulted("," >> nonemptyList(statOrErrmsg)))))
 
 // R1168 sync-memory-stmt -> SYNC MEMORY [( [sync-stat-list] )]
 TYPE_CONTEXT_PARSER("SYNC MEMORY statement",
-  "SYNC MEMORY" >> construct<SyncMemoryStmt>{}(
-    defaulted(parenthesized(optionalList(statOrErrmsg)))))
+    "SYNC MEMORY" >> construct<SyncMemoryStmt>{}(
+                         defaulted(parenthesized(optionalList(statOrErrmsg)))))
 
 // R1169 sync-team-stmt -> SYNC TEAM ( team-variable [, sync-stat-list] )
 TYPE_CONTEXT_PARSER("SYNC TEAM statement",
-  "SYNC TEAM" >> parenthesized(construct<SyncTeamStmt>{}(
-    teamVariable,
-    defaulted("," >> nonemptyList(statOrErrmsg)))))
+    "SYNC TEAM" >> parenthesized(construct<SyncTeamStmt>{}(teamVariable,
+                       defaulted("," >> nonemptyList(statOrErrmsg)))))
 
 // R1170 event-post-stmt -> EVENT POST ( event-variable [, sync-stat-list] )
 // R1171 event-variable -> scalar-variable
 TYPE_CONTEXT_PARSER("EVENT POST statement",
-  "EVENT POST" >> parenthesized(construct<EventPostStmt>{}(
-    scalar(variable),
-    defaulted("," >> nonemptyList(statOrErrmsg)))))
+    "EVENT POST" >> parenthesized(construct<EventPostStmt>{}(scalar(variable),
+                        defaulted("," >> nonemptyList(statOrErrmsg)))))
 
 // R1172 event-wait-stmt ->
 //         EVENT WAIT ( event-variable [, event-wait-spec-list] )
 TYPE_CONTEXT_PARSER("EVENT WAIT statement",
-  "EVENT WAIT" >> parenthesized(construct<EventWaitStmt>{}(
-    scalar(variable),
-    defaulted("," >> nonemptyList(Parser<EventWaitStmt::EventWaitSpec>{})))))
+    "EVENT WAIT" >>
+        parenthesized(construct<EventWaitStmt>{}(scalar(variable),
+            defaulted(
+                "," >> nonemptyList(Parser<EventWaitStmt::EventWaitSpec>{})))))
 
 // R1174 until-spec -> UNTIL_COUNT = scalar-int-expr
 constexpr auto untilSpec = "UNTIL_COUNT =" >> scalarIntExpr;
 
 // R1173 event-wait-spec -> until-spec | sync-stat
-TYPE_PARSER(
-  construct<EventWaitStmt::EventWaitSpec>{}(untilSpec) ||
-  construct<EventWaitStmt::EventWaitSpec>{}(statOrErrmsg))
+TYPE_PARSER(construct<EventWaitStmt::EventWaitSpec>{}(untilSpec) ||
+    construct<EventWaitStmt::EventWaitSpec>{}(statOrErrmsg))
 
 // R1175 form-team-stmt ->
 //         FORM TEAM ( team-number , team-variable [, form-team-spec-list] )
 // R1176 team-number -> scalar-int-expr
 TYPE_CONTEXT_PARSER("FORM TEAM statement",
-  "FORM TEAM" >> parenthesized(construct<FormTeamStmt>{}(
-    scalarIntExpr,
-    "," >> teamVariable,
-    defaulted("," >> nonemptyList(Parser<FormTeamStmt::FormTeamSpec>{})))))
+    "FORM TEAM" >>
+        parenthesized(construct<FormTeamStmt>{}(scalarIntExpr,
+            "," >> teamVariable,
+            defaulted(
+                "," >> nonemptyList(Parser<FormTeamStmt::FormTeamSpec>{})))))
 
 // R1177 form-team-spec -> NEW_INDEX = scalar-int-expr | sync-stat
 TYPE_PARSER(
-  "NEW_INDEX =" >> construct<FormTeamStmt::FormTeamSpec>{}(scalarIntExpr) ||
-  construct<FormTeamStmt::FormTeamSpec>{}(statOrErrmsg))
+    "NEW_INDEX =" >> construct<FormTeamStmt::FormTeamSpec>{}(scalarIntExpr) ||
+    construct<FormTeamStmt::FormTeamSpec>{}(statOrErrmsg))
 
 // R1181 lock-variable -> scalar-variable
 constexpr auto lockVariable = scalar(variable);
 
 // R1178 lock-stmt -> LOCK ( lock-variable [, lock-stat-list] )
 TYPE_CONTEXT_PARSER("LOCK statement",
-  "LOCK" >> parenthesized(construct<LockStmt>{}(
-    lockVariable,
-    defaulted("," >> nonemptyList(Parser<LockStmt::LockStat>{})))))
+    "LOCK" >>
+        parenthesized(construct<LockStmt>{}(lockVariable,
+            defaulted("," >> nonemptyList(Parser<LockStmt::LockStat>{})))))
 
 // R1179 lock-stat -> ACQUIRED_LOCK = scalar-logical-variable | sync-stat
-TYPE_PARSER(
-  "ACQUIRED_LOCK =" >> construct<LockStmt::LockStat>{}(
-    scalarLogicalVariable) ||
-  construct<LockStmt::LockStat>{}(statOrErrmsg))
+TYPE_PARSER("ACQUIRED_LOCK =" >>
+        construct<LockStmt::LockStat>{}(scalarLogicalVariable) ||
+    construct<LockStmt::LockStat>{}(statOrErrmsg))
 
 // R1180 unlock-stmt -> UNLOCK ( lock-variable [, sync-stat-list] )
 TYPE_CONTEXT_PARSER("UNLOCK statement",
-  "UNLOCK" >> parenthesized(construct<UnlockStmt>{}(
-    lockVariable,
-    defaulted("," >> nonemptyList(statOrErrmsg)))))
+    "UNLOCK" >> parenthesized(construct<UnlockStmt>{}(lockVariable,
+                    defaulted("," >> nonemptyList(statOrErrmsg)))))
 
 // R1201 io-unit -> file-unit-number | * | internal-file-variable
 // R1203 internal-file-variable -> char-variable
-TYPE_PARSER(
-  construct<IoUnit>{}(fileUnitNumber) ||
-  construct<IoUnit>{}(star) ||
-  construct<IoUnit>{}(charVariable / !"="_tok))
+TYPE_PARSER(construct<IoUnit>{}(fileUnitNumber) || construct<IoUnit>{}(star) ||
+    construct<IoUnit>{}(charVariable / !"="_tok))
 
 // R1202 file-unit-number -> scalar-int-expr
 TYPE_PARSER(construct<FileUnitNumber>{}(scalarIntExpr / !"="_tok))
 
 // R1204 open-stmt -> OPEN ( connect-spec-list )
 TYPE_CONTEXT_PARSER("OPEN statement",
-  "OPEN" >>
-    parenthesized(construct<OpenStmt>{}(nonemptyList(Parser<ConnectSpec>{}))))
+    "OPEN" >> parenthesized(
+                  construct<OpenStmt>{}(nonemptyList(Parser<ConnectSpec>{}))))
 
 // R1206 file-name-expr -> scalar-default-char-expr
 constexpr auto fileNameExpr = scalarDefaultCharExpr;
@@ -2820,103 +2626,97 @@ constexpr auto fileNameExpr = scalarDefaultCharExpr;
 constexpr auto statusExpr = construct<StatusExpr>{}(scalarDefaultCharExpr);
 constexpr auto errLabel = construct<ErrLabel>{}(label);
 
-TYPE_PARSER(
-  maybe("UNIT ="_tok) >> construct<ConnectSpec>{}(fileUnitNumber) ||
-  "ACCESS =" >> construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
-    pure(ConnectSpec::CharExpr::Kind::Access),
-    scalarDefaultCharExpr)) ||
-  "ACTION =" >> construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
-    pure(ConnectSpec::CharExpr::Kind::Action),
-    scalarDefaultCharExpr)) ||
-  "ASYNCHRONOUS =" >>
-    construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
-      pure(ConnectSpec::CharExpr::Kind::Asynchronous),
-      scalarDefaultCharExpr)) ||
-  "BLANK =" >> construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
-    pure(ConnectSpec::CharExpr::Kind::Blank),
-    scalarDefaultCharExpr)) ||
-  "DECIMAL =" >> construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
-    pure(ConnectSpec::CharExpr::Kind::Decimal),
-    scalarDefaultCharExpr)) ||
-  "DELIM =" >> construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
-    pure(ConnectSpec::CharExpr::Kind::Delim),
-    scalarDefaultCharExpr)) ||
-  "ENCODING =" >> construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
-    pure(ConnectSpec::CharExpr::Kind::Encoding),
-    scalarDefaultCharExpr)) ||
-  "ERR =" >> construct<ConnectSpec>{}(errLabel) ||
-  "FILE =" >> construct<ConnectSpec>{}(fileNameExpr) ||
-  extension("NAME =" >> construct<ConnectSpec>{}(fileNameExpr)) ||
-  "FORM =" >> construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
-    pure(ConnectSpec::CharExpr::Kind::Form),
-    scalarDefaultCharExpr)) ||
-  "IOSTAT =" >> construct<ConnectSpec>{}(statVariable) ||
-  "NEWUNIT =" >> construct<ConnectSpec>{}(construct<ConnectSpec::Newunit>{}(
-    scalar(integer(variable)))) ||
-  "PAD =" >> construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
-    pure(ConnectSpec::CharExpr::Kind::Pad),
-    scalarDefaultCharExpr)) ||
-  "POSITION =" >> construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
-    pure(ConnectSpec::CharExpr::Kind::Position),
-    scalarDefaultCharExpr)) ||
-  "RECL =" >> construct<ConnectSpec>{}(construct<ConnectSpec::Recl>{}(
-    scalarIntExpr)) ||
-  "ROUND =" >> construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
-    pure(ConnectSpec::CharExpr::Kind::Round),
-    scalarDefaultCharExpr)) ||
-  "SIGN =" >> construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
-    pure(ConnectSpec::CharExpr::Kind::Sign),
-    scalarDefaultCharExpr)) ||
-  "STATUS =" >> construct<ConnectSpec>{}(statusExpr) ||
-  extension("DISPOSE =" >> construct<ConnectSpec>{}(
-    construct<ConnectSpec::CharExpr>{}(
-      pure(ConnectSpec::CharExpr::Kind::Dispose),
-      scalarDefaultCharExpr))))
+TYPE_PARSER(maybe("UNIT ="_tok) >> construct<ConnectSpec>{}(fileUnitNumber) ||
+    "ACCESS =" >> construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
+                      pure(ConnectSpec::CharExpr::Kind::Access),
+                      scalarDefaultCharExpr)) ||
+    "ACTION =" >> construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
+                      pure(ConnectSpec::CharExpr::Kind::Action),
+                      scalarDefaultCharExpr)) ||
+    "ASYNCHRONOUS =" >>
+        construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
+            pure(ConnectSpec::CharExpr::Kind::Asynchronous),
+            scalarDefaultCharExpr)) ||
+    "BLANK =" >>
+        construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
+            pure(ConnectSpec::CharExpr::Kind::Blank), scalarDefaultCharExpr)) ||
+    "DECIMAL =" >> construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
+                       pure(ConnectSpec::CharExpr::Kind::Decimal),
+                       scalarDefaultCharExpr)) ||
+    "DELIM =" >>
+        construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
+            pure(ConnectSpec::CharExpr::Kind::Delim), scalarDefaultCharExpr)) ||
+    "ENCODING =" >> construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
+                        pure(ConnectSpec::CharExpr::Kind::Encoding),
+                        scalarDefaultCharExpr)) ||
+    "ERR =" >> construct<ConnectSpec>{}(errLabel) ||
+    "FILE =" >> construct<ConnectSpec>{}(fileNameExpr) ||
+    extension("NAME =" >> construct<ConnectSpec>{}(fileNameExpr)) ||
+    "FORM =" >>
+        construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
+            pure(ConnectSpec::CharExpr::Kind::Form), scalarDefaultCharExpr)) ||
+    "IOSTAT =" >> construct<ConnectSpec>{}(statVariable) ||
+    "NEWUNIT =" >> construct<ConnectSpec>{}(construct<ConnectSpec::Newunit>{}(
+                       scalar(integer(variable)))) ||
+    "PAD =" >>
+        construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
+            pure(ConnectSpec::CharExpr::Kind::Pad), scalarDefaultCharExpr)) ||
+    "POSITION =" >> construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
+                        pure(ConnectSpec::CharExpr::Kind::Position),
+                        scalarDefaultCharExpr)) ||
+    "RECL =" >> construct<ConnectSpec>{}(
+                    construct<ConnectSpec::Recl>{}(scalarIntExpr)) ||
+    "ROUND =" >>
+        construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
+            pure(ConnectSpec::CharExpr::Kind::Round), scalarDefaultCharExpr)) ||
+    "SIGN =" >>
+        construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
+            pure(ConnectSpec::CharExpr::Kind::Sign), scalarDefaultCharExpr)) ||
+    "STATUS =" >> construct<ConnectSpec>{}(statusExpr) ||
+    extension("DISPOSE =" >>
+        construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
+            pure(ConnectSpec::CharExpr::Kind::Dispose),
+            scalarDefaultCharExpr))))
 
 // R1209 close-spec ->
 //         [UNIT =] file-unit-number | IOSTAT = scalar-int-variable |
 //         IOMSG = iomsg-variable | ERR = label |
 //         STATUS = scalar-default-char-expr
-constexpr auto closeSpec =
-  maybe("UNIT ="_tok) >>
-    construct<CloseStmt::CloseSpec>{}(fileUnitNumber) ||
-  "IOSTAT =" >> construct<CloseStmt::CloseSpec>{}(statVariable) ||
-  "IOMSG =" >> construct<CloseStmt::CloseSpec>{}(msgVariable) ||
-  "STATUS =" >> construct<CloseStmt::CloseSpec>{}(statusExpr);
+constexpr auto closeSpec = maybe("UNIT ="_tok) >>
+        construct<CloseStmt::CloseSpec>{}(fileUnitNumber) ||
+    "IOSTAT =" >> construct<CloseStmt::CloseSpec>{}(statVariable) ||
+    "IOMSG =" >> construct<CloseStmt::CloseSpec>{}(msgVariable) ||
+    "STATUS =" >> construct<CloseStmt::CloseSpec>{}(statusExpr);
 
 // R1208 close-stmt -> CLOSE ( close-spec-list )
 TYPE_CONTEXT_PARSER("CLOSE statement",
-  "CLOSE" >> construct<CloseStmt>{}(parenthesized(nonemptyList(closeSpec))))
+    "CLOSE" >> construct<CloseStmt>{}(parenthesized(nonemptyList(closeSpec))))
 
 // R1210 read-stmt ->
 //         READ ( io-control-spec-list ) [input-item-list] |
 //         READ format [, input-item-list]
 constexpr auto inputItemList =
-  extension(some("," >> inputItem)) ||  // legacy extension: leading comma
-  optionalList(inputItem);
+    extension(some("," >> inputItem)) ||  // legacy extension: leading comma
+    optionalList(inputItem);
 
 TYPE_CONTEXT_PARSER("READ statement",
-  "READ" >> (
-    "(" >> construct<ReadStmt>{}(
-      construct<std::optional<IoUnit>>{}(maybe("UNIT ="_tok) >> ioUnit),
-      "," >> construct<std::optional<Format>>{}(format),
-      defaulted("," >> nonemptyList(ioControlSpec)) / ")",
-      inputItemList) ||
-    "(" >> construct<ReadStmt>{}(
-      construct<std::optional<IoUnit>>{}(ioUnit),
-      construct<std::optional<Format>>{},
-      defaulted("," >> nonemptyList(ioControlSpec)) / ")",
-      inputItemList) ||
-    construct<ReadStmt>{}(
-      construct<std::optional<IoUnit>>{},
-      construct<std::optional<Format>>{},
-      parenthesized(nonemptyList(ioControlSpec)),
-      inputItemList) ||
-    construct<ReadStmt>{}(
-      construct<std::optional<IoUnit>>{},
-      construct<std::optional<Format>>{}(format),
-      construct<std::list<IoControlSpec>>{},
-      many("," >> inputItem))))
+    "READ" >>
+        ("(" >> construct<ReadStmt>{}(construct<std::optional<IoUnit>>{}(
+                                          maybe("UNIT ="_tok) >> ioUnit),
+                    "," >> construct<std::optional<Format>>{}(format),
+                    defaulted("," >> nonemptyList(ioControlSpec)) / ")",
+                    inputItemList) ||
+            "(" >> construct<ReadStmt>{}(
+                       construct<std::optional<IoUnit>>{}(ioUnit),
+                       construct<std::optional<Format>>{},
+                       defaulted("," >> nonemptyList(ioControlSpec)) / ")",
+                       inputItemList) ||
+            construct<ReadStmt>{}(construct<std::optional<IoUnit>>{},
+                construct<std::optional<Format>>{},
+                parenthesized(nonemptyList(ioControlSpec)), inputItemList) ||
+            construct<ReadStmt>{}(construct<std::optional<IoUnit>>{},
+                construct<std::optional<Format>>{}(format),
+                construct<std::list<IoControlSpec>>{}, many("," >> inputItem))))
 
 // R1214 id-variable -> scalar-int-variable
 constexpr auto idVariable = construct<IdVariable>{}(scalarIntVariable);
@@ -2935,92 +2735,88 @@ constexpr auto idVariable = construct<IdVariable>{}(scalarIntVariable);
 //         SIZE = scalar-int-variable
 constexpr auto endLabel = construct<EndLabel>{}(label);
 constexpr auto eorLabel = construct<EorLabel>{}(label);
-TYPE_PARSER(
-  "UNIT =" >> construct<IoControlSpec>{}(ioUnit) ||
-  "FMT =" >> construct<IoControlSpec>{}(format) ||
-  "NML =" >> construct<IoControlSpec>{}(name) ||
-  "ADVANCE =" >>
-    construct<IoControlSpec>{}(construct<IoControlSpec::CharExpr>{}(
-      pure(IoControlSpec::CharExpr::Kind::Advance),
-      scalarDefaultCharExpr)) ||
-  "ASYNCHRONOUS =" >> construct<IoControlSpec>{}(
-    construct<IoControlSpec::Asynchronous>{}(scalarDefaultCharConstantExpr)) ||
-  "BLANK =" >> construct<IoControlSpec>{}(construct<IoControlSpec::CharExpr>{}(
-    pure(IoControlSpec::CharExpr::Kind::Blank),
-    scalarDefaultCharExpr)) ||
-  "DECIMAL =" >>
-    construct<IoControlSpec>{}(construct<IoControlSpec::CharExpr>{}(
-      pure(IoControlSpec::CharExpr::Kind::Decimal),
-      scalarDefaultCharExpr)) ||
-  "DELIM =" >> construct<IoControlSpec>{}(construct<IoControlSpec::CharExpr>{}(
-    pure(IoControlSpec::CharExpr::Kind::Delim),
-    scalarDefaultCharExpr)) ||
-  "END =" >> construct<IoControlSpec>{}(endLabel) ||
-  "EOR =" >> construct<IoControlSpec>{}(eorLabel) ||
-  "ERR =" >> construct<IoControlSpec>{}(errLabel) ||
-  "ID =" >> construct<IoControlSpec>{}(idVariable) ||
-  "IOMSG = " >> construct<IoControlSpec>{}(msgVariable) ||
-  "IOSTAT = " >> construct<IoControlSpec>{}(statVariable) ||
-  "PAD =" >> construct<IoControlSpec>{}(construct<IoControlSpec::CharExpr>{}(
-    pure(IoControlSpec::CharExpr::Kind::Pad),
-    scalarDefaultCharExpr)) ||
-  "POS =" >> construct<IoControlSpec>{}(
-    construct<IoControlSpec::Pos>{}(scalarIntExpr)) ||
-  "REC =" >> construct<IoControlSpec>{}(
-    construct<IoControlSpec::Rec>{}(scalarIntExpr)) ||
-  "ROUND =" >> construct<IoControlSpec>{}(construct<IoControlSpec::CharExpr>{}(
-    pure(IoControlSpec::CharExpr::Kind::Round),
-    scalarDefaultCharExpr)) ||
-  "SIGN =" >> construct<IoControlSpec>{}(construct<IoControlSpec::CharExpr>{}(
-    pure(IoControlSpec::CharExpr::Kind::Sign),
-    scalarDefaultCharExpr)) ||
-  "SIZE =" >> construct<IoControlSpec>{}(
-    construct<IoControlSpec::Size>{}(scalarIntVariable)))
+TYPE_PARSER("UNIT =" >> construct<IoControlSpec>{}(ioUnit) ||
+    "FMT =" >> construct<IoControlSpec>{}(format) ||
+    "NML =" >> construct<IoControlSpec>{}(name) ||
+    "ADVANCE =" >>
+        construct<IoControlSpec>{}(construct<IoControlSpec::CharExpr>{}(
+            pure(IoControlSpec::CharExpr::Kind::Advance),
+            scalarDefaultCharExpr)) ||
+    "ASYNCHRONOUS =" >>
+        construct<IoControlSpec>{}(construct<IoControlSpec::Asynchronous>{}(
+            scalarDefaultCharConstantExpr)) ||
+    "BLANK =" >>
+        construct<IoControlSpec>{}(construct<IoControlSpec::CharExpr>{}(
+            pure(IoControlSpec::CharExpr::Kind::Blank),
+            scalarDefaultCharExpr)) ||
+    "DECIMAL =" >>
+        construct<IoControlSpec>{}(construct<IoControlSpec::CharExpr>{}(
+            pure(IoControlSpec::CharExpr::Kind::Decimal),
+            scalarDefaultCharExpr)) ||
+    "DELIM =" >>
+        construct<IoControlSpec>{}(construct<IoControlSpec::CharExpr>{}(
+            pure(IoControlSpec::CharExpr::Kind::Delim),
+            scalarDefaultCharExpr)) ||
+    "END =" >> construct<IoControlSpec>{}(endLabel) ||
+    "EOR =" >> construct<IoControlSpec>{}(eorLabel) ||
+    "ERR =" >> construct<IoControlSpec>{}(errLabel) ||
+    "ID =" >> construct<IoControlSpec>{}(idVariable) ||
+    "IOMSG = " >> construct<IoControlSpec>{}(msgVariable) ||
+    "IOSTAT = " >> construct<IoControlSpec>{}(statVariable) ||
+    "PAD =" >>
+        construct<IoControlSpec>{}(construct<IoControlSpec::CharExpr>{}(
+            pure(IoControlSpec::CharExpr::Kind::Pad), scalarDefaultCharExpr)) ||
+    "POS =" >> construct<IoControlSpec>{}(
+                   construct<IoControlSpec::Pos>{}(scalarIntExpr)) ||
+    "REC =" >> construct<IoControlSpec>{}(
+                   construct<IoControlSpec::Rec>{}(scalarIntExpr)) ||
+    "ROUND =" >>
+        construct<IoControlSpec>{}(construct<IoControlSpec::CharExpr>{}(
+            pure(IoControlSpec::CharExpr::Kind::Round),
+            scalarDefaultCharExpr)) ||
+    "SIGN =" >> construct<IoControlSpec>{}(construct<IoControlSpec::CharExpr>{}(
+                    pure(IoControlSpec::CharExpr::Kind::Sign),
+                    scalarDefaultCharExpr)) ||
+    "SIZE =" >> construct<IoControlSpec>{}(
+                    construct<IoControlSpec::Size>{}(scalarIntVariable)))
 
 // R1211 write-stmt -> WRITE ( io-control-spec-list ) [output-item-list]
 constexpr auto outputItemList =
-  extension(some("," >> outputItem)) ||  // legacy: allow leading comma
-  optionalList(outputItem);
+    extension(some("," >> outputItem)) ||  // legacy: allow leading comma
+    optionalList(outputItem);
 
 TYPE_CONTEXT_PARSER("WRITE statement",
-  "WRITE" >> (
-    construct<WriteStmt>{}(
-      "(" >> construct<std::optional<IoUnit>>{}(maybe("UNIT ="_tok) >> ioUnit),
-      "," >> construct<std::optional<Format>>{}(format),
-      defaulted("," >> nonemptyList(ioControlSpec)) / ")",
-      outputItemList) ||
-    construct<WriteStmt>{}(
-      "(" >> construct<std::optional<IoUnit>>{}(ioUnit),
-      construct<std::optional<Format>>{},
-      defaulted("," >> nonemptyList(ioControlSpec)) / ")",
-      outputItemList) ||
-    construct<WriteStmt>{}(
-      construct<std::optional<IoUnit>>{},
-      construct<std::optional<Format>>{},
-      parenthesized(nonemptyList(ioControlSpec)),
-      outputItemList)))
+    "WRITE" >>
+        (construct<WriteStmt>{}("(" >> construct<std::optional<IoUnit>>{}(
+                                           maybe("UNIT ="_tok) >> ioUnit),
+             "," >> construct<std::optional<Format>>{}(format),
+             defaulted("," >> nonemptyList(ioControlSpec)) / ")",
+             outputItemList) ||
+            construct<WriteStmt>{}(
+                "(" >> construct<std::optional<IoUnit>>{}(ioUnit),
+                construct<std::optional<Format>>{},
+                defaulted("," >> nonemptyList(ioControlSpec)) / ")",
+                outputItemList) ||
+            construct<WriteStmt>{}(construct<std::optional<IoUnit>>{},
+                construct<std::optional<Format>>{},
+                parenthesized(nonemptyList(ioControlSpec)), outputItemList)))
 
 // R1212 print-stmt PRINT format [, output-item-list]
 TYPE_CONTEXT_PARSER("PRINT statement",
-  "PRINT" >> construct<PrintStmt>{}(
-    format,
-    defaulted("," >> nonemptyList(outputItem))))
+    "PRINT" >> construct<PrintStmt>{}(
+                   format, defaulted("," >> nonemptyList(outputItem))))
 
 // R1215 format -> default-char-expr | label | *
-TYPE_PARSER(
-  construct<Format>{}(defaultCharExpr / !"="_tok) ||
-  construct<Format>{}(label) ||
-  construct<Format>{}(star))
+TYPE_PARSER(construct<Format>{}(defaultCharExpr / !"="_tok) ||
+    construct<Format>{}(label) || construct<Format>{}(star))
 
 // R1216 input-item -> variable | io-implied-do
-TYPE_PARSER(
-  construct<InputItem>{}(variable) ||
-  construct<InputItem>{}(indirect(inputImpliedDo)))
+TYPE_PARSER(construct<InputItem>{}(variable) ||
+    construct<InputItem>{}(indirect(inputImpliedDo)))
 
 // R1217 output-item -> expr | io-implied-do
-TYPE_PARSER(
-  construct<OutputItem>{}(expr) ||
-  construct<OutputItem>{}(indirect(outputImpliedDo)))
+TYPE_PARSER(construct<OutputItem>{}(expr) ||
+    construct<OutputItem>{}(indirect(outputImpliedDo)))
 
 // R1220 io-implied-do-control ->
 //         do-variable = scalar-int-expr , scalar-int-expr [, scalar-int-expr]
@@ -3029,18 +2825,18 @@ constexpr auto ioImpliedDoControl = loopBounds(scalarIntExpr);
 // R1218 io-implied-do -> ( io-implied-do-object-list , io-implied-do-control )
 // R1219 io-implied-do-object -> input-item | output-item
 TYPE_CONTEXT_PARSER("input implied DO",
-  parenthesized(construct<InputImpliedDo>{}(
-    nonemptyList(inputItem / lookAhead(","_tok)),
-    "," >> ioImpliedDoControl)))
+    parenthesized(construct<InputImpliedDo>{}(
+        nonemptyList(inputItem / lookAhead(","_tok)),
+        "," >> ioImpliedDoControl)))
 TYPE_CONTEXT_PARSER("output implied DO",
-  parenthesized(construct<OutputImpliedDo>{}(
-    nonemptyList(outputItem / lookAhead(","_tok)),
-    "," >> ioImpliedDoControl)))
+    parenthesized(construct<OutputImpliedDo>{}(
+        nonemptyList(outputItem / lookAhead(","_tok)),
+        "," >> ioImpliedDoControl)))
 
 // R1222 wait-stmt -> WAIT ( wait-spec-list )
 TYPE_CONTEXT_PARSER("WAIT statement",
-  "WAIT" >>
-    parenthesized(construct<WaitStmt>{}(nonemptyList(Parser<WaitSpec>{}))))
+    "WAIT" >>
+        parenthesized(construct<WaitStmt>{}(nonemptyList(Parser<WaitSpec>{}))))
 
 // R1223 wait-spec ->
 //         [UNIT =] file-unit-number | END = label | EOR = label | ERR = label |
@@ -3048,36 +2844,33 @@ TYPE_CONTEXT_PARSER("WAIT statement",
 //         IOSTAT = scalar-int-variable
 constexpr auto idExpr = construct<IdExpr>{}(scalarIntExpr);
 
-TYPE_PARSER(
-  maybe("UNIT ="_tok) >> construct<WaitSpec>{}(fileUnitNumber) ||
-  "END =" >> construct<WaitSpec>{}(endLabel) ||
-  "EOR =" >> construct<WaitSpec>{}(eorLabel) ||
-  "ERR =" >> construct<WaitSpec>{}(errLabel) ||
-  "ID =" >> construct<WaitSpec>{}(idExpr) ||
-  "IOMSG =" >> construct<WaitSpec>{}(msgVariable) ||
-  "IOSTAT =" >> construct<WaitSpec>{}(statVariable))
+TYPE_PARSER(maybe("UNIT ="_tok) >> construct<WaitSpec>{}(fileUnitNumber) ||
+    "END =" >> construct<WaitSpec>{}(endLabel) ||
+    "EOR =" >> construct<WaitSpec>{}(eorLabel) ||
+    "ERR =" >> construct<WaitSpec>{}(errLabel) ||
+    "ID =" >> construct<WaitSpec>{}(idExpr) ||
+    "IOMSG =" >> construct<WaitSpec>{}(msgVariable) ||
+    "IOSTAT =" >> construct<WaitSpec>{}(statVariable))
 
 // R1224 backspace-stmt ->
 //         BACKSPACE file-unit-number | BACKSPACE ( position-spec-list )
 TYPE_CONTEXT_PARSER("BACKSPACE statement",
-  "BACKSPACE" >> (
-    construct<BackspaceStmt>{}(fileUnitNumber) ||
-    construct<BackspaceStmt>{}(
-      parenthesized(nonemptyList(positionOrFlushSpec)))))
+    "BACKSPACE" >> (construct<BackspaceStmt>{}(fileUnitNumber) ||
+                       construct<BackspaceStmt>{}(
+                           parenthesized(nonemptyList(positionOrFlushSpec)))))
 
 // R1225 endfile-stmt ->
 //         ENDFILE file-unit-number | ENDFILE ( position-spec-list )
 TYPE_CONTEXT_PARSER("ENDFILE statement",
-  "ENDFILE" >> (
-    construct<EndfileStmt>{}(fileUnitNumber) ||
-    construct<EndfileStmt>{}(
-      parenthesized(nonemptyList(positionOrFlushSpec)))))
+    "ENDFILE" >> (construct<EndfileStmt>{}(fileUnitNumber) ||
+                     construct<EndfileStmt>{}(
+                         parenthesized(nonemptyList(positionOrFlushSpec)))))
 
 // R1226 rewind-stmt -> REWIND file-unit-number | REWIND ( position-spec-list )
 TYPE_CONTEXT_PARSER("REWIND statement",
-  "REWIND" >> (
-    construct<RewindStmt>{}(fileUnitNumber) ||
-    construct<RewindStmt>{}(parenthesized(nonemptyList(positionOrFlushSpec)))))
+    "REWIND" >> (construct<RewindStmt>{}(fileUnitNumber) ||
+                    construct<RewindStmt>{}(
+                        parenthesized(nonemptyList(positionOrFlushSpec)))))
 
 // R1227 position-spec ->
 //         [UNIT =] file-unit-number | IOMSG = iomsg-variable |
@@ -3086,16 +2879,16 @@ TYPE_CONTEXT_PARSER("REWIND statement",
 //         [UNIT =] file-unit-number | IOSTAT = scalar-int-variable |
 //         IOMSG = iomsg-variable | ERR = label
 TYPE_PARSER(
-  maybe("UNIT ="_tok) >> construct<PositionOrFlushSpec>{}(fileUnitNumber) ||
-  "IOMSG =" >> construct<PositionOrFlushSpec>{}(msgVariable) ||
-  "IOSTAT =" >> construct<PositionOrFlushSpec>{}(statVariable) ||
-  "ERR =" >> construct<PositionOrFlushSpec>{}(errLabel))
+    maybe("UNIT ="_tok) >> construct<PositionOrFlushSpec>{}(fileUnitNumber) ||
+    "IOMSG =" >> construct<PositionOrFlushSpec>{}(msgVariable) ||
+    "IOSTAT =" >> construct<PositionOrFlushSpec>{}(statVariable) ||
+    "ERR =" >> construct<PositionOrFlushSpec>{}(errLabel))
 
 // R1228 flush-stmt -> FLUSH file-unit-number | FLUSH ( flush-spec-list )
 TYPE_CONTEXT_PARSER("FLUSH statement",
-  "FLUSH" >> (
-    construct<FlushStmt>{}(fileUnitNumber) ||
-    construct<FlushStmt>{}(parenthesized(nonemptyList(positionOrFlushSpec)))))
+    "FLUSH" >> (construct<FlushStmt>{}(fileUnitNumber) ||
+                   construct<FlushStmt>{}(
+                       parenthesized(nonemptyList(positionOrFlushSpec)))))
 
 // R1231 inquire-spec ->
 //         [UNIT =] file-unit-number | FILE = file-name-expr |
@@ -3127,129 +2920,128 @@ TYPE_CONTEXT_PARSER("FLUSH statement",
 //         STREAM = scalar-default-char-variable |
 //         STATUS = scalar-default-char-variable |
 //         WRITE = scalar-default-char-variable
-TYPE_PARSER(
-  maybe("UNIT ="_tok) >> construct<InquireSpec>{}(fileUnitNumber) ||
-  "FILE =" >> construct<InquireSpec>{}(fileNameExpr) ||
-  "ACCESS =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
-    pure(InquireSpec::CharVar::Kind::Access),
-    scalarDefaultCharVariable)) ||
-  "ACTION =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
-    pure(InquireSpec::CharVar::Kind::Action),
-    scalarDefaultCharVariable)) ||
-  "ASYNCHRONOUS =" >>
-    construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
-      pure(InquireSpec::CharVar::Kind::Asynchronous),
-      scalarDefaultCharVariable)) ||
-  "BLANK =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
-    pure(InquireSpec::CharVar::Kind::Blank),
-    scalarDefaultCharVariable)) ||
-  "DECIMAL =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
-    pure(InquireSpec::CharVar::Kind::Decimal),
-    scalarDefaultCharVariable)) ||
-  "DELIM =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
-    pure(InquireSpec::CharVar::Kind::Delim),
-    scalarDefaultCharVariable)) ||
-  "ENCODING =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
-    pure(InquireSpec::CharVar::Kind::Encoding),
-    scalarDefaultCharVariable)) ||
-  "ERR =" >> construct<InquireSpec>{}(errLabel) ||
-  "EXIST =" >> construct<InquireSpec>{}(construct<InquireSpec::LogVar>{}(
-    pure(InquireSpec::LogVar::Kind::Exist),
-    scalarLogicalVariable)) ||
-  "FORM =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
-    pure(InquireSpec::CharVar::Kind::Form),
-    scalarDefaultCharVariable)) ||
-  "FORMATTED =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
-    pure(InquireSpec::CharVar::Kind::Formatted),
-    scalarDefaultCharVariable)) ||
-  "ID =" >> construct<InquireSpec>{}(idExpr) ||
-  "IOMSG =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
-    pure(InquireSpec::CharVar::Kind::Iomsg),
-    scalarDefaultCharVariable)) ||
-  "IOSTAT =" >> construct<InquireSpec>{}(construct<InquireSpec::IntVar>{}(
-    pure(InquireSpec::IntVar::Kind::Iostat),
-    scalar(integer(variable)))) ||
-  "NAME =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
-    pure(InquireSpec::CharVar::Kind::Name),
-    scalarDefaultCharVariable)) ||
-  "NAMED =" >> construct<InquireSpec>{}(construct<InquireSpec::LogVar>{}(
-    pure(InquireSpec::LogVar::Kind::Named),
-    scalarLogicalVariable)) ||
-  "NEXTREC =" >> construct<InquireSpec>{}(construct<InquireSpec::IntVar>{}(
-    pure(InquireSpec::IntVar::Kind::Nextrec),
-    scalar(integer(variable)))) ||
-  "NUMBER =" >> construct<InquireSpec>{}(construct<InquireSpec::IntVar>{}(
-    pure(InquireSpec::IntVar::Kind::Number),
-    scalar(integer(variable)))) ||
-  "OPENED =" >> construct<InquireSpec>{}(construct<InquireSpec::LogVar>{}(
-    pure(InquireSpec::LogVar::Kind::Opened),
-    scalarLogicalVariable)) ||
-  "PAD =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
-    pure(InquireSpec::CharVar::Kind::Pad),
-    scalarDefaultCharVariable)) ||
-  "PENDING =" >> construct<InquireSpec>{}(construct<InquireSpec::LogVar>{}(
-    pure(InquireSpec::LogVar::Kind::Pending),
-    scalarLogicalVariable)) ||
-  "POS =" >> construct<InquireSpec>{}(construct<InquireSpec::IntVar>{}(
-    pure(InquireSpec::IntVar::Kind::Pos),
-    scalar(integer(variable)))) ||
-  "POSITION =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
-    pure(InquireSpec::CharVar::Kind::Position),
-    scalarDefaultCharVariable)) ||
-  "READ =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
-    pure(InquireSpec::CharVar::Kind::Read),
-    scalarDefaultCharVariable)) ||
-  "READWRITE =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
-    pure(InquireSpec::CharVar::Kind::Readwrite),
-    scalarDefaultCharVariable)) ||
-  "RECL =" >> construct<InquireSpec>{}(construct<InquireSpec::IntVar>{}(
-    pure(InquireSpec::IntVar::Kind::Recl),
-    scalar(integer(variable)))) ||
-  "ROUND =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
-    pure(InquireSpec::CharVar::Kind::Round),
-    scalarDefaultCharVariable)) ||
-  "SEQUENTIAL =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
-    pure(InquireSpec::CharVar::Kind::Sequential),
-    scalarDefaultCharVariable)) ||
-  "SIGN =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
-    pure(InquireSpec::CharVar::Kind::Sign),
-    scalarDefaultCharVariable)) ||
-  "SIZE =" >> construct<InquireSpec>{}(construct<InquireSpec::IntVar>{}(
-    pure(InquireSpec::IntVar::Kind::Size),
-    scalar(integer(variable)))) ||
-  "STREAM =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
-    pure(InquireSpec::CharVar::Kind::Stream),
-    scalarDefaultCharVariable)) ||
-  "STATUS =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
-    pure(InquireSpec::CharVar::Kind::Status),
-    scalarDefaultCharVariable)) ||
-  "WRITE =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
-    pure(InquireSpec::CharVar::Kind::Write),
-    scalarDefaultCharVariable)))
+TYPE_PARSER(maybe("UNIT ="_tok) >> construct<InquireSpec>{}(fileUnitNumber) ||
+    "FILE =" >> construct<InquireSpec>{}(fileNameExpr) ||
+    "ACCESS =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+                      pure(InquireSpec::CharVar::Kind::Access),
+                      scalarDefaultCharVariable)) ||
+    "ACTION =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+                      pure(InquireSpec::CharVar::Kind::Action),
+                      scalarDefaultCharVariable)) ||
+    "ASYNCHRONOUS =" >>
+        construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+            pure(InquireSpec::CharVar::Kind::Asynchronous),
+            scalarDefaultCharVariable)) ||
+    "BLANK =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+                     pure(InquireSpec::CharVar::Kind::Blank),
+                     scalarDefaultCharVariable)) ||
+    "DECIMAL =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+                       pure(InquireSpec::CharVar::Kind::Decimal),
+                       scalarDefaultCharVariable)) ||
+    "DELIM =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+                     pure(InquireSpec::CharVar::Kind::Delim),
+                     scalarDefaultCharVariable)) ||
+    "ENCODING =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+                        pure(InquireSpec::CharVar::Kind::Encoding),
+                        scalarDefaultCharVariable)) ||
+    "ERR =" >> construct<InquireSpec>{}(errLabel) ||
+    "EXIST =" >>
+        construct<InquireSpec>{}(construct<InquireSpec::LogVar>{}(
+            pure(InquireSpec::LogVar::Kind::Exist), scalarLogicalVariable)) ||
+    "FORM =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+                    pure(InquireSpec::CharVar::Kind::Form),
+                    scalarDefaultCharVariable)) ||
+    "FORMATTED =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+                         pure(InquireSpec::CharVar::Kind::Formatted),
+                         scalarDefaultCharVariable)) ||
+    "ID =" >> construct<InquireSpec>{}(idExpr) ||
+    "IOMSG =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+                     pure(InquireSpec::CharVar::Kind::Iomsg),
+                     scalarDefaultCharVariable)) ||
+    "IOSTAT =" >> construct<InquireSpec>{}(construct<InquireSpec::IntVar>{}(
+                      pure(InquireSpec::IntVar::Kind::Iostat),
+                      scalar(integer(variable)))) ||
+    "NAME =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+                    pure(InquireSpec::CharVar::Kind::Name),
+                    scalarDefaultCharVariable)) ||
+    "NAMED =" >>
+        construct<InquireSpec>{}(construct<InquireSpec::LogVar>{}(
+            pure(InquireSpec::LogVar::Kind::Named), scalarLogicalVariable)) ||
+    "NEXTREC =" >> construct<InquireSpec>{}(construct<InquireSpec::IntVar>{}(
+                       pure(InquireSpec::IntVar::Kind::Nextrec),
+                       scalar(integer(variable)))) ||
+    "NUMBER =" >> construct<InquireSpec>{}(construct<InquireSpec::IntVar>{}(
+                      pure(InquireSpec::IntVar::Kind::Number),
+                      scalar(integer(variable)))) ||
+    "OPENED =" >>
+        construct<InquireSpec>{}(construct<InquireSpec::LogVar>{}(
+            pure(InquireSpec::LogVar::Kind::Opened), scalarLogicalVariable)) ||
+    "PAD =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+                   pure(InquireSpec::CharVar::Kind::Pad),
+                   scalarDefaultCharVariable)) ||
+    "PENDING =" >>
+        construct<InquireSpec>{}(construct<InquireSpec::LogVar>{}(
+            pure(InquireSpec::LogVar::Kind::Pending), scalarLogicalVariable)) ||
+    "POS =" >>
+        construct<InquireSpec>{}(construct<InquireSpec::IntVar>{}(
+            pure(InquireSpec::IntVar::Kind::Pos), scalar(integer(variable)))) ||
+    "POSITION =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+                        pure(InquireSpec::CharVar::Kind::Position),
+                        scalarDefaultCharVariable)) ||
+    "READ =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+                    pure(InquireSpec::CharVar::Kind::Read),
+                    scalarDefaultCharVariable)) ||
+    "READWRITE =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+                         pure(InquireSpec::CharVar::Kind::Readwrite),
+                         scalarDefaultCharVariable)) ||
+    "RECL =" >> construct<InquireSpec>{}(construct<InquireSpec::IntVar>{}(
+                    pure(InquireSpec::IntVar::Kind::Recl),
+                    scalar(integer(variable)))) ||
+    "ROUND =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+                     pure(InquireSpec::CharVar::Kind::Round),
+                     scalarDefaultCharVariable)) ||
+    "SEQUENTIAL =" >>
+        construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+            pure(InquireSpec::CharVar::Kind::Sequential),
+            scalarDefaultCharVariable)) ||
+    "SIGN =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+                    pure(InquireSpec::CharVar::Kind::Sign),
+                    scalarDefaultCharVariable)) ||
+    "SIZE =" >> construct<InquireSpec>{}(construct<InquireSpec::IntVar>{}(
+                    pure(InquireSpec::IntVar::Kind::Size),
+                    scalar(integer(variable)))) ||
+    "STREAM =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+                      pure(InquireSpec::CharVar::Kind::Stream),
+                      scalarDefaultCharVariable)) ||
+    "STATUS =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+                      pure(InquireSpec::CharVar::Kind::Status),
+                      scalarDefaultCharVariable)) ||
+    "WRITE =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+                     pure(InquireSpec::CharVar::Kind::Write),
+                     scalarDefaultCharVariable)))
 
 // R1230 inquire-stmt ->
 //         INQUIRE ( inquire-spec-list ) |
 //         INQUIRE ( IOLENGTH = scalar-int-variable ) output-item-list
 TYPE_CONTEXT_PARSER("INQUIRE statement",
-  "INQUIRE" >> (
-    construct<InquireStmt>{}(parenthesized(nonemptyList(
-      Parser<InquireSpec>{}))) ||
-    construct<InquireStmt>{}(construct<InquireStmt::Iolength>{}(
-      parenthesized("IOLENGTH =" >> scalar(integer(variable))),
-      nonemptyList(outputItem)))))
+    "INQUIRE" >>
+        (construct<InquireStmt>{}(
+             parenthesized(nonemptyList(Parser<InquireSpec>{}))) ||
+            construct<InquireStmt>{}(construct<InquireStmt::Iolength>{}(
+                parenthesized("IOLENGTH =" >> scalar(integer(variable))),
+                nonemptyList(outputItem)))))
 
 // R1301 format-stmt -> FORMAT format-specification
-TYPE_PARSER(
-  "FORMAT" >> construct<FormatStmt>{}(Parser<FormatSpecification>{}))
+TYPE_PARSER("FORMAT" >> construct<FormatStmt>{}(Parser<FormatSpecification>{}))
 
 // R1321 char-string-edit-desc
 // N.B. C1313 disallows any kind parameter on the character literal.
-constexpr auto charStringEditDesc =
-  spaces >> (charLiteralConstantWithoutKind || rawHollerithLiteral);
+constexpr auto charStringEditDesc = spaces >>
+    (charLiteralConstantWithoutKind || rawHollerithLiteral);
 
 // R1303 format-items -> format-item [[,] format-item]...
 constexpr auto formatItems =
-  nonemptySeparated(Parser<FormatItem>{}, maybe(","_tok));
+    nonemptySeparated(Parser<FormatItem>{}, maybe(","_tok));
 
 // R1306 r -> digit-string
 static inline int castU64ToInt(std::uint64_t &&n) {
@@ -3261,20 +3053,20 @@ constexpr auto repeat = spaces >> applyFunction(castU64ToInt, digitString);
 // R1304 format-item ->
 //         [r] data-edit-desc | control-edit-desc | char-string-edit-desc |
 //         [r] ( format-items )
-TYPE_PARSER(
-  construct<FormatItem>{}(maybe(repeat), Parser<IntrinsicTypeDataEditDesc>{}) ||
-  construct<FormatItem>{}(maybe(repeat), Parser<DerivedTypeDataEditDesc>{}) ||
-  construct<FormatItem>{}(Parser<ControlEditDesc>{}) ||
-  construct<FormatItem>{}(charStringEditDesc) ||
-  construct<FormatItem>{}(maybe(repeat), parenthesized(formatItems)))
+TYPE_PARSER(construct<FormatItem>{}(
+                maybe(repeat), Parser<IntrinsicTypeDataEditDesc>{}) ||
+    construct<FormatItem>{}(maybe(repeat), Parser<DerivedTypeDataEditDesc>{}) ||
+    construct<FormatItem>{}(Parser<ControlEditDesc>{}) ||
+    construct<FormatItem>{}(charStringEditDesc) ||
+    construct<FormatItem>{}(maybe(repeat), parenthesized(formatItems)))
 
 // R1302 format-specification ->
 //         ( [format-items] ) | ( [format-items ,] unlimited-format-item )
 // R1305 unlimited-format-item -> * ( format-items )
-TYPE_PARSER(parenthesized(
-    construct<FormatSpecification>{}(defaulted(formatItems)) ||
-    construct<FormatSpecification>{}(defaulted(formatItems / ","),
-                                     "*" >> parenthesized(formatItems))))
+TYPE_PARSER(
+    parenthesized(construct<FormatSpecification>{}(defaulted(formatItems)) ||
+        construct<FormatSpecification>{}(
+            defaulted(formatItems / ","), "*" >> parenthesized(formatItems))))
 // R1308 w -> digit-string
 // R1309 m -> digit-string
 // R1310 d -> digit-string
@@ -3291,64 +3083,62 @@ constexpr auto mandatoryDigits = "." >> construct<std::optional<int>>{}(width);
 //         G w [. d [E e]] | L w | A [w] | D w . d |
 //         DT [char-literal-constant] [( v-list )]
 // (part 1 of 2)
-TYPE_PARSER(
-  construct<IntrinsicTypeDataEditDesc>{}(
-    "I" >> pure(IntrinsicTypeDataEditDesc::Kind::I) ||
-    "B" >> pure(IntrinsicTypeDataEditDesc::Kind::B) ||
-    "O" >> pure(IntrinsicTypeDataEditDesc::Kind::O) ||
-    "Z" >> pure(IntrinsicTypeDataEditDesc::Kind::Z),
-    mandatoryWidth, maybe("." >> digits), noInt) ||
-  construct<IntrinsicTypeDataEditDesc>{}(
-    "F" >> pure(IntrinsicTypeDataEditDesc::Kind::F) ||
-    "D" >> pure(IntrinsicTypeDataEditDesc::Kind::D),
-    mandatoryWidth, mandatoryDigits, noInt) ||
-  construct<IntrinsicTypeDataEditDesc>{}(
-    "EN" >> pure(IntrinsicTypeDataEditDesc::Kind::EN) ||
-    "ES" >> pure(IntrinsicTypeDataEditDesc::Kind::ES) ||
-    "EX" >> pure(IntrinsicTypeDataEditDesc::Kind::EX) ||
-    "E" >> pure(IntrinsicTypeDataEditDesc::Kind::E),
-    mandatoryWidth, mandatoryDigits, maybe("E" >> digits)) ||
-  construct<IntrinsicTypeDataEditDesc>{}(
-    "G" >> pure(IntrinsicTypeDataEditDesc::Kind::G),
-    mandatoryWidth, mandatoryDigits, maybe("E" >> digits)) ||
-  construct<IntrinsicTypeDataEditDesc>{}(
-    "G" >> pure(IntrinsicTypeDataEditDesc::Kind::G) ||
-    "L" >> pure(IntrinsicTypeDataEditDesc::Kind::L),
-    mandatoryWidth, noInt, noInt) ||
-  construct<IntrinsicTypeDataEditDesc>{}(
-    "A" >> pure(IntrinsicTypeDataEditDesc::Kind::A),
-    maybe(width), noInt, noInt) ||
-  // PGI/Intel extension: omitting width (and all else that follows)
-  extension(
+TYPE_PARSER(construct<IntrinsicTypeDataEditDesc>{}(
+                "I" >> pure(IntrinsicTypeDataEditDesc::Kind::I) ||
+                    "B" >> pure(IntrinsicTypeDataEditDesc::Kind::B) ||
+                    "O" >> pure(IntrinsicTypeDataEditDesc::Kind::O) ||
+                    "Z" >> pure(IntrinsicTypeDataEditDesc::Kind::Z),
+                mandatoryWidth, maybe("." >> digits), noInt) ||
     construct<IntrinsicTypeDataEditDesc>{}(
-      "I" >> pure(IntrinsicTypeDataEditDesc::Kind::I) ||
-      "B" >> pure(IntrinsicTypeDataEditDesc::Kind::B) ||
-      "O" >> pure(IntrinsicTypeDataEditDesc::Kind::O) ||
-      "Z" >> pure(IntrinsicTypeDataEditDesc::Kind::Z) ||
-      "F" >> pure(IntrinsicTypeDataEditDesc::Kind::F) ||
-      ("D"_tok / !letter /* don't occlude DC & DP */) >>
-        pure(IntrinsicTypeDataEditDesc::Kind::D) ||
-      "EN" >> pure(IntrinsicTypeDataEditDesc::Kind::EN) ||
-      "ES" >> pure(IntrinsicTypeDataEditDesc::Kind::ES) ||
-      "EX" >> pure(IntrinsicTypeDataEditDesc::Kind::EX) ||
-      "E" >> pure(IntrinsicTypeDataEditDesc::Kind::E) ||
-      "G" >> pure(IntrinsicTypeDataEditDesc::Kind::G) ||
-      "L" >> pure(IntrinsicTypeDataEditDesc::Kind::L),
-      noInt, noInt, noInt)))
+        "F" >> pure(IntrinsicTypeDataEditDesc::Kind::F) ||
+            "D" >> pure(IntrinsicTypeDataEditDesc::Kind::D),
+        mandatoryWidth, mandatoryDigits, noInt) ||
+    construct<IntrinsicTypeDataEditDesc>{}(
+        "EN" >> pure(IntrinsicTypeDataEditDesc::Kind::EN) ||
+            "ES" >> pure(IntrinsicTypeDataEditDesc::Kind::ES) ||
+            "EX" >> pure(IntrinsicTypeDataEditDesc::Kind::EX) ||
+            "E" >> pure(IntrinsicTypeDataEditDesc::Kind::E),
+        mandatoryWidth, mandatoryDigits, maybe("E" >> digits)) ||
+    construct<IntrinsicTypeDataEditDesc>{}(
+        "G" >> pure(IntrinsicTypeDataEditDesc::Kind::G), mandatoryWidth,
+        mandatoryDigits, maybe("E" >> digits)) ||
+    construct<IntrinsicTypeDataEditDesc>{}(
+        "G" >> pure(IntrinsicTypeDataEditDesc::Kind::G) ||
+            "L" >> pure(IntrinsicTypeDataEditDesc::Kind::L),
+        mandatoryWidth, noInt, noInt) ||
+    construct<IntrinsicTypeDataEditDesc>{}(
+        "A" >> pure(IntrinsicTypeDataEditDesc::Kind::A), maybe(width), noInt,
+        noInt) ||
+    // PGI/Intel extension: omitting width (and all else that follows)
+    extension(construct<IntrinsicTypeDataEditDesc>{}(
+        "I" >> pure(IntrinsicTypeDataEditDesc::Kind::I) ||
+            "B" >> pure(IntrinsicTypeDataEditDesc::Kind::B) ||
+            "O" >> pure(IntrinsicTypeDataEditDesc::Kind::O) ||
+            "Z" >> pure(IntrinsicTypeDataEditDesc::Kind::Z) ||
+            "F" >> pure(IntrinsicTypeDataEditDesc::Kind::F) ||
+            ("D"_tok / !letter /* don't occlude DC & DP */) >>
+                pure(IntrinsicTypeDataEditDesc::Kind::D) ||
+            "EN" >> pure(IntrinsicTypeDataEditDesc::Kind::EN) ||
+            "ES" >> pure(IntrinsicTypeDataEditDesc::Kind::ES) ||
+            "EX" >> pure(IntrinsicTypeDataEditDesc::Kind::EX) ||
+            "E" >> pure(IntrinsicTypeDataEditDesc::Kind::E) ||
+            "G" >> pure(IntrinsicTypeDataEditDesc::Kind::G) ||
+            "L" >> pure(IntrinsicTypeDataEditDesc::Kind::L),
+        noInt, noInt, noInt)))
 
 // R1307 data-edit-desc (part 2 of 2)
 // R1312 v -> [sign] digit-string
-TYPE_PARSER(
-  "DT" >> construct<DerivedTypeDataEditDesc>{}(
-    spaces >> defaulted(charLiteralConstantWithoutKind),
-    defaulted(parenthesized(nonemptyList(spaces >> signedDigitString)))))
+TYPE_PARSER("DT" >>
+    construct<DerivedTypeDataEditDesc>{}(
+        spaces >> defaulted(charLiteralConstantWithoutKind),
+        defaulted(parenthesized(nonemptyList(spaces >> signedDigitString)))))
 
 // R1314 k -> [sign] digit-string
 static inline int castS64ToInt(std::int64_t &&n) {
   return n;  // TODO: check for overflow
 }
-constexpr auto scaleFactor =
-  spaces >> applyFunction(castS64ToInt, signedDigitString);
+constexpr auto scaleFactor = spaces >>
+    applyFunction(castS64ToInt, signedDigitString);
 
 // R1313 control-edit-desc ->
 //         position-edit-desc | [r] / | : | sign-edit-desc | k P |
@@ -3360,203 +3150,176 @@ constexpr auto scaleFactor =
 // R1319 round-edit-desc -> RU | RD | RZ | RN | RC | RP
 // R1320 decimal-edit-desc -> DC | DP
 TYPE_PARSER(
-  construct<ControlEditDesc>{}(
-    "TL" >> pure(ControlEditDesc::Kind::TL) ||
-    "TR" >> pure(ControlEditDesc::Kind::TR) ||
-    "T" >> pure(ControlEditDesc::Kind::T),
-    repeat) ||
-  construct<ControlEditDesc>{}(
-    repeat,
-    "X" >> pure(ControlEditDesc::Kind::X) ||
-    "/" >> pure(ControlEditDesc::Kind::Slash)) ||
-  construct<ControlEditDesc>{}(
-    "X" >> pure(ControlEditDesc::Kind::X) ||
-    "/" >> pure(ControlEditDesc::Kind::Slash)) ||
-  construct<ControlEditDesc>{}(
-    scaleFactor, "P" >> pure(ControlEditDesc::Kind::P)) ||
-  ":" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::Colon)) ||
-  "SS" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::SS)) ||
-  "SP" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::SP)) ||
-  "S"  >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::S)) ||
-  "BN" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::BN)) ||
-  "BZ" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::BZ)) ||
-  "RU" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::RU)) ||
-  "RD" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::RD)) ||
-  "RZ" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::RZ)) ||
-  "RN" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::RN)) ||
-  "RC" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::RC)) ||
-  "RP" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::RP)) ||
-  "DC" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::DC)) ||
-  "DP" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::DP)))
+    construct<ControlEditDesc>{}("TL" >> pure(ControlEditDesc::Kind::TL) ||
+            "TR" >> pure(ControlEditDesc::Kind::TR) ||
+            "T" >> pure(ControlEditDesc::Kind::T),
+        repeat) ||
+    construct<ControlEditDesc>{}(repeat,
+        "X" >> pure(ControlEditDesc::Kind::X) ||
+            "/" >> pure(ControlEditDesc::Kind::Slash)) ||
+    construct<ControlEditDesc>{}("X" >> pure(ControlEditDesc::Kind::X) ||
+        "/" >> pure(ControlEditDesc::Kind::Slash)) ||
+    construct<ControlEditDesc>{}(
+        scaleFactor, "P" >> pure(ControlEditDesc::Kind::P)) ||
+    ":" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::Colon)) ||
+    "SS" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::SS)) ||
+    "SP" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::SP)) ||
+    "S" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::S)) ||
+    "BN" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::BN)) ||
+    "BZ" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::BZ)) ||
+    "RU" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::RU)) ||
+    "RD" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::RD)) ||
+    "RZ" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::RZ)) ||
+    "RN" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::RN)) ||
+    "RC" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::RC)) ||
+    "RP" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::RP)) ||
+    "DC" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::DC)) ||
+    "DP" >> construct<ControlEditDesc>{}(pure(ControlEditDesc::Kind::DP)))
 
 // R1401 main-program ->
 //         [program-stmt] [specification-part] [execution-part]
 //         [internal-subprogram-part] end-program-stmt
 // R1402 program-stmt -> PROGRAM program-name
-TYPE_CONTEXT_PARSER("main program", construct<MainProgram>{}(
-  maybe(statement("PROGRAM" >> name)),
-  specificationPart,
-  executionPart,
-  maybe(internalSubprogramPart),
-  unterminatedStatement(endProgramStmt)))
+TYPE_CONTEXT_PARSER("main program",
+    construct<MainProgram>{}(maybe(statement("PROGRAM" >> name)),
+        specificationPart, executionPart, maybe(internalSubprogramPart),
+        unterminatedStatement(endProgramStmt)))
 
 // R1403 end-program-stmt -> END [PROGRAM [program-name]]
 TYPE_CONTEXT_PARSER("END PROGRAM statement",
-  "END" >> construct<EndProgramStmt>{}(defaulted("PROGRAM" >> maybe(name))))
+    "END" >> construct<EndProgramStmt>{}(defaulted("PROGRAM" >> maybe(name))))
 
 // R1404 module ->
 //         module-stmt [specification-part] [module-subprogram-part]
 //         end-module-stmt
-TYPE_CONTEXT_PARSER("module", construct<Module>{}(
-  statement(Parser<ModuleStmt>{}),
-  specificationPart,
-  maybe(Parser<ModuleSubprogramPart>{}),
-  unterminatedStatement(Parser<EndModuleStmt>{})))
+TYPE_CONTEXT_PARSER("module",
+    construct<Module>{}(statement(Parser<ModuleStmt>{}), specificationPart,
+        maybe(Parser<ModuleSubprogramPart>{}),
+        unterminatedStatement(Parser<EndModuleStmt>{})))
 
 // R1405 module-stmt -> MODULE module-name
-TYPE_CONTEXT_PARSER("MODULE statement",
-  "MODULE" >> construct<ModuleStmt>{}(name))
+TYPE_CONTEXT_PARSER(
+    "MODULE statement", "MODULE" >> construct<ModuleStmt>{}(name))
 
 // R1406 end-module-stmt -> END [MODULE [module-name]]
 TYPE_CONTEXT_PARSER("END MODULE statement",
-  "END" >> construct<EndModuleStmt>{}(defaulted("MODULE" >> maybe(name))))
+    "END" >> construct<EndModuleStmt>{}(defaulted("MODULE" >> maybe(name))))
 
 // R1407 module-subprogram-part -> contains-stmt [module-subprogram]...
-TYPE_CONTEXT_PARSER("module subprogram part", construct<ModuleSubprogramPart>{}(
-  statement(containsStmt),
-  many(startNewSubprogram >> Parser<ModuleSubprogram>{})))
+TYPE_CONTEXT_PARSER("module subprogram part",
+    construct<ModuleSubprogramPart>{}(statement(containsStmt),
+        many(startNewSubprogram >> Parser<ModuleSubprogram>{})))
 
 // R1408 module-subprogram ->
 //         function-subprogram | subroutine-subprogram |
 //         separate-module-subprogram
-TYPE_PARSER(
-  construct<ModuleSubprogram>{}(indirect(functionSubprogram)) ||
-  construct<ModuleSubprogram>{}(indirect(subroutineSubprogram)) ||
-  construct<ModuleSubprogram>{}(indirect(Parser<SeparateModuleSubprogram>{})))
+TYPE_PARSER(construct<ModuleSubprogram>{}(indirect(functionSubprogram)) ||
+    construct<ModuleSubprogram>{}(indirect(subroutineSubprogram)) ||
+    construct<ModuleSubprogram>{}(indirect(Parser<SeparateModuleSubprogram>{})))
 
 // R1410 module-nature -> INTRINSIC | NON_INTRINSIC
-constexpr auto moduleNature =
-  "INTRINSIC" >> pure(UseStmt::ModuleNature::Intrinsic) ||
-  "NON_INTRINSIC" >> pure(UseStmt::ModuleNature::Non_Intrinsic);
+constexpr auto moduleNature = "INTRINSIC" >>
+        pure(UseStmt::ModuleNature::Intrinsic) ||
+    "NON_INTRINSIC" >> pure(UseStmt::ModuleNature::Non_Intrinsic);
 
 // R1409 use-stmt ->
 //         USE [[, module-nature] ::] module-name [, rename-list] |
 //         USE [[, module-nature] ::] module-name , ONLY : [only-list]
 TYPE_PARSER(
-  "USE" >> (
-    construct<UseStmt>{}(
-      optionalBeforeColons(maybe(moduleNature)),
-      name,
-      ", ONLY :" >> optionalList(Parser<Only>{})) ||
-    construct<UseStmt>{}(
-      optionalBeforeColons(maybe(moduleNature)),
-      name,
-      defaulted("," >> nonemptyList(Parser<Rename>{})))))
+    "USE" >> (construct<UseStmt>{}(optionalBeforeColons(maybe(moduleNature)),
+                  name, ", ONLY :" >> optionalList(Parser<Only>{})) ||
+                 construct<UseStmt>{}(optionalBeforeColons(maybe(moduleNature)),
+                     name, defaulted("," >> nonemptyList(Parser<Rename>{})))))
 
 // R1411 rename ->
 //         local-name => use-name |
 //         OPERATOR ( local-defined-operator ) =>
 //           OPERATOR ( use-defined-operator )
-TYPE_PARSER(
-  "OPERATOR (" >> construct<Rename>{}(construct<Rename::Operators>{}(
-    definedOpName / ") => OPERATOR (",
-    definedOpName / ")")) ||
-  construct<Rename>{}(construct<Rename::Names>{}(
-    name,
-    "=>" >> name)))
+TYPE_PARSER("OPERATOR (" >>
+        construct<Rename>{}(construct<Rename::Operators>{}(
+            definedOpName / ") => OPERATOR (", definedOpName / ")")) ||
+    construct<Rename>{}(construct<Rename::Names>{}(name, "=>" >> name)))
 
 // R1412 only -> generic-spec | only-use-name | rename
 // R1413 only-use-name -> use-name
-TYPE_PARSER(
-  construct<Only>{}(Parser<Rename>{}) ||
-  construct<Only>{}(indirect(genericSpec)) ||
-  construct<Only>{}(name))  // TODO: ambiguous, accepted by genericSpec
+TYPE_PARSER(construct<Only>{}(Parser<Rename>{}) ||
+    construct<Only>{}(indirect(genericSpec)) ||
+    construct<Only>{}(name))  // TODO: ambiguous, accepted by genericSpec
 
 // R1416 submodule ->
 //         submodule-stmt [specification-part] [module-subprogram-part]
 //         end-submodule-stmt
-TYPE_CONTEXT_PARSER("submodule", construct<Submodule>{}(
-  statement(Parser<SubmoduleStmt>{}),
-  specificationPart,
-  maybe(Parser<ModuleSubprogramPart>{}),
-  statement(Parser<EndSubmoduleStmt>{})))
+TYPE_CONTEXT_PARSER("submodule",
+    construct<Submodule>{}(statement(Parser<SubmoduleStmt>{}),
+        specificationPart, maybe(Parser<ModuleSubprogramPart>{}),
+        statement(Parser<EndSubmoduleStmt>{})))
 
 // R1417 submodule-stmt -> SUBMODULE ( parent-identifier ) submodule-name
 TYPE_CONTEXT_PARSER("SUBMODULE statement",
-  "SUBMODULE" >> construct<SubmoduleStmt>{}(
-    parenthesized(Parser<ParentIdentifier>{}),
-    name))
+    "SUBMODULE" >> construct<SubmoduleStmt>{}(
+                       parenthesized(Parser<ParentIdentifier>{}), name))
 
 // R1418 parent-identifier -> ancestor-module-name [: parent-submodule-name]
 TYPE_PARSER(construct<ParentIdentifier>{}(name, maybe(":" >> name)))
 
 // R1419 end-submodule-stmt -> END [SUBMODULE [submodule-name]]
 TYPE_CONTEXT_PARSER("END SUBMODULE statement",
-  "END" >>
-    construct<EndSubmoduleStmt>{}(defaulted("SUBMODULE" >> maybe(name))))
+    "END" >>
+        construct<EndSubmoduleStmt>{}(defaulted("SUBMODULE" >> maybe(name))))
 
 // R1420 block-data -> block-data-stmt [specification-part] end-block-data-stmt
-TYPE_CONTEXT_PARSER("BLOCK DATA subprogram", construct<BlockData>{}(
-  statement(Parser<BlockDataStmt>{}),
-  specificationPart,
-  unterminatedStatement(Parser<EndBlockDataStmt>{})))
+TYPE_CONTEXT_PARSER("BLOCK DATA subprogram",
+    construct<BlockData>{}(statement(Parser<BlockDataStmt>{}),
+        specificationPart, unterminatedStatement(Parser<EndBlockDataStmt>{})))
 
 // R1421 block-data-stmt -> BLOCK DATA [block-data-name]
 TYPE_CONTEXT_PARSER("BLOCK DATA statement",
-  "BLOCK DATA" >> construct<BlockDataStmt>{}(maybe(name)))
+    "BLOCK DATA" >> construct<BlockDataStmt>{}(maybe(name)))
 
 // R1422 end-block-data-stmt -> END [BLOCK DATA [block-data-name]]
 TYPE_CONTEXT_PARSER("END BLOCK DATA statement",
-  "END" >>
-    construct<EndBlockDataStmt>{}(defaulted("BLOCK DATA" >> maybe(name))))
+    "END" >>
+        construct<EndBlockDataStmt>{}(defaulted("BLOCK DATA" >> maybe(name))))
 
 // R1501 interface-block ->
 //         interface-stmt [interface-specification]... end-interface-stmt
-TYPE_PARSER(construct<InterfaceBlock>{}(
-  statement(Parser<InterfaceStmt>{}),
-  many(Parser<InterfaceSpecification>{}),
-  statement(Parser<EndInterfaceStmt>{})))
+TYPE_PARSER(construct<InterfaceBlock>{}(statement(Parser<InterfaceStmt>{}),
+    many(Parser<InterfaceSpecification>{}),
+    statement(Parser<EndInterfaceStmt>{})))
 
 // R1502 interface-specification -> interface-body | procedure-stmt
-TYPE_PARSER(
-  construct<InterfaceSpecification>{}(Parser<InterfaceBody>{}) ||
-  construct<InterfaceSpecification>{}(statement(Parser<ProcedureStmt>{})))
+TYPE_PARSER(construct<InterfaceSpecification>{}(Parser<InterfaceBody>{}) ||
+    construct<InterfaceSpecification>{}(statement(Parser<ProcedureStmt>{})))
 
 // R1503 interface-stmt -> INTERFACE [generic-spec] | ABSTRACT INTERFACE
-TYPE_PARSER(
-  "INTERFACE" >> construct<InterfaceStmt>{}(maybe(genericSpec)) ||
-  "ABSTRACT INTERFACE" >> construct<InterfaceStmt>{}(construct<Abstract>{}))
+TYPE_PARSER("INTERFACE" >> construct<InterfaceStmt>{}(maybe(genericSpec)) ||
+    "ABSTRACT INTERFACE" >> construct<InterfaceStmt>{}(construct<Abstract>{}))
 
 // R1504 end-interface-stmt -> END INTERFACE [generic-spec]
 TYPE_PARSER(
-  "END INTERFACE" >> construct<EndInterfaceStmt>{}(maybe(genericSpec)))
+    "END INTERFACE" >> construct<EndInterfaceStmt>{}(maybe(genericSpec)))
 
 // R1505 interface-body ->
 //         function-stmt [specification-part] end-function-stmt |
 //         subroutine-stmt [specification-part] end-subroutine-stmt
 TYPE_CONTEXT_PARSER("interface body",
-  construct<InterfaceBody>{}(construct<InterfaceBody::Function>{} (
-    statement(functionStmt),
-    indirect(specificationPart),
-    statement(endFunctionStmt))) ||
-  construct<InterfaceBody>{}(construct<InterfaceBody::Subroutine>{} (
-    statement(subroutineStmt),
-    indirect(specificationPart),
-    statement(endSubroutineStmt))))
+    construct<InterfaceBody>{}(
+        construct<InterfaceBody::Function>{}(statement(functionStmt),
+            indirect(specificationPart), statement(endFunctionStmt))) ||
+        construct<InterfaceBody>{}(
+            construct<InterfaceBody::Subroutine>{}(statement(subroutineStmt),
+                indirect(specificationPart), statement(endSubroutineStmt))))
 
 // R1507 specific-procedure -> procedure-name
 constexpr auto specificProcedure = name;
 
 // R1506 procedure-stmt -> [MODULE] PROCEDURE [::] specific-procedure-list
-TYPE_PARSER(
-  "MODULE PROCEDURE" >>
-    construct<ProcedureStmt>{}(
-      pure(ProcedureStmt::Kind::ModuleProcedure),
-      maybe("::"_tok) >> nonemptyList(specificProcedure)) ||
-  "PROCEDURE" >>
-    construct<ProcedureStmt>{}(
-      pure(ProcedureStmt::Kind::Procedure),
-      maybe("::"_tok) >> nonemptyList(specificProcedure)))
+TYPE_PARSER("MODULE PROCEDURE" >>
+        construct<ProcedureStmt>{}(pure(ProcedureStmt::Kind::ModuleProcedure),
+            maybe("::"_tok) >> nonemptyList(specificProcedure)) ||
+    "PROCEDURE" >>
+        construct<ProcedureStmt>{}(pure(ProcedureStmt::Kind::Procedure),
+            maybe("::"_tok) >> nonemptyList(specificProcedure)))
 
 // R1508 generic-spec ->
 //         generic-name | OPERATOR ( defined-operator ) |
@@ -3564,77 +3327,63 @@ TYPE_PARSER(
 // R1509 defined-io-generic-spec ->
 //         READ ( FORMATTED ) | READ ( UNFORMATTED ) |
 //         WRITE ( FORMATTED ) | WRITE ( UNFORMATTED )
-TYPE_PARSER(
-  "OPERATOR" >> parenthesized(construct<GenericSpec>{}(
-    Parser<DefinedOperator>{})) ||
-  "ASSIGNMENT ( = )" >> construct<GenericSpec>{}(
-    construct<GenericSpec::Assignment>{}) ||
-  "READ ( FORMATTED )" >> construct<GenericSpec>{}(
-    construct<GenericSpec::ReadFormatted>{}) ||
-  "READ ( UNFORMATTED )" >> construct<GenericSpec>{}(
-    construct<GenericSpec::ReadUnformatted>{}) ||
-  "WRITE ( FORMATTED )" >> construct<GenericSpec>{}(
-    construct<GenericSpec::WriteFormatted>{}) ||
-  "WRITE ( UNFORMATTED )" >> construct<GenericSpec>{}(
-    construct<GenericSpec::WriteUnformatted>{}) ||
-  construct<GenericSpec>{}(name))
+TYPE_PARSER("OPERATOR" >>
+        parenthesized(construct<GenericSpec>{}(Parser<DefinedOperator>{})) ||
+    "ASSIGNMENT ( = )" >>
+        construct<GenericSpec>{}(construct<GenericSpec::Assignment>{}) ||
+    "READ ( FORMATTED )" >>
+        construct<GenericSpec>{}(construct<GenericSpec::ReadFormatted>{}) ||
+    "READ ( UNFORMATTED )" >>
+        construct<GenericSpec>{}(construct<GenericSpec::ReadUnformatted>{}) ||
+    "WRITE ( FORMATTED )" >>
+        construct<GenericSpec>{}(construct<GenericSpec::WriteFormatted>{}) ||
+    "WRITE ( UNFORMATTED )" >>
+        construct<GenericSpec>{}(construct<GenericSpec::WriteUnformatted>{}) ||
+    construct<GenericSpec>{}(name))
 
 // R1510 generic-stmt ->
 //         GENERIC [, access-spec] :: generic-spec => specific-procedure-list
-TYPE_PARSER(
-  "GENERIC" >> construct<GenericStmt>{}(
-    maybe("," >> accessSpec),
-    "::" >> genericSpec,
-    "=>" >> nonemptyList(specificProcedure)))
+TYPE_PARSER("GENERIC" >> construct<GenericStmt>{}(maybe("," >> accessSpec),
+                             "::" >> genericSpec,
+                             "=>" >> nonemptyList(specificProcedure)))
 
 // R1511 external-stmt -> EXTERNAL [::] external-name-list
-TYPE_PARSER(
-  "EXTERNAL" >> maybe("::"_tok) >>
+TYPE_PARSER("EXTERNAL" >> maybe("::"_tok) >>
     construct<ExternalStmt>{}(nonemptyList(name)))
 
 // R1512 procedure-declaration-stmt ->
 //         PROCEDURE ( [proc-interface] ) [[, proc-attr-spec]... ::]
 //         proc-decl-list
-TYPE_PARSER(
-  "PROCEDURE" >>
-    construct<ProcedureDeclarationStmt>{}(
-      parenthesized(maybe(procInterface)),
-      optionalBeforeColons(nonemptyList(Parser<ProcAttrSpec>{})),
-      nonemptyList(procDecl)))
+TYPE_PARSER("PROCEDURE" >>
+    construct<ProcedureDeclarationStmt>{}(parenthesized(maybe(procInterface)),
+        optionalBeforeColons(nonemptyList(Parser<ProcAttrSpec>{})),
+        nonemptyList(procDecl)))
 
 // R1513 proc-interface -> interface-name | declaration-type-spec
 // R1516 interface-name -> name
-TYPE_PARSER(
-  construct<ProcInterface>{}(name) ||
-  construct<ProcInterface>{}(declarationTypeSpec))
+TYPE_PARSER(construct<ProcInterface>{}(name) ||
+    construct<ProcInterface>{}(declarationTypeSpec))
 
 // R1514 proc-attr-spec ->
 //         access-spec | proc-language-binding-spec | INTENT ( intent-spec ) |
 //         OPTIONAL | POINTER | PROTECTED | SAVE
-TYPE_PARSER(
-  construct<ProcAttrSpec>{}(accessSpec) ||
-  construct<ProcAttrSpec>{}(languageBindingSpec) ||
-  construct<ProcAttrSpec>{}("INTENT" >> parenthesized(intentSpec)) ||
-  construct<ProcAttrSpec>{}(optional) ||
-  construct<ProcAttrSpec>{}(pointer) ||
-  construct<ProcAttrSpec>{}(protectedAttr) ||
-  construct<ProcAttrSpec>{}(save))
+TYPE_PARSER(construct<ProcAttrSpec>{}(accessSpec) ||
+    construct<ProcAttrSpec>{}(languageBindingSpec) ||
+    construct<ProcAttrSpec>{}("INTENT" >> parenthesized(intentSpec)) ||
+    construct<ProcAttrSpec>{}(optional) || construct<ProcAttrSpec>{}(pointer) ||
+    construct<ProcAttrSpec>{}(protectedAttr) || construct<ProcAttrSpec>{}(save))
 
 // R1515 proc-decl -> procedure-entity-name [=> proc-pointer-init]
 TYPE_PARSER(
-  construct<ProcDecl>{}(
-    name,
-    maybe("=>" >> Parser<ProcPointerInit>{})))
+    construct<ProcDecl>{}(name, maybe("=>" >> Parser<ProcPointerInit>{})))
 
 // R1517 proc-pointer-init -> null-init | initial-proc-target
 // R1518 initial-proc-target -> procedure-name
-TYPE_PARSER(
-  construct<ProcPointerInit>{}(nullInit) ||
-  construct<ProcPointerInit>{}(name))
+TYPE_PARSER(construct<ProcPointerInit>{}(nullInit) ||
+    construct<ProcPointerInit>{}(name))
 
 // R1519 intrinsic-stmt -> INTRINSIC [::] intrinsic-procedure-name-list
-TYPE_PARSER(
-  "INTRINSIC" >> maybe("::"_tok) >>
+TYPE_PARSER("INTRINSIC" >> maybe("::"_tok) >>
     construct<IntrinsicStmt>{}(nonemptyList(name)))
 
 // R1520 function-reference -> procedure-designator ( [actual-arg-spec-list] )
@@ -3642,8 +3391,9 @@ TYPE_PARSER(
 // variable as part of a procedure-designator will overshoot and consume
 // any actual argument list, since a pointer-valued function-reference is
 // acceptable as an alternative for a variable (since Fortran 2008).
-template<> std::optional<FunctionReference>
-Parser<FunctionReference>::Parse(ParseState *state) {
+template<>
+std::optional<FunctionReference> Parser<FunctionReference>::Parse(
+    ParseState *state) {
   state->PushContext("function reference");
   std::optional<Variable> var{variable.Parse(state)};
   if (var.has_value()) {
@@ -3661,18 +3411,17 @@ Parser<FunctionReference>::Parse(ParseState *state) {
         return {FunctionReference{std::move(call.value())}};
       }
     }
-    state->messages()->Add(Message{state->position(), "expected (arguments)",
-                                   state->context()});
+    state->messages()->Add(
+        Message{state->position(), "expected (arguments)", state->context()});
   }
   state->PopContext();
   return {};
 };
 
 // R1521 call-stmt -> CALL procedure-designator [( [actual-arg-spec-list] )]
-template<> std::optional<CallStmt>
-Parser<CallStmt>::Parse(ParseState *state) {
+template<> std::optional<CallStmt> Parser<CallStmt>::Parse(ParseState *state) {
   static constexpr auto parser =
-    inContext("CALL statement", "CALL" >> variable);
+      inContext("CALL statement", "CALL" >> variable);
   std::optional<Variable> var{parser.Parse(state)};
   if (var.has_value()) {
     if (auto funcref = std::get_if<Indirection<FunctionReference>>(&var->u)) {
@@ -3694,23 +3443,23 @@ Parser<CallStmt>::Parse(ParseState *state) {
 // variable.
 
 // R1523 actual-arg-spec -> [keyword =] actual-arg
-TYPE_PARSER(construct<ActualArgSpec>{}(
-  maybe(keyword / "="),
-  Parser<ActualArg>{}))
+TYPE_PARSER(
+    construct<ActualArgSpec>{}(maybe(keyword / "="), Parser<ActualArg>{}))
 
 // R1524 actual-arg ->
 //         expr | variable | procedure-name | proc-component-ref |
 //         alt-return-spec
 // N.B. the "procedure-name" and "proc-component-ref" alternatives can't
 // yet be distinguished from "variable".
-TYPE_PARSER(
-  construct<ActualArg>{}(variable) / lookAhead(","_tok || ")"_tok) ||
-  construct<ActualArg>{}(expr) ||
-  construct<ActualArg>{}(Parser<AltReturnSpec>{}) ||
-  extension("%REF" >> construct<ActualArg>{}(construct<ActualArg::PercentRef>{}(
-    parenthesized(variable)))) ||
-  extension("%VAL" >> construct<ActualArg>{}(construct<ActualArg::PercentVal>{}(
-    parenthesized(expr)))))
+TYPE_PARSER(construct<ActualArg>{}(variable) / lookAhead(","_tok || ")"_tok) ||
+    construct<ActualArg>{}(expr) ||
+    construct<ActualArg>{}(Parser<AltReturnSpec>{}) ||
+    extension("%REF" >>
+        construct<ActualArg>{}(
+            construct<ActualArg::PercentRef>{}(parenthesized(variable)))) ||
+    extension(
+        "%VAL" >> construct<ActualArg>{}(
+                      construct<ActualArg::PercentVal>{}(parenthesized(expr)))))
 
 // R1525 alt-return-spec -> * label
 TYPE_PARSER(star >> construct<AltReturnSpec>{}(label))
@@ -3718,127 +3467,99 @@ TYPE_PARSER(star >> construct<AltReturnSpec>{}(label))
 // R1527 prefix-spec ->
 //         declaration-type-spec | ELEMENTAL | IMPURE | MODULE |
 //         NON_RECURSIVE | PURE | RECURSIVE
-TYPE_PARSER(
-  construct<PrefixSpec>{}(declarationTypeSpec) ||
-  "ELEMENTAL" >> construct<PrefixSpec>{}(construct<PrefixSpec::Elemental>{}) ||
-  "IMPURE" >> construct<PrefixSpec>{}(construct<PrefixSpec::Impure>{}) ||
-  "MODULE" >> construct<PrefixSpec>{}(construct<PrefixSpec::Module>{}) ||
-  "NON_RECURSIVE" >>
-    construct<PrefixSpec>{}(construct<PrefixSpec::Non_Recursive>{}) ||
-  "PURE" >> construct<PrefixSpec>{}(construct<PrefixSpec::Pure>{}) ||
-  "RECURSIVE" >> construct<PrefixSpec>{}(construct<PrefixSpec::Recursive>{}))
+TYPE_PARSER(construct<PrefixSpec>{}(declarationTypeSpec) ||
+    "ELEMENTAL" >>
+        construct<PrefixSpec>{}(construct<PrefixSpec::Elemental>{}) ||
+    "IMPURE" >> construct<PrefixSpec>{}(construct<PrefixSpec::Impure>{}) ||
+    "MODULE" >> construct<PrefixSpec>{}(construct<PrefixSpec::Module>{}) ||
+    "NON_RECURSIVE" >>
+        construct<PrefixSpec>{}(construct<PrefixSpec::Non_Recursive>{}) ||
+    "PURE" >> construct<PrefixSpec>{}(construct<PrefixSpec::Pure>{}) ||
+    "RECURSIVE" >> construct<PrefixSpec>{}(construct<PrefixSpec::Recursive>{}))
 
 // R1529 function-subprogram ->
 //         function-stmt [specification-part] [execution-part]
 //         [internal-subprogram-part] end-function-stmt
-TYPE_CONTEXT_PARSER("FUNCTION subprogram", construct<FunctionSubprogram>{}(
-  statement(functionStmt),
-  specificationPart,
-  executionPart,
-  maybe(internalSubprogramPart),
-  unterminatedStatement(endFunctionStmt)))
+TYPE_CONTEXT_PARSER("FUNCTION subprogram",
+    construct<FunctionSubprogram>{}(statement(functionStmt), specificationPart,
+        executionPart, maybe(internalSubprogramPart),
+        unterminatedStatement(endFunctionStmt)))
 
 // R1530 function-stmt ->
 //         [prefix] FUNCTION function-name ( [dummy-arg-name-list] ) [suffix]
 // R1526 prefix -> prefix-spec [prefix-spec]...
 // R1531 dummy-arg-name -> name
 TYPE_CONTEXT_PARSER("FUNCTION statement",
-  construct<FunctionStmt>{}(
-    many(prefixSpec),
-    "FUNCTION" >> name,
-    parenthesized(optionalList(name)),
-    maybe(suffix)) ||
-  extension(construct<FunctionStmt>{}(  // PGI & Intel accept "FUNCTION F"
-    many(prefixSpec),
-    "FUNCTION" >> name,
-    construct<std::list<Name>>{},
-    construct<std::optional<Suffix>>{})))
+    construct<FunctionStmt>{}(many(prefixSpec), "FUNCTION" >> name,
+        parenthesized(optionalList(name)), maybe(suffix)) ||
+        extension(construct<FunctionStmt>{}(  // PGI & Intel accept "FUNCTION F"
+            many(prefixSpec), "FUNCTION" >> name, construct<std::list<Name>>{},
+            construct<std::optional<Suffix>>{})))
 
 // R1532 suffix ->
 //         proc-language-binding-spec [RESULT ( result-name )] |
 //         RESULT ( result-name ) [proc-language-binding-spec]
-TYPE_PARSER(
-  construct<Suffix>{}(
-    languageBindingSpec,
-    maybe("RESULT" >> parenthesized(name))) ||
-  construct<Suffix>{}(
-    "RESULT" >> parenthesized(name),
-    maybe(languageBindingSpec)))
+TYPE_PARSER(construct<Suffix>{}(
+                languageBindingSpec, maybe("RESULT" >> parenthesized(name))) ||
+    construct<Suffix>{}(
+        "RESULT" >> parenthesized(name), maybe(languageBindingSpec)))
 
 // R1533 end-function-stmt -> END [FUNCTION [function-name]]
 TYPE_PARSER(
-  "END" >> construct<EndFunctionStmt>{}(defaulted("FUNCTION" >> maybe(name))))
+    "END" >> construct<EndFunctionStmt>{}(defaulted("FUNCTION" >> maybe(name))))
 
 // R1534 subroutine-subprogram ->
 //         subroutine-stmt [specification-part] [execution-part]
 //         [internal-subprogram-part] end-subroutine-stmt
-TYPE_CONTEXT_PARSER("SUBROUTINE subprogram", construct<SubroutineSubprogram>{}(
-  statement(subroutineStmt),
-  specificationPart,
-  executionPart,
-  maybe(internalSubprogramPart),
-  unterminatedStatement(endSubroutineStmt)))
+TYPE_CONTEXT_PARSER("SUBROUTINE subprogram",
+    construct<SubroutineSubprogram>{}(statement(subroutineStmt),
+        specificationPart, executionPart, maybe(internalSubprogramPart),
+        unterminatedStatement(endSubroutineStmt)))
 
 // R1535 subroutine-stmt ->
 //         [prefix] SUBROUTINE subroutine-name [( [dummy-arg-list] )
 //         [proc-language-binding-spec]]
 TYPE_PARSER(
-  construct<SubroutineStmt>{}(
-    many(prefixSpec),
-    "SUBROUTINE" >> name,
-    parenthesized(optionalList(dummyArg)),
-    maybe(languageBindingSpec)) ||
-  construct<SubroutineStmt>{}(
-    many(prefixSpec),
-    "SUBROUTINE" >> name,
-    defaulted(cut >> many(dummyArg)),
-    defaulted(cut >> maybe(languageBindingSpec))))
+    construct<SubroutineStmt>{}(many(prefixSpec), "SUBROUTINE" >> name,
+        parenthesized(optionalList(dummyArg)), maybe(languageBindingSpec)) ||
+    construct<SubroutineStmt>{}(many(prefixSpec), "SUBROUTINE" >> name,
+        defaulted(cut >> many(dummyArg)),
+        defaulted(cut >> maybe(languageBindingSpec))))
 
 // R1536 dummy-arg -> dummy-arg-name | *
-TYPE_PARSER(
-  construct<DummyArg>{}(name) ||
-  construct<DummyArg>{}(star))
+TYPE_PARSER(construct<DummyArg>{}(name) || construct<DummyArg>{}(star))
 
 // R1537 end-subroutine-stmt -> END [SUBROUTINE [subroutine-name]]
-TYPE_PARSER(
-  "END" >>
+TYPE_PARSER("END" >>
     construct<EndSubroutineStmt>{}(defaulted("SUBROUTINE" >> maybe(name))))
 
 // R1538 separate-module-subprogram ->
 //         mp-subprogram-stmt [specification-part] [execution-part]
 //         [internal-subprogram-part] end-mp-subprogram-stmt
 TYPE_CONTEXT_PARSER("separate module subprogram",
-  construct<SeparateModuleSubprogram>{}(
-    statement(Parser<MpSubprogramStmt>{}),
-    specificationPart,
-    executionPart,
-    maybe(internalSubprogramPart),
-    statement(Parser<EndMpSubprogramStmt>{})))
+    construct<SeparateModuleSubprogram>{}(statement(Parser<MpSubprogramStmt>{}),
+        specificationPart, executionPart, maybe(internalSubprogramPart),
+        statement(Parser<EndMpSubprogramStmt>{})))
 
 // R1539 mp-subprogram-stmt -> MODULE PROCEDURE procedure-name
-TYPE_CONTEXT_PARSER("MODULE PROCEDURE statement", construct<MpSubprogramStmt>{}(
-  "MODULE PROCEDURE" >> name))
+TYPE_CONTEXT_PARSER("MODULE PROCEDURE statement",
+    construct<MpSubprogramStmt>{}("MODULE PROCEDURE" >> name))
 
 // R1540 end-mp-subprogram-stmt -> END [PROCEDURE [procedure-name]]
 TYPE_CONTEXT_PARSER("END PROCEDURE statement",
-  "END" >>
-    construct<EndMpSubprogramStmt>{}(defaulted("PROCEDURE" >> maybe(name))))
+    "END" >>
+        construct<EndMpSubprogramStmt>{}(defaulted("PROCEDURE" >> maybe(name))))
 
 // R1541 entry-stmt -> ENTRY entry-name [( [dummy-arg-list] ) [suffix]]
-TYPE_PARSER(
-  "ENTRY" >>
+TYPE_PARSER("ENTRY" >>
     (construct<EntryStmt>{}(
-       name,
-       parenthesized(optionalList(dummyArg)),
-       maybe(suffix)) ||
-     construct<EntryStmt>{}(
-       name,
-       construct<std::list<DummyArg>>{},
-       construct<std::optional<Suffix>>{})))
+         name, parenthesized(optionalList(dummyArg)), maybe(suffix)) ||
+        construct<EntryStmt>{}(name, construct<std::list<DummyArg>>{},
+            construct<std::optional<Suffix>>{})))
 
 // R1542 return-stmt -> RETURN [scalar-int-expr]
 TYPE_CONTEXT_PARSER("RETURN statement",
-  "RETURN" >> construct<ReturnStmt>{}(maybe(scalarIntExpr)))
+    "RETURN" >> construct<ReturnStmt>{}(maybe(scalarIntExpr)))
 
 // R1543 contains-stmt -> CONTAINS
 TYPE_PARSER("CONTAINS" >> construct<ContainsStmt>{})
@@ -3846,67 +3567,57 @@ TYPE_PARSER("CONTAINS" >> construct<ContainsStmt>{})
 // R1544 stmt-function-stmt ->
 //         function-name ( [dummy-arg-name-list] ) = scalar-expr
 TYPE_PARSER(construct<StmtFunctionStmt>{}(
-  name,
-  parenthesized(optionalList(name)),
-  "=" >> scalar(expr)))
+    name, parenthesized(optionalList(name)), "=" >> scalar(expr)))
 
 // Extension and deprecated statements
 TYPE_PARSER(extension(
-  "POINTER" >> parenthesized(construct<BasedPointerStmt>{}(
-    objectName / ",",
-    objectName,
-    maybe(Parser<ArraySpec>{})))))
+    "POINTER" >> parenthesized(construct<BasedPointerStmt>{}(objectName / ",",
+                     objectName, maybe(Parser<ArraySpec>{})))))
 
-TYPE_PARSER(extension(
-  "REDIMENSION" >> construct<RedimensionStmt>{}(
-    objectName,
-    parenthesized(nonemptyList(Parser<AllocateShapeSpec>{})))))
+TYPE_PARSER(extension("REDIMENSION" >>
+    construct<RedimensionStmt>{}(
+        objectName, parenthesized(nonemptyList(Parser<AllocateShapeSpec>{})))))
 
-TYPE_PARSER(
-  "STRUCTURE /" >> construct<StructureStmt>{}(
-    name / "/",
-    optionalList(entityDecl)) ||
-  "STRUCTURE" >> construct<StructureStmt>{}(
-    name,
-    defaulted(cut >> many(entityDecl))))
+TYPE_PARSER("STRUCTURE /" >>
+        construct<StructureStmt>{}(name / "/", optionalList(entityDecl)) ||
+    "STRUCTURE" >>
+        construct<StructureStmt>{}(name, defaulted(cut >> many(entityDecl))))
 
 TYPE_PARSER(
-  construct<StructureField>{}(statement(Parser<DataComponentDefStmt>{})) ||
-  construct<StructureField>{}(indirect(Parser<Union>{})) ||
-  construct<StructureField>{}(indirect(Parser<StructureDef>{})))
+    construct<StructureField>{}(statement(Parser<DataComponentDefStmt>{})) ||
+    construct<StructureField>{}(indirect(Parser<Union>{})) ||
+    construct<StructureField>{}(indirect(Parser<StructureDef>{})))
 
-TYPE_CONTEXT_PARSER("STRUCTURE definition", extension(construct<StructureDef>{}(
-  statement(Parser<StructureStmt>{}),
-  many(Parser<StructureField>{}),
-  statement("END STRUCTURE" >> construct<StructureDef::EndStructureStmt>{}))))
+TYPE_CONTEXT_PARSER("STRUCTURE definition",
+    extension(construct<StructureDef>{}(statement(Parser<StructureStmt>{}),
+        many(Parser<StructureField>{}),
+        statement(
+            "END STRUCTURE" >> construct<StructureDef::EndStructureStmt>{}))))
 
-TYPE_CONTEXT_PARSER("UNION definition", construct<Union>{}(
-  statement("UNION" >> construct<Union::UnionStmt>{}),
-  many(Parser<Map>{}),
-  statement("END UNION" >> construct<Union::EndUnionStmt>{})))
+TYPE_CONTEXT_PARSER("UNION definition",
+    construct<Union>{}(statement("UNION" >> construct<Union::UnionStmt>{}),
+        many(Parser<Map>{}),
+        statement("END UNION" >> construct<Union::EndUnionStmt>{})))
 
-TYPE_CONTEXT_PARSER("MAP definition", construct<Map>{}(
-  statement("MAP" >> construct<Map::MapStmt>{}),
-  many(Parser<StructureField>{}),
-  statement("END MAP" >> construct<Map::EndMapStmt>{})))
+TYPE_CONTEXT_PARSER("MAP definition",
+    construct<Map>{}(statement("MAP" >> construct<Map::MapStmt>{}),
+        many(Parser<StructureField>{}),
+        statement("END MAP" >> construct<Map::EndMapStmt>{})))
 
-TYPE_CONTEXT_PARSER("arithmetic IF statement", deprecated(
-  "IF" >> construct<ArithmeticIfStmt>{}(
-    parenthesized(expr),
-    label / ",",
-    label / ",",
-    label)))
+TYPE_CONTEXT_PARSER("arithmetic IF statement",
+    deprecated("IF" >> construct<ArithmeticIfStmt>{}(parenthesized(expr),
+                           label / ",", label / ",", label)))
 
-TYPE_CONTEXT_PARSER("ASSIGN statement", deprecated(
-  "ASSIGN" >> construct<AssignStmt>{}(label, "TO" >> name)))
+TYPE_CONTEXT_PARSER("ASSIGN statement",
+    deprecated("ASSIGN" >> construct<AssignStmt>{}(label, "TO" >> name)))
 
-TYPE_CONTEXT_PARSER("assigned GOTO statement", deprecated(
-  "GO TO" >> construct<AssignedGotoStmt>{}(
-    name,
-    defaulted(maybe(","_tok) >> parenthesized(nonemptyList(label))))))
+TYPE_CONTEXT_PARSER("assigned GOTO statement",
+    deprecated("GO TO" >>
+        construct<AssignedGotoStmt>{}(name,
+            defaulted(maybe(","_tok) >> parenthesized(nonemptyList(label))))))
 
-TYPE_CONTEXT_PARSER("PAUSE statement", deprecated(
-  "PAUSE" >> construct<PauseStmt>{}(maybe(Parser<StopCode>{}))))
+TYPE_CONTEXT_PARSER("PAUSE statement",
+    deprecated("PAUSE" >> construct<PauseStmt>{}(maybe(Parser<StopCode>{}))))
 
 // These requirement productions are defined by the Fortran standard but never
 // used directly by the grammar:

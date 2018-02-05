@@ -91,7 +91,8 @@ int main(int argc, char *const argv[]) {
     path = std::move(args.front());
     args.pop_front();
     if (!args.empty()) {
-      std::cerr << "multiple input files\n";;
+      std::cerr << "multiple input files\n";
+      ;
       return 1;
     }
   }
@@ -109,13 +110,12 @@ int main(int argc, char *const argv[]) {
   if (prescan) {
     Fortran::Messages messages;
     Fortran::Prescanner prescanner{messages};
-    Fortran::CharBuffer
-      buffer{prescanner.
-               set_fixedForm(fixedForm).
-               set_enableBackslashEscapesInCharLiterals(backslashEscapes).
-               set_fixedFormColumnLimit(columns).
-               set_enableOldDebugLines(enableOldDebugLines).
-               Prescan(source)};
+    Fortran::CharBuffer buffer{
+        prescanner.set_fixedForm(fixedForm)
+            .set_enableBackslashEscapesInCharLiterals(backslashEscapes)
+            .set_fixedFormColumnLimit(columns)
+            .set_enableOldDebugLines(enableOldDebugLines)
+            .Prescan(source)};
     std::cerr << messages;
     if (prescanner.anyFatalErrors()) {
       return 1;

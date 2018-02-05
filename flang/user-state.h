@@ -30,6 +30,7 @@ public:
       --nonlabelDoConstructNestingDepth_;
     }
   }
+
 private:
   std::unordered_set<Label> doLabels_;
   int nonlabelDoConstructNestingDepth_{0};

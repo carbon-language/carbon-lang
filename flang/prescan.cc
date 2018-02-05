@@ -1,6 +1,6 @@
-#include "prescan.h"
 #include "char-buffer.h"
 #include "idioms.h"
+#include "prescan.h"
 #include "source.h"
 #include <cctype>
 #include <cstring>
@@ -16,8 +16,7 @@ CharBuffer Prescanner::Prescan(const SourceFile &source) {
   CharBuffer out;
   TokenSequence tokens, preprocessed;
   while (lineStart_ < limit_) {
-    if (CommentLinesAndPreprocessorDirectives() &&
-        lineStart_ >= limit_) {
+    if (CommentLinesAndPreprocessorDirectives() && lineStart_ >= limit_) {
       break;
     }
     BeginSourceLineAndAdvance();
@@ -91,7 +90,7 @@ void Prescanner::LabelField(TokenSequence *token) {
     }
     if (*at_ != ' ' &&
         (*at_ != '0' ||
-         atPosition_.column() != 6)) {  // '0' in column 6 becomes space
+            atPosition_.column() != 6)) {  // '0' in column 6 becomes space
       token->AddChar(*at_);
       ++outCol;
     }
@@ -129,7 +128,7 @@ void Prescanner::NextChar() {
     }
   } else {
     if ((inFixedForm_ && atPosition_.column() > fixedFormColumnLimit_ &&
-         !tabInCurrentLine_) ||
+            !tabInCurrentLine_) ||
         (*at_ == '!' && !inCharLiteral_)) {
       while (*at_ != '\n') {
         ++at_;
@@ -178,7 +177,7 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
     preventHollerith_ = false;
   } else if (isdigit(*at_)) {
     int n{0};
-    static constexpr int maxHollerith = 256 * (132-6);
+    static constexpr int maxHollerith = 256 * (132 - 6);
     do {
       if (n < maxHollerith) {
         n = 10 * n + *at_ - '0';
@@ -188,8 +187,7 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
         SkipSpaces();
       }
     } while (isdigit(*at_));
-    if ((*at_ == 'h' || *at_ == 'H') &&
-        n > 0 && n < maxHollerith &&
+    if ((*at_ == 'h' || *at_ == 'H') && n > 0 && n < maxHollerith &&
         !preventHollerith_) {
       EmitCharAndAdvance(tokens, 'h');
       inCharLiteral_ = true;
@@ -248,11 +246,10 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
     char nch{EmitCharAndAdvance(tokens, ch)};
     preventHollerith_ = false;
     if ((nch == '=' &&
-         (ch == '<' || ch == '>' || ch == '/' || ch == '=' ||
-          ch == '!')) ||
+            (ch == '<' || ch == '>' || ch == '/' || ch == '=' || ch == '!')) ||
         (ch == nch &&
-         (ch == '/' || ch == ':' || ch == '*' ||
-          ch == '#' || ch == '&' || ch == '|' || ch == '<' || ch == '>')) ||
+            (ch == '/' || ch == ':' || ch == '*' || ch == '#' || ch == '&' ||
+                ch == '|' || ch == '<' || ch == '>')) ||
         (ch == '=' && nch == '>')) {
       // token comprises two characters
       EmitCharAndAdvance(tokens, nch);
@@ -310,9 +307,7 @@ void Prescanner::QuotedCharacterLiteral(TokenSequence *tokens) {
 }
 
 bool Prescanner::PadOutCharacterLiteral() {
-  if (inFixedForm_ &&
-      !tabInCurrentLine_ &&
-      *at_ == '\n' &&
+  if (inFixedForm_ && !tabInCurrentLine_ && *at_ == '\n' &&
       atPosition_.column() < fixedFormColumnLimit_) {
     atPosition_.AdvanceColumn();
     return true;
@@ -382,8 +377,7 @@ bool Prescanner::IsPreprocessorDirectiveLine(const char *start) {
 bool Prescanner::CommentLines() {
   bool any{false};
   while (lineStart_ < limit_) {
-    if (IsFixedFormCommentLine(lineStart_) ||
-        IsFreeFormComment(lineStart_)) {
+    if (IsFixedFormCommentLine(lineStart_) || IsFreeFormComment(lineStart_)) {
       NextLine();
       ++newlineDebt_;
       any = true;
@@ -397,8 +391,7 @@ bool Prescanner::CommentLines() {
 bool Prescanner::CommentLinesAndPreprocessorDirectives() {
   bool any{false};
   while (lineStart_ < limit_) {
-    if (IsFixedFormCommentLine(lineStart_) ||
-        IsFreeFormComment(lineStart_)) {
+    if (IsFixedFormCommentLine(lineStart_) || IsFreeFormComment(lineStart_)) {
       NextLine();
     } else if (IsPreprocessorDirectiveLine(lineStart_)) {
       if (std::optional<TokenSequence> tokens{NextTokenizedLine()}) {
@@ -426,8 +419,7 @@ const char *Prescanner::FixedFormContinuationLine() {
     tabInCurrentLine_ = true;
     return p + 2;  // VAX extension
   }
-  if (p[0] == ' ' && p[1] == ' ' && p[2] == ' ' &&
-      p[3] == ' ' && p[4] == ' ') {
+  if (p[0] == ' ' && p[1] == ' ' && p[2] == ' ' && p[3] == ' ' && p[4] == ' ') {
     char col6{p[5]};
     if (col6 != '\n' && col6 != '\t' && col6 != ' ' && col6 != '0') {
       return p + 6;
