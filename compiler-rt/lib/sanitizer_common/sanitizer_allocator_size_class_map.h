@@ -163,7 +163,7 @@ class SizeClassMap {
       return (size + kMinSize - 1) >> kMinSizeLog;
     uptr l = MostSignificantSetBitIndex(size);
     uptr hbits = (size >> (l - S)) & M;
-    uptr lbits = size & ((1U << (l - S)) - 1);
+    uptr lbits = size & ((1 << (l - S)) - 1);
     uptr l1 = l - kMidSizeLog;
     return kMidClass + (l1 << S) + hbits + (lbits > 0);
   }
@@ -176,8 +176,7 @@ class SizeClassMap {
       return 16;
     if (UNLIKELY(class_id == 0))
       return 0;
-    const uptr n =
-        (1U << kMaxBytesCachedLog) / static_cast<u32>(Size(class_id));
+    uptr n = (1UL << kMaxBytesCachedLog) / Size(class_id);
     return Max<uptr>(1, Min(kMaxNumCachedHint, n));
   }
 
