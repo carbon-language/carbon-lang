@@ -327,12 +327,14 @@ static bool canNotEvaluateInType(Value *V, Type *Ty) {
   if (!isa<Instruction>(V))
     return true;
   // We can't extend or shrink something that has multiple uses -- unless those
-  // multiple uses are all in the same instruction -- doing so would require
-  // duplicating the instruction which isn't profitable.
-  if (!V->hasOneUse())
+  // multiple uses are all in the same binop instruction -- doing so would
+  // require duplicating the instruction which isn't profitable.
+  if (!V->hasOneUse()) {
+    if (!match(V->user_back(), m_BinOp()))
+      return true;
     if (any_of(V->users(), [&](User *U) { return U != V->user_back(); }))
       return true;
-
+  }
   return false;
 }
 
