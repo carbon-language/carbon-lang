@@ -52,7 +52,7 @@ template<typename... LAMBDAS>
 visitors(LAMBDAS... x) -> visitors<LAMBDAS...>;
 
 // Calls std::fprintf(stderr, ...), then abort().
-void die(const char *, ...);
+[[noreturn]] void die(const char *, ...);
 
 // Treat operator! as if it were a Boolean context, i.e. like if() and ? :,
 // when its operand is std::optional<>.
@@ -62,8 +62,8 @@ template<typename A> bool operator!(const std::optional<A> &x) {
 }  // namespace Fortran
 
 // For switch statements without default: labels.
-#define DEFAULT_CRASH \
-  default: die("no case at " __FILE__ "(%d)", __LINE__)
+#define CRASH_NO_CASE \
+  die("no case at " __FILE__ "(%d)", __LINE__)
 
 // For cheap assertions that should be applied in production.
 #define CHECK(x) \

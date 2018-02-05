@@ -517,7 +517,7 @@ std::ostream &operator<<(std::ostream &o,
   case DefinedOperator::IntrinsicOperator::OR: return o << "OR";
   case DefinedOperator::IntrinsicOperator::EQV: return o << "EQV";
   case DefinedOperator::IntrinsicOperator::NEQV: return o << "NEQV";
-  DEFAULT_CRASH;
+  default: CRASH_NO_CASE;
   }
   return o;
 }
@@ -560,7 +560,7 @@ std::ostream &operator<<(std::ostream &o, Sign x) {
   switch (x) {
   case Sign::Positive: return o << "Positive";
   case Sign::Negative: return o << "Negative";
-  DEFAULT_CRASH;
+  default: CRASH_NO_CASE;
   }
   return o;
 }
@@ -617,7 +617,7 @@ std::ostream &operator<<(std::ostream &o,
   switch (x) {
   case TypeParamDefStmt::KindOrLength::Kind: o << "Kind"; break;
   case TypeParamDefStmt::KindOrLength::Length: o << "Length"; break;
-  DEFAULT_CRASH;
+  default: CRASH_NO_CASE;
   }
   return o;
 }
@@ -645,7 +645,7 @@ std::ostream &operator<<(std::ostream &o, const AccessSpec &x) {
   switch (x.v) {
   case AccessSpec::Kind::Public: return o << "(Public)";
   case AccessSpec::Kind::Private: return o << "(Private)";
-  DEFAULT_CRASH;
+  default: CRASH_NO_CASE;
   }
   return o;
 }
@@ -656,7 +656,7 @@ std::ostream &operator<<(std::ostream &o, const IntentSpec &x) {
   case IntentSpec::Intent::In: return o << "(Intent In)";
   case IntentSpec::Intent::Out: return o << "(Intent Out)";
   case IntentSpec::Intent::InOut: return o << "(Intent InOut)";
-  DEFAULT_CRASH;
+  default: CRASH_NO_CASE;
   }
   return o;
 }
@@ -678,7 +678,7 @@ std::ostream &operator<<(std::ostream &o,
   switch (x) {
   case ImplicitStmt::ImplicitNoneNameSpec::External: return o << "External";
   case ImplicitStmt::ImplicitNoneNameSpec::Type: return o << "Type";
-  DEFAULT_CRASH;
+  default: CRASH_NO_CASE;
   }
   return o;
 }
@@ -700,7 +700,7 @@ std::ostream &operator<<(std::ostream &o, const ImportStmt &x) {
     return o << "None)";
   case ImportStmt::Kind::All:
     return o << "All)";
-  DEFAULT_CRASH;
+  default: CRASH_NO_CASE;
   }
   return o;
 }
@@ -895,7 +895,7 @@ std::ostream &operator<<(std::ostream &o, const ConnectSpec::CharExpr::Kind x) {
   case ConnectSpec::CharExpr::Kind::Round: o << "Round"; break;
   case ConnectSpec::CharExpr::Kind::Sign: o << "Sign"; break;
   case ConnectSpec::CharExpr::Kind::Dispose: o << "Dispose"; break;
-  DEFAULT_CRASH;
+  default: CRASH_NO_CASE;
   }
   return o;
 }
@@ -910,7 +910,7 @@ std::ostream &operator<<(std::ostream &o, IoControlSpec::CharExpr::Kind x) {
   case IoControlSpec::CharExpr::Kind::Pad: o << "Pad"; break;
   case IoControlSpec::CharExpr::Kind::Round: o << "Round"; break;
   case IoControlSpec::CharExpr::Kind::Sign: o << "Sign"; break;
-  DEFAULT_CRASH;
+  default: CRASH_NO_CASE;
   }
   return o;
 }
@@ -939,7 +939,7 @@ std::ostream &operator<<(std::ostream &o, const InquireSpec::CharVar::Kind x) {
   case InquireSpec::CharVar::Kind::Stream: o << "Stream"; break;
   case InquireSpec::CharVar::Kind::Status: o << "Status"; break;
   case InquireSpec::CharVar::Kind::Write: o << "Write"; break;
-  DEFAULT_CRASH;
+  default: CRASH_NO_CASE;
   }
   return o;
 }
@@ -952,7 +952,7 @@ std::ostream &operator<<(std::ostream &o, const InquireSpec::IntVar::Kind x) {
   case InquireSpec::IntVar::Kind::Pos: o << "Pos"; break;
   case InquireSpec::IntVar::Kind::Recl: o << "Recl"; break;
   case InquireSpec::IntVar::Kind::Size: o << "Size"; break;
-  DEFAULT_CRASH;
+  default: CRASH_NO_CASE;
   }
   return o;
 }
@@ -963,7 +963,7 @@ std::ostream &operator<<(std::ostream &o, const InquireSpec::LogVar::Kind x) {
   case InquireSpec::LogVar::Kind::Named: o << "Named"; break;
   case InquireSpec::LogVar::Kind::Opened: o << "Opened"; break;
   case InquireSpec::LogVar::Kind::Pending: o << "Pending"; break;
-  DEFAULT_CRASH;
+  default: CRASH_NO_CASE;
   }
   return o;
 }
@@ -985,7 +985,7 @@ std::ostream &operator<<(std::ostream &o, const IntrinsicTypeDataEditDesc &x) {
   case IntrinsicTypeDataEditDesc::Kind::L: o << "L "; break;
   case IntrinsicTypeDataEditDesc::Kind::A: o << "A "; break;
   case IntrinsicTypeDataEditDesc::Kind::D: o << "D "; break;
-  DEFAULT_CRASH;
+  default: CRASH_NO_CASE;
   }
   return o << x.width << ' ' << x.digits << ' ' << x.exponentWidth << ')';
 }
@@ -995,7 +995,7 @@ std::ostream &operator<<(std::ostream &o, StopStmt::Kind x) {
   switch (x) {
   case StopStmt::Kind::Stop: o << "Stop"; break;
   case StopStmt::Kind::ErrorStop: o << "ErrorStop"; break;
-  DEFAULT_CRASH;
+  default: CRASH_NO_CASE;
   }
   return o;
 }
@@ -1041,7 +1041,7 @@ std::ostream &operator<<(std::ostream &o, const ControlEditDesc &x) {
   case ControlEditDesc::Kind::RP: o << "RP "; break;
   case ControlEditDesc::Kind::DC: o << "DC "; break;
   case ControlEditDesc::Kind::DP: o << "DP "; break;
-  DEFAULT_CRASH;
+  default: CRASH_NO_CASE;
   }
   return o << x.count << ')';
 }
@@ -1064,7 +1064,7 @@ std::ostream &operator<<(std::ostream &o, const UseStmt &x) {
     case UseStmt::ModuleNature::Non_Intrinsic:
       o << "Non_Intrinsic";
       break;
-    DEFAULT_CRASH;
+    default: CRASH_NO_CASE;
     }
   } else {
     o << "()";
@@ -1082,7 +1082,7 @@ std::ostream &operator<<(std::ostream &o, const ProcedureStmt::Kind &x) {
   switch (x) {
   case ProcedureStmt::Kind::ModuleProcedure: return o << "ModuleProcedure";
   case ProcedureStmt::Kind::Procedure: return o << "Procedure";
-  DEFAULT_CRASH;
+  default: CRASH_NO_CASE;
   }
   return o;
 }

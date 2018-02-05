@@ -216,10 +216,13 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
     }
     preventHollerith_ = false;
   } else if (*at_ == '.') {
-    if (isdigit(EmitCharAndAdvance(tokens, '.'))) {
+    char nch{EmitCharAndAdvance(tokens, '.')};
+    if (isdigit(nch)) {
       while (isdigit(EmitCharAndAdvance(tokens, *at_))) {
       }
       ExponentAndKind(tokens);
+    } else if (nch == '.' && EmitCharAndAdvance(tokens, '.') == '.') {
+      EmitCharAndAdvance(tokens, '.');  // variadic macro definition ellipsis
     }
     preventHollerith_ = false;
   } else if (IsNameChar(*at_)) {

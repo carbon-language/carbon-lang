@@ -5,7 +5,7 @@
 
 namespace Fortran {
 
-void die(const char *msg, ...) {
+[[noreturn]] void die(const char *msg, ...) {
   va_list ap;
   va_start(ap, msg);
   std::fputs("\nfatal internal error: ", stderr);

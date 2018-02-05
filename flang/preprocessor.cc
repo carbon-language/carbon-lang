@@ -57,14 +57,50 @@ std::string TokenSequence::ToString() const {
   return {&char_[0], char_.size()};
 }
 
+void TokenSequence::clear() {
+  start_.clear();
+  nextStart_ = 0;
+  char_.clear();
+}
+
+void TokenSequence::push_back(const char *s, size_t bytes) {
+  for (size_t j{0}; j < bytes; ++j) {
+    AddChar(s[j]);
+  }
+  EndToken();
+}
+
+void TokenSequence::push_back(const CharPointerWithLength &t) {
+  push_back(&t[0], t.size());
+}
+void TokenSequence::push_back(const std::string &s) {
+  push_back(s.data(), s.size());
+}
+
+void TokenSequence::push_back(const std::stringstream &ss) {
+  push_back(ss.str());
+}
+
+void TokenSequence::pop_back() {
+  nextStart_ = start_.back();
+  start_.pop_back();
+  char_.resize(nextStart_);
+}
+
+void TokenSequence::shrink_to_fit() {
+  start_.shrink_to_fit();
+  char_.shrink_to_fit();
+}
+
 Definition::Definition(const TokenSequence &repl, size_t firstToken,
                        size_t tokens)
   : replacement_{Tokenize({}, repl, firstToken, tokens)} {}
 
 Definition::Definition(const std::vector<std::string> &argNames,
                        const TokenSequence &repl, size_t firstToken,
-                       size_t tokens)
+                       size_t tokens, bool isVariadic)
   : isFunctionLike_{true}, argumentCount_(argNames.size()),
+    isVariadic_{isVariadic},
     replacement_{Tokenize(argNames, repl, firstToken, tokens)} {}
 
 Definition::Definition(const std::string &predefined)
@@ -95,19 +131,15 @@ TokenSequence Definition::Tokenize(const std::vector<std::string> &argNames,
   }
   TokenSequence result;
   for (size_t j{0}; j < tokens; ++j) {
-    size_t bytes{token[firstToken + j].size()};
-    if (bytes == 0) {
-      continue;
-    }
-    const char *text{token[firstToken + j].data()};
-    if (bytes > 0 && IsIdentifierFirstCharacter(*text)) {
-      auto it = args.find(token[firstToken + j].ToString());
+    CharPointerWithLength tok{token[firstToken + j]};
+    if (IsIdentifierFirstCharacter(tok)) {
+      auto it = args.find(tok.ToString());
       if (it != args.end()) {
         result.push_back(it->second);
         continue;
       }
     }
-    result.push_back(text, bytes);
+    result.push_back(tok);
   }
   return result;
 }
@@ -115,13 +147,24 @@ TokenSequence Definition::Tokenize(const std::vector<std::string> &argNames,
 TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
   TokenSequence result;
   bool pasting{false};
+  bool skipping{false};
+  int parenthesesNesting{0};
   size_t tokens{replacement_.size()};
   for (size_t j{0}; j < tokens; ++j) {
     const CharPointerWithLength &token{replacement_[j]};
     size_t bytes{token.size()};
-    const char *text{token.data()};
-    if (bytes == 2 && *text == '~') {
-      size_t index = text[1] - 'A';
+    if (skipping) {
+      if (bytes == 1) {
+        if (token[0] == '(') {
+           ++parenthesesNesting;
+        } else if (token[0] == ')') {
+          skipping = --parenthesesNesting > 0;
+        }
+      }
+      continue;
+    }
+    if (bytes == 2 && token[0] == '~') {
+      size_t index = token[1] - 'A';
       if (index >= args.size()) {
         continue;
       }
@@ -138,8 +181,8 @@ TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
         }
         std::string strung{'"'};
         for (size_t k{0}; k < argTokens; ++k) {
+          const CharPointerWithLength &arg{args[index][k]};
           size_t argBytes{args[index][k].size()};
-          const char *arg{args[index][k].data()};
           for (size_t n{0}; n < argBytes; ++n) {
             char ch{arg[n]};
             if (ch == '"' || ch == '\\') {
@@ -159,7 +202,7 @@ TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
           }
         }
       }
-    } else if (bytes == 2 && text[0] == '#' && text[1] == '#') {
+    } else if (bytes == 2 && token[0] == '#' && token[1] == '#') {
       // Token pasting operator in body (not expanded argument); discard any
       // immediately preceding white space, then reopen the last token.
       while (!result.empty() && result[result.size() - 1].IsBlank()) {
@@ -171,7 +214,33 @@ TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
       }
     } else if (pasting && token.IsBlank()) {
       // Delete whitespace immediately following ## in the body.
+    } else if (bytes == 11 && isVariadic_ &&
+               token.ToString() == "__VA_ARGS__") {
+      for (size_t k{argumentCount_}; k < args.size(); ++k) {
+        if (k > argumentCount_) {
+          result.push_back(","s);
+        }
+        for (size_t n{0}; n < args[k].size(); ++n) {
+          result.push_back(args[k][n]);
+        }
+      }
+    } else if (bytes == 10 && isVariadic_ &&
+               token.ToString() == "__VA_OPT__" &&
+               j + 2 < tokens &&
+               replacement_[j + 1].ToString() == "(" &&
+               parenthesesNesting == 0) {
+      parenthesesNesting = 1;
+      skipping = args.size() == argumentCount_;
+      ++j;
     } else {
+      if (bytes == 1 && parenthesesNesting > 0 && token[0] == '(') {
+        ++parenthesesNesting;
+      } else if (bytes == 1 && parenthesesNesting > 0 && token[0] == ')') {
+        if (--parenthesesNesting == 0) {
+          skipping = false;
+          continue;
+        }
+      }
       result.push_back(token);
     }
   }
@@ -285,7 +354,8 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
       }
     }
     if (k >= tokens ||
-        argStart.size() != def.argumentCount()) {
+        argStart.size() < def.argumentCount() ||
+        (argStart.size() > def.argumentCount() && !def.isVariadic())) {
       result->push_back(token);
       continue;
     }
@@ -296,7 +366,7 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
       size_t count{(k + 1 == argStart.size() ? j : argStart[k+1] - 1) - at};
       TokenSequence actual;
       for (; count-- > 0; ++at) {
-        actual.push_back(input[at].data(), input[at].size());
+        actual.push_back(input[at]);
       }
       args.emplace_back(std::move(actual));
     }
@@ -393,14 +463,19 @@ bool Preprocessor::Directive(const TokenSequence &dir) {
     if (++j < tokens && dir[j].size() == 1 && dir[j][0] == '(') {
       j = SkipBlanks(dir, j + 1, tokens);
       std::vector<std::string> argName;
+      bool isVariadic{false};
       if (dir[j].ToString() != ")") {
         while (true) {
           std::string an{dir[j].ToString()};
-          if (an.empty() || !IsIdentifierFirstCharacter(an[0])) {
-            Complain("#define: missing or invalid argument name");
-            return false;
+          if (an == "...") {
+            isVariadic = true;
+          } else {
+            if (an.empty() || !IsIdentifierFirstCharacter(an[0])) {
+              Complain("#define: missing or invalid argument name");
+              return false;
+            }
+            argName.push_back(an);
           }
-          argName.push_back(an);
           j = SkipBlanks(dir, j + 1, tokens);
           if (j == tokens) {
             Complain("#define: malformed argument list");
@@ -415,7 +490,7 @@ bool Preprocessor::Directive(const TokenSequence &dir) {
             return false;
           }
           j = SkipBlanks(dir, j + 1, tokens);
-          if (j == tokens) {
+          if (j == tokens || isVariadic) {
             Complain("#define: malformed argument list");
             return false;
           }
@@ -428,7 +503,8 @@ bool Preprocessor::Directive(const TokenSequence &dir) {
       }
       j = SkipBlanks(dir, j + 1, tokens);
       definitions_.emplace(
-        std::make_pair(nameToken, Definition{argName, dir, j, tokens - j}));
+        std::make_pair(nameToken,
+                       Definition{argName, dir, j, tokens - j, isVariadic}));
     } else {
       definitions_.emplace(
         std::make_pair(nameToken, Definition{dir, j, tokens - j}));
@@ -560,21 +636,22 @@ void Preprocessor::Complain(const std::string &message) {
 }
 
 // Precedence level codes used here to accommodate mixed Fortran and C:
-// 13: parentheses and constants, logical !, bitwise ~
-// 12: unary + and -
-// 11: **
-// 10: *, /, % (modulus)
-//  9: + and -
-//  8: << and >>
-//  7: bitwise &
-//  6: bitwise ^
-//  5: bitwise |
-//  4: relations (.EQ., ==, &c.)
-//  3: .NOT.
-//  2: .AND., &&
-//  1: .OR., ||
-//  0: .EQV. and .NEQV. / .XOR.
-// TODO: Ternary and comma operators?
+// 15: parentheses and constants, logical !, bitwise ~
+// 14: unary + and -
+// 13: **
+// 12: *, /, % (modulus)
+// 11: + and -
+//  0: << and >>
+//  9: bitwise &
+//  8: bitwise ^
+//  7: bitwise |
+//  6: relations (.EQ., ==, &c.)
+//  5: .NOT.
+//  4: .AND., &&
+//  3: .OR., ||
+//  2: .EQV. and .NEQV. / .XOR.
+//  1: ? :
+//  0: ,
 static std::int64_t ExpressionValue(const TokenSequence &token,
                                     int minimumPrecedence,
                                     size_t *atToken, std::string *errors) {
@@ -583,23 +660,26 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
     TIMES, DIVIDE, MODULUS, ADD, SUBTRACT, LEFTSHIFT, RIGHTSHIFT,
     BITAND, BITXOR, BITOR,
     LT, LE, EQ, NE, GE, GT,
-    NOT, AND, OR, EQV, NEQV
+    NOT, AND, OR, EQV, NEQV,
+    SELECT, COMMA
   };
   static const int precedence[]{
-    13, 13, 13, 13,  // (), 0, !, ~
-    12, 12,  // unary +, -
-    11, 10, 10, 10, 9, 9, 8, 8,  // **, *, /, %, +, -, <<, >>
-    7, 6, 5,  // &, ^, |
-    4, 4, 4, 4, 4, 4,  // relations
-    3, 2, 1, 0, 0  // .NOT., .AND., .OR., .EQV., .NEQV.
+    15, 15, 15, 15,  // (), 0, !, ~
+    14, 14,  // unary +, -
+    13, 12, 12, 12, 11, 11, 10, 10,  // **, *, /, %, +, -, <<, >>
+    9, 8, 7,  // &, ^, |
+    6, 6, 6, 6, 6, 6,  // relations
+    5, 4, 3, 2, 2,  // .NOT., .AND., .OR., .EQV., .NEQV.
+    1, 0  // ?: and ,
   };
   static const int operandPrecedence[]{
-    0, -1, 13, 13,
-    13, 13,
-    11, 10, 10, 10, 9, 9, 9, 9,
-    7, 6, 5,
-    5, 5, 5, 5, 5, 5,
-    4, 2, 1, 1, 1
+    0, -1, 15, 15,
+    15, 15,
+    13, 12, 12, 12, 11, 11, 11, 11,
+    9, 8, 7,
+    7, 7, 7, 7, 7, 7,
+    6, 4, 3, 3, 3,
+    1, 0
   };
 
   static std::map<std::string, enum Operator> opNameMap;
@@ -629,6 +709,8 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
     opNameMap[".or."] = opNameMap[".o."] = opNameMap["||"] = OR;
     opNameMap[".eqv."] = EQV;
     opNameMap[".neqv."] = opNameMap[".xor."] = opNameMap[".x."] = NEQV;
+    opNameMap["?"] = SELECT;
+    opNameMap[","] = COMMA;
   }
 
   size_t tokens{token.size()};
@@ -700,7 +782,7 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
     case NOT:
       left = -!left;
       break;
-    DEFAULT_CRASH;
+    default: CRASH_NO_CASE;
     }
   }
   if (!errors->empty() || *atToken >= tokens) {
@@ -813,7 +895,19 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
     return -(!left == !right);
   case NEQV:
     return -(!left != !right);
-  DEFAULT_CRASH;
+  case SELECT:
+    if (*atToken >= tokens || token[*atToken].ToString() != ":") {
+      *errors = "':' required in selection expression";
+      return left;
+    } else {
+      ++*atToken;
+      std::int64_t third{ExpressionValue(token, operandPrecedence[op],
+                                         atToken, errors)};
+      return left != 0 ? right : third;
+    }
+  case COMMA:
+    return right;
+  default: CRASH_NO_CASE;
   }
   return 0;  // silence compiler warning
 }

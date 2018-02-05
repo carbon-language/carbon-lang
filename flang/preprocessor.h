@@ -41,7 +41,6 @@ class CharPointerWithLength {
 
   bool empty() const { return bytes_ == 0; }
   size_t size() const { return bytes_; }
-  const char *data() const { return data_; }
   const char &operator[](size_t j) const { return data_[j]; }
 
   bool IsBlank() const;
@@ -56,10 +55,9 @@ class CharPointerWithLength {
 // Specializations to enable std::unordered_map<CharPointerWithLength, ...>
 template<> struct std::hash<Fortran::CharPointerWithLength> {
   size_t operator()(const Fortran::CharPointerWithLength &x) const {
-    size_t hash{0};
-    const char *p{x.data()}, *limit{p + x.size()};
-    for (; p < limit; ++p) {
-      hash = (hash * 31) ^ *p;
+    size_t hash{0}, bytes{x.size()};
+    for (size_t j{0}; j < bytes; ++j) {
+      hash = (hash * 31) ^ x[j];
     }
     return hash;
   }
@@ -69,8 +67,8 @@ template<> struct std::equal_to<Fortran::CharPointerWithLength> {
   bool operator()(const Fortran::CharPointerWithLength &x,
                   const Fortran::CharPointerWithLength &y) const {
     return x.size() == y.size() &&
-           std::memcmp(static_cast<const void *>(x.data()),
-                       static_cast<const void *>(y.data()),
+           std::memcmp(static_cast<const void *>(&x[0]),
+                       static_cast<const void *>(&y[0]),
                        x.size()) == 0;
   }
 };
@@ -128,36 +126,13 @@ class TokenSequence {
   bool empty() const { return start_.empty(); }
   size_t size() const { return start_.size(); }
   const char *data() const { return &char_[0]; }
-
-  void clear() {
-    start_.clear();
-    nextStart_ = 0;
-    char_.clear();
-  }
-
-  void push_back(const char *s, size_t bytes) {
-    for (size_t j{0}; j < bytes; ++j) {
-      AddChar(s[j]);
-    }
-    EndToken();
-  }
-
-  void push_back(const CharPointerWithLength &t) {
-    push_back(t.data(), t.size());
-  }
-
-  void push_back(const std::stringstream &ss) { push_back(ss.str()); }
-
-  void pop_back() {
-    nextStart_ = start_.back();
-    start_.pop_back();
-    char_.resize(nextStart_);
-  }
-
-  void shrink_to_fit() {
-    start_.shrink_to_fit();
-    char_.shrink_to_fit();
-  }
+  void clear();
+  void push_back(const char *, size_t);
+  void push_back(const CharPointerWithLength &);
+  void push_back(const std::string &);
+  void push_back(const std::stringstream &);
+  void pop_back();
+  void shrink_to_fit();
 
  private:
   std::vector<int> start_;
@@ -170,7 +145,7 @@ class Definition {
  public:
   Definition(const TokenSequence &, size_t firstToken, size_t tokens);
   Definition(const std::vector<std::string> &argNames, const TokenSequence &,
-             size_t firstToken, size_t tokens);
+             size_t firstToken, size_t tokens, bool isVariadic = false);
   explicit Definition(const std::string &predefined);
 
   bool isFunctionLike() const { return isFunctionLike_; }
