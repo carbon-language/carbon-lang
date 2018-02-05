@@ -611,12 +611,16 @@ bool Preprocessor::SkipDisabledConditionalCode(
       if (nesting-- == 0) {
         return true;
       }
-    } else if (isElseActive == IsElseActive::Yes && nesting == 0 &&
-        (dn == "else" ||
-            (dn == "elif" &&
-                IsIfPredicateTrue(*line, rest, line->size() - rest)))) {
-      ifStack_.push(CanDeadElseAppear::No);
-      return true;
+    } else if (isElseActive == IsElseActive::Yes && nesting == 0) {
+      if (dn == "else") {
+        ifStack_.push(CanDeadElseAppear::No);
+        return true;
+      }
+      if (dn == "elif" &&
+          IsIfPredicateTrue(*line, rest, line->size() - rest)) {
+        ifStack_.push(CanDeadElseAppear::Yes);
+        return true;
+      }
     }
   }
   Complain("#"s + dirName + ": missing #endif");
@@ -649,8 +653,8 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
   enum Operator {
     PARENS,
     CONST,
-    NOTZERO /*!*/,
-    COMPLEMENT /*~*/,
+    NOTZERO,  // !
+    COMPLEMENT,  // ~
     UPLUS,
     UMINUS,
     POWER,
