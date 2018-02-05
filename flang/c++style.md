@@ -11,22 +11,22 @@
 extension ".cc", not ".C" or ".cpp" or ".cxx".  Don't create needless
 source directory hierarchies.
 1. Header files should be idempotent:
-  * #ifndef FORTRAN_headername_H_
-  * #define FORTRAN_headername_H_
-  * // code
-  * #endif  // FORTRAN_headername_H_
+  1. #ifndef FORTRAN_headername_H_
+  1. #define FORTRAN_headername_H_
+  1. // code
+  1. #endif  // FORTRAN_headername_H_
 1. #include every header defining an entity that your project header or source
 file actually uses directly.  (Exception: when foo.cc starts, as it should,
 with #include "foo.h", and foo.h includes bar.h in order to define the
 interface to the module foo, you don't have to redundantly #include "bar.h"
 in foo.cc.)
 1. Order the #include directives for foo.cc as:
-  * #include "foo.h"  // this module's interface comes first
-  * #include "armadillo.h"  // other modules in this project, alphabetically
-  * #include "zebra.h"
-  * #include <algorithm>  // C++ standard headers, alphabetically
-  * #include <vector>
-  * #include <sys/types.h>  // C headers, alphabetically
+  1. #include "foo.h"  // this module's interface comes first
+  1. #include "armadillo.h"  // other modules in this project, alphabetically
+  1. #include "zebra.h"
+  1. #include <<algorithm>>  // C++ standard headers, alphabetically
+  1. #include <<vector>>
+  1. #include <sys/types.h>  // C headers, alphabetically
 ### Naming
 1. C++ names that correspond to STL names should look like those STL names
 (e.g., *clear()* and *size()* member functions in a class that implements
@@ -48,8 +48,8 @@ condition.  Otherwise, prefer complete English words to abbreviations
 when creating names.
 ### Commentary
 1. Use // for all comments except for short notes within statements.
-When // follows code on a line, precede it with two spaces.  Comments
-should matter.  Assume that the reader knows current C++ at least as
+1. When // follows code on a line, precede it with two spaces.
+1. Comments should matter.  Assume that the reader knows current C++ at least as
 well as you do and avoid distracting her by calling out usage of new
 features in comments.
 ### Layout
@@ -87,32 +87,32 @@ default data member initialization.  They inhibit implicit truncation.
 Don't use "= expr" initialization just to effect implicit truncation;
 prefer an explicit static_cast<>.
 1. Avoid unsigned types apart from size_t, which must be used with care.
-When int just obviously works, just use int.  When you need something
-bigger than int, use std::int64_t rather than long or long long.
+When *int* just obviously works, just use *int*.  When you need something
+bigger than *int*, use std::int64_t rather than *long* or long long.
 1. Use namespaces to avoid conflicts with client code.  Use one top-level
 project namespace.  Don't introduce needless nested namespaces within a
 project when names don't conflict or better solutions exist.  Never use
 "using namespace ...;", especially not "using namespace std;".  Access
 STL entities with names like std::unique_ptr<>, without a leading "::".
 1. Prefer static functions to functions in anonymous namespaces in source files.
-1. Use *auto* judiciously.  When the type of a local variable is known and
-easy to type, be explicit rather than using *auto*.
+1. Use *auto* judiciously.  When the type of a local variable is known,
+monomorphic, and easy to type, be explicit rather than using *auto*.
 1. Use move semantics and smart pointers to make dynamic memory ownership
 clear.  Consider reworking any code that uses malloc() or a (non-placement)
 operator new.
 1. Use references for const arguments; prefer const references to values for
-all but small types that are trivially copyable (e.g., int).  Use non-const
+all but small types that are trivially copyable (e.g., *int*).  Use non-const
 pointers for output arguments.  Put output arguments last (pace the standard
 C library conventions for memcpy() & al.).
-1. Prefer "typename" to "class" in template argument declarations.
+1. Prefer *typename* to *class* in template argument declarations.
 1. Prefer enum class to plain enum wherever enum class will work.
 1. Use constexpr and const generously.
 1. When a switch() statement's labels do not cover all possible case values
 explicitly, it should contains either a "default:;" at its end or a
 default: label that obviously crashes.
 #### Classes
-1. Define only POD structures with struct.  Use foo_ and Bar(x) in
-non-static member functions, not this->foo_ and this->Bar(x).
+1. Define only POD structures with struct.
+1. Don't use "this->" in (non-static) member functions.
 1. Define accessor and mutator member functions (implicitly) inline in the
 class, after constructors and assignments.  Don't needlessly define
 (implicit) inline member functions in classes unless they really solve a
