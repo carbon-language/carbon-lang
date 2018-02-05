@@ -51,3 +51,13 @@ parse-state.h: message.h position.h
 	@touch $@
 parse-tree.h: format-specification.h idioms.h indirection.h position.h
 	@touch $@
+
+
+CLANG_FORMAT=/proj/pgi/flang/x86_64/flang-dev/bin/clang-format
+formatted:
+	@mkdir -p formatted
+	@for x in *.h *.cc; do \
+		$(CLANG_FORMAT) < $$x > formatted/$$x; \
+	done
+
+.PHONY: formatted
