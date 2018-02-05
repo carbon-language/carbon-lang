@@ -234,15 +234,14 @@ UnwrappedLineParser::UnwrappedLineParser(const FormatStyle &Style,
       CurrentLines(&Lines), Style(Style), Keywords(Keywords),
       CommentPragmasRegex(Style.CommentPragmas), Tokens(nullptr),
       Callback(Callback), AllTokens(Tokens), PPBranchLevel(-1),
-      IncludeGuard(Style.IndentPPDirectives == FormatStyle::PPDIS_None
-                       ? IG_Rejected
-                       : IG_Inited),
-      IncludeGuardToken(nullptr), FirstStartColumn(FirstStartColumn) {}
+      IfNdefCondition(nullptr), FoundIncludeGuardStart(false),
+      IncludeGuardRejected(false), FirstStartColumn(FirstStartColumn) {}
 
 void UnwrappedLineParser::reset() {
   PPBranchLevel = -1;
-  IncludeGuard = IG_Inited;
-  IncludeGuardToken = nullptr;
+  IfNdefCondition = nullptr;
+  FoundIncludeGuardStart = false;
+  IncludeGuardRejected = false;
   Line.reset(new UnwrappedLine);
   CommentsBeforeNextToken.clear();
   FormatTok = nullptr;
@@ -265,14 +264,6 @@ void UnwrappedLineParser::parse() {
 
     readToken();
     parseFile();
-
-    // If we found an include guard then all preprocessor directives (other than
-    // the guard) are over-indented by one.
-    if (IncludeGuard == IG_Found)
-      for (auto &Line : Lines)
-        if (Line.InPPDirective && Line.Level > 0)
-          --Line.Level;
-
     // Create line with eof token.
     pushToken(FormatTok);
     addUnwrappedLine();
@@ -733,11 +724,11 @@ void UnwrappedLineParser::parsePPIf(bool IfDef) {
   // If there's a #ifndef on the first line, and the only lines before it are
   // comments, it could be an include guard.
   bool MaybeIncludeGuard = IfNDef;
-  if (IncludeGuard == IG_Inited && MaybeIncludeGuard) {
+  if (!IncludeGuardRejected && !FoundIncludeGuardStart && MaybeIncludeGuard) {
     for (auto &Line : Lines) {
       if (!Line.Tokens.front().Tok->is(tok::comment)) {
         MaybeIncludeGuard = false;
-        IncludeGuard = IG_Rejected;
+        IncludeGuardRejected = true;
         break;
       }
     }
@@ -745,16 +736,14 @@ void UnwrappedLineParser::parsePPIf(bool IfDef) {
   --PPBranchLevel;
   parsePPUnknown();
   ++PPBranchLevel;
-  if (IncludeGuard == IG_Inited && MaybeIncludeGuard) {
-    IncludeGuard = IG_IfNdefed;
-    IncludeGuardToken = IfCondition;
-  }
+  if (!IncludeGuardRejected && !FoundIncludeGuardStart && MaybeIncludeGuard)
+    IfNdefCondition = IfCondition;
 }
 
 void UnwrappedLineParser::parsePPElse() {
   // If a potential include guard has an #else, it's not an include guard.
-  if (IncludeGuard == IG_Defined && PPBranchLevel == 0)
-    IncludeGuard = IG_Rejected;
+  if (FoundIncludeGuardStart && PPBranchLevel == 0)
+    FoundIncludeGuardStart = false;
   conditionalCompilationAlternative();
   if (PPBranchLevel > -1)
     --PPBranchLevel;
@@ -768,37 +757,34 @@ void UnwrappedLineParser::parsePPEndIf() {
   conditionalCompilationEnd();
   parsePPUnknown();
   // If the #endif of a potential include guard is the last thing in the file,
-  // then we found an include guard.
+  // then we count it as a real include guard and subtract one from every
+  // preprocessor indent.
   unsigned TokenPosition = Tokens->getPosition();
   FormatToken *PeekNext = AllTokens[TokenPosition];
-  if (IncludeGuard == IG_Defined && PPBranchLevel == -1 &&
-      PeekNext->is(tok::eof) &&
+  if (FoundIncludeGuardStart && PPBranchLevel == -1 && PeekNext->is(tok::eof) &&
       Style.IndentPPDirectives != FormatStyle::PPDIS_None)
-    IncludeGuard = IG_Found;
+    for (auto &Line : Lines)
+      if (Line.InPPDirective && Line.Level > 0)
+        --Line.Level;
 }
 
 void UnwrappedLineParser::parsePPDefine() {
   nextToken();
 
   if (FormatTok->Tok.getKind() != tok::identifier) {
-    IncludeGuard = IG_Rejected;
-    IncludeGuardToken = nullptr;
     parsePPUnknown();
     return;
   }
-
-  if (IncludeGuard == IG_IfNdefed &&
-      IncludeGuardToken->TokenText == FormatTok->TokenText) {
-    IncludeGuard = IG_Defined;
-    IncludeGuardToken = nullptr;
+  if (IfNdefCondition && IfNdefCondition->TokenText == FormatTok->TokenText) {
+    FoundIncludeGuardStart = true;
     for (auto &Line : Lines) {
       if (!Line.Tokens.front().Tok->isOneOf(tok::comment, tok::hash)) {
-        IncludeGuard = IG_Rejected;
+        FoundIncludeGuardStart = false;
         break;
       }
     }
   }
-
+  IfNdefCondition = nullptr;
   nextToken();
   if (FormatTok->Tok.getKind() == tok::l_paren &&
       FormatTok->WhitespaceRange.getBegin() ==
@@ -825,6 +811,7 @@ void UnwrappedLineParser::parsePPUnknown() {
   if (Style.IndentPPDirectives == FormatStyle::PPDIS_AfterHash)
     Line->Level += PPBranchLevel + 1;
   addUnwrappedLine();
+  IfNdefCondition = nullptr;
 }
 
 // Here we blacklist certain tokens that are not usually the first token in an

@@ -248,23 +248,10 @@ private:
   // sequence.
   std::stack<int> PPChainBranchIndex;
 
-  // Include guard search state. Used to fixup preprocessor indent levels
-  // so that include guards do not participate in indentation.
-  enum IncludeGuardState {
-    IG_Inited,
-    IG_IfNdefed,
-    IG_Defined,
-    IG_Found,
-    IG_Rejected,
-  };
-
-  // Current state of include guard search.
-  IncludeGuardState IncludeGuard;
-
-  // Points to the #ifndef condition for a potential include guard. Null unless
-  // IncludeGuardState == IG_IfNdefed.
-  FormatToken *IncludeGuardToken;
-
+  // Contains the #ifndef condition for a potential include guard.
+  FormatToken *IfNdefCondition;
+  bool FoundIncludeGuardStart;
+  bool IncludeGuardRejected;
   // Contains the first start column where the source begins. This is zero for
   // normal source code and may be nonzero when formatting a code fragment that
   // does not start at the beginning of the file.
