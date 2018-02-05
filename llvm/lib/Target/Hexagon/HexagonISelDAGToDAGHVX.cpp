@@ -926,7 +926,7 @@ bool HvxSelector::selectVectorConstants(SDNode *N) {
     if (N->isMachineOpcode())
       return false;
     unsigned Opc = N->getOpcode();
-    if (Opc == HexagonISD::VSPLAT)
+    if (Opc == HexagonISD::VSPLAT || Opc == HexagonISD::VZERO)
       return true;
     if (Opc == ISD::BITCAST) {
       // Only select bitcasts of VSPLATs.
