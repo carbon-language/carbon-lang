@@ -67,7 +67,9 @@ extern "C" LLVM_ATTRIBUTE_USED size_t LLVMFuzzerCustomMutator(
 
   if (verifyModule(*M, &errs())) {
     errs() << "mutation result doesn't pass verification\n";
+#ifndef NDEBUG
     M->dump();
+#endif
     // Avoid adding incorrect test cases to the corpus.
     return 0;
   }
@@ -90,7 +92,9 @@ extern "C" LLVM_ATTRIBUTE_USED size_t LLVMFuzzerCustomMutator(
       reinterpret_cast<const uint8_t*>(Buf.data()), Buf.size(), Context);
   if (!NewM) {
     errs() << "mutator failed to re-read the module\n";
+#ifndef NDEBUG
     M->dump();
+#endif
     return 0;
   }
 
