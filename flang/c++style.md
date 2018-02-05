@@ -11,22 +11,22 @@
 extension ".cc", not ".C" or ".cpp" or ".cxx".  Don't create needless
 source directory hierarchies.
 1. Header files should be idempotent:
-    #ifndef FORTRAN_headername_H_
-    #define FORTRAN_headername_H_
-    // code
-    #endif  // FORTRAN_headername_H_
+  * #ifndef FORTRAN_headername_H_
+  * #define FORTRAN_headername_H_
+  * // code
+  * #endif  // FORTRAN_headername_H_
 1. #include every header defining an entity that your project header or source
 file actually uses directly.  (Exception: when foo.cc starts, as it should,
 with #include "foo.h", and foo.h includes bar.h in order to define the
 interface to the module foo, you don't have to redundantly #include "bar.h"
 in foo.cc.)
-1.Order the #include directives for foo.cc as:
-    #include "foo.h"  // this module's interface comes first
-    #include "armadillo.h"  // other modules in this project, alphabetically
-    #include "zebra.h"
-    #include <algorithm>  // C++ standard headers, alphabetically
-    #include <vector>
-    #include <sys/types.h>  // C headers, alphabetically
+1. Order the #include directives for foo.cc as:
+  * #include "foo.h"  // this module's interface comes first
+  * #include "armadillo.h"  // other modules in this project, alphabetically
+  * #include "zebra.h"
+  * #include <algorithm>  // C++ standard headers, alphabetically
+  * #include <vector>
+  * #include <sys/types.h>  // C headers, alphabetically
 ### Naming
 1. C++ names that correspond to STL names should look like those STL names
 (e.g., *clear()* and *size()* member functions in a class that implements
@@ -104,7 +104,7 @@ operator new.
 all but small types that are trivially copyable (e.g., int).  Use non-const
 pointers for output arguments.  Put output arguments last (pace the standard
 C library conventions for memcpy() & al.).
-1. Prefer template<typename T> to template<class T>.
+1. Prefer "typename" to "class" in template argument declarations.
 1. Prefer enum class to plain enum wherever enum class will work.
 1. Use constexpr and const generously.
 1. When a switch() statement's labels do not cover all possible case values
@@ -112,7 +112,7 @@ explicitly, it should contains either a "default:;" at its end or a
 default: label that obviously crashes.
 #### Classes
 1. Define only POD structures with struct.  Use foo_ and Bar(x) in
-non-static member functions, not this-foo_> and this-Bar(x)>.
+non-static member functions, not this->foo_ and this->Bar(x).
 1. Define accessor and mutator member functions (implicitly) inline in the
 class, after constructors and assignments.  Don't needlessly define
 (implicit) inline member functions in classes unless they really solve a
@@ -130,4 +130,4 @@ Don't use dynamic solutions to solve problems that can be solved at
 build time; don't solve build time problems by writing programs that
 produce source code when macros and templates suffice; don't write macros
 when templates suffice.  Templates are statically typed, checked by the
-compiler, and visible to debuggers.
+compiler, and are (or should be) visible to debuggers.
