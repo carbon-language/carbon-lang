@@ -14,7 +14,7 @@
 namespace Fortran {
 
 class DebugParser {
- public:
+public:
   using resultType = Success;
   constexpr DebugParser(const DebugParser &) = default;
   constexpr DebugParser(const char *str, size_t n) : str_{str}, length_{n} {}
@@ -25,7 +25,7 @@ class DebugParser {
     std::cout << state->position() << ' ' << std::string{str_, length_} << '\n';
     return {Success{}};
   }
- private:
+private:
   const char *const str_;
   size_t length_;
 };

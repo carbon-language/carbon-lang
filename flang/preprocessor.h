@@ -26,7 +26,7 @@ class Prescanner;
 // Just a const char pointer with an associated length; does not own the
 // referenced data.  Used to describe buffered tokens and hash table keys.
 class CharPointerWithLength {
- public:
+public:
   CharPointerWithLength() {}
   CharPointerWithLength(const char *x, size_t n) : data_{x}, bytes_{n} {}
   CharPointerWithLength(const std::string &s)
@@ -46,7 +46,7 @@ class CharPointerWithLength {
   bool IsBlank() const;
   std::string ToString() const { return std::string{data_, bytes_}; }
 
- private:
+private:
   const char *data_{nullptr};
   size_t bytes_{0};
 };
@@ -78,7 +78,7 @@ namespace Fortran {
 // Buffers a contiguous sequence of characters that has been partitioned into
 // a sequence of preprocessing tokens.
 class TokenSequence {
- public:
+public:
   TokenSequence() {}
   TokenSequence(const TokenSequence &that) { Append(that); }
   TokenSequence(TokenSequence &&that)
@@ -134,7 +134,7 @@ class TokenSequence {
   void pop_back();
   void shrink_to_fit();
 
- private:
+private:
   std::vector<int> start_;
   size_t nextStart_{0};
   std::vector<char> char_;
@@ -142,7 +142,7 @@ class TokenSequence {
 
 // Defines a macro
 class Definition {
- public:
+public:
   Definition(const TokenSequence &, size_t firstToken, size_t tokens);
   Definition(const std::vector<std::string> &argNames, const TokenSequence &,
              size_t firstToken, size_t tokens, bool isVariadic = false);
@@ -159,7 +159,7 @@ class Definition {
 
   TokenSequence Apply(const std::vector<TokenSequence> &args);
 
- private:
+private:
   static TokenSequence Tokenize(const std::vector<std::string> &argNames,
                                 const TokenSequence &token, size_t firstToken,
                                 size_t tokens);
@@ -174,7 +174,7 @@ class Definition {
 
 // Preprocessing state
 class Preprocessor {
- public:
+public:
   explicit Preprocessor(Prescanner &);
 
   // When the input contains macros to be replaced, the new token sequence
@@ -186,7 +186,7 @@ class Preprocessor {
   // Implements a preprocessor directive; returns true when no fatal error.
   bool Directive(const TokenSequence &);
 
- private:
+private:
   enum class IsElseActive { No, Yes };
   enum class CanDeadElseAppear { No, Yes };
 

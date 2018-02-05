@@ -11,7 +11,7 @@
 
 namespace Fortran {
 class UserState {
- public:
+public:
   using Label = std::uint64_t;
   bool IsDoLabel(Label label) const {
     return doLabels_.find(label) != doLabels_.end();
@@ -30,7 +30,7 @@ class UserState {
       --nonlabelDoConstructNestingDepth_;
     }
   }
- private:
+private:
   std::unordered_set<Label> doLabels_;
   int nonlabelDoConstructNestingDepth_{0};
 };

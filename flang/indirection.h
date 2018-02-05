@@ -14,7 +14,7 @@ namespace Fortran {
 
 template<typename A>
 class Indirection {
- public:
+public:
   using element_type = A;
   Indirection() = delete;
   Indirection(A *&p) : p_{p} {
@@ -46,7 +46,7 @@ class Indirection {
   }
   A &operator*() const { return *p_; }
   A *operator->() { return p_; }
- private:
+private:
   A *p_{nullptr};
 };
 

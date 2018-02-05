@@ -22,7 +22,7 @@
 namespace Fortran {
 
 class Prescanner {
- public:
+public:
   explicit Prescanner(Messages &messages)
     : messages_{messages}, preprocessor_{*this} {}
 
@@ -51,7 +51,7 @@ class Prescanner {
   CharBuffer Prescan(const SourceFile &source);
   std::optional<TokenSequence> NextTokenizedLine();
 
- private:
+private:
   void BeginSourceLine(const char *at) {
     at_ = at;
     atPosition_ = lineStartPosition_;

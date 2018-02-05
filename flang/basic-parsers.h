@@ -33,7 +33,7 @@ namespace Fortran {
 // the type checker.  The state remains valid.
 template<typename A>
 class FailParser {
- public:
+public:
   using resultType = A;
   constexpr FailParser(const FailParser &) = default;
   constexpr explicit FailParser(const char *str) : str_{str} {}
@@ -41,7 +41,7 @@ class FailParser {
     state->messages()->Add(Message{state->position(), str_, state->context()});
     return {};
   }
- private:
+private:
   const char *const str_;
 };
 
@@ -56,12 +56,12 @@ inline constexpr auto fail(const char *message) {
 // parse, and returns a captured value whose type must be copy-constructible.
 template<typename A>
 class PureParser {
- public:
+public:
   using resultType = A;
   constexpr PureParser(const PureParser &) = default;
   constexpr explicit PureParser(A &&x) : value_(std::move(x)) {}
   std::optional<A> Parse(ParseState *) const { return {value_}; }
- private:
+private:
   const A value_;
 };
 
@@ -74,7 +74,7 @@ inline constexpr auto pure(A x) {
 // the ParseState is guaranteed to have been restored to its initial value.
 template<typename A>
 class BacktrackingParser {
- public:
+public:
   using resultType = typename A::resultType;
   constexpr BacktrackingParser(const BacktrackingParser &) = default;
   constexpr BacktrackingParser(const A &parser) : parser_{parser} {}
@@ -94,7 +94,7 @@ class BacktrackingParser {
     }
     return result;
   }
- private:
+private:
   const A parser_;
 };
 
@@ -107,7 +107,7 @@ inline constexpr auto attempt(const A &parser) {
 // x fails, returning a useless (but present) result.  !x fails when x succeeds.
 template<typename PA>
 class NegatedParser {
- public:
+public:
   using resultType = Success;
   constexpr NegatedParser(const NegatedParser &) = default;
   constexpr NegatedParser(const PA &p) : parser_{p} {}
@@ -120,7 +120,7 @@ class NegatedParser {
     }
     return {Success{}};
   }
- private:
+private:
   const PA parser_;
 };
 
@@ -133,7 +133,7 @@ inline constexpr auto operator!(const PA &p) {
 // or fails if x does, but the state is not modified.
 template<typename PA>
 class LookAheadParser {
- public:
+public:
   using resultType = Success;
   constexpr LookAheadParser(const LookAheadParser &) = default;
   constexpr LookAheadParser(const PA &p) : parser_{p} {}
@@ -143,7 +143,7 @@ class LookAheadParser {
     state->messages()->swap(messages);
     return parser_.Parse(&forked);
   }
- private:
+private:
   const PA parser_;
 };
 
@@ -155,7 +155,7 @@ inline constexpr auto lookAhead(const PA &p) {
 // If a is a parser, inContext("...", a) runs it in a nested message context.
 template<typename PA>
 class MessageContextParser {
- public:
+public:
   using resultType = typename PA::resultType;
   constexpr MessageContextParser(const MessageContextParser &) = default;
   constexpr MessageContextParser(const char *str, const PA &p)
@@ -166,7 +166,7 @@ class MessageContextParser {
     state->PopContext();
     return result;
   }
- private:
+private:
   const char *str_;
   const PA parser_;
 };
@@ -182,7 +182,7 @@ inline constexpr auto inContext(const char *context, const PA &parser) {
 // do so, but the result is that returned by a.
 template<typename PA, typename PB>
 class SequenceParser {
- public:
+public:
   using resultType = typename PB::resultType;
   constexpr SequenceParser(const SequenceParser &) = default;
   constexpr SequenceParser(const PA &pa, const PB &pb) : pa_{pa}, pb_{pb} {}
@@ -192,7 +192,7 @@ class SequenceParser {
     }
     return {};
   }
- private:
+private:
   const PA pa_;
   const PB pb_;
 };
@@ -204,7 +204,7 @@ inline constexpr auto operator>>(const PA &pa, const PB &pb) {
 
 template<typename PA, typename PB>
 class InvertedSequenceParser {
- public:
+public:
   using resultType = typename PA::resultType;
   constexpr InvertedSequenceParser(const InvertedSequenceParser &) = default;
   constexpr InvertedSequenceParser(const PA &pa, const PB &pb)
@@ -217,7 +217,7 @@ class InvertedSequenceParser {
     }
     return {};
   }
- private:
+private:
   const PA pa_;
   const PB pb_;
 };
@@ -232,7 +232,7 @@ inline constexpr auto operator/(const PA &pa, const PB &pb) {
 // must be the same type.  If a succeeds, b is not attempted.
 template<typename PA, typename PB>
 class AlternativeParser {
- public:
+public:
   using resultType = typename PA::resultType;
   constexpr AlternativeParser(const AlternativeParser &) = default;
   constexpr AlternativeParser(const PA &pa, const PB &pb) : pa_{pa}, pb_{pb} {}
@@ -266,7 +266,7 @@ class AlternativeParser {
     state->messages()->swap(messages);
     return {};
   }
- private:
+private:
   const PA pa_;
   const PB pb_;
 };
@@ -291,7 +291,7 @@ inline constexpr auto operator||(const AlternativeParser<PA,PB> &papb,
 // All messages from the first parse are retained.
 template<typename PA, typename PB>
 class RecoveryParser {
- public:
+public:
   using resultType = typename PA::resultType;
   constexpr RecoveryParser(const RecoveryParser &) = default;
   constexpr RecoveryParser(const PA &pa, const PB &pb) : pa_{pa}, pb_{pb} {}
@@ -314,7 +314,7 @@ class RecoveryParser {
     }
     return bx;
   }
- private:
+private:
   const PA pa_;
   const PB pb_;
 };
@@ -330,7 +330,7 @@ inline constexpr auto recovery(const PA &pa, const PB &pb) {
 template<typename PA>
 class ManyParser {
   using paType = typename PA::resultType;
- public:
+public:
   using resultType = std::list<paType>;
   constexpr ManyParser(const ManyParser &) = default;
   constexpr ManyParser(const PA &parser) : parser_{parser} {}
@@ -346,7 +346,7 @@ class ManyParser {
     }
     return {std::move(result)};
   }
- private:
+private:
   const BacktrackingParser<PA> parser_;
 };
 
@@ -362,7 +362,7 @@ inline constexpr auto many(const PA &parser) {
 template<typename PA>
 class SomeParser {
   using paType = typename PA::resultType;
- public:
+public:
   using resultType = std::list<paType>;
   constexpr SomeParser(const SomeParser &) = default;
   constexpr SomeParser(const PA &parser) : parser_{parser} {}
@@ -378,7 +378,7 @@ class SomeParser {
     }
     return {};
   }
- private:
+private:
   const PA parser_;
 };
 
@@ -390,7 +390,7 @@ inline constexpr auto some(const PA &parser) {
 // If x is a parser, skipMany(x) is equivalent to many(x) but with no result.
 template<typename PA>
 class SkipManyParser {
- public:
+public:
   using resultType = Success;
   constexpr SkipManyParser(const SkipManyParser &) = default;
   constexpr SkipManyParser(const PA &parser) : parser_{parser} {}
@@ -401,7 +401,7 @@ class SkipManyParser {
     }
     return {Success{}};
   }
- private:
+private:
   const BacktrackingParser<PA> parser_;
 };
 
@@ -415,7 +415,7 @@ inline constexpr auto skipMany(const PA &parser) {
 // state on failure.
 template<typename PA>
 class SkipManyFastParser {
- public:
+public:
   using resultType = Success;
   constexpr SkipManyFastParser(const SkipManyFastParser &) = default;
   constexpr SkipManyFastParser(const PA &parser) : parser_{parser} {}
@@ -424,7 +424,7 @@ class SkipManyFastParser {
     }
     return {Success{}};
   }
- private:
+private:
   const PA parser_;
 };
 
@@ -438,7 +438,7 @@ inline constexpr auto skipManyFast(const PA &parser) {
 template<typename PA>
 class MaybeParser {
   using paType = typename PA::resultType;
- public:
+public:
   using resultType = std::optional<paType>;
   constexpr MaybeParser(const MaybeParser &) = default;
   constexpr MaybeParser(const PA &parser) : parser_{parser} {}
@@ -448,7 +448,7 @@ class MaybeParser {
     }
     return {resultType{}};
   }
- private:
+private:
   const BacktrackingParser<PA> parser_;
 };
 
@@ -462,7 +462,7 @@ inline constexpr auto maybe(const PA &parser) {
 // result is a default-constructed value of x's result type.
 template<typename PA>
 class DefaultedParser {
- public:
+public:
   using resultType = typename PA::resultType;
   constexpr DefaultedParser(const DefaultedParser &) = default;
   constexpr DefaultedParser(const PA &p) : parser_{p} {}
@@ -474,7 +474,7 @@ class DefaultedParser {
     }
     return {resultType{}};
   }
- private:
+private:
   const BacktrackingParser<PA> parser_;
 };
 
@@ -505,7 +505,7 @@ template<typename PA, typename T>
 class Apply1 {
   using paType = typename PA::resultType;
   using funcType = T (*)(paType &&);
- public:
+public:
   using resultType = T;
   constexpr Apply1(const Apply1 &) = default;
   constexpr Apply1(funcType function, const PA &parser)
@@ -516,7 +516,7 @@ class Apply1 {
     }
     return {};
   }
- private:
+private:
   const funcType function_;
   const PA parser_;
 };
@@ -531,7 +531,7 @@ template<typename PA, typename T>
 class Apply1Functor {
   using paType = typename PA::resultType;
   using funcType = std::function<T(paType &&)>;
- public:
+public:
   using resultType = T;
   Apply1Functor(const Apply1Functor &) = default;
   Apply1Functor(const funcType &functor, const PA &parser)
@@ -542,7 +542,7 @@ class Apply1Functor {
     }
     return {};
   }
- private:
+private:
   const funcType &functor_;
   const PA parser_;
 };
@@ -556,7 +556,7 @@ applyLambda(const std::function<T(typename PA::resultType &&)> &f,
 
 template<typename PA>
 class Apply1Mem {
- public:
+public:
   using resultType = typename PA::resultType;
   using funcType = void (resultType::*)();
   constexpr Apply1Mem(const Apply1Mem &) = default;
@@ -569,7 +569,7 @@ class Apply1Mem {
     }
     return result;
   }
- private:
+private:
   const funcType function_;
   const PA pa_;
 };
@@ -585,7 +585,7 @@ class Apply2 {
   using paType = typename PA::resultType;
   using pbType = typename PB::resultType;
   using funcType = T (*)(paType &&, pbType &&);
- public:
+public:
   using resultType = T;
   constexpr Apply2(const Apply2 &) = default;
   constexpr Apply2(funcType function, const PA &pa, const PB &pb)
@@ -598,7 +598,7 @@ class Apply2 {
     }
     return {};
   }
- private:
+private:
   const funcType function_;
   const PA pa_;
   const PB pb_;
@@ -616,7 +616,7 @@ class Apply2Functor {
   using paType = typename PA::resultType;
   using pbType = typename PB::resultType;
   using funcType = std::function<T(paType &&, pbType &&)>;
- public:
+public:
   using resultType = T;
   Apply2Functor(const Apply2Functor &) = default;
   Apply2Functor(const funcType &function, const PA &pa, const PB &pb)
@@ -629,7 +629,7 @@ class Apply2Functor {
     }
     return {};
   }
- private:
+private:
   const funcType &function_;
   const PA pa_;
   const PB pb_;
@@ -646,7 +646,7 @@ applyLambda(const std::function<T(typename PA::resultType &&,
 template<typename PA, typename PB>
 class Apply2Mem {
   using pbType = typename PB::resultType;
- public:
+public:
   using resultType = typename PA::resultType;
   using funcType = void (resultType::*)(pbType &&);
   constexpr Apply2Mem(const Apply2Mem &) = default;
@@ -661,7 +661,7 @@ class Apply2Mem {
     }
     return {};
   }
- private:
+private:
   const funcType function_;
   const PA pa_;
   const PB pb_;
@@ -679,7 +679,7 @@ class Apply3 {
   using pbType = typename PB::resultType;
   using pcType = typename PC::resultType;
   using funcType = T (*) (paType &&, pbType &&, pcType &&);
- public:
+public:
   using resultType = T;
   constexpr Apply3(const Apply3 &) = default;
   constexpr Apply3(funcType function, const PA &pa, const PB &pb, const PC &pc)
@@ -694,7 +694,7 @@ class Apply3 {
     }
     return {};
   }
- private:
+private:
   const funcType function_;
   const PA pa_;
   const PB pb_;
@@ -713,7 +713,7 @@ template<typename PA, typename PB, typename PC>
 class Apply3Mem {
   using pbType = typename PB::resultType;
   using pcType = typename PC::resultType;
- public:
+public:
   using resultType = typename PA::resultType;
   using funcType = void (resultType::*)(pbType &&, pcType &&);
   constexpr Apply3Mem(const Apply3Mem &) = default;
@@ -731,7 +731,7 @@ class Apply3Mem {
     }
     return {};
   }
- private:
+private:
   const funcType function_;
   const PA pa_;
   const PB pb_;
@@ -752,7 +752,7 @@ class Apply4 {
   using pcType = typename PC::resultType;
   using pdType = typename PD::resultType;
   using funcType = T (*) (paType &&, pbType &&, pcType &&, pdType &&);
- public:
+public:
   using resultType = T;
   constexpr Apply4(const Apply4 &) = default;
   constexpr Apply4(funcType function, const PA &pa, const PB &pb, const PC &pc,
@@ -771,7 +771,7 @@ class Apply4 {
     }
     return {};
   }
- private:
+private:
   const funcType function_;
   const PA pa_;
   const PB pb_;
@@ -792,7 +792,7 @@ class Apply4Mem {
   using pbType = typename PB::resultType;
   using pcType = typename PC::resultType;
   using pdType = typename PD::resultType;
- public:
+public:
   using resultType = typename PA::resultType;
   using funcType = void (resultType::*) (pbType &&, pcType &&, pdType &&);
   constexpr Apply4Mem(const Apply4Mem &) = default;
@@ -813,7 +813,7 @@ class Apply4Mem {
     }
     return {};
   }
- private:
+private:
   const funcType function_;
   const PA pa_;
   const PB pb_;
@@ -847,7 +847,7 @@ struct construct {
 
   template<typename PA>
   class Construct1 {
-   public:
+  public:
     using resultType = T;
     constexpr Construct1(const Construct1 &) = default;
     constexpr explicit Construct1(const PA &parser) : parser_{parser} {}
@@ -857,7 +857,7 @@ struct construct {
       }
       return {};
     }
-   private:
+  private:
     const PA parser_;
   };
 
@@ -868,7 +868,7 @@ struct construct {
 
   template<typename PA, typename PB>
   class Construct2 {
-   public:
+  public:
     using resultType = T;
     constexpr Construct2(const Construct2 &) = default;
     constexpr Construct2(const PA &pa, const PB &pb) : pa_{pa}, pb_{pb} {}
@@ -880,7 +880,7 @@ struct construct {
       }
       return {};
     }
-   private:
+  private:
     const PA pa_;
     const PB pb_;
   };
@@ -892,7 +892,7 @@ struct construct {
 
   template<typename PA, typename PB, typename PC>
   class Construct3 {
-   public:
+  public:
     using resultType = T;
     constexpr Construct3(const Construct3 &) = default;
     constexpr Construct3(const PA &pa, const PB &pb, const PC &pc)
@@ -907,7 +907,7 @@ struct construct {
       }
       return {};
     }
-   private:
+  private:
     const PA pa_;
     const PB pb_;
     const PC pc_;
@@ -921,7 +921,7 @@ struct construct {
 
   template<typename PA, typename PB, typename PC, typename PD>
   class Construct4 {
-   public:
+  public:
     using resultType = T;
     constexpr Construct4(const Construct4 &) = default;
     constexpr Construct4(const PA &pa, const PB &pb,
@@ -940,7 +940,7 @@ struct construct {
       }
       return {};
     }
-   private:
+  private:
     const PA pa_;
     const PB pb_;
     const PC pc_;
@@ -955,7 +955,7 @@ struct construct {
 
   template<typename PA, typename PB, typename PC, typename PD, typename PE>
   class Construct5 {
-   public:
+  public:
     using resultType = T;
     constexpr Construct5(const Construct5 &) = default;
     constexpr Construct5(const PA &pa, const PB &pb,
@@ -977,7 +977,7 @@ struct construct {
       }
       return {};
     }
-   private:
+  private:
     const PA pa_;
     const PB pb_;
     const PC pc_;
@@ -995,7 +995,7 @@ struct construct {
   template<typename PA, typename PB, typename PC, typename PD, typename PE,
            typename PF>
   class Construct6 {
-   public:
+  public:
     using resultType = T;
     constexpr Construct6(const Construct6 &) = default;
     constexpr Construct6(const PA &pa, const PB &pb,
@@ -1019,7 +1019,7 @@ struct construct {
       }
       return {};
     }
-   private:
+  private:
     const PA pa_;
     const PB pb_;
     const PC pc_;
@@ -1041,7 +1041,7 @@ struct construct {
 // StatePredicateGuardParser{f} is a parser that succeeds when f() is true
 // and fails otherwise.  The state is preserved.
 class StatePredicateGuardParser {
- public:
+public:
   using resultType = Success;
   constexpr StatePredicateGuardParser(const StatePredicateGuardParser &)
     = default;
@@ -1054,7 +1054,7 @@ class StatePredicateGuardParser {
     }
     return {};
   }
- private:
+private:
   bool (*const predicate_)(const ParseState &);
 };
 
@@ -1070,9 +1070,9 @@ std::list<T> prepend(T &&head, std::list<T> &&rest) {
 
 template<typename PA, typename PB>
 class NonemptySeparated {
- private:
+private:
   using paType = typename PA::resultType;
- public:
+public:
   using resultType = std::list<paType>;
   constexpr NonemptySeparated(const NonemptySeparated &) = default;
   constexpr NonemptySeparated(const PA &p, const PB &sep)
@@ -1082,7 +1082,7 @@ class NonemptySeparated {
                          parser_,
                          many(separator_ >> parser_)).Parse(state);
   }
- private:
+private:
   const PA parser_;
   const PB separator_;
 };
@@ -1097,7 +1097,7 @@ nonemptySeparated(const PA &p, const PB &sep) {
 // StateUpdateParser{f} is a parser that always succeeds, possibly with
 // side effects on the parsing state.
 class StateUpdateParser {
- public:
+public:
   using resultType = Success;
   constexpr StateUpdateParser(const StateUpdateParser &) = default;
   constexpr StateUpdateParser(void (*function)(ParseState *))
@@ -1106,7 +1106,7 @@ class StateUpdateParser {
     function_(state);
     return {Success{}};
   }
- private:
+private:
   void (*const function_)(ParseState *);
 };
 
@@ -1118,7 +1118,7 @@ template<typename PA, typename T>
 class BoundMoveParser {
   using paType = typename PA::resultType;
   using funcType = T (*)(paType &&);
- public:
+public:
   using resultType = T;
   constexpr BoundMoveParser(const BoundMoveParser &) = default;
   constexpr BoundMoveParser(const PA &pa, funcType f) : pa_{pa}, f_{f} {}
@@ -1128,7 +1128,7 @@ class BoundMoveParser {
     }
     return {};
   }
- private:
+private:
   const PA pa_;
   const funcType f_;
 };
@@ -1167,7 +1167,7 @@ constexpr FixedParser<false> cut;
 // guard(bool) returns a parser that succeeds iff its dynamic argument
 // value is true.  The state is preserved.
 class GuardParser {
- public:
+public:
   using resultType = Success;
   constexpr GuardParser(const GuardParser &) = default;
   constexpr GuardParser(bool ok) : ok_{ok} {}
@@ -1177,7 +1177,7 @@ class GuardParser {
     }
     return {};
   }
- private:
+private:
   const bool ok_;
 };
 
@@ -1207,7 +1207,7 @@ constexpr struct RawNextCharParser {
 // signify that the parse is within quotes or Hollerith.
 template<typename PA>
 class WithinCharLiteral {
- public:
+public:
   using resultType = typename PA::resultType;
   constexpr WithinCharLiteral(const WithinCharLiteral &) = default;
   constexpr WithinCharLiteral(const PA &parser) : parser_{parser} {}
@@ -1217,7 +1217,7 @@ class WithinCharLiteral {
     state->set_inCharLiteral(was);
     return result;
   }
- private:
+private:
   const PA parser_;
 };
 
@@ -1231,7 +1231,7 @@ inline constexpr auto withinCharLiteral(const PA &parser) {
 // a warning if such a warning is enabled.
 template<typename PA>
 class NonstandardParser {
- public:
+public:
   using resultType = typename PA::resultType;
   constexpr NonstandardParser(const NonstandardParser &) = default;
   constexpr NonstandardParser(const PA &parser) : parser_{parser} {}
@@ -1249,7 +1249,7 @@ class NonstandardParser {
     }
     return result;
   }
- private:
+private:
   const PA parser_;
 };
 
@@ -1263,7 +1263,7 @@ inline constexpr auto extension(const PA &parser) {
 // a warning if such a warning is enabled.
 template<typename PA>
 class DeprecatedParser {
- public:
+public:
   using resultType = typename PA::resultType;
   constexpr DeprecatedParser(const DeprecatedParser &) = default;
   constexpr DeprecatedParser(const PA &parser) : parser_{parser} {}
@@ -1281,7 +1281,7 @@ class DeprecatedParser {
     }
     return result;
   }
- private:
+private:
   const PA parser_;
 };
 

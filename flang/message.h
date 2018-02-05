@@ -18,7 +18,7 @@ class Message;
 using MessageContext = std::shared_ptr<Message>;
 
 class Message {
- public:
+public:
   Message() {}
   Message(const Message &) = default;
   Message(Message &&) = default;
@@ -44,7 +44,7 @@ class Message {
     return position_ < that.position_;
   }
 
- private:
+private:
   Position position_;
   std::string message_;
   MessageContext context_;
@@ -52,7 +52,7 @@ class Message {
 
 class Messages {
   using list_type = std::forward_list<Message>;
- public:
+public:
   using iterator = list_type::iterator;
   using const_iterator = list_type::const_iterator;
 
@@ -96,7 +96,7 @@ class Messages {
     }
   }
 
- private:
+private:
   list_type messages_;
   iterator last_;  // valid iff messages_ nonempty
 };

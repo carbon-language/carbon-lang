@@ -84,7 +84,7 @@ static inline bool InCharLiteral(const ParseState &state) {
 constexpr StatePredicateGuardParser inCharLiteral{InCharLiteral};
 
 class RawStringMatch {
- public:
+public:
   using resultType = Success;
   constexpr RawStringMatch(const RawStringMatch &) = default;
   constexpr RawStringMatch(const char *str, size_t n) : str_{str}, length_{n} {}
@@ -102,7 +102,7 @@ class RawStringMatch {
     }
     return {Success{}};
   }
- private:
+private:
   const char *const str_;
   const size_t length_;
 };

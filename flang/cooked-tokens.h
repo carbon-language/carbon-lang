@@ -20,7 +20,7 @@
 namespace Fortran {
 
 class CharPredicateGuardParser {
- public:
+public:
   using resultType = char;
   constexpr CharPredicateGuardParser(const CharPredicateGuardParser &)
     = default;
@@ -36,7 +36,7 @@ class CharPredicateGuardParser {
     state->messages()->Add(Message{at, message_, state->context()});
     return {};
   }
- private:
+private:
   bool (*const predicate_)(char);
   const char *const message_;
 };
@@ -69,7 +69,7 @@ constexpr auto letter =
 
 template<char good>
 class CharMatch {
- public:
+public:
   using resultType = char;
   constexpr CharMatch() {}
   static std::optional<char> Parse(ParseState *state) {
@@ -102,7 +102,7 @@ constexpr struct Space {
 constexpr auto spaces = skipMany(space);
 
 class TokenStringMatch {
- public:
+public:
   using resultType = Success;
   constexpr TokenStringMatch(const TokenStringMatch &) = default;
   constexpr TokenStringMatch(const char *str, size_t n)
@@ -143,7 +143,7 @@ class TokenStringMatch {
     }
     return spaces.Parse(state);
   }
- private:
+private:
   const char *const str_;
   const size_t length_{std::numeric_limits<size_t>::max()};
 };

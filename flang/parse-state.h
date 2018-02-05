@@ -21,7 +21,7 @@ namespace Fortran {
 class UserState;
 
 class ParseState {
- public:
+public:
   ParseState() {}
   ParseState(const char *str) : p_{str}, remaining_{std::strlen(str)} {}
   ParseState(const char *str, size_t bytes) : p_{str}, remaining_{bytes} {}
@@ -203,7 +203,7 @@ class ParseState {
     position_.AdvanceColumn();
   }
 
- private:
+private:
   // Text remaining to be parsed
   const char *p_{nullptr};
   size_t remaining_{0};

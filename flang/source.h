@@ -11,7 +11,7 @@
 namespace Fortran {
 
 class SourceFile {
- public:
+public:
   SourceFile() {}
   ~SourceFile();
   bool Open(std::string path, std::stringstream *error);
@@ -19,7 +19,7 @@ class SourceFile {
   std::string path() const { return path_; }
   const char *content() const { return content_; }
   size_t bytes() const { return bytes_; }
- private:
+private:
   std::string path_;
   int fileDescriptor_{-1};
   bool isMemoryMapped_{false};

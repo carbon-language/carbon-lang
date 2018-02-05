@@ -10,7 +10,7 @@
 namespace Fortran {
 
 class Position {
- public:
+public:
   constexpr Position() {}
   constexpr Position(const Position &) = default;
   constexpr Position(Position &&) = default;
@@ -65,7 +65,7 @@ class Position {
     column_ = 1;
   }
 
- private:
+private:
   int lineNumber_{1};
   int column_{1};
 };

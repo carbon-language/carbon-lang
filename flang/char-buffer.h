@@ -12,7 +12,7 @@
 namespace Fortran {
 
 class CharBuffer {
- public:
+public:
   CharBuffer() {}
   CharBuffer(CharBuffer &&that)
     : blocks_(std::move(that.blocks_)), last_{that.last_},
@@ -44,15 +44,15 @@ class CharBuffer {
   void Put(char x) { Put(&x, 1); }
   void CopyToContiguous(char *data);
 
- private:
+private:
   struct Block {
     static constexpr size_t capacity{1 << 20};
     char data[capacity];
   };
 
- public:
+public:
   class iterator {
-   public:
+  public:
     iterator() {}
     iterator(std::forward_list<Block>::const_iterator block, int offset)
       : block_{block}, offset_{offset} {}
@@ -91,7 +91,7 @@ class CharBuffer {
     bool operator!=(const iterator &that) const {
       return block_ != that.block_ || offset_ != that.offset_;
     }
-   private:
+  private:
     std::forward_list<Block>::const_iterator block_;
     int offset_;
   };
@@ -105,7 +105,7 @@ class CharBuffer {
     return iterator(blocks_.end(), 0);
   }
 
- private:
+private:
   int LastBlockOffset() const { return bytes_ % Block::capacity; }
   std::forward_list<Block> blocks_;
   std::forward_list<Block>::iterator last_{blocks_.end()};
