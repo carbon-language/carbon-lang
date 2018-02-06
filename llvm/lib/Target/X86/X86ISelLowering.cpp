@@ -32066,17 +32066,6 @@ static SDValue combineCMov(SDNode *N, SelectionDAG &DAG,
   X86::CondCode CC = (X86::CondCode)N->getConstantOperandVal(2);
   SDValue Cond = N->getOperand(3);
 
-  if (CC == X86::COND_E || CC == X86::COND_NE) {
-    switch (Cond.getOpcode()) {
-    default: break;
-    case X86ISD::BSR:
-    case X86ISD::BSF:
-      // If operand of BSR / BSF are proven never zero, then ZF cannot be set.
-      if (DAG.isKnownNeverZero(Cond.getOperand(0)))
-        return (CC == X86::COND_E) ? FalseOp : TrueOp;
-    }
-  }
-
   // Try to simplify the EFLAGS and condition code operands.
   // We can't always do this as FCMOV only supports a subset of X86 cond.
   if (SDValue Flags = combineSetCCEFLAGS(Cond, CC, DAG, Subtarget)) {
