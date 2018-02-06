@@ -157,7 +157,7 @@ private:
           SymbolFlags[S] = Sym.getFlags();
         else if (auto Err = Sym.takeError()) {
           Stack.reportError(std::move(Err));
-          return {};
+          return orc::SymbolNameSet();
         } else
           SymbolsNotFound.insert(S);
       }
@@ -175,11 +175,11 @@ private:
             Query.setDefinition(S, JITEvaluatedSymbol(*Addr, Sym.getFlags()));
           else {
             Query.setFailed(Addr.takeError());
-            return {};
+            return orc::SymbolNameSet();
           }
         } else if (auto Err = Sym.takeError()) {
           Query.setFailed(std::move(Err));
-          return {};
+          return orc::SymbolNameSet();
         } else
           UnresolvedSymbols.insert(S);
       }
