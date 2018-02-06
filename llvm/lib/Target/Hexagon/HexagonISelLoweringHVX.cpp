@@ -791,15 +791,24 @@ HexagonTargetLowering::LowerHvxBuildVector(SDValue Op, SelectionDAG &DAG)
 SDValue
 HexagonTargetLowering::LowerHvxConcatVectors(SDValue Op, SelectionDAG &DAG)
       const {
-  // This should only be called for vectors of i1. The "scalar" vector
-  // concatenation does not need special lowering (assuming that only
-  // two vectors are concatenated at a time).
+  // Vector concatenation of two integer (non-bool) vectors does not need
+  // special lowering. Custom-lower concats of bool vectors and expand
+  // concats of more than 2 vectors.
   MVT VecTy = ty(Op);
-  assert(VecTy.getVectorElementType() == MVT::i1);
-
   const SDLoc &dl(Op);
-  unsigned HwLen = Subtarget.getVectorLength();
   unsigned NumOp = Op.getNumOperands();
+  if (VecTy.getVectorElementType() != MVT::i1) {
+    if (NumOp == 2)
+      return Op;
+    // Expand the other cases into a build-vector.
+    SmallVector<SDValue,8> Elems;
+    for (SDValue V : Op.getNode()->ops())
+      DAG.ExtractVectorElements(V, Elems);
+    return DAG.getBuildVector(VecTy, dl, Elems);
+  }
+
+  assert(VecTy.getVectorElementType() == MVT::i1);
+  unsigned HwLen = Subtarget.getVectorLength();
   assert(isPowerOf2_32(NumOp) && HwLen % NumOp == 0);
 
   SDValue Op0 = Op.getOperand(0);

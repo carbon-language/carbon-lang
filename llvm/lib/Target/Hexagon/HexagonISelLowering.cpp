@@ -2077,7 +2077,6 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
 
     setOperationAction(ISD::VECTOR_SHUFFLE, ByteV, Legal);
     setOperationAction(ISD::VECTOR_SHUFFLE, ByteW, Legal);
-    setOperationAction(ISD::CONCAT_VECTORS, ByteW, Legal);
     setOperationAction(ISD::AND,            ByteV, Legal);
     setOperationAction(ISD::OR,             ByteV, Legal);
     setOperationAction(ISD::XOR,            ByteV, Legal);
@@ -2097,6 +2096,8 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
       setOperationAction(ISD::MULHS,              T, Custom);
       setOperationAction(ISD::MULHU,              T, Custom);
       setOperationAction(ISD::BUILD_VECTOR,       T, Custom);
+      // Make concat-vectors custom to handle concats of more than 2 vectors.
+      setOperationAction(ISD::CONCAT_VECTORS,     T, Custom);
       setOperationAction(ISD::INSERT_SUBVECTOR,   T, Custom);
       setOperationAction(ISD::INSERT_VECTOR_ELT,  T, Custom);
       setOperationAction(ISD::EXTRACT_SUBVECTOR,  T, Custom);
@@ -2134,9 +2135,8 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
     for (MVT T : LegalV) {
       if (T == ByteV)
         continue;
-      // Promote all shuffles and concats to operate on vectors of bytes.
+      // Promote all shuffles to operate on vectors of bytes.
       setPromoteTo(ISD::VECTOR_SHUFFLE, T, ByteV);
-      setPromoteTo(ISD::CONCAT_VECTORS, T, ByteV);
       setPromoteTo(ISD::AND,            T, ByteV);
       setPromoteTo(ISD::OR,             T, ByteV);
       setPromoteTo(ISD::XOR,            T, ByteV);
@@ -2146,7 +2146,9 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
       // Custom-lower BUILD_VECTOR for vector pairs. The standard (target-
       // independent) handling of it would convert it to a load, which is
       // not always the optimal choice.
-      setOperationAction(ISD::BUILD_VECTOR, T, Custom);
+      setOperationAction(ISD::BUILD_VECTOR,   T, Custom);
+      // Make concat-vectors custom to handle concats of more than 2 vectors.
+      setOperationAction(ISD::CONCAT_VECTORS, T, Custom);
 
       // Custom-lower these operations for pairs. Expand them into a concat
       // of the corresponding operations on individual vectors.
@@ -2173,9 +2175,8 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
         setOperationAction(ISD::SHL,      T, Custom);
         setOperationAction(ISD::SRL,      T, Custom);
 
-        // Promote all shuffles and concats to operate on vectors of bytes.
+        // Promote all shuffles to operate on vectors of bytes.
         setPromoteTo(ISD::VECTOR_SHUFFLE, T, ByteW);
-        setPromoteTo(ISD::CONCAT_VECTORS, T, ByteW);
       }
 
       MVT BoolV = MVT::getVectorVT(MVT::i1, T.getVectorNumElements());
@@ -3063,6 +3064,8 @@ HexagonTargetLowering::LowerCONCAT_VECTORS(SDValue Op,
                                            SelectionDAG &DAG) const {
   MVT VecTy = ty(Op);
   const SDLoc &dl(Op);
+  if (Subtarget.useHVXOps() && Subtarget.isHVXVectorType(VecTy, true))
+    return LowerHvxConcatVectors(Op, DAG);
 
   if (VecTy.getSizeInBits() == 64) {
     assert(Op.getNumOperands() == 2);
@@ -3072,9 +3075,6 @@ HexagonTargetLowering::LowerCONCAT_VECTORS(SDValue Op,
 
   MVT ElemTy = VecTy.getVectorElementType();
   if (ElemTy == MVT::i1) {
-    if (Subtarget.useHVXOps() && Subtarget.isHVXVectorType(VecTy, true))
-      return LowerHvxConcatVectors(Op, DAG);
-
     assert(VecTy == MVT::v2i1 || VecTy == MVT::v4i1 || VecTy == MVT::v8i1);
     MVT OpTy = ty(Op.getOperand(0));
     // Scale is how many times the operands need to be contracted to match
