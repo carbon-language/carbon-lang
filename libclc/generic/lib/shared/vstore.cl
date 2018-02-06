@@ -124,6 +124,26 @@ _CLC_DEF _CLC_OVERLOAD float __clc_rtz(float x)
 		return x;
 	return as_float(as_uint(x) & mask);
 }
+_CLC_DEF _CLC_OVERLOAD float __clc_rti(float x)
+{
+	const float inf = copysign(INFINITY, x);
+	/* Set lower 13 bits */
+	int mask = (1 << 13) - 1;
+	const int exp = (as_uint(x) >> 23 & 0xff) - 127;
+	/* Denormals cannot be flushed, and they use different bit for rounding */
+	if (exp < -14)
+		mask = (1 << (13 + min(-(exp + 14), 10))) - 1;
+	/* Handle nan corner case */
+	if (isnan(x))
+		return x;
+	const float next = nextafter(as_float(as_uint(x) | mask), inf);
+	return ((as_uint(x) & mask) == 0) ? x : next;
+}
+_CLC_DEF _CLC_OVERLOAD float __clc_rtn(float x)
+{
+	return ((as_uint(x) & 0x80000000) == 0) ? __clc_rtz(x) : __clc_rti(x);
+}
+
 #ifdef cl_khr_fp64
 _CLC_DEF _CLC_OVERLOAD double __clc_noop(double x)
 {
@@ -145,11 +165,31 @@ _CLC_DEF _CLC_OVERLOAD double __clc_rtz(double x)
 		return x;
 	return as_double(as_ulong(x) & mask);
 }
+_CLC_DEF _CLC_OVERLOAD double __clc_rti(double x)
+{
+	const double inf = copysign((double)INFINITY, x);
+	/* Set lower 42 bits */
+	long mask = (1UL << 42UL) - 1UL;
+	const int exp = (as_ulong(x) >> 52 & 0x7ff) - 1023;
+	/* Denormals cannot be flushed, and they use different bit for rounding */
+	if (exp < -14)
+		mask = (1UL << (42UL + min(-(exp + 14), 10))) - 1;
+	/* Handle nan corner case */
+	if (isnan(x))
+		return x;
+	const double next = nextafter(as_double(as_ulong(x) | mask), inf);
+	return ((as_ulong(x) & mask) == 0) ? x : next;
+}
+_CLC_DEF _CLC_OVERLOAD double __clc_rtn(double x)
+{
+	return ((as_ulong(x) & 0x8000000000000000UL) == 0) ? __clc_rtz(x) : __clc_rti(x);
+}
 #endif
 
 #define __XFUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS) \
 	__FUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS, __clc_noop) \
-	__FUNC(SUFFIX ## _rtz, VEC_SIZE, OFFSET, TYPE, STYPE, AS, __clc_rtz)
+	__FUNC(SUFFIX ## _rtz, VEC_SIZE, OFFSET, TYPE, STYPE, AS, __clc_rtz) \
+	__FUNC(SUFFIX ## _rtn, VEC_SIZE, OFFSET, TYPE, STYPE, AS, __clc_rtn)
 
 #define FUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS) \
 	__XFUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS)
