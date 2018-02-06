@@ -143,6 +143,10 @@ _CLC_DEF _CLC_OVERLOAD float __clc_rtn(float x)
 {
 	return ((as_uint(x) & 0x80000000) == 0) ? __clc_rtz(x) : __clc_rti(x);
 }
+_CLC_DEF _CLC_OVERLOAD float __clc_rtp(float x)
+{
+	return ((as_uint(x) & 0x80000000) == 0) ? __clc_rti(x) : __clc_rtz(x);
+}
 
 #ifdef cl_khr_fp64
 _CLC_DEF _CLC_OVERLOAD double __clc_noop(double x)
@@ -184,12 +188,17 @@ _CLC_DEF _CLC_OVERLOAD double __clc_rtn(double x)
 {
 	return ((as_ulong(x) & 0x8000000000000000UL) == 0) ? __clc_rtz(x) : __clc_rti(x);
 }
+_CLC_DEF _CLC_OVERLOAD double __clc_rtp(double x)
+{
+	return ((as_ulong(x) & 0x8000000000000000UL) == 0) ? __clc_rti(x) : __clc_rtz(x);
+}
 #endif
 
 #define __XFUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS) \
 	__FUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS, __clc_noop) \
 	__FUNC(SUFFIX ## _rtz, VEC_SIZE, OFFSET, TYPE, STYPE, AS, __clc_rtz) \
-	__FUNC(SUFFIX ## _rtn, VEC_SIZE, OFFSET, TYPE, STYPE, AS, __clc_rtn)
+	__FUNC(SUFFIX ## _rtn, VEC_SIZE, OFFSET, TYPE, STYPE, AS, __clc_rtn) \
+	__FUNC(SUFFIX ## _rtp, VEC_SIZE, OFFSET, TYPE, STYPE, AS, __clc_rtp)
 
 #define FUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS) \
 	__XFUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS)
