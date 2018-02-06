@@ -1232,10 +1232,11 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
   case ISD::SUB: {
     // Add, Sub, and Mul don't demand any bits in positions beyond that
     // of the highest bit demanded of them.
-    APInt LoMask = APInt::getLowBitsSet(BitWidth,
-                                        BitWidth - NewMask.countLeadingZeros());
-    if (SimplifyDemandedBits(Op.getOperand(0), LoMask, Known2, TLO, Depth+1) ||
-        SimplifyDemandedBits(Op.getOperand(1), LoMask, Known2, TLO, Depth+1) ||
+    SDValue Op0 = Op.getOperand(0), Op1 = Op.getOperand(1);
+    unsigned NewMaskLZ = NewMask.countLeadingZeros();
+    APInt LoMask = APInt::getLowBitsSet(BitWidth, BitWidth - NewMaskLZ);
+    if (SimplifyDemandedBits(Op0, LoMask, Known2, TLO, Depth + 1) ||
+        SimplifyDemandedBits(Op1, LoMask, Known2, TLO, Depth + 1) ||
         // See if the operation should be performed at a smaller bit width.
         ShrinkDemandedOp(Op, BitWidth, NewMask, TLO)) {
       SDNodeFlags Flags = Op.getNode()->getFlags();
@@ -1245,8 +1246,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
         Flags.setNoSignedWrap(false);
         Flags.setNoUnsignedWrap(false);
         SDValue NewOp = TLO.DAG.getNode(Op.getOpcode(), dl, Op.getValueType(),
-                                        Op.getOperand(0), Op.getOperand(1),
-                                        Flags);
+                                        Op0, Op1, Flags);
         return TLO.CombineTo(Op, NewOp);
       }
       return true;
