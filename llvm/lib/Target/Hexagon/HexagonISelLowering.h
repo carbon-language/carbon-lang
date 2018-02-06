@@ -73,6 +73,7 @@ namespace HexagonISD {
                    // [*] The equivalence is defined as "Q <=> (V != 0)",
                    //     where the != operation compares bytes.
                    // Note: V != 0 is implemented as V >u 0.
+      QCAT,
       QTRUE,
       QFALSE,
       VZERO,
@@ -408,9 +409,14 @@ namespace HexagonISD {
     SDValue LowerHvxExtend(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerHvxShift(SDValue Op, SelectionDAG &DAG) const;
 
+    SDValue SplitHvxPairOp(SDValue Op, SelectionDAG &DAG) const;
+
     std::pair<const TargetRegisterClass*, uint8_t>
     findRepresentativeClass(const TargetRegisterInfo *TRI, MVT VT)
         const override;
+
+    bool isHvxOperation(SDValue Op) const;
+    SDValue LowerHvxOperation(SDValue Op, SelectionDAG &DAG) const;
   };
 
 } // end namespace llvm
