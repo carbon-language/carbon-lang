@@ -41,7 +41,7 @@ define void @foo() {
 ; X86-NEXT:    .cfi_adjust_cfa_offset 4
 ; X86-NEXT:    pushl $0
 ; X86-NEXT:    .cfi_adjust_cfa_offset 4
-; X86-NEXT:    calll __divdi3@PLT
+; X86-NEXT:    calll __divdi3
 ; X86-NEXT:    addl $16, %esp
 ; X86-NEXT:    .cfi_adjust_cfa_offset -16
 ; X86-NEXT:    orl %eax, %edx
