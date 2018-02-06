@@ -147,6 +147,27 @@ _CLC_DEF _CLC_OVERLOAD float __clc_rtp(float x)
 {
 	return ((as_uint(x) & 0x80000000) == 0) ? __clc_rti(x) : __clc_rtz(x);
 }
+_CLC_DEF _CLC_OVERLOAD float __clc_rte(float x)
+{
+	/* Mantisa + implicit bit */
+	const uint mantissa = (as_uint(x) & 0x7fffff) | (1u << 23);
+	const int exp = (as_uint(x) >> 23 & 0xff) - 127;
+	int shift = 13;
+	if (exp < -14) {
+		/* The default assumes lower 13 bits are rounded,
+		 * but it might be more for denormals.
+		 * Shifting beyond last == 0b, and qr == 00b is not necessary */
+		shift += min(-(exp + 14), 15);
+	}
+	int mask = (1 << shift) - 1;
+	const uint grs = mantissa & mask;
+	const uint last = mantissa & (1 << shift);
+	/* IEEE round up rule is: grs > 101b or grs == 100b and last == 1.
+	 * exp > 15 should round to inf. */
+	bool roundup = (grs > (1 << (shift - 1))) ||
+		(grs == (1 << (shift - 1)) && last != 0) || (exp > 15);
+	return roundup ? __clc_rti(x) : __clc_rtz(x);
+}
 
 #ifdef cl_khr_fp64
 _CLC_DEF _CLC_OVERLOAD double __clc_noop(double x)
@@ -192,13 +213,35 @@ _CLC_DEF _CLC_OVERLOAD double __clc_rtp(double x)
 {
 	return ((as_ulong(x) & 0x8000000000000000UL) == 0) ? __clc_rti(x) : __clc_rtz(x);
 }
+_CLC_DEF _CLC_OVERLOAD double __clc_rte(double x)
+{
+	/* Mantisa + implicit bit */
+	const ulong mantissa = (as_ulong(x) & 0xfffffffffffff) | (1UL << 52);
+	const int exp = (as_ulong(x) >> 52 & 0x7ff) - 1023;
+	int shift = 42;
+	if (exp < -14) {
+		/* The default assumes lower 13 bits are rounded,
+		 * but it might be more for denormals.
+		 * Shifting beyond last == 0b, and qr == 00b is not necessary */
+		shift += min(-(exp + 14), 15);
+	}
+	ulong mask = (1UL << shift) - 1UL;
+	const ulong grs = mantissa & mask;
+	const ulong last = mantissa & (1UL << shift);
+	/* IEEE round up rule is: grs > 101b or grs == 100b and last == 1.
+	 * exp > 15 should round to inf. */
+	bool roundup = (grs > (1UL << (shift - 1UL))) ||
+		(grs == (1UL << (shift - 1UL)) && last != 0) || (exp > 15);
+	return roundup ? __clc_rti(x) : __clc_rtz(x);
+}
 #endif
 
 #define __XFUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS) \
 	__FUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS, __clc_noop) \
 	__FUNC(SUFFIX ## _rtz, VEC_SIZE, OFFSET, TYPE, STYPE, AS, __clc_rtz) \
 	__FUNC(SUFFIX ## _rtn, VEC_SIZE, OFFSET, TYPE, STYPE, AS, __clc_rtn) \
-	__FUNC(SUFFIX ## _rtp, VEC_SIZE, OFFSET, TYPE, STYPE, AS, __clc_rtp)
+	__FUNC(SUFFIX ## _rtp, VEC_SIZE, OFFSET, TYPE, STYPE, AS, __clc_rtp) \
+	__FUNC(SUFFIX ## _rte, VEC_SIZE, OFFSET, TYPE, STYPE, AS, __clc_rte)
 
 #define FUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS) \
 	__XFUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS)

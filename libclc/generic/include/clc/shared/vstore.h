@@ -40,6 +40,7 @@ _CLC_VECTOR_VSTORE_HALF_PRIM1(float,)
 _CLC_VECTOR_VSTORE_HALF_PRIM1(float, _rtz)
 _CLC_VECTOR_VSTORE_HALF_PRIM1(float, _rtn)
 _CLC_VECTOR_VSTORE_HALF_PRIM1(float, _rtp)
+_CLC_VECTOR_VSTORE_HALF_PRIM1(float, _rte)
 
 #ifdef cl_khr_fp64
   _CLC_VECTOR_VSTORE_PRIM1(double)
@@ -47,6 +48,7 @@ _CLC_VECTOR_VSTORE_HALF_PRIM1(float, _rtp)
   _CLC_VECTOR_VSTORE_HALF_PRIM1(double, _rtz)
   _CLC_VECTOR_VSTORE_HALF_PRIM1(double, _rtn)
   _CLC_VECTOR_VSTORE_HALF_PRIM1(double, _rtp)
+  _CLC_VECTOR_VSTORE_HALF_PRIM1(double, _rte)
 #endif
 
 #ifdef cl_khr_fp16
