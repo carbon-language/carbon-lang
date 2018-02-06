@@ -78,6 +78,18 @@ HexagonTargetLowering::opSplit(SDValue Vec, const SDLoc &dl,
   return DAG.SplitVector(Vec, dl, Tys.first, Tys.second);
 }
 
+bool
+HexagonTargetLowering::isHvxSingleTy(MVT Ty) const {
+  return Subtarget.isHVXVectorType(Ty) &&
+         Ty.getSizeInBits() == 8 * Subtarget.getVectorLength();
+}
+
+bool
+HexagonTargetLowering::isHvxPairTy(MVT Ty) const {
+  return Subtarget.isHVXVectorType(Ty) &&
+         Ty.getSizeInBits() == 16 * Subtarget.getVectorLength();
+}
+
 SDValue
 HexagonTargetLowering::convertToByteIndex(SDValue ElemIdx, MVT ElemTy,
                                           SelectionDAG &DAG) const {
@@ -503,7 +515,7 @@ HexagonTargetLowering::extractHvxSubvectorReg(SDValue VecV, SDValue IdxV,
   // If the source vector is a vector pair, get the single vector containing
   // the subvector of interest. The subvector will never overlap two single
   // vectors.
-  if (VecTy.getSizeInBits() == 16*HwLen) {
+  if (isHvxPairTy(VecTy)) {
     unsigned SubIdx;
     if (Idx * ElemWidth >= 8*HwLen) {
       SubIdx = Hexagon::vsub_hi;
@@ -609,7 +621,7 @@ HexagonTargetLowering::insertHvxSubvectorReg(SDValue VecV, SDValue SubV,
   MVT ElemTy = VecTy.getVectorElementType();
   unsigned ElemWidth = ElemTy.getSizeInBits();
 
-  bool IsPair = VecTy.getSizeInBits() == 16*HwLen;
+  bool IsPair = isHvxPairTy(VecTy);
   MVT SingleTy = MVT::getVectorVT(ElemTy, (8*HwLen)/ElemWidth);
   // The two single vectors that VecV consists of, if it's a pair.
   SDValue V0, V1;
@@ -623,7 +635,7 @@ HexagonTargetLowering::insertHvxSubvectorReg(SDValue VecV, SDValue SubV,
     SDValue HalfV = DAG.getConstant(SingleTy.getVectorNumElements(),
                                     dl, MVT::i32);
     PickHi = DAG.getSetCC(dl, MVT::i1, IdxV, HalfV, ISD::SETUGT);
-    if (SubTy.getSizeInBits() == 8*HwLen) {
+    if (isHvxSingleTy(SubTy)) {
       if (const auto *CN = dyn_cast<const ConstantSDNode>(IdxV.getNode())) {
         unsigned Idx = CN->getZExtValue();
         assert(Idx == 0 || Idx == VecTy.getVectorNumElements()/2);
