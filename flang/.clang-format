@@ -1,20 +1,18 @@
 ---
 # See: https://clang.llvm.org/docs/ClangFormatStyleOptions.html
 BasedOnStyle: LLVM
-SpacesBeforeTrailingComments: 2
+AlignAfterOpenBracket: DontAlign
 AlignEscapedNewlines: DontAlign
 AllowShortCaseLabelsOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true
-ConstructorInitializerIndentWidth: 2
-AlignAfterOpenBracket: DontAlign
-AlignOperands: false
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
+AlignOperands: false
 AlignTrailingComments: false
+ConstructorInitializerIndentWidth: 2
 SpaceAfterTemplateKeyword: false
-BreakBeforeBinaryOperators: None
-BreakBeforeTernaryOperators: true
-ContinuationIndentWidth: 4
+SpacesBeforeTrailingComments: 2
+Standard: Cpp17
 ...
 
 # vim:set filetype=yaml:
