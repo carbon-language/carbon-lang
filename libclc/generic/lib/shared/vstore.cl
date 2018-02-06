@@ -75,41 +75,57 @@ DECLARE_HELPER(double, __global, __builtin_store_half);
 DECLARE_HELPER(double, __local, __builtin_store_half);
 #endif
 
-#define VEC_STORE1(STYPE, AS, val) __clc_vstore_half_##STYPE##_helper##AS (val, &mem[offset++]);
+#define VEC_STORE1(STYPE, AS, val, ROUNDF) __clc_vstore_half_##STYPE##_helper##AS (ROUNDF(val), &mem[offset++]);
 
-#define VEC_STORE2(STYPE, AS, val) \
-	VEC_STORE1(STYPE, AS, val.lo) \
-	VEC_STORE1(STYPE, AS, val.hi)
-#define VEC_STORE3(STYPE, AS, val) \
-	VEC_STORE1(STYPE, AS, val.s0) \
-	VEC_STORE1(STYPE, AS, val.s1) \
-	VEC_STORE1(STYPE, AS, val.s2)
-#define VEC_STORE4(STYPE, AS, val) \
-	VEC_STORE2(STYPE, AS, val.lo) \
-	VEC_STORE2(STYPE, AS, val.hi)
-#define VEC_STORE8(STYPE, AS, val) \
-	VEC_STORE4(STYPE, AS, val.lo) \
-	VEC_STORE4(STYPE, AS, val.hi)
-#define VEC_STORE16(STYPE, AS, val) \
-	VEC_STORE8(STYPE, AS, val.lo) \
-	VEC_STORE8(STYPE, AS, val.hi)
+#define VEC_STORE2(STYPE, AS, val, ROUNDF) \
+	VEC_STORE1(STYPE, AS, val.lo, ROUNDF) \
+	VEC_STORE1(STYPE, AS, val.hi, ROUNDF)
+#define VEC_STORE3(STYPE, AS, val, ROUNDF) \
+	VEC_STORE1(STYPE, AS, val.s0, ROUNDF) \
+	VEC_STORE1(STYPE, AS, val.s1, ROUNDF) \
+	VEC_STORE1(STYPE, AS, val.s2, ROUNDF)
+#define VEC_STORE4(STYPE, AS, val, ROUNDF) \
+	VEC_STORE2(STYPE, AS, val.lo, ROUNDF) \
+	VEC_STORE2(STYPE, AS, val.hi, ROUNDF)
+#define VEC_STORE8(STYPE, AS, val, ROUNDF) \
+	VEC_STORE4(STYPE, AS, val.lo, ROUNDF) \
+	VEC_STORE4(STYPE, AS, val.hi, ROUNDF)
+#define VEC_STORE16(STYPE, AS, val, ROUNDF) \
+	VEC_STORE8(STYPE, AS, val.lo, ROUNDF) \
+	VEC_STORE8(STYPE, AS, val.hi, ROUNDF)
 
-#define __FUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS) \
+#define __FUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS, ROUNDF) \
   _CLC_OVERLOAD _CLC_DEF void vstore_half##SUFFIX(TYPE vec, size_t offset, AS half *mem) { \
     offset *= VEC_SIZE; \
-    VEC_STORE##VEC_SIZE(STYPE, AS, vec) \
+    VEC_STORE##VEC_SIZE(STYPE, AS, vec, ROUNDF) \
   } \
   _CLC_OVERLOAD _CLC_DEF void vstorea_half##SUFFIX(TYPE vec, size_t offset, AS half *mem) { \
     offset *= OFFSET; \
-    VEC_STORE##VEC_SIZE(STYPE, AS, vec) \
+    VEC_STORE##VEC_SIZE(STYPE, AS, vec, ROUNDF) \
   }
 
-#define FUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS) __FUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS)
+_CLC_DEF _CLC_OVERLOAD float __clc_noop(float x)
+{
+	return x;
+}
+#ifdef cl_khr_fp64
+_CLC_DEF _CLC_OVERLOAD double __clc_noop(double x)
+{
+	return x;
+}
+#endif
+
+#define __XFUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS) \
+	__FUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS, __clc_noop)
+
+#define FUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS) \
+	__XFUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS)
 
 #define __CLC_BODY "vstore_half.inc"
 #include <clc/math/gentype.inc>
 #undef __CLC_BODY
 #undef FUNC
+#undef __XFUNC
 #undef __FUNC
 #undef VEC_LOAD16
 #undef VEC_LOAD8
