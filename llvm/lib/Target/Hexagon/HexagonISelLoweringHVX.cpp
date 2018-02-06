@@ -75,10 +75,8 @@ HexagonTargetLowering::VectorPair
 HexagonTargetLowering::opSplit(SDValue Vec, const SDLoc &dl,
                                SelectionDAG &DAG) const {
   TypePair Tys = typeSplit(ty(Vec));
-  if (Vec.getOpcode() == HexagonISD::QCAT) {
-assert(0);
+  if (Vec.getOpcode() == HexagonISD::QCAT)
     return VectorPair(Vec.getOperand(0), Vec.getOperand(1));
-  }
   return DAG.SplitVector(Vec, dl, Tys.first, Tys.second);
 }
 
