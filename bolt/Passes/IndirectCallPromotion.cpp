@@ -35,8 +35,7 @@ IndirectCallPromotion("indirect-call-promotion",
     clEnumValN(ICP_NONE, "none", "do not perform indirect call promotion"),
     clEnumValN(ICP_CALLS, "calls", "perform ICP on indirect calls"),
     clEnumValN(ICP_JUMP_TABLES, "jump-tables", "perform ICP on jump tables"),
-    clEnumValN(ICP_ALL, "all", "perform ICP on calls and jump tables"),
-    clEnumValEnd),
+    clEnumValN(ICP_ALL, "all", "perform ICP on calls and jump tables")),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -174,7 +173,7 @@ IndirectCallPromotion::getCallTargets(
     const auto *JI = JT->Counts.empty() ? &DefaultJI : &JT->Counts[Range.first];
     const size_t JIAdj = JT->Counts.empty() ? 0 : 1;
     assert(JT->Type == BinaryFunction::JumpTable::JTT_PIC ||
-           JT->EntrySize == BC.AsmInfo->getPointerSize());
+           JT->EntrySize == BC.AsmInfo->getCodePointerSize());
     for (size_t I = Range.first; I < Range.second; ++I, JI += JIAdj) {
       auto *Entry = JT->Entries[I];
       assert(BF.getBasicBlockForLabel(Entry) ||
@@ -307,16 +306,9 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(
   int64_t DispValue;
   const MCExpr *DispExpr;
   MutableArrayRef<MCInst> Insts(&BB->front(), &CallInst);
-  const auto Type = BC.MIA->analyzeIndirectBranch(CallInst,
-                                                  Insts.begin(),
-                                                  Insts.end(),
-                                                  BC.AsmInfo->getPointerSize(),
-                                                  MemLocInstr,
-                                                  BaseReg,
-                                                  IndexReg,
-                                                  DispValue,
-                                                  DispExpr,
-                                                  PCRelBaseOut);
+  const auto Type = BC.MIA->analyzeIndirectBranch(
+      CallInst, Insts.begin(), Insts.end(), BC.AsmInfo->getCodePointerSize(),
+      MemLocInstr, BaseReg, IndexReg, DispValue, DispExpr, PCRelBaseOut);
 
   assert(MemLocInstr && "There should always be a load for jump tables");
   if (!MemLocInstr)
@@ -665,7 +657,7 @@ IndirectCallPromotion::maybeGetVtableAddrs(
 
   return MethodInfoType(VtableAddrs, MethodFetchInsns);
 }
-  
+
 std::vector<std::unique_ptr<BinaryBasicBlock>>
 IndirectCallPromotion::rewriteCall(
    BinaryContext &BC,
@@ -1201,7 +1193,7 @@ void IndirectCallPromotion::runOnFunctions(
             for (const auto &BInfo : getCallTargets(Function, Inst)) {
               NumCalls += BInfo.Branches;
             }
-            
+
             IndirectCalls.push_back(std::make_pair(NumCalls, &Inst));
             TotalIndirectCalls += NumCalls;
           }

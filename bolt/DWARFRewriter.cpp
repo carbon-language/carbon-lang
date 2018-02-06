@@ -15,12 +15,14 @@
 #include "BinaryFunction.h"
 #include "RewriteInstance.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/DebugInfo/DWARF/DWARFDebugLine.h"
 #include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDwarf.h"
+#include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCStreamer.h"
@@ -29,11 +31,9 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/TimeValue.h"
 #include "llvm/Support/Timer.h"
 #include <algorithm>
 
@@ -67,8 +67,7 @@ void RewriteInstance::updateDebugInfo() {
   LocationListWriter = llvm::make_unique<DebugLocWriter>(BC.get());
 
   for (auto &CU : BC->DwCtx->compile_units()) {
-    updateUnitDebugInfo(CU.get(),
-                        CU->getUnitDIE(false),
+    updateUnitDebugInfo(CU->getUnitDIE(false),
                         std::vector<const BinaryFunction *>{});
   }
 
@@ -78,28 +77,27 @@ void RewriteInstance::updateDebugInfo() {
 }
 
 void RewriteInstance::updateUnitDebugInfo(
-    DWARFCompileUnit *Unit,
-    const DWARFDebugInfoEntryMinimal *DIE,
+    const DWARFDie DIE,
     std::vector<const BinaryFunction *> FunctionStack) {
 
   bool IsFunctionDef = false;
-  switch (DIE->getTag()) {
+  switch (DIE.getTag()) {
   case dwarf::DW_TAG_compile_unit:
     {
-      const auto ModuleRanges = DIE->getAddressRanges(Unit);
+      const auto ModuleRanges = DIE.getAddressRanges();
       auto OutputRanges = translateModuleAddressRanges(ModuleRanges);
       const auto RangesSectionOffset =
-        RangesSectionsWriter->addCURanges(Unit->getOffset(),
+        RangesSectionsWriter->addCURanges(DIE.getDwarfUnit()->getOffset(),
                                           std::move(OutputRanges));
-      updateDWARFObjectAddressRanges(Unit, DIE, RangesSectionOffset);
+      updateDWARFObjectAddressRanges(DIE, RangesSectionOffset);
     }
     break;
 
   case dwarf::DW_TAG_subprogram:
     {
       // The function cannot have multiple ranges on the input.
-      uint64_t LowPC, HighPC;
-      if (DIE->getLowAndHighPC(Unit, LowPC, HighPC)) {
+      uint64_t SectionIndex, LowPC, HighPC;
+      if (DIE.getLowAndHighPC(LowPC, HighPC, SectionIndex)) {
         IsFunctionDef = true;
         const auto *Function = getBinaryFunctionAtAddress(LowPC);
         if (Function && Function->isFolded()) {
@@ -114,7 +112,7 @@ void RewriteInstance::updateUnitDebugInfo(
             RangesSectionsWriter->addRanges(Function,
                                             std::move(FunctionRanges));
         }
-        updateDWARFObjectAddressRanges(Unit, DIE, RangesSectionOffset);
+        updateDWARFObjectAddressRanges(DIE, RangesSectionOffset);
       }
     }
     break;
@@ -129,19 +127,19 @@ void RewriteInstance::updateUnitDebugInfo(
       const BinaryFunction *Function =
         FunctionStack.empty() ? nullptr : FunctionStack.back();
       if (Function) {
-        const auto Ranges = DIE->getAddressRanges(Unit);
+        const auto Ranges = DIE.getAddressRanges();
         auto OutputRanges = Function->translateInputToOutputRanges(Ranges);
         DEBUG(
           if (OutputRanges.empty() != Ranges.empty()) {
             dbgs() << "BOLT-DEBUG: problem with DIE at 0x"
-                   << Twine::utohexstr(DIE->getOffset()) << " in CU at 0x"
-                   << Twine::utohexstr(Unit->getOffset()) << '\n';
+                   << Twine::utohexstr(DIE.getOffset()) << " in CU at 0x"
+                   << Twine::utohexstr(DIE.getDwarfUnit()->getOffset()) << '\n';
           }
         );
         RangesSectionOffset =
           RangesSectionsWriter->addRanges(Function, std::move(OutputRanges));
       }
-      updateDWARFObjectAddressRanges(Unit, DIE, RangesSectionOffset);
+      updateDWARFObjectAddressRanges(DIE, RangesSectionOffset);
     }
     break;
 
@@ -152,8 +150,8 @@ void RewriteInstance::updateUnitDebugInfo(
       uint32_t AttrOffset;
       const BinaryFunction *Function =
         FunctionStack.empty() ? nullptr : FunctionStack.back();
-      if (DIE->getAttributeValue(Unit, dwarf::DW_AT_location, Value,
-                                 &AttrOffset)) {
+      if (auto V = DIE.find(dwarf::DW_AT_location, &AttrOffset)) {
+        Value = *V;
         if (Value.isFormClass(DWARFFormValue::FC_Constant) ||
             Value.isFormClass(DWARFFormValue::FC_SectionOffset)) {
           auto LocListSectionOffset = LocationListWriter->getEmptyListOffset();
@@ -164,20 +162,25 @@ void RewriteInstance::updateUnitDebugInfo(
               Value.getAsUnsignedConstant().getValue() :
               Value.getAsSectionOffset().getValue();
 
-            Unit->getContext().getOneDebugLocList(LL);
-            if (LL.Entries.empty()) {
+            uint32_t LLOff = LL.Offset;
+            auto OptLL =
+                DIE.getDwarfUnit()->getContext().getOneDebugLocList(&LLOff);
+            if (!OptLL || OptLL->Entries.empty()) {
               errs() << "BOLT-WARNING: empty location list detected at 0x"
-                     << Twine::utohexstr(LL.Offset) << " for DIE at 0x"
-                     << Twine::utohexstr(DIE->getOffset()) << " in CU at 0x"
-                     << Twine::utohexstr(Unit->getOffset()) << '\n';
+                     << Twine::utohexstr(LLOff) << " for DIE at 0x"
+                     << Twine::utohexstr(DIE.getOffset()) << " in CU at 0x"
+                     << Twine::utohexstr(DIE.getDwarfUnit()->getOffset())
+                     << '\n';
             } else {
-              const auto OutputLL = Function->
-                translateInputToOutputLocationList(LL, Unit->getBaseAddress());
+              const auto OutputLL =
+                  Function->translateInputToOutputLocationList(
+                      *OptLL, *DIE.getDwarfUnit()->getBaseAddress());
               DEBUG(if (OutputLL.Entries.empty()) {
                 dbgs() << "BOLT-DEBUG: location list translated to an empty "
                           "one at 0x"
-                       << Twine::utohexstr(DIE->getOffset()) << " in CU at 0x"
-                       << Twine::utohexstr(Unit->getOffset()) << '\n';
+                       << Twine::utohexstr(DIE.getOffset()) << " in CU at 0x"
+                       << Twine::utohexstr(DIE.getDwarfUnit()->getOffset())
+                       << '\n';
               });
               LocListSectionOffset = LocationListWriter->addList(OutputLL);
             }
@@ -192,9 +195,9 @@ void RewriteInstance::updateUnitDebugInfo(
                   Value.isFormClass(DWARFFormValue::FC_Block)) &&
                  "unexpected DW_AT_location form");
         }
-      } else if (DIE->getAttributeValue(Unit, dwarf::DW_AT_low_pc, Value,
-                                        &AttrOffset)) {
-        const auto Result = Value.getAsAddress(Unit);
+      } else if (auto V = DIE.find(dwarf::DW_AT_low_pc, &AttrOffset)) {
+        Value = *V;
+        const auto Result = Value.getAsAddress();
         if (Result.hasValue()) {
           uint64_t NewAddress = 0;
           if (Function) {
@@ -202,7 +205,7 @@ void RewriteInstance::updateUnitDebugInfo(
             NewAddress = Function->translateInputToOutputAddress(Address);
             DEBUG(dbgs() << "BOLT-DEBUG: Fixing low_pc 0x"
                          << Twine::utohexstr(Address)
-                         << " for DIE with tag " << DIE->getTag()
+                         << " for DIE with tag " << DIE.getTag()
                          << " to 0x" << Twine::utohexstr(NewAddress) << '\n');
           }
           auto DebugInfoPatcher =
@@ -218,19 +221,16 @@ void RewriteInstance::updateUnitDebugInfo(
   }
 
   // Recursively update each child.
-  for (auto Child = DIE->getFirstChild(); Child; Child = Child->getSibling()) {
-    updateUnitDebugInfo(Unit, Child, FunctionStack);
+  for (auto Child = DIE.getFirstChild(); Child; Child = Child.getSibling()) {
+    updateUnitDebugInfo(Child, FunctionStack);
   }
 
   if (IsFunctionDef)
     FunctionStack.pop_back();
 }
 
-
 void RewriteInstance::updateDWARFObjectAddressRanges(
-    const DWARFUnit *Unit,
-    const DWARFDebugInfoEntryMinimal *DIE,
-    uint64_t DebugRangesOffset) {
+    const DWARFDie DIE, uint64_t DebugRangesOffset) {
 
   // Some objects don't have an associated DIE and cannot be updated (such as
   // compiler-generated functions).
@@ -240,7 +240,7 @@ void RewriteInstance::updateDWARFObjectAddressRanges(
 
   if (opts::Verbosity >= 2 && DebugRangesOffset == -1U) {
     errs() << "BOLT-WARNING: using invalid DW_AT_range for DIE at offset 0x"
-           << Twine::utohexstr(DIE->getOffset()) << '\n';
+           << Twine::utohexstr(DIE.getOffset()) << '\n';
   }
 
   auto DebugInfoPatcher =
@@ -250,24 +250,24 @@ void RewriteInstance::updateDWARFObjectAddressRanges(
 
   assert(DebugInfoPatcher && AbbrevPatcher && "Patchers not initialized.");
 
-  const auto *AbbreviationDecl = DIE->getAbbreviationDeclarationPtr();
+  const auto *AbbreviationDecl = DIE.getAbbreviationDeclarationPtr();
   if (!AbbreviationDecl) {
     if (opts::Verbosity >= 1) {
       errs() << "BOLT-WARNING: object's DIE doesn't have an abbreviation: "
              << "skipping update. DIE at offset 0x"
-             << Twine::utohexstr(DIE->getOffset()) << '\n';
+             << Twine::utohexstr(DIE.getOffset()) << '\n';
     }
     return;
   }
 
   auto AbbrevCode = AbbreviationDecl->getCode();
 
-  if (AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_ranges) != -1U) {
+  if (AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_ranges)) {
     // Case 1: The object was already non-contiguous and had DW_AT_ranges.
     // In this case we simply need to update the value of DW_AT_ranges.
-    DWARFFormValue FormValue;
     uint32_t AttrOffset = -1U;
-    DIE->getAttributeValue(Unit, dwarf::DW_AT_ranges, FormValue, &AttrOffset);
+    DIE.find(dwarf::DW_AT_ranges, &AttrOffset);
+    assert(AttrOffset != -1U &&  "failed to locate DWARF attribute");
     DebugInfoPatcher->addLE32Patch(AttrOffset, DebugRangesOffset);
   } else {
     // Case 2: The object has both DW_AT_low_pc and DW_AT_high_pc emitted back
@@ -282,38 +282,37 @@ void RewriteInstance::updateDWARFObjectAddressRanges(
     // To fill in the gap we use a variable length DW_FORM_udata encoding for
     // DW_AT_low_pc. We exploit the fact that the encoding can take an arbitrary
     // large size.
-    if (AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_low_pc) != -1U &&
-        AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_high_pc) != -1U) {
+    if (AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_low_pc) &&
+        AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_high_pc)) {
       uint32_t LowPCOffset = -1U;
       uint32_t HighPCOffset = -1U;
-      DWARFFormValue LowPCFormValue;
-      DWARFFormValue HighPCFormValue;
-      DIE->getAttributeValue(Unit, dwarf::DW_AT_low_pc, LowPCFormValue,
-                             &LowPCOffset);
-      DIE->getAttributeValue(Unit, dwarf::DW_AT_high_pc, HighPCFormValue,
-                             &HighPCOffset);
+      DWARFFormValue LowPCFormValue =
+          *DIE.find(dwarf::DW_AT_low_pc, &LowPCOffset);
+      DWARFFormValue HighPCFormValue =
+          *DIE.find(dwarf::DW_AT_high_pc, &HighPCOffset);
+
       if (LowPCFormValue.getForm() != dwarf::DW_FORM_addr ||
           (HighPCFormValue.getForm() != dwarf::DW_FORM_addr &&
            HighPCFormValue.getForm() != dwarf::DW_FORM_data8 &&
            HighPCFormValue.getForm() != dwarf::DW_FORM_data4)) {
         errs() << "BOLT-WARNING: unexpected form value. Cannot update DIE "
-                 << "at offset 0x" << Twine::utohexstr(DIE->getOffset())
+                 << "at offset 0x" << Twine::utohexstr(DIE.getOffset())
                  << "\n";
         return;
       }
       if (LowPCOffset == -1U || (LowPCOffset + 8 != HighPCOffset)) {
         errs() << "BOLT-WARNING: high_pc expected immediately after low_pc. "
                << "Cannot update DIE at offset 0x"
-               << Twine::utohexstr(DIE->getOffset()) << '\n';
+               << Twine::utohexstr(DIE.getOffset()) << '\n';
         return;
       }
 
-      AbbrevPatcher->addAttributePatch(Unit,
+      AbbrevPatcher->addAttributePatch(DIE.getDwarfUnit(),
                                        AbbrevCode,
                                        dwarf::DW_AT_low_pc,
                                        dwarf::DW_AT_ranges,
                                        dwarf::DW_FORM_sec_offset);
-      AbbrevPatcher->addAttributePatch(Unit,
+      AbbrevPatcher->addAttributePatch(DIE.getDwarfUnit(),
                                        AbbrevCode,
                                        dwarf::DW_AT_high_pc,
                                        dwarf::DW_AT_low_pc,
@@ -332,7 +331,7 @@ void RewriteInstance::updateDWARFObjectAddressRanges(
     } else {
       if (opts::Verbosity >= 1) {
         errs() << "BOLT-WARNING: Cannot update ranges for DIE at offset 0x"
-               << Twine::utohexstr(DIE->getOffset()) << '\n';
+               << Twine::utohexstr(DIE.getOffset()) << '\n';
       }
     }
   }
@@ -378,7 +377,7 @@ void RewriteInstance::updateDebugLineInfoForNonSimpleFunctions() {
             Row.Address);
         auto Loc = BC->Ctx->getCurrentDwarfLoc();
         BC->Ctx->clearDwarfLocSeen();
-        OutputLineTable.addLineEntry(MCLineEntry{nullptr, Loc},
+        OutputLineTable.addLineEntry(MCDwarfLineEntry{nullptr, Loc},
                                      FunctionSection);
       }
       // Add an empty entry past the end of the function
@@ -387,7 +386,7 @@ void RewriteInstance::updateDebugLineInfoForNonSimpleFunctions() {
                                   Address + Function.getMaxSize());
       auto Loc = BC->Ctx->getCurrentDwarfLoc();
       BC->Ctx->clearDwarfLocSeen();
-      OutputLineTable.addLineEntry(MCLineEntry{nullptr, Loc},
+      OutputLineTable.addLineEntry(MCDwarfLineEntry{nullptr, Loc},
                                    FunctionSection);
     } else {
       DEBUG(dbgs() << "BOLT-DEBUG: Function " << Function
@@ -397,7 +396,7 @@ void RewriteInstance::updateDebugLineInfoForNonSimpleFunctions() {
 }
 
 void RewriteInstance::updateLineTableOffsets() {
-  const auto LineSection =
+  const auto *LineSection =
     BC->Ctx->getObjectFileInfo()->getDwarfLineSection();
   auto CurrentFragment = LineSection->begin();
   uint32_t CurrentOffset = 0;
@@ -460,8 +459,8 @@ void RewriteInstance::finalizeDebugSections() {
     SmallVector<char, 16> ARangesBuffer;
     raw_svector_ostream OS(ARangesBuffer);
 
-    auto MAB = std::unique_ptr<MCAsmBackend>(
-        BC->TheTarget->createMCAsmBackend(*BC->MRI, BC->TripleName, ""));
+    auto MAB = std::unique_ptr<MCAsmBackend>(BC->TheTarget->createMCAsmBackend(
+        *BC->STI, *BC->MRI, MCTargetOptions()));
     auto Writer = std::unique_ptr<MCObjectWriter>(MAB->createObjectWriter(OS));
 
     RangesSectionsWriter->writeArangesSection(Writer.get());
@@ -591,8 +590,8 @@ void RewriteInstance::updateGdbIndexSection() {
     const auto CUIndex = OffsetToIndexMap[CURangesPair.first];
     const auto &Ranges = CURangesPair.second;
     for (const auto &Range : Ranges) {
-      write64le(Buffer, Range.first);
-      write64le(Buffer + 8, Range.second);
+      write64le(Buffer, Range.LowPC);
+      write64le(Buffer + 8, Range.HighPC);
       write32le(Buffer + 16, CUIndex);
       Buffer += 20;
     }

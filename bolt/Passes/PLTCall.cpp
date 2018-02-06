@@ -34,8 +34,7 @@ PLT("plt",
       "optimize executed (hot) PLT calls"),
     clEnumValN(bolt::PLTCall::OT_ALL,
       "all",
-      "optimize all PLT calls"),
-    clEnumValEnd),
+      "optimize all PLT calls")),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 

@@ -19,12 +19,12 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/DebugInfo/DWARF/DWARFFrame.h"
+#include "llvm/BinaryFormat/Dwarf.h"
+#include "llvm/DebugInfo/DWARF/DWARFDebugFrame.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Dwarf.h"
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
@@ -61,7 +61,7 @@ unsigned getEncodingSize(unsigned Encoding, BinaryContext &BC) {
   default: llvm_unreachable("unknown encoding");
   case dwarf::DW_EH_PE_absptr:
   case dwarf::DW_EH_PE_signed:
-    return BC.AsmInfo->getPointerSize();
+    return BC.AsmInfo->getCodePointerSize();
   case dwarf::DW_EH_PE_udata2:
   case dwarf::DW_EH_PE_sdata2:
     return 2;
@@ -133,30 +133,24 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
   if (!getLSDAAddress())
     return;
 
-  assert(getLSDAAddress() < LSDASectionAddress + LSDASectionData.size() &&
-         "wrong LSDA address");
+  DWARFDataExtractor Data(
+      StringRef(reinterpret_cast<const char *>(LSDASectionData.data()),
+                LSDASectionData.size()),
+      BC.DwCtx->getDWARFObj().isLittleEndian(), 8);
+  uint32_t Offset = getLSDAAddress() - LSDASectionAddress;
+  assert(Data.isValidOffset(Offset) && "wrong LSDA address");
 
-  // Given an address in memory corresponding to some entity in mapped
-  // LSDA section return address of this entity in a binary file.
-  auto getFileAddress = [&](const uint8_t *InMemAddress) {
-    return InMemAddress - LSDASectionData.data() + LSDASectionAddress;
-  };
-  const uint8_t *Ptr =
-      LSDASectionData.data() + getLSDAAddress() - LSDASectionAddress;
-
-  uint8_t LPStartEncoding = *Ptr++;
-  uintptr_t LPStart = 0;
-  if (LPStartEncoding != DW_EH_PE_omit) {
-    LPStart = readEncodedPointer(Ptr, LPStartEncoding, getFileAddress(Ptr));
-  }
+  uint8_t LPStartEncoding = Data.getU8(&Offset);
+  uint64_t LPStart = Data.getEncodedPointer(&Offset, LPStartEncoding,
+                                            Offset + LSDASectionAddress);
 
   assert(LPStart == 0 && "support for split functions not implemented");
 
-  const auto TTypeEncoding = *Ptr++;
+  const auto TTypeEncoding = Data.getU8(&Offset);
   size_t TTypeEncodingSize = 0;
   uintptr_t TTypeEnd = 0;
   if (TTypeEncoding != DW_EH_PE_omit) {
-    TTypeEnd = readULEB128(Ptr);
+    TTypeEnd = Data.getULEB128(&Offset);
     TTypeEncodingSize = getEncodingSize(TTypeEncoding, BC);
   }
 
@@ -171,24 +165,24 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
   }
 
   // Table to store list of indices in type table. Entries are uleb128 values.
-  auto TypeIndexTableStart = Ptr + TTypeEnd;
+  const uint32_t TypeIndexTableStart = Offset + TTypeEnd;
 
   // Offset past the last decoded index.
-  intptr_t MaxTypeIndexTableOffset = 0;
+  uint32_t MaxTypeIndexTableOffset = 0;
 
   // Max positive index used in type table.
   unsigned MaxTypeIndex = 0;
 
   // The actual type info table starts at the same location, but grows in
   // opposite direction. TTypeEncoding is used to encode stored values.
-  const auto TypeTableStart = Ptr + TTypeEnd;
+  const auto TypeTableStart = Offset + TTypeEnd;
 
-  uint8_t       CallSiteEncoding = *Ptr++;
-  uint32_t      CallSiteTableLength = readULEB128(Ptr);
-  const uint8_t *CallSiteTableStart = Ptr;
-  const uint8_t *CallSiteTableEnd = CallSiteTableStart + CallSiteTableLength;
-  const uint8_t *CallSitePtr = CallSiteTableStart;
-  const uint8_t *ActionTableStart = CallSiteTableEnd;
+  uint8_t CallSiteEncoding = Data.getU8(&Offset);
+  uint32_t CallSiteTableLength = Data.getULEB128(&Offset);
+  auto CallSiteTableStart = Offset;
+  auto CallSiteTableEnd = CallSiteTableStart + CallSiteTableLength;
+  auto CallSitePtr = CallSiteTableStart;
+  auto ActionTableStart = CallSiteTableEnd;
 
   if (opts::PrintExceptions) {
     outs() << "CallSite Encoding = " << (unsigned)CallSiteEncoding << '\n';
@@ -199,13 +193,13 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
   HasEHRanges = CallSitePtr < CallSiteTableEnd;
   uint64_t RangeBase = getAddress();
   while (CallSitePtr < CallSiteTableEnd) {
-    uintptr_t Start = readEncodedPointer(CallSitePtr, CallSiteEncoding,
-                                         getFileAddress(CallSitePtr));
-    uintptr_t Length = readEncodedPointer(CallSitePtr, CallSiteEncoding,
-                                          getFileAddress(CallSitePtr));
-    uintptr_t LandingPad = readEncodedPointer(CallSitePtr, CallSiteEncoding,
-                                              getFileAddress(CallSitePtr));
-    uintptr_t ActionEntry = readULEB128(CallSitePtr);
+    uintptr_t Start = Data.getEncodedPointer(&CallSitePtr, CallSiteEncoding,
+                                             CallSitePtr + LSDASectionAddress);
+    uintptr_t Length = Data.getEncodedPointer(&CallSitePtr, CallSiteEncoding,
+                                              CallSitePtr + LSDASectionAddress);
+    uintptr_t LandingPad = Data.getEncodedPointer(
+        &CallSitePtr, CallSiteEncoding, CallSitePtr + LSDASectionAddress);
+    uintptr_t ActionEntry = Data.getULEB128(&CallSitePtr);
 
     if (opts::PrintExceptions) {
       outs() << "Call Site: [0x" << Twine::utohexstr(RangeBase + Start)
@@ -258,11 +252,10 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
     if (ActionEntry != 0) {
       auto printType = [&] (int Index, raw_ostream &OS) {
         assert(Index > 0 && "only positive indices are valid");
-        const uint8_t *TTEntry = TypeTableStart - Index * TTypeEncodingSize;
-        const auto TTEntryAddress = getFileAddress(TTEntry);
-        auto TypeAddress = readEncodedPointer(TTEntry,
-                                              TTypeEncoding,
-                                              TTEntryAddress);
+        uint32_t TTEntry = TypeTableStart - Index * TTypeEncodingSize;
+        const auto TTEntryAddress = TTEntry + LSDASectionAddress;
+        auto TypeAddress =
+            Data.getEncodedPointer(&TTEntry, TTypeEncoding, TTEntryAddress);
         if ((TTypeEncoding & DW_EH_PE_pcrel) &&
             (TypeAddress == TTEntryAddress)) {
           TypeAddress = 0;
@@ -285,14 +278,14 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
       };
       if (opts::PrintExceptions)
         outs() << "    actions: ";
-      const uint8_t *ActionPtr = ActionTableStart + ActionEntry - 1;
+      uint32_t ActionPtr = ActionTableStart + ActionEntry - 1;
       long long ActionType;
       long long ActionNext;
       auto Sep = "";
       do {
-        ActionType = readSLEB128(ActionPtr);
+        ActionType = Data.getSLEB128(&ActionPtr);
         auto Self = ActionPtr;
-        ActionNext = readSLEB128(ActionPtr);
+        ActionNext = Data.getSLEB128(&ActionPtr);
         if (opts::PrintExceptions)
           outs() << Sep << "(" << ActionType << ", " << ActionNext << ") ";
         if (ActionType == 0) {
@@ -314,8 +307,8 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
           // of indices with base 1.
           // E.g. -1 means offset 0, -2 is offset 1, etc. The indices are
           // encoded using uleb128 thus we cannot directly dereference them.
-          auto TypeIndexTablePtr = TypeIndexTableStart - ActionType - 1;
-          while (auto Index = readULEB128(TypeIndexTablePtr)) {
+          uint32_t TypeIndexTablePtr = TypeIndexTableStart - ActionType - 1;
+          while (auto Index = Data.getULEB128(&TypeIndexTablePtr)) {
             MaxTypeIndex = std::max(MaxTypeIndex, static_cast<unsigned>(Index));
             if (opts::PrintExceptions) {
               outs() << TSep;
@@ -340,22 +333,20 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
     outs() << '\n';
 
   assert(TypeIndexTableStart + MaxTypeIndexTableOffset <=
-         LSDASectionData.data() + LSDASectionData.size() &&
+             Data.getData().size() &&
          "LSDA entry has crossed section boundary");
 
   if (TTypeEnd) {
-    // TypeIndexTableStart is a <uint8_t *> alias for TypeTableStart.
-    LSDAActionTable =
-      ArrayRef<uint8_t>(ActionTableStart, TypeIndexTableStart -
-                        MaxTypeIndex * TTypeEncodingSize - ActionTableStart);
+    LSDAActionTable = LSDASectionData.slice(
+        ActionTableStart, TypeIndexTableStart -
+                              MaxTypeIndex * TTypeEncodingSize -
+                              ActionTableStart);
     for (unsigned Index = 1; Index <= MaxTypeIndex; ++Index) {
-      const uint8_t *TTEntry = TypeTableStart - Index * TTypeEncodingSize;
-      const auto TTEntryAddress = getFileAddress(TTEntry);
-      auto TypeAddress = readEncodedPointer(TTEntry,
-                                            TTypeEncoding,
-                                            TTEntryAddress);
-      if ((TTypeEncoding & DW_EH_PE_pcrel) &&
-          (TypeAddress == TTEntryAddress)) {
+      uint32_t TTEntry = TypeTableStart - Index * TTypeEncodingSize;
+      const auto TTEntryAddress = TTEntry + LSDASectionAddress;
+      auto TypeAddress =
+          Data.getEncodedPointer(&TTEntry, TTypeEncoding, TTEntryAddress);
+      if ((TTypeEncoding & DW_EH_PE_pcrel) && (TypeAddress == TTEntryAddress)) {
         TypeAddress = 0;
       }
       if (TypeAddress &&
@@ -367,7 +358,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
       LSDATypeTable.emplace_back(TypeAddress);
     }
     LSDATypeIndexTable =
-      ArrayRef<uint8_t>(TypeIndexTableStart, MaxTypeIndexTableOffset);
+        LSDASectionData.slice(TypeIndexTableStart, MaxTypeIndexTableOffset);
   }
 }
 
@@ -595,7 +586,7 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer, bool EmitColdPart) {
 
   // Account for any extra padding that will be added to the call site table
   // length.
-  Streamer->EmitULEB128IntValue(TTypeBaseOffset, SizeAlign);
+  Streamer->EmitPaddedULEB128IntValue(TTypeBaseOffset, SizeAlign);
 
   // Emit the landing pad call site table. We use signed data4 since we can emit
   // a landing pad in a different part of the split function that could appear
@@ -684,21 +675,22 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
     return false;
   }
 
-  Function.setLSDAAddress(CurFDE.getLSDAAddress());
+  auto LSDA = CurFDE.getLSDAAddress();
+  Function.setLSDAAddress(LSDA ? *LSDA : 0);
 
   uint64_t Offset = 0;
   uint64_t CodeAlignment = CurFDE.getLinkedCIE()->getCodeAlignmentFactor();
   uint64_t DataAlignment = CurFDE.getLinkedCIE()->getDataAlignmentFactor();
-  if (CurFDE.getLinkedCIE()->getPersonalityAddress() != 0) {
+  if (CurFDE.getLinkedCIE()->getPersonalityAddress()) {
     Function.setPersonalityFunction(
-        CurFDE.getLinkedCIE()->getPersonalityAddress());
+        *CurFDE.getLinkedCIE()->getPersonalityAddress());
     Function.setPersonalityEncoding(
-        CurFDE.getLinkedCIE()->getPersonalityEncoding());
+        *CurFDE.getLinkedCIE()->getPersonalityEncoding());
   }
 
   auto decodeFrameInstruction =
       [&Function, &Offset, Address, CodeAlignment, DataAlignment](
-          const FrameEntry::Instruction &Instr) {
+          const CFIProgram::Instruction &Instr) {
         uint8_t Opcode = Instr.Opcode;
         if (Opcode & DWARF_CFI_PRIMARY_OPCODE_MASK)
           Opcode &= DWARF_CFI_PRIMARY_OPCODE_MASK;
@@ -854,12 +846,12 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
         return true;
       };
 
-  for (const FrameEntry::Instruction &Instr : *(CurFDE.getLinkedCIE())) {
+  for (const CFIProgram::Instruction &Instr : CurFDE.getLinkedCIE()->cfis()) {
     if (!decodeFrameInstruction(Instr))
       return false;
   }
 
-  for (const FrameEntry::Instruction &Instr : CurFDE) {
+  for (const CFIProgram::Instruction &Instr : CurFDE.cfis()) {
     if (!decodeFrameInstruction(Instr))
       return false;
   }
@@ -868,8 +860,8 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
 }
 
 std::vector<char> CFIReaderWriter::generateEHFrameHeader(
-    const DWARFFrame &OldEHFrame,
-    const DWARFFrame &NewEHFrame,
+    const DWARFDebugFrame &OldEHFrame,
+    const DWARFDebugFrame &NewEHFrame,
     uint64_t EHFrameHeaderAddress,
     std::vector<uint64_t> &FailedAddresses) const {
   // Common PC -> FDE map to be written into .eh_frame_hdr.
@@ -881,7 +873,7 @@ std::vector<char> CFIReaderWriter::generateEHFrameHeader(
   // Initialize PCToFDE using NewEHFrame.
   NewEHFrame.for_each_FDE([&](const dwarf::FDE *FDE) {
     const auto FuncAddress = FDE->getInitialLocation();
-    const auto FDEAddress = NewEHFrame.EHFrameAddress + FDE->getOffset();
+    const auto FDEAddress = NewEHFrame.getEHFrameAddress() + FDE->getOffset();
 
     // Ignore unused FDEs.
     if (FuncAddress == 0)
@@ -898,13 +890,15 @@ std::vector<char> CFIReaderWriter::generateEHFrameHeader(
   });
 
   DEBUG(dbgs() << "BOLT-DEBUG: new .eh_frame contains "
-               << NewEHFrame.Entries.size() << " entries\n");
+               << std::distance(NewEHFrame.entries().begin(),
+                                NewEHFrame.entries().end())
+               << " entries\n");
 
   // Add entries from the original .eh_frame corresponding to the functions
   // that we did not update.
   OldEHFrame.for_each_FDE([&](const dwarf::FDE *FDE) {
     const auto FuncAddress = FDE->getInitialLocation();
-    const auto FDEAddress = OldEHFrame.EHFrameAddress + FDE->getOffset();
+    const auto FDEAddress = OldEHFrame.getEHFrameAddress() + FDE->getOffset();
 
     // Add the address if we failed to write it.
     if (PCToFDE.count(FuncAddress) == 0) {
@@ -916,7 +910,9 @@ std::vector<char> CFIReaderWriter::generateEHFrameHeader(
   });
 
   DEBUG(dbgs() << "BOLT-DEBUG: old .eh_frame contains "
-               << OldEHFrame.Entries.size() << " entries\n");
+               << std::distance(OldEHFrame.entries().begin(),
+                                OldEHFrame.entries().end())
+               << " entries\n");
 
   // Generate a new .eh_frame_hdr based on the new map.
 
@@ -934,7 +930,7 @@ std::vector<char> CFIReaderWriter::generateEHFrameHeader(
 
   // Address of eh_frame. Use the new one.
   support::ulittle32_t::ref(EHFrameHeader.data() + 4) =
-    NewEHFrame.EHFrameAddress - (EHFrameHeaderAddress + 4);
+    NewEHFrame.getEHFrameAddress() - (EHFrameHeaderAddress + 4);
 
   // Number of entries in the table (FDE count).
   support::ulittle32_t::ref(EHFrameHeader.data() + 8) = PCToFDE.size();

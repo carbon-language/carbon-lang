@@ -15,6 +15,7 @@
 #include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
 #include "llvm/DebugInfo/DWARF/DWARFUnit.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/CommandLine.h"
@@ -48,10 +49,11 @@ PrintMemData("print-mem-data",
 
 BinaryContext::~BinaryContext() { }
 
-MCObjectWriter *BinaryContext::createObjectWriter(raw_pwrite_stream &OS) {
+std::unique_ptr<MCObjectWriter>
+BinaryContext::createObjectWriter(raw_pwrite_stream &OS) {
   if (!MAB) {
     MAB = std::unique_ptr<MCAsmBackend>(
-        TheTarget->createMCAsmBackend(*MRI, TripleName, ""));
+        TheTarget->createMCAsmBackend(*STI, *MRI, MCTargetOptions()));
   }
 
   return MAB->createObjectWriter(OS);
@@ -148,21 +150,20 @@ namespace {
 /// Recursively finds DWARF DW_TAG_subprogram DIEs and match them with
 /// BinaryFunctions. Record DIEs for unknown subprograms (mostly functions that
 /// are never called and removed from the binary) in Unknown.
-void findSubprograms(DWARFCompileUnit *Unit,
-                     const DWARFDebugInfoEntryMinimal *DIE,
+void findSubprograms(const DWARFDie DIE,
                      std::map<uint64_t, BinaryFunction> &BinaryFunctions) {
-  if (DIE->isSubprogramDIE()) {
+  if (DIE.isSubprogramDIE()) {
     // TODO: handle DW_AT_ranges.
-    uint64_t LowPC, HighPC;
-    if (DIE->getLowAndHighPC(Unit, LowPC, HighPC)) {
+    uint64_t LowPC, HighPC, SectionIndex;
+    if (DIE.getLowAndHighPC(LowPC, HighPC, SectionIndex)) {
       auto It = BinaryFunctions.find(LowPC);
       if (It != BinaryFunctions.end()) {
-        It->second.addSubprogramDIE(Unit, DIE);
+        It->second.addSubprogramDIE(DIE);
       } else {
         // The function must have been optimized away by GC.
       }
     } else {
-      const auto RangesVector = DIE->getAddressRanges(Unit);
+      const auto RangesVector = DIE.getAddressRanges();
       if (!RangesVector.empty()) {
         errs() << "BOLT-ERROR: split function detected in .debug_info. "
                   "Split functions are not supported.\n";
@@ -171,10 +172,9 @@ void findSubprograms(DWARFCompileUnit *Unit,
     }
   }
 
-  for (auto ChildDIE = DIE->getFirstChild();
-       ChildDIE != nullptr && !ChildDIE->isNULL();
-       ChildDIE = ChildDIE->getSibling()) {
-    findSubprograms(Unit, ChildDIE, BinaryFunctions);
+  for (auto ChildDIE = DIE.getFirstChild(); ChildDIE && !ChildDIE.isNULL();
+       ChildDIE = ChildDIE.getSibling()) {
+    findSubprograms(ChildDIE, BinaryFunctions);
   }
 }
 
@@ -190,10 +190,13 @@ unsigned BinaryContext::addDebugFilenameToUnit(const uint32_t DestCUID,
   // means empty dir.
   assert(FileIndex > 0 && FileIndex <= FileNames.size() &&
          "FileIndex out of range for the compilation unit.");
-  const char *Dir = FileNames[FileIndex - 1].DirIdx ?
-    LineTable->Prologue.IncludeDirectories[FileNames[FileIndex - 1].DirIdx - 1] :
-    "";
-  return Ctx->getDwarfFile(Dir, FileNames[FileIndex - 1].Name, 0, DestCUID);
+  StringRef Dir =
+      FileNames[FileIndex - 1].DirIdx
+          ? LineTable->Prologue
+                .IncludeDirectories[FileNames[FileIndex - 1].DirIdx - 1]
+          : "";
+  return Ctx->getDwarfFile(Dir, FileNames[FileIndex - 1].Name, 0, nullptr,
+                           DestCUID);
 }
 
 std::vector<BinaryFunction *> BinaryContext::getSortedFunctions(
@@ -221,22 +224,23 @@ void BinaryContext::preprocessDebugInfo(
   // Populate MCContext with DWARF files.
   for (const auto &CU : DwCtx->compile_units()) {
     const auto CUID = CU->getOffset();
-    auto LineTable = DwCtx->getLineTableForUnit(CU.get());
+    auto *LineTable = DwCtx->getLineTableForUnit(CU.get());
     const auto &FileNames = LineTable->Prologue.FileNames;
     for (size_t I = 0, Size = FileNames.size(); I != Size; ++I) {
       // Dir indexes start at 1, as DWARF file numbers, and a dir index 0
       // means empty dir.
-      const char *Dir = FileNames[I].DirIdx ?
-          LineTable->Prologue.IncludeDirectories[FileNames[I].DirIdx - 1] :
-          "";
-      Ctx->getDwarfFile(Dir, FileNames[I].Name, 0, CUID);
+      StringRef Dir =
+          FileNames[I].DirIdx
+              ? LineTable->Prologue.IncludeDirectories[FileNames[I].DirIdx - 1]
+              : "";
+      Ctx->getDwarfFile(Dir, FileNames[I].Name, 0, nullptr, CUID);
     }
   }
 
   // For each CU, iterate over its children DIEs and match subprogram DIEs to
   // BinaryFunctions.
   for (auto &CU : DwCtx->compile_units()) {
-    findSubprograms(CU.get(), CU->getUnitDIE(false), BinaryFunctions);
+    findSubprograms(CU->getUnitDIE(false), BinaryFunctions);
   }
 
   // Some functions may not have a corresponding subprogram DIE
@@ -250,8 +254,8 @@ void BinaryContext::preprocessDebugInfo(
     if (auto DebugAranges = DwCtx->getDebugAranges()) {
       auto CUOffset = DebugAranges->findAddress(FunctionAddress);
       if (CUOffset != -1U) {
-        Function.addSubprogramDIE(DwCtx->getCompileUnitForOffset(CUOffset),
-                                  nullptr);
+        Function.addSubprogramDIE(
+            DWARFDie(DwCtx->getCompileUnitForOffset(CUOffset), nullptr));
         continue;
       }
     }
@@ -266,7 +270,7 @@ void BinaryContext::preprocessDebugInfo(
       for (const auto &Range : CUDie->getAddressRanges(CU.get())) {
         if (FunctionAddress >= Range.first &&
             FunctionAddress < Range.second) {
-          Function.addSubprogramDIE(CU.get(), nullptr);
+          Function.addSubprogramDIE(DWARFDie(CU.get(), nullptr));
           break;
         }
       }
@@ -495,7 +499,7 @@ BinaryContext::extractPointerAtAddress(uint64_t Address) const {
   StringRef SectionContents = Section->getContents();
   DataExtractor DE(SectionContents,
                    AsmInfo->isLittleEndian(),
-                   AsmInfo->getPointerSize());
+                   AsmInfo->getCodePointerSize());
   uint32_t SectionOffset = Address - Section->getAddress();
   return DE.getAddress(&SectionOffset);
 }

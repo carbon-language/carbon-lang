@@ -204,7 +204,8 @@ public:
   virtual ~StackPointerTracking() {}
 
   void run() {
-    NamedRegionTimer T1("SPT", "Dataflow", opts::TimeOpts);
+    NamedRegionTimer T1("SPT", "Stack Pointer Tracking", "Dataflow", "Dataflow",
+                        opts::TimeOpts);
     StackPointerTrackingBase<StackPointerTracking>::run();
   }
 };

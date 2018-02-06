@@ -90,8 +90,7 @@ JumpTables("jump-tables",
                  "function execution frequency"),
       clEnumValN(JTS_AGGRESSIVE, "aggressive",
                  "aggressively split jump tables section based on usage "
-                 "of the tables"),
-      clEnumValEnd),
+                 "of the tables")),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -163,7 +162,8 @@ namespace bolt {
 
 constexpr const char *DynoStats::Desc[];
 constexpr unsigned BinaryFunction::MinAlign;
-const char BinaryFunction::TimerGroupName[] = "Build binary functions";
+const char BinaryFunction::TimerGroupName[] = "buildfuncs";
+const char BinaryFunction::TimerGroupDesc[] = "Build Binary Functions";
 
 namespace {
 
@@ -485,7 +485,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
       OS << '\n';
     }
 
-    Offset = RoundUpToAlignment(Offset, BB->getAlignment());
+    Offset = alignTo(Offset, BB->getAlignment());
 
     // Note: offsets are imprecise since this is happening prior to relaxation.
     Offset = BC.printInstructions(OS, BB->begin(), BB->end(), Offset, this);
@@ -605,7 +605,7 @@ void BinaryFunction::printRelocations(raw_ostream &OS,
 IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
                                                          unsigned Size,
                                                          uint64_t Offset) {
-  const auto PtrSize = BC.AsmInfo->getPointerSize();
+  const auto PtrSize = BC.AsmInfo->getCodePointerSize();
 
   // An instruction referencing memory used by jump instruction (directly or
   // via register). This location could be an array of function pointers
@@ -869,7 +869,8 @@ MCSymbol *BinaryFunction::getOrCreateLocalLabel(uint64_t Address,
 }
 
 void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
-  NamedRegionTimer T("disassemble", TimerGroupName, opts::TimeBuild);
+  NamedRegionTimer T("disassemble", "Disassemble function", TimerGroupName,
+                     TimerGroupDesc, opts::TimeBuild);
 
   assert(FunctionData.size() == getSize() &&
          "function size does not match raw data size");
@@ -1435,7 +1436,8 @@ void BinaryFunction::recomputeLandingPads() {
 }
 
 bool BinaryFunction::buildCFG() {
-  NamedRegionTimer T("build cfg", TimerGroupName, opts::TimeBuild);
+  NamedRegionTimer T("buildcfg", "Build CFG", TimerGroupName, TimerGroupDesc,
+                     opts::TimeBuild);
   auto &MIA = BC.MIA;
 
   if (!isSimple()) {
@@ -2073,8 +2075,6 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {
       Streamer.EmitCodeAlignment(BB->getAlignment());
     Streamer.EmitLabel(BB->getLabel());
 
-    // Remember if last instruction emitted was a prefix
-    bool LastIsPrefix = false;
     SMLoc LastLocSeen;
     for (auto I = BB->begin(), E = BB->end(); I != E; ++I) {
       auto &Instr = *I;
@@ -2105,7 +2105,6 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {
       }
 
       Streamer.EmitInstruction(Instr, *BC.STI);
-      LastIsPrefix = BC.MIA->isPrefix(Instr);
     }
   }
 
@@ -3129,10 +3128,9 @@ bool BinaryFunction::isDataMarker(const SymbolRef &Symbol,
                                   uint64_t SymbolSize) const {
   // For aarch64, the ABI defines mapping symbols so we identify data in the
   // code section (see IHI0056B). $d identifies a symbol starting data contents.
-  if (BC.TheTriple->getArch() == llvm::Triple::aarch64 &&
-      Symbol.getType() == SymbolRef::ST_Unknown &&
-      SymbolSize == 0 &&
-      (!Symbol.getName().getError() && *Symbol.getName() == "$d"))
+  if (BC.TheTriple->getArch() == llvm::Triple::aarch64 && Symbol.getType() &&
+      cantFail(Symbol.getType()) == SymbolRef::ST_Unknown && SymbolSize == 0 &&
+      Symbol.getName() && cantFail(Symbol.getName()) == "$d")
     return true;
   return false;
 }
@@ -3142,10 +3140,9 @@ bool BinaryFunction::isCodeMarker(const SymbolRef &Symbol,
   // For aarch64, the ABI defines mapping symbols so we identify data in the
   // code section (see IHI0056B). $x identifies a symbol starting code or the
   // end of a data chunk inside code.
-  if (BC.TheTriple->getArch() == llvm::Triple::aarch64 &&
-      Symbol.getType() == SymbolRef::ST_Unknown &&
-      SymbolSize == 0 &&
-      (!Symbol.getName().getError() && *Symbol.getName() == "$x"))
+  if (BC.TheTriple->getArch() == llvm::Triple::aarch64 && Symbol.getType() &&
+      cantFail(Symbol.getType()) == SymbolRef::ST_Unknown && SymbolSize == 0 &&
+      Symbol.getName() && cantFail(Symbol.getName()) == "$x")
     return true;
   return false;
 }
@@ -3159,10 +3156,10 @@ bool BinaryFunction::isSymbolValidInScope(const SymbolRef &Symbol,
 
   // It's okay to have a zero-sized symbol in the middle of non-zero-sized
   // function.
-  if (SymbolSize == 0 && containsAddress(*Symbol.getAddress()))
+  if (SymbolSize == 0 && containsAddress(cantFail(Symbol.getAddress())))
     return true;
 
-  if (Symbol.getType() != SymbolRef::ST_Unknown)
+  if (cantFail(Symbol.getType()) != SymbolRef::ST_Unknown)
     return false;
 
   if (Symbol.getFlags() & SymbolRef::SF_Global)
@@ -3413,8 +3410,8 @@ void BinaryFunction::JumpTable::print(raw_ostream &OS) const {
 
 void BinaryFunction::calculateLoopInfo() {
   // Discover loops.
-  BinaryDominatorTree DomTree(false);
-  DomTree.recalculate<BinaryFunction>(*this);
+  BinaryDominatorTree DomTree;
+  DomTree.recalculate(*this);
   BLI.reset(new BinaryLoopInfo());
   BLI->analyze(DomTree);
 
@@ -3531,15 +3528,15 @@ DWARFAddressRangesVector BinaryFunction::translateInputToOutputRanges(
   uint64_t PrevEndAddress = 0;
   DWARFAddressRangesVector OutputRanges;
   for (const auto &Range : InputRanges) {
-    if (!containsAddress(Range.first)) {
+    if (!containsAddress(Range.LowPC)) {
       DEBUG(dbgs() << "BOLT-DEBUG: invalid debug address range detected for "
-                   << *this << " : [0x" << Twine::utohexstr(Range.first)
-                   << ", 0x" << Twine::utohexstr(Range.second) << "]\n");
+                   << *this << " : [0x" << Twine::utohexstr(Range.LowPC)
+                   << ", 0x" << Twine::utohexstr(Range.HighPC) << "]\n");
       PrevEndAddress = 0;
       continue;
     }
-    auto InputOffset = Range.first - getAddress();
-    const auto InputEndOffset = std::min(Range.second - getAddress(), getSize());
+    auto InputOffset = Range.LowPC - getAddress();
+    const auto InputEndOffset = std::min(Range.HighPC - getAddress(), getSize());
 
     auto BBI = std::upper_bound(BasicBlockOffsets.begin(),
                                 BasicBlockOffsets.end(),
@@ -3550,8 +3547,8 @@ DWARFAddressRangesVector BinaryFunction::translateInputToOutputRanges(
       const auto *BB = BBI->second;
       if (InputOffset < BB->getOffset() || InputOffset >= BB->getEndOffset()) {
         DEBUG(dbgs() << "BOLT-DEBUG: invalid debug address range detected for "
-                     << *this << " : [0x" << Twine::utohexstr(Range.first)
-                     << ", 0x" << Twine::utohexstr(Range.second) << "]\n");
+                     << *this << " : [0x" << Twine::utohexstr(Range.LowPC)
+                     << ", 0x" << Twine::utohexstr(Range.HighPC) << "]\n");
         PrevEndAddress = 0;
         break;
       }
@@ -3564,13 +3561,13 @@ DWARFAddressRangesVector BinaryFunction::translateInputToOutputRanges(
           EndAddress = StartAddress + InputEndOffset - InputOffset;
 
         if (StartAddress == PrevEndAddress) {
-          OutputRanges.back().second = std::max(OutputRanges.back().second,
+          OutputRanges.back().HighPC = std::max(OutputRanges.back().HighPC,
                                                 EndAddress);
         } else {
           OutputRanges.emplace_back(StartAddress,
                                     std::max(StartAddress, EndAddress));
         }
-        PrevEndAddress = OutputRanges.back().second;
+        PrevEndAddress = OutputRanges.back().HighPC;
       }
 
       InputOffset = BB->getEndOffset();
@@ -3583,13 +3580,13 @@ DWARFAddressRangesVector BinaryFunction::translateInputToOutputRanges(
   DWARFAddressRangesVector MergedRanges;
   PrevEndAddress = 0;
   for(const auto &Range : OutputRanges) {
-    if (Range.first <= PrevEndAddress) {
-      MergedRanges.back().second = std::max(MergedRanges.back().second,
-                                            Range.second);
+    if (Range.LowPC <= PrevEndAddress) {
+      MergedRanges.back().HighPC = std::max(MergedRanges.back().HighPC,
+                                            Range.HighPC);
     } else {
-      MergedRanges.emplace_back(Range.first, Range.second);
+      MergedRanges.emplace_back(Range.LowPC, Range.HighPC);
     }
-    PrevEndAddress = MergedRanges.back().second;
+    PrevEndAddress = MergedRanges.back().HighPC;
   }
 
   return MergedRanges;
@@ -3619,27 +3616,28 @@ MCInst *BinaryFunction::getInstructionAtOffset(uint64_t Offset) {
 
 DWARFDebugLoc::LocationList BinaryFunction::translateInputToOutputLocationList(
       const DWARFDebugLoc::LocationList &InputLL,
-      uint64_t BaseAddress) const {
+      BaseAddress BaseAddr) const {
+  uint64_t BAddr = BaseAddr.Address;
   // If the function wasn't changed - there's nothing to update.
   if (!isEmitted() && !BC.HasRelocations) {
-    if (!BaseAddress) {
+    if (!BAddr) {
       return InputLL;
     } else {
       auto OutputLL = std::move(InputLL);
       for (auto &Entry : OutputLL.Entries) {
-        Entry.Begin += BaseAddress;
-        Entry.End += BaseAddress;
+        Entry.Begin += BAddr;
+        Entry.End += BAddr;
       }
       return OutputLL;
     }
   }
 
   uint64_t PrevEndAddress = 0;
-  SmallVectorImpl<unsigned char> *PrevLoc = nullptr;
+  SmallVectorImpl<char> *PrevLoc = nullptr;
   DWARFDebugLoc::LocationList OutputLL;
   for (auto &Entry : InputLL.Entries) {
-    const auto Start = Entry.Begin + BaseAddress;
-    const auto End = Entry.End + BaseAddress;
+    const auto Start = Entry.Begin + BAddr;
+    const auto End = Entry.End + BAddr;
     if (!containsAddress(Start)) {
       DEBUG(dbgs() << "BOLT-DEBUG: invalid debug address range detected for "
                    << *this << " : [0x" << Twine::utohexstr(Start)

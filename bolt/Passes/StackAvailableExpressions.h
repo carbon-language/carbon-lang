@@ -36,7 +36,8 @@ public:
   virtual ~StackAvailableExpressions() {}
 
   void run() {
-    NamedRegionTimer T1("SAE", "Dataflow", opts::TimeOpts);
+    NamedRegionTimer T1("SAE", "Stack Available Expressions", "Dataflow",
+                        "Dataflow", opts::TimeOpts);
     InstrsDataflowAnalysis<StackAvailableExpressions>::run();
   }
 

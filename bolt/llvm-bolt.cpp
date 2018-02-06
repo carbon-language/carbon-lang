@@ -91,6 +91,13 @@ static void report_error(StringRef Message, std::error_code EC) {
   exit(1);
 }
 
+static void report_error(StringRef Message, Error E) {
+  assert(E);
+  errs() << ToolName << ": '" << Message << "': " << toString(std::move(E))
+         << ".\n";
+  exit(1);
+}
+
 namespace llvm {
 namespace bolt {
 const char *BoltRevision =
@@ -99,8 +106,8 @@ const char *BoltRevision =
 }
 }
 
-static void printBoltRevision() {
-  errs() << "BOLT revision " << BoltRevision << "\n";
+static void printBoltRevision(llvm::raw_ostream &OS) {
+  OS << "BOLT revision " << BoltRevision << "\n";
 }
 
 void perf2boltMode(int argc, char **argv) {
@@ -139,7 +146,7 @@ void boltMode(int argc, char **argv) {
 
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
-  sys::PrintStackTraceOnErrorSignal();
+  sys::PrintStackTraceOnErrorSignal(argv[0]);
   PrettyStackTraceProgram X(argc, argv);
 
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
@@ -198,9 +205,10 @@ int main(int argc, char **argv) {
   }
 
   // Attempt to open the binary.
-  ErrorOr<OwningBinary<Binary>> BinaryOrErr = createBinary(opts::InputFilename);
-  if (std::error_code EC = BinaryOrErr.getError())
-    report_error(opts::InputFilename, EC);
+  Expected<OwningBinary<Binary>> BinaryOrErr =
+      createBinary(opts::InputFilename);
+  if (auto E = BinaryOrErr.takeError())
+    report_error(opts::InputFilename, std::move(E));
   Binary &Binary = *BinaryOrErr.get().getBinary();
 
   if (auto *e = dyn_cast<ELFObjectFileBase>(&Binary)) {

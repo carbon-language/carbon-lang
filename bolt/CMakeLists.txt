@@ -75,6 +75,9 @@ add_llvm_tool(llvm-bolt
   ProfileReader.cpp
   ProfileWriter.cpp
   RewriteInstance.cpp
+
+  DEPENDS
+  intrinsics_gen
   )
 
 add_llvm_tool_symlink(perf2bolt llvm-bolt)

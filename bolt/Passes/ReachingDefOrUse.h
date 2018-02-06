@@ -58,7 +58,8 @@ public:
   }
 
   void run() {
-    NamedRegionTimer T1("RD", "Dataflow", opts::TimeOpts);
+    NamedRegionTimer T1("RD", "Reaching Defs", "Dataflow", "Dataflow",
+                        opts::TimeOpts);
     InstrsDataflowAnalysis<ReachingDefOrUse<Def>, !Def>::run();
   }
 

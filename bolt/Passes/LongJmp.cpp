@@ -130,7 +130,7 @@ LongJmpPass::replaceTargetWithStub(const BinaryContext &BC,
   }
   BC.MIA->replaceBranchTarget(Inst, StubSymbol, BC.Ctx.get());
   ++StubRefCount[StubBB];
-  StubBits[StubBB] = BC.AsmInfo->getPointerSize() * 8;
+  StubBits[StubBB] = BC.AsmInfo->getCodePointerSize() * 8;
 
   if (NewBB) {
     if (BB.isCold())
@@ -216,7 +216,7 @@ uint64_t LongJmpPass::tentativeLayoutRelocColdPart(
   for (auto Func : SortedFunctions) {
     if (!Func->isSplit())
       continue;
-    DotAddress = RoundUpToAlignment(DotAddress, BinaryFunction::MinAlign);
+    DotAddress = alignTo(DotAddress, BinaryFunction::MinAlign);
     auto Pad = OffsetToAlignment(DotAddress, opts::AlignFunctions);
     if (Pad <= opts::AlignFunctionsMaxBytes)
       DotAddress += Pad;
@@ -253,7 +253,7 @@ uint64_t LongJmpPass::tentativeLayoutRelocMode(
       ColdLayoutDone = true;
     }
 
-    DotAddress = RoundUpToAlignment(DotAddress, BinaryFunction::MinAlign);
+    DotAddress = alignTo(DotAddress, BinaryFunction::MinAlign);
     auto Pad = OffsetToAlignment(DotAddress, opts::AlignFunctions);
     if (Pad <= opts::AlignFunctionsMaxBytes)
       DotAddress += Pad;
@@ -282,7 +282,7 @@ void LongJmpPass::tentativeLayout(
   if (!BC.HasRelocations) {
     for (auto Func : SortedFunctions) {
       HotAddresses[Func] = Func->getAddress();
-      DotAddress = RoundUpToAlignment(DotAddress, ColdFragAlign);
+      DotAddress = alignTo(DotAddress, ColdFragAlign);
       ColdAddresses[Func] = DotAddress;
       if (Func->isSplit())
         DotAddress += Func->estimateColdSize();
@@ -303,7 +303,7 @@ void LongJmpPass::tentativeLayout(
       DotAddress += Pad;
     }
   } else {
-    DotAddress = RoundUpToAlignment(BC.LayoutStartAddress, PageAlign);
+    DotAddress = alignTo(BC.LayoutStartAddress, PageAlign);
   }
 
   tentativeLayoutRelocMode(BC, SortedFunctions, DotAddress);

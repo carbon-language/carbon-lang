@@ -15,6 +15,7 @@
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Signals.h"
@@ -56,8 +57,7 @@ PrintFunctionList("print",
       "print functions sorted by execution count"),
     clEnumValN(ST_TOTAL_BRANCHES,
       "branches",
-      "print functions sorted by total branch count"),
-    clEnumValEnd),
+      "print functions sorted by total branch count")),
   cl::cat(MergeFdataCategory));
 
 static cl::opt<bool>
@@ -79,7 +79,7 @@ static void report_error(StringRef Message, std::error_code EC) {
 
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
-  sys::PrintStackTraceOnErrorSignal();
+  sys::PrintStackTraceOnErrorSignal(argv[0]);
   PrettyStackTraceProgram X(argc, argv);
 
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.

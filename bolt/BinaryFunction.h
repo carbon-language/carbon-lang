@@ -24,9 +24,10 @@
 #include "DebugData.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ilist.h"
+#include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCDisassembler.h"
+#include "llvm/MC/MCDisassembler/MCDisassembler.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrAnalysis.h"
@@ -34,7 +35,6 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Dwarf.h"
 #include "llvm/Support/raw_ostream.h"
 #include <limits>
 #include <unordered_map>
@@ -45,14 +45,14 @@ using namespace llvm::object;
 
 namespace llvm {
 
-class DWARFCompileUnit;
+class DWARFUnit;
 class DWARFDebugInfoEntryMinimal;
 
 namespace bolt {
 
 struct SectionInfo;
 
-using DWARFUnitLineTable = std::pair<DWARFCompileUnit *,
+using DWARFUnitLineTable = std::pair<DWARFUnit *,
                                      const DWARFDebugLine::LineTable *>;
 
 /// Class encapsulating runtime statistics about an execution unit.
@@ -233,6 +233,7 @@ public:
   static constexpr unsigned MinAlign = 2;
 
   static const char TimerGroupName[];
+  static const char TimerGroupDesc[];
 
   using BasicBlockOrderType = std::vector<BinaryBasicBlock *>;
 
@@ -345,8 +346,7 @@ private:
 
   /// Associated DIEs in the .debug_info section with their respective CUs.
   /// There can be multiple because of identical code folding.
-  std::vector<std::pair<const DWARFDebugInfoEntryMinimal *,
-                        DWARFCompileUnit *>> SubprogramDIEs;
+  std::vector<DWARFDie> SubprogramDIEs;
 
   /// Line table for the function with containing compilation unit.
   /// Because of identical code folding the function could have multiple
@@ -1235,11 +1235,11 @@ public:
     case ELF::R_AARCH64_LDST64_ABS_LO12_NC:
     case ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
     case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
-    case ELF::R_AARCH64_TLSDESC_LD64_LO12_NC:
+    case ELF::R_AARCH64_TLSDESC_LD64_LO12:
     case ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12:
     case ELF::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
     case ELF::R_AARCH64_LD64_GOT_LO12_NC:
-    case ELF::R_AARCH64_TLSDESC_ADD_LO12_NC:
+    case ELF::R_AARCH64_TLSDESC_ADD_LO12:
     case ELF::R_AARCH64_ADD_ABS_LO12_NC:
     case ELF::R_AARCH64_LDST16_ABS_LO12_NC:
     case ELF::R_AARCH64_LDST32_ABS_LO12_NC:
@@ -2163,12 +2163,12 @@ public:
   std::size_t hash(bool Recompute = true, bool UseDFS = false) const;
 
   /// Sets the associated .debug_info entry.
-  void addSubprogramDIE(DWARFCompileUnit *Unit,
-                        const DWARFDebugInfoEntryMinimal *DIE) {
-    SubprogramDIEs.emplace_back(DIE, Unit);
+  void addSubprogramDIE(const DWARFDie DIE) {
+    SubprogramDIEs.emplace_back(DIE);
     if (!UnitLineTable.first) {
-      if (const auto *LineTable = BC.DwCtx->getLineTableForUnit(Unit)) {
-        UnitLineTable = std::make_pair(Unit, LineTable);
+      if (const auto *LineTable =
+              BC.DwCtx->getLineTableForUnit(DIE.getDwarfUnit())) {
+        UnitLineTable = std::make_pair(DIE.getDwarfUnit(), LineTable);
       }
     }
   }
@@ -2285,7 +2285,7 @@ public:
   /// \p BaseAddress is applied to all addresses in \pInputLL.
   DWARFDebugLoc::LocationList translateInputToOutputLocationList(
       const DWARFDebugLoc::LocationList &InputLL,
-      uint64_t BaseAddress) const;
+      BaseAddress BaseAddr) const;
 
   virtual ~BinaryFunction();
 
@@ -2388,18 +2388,20 @@ inline raw_ostream &operator<<(raw_ostream &OS,
 // GraphTraits specializations for function basic block graphs (CFGs)
 template <> struct GraphTraits<bolt::BinaryFunction *> :
   public GraphTraits<bolt::BinaryBasicBlock *> {
-  static NodeType *getEntryNode(bolt::BinaryFunction *F) {
+  static NodeRef getEntryNode(bolt::BinaryFunction *F) {
     return *F->layout_begin();
   }
 
-  typedef bolt::BinaryBasicBlock * nodes_iterator;
+  using nodes_iterator = pointer_iterator<bolt::BinaryFunction::iterator>;
+
+//  typedef bolt::BinaryBasicBlock * nodes_iterator;
   static nodes_iterator nodes_begin(bolt::BinaryFunction *F) {
     llvm_unreachable("Not implemented");
-    return &(*F->begin());
+    return nodes_iterator(F->begin());
   }
   static nodes_iterator nodes_end(bolt::BinaryFunction *F) {
     llvm_unreachable("Not implemented");
-    return &(*F->end());
+    return nodes_iterator(F->end());
   }
   static size_t size(bolt::BinaryFunction *F) {
     return F->size();
@@ -2408,18 +2410,19 @@ template <> struct GraphTraits<bolt::BinaryFunction *> :
 
 template <> struct GraphTraits<const bolt::BinaryFunction *> :
   public GraphTraits<const bolt::BinaryBasicBlock *> {
-  static NodeType *getEntryNode(const bolt::BinaryFunction *F) {
+  static NodeRef getEntryNode(const bolt::BinaryFunction *F) {
     return *F->layout_begin();
   }
 
-  typedef const bolt::BinaryBasicBlock * nodes_iterator;
+  using nodes_iterator = pointer_iterator<bolt::BinaryFunction::const_iterator>;
+
   static nodes_iterator nodes_begin(const bolt::BinaryFunction *F) {
     llvm_unreachable("Not implemented");
-    return &(*F->begin());
+    return nodes_iterator(F->begin());
   }
   static nodes_iterator nodes_end(const bolt::BinaryFunction *F) {
     llvm_unreachable("Not implemented");
-    return &(*F->end());
+    return nodes_iterator(F->end());
   }
   static size_t size(const bolt::BinaryFunction *F) {
     return F->size();
@@ -2428,14 +2431,14 @@ template <> struct GraphTraits<const bolt::BinaryFunction *> :
 
 template <> struct GraphTraits<Inverse<bolt::BinaryFunction *>> :
   public GraphTraits<Inverse<bolt::BinaryBasicBlock *>> {
-  static NodeType *getEntryNode(Inverse<bolt::BinaryFunction *> G) {
+  static NodeRef getEntryNode(Inverse<bolt::BinaryFunction *> G) {
     return *G.Graph->layout_begin();
   }
 };
 
 template <> struct GraphTraits<Inverse<const bolt::BinaryFunction *>> :
   public GraphTraits<Inverse<const bolt::BinaryBasicBlock *>> {
-  static NodeType *getEntryNode(Inverse<const bolt::BinaryFunction *> G) {
+  static NodeRef getEntryNode(Inverse<const bolt::BinaryFunction *> G) {
     return *G.Graph->layout_begin();
   }
 };

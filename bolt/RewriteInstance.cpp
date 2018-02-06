@@ -23,22 +23,24 @@
 #include "RewriteInstance.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/DebugInfo/DWARF/DWARFDebugLine.h"
 #include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
-#include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
+#include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
 #include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCDisassembler.h"
+#include "llvm/MC/MCDisassembler/MCDisassembler.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCObjectStreamer.h"
+#include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSectionELF.h"
@@ -49,7 +51,6 @@
 #include "llvm/Object/SymbolicFile.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Dwarf.h"
 #include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -262,8 +263,7 @@ SplitFunctions("split-functions",
              clEnumValN(BinaryFunction::ST_LARGE, "2",
                         "also split if function too large to fit"),
              clEnumValN(BinaryFunction::ST_ALL, "3",
-                        "split all functions"),
-             clEnumValEnd),
+                        "split all functions")),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -420,7 +420,8 @@ const std::string RewriteInstance::OrgSecPrefix = ".bolt.org";
 
 const std::string RewriteInstance::BOLTSecPrefix = ".bolt";
 
-const char RewriteInstance::TimerGroupName[] = "Rewrite passes";
+const char RewriteInstance::TimerGroupName[] = "rewrite";
+const char RewriteInstance::TimerGroupDesc[] = "Rewrite passes";
 
 namespace llvm {
 namespace bolt {
@@ -429,6 +430,13 @@ extern const char *BoltRevision;
 void report_error(StringRef Message, std::error_code EC) {
   assert(EC);
   errs() << "BOLT-ERROR: '" << Message << "': " << EC.message() << ".\n";
+  exit(1);
+}
+
+void report_error(StringRef Message, Error E) {
+  assert(E);
+  errs() << "BOLT-ERROR: '" << Message << "': " << toString(std::move(E))
+         << ".\n";
   exit(1);
 }
 
@@ -447,6 +455,28 @@ uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
                                                       StringRef SectionName,
                                                       bool IsCode,
                                                       bool IsReadOnly) {
+  // Register as note section (non-allocatable) if we recognize it as so
+  for (auto &OverwriteName : RewriteInstance::SectionsToOverwrite) {
+    if (SectionName == OverwriteName) {
+      uint8_t *DataCopy = new uint8_t[Size];
+      DEBUG(dbgs() << "BOLT: note section " << SectionName << " with size "
+                   << Size << ", alignment " << Alignment << " at 0x"
+                   << Twine::utohexstr(reinterpret_cast<uint64_t>(DataCopy))
+                   << '\n');
+      NoteSectionInfo[SectionName] =
+        SectionInfo(reinterpret_cast<uint64_t>(DataCopy),
+                    Size,
+                    Alignment,
+                    /*IsCode=*/false,
+                    /*IsReadOnly=*/true,
+                    /*IsLocal=*/false,
+                    0,
+                    0,
+                    SectionID);
+      return DataCopy;
+    }
+  }
+
   uint8_t *ret;
   if (IsCode) {
     ret = SectionMemoryManager::allocateCodeSection(Size, Alignment,
@@ -590,8 +620,7 @@ createBinaryContext(ELFObjectFileBase *File, DataReader &DR,
     llvm::make_unique<MCObjectFileInfo>();
   std::unique_ptr<MCContext> Ctx =
     llvm::make_unique<MCContext>(AsmInfo.get(), MRI.get(), MOFI.get());
-  MOFI->InitMCObjectFileInfo(*TheTriple, Reloc::Default,
-                             CodeModel::Small, *Ctx);
+  MOFI->InitMCObjectFileInfo(*TheTriple, /*PIC=*/false, *Ctx);
 
   std::unique_ptr<MCDisassembler> DisAsm(
     TheTarget->createMCDisassembler(*STI, *Ctx));
@@ -653,11 +682,12 @@ createBinaryContext(ELFObjectFileBase *File, DataReader &DR,
 RewriteInstance::RewriteInstance(ELFObjectFileBase *File, DataReader &DR,
                                  DataAggregator &DA, const int Argc,
                                  const char *const *Argv)
-  : InputFile(File), Argc(Argc), Argv(Argv), DA(DA),
-    BC(createBinaryContext(
-        File, DR,
-        std::unique_ptr<DWARFContext>(
-            new DWARFContextInMemory(*InputFile, nullptr, true)))) {}
+    : InputFile(File), Argc(Argc), Argv(Argv), DA(DA),
+      BC(createBinaryContext(
+          File, DR,
+          DWARFContext::create(*File, nullptr,
+                               DWARFContext::defaultErrorHandler, "", false))),
+      SHStrTab(StringTableBuilder::ELF) {}
 
 RewriteInstance::~RewriteInstance() {}
 
@@ -667,10 +697,11 @@ void RewriteInstance::reset() {
   auto &DR = BC->DR;
   BC = createBinaryContext(
       InputFile, DR,
-      std::unique_ptr<DWARFContext>(
-          new DWARFContextInMemory(*InputFile, nullptr, true)));
+      DWARFContext::create(*InputFile, nullptr,
+                           DWARFContext::defaultErrorHandler, "", false));
   CFIRdWrt.reset(nullptr);
-  EFMM.reset(nullptr);
+  OLT.reset(nullptr);
+  EFMM.reset();
   Out.reset(nullptr);
   EHFrame = nullptr;
   FailedAddresses.clear();
@@ -679,7 +710,8 @@ void RewriteInstance::reset() {
 }
 
 void RewriteInstance::discoverStorage() {
-  NamedRegionTimer T("discover storage", TimerGroupName, opts::TimeRewrite);
+  NamedRegionTimer T("discoverStorage", "discover storage", TimerGroupName,
+                     TimerGroupDesc, opts::TimeRewrite);
 
   // Stubs are harmful because RuntimeDyld may try to increase the size of
   // sections accounting for stubs when we need those sections to match the
@@ -702,7 +734,8 @@ void RewriteInstance::discoverStorage() {
 
   NextAvailableAddress = 0;
   uint64_t NextAvailableOffset = 0;
-  for (const auto &Phdr : Obj->program_headers()) {
+  auto PHs = cantFail(Obj->program_headers(), "program_headers() failed");
+  for (const auto &Phdr : PHs) {
     if (Phdr.p_type == ELF::PT_LOAD) {
       FirstAllocAddress = std::min(FirstAllocAddress,
                                    static_cast<uint64_t>(Phdr.p_vaddr));
@@ -746,8 +779,8 @@ void RewriteInstance::discoverStorage() {
 
   FirstNonAllocatableOffset = NextAvailableOffset;
 
-  NextAvailableAddress = RoundUpToAlignment(NextAvailableAddress, PageAlign);
-  NextAvailableOffset = RoundUpToAlignment(NextAvailableOffset, PageAlign);
+  NextAvailableAddress = alignTo(NextAvailableAddress, PageAlign);
+  NextAvailableOffset = alignTo(NextAvailableOffset, PageAlign);
 
   if (!opts::UseGnuStack) {
     // This is where the black magic happens. Creating PHDR table in a segment
@@ -784,8 +817,8 @@ void RewriteInstance::discoverStorage() {
   }
 
   // Align at cache line.
-  NextAvailableAddress = RoundUpToAlignment(NextAvailableAddress, 64);
-  NextAvailableOffset = RoundUpToAlignment(NextAvailableOffset, 64);
+  NextAvailableAddress = alignTo(NextAvailableAddress, 64);
+  NextAvailableOffset = alignTo(NextAvailableOffset, 64);
 
   NewTextSegmentAddress = NextAvailableAddress;
   NewTextSegmentOffset = NextAvailableOffset;
@@ -826,7 +859,7 @@ RewriteInstance::getBuildID() {
       return NoneType();
 
     StringRef Name = SectionContents.slice(Offset, Offset + NameSz);
-    Offset = RoundUpToAlignment(Offset + NameSz, 4);
+    Offset = alignTo(Offset + NameSz, 4);
     StringRef BinaryBuildID = SectionContents.slice(Offset, Offset + DescSz);
     if (Name.substr(0, 3) != "GNU")
       return NoneType();
@@ -949,8 +982,8 @@ void RewriteInstance::run() {
 
   // Copy allocatable part of the input.
   std::error_code EC;
-  Out = llvm::make_unique<tool_output_file>(opts::OutputFilename, EC,
-                                            sys::fs::F_None, 0777);
+  Out = llvm::make_unique<ToolOutputFile>(opts::OutputFilename, EC,
+                                          sys::fs::F_None, 0777);
   check_error(EC, "cannot create output executable file");
   Out->os() << InputFile->getData().substr(0, FirstNonAllocatableOffset);
 
@@ -959,8 +992,8 @@ void RewriteInstance::run() {
 }
 
 void RewriteInstance::discoverFileObjects() {
-  NamedRegionTimer T("discover file objects", TimerGroupName,
-                      opts::TimeRewrite);
+  NamedRegionTimer T("discoverFileObjects", "discover file objects",
+                     TimerGroupName, TimerGroupDesc, opts::TimeRewrite);
 
   FileSymRefs.clear();
   BinaryFunctions.clear();
@@ -977,7 +1010,7 @@ void RewriteInstance::discoverFileObjects() {
   };
   std::unordered_map<SymbolRef, StringRef, SymbolRefHash> SymbolToFileName;
   for (const auto &Symbol : InputFile->symbols()) {
-    ErrorOr<StringRef> NameOrError = Symbol.getName();
+    auto NameOrError = Symbol.getName();
     if (NameOrError && NameOrError->startswith("__asan_init")) {
       errs() << "BOLT-ERROR: input file was compiled or linked with sanitizer "
                 "support. Cannot optimize.\n";
@@ -992,13 +1025,14 @@ void RewriteInstance::discoverFileObjects() {
     if (Symbol.getFlags() & SymbolRef::SF_Undefined)
       continue;
 
-    if (Symbol.getType() == SymbolRef::ST_File) {
-      check_error(NameOrError.getError(), "cannot get symbol name for file");
+    if (cantFail(Symbol.getType()) == SymbolRef::ST_File) {
+      auto Name =
+          cantFail(std::move(NameOrError), "cannot get symbol name for file");
       // Ignore Clang LTO artificial FILE symbol as it is not always generated,
       // and this uncertainty is causing havoc in function name matching.
-      if (*NameOrError == "ld-temp.o")
+      if (Name == "ld-temp.o")
         continue;
-      FileSymbolName = *NameOrError;
+      FileSymbolName = Name;
       SeenFileName = true;
       continue;
     }
@@ -1014,11 +1048,13 @@ void RewriteInstance::discoverFileObjects() {
   std::stable_sort(SortedFileSymbols.begin(), SortedFileSymbols.end(),
                    [](const SymbolRef &A, const SymbolRef &B) {
                      // FUNC symbols have higher precedence.
-                     if (*(A.getAddress()) == *(B.getAddress())) {
-                       return A.getType() == SymbolRef::ST_Function &&
-                              B.getType() != SymbolRef::ST_Function;
+                     auto AddressA = cantFail(A.getAddress());
+                     auto AddressB = cantFail(B.getAddress());
+                     if (AddressA == AddressB) {
+                       return cantFail(A.getType()) == SymbolRef::ST_Function &&
+                              cantFail(B.getType()) != SymbolRef::ST_Function;
                      }
-                     return *(A.getAddress()) < *(B.getAddress());
+                     return AddressA < AddressB;
                    });
 
   // For aarch64, the ABI defines mapping symbols so we identify data in the
@@ -1028,9 +1064,9 @@ void RewriteInstance::discoverFileObjects() {
     MarkersBegin = std::stable_partition(
         SortedFileSymbols.begin(), SortedFileSymbols.end(),
         [](const SymbolRef &Symbol) {
-          ErrorOr<StringRef> NameOrError = Symbol.getName();
-          return !(Symbol.getType() == SymbolRef::ST_Unknown &&
-                   (*NameOrError == "$d" || *NameOrError == "$x"));
+          StringRef Name = cantFail(Symbol.getName());
+          return !(cantFail(Symbol.getType()) == SymbolRef::ST_Unknown &&
+                   (Name == "$d" || Name == "$x"));
         });
   }
 
@@ -1041,17 +1077,15 @@ void RewriteInstance::discoverFileObjects() {
     if (Symbol.getFlags() & SymbolRef::SF_Undefined)
       continue;
 
-    if (Symbol.getType() == SymbolRef::ST_File)
+    if (cantFail(Symbol.getType()) == SymbolRef::ST_File)
       continue;
 
-    ErrorOr<StringRef> NameOrError = Symbol.getName();
-    check_error(NameOrError.getError(), "cannot get symbol name");
-
-    ErrorOr<uint64_t> AddressOrErr = Symbol.getAddress();
-    check_error(AddressOrErr.getError(), "cannot get symbol address");
-    uint64_t Address = *AddressOrErr;
+    StringRef SymName = cantFail(Symbol.getName(), "cannot get symbol name");
+    uint64_t Address =
+        cantFail(Symbol.getAddress(), "cannot get symbol address");
     if (Address == 0) {
-      if (opts::Verbosity >= 1 && Symbol.getType() == SymbolRef::ST_Function)
+      if (opts::Verbosity >= 1 &&
+          cantFail(Symbol.getType()) == SymbolRef::ST_Function)
         errs() << "BOLT-WARNING: function with 0 address seen\n";
       continue;
     }
@@ -1060,16 +1094,15 @@ void RewriteInstance::discoverFileObjects() {
 
     // There's nothing horribly wrong with anonymous symbols, but let's
     // ignore them for now.
-    if (NameOrError->empty())
+    if (SymName.empty())
       continue;
 
     /// It is possible we are seeing a globalized local. LLVM might treat it as
     /// a local if it has a "private global" prefix, e.g. ".L". Thus we have to
     /// change the prefix to enforce global scope of the symbol.
-    std::string Name =
-      NameOrError->startswith(BC->AsmInfo->getPrivateGlobalPrefix())
-        ? "PG" + std::string(*NameOrError)
-        : std::string(*NameOrError);
+    std::string Name = SymName.startswith(BC->AsmInfo->getPrivateGlobalPrefix())
+                           ? "PG" + std::string(SymName)
+                           : std::string(SymName);
 
     // Disambiguate all local symbols before adding to symbol table.
     // Since we don't know if we will see a global with the same name,
@@ -1119,9 +1152,8 @@ void RewriteInstance::discoverFileObjects() {
     if (!AlternativeName.empty())
       BC->registerNameAtAddress(AlternativeName, Address);
 
-    ErrorOr<section_iterator> SectionOrErr = Symbol.getSection();
-    check_error(SectionOrErr.getError(), "cannot get symbol section");
-    section_iterator Section = *SectionOrErr;
+    section_iterator Section =
+        cantFail(Symbol.getSection(), "cannot get symbol section");
     if (Section == InputFile->section_end()) {
       // Could be an absolute symbol. Could record for pretty printing.
       continue;
@@ -1131,7 +1163,7 @@ void RewriteInstance::discoverFileObjects() {
                  << " for function\n");
 
     if (!Section->isText()) {
-      assert(Symbol.getType() != SymbolRef::ST_Function &&
+      assert(cantFail(Symbol.getType()) != SymbolRef::ST_Function &&
              "unexpected function inside non-code section");
       DEBUG(dbgs() << "BOLT-DEBUG: rejecting as symbol is not in code\n");
       continue;
@@ -1146,7 +1178,7 @@ void RewriteInstance::discoverFileObjects() {
     // Sometimes assembly functions are not marked as functions and neither are
     // their local labels. The only way to tell them apart is to look at
     // symbol scope - global vs local.
-    if (Symbol.getType() != SymbolRef::ST_Function) {
+    if (cantFail(Symbol.getType()) != SymbolRef::ST_Function) {
       if (PreviousFunction) {
         if (PreviousFunction->getSize() == 0) {
           if (PreviousFunction->isSymbolValidInScope(Symbol, SymbolSize)) {
@@ -1308,10 +1340,9 @@ void RewriteInstance::discoverFileObjects() {
   // Annotate functions with code/data markers in AArch64
   for (auto ISym = MarkersBegin; ISym != SortedFileSymbols.end(); ++ISym) {
     const auto &Symbol = *ISym;
-    ErrorOr<uint64_t> AddressOrErr = Symbol.getAddress();
-    check_error(AddressOrErr.getError(), "cannot get symbol address");
+    uint64_t Address =
+        cantFail(Symbol.getAddress(), "cannot get symbol address");
     auto SymbolSize = ELFSymbolRef(Symbol).getSize();
-    uint64_t Address = *AddressOrErr;
     auto *BF = getBinaryFunctionContainingAddress(Address, true, true);
     if (!BF) {
       // Stray marker
@@ -1390,7 +1421,7 @@ void RewriteInstance::disassemblePLT() {
         const auto SymbolIter = Rel.getSymbol();
         assert(SymbolIter != InputFile->symbol_end() &&
                "non-null symbol expected");
-        const auto SymbolName = *(*SymbolIter).getName();
+        const auto SymbolName = cantFail((*SymbolIter).getName());
         std::string Name = SymbolName.str() + "@PLT";
         auto *BF = createBinaryFunction(Name,
                                         *PLTSection,
@@ -1451,9 +1482,6 @@ void RewriteInstance::adjustFunctionBoundaries() {
 
       ++NextSymRefI;
     }
-    auto NextSymRefSectionI = (NextSymRefI == FileSymRefs.end())
-      ? InputFile->section_end()
-      : NextSymRefI->second.getSection();
 
     // Function runs at most till the end of the containing section.
     uint64_t NextObjectAddress = Function.getSection().getEndAddress();
@@ -1492,11 +1520,10 @@ void RewriteInstance::adjustFunctionBoundaries() {
 void RewriteInstance::relocateEHFrameSection() {
   assert(EHFrameSection && "non-empty .eh_frame section expected");
 
-  DWARFFrame EHFrame(EHFrameSection->getAddress());
+  DWARFDebugFrame EHFrame(true, EHFrameSection->getAddress());
   StringRef EHFrameSectionContents = EHFrameSection->getContents();
-  DataExtractor DE(EHFrameSectionContents,
-                   BC->AsmInfo->isLittleEndian(),
-                   BC->AsmInfo->getPointerSize());
+  DWARFDataExtractor DE(EHFrameSectionContents, BC->AsmInfo->isLittleEndian(),
+                        BC->AsmInfo->getCodePointerSize());
   auto createReloc = [&](uint64_t Value, uint64_t Offset, uint64_t DwarfType) {
     if (DwarfType == dwarf::DW_EH_PE_omit)
       return;
@@ -1518,10 +1545,12 @@ void RewriteInstance::relocateEHFrameSection() {
     case dwarf::DW_EH_PE_sdata4:
     case dwarf::DW_EH_PE_udata4:
       RelType = ELF::R_X86_64_PC32;
+      Offset -= 4;
       break;
     case dwarf::DW_EH_PE_sdata8:
     case dwarf::DW_EH_PE_udata8:
       RelType = ELF::R_X86_64_PC64;
+      Offset -= 8;
       break;
     }
 
@@ -1539,12 +1568,6 @@ void RewriteInstance::relocateEHFrameSection() {
   };
 
   EHFrame.parse(DE, createReloc);
-
-  if (!EHFrame.ParseError.empty()) {
-    errs() << "BOLT-ERROR: EHFrame reader failed with message \""
-           << EHFrame.ParseError << '\n';
-    exit(1);
-  }
 }
 
 BinaryFunction *RewriteInstance::createBinaryFunction(
@@ -1560,8 +1583,8 @@ BinaryFunction *RewriteInstance::createBinaryFunction(
 }
 
 void RewriteInstance::readSpecialSections() {
-  NamedRegionTimer T("read special sections", TimerGroupName,
-                      opts::TimeRewrite);
+  NamedRegionTimer T("readSpecialSections", "read special sections",
+                     TimerGroupName, TimerGroupDesc, opts::TimeRewrite);
 
   bool HasTextRelocations = false;
 
@@ -1570,11 +1593,14 @@ void RewriteInstance::readSpecialSections() {
     StringRef SectionName;
     check_error(Section.getName(SectionName), "cannot get section name");
     StringRef SectionContents;
-    check_error(Section.getContents(SectionContents),
-                "cannot get section contents");
-    ArrayRef<uint8_t> SectionData(
-        reinterpret_cast<const uint8_t *>(SectionContents.data()),
-        Section.getSize());
+    ArrayRef<uint8_t> SectionData;
+    if (!(ELFSectionRef(Section).getType() & ELF::SHT_NOBITS)) {
+      check_error(Section.getContents(SectionContents),
+                  "cannot get section contents");
+      SectionData = ArrayRef<uint8_t>(
+          reinterpret_cast<const uint8_t *>(SectionContents.data()),
+          Section.getSize());
+    }
 
     if (SectionName == ".gcc_except_table") {
       LSDAData = SectionData;
@@ -1612,14 +1638,9 @@ void RewriteInstance::readSpecialSections() {
   EHFrame = BC->DwCtx->getEHFrame();
   if (opts::DumpEHFrame) {
     outs() << "BOLT-INFO: Dumping original binary .eh_frame\n";
-    EHFrame->dump(outs());
+    EHFrame->dump(outs(), NoneType());
   }
   CFIRdWrt.reset(new CFIReaderWriter(*EHFrame));
-  if (!EHFrame->ParseError.empty()) {
-    errs() << "BOLT-ERROR: EHFrame reader failed with message \""
-           << EHFrame->ParseError << '\n';
-    exit(1);
-  }
 }
 
 namespace {
@@ -1629,7 +1650,7 @@ int64_t getRelocationAddend(const ELFObjectFile<ELFT> *Obj,
   int64_t Addend = 0;
   const ELFFile<ELFT> &EF = *Obj->getELFFile();
   DataRefImpl Rel = RelRef.getRawDataRefImpl();
-  const auto *RelocationSection = *(EF.getSection(Rel.d.a));
+  const auto *RelocationSection = cantFail(EF.getSection(Rel.d.a));
   switch (RelocationSection->sh_type) {
   default: llvm_unreachable("unexpected relocation section type");
   case ELF::SHT_REL:
@@ -1668,21 +1689,21 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
 
   const bool IsAArch64 = BC->TheTriple->getArch() == llvm::Triple::aarch64;
   const bool IsFromCode = RelocatedSection.isText();
-  
+
   // For value extraction.
   StringRef RelocatedSectionContents;
   RelocatedSection.getContents(RelocatedSectionContents);
   DataExtractor DE(RelocatedSectionContents,
                    BC->AsmInfo->isLittleEndian(),
-                   BC->AsmInfo->getPointerSize());
+                   BC->AsmInfo->getCodePointerSize());
 
   const bool IsPCRelative = Relocation::isPCRelative(Rel.getType());
   auto SymbolIter = Rel.getSymbol();
   assert(SymbolIter != InputFile->symbol_end() &&
          "relocation symbol must exist");
   auto Symbol = *SymbolIter;
-  SymbolName = *(Symbol.getName());
-  SymbolAddress = *(Symbol.getAddress());
+  SymbolName = cantFail(Symbol.getName());
+  SymbolAddress = cantFail(Symbol.getAddress());
   Addend = getRelocationAddend(InputFile, Rel);
 
   uint32_t RelocationOffset =
@@ -1698,9 +1719,9 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
   }
 
   // Weird stuff - section symbols are marked as ST_Debug.
-  const bool SymbolIsSection = (Symbol.getType() == SymbolRef::ST_Debug);
-  const auto PCRelOffset =
-    IsPCRelative && !IsAArch64 ? Rel.getOffset() : 0;
+  const bool SymbolIsSection =
+      (cantFail(Symbol.getType()) == SymbolRef::ST_Debug);
+  const auto PCRelOffset = IsPCRelative && !IsAArch64 ? Rel.getOffset() : 0;
 
   // If no symbol has been found or if it is a relocation requiring the
   // creation of a GOT entry, do not link against the symbol but against
@@ -1781,10 +1802,10 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
              << "; type name = " << TypeName
              << "; value = 0x" << Twine::utohexstr(ExtractedValue)
              << "; symbol = " << SymbolName
-             << "; symbol type = " << Symbol.getType()
+             << "; symbol type = " << cantFail(Symbol.getType())
              << "; symbol address = 0x" << Twine::utohexstr(SymbolAddress)
              << "; orig symbol address = 0x"
-             << Twine::utohexstr(*(Symbol.getAddress()))
+             << Twine::utohexstr(cantFail(Symbol.getAddress()))
              << "; symbol section = " << getSectionName(**Section)
              << "; addend = 0x" << Twine::utohexstr(Addend)
              << "; original addend = 0x"
@@ -1981,7 +2002,8 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
 }
 
 void RewriteInstance::readDebugInfo() {
-  NamedRegionTimer T("read debug info", TimerGroupName, opts::TimeRewrite);
+  NamedRegionTimer T("readDebugInfo", "read debug info", TimerGroupName,
+                     TimerGroupDesc, opts::TimeRewrite);
   if (!opts::UpdateDebugSections)
     return;
 
@@ -1990,7 +2012,8 @@ void RewriteInstance::readDebugInfo() {
 
 void RewriteInstance::processProfileData() {
   if (DA.started()) {
-    NamedRegionTimer T("aggregate data", TimerGroupName, opts::TimeRewrite);
+    NamedRegionTimer T("aggregate", "aggregate data", TimerGroupName,
+                       TimerGroupDesc, opts::TimeRewrite);
     DA.aggregate(*BC.get(), BinaryFunctions);
 
     for (auto &BFI : BinaryFunctions) {
@@ -2004,7 +2027,8 @@ void RewriteInstance::processProfileData() {
       }
     }
   } else {
-    NamedRegionTimer T("read profile data", TimerGroupName, opts::TimeRewrite);
+    NamedRegionTimer T("readprofile", "read profile data", TimerGroupName,
+                       TimerGroupDesc, opts::TimeRewrite);
 
     if (!opts::BoltProfile.empty()) {
       ProfileReader PR;
@@ -2042,8 +2066,8 @@ void RewriteInstance::processProfileData() {
 }
 
 void RewriteInstance::disassembleFunctions() {
-  NamedRegionTimer T("disassemble functions", TimerGroupName,
-                      opts::TimeRewrite);
+  NamedRegionTimer T("disassembleFunctions", "disassemble functions",
+                     TimerGroupName, TimerGroupDesc, opts::TimeRewrite);
   for (auto &BFI : BinaryFunctions) {
     BinaryFunction &Function = BFI.second;
 
@@ -2190,8 +2214,8 @@ void RewriteInstance::postProcessFunctions() {
 }
 
 void RewriteInstance::runOptimizationPasses() {
-  NamedRegionTimer T("run optimization passes", TimerGroupName,
-                     opts::TimeRewrite);
+  NamedRegionTimer T("runOptimizationPasses", "run optimization passes",
+                     TimerGroupName, TimerGroupDesc, opts::TimeRewrite);
   BinaryFunctionPassManager::runAllPasses(*BC, BinaryFunctions, LargeFunctions);
 }
 
@@ -2232,7 +2256,6 @@ void RewriteInstance::emitFunction(MCStreamer &Streamer,
       Streamer.EmitCodeAlignment(Function.getAlignment(), MaxAlignBytes);
   } else {
     Streamer.EmitCodeAlignment(Function.getAlignment());
-    Streamer.setCodeSkew(EmitColdPart ? 0 : Function.getAddress());
   }
 
   MCContext &Context = Streamer.getContext();
@@ -2293,7 +2316,7 @@ void RewriteInstance::emitFunction(MCStreamer &Streamer,
   if (auto Padding = opts::padFunction(Function)) {
     DEBUG(dbgs() << "BOLT-DEBUG: padding function " << Function << " with "
                  << Padding << " bytes\n");
-    Streamer.EmitFill(Padding, MAI->getTextAlignFillValue());
+    Streamer.emitFill(Padding, MAI->getTextAlignFillValue());
   }
 
   if (opts::MarkFuncs) {
@@ -2328,14 +2351,15 @@ std::vector<T> singletonSet(T t) {
 } // anonymous namespace
 
 void RewriteInstance::emitFunctions() {
-  NamedRegionTimer T("emit functions", TimerGroupName, opts::TimeRewrite);
+  NamedRegionTimer T("emitFunctions", "emit functions", TimerGroupName,
+                     TimerGroupDesc, opts::TimeRewrite);
   std::error_code EC;
 
   // This is an object file, which we keep for debugging purposes.
   // Once we decide it's useless, we should create it in memory.
-  std::unique_ptr<tool_output_file> TempOut =
-    llvm::make_unique<tool_output_file>(opts::OutputFilename + ".bolt.o",
-                                        EC, sys::fs::F_None);
+  std::unique_ptr<ToolOutputFile> TempOut =
+    llvm::make_unique<ToolOutputFile>(opts::OutputFilename + ".bolt.o",
+                                      EC, sys::fs::F_None);
   check_error(EC, "cannot create output object file");
 
   std::unique_ptr<buffer_ostream> BOS =
@@ -2346,16 +2370,14 @@ void RewriteInstance::emitFunctions() {
   // and MCCodeEmitter (MCE). ~MCObjectStreamer() will delete these
   // two instances.
   auto MCE = BC->TheTarget->createMCCodeEmitter(*BC->MII, *BC->MRI, *BC->Ctx);
-  auto MAB = BC->TheTarget->createMCAsmBackend(*BC->MRI, BC->TripleName, "");
-  std::unique_ptr<MCStreamer> Streamer(
-    BC->TheTarget->createMCObjectStreamer(*BC->TheTriple,
-                                          *BC->Ctx,
-                                          *MAB,
-                                          *OS,
-                                          MCE,
-                                          *BC->STI,
-                                          /* RelaxAll */ false,
-                                          /* DWARFMustBeAtTheEnd */ false));
+  auto MAB =
+      BC->TheTarget->createMCAsmBackend(*BC->STI, *BC->MRI, MCTargetOptions());
+  std::unique_ptr<MCStreamer> Streamer(BC->TheTarget->createMCObjectStreamer(
+      *BC->TheTriple, *BC->Ctx, std::unique_ptr<MCAsmBackend>(MAB), *OS,
+      std::unique_ptr<MCCodeEmitter>(MCE), *BC->STI,
+      /* RelaxAll */ false,
+      /* IncrementalLinkerCompatible */ false,
+      /* DWARFMustBeAtTheEnd */ false));
 
   Streamer->InitSections(false);
 
@@ -2465,18 +2487,17 @@ void RewriteInstance::emitFunctions() {
   // Get output object as ObjectFile.
   std::unique_ptr<MemoryBuffer> ObjectMemBuffer =
       MemoryBuffer::getMemBuffer(BOS->str(), "in-memory object file", false);
-  ErrorOr<std::unique_ptr<object::ObjectFile>> ObjOrErr =
-    object::ObjectFile::createObjectFile(ObjectMemBuffer->getMemBufferRef());
-  check_error(ObjOrErr.getError(), "error creating in-memory object");
+  std::unique_ptr<object::ObjectFile> Obj = cantFail(
+      object::ObjectFile::createObjectFile(ObjectMemBuffer->getMemBufferRef()),
+      "error creating in-memory object");
 
   auto Resolver = orc::createLambdaResolver(
-          [&](const std::string &Name) {
+          [&](const std::string &Name) -> JITSymbol {
             DEBUG(dbgs() << "BOLT: looking for " << Name << "\n");
             auto I = BC->GlobalSymbols.find(Name);
             if (I == BC->GlobalSymbols.end())
-              return RuntimeDyld::SymbolInfo(nullptr);
-            return RuntimeDyld::SymbolInfo(I->second,
-                                           JITSymbolFlags::None);
+              return JITSymbol(nullptr);
+            return JITSymbol(I->second, JITSymbolFlags());
           },
           [](const std::string &S) {
             DEBUG(dbgs() << "BOLT: resolving " << S << "\n");
@@ -2485,21 +2506,35 @@ void RewriteInstance::emitFunctions() {
       );
   Resolver->setAllowsZeroSymbols(true);
 
-  auto ObjectsHandle = OLT.addObjectSet(
-        singletonSet(std::move(ObjOrErr.get())),
-        EFMM.get(),
-        std::move(Resolver),
-        /* ProcessAllSections = */true);
-
-  // Assign addresses to all sections.
-  mapFileSections(ObjectsHandle);
-
-  // Update output addresses based on the new section map and layout.
   MCAsmLayout FinalLayout(
         static_cast<MCObjectStreamer *>(Streamer.get())->getAssembler());
-  updateOutputValues(FinalLayout);
 
-  OLT.emitAndFinalize(ObjectsHandle);
+  OLT.reset(new decltype(OLT)::element_type(
+      [this]() {
+        // Get memory manager
+        return EFMM;
+      },
+      [&](orc::RTDyldObjectLinkingLayerBase::ObjHandleT Handle,
+          const orc::RTDyldObjectLinkingLayer::ObjectPtr &Obj,
+          const RuntimeDyld::LoadedObjectInfo &) {
+        // On NotifyLoaded...
+        // Assign addresses to all sections.
+        mapFileSections(Handle);
+
+        // Update output addresses based on the new section map and
+        // layout.
+        updateOutputValues(FinalLayout);
+      }));
+
+  OLT->setProcessAllSections(true);
+  auto ObjectsHandle = cantFail(
+      OLT->addObject(std::unique_ptr<OwningBinary<object::ObjectFile>>(
+                        new OwningBinary<object::ObjectFile>(
+                            std::move(Obj), std::move(ObjectMemBuffer))),
+                     std::move(Resolver)),
+      "failed in addObject()");
+
+  cantFail(OLT->emitAndFinalize(ObjectsHandle));
 
   if (opts::PrintCacheMetrics) {
     outs() << "BOLT-INFO: cache metrics after emitting functions:\n";
@@ -2511,7 +2546,7 @@ void RewriteInstance::emitFunctions() {
 }
 
 void RewriteInstance::mapFileSections(
-    orc::ObjectLinkingLayer<>::ObjSetHandleT &ObjectsHandle) {
+    orc::RTDyldObjectLinkingLayer::ObjHandleT &ObjectsHandle) {
   NewTextSectionStartAddress = NextAvailableAddress;
   if (BC->HasRelocations) {
     auto SMII = EFMM->SectionMapInfo.find(".text");
@@ -2550,9 +2585,9 @@ void RewriteInstance::mapFileSections(
                  << Twine::utohexstr(SMII->second.AllocAddress)
                  << " to 0x" << Twine::utohexstr(NewTextSectionStartAddress)
                  << '\n');
-    OLT.mapSectionAddress(ObjectsHandle,
-                          SI.SectionID,
-                          NewTextSectionStartAddress);
+    OLT->mapSectionAddress(ObjectsHandle,
+                           SI.SectionID,
+                           NewTextSectionStartAddress);
   } else {
     for (auto &BFI : BinaryFunctions) {
       auto &Function = BFI.second;
@@ -2567,9 +2602,9 @@ void RewriteInstance::mapFileSections(
                    << Twine::utohexstr(SMII->second.AllocAddress)
                    << " to 0x" << Twine::utohexstr(Function.getAddress())
                    << '\n');
-      OLT.mapSectionAddress(ObjectsHandle,
-                            SMII->second.SectionID,
-                            Function.getAddress());
+      OLT->mapSectionAddress(ObjectsHandle,
+                             SMII->second.SectionID,
+                             Function.getAddress());
       Function.setImageAddress(SMII->second.AllocAddress);
       Function.setImageSize(SMII->second.Size);
       if (Function.getImageSize() > Function.getMaxSize()) {
@@ -2588,9 +2623,9 @@ void RewriteInstance::mapFileSections(
           JT.SecInfo->FileAddress = JT.Address;
           DEBUG(dbgs() << "BOLT-DEBUG: mapping " << JT.SectionName << " to 0x"
                        << Twine::utohexstr(JT.Address) << '\n');
-          OLT.mapSectionAddress(ObjectsHandle,
-                                JT.SecInfo->SectionID,
-                                JT.Address);
+          OLT->mapSectionAddress(ObjectsHandle,
+                                 JT.SecInfo->SectionID,
+                                 JT.Address);
         }
       }
 
@@ -2601,7 +2636,7 @@ void RewriteInstance::mapFileSections(
       assert(SMII != EFMM->SectionMapInfo.end() &&
              "cannot find section for cold part");
       // Cold fragments are aligned at 16 bytes.
-      NextAvailableAddress = RoundUpToAlignment(NextAvailableAddress, 16);
+      NextAvailableAddress = alignTo(NextAvailableAddress, 16);
       auto &ColdPart = Function.cold();
       if (TooLarge) {
         // The corresponding FDE will refer to address 0.
@@ -2622,9 +2657,9 @@ void RewriteInstance::mapFileSections(
                    << Twine::utohexstr(ColdPart.getAddress())
                    << " with size "
                    << Twine::utohexstr(ColdPart.getImageSize()) << '\n');
-      OLT.mapSectionAddress(ObjectsHandle,
-                            SMII->second.SectionID,
-                            ColdPart.getAddress());
+      OLT->mapSectionAddress(ObjectsHandle,
+                             SMII->second.SectionID,
+                             ColdPart.getAddress());
 
       NextAvailableAddress += ColdPart.getImageSize();
     }
@@ -2657,16 +2692,15 @@ void RewriteInstance::mapFileSections(
     if (SMII == EFMM->SectionMapInfo.end())
       continue;
     SectionInfo &SI = SMII->second;
-    NextAvailableAddress = RoundUpToAlignment(NextAvailableAddress,
-                                              SI.Alignment);
+    NextAvailableAddress = alignTo(NextAvailableAddress, SI.Alignment);
     DEBUG(dbgs() << "BOLT: mapping section " << SectionName << " (0x"
                  << Twine::utohexstr(SI.AllocAddress)
                  << ") to 0x" << Twine::utohexstr(NextAvailableAddress)
                  << '\n');
 
-    OLT.mapSectionAddress(ObjectsHandle,
-                          SI.SectionID,
-                          NextAvailableAddress);
+    OLT->mapSectionAddress(ObjectsHandle,
+                           SI.SectionID,
+                           NextAvailableAddress);
     SI.FileAddress = NextAvailableAddress;
     SI.FileOffset = getFileOffsetForAddress(NextAvailableAddress);
 
@@ -2696,9 +2730,9 @@ void RewriteInstance::mapFileSections(
                  << ") to 0x" << Twine::utohexstr(Section.getAddress())
                  << '\n');
 
-    OLT.mapSectionAddress(ObjectsHandle,
-                          SI.SectionID,
-                          Section.getAddress());
+    OLT->mapSectionAddress(ObjectsHandle,
+                           SI.SectionID,
+                           Section.getAddress());
     SI.FileAddress = Section.getAddress();
 
     StringRef SectionContents = Section.getContents();
@@ -2730,10 +2764,10 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
       Function.setOutputSize(EndOffset - StartOffset);
       if (Function.isSplit()) {
         const auto *ColdStartSymbol = Function.getColdSymbol();
-        assert(ColdStartSymbol && ColdStartSymbol->isDefined(false) &&
+        assert(ColdStartSymbol && ColdStartSymbol->isDefined() &&
                "split function should have defined cold symbol");
         const auto *ColdEndSymbol = Function.getFunctionColdEndLabel();
-        assert(ColdEndSymbol && ColdEndSymbol->isDefined(false) &&
+        assert(ColdEndSymbol && ColdEndSymbol->isDefined() &&
                "split function should have defined cold end symbol");
         const auto ColdStartOffset = Layout.getSymbolOffset(*ColdStartSymbol);
         const auto ColdEndOffset = Layout.getSymbolOffset(*ColdEndSymbol);
@@ -2763,7 +2797,7 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
     for (auto BBI = Function.layout_begin(), BBE = Function.layout_end();
          BBI != BBE; ++BBI) {
       auto *BB = *BBI;
-      assert(BB->getLabel()->isDefined(false) && "symbol should be defined");
+      assert(BB->getLabel()->isDefined() && "symbol should be defined");
       uint64_t BaseAddress;
       if (BC->HasRelocations) {
         BaseAddress = NewTextSectionStartAddress;
@@ -2900,7 +2934,7 @@ void RewriteInstance::patchELFPHDRTable() {
   (void)AddedSegment;
 
   // Copy existing program headers with modifications.
-  for (auto &Phdr : Obj->program_headers()) {
+  for (auto &Phdr : cantFail(Obj->program_headers())) {
     auto NewPhdr = Phdr;
     if (PHDRTableAddress && Phdr.p_type == ELF::PT_PHDR) {
       NewPhdr.p_offset = PHDRTableOffset;
@@ -2986,7 +3020,7 @@ void RewriteInstance::rewriteNoteSections() {
   OS.seek(NextAvailableOffset);
 
   // Copy over non-allocatable section contents and update file offsets.
-  for (auto &Section : Obj->sections()) {
+  for (auto &Section : cantFail(Obj->sections())) {
     if (Section.sh_type == ELF::SHT_NULL)
       continue;
     if (Section.sh_flags & ELF::SHF_ALLOC)
@@ -2999,17 +3033,17 @@ void RewriteInstance::rewriteNoteSections() {
     NextAvailableOffset =
       appendPadding(OS, NextAvailableOffset, Section.sh_addralign);
 
-    ErrorOr<StringRef> SectionName = Obj->getSectionName(&Section);
-    check_error(SectionName.getError(), "cannot get section name");
+    StringRef SectionName =
+        cantFail(Obj->getSectionName(&Section), "cannot get section name");
 
     // New section size.
     uint64_t Size = 0;
 
     // Copy over section contents unless it's one of the sections we overwrite.
-    if (!willOverwriteSection(*SectionName)) {
+    if (!willOverwriteSection(SectionName)) {
       Size = Section.sh_size;
       std::string Data = InputFile->getData().substr(Section.sh_offset, Size);
-      auto SectionPatchersIt = SectionPatchers.find(*SectionName);
+      auto SectionPatchersIt = SectionPatchers.find(SectionName);
       if (SectionPatchersIt != SectionPatchers.end()) {
         (*SectionPatchersIt->second).patchBinary(Data);
       }
@@ -3023,8 +3057,7 @@ void RewriteInstance::rewriteNoteSections() {
     uint64_t Address{0};
 
     // Perform section post-processing.
-
-    auto SII = EFMM->NoteSectionInfo.find(*SectionName);
+    auto SII = EFMM->NoteSectionInfo.find(SectionName);
     if (SII != EFMM->NoteSectionInfo.end()) {
       auto &SI = SII->second;
       assert(SI.Alignment <= Section.sh_addralign &&
@@ -3035,14 +3068,14 @@ void RewriteInstance::rewriteNoteSections() {
       if (Address) {
         DEBUG(dbgs() << "BOLT-DEBUG: " << (Size ? "appending" : "writing")
                      << " contents to section "
-                     << *SectionName << '\n');
+                     << SectionName << '\n');
         OS.write(reinterpret_cast<const char *>(Address), SI.Size);
         Size += SI.Size;
       }
 
       if (!SI.PendingRelocs.empty()) {
         DEBUG(dbgs() << "BOLT-DEBUG: processing relocs for section "
-                     << *SectionName << '\n');
+                     << SectionName << '\n');
         for (auto &Reloc : SI.PendingRelocs) {
           DEBUG(dbgs() << "BOLT-DEBUG: writing value "
                        << Twine::utohexstr(Reloc.Value)
@@ -3059,7 +3092,7 @@ void RewriteInstance::rewriteNoteSections() {
     }
 
     // Set/modify section info.
-    EFMM->NoteSectionInfo[*SectionName] =
+    EFMM->NoteSectionInfo[SectionName] =
       SectionInfo(Address,
                   Size,
                   Section.sh_addralign,
@@ -3097,12 +3130,15 @@ void RewriteInstance::finalizeSectionStringTable(ELFObjectFile<ELFT> *File) {
   auto *Obj = File->getELFFile();
 
   // Pre-populate section header string table.
-  for (auto &Section : Obj->sections()) {
-    ErrorOr<StringRef> SectionName = Obj->getSectionName(&Section);
-    check_error(SectionName.getError(), "cannot get section name");
-    SHStrTab.add(*SectionName);
-    if (willOverwriteSection(*SectionName))
-      SHStrTab.add(OrgSecPrefix + SectionName->str());
+  for (auto &Section : cantFail(Obj->sections())) {
+    StringRef SectionName =
+        cantFail(Obj->getSectionName(&Section), "cannot get section name");
+    SHStrTab.add(SectionName);
+    if (willOverwriteSection(SectionName)) {
+      AllSHStrTabStrings.emplace_back(
+          SHStrTabPool.intern(OrgSecPrefix + SectionName.str()));
+      SHStrTab.add(*AllSHStrTabStrings.back());
+    }
   }
   for (auto &SMII : EFMM->SectionMapInfo) {
     SHStrTab.add(SMII.first);
@@ -3110,11 +3146,12 @@ void RewriteInstance::finalizeSectionStringTable(ELFObjectFile<ELFT> *File) {
   for (auto &SMII : EFMM->NoteSectionInfo) {
     SHStrTab.add(SMII.first);
   }
-  SHStrTab.finalize(StringTableBuilder::ELF);
+  SHStrTab.finalize();
 
-  const auto SHStrTabSize = SHStrTab.data().size();
+  const auto SHStrTabSize = SHStrTab.getSize();
   uint8_t *DataCopy = new uint8_t[SHStrTabSize];
-  memcpy(DataCopy, SHStrTab.data().data(), SHStrTabSize);
+  memset(DataCopy, 0, SHStrTabSize);
+  SHStrTab.write(DataCopy);
   EFMM->NoteSectionInfo[".shstrtab"] =
     SectionInfo(reinterpret_cast<uint64_t>(DataCopy),
                 SHStrTabSize,
@@ -3147,12 +3184,12 @@ void RewriteInstance::addBoltInfoSection() {
     OS.write(reinterpret_cast<const char*>(&(Type)), 4);
     OS << NameStr;
     for (uint64_t I = NameStr.size();
-         I < RoundUpToAlignment(NameStr.size(), 4); ++I) {
+         I < alignTo(NameStr.size(), 4); ++I) {
       OS << '\0';
     }
     OS << DescStr;
     for (uint64_t I = DescStr.size();
-         I < RoundUpToAlignment(DescStr.size(), 4); ++I) {
+         I < alignTo(DescStr.size(), 4); ++I) {
       OS << '\0';
     }
 
@@ -3181,14 +3218,16 @@ std::vector<uint32_t>
 RewriteInstance::getOutputSections(ELFObjectFile<ELFT> *File,
                                    std::vector<ELFShdrTy> *OutputSections) {
   auto *Obj = File->getELFFile();
+  auto Sections = cantFail(Obj->sections());
 
-  std::vector<uint32_t> NewSectionIndex(Obj->getNumSections(), 0);
+  std::vector<uint32_t> NewSectionIndex(
+      std::distance(Sections.begin(), Sections.end()), 0);
   NewTextSectionIndex = 0;
   uint32_t CurIndex{0};
 
   // Copy over entries for original allocatable sections with minor
   // modifications (e.g. name).
-  for (auto &Section : Obj->sections()) {
+  for (auto &Section : Sections) {
     // Always ignore this section.
     if (Section.sh_type == ELF::SHT_NULL) {
       NewSectionIndex[0] = CurIndex++;
@@ -3209,27 +3248,27 @@ RewriteInstance::getOutputSections(ELFObjectFile<ELFT> *File,
     if (!(Section.sh_flags & ELF::SHF_ALLOC))
       continue;
 
-    NewSectionIndex[std::distance(Obj->section_begin(), &Section)] =
+    NewSectionIndex[std::distance(Sections.begin(), &Section)] =
       CurIndex++;
 
     // If only computing the map, we're done with this iteration
     if (!OutputSections)
       continue;
 
-    ErrorOr<StringRef> SectionName = Obj->getSectionName(&Section);
-    check_error(SectionName.getError(), "cannot get section name");
+    StringRef SectionName =
+        cantFail(Obj->getSectionName(&Section), "cannot get section name");
 
     auto NewSection = Section;
-    if (*SectionName == ".bss") {
+    if (SectionName == ".bss") {
       // .bss section offset matches that of the next section.
       NewSection.sh_offset = NewTextSegmentOffset;
     }
 
-    if (willOverwriteSection(*SectionName)) {
+    if (willOverwriteSection(SectionName)) {
       NewSection.sh_name = SHStrTab.getOffset(OrgSecPrefix +
-                                              SectionName->str());
+                                              SectionName.str());
     } else {
-      NewSection.sh_name = SHStrTab.getOffset(*SectionName);
+      NewSection.sh_name = SHStrTab.getOffset(SectionName);
     }
 
     OutputSections->emplace_back(NewSection);
@@ -3278,7 +3317,7 @@ RewriteInstance::getOutputSections(ELFObjectFile<ELFT> *File,
 
   // Copy over entries for non-allocatable sections performing necessary
   // adjustments.
-  for (auto &Section : Obj->sections()) {
+  for (auto &Section : Sections) {
     if (Section.sh_type == ELF::SHT_NULL)
       continue;
     if (Section.sh_flags & ELF::SHF_ALLOC)
@@ -3287,17 +3326,17 @@ RewriteInstance::getOutputSections(ELFObjectFile<ELFT> *File,
     if (Section.sh_type == ELF::SHT_RELA)
       continue;
 
-    NewSectionIndex[std::distance(Obj->section_begin(), &Section)] =
+    NewSectionIndex[std::distance(Sections.begin(), &Section)] =
       CurIndex++;
 
     // If only computing the map, we're done with this iteration
     if (!OutputSections)
       continue;
 
-    ErrorOr<StringRef> SectionName = Obj->getSectionName(&Section);
-    check_error(SectionName.getError(), "cannot get section name");
+    StringRef SectionName =
+        cantFail(Obj->getSectionName(&Section), "cannot get section name");
 
-    auto SII = EFMM->NoteSectionInfo.find(*SectionName);
+    auto SII = EFMM->NoteSectionInfo.find(SectionName);
     assert(SII != EFMM->NoteSectionInfo.end() &&
            "missing section info for non-allocatable section");
 
@@ -3305,7 +3344,7 @@ RewriteInstance::getOutputSections(ELFObjectFile<ELFT> *File,
     auto NewSection = Section;
     NewSection.sh_offset = SI.FileOffset;
     NewSection.sh_size = SI.Size;
-    NewSection.sh_name = SHStrTab.getOffset(*SectionName);
+    NewSection.sh_name = SHStrTab.getOffset(SectionName);
 
     OutputSections->emplace_back(NewSection);
 
@@ -3436,10 +3475,10 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
                                std::function<void(size_t, const char *, size_t)>
                                Write,
                                std::function<size_t(StringRef)> AddToStrTab) {
-    auto StringSection = *Obj->getStringTableForSymtab(*Section);
+    auto StringSection = cantFail(Obj->getStringTableForSymtab(*Section));
     unsigned IsHotTextUpdated = 0;
 
-    for (const Elf_Sym &Symbol : Obj->symbols(Section)) {
+    for (const Elf_Sym &Symbol : cantFail(Obj->symbols(Section))) {
       auto NewSymbol = Symbol;
       const auto *Function = getBinaryFunctionAtAddress(Symbol.st_value);
       // Some section symbols may be mistakenly associated with the first
@@ -3456,9 +3495,10 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
         if (!PatchExisting && Function->isSplit()) {
           auto NewColdSym = NewSymbol;
           SmallVector<char, 256> Buf;
-          NewColdSym.st_name = AddToStrTab(Twine(*Symbol.getName(StringSection))
-                                               .concat(".cold.0")
-                                               .toStringRef(Buf));
+          NewColdSym.st_name =
+              AddToStrTab(Twine(cantFail(Symbol.getName(StringSection)))
+                              .concat(".cold.0")
+                              .toStringRef(Buf));
           NewColdSym.st_value = Function->cold().getAddress();
           NewColdSym.st_size = Function->cold().getImageSize();
           Write(0, reinterpret_cast<const char *>(&NewColdSym),
@@ -3511,9 +3551,9 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
         if (NewSymbol.getType() == ELF::STT_NOTYPE &&
             NewSymbol.getBinding() == ELF::STB_LOCAL &&
             NewSymbol.st_size == 0) {
-          if (auto SecOrErr =
-                  File->getELFFile()->getSection(NewSymbol.st_shndx)) {
-            auto Section = *SecOrErr;
+          auto ExpectedSec = File->getELFFile()->getSection(NewSymbol.st_shndx);
+          if (ExpectedSec) {
+            auto Section = *ExpectedSec;
             if (Section->sh_type == ELF::SHT_PROGBITS &&
                 Section->sh_flags & ELF::SHF_ALLOC &&
                 Section->sh_flags & ELF::SHF_EXECINSTR) {
@@ -3524,6 +3564,8 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
               // If patching an existing symtab, patch this value to zero.
               NewSymbol.st_value = 0;
             }
+          } else {
+            consumeError(ExpectedSec.takeError());
           }
         }
       }
@@ -3538,13 +3580,14 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
           return true;
         };
 
-        auto SymbolName = Symbol.getName(StringSection);
-        assert(SymbolName && "cannot get symbol name");
-        if (*SymbolName == "__hot_start" || *SymbolName == "__hot_end")
-          updateSymbolValue(*SymbolName);
+        auto SymbolName =
+            cantFail(Symbol.getName(StringSection), "cannot get symbol name");
+        if (SymbolName == "__hot_start" || SymbolName == "__hot_end")
+          updateSymbolValue(SymbolName);
       }
 
-      Write((&Symbol - Obj->symbol_begin(Section)) * sizeof(Elf_Sym),
+      Write((&Symbol - cantFail(Obj->symbols(Section)).begin()) *
+                sizeof(Elf_Sym),
             reinterpret_cast<const char *>(&NewSymbol), sizeof(NewSymbol));
     }
 
@@ -3572,7 +3615,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
 
   // Update dynamic symbol table.
   const Elf_Shdr *DynSymSection = nullptr;
-  for (const Elf_Shdr &Section : Obj->sections()) {
+  for (const Elf_Shdr &Section : cantFail(Obj->sections())) {
     if (Section.sh_type == ELF::SHT_DYNSYM) {
       DynSymSection = &Section;
       break;
@@ -3588,7 +3631,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
 
   // (re)create regular symbol table.
   const Elf_Shdr *SymTabSection = nullptr;
-  for (const auto &Section : Obj->sections()) {
+  for (const auto &Section : cantFail(Obj->sections())) {
     if (Section.sh_type == ELF::SHT_SYMTAB) {
       SymTabSection = &Section;
       break;
@@ -3599,12 +3642,13 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
     return;
   }
 
-  const Elf_Shdr *StrTabSection = *Obj->getSection(SymTabSection->sh_link);
+  const Elf_Shdr *StrTabSection =
+      cantFail(Obj->getSection(SymTabSection->sh_link));
   std::string NewContents;
   std::string NewStrTab =
       File->getData().substr(StrTabSection->sh_offset, StrTabSection->sh_size);
-  auto SecName = *Obj->getSectionName(SymTabSection);
-  auto StrSecName = *Obj->getSectionName(StrTabSection);
+  auto SecName = cantFail(Obj->getSectionName(SymTabSection));
+  auto StrSecName = cantFail(Obj->getSectionName(StrTabSection));
 
   updateSymbolTable(/*patch existing table?*/false, SymTabSection,
                     [&](size_t Offset, const char *Buf, size_t Size) {
@@ -3707,7 +3751,7 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
   // Locate DYNAMIC by looking through program headers.
   uint64_t DynamicOffset = 0;
   const Elf_Phdr *DynamicPhdr = 0;
-  for (auto &Phdr : Obj->program_headers()) {
+  for (auto &Phdr : cantFail(Obj->program_headers())) {
     if (Phdr.p_type == ELF::PT_DYNAMIC) {
       DynamicOffset = Phdr.p_offset;
       DynamicPhdr = &Phdr;
@@ -3721,10 +3765,11 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
 
   // Go through all dynamic entries and patch functions addresses with
   // new ones.
-  ErrorOr<const Elf_Dyn *> DTB = Obj->dynamic_table_begin(DynamicPhdr);
-  ErrorOr<const Elf_Dyn *> DTE = Obj->dynamic_table_end(DynamicPhdr);
-  assert(DTB && DTE && "error accessing dynamic table");
-  for (auto *DE = *DTB; DE != *DTE; ++DE) {
+  const Elf_Dyn *DTB = cantFail(Obj->dynamic_table_begin(DynamicPhdr),
+                                "error accessing dynamic table");
+  const Elf_Dyn *DTE = cantFail(Obj->dynamic_table_end(DynamicPhdr),
+                                "error accessing dynamic table");
+  for (auto *DE = DTB; DE != DTE; ++DE) {
     auto NewDE = *DE;
     bool ShouldPatch = true;
     switch (DE->getTag()) {
@@ -3756,7 +3801,7 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
     }
     if (ShouldPatch) {
       OS.pwrite(reinterpret_cast<const char *>(&NewDE), sizeof(NewDE),
-                DynamicOffset + (DE - *DTB) * sizeof(*DE));
+                DynamicOffset + (DE - DTB) * sizeof(*DE));
     }
   }
 
@@ -3781,16 +3826,14 @@ void RewriteInstance::rewriteFile() {
   // We obtain an asm-specific writer so that we can emit nops in an
   // architecture-specific way at the end of the function.
   auto MCE = BC->TheTarget->createMCCodeEmitter(*BC->MII, *BC->MRI, *BC->Ctx);
-  auto MAB = BC->TheTarget->createMCAsmBackend(*BC->MRI, BC->TripleName, "");
-  std::unique_ptr<MCStreamer> Streamer(
-    BC->TheTarget->createMCObjectStreamer(*BC->TheTriple,
-                                          *BC->Ctx,
-                                          *MAB,
-                                          OS,
-                                          MCE,
-                                          *BC->STI,
-                                          /* RelaxAll */ false,
-                                          /* DWARFMustBeAtTheEnd */ false));
+  auto MAB =
+      BC->TheTarget->createMCAsmBackend(*BC->STI, *BC->MRI, MCTargetOptions());
+  std::unique_ptr<MCStreamer> Streamer(BC->TheTarget->createMCObjectStreamer(
+      *BC->TheTriple, *BC->Ctx, std::unique_ptr<MCAsmBackend>(MAB), OS,
+      std::unique_ptr<MCCodeEmitter>(MCE), *BC->STI,
+      /* RelaxAll */ false,
+      /*IncrementalLinkerCompatible */ false,
+      /* DWARFMustBeAtTheEnd */ false));
 
   auto &Writer = static_cast<MCObjectStreamer *>(Streamer.get())
                      ->getAssembler()
@@ -3929,6 +3972,8 @@ void RewriteInstance::rewriteFile() {
     OS.pwrite(reinterpret_cast<const char *>(SI.AllocAddress),
                      SI.Size,
                      SI.FileOffset);
+    assert(SI.AllocAddress &&
+           "writing section that was not assigned an address");
   }
 
   // If .eh_frame is present create .eh_frame_hdr.
@@ -3965,51 +4010,37 @@ void RewriteInstance::rewriteFile() {
 
   // If requested, open again the binary we just wrote to dump its EH Frame
   if (opts::DumpEHFrame) {
-    ErrorOr<OwningBinary<Binary>> BinaryOrErr =
+    Expected<OwningBinary<Binary>> BinaryOrErr =
         createBinary(opts::OutputFilename);
-    if (std::error_code EC = BinaryOrErr.getError())
-      report_error(opts::OutputFilename, EC);
+    if (auto E = BinaryOrErr.takeError())
+      report_error(opts::OutputFilename, std::move(E));
     Binary &Binary = *BinaryOrErr.get().getBinary();
 
     if (auto *E = dyn_cast<ELFObjectFileBase>(&Binary)) {
-      DWARFContextInMemory DwCtx(*E, nullptr, true);
-      const auto &EHFrame = DwCtx.getEHFrame();
+      auto DwCtx = DWARFContext::create(*E);
+      const auto &EHFrame = DwCtx->getEHFrame();
       outs() << "BOLT-INFO: Dumping rewritten .eh_frame\n";
-      EHFrame->dump(outs());
+      EHFrame->dump(outs(), NoneType());
     }
   }
 }
 
 void RewriteInstance::writeEHFrameHeader(SectionInfo &EHFrameSecInfo) {
-  DWARFFrame NewEHFrame(EHFrameSecInfo.FileAddress);
-  NewEHFrame.parse(
-    DataExtractor(StringRef(reinterpret_cast<const char *>(
-                                                 EHFrameSecInfo.AllocAddress),
-                            EHFrameSecInfo.Size),
-                  BC->AsmInfo->isLittleEndian(),
-                  BC->AsmInfo->getPointerSize()));
-  if (!NewEHFrame.ParseError.empty()) {
-    errs() << "BOLT-ERROR: EHFrame reader failed with message \""
-           << NewEHFrame.ParseError << '\n';
-    exit(1);
-  }
+  DWARFDebugFrame NewEHFrame(true, EHFrameSecInfo.FileAddress);
+  NewEHFrame.parse(DWARFDataExtractor(
+      StringRef(reinterpret_cast<const char *>(EHFrameSecInfo.AllocAddress),
+                EHFrameSecInfo.Size),
+      BC->AsmInfo->isLittleEndian(), BC->AsmInfo->getCodePointerSize()));
 
   auto OldSMII = EFMM->SectionMapInfo.find(".eh_frame_old");
   assert(OldSMII != EFMM->SectionMapInfo.end() &&
          "expected .eh_frame_old to be present");
   auto &OldEHFrameSecInfo = OldSMII->second;
-  DWARFFrame OldEHFrame(OldEHFrameSecInfo.FileAddress);
-  OldEHFrame.parse(
-    DataExtractor(StringRef(reinterpret_cast<const char *>(
-                                              OldEHFrameSecInfo.AllocAddress),
-                            OldEHFrameSecInfo.Size),
-                  BC->AsmInfo->isLittleEndian(),
-                  BC->AsmInfo->getPointerSize()));
-  if (!OldEHFrame.ParseError.empty()) {
-    errs() << "BOLT-ERROR: EHFrame reader failed with message \""
-           << OldEHFrame.ParseError << '\n';
-    exit(1);
-  }
+  DWARFDebugFrame OldEHFrame(true, OldEHFrameSecInfo.FileAddress);
+  OldEHFrame.parse(DWARFDataExtractor(
+      StringRef(reinterpret_cast<const char *>(OldEHFrameSecInfo.AllocAddress),
+                OldEHFrameSecInfo.Size),
+      BC->AsmInfo->isLittleEndian(), BC->AsmInfo->getCodePointerSize()));
 
   DEBUG(dbgs() << "BOLT: writing a new .eh_frame_hdr\n");
 
@@ -4107,10 +4138,10 @@ DWARFAddressRangesVector RewriteInstance::translateModuleAddressRanges(
   DWARFAddressRangesVector OutputRanges;
 
   for (const auto Range : InputRanges) {
-    auto BFI = BinaryFunctions.lower_bound(Range.first);
+    auto BFI = BinaryFunctions.lower_bound(Range.LowPC);
     while (BFI != BinaryFunctions.end()) {
       const auto &Function = BFI->second;
-      if (Function.getAddress() >= Range.second)
+      if (Function.getAddress() >= Range.HighPC)
         break;
       const auto FunctionRanges = Function.getOutputAddressRanges();
       std::move(std::begin(FunctionRanges),

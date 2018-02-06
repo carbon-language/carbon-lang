@@ -50,7 +50,8 @@ public:
   }
 
   void run() {
-    NamedRegionTimer T1("LA", "Dataflow", opts::TimeOpts);
+    NamedRegionTimer T1("LA", "Liveness Analysis", "Dataflow", "Dataflow",
+                        opts::TimeOpts);
     Parent::run();
   }
 

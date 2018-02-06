@@ -34,6 +34,7 @@ private:
 
  public:
   static const char TimerGroupName[];
+  static const char TimerGroupDesc[];
 
   BinaryFunctionPassManager(BinaryContext &BC,
                             std::map<uint64_t, BinaryFunction> &BFs,

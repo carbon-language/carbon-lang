@@ -51,7 +51,8 @@ public:
                    bool IncludeLocalAccesses = true) const;
 
   void run() {
-    NamedRegionTimer T1("SRU", "Dataflow", opts::TimeOpts);
+    NamedRegionTimer T1("SRU", "Stack Reaching Uses", "Dataflow", "Dataflow",
+                        opts::TimeOpts);
     InstrsDataflowAnalysis<StackReachingUses, true>::run();
   }
 

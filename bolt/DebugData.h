@@ -220,7 +220,7 @@ private:
   /// Patch of changing one attribute to another.
   struct AbbrevAttrPatch {
     uint32_t Code;    // Code of abbreviation to be modified.
-    uint16_t Attr;    // ID of attribute to be replaced.
+    dwarf::Attribute Attr;    // ID of attribute to be replaced.
     uint8_t NewAttr;  // ID of the new attribute.
     uint8_t NewForm;  // Form of the new attribute.
   };
@@ -238,7 +238,7 @@ public:
   /// We only handle standard forms, that are encoded in a single byte.
   void addAttributePatch(const DWARFUnit *Unit,
                          uint32_t AbbrevCode,
-                         uint16_t AttrTag,
+                         dwarf::Attribute AttrTag,
                          uint8_t NewAttrTag,
                          uint8_t NewAttrForm);
 

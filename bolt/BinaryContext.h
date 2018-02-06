@@ -23,7 +23,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCDisassembler.h"
+#include "llvm/MC/MCDisassembler/MCDisassembler.h"
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -189,7 +189,7 @@ public:
 
   ~BinaryContext();
 
-  MCObjectWriter *createObjectWriter(raw_pwrite_stream &OS);
+  std::unique_ptr<MCObjectWriter> createObjectWriter(raw_pwrite_stream &OS);
 
   /// Return a global symbol registered at a given \p Address. If no symbol
   /// exists, create one with unique name using \p Prefix.

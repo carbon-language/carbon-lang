@@ -272,6 +272,8 @@ namespace bolt {
 using namespace opts;
 
 const char BinaryFunctionPassManager::TimerGroupName[] =
+    "passman";
+const char BinaryFunctionPassManager::TimerGroupDesc[] =
     "Binary Function Pass Manager";
 
 void BinaryFunctionPassManager::runPasses() {
@@ -285,7 +287,8 @@ void BinaryFunctionPassManager::runPasses() {
       outs() << "BOLT-INFO: Starting pass: " << Pass->getName() << "\n";
     }
 
-    NamedRegionTimer T(Pass->getName(), TimerGroupName, TimeOpts);
+    NamedRegionTimer T(Pass->getName(), Pass->getName(), TimerGroupName,
+                       TimerGroupDesc, TimeOpts);
 
     callWithDynoStats(
       [this,&Pass] {

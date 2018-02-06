@@ -14,7 +14,7 @@
 
 #include "BinaryContext.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/DebugInfo/DWARF/DWARFFrame.h"
+#include "llvm/DebugInfo/DWARF/DWARFDebugFrame.h"
 #include "llvm/Support/Casting.h"
 #include <map>
 
@@ -28,10 +28,10 @@ class RewriteInstance;
 /// BinaryFunction, as well as rewriting CFI sections.
 class CFIReaderWriter {
 public:
-  explicit CFIReaderWriter(const DWARFFrame &EHFrame) {
+  explicit CFIReaderWriter(const DWARFDebugFrame &EHFrame) {
     // Prepare FDEs for fast lookup
-    for (const auto &Entry : EHFrame.Entries) {
-      const auto *CurFDE = dyn_cast<dwarf::FDE>(Entry.get());
+    for (const auto &Entry : EHFrame.entries()) {
+      const auto *CurFDE = dyn_cast<dwarf::FDE>(&Entry);
       // Skip CIEs.
       if (!CurFDE)
         continue;
@@ -69,8 +69,8 @@ public:
   /// \p EHFrameHeaderAddress specifies location of .eh_frame_hdr,
   /// and is required for relative addressing used in the section.
   std::vector<char> generateEHFrameHeader(
-      const DWARFFrame &OldEHFrame,
-      const DWARFFrame &NewEHFrame,
+      const DWARFDebugFrame &OldEHFrame,
+      const DWARFDebugFrame &NewEHFrame,
       uint64_t EHFrameHeaderAddress,
       std::vector<uint64_t> &FailedAddresses) const;
 

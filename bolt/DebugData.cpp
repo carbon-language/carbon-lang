@@ -43,9 +43,9 @@ uint64_t writeAddressRanges(
     const DWARFAddressRangesVector &AddressRanges,
     const bool WriteRelativeRanges = false) {
   for (auto &Range : AddressRanges) {
-    Writer->writeLE64(Range.first);
-    Writer->writeLE64(WriteRelativeRanges ? Range.second - Range.first
-                                          : Range.second);
+    Writer->writeLE64(Range.LowPC);
+    Writer->writeLE64(WriteRelativeRanges ? Range.HighPC - Range.LowPC
+                                          : Range.HighPC);
   }
   // Finish with 0 entries.
   Writer->writeLE64(0);
@@ -202,13 +202,9 @@ void SimpleBinaryPatcher::addLEPatch(uint32_t Offset, uint64_t NewValue,
 }
 
 void SimpleBinaryPatcher::addUDataPatch(uint32_t Offset, uint64_t Value, uint64_t Size) {
-  const auto EncodedSize = getULEB128Size(Value);
-  assert(EncodedSize <= Size && "value did not fit");
-
-  const auto Padding = Size - EncodedSize;
   std::string Buff;
   raw_string_ostream OS(Buff);
-  encodeULEB128(Value, OS, Padding);
+  encodeULEB128(Value, OS, Size);
 
   Patches.emplace_back(Offset, OS.str());
 }
@@ -235,7 +231,7 @@ void SimpleBinaryPatcher::patchBinary(std::string &BinaryContents) {
 
 void DebugAbbrevPatcher::addAttributePatch(const DWARFUnit *Unit,
                                            uint32_t AbbrevCode,
-                                           uint16_t AttrTag,
+                                           dwarf::Attribute AttrTag,
                                            uint8_t NewAttrTag,
                                            uint8_t NewAttrForm) {
   assert(Unit && "No compile unit specified.");
@@ -256,8 +252,8 @@ void DebugAbbrevPatcher::patchBinary(std::string &Contents) {
       const auto *AbbreviationDeclaration =
         UnitAbbreviations->getAbbreviationDeclaration(AttrPatch.Code);
       assert(AbbreviationDeclaration && "No abbreviation with given code.");
-      const auto *Attribute = AbbreviationDeclaration->findAttribute(
-          AttrPatch.Attr);
+      const auto Attribute =
+          AbbreviationDeclaration->findAttribute(AttrPatch.Attr);
 
       assert(Attribute && "Specified attribute doesn't occur in abbreviation.");
       // Because we're only handling standard values (i.e. no DW_FORM_GNU_* or

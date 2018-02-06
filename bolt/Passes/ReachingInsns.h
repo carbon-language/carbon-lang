@@ -46,7 +46,8 @@ public:
   }
 
   void run() {
-    NamedRegionTimer T1("RI", "Dataflow", opts::TimeOpts);
+    NamedRegionTimer T1("RI", "Reaching Insns", "Dataflow", "Dataflow",
+                        opts::TimeOpts);
     InstrsDataflowAnalysis<ReachingInsns<Backward>, Backward>::run();
   }
 

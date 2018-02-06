@@ -25,8 +25,8 @@ namespace bolt {
 
 class BinaryBasicBlock;
 
-typedef DomTreeNodeBase<BinaryBasicBlock> BinaryDomTreeNode;
-typedef DominatorTreeBase<BinaryBasicBlock> BinaryDominatorTree;
+using BinaryDomTreeNode = DomTreeNodeBase<BinaryBasicBlock>;
+using BinaryDominatorTree =  DomTreeBase<BinaryBasicBlock>;
 
 class BinaryLoop : public LoopBase<BinaryBasicBlock, BinaryLoop> {
 public:
@@ -76,7 +76,7 @@ template <> struct GraphTraits<const bolt::BinaryDomTreeNode *>
 
 template <> struct GraphTraits<bolt::BinaryDominatorTree *>
   : public GraphTraits<bolt::BinaryDomTreeNode *> {
-  static NodeType *getEntryNode(bolt::BinaryDominatorTree *DT) {
+  static NodeRef getEntryNode(bolt::BinaryDominatorTree *DT) {
     return DT->getRootNode();
   }
 

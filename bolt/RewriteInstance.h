@@ -17,11 +17,12 @@
 #include "BinaryFunction.h"
 #include "DebugData.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
+#include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/MC/StringTableBuilder.h"
 #include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/Support/StringPool.h"
 #include <map>
 #include <set>
 
@@ -29,7 +30,7 @@ namespace llvm {
 
 class DWARFContext;
 class DWARFFrame;
-class tool_output_file;
+class ToolOutputFile;
 
 namespace bolt {
 
@@ -67,6 +68,7 @@ struct SectionInfo {
               bool IsReadOnly, bool IsLocal, uint64_t FileAddress = 0,
               uint64_t FileOffset = 0, unsigned SectionID = 0,
               bool IsELFNote = false)
+
       : AllocAddress(Address), Size(Size), Alignment(Alignment), IsCode(IsCode),
         IsReadOnly(IsReadOnly), IsLocal(IsLocal), FileAddress(FileAddress),
         FileOffset(FileOffset), SectionID(SectionID), IsELFNote(IsELFNote) {}
@@ -211,12 +213,12 @@ public:
   /// Recursively update debug info for all DIEs in \p Unit.
   /// If \p Function is not empty, it points to a function corresponding
   /// to a parent DW_TAG_subprogram node of the current \p DIE.
-  void updateUnitDebugInfo(DWARFCompileUnit *Unit,
-                           const DWARFDebugInfoEntryMinimal *DIE,
+  void updateUnitDebugInfo(const DWARFDie DIE,
                            std::vector<const BinaryFunction *> FunctionStack);
 
   /// Map all sections to their final addresses.
-  void mapFileSections(orc::ObjectLinkingLayer<>::ObjSetHandleT &ObjectsHandle);
+  void
+  mapFileSections(orc::RTDyldObjectLinkingLayer::ObjHandleT &ObjectsHandle);
 
   /// Update output object's values based on the final \p Layout.
   void updateOutputValues(const MCAsmLayout &Layout);
@@ -245,7 +247,8 @@ public:
 
   /// Return value for the symbol \p Name in the output.
   uint64_t getNewValueForSymbol(const StringRef Name) {
-    return OLT.findSymbol(Name, false).getAddress();
+    return cantFail(OLT->findSymbol(Name, false).getAddress(),
+                    "findSymbol failed");
   }
 
   /// Return BinaryFunction containing a given \p Address or nullptr if
@@ -310,9 +313,6 @@ private:
 
   /// Write .eh_frame_hdr.
   void writeEHFrameHeader(SectionInfo &EHFrameSecInfo);
-
-  // Run ObjectLinkingLayer() with custom memory manager and symbol resolver.
-  orc::ObjectLinkingLayer<> OLT;
 
   /// Disassemble and create function entries for PLT.
   void disassemblePLT();
@@ -385,8 +385,7 @@ private:
   /// new address ranges in the output binary.
   /// \p Unit Compile uniit the object belongs to.
   /// \p DIE is the object's DIE in the input binary.
-  void updateDWARFObjectAddressRanges(const DWARFUnit *Unit,
-                                      const DWARFDebugInfoEntryMinimal *DIE,
+  void updateDWARFObjectAddressRanges(const DWARFDie DIE,
                                       uint64_t DebugRangesOffset);
 
   /// Return file offset corresponding to a given virtual address.
@@ -411,8 +410,8 @@ private:
                                        uint64_t Address,
                                        uint64_t Size,
                                        bool IsSimple);
-private:
 
+public:
   /// When updating debug info, these are the sections we overwrite.
   static constexpr const char *SectionsToOverwrite[] = {
     ".shstrtab",
@@ -425,7 +424,11 @@ private:
     ".gdb_index",
   };
 
+private:
+
   static const char TimerGroupName[];
+
+  static const char TimerGroupDesc[];
 
   /// Huge page size used for alignment.
   static constexpr unsigned PageAlign = 0x200000;
@@ -448,11 +451,14 @@ private:
 
   /// Memory manager for sections and segments. Used to communicate with ORC
   /// among other things.
-  std::unique_ptr<ExecutableFileMemoryManager> EFMM;
+  std::shared_ptr<ExecutableFileMemoryManager> EFMM;
+
+  // Run ObjectLinkingLayer() with custom memory manager and symbol resolver.
+  std::unique_ptr<orc::RTDyldObjectLinkingLayer> OLT;
 
   /// Output file where we mix original code from the input binary and
   /// optimized code for selected functions.
-  std::unique_ptr<tool_output_file> Out;
+  std::unique_ptr<ToolOutputFile> Out;
 
   /// Offset in the input file where non-allocatable sections start.
   uint64_t FirstNonAllocatableOffset{0};
@@ -496,7 +502,7 @@ private:
   /// Exception handling and stack unwinding information in this binary.
   ArrayRef<uint8_t> LSDAData;
   uint64_t LSDAAddress{0};
-  const llvm::DWARFFrame *EHFrame{nullptr};
+  const llvm::DWARFDebugFrame *EHFrame{nullptr};
   ErrorOr<BinarySection &> EHFrameSection{std::errc::bad_address};
 
   /// .plt section.
@@ -536,6 +542,8 @@ private:
 
   /// Section header string table.
   StringTableBuilder SHStrTab;
+  StringPool SHStrTabPool;
+  std::vector<PooledStringPtr> AllSHStrTabStrings;
 
   /// A rewrite of strtab
   std::string NewStrTab;

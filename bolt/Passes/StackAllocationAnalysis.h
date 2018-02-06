@@ -41,7 +41,8 @@ public:
   virtual ~StackAllocationAnalysis() {}
 
   void run() {
-    NamedRegionTimer T1("SAA", "Dataflow", opts::TimeOpts);
+    NamedRegionTimer T1("SAA", "Stack Allocation Analysis", "Dataflow",
+                        "Dataflow", opts::TimeOpts);
     InstrsDataflowAnalysis<StackAllocationAnalysis, false>::run();
   }
 

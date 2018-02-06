@@ -10,7 +10,8 @@ namespace llvm {
 namespace bolt {
 
 void CallGraphWalker::traverseCG() {
-  NamedRegionTimer T1("CG Traversal", "CG breakdown", opts::TimeOpts);
+  NamedRegionTimer T1("CG Traversal", "CG Traversal", "CG breakdown",
+                      "CG breakdown", opts::TimeOpts);
   std::queue<BinaryFunction *> Queue;
   std::set<BinaryFunction *> InQueue;
 

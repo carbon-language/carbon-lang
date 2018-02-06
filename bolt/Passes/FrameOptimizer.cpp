@@ -35,8 +35,7 @@ FrameOptimization("frame-opt",
   cl::values(
     clEnumValN(FOP_NONE, "none", "do not perform frame optimization"),
     clEnumValN(FOP_HOT, "hot", "perform FOP on hot functions"),
-    clEnumValN(FOP_ALL, "all", "perform FOP on all functions"),
-    clEnumValEnd),
+    clEnumValN(FOP_ALL, "all", "perform FOP on all functions")),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -249,18 +248,21 @@ void FrameOptimizerPass::runOnFunctions(BinaryContext &BC,
                    << BC.getHotThreshold() << " )\n");
     }
     {
-      NamedRegionTimer T1("remove loads", "FOP breakdown", opts::TimeOpts);
+      NamedRegionTimer T1("removeloads", "remove loads", "FOP", "FOP breakdown",
+                          opts::TimeOpts);
       removeUnnecessaryLoads(RA, FA, BC, I.second);
     }
     if (opts::RemoveStores) {
-      NamedRegionTimer T1("remove stores", "FOP breakdown", opts::TimeOpts);
+      NamedRegionTimer T1("removestores", "remove stores", "FOP",
+                          "FOP breakdown", opts::TimeOpts);
       removeUnusedStores(FA, BC, I.second);
     }
     // Don't even start shrink wrapping if no profiling info is available
     if (I.second.getKnownExecutionCount() == 0)
       continue;
     {
-      NamedRegionTimer T1("move spills", "FOP breakdown", opts::TimeOpts);
+      NamedRegionTimer T1("movespills", "move spills", "FOP", "FOP breakdown",
+                          opts::TimeOpts);
       DataflowInfoManager Info(BC, I.second, &RA, &FA);
       ShrinkWrapping SW(FA, BC, I.second, Info);
       SW.perform();

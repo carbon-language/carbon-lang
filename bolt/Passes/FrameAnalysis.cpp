@@ -152,7 +152,8 @@ public:
   FrameAccessAnalysis(const BinaryContext &BC, BinaryFunction &BF)
       : SPT(BC, BF), BC(BC), BF(BF) {
     {
-      NamedRegionTimer T1("SPT", "Dataflow", opts::TimeOpts);
+      NamedRegionTimer T1("SPT", "Stack Pointer Tracking", "Dataflow",
+                          "Dataflow", opts::TimeOpts);
       SPT.run();
     }
   }
@@ -519,8 +520,8 @@ FrameAnalysis::FrameAnalysis(BinaryContext &BC,
     }
 
     {
-      NamedRegionTimer T1("restore frame index", "FOP breakdown",
-                          opts::TimeOpts);
+      NamedRegionTimer T1("restorefi", "restore frame index", "FOP",
+                          "FOP breakdown", opts::TimeOpts);
       if (!restoreFrameIndex(I.second)) {
         ++NumFunctionsFailedRestoreFI;
         auto Count = I.second.getExecutionCount();

@@ -50,8 +50,8 @@ bool Relocation::isSupported(uint64_t Type) {
   case ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12:
   case ELF::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
   case ELF::R_AARCH64_LD64_GOT_LO12_NC:
-  case ELF::R_AARCH64_TLSDESC_LD64_LO12_NC:
-  case ELF::R_AARCH64_TLSDESC_ADD_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_LD64_LO12:
+  case ELF::R_AARCH64_TLSDESC_ADD_LO12:
   case ELF::R_AARCH64_TLSDESC_CALL:
   case ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
   case ELF::R_AARCH64_JUMP26:
@@ -93,8 +93,8 @@ size_t Relocation::getSizeForType(uint64_t Type) {
   case ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12:
   case ELF::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
   case ELF::R_AARCH64_LD64_GOT_LO12_NC:
-  case ELF::R_AARCH64_TLSDESC_LD64_LO12_NC:
-  case ELF::R_AARCH64_TLSDESC_ADD_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_LD64_LO12:
+  case ELF::R_AARCH64_TLSDESC_ADD_LO12:
   case ELF::R_AARCH64_TLSDESC_CALL:
   case ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
   case ELF::R_AARCH64_JUMP26:
@@ -137,7 +137,7 @@ uint64_t Relocation::extractValue(uint64_t Type, uint64_t Contents,
     return Contents;
   }
   case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
-  case ELF::R_AARCH64_TLSDESC_LD64_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_LD64_LO12:
   case ELF::R_AARCH64_LD64_GOT_LO12_NC:
   case ELF::R_AARCH64_LDST64_ABS_LO12_NC: {
     // Immediate goes in bits 21:10 of LD/ST instruction, taken
@@ -147,7 +147,7 @@ uint64_t Relocation::extractValue(uint64_t Type, uint64_t Contents,
   }
   case ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12:
   case ELF::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
-  case ELF::R_AARCH64_TLSDESC_ADD_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_ADD_LO12:
   case ELF::R_AARCH64_ADD_ABS_LO12_NC: {
     // Immediate goes in bits 21:10 of ADD instruction
     Contents &= ~0xffffffffffc003ffU;
@@ -203,8 +203,8 @@ bool Relocation::isGOT(uint64_t Type) {
   case ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12:
   case ELF::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
   case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
-  case ELF::R_AARCH64_TLSDESC_LD64_LO12_NC:
-  case ELF::R_AARCH64_TLSDESC_ADD_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_LD64_LO12:
+  case ELF::R_AARCH64_TLSDESC_ADD_LO12:
   case ELF::R_AARCH64_TLSDESC_CALL:
     return true;
   }
@@ -221,8 +221,8 @@ bool Relocation::isTLS(uint64_t Type) {
   case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
   case ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12:
   case ELF::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
-  case ELF::R_AARCH64_TLSDESC_LD64_LO12_NC:
-  case ELF::R_AARCH64_TLSDESC_ADD_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_LD64_LO12:
+  case ELF::R_AARCH64_TLSDESC_ADD_LO12:
   case ELF::R_AARCH64_TLSDESC_CALL:
   case ELF::R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
     return true;
@@ -251,8 +251,8 @@ bool Relocation::isPCRelative(uint64_t Type) {
   case ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12:
   case ELF::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
   case ELF::R_AARCH64_LD64_GOT_LO12_NC:
-  case ELF::R_AARCH64_TLSDESC_LD64_LO12_NC:
-  case ELF::R_AARCH64_TLSDESC_ADD_LO12_NC:
+  case ELF::R_AARCH64_TLSDESC_LD64_LO12:
+  case ELF::R_AARCH64_TLSDESC_ADD_LO12:
     return false;
 
   case ELF::R_X86_64_PC8:
@@ -305,10 +305,10 @@ size_t Relocation::emit(MCStreamer *Streamer) const {
 
 void Relocation::print(raw_ostream &OS) const {
   static const char *X86RelocNames[] = {
-#include "llvm/Support/ELFRelocs/x86_64.def"
+#include "llvm/BinaryFormat/ELFRelocs/x86_64.def"
   };
   static const char *AArch64RelocNames[] = {
-#include "llvm/Support/ELFRelocs/AArch64.def"
+#include "llvm/BinaryFormat/ELFRelocs/AArch64.def"
   };
   if (Arch == Triple::aarch64)
     OS << AArch64RelocNames[Type];

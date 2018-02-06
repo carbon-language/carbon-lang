@@ -804,6 +804,11 @@ public:
     LayoutIndex = Index;
   }
 
+  /// FIXME
+  BinaryFunction *getParent() const {
+    return nullptr;
+  }
+
 private:
   void adjustNumPseudos(const MCInst &Inst, int Sign);
 
@@ -850,57 +855,57 @@ bool operator<(const BinaryBasicBlock &LHS, const BinaryBasicBlock &RHS);
 
 // GraphTraits specializations for basic block graphs (CFGs)
 template <> struct GraphTraits<bolt::BinaryBasicBlock *> {
-  using NodeType = bolt::BinaryBasicBlock;
+  using NodeRef = bolt::BinaryBasicBlock *;
   using ChildIteratorType = bolt::BinaryBasicBlock::succ_iterator;
 
-  static NodeType *getEntryNode(bolt::BinaryBasicBlock *BB) { return BB; }
-  static inline ChildIteratorType child_begin(NodeType *N) {
+  static NodeRef getEntryNode(bolt::BinaryBasicBlock *BB) { return BB; }
+  static inline ChildIteratorType child_begin(NodeRef N) {
     return N->succ_begin();
   }
-  static inline ChildIteratorType child_end(NodeType *N) {
+  static inline ChildIteratorType child_end(NodeRef N) {
     return N->succ_end();
   }
 };
 
 template <> struct GraphTraits<const bolt::BinaryBasicBlock *> {
-  using NodeType = const bolt::BinaryBasicBlock;
+  using NodeRef = const bolt::BinaryBasicBlock *;
   using ChildIteratorType = bolt::BinaryBasicBlock::const_succ_iterator;
 
-  static NodeType *getEntryNode(const bolt::BinaryBasicBlock *BB) {
+  static NodeRef getEntryNode(const bolt::BinaryBasicBlock *BB) {
     return BB;
   }
-  static inline ChildIteratorType child_begin(NodeType *N) {
+  static inline ChildIteratorType child_begin(NodeRef N) {
     return N->succ_begin();
   }
-  static inline ChildIteratorType child_end(NodeType *N) {
+  static inline ChildIteratorType child_end(NodeRef N) {
     return N->succ_end();
   }
 };
 
 template <> struct GraphTraits<Inverse<bolt::BinaryBasicBlock *>> {
-  using NodeType = bolt::BinaryBasicBlock;
+  using NodeRef = bolt::BinaryBasicBlock *;
   using ChildIteratorType = bolt::BinaryBasicBlock::pred_iterator;
-  static NodeType *getEntryNode(Inverse<bolt::BinaryBasicBlock *> G) {
+  static NodeRef getEntryNode(Inverse<bolt::BinaryBasicBlock *> G) {
     return G.Graph;
   }
-  static inline ChildIteratorType child_begin(NodeType *N) {
+  static inline ChildIteratorType child_begin(NodeRef N) {
     return N->pred_begin();
   }
-  static inline ChildIteratorType child_end(NodeType *N) {
+  static inline ChildIteratorType child_end(NodeRef N) {
     return N->pred_end();
   }
 };
 
 template <> struct GraphTraits<Inverse<const bolt::BinaryBasicBlock *>> {
-  using NodeType = const bolt::BinaryBasicBlock;
+  using NodeRef = const bolt::BinaryBasicBlock *;
   using ChildIteratorType = bolt::BinaryBasicBlock::const_pred_iterator;
-  static NodeType *getEntryNode(Inverse<const bolt::BinaryBasicBlock *> G) {
+  static NodeRef getEntryNode(Inverse<const bolt::BinaryBasicBlock *> G) {
     return G.Graph;
   }
-  static inline ChildIteratorType child_begin(NodeType *N) {
+  static inline ChildIteratorType child_begin(NodeRef N) {
     return N->pred_begin();
   }
-  static inline ChildIteratorType child_end(NodeType *N) {
+  static inline ChildIteratorType child_end(NodeRef N) {
     return N->pred_end();
   }
 };

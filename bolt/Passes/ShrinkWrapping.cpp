@@ -1366,7 +1366,8 @@ public:
         TodoMap(TodoMap), Info(Info) {}
 
   void run() {
-    NamedRegionTimer T1("PSPT", "Dataflow", opts::TimeOpts);
+    NamedRegionTimer T1("PSPT", "Predictive Stack Pointer Tracking", "Dataflow",
+                        "Dataflow", opts::TimeOpts);
     StackPointerTrackingBase<PredictiveStackPointerTracking>::run();
   }
 };

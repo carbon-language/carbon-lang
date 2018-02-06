@@ -104,7 +104,8 @@ public:
   }
 
   void run() {
-    NamedRegionTimer T1("DA", "Dataflow", opts::TimeOpts);
+    NamedRegionTimer T1("DA", "Dominator Analysis", "Dataflow", "Dataflow",
+                        opts::TimeOpts);
     InstrsDataflowAnalysis<DominatorAnalysis<Backward>, Backward>::run();
   }
 

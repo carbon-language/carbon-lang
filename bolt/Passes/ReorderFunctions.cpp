@@ -51,8 +51,7 @@ ReorderFunctions("reorder-functions",
       "reorder functions randomly"),
     clEnumValN(bolt::ReorderFunctions::RT_USER,
       "user",
-      "use function order specified by -function-order"),
-    clEnumValEnd),
+      "use function order specified by -function-order")),
   cl::cat(BoltOptCategory));
 
 static cl::opt<bool>

@@ -111,8 +111,7 @@ Peepholes("peepholes",
     clEnumValN(PEEP_TAILCALL_TRAPS, "tailcall-traps", "insert tail call traps"),
     clEnumValN(PEEP_USELESS_BRANCHES, "useless-branches",
                "remove useless conditional branches"),
-    clEnumValN(PEEP_ALL, "all", "enable all peephole optimizations"),
-    clEnumValEnd),
+    clEnumValN(PEEP_ALL, "all", "enable all peephole optimizations")),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -135,7 +134,8 @@ PrintSortedBy("print-sorted-by",
                dynoStatsOptDesc(bolt::DynoStats::name)),
     DYNO_STATS
 #undef D
-    clEnumValEnd),
+    clEnumValN(0xffff, ".", ".")
+    ),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -166,8 +166,7 @@ ReorderBlocks("reorder-blocks",
       "perform layout optimizing I-cache behavior"),
     clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE_SHUFFLE,
       "cluster-shuffle",
-      "perform random layout of clusters"),
-    clEnumValEnd),
+      "perform random layout of clusters")),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -196,8 +195,7 @@ SctcMode("sctc-mode",
       "preserved"),
     clEnumValN(SctcHeuristic,
       "heuristic",
-      "use branch prediction data to control sctc"),
-    clEnumValEnd),
+      "use branch prediction data to control sctc")),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -1539,15 +1537,9 @@ void StripRepRet::runOnFunctions(
     for (auto &BB : BFI.second) {
       auto LastInstRIter = BB.getLastNonPseudo();
       if (LastInstRIter == BB.rend() ||
-          !BC.MIA->isReturn(*LastInstRIter))
+          !BC.MIA->isReturn(*LastInstRIter) ||
+          !BC.MIA->deleteREPPrefix(*LastInstRIter))
         continue;
-
-      auto NextToLastInstRIter = std::next(LastInstRIter);
-      if (NextToLastInstRIter == BB.rend() ||
-          !BC.MIA->isPrefix(*NextToLastInstRIter))
-        continue;
-
-      BB.eraseInstruction(std::next(NextToLastInstRIter).base());
 
       NumPrefixesRemoved += BB.getKnownExecutionCount();
       ++NumBytesSaved;

@@ -37,8 +37,8 @@ CallGraph::NodeId BinaryFunctionCallGraph::addNode(BinaryFunction *BF,
 }
 
 std::deque<BinaryFunction *> BinaryFunctionCallGraph::buildTraversalOrder() {
-  NamedRegionTimer T1("Build cg traversal order", "CG breakdown",
-                      opts::TimeOpts);
+  NamedRegionTimer T1("buildcgorder", "Build cg traversal order",
+                      "CG breakdown", "CG breakdown", opts::TimeOpts);
   std::deque<BinaryFunction *> TopologicalOrder;
   enum NodeStatus { NEW, VISITING, VISITED };
   std::vector<NodeStatus> NodeStatus(Funcs.size());
@@ -85,7 +85,8 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
                                        bool UseSplitHotSize,
                                        bool UseEdgeCounts,
                                        bool IgnoreRecursiveCalls) {
-  NamedRegionTimer T1("Callgraph construction", "CG breakdown", opts::TimeOpts);
+  NamedRegionTimer T1("buildcg", "Callgraph construction", "CG breakdown",
+                      "CG breakdown", opts::TimeOpts);
   BinaryFunctionCallGraph Cg;
   static constexpr auto COUNT_NO_PROFILE = BinaryBasicBlock::COUNT_NO_PROFILE;
 
@@ -161,7 +162,7 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
           });
         return true;
       }
-      
+
       return false;
     };
 

@@ -30,6 +30,9 @@ add_llvm_library(LLVMBOLTPasses
   StackPointerTracking.cpp
   StackReachingUses.cpp
   StokeInfo.cpp
+
+  DEPENDS
+  intrinsics_gen
   )
 
 include_directories( ${LLVM_MAIN_SRC_DIR}/tools/llvm-bolt )

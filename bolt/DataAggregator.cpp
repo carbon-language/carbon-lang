@@ -46,7 +46,8 @@ TimeAggregator("time-aggr",
 
 namespace {
 
-const char TimerGroupName[] = "Aggregator";
+const char TimerGroupName[] = "aggregator";
+const char TimerGroupDesc[] = "Aggregator";
 
 }
 
@@ -83,8 +84,6 @@ void DataAggregator::abort() {
 
 bool DataAggregator::launchPerfBranchEventsNoWait() {
   SmallVector<const char*, 4> Argv;
-  SmallVector<StringRef, 3> Redirects;
-  SmallVector<const StringRef*, 3> RedirectPtrs;
 
   outs() << "PERF2BOLT: Spawning perf-script job to read branch events\n";
   Argv.push_back(PerfPath.data());
@@ -108,28 +107,23 @@ bool DataAggregator::launchPerfBranchEventsNoWait() {
            << PerfBranchEventsErrPath << " with error " << Errc.message() << "\n";
     exit(1);
   }
-
-  Redirects.push_back("");                                           // Stdin
-  Redirects.push_back(StringRef(PerfBranchEventsOutputPath.data())); // Stdout
-  Redirects.push_back(StringRef(PerfBranchEventsErrPath.data()));    // Stderr
-  RedirectPtrs.push_back(&Redirects[0]);
-  RedirectPtrs.push_back(&Redirects[1]);
-  RedirectPtrs.push_back(&Redirects[2]);
+  Optional<StringRef> Redirects[] = {
+      llvm::None,                                   // Stdin
+      StringRef(PerfBranchEventsOutputPath.data()), // Stdout
+      StringRef(PerfBranchEventsErrPath.data())};   // Stderr
 
   DEBUG(dbgs() << "Launching perf: " << PerfPath.data() << " 1> "
                << PerfBranchEventsOutputPath.data() << " 2> "
                << PerfBranchEventsErrPath.data() << "\n");
 
   BranchEventsPI = sys::ExecuteNoWait(PerfPath.data(), Argv.data(),
-                                      /*envp*/ nullptr, &RedirectPtrs[0]);
+                                      /*envp*/ nullptr, Redirects);
 
   return true;
 }
 
 bool DataAggregator::launchPerfMemEventsNoWait() {
   SmallVector<const char*, 4> Argv;
-  SmallVector<StringRef, 3> Redirects;
-  SmallVector<const StringRef*, 3> RedirectPtrs;
 
   outs() << "PERF2BOLT: Spawning perf-script job to read mem events\n";
   Argv.push_back(PerfPath.data());
@@ -154,27 +148,23 @@ bool DataAggregator::launchPerfMemEventsNoWait() {
     exit(1);
   }
 
-  Redirects.push_back("");                                        // Stdin
-  Redirects.push_back(StringRef(PerfMemEventsOutputPath.data())); // Stdout
-  Redirects.push_back(StringRef(PerfMemEventsErrPath.data()));    // Stderr
-  RedirectPtrs.push_back(&Redirects[0]);
-  RedirectPtrs.push_back(&Redirects[1]);
-  RedirectPtrs.push_back(&Redirects[2]);
+  Optional<StringRef> Redirects[] = {
+      llvm::None,                                // Stdin
+      StringRef(PerfMemEventsOutputPath.data()), // Stdout
+      StringRef(PerfMemEventsErrPath.data())};   // Stderr
 
   DEBUG(dbgs() << "Launching perf: " << PerfPath.data() << " 1> "
                << PerfMemEventsOutputPath.data() << " 2> "
                << PerfMemEventsErrPath.data() << "\n");
 
   MemEventsPI = sys::ExecuteNoWait(PerfPath.data(), Argv.data(),
-                                   /*envp*/ nullptr, &RedirectPtrs[0]);
+                                   /*envp*/ nullptr, Redirects);
 
   return true;
 }
 
 bool DataAggregator::launchPerfTasksNoWait() {
   SmallVector<const char*, 4> Argv;
-  SmallVector<StringRef, 3> Redirects;
-  SmallVector<const StringRef*, 3> RedirectPtrs;
 
   outs() << "PERF2BOLT: Spawning perf-script job to read tasks\n";
   Argv.push_back(PerfPath.data());
@@ -198,27 +188,23 @@ bool DataAggregator::launchPerfTasksNoWait() {
     exit(1);
   }
 
-  Redirects.push_back("");                                    // Stdin
-  Redirects.push_back(StringRef(PerfTasksOutputPath.data())); // Stdout
-  Redirects.push_back(StringRef(PerfTasksErrPath.data()));    // Stderr
-  RedirectPtrs.push_back(&Redirects[0]);
-  RedirectPtrs.push_back(&Redirects[1]);
-  RedirectPtrs.push_back(&Redirects[2]);
+  Optional<StringRef> Redirects[] = {
+      llvm::None,                            // Stdin
+      StringRef(PerfTasksOutputPath.data()), // Stdout
+      StringRef(PerfTasksErrPath.data())};   // Stderr
 
   DEBUG(dbgs() << "Launching perf: " << PerfPath.data() << " 1> "
                << PerfTasksOutputPath.data() << " 2> "
                << PerfTasksErrPath.data() << "\n");
 
   TasksPI = sys::ExecuteNoWait(PerfPath.data(), Argv.data(),
-                               /*envp*/ nullptr, &RedirectPtrs[0]);
+                               /*envp*/ nullptr, Redirects);
 
   return true;
 }
 
 Optional<std::string> DataAggregator::getPerfBuildID() {
   SmallVector<const char *, 4> Argv;
-  SmallVector<StringRef, 3> Redirects;
-  SmallVector<const StringRef*, 3> RedirectPtrs;
   SmallVector<char, 256> OutputPath;
   SmallVector<char, 256> ErrPath;
 
@@ -242,19 +228,17 @@ Optional<std::string> DataAggregator::getPerfBuildID() {
     exit(1);
   }
 
-  Redirects.push_back("");                           // Stdin
-  Redirects.push_back(StringRef(OutputPath.data())); // Stdout
-  Redirects.push_back(StringRef(ErrPath.data()));    // Stderr
-  RedirectPtrs.push_back(&Redirects[0]);
-  RedirectPtrs.push_back(&Redirects[1]);
-  RedirectPtrs.push_back(&Redirects[2]);
+  Optional<StringRef> Redirects[] = {
+      llvm::None,                   // Stdin
+      StringRef(OutputPath.data()), // Stdout
+      StringRef(ErrPath.data())};   // Stderr
 
   DEBUG(dbgs() << "Launching perf: " << PerfPath.data() << " 1> "
                << OutputPath.data() << " 2> "
                << ErrPath.data() << "\n");
 
   auto RetCode = sys::ExecuteAndWait(PerfPath.data(), Argv.data(),
-                                     /*envp*/ nullptr, &RedirectPtrs[0]);
+                                     /*envp*/ nullptr, Redirects);
 
   if (RetCode != 0) {
     ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
@@ -729,8 +713,8 @@ bool DataAggregator::hasData() {
 
 std::error_code DataAggregator::parseBranchEvents() {
   outs() << "PERF2BOLT: Aggregating branch events...\n";
-  NamedRegionTimer T("Branch samples parsing", TimerGroupName,
-                      opts::TimeAggregator);
+  NamedRegionTimer T("parseBranch", "Branch samples parsing", TimerGroupName,
+                     TimerGroupDesc, opts::TimeAggregator);
   uint64_t NumEntries{0};
   uint64_t NumSamples{0};
   uint64_t NumTraces{0};
@@ -800,7 +784,8 @@ std::error_code DataAggregator::parseBranchEvents() {
 
 std::error_code DataAggregator::parseMemEvents() {
   outs() << "PERF2BOLT: Aggregating memory events...\n";
-  NamedRegionTimer T("Mem samples parsing", TimerGroupName, opts::TimeAggregator);
+  NamedRegionTimer T("memevents", "Mem samples parsing", TimerGroupName,
+                     TimerGroupDesc, opts::TimeAggregator);
 
   while (hasData()) {
     auto SampleRes = parseMemSample();
@@ -889,7 +874,8 @@ ErrorOr<int64_t> DataAggregator::parseTaskPID() {
 
 std::error_code DataAggregator::parseTasks() {
   outs() << "PERF2BOLT: Parsing perf-script tasks output\n";
-  NamedRegionTimer T("Tasks parsing", TimerGroupName, opts::TimeAggregator);
+  NamedRegionTimer T("parseTasks", "Tasks parsing", TimerGroupName,
+                     TimerGroupDesc, opts::TimeAggregator);
 
   while (hasData()) {
     auto PIDRes = parseTaskPID();
