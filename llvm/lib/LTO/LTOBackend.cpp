@@ -401,14 +401,23 @@ Error lto::backend(Config &C, AddStreamFn AddStream,
 
 static void dropDeadSymbols(Module &Mod, const GVSummaryMapTy &DefinedGlobals,
                             const ModuleSummaryIndex &Index) {
-  std::vector<GlobalValue *> ReplacedGlobals;
+  std::vector<GlobalValue*> DeadGVs;
   for (auto &GV : Mod.global_values())
     if (GlobalValueSummary *GVS = DefinedGlobals.lookup(GV.getGUID()))
-      if (!Index.isGlobalValueLive(GVS) && !convertToDeclaration(GV))
-        ReplacedGlobals.push_back(&GV);
+      if (!Index.isGlobalValueLive(GVS)) {
+        DeadGVs.push_back(&GV);
+        convertToDeclaration(GV);
+      }
 
-  for (GlobalValue *GV : ReplacedGlobals)
-    GV->eraseFromParent();
+  // Now that all dead bodies have been dropped, delete the actual objects
+  // themselves when possible.
+  for (GlobalValue *GV : DeadGVs) {
+    GV->removeDeadConstantUsers();
+    // Might reference something defined in native object (i.e. dropped a
+    // non-prevailing IR def, but we need to keep the declaration).
+    if (GV->use_empty())
+      GV->eraseFromParent();
+  }
 }
 
 Error lto::thinBackend(Config &Conf, unsigned Task, AddStreamFn AddStream,
