@@ -59,7 +59,7 @@ VSTORE_ADDR_SPACES(float)
 #define DECLARE_HELPER(STYPE, AS, builtin) void __clc_vstore_half_##STYPE##_helper##AS(STYPE, AS half *);
 #else
 #define DECLARE_HELPER(STYPE, AS, __builtin) \
-inline void __clc_vstore_half_##STYPE##_helper##AS(STYPE s, AS half *d) \
+_CLC_DEF void __clc_vstore_half_##STYPE##_helper##AS(STYPE s, AS half *d) \
 { \
 	__builtin(s, d); \
 }
