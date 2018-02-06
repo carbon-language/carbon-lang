@@ -37,10 +37,12 @@ _CLC_VECTOR_VSTORE_PRIM1(ulong)
 _CLC_VECTOR_VSTORE_PRIM1(float)
 
 _CLC_VECTOR_VSTORE_HALF_PRIM1(float,)
+_CLC_VECTOR_VSTORE_HALF_PRIM1(float, _rtz)
 
 #ifdef cl_khr_fp64
   _CLC_VECTOR_VSTORE_PRIM1(double)
   _CLC_VECTOR_VSTORE_HALF_PRIM1(double,)
+  _CLC_VECTOR_VSTORE_HALF_PRIM1(double, _rtz)
 #endif
 
 #ifdef cl_khr_fp16

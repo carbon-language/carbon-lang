@@ -108,15 +108,48 @@ _CLC_DEF _CLC_OVERLOAD float __clc_noop(float x)
 {
 	return x;
 }
+_CLC_DEF _CLC_OVERLOAD float __clc_rtz(float x)
+{
+	/* Remove lower 13 bits to make sure the number is rounded down */
+	int mask = 0xffffe000;
+	const int exp = (as_uint(x) >> 23 & 0xff) - 127;
+	/* Denormals cannot be flushed, and they use different bit for rounding */
+	if (exp < -14)
+		mask <<= min(-(exp + 14), 10);
+	/* RTZ does not produce Inf for large numbers */
+	if (fabs(x) > 65504.0f && !isinf(x))
+		return copysign(65504.0f, x);
+	/* Handle nan corner case */
+	if (isnan(x))
+		return x;
+	return as_float(as_uint(x) & mask);
+}
 #ifdef cl_khr_fp64
 _CLC_DEF _CLC_OVERLOAD double __clc_noop(double x)
 {
 	return x;
 }
+_CLC_DEF _CLC_OVERLOAD double __clc_rtz(double x)
+{
+	/* Remove lower 42 bits to make sure the number is rounded down */
+	ulong mask = 0xfffffc0000000000UL;
+	const int exp = (as_ulong(x) >> 52 & 0x7ff) - 1023;
+	/* Denormals cannot be flushed, and they use different bit for rounding */
+	if (exp < -14)
+		mask <<= min(-(exp + 14), 10);
+	/* RTZ does not produce Inf for large numbers */
+	if (fabs(x) > 65504.0 && !isinf(x))
+		return copysign(65504.0, x);
+	/* Handle nan corner case */
+	if (isnan(x))
+		return x;
+	return as_double(as_ulong(x) & mask);
+}
 #endif
 
 #define __XFUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS) \
-	__FUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS, __clc_noop)
+	__FUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS, __clc_noop) \
+	__FUNC(SUFFIX ## _rtz, VEC_SIZE, OFFSET, TYPE, STYPE, AS, __clc_rtz)
 
 #define FUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS) \
 	__XFUNC(SUFFIX, VEC_SIZE, OFFSET, TYPE, STYPE, AS)
