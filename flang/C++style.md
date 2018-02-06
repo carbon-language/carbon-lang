@@ -20,6 +20,8 @@ in foo.cc.)
 1. In the source file "foo.cc", put the #include of "foo.h" first.
 Then #include other project headers in alphabetic order; then C++ standard
 headers, also alphabetically; then C and system headers.
+1. Don't include the standard iostream header.  If you need it for debugging,
+remove the inclusion before committing.
 ### Naming
 1. C++ names that correspond to STL names should look like those STL names
 (e.g., *clear()* and *size()* member functions in a class that implements
@@ -40,7 +42,7 @@ especially when you can declare them directly in a for()/while()/if()
 condition.  Otherwise, prefer complete English words to abbreviations
 when creating names.
 ### Commentary
-1. Use // for all comments except for short notes within statements.
+1. Use // for all comments except for short notes within expressions.
 1. When // follows code on a line, precede it with two spaces.
 1. Comments should matter.  Assume that the reader knows current C++ at least as
 well as you do and avoid distracting her by calling out usage of new
