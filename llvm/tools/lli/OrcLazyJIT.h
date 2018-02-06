@@ -148,7 +148,7 @@ public:
       };
 
       auto LegacyLookup =
-          [this, LegacyLookupInDylib](const std::string &Name) -> JITSymbol {
+          [LegacyLookupInDylib](const std::string &Name) -> JITSymbol {
         if (auto Sym = LegacyLookupInDylib(Name))
           return Sym;
         else if (auto Err = Sym.takeError())
@@ -163,8 +163,8 @@ public:
       auto K = ES.allocateVModule();
       assert(!Resolvers.count(K) && "Resolver already present");
       Resolvers[K] = orc::createSymbolResolver(
-          [this, LegacyLookupInDylib](orc::SymbolFlagsMap &SymbolFlags,
-                                      const orc::SymbolNameSet &Symbols) {
+          [LegacyLookupInDylib](orc::SymbolFlagsMap &SymbolFlags,
+                                const orc::SymbolNameSet &Symbols) {
             auto NotFoundViaLegacyLookup = lookupFlagsWithLegacyFn(
                 SymbolFlags, Symbols, LegacyLookupInDylib);
             if (!NotFoundViaLegacyLookup) {

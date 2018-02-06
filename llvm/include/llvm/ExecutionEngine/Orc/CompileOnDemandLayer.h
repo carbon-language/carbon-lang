@@ -478,8 +478,8 @@ private:
     };
 
     auto GVsResolver = createSymbolResolver(
-        [this, &LD, LegacyLookup](SymbolFlagsMap &SymbolFlags,
-                                  const SymbolNameSet &Symbols) {
+        [&LD, LegacyLookup](SymbolFlagsMap &SymbolFlags,
+                            const SymbolNameSet &Symbols) {
           auto NotFoundViaLegacyLookup =
               lookupFlagsWithLegacyFn(SymbolFlags, Symbols, LegacyLookup);
 
@@ -637,8 +637,8 @@ private:
 
     // Create memory manager and symbol resolver.
     auto Resolver = createSymbolResolver(
-        [this, &LD, LegacyLookup](SymbolFlagsMap &SymbolFlags,
-                                  const SymbolNameSet &Symbols) {
+        [&LD, LegacyLookup](SymbolFlagsMap &SymbolFlags,
+                            const SymbolNameSet &Symbols) {
           auto NotFoundViaLegacyLookup =
               lookupFlagsWithLegacyFn(SymbolFlags, Symbols, LegacyLookup);
           if (!NotFoundViaLegacyLookup) {
