@@ -2492,12 +2492,9 @@ llvm::DIType *CGDebugInfo::CreateTypeDefinition(const EnumType *Ty) {
   // Create elements for each enumerator.
   SmallVector<llvm::Metadata *, 16> Enumerators;
   ED = ED->getDefinition();
-  bool IsSigned = ED->getIntegerType()->isSignedIntegerType();
   for (const auto *Enum : ED->enumerators()) {
-    const auto &InitVal = Enum->getInitVal();
-    auto Value = IsSigned ? InitVal.getSExtValue() : InitVal.getZExtValue();
-    Enumerators.push_back(
-        DBuilder.createEnumerator(Enum->getName(), Value, !IsSigned));
+    Enumerators.push_back(DBuilder.createEnumerator(
+        Enum->getName(), Enum->getInitVal().getSExtValue()));
   }
 
   // Return a CompositeType for the enum itself.
@@ -2506,10 +2503,11 @@ llvm::DIType *CGDebugInfo::CreateTypeDefinition(const EnumType *Ty) {
   llvm::DIFile *DefUnit = getOrCreateFile(ED->getLocation());
   unsigned Line = getLineNumber(ED->getLocation());
   llvm::DIScope *EnumContext = getDeclContextDescriptor(ED);
-  llvm::DIType *ClassTy = getOrCreateType(ED->getIntegerType(), DefUnit);
+  llvm::DIType *ClassTy =
+      ED->isFixed() ? getOrCreateType(ED->getIntegerType(), DefUnit) : nullptr;
   return DBuilder.createEnumerationType(EnumContext, ED->getName(), DefUnit,
                                         Line, Size, Align, EltArray, ClassTy,
-                                        FullName, ED->isFixed());
+                                        FullName);
 }
 
 llvm::DIMacro *CGDebugInfo::CreateMacro(llvm::DIMacroFile *Parent,
