@@ -1,6 +1,8 @@
 #ifndef FORTRAN_TYPE_H_
 #define FORTRAN_TYPE_H_
 
+#include "attr.h"
+#include "idioms.h"
 #include <algorithm>
 #include <list>
 #include <map>
@@ -10,9 +12,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include "attr.h"
-#include "idioms.h"
 
 /*
 
@@ -110,7 +109,7 @@ TypeSpec::~TypeSpec() {}
 
 class IntrinsicTypeSpec : public TypeSpec {
 public:
-  const KindParamValue &kind() { return kind_; }
+  const KindParamValue &kind() const { return kind_; }
 
 protected:
   IntrinsicTypeSpec(KindParamValue kind) : kind_{kind} {}
@@ -219,7 +218,7 @@ class CharacterTypeSpec : public IntrinsicTypeSpec {
 public:
   static const int DefaultKind = 0;
   CharacterTypeSpec(LenParamValue len, KindParamValue kind = DefaultKind)
-    : IntrinsicTypeSpec(kind), len_{len} {}
+    : IntrinsicTypeSpec{kind}, len_{len} {}
 
 private:
   const LenParamValue len_;
@@ -232,9 +231,9 @@ public:
   TypeParamDef(const Name &name, const IntegerTypeSpec &type,
       const std::optional<IntConst> &defaultValue = {})
     : name_{name}, type_{type}, defaultValue_{defaultValue} {};
-  const Name &name() { return name_; }
-  const IntegerTypeSpec &type() { return type_; }
-  const std::optional<IntConst> &defaultValue() { return defaultValue_; }
+  const Name &name() const { return name_; }
+  const IntegerTypeSpec &type() const { return type_; }
+  const std::optional<IntConst> &defaultValue() const { return defaultValue_; }
 
 private:
   const Name name_;
@@ -268,8 +267,8 @@ using LenParamValues = std::map<Name, LenParamValue>;
 // Instantiation of a DerivedTypeDef with kind and len parameter values
 class DerivedTypeSpec : public TypeSpec {
 public:
-  DerivedTypeSpec(DerivedTypeDef def, KindParamValues kindParamValues = {},
-      LenParamValues lenParamValues = {});
+  DerivedTypeSpec(DerivedTypeDef def, KindParamValues kindParamValues{},
+      LenParamValues lenParamValues{});
 
 private:
   const DerivedTypeDef def_;
@@ -281,26 +280,26 @@ private:
 class DeclTypeSpec {
 public:
   // intrinsic-type-spec or TYPE(intrinsic-type-spec)
-  static const DeclTypeSpec makeIntrinsic(
+  static DeclTypeSpec makeIntrinsic(
       const IntrinsicTypeSpec *intrinsicTypeSpec) {
-    return DeclTypeSpec(Intrinsic, intrinsicTypeSpec, nullptr);
+    return DeclTypeSpec{Intrinsic, intrinsicTypeSpec};
   }
   // TYPE(derived-type-spec)
-  static const DeclTypeSpec makeTypeDerivedType(
+  static DeclTypeSpec makeTypeDerivedType(
       const DerivedTypeSpec *derivedTypeSpec) {
-    return DeclTypeSpec(TypeDerived, nullptr, derivedTypeSpec);
+    return DeclTypeSpec{TypeDerived, nullptr, derivedTypeSpec};
   }
   // CLASS(derived-type-spec)
-  static const DeclTypeSpec makeClassDerivedType(
+  static DeclTypeSpec makeClassDerivedType(
       const DerivedTypeSpec *derivedTypeSpec) {
-    return DeclTypeSpec(ClassDerived, nullptr, derivedTypeSpec);
+    return DeclTypeSpec{ClassDerived, nullptr, derivedTypeSpec};
   }
-  // TYPE(*) or CLASS(*)
-  static const DeclTypeSpec makeUnlimitedPoly() {
-    return DeclTypeSpec(UnlimitedPoly, nullptr, nullptr);
-  }
+  // TYPE(*)
+  static DeclTypeSpec makeTypeStar() { return DeclTypeSpec{TypeStar}; }
+  // CLASS(*)
+  static DeclTypeSpec makeClassStar() { return DeclTypeSpec{ClassStar}; }
 
-  enum Category { Intrinsic, TypeDerived, ClassDerived, UnlimitedPoly };
+  enum Category { Intrinsic, TypeDerived, ClassDerived, TypeStar, ClassStar };
   Category category() const { return category_; }
   const IntrinsicTypeSpec &intrinsicTypeSpec() const {
     return *intrinsicTypeSpec_;
@@ -308,8 +307,9 @@ public:
   const DerivedTypeSpec &derivedTypeSpec() const { return *derivedTypeSpec_; }
 
 private:
-  DeclTypeSpec(Category category, const IntrinsicTypeSpec *intrinsicTypeSpec,
-      const DerivedTypeSpec *derivedTypeSpec)
+  DeclTypeSpec(Category category,
+      const IntrinsicTypeSpec *intrinsicTypeSpec = nullptr,
+      const DerivedTypeSpec *derivedTypeSpec = nullptr)
     : category_{category}, intrinsicTypeSpec_{intrinsicTypeSpec},
       derivedTypeSpec_{derivedTypeSpec} {}
   const Category category_;
@@ -317,11 +317,12 @@ private:
   const DerivedTypeSpec *const derivedTypeSpec_;
 };
 
-struct DataComponentDef {
+class DataComponentDef {
+public:
   // component-array-spec
   // coarray-spec
   DataComponentDef(
-      const DeclTypeSpec type, const Name &name, const Attrs &attrs)
+      const DeclTypeSpec &type, const Name &name, const Attrs &attrs)
     : type_{type}, name_{name}, attrs_{attrs} {
     checkAttrs("DataComponentDef", attrs,
         Attrs{Attr::PUBLIC, Attr::PRIVATE, Attr::ALLOCATABLE, Attr::CONTIGUOUS,

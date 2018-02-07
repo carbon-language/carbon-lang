@@ -1,6 +1,7 @@
-#include <iostream>
-
 #include "type.h"
+
+#include "attr.h"
+#include <iostream>
 
 namespace Fortran {
 
@@ -11,7 +12,7 @@ template<typename V>
 static void checkParams(
     std::string kindOrLen, TypeParamDefs defs, std::map<Name, V> values) {
   std::set<Name> validNames{};
-  for (TypeParamDef def : defs) {
+  for (const TypeParamDef &def : defs) {
     Name name = def.name();
     validNames.insert(name);
     if (!def.defaultValue() && values.find(name) == values.end()) {
@@ -105,11 +106,11 @@ std::ostream &operator<<(std::ostream &o, const DerivedTypeDef &x) {
     o << '(';
     int n = 0;
     for (auto param : x.lenParams_) {
-      if (n++) o << ", ";
+      if (n++) { o << ", "; }
       o << param.name();
     }
     for (auto param : x.kindParams_) {
-      if (n++) o << ", ";
+      if (n++) { o << ", "; }
       o << param.name();
     }
     o << ')';
@@ -121,8 +122,8 @@ std::ostream &operator<<(std::ostream &o, const DerivedTypeDef &x) {
   for (auto param : x.kindParams_) {
     o << "  " << param.type() << ", KIND :: " << param.name() << "\n";
   }
-  if (x.private_) o << "  PRIVATE\n";
-  if (x.sequence_) o << "  SEQUENCE\n";
+  if (x.private_) { o << "  PRIVATE\n"; }
+  if (x.sequence_) { o << "  SEQUENCE\n"; }
   // components
   return o << "END TYPE\n";
 }
@@ -141,11 +142,11 @@ std::ostream &operator<<(std::ostream &o, const DerivedTypeSpec &x) {
     o << '(';
     int n = 0;
     for (auto pair : x.kindParamValues_) {
-      if (n++) o << ", ";
+      if (n++) { o << ", "; }
       o << pair.first << '=' << pair.second;
     }
     for (auto pair : x.lenParamValues_) {
-      if (n++) o << ", ";
+      if (n++) { o << ", "; }
       o << pair.first << '=' << pair.second;
     }
     o << ')';
@@ -173,9 +174,9 @@ std::ostream &operator<<(std::ostream &o, const ShapeSpec &x) {
     CHECK(x.ub_.isAssumed());
     o << "..";
   } else {
-    if (!x.lb_.isDeferred()) o << x.lb_;
+    if (!x.lb_.isDeferred()) { o << x.lb_; }
     o << ':';
-    if (!x.ub_.isDeferred()) o << x.ub_;
+    if (!x.ub_.isDeferred()) { o << x.ub_; }
   }
   return o;
 }

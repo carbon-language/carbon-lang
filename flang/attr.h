@@ -1,11 +1,10 @@
 #ifndef FORTRAN_ATTR_H_
 #define FORTRAN_ATTR_H_
 
+#include "idioms.h"
 #include <iostream>
 #include <set>
 #include <string>
-
-#include "idioms.h"
 
 namespace Fortran {
 

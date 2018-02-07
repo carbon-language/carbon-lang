@@ -1,4 +1,5 @@
 #include "attr.h"
+
 #include <sstream>
 #include <string>
 
@@ -32,7 +33,7 @@ std::ostream &operator<<(std::ostream &o, Attr attr) {
 std::ostream &operator<<(std::ostream &o, const Attrs &attrs) {
   int n = 0;
   for (auto attr : attrs) {
-    if (n++) o << ", ";
+    if (n++) { o << ", "; }
     o << attr;
   }
   return o;
