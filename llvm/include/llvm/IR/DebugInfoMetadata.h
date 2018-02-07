@@ -396,38 +396,36 @@ class DIEnumerator : public DINode {
   friend class MDNode;
 
   int64_t Value;
+
   DIEnumerator(LLVMContext &C, StorageType Storage, int64_t Value,
-               bool IsUnsigned, ArrayRef<Metadata *> Ops)
+               ArrayRef<Metadata *> Ops)
       : DINode(C, DIEnumeratorKind, Storage, dwarf::DW_TAG_enumerator, Ops),
-        Value(Value) {
-    SubclassData32 = IsUnsigned;
-  }
+        Value(Value) {}
   ~DIEnumerator() = default;
 
   static DIEnumerator *getImpl(LLVMContext &Context, int64_t Value,
-                               bool IsUnsigned, StringRef Name,
-                               StorageType Storage, bool ShouldCreate = true) {
-    return getImpl(Context, Value, IsUnsigned,
-                   getCanonicalMDString(Context, Name), Storage, ShouldCreate);
+                               StringRef Name, StorageType Storage,
+                               bool ShouldCreate = true) {
+    return getImpl(Context, Value, getCanonicalMDString(Context, Name), Storage,
+                   ShouldCreate);
   }
   static DIEnumerator *getImpl(LLVMContext &Context, int64_t Value,
-                               bool IsUnsigned, MDString *Name,
-                               StorageType Storage, bool ShouldCreate = true);
+                               MDString *Name, StorageType Storage,
+                               bool ShouldCreate = true);
 
   TempDIEnumerator cloneImpl() const {
-    return getTemporary(getContext(), getValue(), isUnsigned(), getName());
+    return getTemporary(getContext(), getValue(), getName());
   }
 
 public:
-  DEFINE_MDNODE_GET(DIEnumerator, (int64_t Value, bool IsUnsigned, StringRef Name),
-                    (Value, IsUnsigned, Name))
-  DEFINE_MDNODE_GET(DIEnumerator, (int64_t Value, bool IsUnsigned, MDString *Name),
-                    (Value, IsUnsigned, Name))
+  DEFINE_MDNODE_GET(DIEnumerator, (int64_t Value, StringRef Name),
+                    (Value, Name))
+  DEFINE_MDNODE_GET(DIEnumerator, (int64_t Value, MDString *Name),
+                    (Value, Name))
 
   TempDIEnumerator clone() const { return cloneImpl(); }
 
   int64_t getValue() const { return Value; }
-  bool isUnsigned() const { return SubclassData32; }
   StringRef getName() const { return getStringOperand(0); }
 
   MDString *getRawName() const { return getOperandAs<MDString>(0); }

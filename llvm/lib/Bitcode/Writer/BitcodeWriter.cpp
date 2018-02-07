@@ -1457,7 +1457,7 @@ void ModuleBitcodeWriter::writeDISubrange(const DISubrange *N,
 void ModuleBitcodeWriter::writeDIEnumerator(const DIEnumerator *N,
                                             SmallVectorImpl<uint64_t> &Record,
                                             unsigned Abbrev) {
-  Record.push_back((N->isUnsigned() << 1) | N->isDistinct());
+  Record.push_back(N->isDistinct());
   Record.push_back(rotateSign(N->getValue()));
   Record.push_back(VE.getMetadataOrNullID(N->getRawName()));
 

@@ -263,12 +263,12 @@ DISubrange *DISubrange::getImpl(LLVMContext &Context, Metadata *CountNode,
 }
 
 DIEnumerator *DIEnumerator::getImpl(LLVMContext &Context, int64_t Value,
-                                    bool IsUnsigned, MDString *Name,
-                                    StorageType Storage, bool ShouldCreate) {
+                                    MDString *Name, StorageType Storage,
+                                    bool ShouldCreate) {
   assert(isCanonical(Name) && "Expected canonical MDString");
-  DEFINE_GETIMPL_LOOKUP(DIEnumerator, (Value, IsUnsigned, Name));
+  DEFINE_GETIMPL_LOOKUP(DIEnumerator, (Value, Name));
   Metadata *Ops[] = {Name};
-  DEFINE_GETIMPL_STORE(DIEnumerator, (Value, IsUnsigned), Ops);
+  DEFINE_GETIMPL_STORE(DIEnumerator, (Value), Ops);
 }
 
 DIBasicType *DIBasicType::getImpl(LLVMContext &Context, unsigned Tag,

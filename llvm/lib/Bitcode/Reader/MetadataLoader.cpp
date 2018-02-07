@@ -1200,11 +1200,10 @@ Error MetadataLoader::MetadataLoaderImpl::parseOneMetadata(
     if (Record.size() != 3)
       return error("Invalid record");
 
-    IsDistinct = Record[0] & 1;
-    bool IsUnsigned = Record[0] & 2;
+    IsDistinct = Record[0];
     MetadataList.assignValue(
         GET_OR_DISTINCT(DIEnumerator, (Context, unrotateSign(Record[1]),
-                                       IsUnsigned, getMDString(Record[2]))),
+                                       getMDString(Record[2]))),
         NextMetadataNo);
     NextMetadataNo++;
     break;

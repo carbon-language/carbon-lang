@@ -354,17 +354,13 @@ template <> struct MDNodeKeyImpl<DISubrange> {
 template <> struct MDNodeKeyImpl<DIEnumerator> {
   int64_t Value;
   MDString *Name;
-  bool IsUnsigned;
 
-  MDNodeKeyImpl(int64_t Value, bool IsUnsigned, MDString *Name)
-      : Value(Value), Name(Name), IsUnsigned(IsUnsigned) {}
+  MDNodeKeyImpl(int64_t Value, MDString *Name) : Value(Value), Name(Name) {}
   MDNodeKeyImpl(const DIEnumerator *N)
-      : Value(N->getValue()), Name(N->getRawName()),
-        IsUnsigned(N->isUnsigned()) {}
+      : Value(N->getValue()), Name(N->getRawName()) {}
 
   bool isKeyOf(const DIEnumerator *RHS) const {
-    return Value == RHS->getValue() && IsUnsigned == RHS->isUnsigned() &&
-           Name == RHS->getRawName();
+    return Value == RHS->getValue() && Name == RHS->getRawName();
   }
 
   unsigned getHashValue() const { return hash_combine(Value, Name); }
