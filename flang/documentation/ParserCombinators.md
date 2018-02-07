@@ -11,8 +11,8 @@ On success, it may return some semantic value to its caller.
 In C++ terms, a parser is any instance of a class that
 1. has a `constexpr` default constructor,
 1. defines a type named `resultType`, and
-1. provides a function (`const` member or static) that accepts a pointer to a
-ParseState as its argument and returns a `std::optional<resultType>` as a
+1. provides a function (`const` member or `static`) that accepts a pointer to a
+`ParseState` as its argument and returns a `std::optional<resultType>` as a
 result, with the presence or absence of a value in the `std::optional<>`
 signifying success or failure, respectively.
 ```
@@ -107,10 +107,10 @@ collect the values that they return.
 These are non-advancing state inquiry and update parsers:
 
 * `getColumn` returns the 1-based column position.
-* `inCharLiteral` succeeds under withinCharLiteral.
+* `inCharLiteral` succeeds under `withinCharLiteral` (below).
 * `inFortran` succeeds unless in a preprocessing directive.
-* `inFixedForm` succeeds in fixed-form source.
-* `setInFixedForm` sets the fixed-form flag, returning its prior value.
+* `inFixedForm` succeeds in fixed form Fortran source.
+* `setInFixedForm` sets the fixed form flag, returning its prior value.
 * `columns` returns the 1-based column number after which source is clipped.
 * `setColumns(c)` sets the column limit and returns its prior value.
 
@@ -135,7 +135,7 @@ is built.  All of the following parsers consume characters acquired from
 * `"..."_tok` match the content of the string, skipping spaces before and
   after, and with multiple spaces accepted for any internal space.
   (Note that the `_tok` suffix is optional when the parser appears before
-  the combinator`">>` or after `/`.)
+  the combinator `>>` or after `/`.)
 * `parenthesized(p)` is shorthand for `"(" >> p / ")"`.
 * `bracketed(p)` is shorthand for `"[" >> p / "]"`.
 * `withinCharLiteral(p)` applies the parser p, tokenizing for
@@ -145,6 +145,6 @@ is built.  All of the following parsers consume characters acquired from
 * `optionalListOf(p)` is the same thing, but can be empty, and always succeeds.
 
 ### Debugging Parser
-Last, the parser `"..."_debug` emits the string to the standard error
-and succeeds.  It is useful for tracing while debugging a parser but should
+Last, a string literal `"..."_debug` denotes a parser that emits the string to
+`std::cerr` and succeeds.  It is useful for tracing while debugging a parser but should
 obviously not be committed for production code.
