@@ -44,7 +44,7 @@ void checkAttrs(std::string className, Attrs attrs, Attrs allowed) {
     if (allowed.find(attr) == allowed.end()) {
       std::stringstream temp;
       temp << attr;
-      die("invalid attribute '%s' for class %s", temp.str().c_str(),
+      parser::die("invalid attribute '%s' for class %s", temp.str().c_str(),
           className.c_str());
     }
   }

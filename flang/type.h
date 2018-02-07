@@ -2,7 +2,7 @@
 #define FORTRAN_TYPE_H_
 
 #include "attr.h"
-#include "idioms.h"
+#include "lib/parser/idioms.h"
 #include <algorithm>
 #include <list>
 #include <map>
@@ -11,6 +11,7 @@
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 /*
@@ -56,31 +57,30 @@ std::ostream &operator<<(std::ostream &o, const IntExpr &x) {
 // TODO
 class IntConst : public IntExpr {
 public:
-  static const IntConst ZERO;
-  static const IntConst ONE;
-  IntConst(int value) : value_{value} {}
-  virtual const IntExpr *clone() const;
+  static const IntConst &make(int value);
+  virtual const IntExpr *clone() const { return &make(value_); }
   bool operator==(const IntConst &x) const { return value_ == x.value_; }
   bool operator!=(const IntConst &x) const { return !operator==(x); }
   bool operator<(const IntConst &x) const { return value_ < x.value_; }
   virtual std::ostream &output(std::ostream &o) const {
     return o << this->value_;
   }
-
 private:
+  static std::unordered_map<int, IntConst> cache;
+  IntConst(int value) : value_{value} {}
   const int value_;
 };
 
 // The value of a kind type parameter
 class KindParamValue {
 public:
-  KindParamValue(int value) : value_{value} {}
+  KindParamValue(int value) : value_{IntConst::make(value)} {}
   bool operator==(const KindParamValue &x) const { return value_ == x.value_; }
   bool operator!=(const KindParamValue &x) const { return !operator==(x); }
   bool operator<(const KindParamValue &x) const { return value_ < x.value_; }
 
 private:
-  const IntConst value_;
+  const IntConst &value_;
   friend std::ostream &operator<<(std::ostream &, const KindParamValue &);
 };
 
@@ -267,8 +267,8 @@ using LenParamValues = std::map<Name, LenParamValue>;
 // Instantiation of a DerivedTypeDef with kind and len parameter values
 class DerivedTypeSpec : public TypeSpec {
 public:
-  DerivedTypeSpec(DerivedTypeDef def, KindParamValues kindParamValues{},
-      LenParamValues lenParamValues{});
+  DerivedTypeSpec(DerivedTypeDef def, KindParamValues kindParamValues = {},
+      LenParamValues lenParamValues = {});
 
 private:
   const DerivedTypeDef def_;
@@ -348,7 +348,7 @@ public:
 
 private:
   enum Category { Explicit, Deferred, Assumed };
-  Bound(Category category) : category_{category}, expr_{&IntConst::ZERO} {}
+  Bound(Category category) : category_{category}, expr_{&IntConst::make(0)} {}
   const Category category_;
   const IntExpr *const expr_;
   friend std::ostream &operator<<(std::ostream &, const Bound &);
@@ -362,10 +362,10 @@ public:
   }
   // 1:ub
   static const ShapeSpec makeExplicit(const Bound &ub) {
-    return makeExplicit(IntConst::ONE, ub);
+    return makeExplicit(IntConst::make(1), ub);
   }
   // 1: or lb:
-  static ShapeSpec makeAssumed(const Bound &lb = IntConst::ONE) {
+  static ShapeSpec makeAssumed(const Bound &lb = IntConst::make(1)) {
     return ShapeSpec(lb, Bound::DEFERRED);
   }
   // :

@@ -16,33 +16,30 @@ static void checkParams(
     Name name = def.name();
     validNames.insert(name);
     if (!def.defaultValue() && values.find(name) == values.end()) {
-      die("no value or default value for %s parameter '%s'", kindOrLen.c_str(),
+      parser::die("no value or default value for %s parameter '%s'", kindOrLen.c_str(),
           name.c_str());
     }
   }
   for (auto pair : values) {
     Name name = pair.first;
     if (validNames.find(name) == validNames.end()) {
-      die("invalid %s parameter '%s'", kindOrLen.c_str(), name.c_str());
+      parser::die("invalid %s parameter '%s'", kindOrLen.c_str(), name.c_str());
     }
   }
 }
 
-const IntConst IntConst::ZERO = IntConst{0};
-const IntConst IntConst::ONE = IntConst{1};
-
-const IntExpr *IntConst::clone() const {
-  if (*this == ZERO) {
-    return &ZERO;
-  } else if (*this == ONE) {
-    return &ONE;
-  } else {
-    return new IntConst{*this};
-  }
-}
+std::unordered_map<int, IntConst> IntConst::cache;
 
 std::ostream &operator<<(std::ostream &o, const KindParamValue &x) {
   return o << x.value_;
+}
+
+const IntConst &IntConst::make(int value) {
+  auto it = cache.find(value);
+  if (it == cache.end()) {
+    it = cache.insert({value, IntConst{value}}).first;
+  }
+  return it->second;
 }
 
 const LenParamValue LenParamValue::ASSUMED =
@@ -196,7 +193,7 @@ void testTypeSpec() {
   std::cout << r2 << "\n";
   CharacterTypeSpec c1{LenParamValue::DEFERRED, 1};
   std::cout << c1 << "\n";
-  CharacterTypeSpec c2{IntConst{10}};
+  CharacterTypeSpec c2{IntConst::make(10)};
   std::cout << c2 << "\n";
 
   IntegerTypeSpec i1 = IntegerTypeSpec::make();
@@ -223,21 +220,21 @@ void testTypeSpec() {
 }
 
 void testShapeSpec() {
-  IntConst ten{10};
+  const IntConst &ten{IntConst::make(10)};
   const ShapeSpec s1{ShapeSpec::makeExplicit(ten)};
   std::cout << "explicit-shape-spec: " << s1 << "\n";
-  ShapeSpec s2{ShapeSpec::makeExplicit(IntConst{2}, IntConst{8})};
+  ShapeSpec s2{ShapeSpec::makeExplicit(IntConst::make(2), IntConst::make(8))};
   std::cout << "explicit-shape-spec: " << s2 << "\n";
 
   ShapeSpec s3{ShapeSpec::makeAssumed()};
   std::cout << "assumed-shape-spec:  " << s3 << "\n";
-  ShapeSpec s4{ShapeSpec::makeAssumed(IntConst{2})};
+  ShapeSpec s4{ShapeSpec::makeAssumed(IntConst::make(2))};
   std::cout << "assumed-shape-spec:  " << s4 << "\n";
 
   ShapeSpec s5{ShapeSpec::makeDeferred()};
   std::cout << "deferred-shape-spec: " << s5 << "\n";
 
-  ShapeSpec s6{ShapeSpec::makeImplied(IntConst{2})};
+  ShapeSpec s6{ShapeSpec::makeImplied(IntConst::make(2))};
   std::cout << "implied-shape-spec:  " << s6 << "\n";
 
   ShapeSpec s7{ShapeSpec::makeAssumedRank()};

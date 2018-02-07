@@ -1,7 +1,7 @@
 #ifndef FORTRAN_ATTR_H_
 #define FORTRAN_ATTR_H_
 
-#include "idioms.h"
+#include "lib/parser/idioms.h"
 #include <iostream>
 #include <set>
 #include <string>
