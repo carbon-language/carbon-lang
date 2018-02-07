@@ -61,3 +61,8 @@ formatted:
 	done
 
 .PHONY: formatted
+
+Debug Release:
+	@mkdir -p $@
+	cd $@ && cmake -DCMAKE_BUILD_TYPE=$@ .. && make
+.PHONY: Debug Release
