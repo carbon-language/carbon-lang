@@ -3274,7 +3274,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Disable the verification pass in -asserts builds.
   if (!IsAssertBuild)
-    CmdArgs.push_back("disable-llvm-verifier");
+    CmdArgs.push_back("-disable-llvm-verifier");
 
   // Discard value names in assert builds unless otherwise specified.
   if (const Arg *A = Args.getLastArg(options::OPT_fdiscard_value_names,
