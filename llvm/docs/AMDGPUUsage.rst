@@ -285,6 +285,7 @@ LLVM Address Space number is used throughout LLVM (for example, in LLVM IR).
      3                  Local (group/LDS) Local (group/LDS) Local (group/LDS) Local (group/LDS)
      4                  Generic (Flat)    Region (GDS)      Region (GDS)      Constant
      5                  Region (GDS)      Private (Scratch) Private (Scratch) Private (Scratch)
+     6                  Constant 32-bit   Constant 32-bit   Constant 32-bit   Constant 32-bit
      ================== ================= ================= ================= =================
 
 Current Default

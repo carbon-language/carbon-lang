@@ -447,7 +447,8 @@ bool isGlobalSegment(const GlobalValue *GV) {
 }
 
 bool isReadOnlySegment(const GlobalValue *GV) {
-  return GV->getType()->getAddressSpace() == AMDGPUAS::CONSTANT_ADDRESS;
+  return GV->getType()->getAddressSpace() == AMDGPUAS::CONSTANT_ADDRESS ||
+         GV->getType()->getAddressSpace() == AMDGPUAS::CONSTANT_ADDRESS_32BIT;
 }
 
 bool shouldEmitConstantsToTextSection(const Triple &TT) {
@@ -914,6 +915,9 @@ bool isUniformMMO(const MachineMemOperand *MMO) {
   // PseudoSourceValue like GOT.
   if (!Ptr || isa<UndefValue>(Ptr) ||
       isa<Constant>(Ptr) || isa<GlobalValue>(Ptr))
+    return true;
+
+  if (MMO->getAddrSpace() == AMDGPUAS::CONSTANT_ADDRESS_32BIT)
     return true;
 
   if (const Argument *Arg = dyn_cast<Argument>(Ptr))
