@@ -746,9 +746,10 @@ static bool shouldAssumeDSOLocal(const CodeGenModule &CGM,
     return false;
 
   // If we can use copy relocations we can assume it is local.
-  if (isa<VarDecl>(D) &&
-      (RM == llvm::Reloc::Static || CGOpts.PIECopyRelocations))
-    return true;
+  if (auto *VD = dyn_cast<VarDecl>(D))
+    if (VD->getTLSKind() == VarDecl::TLS_None &&
+        (RM == llvm::Reloc::Static || CGOpts.PIECopyRelocations))
+      return true;
 
   // If we can use a plt entry as the symbol address we can assume it
   // is local.
