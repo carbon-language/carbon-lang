@@ -1,4 +1,4 @@
-# REQUIRES: x86
+# REQUIRES: arm
 # RUN: llvm-mc -filetype=obj -triple=armv7-unknown-linux-gnueabi %s -o %t.o
 # RUN: echo "SECTIONS { .trap : { *(.ARM.exidx) *(.dummy) } }" > %t.script
 
