@@ -1,4 +1,8 @@
-; RUN: opt -verify-loop-info -irce -S < %s | FileCheck %s
+; RUN: opt -verify-loop-info -irce -debug-only=irce -S < %s 2>&1 | FileCheck %s
+
+; CHECK-LABEL: irce: in function decrementing_loop: constrained Loop at depth 1
+; CHECK-LABEL: irce: in function test_01: constrained Loop at depth 1
+; CHECK-LABEL: irce: in function test_02: constrained Loop at depth 1
 
 define void @decrementing_loop(i32 *%arr, i32 *%a_len_ptr, i32 %n) {
  entry:
@@ -36,6 +40,86 @@ define void @decrementing_loop(i32 *%arr, i32 *%a_len_ptr, i32 %n) {
 ; CHECK:   [[not_exit_preloop_at_cmp:[^ ]+]] = icmp sgt i32 [[len_hiclamp]], 0
 ; CHECK:   [[not_exit_preloop_at:[^ ]+]] = select i1 [[not_exit_preloop_at_cmp]], i32 [[len_hiclamp]], i32 0
 ; CHECK:   %exit.preloop.at = add i32 [[not_exit_preloop_at]], -1
+}
+
+; Make sure that we can eliminate the range check when the loop looks like:
+; for (i = len.a - 1; i >= 0; --i)
+;   b[i] = a[i];
+define void @test_01(i32* %a, i32* %b, i32* %a_len_ptr, i32* %b_len_ptr) {
+
+; CHECK-LABEL: test_01
+; CHECK:       mainloop:
+; CHECK-NEXT:    br label %loop
+; CHECK:       loop:
+; CHECK:         %rc = and i1 true, true
+; CHECK:       loop.preloop:
+
+ entry:
+  %len.a = load i32, i32* %a_len_ptr, !range !0
+  %len.b = load i32, i32* %b_len_ptr, !range !0
+  %first.itr.check = icmp ne i32 %len.a, 0
+  br i1 %first.itr.check, label %loop, label %exit
+
+ loop:
+  %idx = phi i32 [ %len.a, %entry ] , [ %idx.next, %in.bounds ]
+  %idx.next = sub i32 %idx, 1
+  %rca = icmp ult i32 %idx.next, %len.a
+  %rcb = icmp ult i32 %idx.next, %len.b
+  %rc = and i1 %rca, %rcb
+  br i1 %rc, label %in.bounds, label %out.of.bounds, !prof !1
+
+ in.bounds:
+  %el.a = getelementptr i32, i32* %a, i32 %idx.next
+  %el.b = getelementptr i32, i32* %b, i32 %idx.next
+  %v = load i32, i32* %el.a
+  store i32 %v, i32* %el.b
+  %loop.cond = icmp slt i32 %idx, 2
+  br i1 %loop.cond, label %exit, label %loop
+
+ out.of.bounds:
+  ret void
+
+ exit:
+  ret void
+}
+
+; Same as test_01, but the latch condition is unsigned
+define void @test_02(i32* %a, i32* %b, i32* %a_len_ptr, i32* %b_len_ptr) {
+
+; CHECK-LABEL: test_02
+; CHECK:       mainloop:
+; CHECK-NEXT:    br label %loop
+; CHECK:       loop:
+; CHECK:         %rc = and i1 true, true
+; CHECK:       loop.preloop:
+
+ entry:
+  %len.a = load i32, i32* %a_len_ptr, !range !0
+  %len.b = load i32, i32* %b_len_ptr, !range !0
+  %first.itr.check = icmp ne i32 %len.a, 0
+  br i1 %first.itr.check, label %loop, label %exit
+
+ loop:
+  %idx = phi i32 [ %len.a, %entry ] , [ %idx.next, %in.bounds ]
+  %idx.next = sub i32 %idx, 1
+  %rca = icmp ult i32 %idx.next, %len.a
+  %rcb = icmp ult i32 %idx.next, %len.b
+  %rc = and i1 %rca, %rcb
+  br i1 %rc, label %in.bounds, label %out.of.bounds, !prof !1
+
+ in.bounds:
+  %el.a = getelementptr i32, i32* %a, i32 %idx.next
+  %el.b = getelementptr i32, i32* %b, i32 %idx.next
+  %v = load i32, i32* %el.a
+  store i32 %v, i32* %el.b
+  %loop.cond = icmp ult i32 %idx, 2
+  br i1 %loop.cond, label %exit, label %loop
+
+ out.of.bounds:
+  ret void
+
+ exit:
+  ret void
 }
 
 !0 = !{i32 0, i32 2147483647}
