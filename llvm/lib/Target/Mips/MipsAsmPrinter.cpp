@@ -499,6 +499,13 @@ bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
         return true;
       O << MO.getImm() - 1;
       return false;
+    case 'y': // exact log2
+      if ((MO.getType()) != MachineOperand::MO_Immediate)
+        return true;
+      if (!isPowerOf2_64(MO.getImm()))
+        return true;
+      O << Log2_64(MO.getImm());
+      return false;
     case 'z':
       // $0 if zero, regular printing otherwise
       if (MO.getType() == MachineOperand::MO_Immediate && MO.getImm() == 0) {
