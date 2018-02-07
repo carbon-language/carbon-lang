@@ -4,6 +4,7 @@
 #include <iostream>
 
 namespace Fortran {
+namespace semantics {
 
 // Check that values specified for param defs are valid: they must match the
 // names of the params and any def that doesn't have a default value must have a
@@ -16,8 +17,8 @@ static void checkParams(
     Name name = def.name();
     validNames.insert(name);
     if (!def.defaultValue() && values.find(name) == values.end()) {
-      parser::die("no value or default value for %s parameter '%s'", kindOrLen.c_str(),
-          name.c_str());
+      parser::die("no value or default value for %s parameter '%s'",
+          kindOrLen.c_str(), name.c_str());
     }
   }
   for (auto pair : values) {
@@ -103,11 +104,15 @@ std::ostream &operator<<(std::ostream &o, const DerivedTypeDef &x) {
     o << '(';
     int n = 0;
     for (auto param : x.lenParams_) {
-      if (n++) { o << ", "; }
+      if (n++) {
+        o << ", ";
+      }
       o << param.name();
     }
     for (auto param : x.kindParams_) {
-      if (n++) { o << ", "; }
+      if (n++) {
+        o << ", ";
+      }
       o << param.name();
     }
     o << ')';
@@ -119,8 +124,12 @@ std::ostream &operator<<(std::ostream &o, const DerivedTypeDef &x) {
   for (auto param : x.kindParams_) {
     o << "  " << param.type() << ", KIND :: " << param.name() << "\n";
   }
-  if (x.private_) { o << "  PRIVATE\n"; }
-  if (x.sequence_) { o << "  SEQUENCE\n"; }
+  if (x.private_) {
+    o << "  PRIVATE\n";
+  }
+  if (x.sequence_) {
+    o << "  SEQUENCE\n";
+  }
   // components
   return o << "END TYPE\n";
 }
@@ -139,11 +148,15 @@ std::ostream &operator<<(std::ostream &o, const DerivedTypeSpec &x) {
     o << '(';
     int n = 0;
     for (auto pair : x.kindParamValues_) {
-      if (n++) { o << ", "; }
+      if (n++) {
+        o << ", ";
+      }
       o << pair.first << '=' << pair.second;
     }
     for (auto pair : x.lenParamValues_) {
-      if (n++) { o << ", "; }
+      if (n++) {
+        o << ", ";
+      }
       o << pair.first << '=' << pair.second;
     }
     o << ')';
@@ -171,16 +184,21 @@ std::ostream &operator<<(std::ostream &o, const ShapeSpec &x) {
     CHECK(x.ub_.isAssumed());
     o << "..";
   } else {
-    if (!x.lb_.isDeferred()) { o << x.lb_; }
+    if (!x.lb_.isDeferred()) {
+      o << x.lb_;
+    }
     o << ':';
-    if (!x.ub_.isDeferred()) { o << x.ub_; }
+    if (!x.ub_.isDeferred()) {
+      o << x.ub_;
+    }
   }
   return o;
 }
 
+}  // namespace semantics
 }  // namespace Fortran
 
-using namespace Fortran;
+using namespace Fortran::semantics;
 
 void testTypeSpec() {
   LogicalTypeSpec l1 = LogicalTypeSpec::make();

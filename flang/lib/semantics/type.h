@@ -1,8 +1,8 @@
 #ifndef FORTRAN_TYPE_H_
 #define FORTRAN_TYPE_H_
 
+#include "../parser/idioms.h"
 #include "attr.h"
-#include "lib/parser/idioms.h"
 #include <algorithm>
 #include <list>
 #include <map>
@@ -41,6 +41,7 @@ that supplied attributes are among the allowed ones using checkAttrs().
 */
 
 namespace Fortran {
+namespace semantics {
 
 using Name = std::string;
 
@@ -65,6 +66,7 @@ public:
   virtual std::ostream &output(std::ostream &o) const {
     return o << this->value_;
   }
+
 private:
   static std::unordered_map<int, IntConst> cache;
   IntConst(int value) : value_{value} {}
@@ -388,6 +390,7 @@ private:
   const Bound ub_;
 };
 
+}  // namespace semantics
 }  // namespace Fortran
 
 #endif
