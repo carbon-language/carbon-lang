@@ -1629,7 +1629,13 @@ static void writeDIEnumerator(raw_ostream &Out, const DIEnumerator *N,
   Out << "!DIEnumerator(";
   MDFieldPrinter Printer(Out);
   Printer.printString("name", N->getName(), /* ShouldSkipEmpty */ false);
-  Printer.printInt("value", N->getValue(), /* ShouldSkipZero */ false);
+  if (N->isUnsigned()) {
+    auto Value = static_cast<uint64_t>(N->getValue());
+    Printer.printInt("value", Value, /* ShouldSkipZero */ false);
+    Printer.printBool("isUnsigned", true);
+  } else {
+    Printer.printInt("value", N->getValue(), /* ShouldSkipZero */ false);
+  }
   Out << ")";
 }
 

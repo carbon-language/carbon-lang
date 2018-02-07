@@ -1427,6 +1427,15 @@ void DwarfUnit::constructArrayTypeDIE(DIE &Buffer, const DICompositeType *CTy) {
 }
 
 void DwarfUnit::constructEnumTypeDIE(DIE &Buffer, const DICompositeType *CTy) {
+  const DIType *DTy = resolve(CTy->getBaseType());
+  bool IsUnsigned = DTy && isUnsignedDIType(DD, DTy);
+  if (DTy && DD->getDwarfVersion() >= 3)
+    addType(Buffer, DTy);
+  if (DD->getDwarfVersion() >= 4 && (CTy->getFlags() & DINode::FlagFixedEnum)) {
+    assert(DTy);
+    addFlag(Buffer, dwarf::DW_AT_enum_class);
+  }
+
   DINodeArray Elements = CTy->getElements();
 
   // Add enumerators to enumeration type.
@@ -1436,15 +1445,9 @@ void DwarfUnit::constructEnumTypeDIE(DIE &Buffer, const DICompositeType *CTy) {
       DIE &Enumerator = createAndAddDIE(dwarf::DW_TAG_enumerator, Buffer);
       StringRef Name = Enum->getName();
       addString(Enumerator, dwarf::DW_AT_name, Name);
-      int64_t Value = Enum->getValue();
-      addSInt(Enumerator, dwarf::DW_AT_const_value, dwarf::DW_FORM_sdata,
-              Value);
+      auto Value = static_cast<uint64_t>(Enum->getValue());
+      addConstantValue(Enumerator, IsUnsigned, Value);
     }
-  }
-  const DIType *DTy = resolve(CTy->getBaseType());
-  if (DTy) {
-    addType(Buffer, DTy);
-    addFlag(Buffer, dwarf::DW_AT_enum_class);
   }
 }
 
