@@ -576,17 +576,27 @@ bool MipsAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
   assert(OffsetMO.isImm() && "Unexpected offset for inline asm memory operand.");
   int Offset = OffsetMO.getImm();
 
-  // Currently we are expecting either no ExtraCode or 'D'
+  // Currently we are expecting either no ExtraCode or 'D','M','L'.
   if (ExtraCode) {
-    if (ExtraCode[0] == 'D')
+    switch (ExtraCode[0]) {
+    case 'D':
       Offset += 4;
-    else
+      break;
+    case 'M':
+      if (Subtarget->isLittle())
+        Offset += 4;
+      break;
+    case 'L':
+      if (!Subtarget->isLittle())
+        Offset += 4;
+      break;
+    default:
       return true; // Unknown modifier.
-    // FIXME: M = high order bits
-    // FIXME: L = low order bits
+    }
   }
 
-  O << Offset << "($" << MipsInstPrinter::getRegisterName(BaseMO.getReg()) << ")";
+  O << Offset << "($" << MipsInstPrinter::getRegisterName(BaseMO.getReg())
+    << ")";
 
   return false;
 }
