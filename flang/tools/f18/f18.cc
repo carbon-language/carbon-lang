@@ -142,8 +142,8 @@ int main(int argc, char *const argv[]) {
   state.set_userState(&ustate);
 
   if (dumpCookedChars) {
-    while (std::optional<char>
-        och{Fortran::parser::cookedNextChar.Parse(&state)}) {
+    while (std::optional<char> och{
+        Fortran::parser::cookedNextChar.Parse(&state)}) {
       std::cout << *och;
     }
     return 0;

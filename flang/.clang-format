@@ -12,7 +12,6 @@ AlignTrailingComments: false
 ConstructorInitializerIndentWidth: 2
 SpaceAfterTemplateKeyword: false
 SpacesBeforeTrailingComments: 2
-Standard: Cpp17
 ...
 
 # vim:set filetype=yaml:
