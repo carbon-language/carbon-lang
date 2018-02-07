@@ -23,7 +23,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/FunctionAttrs.h"
-#include "llvm/Transforms/IPO/FunctionImport.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 using namespace llvm;
@@ -170,18 +169,45 @@ void simplifyExternals(Module &M) {
   }
 }
 
-static void
-filterModule(Module *M,
-             function_ref<bool(const GlobalValue *)> ShouldKeepDefinition) {
-  auto I = M->global_values().begin();
-  auto E = M->global_values().end();
-  while (I != E) {
-    GlobalValue &GV = *I++;
+void filterModule(
+    Module *M, function_ref<bool(const GlobalValue *)> ShouldKeepDefinition) {
+  for (Module::alias_iterator I = M->alias_begin(), E = M->alias_end();
+       I != E;) {
+    GlobalAlias *GA = &*I++;
+    if (ShouldKeepDefinition(GA))
+      continue;
+
+    GlobalObject *GO;
+    if (GA->getValueType()->isFunctionTy())
+      GO = Function::Create(cast<FunctionType>(GA->getValueType()),
+                            GlobalValue::ExternalLinkage, "", M);
+    else
+      GO = new GlobalVariable(
+          *M, GA->getValueType(), false, GlobalValue::ExternalLinkage,
+          nullptr, "", nullptr,
+          GA->getThreadLocalMode(), GA->getType()->getAddressSpace());
+    GO->takeName(GA);
+    GA->replaceAllUsesWith(GO);
+    GA->eraseFromParent();
+  }
+
+  for (Function &F : *M) {
+    if (ShouldKeepDefinition(&F))
+      continue;
+
+    F.deleteBody();
+    F.setComdat(nullptr);
+    F.clearMetadata();
+  }
+
+  for (GlobalVariable &GV : M->globals()) {
     if (ShouldKeepDefinition(&GV))
       continue;
-    if (convertToDeclaration(GV))
-      continue;
-    GV.eraseFromParent();
+
+    GV.setInitializer(nullptr);
+    GV.setLinkage(GlobalValue::ExternalLinkage);
+    GV.setComdat(nullptr);
+    GV.clearMetadata();
   }
 }
 
