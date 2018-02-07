@@ -133,7 +133,7 @@ void Driver::ParseDriverMode(StringRef ProgramName,
   setDriverModeFromOption(ClangNameParts.DriverMode);
 
   for (const char *ArgPtr : Args) {
-    // Ingore nullptrs, they are response file's EOL markers
+    // Ignore nullptrs, they are the response file's EOL markers.
     if (ArgPtr == nullptr)
       continue;
     const StringRef Arg = ArgPtr;
