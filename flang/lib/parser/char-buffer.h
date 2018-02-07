@@ -10,6 +10,7 @@
 #include <vector>
 
 namespace Fortran {
+namespace parser {
 
 class CharBuffer {
 public:
@@ -113,5 +114,6 @@ private:
   size_t bytes_{0};
   bool lastBlockEmpty_{false};
 };
+}  // namespace parser
 }  // namespace Fortran
 #endif  // FORTRAN_CHAR_BUFFER_H_

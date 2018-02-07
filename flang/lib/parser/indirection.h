@@ -11,6 +11,7 @@
 #include <utility>
 
 namespace Fortran {
+namespace parser {
 
 template<typename A> class Indirection {
 public:
@@ -54,5 +55,6 @@ template<typename A>
 std::ostream &operator<<(std::ostream &o, const Indirection<A> &x) {
   return o << *x;
 }
+}  // namespace parser
 }  // namespace Fortran
 #endif  // FORTRAN_INDIRECTION_H_

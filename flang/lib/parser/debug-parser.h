@@ -12,6 +12,7 @@
 #include <string>
 
 namespace Fortran {
+namespace parser {
 
 class DebugParser {
 public:
@@ -34,5 +35,6 @@ private:
 constexpr DebugParser operator""_debug(const char str[], size_t n) {
   return DebugParser{str, n};
 }
+}  // namespace parser
 }  // namespace Fortran
 #endif  // FORTRAN_DEBUG_PARSER_H_

@@ -4,6 +4,7 @@
 #include <algorithm>
 
 namespace Fortran {
+namespace parser {
 
 #define UNION_FORMATTER(TYPE) \
   std::ostream &operator<<(std::ostream &o, const TYPE &x) { \
@@ -1085,4 +1086,5 @@ std::ostream &operator<<(std::ostream &o, const ProcedureStmt &x) {
 std::ostream &operator<<(std::ostream &o, const Suffix &x) {
   return o << "(Suffix " << x.binding << ' ' << x.resultName << ')';
 }
+}  // namespace parser
 }  // namespace Fortran

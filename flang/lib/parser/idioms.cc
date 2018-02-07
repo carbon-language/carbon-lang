@@ -4,6 +4,7 @@
 #include <cstdlib>
 
 namespace Fortran {
+namespace parser {
 
 [[noreturn]] void die(const char *msg, ...) {
   va_list ap;
@@ -18,4 +19,5 @@ namespace Fortran {
 std::ostream &operator<<(std::ostream &o, const std::monostate &) {
   return o << "(empty variant)";
 }
+}  // namespace parser
 }  // namespace Fortran

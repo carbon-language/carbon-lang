@@ -18,6 +18,7 @@
 #include <optional>
 
 namespace Fortran {
+namespace parser {
 
 constexpr struct FixedFormPadding {
   using resultType = char;
@@ -210,5 +211,6 @@ static inline bool ConsumedAllInput(const ParseState &state) {
 }
 
 constexpr StatePredicateGuardParser consumedAllInput{ConsumedAllInput};
+}  // namespace parser
 }  // namespace Fortran
 #endif  // FORTRAN_COOKED_CHARS_H_

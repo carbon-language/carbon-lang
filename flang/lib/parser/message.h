@@ -13,6 +13,7 @@
 #include <string>
 
 namespace Fortran {
+namespace parser {
 
 class Message;
 using MessageContext = std::shared_ptr<Message>;
@@ -103,5 +104,6 @@ private:
 
 std::ostream &operator<<(std::ostream &, const Message &);
 std::ostream &operator<<(std::ostream &, const Messages &);
+}  // namespace parser
 }  // namespace Fortran
 #endif  // FORTRAN_MESSAGE_H_

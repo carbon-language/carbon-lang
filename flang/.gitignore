@@ -1,7 +1,7 @@
 Debug
 Release
 tags
-f18
+./f18
 *.o
 *~
 CMakeCache.txt

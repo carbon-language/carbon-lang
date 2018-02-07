@@ -9,6 +9,7 @@
 #include <string>
 
 namespace Fortran {
+namespace parser {
 
 class SourceFile {
 public:
@@ -27,5 +28,6 @@ private:
   const char *content_{nullptr};
   size_t bytes_{0};
 };
+}  // namespace parser
 }  // namespace Fortran
 #endif  // FORTRAN_SOURCE_H_

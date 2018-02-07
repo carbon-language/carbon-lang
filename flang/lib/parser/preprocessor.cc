@@ -13,6 +13,7 @@
 #include <utility>
 
 namespace Fortran {
+namespace parser {
 
 bool CharPointerWithLength::IsBlank() const {
   for (size_t j{0}; j < bytes_; ++j) {
@@ -937,4 +938,5 @@ bool Preprocessor::IsIfPredicateTrue(
   }
   return result;
 }
+}  // namespace parser
 }  // namespace Fortran

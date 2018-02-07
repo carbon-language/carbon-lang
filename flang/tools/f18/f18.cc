@@ -1,15 +1,15 @@
 // Temporary Fortran front end driver main program for development scaffolding.
 
-#include "basic-parsers.h"
-#include "char-buffer.h"
-#include "cooked-chars.h"
-#include "grammar.h"
-#include "idioms.h"
-#include "message.h"
-#include "parse-tree.h"
-#include "prescan.h"
-#include "source.h"
-#include "user-state.h"
+#include "../../lib/parser/basic-parsers.h"
+#include "../../lib/parser/char-buffer.h"
+#include "../../lib/parser/cooked-chars.h"
+#include "../../lib/parser/grammar.h"
+#include "../../lib/parser/idioms.h"
+#include "../../lib/parser/message.h"
+#include "../../lib/parser/parse-tree.h"
+#include "../../lib/parser/prescan.h"
+#include "../../lib/parser/source.h"
+#include "../../lib/parser/user-state.h"
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
@@ -36,9 +36,11 @@ std::list<std::string> argList(int argc, char *const argv[]) {
 }  // namespace
 
 namespace Fortran {
+namespace parser {
 constexpr auto grammar = program;
+}  // namespace parser
 }  // namespace Fortran
-using Fortran::grammar;
+using Fortran::parser::grammar;
 
 int main(int argc, char *const argv[]) {
 
@@ -97,7 +99,7 @@ int main(int argc, char *const argv[]) {
     }
   }
 
-  Fortran::SourceFile source;
+  Fortran::parser::SourceFile source;
   std::stringstream error;
   if (!source.Open(path, &error)) {
     std::cerr << error.str() << '\n';
@@ -108,9 +110,9 @@ int main(int argc, char *const argv[]) {
   size_t sourceBytes{source.bytes()};
   std::unique_ptr<char[]> prescanned;
   if (prescan) {
-    Fortran::Messages messages;
-    Fortran::Prescanner prescanner{messages};
-    Fortran::CharBuffer buffer{
+    Fortran::parser::Messages messages;
+    Fortran::parser::Prescanner prescanner{messages};
+    Fortran::parser::CharBuffer buffer{
         prescanner.set_fixedForm(fixedForm)
             .set_enableBackslashEscapesInCharLiterals(backslashEscapes)
             .set_fixedFormColumnLimit(columns)
@@ -128,7 +130,7 @@ int main(int argc, char *const argv[]) {
     columns = std::numeric_limits<int>::max();
   }
 
-  Fortran::ParseState state{sourceContent, sourceBytes};
+  Fortran::parser::ParseState state{sourceContent, sourceBytes};
   state.set_prescanned(prescan);
   state.set_inFixedForm(fixedForm);
   state.set_enableBackslashEscapesInCharLiterals(backslashEscapes);
@@ -136,11 +138,12 @@ int main(int argc, char *const argv[]) {
   state.set_columns(columns);
   state.set_enableOldDebugLines(enableOldDebugLines);
   state.PushContext("source file '"s + path + "'");
-  Fortran::UserState ustate;
+  Fortran::parser::UserState ustate;
   state.set_userState(&ustate);
 
   if (dumpCookedChars) {
-    while (std::optional<char> och{Fortran::cookedNextChar.Parse(&state)}) {
+    while (std::optional<char>
+        och{Fortran::parser::cookedNextChar.Parse(&state)}) {
       std::cout << *och;
     }
     return 0;
@@ -149,7 +152,7 @@ int main(int argc, char *const argv[]) {
   std::optional<typename decltype(grammar)::resultType> result;
 #if 0
   for (int j = 0; j < 1000; ++j) {
-    Fortran::ParseState state1{state};
+    Fortran::parser::ParseState state1{state};
     result = grammar.Parse(&state1);
     if (!result) {
       std::cerr << "demo FAIL in timing loop\n";

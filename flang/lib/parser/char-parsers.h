@@ -9,6 +9,7 @@
 #include <optional>
 
 namespace Fortran {
+namespace parser {
 
 template<char goal> struct ExactRaw {
   using resultType = char;
@@ -107,5 +108,6 @@ private:
 constexpr RawStringMatch operator""_raw(const char str[], size_t n) {
   return RawStringMatch{str, n};
 }
+}  // namespace parser
 }  // namespace Fortran
 #endif  // FORTRAN_CHAR_PARSERS_H_
