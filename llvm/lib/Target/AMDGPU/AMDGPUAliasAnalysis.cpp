@@ -115,8 +115,7 @@ bool AMDGPUAAResult::pointsToConstantMemory(const MemoryLocation &Loc,
                                             bool OrLocal) {
   const Value *Base = GetUnderlyingObject(Loc.Ptr, DL);
 
-  if (Base->getType()->getPointerAddressSpace() == AS.CONSTANT_ADDRESS ||
-      Base->getType()->getPointerAddressSpace() == AS.CONSTANT_ADDRESS_32BIT) {
+  if (Base->getType()->getPointerAddressSpace() == AS.CONSTANT_ADDRESS) {
     return true;
   }
 
