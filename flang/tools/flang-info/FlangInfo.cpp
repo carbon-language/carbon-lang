@@ -11,13 +11,14 @@
 //  It will eventually disapear.
 //
 //
-//  PLEASE DO NOT REPORT CODING STYLE VIOLATIONS ON THAT FILE! 
+//  PLEASE DO NOT REPORT CODING STYLE VIOLATIONS ON THAT FILE!
 //  THIS IS A TEMPORARY PLAYGROUND!
 //
 //
 //===----------------------------------------------------------------------===//
 
 #include "flang/Basic/Version.h"
+#include "flang/Sema/Sema.h"
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Option/OptTable.h"
@@ -31,11 +32,15 @@ using namespace flang;
 #include <iostream>
 
 int main(int argc, const char **argv) {
-  
+
   std::cout << "Flang Repository = '" << getFlangRepositoryPath() << "'\n";
   std::cout << "Flang Version    = '" << getFlangFullVersion() << "'\n";
 
   std::cout << "LLVM  Repository = '" << getLLVMRepositoryPath() << "'\n";
 
-  return 1 ;
+#if 1
+  Sema sema;
+#endif
+
+  return 1;
 }

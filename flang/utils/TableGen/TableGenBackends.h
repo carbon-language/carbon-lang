@@ -19,19 +19,18 @@
 #include <string>
 
 namespace llvm {
-  class raw_ostream;
-  class RecordKeeper;
-}
+class raw_ostream;
+class RecordKeeper;
+}  // namespace llvm
 
-using llvm::raw_ostream;
 using llvm::RecordKeeper;
+using llvm::raw_ostream;
 
 namespace flang {
 
-
 // Used by FlangDiagnosticsEmitter.cpp
-void EmitFlangDiagsDefs(RecordKeeper &Records, raw_ostream &OS,
-                        const std::string &Component);
+void EmitFlangDiagsDefs(
+    RecordKeeper &Records, raw_ostream &OS, const std::string &Component);
 void EmitFlangDiagGroups(RecordKeeper &Records, raw_ostream &OS);
 void EmitFlangDiagsIndexName(RecordKeeper &Records, raw_ostream &OS);
 void EmitFlangDiagDocs(RecordKeeper &Records, raw_ostream &OS);
@@ -39,7 +38,6 @@ void EmitFlangDiagDocs(RecordKeeper &Records, raw_ostream &OS);
 // Used by FlangOptionDocEmitter.cpp
 void EmitFlangOptDocs(RecordKeeper &Records, raw_ostream &OS);
 
-
-} // end namespace flang
+}  // end namespace flang
 
 #endif

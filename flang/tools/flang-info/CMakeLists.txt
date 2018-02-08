@@ -10,6 +10,7 @@ add_flang_executable(flang-info
 
 target_link_libraries(flang-info
   flangBasic
+  flangSema
   )
 
 install(TARGETS flang-info

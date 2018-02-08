@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the Sema class, which performs semantic analysis 
+// This file defines the Sema class, which performs semantic analysis
 // for Fortran.
 //
 //===----------------------------------------------------------------------===//
@@ -28,33 +28,32 @@
 #include <string>
 #include <vector>
 
-namespace llvm { 
-  // Put here the required forward declarations for LLVM
-  class APSInt;
-  template <typename ValueT> struct DenseMapInfo;
-  template <typename ValueT, typename ValueInfoT> class DenseSet;
-  class SmallBitVector;
-  class InlineAsmIdentifierInfo;
-}
+namespace llvm {
+// Put here the required forward declarations for LLVM
+class APSInt;
+template<typename ValueT> struct DenseMapInfo;
+template<typename ValueT, typename ValueInfoT> class DenseSet;
+class SmallBitVector;
+class InlineAsmIdentifierInfo;
+}  // namespace llvm
 
 namespace flang {
 
-  // Put here the required forward declarations for flang
-  class SourceLocation;
-  
+// Put here the required forward declarations for flang
+class SourceLocation;
+
 namespace sema {
-  // Put here the forward declarations of the inner classes of the Sema library 
-  class ProgramScope;
-  class FunctionScope;
-} // end namespace flang::sema
+// Put here the forward declarations of the inner classes of the Sema library
+class ProgramScope;
+class FunctionScope;
+}  // namespace sema
 
 /// Sema - This implements semantic analysis for Fortran
 class Sema {
 public:
   Sema();
-}; // end class Sema 
+};  // end class Sema
 
-} // end namespace flang 
+}  // end namespace flang
 
 #endif
-
