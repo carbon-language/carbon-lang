@@ -279,7 +279,7 @@ TEST(TargetParserTest, testARMCPU) {
                          "7-S"));
 }
 
-static constexpr int NumARMCPUArchs = 82;
+static constexpr unsigned NumARMCPUArchs = 82;
 
 TEST(TargetParserTest, testARMCPUArchList) {
   SmallVector<StringRef, NumARMCPUArchs> List;
@@ -761,7 +761,7 @@ TEST(TargetParserTest, testAArch64CPU) {
       "8-A"));
 }
 
-static constexpr int NumAArch64CPUArchs = 19;
+static constexpr unsigned NumAArch64CPUArchs = 19;
 
 TEST(TargetParserTest, testAArch64CPUArchList) {
   SmallVector<StringRef, NumAArch64CPUArchs> List;
