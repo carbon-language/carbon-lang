@@ -439,7 +439,7 @@ template <class ELFT> void ICF<ELFT>::run() {
   };
 
   // Merge sections by the equivalence class.
-  forEachClass([&](size_t Begin, size_t End) {
+  forEachClassRange(0, Sections.size(), [&](size_t Begin, size_t End) {
     if (End - Begin == 1)
       return;
 
