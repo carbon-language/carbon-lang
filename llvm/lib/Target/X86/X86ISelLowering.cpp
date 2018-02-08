@@ -18149,7 +18149,15 @@ static SDValue EmitKTEST(SDValue Op0, SDValue Op1, ISD::CondCode CC,
   } else
     return SDValue();
 
-  SDValue KORTEST = DAG.getNode(X86ISD::KORTEST, dl, MVT::i32, Op0, Op0);
+  // If the input is an OR, we can combine it's operands into the KORTEST.
+  SDValue LHS = Op0;
+  SDValue RHS = Op0;
+  if (Op0.getOpcode() == ISD::OR && Op0.hasOneUse( && Op0.hasOneUse())) {
+    LHS = Op0.getOperand(0);
+    RHS = Op0.getOperand(1);
+  }
+
+  SDValue KORTEST = DAG.getNode(X86ISD::KORTEST, dl, MVT::i32, LHS, RHS);
   return getSETCC(X86CC, KORTEST, dl, DAG);
 }
 

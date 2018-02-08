@@ -583,8 +583,7 @@ define void @test7(<8 x i1> %mask)  {
 ; SKX-NEXT:    vpmovw2m %xmm0, %k0
 ; SKX-NEXT:    movb $85, %al
 ; SKX-NEXT:    kmovd %eax, %k1
-; SKX-NEXT:    korb %k1, %k0, %k0
-; SKX-NEXT:    kortestb %k0, %k0
+; SKX-NEXT:    kortestb %k1, %k0
 ; SKX-NEXT:    retq
 ;
 ; AVX512BW-LABEL: test7:
@@ -606,8 +605,7 @@ define void @test7(<8 x i1> %mask)  {
 ; AVX512DQ-NEXT:    vptestmq %zmm0, %zmm0, %k0
 ; AVX512DQ-NEXT:    movb $85, %al
 ; AVX512DQ-NEXT:    kmovw %eax, %k1
-; AVX512DQ-NEXT:    korb %k1, %k0, %k0
-; AVX512DQ-NEXT:    kortestb %k0, %k0
+; AVX512DQ-NEXT:    kortestb %k1, %k0
 ; AVX512DQ-NEXT:    vzeroupper
 ; AVX512DQ-NEXT:    retq
 allocas:
@@ -1787,8 +1785,7 @@ define void @ktest_2(<32 x float> %in, float * %base) {
 ; SKX-NEXT:    vcmpltps %zmm3, %zmm0, %k1
 ; SKX-NEXT:    vcmpltps %zmm2, %zmm1, %k2
 ; SKX-NEXT:    kunpckwd %k1, %k2, %k1
-; SKX-NEXT:    kord %k1, %k0, %k0
-; SKX-NEXT:    kortestd %k0, %k0
+; SKX-NEXT:    kortestd %k1, %k0
 ; SKX-NEXT:    je LBB43_2
 ; SKX-NEXT:  ## %bb.1: ## %L1
 ; SKX-NEXT:    vmovaps %zmm0, (%rdi)
@@ -1813,8 +1810,7 @@ define void @ktest_2(<32 x float> %in, float * %base) {
 ; AVX512BW-NEXT:    vcmpltps %zmm3, %zmm0, %k1
 ; AVX512BW-NEXT:    vcmpltps %zmm2, %zmm1, %k2
 ; AVX512BW-NEXT:    kunpckwd %k1, %k2, %k1
-; AVX512BW-NEXT:    kord %k1, %k0, %k0
-; AVX512BW-NEXT:    kortestd %k0, %k0
+; AVX512BW-NEXT:    kortestd %k1, %k0
 ; AVX512BW-NEXT:    je LBB43_2
 ; AVX512BW-NEXT:  ## %bb.1: ## %L1
 ; AVX512BW-NEXT:    vmovaps %zmm0, (%rdi)
