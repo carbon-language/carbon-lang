@@ -218,7 +218,7 @@ FunctionPass *llvm::createSIPeepholeSDWAPass() {
 
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
-static raw_ostream& operator<<(raw_ostream &OS, const SdwaSel &Sel) {
+static raw_ostream& operator<<(raw_ostream &OS, SdwaSel Sel) {
   switch(Sel) {
   case BYTE_0: OS << "BYTE_0"; break;
   case BYTE_1: OS << "BYTE_1"; break;
@@ -984,7 +984,7 @@ bool SIPeepholeSDWA::convertToSDWA(MachineInstr &MI,
     }
   }
 
-  // Apply all sdwa operand pattenrs
+  // Apply all sdwa operand patterns.
   bool Converted = false;
   for (auto &Operand : SDWAOperands) {
     // There should be no intesection between SDWA operands and potential MIs
@@ -1017,7 +1017,8 @@ bool SIPeepholeSDWA::convertToSDWA(MachineInstr &MI,
 
 // If an instruction was converted to SDWA it should not have immediates or SGPR
 // operands (allowed one SGPR on GFX9). Copy its scalar operands into VGPRs.
-void SIPeepholeSDWA::legalizeScalarOperands(MachineInstr &MI, const SISubtarget &ST) const {
+void SIPeepholeSDWA::legalizeScalarOperands(MachineInstr &MI,
+                                            const SISubtarget &ST) const {
   const MCInstrDesc &Desc = TII->get(MI.getOpcode());
   unsigned ConstantBusCount = 0;
   for (MachineOperand &Op : MI.explicit_uses()) {
