@@ -555,7 +555,8 @@ static void implementPatch(uint64_t AdrpAddr, uint64_t PatcheeOffset,
   if (RelIt != IS->Relocations.end() && RelIt->Type == R_AARCH64_JUMP26)
     return;
 
-  if (Config->Verbose)
+
+  if (errorHandler().Verbose)
     message("detected cortex-a53-843419 erratum sequence starting at " +
             utohexstr(AdrpAddr) + " in unpatched output.");
 
