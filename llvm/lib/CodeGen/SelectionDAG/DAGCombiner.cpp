@@ -1026,12 +1026,39 @@ SDValue DAGCombiner::CombineTo(SDNode *N, const SDValue *To, unsigned NumTo,
 
   WorklistRemover DeadNodes(*this);
   DAG.ReplaceAllUsesWith(N, To);
+  ArrayRef<const SDValue> ToValues{To, NumTo};
+#ifndef NDEBUG
+  // If the RAUW'd node has a debug value, at least one of its replacements
+  // should have one as well.
+  if (N->getHasDebugValue())
+    assert(any_of(ToValues,
+                  [](const SDValue &ToVal) {
+                    if (SDNode *ToN = ToVal.getNode())
+                      return ToN->getHasDebugValue();
+                    return false;
+                  }) &&
+           "Dropped debug value");
+
+  // If the RAUW'd node has a debug loc, at least one of its replacements
+  // should have a loc as well, unless they've *all* got merged locations.
+  if (N->getDebugLoc())
+    assert(any_of(ToValues,
+                  [](const SDValue &ToVal) -> bool {
+                    return ToVal.getDebugLoc();
+                  }) ||
+           all_of(ToValues,
+                  [](const SDValue &ToVal) {
+                    return !ToVal.hasOneUse() && !ToVal.use_empty();
+                  }) &&
+               "Dropped debug loc");
+#endif
+
   if (AddTo) {
     // Push the new nodes and any users onto the worklist
-    for (unsigned i = 0, e = NumTo; i != e; ++i) {
-      if (To[i].getNode()) {
-        AddToWorklist(To[i].getNode());
-        AddUsersToWorklist(To[i].getNode());
+    for (const SDValue &ToVal : ToValues) {
+      if (SDNode *ToN = ToVal.getNode()) {
+        AddToWorklist(ToN);
+        AddUsersToWorklist(ToN);
       }
     }
   }
