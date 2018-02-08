@@ -1629,7 +1629,7 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
   {
     const APInt *Y;
     // X % -Y -> X % Y
-    if (match(Op1, m_APInt(Y)) && Y->isNegative() && !Y->isMinSignedValue()) {
+    if (match(Op1, m_Negative(Y)) && !Y->isMinSignedValue()) {
       Worklist.AddValue(I.getOperand(1));
       I.setOperand(1, ConstantInt::get(I.getType(), -*Y));
       return &I;
