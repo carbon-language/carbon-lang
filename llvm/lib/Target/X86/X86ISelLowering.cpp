@@ -30627,6 +30627,20 @@ static SDValue combineBitcast(SDNode *N, SelectionDAG &DAG,
     }
   }
 
+  // Try to remove a bitcast of constant vXi1 vector. We have to legalize
+  // most of these to scalar anyway.
+  if (Subtarget.hasAVX512() && VT.isScalarInteger() &&
+      SrcVT.isVector() && SrcVT.getVectorElementType() == MVT::i1 &&
+      ISD::isBuildVectorOfConstantSDNodes(N0.getNode())) {
+    APInt Imm(SrcVT.getVectorNumElements(), 0);
+    for (unsigned Idx = 0, e = N0.getNumOperands(); Idx < e; ++Idx) {
+      SDValue In = N0.getOperand(Idx);
+      if (!In.isUndef() && (cast<ConstantSDNode>(In)->getZExtValue() & 0x1))
+        Imm.setBit(Idx);
+    }
+    return DAG.getConstant(Imm, SDLoc(N), VT);
+  }
+
   // Try to remove bitcasts from input and output of mask arithmetic to
   // remove GPR<->K-register crossings.
   if (SDValue V = combineCastedMaskArithmetic(N, DAG, DCI, Subtarget))
