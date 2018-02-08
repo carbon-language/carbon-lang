@@ -1055,9 +1055,10 @@ struct UDivFoldAction {
 // X udiv 2^C -> X >> C
 static Instruction *foldUDivPow2Cst(Value *Op0, Value *Op1,
                                     const BinaryOperator &I, InstCombiner &IC) {
-  const APInt &C = cast<Constant>(Op1)->getUniqueInteger();
-  BinaryOperator *LShr = BinaryOperator::CreateLShr(
-      Op0, ConstantInt::get(Op0->getType(), C.logBase2()));
+  Constant *C1 = getLogBase2(Op0->getType(), cast<Constant>(Op1));
+  if (!C1)
+    llvm_unreachable("Failed to constant fold udiv -> logbase2");
+  BinaryOperator *LShr = BinaryOperator::CreateLShr(Op0, C1);
   if (I.isExact())
     LShr->setIsExact();
   return LShr;
