@@ -352,6 +352,7 @@ void MachineBasicBlock::print(raw_ostream &OS, ModuleSlotTracker &MST,
     if (I.isInsideBundle())
       OS << "  * ";
     I.print(OS, MST, IsStandalone);
+    OS << '\n';
   }
 
   // Print the successors of this block according to the CFG.
