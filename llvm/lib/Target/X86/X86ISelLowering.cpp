@@ -30494,6 +30494,24 @@ static SDValue combineBitcastvxi1(SelectionDAG &DAG, SDValue BitCast,
   return DAG.getZExtOrTrunc(V, DL, VT);
 }
 
+// Convert a vXi1 constant build vector to the same width scalar integer.
+static SDValue combinevXi1ConstantToInteger(SDValue Op, SelectionDAG &DAG) {
+  EVT SrcVT = Op.getValueType();
+  assert(SrcVT.getVectorElementType() == MVT::i1 &&
+         "Expected a vXi1 vector");
+  assert(ISD::isBuildVectorOfConstantSDNodes(Op.getNode()) &&
+         "Expected a constant build vector");
+
+  APInt Imm(SrcVT.getVectorNumElements(), 0);
+  for (unsigned Idx = 0, e = Op.getNumOperands(); Idx < e; ++Idx) {
+    SDValue In = Op.getOperand(Idx);
+    if (!In.isUndef() && (cast<ConstantSDNode>(In)->getZExtValue() & 0x1))
+      Imm.setBit(Idx);
+  }
+  EVT IntVT = EVT::getIntegerVT(*DAG.getContext(), Imm.getBitWidth());
+  return DAG.getConstant(Imm, SDLoc(Op), IntVT);
+}
+
 static SDValue combineCastedMaskArithmetic(SDNode *N, SelectionDAG &DAG,
                                            TargetLowering::DAGCombinerInfo &DCI,
                                            const X86Subtarget &Subtarget) {
@@ -30538,6 +30556,14 @@ static SDValue combineCastedMaskArithmetic(SDNode *N, SelectionDAG &DAG,
       RHS.getOperand(0).getValueType() == DstVT)
     return DAG.getNode(Op.getOpcode(), SDLoc(N), DstVT,
                        DAG.getBitcast(DstVT, LHS), RHS.getOperand(0));
+
+  // If the RHS is a vXi1 build vector, this is a good reason to flip too.
+  // Most of these have to move a constant from the scalar domain anyway.
+  if (ISD::isBuildVectorOfConstantSDNodes(RHS.getNode())) {
+    RHS = combinevXi1ConstantToInteger(RHS, DAG);
+    return DAG.getNode(Op.getOpcode(), SDLoc(N), DstVT,
+                       DAG.getBitcast(DstVT, LHS), RHS);
+  }
 
   return SDValue();
 }
@@ -30632,13 +30658,7 @@ static SDValue combineBitcast(SDNode *N, SelectionDAG &DAG,
   if (Subtarget.hasAVX512() && VT.isScalarInteger() &&
       SrcVT.isVector() && SrcVT.getVectorElementType() == MVT::i1 &&
       ISD::isBuildVectorOfConstantSDNodes(N0.getNode())) {
-    APInt Imm(SrcVT.getVectorNumElements(), 0);
-    for (unsigned Idx = 0, e = N0.getNumOperands(); Idx < e; ++Idx) {
-      SDValue In = N0.getOperand(Idx);
-      if (!In.isUndef() && (cast<ConstantSDNode>(In)->getZExtValue() & 0x1))
-        Imm.setBit(Idx);
-    }
-    return DAG.getConstant(Imm, SDLoc(N), VT);
+    return combinevXi1ConstantToInteger(N0, DAG);
   }
 
   // Try to remove bitcasts from input and output of mask arithmetic to

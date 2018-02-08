@@ -7020,18 +7020,16 @@ define void @vcmp_test7(<8 x i1> %mask)  {
 ; GENERIC:       # %bb.0: # %allocas
 ; GENERIC-NEXT:    vpsllw $15, %xmm0, %xmm0 # sched: [1:1.00]
 ; GENERIC-NEXT:    vpmovw2m %xmm0, %k0 # sched: [1:0.33]
-; GENERIC-NEXT:    movb $85, %al # sched: [1:0.33]
-; GENERIC-NEXT:    kmovd %eax, %k1 # sched: [1:0.33]
-; GENERIC-NEXT:    kortestb %k1, %k0 # sched: [1:1.00]
+; GENERIC-NEXT:    kmovd %k0, %eax # sched: [1:0.33]
+; GENERIC-NEXT:    orb $85, %al # sched: [1:0.33]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: vcmp_test7:
 ; SKX:       # %bb.0: # %allocas
 ; SKX-NEXT:    vpsllw $15, %xmm0, %xmm0 # sched: [1:0.50]
 ; SKX-NEXT:    vpmovw2m %xmm0, %k0 # sched: [1:1.00]
-; SKX-NEXT:    movb $85, %al # sched: [1:0.25]
-; SKX-NEXT:    kmovd %eax, %k1 # sched: [1:1.00]
-; SKX-NEXT:    kortestb %k1, %k0 # sched: [3:1.00]
+; SKX-NEXT:    kmovd %k0, %eax # sched: [3:1.00]
+; SKX-NEXT:    orb $85, %al # sched: [1:0.25]
 ; SKX-NEXT:    retq # sched: [7:1.00]
 allocas:
   %a= or <8 x i1> %mask, <i1 true, i1 false, i1 true, i1 false, i1 true, i1 false, i1 true, i1 false>
