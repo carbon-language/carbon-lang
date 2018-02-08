@@ -18135,18 +18135,22 @@ static SDValue EmitKTEST(SDValue Op0, SDValue Op1, ISD::CondCode CC,
 
   Op0 = Op0.getOperand(0);
   MVT VT = Op0.getSimpleValueType();
-  if (!(Subtarget.hasDQI() && (VT == MVT::v8i1  || VT == MVT::v16i1)) &&
+  if (!(Subtarget.hasAVX512() && VT == MVT::v16i1) &&
+      !(Subtarget.hasDQI() && VT == MVT::v8i1) &&
       !(Subtarget.hasBWI() && (VT == MVT::v32i1 || VT == MVT::v64i1)))
     return SDValue();
 
   X86::CondCode X86CC;
   if (isNullConstant(Op1)) {
     X86CC = CC == ISD::SETEQ ? X86::COND_E : X86::COND_NE;
+  } else if (isAllOnesConstant(Op1)) {
+    // C flag is set for all ones.
+    X86CC = CC == ISD::SETEQ ? X86::COND_B : X86::COND_AE;
   } else
     return SDValue();
 
-  SDValue KTEST = DAG.getNode(X86ISD::KTEST, dl, MVT::i32, Op0, Op0);
-  return getSETCC(X86CC, KTEST, dl, DAG);
+  SDValue KORTEST = DAG.getNode(X86ISD::KORTEST, dl, MVT::i32, Op0, Op0);
+  return getSETCC(X86CC, KORTEST, dl, DAG);
 }
 
 SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {

@@ -584,7 +584,7 @@ define void @test7(<8 x i1> %mask)  {
 ; SKX-NEXT:    movb $85, %al
 ; SKX-NEXT:    kmovd %eax, %k1
 ; SKX-NEXT:    korb %k1, %k0, %k0
-; SKX-NEXT:    ktestb %k0, %k0
+; SKX-NEXT:    kortestb %k0, %k0
 ; SKX-NEXT:    retq
 ;
 ; AVX512BW-LABEL: test7:
@@ -607,7 +607,7 @@ define void @test7(<8 x i1> %mask)  {
 ; AVX512DQ-NEXT:    movb $85, %al
 ; AVX512DQ-NEXT:    kmovw %eax, %k1
 ; AVX512DQ-NEXT:    korb %k1, %k0, %k0
-; AVX512DQ-NEXT:    ktestb %k0, %k0
+; AVX512DQ-NEXT:    kortestb %k0, %k0
 ; AVX512DQ-NEXT:    vzeroupper
 ; AVX512DQ-NEXT:    retq
 allocas:
@@ -1673,7 +1673,7 @@ define void @ktest_1(<8 x double> %in, double * %base) {
 ; SKX-NEXT:    vcmpltpd %zmm0, %zmm1, %k1
 ; SKX-NEXT:    vmovupd 8(%rdi), %zmm1 {%k1} {z}
 ; SKX-NEXT:    vcmpltpd %zmm1, %zmm0, %k0 {%k1}
-; SKX-NEXT:    ktestb %k0, %k0
+; SKX-NEXT:    kortestb %k0, %k0
 ; SKX-NEXT:    je LBB42_2
 ; SKX-NEXT:  ## %bb.1: ## %L1
 ; SKX-NEXT:    vmovapd %zmm0, (%rdi)
@@ -1708,7 +1708,7 @@ define void @ktest_1(<8 x double> %in, double * %base) {
 ; AVX512DQ-NEXT:    vcmpltpd %zmm0, %zmm1, %k1
 ; AVX512DQ-NEXT:    vmovupd 8(%rdi), %zmm1 {%k1} {z}
 ; AVX512DQ-NEXT:    vcmpltpd %zmm1, %zmm0, %k0 {%k1}
-; AVX512DQ-NEXT:    ktestb %k0, %k0
+; AVX512DQ-NEXT:    kortestb %k0, %k0
 ; AVX512DQ-NEXT:    je LBB42_2
 ; AVX512DQ-NEXT:  ## %bb.1: ## %L1
 ; AVX512DQ-NEXT:    vmovapd %zmm0, (%rdi)
@@ -1788,7 +1788,7 @@ define void @ktest_2(<32 x float> %in, float * %base) {
 ; SKX-NEXT:    vcmpltps %zmm2, %zmm1, %k2
 ; SKX-NEXT:    kunpckwd %k1, %k2, %k1
 ; SKX-NEXT:    kord %k1, %k0, %k0
-; SKX-NEXT:    ktestd %k0, %k0
+; SKX-NEXT:    kortestd %k0, %k0
 ; SKX-NEXT:    je LBB43_2
 ; SKX-NEXT:  ## %bb.1: ## %L1
 ; SKX-NEXT:    vmovaps %zmm0, (%rdi)
@@ -1814,7 +1814,7 @@ define void @ktest_2(<32 x float> %in, float * %base) {
 ; AVX512BW-NEXT:    vcmpltps %zmm2, %zmm1, %k2
 ; AVX512BW-NEXT:    kunpckwd %k1, %k2, %k1
 ; AVX512BW-NEXT:    kord %k1, %k0, %k0
-; AVX512BW-NEXT:    ktestd %k0, %k0
+; AVX512BW-NEXT:    kortestd %k0, %k0
 ; AVX512BW-NEXT:    je LBB43_2
 ; AVX512BW-NEXT:  ## %bb.1: ## %L1
 ; AVX512BW-NEXT:    vmovaps %zmm0, (%rdi)
@@ -2786,3 +2786,32 @@ bb.2:
 }
 declare void @foo()
 
+; Make sure we can use the C flag from kortest to check for all ones.
+define void @ktest_allones(<16 x i32> %x, <16 x i32> %y) {
+; CHECK-LABEL: ktest_allones:
+; CHECK:       ## %bb.0:
+; CHECK-NEXT:    pushq %rax
+; CHECK-NEXT:    .cfi_def_cfa_offset 16
+; CHECK-NEXT:    vporq %zmm1, %zmm0, %zmm0
+; CHECK-NEXT:    vptestnmd %zmm0, %zmm0, %k0
+; CHECK-NEXT:    kortestw %k0, %k0
+; CHECK-NEXT:    jb LBB65_2
+; CHECK-NEXT:  ## %bb.1: ## %bb.1
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    callq _foo
+; CHECK-NEXT:  LBB65_2: ## %bb.2
+; CHECK-NEXT:    popq %rax
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    retq
+  %a = icmp eq <16 x i32> %x, zeroinitializer
+  %b = icmp eq <16 x i32> %y, zeroinitializer
+  %c = and <16 x i1> %a, %b
+  %d = bitcast <16 x i1> %c to i16
+  %e = icmp eq i16 %d, -1
+  br i1 %e, label %bb.2, label %bb.1
+bb.1:
+  call void @foo()
+  br label %bb.2
+bb.2:
+  ret void
+}
