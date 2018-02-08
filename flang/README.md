@@ -1,13 +1,19 @@
 # f18
 
+## Selection of the C/C++ compiler
+
+   export CXX=.../the/path/to/g++ 
+   export CC=.../the/path/to/gcc    
+   
 ## Installation of LLVM 5.0    
     
     ############ Extract LLVM, CLANG and other from git in current directory. 
     ############         
-    ############ Remark: 
+    ############ Question: 
     ############    Do we need the Clang sources for F18? 
     ############    Probably not but its nice to have the Clang source as 
-    ############    example during development.
+    ############    example during development. 
+    ############    Also, we need cland-format.
     ############
     ############        
     
@@ -52,12 +58,25 @@
     
     mkdir $ROOT/llvm/build
     cd  $ROOT/llvm/build 
-    cmake CMAKE_INSTALL_PREFIX=$PREFIX 
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PREFIX ..
     make -j 4
     make install
     
-## 
-    ######### Add $PREFIX/bin to PATH 
+## Installation of Flang 
+ 
+    ######### Add $PREFIX/bin to PATH to find llvm-config executable
     
+    export "PATH=$PREFIX/bin:$PATH"
     
+    ######## Get Flang sources 
+    git clone https://github.com/ThePortlandGroup/f18.git
+    
+    ######## Create a build directory for f18 
+    mkdir $ROOT/f18-build
+    cd $ROOT/f18-build
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PREFIX ../f18 
+    make -j 4
+
+
+
     
