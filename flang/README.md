@@ -2,8 +2,8 @@
 
 ## Selection of the C/C++ compiler
 
-   export CXX=.../the/path/to/g++ 
-   export CC=.../the/path/to/gcc    
+    export CXX=.../the/path/to/g++ 
+    export CC=.../the/path/to/gcc    
    
 ## Installation of LLVM 5.0    
     
