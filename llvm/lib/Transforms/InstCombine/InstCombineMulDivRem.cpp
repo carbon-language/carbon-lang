@@ -138,7 +138,7 @@ static bool IsMultiple(const APInt &C1, const APInt &C2, APInt &Quotient,
 static Constant *getLogBase2(Type *Ty, Constant *C) {
   const APInt *IVal;
   if (const auto *CI = dyn_cast<ConstantInt>(C))
-    if (match(C, m_APInt(IVal)) && IVal->isPowerOf2())
+    if (match(CI, m_APInt(IVal)) && IVal->isPowerOf2())
       return ConstantInt::get(Ty, IVal->logBase2());
 
   if (!Ty->isVectorTy())
