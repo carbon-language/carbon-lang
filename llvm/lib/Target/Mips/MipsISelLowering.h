@@ -370,8 +370,6 @@ class TargetRegisterClass;
     bool isJumpTableRelative() const override {
       return getTargetMachine().isPositionIndependent();
     }
-    
-    void finalizeLowering(MachineFunction &MF) const override;
 
   protected:
     SDValue getGlobalReg(SelectionDAG &DAG, EVT Ty) const;
