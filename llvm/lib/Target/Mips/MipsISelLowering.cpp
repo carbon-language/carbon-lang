@@ -108,6 +108,11 @@ static bool isShiftedMask(uint64_t I, uint64_t &Pos, uint64_t &Size) {
   return true;
 }
 
+void MipsTargetLowering::finalizeLowering(MachineFunction &MF) const {
+  MF.getFrameInfo().computeMaxCallFrameSize(MF);
+  TargetLoweringBase::finalizeLowering(MF);
+}
+
 // The MIPS MSA ABI passes vector arguments in the integer register set.
 // The number of integer registers used is dependant on the ABI used.
 MVT MipsTargetLowering::getRegisterTypeForCallingConv(MVT VT) const {
