@@ -1,6 +1,6 @@
+#include "source.h"
 #include "char-buffer.h"
 #include "idioms.h"
-#include "source.h"
 #include <algorithm>
 #include <cerrno>
 #include <cstring>

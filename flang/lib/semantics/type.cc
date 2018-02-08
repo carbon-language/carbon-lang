@@ -1,5 +1,4 @@
 #include "type.h"
-
 #include "attr.h"
 #include <iostream>
 

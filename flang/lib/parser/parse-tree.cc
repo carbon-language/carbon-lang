@@ -1,6 +1,6 @@
+#include "parse-tree.h"
 #include "idioms.h"
 #include "indirection.h"
-#include "parse-tree.h"
 #include <algorithm>
 
 namespace Fortran {

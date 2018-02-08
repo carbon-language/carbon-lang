@@ -1,6 +1,6 @@
+#include "prescan.h"
 #include "char-buffer.h"
 #include "idioms.h"
-#include "prescan.h"
 #include "source.h"
 #include <cctype>
 #include <cstring>
