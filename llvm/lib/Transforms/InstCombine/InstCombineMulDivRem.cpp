@@ -1604,8 +1604,7 @@ Instruction *InstCombiner::visitURem(BinaryOperator &I) {
   }
 
   // X urem C -> X < C ? X : X - C, where C >= signbit.
-  const APInt *DivisorC;
-  if (match(Op1, m_APInt(DivisorC)) && DivisorC->isNegative()) {
+  if (match(Op1, m_Negative())) {
     Value *Cmp = Builder.CreateICmpULT(Op0, Op1);
     Value *Sub = Builder.CreateSub(Op0, Op1);
     return SelectInst::Create(Cmp, Op0, Sub);
