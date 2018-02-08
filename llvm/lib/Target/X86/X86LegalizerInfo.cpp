@@ -163,6 +163,9 @@ void X86LegalizerInfo::setLegalizerInfo64bit() {
   const LLT s128 = LLT::scalar(128);
 
   setAction({G_IMPLICIT_DEF, s64}, Legal);
+  // Need to have that, as tryFoldImplicitDef will create this pattern:
+  // s128 = EXTEND (G_IMPLICIT_DEF s32/s64) -> s128 = G_IMPLICIT_DEF
+  setAction({G_IMPLICIT_DEF, s128}, Legal);
 
   setAction({G_PHI, s64}, Legal);
 
