@@ -146,16 +146,21 @@ void SourceFile::Close() {
 
 Position SourceFile::FindOffsetPosition(size_t at) const {
   CHECK(at < bytes_);
-  size_t lo{0}, hi{lineStart_.size()};
-  while (lo < hi) {
-    size_t mid{(lo + hi) >> 1};
+  if (lineStart_.empty()) {
+    return {1, static_cast<int>(at + 1)};
+  }
+  size_t low{0}, count{lineStart_.size()};
+  while (count > 1) {
+    size_t mid{low + (count >> 1)};
     if (lineStart_[mid] > at) {
-      hi = mid;
+      count = mid - low;
     } else {
-      lo = mid;
+      count -= mid - low;
+      low = mid;
     }
   }
-  return {static_cast<int>(lo + 1), static_cast<int>(at - lineStart_[lo] + 1)};
+  return {static_cast<int>(low + 1),
+          static_cast<int>(at - lineStart_[low] + 1)};
 }
 
 size_t SourceFile::FindPositionOffset(int lineNumber, int column) const {
