@@ -19,6 +19,33 @@ define <4 x i32> @test_v4i32_const_pow2(<4 x i32> %a0) {
   ret <4 x i32> %1
 }
 
+; X udiv C, where C >= signbit
+define <4 x i32> @test_v4i32_negconstsplat(<4 x i32> %a0) {
+; CHECK-LABEL: @test_v4i32_negconstsplat(
+; CHECK-NEXT:    [[TMP1:%.*]] = udiv <4 x i32> [[A0:%.*]], <i32 -3, i32 -3, i32 -3, i32 -3>
+; CHECK-NEXT:    ret <4 x i32> [[TMP1]]
+;
+  %1 = udiv <4 x i32> %a0, <i32 -3, i32 -3, i32 -3, i32 -3>
+  ret <4 x i32> %1
+}
+
+define <4 x i32> @test_v4i32_negconst(<4 x i32> %a0) {
+; CHECK-LABEL: @test_v4i32_negconst(
+; CHECK-NEXT:    [[TMP1:%.*]] = udiv <4 x i32> [[A0:%.*]], <i32 -3, i32 -5, i32 -7, i32 -9>
+; CHECK-NEXT:    ret <4 x i32> [[TMP1]]
+;
+  %1 = udiv <4 x i32> %a0, <i32 -3, i32 -5, i32 -7, i32 -9>
+  ret <4 x i32> %1
+}
+
+define <4 x i32> @test_v4i32_negconst_undef(<4 x i32> %a0) {
+; CHECK-LABEL: @test_v4i32_negconst_undef(
+; CHECK-NEXT:    ret <4 x i32> undef
+;
+  %1 = udiv <4 x i32> %a0, <i32 -3, i32 -5, i32 -7, i32 undef>
+  ret <4 x i32> %1
+}
+
 ; X udiv (C1 << N), where C1 is "1<<C2"  -->  X >> (N+C2)
 define <4 x i32> @test_v4i32_shl_splatconst_pow2(<4 x i32> %a0, <4 x i32> %a1) {
 ; CHECK-LABEL: @test_v4i32_shl_splatconst_pow2(
