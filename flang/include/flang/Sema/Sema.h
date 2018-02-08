@@ -15,8 +15,8 @@
 #ifndef LLVM_CLANG_SEMA_SEMA_H
 #define LLVM_CLANG_SEMA_SEMA_H
 
-#include "clang/Basic/Version.h"
-#include "clang/Sema/Scope.h"
+#include "flang/Basic/Version.h"
+#include "flang/Sema/Scope.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SetVector.h"
