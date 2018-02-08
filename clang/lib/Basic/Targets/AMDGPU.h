@@ -69,7 +69,7 @@ class LLVM_LIBRARY_VISIBILITY AMDGPUTargetInfo final : public TargetInfo {
     AMDGPUTargetInfo::GPUKind Kind;
   };
 
-  static constexpr NameGPUKind R600Names[] = {
+  static constexpr NameGPUKind R600Names[25] = {
       {{"r600"}, GK_R600},
       {{"rv610"}, GK_R600},
       {{"rv620"}, GK_R600},
@@ -96,7 +96,7 @@ class LLVM_LIBRARY_VISIBILITY AMDGPUTargetInfo final : public TargetInfo {
       {{"cayman"}, GK_CAYMAN},
       {{"aruba"}, GK_CAYMAN},
   };
-  static constexpr NameGPUKind AMDGCNNames[] = {
+  static constexpr NameGPUKind AMDGCNNames[33] = {
       {{"gfx600"}, GK_GFX6},    {{"tahiti"}, GK_GFX6},
       {{"gfx601"}, GK_GFX6},    {{"pitcairn"}, GK_GFX6},
       {{"verde"}, GK_GFX6},     {{"oland"}, GK_GFX6},
