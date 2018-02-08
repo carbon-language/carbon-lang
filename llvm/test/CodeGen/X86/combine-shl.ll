@@ -3,6 +3,33 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx2 | FileCheck %s --check-prefixes=AVX,AVX-SLOW
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx2,+fast-variable-shuffle | FileCheck %s --check-prefixes=AVX,AVX-FAST
 
+; fold (shl undef, x) -> 0
+define i32 @combine_shl_undef0(i32 %x) {
+; SSE-LABEL: combine_shl_undef0:
+; SSE:       # %bb.0:
+; SSE-NEXT:    xorl %eax, %eax
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: combine_shl_undef0:
+; AVX:       # %bb.0:
+; AVX-NEXT:    xorl %eax, %eax
+; AVX-NEXT:    retq
+  %1 = shl i32 undef, %x
+  ret i32 %1
+}
+
+define <4 x i32> @combine_vec_shl_undef0(<4 x i32> %x) {
+; SSE-LABEL: combine_vec_shl_undef0:
+; SSE:       # %bb.0:
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: combine_vec_shl_undef0:
+; AVX:       # %bb.0:
+; AVX-NEXT:    retq
+  %1 = shl <4 x i32> undef, %x
+  ret <4 x i32> %1
+}
+
 ; fold (shl 0, x) -> 0
 define <4 x i32> @combine_vec_shl_zero(<4 x i32> %x) {
 ; SSE-LABEL: combine_vec_shl_zero:

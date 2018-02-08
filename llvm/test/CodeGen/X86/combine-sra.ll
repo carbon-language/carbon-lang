@@ -3,6 +3,31 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx2 | FileCheck %s --check-prefixes=AVX,AVX2-SLOW
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx2,+fast-variable-shuffle | FileCheck %s --check-prefixes=AVX,AVX2-FAST
 
+; fold (sra undef, x) -> undef
+define i32 @combine_lshr_undef0(i32 %x) {
+; SSE-LABEL: combine_lshr_undef0:
+; SSE:       # %bb.0:
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: combine_lshr_undef0:
+; AVX:       # %bb.0:
+; AVX-NEXT:    retq
+  %1 = ashr i32 undef, %x
+  ret i32 %1
+}
+
+define <4 x i32> @combine_vec_ashr_undef0(<4 x i32> %x) {
+; SSE-LABEL: combine_vec_ashr_undef0:
+; SSE:       # %bb.0:
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: combine_vec_ashr_undef0:
+; AVX:       # %bb.0:
+; AVX-NEXT:    retq
+  %1 = ashr <4 x i32> undef, %x
+  ret <4 x i32> %1
+}
+
 ; fold (sra 0, x) -> 0
 define <4 x i32> @combine_vec_ashr_zero(<4 x i32> %x) {
 ; SSE-LABEL: combine_vec_ashr_zero:
