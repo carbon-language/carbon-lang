@@ -20,32 +20,22 @@
     ROOT=$(pwd)
     REL=release_50
     
-    git clone https://git.llvm.org/git/llvm.git/
-    cd llvm/
-    git checkout $REL
+    # To build LLVM and Clang, we only need the head of the requested branch. 
+    # Remove --single-branch --depth=1 if you want access to the whole repository
+
+    git clone --branch $REL --single-branch --depth=1 https://git.llvm.org/git/llvm.git/       llvm
+
+    # The following sub-repositories are probably not needed unless you also want to 
+    # build clang: 
+
+    git clone --branch $REL --single-branch --depth=1 https://git.llvm.org/git/clang.git/      llvm/tools/clang
+    git clone --branch $REL --single-branch --depth=1 https://git.llvm.org/git/openmp.git/     llvm/projects/openmp
+    git clone --branch $REL --single-branch --depth=1 https://git.llvm.org/git/libcxx.git/     llvm/projects/libcxx
+    git clone --branch $REL --single-branch --depth=1 https://git.llvm.org/git/libcxxabi.git/  llvm/projects/libcxxabi
+
     
-    cd $ROOT/llvm/tools
-    git clone https://git.llvm.org/git/clang.git/
-    git checkout $REL
-    
-    cd $ROOT/llvm/projects
-    git clone https://git.llvm.org/git/openmp.git/ 
-    cd openmp
-    git checkout $REL
-    
-    cd $ROOT/llvm/projects
-    git clone https://git.llvm.org/git/libcxx.git/
-    cd libcxx
-    git checkout $REL
-    
-    cd $ROOT/llvm/projects
-    git clone https://git.llvm.org/git/libcxxabi.git/
-    cd libcxxabi
-    git checkout $REL
-    
-    # List the version of all git sub-directories 
-    # They should all match $REL
-    for dir in $(find "$ROOT" -name .git) ; do 
+    # List the version of all git sub-directories. They should all match $REL
+    for dir in $(find "$ROOT/llvm" -name .git) ; do 
       cd $dir/.. ; 
       printf " %-15s %s\n" "$(git rev-parse --abbrev-ref HEAD)" "$(pwd)" ; 
     done
