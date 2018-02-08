@@ -18152,7 +18152,7 @@ static SDValue EmitKTEST(SDValue Op0, SDValue Op1, ISD::CondCode CC,
   // If the input is an OR, we can combine it's operands into the KORTEST.
   SDValue LHS = Op0;
   SDValue RHS = Op0;
-  if (Op0.getOpcode() == ISD::OR && Op0.hasOneUse( && Op0.hasOneUse())) {
+  if (Op0.getOpcode() == ISD::OR && Op0.hasOneUse()) {
     LHS = Op0.getOperand(0);
     RHS = Op0.getOperand(1);
   }
