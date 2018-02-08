@@ -52,7 +52,9 @@
     
     
     ###########  Build LLVM & CLANG in $PREFIX 
-        
+    ###########  A Debug build can take a long time and a lot of disk space
+    ###########  so I recommend making a Release build.
+       
     PREFIX=$ROOT/usr
     mkdir $PREFIX
     
@@ -64,7 +66,7 @@
     
 ## Installation of Flang 
  
-    ######### Add $PREFIX/bin to PATH to find llvm-config executable
+    ######### Add $PREFIX/bin to PATH so that cmake finds llvm-config   
     
     export "PATH=$PREFIX/bin:$PATH"
     
@@ -77,6 +79,5 @@
     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PREFIX ../f18 
     make -j 4
 
-
-
     
+
