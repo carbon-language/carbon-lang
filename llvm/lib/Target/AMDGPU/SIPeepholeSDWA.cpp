@@ -86,7 +86,7 @@ public:
   }
 
   bool runOnMachineFunction(MachineFunction &MF) override;
-  void matchSDWAOperands(MachineFunction &MF);
+  void matchSDWAOperands(MachineBasicBlock &MBB);
   std::unique_ptr<SDWAOperand> matchSDWAOperand(MachineInstr &MI);
   bool isConvertibleToSDWA(const MachineInstr &MI, const SISubtarget &ST) const;
   bool convertToSDWA(MachineInstr &MI, const SDWAOperandsVector &SDWAOperands);
@@ -804,14 +804,12 @@ SIPeepholeSDWA::matchSDWAOperand(MachineInstr &MI) {
   return std::unique_ptr<SDWAOperand>(nullptr);
 }
 
-void SIPeepholeSDWA::matchSDWAOperands(MachineFunction &MF) {
-  for (MachineBasicBlock &MBB : MF) {
-    for (MachineInstr &MI : MBB) {
-      if (auto Operand = matchSDWAOperand(MI)) {
-        DEBUG(dbgs() << "Match: " << MI << "To: " << *Operand << '\n');
-        SDWAOperands[&MI] = std::move(Operand);
-        ++NumSDWAPatternsFound;
-      }
+void SIPeepholeSDWA::matchSDWAOperands(MachineBasicBlock &MBB) {
+  for (MachineInstr &MI : MBB) {
+    if (auto Operand = matchSDWAOperand(MI)) {
+      DEBUG(dbgs() << "Match: " << MI << "To: " << *Operand << '\n');
+      SDWAOperands[&MI] = std::move(Operand);
+      ++NumSDWAPatternsFound;
     }
   }
 }
@@ -1059,35 +1057,36 @@ bool SIPeepholeSDWA::runOnMachineFunction(MachineFunction &MF) {
   TII = ST.getInstrInfo();
 
   // Find all SDWA operands in MF.
-  bool Changed = false;
   bool Ret = false;
-  do {
-    matchSDWAOperands(MF);
+  for (MachineBasicBlock &MBB : MF) {
+    bool Changed = false;
+    do {
+      matchSDWAOperands(MBB);
 
-    for (const auto &OperandPair : SDWAOperands) {
-      const auto &Operand = OperandPair.second;
-      MachineInstr *PotentialMI = Operand->potentialToConvert(TII);
-      if (PotentialMI && isConvertibleToSDWA(*PotentialMI, ST)) {
-        PotentialMatches[PotentialMI].push_back(Operand.get());
+      for (const auto &OperandPair : SDWAOperands) {
+        const auto &Operand = OperandPair.second;
+        MachineInstr *PotentialMI = Operand->potentialToConvert(TII);
+        if (PotentialMI && isConvertibleToSDWA(*PotentialMI, ST)) {
+          PotentialMatches[PotentialMI].push_back(Operand.get());
+        }
       }
-    }
 
-    for (auto &PotentialPair : PotentialMatches) {
-      MachineInstr &PotentialMI = *PotentialPair.first;
-      convertToSDWA(PotentialMI, PotentialPair.second);
-    }
+      for (auto &PotentialPair : PotentialMatches) {
+        MachineInstr &PotentialMI = *PotentialPair.first;
+        convertToSDWA(PotentialMI, PotentialPair.second);
+      }
 
-    PotentialMatches.clear();
-    SDWAOperands.clear();
+      PotentialMatches.clear();
+      SDWAOperands.clear();
 
-    Changed = !ConvertedInstructions.empty();
+      Changed = !ConvertedInstructions.empty();
 
-    if (Changed)
-      Ret = true;
-
-    while (!ConvertedInstructions.empty())
-      legalizeScalarOperands(*ConvertedInstructions.pop_back_val(), ST);
-  } while (Changed);
+      if (Changed)
+        Ret = true;
+      while (!ConvertedInstructions.empty())
+        legalizeScalarOperands(*ConvertedInstructions.pop_back_val(), ST);
+    } while (Changed);
+  }
 
   return Ret;
 }
