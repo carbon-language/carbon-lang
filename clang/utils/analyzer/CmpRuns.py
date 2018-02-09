@@ -29,6 +29,7 @@ Usage:
 import os
 import plistlib
 from math import log
+from optparse import OptionParser
 
 
 # Information about analysis run:
