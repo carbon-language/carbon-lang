@@ -2783,14 +2783,12 @@ define <8 x i64> @test_v8i64_insert_zero_128(<8 x i64> %a) {
 define <8 x i64> @test_v8i64_insert_zero_256(<8 x i64> %a) {
 ; AVX512F-LABEL: test_v8i64_insert_zero_256:
 ; AVX512F:       # %bb.0:
-; AVX512F-NEXT:    vxorps %xmm1, %xmm1, %xmm1
-; AVX512F-NEXT:    vinsertf64x4 $1, %ymm1, %zmm0, %zmm0
+; AVX512F-NEXT:    vmovaps %ymm0, %ymm0
 ; AVX512F-NEXT:    retq
 ;
 ; AVX512F-32-LABEL: test_v8i64_insert_zero_256:
 ; AVX512F-32:       # %bb.0:
-; AVX512F-32-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; AVX512F-32-NEXT:    vshufi64x2 {{.*#+}} zmm0 = zmm0[0,1,2,3],zmm1[0,1,0,1]
+; AVX512F-32-NEXT:    vmovaps %ymm0, %ymm0
 ; AVX512F-32-NEXT:    retl
   %res = shufflevector <8 x i64> %a, <8 x i64> <i64 0, i64 0, i64 0, i64 0, i64 undef, i64 undef, i64 undef, i64 undef>, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 8, i32 9, i32 8, i32 9>
   ret <8 x i64> %res
