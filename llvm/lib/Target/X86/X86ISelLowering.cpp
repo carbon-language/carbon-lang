@@ -12761,12 +12761,11 @@ static SDValue lowerV2X128VectorShuffle(const SDLoc &DL, MVT VT, SDValue V1,
       // this will likely become vinsertf128 which can't fold a 256-bit memop.
       if (!isa<LoadSDNode>(peekThroughBitcasts(V1))) {
         MVT SubVT = MVT::getVectorVT(VT.getVectorElementType(), 2);
-        SDValue LoV = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SubVT, V1,
-                                  DAG.getIntPtrConstant(0, DL));
-        SDValue HiV = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SubVT,
-                                  OnlyUsesV1 ? V1 : V2,
-                                  DAG.getIntPtrConstant(0, DL));
-        return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, LoV, HiV);
+        SDValue SubVec = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SubVT,
+                                     OnlyUsesV1 ? V1 : V2,
+                                     DAG.getIntPtrConstant(0, DL));
+        return DAG.getNode(ISD::INSERT_SUBVECTOR, DL, VT, V1, SubVec,
+                           DAG.getIntPtrConstant(2, DL));
       }
     }
 
@@ -13930,12 +13929,11 @@ static SDValue lowerV4X128VectorShuffle(const SDLoc &DL, MVT VT,
   if (OnlyUsesV1 || isShuffleEquivalent(V1, V2, Mask,
                                         {0, 1, 2, 3, 8, 9, 10, 11})) {
     MVT SubVT = MVT::getVectorVT(VT.getVectorElementType(), 4);
-    SDValue LoV = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SubVT, V1,
+    SDValue SubVec = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SubVT,
+                                 OnlyUsesV1 ? V1 : V2,
                               DAG.getIntPtrConstant(0, DL));
-    SDValue HiV = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SubVT,
-                              OnlyUsesV1 ? V1 : V2,
-                              DAG.getIntPtrConstant(0, DL));
-    return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, LoV, HiV);
+    return DAG.getNode(ISD::INSERT_SUBVECTOR, DL, VT, V1, SubVec,
+                       DAG.getIntPtrConstant(4, DL));
   }
 
   assert(WidenedMask.size() == 4);
