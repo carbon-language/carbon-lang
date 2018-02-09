@@ -127,6 +127,9 @@ bool AMDGPUInstrInfo::isUniformMMO(const MachineMemOperand *MMO) {
       isa<Constant>(Ptr) || isa<GlobalValue>(Ptr))
     return true;
 
+  if (MMO->getAddrSpace() == AMDGPUAS::CONSTANT_ADDRESS_32BIT)
+    return true;
+
   if (const Argument *Arg = dyn_cast<Argument>(Ptr))
     return AMDGPU::isArgPassedInSGPR(Arg);
 
