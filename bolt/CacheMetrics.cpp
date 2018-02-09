@@ -116,6 +116,8 @@ double calcExtTSPScore(
 
   double Score = 0.0;
   for (auto BF : BinaryFunctions) {
+    if (!BF->hasProfile())
+      continue;
     for (auto SrcBB : BF->layout()) {
       auto BI = SrcBB->branch_info_begin();
       for (auto DstBB : SrcBB->successors()) {

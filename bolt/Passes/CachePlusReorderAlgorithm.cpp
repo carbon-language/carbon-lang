@@ -14,10 +14,24 @@
 #include "CacheMetrics.h"
 #include "ReorderAlgorithm.h"
 #include "ReorderUtils.h"
+#include "llvm/Support/Options.h"
 
 using namespace llvm;
 using namespace bolt;
 using EdgeList = std::vector<std::pair<BinaryBasicBlock *, uint64_t>>;
+
+namespace opts {
+
+extern cl::OptionCategory BoltOptCategory;
+
+cl::opt<unsigned>
+ClusterSplitThreshold("cluster-split-threshold",
+  cl::desc("The maximum size of a function to apply splitting of clusters"),
+  cl::init(2048),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+}
 
 namespace llvm {
 namespace bolt {
@@ -88,6 +102,59 @@ private:
   double Score;
 };
 
+using ClusterIter = std::vector<BinaryBasicBlock *>::const_iterator;
+
+// A wrapper around three clusters of basic blocks; it is used to avoid extra
+// instantiation of the vectors.
+class MergedCluster {
+public:
+  MergedCluster(ClusterIter Begin1,
+                ClusterIter End1,
+                ClusterIter Begin2,
+                ClusterIter End2,
+                ClusterIter Begin3,
+                ClusterIter End3)
+  : Begin1(Begin1),
+    End1(End1),
+    Begin2(Begin2),
+    End2(End2),
+    Begin3(Begin3),
+    End3(End3) {}
+
+  template<typename F>
+  void forEach(const F &Func) const {
+    for (auto It = Begin1; It != End1; It++)
+      Func(*It);
+    for (auto It = Begin2; It != End2; It++)
+      Func(*It);
+    for (auto It = Begin3; It != End3; It++)
+      Func(*It);
+  }
+
+  std::vector<BinaryBasicBlock *> getBlocks() const {
+    std::vector<BinaryBasicBlock *> Result;
+    Result.reserve(std::distance(Begin1, End1) +
+                   std::distance(Begin2, End2) +
+                   std::distance(Begin3, End3));
+    Result.insert(Result.end(), Begin1, End1);
+    Result.insert(Result.end(), Begin2, End2);
+    Result.insert(Result.end(), Begin3, End3);
+    return Result;
+  }
+
+  const BinaryBasicBlock *getFirstBlock() const {
+    return *Begin1;
+  }
+
+private:
+  ClusterIter Begin1;
+  ClusterIter End1;
+  ClusterIter Begin2;
+  ClusterIter End2;
+  ClusterIter Begin3;
+  ClusterIter End3;
+};
+
 /// Deterministically compare clusters by their density in decreasing order
 bool compareClusters(const Cluster *C1, const Cluster *C2) {
   // original entry point to the front
@@ -140,8 +207,11 @@ bool compareClusterPairs(const Cluster *A1, const Cluster *B1,
 /// while keeping the implementation sufficiently fast.
 class CachePlus {
 public:
-  CachePlus(const BinaryFunction &BF)
-  : BF(BF), Adjacent(BF.layout_size()), Cache(BF.layout_size()) {
+  CachePlus(const BinaryFunction &BF, bool UseClusterSplitting)
+  : BF(BF),
+    UseClusterSplitting(UseClusterSplitting),
+    Adjacent(BF.layout_size()),
+    Cache(BF.layout_size()) {
     initialize();
   }
 
@@ -338,31 +408,37 @@ private:
   }
 
   /// Compute ExtTSP score for a given order of basic blocks
-  double score(const std::vector<BinaryBasicBlock *>& Blocks) const {
+  double score(const MergedCluster& MergedBlocks) const {
     uint64_t NotSet = static_cast<uint64_t>(-1);
-    auto Addr = std::vector<uint64_t>(BF.layout_size(), NotSet);
+    EstimatedAddr.assign(BF.layout_size(), NotSet);
+
     uint64_t CurAddr = 0;
-    for (auto BB : Blocks) {
-      size_t Index = BB->getLayoutIndex();
-      Addr[Index] = CurAddr;
-      CurAddr += Size[Index];
-    }
+    MergedBlocks.forEach(
+      [&](const BinaryBasicBlock *BB) {
+        size_t Index = BB->getLayoutIndex();
+        EstimatedAddr[Index] = CurAddr;
+        CurAddr += Size[Index];
+      }
+    );
 
     double Score = 0;
-    for (auto BB : Blocks) {
-      size_t Index = BB->getLayoutIndex();
-      for (auto Edge : OutEdges[Index]) {
-        auto SuccBB = Edge.first;
-        size_t SuccIndex = SuccBB->getLayoutIndex();
+    MergedBlocks.forEach(
+      [&](const BinaryBasicBlock *BB) {
+        size_t Index = BB->getLayoutIndex();
+        for (auto Edge : OutEdges[Index]) {
+          auto SuccBB = Edge.first;
+          size_t SuccIndex = SuccBB->getLayoutIndex();
 
-        if (Addr[SuccBB->getLayoutIndex()] != NotSet) {
-          Score += CacheMetrics::extTSPScore(Addr[Index],
-                                             Size[Index],
-                                             Addr[SuccIndex],
-                                             Edge.second);
+          if (EstimatedAddr[SuccIndex] != NotSet) {
+            Score += CacheMetrics::extTSPScore(EstimatedAddr[Index],
+                                               Size[Index],
+                                               EstimatedAddr[SuccIndex],
+                                               Edge.second);
+          }
         }
       }
-    }
+    );
+
     return Score;
   }
 
@@ -391,7 +467,7 @@ private:
                                       MergeType);
       // Does the new cluster preserve the original entry point?
       if ((ClusterPred->isEntryPoint() || ClusterSucc->isEntryPoint()) &&
-          MergedBlocks[0]->getLayoutIndex() != 0)
+          MergedBlocks.getFirstBlock()->getLayoutIndex() != 0)
         return CurGain;
 
       // The score of the new cluster
@@ -405,18 +481,20 @@ private:
     std::pair<double, size_t> Gain = std::make_pair(-1, 0);
     // Try to concatenate two clusters w/o splitting
     Gain = computeMergeGain(Gain, ClusterPred, ClusterSucc, 0);
-    // Try to split ClusterPred into two and merge with ClusterSucc
-    for (size_t Offset = 1; Offset < ClusterPred->blocks().size(); Offset++) {
-      // Make sure the splitting does not break FT successors
-      auto BB = ClusterPred->blocks()[Offset - 1];
-      if (FallthroughSucc[BB->getLayoutIndex()] != nullptr) {
-        assert(FallthroughSucc[BB->getLayoutIndex()] == ClusterPred->blocks()[Offset]);
-        continue;
-      }
+    if (UseClusterSplitting) {
+      // Try to split ClusterPred into two and merge with ClusterSucc
+      for (size_t Offset = 1; Offset < ClusterPred->blocks().size(); Offset++) {
+        // Make sure the splitting does not break FT successors
+        auto BB = ClusterPred->blocks()[Offset - 1];
+        if (FallthroughSucc[BB->getLayoutIndex()] != nullptr) {
+          assert(FallthroughSucc[BB->getLayoutIndex()] == ClusterPred->blocks()[Offset]);
+          continue;
+        }
 
-      for (size_t Type = 0; Type < 4; Type++) {
-        size_t MergeType = 1 + Type + Offset * 4;
-        Gain = computeMergeGain(Gain, ClusterPred, ClusterSucc, MergeType);
+        for (size_t Type = 0; Type < 4; Type++) {
+          size_t MergeType = 1 + Type + Offset * 4;
+          Gain = computeMergeGain(Gain, ClusterPred, ClusterSucc, MergeType);
+        }
       }
     }
 
@@ -426,29 +504,16 @@ private:
 
   /// Merge two clusters (orders) of blocks according to a given 'merge type'.
   ///
-  /// If MergeType == 0, then the results is a concatentation of two clusters.
+  /// If MergeType == 0, then the result is a concatentation of two clusters.
   /// Otherwise, the first cluster is cut into two and we consider all possible
   /// ways of concatenating three clusters.
-  std::vector<BinaryBasicBlock *> mergeBlocks(
-    const std::vector<BinaryBasicBlock *> &X,
-    const std::vector<BinaryBasicBlock *> &Y,
-    size_t MergeType
-  ) const {
-    // Concatenate three clusters of blocks in the given order
-    auto concat = [&](const std::vector<BinaryBasicBlock *> &A,
-                      const std::vector<BinaryBasicBlock *> &B,
-                      const std::vector<BinaryBasicBlock *> &C) {
-      std::vector<BinaryBasicBlock *> Result;
-      Result.reserve(A.size() + B.size() + C.size());
-      Result.insert(Result.end(), A.begin(), A.end());
-      Result.insert(Result.end(), B.begin(), B.end());
-      Result.insert(Result.end(), C.begin(), C.end());
-      return Result;
-    };
-
+  MergedCluster mergeBlocks(const std::vector<BinaryBasicBlock *> &X,
+                            const std::vector<BinaryBasicBlock *> &Y,
+                            size_t MergeType) const {
     // Merging w/o splitting existing clusters
     if (MergeType == 0) {
-      return concat(X, Y, std::vector<BinaryBasicBlock *>());
+      ClusterIter Empty;
+      return MergedCluster(X.begin(), X.end(), Y.begin(), Y.end(), Empty, Empty);
     }
 
     MergeType--;
@@ -457,15 +522,19 @@ private:
     assert(0 < Offset && Offset < X.size() &&
            "Invalid offset while merging clusters");
     // Split the first cluster, X, into X1 and X2
-    std::vector<BinaryBasicBlock *> X1(X.begin(), X.begin() + Offset);
-    std::vector<BinaryBasicBlock *> X2(X.begin() + Offset, X.end());
+    ClusterIter BeginX1 = X.begin();
+    ClusterIter EndX1 = X.begin() + Offset;
+    ClusterIter BeginX2 = X.begin() + Offset;
+    ClusterIter EndX2 = X.end();
+    ClusterIter BeginY = Y.begin();
+    ClusterIter EndY = Y.end();
 
     // Construct a new cluster from three existing ones
     switch(Type) {
-    case 0: return concat(X1, Y, X2);
-    case 1: return concat(Y, X2, X1);
-    case 2: return concat(X2, Y, X1);
-    case 3: return concat(X2, X1, Y);
+    case 0: return MergedCluster(BeginX1, EndX1, BeginY, EndY, BeginX2, EndX2);
+    case 1: return MergedCluster(BeginY, EndY, BeginX2, EndX2, BeginX1, EndX1);
+    case 2: return MergedCluster(BeginX2, EndX2, BeginY, EndY, BeginX1, EndX1);
+    case 3: return MergedCluster(BeginX2, EndX2, BeginX1, EndX1, BeginY, EndY);
     default:
       llvm_unreachable("unexpected merge type");
     }
@@ -479,7 +548,7 @@ private:
 
     // Merge the blocks of clusters
     auto MergedBlocks = mergeBlocks(Into->blocks(), From->blocks(), MergeType);
-    Into->merge(From, MergedBlocks, score(MergedBlocks));
+    Into->merge(From, MergedBlocks.getBlocks(), score(MergedBlocks));
 
     // Remove cluster From from the list of active clusters
     auto Iter = std::remove(Clusters.begin(), Clusters.end(), From);
@@ -494,6 +563,9 @@ private:
 
   // The binary function
   const BinaryFunction &BF;
+
+  // Indicates whether to use cluster splitting for optimization
+  bool UseClusterSplitting;
 
   // All clusters
   std::vector<Cluster> AllClusters;
@@ -520,6 +592,9 @@ private:
   // containing both x and y and all clusters adjacent to x and y (and recompute
   // them on the next iteration).
   mutable ClusterPairCache<Cluster, std::pair<double, size_t>> Cache;
+
+  // A reusable vector used within score() method
+  mutable std::vector<uint64_t> EstimatedAddr;
 };
 
 void CachePlusReorderAlgorithm::reorderBasicBlocks(
@@ -528,18 +603,14 @@ void CachePlusReorderAlgorithm::reorderBasicBlocks(
     return;
 
   // Are there jumps with positive execution count?
-  uint64_t SumCount = 0;
+  size_t NumHotBlocks = 0;
   for (auto BB : BF.layout()) {
-    auto BI = BB->branch_info_begin();
-    for (auto I : BB->successors()) {
-      assert(BI->Count != BinaryBasicBlock::COUNT_NO_PROFILE && I != nullptr);
-      SumCount += BI->Count;
-      ++BI;
-    }
+    if (BB->getKnownExecutionCount() > 0)
+      NumHotBlocks++;
   }
 
   // Do not change layout of functions w/o profile information
-  if (SumCount == 0) {
+  if (NumHotBlocks == 0) {
     for (auto BB : BF.layout()) {
       Order.push_back(BB);
     }
@@ -547,7 +618,7 @@ void CachePlusReorderAlgorithm::reorderBasicBlocks(
   }
 
   // Apply the algorithm
-  Order = CachePlus(BF).run();
+  Order = CachePlus(BF, NumHotBlocks <= opts::ClusterSplitThreshold).run();
 
   // Verify correctness
   assert(Order[0]->isEntryPoint() && "Original entry point is not preserved");
