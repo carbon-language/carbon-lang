@@ -334,27 +334,30 @@ void MachineBasicBlock::print(raw_ostream &OS, ModuleSlotTracker &MST,
     OS << '\n';
   }
 
-  // Print the successors
-  OS.indent(2) << "successors: ";
-  for (auto I = succ_begin(), E = succ_end(); I != E; ++I) {
-    if (I != succ_begin())
-      OS << ", ";
-    OS << printMBBReference(**I);
-    OS << '(' << format("0x%08" PRIx32, getSuccProbability(I).getNumerator())
-       << ')';
-  }
-  // Print human readable probabilities as comments.
-  OS << "; ";
-  for (auto I = succ_begin(), E = succ_end(); I != E; ++I) {
-    const BranchProbability &BP = *getProbabilityIterator(I);
-    if (I != succ_begin())
-      OS << ", ";
-    OS << printMBBReference(**I) << '('
-       << format("%.2f%%",
-                 rint(((double)BP.getNumerator() / BP.getDenominator()) *
-                      100.0 * 100.0) /
-                     100.0)
-       << ')';
+  if (!succ_empty()) {
+    // Print the successors
+    OS.indent(2) << "successors: ";
+    for (auto I = succ_begin(), E = succ_end(); I != E; ++I) {
+      if (I != succ_begin())
+        OS << ", ";
+      OS << printMBBReference(**I);
+      OS << '(' << format("0x%08" PRIx32, getSuccProbability(I).getNumerator())
+         << ')';
+    }
+    // Print human readable probabilities as comments.
+    OS << "; ";
+    for (auto I = succ_begin(), E = succ_end(); I != E; ++I) {
+      const BranchProbability &BP = *getProbabilityIterator(I);
+      if (I != succ_begin())
+        OS << ", ";
+      OS << printMBBReference(**I) << '('
+         << format("%.2f%%",
+                   rint(((double)BP.getNumerator() / BP.getDenominator()) *
+                        100.0 * 100.0) /
+                       100.0)
+         << ')';
+    }
+    OS << '\n';
   }
 
   // Print the preds of this block according to the CFG.
