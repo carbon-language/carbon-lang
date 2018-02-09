@@ -14414,8 +14414,36 @@ static SDValue lower512BitVectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
 // vector, shuffle and then truncate it back.
 static SDValue lower1BitVectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
                                       MVT VT, SDValue V1, SDValue V2,
+                                      const APInt &Zeroable,
                                       const X86Subtarget &Subtarget,
                                       SelectionDAG &DAG) {
+  unsigned NumElts = Mask.size();
+
+  // Try to recognize shuffles that are just padding a subvector with zeros.
+  unsigned SubvecElts = 0;
+  for (int i = 0; i != (int)NumElts; ++i) {
+    if (Mask[i] >= 0 && Mask[i] != i)
+      break;
+
+    ++SubvecElts;
+  }
+  assert(SubvecElts != NumElts && "Identity shuffle?");
+
+  // Clip to a power 2.
+  SubvecElts = PowerOf2Floor(SubvecElts);
+
+  // Make sure the number of zeroable bits in the top at least covers the bits
+  // not covered by the subvector.
+  if (Zeroable.countLeadingOnes() >= (NumElts - SubvecElts)) {
+    MVT ExtractVT = MVT::getVectorVT(MVT::i1, SubvecElts);
+    SDValue Extract = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, ExtractVT,
+                                  V1, DAG.getIntPtrConstant(0, DL));
+    return DAG.getNode(ISD::INSERT_SUBVECTOR, DL, VT,
+                       getZeroVector(VT, Subtarget, DAG, DL),
+                       Extract, DAG.getIntPtrConstant(0, DL));
+  }
+
+
   assert(Subtarget.hasAVX512() &&
          "Cannot lower 512-bit vectors w/o basic ISA!");
   MVT ExtVT;
@@ -14624,7 +14652,8 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget &Subtarget,
                                     DAG);
 
   if (Is1BitVector)
-    return lower1BitVectorShuffle(DL, Mask, VT, V1, V2, Subtarget, DAG);
+    return lower1BitVectorShuffle(DL, Mask, VT, V1, V2, Zeroable, Subtarget,
+                                  DAG);
 
   llvm_unreachable("Unimplemented!");
 }

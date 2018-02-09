@@ -2757,19 +2757,16 @@ define <8 x i64> @mask_widening(<2 x i64> %a, <2 x i64> %b, <2 x i64> %c, <2 x i
 ; KNL-NEXT:    ## kill: def $xmm0 killed $xmm0 def $zmm0
 ; KNL-NEXT:    vpcmpeqd %zmm1, %zmm0, %k0
 ; KNL-NEXT:    kshiftlw $12, %k0, %k0
-; KNL-NEXT:    kshiftrw $12, %k0, %k1
-; KNL-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0 {%k1} {z}
-; KNL-NEXT:    vmovdqa %ymm0, %ymm0
-; KNL-NEXT:    vptestmd %zmm0, %zmm0, %k1
+; KNL-NEXT:    kshiftrw $12, %k0, %k0
+; KNL-NEXT:    kshiftlw $8, %k0, %k0
+; KNL-NEXT:    kshiftrw $8, %k0, %k1
 ; KNL-NEXT:    vpblendmd %zmm5, %zmm4, %zmm0 {%k1}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: mask_widening:
 ; SKX:       ## %bb.0: ## %entry
 ; SKX-NEXT:    vpcmpeqd %xmm1, %xmm0, %k0
-; SKX-NEXT:    vpmovm2d %k0, %zmm0
-; SKX-NEXT:    vmovdqa %ymm0, %ymm0
-; SKX-NEXT:    vpmovd2m %zmm0, %k1
+; SKX-NEXT:    kmovb %k0, %k1
 ; SKX-NEXT:    vpblendmd %zmm5, %zmm4, %zmm0 {%k1}
 ; SKX-NEXT:    retq
 ;
@@ -2779,10 +2776,9 @@ define <8 x i64> @mask_widening(<2 x i64> %a, <2 x i64> %b, <2 x i64> %c, <2 x i
 ; AVX512BW-NEXT:    ## kill: def $xmm0 killed $xmm0 def $zmm0
 ; AVX512BW-NEXT:    vpcmpeqd %zmm1, %zmm0, %k0
 ; AVX512BW-NEXT:    kshiftlw $12, %k0, %k0
-; AVX512BW-NEXT:    kshiftrw $12, %k0, %k1
-; AVX512BW-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0 {%k1} {z}
-; AVX512BW-NEXT:    vmovdqa %ymm0, %ymm0
-; AVX512BW-NEXT:    vptestmd %zmm0, %zmm0, %k1
+; AVX512BW-NEXT:    kshiftrw $12, %k0, %k0
+; AVX512BW-NEXT:    kshiftlw $8, %k0, %k0
+; AVX512BW-NEXT:    kshiftrw $8, %k0, %k1
 ; AVX512BW-NEXT:    vpblendmd %zmm5, %zmm4, %zmm0 {%k1}
 ; AVX512BW-NEXT:    retq
 ;
@@ -2793,9 +2789,7 @@ define <8 x i64> @mask_widening(<2 x i64> %a, <2 x i64> %b, <2 x i64> %c, <2 x i
 ; AVX512DQ-NEXT:    vpcmpeqd %zmm1, %zmm0, %k0
 ; AVX512DQ-NEXT:    kshiftlb $4, %k0, %k0
 ; AVX512DQ-NEXT:    kshiftrb $4, %k0, %k0
-; AVX512DQ-NEXT:    vpmovm2d %k0, %zmm0
-; AVX512DQ-NEXT:    vmovdqa %ymm0, %ymm0
-; AVX512DQ-NEXT:    vpmovd2m %zmm0, %k1
+; AVX512DQ-NEXT:    kmovb %k0, %k1
 ; AVX512DQ-NEXT:    vpblendmd %zmm5, %zmm4, %zmm0 {%k1}
 ; AVX512DQ-NEXT:    retq
 entry:
