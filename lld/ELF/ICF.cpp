@@ -425,17 +425,11 @@ template <class ELFT> void ICF<ELFT>::run() {
   log("ICF needed " + Twine(Cnt) + " iterations");
 
   auto Print = [&](const Twine &Prefix, size_t I) {
-    if (!Config->PrintIcfSections && !errorHandler().Verbose)
+    if (!Config->PrintIcfSections)
       return;
-    std::string Filename =
-        Sections[I]->File ? Sections[I]->File->getName() : "<internal>";
-    std::string S = (Prefix + " section '" + Sections[I]->Name +
-                     "' from file '" + Filename + "'")
-                        .str();
-    if (Config->PrintIcfSections)
-      message(S);
-    else
-      log(S);
+    InputSection *S = Sections[I];
+    std::string File = S->File ? S->File->getName() : "<internal>";
+    message(Prefix + " section '" + S->Name + "' from file '" + File + "'");
   };
 
   // Merge sections by the equivalence class.
