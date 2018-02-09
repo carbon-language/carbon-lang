@@ -180,7 +180,7 @@ template<typename PA>
 using statementConstructor = construct<Statement<typename PA::resultType>>;
 
 template<typename PA> inline constexpr auto unterminatedStatement(const PA &p) {
-  return skipMany("\n"_tok) >> statementConstructor<PA>{}(getPosition,
+  return skipMany("\n"_tok) >> statementConstructor<PA>{}(getProvenance,
                                    maybe(label), isLabelOk, spaces >> p);
 }
 
@@ -553,7 +553,7 @@ TYPE_CONTEXT_PARSER("execution part construct",
                 statement(indirect(dataStmt))) ||
             extension(construct<ExecutionPartConstruct>{}(
                 statement(indirect(Parser<NamelistStmt>{})))),
-        construct<ExecutionPartConstruct>{}(executionPartErrorRecovery)));
+        construct<ExecutionPartConstruct>{}(executionPartErrorRecovery)))
 
 // R509 execution-part -> executable-construct [execution-part-construct]...
 constexpr auto executionPart =
@@ -1674,7 +1674,7 @@ constexpr auto vectorSubscript = intExpr;
 // "vector-subscript" is deferred to semantic analysis.
 TYPE_PARSER(construct<SectionSubscript>{}(Parser<SubscriptTriplet>{}) ||
     construct<SectionSubscript>{}(vectorSubscript) ||
-    construct<SectionSubscript>{}(subscript));
+    construct<SectionSubscript>{}(subscript))
 
 // R921 subscript-triplet -> [subscript] : [subscript] [: stride]
 TYPE_PARSER(construct<SubscriptTriplet>{}(
@@ -3412,12 +3412,11 @@ std::optional<FunctionReference> Parser<FunctionReference>::Parse(
         return {FunctionReference{std::move(call.value())}};
       }
     }
-    state->messages()->Add(
-        Message{state->position(), "expected (arguments)", state->context()});
+    state->PutMessage("expected (arguments)");
   }
   state->PopContext();
   return {};
-};
+}
 
 // R1521 call-stmt -> CALL procedure-designator [( [actual-arg-spec-list] )]
 template<> std::optional<CallStmt> Parser<CallStmt>::Parse(ParseState *state) {
@@ -3435,7 +3434,7 @@ template<> std::optional<CallStmt> Parser<CallStmt>::Parse(ParseState *state) {
     }
   }
   return {};
-};
+}
 
 // R1522 procedure-designator ->
 //         procedure-name | proc-component-ref | data-ref % binding-name

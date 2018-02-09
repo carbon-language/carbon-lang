@@ -8,6 +8,7 @@
 #include "../../lib/parser/message.h"
 #include "../../lib/parser/parse-tree.h"
 #include "../../lib/parser/prescan.h"
+#include "../../lib/parser/provenance.h"
 #include "../../lib/parser/source.h"
 #include "../../lib/parser/user-state.h"
 #include <cerrno>
@@ -54,7 +55,6 @@ int main(int argc, char *const argv[]) {
   bool standard{false};
   bool enableOldDebugLines{false};
   int columns{72};
-  bool prescan{true};
 
   while (!args.empty()) {
     if (args.front().empty()) {
@@ -77,8 +77,6 @@ int main(int argc, char *const argv[]) {
         columns = 132;
       } else if (flag == "-fdebug-dump-cooked-chars") {
         dumpCookedChars = true;
-      } else if (flag == "-fno-prescan") {
-        prescan = false;
       } else if (flag == "-ed") {
         enableOldDebugLines = true;
       } else {
@@ -99,39 +97,29 @@ int main(int argc, char *const argv[]) {
     }
   }
 
-  Fortran::parser::SourceFile source;
+  Fortran::parser::SourceFile sourceFile;
   std::stringstream error;
-  if (!source.Open(path, &error)) {
+  if (!sourceFile.Open(path, &error)) {
     std::cerr << error.str() << '\n';
     return 1;
   }
 
-  const char *sourceContent{source.content()};
-  size_t sourceBytes{source.bytes()};
-  std::unique_ptr<char[]> prescanned;
-  if (prescan) {
-    Fortran::parser::Messages messages;
-    Fortran::parser::Prescanner prescanner{messages};
-    Fortran::parser::CharBuffer buffer{
-        prescanner.set_fixedForm(fixedForm)
-            .set_enableBackslashEscapesInCharLiterals(backslashEscapes)
-            .set_fixedFormColumnLimit(columns)
-            .set_enableOldDebugLines(enableOldDebugLines)
-            .Prescan(source)};
-    std::cerr << messages;
-    if (prescanner.anyFatalErrors()) {
-      return 1;
-    }
-    sourceBytes = buffer.bytes();
-    char *contig{new char[sourceBytes]};
-    buffer.CopyToContiguous(contig);
-    sourceContent = contig;
-    prescanned.reset(contig);
-    columns = std::numeric_limits<int>::max();
+  Fortran::parser::AllSources allSources{sourceFile};
+  Fortran::parser::Messages messages;
+  Fortran::parser::Prescanner prescanner{messages, allSources};
+  Fortran::parser::CookedSource cooked{
+      prescanner.set_fixedForm(fixedForm)
+          .set_enableBackslashEscapesInCharLiterals(backslashEscapes)
+          .set_fixedFormColumnLimit(columns)
+          .set_enableOldDebugLines(enableOldDebugLines)
+          .Prescan()};
+  messages.Emit(std::cerr, allSources);
+  if (prescanner.anyFatalErrors()) {
+    return 1;
   }
+  columns = std::numeric_limits<int>::max();
 
-  Fortran::parser::ParseState state{sourceContent, sourceBytes};
-  state.set_prescanned(prescan);
+  Fortran::parser::ParseState state{cooked};
   state.set_inFixedForm(fixedForm);
   state.set_enableBackslashEscapesInCharLiterals(backslashEscapes);
   state.set_strictConformance(standard);
@@ -164,7 +152,9 @@ int main(int argc, char *const argv[]) {
   if (result.has_value() && !state.anyErrorRecovery()) {
     std::cout << "demo PASS\n" << *result << '\n';
   } else {
-    std::cerr << "demo FAIL " << state.position() << '\n' << *state.messages();
+    std::cerr << "demo FAIL\n";
+    allSources.Identify(std::cerr, state.GetProvenance(), "   ");
+    state.messages()->Emit(std::cerr, allSources);
     return EXIT_FAILURE;
   }
 }

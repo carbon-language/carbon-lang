@@ -29,7 +29,7 @@ public:
     return *this;
   }
 
-  size_t bytes() const { return bytes_; }
+  size_t size() const { return bytes_; }
 
   void clear() {
     blocks_.clear();
@@ -43,7 +43,6 @@ public:
   void Put(const char *data, size_t n);
   void Put(const std::string &);
   void Put(char x) { Put(&x, 1); }
-  void CopyToContiguous(char *data);
 
 private:
   struct Block {

@@ -5,9 +5,9 @@
 //  - Line ending markers are converted to single newline characters
 //  - A newline character is added to the last line of the file if one is needed
 
-#include "position.h"
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace Fortran {
@@ -23,9 +23,7 @@ public:
   const char *content() const { return content_; }
   size_t bytes() const { return bytes_; }
   size_t lines() const { return lineStart_.size(); }
-  Position FindOffsetPosition(size_t) const;
-  size_t FindPositionOffset(int lineNumber, int column) const;
-  size_t FindPositionOffset(Position) const;
+  std::pair<int, int> FindOffsetLineAndColumn(size_t) const;
 
 private:
   std::string path_;

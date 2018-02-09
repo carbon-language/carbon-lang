@@ -8,7 +8,7 @@
 #include "basic-parsers.h"
 #include "cooked-chars.h"
 #include "idioms.h"
-#include "position.h"
+#include "provenance.h"
 #include <cctype>
 #include <cstring>
 #include <functional>
@@ -28,13 +28,13 @@ public:
   constexpr CharPredicateGuardParser(bool (*f)(char), const char *msg)
     : predicate_{f}, message_{msg} {}
   std::optional<char> Parse(ParseState *state) const {
-    Position at{state->position()};
+    auto at = state->GetLocation();
     if (std::optional<char> result{cookedNextChar.Parse(state)}) {
       if (predicate_(*result)) {
         return result;
       }
     }
-    state->messages()->Add(Message{at, message_, state->context()});
+    state->PutMessage(at, message_);
     return {};
   }
 
@@ -67,13 +67,13 @@ public:
   using resultType = char;
   constexpr CharMatch() {}
   static std::optional<char> Parse(ParseState *state) {
-    Position at{state->position()};
+    auto at = state->GetLocation();
     std::optional<char> result{cookedNextChar.Parse(state)};
     if (result && *result != good) {
       result.reset();
     }
     if (!result) {
-      state->messages()->Add(Message{at, good, state->context()});
+      state->PutMessage(at, "expected '"s + good + '\'');
     }
     return {result};
   }
@@ -103,7 +103,7 @@ public:
     : str_{str}, length_{n} {}
   constexpr TokenStringMatch(const char *str) : str_{str} {}
   std::optional<Success> Parse(ParseState *state) const {
-    Position at{state->position()};
+    auto at = state->GetLocation();
     if (!spaces.Parse(state)) {
       return {};
     }
@@ -130,8 +130,7 @@ public:
       } else if (*ch == tolower(*p)) {
         ch.reset();
       } else {
-        state->messages()->Add(
-            Message{at, "expected '"s + str_ + '\'', state->context()});
+        state->PutMessage(at, "expected '"s + str_ + '\'');
         return {};
       }
     }
@@ -191,15 +190,14 @@ struct CharLiteralChar {
   };
   using resultType = Result;
   static std::optional<Result> Parse(ParseState *state) {
-    Position at{state->position()};
+    auto at = state->GetLocation();
     std::optional<char> och{cookedNextChar.Parse(state)};
     if (!och.has_value()) {
       return {};
     }
     char ch{*och};
     if (ch == '\n') {
-      state->messages()->Add(
-          Message{at, "unclosed character constant", state->context()});
+      state->PutMessage(at, "unclosed character constant");
       return {};
     }
     if (ch != '\\' || !state->enableBackslashEscapesInCharLiterals()) {
@@ -219,10 +217,7 @@ struct CharLiteralChar {
     case '"':
     case '\'':
     case '\\': return {Result::Escaped(ch)};
-    case '\n':
-      state->messages()->Add(
-          Message{at, "unclosed character constant", state->context()});
-      return {};
+    case '\n': state->PutMessage(at, "unclosed character constant"); return {};
     default:
       if (IsOctalDigit(ch)) {
         ch -= '0';
@@ -243,8 +238,7 @@ struct CharLiteralChar {
           }
         }
       } else {
-        state->messages()->Add(
-            Message{at, "bad escaped character", state->context()});
+        state->PutMessage(at, "bad escaped character");
       }
       return {Result::Escaped(ch)};
     }
@@ -308,7 +302,7 @@ struct BOZLiteral {
       return {};
     }
 
-    Position at{state->position()};
+    auto at = state->GetLocation();
     std::string content;
     while (true) {
       if (!(ch = cookedNextChar.Parse(state))) {
@@ -331,8 +325,7 @@ struct BOZLiteral {
     }
 
     if (content.empty()) {
-      state->messages()->Add(
-          Message{at, "no digit in BOZ literal", state->context()});
+      state->PutMessage(at, "no digit in BOZ literal");
       return {};
     }
 
@@ -340,15 +333,13 @@ struct BOZLiteral {
     for (auto digit : content) {
       digit = HexadecimalDigitValue(digit);
       if ((digit >> *shift) > 0) {
-        state->messages()->Add(
-            Message{at, "bad digit in BOZ literal", state->context()});
+        state->PutMessage(at, "bad digit in BOZ literal");
         return {};
       }
       std::uint64_t was{value};
       value <<= *shift;
       if ((value >> *shift) != was) {
-        state->messages()->Add(
-            Message{at, "excessive digits in BOZ literal", state->context()});
+        state->PutMessage(at, "excessive digits in BOZ literal");
         return {};
       }
       value |= digit;
@@ -362,7 +353,7 @@ struct DigitString {
   using resultType = std::uint64_t;
   static std::optional<std::uint64_t> Parse(ParseState *state) {
     static constexpr auto getDigit = attempt(digit);
-    Position at{state->position()};
+    auto at = state->GetLocation();
     std::optional<char> firstDigit{getDigit.Parse(state)};
     if (!firstDigit) {
       return {};
@@ -381,8 +372,7 @@ struct DigitString {
       value += digitValue;
     }
     if (overflow) {
-      state->messages()->Add(
-          Message{at, "overflow in decimal literal", state->context()});
+      state->PutMessage(at, "overflow in decimal literal");
     }
     return {value};
   }
@@ -395,7 +385,7 @@ struct HollerithLiteral {
     if (!spaces.Parse(state)) {
       return {};
     }
-    Position at{state->position()};
+    auto at = state->GetLocation();
     std::optional<std::uint64_t> charCount{DigitString{}.Parse(state)};
     if (!charCount || *charCount < 1) {
       return {};
@@ -409,8 +399,7 @@ struct HollerithLiteral {
     for (auto j = *charCount; j-- > 0;) {
       std::optional<char> ch{cookedNextChar.Parse(state)};
       if (!ch || !isprint(*ch)) {
-        state->messages()->Add(Message{at,
-            "insufficient or bad characters in Hollerith", state->context()});
+        state->PutMessage(at, "insufficient or bad characters in Hollerith");
         state->set_inCharLiteral(false);
         return {};
       }

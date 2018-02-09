@@ -1,5 +1,4 @@
 #include "preprocessor.h"
-#include "char-buffer.h"
 #include "idioms.h"
 #include "prescan.h"
 #include <algorithm>
@@ -25,7 +24,27 @@ bool CharPointerWithLength::IsBlank() const {
   return true;
 }
 
-void TokenSequence::Append(const TokenSequence &that) {
+void TokenSequence::clear() {
+  start_.clear();
+  nextStart_ = 0;
+  char_.clear();
+}
+
+void TokenSequence::pop_back() {
+  size_t bytes{nextStart_ - start_.back()};
+  nextStart_ = start_.back();
+  start_.pop_back();
+  char_.resize(nextStart_);
+  provenances_.RemoveLastBytes(bytes);
+}
+
+void TokenSequence::shrink_to_fit() {
+  start_.shrink_to_fit();
+  char_.shrink_to_fit();
+  provenances_.shrink_to_fit();
+}
+
+void TokenSequence::Put(const TokenSequence &that) {
   if (nextStart_ < char_.size()) {
     start_.push_back(nextStart_);
   }
@@ -35,9 +54,45 @@ void TokenSequence::Append(const TokenSequence &that) {
   }
   char_.insert(char_.end(), that.char_.begin(), that.char_.end());
   nextStart_ = char_.size();
+  provenances_.Put(that.provenances_);
 }
 
-void TokenSequence::EmitWithCaseConversion(CharBuffer *out) const {
+void TokenSequence::Put(const TokenSequence &that, size_t at, size_t tokens) {
+  ProvenanceRange provenance;
+  size_t offset{0};
+  for (; tokens-- > 0; ++at) {
+    CharPointerWithLength tok{that[at]};
+    size_t tokBytes{tok.size()};
+    for (size_t j{0}; j < tokBytes; ++j) {
+      if (offset == provenance.bytes) {
+        offset = 0;
+        provenance = that.provenances_.Map(that.start_[at] + j);
+      }
+      PutNextTokenChar(tok[j], provenance.start + offset++);
+    }
+    CloseToken();
+  }
+}
+
+void TokenSequence::Put(const char *s, size_t bytes, Provenance provenance) {
+  for (size_t j{0}; j < bytes; ++j) {
+    PutNextTokenChar(s[j], provenance++);
+  }
+  CloseToken();
+}
+
+void TokenSequence::Put(const CharPointerWithLength &t, Provenance provenance) {
+  Put(&t[0], t.size(), provenance);
+}
+void TokenSequence::Put(const std::string &s, Provenance provenance) {
+  Put(s.data(), s.size(), provenance);
+}
+
+void TokenSequence::Put(const std::stringstream &ss, Provenance provenance) {
+  Put(ss.str(), provenance);
+}
+
+void TokenSequence::EmitWithCaseConversion(CookedSource *cooked) const {
   size_t tokens{start_.size()};
   size_t chars{char_.size()};
   size_t atToken{0};
@@ -45,52 +100,24 @@ void TokenSequence::EmitWithCaseConversion(CharBuffer *out) const {
     size_t nextStart{atToken + 1 < tokens ? start_[++atToken] : chars};
     if (isalpha(char_[j])) {
       for (; j < nextStart; ++j) {
-        out->Put(tolower(char_[j]));
+        cooked->Put(tolower(char_[j]));
       }
     } else {
-      out->Put(&char_[j], nextStart - j);
+      cooked->Put(&char_[j], nextStart - j);
       j = nextStart;
     }
   }
+  cooked->Put(provenances_);
 }
 
 std::string TokenSequence::ToString() const {
   return {&char_[0], char_.size()};
 }
 
-void TokenSequence::clear() {
-  start_.clear();
-  nextStart_ = 0;
-  char_.clear();
-}
-
-void TokenSequence::push_back(const char *s, size_t bytes) {
-  for (size_t j{0}; j < bytes; ++j) {
-    AddChar(s[j]);
-  }
-  EndToken();
-}
-
-void TokenSequence::push_back(const CharPointerWithLength &t) {
-  push_back(&t[0], t.size());
-}
-void TokenSequence::push_back(const std::string &s) {
-  push_back(s.data(), s.size());
-}
-
-void TokenSequence::push_back(const std::stringstream &ss) {
-  push_back(ss.str());
-}
-
-void TokenSequence::pop_back() {
-  nextStart_ = start_.back();
-  start_.pop_back();
-  char_.resize(nextStart_);
-}
-
-void TokenSequence::shrink_to_fit() {
-  start_.shrink_to_fit();
-  char_.shrink_to_fit();
+ProvenanceRange TokenSequence::GetProvenance(
+    size_t token, size_t offset) const {
+  ProvenanceRange range{provenances_.Map(start_[token] + offset)};
+  return {range.start, std::min(range.bytes, TokenBytes(token) - offset)};
 }
 
 Definition::Definition(
@@ -135,11 +162,11 @@ TokenSequence Definition::Tokenize(const std::vector<std::string> &argNames,
     if (IsIdentifierFirstCharacter(tok)) {
       auto it = args.find(tok.ToString());
       if (it != args.end()) {
-        result.push_back(it->second);
+        result.Put(it->second, 0);
         continue;
       }
     }
-    result.push_back(tok);
+    result.Put(token, j, 1);
   }
   return result;
 }
@@ -168,36 +195,37 @@ TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
       if (index >= args.size()) {
         continue;
       }
-      int lastNonBlank{static_cast<int>(result.size()) - 1};
-      for (; lastNonBlank >= 0; --lastNonBlank) {
-        if (!result[lastNonBlank].IsBlank()) {
+      size_t afterLastNonBlank{result.size()};
+      for (; afterLastNonBlank > 0; --afterLastNonBlank) {
+        if (!result[afterLastNonBlank - 1].IsBlank()) {
           break;
         }
       }
       size_t argTokens{args[index].size()};
-      if (lastNonBlank >= 0 && result[lastNonBlank].ToString() == "#") {
-        while (result.size() > static_cast<size_t>(lastNonBlank)) {
+      if (afterLastNonBlank > 0 &&
+          result[afterLastNonBlank - 1].ToString() == "#") {
+        while (result.size() >= afterLastNonBlank) {
           result.pop_back();
         }
-        std::string strung{'"'};
+        result.PutNextTokenChar('"', 0);  // TODO provenance
         for (size_t k{0}; k < argTokens; ++k) {
           const CharPointerWithLength &arg{args[index][k]};
           size_t argBytes{args[index][k].size()};
           for (size_t n{0}; n < argBytes; ++n) {
             char ch{arg[n]};
+            Provenance from{args[index].GetProvenance(k, n).start};
             if (ch == '"' || ch == '\\') {
-              strung += ch;
+              result.PutNextTokenChar(ch, from);
             }
-            strung += ch;
+            result.PutNextTokenChar(ch, from);
           }
         }
-        result.push_back(strung + '"');
+        result.PutNextTokenChar('"', 0);  // TODO provenance
+        result.CloseToken();
       } else {
         for (size_t k{0}; k < argTokens; ++k) {
-          const CharPointerWithLength &argToken{args[index][k]};
-          if (pasting && argToken.IsBlank()) {
-          } else {
-            result.push_back(argToken);
+          if (!pasting || !args[index][k].IsBlank()) {
+            result.Put(args[index], k);
             pasting = false;
           }
         }
@@ -218,11 +246,9 @@ TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
         token.ToString() == "__VA_ARGS__") {
       for (size_t k{argumentCount_}; k < args.size(); ++k) {
         if (k > argumentCount_) {
-          result.push_back(","s);
+          result.Put(","s, 0);  // TODO provenance
         }
-        for (size_t n{0}; n < args[k].size(); ++n) {
-          result.push_back(args[k][n]);
-        }
+        result.Put(args[k]);
       }
     } else if (bytes == 10 && isVariadic_ && token.ToString() == "__VA_OPT__" &&
         j + 2 < tokens && replacement_[j + 1].ToString() == "(" &&
@@ -239,7 +265,7 @@ TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
           continue;
         }
       }
-      result.push_back(token);
+      result.Put(replacement_, j);
     }
   }
   return result;
@@ -280,42 +306,39 @@ bool Preprocessor::MacroReplacement(
   if (j == tokens) {
     return false;  // nothing appeared that could be replaced
   }
-
-  for (size_t k{0}; k < j; ++k) {
-    result->push_back(input[k]);
-  }
+  result->Put(input, 0, j);
   for (; j < tokens; ++j) {
     const CharPointerWithLength &token{input[j]};
     if (token.IsBlank() || !IsIdentifierFirstCharacter(token[0])) {
-      result->push_back(token);
+      result->Put(input, j);
       continue;
     }
     auto it = definitions_.find(token);
     if (it == definitions_.end()) {
-      result->push_back(token);
+      result->Put(input, j);
       continue;
     }
     Definition &def{it->second};
     if (def.isDisabled()) {
-      result->push_back(token);
+      result->Put(input, j);
       continue;
     }
     if (!def.isFunctionLike()) {
       if (def.isPredefined()) {
         std::string name{def.replacement()[0].ToString()};
         if (name == "__FILE__") {
-          result->Append("\""s + prescanner_.sourceFile().path() + '"');
+          result->Put("\""s + prescanner_.GetCurrentPath() + '"');
           continue;
         }
         if (name == "__LINE__") {
           std::stringstream ss;
-          ss << prescanner_.position().lineNumber();
-          result->Append(ss.str());
+          ss << prescanner_.GetCurrentLineNumber();
+          result->Put(ss.str());
           continue;
         }
       }
       def.set_isDisabled(true);
-      result->Append(ReplaceMacros(def.replacement()));
+      result->Put(ReplaceMacros(def.replacement()));
       def.set_isDisabled(false);
       continue;
     }
@@ -331,7 +354,7 @@ bool Preprocessor::MacroReplacement(
       }
     }
     if (!leftParen) {
-      result->push_back(token);
+      result->Put(input, j);
       continue;
     }
     std::vector<size_t> argStart{++k};
@@ -352,7 +375,7 @@ bool Preprocessor::MacroReplacement(
     }
     if (k >= tokens || argStart.size() < def.argumentCount() ||
         (argStart.size() > def.argumentCount() && !def.isVariadic())) {
-      result->push_back(token);
+      result->Put(input, j);
       continue;
     }
     j = k;  // advance to the terminal ')'
@@ -360,14 +383,10 @@ bool Preprocessor::MacroReplacement(
     for (k = 0; k < argStart.size(); ++k) {
       size_t at{argStart[k]};
       size_t count{(k + 1 == argStart.size() ? j : argStart[k + 1] - 1) - at};
-      TokenSequence actual;
-      for (; count-- > 0; ++at) {
-        actual.push_back(input[at]);
-      }
-      args.emplace_back(std::move(actual));
+      args.emplace_back(TokenSequence(input, at, count));
     }
     def.set_isDisabled(true);
-    result->Append(ReplaceMacros(def.Apply(args)));
+    result->Put(ReplaceMacros(def.Apply(args)));
     def.set_isDisabled(false);
   }
   return true;
@@ -393,7 +412,7 @@ static TokenSequence StripBlanks(
   TokenSequence noBlanks;
   for (size_t j{SkipBlanks(token, first, tokens)}; j < tokens;
        j = SkipBlanks(token, j + 1, tokens)) {
-    noBlanks.push_back(token[j]);
+    noBlanks.Put(token, j);
   }
   return noBlanks;
 }
@@ -628,7 +647,7 @@ bool Preprocessor::SkipDisabledConditionalCode(
 }
 
 void Preprocessor::Complain(const std::string &message) {
-  prescanner_.messages().Add({prescanner_.position(), message});
+  prescanner_.messages().Put({prescanner_.GetCurrentProvenance(), message});
 }
 
 // Precedence level codes used here to accommodate mixed Fortran and C:
@@ -918,11 +937,11 @@ bool Preprocessor::IsIfPredicateTrue(
         name = expr1[j++];
       }
       if (!name.empty()) {
-        expr2.push_back(IsNameDefined(name) ? "1" : "0", 1);
+        expr2.Put(IsNameDefined(name) ? "1" : "0", 1, 0);  // TODO provenance
         continue;
       }
     }
-    expr2.push_back(expr1[j]);
+    expr2.Put(expr1, j);
   }
   TokenSequence expr3{ReplaceMacros(expr2)};
   TokenSequence expr4{StripBlanks(expr3, 0, expr3.size())};

@@ -38,13 +38,5 @@ void CharBuffer::Put(const char *data, size_t n) {
 }
 
 void CharBuffer::Put(const std::string &str) { Put(str.data(), str.size()); }
-
-void CharBuffer::CopyToContiguous(char *data) {
-  char *to{data};
-  for (char ch : *this) {
-    *to++ = ch;
-  }
-  CHECK(to == data + bytes_);
-}
 }  // namespace parser
 }  // namespace Fortran

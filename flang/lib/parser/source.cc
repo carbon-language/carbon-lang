@@ -105,7 +105,7 @@ bool SourceFile::Open(std::string path, std::stringstream *error) {
   }
   close(fileDescriptor_);
   fileDescriptor_ = -1;
-  bytes_ = buffer.bytes();
+  bytes_ = buffer.size();
   if (bytes_ == 0) {
     // empty file
     content_ = nullptr;
@@ -144,7 +144,7 @@ void SourceFile::Close() {
   path_.clear();
 }
 
-Position SourceFile::FindOffsetPosition(size_t at) const {
+std::pair<int, int> SourceFile::FindOffsetLineAndColumn(size_t at) const {
   CHECK(at < bytes_);
   if (lineStart_.empty()) {
     return {1, static_cast<int>(at + 1)};
@@ -159,16 +159,8 @@ Position SourceFile::FindOffsetPosition(size_t at) const {
       low = mid;
     }
   }
-  return {static_cast<int>(low + 1),
-          static_cast<int>(at - lineStart_[low] + 1)};
-}
-
-size_t SourceFile::FindPositionOffset(int lineNumber, int column) const {
-  return lineStart_.at(lineNumber - 1) + column - 1;
-}
-
-size_t SourceFile::FindPositionOffset(Position pos) const {
-  return FindPositionOffset(pos.lineNumber(), pos.column());
+  return {
+      static_cast<int>(low + 1), static_cast<int>(at - lineStart_[low] + 1)};
 }
 }  // namespace parser
 }  // namespace Fortran

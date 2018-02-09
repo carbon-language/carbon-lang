@@ -13,7 +13,7 @@
 #include "idioms.h"
 #include "indirection.h"
 #include "message.h"
-#include "position.h"
+#include "provenance.h"
 #include <cinttypes>
 #include <list>
 #include <optional>
@@ -60,22 +60,22 @@
 // Many classes below simply wrap a std::variant<> discriminated union,
 // which is conventionally named "u".
 #define UNION_CLASS_BOILERPLATE(classname) \
-  BOILERPLATE(classname); \
-  template<typename A> classname(A &&x) : u(std::move(x)) {}
+  template<typename A> classname(A &&x) : u(std::move(x)) {} \
+  BOILERPLATE(classname)
 
 // Many other classes below simply wrap a std::tuple<> structure, which
 // is conventionally named "t".
 #define TUPLE_CLASS_BOILERPLATE(classname) \
-  BOILERPLATE(classname); \
   template<typename... Ts> \
-  classname(Ts &&... args) : t(std::forward<Ts>(args)...) {}
+  classname(Ts &&... args) : t(std::forward<Ts>(args)...) {} \
+  BOILERPLATE(classname)
 
 // Many other classes below simply wrap a single data member, which is
 // conventionally named "v".
 #define WRAPPER_CLASS_BOILERPLATE(classname, type) \
   BOILERPLATE(classname); \
   classname(type &&x) : v(std::move(x)) {} \
-  type v;
+  type v
 
 #define WRAPPER_CLASS(classname, type) \
   struct classname { \
@@ -275,13 +275,12 @@ using ScalarDefaultCharConstantExpr = Scalar<DefaultChar<ConstantExpr>>;
 using Label = std::uint64_t;  // validated later, must be in [1..99999]
 
 // A wrapper for xzy-stmt productions that are statements, so that
-// source positions and labels have a uniform representation.
+// source provenances and labels have a uniform representation.
 template<typename A> struct Statement {
-  Statement(Position &&pos, std::optional<long> &&lab, bool &&accept, A &&s)
-    : position(std::move(pos)),
-      label(std::move(lab)), isLabelInAcceptableField{accept},
+  Statement(Provenance &&at, std::optional<long> &&lab, bool &&accept, A &&s)
+    : provenance(at), label(std::move(lab)), isLabelInAcceptableField{accept},
       statement(std::move(s)) {}
-  Position position;
+  Provenance provenance;
   std::optional<Label> label;
   bool isLabelInAcceptableField{true};
   A statement;
@@ -3190,7 +3189,7 @@ template<typename A>
 std::ostream &operator<<(std::ostream &o, const Statement<A> &x) {
   return o << "(Statement " << x.label << ' '
            << (x.isLabelInAcceptableField ? ""s : "!isLabelInAcceptableField "s)
-           << x.position << ' ' << x.statement << ')';
+           << ' ' << x.statement << ')';
 }
 
 template<typename A>

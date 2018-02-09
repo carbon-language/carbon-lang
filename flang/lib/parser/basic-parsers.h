@@ -17,7 +17,7 @@
 #include "idioms.h"
 #include "message.h"
 #include "parse-state.h"
-#include "position.h"
+#include "provenance.h"
 #include <cstring>
 #include <functional>
 #include <list>
@@ -38,7 +38,7 @@ public:
   constexpr FailParser(const FailParser &) = default;
   constexpr explicit FailParser(const char *str) : str_{str} {}
   std::optional<A> Parse(ParseState *state) const {
-    state->messages()->Add(Message{state->position(), str_, state->context()});
+    state->PutMessage(str_);
     return {};
   }
 
@@ -252,7 +252,7 @@ public:
     }
     // Both alternatives failed.  Retain the state (and messages) from the
     // alternative parse that went the furthest.
-    if (state->position() <= paState.position()) {
+    if (state->GetLocation() <= paState.GetLocation()) {
       messages.Annex(paState.messages());
       state->swap(paState);
     } else {
@@ -332,13 +332,13 @@ public:
   constexpr ManyParser(const PA &parser) : parser_{parser} {}
   std::optional<resultType> Parse(ParseState *state) const {
     resultType result;
-    Position at{state->position()};
+    auto at = state->GetLocation();
     while (std::optional<paType> x{parser_.Parse(state)}) {
       result.emplace_back(std::move(*x));
-      if (state->position() <= at) {
+      if (state->GetLocation() <= at) {
         break;  // no forward progress, don't loop
       }
-      at = state->position();
+      at = state->GetLocation();
     }
     return {std::move(result)};
   }
@@ -363,11 +363,11 @@ public:
   constexpr SomeParser(const SomeParser &) = default;
   constexpr SomeParser(const PA &parser) : parser_{parser} {}
   std::optional<resultType> Parse(ParseState *state) const {
-    Position start{state->position()};
+    auto start = state->GetLocation();
     if (std::optional<paType> first{parser_.Parse(state)}) {
       resultType result;
       result.emplace_back(std::move(*first));
-      if ((state->position() > start)) {
+      if ((state->GetLocation() > start)) {
         result.splice(result.end(), *many(parser_).Parse(state));
       }
       return {std::move(result)};
@@ -390,9 +390,9 @@ public:
   constexpr SkipManyParser(const SkipManyParser &) = default;
   constexpr SkipManyParser(const PA &parser) : parser_{parser} {}
   std::optional<Success> Parse(ParseState *state) const {
-    for (Position at{state->position()};
-         parser_.Parse(state) && state->position() > at;
-         at = state->position()) {
+    for (auto at = state->GetLocation();
+         parser_.Parse(state) && state->GetLocation() > at;
+         at = state->GetLocation()) {
     }
     return {Success{}};
   }
@@ -1190,8 +1190,7 @@ constexpr struct RawNextCharParser {
       state->Advance();
       return ch;
     }
-    state->messages()->Add(
-        Message{state->position(), "end of file", state->context()});
+    state->PutMessage("end of file");
     return {};
   }
 } rawNextChar;
@@ -1232,12 +1231,11 @@ public:
     if (state->strictConformance()) {
       return {};
     }
-    Position at{state->position()};
+    auto at = state->GetLocation();
     auto result = parser_.Parse(state);
     if (result) {
       if (state->warnOnNonstandardUsage()) {
-        state->messages()->Add(
-            Message{at, "nonstandard usage", state->context()});
+        state->PutMessage(at, "nonstandard usage");
       }
     }
     return result;
@@ -1263,12 +1261,11 @@ public:
     if (state->strictConformance()) {
       return {};
     }
-    Position at{state->position()};
+    auto at = state->GetLocation();
     auto result = parser_.Parse(state);
     if (result) {
       if (state->warnOnDeprecatedUsage()) {
-        state->messages()->Add(
-            Message{at, "deprecated usage", state->context()});
+        state->PutMessage(at, "deprecated usage");
       }
     }
     return result;
@@ -1305,17 +1302,17 @@ constexpr struct GetColumn {
   using resultType = int;
   constexpr GetColumn() {}
   static std::optional<int> Parse(ParseState *state) {
-    return {state->position().column()};
+    return {state->column()};
   }
 } getColumn;
 
-constexpr struct GetPosition {
-  using resultType = Position;
-  constexpr GetPosition() {}
-  static std::optional<Position> Parse(ParseState *state) {
-    return {state->position()};
+constexpr struct GetProvenance {
+  using resultType = Provenance;
+  constexpr GetProvenance() {}
+  static std::optional<Provenance> Parse(ParseState *state) {
+    return {state->GetProvenance()};
   }
-} getPosition;
+} getProvenance;
 
 }  // namespace parser
 }  // namespace Fortran

@@ -1,38 +1,78 @@
 #ifndef FORTRAN_PROVENANCE_H_
 #define FORTRAN_PROVENANCE_H_
+#include "char-buffer.h"
 #include "source.h"
-#include <memory>
 #include <ostream>
 #include <string>
+#include <utility>
 #include <variant>
+#include <vector>
 namespace Fortran {
 namespace parser {
 
+// Each character in the contiguous source stream built by the
+// prescanner corresponds to a particular character in a source file,
+// include file, macro expansion, or compiler-inserted padding.
+// The location of this original character to which a parsable character
+// corresponds is its provenance.
+//
+// Provenances are offsets into an unmaterialized marshaling of all of the
+// entire contents of the original source files, include files,  macro
+// expansions, &c. for each visit to each source.  These origins of the
+// original source characters constitute a forest whose roots are
+// the original source files named on the compiler's command line.
+// We can describe provenances precisely by walking up this tree.
+
 using Provenance = size_t;
 
-class ProvenanceRange {
-public:
+struct ProvenanceRange {
   ProvenanceRange() {}
-  bool empty() const { return bytes_ == 0; }
-  Provenance start() const { return start_; }
-  size_t bytes() const { return bytes_; }
-private:
-  Provenance start_{0};
-  size_t bytes_{0};
+  ProvenanceRange(Provenance s, size_t n) : start{s}, bytes{n} {}
+  ProvenanceRange(const ProvenanceRange &) = default;
+  ProvenanceRange(ProvenanceRange &&) = default;
+  ProvenanceRange &operator=(const ProvenanceRange &) = default;
+  ProvenanceRange &operator=(ProvenanceRange &&) = default;
+  Provenance start{0};
+  size_t bytes{0};
 };
 
-class AllOfTheSource;
-
-class Origin {
+class OffsetToProvenanceMappings {
 public:
-  explicit Origin(const SourceFile &);  // initial source file
-  Origin(const SourceFile &, ProvenanceRange);  // included source file
-  Origin(ProvenanceRange def, ProvenanceRange use,  // macro call
-         const std::string &expansion);
-  size_t size() const;
-  const char &operator[](size_t) const;
-  void Identify(std::ostream &, const AllOfTheSource &, size_t,
-                const std::string &indent) const;
+  OffsetToProvenanceMappings() {}
+  size_t size() const { return bytes_; }
+  void shrink_to_fit() { provenanceMap_.shrink_to_fit(); }
+  void Put(ProvenanceRange);
+  void Put(const OffsetToProvenanceMappings &);
+  ProvenanceRange Map(size_t at) const;
+  void RemoveLastBytes(size_t);
+
+private:
+  struct ContiguousProvenanceMapping {
+    size_t start;
+    ProvenanceRange range;
+  };
+
+  size_t bytes_{0};
+  std::vector<ContiguousProvenanceMapping> provenanceMap_;
+};
+
+class AllSources {
+public:
+  explicit AllSources(const SourceFile &initialSourceFile);
+
+  size_t size() const { return bytes_; }
+  const char &operator[](Provenance) const;
+
+  ProvenanceRange AddIncludedFile(const SourceFile &, ProvenanceRange);
+  ProvenanceRange AddMacroCall(
+      ProvenanceRange def, ProvenanceRange use, const std::string &expansion);
+  ProvenanceRange AddCompilerInsertion(const std::string &);
+
+  void Identify(std::ostream &, Provenance, const std::string &prefix) const;
+  const SourceFile *GetSourceFile(Provenance) const;
+  std::string GetPath(Provenance) const;  // __FILE__
+  int GetLineNumber(Provenance) const;  // __LINE__
+
 private:
   struct Inclusion {
     const SourceFile &source;
@@ -41,82 +81,58 @@ private:
     ProvenanceRange definition;
     std::string expansion;
   };
-  std::variant<Inclusion, Macro> u_;
-  ProvenanceRange replaces_;
-};
+  struct CompilerInsertion {
+    std::string text;
+  };
 
-class AllOfTheSource {
-public:
-  AllOfTheSource() {}
-  AllOfTheSource(AllOfTheSource &&) = default;
-  AllOfTheSource &operator=(AllOfTheSource &&) = default;
-  size_t size() const { return bytes_; }
-  const char &operator[](Provenance) const;
-  AllOfTheSource &Add(Origin &&);
-  void Identify(std::ostream &, Provenance, const std::string &prefix) const;
-private:
-  struct Chunk {
-    Chunk(Origin &&origin, size_t at) : origin{std::move(origin)}, start{at} {}
-    Origin origin;
+  struct Origin {
+    Origin(size_t start, const SourceFile &);
+    Origin(size_t start, const SourceFile &, ProvenanceRange);
+    Origin(size_t start, ProvenanceRange def, ProvenanceRange use,
+        const std::string &expansion);
+    Origin(size_t start, const std::string &);
+
+    size_t size() const;
+    const char &operator[](size_t) const;
+
     size_t start;
-  };
-  const Chunk &MapToChunk(Provenance) const;
-  std::vector<Chunk> chunk_;
-  size_t bytes_;
-};
-
-class ProvenancedChar {
-public:
-  using type = char;
-  char character() const { return static_cast<char>(packed_); }
-  Provenance provenance() const { return packed_ >> 8; }
-private:
-  size_t packed_;
-};
-
-class ProvenancedString {
-private:
-  class iterator {
-  public:
-    iterator(const AllOfTheSource &sources, Provenance at)
-      : sources_{&sources}, at_{at} {}
-    iterator(const iterator &that)
-      : sources_{that.sources_}, at_{that.at_} {}
-    iterator &operator=(const iterator &that) {
-      sources_ = that.sources_;
-      at_ = that.at_;
-      return *this;
-    }
-    const char &operator*() const;
-    iterator &operator++() {
-      ++at_;
-      return *this;
-    }
-    iterator operator++(int) {
-      iterator result{*this};
-      ++at_;
-      return result;
-    }
-    bool operator<(const iterator &that) { return at_ < that.at_; }
-    bool operator<=(const iterator &that) { return at_ <= that.at_; }
-    bool operator==(const iterator &that) { return at_ == that.at_; }
-    bool operator!=(const iterator &that) { return at_ != that.at_; }
-  private:
-    const AllOfTheSource *sources_;
-    size_t at_;
+    std::variant<Inclusion, Macro, CompilerInsertion> u;
+    ProvenanceRange replaces;
   };
 
-  iterator begin(const AllOfTheSource &sources) const {
-    return iterator(sources, start_);
-  }
-  iterator end(const AllOfTheSource &sources) const {
-    return iterator(sources, start_ + bytes_);
-  }
+  const Origin &MapToOrigin(Provenance) const;
+
+  std::vector<Origin> origin_;
+  size_t bytes_{0};
+};
+
+class CookedSource {
 public:
-  size_t size() const { return bytes_; }
+  explicit CookedSource(AllSources &sources) : sources_{sources} {}
+
+  size_t size() const { return data_.size(); }
+  const char &operator[](size_t n) const { return data_[n]; }
+  const char &at(size_t n) const { return data_.at(n); }
+
+  AllSources &sources() const { return sources_; }
+
+  ProvenanceRange GetProvenance(const char *) const;
+  void Identify(std::ostream &, const char *) const;
+
+  void Put(const char *data, size_t bytes) { buffer_.Put(data, bytes); }
+  void Put(char ch) { buffer_.Put(&ch, 1); }
+  void Put(char ch, Provenance p) {
+    buffer_.Put(&ch, 1);
+    provenanceMap_.Put(ProvenanceRange{p, 1});
+  }
+  void Put(const OffsetToProvenanceMappings &pm) { provenanceMap_.Put(pm); }
+  void Marshal();  // marshalls all text into one contiguous block
+
 private:
-  Provenance start_;
-  size_t bytes_;
+  AllSources &sources_;
+  CharBuffer buffer_;  // before Marshal()
+  std::vector<char> data_;  // all of it, prescanned and preprocessed
+  OffsetToProvenanceMappings provenanceMap_;
 };
 }  // namespace parser
 }  // namespace Fortran

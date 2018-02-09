@@ -8,6 +8,7 @@
 // extensions for preprocessing will not be necessary.
 
 #include "idioms.h"
+#include "provenance.h"
 #include <cctype>
 #include <cstring>
 #include <functional>
@@ -21,7 +22,7 @@
 namespace Fortran {
 namespace parser {
 
-class CharBuffer;
+class CookedSource;
 class Prescanner;
 
 // Just a const char pointer with an associated length; does not own the
@@ -78,19 +79,22 @@ namespace Fortran {
 namespace parser {
 
 // Buffers a contiguous sequence of characters that has been partitioned into
-// a sequence of preprocessing tokens.
+// a sequence of preprocessing tokens with provenances.
 class TokenSequence {
 public:
   TokenSequence() {}
-  TokenSequence(const TokenSequence &that) { Append(that); }
+  TokenSequence(const TokenSequence &that) { Put(that); }
+  TokenSequence(const TokenSequence &that, size_t at, size_t count = 1) {
+    Put(that, at, count);
+  }
   TokenSequence(TokenSequence &&that)
     : start_{std::move(that.start_)},
       nextStart_{that.nextStart_}, char_{std::move(that.char_)} {}
-  TokenSequence(const std::string &s) { push_back(s); }
+  TokenSequence(const std::string &s) { Put(s, 0); }  // TODO predefined prov.
 
   TokenSequence &operator=(const TokenSequence &that) {
     clear();
-    Append(that);
+    Put(that);
     return *this;
   }
   TokenSequence &operator=(TokenSequence &&that) {
@@ -101,14 +105,22 @@ public:
   }
 
   CharPointerWithLength operator[](size_t token) const {
-    return {&char_[start_[token]],
-        (token + 1 >= start_.size() ? char_.size() : start_[token + 1]) -
-            start_[token]};
+    return {&char_[start_[token]], TokenBytes(token)};
   }
 
-  void AddChar(char ch) { char_.emplace_back(ch); }
+  bool empty() const { return start_.empty(); }
+  size_t size() const { return start_.size(); }
+  const char *data() const { return &char_[0]; }
+  void clear();
+  void pop_back();
+  void shrink_to_fit();
 
-  void EndToken() {
+  void PutNextTokenChar(char ch, Provenance provenance) {
+    char_.emplace_back(ch);
+    provenances_.Put({provenance, 1});
+  }
+
+  void CloseToken() {
     // CHECK(char_.size() > nextStart_);
     start_.emplace_back(nextStart_);
     nextStart_ = char_.size();
@@ -119,25 +131,26 @@ public:
     start_.pop_back();
   }
 
-  void Append(const TokenSequence &);
-  void EmitWithCaseConversion(CharBuffer *) const;
+  void Put(const TokenSequence &);
+  void Put(const TokenSequence &, size_t at, size_t tokens = 1);
+  void Put(const char *, size_t, Provenance);
+  void Put(const CharPointerWithLength &, Provenance);
+  void Put(const std::string &, Provenance);
+  void Put(const std::stringstream &, Provenance);
+  void EmitWithCaseConversion(CookedSource *) const;
   std::string ToString() const;
-
-  bool empty() const { return start_.empty(); }
-  size_t size() const { return start_.size(); }
-  const char *data() const { return &char_[0]; }
-  void clear();
-  void push_back(const char *, size_t);
-  void push_back(const CharPointerWithLength &);
-  void push_back(const std::string &);
-  void push_back(const std::stringstream &);
-  void pop_back();
-  void shrink_to_fit();
+  ProvenanceRange GetProvenance(size_t token, size_t offset = 0) const;
 
 private:
-  std::vector<int> start_;
+  size_t TokenBytes(size_t token) const {
+    return (token + 1 >= start_.size() ? char_.size() : start_[token + 1]) -
+        start_[token];
+  }
+
+  std::vector<size_t> start_;
   size_t nextStart_{0};
   std::vector<char> char_;
+  OffsetToProvenanceMappings provenances_;
 };
 
 // Defines a macro

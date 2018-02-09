@@ -7,29 +7,23 @@
 // line continuation, comment removal, card image margins, padding out
 // fixed form character literals on truncated card images, and drives the
 // Fortran source preprocessor.
-//
-// It is possible to run the Fortran parser without running this prescan
-// phase, using only the parsers defined in cooked-chars.h, so long as
-// preprocessing and INCLUDE lines need not be handled.
 
-#include "char-buffer.h"
 #include "message.h"
-#include "position.h"
 #include "preprocessor.h"
+#include "provenance.h"
 #include "source.h"
 #include <optional>
+#include <string>
 
 namespace Fortran {
 namespace parser {
 
 class Prescanner {
 public:
-  explicit Prescanner(Messages &messages)
-    : messages_{messages}, preprocessor_{*this} {}
+  Prescanner(Messages &messages, AllSources &allSources)
+    : messages_{messages}, allSources_{allSources}, preprocessor_{*this} {}
 
   Messages &messages() const { return messages_; }
-  const SourceFile &sourceFile() const { return *sourceFile_; }
-  Position position() const { return atPosition_; }
   bool anyFatalErrors() const { return anyFatalErrors_; }
 
   Prescanner &set_fixedForm(bool yes) {
@@ -49,13 +43,15 @@ public:
     return *this;
   }
 
-  CharBuffer Prescan(const SourceFile &source);
+  CookedSource Prescan();
   std::optional<TokenSequence> NextTokenizedLine();
+  Provenance GetCurrentProvenance() const { return GetProvenance(at_); }
+  std::string GetCurrentPath() const;  // __FILE__
+  int GetCurrentLineNumber() const;  // __LINE__
 
 private:
   void BeginSourceLine(const char *at) {
     at_ = at;
-    atPosition_ = lineStartPosition_;
     tabInCurrentLine_ = false;
     preventHollerith_ = false;
     delimiterNesting_ = 0;
@@ -66,8 +62,16 @@ private:
     NextLine();
   }
 
+  Provenance GetProvenance(const char *sourceChar) const {
+    return startProvenance_ + sourceChar - start_;
+  }
+
+  void EmitChar(TokenSequence *tokens, char ch) {
+    tokens->PutNextTokenChar(ch, GetCurrentProvenance());
+  }
+
   char EmitCharAndAdvance(TokenSequence *tokens, char ch) {
-    tokens->AddChar(ch);
+    EmitChar(tokens, ch);
     NextChar();
     return *at_;
   }
@@ -88,23 +92,26 @@ private:
   const char *FixedFormContinuationLine();
   bool FixedFormContinuation();
   bool FreeFormContinuation();
-  void PayNewlineDebt(CharBuffer *);
+  void PayNewlineDebt(CookedSource *);
 
   Messages &messages_;
-  bool anyFatalErrors_{false};
-  const char *lineStart_{nullptr};  // next line to process; <= limit_
+  AllSources &allSources_;
+
+  Provenance startProvenance_;
+  const char *start_{nullptr};  // beginning of sourceFile_ content
+  const char *limit_{nullptr};  // first address after end of source
   const char *at_{nullptr};  // next character to process; < lineStart_
   int column_{1};  // card image column position of next character
-  const char *limit_{nullptr};  // first address after end of source
+  const char *lineStart_{nullptr};  // next line to process; <= limit_
+  bool tabInCurrentLine_{false};
+  bool preventHollerith_{false};
+
+  bool anyFatalErrors_{false};
   int newlineDebt_{0};  // newline characters consumed but not yet emitted
-  const SourceFile *sourceFile_{nullptr};
-  Position atPosition_, lineStartPosition_;
   bool inCharLiteral_{false};
   bool inPreprocessorDirective_{false};
   bool inFixedForm_{true};
   int fixedFormColumnLimit_{72};
-  bool tabInCurrentLine_{false};
-  bool preventHollerith_{false};
   bool enableOldDebugLines_{false};
   bool enableBackslashEscapesInCharLiterals_{true};
   int delimiterNesting_{0};

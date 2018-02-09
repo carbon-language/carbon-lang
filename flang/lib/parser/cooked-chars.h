@@ -24,10 +24,10 @@ constexpr struct FixedFormPadding {
   using resultType = char;
   static std::optional<char> Parse(ParseState *state) {
     if (state->inCharLiteral() && state->inFortran() && state->inFixedForm() &&
-        state->position().column() <= state->columns()) {
+        state->column() <= state->columns()) {
       if (std::optional<char> ch{state->GetNextRawChar()}) {
         if (*ch == '\n') {
-          state->AdvancePositionForPadding();
+          state->AdvanceColumnForPadding();
           return {' '};
         }
       }
@@ -44,8 +44,7 @@ constexpr StateUpdateParser noteSkippedNewLine{IncrementSkippedNewLines};
 
 static inline bool InRightMargin(const ParseState &state) {
   if (state.inFortran() && state.inFixedForm() &&
-      state.position().column() > state.columns() &&
-      !state.tabInCurrentLine()) {
+      state.column() > state.columns() && !state.tabInCurrentLine()) {
     if (std::optional<char> ch{state.GetNextRawChar()}) {
       return *ch != '\n';
     }
@@ -61,7 +60,7 @@ template<int col> struct AtFixedFormColumn {
   constexpr AtFixedFormColumn(const AtFixedFormColumn &) {}
   static std::optional<Success> Parse(ParseState *state) {
     if (state->inFortran() && state->inFixedForm() && !state->IsAtEnd() &&
-        state->position().column() == col) {
+        state->column() == col) {
       return {Success{}};
     }
     return {};
@@ -73,7 +72,7 @@ template<int col> struct AtColumn {
   constexpr AtColumn() {}
   constexpr AtColumn(const AtColumn &) {}
   static std::optional<Success> Parse(ParseState *state) {
-    if (!state->IsAtEnd() && state->position().column() == col) {
+    if (!state->IsAtEnd() && state->column() == col) {
       return {Success{}};
     }
     return {};
@@ -81,8 +80,7 @@ template<int col> struct AtColumn {
 };
 
 static inline bool AtOldDebugLineMarker(const ParseState &state) {
-  if (state.inFortran() && state.inFixedForm() &&
-      state.position().column() == 1) {
+  if (state.inFortran() && state.inFixedForm() && state.column() == 1) {
     if (std::optional<char> ch{state.GetNextRawChar()}) {
       return toupper(*ch) == 'D';
     }
@@ -114,7 +112,7 @@ constexpr struct FastRawSpaceParser {
   static std::optional<Success> Parse(ParseState *state) {
     if (std::optional<char> ch{state->GetNextRawChar()}) {
       if (*ch == ' ' || *ch == '\t' ||
-          (toupper(*ch) == 'D' && state->position().column() == 1 &&
+          (toupper(*ch) == 'D' && state->column() == 1 &&
               state->enableOldDebugLines() && state->inFortran() &&
               state->inFixedForm())) {
         state->Advance();

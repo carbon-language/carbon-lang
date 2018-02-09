@@ -77,8 +77,8 @@ UNION_FORMATTER(SyncImagesStmt::ImageSet)  // R1167
 UNION_FORMATTER(EventWaitStmt::EventWaitSpec)  // R1173
 UNION_FORMATTER(FormTeamStmt::FormTeamSpec)  // R1177
 UNION_FORMATTER(LockStmt::LockStat)  // R1179
-UNION_FORMATTER(IoUnit);  // R1201, R1203
-UNION_FORMATTER(ConnectSpec);  // R1205
+UNION_FORMATTER(IoUnit)  // R1201, R1203
+UNION_FORMATTER(ConnectSpec)  // R1205
 UNION_FORMATTER(CloseStmt::CloseSpec)  // R1209
 UNION_FORMATTER(IoControlSpec)  // R1213
 UNION_FORMATTER(Format)  // R1215
@@ -90,7 +90,7 @@ UNION_FORMATTER(EndfileStmt)  // R1225
 UNION_FORMATTER(RewindStmt)  // R1226
 UNION_FORMATTER(PositionOrFlushSpec)  // R1227 & R1229
 UNION_FORMATTER(FlushStmt)  // R1228
-UNION_FORMATTER(InquireStmt);  // R1230
+UNION_FORMATTER(InquireStmt)  // R1230
 UNION_FORMATTER(InquireSpec)  // R1231
 UNION_FORMATTER(ModuleSubprogram)  // R1408
 UNION_FORMATTER(Rename)  // R1411
@@ -733,7 +733,7 @@ ProcedureDesignator Designator::ConvertToProcedureDesignator() {
 std::optional<Call> Designator::ConvertToCall() {
   return std::visit(
       visitors{[](ObjectName &n) -> std::optional<Call> {
-                 return {Call{ProcedureDesignator{std : move(n)},
+                 return {Call{ProcedureDesignator{std::move(n)},
                      std::list<ActualArgSpec>{}}};
                },
           [this](DataReference &dr) -> std::optional<Call> {
