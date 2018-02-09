@@ -493,8 +493,7 @@ static constexpr llvm::StringLiteral ValidCPUNames[] = {
 };
 
 bool PPCTargetInfo::isValidCPUName(StringRef Name) const {
-  const StringRef *FoundName = llvm::find(ValidCPUNames, Name);
-  return FoundName != std::end(ValidCPUNames);
+  return llvm::find(ValidCPUNames, Name) != std::end(ValidCPUNames);
 }
 
 void PPCTargetInfo::fillValidCPUList(SmallVectorImpl<StringRef> &Values) const {
