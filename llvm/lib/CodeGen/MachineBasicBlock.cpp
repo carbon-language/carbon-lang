@@ -323,18 +323,25 @@ void MachineBasicBlock::print(raw_ostream &OS, ModuleSlotTracker &MST,
   OS << ":\n";
 
   const TargetRegisterInfo *TRI = MF->getSubtarget().getRegisterInfo();
-  if (!livein_empty()) {
+  const MachineRegisterInfo &MRI = MF->getRegInfo();
+  if (!livein_empty() && MRI.tracksLiveness()) {
     if (Indexes) OS << '\t';
-    OS << "    Live Ins:";
-    for (const auto &LI : LiveIns) {
-      OS << ' ' << printReg(LI.PhysReg, TRI);
+    OS.indent(2) << "liveins: ";
+
+    bool First = true;
+    for (const auto &LI : liveins()) {
+      if (!First)
+        OS << ", ";
+      First = false;
+      OS << printReg(LI.PhysReg, TRI);
       if (!LI.LaneMask.all())
-        OS << ':' << PrintLaneMask(LI.LaneMask);
+        OS << ":0x" << PrintLaneMask(LI.LaneMask);
     }
     OS << '\n';
   }
 
   if (!succ_empty()) {
+    if (Indexes) OS << '\t';
     // Print the successors
     OS.indent(2) << "successors: ";
     for (auto I = succ_begin(), E = succ_end(); I != E; ++I) {
