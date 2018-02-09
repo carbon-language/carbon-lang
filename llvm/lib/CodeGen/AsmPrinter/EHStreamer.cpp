@@ -374,15 +374,17 @@ void EHStreamer::emitExceptionTable() {
   computeCallSiteTable(CallSites, LandingPads, FirstActions);
 
   bool IsSJLJ = Asm->MAI->getExceptionHandlingType() == ExceptionHandling::SjLj;
-  bool HaveTTData = IsSJLJ ? (!TypeInfos.empty() || !FilterIds.empty()) : true;
+  unsigned CallSiteEncoding =
+      IsSJLJ ? dwarf::DW_EH_PE_udata4 : dwarf::DW_EH_PE_uleb128;
+  bool HaveTTData = !TypeInfos.empty() || !FilterIds.empty();
 
   // Type infos.
   MCSection *LSDASection = Asm->getObjFileLowering().getLSDASection();
   unsigned TTypeEncoding;
 
   if (!HaveTTData) {
-    // For SjLj exceptions, if there is no TypeInfo, then we just explicitly say
-    // that we're omitting that bit.
+    // If there is no TypeInfo, then we just explicitly say that we're omitting
+    // that bit.
     TTypeEncoding = dwarf::DW_EH_PE_omit;
   } else {
     // Okay, we have actual filters or typeinfos to emit.  As such, we need to
@@ -450,7 +452,7 @@ void EHStreamer::emitExceptionTable() {
   // Emit the landing pad call site table.
   MCSymbol *CstBeginLabel = Asm->createTempSymbol("cst_begin");
   MCSymbol *CstEndLabel = Asm->createTempSymbol("cst_end");
-  Asm->EmitEncodingByte(dwarf::DW_EH_PE_udata4, "Call site");
+  Asm->EmitEncodingByte(CallSiteEncoding, "Call site");
   Asm->EmitLabelDifferenceAsULEB128(CstEndLabel, CstBeginLabel);
   Asm->OutStreamer->EmitLabel(CstBeginLabel);
 
@@ -518,23 +520,24 @@ void EHStreamer::emitExceptionTable() {
       // Offset of the call site relative to the start of the procedure.
       if (VerboseAsm)
         Asm->OutStreamer->AddComment(">> Call Site " + Twine(++Entry) + " <<");
-      Asm->EmitLabelDifference(BeginLabel, EHFuncBeginSym, 4);
+      Asm->EmitLabelDifferenceAsULEB128(BeginLabel, EHFuncBeginSym);
       if (VerboseAsm)
         Asm->OutStreamer->AddComment(Twine("  Call between ") +
                                      BeginLabel->getName() + " and " +
                                      EndLabel->getName());
-      Asm->EmitLabelDifference(EndLabel, BeginLabel, 4);
+      Asm->EmitLabelDifferenceAsULEB128(EndLabel, BeginLabel);
 
       // Offset of the landing pad relative to the start of the procedure.
       if (!S.LPad) {
         if (VerboseAsm)
           Asm->OutStreamer->AddComment("    has no landing pad");
-        Asm->OutStreamer->EmitIntValue(0, 4/*size*/);
+        Asm->EmitULEB128(0);
       } else {
         if (VerboseAsm)
           Asm->OutStreamer->AddComment(Twine("    jumps to ") +
                                        S.LPad->LandingPadLabel->getName());
-        Asm->EmitLabelDifference(S.LPad->LandingPadLabel, EHFuncBeginSym, 4);
+        Asm->EmitLabelDifferenceAsULEB128(S.LPad->LandingPadLabel,
+                                          EHFuncBeginSym);
       }
 
       // Offset of the first associated action record, relative to the start of
