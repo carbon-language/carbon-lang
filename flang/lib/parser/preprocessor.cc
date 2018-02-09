@@ -28,6 +28,7 @@ void TokenSequence::clear() {
   start_.clear();
   nextStart_ = 0;
   char_.clear();
+  provenances_.clear();
 }
 
 void TokenSequence::pop_back() {

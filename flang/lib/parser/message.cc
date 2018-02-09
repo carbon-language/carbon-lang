@@ -8,7 +8,7 @@ void Message::Emit(std::ostream &o, const AllSources &sources) const {
     context_->Emit(o, sources);
   }
   sources.Identify(o, provenance_, "");
-  o << ": " << message_ << '\n';
+  o << "   " << message_ << '\n';
 }
 
 void Messages::Emit(std::ostream &o, const AllSources &sources) const {

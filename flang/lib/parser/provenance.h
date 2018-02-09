@@ -40,6 +40,7 @@ class OffsetToProvenanceMappings {
 public:
   OffsetToProvenanceMappings() {}
   size_t size() const { return bytes_; }
+  void clear();
   void shrink_to_fit() { provenanceMap_.shrink_to_fit(); }
   void Put(ProvenanceRange);
   void Put(const OffsetToProvenanceMappings &);

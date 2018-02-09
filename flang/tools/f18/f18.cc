@@ -153,7 +153,10 @@ int main(int argc, char *const argv[]) {
     std::cout << "demo PASS\n" << *result << '\n';
   } else {
     std::cerr << "demo FAIL\n";
-    allSources.Identify(std::cerr, state.GetProvenance(), "   ");
+    if (!state.IsAtEnd()) {
+      std::cerr << "final position: ";
+      allSources.Identify(std::cerr, state.GetProvenance(), "   ");
+    }
     state.messages()->Emit(std::cerr, allSources);
     return EXIT_FAILURE;
   }

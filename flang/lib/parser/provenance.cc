@@ -4,6 +4,11 @@
 namespace Fortran {
 namespace parser {
 
+void OffsetToProvenanceMappings::clear() {
+  bytes_ = 0;
+  provenanceMap_.clear();
+}
+
 void OffsetToProvenanceMappings::Put(ProvenanceRange range) {
   if (provenanceMap_.empty()) {
     provenanceMap_.push_back({bytes_, range});
@@ -96,7 +101,7 @@ void AllSources::Identify(
                  std::pair<int, int> pos{
                      inc.source.FindOffsetLineAndColumn(at - origin.start)};
                  o << prefix << "at line " << pos.first << ", column "
-                   << pos.second << "in the file " << inc.source.path() << '\n';
+                   << pos.second << " in the file " << inc.source.path() << '\n';
                  if (origin.replaces.bytes > 0) {
                    o << prefix << " that was included\n";
                    Identify(o, origin.replaces.start, indented);
@@ -192,6 +197,8 @@ ProvenanceRange CookedSource::GetProvenance(const char *at) const {
 }
 
 void CookedSource::Marshal() {
+  CHECK(provenanceMap_.size() == buffer_.size());
+  provenanceMap_.Put(sources_.AddCompilerInsertion("EOF"));
   data_.resize(buffer_.size());
   char *p{&data_[0]};
   for (char ch : buffer_) {

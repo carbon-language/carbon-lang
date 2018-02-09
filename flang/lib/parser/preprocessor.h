@@ -89,7 +89,8 @@ public:
   }
   TokenSequence(TokenSequence &&that)
     : start_{std::move(that.start_)},
-      nextStart_{that.nextStart_}, char_{std::move(that.char_)} {}
+      nextStart_{that.nextStart_}, char_{std::move(that.char_)},
+      provenances_{std::move(that.provenances_)} {}
   TokenSequence(const std::string &s) { Put(s, 0); }  // TODO predefined prov.
 
   TokenSequence &operator=(const TokenSequence &that) {
@@ -121,7 +122,6 @@ public:
   }
 
   void CloseToken() {
-    // CHECK(char_.size() > nextStart_);
     start_.emplace_back(nextStart_);
     nextStart_ = char_.size();
   }
