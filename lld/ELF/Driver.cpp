@@ -591,7 +591,7 @@ static int parseInt(StringRef S, opt::Arg *Arg) {
 
 // Initializes Config members by the command line options.
 void LinkerDriver::readConfigs(opt::InputArgList &Args) {
-  errorHandler().Verbose = Args.hasArg(OPT_verbose);;
+  errorHandler().Verbose = Args.hasArg(OPT_verbose);
   errorHandler().FatalWarnings =
       Args.hasFlag(OPT_fatal_warnings, OPT_no_fatal_warnings, false);
 
