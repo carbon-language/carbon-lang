@@ -36218,10 +36218,6 @@ static SDValue combineExtSetcc(SDNode *N, SelectionDAG &DAG,
   EVT VT = N->getValueType(0);
   SDLoc dl(N);
 
-  // Only handle sext/aext for now.
-  if (N->getOpcode() != ISD::SIGN_EXTEND && N->getOpcode() != ISD::ANY_EXTEND)
-    return SDValue();
-
   // Only do this combine with AVX512 for vector extends.
   if (!Subtarget.hasAVX512() || !VT.isVector() || N0->getOpcode() != ISD::SETCC)
     return SDValue();
@@ -36249,7 +36245,12 @@ static SDValue combineExtSetcc(SDNode *N, SelectionDAG &DAG,
   if (Size != MatchingVecType.getSizeInBits())
     return SDValue();
 
-  return DAG.getSetCC(dl, VT, N0.getOperand(0), N0.getOperand(1), CC);
+  SDValue Res = DAG.getSetCC(dl, VT, N0.getOperand(0), N0.getOperand(1), CC);
+
+  if (N->getOpcode() == ISD::ZERO_EXTEND)
+    Res = DAG.getZeroExtendInReg(Res, dl, N0.getValueType().getScalarType());
+
+  return Res;
 }
 
 static SDValue combineSext(SDNode *N, SelectionDAG &DAG,

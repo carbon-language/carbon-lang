@@ -4670,14 +4670,14 @@ define <32 x i16> @zext_32xi1_to_32xi16(<32 x i16> %x, <32 x i16> %y) #0 {
 define <16 x i16> @zext_16xi1_to_16xi16(<16 x i16> %x, <16 x i16> %y) #0 {
 ; GENERIC-LABEL: zext_16xi1_to_16xi16:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    vpcmpeqw %ymm1, %ymm0, %k1 # sched: [3:1.00]
-; GENERIC-NEXT:    vmovdqu16 {{.*}}(%rip), %ymm0 {%k1} {z} # sched: [4:0.50]
+; GENERIC-NEXT:    vpcmpeqw %ymm1, %ymm0, %ymm0 # sched: [3:1.00]
+; GENERIC-NEXT:    vpsrlw $15, %ymm0, %ymm0 # sched: [1:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: zext_16xi1_to_16xi16:
 ; SKX:       # %bb.0:
-; SKX-NEXT:    vpcmpeqw %ymm1, %ymm0, %k1 # sched: [3:1.00]
-; SKX-NEXT:    vmovdqu16 {{.*}}(%rip), %ymm0 {%k1} {z} # sched: [8:0.50]
+; SKX-NEXT:    vpcmpeqw %ymm1, %ymm0, %ymm0 # sched: [1:0.50]
+; SKX-NEXT:    vpsrlw $15, %ymm0, %ymm0 # sched: [1:0.50]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %mask = icmp eq <16 x i16> %x, %y
   %1 = zext <16 x i1> %mask to <16 x i16>
@@ -4708,8 +4708,8 @@ define <4 x i32> @zext_4xi1_to_4x32(<4 x i8> %x, <4 x i8> %y) #0 {
 ; GENERIC-NEXT:    vmovdqa {{.*#+}} xmm2 = [255,0,0,0,255,0,0,0,255,0,0,0,255,0,0,0] sched: [6:0.50]
 ; GENERIC-NEXT:    vpand %xmm2, %xmm1, %xmm1 # sched: [1:0.33]
 ; GENERIC-NEXT:    vpand %xmm2, %xmm0, %xmm0 # sched: [1:0.33]
-; GENERIC-NEXT:    vpcmpeqd %xmm1, %xmm0, %k1 # sched: [3:1.00]
-; GENERIC-NEXT:    vpbroadcastd {{.*}}(%rip), %xmm0 {%k1} {z} # sched: [5:1.00]
+; GENERIC-NEXT:    vpcmpeqd %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; GENERIC-NEXT:    vpsrld $31, %xmm0, %xmm0 # sched: [1:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: zext_4xi1_to_4x32:
@@ -4717,8 +4717,8 @@ define <4 x i32> @zext_4xi1_to_4x32(<4 x i8> %x, <4 x i8> %y) #0 {
 ; SKX-NEXT:    vmovdqa {{.*#+}} xmm2 = [255,0,0,0,255,0,0,0,255,0,0,0,255,0,0,0] sched: [6:0.50]
 ; SKX-NEXT:    vpand %xmm2, %xmm1, %xmm1 # sched: [1:0.33]
 ; SKX-NEXT:    vpand %xmm2, %xmm0, %xmm0 # sched: [1:0.33]
-; SKX-NEXT:    vpcmpeqd %xmm1, %xmm0, %k1 # sched: [3:1.00]
-; SKX-NEXT:    vpbroadcastd {{.*}}(%rip), %xmm0 {%k1} {z} # sched: [7:0.50]
+; SKX-NEXT:    vpcmpeqd %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; SKX-NEXT:    vpsrld $31, %xmm0, %xmm0 # sched: [1:0.50]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %mask = icmp eq <4 x i8> %x, %y
   %1 = zext <4 x i1> %mask to <4 x i32>
@@ -4731,8 +4731,8 @@ define <2 x i64> @zext_2xi1_to_2xi64(<2 x i8> %x, <2 x i8> %y) #0 {
 ; GENERIC-NEXT:    vmovdqa {{.*#+}} xmm2 = [255,0,0,0,0,0,0,0,255,0,0,0,0,0,0,0] sched: [6:0.50]
 ; GENERIC-NEXT:    vpand %xmm2, %xmm1, %xmm1 # sched: [1:0.33]
 ; GENERIC-NEXT:    vpand %xmm2, %xmm0, %xmm0 # sched: [1:0.33]
-; GENERIC-NEXT:    vpcmpeqq %xmm1, %xmm0, %k1 # sched: [3:1.00]
-; GENERIC-NEXT:    vmovdqa64 {{.*}}(%rip), %xmm0 {%k1} {z} # sched: [4:0.50]
+; GENERIC-NEXT:    vpcmpeqq %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; GENERIC-NEXT:    vpsrlq $63, %xmm0, %xmm0 # sched: [1:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: zext_2xi1_to_2xi64:
@@ -4740,8 +4740,8 @@ define <2 x i64> @zext_2xi1_to_2xi64(<2 x i8> %x, <2 x i8> %y) #0 {
 ; SKX-NEXT:    vmovdqa {{.*#+}} xmm2 = [255,0,0,0,0,0,0,0,255,0,0,0,0,0,0,0] sched: [6:0.50]
 ; SKX-NEXT:    vpand %xmm2, %xmm1, %xmm1 # sched: [1:0.33]
 ; SKX-NEXT:    vpand %xmm2, %xmm0, %xmm0 # sched: [1:0.33]
-; SKX-NEXT:    vpcmpeqq %xmm1, %xmm0, %k1 # sched: [3:1.00]
-; SKX-NEXT:    vmovdqa64 {{.*}}(%rip), %xmm0 {%k1} {z} # sched: [7:0.50]
+; SKX-NEXT:    vpcmpeqq %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; SKX-NEXT:    vpsrlq $63, %xmm0, %xmm0 # sched: [1:0.50]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %mask = icmp eq <2 x i8> %x, %y
   %1 = zext <2 x i1> %mask to <2 x i64>
