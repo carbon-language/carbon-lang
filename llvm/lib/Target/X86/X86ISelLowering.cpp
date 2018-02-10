@@ -1168,10 +1168,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationPromotedToType(ISD::FP_TO_UINT, MVT::v8i1,  MVT::v8i32);
     setOperationPromotedToType(ISD::FP_TO_SINT, MVT::v4i1,  MVT::v4i32);
     setOperationPromotedToType(ISD::FP_TO_UINT, MVT::v4i1,  MVT::v4i32);
-    if (Subtarget.hasVLX()) {
-      setOperationAction(ISD::FP_TO_SINT,         MVT::v2i1,  Custom);
-      setOperationAction(ISD::FP_TO_UINT,         MVT::v2i1,  Custom);
-    }
+    setOperationAction(ISD::FP_TO_SINT,         MVT::v2i1,  Custom);
+    setOperationAction(ISD::FP_TO_UINT,         MVT::v2i1,  Custom);
 
     // Extends of v16i1/v8i1/v4i1/v2i1 to 128-bit vectors.
     for (auto VT : { MVT::v16i8, MVT::v8i16, MVT::v4i32, MVT::v2i64 }) {
