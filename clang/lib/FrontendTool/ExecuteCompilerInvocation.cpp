@@ -258,4 +258,4 @@ bool ExecuteCompilerInvocation(CompilerInstance *Clang) {
   return Success;
 }
 
-} //namespace clang 
+} // namespace clang 

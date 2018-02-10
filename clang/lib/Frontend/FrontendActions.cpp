@@ -309,17 +309,17 @@ class DefaultTemplateInstCallback : public TemplateInstantiationCallback {
   using CodeSynthesisContext = Sema::CodeSynthesisContext;
 
 public:
-  virtual void initialize(const Sema &) {}
+  void initialize(const Sema &) override {}
 
-  virtual void finalize(const Sema &) {}
+  void finalize(const Sema &) override {}
 
-  virtual void atTemplateBegin(const Sema &TheSema,
-                               const CodeSynthesisContext &Inst) override {
+  void atTemplateBegin(const Sema &TheSema,
+                       const CodeSynthesisContext &Inst) override {
     displayTemplightEntry<true>(llvm::outs(), TheSema, Inst);
   }
 
-  virtual void atTemplateEnd(const Sema &TheSema,
-                             const CodeSynthesisContext &Inst) override {
+  void atTemplateEnd(const Sema &TheSema,
+                     const CodeSynthesisContext &Inst) override {
     displayTemplightEntry<false>(llvm::outs(), TheSema, Inst);
   }
 
