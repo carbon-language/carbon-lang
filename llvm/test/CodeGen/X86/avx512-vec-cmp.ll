@@ -288,11 +288,19 @@ define i64 @test12_v64i16(<64 x i16> %a, <64 x i16> %b) nounwind {
 }
 
 define <16 x i32> @test13(<16 x float>%a, <16 x float>%b)
-; CHECK-LABEL: test13:
-; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vcmpeqps %zmm1, %zmm0, %k1
-; CHECK-NEXT:    vpbroadcastd {{.*}}(%rip), %zmm0 {%k1} {z}
-; CHECK-NEXT:    retq
+; AVX512-LABEL: test13:
+; AVX512:       ## %bb.0:
+; AVX512-NEXT:    vcmpeqps %zmm1, %zmm0, %k1
+; AVX512-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0 {%k1} {z}
+; AVX512-NEXT:    vpsrld $31, %zmm0, %zmm0
+; AVX512-NEXT:    retq
+;
+; SKX-LABEL: test13:
+; SKX:       ## %bb.0:
+; SKX-NEXT:    vcmpeqps %zmm1, %zmm0, %k0
+; SKX-NEXT:    vpmovm2d %k0, %zmm0
+; SKX-NEXT:    vpsrld $31, %zmm0, %zmm0
+; SKX-NEXT:    retq
 {
   %cmpvector_i = fcmp oeq <16 x float> %a, %b
   %conv = zext <16 x i1> %cmpvector_i to <16 x i32>
@@ -906,8 +914,9 @@ define <2 x i64> @test46(<2 x float> %x, <2 x float> %y) #0 {
 ;
 ; SKX-LABEL: test46:
 ; SKX:       ## %bb.0:
-; SKX-NEXT:    vcmpeqps %xmm1, %xmm0, %k1
-; SKX-NEXT:    vmovdqa64 {{.*}}(%rip), %xmm0 {%k1} {z}
+; SKX-NEXT:    vcmpeqps %xmm1, %xmm0, %k0
+; SKX-NEXT:    vpmovm2q %k0, %xmm0
+; SKX-NEXT:    vpsrlq $63, %xmm0, %xmm0
 ; SKX-NEXT:    retq
   %mask = fcmp oeq <2 x float> %x, %y
   %1 = zext <2 x i1> %mask to <2 x i64>

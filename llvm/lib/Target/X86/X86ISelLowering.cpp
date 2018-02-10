@@ -16472,10 +16472,17 @@ static  SDValue LowerZERO_EXTEND_Mask(SDValue Op,
   SDLoc DL(Op);
   unsigned NumElts = VT.getVectorNumElements();
 
-  // Extend VT if the scalar type is v8/v16 and BWI is not supported.
+  // For all vectors, but vXi8 we can just emit a sign_extend a shift. This
+  // avoids a constant pool load.
+  if (VT.getVectorElementType() != MVT::i8) {
+    SDValue Extend = DAG.getNode(ISD::SIGN_EXTEND, DL, VT, In);
+    return DAG.getNode(ISD::SRL, DL, VT, Extend,
+                       DAG.getConstant(VT.getScalarSizeInBits() - 1, DL, VT));
+  }
+
+  // Extend VT if BWI is not supported.
   MVT ExtVT = VT;
-  if (!Subtarget.hasBWI() &&
-      (VT.getVectorElementType().getSizeInBits() <= 16)) {
+  if (!Subtarget.hasBWI()) {
     // If v16i32 is to be avoided, we'll need to split and concatenate.
     if (NumElts == 16 && !Subtarget.canExtendTo512DQ())
       return SplitAndExtendv16i1(ISD::ZERO_EXTEND, VT, In, DL, DAG);
@@ -16499,9 +16506,9 @@ static  SDValue LowerZERO_EXTEND_Mask(SDValue Op,
 
   SDValue SelectedVal = DAG.getSelect(DL, WideVT, In, One, Zero);
 
-  // Truncate if we had to extend i16/i8 above.
+  // Truncate if we had to extend above.
   if (VT != ExtVT) {
-    WideVT = MVT::getVectorVT(VT.getVectorElementType(), NumElts);
+    WideVT = MVT::getVectorVT(MVT::i8, NumElts);
     SelectedVal = DAG.getNode(ISD::TRUNCATE, DL, WideVT, SelectedVal);
   }
 
