@@ -2757,16 +2757,13 @@ define <8 x i64> @mask_widening(<2 x i64> %a, <2 x i64> %b, <2 x i64> %c, <2 x i
 ; KNL-NEXT:    ## kill: def $xmm0 killed $xmm0 def $zmm0
 ; KNL-NEXT:    vpcmpeqd %zmm1, %zmm0, %k0
 ; KNL-NEXT:    kshiftlw $12, %k0, %k0
-; KNL-NEXT:    kshiftrw $12, %k0, %k0
-; KNL-NEXT:    kshiftlw $8, %k0, %k0
-; KNL-NEXT:    kshiftrw $8, %k0, %k1
+; KNL-NEXT:    kshiftrw $12, %k0, %k1
 ; KNL-NEXT:    vpblendmd %zmm5, %zmm4, %zmm0 {%k1}
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: mask_widening:
 ; SKX:       ## %bb.0: ## %entry
-; SKX-NEXT:    vpcmpeqd %xmm1, %xmm0, %k0
-; SKX-NEXT:    kmovb %k0, %k1
+; SKX-NEXT:    vpcmpeqd %xmm1, %xmm0, %k1
 ; SKX-NEXT:    vpblendmd %zmm5, %zmm4, %zmm0 {%k1}
 ; SKX-NEXT:    retq
 ;
@@ -2776,9 +2773,7 @@ define <8 x i64> @mask_widening(<2 x i64> %a, <2 x i64> %b, <2 x i64> %c, <2 x i
 ; AVX512BW-NEXT:    ## kill: def $xmm0 killed $xmm0 def $zmm0
 ; AVX512BW-NEXT:    vpcmpeqd %zmm1, %zmm0, %k0
 ; AVX512BW-NEXT:    kshiftlw $12, %k0, %k0
-; AVX512BW-NEXT:    kshiftrw $12, %k0, %k0
-; AVX512BW-NEXT:    kshiftlw $8, %k0, %k0
-; AVX512BW-NEXT:    kshiftrw $8, %k0, %k1
+; AVX512BW-NEXT:    kshiftrw $12, %k0, %k1
 ; AVX512BW-NEXT:    vpblendmd %zmm5, %zmm4, %zmm0 {%k1}
 ; AVX512BW-NEXT:    retq
 ;
@@ -2787,9 +2782,8 @@ define <8 x i64> @mask_widening(<2 x i64> %a, <2 x i64> %b, <2 x i64> %c, <2 x i
 ; AVX512DQ-NEXT:    ## kill: def $xmm1 killed $xmm1 def $zmm1
 ; AVX512DQ-NEXT:    ## kill: def $xmm0 killed $xmm0 def $zmm0
 ; AVX512DQ-NEXT:    vpcmpeqd %zmm1, %zmm0, %k0
-; AVX512DQ-NEXT:    kshiftlb $4, %k0, %k0
-; AVX512DQ-NEXT:    kshiftrb $4, %k0, %k0
-; AVX512DQ-NEXT:    kmovb %k0, %k1
+; AVX512DQ-NEXT:    kshiftlw $12, %k0, %k0
+; AVX512DQ-NEXT:    kshiftrw $12, %k0, %k1
 ; AVX512DQ-NEXT:    vpblendmd %zmm5, %zmm4, %zmm0 {%k1}
 ; AVX512DQ-NEXT:    retq
 entry:
