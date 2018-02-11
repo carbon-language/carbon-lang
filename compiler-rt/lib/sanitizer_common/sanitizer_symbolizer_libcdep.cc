@@ -395,14 +395,14 @@ const char *LLVMSymbolizer::FormatAndSendCommand(bool is_data,
   return symbolizer_process_->SendCommand(buffer_);
 }
 
-SymbolizerProcess::SymbolizerProcess(const char *path, bool use_posix_spawn)
+SymbolizerProcess::SymbolizerProcess(const char *path, bool use_forkpty)
     : path_(path),
       input_fd_(kInvalidFd),
       output_fd_(kInvalidFd),
       times_restarted_(0),
       failed_to_start_(false),
       reported_invalid_path_(false),
-      use_posix_spawn_(use_posix_spawn) {
+      use_forkpty_(use_forkpty) {
   CHECK(path_);
   CHECK_NE(path_[0], '\0');
 }

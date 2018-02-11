@@ -64,9 +64,7 @@ extern "C" {
 #include <pthread.h>
 #include <sched.h>
 #include <signal.h>
-#include <spawn.h>
 #include <stdlib.h>
-#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
@@ -208,62 +206,27 @@ int internal_fork() {
   return fork();
 }
 
-fd_t internal_spawn(const char *argv[], pid_t *pid) {
-  int master_fd = kInvalidFd;
-  int slave_fd = kInvalidFd;
-  char **env = GetEnviron();
-  int res = 0;
-
-  // We need a new pseudoterminal to avoid bufferring problems. The 'atos' tool
-  // in particular detects when it's talking to a pipe and forgets to flush the
-  // output stream after sending a response.
-  master_fd = posix_openpt(O_RDWR);
-  if (master_fd == kInvalidFd) goto cleanup;
-  res = grantpt(master_fd);
-  if (res != 0) goto cleanup;
-  res = unlockpt(master_fd);
-  if (res != 0) goto cleanup;
-
-  // Use TIOCPTYGNAME instead of ptsname() to avoid threading problems.
-  char slave_pty_name[128];
-  res = ioctl(master_fd, TIOCPTYGNAME, slave_pty_name);
-  if (res == -1) goto cleanup;
-
-  slave_fd = internal_open(slave_pty_name, O_RDWR);
-  if (slave_fd == kInvalidFd) goto cleanup;
-
-  posix_spawn_file_actions_t actions;
-  res = posix_spawn_file_actions_init(&actions);
-  if (res != 0) goto cleanup;
-  res = posix_spawn_file_actions_adddup2(&actions, slave_fd, STDIN_FILENO);
-  if (res != 0) goto cleanup;
-  res = posix_spawn_file_actions_adddup2(&actions, slave_fd, STDOUT_FILENO);
-  if (res != 0) goto cleanup;
-  res = posix_spawn_file_actions_addclose(&actions, slave_fd);
-  if (res != 0) goto cleanup;
-  res = posix_spawn_file_actions_addclose(&actions, master_fd);
-  if (res != 0) goto cleanup;
-
-  res = posix_spawnp(pid, argv[0], &actions, NULL, const_cast<char **>(argv),
-                     env);
-  if (res != 0) goto cleanup;
-
-  internal_close(slave_fd);
-  slave_fd = kInvalidFd;
-
-  // Disable echo in the new terminal, disable CR.
-  struct termios termflags;
-  tcgetattr(master_fd, &termflags);
-  termflags.c_oflag &= ~ONLCR;
-  termflags.c_lflag &= ~ECHO;
-  tcsetattr(master_fd, TCSANOW, &termflags);
-
-  return master_fd;
-
- cleanup:
-  if (master_fd != kInvalidFd) internal_close(master_fd);
-  if (slave_fd != kInvalidFd) internal_close(slave_fd);
-  return kInvalidFd;
+int internal_forkpty(int *amaster) {
+  int master, slave;
+  if (openpty(&master, &slave, nullptr, nullptr, nullptr) == -1) return -1;
+  int pid = internal_fork();
+  if (pid == -1) {
+    close(master);
+    close(slave);
+    return -1;
+  }
+  if (pid == 0) {
+    close(master);
+    if (login_tty(slave) != 0) {
+      // We already forked, there's not much we can do.  Let's quit.
+      Report("login_tty failed (errno %d)\n", errno);
+      internal__exit(1);
+    }
+  } else {
+    *amaster = master;
+    close(slave);
+  }
+  return pid;
 }
 
 uptr internal_rename(const char *oldpath, const char *newpath) {
