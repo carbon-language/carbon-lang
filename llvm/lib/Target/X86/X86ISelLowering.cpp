@@ -20489,15 +20489,6 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                                               DataToCompress),
                                   Mask, PassThru, Subtarget, DAG);
     }
-    case MASK_BINOP: {
-      MVT VT = Op.getSimpleValueType();
-      MVT MaskVT = MVT::getVectorVT(MVT::i1, VT.getSizeInBits());
-
-      SDValue Src1 = getMaskNode(Op.getOperand(1), MaskVT, Subtarget, DAG, dl);
-      SDValue Src2 = getMaskNode(Op.getOperand(2), MaskVT, Subtarget, DAG, dl);
-      SDValue Res = DAG.getNode(IntrData->Opc0, dl, MaskVT, Src1, Src2);
-      return DAG.getBitcast(VT, Res);
-    }
     case FIXUPIMMS:
     case FIXUPIMMS_MASKZ:
     case FIXUPIMM:
