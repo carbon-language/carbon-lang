@@ -19782,27 +19782,19 @@ static SDValue getMaskNode(SDValue Mask, MVT MaskVT,
   }
 
   if (Mask.getSimpleValueType() == MVT::i64 && Subtarget.is32Bit()) {
-    if (MaskVT == MVT::v64i1) {
-      assert(Subtarget.hasBWI() && "Expected AVX512BW target!");
-      // In case 32bit mode, bitcast i64 is illegal, extend/split it.
-      SDValue Lo, Hi;
-      Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Mask,
-                          DAG.getConstant(0, dl, MVT::i32));
-      Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Mask,
-                          DAG.getConstant(1, dl, MVT::i32));
+    assert(MaskVT == MVT::v64i1 && "Expected v64i1 mask!");
+    assert(Subtarget.hasBWI() && "Expected AVX512BW target!");
+    // In case 32bit mode, bitcast i64 is illegal, extend/split it.
+    SDValue Lo, Hi;
+    Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Mask,
+                        DAG.getConstant(0, dl, MVT::i32));
+    Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Mask,
+                        DAG.getConstant(1, dl, MVT::i32));
 
-      Lo = DAG.getBitcast(MVT::v32i1, Lo);
-      Hi = DAG.getBitcast(MVT::v32i1, Hi);
+    Lo = DAG.getBitcast(MVT::v32i1, Lo);
+    Hi = DAG.getBitcast(MVT::v32i1, Hi);
 
-      return DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v64i1, Lo, Hi);
-    } else {
-      // MaskVT require < 64bit. Truncate mask (should succeed in any case),
-      // and bitcast.
-      MVT TruncVT = MVT::getIntegerVT(MaskVT.getSizeInBits());
-      return DAG.getBitcast(MaskVT,
-                            DAG.getNode(ISD::TRUNCATE, dl, TruncVT, Mask));
-    }
-
+    return DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v64i1, Lo, Hi);
   } else {
     MVT BitcastVT = MVT::getVectorVT(MVT::i1,
                                      Mask.getSimpleValueType().getSizeInBits());
