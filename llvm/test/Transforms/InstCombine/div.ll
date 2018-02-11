@@ -562,3 +562,56 @@ define <2 x i8> @PR34841(<2 x i8> %x) {
   %div = udiv <2 x i8> <i8 1, i8 1>, %neg
   ret <2 x i8> %div
 }
+
+; (X / (X * Y) -> 1 / Y if the multiplication does not overflow
+
+define i8 @div_factor_signed(i8 %x, i8 %y) {
+; CHECK-LABEL: @div_factor_signed(
+; CHECK-NEXT:    [[A:%.*]] = mul nsw i8 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = sdiv i8 [[X]], [[A]]
+; CHECK-NEXT:    ret i8 [[R]]
+;
+  %a = mul nsw i8 %x, %y
+  %r = sdiv i8 %x, %a
+  ret i8 %r
+}
+
+; (X / (Y * X) -> 1 / Y if the multiplication does not overflow
+
+define <2 x i8> @div_factor_signed_vec(<2 x i8> %x, <2 x i8> %y) {
+; CHECK-LABEL: @div_factor_signed_vec(
+; CHECK-NEXT:    [[A:%.*]] = mul nsw <2 x i8> [[Y:%.*]], [[X:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = sdiv <2 x i8> [[X]], [[A]]
+; CHECK-NEXT:    ret <2 x i8> [[R]]
+;
+  %a = mul nsw <2 x i8> %y, %x
+  %r = sdiv <2 x i8> %x, %a
+  ret <2 x i8> %r
+}
+
+; (X / (Y * X) -> 1 / Y if the multiplication does not overflow
+
+define i8 @div_factor_unsigned(i8 %x, i8 %y) {
+; CHECK-LABEL: @div_factor_unsigned(
+; CHECK-NEXT:    [[A:%.*]] = mul nuw i8 [[Y:%.*]], [[X:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = udiv i8 [[X]], [[A]]
+; CHECK-NEXT:    ret i8 [[R]]
+;
+  %a = mul nuw i8 %y, %x
+  %r = udiv i8 %x, %a
+  ret i8 %r
+}
+
+; (X / (X * Y) -> 1 / Y if the multiplication does not overflow
+
+define <2 x i8> @div_factor_unsigned_vec(<2 x i8> %x, <2 x i8> %y) {
+; CHECK-LABEL: @div_factor_unsigned_vec(
+; CHECK-NEXT:    [[A:%.*]] = mul nuw <2 x i8> [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = udiv <2 x i8> [[X]], [[A]]
+; CHECK-NEXT:    ret <2 x i8> [[R]]
+;
+  %a = mul nuw <2 x i8> %x, %y
+  %r = udiv <2 x i8> %x, %a
+  ret <2 x i8> %r
+}
+
