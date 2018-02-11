@@ -18071,6 +18071,40 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget &Subtarget,
     }
   }
 
+  // If both operands are known non-negative, then an unsigned compare is the
+  // same as a signed compare and there's no need to flip signbits.
+  // TODO: We could check for more general simplifications here since we're
+  // computing known bits.
+  bool FlipSigns = ISD::isUnsignedIntSetCC(Cond) &&
+                   !(DAG.SignBitIsZero(Op0) && DAG.SignBitIsZero(Op1));
+
+  // Special case: Use min/max operations for unsigned compares. We only want
+  // to do this for unsigned compares if we need to flip signs or if it allows
+  // use to avoid an invert.
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  if (ISD::isUnsignedIntSetCC(Cond) &&
+      (FlipSigns || ISD::isTrueWhenEqual(Cond)) &&
+      TLI.isOperationLegal(ISD::UMIN, VT)) {
+    bool Invert = false;
+    unsigned Opc;
+    switch (Cond) {
+    default: llvm_unreachable("Unexpected condition code");
+    case ISD::SETUGT: Invert = true; LLVM_FALLTHROUGH;
+    case ISD::SETULE: Opc = ISD::UMIN; break;
+    case ISD::SETULT: Invert = true; LLVM_FALLTHROUGH;
+    case ISD::SETUGE: Opc = ISD::UMAX; break;
+    }
+
+    SDValue Result = DAG.getNode(Opc, dl, VT, Op0, Op1);
+    Result = DAG.getNode(X86ISD::PCMPEQ, dl, VT, Op0, Result);
+
+    // If the logical-not of the result is required, perform that now.
+    if (Invert)
+      Result = DAG.getNOT(dl, Result, VT);
+
+    return Result;
+  }
+
   // We are handling one of the integer comparisons here. Since SSE only has
   // GT and EQ comparisons for integer, swapping operands and multiple
   // operations may be required for some comparisons.
@@ -18081,34 +18115,10 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget &Subtarget,
   bool Invert = Cond == ISD::SETNE ||
                 (Cond != ISD::SETEQ && ISD::isTrueWhenEqual(Cond));
 
-  // If both operands are known non-negative, then an unsigned compare is the
-  // same as a signed compare and there's no need to flip signbits.
-  // TODO: We could check for more general simplifications here since we're
-  // computing known bits.
-  bool FlipSigns = ISD::isUnsignedIntSetCC(Cond) &&
-                   !(DAG.SignBitIsZero(Op0) && DAG.SignBitIsZero(Op1));
-
-  // Special case: Use min/max operations for SETULE/SETUGE
   MVT VET = VT.getVectorElementType();
-  bool HasMinMax =
-      (Subtarget.hasAVX512() && VET == MVT::i64) ||
-      (Subtarget.hasSSE41() && (VET == MVT::i16 || VET == MVT::i32)) ||
-      (Subtarget.hasSSE2() && (VET == MVT::i8));
-  bool MinMax = false;
-  if (HasMinMax) {
-    switch (Cond) {
-    default: break;
-    case ISD::SETULE: Opc = ISD::UMIN; MinMax = true; break;
-    case ISD::SETUGE: Opc = ISD::UMAX; MinMax = true; break;
-    }
-
-    if (MinMax)
-      Swap = Invert = FlipSigns = false;
-  }
-
   bool HasSubus = Subtarget.hasSSE2() && (VET == MVT::i8 || VET == MVT::i16);
   bool Subus = false;
-  if (!MinMax && HasSubus) {
+  if (HasSubus) {
     // As another special case, use PSUBUS[BW] when it's profitable. E.g. for
     // Op0 u<= Op1:
     //   t = psubus Op0, Op1
@@ -18226,9 +18236,6 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget &Subtarget,
   // If the logical-not of the result is required, perform that now.
   if (Invert)
     Result = DAG.getNOT(dl, Result, VT);
-
-  if (MinMax)
-    Result = DAG.getNode(X86ISD::PCMPEQ, dl, VT, Op0, Result);
 
   if (Subus)
     Result = DAG.getNode(X86ISD::PCMPEQ, dl, VT, Result,
