@@ -790,10 +790,12 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::FABS,               MVT::v2f64, Custom);
     setOperationAction(ISD::FCOPYSIGN,          MVT::v2f64, Custom);
 
-    setOperationAction(ISD::SMAX,               MVT::v8i16, Legal);
-    setOperationAction(ISD::UMAX,               MVT::v16i8, Legal);
-    setOperationAction(ISD::SMIN,               MVT::v8i16, Legal);
-    setOperationAction(ISD::UMIN,               MVT::v16i8, Legal);
+    for (auto VT : { MVT::v16i8, MVT::v8i16, MVT::v4i32, MVT::v2i64 }) {
+      setOperationAction(ISD::SMAX, VT, VT == MVT::v8i16 ? Legal : Custom);
+      setOperationAction(ISD::SMIN, VT, VT == MVT::v8i16 ? Legal : Custom);
+      setOperationAction(ISD::UMAX, VT, VT == MVT::v16i8 ? Legal : Custom);
+      setOperationAction(ISD::UMIN, VT, VT == MVT::v16i8 ? Legal : Custom);
+    }
 
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v8i16, Custom);
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v4i32, Custom);
@@ -1066,6 +1068,11 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::MULHS,     MVT::v16i16, HasInt256 ? Legal : Custom);
     setOperationAction(ISD::MULHU,     MVT::v32i8,  Custom);
     setOperationAction(ISD::MULHS,     MVT::v32i8,  Custom);
+
+    setOperationAction(ISD::SMAX,      MVT::v4i64,  Custom);
+    setOperationAction(ISD::UMAX,      MVT::v4i64,  Custom);
+    setOperationAction(ISD::SMIN,      MVT::v4i64,  Custom);
+    setOperationAction(ISD::UMIN,      MVT::v4i64,  Custom);
 
     for (auto VT : { MVT::v32i8, MVT::v16i16, MVT::v8i32 }) {
       setOperationAction(ISD::ABS,  VT, HasInt256 ? Legal : Custom);
@@ -22062,10 +22069,42 @@ static SDValue LowerABS(SDValue Op, SelectionDAG &DAG) {
 }
 
 static SDValue LowerMINMAX(SDValue Op, SelectionDAG &DAG) {
-  assert(Op.getSimpleValueType().is256BitVector() &&
-         Op.getSimpleValueType().isInteger() &&
-         "Only handle AVX 256-bit vector integer operation");
-  return Lower256IntArith(Op, DAG);
+  MVT VT = Op.getSimpleValueType();
+
+  // For AVX1 cases, split to use use legal ops (everything but v4i64).
+  if (VT.getScalarType() != MVT::i64 && VT.is256BitVector())
+    return Lower256IntArith(Op, DAG);
+
+  SDLoc DL(Op);
+  unsigned Opcode = Op.getOpcode();
+  SDValue N0 = Op.getOperand(0);
+  SDValue N1 = Op.getOperand(1);
+
+  // For pre-SSE41, we can perform UMIN/UMAX v8i16 by flipping the signbit,
+  // using the SMIN/SMAX instructions and flipping the signbit back.
+  if (VT == MVT::v8i16) {
+    assert((Opcode == ISD::UMIN || Opcode == ISD::UMAX) &&
+           "Unexpected MIN/MAX opcode");
+    SDValue Sign = DAG.getConstant(APInt::getSignedMinValue(16), DL, VT);
+    N0 = DAG.getNode(ISD::XOR, DL, VT, N0, Sign);
+    N1 = DAG.getNode(ISD::XOR, DL, VT, N1, Sign);
+    Opcode = (Opcode == ISD::UMIN ? ISD::SMIN : ISD::SMAX);
+    SDValue Result = DAG.getNode(Opcode, DL, VT, N0, N1);
+    return DAG.getNode(ISD::XOR, DL, VT, Result, Sign);
+  }
+
+  // Else, expand to a compare/select.
+  ISD::CondCode CC;
+  switch (Opcode) {
+  case ISD::SMIN: CC = ISD::CondCode::SETLT;  break;
+  case ISD::SMAX: CC = ISD::CondCode::SETGT;  break;
+  case ISD::UMIN: CC = ISD::CondCode::SETULT; break;
+  case ISD::UMAX: CC = ISD::CondCode::SETUGT; break;
+  default: llvm_unreachable("Unknown MINMAX opcode");
+  }
+
+  SDValue Cond = DAG.getSetCC(DL, VT, N0, N1, CC);
+  return DAG.getSelect(DL, VT, Cond, N0, N1);
 }
 
 static SDValue LowerMUL(SDValue Op, const X86Subtarget &Subtarget,
