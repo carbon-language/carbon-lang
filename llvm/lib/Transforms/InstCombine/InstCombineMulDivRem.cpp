@@ -1523,6 +1523,16 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
     return &I;
   }
 
+  // X / (X * Y) --> 1.0 / Y
+  // Reassociate to (X / X -> 1.0) is legal when NaNs are not allowed.
+  // We can ignore the possibility that X is infinity because INF/INF is NaN.
+  if (I.hasNoNaNs() && I.hasAllowReassoc() &&
+      match(Op1, m_c_FMul(m_Specific(Op0), m_Value(Y)))) {
+    I.setOperand(0, ConstantFP::get(I.getType(), 1.0));
+    I.setOperand(1, Y);
+    return &I;
+  }
+
   return nullptr;
 }
 
