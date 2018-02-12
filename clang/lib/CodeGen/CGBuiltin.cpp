@@ -8846,7 +8846,8 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     RHS = Builder.CreateShuffleVector(RHS, RHS,
                                       makeArrayRef(Indices, NumElts / 2));
     // Concat the vectors.
-    Value *Res = Builder.CreateShuffleVector(LHS, RHS,
+    // NOTE: Operands are swapped to match the intrinsic definition.
+    Value *Res = Builder.CreateShuffleVector(RHS, LHS,
                                              makeArrayRef(Indices, NumElts));
     return Builder.CreateBitCast(Res, Ops[0]->getType());
   }
