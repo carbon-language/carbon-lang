@@ -4214,6 +4214,7 @@ let Predicates = [HasAVX512] in {
             (VMOVSDZrr VR128X:$src1, VR128X:$src2)>;
 }
 
+let ExeDomain = SSEPackedInt, SchedRW = [WriteVecLogic] in {
 let AddedComplexity = 15 in
 def VMOVZPQILo2PQIZrr : AVX512XSI<0x7E, MRMSrcReg, (outs VR128X:$dst),
                                 (ins VR128X:$src),
@@ -4221,6 +4222,7 @@ def VMOVZPQILo2PQIZrr : AVX512XSI<0x7E, MRMSrcReg, (outs VR128X:$dst),
                                 [(set VR128X:$dst, (v2i64 (X86vzmovl
                                                    (v2i64 VR128X:$src))))],
                                 IIC_SSE_MOVQ_RR>, EVEX, VEX_W;
+}
 
 let Predicates = [HasAVX512] in {
   let AddedComplexity = 15 in {
@@ -6082,12 +6084,12 @@ def VMOVLHPSZrr : AVX512PSI<0x16, MRMSrcReg, (outs VR128X:$dst),
           (ins VR128X:$src1, VR128X:$src2),
           "vmovlhps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
           [(set VR128X:$dst, (v4f32 (X86Movlhps VR128X:$src1, VR128X:$src2)))],
-           IIC_SSE_MOV_LH>, EVEX_4V;
+           IIC_SSE_MOV_LH>, Sched<[WriteFShuffle]>, EVEX_4V;
 def VMOVHLPSZrr : AVX512PSI<0x12, MRMSrcReg, (outs VR128X:$dst),
           (ins VR128X:$src1, VR128X:$src2),
           "vmovhlps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
           [(set VR128X:$dst, (v4f32 (X86Movhlps VR128X:$src1, VR128X:$src2)))],
-          IIC_SSE_MOV_LH>, EVEX_4V;
+          IIC_SSE_MOV_LH>, Sched<[WriteFShuffle]>, EVEX_4V;
 
 //===----------------------------------------------------------------------===//
 // VMOVHPS/PD VMOVLPS Instructions
@@ -6104,7 +6106,7 @@ multiclass avx512_mov_hilo_packed<bits<8> opc, string OpcodeStr, SDNode OpNode,
                      (OpNode _.RC:$src1,
                        (_.VT (bitconvert
                          (v2f64 (scalar_to_vector (loadf64 addr:$src2)))))))],
-                  IIC_SSE_MOV_LH>, EVEX_4V;
+                  IIC_SSE_MOV_LH>, Sched<[WriteFShuffleLd, ReadAfterLd]>, EVEX_4V;
 }
 
 defm VMOVHPSZ128 : avx512_mov_hilo_packed<0x16, "vmovhps", X86Movlhps,
@@ -6139,6 +6141,7 @@ let Predicates = [HasAVX512] in {
           (VMOVLPDZ128rm VR128X:$src1, addr:$src2)>;
 }
 
+let SchedRW = [WriteStore] in {
 def VMOVHPSZ128mr : AVX512PSI<0x17, MRMDestMem, (outs),
                        (ins f64mem:$dst, VR128X:$src),
                        "vmovhps\t{$src, $dst|$dst, $src}",
@@ -6168,6 +6171,7 @@ def VMOVLPDZ128mr : AVX512PDI<0x13, MRMDestMem, (outs),
                                      (iPTR 0))), addr:$dst)],
                                      IIC_SSE_MOV_LH>,
                        EVEX, EVEX_CD8<64, CD8VT1>, VEX_W;
+} // SchedRW
 
 let Predicates = [HasAVX512] in {
   // VMOVHPD patterns
