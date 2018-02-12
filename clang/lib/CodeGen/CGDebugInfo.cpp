@@ -361,19 +361,19 @@ StringRef CGDebugInfo::getClassName(const RecordDecl *RD) {
   return StringRef();
 }
 
-llvm::DIFile::ChecksumKind
+Optional<llvm::DIFile::ChecksumKind>
 CGDebugInfo::computeChecksum(FileID FID, SmallString<32> &Checksum) const {
   Checksum.clear();
 
   if (!CGM.getCodeGenOpts().EmitCodeView &&
       CGM.getCodeGenOpts().DwarfVersion < 5)
-    return llvm::DIFile::CSK_None;
+    return None;
 
   SourceManager &SM = CGM.getContext().getSourceManager();
   bool Invalid;
   llvm::MemoryBuffer *MemBuffer = SM.getBuffer(FID, &Invalid);
   if (Invalid)
-    return llvm::DIFile::CSK_None;
+    return None;
 
   llvm::MD5 Hash;
   llvm::MD5::MD5Result Result;
@@ -390,7 +390,6 @@ llvm::DIFile *CGDebugInfo::getOrCreateFile(SourceLocation Loc) {
     // If Location is not valid then use main input file.
     return DBuilder.createFile(remapDIPath(TheCU->getFilename()),
                                remapDIPath(TheCU->getDirectory()),
-                               TheCU->getFile()->getChecksumKind(),
                                TheCU->getFile()->getChecksum());
 
   SourceManager &SM = CGM.getContext().getSourceManager();
@@ -400,7 +399,6 @@ llvm::DIFile *CGDebugInfo::getOrCreateFile(SourceLocation Loc) {
     // If the location is not valid then use main input file.
     return DBuilder.createFile(remapDIPath(TheCU->getFilename()),
                                remapDIPath(TheCU->getDirectory()),
-                               TheCU->getFile()->getChecksumKind(),
                                TheCU->getFile()->getChecksum());
 
   // Cache the results.
@@ -414,12 +412,15 @@ llvm::DIFile *CGDebugInfo::getOrCreateFile(SourceLocation Loc) {
   }
 
   SmallString<32> Checksum;
-  llvm::DIFile::ChecksumKind CSKind =
+  Optional<llvm::DIFile::ChecksumKind> CSKind =
       computeChecksum(SM.getFileID(Loc), Checksum);
+  Optional<llvm::DIFile::ChecksumInfo<StringRef>> CSInfo;
+  if (CSKind)
+    CSInfo.emplace(*CSKind, Checksum);
 
   llvm::DIFile *F = DBuilder.createFile(remapDIPath(PLoc.getFilename()),
                                         remapDIPath(getCurrentDirname()),
-                                        CSKind, Checksum);
+                                        CSInfo);
 
   DIFileCache[fname].reset(F);
   return F;
@@ -428,7 +429,6 @@ llvm::DIFile *CGDebugInfo::getOrCreateFile(SourceLocation Loc) {
 llvm::DIFile *CGDebugInfo::getOrCreateMainFile() {
   return DBuilder.createFile(remapDIPath(TheCU->getFilename()),
                              remapDIPath(TheCU->getDirectory()),
-                             TheCU->getFile()->getChecksumKind(),
                              TheCU->getFile()->getChecksum());
 }
 
@@ -473,7 +473,8 @@ StringRef CGDebugInfo::getCurrentDirname() {
 
 void CGDebugInfo::CreateCompileUnit() {
   SmallString<32> Checksum;
-  llvm::DIFile::ChecksumKind CSKind = llvm::DIFile::CSK_None;
+  Optional<llvm::DIFile::ChecksumKind> CSKind;
+  Optional<llvm::DIFile::ChecksumInfo<StringRef>> CSInfo;
 
   // Should we be asking the SourceManager for the main file name, instead of
   // accepting it as an argument? This just causes the main file name to
@@ -552,13 +553,16 @@ void CGDebugInfo::CreateCompileUnit() {
     break;
   }
 
+  if (CSKind)
+    CSInfo.emplace(*CSKind, Checksum);
+
   // Create new compile unit.
   // FIXME - Eliminate TheCU.
   auto &CGOpts = CGM.getCodeGenOpts();
   TheCU = DBuilder.createCompileUnit(
       LangTag,
       DBuilder.createFile(remapDIPath(MainFileName),
-                          remapDIPath(getCurrentDirname()), CSKind, Checksum),
+                          remapDIPath(getCurrentDirname()), CSInfo),
       Producer, LO.Optimize || CGOpts.PrepareForLTO || CGOpts.EmitSummaryIndex,
       CGOpts.DwarfDebugFlags, RuntimeVers,
       CGOpts.EnableSplitDwarf ? "" : CGOpts.SplitDwarfFile, EmissionKind,
