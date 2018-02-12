@@ -12,6 +12,7 @@
 #include "preprocessor.h"
 #include "provenance.h"
 #include "source.h"
+#include <map>
 #include <optional>
 #include <string>
 
@@ -20,10 +21,9 @@ namespace parser {
 
 class Prescanner {
 public:
-  explicit Prescanner(Messages &messages)
-    : messages_{messages}, preprocessor_{*this} {}
+  Prescanner(Messages *, AllSources *);
 
-  Messages &messages() const { return messages_; }
+  Messages *messages() const { return messages_; }
   bool anyFatalErrors() const { return anyFatalErrors_; }
 
   Prescanner &set_fixedForm(bool yes) {
@@ -43,13 +43,12 @@ public:
     return *this;
   }
 
-  const AllSources &allSources() const { return messages_.allSources(); }
+  AllSources *allSources() const { return allSources_; }
 
-  CookedSource Prescan(AllSources *);
+  CookedSource Prescan();
   std::optional<TokenSequence> NextTokenizedLine();
   Provenance GetCurrentProvenance() const { return GetProvenance(at_); }
-  std::string GetCurrentPath() const;  // __FILE__
-  int GetCurrentLineNumber() const;  // __LINE__
+  Provenance CompilerInsertionProvenance(char ch) const;
 
 private:
   void BeginSourceLine(const char *at) {
@@ -97,7 +96,8 @@ private:
   bool FreeFormContinuation();
   void PayNewlineDebt(CookedSource *);
 
-  Messages &messages_;
+  Messages *messages_;
+  AllSources *allSources_;
 
   Provenance startProvenance_;
   const char *start_{nullptr};  // beginning of sourceFile_ content
@@ -118,6 +118,7 @@ private:
   bool enableBackslashEscapesInCharLiterals_{true};
   int delimiterNesting_{0};
   Preprocessor preprocessor_;
+  std::map<char, Provenance> compilerInsertionProvenance_;
 };
 }  // namespace parser
 }  // namespace Fortran

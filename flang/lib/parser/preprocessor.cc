@@ -132,8 +132,9 @@ Definition::Definition(const std::vector<std::string> &argNames,
     argumentCount_(argNames.size()), isVariadic_{isVariadic},
     replacement_{Tokenize(argNames, repl, firstToken, tokens)} {}
 
-Definition::Definition(const std::string &predefined)
-  : isPredefined_{true}, replacement_{predefined} {}
+Definition::Definition(const std::string &predefined, AllSources *sources)
+  : isPredefined_{true}, replacement_{predefined,
+                             sources->AddCompilerInsertion(predefined).start} {}
 
 bool Definition::set_isDisabled(bool disable) {
   bool was{isDisabled_};
@@ -172,7 +173,8 @@ TokenSequence Definition::Tokenize(const std::vector<std::string> &argNames,
   return result;
 }
 
-TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
+TokenSequence Definition::Apply(
+    const std::vector<TokenSequence> &args, const Prescanner &prescanner) {
   TokenSequence result;
   bool pasting{false};
   bool skipping{false};
@@ -208,7 +210,8 @@ TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
         while (result.size() >= afterLastNonBlank) {
           result.pop_back();
         }
-        result.PutNextTokenChar('"', 0);  // TODO provenance
+        result.PutNextTokenChar(
+            '"', prescanner.CompilerInsertionProvenance('"'));
         for (size_t k{0}; k < argTokens; ++k) {
           const CharPointerWithLength &arg{args[index][k]};
           size_t argBytes{args[index][k].size()};
@@ -221,7 +224,8 @@ TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
             result.PutNextTokenChar(ch, from);
           }
         }
-        result.PutNextTokenChar('"', 0);  // TODO provenance
+        result.PutNextTokenChar(
+            '"', prescanner.CompilerInsertionProvenance('"'));
         result.CloseToken();
       } else {
         for (size_t k{0}; k < argTokens; ++k) {
@@ -247,7 +251,7 @@ TokenSequence Definition::Apply(const std::vector<TokenSequence> &args) {
         token.ToString() == "__VA_ARGS__") {
       for (size_t k{argumentCount_}; k < args.size(); ++k) {
         if (k > argumentCount_) {
-          result.Put(","s, 0);  // TODO provenance
+          result.Put(","s, prescanner.CompilerInsertionProvenance(','));
         }
         result.Put(args[k]);
       }
@@ -283,13 +287,15 @@ Preprocessor::Preprocessor(Prescanner &ps) : prescanner_{ps} {
   // of __DATE__ or __TIME__ change during compilation.
   std::time_t now;
   std::time(&now);
-  definitions_.emplace(SaveToken("__DATE__"s),  // e.g., "Jun 16 1904"
-      Definition{FormatTime(now, "\"%h %e %Y\""), 0, 1});
-  definitions_.emplace(SaveToken("__TIME__"s),  // e.g., "23:59:60"
-      Definition{FormatTime(now, "\"%T\""), 0, 1});
+  definitions_.emplace(SaveTokenAsName("__DATE__"s),  // e.g., "Jun 16 1904"
+      Definition{FormatTime(now, "\"%h %e %Y\""), ps.allSources()});
+  definitions_.emplace(SaveTokenAsName("__TIME__"s),  // e.g., "23:59:60"
+      Definition{FormatTime(now, "\"%T\""), ps.allSources()});
   // The values of these predefined macros depend on their invocation sites.
-  definitions_.emplace(SaveToken("__FILE__"s), Definition{"__FILE__"s});
-  definitions_.emplace(SaveToken("__LINE__"s), Definition{"__LINE__"s});
+  definitions_.emplace(
+      SaveTokenAsName("__FILE__"s), Definition{"__FILE__"s, ps.allSources()});
+  definitions_.emplace(
+      SaveTokenAsName("__LINE__"s), Definition{"__LINE__"s, ps.allSources()});
 }
 
 bool Preprocessor::MacroReplacement(
@@ -328,17 +334,21 @@ bool Preprocessor::MacroReplacement(
       if (def.isPredefined()) {
         std::string name{def.replacement()[0].ToString()};
         if (name == "__FILE__") {
-          result->Put("\""s +
-              prescanner_.allSources().GetPath(
+          std::string f{"\""s +
+              prescanner_.allSources()->GetPath(
                   prescanner_.GetCurrentProvenance()) +
-              '"');
+              '"'};
+          result->Put(
+              f, prescanner_.allSources()->AddCompilerInsertion(f).start);
           continue;
         }
         if (name == "__LINE__") {
           std::stringstream ss;
-          ss << prescanner_.allSources().GetLineNumber(
+          ss << prescanner_.allSources()->GetLineNumber(
               prescanner_.GetCurrentProvenance());
-          result->Put(ss.str());
+          std::string s{ss.str()};
+          result->Put(
+              s, prescanner_.allSources()->AddCompilerInsertion(s).start);
           continue;
         }
       }
@@ -391,7 +401,7 @@ bool Preprocessor::MacroReplacement(
       args.emplace_back(TokenSequence(input, at, count));
     }
     def.set_isDisabled(true);
-    result->Put(ReplaceMacros(def.Apply(args)));
+    result->Put(ReplaceMacros(def.Apply(args, prescanner_)));
     def.set_isDisabled(false);
   }
   return true;
@@ -478,7 +488,7 @@ bool Preprocessor::Directive(const TokenSequence &dir) {
       Complain("#define: missing or invalid name");
       return false;
     }
-    nameToken = SaveToken(nameToken);
+    nameToken = SaveTokenAsName(nameToken);
     definitions_.erase(nameToken);
     if (++j < tokens && dir[j].size() == 1 && dir[j][0] == '(') {
       j = SkipBlanks(dir, j + 1, tokens);
@@ -615,7 +625,8 @@ bool Preprocessor::Directive(const TokenSequence &dir) {
   return false;
 }
 
-CharPointerWithLength Preprocessor::SaveToken(const CharPointerWithLength &t) {
+CharPointerWithLength Preprocessor::SaveTokenAsName(
+    const CharPointerWithLength &t) {
   names_.push_back(t.ToString());
   return {names_.back().data(), names_.back().size()};
 }
@@ -652,7 +663,7 @@ bool Preprocessor::SkipDisabledConditionalCode(
 }
 
 void Preprocessor::Complain(const std::string &message) {
-  prescanner_.messages().Put({prescanner_.GetCurrentProvenance(), message});
+  prescanner_.messages()->Put({prescanner_.GetCurrentProvenance(), message});
 }
 
 // Precedence level codes used here to accommodate mixed Fortran and C:
@@ -661,7 +672,7 @@ void Preprocessor::Complain(const std::string &message) {
 // 13: **
 // 12: *, /, % (modulus)
 // 11: + and -
-//  0: << and >>
+// 10: << and >>
 //  9: bitwise &
 //  8: bitwise ^
 //  7: bitwise |
@@ -942,7 +953,8 @@ bool Preprocessor::IsIfPredicateTrue(
         name = expr1[j++];
       }
       if (!name.empty()) {
-        expr2.Put(IsNameDefined(name) ? "1" : "0", 1, 0);  // TODO provenance
+        char truth{IsNameDefined(name) ? '1' : '0'};
+        expr2.Put(&truth, 1, prescanner_.CompilerInsertionProvenance(truth));
         continue;
       }
     }

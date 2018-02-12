@@ -91,7 +91,7 @@ public:
     : start_{std::move(that.start_)}, nextStart_{that.nextStart_},
       char_{std::move(that.char_)}, provenances_{std::move(that.provenances_)} {
   }
-  TokenSequence(const std::string &s) { Put(s, 0); }  // TODO predefined prov.
+  TokenSequence(const std::string &s, Provenance p) { Put(s, p); }
 
   TokenSequence &operator=(const TokenSequence &that) {
     clear();
@@ -159,7 +159,7 @@ public:
   Definition(const TokenSequence &, size_t firstToken, size_t tokens);
   Definition(const std::vector<std::string> &argNames, const TokenSequence &,
       size_t firstToken, size_t tokens, bool isVariadic = false);
-  explicit Definition(const std::string &predefined);
+  Definition(const std::string &predefined, AllSources *);
 
   bool isFunctionLike() const { return isFunctionLike_; }
   size_t argumentCount() const { return argumentCount_; }
@@ -170,7 +170,8 @@ public:
 
   bool set_isDisabled(bool disable);
 
-  TokenSequence Apply(const std::vector<TokenSequence> &args);
+  TokenSequence Apply(
+      const std::vector<TokenSequence> &args, const Prescanner &);
 
 private:
   static TokenSequence Tokenize(const std::vector<std::string> &argNames,
@@ -203,7 +204,7 @@ private:
   enum class CanDeadElseAppear { No, Yes };
 
   void Complain(const std::string &);
-  CharPointerWithLength SaveToken(const CharPointerWithLength &);
+  CharPointerWithLength SaveTokenAsName(const CharPointerWithLength &);
   bool IsNameDefined(const CharPointerWithLength &);
   TokenSequence ReplaceMacros(const TokenSequence &);
   bool SkipDisabledConditionalCode(const std::string &dirName, IsElseActive);

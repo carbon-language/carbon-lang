@@ -9,14 +9,23 @@
 namespace Fortran {
 namespace parser {
 
-CookedSource Prescanner::Prescan(AllSources *allSources) {
+Prescanner::Prescanner(Messages *messages, AllSources *allSources)
+  : messages_{messages}, allSources_{allSources}, preprocessor_{*this} {
+  std::string compilerInserts{" ,\"01"};
+  ProvenanceRange range{allSources->AddCompilerInsertion(compilerInserts)};
+  for (size_t j{0}; j < compilerInserts.size(); ++j) {
+    compilerInsertionProvenance_[compilerInserts[j]] = range.start + j;
+  }
+}
+
+CookedSource Prescanner::Prescan() {
   startProvenance_ = 0;
-  start_ = &(*allSources)[0];
-  limit_ = start_ + allSources->size();
+  start_ = &(*allSources_)[0];
+  limit_ = start_ + allSources_->size();
   lineStart_ = start_;
   BeginSourceLine(start_);
   TokenSequence tokens, preprocessed;
-  CookedSource cooked{allSources};
+  CookedSource cooked{allSources_};
   while (lineStart_ < limit_) {
     if (CommentLinesAndPreprocessorDirectives() && lineStart_ >= limit_) {
       break;
@@ -68,6 +77,10 @@ std::optional<TokenSequence> Prescanner::NextTokenizedLine() {
   return {std::move(tokens)};
 }
 
+Provenance Prescanner::CompilerInsertionProvenance(char ch) const {
+  return compilerInsertionProvenance_.find(ch)->second;
+}
+
 void Prescanner::NextLine() {
   void *vstart{static_cast<void *>(const_cast<char *>(lineStart_))};
   void *v{std::memchr(vstart, '\n', limit_ - lineStart_)};
@@ -98,8 +111,9 @@ void Prescanner::LabelField(TokenSequence *token) {
     token->CloseToken();
   }
   if (outCol < 7) {
+    Provenance provenance{CompilerInsertionProvenance(' ')};
     for (; outCol < 7; ++outCol) {
-      EmitChar(token, ' ');
+      token->PutNextTokenChar(' ', provenance);
     }
     token->CloseToken();
   }
@@ -192,7 +206,7 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
       inCharLiteral_ = true;
       while (n-- > 0) {
         if (PadOutCharacterLiteral()) {
-          EmitChar(tokens, ' ');
+          tokens->PutNextTokenChar(' ', compilerInsertionProvenance_[' ']);
         } else {
           if (*at_ == '\n') {
             break;  // TODO error
@@ -283,12 +297,12 @@ void Prescanner::QuotedCharacterLiteral(TokenSequence *tokens) {
   do {
     EmitCharAndAdvance(tokens, *at_);
     while (PadOutCharacterLiteral()) {
-      EmitChar(tokens, ' ');
+      tokens->PutNextTokenChar(' ', compilerInsertionProvenance_[' ']);
     }
     if (*at_ == '\\' && enableBackslashEscapesInCharLiterals_) {
       EmitCharAndAdvance(tokens, '\\');
       while (PadOutCharacterLiteral()) {
-        EmitChar(tokens, ' ');
+        tokens->PutNextTokenChar(' ', compilerInsertionProvenance_[' ']);
       }
     } else if (*at_ == quote) {
       // A doubled quote mark becomes a single instance of the quote character
