@@ -141,11 +141,10 @@ namespace llvm {
     /// Create a file descriptor to hold debugging information for a file.
     /// \param Filename  File name.
     /// \param Directory Directory.
-    /// \param CSKind    Checksum kind (e.g. CSK_None, CSK_MD5, CSK_SHA1, etc.).
-    /// \param Checksum  Checksum data.
-    DIFile *createFile(StringRef Filename, StringRef Directory,
-                       DIFile::ChecksumKind CSKind = DIFile::CSK_None,
-                       StringRef Checksum = StringRef());
+    /// \param Checksum  Checksum kind (e.g. CSK_MD5, CSK_SHA1, etc.) and value.
+    DIFile *
+    createFile(StringRef Filename, StringRef Directory,
+               Optional<DIFile::ChecksumInfo<StringRef>> Checksum = None);
 
     /// Create debugging information entry for a macro.
     /// \param Parent     Macro parent (could be nullptr).

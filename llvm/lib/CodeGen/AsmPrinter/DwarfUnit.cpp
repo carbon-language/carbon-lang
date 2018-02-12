@@ -280,15 +280,16 @@ void DwarfUnit::addSectionOffset(DIE &Die, dwarf::Attribute Attribute,
 
 MD5::MD5Result *DwarfUnit::getMD5AsBytes(const DIFile *File) {
   assert(File);
-  if (File->getChecksumKind() != DIFile::CSK_MD5)
+  Optional<DIFile::ChecksumInfo<StringRef>> Checksum = File->getChecksum();
+  if (!Checksum || Checksum->Kind != DIFile::CSK_MD5)
     return nullptr;
 
   // Convert the string checksum to an MD5Result for the streamer.
   // The verifier validates the checksum so we assume it's okay.
   // An MD5 checksum is 16 bytes.
-  std::string Checksum = fromHex(File->getChecksum());
+  std::string ChecksumString = fromHex(Checksum->Value);
   void *CKMem = Asm->OutStreamer->getContext().allocate(16, 1);
-  memcpy(CKMem, Checksum.data(), 16);
+  memcpy(CKMem, ChecksumString.data(), 16);
   return reinterpret_cast<MD5::MD5Result *>(CKMem);
 }
 

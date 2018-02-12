@@ -204,8 +204,8 @@ DIImportedEntity *DIBuilder::createImportedDeclaration(DIScope *Context,
 }
 
 DIFile *DIBuilder::createFile(StringRef Filename, StringRef Directory,
-                              DIFile::ChecksumKind CSKind, StringRef Checksum) {
-  return DIFile::get(VMContext, Filename, Directory, CSKind, Checksum);
+                              Optional<DIFile::ChecksumInfo<StringRef>> CS) {
+  return DIFile::get(VMContext, Filename, Directory, CS);
 }
 
 DIMacro *DIBuilder::createMacro(DIMacroFile *Parent, unsigned LineNumber,

@@ -3612,7 +3612,6 @@ struct MDFieldList : public MDFieldImpl<SmallVector<Metadata *, 4>> {
 };
 
 struct ChecksumKindField : public MDFieldImpl<DIFile::ChecksumKind> {
-  ChecksumKindField() : ImplTy(DIFile::CSK_None) {}
   ChecksumKindField(DIFile::ChecksumKind CSKind) : ImplTy(CSKind) {}
 };
 
@@ -3976,13 +3975,14 @@ bool LLParser::ParseMDField(LocTy Loc, StringRef Name, MDFieldList &Result) {
 template <>
 bool LLParser::ParseMDField(LocTy Loc, StringRef Name,
                             ChecksumKindField &Result) {
-  if (Lex.getKind() != lltok::ChecksumKind)
+  Optional<DIFile::ChecksumKind> CSKind =
+      DIFile::getChecksumKind(Lex.getStrVal());
+
+  if (Lex.getKind() != lltok::ChecksumKind || !CSKind)
     return TokError(
         "invalid checksum kind" + Twine(" '") + Lex.getStrVal() + "'");
 
-  DIFile::ChecksumKind CSKind = DIFile::getChecksumKind(Lex.getStrVal());
-
-  Result.assign(CSKind);
+  Result.assign(*CSKind);
   Lex.Lex();
   return false;
 }
@@ -4247,16 +4247,25 @@ bool LLParser::ParseDISubroutineType(MDNode *&Result, bool IsDistinct) {
 ///                   checksumkind: CSK_MD5,
 ///                   checksum: "000102030405060708090a0b0c0d0e0f")
 bool LLParser::ParseDIFile(MDNode *&Result, bool IsDistinct) {
+  // The default constructed value for checksumkind is required, but will never
+  // be used, as the parser checks if the field was actually Seen before using
+  // the Val.
 #define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
   REQUIRED(filename, MDStringField, );                                         \
   REQUIRED(directory, MDStringField, );                                        \
-  OPTIONAL(checksumkind, ChecksumKindField, );                                 \
+  OPTIONAL(checksumkind, ChecksumKindField, (DIFile::CSK_MD5));                \
   OPTIONAL(checksum, MDStringField, );
   PARSE_MD_FIELDS();
 #undef VISIT_MD_FIELDS
 
+  Optional<DIFile::ChecksumInfo<MDString *>> OptChecksum;
+  if (checksumkind.Seen && checksum.Seen)
+    OptChecksum.emplace(checksumkind.Val, checksum.Val);
+  else if (checksumkind.Seen || checksum.Seen)
+    return Lex.Error("'checksumkind' and 'checksum' must be provided together");
+
   Result = GET_OR_DISTINCT(DIFile, (Context, filename.Val, directory.Val,
-                                    checksumkind.Val, checksum.Val));
+                                    OptChecksum));
   return false;
 }
 
