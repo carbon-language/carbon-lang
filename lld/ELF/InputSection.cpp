@@ -178,7 +178,9 @@ OutputSection *SectionBase::getOutputSection() {
 // Decompress section contents if required. Note that this function
 // is called from parallelForEach, so it must be thread-safe.
 void InputSectionBase::maybeDecompress() {
-  if (DecompressBuf || !Decompressor::isCompressedELFSection(Flags, Name))
+  if (DecompressBuf)
+    return;
+  if (!(Flags & SHF_COMPRESSED) && !Name.startswith(".zdebug"))
     return;
 
   // Decompress a section.
