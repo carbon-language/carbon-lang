@@ -1536,7 +1536,7 @@ let Defs = [EAX] in
 def MOV32ao16 : Ii16<0xA1, RawFrmMemOffs, (outs), (ins offset16_32:$src),
                      "mov{l}\t{$src, %eax|eax, $src}", [], IIC_MOV_MEM>,
                      AdSize16, OpSize32;
-}
+} // mayLoad
 let mayStore = 1 in {
 let Uses = [AL] in
 def MOV8o32a : Ii32<0xA2, RawFrmMemOffs, (outs), (ins offset32_8:$dst),
@@ -1565,8 +1565,7 @@ let Uses = [EAX] in
 def MOV32o16a : Ii16<0xA3, RawFrmMemOffs, (outs), (ins offset16_32:$dst),
                      "mov{l}\t{%eax, $dst|$dst, eax}", [], IIC_MOV_MEM>,
                      OpSize32, AdSize16;
-}
-}
+} // mayStore
 
 // These forms all have full 64-bit absolute addresses in their instructions
 // and use the movabs mnemonic to indicate this specific form.
@@ -1587,7 +1586,7 @@ let Defs = [RAX] in
 def MOV64ao64 : RIi64<0xA1, RawFrmMemOffs, (outs), (ins offset64_64:$src),
                      "movabs{q}\t{$src, %rax|rax, $src}", [], IIC_MOV_MEM>,
                      AdSize64;
-}
+} // mayLoad
 
 let mayStore = 1 in {
 let Uses = [AL] in
@@ -1606,7 +1605,8 @@ let Uses = [RAX] in
 def MOV64o64a : RIi64<0xA3, RawFrmMemOffs, (outs), (ins offset64_64:$dst),
                      "movabs{q}\t{%rax, $dst|$dst, rax}", [], IIC_MOV_MEM>,
                      AdSize64;
-}
+} // mayStore
+} // SchedRW
 } // hasSideEffects = 0
 
 let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0,
