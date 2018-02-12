@@ -20,9 +20,17 @@ static cl::opt<cl::boolOrDefault>
              cl::desc("use colored syntax highlighting (default=autodetect)"),
              cl::init(cl::BOU_UNSET));
 
+bool WithColor::colorsEnabled(raw_ostream &OS) {
+  switch (UseColor) {
+  case cl::BOU_UNSET: return OS.has_colors();
+  case cl::BOU_TRUE:  return true;
+  case cl::BOU_FALSE: return false;
+  }
+}
+
 WithColor::WithColor(raw_ostream &OS, enum HighlightColor Type) : OS(OS) {
   // Detect color from terminal type unless the user passed the --color option.
-  if (UseColor == cl::BOU_UNSET ? OS.has_colors() : UseColor == cl::BOU_TRUE) {
+  if (colorsEnabled(OS)) {
     switch (Type) {
     case Address:    OS.changeColor(raw_ostream::YELLOW);         break;
     case String:     OS.changeColor(raw_ostream::GREEN);          break;
@@ -38,6 +46,6 @@ WithColor::WithColor(raw_ostream &OS, enum HighlightColor Type) : OS(OS) {
 }
 
 WithColor::~WithColor() {
-  if (UseColor == cl::BOU_UNSET ? OS.has_colors() : UseColor == cl::BOU_TRUE)
+  if (colorsEnabled(OS))
     OS.resetColor();
 }
