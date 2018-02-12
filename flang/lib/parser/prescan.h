@@ -52,6 +52,7 @@ public:
 private:
   void BeginSourceLine(const char *at) {
     at_ = at;
+    column_ = 1;
     tabInCurrentLine_ = false;
     preventHollerith_ = false;
     delimiterNesting_ = 0;

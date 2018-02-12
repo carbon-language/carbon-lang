@@ -468,22 +468,23 @@ bool Prescanner::FreeFormContinuation() {
   if (p >= limit_) {
     return false;
   }
-  column_ = 1;
+  int column{1};
   for (; *p == ' ' || *p == '\t'; ++p) {
-    ++column_;
+    ++column;
   }
   if (*p == '&') {
     ++p;
-    ++column_;
+    ++column;
   } else if (ampersand || delimiterNesting_ > 0) {
     if (p > lineStart_) {
       --p;
-      --column_;
+      --column;
     }
   } else {
     return false;  // not a continuation
   }
   at_ = p;
+  column_ = column;
   tabInCurrentLine_ = false;
   ++newlineDebt_;
   NextLine();

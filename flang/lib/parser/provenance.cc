@@ -101,7 +101,8 @@ void AllSources::Identify(
                  std::pair<int, int> pos{
                      inc.source.FindOffsetLineAndColumn(at - origin.start)};
                  o << prefix << "at line " << pos.first << ", column "
-                   << pos.second << " in the file " << inc.source.path() << '\n';
+                   << pos.second << " in the file " << inc.source.path()
+                   << '\n';
                  if (origin.replaces.bytes > 0) {
                    o << prefix << " that was included\n";
                    Identify(o, origin.replaces.start, indented);
