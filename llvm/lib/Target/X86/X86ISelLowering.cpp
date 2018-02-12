@@ -25336,6 +25336,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::TESTP:              return "X86ISD::TESTP";
   case X86ISD::KORTEST:            return "X86ISD::KORTEST";
   case X86ISD::KTEST:              return "X86ISD::KTEST";
+  case X86ISD::KADD:               return "X86ISD::KADD";
   case X86ISD::KSHIFTL:            return "X86ISD::KSHIFTL";
   case X86ISD::KSHIFTR:            return "X86ISD::KSHIFTR";
   case X86ISD::PACKSS:             return "X86ISD::PACKSS";
