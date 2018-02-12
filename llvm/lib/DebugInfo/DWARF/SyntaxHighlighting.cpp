@@ -21,11 +21,9 @@ static cl::opt<cl::boolOrDefault>
              cl::init(cl::BOU_UNSET));
 
 bool WithColor::colorsEnabled(raw_ostream &OS) {
-  switch (UseColor) {
-  case cl::BOU_UNSET: return OS.has_colors();
-  case cl::BOU_TRUE:  return true;
-  case cl::BOU_FALSE: return false;
-  }
+  if (UseColor == cl::BOU_UNSET)
+    return OS.has_colors();
+  return UseColor == cl::BOU_TRUE;
 }
 
 WithColor::WithColor(raw_ostream &OS, enum HighlightColor Type) : OS(OS) {
