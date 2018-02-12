@@ -109,13 +109,13 @@ private:
 
 class CookedSource {
 public:
-  explicit CookedSource(AllSources &sources) : sources_{sources} {}
+  explicit CookedSource(AllSources *sources) : allSources_{sources} {}
 
   size_t size() const { return data_.size(); }
   const char &operator[](size_t n) const { return data_[n]; }
   const char &at(size_t n) const { return data_.at(n); }
 
-  AllSources &sources() const { return sources_; }
+  AllSources *allSources() const { return allSources_; }
 
   ProvenanceRange GetProvenance(const char *) const;
   void Identify(std::ostream &, const char *) const;
@@ -130,7 +130,7 @@ public:
   void Marshal();  // marshalls all text into one contiguous block
 
 private:
-  AllSources &sources_;
+  AllSources *allSources_;
   CharBuffer buffer_;  // before Marshal()
   std::vector<char> data_;  // all of it, prescanned and preprocessed
   OffsetToProvenanceMappings provenanceMap_;

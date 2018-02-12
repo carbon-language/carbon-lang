@@ -24,10 +24,11 @@ class UserState;
 class ParseState {
 public:
   ParseState(const CookedSource &cooked)
-    : cooked_{cooked}, p_{&cooked[0]}, remaining_{cooked.size()} {}
+    : cooked_{cooked}, p_{&cooked[0]},
+      remaining_{cooked.size()}, messages_{*cooked.allSources()} {}
   ParseState(const ParseState &that)
-    : cooked_{that.cooked_}, p_{that.p_},
-      remaining_{that.remaining_}, column_{that.column_},
+    : cooked_{that.cooked_}, p_{that.p_}, remaining_{that.remaining_},
+      column_{that.column_}, messages_{*that.cooked_.allSources()},
       userState_{that.userState_}, inCharLiteral_{that.inCharLiteral_},
       inFortran_{that.inFortran_}, inFixedForm_{that.inFixedForm_},
       enableOldDebugLines_{that.enableOldDebugLines_}, columns_{that.columns_},
@@ -69,14 +70,15 @@ public:
     std::memcpy(&that, buffer, bytes);
   }
 
+  const CookedSource &cooked() const { return cooked_; }
+  int column() const { return column_; }
+  Messages *messages() { return &messages_; }
+
   bool anyErrorRecovery() const { return anyErrorRecovery_; }
   void set_anyErrorRecovery() { anyErrorRecovery_ = true; }
 
   UserState *userState() const { return userState_; }
   void set_userState(UserState *u) { userState_ = u; }
-
-  int column() const { return column_; }
-  Messages *messages() { return &messages_; }
 
   MessageContext context() const { return context_; }
   MessageContext set_context(MessageContext c) {
@@ -157,7 +159,6 @@ public:
 
   bool tabInCurrentLine() const { return tabInCurrentLine_; }
 
-  const AllSources &GetAllSources() const { return cooked_.sources(); }
   const char *GetLocation() const { return p_; }
   Provenance GetProvenance(const char *at) const {
     return cooked_.GetProvenance(at).start;

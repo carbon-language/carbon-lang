@@ -20,8 +20,8 @@ namespace parser {
 
 class Prescanner {
 public:
-  Prescanner(Messages &messages, AllSources &allSources)
-    : messages_{messages}, allSources_{allSources}, preprocessor_{*this} {}
+  explicit Prescanner(Messages &messages)
+    : messages_{messages}, preprocessor_{*this} {}
 
   Messages &messages() const { return messages_; }
   bool anyFatalErrors() const { return anyFatalErrors_; }
@@ -43,7 +43,9 @@ public:
     return *this;
   }
 
-  CookedSource Prescan();
+  const AllSources &allSources() const { return messages_.allSources(); }
+
+  CookedSource Prescan(AllSources *);
   std::optional<TokenSequence> NextTokenizedLine();
   Provenance GetCurrentProvenance() const { return GetProvenance(at_); }
   std::string GetCurrentPath() const;  // __FILE__
@@ -96,7 +98,6 @@ private:
   void PayNewlineDebt(CookedSource *);
 
   Messages &messages_;
-  AllSources &allSources_;
 
   Provenance startProvenance_;
   const char *start_{nullptr};  // beginning of sourceFile_ content

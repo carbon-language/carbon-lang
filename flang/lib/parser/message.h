@@ -57,9 +57,10 @@ public:
   using iterator = list_type::iterator;
   using const_iterator = list_type::const_iterator;
 
-  Messages() {}
+  explicit Messages(const AllSources &sources) : allSources_{sources} {}
   Messages(Messages &&that)
-    : messages_{std::move(that.messages_)}, last_{that.last_} {}
+    : allSources_{that.allSources_}, messages_{std::move(that.messages_)},
+      last_{that.last_} {}
   Messages &operator=(Messages &&that) {
     swap(that);
     return *this;
@@ -77,7 +78,10 @@ public:
   const_iterator cbegin() const { return messages_.cbegin(); }
   const_iterator cend() const { return messages_.cend(); }
 
+  const AllSources &allSources() const { return allSources_; }
+
   void Put(Message &&m) {
+    CHECK(m.provenance() < allSources_.size());
     if (messages_.empty()) {
       messages_.emplace_front(std::move(m));
       last_ = messages_.begin();
@@ -97,9 +101,10 @@ public:
     }
   }
 
-  void Emit(std::ostream &, const AllSources &) const;
+  void Emit(std::ostream &) const;
 
 private:
+  const AllSources &allSources_;
   list_type messages_;
   iterator last_;  // valid iff messages_ nonempty
 };

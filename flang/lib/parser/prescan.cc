@@ -9,13 +9,14 @@
 namespace Fortran {
 namespace parser {
 
-CookedSource Prescanner::Prescan() {
+CookedSource Prescanner::Prescan(AllSources *allSources) {
   startProvenance_ = 0;
-  start_ = &allSources_[0];
-  limit_ = start_ + allSources_.size();
+  start_ = &(*allSources)[0];
+  limit_ = start_ + allSources->size();
   lineStart_ = start_;
+  BeginSourceLine(start_);
   TokenSequence tokens, preprocessed;
-  CookedSource cooked{allSources_};
+  CookedSource cooked{allSources};
   while (lineStart_ < limit_) {
     if (CommentLinesAndPreprocessorDirectives() && lineStart_ >= limit_) {
       break;
@@ -65,14 +66,6 @@ std::optional<TokenSequence> Prescanner::NextTokenizedLine() {
   inPreprocessorDirective_ = wasInPreprocessorDirective;
   at_ = saveAt;
   return {std::move(tokens)};
-}
-
-std::string Prescanner::GetCurrentPath() const {
-  return allSources_.GetPath(GetCurrentProvenance());
-}
-
-int Prescanner::GetCurrentLineNumber() const {
-  return allSources_.GetLineNumber(GetCurrentProvenance());
 }
 
 void Prescanner::NextLine() {

@@ -105,15 +105,15 @@ int main(int argc, char *const argv[]) {
   }
 
   Fortran::parser::AllSources allSources{sourceFile};
-  Fortran::parser::Messages messages;
-  Fortran::parser::Prescanner prescanner{messages, allSources};
+  Fortran::parser::Messages messages{allSources};
+  Fortran::parser::Prescanner prescanner{messages};
   Fortran::parser::CookedSource cooked{
       prescanner.set_fixedForm(fixedForm)
           .set_enableBackslashEscapesInCharLiterals(backslashEscapes)
           .set_fixedFormColumnLimit(columns)
           .set_enableOldDebugLines(enableOldDebugLines)
-          .Prescan()};
-  messages.Emit(std::cerr, allSources);
+          .Prescan(&allSources)};
+  messages.Emit(std::cerr);
   if (prescanner.anyFatalErrors()) {
     return 1;
   }
@@ -157,7 +157,7 @@ int main(int argc, char *const argv[]) {
       std::cerr << "final position: ";
       allSources.Identify(std::cerr, state.GetProvenance(), "   ");
     }
-    state.messages()->Emit(std::cerr, allSources);
+    state.messages()->Emit(std::cerr);
     return EXIT_FAILURE;
   }
 }

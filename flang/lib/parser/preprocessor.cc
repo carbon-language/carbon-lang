@@ -328,12 +328,16 @@ bool Preprocessor::MacroReplacement(
       if (def.isPredefined()) {
         std::string name{def.replacement()[0].ToString()};
         if (name == "__FILE__") {
-          result->Put("\""s + prescanner_.GetCurrentPath() + '"');
+          result->Put("\""s +
+              prescanner_.allSources().GetPath(
+                  prescanner_.GetCurrentProvenance()) +
+              '"');
           continue;
         }
         if (name == "__LINE__") {
           std::stringstream ss;
-          ss << prescanner_.GetCurrentLineNumber();
+          ss << prescanner_.allSources().GetLineNumber(
+              prescanner_.GetCurrentProvenance());
           result->Put(ss.str());
           continue;
         }

@@ -199,7 +199,7 @@ ProvenanceRange CookedSource::GetProvenance(const char *at) const {
 
 void CookedSource::Marshal() {
   CHECK(provenanceMap_.size() == buffer_.size());
-  provenanceMap_.Put(sources_.AddCompilerInsertion("EOF"));
+  provenanceMap_.Put(allSources_->AddCompilerInsertion("EOF"));
   data_.resize(buffer_.size());
   char *p{&data_[0]};
   for (char ch : buffer_) {

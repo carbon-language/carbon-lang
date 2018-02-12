@@ -11,9 +11,9 @@ void Message::Emit(std::ostream &o, const AllSources &sources) const {
   o << "   " << message_ << '\n';
 }
 
-void Messages::Emit(std::ostream &o, const AllSources &sources) const {
+void Messages::Emit(std::ostream &o) const {
   for (const auto &msg : messages_) {
-    msg.Emit(o, sources);
+    msg.Emit(o, allSources_);
   }
 }
 }  // namespace parser

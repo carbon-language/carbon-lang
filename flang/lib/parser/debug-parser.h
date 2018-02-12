@@ -23,7 +23,8 @@ public:
     if (auto context = state->context()) {
       std::cout << *context;
     }
-    state->GetAllSources().Identify(std::cout, state->GetProvenance(), "");
+    state->cooked().allSources().Identify(
+        std::cout, state->GetProvenance(), "");
     std::cout << "   parser debug: " << std::string{str_, length_} << '\n';
     return {Success{}};
   }
