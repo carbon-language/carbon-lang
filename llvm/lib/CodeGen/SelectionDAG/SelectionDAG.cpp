@@ -4667,19 +4667,15 @@ SDValue SelectionDAG::getNode(unsigned Opcode, const SDLoc &DL, EVT VT,
       case ISD::FSUB:
       case ISD::FDIV:
       case ISD::FREM:
-      case ISD::SRA:
         return N1;     // fold op(undef, arg2) -> undef
       case ISD::UDIV:
       case ISD::SDIV:
       case ISD::UREM:
       case ISD::SREM:
+      case ISD::SRA:
       case ISD::SRL:
       case ISD::SHL:
-        if (!VT.isVector())
-          return getConstant(0, DL, VT);    // fold op(undef, arg2) -> 0
-        // For vectors, we can't easily build an all zero vector, just return
-        // the LHS.
-        return N2;
+        return getConstant(0, DL, VT);    // fold op(undef, arg2) -> 0
       }
     }
   }
@@ -4701,6 +4697,9 @@ SDValue SelectionDAG::getNode(unsigned Opcode, const SDLoc &DL, EVT VT,
     case ISD::SDIV:
     case ISD::UREM:
     case ISD::SREM:
+    case ISD::SRA:
+    case ISD::SRL:
+    case ISD::SHL:
       return N2;       // fold op(arg1, undef) -> undef
     case ISD::FADD:
     case ISD::FSUB:
@@ -4712,21 +4711,9 @@ SDValue SelectionDAG::getNode(unsigned Opcode, const SDLoc &DL, EVT VT,
       break;
     case ISD::MUL:
     case ISD::AND:
-    case ISD::SRL:
-    case ISD::SHL:
-      if (!VT.isVector())
-        return getConstant(0, DL, VT);  // fold op(arg1, undef) -> 0
-      // For vectors, we can't easily build an all zero vector, just return
-      // the LHS.
-      return N1;
+      return getConstant(0, DL, VT);  // fold op(arg1, undef) -> 0
     case ISD::OR:
-      if (!VT.isVector())
-        return getConstant(APInt::getAllOnesValue(VT.getSizeInBits()), DL, VT);
-      // For vectors, we can't easily build an all one vector, just return
-      // the LHS.
-      return N1;
-    case ISD::SRA:
-      return N1;
+      return getAllOnesConstant(DL, VT);
     }
   }
 
