@@ -464,6 +464,8 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::PREFETCH, MVT::Other, Custom);
 
   setOperationAction(ISD::ATOMIC_CMP_SWAP, MVT::i128, Custom);
+  setOperationAction(ISD::ATOMIC_LOAD_SUB, MVT::i32, Custom);
+  setOperationAction(ISD::ATOMIC_LOAD_SUB, MVT::i64, Custom);
 
   // Lower READCYCLECOUNTER using an mrs from PMCCNTR_EL0.
   // This requires the Performance Monitors extension.
@@ -2679,6 +2681,8 @@ SDValue AArch64TargetLowering::LowerOperation(SDValue Op,
   case ISD::VECREDUCE_FMAX:
   case ISD::VECREDUCE_FMIN:
     return LowerVECREDUCE(Op, DAG);
+  case ISD::ATOMIC_LOAD_SUB:
+    return LowerATOMIC_LOAD_SUB(Op, DAG);
   }
 }
 
@@ -7371,6 +7375,23 @@ SDValue AArch64TargetLowering::LowerVECREDUCE(SDValue Op,
   default:
     llvm_unreachable("Unhandled reduction");
   }
+}
+
+SDValue AArch64TargetLowering::LowerATOMIC_LOAD_SUB(SDValue Op,
+                                                    SelectionDAG &DAG) const {
+  auto &Subtarget = static_cast<const AArch64Subtarget &>(DAG.getSubtarget());
+  if (!Subtarget.hasLSE())
+    return SDValue();
+
+  // LSE has an atomic load-add instruction, but not a load-sub.
+  SDLoc dl(Op);
+  MVT VT = Op.getSimpleValueType();
+  SDValue RHS = Op.getOperand(2);
+  AtomicSDNode *AN = cast<AtomicSDNode>(Op.getNode());
+  RHS = DAG.getNode(ISD::SUB, dl, VT, DAG.getConstant(0, dl, VT), RHS);
+  return DAG.getAtomic(ISD::ATOMIC_LOAD_ADD, dl, AN->getMemoryVT(),
+                       Op.getOperand(0), Op.getOperand(1), RHS,
+                       AN->getMemOperand());
 }
 
 /// getTgtMemIntrinsic - Represent NEON load and store intrinsics as
