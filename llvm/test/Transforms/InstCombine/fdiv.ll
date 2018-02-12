@@ -83,3 +83,45 @@ define float @fdiv_fneg_fneg_fast(float %x, float %y) {
   ret float %div
 }
 
+; FIXME: 
+; X / (X * Y) --> 1.0 / Y
+
+define float @div_factor(float %x, float %y) {
+; CHECK-LABEL: @div_factor(
+; CHECK-NEXT:    [[M:%.*]] = fmul float [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[D:%.*]] = fdiv reassoc nnan float [[X]], [[M]]
+; CHECK-NEXT:    ret float [[D]]
+;
+  %m = fmul float %x, %y
+  %d = fdiv nnan reassoc float %x, %m
+  ret float %d;
+}
+
+; We can't do the transform without 'nnan' because if x is NAN and y is a number, this should return NAN.
+
+define float @div_factor_too_strict(float %x, float %y) {
+; CHECK-LABEL: @div_factor_too_strict(
+; CHECK-NEXT:    [[M:%.*]] = fmul float [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[D:%.*]] = fdiv reassoc float [[X]], [[M]]
+; CHECK-NEXT:    ret float [[D]]
+;
+  %m = fmul float %x, %y
+  %d = fdiv reassoc float %x, %m
+  ret float %d
+}
+
+; FIXME:
+; Commute, verify vector types, and show that we are not dropping extra FMF.
+; X / (Y * X) --> 1.0 / Y
+
+define <2 x float> @div_factor_commute(<2 x float> %x, <2 x float> %y) {
+; CHECK-LABEL: @div_factor_commute(
+; CHECK-NEXT:    [[M:%.*]] = fmul <2 x float> [[Y:%.*]], [[X:%.*]]
+; CHECK-NEXT:    [[D:%.*]] = fdiv reassoc nnan ninf nsz <2 x float> [[X]], [[M]]
+; CHECK-NEXT:    ret <2 x float> [[D]]
+;
+  %m = fmul <2 x float> %y, %x
+  %d = fdiv nnan ninf nsz reassoc <2 x float> %x, %m
+  ret <2 x float> %d
+}
+
