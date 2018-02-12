@@ -39,19 +39,19 @@
 
 // RUN: not %clang_cc1 -triple r600--- -target-cpu not-a-cpu -fsyntax-only %s 2>&1 | FileCheck %s --check-prefix R600
 // R600: error: unknown target CPU 'not-a-cpu'
-// R600: note: valid target CPU values are: r600, rv610, rv620, rv630, rv635,
-// R600-SAME: rs780, rs880, rv670, rv710, rv730, rv740, rv770, palm, cedar,
-// R600-SAME: sumo, sumo2, redwood, juniper, hemlock, cypress, barts, turks,
-// R600-SAME: caicos, cayman, aruba
+// R600: note: valid target CPU values are: r600, rv630, rv635, r630, rs780, 
+// R600-SAME: rs880, rv610, rv620, rv670, rv710, rv730, rv740, rv770, cedar, 
+// R600-SAME: palm, cypress, hemlock, juniper, redwood, sumo, sumo2, barts, 
+// R600-SAME: caicos, turks, aruba, cayman
 
 
 // RUN: not %clang_cc1 -triple amdgcn--- -target-cpu not-a-cpu -fsyntax-only %s 2>&1 | FileCheck %s --check-prefix AMDGCN
 // AMDGCN: error: unknown target CPU 'not-a-cpu'
-// AMDGCN: note: valid target CPU values are: gfx600, tahiti, gfx601, pitcairn,
-// AMDGCN-SAME: verde, oland, hainan, gfx700, bonaire, kaveri, gfx701, hawaii,
-// AMDGCN-SAME: gfx702, gfx703, kabini, mullins, gfx800, iceland, gfx801,
-// AMDGCN-SAME: carrizo, gfx802, tonga, gfx803, fiji, polaris10, polaris11,
-// AMDGCN-SAME: gfx804, gfx810, stoney, gfx900, gfx901, gfx902, gfx903
+// AMDGCN: note: valid target CPU values are: gfx600, tahiti, gfx601, hainan,
+// AMDGCN-SAME: oland, pitcairn, verde, gfx700, kaveri, gfx701, hawaii, gfx702,
+// AMDGCN-SAME: gfx703, kabini, mullins, gfx704, bonaire, gfx801, carrizo, 
+// AMDGCN-SAME: gfx802, iceland, tonga, gfx803, fiji, polaris10, polaris11,
+// AMDGCN-SAME: gfx810, stoney, gfx900, gfx902
 
 // RUN: not %clang_cc1 -triple wasm64--- -target-cpu not-a-cpu -fsyntax-only %s 2>&1 | FileCheck %s --check-prefix WEBASM
 // WEBASM: error: unknown target CPU 'not-a-cpu'
