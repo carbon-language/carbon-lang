@@ -3939,11 +3939,6 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
     if (Imms.size() == 1)
       continue;
 
-    // UB: Check for overflow
-    int64_t Res;
-    if (__builtin_saddll_overflow(Imms.begin()->first, std::prev(Imms.end())->first, &Res))
-      continue;
-
     DEBUG(dbgs() << "Generating cross-use offsets for " << *Reg << ':';
           for (const auto &Entry : Imms)
             dbgs() << ' ' << Entry.first;
