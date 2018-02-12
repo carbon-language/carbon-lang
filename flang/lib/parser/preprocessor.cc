@@ -167,7 +167,7 @@ TokenSequence Definition::Tokenize(const std::vector<std::string> &argNames,
         continue;
       }
     }
-    result.Put(token, j, 1);
+    result.Put(token, firstToken + j, 1);
   }
   return result;
 }
