@@ -590,8 +590,6 @@ bool HexagonTargetLowering::getPostIndexedAddressParts(SDNode *N, SDNode *Op,
     VT  = LD->getMemoryVT();
   } else if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
     VT  = ST->getMemoryVT();
-    if (ST->getValue().getValueType() == MVT::i64 && ST->isTruncatingStore())
-      return false;
   } else {
     return false;
   }
