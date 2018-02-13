@@ -330,6 +330,10 @@ static void splitCallSite(
     if (CurrentI == OriginalBegin)
       break;
   }
+
+  ValueToValueMaps[0].clear();
+  ValueToValueMaps[1].clear();
+
   NumCallSiteSplit++;
 }
 
