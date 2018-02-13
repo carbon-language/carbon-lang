@@ -17,6 +17,7 @@ set(SOURCES_F18
   lib/parser/prescan.cc
   lib/parser/provenance.cc
   lib/parser/source.cc
+  lib/parser/token-sequence.cc
 )
 add_executable(f18 ${SOURCES_F18})
 

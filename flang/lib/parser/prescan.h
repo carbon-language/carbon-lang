@@ -8,15 +8,16 @@
 // fixed form character literals on truncated card images, file
 // inclusion, and driving the Fortran source preprocessor.
 
-#include "message.h"
-#include "preprocessor.h"
 #include "provenance.h"
-#include "source.h"
+#include "token-sequence.h"
 #include <optional>
 #include <string>
 
 namespace Fortran {
 namespace parser {
+
+class Messages;
+class Preprocessor;
 
 class Prescanner {
 public:

@@ -1,6 +1,9 @@
 #include "prescan.h"
 #include "idioms.h"
+#include "message.h"
+#include "preprocessor.h"
 #include "source.h"
+#include "token-sequence.h"
 #include <cctype>
 #include <cstring>
 #include <utility>
