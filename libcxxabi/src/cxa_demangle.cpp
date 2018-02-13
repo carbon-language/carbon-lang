@@ -1977,6 +1977,7 @@ struct Db {
   Node *parseArrayType();
   Node *parsePointerToMemberType();
   Node *parseClassEnumType();
+  Node *parseQualifiedType(bool &AppliesToFunction);
 
   // FIXME: remove this when all the parse_* functions have been rewritten.
   template <const char *(*parse_fn)(const char *, const char *, Db &)>
@@ -2238,6 +2239,52 @@ Node *Db::parseClassEnumType() {
   return legacyParse<parse_name>();
 }
 
+// <qualified-type>     ::= <qualifiers> <type>
+// <qualifiers> ::= <extended-qualifier>* <CV-qualifiers>
+// <extended-qualifier> ::= U <source-name> [<template-args>] # vendor extended type qualifier
+Node *Db::parseQualifiedType(bool &AppliesToFunction) {
+  if (consumeIf('U')) {
+    StringView Qual = parseBareSourceName();
+    if (Qual.empty())
+      return nullptr;
+
+    // FIXME parse the optional <template-args> here!
+
+    // extension            ::= U <objc-name> <objc-type>  # objc-type<identifier>
+    if (Qual.startsWith("objcproto")) {
+      StringView ProtoSourceName = Qual.dropFront(std::strlen("objcproto"));
+      StringView Proto;
+      {
+        SwapAndRestore<const char *> SaveFirst(First, ProtoSourceName.begin()),
+                                     SaveLast(Last, ProtoSourceName.end());
+        Proto = parseBareSourceName();
+      }
+      if (Proto.empty())
+        return nullptr;
+      Node *Child = parseQualifiedType(AppliesToFunction);
+      if (Child == nullptr)
+        return nullptr;
+      return make<ObjCProtoName>(Child, Proto);
+    }
+
+    Node *Child = parseQualifiedType(AppliesToFunction);
+    if (Child == nullptr)
+      return nullptr;
+    return make<VendorExtQualType>(Child, Qual);
+  }
+
+  Qualifiers Quals = parseCVQualifiers();
+  AppliesToFunction = look() == 'F';
+  Node *Ty = parseType();
+  if (Ty == nullptr)
+    return nullptr;
+  if (Quals != QualNone) {
+    return AppliesToFunction ?
+      make<FunctionQualType>(Ty, Quals) : make<QualType>(Ty, Quals);
+  }
+  return Ty;
+}
+
 // <type>      ::= <builtin-type>
 //             ::= <qualified-type>
 //             ::= <function-type>
@@ -2265,57 +2312,16 @@ Node *Db::parseType() {
   //             ::= <qualified-type>
   case 'r':
   case 'V':
-  case 'K': {
-    Qualifiers Q = parseCVQualifiers();
-    bool AppliesToFunction = look() == 'F';
-
-    Node *Child = parseType();
-    if (Child == nullptr)
-      return nullptr;
-
-    if (AppliesToFunction)
-      Result = make<FunctionQualType>(Child, Q);
-    else
-      Result = make<QualType>(Child, Q);
+  case 'K':
+  case 'U': {
+    bool AppliesToFunction = false;
+    Result = parseQualifiedType(AppliesToFunction);
 
     // Itanium C++ ABI 5.1.5.3:
     //   For the purposes of substitution, the CV-qualifiers and ref-qualifier
     //   of a function type are an indivisible part of the type.
     if (AppliesToFunction)
       return Result;
-    break;
-  }
-  // <extended-qualifier> ::= U <source-name> [<template-args>] # vendor extended type qualifier
-  case 'U': {
-    // FIXME: We should fold this into the cvr qualifier parsing above. This
-    // currently adds too many entries into the substitution table if multiple
-    // qualifiers are present on the same type, as all the qualifiers on a type
-    // should just get one entry in the substitution table.
-    ++First;
-    StringView Qual = parseBareSourceName();
-    if (Qual.empty())
-      return nullptr;
-
-    // FIXME parse the optional <template-args> here!
-
-    Result = parseType();
-    if (Result == nullptr)
-      return nullptr;
-
-    // extension   ::= U <objc-name> <objc-type>  # objc-type<identifier>
-    if (Qual.startsWith("objcproto")) {
-      StringView ProtoSourceName = Qual.dropFront(std::strlen("objcproto"));
-      StringView Proto;
-      {
-        SwapAndRestore<const char *> SaveFirst(First, ProtoSourceName.begin()),
-                                     SaveLast(Last, ProtoSourceName.end());
-        Proto = parseBareSourceName();
-      }
-      if (Proto.empty())
-        return nullptr;
-      Result = make<ObjCProtoName>(Result, Proto);
-    } else
-      Result = make<VendorExtQualType>(Result, Qual);
     break;
   }
   // <builtin-type> ::= v    # void
