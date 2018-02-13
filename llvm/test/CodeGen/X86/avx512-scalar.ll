@@ -55,7 +55,7 @@ declare float     @llvm.sqrt.f32(float  %Val)
 define float @test_trunc(float %a) {
 ; AVX512-LABEL: test_trunc:
 ; AVX512:       ## %bb.0:
-; AVX512-NEXT:    vrndscaless $11, %xmm0, %xmm0, %xmm0 ## encoding: [0x62,0xf3,0x7d,0x08,0x0a,0xc0,0x0b]
+; AVX512-NEXT:    vroundss $11, %xmm0, %xmm0, %xmm0 ## EVEX TO VEX Compression encoding: [0xc4,0xe3,0x79,0x0a,0xc0,0x0b]
 ; AVX512-NEXT:    retq ## encoding: [0xc3]
 ;
 ; AVX-LABEL: test_trunc:
@@ -83,7 +83,7 @@ define double @test_sqrt(double %a) {
 define float @test_rint(float %a) {
 ; AVX512-LABEL: test_rint:
 ; AVX512:       ## %bb.0:
-; AVX512-NEXT:    vrndscaless $4, %xmm0, %xmm0, %xmm0 ## encoding: [0x62,0xf3,0x7d,0x08,0x0a,0xc0,0x04]
+; AVX512-NEXT:    vroundss $4, %xmm0, %xmm0, %xmm0 ## EVEX TO VEX Compression encoding: [0xc4,0xe3,0x79,0x0a,0xc0,0x04]
 ; AVX512-NEXT:    retq ## encoding: [0xc3]
 ;
 ; AVX-LABEL: test_rint:
