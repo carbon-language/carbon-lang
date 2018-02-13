@@ -75,9 +75,20 @@ const char &AllSources::operator[](Provenance at) const {
   return origin[at - origin.start];
 }
 
+void AllSources::PushSearchPathDirectory(std::string directory) {
+  // gfortran and ifort append to current path, PGI prepends
+  searchPath_.push_back(directory);
+}
+
+std::string AllSources::PopSearchPathDirectory() {
+  std::string directory{searchPath_.back()};
+  searchPath_.pop_back();
+  return directory;
+}
+
 const SourceFile *AllSources::Open(std::string path, std::stringstream *error) {
   std::unique_ptr<SourceFile> source{std::make_unique<SourceFile>()};
-  if (source->Open(path, error)) {
+  if (source->Open(LocateSourceFile(path, searchPath_), error)) {
     return ownedSourceFiles_.emplace_back(std::move(source)).get();
   }
   return nullptr;

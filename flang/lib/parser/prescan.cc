@@ -426,7 +426,14 @@ bool Prescanner::IncludeLine(const char *p) {
   std::stringstream error;
   Provenance provenance{GetProvenance(start)};
   AllSources *allSources{cooked_->allSources()};
+  const SourceFile *currentFile{allSources->GetSourceFile(provenance)};
+  if (currentFile != nullptr) {
+    allSources->PushSearchPathDirectory(DirectoryName(currentFile->path()));
+  }
   const SourceFile *included{allSources->Open(path, &error)};
+  if (currentFile != nullptr) {
+    allSources->PopSearchPathDirectory();
+  }
   if (included == nullptr) {
     messages_->Put({provenance, error.str()});
     anyFatalErrors_ = true;

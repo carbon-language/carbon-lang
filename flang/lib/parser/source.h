@@ -13,16 +13,21 @@
 namespace Fortran {
 namespace parser {
 
+std::string DirectoryName(std::string path);
+std::string LocateSourceFile(
+    std::string name, const std::vector<std::string> &searchPath);
+
 class SourceFile {
 public:
   SourceFile() {}
   ~SourceFile();
-  bool Open(std::string path, std::stringstream *error);
-  void Close();
   std::string path() const { return path_; }
   const char *content() const { return content_; }
   size_t bytes() const { return bytes_; }
   size_t lines() const { return lineStart_.size(); }
+
+  bool Open(std::string path, std::stringstream *error);
+  void Close();
   std::pair<int, int> FindOffsetLineAndColumn(size_t) const;
 
 private:

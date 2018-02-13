@@ -56,6 +56,8 @@ int main(int argc, char *const argv[]) {
   bool enableOldDebugLines{false};
   int columns{72};
 
+  Fortran::parser::AllSources allSources;
+
   while (!args.empty()) {
     if (args.front().empty()) {
       args.pop_front();
@@ -79,6 +81,11 @@ int main(int argc, char *const argv[]) {
         dumpCookedChars = true;
       } else if (flag == "-ed") {
         enableOldDebugLines = true;
+      } else if (flag == "-I") {
+        allSources.PushSearchPathDirectory(args.front());
+        args.pop_front();
+      } else if (flag.substr(0, 2) == "-I") {
+        allSources.PushSearchPathDirectory(flag.substr(2, std::string::npos));
       } else {
         std::cerr << "unknown flag: '" << flag << "'\n";
         return 1;
@@ -97,7 +104,6 @@ int main(int argc, char *const argv[]) {
     }
   }
 
-  Fortran::parser::AllSources allSources;
   std::stringstream error;
   const auto *sourceFile = allSources.Open(path, &error);
   if (!sourceFile) {
@@ -129,7 +135,6 @@ int main(int argc, char *const argv[]) {
   state.set_strictConformance(standard);
   state.set_columns(columns);
   state.set_enableOldDebugLines(enableOldDebugLines);
-  state.PushContext("source file '"s + path + "'");
   Fortran::parser::UserState ustate;
   state.set_userState(&ustate);
 

@@ -75,6 +75,8 @@ public:
   size_t size() const { return bytes_; }
   const char &operator[](Provenance) const;
 
+  void PushSearchPathDirectory(std::string);
+  std::string PopSearchPathDirectory();
   const SourceFile *Open(std::string path, std::stringstream *error);
 
   ProvenanceRange AddIncludedFile(const SourceFile &, ProvenanceRange);
@@ -122,6 +124,7 @@ private:
   size_t bytes_{0};
   std::map<char, Provenance> compilerInsertionProvenance_;
   std::vector<std::unique_ptr<SourceFile>> ownedSourceFiles_;
+  std::vector<std::string> searchPath_;
 };
 
 class CookedSource {

@@ -5,11 +5,13 @@
 #include <cerrno>
 #include <cstring>
 #include <fcntl.h>
+#include <iostream>  // TODO pmk rm
 #include <memory>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <vector>
 
 // TODO: Port to Windows &c.
 
@@ -36,6 +38,26 @@ static std::vector<size_t> FindLineStarts(const char *source, size_t bytes) {
   return result;
 }
 
+std::string DirectoryName(std::string path) {
+  auto lastSlash = path.rfind("/");
+  return lastSlash == std::string::npos ? path : path.substr(0, lastSlash);
+}
+
+std::string LocateSourceFile(
+    std::string name, const std::vector<std::string> &searchPath) {
+  if (name.empty() || name == "-" || name[0] == '/') {
+    return name;
+  }
+  for (const std::string &dir : searchPath) {
+    std::string path{dir + '/' + name};
+    struct stat statbuf;
+    if (stat(path.c_str(), &statbuf) == 0 && !S_ISDIR(statbuf.st_mode)) {
+      return path;
+    }
+  }
+  return name;
+}
+
 bool SourceFile::Open(std::string path, std::stringstream *error) {
   Close();
   path_ = path;
@@ -48,8 +70,7 @@ bool SourceFile::Open(std::string path, std::stringstream *error) {
     error_path = "'"s + path + "'";
     fileDescriptor_ = open(path.c_str(), O_RDONLY);
     if (fileDescriptor_ < 0) {
-      *error << "could not open '" << error_path
-             << "': " << std::strerror(errno);
+      *error << "could not open " << error_path << ": " << std::strerror(errno);
       return false;
     }
   }
