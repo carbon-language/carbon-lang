@@ -33592,6 +33592,20 @@ static SDValue combineAnd(SDNode *N, SelectionDAG &DAG,
                                 DAG.getBitcast(MVT::v4f32, N->getOperand(1))));
   }
 
+  // Use a 32-bit and+zext if upper bits known zero.
+  if (VT == MVT::i64 && Subtarget.is64Bit() &&
+      !isa<ConstantSDNode>(N->getOperand(1))) {
+    APInt HiMask = APInt::getHighBitsSet(64, 32);
+    if (DAG.MaskedValueIsZero(N->getOperand(1), HiMask) ||
+        DAG.MaskedValueIsZero(N->getOperand(0), HiMask)) {
+      SDLoc dl(N);
+      SDValue LHS = DAG.getNode(ISD::TRUNCATE, dl, MVT::i32, N->getOperand(0));
+      SDValue RHS = DAG.getNode(ISD::TRUNCATE, dl, MVT::i32, N->getOperand(1));
+      return DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i64,
+                         DAG.getNode(ISD::AND, dl, MVT::i32, LHS, RHS));
+    }
+  }
+
   if (DCI.isBeforeLegalizeOps())
     return SDValue();
 
