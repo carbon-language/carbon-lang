@@ -22,7 +22,6 @@
 namespace Fortran {
 namespace parser {
 
-class CookedSource;
 class Prescanner;
 
 // Just a const char pointer with an associated length; does not own the
@@ -171,7 +170,7 @@ public:
   bool set_isDisabled(bool disable);
 
   TokenSequence Apply(
-      const std::vector<TokenSequence> &args, const Prescanner &);
+      const std::vector<TokenSequence> &args, const AllSources &);
 
 private:
   static TokenSequence Tokenize(const std::vector<std::string> &argNames,
@@ -188,30 +187,31 @@ private:
 // Preprocessing state
 class Preprocessor {
 public:
-  explicit Preprocessor(Prescanner &);
+  explicit Preprocessor(AllSources *);
 
   // When the input contains macros to be replaced, the new token sequence
   // is appended to the output and the returned value is true.  When
   // no macro replacement is necessary, the output is unmodified and the
   // return value is false.
-  bool MacroReplacement(const TokenSequence &, TokenSequence *);
+  bool MacroReplacement(
+      const TokenSequence &, const Prescanner &, TokenSequence *);
 
   // Implements a preprocessor directive; returns true when no fatal error.
-  bool Directive(const TokenSequence &);
+  bool Directive(const TokenSequence &, Prescanner *);
 
 private:
   enum class IsElseActive { No, Yes };
   enum class CanDeadElseAppear { No, Yes };
 
-  void Complain(const std::string &);
   CharPointerWithLength SaveTokenAsName(const CharPointerWithLength &);
   bool IsNameDefined(const CharPointerWithLength &);
-  TokenSequence ReplaceMacros(const TokenSequence &);
-  bool SkipDisabledConditionalCode(const std::string &dirName, IsElseActive);
+  TokenSequence ReplaceMacros(const TokenSequence &, const Prescanner &);
+  bool SkipDisabledConditionalCode(
+      const std::string &dirName, IsElseActive, Prescanner *);
   bool IsIfPredicateTrue(
-      const TokenSequence &expr, size_t first, size_t exprTokens);
+      const TokenSequence &expr, size_t first, size_t exprTokens, Prescanner *);
 
-  Prescanner &prescanner_;
+  AllSources *allSources_;
   std::list<std::string> names_;
   std::unordered_map<CharPointerWithLength, Definition> definitions_;
   std::stack<CanDeadElseAppear> ifStack_;

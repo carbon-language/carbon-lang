@@ -60,8 +60,12 @@ void OffsetToProvenanceMappings::RemoveLastBytes(size_t bytes) {
   }
 }
 
-AllSources::AllSources(const SourceFile &initialSourceFile) {
-  AddIncludedFile(initialSourceFile, ProvenanceRange{});
+AllSources::AllSources() {
+  std::string compilerInserts{" ,\"01\n"};
+  ProvenanceRange range{AddCompilerInsertion(compilerInserts)};
+  for (size_t j{0}; j < range.bytes; ++j) {
+    compilerInsertionProvenance_[compilerInserts[j]] = range.start + j;
+  }
 }
 
 const char &AllSources::operator[](Provenance at) const {
@@ -135,6 +139,11 @@ const SourceFile *AllSources::GetSourceFile(Provenance at) const {
       origin.u);
 }
 
+ProvenanceRange AllSources::GetContiguousRangeAround(Provenance at) const {
+  const Origin &origin{MapToOrigin(at)};
+  return {origin.start, origin.size()};
+}
+
 std::string AllSources::GetPath(Provenance at) const {
   const SourceFile *source{GetSourceFile(at)};
   return source ? source->path() : ""s;
@@ -143,6 +152,10 @@ std::string AllSources::GetPath(Provenance at) const {
 int AllSources::GetLineNumber(Provenance at) const {
   const SourceFile *source{GetSourceFile(at)};
   return source ? source->FindOffsetLineAndColumn(at).first : 0;
+}
+
+Provenance AllSources::CompilerInsertionProvenance(char ch) const {
+  return compilerInsertionProvenance_.find(ch)->second;
 }
 
 AllSources::Origin::Origin(size_t s, const SourceFile &source)

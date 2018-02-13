@@ -5,14 +5,13 @@
 // character-level features of the language that can be inefficient to
 // support directly in a backtracking parser.  This phase handles Fortran
 // line continuation, comment removal, card image margins, padding out
-// fixed form character literals on truncated card images, and drives the
-// Fortran source preprocessor.
+// fixed form character literals on truncated card images, file
+// inclusion, and driving the Fortran source preprocessor.
 
 #include "message.h"
 #include "preprocessor.h"
 #include "provenance.h"
 #include "source.h"
-#include <map>
 #include <optional>
 #include <string>
 
@@ -21,10 +20,9 @@ namespace parser {
 
 class Prescanner {
 public:
-  Prescanner(Messages *, AllSources *);
+  Prescanner(Messages *, CookedSource *, Preprocessor *);
 
   Messages *messages() const { return messages_; }
-  bool anyFatalErrors() const { return anyFatalErrors_; }
 
   Prescanner &set_fixedForm(bool yes) {
     inFixedForm_ = yes;
@@ -43,12 +41,12 @@ public:
     return *this;
   }
 
-  AllSources *allSources() const { return allSources_; }
+  CookedSource *cooked() const { return cooked_; }
 
-  CookedSource Prescan();
+  bool Prescan(ProvenanceRange);
   std::optional<TokenSequence> NextTokenizedLine();
   Provenance GetCurrentProvenance() const { return GetProvenance(at_); }
-  Provenance CompilerInsertionProvenance(char ch) const;
+  void Complain(const std::string &message);
 
 private:
   void BeginSourceLine(const char *at) {
@@ -65,7 +63,7 @@ private:
   }
 
   Provenance GetProvenance(const char *sourceChar) const {
-    return startProvenance_ /*TODO pmk rm?*/ + sourceChar - start_;
+    return startProvenance_ + sourceChar - start_;
   }
 
   void EmitChar(TokenSequence *tokens, char ch) {
@@ -97,11 +95,12 @@ private:
   void PayNewlineDebt(CookedSource *);
 
   Messages *messages_;
-  AllSources *allSources_;
+  CookedSource *cooked_;
+  Preprocessor *preprocessor_;
 
   Provenance startProvenance_{0};
-  const char *start_{nullptr};  // beginning of sourceFile_ content
-  const char *limit_{nullptr};  // first address after end of source
+  const char *start_{nullptr};  // beginning of current source file content
+  const char *limit_{nullptr};  // first address after end of current source
   const char *at_{nullptr};  // next character to process; < lineStart_
   int column_{1};  // card image column position of next character
   const char *lineStart_{nullptr};  // next line to process; <= limit_
@@ -117,9 +116,10 @@ private:
   bool enableOldDebugLines_{false};
   bool enableBackslashEscapesInCharLiterals_{true};
   int delimiterNesting_{0};
-  Preprocessor preprocessor_;
-  std::map<char, Provenance> compilerInsertionProvenance_;
-  Provenance newlineProvenance_{0};
+  Provenance newlineProvenance_{
+      cooked_->allSources()->CompilerInsertionProvenance('\n')};
+  Provenance spaceProvenance_{
+      cooked_->allSources()->CompilerInsertionProvenance(' ')};
 };
 }  // namespace parser
 }  // namespace Fortran

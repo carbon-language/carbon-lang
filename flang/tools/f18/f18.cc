@@ -7,6 +7,7 @@
 #include "../../lib/parser/idioms.h"
 #include "../../lib/parser/message.h"
 #include "../../lib/parser/parse-tree.h"
+#include "../../lib/parser/preprocessor.h"
 #include "../../lib/parser/prescan.h"
 #include "../../lib/parser/provenance.h"
 #include "../../lib/parser/source.h"
@@ -104,21 +105,25 @@ int main(int argc, char *const argv[]) {
     return 1;
   }
 
-  Fortran::parser::AllSources allSources{sourceFile};
+  Fortran::parser::AllSources allSources;
+  Fortran::parser::ProvenanceRange range{allSources.AddIncludedFile(
+      sourceFile, Fortran::parser::ProvenanceRange{})};
   Fortran::parser::Messages messages{allSources};
-  Fortran::parser::Prescanner prescanner{&messages, &allSources};
-  Fortran::parser::CookedSource cooked{
-      prescanner.set_fixedForm(fixedForm)
-          .set_enableBackslashEscapesInCharLiterals(backslashEscapes)
-          .set_fixedFormColumnLimit(columns)
-          .set_enableOldDebugLines(enableOldDebugLines)
-          .Prescan()};
+  Fortran::parser::CookedSource cooked{&allSources};
+  Fortran::parser::Preprocessor preprocessor{&allSources};
+  Fortran::parser::Prescanner prescanner{&messages, &cooked, &preprocessor};
+  bool prescanOk{prescanner.set_fixedForm(fixedForm)
+                     .set_enableBackslashEscapesInCharLiterals(backslashEscapes)
+                     .set_fixedFormColumnLimit(columns)
+                     .set_enableOldDebugLines(enableOldDebugLines)
+                     .Prescan(range)};
   messages.Emit(std::cerr);
-  if (prescanner.anyFatalErrors()) {
+  if (!prescanOk) {
     return 1;
   }
   columns = std::numeric_limits<int>::max();
 
+  cooked.Marshal();
   Fortran::parser::ParseState state{cooked};
   state.set_inFixedForm(fixedForm);
   state.set_enableBackslashEscapesInCharLiterals(backslashEscapes);

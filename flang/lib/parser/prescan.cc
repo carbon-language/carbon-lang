@@ -9,22 +9,22 @@
 namespace Fortran {
 namespace parser {
 
-Prescanner::Prescanner(Messages *messages, AllSources *allSources)
-  : messages_{messages}, allSources_{allSources}, start_{&(*allSources)[0]},
-    limit_{start_ + allSources->size()}, preprocessor_{*this} {
-  std::string compilerInserts{" ,\"01\n"};
-  ProvenanceRange range{allSources->AddCompilerInsertion(compilerInserts)};
-  for (size_t j{0}; j < compilerInserts.size(); ++j) {
-    compilerInsertionProvenance_[compilerInserts[j]] = range.start + j;
-  }
-  newlineProvenance_ = CompilerInsertionProvenance('\n');
-}
+Prescanner::Prescanner(
+    Messages *messages, CookedSource *cooked, Preprocessor *preprocessor)
+  : messages_{messages}, cooked_{cooked}, preprocessor_{preprocessor} {}
 
-CookedSource Prescanner::Prescan() {
-  lineStart_ = start_;
+bool Prescanner::Prescan(ProvenanceRange range) {
+  startProvenance_ = range.start;
+  ProvenanceRange around{
+      cooked_->allSources()->GetContiguousRangeAround(startProvenance_)};
+  CHECK(startProvenance_ + range.bytes <= around.start + around.bytes);
+  const SourceFile *source{
+      cooked_->allSources()->GetSourceFile(startProvenance_)};
+  size_t offset{startProvenance_ - around.start};
+  lineStart_ = start_ = source->content() + offset;
+  limit_ = start_ + range.bytes;
   BeginSourceLine(start_);
   TokenSequence tokens, preprocessed;
-  CookedSource cooked{allSources_};
   while (lineStart_ < limit_) {
     if (CommentLinesAndPreprocessorDirectives() && lineStart_ >= limit_) {
       break;
@@ -37,7 +37,7 @@ CookedSource Prescanner::Prescan() {
     }
     while (NextToken(&tokens)) {
     }
-    if (preprocessor_.MacroReplacement(tokens, &preprocessed)) {
+    if (preprocessor_->MacroReplacement(tokens, *this, &preprocessed)) {
       preprocessed.PutNextTokenChar('\n', newlineProvenance_);
       preprocessed.CloseToken();
       if (IsFixedFormCommentLine(preprocessed.data()) ||
@@ -45,19 +45,18 @@ CookedSource Prescanner::Prescan() {
         ++newlineDebt_;
       } else {
         preprocessed.pop_back();  // clip the newline added above
-        preprocessed.EmitWithCaseConversion(&cooked);
+        preprocessed.EmitWithCaseConversion(cooked_);
       }
       preprocessed.clear();
     } else {
-      tokens.EmitWithCaseConversion(&cooked);
+      tokens.EmitWithCaseConversion(cooked_);
     }
     tokens.clear();
-    cooked.Put('\n', newlineProvenance_);
-    PayNewlineDebt(&cooked);
+    cooked_->Put('\n', newlineProvenance_);
+    PayNewlineDebt(cooked_);
   }
-  PayNewlineDebt(&cooked);
-  cooked.Marshal();
-  return cooked;
+  PayNewlineDebt(cooked_);
+  return !anyFatalErrors_;
 }
 
 std::optional<TokenSequence> Prescanner::NextTokenizedLine() {
@@ -76,8 +75,8 @@ std::optional<TokenSequence> Prescanner::NextTokenizedLine() {
   return {std::move(tokens)};
 }
 
-Provenance Prescanner::CompilerInsertionProvenance(char ch) const {
-  return compilerInsertionProvenance_.find(ch)->second;
+void Prescanner::Complain(const std::string &message) {
+  messages_->Put({GetCurrentProvenance(), message});
 }
 
 void Prescanner::NextLine() {
@@ -110,16 +109,15 @@ void Prescanner::LabelField(TokenSequence *token) {
     token->CloseToken();
   }
   if (outCol < 7) {
-    Provenance provenance{CompilerInsertionProvenance(' ')};
     for (; outCol < 7; ++outCol) {
-      token->PutNextTokenChar(' ', provenance);
+      token->PutNextTokenChar(' ', spaceProvenance_);
     }
     token->CloseToken();
   }
 }
 
 void Prescanner::NextChar() {
-  CHECK(*at_ != '\n');  // TODO pmk
+  CHECK(*at_ != '\n');
   ++at_;
   ++column_;
   if (inPreprocessorDirective_) {
@@ -168,7 +166,7 @@ static inline bool IsNameChar(char ch) {
 }
 
 bool Prescanner::NextToken(TokenSequence *tokens) {
-  CHECK(at_ >= start_ && at_ < limit_);  // TODO pmk rm?
+  CHECK(at_ >= start_ && at_ < limit_);
   if (inFixedForm_) {
     SkipSpaces();
   } else if (*at_ == ' ' || *at_ == '\t') {
@@ -206,7 +204,7 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
       inCharLiteral_ = true;
       while (n-- > 0) {
         if (PadOutCharacterLiteral()) {
-          tokens->PutNextTokenChar(' ', compilerInsertionProvenance_[' ']);
+          tokens->PutNextTokenChar(' ', spaceProvenance_);
         } else {
           if (*at_ == '\n') {
             break;  // TODO error
@@ -297,12 +295,12 @@ void Prescanner::QuotedCharacterLiteral(TokenSequence *tokens) {
   do {
     EmitCharAndAdvance(tokens, *at_);
     while (PadOutCharacterLiteral()) {
-      tokens->PutNextTokenChar(' ', compilerInsertionProvenance_[' ']);
+      tokens->PutNextTokenChar(' ', spaceProvenance_);
     }
     if (*at_ == '\\' && enableBackslashEscapesInCharLiterals_) {
       EmitCharAndAdvance(tokens, '\\');
       while (PadOutCharacterLiteral()) {
-        tokens->PutNextTokenChar(' ', compilerInsertionProvenance_[' ']);
+        tokens->PutNextTokenChar(' ', spaceProvenance_);
       }
     } else if (*at_ == quote) {
       // A doubled quote mark becomes a single instance of the quote character
@@ -408,7 +406,7 @@ bool Prescanner::CommentLinesAndPreprocessorDirectives() {
       NextLine();
     } else if (IsPreprocessorDirectiveLine(lineStart_)) {
       if (std::optional<TokenSequence> tokens{NextTokenizedLine()}) {
-        anyFatalErrors_ |= !preprocessor_.Directive(*tokens);
+        anyFatalErrors_ |= !preprocessor_->Directive(*tokens, this);
       }
     } else {
       break;

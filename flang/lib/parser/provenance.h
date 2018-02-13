@@ -2,6 +2,7 @@
 #define FORTRAN_PROVENANCE_H_
 #include "char-buffer.h"
 #include "source.h"
+#include <map>
 #include <ostream>
 #include <string>
 #include <utility>
@@ -32,6 +33,11 @@ struct ProvenanceRange {
   ProvenanceRange(ProvenanceRange &&) = default;
   ProvenanceRange &operator=(const ProvenanceRange &) = default;
   ProvenanceRange &operator=(ProvenanceRange &&) = default;
+
+  bool operator==(const ProvenanceRange &that) const {
+    return start == that.start && bytes == that.bytes;
+  }
+
   Provenance start{0};
   size_t bytes{0};
 };
@@ -59,7 +65,7 @@ private:
 
 class AllSources {
 public:
-  explicit AllSources(const SourceFile &initialSourceFile);
+  AllSources();
 
   size_t size() const { return bytes_; }
   const char &operator[](Provenance) const;
@@ -71,8 +77,10 @@ public:
 
   void Identify(std::ostream &, Provenance, const std::string &prefix) const;
   const SourceFile *GetSourceFile(Provenance) const;
+  ProvenanceRange GetContiguousRangeAround(Provenance) const;
   std::string GetPath(Provenance) const;  // __FILE__
   int GetLineNumber(Provenance) const;  // __LINE__
+  Provenance CompilerInsertionProvenance(char ch) const;
 
 private:
   struct Inclusion {
@@ -105,6 +113,7 @@ private:
 
   std::vector<Origin> origin_;
   size_t bytes_{0};
+  std::map<char, Provenance> compilerInsertionProvenance_;
 };
 
 class CookedSource {
