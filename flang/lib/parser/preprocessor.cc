@@ -108,7 +108,7 @@ void TokenSequence::EmitWithCaseConversion(CookedSource *cooked) const {
       j = nextStart;
     }
   }
-  cooked->Put(provenances_);
+  cooked->PutProvenanceMappings(provenances_);
 }
 
 std::string TokenSequence::ToString() const {

@@ -65,7 +65,7 @@ private:
   }
 
   Provenance GetProvenance(const char *sourceChar) const {
-    return startProvenance_ + sourceChar - start_;
+    return startProvenance_ /*TODO pmk rm?*/ + sourceChar - start_;
   }
 
   void EmitChar(TokenSequence *tokens, char ch) {
@@ -99,7 +99,7 @@ private:
   Messages *messages_;
   AllSources *allSources_;
 
-  Provenance startProvenance_;
+  Provenance startProvenance_{0};
   const char *start_{nullptr};  // beginning of sourceFile_ content
   const char *limit_{nullptr};  // first address after end of source
   const char *at_{nullptr};  // next character to process; < lineStart_
@@ -119,6 +119,7 @@ private:
   int delimiterNesting_{0};
   Preprocessor preprocessor_;
   std::map<char, Provenance> compilerInsertionProvenance_;
+  Provenance newlineProvenance_{0};
 };
 }  // namespace parser
 }  // namespace Fortran

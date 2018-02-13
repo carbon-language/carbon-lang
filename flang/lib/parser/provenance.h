@@ -126,7 +126,9 @@ public:
     buffer_.Put(&ch, 1);
     provenanceMap_.Put(ProvenanceRange{p, 1});
   }
-  void Put(const OffsetToProvenanceMappings &pm) { provenanceMap_.Put(pm); }
+  void PutProvenanceMappings(const OffsetToProvenanceMappings &pm) {
+    provenanceMap_.Put(pm);
+  }
   void Marshal();  // marshalls all text into one contiguous block
 
 private:

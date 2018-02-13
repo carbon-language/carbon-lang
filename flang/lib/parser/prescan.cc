@@ -10,18 +10,17 @@ namespace Fortran {
 namespace parser {
 
 Prescanner::Prescanner(Messages *messages, AllSources *allSources)
-  : messages_{messages}, allSources_{allSources}, preprocessor_{*this} {
-  std::string compilerInserts{" ,\"01"};
+  : messages_{messages}, allSources_{allSources}, start_{&(*allSources)[0]},
+    limit_{start_ + allSources->size()}, preprocessor_{*this} {
+  std::string compilerInserts{" ,\"01\n"};
   ProvenanceRange range{allSources->AddCompilerInsertion(compilerInserts)};
   for (size_t j{0}; j < compilerInserts.size(); ++j) {
     compilerInsertionProvenance_[compilerInserts[j]] = range.start + j;
   }
+  newlineProvenance_ = CompilerInsertionProvenance('\n');
 }
 
 CookedSource Prescanner::Prescan() {
-  startProvenance_ = 0;
-  start_ = &(*allSources_)[0];
-  limit_ = start_ + allSources_->size();
   lineStart_ = start_;
   BeginSourceLine(start_);
   TokenSequence tokens, preprocessed;
@@ -39,7 +38,7 @@ CookedSource Prescanner::Prescan() {
     while (NextToken(&tokens)) {
     }
     if (preprocessor_.MacroReplacement(tokens, &preprocessed)) {
-      EmitChar(&preprocessed, '\n');
+      preprocessed.PutNextTokenChar('\n', newlineProvenance_);
       preprocessed.CloseToken();
       if (IsFixedFormCommentLine(preprocessed.data()) ||
           IsFreeFormComment(preprocessed.data())) {
@@ -53,7 +52,7 @@ CookedSource Prescanner::Prescan() {
       tokens.EmitWithCaseConversion(&cooked);
     }
     tokens.clear();
-    cooked.Put('\n', 0);
+    cooked.Put('\n', newlineProvenance_);
     PayNewlineDebt(&cooked);
   }
   PayNewlineDebt(&cooked);
@@ -120,7 +119,7 @@ void Prescanner::LabelField(TokenSequence *token) {
 }
 
 void Prescanner::NextChar() {
-  // CHECK(*at_ != '\n');
+  CHECK(*at_ != '\n');  // TODO pmk
   ++at_;
   ++column_;
   if (inPreprocessorDirective_) {
@@ -169,6 +168,7 @@ static inline bool IsNameChar(char ch) {
 }
 
 bool Prescanner::NextToken(TokenSequence *tokens) {
+  CHECK(at_ > start_ && at_ < limit_);  // TODO pmk
   if (inFixedForm_) {
     SkipSpaces();
   } else if (*at_ == ' ' || *at_ == '\t') {
@@ -500,7 +500,7 @@ bool Prescanner::FreeFormContinuation() {
 
 void Prescanner::PayNewlineDebt(CookedSource *cooked) {
   for (; newlineDebt_ > 0; --newlineDebt_) {
-    cooked->Put('\n', 0);
+    cooked->Put('\n', newlineProvenance_);
   }
 }
 }  // namespace parser
