@@ -296,10 +296,10 @@ static void splitCallSite(
       CallPN->addIncoming(NewCI, SplitBlock);
   }
 
-  auto OriginalBegin = TailBB->begin();
+  auto *OriginalBegin = &*TailBB->begin();
   // Replace users of the original call with a PHI mering call-sites split.
   if (CallPN) {
-    CallPN->insertBefore(&*OriginalBegin);
+    CallPN->insertBefore(OriginalBegin);
     Instr->replaceAllUsesWith(CallPN);
   }
 
@@ -327,7 +327,7 @@ static void splitCallSite(
     }
     CurrentI->eraseFromParent();
     // We are done once we handled the first original instruction in TailBB.
-    if (CurrentI == &*OriginalBegin)
+    if (CurrentI == OriginalBegin)
       break;
   }
   NumCallSiteSplit++;
