@@ -411,18 +411,18 @@ public:
 
   /// Add instruction at the end of this basic block.
   /// Returns the index of the instruction in the Instructions vector of the BB.
-  uint32_t addInstruction(MCInst &&Inst) {
+  iterator addInstruction(MCInst &&Inst) {
     adjustNumPseudos(Inst, 1);
     Instructions.emplace_back(Inst);
-    return Instructions.size() - 1;
+    return std::prev(Instructions.end());
   }
 
   /// Add instruction at the end of this basic block.
   /// Returns the index of the instruction in the Instructions vector of the BB.
-  uint32_t addInstruction(const MCInst &Inst) {
+  iterator addInstruction(const MCInst &Inst) {
     adjustNumPseudos(Inst, 1);
     Instructions.push_back(Inst);
-    return Instructions.size() - 1;
+    return std::prev(Instructions.end());
   }
 
   /// Add a range of instructions to the end of this basic block.

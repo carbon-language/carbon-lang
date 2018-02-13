@@ -189,12 +189,22 @@ using IndirectCallSiteProfile = SmallVector<IndirectCallProfile, 4>;
 
 inline raw_ostream &operator<<(raw_ostream &OS,
                                const bolt::IndirectCallSiteProfile &ICSP) {
-  const char *Sep = "";
+  std::string TempString;
+  raw_string_ostream SS(TempString);
+
+  const char *Sep = "\n        ";
+  uint64_t TotalCount = 0;
+  uint64_t TotalMispreds = 0;
   for (auto &CSP : ICSP) {
-    OS << Sep << "{ " << (CSP.IsFunction ? CSP.Name : "<unknown>") << ": "
+    SS << Sep << "{ " << (CSP.IsFunction ? CSP.Name : "<unknown>") << ": "
        << CSP.Count << " (" << CSP.Mispreds << " misses) }";
-    Sep = ", ";
+    Sep = ",\n        ";
+    TotalCount += CSP.Count;
+    TotalMispreds += CSP.Mispreds;
   }
+  SS.flush();
+
+  OS << TotalCount << " (" << TotalMispreds << " misses) :" << TempString;
   return OS;
 }
 

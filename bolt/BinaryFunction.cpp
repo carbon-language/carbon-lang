@@ -470,7 +470,11 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
 
     uint64_t BBExecCount = BB->getExecutionCount();
     if (hasValidProfile()) {
-      OS << "  Exec Count : " << BBExecCount << '\n';
+      OS << "  Exec Count : ";
+      if (BB->getExecutionCount() != BinaryBasicBlock::COUNT_NO_PROFILE)
+        OS << BBExecCount << '\n';
+      else
+        OS << "<unknown>\n";
     }
     if (BB->getCFIState() >= 0) {
       OS << "  CFI State : " << BB->getCFIState() << '\n';
@@ -1492,7 +1496,7 @@ bool BinaryFunction::buildCFG() {
   BinaryBasicBlock *InsertBB{nullptr};
   BinaryBasicBlock *PrevBB{nullptr};
   bool IsLastInstrNop{false};
-  const MCInst *PrevInstr{nullptr};
+  uint64_t LastInstrOffset{0};
 
   auto addCFIPlaceholders =
       [this](uint64_t CFIOffset, BinaryBasicBlock *InsertBB) {
@@ -1502,6 +1506,16 @@ bool BinaryFunction::buildCFG() {
           addCFIPseudo(InsertBB, InsertBB->end(), FI->second);
         }
       };
+
+  // For profiling purposes we need to save the offset of the last instruction
+  // in the basic block. But in certain cases we don't if the instruction was
+  // the last one, and we have to go back and update its offset.
+  auto updateOffset = [&](uint64_t Offset) {
+    assert(PrevBB && PrevBB != InsertBB && "invalid previous block");
+    auto *PrevInstr = PrevBB->getLastNonPseudoInstr();
+    if (PrevInstr && !MIA->hasAnnotation(*PrevInstr, "Offset"))
+      MIA->addAnnotation(BC.Ctx.get(), *PrevInstr, "Offset", Offset);
+  };
 
   for (auto I = Instructions.begin(), E = Instructions.end(); I != E; ++I) {
     const auto Offset = I->first;
@@ -1515,6 +1529,8 @@ bool BinaryFunction::buildCFG() {
                                /* DeriveAlignment = */ IsLastInstrNop);
       if (hasEntryPointAtOffset(Offset))
         InsertBB->setEntryPoint();
+      if (PrevBB)
+        updateOffset(LastInstrOffset);
     }
     // Ignore nops. We use nops to derive alignment of the next basic block.
     // It will not always work, as some blocks are naturally aligned, but
@@ -1528,6 +1544,7 @@ bool BinaryFunction::buildCFG() {
       // we see an unconditional branch following a conditional one. The latter
       // should not be a conditional tail call.
       assert(PrevBB && "no previous basic block for a fall through");
+      auto *PrevInstr = PrevBB->getLastNonPseudoInstr();
       assert(PrevInstr && "no previous instruction for a fall through");
       if (MIA->isUnconditionalBranch(Instr) &&
           !MIA->isUnconditionalBranch(*PrevInstr) &&
@@ -1538,6 +1555,7 @@ bool BinaryFunction::buildCFG() {
         InsertBB = addBasicBlock(Offset,
                                  BC.Ctx->createTempSymbol("FT", true),
                                  /* DeriveAlignment = */ IsLastInstrNop);
+        updateOffset(LastInstrOffset);
       }
     }
     if (Offset == 0) {
@@ -1545,9 +1563,10 @@ bool BinaryFunction::buildCFG() {
       addCFIPlaceholders(0, InsertBB);
     }
 
-    IsLastInstrNop = false;
-    InsertBB->addInstruction(Instr);
-    PrevInstr = &Instr;
+    const auto IsBlockEnd = MIA->isTerminator(Instr);
+    IsLastInstrNop = MIA->isNoop(Instr);
+    LastInstrOffset = Offset;
+    InsertBB->addInstruction(std::move(Instr));
 
     // Add associated CFI instrs. We always add the CFI instruction that is
     // located immediately after this instruction, since the next CFI
@@ -1558,9 +1577,11 @@ bool BinaryFunction::buildCFG() {
       CFIOffset = NextInstr->first;
     else
       CFIOffset = getSize();
+
+    // Note: this potentially invalidates instruction pointers/iterators.
     addCFIPlaceholders(CFIOffset, InsertBB);
 
-    if (MIA->isTerminator(Instr)) {
+    if (IsBlockEnd) {
       PrevBB = InsertBB;
       InsertBB = nullptr;
     }
@@ -1769,10 +1790,6 @@ void BinaryFunction::addEntryPoint(uint64_t Address) {
 }
 
 void BinaryFunction::removeConditionalTailCalls() {
-  // Don't touch code if non-simple ARM
-  if (BC.TheTriple->getArch() == llvm::Triple::aarch64 && !isSimple())
-    return;
-
   // Blocks to be appended at the end.
   std::vector<std::unique_ptr<BinaryBasicBlock>> NewBlocks;
 
@@ -1824,29 +1841,14 @@ void BinaryFunction::removeConditionalTailCalls() {
 
     BC.MIA->convertTailCallToJmp(*CTCInstr);
 
-    // In attempt to preserve the direction of the original conditional jump,
-    // we will either create an unconditional jump in a separate basic block
-    // at the end of the function, or reverse a condition of the jump
-    // and create a fall-through block right after the original tail call.
-    if (getAddress() >= *TargetAddressOrNone) {
-      // Insert the basic block right after the current one.
-      std::vector<std::unique_ptr<BinaryBasicBlock>> TCBB;
-      TCBB.emplace_back(std::move(TailCallBB));
-      BBI = insertBasicBlocks(BBI,
-                              std::move(TCBB),
-                              /* UpdateLayout */ true,
-                              /* UpdateCFIState */ false);
-      BC.MIA->reverseBranchCondition(
-          *CTCInstr, (*std::next(BBI)).getLabel(), BC.Ctx.get());
+    BC.MIA->replaceBranchTarget(*CTCInstr, TailCallBB->getLabel(),
+                                BC.Ctx.get());
 
-    } else {
-      BC.MIA->replaceBranchTarget(*CTCInstr, TailCallBB->getLabel(),
-                                  BC.Ctx.get());
-      // Add basic block to the list that will be added to the end.
-      NewBlocks.emplace_back(std::move(TailCallBB));
-      // Swap edges as the TailCallBB corresponds to the taken branch.
-      BB.swapConditionalSuccessors();
-    }
+    // Add basic block to the list that will be added to the end.
+    NewBlocks.emplace_back(std::move(TailCallBB));
+
+    // Swap edges as the TailCallBB corresponds to the taken branch.
+    BB.swapConditionalSuccessors();
 
     // This branch is no longer a conditional tail call.
     BC.MIA->unsetConditionalTailCall(*CTCInstr);

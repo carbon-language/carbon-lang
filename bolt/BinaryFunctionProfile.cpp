@@ -69,14 +69,22 @@ FixFuncCounts("fix-func-counts",
   cl::Hidden,
   cl::cat(BoltOptCategory));
 
+static cl::opt<bool>
+InferFallThroughs("infer-fall-throughs",
+  cl::desc("infer execution count for fall-through blocks"),
+  cl::init(true),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
 } // namespace opts
 
 namespace llvm {
 namespace bolt {
 
 bool BinaryFunction::recordTrace(
-    const LBREntry &First,
-    const LBREntry &Second,
+    const LBREntry &FirstLBR,
+    const LBREntry &SecondLBR,
     uint64_t Count,
     SmallVector<std::pair<uint64_t, uint64_t>, 16> *Branches) {
   if (!isSimple())
@@ -85,8 +93,8 @@ bool BinaryFunction::recordTrace(
   assert(CurrentState == State::CFG && "can only record traces in CFG state");
 
   // Offsets of the trace within this function.
-  const auto From = First.To - getAddress();
-  const auto To = Second.From - getAddress();
+  const auto From = FirstLBR.To - getAddress();
+  const auto To = SecondLBR.From - getAddress();
 
   if (From > To)
     return false;
@@ -97,47 +105,27 @@ bool BinaryFunction::recordTrace(
   if (!FromBB || !ToBB)
     return false;
 
+  // Adjust FromBB if the first LBR is a return from the last instruction in
+  // the previous block (that instruction should be a call).
+  if (From == FromBB->getOffset() && !containsAddress(FirstLBR.From) &&
+      !FromBB->isEntryPoint() && !FromBB->isLandingPad()) {
+    auto *PrevBB = BasicBlocksLayout[FromBB->getIndex() - 1];
+    if (PrevBB->getSuccessor(FromBB->getLabel())) {
+      const auto *Instr = PrevBB->getLastNonPseudoInstr();
+      if (Instr && BC.MIA->isCall(*Instr)) {
+        FromBB = PrevBB;
+      } else {
+        DEBUG(dbgs() << "invalid incoming LBR (no call): " << FirstLBR << '\n');
+      }
+    } else {
+      DEBUG(dbgs() << "invalid incoming LBR: " << FirstLBR << '\n');
+    }
+  }
+
   // Fill out information for fall-through edges. The From and To could be
   // within the same basic block, e.g. when two call instructions are in the
   // same block. In this case we skip the processing.
   if (FromBB == ToBB) {
-    if (opts::CompatMode)
-      return true;
-
-    // If the previous block ended with a call, the destination of a return
-    // would be in ToBB basic block. And if the ToBB starts with a control
-    // transfer instruction, we will have a 0-length trace that we have to
-    // account for as a fall-through edge.
-    if (To == ToBB->getOffset()) {
-      // External entry point.
-      if (ToBB->isEntryPoint() || ToBB->isLandingPad())
-        return true;
-
-      // Check that the origin LBR of a trace starts in another function.
-      // Otherwise it's an internal branch that was accounted for.
-      if (containsAddress(First.From))
-        return true;
-
-      auto *PrevBB = BasicBlocksLayout[ToBB->getIndex() - 1];
-
-      // This could be a bad trace.
-      if (!PrevBB->getSuccessor(ToBB->getLabel())) {
-        DEBUG(dbgs() << "invalid LBR sequence:\n"
-                     << "  " << First << '\n'
-                     << "  " << Second << '\n');
-        return false;
-      }
-
-      auto &BI = PrevBB->getBranchInfo(*ToBB);
-      BI.Count += Count;
-      if (Branches) {
-        const auto *Instr = PrevBB->getLastNonPseudoInstr();
-        const auto Offset =
-          BC.MIA->getAnnotationWithDefault<uint64_t>(*Instr, "Offset");
-        Branches->push_back(std::make_pair(Offset, ToBB->getOffset()));
-      }
-    }
-
     return true;
   }
 
@@ -151,8 +139,8 @@ bool BinaryFunction::recordTrace(
     // Check for bad LBRs.
     if (!BB->getSuccessor(NextBB->getLabel())) {
       DEBUG(dbgs() << "no fall-through for the trace:\n"
-                   << "  " << First << '\n'
-                   << "  " << Second << '\n');
+                   << "  " << FirstLBR << '\n'
+                   << "  " << SecondLBR << '\n');
       return false;
     }
 
@@ -166,12 +154,13 @@ bool BinaryFunction::recordTrace(
 
       if (Branches) {
         const auto *Instr = BB->getLastNonPseudoInstr();
-        // Note: real offset for conditional jump instruction shouldn't be 0.
-        const auto Offset =
-            BC.MIA->getAnnotationWithDefault<uint64_t>(*Instr, "Offset");
-        if (Offset) {
-          Branches->push_back(std::make_pair(Offset, NextBB->getOffset()));
+        uint64_t Offset{0};
+        if (Instr) {
+          Offset = BC.MIA->getAnnotationWithDefault<uint64_t>(*Instr, "Offset");
+        } else {
+          Offset = BB->getOffset();
         }
+        Branches->emplace_back(std::make_pair(Offset, NextBB->getOffset()));
       }
     }
 
@@ -374,7 +363,8 @@ void BinaryFunction::postProcessProfile() {
     }
   }
 
-  inferFallThroughCounts();
+  if (opts::InferFallThroughs)
+    inferFallThroughCounts();
 
   // Update profile information for jump tables based on CFG branch data.
   for (auto *BB : BasicBlocks) {
@@ -421,11 +411,11 @@ void BinaryFunction::postProcessProfile() {
 }
 
 Optional<SmallVector<std::pair<uint64_t, uint64_t>, 16>>
-BinaryFunction::getFallthroughsInTrace(const LBREntry &First,
-                                       const LBREntry &Second) {
+BinaryFunction::getFallthroughsInTrace(const LBREntry &FirstLBR,
+                                       const LBREntry &SecondLBR) {
   SmallVector<std::pair<uint64_t, uint64_t>, 16> Res;
 
-  if (!recordTrace(First, Second, 1, &Res))
+  if (!recordTrace(FirstLBR, SecondLBR, 1, &Res))
     return NoneType();
 
   return Res;

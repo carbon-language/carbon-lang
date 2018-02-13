@@ -161,7 +161,9 @@ ProfileReader::parseFunctionProfile(BinaryFunction &BF,
         continue;
       }
 
-      BB.setSuccessorBranchInfo(SuccessorBB, YamlSI.Count, YamlSI.Mispreds);
+      auto &BI = BB.getBranchInfo(SuccessorBB);
+      BI.Count += YamlSI.Count;
+      BI.MispredictedCount += YamlSI.Mispreds;
     }
   }
 
