@@ -361,6 +361,8 @@ class RelocationBaseSection : public SyntheticSection {
 public:
   RelocationBaseSection(StringRef Name, uint32_t Type, int32_t DynamicTag,
                         int32_t SizeDynamicTag);
+  void addReloc(uint32_t DynType, InputSectionBase *IS, uint64_t OffsetInSec,
+                Symbol *Sym);
   void addReloc(uint32_t DynType, InputSectionBase *InputSec,
                 uint64_t OffsetInSec, bool UseSymVA, Symbol *Sym,
                 int64_t Addend, RelExpr Expr, RelType Type);
