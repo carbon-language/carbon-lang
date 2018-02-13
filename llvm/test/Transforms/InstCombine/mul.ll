@@ -158,8 +158,8 @@ define i32 @signbit_mul_commute_extra_use(i32 %a, i32 %b) {
 
 define <2 x i32> @signbit_mul_vec(<2 x i32> %a, <2 x i32> %b) {
 ; CHECK-LABEL: @signbit_mul_vec(
-; CHECK-NEXT:    [[D:%.*]] = lshr <2 x i32> [[A:%.*]], <i32 31, i32 31>
-; CHECK-NEXT:    [[E:%.*]] = mul nuw <2 x i32> [[D]], [[B:%.*]]
+; CHECK-NEXT:    [[TMP1:%.*]] = ashr <2 x i32> [[A:%.*]], <i32 31, i32 31>
+; CHECK-NEXT:    [[E:%.*]] = and <2 x i32> [[TMP1]], [[B:%.*]]
 ; CHECK-NEXT:    ret <2 x i32> [[E]]
 ;
   %d = lshr <2 x i32> %a, <i32 31, i32 31>
@@ -169,8 +169,8 @@ define <2 x i32> @signbit_mul_vec(<2 x i32> %a, <2 x i32> %b) {
 
 define <2 x i32> @signbit_mul_vec_commute(<2 x i32> %a, <2 x i32> %b) {
 ; CHECK-LABEL: @signbit_mul_vec_commute(
-; CHECK-NEXT:    [[D:%.*]] = lshr <2 x i32> [[A:%.*]], <i32 31, i32 31>
-; CHECK-NEXT:    [[E:%.*]] = mul nuw <2 x i32> [[D]], [[B:%.*]]
+; CHECK-NEXT:    [[TMP1:%.*]] = ashr <2 x i32> [[A:%.*]], <i32 31, i32 31>
+; CHECK-NEXT:    [[E:%.*]] = and <2 x i32> [[TMP1]], [[B:%.*]]
 ; CHECK-NEXT:    ret <2 x i32> [[E]]
 ;
   %d = lshr <2 x i32> %a, <i32 31, i32 31>
