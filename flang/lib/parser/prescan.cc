@@ -168,7 +168,7 @@ static inline bool IsNameChar(char ch) {
 }
 
 bool Prescanner::NextToken(TokenSequence *tokens) {
-  CHECK(at_ > start_ && at_ < limit_);  // TODO pmk
+  CHECK(at_ >= start_ && at_ < limit_);  // TODO pmk rm?
   if (inFixedForm_) {
     SkipSpaces();
   } else if (*at_ == ' ' || *at_ == '\t') {
