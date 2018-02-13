@@ -38,6 +38,9 @@ define i32 @neg(i32 %i) {
   ret i32 %tmp
 }
 
+; Use the sign-bit as a mask:
+; (zext (A < 0)) * B --> (A >> 31) & B
+
 define i32 @test10(i32 %a, i32 %b) {
 ; CHECK-LABEL: @test10(
 ; CHECK-NEXT:    [[TMP1:%.*]] = ashr i32 [[A:%.*]], 31
@@ -46,7 +49,6 @@ define i32 @test10(i32 %a, i32 %b) {
 ;
   %c = icmp slt i32 %a, 0
   %d = zext i1 %c to i32
-  ; e = b & (a >> 31)
   %e = mul i32 %d, %b
   ret i32 %e
 }
@@ -59,20 +61,24 @@ define i32 @test11(i32 %a, i32 %b) {
 ;
   %c = icmp sle i32 %a, -1
   %d = zext i1 %c to i32
-  ; e = b & (a >> 31)
   %e = mul i32 %d, %b
   ret i32 %e
 }
 
+declare void @use32(i32)
+
 define i32 @test12(i32 %a, i32 %b) {
 ; CHECK-LABEL: @test12(
-; CHECK-NEXT:    [[TMP1:%.*]] = ashr i32 [[A:%.*]], 31
+; CHECK-NEXT:    [[A_LOBIT:%.*]] = lshr i32 [[A:%.*]], 31
+; CHECK-NEXT:    [[TMP1:%.*]] = ashr i32 [[A]], 31
 ; CHECK-NEXT:    [[E:%.*]] = and i32 [[TMP1]], [[B:%.*]]
+; CHECK-NEXT:    call void @use32(i32 [[A_LOBIT]])
 ; CHECK-NEXT:    ret i32 [[E]]
 ;
   %c = icmp ugt i32 %a, 2147483647
   %d = zext i1 %c to i32
   %e = mul i32 %d, %b
+  call void @use32(i32 %d)
   ret i32 %e
 }
 
@@ -121,16 +127,55 @@ define <2 x i32> @mul_bool_vec_commute(<2 x i32> %x, <2 x i1> %y) {
   ret <2 x i32> %m
 }
 
-; X * Y (when Y is 0 or 1) --> x & (0-Y)
-define i32 @test17(i32 %a, i32 %b) {
-; CHECK-LABEL: @test17(
+; (A >>u 31) * B --> (A >>s 31) & B
+
+define i32 @signbit_mul(i32 %a, i32 %b) {
+; CHECK-LABEL: @signbit_mul(
 ; CHECK-NEXT:    [[TMP1:%.*]] = ashr i32 [[A:%.*]], 31
 ; CHECK-NEXT:    [[E:%.*]] = and i32 [[TMP1]], [[B:%.*]]
 ; CHECK-NEXT:    ret i32 [[E]]
 ;
-  %a.lobit = lshr i32 %a, 31
-  %e = mul i32 %a.lobit, %b
+  %d = lshr i32 %a, 31
+  %e = mul i32 %d, %b
   ret i32 %e
+}
+
+define i32 @signbit_mul_commute_extra_use(i32 %a, i32 %b) {
+; CHECK-LABEL: @signbit_mul_commute_extra_use(
+; CHECK-NEXT:    [[D:%.*]] = lshr i32 [[A:%.*]], 31
+; CHECK-NEXT:    [[TMP1:%.*]] = ashr i32 [[A]], 31
+; CHECK-NEXT:    [[E:%.*]] = and i32 [[TMP1]], [[B:%.*]]
+; CHECK-NEXT:    call void @use32(i32 [[D]])
+; CHECK-NEXT:    ret i32 [[E]]
+;
+  %d = lshr i32 %a, 31
+  %e = mul i32 %b, %d
+  call void @use32(i32 %d)
+  ret i32 %e
+}
+
+; (A >>u 31)) * B --> (A >>s 31) & B
+
+define <2 x i32> @signbit_mul_vec(<2 x i32> %a, <2 x i32> %b) {
+; CHECK-LABEL: @signbit_mul_vec(
+; CHECK-NEXT:    [[D:%.*]] = lshr <2 x i32> [[A:%.*]], <i32 31, i32 31>
+; CHECK-NEXT:    [[E:%.*]] = mul nuw <2 x i32> [[D]], [[B:%.*]]
+; CHECK-NEXT:    ret <2 x i32> [[E]]
+;
+  %d = lshr <2 x i32> %a, <i32 31, i32 31>
+  %e = mul <2 x i32> %d, %b
+  ret <2 x i32> %e
+}
+
+define <2 x i32> @signbit_mul_vec_commute(<2 x i32> %a, <2 x i32> %b) {
+; CHECK-LABEL: @signbit_mul_vec_commute(
+; CHECK-NEXT:    [[D:%.*]] = lshr <2 x i32> [[A:%.*]], <i32 31, i32 31>
+; CHECK-NEXT:    [[E:%.*]] = mul nuw <2 x i32> [[D]], [[B:%.*]]
+; CHECK-NEXT:    ret <2 x i32> [[E]]
+;
+  %d = lshr <2 x i32> %a, <i32 31, i32 31>
+  %e = mul <2 x i32> %b, %d
+  ret <2 x i32> %e
 }
 
 define i32 @test18(i32 %A, i32 %B) {
