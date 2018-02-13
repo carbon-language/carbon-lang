@@ -99,12 +99,21 @@ define i32 @mul_bool(i32 %x, i1 %y) {
   ret i32 %m
 }
 
-; FIXME: Commute and test vector type.
+; Commute and test vector type.
 
 define <2 x i32> @mul_bool_vec(<2 x i32> %x, <2 x i1> %y) {
 ; CHECK-LABEL: @mul_bool_vec(
-; CHECK-NEXT:    [[Z:%.*]] = zext <2 x i1> [[Y:%.*]] to <2 x i32>
-; CHECK-NEXT:    [[M:%.*]] = mul nuw <2 x i32> [[Z]], [[X:%.*]]
+; CHECK-NEXT:    [[M:%.*]] = select <2 x i1> [[Y:%.*]], <2 x i32> [[X:%.*]], <2 x i32> zeroinitializer
+; CHECK-NEXT:    ret <2 x i32> [[M]]
+;
+  %z = zext <2 x i1> %y to <2 x i32>
+  %m = mul <2 x i32> %x, %z
+  ret <2 x i32> %m
+}
+
+define <2 x i32> @mul_bool_vec_commute(<2 x i32> %x, <2 x i1> %y) {
+; CHECK-LABEL: @mul_bool_vec_commute(
+; CHECK-NEXT:    [[M:%.*]] = select <2 x i1> [[Y:%.*]], <2 x i32> [[X:%.*]], <2 x i32> zeroinitializer
 ; CHECK-NEXT:    ret <2 x i32> [[M]]
 ;
   %z = zext <2 x i1> %y to <2 x i32>

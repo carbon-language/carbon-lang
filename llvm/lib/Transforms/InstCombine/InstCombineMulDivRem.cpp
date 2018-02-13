@@ -340,6 +340,15 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
     }
   }
 
+  Value *X;
+  // (bool X) * Y --> X ? Y : 0
+  if (match(Op0, m_ZExt(m_Value(X))) && X->getType()->isIntOrIntVectorTy(1))
+    return SelectInst::Create(X, Op1, ConstantInt::get(I.getType(), 0));
+
+  // Y * (bool X) --> X ? Y : 0
+  if (match(Op1, m_ZExt(m_Value(X))) && X->getType()->isIntOrIntVectorTy(1))
+    return SelectInst::Create(X, Op0, ConstantInt::get(I.getType(), 0));
+
   // If one of the operands of the multiply is a cast from a boolean value, then
   // we know the bool is either zero or one, so this is a 'masking' multiply.
   //   X * Y (where Y is 0 or 1) -> X & (0-Y)
