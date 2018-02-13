@@ -10,7 +10,6 @@
 #include "../../lib/parser/preprocessor.h"
 #include "../../lib/parser/prescan.h"
 #include "../../lib/parser/provenance.h"
-#include "../../lib/parser/source.h"
 #include "../../lib/parser/user-state.h"
 #include <cerrno>
 #include <cstdio>
@@ -98,16 +97,16 @@ int main(int argc, char *const argv[]) {
     }
   }
 
-  Fortran::parser::SourceFile sourceFile;
+  Fortran::parser::AllSources allSources;
   std::stringstream error;
-  if (!sourceFile.Open(path, &error)) {
+  const auto *sourceFile = allSources.Open(path, &error);
+  if (!sourceFile) {
     std::cerr << error.str() << '\n';
     return 1;
   }
 
-  Fortran::parser::AllSources allSources;
   Fortran::parser::ProvenanceRange range{allSources.AddIncludedFile(
-      sourceFile, Fortran::parser::ProvenanceRange{})};
+      *sourceFile, Fortran::parser::ProvenanceRange{})};
   Fortran::parser::Messages messages{allSources};
   Fortran::parser::CookedSource cooked{&allSources};
   Fortran::parser::Preprocessor preprocessor{&allSources};

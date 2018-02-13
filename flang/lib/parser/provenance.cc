@@ -68,9 +68,19 @@ AllSources::AllSources() {
   }
 }
 
+AllSources::~AllSources() {}
+
 const char &AllSources::operator[](Provenance at) const {
   const Origin &origin{MapToOrigin(at)};
   return origin[at - origin.start];
+}
+
+const SourceFile *AllSources::Open(std::string path, std::stringstream *error) {
+  std::unique_ptr<SourceFile> source{std::make_unique<SourceFile>()};
+  if (source->Open(path, error)) {
+    return ownedSourceFiles_.emplace_back(std::move(source)).get();
+  }
+  return nullptr;
 }
 
 ProvenanceRange AllSources::AddIncludedFile(

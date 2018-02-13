@@ -22,6 +22,7 @@ class Preprocessor;
 class Prescanner {
 public:
   Prescanner(Messages *, CookedSource *, Preprocessor *);
+  Prescanner(const Prescanner &);
 
   Messages *messages() const { return messages_; }
 
@@ -42,9 +43,9 @@ public:
     return *this;
   }
 
-  CookedSource *cooked() const { return cooked_; }
-
   bool Prescan(ProvenanceRange);
+
+  // Callbacks for use by Preprocessor.
   std::optional<TokenSequence> NextTokenizedLine();
   Provenance GetCurrentProvenance() const { return GetProvenance(at_); }
   void Complain(const std::string &message);
@@ -89,11 +90,12 @@ private:
   bool CommentLinesAndPreprocessorDirectives();
   bool IsFixedFormCommentLine(const char *);
   bool IsFreeFormComment(const char *);
+  bool IncludeLine(const char *);
   bool IsPreprocessorDirectiveLine(const char *);
   const char *FixedFormContinuationLine();
   bool FixedFormContinuation();
   bool FreeFormContinuation();
-  void PayNewlineDebt(CookedSource *);
+  void PayNewlineDebt();
 
   Messages *messages_;
   CookedSource *cooked_;

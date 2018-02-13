@@ -6,6 +6,7 @@
 #include "token-sequence.h"
 #include <cctype>
 #include <cstring>
+#include <sstream>
 #include <utility>
 #include <vector>
 
@@ -15,6 +16,14 @@ namespace parser {
 Prescanner::Prescanner(
     Messages *messages, CookedSource *cooked, Preprocessor *preprocessor)
   : messages_{messages}, cooked_{cooked}, preprocessor_{preprocessor} {}
+
+Prescanner::Prescanner(const Prescanner &that)
+  : messages_{that.messages_}, cooked_{that.cooked_},
+    preprocessor_{that.preprocessor_}, inFixedForm_{that.inFixedForm_},
+    fixedFormColumnLimit_{that.fixedFormColumnLimit_},
+    enableOldDebugLines_{that.enableOldDebugLines_},
+    enableBackslashEscapesInCharLiterals_{
+        that.enableBackslashEscapesInCharLiterals_} {}
 
 bool Prescanner::Prescan(ProvenanceRange range) {
   startProvenance_ = range.start;
@@ -30,6 +39,7 @@ bool Prescanner::Prescan(ProvenanceRange range) {
   TokenSequence tokens, preprocessed;
   while (lineStart_ < limit_) {
     if (CommentLinesAndPreprocessorDirectives() && lineStart_ >= limit_) {
+      PayNewlineDebt();
       break;
     }
     BeginSourceLineAndAdvance();
@@ -56,9 +66,9 @@ bool Prescanner::Prescan(ProvenanceRange range) {
     }
     tokens.clear();
     cooked_->Put('\n', newlineProvenance_);
-    PayNewlineDebt(cooked_);
+    PayNewlineDebt();
   }
-  PayNewlineDebt(cooked_);
+  PayNewlineDebt();
   return !anyFatalErrors_;
 }
 
@@ -373,6 +383,62 @@ bool Prescanner::IsFreeFormComment(const char *p) {
   return *p == '!' || *p == '\n';
 }
 
+bool Prescanner::IncludeLine(const char *p) {
+  if (p >= limit_) {
+    return false;
+  }
+  const char *start{p};
+  while (*p == ' ' || *p == '\t') {
+    ++p;
+  }
+  for (char ch : "include"s) {
+    if (tolower(*p++) != ch) {
+      return false;
+    }
+  }
+  while (*p == ' ' || *p == '\t') {
+    ++p;
+  }
+  if (*p != '"' && *p != '\'') {
+    return false;
+  }
+  char quote{*p};
+  std::string path;
+  for (++p; *p != '\n'; ++p) {
+    if (*p == quote) {
+      if (p[1] != quote) {
+        break;
+      }
+      ++p;
+    }
+    path += *p;
+  }
+  if (*p != quote) {
+    messages_->Put({GetProvenance(p), "malformed path name string"});
+    anyFatalErrors_ = true;
+    return true;
+  }
+  for (++p; *p == ' ' || *p == '\t'; ++p) {
+  }
+  if (*p != '\n' && *p != '!') {
+    messages_->Put({GetProvenance(p), "excess characters after path name"});
+  }
+  std::stringstream error;
+  Provenance provenance{GetProvenance(start)};
+  AllSources *allSources{cooked_->allSources()};
+  const SourceFile *included{allSources->Open(path, &error)};
+  if (included == nullptr) {
+    messages_->Put({provenance, error.str()});
+    anyFatalErrors_ = true;
+    return true;
+  }
+  ProvenanceRange includeLineRange{provenance, static_cast<size_t>(p - start)};
+  ProvenanceRange fileRange{
+      allSources->AddIncludedFile(*included, includeLineRange)};
+  anyFatalErrors_ |= !Prescanner{*this}.Prescan(fileRange);
+  return true;
+}
+
 bool Prescanner::IsPreprocessorDirectiveLine(const char *start) {
   const char *p{start};
   if (p >= limit_ || inPreprocessorDirective_) {
@@ -405,7 +471,8 @@ bool Prescanner::CommentLines() {
 bool Prescanner::CommentLinesAndPreprocessorDirectives() {
   bool any{false};
   while (lineStart_ < limit_) {
-    if (IsFixedFormCommentLine(lineStart_) || IsFreeFormComment(lineStart_)) {
+    if (IsFixedFormCommentLine(lineStart_) || IsFreeFormComment(lineStart_) ||
+        IncludeLine(lineStart_)) {
       NextLine();
     } else if (IsPreprocessorDirectiveLine(lineStart_)) {
       if (std::optional<TokenSequence> tokens{NextTokenizedLine()}) {
@@ -499,9 +566,9 @@ bool Prescanner::FreeFormContinuation() {
   return true;
 }
 
-void Prescanner::PayNewlineDebt(CookedSource *cooked) {
+void Prescanner::PayNewlineDebt() {
   for (; newlineDebt_ > 0; --newlineDebt_) {
-    cooked->Put('\n', newlineProvenance_);
+    cooked_->Put('\n', newlineProvenance_);
   }
 }
 }  // namespace parser

@@ -1,13 +1,17 @@
 #ifndef FORTRAN_PROVENANCE_H_
 #define FORTRAN_PROVENANCE_H_
+
 #include "char-buffer.h"
 #include "source.h"
 #include <map>
+#include <memory>
 #include <ostream>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <variant>
 #include <vector>
+
 namespace Fortran {
 namespace parser {
 
@@ -66,9 +70,12 @@ private:
 class AllSources {
 public:
   AllSources();
+  ~AllSources();
 
   size_t size() const { return bytes_; }
   const char &operator[](Provenance) const;
+
+  const SourceFile *Open(std::string path, std::stringstream *error);
 
   ProvenanceRange AddIncludedFile(const SourceFile &, ProvenanceRange);
   ProvenanceRange AddMacroCall(
@@ -114,6 +121,7 @@ private:
   std::vector<Origin> origin_;
   size_t bytes_{0};
   std::map<char, Provenance> compilerInsertionProvenance_;
+  std::vector<std::unique_ptr<SourceFile>> ownedSourceFiles_;
 };
 
 class CookedSource {
