@@ -2200,10 +2200,15 @@ Node *Db::parseCtorDtorName(Node *&SoFar) {
   }
 
   if (consumeIf('C')) {
+    bool IsInherited = consumeIf('I');
     if (look() != '1' && look() != '2' && look() != '3' && look() != '5')
       return nullptr;
     ++First;
     ParsedCtorDtorCV = true;
+    if (IsInherited) {
+      if (legacyParse<parse_name>() == nullptr)
+        return nullptr;
+    }
     return make<CtorDtorName>(SoFar, false);
   }
 
