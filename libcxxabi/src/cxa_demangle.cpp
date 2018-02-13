@@ -198,6 +198,8 @@ public:
     KUnnamedTypeName,
     KLambdaTypeName,
     KExpr,
+    KBracedExpr,
+    KBracedRangeExpr,
   };
 
   static constexpr unsigned NoParameterPack =
@@ -1322,7 +1324,7 @@ public:
 // -- Expression Nodes --
 
 struct Expr : public Node {
-  Expr() : Node(KExpr) {}
+  Expr(Kind K = KExpr) : Node(K) {}
 };
 
 class BinaryExpr : public Expr {
@@ -1620,6 +1622,70 @@ public:
     S += ")(";
     Expressions.printWithComma(S);
     S += ")";
+  }
+};
+
+class InitListExpr : public Expr {
+  Node *Ty;
+  NodeArray Inits;
+public:
+  InitListExpr(Node *Ty_, NodeArray Inits_)
+      : Ty(Ty_), Inits(Inits_) {
+    if (Ty)
+      ParameterPackSize = Ty->ParameterPackSize;
+    for (Node *I : Inits)
+      ParameterPackSize = std::min(I->ParameterPackSize, ParameterPackSize);
+  }
+
+  void printLeft(OutputStream &S) const override {
+    if (Ty)
+      Ty->print(S);
+    S += '{';
+    Inits.printWithComma(S);
+    S += '}';
+  }
+};
+
+class BracedExpr : public Expr {
+  Node *Elem;
+  Node *Init;
+  bool IsArray;
+public:
+  BracedExpr(Node *Elem_, Node *Init_, bool IsArray_)
+      : Expr(KBracedExpr), Elem(Elem_), Init(Init_), IsArray(IsArray_) {}
+
+  void printLeft(OutputStream &S) const override {
+    if (IsArray) {
+      S += '[';
+      Elem->print(S);
+      S += ']';
+    } else {
+      S += '.';
+      Elem->print(S);
+    }
+    if (Init->getKind() != KBracedExpr && Init->getKind() != KBracedRangeExpr)
+      S += " = ";
+    Init->print(S);
+  }
+};
+
+class BracedRangeExpr : public Expr {
+  Node *First;
+  Node *Last;
+  Node *Init;
+public:
+  BracedRangeExpr(Node *First_, Node *Last_, Node *Init_)
+      : Expr(KBracedRangeExpr), First(First_), Last(Last_), Init(Init_) {}
+
+  void printLeft(OutputStream &S) const override {
+    S += '[';
+    First->print(S);
+    S += " ... ";
+    Last->print(S);
+    S += ']';
+    if (Init->getKind() != KBracedExpr && Init->getKind() != KBracedRangeExpr)
+      S += " = ";
+    Init->print(S);
   }
 };
 
@@ -1985,6 +2051,7 @@ struct Db {
   Node *parseFunctionParam();
   Node *parseNewExpr();
   Node *parseConversionExpr();
+  Node *parseBracedExpr();
 
   /// Parse the <type> production.
   Node *parseType();
@@ -2070,6 +2137,7 @@ const char *parse_name(const char *first, const char *last, Db &db,
 const char *parse_template_args(const char *first, const char *last, Db &db);
 const char *parse_template_param(const char *, const char *, Db &);
 const char *parse_operator_name(const char *first, const char *last, Db &db);
+const char *parse_source_name(const char *, const char *, Db &);
 const char *parse_unqualified_name(const char *first, const char *last, Db &db);
 const char *parse_decltype(const char *first, const char *last, Db &db);
 const char *parse_unresolved_name(const char *, const char *, Db &);
@@ -2870,6 +2938,51 @@ Node *Db::parseExprPrimary() {
   }
 }
 
+// <braced-expression> ::= <expression>
+//                     ::= di <field source-name> <braced-expression>    # .name = expr
+//                     ::= dx <index expression> <braced-expression>     # [expr] = expr
+//                     ::= dX <range begin expression> <range end expression> <braced-expression>
+Node *Db::parseBracedExpr() {
+  if (look() == 'd') {
+    switch (look(1)) {
+    case 'i': {
+      First += 2;
+      Node *Field = legacyParse<parse_source_name>();
+      if (Field == nullptr)
+        return nullptr;
+      Node *Init = parseBracedExpr();
+      if (Init == nullptr)
+        return nullptr;
+      return make<BracedExpr>(Field, Init, /*isArray=*/false);
+    }
+    case 'x': {
+      First += 2;
+      Node *Index = parseExpr();
+      if (Index == nullptr)
+        return nullptr;
+      Node *Init = parseBracedExpr();
+      if (Init == nullptr)
+        return nullptr;
+      return make<BracedExpr>(Index, Init, /*isArray=*/true);
+    }
+    case 'X': {
+      First += 2;
+      Node *RangeBegin = parseExpr();
+      if (RangeBegin == nullptr)
+        return nullptr;
+      Node *RangeEnd = parseExpr();
+      if (RangeEnd == nullptr)
+        return nullptr;
+      Node *Init = parseBracedExpr();
+      if (Init == nullptr)
+        return nullptr;
+      return make<BracedRangeExpr>(RangeBegin, RangeEnd, Init);
+    }
+    }
+  }
+  return parseExpr();
+}
+
 // <expression> ::= <unary operator-name> <expression>
 //              ::= <binary operator-name> <expression> <expression>
 //              ::= <ternary operator-name> <expression> <expression> <expression>
@@ -3079,7 +3192,8 @@ Node *Db::parseExpr() {
     }
     return nullptr;
   case 'i':
-    if (First[1] == 'x') {
+    switch (First[1]) {
+    case 'x': {
       First += 2;
       Node *Base = parseExpr();
       if (Base == nullptr)
@@ -3088,6 +3202,18 @@ Node *Db::parseExpr() {
       if (Index == nullptr)
         return Index;
       return make<ArraySubscriptExpr>(Base, Index);
+    }
+    case 'l': {
+      First += 2;
+      size_t InitsBegin = Names.size();
+      while (!consumeIf('E')) {
+        Node *E = parseBracedExpr();
+        if (E == nullptr)
+          return nullptr;
+        Names.push_back(E);
+      }
+      return make<InitListExpr>(nullptr, popTrailingNodeArray(InitsBegin));
+    }
     }
     return nullptr;
   case 'l':
@@ -3309,6 +3435,20 @@ Node *Db::parseExpr() {
       if (Ty == nullptr)
         return Ty;
       return make<EnclosingExpr>("typeid (", Ty, ")");
+    }
+    case 'l': {
+      First += 2;
+      Node *Ty = parseType();
+      if (Ty == nullptr)
+        return nullptr;
+      size_t InitsBegin = Names.size();
+      while (!consumeIf('E')) {
+        Node *E = parseBracedExpr();
+        if (E == nullptr)
+          return nullptr;
+        Names.push_back(E);
+      }
+      return make<InitListExpr>(Ty, popTrailingNodeArray(InitsBegin));
     }
     case 'r':
       First += 2;
