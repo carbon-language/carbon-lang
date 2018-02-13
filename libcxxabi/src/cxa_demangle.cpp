@@ -165,6 +165,7 @@ public:
     KQualType,
     KConversionOperatorType,
     KPostfixQualifiedType,
+    KElaboratedTypeSpefType,
     KNameType,
     KAbiTagAttr,
     KObjCProtoName,
@@ -441,6 +442,22 @@ public:
   StringView getBaseName() const override { return Name; }
 
   void printLeft(OutputStream &s) const override { s += Name; }
+};
+
+class ElaboratedTypeSpefType : public Node {
+  StringView Kind;
+  Node *Child;
+public:
+  ElaboratedTypeSpefType(StringView Kind_, Node *Child_)
+      : Node(KElaboratedTypeSpefType), Kind(Kind_), Child(Child_) {
+    ParameterPackSize = Child->ParameterPackSize;
+  }
+
+  void printLeft(OutputStream &S) const override {
+    S += Kind;
+    S += ' ';
+    Child->print(S);
+  }
 };
 
 class AbiTagAttr final : public Node {
@@ -2235,8 +2252,22 @@ Node *Db::parsePointerToMemberType() {
 //                   ::= Tu <name>  # dependent elaborated type specifier using 'union'
 //                   ::= Te <name>  # dependent elaborated type specifier using 'enum'
 Node *Db::parseClassEnumType() {
-  // FIXME: try to parse the elaborated type specifiers here!
-  return legacyParse<parse_name>();
+  StringView ElabSpef;
+  if (consumeIf("Ts"))
+    ElabSpef = "struct";
+  else if (consumeIf("Tu"))
+    ElabSpef = "union";
+  else if (consumeIf("Te"))
+    ElabSpef = "enum";
+
+  Node *Name = legacyParse<parse_name>();
+  if (Name == nullptr)
+    return nullptr;
+
+  if (!ElabSpef.empty())
+    return make<ElaboratedTypeSpefType>(ElabSpef, Name);
+
+  return Name;
 }
 
 // <qualified-type>     ::= <qualifiers> <type>
@@ -2495,6 +2526,12 @@ Node *Db::parseType() {
   }
   //             ::= <template-param>
   case 'T': {
+    // This could be an elaborate type specifier on a <class-enum-type>.
+    if (look(1) == 's' || look(1) == 'u' || look(1) == 'e') {
+      Result = parseClassEnumType();
+      break;
+    }
+
     Result = legacyParse<parse_template_param>();
     if (Result == nullptr)
       return nullptr;
