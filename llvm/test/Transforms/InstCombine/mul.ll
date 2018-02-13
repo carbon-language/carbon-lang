@@ -87,16 +87,29 @@ define i32 @test15(i32 %A, i32 %B) {
   ret i32 %m
 }
 
-; X * Y (when Y is 0 or 1) --> x & (0-Y)
-define i32 @test16(i32 %b, i1 %c) {
-; CHECK-LABEL: @test16(
-; CHECK-NEXT:    [[E:%.*]] = select i1 [[C:%.*]], i32 [[B:%.*]], i32 0
-; CHECK-NEXT:    ret i32 [[E]]
+; X * Y (when Y is a boolean) --> Y ? X : 0
+
+define i32 @mul_bool(i32 %x, i1 %y) {
+; CHECK-LABEL: @mul_bool(
+; CHECK-NEXT:    [[M:%.*]] = select i1 [[Y:%.*]], i32 [[X:%.*]], i32 0
+; CHECK-NEXT:    ret i32 [[M]]
 ;
-  %d = zext i1 %c to i32
-  ; e = b & (a >> 31)
-  %e = mul i32 %d, %b
-  ret i32 %e
+  %z = zext i1 %y to i32
+  %m = mul i32 %x, %z
+  ret i32 %m
+}
+
+; FIXME: Commute and test vector type.
+
+define <2 x i32> @mul_bool_vec(<2 x i32> %x, <2 x i1> %y) {
+; CHECK-LABEL: @mul_bool_vec(
+; CHECK-NEXT:    [[Z:%.*]] = zext <2 x i1> [[Y:%.*]] to <2 x i32>
+; CHECK-NEXT:    [[M:%.*]] = mul nuw <2 x i32> [[Z]], [[X:%.*]]
+; CHECK-NEXT:    ret <2 x i32> [[M]]
+;
+  %z = zext <2 x i1> %y to <2 x i32>
+  %m = mul <2 x i32> %z, %x
+  ret <2 x i32> %m
 }
 
 ; X * Y (when Y is 0 or 1) --> x & (0-Y)
