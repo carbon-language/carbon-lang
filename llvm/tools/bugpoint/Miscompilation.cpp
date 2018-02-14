@@ -577,23 +577,19 @@ ExtractBlocks(BugDriver &BD,
   }
 
   ValueToValueMapTy VMap;
-  Module *ProgClone = CloneModule(*BD.getProgram(), VMap).release();
-  Module *ToExtract =
-      SplitFunctionsOutOfModule(ProgClone, MiscompiledFunctions, VMap)
-          .release();
+  std::unique_ptr<Module> ProgClone = CloneModule(*BD.getProgram(), VMap);
+  std::unique_ptr<Module> ToExtract =
+      SplitFunctionsOutOfModule(ProgClone.get(), MiscompiledFunctions, VMap);
   std::unique_ptr<Module> Extracted =
-      BD.extractMappedBlocksFromModule(Blocks, ToExtract);
+      BD.extractMappedBlocksFromModule(Blocks, ToExtract.get());
   if (!Extracted) {
     // Weird, extraction should have worked.
     errs() << "Nondeterministic problem extracting blocks??\n";
-    delete ProgClone;
-    delete ToExtract;
     return false;
   }
 
   // Otherwise, block extraction succeeded.  Link the two program fragments back
   // together.
-  delete ToExtract;
 
   std::vector<std::pair<std::string, FunctionType *>> MisCompFunctions;
   for (Module::iterator I = Extracted->begin(), E = Extracted->end(); I != E;
@@ -605,7 +601,7 @@ ExtractBlocks(BugDriver &BD,
     exit(1);
 
   // Set the new program and delete the old one.
-  BD.setNewProgram(ProgClone);
+  BD.setNewProgram(ProgClone.release());
 
   // Update the list of miscompiled functions.
   MiscompiledFunctions.clear();
