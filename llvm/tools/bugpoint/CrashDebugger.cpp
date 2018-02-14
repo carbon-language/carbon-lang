@@ -775,7 +775,7 @@ public:
 bool ReduceCrashingNamedMD::TestNamedMDs(std::vector<std::string> &NamedMDs) {
 
   ValueToValueMapTy VMap;
-  Module *M = CloneModule(*BD.getProgram(), VMap).release();
+  std::unique_ptr<Module> M = CloneModule(*BD.getProgram(), VMap);
 
   outs() << "Checking for crash with only these named metadata nodes:";
   unsigned NumPrint = std::min<size_t>(NamedMDs.size(), 10);
@@ -809,11 +809,10 @@ bool ReduceCrashingNamedMD::TestNamedMDs(std::vector<std::string> &NamedMDs) {
   Passes.run(*M);
 
   // Try running on the hacked up program...
-  if (TestFn(BD, M)) {
-    BD.setNewProgram(M); // It crashed, keep the trimmed version...
+  if (TestFn(BD, M.get())) {
+    BD.setNewProgram(M.release()); // It crashed, keep the trimmed version...
     return true;
   }
-  delete M; // It didn't crash, try something else.
   return false;
 }
 
