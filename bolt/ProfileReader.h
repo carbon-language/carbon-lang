@@ -20,30 +20,32 @@ namespace llvm {
 namespace bolt {
 
 class ProfileReader {
-  /// Number of function profiles that were unused by the reader.
-  uint64_t NumUnusedProfiles{0};
-
-  /// Map a function ID from a profile to a BinaryFunction object.
+  /// Map a function ID from a YAML profile to a BinaryFunction object.
   std::vector<BinaryFunction *> YamlProfileToFunction;
 
-  void reportError(StringRef Message);
+  /// To keep track of functions that have a matched profile before the profile
+  /// is attributed.
+  std::unordered_set<const BinaryFunction *> ProfiledFunctions;
 
+  /// Populate \p Function profile with the one supplied in YAML format.
   bool parseFunctionProfile(BinaryFunction &Function,
                             const yaml::bolt::BinaryFunctionProfile &YamlBF);
 
-  /// Profile for binary functions.
+  /// All function profiles in YAML format.
   std::vector<yaml::bolt::BinaryFunctionProfile> YamlBFs;
 
   /// For LTO symbol resolution.
-  /// Map a common LTO prefix to a list of profiles matching the prefix.
+  /// Map a common LTO prefix to a list of YAML profiles matching the prefix.
   StringMap<std::vector<yaml::bolt::BinaryFunctionProfile *>> LTOCommonNameMap;
 
   /// Map a common LTO prefix to a set of binary functions.
   StringMap<std::unordered_set<const BinaryFunction *>>
                                                       LTOCommonNameFunctionMap;
 
+  /// Strict matching of a name in a profile to its contents.
   StringMap<yaml::bolt::BinaryFunctionProfile *> ProfileNameToProfile;
 
+  /// Initialize maps for profile matching.
   void buildNameMaps(std::map<uint64_t, BinaryFunction> &Functions);
 
   /// Update matched YAML -> BinaryFunction pair.
@@ -53,6 +55,10 @@ class ProfileReader {
       YamlProfileToFunction.resize(YamlBF.Id + 1);
     YamlProfileToFunction[YamlBF.Id] = &BF;
     YamlBF.Used = true;
+
+    assert(!ProfiledFunctions.count(&BF) &&
+           "function already has an assigned profile");
+    ProfiledFunctions.emplace(&BF);
   }
 
 public:

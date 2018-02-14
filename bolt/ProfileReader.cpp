@@ -199,9 +199,31 @@ ProfileReader::readProfile(const std::string &FileName,
   buildNameMaps(Functions);
 
   YamlProfileToFunction.resize(YamlBFs.size() + 1);
+
+  // We have to do 2 passes since LTO introduces an ambiguity in function
+  // names. The first pass assigns profiles that match 100% by name and
+  // by hash. The second pass allows name ambiguity for LTO private functions.
   for (auto &BFI : Functions) {
     auto &Function = BFI.second;
     auto Hash = Function.hash(true, true);
+    for (auto &FunctionName : Function.getNames()) {
+      auto PI = ProfileNameToProfile.find(FunctionName);
+      if (PI == ProfileNameToProfile.end())
+        continue;
+      auto &YamlBF = *PI->getValue();
+      if (YamlBF.Hash == Hash) {
+        matchProfileToFunction(YamlBF, Function);
+      }
+    }
+  }
+
+  for (auto &BFI : Functions) {
+    auto &Function = BFI.second;
+
+    if (ProfiledFunctions.count(&Function))
+      continue;
+
+    auto Hash = Function.hash(/*Recompute = */false); // was just recomputed
     for (auto &FunctionName : Function.getNames()) {
       const auto CommonName = getLTOCommonName(FunctionName);
       if (CommonName) {
@@ -236,8 +258,10 @@ ProfileReader::readProfile(const std::string &FileName,
           continue;
 
         auto &YamlBF = *PI->getValue();
-        matchProfileToFunction(YamlBF, Function);
-        break;
+        if (!YamlBF.Used) {
+          matchProfileToFunction(YamlBF, Function);
+          break;
+        }
       }
     }
   }

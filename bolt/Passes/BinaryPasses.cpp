@@ -1352,18 +1352,23 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC,
                                   std::set<uint64_t> &) {
   uint64_t NumSimpleFunctions{0};
   uint64_t NumStaleProfileFunctions{0};
+  uint64_t NumNonSimpleProfiledFunctions{0};
   std::vector<BinaryFunction *> ProfiledFunctions;
   const char *StaleFuncsHeader = "BOLT-INFO: Functions with stale profile:\n";
   for (auto &BFI : BFs) {
     auto &Function = BFI.second;
-    if (!Function.isSimple())
+    if (!Function.isSimple()) {
+      if (Function.hasProfile()) {
+        ++NumNonSimpleProfiledFunctions;
+      }
       continue;
+    }
     ++NumSimpleFunctions;
-    if (Function.getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE)
+    if (!Function.hasProfile())
       continue;
-    if (Function.hasValidProfile())
+    if (Function.hasValidProfile()) {
       ProfiledFunctions.push_back(&Function);
-    else {
+    } else {
       if (opts::ReportStaleFuncs) {
         outs() << StaleFuncsHeader;
         StaleFuncsHeader = "";
@@ -1382,13 +1387,18 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC,
          << format("%.1f", NumAllProfiledFunctions /
                                             (float) NumSimpleFunctions * 100.0f)
          << "%) have non-empty execution profile.\n";
+  if (NumNonSimpleProfiledFunctions) {
+    outs() << "BOLT-INFO: " << NumNonSimpleProfiledFunctions
+           << " non-simple function(s) have profile.\n";
+  }
   if (NumStaleProfileFunctions) {
     outs() << "BOLT-INFO: " << NumStaleProfileFunctions
            << format(" (%.1f%% of all profiled)",
                      NumStaleProfileFunctions /
                                       (float) NumAllProfiledFunctions * 100.0f)
            << " function" << (NumStaleProfileFunctions == 1 ? "" : "s")
-           << " have invalid (possibly stale) profile.\n";
+           << " have invalid (possibly stale) profile."
+              " Use -report-stale to see the list.\n";
   }
 
   // Profile is marked as 'Used' if it either matches a function name
