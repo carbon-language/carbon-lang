@@ -2760,7 +2760,7 @@ static void method_reference(struct DisassembleInfo *info,
     if (strcmp(*ReferenceName, "_objc_msgSend") == 0) {
       if (info->selector_name != nullptr) {
         if (info->method != nullptr)
-          delete info->method;
+          delete[] info->method;
         if (info->class_name != nullptr) {
           info->method = new char[5 + strlen(info->class_name) +
                                   strlen(info->selector_name)];
@@ -2793,7 +2793,7 @@ static void method_reference(struct DisassembleInfo *info,
     } else if (strcmp(*ReferenceName, "_objc_msgSendSuper2") == 0) {
       if (info->selector_name != nullptr) {
         if (info->method != nullptr)
-          delete info->method;
+          delete[] info->method;
         info->method = new char[17 + strlen(info->selector_name)];
         if (info->method != nullptr) {
           if (Arch == Triple::x86_64)
