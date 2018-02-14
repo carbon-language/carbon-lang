@@ -242,7 +242,7 @@ bool ReduceCrashingFunctions::TestFuncs(std::vector<Function *> &Funcs) {
 
   // Clone the program to try hacking it apart...
   ValueToValueMapTy VMap;
-  Module *M = CloneModule(*BD.getProgram(), VMap).release();
+  std::unique_ptr<Module> M = CloneModule(*BD.getProgram(), VMap);
 
   // Convert list to set for fast lookup...
   std::set<Function *> Functions;
@@ -301,19 +301,18 @@ bool ReduceCrashingFunctions::TestFuncs(std::vector<Function *> &Funcs) {
     }
 
     // Finally, remove any null members from any global intrinsic.
-    RemoveFunctionReferences(M, "llvm.used");
-    RemoveFunctionReferences(M, "llvm.compiler.used");
+    RemoveFunctionReferences(M.get(), "llvm.used");
+    RemoveFunctionReferences(M.get(), "llvm.compiler.used");
   }
   // Try running the hacked up program...
-  if (TestFn(BD, M)) {
-    BD.setNewProgram(M); // It crashed, keep the trimmed version...
+  if (TestFn(BD, M.get())) {
+    BD.setNewProgram(M.release()); // It crashed, keep the trimmed version...
 
     // Make sure to use function pointers that point into the now-current
     // module.
     Funcs.assign(Functions.begin(), Functions.end());
     return true;
   }
-  delete M;
   return false;
 }
 
