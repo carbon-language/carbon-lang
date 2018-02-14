@@ -196,8 +196,9 @@ TEST_F(RTDyldObjectLinkingLayerExecutionTest, NoDuplicateFinalization) {
         return cantFail(
             lookupFlagsWithLegacyFn(SymbolFlags, Symbols, LegacyLookup));
       },
-      [&](AsynchronousSymbolQuery &Query, const SymbolNameSet &Symbols) {
-        return lookupWithLegacyFn(Query, Symbols, LegacyLookup);
+      [&](std::shared_ptr<AsynchronousSymbolQuery> Query,
+          const SymbolNameSet &Symbols) {
+        return lookupWithLegacyFn(*Query, Symbols, LegacyLookup);
       });
 
   cantFail(ObjLayer.addObject(K2, std::move(Obj2)));
