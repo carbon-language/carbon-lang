@@ -243,10 +243,9 @@ static Expected<std::unique_ptr<Module>> testMergedProgram(const BugDriver &BD,
   return std::move(Merged);
 }
 
-/// TestFuncs - split functions in a Module into two groups: those that are
-/// under consideration for miscompilation vs. those that are not, and test
+/// split functions in a Module into two groups: those that are under
+/// consideration for miscompilation vs. those that are not, and test
 /// accordingly. Each group of functions becomes a separate Module.
-///
 Expected<bool>
 ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function *> &Funcs) {
   // Test to see if the function is misoptimized if we ONLY run it on the
@@ -266,8 +265,8 @@ ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function *> &Funcs) {
   //   we can conclude that a function triggers the bug when in fact one
   //   needs a larger set of original functions to do so.
   ValueToValueMapTy VMap;
-  Module *Clone = CloneModule(*BD.getProgram(), VMap).release();
-  Module *Orig = BD.swapProgramIn(Clone);
+  std::unique_ptr<Module> Clone = CloneModule(*BD.getProgram(), VMap);
+  std::unique_ptr<Module> Orig(BD.swapProgramIn(Clone.release()));
 
   std::vector<Function *> FuncsOnClone;
   for (unsigned i = 0, e = Funcs.size(); i != e; ++i) {
@@ -284,7 +283,7 @@ ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function *> &Funcs) {
   Expected<bool> Broken =
       TestFn(BD, std::move(ToOptimize), std::move(ToNotOptimize));
 
-  delete BD.swapProgramIn(Orig);
+  delete BD.swapProgramIn(Orig.release());
 
   return Broken;
 }
