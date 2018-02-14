@@ -10532,8 +10532,8 @@
 // CHECK: 	skinit %eax
         	skinit %eax
 
-// CHECK: 	invlpga %ecx, %eax
-        	invlpga %ecx, %eax
+// CHECK: 	invlpga %eax, %ecx
+        	invlpga %eax, %ecx
 
 // CHECK:   blendvps	%xmm0, (%eax), %xmm1   # encoding: [0x66,0x0f,0x38,0x14,0x08]
             blendvps (%eax), %xmm1
