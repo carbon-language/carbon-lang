@@ -368,7 +368,7 @@ bool Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
     nameToken = dir[j];
   }
   if (dirName == "line") {
-    // TODO
+    // TODO: implement #line
     return true;
   }
   if (dirName == "define") {
@@ -423,6 +423,7 @@ bool Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
       definitions_.emplace(std::make_pair(
           nameToken, Definition{argName, dir, j, tokens - j, isVariadic}));
     } else {
+      j = SkipBlanks(dir, j + 1, tokens);
       definitions_.emplace(
           std::make_pair(nameToken, Definition{dir, j, tokens - j}));
     }
@@ -510,6 +511,42 @@ bool Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
   if (dirName == "error" || dirName == "warning") {
     prescanner->Complain(dir.ToString());
     return dirName != "error";
+  }
+  if (dirName == "include") {
+    if (j == tokens) {
+      prescanner->Complain("#include: missing name of file to include");
+      return false;
+    }
+    ProvenanceRange includeDirRange{dir.GetProvenance(j)};
+    std::string include;
+    if (dir[j].ToString() == "<") {
+      if (dir[tokens - 1].ToString() != ">") {
+        prescanner->Complain("#include: expected '>' at end of directive");
+        return false;
+      }
+      TokenSequence braced{dir, j + 1, tokens - j - 2};
+      include = ReplaceMacros(braced, *prescanner).ToString();
+    } else if (j + 1 == tokens &&
+        (include = dir[j].ToString()).substr(0, 1) == "\"" &&
+        include.substr(include.size() - 1, 1) == "\"") {
+      include = include.substr(1, include.size() - 2);
+    } else {
+      prescanner->Complain("#include: expected name of file to include");
+      return false;
+    }
+    if (include.empty()) {
+      prescanner->Complain("#include: empty include file name");
+      return false;
+    }
+    std::stringstream error;
+    const SourceFile *included{allSources_->Open(include, &error)};
+    if (included == nullptr) {
+      prescanner->Complain(error.str());
+      return false;
+    }
+    ProvenanceRange fileRange{
+        allSources_->AddIncludedFile(*included, includeDirRange)};
+    return Prescanner{*prescanner}.Prescan(fileRange);
   }
   prescanner->Complain("#"s + dirName + ": unknown or unimplemented directive");
   return false;
