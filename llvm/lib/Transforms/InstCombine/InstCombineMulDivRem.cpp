@@ -596,19 +596,18 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
   bool AllowReassociate = I.isFast();
 
   // Simplify mul instructions with a constant RHS.
-  if (isa<Constant>(Op1)) {
+  if (auto *C = dyn_cast<Constant>(Op1)) {
     if (Instruction *FoldedMul = foldOpWithConstantIntoOperand(I))
       return FoldedMul;
 
     // (fmul X, -1.0) --> (fsub -0.0, X)
-    if (match(Op1, m_SpecificFP(-1.0))) {
+    if (match(C, m_SpecificFP(-1.0))) {
       Constant *NegZero = ConstantFP::getNegativeZero(Op1->getType());
       Instruction *RI = BinaryOperator::CreateFSub(NegZero, Op0);
       RI->copyFastMathFlags(&I);
       return RI;
     }
 
-    Constant *C = cast<Constant>(Op1);
     if (AllowReassociate && isFiniteNonZeroFp(C)) {
       // Let MDC denote an expression in one of these forms:
       // X * C, C/X, X/C, where C is a constant.
