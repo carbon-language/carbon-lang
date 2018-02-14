@@ -270,15 +270,20 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
     }
   }
 
-  if (Value *Op0v = dyn_castNegVal(Op0)) {   // -X * -Y = X*Y
-    if (Value *Op1v = dyn_castNegVal(Op1)) {
-      BinaryOperator *BO = BinaryOperator::CreateMul(Op0v, Op1v);
-      if (I.hasNoSignedWrap() &&
-          match(Op0, m_NSWSub(m_Value(), m_Value())) &&
-          match(Op1, m_NSWSub(m_Value(), m_Value())))
-        BO->setHasNoSignedWrap();
-      return BO;
-    }
+  // -X * C --> X * -C
+  Value *X, *Y;
+  Constant *Op1C;
+  if (match(Op0, m_Neg(m_Value(X))) && match(Op1, m_Constant(Op1C)))
+    return BinaryOperator::CreateMul(X, ConstantExpr::getNeg(Op1C));
+
+  // -X * -Y --> X * Y
+  if (match(Op0, m_Neg(m_Value(X))) && match(Op1, m_Neg(m_Value(Y)))) {
+    auto *NewMul = BinaryOperator::CreateMul(X, Y);
+    if (I.hasNoSignedWrap() &&
+        cast<OverflowingBinaryOperator>(Op0)->hasNoSignedWrap() &&
+        cast<OverflowingBinaryOperator>(Op1)->hasNoSignedWrap())
+      NewMul->setHasNoSignedWrap();
+    return NewMul;
   }
 
   // (X / Y) *  Y = X - (X % Y)
@@ -342,7 +347,6 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
 
   // (bool X) * Y --> X ? Y : 0
   // Y * (bool X) --> X ? Y : 0
-  Value *X;
   if (match(Op0, m_ZExt(m_Value(X))) && X->getType()->isIntOrIntVectorTy(1))
     return SelectInst::Create(X, Op1, ConstantInt::get(I.getType(), 0));
   if (match(Op1, m_ZExt(m_Value(X))) && X->getType()->isIntOrIntVectorTy(1))
