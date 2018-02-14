@@ -1,56 +1,83 @@
+#include "../parser/idioms.h"
 #include "attr.h"
-
-#include <sstream>
-#include <string>
+#include <stddef.h>
 
 namespace Fortran {
 namespace semantics {
 
-std::ostream &operator<<(std::ostream &o, Attr attr) {
-  switch (attr) {
-  case Attr::ABSTRACT: return o << "ABSTRACT";
-  case Attr::ALLOCATABLE: return o << "ALLOCATABLE";
-  case Attr::ASYNCHRONOUS: return o << "ASYNCHRONOUS";
-  case Attr::BIND_C: return o << "BIND(C)";
-  case Attr::CONTIGUOUS: return o << "CONTIGUOUS";
-  case Attr::EXTERNAL: return o << "EXTERNAL";
-  case Attr::INTENT_IN: return o << "INTENT_IN";
-  case Attr::INTENT_OUT: return o << "INTENT_OUT";
-  case Attr::INTRINSIC: return o << "INTRINSIC";
-  case Attr::OPTIONAL: return o << "OPTIONAL";
-  case Attr::PARAMETER: return o << "PARAMETER";
-  case Attr::POINTER: return o << "POINTER";
-  case Attr::PRIVATE: return o << "PRIVATE";
-  case Attr::PROTECTED: return o << "PROTECTED";
-  case Attr::PUBLIC: return o << "PUBLIC";
-  case Attr::SAVE: return o << "SAVE";
-  case Attr::TARGET: return o << "TARGET";
-  case Attr::VALUE: return o << "VALUE";
-  case Attr::VOLATILE: return o << "VOLATILE";
-  default: CRASH_NO_CASE;
+constexpr static size_t toInt(Attr attr) { return static_cast<size_t>(attr); }
+
+static const char *attrToString[] = {
+    [toInt(Attr::ABSTRACT)] = "ABSTRACT",
+    [toInt(Attr::ALLOCATABLE)] = "ALLOCATABLE",
+    [toInt(Attr::ASYNCHRONOUS)] = "ASYNCHRONOUS",
+    [toInt(Attr::BIND_C)] = "BIND(C)",
+    [toInt(Attr::CONTIGUOUS)] = "CONTIGUOUS",
+    [toInt(Attr::EXTERNAL)] = "EXTERNAL",
+    [toInt(Attr::INTENT_IN)] = "INTENT_IN",
+    [toInt(Attr::INTENT_OUT)] = "INTENT_OUT",
+    [toInt(Attr::INTRINSIC)] = "INTRINSIC",
+    [toInt(Attr::NOPASS)] = "NOPASS",
+    [toInt(Attr::OPTIONAL)] = "OPTIONAL",
+    [toInt(Attr::PARAMETER)] = "PARAMETER",
+    [toInt(Attr::PASS)] = "PASS",
+    [toInt(Attr::POINTER)] = "POINTER",
+    [toInt(Attr::PRIVATE)] = "PRIVATE",
+    [toInt(Attr::PROTECTED)] = "PROTECTED",
+    [toInt(Attr::PUBLIC)] = "PUBLIC",
+    [toInt(Attr::SAVE)] = "SAVE",
+    [toInt(Attr::TARGET)] = "TARGET",
+    [toInt(Attr::VALUE)] = "VALUE",
+    [toInt(Attr::VOLATILE)] = "VOLATILE",
+};
+
+Attrs::Attrs(std::initializer_list<Attr> attrs) {
+  bits_ = 0;
+  for (auto attr : attrs) {
+    set(attr);
   }
+}
+
+Attrs &Attrs::set(Attr attr) {
+  bits_ |= 1u << toInt(attr);
+  return *this;
+}
+Attrs &Attrs::add(const Attrs &attrs) {
+  bits_ |= attrs.bits_;
+  return *this;
+}
+
+bool Attrs::has(Attr attr) const { return (bits_ & (1u << toInt(attr))) != 0; }
+
+bool Attrs::hasAny(const Attrs &attrs) const {
+  return (bits_ & attrs.bits_) != 0;
+}
+
+bool Attrs::hasAll(const Attrs &attrs) const {
+  return (bits_ & attrs.bits_) == attrs.bits_;
+}
+
+void Attrs::checkValid(const Attrs &allowed) const {
+  if (!allowed.hasAll(*this)) {
+    parser::die("invalid attribute");
+  }
+}
+
+std::ostream &operator<<(std::ostream &o, Attr attr) {
+  return o << attrToString[toInt(attr)];
 }
 
 std::ostream &operator<<(std::ostream &o, const Attrs &attrs) {
-  int n = 0;
-  for (auto attr : attrs) {
-    if (n++) {
-      o << ", ";
+  int i = 0, n = 0;
+  for (std::uint64_t bits = attrs.bits_; bits != 0; bits >>= 1, ++i) {
+    if (bits & 1) {
+      if (n++) {
+        o << ", ";
+      }
+      o << attrToString[i];
     }
-    o << attr;
   }
   return o;
-}
-
-void checkAttrs(std::string className, Attrs attrs, Attrs allowed) {
-  for (auto attr : attrs) {
-    if (allowed.find(attr) == allowed.end()) {
-      std::stringstream temp;
-      temp << attr;
-      parser::die("invalid attribute '%s' for class %s", temp.str().c_str(),
-          className.c_str());
-    }
-  }
 }
 
 }  // namespace semantics
