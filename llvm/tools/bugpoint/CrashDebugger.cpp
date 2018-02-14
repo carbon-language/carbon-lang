@@ -85,14 +85,14 @@ Expected<ReducePassList::TestResult>
 ReducePassList::doTest(std::vector<std::string> &Prefix,
                        std::vector<std::string> &Suffix) {
   std::string PrefixOutput;
-  Module *OrigProgram = nullptr;
+  std::unique_ptr<Module> OrigProgram;
   if (!Prefix.empty()) {
     outs() << "Checking to see if these passes crash: "
            << getPassesString(Prefix) << ": ";
     if (BD.runPasses(BD.getProgram(), Prefix, PrefixOutput))
       return KeepPrefix;
 
-    OrigProgram = BD.Program;
+    OrigProgram.reset(BD.Program);
 
     BD.Program = parseInputFile(PrefixOutput, BD.getContext()).release();
     if (BD.Program == nullptr) {
@@ -106,15 +106,13 @@ ReducePassList::doTest(std::vector<std::string> &Prefix,
   outs() << "Checking to see if these passes crash: " << getPassesString(Suffix)
          << ": ";
 
-  if (BD.runPasses(BD.getProgram(), Suffix)) {
-    delete OrigProgram; // The suffix crashes alone...
-    return KeepSuffix;
-  }
+  if (BD.runPasses(BD.getProgram(), Suffix))
+    return KeepSuffix; // The suffix crashes alone...
 
   // Nothing failed, restore state...
   if (OrigProgram) {
     delete BD.Program;
-    BD.Program = OrigProgram;
+    BD.Program = OrigProgram.release();
   }
   return NoFailure;
 }
