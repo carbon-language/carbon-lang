@@ -854,7 +854,7 @@ bool ReduceCrashingNamedMDOps::TestNamedMDOps(
     outs() << " named metadata operands: ";
 
   ValueToValueMapTy VMap;
-  Module *M = CloneModule(*BD.getProgram(), VMap).release();
+  std::unique_ptr<Module> M = CloneModule(*BD.getProgram(), VMap);
 
   // This is a little wasteful. In the future it might be good if we could have
   // these dropped during cloning.
@@ -874,17 +874,17 @@ bool ReduceCrashingNamedMDOps::TestNamedMDOps(
   Passes.run(*M);
 
   // Try running on the hacked up program...
-  if (TestFn(BD, M)) {
+  if (TestFn(BD, M.get())) {
     // Make sure to use instruction pointers that point into the now-current
     // module, and that they don't include any deleted blocks.
     NamedMDOps.clear();
     for (const MDNode *Node : OldMDNodeOps)
       NamedMDOps.push_back(cast<MDNode>(*VMap.getMappedMD(Node)));
 
-    BD.setNewProgram(M); // It crashed, keep the trimmed version...
+    BD.setNewProgram(M.release()); // It crashed, keep the trimmed version...
     return true;
   }
-  delete M; // It didn't crash, try something else.
+  // It didn't crash, try something else.
   return false;
 }
 
