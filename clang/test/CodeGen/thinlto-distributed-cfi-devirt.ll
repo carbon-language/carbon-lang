@@ -54,8 +54,6 @@ entry:
   %0 = bitcast %struct.A* %obj to i8**
   %vtable5 = load i8*, i8** %0
 
-  ; Check that the call was devirtualized.
-  ; CHECK-IR: %call = tail call i32 @_ZN1A1nEi
   %1 = tail call { i8*, i1 } @llvm.type.checked.load(i8* %vtable5, i32 8, metadata !"_ZTS1A")
   %2 = extractvalue { i8*, i1 } %1, 1
   br i1 %2, label %cont, label %trap
@@ -67,6 +65,9 @@ trap:
 cont:
   %3 = extractvalue { i8*, i1 } %1, 0
   %4 = bitcast i8* %3 to i32 (%struct.A*, i32)*
+
+  ; Check that the call was devirtualized.
+  ; CHECK-IR: %call = tail call i32 @_ZN1A1nEi
   %call = tail call i32 %4(%struct.A* nonnull %obj, i32 %a)
   %vtable16 = load i8*, i8** %0
   %5 = tail call { i8*, i1 } @llvm.type.checked.load(i8* %vtable16, i32 0, metadata !"_ZTS1A")
