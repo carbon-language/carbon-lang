@@ -507,22 +507,14 @@ static bool isNormalFp(Constant *C) {
   return isa<ConstantFP>(C) && cast<ConstantFP>(C)->getValueAPF().isNormal();
 }
 
-/// Helper function of InstCombiner::visitFMul(BinaryOperator(). It returns
-/// true iff the given value is FMul or FDiv with one and only one operand
-/// being a normal constant (i.e. not Zero/NaN/Infinity).
+/// Helper function of InstCombiner::visitFMul(). Return true iff the given
+/// value is FMul or FDiv with one and only one operand being a finite-non-zero
+/// constant (i.e. not Zero/NaN/Infinity).
 static bool isFMulOrFDivWithConstant(Value *V) {
-  Instruction *I = dyn_cast<Instruction>(V);
-  if (!I || (I->getOpcode() != Instruction::FMul &&
-             I->getOpcode() != Instruction::FDiv))
-    return false;
-
-  Constant *C0 = dyn_cast<Constant>(I->getOperand(0));
-  Constant *C1 = dyn_cast<Constant>(I->getOperand(1));
-
-  if (C0 && C1)
-    return false;
-
-  return (C0 && isFiniteNonZeroFp(C0)) || (C1 && isFiniteNonZeroFp(C1));
+  Constant *C;
+  return (match(V, m_FMul(m_Value(), m_Constant(C))) ||
+          match(V, m_FDiv(m_Value(), m_Constant(C))) ||
+          match(V, m_FDiv(m_Constant(C), m_Value()))) && isFiniteNonZeroFp(C);
 }
 
 /// foldFMulConst() is a helper routine of InstCombiner::visitFMul().
