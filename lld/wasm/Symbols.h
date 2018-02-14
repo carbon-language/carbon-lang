@@ -242,8 +242,8 @@ T *replaceSymbol(Symbol *S, ArgT &&... Arg) {
   static_assert(sizeof(T) <= sizeof(SymbolUnion), "Symbol too small");
   static_assert(alignof(T) <= alignof(SymbolUnion),
                 "SymbolUnion not aligned enough");
-  assert(static_cast<Symbol *>(static_cast<T *>(nullptr)) == nullptr &&
-         "Not a Symbol");
+  static_assert(static_cast<Symbol *>(static_cast<T *>(nullptr)) == nullptr,
+                "Not a Symbol");
   return new (S) T(std::forward<ArgT>(Arg)...);
 }
 
