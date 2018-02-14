@@ -16626,7 +16626,7 @@ static SDValue truncateVectorWithPACK(unsigned Opcode, EVT DstVT, SDValue In,
   // Pack to the largest type possible:
   // vXi64/vXi32 -> PACK*SDW and vXi16 -> PACK*SWB.
   EVT InVT = MVT::i16, OutVT = MVT::i8;
-  if (DstVT.getScalarSizeInBits() > 8 &&
+  if (SrcVT.getScalarSizeInBits() > 16 &&
       (Opcode == X86ISD::PACKSS || Subtarget.hasSSE41())) {
     InVT = MVT::i32;
     OutVT = MVT::i16;
