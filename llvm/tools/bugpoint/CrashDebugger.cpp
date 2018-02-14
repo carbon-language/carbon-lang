@@ -700,7 +700,7 @@ bool ReduceCrashingInstructions::TestInsts(
     std::vector<const Instruction *> &Insts) {
   // Clone the program to try hacking it apart...
   ValueToValueMapTy VMap;
-  Module *M = CloneModule(*BD.getProgram(), VMap).release();
+  std::unique_ptr<Module> M = CloneModule(*BD.getProgram(), VMap);
 
   // Convert list to set for fast lookup...
   SmallPtrSet<Instruction *, 32> Instructions;
@@ -734,8 +734,8 @@ bool ReduceCrashingInstructions::TestInsts(
   Passes.run(*M);
 
   // Try running on the hacked up program...
-  if (TestFn(BD, M)) {
-    BD.setNewProgram(M); // It crashed, keep the trimmed version...
+  if (TestFn(BD, M.get())) {
+    BD.setNewProgram(M.release()); // It crashed, keep the trimmed version...
 
     // Make sure to use instruction pointers that point into the now-current
     // module, and that they don't include any deleted blocks.
@@ -744,7 +744,7 @@ bool ReduceCrashingInstructions::TestInsts(
       Insts.push_back(Inst);
     return true;
   }
-  delete M; // It didn't crash, try something else.
+  // It didn't crash, try something else.
   return false;
 }
 
