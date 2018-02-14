@@ -5,7 +5,6 @@
 #include <cerrno>
 #include <cstring>
 #include <fcntl.h>
-#include <iostream>  // TODO pmk rm
 #include <memory>
 #include <sys/mman.h>
 #include <sys/stat.h>
