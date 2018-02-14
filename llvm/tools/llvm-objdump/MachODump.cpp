@@ -7250,11 +7250,11 @@ static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF,
     ThumbTripleName = "";
 
     if (SymbolizerInfo.method != nullptr)
-      free(SymbolizerInfo.method);
+      delete[] SymbolizerInfo.method;
     if (SymbolizerInfo.demangled_name != nullptr)
       free(SymbolizerInfo.demangled_name);
     if (ThumbSymbolizerInfo.method != nullptr)
-      free(ThumbSymbolizerInfo.method);
+      delete[] ThumbSymbolizerInfo.method;
     if (ThumbSymbolizerInfo.demangled_name != nullptr)
       free(ThumbSymbolizerInfo.demangled_name);
   }
