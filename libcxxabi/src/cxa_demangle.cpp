@@ -176,8 +176,6 @@ public:
     KArrayType,
     KFunctionType,
     KFunctionEncoding,
-    KFunctionQualType,
-    KFunctionRefQualType,
     KLiteralOperator,
     KSpecialName,
     KCtorVtableSpecialName,
@@ -355,6 +353,12 @@ public:
     S += " ";
     S += Ext;
   }
+};
+
+enum FunctionRefQual : unsigned char {
+  FrefQualNone,
+  FrefQualLValue,
+  FrefQualRValue,
 };
 
 enum Qualifiers {
@@ -714,13 +718,16 @@ public:
 class FunctionType final : public Node {
   Node *Ret;
   NodeArray Params;
+  Qualifiers CVQuals;
+  FunctionRefQual RefQual;
 
 public:
-  FunctionType(Node *Ret_, NodeArray Params_)
+  FunctionType(Node *Ret_, NodeArray Params_, Qualifiers CVQuals_,
+               FunctionRefQual RefQual_)
       : Node(KFunctionType, Ret_->ParameterPackSize,
              /*RHSComponentCache=*/Cache::Yes, /*ArrayCache=*/Cache::No,
              /*FunctionCache=*/Cache::Yes),
-        Ret(Ret_), Params(Params_) {
+        Ret(Ret_), Params(Params_), CVQuals(CVQuals_), RefQual(RefQual_) {
     for (Node *P : Params)
       ParameterPackSize = std::min(ParameterPackSize, P->ParameterPackSize);
   }
@@ -745,6 +752,18 @@ public:
     Params.printWithComma(S);
     S += ")";
     Ret->printRight(S);
+
+    if (CVQuals & QualConst)
+      S += " const";
+    if (CVQuals & QualVolatile)
+      S += " volatile";
+    if (CVQuals & QualRestrict)
+      S += " restrict";
+
+    if (RefQual == FrefQualLValue)
+      S += " &";
+    else if (RefQual == FrefQualRValue)
+      S += " &&";
   }
 };
 
@@ -752,13 +771,17 @@ class FunctionEncoding final : public Node {
   const Node *Ret;
   const Node *Name;
   NodeArray Params;
+  Qualifiers CVQuals;
+  FunctionRefQual RefQual;
 
 public:
-  FunctionEncoding(Node *Ret_, Node *Name_, NodeArray Params_)
+  FunctionEncoding(Node *Ret_, Node *Name_, NodeArray Params_,
+                   Qualifiers CVQuals_, FunctionRefQual RefQual_)
       : Node(KFunctionEncoding, NoParameterPack,
              /*RHSComponentCache=*/Cache::Yes, /*ArrayCache=*/Cache::No,
              /*FunctionCache=*/Cache::Yes),
-        Ret(Ret_), Name(Name_), Params(Params_) {
+        Ret(Ret_), Name(Name_), Params(Params_), CVQuals(CVQuals_),
+        RefQual(RefQual_) {
     for (Node *P : Params)
       ParameterPackSize = std::min(ParameterPackSize, P->ParameterPackSize);
     if (Ret)
@@ -785,65 +808,18 @@ public:
     S += ")";
     if (Ret)
       Ret->printRight(S);
-  }
-};
 
-enum FunctionRefQual : unsigned char {
-  FrefQualNone,
-  FrefQualLValue,
-  FrefQualRValue,
-};
+    if (CVQuals & QualConst)
+      S += " const";
+    if (CVQuals & QualVolatile)
+      S += " volatile";
+    if (CVQuals & QualRestrict)
+      S += " restrict";
 
-class FunctionRefQualType : public Node {
-  Node *Fn;
-  FunctionRefQual Quals;
-
-  friend class FunctionQualType;
-
-public:
-  FunctionRefQualType(Node *Fn_, FunctionRefQual Quals_)
-      : Node(KFunctionRefQualType, Fn_->ParameterPackSize,
-             /*RHSComponentCache=*/Cache::Yes, /*ArrayCache=*/Cache::No,
-             /*FunctionCache=*/Cache::Yes),
-        Fn(Fn_), Quals(Quals_) {}
-
-  bool hasFunctionSlow(OutputStream &) const override { return true; }
-  bool hasRHSComponentSlow(OutputStream &) const override { return true; }
-
-  void printQuals(OutputStream &S) const {
-    if (Quals == FrefQualLValue)
+    if (RefQual == FrefQualLValue)
       S += " &";
-    else
+    else if (RefQual == FrefQualRValue)
       S += " &&";
-  }
-
-  void printLeft(OutputStream &S) const override { Fn->printLeft(S); }
-
-  void printRight(OutputStream &S) const override {
-    Fn->printRight(S);
-    printQuals(S);
-  }
-};
-
-class FunctionQualType final : public QualType {
-public:
-  FunctionQualType(Node *Child_, Qualifiers Quals_)
-      : QualType(Child_, Quals_) {
-    K = KFunctionQualType;
-  }
-
-  void printLeft(OutputStream &S) const override { Child->printLeft(S); }
-
-  void printRight(OutputStream &S) const override {
-    if (Child->getKind() == KFunctionRefQualType) {
-      auto *RefQuals = static_cast<const FunctionRefQualType *>(Child);
-      RefQuals->Fn->printRight(S);
-      printQuals(S);
-      RefQuals->printQuals(S);
-    } else {
-      Child->printRight(S);
-      printQuals(S);
-    }
   }
 };
 
@@ -2077,7 +2053,7 @@ struct Db {
   Node *parseArrayType();
   Node *parsePointerToMemberType();
   Node *parseClassEnumType();
-  Node *parseQualifiedType(bool &AppliesToFunction);
+  Node *parseQualifiedType();
 
   Node *parseNestedName();
   Node *parseCtorDtorName(Node *&SoFar);
@@ -2384,11 +2360,16 @@ StringView Db::parseBareSourceName() {
   return R;
 }
 
-// <function-type> ::= F [Y] <bare-function-type> [<ref-qualifier>] E
+// <function-type> ::= [<CV-qualifiers>] [<exception-spec>] [Dx] F [Y] <bare-function-type> [<ref-qualifier>] E
 //
-//  <ref-qualifier> ::= R                   # & ref-qualifier
-//  <ref-qualifier> ::= O                   # && ref-qualifier
+// <exception-spec> ::= Do                # non-throwing exception-specification (e.g., noexcept, throw())
+//                  ::= DO <expression> E # computed (instantiation-dependent) noexcept
+//                  ::= Dw <type>+ E      # dynamic exception specification with instantiation-dependent types
+//
+// <ref-qualifier> ::= R                   # & ref-qualifier
+// <ref-qualifier> ::= O                   # && ref-qualifier
 Node *Db::parseFunctionType() {
+  Qualifiers CVQuals = parseCVQualifiers();
   if (!consumeIf('F'))
     return nullptr;
   consumeIf('Y'); // extern "C"
@@ -2418,10 +2399,7 @@ Node *Db::parseFunctionType() {
   }
 
   NodeArray Params = popTrailingNodeArray(ParamsBegin);
-  Node *Fn = make<FunctionType>(ReturnType, Params);
-  if (ReferenceQualifier != FrefQualNone)
-    Fn = make<FunctionRefQualType>(Fn, ReferenceQualifier);
-  return Fn;
+  return make<FunctionType>(ReturnType, Params, CVQuals, ReferenceQualifier);
 }
 
 // extension:
@@ -2549,7 +2527,7 @@ Node *Db::parseClassEnumType() {
 // <qualified-type>     ::= <qualifiers> <type>
 // <qualifiers> ::= <extended-qualifier>* <CV-qualifiers>
 // <extended-qualifier> ::= U <source-name> [<template-args>] # vendor extended type qualifier
-Node *Db::parseQualifiedType(bool &AppliesToFunction) {
+Node *Db::parseQualifiedType() {
   if (consumeIf('U')) {
     StringView Qual = parseBareSourceName();
     if (Qual.empty())
@@ -2568,27 +2546,24 @@ Node *Db::parseQualifiedType(bool &AppliesToFunction) {
       }
       if (Proto.empty())
         return nullptr;
-      Node *Child = parseQualifiedType(AppliesToFunction);
+      Node *Child = parseQualifiedType();
       if (Child == nullptr)
         return nullptr;
       return make<ObjCProtoName>(Child, Proto);
     }
 
-    Node *Child = parseQualifiedType(AppliesToFunction);
+    Node *Child = parseQualifiedType();
     if (Child == nullptr)
       return nullptr;
     return make<VendorExtQualType>(Child, Qual);
   }
 
   Qualifiers Quals = parseCVQualifiers();
-  AppliesToFunction = look() == 'F';
   Node *Ty = parseType();
   if (Ty == nullptr)
     return nullptr;
-  if (Quals != QualNone) {
-    return AppliesToFunction ?
-      make<FunctionQualType>(Ty, Quals) : make<QualType>(Ty, Quals);
-  }
+  if (Quals != QualNone)
+    Ty = make<QualType>(Ty, Quals);
   return Ty;
 }
 
@@ -2619,16 +2594,19 @@ Node *Db::parseType() {
   //             ::= <qualified-type>
   case 'r':
   case 'V':
-  case 'K':
+  case 'K': {
+    unsigned AfterQuals = 0;
+    if (look(AfterQuals) == 'r') ++AfterQuals;
+    if (look(AfterQuals) == 'V') ++AfterQuals;
+    if (look(AfterQuals) == 'K') ++AfterQuals;
+    if (look(AfterQuals) == 'F') {
+      Result = parseFunctionType();
+      break;
+    }
+    _LIBCPP_FALLTHROUGH();
+  }
   case 'U': {
-    bool AppliesToFunction = false;
-    Result = parseQualifiedType(AppliesToFunction);
-
-    // Itanium C++ ABI 5.1.5.3:
-    //   For the purposes of substitution, the CV-qualifiers and ref-qualifier
-    //   of a function type are an indivisible part of the type.
-    if (AppliesToFunction)
-      return Result;
+    Result = parseQualifiedType();
     break;
   }
   // <builtin-type> ::= v    # void
@@ -5506,7 +5484,7 @@ parse_encoding(const char* first, const char* last, Db& db)
                         Node* name = db.Names.back();
                         db.Names.pop_back();
                         result = db.make<FunctionEncoding>(
-                            return_type, name, NodeArray());
+                            return_type, name, NodeArray(), cv, ref);
                     }
                     else
                     {
@@ -5527,12 +5505,8 @@ parse_encoding(const char* first, const char* last, Db& db)
                         Node* name = db.Names.back();
                         db.Names.pop_back();
                         result = db.make<FunctionEncoding>(
-                            return_type, name, params);
+                            return_type, name, params, cv, ref);
                     }
-                    if (ref != FrefQualNone)
-                        result = db.make<FunctionRefQualType>(result, ref);
-                    if (cv != QualNone)
-                        result = db.make<FunctionQualType>(result, cv);
                     db.Names.push_back(result);
                     first = t;
                 }
