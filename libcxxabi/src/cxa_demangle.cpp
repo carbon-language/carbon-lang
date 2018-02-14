@@ -175,6 +175,8 @@ public:
     KPointerToMemberType,
     KArrayType,
     KFunctionType,
+    KNoexceptSpec,
+    KDynamicExceptionSpec,
     KFunctionEncoding,
     KLiteralOperator,
     KSpecialName,
@@ -720,16 +722,21 @@ class FunctionType final : public Node {
   NodeArray Params;
   Qualifiers CVQuals;
   FunctionRefQual RefQual;
+  Node *ExceptionSpec;
 
 public:
   FunctionType(Node *Ret_, NodeArray Params_, Qualifiers CVQuals_,
-               FunctionRefQual RefQual_)
+               FunctionRefQual RefQual_, Node *ExceptionSpec_)
       : Node(KFunctionType, Ret_->ParameterPackSize,
              /*RHSComponentCache=*/Cache::Yes, /*ArrayCache=*/Cache::No,
              /*FunctionCache=*/Cache::Yes),
-        Ret(Ret_), Params(Params_), CVQuals(CVQuals_), RefQual(RefQual_) {
+        Ret(Ret_), Params(Params_), CVQuals(CVQuals_), RefQual(RefQual_),
+        ExceptionSpec(ExceptionSpec_) {
     for (Node *P : Params)
       ParameterPackSize = std::min(ParameterPackSize, P->ParameterPackSize);
+    if (ExceptionSpec != nullptr)
+      ParameterPackSize =
+        std::min(ParameterPackSize, ExceptionSpec->ParameterPackSize);
   }
 
   bool hasRHSComponentSlow(OutputStream &) const override { return true; }
@@ -764,6 +771,39 @@ public:
       S += " &";
     else if (RefQual == FrefQualRValue)
       S += " &&";
+
+    if (ExceptionSpec != nullptr) {
+      S += ' ';
+      ExceptionSpec->print(S);
+    }
+  }
+};
+
+class NoexceptSpec : public Node {
+  Node *E;
+public:
+  NoexceptSpec(Node *E_) : Node(KNoexceptSpec, E_->ParameterPackSize), E(E_) {}
+
+  void printLeft(OutputStream &S) const override {
+    S += "noexcept(";
+    E->print(S);
+    S += ")";
+  }
+};
+
+class DynamicExceptionSpec : public Node {
+  NodeArray Types;
+public:
+  DynamicExceptionSpec(NodeArray Types_)
+      : Node(KDynamicExceptionSpec), Types(Types_) {
+    for (Node *T : Types)
+      ParameterPackSize = std::min(ParameterPackSize, T->ParameterPackSize);
+  }
+
+  void printLeft(OutputStream &S) const override {
+    S += "throw(";
+    Types.printWithComma(S);
+    S += ')';
   }
 };
 
@@ -2370,6 +2410,29 @@ StringView Db::parseBareSourceName() {
 // <ref-qualifier> ::= O                   # && ref-qualifier
 Node *Db::parseFunctionType() {
   Qualifiers CVQuals = parseCVQualifiers();
+
+  Node *ExceptionSpec = nullptr;
+  if (consumeIf("Do")) {
+    ExceptionSpec = make<NameType>("noexcept");
+  } else if (consumeIf("DO")) {
+    Node *E = parseExpr();
+    if (E == nullptr || !consumeIf('E'))
+      return nullptr;
+    ExceptionSpec = make<NoexceptSpec>(E);
+  } else if (consumeIf("Dw")) {
+    size_t SpecsBegin = Names.size();
+    while (!consumeIf('E')) {
+      Node *T = parseType();
+      if (T == nullptr)
+        return nullptr;
+      Names.push_back(T);
+    }
+    ExceptionSpec =
+      make<DynamicExceptionSpec>(popTrailingNodeArray(SpecsBegin));
+  }
+
+  consumeIf("Dx"); // transaction safe
+
   if (!consumeIf('F'))
     return nullptr;
   consumeIf('Y'); // extern "C"
@@ -2399,7 +2462,8 @@ Node *Db::parseFunctionType() {
   }
 
   NodeArray Params = popTrailingNodeArray(ParamsBegin);
-  return make<FunctionType>(ReturnType, Params, CVQuals, ReferenceQualifier);
+  return make<FunctionType>(ReturnType, Params, CVQuals,
+                            ReferenceQualifier, ExceptionSpec);
 }
 
 // extension:
@@ -2599,7 +2663,11 @@ Node *Db::parseType() {
     if (look(AfterQuals) == 'r') ++AfterQuals;
     if (look(AfterQuals) == 'V') ++AfterQuals;
     if (look(AfterQuals) == 'K') ++AfterQuals;
-    if (look(AfterQuals) == 'F') {
+
+    if (look(AfterQuals) == 'F' ||
+        (look(AfterQuals) == 'D' &&
+         (look(AfterQuals + 1) == 'o' || look(AfterQuals + 1) == 'O' ||
+          look(AfterQuals + 1) == 'w' || look(AfterQuals + 1) == 'x'))) {
       Result = parseFunctionType();
       break;
     }
@@ -2761,6 +2829,14 @@ Node *Db::parseType() {
       Result = make<ParameterPackExpansion>(Child);
       break;
     }
+    // Exception specifier on a function type.
+    case 'o':
+    case 'O':
+    case 'w':
+    // Transaction safe function type.
+    case 'x':
+      Result = parseFunctionType();
+      break;
     }
     break;
   //             ::= <function-type>
