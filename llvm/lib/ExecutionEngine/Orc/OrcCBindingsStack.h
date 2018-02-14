@@ -205,16 +205,14 @@ public:
       : ES(SSP), DL(TM.createDataLayout()),
         IndirectStubsMgr(IndirectStubsMgrBuilder()), CCMgr(std::move(CCMgr)),
         ObjectLayer(ES,
-                    [](orc::VModuleKey K) {
-                      return std::make_shared<SectionMemoryManager>();
-                    },
                     [this](orc::VModuleKey K) {
                       auto ResolverI = Resolvers.find(K);
                       assert(ResolverI != Resolvers.end() &&
                              "No resolver for module K");
                       auto Resolver = std::move(ResolverI->second);
                       Resolvers.erase(ResolverI);
-                      return Resolver;
+                      return ObjLayerT::Resources{
+                          std::make_shared<SectionMemoryManager>(), Resolver};
                     }),
         CompileLayer(ObjectLayer, orc::SimpleCompiler(TM)),
         CODLayer(ES, CompileLayer,

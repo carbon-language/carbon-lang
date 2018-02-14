@@ -229,9 +229,12 @@ public:
         Resolver(std::make_shared<LinkingORCResolver>(*this)),
         ClientResolver(std::move(ClientResolver)), NotifyObjectLoaded(*this),
         NotifyFinalized(*this),
-        ObjectLayer(ES, [this](VModuleKey K) { return this->MemMgr; },
-                    [this](VModuleKey K) { return this->Resolver; },
-                    NotifyObjectLoaded, NotifyFinalized),
+        ObjectLayer(
+            ES,
+            [this](VModuleKey K) {
+              return ObjectLayerT::Resources{this->MemMgr, this->Resolver};
+            },
+            NotifyObjectLoaded, NotifyFinalized),
         CompileLayer(ObjectLayer, SimpleCompiler(*this->TM)),
         LazyEmitLayer(CompileLayer) {}
 
