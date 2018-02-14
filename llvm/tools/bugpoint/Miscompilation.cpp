@@ -501,8 +501,8 @@ ReduceMiscompiledBlocks::TestFuncs(const std::vector<BasicBlock *> &BBs) {
 
   // Split the module into the two halves of the program we want.
   ValueToValueMapTy VMap;
-  Module *Clone = CloneModule(*BD.getProgram(), VMap).release();
-  Module *Orig = BD.swapProgramIn(Clone);
+  std::unique_ptr<Module> Clone = CloneModule(*BD.getProgram(), VMap);
+  std::unique_ptr<Module> Orig(BD.swapProgramIn(Clone.release()));
   std::vector<Function *> FuncsOnClone;
   std::vector<BasicBlock *> BBsOnClone;
   for (unsigned i = 0, e = FunctionsBeingTested.size(); i != e; ++i) {
@@ -524,10 +524,10 @@ ReduceMiscompiledBlocks::TestFuncs(const std::vector<BasicBlock *> &BBs) {
   if (std::unique_ptr<Module> New =
           BD.extractMappedBlocksFromModule(BBsOnClone, ToOptimize.get())) {
     Expected<bool> Ret = TestFn(BD, std::move(New), std::move(ToNotOptimize));
-    delete BD.swapProgramIn(Orig);
+    delete BD.swapProgramIn(Orig.release());
     return Ret;
   }
-  delete BD.swapProgramIn(Orig);
+  delete BD.swapProgramIn(Orig.release());
   return false;
 }
 
