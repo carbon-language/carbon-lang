@@ -316,17 +316,14 @@ ExtractLoops(BugDriver &BD,
 
     ValueToValueMapTy VMap;
     std::unique_ptr<Module> ToNotOptimize = CloneModule(*BD.getProgram(), VMap);
-    Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize.get(),
-                                                   MiscompiledFunctions, VMap)
-                             .release();
+    std::unique_ptr<Module> ToOptimize = SplitFunctionsOutOfModule(
+        ToNotOptimize.get(), MiscompiledFunctions, VMap);
     std::unique_ptr<Module> ToOptimizeLoopExtracted =
-        BD.extractLoop(ToOptimize);
-    if (!ToOptimizeLoopExtracted) {
+        BD.extractLoop(ToOptimize.get());
+    if (!ToOptimizeLoopExtracted)
       // If the loop extractor crashed or if there were no extractible loops,
       // then this chapter of our odyssey is over with.
-      delete ToOptimize;
       return MadeChange;
-    }
 
     errs() << "Extracted a loop from the breaking portion of the program.\n";
 
@@ -345,10 +342,9 @@ ExtractLoops(BugDriver &BD,
       return false;
 
     // Delete the original and set the new program.
-    Module *Old = BD.swapProgramIn(New->release());
+    std::unique_ptr<Module> Old(BD.swapProgramIn(New->release()));
     for (unsigned i = 0, e = MiscompiledFunctions.size(); i != e; ++i)
       MiscompiledFunctions[i] = cast<Function>(VMap[MiscompiledFunctions[i]]);
-    delete Old;
 
     if (Failure) {
       BD.switchToInterpreter(AI);
@@ -361,16 +357,14 @@ ExtractLoops(BugDriver &BD,
       BD.writeProgramToFile(OutputPrefix + "-loop-extract-fail-tno.bc",
                             ToNotOptimize.get());
       BD.writeProgramToFile(OutputPrefix + "-loop-extract-fail-to.bc",
-                            ToOptimize);
+                            ToOptimize.get());
       BD.writeProgramToFile(OutputPrefix + "-loop-extract-fail-to-le.bc",
                             ToOptimizeLoopExtracted.get());
 
       errs() << "Please submit the " << OutputPrefix
              << "-loop-extract-fail-*.bc files.\n";
-      delete ToOptimize;
       return MadeChange;
     }
-    delete ToOptimize;
     BD.switchToInterpreter(AI);
 
     outs() << "  Testing after loop extraction:\n";
