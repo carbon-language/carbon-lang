@@ -150,7 +150,7 @@ bool ReduceCrashingGlobalInitializers::TestGlobalVariables(
     std::vector<GlobalVariable *> &GVs) {
   // Clone the program to try hacking it apart...
   ValueToValueMapTy VMap;
-  std::unique_ptr<Module> M = CloneModule(BD.getProgram(), VMap);
+  std::unique_ptr<Module> M = CloneModule(*BD.getProgram(), VMap);
 
   // Convert list to set for fast lookup...
   std::set<GlobalVariable *> GVSet;
@@ -244,7 +244,7 @@ bool ReduceCrashingFunctions::TestFuncs(std::vector<Function *> &Funcs) {
 
   // Clone the program to try hacking it apart...
   ValueToValueMapTy VMap;
-  Module *M = CloneModule(BD.getProgram(), VMap).release();
+  Module *M = CloneModule(*BD.getProgram(), VMap).release();
 
   // Convert list to set for fast lookup...
   std::set<Function *> Functions;
@@ -388,7 +388,7 @@ public:
 bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock *> &BBs) {
   // Clone the program to try hacking it apart...
   ValueToValueMapTy VMap;
-  std::unique_ptr<Module> M = CloneModule(BD.getProgram(), VMap);
+  std::unique_ptr<Module> M = CloneModule(*BD.getProgram(), VMap);
 
   // Convert list to set for fast lookup...
   SmallPtrSet<BasicBlock *, 8> Blocks;
@@ -507,7 +507,7 @@ bool ReduceCrashingConditionals::TestBlocks(
     std::vector<const BasicBlock *> &BBs) {
   // Clone the program to try hacking it apart...
   ValueToValueMapTy VMap;
-  std::unique_ptr<Module> M = CloneModule(BD.getProgram(), VMap);
+  std::unique_ptr<Module> M = CloneModule(*BD.getProgram(), VMap);
 
   // Convert list to set for fast lookup...
   SmallPtrSet<const BasicBlock *, 8> Blocks;
@@ -611,7 +611,7 @@ public:
 bool ReduceSimplifyCFG::TestBlocks(std::vector<const BasicBlock *> &BBs) {
   // Clone the program to try hacking it apart...
   ValueToValueMapTy VMap;
-  std::unique_ptr<Module> M = CloneModule(BD.getProgram(), VMap);
+  std::unique_ptr<Module> M = CloneModule(*BD.getProgram(), VMap);
 
   // Convert list to set for fast lookup...
   SmallPtrSet<const BasicBlock *, 8> Blocks;
@@ -703,7 +703,7 @@ bool ReduceCrashingInstructions::TestInsts(
     std::vector<const Instruction *> &Insts) {
   // Clone the program to try hacking it apart...
   ValueToValueMapTy VMap;
-  Module *M = CloneModule(BD.getProgram(), VMap).release();
+  Module *M = CloneModule(*BD.getProgram(), VMap).release();
 
   // Convert list to set for fast lookup...
   SmallPtrSet<Instruction *, 32> Instructions;
@@ -778,7 +778,7 @@ public:
 bool ReduceCrashingNamedMD::TestNamedMDs(std::vector<std::string> &NamedMDs) {
 
   ValueToValueMapTy VMap;
-  Module *M = CloneModule(BD.getProgram(), VMap).release();
+  Module *M = CloneModule(*BD.getProgram(), VMap).release();
 
   outs() << "Checking for crash with only these named metadata nodes:";
   unsigned NumPrint = std::min<size_t>(NamedMDs.size(), 10);
@@ -858,7 +858,7 @@ bool ReduceCrashingNamedMDOps::TestNamedMDOps(
     outs() << " named metadata operands: ";
 
   ValueToValueMapTy VMap;
-  Module *M = CloneModule(BD.getProgram(), VMap).release();
+  Module *M = CloneModule(*BD.getProgram(), VMap).release();
 
   // This is a little wasteful. In the future it might be good if we could have
   // these dropped during cloning.
@@ -900,7 +900,7 @@ static Error ReduceGlobalInitializers(BugDriver &BD, BugTester TestFn) {
 
   // Now try to reduce the number of global variable initializers in the
   // module to something small.
-  std::unique_ptr<Module> M = CloneModule(OrigM);
+  std::unique_ptr<Module> M = CloneModule(*OrigM);
   bool DeletedInit = false;
 
   for (GlobalVariable &GV : M->globals()) {
@@ -1120,7 +1120,7 @@ static Error DebugACrash(BugDriver &BD, BugTester TestFn) {
 
   // Attempt to strip debug info metadata.
   auto stripMetadata = [&](std::function<bool(Module &)> strip) {
-    std::unique_ptr<Module> M = CloneModule(BD.getProgram());
+    std::unique_ptr<Module> M = CloneModule(*BD.getProgram());
     strip(*M);
     if (TestFn(BD, M.get()))
       BD.setNewProgram(M.release());
@@ -1166,7 +1166,7 @@ static Error DebugACrash(BugDriver &BD, BugTester TestFn) {
   // Try to clean up the testcase by running funcresolve and globaldce...
   if (!BugpointIsInterrupted) {
     outs() << "\n*** Attempting to perform final cleanups: ";
-    std::unique_ptr<Module> M = CloneModule(BD.getProgram());
+    std::unique_ptr<Module> M = CloneModule(*BD.getProgram());
     M = BD.performFinalCleanups(M.release(), true);
 
     // Find out if the pass still crashes on the cleaned up program...

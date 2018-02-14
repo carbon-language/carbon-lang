@@ -230,8 +230,8 @@ static Expected<std::unique_ptr<Module>> testMergedProgram(const BugDriver &BD,
                                                            const Module &M2,
                                                            bool &Broken) {
   // Resulting merge of M1 and M2.
-  auto Merged = CloneModule(&M1);
-  if (Linker::linkModules(*Merged, CloneModule(&M2)))
+  auto Merged = CloneModule(M1);
+  if (Linker::linkModules(*Merged, CloneModule(M2)))
     // TODO: Shouldn't we thread the error up instead of exiting?
     exit(1);
 
@@ -266,7 +266,7 @@ ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function *> &Funcs) {
   //   we can conclude that a function triggers the bug when in fact one
   //   needs a larger set of original functions to do so.
   ValueToValueMapTy VMap;
-  Module *Clone = CloneModule(BD.getProgram(), VMap).release();
+  Module *Clone = CloneModule(*BD.getProgram(), VMap).release();
   Module *Orig = BD.swapProgramIn(Clone);
 
   std::vector<Function *> FuncsOnClone;
@@ -277,7 +277,7 @@ ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function *> &Funcs) {
 
   // Split the module into the two halves of the program we want.
   VMap.clear();
-  std::unique_ptr<Module> ToNotOptimize = CloneModule(BD.getProgram(), VMap);
+  std::unique_ptr<Module> ToNotOptimize = CloneModule(*BD.getProgram(), VMap);
   std::unique_ptr<Module> ToOptimize =
       SplitFunctionsOutOfModule(ToNotOptimize.get(), FuncsOnClone, VMap);
 
@@ -316,7 +316,7 @@ ExtractLoops(BugDriver &BD,
       return MadeChange;
 
     ValueToValueMapTy VMap;
-    std::unique_ptr<Module> ToNotOptimize = CloneModule(BD.getProgram(), VMap);
+    std::unique_ptr<Module> ToNotOptimize = CloneModule(*BD.getProgram(), VMap);
     Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize.get(),
                                                    MiscompiledFunctions, VMap)
                              .release();
@@ -377,8 +377,8 @@ ExtractLoops(BugDriver &BD,
     outs() << "  Testing after loop extraction:\n";
     // Clone modules, the tester function will free them.
     std::unique_ptr<Module> TOLEBackup =
-        CloneModule(ToOptimizeLoopExtracted.get(), VMap);
-    std::unique_ptr<Module> TNOBackup = CloneModule(ToNotOptimize.get(), VMap);
+        CloneModule(*ToOptimizeLoopExtracted, VMap);
+    std::unique_ptr<Module> TNOBackup = CloneModule(*ToNotOptimize, VMap);
 
     for (unsigned i = 0, e = MiscompiledFunctions.size(); i != e; ++i)
       MiscompiledFunctions[i] = cast<Function>(VMap[MiscompiledFunctions[i]]);
@@ -508,7 +508,7 @@ ReduceMiscompiledBlocks::TestFuncs(const std::vector<BasicBlock *> &BBs) {
 
   // Split the module into the two halves of the program we want.
   ValueToValueMapTy VMap;
-  Module *Clone = CloneModule(BD.getProgram(), VMap).release();
+  Module *Clone = CloneModule(*BD.getProgram(), VMap).release();
   Module *Orig = BD.swapProgramIn(Clone);
   std::vector<Function *> FuncsOnClone;
   std::vector<BasicBlock *> BBsOnClone;
@@ -522,7 +522,7 @@ ReduceMiscompiledBlocks::TestFuncs(const std::vector<BasicBlock *> &BBs) {
   }
   VMap.clear();
 
-  std::unique_ptr<Module> ToNotOptimize = CloneModule(BD.getProgram(), VMap);
+  std::unique_ptr<Module> ToNotOptimize = CloneModule(*BD.getProgram(), VMap);
   std::unique_ptr<Module> ToOptimize =
       SplitFunctionsOutOfModule(ToNotOptimize.get(), FuncsOnClone, VMap);
 
@@ -577,7 +577,7 @@ ExtractBlocks(BugDriver &BD,
   }
 
   ValueToValueMapTy VMap;
-  Module *ProgClone = CloneModule(BD.getProgram(), VMap).release();
+  Module *ProgClone = CloneModule(*BD.getProgram(), VMap).release();
   Module *ToExtract =
       SplitFunctionsOutOfModule(ProgClone, MiscompiledFunctions, VMap)
           .release();
@@ -770,7 +770,7 @@ Error BugDriver::debugMiscompilation() {
   // Output a bunch of bitcode files for the user...
   outs() << "Outputting reduced bitcode files which expose the problem:\n";
   ValueToValueMapTy VMap;
-  Module *ToNotOptimize = CloneModule(getProgram(), VMap).release();
+  Module *ToNotOptimize = CloneModule(*getProgram(), VMap).release();
   Module *ToOptimize =
       SplitFunctionsOutOfModule(ToNotOptimize, *MiscompiledFunctions, VMap)
           .release();
@@ -1037,7 +1037,7 @@ Error BugDriver::debugCodeGenerator() {
 
   // Split the module into the two halves of the program we want.
   ValueToValueMapTy VMap;
-  std::unique_ptr<Module> ToNotCodeGen = CloneModule(getProgram(), VMap);
+  std::unique_ptr<Module> ToNotCodeGen = CloneModule(*getProgram(), VMap);
   std::unique_ptr<Module> ToCodeGen =
       SplitFunctionsOutOfModule(ToNotCodeGen.get(), *Funcs, VMap);
 

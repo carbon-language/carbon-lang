@@ -259,7 +259,7 @@ void splitAndWriteThinLTOBitcode(
 
   ValueToValueMapTy VMap;
   std::unique_ptr<Module> MergedM(
-      CloneModule(&M, VMap, [&](const GlobalValue *GV) -> bool {
+      CloneModule(M, VMap, [&](const GlobalValue *GV) -> bool {
         if (const auto *C = GV->getComdat())
           if (MergedMComdats.count(C))
             return true;
