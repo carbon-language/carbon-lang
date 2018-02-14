@@ -1282,7 +1282,7 @@ void RewriteInstance::discoverFileObjects() {
     bool IsSimple = true;
     auto FDEI = CFIRdWrt->getFDEs().lower_bound(Address);
     if (FDEI != CFIRdWrt->getFDEs().end()) {
-      auto &FDE = *FDEI->second;
+      const auto &FDE = *FDEI->second;
       if (FDEI->first != Address) {
         // There's no matching starting address in FDE. Make sure the previous
         // FDE does not contain this address.
@@ -1311,7 +1311,8 @@ void RewriteInstance::discoverFileObjects() {
         if (BC->getBinaryDataAtAddress(Address)) {
           BC->setBinaryDataSize(Address, SymbolSize);
         } else {
-          DEBUG(dbgs() << "BOLT-DEBUG: No BD @ 0x" << Twine::utohexstr(Address) << "\n");
+          DEBUG(dbgs() << "BOLT-DEBUG: No BD @ 0x"
+                       << Twine::utohexstr(Address) << "\n");
         }
       }
       TentativeSize = SymbolSize;
@@ -2091,7 +2092,9 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
         // These are mostly local data symbols but undefined symbols
         // in relocation sections can get through here too, from .plt.
         assert(cantFail(Symbol.getType()) == SymbolRef::ST_Debug ||
-               BC->getSectionForAddress(SymbolAddress)->getName().startswith(".plt"));
+               BC->getSectionForAddress(SymbolAddress)
+                   ->getName()
+                   .startswith(".plt"));
         const uint64_t SymbolSize = ELFSymbolRef(Symbol).getSize();
         const uint64_t SymbolAlignment = Symbol.getAlignment();
 
@@ -2315,21 +2318,41 @@ void RewriteInstance::disassembleFunctions() {
       }
     }
     BC->InterproceduralReferences.clear();
+  }
+
+  for (auto &BFI : BinaryFunctions) {
+    BinaryFunction &Function = BFI.second;
+
+    if (!BC->HasRelocations && !opts::shouldProcess(Function)) {
+      DEBUG(dbgs() << "BOLT: skipping processing function "
+                   << Function << " per user request.\n");
+      continue;
+    }
+
+    if (!Function.isSimple()) {
+      assert((!BC->HasRelocations || Function.getSize() == 0) &&
+             "unexpected non-simple function in relocation mode");
+      continue;
+    }
 
     // Fill in CFI information for this function
-    if (Function.isSimple() && !Function.trapsOnEntry()) {
+    if (!Function.trapsOnEntry()) {
       if (!CFIRdWrt->fillCFIInfoFor(Function)) {
-        errs() << "BOLT-ERROR: unable to fill CFI for function "
-               << Function << ".\n";
-        if (BC->HasRelocations)
+        if (BC->HasRelocations) {
+          errs() << "BOLT-ERROR: unable to fill CFI for function "
+                 << Function << ". Aborting.\n";
           exit(1);
-        Function.setSimple(false);
-        continue;
+        } else {
+          errs() << "BOLT-WARNING: unable to fill CFI for function "
+                 << Function << ". Skipping.\n";
+          Function.setSimple(false);
+          continue;
+        }
       }
     }
 
     // Parse LSDA.
-    if (Function.isSimple() && Function.getLSDAAddress() != 0)
+    if (Function.getLSDAAddress() != 0)
       Function.parseLSDA(LSDAData, LSDAAddress);
 
     if (!Function.buildCFG())

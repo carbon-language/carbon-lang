@@ -1803,9 +1803,9 @@ void BinaryFunction::addEntryPoint(uint64_t Address) {
   auto *EntryBD = BC.getBinaryDataAtAddress(Address);
   auto *EntrySymbol = EntryBD ? EntryBD->getSymbol() : nullptr;
 
-  // If we haven't disassembled the function yet we can add a new entry point
+  // If we haven't built CFG for the function, we can add a new entry point
   // even if it doesn't have an associated entry in the symbol table.
-  if (CurrentState == State::Empty) {
+  if (CurrentState == State::Empty || CurrentState == State::Disassembled) {
     if (!EntrySymbol) {
       DEBUG(dbgs() << "creating local label\n");
       EntrySymbol = getOrCreateLocalLabel(Address);
