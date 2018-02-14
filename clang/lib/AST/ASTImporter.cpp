@@ -360,7 +360,36 @@ namespace clang {
     // Importing overrides.
     void ImportOverrides(CXXMethodDecl *ToMethod, CXXMethodDecl *FromMethod);
   };
+
+
+template <typename InContainerTy>
+bool ASTNodeImporter::ImportTemplateArgumentListInfo(
+    SourceLocation FromLAngleLoc, SourceLocation FromRAngleLoc,
+    const InContainerTy &Container, TemplateArgumentListInfo &Result) {
+  TemplateArgumentListInfo ToTAInfo(Importer.Import(FromLAngleLoc),
+                                    Importer.Import(FromRAngleLoc));
+  if (ImportTemplateArgumentListInfo(Container, ToTAInfo))
+    return true;
+  Result = ToTAInfo;
+  return false;
 }
+
+template <>
+bool ASTNodeImporter::ImportTemplateArgumentListInfo<TemplateArgumentListInfo>(
+    const TemplateArgumentListInfo &From, TemplateArgumentListInfo &Result) {
+  return ImportTemplateArgumentListInfo(
+      From.getLAngleLoc(), From.getRAngleLoc(), From.arguments(), Result);
+}
+
+template <>
+bool ASTNodeImporter::ImportTemplateArgumentListInfo<
+    ASTTemplateArgumentListInfo>(const ASTTemplateArgumentListInfo &From,
+                                 TemplateArgumentListInfo &Result) {
+  return ImportTemplateArgumentListInfo(From.LAngleLoc, From.RAngleLoc,
+                                        From.arguments(), Result);
+}
+
+} // end namespace clang
 
 //----------------------------------------------------------------------------
 // Import Types
@@ -1320,33 +1349,6 @@ bool ASTNodeImporter::ImportTemplateArgumentListInfo(
       return true;
   }
   return false;
-}
-
-template <typename InContainerTy>
-bool ASTNodeImporter::ImportTemplateArgumentListInfo(
-    SourceLocation FromLAngleLoc, SourceLocation FromRAngleLoc,
-    const InContainerTy &Container, TemplateArgumentListInfo &Result) {
-  TemplateArgumentListInfo ToTAInfo(Importer.Import(FromLAngleLoc),
-                                    Importer.Import(FromRAngleLoc));
-  if (ImportTemplateArgumentListInfo(Container, ToTAInfo))
-    return true;
-  Result = ToTAInfo;
-  return false;
-}
-
-template <>
-bool ASTNodeImporter::ImportTemplateArgumentListInfo<TemplateArgumentListInfo>(
-    const TemplateArgumentListInfo &From, TemplateArgumentListInfo &Result) {
-  return ImportTemplateArgumentListInfo(
-      From.getLAngleLoc(), From.getRAngleLoc(), From.arguments(), Result);
-}
-
-template <>
-bool ASTNodeImporter::ImportTemplateArgumentListInfo<
-    ASTTemplateArgumentListInfo>(const ASTTemplateArgumentListInfo &From,
-                                 TemplateArgumentListInfo &Result) {
-  return ImportTemplateArgumentListInfo(From.LAngleLoc, From.RAngleLoc,
-                                        From.arguments(), Result);
 }
 
 bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord, 
