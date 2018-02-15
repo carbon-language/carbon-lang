@@ -6029,7 +6029,7 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleAlwaysInlineAttr(S, D, AL);
     break;
   case AttributeList::AT_Artificial:
-    handleSimpleAttribute<ArtificialAttr>(S, D, Attr);
+    handleSimpleAttribute<ArtificialAttr>(S, D, AL);
     break;
   case AttributeList::AT_AnalyzerNoReturn:
     handleAnalyzerNoReturnAttr(S, D, AL);
