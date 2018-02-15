@@ -779,6 +779,7 @@ INTERCEPTOR(int, socketpair, int domain, int type, int protocol, int sv[2]) {
 
 INTERCEPTOR(char *, fgets, char *s, int size, void *stream) {
   ENSURE_MSAN_INITED();
+  InterceptorScope interceptor_scope;
   char *res = REAL(fgets)(s, size, stream);
   if (res)
     __msan_unpoison(s, REAL(strlen)(s) + 1);
