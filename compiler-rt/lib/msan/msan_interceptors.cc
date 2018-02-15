@@ -1392,6 +1392,7 @@ static uptr signal_impl(int signo, uptr cb) {
   } while (false)
 #define COMMON_SYSCALL_POST_WRITE_RANGE(p, s) __msan_unpoison(p, s)
 #include "sanitizer_common/sanitizer_common_syscalls.inc"
+#include "sanitizer_common/sanitizer_syscalls_netbsd.inc"
 
 struct dlinfo {
   char *dli_fname;
