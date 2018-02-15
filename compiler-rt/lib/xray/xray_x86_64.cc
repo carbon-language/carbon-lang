@@ -92,7 +92,10 @@ uint64_t getTSCFrequency() XRAY_NEVER_INSTRUMENT {
     
 }
 #else
-#error "Platform not supported"
+uint64_t getTSCFrequency() XRAY_NEVER_INSTRUMENT {
+    /* Not supported */
+    return 0;
+}
 #endif
 
 static constexpr uint8_t CallOpCode = 0xe8;
