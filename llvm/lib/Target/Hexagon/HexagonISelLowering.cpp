@@ -112,9 +112,16 @@ namespace {
   public:
     HexagonCCState(CallingConv::ID CC, bool IsVarArg, MachineFunction &MF,
                    SmallVectorImpl<CCValAssign> &locs, LLVMContext &C,
-                   unsigned NumNamedArgs)
-        : CCState(CC, IsVarArg, MF, locs, C),
-          NumNamedVarArgParams(NumNamedArgs) {}
+                   const Function *Callee)
+        : CCState(CC, IsVarArg, MF, locs, C) {
+      // If a function has zero args and is a vararg function, that's
+      // disallowed so it must be an undeclared function.  Do not assume
+      // varargs if the callee is undefined.
+      if (Callee && Callee->isVarArg() &&
+          Callee->getFunctionType()->getNumParams() != 0)
+        NumNamedVarArgParams = Callee->getFunctionType()->getNumParams();
+    }
+
     unsigned getNumNamedVarArgParams() const { return NumNamedVarArgParams; }
   };
 
@@ -317,18 +324,22 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   bool IsVarArg                         = CLI.IsVarArg;
   bool DoesNotReturn                    = CLI.DoesNotReturn;
 
-  bool IsStructRet    = Outs.empty() ? false : Outs[0].Flags.isSRet();
+  bool IsStructRet    = (Outs.empty()) ? false : Outs[0].Flags.isSRet();
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo &MFI = MF.getFrameInfo();
   auto PtrVT = getPointerTy(MF.getDataLayout());
 
-  if (GlobalAddressSDNode *GAN = dyn_cast<GlobalAddressSDNode>(Callee))
-    Callee = DAG.getTargetGlobalAddress(GAN->getGlobal(), dl, MVT::i32);
+  const Function *CalleeF = nullptr;
+  if (GlobalAddressSDNode *GAN = dyn_cast<GlobalAddressSDNode>(Callee)) {
+    const GlobalValue *GV = GAN->getGlobal();
+    Callee = DAG.getTargetGlobalAddress(GV, dl, MVT::i32);
+    CalleeF = dyn_cast<Function>(GV);
+  }
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
   HexagonCCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext(),
-                        CLI.CS.getFunctionType()->getNumParams());
+                        CalleeF);
 
   if (Subtarget.useHVXOps())
     CCInfo.AnalyzeCallOperands(Outs, CC_Hexagon_HVX);
@@ -686,7 +697,7 @@ SDValue HexagonTargetLowering::LowerFormalArguments(
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
   HexagonCCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext(),
-                        MF.getFunction().getFunctionType()->getNumParams());
+                        &MF.getFunction());
 
   if (Subtarget.useHVXOps())
     CCInfo.AnalyzeFormalArguments(Ins, CC_Hexagon_HVX);
