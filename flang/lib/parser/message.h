@@ -42,7 +42,8 @@ public:
   std::string message() const { return message_; }
   MessageContext context() const { return context_; }
 
-  void Emit(std::ostream &, const AllSources &) const;
+  Provenance Emit(
+      std::ostream &, const AllSources &, bool echoSourceLine = true) const;
 
 private:
   Provenance provenance_;

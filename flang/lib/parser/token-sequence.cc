@@ -47,6 +47,16 @@ void TokenSequence::Put(const TokenSequence &that) {
   provenances_.Put(that.provenances_);
 }
 
+void TokenSequence::Put(const TokenSequence &that, ProvenanceRange range) {
+  size_t offset{0};
+  for (size_t j{0}; j < that.size(); ++j) {
+    CharPointerWithLength tok{that[j]};
+    Put(tok, range.LocalOffsetToProvenance(offset));
+    offset += tok.size();
+  }
+  CHECK(offset == range.size());
+}
+
 void TokenSequence::Put(const TokenSequence &that, size_t at, size_t tokens) {
   ProvenanceRange provenance;
   size_t offset{0};
@@ -74,6 +84,7 @@ void TokenSequence::Put(const char *s, size_t bytes, Provenance provenance) {
 void TokenSequence::Put(const CharPointerWithLength &t, Provenance provenance) {
   Put(&t[0], t.size(), provenance);
 }
+
 void TokenSequence::Put(const std::string &s, Provenance provenance) {
   Put(s.data(), s.size(), provenance);
 }
@@ -104,15 +115,32 @@ std::string TokenSequence::ToString() const {
   return {&char_[0], char_.size()};
 }
 
-Provenance TokenSequence::GetProvenance(size_t token, size_t offset) const {
+Provenance TokenSequence::GetTokenProvenance(
+    size_t token, size_t offset) const {
   ProvenanceRange range{provenances_.Map(start_[token] + offset)};
   return range.LocalOffsetToProvenance(0);
 }
 
-ProvenanceRange TokenSequence::GetProvenanceRange(
+ProvenanceRange TokenSequence::GetTokenProvenanceRange(
     size_t token, size_t offset) const {
   ProvenanceRange range{provenances_.Map(start_[token] + offset)};
   return range.Prefix(TokenBytes(token) - offset);
+}
+
+ProvenanceRange TokenSequence::GetIntervalProvenanceRange(
+    size_t token, size_t tokens) const {
+  if (tokens == 0) {
+    return {};
+  }
+  ProvenanceRange range{provenances_.Map(start_[token])};
+  while (--tokens > 0 &&
+      range.AnnexIfPredecessor(provenances_.Map(start_[++token]))) {
+  }
+  return range;
+}
+
+ProvenanceRange TokenSequence::GetProvenanceRange() const {
+  return GetIntervalProvenanceRange(0, start_.size());
 }
 }  // namespace parser
 }  // namespace Fortran

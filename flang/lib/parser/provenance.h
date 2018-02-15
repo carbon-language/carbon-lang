@@ -48,8 +48,9 @@ public:
   }
   Provenance operator+(size_t n) const { return {offset_ + n}; }
   bool operator<(Provenance that) const { return offset_ < that.offset_; }
-  bool operator<=(Provenance that) const { return offset_ <= that.offset_; }
+  bool operator<=(Provenance that) const { return !(that < *this); }
   bool operator==(Provenance that) const { return offset_ == that.offset_; }
+  bool operator!=(Provenance that) const { return !(*this == that); }
   size_t offset() const { return offset_; }
 
 private:
@@ -159,8 +160,8 @@ public:
   std::string PopSearchPathDirectory();
   const SourceFile *Open(std::string path, std::stringstream *error);
 
-  ProvenanceRange AddIncludedFile(const SourceFile &, ProvenanceRange,
-                                  bool isModule = false);
+  ProvenanceRange AddIncludedFile(
+      const SourceFile &, ProvenanceRange, bool isModule = false);
   ProvenanceRange AddMacroCall(
       ProvenanceRange def, ProvenanceRange use, const std::string &expansion);
   ProvenanceRange AddCompilerInsertion(std::string);
@@ -169,7 +170,8 @@ public:
   bool IsValid(ProvenanceRange range) const {
     return range.size() > 0 && range_.Contains(range);
   }
-  void Identify(std::ostream &, Provenance, const std::string &prefix) const;
+  void Identify(std::ostream &, Provenance, const std::string &prefix,
+      bool echoSourceLine = false) const;
   const SourceFile *GetSourceFile(Provenance, size_t *offset = nullptr) const;
   ProvenanceRange GetContiguousRangeAround(ProvenanceRange) const;
   std::string GetPath(Provenance) const;  // __FILE__
@@ -196,7 +198,7 @@ private:
   struct Origin {
     Origin(ProvenanceRange, const SourceFile &);
     Origin(ProvenanceRange, const SourceFile &, ProvenanceRange,
-           bool isModule = false);
+        bool isModule = false);
     Origin(ProvenanceRange, ProvenanceRange def, ProvenanceRange use,
         const std::string &expansion);
     Origin(ProvenanceRange, const std::string &);

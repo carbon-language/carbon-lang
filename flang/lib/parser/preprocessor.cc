@@ -58,7 +58,7 @@ TokenSequence Definition::Tokenize(const std::vector<std::string> &argNames,
     if (IsIdentifierFirstCharacter(tok)) {
       auto it = args.find(tok.ToString());
       if (it != args.end()) {
-        result.Put(it->second, token.GetProvenance(j));
+        result.Put(it->second, token.GetTokenProvenance(j));
         continue;
       }
     }
@@ -111,7 +111,7 @@ TokenSequence Definition::Apply(
           size_t argBytes{args[index][k].size()};
           for (size_t n{0}; n < argBytes; ++n) {
             char ch{arg[n]};
-            Provenance from{args[index].GetProvenance(k, n)};
+            Provenance from{args[index].GetTokenProvenance(k, n)};
             if (ch == '"' || ch == '\\') {
               result.PutNextTokenChar(ch, from);
             }
@@ -238,14 +238,19 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
         if (!repl.empty()) {
           ProvenanceRange insert{allSources_->AddCompilerInsertion(repl)};
           ProvenanceRange call{allSources_->AddMacroCall(
-              insert, input.GetProvenanceRange(j), repl)};
+              insert, input.GetTokenProvenanceRange(j), repl)};
           result->Put(repl, call.LocalOffsetToProvenance(0));
           continue;
         }
       }
       def.set_isDisabled(true);
-      result->Put(ReplaceMacros(def.replacement(), prescanner));
+      TokenSequence replaced{ReplaceMacros(def.replacement(), prescanner)};
       def.set_isDisabled(false);
+      ProvenanceRange from{def.replacement().GetProvenanceRange()};
+      ProvenanceRange use{input.GetTokenProvenanceRange(j)};
+      ProvenanceRange newRange{
+          allSources_->AddMacroCall(from, use, replaced.ToString())};
+      result->Put(replaced, newRange);
       continue;
     }
     // Possible function-like macro call.  Skip spaces and newlines to see
@@ -284,16 +289,22 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
       result->Put(input, j);
       continue;
     }
-    j = k;  // advance to the terminal ')'
     std::vector<TokenSequence> args;
-    for (k = 0; k < argStart.size(); ++k) {
-      size_t at{argStart[k]};
-      size_t count{(k + 1 == argStart.size() ? j : argStart[k + 1] - 1) - at};
+    for (size_t n{0}; n < argStart.size(); ++n) {
+      size_t at{argStart[n]};
+      size_t count{(n + 1 == argStart.size() ? k : argStart[n + 1] - 1) - at};
       args.emplace_back(TokenSequence(input, at, count));
     }
     def.set_isDisabled(true);
-    result->Put(ReplaceMacros(def.Apply(args, *allSources_), prescanner));
+    TokenSequence replaced{
+        ReplaceMacros(def.Apply(args, *allSources_), prescanner)};
     def.set_isDisabled(false);
+    ProvenanceRange from{def.replacement().GetProvenanceRange()};
+    ProvenanceRange use{input.GetIntervalProvenanceRange(j, k - j)};
+    ProvenanceRange newRange{
+        allSources_->AddMacroCall(from, use, replaced.ToString())};
+    result->Put(replaced, newRange);
+    j = k;  // advance to the terminal ')'
   }
   return true;
 }
@@ -521,7 +532,6 @@ bool Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
       prescanner->Complain("#include: missing name of file to include");
       return false;
     }
-    ProvenanceRange includeDirRange{dir.GetProvenanceRange(j)};
     std::string include;
     if (dir[j].ToString() == "<") {
       if (dir[tokens - 1].ToString() != ">") {
@@ -549,7 +559,7 @@ bool Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
       return false;
     }
     ProvenanceRange fileRange{
-        allSources_->AddIncludedFile(*included, includeDirRange)};
+        allSources_->AddIncludedFile(*included, dir.GetProvenanceRange())};
     return Prescanner{*prescanner}.Prescan(fileRange);
   }
   prescanner->Complain("#"s + dirName + ": unknown or unimplemented directive");

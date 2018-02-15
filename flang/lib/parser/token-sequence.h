@@ -121,6 +121,7 @@ public:
   }
 
   void Put(const TokenSequence &);
+  void Put(const TokenSequence &, ProvenanceRange);
   void Put(const TokenSequence &, size_t at, size_t tokens = 1);
   void Put(const char *, size_t, Provenance);
   void Put(const CharPointerWithLength &, Provenance);
@@ -128,8 +129,12 @@ public:
   void Put(const std::stringstream &, Provenance);
   void EmitWithCaseConversion(CookedSource *) const;
   std::string ToString() const;
-  Provenance GetProvenance(size_t token, size_t offset = 0) const;
-  ProvenanceRange GetProvenanceRange(size_t token, size_t offset = 0) const;
+  Provenance GetTokenProvenance(size_t token, size_t offset = 0) const;
+  ProvenanceRange GetTokenProvenanceRange(
+      size_t token, size_t offset = 0) const;
+  ProvenanceRange GetIntervalProvenanceRange(
+      size_t token, size_t tokens = 1) const;
+  ProvenanceRange GetProvenanceRange() const;
 
 private:
   size_t TokenBytes(size_t token) const {

@@ -125,8 +125,8 @@ ProvenanceRange AllSources::AddCompilerInsertion(std::string text) {
   return covers;
 }
 
-void AllSources::Identify(
-    std::ostream &o, Provenance at, const std::string &prefix) const {
+void AllSources::Identify(std::ostream &o, Provenance at,
+    const std::string &prefix, bool echoSourceLine) const {
   CHECK(IsValid(at));
   static const std::string indented{prefix + "  "};
   const Origin &origin{MapToOrigin(at)};
@@ -135,11 +135,28 @@ void AllSources::Identify(
           [&](const Inclusion &inc) {
             size_t offset{origin.covers.ProvenanceToLocalOffset(at)};
             std::pair<int, int> pos{inc.source.FindOffsetLineAndColumn(offset)};
-            o << prefix << "at line " << pos.first << ", column " << pos.second
-              << " in the " << (inc.isModule ? "module " : "file ")
+            o << prefix << "at line " << pos.first << ", column " << pos.second;
+            if (echoSourceLine) {
+              o << ":\n" << indented << "  ";
+              const char *text{inc.source.content() +
+                  inc.source.GetLineStartOffset(pos.first)};
+              for (const char *p{text}; *p != '\n'; ++p) {
+                o << *p;
+              }
+              o << '\n' << indented << "  ";
+              for (int j{1}; j < pos.second; ++j) {
+                char ch{text[j - 1]};
+                o << (ch == '\t' ? '\t' : ' ');
+              }
+              o << "^\n" << prefix;
+            } else {
+              o << ' ';
+            }
+            o << "in the " << (inc.isModule ? "module " : "file ")
               << inc.source.path() << '\n';
             if (IsValid(origin.replaces)) {
-              o << prefix << " that was " << (inc.isModule ? "used\n" : "included\n");
+              o << prefix << " that was "
+                << (inc.isModule ? "used\n" : "included\n");
               Identify(o, origin.replaces.LocalOffsetToProvenance(0), indented);
             }
           },
@@ -206,9 +223,8 @@ Provenance AllSources::CompilerInsertionProvenance(char ch) const {
 
 AllSources::Origin::Origin(ProvenanceRange r, const SourceFile &source)
   : u{Inclusion{source}}, covers{r} {}
-AllSources::Origin::Origin(
-    ProvenanceRange r, const SourceFile &included, ProvenanceRange from,
-    bool isModule)
+AllSources::Origin::Origin(ProvenanceRange r, const SourceFile &included,
+    ProvenanceRange from, bool isModule)
   : u{Inclusion{included, isModule}}, covers{r}, replaces{from} {}
 AllSources::Origin::Origin(ProvenanceRange r, ProvenanceRange def,
     ProvenanceRange use, const std::string &expansion)
@@ -284,7 +300,9 @@ void AllSources::Dump(std::ostream &o) const {
     m.covers.Dump(o);
     o << " -> ";
     std::visit(visitors{[&](const Inclusion &inc) {
-                          if (inc.isModule) { o << "module "; }
+                          if (inc.isModule) {
+                            o << "module ";
+                          }
                           o << "file " << inc.source.path();
                         },
                    [&](const Macro &mac) { o << "macro " << mac.expansion; },

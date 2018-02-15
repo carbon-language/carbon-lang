@@ -1204,7 +1204,7 @@ public:
   constexpr WithinCharLiteral(const WithinCharLiteral &) = default;
   constexpr WithinCharLiteral(const PA &parser) : parser_{parser} {}
   std::optional<resultType> Parse(ParseState *state) const {
-    bool was = state->set_inCharLiteral(true);
+    bool was{state->inCharLiteral()};
     std::optional<resultType> result{parser_.Parse(state)};
     state->set_inCharLiteral(was);
     return result;

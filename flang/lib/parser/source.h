@@ -29,6 +29,9 @@ public:
   bool Open(std::string path, std::stringstream *error);
   void Close();
   std::pair<int, int> FindOffsetLineAndColumn(size_t) const;
+  size_t GetLineStartOffset(int lineNumber) const {
+    return lineStart_.at(lineNumber - 1);
+  }
 
 private:
   std::string path_;

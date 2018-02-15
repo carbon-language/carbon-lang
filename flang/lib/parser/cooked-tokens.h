@@ -249,7 +249,7 @@ template<char quote> struct CharLiteral {
   using resultType = std::string;
   static std::optional<std::string> Parse(ParseState *state) {
     std::string str;
-    CHECK(!state->set_inCharLiteral(true));
+    CHECK(!state->inCharLiteral());
     static constexpr auto nextch = attempt(CharLiteralChar{});
     while (std::optional<CharLiteralChar::Result> ch{nextch.Parse(state)}) {
       if (ch->ch == quote && !ch->wasEscaped) {
@@ -395,7 +395,8 @@ struct HollerithLiteral {
       return {};
     }
     std::string content;
-    CHECK(!state->set_inCharLiteral(true));
+    CHECK(!state->inCharLiteral());
+    state->set_inCharLiteral(true);
     for (auto j = *charCount; j-- > 0;) {
       std::optional<char> ch{cookedNextChar.Parse(state)};
       if (!ch || !isprint(*ch)) {

@@ -138,11 +138,11 @@ int main(int argc, char *const argv[]) {
   Fortran::parser::ParseState state{cooked};
   Fortran::parser::UserState ustate;
   state.set_inFixedForm(fixedForm)
-       .set_enableBackslashEscapesInCharLiterals(backslashEscapes)
-       .set_strictConformance(standard)
-       .set_columns(columns)
-       .set_enableOldDebugLines(enableOldDebugLines)
-       .set_userState(&ustate);
+      .set_enableBackslashEscapesInCharLiterals(backslashEscapes)
+      .set_strictConformance(standard)
+      .set_columns(columns)
+      .set_enableOldDebugLines(enableOldDebugLines)
+      .set_userState(&ustate);
 
   if (dumpCookedChars) {
     while (std::optional<char> och{
