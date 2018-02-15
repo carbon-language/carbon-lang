@@ -90,8 +90,7 @@ struct TypeCloner {
         unsigned ParamCount = LLVMCountParamTypes(Src);
         LLVMTypeRef* Params = nullptr;
         if (ParamCount > 0) {
-          Params = static_cast<LLVMTypeRef*>(
-              llvm::malloc(ParamCount * sizeof(LLVMTypeRef)));
+          Params = (LLVMTypeRef*) malloc(ParamCount * sizeof(LLVMTypeRef));
           LLVMGetParamTypes(Src, Params);
           for (unsigned i = 0; i < ParamCount; i++)
             Params[i] = Clone(Params[i]);
