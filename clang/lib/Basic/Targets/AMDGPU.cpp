@@ -228,7 +228,7 @@ void AMDGPUTargetInfo::adjustTargetOptions(const CodeGenOptions &CGOpts,
     TargetOpts.Features.push_back("+fp64-fp16-denormals");
 }
 
-
+constexpr AMDGPUTargetInfo::GPUInfo AMDGPUTargetInfo::InvalidGPU;
 constexpr AMDGPUTargetInfo::GPUInfo AMDGPUTargetInfo::R600Names[];
 constexpr AMDGPUTargetInfo::GPUInfo AMDGPUTargetInfo::AMDGCNNames[];
 AMDGPUTargetInfo::GPUInfo AMDGPUTargetInfo::parseR600Name(StringRef Name) {
