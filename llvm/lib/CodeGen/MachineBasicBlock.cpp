@@ -416,9 +416,8 @@ void MachineBasicBlock::print(raw_ostream &OS, ModuleSlotTracker &MST,
 
   if (IrrLoopHeaderWeight) {
     if (Indexes) OS << '\t';
-    OS << "    Irreducible loop header weight: "
-       << IrrLoopHeaderWeight.getValue();
-    OS << '\n';
+    OS.indent(2) << "; Irreducible loop header weight: "
+                 << IrrLoopHeaderWeight.getValue() << '\n';
   }
 }
 
