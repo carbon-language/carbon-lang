@@ -12,7 +12,9 @@
 #include "../../lib/parser/message.h"
 #include "../../lib/parser/parse-state.h"
 #include "../../lib/parser/parse-tree.h"
-#include "../../lib/parser/position.h"
+#include "../../lib/parser/preprocessor.h"
+#include "../../lib/parser/prescan.h"
+#include "../../lib/parser/provenance.h"
 #include "../../lib/parser/source.h"
 #include "../../lib/parser/user-state.h"
 #include "../../lib/semantics/attr.h"
@@ -30,26 +32,31 @@ int main(int argc, char *const argv[]) {
   }
 
   std::string path{argv[1]};
-  Fortran::parser::SourceFile source;
+  AllSources allSources;
   std::stringstream error;
-  if (!source.Open(path, &error)) {
+  const auto *sourceFile = allSources.Open(path, &error);
+  if (!sourceFile) {
     std::cerr << error.str() << '\n';
-    return EXIT_FAILURE;
+    return 1;
   }
 
-  const char *sourceContent{source.content()};
-  size_t sourceBytes{source.bytes()};
-
-  Fortran::parser::ParseState state{sourceContent, sourceBytes};
-  state.PushContext("source file '"s + path + "'");
-  Fortran::parser::UserState ustate;
-  state.set_userState(&ustate);
-
-  std::optional<Program> result;
-  result = program.Parse(&state);
-  if (!result.has_value()) {
-    std::cerr << "parse FAILED " << state.position() << '\n'
-              << *state.messages();
+  ProvenanceRange range{allSources.AddIncludedFile(
+      *sourceFile, ProvenanceRange{})};
+  Messages messages{allSources};
+  CookedSource cooked{&allSources};
+  Preprocessor preprocessor{&allSources};
+  bool prescanOk{Prescanner{&messages, &cooked, &preprocessor}.Prescan(range)};
+  messages.Emit(std::cerr);
+  if (!prescanOk) {
+    return EXIT_FAILURE;
+  }
+  cooked.Marshal();
+  ParseState state{cooked};
+  UserState ustate;
+  std::optional<Program> result{program.Parse(&state)};
+  if (!result.has_value() || state.anyErrorRecovery()) {
+    std::cerr << "parse FAILED\n";
+    state.messages()->Emit(std::cerr);
     return EXIT_FAILURE;
   }
   for (const ProgramUnit &unit : result->v) {
