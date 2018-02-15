@@ -76,16 +76,16 @@ static const semantics::IntrinsicTypeSpec *doIntrinsicTypeSpec(
   return std::visit(
       visitors{
           [](const IntegerTypeSpec &x) -> returnType {
-            return semantics::IntegerTypeSpec::make(doKindSelector(x.v));
+            return semantics::IntegerTypeSpec::Make(doKindSelector(x.v));
           },
           [](const IntrinsicTypeSpec::Logical &x) -> returnType {
-            return semantics::LogicalTypeSpec::make(doKindSelector(x.kind));
+            return semantics::LogicalTypeSpec::Make(doKindSelector(x.kind));
           },
           [](const IntrinsicTypeSpec::Real &x) -> returnType {
-            return semantics::RealTypeSpec::make(doKindSelector(x.kind));
+            return semantics::RealTypeSpec::Make(doKindSelector(x.kind));
           },
           [](const IntrinsicTypeSpec::Complex &x) -> returnType {
-            return semantics::ComplexTypeSpec::make(doKindSelector(x.kind));
+            return semantics::ComplexTypeSpec::Make(doKindSelector(x.kind));
           },
           [](const IntrinsicTypeSpec::DoublePrecision &x) -> returnType {
             return nullptr;  // TODO
@@ -108,18 +108,18 @@ static semantics::DeclTypeSpec doDeclarationTypeSpec(
   return std::visit(
       visitors{
           [](const DeclarationTypeSpec::ClassStar &) {
-            return semantics::DeclTypeSpec::makeClassStar();
+            return semantics::DeclTypeSpec::MakeClassStar();
           },
           [](const DeclarationTypeSpec::TypeStar &) {
-            return semantics::DeclTypeSpec::makeTypeStar();
+            return semantics::DeclTypeSpec::MakeTypeStar();
           },
           [](const IntrinsicTypeSpec &x) {
-            return semantics::DeclTypeSpec::makeIntrinsic(
+            return semantics::DeclTypeSpec::MakeIntrinsic(
                 doIntrinsicTypeSpec(x));
           },
           [](const auto &x) {
             // TODO
-            return semantics::DeclTypeSpec::makeTypeStar();
+            return semantics::DeclTypeSpec::MakeTypeStar();
           },
       },
       dts.u);
@@ -145,15 +145,15 @@ static semantics::Attrs doComponentAttrSpec(
     std::visit(
         visitors{
             [&](const AccessSpec &accessSpec) {
-              attrs.set(doAccessSpec(accessSpec));
+              attrs.Set(doAccessSpec(accessSpec));
             },
             [&](const CoarraySpec &) { TODO("CoarraySpec"); },
             [&](const ComponentArraySpec &) { TODO("ComponentArraySpec"); },
             [&](const Allocatable &) {
-              attrs.set(semantics::Attr::ALLOCATABLE);
+              attrs.Set(semantics::Attr::ALLOCATABLE);
             },
-            [&](const Pointer &) { attrs.set(semantics::Attr::POINTER); },
-            [&](const Contiguous &) { attrs.set(semantics::Attr::CONTIGUOUS); },
+            [&](const Pointer &) { attrs.Set(semantics::Attr::POINTER); },
+            [&](const Contiguous &) { attrs.Set(semantics::Attr::CONTIGUOUS); },
         },
         attr.u);
   }
@@ -203,15 +203,7 @@ static void visitDerivedTypeDef(const DerivedTypeDef &dtd) {
             },
             [&](const Abstract &) { builder.attr(semantics::Attr::ABSTRACT); },
             [&](const AccessSpec &accessSpec) {
-              switch (accessSpec.v) {
-              case AccessSpec::Kind::Public:
-                builder.attr(semantics::Attr::PUBLIC);
-                break;
-              case AccessSpec::Kind::Private:
-                builder.attr(semantics::Attr::PRIVATE);
-                break;
-              default: CRASH_NO_CASE;
-              }
+              builder.attr(doAccessSpec(accessSpec));
             },
         },
         attr.u);
@@ -247,60 +239,65 @@ static void visitDerivedTypeDef(const DerivedTypeDef &dtd) {
 }
 
 static void visitSpecificationConstruct(const SpecificationConstruct &sc) {
-  std::cout << "SpecificationConstruct\n";
   std::visit(
       visitors{
           [](const Indirection<DerivedTypeDef> &dtd) {
             visitDerivedTypeDef(*dtd);
           },
-          [](const auto &x) -> void {
-            std::cout << "something else in SpecificationConstruct\n";
+          [](const Indirection<EnumDef> &x) { TODO("EnumDef"); },
+          [](const Statement<Indirection<GenericStmt>> &x) {
+            TODO("GenericStmt");
           },
+          [](const Indirection<InterfaceBlock> &x) { TODO("InterfaceBlock"); },
+          [](const Statement<Indirection<ParameterStmt>> &x) {
+            TODO("ParameterStmt");
+          },
+          [](const Statement<Indirection<ProcedureDeclarationStmt>> &x) {
+            TODO("ProcedureDeclarationStmt");
+          },
+          [](const Statement<OtherSpecificationStmt> &x) {
+            TODO("OtherSpecificationStmt");
+          },
+          [](const Statement<Indirection<TypeDeclarationStmt>> &x) {
+            TODO("TypeDeclarationStmt");
+          },
+          [](const Indirection<StructureDef> &x) { TODO("StructureDef"); },
       },
       sc.u);
 }
 
 static void visitDeclarationConstruct(const DeclarationConstruct &dc) {
-  std::cout << "DeclarationConstruct\n";
-  std::visit(
-      visitors{
-          [](const SpecificationConstruct &sc) {
-            visitSpecificationConstruct(sc);
-          },
-          [](const auto &x) -> void {
-            std::cout << "something else in DeclarationConstruct\n";
-          },
-      },
-      dc.u);
+  if (std::holds_alternative<SpecificationConstruct>(dc.u)) {
+    visitSpecificationConstruct(std::get<SpecificationConstruct>(dc.u));
+  }
 }
 
 static void visitSpecificationPart(const SpecificationPart &sp) {
-  std::cout << "SpecificationPart\n";
   for (const DeclarationConstruct &dc :
       std::get<std::list<DeclarationConstruct>>(sp.t)) {
     visitDeclarationConstruct(dc);
   }
 }
 
-static void visitMainProgram(const MainProgram &mp) {
-  std::cout << "MainProgram\n";
-  visitSpecificationPart(std::get<SpecificationPart>(mp.t));
-}
-
-static void visitFunctionSubprogram(const FunctionSubprogram &fs) {
-  std::cout << "FunctionSubprogram\n";
-}
-
 static void visitProgramUnit(const ProgramUnit &unit) {
   std::visit(
       visitors{
-          [](const Indirection<MainProgram> &mp) -> void {
-            visitMainProgram(*mp);
+          [](const Indirection<MainProgram> &x) {
+            visitSpecificationPart(std::get<SpecificationPart>(x->t));
           },
-          [](const Indirection<FunctionSubprogram> &fs) -> void {
-            visitFunctionSubprogram(*fs);
+          [](const Indirection<FunctionSubprogram> &x) {
+            visitSpecificationPart(std::get<SpecificationPart>(x->t));
           },
-          [](const auto &x) -> void { std::cout << "something else\n"; },
+          [](const Indirection<SubroutineSubprogram> &x) {
+            visitSpecificationPart(std::get<SpecificationPart>(x->t));
+          },
+          [](const Indirection<Module> &x) {
+            visitSpecificationPart(std::get<SpecificationPart>(x->t));
+          },
+          [](const Indirection<Submodule> &x) {
+            visitSpecificationPart(std::get<SpecificationPart>(x->t));
+          },
+          [](const auto &x) {},
       },
       unit.u);
 }

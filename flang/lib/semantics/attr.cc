@@ -34,31 +34,31 @@ static const char *attrToString[] = {
 Attrs::Attrs(std::initializer_list<Attr> attrs) {
   bits_ = 0;
   for (auto attr : attrs) {
-    set(attr);
+    Set(attr);
   }
 }
 
-Attrs &Attrs::set(Attr attr) {
+Attrs &Attrs::Set(Attr attr) {
   bits_ |= 1u << toInt(attr);
   return *this;
 }
-Attrs &Attrs::add(const Attrs &attrs) {
+Attrs &Attrs::Add(const Attrs &attrs) {
   bits_ |= attrs.bits_;
   return *this;
 }
 
-bool Attrs::has(Attr attr) const { return (bits_ & (1u << toInt(attr))) != 0; }
+bool Attrs::Has(Attr attr) const { return (bits_ & (1u << toInt(attr))) != 0; }
 
-bool Attrs::hasAny(const Attrs &attrs) const {
+bool Attrs::HasAny(const Attrs &attrs) const {
   return (bits_ & attrs.bits_) != 0;
 }
 
-bool Attrs::hasAll(const Attrs &attrs) const {
+bool Attrs::HasAll(const Attrs &attrs) const {
   return (bits_ & attrs.bits_) == attrs.bits_;
 }
 
-void Attrs::checkValid(const Attrs &allowed) const {
-  if (!allowed.hasAll(*this)) {
+void Attrs::CheckValid(const Attrs &allowed) const {
+  if (!allowed.HasAll(*this)) {
     parser::die("invalid attribute");
   }
 }

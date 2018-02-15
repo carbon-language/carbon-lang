@@ -42,19 +42,19 @@ using Name = std::string;
 // TODO
 class IntExpr {
 public:
-  virtual const IntExpr *clone() const { return new IntExpr{*this}; }
-  virtual std::ostream &output(std::ostream &o) const { return o << "IntExpr"; }
+  virtual const IntExpr *Clone() const { return new IntExpr{*this}; }
+  virtual std::ostream &Output(std::ostream &o) const { return o << "IntExpr"; }
 };
 
 // TODO
 class IntConst : public IntExpr {
 public:
-  static const IntConst &make(int value);
-  const IntExpr *clone() const override { return &make(value_); }
+  static const IntConst &Make(int value);
+  const IntExpr *Clone() const override { return &Make(value_); }
   bool operator==(const IntConst &x) const { return value_ == x.value_; }
   bool operator!=(const IntConst &x) const { return !operator==(x); }
   bool operator<(const IntConst &x) const { return value_ < x.value_; }
-  std::ostream &output(std::ostream &o) const override {
+  std::ostream &Output(std::ostream &o) const override {
     return o << this->value_;
   }
 
@@ -67,7 +67,7 @@ private:
 // The value of a kind type parameter
 class KindParamValue {
 public:
-  KindParamValue(int value = 0) : value_{IntConst::make(value)} {}
+  KindParamValue(int value = 0) : value_{IntConst::Make(value)} {}
   bool operator==(const KindParamValue &x) const { return value_ == x.value_; }
   bool operator!=(const KindParamValue &x) const { return !operator==(x); }
   bool operator<(const KindParamValue &x) const { return value_ < x.value_; }
@@ -82,7 +82,7 @@ class Bound {
 public:
   static const Bound ASSUMED;
   static const Bound DEFERRED;
-  Bound(const IntExpr &expr) : category_{Explicit}, expr_{expr.clone()} {}
+  Bound(const IntExpr &expr) : category_{Explicit}, expr_{expr.Clone()} {}
   bool isExplicit() const { return category_ == Explicit; }
   bool isAssumed() const { return category_ == Assumed; }
   bool isDeferred() const { return category_ == Deferred; }
@@ -90,7 +90,7 @@ public:
 
 private:
   enum Category { Explicit, Deferred, Assumed };
-  Bound(Category category) : category_{category}, expr_{&IntConst::make(0)} {}
+  Bound(Category category) : category_{category}, expr_{&IntConst::Make(0)} {}
   const Category category_;
   const IntExpr *const expr_;
   friend std::ostream &operator<<(std::ostream &, const Bound &);
@@ -104,24 +104,24 @@ class DerivedTypeSpec;
 class DeclTypeSpec {
 public:
   // intrinsic-type-spec or TYPE(intrinsic-type-spec)
-  static DeclTypeSpec makeIntrinsic(
+  static DeclTypeSpec MakeIntrinsic(
       const IntrinsicTypeSpec *intrinsicTypeSpec) {
     return DeclTypeSpec{Intrinsic, intrinsicTypeSpec};
   }
   // TYPE(derived-type-spec)
-  static DeclTypeSpec makeTypeDerivedType(
+  static DeclTypeSpec MakeTypeDerivedType(
       const DerivedTypeSpec *derivedTypeSpec) {
     return DeclTypeSpec{TypeDerived, nullptr, derivedTypeSpec};
   }
   // CLASS(derived-type-spec)
-  static DeclTypeSpec makeClassDerivedType(
+  static DeclTypeSpec MakeClassDerivedType(
       const DerivedTypeSpec *derivedTypeSpec) {
     return DeclTypeSpec{ClassDerived, nullptr, derivedTypeSpec};
   }
   // TYPE(*)
-  static DeclTypeSpec makeTypeStar() { return DeclTypeSpec{TypeStar}; }
+  static DeclTypeSpec MakeTypeStar() { return DeclTypeSpec{TypeStar}; }
   // CLASS(*)
-  static DeclTypeSpec makeClassStar() { return DeclTypeSpec{ClassStar}; }
+  static DeclTypeSpec MakeClassStar() { return DeclTypeSpec{ClassStar}; }
 
   enum Category { Intrinsic, TypeDerived, ClassDerived, TypeStar, ClassStar };
   Category category() const { return category_; }
@@ -145,7 +145,7 @@ private:
 // Root of the *TypeSpec hierarchy
 class TypeSpec {
 public:
-  virtual std::ostream &output(std::ostream &o) const = 0;
+  virtual std::ostream &Output(std::ostream &o) const = 0;
 };
 
 class IntrinsicTypeSpec : public TypeSpec {
@@ -170,15 +170,15 @@ public:
   std::map<KindParamValue, T> cache;
   KindedTypeHelper(Name name, KindParamValue defaultValue)
     : name_{name}, defaultValue_{defaultValue} {}
-  const T &make() { return make(defaultValue_); }
-  const T &make(KindParamValue kind) {
+  const T &Make() { return Make(defaultValue_); }
+  const T &Make(KindParamValue kind) {
     auto it = cache.find(kind);
     if (it == cache.end()) {
       it = cache.insert(std::make_pair(kind, T{kind})).first;
     }
     return it->second;
   }
-  std::ostream &output(std::ostream &o, const T &x) {
+  std::ostream &Output(std::ostream &o, const T &x) {
     o << name_;
     if (x.kind_ != defaultValue_) o << '(' << x.kind_ << ')';
     return o;
@@ -194,9 +194,9 @@ private:
 // One unique instance of LogicalTypeSpec for each kind.
 class LogicalTypeSpec : public IntrinsicTypeSpec {
 public:
-  static const LogicalTypeSpec *make();
-  static const LogicalTypeSpec *make(KindParamValue kind);
-  std::ostream &output(std::ostream &o) const override { return o << *this; }
+  static const LogicalTypeSpec *Make();
+  static const LogicalTypeSpec *Make(KindParamValue kind);
+  std::ostream &Output(std::ostream &o) const override { return o << *this; }
 
 private:
   friend class KindedTypeHelper<LogicalTypeSpec>;
@@ -208,9 +208,9 @@ private:
 // One unique instance of IntegerTypeSpec for each kind.
 class IntegerTypeSpec : public NumericTypeSpec {
 public:
-  static const IntegerTypeSpec *make();
-  static const IntegerTypeSpec *make(KindParamValue kind);
-  std::ostream &output(std::ostream &o) const override { return o << *this; }
+  static const IntegerTypeSpec *Make();
+  static const IntegerTypeSpec *Make(KindParamValue kind);
+  std::ostream &Output(std::ostream &o) const override { return o << *this; }
 
 private:
   friend class KindedTypeHelper<IntegerTypeSpec>;
@@ -222,9 +222,9 @@ private:
 // One unique instance of RealTypeSpec for each kind.
 class RealTypeSpec : public NumericTypeSpec {
 public:
-  static const RealTypeSpec *make();
-  static const RealTypeSpec *make(KindParamValue kind);
-  std::ostream &output(std::ostream &o) const override { return o << *this; }
+  static const RealTypeSpec *Make();
+  static const RealTypeSpec *Make(KindParamValue kind);
+  std::ostream &Output(std::ostream &o) const override { return o << *this; }
 
 private:
   friend class KindedTypeHelper<RealTypeSpec>;
@@ -236,9 +236,9 @@ private:
 // One unique instance of ComplexTypeSpec for each kind.
 class ComplexTypeSpec : public NumericTypeSpec {
 public:
-  static const ComplexTypeSpec *make();
-  static const ComplexTypeSpec *make(KindParamValue kind);
-  std::ostream &output(std::ostream &o) const override { return o << *this; }
+  static const ComplexTypeSpec *Make();
+  static const ComplexTypeSpec *Make(KindParamValue kind);
+  std::ostream &Output(std::ostream &o) const override { return o << *this; }
 
 private:
   friend class KindedTypeHelper<ComplexTypeSpec>;
@@ -252,7 +252,7 @@ public:
   static const int DefaultKind = 0;
   CharacterTypeSpec(LenParamValue len, KindParamValue kind = DefaultKind)
     : IntrinsicTypeSpec{kind}, len_{len} {}
-  std::ostream &output(std::ostream &o) const override { return o << *this; }
+  std::ostream &Output(std::ostream &o) const override { return o << *this; }
 
 private:
   const LenParamValue len_;
@@ -280,27 +280,27 @@ using TypeParamDefs = std::list<TypeParamDef>;
 class ShapeSpec {
 public:
   // lb:ub
-  static ShapeSpec makeExplicit(const Bound &lb, const Bound &ub) {
+  static ShapeSpec MakeExplicit(const Bound &lb, const Bound &ub) {
     return ShapeSpec(lb, ub);
   }
   // 1:ub
-  static const ShapeSpec makeExplicit(const Bound &ub) {
-    return makeExplicit(IntConst::make(1), ub);
+  static const ShapeSpec MakeExplicit(const Bound &ub) {
+    return MakeExplicit(IntConst::Make(1), ub);
   }
   // 1: or lb:
-  static ShapeSpec makeAssumed(const Bound &lb = IntConst::make(1)) {
+  static ShapeSpec MakeAssumed(const Bound &lb = IntConst::Make(1)) {
     return ShapeSpec(lb, Bound::DEFERRED);
   }
   // :
-  static ShapeSpec makeDeferred() {
+  static ShapeSpec MakeDeferred() {
     return ShapeSpec(Bound::DEFERRED, Bound::DEFERRED);
   }
   // 1:* or lb:*
-  static ShapeSpec makeImplied(const Bound &lb) {
+  static ShapeSpec MakeImplied(const Bound &lb) {
     return ShapeSpec(lb, Bound::ASSUMED);
   }
   // ..
-  static ShapeSpec makeAssumedRank() {
+  static ShapeSpec MakeAssumedRank() {
     return ShapeSpec(Bound::ASSUMED, Bound::ASSUMED);
   }
 
@@ -425,7 +425,7 @@ using LenParamValues = std::map<Name, LenParamValue>;
 // Instantiation of a DerivedTypeDef with kind and len parameter values
 class DerivedTypeSpec : public TypeSpec {
 public:
-  std::ostream &output(std::ostream &o) const override { return o << *this; }
+  std::ostream &Output(std::ostream &o) const override { return o << *this; }
 
 private:
   const DerivedTypeDef def_;

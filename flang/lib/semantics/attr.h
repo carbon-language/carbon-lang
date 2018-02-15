@@ -39,13 +39,13 @@ public:
   Attrs() : bits_{0} {}
   Attrs(std::initializer_list<Attr> attrs);
   bool empty() const { return bits_ == 0; }
-  Attrs &set(Attr attr);
-  Attrs &add(const Attrs &attrs);
-  bool has(Attr attr) const;
-  bool hasAny(const Attrs &attrs) const;
-  bool hasAll(const Attrs &attrs) const;
+  Attrs &Set(Attr attr);
+  Attrs &Add(const Attrs &attrs);
+  bool Has(Attr attr) const;
+  bool HasAny(const Attrs &attrs) const;
+  bool HasAll(const Attrs &attrs) const;
   // Internal error if any of these attributes are not in allowed.
-  void checkValid(const Attrs &allowed) const;
+  void CheckValid(const Attrs &allowed) const;
 
 private:
   std::uint64_t bits_;
