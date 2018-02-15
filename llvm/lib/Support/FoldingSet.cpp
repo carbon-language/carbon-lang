@@ -214,7 +214,8 @@ static void **GetBucketFor(unsigned Hash, void **Buckets, unsigned NumBuckets) {
 
 /// AllocateBuckets - Allocated initialized bucket memory.
 static void **AllocateBuckets(unsigned NumBuckets) {
-  void **Buckets = static_cast<void**>(calloc(NumBuckets+1, sizeof(void*)));
+  void **Buckets = static_cast<void**>(
+      llvm::calloc(NumBuckets+1, sizeof(void*)));
 
   if (Buckets == nullptr)
     report_bad_alloc_error("Allocation of Buckets failed.");
