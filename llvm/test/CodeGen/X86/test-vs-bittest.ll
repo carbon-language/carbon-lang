@@ -75,8 +75,8 @@ define void @test64_optsize_2(i64 inreg %x) optsize {
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    pushq %rax
 ; CHECK-NEXT:    .cfi_def_cfa_offset 16
-; CHECK-NEXT:    testl $2048, %edi # imm = 0x800
-; CHECK-NEXT:    je .LBB3_2
+; CHECK-NEXT:    btl $11, %edi
+; CHECK-NEXT:    jae .LBB3_2
 ; CHECK-NEXT:  # %bb.1: # %yes
 ; CHECK-NEXT:    callq bar
 ; CHECK-NEXT:  .LBB3_2: # %no
@@ -259,8 +259,8 @@ define void @test32_optsize_2(i32 inreg %x) optsize {
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    pushq %rax
 ; CHECK-NEXT:    .cfi_def_cfa_offset 16
-; CHECK-NEXT:    testl $2048, %edi # imm = 0x800
-; CHECK-NEXT:    je .LBB11_2
+; CHECK-NEXT:    btl $11, %edi
+; CHECK-NEXT:    jae .LBB11_2
 ; CHECK-NEXT:  # %bb.1: # %yes
 ; CHECK-NEXT:    callq bar
 ; CHECK-NEXT:  .LBB11_2: # %no
@@ -351,8 +351,8 @@ define void @test16_optsize_2(i16 inreg %x) optsize {
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    pushq %rax
 ; CHECK-NEXT:    .cfi_def_cfa_offset 16
-; CHECK-NEXT:    testl $2048, %edi # imm = 0x800
-; CHECK-NEXT:    je .LBB15_2
+; CHECK-NEXT:    btl $11, %edi
+; CHECK-NEXT:    jae .LBB15_2
 ; CHECK-NEXT:  # %bb.1: # %yes
 ; CHECK-NEXT:    callq bar
 ; CHECK-NEXT:  .LBB15_2: # %no
