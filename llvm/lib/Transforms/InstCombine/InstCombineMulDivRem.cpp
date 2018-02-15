@@ -1461,8 +1461,7 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
     }
   }
 
-  if (AllowReassociate &&
-      Op0->hasOneUse() && Op1->hasOneUse()) {
+  if (I.hasAllowReassoc() && Op0->hasOneUse() && Op1->hasOneUse()) {
     Value *A;
     // sin(a) / cos(a) -> tan(a)
     if (match(Op0, m_Intrinsic<Intrinsic::sin>(m_Value(A))) &&
