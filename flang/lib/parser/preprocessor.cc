@@ -10,6 +10,7 @@
 #include <set>
 #include <sstream>
 #include <utility>
+#include <iostream>  // TODO pmk rm
 
 namespace Fortran {
 namespace parser {
@@ -246,11 +247,13 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
       def.set_isDisabled(true);
       TokenSequence replaced{ReplaceMacros(def.replacement(), prescanner)};
       def.set_isDisabled(false);
-      ProvenanceRange from{def.replacement().GetProvenanceRange()};
-      ProvenanceRange use{input.GetTokenProvenanceRange(j)};
-      ProvenanceRange newRange{
-          allSources_->AddMacroCall(from, use, replaced.ToString())};
-      result->Put(replaced, newRange);
+      if (!replaced.empty()) {
+        ProvenanceRange from{def.replacement().GetProvenanceRange()};
+        ProvenanceRange use{input.GetTokenProvenanceRange(j)};
+        ProvenanceRange newRange{
+            allSources_->AddMacroCall(from, use, replaced.ToString())};
+        result->Put(replaced, newRange);
+      }
       continue;
     }
     // Possible function-like macro call.  Skip spaces and newlines to see
@@ -299,11 +302,13 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
     TokenSequence replaced{
         ReplaceMacros(def.Apply(args, *allSources_), prescanner)};
     def.set_isDisabled(false);
-    ProvenanceRange from{def.replacement().GetProvenanceRange()};
-    ProvenanceRange use{input.GetIntervalProvenanceRange(j, k - j)};
-    ProvenanceRange newRange{
-        allSources_->AddMacroCall(from, use, replaced.ToString())};
-    result->Put(replaced, newRange);
+    if (!replaced.empty()) {
+      ProvenanceRange from{def.replacement().GetProvenanceRange()};
+      ProvenanceRange use{input.GetIntervalProvenanceRange(j, k - j)};
+      ProvenanceRange newRange{
+          allSources_->AddMacroCall(from, use, replaced.ToString())};
+      result->Put(replaced, newRange);
+    }
     j = k;  // advance to the terminal ')'
   }
   return true;
@@ -438,7 +443,7 @@ bool Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
       definitions_.emplace(std::make_pair(
           nameToken, Definition{argName, dir, j, tokens - j, isVariadic}));
     } else {
-      j = SkipBlanks(dir, j + 1, tokens);
+      j = SkipBlanks(dir, j, tokens);
       definitions_.emplace(
           std::make_pair(nameToken, Definition{dir, j, tokens - j}));
     }

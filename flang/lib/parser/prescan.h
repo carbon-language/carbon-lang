@@ -114,7 +114,7 @@ private:
   int newlineDebt_{0};  // newline characters consumed but not yet emitted
   bool inCharLiteral_{false};
   bool inPreprocessorDirective_{false};
-  bool inFixedForm_{true};
+  bool inFixedForm_{false};
   int fixedFormColumnLimit_{72};
   bool enableOldDebugLines_{false};
   bool enableBackslashEscapesInCharLiterals_{true};
