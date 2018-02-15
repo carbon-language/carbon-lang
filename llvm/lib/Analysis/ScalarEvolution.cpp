@@ -8693,8 +8693,8 @@ bool ScalarEvolution::isKnownPredicate(ICmpInst::Predicate Pred,
   if (isKnownPredicateViaSplitting(Pred, LHS, RHS))
     return true;
 
-  // Otherwise see what can be done with known constant ranges.
-  return isKnownPredicateViaConstantRanges(Pred, LHS, RHS);
+  // Otherwise see what can be done with some simple reasoning.
+  return isKnownViaSimpleReasoning(Pred, LHS, RHS);
 }
 
 bool ScalarEvolution::isMonotonicPredicate(const SCEVAddRecExpr *LHS,
@@ -8961,7 +8961,7 @@ ScalarEvolution::isLoopBackedgeGuardedByCond(const Loop *L,
   // (interprocedural conditions notwithstanding).
   if (!L) return true;
 
-  if (isKnownPredicateViaConstantRanges(Pred, LHS, RHS))
+  if (isKnownViaSimpleReasoning(Pred, LHS, RHS))
     return true;
 
   BasicBlock *Latch = L->getLoopLatch();
@@ -9072,7 +9072,7 @@ ScalarEvolution::isLoopEntryGuardedByCond(const Loop *L,
   assert(isAvailableAtLoopEntry(RHS, L) &&
          "RHS is not available at Loop Entry");
 
-  if (isKnownPredicateViaConstantRanges(Pred, LHS, RHS))
+  if (isKnownViaSimpleReasoning(Pred, LHS, RHS))
     return true;
 
   // If we cannot prove strict comparison (e.g. a > b), maybe we can prove
@@ -9087,9 +9087,9 @@ ScalarEvolution::isLoopEntryGuardedByCond(const Loop *L,
 
   if (ProvingStrictComparison) {
     ProvedNonStrictComparison =
-        isKnownPredicateViaConstantRanges(NonStrictPredicate, LHS, RHS);
+        isKnownViaSimpleReasoning(NonStrictPredicate, LHS, RHS);
     ProvedNonEquality =
-        isKnownPredicateViaConstantRanges(ICmpInst::ICMP_NE, LHS, RHS);
+        isKnownViaSimpleReasoning(ICmpInst::ICMP_NE, LHS, RHS);
     if (ProvedNonStrictComparison && ProvedNonEquality)
       return true;
   }
