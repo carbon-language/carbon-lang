@@ -26,20 +26,20 @@ Prescanner::Prescanner(const Prescanner &that)
         that.enableBackslashEscapesInCharLiterals_} {}
 
 bool Prescanner::Prescan(ProvenanceRange range) {
-  startProvenance_ = range.start;
-  ProvenanceRange around{
-      cooked_->allSources()->GetContiguousRangeAround(startProvenance_)};
-  CHECK(startProvenance_ + range.bytes <= around.start + around.bytes);
+  AllSources *allSources{cooked_->allSources()};
+  ProvenanceRange around{allSources->GetContiguousRangeAround(range)};
+  startProvenance_ = range.LocalOffsetToProvenance(0);
+  size_t offset{0};
   const SourceFile *source{
-      cooked_->allSources()->GetSourceFile(startProvenance_)};
-  size_t offset{startProvenance_ - around.start};
-  lineStart_ = start_ = source->content() + offset;
-  limit_ = start_ + range.bytes;
-  BeginSourceLine(start_);
+      allSources->GetSourceFile(startProvenance_, &offset)};
+  CHECK(source != nullptr);
+  start_ = source->content() + offset;
+  limit_ = start_ + range.size();
+  lineStart_ = start_;
+  BeginSourceLine(lineStart_);
   TokenSequence tokens, preprocessed;
   while (lineStart_ < limit_) {
     if (CommentLinesAndPreprocessorDirectives() && lineStart_ >= limit_) {
-      PayNewlineDebt();
       break;
     }
     BeginSourceLineAndAdvance();
@@ -50,8 +50,9 @@ bool Prescanner::Prescan(ProvenanceRange range) {
     }
     while (NextToken(&tokens)) {
     }
+    Provenance newlineProvenance{GetCurrentProvenance()};
     if (preprocessor_->MacroReplacement(tokens, *this, &preprocessed)) {
-      preprocessed.PutNextTokenChar('\n', newlineProvenance_);
+      preprocessed.PutNextTokenChar('\n', newlineProvenance);
       preprocessed.CloseToken();
       if (IsFixedFormCommentLine(preprocessed.data()) ||
           IsFreeFormComment(preprocessed.data())) {
@@ -65,10 +66,9 @@ bool Prescanner::Prescan(ProvenanceRange range) {
       tokens.EmitWithCaseConversion(cooked_);
     }
     tokens.clear();
-    cooked_->Put('\n', newlineProvenance_);
-    PayNewlineDebt();
+    ++newlineDebt_;
+    PayNewlineDebt(newlineProvenance);
   }
-  PayNewlineDebt();
   return !anyFatalErrors_;
 }
 
@@ -573,9 +573,9 @@ bool Prescanner::FreeFormContinuation() {
   return true;
 }
 
-void Prescanner::PayNewlineDebt() {
+void Prescanner::PayNewlineDebt(Provenance p) {
   for (; newlineDebt_ > 0; --newlineDebt_) {
-    cooked_->Put('\n', newlineProvenance_);
+    cooked_->Put('\n', p);
   }
 }
 }  // namespace parser

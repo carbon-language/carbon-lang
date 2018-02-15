@@ -49,7 +49,7 @@ int main(int argc, char *const argv[]) {
   std::string progName{args.front()};
   args.pop_front();
 
-  bool dumpCookedChars{false};
+  bool dumpCookedChars{false}, dumpProvenance{false};
   bool fixedForm{false};
   bool backslashEscapes{true};
   bool standard{false};
@@ -79,6 +79,8 @@ int main(int argc, char *const argv[]) {
         columns = 132;
       } else if (flag == "-fdebug-dump-cooked-chars") {
         dumpCookedChars = true;
+      } else if (flag == "-fdebug-dump-provenance") {
+        dumpProvenance = true;
       } else if (flag == "-ed") {
         enableOldDebugLines = true;
       } else if (flag == "-I") {
@@ -129,14 +131,18 @@ int main(int argc, char *const argv[]) {
   columns = std::numeric_limits<int>::max();
 
   cooked.Marshal();
+  if (dumpProvenance) {
+    cooked.Dump(std::cout);
+  }
+
   Fortran::parser::ParseState state{cooked};
-  state.set_inFixedForm(fixedForm);
-  state.set_enableBackslashEscapesInCharLiterals(backslashEscapes);
-  state.set_strictConformance(standard);
-  state.set_columns(columns);
-  state.set_enableOldDebugLines(enableOldDebugLines);
   Fortran::parser::UserState ustate;
-  state.set_userState(&ustate);
+  state.set_inFixedForm(fixedForm)
+       .set_enableBackslashEscapesInCharLiterals(backslashEscapes)
+       .set_strictConformance(standard)
+       .set_columns(columns)
+       .set_enableOldDebugLines(enableOldDebugLines)
+       .set_userState(&ustate);
 
   if (dumpCookedChars) {
     while (std::optional<char> och{
@@ -146,18 +152,8 @@ int main(int argc, char *const argv[]) {
     return 0;
   }
 
-  std::optional<typename decltype(grammar)::resultType> result;
-#if 0
-  for (int j = 0; j < 1000; ++j) {
-    Fortran::parser::ParseState state1{state};
-    result = grammar.Parse(&state1);
-    if (!result) {
-      std::cerr << "demo FAIL in timing loop\n";
-      break;
-    }
-  }
-#endif
-  result = grammar.Parse(&state);
+  std::optional<typename decltype(grammar)::resultType> result{
+      grammar.Parse(&state)};
   if (result.has_value() && !state.anyErrorRecovery()) {
     std::cout << "demo PASS\n" << *result << '\n';
   } else {

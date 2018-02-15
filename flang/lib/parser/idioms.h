@@ -66,7 +66,7 @@ template<typename A> bool operator!(const std::optional<A> &x) {
   Fortran::parser::die("no case at " __FILE__ "(%d)", __LINE__)
 
 // For cheap assertions that should be applied in production.
-// To disable all CHECK tests, compile with -DCHECK.
+// To disable, compile with '-DCHECK=(void)'
 #ifndef CHECK
 #define CHECK(x) \
   ((x) || \

@@ -184,11 +184,11 @@ template<typename PA> inline constexpr auto unterminatedStatement(const PA &p) {
                                    maybe(label), isLabelOk, spaces >> p);
 }
 
-constexpr auto endOfLine =
-    CharMatch<'\n'>{} || fail<char>("expected end of line");
+constexpr auto endOfLine = CharMatch<'\n'>{} / skipMany("\n"_tok) ||
+    fail<char>("expected end of line");
 
-constexpr auto
-    endOfStmt = spaces >> CharMatch<';'>{} / skipMany(";"_tok) || endOfLine;
+constexpr auto endOfStmt = spaces >>
+    (CharMatch<';'>{} / skipMany(";"_tok) / maybe(endOfLine) || endOfLine);
 
 template<typename PA> inline constexpr auto statement(const PA &p) {
   return unterminatedStatement(p) / endOfStmt;
@@ -372,8 +372,10 @@ struct StartNewSubprogram {
 } startNewSubprogram;
 
 TYPE_PARSER(construct<Program>{}(
-                some(startNewSubprogram >> Parser<ProgramUnit>{} / endOfLine)) /
-    skipMany(endOfLine) / consumedAllInput)
+    // statements consume only trailing noise; consume leading noise here.
+    skipMany("\n"_tok) >>
+    some(startNewSubprogram >> Parser<ProgramUnit>{} / endOfLine) /
+        consumedAllInput))
 
 // R502 program-unit ->
 //        main-program | external-subprogram | module | submodule | block-data

@@ -26,8 +26,9 @@ Definition::Definition(const std::vector<std::string> &argNames,
     replacement_{Tokenize(argNames, repl, firstToken, tokens)} {}
 
 Definition::Definition(const std::string &predefined, AllSources *sources)
-  : isPredefined_{true}, replacement_{predefined,
-                             sources->AddCompilerInsertion(predefined).start} {}
+  : isPredefined_{true},
+    replacement_{predefined,
+        sources->AddCompilerInsertion(predefined).LocalOffsetToProvenance(0)} {}
 
 bool Definition::set_isDisabled(bool disable) {
   bool was{isDisabled_};
@@ -57,7 +58,7 @@ TokenSequence Definition::Tokenize(const std::vector<std::string> &argNames,
     if (IsIdentifierFirstCharacter(tok)) {
       auto it = args.find(tok.ToString());
       if (it != args.end()) {
-        result.Put(it->second, 0);
+        result.Put(it->second, token.GetProvenance(j));
         continue;
       }
     }
@@ -110,7 +111,7 @@ TokenSequence Definition::Apply(
           size_t argBytes{args[index][k].size()};
           for (size_t n{0}; n < argBytes; ++n) {
             char ch{arg[n]};
-            Provenance from{args[index].GetProvenance(k, n).start};
+            Provenance from{args[index].GetProvenance(k, n)};
             if (ch == '"' || ch == '\\') {
               result.PutNextTokenChar(ch, from);
             }
@@ -225,17 +226,20 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
     if (!def.isFunctionLike()) {
       if (def.isPredefined()) {
         std::string name{def.replacement()[0].ToString()};
+        std::string repl;
         if (name == "__FILE__") {
-          std::string f{"\""s +
-              allSources_->GetPath(prescanner.GetCurrentProvenance()) + '"'};
-          result->Put(f, allSources_->AddCompilerInsertion(f).start);
-          continue;
-        }
-        if (name == "__LINE__") {
+          repl = "\""s +
+              allSources_->GetPath(prescanner.GetCurrentProvenance()) + '"';
+        } else if (name == "__LINE__") {
           std::stringstream ss;
           ss << allSources_->GetLineNumber(prescanner.GetCurrentProvenance());
-          std::string s{ss.str()};
-          result->Put(s, allSources_->AddCompilerInsertion(s).start);
+          repl = ss.str();
+        }
+        if (!repl.empty()) {
+          ProvenanceRange insert{allSources_->AddCompilerInsertion(repl)};
+          ProvenanceRange call{allSources_->AddMacroCall(
+              insert, input.GetProvenanceRange(j), repl)};
+          result->Put(repl, call.LocalOffsetToProvenance(0));
           continue;
         }
       }
@@ -517,7 +521,7 @@ bool Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
       prescanner->Complain("#include: missing name of file to include");
       return false;
     }
-    ProvenanceRange includeDirRange{dir.GetProvenance(j)};
+    ProvenanceRange includeDirRange{dir.GetProvenanceRange(j)};
     std::string include;
     if (dir[j].ToString() == "<") {
       if (dir[tokens - 1].ToString() != ">") {
@@ -642,7 +646,7 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
     COMMA
   };
   static const int precedence[]{
-      15, 15, 15, 15,  // (), 0, !, ~
+      15, 15, 15, 15,  // (), 6, !, ~
       14, 14,  // unary +, -
       13, 12, 12, 12, 11, 11, 10, 10,  // **, *, /, %, +, -, <<, >>
       9, 8, 7,  // &, ^, |

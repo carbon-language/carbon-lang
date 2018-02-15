@@ -65,7 +65,7 @@ private:
   }
 
   Provenance GetProvenance(const char *sourceChar) const {
-    return startProvenance_ + sourceChar - start_;
+    return startProvenance_ + (sourceChar - start_);
   }
 
   void EmitChar(TokenSequence *tokens, char ch) {
@@ -95,13 +95,13 @@ private:
   const char *FixedFormContinuationLine();
   bool FixedFormContinuation();
   bool FreeFormContinuation();
-  void PayNewlineDebt();
+  void PayNewlineDebt(Provenance);
 
   Messages *messages_;
   CookedSource *cooked_;
   Preprocessor *preprocessor_;
 
-  Provenance startProvenance_{0};
+  Provenance startProvenance_;
   const char *start_{nullptr};  // beginning of current source file content
   const char *limit_{nullptr};  // first address after end of current source
   const char *at_{nullptr};  // next character to process; < lineStart_
@@ -119,8 +119,6 @@ private:
   bool enableOldDebugLines_{false};
   bool enableBackslashEscapesInCharLiterals_{true};
   int delimiterNesting_{0};
-  Provenance newlineProvenance_{
-      cooked_->allSources()->CompilerInsertionProvenance('\n')};
   Provenance spaceProvenance_{
       cooked_->allSources()->CompilerInsertionProvenance(' ')};
 };

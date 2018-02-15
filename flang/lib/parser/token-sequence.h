@@ -128,7 +128,8 @@ public:
   void Put(const std::stringstream &, Provenance);
   void EmitWithCaseConversion(CookedSource *) const;
   std::string ToString() const;
-  ProvenanceRange GetProvenance(size_t token, size_t offset = 0) const;
+  Provenance GetProvenance(size_t token, size_t offset = 0) const;
+  ProvenanceRange GetProvenanceRange(size_t token, size_t offset = 0) const;
 
 private:
   size_t TokenBytes(size_t token) const {

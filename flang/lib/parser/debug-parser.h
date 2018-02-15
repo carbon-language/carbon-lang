@@ -21,9 +21,9 @@ public:
   constexpr DebugParser(const char *str, size_t n) : str_{str}, length_{n} {}
   std::optional<Success> Parse(ParseState *state) const {
     if (auto context = state->context()) {
-      std::cout << *context;
+      context->Emit(std::cout, *state->cooked().allSources());
     }
-    state->cooked().allSources().Identify(
+    state->cooked().allSources()->Identify(
         std::cout, state->GetProvenance(), "");
     std::cout << "   parser debug: " << std::string{str_, length_} << '\n';
     return {Success{}};

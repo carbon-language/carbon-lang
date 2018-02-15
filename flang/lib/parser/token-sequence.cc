@@ -54,11 +54,11 @@ void TokenSequence::Put(const TokenSequence &that, size_t at, size_t tokens) {
     CharPointerWithLength tok{that[at]};
     size_t tokBytes{tok.size()};
     for (size_t j{0}; j < tokBytes; ++j) {
-      if (offset == provenance.bytes) {
+      if (offset == provenance.size()) {
         offset = 0;
         provenance = that.provenances_.Map(that.start_[at] + j);
       }
-      PutNextTokenChar(tok[j], provenance.start + offset++);
+      PutNextTokenChar(tok[j], provenance.LocalOffsetToProvenance(offset++));
     }
     CloseToken();
   }
@@ -66,7 +66,7 @@ void TokenSequence::Put(const TokenSequence &that, size_t at, size_t tokens) {
 
 void TokenSequence::Put(const char *s, size_t bytes, Provenance provenance) {
   for (size_t j{0}; j < bytes; ++j) {
-    PutNextTokenChar(s[j], provenance++);
+    PutNextTokenChar(s[j], provenance + j);
   }
   CloseToken();
 }
@@ -104,10 +104,15 @@ std::string TokenSequence::ToString() const {
   return {&char_[0], char_.size()};
 }
 
-ProvenanceRange TokenSequence::GetProvenance(
+Provenance TokenSequence::GetProvenance(size_t token, size_t offset) const {
+  ProvenanceRange range{provenances_.Map(start_[token] + offset)};
+  return range.LocalOffsetToProvenance(0);
+}
+
+ProvenanceRange TokenSequence::GetProvenanceRange(
     size_t token, size_t offset) const {
   ProvenanceRange range{provenances_.Map(start_[token] + offset)};
-  return {range.start, std::min(range.bytes, TokenBytes(token) - offset)};
+  return range.Prefix(TokenBytes(token) - offset);
 }
 }  // namespace parser
 }  // namespace Fortran
