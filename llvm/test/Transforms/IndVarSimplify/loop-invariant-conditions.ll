@@ -141,8 +141,6 @@ for.end:                                          ; preds = %if.end, %entry
   ret void
 }
 
-!0 = !{i64 0, i64 100}
-
 ; Negative test - we can't show that the internal branch executes, so we can't
 ; fold the test to a loop invariant one.
 define void @test1_neg(i64 %start) {
@@ -387,7 +385,7 @@ exit:
   ret void
 }
 
+!0 = !{i64 0, i64 100}
 !1 = !{i64 -1, i64 100}
-
 
 declare void @foo()
