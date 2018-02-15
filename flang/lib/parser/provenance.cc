@@ -153,24 +153,38 @@ void AllSources::Identify(std::ostream &o, Provenance at,
               o << ' ';
             }
             o << "in the " << (inc.isModule ? "module " : "file ")
-              << inc.source.path() << '\n';
+              << inc.source.path();
             if (IsValid(origin.replaces)) {
-              o << prefix << " that was "
-                << (inc.isModule ? "used\n" : "included\n");
+              o << (inc.isModule ? " used\n" : " included\n");
               Identify(o, origin.replaces.LocalOffsetToProvenance(0), indented);
+            } else {
+              o << '\n';
             }
           },
           [&](const Macro &mac) {
             o << prefix << "in the expansion of a macro that was defined\n";
-            Identify(o, mac.definition.LocalOffsetToProvenance(0), indented);
-            o << prefix << "... and called\n";
-            Identify(o, origin.replaces.LocalOffsetToProvenance(0), indented);
-            o << prefix << "... and expanded to\n"
-              << indented << mac.expansion << '\n';
+            Identify(o, mac.definition.LocalOffsetToProvenance(0), indented,
+                echoSourceLine);
+            o << prefix << "and called\n";
+            Identify(o, origin.replaces.LocalOffsetToProvenance(0), indented,
+                echoSourceLine);
+            if (echoSourceLine) {
+              o << prefix << "and expanded to\n"
+                << indented << "  " << mac.expansion << '\n'
+                << indented << "  ";
+              for (size_t j{0}; origin.covers.LocalOffsetToProvenance(j) < at;
+                   ++j) {
+                o << (mac.expansion[j] == '\t' ? '\t' : ' ');
+              }
+              o << "^\n";
+            }
           },
           [&](const CompilerInsertion &ins) {
-            o << prefix << "in text '" << ins.text
-              << "' inserted by the compiler\n";
+            o << prefix << "in text ";
+            if (echoSourceLine) {
+              o << '\'' << ins.text << "' ";
+            }
+            o << "inserted by the compiler\n";
           }},
       origin.u);
 }
