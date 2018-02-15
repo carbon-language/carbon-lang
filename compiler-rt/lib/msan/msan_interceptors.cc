@@ -514,6 +514,7 @@ INTERCEPTOR(SIZE_T, __strxfrm_l, char *dest, const char *src, SIZE_T n,
 
 #define INTERCEPTOR_STRFTIME_BODY(char_type, ret_type, func, s, ...) \
   ENSURE_MSAN_INITED();                                              \
+  InterceptorScope interceptor_scope;                                \
   ret_type res = REAL(func)(s, __VA_ARGS__);                         \
   if (s) __msan_unpoison(s, sizeof(char_type) * (res + 1));          \
   return res;
