@@ -45,9 +45,7 @@ These objects and functions are (or return) the fundamental parsers:
 * `cut` is a trivial parser that always fails silently.
 * `guard(pred)` returns a parser that succeeds if and only if the predicate
   expression evaluates to true.
-* `rawNextChar` returns the next raw character, and fails at EOF.
-* `cookedNextChar` returns the next character after preprocessing, skipping
-  Fortran line continuations and comments; it also fails at EOF
+* `nextChar` returns the next character, and fails at EOF.
 
 ### Combinators
 These functions and operators combine existing parsers to generate new parsers.
@@ -107,26 +105,15 @@ collect the values that they return.
 These are non-advancing state inquiry and update parsers:
 
 * `getColumn` returns the 1-based column position.
-* `inCharLiteral` succeeds under `withinCharLiteral` (below).
-* `inFortran` succeeds unless in a preprocessing directive.
 * `inFixedForm` succeeds in fixed form Fortran source.
 * `setInFixedForm` sets the fixed form flag, returning its prior value.
 * `columns` returns the 1-based column number after which source is clipped.
 * `setColumns(c)` sets the column limit and returns its prior value.
 
-### Monadic Combination
-When parsing depends on the result values of earlier parses, the
-*monadic bind* combinator is available.
-Please try to avoid using it, as it makes automatic analysis of the
-grammar difficult.
-It has the syntax `p >>= f`, and it constructs a parser that matches p,
-yielding some value x on success, then matches the parser returned from
-the function call `f(x)`.
-
 ### Token Parsers
 Last, we have these basic parsers on which the actual grammar of the Fortran
 is built.  All of the following parsers consume characters acquired from
-`cookedNextChar`.
+`nextChar`.
 
 * `spaces` always succeeds after consuming any spaces or tabs
 * `digit` matches one cooked decimal digit (0-9)
@@ -138,8 +125,6 @@ is built.  All of the following parsers consume characters acquired from
   the combinator `>>` or after `/`.)
 * `parenthesized(p)` is shorthand for `"(" >> p / ")"`.
 * `bracketed(p)` is shorthand for `"[" >> p / "]"`.
-* `withinCharLiteral(p)` applies the parser p, tokenizing for
-  CHARACTER/Hollerith literals.
 * `nonEmptyListOf(p)` matches a comma-separated list of one or more
   instances of p.
 * `optionalListOf(p)` is the same thing, but can be empty, and always succeeds.

@@ -1179,45 +1179,20 @@ private:
 
 inline constexpr auto guard(bool truth) { return GuardParser(truth); }
 
-// rawNextChar is a parser that succeeds if the parsing state is not
+// nextChar is a parser that succeeds if the parsing state is not
 // at the end of its input, returning the next character and
 // advancing the parse when it does so.
-constexpr struct RawNextCharParser {
+constexpr struct NextCharParser {
   using resultType = char;
-  constexpr RawNextCharParser() {}
+  constexpr NextCharParser() {}
   std::optional<char> Parse(ParseState *state) const {
-    if (std::optional<char> ch{state->GetNextRawChar()}) {
-      state->Advance();
-      return ch;
+    std::optional<char> ch{state->GetNextChar()};
+    if (!ch) {
+      state->PutMessage("end of file");
     }
-    state->PutMessage("end of file");
-    return {};
+    return ch;
   }
-} rawNextChar;
-
-// If a is a parser, then withinCharLiteral(a) succeeds if a does so, with the
-// parsing state temporarily modified during the recognition of a to
-// signify that the parse is within quotes or Hollerith.
-template<typename PA> class WithinCharLiteral {
-public:
-  using resultType = typename PA::resultType;
-  constexpr WithinCharLiteral(const WithinCharLiteral &) = default;
-  constexpr WithinCharLiteral(const PA &parser) : parser_{parser} {}
-  std::optional<resultType> Parse(ParseState *state) const {
-    bool was{state->inCharLiteral()};
-    std::optional<resultType> result{parser_.Parse(state)};
-    state->set_inCharLiteral(was);
-    return result;
-  }
-
-private:
-  const PA parser_;
-};
-
-template<typename PA>
-inline constexpr auto withinCharLiteral(const PA &parser) {
-  return WithinCharLiteral<PA>(parser);
-}
+} nextChar;
 
 // If a is a parser for nonstandard usage, extension(a) is a parser that
 // is disabled if strict standard compliance is enforced, and enabled with

@@ -1,8 +1,5 @@
 // Temporary Fortran front end driver main program for development scaffolding.
 
-#include "../../lib/parser/basic-parsers.h"
-#include "../../lib/parser/char-buffer.h"
-#include "../../lib/parser/cooked-chars.h"
 #include "../../lib/parser/grammar.h"
 #include "../../lib/parser/idioms.h"
 #include "../../lib/parser/message.h"
@@ -151,13 +148,10 @@ int main(int argc, char *const argv[]) {
   state.set_inFixedForm(fixedForm)
       .set_enableBackslashEscapesInCharLiterals(backslashEscapes)
       .set_strictConformance(standard)
-      .set_columns(columns)
-      .set_enableOldDebugLines(enableOldDebugLines)
       .set_userState(&ustate);
 
   if (dumpCookedChars) {
-    while (std::optional<char> och{
-        Fortran::parser::cookedNextChar.Parse(&state)}) {
+    while (std::optional<char> och{state.GetNextChar()}) {
       std::cout << *och;
     }
     return 0;

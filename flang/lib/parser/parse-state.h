@@ -30,33 +30,25 @@ public:
   ParseState(const ParseState &that)
     : cooked_{that.cooked_}, p_{that.p_}, limit_{that.limit_},
       column_{that.column_}, messages_{*that.cooked_.allSources()},
-      userState_{that.userState_}, inCharLiteral_{that.inCharLiteral_},
-      inFortran_{that.inFortran_}, inFixedForm_{that.inFixedForm_},
-      enableOldDebugLines_{that.enableOldDebugLines_}, columns_{that.columns_},
+      userState_{that.userState_}, inFixedForm_{that.inFixedForm_},
       enableBackslashEscapesInCharLiterals_{
           that.enableBackslashEscapesInCharLiterals_},
       strictConformance_{that.strictConformance_},
       warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
       warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
-      skippedNewLines_{that.skippedNewLines_},
-      tabInCurrentLine_{that.tabInCurrentLine_},
-      anyErrorRecovery_{that.anyErrorRecovery_}, prescanned_{that.prescanned_} {
+      anyErrorRecovery_{that.anyErrorRecovery_} {
   }
   ParseState(ParseState &&that)
     : cooked_{that.cooked_}, p_{that.p_}, limit_{that.limit_},
       column_{that.column_}, messages_{std::move(that.messages_)},
       context_{std::move(that.context_)}, userState_{that.userState_},
-      inCharLiteral_{that.inCharLiteral_}, inFortran_{that.inFortran_},
       inFixedForm_{that.inFixedForm_},
-      enableOldDebugLines_{that.enableOldDebugLines_}, columns_{that.columns_},
       enableBackslashEscapesInCharLiterals_{
           that.enableBackslashEscapesInCharLiterals_},
       strictConformance_{that.strictConformance_},
       warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
       warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
-      skippedNewLines_{that.skippedNewLines_},
-      tabInCurrentLine_{that.tabInCurrentLine_},
-      anyErrorRecovery_{that.anyErrorRecovery_}, prescanned_{that.prescanned_} {
+      anyErrorRecovery_{that.anyErrorRecovery_} {
   }
   ParseState &operator=(ParseState &&that) {
     swap(that);
@@ -87,33 +79,9 @@ public:
     return *this;
   }
 
-  bool inCharLiteral() const { return inCharLiteral_; }
-  ParseState &set_inCharLiteral(bool yes) {
-    inCharLiteral_ = yes;
-    return *this;
-  }
-
-  bool inFortran() const { return inFortran_; }
-  ParseState &set_inFortran(bool yes) {
-    inFortran_ = yes;
-    return *this;
-  }
-
   bool inFixedForm() const { return inFixedForm_; }
   ParseState &set_inFixedForm(bool yes) {
     inFixedForm_ = yes;
-    return *this;
-  }
-
-  bool enableOldDebugLines() const { return enableOldDebugLines_; }
-  ParseState &set_enableOldDebugLines(bool yes) {
-    enableOldDebugLines_ = yes;
-    return *this;
-  }
-
-  int columns() const { return columns_; }
-  ParseState &set_columns(int cols) {
-    columns_ = cols;
     return *this;
   }
 
@@ -142,13 +110,6 @@ public:
     warnOnDeprecatedUsage_ = yes;
     return *this;
   }
-
-  int skippedNewLines() const { return skippedNewLines_; }
-  void set_skippedNewLines(int n) { skippedNewLines_ = n; }
-
-  bool prescanned() const { return prescanned_; }  // TODO: always true, remove
-
-  bool tabInCurrentLine() const { return tabInCurrentLine_; }
 
   const char *GetLocation() const { return p_; }
   Provenance GetProvenance(const char *at) const {
@@ -197,28 +158,17 @@ public:
 
   bool IsAtEnd() const { return p_ >= limit_; }
 
-  std::optional<char> GetNextRawChar() const {
-    if (p_ < limit_) {
-      return {*p_};
+  std::optional<char> GetNextChar() {
+    if (p_ >= limit_) {
+      return {};
     }
-    return {};
-  }
-
-  void Advance() {
-    CHECK(p_ < limit_);
-    if (*p_ == '\n') {
+    char ch{*p_++};
+    ++column_;
+    if (ch == '\n') {
       column_ = 1;
-      tabInCurrentLine_ = false;
-    } else if (*p_ == '\t') {
-      column_ = ((column_ + 7) & -8) + 1;
-      tabInCurrentLine_ = true;
-    } else {
-      ++column_;
     }
-    ++p_;
+    return {ch};
   }
-
-  void AdvanceColumnForPadding() { ++column_; }
 
 private:
   // Text remaining to be parsed
@@ -232,19 +182,12 @@ private:
 
   UserState *userState_{nullptr};
 
-  bool inCharLiteral_{false};
-  bool inFortran_{true};
   bool inFixedForm_{false};
-  bool enableOldDebugLines_{false};
-  int columns_{72};
   bool enableBackslashEscapesInCharLiterals_{true};
   bool strictConformance_{false};
   bool warnOnNonstandardUsage_{false};
   bool warnOnDeprecatedUsage_{false};
-  int skippedNewLines_{0};
-  bool tabInCurrentLine_{false};
   bool anyErrorRecovery_{false};
-  bool prescanned_{true};
   // NOTE: Any additions or modifications to these data members must also be
   // reflected in the copy and move constructors defined at the top of this
   // class definition!

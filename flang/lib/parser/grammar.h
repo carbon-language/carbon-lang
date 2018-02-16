@@ -2,14 +2,13 @@
 #define FORTRAN_GRAMMAR_H_
 
 // Top-level grammar specification for Fortran.  These parsers drive
-// tokenizing and raw character parsers (cooked-tokens.h, cooked-chars.h)
-// to recognize the productions of Fortran and to construct a parse tree.
+// the tokenization parsers in cooked-tokens.h to consume characters,
+// recognize the productions of Fortran, and to construct a parse tree.
 // See parser-combinators.txt for documentation on the parser combinator
 // library used here to implement an LL recursive descent recognizer.
 
 #include "basic-parsers.h"
-#include "cooked-chars.h"
-#include "cooked-tokens.h"
+#include "token-parsers.h"
 #include "format-specification.h"
 #include "parse-tree.h"
 #include "user-state.h"
@@ -540,7 +539,7 @@ constexpr auto executableConstruct =
 constexpr auto executionPartErrorRecovery = skipMany("\n"_tok) >>
     maybe(label) >> !"END"_tok >> !"ELSE"_tok >> !"CONTAINS"_tok >>
     !"CASE"_tok >> !"TYPE IS"_tok >> !"CLASS"_tok >>
-    !"RANK"_tok >> skipPastNewLine >> construct<ErrorRecovery>{};
+    !"RANK"_tok >> SkipPast<'\n'>{} >> construct<ErrorRecovery>{};
 
 // R510 execution-part-construct ->
 //        executable-construct | format-stmt | entry-stmt | data-stmt

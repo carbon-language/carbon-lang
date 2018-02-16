@@ -1,11 +1,3 @@
-#include <cstdlib>
-#include <iostream>
-#include <list>
-#include <optional>
-#include <sstream>
-#include <stddef.h>
-#include <string>
-
 #include "../../lib/parser/grammar.h"
 #include "../../lib/parser/idioms.h"
 #include "../../lib/parser/indirection.h"
@@ -19,6 +11,13 @@
 #include "../../lib/parser/user-state.h"
 #include "../../lib/semantics/attr.h"
 #include "../../lib/semantics/type.h"
+#include <cstdlib>
+#include <iostream>
+#include <list>
+#include <optional>
+#include <sstream>
+#include <string>
+#include <stddef.h>
 
 using namespace Fortran;
 using namespace parser;

@@ -1,12 +1,10 @@
-#ifndef FORTRAN_COOKED_TOKENS_H_
-#define FORTRAN_COOKED_TOKENS_H_
+#ifndef FORTRAN_TOKEN_PARSERS_H_
+#define FORTRAN_TOKEN_PARSERS_H_
 
 // These parsers are driven by the Fortran grammar (grammar.h) to consume
-// the cooked character stream from cookedNextChar (cooked-chars.h) and
-// partition it into a context-sensitive token stream.
+// the prescanned character stream and recognize context-sensitive tokens.
 
 #include "basic-parsers.h"
-#include "cooked-chars.h"
 #include "idioms.h"
 #include "provenance.h"
 #include <cctype>
@@ -29,7 +27,7 @@ public:
     : predicate_{f}, message_{msg} {}
   std::optional<char> Parse(ParseState *state) const {
     auto at = state->GetLocation();
-    if (std::optional<char> result{cookedNextChar.Parse(state)}) {
+    if (std::optional<char> result{nextChar.Parse(state)}) {
       if (predicate_(*result)) {
         return result;
       }
@@ -68,7 +66,7 @@ public:
   constexpr CharMatch() {}
   static std::optional<char> Parse(ParseState *state) {
     auto at = state->GetLocation();
-    std::optional<char> result{cookedNextChar.Parse(state)};
+    std::optional<char> result{nextChar.Parse(state)};
     if (result && *result != good) {
       result.reset();
     }
@@ -83,7 +81,7 @@ constexpr struct Space {
   using resultType = Success;
   constexpr Space() {}
   static std::optional<Success> Parse(ParseState *state) {
-    std::optional<char> ch{cookedNextChar.Parse(state)};
+    std::optional<char> ch{nextChar.Parse(state)};
     if (ch) {
       if (ch == ' ' || ch == '\t') {
         return {Success{}};
@@ -116,13 +114,13 @@ public:
           continue;  // redundant; ignore
         }
       }
-      if (!ch && !(ch = cookedNextChar.Parse(state))) {
+      if (!ch && !(ch = nextChar.Parse(state))) {
         return {};
       }
       if (spaceSkipping) {
         // medial space: 0 or more spaces/tabs accepted, none required
         while (*ch == ' ' || *ch == '\t') {
-          if (!(ch = cookedNextChar.Parse(state))) {
+          if (!(ch = nextChar.Parse(state))) {
             return {};
           }
         }
@@ -191,7 +189,7 @@ struct CharLiteralChar {
   using resultType = Result;
   static std::optional<Result> Parse(ParseState *state) {
     auto at = state->GetLocation();
-    std::optional<char> och{cookedNextChar.Parse(state)};
+    std::optional<char> och{nextChar.Parse(state)};
     if (!och.has_value()) {
       return {};
     }
@@ -203,7 +201,7 @@ struct CharLiteralChar {
     if (ch != '\\' || !state->enableBackslashEscapesInCharLiterals()) {
       return {Result::Bare(ch)};
     }
-    if (!(och = cookedNextChar.Parse(state)).has_value()) {
+    if (!(och = nextChar.Parse(state)).has_value()) {
       return {};
     }
     switch ((ch = *och)) {
@@ -249,13 +247,11 @@ template<char quote> struct CharLiteral {
   using resultType = std::string;
   static std::optional<std::string> Parse(ParseState *state) {
     std::string str;
-    CHECK(!state->inCharLiteral());
     static constexpr auto nextch = attempt(CharLiteralChar{});
     while (std::optional<CharLiteralChar::Result> ch{nextch.Parse(state)}) {
       if (ch->ch == quote && !ch->wasEscaped) {
         static constexpr auto doubled = attempt(CharMatch<quote>{});
         if (!doubled.Parse(state).has_value()) {
-          state->set_inCharLiteral(false);
           return {str};
         }
       }
@@ -286,14 +282,14 @@ struct BOZLiteral {
       return {};
     }
 
-    auto ch = cookedNextChar.Parse(state);
+    auto ch = nextChar.Parse(state);
     if (!ch) {
       return {};
     }
     if (toupper(*ch) == 'X' && state->strictConformance()) {
       return {};
     }
-    if (baseChar(*ch) && !(ch = cookedNextChar.Parse(state))) {
+    if (baseChar(*ch) && !(ch = nextChar.Parse(state))) {
       return {};
     }
 
@@ -305,7 +301,7 @@ struct BOZLiteral {
     auto at = state->GetLocation();
     std::string content;
     while (true) {
-      if (!(ch = cookedNextChar.Parse(state))) {
+      if (!(ch = nextChar.Parse(state))) {
         return {};
       }
       if (*ch == quote) {
@@ -319,7 +315,7 @@ struct BOZLiteral {
 
     if (!shift && !state->strictConformance()) {
       // extension: base allowed to appear as suffix
-      if (!(ch = cookedNextChar.Parse(state)) || !baseChar(*ch)) {
+      if (!(ch = nextChar.Parse(state)) || !baseChar(*ch)) {
         return {};
       }
     }
@@ -395,19 +391,41 @@ struct HollerithLiteral {
       return {};
     }
     std::string content;
-    CHECK(!state->inCharLiteral());
-    state->set_inCharLiteral(true);
     for (auto j = *charCount; j-- > 0;) {
-      std::optional<char> ch{cookedNextChar.Parse(state)};
+      std::optional<char> ch{nextChar.Parse(state)};
       if (!ch || !isprint(*ch)) {
         state->PutMessage(at, "insufficient or bad characters in Hollerith");
-        state->set_inCharLiteral(false);
         return {};
       }
       content += *ch;
     }
-    state->set_inCharLiteral(false);
     return {content};
+  }
+};
+
+struct ConsumedAllInputParser {
+  using resultType = Success;
+  constexpr ConsumedAllInputParser() {}
+  static std::optional<Success> Parse(ParseState *state) {
+    if (state->IsAtEnd()) {
+      return {Success{}};
+    }
+    return {};
+  }
+} consumedAllInput;
+
+template<char goal>
+struct SkipPast {
+  using resultType = Success;
+  constexpr SkipPast() {}
+  constexpr SkipPast(const SkipPast &) {}
+  static std::optional<Success> Parse(ParseState *state) {
+    while (std::optional<char> ch{state->GetNextChar()}) {
+      if (*ch == goal) {
+        return {Success{}};
+      }
+    }
+    return {};
   }
 };
 
@@ -423,4 +441,4 @@ template<typename PA> inline constexpr auto optionalBeforeColons(const PA &p) {
 }
 }  // namespace parser
 }  // namespace Fortran
-#endif  // FORTRAN_COOKED_TOKENS_H_
+#endif  // FORTRAN_TOKEN_PARSERS_H_
