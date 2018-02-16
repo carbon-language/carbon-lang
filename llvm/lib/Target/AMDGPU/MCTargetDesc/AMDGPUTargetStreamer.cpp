@@ -184,7 +184,7 @@ bool AMDGPUTargetAsmStreamer::EmitPALMetadata(
 
 AMDGPUTargetELFStreamer::AMDGPUTargetELFStreamer(
     MCStreamer &S, const MCSubtargetInfo &STI)
-    : AMDGPUTargetStreamer(S), STI(STI), Streamer(S) {
+    : AMDGPUTargetStreamer(S), Streamer(S) {
   MCAssembler &MCA = getStreamer().getAssembler();
   unsigned EFlags = MCA.getELFHeaderEFlags();
 

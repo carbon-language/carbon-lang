@@ -87,7 +87,6 @@ public:
 };
 
 class AMDGPUTargetELFStreamer final : public AMDGPUTargetStreamer {
-  const MCSubtargetInfo &STI;
   MCStreamer &Streamer;
 
   void EmitAMDGPUNote(const MCExpr *DescSize, unsigned NoteType,
