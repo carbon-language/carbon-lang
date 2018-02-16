@@ -414,8 +414,7 @@ struct ConsumedAllInputParser {
   }
 } consumedAllInput;
 
-template<char goal>
-struct SkipPast {
+template<char goal> struct SkipPast {
   using resultType = Success;
   constexpr SkipPast() {}
   constexpr SkipPast(const SkipPast &) {}

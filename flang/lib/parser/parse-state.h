@@ -36,8 +36,7 @@ public:
       strictConformance_{that.strictConformance_},
       warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
       warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
-      anyErrorRecovery_{that.anyErrorRecovery_} {
-  }
+      anyErrorRecovery_{that.anyErrorRecovery_} {}
   ParseState(ParseState &&that)
     : cooked_{that.cooked_}, p_{that.p_}, limit_{that.limit_},
       column_{that.column_}, messages_{std::move(that.messages_)},
@@ -48,8 +47,7 @@ public:
       strictConformance_{that.strictConformance_},
       warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
       warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
-      anyErrorRecovery_{that.anyErrorRecovery_} {
-  }
+      anyErrorRecovery_{that.anyErrorRecovery_} {}
   ParseState &operator=(ParseState &&that) {
     swap(that);
     return *this;

@@ -26,7 +26,7 @@
 
 // Parse tree node class types do not have default constructors.  They
 // explicitly declare "T() {} = delete;" to make this clear.  This restriction
-// avoids what would otherwise become a viral requirement to include
+// prevents the introduction of what would be a viral requirement to include
 // std::monostate among most std::variant<> discriminated union members.
 
 // Parse tree node class types do not have copy constructors or copy assignment

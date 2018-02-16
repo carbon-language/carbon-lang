@@ -22,7 +22,7 @@
 #include <type_traits>
 #include <variant>
 
-// Avoid a deduction bug in GNU 7.1.0 headers by forcing the answer.
+// Avoid a deduction bug in GNU 7.3.0 headers by forcing the answer.
 // TODO: better resolution
 namespace std {
 template<typename A>

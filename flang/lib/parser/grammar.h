@@ -8,9 +8,9 @@
 // library used here to implement an LL recursive descent recognizer.
 
 #include "basic-parsers.h"
-#include "token-parsers.h"
 #include "format-specification.h"
 #include "parse-tree.h"
+#include "token-parsers.h"
 #include "user-state.h"
 #include <cctype>
 #include <cinttypes>
