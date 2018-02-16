@@ -26,10 +26,12 @@ class BinaryStreamWriter;
 
 namespace pdb {
 
+class HashTable;
+
 class HashTableIterator
     : public iterator_facade_base<HashTableIterator, std::forward_iterator_tag,
                                   std::pair<uint32_t, uint32_t>> {
-  friend class HashTable;
+  friend HashTable;
 
   HashTableIterator(const HashTable &Map, uint32_t Index, bool IsEnd);
 
