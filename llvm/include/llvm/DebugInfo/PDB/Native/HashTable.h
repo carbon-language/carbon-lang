@@ -26,7 +26,29 @@ class BinaryStreamWriter;
 
 namespace pdb {
 
-class HashTableIterator;
+class HashTableIterator
+    : public iterator_facade_base<HashTableIterator, std::forward_iterator_tag,
+                                  std::pair<uint32_t, uint32_t>> {
+  friend class HashTable;
+
+  HashTableIterator(const HashTable &Map, uint32_t Index, bool IsEnd);
+
+public:
+  HashTableIterator(const HashTable &Map);
+
+  HashTableIterator &operator=(const HashTableIterator &R);
+  bool operator==(const HashTableIterator &R) const;
+  const std::pair<uint32_t, uint32_t> &operator*() const;
+  HashTableIterator &operator++();
+
+private:
+  bool isEnd() const { return IsEnd; }
+  uint32_t index() const { return Index; }
+
+  const HashTable *Map;
+  uint32_t Index;
+  bool IsEnd;
+};
 
 class HashTable {
   friend class HashTableIterator;
@@ -187,30 +209,6 @@ private:
                                    SparseBitVector<> &V);
   static Error writeSparseBitVector(BinaryStreamWriter &Writer,
                                     SparseBitVector<> &Vec);
-};
-
-class HashTableIterator
-    : public iterator_facade_base<HashTableIterator, std::forward_iterator_tag,
-                                  std::pair<uint32_t, uint32_t>> {
-  friend class HashTable;
-
-  HashTableIterator(const HashTable &Map, uint32_t Index, bool IsEnd);
-
-public:
-  HashTableIterator(const HashTable &Map);
-
-  HashTableIterator &operator=(const HashTableIterator &R);
-  bool operator==(const HashTableIterator &R) const;
-  const std::pair<uint32_t, uint32_t> &operator*() const;
-  HashTableIterator &operator++();
-
-private:
-  bool isEnd() const { return IsEnd; }
-  uint32_t index() const { return Index; }
-
-  const HashTable *Map;
-  uint32_t Index;
-  bool IsEnd;
 };
 
 } // end namespace pdb
