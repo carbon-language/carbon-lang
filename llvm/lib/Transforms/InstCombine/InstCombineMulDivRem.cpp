@@ -1454,8 +1454,6 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
     }
 
     if (NewInst) {
-      if (Instruction *T = dyn_cast<Instruction>(NewInst))
-        T->setDebugLoc(I.getDebugLoc());
       SimpR->setFastMathFlags(I.getFastMathFlags());
       return SimpR;
     }
