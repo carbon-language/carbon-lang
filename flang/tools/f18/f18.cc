@@ -50,7 +50,7 @@ int main(int argc, char *const argv[]) {
   args.pop_front();
 
   bool dumpCookedChars{false}, dumpProvenance{false};
-  bool fixedForm{false};
+  bool fixedForm{false}, freeForm{false};
   bool backslashEscapes{true};
   bool standard{false};
   bool enableOldDebugLines{false};
@@ -71,6 +71,8 @@ int main(int argc, char *const argv[]) {
       args.pop_front();
       if (flag == "-Mfixed") {
         fixedForm = true;
+      } else if (flag == "-Mfree") {
+        freeForm = true;
       } else if (flag == "-Mbackslash") {
         backslashEscapes = false;
       } else if (flag == "-Mstandard") {
@@ -90,7 +92,7 @@ int main(int argc, char *const argv[]) {
         allSources.PushSearchPathDirectory(flag.substr(2, std::string::npos));
       } else {
         std::cerr << "unknown flag: '" << flag << "'\n";
-        return 1;
+        return EXIT_FAILURE;
       }
     }
   }
@@ -101,8 +103,7 @@ int main(int argc, char *const argv[]) {
     args.pop_front();
     if (!args.empty()) {
       std::cerr << "multiple input files\n";
-      ;
-      return 1;
+      return EXIT_FAILURE;
     }
   }
 
@@ -110,7 +111,17 @@ int main(int argc, char *const argv[]) {
   const auto *sourceFile = allSources.Open(path, &error);
   if (!sourceFile) {
     std::cerr << error.str() << '\n';
-    return 1;
+    return EXIT_FAILURE;
+  }
+
+  if (!freeForm) {
+    auto dot = path.rfind(".");
+    if (dot != std::string::npos) {
+      std::string suffix{path.substr(dot + 1, std::string::npos)};
+      if (suffix == "f" || suffix == "F") {
+        fixedForm = true;
+      }
+    }
   }
 
   Fortran::parser::ProvenanceRange range{allSources.AddIncludedFile(

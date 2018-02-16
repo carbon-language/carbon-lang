@@ -10,7 +10,6 @@
 #include <set>
 #include <sstream>
 #include <utility>
-#include <iostream>  // TODO pmk rm
 
 namespace Fortran {
 namespace parser {
