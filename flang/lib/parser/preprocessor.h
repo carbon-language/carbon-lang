@@ -1,5 +1,5 @@
-#ifndef FORTRAN_PREPROCESSOR_H_
-#define FORTRAN_PREPROCESSOR_H_
+#ifndef FORTRAN_PARSER_PREPROCESSOR_H_
+#define FORTRAN_PARSER_PREPROCESSOR_H_
 
 // A Fortran-aware preprocessing module used by the prescanner to implement
 // preprocessing directives and macro replacement.  Intended to be efficient
@@ -86,4 +86,4 @@ private:
 };
 }  // namespace parser
 }  // namespace Fortran
-#endif  // FORTRAN_PREPROCESSOR_H_
+#endif  // FORTRAN_PARSER_PREPROCESSOR_H_

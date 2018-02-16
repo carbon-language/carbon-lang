@@ -1,5 +1,5 @@
-#ifndef FORTRAN_SOURCE_H_
-#define FORTRAN_SOURCE_H_
+#ifndef FORTRAN_PARSER_SOURCE_H_
+#define FORTRAN_PARSER_SOURCE_H_
 
 // Source file content is lightly normalized when the file is read.
 //  - Line ending markers are converted to single newline characters
@@ -43,4 +43,4 @@ private:
 };
 }  // namespace parser
 }  // namespace Fortran
-#endif  // FORTRAN_SOURCE_H_
+#endif  // FORTRAN_PARSER_SOURCE_H_

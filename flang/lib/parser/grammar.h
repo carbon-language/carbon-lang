@@ -1,5 +1,5 @@
-#ifndef FORTRAN_GRAMMAR_H_
-#define FORTRAN_GRAMMAR_H_
+#ifndef FORTRAN_PARSER_GRAMMAR_H_
+#define FORTRAN_PARSER_GRAMMAR_H_
 
 // Top-level grammar specification for Fortran.  These parsers drive
 // the tokenization parsers in cooked-tokens.h to consume characters,
@@ -3646,4 +3646,4 @@ TYPE_CONTEXT_PARSER("PAUSE statement",
 //     is only used via scalar-default-char-constant-expr
 }  // namespace parser
 }  // namespace Fortran
-#endif  // FORTRAN_GRAMMAR_H_
+#endif  // FORTRAN_PARSER_GRAMMAR_H_

@@ -1,5 +1,5 @@
-#ifndef FORTRAN_TOKEN_PARSERS_H_
-#define FORTRAN_TOKEN_PARSERS_H_
+#ifndef FORTRAN_PARSER_TOKEN_PARSERS_H_
+#define FORTRAN_PARSER_TOKEN_PARSERS_H_
 
 // These parsers are driven by the Fortran grammar (grammar.h) to consume
 // the prescanned character stream and recognize context-sensitive tokens.
@@ -440,4 +440,4 @@ template<typename PA> inline constexpr auto optionalBeforeColons(const PA &p) {
 }
 }  // namespace parser
 }  // namespace Fortran
-#endif  // FORTRAN_TOKEN_PARSERS_H_
+#endif  // FORTRAN_PARSER_TOKEN_PARSERS_H_

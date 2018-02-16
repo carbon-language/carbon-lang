@@ -1,5 +1,5 @@
-#ifndef FORTRAN_PARSE_TREE_H_
-#define FORTRAN_PARSE_TREE_H_
+#ifndef FORTRAN_PARSER_PARSE_TREE_H_
+#define FORTRAN_PARSER_PARSE_TREE_H_
 
 // Defines the classes used to represent successful reductions of productions
 // in the Fortran grammar.  The names and content of these definitions
@@ -3224,4 +3224,4 @@ std::ostream &operator<<(std::ostream &o, const LoopBounds<A> &x) {
 }
 }  // namespace parser
 }  // namespace Fortran
-#endif  // FORTRAN_PARSE_TREE_H_
+#endif  // FORTRAN_PARSER_PARSE_TREE_H_

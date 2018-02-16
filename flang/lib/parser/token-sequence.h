@@ -1,5 +1,5 @@
-#ifndef FORTRAN_TOKEN_SEQUENCE_H_
-#define FORTRAN_TOKEN_SEQUENCE_H_
+#ifndef FORTRAN_PARSER_TOKEN_SEQUENCE_H_
+#define FORTRAN_PARSER_TOKEN_SEQUENCE_H_
 
 // A buffer class capable of holding a contiguous sequence of characters
 // that have been partitioned into preprocessing tokens.
@@ -149,4 +149,4 @@ private:
 };
 }  // namespace parser
 }  // namespace Fortran
-#endif  // FORTRAN_TOKEN_SEQUENCE_H_
+#endif  // FORTRAN_PARSER_TOKEN_SEQUENCE_H_

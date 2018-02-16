@@ -1,5 +1,5 @@
-#ifndef FORTRAN_IDIOMS_H_
-#define FORTRAN_IDIOMS_H_
+#ifndef FORTRAN_PARSER_IDIOMS_H_
+#define FORTRAN_PARSER_IDIOMS_H_
 
 // Defines anything that might ever be useful in more than one source file
 // or that is too weird or too specific to the host C++ compiler to be
@@ -128,4 +128,4 @@ std::ostream &operator<<(std::ostream &o, const std::variant<As...> &x) {
 }
 }  // namespace parser
 }  // namespace Fortran
-#endif  // FORTRAN_IDIOMS_H_
+#endif  // FORTRAN_PARSER_IDIOMS_H_

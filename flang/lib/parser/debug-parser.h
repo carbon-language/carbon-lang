@@ -1,5 +1,5 @@
-#ifndef FORTRAN_DEBUG_PARSER_H_
-#define FORTRAN_DEBUG_PARSER_H_
+#ifndef FORTRAN_PARSER_DEBUG_PARSER_H_
+#define FORTRAN_PARSER_DEBUG_PARSER_H_
 
 // Implements the parser with syntax "(YOUR MESSAGE HERE)"_debug for use
 // in temporary modifications to the grammar intended for tracing the
@@ -39,4 +39,4 @@ constexpr DebugParser operator""_debug(const char str[], size_t n) {
 }
 }  // namespace parser
 }  // namespace Fortran
-#endif  // FORTRAN_DEBUG_PARSER_H_
+#endif  // FORTRAN_PARSER_DEBUG_PARSER_H_

@@ -1,5 +1,5 @@
-#ifndef FORTRAN_INDIRECTION_H_
-#define FORTRAN_INDIRECTION_H_
+#ifndef FORTRAN_PARSER_INDIRECTION_H_
+#define FORTRAN_PARSER_INDIRECTION_H_
 
 // Defines a smart pointer template class that's rather like std::unique_ptr<>
 // but further restricted, like a C++ reference, to be non-null when constructed
@@ -58,4 +58,4 @@ std::ostream &operator<<(std::ostream &o, const Indirection<A> &x) {
 }
 }  // namespace parser
 }  // namespace Fortran
-#endif  // FORTRAN_INDIRECTION_H_
+#endif  // FORTRAN_PARSER_INDIRECTION_H_

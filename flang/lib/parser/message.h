@@ -1,5 +1,5 @@
-#ifndef FORTRAN_MESSAGE_H_
-#define FORTRAN_MESSAGE_H_
+#ifndef FORTRAN_PARSER_MESSAGE_H_
+#define FORTRAN_PARSER_MESSAGE_H_
 
 // Defines a representation for sequences of compiler messages.
 // Supports nested contextualization.
@@ -111,4 +111,4 @@ private:
 };
 }  // namespace parser
 }  // namespace Fortran
-#endif  // FORTRAN_MESSAGE_H_
+#endif  // FORTRAN_PARSER_MESSAGE_H_

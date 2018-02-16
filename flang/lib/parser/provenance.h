@@ -1,5 +1,5 @@
-#ifndef FORTRAN_PROVENANCE_H_
-#define FORTRAN_PROVENANCE_H_
+#ifndef FORTRAN_PARSER_PROVENANCE_H_
+#define FORTRAN_PARSER_PROVENANCE_H_
 
 #include "char-buffer.h"
 #include "idioms.h"
@@ -251,4 +251,4 @@ private:
 };
 }  // namespace parser
 }  // namespace Fortran
-#endif  // FORTRAN_PROVENANCE_H_
+#endif  // FORTRAN_PARSER_PROVENANCE_H_

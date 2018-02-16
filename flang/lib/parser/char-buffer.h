@@ -1,5 +1,5 @@
-#ifndef FORTRAN_CHAR_BUFFER_H_
-#define FORTRAN_CHAR_BUFFER_H_
+#ifndef FORTRAN_PARSER_CHAR_BUFFER_H_
+#define FORTRAN_PARSER_CHAR_BUFFER_H_
 
 // Defines a simple expandable buffer suitable for efficiently accumulating
 // a stream of bytes.
@@ -115,4 +115,4 @@ private:
 };
 }  // namespace parser
 }  // namespace Fortran
-#endif  // FORTRAN_CHAR_BUFFER_H_
+#endif  // FORTRAN_PARSER_CHAR_BUFFER_H_

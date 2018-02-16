@@ -1,5 +1,5 @@
-#ifndef FORTRAN_BASIC_PARSERS_H_
-#define FORTRAN_BASIC_PARSERS_H_
+#ifndef FORTRAN_PARSER_BASIC_PARSERS_H_
+#define FORTRAN_PARSER_BASIC_PARSERS_H_
 
 // Let a "parser" be an instance of any class that supports this
 // type definition and member (or static) function:
@@ -1291,4 +1291,4 @@ constexpr struct GetProvenance {
 
 }  // namespace parser
 }  // namespace Fortran
-#endif  // FORTRAN_BASIC_PARSERS_H_
+#endif  // FORTRAN_PARSER_BASIC_PARSERS_H_

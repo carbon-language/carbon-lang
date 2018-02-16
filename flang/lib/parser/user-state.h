@@ -1,5 +1,5 @@
-#ifndef FORTRAN_USER_STATE_H_
-#define FORTRAN_USER_STATE_H_
+#ifndef FORTRAN_PARSER_USER_STATE_H_
+#define FORTRAN_PARSER_USER_STATE_H_
 
 // Instances of ParseState (parse-state.h) incorporate instances of this
 // UserState class, which encapsulates any semantic information necessary for
@@ -38,4 +38,4 @@ private:
 };
 }  // namespace parser
 }  // namespace Fortran
-#endif  // FORTRAN_USER_STATE_H_
+#endif  // FORTRAN_PARSER_USER_STATE_H_

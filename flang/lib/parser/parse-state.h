@@ -1,5 +1,5 @@
-#ifndef FORTRAN_PARSE_STATE_H_
-#define FORTRAN_PARSE_STATE_H_
+#ifndef FORTRAN_PARSER_PARSE_STATE_H_
+#define FORTRAN_PARSER_PARSE_STATE_H_
 
 // Defines the ParseState type used as the argument for every parser's
 // Parse member or static function.  Tracks source provenance, context,
@@ -192,4 +192,4 @@ private:
 };
 }  // namespace parser
 }  // namespace Fortran
-#endif  // FORTRAN_PARSE_STATE_H_
+#endif  // FORTRAN_PARSER_PARSE_STATE_H_

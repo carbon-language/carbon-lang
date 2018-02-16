@@ -1,5 +1,5 @@
-#ifndef FORTRAN_PRESCAN_H_
-#define FORTRAN_PRESCAN_H_
+#ifndef FORTRAN_PARSER_PRESCAN_H_
+#define FORTRAN_PARSER_PRESCAN_H_
 
 // Defines a fast Fortran source prescanning phase that implements some
 // character-level features of the language that can be inefficient to
@@ -124,4 +124,4 @@ private:
 };
 }  // namespace parser
 }  // namespace Fortran
-#endif  // FORTRAN_PRESCAN_H_
+#endif  // FORTRAN_PARSER_PRESCAN_H_
