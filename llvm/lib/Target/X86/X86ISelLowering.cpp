@@ -36047,14 +36047,15 @@ static SDValue combineToExtendCMOV(SDNode *Extend, SelectionDAG &DAG) {
   if (TargetVT != MVT::i32 && TargetVT != MVT::i64)
     return SDValue();
 
-  // Only extend from i16.
-  if (VT != MVT::i16)
+  // Only extend from i16 unless its a sign_extend from i32. Zext/aext from i32
+  // are free.
+  if (VT != MVT::i16 && !(ExtendOpcode == ISD::SIGN_EXTEND && VT == MVT::i32))
     return SDValue();
 
   // If this a zero extend to i64, we should only extend to i32 and use a free
   // zero extend to finish.
   EVT ExtendVT = TargetVT;
-  if (TargetVT == MVT::i64 && ExtendOpcode == ISD::ZERO_EXTEND)
+  if (TargetVT == MVT::i64 && ExtendOpcode != ISD::SIGN_EXTEND)
     ExtendVT = MVT::i32;
 
   CMovOp0 = DAG.getNode(ExtendOpcode, DL, ExtendVT, CMovOp0);
@@ -36065,7 +36066,7 @@ static SDValue combineToExtendCMOV(SDNode *Extend, SelectionDAG &DAG) {
 
   // Finish extending if needed.
   if (ExtendVT != TargetVT)
-    Res = DAG.getNode(ISD::ZERO_EXTEND, DL, TargetVT, Res);
+    Res = DAG.getNode(ExtendOpcode, DL, TargetVT, Res);
 
   return Res;
 }
