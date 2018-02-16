@@ -32941,10 +32941,16 @@ static SDValue combineShiftRightArithmetic(SDNode *N, SelectionDAG &DAG) {
   return SDValue();
 }
 
-static SDValue combineShiftRightLogical(SDNode *N, SelectionDAG &DAG) {
+static SDValue combineShiftRightLogical(SDNode *N, SelectionDAG &DAG,
+                                        TargetLowering::DAGCombinerInfo &DCI) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
   EVT VT = N0.getValueType();
+
+  // Only do this on the last DAG combine as it can interfere with other
+  // combines.
+  if (!DCI.isAfterLegalizeVectorOps())
+    return SDValue();
 
   // Try to improve a sequence of srl (and X, C1), C2 by inverting the order.
   // TODO: This is a generic DAG combine that became an x86-only combine to
@@ -32996,7 +33002,7 @@ static SDValue combineShift(SDNode* N, SelectionDAG &DAG,
       return V;
 
   if (N->getOpcode() == ISD::SRL)
-    if (SDValue V = combineShiftRightLogical(N, DAG))
+    if (SDValue V = combineShiftRightLogical(N, DAG, DCI))
       return V;
 
   return SDValue();
