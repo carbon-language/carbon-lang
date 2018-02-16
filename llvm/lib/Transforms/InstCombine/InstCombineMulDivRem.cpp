@@ -1462,37 +1462,25 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
   }
 
   if (I.hasAllowReassoc() && Op0->hasOneUse() && Op1->hasOneUse()) {
-    Value *A;
-    // sin(a) / cos(a) -> tan(a)
-    if (match(Op0, m_Intrinsic<Intrinsic::sin>(m_Value(A))) &&
-        match(Op1, m_Intrinsic<Intrinsic::cos>(m_Specific(A)))) {
-      if (hasUnaryFloatFn(&TLI, I.getType(), LibFunc_tan,
-                          LibFunc_tanf, LibFunc_tanl)) {
-        IRBuilder<> B(&I);
-        IRBuilder<>::FastMathFlagGuard Guard(B);
-        B.setFastMathFlags(I.getFastMathFlags());
-        Value *Tan = emitUnaryFloatFnCall(
-            A, TLI.getName(LibFunc_tan), B,
-            CallSite(Op0).getCalledFunction()->getAttributes());
-        return replaceInstUsesWith(I, Tan);
-      }
-    }
+    // sin(X) / cos(X) -> tan(X)
+    // cos(X) / sin(X) -> 1/tan(X) (cotangent)
+    Value *X;
+    bool IsTan = match(Op0, m_Intrinsic<Intrinsic::sin>(m_Value(X))) &&
+                 match(Op1, m_Intrinsic<Intrinsic::cos>(m_Specific(X)));
+    bool IsCot =
+        !IsTan && match(Op0, m_Intrinsic<Intrinsic::cos>(m_Value(X))) &&
+                  match(Op1, m_Intrinsic<Intrinsic::sin>(m_Specific(X)));
 
-    // cos(a) / sin(a) -> 1/tan(a)
-    if (match(Op0, m_Intrinsic<Intrinsic::cos>(m_Value(A))) &&
-        match(Op1, m_Intrinsic<Intrinsic::sin>(m_Specific(A)))) {
-      if (hasUnaryFloatFn(&TLI, I.getType(), LibFunc_tan,
-                          LibFunc_tanf, LibFunc_tanl)) {
-        IRBuilder<> B(&I);
-        IRBuilder<>::FastMathFlagGuard Guard(B);
-        B.setFastMathFlags(I.getFastMathFlags());
-        Value *Tan = emitUnaryFloatFnCall(
-            A, TLI.getName(LibFunc_tan), B,
-            CallSite(Op0).getCalledFunction()->getAttributes());
-        Value *One = ConstantFP::get(Tan->getType(), 1.0);
-        Value *Div = B.CreateFDiv(One, Tan);
-        return replaceInstUsesWith(I, Div);
-      }
+    if ((IsTan || IsCot) && hasUnaryFloatFn(&TLI, I.getType(), LibFunc_tan,
+                                            LibFunc_tanf, LibFunc_tanl)) {
+      IRBuilder<> B(&I);
+      IRBuilder<>::FastMathFlagGuard FMFGuard(B);
+      B.setFastMathFlags(I.getFastMathFlags());
+      AttributeList Attrs = CallSite(Op0).getCalledFunction()->getAttributes();
+      Value *Res = emitUnaryFloatFnCall(X, TLI.getName(LibFunc_tan), B, Attrs);
+      if (IsCot)
+        Res = B.CreateFDiv(ConstantFP::get(I.getType(), 1.0), Res);
+      return replaceInstUsesWith(I, Res);
     }
   }
 
