@@ -115,7 +115,7 @@ define i64 @cmov_zpromotion_16_to_64(i1 %c) {
 ; CMOV-NEXT:    testb $1, %dil
 ; CMOV-NEXT:    movl $12414, %ecx # imm = 0x307E
 ; CMOV-NEXT:    movl $65535, %eax # imm = 0xFFFF
-; CMOV-NEXT:    cmovneq %rcx, %rax
+; CMOV-NEXT:    cmovnel %ecx, %eax
 ; CMOV-NEXT:    retq
 ;
 ; NO_CMOV-LABEL: cmov_zpromotion_16_to_64:
