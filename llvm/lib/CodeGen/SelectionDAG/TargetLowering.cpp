@@ -1462,7 +1462,7 @@ bool TargetLowering::SimplifyDemandedVectorElts(
     bool Updated = false;
     bool IdentityLHS = true, IdentityRHS = true;
     SmallVector<int, 32> NewMask(ShuffleMask.begin(), ShuffleMask.end());
-    for (int i = 0; i != NumElts; ++i) {
+    for (unsigned i = 0; i != NumElts; ++i) {
       int &M = NewMask[i];
       if (M < 0)
         continue;
@@ -1471,8 +1471,8 @@ bool TargetLowering::SimplifyDemandedVectorElts(
         Updated = true;
         M = -1;
       }
-      IdentityLHS &= (M < 0) || (M == i);
-      IdentityRHS &= (M < 0) || ((M - NumElts) == i);
+      IdentityLHS &= (M < 0) || (M == (int)i);
+      IdentityRHS &= (M < 0) || ((M - NumElts) == (int)i);
     }
 
     // Update legal shuffle masks based on demanded elements if it won't reduce
