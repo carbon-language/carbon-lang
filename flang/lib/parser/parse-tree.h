@@ -82,6 +82,14 @@
     WRAPPER_CLASS_BOILERPLATE(classname, type); \
   }
 
+// Enumeration types in classes can be defined with this macro,
+// which also captures the names of the enums for formatting.
+// Invocations an be followed by declarators and must be followed by
+// a semicolon.
+#define DEFINE_NESTED_ENUM_CLASS(ENUMTYPE, ...) \
+  static constexpr const char *ENUMTYPE##AsString{#__VA_ARGS__}; \
+  enum class ENUMTYPE { __VA_ARGS__ }
+
 namespace Fortran {
 namespace parser {
 
@@ -477,30 +485,16 @@ WRAPPER_CLASS(NamedConstant, Name);
 // The Name here is stored without the dots; e.g., FOO, not .FOO.
 WRAPPER_CLASS(DefinedOpName, Name);
 
+// R608 intrinsic-operator ->
+//        ** | * | / | + | - | // | .LT. | .LE. | .EQ. | .NE. | .GE. | .GT. |
+//        .NOT. | .AND. | .OR. | .EQV. | .NEQV.
 // R609 defined-operator ->
 //        defined-unary-op | defined-binary-op | extended-intrinsic-op
 // R610 extended-intrinsic-op -> intrinsic-operator
 struct DefinedOperator {
   UNION_CLASS_BOILERPLATE(DefinedOperator);
-  enum class IntrinsicOperator {  // R608 intrinsic-operator
-    Power,
-    Multiply,
-    Divide,
-    Add,
-    Subtract,
-    Concat,
-    LT,
-    LE,
-    EQ,
-    NE,
-    GE,
-    GT,
-    NOT,
-    AND,
-    OR,
-    EQV,
-    NEQV
-  };
+  DEFINE_NESTED_ENUM_CLASS(IntrinsicOperator, Power, Multiply, Divide, Add,
+      Subtract, Concat, LT, LE, EQ, NE, GE, GT, NOT, AND, OR, EQV, NEQV);
   std::variant<DefinedOpName, IntrinsicOperator> u;
 };
 
@@ -512,7 +506,7 @@ using ObjectName = Name;
 //        IMPORT , ONLY : import-name-list | IMPORT , NONE | IMPORT , ALL
 struct ImportStmt {
   BOILERPLATE(ImportStmt);
-  enum class Kind { Default, Only, None, All } kind{Kind::Default};
+  DEFINE_NESTED_ENUM_CLASS(Kind, Default, Only, None, All) kind{Kind::Default};
   ImportStmt(Kind &&k) : kind{k} {}
   ImportStmt(std::list<Name> &&n) : names(std::move(n)) {}
   ImportStmt(Kind &&, std::list<Name> &&);
@@ -552,7 +546,7 @@ WRAPPER_CLASS(IntegerTypeSpec, std::optional<KindSelector>);
 // R723 char-length -> ( type-param-value ) | digit-string
 struct CharLength {
   UNION_CLASS_BOILERPLATE(CharLength);
-  std::variant<TypeParamValue, int64_t> u;
+  std::variant<TypeParamValue, std::int64_t> u;
 };
 
 // R722 length-selector -> ( [LEN =] type-param-value ) | * char-length [,]
@@ -782,7 +776,7 @@ struct ConstantValue {
 
 // R807 access-spec -> PUBLIC | PRIVATE
 struct AccessSpec {
-  enum class Kind { Public, Private };
+  DEFINE_NESTED_ENUM_CLASS(Kind, Public, Private);
   WRAPPER_CLASS_BOILERPLATE(AccessSpec, Kind);
 };
 
@@ -792,11 +786,7 @@ EMPTY_CLASS(Abstract);
 struct TypeAttrSpec {
   UNION_CLASS_BOILERPLATE(TypeAttrSpec);
   EMPTY_CLASS(BindC);
-  struct Extends {
-    BOILERPLATE(Extends);
-    Extends(Name &&n) : name(std::move(n)) {}
-    Name name;
-  };
+  WRAPPER_CLASS(Extends, Name);
   std::variant<Abstract, AccessSpec, BindC, Extends> u;
 };
 
@@ -830,9 +820,9 @@ struct TypeParamDecl {
 //        integer-type-spec , type-param-attr-spec :: type-param-decl-list
 // R734 type-param-attr-spec -> KIND | LEN
 struct TypeParamDefStmt {
-  enum class KindOrLength { Kind, Length };  // R734
+  DEFINE_NESTED_ENUM_CLASS(KindOrLen, Kind, Len);  // R734
   TUPLE_CLASS_BOILERPLATE(TypeParamDefStmt);
-  std::tuple<IntegerTypeSpec, KindOrLength, std::list<TypeParamDecl>> t;
+  std::tuple<IntegerTypeSpec, KindOrLen, std::list<TypeParamDecl>> t;
 };
 
 // R1028 specification-expr -> scalar-int-expr
@@ -1209,7 +1199,7 @@ struct ArraySpec {
 
 // R826 intent-spec -> IN | OUT | INOUT
 struct IntentSpec {
-  enum class Intent { In, Out, InOut };
+  DEFINE_NESTED_ENUM_CLASS(Intent, In, Out, InOut);
   WRAPPER_CLASS_BOILERPLATE(IntentSpec, Intent);
 };
 
@@ -1445,8 +1435,7 @@ struct ImplicitSpec {
 // R866 implicit-name-spec -> EXTERNAL | TYPE
 struct ImplicitStmt {
   UNION_CLASS_BOILERPLATE(ImplicitStmt);
-  enum class ImplicitNoneNameSpec { External, Type };  // R866
-  friend std::ostream &operator<<(std::ostream &, ImplicitNoneNameSpec);
+  DEFINE_NESTED_ENUM_CLASS(ImplicitNoneNameSpec, External, Type);  // R866
   std::variant<std::list<ImplicitSpec>, std::list<ImplicitNoneNameSpec>> u;
 };
 
@@ -2332,7 +2321,7 @@ struct StopCode {
 // R1161 error-stop-stmt ->
 //         ERROR STOP [stop-code] [, QUIET = scalar-logical-expr]
 struct StopStmt {
-  enum class Kind { Stop, ErrorStop };
+  DEFINE_NESTED_ENUM_CLASS(Kind, Stop, ErrorStop);
   TUPLE_CLASS_BOILERPLATE(StopStmt);
   std::tuple<Kind, std::optional<StopCode>, std::optional<ScalarLogicalExpr>> t;
 };
@@ -2448,28 +2437,16 @@ WRAPPER_CLASS(ErrLabel, Label);
 struct ConnectSpec {
   UNION_CLASS_BOILERPLATE(ConnectSpec);
   struct CharExpr {
-    enum class Kind {
-      Access,
-      Action,
-      Asynchronous,
-      Blank,
-      Decimal,
-      Delim,
-      Encoding,
-      Form,
-      Pad,
-      Position,
-      Round,
-      Sign,
-      Dispose /*extension*/
-    };
+    DEFINE_NESTED_ENUM_CLASS(Kind, Access, Action, Asynchronous, Blank, Decimal,
+        Delim, Encoding, Form, Pad, Position, Round, Sign,
+        Dispose /*extension*/);
     TUPLE_CLASS_BOILERPLATE(CharExpr);
     std::tuple<Kind, ScalarDefaultCharExpr> t;
   };
   WRAPPER_CLASS(Recl, ScalarIntExpr);
   WRAPPER_CLASS(Newunit, ScalarIntVariable);
-  std::variant<FileUnitNumber, FileNameExpr, CharExpr, StatVariable, Recl,
-      Newunit, ErrLabel, StatusExpr>
+  std::variant<FileUnitNumber, FileNameExpr, CharExpr, MsgVariable,
+      StatVariable, Recl, Newunit, ErrLabel, StatusExpr>
       u;
 };
 
@@ -2517,7 +2494,8 @@ WRAPPER_CLASS(EorLabel, Label);
 struct IoControlSpec {
   UNION_CLASS_BOILERPLATE(IoControlSpec);
   struct CharExpr {
-    enum class Kind { Advance, Blank, Decimal, Delim, Pad, Round, Sign };
+    DEFINE_NESTED_ENUM_CLASS(
+        Kind, Advance, Blank, Decimal, Delim, Pad, Round, Sign);
     TUPLE_CLASS_BOILERPLATE(CharExpr);
     std::tuple<Kind, ScalarDefaultCharExpr> t;
   };
@@ -2680,39 +2658,19 @@ struct FlushStmt {
 struct InquireSpec {
   UNION_CLASS_BOILERPLATE(InquireSpec);
   struct CharVar {
-    enum class Kind {
-      Access,
-      Action,
-      Asynchronous,
-      Blank,
-      Decimal,
-      Delim,
-      Encoding,
-      Form,
-      Formatted,
-      Iomsg,
-      Name,
-      Pad,
-      Position,
-      Read,
-      Readwrite,
-      Round,
-      Sequential,
-      Sign,
-      Stream,
-      Status,
-      Write
-    };
+    DEFINE_NESTED_ENUM_CLASS(Kind, Access, Action, Asynchronous, Blank, Decimal,
+        Delim, Encoding, Form, Formatted, Iomsg, Name, Pad, Position, Read,
+        Readwrite, Round, Sequential, Sign, Stream, Status, Write);
     TUPLE_CLASS_BOILERPLATE(CharVar);
     std::tuple<Kind, ScalarDefaultCharVariable> t;
   };
   struct IntVar {
-    enum class Kind { Iostat, Nextrec, Number, Pos, Recl, Size };
+    DEFINE_NESTED_ENUM_CLASS(Kind, Iostat, Nextrec, Number, Pos, Recl, Size);
     TUPLE_CLASS_BOILERPLATE(IntVar);
     std::tuple<Kind, ScalarIntVariable> t;
   };
   struct LogVar {
-    enum class Kind { Exist, Named, Opened, Pending };
+    DEFINE_NESTED_ENUM_CLASS(Kind, Exist, Named, Opened, Pending);
     TUPLE_CLASS_BOILERPLATE(LogVar);
     std::tuple<Kind, Scalar<Logical<Variable>>> t;
   };
@@ -2736,17 +2694,20 @@ struct InquireStmt {
 // R1301 format-stmt -> FORMAT format-specification
 WRAPPER_CLASS(FormatStmt, FormatSpecification);
 
+// R1402 program-stmt -> PROGRAM program-name
+WRAPPER_CLASS(ProgramStmt, Name);
+
 // R1403 end-program-stmt -> END [PROGRAM [program-name]]
 WRAPPER_CLASS(EndProgramStmt, std::optional<Name>);
 
 // R1401 main-program ->
 //         [program-stmt] [specification-part] [execution-part]
 //         [internal-subprogram-part] end-program-stmt
-// R1402 program-stmt -> PROGRAM program-name
 struct MainProgram {
   TUPLE_CLASS_BOILERPLATE(MainProgram);
-  std::tuple<std::optional<Statement<Name>>, SpecificationPart, ExecutionPart,
-      std::optional<InternalSubprogramPart>, Statement<EndProgramStmt>>
+  std::tuple<std::optional<Statement<ProgramStmt>>, SpecificationPart,
+      ExecutionPart, std::optional<InternalSubprogramPart>,
+      Statement<EndProgramStmt>>
       t;
 };
 
@@ -2882,7 +2843,7 @@ struct Only {
 // R1410 module-nature -> INTRINSIC | NON_INTRINSIC
 struct UseStmt {
   BOILERPLATE(UseStmt);
-  enum class ModuleNature { Intrinsic, Non_Intrinsic };  // R1410
+  DEFINE_NESTED_ENUM_CLASS(ModuleNature, Intrinsic, Non_Intrinsic);  // R1410
   template<typename A>
   UseStmt(std::optional<ModuleNature> &&nat, Name &&n, std::list<A> &&x)
     : nature(std::move(nat)), moduleName(std::move(n)), u(std::move(x)) {}
@@ -2995,7 +2956,7 @@ struct InterfaceBody {
 
 // R1506 procedure-stmt -> [MODULE] PROCEDURE [::] specific-procedure-list
 struct ProcedureStmt {
-  enum class Kind { ModuleProcedure, Procedure };
+  DEFINE_NESTED_ENUM_CLASS(Kind, ModuleProcedure, Procedure);
   TUPLE_CLASS_BOILERPLATE(ProcedureStmt);
   std::tuple<Kind, std::list<Name>> t;
 };
@@ -3184,7 +3145,6 @@ struct AssignedGotoStmt {
 WRAPPER_CLASS(PauseStmt, std::optional<StopCode>);
 
 // Formatting of template types
-// TODO move elsewhere?
 template<typename A>
 std::ostream &operator<<(std::ostream &o, const Statement<A> &x) {
   return o << "(Statement " << x.label << ' '
@@ -3222,6 +3182,20 @@ std::ostream &operator<<(std::ostream &o, const LoopBounds<A> &x) {
   return o << "(LoopBounds " << x.name << ' ' << x.lower << ' ' << x.upper
            << ' ' << x.step << ')';
 }
+
+// Formatting enumerations defined via DEFINE_NESTED_ENUM_CLASS
+#define NESTED_ENUM_TO_STRING(ENUMTYPE) \
+  static std::string ToString(ENUMTYPE x) { \
+    std::string str{ENUMTYPE##AsString}; \
+    size_t start{0}; \
+    for (int j{static_cast<int>(x)}; j-- > 0;) { \
+      start = str.find(',', start) + 1; \
+    } \
+    while (str[start] == ' ') { \
+      ++start; \
+    } \
+    return str.substr(start, str.find(',', start)); \
+  }
 }  // namespace parser
 }  // namespace Fortran
 #endif  // FORTRAN_PARSER_PARSE_TREE_H_

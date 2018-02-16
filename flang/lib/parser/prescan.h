@@ -74,6 +74,17 @@ private:
     tokens->PutNextTokenChar(ch, GetCurrentProvenance());
   }
 
+  void EmitInsertedChar(TokenSequence *tokens, char ch) {
+    Provenance provenance{
+        cooked_->allSources()->CompilerInsertionProvenance(ch)};
+    tokens->PutNextTokenChar(ch, provenance);
+  }
+
+  void EmitEscapedChar(TokenSequence *tokens, char ch) {
+    EmitInsertedChar(tokens, '\\');
+    EmitChar(tokens, ch);
+  }
+
   char EmitCharAndAdvance(TokenSequence *tokens, char ch) {
     EmitChar(tokens, ch);
     NextChar();
@@ -86,8 +97,9 @@ private:
   void SkipSpaces();
   bool NextToken(TokenSequence *);
   bool ExponentAndKind(TokenSequence *);
+  void EmitQuotedCharacter(TokenSequence *, char);
   void QuotedCharacterLiteral(TokenSequence *);
-  bool PadOutCharacterLiteral();
+  bool PadOutCharacterLiteral(TokenSequence *);
   bool CommentLines();
   bool CommentLinesAndPreprocessorDirectives();
   bool IsFixedFormCommentLine(const char *);
@@ -123,6 +135,8 @@ private:
   int delimiterNesting_{0};
   Provenance spaceProvenance_{
       cooked_->allSources()->CompilerInsertionProvenance(' ')};
+  Provenance backslashProvenance_{
+      cooked_->allSources()->CompilerInsertionProvenance('\\')};
 };
 }  // namespace parser
 }  // namespace Fortran

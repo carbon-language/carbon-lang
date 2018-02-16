@@ -68,8 +68,39 @@ TokenSequence Definition::Tokenize(const std::vector<std::string> &argNames,
   return result;
 }
 
+static size_t AfterLastNonBlank(const TokenSequence &tokens) {
+  for (size_t j{tokens.size()}; j > 0; --j) {
+    if (!tokens[j - 1].IsBlank()) {
+      return j;
+    }
+  }
+  return 0;
+}
+
+static TokenSequence Stringify(
+    const TokenSequence &tokens, AllSources *allSources) {
+  TokenSequence result;
+  Provenance quoteProvenance{allSources->CompilerInsertionProvenance('"')};
+  result.PutNextTokenChar('"', quoteProvenance);
+  for (size_t j{0}; j < tokens.size(); ++j) {
+    const CharPointerWithLength &token{tokens[j]};
+    size_t bytes{token.size()};
+    for (size_t k{0}; k < bytes; ++k) {
+      char ch{token[k]};
+      Provenance from{tokens.GetTokenProvenance(j, k)};
+      if (ch == '"' || ch == '\\') {
+        result.PutNextTokenChar(ch, from);
+      }
+      result.PutNextTokenChar(ch, from);
+    }
+  }
+  result.PutNextTokenChar('"', quoteProvenance);
+  result.CloseToken();
+  return result;
+}
+
 TokenSequence Definition::Apply(
-    const std::vector<TokenSequence> &args, const AllSources &allSources) {
+    const std::vector<TokenSequence> &args, AllSources *allSources) {
   TokenSequence result;
   bool pasting{false};
   bool skipping{false};
@@ -93,35 +124,16 @@ TokenSequence Definition::Apply(
       if (index >= args.size()) {
         continue;
       }
-      size_t afterLastNonBlank{result.size()};
-      for (; afterLastNonBlank > 0; --afterLastNonBlank) {
-        if (!result[afterLastNonBlank - 1].IsBlank()) {
-          break;
-        }
-      }
-      size_t argTokens{args[index].size()};
+      size_t afterLastNonBlank{AfterLastNonBlank(result)};
       if (afterLastNonBlank > 0 &&
           result[afterLastNonBlank - 1].ToString() == "#") {
+        // stringifying
         while (result.size() >= afterLastNonBlank) {
           result.pop_back();
         }
-        Provenance quoteProvenance{allSources.CompilerInsertionProvenance('"')};
-        result.PutNextTokenChar('"', quoteProvenance);
-        for (size_t k{0}; k < argTokens; ++k) {
-          const CharPointerWithLength &arg{args[index][k]};
-          size_t argBytes{args[index][k].size()};
-          for (size_t n{0}; n < argBytes; ++n) {
-            char ch{arg[n]};
-            Provenance from{args[index].GetTokenProvenance(k, n)};
-            if (ch == '"' || ch == '\\') {
-              result.PutNextTokenChar(ch, from);
-            }
-            result.PutNextTokenChar(ch, from);
-          }
-        }
-        result.PutNextTokenChar('"', quoteProvenance);
-        result.CloseToken();
+        result.Put(Stringify(args[index], allSources));
       } else {
+        size_t argTokens{args[index].size()};
         for (size_t k{0}; k < argTokens; ++k) {
           if (!pasting || !args[index][k].IsBlank()) {
             result.Put(args[index], k);
@@ -143,9 +155,10 @@ TokenSequence Definition::Apply(
       // Delete whitespace immediately following ## in the body.
     } else if (bytes == 11 && isVariadic_ &&
         token.ToString() == "__VA_ARGS__") {
+      Provenance commaProvenance{allSources->CompilerInsertionProvenance(',')};
       for (size_t k{argumentCount_}; k < args.size(); ++k) {
         if (k > argumentCount_) {
-          result.Put(","s, allSources.CompilerInsertionProvenance(','));
+          result.Put(","s, commaProvenance);
         }
         result.Put(args[k]);
       }
@@ -205,7 +218,7 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
     }
   }
   if (j == tokens) {
-    return false;  // nothing appeared that could be replaced
+    return false;  // contains nothing that would be replaced
   }
   result->Put(input, 0, j);
   for (; j < tokens; ++j) {
@@ -300,7 +313,7 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
     }
     def.set_isDisabled(true);
     TokenSequence replaced{
-        ReplaceMacros(def.Apply(args, *allSources_), prescanner)};
+        ReplaceMacros(def.Apply(args, allSources_), prescanner)};
     def.set_isDisabled(false);
     if (!replaced.empty()) {
       ProvenanceRange from{def.replacement().GetProvenanceRange()};

@@ -311,6 +311,29 @@ std::ostream &operator<<(std::ostream &o, const FormatSpecification &x) {
            << ')';
 }
 
+#define NESTED_ENUM_FORMATTER(T) \
+  NESTED_ENUM_TO_STRING(T) \
+  std::ostream &operator<<(std::ostream &o, const T &x) { \
+    return o << ToString(x); \
+  }
+
+NESTED_ENUM_FORMATTER(DefinedOperator::IntrinsicOperator)  // R608
+NESTED_ENUM_FORMATTER(TypeParamDefStmt::KindOrLen)  // R734
+NESTED_ENUM_FORMATTER(AccessSpec::Kind)  // R807
+NESTED_ENUM_FORMATTER(IntentSpec::Intent)  // R826
+NESTED_ENUM_FORMATTER(ImplicitStmt::ImplicitNoneNameSpec)  // R866
+NESTED_ENUM_FORMATTER(ImportStmt::Kind)  // R867
+NESTED_ENUM_FORMATTER(StopStmt::Kind)  // R1160, R1161
+NESTED_ENUM_FORMATTER(ConnectSpec::CharExpr::Kind)  // R1205
+NESTED_ENUM_FORMATTER(IoControlSpec::CharExpr::Kind)  // R1213
+NESTED_ENUM_FORMATTER(InquireSpec::CharVar::Kind)  // R1231
+NESTED_ENUM_FORMATTER(InquireSpec::IntVar::Kind)  // R1231
+NESTED_ENUM_FORMATTER(InquireSpec::LogVar::Kind)  // R1231
+NESTED_ENUM_FORMATTER(UseStmt::ModuleNature)  // R1410
+NESTED_ENUM_FORMATTER(ProcedureStmt::Kind)  // R1506
+
+#undef NESTED_ENUM_FORMATTER
+
 // Wrapper class formatting
 #define WRAPPER_FORMATTER(TYPE) \
   std::ostream &operator<<(std::ostream &o, const TYPE &x) { \
@@ -327,6 +350,7 @@ WRAPPER_FORMATTER(IntegerTypeSpec)  // R705
 WRAPPER_FORMATTER(KindSelector)  // R706
 WRAPPER_FORMATTER(HollerithLiteralConstant)  // extension
 WRAPPER_FORMATTER(LogicalLiteralConstant)  // R725
+WRAPPER_FORMATTER(TypeAttrSpec::Extends)  // R728
 WRAPPER_FORMATTER(EndTypeStmt)  // R730
 WRAPPER_FORMATTER(Pass)  // R742 & R752
 WRAPPER_FORMATTER(FinalProcedureStmt)  // R753
@@ -334,12 +358,14 @@ WRAPPER_FORMATTER(ComponentDataSource)  // R758
 WRAPPER_FORMATTER(EnumeratorDefStmt)  // R761
 WRAPPER_FORMATTER(BOZLiteralConstant)  // R764, R765, R766, R767
 WRAPPER_FORMATTER(ArrayConstructor)  // R769
+WRAPPER_FORMATTER(AccessSpec)  // R807
 WRAPPER_FORMATTER(LanguageBindingSpec)  // R808 & R1528
 WRAPPER_FORMATTER(DeferredCoshapeSpecList)  // R810
 WRAPPER_FORMATTER(AssumedShapeSpec)  // R819
 WRAPPER_FORMATTER(DeferredShapeSpecList)  // R820
 WRAPPER_FORMATTER(AssumedImpliedSpec)  // R821
 WRAPPER_FORMATTER(ImpliedShapeSpec)  // R823 & R824
+WRAPPER_FORMATTER(IntentSpec)  // R826
 WRAPPER_FORMATTER(AllocatableStmt)  // R829
 WRAPPER_FORMATTER(AsynchronousStmt)  // R831
 WRAPPER_FORMATTER(CodimensionStmt)  // R834
@@ -413,6 +439,7 @@ WRAPPER_FORMATTER(IdVariable)  // R1214
 WRAPPER_FORMATTER(WaitStmt)  // R1222
 WRAPPER_FORMATTER(IdExpr)  // R1223 & R1231
 WRAPPER_FORMATTER(FormatStmt)  // R1301
+WRAPPER_FORMATTER(ProgramStmt)  // R1402
 WRAPPER_FORMATTER(EndProgramStmt)  // R1403
 WRAPPER_FORMATTER(ModuleStmt)  // R1405
 WRAPPER_FORMATTER(EndModuleStmt)  // R1406
@@ -495,32 +522,6 @@ EMPTY_TYPE_FORMATTER(Map::EndMapStmt)
 
 #undef EMPTY_TYPE_FORMATTER
 
-// R609
-std::ostream &operator<<(
-    std::ostream &o, DefinedOperator::IntrinsicOperator x) {
-  switch (x) {
-  case DefinedOperator::IntrinsicOperator::Power: return o << "Power";
-  case DefinedOperator::IntrinsicOperator::Multiply: return o << "Multiply";
-  case DefinedOperator::IntrinsicOperator::Divide: return o << "Divide";
-  case DefinedOperator::IntrinsicOperator::Add: return o << "Add";
-  case DefinedOperator::IntrinsicOperator::Subtract: return o << "Subtract";
-  case DefinedOperator::IntrinsicOperator::Concat: return o << "Concat";
-  case DefinedOperator::IntrinsicOperator::LT: return o << "LT";
-  case DefinedOperator::IntrinsicOperator::LE: return o << "LE";
-  case DefinedOperator::IntrinsicOperator::EQ: return o << "EQ";
-  case DefinedOperator::IntrinsicOperator::NE: return o << "NE";
-  case DefinedOperator::IntrinsicOperator::GE: return o << "GE";
-  case DefinedOperator::IntrinsicOperator::GT: return o << "GT";
-  case DefinedOperator::IntrinsicOperator::NOT: return o << "NOT";
-  case DefinedOperator::IntrinsicOperator::AND: return o << "AND";
-  case DefinedOperator::IntrinsicOperator::OR: return o << "OR";
-  case DefinedOperator::IntrinsicOperator::EQV: return o << "EQV";
-  case DefinedOperator::IntrinsicOperator::NEQV: return o << "NEQV";
-  default: CRASH_NO_CASE;
-  }
-  return o;
-}
-
 // R703
 std::ostream &operator<<(std::ostream &o, const DeclarationTypeSpec::Type &x) {
   return o << "(DeclarationTypeSpec TYPE " << x.derived << ')';
@@ -602,22 +603,6 @@ std::ostream &operator<<(
   return o << "(LengthAndKind " << x.length << ' ' << x.kind << ')';
 }
 
-// R728 type-attr-spec
-std::ostream &operator<<(std::ostream &o, const TypeAttrSpec::Extends &x) {
-  return o << "(Extends " << x.name << ')';
-}
-
-// R734 type-param-attr-spec
-std::ostream &operator<<(
-    std::ostream &o, const TypeParamDefStmt::KindOrLength &x) {
-  switch (x) {
-  case TypeParamDefStmt::KindOrLength::Kind: o << "Kind"; break;
-  case TypeParamDefStmt::KindOrLength::Length: o << "Length"; break;
-  default: CRASH_NO_CASE;
-  }
-  return o;
-}
-
 // R749 type-bound-procedure-stmt
 std::ostream &operator<<(
     std::ostream &o, const TypeBoundProcedureStmt::WithoutInterface &x) {
@@ -636,27 +621,6 @@ std::ostream &operator<<(std::ostream &o, const AcSpec &x) {
   return o << "(AcSpec " << x.type << ' ' << x.values << ')';
 }
 
-// R807 access-spec
-std::ostream &operator<<(std::ostream &o, const AccessSpec &x) {
-  switch (x.v) {
-  case AccessSpec::Kind::Public: return o << "(Public)";
-  case AccessSpec::Kind::Private: return o << "(Private)";
-  default: CRASH_NO_CASE;
-  }
-  return o;
-}
-
-// R826 intent-spec
-std::ostream &operator<<(std::ostream &o, const IntentSpec &x) {
-  switch (x.v) {
-  case IntentSpec::Intent::In: return o << "(Intent In)";
-  case IntentSpec::Intent::Out: return o << "(Intent Out)";
-  case IntentSpec::Intent::InOut: return o << "(Intent InOut)";
-  default: CRASH_NO_CASE;
-  }
-  return o;
-}
-
 // R863 implicit-stmt
 std::ostream &operator<<(std::ostream &o, const ImplicitStmt &x) {
   o << "(ImplicitStmt ";
@@ -664,19 +628,8 @@ std::ostream &operator<<(std::ostream &o, const ImplicitStmt &x) {
           x.u)) {
     o << "NONE ";
   }
-  std::visit([&o](auto &&y) { o << y; }, x.u);
+  std::visit([&o](const auto &y) { o << y; }, x.u);
   return o << ')';
-}
-
-// R866
-std::ostream &operator<<(
-    std::ostream &o, ImplicitStmt::ImplicitNoneNameSpec x) {
-  switch (x) {
-  case ImplicitStmt::ImplicitNoneNameSpec::External: return o << "External";
-  case ImplicitStmt::ImplicitNoneNameSpec::Type: return o << "Type";
-  default: CRASH_NO_CASE;
-  }
-  return o;
 }
 
 // R867
@@ -687,14 +640,10 @@ ImportStmt::ImportStmt(Kind &&k, std::list<Name> &&n)
 
 std::ostream &operator<<(std::ostream &o, const ImportStmt &x) {
   o << "(ImportStmt ";
-  switch (x.kind) {
-  case ImportStmt::Kind::Default: return o << x.names << ')';
-  case ImportStmt::Kind::Only: return o << "Only " << x.names << ')';
-  case ImportStmt::Kind::None: return o << "None)";
-  case ImportStmt::Kind::All: return o << "All)";
-  default: CRASH_NO_CASE;
+  if (x.kind != ImportStmt::Kind::Default) {
+    o << x.kind;
   }
-  return o;
+  return o << x.names << ')';
 }
 
 // R901 designator
@@ -871,95 +820,6 @@ std::ostream &operator<<(std::ostream &o, const CaseValueRange::Range &x) {
   return o << "(Range " << x.lower << ' ' << x.upper << ')';
 }
 
-// R1205
-std::ostream &operator<<(std::ostream &o, const ConnectSpec::CharExpr::Kind x) {
-  switch (x) {
-  case ConnectSpec::CharExpr::Kind::Access: o << "Access"; break;
-  case ConnectSpec::CharExpr::Kind::Action: o << "Action"; break;
-  case ConnectSpec::CharExpr::Kind::Asynchronous: o << "Asynchronous"; break;
-  case ConnectSpec::CharExpr::Kind::Blank: o << "Blank"; break;
-  case ConnectSpec::CharExpr::Kind::Decimal: o << "Decimal"; break;
-  case ConnectSpec::CharExpr::Kind::Delim: o << "Delim"; break;
-  case ConnectSpec::CharExpr::Kind::Encoding: o << "Encoding"; break;
-  case ConnectSpec::CharExpr::Kind::Form: o << "Form"; break;
-  case ConnectSpec::CharExpr::Kind::Pad: o << "Pad"; break;
-  case ConnectSpec::CharExpr::Kind::Position: o << "Position"; break;
-  case ConnectSpec::CharExpr::Kind::Round: o << "Round"; break;
-  case ConnectSpec::CharExpr::Kind::Sign: o << "Sign"; break;
-  case ConnectSpec::CharExpr::Kind::Dispose: o << "Dispose"; break;
-  default: CRASH_NO_CASE;
-  }
-  return o;
-}
-
-// R1213
-std::ostream &operator<<(std::ostream &o, IoControlSpec::CharExpr::Kind x) {
-  switch (x) {
-  case IoControlSpec::CharExpr::Kind::Advance: o << "Advance"; break;
-  case IoControlSpec::CharExpr::Kind::Blank: o << "Blank"; break;
-  case IoControlSpec::CharExpr::Kind::Decimal: o << "Decimal"; break;
-  case IoControlSpec::CharExpr::Kind::Delim: o << "Delim"; break;
-  case IoControlSpec::CharExpr::Kind::Pad: o << "Pad"; break;
-  case IoControlSpec::CharExpr::Kind::Round: o << "Round"; break;
-  case IoControlSpec::CharExpr::Kind::Sign: o << "Sign"; break;
-  default: CRASH_NO_CASE;
-  }
-  return o;
-}
-
-// R1231
-std::ostream &operator<<(std::ostream &o, const InquireSpec::CharVar::Kind x) {
-  switch (x) {
-  case InquireSpec::CharVar::Kind::Access: o << "Access"; break;
-  case InquireSpec::CharVar::Kind::Action: o << "Action"; break;
-  case InquireSpec::CharVar::Kind::Asynchronous: o << "Asynchronous"; break;
-  case InquireSpec::CharVar::Kind::Blank: o << "Blank"; break;
-  case InquireSpec::CharVar::Kind::Decimal: o << "Decimal"; break;
-  case InquireSpec::CharVar::Kind::Delim: o << "Delim"; break;
-  case InquireSpec::CharVar::Kind::Encoding: o << "Encoding"; break;
-  case InquireSpec::CharVar::Kind::Form: o << "Form"; break;
-  case InquireSpec::CharVar::Kind::Formatted: o << "Formatted"; break;
-  case InquireSpec::CharVar::Kind::Iomsg: o << "Iomsg"; break;
-  case InquireSpec::CharVar::Kind::Name: o << "Name"; break;
-  case InquireSpec::CharVar::Kind::Pad: o << "Pad"; break;
-  case InquireSpec::CharVar::Kind::Position: o << "Position"; break;
-  case InquireSpec::CharVar::Kind::Read: o << "Read"; break;
-  case InquireSpec::CharVar::Kind::Readwrite: o << "Readwrite"; break;
-  case InquireSpec::CharVar::Kind::Round: o << "Round"; break;
-  case InquireSpec::CharVar::Kind::Sequential: o << "Sequential"; break;
-  case InquireSpec::CharVar::Kind::Sign: o << "Sign"; break;
-  case InquireSpec::CharVar::Kind::Stream: o << "Stream"; break;
-  case InquireSpec::CharVar::Kind::Status: o << "Status"; break;
-  case InquireSpec::CharVar::Kind::Write: o << "Write"; break;
-  default: CRASH_NO_CASE;
-  }
-  return o;
-}
-
-std::ostream &operator<<(std::ostream &o, const InquireSpec::IntVar::Kind x) {
-  switch (x) {
-  case InquireSpec::IntVar::Kind::Iostat: o << "Iostat"; break;
-  case InquireSpec::IntVar::Kind::Nextrec: o << "Nextrec"; break;
-  case InquireSpec::IntVar::Kind::Number: o << "Number"; break;
-  case InquireSpec::IntVar::Kind::Pos: o << "Pos"; break;
-  case InquireSpec::IntVar::Kind::Recl: o << "Recl"; break;
-  case InquireSpec::IntVar::Kind::Size: o << "Size"; break;
-  default: CRASH_NO_CASE;
-  }
-  return o;
-}
-
-std::ostream &operator<<(std::ostream &o, const InquireSpec::LogVar::Kind x) {
-  switch (x) {
-  case InquireSpec::LogVar::Kind::Exist: o << "Exist"; break;
-  case InquireSpec::LogVar::Kind::Named: o << "Named"; break;
-  case InquireSpec::LogVar::Kind::Opened: o << "Opened"; break;
-  case InquireSpec::LogVar::Kind::Pending: o << "Pending"; break;
-  default: CRASH_NO_CASE;
-  }
-  return o;
-}
-
 // R1307 data-edit-desc (part 1 of 2)
 std::ostream &operator<<(std::ostream &o, const IntrinsicTypeDataEditDesc &x) {
   o << "(IntrinsicTypeDataEditDesc ";
@@ -980,16 +840,6 @@ std::ostream &operator<<(std::ostream &o, const IntrinsicTypeDataEditDesc &x) {
   default: CRASH_NO_CASE;
   }
   return o << x.width << ' ' << x.digits << ' ' << x.exponentWidth << ')';
-}
-
-// R1160, R1161
-std::ostream &operator<<(std::ostream &o, StopStmt::Kind x) {
-  switch (x) {
-  case StopStmt::Kind::Stop: o << "Stop"; break;
-  case StopStmt::Kind::ErrorStop: o << "ErrorStop"; break;
-  default: CRASH_NO_CASE;
-  }
-  return o;
 }
 
 // R1210 read-stmt
@@ -1045,19 +895,9 @@ std::ostream &operator<<(std::ostream &o, const FormatItem &x) {
   return o << ')';
 }
 
-// R1409, R1410
+// R1409
 std::ostream &operator<<(std::ostream &o, const UseStmt &x) {
-  o << "(UseStmt ";
-  if (x.nature) {
-    switch (*x.nature) {
-    case UseStmt::ModuleNature::Intrinsic: o << "Intrinsic"; break;
-    case UseStmt::ModuleNature::Non_Intrinsic: o << "Non_Intrinsic"; break;
-    default: CRASH_NO_CASE;
-    }
-  } else {
-    o << "()";
-  }
-  o << ' ' << x.moduleName << ' ';
+  o << "(UseStmt " << x.nature << ' ' << x.moduleName << ' ';
   std::visit(
       visitors{
           [&o](const std::list<Rename> &y) -> void { o << "RENAME " << y; },
@@ -1068,15 +908,6 @@ std::ostream &operator<<(std::ostream &o, const UseStmt &x) {
 }
 
 // R1506
-std::ostream &operator<<(std::ostream &o, const ProcedureStmt::Kind &x) {
-  switch (x) {
-  case ProcedureStmt::Kind::ModuleProcedure: return o << "ModuleProcedure";
-  case ProcedureStmt::Kind::Procedure: return o << "Procedure";
-  default: CRASH_NO_CASE;
-  }
-  return o;
-}
-
 std::ostream &operator<<(std::ostream &o, const ProcedureStmt &x) {
   return o << "(ProcedureStmt " << std::get<0>(x.t) << ' ' << std::get<1>(x.t)
            << ')';

@@ -161,8 +161,11 @@ void Prescanner::NextChar() {
       }
     }
     while (*at_ == '\n' || *at_ == '&') {
-      if ((inFixedForm_ && !FixedFormContinuation()) ||
-          (!inFixedForm_ && !FreeFormContinuation())) {
+      if (inFixedForm_) {
+        if (!FixedFormContinuation()) {
+          return;
+        }
+      } else if (!FreeFormContinuation()) {
         return;
       }
     }
@@ -220,9 +223,7 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
       EmitCharAndAdvance(tokens, 'h');
       inCharLiteral_ = true;
       while (n-- > 0) {
-        if (PadOutCharacterLiteral()) {
-          tokens->PutNextTokenChar(' ', spaceProvenance_);
-        } else {
+        if (!PadOutCharacterLiteral(tokens)) {
           if (*at_ == '\n') {
             break;  // TODO error
           }
@@ -306,20 +307,42 @@ bool Prescanner::ExponentAndKind(TokenSequence *tokens) {
   return true;
 }
 
+void Prescanner::EmitQuotedCharacter(TokenSequence *tokens, char ch) {
+  switch (ch) {
+  case '\a': EmitEscapedChar(tokens, 'a'); break;
+  case '\b': EmitEscapedChar(tokens, 'b'); break;
+  case '\f': EmitEscapedChar(tokens, 'f'); break;
+  case '\r': EmitEscapedChar(tokens, 'r'); break;
+  case '\t': EmitEscapedChar(tokens, 't'); break;
+  case '\v': EmitEscapedChar(tokens, 'v'); break;
+  case '\\':
+    if (!enableBackslashEscapesInCharLiterals_) {
+      EmitInsertedChar(tokens, '\\');
+    }
+    EmitChar(tokens, '\\');
+    break;
+  default:
+    if (ch < ' ') {
+      // emit an octal escape sequence
+      EmitInsertedChar(tokens, '\\');
+      EmitInsertedChar(tokens, '0' + ((ch >> 6) & 3));
+      EmitInsertedChar(tokens, '0' + ((ch >> 3) & 7));
+      EmitInsertedChar(tokens, '0' + (ch & 7));
+    } else {
+      EmitChar(tokens, ch);
+    }
+  }
+}
+
 void Prescanner::QuotedCharacterLiteral(TokenSequence *tokens) {
   char quote{*at_};
   inCharLiteral_ = true;
   do {
-    EmitCharAndAdvance(tokens, *at_);
-    while (PadOutCharacterLiteral()) {
-      tokens->PutNextTokenChar(' ', spaceProvenance_);
+    EmitQuotedCharacter(tokens, *at_);
+    NextChar();
+    while (PadOutCharacterLiteral(tokens)) {
     }
-    if (*at_ == '\\' && enableBackslashEscapesInCharLiterals_) {
-      EmitCharAndAdvance(tokens, '\\');
-      while (PadOutCharacterLiteral()) {
-        tokens->PutNextTokenChar(' ', spaceProvenance_);
-      }
-    } else if (*at_ == quote) {
+    if (*at_ == quote) {
       // A doubled quote mark becomes a single instance of the quote character
       // in the literal later.
       EmitCharAndAdvance(tokens, quote);
@@ -334,9 +357,10 @@ void Prescanner::QuotedCharacterLiteral(TokenSequence *tokens) {
   inCharLiteral_ = false;
 }
 
-bool Prescanner::PadOutCharacterLiteral() {
+bool Prescanner::PadOutCharacterLiteral(TokenSequence *tokens) {
   if (inFixedForm_ && !tabInCurrentLine_ && *at_ == '\n' &&
       column_ < fixedFormColumnLimit_) {
+    tokens->PutNextTokenChar(' ', spaceProvenance_);
     ++column_;
     return true;
   }
@@ -502,7 +526,7 @@ bool Prescanner::CommentLinesAndPreprocessorDirectives() {
 
 const char *Prescanner::FixedFormContinuationLine() {
   const char *p{lineStart_};
-  if (p >= limit_) {
+  if (p >= limit_ || !inFixedForm_) {
     return nullptr;
   }
   tabInCurrentLine_ = false;
@@ -539,6 +563,9 @@ bool Prescanner::FixedFormContinuation() {
 }
 
 bool Prescanner::FreeFormContinuation() {
+  if (inFixedForm_) {
+    return false;
+  }
   while (*at_ == ' ' || *at_ == '\t') {
     ++at_;
   }

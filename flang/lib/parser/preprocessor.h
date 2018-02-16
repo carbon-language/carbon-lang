@@ -37,8 +37,7 @@ public:
 
   bool set_isDisabled(bool disable);
 
-  TokenSequence Apply(
-      const std::vector<TokenSequence> &args, const AllSources &);
+  TokenSequence Apply(const std::vector<TokenSequence> &args, AllSources *);
 
 private:
   static TokenSequence Tokenize(const std::vector<std::string> &argNames,

@@ -382,12 +382,6 @@ template<typename V> void Walk(const Suffix &x, V &visitor) {
     visitor.Post(x);
   }
 }
-template<typename V> void Walk(const TypeAttrSpec::Extends &x, V &visitor) {
-  if (visitor.Pre(x)) {
-    Walk(x.name, visitor);
-    visitor.Post(x);
-  }
-}
 template<typename V>
 void Walk(const TypeBoundProcedureStmt::WithInterface &x, V &visitor) {
   if (visitor.Pre(x)) {
@@ -1524,6 +1518,9 @@ template<typename V> void Walk(const PointerStmt &x, V &visitor) {
 template<typename V> void Walk(const Program &x, V &visitor) {
   WalkWrapperClass(x, visitor);
 }
+template<typename V> void Walk(const ProgramStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
 template<typename V> void Walk(const ProtectedStmt &x, V &visitor) {
   WalkWrapperClass(x, visitor);
 }
@@ -1549,6 +1546,9 @@ template<typename V> void Walk(const SyncMemoryStmt &x, V &visitor) {
   WalkWrapperClass(x, visitor);
 }
 template<typename V> void Walk(const TargetStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+template<typename V> void Walk(const TypeAttrSpec::Extends &x, V &visitor) {
   WalkWrapperClass(x, visitor);
 }
 template<typename V> void Walk(const TypeParamInquiry &x, V &visitor) {

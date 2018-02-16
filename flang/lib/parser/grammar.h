@@ -894,8 +894,8 @@ TYPE_PARSER("SEQUENCE" >> construct<SequenceStmt>{})
 //        integer-type-spec , type-param-attr-spec :: type-param-decl-list
 // R734 type-param-attr-spec -> KIND | LEN
 TYPE_PARSER(construct<TypeParamDefStmt>{}(integerTypeSpec / ",",
-    "KIND" >> pure(TypeParamDefStmt::KindOrLength::Kind) ||
-        "LEN" >> pure(TypeParamDefStmt::KindOrLength::Length),
+    "KIND" >> pure(TypeParamDefStmt::KindOrLen::Kind) ||
+        "LEN" >> pure(TypeParamDefStmt::KindOrLen::Len),
     "::" >> nonemptyList(Parser<TypeParamDecl>{})))
 
 // R733 type-param-decl -> type-param-name [= scalar-int-constant-expr]
@@ -1138,6 +1138,8 @@ TYPE_PARSER(construct<TypeDeclarationStmt>{}(declarationTypeSpec,
                 optionalBeforeColons(nonemptyList(Parser<AttrSpec>{})),
                 nonemptyList(entityDecl)) ||
     // PGI-only extension: don't require the colons
+    // TODO: The standard requires the colons if the entity
+    // declarations contain initializers.
     extension(construct<TypeDeclarationStmt>{}(declarationTypeSpec,
         defaulted("," >> nonemptyList(Parser<AttrSpec>{})),
         "," >> nonemptyList(entityDecl))))
@@ -2663,6 +2665,7 @@ TYPE_PARSER(maybe("UNIT ="_tok) >> construct<ConnectSpec>{}(fileUnitNumber) ||
     "FORM =" >>
         construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
             pure(ConnectSpec::CharExpr::Kind::Form), scalarDefaultCharExpr)) ||
+    "IOMSG =" >> construct<ConnectSpec>{}(msgVariable) ||
     "IOSTAT =" >> construct<ConnectSpec>{}(statVariable) ||
     "NEWUNIT =" >> construct<ConnectSpec>{}(construct<ConnectSpec::Newunit>{}(
                        scalar(integer(variable)))) ||
@@ -3187,15 +3190,18 @@ TYPE_PARSER(
 // R1401 main-program ->
 //         [program-stmt] [specification-part] [execution-part]
 //         [internal-subprogram-part] end-program-stmt
-// R1402 program-stmt -> PROGRAM program-name
 TYPE_CONTEXT_PARSER("main program"_en_US,
-    construct<MainProgram>{}(maybe(statement("PROGRAM" >> name)),
+    construct<MainProgram>{}(maybe(statement(Parser<ProgramStmt>{})),
         specificationPart, executionPart, maybe(internalSubprogramPart),
         unterminatedStatement(endProgramStmt)))
 
+// R1402 program-stmt -> PROGRAM program-name
+TYPE_CONTEXT_PARSER(
+    "PROGRAM statement"_en_US, construct<ProgramStmt>{}("PROGRAM" >> name))
+
 // R1403 end-program-stmt -> END [PROGRAM [program-name]]
 TYPE_CONTEXT_PARSER("END PROGRAM statement"_en_US,
-    "END" >> construct<EndProgramStmt>{}(defaulted("PROGRAM" >> maybe(name))))
+    construct<EndProgramStmt>{}("END" >> defaulted("PROGRAM" >> maybe(name))))
 
 // R1404 module ->
 //         module-stmt [specification-part] [module-subprogram-part]

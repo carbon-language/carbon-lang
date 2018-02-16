@@ -199,7 +199,7 @@ struct CharLiteralChar {
       state->PutMessage(at, "unclosed character constant"_en_US);
       return {};
     }
-    if (ch != '\\' || !state->enableBackslashEscapesInCharLiterals()) {
+    if (ch != '\\') {
       return {Result::Bare(ch)};
     }
     if (!(och = nextChar.Parse(state)).has_value()) {

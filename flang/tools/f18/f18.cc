@@ -147,7 +147,6 @@ int main(int argc, char *const argv[]) {
   Fortran::parser::ParseState state{cooked};
   Fortran::parser::UserState ustate;
   state.set_inFixedForm(fixedForm)
-      .set_enableBackslashEscapesInCharLiterals(backslashEscapes)
       .set_strictConformance(standard)
       .set_userState(&ustate);
 

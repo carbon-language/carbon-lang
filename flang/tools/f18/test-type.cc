@@ -202,7 +202,7 @@ static void visitDerivedTypeDef(const DerivedTypeDef &dtd) {
     std::visit(
         visitors{
             [&](const TypeAttrSpec::Extends &extends) {
-              builder.extends(extends.name);
+              builder.extends(extends.v);
             },
             [&](const TypeAttrSpec::BindC &) {
               builder.attr(semantics::Attr::BIND_C);

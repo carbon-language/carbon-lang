@@ -176,7 +176,7 @@ public:
   ProvenanceRange GetContiguousRangeAround(ProvenanceRange) const;
   std::string GetPath(Provenance) const;  // __FILE__
   int GetLineNumber(Provenance) const;  // __LINE__
-  Provenance CompilerInsertionProvenance(char ch) const;
+  Provenance CompilerInsertionProvenance(char ch);
   void Dump(std::ostream &) const;
 
 private:

@@ -31,8 +31,6 @@ public:
     : cooked_{that.cooked_}, p_{that.p_}, limit_{that.limit_},
       column_{that.column_}, messages_{*that.cooked_.allSources()},
       userState_{that.userState_}, inFixedForm_{that.inFixedForm_},
-      enableBackslashEscapesInCharLiterals_{
-          that.enableBackslashEscapesInCharLiterals_},
       strictConformance_{that.strictConformance_},
       warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
       warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
@@ -42,8 +40,6 @@ public:
       column_{that.column_}, messages_{std::move(that.messages_)},
       context_{std::move(that.context_)}, userState_{that.userState_},
       inFixedForm_{that.inFixedForm_},
-      enableBackslashEscapesInCharLiterals_{
-          that.enableBackslashEscapesInCharLiterals_},
       strictConformance_{that.strictConformance_},
       warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
       warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
@@ -80,14 +76,6 @@ public:
   bool inFixedForm() const { return inFixedForm_; }
   ParseState &set_inFixedForm(bool yes) {
     inFixedForm_ = yes;
-    return *this;
-  }
-
-  bool enableBackslashEscapesInCharLiterals() const {
-    return enableBackslashEscapesInCharLiterals_;
-  }
-  ParseState &set_enableBackslashEscapesInCharLiterals(bool yes) {
-    enableBackslashEscapesInCharLiterals_ = yes;
     return *this;
   }
 
@@ -179,7 +167,6 @@ private:
   UserState *userState_{nullptr};
 
   bool inFixedForm_{false};
-  bool enableBackslashEscapesInCharLiterals_{true};
   bool strictConformance_{false};
   bool warnOnNonstandardUsage_{false};
   bool warnOnDeprecatedUsage_{false};

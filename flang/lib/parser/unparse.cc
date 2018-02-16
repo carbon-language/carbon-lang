@@ -165,11 +165,9 @@ public:
     Put("END MODULE");
     return true;
   }
-  bool Pre(const MainProgram &x) {
-    if (std::get<std::optional<Statement<Name>>>(x.t)) {
-      Put("PROGRAM ");
-      Indent();
-    }
+  bool Pre(const ProgramStmt &x) {
+    Put("PROGRAM ");
+    Indent();
     return true;
   }
   bool Pre(const EndProgramStmt &x) {

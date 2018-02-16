@@ -66,11 +66,6 @@ AllSources::AllSources() : range_{1, 1} {
   // so that provenance offset 0 remains reserved as an uninitialized
   // value.
   origin_.emplace_back(range_, std::string{'?'});
-
-  for (char ch : " ,\"01\n"s) {
-    compilerInsertionProvenance_[ch] =
-        AddCompilerInsertion(std::string{ch}).LocalOffsetToProvenance(0);
-  }
 }
 
 AllSources::~AllSources() {}
@@ -231,8 +226,15 @@ int AllSources::GetLineNumber(Provenance at) const {
   return source ? source->FindOffsetLineAndColumn(offset).first : 0;
 }
 
-Provenance AllSources::CompilerInsertionProvenance(char ch) const {
-  return compilerInsertionProvenance_.find(ch)->second;
+Provenance AllSources::CompilerInsertionProvenance(char ch) {
+  auto iter = compilerInsertionProvenance_.find(ch);
+  if (iter != compilerInsertionProvenance_.end()) {
+    return iter->second;
+  }
+  ProvenanceRange newCharRange{AddCompilerInsertion(std::string{ch})};
+  Provenance newCharProvenance{newCharRange.LocalOffsetToProvenance(0)};
+  compilerInsertionProvenance_.insert(std::make_pair(ch, newCharProvenance));
+  return newCharProvenance;
 }
 
 AllSources::Origin::Origin(ProvenanceRange r, const SourceFile &source)
