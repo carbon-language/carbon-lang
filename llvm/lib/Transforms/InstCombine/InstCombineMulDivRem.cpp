@@ -1426,36 +1426,31 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
 
   if (AllowReassociate) {
     Value *X, *Y;
-    Value *NewInst = nullptr;
-    Instruction *SimpR = nullptr;
-
-    if (match(Op0, m_OneUse(m_FDiv(m_Value(X), m_Value(Y))))) {
-      // (X/Y) / Z => X / (Y*Z)
-      if (!isa<Constant>(Y) || !isa<Constant>(Op1)) {
-        NewInst = Builder.CreateFMul(Y, Op1);
-        if (Instruction *RI = dyn_cast<Instruction>(NewInst)) {
-          FastMathFlags Flags = I.getFastMathFlags();
-          Flags &= cast<Instruction>(Op0)->getFastMathFlags();
-          RI->setFastMathFlags(Flags);
-        }
-        SimpR = BinaryOperator::CreateFDiv(X, NewInst);
+    if (match(Op0, m_OneUse(m_FDiv(m_Value(X), m_Value(Y)))) &&
+        (!isa<Constant>(Y) || !isa<Constant>(Op1))) {
+      // (X / Y) / Z => X / (Y * Z)
+      Value *YZ = Builder.CreateFMul(Y, Op1);
+      if (auto *YZInst = dyn_cast<Instruction>(YZ)) {
+        FastMathFlags FMFIntersect = I.getFastMathFlags();
+        FMFIntersect &= cast<Instruction>(Op0)->getFastMathFlags();
+        YZInst->setFastMathFlags(FMFIntersect);
       }
-    } else if (match(Op1, m_OneUse(m_FDiv(m_Value(X), m_Value(Y))))) {
-      // Z / (X/Y) => Z*Y / X
-      if (!isa<Constant>(Y) || !isa<Constant>(Op0)) {
-        NewInst = Builder.CreateFMul(Op0, Y);
-        if (Instruction *RI = dyn_cast<Instruction>(NewInst)) {
-          FastMathFlags Flags = I.getFastMathFlags();
-          Flags &= cast<Instruction>(Op1)->getFastMathFlags();
-          RI->setFastMathFlags(Flags);
-        }
-        SimpR = BinaryOperator::CreateFDiv(NewInst, X);
-      }
+      Instruction *NewDiv = BinaryOperator::CreateFDiv(X, YZ);
+      NewDiv->setFastMathFlags(I.getFastMathFlags());
+      return NewDiv;
     }
-
-    if (NewInst) {
-      SimpR->setFastMathFlags(I.getFastMathFlags());
-      return SimpR;
+    if (match(Op1, m_OneUse(m_FDiv(m_Value(X), m_Value(Y)))) &&
+        (!isa<Constant>(Y) || !isa<Constant>(Op0))) {
+      // Z / (X / Y) => (Y * Z) / X
+      Value *YZ = Builder.CreateFMul(Y, Op0);
+      if (auto *YZInst = dyn_cast<Instruction>(YZ)) {
+        FastMathFlags FMFIntersect = I.getFastMathFlags();
+        FMFIntersect &= cast<Instruction>(Op1)->getFastMathFlags();
+        YZInst->setFastMathFlags(FMFIntersect);
+      }
+      Instruction *NewDiv = BinaryOperator::CreateFDiv(YZ, X);
+      NewDiv->setFastMathFlags(I.getFastMathFlags());
+      return NewDiv;
     }
   }
 
