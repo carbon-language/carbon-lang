@@ -3,12 +3,19 @@
 namespace Fortran {
 namespace parser {
 
+std::ostream &operator<<(std::ostream &o, const MessageText &t) {
+  for (size_t j{0}; j < t.size(); ++j) {
+    o << t.str()[j];
+  }
+  return o;
+}
+
 Provenance Message::Emit(
     std::ostream &o, const AllSources &sources, bool echoSourceLine) const {
   if (!context_ || context_->Emit(o, sources, false) != provenance_) {
     sources.Identify(o, provenance_, "", echoSourceLine);
   }
-  o << "   " << message_ << '\n';
+  o << "   " << text_ << message_ << '\n';
   return provenance_;
 }
 

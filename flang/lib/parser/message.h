@@ -18,12 +18,38 @@ namespace parser {
 class Message;
 using MessageContext = std::shared_ptr<Message>;
 
+class MessageText {
+public:
+  MessageText() {}
+  constexpr MessageText(const char str[], size_t n) : str_{str}, bytes_{n} {}
+  constexpr MessageText(const MessageText &) = default;
+  MessageText(MessageText &&) = default;
+  constexpr MessageText &operator=(const MessageText &) = default;
+  MessageText &operator=(MessageText &&) = default;
+
+  const char *str() const { return str_; }
+  size_t size() const { return bytes_; }
+
+  std::string ToString() const { return std::string(str_, bytes_); }
+
+private:
+  const char *str_{nullptr};
+  size_t bytes_{0};
+};
+
+constexpr MessageText operator""_msg(const char str[], size_t n) {
+  return MessageText{str, n};
+}
+
+std::ostream &operator<<(std::ostream &, const MessageText &);
+
 class Message {
 public:
   Message() {}
   Message(const Message &) = default;
   Message(Message &&) = default;
 
+  Message(Provenance at, MessageText t, MessageContext ctx = nullptr);
   Message(Provenance at, const std::string &msg, MessageContext ctx = nullptr)
     : provenance_{at}, message_{msg}, context_{ctx} {}
   Message(Provenance at, std::string &&msg, MessageContext ctx = nullptr)
@@ -39,6 +65,7 @@ public:
   }
 
   Provenance provenance() const { return provenance_; }
+  MessageText text() const { return text_; }
   std::string message() const { return message_; }
   MessageContext context() const { return context_; }
 
@@ -47,6 +74,7 @@ public:
 
 private:
   Provenance provenance_;
+  MessageText text_;
   std::string message_;
   MessageContext context_;
 };
