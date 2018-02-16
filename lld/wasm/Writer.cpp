@@ -169,7 +169,7 @@ void Writer::createImportSection() {
     Import.Module = "env";
     Import.Field = Sym->getName();
     Import.Kind = WASM_EXTERNAL_FUNCTION;
-    Import.SigIndex = lookupType(Sym->getFunctionType());
+    Import.SigIndex = lookupType(*Sym->getFunctionType());
     writeImport(OS, Import);
   }
 
@@ -713,7 +713,7 @@ void Writer::calculateTypes() {
   }
 
   for (const FunctionSymbol *Sym : ImportedFunctions)
-    registerType(Sym->getFunctionType());
+    registerType(*Sym->getFunctionType());
 
   for (const InputFunction *F : DefinedFunctions)
     registerType(F->Signature);
