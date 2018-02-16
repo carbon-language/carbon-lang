@@ -623,7 +623,7 @@ uint32_t ScriptParser::readFill() {
 //
 // An output section name can be followed by an address expression
 // and/or directive. This grammar is not LL(1) because "(" can be
-// interpreted as either the beginning of some expression or begining
+// interpreted as either the beginning of some expression or beginning
 // of directive.
 //
 // https://sourceware.org/binutils/docs/ld/Output-Section-Address.html
