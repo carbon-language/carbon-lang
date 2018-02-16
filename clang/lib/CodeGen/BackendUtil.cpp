@@ -1025,14 +1025,20 @@ Expected<BitcodeModule> clang::FindThinLTOModule(MemoryBufferRef MBRef) {
 
   // The bitcode file may contain multiple modules, we want the one that is
   // marked as being the ThinLTO module.
-  for (BitcodeModule &BM : *BMsOrErr) {
-    Expected<BitcodeLTOInfo> LTOInfo = BM.getLTOInfo();
-    if (LTOInfo && LTOInfo->IsThinLTO)
-      return BM;
-  }
+  if (const BitcodeModule *Bm = FindThinLTOModule(*BMsOrErr))
+    return *Bm;
 
   return make_error<StringError>("Could not find module summary",
                                  inconvertibleErrorCode());
+}
+
+BitcodeModule *clang::FindThinLTOModule(MutableArrayRef<BitcodeModule> BMs) {
+  for (BitcodeModule &BM : BMs) {
+    Expected<BitcodeLTOInfo> LTOInfo = BM.getLTOInfo();
+    if (LTOInfo && LTOInfo->IsThinLTO)
+      return &BM;
+  }
+  return nullptr;
 }
 
 static void runThinLTOBackend(ModuleSummaryIndex *CombinedIndex, Module *M,
