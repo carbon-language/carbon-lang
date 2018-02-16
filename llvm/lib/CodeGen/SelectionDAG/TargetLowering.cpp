@@ -1472,7 +1472,7 @@ bool TargetLowering::SimplifyDemandedVectorElts(
         M = -1;
       }
       IdentityLHS &= (M < 0) || (M == (int)i);
-      IdentityRHS &= (M < 0) || ((M - NumElts) == (int)i);
+      IdentityRHS &= (M < 0) || ((M - NumElts) == i);
     }
 
     // Update legal shuffle masks based on demanded elements if it won't reduce
