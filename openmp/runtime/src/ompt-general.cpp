@@ -606,7 +606,7 @@ OMPT_API_ROUTINE int ompt_get_partition_place_nums(int place_nums_size,
     for (i = 0, place_num = start; place_num <= end; ++place_num, ++i) {
       place_nums[i] = place_num;
     }
-  return end - start;
+  return end - start + 1;
 #endif
 }
 
