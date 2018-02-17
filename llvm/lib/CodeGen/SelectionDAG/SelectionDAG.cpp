@@ -3211,7 +3211,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, const APInt &DemandedElts,
     // the minimum of the clamp min/max range.
     bool IsMax = (Opcode == ISD::SMAX);
     ConstantSDNode *CstLow = nullptr, *CstHigh = nullptr;
-    if (CstLow = isConstOrDemandedConstSplat(Op.getOperand(1), DemandedElts))
+    if ((CstLow = isConstOrDemandedConstSplat(Op.getOperand(1), DemandedElts)))
       if (Op.getOperand(0).getOpcode() == (IsMax ? ISD::SMIN : ISD::SMAX))
         CstHigh = isConstOrDemandedConstSplat(Op.getOperand(0).getOperand(1),
                                               DemandedElts);
