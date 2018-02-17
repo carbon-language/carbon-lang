@@ -218,8 +218,8 @@ ompt_try_start_tool(unsigned int omp_version, const char *runtime_version) {
   const char *sep = ":";
 #endif
 
-  // Try in the current address space
 #if KMP_OS_DARWIN
+  // Try in the current address space
   ret = ompt_tool_darwin(omp_version, runtime_version);
 #elif OMPT_HAVE_WEAK_ATTRIBUTE
   ret = ompt_start_tool(omp_version, runtime_version);
@@ -501,7 +501,8 @@ OMPT_API_ROUTINE int ompt_get_task_info(int ancestor_level, int *type,
  ****************************************************************************/
 
 OMPT_API_ROUTINE int ompt_get_num_procs(void) {
-// copied from kmp_ftn_entry.h (but modified: OMPT can only be called when runtime is initialized)
+  // copied from kmp_ftn_entry.h (but modified: OMPT can only be called when
+  // runtime is initialized)
   return __kmp_avail_proc;
 }
 
