@@ -100,7 +100,6 @@ void FunctionSymbol::setTableIndex(uint32_t Index) {
 }
 
 uint32_t DefinedGlobal::getVirtualAddress() const {
-  assert(isGlobal());
   DEBUG(dbgs() << "getVirtualAddress: " << getName() << "\n");
   return Chunk ? dyn_cast<InputSegment>(Chunk)->translateVA(VirtualAddress)
                : VirtualAddress;
@@ -108,7 +107,6 @@ uint32_t DefinedGlobal::getVirtualAddress() const {
 
 void DefinedGlobal::setVirtualAddress(uint32_t Value) {
   DEBUG(dbgs() << "setVirtualAddress " << Name << " -> " << Value << "\n");
-  assert(isGlobal());
   VirtualAddress = Value;
 }
 

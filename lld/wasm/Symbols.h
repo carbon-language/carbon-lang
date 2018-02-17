@@ -49,11 +49,6 @@ public:
     return SymbolKind == UndefinedGlobalKind ||
            SymbolKind == UndefinedFunctionKind;
   }
-  bool isFunction() const {
-    return SymbolKind == DefinedFunctionKind ||
-           SymbolKind == UndefinedFunctionKind;
-  }
-  bool isGlobal() const { return !isFunction(); }
   bool isLocal() const;
   bool isWeak() const;
   bool isHidden() const;

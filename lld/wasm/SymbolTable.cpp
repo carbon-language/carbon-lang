@@ -86,9 +86,9 @@ static void checkSymbolTypes(const Symbol &Existing, const InputFile &F,
 
   // First check the symbol types match (i.e. either both are function
   // symbols or both are data symbols).
-  if (Existing.isFunction() != NewIsFunction) {
+  if (isa<FunctionSymbol>(Existing) != NewIsFunction) {
     error("symbol type mismatch: " + Existing.getName() + "\n>>> defined as " +
-          (Existing.isFunction() ? "Function" : "Global") + " in " +
+          (isa<FunctionSymbol>(Existing) ? "Function" : "Global") + " in " +
           toString(Existing.getFile()) + "\n>>> defined as " +
           (NewIsFunction ? "Function" : "Global") + " in " + F.getName());
     return;
