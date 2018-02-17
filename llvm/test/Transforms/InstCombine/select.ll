@@ -74,7 +74,7 @@ define <2 x i1> @trueval_is_true_vec(<2 x i1> %C, <2 x i1> %X) {
 
 define <2 x i1> @trueval_is_true_vec_undef_elt(<2 x i1> %C, <2 x i1> %X) {
 ; CHECK-LABEL: @trueval_is_true_vec_undef_elt(
-; CHECK-NEXT:    [[R:%.*]] = select <2 x i1> [[C:%.*]], <2 x i1> <i1 undef, i1 true>, <2 x i1> [[X:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = or <2 x i1> [[C:%.*]], [[X:%.*]]
 ; CHECK-NEXT:    ret <2 x i1> [[R]]
 ;
   %R = select <2 x i1> %C, <2 x i1> <i1 undef, i1 true>, <2 x i1> %X

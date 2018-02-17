@@ -14,8 +14,7 @@ define <2 x i1> @eq_t(<2 x i1> %a) {
 
 define <2 x i1> @eq_t_undef_elt(<2 x i1> %a) {
 ; CHECK-LABEL: @eq_t_undef_elt(
-; CHECK-NEXT:    [[R:%.*]] = icmp eq <2 x i1> [[A:%.*]], <i1 undef, i1 true>
-; CHECK-NEXT:    ret <2 x i1> [[R]]
+; CHECK-NEXT:    ret <2 x i1> [[A:%.*]]
 ;
   %r = icmp eq <2 x i1> %a, <i1 undef, i1 true>
   ret <2 x i1> %r
@@ -57,8 +56,7 @@ define <2 x i1> @ugt_t(<2 x i1> %a) {
 
 define <2 x i1> @ugt_t_undef_elt(<2 x i1> %a) {
 ; CHECK-LABEL: @ugt_t_undef_elt(
-; CHECK-NEXT:    [[R:%.*]] = icmp ugt <2 x i1> [[A:%.*]], <i1 true, i1 undef>
-; CHECK-NEXT:    ret <2 x i1> [[R]]
+; CHECK-NEXT:    ret <2 x i1> zeroinitializer
 ;
   %r = icmp ugt <2 x i1> %a, <i1 true, i1 undef>
   ret <2 x i1> %r
@@ -165,8 +163,7 @@ define <2 x i1> @sge_t(<2 x i1> %a) {
 
 define <2 x i1> @sge_t_undef_elt(<2 x i1> %a) {
 ; CHECK-LABEL: @sge_t_undef_elt(
-; CHECK-NEXT:    [[R:%.*]] = icmp sge <2 x i1> [[A:%.*]], <i1 true, i1 undef>
-; CHECK-NEXT:    ret <2 x i1> [[R]]
+; CHECK-NEXT:    ret <2 x i1> <i1 true, i1 true>
 ;
   %r = icmp sge <2 x i1> %a, <i1 true, i1 undef>
   ret <2 x i1> %r
