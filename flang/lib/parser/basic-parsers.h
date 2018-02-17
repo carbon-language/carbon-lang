@@ -28,7 +28,7 @@
 namespace Fortran {
 namespace parser {
 
-// fail<A>("...") returns a parser that never succeeds.  It reports an
+// fail<A>("..."_msg) returns a parser that never succeeds.  It reports an
 // error message at the current position.  The result type is unused,
 // but might have to be specified at the point of call for satisfy
 // the type checker.  The state remains valid.
@@ -36,20 +36,20 @@ template<typename A> class FailParser {
 public:
   using resultType = A;
   constexpr FailParser(const FailParser &) = default;
-  constexpr explicit FailParser(const char *str) : str_{str} {}
+  constexpr explicit FailParser(MessageText t) : text_{t} {}
   std::optional<A> Parse(ParseState *state) const {
-    state->PutMessage(str_);
+    state->PutMessage(text_);
     return {};
   }
 
 private:
-  const char *const str_;
+  const MessageText text_;
 };
 
 class Success {};  // for when one must return something that's present
 
-template<typename A = Success> inline constexpr auto fail(const char *message) {
-  return FailParser<A>{message};
+template<typename A = Success> inline constexpr auto fail(MessageText t) {
+  return FailParser<A>{t};
 }
 
 // pure(x) returns a parsers that always succeeds, does not advance the
@@ -148,27 +148,28 @@ template<typename PA> inline constexpr auto lookAhead(const PA &p) {
   return LookAheadParser<PA>{p};
 }
 
-// If a is a parser, inContext("...", a) runs it in a nested message context.
+// If a is a parser, inContext("..."_msg, a) runs it in a nested message
+// context.
 template<typename PA> class MessageContextParser {
 public:
   using resultType = typename PA::resultType;
   constexpr MessageContextParser(const MessageContextParser &) = default;
-  constexpr MessageContextParser(const char *str, const PA &p)
-    : str_{str}, parser_{p} {}
+  constexpr MessageContextParser(MessageText t, const PA &p)
+    : text_{t}, parser_{p} {}
   std::optional<resultType> Parse(ParseState *state) const {
-    state->PushContext(std::string{str_});
+    state->PushContext(text_);
     std::optional<resultType> result{parser_.Parse(state)};
     state->PopContext();
     return result;
   }
 
 private:
-  const char *str_;
+  const MessageText text_;
   const PA parser_;
 };
 
 template<typename PA>
-inline constexpr auto inContext(const char *context, const PA &parser) {
+inline constexpr auto inContext(MessageText context, const PA &parser) {
   return MessageContextParser{context, parser};
 }
 
@@ -1188,7 +1189,7 @@ constexpr struct NextCharParser {
   std::optional<char> Parse(ParseState *state) const {
     std::optional<char> ch{state->GetNextChar()};
     if (!ch) {
-      state->PutMessage("end of file");
+      state->PutMessage("end of file"_msg);
     }
     return ch;
   }
@@ -1210,7 +1211,7 @@ public:
     auto result = parser_.Parse(state);
     if (result) {
       if (state->warnOnNonstandardUsage()) {
-        state->PutMessage(at, "nonstandard usage");
+        state->PutMessage(at, "nonstandard usage"_msg);
       }
     }
     return result;
@@ -1240,7 +1241,7 @@ public:
     auto result = parser_.Parse(state);
     if (result) {
       if (state->warnOnDeprecatedUsage()) {
-        state->PutMessage(at, "deprecated usage");
+        state->PutMessage(at, "deprecated usage"_msg);
       }
     }
     return result;

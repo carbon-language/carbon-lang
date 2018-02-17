@@ -74,8 +74,7 @@ private:
   CharPointerWithLength SaveTokenAsName(const CharPointerWithLength &);
   bool IsNameDefined(const CharPointerWithLength &);
   TokenSequence ReplaceMacros(const TokenSequence &, const Prescanner &);
-  bool SkipDisabledConditionalCode(
-      const std::string &dirName, IsElseActive, Prescanner *);
+  bool SkipDisabledConditionalCode(const std::string &, IsElseActive, Prescanner *);
   bool IsIfPredicateTrue(
       const TokenSequence &expr, size_t first, size_t exprTokens, Prescanner *);
 

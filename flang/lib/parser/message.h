@@ -29,6 +29,7 @@ public:
 
   const char *str() const { return str_; }
   size_t size() const { return bytes_; }
+  bool empty() const { return bytes_ == 0; }
 
   std::string ToString() const { return std::string(str_, bytes_); }
 
@@ -47,16 +48,9 @@ class Message {
 public:
   Message() {}
   Message(const Message &) = default;
+  Message(Provenance p, MessageText t, MessageContext c = nullptr)
+    : provenance_{p}, text_{t}, context_{c} {}
   Message(Message &&) = default;
-
-  Message(Provenance at, MessageText t, MessageContext ctx = nullptr);
-  Message(Provenance at, const std::string &msg, MessageContext ctx = nullptr)
-    : provenance_{at}, message_{msg}, context_{ctx} {}
-  Message(Provenance at, std::string &&msg, MessageContext ctx = nullptr)
-    : provenance_{at}, message_{std::move(msg)}, context_{ctx} {}
-  Message(Provenance at, const char *msg, MessageContext ctx = nullptr)
-    : provenance_{at}, message_{msg}, context_{ctx} {}
-
   Message &operator=(const Message &that) = default;
   Message &operator=(Message &&that) = default;
 
@@ -66,8 +60,17 @@ public:
 
   Provenance provenance() const { return provenance_; }
   MessageText text() const { return text_; }
-  std::string message() const { return message_; }
+  std::string extra() const { return extra_; }
+  Message &set_extra(std::string &&s) {
+    extra_ = std::move(s);
+    return *this;
+  }
   MessageContext context() const { return context_; }
+
+  Message &operator+=(std::string s) {
+    extra_ += s;
+    return *this;
+  }
 
   Provenance Emit(
       std::ostream &, const AllSources &, bool echoSourceLine = true) const;
@@ -75,7 +78,7 @@ public:
 private:
   Provenance provenance_;
   MessageText text_;
-  std::string message_;
+  std::string extra_;
   MessageContext context_;
 };
 
@@ -109,7 +112,7 @@ public:
 
   const AllSources &allSources() const { return allSources_; }
 
-  void Put(Message &&m) {
+  Message &Put(Message &&m) {
     CHECK(m.provenance() < allSources_.size());
     if (messages_.empty()) {
       messages_.emplace_front(std::move(m));
@@ -117,6 +120,7 @@ public:
     } else {
       last_ = messages_.emplace_after(last_, std::move(m));
     }
+    return *last_;
   }
 
   void Annex(Messages *that) {

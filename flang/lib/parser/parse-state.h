@@ -115,15 +115,9 @@ public:
   }
   Provenance GetProvenance() const { return GetProvenance(p_); }
 
-  void PushContext(const std::string &str) {
-    context_ = std::make_shared<Message>(GetProvenance(), str, context_);
-  }
-  void PushContext(std::string &&str) {
-    context_ =
-        std::make_shared<Message>(GetProvenance(), std::move(str), context_);
-  }
-  void PushContext(const char *str) {
-    context_ = std::make_shared<Message>(GetProvenance(), str, context_);
+  MessageContext &PushContext(MessageText text) {
+    context_ = std::make_shared<Message>(GetProvenance(), text, context_);
+    return context_;
   }
 
   void PopContext() {
@@ -132,27 +126,13 @@ public:
     }
   }
 
-  void PutMessage(Provenance at, const std::string &msg) {
-    messages_.Put(Message{at, msg, context_});
+  Message &PutMessage(MessageText t) { return PutMessage(p_, t); }
+  Message &PutMessage(const char *at, MessageText t) {
+    return PutMessage(GetProvenance(at), t);
   }
-  void PutMessage(const char *at, const std::string &msg) {
-    PutMessage(GetProvenance(at), msg);
+  Message &PutMessage(Provenance at, MessageText t) {
+    return messages_.Put(Message{at, t, context_});
   }
-  void PutMessage(const std::string &msg) { PutMessage(p_, msg); }
-  void PutMessage(Provenance at, std::string &&msg) {
-    messages_.Put(Message{at, std::move(msg), context_});
-  }
-  void PutMessage(const char *at, std::string &&msg) {
-    PutMessage(GetProvenance(at), std::move(msg));
-  }
-  void PutMessage(std::string &&msg) { PutMessage(p_, std::move(msg)); }
-  void PutMessage(Provenance at, const char *msg) {
-    PutMessage(at, std::string{msg});
-  }
-  void PutMessage(const char *at, const char *msg) {
-    PutMessage(GetProvenance(at), msg);
-  }
-  void PutMessage(const char *msg) { PutMessage(p_, msg); }
 
   bool IsAtEnd() const { return p_ >= limit_; }
 

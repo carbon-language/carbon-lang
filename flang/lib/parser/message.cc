@@ -15,7 +15,7 @@ Provenance Message::Emit(
   if (!context_ || context_->Emit(o, sources, false) != provenance_) {
     sources.Identify(o, provenance_, "", echoSourceLine);
   }
-  o << "   " << text_ << message_ << '\n';
+  o << "   " << text_ << extra_ << '\n';
   return provenance_;
 }
 
