@@ -75,10 +75,13 @@ static void applySecRel(const SectionChunk *Sec, uint8_t *Off,
 }
 
 static void applySecIdx(uint8_t *Off, OutputSection *OS) {
-  // If we have no output section, this must be an absolute symbol. Use the
-  // sentinel absolute symbol section index.
-  uint16_t SecIdx = OS ? OS->SectionIndex : DefinedAbsolute::OutputSectionIndex;
-  add16(Off, SecIdx);
+  // Absolute symbol doesn't have section index, but section index relocation
+  // against absolute symbol should be resolved to one plus the last output
+  // section index. This is required for compatibility with MSVC.
+  if (OS)
+    add16(Off, OS->SectionIndex);
+  else
+    add16(Off, DefinedAbsolute::NumOutputSections + 1);
 }
 
 void SectionChunk::applyRelX64(uint8_t *Off, uint16_t Type, OutputSection *OS,
