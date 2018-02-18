@@ -182,17 +182,6 @@ struct match_nan {
 /// Match an arbitrary NaN constant. This includes quiet and signalling nans.
 inline match_nan m_NaN() { return match_nan(); }
 
-struct match_all_ones {
-  template <typename ITy> bool match(ITy *V) {
-    if (const auto *C = dyn_cast<Constant>(V))
-      return C->isAllOnesValue();
-    return false;
-  }
-};
-
-/// Match an integer or vector with all bits set to true.
-inline match_all_ones m_AllOnes() { return match_all_ones(); }
-
 struct match_sign_mask {
   template <typename ITy> bool match(ITy *V) {
     if (const auto *C = dyn_cast<Constant>(V))
@@ -336,6 +325,14 @@ template <typename Predicate> struct api_pred_ty : public Predicate {
 // undef values.
 //
 ///////////////////////////////////////////////////////////////////////////////
+
+struct is_all_ones {
+  bool isValue(const APInt &C) { return C.isAllOnesValue(); }
+};
+/// Match an integer or vector with all bits set.
+inline cst_pred_ty<is_all_ones> m_AllOnes() {
+  return cst_pred_ty<is_all_ones>();
+}
 
 struct is_maxsignedvalue {
   bool isValue(const APInt &C) { return C.isMaxSignedValue(); }

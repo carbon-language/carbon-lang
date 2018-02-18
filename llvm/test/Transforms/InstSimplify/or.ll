@@ -19,8 +19,7 @@ define i32 @all_ones(i32 %A) {
 
 define <3 x i8> @all_ones_vec_with_undef_elt(<3 x i8> %A) {
 ; CHECK-LABEL: @all_ones_vec_with_undef_elt(
-; CHECK-NEXT:    [[B:%.*]] = or <3 x i8> [[A:%.*]], <i8 -1, i8 undef, i8 -1>
-; CHECK-NEXT:    ret <3 x i8> [[B]]
+; CHECK-NEXT:    ret <3 x i8> <i8 -1, i8 -1, i8 -1>
 ;
   %B = or <3 x i8> %A, <i8 -1, i8 undef, i8 -1>
   ret <3 x i8> %B
