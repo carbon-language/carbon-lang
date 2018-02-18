@@ -1081,7 +1081,7 @@ define i16 @pcmpeq_mem_1(<16 x i32> %a, <16 x i32>* %b) {
 define i16 @pcmpeq_mem_2(<16 x i32> %a, <16 x i32>* %b) {
 ; KNL-LABEL: pcmpeq_mem_2:
 ; KNL:       ## %bb.0:
-; KNL-NEXT:    vpcmpeqd (%rdi), %zmm0, %k0 ## encoding: [0x62,0xf3,0x7d,0x48,0x1f,0x07,0x00]
+; KNL-NEXT:    vpcmpeqd (%rdi), %zmm0, %k0 ## encoding: [0x62,0xf1,0x7d,0x48,0x76,0x07]
 ; KNL-NEXT:    kmovw %k0, %eax ## encoding: [0xc5,0xf8,0x93,0xc0]
 ; KNL-NEXT:    ## kill: def $ax killed $ax killed $eax
 ; KNL-NEXT:    vzeroupper ## encoding: [0xc5,0xf8,0x77]
@@ -1089,7 +1089,7 @@ define i16 @pcmpeq_mem_2(<16 x i32> %a, <16 x i32>* %b) {
 ;
 ; AVX512BW-LABEL: pcmpeq_mem_2:
 ; AVX512BW:       ## %bb.0:
-; AVX512BW-NEXT:    vpcmpeqd (%rdi), %zmm0, %k0 ## encoding: [0x62,0xf3,0x7d,0x48,0x1f,0x07,0x00]
+; AVX512BW-NEXT:    vpcmpeqd (%rdi), %zmm0, %k0 ## encoding: [0x62,0xf1,0x7d,0x48,0x76,0x07]
 ; AVX512BW-NEXT:    kmovd %k0, %eax ## encoding: [0xc5,0xfb,0x93,0xc0]
 ; AVX512BW-NEXT:    ## kill: def $ax killed $ax killed $eax
 ; AVX512BW-NEXT:    vzeroupper ## encoding: [0xc5,0xf8,0x77]
@@ -1097,7 +1097,7 @@ define i16 @pcmpeq_mem_2(<16 x i32> %a, <16 x i32>* %b) {
 ;
 ; SKX-LABEL: pcmpeq_mem_2:
 ; SKX:       ## %bb.0:
-; SKX-NEXT:    vpcmpeqd (%rdi), %zmm0, %k0 ## encoding: [0x62,0xf3,0x7d,0x48,0x1f,0x07,0x00]
+; SKX-NEXT:    vpcmpeqd (%rdi), %zmm0, %k0 ## encoding: [0x62,0xf1,0x7d,0x48,0x76,0x07]
 ; SKX-NEXT:    kmovd %k0, %eax ## encoding: [0xc5,0xfb,0x93,0xc0]
 ; SKX-NEXT:    ## kill: def $ax killed $ax killed $eax
 ; SKX-NEXT:    vzeroupper ## encoding: [0xc5,0xf8,0x77]
