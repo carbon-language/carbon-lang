@@ -17848,8 +17848,8 @@ static SDValue LowerIntVSETCC_AVX512(SDValue Op, SelectionDAG &DAG) {
   case ISD::SETLT:  Swap = true; LLVM_FALLTHROUGH;
   case ISD::SETUGT:
   case ISD::SETGT:  SSECC = 6; break;
-  case ISD::SETUGE: SSECC = 5; break;
-  case ISD::SETGE:  Swap = true; LLVM_FALLTHROUGH;
+  case ISD::SETUGE:
+  case ISD::SETGE:  SSECC = 5; break;
   case ISD::SETULE:
   case ISD::SETLE:  SSECC = 2; break;
   }
