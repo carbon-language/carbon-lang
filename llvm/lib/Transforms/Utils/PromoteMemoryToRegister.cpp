@@ -136,8 +136,8 @@ struct AllocaInfo {
     // As we scan the uses of the alloca instruction, keep track of stores,
     // and decide whether all of the loads and stores to the alloca are within
     // the same basic block.
-    for (User *U : AI->users()) {
-      Instruction *User = cast<Instruction>(U);
+    for (auto UI = AI->user_begin(), E = AI->user_end(); UI != E;) {
+      Instruction *User = cast<Instruction>(*UI++);
 
       if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
         // Remember the basic blocks which define new values for the alloca
@@ -325,8 +325,9 @@ static void removeLifetimeIntrinsicUsers(AllocaInst *AI) {
   // Knowing that this alloca is promotable, we know that it's safe to kill all
   // instructions except for load and store.
 
-  for (User *U : AI->users()) {
-    Instruction *I = cast<Instruction>(U);
+  for (auto UI = AI->user_begin(), UE = AI->user_end(); UI != UE;) {
+    Instruction *I = cast<Instruction>(*UI);
+    ++UI;
     if (isa<LoadInst>(I) || isa<StoreInst>(I))
       continue;
 
@@ -363,8 +364,8 @@ static bool rewriteSingleStoreAlloca(AllocaInst *AI, AllocaInfo &Info,
   // Clear out UsingBlocks.  We will reconstruct it here if needed.
   Info.UsingBlocks.clear();
 
-  for (User *U : AI->users()) {
-    Instruction *UserInst = cast<Instruction>(U);
+  for (auto UI = AI->user_begin(), E = AI->user_end(); UI != E;) {
+    Instruction *UserInst = cast<Instruction>(*UI++);
     if (!isa<LoadInst>(UserInst)) {
       assert(UserInst == OnlyStore && "Should only have load/stores");
       continue;
@@ -478,8 +479,8 @@ static bool promoteSingleBlockAlloca(AllocaInst *AI, const AllocaInfo &Info,
 
   // Walk all of the loads from this alloca, replacing them with the nearest
   // store above them, if any.
-  for (User *U : AI->users()) {
-    LoadInst *LI = dyn_cast<LoadInst>(U);
+  for (auto UI = AI->user_begin(), E = AI->user_end(); UI != E;) {
+    LoadInst *LI = dyn_cast<LoadInst>(*UI++);
     if (!LI)
       continue;
 
