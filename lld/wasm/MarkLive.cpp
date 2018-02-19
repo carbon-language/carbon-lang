@@ -91,17 +91,13 @@ void lld::wasm::markLive() {
 
   // Report garbage-collected sections.
   if (Config->PrintGcSections) {
-    auto CheckChunk = [](const InputChunk *C) {
-      if (!C->Live)
-        message("removing unused section '" + C->getName() + "' in file '" +
-                C->File->getName() + "'");
-    };
-
     for (const ObjFile *Obj : Symtab->ObjectFiles) {
       for (InputChunk *C : Obj->Functions)
-        CheckChunk(C);
+        if (!C->Live)
+          message("removing unused section " + toString(C));
       for (InputChunk *C : Obj->Segments)
-        CheckChunk(C);
+        if (!C->Live)
+          message("removing unused section " + toString(C));
     }
   }
 }

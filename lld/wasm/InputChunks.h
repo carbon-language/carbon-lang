@@ -174,6 +174,8 @@ protected:
 };
 
 } // namespace wasm
+
+std::string toString(const wasm::InputChunk *);
 } // namespace lld
 
 #endif // LLD_WASM_INPUT_CHUNKS_H

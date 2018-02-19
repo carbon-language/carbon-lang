@@ -22,6 +22,10 @@ using namespace llvm::support::endian;
 using namespace lld;
 using namespace lld::wasm;
 
+std::string lld::toString(const InputChunk *C) {
+  return (toString(C->File) + ":(" + C->getName() + ")").str();
+}
+
 uint32_t InputSegment::translateVA(uint32_t Address) const {
   assert(Address >= startVA() && Address < endVA());
   int32_t Delta = OutputSeg->StartVA + OutputSegmentOffset - startVA();
