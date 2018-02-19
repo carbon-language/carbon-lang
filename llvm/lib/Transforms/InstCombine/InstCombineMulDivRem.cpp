@@ -1313,7 +1313,8 @@ static Instruction *foldFDivConstantDivisor(BinaryOperator &FDiv) {
     return nullptr;
 
   auto *RecipCFP = ConstantFP::get(FDiv.getType(), Reciprocal);
-  return BinaryOperator::CreateFMul(FDiv.getOperand(0), RecipCFP);
+  return BinaryOperator::CreateWithCopiedFlags(Instruction::FMul, RecipCFP,
+                                               FDiv.getOperand(0), &FDiv);
 }
 
 /// Try to reassociate C / X expressions where X includes another constant.
@@ -1352,10 +1353,11 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
                                   SQ.getWithInstruction(&I)))
     return replaceInstUsesWith(I, V);
 
-  if (Instruction *FMul = foldFDivConstantDivisor(I)) {
-    FMul->copyFastMathFlags(&I);
+  if (Instruction *FMul = foldFDivConstantDivisor(I))
     return FMul;
-  }
+
+  if (Instruction *NewFDiv = foldFDivConstantDividend(I))
+    return NewFDiv;
 
   if (isa<Constant>(Op0))
     if (SelectInst *SI = dyn_cast<SelectInst>(Op1))
@@ -1393,9 +1395,6 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
     }
     return nullptr;
   }
-
-  if (Instruction *NewFDiv = foldFDivConstantDividend(I))
-    return NewFDiv;
 
   if (AllowReassociate) {
     Value *X, *Y;
