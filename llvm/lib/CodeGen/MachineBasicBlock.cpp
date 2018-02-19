@@ -414,8 +414,6 @@ void MachineBasicBlock::print(raw_ostream &OS, ModuleSlotTracker &MST,
       OS << " {";
       IsInBundle = true;
     }
-
-    OS << '\n';
   }
 
   if (IsInBundle)
