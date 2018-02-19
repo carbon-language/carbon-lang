@@ -78,17 +78,17 @@ static void applyRelocation(uint8_t *Buf, const OutputRelocation &Reloc) {
   }
 }
 
-static void applyRelocations(uint8_t *Buf, ArrayRef<OutputRelocation> Relocs) {
-  if (!Relocs.size())
-    return;
-  DEBUG(dbgs() << "applyRelocations: count=" << Relocs.size() << "\n");
-  for (const OutputRelocation &Reloc : Relocs)
-    applyRelocation(Buf, Reloc);
-}
+// Copy this input chunk to an mmap'ed output file.
+void InputChunk::writeTo(uint8_t *Buf) const {
+  // Copy contents
+  memcpy(Buf + getOutputOffset(), data().data(), data().size());
 
-void InputChunk::writeTo(uint8_t *SectionStart) const {
-  memcpy(SectionStart + getOutputOffset(), data().data(), data().size());
-  applyRelocations(SectionStart, OutRelocations);
+  // Apply relocations
+  if (OutRelocations.empty())
+    return;
+  DEBUG(dbgs() << "applyRelocations: count=" << OutRelocations.size() << "\n");
+  for (const OutputRelocation &Reloc : OutRelocations)
+    applyRelocation(Buf, Reloc);
 }
 
 // Populate OutRelocations based on the input relocations and offset within the
