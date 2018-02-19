@@ -1316,6 +1316,31 @@ static Instruction *foldFDivConstantDivisor(BinaryOperator &FDiv) {
   return BinaryOperator::CreateFMul(FDiv.getOperand(0), RecipCFP);
 }
 
+/// Try to strength-reduce C / X expressions where X includes another constant.
+static Instruction *foldFDivConstantDividend(BinaryOperator &I) {
+  Constant *C1;
+  if (!I.isFast() || !match(I.getOperand(0), m_Constant(C1)))
+    return nullptr;
+
+  Value *X;
+  Constant *C2, *NewC = nullptr;
+  if (match(I.getOperand(1), m_FMul(m_Value(X), m_Constant(C2)))) {
+    // C1 / (X * C2) --> (C1 / C2) / X
+    NewC = ConstantExpr::getFDiv(C1, C2);
+  } else if (match(I.getOperand(1), m_FDiv(m_Value(X), m_Constant(C2)))) {
+    // C1 / (X / C2) --> (C1 * C2) / X
+    NewC = ConstantExpr::getFMul(C1, C2);
+  }
+  // Disallow denormal constants because we don't know what would happen
+  // on all targets.
+  // TODO: Use Intrinsic::canonicalize or let function attributes tell us that
+  // denorms are flushed?
+  if (!NewC || !NewC->isNormalFP())
+    return nullptr;
+
+  return BinaryOperator::CreateWithCopiedFlags(Instruction::FDiv, NewC, X, &I);
+}
+
 Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
@@ -1368,32 +1393,8 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
     return nullptr;
   }
 
-  if (AllowReassociate && isa<Constant>(Op0)) {
-    Constant *C1 = cast<Constant>(Op0), *C2;
-    Constant *Fold = nullptr;
-    Value *X;
-    bool CreateDiv = true;
-
-    // C1 / (X*C2) => (C1/C2) / X
-    if (match(Op1, m_FMul(m_Value(X), m_Constant(C2))))
-      Fold = ConstantExpr::getFDiv(C1, C2);
-    else if (match(Op1, m_FDiv(m_Value(X), m_Constant(C2)))) {
-      // C1 / (X/C2) => (C1*C2) / X
-      Fold = ConstantExpr::getFMul(C1, C2);
-    } else if (match(Op1, m_FDiv(m_Constant(C2), m_Value(X)))) {
-      // C1 / (C2/X) => (C1/C2) * X
-      Fold = ConstantExpr::getFDiv(C1, C2);
-      CreateDiv = false;
-    }
-
-    if (Fold && Fold->isNormalFP()) {
-      Instruction *R = CreateDiv ? BinaryOperator::CreateFDiv(Fold, X)
-                                 : BinaryOperator::CreateFMul(X, Fold);
-      R->setFastMathFlags(I.getFastMathFlags());
-      return R;
-    }
-    return nullptr;
-  }
+  if (Instruction *NewFDiv = foldFDivConstantDividend(I))
+    return NewFDiv;
 
   if (AllowReassociate) {
     Value *X, *Y;
