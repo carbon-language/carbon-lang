@@ -48,16 +48,16 @@ static void applyRelocation(uint8_t *Buf, const OutputRelocation &Reloc) {
   DEBUG(dbgs() << "write reloc: type=" << Reloc.Reloc.Type
                << " index=" << Reloc.Reloc.Index << " value=" << Reloc.Value
                << " offset=" << Reloc.Reloc.Offset << "\n");
+
   Buf += Reloc.Reloc.Offset;
-  int64_t ExistingValue;
+
   switch (Reloc.Reloc.Type) {
   case R_WEBASSEMBLY_TYPE_INDEX_LEB:
   case R_WEBASSEMBLY_FUNCTION_INDEX_LEB:
   case R_WEBASSEMBLY_GLOBAL_INDEX_LEB:
-    ExistingValue = decodeULEB128(Buf);
     // Additional check to verify that the existing value that the location
     // matches our expectations.
-    if (ExistingValue != Reloc.Reloc.Index) {
+    if (decodeULEB128(Buf) != Reloc.Reloc.Index) {
       DEBUG(dbgs() << "existing value: " << decodeULEB128(Buf) << "\n");
       assert(decodeULEB128(Buf) == Reloc.Reloc.Index);
     }
