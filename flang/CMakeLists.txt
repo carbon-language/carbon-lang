@@ -1,42 +1,62 @@
 cmake_minimum_required(VERSION 3.9.0)
 
-set(GCC /home/sw/thirdparty/gcc/gcc-7.3.0/linux86-64/redhat)
-set(CMAKE_CXX_COMPILER "${GCC}/bin/g++")
-set(CMAKE_INSTALL_RPATH "${GCC}/lib64")
-set(CMAKE_BUILD_WITH_INSTALL_RPATH true)
+#
+# Reminder: The normal way to set the compiler is via the CXX environment variable
+#  
+#   CXX=/opt/gcc-7.2.0/bin/g++ cmake .../f18  
+#
+# but for convenience we provide the following cmake variables to 
+# use an existing gcc installation directory.
+#
 
-# project(f18)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -std=c++17")
-set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DDEBUG")
-set(CMAKE_CXX_FLAGS_MINSIZEREL "-O2 '-DCHECK=(void)'")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -DDEBUG")
+# Pass '-DPGI=1' to cmake to use the latest gcc installation at PGI 
+if( PGI )  
+  set(GCC /home/sw/thirdparty/gcc/gcc-7.3.0/linux86-64/redhat)
+endif()
 
-set(SOURCES_F18
-  tools/f18/f18.cc
-  lib/parser/char-buffer.cc
-  lib/parser/idioms.cc
-  lib/parser/message.cc
-  lib/parser/parse-tree.cc
-  lib/parser/preprocessor.cc
-  lib/parser/prescan.cc
-  lib/parser/provenance.cc
-  lib/parser/source.cc
-  lib/parser/token-sequence.cc
-)
-add_executable(f18 ${SOURCES_F18})
+# Pass -DGCC=... to cmake to use a specific gcc installation 
+if( GCC ) 
+  set(CMAKE_CXX_COMPILER "${GCC}/bin/g++")
+  set(CMAKE_CC_COMPILER "${GCC}/bin/gcc")
+  set(CMAKE_INSTALL_RPATH "${GCC}/lib64")
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH true)
+endif()
 
-set(SOURCES_TEST_TYPE
-  tools/f18/test-type.cc
-  lib/semantics/type.cc
-  lib/semantics/attr.cc
-  lib/parser/char-buffer.cc
-  lib/parser/idioms.cc
-  lib/parser/message.cc
-  lib/parser/parse-tree.cc
-  lib/parser/preprocessor.cc
-  lib/parser/prescan.cc
-  lib/parser/provenance.cc
-  lib/parser/source.cc
-  lib/parser/token-sequence.cc
-)
-add_executable(test-type ${SOURCES_TEST_TYPE})
+# Reminder: Setting CMAKE_CXX_COMPILER must be done before calling project() 
+
+project(f18 CXX)
+
+if( NOT CMAKE_BUILD_TYPE )
+  set( CMAKE_BUILD_TYPE Debug )
+endif()
+message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
+
+if(CMAKE_COMPILER_IS_GNUCXX)
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic")
+   set(CMAKE_CXX_FLAGS_RELEASE    "-O2 -DDEBUG")
+   set(CMAKE_CXX_FLAGS_MINSIZEREL "-O2 '-DCHECK=(void)'")
+   set(CMAKE_CXX_FLAGS_DEBUG      "-g -DDEBUG")
+endif()
+
+set(FLANG_VERSION_MAJOR      "0")
+set(FLANG_VERSION_MINOR      "1")
+set(FLANG_VERSION_PATCHLEVEL "0")
+set(FLANG_VERSION "${FLANG_VERSION_MAJOR}.${FLANG_VERSION_MINOR}.${FLANG_VERSION_PATCHLEVEL}")
+message(STATUS "FLANG version: ${FLANG_VERSION}")
+
+set(FLANG_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set(FLANG_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
+
+include_directories(BEFORE
+  ${FLANG_BINARY_DIR}/include
+  ${FLANG_SOURCE_DIR}/include
+  )
+
+add_subdirectory(include/flang)
+add_subdirectory(lib)
+add_subdirectory(tools)
+
+configure_file(
+  ${FLANG_SOURCE_DIR}/include/flang/Config/config.h.cmake
+  ${FLANG_BINARY_DIR}/include/flang/Config/config.h)
