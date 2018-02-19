@@ -17830,6 +17830,14 @@ static SDValue LowerIntVSETCC_AVX512(SDValue Op, SelectionDAG &DAG) {
          "Cannot set masked compare for this operation");
 
   ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
+
+  // If this is a seteq make sure any build vectors of all zeros are on the RHS.
+  // This helps with vptestm matching.
+  // TODO: Should we just canonicalize the setcc during DAG combine?
+  if ((SetCCOpcode == ISD::SETEQ || SetCCOpcode == ISD::SETNE) &&
+      ISD::isBuildVectorAllZeros(Op0.getNode()))
+    std::swap(Op0, Op1);
+
   bool Swap = false;
   unsigned SSECC;
   switch (SetCCOpcode) {
