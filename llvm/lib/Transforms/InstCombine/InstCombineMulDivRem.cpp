@@ -1316,10 +1316,11 @@ static Instruction *foldFDivConstantDivisor(BinaryOperator &FDiv) {
   return BinaryOperator::CreateFMul(FDiv.getOperand(0), RecipCFP);
 }
 
-/// Try to strength-reduce C / X expressions where X includes another constant.
+/// Try to reassociate C / X expressions where X includes another constant.
 static Instruction *foldFDivConstantDividend(BinaryOperator &I) {
   Constant *C1;
-  if (!I.isFast() || !match(I.getOperand(0), m_Constant(C1)))
+  if (!I.hasAllowReassoc() || !I.hasAllowReciprocal() ||
+      !match(I.getOperand(0), m_Constant(C1)))
     return nullptr;
 
   Value *X;
