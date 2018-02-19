@@ -387,7 +387,6 @@ void MachineBasicBlock::print(raw_ostream &OS, ModuleSlotTracker &MST,
       if (!LI.LaneMask.all())
         OS << ":0x" << PrintLaneMask(LI.LaneMask);
     }
-    OS << '\n';
     HasLineAttributes = true;
   }
 
