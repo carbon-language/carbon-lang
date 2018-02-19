@@ -16762,6 +16762,10 @@ static SDValue LowerTruncateVecI1(SDValue Op, SelectionDAG &DAG,
     In = DAG.getNode(ISD::SHL, DL, InVT, In,
                      DAG.getConstant(ShiftInx, DL, InVT));
   }
+  // If we have DQI, emit a pattern that will be iseled as vpmovq2m/vpmovd2m.
+  if (Subtarget.hasDQI())
+    return DAG.getNode(X86ISD::CMPM, DL, VT, DAG.getConstant(0, DL, InVT),
+                       In, DAG.getConstant(6, DL, MVT::i8));
   return DAG.getNode(X86ISD::CMPM, DL, VT, In,
                      getZeroVector(InVT, Subtarget, DAG, DL),
                      DAG.getConstant(4, DL, MVT::i8));
