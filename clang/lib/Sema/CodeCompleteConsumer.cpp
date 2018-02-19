@@ -33,7 +33,7 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 bool CodeCompletionContext::wantConstructorResults() const {
-  switch (Kind) {
+  switch (CCKind) {
   case CCC_Recovery:
   case CCC_Statement:
   case CCC_Expression:
@@ -76,8 +76,8 @@ bool CodeCompletionContext::wantConstructorResults() const {
   llvm_unreachable("Invalid CodeCompletionContext::Kind!");
 }
 
-StringRef clang::getCompletionKindString(enum CodeCompletionContext::Kind Kind) {
-  using CCKind = enum CodeCompletionContext::Kind;
+StringRef clang::getCompletionKindString(CodeCompletionContext::Kind Kind) {
+  using CCKind = CodeCompletionContext::Kind;
   switch (Kind) {
   case CCKind::CCC_Other:
     return "Other";
