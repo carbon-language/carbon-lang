@@ -18713,6 +18713,15 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
     }
   }
 
+  // Promote i16 cmovs if it won't prevent folding a load.
+  if (Op.getValueType() == MVT::i16 && !MayFoldLoad(Op1) && !MayFoldLoad(Op2)) {
+    Op1 = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i32, Op1);
+    Op2 = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i32, Op2);
+    SDValue Ops[] = { Op2, Op1, CC, Cond };
+    SDValue Cmov = DAG.getNode(X86ISD::CMOV, DL, MVT::i32, Ops);
+    return DAG.getNode(ISD::TRUNCATE, DL, Op.getValueType(), Cmov);
+  }
+
   // X86ISD::CMOV means set the result (which is operand 1) to the RHS if
   // condition is true.
   SDValue Ops[] = { Op2, Op1, CC, Cond };
@@ -35935,12 +35944,54 @@ static SDValue combineBT(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-static SDValue combineSignExtendInReg(SDNode *N, SelectionDAG &DAG,
-                                      const X86Subtarget &Subtarget) {
+// Try to combine sext_in_reg of a cmov of constants by extending the constants.
+static SDValue combineSextInRegCmov(SDNode *N, SelectionDAG &DAG) {
   EVT VT = N->getValueType(0);
-  if (!VT.isVector())
+
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  EVT ExtraVT = cast<VTSDNode>(N1)->getVT();
+
+  if (ExtraVT != MVT::i16)
     return SDValue();
 
+  // Look through single use any_extends.
+  if (N0.getOpcode() == ISD::ANY_EXTEND && N0.hasOneUse())
+    N0 = N0.getOperand(0);
+
+  // See if we have a single use cmov.
+  if (N0.getOpcode() != X86ISD::CMOV || !N0.hasOneUse())
+    return SDValue();
+
+  SDValue CMovOp0 = N0.getOperand(0);
+  SDValue CMovOp1 = N0.getOperand(1);
+
+  // Make sure both operands are constants.
+  if (!isa<ConstantSDNode>(CMovOp0.getNode()) ||
+      !isa<ConstantSDNode>(CMovOp1.getNode()))
+    return SDValue();
+
+  SDLoc DL(N);
+
+  // If we looked through an any_extend above, add one to the constants.
+  if (N0.getValueType() != VT) {
+    CMovOp0 = DAG.getNode(ISD::ANY_EXTEND, DL, VT, CMovOp0);
+    CMovOp1 = DAG.getNode(ISD::ANY_EXTEND, DL, VT, CMovOp1);
+  }
+
+  CMovOp0 = DAG.getNode(ISD::SIGN_EXTEND_INREG, DL, VT, CMovOp0, N1);
+  CMovOp1 = DAG.getNode(ISD::SIGN_EXTEND_INREG, DL, VT, CMovOp1, N1);
+
+  return DAG.getNode(X86ISD::CMOV, DL, VT, CMovOp0, CMovOp1,
+                     N0.getOperand(2), N0.getOperand(3));
+}
+
+static SDValue combineSignExtendInReg(SDNode *N, SelectionDAG &DAG,
+                                      const X86Subtarget &Subtarget) {
+  if (SDValue V = combineSextInRegCmov(N, DAG))
+    return V;
+
+  EVT VT = N->getValueType(0);
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
   EVT ExtraVT = cast<VTSDNode>(N1)->getVT();
