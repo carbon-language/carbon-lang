@@ -71,12 +71,6 @@ std::pair<Symbol *, bool> SymbolTable::insert(StringRef Name) {
   return {Sym, true};
 }
 
-void SymbolTable::reportDuplicate(Symbol *Existing, InputFile *NewFile) {
-  error("duplicate symbol: " + toString(*Existing) + "\n>>> defined in " +
-        toString(Existing->getFile()) + "\n>>> defined in " +
-        toString(NewFile));
-}
-
 // Check the type of new symbol matches that of the symbol is replacing.
 // For functions this can also involve verifying that the signatures match.
 static void checkSymbolTypes(const Symbol &Existing, const InputFile &F,
@@ -146,56 +140,73 @@ DefinedGlobal *SymbolTable::addSyntheticGlobal(StringRef Name, uint32_t Flags) {
   return replaceSymbol<DefinedGlobal>(S, Name, Flags);
 }
 
-Symbol *SymbolTable::addDefined(bool IsFunction, StringRef Name, uint32_t Flags,
-                                InputFile *F, InputChunk *Chunk,
-                                uint32_t Address) {
-  if (IsFunction)
-    DEBUG(dbgs() << "addDefined: func:" << Name << "\n");
-  else
-    DEBUG(dbgs() << "addDefined: global:" << Name << " addr:" << Address
-                 << "\n");
-  Symbol *S;
-  bool WasInserted;
+struct NewSymbol {
+  InputFile *File;
+  uint32_t Flags;
+  InputChunk *Chunk;
+  bool IsFunction;
+};
+
+static bool shouldReplace(const Symbol &Existing, const NewSymbol &New) {
   bool Replace = false;
   bool CheckTypes = false;
 
-  std::tie(S, WasInserted) = insert(Name);
-  if (WasInserted) {
-    Replace = true;
-  } else if (S->isLazy()) {
+  if (Existing.isLazy()) {
     // Existing symbol is lazy. Replace it without checking types since
     // lazy symbols don't have any type information.
-    DEBUG(dbgs() << "replacing existing lazy symbol: " << Name << "\n");
+    DEBUG(dbgs() << "replacing existing lazy symbol: " << Existing.getName()
+                 << "\n");
     Replace = true;
-  } else if (!S->isDefined()) {
+  } else if (!Existing.isDefined()) {
     // Existing symbol is undefined: replace it, while check types.
-    DEBUG(dbgs() << "resolving existing undefined symbol: " << Name << "\n");
+    DEBUG(dbgs() << "resolving existing undefined symbol: "
+                 << Existing.getName() << "\n");
     Replace = true;
     CheckTypes = true;
-  } else if ((Flags & WASM_SYMBOL_BINDING_MASK) == WASM_SYMBOL_BINDING_WEAK) {
+  } else if ((New.Flags & WASM_SYMBOL_BINDING_MASK) == WASM_SYMBOL_BINDING_WEAK) {
     // the new symbol is weak we can ignore it
     DEBUG(dbgs() << "existing symbol takes precedence\n");
     CheckTypes = true;
-  } else if (S->isWeak()) {
+  } else if (Existing.isWeak()) {
     // the existing symbol is, so we replace it
     DEBUG(dbgs() << "replacing existing weak symbol\n");
     Replace = true;
     CheckTypes = true;
   } else {
     // neither symbol is week. They conflict.
-    reportDuplicate(S, F);
+    error("duplicate symbol: " + toString(Existing) + "\n>>> defined in " +
+          toString(Existing.getFile()) + "\n>>> defined in " +
+          toString(New.File));
   }
 
-  if (Replace) {
-    if (CheckTypes)
-      checkSymbolTypes(*S, *F, IsFunction, Chunk);
-    if (IsFunction)
-      replaceSymbol<DefinedFunction>(S, Name, Flags, F,
-                                     cast<InputFunction>(Chunk));
-    else
-      replaceSymbol<DefinedGlobal>(S, Name, Flags, F, cast<InputSegment>(Chunk),
-                                   Address);
-  }
+  if (CheckTypes)
+    checkSymbolTypes(Existing, *New.File, New.IsFunction, New.Chunk);
+
+  return Replace;
+}
+
+Symbol *SymbolTable::addDefinedFunction(StringRef Name, uint32_t Flags,
+                                        InputFile *F, InputFunction *Function) {
+  DEBUG(dbgs() << "addDefinedFunction: " << Name << "\n");
+  Symbol *S;
+  bool WasInserted;
+  std::tie(S, WasInserted) = insert(Name);
+  NewSymbol New{F, Flags, Function, true};
+  if (WasInserted || shouldReplace(*S, New))
+    replaceSymbol<DefinedFunction>(S, Name, Flags, F, Function);
+  return S;
+}
+
+Symbol *SymbolTable::addDefinedGlobal(StringRef Name, uint32_t Flags,
+                                      InputFile *F, InputSegment *Segment,
+                                      uint32_t Address) {
+  DEBUG(dbgs() << "addDefinedGlobal:" << Name << " addr:" << Address << "\n");
+  Symbol *S;
+  bool WasInserted;
+  std::tie(S, WasInserted) = insert(Name);
+  NewSymbol New{F, Flags, Segment, false};
+  if (WasInserted || shouldReplace(*S, New))
+    replaceSymbol<DefinedGlobal>(S, Name, Flags, F, Segment, Address);
   return S;
 }
 

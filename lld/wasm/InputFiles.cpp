@@ -306,14 +306,14 @@ Symbol *ObjFile::createDefinedFunction(const WasmSymbol &Sym,
                                        InputFunction *Function) {
   if (Sym.isBindingLocal())
     return make<DefinedFunction>(Sym.Name, Sym.Flags, this, Function);
-  return Symtab->addDefined(true, Sym.Name, Sym.Flags, this, Function);
+  return Symtab->addDefinedFunction(Sym.Name, Sym.Flags, this, Function);
 }
 
 Symbol *ObjFile::createDefinedGlobal(const WasmSymbol &Sym,
                                      InputSegment *Segment, uint32_t Address) {
   if (Sym.isBindingLocal())
     return make<DefinedGlobal>(Sym.Name, Sym.Flags, this, Segment, Address);
-  return Symtab->addDefined(false, Sym.Name, Sym.Flags, this, Segment, Address);
+  return Symtab->addDefinedGlobal(Sym.Name, Sym.Flags, this, Segment, Address);
 }
 
 void ArchiveFile::parse() {
