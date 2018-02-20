@@ -69,6 +69,10 @@ public:
     extra_ += s;
     return *this;
   }
+  Message &operator+=(char ch) {
+    extra_ += ch;
+    return *this;
+  }
 
   Provenance Emit(
       std::ostream &, const AllSources &, bool echoSourceLine = true) const;

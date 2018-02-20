@@ -133,7 +133,7 @@ public:
       } else if (*ch == tolower(*p)) {
         ch.reset();
       } else {
-        state->PutMessage(at, "expected '"_en_US) += str_ + '\'';
+        (state->PutMessage(at, "expected '"_en_US) += str_) += '\'';
         return {};
       }
     }
