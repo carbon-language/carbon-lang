@@ -175,6 +175,7 @@ Symbol *SymbolTable::addDefined(bool IsFunction, StringRef Name, uint32_t Flags,
   } else if ((Flags & WASM_SYMBOL_BINDING_MASK) == WASM_SYMBOL_BINDING_WEAK) {
     // the new symbol is weak we can ignore it
     DEBUG(dbgs() << "existing symbol takes precedence\n");
+    CheckTypes = true;
   } else if (S->isWeak()) {
     // the existing symbol is, so we replace it
     DEBUG(dbgs() << "replacing existing weak symbol\n");
