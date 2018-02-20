@@ -2233,18 +2233,7 @@ defm VPCMPGTQ : avx512_icmp_packed_rmb_vl<0x37, "vpcmpgtq", X86pcmpgtm,
 // operand.
 def CommutePCMPCC : SDNodeXForm<imm, [{
   uint8_t Imm = N->getZExtValue() & 0x7;
-  switch (Imm) {
-  default: llvm_unreachable("Unreachable!");
-  case 0x01: Imm = 0x06; break; // LT  -> NLE
-  case 0x02: Imm = 0x05; break; // LE  -> NLT
-  case 0x05: Imm = 0x02; break; // NLT -> LE
-  case 0x06: Imm = 0x01; break; // NLE -> LT
-  case 0x00: // EQ
-  case 0x03: // FALSE
-  case 0x04: // NE
-  case 0x07: // TRUE
-    break;
-  }
+  Imm = X86::getSwappedVPCMPImm(Imm);
   return getI8Imm(Imm, SDLoc(N));
 }]>;
 
