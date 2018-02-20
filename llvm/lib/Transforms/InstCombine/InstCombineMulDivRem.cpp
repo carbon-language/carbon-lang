@@ -1359,11 +1359,10 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
       if (Instruction *R = FoldOpIntoSelect(I, SI))
         return R;
 
-  if (Constant *Op1C = dyn_cast<Constant>(Op1)) {
+  if (isa<Constant>(Op1))
     if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
       if (Instruction *R = FoldOpIntoSelect(I, SI))
         return R;
-  }
 
   if (I.isFast()) {
     Value *X, *Y;
