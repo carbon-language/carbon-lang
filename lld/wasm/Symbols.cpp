@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Symbols.h"
-
 #include "Config.h"
 #include "InputChunks.h"
 #include "InputFiles.h"

@@ -38,7 +38,6 @@
 #include "llvm/ToolDrivers/llvm-lib/LibDriver.h"
 #include <algorithm>
 #include <memory>
-
 #include <future>
 
 using namespace llvm;
