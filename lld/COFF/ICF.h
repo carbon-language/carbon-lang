@@ -7,15 +7,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_ELF_ICF_H
-#define LLD_ELF_ICF_H
+#ifndef LLD_COFF_ICF_H
+#define LLD_COFF_ICF_H
+
+#include "lld/Common/LLVM.h"
+#include "llvm/ADT/ArrayRef.h"
 
 namespace lld {
-namespace elf {
+namespace coff {
 
-template <class ELFT> void doIcf();
+class Chunk;
 
-} // namespace elf
+void doICF(ArrayRef<Chunk *> Chunks);
+
+} // namespace coff
 } // namespace lld
 
 #endif
