@@ -3,7 +3,7 @@
 namespace Fortran {
 namespace parser {
 
-std::ostream &operator<<(std::ostream &o, const MessageText &t) {
+std::ostream &operator<<(std::ostream &o, const MessageFixedText &t) {
   for (size_t j{0}; j < t.size(); ++j) {
     o << t.str()[j];
   }

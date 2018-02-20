@@ -49,7 +49,7 @@ public:
   // Callbacks for use by Preprocessor.
   std::optional<TokenSequence> NextTokenizedLine();
   Provenance GetCurrentProvenance() const { return GetProvenance(at_); }
-  Message &Complain(MessageText);
+  Message &Complain(MessageFixedText);
 
 private:
   void BeginSourceLine(const char *at) {

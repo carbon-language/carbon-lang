@@ -15,17 +15,16 @@
 namespace Fortran {
 namespace parser {
 
-class Message;
-using MessageContext = std::shared_ptr<Message>;
-
-class MessageText {
+// Use "..."_en_US literals to define the static text of a message.
+class MessageFixedText {
 public:
-  MessageText() {}
-  constexpr MessageText(const char str[], size_t n) : str_{str}, bytes_{n} {}
-  constexpr MessageText(const MessageText &) = default;
-  MessageText(MessageText &&) = default;
-  constexpr MessageText &operator=(const MessageText &) = default;
-  MessageText &operator=(MessageText &&) = default;
+  MessageFixedText() {}
+  constexpr MessageFixedText(const char str[], size_t n)
+    : str_{str}, bytes_{n} {}
+  constexpr MessageFixedText(const MessageFixedText &) = default;
+  MessageFixedText(MessageFixedText &&) = default;
+  constexpr MessageFixedText &operator=(const MessageFixedText &) = default;
+  MessageFixedText &operator=(MessageFixedText &&) = default;
 
   const char *str() const { return str_; }
   size_t size() const { return bytes_; }
@@ -38,17 +37,20 @@ private:
   size_t bytes_{0};
 };
 
-constexpr MessageText operator""_msg(const char str[], size_t n) {
-  return MessageText{str, n};
+constexpr MessageFixedText operator""_en_US(const char str[], size_t n) {
+  return MessageFixedText{str, n};
 }
 
-std::ostream &operator<<(std::ostream &, const MessageText &);
+std::ostream &operator<<(std::ostream &, const MessageFixedText &);
+
+class Message;
+using MessageContext = std::shared_ptr<Message>;
 
 class Message {
 public:
   Message() {}
   Message(const Message &) = default;
-  Message(Provenance p, MessageText t, MessageContext c = nullptr)
+  Message(Provenance p, MessageFixedText t, MessageContext c = nullptr)
     : provenance_{p}, text_{t}, context_{c} {}
   Message(Message &&) = default;
   Message &operator=(const Message &that) = default;
@@ -59,12 +61,8 @@ public:
   }
 
   Provenance provenance() const { return provenance_; }
-  MessageText text() const { return text_; }
+  MessageFixedText text() const { return text_; }
   std::string extra() const { return extra_; }
-  Message &set_extra(std::string &&s) {
-    extra_ = std::move(s);
-    return *this;
-  }
   MessageContext context() const { return context_; }
 
   Message &operator+=(std::string s) {
@@ -77,7 +75,7 @@ public:
 
 private:
   Provenance provenance_;
-  MessageText text_;
+  MessageFixedText text_;
   std::string extra_;
   MessageContext context_;
 };

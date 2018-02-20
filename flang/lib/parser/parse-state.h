@@ -115,7 +115,7 @@ public:
   }
   Provenance GetProvenance() const { return GetProvenance(p_); }
 
-  MessageContext &PushContext(MessageText text) {
+  MessageContext &PushContext(MessageFixedText text) {
     context_ = std::make_shared<Message>(GetProvenance(), text, context_);
     return context_;
   }
@@ -126,11 +126,11 @@ public:
     }
   }
 
-  Message &PutMessage(MessageText t) { return PutMessage(p_, t); }
-  Message &PutMessage(const char *at, MessageText t) {
+  Message &PutMessage(MessageFixedText t) { return PutMessage(p_, t); }
+  Message &PutMessage(const char *at, MessageFixedText t) {
     return PutMessage(GetProvenance(at), t);
   }
-  Message &PutMessage(Provenance at, MessageText t) {
+  Message &PutMessage(Provenance at, MessageFixedText t) {
     return messages_.Put(Message{at, t, context_});
   }
 

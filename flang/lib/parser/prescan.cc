@@ -88,7 +88,7 @@ std::optional<TokenSequence> Prescanner::NextTokenizedLine() {
   return {std::move(tokens)};
 }
 
-Message &Prescanner::Complain(MessageText text) {
+Message &Prescanner::Complain(MessageFixedText text) {
   return messages_->Put({GetCurrentProvenance(), text});
 }
 
@@ -414,14 +414,15 @@ bool Prescanner::IncludeLine(const char *p) {
     path += *p;
   }
   if (*p != quote) {
-    messages_->Put({GetProvenance(p), "malformed path name string"_msg});
+    messages_->Put({GetProvenance(p), "malformed path name string"_en_US});
     anyFatalErrors_ = true;
     return true;
   }
   for (++p; *p == ' ' || *p == '\t'; ++p) {
   }
   if (*p != '\n' && *p != '!') {
-    messages_->Put({GetProvenance(p), "excess characters after path name"_msg});
+    messages_->Put(
+        {GetProvenance(p), "excess characters after path name"_en_US});
   }
   std::stringstream error;
   Provenance provenance{GetProvenance(start)};
@@ -435,7 +436,7 @@ bool Prescanner::IncludeLine(const char *p) {
     allSources->PopSearchPathDirectory();
   }
   if (included == nullptr) {
-    messages_->Put({provenance, "INCLUDE: "_msg}) += error.str();
+    messages_->Put({provenance, "INCLUDE: "_en_US}) += error.str();
     anyFatalErrors_ = true;
     return true;
   }
