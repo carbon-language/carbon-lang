@@ -140,14 +140,9 @@ DefinedGlobal *SymbolTable::addSyntheticGlobal(StringRef Name, uint32_t Flags) {
   return replaceSymbol<DefinedGlobal>(S, Name, Flags);
 }
 
-struct NewSymbol {
-  InputFile *File;
-  uint32_t Flags;
-  InputChunk *Chunk;
-  bool IsFunction;
-};
-
-static bool shouldReplace(const Symbol &Existing, const NewSymbol &New) {
+static bool shouldReplace(const Symbol &Existing, InputFile *NewFile,
+                          uint32_t NewFlags, InputChunk *NewChunk,
+                          bool NewIsFunction) {
   bool Replace = false;
   bool CheckTypes = false;
 
@@ -163,7 +158,7 @@ static bool shouldReplace(const Symbol &Existing, const NewSymbol &New) {
                  << Existing.getName() << "\n");
     Replace = true;
     CheckTypes = true;
-  } else if ((New.Flags & WASM_SYMBOL_BINDING_MASK) == WASM_SYMBOL_BINDING_WEAK) {
+  } else if ((NewFlags & WASM_SYMBOL_BINDING_MASK) == WASM_SYMBOL_BINDING_WEAK) {
     // the new symbol is weak we can ignore it
     DEBUG(dbgs() << "existing symbol takes precedence\n");
     CheckTypes = true;
@@ -176,11 +171,11 @@ static bool shouldReplace(const Symbol &Existing, const NewSymbol &New) {
     // neither symbol is week. They conflict.
     error("duplicate symbol: " + toString(Existing) + "\n>>> defined in " +
           toString(Existing.getFile()) + "\n>>> defined in " +
-          toString(New.File));
+          toString(NewFile));
   }
 
   if (CheckTypes)
-    checkSymbolTypes(Existing, *New.File, New.IsFunction, New.Chunk);
+    checkSymbolTypes(Existing, *NewFile, NewIsFunction, NewChunk);
 
   return Replace;
 }
@@ -191,8 +186,7 @@ Symbol *SymbolTable::addDefinedFunction(StringRef Name, uint32_t Flags,
   Symbol *S;
   bool WasInserted;
   std::tie(S, WasInserted) = insert(Name);
-  NewSymbol New{F, Flags, Function, true};
-  if (WasInserted || shouldReplace(*S, New))
+  if (WasInserted || shouldReplace(*S, F, Flags, Function, true))
     replaceSymbol<DefinedFunction>(S, Name, Flags, F, Function);
   return S;
 }
@@ -204,8 +198,7 @@ Symbol *SymbolTable::addDefinedGlobal(StringRef Name, uint32_t Flags,
   Symbol *S;
   bool WasInserted;
   std::tie(S, WasInserted) = insert(Name);
-  NewSymbol New{F, Flags, Segment, false};
-  if (WasInserted || shouldReplace(*S, New))
+  if (WasInserted || shouldReplace(*S, F, Flags, Segment, false))
     replaceSymbol<DefinedGlobal>(S, Name, Flags, F, Segment, Address);
   return S;
 }
