@@ -204,9 +204,7 @@ define float @fneg_fneg_fast(float %x, float %y) {
 
 define <2 x float> @fneg_fneg_vec(<2 x float> %x, <2 x float> %y) {
 ; CHECK-LABEL: @fneg_fneg_vec(
-; CHECK-NEXT:    [[XNEG:%.*]] = fsub <2 x float> <float -0.000000e+00, float -0.000000e+00>, [[X:%.*]]
-; CHECK-NEXT:    [[YNEG:%.*]] = fsub <2 x float> <float -0.000000e+00, float -0.000000e+00>, [[Y:%.*]]
-; CHECK-NEXT:    [[DIV:%.*]] = fdiv <2 x float> [[XNEG]], [[YNEG]]
+; CHECK-NEXT:    [[DIV:%.*]] = fdiv <2 x float> [[X:%.*]], [[Y:%.*]]
 ; CHECK-NEXT:    ret <2 x float> [[DIV]]
 ;
   %xneg = fsub <2 x float> <float -0.0, float -0.0>, %x
