@@ -18,7 +18,6 @@
 #include "llvm/Support/MemoryBuffer.h"
 
 #include "Symbols.h"
-#include "WriterUtils.h"
 
 #include <vector>
 
