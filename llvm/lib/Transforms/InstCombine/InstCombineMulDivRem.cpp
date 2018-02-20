@@ -1289,32 +1289,27 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
 }
 
 /// Try to convert X/C into X * (1/C).
-static Instruction *foldFDivConstantDivisor(BinaryOperator &FDiv) {
-  // TODO: Handle non-splat vector constants.
-  const APFloat *C;
-  if (!match(FDiv.getOperand(1), m_APFloat(C)))
+static Instruction *foldFDivConstantDivisor(BinaryOperator &I) {
+  Constant *C;
+  if (!match(I.getOperand(1), m_Constant(C)))
     return nullptr;
 
-  // This returns false if the inverse would be a denormal.
-  APFloat Reciprocal(C->getSemantics());
-  bool HasRecip = C->getExactInverse(&Reciprocal);
-  // If the inverse is not exact, we may still be able to convert if we are
-  // not operating with strict math.
-  if (!HasRecip && FDiv.hasAllowReciprocal() && C->isFiniteNonZero()) {
-    Reciprocal = APFloat(C->getSemantics(), 1.0f);
-    Reciprocal.divide(*C, APFloat::rmNearestTiesToEven);
-    // Disallow denormal constants because we don't know what would happen
-    // on all targets.
-    // TODO: Function attributes can tell us that denorms are flushed?
-    HasRecip = !Reciprocal.isDenormal();
-  }
-
-  if (!HasRecip)
+  // If the constant divisor has an exact inverse, this is always safe. If not,
+  // then we can still create a reciprocal if fast-math-flags allow it and the
+  // constant is a regular number (not zero, infinite, or denormal).
+  if (!(C->hasExactInverseFP() || (I.hasAllowReciprocal() && C->isNormalFP())))
     return nullptr;
 
-  auto *RecipCFP = ConstantFP::get(FDiv.getType(), Reciprocal);
-  return BinaryOperator::CreateWithCopiedFlags(Instruction::FMul, RecipCFP,
-                                               FDiv.getOperand(0), &FDiv);
+  // Disallow denormal constants because we don't know what would happen
+  // on all targets.
+  // TODO: Use Intrinsic::canonicalize or let function attributes tell us that
+  // denorms are flushed?
+  auto *RecipC = ConstantExpr::getFDiv(ConstantFP::get(I.getType(), 1.0), C);
+  if (!RecipC->isNormalFP())
+    return nullptr;
+
+  return BinaryOperator::CreateWithCopiedFlags(
+      Instruction::FMul, I.getOperand(0), RecipC, &I);
 }
 
 /// Try to reassociate C / X expressions where X includes another constant.
