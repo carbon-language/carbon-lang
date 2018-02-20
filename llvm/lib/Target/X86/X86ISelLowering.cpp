@@ -31910,31 +31910,29 @@ static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
     if (VT.is512BitVector())
       return SDValue();
 
-    assert(BitWidth >= 8 && BitWidth <= 64 && "Invalid mask size");
-    APInt DemandedMask(APInt::getSignMask(BitWidth));
-    KnownBits Known;
-    TargetLowering::TargetLoweringOpt TLO(DAG, !DCI.isBeforeLegalize(),
-                                          !DCI.isBeforeLegalizeOps());
-    if (TLI.SimplifyDemandedBits(Cond, DemandedMask, Known, TLO)) {
-      // If we changed the computation somewhere in the DAG, this change will
-      // affect all users of Cond. Make sure it is fine and update all the nodes
-      // so that we do not use the generic VSELECT anymore. Otherwise, we may
-      // perform wrong optimizations as we messed with the actual expectation
-      // for the vector boolean values.
-      if (Cond != TLO.Old) {
-        // Check all uses of the condition operand to check whether it will be
-        // consumed by non-BLEND instructions. Those may require that all bits
-        // are set properly.
-        for (SDNode::use_iterator UI = Cond->use_begin(), UE = Cond->use_end();
-             UI != UE; ++UI) {
-          // TODO: Add other opcodes eventually lowered into BLEND.
-          if (UI->getOpcode() != ISD::VSELECT || UI.getOperandNo() != 0)
-            return SDValue();
-        }
+    bool CanShrinkCond = true;
+    for (SDNode::use_iterator UI = Cond->use_begin(), UE = Cond->use_end();
+         UI != UE; ++UI) {
+      // TODO: Add other opcodes eventually lowered into BLEND.
+      if (UI->getOpcode() != ISD::VSELECT || UI.getOperandNo() != 0) {
+        CanShrinkCond = false;
+        break;
+      }
+    }
 
-        // Update all users of the condition before committing the change, so
-        // that the VSELECT optimizations that expect the correct vector boolean
-        // value will not be triggered.
+    if (CanShrinkCond) {
+      assert(BitWidth >= 8 && BitWidth <= 64 && "Invalid mask size");
+      APInt DemandedMask(APInt::getSignMask(BitWidth));
+      KnownBits Known;
+      TargetLowering::TargetLoweringOpt TLO(DAG, !DCI.isBeforeLegalize(),
+                                            !DCI.isBeforeLegalizeOps());
+      if (TLI.SimplifyDemandedBits(Cond, DemandedMask, Known, TLO, 0,
+                                   /*AssumeSingleUse*/true)) {
+        // If we changed the computation somewhere in the DAG, this change will
+        // affect all users of Cond. Update all the nodes so that we do not use
+        // the generic VSELECT anymore. Otherwise, we may perform wrong
+        // optimizations as we messed with the actual expectation for the vector
+        // boolean values.
         for (SDNode *U : Cond->uses()) {
           SDValue SB = DAG.getNode(X86ISD::SHRUNKBLEND, SDLoc(U),
                                    U->getValueType(0), Cond, U->getOperand(1),
@@ -31942,14 +31940,8 @@ static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
           DAG.ReplaceAllUsesOfValueWith(SDValue(U, 0), SB);
         }
         DCI.CommitTargetLoweringOpt(TLO);
-        return SDValue();
+        return SDValue(N, 0);
       }
-      // Only Cond (rather than other nodes in the computation chain) was
-      // changed. Change the condition just for N to keep the opportunity to
-      // optimize all other users their own way.
-      SDValue SB = DAG.getNode(X86ISD::SHRUNKBLEND, DL, VT, TLO.New, LHS, RHS);
-      DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), SB);
-      return SDValue();
     }
   }
 
