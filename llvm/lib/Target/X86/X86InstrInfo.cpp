@@ -5411,18 +5411,7 @@ MachineInstr *X86InstrInfo::commuteInstructionImpl(MachineInstr &MI, bool NewMI,
   case X86::VPCOMWri: case X86::VPCOMUWri: {
     // Flip comparison mode immediate (if necessary).
     unsigned Imm = MI.getOperand(3).getImm() & 0x7;
-    switch (Imm) {
-    default: llvm_unreachable("Unreachable!");
-    case 0x00: Imm = 0x02; break; // LT -> GT
-    case 0x01: Imm = 0x03; break; // LE -> GE
-    case 0x02: Imm = 0x00; break; // GT -> LT
-    case 0x03: Imm = 0x01; break; // GE -> LE
-    case 0x04: // EQ
-    case 0x05: // NE
-    case 0x06: // FALSE
-    case 0x07: // TRUE
-      break;
-    }
+    Imm = X86::getSwappedVPCOMImm(Imm);
     auto &WorkingMI = cloneIfNew(MI);
     WorkingMI.getOperand(3).setImm(Imm);
     return TargetInstrInfo::commuteInstructionImpl(WorkingMI, /*NewMI=*/false,
@@ -6133,6 +6122,24 @@ unsigned X86::getSwappedVPCMPImm(unsigned Imm) {
   case 0x00: // EQ
   case 0x03: // FALSE
   case 0x04: // NE
+  case 0x07: // TRUE
+    break;
+  }
+
+  return Imm;
+}
+
+/// \brief Get the VPCOM immediate if the opcodes are swapped.
+unsigned X86::getSwappedVPCOMImm(unsigned Imm) {
+  switch (Imm) {
+  default: llvm_unreachable("Unreachable!");
+  case 0x00: Imm = 0x02; break; // LT -> GT
+  case 0x01: Imm = 0x03; break; // LE -> GE
+  case 0x02: Imm = 0x00; break; // GT -> LT
+  case 0x03: Imm = 0x01; break; // GE -> LE
+  case 0x04: // EQ
+  case 0x05: // NE
+  case 0x06: // FALSE
   case 0x07: // TRUE
     break;
   }
