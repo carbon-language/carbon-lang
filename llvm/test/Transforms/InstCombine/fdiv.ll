@@ -178,8 +178,8 @@ define float @div_with_div_denominator_extra_use(float %x, float %y, float %z) {
   ret float %div2
 }
 
-define float @fdiv_fneg_fneg(float %x, float %y) {
-; CHECK-LABEL: @fdiv_fneg_fneg(
+define float @fneg_fneg(float %x, float %y) {
+; CHECK-LABEL: @fneg_fneg(
 ; CHECK-NEXT:    [[DIV:%.*]] = fdiv float [[X:%.*]], [[Y:%.*]]
 ; CHECK-NEXT:    ret float [[DIV]]
 ;
@@ -191,8 +191,8 @@ define float @fdiv_fneg_fneg(float %x, float %y) {
 
 ; The test above shows that no FMF are needed, but show that we are not dropping FMF.
 
-define float @fdiv_fneg_fneg_fast(float %x, float %y) {
-; CHECK-LABEL: @fdiv_fneg_fneg_fast(
+define float @fneg_fneg_fast(float %x, float %y) {
+; CHECK-LABEL: @fneg_fneg_fast(
 ; CHECK-NEXT:    [[DIV:%.*]] = fdiv fast float [[X:%.*]], [[Y:%.*]]
 ; CHECK-NEXT:    ret float [[DIV]]
 ;
@@ -200,6 +200,19 @@ define float @fdiv_fneg_fneg_fast(float %x, float %y) {
   %y.fneg = fsub float -0.0, %y
   %div = fdiv fast float %x.fneg, %y.fneg
   ret float %div
+}
+
+define <2 x float> @fneg_fneg_vec(<2 x float> %x, <2 x float> %y) {
+; CHECK-LABEL: @fneg_fneg_vec(
+; CHECK-NEXT:    [[XNEG:%.*]] = fsub <2 x float> <float -0.000000e+00, float -0.000000e+00>, [[X:%.*]]
+; CHECK-NEXT:    [[YNEG:%.*]] = fsub <2 x float> <float -0.000000e+00, float -0.000000e+00>, [[Y:%.*]]
+; CHECK-NEXT:    [[DIV:%.*]] = fdiv <2 x float> [[XNEG]], [[YNEG]]
+; CHECK-NEXT:    ret <2 x float> [[DIV]]
+;
+  %xneg = fsub <2 x float> <float -0.0, float -0.0>, %x
+  %yneg = fsub <2 x float> <float -0.0, float -0.0>, %y
+  %div = fdiv <2 x float> %xneg, %yneg
+  ret <2 x float> %div
 }
 
 ; X / (X * Y) --> 1.0 / Y
