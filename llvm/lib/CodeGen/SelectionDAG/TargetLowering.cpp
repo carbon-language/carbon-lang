@@ -2237,9 +2237,8 @@ SDValue TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
         N0.getOpcode() == ISD::AND) {
       auto &DL = DAG.getDataLayout();
       if (auto *AndRHS = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
-        EVT ShiftTy = DCI.isBeforeLegalize()
-                          ? getPointerTy(DL)
-                          : getShiftAmountTy(N0.getValueType(), DL);
+        EVT ShiftTy = getShiftAmountTy(N0.getValueType(), DL,
+                                       !DCI.isBeforeLegalize());
         if (Cond == ISD::SETNE && C1 == 0) {// (X & 8) != 0  -->  (X & 8) >> 3
           // Perform the xform if the AND RHS is a single bit.
           if (AndRHS->getAPIntValue().isPowerOf2()) {
@@ -2271,9 +2270,8 @@ SDValue TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
           if ((-AndRHSC).isPowerOf2() && (AndRHSC & C1) == C1) {
             unsigned ShiftBits = AndRHSC.countTrailingZeros();
             auto &DL = DAG.getDataLayout();
-            EVT ShiftTy = DCI.isBeforeLegalize()
-                              ? getPointerTy(DL)
-                              : getShiftAmountTy(N0.getValueType(), DL);
+            EVT ShiftTy = getShiftAmountTy(N0.getValueType(), DL,
+                                           !DCI.isBeforeLegalize());
             EVT CmpTy = N0.getValueType();
             SDValue Shift = DAG.getNode(ISD::SRL, dl, CmpTy, N0.getOperand(0),
                                         DAG.getConstant(ShiftBits, dl,
@@ -2303,9 +2301,8 @@ SDValue TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
         if (ShiftBits && NewC.getMinSignedBits() <= 64 &&
           isLegalICmpImmediate(NewC.getSExtValue())) {
           auto &DL = DAG.getDataLayout();
-          EVT ShiftTy = DCI.isBeforeLegalize()
-                            ? getPointerTy(DL)
-                            : getShiftAmountTy(N0.getValueType(), DL);
+          EVT ShiftTy = getShiftAmountTy(N0.getValueType(), DL,
+                                         !DCI.isBeforeLegalize());
           EVT CmpTy = N0.getValueType();
           SDValue Shift = DAG.getNode(ISD::SRL, dl, CmpTy, N0,
                                       DAG.getConstant(ShiftBits, dl, ShiftTy));
@@ -2499,7 +2496,8 @@ SDValue TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
             SDValue SH = DAG.getNode(
                 ISD::SHL, dl, N1.getValueType(), N1,
                 DAG.getConstant(1, dl,
-                                getShiftAmountTy(N1.getValueType(), DL)));
+                                getShiftAmountTy(N1.getValueType(), DL,
+                                                 !DCI.isBeforeLegalize())));
             if (!DCI.isCalledByLegalizer())
               DCI.AddToWorklist(SH.getNode());
             return DAG.getSetCC(dl, VT, N0.getOperand(0), SH, Cond);
@@ -2524,7 +2522,8 @@ SDValue TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
           // X == (Z-X)  --> X<<1 == Z
           SDValue SH = DAG.getNode(
               ISD::SHL, dl, N1.getValueType(), N0,
-              DAG.getConstant(1, dl, getShiftAmountTy(N0.getValueType(), DL)));
+              DAG.getConstant(1, dl, getShiftAmountTy(N0.getValueType(), DL,
+                                                      !DCI.isBeforeLegalize())));
           if (!DCI.isCalledByLegalizer())
             DCI.AddToWorklist(SH.getNode());
           return DAG.getSetCC(dl, VT, SH, N1.getOperand(0), Cond);
