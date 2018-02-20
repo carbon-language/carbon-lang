@@ -1359,39 +1359,13 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
       if (Instruction *R = FoldOpIntoSelect(I, SI))
         return R;
 
-  bool AllowReassociate = I.isFast();
   if (Constant *Op1C = dyn_cast<Constant>(Op1)) {
     if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
       if (Instruction *R = FoldOpIntoSelect(I, SI))
         return R;
-
-    if (AllowReassociate) {
-      Constant *C1 = nullptr;
-      Constant *C2 = Op1C;
-      Value *X;
-      Instruction *Res = nullptr;
-
-      if (match(Op0, m_FMul(m_Value(X), m_Constant(C1)))) {
-        // (X*C1)/C2 => X * (C1/C2)
-        Constant *C = ConstantExpr::getFDiv(C1, C2);
-        if (C->isNormalFP())
-          Res = BinaryOperator::CreateFMul(X, C);
-      } else if (match(Op0, m_FDiv(m_Value(X), m_Constant(C1)))) {
-        // (X/C1)/C2 => X /(C2*C1)
-        Constant *C = ConstantExpr::getFMul(C1, C2);
-        if (C->isNormalFP())
-          Res = BinaryOperator::CreateFDiv(X, C);
-      }
-
-      if (Res) {
-        Res->setFastMathFlags(I.getFastMathFlags());
-        return Res;
-      }
-    }
-    return nullptr;
   }
 
-  if (AllowReassociate) {
+  if (I.isFast()) {
     Value *X, *Y;
     if (match(Op0, m_OneUse(m_FDiv(m_Value(X), m_Value(Y)))) &&
         (!isa<Constant>(Y) || !isa<Constant>(Op1))) {
