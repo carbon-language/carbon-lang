@@ -213,6 +213,50 @@ define <2 x float> @fneg_fneg_vec(<2 x float> %x, <2 x float> %y) {
   ret <2 x float> %div
 }
 
+define float @fneg_dividend_constant_divisor(float %x) {
+; CHECK-LABEL: @fneg_dividend_constant_divisor(
+; CHECK-NEXT:    [[NEG:%.*]] = fsub float -0.000000e+00, [[X:%.*]]
+; CHECK-NEXT:    [[DIV:%.*]] = fdiv float [[NEG]], 3.000000e+00
+; CHECK-NEXT:    ret float [[DIV]]
+;
+  %neg = fsub float -0.0, %x
+  %div = fdiv float %neg, 3.0
+  ret  float %div
+}
+
+define float @fneg_divisor_constant_dividend(float %x) {
+; CHECK-LABEL: @fneg_divisor_constant_dividend(
+; CHECK-NEXT:    [[NEG:%.*]] = fsub float -0.000000e+00, [[X:%.*]]
+; CHECK-NEXT:    [[DIV:%.*]] = fdiv float -3.000000e+00, [[NEG]]
+; CHECK-NEXT:    ret float [[DIV]]
+;
+  %neg = fsub float -0.0, %x
+  %div = fdiv float -3.0, %neg
+  ret float %div
+}
+
+define <2 x float> @fneg_dividend_constant_divisor_vec(<2 x float> %x) {
+; CHECK-LABEL: @fneg_dividend_constant_divisor_vec(
+; CHECK-NEXT:    [[NEG:%.*]] = fsub <2 x float> <float -0.000000e+00, float -0.000000e+00>, [[X:%.*]]
+; CHECK-NEXT:    [[DIV:%.*]] = fdiv <2 x float> [[NEG]], <float 3.000000e+00, float -8.000000e+00>
+; CHECK-NEXT:    ret <2 x float> [[DIV]]
+;
+  %neg = fsub <2 x float> <float -0.0, float -0.0>, %x
+  %div = fdiv <2 x float> %neg, <float 3.0, float -8.0>
+  ret <2 x float> %div
+}
+
+define <2 x float> @fneg_divisor_constant_dividend_vec(<2 x float> %x) {
+; CHECK-LABEL: @fneg_divisor_constant_dividend_vec(
+; CHECK-NEXT:    [[NEG:%.*]] = fsub <2 x float> <float -0.000000e+00, float -0.000000e+00>, [[X:%.*]]
+; CHECK-NEXT:    [[DIV:%.*]] = fdiv <2 x float> <float -3.000000e+00, float 5.000000e+00>, [[NEG]]
+; CHECK-NEXT:    ret <2 x float> [[DIV]]
+;
+  %neg = fsub <2 x float> <float -0.0, float -0.0>, %x
+  %div = fdiv <2 x float> <float -3.0, float 5.0>, %neg
+  ret <2 x float> %div
+}
+
 ; X / (X * Y) --> 1.0 / Y
 
 define float @div_factor(float %x, float %y) {
