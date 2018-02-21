@@ -30,7 +30,7 @@ public:
   size_t size() const { return bytes_; }
   bool empty() const { return bytes_ == 0; }
 
-  std::string ToString() const { return std::string(str_, bytes_); }
+  std::string ToString() const;
 
 private:
   const char *str_{nullptr};
@@ -43,6 +43,28 @@ constexpr MessageFixedText operator""_en_US(const char str[], size_t n) {
 
 std::ostream &operator<<(std::ostream &, const MessageFixedText &);
 
+class MessageFormattedText {
+public:
+  MessageFormattedText(MessageFixedText, ...);
+  std::string MoveString() { return std::move(string_); }
+
+private:
+  std::string string_;
+};
+
+// Represents a formatted rendition of "expected '%s'"_en_US on a constant text.
+class MessageExpectedText {
+public:
+  MessageExpectedText(const char *s, size_t n) : str_{s}, bytes_{n} {}
+  explicit MessageExpectedText(char ch) : singleton_{ch} {}
+  MessageFixedText AsMessageFixedText() const;
+
+private:
+  const char *str_{nullptr};
+  char singleton_;
+  size_t bytes_{1};
+};
+
 class Message;
 using MessageContext = std::shared_ptr<Message>;
 
@@ -52,6 +74,11 @@ public:
   Message(const Message &) = default;
   Message(Provenance p, MessageFixedText t, MessageContext c = nullptr)
     : provenance_{p}, text_{t}, context_{c} {}
+  Message(Provenance p, MessageFormattedText &&s, MessageContext c = nullptr)
+    : provenance_{p}, string_{s.MoveString()}, context_{c} {}
+  Message(Provenance p, MessageExpectedText t, MessageContext c = nullptr)
+    : provenance_{p}, text_{t.AsMessageFixedText()},
+      isExpectedText_{true}, context_{c} {}
   Message(Message &&) = default;
   Message &operator=(const Message &that) = default;
   Message &operator=(Message &&that) = default;
@@ -61,18 +88,7 @@ public:
   }
 
   Provenance provenance() const { return provenance_; }
-  MessageFixedText text() const { return text_; }
-  std::string extra() const { return extra_; }
   MessageContext context() const { return context_; }
-
-  Message &operator+=(std::string s) {
-    extra_ += s;
-    return *this;
-  }
-  Message &operator+=(char ch) {
-    extra_ += ch;
-    return *this;
-  }
 
   Provenance Emit(
       std::ostream &, const AllSources &, bool echoSourceLine = true) const;
@@ -80,7 +96,8 @@ public:
 private:
   Provenance provenance_;
   MessageFixedText text_;
-  std::string extra_;
+  bool isExpectedText_{false};  // implies "expected '%s'"_en_US
+  std::string string_;
   MessageContext context_;
 };
 

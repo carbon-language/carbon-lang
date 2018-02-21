@@ -466,13 +466,14 @@ bool Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
   }
   if (dirName == "ifdef" || dirName == "ifndef") {
     if (nameToken.empty()) {
-      prescanner->Complain("#"_en_US) += dirName + ": missing name";
+      prescanner->Complain(
+          MessageFormattedText("#%s: missing name"_en_US, dirName.data()));
       return false;
     }
     j = SkipBlanks(dir, j + 1, tokens);
     if (j != tokens) {
-      prescanner->Complain("#"_en_US) +=
-          dirName + ": excess tokens at end of directive";
+      prescanner->Complain(MessageFormattedText(
+          "#%s: excess tokens at end of directive"_en_US, dirName.data()));
       return false;
     }
     if (IsNameDefined(nameToken) == (dirName == "ifdef")) {
@@ -533,11 +534,13 @@ bool Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
     return true;
   }
   if (dirName == "error") {
-    prescanner->Complain("#error: "_en_US) += dir.ToString();
+    prescanner->Complain(
+        MessageFormattedText("#error: %s"_en_US, dir.ToString().data()));
     return false;
   }
   if (dirName == "warning") {
-    prescanner->Complain("#warning: "_en_US) += dir.ToString();
+    prescanner->Complain(
+        MessageFormattedText("#warning: %s"_en_US, dir.ToString().data()));
     return true;
   }
   if (dirName == "include") {
@@ -569,15 +572,16 @@ bool Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
     std::stringstream error;
     const SourceFile *included{allSources_->Open(include, &error)};
     if (included == nullptr) {
-      prescanner->Complain("#include: "_en_US) += error.str();
+      prescanner->Complain(
+          MessageFormattedText("#include: %s"_en_US, error.str().data()));
       return false;
     }
     ProvenanceRange fileRange{
         allSources_->AddIncludedFile(*included, dir.GetProvenanceRange())};
     return Prescanner{*prescanner}.Prescan(fileRange);
   }
-  prescanner->Complain("#"_en_US) +=
-      dirName + ": unknown or unimplemented directive";
+  prescanner->Complain(MessageFormattedText(
+      "#%s: unknown or unimplemented directive"_en_US, dirName.data()));
   return false;
 }
 
@@ -615,7 +619,8 @@ bool Preprocessor::SkipDisabledConditionalCode(const std::string &dirName,
       }
     }
   }
-  prescanner->Complain("#"_en_US) += dirName + ": missing #endif";
+  prescanner->Complain(
+      MessageFormattedText("#%s: missing #endif"_en_US, dirName.data()));
   return false;
 }
 

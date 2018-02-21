@@ -92,6 +92,10 @@ Message &Prescanner::Complain(MessageFixedText text) {
   return messages_->Put({GetCurrentProvenance(), text});
 }
 
+Message &Prescanner::Complain(MessageFormattedText &&text) {
+  return messages_->Put({GetCurrentProvenance(), std::move(text)});
+}
+
 void Prescanner::NextLine() {
   void *vstart{static_cast<void *>(const_cast<char *>(lineStart_))};
   void *v{std::memchr(vstart, '\n', limit_ - lineStart_)};
@@ -436,7 +440,8 @@ bool Prescanner::IncludeLine(const char *p) {
     allSources->PopSearchPathDirectory();
   }
   if (included == nullptr) {
-    messages_->Put({provenance, "INCLUDE: "_en_US}) += error.str();
+    messages_->Put({provenance,
+        MessageFormattedText("INCLUDE: %s"_en_US, error.str().data())});
     anyFatalErrors_ = true;
     return true;
   }

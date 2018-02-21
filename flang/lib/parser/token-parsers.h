@@ -72,11 +72,7 @@ public:
       result.reset();
     }
     if (!result) {
-      if (good == '\n') {
-        state->PutMessage(at, "expected end of line"_en_US);
-      } else {
-        state->PutMessage(at, "expected '"_en_US) += std::string{good} + '\'';
-      }
+      state->PutMessage(at, MessageExpectedText{good});
     }
     return {result};
   }
@@ -103,7 +99,7 @@ public:
   using resultType = Success;
   constexpr TokenStringMatch(const TokenStringMatch &) = default;
   constexpr TokenStringMatch(const char *str, size_t n)
-    : str_{str}, length_{n} {}
+    : str_{str}, bytes_{n} {}
   constexpr TokenStringMatch(const char *str) : str_{str} {}
   std::optional<Success> Parse(ParseState *state) const {
     auto at = state->GetLocation();
@@ -112,10 +108,10 @@ public:
     }
     const char *p{str_};
     std::optional<char> ch;  // initially empty
-    for (size_t j{0}; j < length_ && *p != '\0'; ++j, ++p) {
+    for (size_t j{0}; j < bytes_ && *p != '\0'; ++j, ++p) {
       const auto spaceSkipping{*p == ' '};
       if (spaceSkipping) {
-        if (j + 1 == length_ || p[1] == ' ' || p[1] == '\0') {
+        if (j + 1 == bytes_ || p[1] == ' ' || p[1] == '\0') {
           continue;  // redundant; ignore
         }
       }
@@ -133,7 +129,7 @@ public:
       } else if (*ch == tolower(*p)) {
         ch.reset();
       } else {
-        (state->PutMessage(at, "expected '"_en_US) += str_) += '\'';
+        state->PutMessage(at, MessageExpectedText{str_, bytes_});
         return {};
       }
     }
@@ -142,7 +138,7 @@ public:
 
 private:
   const char *const str_;
-  const size_t length_{std::numeric_limits<size_t>::max()};
+  const size_t bytes_{std::numeric_limits<size_t>::max()};
 };
 
 constexpr TokenStringMatch operator""_tok(const char str[], size_t n) {

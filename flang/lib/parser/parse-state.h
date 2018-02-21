@@ -127,11 +127,29 @@ public:
   }
 
   Message &PutMessage(MessageFixedText t) { return PutMessage(p_, t); }
+  Message &PutMessage(MessageFormattedText &&t) {
+    return PutMessage(p_, std::move(t));
+  }
+  Message &PutMessage(MessageExpectedText &&t) {
+    return PutMessage(p_, std::move(t));
+  }
   Message &PutMessage(const char *at, MessageFixedText t) {
     return PutMessage(GetProvenance(at), t);
   }
+  Message &PutMessage(const char *at, MessageFormattedText &&t) {
+    return PutMessage(GetProvenance(at), std::move(t));
+  }
+  Message &PutMessage(const char *at, MessageExpectedText &&t) {
+    return PutMessage(GetProvenance(at), std::move(t));
+  }
   Message &PutMessage(Provenance at, MessageFixedText t) {
     return messages_.Put(Message{at, t, context_});
+  }
+  Message &PutMessage(Provenance at, MessageFormattedText &&t) {
+    return messages_.Put(Message{at, std::move(t), context_});
+  }
+  Message &PutMessage(Provenance at, MessageExpectedText &&t) {
+    return messages_.Put(Message{at, std::move(t), context_});
   }
 
   bool IsAtEnd() const { return p_ >= limit_; }

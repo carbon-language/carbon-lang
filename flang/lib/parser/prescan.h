@@ -50,6 +50,7 @@ public:
   std::optional<TokenSequence> NextTokenizedLine();
   Provenance GetCurrentProvenance() const { return GetProvenance(at_); }
   Message &Complain(MessageFixedText);
+  Message &Complain(MessageFormattedText &&);
 
 private:
   void BeginSourceLine(const char *at) {
