@@ -37,9 +37,7 @@ namespace orc {
 
 class RTDyldObjectLinkingLayerBase {
 public:
-
-  using ObjectPtr =
-    std::shared_ptr<object::OwningBinary<object::ObjectFile>>;
+  using ObjectPtr = std::unique_ptr<MemoryBuffer>;
 
 protected:
 
@@ -95,17 +93,20 @@ public:
   using RTDyldObjectLinkingLayerBase::ObjectPtr;
 
   /// @brief Functor for receiving object-loaded notifications.
-  using NotifyLoadedFtor = std::function<void(
-      VModuleKey, const ObjectPtr &Obj, const RuntimeDyld::LoadedObjectInfo &)>;
+  using NotifyLoadedFtor =
+      std::function<void(VModuleKey, const object::ObjectFile &Obj,
+                         const RuntimeDyld::LoadedObjectInfo &)>;
 
   /// @brief Functor for receiving finalization notifications.
   using NotifyFinalizedFtor = std::function<void(VModuleKey)>;
 
 private:
+  using OwnedObject = object::OwningBinary<object::ObjectFile>;
+
   template <typename MemoryManagerPtrT, typename FinalizerFtor>
   class ConcreteLinkedObject : public LinkedObject {
   public:
-    ConcreteLinkedObject(ExecutionSession &ES, ObjectPtr Obj,
+    ConcreteLinkedObject(ExecutionSession &ES, OwnedObject Obj,
                          MemoryManagerPtrT MemMgr,
                          std::shared_ptr<SymbolResolver> Resolver,
                          FinalizerFtor Finalizer, bool ProcessAllSections)
@@ -156,9 +157,8 @@ private:
     }
 
   private:
-
-    void buildInitialSymbolTable(const ObjectPtr &Obj) {
-      for (auto &Symbol : Obj->getBinary()->symbols()) {
+    void buildInitialSymbolTable(const OwnedObject &Obj) {
+      for (auto &Symbol : Obj.getBinary()->symbols()) {
         if (Symbol.getFlags() & object::SymbolRef::SF_Undefined)
           continue;
         Expected<StringRef> SymbolName = Symbol.getName();
@@ -181,7 +181,7 @@ private:
     // Contains the information needed prior to finalization: the object files,
     // memory manager, resolver, and flags needed for RuntimeDyld.
     struct PreFinalizeContents {
-      PreFinalizeContents(ExecutionSession &ES, ObjectPtr Obj,
+      PreFinalizeContents(ExecutionSession &ES, OwnedObject Obj,
                           std::shared_ptr<SymbolResolver> Resolver,
                           FinalizerFtor Finalizer, bool ProcessAllSections)
           : ES(ES), Obj(std::move(Obj)), Resolver(std::move(Resolver)),
@@ -189,7 +189,7 @@ private:
             ProcessAllSections(ProcessAllSections) {}
 
       ExecutionSession &ES;
-      ObjectPtr Obj;
+      OwnedObject Obj;
       std::shared_ptr<SymbolResolver> Resolver;
       FinalizerFtor Finalizer;
       bool ProcessAllSections;
@@ -202,7 +202,7 @@ private:
 
   template <typename MemoryManagerPtrT, typename FinalizerFtor>
   std::unique_ptr<ConcreteLinkedObject<MemoryManagerPtrT, FinalizerFtor>>
-  createLinkedObject(ExecutionSession &ES, ObjectPtr Obj,
+  createLinkedObject(ExecutionSession &ES, OwnedObject Obj,
                      MemoryManagerPtrT MemMgr,
                      std::shared_ptr<SymbolResolver> Resolver,
                      FinalizerFtor Finalizer, bool ProcessAllSections) {
@@ -242,16 +242,22 @@ public:
   }
 
   /// @brief Add an object to the JIT.
-  Error addObject(VModuleKey K, ObjectPtr Obj) {
-    auto Finalizer = [&, K](RuntimeDyld &RTDyld, const ObjectPtr &ObjToLoad,
+  Error addObject(VModuleKey K, ObjectPtr ObjBuffer) {
+
+    auto Obj =
+        object::ObjectFile::createObjectFile(ObjBuffer->getMemBufferRef());
+    if (!Obj)
+      return Obj.takeError();
+
+    auto Finalizer = [&, K](RuntimeDyld &RTDyld, const OwnedObject &ObjToLoad,
                             std::function<void()> LOSHandleLoad) -> Error {
       std::unique_ptr<RuntimeDyld::LoadedObjectInfo> Info =
-        RTDyld.loadObject(*ObjToLoad->getBinary());
+          RTDyld.loadObject(*ObjToLoad.getBinary());
 
       LOSHandleLoad();
 
       if (this->NotifyLoaded)
-        this->NotifyLoaded(K, ObjToLoad, *Info);
+        this->NotifyLoaded(K, *ObjToLoad.getBinary(), *Info);
 
       RTDyld.finalizeWithMemoryManagerLocking();
 
@@ -270,8 +276,9 @@ public:
     auto R = GetResources(K);
 
     LinkedObjects[K] = createLinkedObject(
-        ES, std::move(Obj), std::move(R.MemMgr), std::move(R.Resolver),
-        std::move(Finalizer), ProcessAllSections);
+        ES, OwnedObject(std::move(*Obj), std::move(ObjBuffer)),
+        std::move(R.MemMgr), std::move(R.Resolver), std::move(Finalizer),
+        ProcessAllSections);
 
     return Error::success();
   }
