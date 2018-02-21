@@ -131,7 +131,6 @@ private:
   std::vector<OutputSection *> OutputSections;
 
   std::unique_ptr<FileOutputBuffer> Buffer;
-  std::unique_ptr<SyntheticFunction> CtorFunction;
   std::string CtorFunctionBody;
 
   std::vector<OutputSegment *> Segments;
@@ -852,10 +851,10 @@ void Writer::createCtorFunction() {
   ArrayRef<uint8_t> BodyArray(
       reinterpret_cast<const uint8_t *>(CtorFunctionBody.data()),
       CtorFunctionBody.size());
-  CtorFunction = llvm::make_unique<SyntheticFunction>(
-      Signature, BodyArray, WasmSym::CallCtors->getName());
-  CtorFunction->setOutputIndex(FunctionIndex);
-  InputFunctions.emplace_back(CtorFunction.get());
+  SyntheticFunction *F = make<SyntheticFunction>(Signature, BodyArray,
+                                                 WasmSym::CallCtors->getName());
+  F->setOutputIndex(FunctionIndex);
+  InputFunctions.emplace_back(F);
 }
 
 // Populate InitFunctions vector with init functions from all input objects.
