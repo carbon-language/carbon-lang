@@ -103,16 +103,16 @@ public:
 private:
   using OwnedObject = object::OwningBinary<object::ObjectFile>;
 
-  template <typename MemoryManagerPtrT, typename FinalizerFtor>
+  template <typename MemoryManagerPtrT>
   class ConcreteLinkedObject : public LinkedObject {
   public:
-    ConcreteLinkedObject(ExecutionSession &ES, OwnedObject Obj,
-                         MemoryManagerPtrT MemMgr,
+    ConcreteLinkedObject(RTDyldObjectLinkingLayer &Parent, VModuleKey K,
+                         OwnedObject Obj, MemoryManagerPtrT MemMgr,
                          std::shared_ptr<SymbolResolver> Resolver,
-                         FinalizerFtor Finalizer, bool ProcessAllSections)
+                         bool ProcessAllSections)
         : MemMgr(std::move(MemMgr)),
           PFC(llvm::make_unique<PreFinalizeContents>(
-              ES, std::move(Obj), std::move(Resolver), std::move(Finalizer),
+              Parent, std::move(K), std::move(Obj), std::move(Resolver),
               ProcessAllSections)) {
       buildInitialSymbolTable(PFC->Obj);
     }
@@ -124,18 +124,32 @@ private:
     Error finalize() override {
       assert(PFC && "mapSectionAddress called on finalized LinkedObject");
 
-      JITSymbolResolverAdapter ResolverAdapter(PFC->ES, *PFC->Resolver);
-      RuntimeDyld RTDyld(*MemMgr, ResolverAdapter);
-      RTDyld.setProcessAllSections(PFC->ProcessAllSections);
-      PFC->RTDyld = &RTDyld;
+      JITSymbolResolverAdapter ResolverAdapter(PFC->Parent.ES, *PFC->Resolver);
+      PFC->RTDyld = llvm::make_unique<RuntimeDyld>(*MemMgr, ResolverAdapter);
+      PFC->RTDyld->setProcessAllSections(PFC->ProcessAllSections);
 
-      this->Finalized = true;
-      auto Err = PFC->Finalizer(RTDyld, std::move(PFC->Obj),
-                                [&]() { this->updateSymbolTable(RTDyld); });
+      Finalized = true;
+
+      std::unique_ptr<RuntimeDyld::LoadedObjectInfo> Info =
+          PFC->RTDyld->loadObject(*PFC->Obj.getBinary());
+
+      updateSymbolTable(*PFC->RTDyld);
+
+      if (PFC->Parent.NotifyLoaded)
+        PFC->Parent.NotifyLoaded(PFC->K, *PFC->Obj.getBinary(), *Info);
+
+      PFC->RTDyld->finalizeWithMemoryManagerLocking();
+
+      if (PFC->RTDyld->hasError())
+        return make_error<StringError>(PFC->RTDyld->getErrorString(),
+                                       inconvertibleErrorCode());
+
+      if (PFC->Parent.NotifyFinalized)
+        PFC->Parent.NotifyFinalized(PFC->K);
 
       // Release resources.
       PFC = nullptr;
-      return Err;
+      return Error::success();
     }
 
     JITSymbol::GetAddressFtor getSymbolMaterializer(std::string Name) override {
@@ -181,34 +195,35 @@ private:
     // Contains the information needed prior to finalization: the object files,
     // memory manager, resolver, and flags needed for RuntimeDyld.
     struct PreFinalizeContents {
-      PreFinalizeContents(ExecutionSession &ES, OwnedObject Obj,
+      PreFinalizeContents(RTDyldObjectLinkingLayer &Parent, VModuleKey K,
+                          OwnedObject Obj,
                           std::shared_ptr<SymbolResolver> Resolver,
-                          FinalizerFtor Finalizer, bool ProcessAllSections)
-          : ES(ES), Obj(std::move(Obj)), Resolver(std::move(Resolver)),
-            Finalizer(std::move(Finalizer)),
+                          bool ProcessAllSections)
+          : Parent(Parent), K(std::move(K)), Obj(std::move(Obj)),
+            Resolver(std::move(Resolver)),
             ProcessAllSections(ProcessAllSections) {}
 
-      ExecutionSession &ES;
+      RTDyldObjectLinkingLayer &Parent;
+      VModuleKey K;
       OwnedObject Obj;
       std::shared_ptr<SymbolResolver> Resolver;
-      FinalizerFtor Finalizer;
       bool ProcessAllSections;
-      RuntimeDyld *RTDyld;
+      std::unique_ptr<RuntimeDyld> RTDyld;
     };
 
     MemoryManagerPtrT MemMgr;
     std::unique_ptr<PreFinalizeContents> PFC;
   };
 
-  template <typename MemoryManagerPtrT, typename FinalizerFtor>
-  std::unique_ptr<ConcreteLinkedObject<MemoryManagerPtrT, FinalizerFtor>>
-  createLinkedObject(ExecutionSession &ES, OwnedObject Obj,
-                     MemoryManagerPtrT MemMgr,
+  template <typename MemoryManagerPtrT>
+  std::unique_ptr<ConcreteLinkedObject<MemoryManagerPtrT>>
+  createLinkedObject(RTDyldObjectLinkingLayer &Parent, VModuleKey K,
+                     OwnedObject Obj, MemoryManagerPtrT MemMgr,
                      std::shared_ptr<SymbolResolver> Resolver,
-                     FinalizerFtor Finalizer, bool ProcessAllSections) {
-    using LOS = ConcreteLinkedObject<MemoryManagerPtrT, FinalizerFtor>;
-    return llvm::make_unique<LOS>(ES, std::move(Obj), std::move(MemMgr),
-                                  std::move(Resolver), std::move(Finalizer),
+                     bool ProcessAllSections) {
+    using LOS = ConcreteLinkedObject<MemoryManagerPtrT>;
+    return llvm::make_unique<LOS>(Parent, std::move(K), std::move(Obj),
+                                  std::move(MemMgr), std::move(Resolver),
                                   ProcessAllSections);
   }
 
@@ -249,36 +264,13 @@ public:
     if (!Obj)
       return Obj.takeError();
 
-    auto Finalizer = [&, K](RuntimeDyld &RTDyld, const OwnedObject &ObjToLoad,
-                            std::function<void()> LOSHandleLoad) -> Error {
-      std::unique_ptr<RuntimeDyld::LoadedObjectInfo> Info =
-          RTDyld.loadObject(*ObjToLoad.getBinary());
-
-      LOSHandleLoad();
-
-      if (this->NotifyLoaded)
-        this->NotifyLoaded(K, *ObjToLoad.getBinary(), *Info);
-
-      RTDyld.finalizeWithMemoryManagerLocking();
-
-      if (RTDyld.hasError())
-        return make_error<StringError>(RTDyld.getErrorString(),
-                                       inconvertibleErrorCode());
-
-      if (this->NotifyFinalized)
-        this->NotifyFinalized(K);
-
-      return Error::success();
-    };
-
     assert(!LinkedObjects.count(K) && "VModuleKey already in use");
 
     auto R = GetResources(K);
 
     LinkedObjects[K] = createLinkedObject(
-        ES, OwnedObject(std::move(*Obj), std::move(ObjBuffer)),
-        std::move(R.MemMgr), std::move(R.Resolver), std::move(Finalizer),
-        ProcessAllSections);
+        *this, K, OwnedObject(std::move(*Obj), std::move(ObjBuffer)),
+        std::move(R.MemMgr), std::move(R.Resolver), ProcessAllSections);
 
     return Error::success();
   }
