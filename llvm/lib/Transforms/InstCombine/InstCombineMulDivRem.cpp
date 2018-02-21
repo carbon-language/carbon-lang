@@ -1316,21 +1316,30 @@ static Instruction *foldFDivConstantDivisor(BinaryOperator &I) {
       Instruction::FMul, I.getOperand(0), RecipC, &I);
 }
 
-/// Try to reassociate C / X expressions where X includes another constant.
+/// Remove negation and try to reassociate constant math.
 static Instruction *foldFDivConstantDividend(BinaryOperator &I) {
-  Constant *C1;
-  if (!I.hasAllowReassoc() || !I.hasAllowReciprocal() ||
-      !match(I.getOperand(0), m_Constant(C1)))
+  Constant *C;
+  if (!match(I.getOperand(0), m_Constant(C)))
     return nullptr;
 
+  // C / -X --> -C / X
   Value *X;
+  if (match(I.getOperand(1), m_FNeg(m_Value(X)))) {
+    return BinaryOperator::CreateWithCopiedFlags(
+        Instruction::FDiv, ConstantExpr::getFNeg(C), X, &I);
+  }
+
+  if (!I.hasAllowReassoc() || !I.hasAllowReciprocal())
+    return nullptr;
+
+  // Try to reassociate C / X expressions where X includes another constant.
   Constant *C2, *NewC = nullptr;
   if (match(I.getOperand(1), m_FMul(m_Value(X), m_Constant(C2)))) {
-    // C1 / (X * C2) --> (C1 / C2) / X
-    NewC = ConstantExpr::getFDiv(C1, C2);
+    // C / (X * C2) --> (C / C2) / X
+    NewC = ConstantExpr::getFDiv(C, C2);
   } else if (match(I.getOperand(1), m_FDiv(m_Value(X), m_Constant(C2)))) {
-    // C1 / (X / C2) --> (C1 * C2) / X
-    NewC = ConstantExpr::getFMul(C1, C2);
+    // C / (X / C2) --> (C * C2) / X
+    NewC = ConstantExpr::getFMul(C, C2);
   }
   // Disallow denormal constants because we don't know what would happen
   // on all targets.
