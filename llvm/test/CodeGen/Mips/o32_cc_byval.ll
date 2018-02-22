@@ -243,10 +243,9 @@ define void @f5(i64 %a0, %struct.S4* nocapture byval %a1) nounwind {
 ; CHECK-NEXT:    lw $7, 52($sp)
 ; CHECK-NEXT:    lw $6, 48($sp)
 ; CHECK-NEXT:    lw $5, 44($sp)
-; CHECK-NEXT:    lw $4, 40($sp)
 ; CHECK-NEXT:    lw $25, %call16(f6)($gp)
 ; CHECK-NEXT:    jalr $25
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    lw $4, 40($sp)
 ; CHECK-NEXT:    lw $ra, 28($sp) # 4-byte Folded Reload
 ; CHECK-NEXT:    jr $ra
 ; CHECK-NEXT:    addiu $sp, $sp, 32
