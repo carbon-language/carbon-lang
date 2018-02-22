@@ -484,9 +484,6 @@ void ODRHash::AddFunctionDecl(const FunctionDecl *Function) {
   if (!Function->hasBody()) return;
   if (!Function->getBody()) return;
 
-  // TODO: Fix hashing friend functions.
-  if (Function->getFriendObjectKind()) return;
-
   // Skip functions that are specializations or in specialization context.
   const DeclContext *DC = Function;
   while (DC) {
