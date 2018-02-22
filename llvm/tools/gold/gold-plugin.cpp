@@ -844,16 +844,8 @@ static void writeEmptyDistributedBuildOutputs(const std::string &ModulePath,
   }
 }
 
-/// gold informs us that all symbols have been read. At this point, we use
-/// get_symbols to see if any of our definitions have been overridden by a
-/// native object file. Then, perform optimization and codegen.
-static ld_plugin_status allSymbolsReadHook() {
-  if (Modules.empty())
-    return LDPS_OK;
-
-  if (unsigned NumOpts = options::extra.size())
-    cl::ParseCommandLineOptions(NumOpts, &options::extra[0]);
-
+/// Runs LTO and return a list of pairs <FileName, IsTemporary>.
+static std::vector<std::pair<SmallString<128>, bool>> runLTO() {
   // Map to own RAII objects that manage the file opening and releasing
   // interfaces with gold. This is needed only for ThinLTO mode, since
   // unlike regular LTO, where addModule will result in the opened file
@@ -905,14 +897,13 @@ static ld_plugin_status allSymbolsReadHook() {
   bool SaveTemps = !Filename.empty();
 
   size_t MaxTasks = Lto->getMaxTasks();
-  std::vector<uintptr_t> IsTemporary(MaxTasks);
-  std::vector<SmallString<128>> Filenames(MaxTasks);
+  std::vector<std::pair<SmallString<128>, bool>> Files(MaxTasks);
 
   auto AddStream =
       [&](size_t Task) -> std::unique_ptr<lto::NativeObjectStream> {
-    IsTemporary[Task] = !SaveTemps;
+    Files[Task].second = !SaveTemps;
     int FD = getOutputFileName(Filename, /* TempOutFile */ !SaveTemps,
-                               Filenames[Task], Task);
+                               Files[Task].first, Task);
     return llvm::make_unique<lto::NativeObjectStream>(
         llvm::make_unique<llvm::raw_fd_ostream>(FD, true));
   };
@@ -935,6 +926,21 @@ static ld_plugin_status allSymbolsReadHook() {
         writeEmptyDistributedBuildOutputs(Identifier.getKey(), OldPrefix,
                                           NewPrefix, /* SkipModule */ false);
 
+  return Files;
+}
+
+/// gold informs us that all symbols have been read. At this point, we use
+/// get_symbols to see if any of our definitions have been overridden by a
+/// native object file. Then, perform optimization and codegen.
+static ld_plugin_status allSymbolsReadHook() {
+  if (Modules.empty())
+    return LDPS_OK;
+
+  if (unsigned NumOpts = options::extra.size())
+    cl::ParseCommandLineOptions(NumOpts, &options::extra[0]);
+
+  std::vector<std::pair<SmallString<128>, bool>> Files = runLTO();
+
   if (options::TheOutputType == options::OT_DISABLE ||
       options::TheOutputType == options::OT_BC_ONLY)
     return LDPS_OK;
@@ -946,9 +952,9 @@ static ld_plugin_status allSymbolsReadHook() {
     exit(0);
   }
 
-  for (unsigned I = 0; I != MaxTasks; ++I)
-    if (!Filenames[I].empty())
-      recordFile(Filenames[I].str(), IsTemporary[I]);
+  for (const auto &F : Files)
+    if (!F.first.empty())
+      recordFile(F.first.str(), F.second);
 
   if (!options::extra_library_path.empty() &&
       set_extra_library_path(options::extra_library_path.c_str()) != LDPS_OK)
