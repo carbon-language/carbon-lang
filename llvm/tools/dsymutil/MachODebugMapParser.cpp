@@ -27,9 +27,8 @@ public:
         PathPrefix(PathPrefix), MainBinaryHolder(Verbose),
         CurrentObjectHolder(Verbose), CurrentDebugMapObject(nullptr) {}
 
-  /// \brief Parses and returns the DebugMaps of the input binary.
-  /// The binary contains multiple maps in case it is a universal
-  /// binary.
+  /// Parses and returns the DebugMaps of the input binary. The binary contains
+  /// multiple maps in case it is a universal binary.
   /// \returns an error in case the provided BinaryPath doesn't exist
   /// or isn't of a supported type.
   ErrorOr<std::vector<std::unique_ptr<DebugMap>>> parse();
