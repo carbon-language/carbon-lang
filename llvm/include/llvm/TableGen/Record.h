@@ -141,6 +141,8 @@ public:
   static CodeRecTy *get() { return &Shared; }
 
   std::string getAsString() const override { return "code"; }
+
+  bool typeIsConvertibleTo(const RecTy *RHS) const override;
 };
 
 /// 'int' - Represent an integer value of no particular size
@@ -176,6 +178,8 @@ public:
   static StringRecTy *get() { return &Shared; }
 
   std::string getAsString() const override;
+
+  bool typeIsConvertibleTo(const RecTy *RHS) const override;
 };
 
 /// 'list<Ty>' - Represent a list of values, all of which must be of

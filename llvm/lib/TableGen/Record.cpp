@@ -97,8 +97,18 @@ bool IntRecTy::typeIsConvertibleTo(const RecTy *RHS) const {
   return kind==BitRecTyKind || kind==BitsRecTyKind || kind==IntRecTyKind;
 }
 
+bool CodeRecTy::typeIsConvertibleTo(const RecTy *RHS) const {
+  RecTyKind Kind = RHS->getRecTyKind();
+  return Kind == CodeRecTyKind || Kind == StringRecTyKind;
+}
+
 std::string StringRecTy::getAsString() const {
   return "string";
+}
+
+bool StringRecTy::typeIsConvertibleTo(const RecTy *RHS) const {
+  RecTyKind Kind = RHS->getRecTyKind();
+  return Kind == StringRecTyKind || Kind == CodeRecTyKind;
 }
 
 std::string ListRecTy::getAsString() const {
@@ -433,6 +443,8 @@ StringInit *StringInit::get(StringRef V) {
 Init *StringInit::convertInitializerTo(RecTy *Ty) const {
   if (isa<StringRecTy>(Ty))
     return const_cast<StringInit *>(this);
+  if (isa<CodeRecTy>(Ty))
+    return CodeInit::get(getValue());
 
   return nullptr;
 }
@@ -440,6 +452,8 @@ Init *StringInit::convertInitializerTo(RecTy *Ty) const {
 Init *CodeInit::convertInitializerTo(RecTy *Ty) const {
   if (isa<CodeRecTy>(Ty))
     return const_cast<CodeInit *>(this);
+  if (isa<StringRecTy>(Ty))
+    return StringInit::get(getValue());
 
   return nullptr;
 }
