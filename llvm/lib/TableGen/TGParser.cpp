@@ -944,9 +944,7 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
 
     // If we are doing !listconcat, we should know the type by now
     if (OpTok == tgtok::XListConcat) {
-      if (VarInit *Arg0 = dyn_cast<VarInit>(InitList[0]))
-        Type = Arg0->getType();
-      else if (ListInit *Arg0 = dyn_cast<ListInit>(InitList[0]))
+      if (TypedInit *Arg0 = dyn_cast<TypedInit>(InitList[0]))
         Type = Arg0->getType();
       else {
         InitList[0]->print(errs());
