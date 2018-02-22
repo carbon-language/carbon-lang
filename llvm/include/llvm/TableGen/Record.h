@@ -1241,6 +1241,8 @@ public:
   bool setValue(Init *V) {
     if (V) {
       Value = V->convertInitializerTo(getType());
+      assert(!Value || !isa<TypedInit>(Value) ||
+             cast<TypedInit>(Value)->getType()->typeIsConvertibleTo(getType()));
       return Value == nullptr;
     }
     Value = nullptr;
