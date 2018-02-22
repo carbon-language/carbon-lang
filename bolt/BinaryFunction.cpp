@@ -3287,8 +3287,14 @@ void BinaryFunction::emitJumpTables(MCStreamer *Streamer) {
                                            ELF::SHF_ALLOC);
         ColdSection = HotSection;
       } else {
-        HotSection = BC.MOFI->getReadOnlySection();
-        ColdSection = BC.MOFI->getReadOnlyColdSection();
+        if (isSimple()) {
+          HotSection = BC.MOFI->getReadOnlySection();
+          ColdSection = BC.MOFI->getReadOnlyColdSection();
+        } else {
+          HotSection = hasProfile() ? BC.MOFI->getReadOnlySection()
+                                    : BC.MOFI->getReadOnlyColdSection();
+          ColdSection = HotSection;
+        }
       }
       JT.emit(Streamer, HotSection, ColdSection);
     }
