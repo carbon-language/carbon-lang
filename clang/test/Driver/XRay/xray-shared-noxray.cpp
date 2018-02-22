@@ -8,7 +8,7 @@
 // SHARED-NOT: {{clang_rt\.xray-}}
 // STATIC: {{clang_rt\.xray-}}
 //
-// REQUIRES: linux, enable_shared
+// REQUIRES: enable_shared
 int foo() { return 42; }
 
 #ifdef MAIN
