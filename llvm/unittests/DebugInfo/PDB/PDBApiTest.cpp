@@ -143,7 +143,7 @@ public:
   }
   std::unique_ptr<IPDBEnumSymbols>
   findChildrenByAddr(PDB_SymType Type, StringRef Name, PDB_NameSearchFlags Flags,
-                     uint32_t Section, uint32_t Offset) const {
+                     uint32_t Section, uint32_t Offset) const override {
     return nullptr;
   }
   std::unique_ptr<IPDBEnumSymbols>
