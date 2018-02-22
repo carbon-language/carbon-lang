@@ -334,3 +334,14 @@ define <4 x i32> @uge_smin(<4 x i32> %x) {
   ret <4 x i32> %r
 }
 
+; Make sure we can efficiently handle ne smin by turning into sgt.
+define <4 x i32> @ne_smin(<4 x i32> %x) {
+; CHECK-LABEL: ne_smin:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    pcmpgtd {{.*}}(%rip), %xmm0
+; CHECK-NEXT:    retq
+  %cmp = icmp ne <4 x i32> %x, <i32 -2147483648, i32 -2147483648, i32 -2147483648, i32 -2147483648>
+  %r = sext <4 x i1> %cmp to <4 x i32>
+  ret <4 x i32> %r
+}
+

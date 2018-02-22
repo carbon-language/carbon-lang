@@ -18099,6 +18099,15 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget &Subtarget,
     }
   }
 
+  // If this is a SETNE against the signed minimum value, change it to SETGT.
+  // Otherwise we use PCMPEQ+invert.
+  APInt ConstValue;
+  if (Cond == ISD::SETNE &&
+      ISD::isConstantSplatVector(Op1.getNode(), ConstValue),
+      ConstValue.isMinSignedValue()) {
+    Cond = ISD::SETGT;
+  }
+
   // If both operands are known non-negative, then an unsigned compare is the
   // same as a signed compare and there's no need to flip signbits.
   // TODO: We could check for more general simplifications here since we're
