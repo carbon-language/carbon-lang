@@ -1075,6 +1075,14 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
         return nullptr;
       }
       Type = MHSt->getType();
+      if (isa<ListRecTy>(Type)) {
+        TypedInit *RHSt = dyn_cast<TypedInit>(RHS);
+        if (!RHSt) {
+          TokError("could not get type of !foreach list elements");
+          return nullptr;
+        }
+        Type = RHSt->getType()->getListTy();
+      }
       break;
     }
     case tgtok::XSubst: {
