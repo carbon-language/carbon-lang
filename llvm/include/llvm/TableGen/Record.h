@@ -679,6 +679,9 @@ public:
     assert(i < NumValues && "List element index out of range!");
     return getTrailingObjects<Init *>()[i];
   }
+  RecTy *getElementType() const {
+    return cast<ListRecTy>(getType())->getElementType();
+  }
 
   Record *getElementAsRecord(unsigned i) const;
 
