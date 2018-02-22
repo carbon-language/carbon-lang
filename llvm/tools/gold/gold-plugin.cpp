@@ -736,7 +736,12 @@ static void getThinLTOOldAndNewPrefix(std::string &OldPrefix,
   std::tie(OldPrefix, NewPrefix) = PrefixReplace.split(';');
 }
 
-static std::unique_ptr<LTO> createLTO(IndexWriteCallback OnIndexWrite) {
+/// Creates instance of LTO.
+/// OnIndexWrite is callback to let caller know when LTO writes index files.
+/// LinkedObjectsFile is an output stream to write the list of object files for
+/// the final ThinLTO linking. Can be nullptr.
+static std::unique_ptr<LTO> createLTO(IndexWriteCallback OnIndexWrite,
+                                      raw_fd_ostream *LinkedObjectsFile) {
   Config Conf;
   ThinBackend Backend;
 
@@ -760,9 +765,9 @@ static std::unique_ptr<LTO> createLTO(IndexWriteCallback OnIndexWrite) {
   if (options::thinlto_index_only) {
     std::string OldPrefix, NewPrefix;
     getThinLTOOldAndNewPrefix(OldPrefix, NewPrefix);
-    Backend = createWriteIndexesThinBackend(
-        OldPrefix, NewPrefix, options::thinlto_emit_imports_files,
-        options::thinlto_linked_objects_file, OnIndexWrite);
+    Backend = createWriteIndexesThinBackend(OldPrefix, NewPrefix,
+                                            options::thinlto_emit_imports_files,
+                                            LinkedObjectsFile, OnIndexWrite);
   }
 
   Conf.OverrideTriple = options::triple;
@@ -844,6 +849,21 @@ static void writeEmptyDistributedBuildOutputs(const std::string &ModulePath,
   }
 }
 
+// Creates and returns output stream with a list of object files for final
+// linking of distributed ThinLTO.
+static std::unique_ptr<raw_fd_ostream> CreateLinkedObjectsFile() {
+  if (options::thinlto_linked_objects_file.empty())
+    return nullptr;
+  assert(options::thinlto_index_only);
+  std::error_code EC;
+  auto LinkedObjectsFile = llvm::make_unique<raw_fd_ostream>(
+      options::thinlto_linked_objects_file, EC, sys::fs::OpenFlags::F_None);
+  if (EC)
+    message(LDPL_FATAL, "Failed to create '%s': %s",
+            options::thinlto_linked_objects_file.c_str(), EC.message().c_str());
+  return LinkedObjectsFile;
+}
+
 /// Runs LTO and return a list of pairs <FileName, IsTemporary>.
 static std::vector<std::pair<SmallString<128>, bool>> runLTO() {
   // Map to own RAII objects that manage the file opening and releasing
@@ -856,10 +876,12 @@ static std::vector<std::pair<SmallString<128>, bool>> runLTO() {
   // Owns string objects and tells if index file was already created.
   StringMap<bool> ObjectToIndexFileState;
 
-  std::unique_ptr<LTO> Lto =
-      createLTO([&ObjectToIndexFileState](const std::string &Identifier) {
+  std::unique_ptr<raw_fd_ostream> LinkedObjects = CreateLinkedObjectsFile();
+  std::unique_ptr<LTO> Lto = createLTO(
+      [&ObjectToIndexFileState](const std::string &Identifier) {
         ObjectToIndexFileState[Identifier] = true;
-      });
+      },
+      LinkedObjects.get());
 
   std::string OldPrefix, NewPrefix;
   if (options::thinlto_index_only)
