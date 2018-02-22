@@ -104,7 +104,7 @@ bool TGParser::SetValue(Record *CurRec, SMLoc Loc, Init *ValName,
   if (BitList.empty())
     if (VarInit *VI = dyn_cast<VarInit>(V))
       if (VI->getNameInit() == ValName && !AllowSelfAssignment)
-        return true;
+        return Error(Loc, "Recursion / self-assignment forbidden");
 
   // If we are assigning to a subset of the bits in the value... then we must be
   // assigning to a field of BitsRecTy, which must have a BitsInit
@@ -147,10 +147,12 @@ bool TGParser::SetValue(Record *CurRec, SMLoc Loc, Init *ValName,
     if (BitsInit *BI = dyn_cast<BitsInit>(V))
       InitType = (Twine("' of type bit initializer with length ") +
                   Twine(BI->getNumBits())).str();
+    else if (TypedInit *TI = dyn_cast<TypedInit>(V))
+      InitType = (Twine("' of type '") + TI->getType()->getAsString()).str();
     return Error(Loc, "Value '" + ValName->getAsUnquotedString() +
-                 "' of type '" + RV->getType()->getAsString() +
-                 "' is incompatible with initializer '" + V->getAsString() +
-                 InitType + "'");
+                          "' of type '" + RV->getType()->getAsString() +
+                          "' is incompatible with initializer '" +
+                          V->getAsString() + InitType + "'");
   }
   return false;
 }
@@ -1396,7 +1398,9 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
       // Make sure the deduced type is compatible with the given type
       if (GivenListTy) {
         if (!EltTy->typeIsConvertibleTo(GivenListTy->getElementType())) {
-          TokError("Element type mismatch for list");
+          TokError(Twine("Element type mismatch for list: element type '") +
+                   EltTy->getAsString() + "' not convertible to '" +
+                   GivenListTy->getElementType()->getAsString());
           return nullptr;
         }
       }
