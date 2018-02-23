@@ -57,6 +57,8 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
 
   // Set up the register classes.
   addRegisterClass(MVT::i64, &BPF::GPRRegClass);
+  if (STI.getHasAlu32())
+    addRegisterClass(MVT::i32, &BPF::GPR32RegClass);
 
   // Compute derived properties from the register classes
   computeRegisterProperties(STI.getRegisterInfo());
