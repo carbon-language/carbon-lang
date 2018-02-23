@@ -1965,6 +1965,14 @@ multiclass avx512_blendmask_rmb<bits<8> opc, string OpcodeStr, OpndItins itins,
       [], itins.rm>, EVEX_4V, EVEX_K, EVEX_B, EVEX_CD8<_.EltSize, CD8VF>,
       Sched<[itins.Sched.Folded, ReadAfterLd]>;
 
+  def rmbkz : AVX5128I<opc, MRMSrcMem, (outs _.RC:$dst),
+      (ins _.KRCWM:$mask, _.RC:$src1, _.ScalarMemOp:$src2),
+       !strconcat(OpcodeStr,
+            "\t{${src2}", _.BroadcastStr, ", $src1, $dst {${mask}} {z}|",
+            "$dst {${mask}} {z}, $src1, ${src2}", _.BroadcastStr, "}"),
+      [], itins.rm>, EVEX_4V, EVEX_KZ, EVEX_B, EVEX_CD8<_.EltSize, CD8VF>,
+      Sched<[itins.Sched.Folded, ReadAfterLd]>;
+
   def rmb : AVX5128I<opc, MRMSrcMem, (outs _.RC:$dst),
       (ins _.RC:$src1, _.ScalarMemOp:$src2),
        !strconcat(OpcodeStr,
