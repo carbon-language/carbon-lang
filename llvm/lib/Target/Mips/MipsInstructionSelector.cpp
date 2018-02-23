@@ -38,8 +38,8 @@ private:
 MipsInstructionSelector::MipsInstructionSelector(
     const MipsTargetMachine &TM, const MipsSubtarget &STI,
     const MipsRegisterBankInfo &RBI)
-    : InstructionSelector(), TM(TM), STI(STI), TII(*STI.getInstrInfo()),
-      TRI(*STI.getRegisterInfo()), RBI(RBI) {}
+    : InstructionSelector(), TII(*STI.getInstrInfo()),
+      TRI(*STI.getRegisterInfo()) {}
 
 bool MipsInstructionSelector::select(MachineInstr &I,
                                      CodeGenCoverage &CoverageInfo) const {
