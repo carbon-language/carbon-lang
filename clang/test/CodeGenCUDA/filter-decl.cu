@@ -21,7 +21,7 @@ __device__ char devicedata[256];
 // CHECK-DEVICE: shareddata = global
 __shared__ char shareddata[256];
 
-// CHECK-HOST: hostdata = global
+// CHECK-HOST: hostdata = {{(dso_local )?}}global
 // CHECK-DEVICE-NOT: hostdata = global
 char hostdata[256];
 
