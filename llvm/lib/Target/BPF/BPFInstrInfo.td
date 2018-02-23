@@ -478,6 +478,36 @@ let usesCustomInserter = 1, isCodeGenOnly = 1 in {
                       "# Select PSEUDO $dst = $lhs $imm $rhs ? $src : $src2",
                       [(set i64:$dst,
                        (BPFselectcc i64:$lhs, (i64immSExt32:$rhs), (i64 imm:$imm), i64:$src, i64:$src2))]>;
+  def Select_64_32 : Pseudo<(outs GPR32:$dst),
+                      (ins GPR:$lhs, GPR:$rhs, i64imm:$imm, GPR32:$src, GPR32:$src2),
+                      "# Select PSEUDO $dst = $lhs $imm $rhs ? $src : $src2",
+                      [(set i32:$dst,
+                       (BPFselectcc i64:$lhs, i64:$rhs, (i64 imm:$imm), i32:$src, i32:$src2))]>;
+  def Select_Ri_64_32 : Pseudo<(outs GPR32:$dst),
+                      (ins GPR:$lhs, i64imm:$rhs, i64imm:$imm, GPR32:$src, GPR32:$src2),
+                      "# Select PSEUDO $dst = $lhs $imm $rhs ? $src : $src2",
+                      [(set i32:$dst,
+                       (BPFselectcc i64:$lhs, (i64immSExt32:$rhs), (i64 imm:$imm), i32:$src, i32:$src2))]>;
+  def Select_32 : Pseudo<(outs GPR32:$dst),
+                      (ins GPR32:$lhs, GPR32:$rhs, i32imm:$imm, GPR32:$src, GPR32:$src2),
+                      "# Select PSEUDO $dst = $lhs $imm $rhs ? $src : $src2",
+                      [(set i32:$dst,
+                       (BPFselectcc i32:$lhs, i32:$rhs, (i32 imm:$imm), i32:$src, i32:$src2))]>;
+  def Select_Ri_32 : Pseudo<(outs GPR32:$dst),
+                      (ins GPR32:$lhs, i32imm:$rhs, i32imm:$imm, GPR32:$src, GPR32:$src2),
+                      "# Select PSEUDO $dst = $lhs $imm $rhs ? $src : $src2",
+                      [(set i32:$dst,
+                       (BPFselectcc i32:$lhs, (i32immSExt32:$rhs), (i32 imm:$imm), i32:$src, i32:$src2))]>;
+  def Select_32_64 : Pseudo<(outs GPR:$dst),
+                      (ins GPR32:$lhs, GPR32:$rhs, i32imm:$imm, GPR:$src, GPR:$src2),
+                      "# Select PSEUDO $dst = $lhs $imm $rhs ? $src : $src2",
+                      [(set i64:$dst,
+                       (BPFselectcc i32:$lhs, i32:$rhs, (i32 imm:$imm), i64:$src, i64:$src2))]>;
+  def Select_Ri_32_64 : Pseudo<(outs GPR:$dst),
+                      (ins GPR32:$lhs, i32imm:$rhs, i32imm:$imm, GPR:$src, GPR:$src2),
+                      "# Select PSEUDO $dst = $lhs $imm $rhs ? $src : $src2",
+                      [(set i64:$dst,
+                       (BPFselectcc i32:$lhs, (i32immSExt32:$rhs), (i32 imm:$imm), i64:$src, i64:$src2))]>;
 }
 
 // load 64-bit global addr into register

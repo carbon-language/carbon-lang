@@ -67,9 +67,6 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::BR_JT, MVT::Other, Expand);
   setOperationAction(ISD::BRIND, MVT::Other, Expand);
   setOperationAction(ISD::BRCOND, MVT::Other, Expand);
-  setOperationAction(ISD::SETCC, MVT::i64, Expand);
-  setOperationAction(ISD::SELECT, MVT::i64, Expand);
-  setOperationAction(ISD::SELECT_CC, MVT::i64, Custom);
 
   setOperationAction(ISD::GlobalAddress, MVT::i64, Custom);
 
@@ -99,10 +96,16 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::SRL_PARTS, VT, Expand);
     setOperationAction(ISD::SRA_PARTS, VT, Expand);
     setOperationAction(ISD::CTPOP, VT, Expand);
+
+    setOperationAction(ISD::SETCC, VT, Expand);
+    setOperationAction(ISD::SELECT, VT, Expand);
+    setOperationAction(ISD::SELECT_CC, VT, Custom);
   }
 
-  if (STI.getHasAlu32())
+  if (STI.getHasAlu32()) {
     setOperationAction(ISD::BSWAP, MVT::i32, Expand);
+    setOperationAction(ISD::BR_CC, MVT::i32, Promote);
+  }
 
   setOperationAction(ISD::CTTZ, MVT::i64, Custom);
   setOperationAction(ISD::CTLZ, MVT::i64, Custom);
@@ -496,7 +499,7 @@ SDValue BPFTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
   if (!getHasJmpExt())
     NegateCC(LHS, RHS, CC);
 
-  SDValue TargetCC = DAG.getConstant(CC, DL, MVT::i64);
+  SDValue TargetCC = DAG.getConstant(CC, DL, LHS.getValueType());
 
   SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Glue);
 
@@ -539,14 +542,53 @@ SDValue BPFTargetLowering::LowerGlobalAddress(SDValue Op,
   return DAG.getNode(BPFISD::Wrapper, DL, MVT::i64, GA);
 }
 
+unsigned
+BPFTargetLowering::EmitSubregExt(MachineInstr &MI, MachineBasicBlock *BB,
+                                 unsigned Reg, bool isSigned) const {
+  const TargetInstrInfo &TII = *BB->getParent()->getSubtarget().getInstrInfo();
+  const TargetRegisterClass *RC = getRegClassFor(MVT::i64);
+  int RShiftOp = isSigned ? BPF::SRA_ri : BPF::SRL_ri;
+  MachineFunction *F = BB->getParent();
+  DebugLoc DL = MI.getDebugLoc();
+
+  MachineRegisterInfo &RegInfo = F->getRegInfo();
+  unsigned PromotedReg0 = RegInfo.createVirtualRegister(RC);
+  unsigned PromotedReg1 = RegInfo.createVirtualRegister(RC);
+  unsigned PromotedReg2 = RegInfo.createVirtualRegister(RC);
+  BuildMI(BB, DL, TII.get(BPF::MOV_32_64), PromotedReg0).addReg(Reg);
+  BuildMI(BB, DL, TII.get(BPF::SLL_ri), PromotedReg1)
+    .addReg(PromotedReg0).addImm(32);
+  BuildMI(BB, DL, TII.get(RShiftOp), PromotedReg2)
+    .addReg(PromotedReg1).addImm(32);
+
+  return PromotedReg2;
+}
+
 MachineBasicBlock *
 BPFTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
                                                MachineBasicBlock *BB) const {
   const TargetInstrInfo &TII = *BB->getParent()->getSubtarget().getInstrInfo();
   DebugLoc DL = MI.getDebugLoc();
-  bool isSelectOp = MI.getOpcode() == BPF::Select;
+  unsigned Opc = MI.getOpcode();
+  bool isSelectRROp = (Opc == BPF::Select ||
+                       Opc == BPF::Select_64_32 ||
+                       Opc == BPF::Select_32 ||
+                       Opc == BPF::Select_32_64);
 
-  assert((isSelectOp || MI.getOpcode() == BPF::Select_Ri) && "Unexpected instr type to insert");
+#ifndef NDEBUG
+  bool isSelectRIOp = (Opc == BPF::Select_Ri ||
+                       Opc == BPF::Select_Ri_64_32 ||
+                       Opc == BPF::Select_Ri_32 ||
+                       Opc == BPF::Select_Ri_32_64);
+
+
+  assert((isSelectRROp || isSelectRIOp) && "Unexpected instr type to insert");
+#endif
+
+  bool is32BitCmp = (Opc == BPF::Select_32 ||
+                     Opc == BPF::Select_32_64 ||
+                     Opc == BPF::Select_Ri_32 ||
+                     Opc == BPF::Select_Ri_32_64);
 
   // To "insert" a SELECT instruction, we actually have to insert the diamond
   // control-flow pattern.  The incoming instruction knows the destination vreg
@@ -577,56 +619,72 @@ BPFTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   BB->addSuccessor(Copy1MBB);
 
   // Insert Branch if Flag
-  unsigned LHS = MI.getOperand(1).getReg();
   int CC = MI.getOperand(3).getImm();
   int NewCC;
   switch (CC) {
   case ISD::SETGT:
-    NewCC = isSelectOp ? BPF::JSGT_rr : BPF::JSGT_ri;
+    NewCC = isSelectRROp ? BPF::JSGT_rr : BPF::JSGT_ri;
     break;
   case ISD::SETUGT:
-    NewCC = isSelectOp ? BPF::JUGT_rr : BPF::JUGT_ri;
+    NewCC = isSelectRROp ? BPF::JUGT_rr : BPF::JUGT_ri;
     break;
   case ISD::SETGE:
-    NewCC = isSelectOp ? BPF::JSGE_rr : BPF::JSGE_ri;
+    NewCC = isSelectRROp ? BPF::JSGE_rr : BPF::JSGE_ri;
     break;
   case ISD::SETUGE:
-    NewCC = isSelectOp ? BPF::JUGE_rr : BPF::JUGE_ri;
+    NewCC = isSelectRROp ? BPF::JUGE_rr : BPF::JUGE_ri;
     break;
   case ISD::SETEQ:
-    NewCC = isSelectOp ? BPF::JEQ_rr : BPF::JEQ_ri;
+    NewCC = isSelectRROp ? BPF::JEQ_rr : BPF::JEQ_ri;
     break;
   case ISD::SETNE:
-    NewCC = isSelectOp ? BPF::JNE_rr : BPF::JNE_ri;
+    NewCC = isSelectRROp ? BPF::JNE_rr : BPF::JNE_ri;
     break;
   case ISD::SETLT:
-    NewCC = isSelectOp ? BPF::JSLT_rr : BPF::JSLT_ri;
+    NewCC = isSelectRROp ? BPF::JSLT_rr : BPF::JSLT_ri;
     break;
   case ISD::SETULT:
-    NewCC = isSelectOp ? BPF::JULT_rr : BPF::JULT_ri;
+    NewCC = isSelectRROp ? BPF::JULT_rr : BPF::JULT_ri;
     break;
   case ISD::SETLE:
-    NewCC = isSelectOp ? BPF::JSLE_rr : BPF::JSLE_ri;
+    NewCC = isSelectRROp ? BPF::JSLE_rr : BPF::JSLE_ri;
     break;
   case ISD::SETULE:
-    NewCC = isSelectOp ? BPF::JULE_rr : BPF::JULE_ri;
+    NewCC = isSelectRROp ? BPF::JULE_rr : BPF::JULE_ri;
     break;
   default:
     report_fatal_error("unimplemented select CondCode " + Twine(CC));
   }
-  if (isSelectOp)
-    BuildMI(BB, DL, TII.get(NewCC))
-        .addReg(LHS)
-        .addReg(MI.getOperand(2).getReg())
-        .addMBB(Copy1MBB);
-  else {
+
+  unsigned LHS = MI.getOperand(1).getReg();
+  bool isSignedCmp = (CC == ISD::SETGT ||
+                      CC == ISD::SETGE ||
+                      CC == ISD::SETLT ||
+                      CC == ISD::SETLE);
+
+  // eBPF at the moment only has 64-bit comparison. Any 32-bit comparison need
+  // to be promoted, however if the 32-bit comparison operands are destination
+  // registers then they are implicitly zero-extended already, there is no
+  // need of explicit zero-extend sequence for them.
+  //
+  // We simply do extension for all situations in this method, but we will
+  // try to remove those unnecessary in BPFMIPeephole pass.
+  if (is32BitCmp)
+    LHS = EmitSubregExt(MI, BB, LHS, isSignedCmp);
+
+  if (isSelectRROp) {
+    unsigned RHS = MI.getOperand(2).getReg();
+
+    if (is32BitCmp)
+      RHS = EmitSubregExt(MI, BB, RHS, isSignedCmp);
+
+    BuildMI(BB, DL, TII.get(NewCC)).addReg(LHS).addReg(RHS).addMBB(Copy1MBB);
+  } else {
     int64_t imm32 = MI.getOperand(2).getImm();
     // sanity check before we build J*_ri instruction.
     assert (isInt<32>(imm32));
     BuildMI(BB, DL, TII.get(NewCC))
-        .addReg(LHS)
-        .addImm(imm32)
-        .addMBB(Copy1MBB);
+        .addReg(LHS).addImm(imm32).addMBB(Copy1MBB);
   }
 
   // Copy0MBB:
@@ -649,4 +707,9 @@ BPFTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
 
   MI.eraseFromParent(); // The pseudo instruction is gone now.
   return BB;
+}
+
+EVT BPFTargetLowering::getSetCCResultType(const DataLayout &, LLVMContext &,
+                                          EVT VT) const {
+  return getHasAlu32() ? MVT::i32 : MVT::i64;
 }

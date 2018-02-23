@@ -57,6 +57,9 @@ public:
   bool getHasAlu32() const { return HasAlu32; }
   bool getHasJmpExt() const { return HasJmpExt; }
 
+  EVT getSetCCResultType(const DataLayout &DL, LLVMContext &Context,
+                         EVT VT) const override;
+
 private:
   // Control Instruction Selection Features
   bool HasAlu32;
@@ -102,6 +105,9 @@ private:
                                          Type *Ty) const override {
     return true;
   }
+
+  unsigned EmitSubregExt(MachineInstr &MI, MachineBasicBlock *BB, unsigned Reg,
+                         bool isSigned) const;
 };
 }
 
