@@ -57,6 +57,8 @@ def u64imm   : Operand<i64> {
 
 def i64immSExt32 : PatLeaf<(i64 imm),
                 [{return isInt<32>(N->getSExtValue()); }]>;
+def i32immSExt32 : PatLeaf<(i32 imm),
+                [{return isInt<32>(N->getSExtValue()); }]>;
 
 // Addressing modes.
 def ADDRri : ComplexPattern<i64, 2, "SelectAddr", [], []>;
@@ -218,7 +220,7 @@ multiclass ALU<BPFArithOp Opc, string OpcodeStr, SDNode OpNode> {
                    (outs GPR32:$dst),
                    (ins GPR32:$src2, i32imm:$imm),
                    "$dst "#OpcodeStr#" $imm",
-                   [(set GPR32:$dst, (OpNode GPR32:$src2, i32:$imm))]>;
+                   [(set GPR32:$dst, (OpNode GPR32:$src2, i32immSExt32:$imm))]>;
 }
 
 let Constraints = "$dst = $src2" in {
@@ -292,7 +294,7 @@ def MOV_ri_32 : ALU_RI<BPF_ALU, BPF_MOV,
                     (outs GPR32:$dst),
                     (ins i32imm:$imm),
                     "$dst = $imm",
-                    [(set GPR32:$dst, (i32 i32:$imm))]>;
+                    [(set GPR32:$dst, (i32 i32immSExt32:$imm))]>;
 }
 
 def FI_ri
