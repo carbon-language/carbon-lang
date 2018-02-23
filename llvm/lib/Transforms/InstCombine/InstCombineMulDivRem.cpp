@@ -618,18 +618,10 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
     }
   }
 
-  if (Op0 == Op1) {
-    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Op0)) {
-      // fabs(X) * fabs(X) -> X * X
-      if (II->getIntrinsicID() == Intrinsic::fabs) {
-        Instruction *FMulVal = BinaryOperator::CreateFMul(II->getOperand(0),
-                                                          II->getOperand(0),
-                                                          I.getName());
-        FMulVal->copyFastMathFlags(&I);
-        return FMulVal;
-      }
-    }
-  }
+  // fabs(X) * fabs(X) -> X * X
+  Value *X, *Y;
+  if (Op0 == Op1 && match(Op0, m_Intrinsic<Intrinsic::fabs>(m_Value(X))))
+    return BinaryOperator::CreateFMulFMF(X, X, &I);
 
   // Under unsafe algebra do:
   // X * log2(0.5*Y) = X*log2(Y) - X
@@ -659,7 +651,6 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
   }
 
   // sqrt(X) * sqrt(Y) -> sqrt(X * Y)
-  Value *X, *Y;
   if (I.hasAllowReassoc() &&
       match(Op0, m_OneUse(m_Intrinsic<Intrinsic::sqrt>(m_Value(X)))) &&
       match(Op1, m_OneUse(m_Intrinsic<Intrinsic::sqrt>(m_Value(Y))))) {
