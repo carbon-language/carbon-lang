@@ -331,7 +331,7 @@ protected:
 private:
   static void deleteMe(DerivedUser *Self);
 
-  unsigned int OptimizedID = 0;
+  unsigned OptimizedID = INVALID_MEMORYACCESS_ID;
 };
 
 template <>
