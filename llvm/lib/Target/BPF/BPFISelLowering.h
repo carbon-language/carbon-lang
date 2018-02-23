@@ -60,6 +60,8 @@ public:
   EVT getSetCCResultType(const DataLayout &DL, LLVMContext &Context,
                          EVT VT) const override;
 
+  MVT getScalarShiftAmountTy(const DataLayout &, EVT) const override;
+
 private:
   // Control Instruction Selection Features
   bool HasAlu32;

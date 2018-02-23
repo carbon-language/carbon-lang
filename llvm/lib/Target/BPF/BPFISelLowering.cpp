@@ -713,3 +713,8 @@ EVT BPFTargetLowering::getSetCCResultType(const DataLayout &, LLVMContext &,
                                           EVT VT) const {
   return getHasAlu32() ? MVT::i32 : MVT::i64;
 }
+
+MVT BPFTargetLowering::getScalarShiftAmountTy(const DataLayout &DL,
+                                              EVT VT) const {
+  return (getHasAlu32() && VT == MVT::i32) ? MVT::i32 : MVT::i64;
+}
