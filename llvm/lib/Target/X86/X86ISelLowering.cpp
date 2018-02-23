@@ -1365,6 +1365,12 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationPromotedToType(ISD::LOAD,   VT, MVT::v8i64);
       setOperationPromotedToType(ISD::SELECT, VT, MVT::v8i64);
     }
+
+    // Need to custom split v32i16/v64i8 bitcasts.
+    if (!Subtarget.hasBWI()) {
+      setOperationAction(ISD::BITCAST, MVT::v32i16, Custom);
+      setOperationAction(ISD::BITCAST, MVT::v64i8,  Custom);
+    }
   }// has  AVX-512
 
   // This block controls legalization for operations that don't have
@@ -21779,8 +21785,9 @@ static SDValue LowerVectorIntUnary(SDValue Op, SelectionDAG &DAG) {
   // Extract the Lo/Hi vectors
   SDLoc dl(Op);
   SDValue Src = Op.getOperand(0);
+  unsigned SrcNumElems = Src.getSimpleValueType().getVectorNumElements();
   SDValue Lo = extractSubVector(Src, 0, DAG, dl, SizeInBits / 2);
-  SDValue Hi = extractSubVector(Src, NumElems / 2, DAG, dl, SizeInBits / 2);
+  SDValue Hi = extractSubVector(Src, SrcNumElems / 2, DAG, dl, SizeInBits / 2);
 
   MVT EltVT = VT.getVectorElementType();
   MVT NewVT = MVT::getVectorVT(EltVT, NumElems / 2);
@@ -23745,6 +23752,10 @@ static SDValue LowerBITCAST(SDValue Op, const X86Subtarget &Subtarget,
     return DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v64i1, Lo, Hi);
   }
 
+  // Custom splitting for BWI types when AVX512F is available but BWI isn't.
+  if ((SrcVT == MVT::v32i16 || SrcVT == MVT::v64i8) && DstVT.isVector())
+    return Lower512IntUnary(Op, DAG);
+
   if (SrcVT == MVT::v2i32 || SrcVT == MVT::v4i16 || SrcVT == MVT::v8i8 ||
       SrcVT == MVT::i64) {
     assert(Subtarget.hasSSE2() && "Requires at least SSE2!");
@@ -25129,6 +25140,14 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
                                DAG.getIntPtrConstant(32, dl));
       Hi = DAG.getBitcast(MVT::i32, Hi);
       SDValue Res = DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, Lo, Hi);
+      Results.push_back(Res);
+      return;
+    }
+
+    // Custom splitting for BWI types when AVX512F is available but BWI isn't.
+    if ((DstVT == MVT::v32i16 || DstVT == MVT::v64i8) &&
+        SrcVT.isVector() && isTypeLegal(SrcVT)) {
+      SDValue Res = Lower512IntUnary(SDValue(N, 0), DAG);
       Results.push_back(Res);
       return;
     }
