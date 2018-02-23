@@ -135,10 +135,6 @@ static Optional<std::string> findFile(StringRef Path1, const Twine &Path2) {
   return None;
 }
 
-static void printHelp(const char *Argv0) {
-  WasmOptTable().PrintHelp(outs(), Argv0, "LLVM Linker", false);
-}
-
 opt::InputArgList WasmOptTable::parse(ArrayRef<const char *> Argv) {
   SmallVector<const char *, 256> Vec(Argv.data(), Argv.data() + Argv.size());
 
@@ -229,7 +225,7 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
 
   // Handle --help
   if (Args.hasArg(OPT_help)) {
-    printHelp(ArgsArr[0]);
+    Parser.PrintHelp(outs(), ArgsArr[0], "LLVM Linker", false);
     return;
   }
 
