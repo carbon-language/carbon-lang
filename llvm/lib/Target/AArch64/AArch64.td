@@ -538,4 +538,5 @@ def AArch64 : Target {
   let InstructionSet = AArch64InstrInfo;
   let AssemblyParserVariants = [GenericAsmParserVariant, AppleAsmParserVariant];
   let AssemblyWriters = [GenericAsmWriter, AppleAsmWriter];
+  let AllowRegisterRenaming = 1;
 }

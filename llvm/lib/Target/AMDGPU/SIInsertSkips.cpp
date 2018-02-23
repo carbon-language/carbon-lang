@@ -278,11 +278,6 @@ void SIInsertSkips::kill(MachineInstr &MI) {
           .add(MI.getOperand(0))
           .addImm(0);  // omod
     }
-    // Clear isRenamable bit if new opcode requires it to be 0.
-    if (NewMI->hasExtraSrcRegAllocReq())
-      for (MachineOperand &NewMO : NewMI->uses())
-        if (NewMO.isReg() && NewMO.isUse())
-          NewMO.setIsRenamable(false);
     break;
   }
   case AMDGPU::SI_KILL_I1_TERMINATOR: {
