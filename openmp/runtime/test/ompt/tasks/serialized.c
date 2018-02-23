@@ -119,8 +119,8 @@ int main() {
   // CHECK-SAME: parallel_id=[[PARALLEL_ID]], task_id=[[IMPLICIT_TASK_ID]]
   // CHECK-SAME: exit_frame=[[NULL]], reenter_frame=[[NULL]]
   // CHECK: {{^}}[[MASTER_ID]]: ompt_event_barrier_end
-  // FIXME: parallel_id should be 0 because the region ended in the barrier!
-  // CHECK-SAME: parallel_id=[[PARALLEL_ID]], task_id=[[IMPLICIT_TASK_ID]]
+  // parallel_id is 0 because the region ended in the barrier!
+  // CHECK-SAME: parallel_id=0, task_id=[[IMPLICIT_TASK_ID]]
   // CHECK: {{^}}[[MASTER_ID]]: ompt_event_implicit_task_end
   // CHECK-SAME: parallel_id=0, task_id=[[IMPLICIT_TASK_ID]]
 
