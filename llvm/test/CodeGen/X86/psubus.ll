@@ -235,79 +235,28 @@ vector.ph:
 }
 
 define <16 x i16> @test8a(<16 x i16> %x) nounwind {
-; SSE2-LABEL: test8a:
-; SSE2:       # %bb.0: # %vector.ph
-; SSE2-NEXT:    movdqa {{.*#+}} xmm2 = [32768,32768,32768,32768,32768,32768,32768,32768]
-; SSE2-NEXT:    movdqa %xmm1, %xmm3
-; SSE2-NEXT:    pxor %xmm2, %xmm3
-; SSE2-NEXT:    pcmpgtw {{.*}}(%rip), %xmm3
-; SSE2-NEXT:    pxor %xmm0, %xmm2
-; SSE2-NEXT:    pcmpgtw {{.*}}(%rip), %xmm2
-; SSE2-NEXT:    paddw {{.*}}(%rip), %xmm1
-; SSE2-NEXT:    pand %xmm3, %xmm1
-; SSE2-NEXT:    paddw {{.*}}(%rip), %xmm0
-; SSE2-NEXT:    pand %xmm2, %xmm0
-; SSE2-NEXT:    retq
-;
-; SSSE3-LABEL: test8a:
-; SSSE3:       # %bb.0: # %vector.ph
-; SSSE3-NEXT:    movdqa {{.*#+}} xmm2 = [32768,32768,32768,32768,32768,32768,32768,32768]
-; SSSE3-NEXT:    movdqa %xmm1, %xmm3
-; SSSE3-NEXT:    pxor %xmm2, %xmm3
-; SSSE3-NEXT:    pcmpgtw {{.*}}(%rip), %xmm3
-; SSSE3-NEXT:    pxor %xmm0, %xmm2
-; SSSE3-NEXT:    pcmpgtw {{.*}}(%rip), %xmm2
-; SSSE3-NEXT:    paddw {{.*}}(%rip), %xmm1
-; SSSE3-NEXT:    pand %xmm3, %xmm1
-; SSSE3-NEXT:    paddw {{.*}}(%rip), %xmm0
-; SSSE3-NEXT:    pand %xmm2, %xmm0
-; SSSE3-NEXT:    retq
-;
-; SSE41-LABEL: test8a:
-; SSE41:       # %bb.0: # %vector.ph
-; SSE41-NEXT:    movdqa {{.*#+}} xmm2 = [32758,32757,32756,32755,32754,32753,32752,32751]
-; SSE41-NEXT:    pminuw %xmm1, %xmm2
-; SSE41-NEXT:    pcmpeqw %xmm1, %xmm2
-; SSE41-NEXT:    movdqa {{.*#+}} xmm3 = [32766,32765,32764,32763,32762,32761,32760,32759]
-; SSE41-NEXT:    pminuw %xmm0, %xmm3
-; SSE41-NEXT:    pcmpeqw %xmm0, %xmm3
-; SSE41-NEXT:    paddw {{.*}}(%rip), %xmm1
-; SSE41-NEXT:    pandn %xmm1, %xmm2
-; SSE41-NEXT:    paddw {{.*}}(%rip), %xmm0
-; SSE41-NEXT:    pandn %xmm0, %xmm3
-; SSE41-NEXT:    movdqa %xmm3, %xmm0
-; SSE41-NEXT:    movdqa %xmm2, %xmm1
-; SSE41-NEXT:    retq
+; SSE-LABEL: test8a:
+; SSE:       # %bb.0: # %vector.ph
+; SSE-NEXT:    psubusw {{.*}}(%rip), %xmm0
+; SSE-NEXT:    psubusw {{.*}}(%rip), %xmm1
+; SSE-NEXT:    retq
 ;
 ; AVX1-LABEL: test8a:
 ; AVX1:       # %bb.0: # %vector.ph
-; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; AVX1-NEXT:    vpminuw {{.*}}(%rip), %xmm1, %xmm2
-; AVX1-NEXT:    vpcmpeqw %xmm2, %xmm1, %xmm2
-; AVX1-NEXT:    vpcmpeqd %xmm3, %xmm3, %xmm3
-; AVX1-NEXT:    vpxor %xmm3, %xmm2, %xmm2
-; AVX1-NEXT:    vpminuw {{.*}}(%rip), %xmm0, %xmm4
-; AVX1-NEXT:    vpcmpeqw %xmm4, %xmm0, %xmm4
-; AVX1-NEXT:    vpxor %xmm3, %xmm4, %xmm3
-; AVX1-NEXT:    vinsertf128 $1, %xmm2, %ymm3, %ymm2
-; AVX1-NEXT:    vpaddw {{.*}}(%rip), %xmm0, %xmm0
-; AVX1-NEXT:    vpaddw {{.*}}(%rip), %xmm1, %xmm1
-; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
-; AVX1-NEXT:    vandps %ymm0, %ymm2, %ymm0
+; AVX1-NEXT:    vpsubusw {{.*}}(%rip), %xmm0, %xmm1
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; AVX1-NEXT:    vpsubusw {{.*}}(%rip), %xmm0, %xmm0
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: test8a:
 ; AVX2:       # %bb.0: # %vector.ph
-; AVX2-NEXT:    vpminuw {{.*}}(%rip), %ymm0, %ymm1
-; AVX2-NEXT:    vpcmpeqw %ymm1, %ymm0, %ymm1
-; AVX2-NEXT:    vpaddw {{.*}}(%rip), %ymm0, %ymm0
-; AVX2-NEXT:    vpandn %ymm0, %ymm1, %ymm0
+; AVX2-NEXT:    vpsubusw {{.*}}(%rip), %ymm0, %ymm0
 ; AVX2-NEXT:    retq
 ;
 ; AVX512-LABEL: test8a:
 ; AVX512:       # %bb.0: # %vector.ph
-; AVX512-NEXT:    vpcmpnleuw {{.*}}(%rip), %ymm0, %k1
-; AVX512-NEXT:    vpaddw {{.*}}(%rip), %ymm0, %ymm0 {%k1} {z}
+; AVX512-NEXT:    vpsubusw {{.*}}(%rip), %ymm0, %ymm0
 ; AVX512-NEXT:    retq
 vector.ph:
   %0 = icmp ugt <16 x i16> %x, <i16 32766, i16 32765, i16 32764, i16 32763, i16 32762, i16 32761, i16 32760, i16 32759, i16 32758, i16 32757, i16 32756, i16 32755, i16 32754, i16 32753, i16 32752, i16 32751>
@@ -427,49 +376,26 @@ vector.ph:
 define <32 x i8> @test11a(<32 x i8> %x) nounwind {
 ; SSE-LABEL: test11a:
 ; SSE:       # %bb.0: # %vector.ph
-; SSE-NEXT:    movdqa {{.*#+}} xmm2 = [110,109,108,107,106,105,104,103,102,101,100,99,98,97,96,95]
-; SSE-NEXT:    pminub %xmm1, %xmm2
-; SSE-NEXT:    pcmpeqb %xmm1, %xmm2
-; SSE-NEXT:    movdqa {{.*#+}} xmm3 = [126,125,124,123,122,121,120,119,118,117,116,115,114,113,112,111]
-; SSE-NEXT:    pminub %xmm0, %xmm3
-; SSE-NEXT:    pcmpeqb %xmm0, %xmm3
-; SSE-NEXT:    paddb {{.*}}(%rip), %xmm1
-; SSE-NEXT:    pandn %xmm1, %xmm2
-; SSE-NEXT:    paddb {{.*}}(%rip), %xmm0
-; SSE-NEXT:    pandn %xmm0, %xmm3
-; SSE-NEXT:    movdqa %xmm3, %xmm0
-; SSE-NEXT:    movdqa %xmm2, %xmm1
+; SSE-NEXT:    psubusb {{.*}}(%rip), %xmm0
+; SSE-NEXT:    psubusb {{.*}}(%rip), %xmm1
 ; SSE-NEXT:    retq
 ;
 ; AVX1-LABEL: test11a:
 ; AVX1:       # %bb.0: # %vector.ph
-; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; AVX1-NEXT:    vpminub {{.*}}(%rip), %xmm1, %xmm2
-; AVX1-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
-; AVX1-NEXT:    vpcmpeqd %xmm3, %xmm3, %xmm3
-; AVX1-NEXT:    vpxor %xmm3, %xmm2, %xmm2
-; AVX1-NEXT:    vpminub {{.*}}(%rip), %xmm0, %xmm4
-; AVX1-NEXT:    vpcmpeqb %xmm4, %xmm0, %xmm4
-; AVX1-NEXT:    vpxor %xmm3, %xmm4, %xmm3
-; AVX1-NEXT:    vinsertf128 $1, %xmm2, %ymm3, %ymm2
-; AVX1-NEXT:    vpaddb {{.*}}(%rip), %xmm0, %xmm0
-; AVX1-NEXT:    vpaddb {{.*}}(%rip), %xmm1, %xmm1
-; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
-; AVX1-NEXT:    vandps %ymm0, %ymm2, %ymm0
+; AVX1-NEXT:    vpsubusb {{.*}}(%rip), %xmm0, %xmm1
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; AVX1-NEXT:    vpsubusb {{.*}}(%rip), %xmm0, %xmm0
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: test11a:
 ; AVX2:       # %bb.0: # %vector.ph
-; AVX2-NEXT:    vpminub {{.*}}(%rip), %ymm0, %ymm1
-; AVX2-NEXT:    vpcmpeqb %ymm1, %ymm0, %ymm1
-; AVX2-NEXT:    vpaddb {{.*}}(%rip), %ymm0, %ymm0
-; AVX2-NEXT:    vpandn %ymm0, %ymm1, %ymm0
+; AVX2-NEXT:    vpsubusb {{.*}}(%rip), %ymm0, %ymm0
 ; AVX2-NEXT:    retq
 ;
 ; AVX512-LABEL: test11a:
 ; AVX512:       # %bb.0: # %vector.ph
-; AVX512-NEXT:    vpcmpnleub {{.*}}(%rip), %ymm0, %k1
-; AVX512-NEXT:    vpaddb {{.*}}(%rip), %ymm0, %ymm0 {%k1} {z}
+; AVX512-NEXT:    vpsubusb {{.*}}(%rip), %ymm0, %ymm0
 ; AVX512-NEXT:    retq
 vector.ph:
   %0 = icmp ugt <32 x i8> %x, <i8 126, i8 125, i8 124, i8 123, i8 122, i8 121, i8 120, i8 119, i8 118, i8 117, i8 116, i8 115, i8 114, i8 113, i8 112, i8 111, i8 110, i8 109, i8 108, i8 107, i8 106, i8 105, i8 104, i8 103, i8 102, i8 101, i8 100, i8 99, i8 98, i8 97, i8 96, i8 95>

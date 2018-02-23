@@ -31886,34 +31886,36 @@ static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
                                       SUBUSBuilder);
 
       if (auto *OpRHSBV = dyn_cast<BuildVectorSDNode>(OpRHS))
-        if (auto *OpRHSConst = OpRHSBV->getConstantSplatNode()) {
-          if (auto *CondRHSBV = dyn_cast<BuildVectorSDNode>(CondRHS))
-            if (auto *CondRHSConst = CondRHSBV->getConstantSplatNode())
-              // If the RHS is a constant we have to reverse the const
-              // canonicalization.
-              // x > C-1 ? x+-C : 0 --> subus x, C
-              if (CC == ISD::SETUGT && Other->getOpcode() == ISD::ADD &&
-                  CondRHSConst->getAPIntValue() ==
-                      (-OpRHSConst->getAPIntValue() - 1))
-                return SplitBinaryOpsAndApply(
-                    DAG, Subtarget, DL, VT, OpLHS,
-                    DAG.getConstant(-OpRHSConst->getAPIntValue(), DL, VT),
-                    SUBUSBuilder);
+        if (auto *CondRHSBV = dyn_cast<BuildVectorSDNode>(CondRHS)) {
+          // If the RHS is a constant we have to reverse the const
+          // canonicalization.
+          // x > C-1 ? x+-C : 0 --> subus x, C
+          auto MatchSUBUS = [](ConstantSDNode *Op, ConstantSDNode *Cond) {
+            return Cond->getAPIntValue() == (-Op->getAPIntValue() - 1);
+          };
+          if (CC == ISD::SETUGT && Other->getOpcode() == ISD::ADD &&
+              ISD::matchBinaryPredicate(OpRHS, CondRHS, MatchSUBUS))
+            return SplitBinaryOpsAndApply(
+                DAG, Subtarget, DL, VT, OpLHS,
+                DAG.getNode(ISD::SUB, DL, VT, DAG.getConstant(0, DL, VT),
+                            OpRHS),
+                SUBUSBuilder);
 
           // Another special case: If C was a sign bit, the sub has been
           // canonicalized into a xor.
           // FIXME: Would it be better to use computeKnownBits to determine
           //        whether it's safe to decanonicalize the xor?
           // x s< 0 ? x^C : 0 --> subus x, C
-          if (CC == ISD::SETLT && Other->getOpcode() == ISD::XOR &&
-              ISD::isBuildVectorAllZeros(CondRHS.getNode()) &&
-              OpRHSConst->getAPIntValue().isSignMask())
-            // Note that we have to rebuild the RHS constant here to ensure we
-            // don't rely on particular values of undef lanes.
-            return SplitBinaryOpsAndApply(
-                DAG, Subtarget, DL, VT, OpLHS,
-                DAG.getConstant(OpRHSConst->getAPIntValue(), DL, VT),
-                SUBUSBuilder);
+          if (auto *OpRHSConst = OpRHSBV->getConstantSplatNode())
+            if (CC == ISD::SETLT && Other.getOpcode() == ISD::XOR &&
+                ISD::isBuildVectorAllZeros(CondRHS.getNode()) &&
+                OpRHSConst->getAPIntValue().isSignMask())
+              // Note that we have to rebuild the RHS constant here to ensure we
+              // don't rely on particular values of undef lanes.
+              return SplitBinaryOpsAndApply(
+                  DAG, Subtarget, DL, VT, OpLHS,
+                  DAG.getConstant(OpRHSConst->getAPIntValue(), DL, VT),
+                  SUBUSBuilder);
         }
     }
   }
