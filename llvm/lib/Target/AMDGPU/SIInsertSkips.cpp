@@ -262,15 +262,14 @@ void SIInsertSkips::kill(MachineInstr &MI) {
 
     assert(MI.getOperand(0).isReg());
 
-    MachineInstr *NewMI;
     if (TRI->isVGPR(MBB.getParent()->getRegInfo(),
                     MI.getOperand(0).getReg())) {
       Opcode = AMDGPU::getVOPe32(Opcode);
-      NewMI = BuildMI(MBB, &MI, DL, TII->get(Opcode))
+      BuildMI(MBB, &MI, DL, TII->get(Opcode))
           .add(MI.getOperand(1))
           .add(MI.getOperand(0));
     } else {
-      NewMI = BuildMI(MBB, &MI, DL, TII->get(Opcode))
+      BuildMI(MBB, &MI, DL, TII->get(Opcode))
           .addReg(AMDGPU::VCC, RegState::Define)
           .addImm(0)  // src0 modifiers
           .add(MI.getOperand(1))
