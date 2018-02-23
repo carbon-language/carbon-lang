@@ -789,8 +789,6 @@ void InputSection::replace(InputSection *Other) {
   Alignment = std::max(Alignment, Other->Alignment);
   Other->Repl = Repl;
   Other->Live = false;
-  for (InputSection *IS : Other->DependentSections)
-    IS->Live = false;
 }
 
 template <class ELFT>
