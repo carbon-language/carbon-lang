@@ -560,6 +560,11 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
     if (Instruction *FoldedMul = foldOpWithConstantIntoOperand(I))
       return FoldedMul;
 
+    // -X * C --> X * -C
+    Value *X;
+    if (match(Op0, m_FNeg(m_Value(X))))
+      return BinaryOperator::CreateFMulFMF(X, ConstantExpr::getFNeg(C), &I);
+
     // (fmul X, -1.0) --> (fsub -0.0, X)
     if (match(C, m_SpecificFP(-1.0))) {
       Constant *NegZero = ConstantFP::getNegativeZero(Op1->getType());
@@ -673,34 +678,23 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
     }
   }
 
+  // -X * -Y --> X * Y
+  Value *X, *Y;
+  if (match(Op0, m_FNeg(m_Value(X))) && match(Op1, m_FNeg(m_Value(Y))))
+    return BinaryOperator::CreateFMulFMF(X, Y, &I);
+
+  // Sink negation: -X * Y --> -(X * Y)
+  if (match(Op0, m_OneUse(m_FNeg(m_Value(X)))))
+    return BinaryOperator::CreateFNegFMF(Builder.CreateFMulFMF(X, Op1, &I), &I);
+
+  // Sink negation: Y * -X --> -(X * Y)
+  if (match(Op1, m_OneUse(m_FNeg(m_Value(X)))))
+    return BinaryOperator::CreateFNegFMF(Builder.CreateFMulFMF(X, Op0, &I), &I);
+
   // Handle symmetric situation in a 2-iteration loop
   Value *Opnd0 = Op0;
   Value *Opnd1 = Op1;
   for (int i = 0; i < 2; i++) {
-    bool IgnoreZeroSign = I.hasNoSignedZeros();
-    if (BinaryOperator::isFNeg(Opnd0, IgnoreZeroSign)) {
-      BuilderTy::FastMathFlagGuard Guard(Builder);
-      Builder.setFastMathFlags(I.getFastMathFlags());
-
-      Value *N0 = dyn_castFNegVal(Opnd0, IgnoreZeroSign);
-      Value *N1 = dyn_castFNegVal(Opnd1, IgnoreZeroSign);
-
-      // -X * -Y => X*Y
-      if (N1) {
-        Value *FMul = Builder.CreateFMul(N0, N1);
-        FMul->takeName(&I);
-        return replaceInstUsesWith(I, FMul);
-      }
-
-      if (Opnd0->hasOneUse()) {
-        // -X * Y => -(X*Y) (Promote negation as high as possible)
-        Value *T = Builder.CreateFMul(N0, Opnd1);
-        Value *Neg = Builder.CreateFNeg(T);
-        Neg->takeName(&I);
-        return replaceInstUsesWith(I, Neg);
-      }
-    }
-
     // Handle specials cases for FMul with selects feeding the operation
     if (Value *V = SimplifySelectsFeedingBinaryOp(I, Op0, Op1))
       return replaceInstUsesWith(I, V);
