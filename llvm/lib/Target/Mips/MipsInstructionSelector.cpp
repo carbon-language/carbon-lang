@@ -29,11 +29,8 @@ public:
   bool select(MachineInstr &I, CodeGenCoverage &CoverageInfo) const override;
 
 private:
-  const MipsTargetMachine &TM;
-  const MipsSubtarget &STI;
   const MipsInstrInfo &TII;
   const MipsRegisterInfo &TRI;
-  const MipsRegisterBankInfo &RBI;
 };
 
 } // end anonymous namespace
