@@ -77,32 +77,37 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
 
-  setOperationAction(ISD::SDIVREM, MVT::i64, Expand);
-  setOperationAction(ISD::UDIVREM, MVT::i64, Expand);
-  setOperationAction(ISD::SREM, MVT::i64, Expand);
-  setOperationAction(ISD::UREM, MVT::i64, Expand);
+  for (auto VT : { MVT::i32, MVT::i64 }) {
+    if (VT == MVT::i32 && !STI.getHasAlu32())
+      continue;
 
-  setOperationAction(ISD::MULHU, MVT::i64, Expand);
-  setOperationAction(ISD::MULHS, MVT::i64, Expand);
-  setOperationAction(ISD::UMUL_LOHI, MVT::i64, Expand);
-  setOperationAction(ISD::SMUL_LOHI, MVT::i64, Expand);
+    setOperationAction(ISD::SDIVREM, VT, Expand);
+    setOperationAction(ISD::UDIVREM, VT, Expand);
+    setOperationAction(ISD::SREM, VT, Expand);
+    setOperationAction(ISD::UREM, VT, Expand);
+    setOperationAction(ISD::MULHU, VT, Expand);
+    setOperationAction(ISD::MULHS, VT, Expand);
+    setOperationAction(ISD::UMUL_LOHI, VT, Expand);
+    setOperationAction(ISD::SMUL_LOHI, VT, Expand);
+    setOperationAction(ISD::ADDC, VT, Expand);
+    setOperationAction(ISD::ADDE, VT, Expand);
+    setOperationAction(ISD::SUBC, VT, Expand);
+    setOperationAction(ISD::SUBE, VT, Expand);
+    setOperationAction(ISD::ROTR, VT, Expand);
+    setOperationAction(ISD::ROTL, VT, Expand);
+    setOperationAction(ISD::SHL_PARTS, VT, Expand);
+    setOperationAction(ISD::SRL_PARTS, VT, Expand);
+    setOperationAction(ISD::SRA_PARTS, VT, Expand);
+    setOperationAction(ISD::CTPOP, VT, Expand);
+  }
 
-  setOperationAction(ISD::ADDC, MVT::i64, Expand);
-  setOperationAction(ISD::ADDE, MVT::i64, Expand);
-  setOperationAction(ISD::SUBC, MVT::i64, Expand);
-  setOperationAction(ISD::SUBE, MVT::i64, Expand);
-
-  setOperationAction(ISD::ROTR, MVT::i64, Expand);
-  setOperationAction(ISD::ROTL, MVT::i64, Expand);
-  setOperationAction(ISD::SHL_PARTS, MVT::i64, Expand);
-  setOperationAction(ISD::SRL_PARTS, MVT::i64, Expand);
-  setOperationAction(ISD::SRA_PARTS, MVT::i64, Expand);
+  if (STI.getHasAlu32())
+    setOperationAction(ISD::BSWAP, MVT::i32, Expand);
 
   setOperationAction(ISD::CTTZ, MVT::i64, Custom);
   setOperationAction(ISD::CTLZ, MVT::i64, Custom);
   setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i64, Custom);
   setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i64, Custom);
-  setOperationAction(ISD::CTPOP, MVT::i64, Expand);
 
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8, Expand);
