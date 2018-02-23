@@ -4047,6 +4047,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-mstack-probe-size=0");
   }
 
+  if (!Args.hasFlag(options::OPT_mstack_arg_probe,
+                    options::OPT_mno_stack_arg_probe, true))
+    CmdArgs.push_back(Args.MakeArgString("-mno-stack-arg-probe"));
+
   if (Arg *A = Args.getLastArg(options::OPT_mrestrict_it,
                                options::OPT_mno_restrict_it)) {
     if (A->getOption().matches(options::OPT_mrestrict_it)) {
