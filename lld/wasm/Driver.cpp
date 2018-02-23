@@ -233,6 +233,12 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
     return;
   }
 
+  // Handle --version
+  if (Args.hasArg(OPT_version) || Args.hasArg(OPT_v)) {
+    outs() << getLLDVersion() << "\n";
+    return;
+  }
+
   // Parse and evaluate -mllvm options.
   std::vector<const char *> V;
   V.push_back("wasm-ld (LLVM option parsing)");
@@ -241,11 +247,6 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   cl::ParseCommandLineOptions(V.size(), V.data());
 
   errorHandler().ErrorLimit = args::getInteger(Args, OPT_error_limit, 20);
-
-  if (Args.hasArg(OPT_version) || Args.hasArg(OPT_v)) {
-    outs() << getLLDVersion() << "\n";
-    return;
-  }
 
   Config->AllowUndefined = Args.hasArg(OPT_allow_undefined);
   Config->CheckSignatures =
