@@ -583,3 +583,23 @@ def LD_ABS_W : LOAD_ABS<BPF_W, "u32", int_bpf_load_word>;
 def LD_IND_B : LOAD_IND<BPF_B, "u8", int_bpf_load_byte>;
 def LD_IND_H : LOAD_IND<BPF_H, "u16", int_bpf_load_half>;
 def LD_IND_W : LOAD_IND<BPF_W, "u32", int_bpf_load_word>;
+
+let isCodeGenOnly = 1 in {
+  def MOV_32_64 : ALU_RR<BPF_ALU, BPF_MOV,
+                         (outs GPR:$dst), (ins GPR32:$src),
+                         "$dst = $src", []>;
+}
+
+def : Pat<(i64 (sext GPR32:$src)),
+          (SRA_ri (SLL_ri (MOV_32_64 GPR32:$src), 32), 32)>;
+
+def : Pat<(i64 (zext GPR32:$src)),
+          (SRL_ri (SLL_ri (MOV_32_64 GPR32:$src), 32), 32)>;
+
+// For i64 -> i32 truncation, use the 32-bit subregister directly.
+def : Pat<(i32 (trunc GPR:$src)),
+          (i32 (EXTRACT_SUBREG GPR:$src, sub_32))>;
+
+// For i32 -> i64 anyext, we don't care about the high bits.
+def : Pat<(i64 (anyext GPR32:$src)),
+          (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GPR32:$src, sub_32)>;
