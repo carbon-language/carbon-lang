@@ -132,6 +132,7 @@ BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
   MaxStoresPerMemmove = MaxStoresPerMemmoveOptSize = 128;
 
   // CPU/Feature control
+  HasAlu32 = STI.getHasAlu32();
   HasJmpExt = STI.getHasJmpExt();
 }
 
@@ -189,26 +190,29 @@ SDValue BPFTargetLowering::LowerFormalArguments(
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
-  CCInfo.AnalyzeFormalArguments(Ins, CC_BPF64);
+  CCInfo.AnalyzeFormalArguments(Ins, getHasAlu32() ? CC_BPF32 : CC_BPF64);
 
   for (auto &VA : ArgLocs) {
     if (VA.isRegLoc()) {
       // Arguments passed in registers
       EVT RegVT = VA.getLocVT();
-      switch (RegVT.getSimpleVT().SimpleTy) {
+      MVT::SimpleValueType SimpleTy = RegVT.getSimpleVT().SimpleTy;
+      switch (SimpleTy) {
       default: {
         errs() << "LowerFormalArguments Unhandled argument type: "
                << RegVT.getEVTString() << '\n';
         llvm_unreachable(0);
       }
+      case MVT::i32:
       case MVT::i64:
-        unsigned VReg = RegInfo.createVirtualRegister(&BPF::GPRRegClass);
+        unsigned VReg = RegInfo.createVirtualRegister(SimpleTy == MVT::i64 ?
+                                                      &BPF::GPRRegClass :
+                                                      &BPF::GPR32RegClass);
         RegInfo.addLiveIn(VA.getLocReg(), VReg);
         SDValue ArgValue = DAG.getCopyFromReg(Chain, DL, VReg, RegVT);
 
-        // If this is an 8/16/32-bit value, it is really passed promoted to 64
-        // bits. Insert an assert[sz]ext to capture this, then truncate to the
-        // right size.
+        // If this is an value that has been promoted to wider types, insert an
+        // assert[sz]ext to capture this, then truncate to the right size.
         if (VA.getLocInfo() == CCValAssign::SExt)
           ArgValue = DAG.getNode(ISD::AssertSext, DL, RegVT, ArgValue,
                                  DAG.getValueType(VA.getValVT()));
@@ -220,6 +224,8 @@ SDValue BPFTargetLowering::LowerFormalArguments(
           ArgValue = DAG.getNode(ISD::TRUNCATE, DL, VA.getValVT(), ArgValue);
 
         InVals.push_back(ArgValue);
+
+	break;
       }
     } else {
       fail(DL, DAG, "defined with too many args");
@@ -264,7 +270,7 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
 
-  CCInfo.AnalyzeCallOperands(Outs, CC_BPF64);
+  CCInfo.AnalyzeCallOperands(Outs, getHasAlu32() ? CC_BPF32 : CC_BPF64);
 
   unsigned NumBytes = CCInfo.getNextStackOffset();
 
@@ -388,7 +394,7 @@ BPFTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
   }
 
   // Analize return values.
-  CCInfo.AnalyzeReturn(Outs, RetCC_BPF64);
+  CCInfo.AnalyzeReturn(Outs, getHasAlu32() ? RetCC_BPF32 : RetCC_BPF64);
 
   SDValue Flag;
   SmallVector<SDValue, 4> RetOps(1, Chain);
@@ -432,7 +438,7 @@ SDValue BPFTargetLowering::LowerCallResult(
     return DAG.getCopyFromReg(Chain, DL, 1, Ins[0].VT, InFlag).getValue(1);
   }
 
-  CCInfo.AnalyzeCallResult(Ins, RetCC_BPF64);
+  CCInfo.AnalyzeCallResult(Ins, getHasAlu32() ? RetCC_BPF32 : RetCC_BPF64);
 
   // Copy all of the result registers out of their specified physreg.
   for (auto &Val : RVLocs) {

@@ -54,10 +54,12 @@ public:
   EmitInstrWithCustomInserter(MachineInstr &MI,
                               MachineBasicBlock *BB) const override;
 
+  bool getHasAlu32() const { return HasAlu32; }
   bool getHasJmpExt() const { return HasJmpExt; }
 
 private:
   // Control Instruction Selection Features
+  bool HasAlu32;
   bool HasJmpExt;
 
   SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
