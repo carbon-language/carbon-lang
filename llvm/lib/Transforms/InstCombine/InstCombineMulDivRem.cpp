@@ -620,10 +620,6 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
 
   if (Op0 == Op1) {
     if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Op0)) {
-      // sqrt(X) * sqrt(X) -> X
-      if (AllowReassociate && II->getIntrinsicID() == Intrinsic::sqrt)
-        return replaceInstUsesWith(I, II->getOperand(0));
-
       // fabs(X) * fabs(X) -> X * X
       if (II->getIntrinsicID() == Intrinsic::fabs) {
         Instruction *FMulVal = BinaryOperator::CreateFMul(II->getOperand(0),
