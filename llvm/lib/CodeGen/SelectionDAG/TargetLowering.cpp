@@ -1536,6 +1536,11 @@ bool TargetLowering::SimplifyDemandedVectorElts(
     }
     break;
   }
+  case ISD::TRUNCATE:
+    if (SimplifyDemandedVectorElts(Op.getOperand(0), DemandedElts, KnownUndef,
+                                   KnownZero, TLO, Depth + 1))
+      return true;
+    break;
   default: {
     if (Op.getOpcode() >= ISD::BUILTIN_OP_END)
       if (SimplifyDemandedVectorEltsForTargetNode(Op, DemandedElts, KnownUndef,
