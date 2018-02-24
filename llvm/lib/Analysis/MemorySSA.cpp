@@ -2029,9 +2029,8 @@ MemorySSA::CachingWalker::getClobberingMemoryAccess(MemoryAccess *MA) {
   // If this is an already optimized use or def, return the optimized result.
   // Note: Currently, we do not store the optimized def result because we'd need
   // a separate field, since we can't use it as the defining access.
-  if (auto *MUD = dyn_cast<MemoryUseOrDef>(StartingAccess))
-    if (MUD->isOptimized())
-      return MUD->getOptimized();
+  if (StartingAccess->isOptimized())
+    return StartingAccess->getOptimized();
 
   const Instruction *I = StartingAccess->getMemoryInst();
   UpwardsMemoryQuery Q(I, StartingAccess);
