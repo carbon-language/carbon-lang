@@ -8,12 +8,12 @@
 #include <variant>
 
 /// Parse tree visitor
-/// Call visit(x, visitor) to visit each node under x.
+/// Call Walk(x, visitor) to visit each node under x.
 ///
-/// visitor.pre(x) is called before visiting x and its children are not
+/// visitor.Pre(x) is called before visiting x and its children are not
 /// visited if it returns false.
 ///
-/// visitor.post(x) is called after visiting x.
+/// visitor.Post(x) is called after visiting x.
 
 namespace Fortran {
 namespace parser {
@@ -36,1919 +36,1913 @@ ForEachInTuple(const std::tuple<Ts...> &tuple, Func func) {
 // Helpers: generic visitor that is called if there is no specific one
 // and visitors for std::optional, std::list, and Indirection.
 
-template<typename T, typename V> void visit(const T &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visitor.post(x);
+template<typename T, typename V> void Walk(const T &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    visitor.Post(x);
   }
 }
 
 template<typename T, typename V>
-void visit(const std::optional<T> &x, V &visitor) {
+void Walk(const std::optional<T> &x, V &visitor) {
   if (x) {
-    visit(*x, visitor);
+    Walk(*x, visitor);
   }
 }
 
-template<typename T, typename V> void visit(const std::list<T> &x, V &visitor) {
+template<typename T, typename V> void Walk(const std::list<T> &x, V &visitor) {
   for (const auto &elem : x) {
-    visit(elem, visitor);
+    Walk(elem, visitor);
   }
 }
 
 template<typename T, typename V>
-void visit(const Indirection<T> &x, V &visitor) {
-  visit(*x, visitor);
+void Walk(const Indirection<T> &x, V &visitor) {
+  Walk(*x, visitor);
 }
 
-// Visit the single field 'v' in the class
-template<typename T, typename V>
-void VisitWrapperClass(const T &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.v, visitor);
-    visitor.post(x);
+// Walk the single field 'v' in the class
+template<typename T, typename V> void WalkWrapperClass(const T &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.v, visitor);
+    visitor.Post(x);
   }
 }
 
-// Visit the single tuple field 't' in the class
-template<typename T, typename V> void VisitTupleClass(const T &x, V &visitor) {
-  if (visitor.pre(x)) {
-    ForEachInTuple(x.t, [&](const auto &y) { visit(y, visitor); });
-    visitor.post(x);
+// Walk the single tuple field 't' in the class
+template<typename T, typename V> void WalkTupleClass(const T &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    ForEachInTuple(x.t, [&](const auto &y) { Walk(y, visitor); });
+    visitor.Post(x);
   }
 }
 
-// Visit the single variant field 'u' in the class
-template<typename T, typename V> void VisitUnionClass(const T &x, V &visitor) {
-  if (visitor.pre(x)) {
-    std::visit([&](const auto &y) { visit(y, visitor); }, x.u);
-    visitor.post(x);
+// Walk the single variant field 'u' in the class
+template<typename T, typename V> void WalkUnionClass(const T &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    std::visit([&](const auto &y) { Walk(y, visitor); }, x.u);
+    visitor.Post(x);
   }
 }
 
 }  // namespace
 
-template<typename T, typename V> void visit(const Scalar<T> &x, V &visitor) {
-  visit(x.thing, visitor);
+template<typename T, typename V> void Walk(const Scalar<T> &x, V &visitor) {
+  Walk(x.thing, visitor);
 }
 
-template<typename T, typename V> void visit(const Constant<T> &x, V &visitor) {
-  visit(x.thing, visitor);
+template<typename T, typename V> void Walk(const Constant<T> &x, V &visitor) {
+  Walk(x.thing, visitor);
 }
 
-template<typename T, typename V> void visit(const Integer<T> &x, V &visitor) {
-  visit(x.thing, visitor);
+template<typename T, typename V> void Walk(const Integer<T> &x, V &visitor) {
+  Walk(x.thing, visitor);
 }
 
-template<typename T, typename V> void visit(const Logical<T> &x, V &visitor) {
-  visit(x.thing, visitor);
-}
-
-template<typename T, typename V>
-void visit(const DefaultChar<T> &x, V &visitor) {
-  visit(x.thing, visitor);
-}
-
-template<typename T, typename V> void visit(const Statement<T> &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.statement, visitor);
-    visitor.post(x);
-  }
+template<typename T, typename V> void Walk(const Logical<T> &x, V &visitor) {
+  Walk(x.thing, visitor);
 }
 
 template<typename T, typename V>
-void visit(const LoopBounds<T> &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.name, visitor);
-    visit(x.lower, visitor);
-    visit(x.upper, visitor);
-    visit(x.step, visitor);
-    visitor.post(x);
+void Walk(const DefaultChar<T> &x, V &visitor) {
+  Walk(x.thing, visitor);
+}
+
+template<typename T, typename V> void Walk(const Statement<T> &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.statement, visitor);
+    visitor.Post(x);
   }
 }
 
-template<typename V> void visit(const AcImpliedDo &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const AcImpliedDoControl &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const AcSpec &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.type, visitor);
-    visit(x.values, visitor);
-    visitor.post(x);
+template<typename T, typename V> void Walk(const LoopBounds<T> &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.name, visitor);
+    Walk(x.lower, visitor);
+    Walk(x.upper, visitor);
+    Walk(x.step, visitor);
+    visitor.Post(x);
   }
 }
 
-template<typename V> void visit(const AcValue &x, V &visitor) {
-  VisitUnionClass(x, visitor);
+template<typename V> void Walk(const AcImpliedDo &x, V &visitor) {
+  WalkTupleClass(x, visitor);
 }
 
-template<typename V> void visit(const AcValue::Triplet &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const AcImpliedDoControl &x, V &visitor) {
+  WalkTupleClass(x, visitor);
 }
 
-template<typename V> void visit(const AccessId &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const AccessStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ActionStmt &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ActualArg &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ActualArg::PercentRef &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const ActualArg::PercentVal &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const ActualArgSpec &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const AllocOpt &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const AllocOpt::Mold &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const AllocOpt::Source &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const AllocatableStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const AllocateCoarraySpec &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const AllocateObject &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const AllocateShapeSpec &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const AllocateStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const Allocation &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const AltReturnSpec &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const ArithmeticIfStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ArrayConstructor &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const ArrayElement &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.base, visitor);
-    visit(x.subscripts, visitor);
-    visitor.post(x);
+template<typename V> void Walk(const AcSpec &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.type, visitor);
+    Walk(x.values, visitor);
+    visitor.Post(x);
   }
 }
 
-template<typename V> void visit(const ArraySpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
+template<typename V> void Walk(const AcValue &x, V &visitor) {
+  WalkUnionClass(x, visitor);
 }
 
-template<typename V> void visit(const AssignStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const AcValue::Triplet &x, V &visitor) {
+  WalkTupleClass(x, visitor);
 }
 
-template<typename V> void visit(const AssignedGotoStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const AccessId &x, V &visitor) {
+  WalkUnionClass(x, visitor);
 }
 
-template<typename V> void visit(const AssignmentStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const AccessStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
 }
 
-template<typename V> void visit(const AssociateConstruct &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const ActionStmt &x, V &visitor) {
+  WalkUnionClass(x, visitor);
 }
 
-template<typename V> void visit(const AssociateStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const ActualArg &x, V &visitor) {
+  WalkUnionClass(x, visitor);
 }
 
-template<typename V> void visit(const Association &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const ActualArg::PercentRef &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
 }
 
-template<typename V> void visit(const AssumedImpliedSpec &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
+template<typename V> void Walk(const ActualArg::PercentVal &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
 }
 
-template<typename V> void visit(const AssumedShapeSpec &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
+template<typename V> void Walk(const ActualArgSpec &x, V &visitor) {
+  WalkTupleClass(x, visitor);
 }
 
-template<typename V> void visit(const AssumedSizeSpec &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const AllocOpt &x, V &visitor) {
+  WalkUnionClass(x, visitor);
 }
 
-template<typename V> void visit(const AsynchronousStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
+template<typename V> void Walk(const AllocOpt::Mold &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
 }
 
-template<typename V> void visit(const AttrSpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
+template<typename V> void Walk(const AllocOpt::Source &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
 }
 
-template<typename V> void visit(const BOZLiteralConstant &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
+template<typename V> void Walk(const AllocatableStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
 }
 
-template<typename V> void visit(const BackspaceStmt &x, V &visitor) {
-  VisitUnionClass(x, visitor);
+template<typename V> void Walk(const AllocateCoarraySpec &x, V &visitor) {
+  WalkTupleClass(x, visitor);
 }
 
-template<typename V> void visit(const BasedPointerStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const AllocateObject &x, V &visitor) {
+  WalkUnionClass(x, visitor);
 }
 
-template<typename V> void visit(const BindAttr &x, V &visitor) {
-  VisitUnionClass(x, visitor);
+template<typename V> void Walk(const AllocateShapeSpec &x, V &visitor) {
+  WalkTupleClass(x, visitor);
 }
 
-template<typename V> void visit(const BindEntity &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const AllocateStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
 }
 
-template<typename V> void visit(const BindStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const Allocation &x, V &visitor) {
+  WalkTupleClass(x, visitor);
 }
 
-template<typename V> void visit(const BlockConstruct &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const AltReturnSpec &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
 }
 
-template<typename V> void visit(const BlockData &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const ArithmeticIfStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
 }
 
-template<typename V> void visit(const BlockDataStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
+template<typename V> void Walk(const ArrayConstructor &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
 }
 
-template<typename V> void visit(const BlockSpecificationPart &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
+template<typename V> void Walk(const ArrayElement &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.base, visitor);
+    Walk(x.subscripts, visitor);
+    visitor.Post(x);
+  }
 }
 
-template<typename V> void visit(const BlockStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
+template<typename V> void Walk(const ArraySpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
 }
 
-template<typename V> void visit(const BoundsRemapping &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const AssignStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
 }
 
-template<typename V> void visit(const BoundsSpec &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
+template<typename V> void Walk(const AssignedGotoStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
 }
 
-template<typename V> void visit(const Call &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const AssignmentStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
 }
 
-template<typename V> void visit(const CallStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
+template<typename V> void Walk(const AssociateConstruct &x, V &visitor) {
+  WalkTupleClass(x, visitor);
 }
 
-template<typename V> void visit(const CaseConstruct &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const AssociateStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
 }
 
-template<typename V> void visit(const CaseConstruct::Case &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const Association &x, V &visitor) {
+  WalkTupleClass(x, visitor);
 }
 
-template<typename V> void visit(const CaseSelector &x, V &visitor) {
-  VisitUnionClass(x, visitor);
+template<typename V> void Walk(const AssumedImpliedSpec &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
 }
 
-template<typename V> void visit(const CaseStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const AssumedShapeSpec &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
 }
 
-template<typename V> void visit(const CaseValueRange &x, V &visitor) {
-  VisitUnionClass(x, visitor);
+template<typename V> void Walk(const AssumedSizeSpec &x, V &visitor) {
+  WalkTupleClass(x, visitor);
 }
 
-template<typename V> void visit(const ChangeTeamConstruct &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const AsynchronousStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
 }
 
-template<typename V> void visit(const ChangeTeamStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const AttrSpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
 }
 
-template<typename V> void visit(const CharLength &x, V &visitor) {
-  VisitUnionClass(x, visitor);
+template<typename V> void Walk(const BOZLiteralConstant &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
 }
 
-template<typename V> void visit(const CharLiteralConstant &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const BackspaceStmt &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const BasedPointerStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const BindAttr &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const BindEntity &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const BindStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const BlockConstruct &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const BlockData &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const BlockDataStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const BlockSpecificationPart &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const BlockStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const BoundsRemapping &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const BoundsSpec &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const Call &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const CallStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const CaseConstruct &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const CaseConstruct::Case &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const CaseSelector &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const CaseStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const CaseValueRange &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ChangeTeamConstruct &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ChangeTeamStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const CharLength &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const CharLiteralConstant &x, V &visitor) {
+  WalkTupleClass(x, visitor);
 }
 
 template<typename V>
-void visit(const CharLiteralConstantSubstring &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+void Walk(const CharLiteralConstantSubstring &x, V &visitor) {
+  WalkTupleClass(x, visitor);
 }
 
-template<typename V> void visit(const CharSelector &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V>
-void visit(const CharSelector::LengthAndKind &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.length, visitor);
-    visit(x.kind, visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const CharVariable &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const CloseStmt::CloseSpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const CoarrayAssociation &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const CoarraySpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const CodimensionDecl &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const CodimensionStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const CoindexedNamedObject &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.base, visitor);
-    visit(x.imageSelector, visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const CommonBlockObject &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const CommonStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ComplexLiteralConstant &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ComplexPart &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ComponentArraySpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ComponentAttrSpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ComponentDataSource &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const ComponentDecl &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ComponentDefStmt &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ComponentSpec &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ComputedGotoStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ConcurrentControl &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ConcurrentHeader &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ConnectSpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ConnectSpec::CharExpr &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ConnectSpec::Newunit &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const ConnectSpec::Recl &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const ConstantValue &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ContiguousStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const CriticalConstruct &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const CriticalStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const CycleStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const DataComponentDefStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const DataIDoObject &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const DataImpliedDo &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const DataReference &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const DataStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const DataStmtConstant &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const DataStmtObject &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const DataStmtRepeat &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const DataStmtSet &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const DataStmtValue &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const DeallocateStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const DeclarationConstruct &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const DeclarationTypeSpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
+template<typename V> void Walk(const CharSelector &x, V &visitor) {
+  WalkUnionClass(x, visitor);
 }
 
 template<typename V>
-void visit(const DeclarationTypeSpec::Class &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.derived, visitor);
-    visitor.post(x);
+void Walk(const CharSelector::LengthAndKind &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.length, visitor);
+    Walk(x.kind, visitor);
+    visitor.Post(x);
   }
+}
+
+template<typename V> void Walk(const CharVariable &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const CloseStmt::CloseSpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const CoarrayAssociation &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const CoarraySpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const CodimensionDecl &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const CodimensionStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const CoindexedNamedObject &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.base, visitor);
+    Walk(x.imageSelector, visitor);
+    visitor.Post(x);
+  }
+}
+
+template<typename V> void Walk(const CommonBlockObject &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const CommonStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ComplexLiteralConstant &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ComplexPart &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ComponentArraySpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ComponentAttrSpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ComponentDataSource &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const ComponentDecl &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ComponentDefStmt &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ComponentSpec &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ComputedGotoStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ConcurrentControl &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ConcurrentHeader &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ConnectSpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ConnectSpec::CharExpr &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ConnectSpec::Newunit &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const ConnectSpec::Recl &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const ConstantValue &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ContiguousStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const CriticalConstruct &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const CriticalStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const CycleStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const DataComponentDefStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const DataIDoObject &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const DataImpliedDo &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const DataReference &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const DataStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const DataStmtConstant &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const DataStmtObject &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const DataStmtRepeat &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const DataStmtSet &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const DataStmtValue &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const DeallocateStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const DeclarationConstruct &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const DeclarationTypeSpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
 }
 
 template<typename V>
-void visit(const DeclarationTypeSpec::Record &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V>
-void visit(const DeclarationTypeSpec::Type &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.derived, visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const DeferredCoshapeSpecList &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const DeferredShapeSpecList &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const DefinedOpName &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const DefinedOperator &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const DerivedTypeDef &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const DerivedTypeSpec &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const DerivedTypeStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const Designator &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V>
-void visit(const DimensionStmt::Declaration &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const DoConstruct &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const DummyArg &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ElseIfStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ElseStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const ElsewhereStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EndAssociateStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EndBlockDataStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EndBlockStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EndChangeTeamStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const EndCriticalStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EndDoStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EndForallStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EndFunctionStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EndIfStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EndInterfaceStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EndLabel &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EndModuleStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EndMpSubprogramStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EndProgramStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EndSelectStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EndSubmoduleStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EndSubroutineStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EndTypeStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EndWhereStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EndfileStmt &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const EntityDecl &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const EntryStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const EnumDef &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const Enumerator &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const EnumeratorDefStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EorLabel &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EquivalenceObject &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EquivalenceStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const ErrLabel &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const EventPostStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const EventWaitStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V>
-void visit(const EventWaitStmt::EventWaitSpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ExecutableConstruct &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ExecutionPartConstruct &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ExitStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const ExplicitCoshapeSpec &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ExplicitShapeSpec &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ExponentPart &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const Expr &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const Expr::AND &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const Expr::Add &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const Expr::ComplexConstructor &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const Expr::Concat &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const Expr::DefinedBinary &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const Expr::DefinedUnary &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const Expr::Divide &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const Expr::EQ &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const Expr::EQV &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const Expr::GE &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const Expr::GT &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const Expr::IntrinsicBinary &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const Expr::IntrinsicUnary &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const Expr::LE &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const Expr::LT &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const Expr::Multiply &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const Expr::NE &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const Expr::NEQV &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const Expr::NOT &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(static_cast<const Expr::IntrinsicUnary &>(x), visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const Expr::Negate &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(static_cast<const Expr::IntrinsicUnary &>(x), visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const Expr::OR &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const Expr::Parentheses &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(static_cast<const Expr::IntrinsicUnary &>(x), visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const Expr::PercentLoc &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const Expr::Power &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const Expr::Subtract &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const Expr::UnaryPlus &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(static_cast<const Expr::IntrinsicUnary &>(x), visitor);
-    visitor.post(x);
-  }
-}
-
-template<typename V> void visit(const ExternalStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const FileUnitNumber &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const FinalProcedureStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const FlushStmt &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ForallAssignmentStmt &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ForallBodyConstruct &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ForallConstruct &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ForallConstructStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ForallStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const FormTeamStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V>
-void visit(const FormTeamStmt::FormTeamSpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const Format &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const FormatStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const Fortran::ControlEditDesc &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.kind, visitor);
-    visitor.post(x);
+void Walk(const DeclarationTypeSpec::Class &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.derived, visitor);
+    visitor.Post(x);
   }
 }
 
 template<typename V>
-void visit(const Fortran::DerivedTypeDataEditDesc &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.type, visitor);
-    visit(x.parameters, visitor);
-    visitor.post(x);
+void Walk(const DeclarationTypeSpec::Record &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const DeclarationTypeSpec::Type &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.derived, visitor);
+    visitor.Post(x);
   }
 }
 
-template<typename V> void visit(const Fortran::FormatItem &x, V &visitor) {
-  VisitUnionClass(x, visitor);
+template<typename V> void Walk(const DeferredCoshapeSpecList &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const DeferredShapeSpecList &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const DefinedOpName &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const DefinedOperator &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const DerivedTypeDef &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const DerivedTypeSpec &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const DerivedTypeStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const Designator &x, V &visitor) {
+  WalkUnionClass(x, visitor);
 }
 
 template<typename V>
-void visit(const Fortran::IntrinsicTypeDataEditDesc &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.kind, visitor);
-    visit(x.width, visitor);
-    visit(x.digits, visitor);
-    visit(x.exponentWidth, visitor);
-    visitor.post(x);
+void Walk(const DimensionStmt::Declaration &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const DoConstruct &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const DummyArg &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ElseIfStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ElseStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const ElsewhereStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EndAssociateStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EndBlockDataStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EndBlockStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EndChangeTeamStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const EndCriticalStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EndDoStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EndForallStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EndFunctionStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EndIfStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EndInterfaceStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EndLabel &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EndModuleStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EndMpSubprogramStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EndProgramStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EndSelectStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EndSubmoduleStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EndSubroutineStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EndTypeStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EndWhereStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EndfileStmt &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const EntityDecl &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const EntryStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const EnumDef &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const Enumerator &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const EnumeratorDefStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EorLabel &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EquivalenceObject &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EquivalenceStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const ErrLabel &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const EventPostStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const EventWaitStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V>
+void Walk(const EventWaitStmt::EventWaitSpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ExecutableConstruct &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ExecutionPartConstruct &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ExitStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const ExplicitCoshapeSpec &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ExplicitShapeSpec &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ExponentPart &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const Expr &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const Expr::AND &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
+    visitor.Post(x);
   }
 }
 
-template<typename V> void visit(const FunctionReference &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const FunctionStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const FunctionSubprogram &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const GenericSpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const GenericStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const GotoStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const IdExpr &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const IdVariable &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const IfConstruct &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const IfConstruct::ElseBlock &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const IfConstruct::ElseIfBlock &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const IfStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const IfThenStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ImageSelector &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ImageSelectorSpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ImageSelectorSpec::Stat &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const ImageSelectorSpec::Team &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V>
-void visit(const ImageSelectorSpec::Team_Number &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const ImplicitPart &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const ImplicitPartStmt &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ImplicitSpec &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ImplicitStmt &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ImpliedShapeSpec &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const ImportStmt &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.names, visitor);
-    visitor.post(x);
+template<typename V> void Walk(const Expr::Add &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
+    visitor.Post(x);
   }
 }
 
-template<typename V> void visit(const Initialization &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const InputImpliedDo &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const InputItem &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const InquireSpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const InquireSpec::CharVar &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const InquireSpec::IntVar &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const InquireSpec::LogVar &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const InquireStmt &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const InquireStmt::Iolength &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const IntLiteralConstant &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const IntegerTypeSpec &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const IntentStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const InterfaceBlock &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const InterfaceBody &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const InterfaceBody::Function &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V>
-void visit(const InterfaceBody::Subroutine &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const InterfaceSpecification &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const InterfaceStmt &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const InternalSubprogram &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const InternalSubprogramPart &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const IntrinsicStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const IntrinsicTypeSpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V>
-void visit(const IntrinsicTypeSpec::Character &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.selector, visitor);
-    visitor.post(x);
+template<typename V> void Walk(const Expr::ComplexConstructor &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
+    visitor.Post(x);
   }
 }
 
-template<typename V>
-void visit(const IntrinsicTypeSpec::Complex &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.kind, visitor);
-    visitor.post(x);
+template<typename V> void Walk(const Expr::Concat &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
+    visitor.Post(x);
   }
 }
 
-template<typename V>
-void visit(const IntrinsicTypeSpec::Logical &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.kind, visitor);
-    visitor.post(x);
+template<typename V> void Walk(const Expr::DefinedBinary &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const Expr::DefinedUnary &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const Expr::Divide &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
+    visitor.Post(x);
   }
 }
 
-template<typename V>
-void visit(const IntrinsicTypeSpec::NCharacter &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const IntrinsicTypeSpec::Real &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.kind, visitor);
-    visitor.post(x);
+template<typename V> void Walk(const Expr::EQ &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
+    visitor.Post(x);
   }
 }
 
-template<typename V> void visit(const IoControlSpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V>
-void visit(const IoControlSpec::Asynchronous &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const IoControlSpec::CharExpr &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const IoControlSpec::Pos &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const IoControlSpec::Rec &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const IoControlSpec::Size &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const IoUnit &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const KindParam &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const LabelDoStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const LanguageBindingSpec &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const LengthSelector &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const LetterSpec &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const LiteralConstant &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const LocalitySpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const LocalitySpec::Local &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const LocalitySpec::LocalInit &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const LocalitySpec::Shared &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const LockStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const LockStmt::LockStat &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const LogicalLiteralConstant &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const LoopControl &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const LoopControl::Concurrent &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const MainProgram &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const Map &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const MaskedElsewhereStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const Module &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ModuleStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const ModuleSubprogram &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ModuleSubprogramPart &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const MpSubprogramStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const MsgVariable &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const NamedConstant &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const NamedConstantDef &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const NamelistStmt::Group &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const NonLabelDoStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const NullifyStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const ObjectDecl &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const Only &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const OpenStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const OptionalStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const OtherSpecificationStmt &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const OutputImpliedDo &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const OutputItem &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ParameterStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const ParentIdentifier &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const PartRef &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.name, visitor);
-    visit(x.subscripts, visitor);
-    visit(x.imageSelector, visitor);
-    visitor.post(x);
+template<typename V> void Walk(const Expr::EQV &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
+    visitor.Post(x);
   }
 }
 
-template<typename V> void visit(const Pass &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const PauseStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const PointerAssignmentStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V>
-void visit(const PointerAssignmentStmt::Bounds &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const PointerDecl &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const PointerObject &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const PointerStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const PositionOrFlushSpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const PrefixSpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const PrintStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const PrivateOrSequence &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ProcAttrSpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ProcComponentAttrSpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ProcComponentDefStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ProcComponentRef &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ProcDecl &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ProcInterface &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ProcPointerInit &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ProcedureDeclarationStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ProcedureDesignator &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ProcedureStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const Program &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const ProgramUnit &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ProtectedStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const ReadStmt &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.iounit, visitor);
-    visit(x.format, visitor);
-    visit(x.controls, visitor);
-    visit(x.items, visitor);
-    visitor.post(x);
+template<typename V> void Walk(const Expr::GE &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
+    visitor.Post(x);
   }
 }
 
-template<typename V> void visit(const RealLiteralConstant &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.intPart, visitor);
-    visit(x.fraction, visitor);
-    visit(x.exponent, visitor);
-    visit(x.kind, visitor);
-    visitor.post(x);
+template<typename V> void Walk(const Expr::GT &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
+    visitor.Post(x);
   }
 }
 
-template<typename V> void visit(const RedimensionStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const Expr::IntrinsicBinary &x, V &visitor) {
+  WalkTupleClass(x, visitor);
 }
 
-template<typename V> void visit(const Rename &x, V &visitor) {
-  VisitUnionClass(x, visitor);
+template<typename V> void Walk(const Expr::IntrinsicUnary &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
 }
 
-template<typename V> void visit(const Rename::Names &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const Rename::Operators &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const ReturnStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const RewindStmt &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const SaveStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const SavedEntity &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const SectionSubscript &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const SelectCaseStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const SelectRankCaseStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const SelectRankCaseStmt::Rank &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const SelectRankConstruct &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V>
-void visit(const SelectRankConstruct::RankCase &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const SelectRankStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const SelectTypeConstruct &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V>
-void visit(const SelectTypeConstruct::TypeCase &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const SelectTypeStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const Selector &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const SeparateModuleSubprogram &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V>
-void visit(const SignedComplexLiteralConstant &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const SignedIntLiteralConstant &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V>
-void visit(const SignedRealLiteralConstant &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const SpecificationConstruct &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const SpecificationExpr &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const SpecificationPart &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const StatOrErrmsg &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const StatVariable &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const StatusExpr &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const StmtFunctionStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const StopCode &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const StopStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const StructureComponent &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.base, visitor);
-    visit(x.component, visitor);
-    visitor.post(x);
+template<typename V> void Walk(const Expr::LE &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
+    visitor.Post(x);
   }
 }
 
-template<typename V> void visit(const StructureConstructor &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const StructureDef &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const StructureField &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const StructureStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const Submodule &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const SubmoduleStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const SubroutineStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const SubroutineSubprogram &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const SubscriptTriplet &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const Substring &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const SubstringRange &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const Suffix &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.binding, visitor);
-    visit(x.resultName, visitor);
-    visitor.post(x);
+template<typename V> void Walk(const Expr::LT &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
+    visitor.Post(x);
   }
 }
 
-template<typename V> void visit(const SyncAllStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const SyncImagesStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const SyncImagesStmt::ImageSet &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const SyncMemoryStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const SyncTeamStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const TargetStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const TypeAttrSpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const TypeAttrSpec::Extends &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.name, visitor);
-    visitor.post(x);
+template<typename V> void Walk(const Expr::Multiply &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
+    visitor.Post(x);
   }
 }
 
-template<typename V> void visit(const TypeBoundGenericStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const Expr::NE &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
+    visitor.Post(x);
+  }
 }
 
-template<typename V> void visit(const TypeBoundProcBinding &x, V &visitor) {
-  VisitUnionClass(x, visitor);
+template<typename V> void Walk(const Expr::NEQV &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
+    visitor.Post(x);
+  }
 }
 
-template<typename V> void visit(const TypeBoundProcDecl &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const Expr::NOT &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(static_cast<const Expr::IntrinsicUnary &>(x), visitor);
+    visitor.Post(x);
+  }
 }
 
-template<typename V> void visit(const TypeBoundProcedurePart &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const Expr::Negate &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(static_cast<const Expr::IntrinsicUnary &>(x), visitor);
+    visitor.Post(x);
+  }
 }
 
-template<typename V> void visit(const TypeBoundProcedureStmt &x, V &visitor) {
-  VisitUnionClass(x, visitor);
+template<typename V> void Walk(const Expr::OR &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
+    visitor.Post(x);
+  }
+}
+
+template<typename V> void Walk(const Expr::Parentheses &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(static_cast<const Expr::IntrinsicUnary &>(x), visitor);
+    visitor.Post(x);
+  }
+}
+
+template<typename V> void Walk(const Expr::PercentLoc &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const Expr::Power &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
+    visitor.Post(x);
+  }
+}
+
+template<typename V> void Walk(const Expr::Subtract &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(static_cast<const Expr::IntrinsicBinary &>(x), visitor);
+    visitor.Post(x);
+  }
+}
+
+template<typename V> void Walk(const Expr::UnaryPlus &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(static_cast<const Expr::IntrinsicUnary &>(x), visitor);
+    visitor.Post(x);
+  }
+}
+
+template<typename V> void Walk(const ExternalStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const FileUnitNumber &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const FinalProcedureStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const FlushStmt &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ForallAssignmentStmt &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ForallBodyConstruct &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ForallConstruct &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ForallConstructStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ForallStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const FormTeamStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
 }
 
 template<typename V>
-void visit(const TypeBoundProcedureStmt::WithInterface &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.interfaceName, visitor);
-    visit(x.attributes, visitor);
-    visit(x.bindingNames, visitor);
-    visitor.post(x);
+void Walk(const FormTeamStmt::FormTeamSpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const Format &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const FormatStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const Fortran::ControlEditDesc &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.kind, visitor);
+    visitor.Post(x);
   }
 }
 
 template<typename V>
-void visit(const TypeBoundProcedureStmt::WithoutInterface &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.attributes, visitor);
-    visit(x.declarations, visitor);
-    visitor.post(x);
+void Walk(const Fortran::DerivedTypeDataEditDesc &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.type, visitor);
+    Walk(x.parameters, visitor);
+    visitor.Post(x);
   }
 }
 
-template<typename V> void visit(const TypeDeclarationStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const TypeGuardStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const TypeGuardStmt::Guard &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const TypeParamDecl &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const TypeParamDefStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const TypeParamSpec &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const TypeParamValue &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const TypeSpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const Union &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const UnlockStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
-}
-
-template<typename V> void visit(const UseStmt &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const ValueStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const Variable &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const VolatileStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const WaitSpec &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const WaitStmt &x, V &visitor) {
-  VisitWrapperClass(x, visitor);
-}
-
-template<typename V> void visit(const WhereBodyConstruct &x, V &visitor) {
-  VisitUnionClass(x, visitor);
-}
-
-template<typename V> void visit(const WhereConstruct &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const Fortran::FormatItem &x, V &visitor) {
+  WalkUnionClass(x, visitor);
 }
 
 template<typename V>
-void visit(const WhereConstruct::Elsewhere &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+void Walk(const Fortran::IntrinsicTypeDataEditDesc &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.kind, visitor);
+    Walk(x.width, visitor);
+    Walk(x.digits, visitor);
+    Walk(x.exponentWidth, visitor);
+    visitor.Post(x);
+  }
+}
+
+template<typename V> void Walk(const FunctionReference &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const FunctionStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const FunctionSubprogram &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const GenericSpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const GenericStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const GotoStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const IdExpr &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const IdVariable &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const IfConstruct &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const IfConstruct::ElseBlock &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const IfConstruct::ElseIfBlock &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const IfStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const IfThenStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ImageSelector &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ImageSelectorSpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ImageSelectorSpec::Stat &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const ImageSelectorSpec::Team &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
 }
 
 template<typename V>
-void visit(const WhereConstruct::MaskedElsewhere &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+void Walk(const ImageSelectorSpec::Team_Number &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
 }
 
-template<typename V> void visit(const WhereConstructStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const ImplicitPart &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
 }
 
-template<typename V> void visit(const WhereStmt &x, V &visitor) {
-  VisitTupleClass(x, visitor);
+template<typename V> void Walk(const ImplicitPartStmt &x, V &visitor) {
+  WalkUnionClass(x, visitor);
 }
 
-template<typename V> void visit(const WriteStmt &x, V &visitor) {
-  if (visitor.pre(x)) {
-    visit(x.iounit, visitor);
-    visit(x.format, visitor);
-    visit(x.controls, visitor);
-    visit(x.items, visitor);
-    visitor.post(x);
+template<typename V> void Walk(const ImplicitSpec &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ImplicitStmt &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ImpliedShapeSpec &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const ImportStmt &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.names, visitor);
+    visitor.Post(x);
+  }
+}
+
+template<typename V> void Walk(const Initialization &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const InputImpliedDo &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const InputItem &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const InquireSpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const InquireSpec::CharVar &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const InquireSpec::IntVar &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const InquireSpec::LogVar &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const InquireStmt &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const InquireStmt::Iolength &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const IntLiteralConstant &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const IntegerTypeSpec &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const IntentStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const InterfaceBlock &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const InterfaceBody &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const InterfaceBody::Function &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const InterfaceBody::Subroutine &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const InterfaceSpecification &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const InterfaceStmt &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const InternalSubprogram &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const InternalSubprogramPart &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const IntrinsicStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const IntrinsicTypeSpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V>
+void Walk(const IntrinsicTypeSpec::Character &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.selector, visitor);
+    visitor.Post(x);
+  }
+}
+
+template<typename V>
+void Walk(const IntrinsicTypeSpec::Complex &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.kind, visitor);
+    visitor.Post(x);
+  }
+}
+
+template<typename V>
+void Walk(const IntrinsicTypeSpec::Logical &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.kind, visitor);
+    visitor.Post(x);
+  }
+}
+
+template<typename V>
+void Walk(const IntrinsicTypeSpec::NCharacter &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const IntrinsicTypeSpec::Real &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.kind, visitor);
+    visitor.Post(x);
+  }
+}
+
+template<typename V> void Walk(const IoControlSpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V>
+void Walk(const IoControlSpec::Asynchronous &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const IoControlSpec::CharExpr &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const IoControlSpec::Pos &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const IoControlSpec::Rec &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const IoControlSpec::Size &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const IoUnit &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const KindParam &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const LabelDoStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const LanguageBindingSpec &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const LengthSelector &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const LetterSpec &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const LiteralConstant &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const LocalitySpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const LocalitySpec::Local &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const LocalitySpec::LocalInit &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const LocalitySpec::Shared &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const LockStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const LockStmt::LockStat &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const LogicalLiteralConstant &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const LoopControl &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const LoopControl::Concurrent &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const MainProgram &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const Map &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const MaskedElsewhereStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const Module &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ModuleStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const ModuleSubprogram &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ModuleSubprogramPart &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const MpSubprogramStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const MsgVariable &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const NamedConstant &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const NamedConstantDef &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const NamelistStmt::Group &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const NonLabelDoStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const NullifyStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const ObjectDecl &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const Only &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const OpenStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const OptionalStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const OtherSpecificationStmt &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const OutputImpliedDo &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const OutputItem &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ParameterStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const ParentIdentifier &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const PartRef &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.name, visitor);
+    Walk(x.subscripts, visitor);
+    Walk(x.imageSelector, visitor);
+    visitor.Post(x);
+  }
+}
+
+template<typename V> void Walk(const Pass &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const PauseStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const PointerAssignmentStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V>
+void Walk(const PointerAssignmentStmt::Bounds &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const PointerDecl &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const PointerObject &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const PointerStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const PositionOrFlushSpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const PrefixSpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const PrintStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const PrivateOrSequence &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ProcAttrSpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ProcComponentAttrSpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ProcComponentDefStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ProcComponentRef &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ProcDecl &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ProcInterface &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ProcPointerInit &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ProcedureDeclarationStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ProcedureDesignator &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ProcedureStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const Program &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const ProgramUnit &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ProtectedStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const ReadStmt &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.iounit, visitor);
+    Walk(x.format, visitor);
+    Walk(x.controls, visitor);
+    Walk(x.items, visitor);
+    visitor.Post(x);
+  }
+}
+
+template<typename V> void Walk(const RealLiteralConstant &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.intPart, visitor);
+    Walk(x.fraction, visitor);
+    Walk(x.exponent, visitor);
+    Walk(x.kind, visitor);
+    visitor.Post(x);
+  }
+}
+
+template<typename V> void Walk(const RedimensionStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const Rename &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const Rename::Names &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const Rename::Operators &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const ReturnStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const RewindStmt &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const SaveStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const SavedEntity &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const SectionSubscript &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const SelectCaseStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const SelectRankCaseStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const SelectRankCaseStmt::Rank &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const SelectRankConstruct &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V>
+void Walk(const SelectRankConstruct::RankCase &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const SelectRankStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const SelectTypeConstruct &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V>
+void Walk(const SelectTypeConstruct::TypeCase &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const SelectTypeStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const Selector &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const SeparateModuleSubprogram &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V>
+void Walk(const SignedComplexLiteralConstant &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const SignedIntLiteralConstant &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const SignedRealLiteralConstant &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const SpecificationConstruct &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const SpecificationExpr &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const SpecificationPart &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const StatOrErrmsg &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const StatVariable &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const StatusExpr &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const StmtFunctionStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const StopCode &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const StopStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const StructureComponent &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.base, visitor);
+    Walk(x.component, visitor);
+    visitor.Post(x);
+  }
+}
+
+template<typename V> void Walk(const StructureConstructor &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const StructureDef &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const StructureField &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const StructureStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const Submodule &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const SubmoduleStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const SubroutineStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const SubroutineSubprogram &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const SubscriptTriplet &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const Substring &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const SubstringRange &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const Suffix &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.binding, visitor);
+    Walk(x.resultName, visitor);
+    visitor.Post(x);
+  }
+}
+
+template<typename V> void Walk(const SyncAllStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const SyncImagesStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const SyncImagesStmt::ImageSet &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const SyncMemoryStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const SyncTeamStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const TargetStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const TypeAttrSpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const TypeAttrSpec::Extends &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.name, visitor);
+    visitor.Post(x);
+  }
+}
+
+template<typename V> void Walk(const TypeBoundGenericStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const TypeBoundProcBinding &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const TypeBoundProcDecl &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const TypeBoundProcedurePart &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const TypeBoundProcedureStmt &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V>
+void Walk(const TypeBoundProcedureStmt::WithInterface &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.interfaceName, visitor);
+    Walk(x.attributes, visitor);
+    Walk(x.bindingNames, visitor);
+    visitor.Post(x);
+  }
+}
+
+template<typename V>
+void Walk(const TypeBoundProcedureStmt::WithoutInterface &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.attributes, visitor);
+    Walk(x.declarations, visitor);
+    visitor.Post(x);
+  }
+}
+
+template<typename V> void Walk(const TypeDeclarationStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const TypeGuardStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const TypeGuardStmt::Guard &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const TypeParamDecl &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const TypeParamDefStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const TypeParamSpec &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const TypeParamValue &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const TypeSpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const Union &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const UnlockStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const UseStmt &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ValueStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const Variable &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const VolatileStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const WaitSpec &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const WaitStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
+template<typename V> void Walk(const WhereBodyConstruct &x, V &visitor) {
+  WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const WhereConstruct &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const WhereConstruct::Elsewhere &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V>
+void Walk(const WhereConstruct::MaskedElsewhere &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const WhereConstructStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const WhereStmt &x, V &visitor) {
+  WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const WriteStmt &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.iounit, visitor);
+    Walk(x.format, visitor);
+    Walk(x.controls, visitor);
+    Walk(x.items, visitor);
+    visitor.Post(x);
   }
 }
 
