@@ -126,7 +126,6 @@ public:
     void extract(const AppleAcceleratorTable &AccelTable, uint32_t *Offset);
 
   public:
-    Entry(const Entry &RHS) : HdrData(RHS.HdrData) { Values = RHS.Values; }
     Optional<uint64_t> getCUOffset() const override;
     Optional<uint64_t> getDIEOffset() const override;
     Optional<dwarf::Tag> getTag() const override;

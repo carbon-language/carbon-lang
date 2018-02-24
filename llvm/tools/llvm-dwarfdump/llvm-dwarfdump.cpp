@@ -337,10 +337,10 @@ bool collectStatsForObjectFile(ObjectFile &Obj, DWARFContext &DICtx,
                                Twine Filename, raw_ostream &OS);
 
 template <typename AccelTable>
-static Optional<uint64_t> getDIEOffset(const AccelTable &Accel,
+static llvm::Optional<uint64_t> getDIEOffset(const AccelTable &Accel,
                                        StringRef Name) {
   for (const auto &Entry : Accel.equal_range(Name))
-    if (Optional<uint64_t> Off = Entry.getDIEOffset())
+    if (llvm::Optional<uint64_t> Off = Entry.getDIEOffset())
       return *Off;
   return None;
 }
