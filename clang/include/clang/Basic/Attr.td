@@ -1503,9 +1503,7 @@ def ObjCBridgeMutable : InheritableAttr {
 }
 
 def ObjCBridgeRelated : InheritableAttr {
-  // TODO: this attribute does not have a [[]] spelling because it requires
-  // custom parsing support.
-  let Spellings = [GNU<"objc_bridge_related">];
+  let Spellings = [Clang<"objc_bridge_related", 1>];
   let Subjects = SubjectList<[Record], ErrorDiag>;
   let Args = [IdentifierArgument<"RelatedClass">,
           IdentifierArgument<"ClassMethod", 1>,

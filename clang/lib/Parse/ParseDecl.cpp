@@ -416,6 +416,10 @@ unsigned Parser::ParseClangAttributeArgs(
     ParseAvailabilityAttribute(*AttrName, AttrNameLoc, Attrs, EndLoc, ScopeName,
                                ScopeLoc, Syntax);
     break;
+  case AttributeList::AT_ObjCBridgeRelated:
+    ParseObjCBridgeRelatedAttribute(*AttrName, AttrNameLoc, Attrs, EndLoc,
+                                    ScopeName, ScopeLoc, Syntax);
+    break;
   }
   return Attrs.getList() ? Attrs.getList()->getNumArgs() : 0;
 }
