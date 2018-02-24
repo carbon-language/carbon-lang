@@ -37647,7 +37647,7 @@ static SDValue combineSubToSubus(SDNode *N, SelectionDAG &DAG,
   SDValue SubusLHS, SubusRHS;
   // Try to find umax(a,b) - b or a - umin(a,b) patterns
   // they may be converted to subus(a,b).
-  // TODO: Need to add IR cannonicialization for this code.
+  // TODO: Need to add IR canonicalization for this code.
   if (Op0.getOpcode() == ISD::UMAX) {
     SubusRHS = Op1;
     SDValue MaxLHS = Op0.getOperand(0);
