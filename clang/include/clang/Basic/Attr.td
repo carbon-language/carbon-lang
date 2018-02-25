@@ -2390,6 +2390,9 @@ def LocksExcluded : InheritableAttr {
 // C/C++ consumed attributes.
 
 def Consumable : InheritableAttr {
+  // This attribute does not have a C [[]] spelling because it only appertains
+  // to C++ struct/class/union.
+  // FIXME: should this attribute have a CPlusPlus language option?
   let Spellings = [Clang<"consumable">];
   let Subjects = SubjectList<[CXXRecord]>;
   let Args = [EnumArgument<"DefaultState", "ConsumedState",
@@ -2399,18 +2402,27 @@ def Consumable : InheritableAttr {
 }
 
 def ConsumableAutoCast : InheritableAttr {
+  // This attribute does not have a C [[]] spelling because it only appertains
+  // to C++ struct/class/union.
+  // FIXME: should this attribute have a CPlusPlus language option?
   let Spellings = [Clang<"consumable_auto_cast_state">];
   let Subjects = SubjectList<[CXXRecord]>;
   let Documentation = [Undocumented];
 }
 
 def ConsumableSetOnRead : InheritableAttr {
+  // This attribute does not have a C [[]] spelling because it only appertains
+  // to C++ struct/class/union.
+  // FIXME: should this attribute have a CPlusPlus language option?
   let Spellings = [Clang<"consumable_set_state_on_read">];
   let Subjects = SubjectList<[CXXRecord]>;
   let Documentation = [Undocumented];
 }
 
 def CallableWhen : InheritableAttr {
+  // This attribute does not have a C [[]] spelling because it only appertains
+  // to C++ function (but doesn't require it to be a member function).
+  // FIXME: should this attribute have a CPlusPlus language option?
   let Spellings = [Clang<"callable_when">];
   let Subjects = SubjectList<[CXXMethod]>;
   let Args = [VariadicEnumArgument<"CallableStates", "ConsumedState",
@@ -2420,6 +2432,9 @@ def CallableWhen : InheritableAttr {
 }
 
 def ParamTypestate : InheritableAttr {
+  // This attribute does not have a C [[]] spelling because it only appertains
+  // to a parameter whose type is a consumable C++ class.
+  // FIXME: should this attribute have a CPlusPlus language option?
   let Spellings = [Clang<"param_typestate">];
   let Subjects = SubjectList<[ParmVar]>;
   let Args = [EnumArgument<"ParamState", "ConsumedState",
@@ -2429,6 +2444,9 @@ def ParamTypestate : InheritableAttr {
 }
 
 def ReturnTypestate : InheritableAttr {
+  // This attribute does not have a C [[]] spelling because it only appertains
+  // to a parameter or function return type that is a consumable C++ class.
+  // FIXME: should this attribute have a CPlusPlus language option?
   let Spellings = [Clang<"return_typestate">];
   let Subjects = SubjectList<[Function, ParmVar]>;
   let Args = [EnumArgument<"State", "ConsumedState",
@@ -2438,6 +2456,9 @@ def ReturnTypestate : InheritableAttr {
 }
 
 def SetTypestate : InheritableAttr {
+  // This attribute does not have a C [[]] spelling because it only appertains
+  // to C++ function (but doesn't require it to be a member function).
+  // FIXME: should this attribute have a CPlusPlus language option?
   let Spellings = [Clang<"set_typestate">];
   let Subjects = SubjectList<[CXXMethod]>;
   let Args = [EnumArgument<"NewState", "ConsumedState",
@@ -2447,6 +2468,9 @@ def SetTypestate : InheritableAttr {
 }
 
 def TestTypestate : InheritableAttr {
+  // This attribute does not have a C [[]] spelling because it only appertains
+  // to C++ function (but doesn't require it to be a member function).
+  // FIXME: should this attribute have a CPlusPlus language option?
   let Spellings = [Clang<"test_typestate">];
   let Subjects = SubjectList<[CXXMethod]>;
   let Args = [EnumArgument<"TestState", "ConsumedState",
