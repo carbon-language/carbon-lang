@@ -140,7 +140,7 @@ define float @fabs_select_constant_variable(i32 %c, float %x) {
   ret float %fabs
 }
 
-define float @fabs_select_neg0_pos0(float addrspace(1)* %out, i32 %c) {
+define float @fabs_select_neg0_pos0(i32 %c) {
 ; CHECK-LABEL: @fabs_select_neg0_pos0(
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i32 [[C:%.*]], 0
 ; CHECK-NEXT:    [[SELECT:%.*]] = select i1 [[CMP]], float -0.000000e+00, float 0.000000e+00
@@ -153,7 +153,7 @@ define float @fabs_select_neg0_pos0(float addrspace(1)* %out, i32 %c) {
   ret float %fabs
 }
 
-define float @fabs_select_neg0_neg1(float addrspace(1)* %out, i32 %c) {
+define float @fabs_select_neg0_neg1(i32 %c) {
 ; CHECK-LABEL: @fabs_select_neg0_neg1(
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i32 [[C:%.*]], 0
 ; CHECK-NEXT:    [[SELECT:%.*]] = select i1 [[CMP]], float -0.000000e+00, float -1.000000e+00
@@ -166,7 +166,7 @@ define float @fabs_select_neg0_neg1(float addrspace(1)* %out, i32 %c) {
   ret float %fabs
 }
 
-define float @fabs_select_nan_nan(float addrspace(1)* %out, i32 %c) {
+define float @fabs_select_nan_nan(i32 %c) {
 ; CHECK-LABEL: @fabs_select_nan_nan(
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i32 [[C:%.*]], 0
 ; CHECK-NEXT:    [[SELECT:%.*]] = select i1 [[CMP]], float 0x7FF8000000000000, float 0x7FF8000100000000
@@ -178,7 +178,7 @@ define float @fabs_select_nan_nan(float addrspace(1)* %out, i32 %c) {
   ret float %fabs
 }
 
-define float @fabs_select_negnan_nan(float addrspace(1)* %out, i32 %c) {
+define float @fabs_select_negnan_nan(i32 %c) {
 ; CHECK-LABEL: @fabs_select_negnan_nan(
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i32 [[C:%.*]], 0
 ; CHECK-NEXT:    [[SELECT:%.*]] = select i1 [[CMP]], float 0xFFF8000000000000, float 0x7FF8000000000000
@@ -191,7 +191,7 @@ define float @fabs_select_negnan_nan(float addrspace(1)* %out, i32 %c) {
   ret float %fabs
 }
 
-define float @fabs_select_negnan_negnan(float addrspace(1)* %out, i32 %c) {
+define float @fabs_select_negnan_negnan(i32 %c) {
 ; CHECK-LABEL: @fabs_select_negnan_negnan(
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i32 [[C:%.*]], 0
 ; CHECK-NEXT:    [[SELECT:%.*]] = select i1 [[CMP]], float 0xFFF8000000000000, float 0x7FF8000100000000
@@ -204,7 +204,7 @@ define float @fabs_select_negnan_negnan(float addrspace(1)* %out, i32 %c) {
   ret float %fabs
 }
 
-define float @fabs_select_negnan_negzero(float addrspace(1)* %out, i32 %c) {
+define float @fabs_select_negnan_negzero(i32 %c) {
 ; CHECK-LABEL: @fabs_select_negnan_negzero(
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i32 [[C:%.*]], 0
 ; CHECK-NEXT:    [[SELECT:%.*]] = select i1 [[CMP]], float 0xFFF8000000000000, float -0.000000e+00
@@ -217,7 +217,7 @@ define float @fabs_select_negnan_negzero(float addrspace(1)* %out, i32 %c) {
   ret float %fabs
 }
 
-define float @fabs_select_negnan_zero(float addrspace(1)* %out, i32 %c) {
+define float @fabs_select_negnan_zero(i32 %c) {
 ; CHECK-LABEL: @fabs_select_negnan_zero(
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i32 [[C:%.*]], 0
 ; CHECK-NEXT:    [[SELECT:%.*]] = select i1 [[CMP]], float 0xFFF8000000000000, float 0.000000e+00
