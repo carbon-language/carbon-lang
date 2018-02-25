@@ -4567,11 +4567,10 @@ static void handleArgumentWithTypeTagAttr(Sema &S, Decl *D,
   bool IsPointer = AL.getName()->getName() == "pointer_with_type_tag";
   if (IsPointer) {
     // Ensure that buffer has a pointer type.
-    QualType BufferTy = getFunctionOrMethodParamType(D, ArgumentIdx);
-    if (!BufferTy->isPointerType()) {
+    if (ArgumentIdx >= getFunctionOrMethodNumParams(D) ||
+        !getFunctionOrMethodParamType(D, ArgumentIdx)->isPointerType())
       S.Diag(AL.getLoc(), diag::err_attribute_pointers_only)
-        << AL.getName() << 0;
-    }
+          << AL.getName() << 0;
   }
 
   D->addAttr(::new (S.Context) ArgumentWithTypeTagAttr(
