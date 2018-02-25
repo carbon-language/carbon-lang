@@ -1255,21 +1255,6 @@ RecTy *VarInit::getFieldType(StringInit *FieldName) const {
   return nullptr;
 }
 
-Init *VarInit::getFieldInit(Record &R, const RecordVal *RV,
-                            StringInit *FieldName) const {
-  if (isa<RecordRecTy>(getType()))
-    if (const RecordVal *Val = R.getValue(VarName)) {
-      if (RV != Val && (RV || isa<UnsetInit>(Val->getValue())))
-        return nullptr;
-      Init *TheInit = Val->getValue();
-      assert(TheInit != this && "Infinite loop detected!");
-      if (Init *I = TheInit->getFieldInit(R, RV, FieldName))
-        return I;
-      return nullptr;
-    }
-  return nullptr;
-}
-
 Init *VarInit::resolveReferences(Record &R, const RecordVal *RV) const {
   if (RecordVal *Val = R.getValue(VarName))
     if (RV == Val || (!RV && !isa<UnsetInit>(Val->getValue())))
@@ -1361,11 +1346,6 @@ RecTy *DefInit::getFieldType(StringInit *FieldName) const {
   return nullptr;
 }
 
-Init *DefInit::getFieldInit(Record &R, const RecordVal *RV,
-                            StringInit *FieldName) const {
-  return Def->getValue(FieldName)->getValue();
-}
-
 std::string DefInit::getAsString() const {
   return Def->getName();
 }
@@ -1388,11 +1368,13 @@ Init *FieldInit::getBit(unsigned Bit) const {
 }
 
 Init *FieldInit::resolveReferences(Record &R, const RecordVal *RV) const {
-  Init *NewRec = RV ? Rec->resolveReferences(R, RV) : Rec;
+  Init *NewRec = Rec->resolveReferences(R, RV);
 
-  if (Init *BitsVal = NewRec->getFieldInit(R, RV, FieldName)) {
-    Init *BVR = BitsVal->resolveReferences(R, RV);
-    return BVR->isComplete() ? BVR : const_cast<FieldInit *>(this);
+  if (DefInit *DI = dyn_cast<DefInit>(NewRec)) {
+    Init *FieldVal = DI->getDef()->getValue(FieldName)->getValue();
+    Init *BVR = FieldVal->resolveReferences(R, RV);
+    if (BVR->isComplete())
+      return BVR;
   }
 
   if (NewRec != Rec)

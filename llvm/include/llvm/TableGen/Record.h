@@ -356,14 +356,6 @@ public:
     return nullptr;
   }
 
-  /// This method complements getFieldType to return the
-  /// initializer for the specified field.  If getFieldType returns non-null
-  /// this method should return non-null, otherwise it returns null.
-  virtual Init *getFieldInit(Record &R, const RecordVal *RV,
-                             StringInit *FieldName) const {
-    return nullptr;
-  }
-
   /// This method is used by classes that refer to other
   /// variables which may not be defined at the time the expression is formed.
   /// If a value is set for the variable later, this method will be called on
@@ -901,8 +893,6 @@ public:
   }
 
   RecTy *getFieldType(StringInit *FieldName) const override;
-  Init *getFieldInit(Record &R, const RecordVal *RV,
-                     StringInit *FieldName) const override;
 
   /// This method is used by classes that refer to other
   /// variables which may not be defined at the time they expression is formed.
@@ -1012,8 +1002,6 @@ public:
   //virtual Init *convertInitializerBitRange(ArrayRef<unsigned> Bits);
 
   RecTy *getFieldType(StringInit *FieldName) const override;
-  Init *getFieldInit(Record &R, const RecordVal *RV,
-                     StringInit *FieldName) const override;
 
   std::string getAsString() const override;
 
