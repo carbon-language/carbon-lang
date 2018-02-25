@@ -1248,13 +1248,6 @@ Init *VarInit::getBit(unsigned Bit) const {
   return VarBitInit::get(const_cast<VarInit*>(this), Bit);
 }
 
-RecTy *VarInit::getFieldType(StringInit *FieldName) const {
-  if (RecordRecTy *RTy = dyn_cast<RecordRecTy>(getType()))
-    if (const RecordVal *RV = RTy->getRecord()->getValue(FieldName))
-      return RV->getType();
-  return nullptr;
-}
-
 Init *VarInit::resolveReferences(Record &R, const RecordVal *RV) const {
   if (RecordVal *Val = R.getValue(VarName))
     if (RV == Val || (!RV && !isa<UnsetInit>(Val->getValue())))

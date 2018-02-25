@@ -892,8 +892,6 @@ public:
     return getNameInit()->getAsUnquotedString();
   }
 
-  RecTy *getFieldType(StringInit *FieldName) const override;
-
   /// This method is used by classes that refer to other
   /// variables which may not be defined at the time they expression is formed.
   /// If a value is set for the variable later, this method will be called on
