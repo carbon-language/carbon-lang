@@ -18,8 +18,6 @@
 namespace Fortran {
 namespace parser {
 
-namespace {
-
 // Apply func to each member of tuple.
 template<size_t I = 0, typename Func, typename... Ts>  // clang-format off
 typename std::enable_if<I == sizeof...(Ts)>::type
@@ -83,8 +81,6 @@ template<typename T, typename V> void WalkUnionClass(const T &x, V &visitor) {
     visitor.Post(x);
   }
 }
-
-}  // namespace
 
 template<typename T, typename V> void Walk(const Scalar<T> &x, V &visitor) {
   Walk(x.thing, visitor);
@@ -150,6 +146,10 @@ template<typename V> void Walk(const AcValue::Triplet &x, V &visitor) {
 
 template<typename V> void Walk(const AccessId &x, V &visitor) {
   WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const AccessSpec &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
 }
 
 template<typename V> void Walk(const AccessStmt &x, V &visitor) {
@@ -230,6 +230,10 @@ template<typename V> void Walk(const ArrayElement &x, V &visitor) {
     Walk(x.subscripts, visitor);
     visitor.Post(x);
   }
+}
+
+template<typename V> void Walk(const ArraySection &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
 }
 
 template<typename V> void Walk(const ArraySpec &x, V &visitor) {
@@ -398,6 +402,10 @@ template<typename V> void Walk(const CharVariable &x, V &visitor) {
   WalkWrapperClass(x, visitor);
 }
 
+template<typename V> void Walk(const CloseStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
 template<typename V> void Walk(const CloseStmt::CloseSpec &x, V &visitor) {
   WalkUnionClass(x, visitor);
 }
@@ -440,6 +448,10 @@ template<typename V> void Walk(const ComplexLiteralConstant &x, V &visitor) {
 
 template<typename V> void Walk(const ComplexPart &x, V &visitor) {
   WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const ComplexPartDesignator &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
 }
 
 template<typename V> void Walk(const ComponentArraySpec &x, V &visitor) {
@@ -616,6 +628,10 @@ template<typename V> void Walk(const DerivedTypeStmt &x, V &visitor) {
 
 template<typename V> void Walk(const Designator &x, V &visitor) {
   WalkUnionClass(x, visitor);
+}
+
+template<typename V> void Walk(const DimensionStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
 }
 
 template<typename V>
@@ -1075,6 +1091,10 @@ template<typename V> void Walk(const GotoStmt &x, V &visitor) {
   WalkWrapperClass(x, visitor);
 }
 
+template<typename V> void Walk(const HollerithLiteralConstant &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
 template<typename V> void Walk(const IdExpr &x, V &visitor) {
   WalkWrapperClass(x, visitor);
 }
@@ -1195,6 +1215,10 @@ template<typename V> void Walk(const IntegerTypeSpec &x, V &visitor) {
   WalkWrapperClass(x, visitor);
 }
 
+template<typename V> void Walk(const IntentSpec &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
 template<typename V> void Walk(const IntentStmt &x, V &visitor) {
   WalkTupleClass(x, visitor);
 }
@@ -1308,6 +1332,10 @@ template<typename V> void Walk(const KindParam &x, V &visitor) {
   WalkUnionClass(x, visitor);
 }
 
+template<typename V> void Walk(const KindSelector &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
+}
+
 template<typename V> void Walk(const LabelDoStmt &x, V &visitor) {
   WalkTupleClass(x, visitor);
 }
@@ -1406,6 +1434,10 @@ template<typename V> void Walk(const NamedConstant &x, V &visitor) {
 
 template<typename V> void Walk(const NamedConstantDef &x, V &visitor) {
   WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const NamelistStmt &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
 }
 
 template<typename V> void Walk(const NamelistStmt::Group &x, V &visitor) {
@@ -1865,6 +1897,10 @@ template<typename V> void Walk(const TypeParamDecl &x, V &visitor) {
 
 template<typename V> void Walk(const TypeParamDefStmt &x, V &visitor) {
   WalkTupleClass(x, visitor);
+}
+
+template<typename V> void Walk(const TypeParamInquiry &x, V &visitor) {
+  WalkWrapperClass(x, visitor);
 }
 
 template<typename V> void Walk(const TypeParamSpec &x, V &visitor) {
