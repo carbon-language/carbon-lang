@@ -723,7 +723,7 @@ static llvm::StringRef canonicalizePlatformName(llvm::StringRef Platform) {
 }
 
 def ExternalSourceSymbol : InheritableAttr {
-  let Spellings = [Clang<"external_source_symbol">];
+  let Spellings = [Clang<"external_source_symbol", 1>];
   let Args = [StringArgument<"language", 1>,
               StringArgument<"definedIn", 1>,
               BoolArgument<"generatedDeclaration", 1>];
@@ -2817,7 +2817,7 @@ def OMPDeclareTargetDecl : Attr {
 }
 
 def InternalLinkage : InheritableAttr {
-  let Spellings = [Clang<"internal_linkage">];
+  let Spellings = [Clang<"internal_linkage", 1>];
   let Subjects = SubjectList<[Var, Function, CXXRecord]>;
   let Documentation = [InternalLinkageDocs];
 }
