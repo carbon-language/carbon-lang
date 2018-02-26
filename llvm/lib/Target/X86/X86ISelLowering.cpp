@@ -883,6 +883,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::BITCAST,            MVT::v2i32, Custom);
     setOperationAction(ISD::BITCAST,            MVT::v4i16, Custom);
     setOperationAction(ISD::BITCAST,            MVT::v8i8,  Custom);
+    if (!Subtarget.hasAVX512())
+      setOperationAction(ISD::BITCAST, MVT::v16i1, Custom);
 
     setOperationAction(ISD::SIGN_EXTEND_VECTOR_INREG, MVT::v2i64, Custom);
     setOperationAction(ISD::SIGN_EXTEND_VECTOR_INREG, MVT::v4i32, Custom);
@@ -1011,6 +1013,9 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
 
     setOperationAction(ISD::SINT_TO_FP,         MVT::v8i32, Legal);
     setOperationAction(ISD::FP_ROUND,           MVT::v4f32, Legal);
+
+    if (!Subtarget.hasAVX512())
+      setOperationAction(ISD::BITCAST, MVT::v32i1, Custom);
 
     for (MVT VT : MVT::fp_vector_valuetypes())
       setLoadExtAction(ISD::EXTLOAD, VT, MVT::v4f32, Legal);
@@ -23740,6 +23745,24 @@ static SDValue LowerCMP_SWAP(SDValue Op, const X86Subtarget &Subtarget,
   return SDValue();
 }
 
+// Create MOVMSKB, taking into account whether we need to split for AVX1.
+static SDValue getPMOVMSKB(const SDLoc &DL, SDValue V, SelectionDAG &DAG,
+                           const X86Subtarget &Subtarget) {
+  MVT InVT = V.getSimpleValueType();
+
+  if (InVT == MVT::v32i8 && !Subtarget.hasInt256()) {
+    SDValue Lo, Hi;
+    std::tie(Lo, Hi) = DAG.SplitVector(V, DL);
+    Lo = DAG.getNode(X86ISD::MOVMSK, DL, MVT::i32, Lo);
+    Hi = DAG.getNode(X86ISD::MOVMSK, DL, MVT::i32, Hi);
+    Hi = DAG.getNode(ISD::SHL, DL, MVT::i32, Hi,
+                     DAG.getConstant(16, DL, MVT::i8));
+    return DAG.getNode(ISD::OR, DL, MVT::i32, Lo, Hi);
+  }
+
+  return DAG.getNode(X86ISD::MOVMSK, DL, MVT::i32, V);
+}
+
 static SDValue LowerBITCAST(SDValue Op, const X86Subtarget &Subtarget,
                             SelectionDAG &DAG) {
   SDValue Src = Op.getOperand(0);
@@ -23764,6 +23787,16 @@ static SDValue LowerBITCAST(SDValue Op, const X86Subtarget &Subtarget,
   // Custom splitting for BWI types when AVX512F is available but BWI isn't.
   if ((SrcVT == MVT::v32i16 || SrcVT == MVT::v64i8) && DstVT.isVector())
     return Lower512IntUnary(Op, DAG);
+
+  // Use MOVMSK for vector to scalar conversion to prevent scalarization.
+  if ((SrcVT == MVT::v16i1 || SrcVT == MVT::v32i1) && DstVT.isScalarInteger()) {
+    assert(!Subtarget.hasAVX512() && "Should use K-registers with AVX512");
+    MVT SExtVT = SrcVT == MVT::v16i1 ? MVT::v16i8 : MVT::v32i8;
+    SDLoc DL(Op);
+    SDValue V = DAG.getSExtOrTrunc(Src, DL, SExtVT);
+    V = getPMOVMSKB(DL, V, DAG, Subtarget);
+    return DAG.getZExtOrTrunc(V, DL, DstVT);
+  }
 
   if (SrcVT == MVT::v2i32 || SrcVT == MVT::v4i16 || SrcVT == MVT::v8i8 ||
       SrcVT == MVT::i64) {
@@ -30648,17 +30681,8 @@ static SDValue combineBitcastvxi1(SelectionDAG &DAG, SDValue BitCast,
   SDLoc DL(BitCast);
   SDValue V = DAG.getSExtOrTrunc(N0, DL, SExtVT);
 
-  if (SExtVT == MVT::v32i8 && !Subtarget.hasInt256()) {
-    // Handle pre-AVX2 cases by splitting to two v16i1's.
-    const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-    MVT ShiftTy = TLI.getScalarShiftAmountTy(DAG.getDataLayout(), MVT::i32);
-    SDValue Lo = extract128BitVector(V, 0, DAG, DL);
-    SDValue Hi = extract128BitVector(V, 16, DAG, DL);
-    Lo = DAG.getNode(X86ISD::MOVMSK, DL, MVT::i32, Lo);
-    Hi = DAG.getNode(X86ISD::MOVMSK, DL, MVT::i32, Hi);
-    Hi = DAG.getNode(ISD::SHL, DL, MVT::i32, Hi,
-                     DAG.getConstant(16, DL, ShiftTy));
-    V = DAG.getNode(ISD::OR, DL, MVT::i32, Lo, Hi);
+  if (SExtVT == MVT::v16i8 || SExtVT == MVT::v32i8) {
+    V = getPMOVMSKB(DL, V, DAG, Subtarget);
     return DAG.getZExtOrTrunc(V, DL, VT);
   }
 
