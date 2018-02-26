@@ -388,18 +388,14 @@ CGDebugInfo::computeChecksum(FileID FID, SmallString<32> &Checksum) const {
 llvm::DIFile *CGDebugInfo::getOrCreateFile(SourceLocation Loc) {
   if (!Loc.isValid())
     // If Location is not valid then use main input file.
-    return DBuilder.createFile(remapDIPath(TheCU->getFilename()),
-                               remapDIPath(TheCU->getDirectory()),
-                               TheCU->getFile()->getChecksum());
+    return getOrCreateMainFile();
 
   SourceManager &SM = CGM.getContext().getSourceManager();
   PresumedLoc PLoc = SM.getPresumedLoc(Loc);
 
   if (PLoc.isInvalid() || StringRef(PLoc.getFilename()).empty())
     // If the location is not valid then use main input file.
-    return DBuilder.createFile(remapDIPath(TheCU->getFilename()),
-                               remapDIPath(TheCU->getDirectory()),
-                               TheCU->getFile()->getChecksum());
+    return getOrCreateMainFile();
 
   // Cache the results.
   const char *fname = PLoc.getFilename();
