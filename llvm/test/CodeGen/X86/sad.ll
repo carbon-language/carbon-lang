@@ -236,7 +236,7 @@ define i32 @sad_32i8() nounwind {
 ; SSE2-NEXT:    psrad $31, %xmm1
 ; SSE2-NEXT:    paddd %xmm1, %xmm3
 ; SSE2-NEXT:    pxor %xmm1, %xmm3
-; SSE2-NEXT:    paddd %xmm3, %xmm1
+; SSE2-NEXT:    paddd %xmm3, %xmm13
 ; SSE2-NEXT:    movdqa %xmm5, %xmm1
 ; SSE2-NEXT:    psrad $31, %xmm1
 ; SSE2-NEXT:    paddd %xmm1, %xmm5
@@ -264,7 +264,7 @@ define i32 @sad_32i8() nounwind {
 ; SSE2-NEXT:    addq $4, %rax
 ; SSE2-NEXT:    jne .LBB1_1
 ; SSE2-NEXT:  # %bb.2: # %middle.block
-; SSE2-NEXT:    movdqa	-{{[0-9]+}}(%rsp), %xmm0 # 16-byte Reload
+; SSE2-NEXT:    movdqa -{{[0-9]+}}(%rsp), %xmm0 # 16-byte Reload
 ; SSE2-NEXT:    paddd %xmm15, %xmm0
 ; SSE2-NEXT:    paddd %xmm14, %xmm13
 ; SSE2-NEXT:    paddd %xmm0, %xmm13
@@ -405,7 +405,7 @@ define i32 @sad_avx64i8() nounwind {
 ; SSE2-NEXT:    pxor %xmm14, %xmm14
 ; SSE2-NEXT:    movq $-1024, %rax # imm = 0xFC00
 ; SSE2-NEXT:    pxor %xmm0, %xmm0
-; SSE2-NEXT:    movdqa	%xmm0, {{[0-9]+}}(%rsp) # 16-byte Spill
+; SSE2-NEXT:    movdqa %xmm0, {{[0-9]+}}(%rsp) # 16-byte Spill
 ; SSE2-NEXT:    pxor %xmm0, %xmm0
 ; SSE2-NEXT:    movdqa %xmm0, {{[0-9]+}}(%rsp) # 16-byte Spill
 ; SSE2-NEXT:    pxor %xmm0, %xmm0
@@ -681,11 +681,11 @@ define i32 @sad_avx64i8() nounwind {
 ; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm2 # 16-byte Reload
 ; SSE2-NEXT:    paddd {{[0-9]+}}(%rsp), %xmm2 # 16-byte Folded Reload
 ; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm1 # 16-byte Reload
-; SSE2-NEXT:    paddd	(%rsp), %xmm1           # 16-byte Folded Reload
-; SSE2-NEXT:    paddd	%xmm4, %xmm1
-; SSE2-NEXT:    paddd	%xmm2, %xmm1
-; SSE2-NEXT:    paddd	%xmm3, %xmm1
-; SSE2-NEXT:    paddd	%xmm0, %xmm1
+; SSE2-NEXT:    paddd (%rsp), %xmm1 # 16-byte Folded Reload
+; SSE2-NEXT:    paddd %xmm4, %xmm1
+; SSE2-NEXT:    paddd %xmm2, %xmm1
+; SSE2-NEXT:    paddd %xmm3, %xmm1
+; SSE2-NEXT:    paddd %xmm0, %xmm1
 ; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm1[2,3,0,1]
 ; SSE2-NEXT:    paddd %xmm1, %xmm0
 ; SSE2-NEXT:    pshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
