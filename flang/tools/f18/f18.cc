@@ -7,6 +7,7 @@
 #include "../../lib/parser/preprocessor.h"
 #include "../../lib/parser/prescan.h"
 #include "../../lib/parser/provenance.h"
+#include "../../lib/parser/unparse.h"
 #include "../../lib/parser/user-state.h"
 #include <cerrno>
 #include <cstdio>
@@ -160,7 +161,8 @@ int main(int argc, char *const argv[]) {
   std::optional<typename decltype(grammar)::resultType> result{
       grammar.Parse(&state)};
   if (result.has_value() && !state.anyErrorRecovery()) {
-    std::cout << "demo PASS\n" << *result << '\n';
+    Unparse(std::cout, *result);
+    return EXIT_SUCCESS;
   } else {
     std::cerr << "demo FAIL\n";
     if (!state.IsAtEnd()) {

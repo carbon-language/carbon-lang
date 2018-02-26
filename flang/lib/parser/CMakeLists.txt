@@ -9,4 +9,5 @@ add_library( FlangParser
   provenance.cc
   source.cc
   token-sequence.cc
+  unparse.cc
 )
