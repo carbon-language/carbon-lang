@@ -11341,9 +11341,13 @@ ScalarEvolution::forgetMemoizedResults(const SCEV *S) {
   RemoveSCEVFromBackedgeMap(PredicatedBackedgeTakenCounts);
 }
 
-void ScalarEvolution::addToLoopUseLists(const SCEV *S) {
+void
+ScalarEvolution::getUsedLoops(const SCEV *S,
+                              SmallPtrSetImpl<const Loop *> &LoopsUsed) {
   struct FindUsedLoops {
-    SmallPtrSet<const Loop *, 8> LoopsUsed;
+    FindUsedLoops(SmallPtrSetImpl<const Loop *> &LoopsUsed)
+        : LoopsUsed(LoopsUsed) {}
+    SmallPtrSetImpl<const Loop *> &LoopsUsed;
     bool follow(const SCEV *S) {
       if (auto *AR = dyn_cast<SCEVAddRecExpr>(S))
         LoopsUsed.insert(AR->getLoop());
@@ -11353,10 +11357,14 @@ void ScalarEvolution::addToLoopUseLists(const SCEV *S) {
     bool isDone() const { return false; }
   };
 
-  FindUsedLoops F;
+  FindUsedLoops F(LoopsUsed);
   SCEVTraversal<FindUsedLoops>(F).visitAll(S);
+}
 
-  for (auto *L : F.LoopsUsed)
+void ScalarEvolution::addToLoopUseLists(const SCEV *S) {
+  SmallPtrSet<const Loop *, 8> LoopsUsed;
+  getUsedLoops(S, LoopsUsed);
+  for (auto *L : LoopsUsed)
     LoopUsers[L].push_back(S);
 }
 
