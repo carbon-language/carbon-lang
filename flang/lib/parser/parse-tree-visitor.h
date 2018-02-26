@@ -295,6 +295,10 @@ void Walk(const Fortran::DerivedTypeDataEditDesc &x, V &visitor) {
     visitor.Post(x);
   }
 }
+template<typename V> void Walk(const Fortran::FormatItem &x, V &visitor) {
+  Walk(x.repeatCount, visitor);
+  WalkUnionClass(x, visitor);
+}
 template<typename V>
 void Walk(const Fortran::IntrinsicTypeDataEditDesc &x, V &visitor) {
   if (visitor.Pre(x)) {
@@ -400,6 +404,11 @@ void Walk(const TypeBoundProcedureStmt::WithoutInterface &x, V &visitor) {
     Walk(x.declarations, visitor);
     visitor.Post(x);
   }
+}
+template<typename V> void Walk(const UseStmt &x, V &visitor) {
+  Walk(x.nature, visitor);
+  Walk(x.moduleName, visitor);
+  WalkUnionClass(x, visitor);
 }
 template<typename V> void Walk(const WriteStmt &x, V &visitor) {
   if (visitor.Pre(x)) {
@@ -1037,9 +1046,6 @@ void Walk(const FormTeamStmt::FormTeamSpec &x, V &visitor) {
 template<typename V> void Walk(const Format &x, V &visitor) {
   WalkUnionClass(x, visitor);
 }
-template<typename V> void Walk(const Fortran::FormatItem &x, V &visitor) {
-  WalkUnionClass(x, visitor);
-}
 template<typename V> void Walk(const GenericSpec &x, V &visitor) {
   WalkUnionClass(x, visitor);
 }
@@ -1195,9 +1201,6 @@ template<typename V> void Walk(const TypeParamValue &x, V &visitor) {
   WalkUnionClass(x, visitor);
 }
 template<typename V> void Walk(const TypeSpec &x, V &visitor) {
-  WalkUnionClass(x, visitor);
-}
-template<typename V> void Walk(const UseStmt &x, V &visitor) {
   WalkUnionClass(x, visitor);
 }
 template<typename V> void Walk(const Variable &x, V &visitor) {
