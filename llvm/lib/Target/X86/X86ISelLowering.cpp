@@ -34369,7 +34369,7 @@ static SDValue combineTruncateWithSat(SDValue In, EVT VT, const SDLoc &DL,
 static SDValue detectAVGPattern(SDValue In, EVT VT, SelectionDAG &DAG,
                                 const X86Subtarget &Subtarget,
                                 const SDLoc &DL) {
-  if (!VT.isVector() || !VT.isSimple())
+  if (!VT.isVector())
     return SDValue();
   EVT InVT = In.getValueType();
   unsigned NumElems = VT.getVectorNumElements();

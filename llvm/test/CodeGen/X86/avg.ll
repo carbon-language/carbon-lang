@@ -1651,3 +1651,375 @@ define <64 x i8> @avg_v64i8_3(<64 x i8> %a, <64 x i8> %b) nounwind {
   %res = trunc <64 x i16> %lshr to <64 x i8>
   ret <64 x i8> %res
 }
+
+define <512 x i8> @avg_v512i8_3(<512 x i8> %a, <512 x i8> %b) nounwind {
+; SSE2-LABEL: avg_v512i8_3:
+; SSE2:       # %bb.0:
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 496(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 480(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 464(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 448(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 432(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 416(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 400(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 384(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 368(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 352(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 336(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 320(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 304(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 288(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 272(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 256(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 240(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 224(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 208(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 192(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 176(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 160(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 144(%rdi)
+; SSE2-NEXT:    movdqa {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm8
+; SSE2-NEXT:    movdqa %xmm8, 128(%rdi)
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm7
+; SSE2-NEXT:    movdqa %xmm7, 112(%rdi)
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm6
+; SSE2-NEXT:    movdqa %xmm6, 96(%rdi)
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm5
+; SSE2-NEXT:    movdqa %xmm5, 80(%rdi)
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm4
+; SSE2-NEXT:    movdqa %xmm4, 64(%rdi)
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm3
+; SSE2-NEXT:    movdqa %xmm3, 48(%rdi)
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm2
+; SSE2-NEXT:    movdqa %xmm2, 32(%rdi)
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm1
+; SSE2-NEXT:    movdqa %xmm1, 16(%rdi)
+; SSE2-NEXT:    pavgb {{[0-9]+}}(%rsp), %xmm0
+; SSE2-NEXT:    movdqa %xmm0, (%rdi)
+; SSE2-NEXT:    movq %rdi, %rax
+; SSE2-NEXT:    retq
+;
+; AVX1-LABEL: avg_v512i8_3:
+; AVX1:       # %bb.0:
+; AVX1-NEXT:    pushq %rbp
+; AVX1-NEXT:    movq %rsp, %rbp
+; AVX1-NEXT:    andq $-32, %rsp
+; AVX1-NEXT:    subq $128, %rsp
+; AVX1-NEXT:    vmovdqa 144(%rbp), %ymm8
+; AVX1-NEXT:    vmovdqa 112(%rbp), %ymm9
+; AVX1-NEXT:    vmovdqa 80(%rbp), %ymm10
+; AVX1-NEXT:    vmovdqa 48(%rbp), %ymm11
+; AVX1-NEXT:    vmovdqa 16(%rbp), %ymm12
+; AVX1-NEXT:    vmovdqa 272(%rbp), %ymm13
+; AVX1-NEXT:    vextractf128 $1, %ymm13, %xmm14
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm15
+; AVX1-NEXT:    vpavgb %xmm14, %xmm15, %xmm14
+; AVX1-NEXT:    vmovdqa 304(%rbp), %ymm15
+; AVX1-NEXT:    vpavgb %xmm13, %xmm0, %xmm0
+; AVX1-NEXT:    vinsertf128 $1, %xmm14, %ymm0, %ymm0
+; AVX1-NEXT:    vmovaps %ymm0, {{[0-9]+}}(%rsp) # 32-byte Spill
+; AVX1-NEXT:    vextractf128 $1, %ymm15, %xmm14
+; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm0
+; AVX1-NEXT:    vpavgb %xmm14, %xmm0, %xmm0
+; AVX1-NEXT:    vmovdqa 336(%rbp), %ymm14
+; AVX1-NEXT:    vpavgb %xmm15, %xmm1, %xmm1
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; AVX1-NEXT:    vmovaps %ymm0, {{[0-9]+}}(%rsp) # 32-byte Spill
+; AVX1-NEXT:    vextractf128 $1, %ymm14, %xmm0
+; AVX1-NEXT:    vextractf128 $1, %ymm2, %xmm1
+; AVX1-NEXT:    vpavgb %xmm0, %xmm1, %xmm0
+; AVX1-NEXT:    vmovdqa 368(%rbp), %ymm1
+; AVX1-NEXT:    vpavgb %xmm14, %xmm2, %xmm2
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm2, %ymm0
+; AVX1-NEXT:    vmovaps %ymm0, (%rsp) # 32-byte Spill
+; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm0
+; AVX1-NEXT:    vextractf128 $1, %ymm3, %xmm2
+; AVX1-NEXT:    vpavgb %xmm0, %xmm2, %xmm0
+; AVX1-NEXT:    vmovdqa 400(%rbp), %ymm2
+; AVX1-NEXT:    vpavgb %xmm1, %xmm3, %xmm1
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm3
+; AVX1-NEXT:    vextractf128 $1, %ymm2, %xmm0
+; AVX1-NEXT:    vextractf128 $1, %ymm4, %xmm1
+; AVX1-NEXT:    vpavgb %xmm0, %xmm1, %xmm0
+; AVX1-NEXT:    vmovdqa 432(%rbp), %ymm1
+; AVX1-NEXT:    vpavgb %xmm2, %xmm4, %xmm2
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm2, %ymm4
+; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm0
+; AVX1-NEXT:    vextractf128 $1, %ymm5, %xmm2
+; AVX1-NEXT:    vpavgb %xmm0, %xmm2, %xmm0
+; AVX1-NEXT:    vmovdqa 464(%rbp), %ymm2
+; AVX1-NEXT:    vpavgb %xmm1, %xmm5, %xmm1
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm5
+; AVX1-NEXT:    vextractf128 $1, %ymm2, %xmm0
+; AVX1-NEXT:    vextractf128 $1, %ymm6, %xmm1
+; AVX1-NEXT:    vpavgb %xmm0, %xmm1, %xmm0
+; AVX1-NEXT:    vmovdqa 496(%rbp), %ymm1
+; AVX1-NEXT:    vpavgb %xmm2, %xmm6, %xmm2
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm2, %ymm6
+; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm0
+; AVX1-NEXT:    vextractf128 $1, %ymm7, %xmm2
+; AVX1-NEXT:    vpavgb %xmm0, %xmm2, %xmm0
+; AVX1-NEXT:    vmovdqa 528(%rbp), %ymm2
+; AVX1-NEXT:    vpavgb %xmm1, %xmm7, %xmm1
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm7
+; AVX1-NEXT:    vextractf128 $1, %ymm2, %xmm0
+; AVX1-NEXT:    vextractf128 $1, %ymm12, %xmm1
+; AVX1-NEXT:    vpavgb %xmm0, %xmm1, %xmm0
+; AVX1-NEXT:    vmovdqa 560(%rbp), %ymm1
+; AVX1-NEXT:    vpavgb %xmm2, %xmm12, %xmm2
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm2, %ymm12
+; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm0
+; AVX1-NEXT:    vextractf128 $1, %ymm11, %xmm2
+; AVX1-NEXT:    vpavgb %xmm0, %xmm2, %xmm0
+; AVX1-NEXT:    vmovdqa 592(%rbp), %ymm2
+; AVX1-NEXT:    vpavgb %xmm1, %xmm11, %xmm1
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm11
+; AVX1-NEXT:    vextractf128 $1, %ymm2, %xmm0
+; AVX1-NEXT:    vextractf128 $1, %ymm10, %xmm1
+; AVX1-NEXT:    vpavgb %xmm0, %xmm1, %xmm0
+; AVX1-NEXT:    vmovdqa 624(%rbp), %ymm1
+; AVX1-NEXT:    vpavgb %xmm2, %xmm10, %xmm2
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm2, %ymm10
+; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm0
+; AVX1-NEXT:    vextractf128 $1, %ymm9, %xmm2
+; AVX1-NEXT:    vpavgb %xmm0, %xmm2, %xmm0
+; AVX1-NEXT:    vmovdqa 656(%rbp), %ymm2
+; AVX1-NEXT:    vpavgb %xmm1, %xmm9, %xmm1
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm9
+; AVX1-NEXT:    vextractf128 $1, %ymm2, %xmm0
+; AVX1-NEXT:    vextractf128 $1, %ymm8, %xmm1
+; AVX1-NEXT:    vpavgb %xmm0, %xmm1, %xmm0
+; AVX1-NEXT:    vmovdqa 176(%rbp), %ymm1
+; AVX1-NEXT:    vpavgb %xmm2, %xmm8, %xmm2
+; AVX1-NEXT:    vmovdqa 688(%rbp), %ymm8
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm2, %ymm0
+; AVX1-NEXT:    vextractf128 $1, %ymm8, %xmm2
+; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm13
+; AVX1-NEXT:    vpavgb %xmm2, %xmm13, %xmm2
+; AVX1-NEXT:    vpavgb %xmm8, %xmm1, %xmm1
+; AVX1-NEXT:    vmovdqa 208(%rbp), %ymm8
+; AVX1-NEXT:    vinsertf128 $1, %xmm2, %ymm1, %ymm13
+; AVX1-NEXT:    vmovdqa 720(%rbp), %ymm2
+; AVX1-NEXT:    vextractf128 $1, %ymm2, %xmm1
+; AVX1-NEXT:    vextractf128 $1, %ymm8, %xmm15
+; AVX1-NEXT:    vpavgb %xmm1, %xmm15, %xmm1
+; AVX1-NEXT:    vpavgb %xmm2, %xmm8, %xmm2
+; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm2, %ymm1
+; AVX1-NEXT:    vmovdqa 240(%rbp), %ymm15
+; AVX1-NEXT:    vmovdqa 752(%rbp), %ymm8
+; AVX1-NEXT:    vextractf128 $1, %ymm8, %xmm2
+; AVX1-NEXT:    vextractf128 $1, %ymm15, %xmm14
+; AVX1-NEXT:    vpavgb %xmm2, %xmm14, %xmm2
+; AVX1-NEXT:    vpavgb %xmm8, %xmm15, %xmm8
+; AVX1-NEXT:    vinsertf128 $1, %xmm2, %ymm8, %ymm2
+; AVX1-NEXT:    vmovaps %ymm2, 480(%rdi)
+; AVX1-NEXT:    vmovaps %ymm1, 448(%rdi)
+; AVX1-NEXT:    vmovaps %ymm13, 416(%rdi)
+; AVX1-NEXT:    vmovaps %ymm0, 384(%rdi)
+; AVX1-NEXT:    vmovaps %ymm9, 352(%rdi)
+; AVX1-NEXT:    vmovaps %ymm10, 320(%rdi)
+; AVX1-NEXT:    vmovaps %ymm11, 288(%rdi)
+; AVX1-NEXT:    vmovaps %ymm12, 256(%rdi)
+; AVX1-NEXT:    vmovaps %ymm7, 224(%rdi)
+; AVX1-NEXT:    vmovaps %ymm6, 192(%rdi)
+; AVX1-NEXT:    vmovaps %ymm5, 160(%rdi)
+; AVX1-NEXT:    vmovaps %ymm4, 128(%rdi)
+; AVX1-NEXT:    vmovaps %ymm3, 96(%rdi)
+; AVX1-NEXT:    vmovaps (%rsp), %ymm0 # 32-byte Reload
+; AVX1-NEXT:    vmovaps %ymm0, 64(%rdi)
+; AVX1-NEXT:    vmovaps {{[0-9]+}}(%rsp), %ymm0 # 32-byte Reload
+; AVX1-NEXT:    vmovaps %ymm0, 32(%rdi)
+; AVX1-NEXT:    vmovaps {{[0-9]+}}(%rsp), %ymm0 # 32-byte Reload
+; AVX1-NEXT:    vmovaps %ymm0, (%rdi)
+; AVX1-NEXT:    movq %rdi, %rax
+; AVX1-NEXT:    movq %rbp, %rsp
+; AVX1-NEXT:    popq %rbp
+; AVX1-NEXT:    vzeroupper
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: avg_v512i8_3:
+; AVX2:       # %bb.0:
+; AVX2-NEXT:    pushq %rbp
+; AVX2-NEXT:    movq %rsp, %rbp
+; AVX2-NEXT:    andq $-32, %rsp
+; AVX2-NEXT:    subq $32, %rsp
+; AVX2-NEXT:    vmovdqa 240(%rbp), %ymm8
+; AVX2-NEXT:    vmovdqa 208(%rbp), %ymm9
+; AVX2-NEXT:    vmovdqa 176(%rbp), %ymm10
+; AVX2-NEXT:    vmovdqa 144(%rbp), %ymm11
+; AVX2-NEXT:    vmovdqa 112(%rbp), %ymm12
+; AVX2-NEXT:    vmovdqa 80(%rbp), %ymm13
+; AVX2-NEXT:    vmovdqa 48(%rbp), %ymm14
+; AVX2-NEXT:    vmovdqa 16(%rbp), %ymm15
+; AVX2-NEXT:    vpavgb 272(%rbp), %ymm0, %ymm0
+; AVX2-NEXT:    vpavgb 304(%rbp), %ymm1, %ymm1
+; AVX2-NEXT:    vpavgb 336(%rbp), %ymm2, %ymm2
+; AVX2-NEXT:    vpavgb 368(%rbp), %ymm3, %ymm3
+; AVX2-NEXT:    vpavgb 400(%rbp), %ymm4, %ymm4
+; AVX2-NEXT:    vpavgb 432(%rbp), %ymm5, %ymm5
+; AVX2-NEXT:    vpavgb 464(%rbp), %ymm6, %ymm6
+; AVX2-NEXT:    vpavgb 496(%rbp), %ymm7, %ymm7
+; AVX2-NEXT:    vpavgb 528(%rbp), %ymm15, %ymm15
+; AVX2-NEXT:    vpavgb 560(%rbp), %ymm14, %ymm14
+; AVX2-NEXT:    vpavgb 592(%rbp), %ymm13, %ymm13
+; AVX2-NEXT:    vpavgb 624(%rbp), %ymm12, %ymm12
+; AVX2-NEXT:    vpavgb 656(%rbp), %ymm11, %ymm11
+; AVX2-NEXT:    vpavgb 688(%rbp), %ymm10, %ymm10
+; AVX2-NEXT:    vpavgb 720(%rbp), %ymm9, %ymm9
+; AVX2-NEXT:    vpavgb 752(%rbp), %ymm8, %ymm8
+; AVX2-NEXT:    vmovdqa %ymm8, 480(%rdi)
+; AVX2-NEXT:    vmovdqa %ymm9, 448(%rdi)
+; AVX2-NEXT:    vmovdqa %ymm10, 416(%rdi)
+; AVX2-NEXT:    vmovdqa %ymm11, 384(%rdi)
+; AVX2-NEXT:    vmovdqa %ymm12, 352(%rdi)
+; AVX2-NEXT:    vmovdqa %ymm13, 320(%rdi)
+; AVX2-NEXT:    vmovdqa %ymm14, 288(%rdi)
+; AVX2-NEXT:    vmovdqa %ymm15, 256(%rdi)
+; AVX2-NEXT:    vmovdqa %ymm7, 224(%rdi)
+; AVX2-NEXT:    vmovdqa %ymm6, 192(%rdi)
+; AVX2-NEXT:    vmovdqa %ymm5, 160(%rdi)
+; AVX2-NEXT:    vmovdqa %ymm4, 128(%rdi)
+; AVX2-NEXT:    vmovdqa %ymm3, 96(%rdi)
+; AVX2-NEXT:    vmovdqa %ymm2, 64(%rdi)
+; AVX2-NEXT:    vmovdqa %ymm1, 32(%rdi)
+; AVX2-NEXT:    vmovdqa %ymm0, (%rdi)
+; AVX2-NEXT:    movq %rdi, %rax
+; AVX2-NEXT:    movq %rbp, %rsp
+; AVX2-NEXT:    popq %rbp
+; AVX2-NEXT:    vzeroupper
+; AVX2-NEXT:    retq
+;
+; AVX512F-LABEL: avg_v512i8_3:
+; AVX512F:       # %bb.0:
+; AVX512F-NEXT:    pushq %rbp
+; AVX512F-NEXT:    movq %rsp, %rbp
+; AVX512F-NEXT:    andq $-32, %rsp
+; AVX512F-NEXT:    subq $32, %rsp
+; AVX512F-NEXT:    vmovdqa 240(%rbp), %ymm8
+; AVX512F-NEXT:    vmovdqa 208(%rbp), %ymm9
+; AVX512F-NEXT:    vmovdqa 176(%rbp), %ymm10
+; AVX512F-NEXT:    vmovdqa 144(%rbp), %ymm11
+; AVX512F-NEXT:    vmovdqa 112(%rbp), %ymm12
+; AVX512F-NEXT:    vmovdqa 80(%rbp), %ymm13
+; AVX512F-NEXT:    vmovdqa 48(%rbp), %ymm14
+; AVX512F-NEXT:    vmovdqa 16(%rbp), %ymm15
+; AVX512F-NEXT:    vpavgb 272(%rbp), %ymm0, %ymm0
+; AVX512F-NEXT:    vpavgb 304(%rbp), %ymm1, %ymm1
+; AVX512F-NEXT:    vpavgb 336(%rbp), %ymm2, %ymm2
+; AVX512F-NEXT:    vpavgb 368(%rbp), %ymm3, %ymm3
+; AVX512F-NEXT:    vpavgb 400(%rbp), %ymm4, %ymm4
+; AVX512F-NEXT:    vpavgb 432(%rbp), %ymm5, %ymm5
+; AVX512F-NEXT:    vpavgb 464(%rbp), %ymm6, %ymm6
+; AVX512F-NEXT:    vpavgb 496(%rbp), %ymm7, %ymm7
+; AVX512F-NEXT:    vpavgb 528(%rbp), %ymm15, %ymm15
+; AVX512F-NEXT:    vpavgb 560(%rbp), %ymm14, %ymm14
+; AVX512F-NEXT:    vpavgb 592(%rbp), %ymm13, %ymm13
+; AVX512F-NEXT:    vpavgb 624(%rbp), %ymm12, %ymm12
+; AVX512F-NEXT:    vpavgb 656(%rbp), %ymm11, %ymm11
+; AVX512F-NEXT:    vpavgb 688(%rbp), %ymm10, %ymm10
+; AVX512F-NEXT:    vpavgb 720(%rbp), %ymm9, %ymm9
+; AVX512F-NEXT:    vpavgb 752(%rbp), %ymm8, %ymm8
+; AVX512F-NEXT:    vmovdqa %ymm8, 480(%rdi)
+; AVX512F-NEXT:    vmovdqa %ymm9, 448(%rdi)
+; AVX512F-NEXT:    vmovdqa %ymm10, 416(%rdi)
+; AVX512F-NEXT:    vmovdqa %ymm11, 384(%rdi)
+; AVX512F-NEXT:    vmovdqa %ymm12, 352(%rdi)
+; AVX512F-NEXT:    vmovdqa %ymm13, 320(%rdi)
+; AVX512F-NEXT:    vmovdqa %ymm14, 288(%rdi)
+; AVX512F-NEXT:    vmovdqa %ymm15, 256(%rdi)
+; AVX512F-NEXT:    vmovdqa %ymm7, 224(%rdi)
+; AVX512F-NEXT:    vmovdqa %ymm6, 192(%rdi)
+; AVX512F-NEXT:    vmovdqa %ymm5, 160(%rdi)
+; AVX512F-NEXT:    vmovdqa %ymm4, 128(%rdi)
+; AVX512F-NEXT:    vmovdqa %ymm3, 96(%rdi)
+; AVX512F-NEXT:    vmovdqa %ymm2, 64(%rdi)
+; AVX512F-NEXT:    vmovdqa %ymm1, 32(%rdi)
+; AVX512F-NEXT:    vmovdqa %ymm0, (%rdi)
+; AVX512F-NEXT:    movq %rdi, %rax
+; AVX512F-NEXT:    movq %rbp, %rsp
+; AVX512F-NEXT:    popq %rbp
+; AVX512F-NEXT:    vzeroupper
+; AVX512F-NEXT:    retq
+;
+; AVX512BW-LABEL: avg_v512i8_3:
+; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    pushq %rbp
+; AVX512BW-NEXT:    movq %rsp, %rbp
+; AVX512BW-NEXT:    andq $-64, %rsp
+; AVX512BW-NEXT:    subq $64, %rsp
+; AVX512BW-NEXT:    vpavgb 16(%rbp), %zmm0, %zmm0
+; AVX512BW-NEXT:    vpavgb 80(%rbp), %zmm1, %zmm1
+; AVX512BW-NEXT:    vpavgb 144(%rbp), %zmm2, %zmm2
+; AVX512BW-NEXT:    vpavgb 208(%rbp), %zmm3, %zmm3
+; AVX512BW-NEXT:    vpavgb 272(%rbp), %zmm4, %zmm4
+; AVX512BW-NEXT:    vpavgb 336(%rbp), %zmm5, %zmm5
+; AVX512BW-NEXT:    vpavgb 400(%rbp), %zmm6, %zmm6
+; AVX512BW-NEXT:    vpavgb 464(%rbp), %zmm7, %zmm7
+; AVX512BW-NEXT:    vmovdqa64 %zmm7, 448(%rdi)
+; AVX512BW-NEXT:    vmovdqa64 %zmm6, 384(%rdi)
+; AVX512BW-NEXT:    vmovdqa64 %zmm5, 320(%rdi)
+; AVX512BW-NEXT:    vmovdqa64 %zmm4, 256(%rdi)
+; AVX512BW-NEXT:    vmovdqa64 %zmm3, 192(%rdi)
+; AVX512BW-NEXT:    vmovdqa64 %zmm2, 128(%rdi)
+; AVX512BW-NEXT:    vmovdqa64 %zmm1, 64(%rdi)
+; AVX512BW-NEXT:    vmovdqa64 %zmm0, (%rdi)
+; AVX512BW-NEXT:    movq %rdi, %rax
+; AVX512BW-NEXT:    movq %rbp, %rsp
+; AVX512BW-NEXT:    popq %rbp
+; AVX512BW-NEXT:    vzeroupper
+; AVX512BW-NEXT:    retq
+  %za = zext <512 x i8> %a to <512 x i16>
+  %zb = zext <512 x i8> %b to <512 x i16>
+  %add = add nuw nsw <512 x i16> %za, %zb
+  %add1 = add nuw nsw <512 x i16> %add, <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
+  %lshr = lshr <512 x i16> %add1, <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
+  %res = trunc <512 x i16> %lshr to <512 x i8>
+  ret <512 x i8> %res
+}
