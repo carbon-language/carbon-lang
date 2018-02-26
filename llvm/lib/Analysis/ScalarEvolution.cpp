@@ -4130,6 +4130,47 @@ private:
   bool SeenOtherLoops = false;
 };
 
+/// Takes SCEV S and Loop L. For each AddRec sub-expression, use its post
+/// increment expression in case its Loop is L. If it is not L then
+/// use AddRec itself.
+/// If SCEV contains non-invariant unknown SCEV rewrite cannot be done.
+class SCEVPostIncRewriter : public SCEVRewriteVisitor<SCEVPostIncRewriter> {
+public:
+  static const SCEV *rewrite(const SCEV *S, const Loop *L, ScalarEvolution &SE) {
+    SCEVPostIncRewriter Rewriter(L, SE);
+    const SCEV *Result = Rewriter.visit(S);
+    return Rewriter.hasSeenLoopVariantSCEVUnknown()
+        ? SE.getCouldNotCompute()
+        : Result;
+  }
+
+  const SCEV *visitUnknown(const SCEVUnknown *Expr) {
+    if (!SE.isLoopInvariant(Expr, L))
+      SeenLoopVariantSCEVUnknown = true;
+    return Expr;
+  }
+
+  const SCEV *visitAddRecExpr(const SCEVAddRecExpr *Expr) {
+    // Only re-write AddRecExprs for this loop.
+    if (Expr->getLoop() == L)
+      return Expr->getPostIncExpr(SE);
+    SeenOtherLoops = true;
+    return Expr;
+  }
+
+  bool hasSeenLoopVariantSCEVUnknown() { return SeenLoopVariantSCEVUnknown; }
+
+  bool hasSeenOtherLoops() { return SeenOtherLoops; }
+
+private:
+  explicit SCEVPostIncRewriter(const Loop *L, ScalarEvolution &SE)
+      : SCEVRewriteVisitor(SE), L(L) {}
+
+  const Loop *L;
+  bool SeenLoopVariantSCEVUnknown = false;
+  bool SeenOtherLoops = false;
+};
+
 /// This class evaluates the compare condition by matching it against the
 /// condition of loop latch. If there is a match we assume a true value
 /// for the condition while building SCEV nodes.
