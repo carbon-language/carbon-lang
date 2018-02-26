@@ -44,6 +44,7 @@ def suppress(remark):
 
 class SourceFileRenderer:
     def __init__(self, source_dir, output_dir, filename, no_highlight):
+        self.filename = filename
         existing_filename = None
         if os.path.exists(filename):
             existing_filename = filename
@@ -131,6 +132,7 @@ class SourceFileRenderer:
 
         print('''
 <html>
+<title>{}</title>
 <meta charset="utf-8" />
 <head>
 <link rel='stylesheet' type='text/css' href='style.css'>
@@ -147,7 +149,7 @@ class SourceFileRenderer:
 <th style="width: 15%">Inline Context</td>
 </tr>
 </thead>
-<tbody>''', file=self.stream)
+<tbody>'''.format(os.path.basename(self.filename)), file=self.stream)
         self.render_source_lines(self.source_stream, line_remarks)
 
         print('''
