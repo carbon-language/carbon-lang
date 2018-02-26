@@ -36885,6 +36885,19 @@ static SDValue combineMOVMSK(SDNode *N, SelectionDAG &DAG,
   SDValue Src = N->getOperand(0);
   MVT SrcVT = Src.getSimpleValueType();
 
+  // Perform constant folding.
+  if (ISD::isBuildVectorOfConstantSDNodes(Src.getNode())) {
+    assert(N->getValueType(0) == MVT::i32 && "Unexpected result type");
+    APInt Imm(32, 0);
+    for (unsigned Idx = 0, e = Src.getNumOperands(); Idx < e; ++Idx) {
+      SDValue In = Src.getOperand(Idx);
+      if (!In.isUndef() &&
+          cast<ConstantSDNode>(In)->getAPIntValue().isNegative())
+        Imm.setBit(Idx);
+    }
+    return DAG.getConstant(Imm, SDLoc(N), N->getValueType(0));
+  }
+
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   TargetLowering::TargetLoweringOpt TLO(DAG, !DCI.isBeforeLegalize(),
                                         !DCI.isBeforeLegalizeOps());

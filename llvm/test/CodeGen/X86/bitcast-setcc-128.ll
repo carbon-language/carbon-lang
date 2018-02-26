@@ -646,40 +646,20 @@ define i64 @v16i8_widened_with_zeroes(<16 x i8> %a, <16 x i8> %b) {
 ; SSE2-SSSE3-LABEL: v16i8_widened_with_zeroes:
 ; SSE2-SSSE3:       # %bb.0: # %entry
 ; SSE2-SSSE3-NEXT:    pcmpeqb %xmm1, %xmm0
-; SSE2-SSSE3-NEXT:    pmovmskb %xmm0, %ecx
-; SSE2-SSSE3-NEXT:    pxor %xmm0, %xmm0
-; SSE2-SSSE3-NEXT:    pmovmskb %xmm0, %edx
-; SSE2-SSSE3-NEXT:    movl %edx, %eax
-; SSE2-SSSE3-NEXT:    shll $16, %eax
-; SSE2-SSSE3-NEXT:    orl %eax, %ecx
-; SSE2-SSSE3-NEXT:    orl %edx, %eax
-; SSE2-SSSE3-NEXT:    shlq $32, %rax
-; SSE2-SSSE3-NEXT:    orq %rcx, %rax
+; SSE2-SSSE3-NEXT:    pmovmskb %xmm0, %eax
 ; SSE2-SSSE3-NEXT:    retq
 ;
 ; AVX1-LABEL: v16i8_widened_with_zeroes:
 ; AVX1:       # %bb.0: # %entry
 ; AVX1-NEXT:    vpcmpeqb %xmm1, %xmm0, %xmm0
-; AVX1-NEXT:    vpmovmskb %xmm0, %ecx
-; AVX1-NEXT:    vpxor %xmm0, %xmm0, %xmm0
-; AVX1-NEXT:    vpmovmskb %xmm0, %edx
-; AVX1-NEXT:    movl %edx, %eax
-; AVX1-NEXT:    shll $16, %eax
-; AVX1-NEXT:    orl %eax, %ecx
-; AVX1-NEXT:    orl %edx, %eax
-; AVX1-NEXT:    shlq $32, %rax
-; AVX1-NEXT:    orq %rcx, %rax
+; AVX1-NEXT:    vpmovmskb %xmm0, %eax
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: v16i8_widened_with_zeroes:
 ; AVX2:       # %bb.0: # %entry
 ; AVX2-NEXT:    vpcmpeqb %xmm1, %xmm0, %xmm0
-; AVX2-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; AVX2-NEXT:    vpmovmskb %ymm1, %ecx
-; AVX2-NEXT:    shlq $32, %rcx
 ; AVX2-NEXT:    vmovdqa %xmm0, %xmm0
 ; AVX2-NEXT:    vpmovmskb %ymm0, %eax
-; AVX2-NEXT:    orq %rcx, %rax
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
 ;
@@ -701,6 +681,69 @@ define i64 @v16i8_widened_with_zeroes(<16 x i8> %a, <16 x i8> %b) {
 entry:
   %c = icmp eq <16 x i8> %a, %b
   %d = shufflevector <16 x i1> %c, <16 x i1> zeroinitializer, <64 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+  %e = bitcast <64 x i1> %d to i64
+  ret i64 %e
+}
+
+define i64 @v16i8_widened_with_ones(<16 x i8> %a, <16 x i8> %b) {
+; SSE2-SSSE3-LABEL: v16i8_widened_with_ones:
+; SSE2-SSSE3:       # %bb.0: # %entry
+; SSE2-SSSE3-NEXT:    pcmpeqb %xmm1, %xmm0
+; SSE2-SSSE3-NEXT:    pmovmskb %xmm0, %ecx
+; SSE2-SSSE3-NEXT:    orl $-65536, %ecx # imm = 0xFFFF0000
+; SSE2-SSSE3-NEXT:    movabsq $-4294967296, %rax # imm = 0xFFFFFFFF00000000
+; SSE2-SSSE3-NEXT:    orq %rcx, %rax
+; SSE2-SSSE3-NEXT:    retq
+;
+; AVX1-LABEL: v16i8_widened_with_ones:
+; AVX1:       # %bb.0: # %entry
+; AVX1-NEXT:    vpcmpeqb %xmm1, %xmm0, %xmm0
+; AVX1-NEXT:    vpsllw $7, %xmm0, %xmm0
+; AVX1-NEXT:    vpand {{.*}}(%rip), %xmm0, %xmm0
+; AVX1-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX1-NEXT:    vpcmpgtb %xmm0, %xmm1, %xmm0
+; AVX1-NEXT:    vpmovmskb %xmm0, %ecx
+; AVX1-NEXT:    orl $-65536, %ecx # imm = 0xFFFF0000
+; AVX1-NEXT:    movabsq $-4294967296, %rax # imm = 0xFFFFFFFF00000000
+; AVX1-NEXT:    orq %rcx, %rax
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: v16i8_widened_with_ones:
+; AVX2:       # %bb.0: # %entry
+; AVX2-NEXT:    vpcmpeqb %xmm1, %xmm0, %xmm0
+; AVX2-NEXT:    vinserti128 $1, {{.*}}(%rip), %ymm0, %ymm0
+; AVX2-NEXT:    vpsllw $7, %ymm0, %ymm0
+; AVX2-NEXT:    vpand {{.*}}(%rip), %ymm0, %ymm0
+; AVX2-NEXT:    vpmovmskb %ymm0, %ecx
+; AVX2-NEXT:    movabsq $-4294967296, %rax # imm = 0xFFFFFFFF00000000
+; AVX2-NEXT:    orq %rcx, %rax
+; AVX2-NEXT:    vzeroupper
+; AVX2-NEXT:    retq
+;
+; AVX512F-LABEL: v16i8_widened_with_ones:
+; AVX512F:       # %bb.0: # %entry
+; AVX512F-NEXT:    vpcmpeqb %xmm1, %xmm0, %xmm0
+; AVX512F-NEXT:    vpmovsxbd %xmm0, %zmm0
+; AVX512F-NEXT:    vptestmd %zmm0, %zmm0, %k0
+; AVX512F-NEXT:    kmovw %k0, %ecx
+; AVX512F-NEXT:    orl $-65536, %ecx # imm = 0xFFFF0000
+; AVX512F-NEXT:    movabsq $-4294967296, %rax # imm = 0xFFFFFFFF00000000
+; AVX512F-NEXT:    orq %rcx, %rax
+; AVX512F-NEXT:    vzeroupper
+; AVX512F-NEXT:    retq
+;
+; AVX512BW-LABEL: v16i8_widened_with_ones:
+; AVX512BW:       # %bb.0: # %entry
+; AVX512BW-NEXT:    vpcmpeqb %xmm1, %xmm0, %k0
+; AVX512BW-NEXT:    kxnorw %k0, %k0, %k1
+; AVX512BW-NEXT:    kunpckwd %k0, %k1, %k0
+; AVX512BW-NEXT:    kxnord %k0, %k0, %k1
+; AVX512BW-NEXT:    kunpckdq %k0, %k1, %k0
+; AVX512BW-NEXT:    kmovq %k0, %rax
+; AVX512BW-NEXT:    retq
+entry:
+  %c = icmp eq <16 x i8> %a, %b
+  %d = shufflevector <16 x i1> %c, <16 x i1> <i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1>, <64 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
   %e = bitcast <64 x i1> %d to i64
   ret i64 %e
 }
