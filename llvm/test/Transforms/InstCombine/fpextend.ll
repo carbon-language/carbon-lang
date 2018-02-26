@@ -3,6 +3,7 @@
 
 @X = external global float
 @Y = external global float
+@Z = external global <2 x float>
 
 define void @test() nounwind  {
 ; CHECK-LABEL: @test(
@@ -75,5 +76,45 @@ entry:
   %tmp2 = fsub double -0.000000e+00, %tmp1		; <double> [#uses=1]
   %tmp34 = fptrunc double %tmp2 to float		; <float> [#uses=1]
   store float %tmp34, float* @X, align 4
+  ret void
+}
+
+; Test with vector splat constant
+define void @test5() nounwind  {
+; CHECK-LABEL: @test5(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[TMP:%.*]] = load <2 x float>, <2 x float>* @Z, align 8
+; CHECK-NEXT:    [[TMP1:%.*]] = fpext <2 x float> [[TMP]] to <2 x double>
+; CHECK-NEXT:    [[TMP3:%.*]] = fadd <2 x double> [[TMP1]], zeroinitializer
+; CHECK-NEXT:    [[TMP34:%.*]] = fptrunc <2 x double> [[TMP3]] to <2 x float>
+; CHECK-NEXT:    store <2 x float> [[TMP34]], <2 x float>* @Z, align 8
+; CHECK-NEXT:    ret void
+;
+entry:
+  %tmp = load <2 x float>, <2 x float>* @Z, align 4
+  %tmp1 = fpext <2 x float> %tmp to <2 x double>
+  %tmp3 = fadd <2 x double> %tmp1, <double 0.000000e+00, double 0.000000e+00>
+  %tmp34 = fptrunc <2 x double> %tmp3 to <2 x float>
+  store <2 x float> %tmp34, <2 x float>* @Z, align 4
+  ret void
+}
+
+; Test with a non-splat constant
+define void @test6() nounwind  {
+; CHECK-LABEL: @test6(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[TMP:%.*]] = load <2 x float>, <2 x float>* @Z, align 8
+; CHECK-NEXT:    [[TMP1:%.*]] = fpext <2 x float> [[TMP]] to <2 x double>
+; CHECK-NEXT:    [[TMP3:%.*]] = fadd <2 x double> [[TMP1]], <double 0.000000e+00, double -0.000000e+00>
+; CHECK-NEXT:    [[TMP34:%.*]] = fptrunc <2 x double> [[TMP3]] to <2 x float>
+; CHECK-NEXT:    store <2 x float> [[TMP34]], <2 x float>* @Z, align 8
+; CHECK-NEXT:    ret void
+;
+entry:
+  %tmp = load <2 x float>, <2 x float>* @Z, align 4
+  %tmp1 = fpext <2 x float> %tmp to <2 x double>
+  %tmp3 = fadd <2 x double> %tmp1, <double 0.000000e+00, double -0.000000e+00>
+  %tmp34 = fptrunc <2 x double> %tmp3 to <2 x float>
+  store <2 x float> %tmp34, <2 x float>* @Z, align 4
   ret void
 }
