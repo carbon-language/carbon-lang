@@ -25134,13 +25134,9 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     // we can split using the k-register rather than memory.
     if (SrcVT == MVT::v64i1 && DstVT == MVT::i64 && Subtarget.hasBWI()) {
       assert(!Subtarget.is64Bit() && "Expected 32-bit mode");
-      SDValue Lo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v32i1,
-                               N->getOperand(0),
-                               DAG.getIntPtrConstant(0, dl));
+      SDValue Lo, Hi;
+      std::tie(Lo, Hi) = DAG.SplitVectorOperand(N, 0);
       Lo = DAG.getBitcast(MVT::i32, Lo);
-      SDValue Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v32i1,
-                               N->getOperand(0),
-                               DAG.getIntPtrConstant(32, dl));
       Hi = DAG.getBitcast(MVT::i32, Hi);
       SDValue Res = DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, Lo, Hi);
       Results.push_back(Res);
