@@ -16,7 +16,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Serialization/ASTDeserializationListener.h"
-#include "llvm/Support/DJB.h"
+#include "llvm/ADT/StringExtras.h"
 
 using namespace clang;
 
@@ -171,7 +171,7 @@ unsigned serialization::ComputeHash(Selector Sel) {
   unsigned R = 5381;
   for (unsigned I = 0; I != N; ++I)
     if (IdentifierInfo *II = Sel.getIdentifierInfoForSlot(I))
-      R = llvm::djbHash(II->getName(), R);
+      R = llvm::HashString(II->getName(), R);
   return R;
 }
 
@@ -231,7 +231,7 @@ serialization::getDefinitiveDeclContext(const DeclContext *DC) {
   default:
     llvm_unreachable("Unhandled DeclContext in AST reader");
   }
-
+  
   llvm_unreachable("Unhandled decl kind");
 }
 
