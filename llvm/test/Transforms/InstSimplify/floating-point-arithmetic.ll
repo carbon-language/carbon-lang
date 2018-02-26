@@ -132,8 +132,7 @@ define <2 x float> @fabs_select_positive_constants_vector(i32 %c) {
 ; CHECK-LABEL: @fabs_select_positive_constants_vector(
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i32 [[C:%.*]], 0
 ; CHECK-NEXT:    [[SELECT:%.*]] = select i1 [[CMP]], <2 x float> <float 1.000000e+00, float 1.000000e+00>, <2 x float> <float 2.000000e+00, float 2.000000e+00>
-; CHECK-NEXT:    [[FABS:%.*]] = call <2 x float> @llvm.fabs.v2f32(<2 x float> [[SELECT]])
-; CHECK-NEXT:    ret <2 x float> [[FABS]]
+; CHECK-NEXT:    ret <2 x float> [[SELECT]]
 ;
   %cmp = icmp eq i32 %c, 0
   %select = select i1 %cmp, <2 x float> <float 1.0, float 1.0>, <2 x float> <float 2.0, float 2.0>
@@ -235,8 +234,7 @@ define <2 x float> @fabs_select_nan_nan_vector(i32 %c) {
 ; CHECK-LABEL: @fabs_select_nan_nan_vector(
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i32 [[C:%.*]], 0
 ; CHECK-NEXT:    [[SELECT:%.*]] = select i1 [[CMP]], <2 x float> <float 0x7FF8000000000000, float 0x7FF8000000000000>, <2 x float> <float 0x7FF8000100000000, float 0x7FF8000100000000>
-; CHECK-NEXT:    [[FABS:%.*]] = call <2 x float> @llvm.fabs.v2f32(<2 x float> [[SELECT]])
-; CHECK-NEXT:    ret <2 x float> [[FABS]]
+; CHECK-NEXT:    ret <2 x float> [[SELECT]]
 ;
   %cmp = icmp eq i32 %c, 0
   %select = select i1 %cmp, <2 x float> <float 0x7FF8000000000000, float 0x7FF8000000000000>, <2 x float> <float 0x7FF8000100000000, float 0x7FF8000100000000>
