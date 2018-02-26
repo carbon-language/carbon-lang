@@ -31029,8 +31029,8 @@ static bool detectZextAbsDiff(const SDValue &Select, SDValue &Op0,
 // Given two zexts of <k x i8> to <k x i32>, create a PSADBW of the inputs
 // to these zexts.
 static SDValue createPSADBW(SelectionDAG &DAG, const SDValue &Zext0,
-                            const SDValue &Zext1, const SDLoc &DL) {
-
+                            const SDValue &Zext1, const SDLoc &DL,
+                            const X86Subtarget &Subtarget) {
   // Find the appropriate width for the PSADBW.
   EVT InVT = Zext0.getOperand(0).getValueType();
   unsigned RegSize = std::max(128u, InVT.getSizeInBits());
@@ -31045,9 +31045,15 @@ static SDValue createPSADBW(SelectionDAG &DAG, const SDValue &Zext0,
   Ops[0] = Zext1.getOperand(0);
   SDValue SadOp1 = DAG.getNode(ISD::CONCAT_VECTORS, DL, ExtendedVT, Ops);
 
-  // Actually build the SAD
+  // Actually build the SAD, split as 128/256/512 bits for SSE/AVX2/AVX512BW.
+  auto PSADBWBuilder = [](SelectionDAG &DAG, const SDLoc &DL, SDValue Op0,
+                          SDValue Op1) {
+    MVT VT = MVT::getVectorVT(MVT::i64, Op0.getValueSizeInBits() / 64);
+    return DAG.getNode(X86ISD::PSADBW, DL, VT, Op0, Op1);
+  };
   MVT SadVT = MVT::getVectorVT(MVT::i64, RegSize / 64);
-  return DAG.getNode(X86ISD::PSADBW, DL, SadVT, SadOp0, SadOp1);
+  return SplitBinaryOpsAndApply(DAG, Subtarget, DL, SadVT, SadOp0, SadOp1,
+                                PSADBWBuilder);
 }
 
 // Attempt to replace an min/max v8i16/v16i8 horizontal reduction with
@@ -31216,10 +31222,10 @@ static SDValue combineBasicSADPattern(SDNode *Extract, SelectionDAG &DAG,
   unsigned RegSize = 128;
   if (Subtarget.useBWIRegs())
     RegSize = 512;
-  else if (Subtarget.hasAVX2())
+  else if (Subtarget.hasAVX())
     RegSize = 256;
 
-  // We handle upto v16i* for SSE2 / v32i* for AVX2 / v64i* for AVX512.
+  // We handle upto v16i* for SSE2 / v32i* for AVX / v64i* for AVX512.
   // TODO: We should be able to handle larger vectors by splitting them before
   // feeding them into several SADs, and then reducing over those.
   if (RegSize / VT.getVectorNumElements() < 8)
@@ -31254,7 +31260,7 @@ static SDValue combineBasicSADPattern(SDNode *Extract, SelectionDAG &DAG,
 
   // Create the SAD instruction.
   SDLoc DL(Extract);
-  SDValue SAD = createPSADBW(DAG, Zext0, Zext1, DL);
+  SDValue SAD = createPSADBW(DAG, Zext0, Zext1, DL, Subtarget);
 
   // If the original vector was wider than 8 elements, sum over the results
   // in the SAD vector.
@@ -37404,10 +37410,10 @@ static SDValue combineLoopSADPattern(SDNode *N, SelectionDAG &DAG,
   unsigned RegSize = 128;
   if (Subtarget.useBWIRegs())
     RegSize = 512;
-  else if (Subtarget.hasAVX2())
+  else if (Subtarget.hasAVX())
     RegSize = 256;
 
-  // We only handle v16i32 for SSE2 / v32i32 for AVX2 / v64i32 for AVX512.
+  // We only handle v16i32 for SSE2 / v32i32 for AVX / v64i32 for AVX512.
   // TODO: We should be able to handle larger vectors by splitting them before
   // feeding them into several SADs, and then reducing over those.
   if (VT.getSizeInBits() / 4 > RegSize)
@@ -37433,7 +37439,7 @@ static SDValue combineLoopSADPattern(SDNode *N, SelectionDAG &DAG,
   // reduction. Note that the number of elements of the result of SAD is less
   // than the number of elements of its input. Therefore, we could only update
   // part of elements in the reduction vector.
-  SDValue Sad = createPSADBW(DAG, Op0, Op1, DL);
+  SDValue Sad = createPSADBW(DAG, Op0, Op1, DL, Subtarget);
 
   // The output of PSADBW is a vector of i64.
   // We need to turn the vector of i64 into a vector of i32.
