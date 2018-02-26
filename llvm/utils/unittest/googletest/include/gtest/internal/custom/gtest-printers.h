@@ -39,4 +39,17 @@
 #ifndef GTEST_INCLUDE_GTEST_INTERNAL_CUSTOM_GTEST_PRINTERS_H_
 #define GTEST_INCLUDE_GTEST_INTERNAL_CUSTOM_GTEST_PRINTERS_H_
 
+#include "llvm/ADT/StringRef.h"
+#include "llvm/Support/raw_os_ostream.h"
+#include <cassert>
+
+namespace llvm {
+// Without this overload StringRef will be printed as a generic container.
+inline void PrintTo(const llvm::StringRef &Val, std::ostream *S) {
+  assert(S);
+  llvm::raw_os_ostream OS(*S);
+  OS << Val;
+}
+} // namespace llvm
+
 #endif  // GTEST_INCLUDE_GTEST_INTERNAL_CUSTOM_GTEST_PRINTERS_H_
