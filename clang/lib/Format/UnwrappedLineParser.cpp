@@ -1135,6 +1135,18 @@ void UnwrappedLineParser::parseStructuralElement() {
         }
         addUnwrappedLine();
         return;
+      case tok::objc_synchronized:
+        nextToken();
+        if (FormatTok->Tok.is(tok::l_paren))
+           // Skip synchronization object
+           parseParens();
+        if (FormatTok->Tok.is(tok::l_brace)) {
+          if (Style.BraceWrapping.AfterObjCDeclaration)
+            addUnwrappedLine();
+          parseBlock(/*MustBeDeclaration=*/false);
+        }
+        addUnwrappedLine();
+        return;
       case tok::objc_try:
         // This branch isn't strictly necessary (the kw_try case below would
         // do this too after the tok::at is parsed above).  But be explicit.

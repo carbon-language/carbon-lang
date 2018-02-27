@@ -209,6 +209,24 @@ TEST_F(FormatTestObjC, FormatObjCGenerics) {
                "        aaaaaaaaaaaaaaaaa);\n");
 }
 
+TEST_F(FormatTestObjC, FormatObjCSynchronized) {
+  verifyFormat("@synchronized(self) {\n"
+               "  f();\n"
+               "}\n"
+               "@synchronized(self) {\n"
+               "  f();\n"
+               "}\n");
+  Style.BreakBeforeBraces = FormatStyle::BS_Allman;
+  verifyFormat("@synchronized(self)\n"
+               "{\n"
+               "  f();\n"
+               "}\n"
+               "@synchronized(self)\n"
+               "{\n"
+               "  f();\n"
+               "}\n");
+}
+
 TEST_F(FormatTestObjC, FormatObjCInterface) {
   verifyFormat("@interface Foo : NSObject <NSSomeDelegate> {\n"
                "@public\n"
