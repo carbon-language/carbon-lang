@@ -1,3 +1,4 @@
+// REQUIRES: system-windows
 // Check that -dwarf-column-info does not get added to the cc1 line:
 // 1) When -gcodeview is present via the clang or clang++ driver
 // 2) When /Z7 is present via the cl driver.
