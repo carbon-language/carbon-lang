@@ -100,7 +100,7 @@ VisitedContextResults runCodeCompleteOnCode(StringRef Code) {
 
   auto Action = llvm::make_unique<CodeCompleteAction>(
       offsetToPosition(WithoutToken, TokenOffset), Results);
-  clang::tooling::runToolOnCodeWithArgs(std::move(Action), Code, {"-std=c++11"},
+  clang::tooling::runToolOnCodeWithArgs(Action.release(), Code, {"-std=c++11"},
                                         TestCCName);
   return Results;
 }

@@ -82,8 +82,8 @@ public:
   }
 
 protected:
-  virtual std::unique_ptr<FrontendAction> CreateTestAction() {
-    return llvm::make_unique<TestAction>(this);
+  virtual ASTFrontendAction* CreateTestAction() {
+    return new TestAction(this);
   }
 
   class FindConsumer : public ASTConsumer {

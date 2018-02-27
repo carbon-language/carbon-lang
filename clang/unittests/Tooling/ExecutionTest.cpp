@@ -79,9 +79,7 @@ private:
 class ReportResultActionFactory : public FrontendActionFactory {
 public:
   ReportResultActionFactory(ExecutionContext *Context) : Context(Context) {}
-  std::unique_ptr<FrontendAction> create() override {
-    return llvm::make_unique<ReportResultAction>(Context);
-  }
+  FrontendAction *create() override { return new ReportResultAction(Context); }
 
 private:
   ExecutionContext *const Context;

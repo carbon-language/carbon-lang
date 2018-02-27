@@ -103,8 +103,7 @@ private:
 
 TEST(CrossTranslationUnit, CanLoadFunctionDefinition) {
   bool Success = false;
-  EXPECT_TRUE(tooling::runToolOnCode(llvm::make_unique<CTUAction>(&Success),
-                                     "int f(int);"));
+  EXPECT_TRUE(tooling::runToolOnCode(new CTUAction(&Success), "int f(int);"));
   EXPECT_TRUE(Success);
 }
 

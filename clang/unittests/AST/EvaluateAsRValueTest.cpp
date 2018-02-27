@@ -90,7 +90,7 @@ TEST(EvaluateAsRValue, FailsGracefullyForUnknownTypes) {
     std::vector<std::string> Args(1, Mode);
     Args.push_back("-fno-delayed-template-parsing");
     ASSERT_TRUE(runToolOnCodeWithArgs(
-      llvm::make_unique<EvaluateConstantInitializersAction>(),
+      new EvaluateConstantInitializersAction(),
       "template <typename T>"
       "struct vector {"
       "  explicit vector(int size);"
