@@ -1,3 +1,5 @@
+// REQUIRES: arm
+
 // RUN: llvm-mc -filetype=obj -triple=armv7-pc-linux %s -o %t.o
 // RUN: ld.lld %t.o -o %t.so -shared
 // RUN: llvm-readelf -l %t.so | FileCheck %s
