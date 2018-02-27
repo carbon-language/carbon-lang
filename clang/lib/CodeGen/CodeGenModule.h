@@ -1183,8 +1183,7 @@ public:
   bool TryEmitBaseDestructorAsAlias(const CXXDestructorDecl *D);
 
   /// Set attributes for a global definition.
-  void setFunctionDefinitionAttributes(const FunctionDecl *D,
-                                       llvm::Function *F);
+  void setFunctionDefinitionAttributes(GlobalDecl GD, llvm::Function *F);
 
   llvm::GlobalValue *GetGlobalValue(StringRef Ref);
 

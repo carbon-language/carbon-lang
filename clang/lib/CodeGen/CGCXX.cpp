@@ -230,7 +230,7 @@ llvm::Function *CodeGenModule::codegenCXXStructor(const CXXMethodDecl *MD,
   setFunctionDLLStorageClass(GD, Fn);
 
   CodeGenFunction(*this).GenerateCode(GD, Fn, FnInfo);
-  setFunctionDefinitionAttributes(MD, Fn);
+  setFunctionDefinitionAttributes(GD, Fn);
   SetLLVMFunctionAttributesForDefinition(MD, Fn);
   return Fn;
 }
