@@ -136,7 +136,8 @@ void OutputSection::addSection(InputSection *IS) {
   }
 
   IS->Parent = this;
-  uint64_t AndMask = Config->EMachine == EM_ARM ? SHF_ARM_PURECODE : 0;
+  uint64_t AndMask =
+      Config->EMachine == EM_ARM ? (uint64_t)SHF_ARM_PURECODE : 0;
   uint64_t OrMask = ~AndMask;
   uint64_t AndFlags = (Flags & IS->Flags) & AndMask;
   uint64_t OrFlags = (Flags | IS->Flags) & OrMask;
