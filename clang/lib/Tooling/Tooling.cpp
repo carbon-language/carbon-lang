@@ -104,12 +104,12 @@ clang::CompilerInvocation *newInvocation(
   return Invocation;
 }
 
-bool runToolOnCode(clang::FrontendAction *ToolAction, const Twine &Code,
-                   const Twine &FileName,
+bool runToolOnCode(std::unique_ptr<FrontendAction> ToolAction,
+                   const Twine &Code, const Twine &FileName,
                    std::shared_ptr<PCHContainerOperations> PCHContainerOps) {
-  return runToolOnCodeWithArgs(ToolAction, Code, std::vector<std::string>(),
-                               FileName, "clang-tool",
-                               std::move(PCHContainerOps));
+  return runToolOnCodeWithArgs(std::move(ToolAction), Code,
+                               std::vector<std::string>(), FileName,
+                               "clang-tool", std::move(PCHContainerOps));
 }
 
 static std::vector<std::string>
@@ -125,7 +125,7 @@ getSyntaxOnlyToolArgs(const Twine &ToolName,
 }
 
 bool runToolOnCodeWithArgs(
-    clang::FrontendAction *ToolAction, const Twine &Code,
+    std::unique_ptr<FrontendAction> ToolAction, const Twine &Code,
     const std::vector<std::string> &Args, const Twine &FileName,
     const Twine &ToolName,
     std::shared_ptr<PCHContainerOperations> PCHContainerOps,
@@ -143,8 +143,7 @@ bool runToolOnCodeWithArgs(
   ArgumentsAdjuster Adjuster = getClangStripDependencyFileAdjuster();
   ToolInvocation Invocation(
       getSyntaxOnlyToolArgs(ToolName, Adjuster(Args, FileNameRef), FileNameRef),
-      ToolAction, Files.get(),
-      std::move(PCHContainerOps));
+      std::move(ToolAction), Files.get(), std::move(PCHContainerOps));
 
   SmallString<1024> CodeStorage;
   InMemoryFileSystem->addFile(FileNameRef, 0,
@@ -204,15 +203,18 @@ void addTargetAndModeForProgramName(std::vector<std::string> &CommandLine,
 namespace {
 
 class SingleFrontendActionFactory : public FrontendActionFactory {
-  FrontendAction *Action;
+  std::unique_ptr<clang::FrontendAction> Action;
 
 public:
-  SingleFrontendActionFactory(FrontendAction *Action) : Action(Action) {}
+  SingleFrontendActionFactory(std::unique_ptr<clang::FrontendAction> Action)
+      : Action(std::move(Action)) {}
 
-  FrontendAction *create() override { return Action; }
+  std::unique_ptr<clang::FrontendAction> create() override {
+    return std::move(Action);
+  }
 };
 
-}
+} // namespace
 
 ToolInvocation::ToolInvocation(
     std::vector<std::string> CommandLine, ToolAction *Action,
@@ -222,12 +224,13 @@ ToolInvocation::ToolInvocation(
       DiagConsumer(nullptr) {}
 
 ToolInvocation::ToolInvocation(
-    std::vector<std::string> CommandLine, FrontendAction *FAction,
-    FileManager *Files, std::shared_ptr<PCHContainerOperations> PCHContainerOps)
+    std::vector<std::string> CommandLine,
+    std::unique_ptr<FrontendAction> FAction, FileManager *Files,
+    std::shared_ptr<PCHContainerOperations> PCHContainerOps)
     : CommandLine(std::move(CommandLine)),
-      Action(new SingleFrontendActionFactory(FAction)), OwnsAction(true),
-      Files(Files), PCHContainerOps(std::move(PCHContainerOps)),
-      DiagConsumer(nullptr) {}
+      Action(new SingleFrontendActionFactory(std::move(FAction))),
+      OwnsAction(true), Files(Files),
+      PCHContainerOps(std::move(PCHContainerOps)), DiagConsumer(nullptr) {}
 
 ToolInvocation::~ToolInvocation() {
   if (OwnsAction)

@@ -94,7 +94,7 @@ public:
   /// \brief Returns a new clang::FrontendAction.
   ///
   /// The caller takes ownership of the returned action.
-  virtual clang::FrontendAction *create() = 0;
+  virtual std::unique_ptr<clang::FrontendAction> create() = 0;
 };
 
 /// \brief Returns a new FrontendActionFactory for a given type.
@@ -149,8 +149,8 @@ inline std::unique_ptr<FrontendActionFactory> newFrontendActionFactory(
 ///                         clang modules.
 ///
 /// \return - True if 'ToolAction' was successfully executed.
-bool runToolOnCode(clang::FrontendAction *ToolAction, const Twine &Code,
-                   const Twine &FileName = "input.cc",
+bool runToolOnCode(std::unique_ptr<FrontendAction> ToolAction,
+                   const Twine &Code, const Twine &FileName = "input.cc",
                    std::shared_ptr<PCHContainerOperations> PCHContainerOps =
                        std::make_shared<PCHContainerOperations>());
 
@@ -172,7 +172,7 @@ typedef std::vector<std::pair<std::string, std::string>> FileContentMappings;
 ///
 /// \return - True if 'ToolAction' was successfully executed.
 bool runToolOnCodeWithArgs(
-    clang::FrontendAction *ToolAction, const Twine &Code,
+    std::unique_ptr<FrontendAction> ToolAction, const Twine &Code,
     const std::vector<std::string> &Args, const Twine &FileName = "input.cc",
     const Twine &ToolName = "clang-tool",
     std::shared_ptr<PCHContainerOperations> PCHContainerOps =
@@ -226,8 +226,8 @@ public:
   /// ownership.
   /// \param PCHContainerOps The PCHContainerOperations for loading and creating
   /// clang modules.
-  ToolInvocation(std::vector<std::string> CommandLine, FrontendAction *FAction,
-                 FileManager *Files,
+  ToolInvocation(std::vector<std::string> CommandLine,
+                 std::unique_ptr<FrontendAction> FAction, FileManager *Files,
                  std::shared_ptr<PCHContainerOperations> PCHContainerOps =
                      std::make_shared<PCHContainerOperations>());
 
@@ -367,7 +367,9 @@ template <typename T>
 std::unique_ptr<FrontendActionFactory> newFrontendActionFactory() {
   class SimpleFrontendActionFactory : public FrontendActionFactory {
   public:
-    clang::FrontendAction *create() override { return new T; }
+    std::unique_ptr<clang::FrontendAction> create() override {
+      return llvm::make_unique<T>();
+    }
   };
 
   return std::unique_ptr<FrontendActionFactory>(
@@ -383,8 +385,9 @@ inline std::unique_ptr<FrontendActionFactory> newFrontendActionFactory(
                                           SourceFileCallbacks *Callbacks)
       : ConsumerFactory(ConsumerFactory), Callbacks(Callbacks) {}
 
-    clang::FrontendAction *create() override {
-      return new ConsumerFactoryAdaptor(ConsumerFactory, Callbacks);
+    std::unique_ptr<clang::FrontendAction> create() override {
+      return llvm::make_unique<ConsumerFactoryAdaptor>(ConsumerFactory,
+                                                       Callbacks);
     }
 
   private:
