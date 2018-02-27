@@ -586,7 +586,8 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer, bool EmitColdPart) {
 
   // Account for any extra padding that will be added to the call site table
   // length.
-  Streamer->EmitPaddedULEB128IntValue(TTypeBaseOffset, SizeAlign);
+  Streamer->EmitPaddedULEB128IntValue(TTypeBaseOffset,
+                                      TTypeBaseOffsetSize + SizeAlign);
 
   // Emit the landing pad call site table. We use signed data4 since we can emit
   // a landing pad in a different part of the split function that could appear
