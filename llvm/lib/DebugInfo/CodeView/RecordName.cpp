@@ -189,7 +189,6 @@ Error TypeNameComputer::visitKnownRecord(CVType &CVR, PointerRecord &Ptr) {
 Error TypeNameComputer::visitKnownRecord(CVType &CVR, ModifierRecord &Mod) {
   uint16_t Mods = static_cast<uint16_t>(Mod.getModifiers());
 
-  SmallString<256> TypeName;
   if (Mods & uint16_t(ModifierOptions::Const))
     Name.append("const ");
   if (Mods & uint16_t(ModifierOptions::Volatile))
