@@ -1,9 +1,9 @@
 #include "preprocessor.h"
+#include "characters.h"
 #include "idioms.h"
 #include "message.h"
 #include "prescan.h"
 #include <algorithm>
-#include <cctype>
 #include <cinttypes>
 #include <ctime>
 #include <map>
@@ -28,8 +28,8 @@ Definition::Definition(const std::vector<std::string> &argNames,
 
 Definition::Definition(const std::string &predefined, AllSources *sources)
   : isPredefined_{true},
-    replacement_{predefined,
-        sources->AddCompilerInsertion(predefined).LocalOffsetToProvenance(0)} {}
+    replacement_{
+        predefined, sources->AddCompilerInsertion(predefined).start()} {}
 
 bool Definition::set_isDisabled(bool disable) {
   bool was{isDisabled_};
@@ -37,12 +37,8 @@ bool Definition::set_isDisabled(bool disable) {
   return was;
 }
 
-static bool IsIdentifierFirstCharacter(char ch) {
-  return ch == '_' || isalpha(ch);
-}
-
-static bool IsIdentifierFirstCharacter(const CharPointerWithLength &cpl) {
-  return cpl.size() > 0 && IsIdentifierFirstCharacter(cpl[0]);
+static bool IsLegalIdentifierStart(const ContiguousChars &cpl) {
+  return cpl.size() > 0 && IsLegalIdentifierStart(cpl[0]);
 }
 
 TokenSequence Definition::Tokenize(const std::vector<std::string> &argNames,
@@ -55,8 +51,8 @@ TokenSequence Definition::Tokenize(const std::vector<std::string> &argNames,
   }
   TokenSequence result;
   for (size_t j{0}; j < tokens; ++j) {
-    CharPointerWithLength tok{token[firstToken + j]};
-    if (IsIdentifierFirstCharacter(tok)) {
+    ContiguousChars tok{token[firstToken + j]};
+    if (IsLegalIdentifierStart(tok)) {
       auto it = args.find(tok.ToString());
       if (it != args.end()) {
         result.Put(it->second, token.GetTokenProvenance(j));
@@ -83,7 +79,7 @@ static TokenSequence Stringify(
   Provenance quoteProvenance{allSources->CompilerInsertionProvenance('"')};
   result.PutNextTokenChar('"', quoteProvenance);
   for (size_t j{0}; j < tokens.size(); ++j) {
-    const CharPointerWithLength &token{tokens[j]};
+    const ContiguousChars &token{tokens[j]};
     size_t bytes{token.size()};
     for (size_t k{0}; k < bytes; ++k) {
       char ch{token[k]};
@@ -107,7 +103,7 @@ TokenSequence Definition::Apply(
   int parenthesesNesting{0};
   size_t tokens{replacement_.size()};
   for (size_t j{0}; j < tokens; ++j) {
-    const CharPointerWithLength &token{replacement_[j]};
+    const ContiguousChars &token{replacement_[j]};
     size_t bytes{token.size()};
     if (skipping) {
       if (bytes == 1) {
@@ -212,7 +208,7 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
   size_t j;
   for (j = 0; j < tokens; ++j) {
     size_t bytes{input[j].size()};
-    if (bytes > 0 && IsIdentifierFirstCharacter(input[j][0]) &&
+    if (bytes > 0 && IsLegalIdentifierStart(input[j][0]) &&
         IsNameDefined(input[j])) {
       break;
     }
@@ -222,8 +218,8 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
   }
   result->Put(input, 0, j);
   for (; j < tokens; ++j) {
-    const CharPointerWithLength &token{input[j]};
-    if (token.IsBlank() || !IsIdentifierFirstCharacter(token[0])) {
+    const ContiguousChars &token{input[j]};
+    if (token.IsBlank() || !IsLegalIdentifierStart(token[0])) {
       result->Put(input, j);
       continue;
     }
@@ -253,7 +249,7 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
           ProvenanceRange insert{allSources_->AddCompilerInsertion(repl)};
           ProvenanceRange call{allSources_->AddMacroCall(
               insert, input.GetTokenProvenanceRange(j), repl)};
-          result->Put(repl, call.LocalOffsetToProvenance(0));
+          result->Put(repl, call.start());
           continue;
         }
       }
@@ -274,7 +270,7 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
     size_t k{j};
     bool leftParen{false};
     while (++k < tokens) {
-      const CharPointerWithLength &lookAhead{input[k]};
+      const ContiguousChars &lookAhead{input[k]};
       if (!lookAhead.IsBlank() && lookAhead[0] != '\n') {
         leftParen = lookAhead[0] == '(' && lookAhead.size() == 1;
         break;
@@ -353,14 +349,6 @@ static TokenSequence StripBlanks(
   return noBlanks;
 }
 
-static std::string ConvertToLowerCase(const std::string &str) {
-  std::string lowered{str};
-  for (char &ch : lowered) {
-    ch = tolower(ch);
-  }
-  return lowered;
-}
-
 static std::string GetDirectiveName(const TokenSequence &line, size_t *rest) {
   size_t tokens{line.size()};
   size_t j{SkipBlanks(line, 0, tokens)};
@@ -374,7 +362,7 @@ static std::string GetDirectiveName(const TokenSequence &line, size_t *rest) {
     return {};
   }
   *rest = SkipBlanks(line, j + 1, tokens);
-  return ConvertToLowerCase(line[j].ToString());
+  return ToLowerCaseLetters(line[j].ToString());
 }
 
 bool Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
@@ -391,13 +379,13 @@ bool Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
   if (j == tokens) {
     return true;
   }
-  if (isdigit(dir[j][0]) || dir[j][0] == '"') {
+  if (IsDecimalDigit(dir[j][0]) || dir[j][0] == '"') {
     return true;  // TODO: treat as #line
   }
-  std::string dirName{ConvertToLowerCase(dir[j].ToString())};
+  std::string dirName{ToLowerCaseLetters(dir[j].ToString())};
   j = SkipBlanks(dir, j + 1, tokens);
-  CharPointerWithLength nameToken;
-  if (j < tokens && IsIdentifierFirstCharacter(dir[j][0])) {
+  ContiguousChars nameToken;
+  if (j < tokens && IsLegalIdentifierStart(dir[j][0])) {
     nameToken = dir[j];
   }
   if (dirName == "line") {
@@ -421,7 +409,7 @@ bool Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
           if (an == "...") {
             isVariadic = true;
           } else {
-            if (an.empty() || !IsIdentifierFirstCharacter(an[0])) {
+            if (an.empty() || !IsLegalIdentifierStart(an[0])) {
               prescanner->Complain(
                   "#define: missing or invalid argument name"_en_US);
               return false;
@@ -598,13 +586,12 @@ bool Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
   return false;
 }
 
-CharPointerWithLength Preprocessor::SaveTokenAsName(
-    const CharPointerWithLength &t) {
+ContiguousChars Preprocessor::SaveTokenAsName(const ContiguousChars &t) {
   names_.push_back(t.ToString());
   return {names_.back().data(), names_.back().size()};
 }
 
-bool Preprocessor::IsNameDefined(const CharPointerWithLength &token) {
+bool Preprocessor::IsNameDefined(const ContiguousChars &token) {
   return definitions_.find(token) != definitions_.end();
 }
 
@@ -743,14 +730,14 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
   std::int64_t left{0};
   if (t == "(") {
     op = PARENS;
-  } else if (isdigit(t[0])) {
+  } else if (IsDecimalDigit(t[0])) {
     op = CONST;
     size_t consumed{0};
     left = std::stoll(t, &consumed);
     if (consumed < t.size()) {
       *error = "uninterpretable numeric constant '"_en_US;
     }
-  } else if (IsIdentifierFirstCharacter(t[0])) {
+  } else if (IsLegalIdentifierStart(t[0])) {
     // undefined macro name -> zero
     // TODO: BOZ constants?
     op = CONST;
@@ -759,7 +746,7 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
   } else if (t == "-") {
     op = UMINUS;
   } else if (t == "." && *atToken + 2 < tokens &&
-      ConvertToLowerCase(token[*atToken + 1].ToString()) == "not" &&
+      ToLowerCaseLetters(token[*atToken + 1].ToString()) == "not" &&
       token[*atToken + 2].ToString() == ".") {
     op = NOT;
     *atToken += 2;
@@ -803,7 +790,7 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
   t = token[*atToken].ToString();
   if (t == "." && *atToken + 2 < tokens &&
       token[*atToken + 2].ToString() == ".") {
-    t += ConvertToLowerCase(token[*atToken + 1].ToString()) + '.';
+    t += ToLowerCaseLetters(token[*atToken + 1].ToString()) + '.';
     advance = 3;
   }
   auto it = opNameMap.find(t);
@@ -913,14 +900,13 @@ bool Preprocessor::IsIfPredicateTrue(const TokenSequence &expr, size_t first,
   TokenSequence expr1{StripBlanks(expr, first, first + exprTokens)};
   TokenSequence expr2;
   for (size_t j{0}; j < expr1.size(); ++j) {
-    if (ConvertToLowerCase(expr1[j].ToString()) == "defined") {
-      CharPointerWithLength name;
+    if (ToLowerCaseLetters(expr1[j].ToString()) == "defined") {
+      ContiguousChars name;
       if (j + 3 < expr1.size() && expr1[j + 1].ToString() == "(" &&
           expr1[j + 3].ToString() == ")") {
         name = expr1[j + 2];
         j += 3;
-      } else if (j + 1 < expr1.size() &&
-          IsIdentifierFirstCharacter(expr1[j + 1])) {
+      } else if (j + 1 < expr1.size() && IsLegalIdentifierStart(expr1[j + 1])) {
         name = expr1[j++];
       }
       if (!name.empty()) {

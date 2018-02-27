@@ -1,10 +1,10 @@
 #include "prescan.h"
+#include "characters.h"
 #include "idioms.h"
 #include "message.h"
 #include "preprocessor.h"
 #include "source.h"
 #include "token-sequence.h"
-#include <cctype>
 #include <cstring>
 #include <sstream>
 #include <utility>
@@ -28,7 +28,7 @@ Prescanner::Prescanner(const Prescanner &that)
 bool Prescanner::Prescan(ProvenanceRange range) {
   AllSources *allSources{cooked_->allSources()};
   ProvenanceRange around{allSources->GetContiguousRangeAround(range)};
-  startProvenance_ = range.LocalOffsetToProvenance(0);
+  startProvenance_ = range.start();
   size_t offset{0};
   const SourceFile *source{
       allSources->GetSourceFile(startProvenance_, &offset)};
@@ -181,10 +181,6 @@ void Prescanner::SkipSpaces() {
   }
 }
 
-static inline bool IsNameChar(char ch) {
-  return isalnum(ch) || ch == '_' || ch == '$' || ch == '@';
-}
-
 bool Prescanner::NextToken(TokenSequence *tokens) {
   CHECK(at_ >= start_ && at_ < limit_);
   if (inFixedForm_) {
@@ -206,18 +202,18 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
   if (*at_ == '\'' || *at_ == '"') {
     QuotedCharacterLiteral(tokens);
     preventHollerith_ = false;
-  } else if (isdigit(*at_)) {
+  } else if (IsDecimalDigit(*at_)) {
     int n{0};
     static constexpr int maxHollerith = 256 * (132 - 6);
     do {
       if (n < maxHollerith) {
-        n = 10 * n + *at_ - '0';
+        n = 10 * n + DecimalDigitValue(*at_);
       }
       EmitCharAndAdvance(tokens, *at_);
       if (inFixedForm_) {
         SkipSpaces();
       }
-    } while (isdigit(*at_));
+    } while (IsDecimalDigit(*at_));
     if ((*at_ == 'h' || *at_ == 'H') && n > 0 && n < maxHollerith &&
         !preventHollerith_) {
       EmitCharAndAdvance(tokens, 'h');
@@ -232,11 +228,11 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
       }
       inCharLiteral_ = false;
     } else if (*at_ == '.') {
-      while (isdigit(EmitCharAndAdvance(tokens, *at_))) {
+      while (IsDecimalDigit(EmitCharAndAdvance(tokens, *at_))) {
       }
       ExponentAndKind(tokens);
     } else if (ExponentAndKind(tokens)) {
-    } else if (isalpha(*at_)) {
+    } else if (IsLetter(*at_)) {
       // Handles FORMAT(3I9HHOLLERITH) by skipping over the first I so that
       // we don't misrecognize I9HOLLERITH as an identifier in the next case.
       EmitCharAndAdvance(tokens, *at_);
@@ -244,16 +240,16 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
     preventHollerith_ = false;
   } else if (*at_ == '.') {
     char nch{EmitCharAndAdvance(tokens, '.')};
-    if (isdigit(nch)) {
-      while (isdigit(EmitCharAndAdvance(tokens, *at_))) {
+    if (IsDecimalDigit(nch)) {
+      while (IsDecimalDigit(EmitCharAndAdvance(tokens, *at_))) {
       }
       ExponentAndKind(tokens);
     } else if (nch == '.' && EmitCharAndAdvance(tokens, '.') == '.') {
       EmitCharAndAdvance(tokens, '.');  // variadic macro definition ellipsis
     }
     preventHollerith_ = false;
-  } else if (IsNameChar(*at_)) {
-    while (IsNameChar(EmitCharAndAdvance(tokens, *at_))) {
+  } else if (IsLegalInIdentifier(*at_)) {
+    while (IsLegalInIdentifier(EmitCharAndAdvance(tokens, *at_))) {
     }
     if (*at_ == '\'' || *at_ == '"') {
       QuotedCharacterLiteral(tokens);
@@ -297,40 +293,31 @@ bool Prescanner::ExponentAndKind(TokenSequence *tokens) {
   if (*at_ == '+' || *at_ == '-') {
     EmitCharAndAdvance(tokens, *at_);
   }
-  while (isdigit(*at_)) {
+  while (IsDecimalDigit(*at_)) {
     EmitCharAndAdvance(tokens, *at_);
   }
   if (*at_ == '_') {
-    while (IsNameChar(EmitCharAndAdvance(tokens, *at_))) {
+    while (IsLegalInIdentifier(EmitCharAndAdvance(tokens, *at_))) {
     }
   }
   return true;
 }
 
 void Prescanner::EmitQuotedCharacter(TokenSequence *tokens, char ch) {
-  switch (ch) {
-  case '\a': EmitEscapedChar(tokens, 'a'); break;
-  case '\b': EmitEscapedChar(tokens, 'b'); break;
-  case '\f': EmitEscapedChar(tokens, 'f'); break;
-  case '\r': EmitEscapedChar(tokens, 'r'); break;
-  case '\t': EmitEscapedChar(tokens, 't'); break;
-  case '\v': EmitEscapedChar(tokens, 'v'); break;
-  case '\\':
-    if (!enableBackslashEscapesInCharLiterals_) {
+  if (std::optional escape{BackslashEscapeChar(ch)}) {
+    if (ch != '\'' && ch != '"' &&
+        (ch != '\\' || !enableBackslashEscapesInCharLiterals_)) {
       EmitInsertedChar(tokens, '\\');
     }
-    EmitChar(tokens, '\\');
-    break;
-  default:
-    if (ch < ' ') {
-      // emit an octal escape sequence
-      EmitInsertedChar(tokens, '\\');
-      EmitInsertedChar(tokens, '0' + ((ch >> 6) & 3));
-      EmitInsertedChar(tokens, '0' + ((ch >> 3) & 7));
-      EmitInsertedChar(tokens, '0' + (ch & 7));
-    } else {
-      EmitChar(tokens, ch);
-    }
+    EmitChar(tokens, *escape);
+  } else if (ch < ' ') {
+    // emit an octal escape sequence
+    EmitInsertedChar(tokens, '\\');
+    EmitInsertedChar(tokens, '0' + ((ch >> 6) & 3));
+    EmitInsertedChar(tokens, '0' + ((ch >> 3) & 7));
+    EmitInsertedChar(tokens, '0' + (ch & 7));
+  } else {
+    EmitChar(tokens, ch);
   }
 }
 

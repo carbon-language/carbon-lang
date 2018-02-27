@@ -47,6 +47,10 @@ public:
     return {offset_ + static_cast<size_t>(n)};
   }
   Provenance operator+(size_t n) const { return {offset_ + n}; }
+  size_t operator-(Provenance that) const {
+    CHECK(that <= *this);
+    return offset_ - that.offset_;
+  }
   bool operator<(Provenance that) const { return offset_ < that.offset_; }
   bool operator<=(Provenance that) const { return !(that < *this); }
   bool operator==(Provenance that) const { return offset_ == that.offset_; }
@@ -57,71 +61,63 @@ private:
   size_t offset_{0};
 };
 
-class ProvenanceRange {
+template<typename A> class Interval {
 public:
-  ProvenanceRange() {}
-  ProvenanceRange(Provenance s, size_t n) : start_{s}, bytes_{n} {
-    CHECK(n > 0);
-  }
-  ProvenanceRange(const ProvenanceRange &) = default;
-  ProvenanceRange(ProvenanceRange &&) = default;
-  ProvenanceRange &operator=(const ProvenanceRange &) = default;
-  ProvenanceRange &operator=(ProvenanceRange &&) = default;
+  using type = A;
+  Interval() {}
+  Interval(const A &s, size_t n) : start_{s}, size_{n} {}
+  Interval(A &&s, size_t n) : start_{std::move(s)}, size_{n} {}
+  Interval(const Interval &) = default;
+  Interval(Interval &&) = default;
+  Interval &operator=(const Interval &) = default;
+  Interval &operator=(Interval &&) = default;
 
-  bool operator==(ProvenanceRange that) const {
-    return start_ == that.start_ && bytes_ == that.bytes_;
-  }
-
-  size_t size() const { return bytes_; }
-
-  bool Contains(Provenance at) const {
-    return start_ <= at && at < start_ + bytes_;
+  bool operator==(const Interval &that) const {
+    return start_ == that.start_ && size_ == that.size_;
   }
 
-  bool Contains(ProvenanceRange that) const {
-    return Contains(that.start_) && Contains(that.start_ + (that.bytes_ - 1));
+  const A &start() const { return start_; }
+  size_t size() const { return size_; }
+  bool empty() const { return size_ == 0; }
+
+  bool Contains(const A &x) const { return start_ <= x && x < start_ + size_; }
+  bool Contains(const Interval &that) const {
+    return Contains(that.start_) && Contains(that.start_ + (that.size_ - 1));
   }
-
-  size_t ProvenanceToLocalOffset(Provenance at) const {
-    CHECK(Contains(at));
-    return at.offset() - start_.offset();
+  bool ImmediatelyPrecedes(const Interval &that) const {
+    return NextAfter() == that.start_;
   }
-
-  Provenance LocalOffsetToProvenance(size_t at) const {
-    CHECK(at < bytes_);
-    return start_ + at;
-  }
-
-  Provenance NextAfter() const { return start_ + bytes_; }
-
-  ProvenanceRange Suffix(size_t at) const {
-    CHECK(at < bytes_);
-    return {start_ + at, bytes_ - at};
-  }
-
-  ProvenanceRange Prefix(size_t bytes) const {
-    CHECK(bytes > 0);
-    return {start_, std::min(bytes_, bytes)};
-  }
-
-  bool IsPredecessor(ProvenanceRange next) {
-    return start_ + bytes_ == next.start_;
-  }
-
-  bool AnnexIfPredecessor(ProvenanceRange next) {
-    if (IsPredecessor(next)) {
-      bytes_ += next.bytes_;
+  bool AnnexIfPredecessor(const Interval &that) {
+    if (ImmediatelyPrecedes(that)) {
+      size_ += that.size_;
       return true;
     }
     return false;
   }
 
-  void Dump(std::ostream &) const;
+  size_t MemberOffset(const A &x) const {
+    CHECK(Contains(x));
+    return x - start_;
+  }
+  A OffsetMember(size_t n) const {
+    CHECK(n < size_);
+    return start_ + n;
+  }
+
+  A Last() const { return start_ + (size_ - 1); }
+  A NextAfter() const { return start_ + size_; }
+  Interval Prefix(size_t n) const { return {start_, std::min(size_, n)}; }
+  Interval Suffix(size_t n) const {
+    CHECK(n <= size_);
+    return {start_ + n, size_ - n};
+  }
 
 private:
-  Provenance start_;
-  size_t bytes_{0};
+  A start_;
+  size_t size_{0};
 };
+
+using ProvenanceRange = Interval<Provenance>;
 
 // Maps 0-based local offsets in some contiguous range (e.g., a token
 // sequence) to their provenances.  Lookup time is on the order of

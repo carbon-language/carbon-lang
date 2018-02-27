@@ -8,11 +8,11 @@
 // library used here to implement an LL recursive descent recognizer.
 
 #include "basic-parsers.h"
+#include "characters.h"
 #include "format-specification.h"
 #include "parse-tree.h"
 #include "token-parsers.h"
 #include "user-state.h"
-#include <cctype>
 #include <cinttypes>
 #include <cstdio>
 #include <functional>
@@ -569,8 +569,8 @@ constexpr CharMatch<'_'> underscore;
 constexpr auto otherIdCharacter =
     underscore / !(CharMatch<'\''>{} || CharMatch<'"'>{}) ||
     extension(
-        CharMatch<'$'>{});  // PGI/ifort (and Cray/gfortran, but not first)
-// Cray also allows '@'.
+        CharMatch<'$'>{} ||  // PGI/ifort (and Cray/gfortran, but not first)
+        CharMatch<'@'>{});  // Cray
 
 constexpr auto nonDigitIdCharacter = letter || otherIdCharacter;
 
@@ -753,11 +753,11 @@ TYPE_CONTEXT_PARSER("REAL literal constant"_en_US,
 // Extension: Q
 // Not a complete token.
 inline constexpr bool isEorD(char ch) {
-  ch = tolower(ch);
+  ch = ToLowerCaseLetter(ch);
   return ch == 'e' || ch == 'd';
 }
 
-inline constexpr bool isQ(char ch) { return tolower(ch) == 'q'; }
+inline constexpr bool isQ(char ch) { return ToLowerCaseLetter(ch) == 'q'; }
 
 constexpr CharPredicateGuardParser exponentEorD{
     isEorD, "expected exponent letter"_en_US};
@@ -821,7 +821,7 @@ TYPE_PARSER(construct<CharLength>{}(parenthesized(typeParamValue)) ||
 // combined.  Backslash escapes can be enabled.
 // PGI extension: nc'...' is Kanji.
 // N.B. charLiteralConstantWithoutKind does not skip preceding spaces.
-// N.B. the parsing of "name" in takes care to not consume the '_'.
+// N.B. the parsing of "name" takes care to not consume the '_'.
 constexpr auto charLiteralConstantWithoutKind =
     CharMatch<'\''>{} >> CharLiteral<'\''>{} ||
     CharMatch<'"'>{} >> CharLiteral<'"'>{};
@@ -2952,6 +2952,9 @@ TYPE_PARSER(maybe("UNIT ="_tok) >> construct<InquireSpec>{}(fileUnitNumber) ||
     "DELIM =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
                      pure(InquireSpec::CharVar::Kind::Delim),
                      scalarDefaultCharVariable)) ||
+    "DIRECT =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+                      pure(InquireSpec::CharVar::Kind::Direct),
+                      scalarDefaultCharVariable)) ||
     "ENCODING =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
                         pure(InquireSpec::CharVar::Kind::Encoding),
                         scalarDefaultCharVariable)) ||
@@ -3027,6 +3030,10 @@ TYPE_PARSER(maybe("UNIT ="_tok) >> construct<InquireSpec>{}(fileUnitNumber) ||
     "STATUS =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
                       pure(InquireSpec::CharVar::Kind::Status),
                       scalarDefaultCharVariable)) ||
+    "UNFORMATTED =" >>
+        construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
+            pure(InquireSpec::CharVar::Kind::Unformatted),
+            scalarDefaultCharVariable)) ||
     "WRITE =" >> construct<InquireSpec>{}(construct<InquireSpec::CharVar>{}(
                      pure(InquireSpec::CharVar::Kind::Write),
                      scalarDefaultCharVariable)))
@@ -3043,7 +3050,8 @@ TYPE_CONTEXT_PARSER("INQUIRE statement"_en_US,
                 nonemptyList(outputItem)))))
 
 // R1301 format-stmt -> FORMAT format-specification
-TYPE_PARSER("FORMAT" >> construct<FormatStmt>{}(Parser<FormatSpecification>{}))
+TYPE_CONTEXT_PARSER("FORMAT statement"_en_US,
+    "FORMAT" >> construct<FormatStmt>{}(Parser<FormatSpecification>{}))
 
 // R1321 char-string-edit-desc
 // N.B. C1313 disallows any kind parameter on the character literal.
@@ -3123,7 +3131,8 @@ TYPE_PARSER(construct<IntrinsicTypeDataEditDesc>{}(
     // PGI/Intel extension: omitting width (and all else that follows)
     extension(construct<IntrinsicTypeDataEditDesc>{}(
         "I" >> pure(IntrinsicTypeDataEditDesc::Kind::I) ||
-            "B" >> pure(IntrinsicTypeDataEditDesc::Kind::B) ||
+            ("B"_tok / !letter /* don't occlude BN & BZ */) >>
+                pure(IntrinsicTypeDataEditDesc::Kind::B) ||
             "O" >> pure(IntrinsicTypeDataEditDesc::Kind::O) ||
             "Z" >> pure(IntrinsicTypeDataEditDesc::Kind::Z) ||
             "F" >> pure(IntrinsicTypeDataEditDesc::Kind::F) ||

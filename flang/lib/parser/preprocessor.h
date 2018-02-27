@@ -70,8 +70,8 @@ private:
   enum class IsElseActive { No, Yes };
   enum class CanDeadElseAppear { No, Yes };
 
-  CharPointerWithLength SaveTokenAsName(const CharPointerWithLength &);
-  bool IsNameDefined(const CharPointerWithLength &);
+  ContiguousChars SaveTokenAsName(const ContiguousChars &);
+  bool IsNameDefined(const ContiguousChars &);
   TokenSequence ReplaceMacros(const TokenSequence &, const Prescanner &);
   bool SkipDisabledConditionalCode(
       const std::string &, IsElseActive, Prescanner *);
@@ -80,7 +80,7 @@ private:
 
   AllSources *allSources_;
   std::list<std::string> names_;
-  std::unordered_map<CharPointerWithLength, Definition> definitions_;
+  std::unordered_map<ContiguousChars, Definition> definitions_;
   std::stack<CanDeadElseAppear> ifStack_;
 };
 }  // namespace parser

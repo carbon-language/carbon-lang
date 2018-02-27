@@ -2633,6 +2633,7 @@ struct FlushStmt {
 //         BLANK = scalar-default-char-variable |
 //         DECIMAL = scalar-default-char-variable |
 //         DELIM = scalar-default-char-variable |
+//         DIRECT = scalar-default-char-variable |
 //         ENCODING = scalar-default-char-variable |
 //         ERR = label | EXIST = scalar-logical-variable |
 //         FORM = scalar-default-char-variable |
@@ -2654,13 +2655,15 @@ struct FlushStmt {
 //         SIZE = scalar-int-variable |
 //         STREAM = scalar-default-char-variable |
 //         STATUS = scalar-default-char-variable |
+//         UNFORMATTED = scalar-default-char-variable |
 //         WRITE = scalar-default-char-variable
 struct InquireSpec {
   UNION_CLASS_BOILERPLATE(InquireSpec);
   struct CharVar {
     DEFINE_NESTED_ENUM_CLASS(Kind, Access, Action, Asynchronous, Blank, Decimal,
-        Delim, Encoding, Form, Formatted, Iomsg, Name, Pad, Position, Read,
-        Readwrite, Round, Sequential, Sign, Stream, Status, Write);
+        Delim, Direct, Encoding, Form, Formatted, Iomsg, Name, Pad, Position,
+        Read, Readwrite, Round, Sequential, Sign, Stream, Status, Unformatted,
+        Write);
     TUPLE_CLASS_BOILERPLATE(CharVar);
     std::tuple<Kind, ScalarDefaultCharVariable> t;
   };

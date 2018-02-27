@@ -1,11 +1,14 @@
 #include "token-sequence.h"
+#include "characters.h"
 
 namespace Fortran {
 namespace parser {
 
-bool CharPointerWithLength::IsBlank() const {
-  for (size_t j{0}; j < bytes_; ++j) {
-    char ch{data_[j]};
+bool ContiguousChars::IsBlank() const {
+  const char *data{interval_.start()};
+  size_t n{interval_.size()};
+  for (size_t j{0}; j < n; ++j) {
+    char ch{data[j]};
     if (ch != ' ' && ch != '\t') {
       return false;
     }
@@ -50,8 +53,8 @@ void TokenSequence::Put(const TokenSequence &that) {
 void TokenSequence::Put(const TokenSequence &that, ProvenanceRange range) {
   size_t offset{0};
   for (size_t j{0}; j < that.size(); ++j) {
-    CharPointerWithLength tok{that[j]};
-    Put(tok, range.LocalOffsetToProvenance(offset));
+    ContiguousChars tok{that[j]};
+    Put(tok, range.OffsetMember(offset));
     offset += tok.size();
   }
   CHECK(offset == range.size());
@@ -61,14 +64,14 @@ void TokenSequence::Put(const TokenSequence &that, size_t at, size_t tokens) {
   ProvenanceRange provenance;
   size_t offset{0};
   for (; tokens-- > 0; ++at) {
-    CharPointerWithLength tok{that[at]};
+    ContiguousChars tok{that[at]};
     size_t tokBytes{tok.size()};
     for (size_t j{0}; j < tokBytes; ++j) {
       if (offset == provenance.size()) {
         offset = 0;
         provenance = that.provenances_.Map(that.start_[at] + j);
       }
-      PutNextTokenChar(tok[j], provenance.LocalOffsetToProvenance(offset++));
+      PutNextTokenChar(tok[j], provenance.OffsetMember(offset++));
     }
     CloseToken();
   }
@@ -81,7 +84,7 @@ void TokenSequence::Put(const char *s, size_t bytes, Provenance provenance) {
   CloseToken();
 }
 
-void TokenSequence::Put(const CharPointerWithLength &t, Provenance provenance) {
+void TokenSequence::Put(const ContiguousChars &t, Provenance provenance) {
   Put(&t[0], t.size(), provenance);
 }
 
@@ -99,7 +102,7 @@ void TokenSequence::EmitWithCaseConversion(CookedSource *cooked) const {
   size_t atToken{0};
   for (size_t j{0}; j < chars;) {
     size_t nextStart{atToken + 1 < tokens ? start_[++atToken] : chars};
-    if (isalpha(char_[j])) {
+    if (IsLegalInIdentifier(char_[j])) {
       for (; j < nextStart; ++j) {
         cooked->Put(tolower(char_[j]));
       }
@@ -118,7 +121,7 @@ std::string TokenSequence::ToString() const {
 Provenance TokenSequence::GetTokenProvenance(
     size_t token, size_t offset) const {
   ProvenanceRange range{provenances_.Map(start_[token] + offset)};
-  return range.LocalOffsetToProvenance(0);
+  return range.start();
 }
 
 ProvenanceRange TokenSequence::GetTokenProvenanceRange(

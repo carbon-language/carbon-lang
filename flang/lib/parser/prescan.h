@@ -80,11 +80,6 @@ private:
     tokens->PutNextTokenChar(ch, provenance);
   }
 
-  void EmitEscapedChar(TokenSequence *tokens, char ch) {
-    EmitInsertedChar(tokens, '\\');
-    EmitChar(tokens, ch);
-  }
-
   char EmitCharAndAdvance(TokenSequence *tokens, char ch) {
     EmitChar(tokens, ch);
     NextChar();

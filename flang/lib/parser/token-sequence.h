@@ -16,37 +16,32 @@ namespace parser {
 // Just a const char pointer with an associated length; does not presume
 // to own the referenced data.  Used to describe buffered tokens and hash
 // table keys.
-class CharPointerWithLength {
+class ContiguousChars {
 public:
-  CharPointerWithLength() {}
-  CharPointerWithLength(const char *x, size_t n) : data_{x}, bytes_{n} {}
-  CharPointerWithLength(const std::string &s)
-    : data_{s.data()}, bytes_{s.size()} {}
-  CharPointerWithLength(const CharPointerWithLength &that)
-    : data_{that.data_}, bytes_{that.bytes_} {}
-  CharPointerWithLength &operator=(const CharPointerWithLength &that) {
-    data_ = that.data_;
-    bytes_ = that.bytes_;
-    return *this;
-  }
+  ContiguousChars() {}
+  ContiguousChars(const char *x, size_t n) : interval_{x, n} {}
+  ContiguousChars(const std::string &s) : interval_{s.data(), s.size()} {}
+  ContiguousChars(const ContiguousChars &that) = default;
+  ContiguousChars &operator=(const ContiguousChars &that) = default;
 
-  bool empty() const { return bytes_ == 0; }
-  size_t size() const { return bytes_; }
-  const char &operator[](size_t j) const { return data_[j]; }
+  bool empty() const { return interval_.empty(); }
+  size_t size() const { return interval_.size(); }
+  const char &operator[](size_t j) const { return interval_.start()[j]; }
 
   bool IsBlank() const;
-  std::string ToString() const { return std::string{data_, bytes_}; }
+  std::string ToString() const {
+    return std::string{interval_.start(), interval_.size()};
+  }
 
 private:
-  const char *data_{nullptr};
-  size_t bytes_{0};
+  Interval<const char *> interval_{nullptr, 0};
 };
 }  // namespace parser
 }  // namespace Fortran
 
-// Specializations to enable std::unordered_map<CharPointerWithLength, ...>
-template<> struct std::hash<Fortran::parser::CharPointerWithLength> {
-  size_t operator()(const Fortran::parser::CharPointerWithLength &x) const {
+// Specializations to enable std::unordered_map<ContiguousChars, ...>
+template<> struct std::hash<Fortran::parser::ContiguousChars> {
+  size_t operator()(const Fortran::parser::ContiguousChars &x) const {
     size_t hash{0}, bytes{x.size()};
     for (size_t j{0}; j < bytes; ++j) {
       hash = (hash * 31) ^ x[j];
@@ -55,9 +50,9 @@ template<> struct std::hash<Fortran::parser::CharPointerWithLength> {
   }
 };
 
-template<> struct std::equal_to<Fortran::parser::CharPointerWithLength> {
-  bool operator()(const Fortran::parser::CharPointerWithLength &x,
-      const Fortran::parser::CharPointerWithLength &y) const {
+template<> struct std::equal_to<Fortran::parser::ContiguousChars> {
+  bool operator()(const Fortran::parser::ContiguousChars &x,
+      const Fortran::parser::ContiguousChars &y) const {
     return x.size() == y.size() &&
         std::memcmp(static_cast<const void *>(&x[0]),
             static_cast<const void *>(&y[0]), x.size()) == 0;
@@ -94,7 +89,7 @@ public:
     return *this;
   }
 
-  CharPointerWithLength operator[](size_t token) const {
+  ContiguousChars operator[](size_t token) const {
     return {&char_[start_[token]], TokenBytes(token)};
   }
 
@@ -124,7 +119,7 @@ public:
   void Put(const TokenSequence &, ProvenanceRange);
   void Put(const TokenSequence &, size_t at, size_t tokens = 1);
   void Put(const char *, size_t, Provenance);
-  void Put(const CharPointerWithLength &, Provenance);
+  void Put(const ContiguousChars &, Provenance);
   void Put(const std::string &, Provenance);
   void Put(const std::stringstream &, Provenance);
   void EmitWithCaseConversion(CookedSource *) const;

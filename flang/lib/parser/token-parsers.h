@@ -5,9 +5,9 @@
 // the prescanned character stream and recognize context-sensitive tokens.
 
 #include "basic-parsers.h"
+#include "characters.h"
 #include "idioms.h"
 #include "provenance.h"
-#include <cctype>
 #include <cstring>
 #include <functional>
 #include <limits>
@@ -41,25 +41,11 @@ private:
   const MessageFixedText text_;
 };
 
-static inline constexpr bool IsDecimalDigit(char ch) { return isdigit(ch); }
-
-static inline constexpr bool IsOctalDigit(char ch) {
-  return ch >= '0' && ch <= '7';
-}
-
-static inline constexpr bool IsHexadecimalDigit(char ch) {
-  return isxdigit(ch);
-}
-
-static inline constexpr bool IsLetter(char ch) { return isalpha(ch); }
-
-static inline constexpr char ToLower(char &&ch) { return tolower(ch); }
-
 constexpr CharPredicateGuardParser digit{
     IsDecimalDigit, "expected digit"_en_US};
 
-constexpr auto letter = applyFunction(
-    ToLower, CharPredicateGuardParser{IsLetter, "expected letter"_en_US});
+constexpr auto letter = applyFunction(ToLowerCaseLetter,
+    CharPredicateGuardParser{IsLetter, "expected letter"_en_US});
 
 template<char good> class CharMatch {
 public:
@@ -115,18 +101,19 @@ public:
           continue;  // redundant; ignore
         }
       }
-      if (!ch && !(ch = nextChar.Parse(state))) {
+      if (!ch.has_value() && !(ch = nextChar.Parse(state))) {
         return {};
       }
       if (spaceSkipping) {
         // medial space: 0 or more spaces/tabs accepted, none required
+        // TODO: designate and enforce free-form mandatory white space
         while (*ch == ' ' || *ch == '\t') {
           if (!(ch = nextChar.Parse(state))) {
             return {};
           }
         }
         // ch remains full for next iteration
-      } else if (*ch == tolower(*p)) {
+      } else if (IsSameApartFromCase(*ch, *p)) {
         ch.reset();
       } else {
         state->PutMessage(at, MessageExpectedText{str_, bytes_});
@@ -171,13 +158,6 @@ bracketed(const PA &p) {
   return "[" >> p / "]";
 }
 
-static inline int HexadecimalDigitValue(char ch) {
-  if (IsDecimalDigit(ch)) {
-    return ch - '0';
-  }
-  return toupper(ch) - 'A' + 10;
-}
-
 // Quoted character literal constants.
 struct CharLiteralChar {
   struct Result {
@@ -205,44 +185,36 @@ struct CharLiteralChar {
     if (!(och = nextChar.Parse(state)).has_value()) {
       return {};
     }
-    switch ((ch = *och)) {
-    case 'a': return {Result::Escaped('\a')};
-    case 'b': return {Result::Escaped('\b')};
-    case 'f': return {Result::Escaped('\f')};
-    case 'n': return {Result::Escaped('\n')};
-    case 'r': return {Result::Escaped('\r')};
-    case 't': return {Result::Escaped('\t')};
-    case 'v': return {Result::Escaped('\v')};
-    case '"':
-    case '\'':
-    case '\\': return {Result::Escaped(ch)};
-    case '\n':
+    ch = *och;
+    if (ch == '\n') {
       state->PutMessage(at, "unclosed character constant"_en_US);
       return {};
-    default:
-      if (IsOctalDigit(ch)) {
-        ch -= '0';
-        for (int j = (ch > 3 ? 1 : 2); j-- > 0;) {
-          static constexpr auto octalDigit = attempt(CharPredicateGuardParser{
-              IsOctalDigit, "expected octal digit"_en_US});
-          if ((och = octalDigit.Parse(state)).has_value()) {
-            ch = 8 * ch + *och - '0';
-          }
-        }
-      } else if (ch == 'x' || ch == 'X') {
-        ch = 0;
-        for (int j = 0; j++ < 2;) {
-          static constexpr auto hexDigit = attempt(CharPredicateGuardParser{
-              IsHexadecimalDigit, "expected hexadecimal digit"_en_US});
-          if ((och = hexDigit.Parse(state)).has_value()) {
-            ch = 16 * ch + HexadecimalDigitValue(*och);
-          }
-        }
-      } else {
-        state->PutMessage(at, "bad escaped character"_en_US);
-      }
-      return {Result::Escaped(ch)};
     }
+    if (std::optional<char> escChar{BackslashEscapeValue(ch)}) {
+      return {Result::Escaped(*escChar)};
+    }
+    if (IsOctalDigit(ch)) {
+      ch -= '0';
+      for (int j = (ch > 3 ? 1 : 2); j-- > 0;) {
+        static constexpr auto octalDigit = attempt(CharPredicateGuardParser{
+            IsOctalDigit, "expected octal digit"_en_US});
+        if ((och = octalDigit.Parse(state)).has_value()) {
+          ch = 8 * ch + *och - '0';
+        }
+      }
+    } else if (ch == 'x' || ch == 'X') {
+      ch = 0;
+      for (int j = 0; j++ < 2;) {
+        static constexpr auto hexDigit = attempt(CharPredicateGuardParser{
+            IsHexadecimalDigit, "expected hexadecimal digit"_en_US});
+        if ((och = hexDigit.Parse(state)).has_value()) {
+          ch = 16 * ch + HexadecimalDigitValue(*och);
+        }
+      }
+    } else {
+      state->PutMessage(at, "bad escaped character"_en_US);
+    }
+    return {Result::Escaped(ch)};
   }
 };
 
@@ -310,7 +282,7 @@ struct BOZLiteral {
       if (*ch == quote) {
         break;
       }
-      if (!isxdigit(*ch)) {
+      if (!IsHexadecimalDigit(*ch)) {
         return {};
       }
       content += *ch;

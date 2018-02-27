@@ -99,7 +99,7 @@ public:
 
   const char *GetLocation() const { return p_; }
   Provenance GetProvenance(const char *at) const {
-    return cooked_.GetProvenance(at).LocalOffsetToProvenance(0);
+    return cooked_.GetProvenance(at).start();
   }
   Provenance GetProvenance() const { return GetProvenance(p_); }
 
