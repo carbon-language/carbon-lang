@@ -2277,11 +2277,11 @@ Attribute ``trivial_abi`` has no effect in the following cases:
 
 - The class directly declares a virtual base or virtual methods.
 - The class has a base class that is non-trivial for the purposes of calls.
-- The class has a non-static data member whose type is non-trivial for the
-purposes of calls, which includes:
- - classes that are non-trivial for the purposes of calls
- - __weak-qualified types in Objective-C++
- - arrays of any of the above
+- The class has a non-static data member whose type is non-trivial for the purposes of calls, which includes:
+
+  - classes that are non-trivial for the purposes of calls
+  - __weak-qualified types in Objective-C++
+  - arrays of any of the above
   }];
 }
 
