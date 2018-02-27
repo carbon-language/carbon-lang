@@ -1129,7 +1129,7 @@ void UnwrappedLineParser::parseStructuralElement() {
       case tok::objc_autoreleasepool:
         nextToken();
         if (FormatTok->Tok.is(tok::l_brace)) {
-          if (Style.BraceWrapping.AfterObjCDeclaration)
+          if (Style.BraceWrapping.AfterControlStatement)
             addUnwrappedLine();
           parseBlock(/*MustBeDeclaration=*/false);
         }
@@ -1141,7 +1141,7 @@ void UnwrappedLineParser::parseStructuralElement() {
            // Skip synchronization object
            parseParens();
         if (FormatTok->Tok.is(tok::l_brace)) {
-          if (Style.BraceWrapping.AfterObjCDeclaration)
+          if (Style.BraceWrapping.AfterControlStatement)
             addUnwrappedLine();
           parseBlock(/*MustBeDeclaration=*/false);
         }
