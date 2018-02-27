@@ -362,6 +362,8 @@ extern int glob_altdirfunc;
 
 extern unsigned path_max;
 
+extern int struct_ttyent_sz;
+
 extern int ptrace_pt_io;
 extern int ptrace_pt_lwpinfo;
 extern int ptrace_pt_set_event_mask;
@@ -435,6 +437,16 @@ struct __sanitizer_ifconf {
   union {
     void *ifcu_req;
   } ifc_ifcu;
+};
+
+struct __sanitizer_ttyent {
+  char *ty_name;
+  char *ty_getty;
+  char *ty_type;
+  int ty_status;
+  char *ty_window;
+  char *ty_comment;
+  char *ty_class;
 };
 
 #define IOC_NRBITS 8

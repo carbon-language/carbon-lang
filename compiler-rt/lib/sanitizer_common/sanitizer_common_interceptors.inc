@@ -6851,6 +6851,40 @@ INTERCEPTOR(void, strmode, u32 mode, char *bp) {
 #define INIT_STRMODE
 #endif
 
+#if SANITIZER_INTERCEPT_TTYENT
+INTERCEPTOR(struct __sanitizer_ttyent *, getttyent, void) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getttyent);
+  struct __sanitizer_ttyent *ttyent = REAL(getttyent)();
+  if (ttyent)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ttyent, struct_ttyent_sz);
+  return ttyent;
+}
+INTERCEPTOR(struct __sanitizer_ttyent *, getttynam, char *name) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getttynam, name);
+  if (name)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, name, REAL(strlen)(name) + 1);
+  struct __sanitizer_ttyent *ttyent = REAL(getttynam)(name);
+  if (ttyent)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ttyent, struct_ttyent_sz);
+  return ttyent;
+}
+INTERCEPTOR(int, setttyentpath, char *path) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, setttyentpath, path);
+  if (path)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
+  return REAL(setttyentpath)(path);
+}
+#define INIT_TTYENT \
+  COMMON_INTERCEPT_FUNCTION(getttyent); \
+  COMMON_INTERCEPT_FUNCTION(getttynam); \
+  COMMON_INTERCEPT_FUNCTION(setttyentpath)
+#else
+#define INIT_TTYENT
+#endif
+
 static void InitializeCommonInterceptors() {
   static u64 metadata_mem[sizeof(MetadataHashMap) / sizeof(u64) + 1];
   interceptor_metadata_map = new((void *)&metadata_mem) MetadataHashMap();
@@ -7081,6 +7115,7 @@ static void InitializeCommonInterceptors() {
   INIT_DEVNAME_R;
   INIT_FGETLN;
   INIT_STRMODE;
+  INIT_TTYENT;
 
 #if SANITIZER_NETBSD
   COMMON_INTERCEPT_FUNCTION(__libc_mutex_lock);
