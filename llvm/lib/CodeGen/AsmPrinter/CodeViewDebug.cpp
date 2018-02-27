@@ -1814,12 +1814,33 @@ void CodeViewDebug::collectMemberInfo(ClassInfo &Info,
     Info.Members.push_back({DDTy, 0});
     return;
   }
-  // An unnamed member must represent a nested struct or union. Add all the
-  // indirect fields to the current record.
+
+  // An unnamed member may represent a nested struct or union. Attempt to
+  // interpret the unnamed member as a DICompositeType possibly wrapped in
+  // qualifier types. Add all the indirect fields to the current record if that
+  // succeeds, and drop the member if that fails.
   assert((DDTy->getOffsetInBits() % 8) == 0 && "Unnamed bitfield member!");
   uint64_t Offset = DDTy->getOffsetInBits();
   const DIType *Ty = DDTy->getBaseType().resolve();
-  const DICompositeType *DCTy = cast<DICompositeType>(Ty);
+  bool FullyResolved = false;
+  while (!FullyResolved) {
+    switch (Ty->getTag()) {
+    case dwarf::DW_TAG_const_type:
+    case dwarf::DW_TAG_volatile_type:
+      // FIXME: we should apply the qualifier types to the indirect fields
+      // rather than dropping them.
+      Ty = cast<DIDerivedType>(Ty)->getBaseType().resolve();
+      break;
+    default:
+      FullyResolved = true;
+      break;
+    }
+  }
+
+  const DICompositeType *DCTy = dyn_cast<DICompositeType>(Ty);
+  if (!DCTy)
+    return;
+
   ClassInfo NestedInfo = collectClassInfo(DCTy);
   for (const ClassInfo::MemberInfo &IndirectField : NestedInfo.Members)
     Info.Members.push_back(
