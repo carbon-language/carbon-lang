@@ -381,7 +381,9 @@ public:
     OptimizedID = getDefiningAccess()->getID();
   }
 
-  MemoryAccess *getOptimized() const { return Optimized; }
+  MemoryAccess *getOptimized() const {
+    return cast_or_null<MemoryAccess>(Optimized);
+  }
 
   bool isOptimized() const {
     return getOptimized() && getDefiningAccess() &&
@@ -401,7 +403,7 @@ private:
 
   const unsigned ID;
   unsigned OptimizedID = INVALID_MEMORYACCESS_ID;
-  MemoryAccess *Optimized = nullptr;
+  WeakVH Optimized;
 };
 
 template <>
