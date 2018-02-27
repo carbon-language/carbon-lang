@@ -11987,14 +11987,20 @@ static bool CheckMapConflicts(
                 DerivedLoc,
                 diag::err_omp_pointer_mapped_along_with_derived_section)
                 << DerivedLoc;
-          } else {
+            SemaRef.Diag(RE->getExprLoc(), diag::note_used_here)
+                << RE->getSourceRange();
+            return true;
+          } else if (CI->getAssociatedExpression()->getStmtClass() !=
+                         SI->getAssociatedExpression()->getStmtClass() ||
+                     CI->getAssociatedDeclaration()->getCanonicalDecl() ==
+                         SI->getAssociatedDeclaration()->getCanonicalDecl()) {
             assert(CI != CE && SI != SE);
-            SemaRef.Diag(DerivedLoc, diag::err_omp_same_pointer_derreferenced)
+            SemaRef.Diag(DerivedLoc, diag::err_omp_same_pointer_dereferenced)
                 << DerivedLoc;
+            SemaRef.Diag(RE->getExprLoc(), diag::note_used_here)
+                << RE->getSourceRange();
+            return true;
           }
-          SemaRef.Diag(RE->getExprLoc(), diag::note_used_here)
-              << RE->getSourceRange();
-          return true;
         }
 
         // OpenMP 4.5 [2.15.5.1, map Clause, Restrictions, p.4]

@@ -225,9 +225,17 @@ void SAclient(int arg) {
   {}
   #pragma omp target teams map(r.ArrS[0].A, t.ArrS[1].A)
   {}
-  #pragma omp target teams map(r.PtrS[0], r.PtrS->B) // expected-error {{same pointer derreferenced in multiple different ways in map clause expressions}} expected-note {{used here}}
+  #pragma omp target teams map(r.PtrS[0], r.PtrS->B) // expected-error {{same pointer dereferenced in multiple different ways in map clause expressions}} expected-note {{used here}}
   {}
-  #pragma omp target teams map(r.RPtrS[0], r.RPtrS->B) // expected-error {{same pointer derreferenced in multiple different ways in map clause expressions}} expected-note {{used here}}
+  #pragma omp target teams map(r.PtrS, r.PtrS->B) // expected-error {{pointer cannot be mapped along with a section derived from itself}} expected-note {{used here}}
+  {}
+  #pragma omp target teams map(r.PtrS->A, r.PtrS->B)
+  {}
+  #pragma omp target teams map(r.RPtrS[0], r.RPtrS->B) // expected-error {{same pointer dereferenced in multiple different ways in map clause expressions}} expected-note {{used here}}
+  {}
+  #pragma omp target teams map(r.RPtrS, r.RPtrS->B) // expected-error {{pointer cannot be mapped along with a section derived from itself}} expected-note {{used here}}
+  {}
+  #pragma omp target teams map(r.RPtrS->A, r.RPtrS->B)
   {}
   #pragma omp target teams map(r.S.Arr[:12])
   {}
