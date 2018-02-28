@@ -268,9 +268,18 @@ void ObjFile::initializeSymbols() {
 }
 
 Symbol *ObjFile::createUndefined(const WasmSymbol &Sym) {
-  return Symtab->addUndefined(
-      Sym.Info.Name, static_cast<WasmSymbolType>(Sym.Info.Kind), Sym.Info.Flags,
-      this, Sym.FunctionType, Sym.GlobalType);
+  StringRef Name = Sym.Info.Name;
+  uint32_t Flags = Sym.Info.Flags;
+
+  switch (Sym.Info.Kind) {
+  case WASM_SYMBOL_TYPE_FUNCTION:
+    return Symtab->addUndefinedFunction(Name, Flags, this, Sym.FunctionType);
+  case WASM_SYMBOL_TYPE_DATA:
+    return Symtab->addUndefinedData(Name, Flags, this);
+  case WASM_SYMBOL_TYPE_GLOBAL:
+    return Symtab->addUndefinedGlobal(Name, Flags, this, Sym.GlobalType);
+  }
+  llvm_unreachable("unkown symbol kind");
 }
 
 Symbol *ObjFile::createDefinedFunction(const WasmSymbol &Sym,
