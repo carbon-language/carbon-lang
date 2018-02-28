@@ -71,7 +71,7 @@ struct BCEAtom {
 };
 
 // If this value is a load from a constant offset w.r.t. a base address, and
-// there are no othe rusers of the load or address, returns the base address and
+// there are no other users of the load or address, returns the base address and
 // the offset.
 BCEAtom visitICmpLoadOperand(Value *const Val) {
   BCEAtom Result;
