@@ -371,6 +371,19 @@ void Writer::createRelocSections() {
   }
 }
 
+static uint32_t getWasmFlags(const Symbol *Sym) {
+  uint32_t Flags = 0;
+  if (Sym->isLocal())
+    Flags |= WASM_SYMBOL_BINDING_LOCAL;
+  if (Sym->isWeak())
+    Flags |= WASM_SYMBOL_BINDING_WEAK;
+  if (Sym->isHidden())
+    Flags |= WASM_SYMBOL_VISIBILITY_HIDDEN;
+  if (Sym->isUndefined())
+    Flags |= WASM_SYMBOL_UNDEFINED;
+  return Flags;
+}
+
 // Create the custom "linking" section containing linker metadata.
 // This is only created when relocatable output is requested.
 void Writer::createLinkingSection() {
@@ -387,15 +400,11 @@ void Writer::createLinkingSection() {
     for (const Symbol *Sym : SymtabEntries) {
       assert(Sym->isDefined() || Sym->isUndefined());
       WasmSymbolType Kind = Sym->getWasmType();
-      uint32_t Flags = Sym->isLocal() ? WASM_SYMBOL_BINDING_LOCAL : 0;
-      if (Sym->isWeak())
-        Flags |= WASM_SYMBOL_BINDING_WEAK;
-      if (Sym->isHidden())
-        Flags |= WASM_SYMBOL_VISIBILITY_HIDDEN;
-      if (Sym->isUndefined())
-        Flags |= WASM_SYMBOL_UNDEFINED;
+      uint32_t Flags = getWasmFlags(Sym);
+
       writeUleb128(SubSection.getStream(), Kind, "sym kind");
       writeUleb128(SubSection.getStream(), Flags, "sym flags");
+
       switch (Kind) {
       case llvm::wasm::WASM_SYMBOL_TYPE_FUNCTION:
       case llvm::wasm::WASM_SYMBOL_TYPE_GLOBAL:
@@ -415,6 +424,7 @@ void Writer::createLinkingSection() {
         break;
       }
     }
+
     SubSection.finalizeContents();
     SubSection.writeToStream(OS);
   }
