@@ -53,11 +53,10 @@ struct WasmSignatureDenseMapInfo {
     return Sig;
   }
   static unsigned getHashValue(const WasmSignature &Sig) {
-    uintptr_t Value = 0;
-    Value += DenseMapInfo<int32_t>::getHashValue(Sig.ReturnType);
+    unsigned H = hash_value(Sig.ReturnType);
     for (int32_t Param : Sig.ParamTypes)
-      Value += DenseMapInfo<int32_t>::getHashValue(Param);
-    return Value;
+      H = hash_combine(H, Param);
+    return H;
   }
   static bool isEqual(const WasmSignature &LHS, const WasmSignature &RHS) {
     return LHS == RHS;
