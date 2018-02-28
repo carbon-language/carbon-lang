@@ -11,6 +11,7 @@
 #include "InputChunks.h"
 #include "InputFiles.h"
 #include "OutputSegment.h"
+#include "WriterUtils.h"
 #include "lld/Common/ErrorHandler.h"
 #include "lld/Common/Threads.h"
 #include "llvm/ADT/Twine.h"
@@ -63,10 +64,6 @@ std::string lld::toString(const OutputSection &Section) {
 
 std::string OutputSection::getSectionName() const {
   return sectionTypeToString(Type);
-}
-
-std::string SubSection::getSectionName() const {
-  return std::string("subsection <type=") + std::to_string(Type) + ">";
 }
 
 void OutputSection::createHeader(size_t BodySize) {
