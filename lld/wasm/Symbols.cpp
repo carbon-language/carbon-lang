@@ -157,7 +157,9 @@ DefinedFunction::DefinedFunction(StringRef Name, uint32_t Flags, InputFile *F,
 
 uint32_t DefinedData::getVirtualAddress() const {
   DEBUG(dbgs() << "getVirtualAddress: " << getName() << "\n");
-  return Segment ? Segment->translateVA(Offset) : Offset;
+  if (Segment)
+    return Segment->OutputSeg->StartVA + Segment->OutputSegmentOffset + Offset;
+  return Offset;
 }
 
 void DefinedData::setVirtualAddress(uint32_t Value) {
