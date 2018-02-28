@@ -395,8 +395,8 @@ public:
 
   void writeTo(raw_ostream &To) {
     OS.flush();
-    lld::wasm::writeUleb128(To, Type, "subsection type");
-    lld::wasm::writeUleb128(To, Body.size(), "subsection size");
+    writeUleb128(To, Type, "subsection type");
+    writeUleb128(To, Body.size(), "subsection size");
     To.write(Body.data(), Body.size());
   }
 
