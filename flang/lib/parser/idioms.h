@@ -80,7 +80,29 @@ template<typename A> bool operator!(const std::optional<A> &x) {
 //   static_assert(BadType<T>::value, "no case for type");
 template<typename A> struct BadType : std::false_type {};
 
+// User-defined type traits that default to false:
+// Invoke CLASS_TRAIT(traitName) to define a trait, then put
+//   using traitName = std::true_type;  (or false_type)
+// into the appropriate class definitions.  You can then use
+//   typename std::enable_if<traitName<...>, ...>::type
+// in template specialization definitions.
+#define CLASS_TRAIT(T) \
+  namespace class_trait_ns_##T { \
+  template<typename A> std::true_type test(typename A::T *); \
+  template<typename A> std::false_type test(...); \
+  template<typename A> \
+    constexpr bool has_trait{decltype(test<A>(nullptr))::value}; \
+  template<typename A> \
+    constexpr typename std::enable_if<has_trait<A>, bool>::type \
+    trait_value() { using U = typename A::T; return U::value; } \
+  template<typename A> \
+    constexpr typename std::enable_if<!has_trait<A>, bool>::type \
+    trait_value() { return false; } \
+  } \
+  template<typename A> constexpr bool T{class_trait_ns_##T::trait_value<A>()}
+
 // Formatting
+// TODO: remove when unparser is up and running
 namespace Fortran {
 namespace parser {
 template<typename A>
@@ -104,21 +126,16 @@ std::ostream &operator<<(std::ostream &o, const std::list<A> &xs) {
   return o << ']';
 }
 
-template<int J, char C, typename T>
-typename std::enable_if<J + 1 == std::tuple_size_v<T>, std::ostream &>::type
-formatTuple(std::ostream &o, const T &x) {
-  return o << C << std::get<J>(x) << '}';
-}
-
-template<int J, char C, typename T>
-typename std::enable_if<J + 1 != std::tuple_size_v<T>, std::ostream &>::type
-formatTuple(std::ostream &o, const T &x) {
-  return formatTuple<J + 1, ' '>(o << C << std::get<J>(x), x);
+template<int J, typename T>
+std::ostream &formatTuple(std::ostream &o, const T &x) {
+  if constexpr (J < std::tuple_size_v<T>) {
+    return formatTuple<J + 1>(o << std::get<J>(x), x);
+  }
 }
 
 template<typename... As>
 std::ostream &operator<<(std::ostream &o, const std::tuple<As...> &xs) {
-  return formatTuple<0, '{'>(o, xs);
+  return formatTuple<0>(o << '{', xs) << '}';
 }
 
 template<typename... As>

@@ -34,6 +34,11 @@
 // although a C++ compiler wouldn't default them anyway due to the presence
 // of move constructors and move assignments.
 
+CLASS_TRAIT(EmptyTrait);
+CLASS_TRAIT(WrapperTrait);
+CLASS_TRAIT(UnionTrait);
+CLASS_TRAIT(TupleTrait);
+
 // Most non-template classes in this file use these default definitions
 // for their move constructor and move assignment operator=, and should
 // declare an operator<< for formatting.
@@ -55,12 +60,14 @@
     classname &operator=(const classname &) { return *this; }; \
     classname &operator=(classname &&) { return *this; }; \
     friend std::ostream &operator<<(std::ostream &, const classname &); \
+    using EmptyTrait = std::true_type; \
   }
 
 // Many classes below simply wrap a std::variant<> discriminated union,
 // which is conventionally named "u".
 #define UNION_CLASS_BOILERPLATE(classname) \
   template<typename A> classname(A &&x) : u(std::move(x)) {} \
+  using UnionTrait = std::true_type; \
   BOILERPLATE(classname)
 
 // Many other classes below simply wrap a std::tuple<> structure, which
@@ -68,6 +75,7 @@
 #define TUPLE_CLASS_BOILERPLATE(classname) \
   template<typename... Ts> \
   classname(Ts &&... args) : t(std::forward<Ts>(args)...) {} \
+  using TupleTrait = std::true_type; \
   BOILERPLATE(classname)
 
 // Many other classes below simply wrap a single data member, which is
@@ -75,6 +83,7 @@
 #define WRAPPER_CLASS_BOILERPLATE(classname, type) \
   BOILERPLATE(classname); \
   classname(type &&x) : v(std::move(x)) {} \
+  using WrapperTrait = std::true_type; \
   type v
 
 #define WRAPPER_CLASS(classname, type) \
@@ -231,6 +240,7 @@ using Keyword = std::string;
 // R403 scalar-xyz -> xyz
 // These template class wrappers correspond to the Standard's modifiers
 // scalar-xyz, constant-xzy, int-xzy, default-char-xyz, & logical-xyz.
+// TODO: Implement as wrappers instead, or maybe remove.
 template<typename A> struct Scalar {
   Scalar(Scalar &&that) = default;
   Scalar(A &&that) : thing(std::move(that)) {}
