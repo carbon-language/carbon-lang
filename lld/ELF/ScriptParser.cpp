@@ -157,10 +157,6 @@ static ExprValue sub(ExprValue A, ExprValue B) {
   return {A.Sec, false, A.getSectionOffset() - B.getValue(), A.Loc};
 }
 
-static ExprValue mul(ExprValue A, ExprValue B) {
-  return A.getValue() * B.getValue();
-}
-
 static ExprValue div(ExprValue A, ExprValue B) {
   if (uint64_t BV = B.getValue())
     return A.getValue() / BV;
@@ -808,7 +804,7 @@ static Expr combine(StringRef Op, Expr L, Expr R) {
   if (Op == "-")
     return [=] { return sub(L(), R()); };
   if (Op == "*")
-    return [=] { return mul(L(), R()); };
+    return [=] { return L().getValue() * R().getValue(); };
   if (Op == "/")
     return [=] { return div(L(), R()); };
   if (Op == "<<")
