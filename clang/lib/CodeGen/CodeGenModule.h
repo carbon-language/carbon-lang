@@ -1277,7 +1277,7 @@ private:
 
   bool GetCPUAndFeaturesAttributes(const Decl *D,
                                    llvm::AttrBuilder &AttrBuilder);
-  void setNonAliasAttributes(const Decl *D, llvm::GlobalObject *GO);
+  void setNonAliasAttributes(GlobalDecl GD, llvm::GlobalObject *GO);
 
   /// Set function attributes for a function declaration.
   void SetFunctionAttributes(GlobalDecl GD, llvm::Function *F,

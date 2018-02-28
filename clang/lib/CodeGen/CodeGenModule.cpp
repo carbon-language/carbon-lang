@@ -1082,7 +1082,7 @@ llvm::ConstantInt *CodeGenModule::CreateCrossDsoCfiTypeId(llvm::Metadata *MD) {
 
 void CodeGenModule::setFunctionDefinitionAttributes(GlobalDecl GD,
                                                     llvm::Function *F) {
-  setNonAliasAttributes(GD.getDecl(), F);
+  setNonAliasAttributes(GD, F);
 }
 
 void CodeGenModule::SetLLVMFunctionAttributes(const Decl *D,
@@ -1304,8 +1304,9 @@ bool CodeGenModule::GetCPUAndFeaturesAttributes(const Decl *D,
   return AddedAttr;
 }
 
-void CodeGenModule::setNonAliasAttributes(const Decl *D,
+void CodeGenModule::setNonAliasAttributes(GlobalDecl GD,
                                           llvm::GlobalObject *GO) {
+  const Decl *D = GD.getDecl();
   SetCommonAttributes(D, GO);
 
   if (D) {
@@ -1350,7 +1351,7 @@ void CodeGenModule::SetInternalFunctionAttributes(GlobalDecl GD,
 
   F->setLinkage(llvm::Function::InternalLinkage);
 
-  setNonAliasAttributes(D, F);
+  setNonAliasAttributes(GD, F);
 }
 
 static void setLinkageForGV(llvm::GlobalValue *GV,
