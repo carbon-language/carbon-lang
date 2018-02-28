@@ -964,7 +964,6 @@ void Writer::run() {
 // Open a result file.
 void Writer::openFile() {
   log("writing: " + Config->OutputFile);
-  ::remove(Config->OutputFile.str().c_str());
 
   Expected<std::unique_ptr<FileOutputBuffer>> BufferOrErr =
       FileOutputBuffer::create(Config->OutputFile, FileSize,
