@@ -3970,6 +3970,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                         options::OPT_fnoopenmp_use_tls, /*Default=*/true))
         CmdArgs.push_back("-fnoopenmp-use-tls");
       Args.AddAllArgs(CmdArgs, options::OPT_fopenmp_version_EQ);
+
+      // When in OpenMP offloading mode with NVPTX target, forward
+      // cuda-mode flag
+      Args.AddLastArg(CmdArgs, options::OPT_fopenmp_cuda_mode,
+                      options::OPT_fno_openmp_cuda_mode);
       break;
     default:
       // By default, if Clang doesn't know how to generate useful OpenMP code
