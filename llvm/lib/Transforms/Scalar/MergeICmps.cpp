@@ -571,6 +571,19 @@ bool processPhi(PHINode &Phi, const TargetLibraryInfo *const TLI) {
       DEBUG(dbgs() << "skip: several non-constant values\n");
       return false;
     }
+    if (!isa<ICmpInst>(Phi.getIncomingValue(I)) ||
+        cast<ICmpInst>(Phi.getIncomingValue(I))->getParent() !=
+            Phi.getIncomingBlock(I)) {
+      // Non-constant incoming value is not from a cmp instruction or not
+      // produced by the last block. We could end up processing the value
+      // producing block more than once.
+      //
+      // This is an uncommon case, so we bail.
+      DEBUG(
+          dbgs()
+          << "skip: non-constant value not from cmp or not from last block.\n");
+      return false;
+    }
     LastBlock = Phi.getIncomingBlock(I);
   }
   if (!LastBlock) {
