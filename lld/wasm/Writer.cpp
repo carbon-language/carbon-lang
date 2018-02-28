@@ -895,11 +895,11 @@ void Writer::createCtorFunction() {
 void Writer::calculateInitFunctions() {
   for (ObjFile *File : Symtab->ObjectFiles) {
     const WasmLinkingData &L = File->getWasmObj()->linkingData();
-    InitFunctions.reserve(InitFunctions.size() + L.InitFunctions.size());
     for (const WasmInitFunc &F : L.InitFunctions)
       InitFunctions.emplace_back(
           WasmInitEntry{File->getFunctionSymbol(F.Symbol), F.Priority});
   }
+
   // Sort in order of priority (lowest first) so that they are called
   // in the correct order.
   std::stable_sort(InitFunctions.begin(), InitFunctions.end(),
