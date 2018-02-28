@@ -125,31 +125,23 @@ DefinedFunction *SymbolTable::addSyntheticFunction(StringRef Name,
                                                    const WasmSignature *Type,
                                                    uint32_t Flags) {
   DEBUG(dbgs() << "addSyntheticFunction: " << Name << "\n");
-  Symbol *S;
-  bool WasInserted;
-  std::tie(S, WasInserted) = insert(Name);
-  assert(WasInserted);
-  return replaceSymbol<DefinedFunction>(S, Name, Flags, Type);
+  assert(!find(Name));
+  return replaceSymbol<DefinedFunction>(insert(Name).first, Name, Flags, Type);
 }
 
 DefinedData *SymbolTable::addSyntheticDataSymbol(StringRef Name,
                                                  uint32_t Flags) {
   DEBUG(dbgs() << "addSyntheticDataSymbol: " << Name << "\n");
-  Symbol *S;
-  bool WasInserted;
-  std::tie(S, WasInserted) = insert(Name);
-  assert(WasInserted);
-  return replaceSymbol<DefinedData>(S, Name, Flags);
+  assert(!find(Name));
+  return replaceSymbol<DefinedData>(insert(Name).first, Name, Flags);
 }
 
 DefinedGlobal *SymbolTable::addSyntheticGlobal(StringRef Name, uint32_t Flags,
                                                InputGlobal *Global) {
   DEBUG(dbgs() << "addSyntheticGlobal: " << Name << " -> " << Global << "\n");
-  Symbol *S;
-  bool WasInserted;
-  std::tie(S, WasInserted) = insert(Name);
-  assert(WasInserted);
-  return replaceSymbol<DefinedGlobal>(S, Name, Flags, nullptr, Global);
+  assert(!find(Name));
+  return replaceSymbol<DefinedGlobal>(insert(Name).first, Name, Flags, nullptr,
+                                      Global);
 }
 
 static bool shouldReplace(const Symbol *Existing, InputFile *NewFile,
@@ -251,7 +243,7 @@ Symbol *SymbolTable::addUndefinedFunction(StringRef Name, uint32_t Flags,
   if (WasInserted)
     replaceSymbol<UndefinedFunction>(S, Name, Flags, File, Sig);
   else if (auto *Lazy = dyn_cast<LazySymbol>(S))
-    cast<ArchiveFile>(Lazy->getFile())->addMember(&Lazy->getArchiveSymbol());
+    Lazy->fetch();
   else if (S->isDefined())
     checkFunctionType(S, File, Sig);
   return S;
@@ -268,7 +260,7 @@ Symbol *SymbolTable::addUndefinedData(StringRef Name, uint32_t Flags,
   if (WasInserted)
     replaceSymbol<UndefinedData>(S, Name, Flags, File);
   else if (auto *Lazy = dyn_cast<LazySymbol>(S))
-    cast<ArchiveFile>(Lazy->getFile())->addMember(&Lazy->getArchiveSymbol());
+    Lazy->fetch();
   else if (S->isDefined())
     checkDataType(S, File);
   return S;
@@ -286,7 +278,7 @@ Symbol *SymbolTable::addUndefinedGlobal(StringRef Name, uint32_t Flags,
   if (WasInserted)
     replaceSymbol<UndefinedGlobal>(S, Name, Flags, File, Type);
   else if (auto *Lazy = dyn_cast<LazySymbol>(S))
-    cast<ArchiveFile>(Lazy->getFile())->addMember(&Lazy->getArchiveSymbol());
+    Lazy->fetch();
   else if (S->isDefined())
     checkGlobalType(S, File, Type);
   return S;
