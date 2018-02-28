@@ -1341,9 +1341,10 @@ void CodeGenModule::setNonAliasAttributes(const Decl *D,
   getTargetCodeGenInfo().setTargetAttributes(D, GO, *this);
 }
 
-void CodeGenModule::SetInternalFunctionAttributes(const Decl *D,
+void CodeGenModule::SetInternalFunctionAttributes(GlobalDecl GD,
                                                   llvm::Function *F,
                                                   const CGFunctionInfo &FI) {
+  const Decl *D = GD.getDecl();
   SetLLVMFunctionAttributes(D, FI, F);
   SetLLVMFunctionAttributesForDefinition(D, F);
 
