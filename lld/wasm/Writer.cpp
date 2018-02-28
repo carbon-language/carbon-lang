@@ -839,16 +839,12 @@ void Writer::assignIndexes() {
 static StringRef getOutputDataSegmentName(StringRef Name) {
   if (Config->Relocatable)
     return Name;
-
-  for (StringRef V :
-       {".text.", ".rodata.", ".data.rel.ro.", ".data.", ".bss.rel.ro.",
-        ".bss.", ".init_array.", ".fini_array.", ".ctors.", ".dtors.", ".tbss.",
-        ".gcc_except_table.", ".tdata.", ".ARM.exidx.", ".ARM.extab."}) {
-    StringRef Prefix = V.drop_back();
-    if (Name.startswith(V) || Name == Prefix)
-      return Prefix;
-  }
-
+  if (Name.startswith(".text."))
+    return ".text";
+  if (Name.startswith(".data."))
+    return ".data";
+  if (Name.startswith(".bss."))
+    return ".bss";
   return Name;
 }
 
