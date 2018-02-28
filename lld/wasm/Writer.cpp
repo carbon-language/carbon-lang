@@ -395,63 +395,62 @@ void Writer::createLinkingSection() {
     return;
 
   if (!SymtabEntries.empty()) {
-    SubSection SubSection(WASM_SYMBOL_TABLE);
-    writeUleb128(SubSection.getStream(), SymtabEntries.size(), "num symbols");
+    SubSection Sub(WASM_SYMBOL_TABLE);
+    writeUleb128(Sub.getStream(), SymtabEntries.size(), "num symbols");
     for (const Symbol *Sym : SymtabEntries) {
       assert(Sym->isDefined() || Sym->isUndefined());
       WasmSymbolType Kind = Sym->getWasmType();
       uint32_t Flags = getWasmFlags(Sym);
 
-      writeUleb128(SubSection.getStream(), Kind, "sym kind");
-      writeUleb128(SubSection.getStream(), Flags, "sym flags");
+      writeUleb128(Sub.getStream(), Kind, "sym kind");
+      writeUleb128(Sub.getStream(), Flags, "sym flags");
 
       switch (Kind) {
       case llvm::wasm::WASM_SYMBOL_TYPE_FUNCTION:
       case llvm::wasm::WASM_SYMBOL_TYPE_GLOBAL:
-        writeUleb128(SubSection.getStream(), Sym->getOutputIndex(), "index");
+        writeUleb128(Sub.getStream(), Sym->getOutputIndex(), "index");
         if (Sym->isDefined())
-          writeStr(SubSection.getStream(), Sym->getName(), "sym name");
+          writeStr(Sub.getStream(), Sym->getName(), "sym name");
         break;
       case llvm::wasm::WASM_SYMBOL_TYPE_DATA:
-        writeStr(SubSection.getStream(), Sym->getName(), "sym name");
+        writeStr(Sub.getStream(), Sym->getName(), "sym name");
         if (auto *DataSym = dyn_cast<DefinedData>(Sym)) {
-          writeUleb128(SubSection.getStream(), DataSym->getOutputSegmentIndex(),
+          writeUleb128(Sub.getStream(), DataSym->getOutputSegmentIndex(),
                        "index");
-          writeUleb128(SubSection.getStream(),
-                       DataSym->getOutputSegmentOffset(), "data offset");
-          writeUleb128(SubSection.getStream(), DataSym->getSize(), "data size");
+          writeUleb128(Sub.getStream(), DataSym->getOutputSegmentOffset(),
+                       "data offset");
+          writeUleb128(Sub.getStream(), DataSym->getSize(), "data size");
         }
         break;
       }
     }
 
-    SubSection.finalizeContents();
-    SubSection.writeToStream(OS);
+    Sub.finalizeContents();
+    Sub.writeToStream(OS);
   }
 
   if (Segments.size()) {
-    SubSection SubSection(WASM_SEGMENT_INFO);
-    writeUleb128(SubSection.getStream(), Segments.size(), "num data segments");
+    SubSection Sub(WASM_SEGMENT_INFO);
+    writeUleb128(Sub.getStream(), Segments.size(), "num data segments");
     for (const OutputSegment *S : Segments) {
-      writeStr(SubSection.getStream(), S->Name, "segment name");
-      writeUleb128(SubSection.getStream(), S->Alignment, "alignment");
-      writeUleb128(SubSection.getStream(), 0, "flags");
+      writeStr(Sub.getStream(), S->Name, "segment name");
+      writeUleb128(Sub.getStream(), S->Alignment, "alignment");
+      writeUleb128(Sub.getStream(), 0, "flags");
     }
-    SubSection.finalizeContents();
-    SubSection.writeToStream(OS);
+    Sub.finalizeContents();
+    Sub.writeToStream(OS);
   }
 
   if (!InitFunctions.empty()) {
-    SubSection SubSection(WASM_INIT_FUNCS);
-    writeUleb128(SubSection.getStream(), InitFunctions.size(),
-                 "num init functions");
+    SubSection Sub(WASM_INIT_FUNCS);
+    writeUleb128(Sub.getStream(), InitFunctions.size(), "num init functions");
     for (const WasmInitEntry &F : InitFunctions) {
-      writeUleb128(SubSection.getStream(), F.Priority, "priority");
-      writeUleb128(SubSection.getStream(), F.Sym->getOutputSymbolIndex(),
+      writeUleb128(Sub.getStream(), F.Priority, "priority");
+      writeUleb128(Sub.getStream(), F.Sym->getOutputSymbolIndex(),
                    "function index");
     }
-    SubSection.finalizeContents();
-    SubSection.writeToStream(OS);
+    Sub.finalizeContents();
+    Sub.writeToStream(OS);
   }
 
   struct ComdatEntry { unsigned Kind; uint32_t Index; };
@@ -477,19 +476,19 @@ void Writer::createLinkingSection() {
   }
 
   if (!Comdats.empty()) {
-    SubSection SubSection(WASM_COMDAT_INFO);
-    writeUleb128(SubSection.getStream(), Comdats.size(), "num comdats");
+    SubSection Sub(WASM_COMDAT_INFO);
+    writeUleb128(Sub.getStream(), Comdats.size(), "num comdats");
     for (const auto &C : Comdats) {
-      writeStr(SubSection.getStream(), C.first, "comdat name");
-      writeUleb128(SubSection.getStream(), 0, "comdat flags"); // flags for future use
-      writeUleb128(SubSection.getStream(), C.second.size(), "num entries");
+      writeStr(Sub.getStream(), C.first, "comdat name");
+      writeUleb128(Sub.getStream(), 0, "comdat flags"); // flags for future use
+      writeUleb128(Sub.getStream(), C.second.size(), "num entries");
       for (const ComdatEntry &Entry : C.second) {
-        writeUleb128(SubSection.getStream(), Entry.Kind, "entry kind");
-        writeUleb128(SubSection.getStream(), Entry.Index, "entry index");
+        writeUleb128(Sub.getStream(), Entry.Kind, "entry kind");
+        writeUleb128(Sub.getStream(), Entry.Index, "entry index");
       }
     }
-    SubSection.finalizeContents();
-    SubSection.writeToStream(OS);
+    Sub.finalizeContents();
+    Sub.writeToStream(OS);
   }
 }
 
@@ -505,8 +504,8 @@ void Writer::createNameSection() {
 
   SyntheticSection *Section = createSyntheticSection(WASM_SEC_CUSTOM, "name");
 
-  SubSection FunctionSubsection(WASM_NAMES_FUNCTION);
-  raw_ostream &OS = FunctionSubsection.getStream();
+  SubSection Sub(WASM_NAMES_FUNCTION);
+  raw_ostream &OS = Sub.getStream();
   writeUleb128(OS, NumNames, "name count");
 
   // Names must appear in function index order.  As it happens ImportedSymbols
@@ -525,8 +524,8 @@ void Writer::createNameSection() {
     }
   }
 
-  FunctionSubsection.finalizeContents();
-  FunctionSubsection.writeToStream(Section->getStream());
+  Sub.finalizeContents();
+  Sub.writeToStream(Section->getStream());
 }
 
 void Writer::writeHeader() {
