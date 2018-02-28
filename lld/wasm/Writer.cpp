@@ -17,6 +17,7 @@
 #include "WriterUtils.h"
 #include "lld/Common/ErrorHandler.h"
 #include "lld/Common/Memory.h"
+#include "lld/Common/Strings.h"
 #include "lld/Common/Threads.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/BinaryFormat/Wasm.h"
@@ -876,7 +877,6 @@ void Writer::createCtorFunction() {
 
   // First write the body bytes to a string.
   std::string FunctionBody;
-  const WasmSignature *Signature = WasmSym::CallCtors->getFunctionType();
   {
     raw_string_ostream OS(FunctionBody);
     writeUleb128(OS, 0, "num locals");
@@ -892,11 +892,11 @@ void Writer::createCtorFunction() {
   writeUleb128(OS, FunctionBody.size(), "function size");
   OS.flush();
   CtorFunctionBody += FunctionBody;
-  ArrayRef<uint8_t> BodyArray(
-      reinterpret_cast<const uint8_t *>(CtorFunctionBody.data()),
-      CtorFunctionBody.size());
-  SyntheticFunction *F = make<SyntheticFunction>(*Signature, BodyArray,
-                                                 WasmSym::CallCtors->getName());
+
+  const WasmSignature *Sig = WasmSym::CallCtors->getFunctionType();
+  SyntheticFunction *F = make<SyntheticFunction>(
+      *Sig, toArrayRef(CtorFunctionBody), WasmSym::CallCtors->getName());
+
   F->setOutputIndex(FunctionIndex);
   F->Live = true;
   WasmSym::CallCtors->Function = F;
