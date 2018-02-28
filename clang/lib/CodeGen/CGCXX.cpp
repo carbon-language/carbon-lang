@@ -205,7 +205,7 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
   }
 
   // Finally, set up the alias with its proper name and attributes.
-  setAliasAttributes(cast<NamedDecl>(AliasDecl.getDecl()), Alias);
+  setAliasAttributes(AliasDecl, Alias);
 
   return false;
 }

@@ -1248,8 +1248,8 @@ void CodeGenModule::SetCommonAttributes(const Decl *D,
     addUsedGlobal(GV);
 }
 
-void CodeGenModule::setAliasAttributes(const Decl *D,
-                                       llvm::GlobalValue *GV) {
+void CodeGenModule::setAliasAttributes(GlobalDecl GD, llvm::GlobalValue *GV) {
+  const Decl *D = GD.getDecl();
   SetCommonAttributes(D, GV);
 
   // Process the dllexport attribute based on whether the original definition
@@ -3675,7 +3675,7 @@ void CodeGenModule::EmitAliasDefinition(GlobalDecl GD) {
     if (VD->getTLSKind())
       setTLSMode(GA, *VD);
 
-  setAliasAttributes(D, GA);
+  setAliasAttributes(GD, GA);
 }
 
 void CodeGenModule::emitIFuncDefinition(GlobalDecl GD) {
