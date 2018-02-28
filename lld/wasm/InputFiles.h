@@ -111,10 +111,7 @@ public:
   GlobalSymbol *getGlobalSymbol(uint32_t Index) const;
 
 private:
-  Symbol *createDefinedData(const WasmSymbol &Sym, InputSegment *Segment,
-                            uint32_t Offset, uint32_t DataSize);
-  Symbol *createDefinedFunction(const WasmSymbol &Sym, InputFunction *Function);
-  Symbol *createDefinedGlobal(const WasmSymbol &Sym, InputGlobal *Global);
+  Symbol *createDefined(const WasmSymbol &Sym);
   Symbol *createUndefined(const WasmSymbol &Sym);
 
   void initializeSymbols();

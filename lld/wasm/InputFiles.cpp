@@ -187,47 +187,55 @@ void ObjFile::initializeSymbols() {
   // Populate `Symbols` based on the WasmSymbols in the object
   for (const SymbolRef &Sym : WasmObj->symbols()) {
     const WasmSymbol &WasmSym = WasmObj->getWasmSymbol(Sym.getRawDataRefImpl());
-    bool IsDefined = WasmSym.isDefined();
 
-    if (IsDefined) {
-      switch (WasmSym.Info.Kind) {
-      case WASM_SYMBOL_TYPE_FUNCTION: {
-        InputFunction *Function = getFunction(WasmSym);
-        if (isExcludedByComdat(Function)) {
-          Function->Live = false;
-          IsDefined = false;
-          break;
-        }
-        Symbols.push_back(createDefinedFunction(WasmSym, Function));
-        break;
-      }
-      case WASM_SYMBOL_TYPE_DATA: {
-        InputSegment *Segment = getSegment(WasmSym);
-        if (isExcludedByComdat(Segment)) {
-          Segment->Live = false;
-          IsDefined = false;
-          break;
-        }
-        Symbols.push_back(createDefinedData(WasmSym, Segment,
-                                            WasmSym.Info.DataRef.Offset,
-                                            WasmSym.Info.DataRef.Size));
-        break;
-      }
-      case WASM_SYMBOL_TYPE_GLOBAL:
-        Symbols.push_back(createDefinedGlobal(WasmSym, getGlobal(WasmSym)));
-        break;
-      default:
-        llvm_unreachable("unkown symbol kind");
-        break;
-      }
-    }
-
-    // Either the the symbol itself was undefined, or was excluded via comdat
-    // in which case this simply insertes the existing symbol into the correct
-    // slot in the Symbols array.
-    if (!IsDefined)
+    if (Symbol *Sym = createDefined(WasmSym))
+      Symbols.push_back(Sym);
+    else
       Symbols.push_back(createUndefined(WasmSym));
   }
+}
+
+Symbol *ObjFile::createDefined(const WasmSymbol &Sym) {
+  if (!Sym.isDefined())
+    return nullptr;
+
+  switch (Sym.Info.Kind) {
+  case WASM_SYMBOL_TYPE_FUNCTION: {
+    InputFunction *Func = getFunction(Sym);
+    if (isExcludedByComdat(Func)) {
+      Func->Live = false;
+      return nullptr;
+    }
+
+    if (Sym.isBindingLocal())
+      return make<DefinedFunction>(Sym.Info.Name, Sym.Info.Flags, this, Func);
+    return Symtab->addDefinedFunction(Sym.Info.Name, Sym.Info.Flags, this,
+                                      Func);
+  }
+  case WASM_SYMBOL_TYPE_DATA: {
+    InputSegment *Seg = getSegment(Sym);
+    if (isExcludedByComdat(Seg)) {
+      Seg->Live = false;
+      return nullptr;
+    }
+
+    uint32_t Offset = Sym.Info.DataRef.Offset;
+    uint32_t Size = Sym.Info.DataRef.Size;
+
+    if (Sym.isBindingLocal())
+      return make<DefinedData>(Sym.Info.Name, Sym.Info.Flags, this, Seg, Offset,
+                               Size);
+    return Symtab->addDefinedData(Sym.Info.Name, Sym.Info.Flags, this, Seg,
+                                  Offset, Size);
+  }
+  case WASM_SYMBOL_TYPE_GLOBAL:
+    if (Sym.isBindingLocal())
+      return make<DefinedGlobal>(Sym.Info.Name, Sym.Info.Flags, this,
+                                 getGlobal(Sym));
+    return Symtab->addDefinedGlobal(Sym.Info.Name, Sym.Info.Flags, this,
+                                    getGlobal(Sym));
+  }
+  llvm_unreachable("unkown symbol kind");
 }
 
 Symbol *ObjFile::createUndefined(const WasmSymbol &Sym) {
@@ -243,30 +251,6 @@ Symbol *ObjFile::createUndefined(const WasmSymbol &Sym) {
     return Symtab->addUndefinedGlobal(Name, Flags, this, Sym.GlobalType);
   }
   llvm_unreachable("unkown symbol kind");
-}
-
-Symbol *ObjFile::createDefinedFunction(const WasmSymbol &Sym,
-                                       InputFunction *Function) {
-  if (Sym.isBindingLocal())
-    return make<DefinedFunction>(Sym.Info.Name, Sym.Info.Flags, this, Function);
-  return Symtab->addDefinedFunction(Sym.Info.Name, Sym.Info.Flags, this,
-                                    Function);
-}
-
-Symbol *ObjFile::createDefinedData(const WasmSymbol &Sym, InputSegment *Segment,
-                                   uint32_t Offset, uint32_t Size) {
-  if (Sym.isBindingLocal())
-    return make<DefinedData>(Sym.Info.Name, Sym.Info.Flags, this, Segment,
-                             Offset, Size);
-  return Symtab->addDefinedData(Sym.Info.Name, Sym.Info.Flags, this, Segment,
-                                Offset, Size);
-}
-
-Symbol *ObjFile::createDefinedGlobal(const WasmSymbol &Sym,
-                                     InputGlobal *Global) {
-  if (Sym.isBindingLocal())
-    return make<DefinedGlobal>(Sym.Info.Name, Sym.Info.Flags, this, Global);
-  return Symtab->addDefinedGlobal(Sym.Info.Name, Sym.Info.Flags, this, Global);
 }
 
 void ArchiveFile::parse() {
