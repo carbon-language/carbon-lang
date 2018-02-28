@@ -56,10 +56,7 @@ void SymbolTable::reportRemainingUndefines() {
 }
 
 Symbol *SymbolTable::find(StringRef Name) {
-  auto It = SymMap.find(CachedHashStringRef(Name));
-  if (It == SymMap.end())
-    return nullptr;
-  return It->second;
+  return SymMap.lookup(CachedHashStringRef(Name));
 }
 
 std::pair<Symbol *, bool> SymbolTable::insert(StringRef Name) {
