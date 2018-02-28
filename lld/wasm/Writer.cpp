@@ -279,31 +279,24 @@ void Writer::createExportSection() {
 
   writeUleb128(OS, NumExports, "export count");
 
-  if (ExportMemory) {
-    WasmExport MemoryExport;
-    MemoryExport.Name = "memory";
-    MemoryExport.Kind = WASM_EXTERNAL_MEMORY;
-    MemoryExport.Index = 0;
-    writeExport(OS, MemoryExport);
-  }
+  if (ExportMemory)
+    writeExport(OS, {"memory", WASM_EXTERNAL_MEMORY, 0});
 
   unsigned FakeGlobalIndex = NumImportedGlobals + InputGlobals.size();
+
   for (const Symbol *Sym : ExportedSymbols) {
-    DEBUG(dbgs() << "Export: " << Sym->getName() << "\n");
+    StringRef Name = Sym->getName();
     WasmExport Export;
-    Export.Name = Sym->getName();
-    if (isa<FunctionSymbol>(Sym)) {
-      Export.Index = Sym->getOutputIndex();
-      Export.Kind = WASM_EXTERNAL_FUNCTION;
-    } else if (isa<GlobalSymbol>(Sym)) {
-      Export.Index = Sym->getOutputIndex();
-      Export.Kind = WASM_EXTERNAL_GLOBAL;
-    } else if (isa<DataSymbol>(Sym)) {
-      Export.Index = FakeGlobalIndex++;
-      Export.Kind = WASM_EXTERNAL_GLOBAL;
-    } else {
+    DEBUG(dbgs() << "Export: " << Name << "\n");
+
+    if (isa<DefinedFunction>(Sym))
+      Export = {Name, WASM_EXTERNAL_FUNCTION, Sym->getOutputIndex()};
+    else if (isa<DefinedGlobal>(Sym))
+      Export = {Name, WASM_EXTERNAL_GLOBAL, Sym->getOutputIndex()};
+    else if (isa<DefinedData>(Sym))
+      Export = {Name, WASM_EXTERNAL_GLOBAL, FakeGlobalIndex++};
+    else
       llvm_unreachable("unexpected symbol type");
-    }
     writeExport(OS, Export);
   }
 }
