@@ -77,6 +77,11 @@ the end of the line, not on the next line.  Functions also put the opening
 `{` after the formal arguments or new-style result type, not on the next
 line.  Use `{}` for empty inline constructors and destructors in classes.
 
+If any branch of an `if`/`else if`/`else` cascade ends with a return statement,
+they all should, with the understanding that the cases are all unexceptional.
+When testing for an error case that should cause an early return, do so with
+an `if` that doesn't have a following `else`.
+
 Don't waste space on the screen with needless blank lines or elaborate block
 commentary (lines of dashes, boxes of asterisks, &c.).  Write code so as to be
 easily read and understood with a minimum of scrolling.

@@ -131,6 +131,7 @@ std::ostream &formatTuple(std::ostream &o, const T &x) {
   if constexpr (J < std::tuple_size_v<T>) {
     return formatTuple<J + 1>(o << std::get<J>(x), x);
   }
+  return o;
 }
 
 template<typename... As>

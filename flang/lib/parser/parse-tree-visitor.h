@@ -73,11 +73,21 @@ Walk(const A &x, V &visitor) {
 
 template<typename A, typename V>
 typename std::enable_if<TupleTrait<A>>::type
-Walk(const A &x, V &visitor) { Walk(x.t, visitor); }
+Walk(const A &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.t, visitor);
+    visitor.Post(x);
+  }
+}
 
 template<typename A, typename V>
 typename std::enable_if<UnionTrait<A>>::type
-Walk(const A &x, V &visitor) { Walk(x.u, visitor); }
+Walk(const A &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.u, visitor);
+    visitor.Post(x);
+  }
+}
 
 template<typename A, typename V>
 typename std::enable_if<WrapperTrait<A>>::type
