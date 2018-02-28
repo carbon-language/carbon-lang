@@ -513,7 +513,7 @@ bool Prescanner::CommentLinesAndPreprocessorDirectives() {
 
 const char *Prescanner::FixedFormContinuationLine() {
   const char *p{lineStart_};
-  if (p >= limit_ || !inFixedForm_) {
+  if (p >= limit_) {
     return nullptr;
   }
   tabInCurrentLine_ = false;
@@ -537,6 +537,10 @@ const char *Prescanner::FixedFormContinuationLine() {
 }
 
 bool Prescanner::FixedFormContinuation() {
+  // N.B. We accept '&' as a continuation indicator (even) in fixed form.
+  if (!inFixedForm_ || (*at_ == '&' && inCharLiteral_)) {
+    return false;
+  }
   CommentLines();
   const char *cont{FixedFormContinuationLine()};
   if (cont == nullptr) {
