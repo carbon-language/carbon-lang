@@ -16,8 +16,9 @@ static constexpr bool IsUpperCaseLetter(char ch) {
     // EBCDIC
     return (ch >= 'A' && ch <= 'I') || (ch >= 'J' && ch <= 'R') ||
         (ch >= 'S' && ch <= 'Z');
+  } else {
+    return ch >= 'A' && ch <= 'Z';
   }
-  return ch >= 'A' && ch <= 'Z';
 }
 
 static constexpr bool IsLowerCaseLetter(char ch) {
@@ -25,8 +26,9 @@ static constexpr bool IsLowerCaseLetter(char ch) {
     // EBCDIC
     return (ch >= 'a' && ch <= 'i') || (ch >= 'j' && ch <= 'r') ||
         (ch >= 's' && ch <= 'z');
+  } else {
+    return ch >= 'a' && ch <= 'z';
   }
-  return ch >= 'a' && ch <= 'z';
 }
 
 static constexpr bool IsLetter(char ch) {
