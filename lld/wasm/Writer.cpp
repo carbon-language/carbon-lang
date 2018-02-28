@@ -357,24 +357,24 @@ void Writer::createRelocSections() {
   // Don't use iterator here since we are adding to OutputSection
   size_t OrigSize = OutputSections.size();
   for (size_t i = 0; i < OrigSize; i++) {
-    OutputSection *S = OutputSections[i];
-    const char *name;
-    uint32_t Count = S->numRelocations();
+    OutputSection *OSec = OutputSections[i];
+    uint32_t Count = OSec->numRelocations();
     if (!Count)
       continue;
 
-    if (S->Type == WASM_SEC_DATA)
-      name = "reloc.DATA";
-    else if (S->Type == WASM_SEC_CODE)
-      name = "reloc.CODE";
+    StringRef Name;
+    if (OSec->Type == WASM_SEC_DATA)
+      Name = "reloc.DATA";
+    else if (OSec->Type == WASM_SEC_CODE)
+      Name = "reloc.CODE";
     else
       llvm_unreachable("relocations only supported for code and data");
 
-    SyntheticSection *Section = createSyntheticSection(WASM_SEC_CUSTOM, name);
+    SyntheticSection *Section = createSyntheticSection(WASM_SEC_CUSTOM, Name);
     raw_ostream &OS = Section->getStream();
-    writeUleb128(OS, S->Type, "reloc section");
+    writeUleb128(OS, OSec->Type, "reloc section");
     writeUleb128(OS, Count, "reloc count");
-    S->writeRelocations(OS);
+    OSec->writeRelocations(OS);
   }
 }
 
