@@ -88,18 +88,23 @@ template<typename A> struct BadType : std::false_type {};
 // in template specialization definitions.
 #define CLASS_TRAIT(T) \
   namespace class_trait_ns_##T { \
-  template<typename A> std::true_type test(typename A::T *); \
-  template<typename A> std::false_type test(...); \
-  template<typename A> \
+    template<typename A> std::true_type test(typename A::T *); \
+    template<typename A> std::false_type test(...); \
+    template<typename A> \
     constexpr bool has_trait{decltype(test<A>(nullptr))::value}; \
-  template<typename A> \
+    template<typename A> \
     constexpr typename std::enable_if<has_trait<A>, bool>::type \
-    trait_value() { using U = typename A::T; return U::value; } \
-  template<typename A> \
+    trait_value() { \
+      using U = typename A::T; \
+      return U::value; \
+    } \
+    template<typename A> \
     constexpr typename std::enable_if<!has_trait<A>, bool>::type \
-    trait_value() { return false; } \
+    trait_value() { \
+      return false; \
+    } \
   } \
-  template<typename A> constexpr bool T{class_trait_ns_##T::trait_value<A>()}
+  template<typename A> constexpr bool T { class_trait_ns_##T::trait_value<A>() }
 
 // Formatting
 // TODO: remove when unparser is up and running

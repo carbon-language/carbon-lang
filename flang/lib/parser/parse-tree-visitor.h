@@ -21,10 +21,10 @@ namespace parser {
 // Default case for visitation of non-class data members (and strings)
 template<typename A, typename V>
 typename std::enable_if<!std::is_class_v<A> ||
-                        std::is_same_v<std::string, A>>::type
+    std::is_same_v<std::string, A>>::type
 Walk(const A &x, V &visitor) {
   if (visitor.Pre(x)) {
-     visitor.Post(x);
+    visitor.Post(x);
   }
 }
 
@@ -64,16 +64,14 @@ void Walk(const std::variant<A...> &x, V &visitor) {
 
 // Trait-determined traversal of empty, tuple, union, and wrapper classes.
 template<typename A, typename V>
-typename std::enable_if<EmptyTrait<A>>::type
-Walk(const A &x, V &visitor) {
+typename std::enable_if<EmptyTrait<A>>::type Walk(const A &x, V &visitor) {
   if (visitor.Pre(x)) {
     visitor.Post(x);
   }
 }
 
 template<typename A, typename V>
-typename std::enable_if<TupleTrait<A>>::type
-Walk(const A &x, V &visitor) {
+typename std::enable_if<TupleTrait<A>>::type Walk(const A &x, V &visitor) {
   if (visitor.Pre(x)) {
     Walk(x.t, visitor);
     visitor.Post(x);
@@ -81,8 +79,7 @@ Walk(const A &x, V &visitor) {
 }
 
 template<typename A, typename V>
-typename std::enable_if<UnionTrait<A>>::type
-Walk(const A &x, V &visitor) {
+typename std::enable_if<UnionTrait<A>>::type Walk(const A &x, V &visitor) {
   if (visitor.Pre(x)) {
     Walk(x.u, visitor);
     visitor.Post(x);
@@ -90,8 +87,7 @@ Walk(const A &x, V &visitor) {
 }
 
 template<typename A, typename V>
-typename std::enable_if<WrapperTrait<A>>::type
-Walk(const A &x, V &visitor) {
+typename std::enable_if<WrapperTrait<A>>::type Walk(const A &x, V &visitor) {
   if (visitor.Pre(x)) {
     Walk(x.v, visitor);
     visitor.Post(x);
@@ -150,8 +146,7 @@ void Walk(const CharSelector::LengthAndKind &x, V &visitor) {
     visitor.Post(x);
   }
 }
-template<typename V>
-void Walk(const CaseValueRange::Range &x, V &visitor) {
+template<typename V> void Walk(const CaseValueRange::Range &x, V &visitor) {
   if (visitor.Pre(x)) {
     Walk(x.lower, visitor);
     Walk(x.upper, visitor);
