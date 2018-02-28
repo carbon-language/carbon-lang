@@ -164,6 +164,13 @@ static ExprValue div(ExprValue A, ExprValue B) {
   return 0;
 }
 
+static ExprValue mod(ExprValue A, ExprValue B) {
+  if (uint64_t BV = B.getValue())
+    return A.getValue() % BV;
+  error("modulo by zero");
+  return 0;
+}
+
 static ExprValue bitAnd(ExprValue A, ExprValue B) {
   moveAbsRight(A, B);
   return {A.Sec, A.ForceAbsolute,
@@ -457,7 +464,7 @@ void ScriptParser::readSections() {
 
 static int precedence(StringRef Op) {
   return StringSwitch<int>(Op)
-      .Cases("*", "/", 5)
+      .Cases("*", "/", "%", 5)
       .Cases("+", "-", 4)
       .Cases("<<", ">>", 3)
       .Cases("<", "<=", ">", ">=", "==", "!=", 2)
@@ -807,6 +814,8 @@ static Expr combine(StringRef Op, Expr L, Expr R) {
     return [=] { return L().getValue() * R().getValue(); };
   if (Op == "/")
     return [=] { return div(L(), R()); };
+  if (Op == "%")
+    return [=] { return mod(L(), R()); };
   if (Op == "<<")
     return [=] { return L().getValue() << R().getValue(); };
   if (Op == ">>")
