@@ -2496,6 +2496,8 @@ def mno_hexagon_hvx_double
     : Flag<[ "-" ], "mno-hvx-double">,
       Group<m_hexagon_Features_HVX_Group>,
       HelpText<"Disable Hexagon Double Vector eXtensions">;
+def ffixed_r19: Flag<["-"], "ffixed-r19">,
+  HelpText<"Reserve the r19 register (Hexagon only)">;
 
 
 // X86 feature flags
