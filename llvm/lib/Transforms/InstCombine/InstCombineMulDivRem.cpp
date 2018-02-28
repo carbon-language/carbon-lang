@@ -669,14 +669,14 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
   if (match(Op1, m_OneUse(m_FNeg(m_Value(X)))))
     return BinaryOperator::CreateFNegFMF(Builder.CreateFMulFMF(X, Op0, &I), &I);
 
+  // (select A, B, C) * (select A, D, E) --> select A, (B*D), (C*E)
+  if (Value *V = SimplifySelectsFeedingBinaryOp(I, Op0, Op1))
+    return replaceInstUsesWith(I, V);
+
   // Handle symmetric situation in a 2-iteration loop
   Value *Opnd0 = Op0;
   Value *Opnd1 = Op1;
   for (int i = 0; i < 2; i++) {
-    // Handle specials cases for FMul with selects feeding the operation
-    if (Value *V = SimplifySelectsFeedingBinaryOp(I, Op0, Op1))
-      return replaceInstUsesWith(I, V);
-
     // (X*Y) * X => (X*X) * Y where Y != X
     //  The purpose is two-fold:
     //   1) to form a power expression (of X).
