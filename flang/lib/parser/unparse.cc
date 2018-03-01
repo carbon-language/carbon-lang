@@ -1,6 +1,4 @@
 #include "unparse.h"
-
-#include "format-specification.h"
 #include "idioms.h"
 #include "indirection.h"
 #include "parse-tree-visitor.h"

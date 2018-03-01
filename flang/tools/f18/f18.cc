@@ -4,6 +4,7 @@
 #include "../../lib/parser/idioms.h"
 #include "../../lib/parser/message.h"
 #include "../../lib/parser/parse-tree.h"
+#include "../../lib/parser/parse-tree-visitor.h"
 #include "../../lib/parser/preprocessor.h"
 #include "../../lib/parser/prescan.h"
 #include "../../lib/parser/provenance.h"
@@ -22,9 +23,7 @@
 #include <string>
 #include <unistd.h>
 
-namespace {
-
-std::list<std::string> argList(int argc, char *const argv[]) {
+static std::list<std::string> argList(int argc, char *const argv[]) {
   std::list<std::string> result;
   for (int j = 0; j < argc; ++j) {
     result.emplace_back(argv[j]);
@@ -32,14 +31,30 @@ std::list<std::string> argList(int argc, char *const argv[]) {
   return result;
 }
 
-}  // namespace
-
 namespace Fortran {
 namespace parser {
 constexpr auto grammar = program;
 }  // namespace parser
 }  // namespace Fortran
 using Fortran::parser::grammar;
+using ParseTree = typename decltype(grammar)::resultType;
+
+struct MeasurementVisitor {
+  template<typename A> bool Pre(const A &) { return true; }
+  template<typename A> void Post(const A &) {
+    ++objects;
+    bytes += sizeof(A);
+  }
+  size_t objects{0}, bytes{0};
+};
+
+void MeasureParseTree(const ParseTree &program) {
+  MeasurementVisitor visitor;
+  Fortran::parser::Walk(program, visitor);
+  std::cout << "Parse tree comprises " << visitor.objects
+            << " objects and occupies " << visitor.bytes
+            << " total bytes.\n";
+}
 
 int main(int argc, char *const argv[]) {
 
@@ -135,7 +150,7 @@ int main(int argc, char *const argv[]) {
                      .Prescan(range)};
   messages.Emit(std::cerr);
   if (!prescanOk) {
-    return 1;
+    return EXIT_FAILURE;
   }
   columns = std::numeric_limits<int>::max();
 
@@ -154,12 +169,12 @@ int main(int argc, char *const argv[]) {
     while (std::optional<char> och{state.GetNextChar()}) {
       std::cout << *och;
     }
-    return 0;
+    return EXIT_SUCCESS;
   }
 
-  std::optional<typename decltype(grammar)::resultType> result{
-      grammar.Parse(&state)};
+  std::optional<ParseTree> result{grammar.Parse(&state)};
   if (result.has_value() && !state.anyErrorRecovery()) {
+    MeasureParseTree(*result);
     Unparse(std::cout, *result);
     return EXIT_SUCCESS;
   } else {

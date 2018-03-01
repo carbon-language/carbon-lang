@@ -306,7 +306,8 @@ std::ostream &operator<<(std::ostream &o, const Rename::Names &x) {  // R1411
 #undef TUPLE_FORMATTER
 
 // R1302 format-specification
-std::ostream &operator<<(std::ostream &o, const FormatSpecification &x) {
+std::ostream &operator<<(
+    std::ostream &o, const format::FormatSpecification &x) {
   return o << "(FormatSpecification " << x.items << ' ' << x.unlimitedItems
            << ')';
 }
@@ -821,22 +822,23 @@ std::ostream &operator<<(std::ostream &o, const CaseValueRange::Range &x) {
 }
 
 // R1307 data-edit-desc (part 1 of 2)
-std::ostream &operator<<(std::ostream &o, const IntrinsicTypeDataEditDesc &x) {
+std::ostream &operator<<(
+    std::ostream &o, const format::IntrinsicTypeDataEditDesc &x) {
   o << "(IntrinsicTypeDataEditDesc ";
   switch (x.kind) {
-  case IntrinsicTypeDataEditDesc::Kind::I: o << "I "; break;
-  case IntrinsicTypeDataEditDesc::Kind::B: o << "B "; break;
-  case IntrinsicTypeDataEditDesc::Kind::O: o << "O "; break;
-  case IntrinsicTypeDataEditDesc::Kind::Z: o << "Z "; break;
-  case IntrinsicTypeDataEditDesc::Kind::F: o << "F "; break;
-  case IntrinsicTypeDataEditDesc::Kind::E: o << "E "; break;
-  case IntrinsicTypeDataEditDesc::Kind::EN: o << "EN "; break;
-  case IntrinsicTypeDataEditDesc::Kind::ES: o << "ES "; break;
-  case IntrinsicTypeDataEditDesc::Kind::EX: o << "EX "; break;
-  case IntrinsicTypeDataEditDesc::Kind::G: o << "G "; break;
-  case IntrinsicTypeDataEditDesc::Kind::L: o << "L "; break;
-  case IntrinsicTypeDataEditDesc::Kind::A: o << "A "; break;
-  case IntrinsicTypeDataEditDesc::Kind::D: o << "D "; break;
+  case format::IntrinsicTypeDataEditDesc::Kind::I: o << "I "; break;
+  case format::IntrinsicTypeDataEditDesc::Kind::B: o << "B "; break;
+  case format::IntrinsicTypeDataEditDesc::Kind::O: o << "O "; break;
+  case format::IntrinsicTypeDataEditDesc::Kind::Z: o << "Z "; break;
+  case format::IntrinsicTypeDataEditDesc::Kind::F: o << "F "; break;
+  case format::IntrinsicTypeDataEditDesc::Kind::E: o << "E "; break;
+  case format::IntrinsicTypeDataEditDesc::Kind::EN: o << "EN "; break;
+  case format::IntrinsicTypeDataEditDesc::Kind::ES: o << "ES "; break;
+  case format::IntrinsicTypeDataEditDesc::Kind::EX: o << "EX "; break;
+  case format::IntrinsicTypeDataEditDesc::Kind::G: o << "G "; break;
+  case format::IntrinsicTypeDataEditDesc::Kind::L: o << "L "; break;
+  case format::IntrinsicTypeDataEditDesc::Kind::A: o << "A "; break;
+  case format::IntrinsicTypeDataEditDesc::Kind::D: o << "D "; break;
   default: CRASH_NO_CASE;
   }
   return o << x.width << ' ' << x.digits << ' ' << x.exponentWidth << ')';
@@ -855,41 +857,42 @@ std::ostream &operator<<(std::ostream &o, const WriteStmt &x) {
 }
 
 // R1307 data-edit-desc (part 2 of 2)
-std::ostream &operator<<(std::ostream &o, const DerivedTypeDataEditDesc &x) {
+std::ostream &operator<<(
+    std::ostream &o, const format::DerivedTypeDataEditDesc &x) {
   return o << "(DerivedTypeDataEditDesc " << x.type << ' ' << x.parameters
            << ')';
 }
 
 // R1313 control-edit-desc
-std::ostream &operator<<(std::ostream &o, const ControlEditDesc &x) {
+std::ostream &operator<<(std::ostream &o, const format::ControlEditDesc &x) {
   o << "(ControlEditDesc ";
   switch (x.kind) {
-  case ControlEditDesc::Kind::T: o << "T "; break;
-  case ControlEditDesc::Kind::TL: o << "TL "; break;
-  case ControlEditDesc::Kind::TR: o << "TR "; break;
-  case ControlEditDesc::Kind::X: o << "X "; break;
-  case ControlEditDesc::Kind::Slash: o << "/ "; break;
-  case ControlEditDesc::Kind::Colon: o << ": "; break;
-  case ControlEditDesc::Kind::SS: o << "SS "; break;
-  case ControlEditDesc::Kind::SP: o << "SP "; break;
-  case ControlEditDesc::Kind::S: o << "S "; break;
-  case ControlEditDesc::Kind::P: o << "P "; break;
-  case ControlEditDesc::Kind::BN: o << "BN "; break;
-  case ControlEditDesc::Kind::BZ: o << "BZ "; break;
-  case ControlEditDesc::Kind::RU: o << "RU "; break;
-  case ControlEditDesc::Kind::RD: o << "RD "; break;
-  case ControlEditDesc::Kind::RN: o << "RN "; break;
-  case ControlEditDesc::Kind::RC: o << "RC "; break;
-  case ControlEditDesc::Kind::RP: o << "RP "; break;
-  case ControlEditDesc::Kind::DC: o << "DC "; break;
-  case ControlEditDesc::Kind::DP: o << "DP "; break;
+  case format::ControlEditDesc::Kind::T: o << "T "; break;
+  case format::ControlEditDesc::Kind::TL: o << "TL "; break;
+  case format::ControlEditDesc::Kind::TR: o << "TR "; break;
+  case format::ControlEditDesc::Kind::X: o << "X "; break;
+  case format::ControlEditDesc::Kind::Slash: o << "/ "; break;
+  case format::ControlEditDesc::Kind::Colon: o << ": "; break;
+  case format::ControlEditDesc::Kind::SS: o << "SS "; break;
+  case format::ControlEditDesc::Kind::SP: o << "SP "; break;
+  case format::ControlEditDesc::Kind::S: o << "S "; break;
+  case format::ControlEditDesc::Kind::P: o << "P "; break;
+  case format::ControlEditDesc::Kind::BN: o << "BN "; break;
+  case format::ControlEditDesc::Kind::BZ: o << "BZ "; break;
+  case format::ControlEditDesc::Kind::RU: o << "RU "; break;
+  case format::ControlEditDesc::Kind::RD: o << "RD "; break;
+  case format::ControlEditDesc::Kind::RN: o << "RN "; break;
+  case format::ControlEditDesc::Kind::RC: o << "RC "; break;
+  case format::ControlEditDesc::Kind::RP: o << "RP "; break;
+  case format::ControlEditDesc::Kind::DC: o << "DC "; break;
+  case format::ControlEditDesc::Kind::DP: o << "DP "; break;
   default: CRASH_NO_CASE;
   }
   return o << x.count << ')';
 }
 
 // R1304 format-item
-std::ostream &operator<<(std::ostream &o, const FormatItem &x) {
+std::ostream &operator<<(std::ostream &o, const format::FormatItem &x) {
   o << "(FormatItem " << x.repeatCount;
   std::visit([&o](const auto &y) { o << y; }, x.u);
   return o << ')';

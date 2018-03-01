@@ -7,7 +7,7 @@
 // that are transcribed here and referenced via their requirement numbers.
 // The representations of some productions that may also be of use in the
 // run-time I/O support library have been isolated into a distinct header file
-// (viz. format-specification.h).
+// (viz., format-specification.h).
 
 #include "format-specification.h"
 #include "idioms.h"
@@ -118,7 +118,6 @@ struct WhereConstruct;  // R1042
 struct ForallConstruct;  // R1050
 struct InputImpliedDo;  // R1218
 struct OutputImpliedDo;  // R1218
-struct FormatItems;  // R1303
 struct FunctionReference;  // R1520
 struct FunctionSubprogram;  // R1529
 struct SubroutineSubprogram;  // R1534
@@ -2706,7 +2705,7 @@ struct InquireStmt {
 };
 
 // R1301 format-stmt -> FORMAT format-specification
-WRAPPER_CLASS(FormatStmt, FormatSpecification);
+WRAPPER_CLASS(FormatStmt, format::FormatSpecification);
 
 // R1402 program-stmt -> PROGRAM program-name
 WRAPPER_CLASS(ProgramStmt, Name);
