@@ -671,6 +671,8 @@ OutputSection *ScriptParser::readOutputSectionDescription(StringRef OutSec) {
   OutputSection *Cmd =
       Script->createOutputSection(OutSec, getCurrentLocation());
 
+  size_t SymbolsReferenced = Script->ReferencedSymbols.size();
+
   if (peek() != ":")
     readSectionAddressType(Cmd);
   expect(":");
@@ -737,6 +739,8 @@ OutputSection *ScriptParser::readOutputSectionDescription(StringRef OutSec) {
   // Consume optional comma following output section command.
   consume(",");
 
+  if (Script->ReferencedSymbols.size() > SymbolsReferenced)
+    Cmd->ExpressionsUseSymbols = true;
   return Cmd;
 }
 
