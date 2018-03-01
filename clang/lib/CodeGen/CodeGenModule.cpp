@@ -1232,8 +1232,8 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
       CreateFunctionTypeMetadata(FD, F);
 }
 
-void CodeGenModule::SetCommonAttributes(const Decl *D,
-                                        llvm::GlobalValue *GV) {
+void CodeGenModule::SetCommonAttributes(GlobalDecl GD, llvm::GlobalValue *GV) {
+  const Decl *D = GD.getDecl();
   if (const auto *ND = dyn_cast_or_null<NamedDecl>(D))
     setGVProperties(GV, ND);
   else
@@ -1245,7 +1245,7 @@ void CodeGenModule::SetCommonAttributes(const Decl *D,
 
 void CodeGenModule::setAliasAttributes(GlobalDecl GD, llvm::GlobalValue *GV) {
   const Decl *D = GD.getDecl();
-  SetCommonAttributes(D, GV);
+  SetCommonAttributes(GD, GV);
 
   // Process the dllexport attribute based on whether the original definition
   // (not necessarily the aliasee) was exported.
@@ -1302,7 +1302,7 @@ bool CodeGenModule::GetCPUAndFeaturesAttributes(const Decl *D,
 void CodeGenModule::setNonAliasAttributes(GlobalDecl GD,
                                           llvm::GlobalObject *GO) {
   const Decl *D = GD.getDecl();
-  SetCommonAttributes(D, GO);
+  SetCommonAttributes(GD, GO);
 
   if (D) {
     if (auto *GV = dyn_cast<llvm::GlobalVariable>(GO)) {
@@ -3731,7 +3731,7 @@ void CodeGenModule::emitIFuncDefinition(GlobalDecl GD) {
   } else
     GIF->setName(MangledName);
 
-  SetCommonAttributes(D, GIF);
+  SetCommonAttributes(GD, GIF);
 }
 
 llvm::Function *CodeGenModule::getIntrinsic(unsigned IID,

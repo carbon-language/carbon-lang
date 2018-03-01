@@ -1188,7 +1188,7 @@ public:
   /// Objective-C method, function, global variable).
   ///
   /// NOTE: This should only be called for definitions.
-  void SetCommonAttributes(const Decl *D, llvm::GlobalValue *GV);
+  void SetCommonAttributes(GlobalDecl GD, llvm::GlobalValue *GV);
 
   /// Set attributes which must be preserved by an alias. This includes common
   /// attributes (i.e. it includes a call to SetCommonAttributes).
