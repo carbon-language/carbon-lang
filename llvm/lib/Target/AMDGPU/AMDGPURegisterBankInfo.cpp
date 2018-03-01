@@ -50,10 +50,13 @@ AMDGPURegisterBankInfo::AMDGPURegisterBankInfo(const TargetRegisterInfo &TRI)
 
 }
 
-unsigned AMDGPURegisterBankInfo::copyCost(const RegisterBank &A,
-                                           const RegisterBank &B,
-                                           unsigned Size) const {
-  return RegisterBankInfo::copyCost(A, B, Size);
+unsigned AMDGPURegisterBankInfo::copyCost(const RegisterBank &Dst,
+                                          const RegisterBank &Src,
+                                          unsigned Size) const {
+  if (Dst.getID() == AMDGPU::SGPRRegBankID &&
+      Src.getID() == AMDGPU::VGPRRegBankID)
+    return std::numeric_limits<unsigned>::max();
+  return RegisterBankInfo::copyCost(Dst, Src, Size);
 }
 
 const RegisterBank &AMDGPURegisterBankInfo::getRegBankFromRegClass(
