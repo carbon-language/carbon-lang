@@ -28,17 +28,17 @@ namespace llvm {
 namespace WasmYAML {
 
 LLVM_YAML_STRONG_TYPEDEF(uint32_t, SectionType)
-LLVM_YAML_STRONG_TYPEDEF(int32_t, ValueType)
-LLVM_YAML_STRONG_TYPEDEF(int32_t, TableType)
-LLVM_YAML_STRONG_TYPEDEF(int32_t, SignatureForm)
-LLVM_YAML_STRONG_TYPEDEF(uint32_t, ExportKind)
+LLVM_YAML_STRONG_TYPEDEF(uint8_t, ValueType)
+LLVM_YAML_STRONG_TYPEDEF(uint8_t, TableType)
+LLVM_YAML_STRONG_TYPEDEF(uint8_t, SignatureForm)
+LLVM_YAML_STRONG_TYPEDEF(uint8_t, ExportKind)
 LLVM_YAML_STRONG_TYPEDEF(uint32_t, Opcode)
-LLVM_YAML_STRONG_TYPEDEF(uint32_t, RelocType)
+LLVM_YAML_STRONG_TYPEDEF(uint8_t, RelocType)
 LLVM_YAML_STRONG_TYPEDEF(uint32_t, SymbolFlags)
-LLVM_YAML_STRONG_TYPEDEF(uint32_t, SymbolKind)
+LLVM_YAML_STRONG_TYPEDEF(uint8_t, SymbolKind)
 LLVM_YAML_STRONG_TYPEDEF(uint32_t, SegmentFlags)
-LLVM_YAML_STRONG_TYPEDEF(uint32_t, LimitFlags)
-LLVM_YAML_STRONG_TYPEDEF(uint32_t, ComdatKind)
+LLVM_YAML_STRONG_TYPEDEF(uint8_t, LimitFlags)
+LLVM_YAML_STRONG_TYPEDEF(uint8_t, ComdatKind)
 
 struct FileHeader {
   yaml::Hex32 Version;
