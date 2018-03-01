@@ -21,7 +21,7 @@ static void checkParams(
           kindOrLen.c_str(), name.c_str());
     }
   }
-  for (auto pair : values) {
+  for (const auto &pair : values) {
     Name name = pair.first;
     if (validNames.find(name) == validNames.end()) {
       parser::die("invalid %s parameter '%s'", kindOrLen.c_str(), name.c_str());
@@ -33,13 +33,13 @@ std::ostream &operator<<(std::ostream &o, const IntExpr &x) {
   return x.Output(o);
 }
 
-std::unordered_map<int, IntConst> IntConst::cache;
+std::unordered_map<std::uint64_t, IntConst> IntConst::cache;
 
 std::ostream &operator<<(std::ostream &o, const KindParamValue &x) {
   return o << x.value_;
 }
 
-const IntConst &IntConst::Make(int value) {
+const IntConst &IntConst::Make(std::uint64_t value) {
   auto it = cache.find(value);
   if (it == cache.end()) {
     it = cache.insert({value, IntConst{value}}).first;
@@ -100,7 +100,7 @@ std::ostream &operator<<(std::ostream &o, const DerivedTypeDef &x) {
   if (x.data_.lenParams.size() > 0 || x.data_.kindParams.size() > 0) {
     o << '(';
     int n = 0;
-    for (auto param : x.data_.lenParams) {
+    for (const auto &param : x.data_.lenParams) {
       if (n++) {
         o << ", ";
       }
@@ -115,10 +115,10 @@ std::ostream &operator<<(std::ostream &o, const DerivedTypeDef &x) {
     o << ')';
   }
   o << '\n';
-  for (auto param : x.data_.lenParams) {
+  for (const auto &param : x.data_.lenParams) {
     o << "  " << param.type() << ", LEN :: " << param.name() << "\n";
   }
-  for (auto param : x.data_.kindParams) {
+  for (const auto &param : x.data_.kindParams) {
     o << "  " << param.type() << ", KIND :: " << param.name() << "\n";
   }
   if (x.data_.Private) {
@@ -127,13 +127,13 @@ std::ostream &operator<<(std::ostream &o, const DerivedTypeDef &x) {
   if (x.data_.sequence) {
     o << "  SEQUENCE\n";
   }
-  for (auto comp : x.data_.dataComps) {
+  for (const auto &comp : x.data_.dataComps) {
     o << "  " << comp << "\n";
   }
-  for (auto comp : x.data_.procComps) {
+  for (const auto &comp : x.data_.procComps) {
     o << "  " << comp << "\n";
   }
-  return o << "END TYPE\n";
+  return o << "END TYPE";
 }
 
 DerivedTypeSpec::DerivedTypeSpec(DerivedTypeDef def,
@@ -150,13 +150,13 @@ std::ostream &operator<<(std::ostream &o, const DerivedTypeSpec &x) {
   if (x.kindParamValues_.size() > 0 || x.lenParamValues_.size() > 0) {
     o << '(';
     int n = 0;
-    for (auto pair : x.kindParamValues_) {
+    for (const auto &pair : x.kindParamValues_) {
       if (n++) {
         o << ", ";
       }
       o << pair.first << '=' << pair.second;
     }
-    for (auto pair : x.lenParamValues_) {
+    for (const auto &pair : x.lenParamValues_) {
       if (n++) {
         o << ", ";
       }
@@ -224,11 +224,11 @@ DataComponentDef::DataComponentDef(const DeclTypeSpec &type, const Name &name,
   attrs.CheckValid({Attr::PUBLIC, Attr::PRIVATE, Attr::ALLOCATABLE,
       Attr::POINTER, Attr::CONTIGUOUS});
   if (attrs.HasAny({Attr::ALLOCATABLE, Attr::POINTER})) {
-    for (auto shapeSpec : arraySpec) {
+    for (const auto &shapeSpec : arraySpec) {
       CHECK(shapeSpec.isDeferred());
     }
   } else {
-    for (auto shapeSpec : arraySpec) {
+    for (const auto &shapeSpec : arraySpec) {
       CHECK(shapeSpec.isExplicit());
     }
   }
@@ -267,13 +267,17 @@ std::ostream &operator<<(std::ostream &o, const ProcComponentDef &x) {
   } else if (x.typeSpec_) {
     o << *x.typeSpec_;
   }
-  o << "), " << x.attrs_ << " :: " << x.decl_ << "\n";
+  o << "), " << x.attrs_ << " :: " << x.decl_;
   return o;
 }
 
 DerivedTypeDef::DerivedTypeDef(const DerivedTypeDef::Data &data)
   : data_{data} {}
 
+DerivedTypeDefBuilder &DerivedTypeDefBuilder::name(const Name &x) {
+  data_.name = x;
+  return *this;
+}
 DerivedTypeDefBuilder &DerivedTypeDefBuilder::extends(const Name &x) {
   data_.extends = x;
   return *this;

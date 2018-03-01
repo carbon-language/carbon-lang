@@ -49,7 +49,7 @@ public:
 // TODO
 class IntConst : public IntExpr {
 public:
-  static const IntConst &Make(int value);
+  static const IntConst &Make(std::uint64_t value);
   const IntExpr *Clone() const override { return &Make(value_); }
   bool operator==(const IntConst &x) const { return value_ == x.value_; }
   bool operator!=(const IntConst &x) const { return !operator==(x); }
@@ -59,9 +59,9 @@ public:
   }
 
 private:
-  static std::unordered_map<int, IntConst> cache;
-  IntConst(int value) : value_{value} {}
-  const int value_;
+  static std::unordered_map<std::uint64_t, IntConst> cache;
+  IntConst(std::uint64_t value) : value_{value} {}
+  const std::uint64_t value_;
 };
 
 // The value of a kind type parameter
@@ -296,7 +296,7 @@ public:
     return ShapeSpec(Bound::DEFERRED, Bound::DEFERRED);
   }
   // 1:* or lb:*
-  static ShapeSpec MakeImplied(const Bound &lb) {
+  static ShapeSpec MakeImplied(const Bound &lb = IntConst::Make(1)) {
     return ShapeSpec(lb, Bound::ASSUMED);
   }
   // ..
@@ -403,7 +403,9 @@ private:
 class DerivedTypeDefBuilder {
 public:
   DerivedTypeDefBuilder(const Name &name) { data_.name = name; }
+  DerivedTypeDefBuilder() {}
   operator DerivedTypeDef() const { return DerivedTypeDef(data_); }
+  DerivedTypeDefBuilder &name(const Name &x);
   DerivedTypeDefBuilder &extends(const Name &x);
   DerivedTypeDefBuilder &attr(const Attr &x);
   DerivedTypeDefBuilder &attrs(const Attrs &x);
