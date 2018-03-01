@@ -1080,11 +1080,6 @@ llvm::ConstantInt *CodeGenModule::CreateCrossDsoCfiTypeId(llvm::Metadata *MD) {
   return llvm::ConstantInt::get(Int64Ty, llvm::MD5Hash(MDS->getString()));
 }
 
-void CodeGenModule::setFunctionDefinitionAttributes(GlobalDecl GD,
-                                                    llvm::Function *F) {
-  setNonAliasAttributes(GD, F);
-}
-
 void CodeGenModule::SetLLVMFunctionAttributes(const Decl *D,
                                               const CGFunctionInfo &Info,
                                               llvm::Function *F) {
@@ -3593,7 +3588,7 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD,
 
   CodeGenFunction(*this).GenerateCode(D, Fn, FI);
 
-  setFunctionDefinitionAttributes(GD, Fn);
+  setNonAliasAttributes(GD, Fn);
   SetLLVMFunctionAttributesForDefinition(D, Fn);
 
   if (const ConstructorAttr *CA = D->getAttr<ConstructorAttr>())
