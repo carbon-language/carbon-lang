@@ -772,7 +772,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
 
   std::tie(Config->BuildId, Config->BuildIdVector) = getBuildId(Args);
 
-  if (auto *Arg = Args.getLastArg(OPT_pack_dyn_relocs_eq)) {
+  if (auto *Arg = Args.getLastArg(OPT_pack_dyn_relocs)) {
     StringRef S = Arg->getValue();
     if (S == "android")
       Config->AndroidPackDynRelocs = true;
