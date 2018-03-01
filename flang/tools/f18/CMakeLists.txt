@@ -24,6 +24,7 @@ target_link_libraries( test-type
 add_executable( test-sema  
   test-sema.cc
   sema-impl.cc
+  foobar.cc
 )
 
 target_link_libraries( test-sema
