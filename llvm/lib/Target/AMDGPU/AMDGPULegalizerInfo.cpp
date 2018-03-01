@@ -34,6 +34,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo() {
   const LLT P2 = LLT::pointer(AMDGPUAS::CONSTANT_ADDRESS, 64);
 
   setAction({G_ADD, S32}, Legal);
+  setAction({G_MUL, S32}, Legal);
   setAction({G_AND, S32}, Legal);
   setAction({G_OR, S32}, Legal);
   setAction({G_XOR, S32}, Legal);
