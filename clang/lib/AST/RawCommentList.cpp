@@ -107,10 +107,10 @@ static bool isOrdinaryKind(RawComment::CommentKind K) {
 }
 
 RawComment::RawComment(const SourceManager &SourceMgr, SourceRange SR,
-                       const CommentOptions &CommentOpts, bool Merged) :
+                       bool Merged, bool ParseAllComments) :
     Range(SR), RawTextValid(false), BriefTextValid(false),
-    IsAttached(false), IsTrailingComment(false),
-    IsAlmostTrailingComment(false) {
+    IsAttached(false), IsTrailingComment(false), IsAlmostTrailingComment(false),
+    ParseAllComments(ParseAllComments) {
   // Extract raw comment text, if possible.
   if (SR.getBegin() == SR.getEnd() || getRawText(SourceMgr).empty()) {
     Kind = RCK_Invalid;
@@ -118,11 +118,10 @@ RawComment::RawComment(const SourceManager &SourceMgr, SourceRange SR,
   }
 
   // Guess comment kind.
-  std::pair<CommentKind, bool> K =
-      getCommentKind(RawText, CommentOpts.ParseAllComments);
+  std::pair<CommentKind, bool> K = getCommentKind(RawText, ParseAllComments);
 
   // Guess whether an ordinary comment is trailing.
-  if (CommentOpts.ParseAllComments && isOrdinaryKind(K.first)) {
+  if (ParseAllComments && isOrdinaryKind(K.first)) {
     FileID BeginFileID;
     unsigned BeginOffset;
     std::tie(BeginFileID, BeginOffset) =
@@ -271,7 +270,6 @@ static bool onlyWhitespaceBetween(SourceManager &SM,
 }
 
 void RawCommentList::addComment(const RawComment &RC,
-                                const CommentOptions &CommentOpts,
                                 llvm::BumpPtrAllocator &Allocator) {
   if (RC.isInvalid())
     return;
@@ -286,7 +284,7 @@ void RawCommentList::addComment(const RawComment &RC,
   }
 
   // Ordinary comments are not interesting for us.
-  if (RC.isOrdinary() && !CommentOpts.ParseAllComments)
+  if (RC.isOrdinary())
     return;
 
   // If this is the first Doxygen comment, save it (because there isn't
@@ -319,7 +317,8 @@ void RawCommentList::addComment(const RawComment &RC,
       onlyWhitespaceBetween(SourceMgr, C1.getLocEnd(), C2.getLocStart(),
                             /*MaxNewlinesAllowed=*/1)) {
     SourceRange MergedRange(C1.getLocStart(), C2.getLocEnd());
-    *Comments.back() = RawComment(SourceMgr, MergedRange, CommentOpts, true);
+    *Comments.back() = RawComment(SourceMgr, MergedRange, true,
+                                  RC.isParseAllComments());
   } else {
     Comments.push_back(new (Allocator) RawComment(RC));
   }

@@ -41,7 +41,7 @@ public:
   RawComment() : Kind(RCK_Invalid), IsAlmostTrailingComment(false) { }
 
   RawComment(const SourceManager &SourceMgr, SourceRange SR,
-             const CommentOptions &CommentOpts, bool Merged);
+             bool Merged, bool ParseAllComments);
 
   CommentKind getKind() const LLVM_READONLY {
     return (CommentKind) Kind;
@@ -83,12 +83,18 @@ public:
 
   /// Returns true if this comment is not a documentation comment.
   bool isOrdinary() const LLVM_READONLY {
-    return ((Kind == RCK_OrdinaryBCPL) || (Kind == RCK_OrdinaryC));
+    return ((Kind == RCK_OrdinaryBCPL) || (Kind == RCK_OrdinaryC)) &&
+        !ParseAllComments;
   }
 
   /// Returns true if this comment any kind of a documentation comment.
   bool isDocumentation() const LLVM_READONLY {
     return !isInvalid() && !isOrdinary();
+  }
+
+  /// Returns whether we are parsing all comments.
+  bool isParseAllComments() const LLVM_READONLY {
+    return ParseAllComments;
   }
 
   /// Returns raw comment text with comment markers.
@@ -133,12 +139,18 @@ private:
   bool IsTrailingComment : 1;
   bool IsAlmostTrailingComment : 1;
 
+  /// When true, ordinary comments starting with "//" and "/*" will be
+  /// considered as documentation comments.
+  bool ParseAllComments : 1;
+
   /// \brief Constructor for AST deserialization.
   RawComment(SourceRange SR, CommentKind K, bool IsTrailingComment,
-             bool IsAlmostTrailingComment) :
+             bool IsAlmostTrailingComment,
+             bool ParseAllComments) :
     Range(SR), RawTextValid(false), BriefTextValid(false), Kind(K),
     IsAttached(false), IsTrailingComment(IsTrailingComment),
-    IsAlmostTrailingComment(IsAlmostTrailingComment)
+    IsAlmostTrailingComment(IsAlmostTrailingComment),
+    ParseAllComments(ParseAllComments)
   { }
 
   StringRef getRawTextSlow(const SourceManager &SourceMgr) const;
@@ -171,8 +183,7 @@ class RawCommentList {
 public:
   RawCommentList(SourceManager &SourceMgr) : SourceMgr(SourceMgr) {}
 
-  void addComment(const RawComment &RC, const CommentOptions &CommentOpts,
-                  llvm::BumpPtrAllocator &Allocator);
+  void addComment(const RawComment &RC, llvm::BumpPtrAllocator &Allocator);
 
   ArrayRef<RawComment *> getComments() const {
     return Comments;

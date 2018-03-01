@@ -9068,7 +9068,8 @@ void ASTReader::ReadComments() {
         bool IsTrailingComment = Record[Idx++];
         bool IsAlmostTrailingComment = Record[Idx++];
         Comments.push_back(new (Context) RawComment(
-            SR, Kind, IsTrailingComment, IsAlmostTrailingComment));
+            SR, Kind, IsTrailingComment, IsAlmostTrailingComment,
+            Context.getLangOpts().CommentOpts.ParseAllComments));
         break;
       }
       }

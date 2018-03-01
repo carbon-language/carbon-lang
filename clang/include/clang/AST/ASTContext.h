@@ -784,7 +784,7 @@ public:
   void addComment(const RawComment &RC) {
     assert(LangOpts.RetainCommentsFromSystemHeaders ||
            !SourceMgr.isInSystemHeader(RC.getSourceRange().getBegin()));
-    Comments.addComment(RC, LangOpts.CommentOpts, BumpAlloc);
+    Comments.addComment(RC, BumpAlloc);
   }
 
   /// \brief Return the documentation comment attached to a given declaration.

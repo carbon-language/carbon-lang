@@ -1463,7 +1463,8 @@ void Sema::ActOnComment(SourceRange Comment) {
   if (!LangOpts.RetainCommentsFromSystemHeaders &&
       SourceMgr.isInSystemHeader(Comment.getBegin()))
     return;
-  RawComment RC(SourceMgr, Comment, LangOpts.CommentOpts, false);
+  RawComment RC(SourceMgr, Comment, false,
+                LangOpts.CommentOpts.ParseAllComments);
   if (RC.isAlmostTrailingComment()) {
     SourceRange MagicMarkerRange(Comment.getBegin(),
                                  Comment.getBegin().getLocWithOffset(3));
