@@ -228,10 +228,9 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   const MachineRegisterInfo &MRI = MF.getRegInfo();
   SmallVector<const ValueMapping*, 8> OpdsMapping(MI.getNumOperands());
 
-  bool IsComplete = true;
   switch (MI.getOpcode()) {
   default:
-    IsComplete = false;
+    return getInvalidInstructionMapping();
     break;
   case AMDGPU::G_IMPLICIT_DEF: {
     unsigned Size = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
@@ -328,20 +327,6 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     return getInstrMappingForLoad(MI);
   }
 
-  if (!IsComplete) {
-    unsigned BankID = AMDGPU::SGPRRegBankID;
-
-    unsigned Size = 0;
-    for (unsigned Idx = 0; Idx < MI.getNumOperands(); ++Idx) {
-      // If the operand is not a register default to the size of the previous
-      // operand.
-      // FIXME: Can't we pull the types from the MachineInstr rather than the
-      // operands.
-      if (MI.getOperand(Idx).isReg())
-        Size = getSizeInBits(MI.getOperand(Idx).getReg(), MRI, *TRI);
-      OpdsMapping.push_back(AMDGPU::getValueMapping(BankID, Size));
-    }
-  }
   return getInstructionMapping(1, 1, getOperandsMapping(OpdsMapping),
                                MI.getNumOperands());
 }
