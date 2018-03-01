@@ -8,12 +8,13 @@
 // CHECK-NEXT: Offset:
 // CHECK-NEXT: VirtualAddress:
 // CHECK-NEXT: PhysicalAddress:
-// CHECK-NEXT: FileSize: 8
-// CHECK-NEXT: MemSize: 8
+// CHECK-NEXT: FileSize: 16
+// CHECK-NEXT: MemSize: 16
 // CHECK-NEXT: Flags [
 // CHECK-NEXT:   PF_R
 // CHECK-NEXT: ]
 // CHECK-NEXT: Alignment: 1
+// CHECK-NOT:  Type: PT_NOTE
 
 // RUN: echo "SECTIONS { .note : { *(.note.a) *(.note.b) } }" > %t.script
 // RUN: ld.lld %t.o --script %t.script -o %t2
@@ -29,6 +30,7 @@
 // SCRIPT-NEXT:   PF_R
 // SCRIPT-NEXT: ]
 // SCRIPT-NEXT: Alignment: 1
+// SCRIPT-NOT:  Type: PT_NOTE
 
 .section .note.a, "a", @note
 .quad 0
