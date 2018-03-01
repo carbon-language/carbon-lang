@@ -54,6 +54,10 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo() {
 
   setAction({G_FADD, S32}, Legal);
 
+  setAction({G_FCMP, S1}, Legal);
+  setAction({G_FCMP, 1, S32}, Legal);
+  setAction({G_FCMP, 1, S64}, Legal);
+
   setAction({G_FMUL, S32}, Legal);
 
   setAction({G_FPTOSI, S32}, Legal);
