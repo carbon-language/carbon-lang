@@ -18,8 +18,10 @@
 # CHECK-NEXT:      0x1010 R_X86_64_PC64 zed 0x0
 # CHECK-NEXT:    }
 # CHECK-NEXT:  ]
+
 # CHECK: DynamicSection [
-# CHECK: 0x0000000000000016 TEXTREL 0x0
+# CHECK:   FLAGS TEXTREL
+# CHECK:   TEXTREL 0x0
 
 # STATIC:      Relocations [
 # STATIC-NEXT:    Section {{.*}} .rela.dyn {
@@ -27,8 +29,10 @@
 # STATIC-NEXT:      0x201010 R_X86_64_PC64 zed 0x0
 # STATIC-NEXT:    }
 # STATIC-NEXT:  ]
+
 # STATIC: DynamicSection [
-# STATIC: 0x0000000000000016 TEXTREL 0x0
+# STATIC:   FLAGS TEXTREL
+# STATIC:   TEXTREL 0x0
 
 foo:
 .quad foo
