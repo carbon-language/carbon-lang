@@ -325,11 +325,15 @@ static KindParamValue GetKindParamValue(
     const std::optional<parser::KindSelector> &kind) {
   if (!kind) {
     return KindParamValue();
-  } else {
+  } else if (std::holds_alternative<parser::ScalarIntConstantExpr>(kind->u)) {
+    const auto &expr = std::get<parser::ScalarIntConstantExpr>(kind->u);
     const auto &lit =
-        std::get<parser::LiteralConstant>(kind->v.thing.thing.thing->u);
+        std::get<parser::LiteralConstant>(expr.thing.thing.thing->u);
     const auto &intlit = std::get<parser::IntLiteralConstant>(lit.u);
     return KindParamValue(std::get<std::uint64_t>(intlit.t));
+  } else {
+    // TODO: COMPLEX*16 means COMPLEX(KIND=8) (yes?); translate
+    return KindParamValue(std::get<parser::KindSelector::StarSize>(kind->u).v);
   }
 }
 
@@ -342,7 +346,6 @@ static const IntExpr *GetIntExpr(const parser::ScalarIntExpr &x) {
       return &IntConst::Make(std::get<std::uint64_t>(intLit.t));
     }
   }
-  std::cerr << "IntExpr:\n" << expr << "\n";
   return new IntExpr();  // TODO
 }
 

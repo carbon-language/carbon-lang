@@ -7,6 +7,7 @@
 // attempts.  Must be efficient to duplicate and assign for backtracking
 // and recovery during parsing!
 
+#include "characters.h"
 #include "idioms.h"
 #include "message.h"
 #include "provenance.h"
@@ -31,19 +32,21 @@ public:
     : cooked_{that.cooked_}, p_{that.p_}, limit_{that.limit_},
       column_{that.column_}, messages_{*that.cooked_.allSources()},
       userState_{that.userState_}, inFixedForm_{that.inFixedForm_},
-      strictConformance_{that.strictConformance_},
+      encoding_{that.encoding_}, strictConformance_{that.strictConformance_},
       warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
       warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
-      anyErrorRecovery_{that.anyErrorRecovery_} {}
+      anyErrorRecovery_{that.anyErrorRecovery_},
+      anyConformanceViolation_{that.anyConformanceViolation_} {}
   ParseState(ParseState &&that)
     : cooked_{that.cooked_}, p_{that.p_}, limit_{that.limit_},
       column_{that.column_}, messages_{std::move(that.messages_)},
       context_{std::move(that.context_)}, userState_{that.userState_},
-      inFixedForm_{that.inFixedForm_},
+      inFixedForm_{that.inFixedForm_}, encoding_{that.encoding_},
       strictConformance_{that.strictConformance_},
       warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
       warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
-      anyErrorRecovery_{that.anyErrorRecovery_} {}
+      anyErrorRecovery_{that.anyErrorRecovery_},
+      anyConformanceViolation_{that.anyConformanceViolation_} {}
   ParseState &operator=(ParseState &&that) {
     swap(that);
     return *this;
@@ -63,6 +66,9 @@ public:
 
   bool anyErrorRecovery() const { return anyErrorRecovery_; }
   void set_anyErrorRecovery() { anyErrorRecovery_ = true; }
+
+  bool anyConformanceViolation() const { return anyConformanceViolation_; }
+  void set_anyConformanceViolation() { anyConformanceViolation_ = true; }
 
   UserState *userState() const { return userState_; }
   void set_userState(UserState *u) { userState_ = u; }
@@ -94,6 +100,12 @@ public:
   bool warnOnDeprecatedUsage() const { return warnOnDeprecatedUsage_; }
   ParseState &set_warnOnDeprecatedUsage(bool yes) {
     warnOnDeprecatedUsage_ = yes;
+    return *this;
+  }
+
+  Encoding encoding() const { return encoding_; }
+  ParseState &set_encoding(Encoding encoding) {
+    encoding_ = encoding;
     return *this;
   }
 
@@ -142,16 +154,20 @@ public:
 
   bool IsAtEnd() const { return p_ >= limit_; }
 
+  char UncheckedAdvance() {
+    ++column_;
+    char ch{*p_++};
+    if (ch == '\n') {
+      column_ = 1;
+    }
+    return ch;
+  }
+
   std::optional<char> GetNextChar() {
     if (p_ >= limit_) {
       return {};
     }
-    char ch{*p_++};
-    ++column_;
-    if (ch == '\n') {
-      column_ = 1;
-    }
-    return {ch};
+    return {UncheckedAdvance()};
   }
 
   std::optional<char> PeekAtNextChar() {
@@ -174,10 +190,12 @@ private:
   UserState *userState_{nullptr};
 
   bool inFixedForm_{false};
+  Encoding encoding_{Encoding::UTF8};
   bool strictConformance_{false};
   bool warnOnNonstandardUsage_{false};
   bool warnOnDeprecatedUsage_{false};
   bool anyErrorRecovery_{false};
+  bool anyConformanceViolation_{false};
   // NOTE: Any additions or modifications to these data members must also be
   // reflected in the copy and move constructors defined at the top of this
   // class definition!

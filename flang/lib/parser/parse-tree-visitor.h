@@ -124,6 +124,7 @@ void Walk(const DefaultChar<T> &x, V &visitor) {
 
 template<typename T, typename V> void Walk(const Statement<T> &x, V &visitor) {
   if (visitor.Pre(x)) {
+    // N.B. the label is not traversed
     Walk(x.statement, visitor);
     visitor.Post(x);
   }

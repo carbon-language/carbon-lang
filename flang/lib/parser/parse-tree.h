@@ -17,7 +17,6 @@
 #include <cinttypes>
 #include <list>
 #include <optional>
-#include <ostream>
 #include <string>
 #include <tuple>
 #include <type_traits>
@@ -40,12 +39,10 @@ CLASS_TRAIT(UnionTrait);
 CLASS_TRAIT(TupleTrait);
 
 // Most non-template classes in this file use these default definitions
-// for their move constructor and move assignment operator=, and should
-// declare an operator<< for formatting.
+// for their move constructor and move assignment operator=.
 #define BOILERPLATE(classname) \
   classname(classname &&) = default; \
   classname &operator=(classname &&) = default; \
-  friend std::ostream &operator<<(std::ostream &, const classname &); \
   classname() = delete; \
   classname(const classname &) = delete; \
   classname &operator=(const classname &) = delete
@@ -59,7 +56,6 @@ CLASS_TRAIT(TupleTrait);
     classname(classname &&) {} \
     classname &operator=(const classname &) { return *this; }; \
     classname &operator=(classname &&) { return *this; }; \
-    friend std::ostream &operator<<(std::ostream &, const classname &); \
     using EmptyTrait = std::true_type; \
   }
 
@@ -140,6 +136,7 @@ struct DimensionStmt;  // R848
 struct IntentStmt;  // R849
 struct OptionalStmt;  // R850
 struct ParameterStmt;  // R851
+struct OldParameterStmt;
 struct PointerStmt;  // R853
 struct ProtectedStmt;  // R855
 struct SaveStmt;  // R856
@@ -226,7 +223,6 @@ struct StmtFunctionStmt;  // R1544
 
 // Extension and deprecated statements
 struct BasedPointerStmt;
-struct RedimensionStmt;
 struct StructureDef;
 struct ArithmeticIfStmt;
 struct AssignStmt;
@@ -337,6 +333,7 @@ struct SpecificationConstruct {
   std::variant<Indirection<DerivedTypeDef>, Indirection<EnumDef>,
       Statement<Indirection<GenericStmt>>, Indirection<InterfaceBlock>,
       Statement<Indirection<ParameterStmt>>,
+      Statement<Indirection<OldParameterStmt>>,
       Statement<Indirection<ProcedureDeclarationStmt>>,
       Statement<OtherSpecificationStmt>,
       Statement<Indirection<TypeDeclarationStmt>>, Indirection<StructureDef>>
@@ -348,8 +345,9 @@ struct SpecificationConstruct {
 struct ImplicitPartStmt {
   UNION_CLASS_BOILERPLATE(ImplicitPartStmt);
   std::variant<Statement<Indirection<ImplicitStmt>>,
-      Statement<Indirection<ParameterStmt>>, Statement<Indirection<FormatStmt>>,
-      Statement<Indirection<EntryStmt>>>
+      Statement<Indirection<ParameterStmt>>,
+      Statement<Indirection<OldParameterStmt>>,
+      Statement<Indirection<FormatStmt>>, Statement<Indirection<EntryStmt>>>
       u;
 };
 
@@ -429,9 +427,8 @@ struct ActionStmt {
       Indirection<SyncTeamStmt>, Indirection<UnlockStmt>, Indirection<WaitStmt>,
       Indirection<WhereStmt>, Indirection<WriteStmt>,
       Indirection<ComputedGotoStmt>, Indirection<ForallStmt>,
-      Indirection<RedimensionStmt>, Indirection<ArithmeticIfStmt>,
-      Indirection<AssignStmt>, Indirection<AssignedGotoStmt>,
-      Indirection<PauseStmt>>
+      Indirection<ArithmeticIfStmt>, Indirection<AssignStmt>,
+      Indirection<AssignedGotoStmt>, Indirection<PauseStmt>>
       u;
 };
 
@@ -544,9 +541,12 @@ struct TypeParamValue {
 };
 
 // R706 kind-selector -> ( [KIND =] scalar-int-constant-expr )
+// Legacy extension: kind-selector -> * digit-string
+// TODO: These are probably not semantically identical, at least for COMPLEX.
 struct KindSelector {
-  WRAPPER_CLASS_BOILERPLATE(KindSelector, ScalarIntConstantExpr);
-  KindSelector(std::uint64_t &&);
+  UNION_CLASS_BOILERPLATE(KindSelector);
+  WRAPPER_CLASS(StarSize, std::uint64_t);
+  std::variant<ScalarIntConstantExpr, StarSize> u;
 };
 
 // R705 integer-type-spec -> INTEGER [kind-selector]
@@ -748,7 +748,7 @@ struct CharLiteralConstant {
   std::string GetString() const { return std::get<std::string>(t); }
 };
 
-// extension
+// legacy extension
 struct HollerithLiteralConstant {
   WRAPPER_CLASS_BOILERPLATE(HollerithLiteralConstant, std::string);
   std::string GetString() const { return v; }
@@ -1286,7 +1286,8 @@ WRAPPER_CLASS(AsynchronousStmt, std::list<ObjectName>);
 // R833 bind-entity -> entity-name | / common-block-name /
 struct BindEntity {
   TUPLE_CLASS_BOILERPLATE(BindEntity);
-  std::tuple<Name, bool /*COMMON*/> t;
+  DEFINE_NESTED_ENUM_CLASS(Kind, Object, Common);
+  std::tuple<Kind, Name> t;
 };
 
 // R832 bind-stmt -> language-binding-spec [::] bind-entity-list
@@ -1412,7 +1413,8 @@ WRAPPER_CLASS(ProtectedStmt, std::list<Name>);
 // R858 proc-pointer-name -> name
 struct SavedEntity {
   TUPLE_CLASS_BOILERPLATE(SavedEntity);
-  std::tuple<Name, bool /*COMMON*/> t;
+  DEFINE_NESTED_ENUM_CLASS(Kind, Object, ProcPointer, Common);
+  std::tuple<Kind, Name> t;
 };
 
 // R856 save-stmt -> SAVE [[::] saved-entity-list]
@@ -2611,29 +2613,17 @@ struct PositionOrFlushSpec {
 
 // R1224 backspace-stmt ->
 //         BACKSPACE file-unit-number | BACKSPACE ( position-spec-list )
-struct BackspaceStmt {
-  UNION_CLASS_BOILERPLATE(BackspaceStmt);
-  std::variant<FileUnitNumber, std::list<PositionOrFlushSpec>> u;
-};
+WRAPPER_CLASS(BackspaceStmt, std::list<PositionOrFlushSpec>);
 
 // R1225 endfile-stmt ->
 //         ENDFILE file-unit-number | ENDFILE ( position-spec-list )
-struct EndfileStmt {
-  UNION_CLASS_BOILERPLATE(EndfileStmt);
-  std::variant<FileUnitNumber, std::list<PositionOrFlushSpec>> u;
-};
+WRAPPER_CLASS(EndfileStmt, std::list<PositionOrFlushSpec>);
 
 // R1226 rewind-stmt -> REWIND file-unit-number | REWIND ( position-spec-list )
-struct RewindStmt {
-  UNION_CLASS_BOILERPLATE(RewindStmt);
-  std::variant<FileUnitNumber, std::list<PositionOrFlushSpec>> u;
-};
+WRAPPER_CLASS(RewindStmt, std::list<PositionOrFlushSpec>);
 
 // R1228 flush-stmt -> FLUSH file-unit-number | FLUSH ( flush-spec-list )
-struct FlushStmt {
-  UNION_CLASS_BOILERPLATE(FlushStmt);
-  std::variant<FileUnitNumber, std::list<PositionOrFlushSpec>> u;
-};
+WRAPPER_CLASS(FlushStmt, std::list<PositionOrFlushSpec>);
 
 // R1231 inquire-spec ->
 //         [UNIT =] file-unit-number | FILE = file-name-expr |
@@ -3090,15 +3080,10 @@ struct StmtFunctionStmt {
   std::tuple<Name, std::list<Name>, Scalar<Expr>> t;
 };
 
-// Extension and deprecated statements
+// Legacy extensions
 struct BasedPointerStmt {
   TUPLE_CLASS_BOILERPLATE(BasedPointerStmt);
   std::tuple<ObjectName, ObjectName, std::optional<ArraySpec>> t;
-};
-
-struct RedimensionStmt {
-  TUPLE_CLASS_BOILERPLATE(RedimensionStmt);
-  std::tuple<ObjectName, std::list<AllocateShapeSpec>> t;
 };
 
 struct Union;
@@ -3129,7 +3114,7 @@ struct Union {
 
 struct StructureStmt {
   TUPLE_CLASS_BOILERPLATE(StructureStmt);
-  std::tuple<Name, std::list<EntityDecl>> t;
+  std::tuple<Name, bool /*slashes*/, std::list<EntityDecl>> t;
 };
 
 struct StructureDef {
@@ -3140,6 +3125,11 @@ struct StructureDef {
       t;
 };
 
+// Old style PARAMETER statement without parentheses.
+// Types are determined entirely from the right-hand sides, not the names.
+WRAPPER_CLASS(OldParameterStmt, std::list<NamedConstantDef>);
+
+// Deprecations
 struct ArithmeticIfStmt {
   TUPLE_CLASS_BOILERPLATE(ArithmeticIfStmt);
   std::tuple<Expr, Label, Label, Label> t;
@@ -3156,59 +3146,6 @@ struct AssignedGotoStmt {
 };
 
 WRAPPER_CLASS(PauseStmt, std::optional<StopCode>);
-
-// Formatting of template types
-template<typename A>
-std::ostream &operator<<(std::ostream &o, const Statement<A> &x) {
-  return o << "(Statement " << x.label << ' '
-           << (x.isLabelInAcceptableField ? ""s : "!isLabelInAcceptableField "s)
-           << ' ' << x.statement << ')';
-}
-
-template<typename A>
-std::ostream &operator<<(std::ostream &o, const Scalar<A> &x) {
-  return o << "(Scalar- " << x.thing << ')';
-}
-
-template<typename A>
-std::ostream &operator<<(std::ostream &o, const Constant<A> &x) {
-  return o << "(Constant- " << x.thing << ')';
-}
-
-template<typename A>
-std::ostream &operator<<(std::ostream &o, const Integer<A> &x) {
-  return o << "(Integer- " << x.thing << ')';
-}
-
-template<typename A>
-std::ostream &operator<<(std::ostream &o, const Logical<A> &x) {
-  return o << "(Logical- " << x.thing << ')';
-}
-
-template<typename A>
-std::ostream &operator<<(std::ostream &o, const DefaultChar<A> &x) {
-  return o << "(DefaultChar- " << x.thing << ')';
-}
-
-template<typename A>
-std::ostream &operator<<(std::ostream &o, const LoopBounds<A> &x) {
-  return o << "(LoopBounds " << x.name << ' ' << x.lower << ' ' << x.upper
-           << ' ' << x.step << ')';
-}
-
-// Formatting enumerations defined via DEFINE_NESTED_ENUM_CLASS
-#define NESTED_ENUM_TO_STRING(ENUMTYPE) \
-  static std::string ToString(ENUMTYPE x) { \
-    std::string str{ENUMTYPE##AsString}; \
-    size_t start{0}; \
-    for (int j{static_cast<int>(x)}; j-- > 0;) { \
-      start = str.find(',', start) + 1; \
-    } \
-    while (str[start] == ' ') { \
-      ++start; \
-    } \
-    return str.substr(start, str.find(',', start)); \
-  }
 }  // namespace parser
 }  // namespace Fortran
 #endif  // FORTRAN_PARSER_PARSE_TREE_H_

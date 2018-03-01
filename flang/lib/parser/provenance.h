@@ -173,6 +173,7 @@ public:
   std::string GetPath(Provenance) const;  // __FILE__
   int GetLineNumber(Provenance) const;  // __LINE__
   Provenance CompilerInsertionProvenance(char ch);
+  Provenance CompilerInsertionProvenance(const char *, size_t);
   void Dump(std::ostream &) const;
 
 private:

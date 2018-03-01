@@ -59,11 +59,11 @@ bool Prescanner::Prescan(ProvenanceRange range) {
         ++newlineDebt_;
       } else {
         preprocessed.pop_back();  // clip the newline added above
-        preprocessed.EmitWithCaseConversion(cooked_);
+        preprocessed.Emit(cooked_);
       }
       preprocessed.clear();
     } else {
-      tokens.EmitWithCaseConversion(cooked_);
+      tokens.Emit(cooked_);
     }
     tokens.clear();
     ++newlineDebt_;
@@ -126,10 +126,14 @@ void Prescanner::LabelField(TokenSequence *token) {
     token->CloseToken();
   }
   if (outCol < 7) {
-    for (; outCol < 7; ++outCol) {
-      token->PutNextTokenChar(' ', spaceProvenance_);
+    if (outCol == 1) {
+      token->Put("      ", 6, sixSpaceProvenance_.start());
+    } else {
+      for (; outCol < 7; ++outCol) {
+        token->PutNextTokenChar(' ', spaceProvenance_);
+      }
+      token->CloseToken();
     }
-    token->CloseToken();
   }
 }
 
@@ -176,9 +180,12 @@ void Prescanner::NextChar() {
 }
 
 void Prescanner::SkipSpaces() {
+  bool wasInCharLiteral{inCharLiteral_};
+  inCharLiteral_ = false;
   while (*at_ == ' ' || *at_ == '\t') {
     NextChar();
   }
+  inCharLiteral_ = wasInCharLiteral;
 }
 
 bool Prescanner::NextToken(TokenSequence *tokens) {
@@ -204,7 +211,7 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
     preventHollerith_ = false;
   } else if (IsDecimalDigit(*at_)) {
     int n{0};
-    static constexpr int maxHollerith = 256 * (132 - 6);
+    static constexpr int maxHollerith{256 /*lines*/ * (132 - 6 /*columns*/)};
     do {
       if (n < maxHollerith) {
         n = 10 * n + DecimalDigitValue(*at_);
@@ -216,17 +223,7 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
     } while (IsDecimalDigit(*at_));
     if ((*at_ == 'h' || *at_ == 'H') && n > 0 && n < maxHollerith &&
         !preventHollerith_) {
-      EmitCharAndAdvance(tokens, 'h');
-      inCharLiteral_ = true;
-      while (n-- > 0) {
-        if (!PadOutCharacterLiteral(tokens)) {
-          if (*at_ == '\n') {
-            break;  // TODO error
-          }
-          EmitCharAndAdvance(tokens, *at_);
-        }
-      }
-      inCharLiteral_ = false;
+      Hollerith(tokens, n);
     } else if (*at_ == '.') {
       while (IsDecimalDigit(EmitCharAndAdvance(tokens, *at_))) {
       }
@@ -235,7 +232,7 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
     } else if (IsLetter(*at_)) {
       // Handles FORMAT(3I9HHOLLERITH) by skipping over the first I so that
       // we don't misrecognize I9HOLLERITH as an identifier in the next case.
-      EmitCharAndAdvance(tokens, *at_);
+      EmitCharAndAdvance(tokens, ToLowerCaseLetter(*at_));
     }
     preventHollerith_ = false;
   } else if (*at_ == '.') {
@@ -249,7 +246,8 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
     }
     preventHollerith_ = false;
   } else if (IsLegalInIdentifier(*at_)) {
-    while (IsLegalInIdentifier(EmitCharAndAdvance(tokens, *at_))) {
+    while (IsLegalInIdentifier(
+        EmitCharAndAdvance(tokens, ToLowerCaseLetter(*at_)))) {
     }
     if (*at_ == '\'' || *at_ == '"') {
       QuotedCharacterLiteral(tokens);
@@ -285,7 +283,7 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
 }
 
 bool Prescanner::ExponentAndKind(TokenSequence *tokens) {
-  char ed = tolower(*at_);
+  char ed = ToLowerCaseLetter(*at_);
   if (ed != 'e' && ed != 'd') {
     return false;
   }
@@ -297,41 +295,36 @@ bool Prescanner::ExponentAndKind(TokenSequence *tokens) {
     EmitCharAndAdvance(tokens, *at_);
   }
   if (*at_ == '_') {
-    while (IsLegalInIdentifier(EmitCharAndAdvance(tokens, *at_))) {
+    while (IsLegalInIdentifier(
+        EmitCharAndAdvance(tokens, ToLowerCaseLetter(*at_)))) {
     }
   }
   return true;
 }
 
-void Prescanner::EmitQuotedCharacter(TokenSequence *tokens, char ch) {
-  if (std::optional escape{BackslashEscapeChar(ch)}) {
-    if (ch != '\'' && ch != '"' &&
-        (ch != '\\' || !enableBackslashEscapesInCharLiterals_)) {
-      EmitInsertedChar(tokens, '\\');
-    }
-    EmitChar(tokens, *escape);
-  } else if (ch < ' ') {
-    // emit an octal escape sequence
-    EmitInsertedChar(tokens, '\\');
-    EmitInsertedChar(tokens, '0' + ((ch >> 6) & 3));
-    EmitInsertedChar(tokens, '0' + ((ch >> 3) & 7));
-    EmitInsertedChar(tokens, '0' + (ch & 7));
-  } else {
-    EmitChar(tokens, ch);
-  }
-}
-
 void Prescanner::QuotedCharacterLiteral(TokenSequence *tokens) {
-  char quote{*at_};
+  const char *start{at_}, quote{*start};
   inCharLiteral_ = true;
-  do {
-    EmitQuotedCharacter(tokens, *at_);
-    NextChar();
+  const auto emit = [&](char ch) { EmitChar(tokens, ch); };
+  const auto insert = [&](char ch) { EmitInsertedChar(tokens, ch); };
+  bool escape{false};
+  while (true) {
+    char ch{*at_};
+    escape = !escape && ch == '\\' && enableBackslashEscapesInCharLiterals_;
+    EmitQuotedChar(
+        ch, emit, insert, false, !enableBackslashEscapesInCharLiterals_);
     while (PadOutCharacterLiteral(tokens)) {
     }
-    if (*at_ == quote) {
+    if (*at_ == '\n') {
+      messages_->Put(
+          {GetProvenance(start), "incomplete character literal"_en_US});
+      break;
+    }
+    NextChar();
+    if (*at_ == quote && !escape) {
       // A doubled quote mark becomes a single instance of the quote character
-      // in the literal later.
+      // in the literal (later).  There can be spaces between the quotes in
+      // fixed form source.
       EmitCharAndAdvance(tokens, quote);
       if (inFixedForm_) {
         SkipSpaces();
@@ -340,16 +333,61 @@ void Prescanner::QuotedCharacterLiteral(TokenSequence *tokens) {
         break;
       }
     }
-  } while (*at_ != '\n');
+  }
   inCharLiteral_ = false;
 }
 
+void Prescanner::Hollerith(TokenSequence *tokens, int count) {
+  inCharLiteral_ = true;
+  EmitChar(tokens, 'H');
+  const char *start{at_};
+  while (count-- > 0) {
+    if (PadOutCharacterLiteral(tokens)) {
+    } else if (*at_ != '\n') {
+      NextChar();
+      EmitChar(tokens, *at_);
+      // Multi-byte character encodings should count as single characters.
+      int bytes{1};
+      if (encoding_ == Encoding::EUC_JP) {
+        if (std::optional<int> chBytes{EUC_JPCharacterBytes(at_)}) {
+          bytes = *chBytes;
+        }
+      } else if (encoding_ == Encoding::UTF8) {
+        if (std::optional<int> chBytes{UTF8CharacterBytes(at_)}) {
+          bytes = *chBytes;
+        }
+      }
+      while (bytes-- > 1) {
+        EmitChar(tokens, *++at_);
+      }
+    } else {
+      break;
+    }
+  }
+  if (*at_ == '\n') {
+    messages_->Put(
+        {GetProvenance(start), "incomplete Hollerith literal"_en_US});
+  } else {
+    NextChar();
+  }
+  inCharLiteral_ = false;
+}
+
+// In fixed form, source card images must be processed as if they were at
+// least 72 columns wide, at least in character literal contexts.
 bool Prescanner::PadOutCharacterLiteral(TokenSequence *tokens) {
-  if (inFixedForm_ && !tabInCurrentLine_ && *at_ == '\n' &&
-      column_ < fixedFormColumnLimit_) {
-    tokens->PutNextTokenChar(' ', spaceProvenance_);
-    ++column_;
-    return true;
+  while (inFixedForm_ && !tabInCurrentLine_ && at_[1] == '\n') {
+    if (column_ < fixedFormColumnLimit_) {
+      tokens->PutNextTokenChar(' ', spaceProvenance_);
+      ++column_;
+      return true;
+    }
+    if (!FixedFormContinuation() || tabInCurrentLine_) {
+      return false;
+    }
+    CHECK(column_ == 7);
+    --at_;  // point to column 6 of continuation line
+    column_ = 6;
   }
   return false;
 }
@@ -407,7 +445,7 @@ bool Prescanner::IncludeLine(const char *p) {
     ++p;
   }
   for (char ch : "include"s) {
-    if (tolower(*p++) != ch) {
+    if (ToLowerCaseLetter(*p++) != ch) {
       return false;
     }
   }
@@ -518,7 +556,7 @@ const char *Prescanner::FixedFormContinuationLine() {
   }
   tabInCurrentLine_ = false;
   if (*p == '&') {
-    return p + 1;  // extension
+    return p + 1;  // extension; TODO: emit warning with -Mstandard
   }
   if (*p == '\t' && p[1] >= '1' && p[1] <= '9') {
     tabInCurrentLine_ = true;

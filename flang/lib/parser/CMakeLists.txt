@@ -1,9 +1,10 @@
-
-add_library( FlangParser
+add_library(FortranParser
   char-buffer.cc
+  characters.cc
   idioms.cc
   message.cc
   parse-tree.cc
+  parsing.cc
   preprocessor.cc
   prescan.cc
   provenance.cc

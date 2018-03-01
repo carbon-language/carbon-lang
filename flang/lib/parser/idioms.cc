@@ -15,9 +15,5 @@ namespace parser {
   fputc('\n', stderr);
   std::abort();
 }
-
-std::ostream &operator<<(std::ostream &o, const std::monostate &) {
-  return o << "(empty variant)";
-}
 }  // namespace parser
 }  // namespace Fortran

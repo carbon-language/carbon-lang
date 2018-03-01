@@ -8,6 +8,7 @@
 // fixed form character literals on truncated card images, file
 // inclusion, and driving the Fortran source preprocessor.
 
+#include "characters.h"
 #include "message.h"
 #include "provenance.h"
 #include "token-sequence.h"
@@ -29,6 +30,10 @@ public:
 
   Prescanner &set_fixedForm(bool yes) {
     inFixedForm_ = yes;
+    return *this;
+  }
+  Prescanner &set_encoding(Encoding code) {
+    encoding_ = code;
     return *this;
   }
   Prescanner &set_enableOldDebugLines(bool yes) {
@@ -92,8 +97,8 @@ private:
   void SkipSpaces();
   bool NextToken(TokenSequence *);
   bool ExponentAndKind(TokenSequence *);
-  void EmitQuotedCharacter(TokenSequence *, char);
   void QuotedCharacterLiteral(TokenSequence *);
+  void Hollerith(TokenSequence *, int);
   bool PadOutCharacterLiteral(TokenSequence *);
   bool CommentLines();
   bool CommentLinesAndPreprocessorDirectives();
@@ -125,6 +130,7 @@ private:
   bool inPreprocessorDirective_{false};
   bool inFixedForm_{false};
   int fixedFormColumnLimit_{72};
+  Encoding encoding_{Encoding::UTF8};
   bool enableOldDebugLines_{false};
   bool enableBackslashEscapesInCharLiterals_{true};
   int delimiterNesting_{0};
@@ -132,6 +138,8 @@ private:
       cooked_->allSources()->CompilerInsertionProvenance(' ')};
   Provenance backslashProvenance_{
       cooked_->allSources()->CompilerInsertionProvenance('\\')};
+  ProvenanceRange sixSpaceProvenance_{
+      cooked_->allSources()->AddCompilerInsertion("      "s)};
 };
 }  // namespace parser
 }  // namespace Fortran

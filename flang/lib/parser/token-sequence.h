@@ -122,7 +122,7 @@ public:
   void Put(const ContiguousChars &, Provenance);
   void Put(const std::string &, Provenance);
   void Put(const std::stringstream &, Provenance);
-  void EmitWithCaseConversion(CookedSource *) const;
+  void Emit(CookedSource *) const;
   std::string ToString() const;
   Provenance GetTokenProvenance(size_t token, size_t offset = 0) const;
   ProvenanceRange GetTokenProvenanceRange(

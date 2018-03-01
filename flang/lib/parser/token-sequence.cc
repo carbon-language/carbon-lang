@@ -96,20 +96,14 @@ void TokenSequence::Put(const std::stringstream &ss, Provenance provenance) {
   Put(ss.str(), provenance);
 }
 
-void TokenSequence::EmitWithCaseConversion(CookedSource *cooked) const {
+void TokenSequence::Emit(CookedSource *cooked) const {
   size_t tokens{start_.size()};
   size_t chars{char_.size()};
   size_t atToken{0};
   for (size_t j{0}; j < chars;) {
     size_t nextStart{atToken + 1 < tokens ? start_[++atToken] : chars};
-    if (IsLegalInIdentifier(char_[j])) {
-      for (; j < nextStart; ++j) {
-        cooked->Put(tolower(char_[j]));
-      }
-    } else {
-      cooked->Put(&char_[j], nextStart - j);
-      j = nextStart;
-    }
+    cooked->Put(&char_[j], nextStart - j);
+    j = nextStart;
   }
   cooked->PutProvenanceMappings(provenances_);
 }

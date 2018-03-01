@@ -73,8 +73,11 @@ Provenance Message::Emit(
   return provenance_;
 }
 
-void Messages::Emit(std::ostream &o) const {
+void Messages::Emit(std::ostream &o, const char *prefix) const {
   for (const auto &msg : messages_) {
+    if (prefix) {
+      o << prefix;
+    }
     if (msg.context()) {
       o << "In the context ";
     }

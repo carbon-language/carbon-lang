@@ -153,7 +153,7 @@ public:
     }
   }
 
-  void Emit(std::ostream &) const;
+  void Emit(std::ostream &, const char *prefix = nullptr) const;
 
 private:
   const AllSources &allSources_;

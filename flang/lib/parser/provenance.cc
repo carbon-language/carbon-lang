@@ -172,11 +172,7 @@ void AllSources::Identify(std::ostream &o, Provenance at,
             }
           },
           [&](const CompilerInsertion &ins) {
-            o << prefix << "in text ";
-            if (echoSourceLine) {
-              o << '\'' << ins.text << "' ";
-            }
-            o << "inserted by the compiler\n";
+            o << prefix << ins.text << '\n';
           }},
       origin.u);
 }
@@ -318,7 +314,12 @@ void AllSources::Dump(std::ostream &o) const {
                         },
                    [&](const Macro &mac) { o << "macro " << mac.expansion; },
                    [&](const CompilerInsertion &ins) {
-                     o << "compiler " << ins.text;
+                     o << "compiler '" << ins.text << '\'';
+                     if (ins.text.length() == 1) {
+                       int ch = ins.text[0];
+                       o << " (0x" << std::hex << (ch & 0xff) << std::dec
+                         << ")";
+                     }
                    }},
         m.u);
     o << '\n';
