@@ -174,6 +174,11 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   default:
     IsComplete = false;
     break;
+  case AMDGPU::G_IMPLICIT_DEF: {
+    unsigned Size = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
+    OpdsMapping[0] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size);
+    break;
+  }
   case AMDGPU::G_FCONSTANT:
   case AMDGPU::G_CONSTANT: {
     unsigned Size = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
