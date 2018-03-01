@@ -97,7 +97,8 @@ MCSymbol *WebAssemblyMCInstLower::GetExternalSymbolSymbol(
   if (strcmp(Name, "__stack_pointer") == 0) {
     WasmSym->setType(wasm::WASM_SYMBOL_TYPE_GLOBAL);
     WasmSym->setGlobalType(wasm::WasmGlobalType{
-        Subtarget.hasAddr64() ? wasm::WASM_TYPE_I64 : wasm::WASM_TYPE_I32,
+        uint8_t(Subtarget.hasAddr64() ? wasm::WASM_TYPE_I64
+                                      : wasm::WASM_TYPE_I32),
         true});
     return WasmSym;
   }

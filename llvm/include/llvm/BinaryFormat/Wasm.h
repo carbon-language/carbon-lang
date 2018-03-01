@@ -178,7 +178,7 @@ enum : unsigned {
 };
 
 // Type immediate encodings used in various contexts.
-enum : uint8_t {
+enum : unsigned {
   WASM_TYPE_I32 = 0x7F,
   WASM_TYPE_I64 = 0x7E,
   WASM_TYPE_F32 = 0x7D,
@@ -189,7 +189,7 @@ enum : uint8_t {
 };
 
 // Kinds of externals (for imports and exports).
-enum : uint8_t {
+enum : unsigned {
   WASM_EXTERNAL_FUNCTION = 0x0,
   WASM_EXTERNAL_TABLE = 0x1,
   WASM_EXTERNAL_MEMORY = 0x2,
@@ -239,7 +239,7 @@ enum : unsigned {
 };
 
 // Kind codes used in the custom "linking" section in the WASM_SYMBOL_TABLE
-enum WasmSymbolType : uint8_t {
+enum WasmSymbolType : unsigned {
   WASM_SYMBOL_TYPE_FUNCTION = 0x0,
   WASM_SYMBOL_TYPE_DATA     = 0x1,
   WASM_SYMBOL_TYPE_GLOBAL   = 0x2,
@@ -257,7 +257,7 @@ const unsigned WASM_SYMBOL_UNDEFINED          = 0x10;
 
 #define WASM_RELOC(name, value) name = value,
 
-enum : uint8_t {
+enum : unsigned {
 #include "WasmRelocs.def"
 };
 
