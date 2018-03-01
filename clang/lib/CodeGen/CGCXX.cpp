@@ -205,7 +205,7 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
   }
 
   // Finally, set up the alias with its proper name and attributes.
-  setAliasAttributes(AliasDecl, Alias);
+  SetCommonAttributes(AliasDecl, Alias);
 
   return false;
 }
@@ -227,7 +227,6 @@ llvm::Function *CodeGenModule::codegenCXXStructor(const CXXMethodDecl *MD,
   }
 
   setFunctionLinkage(GD, Fn);
-  setFunctionDLLStorageClass(GD, Fn);
 
   CodeGenFunction(*this).GenerateCode(GD, Fn, FnInfo);
   setNonAliasAttributes(GD, Fn);
