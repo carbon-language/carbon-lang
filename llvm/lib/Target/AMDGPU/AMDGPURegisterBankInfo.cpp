@@ -286,9 +286,22 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     break;
   }
   case AMDGPU::G_INTRINSIC_W_SIDE_EFFECTS: {
-    unsigned IntrinsicID = MI.getOperand(0).getIntrinsicID();
-    switch (IntrinsicID) {
-    case Intrinsic::amdgcn_exp: {
+    switch (MI.getOperand(0).getIntrinsicID()) {
+    default:
+      return getInvalidInstructionMapping();
+    case Intrinsic::amdgcn_exp_compr:
+      OpdsMapping[0] = nullptr; // IntrinsicID
+      // FIXME: These are immediate values which can't be read from registers.
+      OpdsMapping[1] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, 32);
+      OpdsMapping[2] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, 32);
+      // FIXME: Could we support packed types here?
+      OpdsMapping[3] = AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, 32);
+      OpdsMapping[4] = AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, 32);
+      // FIXME: These are immediate values which can't be read from registers.
+      OpdsMapping[5] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, 32);
+      OpdsMapping[6] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, 32);
+      break;
+    case Intrinsic::amdgcn_exp:
       OpdsMapping[0] = nullptr; // IntrinsicID
       // FIXME: These are immediate values which can't be read from registers.
       OpdsMapping[1] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, 32);
@@ -302,7 +315,6 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       OpdsMapping[7] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, 32);
       OpdsMapping[8] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, 32);
       break;
-    }
     }
     break;
   }
