@@ -236,6 +236,7 @@ static void visitDerivedTypeDef(const DerivedTypeDef &dtd) {
             [&](const ProcComponentDefStmt &x) {
               TODO("ProcComponentDefStmt");
             },
+            [&](const ErrorRecovery &) {},
         },
         cds.statement.u);
   }

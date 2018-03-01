@@ -404,6 +404,21 @@ template<char goal> struct SkipPast {
   }
 };
 
+template<char goal> struct SkipTo {
+  using resultType = Success;
+  constexpr SkipTo() {}
+  constexpr SkipTo(const SkipTo &) {}
+  static std::optional<Success> Parse(ParseState *state) {
+    while (std::optional<char> ch{state->PeekAtNextChar()}) {
+      if (*ch == goal) {
+        return {Success{}};
+      }
+      state->GetNextChar();
+    }
+    return {};
+  }
+};
+
 // A common idiom in the Fortran grammar is an optional item (usually
 // a nonempty comma-separated list) that, if present, must follow a comma
 // and precede a doubled colon.  When the item is absent, the comma must

@@ -973,7 +973,7 @@ struct ProcComponentDefStmt {
 // R736 component-def-stmt -> data-component-def-stmt | proc-component-def-stmt
 struct ComponentDefStmt {
   UNION_CLASS_BOILERPLATE(ComponentDefStmt);
-  std::variant<DataComponentDefStmt, ProcComponentDefStmt
+  std::variant<DataComponentDefStmt, ProcComponentDefStmt, ErrorRecovery
       // , TypeParamDefStmt -- PGI accidental extension, not enabled
       >
       u;
@@ -1036,7 +1036,8 @@ WRAPPER_CLASS(FinalProcedureStmt, std::list<Name>);
 //        final-procedure-stmt
 struct TypeBoundProcBinding {
   UNION_CLASS_BOILERPLATE(TypeBoundProcBinding);
-  std::variant<TypeBoundProcedureStmt, TypeBoundGenericStmt, FinalProcedureStmt>
+  std::variant<TypeBoundProcedureStmt, TypeBoundGenericStmt, FinalProcedureStmt,
+      ErrorRecovery>
       u;
 };
 

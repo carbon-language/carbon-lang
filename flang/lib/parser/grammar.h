@@ -193,6 +193,20 @@ template<typename PA> inline constexpr auto statement(const PA &p) {
   return unterminatedStatement(p) / endOfStmt;
 }
 
+// Error recovery within statements: skip to the end of the line,
+// but not over an END or CONTAINS statement.
+constexpr auto skipToEndOfLine = SkipTo<'\n'>{} >> construct<ErrorRecovery>{};
+constexpr auto stmtErrorRecovery =
+    !"END"_tok >> !"CONTAINS"_tok >> skipToEndOfLine;
+
+// Error recovery across statements: skip the line, unless it looks
+// like it might end the containing construct.
+constexpr auto errorRecoveryStart = skipMany("\n"_tok) >> maybe(label);
+constexpr auto skipBadLine = SkipPast<'\n'>{} >> construct<ErrorRecovery>{};
+constexpr auto executionPartErrorRecovery = errorRecoveryStart >> !"END"_tok >>
+    !"ELSE"_tok >> !"CONTAINS"_tok >> !"CASE"_tok >> !"TYPE IS"_tok >>
+    !"CLASS"_tok >> !"RANK"_tok >> skipBadLine;
+
 // R507 declaration-construct ->
 //        specification-construct | data-stmt | format-stmt |
 //        entry-stmt | stmt-function-stmt
@@ -535,11 +549,6 @@ constexpr auto executableConstruct =
     construct<ExecutableConstruct>{}(indirect(Parser<SelectTypeConstruct>{})) ||
     construct<ExecutableConstruct>{}(indirect(whereConstruct)) ||
     construct<ExecutableConstruct>{}(indirect(forallConstruct));
-
-constexpr auto executionPartErrorRecovery = skipMany("\n"_tok) >>
-    maybe(label) >> !"END"_tok >> !"ELSE"_tok >> !"CONTAINS"_tok >>
-    !"CASE"_tok >> !"TYPE IS"_tok >> !"CLASS"_tok >>
-    !"RANK"_tok >> SkipPast<'\n'>{} >> construct<ErrorRecovery>{};
 
 // R510 execution-part-construct ->
 //        executable-construct | format-stmt | entry-stmt | data-stmt
@@ -903,14 +912,13 @@ TYPE_PARSER(
     construct<TypeParamDecl>{}(name, maybe("=" >> scalarIntConstantExpr)))
 
 // R736 component-def-stmt -> data-component-def-stmt |
-// proc-component-def-stmt
-TYPE_PARSER(construct<ComponentDefStmt>{}(Parser<DataComponentDefStmt>{}) ||
-    construct<ComponentDefStmt>{}(Parser<ProcComponentDefStmt>{})
-    // Accidental extension: PGI accepts type-param-def-stmt in
-    // component-part of derived-type-def.  Not enabled here.
-    //  ||
-    //  extension(construct<ComponentDefStmt>{}(Parser<TypeParamDefStmt>{})
-)
+//        proc-component-def-stmt
+// Accidental extension not enabled here: PGI accepts type-param-def-stmt in
+// component-part of derived-type-def.
+TYPE_PARSER(
+    recovery(construct<ComponentDefStmt>{}(Parser<DataComponentDefStmt>{}) ||
+            construct<ComponentDefStmt>{}(Parser<ProcComponentDefStmt>{}),
+        construct<ComponentDefStmt>{}(stmtErrorRecovery)))
 
 // R737 data-component-def-stmt ->
 //        declaration-type-spec [[, component-attr-spec-list] ::]
@@ -996,10 +1004,11 @@ TYPE_CONTEXT_PARSER("type bound procedure part"_en_US,
 // R748 type-bound-proc-binding ->
 //        type-bound-procedure-stmt | type-bound-generic-stmt |
 //        final-procedure-stmt
-TYPE_PARSER(
+TYPE_PARSER(recovery(
     construct<TypeBoundProcBinding>{}(Parser<TypeBoundProcedureStmt>{}) ||
-    construct<TypeBoundProcBinding>{}(Parser<TypeBoundGenericStmt>{}) ||
-    construct<TypeBoundProcBinding>{}(Parser<FinalProcedureStmt>{}))
+        construct<TypeBoundProcBinding>{}(Parser<TypeBoundGenericStmt>{}) ||
+        construct<TypeBoundProcBinding>{}(Parser<FinalProcedureStmt>{}),
+    construct<TypeBoundProcBinding>{}(stmtErrorRecovery)))
 
 // R749 type-bound-procedure-stmt ->
 //        PROCEDURE [[, bind-attr-list] ::] type-bound-proc-decl-list |
@@ -3384,8 +3393,8 @@ TYPE_PARSER("PROCEDURE" >>
 
 // R1513 proc-interface -> interface-name | declaration-type-spec
 // R1516 interface-name -> name
-TYPE_PARSER(construct<ProcInterface>{}(name) ||
-    construct<ProcInterface>{}(declarationTypeSpec))
+TYPE_PARSER(construct<ProcInterface>{}(declarationTypeSpec) ||
+    construct<ProcInterface>{}(name))
 
 // R1514 proc-attr-spec ->
 //         access-spec | proc-language-binding-spec | INTENT ( intent-spec ) |

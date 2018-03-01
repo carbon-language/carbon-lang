@@ -154,6 +154,13 @@ public:
     return {ch};
   }
 
+  std::optional<char> PeekAtNextChar() {
+    if (p_ >= limit_) {
+      return {};
+    }
+    return {*p_};
+  }
+
 private:
   // Text remaining to be parsed
   const CookedSource &cooked_;
