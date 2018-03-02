@@ -302,7 +302,7 @@ define float @reassoc_common_operand_multi_use(float %x, float %y) {
 
 declare float @llvm.log2.f32(float)
 
-; X * log2(Y * 0.5) = X * log2(Y) - X
+; log2(Y * 0.5) * X = log2(Y) * X - X
 
 define float @log2half(float %x, float %y) {
 ; CHECK-LABEL: @log2half(
@@ -311,8 +311,8 @@ define float @log2half(float %x, float %y) {
 ; CHECK-NEXT:    [[MUL:%.*]] = fsub fast float [[TMP1]], [[X]]
 ; CHECK-NEXT:    ret float [[MUL]]
 ;
-  %halfy = fmul fast float %y, 0.5
-  %log2 = call fast float @llvm.log2.f32(float %halfy)
+  %halfy = fmul float %y, 0.5
+  %log2 = call float @llvm.log2.f32(float %halfy)
   %mul = fmul fast float %log2, %x
   ret float %mul
 }
@@ -321,13 +321,13 @@ define float @log2half_commute(float %x1, float %y) {
 ; CHECK-LABEL: @log2half_commute(
 ; CHECK-NEXT:    [[X:%.*]] = fdiv float [[X1:%.*]], 7.000000e+00
 ; CHECK-NEXT:    [[LOG2:%.*]] = call fast float @llvm.log2.f32(float [[Y:%.*]])
-; CHECK-NEXT:    [[TMP1:%.*]] = fmul fast float [[X]], [[LOG2]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fmul fast float [[LOG2]], [[X]]
 ; CHECK-NEXT:    [[MUL:%.*]] = fsub fast float [[TMP1]], [[X]]
 ; CHECK-NEXT:    ret float [[MUL]]
 ;
   %x = fdiv float %x1, 7.0 ; thwart complexity-based canonicalization
-  %halfy = fmul fast float %y, 0.5
-  %log2 = call fast float @llvm.log2.f32(float %halfy)
+  %halfy = fmul float %y, 0.5
+  %log2 = call float @llvm.log2.f32(float %halfy)
   %mul = fmul fast float %x, %log2
   ret float %mul
 }
