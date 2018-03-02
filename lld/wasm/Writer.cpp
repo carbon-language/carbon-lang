@@ -677,14 +677,8 @@ void Writer::calculateExports() {
 
     DEBUG(dbgs() << "exporting sym: " << Sym->getName() << "\n");
 
-    if (auto *D = dyn_cast<DefinedData>(Sym)) {
-      // TODO Remove this check here; for non-relocatable output we actually
-      // used only to create fake-global exports for the synthetic symbols.  Fix
-      // this in a future commit
-      if (Sym != WasmSym::DataEnd && Sym != WasmSym::HeapBase)
-        continue;
+    if (auto *D = dyn_cast<DefinedData>(Sym))
       DefinedFakeGlobals.emplace_back(D);
-    }
     ExportedSymbols.emplace_back(Sym);
   }
 }
