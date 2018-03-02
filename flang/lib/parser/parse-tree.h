@@ -52,9 +52,14 @@ CLASS_TRAIT(TupleTrait);
 // later thus allowing the parser to be build without an dependency 
 // with the Sema library
 //  
-template <typename T> struct Semantic {
+
+namespace Fortran {
+namespace semantics {
+  template <typename T> struct Semantic {
    Semantic(T*) {}
 };
+}
+}
 
 // Most non-template classes in this file use these default definitions
 // for their move constructor and move assignment operator=, and disable
@@ -64,7 +69,7 @@ template <typename T> struct Semantic {
   classname &operator=(classname &&) = default; \
   classname(const classname &) = delete; \
   classname &operator=(const classname &) = delete; \
-  Semantic<classname> * s = nullptr \
+  Fortran::semantics::Semantic<classname> * s = nullptr \
 
 // Almost all classes in this file have no default constructor.
 #define BOILERPLATE(classname) \
@@ -81,7 +86,7 @@ template <typename T> struct Semantic {
     classname &operator=(const classname &) { return *this; }; \
     classname &operator=(classname &&) { return *this; }; \
     using EmptyTrait = std::true_type; \
-    Semantic<classname> * s = nullptr ; \
+    Fortran::semantics::Semantic<classname> * s = nullptr ; \
   }
 
 // Many classes below simply wrap a std::variant<> discriminated union,
@@ -2748,6 +2753,7 @@ struct MainProgram {
       ExecutionPart, std::optional<InternalSubprogramPart>,
       Statement<EndProgramStmt>>
       t;
+  enum { PROG, SPEC, EXEC, INTERNAL, END } ; 
 };
 
 // R1405 module-stmt -> MODULE module-name
@@ -3072,6 +3078,7 @@ struct FunctionSubprogram {
   std::tuple<Statement<FunctionStmt>, SpecificationPart, ExecutionPart,
       std::optional<InternalSubprogramPart>, Statement<EndFunctionStmt>>
       t;
+  enum { FUNC, SPEC, EXEC, INTERNAL, END } ; 
 };
 
 // R1534 subroutine-subprogram ->

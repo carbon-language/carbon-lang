@@ -13,8 +13,8 @@ namespace semantics {
 //
 // Also, identifiers are immutable and are never destroyed.
 // 
-// The comparison of two 'Identifier*' returns true iff their 
-// name are identical.
+// The comparison of two 'Identifier*' is expected to return 
+// true iff their name are identical.
 //
 class Identifier 
 {
@@ -25,7 +25,7 @@ private:
 private:
   std::string name_ ;
 public:
-  const std::string & name() { return name_ ; }
+  std::string name() const { return name_ ; }
   static const Identifier *get(std::string n) ;     
 }; 
 
