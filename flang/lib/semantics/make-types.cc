@@ -1,10 +1,12 @@
+#include "make-types.h"
 #include "attr.h"
 #include "type.h"
 
 #include "../parser/idioms.h"
-#include "../parser/parse-tree.h"
 #include "../parser/parse-tree-visitor.h"
+#include "../parser/parse-tree.h"
 #include <iostream>
+#include <memory>
 #include <set>
 
 namespace Fortran {
@@ -27,21 +29,19 @@ public:
     return true;
   }
   void Post(const parser::TypeDeclarationStmt &x) {
-    CHECK(declTypeSpec_ != nullptr);
     out_ << *declTypeSpec_ << "\n\n";
-    delete declTypeSpec_;
-    declTypeSpec_ = nullptr;
+    declTypeSpec_.reset();
   }
 
   bool Pre(const parser::DerivedTypeDef &x) {
-    builder_ = new DerivedTypeDefBuilder{};
+    CHECK(!builder_);
+    builder_ = std::make_unique<DerivedTypeDefBuilder>();
     return true;
   }
   void Post(const parser::DerivedTypeDef &x) {
     DerivedTypeDef derivedType{*builder_};
     out_ << derivedType << "\n\n";
-    delete builder_;
-    builder_ = nullptr;
+    builder_.reset();
   }
 
   bool Pre(const parser::TypeAttrSpec::Extends &x) {
@@ -152,64 +152,54 @@ public:
   }
 
   bool Pre(const parser::ProcComponentDefStmt &x) {
-    CHECK(attrs_ == nullptr);
-    attrs_ = new Attrs();
+    CHECK(!attrs_);
+    attrs_ = std::make_unique<Attrs>();
     return true;
   }
   void Post(const parser::ProcComponentDefStmt &x) {
     if (declTypeSpec_) {
       std::cerr << "ProcComponentDefStmt: " << *declTypeSpec_ << "\n";
-      delete declTypeSpec_;
-      declTypeSpec_ = nullptr;
+      declTypeSpec_.reset();
     }
-    delete attrs_;
-    attrs_ = nullptr;
+    attrs_.reset();
   }
   void Post(const parser::ProcDecl &x) {
-    CHECK(attrs_ != nullptr);
     const auto &name = std::get<parser::Name>(x.t);
     //TODO: std::get<std::optional<ProcPointerInit>>(x.t)
     builder_->procComponent(ProcComponentDef(ProcDecl(name), *attrs_));
   }
 
   bool Pre(const parser::DataComponentDefStmt &x) {
-    CHECK(attrs_ == nullptr);
-    attrs_ = new Attrs();
+    CHECK(!attrs_);
+    attrs_ = std::make_unique<Attrs>();
     return true;
   }
   void Post(const parser::DataComponentDefStmt &x) {
-    delete declTypeSpec_;
-    declTypeSpec_ = nullptr;
-    delete attrs_;
-    attrs_ = nullptr;
-    delete attrArraySpec_;
-    attrArraySpec_ = nullptr;
+    declTypeSpec_.reset();
+    attrs_.reset();
+    attrArraySpec_.reset();
   }
 
   void Post(const parser::ComponentAttrSpec &x) {
-    if (attrArraySpec_ == nullptr) {
-      attrArraySpec_ = arraySpec_;
-      arraySpec_ = nullptr;
+    if (!attrArraySpec_) {
+      attrArraySpec_ = std::move(arraySpec_);
     }
   }
 
   void Post(const parser::ComponentDecl &x) {
-    CHECK(declTypeSpec_ != nullptr);
-    CHECK(attrs_ != nullptr);
     const auto &name = std::get<parser::Name>(x.t);
     // use the array spec in the decl if present
     const auto &arraySpec = arraySpec_ && !arraySpec_->empty()
         ? *arraySpec_
-        : attrArraySpec_ != nullptr ? *attrArraySpec_ : ComponentArraySpec{};
+        : attrArraySpec_ ? *attrArraySpec_ : ComponentArraySpec{};
     builder_->dataComponent(
         DataComponentDef(*declTypeSpec_, name, *attrs_, arraySpec));
-    delete arraySpec_;
-    arraySpec_ = nullptr;
+    arraySpec_.reset();
   }
 
   bool Pre(const parser::ComponentArraySpec &x) {
-    CHECK(arraySpec_ == nullptr);
-    arraySpec_ = new std::list<ShapeSpec>();
+    CHECK(!arraySpec_);
+    arraySpec_ = std::make_unique<std::list<ShapeSpec>>();
     return true;
   }
   bool Pre(const parser::DeferredShapeSpecList &x) {
@@ -230,11 +220,15 @@ public:
   }
 
   bool Pre(const parser::DeclarationTypeSpec::ClassStar &x) {
-    declTypeSpec_ = new DeclTypeSpec{semantics::DeclTypeSpec::MakeClassStar()};
+    CHECK(!declTypeSpec_);
+    declTypeSpec_ =
+        std::make_unique<DeclTypeSpec>(DeclTypeSpec::MakeClassStar());
     return false;
   }
   bool Pre(const parser::DeclarationTypeSpec::TypeStar &x) {
-    declTypeSpec_ = new DeclTypeSpec{semantics::DeclTypeSpec::MakeTypeStar()};
+    CHECK(!declTypeSpec_);
+    declTypeSpec_ =
+        std::make_unique<DeclTypeSpec>(DeclTypeSpec::MakeTypeStar());
     return false;
   }
   bool Pre(const parser::DeclarationTypeSpec::Type &x) {
@@ -250,26 +244,30 @@ public:
     return true;
   }
   bool Pre(const parser::IntegerTypeSpec &x) {
-    declTypeSpec_ = new DeclTypeSpec{DeclTypeSpec::MakeIntrinsic(
-      IntegerTypeSpec::Make(GetKindParamValue(x.v)))};
+    CHECK(!declTypeSpec_);
+    declTypeSpec_ = std::make_unique<DeclTypeSpec>(DeclTypeSpec::MakeIntrinsic(
+        IntegerTypeSpec::Make(GetKindParamValue(x.v))));
     return false;
   }
 
   bool Pre(const parser::IntrinsicTypeSpec::Logical &x) {
-    declTypeSpec_ = new DeclTypeSpec{DeclTypeSpec::MakeIntrinsic(
-        LogicalTypeSpec::Make(GetKindParamValue(x.kind)))};
+    CHECK(!declTypeSpec_);
+    declTypeSpec_ = std::make_unique<DeclTypeSpec>(DeclTypeSpec::MakeIntrinsic(
+        LogicalTypeSpec::Make(GetKindParamValue(x.kind))));
     return false;
   }
 
   bool Pre(const parser::IntrinsicTypeSpec::Real &x) {
-    declTypeSpec_ = new DeclTypeSpec{DeclTypeSpec::MakeIntrinsic(
-        RealTypeSpec::Make(GetKindParamValue(x.kind)))};
+    CHECK(!declTypeSpec_);
+    declTypeSpec_ = std::make_unique<DeclTypeSpec>(DeclTypeSpec::MakeIntrinsic(
+        RealTypeSpec::Make(GetKindParamValue(x.kind))));
     return false;
   }
 
   bool Pre(const parser::IntrinsicTypeSpec::Complex &x) {
-    declTypeSpec_ = new DeclTypeSpec{DeclTypeSpec::MakeIntrinsic(
-        ComplexTypeSpec::Make(GetKindParamValue(x.kind)))};
+    CHECK(!declTypeSpec_);
+    declTypeSpec_ = std::make_unique<DeclTypeSpec>(DeclTypeSpec::MakeIntrinsic(
+        ComplexTypeSpec::Make(GetKindParamValue(x.kind))));
     return false;
   }
 
@@ -287,35 +285,34 @@ public:
   }
 
   bool Pre(const parser::DerivedTypeStmt &x) {
-    CHECK(attrs_ == nullptr);
-    attrs_ = new Attrs{};
+    CHECK(!attrs_);
+    attrs_ = std::make_unique<Attrs>();
     return true;
   }
   void Post(const parser::DerivedTypeStmt &x) {
     builder_->name(std::get<Name>(x.t));
     builder_->attrs(*attrs_);
-    delete attrs_;
-    attrs_ = nullptr;
+    attrs_.release();
   }
 
   void Post(const parser::Program &) {
     // ensure that all temps were deallocated
-    CHECK(builder_ == nullptr);
-    CHECK(declTypeSpec_ == nullptr);
-    CHECK(attrs_ == nullptr);
-    CHECK(arraySpec_ == nullptr);
-    CHECK(attrArraySpec_ == nullptr);
+    CHECK(!builder_);
+    CHECK(!declTypeSpec_);
+    CHECK(!attrs_);
+    CHECK(!arraySpec_);
+    CHECK(!attrArraySpec_);
   }
 
 private:
   std::ostream &out_;
-  DerivedTypeDefBuilder *builder_ = nullptr;
-  DeclTypeSpec *declTypeSpec_ = nullptr;
-  Attrs *attrs_ = nullptr;
-  std::list<ShapeSpec> *arraySpec_ = nullptr;
+  std::unique_ptr<DerivedTypeDefBuilder> builder_;
+  std::unique_ptr<DeclTypeSpec> declTypeSpec_;
+  std::unique_ptr<Attrs> attrs_;
+  std::unique_ptr<std::list<ShapeSpec>> arraySpec_;
   // attrArraySpec_ is used to save the component-array-spec that is part of
   // the component-attr-spec
-  std::list<ShapeSpec> *attrArraySpec_ = nullptr;
+  std::unique_ptr<std::list<ShapeSpec>> attrArraySpec_;
 
 };
 
@@ -346,7 +343,7 @@ static const IntExpr *GetIntExpr(const parser::ScalarIntExpr &x) {
     }
   }
   std::cerr << "IntExpr:\n" << expr << "\n";
-  return new semantics::IntExpr();  // TODO
+  return new IntExpr();  // TODO
 }
 
 static Bound GetBound(const parser::SpecificationExpr &x) {
