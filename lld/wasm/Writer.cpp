@@ -893,9 +893,12 @@ void Writer::createCtorFunction() {
 void Writer::calculateInitFunctions() {
   for (ObjFile *File : Symtab->ObjectFiles) {
     const WasmLinkingData &L = File->getWasmObj()->linkingData();
-    for (const WasmInitFunc &F : L.InitFunctions)
-      InitFunctions.emplace_back(
-          WasmInitEntry{File->getFunctionSymbol(F.Symbol), F.Priority});
+    for (const WasmInitFunc &F : L.InitFunctions) {
+      FunctionSymbol *Sym = File->getFunctionSymbol(F.Symbol);
+      if (*Sym->getFunctionType() != WasmSignature{{}, WASM_TYPE_NORESULT})
+        error("invalid signature for init func: " + toString(*Sym));
+      InitFunctions.emplace_back(WasmInitEntry{Sym, F.Priority});
+    }
   }
 
   // Sort in order of priority (lowest first) so that they are called
