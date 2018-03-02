@@ -983,6 +983,13 @@ LowerAsmOperandForConstraint(SDValue Op, std::string &Constraint,
 
 #include "SystemZGenCallingConv.inc"
 
+const MCPhysReg *SystemZTargetLowering::getScratchRegisters(
+  CallingConv::ID) const {
+  static const MCPhysReg ScratchRegs[] = { SystemZ::R0D, SystemZ::R1D,
+                                           SystemZ::R14D, 0 };
+  return ScratchRegs;
+}
+
 bool SystemZTargetLowering::allowTruncateForTailCall(Type *FromType,
                                                      Type *ToType) const {
   return isTruncateFree(FromType, ToType);
@@ -6805,6 +6812,10 @@ MachineBasicBlock *SystemZTargetLowering::EmitInstrWithCustomInserter(
     return emitLoadAndTestCmp0(MI, MBB, SystemZ::LTDBR);
   case SystemZ::LTXBRCompare_VecPseudo:
     return emitLoadAndTestCmp0(MI, MBB, SystemZ::LTXBR);
+
+  case TargetOpcode::STACKMAP:
+  case TargetOpcode::PATCHPOINT:
+    return emitPatchPoint(MI, MBB);
 
   default:
     llvm_unreachable("Unexpected instr type to insert");
