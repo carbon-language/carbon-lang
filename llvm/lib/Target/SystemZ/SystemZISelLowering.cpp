@@ -5249,9 +5249,7 @@ SDValue SystemZTargetLowering::combineSTORE(
     }
   }
   // Combine STORE (BSWAP) into STRVH/STRV/STRVG
-  // See comment in combineBSWAP about volatile accesses.
   if (!SN->isTruncatingStore() &&
-      !SN->isVolatile() &&
       Op1.getOpcode() == ISD::BSWAP &&
       Op1.getNode()->hasOneUse() &&
       (Op1.getValueType() == MVT::i16 ||
@@ -5352,13 +5350,10 @@ SDValue SystemZTargetLowering::combineBSWAP(
     SDNode *N, DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
   // Combine BSWAP (LOAD) into LRVH/LRV/LRVG
-  // These loads are allowed to access memory multiple times, and so we must check
-  // that the loads are not volatile before performing the combine.
   if (ISD::isNON_EXTLoad(N->getOperand(0).getNode()) &&
       N->getOperand(0).hasOneUse() &&
       (N->getValueType(0) == MVT::i16 || N->getValueType(0) == MVT::i32 ||
-       N->getValueType(0) == MVT::i64) &&
-       !cast<LoadSDNode>(N->getOperand(0))->isVolatile()) {
+       N->getValueType(0) == MVT::i64)) {
       SDValue Load = N->getOperand(0);
       LoadSDNode *LD = cast<LoadSDNode>(Load);
 
