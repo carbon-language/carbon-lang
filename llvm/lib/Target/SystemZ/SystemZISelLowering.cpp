@@ -740,6 +740,7 @@ SystemZTargetLowering::getConstraintType(StringRef Constraint) const {
     case 'f': // Floating-point register
     case 'h': // High-part register
     case 'r': // General-purpose register
+    case 'v': // Vector register
       return C_RegisterClass;
 
     case 'Q': // Memory with base and unsigned 12-bit displacement
@@ -792,6 +793,12 @@ getSingleConstraintMatchWeight(AsmOperandInfo &info,
       weight = CW_Register;
     break;
 
+  case 'v': // Vector register
+    if ((type->isVectorTy() || type->isFloatingPointTy()) &&
+        Subtarget.hasVector())
+      weight = CW_Register;
+    break;
+
   case 'I': // Unsigned 8-bit constant
     if (auto *C = dyn_cast<ConstantInt>(CallOperandVal))
       if (isUInt<8>(C->getZExtValue()))
@@ -830,13 +837,13 @@ getSingleConstraintMatchWeight(AsmOperandInfo &info,
 // Map maps 0-based register numbers to LLVM register numbers.
 static std::pair<unsigned, const TargetRegisterClass *>
 parseRegisterNumber(StringRef Constraint, const TargetRegisterClass *RC,
-                    const unsigned *Map) {
+                    const unsigned *Map, unsigned Size) {
   assert(*(Constraint.end()-1) == '}' && "Missing '}'");
   if (isdigit(Constraint[2])) {
     unsigned Index;
     bool Failed =
         Constraint.slice(2, Constraint.size() - 1).getAsInteger(10, Index);
-    if (!Failed && Index < 16 && Map[Index])
+    if (!Failed && Index < Size && Map[Index])
       return std::make_pair(Map[Index], RC);
   }
   return std::make_pair(0U, nullptr);
@@ -873,6 +880,16 @@ SystemZTargetLowering::getRegForInlineAsmConstraint(
       else if (VT == MVT::f128)
         return std::make_pair(0U, &SystemZ::FP128BitRegClass);
       return std::make_pair(0U, &SystemZ::FP32BitRegClass);
+
+    case 'v': // Vector register
+      if (Subtarget.hasVector()) {
+        if (VT == MVT::f32)
+          return std::make_pair(0U, &SystemZ::VR32BitRegClass);
+        if (VT == MVT::f64)
+          return std::make_pair(0U, &SystemZ::VR64BitRegClass);
+        return std::make_pair(0U, &SystemZ::VR128BitRegClass);
+      }
+      break;
     }
   }
   if (Constraint.size() > 0 && Constraint[0] == '{') {
@@ -883,22 +900,32 @@ SystemZTargetLowering::getRegForInlineAsmConstraint(
     if (Constraint[1] == 'r') {
       if (VT == MVT::i32)
         return parseRegisterNumber(Constraint, &SystemZ::GR32BitRegClass,
-                                   SystemZMC::GR32Regs);
+                                   SystemZMC::GR32Regs, 16);
       if (VT == MVT::i128)
         return parseRegisterNumber(Constraint, &SystemZ::GR128BitRegClass,
-                                   SystemZMC::GR128Regs);
+                                   SystemZMC::GR128Regs, 16);
       return parseRegisterNumber(Constraint, &SystemZ::GR64BitRegClass,
-                                 SystemZMC::GR64Regs);
+                                 SystemZMC::GR64Regs, 16);
     }
     if (Constraint[1] == 'f') {
       if (VT == MVT::f32)
         return parseRegisterNumber(Constraint, &SystemZ::FP32BitRegClass,
-                                   SystemZMC::FP32Regs);
+                                   SystemZMC::FP32Regs, 16);
       if (VT == MVT::f128)
         return parseRegisterNumber(Constraint, &SystemZ::FP128BitRegClass,
-                                   SystemZMC::FP128Regs);
+                                   SystemZMC::FP128Regs, 16);
       return parseRegisterNumber(Constraint, &SystemZ::FP64BitRegClass,
-                                 SystemZMC::FP64Regs);
+                                 SystemZMC::FP64Regs, 16);
+    }
+    if (Constraint[1] == 'v') {
+      if (VT == MVT::f32)
+        return parseRegisterNumber(Constraint, &SystemZ::VR32BitRegClass,
+                                   SystemZMC::VR32Regs, 32);
+      if (VT == MVT::f64)
+        return parseRegisterNumber(Constraint, &SystemZ::VR64BitRegClass,
+                                   SystemZMC::VR64Regs, 32);
+      return parseRegisterNumber(Constraint, &SystemZ::VR128BitRegClass,
+                                 SystemZMC::VR128Regs, 32);
     }
   }
   return TargetLowering::getRegForInlineAsmConstraint(TRI, Constraint, VT);
