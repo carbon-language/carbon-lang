@@ -371,7 +371,15 @@ void SystemZFrameLowering::emitPrologue(MachineFunction &MF,
     }
   }
 
-  uint64_t StackSize = getAllocatedStackSize(MF);
+  uint64_t StackSize = MFFrame.getStackSize();
+  // We need to allocate the ABI-defined 160-byte base area whenever
+  // we allocate stack space for our own use and whenever we call another
+  // function.
+  if (StackSize || MFFrame.hasVarSizedObjects() || MFFrame.hasCalls()) {
+    StackSize += SystemZMC::CallFrameSize;
+    MFFrame.setStackSize(StackSize);
+  }
+
   if (StackSize) {
     // Determine if we want to store a backchain.
     bool StoreBackchain = MF.getFunction().hasFnAttribute("backchain");
@@ -454,11 +462,12 @@ void SystemZFrameLowering::emitEpilogue(MachineFunction &MF,
   auto *ZII =
       static_cast<const SystemZInstrInfo *>(MF.getSubtarget().getInstrInfo());
   SystemZMachineFunctionInfo *ZFI = MF.getInfo<SystemZMachineFunctionInfo>();
+  MachineFrameInfo &MFFrame = MF.getFrameInfo();
 
   // Skip the return instruction.
   assert(MBBI->isReturn() && "Can only insert epilogue into returning blocks");
 
-  uint64_t StackSize = getAllocatedStackSize(MF);
+  uint64_t StackSize = MFFrame.getStackSize();
   if (ZFI->getLowSavedGPR()) {
     --MBBI;
     unsigned Opcode = MBBI->getOpcode();
@@ -493,46 +502,6 @@ bool SystemZFrameLowering::hasFP(const MachineFunction &MF) const {
   return (MF.getTarget().Options.DisableFramePointerElim(MF) ||
           MF.getFrameInfo().hasVarSizedObjects() ||
           MF.getInfo<SystemZMachineFunctionInfo>()->getManipulatesSP());
-}
-
-int SystemZFrameLowering::getFrameIndexReference(const MachineFunction &MF,
-                                                 int FI,
-                                                 unsigned &FrameReg) const {
-  const MachineFrameInfo &MFFrame = MF.getFrameInfo();
-  const TargetRegisterInfo *RI = MF.getSubtarget().getRegisterInfo();
-
-  // Fill in FrameReg output argument.
-  FrameReg = RI->getFrameRegister(MF);
-
-  // Start with the offset of FI from the top of the caller-allocated frame
-  // (i.e. the top of the 160 bytes allocated by the caller).  This initial
-  // offset is therefore negative.
-  int64_t Offset = (MFFrame.getObjectOffset(FI) +
-                    MFFrame.getOffsetAdjustment());
-
-  // Make the offset relative to the incoming stack pointer.
-  Offset -= getOffsetOfLocalArea();
-
-  // Make the offset relative to the bottom of the frame.
-  Offset += getAllocatedStackSize(MF);
-
-  return Offset;
-}
-
-uint64_t SystemZFrameLowering::
-getAllocatedStackSize(const MachineFunction &MF) const {
-  const MachineFrameInfo &MFFrame = MF.getFrameInfo();
-
-  // Start with the size of the local variables and spill slots.
-  uint64_t StackSize = MFFrame.getStackSize();
-
-  // We need to allocate the ABI-defined 160-byte base area whenever
-  // we allocate stack space for our own use and whenever we call another
-  // function.
-  if (StackSize || MFFrame.hasVarSizedObjects() || MFFrame.hasCalls())
-    StackSize += SystemZMC::CallFrameSize;
-
-  return StackSize;
 }
 
 bool
