@@ -160,8 +160,8 @@ define float @test7_reassoc(float %A, float %B, float %C) {
 ; CHECK-LABEL: @test7_reassoc(
 ; CHECK-NEXT:    [[AA:%.*]] = fmul reassoc float [[A:%.*]], [[A]]
 ; CHECK-NEXT:    [[AAB:%.*]] = fmul reassoc float [[AA]], [[B:%.*]]
-; CHECK-NEXT:    [[AC:%.*]] = fmul reassoc float [[A]], [[C:%.*]]
-; CHECK-NEXT:    [[AAC:%.*]] = fmul reassoc float [[AC]], [[A]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fmul reassoc float [[A]], [[A]]
+; CHECK-NEXT:    [[AAC:%.*]] = fmul reassoc float [[TMP1]], [[C:%.*]]
 ; CHECK-NEXT:    [[R:%.*]] = fadd reassoc float [[AAB]], [[AAC]]
 ; CHECK-NEXT:    ret float [[R]]
 ;
@@ -362,8 +362,7 @@ define float @test15(float %arg) {
 
 define float @test15_reassoc(float %arg) {
 ; CHECK-LABEL: @test15_reassoc(
-; CHECK-NEXT:    [[T1:%.*]] = fmul reassoc float [[ARG:%.*]], 1.200000e+01
-; CHECK-NEXT:    [[T2:%.*]] = fmul reassoc float [[T1]], 1.200000e+01
+; CHECK-NEXT:    [[T2:%.*]] = fmul reassoc float [[ARG:%.*]], 1.440000e+02
 ; CHECK-NEXT:    ret float [[T2]]
 ;
   %t1 = fmul reassoc float 1.200000e+01, %arg
