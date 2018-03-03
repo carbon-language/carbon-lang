@@ -50,7 +50,7 @@ define i8 @notnotsub(i8 %x, i8 %y) {
 ; CHECK-LABEL: @notnotsub(
 ; CHECK-NEXT:    [[NX:%.*]] = xor i8 [[X:%.*]], -1
 ; CHECK-NEXT:    [[NY:%.*]] = xor i8 [[Y:%.*]], -1
-; CHECK-NEXT:    [[SUB:%.*]] = sub i8 [[NX]], [[NY]]
+; CHECK-NEXT:    [[SUB:%.*]] = sub i8 [[Y]], [[X]]
 ; CHECK-NEXT:    call void @use8(i8 [[NX]])
 ; CHECK-NEXT:    call void @use8(i8 [[NY]])
 ; CHECK-NEXT:    ret i8 [[SUB]]
@@ -65,9 +65,7 @@ define i8 @notnotsub(i8 %x, i8 %y) {
 
 define <2 x i8> @notnotsub_vec(<2 x i8> %x, <2 x i8> %y) {
 ; CHECK-LABEL: @notnotsub_vec(
-; CHECK-NEXT:    [[NX:%.*]] = xor <2 x i8> [[X:%.*]], <i8 -1, i8 -1>
-; CHECK-NEXT:    [[NY:%.*]] = xor <2 x i8> [[Y:%.*]], <i8 -1, i8 -1>
-; CHECK-NEXT:    [[SUB:%.*]] = sub <2 x i8> [[NX]], [[NY]]
+; CHECK-NEXT:    [[SUB:%.*]] = sub <2 x i8> [[Y:%.*]], [[X:%.*]]
 ; CHECK-NEXT:    ret <2 x i8> [[SUB]]
 ;
   %nx = xor <2 x i8> %x, <i8 -1, i8 -1>
