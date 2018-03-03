@@ -4440,7 +4440,7 @@ INTERCEPTOR_PTHREAD_ATTR_GET(schedpolicy, sizeof(int))
 
 #define INIT_PTHREAD_ATTR_GET_SCHED                       \
   COMMON_INTERCEPT_FUNCTION(pthread_attr_getschedparam);  \
-  COMMON_INTERCEPT_FUNCTION(pthread_attr_getschedpolicy); \
+  COMMON_INTERCEPT_FUNCTION(pthread_attr_getschedpolicy)
 #else
 #define INIT_PTHREAD_ATTR_GET_SCHED
 #endif
