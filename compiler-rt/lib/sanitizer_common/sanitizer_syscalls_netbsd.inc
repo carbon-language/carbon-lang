@@ -367,10 +367,6 @@ POST_SYSCALL(ptrace)
       POST_READ(addr_, struct_ptrace_ptrace_siginfo_struct_sz);
     } else if (req_ == ptrace_pt_get_siginfo) {
       POST_WRITE(addr_, struct_ptrace_ptrace_siginfo_struct_sz);
-    } else if (req_ == ptrace_pt_set_sigmask) {
-      POST_READ(addr_, sizeof(__sanitizer_sigset_t));
-    } else if (req_ == ptrace_pt_get_sigmask) {
-      POST_WRITE(addr_, sizeof(__sanitizer_sigset_t));
     } else if (req_ == ptrace_pt_setregs) {
       POST_READ(addr_, struct_ptrace_reg_struct_sz);
     } else if (req_ == ptrace_pt_getregs) {
