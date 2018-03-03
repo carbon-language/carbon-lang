@@ -1555,20 +1555,16 @@ void GPUNodeBuilder::clearDominators(Function *F) {
 }
 
 void GPUNodeBuilder::clearScalarEvolution(Function *F) {
-  for (BasicBlock &BB : *F) {
-    Loop *L = LI.getLoopFor(&BB);
+  for (auto *L : LI)
     if (L)
       SE.forgetLoop(L);
-  }
 }
 
 void GPUNodeBuilder::clearLoops(Function *F) {
-  for (BasicBlock &BB : *F) {
-    Loop *L = LI.getLoopFor(&BB);
-    if (L)
-      SE.forgetLoop(L);
-    LI.removeBlock(&BB);
-  }
+  clearScalarEvolution(F);
+  SmallVector<Loop *, 1> Loops(LI.begin(), LI.end());
+  for (auto *L : Loops)
+    LI.erase(L);
 }
 
 std::tuple<Value *, Value *> GPUNodeBuilder::getGridSizes(ppcg_kernel *Kernel) {
