@@ -3590,8 +3590,7 @@ INTERCEPTOR(char *, strerror, int errnum) {
 //  * GNU version returns message pointer, which points to either buf or some
 //    static storage.
 #if ((_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && !_GNU_SOURCE) || \
-    SANITIZER_MAC || SANITIZER_ANDROID || SANITIZER_NETBSD || \
-    SANITIZER_FREEBSD || SANITIZER_OPENBSD
+    SANITIZER_MAC || SANITIZER_ANDROID || SANITIZER_NETBSD || SANITIZER_FREEBSD
 // POSIX version. Spec is not clear on whether buf is NULL-terminated.
 // At least on OSX, buf contents are valid even when the call fails.
 INTERCEPTOR(int, strerror_r, int errnum, char *buf, SIZE_T buflen) {
@@ -4408,6 +4407,8 @@ INTERCEPTOR(int, random_r, void *buf, u32 *result) {
 #if SANITIZER_INTERCEPT_PTHREAD_ATTR_GET
 INTERCEPTOR_PTHREAD_ATTR_GET(detachstate, sizeof(int))
 INTERCEPTOR_PTHREAD_ATTR_GET(guardsize, sizeof(SIZE_T))
+INTERCEPTOR_PTHREAD_ATTR_GET(schedparam, struct_sched_param_sz)
+INTERCEPTOR_PTHREAD_ATTR_GET(schedpolicy, sizeof(int))
 INTERCEPTOR_PTHREAD_ATTR_GET(scope, sizeof(int))
 INTERCEPTOR_PTHREAD_ATTR_GET(stacksize, sizeof(SIZE_T))
 INTERCEPTOR(int, pthread_attr_getstack, void *attr, void **addr, SIZE_T *size) {
@@ -4424,27 +4425,6 @@ INTERCEPTOR(int, pthread_attr_getstack, void *attr, void **addr, SIZE_T *size) {
   return res;
 }
 
-#define INIT_PTHREAD_ATTR_GET                             \
-  COMMON_INTERCEPT_FUNCTION(pthread_attr_getdetachstate); \
-  COMMON_INTERCEPT_FUNCTION(pthread_attr_getguardsize);   \
-  COMMON_INTERCEPT_FUNCTION(pthread_attr_getscope);       \
-  COMMON_INTERCEPT_FUNCTION(pthread_attr_getstacksize);   \
-  COMMON_INTERCEPT_FUNCTION(pthread_attr_getstack);
-#else
-#define INIT_PTHREAD_ATTR_GET
-#endif
-
-#if SANITIZER_INTERCEPT_PTHREAD_ATTR_GET_SCHED
-INTERCEPTOR_PTHREAD_ATTR_GET(schedparam, struct_sched_param_sz)
-INTERCEPTOR_PTHREAD_ATTR_GET(schedpolicy, sizeof(int))          
-
-#define INIT_PTHREAD_ATTR_GET_SCHED                       \
-  COMMON_INTERCEPT_FUNCTION(pthread_attr_getschedparam);  \
-  COMMON_INTERCEPT_FUNCTION(pthread_attr_getschedpolicy)
-#else
-#define INIT_PTHREAD_ATTR_GET_SCHED
-#endif
-
 // We may need to call the real pthread_attr_getstack from the run-time
 // in sanitizer_common, but we don't want to include the interception headers
 // there. So, just define this function here.
@@ -4456,7 +4436,16 @@ int real_pthread_attr_getstack(void *attr, void **addr, SIZE_T *size) {
 }  // extern "C"
 }  // namespace __sanitizer
 
-
+#define INIT_PTHREAD_ATTR_GET                             \
+  COMMON_INTERCEPT_FUNCTION(pthread_attr_getdetachstate); \
+  COMMON_INTERCEPT_FUNCTION(pthread_attr_getguardsize);   \
+  COMMON_INTERCEPT_FUNCTION(pthread_attr_getschedparam);  \
+  COMMON_INTERCEPT_FUNCTION(pthread_attr_getschedpolicy); \
+  COMMON_INTERCEPT_FUNCTION(pthread_attr_getscope);       \
+  COMMON_INTERCEPT_FUNCTION(pthread_attr_getstacksize);   \
+  COMMON_INTERCEPT_FUNCTION(pthread_attr_getstack);
+#else
+#define INIT_PTHREAD_ATTR_GET
 #endif
 
 #if SANITIZER_INTERCEPT_PTHREAD_ATTR_GETINHERITSCHED
@@ -6654,13 +6643,6 @@ INTERCEPTOR(int, getgrouplist, const char *name, u32 basegid, u32 *groups,
   return res;
 }
 
-#define INIT_GETGROUPLIST \
-  COMMON_INTERCEPT_FUNCTION(getgrouplist);
-#else
-#define INIT_GETGROUPLIST
-#endif
-
-#if SANITIZER_INTERCEPT_GETGROUPMEMBERSHIP
 INTERCEPTOR(int, getgroupmembership, const char *name, u32 basegid, u32 *groups,
             int maxgrp, int *ngroups) {
   void *ctx;
@@ -6677,10 +6659,11 @@ INTERCEPTOR(int, getgroupmembership, const char *name, u32 basegid, u32 *groups,
   return res;
 }
 
-#define INIT_GETGROUPMEMBERSHIP \
+#define INIT_GETGROUPLIST \
+  COMMON_INTERCEPT_FUNCTION(getgrouplist); \
   COMMON_INTERCEPT_FUNCTION(getgroupmembership);
 #else
-#define INIT_GETGROUPMEMBERSHIP
+#define INIT_GETGROUPLIST
 #endif
 
 #if SANITIZER_INTERCEPT_READLINK
@@ -7181,7 +7164,6 @@ static void InitializeCommonInterceptors() {
   INIT_SHMCTL;
   INIT_RANDOM_R;
   INIT_PTHREAD_ATTR_GET;
-  INIT_PTHREAD_ATTR_GET_SCHED;
   INIT_PTHREAD_ATTR_GETINHERITSCHED;
   INIT_PTHREAD_ATTR_GETAFFINITY_NP;
   INIT_PTHREAD_MUTEXATTR_GETPSHARED;
@@ -7264,7 +7246,6 @@ static void InitializeCommonInterceptors() {
   INIT_ACCESS;
   INIT_FACCESSAT;
   INIT_GETGROUPLIST;
-  INIT_GETGROUPMEMBERSHIP;
   INIT_READLINK;
   INIT_READLINKAT;
   INIT_NAME_TO_HANDLE_AT;
