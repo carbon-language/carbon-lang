@@ -2795,3 +2795,35 @@ entry:
   ret <8 x i64> %8
 }
 
+define void @store_v64i1_constant(<64 x i1>* %R) {
+; KNL-LABEL: store_v64i1_constant:
+; KNL:       ## %bb.0: ## %entry
+; KNL-NEXT:    kxnorw %k0, %k0, %k0
+; KNL-NEXT:    kmovw %k0, 2(%rdi)
+; KNL-NEXT:    movl $-536871045, 4(%rdi) ## imm = 0xDFFFFF7B
+; KNL-NEXT:    movw $-4099, (%rdi) ## imm = 0xEFFD
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: store_v64i1_constant:
+; SKX:       ## %bb.0: ## %entry
+; SKX-NEXT:    movabsq $-2305843576149381123, %rax ## imm = 0xDFFFFF7BFFFFEFFD
+; SKX-NEXT:    movq %rax, (%rdi)
+; SKX-NEXT:    retq
+;
+; AVX512BW-LABEL: store_v64i1_constant:
+; AVX512BW:       ## %bb.0: ## %entry
+; AVX512BW-NEXT:    movabsq $-2305843576149381123, %rax ## imm = 0xDFFFFF7BFFFFEFFD
+; AVX512BW-NEXT:    movq %rax, (%rdi)
+; AVX512BW-NEXT:    retq
+;
+; AVX512DQ-LABEL: store_v64i1_constant:
+; AVX512DQ:       ## %bb.0: ## %entry
+; AVX512DQ-NEXT:    kxnorw %k0, %k0, %k0
+; AVX512DQ-NEXT:    kmovw %k0, 2(%rdi)
+; AVX512DQ-NEXT:    movl $-536871045, 4(%rdi) ## imm = 0xDFFFFF7B
+; AVX512DQ-NEXT:    movw $-4099, (%rdi) ## imm = 0xEFFD
+; AVX512DQ-NEXT:    retq
+entry:
+  store <64 x i1> <i1 1, i1 0, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 0, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 0, i1 1, i1 1, i1 1, i1 1, i1 0, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 0, i1 1, i1 1>, <64 x i1>* %R
+  ret void
+}
