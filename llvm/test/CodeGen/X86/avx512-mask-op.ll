@@ -447,43 +447,19 @@ define i8 @zext_test3(<16 x i32> %a, <16 x i32> %b) {
 }
 
 define i8 @conv1(<8 x i1>* %R) {
-; KNL-LABEL: conv1:
-; KNL:       ## %bb.0: ## %entry
-; KNL-NEXT:    movb $-1, (%rdi)
-; KNL-NEXT:    movb $-2, -{{[0-9]+}}(%rsp)
-; KNL-NEXT:    movb $-2, %al
-; KNL-NEXT:    retq
-;
-; SKX-LABEL: conv1:
-; SKX:       ## %bb.0: ## %entry
-; SKX-NEXT:    kxnorw %k0, %k0, %k0
-; SKX-NEXT:    kmovb %k0, (%rdi)
-; SKX-NEXT:    movb $-2, -{{[0-9]+}}(%rsp)
-; SKX-NEXT:    movb $-2, %al
-; SKX-NEXT:    retq
-;
-; AVX512BW-LABEL: conv1:
-; AVX512BW:       ## %bb.0: ## %entry
-; AVX512BW-NEXT:    movb $-1, (%rdi)
-; AVX512BW-NEXT:    movb $-2, -{{[0-9]+}}(%rsp)
-; AVX512BW-NEXT:    movb $-2, %al
-; AVX512BW-NEXT:    retq
-;
-; AVX512DQ-LABEL: conv1:
-; AVX512DQ:       ## %bb.0: ## %entry
-; AVX512DQ-NEXT:    kxnorw %k0, %k0, %k0
-; AVX512DQ-NEXT:    kmovb %k0, (%rdi)
-; AVX512DQ-NEXT:    movb $-2, -{{[0-9]+}}(%rsp)
-; AVX512DQ-NEXT:    movb $-2, %al
-; AVX512DQ-NEXT:    retq
+; CHECK-LABEL: conv1:
+; CHECK:       ## %bb.0: ## %entry
+; CHECK-NEXT:    movb $-1, (%rdi)
+; CHECK-NEXT:    movb $-2, -{{[0-9]+}}(%rsp)
+; CHECK-NEXT:    movb $-2, %al
+; CHECK-NEXT:    retq
 ;
 ; X86-LABEL: conv1:
 ; X86:       ## %bb.0: ## %entry
 ; X86-NEXT:    subl $12, %esp
 ; X86-NEXT:    .cfi_def_cfa_offset 16
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X86-NEXT:    kxnorw %k0, %k0, %k0
-; X86-NEXT:    kmovb %k0, (%eax)
+; X86-NEXT:    movb $-1, (%eax)
 ; X86-NEXT:    movb $-2, (%esp)
 ; X86-NEXT:    movb $-2, %al
 ; X86-NEXT:    addl $12, %esp
@@ -3422,43 +3398,17 @@ entry:
 }
 
 define void @store_v64i1_constant(<64 x i1>* %R) {
-; KNL-LABEL: store_v64i1_constant:
-; KNL:       ## %bb.0: ## %entry
-; KNL-NEXT:    kxnorw %k0, %k0, %k0
-; KNL-NEXT:    kmovw %k0, 2(%rdi)
-; KNL-NEXT:    movl $-536871045, 4(%rdi) ## imm = 0xDFFFFF7B
-; KNL-NEXT:    movw $-4099, (%rdi) ## imm = 0xEFFD
-; KNL-NEXT:    retq
-;
-; SKX-LABEL: store_v64i1_constant:
-; SKX:       ## %bb.0: ## %entry
-; SKX-NEXT:    movabsq $-2305843576149381123, %rax ## imm = 0xDFFFFF7BFFFFEFFD
-; SKX-NEXT:    movq %rax, (%rdi)
-; SKX-NEXT:    retq
-;
-; AVX512BW-LABEL: store_v64i1_constant:
-; AVX512BW:       ## %bb.0: ## %entry
-; AVX512BW-NEXT:    movabsq $-2305843576149381123, %rax ## imm = 0xDFFFFF7BFFFFEFFD
-; AVX512BW-NEXT:    movq %rax, (%rdi)
-; AVX512BW-NEXT:    retq
-;
-; AVX512DQ-LABEL: store_v64i1_constant:
-; AVX512DQ:       ## %bb.0: ## %entry
-; AVX512DQ-NEXT:    kxnorw %k0, %k0, %k0
-; AVX512DQ-NEXT:    kmovw %k0, 2(%rdi)
-; AVX512DQ-NEXT:    movl $-536871045, 4(%rdi) ## imm = 0xDFFFFF7B
-; AVX512DQ-NEXT:    movw $-4099, (%rdi) ## imm = 0xEFFD
-; AVX512DQ-NEXT:    retq
+; CHECK-LABEL: store_v64i1_constant:
+; CHECK:       ## %bb.0: ## %entry
+; CHECK-NEXT:    movabsq $-2305843576149381123, %rax ## imm = 0xDFFFFF7BFFFFEFFD
+; CHECK-NEXT:    movq %rax, (%rdi)
+; CHECK-NEXT:    retq
 ;
 ; X86-LABEL: store_v64i1_constant:
 ; X86:       ## %bb.0: ## %entry
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X86-NEXT:    movl $-4099, %ecx ## imm = 0xEFFD
-; X86-NEXT:    kmovd %ecx, %k0
-; X86-NEXT:    movl $-536871045, %ecx ## imm = 0xDFFFFF7B
-; X86-NEXT:    kmovd %ecx, %k1
-; X86-NEXT:    kunpckdq %k0, %k1, %k0
-; X86-NEXT:    kmovq %k0, (%eax)
+; X86-NEXT:    movl $-536871045, 4(%eax) ## imm = 0xDFFFFF7B
+; X86-NEXT:    movl $-4099, (%eax) ## imm = 0xEFFD
 ; X86-NEXT:    retl
 entry:
   store <64 x i1> <i1 1, i1 0, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 0, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 0, i1 1, i1 1, i1 1, i1 1, i1 0, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 0, i1 1, i1 1>, <64 x i1>* %R
@@ -3466,36 +3416,15 @@ entry:
 }
 
 define void @store_v2i1_constant(<2 x i1>* %R) {
-; KNL-LABEL: store_v2i1_constant:
-; KNL:       ## %bb.0: ## %entry
-; KNL-NEXT:    movb $1, (%rdi)
-; KNL-NEXT:    retq
-;
-; SKX-LABEL: store_v2i1_constant:
-; SKX:       ## %bb.0: ## %entry
-; SKX-NEXT:    movb $1, %al
-; SKX-NEXT:    kmovd %eax, %k0
-; SKX-NEXT:    kmovb %k0, (%rdi)
-; SKX-NEXT:    retq
-;
-; AVX512BW-LABEL: store_v2i1_constant:
-; AVX512BW:       ## %bb.0: ## %entry
-; AVX512BW-NEXT:    movb $1, (%rdi)
-; AVX512BW-NEXT:    retq
-;
-; AVX512DQ-LABEL: store_v2i1_constant:
-; AVX512DQ:       ## %bb.0: ## %entry
-; AVX512DQ-NEXT:    movb $1, %al
-; AVX512DQ-NEXT:    kmovw %eax, %k0
-; AVX512DQ-NEXT:    kmovb %k0, (%rdi)
-; AVX512DQ-NEXT:    retq
+; CHECK-LABEL: store_v2i1_constant:
+; CHECK:       ## %bb.0: ## %entry
+; CHECK-NEXT:    movb $1, (%rdi)
+; CHECK-NEXT:    retq
 ;
 ; X86-LABEL: store_v2i1_constant:
 ; X86:       ## %bb.0: ## %entry
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X86-NEXT:    movb $1, %cl
-; X86-NEXT:    kmovd %ecx, %k0
-; X86-NEXT:    kmovb %k0, (%eax)
+; X86-NEXT:    movb $1, (%eax)
 ; X86-NEXT:    retl
 entry:
   store <2 x i1> <i1 1, i1 0>, <2 x i1>* %R
@@ -3503,36 +3432,15 @@ entry:
 }
 
 define void @store_v4i1_constant(<4 x i1>* %R) {
-; KNL-LABEL: store_v4i1_constant:
-; KNL:       ## %bb.0: ## %entry
-; KNL-NEXT:    movb $5, (%rdi)
-; KNL-NEXT:    retq
-;
-; SKX-LABEL: store_v4i1_constant:
-; SKX:       ## %bb.0: ## %entry
-; SKX-NEXT:    movb $5, %al
-; SKX-NEXT:    kmovd %eax, %k0
-; SKX-NEXT:    kmovb %k0, (%rdi)
-; SKX-NEXT:    retq
-;
-; AVX512BW-LABEL: store_v4i1_constant:
-; AVX512BW:       ## %bb.0: ## %entry
-; AVX512BW-NEXT:    movb $5, (%rdi)
-; AVX512BW-NEXT:    retq
-;
-; AVX512DQ-LABEL: store_v4i1_constant:
-; AVX512DQ:       ## %bb.0: ## %entry
-; AVX512DQ-NEXT:    movb $5, %al
-; AVX512DQ-NEXT:    kmovw %eax, %k0
-; AVX512DQ-NEXT:    kmovb %k0, (%rdi)
-; AVX512DQ-NEXT:    retq
+; CHECK-LABEL: store_v4i1_constant:
+; CHECK:       ## %bb.0: ## %entry
+; CHECK-NEXT:    movb $5, (%rdi)
+; CHECK-NEXT:    retq
 ;
 ; X86-LABEL: store_v4i1_constant:
 ; X86:       ## %bb.0: ## %entry
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X86-NEXT:    movb $5, %cl
-; X86-NEXT:    kmovd %ecx, %k0
-; X86-NEXT:    kmovb %k0, (%eax)
+; X86-NEXT:    movb $5, (%eax)
 ; X86-NEXT:    retl
 entry:
   store <4 x i1> <i1 1, i1 0, i1 1, i1 0>, <4 x i1>* %R
