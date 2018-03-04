@@ -18999,13 +18999,14 @@ static SDValue LowerSIGN_EXTEND(SDValue Op, const X86Subtarget &Subtarget,
 static SDValue LowerStore(SDValue Op, const X86Subtarget &Subtarget,
                           SelectionDAG &DAG) {
   StoreSDNode *St = cast<StoreSDNode>(Op.getNode());
-  EVT VT = St->getValue().getValueType();
   SDLoc dl(St);
-  SDValue StoredVal = St->getOperand(1);
+  SDValue StoredVal = St->getValue();
 
   // Without AVX512DQ, we need to use a scalar type for v2i1/v4i1/v8i1 loads.
-  assert(VT.isVector() && VT.getVectorElementType() == MVT::i1 &&
-         VT.getVectorNumElements() <= 8 && "Unexpected VT");
+  assert(StoredVal.getValueType().isVector() &&
+         StoredVal.getValueType().getVectorElementType() == MVT::i1 &&
+         StoredVal.getValueType().getVectorNumElements() <= 8 &&
+         "Unexpected VT");
   assert(!St->isTruncatingStore() && "Expected non-truncating store");
   assert(Subtarget.hasAVX512() && !Subtarget.hasDQI() &&
          "Expected AVX512F without AVX512DQI");
