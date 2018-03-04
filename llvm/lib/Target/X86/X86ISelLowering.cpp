@@ -35021,6 +35021,16 @@ static SDValue combineStore(SDNode *N, SelectionDAG &DAG,
   SDValue StoredVal = St->getOperand(1);
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
+  // If this is a store of a scalar_to_vector to v1i1, just use a scalar store.
+  // This will avoid a copy to k-register.
+  if (VT == MVT::v1i1 && VT == StVT && Subtarget.hasAVX512() &&
+      StoredVal.getOpcode() == ISD::SCALAR_TO_VECTOR &&
+      StoredVal.getOperand(0).getValueType() == MVT::i8) {
+    return DAG.getStore(St->getChain(), dl, StoredVal.getOperand(0),
+                        St->getBasePtr(), St->getPointerInfo(),
+                        St->getAlignment(), St->getMemOperand()->getFlags());
+  }
+
   // If we are saving a concatenation of two XMM registers and 32-byte stores
   // are slow, such as on Sandy Bridge, perform two 16-byte stores.
   bool Fast;
