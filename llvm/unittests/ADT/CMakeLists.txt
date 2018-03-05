@@ -56,7 +56,6 @@ set(ADTSources
   SparseBitVectorTest.cpp
   SparseMultiSetTest.cpp
   SparseSetTest.cpp
-  StatisticTest.cpp
   StringExtrasTest.cpp
   StringMapTest.cpp
   StringRefTest.cpp
