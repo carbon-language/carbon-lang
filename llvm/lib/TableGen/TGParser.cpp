@@ -985,8 +985,109 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
     return nullptr;
   }
 
+  case tgtok::XForEach: { // Value ::= !foreach '(' Id ',' Value ',' Value ')'
+    SMLoc OpLoc = Lex.getLoc();
+    Lex.Lex(); // eat the operation
+    if (Lex.getCode() != tgtok::l_paren) {
+      TokError("expected '(' after !foreach");
+      return nullptr;
+    }
+
+    if (Lex.Lex() != tgtok::Id) { // eat the '('
+      TokError("first argument of !foreach must be an identifier");
+      return nullptr;
+    }
+
+    Init *LHS = StringInit::get(Lex.getCurStrVal());
+
+    if (CurRec->getValue(LHS)) {
+      TokError((Twine("iteration variable '") + LHS->getAsString() +
+                "' already defined")
+                   .str());
+      return nullptr;
+    }
+
+    if (Lex.Lex() != tgtok::comma) { // eat the id
+      TokError("expected ',' in ternary operator");
+      return nullptr;
+    }
+    Lex.Lex();  // eat the ','
+
+    Init *MHS = ParseValue(CurRec);
+    if (!MHS)
+      return nullptr;
+
+    if (Lex.getCode() != tgtok::comma) {
+      TokError("expected ',' in ternary operator");
+      return nullptr;
+    }
+    Lex.Lex();  // eat the ','
+
+    TypedInit *MHSt = dyn_cast<TypedInit>(MHS);
+    if (!MHSt) {
+      TokError("could not get type of !foreach input");
+      return nullptr;
+    }
+
+    RecTy *InEltType = nullptr;
+    RecTy *OutEltType = nullptr;
+    bool IsDAG = false;
+
+    if (ListRecTy *InListTy = dyn_cast<ListRecTy>(MHSt->getType())) {
+      InEltType = InListTy->getElementType();
+      if (ItemType) {
+        if (ListRecTy *OutListTy = dyn_cast<ListRecTy>(ItemType)) {
+          OutEltType = OutListTy->getElementType();
+        } else {
+          Error(OpLoc,
+                "expected value of type '" + Twine(ItemType->getAsString()) +
+                "', but got !foreach of list type");
+          return nullptr;
+        }
+      }
+    } else if (DagRecTy *InDagTy = dyn_cast<DagRecTy>(MHSt->getType())) {
+      InEltType = InDagTy;
+      if (ItemType && !isa<DagRecTy>(ItemType)) {
+        Error(OpLoc,
+              "expected value of type '" + Twine(ItemType->getAsString()) +
+              "', but got !foreach of dag type");
+        return nullptr;
+      }
+      IsDAG = true;
+    } else {
+      TokError("!foreach must have list or dag input");
+      return nullptr;
+    }
+
+    CurRec->addValue(RecordVal(LHS, InEltType, false));
+    Init *RHS = ParseValue(CurRec, OutEltType);
+    CurRec->removeValue(LHS);
+    if (!RHS)
+      return nullptr;
+
+    if (Lex.getCode() != tgtok::r_paren) {
+      TokError("expected ')' in binary operator");
+      return nullptr;
+    }
+    Lex.Lex();  // eat the ')'
+
+    RecTy *OutType;
+    if (IsDAG) {
+      OutType = InEltType;
+    } else {
+      TypedInit *RHSt = dyn_cast<TypedInit>(RHS);
+      if (!RHSt) {
+        TokError("could not get type of !foreach result");
+        return nullptr;
+      }
+      OutType = RHSt->getType()->getListTy();
+    }
+
+    return (TernOpInit::get(TernOpInit::FOREACH, LHS, MHS, RHS, OutType))
+               ->Fold(CurRec, CurMultiClass);
+  }
+
   case tgtok::XIf:
-  case tgtok::XForEach:
   case tgtok::XSubst: {  // Value ::= !ternop '(' Value ',' Value ',' Value ')'
     TernOpInit::TernaryOp Code;
     RecTy *Type = nullptr;
@@ -997,9 +1098,6 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
     default: llvm_unreachable("Unhandled code!");
     case tgtok::XIf:
       Code = TernOpInit::IF;
-      break;
-    case tgtok::XForEach:
-      Code = TernOpInit::FOREACH;
       break;
     case tgtok::XSubst:
       Code = TernOpInit::SUBST;
@@ -1078,23 +1176,6 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
       } else {
         TokError("inconsistent types for !if");
         return nullptr;
-      }
-      break;
-    }
-    case tgtok::XForEach: {
-      TypedInit *MHSt = dyn_cast<TypedInit>(MHS);
-      if (!MHSt) {
-        TokError("could not get type for !foreach");
-        return nullptr;
-      }
-      Type = MHSt->getType();
-      if (isa<ListRecTy>(Type)) {
-        TypedInit *RHSt = dyn_cast<TypedInit>(RHS);
-        if (!RHSt) {
-          TokError("could not get type of !foreach list elements");
-          return nullptr;
-        }
-        Type = RHSt->getType()->getListTy();
       }
       break;
     }

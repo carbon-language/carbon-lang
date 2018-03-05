@@ -17,6 +17,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallVector.h"
@@ -1030,6 +1031,9 @@ public:
 
   static FieldInit *get(Init *R, StringInit *FN);
 
+  Init *getRecord() const { return Rec; }
+  StringInit *getFieldName() const { return FieldName; }
+
   Init *getBit(unsigned Bit) const override;
 
   Init *resolveReferences(Resolver &R) const override;
@@ -1632,6 +1636,26 @@ public:
   virtual bool keepUnsetBits() const { return false; }
 };
 
+/// Resolve arbitrary mappings.
+class MapResolver final : public Resolver {
+  struct MappedValue {
+    Init *V;
+    bool Resolved;
+
+    MappedValue() : V(nullptr), Resolved(false) {}
+    MappedValue(Init *V, bool Resolved) : V(V), Resolved(Resolved) {}
+  };
+
+  DenseMap<Init *, MappedValue> Map;
+
+public:
+  explicit MapResolver(Record *CurRec = nullptr) : Resolver(CurRec) {}
+
+  void set(Init *Key, Init *Value) { Map[Key] = {Value, false}; }
+
+  Init *resolve(Init *VarName) override;
+};
+
 /// Resolve all variables from a record except for unset variables.
 class RecordResolver final : public Resolver {
   DenseMap<Init *, Init *> Cache;
@@ -1661,6 +1685,23 @@ public:
     if (VarName == RV->getNameInit())
       return RV->getValue();
     return nullptr;
+  }
+};
+
+/// Delegate resolving to a sub-resolver, but shadow some variable names.
+class ShadowResolver final : public Resolver {
+  Resolver &R;
+  DenseSet<Init *> Shadowed;
+
+public:
+  explicit ShadowResolver(Resolver &R) : Resolver(R.getCurrentRecord()), R(R) {}
+
+  void addShadow(Init *Key) { Shadowed.insert(Key); }
+
+  Init *resolve(Init *VarName) override {
+    if (Shadowed.count(VarName))
+      return nullptr;
+    return R.resolve(VarName);
   }
 };
 
