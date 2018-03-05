@@ -6777,11 +6777,17 @@ SDValue AArch64TargetLowering::LowerBUILD_VECTOR(SDValue Op,
       const SDNode *N = V.getNode();
       if (!isa<ConstantSDNode>(N->getOperand(1)))
         break;
+      SDValue N0 = N->getOperand(0);
 
       // All elements are extracted from the same vector.
-      if (!Vector)
-        Vector = N->getOperand(0).getNode();
-      else if (Vector != N->getOperand(0).getNode()) {
+      if (!Vector) {
+        Vector = N0.getNode();
+        // Check that the type of EXTRACT_VECTOR_ELT matches the type of
+        // BUILD_VECTOR.
+        if (VT.getVectorElementType() !=
+            N0.getValueType().getVectorElementType())
+          break;
+      } else if (Vector != N0.getNode()) {
         Odd = false;
         Even = false;
         break;
