@@ -1420,7 +1420,8 @@ static void PrintDiagnosticCategories(raw_ostream &OS) {
 }
 
 void Driver::HandleAutocompletions(StringRef PassedFlags) const {
-  if (PassedFlags == "") return;
+  if (PassedFlags == "")
+    return;
   // Print out all options that start with a given argument. This is used for
   // shell autocompletion.
   std::vector<std::string> SuggestedCompletions;
@@ -1440,7 +1441,8 @@ void Driver::HandleAutocompletions(StringRef PassedFlags) const {
 
   // We want to show cc1-only options only when clang is invoked with -cc1 or
   // -Xclang.
-  if (std::find(Flags.begin(), Flags.end(), "-Xclang") != Flags.end() || std::find(Flags.begin(), Flags.end(), "-cc1") != Flags.end())
+  if (std::find(Flags.begin(), Flags.end(), "-Xclang") != Flags.end() ||
+      std::find(Flags.begin(), Flags.end(), "-cc1") != Flags.end())
     DisableFlags &= ~options::NoDriverOption;
 
   StringRef Cur;
@@ -1467,7 +1469,6 @@ void Driver::HandleAutocompletions(StringRef PassedFlags) const {
       if (S.startswith(Cur))
         SuggestedCompletions.push_back(S);
   }
-
 
   // Sort the autocomplete candidates so that shells print them out in a
   // deterministic order. We could sort in any way, but we chose
