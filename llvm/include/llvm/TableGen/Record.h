@@ -16,6 +16,7 @@
 #define LLVM_TABLEGEN_RECORD_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallVector.h"
@@ -42,6 +43,7 @@ struct MultiClass;
 class Record;
 class RecordKeeper;
 class RecordVal;
+class Resolver;
 class StringInit;
 
 //===----------------------------------------------------------------------===//
@@ -360,7 +362,7 @@ public:
   /// variables which may not be defined at the time the expression is formed.
   /// If a value is set for the variable later, this method will be called on
   /// users of the value to allow the value to propagate out.
-  virtual Init *resolveReferences(Record &R, const RecordVal *RV) const {
+  virtual Init *resolveReferences(Resolver &R) const {
     return const_cast<Init *>(this);
   }
 
@@ -508,7 +510,7 @@ public:
 
   std::string getAsString() const override;
 
-  Init *resolveReferences(Record &R, const RecordVal *RV) const override;
+  Init *resolveReferences(Resolver &R) const override;
 
   Init *getBit(unsigned Bit) const override {
     assert(Bit < NumBits && "Bit index out of range!");
@@ -653,7 +655,7 @@ public:
   /// If a value is set for the variable later, this method will be called on
   /// users of the value to allow the value to propagate out.
   ///
-  Init *resolveReferences(Record &R, const RecordVal *RV) const override;
+  Init *resolveReferences(Resolver &R) const override;
 
   std::string getAsString() const override;
 
@@ -746,7 +748,7 @@ public:
   // possible to fold.
   Init *Fold(Record *CurRec, MultiClass *CurMultiClass) const override;
 
-  Init *resolveReferences(Record &R, const RecordVal *RV) const override;
+  Init *resolveReferences(Resolver &R) const override;
 
   std::string getAsString() const override;
 };
@@ -800,7 +802,7 @@ public:
   // possible to fold.
   Init *Fold(Record *CurRec, MultiClass *CurMultiClass) const override;
 
-  Init *resolveReferences(Record &R, const RecordVal *RV) const override;
+  Init *resolveReferences(Resolver &R) const override;
 
   std::string getAsString() const override;
 };
@@ -862,7 +864,7 @@ public:
     return LHS->isComplete() && MHS->isComplete() && RHS->isComplete();
   }
 
-  Init *resolveReferences(Record &R, const RecordVal *RV) const override;
+  Init *resolveReferences(Resolver &R) const override;
 
   std::string getAsString() const override;
 };
@@ -897,7 +899,7 @@ public:
   /// If a value is set for the variable later, this method will be called on
   /// users of the value to allow the value to propagate out.
   ///
-  Init *resolveReferences(Record &R, const RecordVal *RV) const override;
+  Init *resolveReferences(Resolver &R) const override;
 
   Init *getBit(unsigned Bit) const override;
 
@@ -934,7 +936,7 @@ public:
   unsigned getBitNum() const override { return Bit; }
 
   std::string getAsString() const override;
-  Init *resolveReferences(Record &R, const RecordVal *RV) const override;
+  Init *resolveReferences(Resolver &R) const override;
 
   Init *getBit(unsigned B) const override {
     assert(B < 1 && "Bit index out of range!");
@@ -970,7 +972,7 @@ public:
   unsigned getElementNum() const { return Element; }
 
   std::string getAsString() const override;
-  Init *resolveReferences(Record &R, const RecordVal *RV) const override;
+  Init *resolveReferences(Resolver &R) const override;
 
   Init *getBit(unsigned Bit) const override;
 };
@@ -1030,7 +1032,7 @@ public:
 
   Init *getBit(unsigned Bit) const override;
 
-  Init *resolveReferences(Record &R, const RecordVal *RV) const override;
+  Init *resolveReferences(Resolver &R) const override;
 
   std::string getAsString() const override {
     return Rec->getAsString() + "." + FieldName->getValue().str();
@@ -1105,7 +1107,7 @@ public:
     return makeArrayRef(getTrailingObjects<StringInit *>(), NumArgNames);
   }
 
-  Init *resolveReferences(Record &R, const RecordVal *RV) const override;
+  Init *resolveReferences(Resolver &R) const override;
 
   std::string getAsString() const override;
 
@@ -1604,6 +1606,63 @@ raw_ostream &operator<<(raw_ostream &OS, const RecordKeeper &RK);
 /// to CurRec's name.
 Init *QualifyName(Record &CurRec, MultiClass *CurMultiClass,
                   Init *Name, StringRef Scoper);
+
+//===----------------------------------------------------------------------===//
+//  Resolvers
+//===----------------------------------------------------------------------===//
+
+/// Interface for looking up the initializer for a variable name, used by
+/// Init::resolveReferences.
+class Resolver {
+  Record *CurRec;
+
+public:
+  explicit Resolver(Record *CurRec) : CurRec(CurRec) {}
+  virtual ~Resolver() {}
+
+  Record *getCurrentRecord() const { return CurRec; }
+
+  /// Return the initializer for the given variable name (should normally be a
+  /// StringInit), or nullptr if the name could not be resolved.
+  virtual Init *resolve(Init *VarName) = 0;
+
+  // Whether bits in a BitsInit should stay unresolved if resolving them would
+  // result in a ? (UnsetInit). This behavior is used to represent instruction
+  // encodings by keeping references to unset variables within a record.
+  virtual bool keepUnsetBits() const { return false; }
+};
+
+/// Resolve all variables from a record except for unset variables.
+class RecordResolver final : public Resolver {
+  DenseMap<Init *, Init *> Cache;
+  SmallVector<Init *, 4> Stack;
+
+public:
+  explicit RecordResolver(Record &R) : Resolver(&R) {}
+
+  Init *resolve(Init *VarName) override;
+
+  bool keepUnsetBits() const override { return true; }
+};
+
+/// Resolve all references to a specific RecordVal.
+//
+// TODO: This is used for resolving references to template arguments, in a
+//       rather inefficient way. Change those uses to resolve all template
+//       arguments simultaneously and get rid of this class.
+class RecordValResolver final : public Resolver {
+  const RecordVal *RV;
+
+public:
+  explicit RecordValResolver(Record &R, const RecordVal *RV)
+      : Resolver(&R), RV(RV) {}
+
+  Init *resolve(Init *VarName) override {
+    if (VarName == RV->getNameInit())
+      return RV->getValue();
+    return nullptr;
+  }
+};
 
 } // end namespace llvm
 
