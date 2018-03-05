@@ -168,6 +168,9 @@ public:
   bool isCheapToSpeculateCttz() const override;
   bool isCheapToSpeculateCtlz() const override;
 
+  bool isSDNodeSourceOfDivergence(const SDNode * N,
+    FunctionLoweringInfo * FLI, DivergenceAnalysis * DA) const;
+  bool isSDNodeAlwaysUniform(const SDNode * N) const;
   static CCAssignFn *CCAssignFnForCall(CallingConv::ID CC, bool IsVarArg);
   static CCAssignFn *CCAssignFnForReturn(CallingConv::ID CC, bool IsVarArg);
 
