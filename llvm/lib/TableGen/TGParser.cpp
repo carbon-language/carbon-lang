@@ -2576,29 +2576,30 @@ bool TGParser::ResolveMulticlassDefArgs(MultiClass &MC, Record *CurRec,
                                         ArrayRef<Init *> TArgs,
                                         ArrayRef<Init *> TemplateVals,
                                         bool DeleteArgs) {
-  // Loop over all of the template arguments, setting them to the specified
-  // value or leaving them as the default if necessary.
+  // Set all template arguments to the specified value or leave them as the
+  // default if necessary, then resolve them all simultaneously.
+  MapResolver R(CurRec);
+
   for (unsigned i = 0, e = TArgs.size(); i != e; ++i) {
     // Check if a value is specified for this temp-arg.
     if (i < TemplateVals.size()) {
-      // Set it now.
       if (SetValue(CurRec, DefmPrefixLoc, TArgs[i], None, TemplateVals[i]))
         return true;
-
-      // Resolve it next.
-      CurRec->resolveReferencesTo(CurRec->getValue(TArgs[i]));
-
-      if (DeleteArgs)
-        // Now remove it.
-        CurRec->removeValue(TArgs[i]);
-
     } else if (!CurRec->getValue(TArgs[i])->getValue()->isComplete()) {
       return Error(SubClassLoc, "value not specified for template argument #" +
                    Twine(i) + " (" + TArgs[i]->getAsUnquotedString() +
                    ") of multiclassclass '" + MC.Rec.getNameInitAsString() +
                    "'");
     }
+
+    R.set(TArgs[i], CurRec->getValue(TArgs[i])->getValue());
+
+    if (DeleteArgs)
+      CurRec->removeValue(TArgs[i]);
   }
+
+  CurRec->resolveReferences(R);
+
   return false;
 }
 
