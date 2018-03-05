@@ -1517,34 +1517,35 @@ void Record::setName(Init *NewName) {
   // this.  See TGParser::ParseDef and TGParser::ParseDefm.
 }
 
-void Record::resolveReferencesTo(const RecordVal *RV) {
-  RecordResolver RecResolver(*this);
-  RecordValResolver RecValResolver(*this, RV);
-  Resolver *R;
-  if (RV)
-    R = &RecValResolver;
-  else
-    R = &RecResolver;
-
+void Record::resolveReferences(Resolver &R, const RecordVal *SkipVal) {
   for (RecordVal &Value : Values) {
-    if (RV == &Value) // Skip resolve the same field as the given one
+    if (SkipVal == &Value) // Skip resolve the same field as the given one
       continue;
-    if (Init *V = Value.getValue())
-      if (Value.setValue(V->resolveReferences(*R)))
+    if (Init *V = Value.getValue()) {
+      Init *VR = V->resolveReferences(R);
+      if (Value.setValue(VR))
         PrintFatalError(getLoc(), "Invalid value is found when setting '" +
-                        Value.getNameInitAsString() +
-                        "' after resolving references" +
-                        (RV ? " against '" + RV->getNameInitAsString() +
-                              "' of (" + RV->getValue()->getAsUnquotedString() +
-                              ")"
-                            : "") + "\n");
+                                      Value.getNameInitAsString() +
+                                      "' after resolving references: " +
+                                      VR->getAsUnquotedString() + "\n");
+    }
   }
   Init *OldName = getNameInit();
-  Init *NewName = Name->resolveReferences(*R);
+  Init *NewName = Name->resolveReferences(R);
   if (NewName != OldName) {
     // Re-register with RecordKeeper.
     setName(NewName);
   }
+}
+
+void Record::resolveReferences() {
+  RecordResolver R(*this);
+  resolveReferences(R);
+}
+
+void Record::resolveReferencesTo(const RecordVal *RV) {
+  RecordValResolver R(*this, RV);
+  resolveReferences(R, RV);
 }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)

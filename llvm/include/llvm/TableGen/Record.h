@@ -1349,7 +1349,14 @@ public:
 
   /// If there are any field references that refer to fields
   /// that have been filled in, we can propagate the values now.
-  void resolveReferences() { resolveReferencesTo(nullptr); }
+  void resolveReferences();
+
+  /// Apply the resolver to the name of the record as well as to the
+  /// initializers of all fields of the record except SkipVal.
+  ///
+  /// The resolver should not resolve any of the fields itself, to avoid
+  /// recursion / infinite loops.
+  void resolveReferences(Resolver &R, const RecordVal *SkipVal = nullptr);
 
   /// If anything in this record refers to RV, replace the
   /// reference to RV with the RHS of RV.  If RV is null, we resolve all
