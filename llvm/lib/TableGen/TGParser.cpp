@@ -252,6 +252,8 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMC,
 
   // Loop over all of the template arguments, setting them to the specified
   // value or leaving them as the default if necessary.
+  MapResolver CurRecResolver(CurRec);
+
   for (unsigned i = 0, e = SMCTArgs.size(); i != e; ++i) {
     if (i < SubMultiClass.TemplateArgs.size()) {
       // If a value is specified for this template arg, set it in the
@@ -260,12 +262,6 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMC,
                    None, SubMultiClass.TemplateArgs[i]))
         return true;
 
-      // Resolve it next.
-      CurRec->resolveReferencesTo(CurRec->getValue(SMCTArgs[i]));
-
-      // Now remove it.
-      CurRec->removeValue(SMCTArgs[i]);
-
       // If a value is specified for this template arg, set it in the
       // new defs now.
       for (const auto &Def :
@@ -273,12 +269,6 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMC,
         if (SetValue(Def.get(), SubMultiClass.RefRange.Start, SMCTArgs[i],
                      None, SubMultiClass.TemplateArgs[i]))
           return true;
-
-        // Resolve it next.
-        Def->resolveReferencesTo(Def->getValue(SMCTArgs[i]));
-
-        // Now remove it
-        Def->removeValue(SMCTArgs[i]);
       }
     } else if (!CurRec->getValue(SMCTArgs[i])->getValue()->isComplete()) {
       return Error(SubMultiClass.RefRange.Start,
@@ -286,6 +276,24 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMC,
                    Twine(i) + " (" + SMCTArgs[i]->getAsUnquotedString() +
                    ") of subclass '" + SMC->Rec.getNameInitAsString() + "'!");
     }
+
+    CurRecResolver.set(SMCTArgs[i], CurRec->getValue(SMCTArgs[i])->getValue());
+
+    CurRec->removeValue(SMCTArgs[i]);
+  }
+
+  CurRec->resolveReferences(CurRecResolver);
+
+  for (const auto &Def :
+       makeArrayRef(CurMC->DefPrototypes).slice(newDefStart)) {
+    MapResolver R(Def.get());
+
+    for (Init *SMCTArg : SMCTArgs) {
+      R.set(SMCTArg, Def->getValue(SMCTArg)->getValue());
+      Def->removeValue(SMCTArg);
+    }
+
+    Def->resolveReferences(R);
   }
 
   return false;
