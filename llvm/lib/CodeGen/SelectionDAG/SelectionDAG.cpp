@@ -7600,7 +7600,9 @@ void SelectionDAG::VerifyDAGDiverence()
     }
   }
   for (auto &N : allnodes()) {
-    assert(DivergenceMap[&N] == N.isDivergent() && "Divergence bit inconsistency detected\n");
+    (void)N;
+    assert(DivergenceMap[&N] == N.isDivergent() &&
+           "Divergence bit inconsistency detected\n");
   }
 }
 
