@@ -537,8 +537,8 @@ define <4 x i16> @bsl4xi16_const(<4 x i16> %a, <4 x i16> %b)  {
 define <1 x i64> @bsl1xi64_const(<1 x i64> %a, <1 x i64> %b)  {
 ; CHECK-LABEL: bsl1xi64_const:
 ; CHECK:  bsl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
-	%tmp1 = and <1 x i64> %a, < i64 -16 >
-	%tmp2 = and <1 x i64> %b, < i64 15 >
+	%tmp1 = and <1 x i64> %a, < i64 -256 >
+	%tmp2 = and <1 x i64> %b, < i64 255 >
 	%tmp3 = or <1 x i64> %tmp1, %tmp2
 	ret <1 x i64> %tmp3
 }
