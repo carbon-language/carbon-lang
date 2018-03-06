@@ -1506,6 +1506,7 @@ class RecordKeeper {
   using RecordMap = std::map<std::string, std::unique_ptr<Record>>;
   RecordMap Classes, Defs;
   FoldingSet<RecordRecTy> RecordTypePool;
+  unsigned AnonCounter = 0;
 
 public:
   const RecordMap &getClasses() const { return Classes; }
@@ -1534,6 +1535,8 @@ public:
     (void)Ins;
     assert(Ins && "Record already exists");
   }
+
+  Init *getNewAnonymousName();
 
   //===--------------------------------------------------------------------===//
   // High-level helper methods, useful for tablegen backends...

@@ -1834,6 +1834,12 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const RecordKeeper &RK) {
   return OS;
 }
 
+/// GetNewAnonymousName - Generate a unique anonymous name that can be used as
+/// an identifier.
+Init *RecordKeeper::getNewAnonymousName() {
+  return StringInit::get("anonymous_" + utostr(AnonCounter++));
+}
+
 std::vector<Record *>
 RecordKeeper::getAllDerivedDefinitions(StringRef ClassName) const {
   Record *Class = getClass(ClassName);

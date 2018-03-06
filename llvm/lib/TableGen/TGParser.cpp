@@ -406,7 +406,7 @@ bool TGParser::ProcessForeachDefs(Record *CurRec, SMLoc Loc, IterSet &IterVals){
     if (!IterRec->isAnonymous())
       return Error(Loc, "def already exists: " +IterRec->getNameInitAsString());
 
-    IterRec->setName(GetNewAnonymousName());
+    IterRec->setName(Records.getNewAnonymousName());
   }
 
   Record *IterRecSave = IterRec.get(); // Keep a copy before release.
@@ -425,12 +425,6 @@ static bool isObjectStart(tgtok::TokKind K) {
   return K == tgtok::Class || K == tgtok::Def ||
          K == tgtok::Defm || K == tgtok::Let ||
          K == tgtok::MultiClass || K == tgtok::Foreach;
-}
-
-/// GetNewAnonymousName - Generate a unique anonymous name that can be used as
-/// an identifier.
-Init *TGParser::GetNewAnonymousName() {
-  return StringInit::get("anonymous_" + utostr(AnonCounter++));
 }
 
 /// ParseObjectName - If an object name is specified, return it.  Otherwise,
@@ -1364,8 +1358,9 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
     SMLoc EndLoc = Lex.getLoc();
 
     // Create the new record, set it as CurRec temporarily.
-    auto NewRecOwner = llvm::make_unique<Record>(GetNewAnonymousName(), NameLoc,
-                                                 Records, /*IsAnonymous=*/true);
+    auto NewRecOwner =
+        make_unique<Record>(Records.getNewAnonymousName(), NameLoc, Records,
+                            /*IsAnonymous=*/true);
     Record *NewRec = NewRecOwner.get(); // Keep a copy since we may release.
     SCRef.RefRange = SMRange(NameLoc, EndLoc);
     SCRef.Rec = Class;
@@ -2158,8 +2153,8 @@ bool TGParser::ParseDef(MultiClass *CurMultiClass) {
   if (Name)
     CurRecOwner = make_unique<Record>(Name, DefLoc, Records);
   else
-    CurRecOwner = llvm::make_unique<Record>(GetNewAnonymousName(), DefLoc,
-                                            Records, /*IsAnonymous=*/true);
+    CurRecOwner = make_unique<Record>(Records.getNewAnonymousName(), DefLoc,
+                                      Records, /*IsAnonymous=*/true);
   Record *CurRec = CurRecOwner.get(); // Keep a copy since we may release.
 
   if (!CurMultiClass && Loops.empty()) {
@@ -2504,7 +2499,7 @@ Record *TGParser::InstantiateMulticlassDef(MultiClass &MC, Record *DefProto,
 
   bool IsAnonymous = false;
   if (!DefmPrefix) {
-    DefmPrefix = GetNewAnonymousName();
+    DefmPrefix = Records.getNewAnonymousName();
     IsAnonymous = true;
   }
 
