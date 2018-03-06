@@ -125,54 +125,138 @@ std::string DagRecTy::getAsString() const {
   return "dag";
 }
 
-RecordRecTy *RecordRecTy::get(Record *R) {
-  return dyn_cast<RecordRecTy>(R->getDefInit()->getType());
+static void ProfileRecordRecTy(FoldingSetNodeID &ID,
+                               ArrayRef<Record *> Classes) {
+  ID.AddInteger(Classes.size());
+  for (Record *R : Classes)
+    ID.AddPointer(R);
+}
+
+RecordRecTy *RecordRecTy::get(ArrayRef<Record *> UnsortedClasses) {
+  if (UnsortedClasses.empty()) {
+    static RecordRecTy AnyRecord(0);
+    return &AnyRecord;
+  }
+
+  FoldingSet<RecordRecTy> &ThePool =
+      UnsortedClasses[0]->getRecords().RecordTypePool;
+
+  SmallVector<Record *, 4> Classes(UnsortedClasses.begin(),
+                                   UnsortedClasses.end());
+  std::sort(Classes.begin(), Classes.end(),
+            [](Record *LHS, Record *RHS) {
+              return LHS->getNameInitAsString() < RHS->getNameInitAsString();
+            });
+
+  FoldingSetNodeID ID;
+  ProfileRecordRecTy(ID, Classes);
+
+  void *IP = nullptr;
+  if (RecordRecTy *Ty = ThePool.FindNodeOrInsertPos(ID, IP))
+    return Ty;
+
+#ifndef NDEBUG
+  // Check for redundancy.
+  for (unsigned i = 0; i < Classes.size(); ++i) {
+    for (unsigned j = 0; j < Classes.size(); ++j) {
+      assert(i == j || !Classes[i]->isSubClassOf(Classes[j]));
+    }
+    assert(&Classes[0]->getRecords() == &Classes[i]->getRecords());
+  }
+#endif
+
+  void *Mem = Allocator.Allocate(totalSizeToAlloc<Record *>(Classes.size()),
+                                 alignof(RecordRecTy));
+  RecordRecTy *Ty = new(Mem) RecordRecTy(Classes.size());
+  std::uninitialized_copy(Classes.begin(), Classes.end(),
+                          Ty->getTrailingObjects<Record *>());
+  ThePool.InsertNode(Ty, IP);
+  return Ty;
+}
+
+void RecordRecTy::Profile(FoldingSetNodeID &ID) const {
+  ProfileRecordRecTy(ID, getClasses());
 }
 
 std::string RecordRecTy::getAsString() const {
-  return Rec->getName();
+  if (NumClasses == 1)
+    return getClasses()[0]->getName();
+
+  std::string Str = "{";
+  bool First = true;
+  for (Record *R : getClasses()) {
+    if (!First)
+      Str += ", ";
+    First = false;
+    Str += R->getName();
+  }
+  Str += "}";
+  return Str;
+}
+
+bool RecordRecTy::isSubClassOf(Record *Class) const {
+  return llvm::any_of(getClasses(), [Class](Record *MySuperClass) {
+                                      return MySuperClass == Class ||
+                                             MySuperClass->isSubClassOf(Class);
+                                    });
 }
 
 bool RecordRecTy::typeIsConvertibleTo(const RecTy *RHS) const {
+  if (this == RHS)
+    return true;
+
   const RecordRecTy *RTy = dyn_cast<RecordRecTy>(RHS);
   if (!RTy)
     return false;
 
-  if (RTy->getRecord() == Rec || Rec->isSubClassOf(RTy->getRecord()))
-    return true;
+  return llvm::all_of(RTy->getClasses(), [this](Record *TargetClass) {
+                                           return isSubClassOf(TargetClass);
+                                         });
+}
 
-  for (const auto &SCPair : RTy->getRecord()->getSuperClasses())
-    if (Rec->isSubClassOf(SCPair.first))
-      return true;
+static RecordRecTy *resolveRecordTypes(RecordRecTy *T1, RecordRecTy *T2) {
+  SmallVector<Record *, 4> CommonSuperClasses;
+  SmallVector<Record *, 4> Stack;
 
-  return false;
+  Stack.insert(Stack.end(), T1->classes_begin(), T1->classes_end());
+
+  while (!Stack.empty()) {
+    Record *R = Stack.back();
+    Stack.pop_back();
+
+    if (T2->isSubClassOf(R)) {
+      CommonSuperClasses.push_back(R);
+    } else {
+      R->getDirectSuperClasses(Stack);
+    }
+  }
+
+  return RecordRecTy::get(CommonSuperClasses);
 }
 
 RecTy *llvm::resolveTypes(RecTy *T1, RecTy *T2) {
+  if (T1 == T2)
+    return T1;
+
+  if (RecordRecTy *RecTy1 = dyn_cast<RecordRecTy>(T1)) {
+    if (RecordRecTy *RecTy2 = dyn_cast<RecordRecTy>(T2))
+      return resolveRecordTypes(RecTy1, RecTy2);
+  }
+
   if (T1->typeIsConvertibleTo(T2))
     return T2;
   if (T2->typeIsConvertibleTo(T1))
     return T1;
 
-  // If one is a Record type, check superclasses
-  if (RecordRecTy *RecTy1 = dyn_cast<RecordRecTy>(T1)) {
-    // See if T2 inherits from a type T1 also inherits from
-    for (const auto &SuperPair1 : RecTy1->getRecord()->getSuperClasses()) {
-      RecordRecTy *SuperRecTy1 = RecordRecTy::get(SuperPair1.first);
-      RecTy *NewType1 = resolveTypes(SuperRecTy1, T2);
-      if (NewType1)
-        return NewType1;
+  if (ListRecTy *ListTy1 = dyn_cast<ListRecTy>(T1)) {
+    if (ListRecTy *ListTy2 = dyn_cast<ListRecTy>(T2)) {
+      RecTy* NewType = resolveTypes(ListTy1->getElementType(),
+                                    ListTy2->getElementType());
+      if (NewType)
+        return NewType->getListTy();
     }
   }
-  if (RecordRecTy *RecTy2 = dyn_cast<RecordRecTy>(T2)) {
-    // See if T1 inherits from a type T2 also inherits from
-    for (const auto &SuperPair2 : RecTy2->getRecord()->getSuperClasses()) {
-      RecordRecTy *SuperRecTy2 = RecordRecTy::get(SuperPair2.first);
-      RecTy *NewType2 = resolveTypes(T1, SuperRecTy2);
-      if (NewType2)
-        return NewType2;
-    }
-  }
+
   return nullptr;
 }
 
@@ -1082,9 +1166,12 @@ std::string TernOpInit::getAsString() const {
 }
 
 RecTy *TypedInit::getFieldType(StringInit *FieldName) const {
-  if (RecordRecTy *RecordType = dyn_cast<RecordRecTy>(getType()))
-    if (RecordVal *Field = RecordType->getRecord()->getValue(FieldName))
-      return Field->getType();
+  if (RecordRecTy *RecordType = dyn_cast<RecordRecTy>(getType())) {
+    for (Record *Rec : RecordType->getClasses()) {
+      if (RecordVal *Field = Rec->getValue(FieldName))
+        return Field->getType();
+    }
+  }
   return nullptr;
 }
 
@@ -1159,11 +1246,8 @@ TypedInit::convertInitializerTo(RecTy *Ty) const {
   }
 
   if (auto *SRRT = dyn_cast<RecordRecTy>(Ty)) {
-    // Ensure that this is compatible with Rec.
-    if (RecordRecTy *DRRT = dyn_cast<RecordRecTy>(getType()))
-      if (DRRT->getRecord()->isSubClassOf(SRRT->getRecord()) ||
-          DRRT->getRecord() == SRRT->getRecord())
-        return const_cast<TypedInit *>(this);
+    if (getType()->typeIsConvertibleTo(SRRT))
+      return const_cast<TypedInit *>(this);
     return nullptr;
   }
 
@@ -1302,13 +1386,22 @@ Init *VarListElementInit::getBit(unsigned Bit) const {
   return VarBitInit::get(const_cast<VarListElementInit*>(this), Bit);
 }
 
+static RecordRecTy *makeDefInitType(Record *Rec) {
+  SmallVector<Record *, 4> SuperClasses;
+  Rec->getDirectSuperClasses(SuperClasses);
+  return RecordRecTy::get(SuperClasses);
+}
+
+DefInit::DefInit(Record *D)
+    : TypedInit(IK_DefInit, makeDefInitType(D)), Def(D) {}
+
 DefInit *DefInit::get(Record *R) {
   return R->getDefInit();
 }
 
 Init *DefInit::convertInitializerTo(RecTy *Ty) const {
   if (auto *RRT = dyn_cast<RecordRecTy>(Ty))
-    if (getDef()->isSubClassOf(RRT->getRecord()))
+    if (getType()->typeIsConvertibleTo(RRT))
       return const_cast<DefInit *>(this);
   return nullptr;
 }
@@ -1497,7 +1590,7 @@ void Record::checkName() {
 
 DefInit *Record::getDefInit() {
   if (!TheInit)
-    TheInit = new(Allocator) DefInit(this, new(Allocator) RecordRecTy(this));
+    TheInit = new(Allocator) DefInit(this);
   return TheInit;
 }
 
@@ -1515,6 +1608,17 @@ void Record::setName(Init *NewName) {
   // record name be an Init is to provide this flexibility.  The extra
   // resolve steps after completely instantiating defs takes care of
   // this.  See TGParser::ParseDef and TGParser::ParseDefm.
+}
+
+void Record::getDirectSuperClasses(SmallVectorImpl<Record *> &Classes) const {
+  ArrayRef<std::pair<Record *, SMRange>> SCs = getSuperClasses();
+  while (!SCs.empty()) {
+    // Superclasses are in reverse preorder, so 'back' is a direct superclass,
+    // and its transitive superclasses are directly preceding it.
+    Record *SC = SCs.back().first;
+    SCs = SCs.drop_back(1 + SC->getSuperClasses().size());
+    Classes.push_back(SC);
+  }
 }
 
 void Record::resolveReferences(Resolver &R, const RecordVal *SkipVal) {

@@ -223,26 +223,47 @@ public:
   std::string getAsString() const override;
 };
 
-/// '[classname]' - Represent an instance of a class, such as:
-/// (R32 X = EAX).
-class RecordRecTy : public RecTy {
+/// '[classname]' - Type of record values that have zero or more superclasses.
+///
+/// The list of superclasses is non-redundant, i.e. only contains classes that
+/// are not the superclass of some other listed class.
+class RecordRecTy final : public RecTy, public FoldingSetNode,
+                          public TrailingObjects<RecordRecTy, Record *> {
   friend class Record;
 
-  Record *Rec;
+  unsigned NumClasses;
 
-  explicit RecordRecTy(Record *R) : RecTy(RecordRecTyKind), Rec(R) {}
+  explicit RecordRecTy(unsigned Num)
+      : RecTy(RecordRecTyKind), NumClasses(Num) {}
 
 public:
+  RecordRecTy(const RecordRecTy &) = delete;
+  RecordRecTy &operator=(const RecordRecTy &) = delete;
+
+  // Do not use sized deallocation due to trailing objects.
+  void operator delete(void *p) { ::operator delete(p); }
+
   static bool classof(const RecTy *RT) {
     return RT->getRecTyKind() == RecordRecTyKind;
   }
 
-  static RecordRecTy *get(Record *R);
+  /// Get the record type with the given non-redundant list of superclasses.
+  static RecordRecTy *get(ArrayRef<Record *> Classes);
 
-  Record *getRecord() const { return Rec; }
+  void Profile(FoldingSetNodeID &ID) const;
+
+  ArrayRef<Record *> getClasses() const {
+    return makeArrayRef(getTrailingObjects<Record *>(), NumClasses);
+  }
+
+  using const_record_iterator = Record * const *;
+
+  const_record_iterator classes_begin() const { return getClasses().begin(); }
+  const_record_iterator classes_end() const { return getClasses().end(); }
 
   std::string getAsString() const override;
 
+  bool isSubClassOf(Record *Class) const;
   bool typeIsConvertibleTo(const RecTy *RHS) const override;
 };
 
@@ -984,7 +1005,7 @@ class DefInit : public TypedInit {
 
   Record *Def;
 
-  DefInit(Record *D, RecordRecTy *T) : TypedInit(IK_DefInit, T), Def(D) {}
+  explicit DefInit(Record *D);
 
 public:
   DefInit(const DefInit &) = delete;
@@ -1189,6 +1210,9 @@ class Record {
   SmallVector<SMLoc, 4> Locs;
   SmallVector<Init *, 0> TemplateArgs;
   SmallVector<RecordVal, 0> Values;
+
+  // All superclasses in the inheritance forest in reverse preorder (yes, it
+  // must be a forest; diamond-shaped inheritance is not allowed).
   SmallVector<std::pair<Record *, SMRange>, 0> SuperClasses;
 
   // Tracks Record instances. Not owned by Record.
@@ -1268,6 +1292,9 @@ public:
   ArrayRef<std::pair<Record *, SMRange>>  getSuperClasses() const {
     return SuperClasses;
   }
+
+  /// Append the direct super classes of this record to Classes.
+  void getDirectSuperClasses(SmallVectorImpl<Record *> &Classes) const;
 
   bool isTemplateArg(Init *Name) const {
     for (Init *TA : TemplateArgs)
@@ -1465,8 +1492,10 @@ struct MultiClass {
 };
 
 class RecordKeeper {
+  friend class RecordRecTy;
   using RecordMap = std::map<std::string, std::unique_ptr<Record>>;
   RecordMap Classes, Defs;
+  FoldingSet<RecordRecTy> RecordTypePool;
 
 public:
   const RecordMap &getClasses() const { return Classes; }

@@ -1178,12 +1178,10 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
         return nullptr;
       }
 
-      if (MHSTy->typeIsConvertibleTo(RHSTy)) {
-        Type = RHSTy;
-      } else if (RHSTy->typeIsConvertibleTo(MHSTy)) {
-        Type = MHSTy;
-      } else {
-        TokError("inconsistent types for !if");
+      Type = resolveTypes(MHSTy, RHSTy);
+      if (!Type) {
+        TokError(Twine("inconsistent types '") + MHSTy->getAsString() +
+                 "' and '" + RHSTy->getAsString() + "' for !if");
         return nullptr;
       }
       break;
@@ -1364,7 +1362,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
                                                        MCNameRV->getType()),
                                           NewRec->getNameInit(),
                                           StringRecTy::get()),
-                           Class->getDefInit()->getType());
+                           NewRec->getDefInit()->getType());
     }
 
     // The result of the expression is a reference to the new record.
