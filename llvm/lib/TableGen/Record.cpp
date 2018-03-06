@@ -393,6 +393,14 @@ BitsInit::convertInitializerBitRange(ArrayRef<unsigned> Bits) const {
   return BitsInit::get(NewBits);
 }
 
+bool BitsInit::isConcrete() const {
+  for (unsigned i = 0, e = getNumBits(); i != e; ++i) {
+    if (!getBit(i)->isConcrete())
+      return false;
+  }
+  return true;
+}
+
 std::string BitsInit::getAsString() const {
   std::string Result = "{ ";
   for (unsigned i = 0, e = getNumBits(); i != e; ++i) {
@@ -639,6 +647,14 @@ Init *ListInit::resolveReferences(Resolver &R) const {
   if (Changed)
     return ListInit::get(Resolved, getElementType());
   return const_cast<ListInit *>(this);
+}
+
+bool ListInit::isConcrete() const {
+  for (Init *Element : *this) {
+    if (!Element->isConcrete())
+      return false;
+  }
+  return true;
 }
 
 std::string ListInit::getAsString() const {
@@ -1442,6 +1458,16 @@ Init *DagInit::resolveReferences(Resolver &R) const {
     return DagInit::get(Op, ValName, NewArgs, getArgNames());
 
   return const_cast<DagInit *>(this);
+}
+
+bool DagInit::isConcrete() const {
+  if (!Val->isConcrete())
+    return false;
+  for (const Init *Elt : getArgs()) {
+    if (!Elt->isConcrete())
+      return false;
+  }
+  return true;
 }
 
 std::string DagInit::getAsString() const {

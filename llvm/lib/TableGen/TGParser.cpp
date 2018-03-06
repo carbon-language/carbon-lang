@@ -68,6 +68,47 @@ LLVM_DUMP_METHOD void SubMultiClassReference::dump() const {
 
 } // end namespace llvm
 
+static bool checkBitsConcrete(Record &R, const RecordVal &RV) {
+  BitsInit *BV = cast<BitsInit>(RV.getValue());
+  for (unsigned i = 0, e = BV->getNumBits(); i != e; ++i) {
+    Init *Bit = BV->getBit(i);
+    bool IsReference = false;
+    if (auto VBI = dyn_cast<VarBitInit>(Bit)) {
+      if (auto VI = dyn_cast<VarInit>(VBI->getBitVar())) {
+        if (R.getValue(VI->getName()))
+          IsReference = true;
+      }
+    } else if (isa<VarInit>(Bit)) {
+      IsReference = true;
+    }
+    if (!(IsReference || Bit->isConcrete()))
+      return false;
+  }
+  return true;
+}
+
+static void checkConcrete(Record &R) {
+  for (const RecordVal &RV : R.getValues()) {
+    // HACK: Disable this check for variables declared with 'field'. This is
+    // done merely because existing targets have legitimate cases of
+    // non-concrete variables in helper defs. Ideally, we'd introduce a
+    // 'maybe' or 'optional' modifier instead of this.
+    if (RV.getPrefix())
+      continue;
+
+    if (Init *V = RV.getValue()) {
+      bool Ok = isa<BitsInit>(V) ? checkBitsConcrete(R, RV) : V->isConcrete();
+      if (!Ok) {
+        PrintError(R.getLoc(),
+                   Twine("Initializer of '") + RV.getNameInitAsString() +
+                   "' in '" + R.getNameInitAsString() +
+                   "' could not be fully resolved: " +
+                   RV.getValue()->getAsString());
+      }
+    }
+  }
+}
+
 bool TGParser::AddValue(Record *CurRec, SMLoc Loc, const RecordVal &RV) {
   if (!CurRec)
     CurRec = &CurMultiClass->Rec;
@@ -371,6 +412,7 @@ bool TGParser::ProcessForeachDefs(Record *CurRec, SMLoc Loc, IterSet &IterVals){
   Record *IterRecSave = IterRec.get(); // Keep a copy before release.
   Records.addDef(std::move(IterRec));
   IterRecSave->resolveReferences();
+  checkConcrete(*IterRecSave);
   return false;
 }
 
@@ -2150,11 +2192,14 @@ bool TGParser::ParseDef(MultiClass *CurMultiClass) {
     return true;
   }
 
-  if (!CurMultiClass)  // Def's in multiclasses aren't really defs.
+  if (!CurMultiClass) { // Def's in multiclasses aren't really defs.
     // See Record::setName().  This resolve step will see any new name
     // for the def that might have been created when resolving
     // inheritance, values and arguments above.
     CurRec->resolveReferences();
+    if (Loops.empty())
+      checkConcrete(*CurRec);
+  }
 
   // If ObjectBody has template arguments, it's an error.
   assert(CurRec->getTemplateArgs().empty() && "How'd this get template args?");
@@ -2747,12 +2792,15 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
     }
   }
 
-  if (!CurMultiClass)
-    for (Record *CurRec : NewRecDefs)
+  if (!CurMultiClass) {
+    for (Record *CurRec : NewRecDefs) {
       // See Record::setName().  This resolve step will see any new
       // name for the def that might have been created when resolving
       // inheritance, values and arguments above.
       CurRec->resolveReferences();
+      checkConcrete(*CurRec);
+    }
+  }
 
   if (Lex.getCode() != tgtok::semi)
     return TokError("expected ';' at end of defm");

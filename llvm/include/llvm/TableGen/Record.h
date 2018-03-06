@@ -348,6 +348,10 @@ public:
   /// not be completely specified yet.
   virtual bool isComplete() const { return true; }
 
+  /// Is this a concrete and fully resolved value without any references or
+  /// stuck operations? Unset values are concrete.
+  virtual bool isConcrete() const { return false; }
+
   /// Print out this value.
   void print(raw_ostream &OS) const { OS << getAsString(); }
 
@@ -468,6 +472,7 @@ public:
   }
 
   bool isComplete() const override { return false; }
+  bool isConcrete() const override { return true; }
   std::string getAsString() const override { return "?"; }
 };
 
@@ -496,6 +501,7 @@ public:
     return const_cast<BitInit*>(this);
   }
 
+  bool isConcrete() const override { return true; }
   std::string getAsString() const override { return Value ? "1" : "0"; }
 };
 
@@ -540,6 +546,7 @@ public:
     return true;
   }
 
+  bool isConcrete() const override;
   std::string getAsString() const override;
 
   Init *resolveReferences(Resolver &R) const override;
@@ -572,6 +579,7 @@ public:
   Init *convertInitializerTo(RecTy *Ty) const override;
   Init *convertInitializerBitRange(ArrayRef<unsigned> Bits) const override;
 
+  bool isConcrete() const override { return true; }
   std::string getAsString() const override;
 
   Init *getBit(unsigned Bit) const override {
@@ -600,6 +608,7 @@ public:
 
   Init *convertInitializerTo(RecTy *Ty) const override;
 
+  bool isConcrete() const override { return true; }
   std::string getAsString() const override { return "\"" + Value.str() + "\""; }
 
   std::string getAsUnquotedString() const override { return Value; }
@@ -630,6 +639,7 @@ public:
 
   Init *convertInitializerTo(RecTy *Ty) const override;
 
+  bool isConcrete() const override { return true; }
   std::string getAsString() const override {
     return "[{" + Value.str() + "}]";
   }
@@ -689,6 +699,7 @@ public:
   ///
   Init *resolveReferences(Resolver &R) const override;
 
+  bool isConcrete() const override;
   std::string getAsString() const override;
 
   ArrayRef<Init*> getValues() const {
@@ -1033,6 +1044,7 @@ public:
 
   RecTy *getFieldType(StringInit *FieldName) const override;
 
+  bool isConcrete() const override { return true; }
   std::string getAsString() const override;
 
   Init *getBit(unsigned Bit) const override {
@@ -1140,6 +1152,7 @@ public:
 
   Init *resolveReferences(Resolver &R) const override;
 
+  bool isConcrete() const override;
   std::string getAsString() const override;
 
   using const_arg_iterator = SmallVectorImpl<Init*>::const_iterator;
