@@ -884,6 +884,10 @@ public:
     construct_name_.clear() ;
   }
   
+
+  //
+  // Should operate with Symbol instead of Identifier
+  //
   const sm::Identifier * GetConstructName(SMap::Index stmt) {
     auto it = construct_name_.find(stmt);
     if ( it == construct_name_.end() ) {
@@ -1518,7 +1522,11 @@ public:
 
   bool Pre(const DerivedTypeStmt &x) { 
     TRACE_CALL() ;
-    InitStmt(x, StmtClass::DerivedType);
+    auto &sema = InitStmt(x, StmtClass::DerivedType);
+
+    auto name = sm::Identifier::get(std::get<1>(x.t));
+    SetConstructName(sema.stmt_index, name);
+
     return true ; 
   }
 
@@ -1530,7 +1538,11 @@ public:
 
   bool Pre(const EndTypeStmt &x) { 
     TRACE_CALL() ;
-    InitStmt(x, StmtClass::EndType);
+    auto & sema = InitStmt(x, StmtClass::EndType);
+
+    auto name = sm::Identifier::get(x.v) ;
+    CheckStatementName(sema.stmt_index, name, false); 
+
     return true ; 
   }
 
@@ -2843,7 +2855,135 @@ public:
 
   bool Pre(const ExitStmt &x) { 
     TRACE_CALL() ;
-    InitStmt(x, StmtClass::Exit);
+    auto & sema = InitStmt(x, StmtClass::Exit);
+
+    auto & smap = GetStatementMap() ;
+
+    // the name of the construct we are looking for (can be null)
+    const sm::Identifier * target_name = sm::Identifier::get(x.v) ; 
+
+    // Remark: I am currently search the target construct by 
+    // only considering its identifer but this is actually incorrect
+    // because of scopes.
+    // 
+    // For instance, consider the following piece of code
+    //
+    //  outer: do i=1,n
+    //  inner: do j=1,n
+    //    block
+    //      import, only :: A,i
+    //      outer: do k=1,3
+    //        ...
+    //      enddo outer
+    //      if (A(i)==0) EXIT outer 
+    //      A(i) = 42 
+    //    end block
+    //  enddo inner
+    //  enddo outer
+    //
+    //  The current implemntation would match the i-loop even though
+    //  its name should not be visible because of the IMPORT, ONLY 
+    //  statement.
+    //
+    //  The proper way should be: 
+    //    - resolve the name to an existing symbol 
+    //    - fail is that symbol is not a construct name (by design 
+    //      there is no issue with forward references)
+    //    - and then explore the parent constructs to match their
+    //      respective symbol (stored in the Statement Map?)
+    //  
+    // Remark: if the symbol holds the SIndex of the construct 
+    //   then the match should be done usng that. 
+    //
+    SMap::Index target_construct = SMap::None ;    
+    SMap::Index construct = sema.stmt_index ; 
+
+    // At that point, construct refers to EXIT statment which is not a
+    // construct index (i.e. a Start statement). However, in the loop below, 
+    // it will be assigned a proper construct index. 
+
+    bool done=false ; 
+    while (!done) 
+      {
+        construct = smap.StartOfConstruct(smap.GetParent(construct));
+        assert( smap.GetGroup(construct) == StmtGroup::Start ) ; 
+        auto construct_name = GetConstructName(construct);
+
+        StmtClass construct_class =  smap.GetClass(construct);
+        switch(construct_class) {
+        case StmtClass::LabelDo:
+        case StmtClass::LabelDoWhile:
+        case StmtClass::NonLabelDo:
+        case StmtClass::NonLabelDoWhile:
+          if ( ! target_name ) {
+            // The default target is the first loop
+            target_construct = construct;
+            done = true;
+          } else if ( construct_name == target_name ) {
+            target_construct = construct;
+            done = true;
+          } 
+          break;
+          
+        case StmtClass::LabelDoConcurrent:
+        case StmtClass::NonLabelDoConcurrent: 
+        case StmtClass::ChangeTeam:
+        case StmtClass::Critical:
+          //
+          //  C1167 An exit-stmt shall not appear within a CHANGE TEAM, CRITICAL, or DO CONCURRENT construct
+          //  if it belongs to that construct or an outer construct.
+          //
+          FAIL("EXIT statement cannot be used to exit a " << StmtClassText(construct_class) << "statement");
+          break ;
+
+        case StmtClass::IfThen:
+        case StmtClass::SelectCase:
+        case StmtClass::SelectRank:
+        case StmtClass::SelectType:
+        case StmtClass::Block:
+        case StmtClass::Associate:
+        case StmtClass::WhereConstruct: 
+          // Those constructs that can be 'exited' if explicitly named
+          if ( target_name ) { 
+            if ( construct_name == target_name ) {
+              target_construct = construct;
+              done = true;
+            }
+          } 
+          break;
+
+        case StmtClass::Program:
+        case StmtClass::Function:
+        case StmtClass::Subroutine:
+          // We need to stop here. 
+          done = true; 
+          break;
+
+        case StmtClass::If:
+          // This is a non-construct IF that owns the EXIT statement
+          break;
+
+        default:
+          // TODO: If you hit that internal error then that means that
+          // we forgot to handle a construct that is susceptible to 
+          // contain an EXIT statement
+          INTERNAL_ERROR;
+
+        }
+      }
+
+    if ( target_construct == SMap::None ) {
+      if ( target_name ) {
+        FAIL("No construct named '" << target_name->name() << "' found arount EXIT statement" ) ;
+      } else {
+        FAIL("No loop found arount EXIT statement" ) ;
+      }
+    }
+    
+    TRACE("Target of EXIT statement #" << sema.stmt_index << " is statement #" << target_construct );
+    // TODO: Do something with target_construct
+
+
     return true ; 
   }
 
