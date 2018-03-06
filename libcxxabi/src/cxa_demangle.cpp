@@ -2102,6 +2102,13 @@ struct Db {
 
   Node *parseAbiTags(Node *N);
 
+  /// Parse the <unresolved-name> production.
+  Node *parseUnresolvedName();
+  Node *parseSimpleId();
+  Node *parseBaseUnresolvedName();
+  Node *parseUnresolvedType();
+  Node *parseDestructorName();
+
   // FIXME: remove this when all the parse_* functions have been rewritten.
   template <const char *(*parse_fn)(const char *, const char *, Db &)>
   Node *legacyParse() {
@@ -2147,46 +2154,6 @@ const char *parse_type(const char *first, const char *last, Db &db) {
   return db.First;
 }
 
-const char *parse_decltype(const char *first, const char *last, Db &db) {
-  db.First = first;
-  db.Last = last;
-  Node *R = db.parseDecltype();
-  if (R == nullptr)
-    return first;
-  db.Names.push_back(R);
-  return db.First;
-}
-
-const char *parse_source_name(const char *first, const char *last, Db &db) {
-  db.First = first;
-  db.Last = last;
-  Node *R = db.parseSourceName(/*NameState=*/nullptr);
-  if (R == nullptr)
-    return first;
-  db.Names.push_back(R);
-  return db.First;
-}
-
-const char *parse_operator_name(const char *first, const char *last, Db &db) {
-  db.First = first;
-  db.Last = last;
-  Node *R = db.parseOperatorName(/*NameState=*/nullptr);
-  if (R == nullptr)
-    return first;
-  db.Names.push_back(R);
-  return db.First;
-}
-
-const char *parse_unqualified_name(const char *first, const char *last, Db &db) {
-  db.First = first;
-  db.Last = last;
-  Node *R = db.parseUnqualifiedName(/*NameState=*/nullptr);
-  if (R == nullptr)
-    return first;
-  db.Names.push_back(R);
-  return db.First;
-}
-
 const char *parse_encoding(const char *first, const char *last, Db &db) {
   db.First = first;
   db.Last = last;
@@ -2200,7 +2167,6 @@ const char *parse_encoding(const char *first, const char *last, Db &db) {
 const char* parse_discriminator(const char* first, const char* last);
 const char *parse_template_args(const char *first, const char *last, Db &db);
 const char *parse_template_param(const char *, const char *, Db &);
-const char *parse_unresolved_name(const char *, const char *, Db &);
 const char *parse_substitution(const char *, const char *, Db &);
 
 
@@ -2795,6 +2761,172 @@ Node *Db::parseNestedName(NameState *State) {
 
   Subs.pop_back();
   return SoFar;
+}
+
+// <simple-id> ::= <source-name> [ <template-args> ]
+Node *Db::parseSimpleId() {
+  Node *SN = parseSourceName(/*NameState=*/nullptr);
+  if (SN == nullptr)
+    return nullptr;
+  if (look() == 'I') {
+    Node *TA = legacyParse<parse_template_args>();
+    if (TA == nullptr)
+      return nullptr;
+    return make<NameWithTemplateArgs>(SN, TA);
+  }
+  return SN;
+}
+
+// <destructor-name> ::= <unresolved-type>  # e.g., ~T or ~decltype(f())
+//                   ::= <simple-id>        # e.g., ~A<2*N>
+Node *Db::parseDestructorName() {
+  Node *Result;
+  if (std::isdigit(look()))
+    Result = parseSimpleId();
+  else
+    Result = parseUnresolvedType();
+  if (Result == nullptr)
+    return nullptr;
+  return make<DtorName>(Result);
+}
+
+// <unresolved-type> ::= <template-param>
+//                   ::= <decltype>
+//                   ::= <substitution>
+Node *Db::parseUnresolvedType() {
+  if (look() == 'T') {
+    Node *TP = legacyParse<parse_template_param>();
+    if (TP == nullptr)
+      return nullptr;
+    Subs.push_back(TP);
+    return TP;
+  }
+  if (look() == 'D') {
+    Node *DT = parseDecltype();
+    if (DT == nullptr)
+      return nullptr;
+    Subs.push_back(DT);
+    return DT;
+  }
+  return legacyParse<parse_substitution>();
+}
+
+// <base-unresolved-name> ::= <simple-id>                                # unresolved name
+//          extension     ::= <operator-name>                            # unresolved operator-function-id
+//          extension     ::= <operator-name> <template-args>            # unresolved operator template-id
+//                        ::= on <operator-name>                         # unresolved operator-function-id
+//                        ::= on <operator-name> <template-args>         # unresolved operator template-id
+//                        ::= dn <destructor-name>                       # destructor or pseudo-destructor;
+//                                                                         # e.g. ~X or ~X<N-1>
+Node *Db::parseBaseUnresolvedName() {
+  if (std::isdigit(look()))
+    return parseSimpleId();
+
+  if (consumeIf("dn"))
+    return parseDestructorName();
+
+  consumeIf("on");
+
+  Node *Oper = parseOperatorName(/*NameState=*/nullptr);
+  if (Oper == nullptr)
+    return nullptr;
+  if (look() == 'I') {
+    Node *TA = legacyParse<parse_template_args>();
+    if (TA == nullptr)
+      return nullptr;
+    return make<NameWithTemplateArgs>(Oper, TA);
+  }
+  return Oper;
+}
+
+// <unresolved-name>
+//  extension        ::= srN <unresolved-type> [<template-args>] <unresolved-qualifier-level>* E <base-unresolved-name>
+//                   ::= [gs] <base-unresolved-name>                     # x or (with "gs") ::x
+//                   ::= [gs] sr <unresolved-qualifier-level>+ E <base-unresolved-name>  
+//                                                                       # A::x, N::y, A<T>::z; "gs" means leading "::"
+//                   ::= sr <unresolved-type> <base-unresolved-name>     # T::x / decltype(p)::x
+//  extension        ::= sr <unresolved-type> <template-args> <base-unresolved-name>
+//                                                                       # T::N::x /decltype(p)::N::x
+//  (ignored)        ::= srN <unresolved-type>  <unresolved-qualifier-level>+ E <base-unresolved-name>
+//
+// <unresolved-qualifier-level> ::= <simple-id>
+Node *Db::parseUnresolvedName() {
+  Node *SoFar = nullptr;
+
+  // srN <unresolved-type> [<template-args>] <unresolved-qualifier-level>* E <base-unresolved-name>
+  // srN <unresolved-type>                   <unresolved-qualifier-level>+ E <base-unresolved-name>
+  if (consumeIf("srN")) {
+    SoFar = parseUnresolvedType();
+    if (SoFar == nullptr)
+      return nullptr;
+
+    if (look() == 'I') {
+      Node *TA = legacyParse<parse_template_args>();
+      if (TA == nullptr)
+        return nullptr;
+      SoFar = make<NameWithTemplateArgs>(SoFar, TA);
+    }
+
+    while (!consumeIf('E')) {
+      Node *Qual = parseSimpleId();
+      if (Qual == nullptr)
+        return nullptr;
+      SoFar = make<QualifiedName>(SoFar, Qual);
+    }
+
+    Node *Base = parseBaseUnresolvedName();
+    if (Base == nullptr)
+      return nullptr;
+    return make<QualifiedName>(SoFar, Base);
+  }
+
+  bool Global = consumeIf("gs");
+
+  // [gs] <base-unresolved-name>                     # x or (with "gs") ::x
+  if (!consumeIf("sr")) {
+    SoFar = parseBaseUnresolvedName();
+    if (SoFar == nullptr)
+      return nullptr;
+    if (Global)
+      SoFar = make<GlobalQualifiedName>(SoFar);
+    return SoFar;
+  }
+
+  // [gs] sr <unresolved-qualifier-level>+ E   <base-unresolved-name>  
+  if (std::isdigit(look())) {
+    do {
+      Node *Qual = parseSimpleId();
+      if (Qual == nullptr)
+        return nullptr;
+      if (SoFar)
+        SoFar = make<QualifiedName>(SoFar, Qual);
+      else if (Global)
+        SoFar = make<GlobalQualifiedName>(Qual);
+      else
+        SoFar = Qual;
+    } while (!consumeIf('E'));
+  }
+  //      sr <unresolved-type>                 <base-unresolved-name>
+  //      sr <unresolved-type> <template-args> <base-unresolved-name>
+  else {
+    SoFar = parseUnresolvedType();
+    if (SoFar == nullptr)
+      return nullptr;
+
+    if (look() == 'I') {
+      Node *TA = legacyParse<parse_template_args>();
+      if (TA == nullptr)
+        return nullptr;
+      SoFar = make<NameWithTemplateArgs>(SoFar, TA);
+    }
+  }
+
+  assert(SoFar != nullptr);
+
+  Node *Base = parseBaseUnresolvedName();
+  if (Base == nullptr)
+    return nullptr;
+  return make<QualifiedName>(SoFar, Base);
 }
 
 // <abi-tags> ::= <abi-tag> [<abi-tags>]
@@ -3844,7 +3976,7 @@ Node *Db::parseExpr() {
       return make<DeleteExpr>(E, Global, /*is_array=*/false);
     }
     case 'n':
-      return legacyParse<parse_unresolved_name>();
+      return parseUnresolvedName();
     case 's': {
       First += 2;
       Node *LHS = parseExpr();
@@ -3986,7 +4118,7 @@ Node *Db::parseExpr() {
   case 'o':
     switch (First[1]) {
     case 'n':
-      return legacyParse<parse_unresolved_name>();
+      return parseUnresolvedName();
     case 'o':
       First += 2;
       return parseBinaryExpr("||");
@@ -4094,7 +4226,7 @@ Node *Db::parseExpr() {
       return make<ParameterPackExpansion>(Child);
     }
     case 'r':
-      return legacyParse<parse_unresolved_name>();
+      return parseUnresolvedName();
     case 't': {
       First += 2;
       Node *Ty = parseType();
@@ -4176,7 +4308,7 @@ Node *Db::parseExpr() {
   case '7':
   case '8':
   case '9':
-    return legacyParse<parse_unresolved_name>();
+    return parseUnresolvedName();
   }
   return nullptr;
 }
@@ -4576,364 +4708,6 @@ parse_template_param(const char* first, const char* last, Db& db)
                         db.make<NameType>(StringView(first, t + 1)));
                     first = t+1;
                     db.FixForwardReferences = true;
-                }
-            }
-        }
-    }
-    return first;
-}
-
-// <simple-id> ::= <source-name> [ <template-args> ]
-
-const char*
-parse_simple_id(const char* first, const char* last, Db& db)
-{
-    if (first != last)
-    {
-        const char* t = parse_source_name(first, last, db);
-        if (t != first)
-        {
-            const char* t1 = parse_template_args(t, last, db);
-            if (t1 != t)
-            {
-                if (db.Names.size() < 2)
-                    return first;
-                auto args = db.Names.back();
-                db.Names.pop_back();
-                db.Names.back() =
-                    db.make<NameWithTemplateArgs>(db.Names.back(), args);
-            }
-            first = t1;
-        }
-        else
-            first = t;
-    }
-    return first;
-}
-
-// <unresolved-type> ::= <template-param>
-//                   ::= <decltype>
-//                   ::= <substitution>
-
-const char*
-parse_unresolved_type(const char* first, const char* last, Db& db)
-{
-    if (first != last)
-    {
-        const char* t = first;
-        switch (*first)
-        {
-        case 'T':
-          {
-            size_t k0 = db.Names.size();
-            t = parse_template_param(first, last, db);
-            size_t k1 = db.Names.size();
-            if (t != first && k1 == k0 + 1)
-            {
-                db.Subs.push_back(db.Names.back());
-                first = t;
-            }
-            else
-            {
-                for (; k1 != k0; --k1)
-                    db.Names.pop_back();
-            }
-            break;
-          }
-        case 'D':
-            t = parse_decltype(first, last, db);
-            if (t != first)
-            {
-                if (db.Names.empty())
-                    return first;
-                db.Subs.push_back(db.Names.back());
-                first = t;
-            }
-            break;
-        case 'S':
-            t = parse_substitution(first, last, db);
-            if (t != first)
-                first = t;
-            else
-            {
-                if (last - first > 2 && first[1] == 't')
-                {
-                    t = parse_unqualified_name(first+2, last, db);
-                    if (t != first+2)
-                    {
-                        if (db.Names.empty())
-                            return first;
-                        db.Names.back() =
-                            db.make<StdQualifiedName>(db.Names.back());
-                        db.Subs.push_back(db.Names.back());
-                        first = t;
-                    }
-                }
-            }
-            break;
-       }
-    }
-    return first;
-}
-
-// <destructor-name> ::= <unresolved-type>                               # e.g., ~T or ~decltype(f())
-//                   ::= <simple-id>                                     # e.g., ~A<2*N>
-
-const char*
-parse_destructor_name(const char* first, const char* last, Db& db)
-{
-    if (first != last)
-    {
-        const char* t = parse_unresolved_type(first, last, db);
-        if (t == first)
-            t = parse_simple_id(first, last, db);
-        if (t != first)
-        {
-            if (db.Names.empty())
-                return first;
-            db.Names.back() = db.make<DtorName>(db.Names.back());
-            first = t;
-        }
-    }
-    return first;
-}
-
-// <base-unresolved-name> ::= <simple-id>                                # unresolved name
-//          extension     ::= <operator-name>                            # unresolved operator-function-id
-//          extension     ::= <operator-name> <template-args>            # unresolved operator template-id
-//                        ::= on <operator-name>                         # unresolved operator-function-id
-//                        ::= on <operator-name> <template-args>         # unresolved operator template-id
-//                        ::= dn <destructor-name>                       # destructor or pseudo-destructor;
-//                                                                         # e.g. ~X or ~X<N-1>
-
-const char*
-parse_base_unresolved_name(const char* first, const char* last, Db& db)
-{
-    if (last - first >= 2)
-    {
-        if ((first[0] == 'o' || first[0] == 'd') && first[1] == 'n')
-        {
-            if (first[0] == 'o')
-            {
-                const char* t = parse_operator_name(first+2, last, db);
-                if (t != first+2)
-                {
-                    first = parse_template_args(t, last, db);
-                    if (first != t)
-                    {
-                        if (db.Names.size() < 2)
-                            return first;
-                        auto args = db.Names.back();
-                        db.Names.pop_back();
-                        db.Names.back() =
-                            db.make<NameWithTemplateArgs>(
-                                db.Names.back(), args);
-                    }
-                }
-            }
-            else
-            {
-                const char* t = parse_destructor_name(first+2, last, db);
-                if (t != first+2)
-                    first = t;
-            }
-        }
-        else
-        {
-            const char* t = parse_simple_id(first, last, db);
-            if (t == first)
-            {
-                t = parse_operator_name(first, last, db);
-                if (t != first)
-                {
-                    first = parse_template_args(t, last, db);
-                    if (first != t)
-                    {
-                        if (db.Names.size() < 2)
-                            return first;
-                        auto args = db.Names.back();
-                        db.Names.pop_back();
-                        db.Names.back() =
-                            db.make<NameWithTemplateArgs>(
-                                db.Names.back(), args);
-                    }
-                }
-            }
-            else
-                first = t;
-        }
-    }
-    return first;
-}
-
-// <unresolved-qualifier-level> ::= <simple-id>
-
-const char*
-parse_unresolved_qualifier_level(const char* first, const char* last, Db& db)
-{
-    return parse_simple_id(first, last, db);
-}
-
-// <unresolved-name>
-//  extension        ::= srN <unresolved-type> [<template-args>] <unresolved-qualifier-level>* E <base-unresolved-name>
-//                   ::= [gs] <base-unresolved-name>                     # x or (with "gs") ::x
-//                   ::= [gs] sr <unresolved-qualifier-level>+ E <base-unresolved-name>  
-//                                                                       # A::x, N::y, A<T>::z; "gs" means leading "::"
-//                   ::= sr <unresolved-type> <base-unresolved-name>     # T::x / decltype(p)::x
-//  extension        ::= sr <unresolved-type> <template-args> <base-unresolved-name>
-//                                                                       # T::N::x /decltype(p)::N::x
-//  (ignored)        ::= srN <unresolved-type>  <unresolved-qualifier-level>+ E <base-unresolved-name>
-
-const char*
-parse_unresolved_name(const char* first, const char* last, Db& db)
-{
-    if (last - first > 2)
-    {
-        const char* t = first;
-        bool global = false;
-        if (t[0] == 'g' && t[1] == 's')
-        {
-            global = true;
-            t += 2;
-        }
-        const char* t2 = parse_base_unresolved_name(t, last, db);
-        if (t2 != t)
-        {
-            if (global)
-            {
-                if (db.Names.empty())
-                    return first;
-                db.Names.back() =
-                    db.make<GlobalQualifiedName>(db.Names.back());
-            }
-            first = t2;
-        }
-        else if (last - t > 2 && t[0] == 's' && t[1] == 'r')
-        {
-            if (t[2] == 'N')
-            {
-                t += 3;
-                const char* t1 = parse_unresolved_type(t, last, db);
-                if (t1 == t || t1 == last)
-                    return first;
-                t = t1;
-                t1 = parse_template_args(t, last, db);
-                if (t1 != t)
-                {
-                    if (db.Names.size() < 2)
-                        return first;
-                    auto args = db.Names.back();
-                    db.Names.pop_back();
-                    db.Names.back() = db.make<NameWithTemplateArgs>(
-                        db.Names.back(), args);
-                    t = t1;
-                    if (t == last)
-                    {
-                        db.Names.pop_back();
-                        return first;
-                    }
-                }
-                while (*t != 'E')
-                {
-                    t1 = parse_unresolved_qualifier_level(t, last, db);
-                    if (t1 == t || t1 == last || db.Names.size() < 2)
-                        return first;
-                    auto s = db.Names.back();
-                    db.Names.pop_back();
-                    db.Names.back() =
-                        db.make<QualifiedName>(db.Names.back(), s);
-                    t = t1;
-                }
-                ++t;
-                t1 = parse_base_unresolved_name(t, last, db);
-                if (t1 == t)
-                {
-                    if (!db.Names.empty())
-                        db.Names.pop_back();
-                    return first;
-                }
-                if (db.Names.size() < 2)
-                    return first;
-                auto s = db.Names.back();
-                db.Names.pop_back();
-                db.Names.back() =
-                    db.make<QualifiedName>(db.Names.back(), s);
-                first = t1;
-            }
-            else
-            {
-                t += 2;
-                const char* t1 = parse_unresolved_type(t, last, db);
-                if (t1 != t)
-                {
-                    t = t1;
-                    t1 = parse_template_args(t, last, db);
-                    if (t1 != t)
-                    {
-                        if (db.Names.size() < 2)
-                            return first;
-                        auto args = db.Names.back();
-                        db.Names.pop_back();
-                        db.Names.back() =
-                            db.make<NameWithTemplateArgs>(
-                                db.Names.back(), args);
-                        t = t1;
-                    }
-                    t1 = parse_base_unresolved_name(t, last, db);
-                    if (t1 == t)
-                    {
-                        if (!db.Names.empty())
-                            db.Names.pop_back();
-                        return first;
-                    }
-                    if (db.Names.size() < 2)
-                        return first;
-                    auto s = db.Names.back();
-                    db.Names.pop_back();
-                    db.Names.back() =
-                        db.make<QualifiedName>(db.Names.back(), s);
-                    first = t1;
-                }
-                else
-                {
-                    t1 = parse_unresolved_qualifier_level(t, last, db);
-                    if (t1 == t || t1 == last)
-                        return first;
-                    t = t1;
-                    if (global)
-                    {
-                        if (db.Names.empty())
-                            return first;
-                        db.Names.back() =
-                            db.make<GlobalQualifiedName>(
-                                db.Names.back());
-                    }
-                    while (*t != 'E')
-                    {
-                        t1 = parse_unresolved_qualifier_level(t, last, db);
-                        if (t1 == t || t1 == last || db.Names.size() < 2)
-                            return first;
-                        auto s = db.Names.back();
-                        db.Names.pop_back();
-                        db.Names.back() = db.make<QualifiedName>(
-                            db.Names.back(), s);
-                        t = t1;
-                    }
-                    ++t;
-                    t1 = parse_base_unresolved_name(t, last, db);
-                    if (t1 == t)
-                    {
-                        if (!db.Names.empty())
-                            db.Names.pop_back();
-                        return first;
-                    }
-                    if (db.Names.size() < 2)
-                        return first;
-                    auto s = db.Names.back();
-                    db.Names.pop_back();
-                    db.Names.back() =
-                        db.make<QualifiedName>(db.Names.back(), s);
-                    first = t1;
                 }
             }
         }
