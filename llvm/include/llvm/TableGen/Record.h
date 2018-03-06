@@ -391,14 +391,6 @@ public:
   /// This method is used to return the initializer for the specified
   /// bit.
   virtual Init *getBit(unsigned Bit) const = 0;
-
-  /// This method is used to retrieve the initializer for bit
-  /// reference. For non-VarBitInit, it simply returns itself.
-  virtual Init *getBitVar() const { return const_cast<Init*>(this); }
-
-  /// This method is used to retrieve the bit number of a bit
-  /// reference. For non-VarBitInit, it simply returns 0.
-  virtual unsigned getBitNum() const { return 0; }
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS, const Init &I) {
@@ -954,8 +946,8 @@ public:
 
   Init *convertInitializerTo(RecTy *Ty) const override;
 
-  Init *getBitVar() const override { return TI; }
-  unsigned getBitNum() const override { return Bit; }
+  Init *getBitVar() const { return TI; }
+  unsigned getBitNum() const { return Bit; }
 
   std::string getAsString() const override;
   Init *resolveReferences(Resolver &R) const override;

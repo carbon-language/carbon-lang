@@ -393,54 +393,35 @@ std::string BitsInit::getAsString() const {
   return Result + " }";
 }
 
-// Fix bit initializer to preserve the behavior that bit reference from a unset
-// bits initializer will resolve into VarBitInit to keep the field name and bit
-// number used in targets with fixed insn length.
-static Init *fixBitInit(const Resolver &R, Init *Before, Init *After) {
-  if (!isa<UnsetInit>(After) || !R.keepUnsetBits())
-    return After;
-  return Before;
-}
-
 // resolveReferences - If there are any field references that refer to fields
 // that have been filled in, we can propagate the values now.
 Init *BitsInit::resolveReferences(Resolver &R) const {
   bool Changed = false;
   SmallVector<Init *, 16> NewBits(getNumBits());
 
-  Init *CachedInit = nullptr;
-  Init *CachedBitVar = nullptr;
-  bool CachedBitVarChanged = false;
+  Init *CachedBitVarRef = nullptr;
+  Init *CachedBitVarResolved = nullptr;
 
   for (unsigned i = 0, e = getNumBits(); i != e; ++i) {
     Init *CurBit = getBit(i);
-    Init *CurBitVar = CurBit->getBitVar();
+    Init *NewBit = CurBit;
 
-    NewBits[i] = CurBit;
-
-    if (CurBitVar == CachedBitVar) {
-      if (CachedBitVarChanged) {
-        Init *Bit = CachedInit->getBit(CurBit->getBitNum());
-        NewBits[i] = fixBitInit(R, CurBit, Bit);
+    if (VarBitInit *CurBitVar = dyn_cast<VarBitInit>(CurBit)) {
+      if (CurBitVar->getBitVar() != CachedBitVarRef) {
+        CachedBitVarRef = CurBitVar->getBitVar();
+        CachedBitVarResolved = CachedBitVarRef->resolveReferences(R);
       }
-      continue;
-    }
-    CachedBitVar = CurBitVar;
-    CachedBitVarChanged = false;
 
-    Init *B;
-    do {
-      B = CurBitVar;
-      CurBitVar = CurBitVar->resolveReferences(R);
-      CachedBitVarChanged |= B != CurBitVar;
-      Changed |= B != CurBitVar;
-    } while (B != CurBitVar);
-    CachedInit = CurBitVar;
-
-    if (CachedBitVarChanged) {
-      Init *Bit = CurBitVar->getBit(CurBit->getBitNum());
-      NewBits[i] = fixBitInit(R, CurBit, Bit);
+      NewBit = CachedBitVarResolved->getBit(CurBitVar->getBitNum());
+    } else {
+      // getBit(0) implicitly converts int and bits<1> values to bit.
+      NewBit = CurBit->resolveReferences(R)->getBit(0);
     }
+
+    if (isa<UnsetInit>(NewBit) && R.keepUnsetBits())
+      NewBit = CurBit;
+    NewBits[i] = NewBit;
+    Changed |= CurBit != NewBit;
   }
 
   if (Changed)
