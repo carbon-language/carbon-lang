@@ -2473,7 +2473,11 @@ public:
 
   bool Pre(const SelectRankStmt &x) { 
     TRACE_CALL() ;
-    InitStmt(x, StmtClass::SelectRank);
+    auto & sema = InitStmt(x, StmtClass::SelectRank);
+
+    auto name = sm::Identifier::get(std::get<0>(x.t));
+    SetConstructName(sema.stmt_index, name);    
+
     return true ; 
   }
 
@@ -2536,10 +2540,18 @@ public:
     else
       {
         // This is a RANK(expr) statement
+
         // TODO: evaluate the constant expression 
         // TODO: compare the expression to other case (shall be unique)
         // TODO: Install a scope to declare the variable with given rank.        
       }
+
+    
+    // Check the construct name 
+    auto name = sm::Identifier::get(std::get<1>(x.t));
+    CheckStatementName(sema.stmt_index, name, false); 
+
+
     return true ; 
   }
 
@@ -2551,7 +2563,11 @@ public:
 
   bool Pre(const SelectTypeStmt &x) { 
     TRACE_CALL() ;
-    InitStmt(x, StmtClass::SelectType);
+    auto &sema = InitStmt(x, StmtClass::SelectType);
+
+    auto name = sm::Identifier::get(std::get<0>(x.t));
+    SetConstructName(sema.stmt_index, name);    
+
     return true ; 
   }
 
@@ -2594,7 +2610,7 @@ public:
                  << " and #" << sema.stmt_index) ; 
           }
         
-        // And specialize to SelectRankSelectRankDefault in the SMap
+        // Specialize from TypeGuard to ClassDefault in the SMap
         smap.Specialize(sema.stmt_index,
                         StmtClass::TypeGuard,
                         StmtClass::ClassDefault);
@@ -2603,7 +2619,8 @@ public:
     else if ( std::holds_alternative<psr::DerivedTypeSpec>(std::get<0>(x.t).u) )
       {
         // This is a CLASS IS (...) statement
-      
+
+        // Specialize from TypeGuard to ClassGuard in the SMap
         smap.Specialize(sema.stmt_index,
                         StmtClass::TypeGuard,
                         StmtClass::ClassGuard);
@@ -2615,6 +2632,11 @@ public:
         // This is a TYPE IS (...) statement
         // TODO: ...
       }
+
+    // Check the construct name.
+    auto name = sm::Identifier::get(std::get<1>(x.t));
+    CheckStatementName(sema.stmt_index, name, false); 
+
 
     return true ; 
   }

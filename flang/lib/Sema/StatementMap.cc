@@ -191,11 +191,31 @@ void StatementMap::AssertNextInConstruct(Index prev_index) const {
       ORDER(CaseDefault, EndSelect) ||
 
       // SELECT RANK
-      ORDER(SelectRank, EndSelect) || ORDER(SelectRankCase, SelectRankCase) ||
-      ORDER(SelectRankCase, EndSelect) || ORDER(SelectRank, SelectRankCase) ||
+      ORDER(SelectRank, EndSelect) || ORDER(SelectRank, SelectRankCase) ||
+      ORDER(SelectRank, SelectRankStar) || ORDER(SelectRank, SelectRankDefault) ||
+      
+      ORDER(SelectRankCase, SelectRankCase) || ORDER(SelectRankCase, SelectRankStar) ||
+      ORDER(SelectRankCase, SelectRankDefault) || ORDER(SelectRankCase, EndSelect) ||
+
+      ORDER(SelectRankStar, SelectRankCase) || ORDER(SelectRankStar, SelectRankStar) ||
+      ORDER(SelectRankStar, SelectRankDefault) || ORDER(SelectRankStar, EndSelect) ||
+
+      ORDER(SelectRankDefault, SelectRankCase) || ORDER(SelectRankDefault, SelectRankStar) ||
+      ORDER(SelectRankDefault, SelectRankDefault) ||ORDER(SelectRankDefault, EndSelect) ||
+
       // SELECT TYPE
-      ORDER(SelectType, EndSelect) || ORDER(SelectType, TypeGuard) ||
-      ORDER(TypeGuard, TypeGuard) || ORDER(TypeGuard, EndSelect) ||
+      ORDER(SelectType, EndSelect) || ORDER(SelectType, TypeGuard) || 
+      ORDER(SelectType, ClassGuard) ||  ORDER(SelectType, ClassDefault) || 
+      
+      ORDER(TypeGuard, EndSelect) || ORDER(TypeGuard, TypeGuard) || 
+      ORDER(TypeGuard, ClassGuard) ||  ORDER(TypeGuard, ClassDefault) || 
+
+      ORDER(ClassGuard, EndSelect) || ORDER(ClassGuard, TypeGuard) || 
+      ORDER(ClassGuard, ClassGuard) ||  ORDER(ClassGuard, ClassDefault) || 
+
+      ORDER(ClassDefault, EndSelect) || ORDER(ClassDefault, TypeGuard) || 
+      ORDER(ClassDefault, ClassGuard) ||  ORDER(ClassDefault, ClassDefault) || 
+      
       // STRUCTURE (PGI)
       ORDER(Structure, EndStructure)) {
     // That looks good
