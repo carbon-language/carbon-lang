@@ -1,4 +1,4 @@
-; RUN: llc -march=hexagon -mcpu=hexagonv5 < %s | FileCheck %s
+; RUN: llc -march=hexagon < %s | FileCheck %s
 ;
 ; Test whether we can produce minimal code for this complex address
 ; calculation.
