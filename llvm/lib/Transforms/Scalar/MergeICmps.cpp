@@ -296,7 +296,7 @@ BCECmpChain::BCECmpChain(const std::vector<BasicBlock *> &Blocks, PHINode &Phi)
         // split them apart in a separate block before the comparison chain.
         // Right now we just discard it and make the chain shorter.
         DEBUG(dbgs()
-              << "ignoring first block '" << Comparison.BB->getName()
+              << "ignoring initial block '" << Comparison.BB->getName()
               << "' that does extra work besides compare\n");
         continue;
       }
