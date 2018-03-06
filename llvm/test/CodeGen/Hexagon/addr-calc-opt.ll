@@ -4,7 +4,7 @@
 ; calculation.
 ;
 
-; CHECK: r0 = memub(r{{[0-9]+}}<<#3{{ *}}+{{ *}}##the_global+516)
+; CHECK: r0 = memub(r{{[0-9]+}}<<#3+##the_global+516)
 
 %0 = type { [3 x %1] }
 %1 = type { %2, i8, i8, i8, i8, i8, [4 x i8], i8, [10 x i8], [10 x i8], [10 x i8], i8, [3 x %4], i16, i16, i16, i16, i32, i8, [4 x i8], i8, i8, i8, i8, %5, i8, i8, i8, i8, i8, i16, i8, i8, i8, i16, i16, i8, i8, [2 x i8], [2 x i8], i8, i8, i8, i8, i8, i16, i16, i8, i8, i8, i8, i8, i8, %9, i8, [6 x [2 x i8]], i16, i32, %10, [28 x i8], [4 x %17] }
