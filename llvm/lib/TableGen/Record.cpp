@@ -63,6 +63,8 @@ bool RecTy::typeIsConvertibleTo(const RecTy *RHS) const {
   return Kind == RHS->getRecTyKind();
 }
 
+bool RecTy::typeIsA(const RecTy *RHS) const { return this == RHS; }
+
 bool BitRecTy::typeIsConvertibleTo(const RecTy *RHS) const{
   if (RecTy::typeIsConvertibleTo(RHS) || RHS->getRecTyKind() == IntRecTyKind)
     return true;
@@ -92,6 +94,12 @@ bool BitsRecTy::typeIsConvertibleTo(const RecTy *RHS) const {
   return (kind == BitRecTyKind && Size == 1) || (kind == IntRecTyKind);
 }
 
+bool BitsRecTy::typeIsA(const RecTy *RHS) const {
+  if (const BitsRecTy *RHSb = dyn_cast<BitsRecTy>(RHS))
+    return RHSb->Size == Size;
+  return false;
+}
+
 bool IntRecTy::typeIsConvertibleTo(const RecTy *RHS) const {
   RecTyKind kind = RHS->getRecTyKind();
   return kind==BitRecTyKind || kind==BitsRecTyKind || kind==IntRecTyKind;
@@ -118,6 +126,12 @@ std::string ListRecTy::getAsString() const {
 bool ListRecTy::typeIsConvertibleTo(const RecTy *RHS) const {
   if (const auto *ListTy = dyn_cast<ListRecTy>(RHS))
     return Ty->typeIsConvertibleTo(ListTy->getElementType());
+  return false;
+}
+
+bool ListRecTy::typeIsA(const RecTy *RHS) const {
+  if (const ListRecTy *RHSl = dyn_cast<ListRecTy>(RHS))
+    return getElementType()->typeIsA(RHSl->getElementType());
   return false;
 }
 
@@ -214,6 +228,10 @@ bool RecordRecTy::typeIsConvertibleTo(const RecTy *RHS) const {
                                          });
 }
 
+bool RecordRecTy::typeIsA(const RecTy *RHS) const {
+  return typeIsConvertibleTo(RHS);
+}
+
 static RecordRecTy *resolveRecordTypes(RecordRecTy *T1, RecordRecTy *T2) {
   SmallVector<Record *, 4> CommonSuperClasses;
   SmallVector<Record *, 4> Stack;
@@ -275,17 +293,11 @@ UnsetInit *UnsetInit::get() {
   return &TheInit;
 }
 
+Init *UnsetInit::getCastTo(RecTy *Ty) const {
+  return const_cast<UnsetInit *>(this);
+}
+
 Init *UnsetInit::convertInitializerTo(RecTy *Ty) const {
-  if (auto *BRT = dyn_cast<BitsRecTy>(Ty)) {
-    SmallVector<Init *, 16> NewBits(BRT->getNumBits());
-
-    for (unsigned i = 0; i != BRT->getNumBits(); ++i)
-      NewBits[i] = UnsetInit::get();
-
-    return BitsInit::get(NewBits);
-  }
-
-  // All other types can just be returned.
   return const_cast<UnsetInit *>(this);
 }
 
@@ -684,7 +696,7 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
 
       if (IntInit *LHSi = dyn_cast<IntInit>(LHS))
         return StringInit::get(LHSi->getAsString());
-    } else {
+    } else if (isa<RecordRecTy>(getType())) {
       if (StringInit *Name = dyn_cast<StringInit>(LHS)) {
         // From TGParser::ParseIDValue
         if (CurRec) {
@@ -729,15 +741,10 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
         PrintFatalError(CurRec->getLoc(),
                         "Undefined reference:'" + Name->getValue() + "'\n");
       }
-
-      if (isa<IntRecTy>(getType())) {
-        if (BitsInit *BI = dyn_cast<BitsInit>(LHS)) {
-          if (Init *NewInit = BI->convertInitializerTo(IntRecTy::get()))
-            return NewInit;
-          break;
-        }
-      }
     }
+
+    if (Init *NewInit = LHS->convertInitializerTo(getType()))
+      return NewInit;
     break;
 
   case HEAD:
@@ -1083,10 +1090,8 @@ Init *TernOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
   }
 
   case IF: {
-    IntInit *LHSi = dyn_cast<IntInit>(LHS);
-    if (Init *I = LHS->convertInitializerTo(IntRecTy::get()))
-      LHSi = dyn_cast<IntInit>(I);
-    if (LHSi) {
+    if (IntInit *LHSi = dyn_cast_or_null<IntInit>(
+                            LHS->convertInitializerTo(IntRecTy::get()))) {
       if (LHSi->getValue())
         return MHS;
       return RHS;
@@ -1102,19 +1107,12 @@ Init *TernOpInit::resolveReferences(Resolver &R) const {
   Init *lhs = LHS->resolveReferences(R);
 
   if (getOpcode() == IF && lhs != LHS) {
-    IntInit *Value = dyn_cast<IntInit>(lhs);
-    if (Init *I = lhs->convertInitializerTo(IntRecTy::get()))
-      Value = dyn_cast<IntInit>(I);
-    if (Value) {
+    if (IntInit *Value = dyn_cast_or_null<IntInit>(
+                             lhs->convertInitializerTo(IntRecTy::get()))) {
       // Short-circuit
-      if (Value->getValue()) {
-        Init *mhs = MHS->resolveReferences(R);
-        return (TernOpInit::get(getOpcode(), lhs, mhs, RHS, getType()))
-            ->Fold(R.getCurrentRecord(), nullptr);
-      }
-      Init *rhs = RHS->resolveReferences(R);
-      return (TernOpInit::get(getOpcode(), lhs, MHS, rhs, getType()))
-          ->Fold(R.getCurrentRecord(), nullptr);
+      if (Value->getValue())
+        return MHS->resolveReferences(R);
+      return RHS->resolveReferences(R);
     }
   }
 
@@ -1158,79 +1156,12 @@ RecTy *TypedInit::getFieldType(StringInit *FieldName) const {
 
 Init *
 TypedInit::convertInitializerTo(RecTy *Ty) const {
-  if (isa<IntRecTy>(Ty)) {
-    if (getType()->typeIsConvertibleTo(Ty))
-      return const_cast<TypedInit *>(this);
-    return nullptr;
-  }
+  if (getType() == Ty || getType()->typeIsA(Ty))
+    return const_cast<TypedInit *>(this);
 
-  if (isa<StringRecTy>(Ty)) {
-    if (isa<StringRecTy>(getType()))
-      return const_cast<TypedInit *>(this);
-    return nullptr;
-  }
-
-  if (isa<CodeRecTy>(Ty)) {
-    if (isa<CodeRecTy>(getType()))
-      return const_cast<TypedInit *>(this);
-    return nullptr;
-  }
-
-  if (isa<BitRecTy>(Ty)) {
-    // Accept variable if it is already of bit type!
-    if (isa<BitRecTy>(getType()))
-      return const_cast<TypedInit *>(this);
-    if (auto *BitsTy = dyn_cast<BitsRecTy>(getType())) {
-      // Accept only bits<1> expression.
-      if (BitsTy->getNumBits() == 1)
-        return const_cast<TypedInit *>(this);
-      return nullptr;
-    }
-    // Ternary !if can be converted to bit, but only if both sides are
-    // convertible to a bit.
-    if (const auto *TOI = dyn_cast<TernOpInit>(this)) {
-      if (TOI->getOpcode() == TernOpInit::TernaryOp::IF &&
-          TOI->getMHS()->convertInitializerTo(BitRecTy::get()) &&
-          TOI->getRHS()->convertInitializerTo(BitRecTy::get()))
-        return const_cast<TypedInit *>(this);
-      return nullptr;
-    }
-    return nullptr;
-  }
-
-  if (auto *BRT = dyn_cast<BitsRecTy>(Ty)) {
-    if (BRT->getNumBits() == 1 && isa<BitRecTy>(getType()))
-      return BitsInit::get(const_cast<TypedInit *>(this));
-
-    if (getType()->typeIsConvertibleTo(BRT)) {
-      SmallVector<Init *, 16> NewBits(BRT->getNumBits());
-
-      for (unsigned i = 0; i != BRT->getNumBits(); ++i)
-        NewBits[i] = VarBitInit::get(const_cast<TypedInit *>(this), i);
-      return BitsInit::get(NewBits);
-    }
-
-    return nullptr;
-  }
-
-  if (auto *DLRT = dyn_cast<ListRecTy>(Ty)) {
-    if (auto *SLRT = dyn_cast<ListRecTy>(getType()))
-      if (SLRT->getElementType()->typeIsConvertibleTo(DLRT->getElementType()))
-        return const_cast<TypedInit *>(this);
-    return nullptr;
-  }
-
-  if (auto *DRT = dyn_cast<DagRecTy>(Ty)) {
-    if (getType()->typeIsConvertibleTo(DRT))
-      return const_cast<TypedInit *>(this);
-    return nullptr;
-  }
-
-  if (auto *SRRT = dyn_cast<RecordRecTy>(Ty)) {
-    if (getType()->typeIsConvertibleTo(SRRT))
-      return const_cast<TypedInit *>(this);
-    return nullptr;
-  }
+  if (isa<BitRecTy>(getType()) && isa<BitsRecTy>(Ty) &&
+      cast<BitsRecTy>(Ty)->getNumBits() == 1)
+    return BitsInit::get({const_cast<TypedInit *>(this)});
 
   return nullptr;
 }
@@ -1249,6 +1180,24 @@ Init *TypedInit::convertInitializerBitRange(ArrayRef<unsigned> Bits) const {
     NewBits.push_back(VarBitInit::get(const_cast<TypedInit *>(this), Bit));
   }
   return BitsInit::get(NewBits);
+}
+
+Init *TypedInit::getCastTo(RecTy *Ty) const {
+  // Handle the common case quickly
+  if (getType() == Ty || getType()->typeIsA(Ty))
+    return const_cast<TypedInit *>(this);
+
+  if (Init *Converted = convertInitializerTo(Ty)) {
+    assert(!isa<TypedInit>(Converted) ||
+           cast<TypedInit>(Converted)->getType()->typeIsA(Ty));
+    return Converted;
+  }
+
+  if (!getType()->typeIsConvertibleTo(Ty))
+    return nullptr;
+
+  return UnOpInit::get(UnOpInit::CAST, const_cast<TypedInit *>(this), Ty)
+             ->Fold(nullptr, nullptr);
 }
 
 Init *TypedInit::convertInitListSlice(ArrayRef<unsigned> Elements) const {
@@ -1311,13 +1260,6 @@ VarBitInit *VarBitInit::get(TypedInit *T, unsigned B) {
   if (!I)
     I = new(Allocator) VarBitInit(T, B);
   return I;
-}
-
-Init *VarBitInit::convertInitializerTo(RecTy *Ty) const {
-  if (isa<BitRecTy>(Ty))
-    return const_cast<VarBitInit *>(this);
-
-  return nullptr;
 }
 
 std::string VarBitInit::getAsString() const {
@@ -1485,13 +1427,6 @@ void DagInit::Profile(FoldingSetNodeID &ID) const {
   ProfileDagInit(ID, Val, ValName, makeArrayRef(getTrailingObjects<Init *>(), NumArgs), makeArrayRef(getTrailingObjects<StringInit *>(), NumArgNames));
 }
 
-Init *DagInit::convertInitializerTo(RecTy *Ty) const {
-  if (isa<DagRecTy>(Ty))
-    return const_cast<DagInit *>(this);
-
-  return nullptr;
-}
-
 Init *DagInit::resolveReferences(Resolver &R) const {
   SmallVector<Init*, 8> NewArgs;
   NewArgs.reserve(arg_size());
@@ -1530,12 +1465,34 @@ std::string DagInit::getAsString() const {
 
 RecordVal::RecordVal(Init *N, RecTy *T, bool P)
   : Name(N), TyAndPrefix(T, P) {
-  Value = UnsetInit::get()->convertInitializerTo(T);
+  setValue(UnsetInit::get());
   assert(Value && "Cannot create unset value for current type!");
 }
 
 StringRef RecordVal::getName() const {
   return cast<StringInit>(getNameInit())->getValue();
+}
+
+bool RecordVal::setValue(Init *V) {
+  if (V) {
+    Value = V->getCastTo(getType());
+    if (Value) {
+      assert(!isa<TypedInit>(Value) ||
+             cast<TypedInit>(Value)->getType()->typeIsA(getType()));
+      if (BitsRecTy *BTy = dyn_cast<BitsRecTy>(getType())) {
+        if (!isa<BitsInit>(Value)) {
+          SmallVector<Init *, 64> Bits;
+          Bits.reserve(BTy->getNumBits());
+          for (unsigned i = 0, e = BTy->getNumBits(); i < e; ++i)
+            Bits.push_back(Value->getBit(i));
+          Value = BitsInit::get(Bits);
+        }
+      }
+    }
+    return Value == nullptr;
+  }
+  Value = nullptr;
+  return false;
 }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)

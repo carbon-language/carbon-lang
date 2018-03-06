@@ -117,12 +117,9 @@ bool TGParser::SetValue(Record *CurRec, SMLoc Loc, Init *ValName,
                    "' is not a bits type");
 
     // Convert the incoming value to a bits type of the appropriate size...
-    Init *BI = V->convertInitializerTo(BitsRecTy::get(BitList.size()));
+    Init *BI = V->getCastTo(BitsRecTy::get(BitList.size()));
     if (!BI)
       return Error(Loc, "Initializer is not compatible with bit range");
-
-    // We should have a BitsInit type now.
-    BitsInit *BInit = cast<BitsInit>(BI);
 
     SmallVector<Init *, 16> NewBits(CurVal->getNumBits());
 
@@ -132,7 +129,7 @@ bool TGParser::SetValue(Record *CurRec, SMLoc Loc, Init *ValName,
       if (NewBits[Bit])
         return Error(Loc, "Cannot set bit #" + Twine(Bit) + " of value '" +
                      ValName->getAsUnquotedString() + "' more than once");
-      NewBits[Bit] = BInit->getBit(i);
+      NewBits[Bit] = BI->getBit(i);
     }
 
     for (unsigned i = 0, e = CurVal->getNumBits(); i != e; ++i)
@@ -1408,7 +1405,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
         // Fallthrough to try convert this to a bit.
       }
       // All other values must be convertible to just a single bit.
-      Init *Bit = Vals[i]->convertInitializerTo(BitRecTy::get());
+      Init *Bit = Vals[i]->getCastTo(BitRecTy::get());
       if (!Bit) {
         Error(BraceLoc, "Element #" + Twine(i) + " (" + Vals[i]->getAsString() +
               ") is not convertable to a bit");
@@ -2528,11 +2525,11 @@ Record *TGParser::InstantiateMulticlassDef(MultiClass &MC, Record *DefProto,
       DefName = CurRec->getNameInit();
       DefNameString = dyn_cast<StringInit>(DefName);
 
-      if (!DefNameString)
+      if (!DefNameString) {
         DefName = DefName->convertInitializerTo(StringRecTy::get());
+        DefNameString = dyn_cast<StringInit>(DefName);
+      }
 
-      // We ran out of options here...
-      DefNameString = dyn_cast<StringInit>(DefName);
       if (!DefNameString) {
         PrintFatalError(CurRec->getLoc()[CurRec->getLoc().size() - 1],
                         DefName->getAsUnquotedString() + " is not a string.");

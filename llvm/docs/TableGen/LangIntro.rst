@@ -182,10 +182,31 @@ supported include:
     the operand of the paste.
 
 ``!cast<type>(a)``
-    A symbol of type *type* obtained by looking up the string 'a' in the symbol
-    table.  If the type of 'a' does not match *type*, TableGen aborts with an
-    error. !cast<string> is a special case in that the argument must be an
-    object defined by a 'def' construct.
+    If 'a' is a string, a record of type *type* obtained by looking up the
+    string 'a' in the list of all records defined by the time that all template
+    arguments in 'a' are fully resolved.
+
+    For example, if !cast<type>(a) appears in a multiclass definition, or in a
+    class instantiated inside of a multiclass definition, and 'a' does not
+    reference any template arguments of the multiclass, then a record of name
+    'a' must be instantiated earlier in the source file. If 'a' does reference
+    a template argument, then the lookup is delayed until defm statements
+    instantiating the multiclass (or later, if the defm occurs in another
+    multiclass and template arguments of the inner multiclass that are
+    referenced by 'a' are substituted by values that themselves contain
+    references to template arguments of the outer multiclass).
+
+    If the type of 'a' does not match *type*, TableGen aborts with an error.
+
+    For historical reasons, 'a' can also be the name of a variable or a
+    template argument in some cases, but this use is unreliable and is
+    discouraged.
+
+    Otherwise, perform a normal type cast e.g. between an int and a bit, or
+    between record types. This allows casting a record to a subclass, though if
+    the types do not match, constant folding will be inhibited. !cast<string>
+    is a special case in that the argument can be an int or a record. In the
+    latter case, the record's name is returned.
 
 ``!subst(a, b, c)``
     If 'a' and 'b' are of string type or are symbol references, substitute 'b'

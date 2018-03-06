@@ -46,6 +46,7 @@ class RecordKeeper;
 class RecordVal;
 class Resolver;
 class StringInit;
+class TypedInit;
 
 //===----------------------------------------------------------------------===//
 //  Type Classes
@@ -82,6 +83,10 @@ public:
   /// Return true if all values of 'this' type can be converted to the specified
   /// type.
   virtual bool typeIsConvertibleTo(const RecTy *RHS) const;
+
+  /// Return true if 'this' type is equal to or a subtype of RHS. For example,
+  /// a bit set is not an int, but they are convertible.
+  virtual bool typeIsA(const RecTy *RHS) const;
 
   /// Returns the type representing list<this>.
   ListRecTy *getListTy();
@@ -128,6 +133,8 @@ public:
   std::string getAsString() const override;
 
   bool typeIsConvertibleTo(const RecTy *RHS) const override;
+
+  bool typeIsA(const RecTy *RHS) const override;
 };
 
 /// 'code' - Represent a code fragment
@@ -174,8 +181,7 @@ class StringRecTy : public RecTy {
 
 public:
   static bool classof(const RecTy *RT) {
-    return RT->getRecTyKind() == StringRecTyKind ||
-           RT->getRecTyKind() == CodeRecTyKind;
+    return RT->getRecTyKind() == StringRecTyKind;
   }
 
   static StringRecTy *get() { return &Shared; }
@@ -205,6 +211,8 @@ public:
   std::string getAsString() const override;
 
   bool typeIsConvertibleTo(const RecTy *RHS) const override;
+
+  bool typeIsA(const RecTy *RHS) const override;
 };
 
 /// 'dag' - Represent a dag fragment
@@ -265,6 +273,8 @@ public:
 
   bool isSubClassOf(Record *Class) const;
   bool typeIsConvertibleTo(const RecTy *RHS) const override;
+
+  bool typeIsA(const RecTy *RHS) const override;
 };
 
 /// Find a common type that T1 and T2 convert to.
@@ -353,8 +363,14 @@ public:
   /// invokes print on stderr.
   void dump() const;
 
-  /// This virtual function converts to the appropriate
-  /// Init based on the passed in type.
+  /// If this initializer is convertible to Ty, return an initializer whose
+  /// type is-a Ty, generating a !cast operation if required. Otherwise, return
+  /// nullptr.
+  virtual Init *getCastTo(RecTy *Ty) const = 0;
+
+  /// Convert to an initializer whose type is-a Ty, or return nullptr if this
+  /// is not possible (this can happen if the initializer's type is convertible
+  /// to Ty, but there are unresolved references).
   virtual Init *convertInitializerTo(RecTy *Ty) const = 0;
 
   /// This method is used to implement the bitrange
@@ -417,6 +433,7 @@ public:
 
   RecTy *getType() const { return Ty; }
 
+  Init *getCastTo(RecTy *Ty) const override;
   Init *convertInitializerTo(RecTy *Ty) const override;
 
   Init *convertInitializerBitRange(ArrayRef<unsigned> Bits) const override;
@@ -443,6 +460,7 @@ public:
 
   static UnsetInit *get();
 
+  Init *getCastTo(RecTy *Ty) const override;
   Init *convertInitializerTo(RecTy *Ty) const override;
 
   Init *getBit(unsigned Bit) const override {
@@ -944,8 +962,6 @@ public:
 
   static VarBitInit *get(TypedInit *T, unsigned B);
 
-  Init *convertInitializerTo(RecTy *Ty) const override;
-
   Init *getBitVar() const { return TI; }
   unsigned getBitNum() const { return Bit; }
 
@@ -1089,8 +1105,6 @@ public:
 
   void Profile(FoldingSetNodeID &ID) const;
 
-  Init *convertInitializerTo(RecTy *Ty) const override;
-
   Init *getOperator() const { return Val; }
 
   StringInit *getName() const { return ValName; }
@@ -1173,16 +1187,7 @@ public:
   RecTy *getType() const { return TyAndPrefix.getPointer(); }
   Init *getValue() const { return Value; }
 
-  bool setValue(Init *V) {
-    if (V) {
-      Value = V->convertInitializerTo(getType());
-      assert(!Value || !isa<TypedInit>(Value) ||
-             cast<TypedInit>(Value)->getType()->typeIsConvertibleTo(getType()));
-      return Value == nullptr;
-    }
-    Value = nullptr;
-    return false;
-  }
+  bool setValue(Init *V);
 
   void dump() const;
   void print(raw_ostream &OS, bool PrintSem = true) const;
