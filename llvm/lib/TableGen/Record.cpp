@@ -1160,6 +1160,77 @@ std::string TernOpInit::getAsString() const {
          RHS->getAsString() + ")";
 }
 
+static void ProfileFoldOpInit(FoldingSetNodeID &ID, Init *A, Init *B,
+                              Init *Start, Init *List, Init *Expr,
+                              RecTy *Type) {
+  ID.AddPointer(Start);
+  ID.AddPointer(List);
+  ID.AddPointer(A);
+  ID.AddPointer(B);
+  ID.AddPointer(Expr);
+  ID.AddPointer(Type);
+}
+
+FoldOpInit *FoldOpInit::get(Init *Start, Init *List, Init *A, Init *B,
+                            Init *Expr, RecTy *Type) {
+  static FoldingSet<FoldOpInit> ThePool;
+
+  FoldingSetNodeID ID;
+  ProfileFoldOpInit(ID, Start, List, A, B, Expr, Type);
+
+  void *IP = nullptr;
+  if (FoldOpInit *I = ThePool.FindNodeOrInsertPos(ID, IP))
+    return I;
+
+  FoldOpInit *I = new (Allocator) FoldOpInit(Start, List, A, B, Expr, Type);
+  ThePool.InsertNode(I, IP);
+  return I;
+}
+
+void FoldOpInit::Profile(FoldingSetNodeID &ID) const {
+  ProfileFoldOpInit(ID, Start, List, A, B, Expr, getType());
+}
+
+Init *FoldOpInit::Fold(Record *CurRec) const {
+  if (ListInit *LI = dyn_cast<ListInit>(List)) {
+    Init *Accum = Start;
+    for (Init *Elt : *LI) {
+      MapResolver R(CurRec);
+      R.set(A, Accum);
+      R.set(B, Elt);
+      Accum = Expr->resolveReferences(R);
+    }
+    return Accum;
+  }
+  return const_cast<FoldOpInit *>(this);
+}
+
+Init *FoldOpInit::resolveReferences(Resolver &R) const {
+  Init *NewStart = Start->resolveReferences(R);
+  Init *NewList = List->resolveReferences(R);
+  ShadowResolver SR(R);
+  SR.addShadow(A);
+  SR.addShadow(B);
+  Init *NewExpr = Expr->resolveReferences(SR);
+
+  if (Start == NewStart && List == NewList && Expr == NewExpr)
+    return const_cast<FoldOpInit *>(this);
+
+  return get(NewStart, NewList, A, B, NewExpr, getType())
+      ->Fold(R.getCurrentRecord());
+}
+
+Init *FoldOpInit::getBit(unsigned Bit) const {
+  return VarBitInit::get(const_cast<FoldOpInit *>(this), Bit);
+}
+
+std::string FoldOpInit::getAsString() const {
+  return (Twine("!foldl(") + Start->getAsString() + ", " + List->getAsString() +
+          ", " + A->getAsUnquotedString() + ", " + B->getAsUnquotedString() +
+          ", " + Expr->getAsString() + ")")
+      .str();
+}
+
 RecTy *TypedInit::getFieldType(StringInit *FieldName) const {
   if (RecordRecTy *RecordType = dyn_cast<RecordRecTy>(getType())) {
     for (Record *Rec : RecordType->getClasses()) {

@@ -217,6 +217,15 @@ supported include:
     of a variable that will be substituted by members of 'b' in 'c'.
     This operation is analogous to $(foreach) in GNU make.
 
+``!foldl(start, lst, a, b, expr)``
+    Perform a left-fold over 'lst' with the given starting value. 'a' and 'b'
+    are variable names which will be substituted in 'expr'. If you think of
+    expr as a function f(a,b), the fold will compute
+    'f(...f(f(start, lst[0]), lst[1]), ...), lst[n-1])' for a list of length n.
+    As usual, 'a' will be of the type of 'start', and 'b' will be of the type
+    of elements of 'lst'. These types need not be the same, but 'expr' must be
+    of the same type as 'start'.
+
 ``!head(a)``
     The first element of list 'a.'
 

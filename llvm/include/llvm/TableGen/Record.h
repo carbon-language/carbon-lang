@@ -316,6 +316,7 @@ protected:
     IK_TernOpInit,
     IK_UnOpInit,
     IK_LastOpInit,
+    IK_FoldOpInit,
     IK_StringInit,
     IK_VarInit,
     IK_VarListElementInit,
@@ -909,6 +910,43 @@ public:
   }
 
   Init *resolveReferences(Resolver &R) const override;
+
+  std::string getAsString() const override;
+};
+
+/// !foldl (a, b, expr, start, lst) - Fold over a list.
+class FoldOpInit : public TypedInit, public FoldingSetNode {
+private:
+  Init *Start;
+  Init *List;
+  Init *A;
+  Init *B;
+  Init *Expr;
+
+  FoldOpInit(Init *Start, Init *List, Init *A, Init *B, Init *Expr, RecTy *Type)
+      : TypedInit(IK_FoldOpInit, Type), Start(Start), List(List), A(A), B(B),
+        Expr(Expr) {}
+
+public:
+  FoldOpInit(const FoldOpInit &) = delete;
+  FoldOpInit &operator=(const FoldOpInit &) = delete;
+
+  static bool classof(const Init *I) { return I->getKind() == IK_FoldOpInit; }
+
+  static FoldOpInit *get(Init *Start, Init *List, Init *A, Init *B, Init *Expr,
+                         RecTy *Type);
+
+  void Profile(FoldingSetNodeID &ID) const;
+
+  // Fold - If possible, fold this to a simpler init.  Return this if not
+  // possible to fold.
+  Init *Fold(Record *CurRec) const;
+
+  bool isComplete() const override { return false; }
+
+  Init *resolveReferences(Resolver &R) const override;
+
+  Init *getBit(unsigned Bit) const override;
 
   std::string getAsString() const override;
 };

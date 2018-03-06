@@ -1232,6 +1232,123 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
     return (TernOpInit::get(Code, LHS, MHS, RHS, Type))->Fold(CurRec,
                                                              CurMultiClass);
   }
+
+  case tgtok::XFoldl: {
+    // Value ::= !foldl '(' Id ',' Id ',' Value ',' Value ',' Value ')'
+    Lex.Lex(); // eat the operation
+    if (Lex.getCode() != tgtok::l_paren) {
+      TokError("expected '(' after !foldl");
+      return nullptr;
+    }
+    Lex.Lex(); // eat the '('
+
+    Init *StartUntyped = ParseValue(CurRec);
+    if (!StartUntyped)
+      return nullptr;
+
+    TypedInit *Start = dyn_cast<TypedInit>(StartUntyped);
+    if (!Start) {
+      TokError(Twine("could not get type of !foldl start: '") +
+               StartUntyped->getAsString() + "'");
+      return nullptr;
+    }
+
+    if (Lex.getCode() != tgtok::comma) {
+      TokError("expected ',' in !foldl");
+      return nullptr;
+    }
+    Lex.Lex(); // eat the ','
+
+    Init *ListUntyped = ParseValue(CurRec);
+    if (!ListUntyped)
+      return nullptr;
+
+    TypedInit *List = dyn_cast<TypedInit>(ListUntyped);
+    if (!List) {
+      TokError(Twine("could not get type of !foldl list: '") +
+               ListUntyped->getAsString() + "'");
+      return nullptr;
+    }
+
+    ListRecTy *ListType = dyn_cast<ListRecTy>(List->getType());
+    if (!ListType) {
+      TokError(Twine("!foldl list must be a list, but is of type '") +
+               List->getType()->getAsString());
+      return nullptr;
+    }
+
+    if (Lex.getCode() != tgtok::comma) {
+      TokError("expected ',' in !foldl");
+      return nullptr;
+    }
+
+    if (Lex.Lex() != tgtok::Id) { // eat the ','
+      TokError("third argument of !foldl must be an identifier");
+      return nullptr;
+    }
+
+    Init *A = StringInit::get(Lex.getCurStrVal());
+    if (CurRec->getValue(A)) {
+      TokError((Twine("left !foldl variable '") + A->getAsString() +
+                "' already defined")
+                   .str());
+      return nullptr;
+    }
+
+    if (Lex.Lex() != tgtok::comma) { // eat the id
+      TokError("expected ',' in !foldl");
+      return nullptr;
+    }
+
+    if (Lex.Lex() != tgtok::Id) { // eat the ','
+      TokError("fourth argument of !foldl must be an identifier");
+      return nullptr;
+    }
+
+    Init *B = StringInit::get(Lex.getCurStrVal());
+    if (CurRec->getValue(B)) {
+      TokError((Twine("right !foldl variable '") + B->getAsString() +
+                "' already defined")
+                   .str());
+      return nullptr;
+    }
+
+    if (Lex.Lex() != tgtok::comma) { // eat the id
+      TokError("expected ',' in !foldl");
+      return nullptr;
+    }
+    Lex.Lex(); // eat the ','
+
+    CurRec->addValue(RecordVal(A, Start->getType(), false));
+    CurRec->addValue(RecordVal(B, ListType->getElementType(), false));
+    Init *ExprUntyped = ParseValue(CurRec);
+    CurRec->removeValue(A);
+    CurRec->removeValue(B);
+    if (!ExprUntyped)
+      return nullptr;
+
+    TypedInit *Expr = dyn_cast<TypedInit>(ExprUntyped);
+    if (!Expr) {
+      TokError("could not get type of !foldl expression");
+      return nullptr;
+    }
+
+    if (Expr->getType() != Start->getType()) {
+      TokError(Twine("!foldl expression must be of same type as start (") +
+               Start->getType()->getAsString() + "), but is of type " +
+               Expr->getType()->getAsString());
+      return nullptr;
+    }
+
+    if (Lex.getCode() != tgtok::r_paren) {
+      TokError("expected ')' in fold operator");
+      return nullptr;
+    }
+    Lex.Lex(); // eat the ')'
+
+    return FoldOpInit::get(Start, List, A, B, Expr, Start->getType())
+        ->Fold(CurRec);
+  }
   }
 }
 
@@ -1590,6 +1707,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
   case tgtok::XListConcat:
   case tgtok::XStrConcat:   // Value ::= !binop '(' Value ',' Value ')'
   case tgtok::XIf:
+  case tgtok::XFoldl:
   case tgtok::XForEach:
   case tgtok::XSubst: {  // Value ::= !ternop '(' Value ',' Value ',' Value ')'
     return ParseOperation(CurRec, ItemType);
@@ -1697,7 +1815,7 @@ Init *TGParser::ParseValue(Record *CurRec, RecTy *ItemType, IDParseMode Mode) {
       TypedInit *RHS = nullptr;
 
       Lex.Lex();  // Eat the '#'.
-      switch (Lex.getCode()) { 
+      switch (Lex.getCode()) {
       case tgtok::colon:
       case tgtok::semi:
       case tgtok::l_brace:
@@ -2579,7 +2697,7 @@ Record *TGParser::InstantiateMulticlassDef(MultiClass &MC, Record *DefProto,
     // Ensure redefinition doesn't happen.
     if (Records.getDef(CurRec->getNameInitAsString())) {
       Error(DefmPrefixRange.Start, "def '" + CurRec->getNameInitAsString() +
-            "' already defined, instantiating defm with subdef '" + 
+            "' already defined, instantiating defm with subdef '" +
             DefProto->getNameInitAsString() + "'");
       return nullptr;
     }
