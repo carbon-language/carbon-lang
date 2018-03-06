@@ -1033,7 +1033,7 @@ TEST(union_hom_fp_partial2)
 // X86-64-LABEL: take_union_hom_fp_partial2(i64, float)
 // ARM64-LABEL: take_union_hom_fp_partial2(i64, float)
 
-// At one point, we emitted lifetime.ends without a matching lifetime.begin for
+// At one point, we emitted lifetime.ends without a matching lifetime.start for
 // CoerceAndExpanded args. Since we're not performing optimizations, neither
 // intrinsic should be emitted.
 // CHECK-LABEL: define void @no_lifetime_markers
