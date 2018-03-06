@@ -3,16 +3,14 @@
 
 #include <map>
 
-using Fortran::semantics::Identifier ;
+using Fortran::semantics::Identifier;
 
-static std::map<std::string, Identifier*> all ;
+static std::map<std::string, Identifier *> all;
 
-const Identifier *
-Identifier::get(std::string n) 
-{
-  Identifier * &ref = all[n] ;
+const Identifier *Identifier::get(std::string n) {
+  Identifier *&ref = all[n];
   if (!ref) {
-    ref = new Identifier(n) ;
+    ref = new Identifier(n);
   }
-  return ref ;
+  return ref;
 }

@@ -323,13 +323,6 @@ template<typename A> struct Statement {
   A statement;
 };
 
-// A wrapper for xzy-stmt productions that are statements, so that
-// source provenances and labels have a uniform representation.
-  template<typename A> struct Statement : public StatementBase {
-  Statement(Provenance &&at, std::optional<long> &&lab, bool &&accept, A &&s)
-    : StatementBase(std::move(at),std::move(lab),std::move(accept)) , statement(std::move(s)) {}  
-  A statement;
-};
 
 // Error recovery marker
 EMPTY_CLASS(ErrorRecovery);
@@ -1104,6 +1097,7 @@ struct DerivedTypeDef {
       std::list<Statement<ComponentDefStmt>>,
       std::optional<TypeBoundProcedurePart>, Statement<EndTypeStmt>>
       t;
+  enum { STMT, PARAMS, SPEC, COMP, PROC, END };
 };
 
 // R758 component-data-source -> expr | data-target | proc-target
@@ -2156,19 +2150,21 @@ struct LoopControl {
     TUPLE_CLASS_BOILERPLATE(Concurrent);
     std::tuple<ConcurrentHeader, std::list<LocalitySpec>> t;
   };
-  std::variant<LoopBounds<ScalarIntExpr>, ScalarLogicalExpr, Concurrent> u;
+  std::variant<LoopBounds<ScalarIntExpr>, ScalarLogicalExpr, Concurrent> u;  
 };
 
 // R1121 label-do-stmt -> [do-construct-name :] DO label [loop-control]
 struct LabelDoStmt {
   TUPLE_CLASS_BOILERPLATE(LabelDoStmt);
   std::tuple<std::optional<Name>, Label, std::optional<LoopControl>> t;
+  enum {NAME,LABEL,CONTROL} ;
 };
 
 // R1122 nonlabel-do-stmt -> [do-construct-name :] DO [loop-control]
 struct NonLabelDoStmt {
   TUPLE_CLASS_BOILERPLATE(NonLabelDoStmt);
   std::tuple<std::optional<Name>, std::optional<LoopControl>> t;
+  enum {NAME,CONTROL} ;
 };
 
 // R1132 end-do-stmt -> END DO [do-construct-name]
@@ -2785,7 +2781,8 @@ struct Module {
   TUPLE_CLASS_BOILERPLATE(Module);
   std::tuple<Statement<ModuleStmt>, SpecificationPart,
       std::optional<ModuleSubprogramPart>, Statement<EndModuleStmt>>
-      t;
+      t;  
+  enum { MOD, SPEC, INTERNAL, END } ; 
 };
 
 // R1411 rename ->
@@ -3089,6 +3086,7 @@ struct SubroutineSubprogram {
   std::tuple<Statement<SubroutineStmt>, SpecificationPart, ExecutionPart,
       std::optional<InternalSubprogramPart>, Statement<EndSubroutineStmt>>
       t;
+  enum { SUBR, SPEC, EXEC, INTERNAL, END } ; 
 };
 
 // R1539 mp-subprogram-stmt -> MODULE PROCEDURE procedure-name
