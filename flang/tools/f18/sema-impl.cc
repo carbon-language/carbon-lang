@@ -2843,7 +2843,116 @@ public:
 
   bool Pre(const CycleStmt &x) { 
     TRACE_CALL() ;
-    InitStmt(x, StmtClass::Cycle);
+    auto & sema = InitStmt(x, StmtClass::Cycle);
+
+    
+    auto & smap = GetStatementMap() ;
+
+    // the name of the construct we are looking for (can be null)
+    const sm::Identifier * target_name = sm::Identifier::get(x.v) ; 
+
+    
+    SMap::Index target_do = SMap::None ;    
+    SMap::Index construct = sema.stmt_index ; 
+
+    // At that point, construct refers to the CYCLE statment which is not a
+    // construct index (i.e. a Start statement). However, in the loop below, 
+    // it will be assigned a proper construct index. 
+
+    bool done=false ; 
+    while (!done) 
+      {
+        construct = smap.StartOfConstruct(smap.GetParent(construct));
+        assert( smap.GetGroup(construct) == StmtGroup::Start ) ; 
+        auto construct_name = GetConstructName(construct);
+
+        StmtClass construct_class =  smap.GetClass(construct);
+        switch(construct_class) {
+        case StmtClass::LabelDo:
+        case StmtClass::LabelDoWhile:
+        case StmtClass::NonLabelDo:
+        case StmtClass::NonLabelDoWhile:
+          if ( ! target_name ) {
+            // The default target is the first loop
+            target_do = construct;
+            done = true;
+          } else if ( construct_name == target_name ) {
+            target_do = construct;
+            done = true;
+          } 
+          break;
+          
+        case StmtClass::LabelDoConcurrent:
+        case StmtClass::NonLabelDoConcurrent: 
+          // C1135 A cycle-stmt shall not appear within a CHANGE TEAM, CRITICAL, or DO 
+          // CONCURRENT construct if it belongs to an outer construct.
+          //           
+          // Simply speaking, a DO CONCURRENT should either match or fail.
+          //
+          if ( ! target_name ) {
+            // The default target is the first loop
+            target_do = construct;
+            done = true;
+          } else if ( construct_name == target_name ) {
+            target_do = construct;
+            done = true;
+          } else {
+            FAIL("CYCLE statement cannot be used to exit a " << StmtClassText(construct_class) << " statement");
+            done = true;
+          }
+          break;
+
+
+        case StmtClass::ChangeTeam:
+        case StmtClass::Critical:
+          // C1135 A cycle-stmt shall not appear within a CHANGE TEAM, CRITICAL, or DO 
+          // CONCURRENT construct if it belongs to an outer construct.
+          //
+          FAIL("CYCLE statement cannot be used to exit a " << StmtClassText(construct_class) <<  " statement");
+          done = true;
+          break ;
+
+        case StmtClass::IfThen:
+        case StmtClass::SelectCase:
+        case StmtClass::SelectRank:
+        case StmtClass::SelectType:
+        case StmtClass::Block:
+        case StmtClass::Associate:
+        case StmtClass::WhereConstruct: 
+          break;
+
+        case StmtClass::Program:
+        case StmtClass::Function:
+        case StmtClass::Subroutine:
+          // We need to stop here. 
+          done = true; 
+          break;
+
+        case StmtClass::If:
+          // This is a non-construct IF that owns the EXIT statement
+          break;
+
+        default:
+          // TODO: If you hit that internal error then that means that
+          // we forgot to handle a construct that is susceptible to 
+          // contain an EXIT statement
+          INTERNAL_ERROR;
+
+        }
+      }
+
+    if ( target_do == SMap::None ) {
+      if ( target_name ) {
+        FAIL("No construct named '" << target_name->name() << "' found arount CYCLE statement" ) ;
+      } else {
+        FAIL("No loop found arount CYCLE statement" ) ;
+      }
+    }
+    
+    TRACE("Target of CYCLE statement #" << sema.stmt_index << " is statement #" << target_do );
+
+    // TODO: Do something with target_do
+
     return true ; 
   }
 
@@ -2933,7 +3042,7 @@ public:
           //  C1167 An exit-stmt shall not appear within a CHANGE TEAM, CRITICAL, or DO CONCURRENT construct
           //  if it belongs to that construct or an outer construct.
           //
-          FAIL("EXIT statement cannot be used to exit a " << StmtClassText(construct_class) << "statement");
+          FAIL("EXIT statement cannot be used to exit a " << StmtClassText(construct_class) << " statement");
           break ;
 
         case StmtClass::IfThen:
