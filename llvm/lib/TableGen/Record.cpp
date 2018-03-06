@@ -1355,6 +1355,132 @@ std::string DefInit::getAsString() const {
   return Def->getName();
 }
 
+static void ProfileVarDefInit(FoldingSetNodeID &ID,
+                              Record *Class,
+                              ArrayRef<Init *> Args) {
+  ID.AddInteger(Args.size());
+  ID.AddPointer(Class);
+
+  for (Init *I : Args)
+    ID.AddPointer(I);
+}
+
+VarDefInit *VarDefInit::get(Record *Class, ArrayRef<Init *> Args) {
+  static FoldingSet<VarDefInit> ThePool;
+
+  FoldingSetNodeID ID;
+  ProfileVarDefInit(ID, Class, Args);
+
+  void *IP = nullptr;
+  if (VarDefInit *I = ThePool.FindNodeOrInsertPos(ID, IP))
+    return I;
+
+  void *Mem = Allocator.Allocate(totalSizeToAlloc<Init *>(Args.size()),
+                                 alignof(VarDefInit));
+  VarDefInit *I = new(Mem) VarDefInit(Class, Args.size());
+  std::uninitialized_copy(Args.begin(), Args.end(),
+                          I->getTrailingObjects<Init *>());
+  ThePool.InsertNode(I, IP);
+  return I;
+}
+
+void VarDefInit::Profile(FoldingSetNodeID &ID) const {
+  ProfileVarDefInit(ID, Class, args());
+}
+
+DefInit *VarDefInit::instantiate() {
+  if (!Def) {
+    RecordKeeper &Records = Class->getRecords();
+    auto NewRecOwner = make_unique<Record>(Records.getNewAnonymousName(),
+                                           Class->getLoc(), Records,
+                                           /*IsAnonymous=*/true);
+    Record *NewRec = NewRecOwner.get();
+
+    // Copy values from class to instance
+    for (const RecordVal &Val : Class->getValues()) {
+      if (Val.getName() != "NAME")
+        NewRec->addValue(Val);
+    }
+
+    // Substitute and resolve template arguments
+    ArrayRef<Init *> TArgs = Class->getTemplateArgs();
+    MapResolver R(NewRec);
+
+    for (unsigned i = 0, e = TArgs.size(); i != e; ++i) {
+      if (i < args_size())
+        R.set(TArgs[i], getArg(i));
+      else
+        R.set(TArgs[i], NewRec->getValue(TArgs[i])->getValue());
+
+      NewRec->removeValue(TArgs[i]);
+    }
+
+    NewRec->resolveReferences(R);
+
+    // Add superclasses.
+    ArrayRef<std::pair<Record *, SMRange>> SCs = Class->getSuperClasses();
+    for (const auto &SCPair : SCs)
+      NewRec->addSuperClass(SCPair.first, SCPair.second);
+
+    NewRec->addSuperClass(Class,
+                          SMRange(Class->getLoc().back(),
+                                  Class->getLoc().back()));
+
+    // Resolve internal references and store in record keeper
+    NewRec->resolveReferences();
+    Records.addDef(std::move(NewRecOwner));
+
+    Def = DefInit::get(NewRec);
+  }
+
+  return Def;
+}
+
+Init *VarDefInit::resolveReferences(Resolver &R) const {
+  TrackUnresolvedResolver UR(&R);
+  bool Changed = false;
+  SmallVector<Init *, 8> NewArgs;
+  NewArgs.reserve(args_size());
+
+  for (Init *Arg : args()) {
+    Init *NewArg = Arg->resolveReferences(UR);
+    NewArgs.push_back(NewArg);
+    Changed |= NewArg != Arg;
+  }
+
+  if (Changed) {
+    auto New = VarDefInit::get(Class, NewArgs);
+    if (!UR.foundUnresolved())
+      return New->instantiate();
+    return New;
+  }
+  return const_cast<VarDefInit *>(this);
+}
+
+Init *VarDefInit::Fold() const {
+  if (Def)
+    return Def;
+
+  TrackUnresolvedResolver R;
+  for (Init *Arg : args())
+    Arg->resolveReferences(R);
+
+  if (!R.foundUnresolved())
+    return const_cast<VarDefInit *>(this)->instantiate();
+  return const_cast<VarDefInit *>(this);
+}
+
+std::string VarDefInit::getAsString() const {
+  std::string Result = Class->getNameInitAsString() + "<";
+  const char *sep = "";
+  for (Init *Arg : args()) {
+    Result += sep;
+    sep = ", ";
+    Result += Arg->getAsString();
+  }
+  return Result + ">";
+}
+
 FieldInit *FieldInit::get(Init *R, StringInit *FN) {
   using Key = std::pair<Init *, StringInit *>;
   static DenseMap<Key, FieldInit*> ThePool;
@@ -1916,4 +2042,24 @@ Init *RecordResolver::resolve(Init *VarName) {
 
   Cache[VarName] = Val;
   return Val;
+}
+
+Init *TrackUnresolvedResolver::resolve(Init *VarName) {
+  Init *I = nullptr;
+
+  if (R) {
+    I = R->resolve(VarName);
+    if (I && !FoundUnresolved) {
+      // Do not recurse into the resolved initializer, as that would change
+      // the behavior of the resolver we're delegating, but do check to see
+      // if there are unresolved variables remaining.
+      TrackUnresolvedResolver Sub;
+      I->resolveReferences(Sub);
+      FoundUnresolved |= Sub.FoundUnresolved;
+    }
+  }
+
+  if (!I)
+    FoundUnresolved = true;
+  return I;
 }

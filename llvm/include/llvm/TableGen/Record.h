@@ -320,6 +320,7 @@ protected:
     IK_VarInit,
     IK_VarListElementInit,
     IK_VarBitInit,
+    IK_VarDefInit,
     IK_LastTypedInit,
     IK_UnsetInit
   };
@@ -1052,6 +1053,58 @@ public:
   }
 };
 
+/// classname<targs...> - Represent an uninstantiated anonymous class
+/// instantiation.
+class VarDefInit final : public TypedInit, public FoldingSetNode,
+                         public TrailingObjects<VarDefInit, Init *> {
+  Record *Class;
+  DefInit *Def = nullptr; // after instantiation
+  unsigned NumArgs;
+
+  explicit VarDefInit(Record *Class, unsigned N)
+    : TypedInit(IK_VarDefInit, RecordRecTy::get(Class)), Class(Class), NumArgs(N) {}
+
+  DefInit *instantiate();
+
+public:
+  VarDefInit(const VarDefInit &) = delete;
+  VarDefInit &operator=(const VarDefInit &) = delete;
+
+  // Do not use sized deallocation due to trailing objects.
+  void operator delete(void *p) { ::operator delete(p); }
+
+  static bool classof(const Init *I) {
+    return I->getKind() == IK_VarDefInit;
+  }
+  static VarDefInit *get(Record *Class, ArrayRef<Init *> Args);
+
+  void Profile(FoldingSetNodeID &ID) const;
+
+  Init *resolveReferences(Resolver &R) const override;
+  Init *Fold() const;
+
+  std::string getAsString() const override;
+
+  Init *getArg(unsigned i) const {
+    assert(i < NumArgs && "Argument index out of range!");
+    return getTrailingObjects<Init *>()[i];
+  }
+
+  using const_iterator = Init *const *;
+
+  const_iterator args_begin() const { return getTrailingObjects<Init *>(); }
+  const_iterator args_end  () const { return args_begin() + NumArgs; }
+
+  size_t         args_size () const { return NumArgs; }
+  bool           args_empty() const { return NumArgs == 0; }
+
+  ArrayRef<Init *> args() const { return makeArrayRef(args_begin(), NumArgs); }
+
+  Init *getBit(unsigned Bit) const override {
+    llvm_unreachable("Illegal bit reference off anonymous def");
+  }
+};
+
 /// X.Y - Represent a reference to a subfield of a variable
 class FieldInit : public TypedInit {
   Init *Rec;                // Record we are referring to
@@ -1752,6 +1805,21 @@ public:
       return nullptr;
     return R.resolve(VarName);
   }
+};
+
+/// (Optionally) delegate resolving to a sub-resolver, and keep track whether
+/// there were unresolved references.
+class TrackUnresolvedResolver final : public Resolver {
+  Resolver *R;
+  bool FoundUnresolved = false;
+
+public:
+  explicit TrackUnresolvedResolver(Resolver *R = nullptr)
+      : Resolver(R ? R->getCurrentRecord() : nullptr), R(R) {}
+
+  bool foundUnresolved() const { return FoundUnresolved; }
+
+  Init *resolve(Init *VarName) override;
 };
 
 } // end namespace llvm

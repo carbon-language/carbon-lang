@@ -1346,61 +1346,49 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
       return nullptr;
     }
 
-    SubClassReference SCRef;
-    ParseValueList(SCRef.TemplateArgs, CurRec, Class);
-    if (SCRef.TemplateArgs.empty()) return nullptr;
+    SmallVector<Init *, 8> Args;
+    ParseValueList(Args, CurRec, Class);
+    if (Args.empty()) return nullptr;
 
     if (Lex.getCode() != tgtok::greater) {
       TokError("expected '>' at end of value list");
       return nullptr;
     }
     Lex.Lex();  // eat the '>'
-    SMLoc EndLoc = Lex.getLoc();
 
-    // Create the new record, set it as CurRec temporarily.
-    auto NewRecOwner =
-        make_unique<Record>(Records.getNewAnonymousName(), NameLoc, Records,
-                            /*IsAnonymous=*/true);
-    Record *NewRec = NewRecOwner.get(); // Keep a copy since we may release.
-    SCRef.RefRange = SMRange(NameLoc, EndLoc);
-    SCRef.Rec = Class;
-    // Add info about the subclass to NewRec.
-    if (AddSubClass(NewRec, SCRef))
+    // Typecheck the template arguments list
+    ArrayRef<Init *> ExpectedArgs = Class->getTemplateArgs();
+    if (ExpectedArgs.size() < Args.size()) {
+      Error(NameLoc,
+            "More template args specified than expected");
       return nullptr;
-
-    if (!CurMultiClass) {
-      NewRec->resolveReferences();
-      Records.addDef(std::move(NewRecOwner));
-    } else {
-      // This needs to get resolved once the multiclass template arguments are
-      // known before any use.
-      NewRec->setResolveFirst(true);
-      // Otherwise, we're inside a multiclass, add it to the multiclass.
-      CurMultiClass->DefPrototypes.push_back(std::move(NewRecOwner));
-
-      // Copy the template arguments for the multiclass into the def.
-      for (Init *TArg : CurMultiClass->Rec.getTemplateArgs()) {
-        const RecordVal *RV = CurMultiClass->Rec.getValue(TArg);
-        assert(RV && "Template arg doesn't exist?");
-        NewRec->addValue(*RV);
-      }
-
-      // We can't return the prototype def here, instead return:
-      // !cast<ItemType>(!strconcat(NAME, AnonName)).
-      const RecordVal *MCNameRV = CurMultiClass->Rec.getValue("NAME");
-      assert(MCNameRV && "multiclass record must have a NAME");
-
-      return UnOpInit::get(UnOpInit::CAST,
-                           BinOpInit::get(BinOpInit::STRCONCAT,
-                                          VarInit::get(MCNameRV->getName(),
-                                                       MCNameRV->getType()),
-                                          NewRec->getNameInit(),
-                                          StringRecTy::get()),
-                           NewRec->getDefInit()->getType());
     }
 
-    // The result of the expression is a reference to the new record.
-    return DefInit::get(NewRec);
+    for (unsigned i = 0, e = ExpectedArgs.size(); i != e; ++i) {
+      RecordVal *ExpectedArg = Class->getValue(ExpectedArgs[i]);
+      if (i < Args.size()) {
+        if (TypedInit *TI = dyn_cast<TypedInit>(Args[i])) {
+          RecTy *ExpectedType = ExpectedArg->getType();
+          if (!TI->getType()->typeIsConvertibleTo(ExpectedType)) {
+            Error(NameLoc,
+                  "Value specified for template argument #" + Twine(i) + " (" +
+                  ExpectedArg->getNameInitAsString() + ") is of type '" +
+                  TI->getType()->getAsString() + "', expected '" +
+                  ExpectedType->getAsString() + "': " + TI->getAsString());
+            return nullptr;
+          }
+          continue;
+        }
+      } else if (ExpectedArg->getValue()->isComplete())
+        continue;
+
+      Error(NameLoc,
+            "Value not specified for template argument #" + Twine(i) + " (" +
+            ExpectedArgs[i]->getAsUnquotedString() + ")");
+      return nullptr;
+    }
+
+    return VarDefInit::get(Class, Args)->Fold();
   }
   case tgtok::l_brace: {           // Value ::= '{' ValueList '}'
     SMLoc BraceLoc = Lex.getLoc();
