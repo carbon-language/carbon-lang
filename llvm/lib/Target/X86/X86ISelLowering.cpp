@@ -39277,6 +39277,16 @@ X86TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
     return Res;
   }
 
+  // Make sure it isn't a register that requires 64-bit mode.
+  if (!Subtarget.is64Bit() &&
+      (isFRClass(*Res.second) || isGRClass(*Res.second)) &&
+      TRI->getEncodingValue(Res.first) >= 8) {
+    // Register requires REX prefix, but we're in 32-bit mode.
+    Res.first = 0;
+    Res.second = nullptr;
+    return Res;
+  }
+
   // Make sure it isn't a register that requires AVX512.
   if (!Subtarget.hasAVX512() && isFRClass(*Res.second) &&
       TRI->getEncodingValue(Res.first) & 0x10) {
