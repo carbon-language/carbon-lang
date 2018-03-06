@@ -47,49 +47,10 @@ using namespace PatternMatch;
 
 #define DEBUG_TYPE "instcombine"
 
-static SelectPatternFlavor
-getInverseMinMaxSelectPattern(SelectPatternFlavor SPF) {
-  switch (SPF) {
-  default:
-    llvm_unreachable("unhandled!");
-
-  case SPF_SMIN:
-    return SPF_SMAX;
-  case SPF_UMIN:
-    return SPF_UMAX;
-  case SPF_SMAX:
-    return SPF_SMIN;
-  case SPF_UMAX:
-    return SPF_UMIN;
-  }
-}
-
-static CmpInst::Predicate getCmpPredicateForMinMax(SelectPatternFlavor SPF,
-                                                   bool Ordered=false) {
-  switch (SPF) {
-  default:
-    llvm_unreachable("unhandled!");
-
-  case SPF_SMIN:
-    return ICmpInst::ICMP_SLT;
-  case SPF_UMIN:
-    return ICmpInst::ICMP_ULT;
-  case SPF_SMAX:
-    return ICmpInst::ICMP_SGT;
-  case SPF_UMAX:
-    return ICmpInst::ICMP_UGT;
-  case SPF_FMINNUM:
-    return Ordered ? FCmpInst::FCMP_OLT : FCmpInst::FCMP_ULT;
-  case SPF_FMAXNUM:
-    return Ordered ? FCmpInst::FCMP_OGT : FCmpInst::FCMP_UGT;
-  }
-}
-
-static Value *generateMinMaxSelectPattern(InstCombiner::BuilderTy &Builder,
-                                          SelectPatternFlavor SPF, Value *A,
-                                          Value *B) {
-  CmpInst::Predicate Pred = getCmpPredicateForMinMax(SPF);
-  assert(CmpInst::isIntPredicate(Pred));
+static Value *createMinMax(InstCombiner::BuilderTy &Builder,
+                           SelectPatternFlavor SPF, Value *A, Value *B) {
+  CmpInst::Predicate Pred = getMinMaxPred(SPF);
+  assert(CmpInst::isIntPredicate(Pred) && "Expected integer predicate");
   return Builder.CreateSelect(Builder.CreateICmp(Pred, A, B), A, B);
 }
 
@@ -1059,10 +1020,10 @@ Instruction *InstCombiner::foldSPFofSPF(Instruction *Inner,
     if (!NotC)
       NotC = Builder.CreateNot(C);
 
-    Value *NewInner = generateMinMaxSelectPattern(
-        Builder, getInverseMinMaxSelectPattern(SPF1), NotA, NotB);
-    Value *NewOuter = Builder.CreateNot(generateMinMaxSelectPattern(
-        Builder, getInverseMinMaxSelectPattern(SPF2), NewInner, NotC));
+    Value *NewInner = createMinMax(Builder, getInverseMinMaxFlavor(SPF1), NotA,
+                                   NotB);
+    Value *NewOuter = Builder.CreateNot(
+        createMinMax(Builder, getInverseMinMaxFlavor(SPF2), NewInner, NotC));
     return replaceInstUsesWith(Outer, NewOuter);
   }
 
@@ -1408,7 +1369,7 @@ static Instruction *factorizeMinMaxTree(SelectPatternFlavor SPF, Value *LHS,
   if (!MinMaxOp || !ThirdOp)
     return nullptr;
 
-  CmpInst::Predicate P = getCmpPredicateForMinMax(SPF);
+  CmpInst::Predicate P = getMinMaxPred(SPF);
   Value *CmpABC = Builder.CreateICmp(P, MinMaxOp, ThirdOp);
   return SelectInst::Create(CmpABC, MinMaxOp, ThirdOp);
 }
@@ -1656,7 +1617,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
           (LHS->getType()->isFPOrFPVectorTy() &&
            ((CmpLHS != LHS && CmpLHS != RHS) ||
             (CmpRHS != LHS && CmpRHS != RHS)))) {
-        CmpInst::Predicate Pred = getCmpPredicateForMinMax(SPF, SPR.Ordered);
+        CmpInst::Predicate Pred = getMinMaxPred(SPF, SPR.Ordered);
 
         Value *Cmp;
         if (CmpInst::isIntPredicate(Pred)) {
@@ -1681,8 +1642,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       Value *A, *B;
       if (match(LHS, m_Not(m_Value(A))) && match(RHS, m_Not(m_Value(B))) &&
           (LHS->getNumUses() <= 2 || RHS->getNumUses() <= 2)) {
-        CmpInst::Predicate InvertedPred =
-            getCmpPredicateForMinMax(getInverseMinMaxSelectPattern(SPF));
+        CmpInst::Predicate InvertedPred = getInverseMinMaxPred(SPF);
         Value *InvertedCmp = Builder.CreateICmp(InvertedPred, A, B);
         Value *NewSel = Builder.CreateSelect(InvertedCmp, A, B);
         return BinaryOperator::CreateNot(NewSel);
