@@ -713,23 +713,18 @@ canonicalizeMinMaxWithConstant(SelectInst &Sel, ICmpInst &Cmp,
 
   // Canonicalize the compare predicate based on whether we have min or max.
   Value *LHS, *RHS;
-  ICmpInst::Predicate NewPred;
   SelectPatternResult SPR = matchSelectPattern(&Sel, LHS, RHS);
-  switch (SPR.Flavor) {
-  case SPF_SMIN: NewPred = ICmpInst::ICMP_SLT; break;
-  case SPF_UMIN: NewPred = ICmpInst::ICMP_ULT; break;
-  case SPF_SMAX: NewPred = ICmpInst::ICMP_SGT; break;
-  case SPF_UMAX: NewPred = ICmpInst::ICMP_UGT; break;
-  default: return nullptr;
-  }
+  if (!SelectPatternResult::isMinOrMax(SPR.Flavor))
+    return nullptr;
 
   // Is this already canonical?
+  ICmpInst::Predicate CanonicalPred = getMinMaxPred(SPR.Flavor);
   if (Cmp.getOperand(0) == LHS && Cmp.getOperand(1) == RHS &&
-      Cmp.getPredicate() == NewPred)
+      Cmp.getPredicate() == CanonicalPred)
     return nullptr;
 
   // Create the canonical compare and plug it into the select.
-  Sel.setCondition(Builder.CreateICmp(NewPred, LHS, RHS));
+  Sel.setCondition(Builder.CreateICmp(CanonicalPred, LHS, RHS));
 
   // If the select operands did not change, we're done.
   if (Sel.getTrueValue() == LHS && Sel.getFalseValue() == RHS)
