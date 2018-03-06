@@ -33155,7 +33155,7 @@ static SDValue combineShiftRightLogical(SDNode *N, SelectionDAG &DAG,
 
   // Only do this on the last DAG combine as it can interfere with other
   // combines.
-  if (!DCI.isAfterLegalizeVectorOps())
+  if (!DCI.isAfterLegalizeDAG())
     return SDValue();
 
   // Try to improve a sequence of srl (and X, C1), C2 by inverting the order.
