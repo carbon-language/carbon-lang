@@ -1288,18 +1288,6 @@ class Record {
 
   bool IsAnonymous;
 
-  // Class-instance values can be used by other defs.  For example, Struct<i>
-  // is used here as a template argument to another class:
-  //
-  //   multiclass MultiClass<int i> {
-  //     def Def : Class<Struct<i>>;
-  //
-  // These need to get fully resolved before instantiating any other
-  // definitions that use them (e.g. Def).  However, inside a multiclass they
-  // can't be immediately resolved so we mark them ResolveFirst to fully
-  // resolve them later as soon as the multiclass is instantiated.
-  bool ResolveFirst = false;
-
   void init();
   void checkName();
 
@@ -1323,7 +1311,7 @@ public:
     Name(O.Name), Locs(O.Locs), TemplateArgs(O.TemplateArgs),
     Values(O.Values), SuperClasses(O.SuperClasses),
     TrackedRecords(O.TrackedRecords), ID(LastID++),
-    IsAnonymous(O.IsAnonymous), ResolveFirst(O.ResolveFirst) { }
+    IsAnonymous(O.IsAnonymous) { }
 
   static unsigned getNewUID() { return LastID++; }
 
@@ -1459,14 +1447,6 @@ public:
 
   bool isAnonymous() const {
     return IsAnonymous;
-  }
-
-  bool isResolveFirst() const {
-    return ResolveFirst;
-  }
-
-  void setResolveFirst(bool b) {
-    ResolveFirst = b;
   }
 
   void print(raw_ostream &OS) const;

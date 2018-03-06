@@ -2722,12 +2722,6 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
       if (ResolveMulticlassDef(*MC, CurRec, DefProto.get(), DefmLoc))
         return Error(SubClassLoc, "could not instantiate def");
 
-      // Defs that can be used by other definitions should be fully resolved
-      // before any use.
-      if (DefProto->isResolveFirst() && !CurMultiClass) {
-        CurRec->resolveReferences();
-        CurRec->setResolveFirst(false);
-      }
       NewRecDefs.push_back(CurRec);
     }
 
