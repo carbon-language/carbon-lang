@@ -35,7 +35,6 @@ class SymbolTableSection;
 class RelocationSection;
 class DynamicRelocationSection;
 class GnuDebugLinkSection;
-class SectionIndexSection;
 class Segment;
 class Object;
 
@@ -53,10 +52,10 @@ public:
   iterator begin() { return iterator(Sections.data()); }
   iterator end() { return iterator(Sections.data() + Sections.size()); }
 
-  SectionBase *getSection(uint32_t Index, Twine ErrMsg);
+  SectionBase *getSection(uint16_t Index, Twine ErrMsg);
 
   template <class T>
-  T *getSectionOfType(uint32_t Index, Twine IndexErrMsg, Twine TypeErrMsg);
+  T *getSectionOfType(uint16_t Index, Twine IndexErrMsg, Twine TypeErrMsg);
 };
 
 enum ElfType { ELFT_ELF32LE, ELFT_ELF64LE, ELFT_ELF32BE, ELFT_ELF64BE };
@@ -72,7 +71,6 @@ public:
   virtual void visit(const RelocationSection &Sec) = 0;
   virtual void visit(const DynamicRelocationSection &Sec) = 0;
   virtual void visit(const GnuDebugLinkSection &Sec) = 0;
-  virtual void visit(const SectionIndexSection &Sec) = 0;
 };
 
 class SectionWriter : public SectionVisitor {
@@ -89,7 +87,6 @@ public:
   virtual void visit(const SymbolTableSection &Sec) override = 0;
   virtual void visit(const RelocationSection &Sec) override = 0;
   virtual void visit(const GnuDebugLinkSection &Sec) override = 0;
-  virtual void visit(const SectionIndexSection &Sec) override = 0;
 
   SectionWriter(FileOutputBuffer &Buf) : Out(Buf) {}
 };
@@ -105,7 +102,6 @@ public:
   void visit(const SymbolTableSection &Sec) override;
   void visit(const RelocationSection &Sec) override;
   void visit(const GnuDebugLinkSection &Sec) override;
-  void visit(const SectionIndexSection &Sec) override;
 
   ELFSectionWriter(FileOutputBuffer &Buf) : SectionWriter(Buf) {}
 };
@@ -121,7 +117,6 @@ public:
   void visit(const SymbolTableSection &Sec) override;
   void visit(const RelocationSection &Sec) override;
   void visit(const GnuDebugLinkSection &Sec) override;
-  void visit(const SectionIndexSection &Sec) override;
   BinarySectionWriter(FileOutputBuffer &Buf) : SectionWriter(Buf) {}
 };
 
@@ -192,7 +187,6 @@ public:
   uint64_t HeaderOffset;
   uint64_t OriginalOffset;
   uint32_t Index;
-  bool HasSymbol = false;
 
   uint64_t Addr = 0;
   uint64_t Align = 1;
@@ -329,7 +323,6 @@ enum SymbolShndxType {
   SYMBOL_HEXAGON_SCOMMON_2 = ELF::SHN_HEXAGON_SCOMMON_2,
   SYMBOL_HEXAGON_SCOMMON_4 = ELF::SHN_HEXAGON_SCOMMON_4,
   SYMBOL_HEXAGON_SCOMMON_8 = ELF::SHN_HEXAGON_SCOMMON_8,
-  SYMBOL_XINDEX = ELF::SHN_XINDEX,
 };
 
 struct Symbol {
@@ -347,33 +340,6 @@ struct Symbol {
   uint16_t getShndx() const;
 };
 
-class SectionIndexSection : public SectionBase {
-  MAKE_SEC_WRITER_FRIEND
-
-private:
-  std::vector<uint32_t> Indexes;
-  SymbolTableSection *Symbols;
-
-public:
-  virtual ~SectionIndexSection() {}
-  void addIndex(uint32_t Index) {
-    Indexes.push_back(Index);
-    Size += 4;
-  }
-  void setSymTab(SymbolTableSection *SymTab) { Symbols = SymTab; }
-  void initialize(SectionTableRef SecTable) override;
-  void finalize() override;
-  void accept(SectionVisitor &Visitor) const override;
-
-  SectionIndexSection() {
-    Name = ".symtab_shndx";
-    OriginalOffset = std::numeric_limits<uint64_t>::max();
-    Align = 4;
-    EntrySize = 4;
-    Type = ELF::SHT_SYMTAB_SHNDX;
-  }
-};
-
 class SymbolTableSection : public SectionBase {
   MAKE_SEC_WRITER_FRIEND
 
@@ -382,7 +348,6 @@ class SymbolTableSection : public SectionBase {
 protected:
   std::vector<std::unique_ptr<Symbol>> Symbols;
   StringTableSection *SymbolNames = nullptr;
-  SectionIndexSection *SectionIndexTable = nullptr;
 
   using SymPtr = std::unique_ptr<Symbol>;
 
@@ -390,9 +355,7 @@ public:
   void addSymbol(StringRef Name, uint8_t Bind, uint8_t Type,
                  SectionBase *DefinedIn, uint64_t Value, uint8_t Visibility,
                  uint16_t Shndx, uint64_t Sz);
-  void prepareForLayout();
-  void setShndxTable(SectionIndexSection *ShndxTable) { SectionIndexTable = ShndxTable; }
-  const SectionBase *getShndxTable() const { return SectionIndexTable; }
+  void addSymbolNames();
   const SectionBase *getStrTab() const { return SymbolNames; }
   const Symbol *getSymbolByIndex(uint32_t Index) const;
   void removeSectionReferences(const SectionBase *Sec) override;
@@ -553,7 +516,6 @@ private:
   using Elf_Addr = typename ELFT::Addr;
   using Elf_Shdr = typename ELFT::Shdr;
   using Elf_Ehdr = typename ELFT::Ehdr;
-  using Elf_Word = typename ELFT::Word;
 
   const ELFFile<ELFT> &ElfFile;
   Object &Obj;
@@ -619,7 +581,6 @@ public:
 
   StringTableSection *SectionNames = nullptr;
   SymbolTableSection *SymbolTable = nullptr;
-  SectionIndexSection *SectionIndexTable = nullptr;
 
   Object(std::shared_ptr<MemoryBuffer> Data) : OwnedData(Data) {}
   virtual ~Object() = default;

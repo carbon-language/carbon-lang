@@ -1,6 +1,0 @@
-RUN: unzip -p %p/Inputs/many-sections.o.zip > %t
-RUN: llvm-objcopy -R=.symtab_shndxr %t %t2
-RUN: llvm-readobj -sections %t2 | FileCheck %s
-
-CHECK: Name: .symtab_shndx (
-
