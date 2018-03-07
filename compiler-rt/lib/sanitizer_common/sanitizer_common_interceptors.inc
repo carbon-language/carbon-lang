@@ -6529,28 +6529,30 @@ INTERCEPTOR(wchar_t *, wcsncat, wchar_t *dst, const wchar_t *src, SIZE_T n) {
 #define INIT_WCSCAT
 #endif
 
+static SIZE_T RealStrLen(const char *str) { return REAL(strlen)(str); }
+
+static SIZE_T RealStrLen(const wchar_t *str) { return REAL(wcslen)(str); }
+
+#define STRXFRM_INTERCEPTOR_IMPL(strxfrm, dest, src, len, ...)             \
+  {                                                                        \
+    void *ctx;                                                             \
+    COMMON_INTERCEPTOR_ENTER(ctx, strxfrm, dest, src, len, ##__VA_ARGS__); \
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, src,                                \
+                                  sizeof(*src) * (RealStrLen(src) + 1));   \
+    SIZE_T res = REAL(strxfrm)(dest, src, len, ##__VA_ARGS__);             \
+    if (res < len)                                                         \
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dest, sizeof(*src) * (res + 1)); \
+    return res;                                                            \
+  }
+
 #if SANITIZER_INTERCEPT_STRXFRM
 INTERCEPTOR(SIZE_T, strxfrm, char *dest, const char *src, SIZE_T len) {
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, strxfrm, dest, src, len);
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, src,
-                                sizeof(char) * (REAL(strlen)(src) + 1));
-  SIZE_T res = REAL(strxfrm)(dest, src, len);
-  if (res < len)
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dest, sizeof(char) * (res + 1));
-  return res;
+  STRXFRM_INTERCEPTOR_IMPL(strxfrm, dest, src, len);
 }
 
 INTERCEPTOR(SIZE_T, strxfrm_l, char *dest, const char *src, SIZE_T len,
             void *locale) {
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, strxfrm_l, dest, src, len, locale);
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, src,
-                                sizeof(char) * (REAL(strlen)(src) + 1));
-  SIZE_T res = REAL(strxfrm_l)(dest, src, len, locale);
-  if (res < len)
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dest, sizeof(char) * (res + 1));
-  return res;
+  STRXFRM_INTERCEPTOR_IMPL(strxfrm_l, dest, src, len, locale);
 }
 
 #define INIT_STRXFRM                  \
@@ -6563,14 +6565,7 @@ INTERCEPTOR(SIZE_T, strxfrm_l, char *dest, const char *src, SIZE_T len,
 #if SANITIZER_INTERCEPT___STRXFRM_L
 INTERCEPTOR(SIZE_T, __strxfrm_l, char *dest, const char *src, SIZE_T len,
             void *locale) {
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, __strxfrm_l, dest, src, len, locale);
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, src,
-                                sizeof(char) * (REAL(strlen)(src) + 1));
-  SIZE_T res = REAL(__strxfrm_l)(dest, src, len, locale);
-  if (res < len)
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dest, sizeof(char) * (res + 1));
-  return res;
+  STRXFRM_INTERCEPTOR_IMPL(__strxfrm_l, dest, src, len, locale);
 }
 
 #define INIT___STRXFRM_L COMMON_INTERCEPT_FUNCTION(__strxfrm_l);
@@ -6580,26 +6575,12 @@ INTERCEPTOR(SIZE_T, __strxfrm_l, char *dest, const char *src, SIZE_T len,
 
 #if SANITIZER_INTERCEPT_WCSXFRM
 INTERCEPTOR(SIZE_T, wcsxfrm, wchar_t *dest, const wchar_t *src, SIZE_T len) {
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, wcsxfrm, dest, src, len);
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, src,
-                                sizeof(wchar_t) * (REAL(wcslen)(src) + 1));
-  SIZE_T res = REAL(wcsxfrm)(dest, src, len);
-  if (res < len)
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dest, sizeof(wchar_t) * (res + 1));
-  return res;
+  STRXFRM_INTERCEPTOR_IMPL(wcsxfrm, dest, src, len);
 }
 
 INTERCEPTOR(SIZE_T, wcsxfrm_l, wchar_t *dest, const wchar_t *src, SIZE_T len,
             void *locale) {
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, wcsxfrm_l, dest, src, len, locale);
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, src,
-                                sizeof(wchar_t) * (REAL(wcslen)(src) + 1));
-  SIZE_T res = REAL(wcsxfrm_l)(dest, src, len, locale);
-  if (res < len)
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dest, sizeof(wchar_t) * (res + 1));
-  return res;
+  STRXFRM_INTERCEPTOR_IMPL(wcsxfrm_l, dest, src, len, locale);
 }
 
 #define INIT_WCSXFRM                  \
@@ -6612,14 +6593,7 @@ INTERCEPTOR(SIZE_T, wcsxfrm_l, wchar_t *dest, const wchar_t *src, SIZE_T len,
 #if SANITIZER_INTERCEPT___WCSXFRM_L
 INTERCEPTOR(SIZE_T, __wcsxfrm_l, wchar_t *dest, const wchar_t *src, SIZE_T len,
             void *locale) {
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, __wcsxfrm_l, dest, src, len, locale);
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, src,
-                                sizeof(wchar_t) * (REAL(wcslen)(src) + 1));
-  SIZE_T res = REAL(__wcsxfrm_l)(dest, src, len, locale);
-  if (res < len)
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dest, sizeof(wchar_t) * (res + 1));
-  return res;
+  STRXFRM_INTERCEPTOR_IMPL(__wcsxfrm_l, dest, src, len, locale);
 }
 
 #define INIT___WCSXFRM_L COMMON_INTERCEPT_FUNCTION(__wcsxfrm_l);
