@@ -801,7 +801,12 @@ public:
   SMap * current_smap_ ;
 
   std::map<SMap::Index, const sm::Identifier *> construct_name_ ;
-  
+
+  // Set of all labe-DO statement that are still open.
+  // The key is the LabelDoStmt index
+  // The value is the required label.
+  std::map<SMap::Index,int> opened_label_do_;
+
 public:
   
   Scope *EnterScope(Scope *s) { 
@@ -1000,8 +1005,44 @@ public:
     assert(current_smap_) ;
     return *current_smap_ ;
   }
-
   
+  void OpenLabelDo(SMap::Index dostmt, int label) 
+  { 
+    opened_label_do_[dostmt] = label ;
+  }
+  
+  void CloseLabelDo(SMap::Index dostmt) 
+  { 
+    opened_label_do_.erase(dostmt) ;
+  }
+
+  // If stmt is an opened LabelDo, then return its label.  
+  // In all other cases, return 0.
+  //
+  // This function can be safely called even if stmt is 
+  // not a LabelStmt
+  // 
+  int GetLabelOfOpenedLabelDo(SMap::Index stmt) 
+  {         
+    auto it = opened_label_do_.find(stmt);
+    if ( it != opened_label_do_.end() ) 
+      return it->second ;
+    else
+      return 0 ; 
+  }
+
+  // return true if the specified label matches any currently opened LabelDo
+  bool MatchAnyOpenedLabelDo(int label) 
+  {         
+    auto smap = GetStatementMap() ; 
+    for (auto it : opened_label_do_ ) {
+      if ( it.second == label )
+        return true;
+    }
+    return false; 
+  }
+  
+
   bool ValidEndOfLabelDo(StmtClass sclass) 
   {
     
@@ -1092,10 +1133,12 @@ public:
     
     auto sgroup = StmtClassToGroup(sclass);
 
+    
+
     if ( smap.Size() >= 1 ) {
 
       // We need to add the statement to the map but before, we have to 
-      // handle the specific  case of the LabelDo. 
+      // handle the specific case of the LabelDo. 
       SMap::Index last = smap.Size(); 
       SMap::Index label_do = SMap::None;
       if ( smap.GetGroup(last) == StmtGroup::Single ) {
@@ -1105,14 +1148,16 @@ public:
       } 
       if ( label_do != SMap::None ) {
         if ( smap.GetClass(label_do) == StmtClass::LabelDo ) {
-          if (  smap.GetLabelDoLabel(label_do) == sema.stmt_label ) {
+          if (  GetLabelOfOpenedLabelDo(label_do) == sema.stmt_label ) {
             if ( ! ValidEndOfLabelDo(sclass) ) {
               FAIL("Statement cannot end a DO label");
+            } else if ( sclass == StmtClass::EndDo ) {
+              CloseLabelDo(label_do);
             }
           } else if ( sclass == StmtClass::EndDo ) {
-            FAIL("ENDDO label does not match previous DO label");
+            FAIL("ENDDO label does not match previous DO-label");
           } else if ( sgroup==StmtGroup::Part || sgroup==StmtGroup::End ) {
-            FAIL("Unterminated DO label statement");
+            FAIL("Unterminated DO-label statement");
           }
         }
       }
@@ -1127,36 +1172,71 @@ public:
     if (sgroup == StmtGroup::Single || sgroup == StmtGroup::End ) 
       {
         SMap::Index s;
-        if (sgroup == StmtGroup::End) 
+        if (sclass == StmtClass::EndDo )
+          s = sema.stmt_index ;
+        else if (sgroup == StmtGroup::End) 
           s = smap.StartOfConstruct(sema.stmt_index);
         else //  StmtGroup::Single        
           s = sema.stmt_index ;
         
         int label = smap.GetLabel(s)  ;
         if ( label > 0 ) {
-          SMap::Index parent = smap.GetParent(s) ;
-          // Insert a DummyEndDo for each enclosing LabelDo that
-          // matches the label of the added statement or construct
-          while (  parent!= SMap::None && 
-                   ( smap.GetClass(parent) == StmtClass::LabelDo ||
-                     smap.GetClass(parent) == StmtClass::LabelDoWhile ||
-                     smap.GetClass(parent) == StmtClass::LabelDoConcurrent 
-                     ) &&                   
-                   smap.GetLabelDoLabel(parent)
+          // For an enddo, go up one more level because we just 
+          // closed that loop (but there could be more loops to close)
+          if (sclass == StmtClass::EndDo ) 
+            s = smap.StartOfConstruct(s) ;
+
+          SMap::Index parent = smap.GetParent(s) ;          
+
+          // Insert a DummyEndDo for each opened LabelDo that
+          // matches the label of the added statement or construct.
+          while (  parent != SMap::None && 
+                   //( smap.GetClass(parent) == StmtClass::LabelDo ||
+                   //  smap.GetClass(parent) == StmtClass::LabelDoWhile ||
+                   //  smap.GetClass(parent) == StmtClass::LabelDoConcurrent 
+                   //  ) &&                   
+                   // isAnOpenLabelDo(parent) && 
+                   // smap.GetLabelDoLabel(parent) == label &&                   
+                   GetLabelOfOpenedLabelDo(parent) == label
                   ) 
             {              
               auto name = GetConstructName(parent);
               if (name) {
+                //
+                // Our DummyEndDo cannot be used to close a named LabelDo.
+                // For instance, the following is not legal:
+                //   foobar: DO 666 i=1,n
+                //   ...
+                //   666 CONTINUE
                 FAIL("Statement #" << sema.stmt_index 
                      << " is ending the named DO label #" 
                      << parent) ;
               }
-              smap.Add( StmtClass::DummyEndDo, 0 ) ;  
+              smap.Add( StmtClass::DummyEndDo, 0 ) ; 
+              CloseLabelDo(parent) ;
               parent = smap.GetParent(parent) ;
             }
         }
       } 
-
+    
+    // TODO: add a data structure to track all opened 'LabelDo' 
+    // and after inserting the  
+    
+    // If the label of the added statement was supposed to 
+    // close some opened LabelDo then they should be now be 
+    // closed. 
+    //
+    // Any opened LabelDo matching the added label indicates
+    // a nesting problem
+    // 
+    int added_label = smap.GetLabel(sema.stmt_index) ;    
+    if ( added_label ) {
+      if ( MatchAnyOpenedLabelDo(added_label) ) {
+        FAIL("Statement with label " <<  added_label << " is not properly"
+             " nested to close all corresponding label DO statement");
+      }
+    }
+    
     return sema;
   }
 
@@ -2344,7 +2424,16 @@ public:
 
     // Inform the Statement Map of the required end label. 
     int end_label = int(std::get<1>(x.t)) ; // TODO: check label is in 1:99999 range
-    smap.SetLabelDoLabel(sema.stmt_index, end_label) ;
+    //smap.SetLabelDoLabel(sema.stmt_index, end_label) ;
+    OpenLabelDo( sema.stmt_index, end_label);
+
+    Provenance previous_loc;
+    if ( GetLabelTable().find(end_label, previous_loc) ) {
+      // Early fail when the label already exists.
+      // This is actually optional since a "Duplicate Label" or "a END mismatch" error 
+      // should occur later. 
+      FAIL("Label " << end_label << " required by DO statement is already declared") ;
+    }
 
     // And also record the construct name 
     auto name = sm::Identifier::get( std::get<0>(x.t) );
@@ -2851,13 +2940,15 @@ public:
     // the name of the construct we are looking for (can be null)
     const sm::Identifier * target_name = sm::Identifier::get(x.v) ; 
 
+    // Reminder: Unlike in EXIT, the target of a CYCLE statement is always 
+    // a DO so the target resolution are similar but not identical.
     
     SMap::Index target_do = SMap::None ;    
     SMap::Index construct = sema.stmt_index ; 
 
-    // At that point, construct refers to the CYCLE statment which is not a
-    // construct index (i.e. a Start statement). However, in the loop below, 
-    // it will be assigned a proper construct index. 
+    // Note: At that point, 'construct' refers to the CYCLE statment which 
+    // is not a construct index (i.e. a Start statement). However, in the 
+    // loop below, 'construct' will be assigned a proper construct index. 
 
     bool done=false ; 
     while (!done) 
@@ -2919,6 +3010,7 @@ public:
         case StmtClass::Block:
         case StmtClass::Associate:
         case StmtClass::WhereConstruct: 
+          // A CYCLE statement can be used to exit those constructs but they are proper targets
           break;
 
         case StmtClass::Program:

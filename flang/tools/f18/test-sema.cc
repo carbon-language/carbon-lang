@@ -54,6 +54,13 @@ int main(int argc, char *const argv[]) {
   cooked.Marshal();
   ParseState state{cooked};
   UserState ustate;
+
+  state
+    //.set_inFixedForm(true)
+    //.set_strictConformance(false)
+    .set_userState(&ustate)
+    ;
+
   std::optional<Program> result{program.Parse(&state)};
   if (!result.has_value() || state.anyErrorRecovery()) {
     std::cerr << "parse FAILED\n";
