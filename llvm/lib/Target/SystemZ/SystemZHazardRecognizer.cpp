@@ -283,9 +283,6 @@ EmitInstruction(SUnit *SU) {
           << LastFPdOpCycleIdx << "\n";);
   }
 
-  bool GroupEndingBranch =
-    (CurrGroupSize >= 1 && isBranchRetTrap(SU->getInstr()));
-
   // Insert SU into current group by increasing number of slots used
   // in current group.
   CurrGroupSize += getNumDecoderSlots(SU);
@@ -293,7 +290,7 @@ EmitInstruction(SUnit *SU) {
 
   // Check if current group is now full/ended. If so, move on to next
   // group to be ready to evaluate more candidates.
-  if (CurrGroupSize == 3 || SC->EndGroup || GroupEndingBranch)
+  if (CurrGroupSize == 3 || SC->EndGroup)
     nextGroup();
 }
 
@@ -386,7 +383,14 @@ void SystemZHazardRecognizer::emitInstruction(MachineInstr *MI,
     }
   }
 
+  unsigned GroupSizeBeforeEmit = CurrGroupSize;
   EmitInstruction(&SU);
+
+  if (!TakenBranch && isBranchRetTrap(MI)) {
+    // NT Branch on second slot ends group.
+    if (GroupSizeBeforeEmit == 1)
+      nextGroup();
+  }
 
   if (TakenBranch && CurrGroupSize > 0)
     nextGroup();
