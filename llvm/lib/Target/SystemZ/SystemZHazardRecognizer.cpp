@@ -253,11 +253,8 @@ EmitInstruction(SUnit *SU) {
   // After returning from a call, we don't know much about the state.
   if (SU->isCall) {
     DEBUG(dbgs() << "++ Clearing state after call.\n";);
-    clearProcResCounters();
-    LastFPdOpCycleIdx = UINT_MAX;
-    CurrGroupSize += getNumDecoderSlots(SU);
-    assert (CurrGroupSize <= 3);
-    nextGroup();
+    Reset();
+    LastEmittedMI = SU->getInstr();
     return;
   }
 
