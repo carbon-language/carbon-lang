@@ -51,7 +51,7 @@ public:
   uint64_t getLMA() const { return PtLoad ? Addr + PtLoad->LMAOffset : Addr; }
   template <typename ELFT> void writeHeaderTo(typename ELFT::Shdr *SHdr);
 
-  unsigned SectionIndex;
+  unsigned SectionIndex = INT_MAX;
   unsigned SortRank;
 
   uint32_t getPhdrFlags() const;
