@@ -694,8 +694,9 @@ void Writer::assignSymtab() {
     for (Symbol *Sym : File->getSymbols()) {
       if (Sym->getFile() != File)
         continue;
-      if (!Sym->isLive())
-        return;
+      // (Since this is relocatable output, GC is not performed so symbols must
+      // be live.)
+      assert(Sym->isLive());
       Sym->setOutputSymbolIndex(SymbolIndex++);
       SymtabEntries.emplace_back(Sym);
     }
@@ -850,7 +851,6 @@ static const int OPCODE_END = 0xb;
 // in input object.
 void Writer::createCtorFunction() {
   uint32_t FunctionIndex = NumImportedFunctions + InputFunctions.size();
-  WasmSym::CallCtors->setOutputIndex(FunctionIndex);
 
   // First write the body's contents to a string.
   std::string BodyContent;
