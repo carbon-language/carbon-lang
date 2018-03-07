@@ -117,9 +117,9 @@ void LinkerScript::expandOutputSection(uint64_t Size) {
   if (Ctx->MemRegion)
     expandMemoryRegion(Ctx->MemRegion, Size, Ctx->MemRegion->Name,
                        Ctx->OutSec->Name);
+  // FIXME: check LMA region overflow too.
   if (Ctx->LMARegion)
-    expandMemoryRegion(Ctx->LMARegion, Size, Ctx->LMARegion->Name,
-                       Ctx->OutSec->Name);
+    Ctx->LMARegion->CurPos += Size;
 }
 
 void LinkerScript::setDot(Expr E, const Twine &Loc, bool InSec) {
