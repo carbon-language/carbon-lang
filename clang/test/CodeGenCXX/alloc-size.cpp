@@ -79,7 +79,7 @@ struct Foo {
 
 void *my_malloc(const Foo &, int N) __attribute__((alloc_size(2)));
 
-// CHECK-LABEL: define i32 lalala
+// CHECK-LABEL: define i32 @_ZN24alloc_size_with_cleanups6testItEv
 int testIt() {
   int *const p = (int *)my_malloc(Foo{}, 3);
   // CHECK: ret i32 3
