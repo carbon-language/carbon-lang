@@ -6529,6 +6529,41 @@ INTERCEPTOR(wchar_t *, wcsncat, wchar_t *dst, const wchar_t *src, SIZE_T n) {
 #define INIT_WCSCAT
 #endif
 
+#if SANITIZER_INTERCEPT_WCSXFRM
+INTERCEPTOR(SIZE_T, wcsxfrm, wchar_t *dest, const wchar_t *src, SIZE_T len) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, wcsxfrm, dest, src, len);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, src,
+                                sizeof(wchar_t) * (REAL(wcslen)(src) + 1));
+
+  SIZE_T res = REAL(wcsxfrm)(dest, src, len);
+  if (res < len)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dest, sizeof(wchar_t) * (res + 1));
+
+  return res;
+}
+
+INTERCEPTOR(SIZE_T, wcsxfrm_l, wchar_t *dest, const wchar_t *src, SIZE_T len,
+            void *locale) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, wcsxfrm_l, dest, src, len, locale);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, src,
+                                sizeof(wchar_t) * (REAL(wcslen)(src) + 1));
+
+  SIZE_T res = REAL(wcsxfrm_l)(dest, src, len, locale);
+  if (res < len)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dest, sizeof(wchar_t) * (res + 1));
+
+  return res;
+}
+
+#define INIT_WCSXFRM                  \
+  COMMON_INTERCEPT_FUNCTION(wcsxfrm); \
+  COMMON_INTERCEPT_FUNCTION(wcsxfrm_l);
+#else
+#define INIT_WCSXFRM
+#endif
+
 #if SANITIZER_INTERCEPT_ACCT
 INTERCEPTOR(int, acct, const char *file) {
   void *ctx;
@@ -7275,6 +7310,7 @@ static void InitializeCommonInterceptors() {
   INIT_GETLOADAVG;
   INIT_WCSLEN;
   INIT_WCSCAT;
+  INIT_WCSXFRM;
   INIT_ACCT;
   INIT_USER_FROM_UID;
   INIT_UID_FROM_USER;
