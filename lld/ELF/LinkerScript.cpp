@@ -380,6 +380,14 @@ void LinkerScript::discard(ArrayRef<InputSection *> V) {
         S == InX::DynStrTab)
       error("discarding " + S->Name + " section is not allowed");
 
+    // You can discard .hash and .gnu.hash sections by linker scripts. Since
+    // they are synthesized sections, we need to handle them differently than
+    // other regular sections.
+    if (S == InX::GnuHashTab)
+      InX::GnuHashTab = nullptr;
+    if (S == InX::HashTab)
+      InX::HashTab = nullptr;
+
     S->Assigned = false;
     S->Live = false;
     discard(S->DependentSections);
