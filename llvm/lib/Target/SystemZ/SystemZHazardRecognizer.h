@@ -75,8 +75,10 @@ class SystemZHazardRecognizer : public ScheduleHazardRecognizer {
 
   /// Two decoder groups per cycle are formed (for z13), meaning 2x3
   /// instructions. This function returns a number between 0 and 5,
-  /// representing the current decoder slot of the current cycle.
-  unsigned getCurrCycleIdx() const;
+  /// representing the current decoder slot of the current cycle.  If an SU
+  /// is passed which will begin a new decoder group, the returned value is
+  /// the cycle index of the next group.
+  unsigned getCurrCycleIdx(SUnit *SU = nullptr) const;
 
   /// LastFPdOpCycleIdx stores the numbeer returned by getCurrCycleIdx()
   /// when a stalling operation is scheduled (which uses the FPd resource).
@@ -95,7 +97,7 @@ class SystemZHazardRecognizer : public ScheduleHazardRecognizer {
 
   /// With the goal of alternating processor sides for stalling (FPd)
   /// ops, return true if it seems good to schedule an FPd op next.
-  bool isFPdOpPreferred_distance(const SUnit *SU);
+  bool isFPdOpPreferred_distance(SUnit *SU) const;
 
   /// Last emitted instruction or nullptr.
   MachineInstr *LastEmittedMI;

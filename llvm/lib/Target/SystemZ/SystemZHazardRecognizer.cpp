@@ -59,10 +59,18 @@ getNumDecoderSlots(SUnit *SU) const {
   return 1; // Normal instruction
 }
 
-unsigned SystemZHazardRecognizer::getCurrCycleIdx() const {
+unsigned SystemZHazardRecognizer::getCurrCycleIdx(SUnit *SU) const {
   unsigned Idx = CurrGroupSize;
   if (GrpCount % 2)
     Idx += 3;
+
+  if (SU != nullptr && !fitsIntoCurrentGroup(SU)) {
+    if (Idx == 1 || Idx == 2)
+      Idx = 3;
+    else if (Idx == 4 || Idx == 5)
+      Idx = 0;
+  }
+
   return Idx;
 }
 
@@ -278,7 +286,7 @@ EmitInstruction(SUnit *SU) {
 
   // Make note of an instruction that uses a blocking resource (FPd).
   if (SU->isUnbuffered) {
-    LastFPdOpCycleIdx = getCurrCycleIdx();
+    LastFPdOpCycleIdx = getCurrCycleIdx(SU);
     DEBUG(dbgs() << "++ Last FPd cycle index: "
           << LastFPdOpCycleIdx << "\n";);
   }
@@ -321,7 +329,7 @@ int SystemZHazardRecognizer::groupingCost(SUnit *SU) const {
   return 0;
 }
 
-bool SystemZHazardRecognizer::isFPdOpPreferred_distance(const SUnit *SU) {
+bool SystemZHazardRecognizer::isFPdOpPreferred_distance(SUnit *SU) const {
   assert (SU->isUnbuffered);
   // If this is the first FPd op, it should be scheduled high.
   if (LastFPdOpCycleIdx == UINT_MAX)
@@ -330,9 +338,10 @@ bool SystemZHazardRecognizer::isFPdOpPreferred_distance(const SUnit *SU) {
   // of the processor to use the other FPd unit there. This should
   // generally happen if two FPd ops are placed with 2 other
   // instructions between them (modulo 6).
-  if (LastFPdOpCycleIdx > getCurrCycleIdx())
-    return ((LastFPdOpCycleIdx - getCurrCycleIdx()) == 3);
-  return ((getCurrCycleIdx() - LastFPdOpCycleIdx) == 3);
+  unsigned SUCycleIdx = getCurrCycleIdx(SU);
+  if (LastFPdOpCycleIdx > SUCycleIdx)
+    return ((LastFPdOpCycleIdx - SUCycleIdx) == 3);
+  return ((SUCycleIdx - LastFPdOpCycleIdx) == 3);
 }
 
 int SystemZHazardRecognizer::
