@@ -80,8 +80,6 @@ public:
 
   void resetIndent() { IndentLevel = 0; }
 
-  int getIndentLevel() { return IndentLevel; }
-
   void setPrefix(StringRef P) { Prefix = P; }
 
   void printIndent() {
