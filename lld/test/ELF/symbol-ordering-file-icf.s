@@ -6,11 +6,10 @@
 # RUN: ld.lld --icf=all --symbol-ordering-file %t.order -shared %t.o -o %t.so
 # RUN: llvm-nm %t.so | FileCheck %s
 
-## Check that after ICF merges 'foo' and 'zed' we still
-## place them before 'bar', in according to ordering file.
-# CHECK-DAG: 0000000000001000 T foo
-# CHECK-DAG: 0000000000001000 T zed
-# CHECK-DAG: 0000000000001004 T bar
+## Check that we do not sort ICF'ed symbols 'foo' and 'zed'.
+# CHECK-DAG: 0000000000001000 T bar
+# CHECK-DAG: 0000000000001004 T foo
+# CHECK-DAG: 0000000000001004 T zed
 
 .section .text.foo,"ax",@progbits
 .align 4
