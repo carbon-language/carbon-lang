@@ -1045,35 +1045,28 @@ static DenseMap<const InputSectionBase *, int> buildSectionOrder() {
       SymbolOrderEntry &Ent = It->second;
       Ent.Present = true;
 
-      auto Warning = [&](StringRef Msg) {
-        if (Config->WarnSymbolOrdering)
-          warn(File->getName() + ": " + Msg + ": " + Sym->getName());
-      };
+      auto *D = dyn_cast<Defined>(Sym);
+      if (Config->WarnSymbolOrdering) {
+        if (Sym->isUndefined())
+          warn(File->getName() +
+               ": unable to order undefined symbol: " + Sym->getName());
+        else if (Sym->isShared())
+          warn(File->getName() +
+               ": unable to order shared symbol: " + Sym->getName());
+        else if (D && !D->Section)
+          warn(File->getName() +
+               ": unable to order absolute symbol: " + Sym->getName());
+        else if (D && !D->Section->Live)
+          warn(File->getName() +
+               ": unable to order discarded symbol: " + Sym->getName());
+      }
+      if (!D)
+        continue;
 
-      if (Sym->isUndefined()) {
-        Warning("unable to order undefined symbol");
-        continue;
+      if (auto *Sec = dyn_cast_or_null<InputSectionBase>(D->Section)) {
+        int &Priority = SectionOrder[cast<InputSectionBase>(Sec->Repl)];
+        Priority = std::min(Priority, Ent.Priority);
       }
-      if (Sym->isShared()) {
-        Warning("unable to order shared symbol");
-        continue;
-      }
-
-      auto *Sec = dyn_cast_or_null<InputSectionBase>(cast<Defined>(Sym)->Section);
-      if (!Sec) {
-        Warning("unable to order absolute symbol");
-        continue;
-      }
-      if (!Sec->Live) {
-        if (Sec->Repl == Sec)
-          Warning("unable to order discarded symbol");
-        else
-          Warning("unable to order a symbol merged by ICF");
-        continue;
-      }
-
-      int &Priority = SectionOrder[cast<InputSectionBase>(Sec->Repl)];
-      Priority = std::min(Priority, Ent.Priority);
     }
   }
 

@@ -109,7 +109,7 @@
 # WARN-NOT:    warning:
 # MISSING:     warning: symbol ordering file: no such symbol: missing
 # MISSING2:    warning: symbol ordering file: no such symbol: missing_sym
-# ICF:         warning: {{.*}}1.o: unable to order a symbol merged by ICF: icf2
+# ICF:         warning: {{.*}}1.o: unable to order discarded symbol: icf2
 # COMDAT:      warning: {{.*}}1.o: unable to order discarded symbol: comdat
 # COMDAT-NEXT: warning: {{.*}}2.o: unable to order discarded symbol: comdat
 # MULTI:       warning: {{.*}}2.o: unable to order absolute symbol: multi
