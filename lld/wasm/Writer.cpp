@@ -17,6 +17,7 @@
 #include "WriterUtils.h"
 #include "lld/Common/ErrorHandler.h"
 #include "lld/Common/Memory.h"
+#include "lld/Common/Strings.h"
 #include "lld/Common/Threads.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/BinaryFormat/Wasm.h"
@@ -873,7 +874,8 @@ void Writer::createCtorFunction() {
 
   const WasmSignature *Sig = WasmSym::CallCtors->getFunctionType();
   SyntheticFunction *F = make<SyntheticFunction>(
-      *Sig, std::move(FunctionBody), WasmSym::CallCtors->getName());
+      *Sig, toArrayRef(Saver.save(FunctionBody)),
+      WasmSym::CallCtors->getName());
 
   F->setOutputIndex(FunctionIndex);
   F->Live = true;
