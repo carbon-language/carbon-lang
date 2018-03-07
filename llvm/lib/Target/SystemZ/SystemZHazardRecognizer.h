@@ -76,8 +76,8 @@ class SystemZHazardRecognizer : public ScheduleHazardRecognizer {
   /// Two decoder groups per cycle are formed (for z13), meaning 2x3
   /// instructions. This function returns a number between 0 and 5,
   /// representing the current decoder slot of the current cycle.
-  unsigned getCurrCycleIdx();
-  
+  unsigned getCurrCycleIdx() const;
+
   /// LastFPdOpCycleIdx stores the numbeer returned by getCurrCycleIdx()
   /// when a stalling operation is scheduled (which uses the FPd resource).
   unsigned LastFPdOpCycleIdx;
@@ -88,7 +88,7 @@ class SystemZHazardRecognizer : public ScheduleHazardRecognizer {
   unsigned getCurrGroupSize() {return CurrGroupSize;};
 
   /// Start next decoder group.
-  void nextGroup(bool DbgOutput = true);
+  void nextGroup();
 
   /// Clear all counters for processor resources.
   void clearProcResCounters();
@@ -145,6 +145,7 @@ public:
   void dumpSU(SUnit *SU, raw_ostream &OS) const;
   void dumpCurrGroup(std::string Msg = "") const;
   void dumpProcResourceCounters() const;
+  void dumpState() const;
 #endif
 
   MachineBasicBlock::iterator getLastEmittedMI() { return LastEmittedMI; }

@@ -59,7 +59,7 @@ getNumDecoderSlots(SUnit *SU) const {
   return 1; // Normal instruction
 }
 
-unsigned SystemZHazardRecognizer::getCurrCycleIdx() {
+unsigned SystemZHazardRecognizer::getCurrCycleIdx() const {
   unsigned Idx = CurrGroupSize;
   if (GrpCount % 2)
     Idx += 3;
@@ -100,30 +100,30 @@ SystemZHazardRecognizer::fitsIntoCurrentGroup(SUnit *SU) const {
   return true;
 }
 
-void SystemZHazardRecognizer::nextGroup(bool DbgOutput) {
-  if (CurrGroupSize > 0) {
-    DEBUG(dumpCurrGroup("Completed decode group"));
-    DEBUG(CurGroupDbg = "";);
+void SystemZHazardRecognizer::nextGroup() {
+  if (CurrGroupSize == 0)
+    return;
 
-    GrpCount++;
+  DEBUG(dumpCurrGroup("Completed decode group"));
+  DEBUG(CurGroupDbg = "";);
 
-    // Reset counter for next group.
-    CurrGroupSize = 0;
+  GrpCount++;
 
-    // Decrease counters for execution units by one.
-    for (unsigned i = 0; i < SchedModel->getNumProcResourceKinds(); ++i)
-      if (ProcResourceCounters[i] > 0)
-        ProcResourceCounters[i]--;
+  // Reset counter for next group.
+  CurrGroupSize = 0;
 
-    // Clear CriticalResourceIdx if it is now below the threshold.
-    if (CriticalResourceIdx != UINT_MAX &&
-        (ProcResourceCounters[CriticalResourceIdx] <=
-         ProcResCostLim))
-      CriticalResourceIdx = UINT_MAX;
-  }
+  // Decrease counters for execution units by one.
+  for (unsigned i = 0; i < SchedModel->getNumProcResourceKinds(); ++i)
+    if (ProcResourceCounters[i] > 0)
+      ProcResourceCounters[i]--;
 
-  DEBUG(if (DbgOutput)
-          dumpProcResourceCounters(););
+  // Clear CriticalResourceIdx if it is now below the threshold.
+  if (CriticalResourceIdx != UINT_MAX &&
+      (ProcResourceCounters[CriticalResourceIdx] <=
+       ProcResCostLim))
+    CriticalResourceIdx = UINT_MAX;
+
+  DEBUG(dumpState(););
 }
 
 #ifndef NDEBUG // Debug output
@@ -163,7 +163,7 @@ void SystemZHazardRecognizer::dumpSU(SUnit *SU, raw_ostream &OS) const {
 }
 
 void SystemZHazardRecognizer::dumpCurrGroup(std::string Msg) const {
-  dbgs() << "+++ " << Msg;
+  dbgs() << "++ " << Msg;
   dbgs() << ": ";
 
   if (CurGroupDbg.empty())
@@ -188,15 +188,28 @@ void SystemZHazardRecognizer::dumpProcResourceCounters() const {
   if (!any)
     return;
 
-  dbgs() << "+++ Resource counters:\n";
+  dbgs() << "++ | Resource counters: ";
   for (unsigned i = 0; i < SchedModel->getNumProcResourceKinds(); ++i)
-    if (ProcResourceCounters[i] > 0) {
-      dbgs() << "+++ Extra schedule for execution unit "
-             << SchedModel->getProcResource(i)->Name
-             << ": " << ProcResourceCounters[i] << "\n";
-      any = true;
-    }
+    if (ProcResourceCounters[i] > 0)
+      dbgs() << SchedModel->getProcResource(i)->Name
+             << ":" << ProcResourceCounters[i] << " ";
+  dbgs() << "\n";
+
+  if (CriticalResourceIdx != UINT_MAX)
+    dbgs() << "++ | Critical resource: "
+           << SchedModel->getProcResource(CriticalResourceIdx)->Name
+           << "\n";
 }
+
+void SystemZHazardRecognizer::dumpState() const {
+  dumpCurrGroup("| Current decoder group");
+  dbgs() << "++ | Current cycle index: "
+         << getCurrCycleIdx() << "\n";
+  dumpProcResourceCounters();
+  if (LastFPdOpCycleIdx != UINT_MAX)
+    dbgs() << "++ | Last FPd cycle index: " << LastFPdOpCycleIdx << "\n";
+}
+
 #endif //NDEBUG
 
 void SystemZHazardRecognizer::clearProcResCounters() {
@@ -213,25 +226,25 @@ static inline bool isBranchRetTrap(MachineInstr *MI) {
 void SystemZHazardRecognizer::
 EmitInstruction(SUnit *SU) {
   const MCSchedClassDesc *SC = getSchedClass(SU);
-  DEBUG( dumpCurrGroup("Decode group before emission"););
+  DEBUG(dbgs() << "++ HazardRecognizer emitting "; dumpSU(SU, dbgs());
+        dbgs() << "\n";);
+  DEBUG(dumpCurrGroup("Decode group before emission"););
 
   // If scheduling an SU that must begin a new decoder group, move on
   // to next group.
   if (!fitsIntoCurrentGroup(SU))
     nextGroup();
 
-  DEBUG( dbgs() << "+++ HazardRecognizer emitting "; dumpSU(SU, dbgs());
-         dbgs() << "\n";
-         raw_string_ostream cgd(CurGroupDbg);
-         if (CurGroupDbg.length())
-           cgd << ", ";
-         dumpSU(SU, cgd););
+  DEBUG(raw_string_ostream cgd(CurGroupDbg);
+        if (CurGroupDbg.length())
+          cgd << ", ";
+        dumpSU(SU, cgd););
 
   LastEmittedMI = SU->getInstr();
 
   // After returning from a call, we don't know much about the state.
   if (SU->isCall) {
-    DEBUG (dbgs() << "+++ Clearing state after call.\n";);
+    DEBUG(dbgs() << "++ Clearing state after call.\n";);
     clearProcResCounters();
     LastFPdOpCycleIdx = UINT_MAX;
     CurrGroupSize += getNumDecoderSlots(SU);
@@ -256,9 +269,9 @@ EmitInstruction(SUnit *SU) {
          (PI->ProcResourceIdx != CriticalResourceIdx &&
           CurrCounter >
           ProcResourceCounters[CriticalResourceIdx]))) {
-      DEBUG( dbgs() << "+++ New critical resource: "
-             << SchedModel->getProcResource(PI->ProcResourceIdx)->Name
-             << "\n";);
+      DEBUG(dbgs() << "++ New critical resource: "
+            << SchedModel->getProcResource(PI->ProcResourceIdx)->Name
+            << "\n";);
       CriticalResourceIdx = PI->ProcResourceIdx;
     }
   }
@@ -266,8 +279,8 @@ EmitInstruction(SUnit *SU) {
   // Make note of an instruction that uses a blocking resource (FPd).
   if (SU->isUnbuffered) {
     LastFPdOpCycleIdx = getCurrCycleIdx();
-    DEBUG (dbgs() << "+++ Last FPd cycle index: "
-           << LastFPdOpCycleIdx << "\n";);
+    DEBUG(dbgs() << "++ Last FPd cycle index: "
+          << LastFPdOpCycleIdx << "\n";);
   }
 
   bool GroupEndingBranch =
@@ -376,7 +389,7 @@ void SystemZHazardRecognizer::emitInstruction(MachineInstr *MI,
   EmitInstruction(&SU);
 
   if (TakenBranch && CurrGroupSize > 0)
-    nextGroup(false /*DbgOutput*/);
+    nextGroup();
 
   assert ((!MI->isTerminator() || isBranchRetTrap(MI)) &&
           "Scheduler: unhandled terminator!");
@@ -386,7 +399,7 @@ void SystemZHazardRecognizer::
 copyState(SystemZHazardRecognizer *Incoming) {
   // Current decoder group
   CurrGroupSize = Incoming->CurrGroupSize;
-  DEBUG (CurGroupDbg = Incoming->CurGroupDbg;);
+  DEBUG(CurGroupDbg = Incoming->CurGroupDbg;);
 
   // Processor resources
   ProcResourceCounters = Incoming->ProcResourceCounters;
