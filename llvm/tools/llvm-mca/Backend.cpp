@@ -31,12 +31,12 @@ void Backend::addEventListener(HWEventListener *Listener) {
 void Backend::runCycle(unsigned Cycle) {
   notifyCycleBegin(Cycle);
 
-  if (!SM->hasNext()) {
+  if (!SM.hasNext()) {
     notifyCycleEnd(Cycle);
     return;
   }
 
-  InstRef IR = SM->peekNext();
+  InstRef IR = SM.peekNext();
   const InstrDesc *Desc = &IB->getOrCreateInstrDesc(STI, *IR.second);
   while (DU->isAvailable(Desc->NumMicroOps) && DU->canDispatch(*Desc)) {
     Instruction *NewIS = IB->createInstruction(STI, *DU, IR.first, *IR.second);
@@ -49,12 +49,12 @@ void Backend::runCycle(unsigned Cycle) {
       notifyInstructionExecuted(IR.first);
 
     // Check if we have dispatched all the instructions.
-    SM->updateNext();
-    if (!SM->hasNext())
+    SM.updateNext();
+    if (!SM.hasNext())
       break;
 
     // Prepare for the next round.
-    IR = SM->peekNext();
+    IR = SM.peekNext();
     Desc = &IB->getOrCreateInstrDesc(STI, *IR.second);
   }
 
