@@ -2158,12 +2158,6 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M, bool
     Initializers[i] = Initializer;
   }
 
-  // Add instrumented globals to llvm.compiler.used list to avoid LTO from
-  // ConstantMerge'ing them.
-  appendToCompilerUsed(
-      M, ArrayRef<GlobalValue *>(cast<GlobalValue *>(NewGlobals.data()),
-                                 NewGlobals.size()));
-
   std::string ELFUniqueModuleId =
       (UseGlobalsGC && TargetTriple.isOSBinFormatELF()) ? getUniqueModuleId(&M)
                                                         : "";
