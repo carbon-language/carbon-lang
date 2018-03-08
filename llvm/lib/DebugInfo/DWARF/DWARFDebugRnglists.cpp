@@ -97,7 +97,7 @@ Error DWARFDebugRnglists::extract(DWARFDataExtractor Data,
                  (uint8_t)dwarf::RangeListEncodingString(Encoding).size());
     switch (Encoding) {
     case dwarf::DW_RLE_end_of_list:
-      CurrentRanges.push_back(RangeListEntry{EntryOffset, Encoding});
+      CurrentRanges.push_back(RangeListEntry{ EntryOffset, Encoding, 0, 0 });
       Ranges.insert(Ranges.end(), CurrentRanges);
       CurrentRanges.clear();
       break;
