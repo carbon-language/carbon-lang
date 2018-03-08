@@ -4,31 +4,32 @@
 ; This is a case where we would incorrectly conclude that LBB0_1 could only
 ; be reached via fall through and would therefore omit the label.
 
+@g = global i32 0
+
 define void @xyz() {
 ; CHECK-LABEL: xyz:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    xorpd %xmm0, %xmm0
-; CHECK-NEXT:    ucomisd %xmm0, %xmm0
+; CHECK-NEXT:    movl $g, %eax
+; CHECK-NEXT:    movq %rax, %xmm1
+; CHECK-NEXT:    xorps %xmm0, %xmm0
+; CHECK-NEXT:    ucomisd %xmm0, %xmm1
 ; CHECK-NEXT:    jne .LBB0_1
 ; CHECK-NEXT:    jnp .LBB0_3
 ; CHECK-NEXT:  .LBB0_1: # %foo.preheader
-; CHECK-NEXT:    mulsd %xmm0, %xmm1
-; CHECK-NEXT:    movapd %xmm1, %xmm0
-; CHECK-NEXT:    subsd %xmm0, %xmm0
-; CHECK-NEXT:    divsd %xmm1, %xmm0
-; CHECK-NEXT:    movsd {{.*#+}} xmm1 = mem[0],zero
+; CHECK-NEXT:    movl $g, %eax
+; CHECK-NEXT:    movq %rax, %xmm1
 ; CHECK-NEXT:    .p2align 4, 0x90
 ; CHECK-NEXT:  .LBB0_2: # %foo
 ; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    ucomisd %xmm1, %xmm0
+; CHECK-NEXT:    ucomisd %xmm0, %xmm1
 ; CHECK-NEXT:    ja .LBB0_2
 ; CHECK-NEXT:  .LBB0_3: # %bar
 ; CHECK-NEXT:    retq
 entry:
-  br i1 fcmp oeq (double fsub (double undef, double undef), double 0.000000e+00), label %bar, label %foo
+  br i1 fcmp oeq (double bitcast (i64 ptrtoint (i32* @g to i64) to double), double 0.000000e+00), label %bar, label %foo
 
 foo:
-  br i1 fcmp ogt (double fdiv (double fsub (double fmul (double undef, double undef), double fsub (double undef, double undef)), double fmul (double undef, double undef)), double 1.0), label %foo, label %bar
+  br i1 fcmp ogt (double bitcast (i64 ptrtoint (i32* @g to i64) to double), double 0.000000e+00), label %foo, label %bar
 
 bar:
   ret void
