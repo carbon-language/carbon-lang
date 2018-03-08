@@ -239,7 +239,6 @@ public:
 
 //  Some fields that need to be defined for all statements
 #define SEMANTIC_STMT_FIELDS \
-   int stmt_label=0 ; \
    int stmt_index=0 
 
 DEFINE_SEMANTIC(ProgramUnit)
