@@ -360,7 +360,7 @@ static bool shouldUseMmap(int FD,
 }
 
 static ErrorOr<std::unique_ptr<WriteThroughMemoryBuffer>>
-getReadWriteFile(const Twine &Filename, int64_t FileSize, uint64_t MapSize,
+getReadWriteFile(const Twine &Filename, uint64_t FileSize, uint64_t MapSize,
                  uint64_t Offset) {
   int FD;
   std::error_code EC = sys::fs::openFileForWrite(
