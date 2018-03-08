@@ -98,7 +98,7 @@ Error DWARFDebugRnglists::extract(DWARFDataExtractor Data,
     switch (Encoding) {
     case dwarf::DW_RLE_end_of_list:
       CurrentRanges.push_back(RangeListEntry{ EntryOffset, Encoding, 0, 0 });
-      Ranges.insert(Ranges.end(), CurrentRanges);
+      Ranges.insert(Ranges.end(), std::move(CurrentRanges));
       CurrentRanges.clear();
       break;
     // TODO: Support other encodings.
@@ -147,7 +147,7 @@ Error DWARFDebugRnglists::extract(DWARFDataExtractor Data,
       break;
     }
     default:
-      Ranges.insert(Ranges.end(), CurrentRanges);
+      Ranges.insert(Ranges.end(), std::move(CurrentRanges));
       return createError("unknown rnglists encoding 0x%" PRIx32
                          " at offset 0x%" PRIx32,
                          uint32_t(Encoding), *OffsetPtr - 1);
