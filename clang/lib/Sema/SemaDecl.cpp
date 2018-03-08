@@ -5747,7 +5747,7 @@ Sema::CheckTypedefForVariablyModifiedType(Scope *S, TypedefNameDecl *NewTD) {
   TypeSourceInfo *TInfo = NewTD->getTypeSourceInfo();
   QualType T = TInfo->getType();
   if (T->isVariablyModifiedType()) {
-    setFunctionHasBranchProtectedScope();
+    getCurFunction()->setHasBranchProtectedScope();
 
     if (S->getFnParent() == nullptr) {
       bool SizeIsNegative;
@@ -7407,7 +7407,7 @@ void Sema::CheckVariableDeclarationType(VarDecl *NewVD) {
   bool isVM = T->isVariablyModifiedType();
   if (isVM || NewVD->hasAttr<CleanupAttr>() ||
       NewVD->hasAttr<BlocksAttr>())
-    setFunctionHasBranchProtectedScope();
+    getCurFunction()->setHasBranchProtectedScope();
 
   if ((isVM && NewVD->hasLinkage()) ||
       (T->isVariableArrayType() && NewVD->hasGlobalStorage())) {
@@ -10644,7 +10644,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init, bool DirectInit) {
     }
 
     if (VDecl->hasLocalStorage())
-      setFunctionHasBranchProtectedScope();
+      getCurFunction()->setHasBranchProtectedScope();
 
     if (DiagnoseUnexpandedParameterPack(Init, UPPC_Initializer)) {
       VDecl->setInvalidDecl();
@@ -11178,11 +11178,11 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl) {
       if (const RecordType *Record
             = Context.getBaseElementType(Type)->getAs<RecordType>()) {
         CXXRecordDecl *CXXRecord = cast<CXXRecordDecl>(Record->getDecl());
-        // Mark the function (if we're in one) for further checking even if the
-        // looser rules of C++11 do not require such checks, so that we can
-        // diagnose incompatibilities with C++98.
+        // Mark the function for further checking even if the looser rules of
+        // C++11 do not require such checks, so that we can diagnose
+        // incompatibilities with C++98.
         if (!CXXRecord->isPOD())
-          setFunctionHasBranchProtectedScope();
+          getCurFunction()->setHasBranchProtectedScope();
       }
     }
 
@@ -11318,14 +11318,13 @@ void Sema::CheckCompleteVariableDeclaration(VarDecl *var) {
 
     case Qualifiers::OCL_Weak:
     case Qualifiers::OCL_Strong:
-      setFunctionHasBranchProtectedScope();
+      getCurFunction()->setHasBranchProtectedScope();
       break;
     }
   }
 
-  if (var->hasLocalStorage() &&
-      var->getType().isDestructedType() == QualType::DK_nontrivial_c_struct)
-    setFunctionHasBranchProtectedScope();
+  if (var->getType().isDestructedType() == QualType::DK_nontrivial_c_struct)
+    getCurFunction()->setHasBranchProtectedScope();
 
   // Warn about externally-visible variables being defined without a
   // prior declaration.  We only want to do this for global

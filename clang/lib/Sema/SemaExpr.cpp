@@ -13126,7 +13126,7 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
     for (const auto &CI : Result->getBlockDecl()->captures()) {
       const VarDecl *var = CI.getVariable();
       if (var->getType().isDestructedType() != QualType::DK_none) {
-        setFunctionHasBranchProtectedScope();
+        getCurFunction()->setHasBranchProtectedScope();
         break;
       }
     }

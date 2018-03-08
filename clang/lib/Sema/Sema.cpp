@@ -162,7 +162,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
       ExpressionEvaluationContext::PotentiallyEvaluated, 0, CleanupInfo{},
       nullptr, false);
 
-  PreallocatedFunctionScope.reset(new FunctionScopeInfo(Diags));
+  FunctionScopes.push_back(new FunctionScopeInfo(Diags));
 
   // Initilization of data sharing attributes stack for OpenMP
   InitDataSharingAttributesStack();
@@ -332,11 +332,11 @@ void Sema::Initialize() {
 
 Sema::~Sema() {
   if (VisContext) FreeVisContext();
-
   // Kill all the active scopes.
-  for (sema::FunctionScopeInfo *FSI : FunctionScopes)
-    if (FSI != PreallocatedFunctionScope.get())
-      delete FSI;
+  for (unsigned I = 1, E = FunctionScopes.size(); I != E; ++I)
+    delete FunctionScopes[I];
+  if (FunctionScopes.size() == 1)
+    delete FunctionScopes[0];
 
   // Tell the SemaConsumer to forget about us; we're going out of scope.
   if (SemaConsumer *SC = dyn_cast<SemaConsumer>(&Consumer))
@@ -1340,13 +1340,17 @@ Scope *Sema::getScopeForContext(DeclContext *Ctx) {
 
 /// \brief Enter a new function scope
 void Sema::PushFunctionScope() {
-  if (FunctionScopes.empty()) {
-    // Use PreallocatedFunctionScope to avoid allocating memory when possible.
-    PreallocatedFunctionScope->Clear();
-    FunctionScopes.push_back(PreallocatedFunctionScope.get());
-  } else {
-    FunctionScopes.push_back(new FunctionScopeInfo(getDiagnostics()));
+  if (FunctionScopes.size() == 1) {
+    // Use the "top" function scope rather than having to allocate
+    // memory for a new scope.
+    FunctionScopes.back()->Clear();
+    FunctionScopes.push_back(FunctionScopes.back());
+    if (LangOpts.OpenMP)
+      pushOpenMPFunctionRegion();
+    return;
   }
+
+  FunctionScopes.push_back(new FunctionScopeInfo(getDiagnostics()));
   if (LangOpts.OpenMP)
     pushOpenMPFunctionRegion();
 }
@@ -1366,15 +1370,15 @@ void Sema::RecordParsingTemplateParameterDepth(unsigned Depth) {
   if (LambdaScopeInfo *const LSI = getCurLambda()) {
     LSI->AutoTemplateParameterDepth = Depth;
     return;
-  }
-  llvm_unreachable(
+  } 
+  llvm_unreachable( 
       "Remove assertion if intentionally called in a non-lambda context.");
 }
 
 void Sema::PopFunctionScopeInfo(const AnalysisBasedWarnings::Policy *WP,
                                 const Decl *D, const BlockExpr *blkExpr) {
-  assert(!FunctionScopes.empty() && "mismatched push/pop!");
   FunctionScopeInfo *Scope = FunctionScopes.pop_back_val();
+  assert(!FunctionScopes.empty() && "mismatched push/pop!");
 
   if (LangOpts.OpenMP)
     popOpenMPFunctionRegion(Scope);
@@ -1386,8 +1390,7 @@ void Sema::PopFunctionScopeInfo(const AnalysisBasedWarnings::Policy *WP,
     for (const auto &PUD : Scope->PossiblyUnreachableDiags)
       Diag(PUD.Loc, PUD.PD);
 
-  // Delete the scope unless its our preallocated scope.
-  if (Scope != PreallocatedFunctionScope.get())
+  if (FunctionScopes.back() != Scope)
     delete Scope;
 }
 
@@ -1406,21 +1409,6 @@ void Sema::PopCompoundScope() {
 /// block.
 bool Sema::hasAnyUnrecoverableErrorsInThisFunction() const {
   return getCurFunction()->ErrorTrap.hasUnrecoverableErrorOccurred();
-}
-
-void Sema::setFunctionHasBranchIntoScope() {
-  if (!FunctionScopes.empty())
-    FunctionScopes.back()->setHasBranchIntoScope();
-}
-
-void Sema::setFunctionHasBranchProtectedScope() {
-  if (!FunctionScopes.empty())
-    FunctionScopes.back()->setHasBranchProtectedScope();
-}
-
-void Sema::setFunctionHasIndirectGoto() {
-  if (!FunctionScopes.empty())
-    FunctionScopes.back()->setHasIndirectGoto();
 }
 
 BlockScopeInfo *Sema::getCurBlock() {
