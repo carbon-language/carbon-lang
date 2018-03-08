@@ -22,7 +22,7 @@
 
 namespace mca {
 
-struct HWEventListener;
+class HWEventListener;
 
 /// \brief An out of order backend for a specific subtarget.
 ///
