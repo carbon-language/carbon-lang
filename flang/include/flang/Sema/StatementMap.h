@@ -99,7 +99,8 @@ private:
   struct Entry {
     StmtClass sclass;
     StmtGroup group;
-    int label;  // The label associated to the statement or 0
+
+    int label;      // The label associated to the statement (1..99999) or 0
 
     // Relations to other statements.
     Index parent;
@@ -122,9 +123,9 @@ public:
   Index Add(StmtClass sclass, int label);
 
   // Set the label required to close a LabelDo
-  void SetLabelDoLabel(Index do_stmt, int label);
+//  void SetLabelDoLabel(Index do_stmt, int label);
 
-  int GetLabelDoLabel(Index do_stmt) const;
+//  int GetLabelDoLabel(Index do_stmt) const;
 
   //
   // 'prev_index' shall be a Start or Part statement.
@@ -138,6 +139,12 @@ public:
   // Reminder: the proper indices are 1..Size()
   int Size() const;
 
+  // The index of the first statement added to the map
+  Index First() const { return 1; }
+
+  // The index of the last statement  added to the map
+  Index Last() const { return Size(); }
+
   //
   // Specialize the StmtClass of an existing statement.
   //
@@ -145,9 +152,17 @@ public:
   void Specialize(Index index, StmtClass oldclass, StmtClass newclass);
 
   StmtClass GetClass(Index index) const { return Get(index).sclass; }
+
   StmtGroup GetGroup(Index index) const { return Get(index).group; }
+
+
+  // Provide the numerical label associated to that statement or 0.
+  // Be aware that labels are not necessarily unique and so cannot 
+  // be used to identify a statement within the whole map.
   int GetLabel(Index index) const { return Get(index).label; }
+
   Index GetParent(Index index) const { return Get(index).parent; }
+
 
   // Dump all the statements in the map in sequence so without
   // relying on the statement 'hierarchy'. This is only useful

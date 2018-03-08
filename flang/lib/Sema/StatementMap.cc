@@ -586,21 +586,21 @@ void StatementMap::VisistConstructRev(
   }
 }
 
-// Set the label required to close a LabelDo
-void StatementMap::SetLabelDoLabel(Index do_stmt, int label) {
-  assert(Get(do_stmt).sclass == StmtClass::LabelDo);
-  assert(label != 0);
-  label_do_map_[do_stmt] = label;
-}
+// // Set the label required to close a LabelDo
+// void StatementMap::SetLabelDoLabel(Index do_stmt, int label) {
+//   assert(Get(do_stmt).sclass == StmtClass::LabelDo);
+//   assert(label != 0);
+//   label_do_map_[do_stmt] = label;
+// }
 
-int StatementMap::GetLabelDoLabel(Index do_stmt) const {
-  auto it = label_do_map_.find(do_stmt);
-  if (it != label_do_map_.end()) {
-    return it->second;
-  }
-  // In theory that should never happen
-  INTERNAL_ERROR;
-  return 0;
-}
+// int StatementMap::GetLabelDoLabel(Index do_stmt) const {
+//   auto it = label_do_map_.find(do_stmt);
+//   if (it != label_do_map_.end()) {
+//     return it->second;
+//   }
+//   // In theory that should never happen
+//   INTERNAL_ERROR;
+//   return 0;
+// }
 
 }  // namespace Fortran::semantics
