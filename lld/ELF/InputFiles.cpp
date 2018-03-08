@@ -1164,6 +1164,7 @@ template <class ELFT> void LazyObjFile::addElfSymbols() {
       if (Sym.st_shndx != SHN_UNDEF)
         Symtab->addLazyObject<ELFT>(CHECK(Sym.getName(StringTable), this),
                                     *this);
+    return;
   }
 }
 
