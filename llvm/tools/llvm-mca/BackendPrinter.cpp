@@ -156,6 +156,8 @@ void BackendPrinter::printReport() const {
   unsigned Cycles = B.getNumCycles();
   printGeneralStatistics(B.getNumIterations(), Cycles, B.getNumInstructions(),
                          B.getDispatchWidth());
+  printInstructionInfo();
+
   if (EnableVerboseOutput) {
     printDispatchStalls(B.getNumRATStalls(), B.getNumRCUStalls(),
                         B.getNumSQStalls(), B.getNumLDQStalls(),
@@ -169,10 +171,8 @@ void BackendPrinter::printReport() const {
     printSchedulerUsage(B.getSchedModel(), Usage);
   }
 
-  if (RPV) {
+  if (RPV)
     RPV->printResourcePressure(getOStream(), Cycles);
-    printInstructionInfo();
-  }
 
   if (TV) {
     TV->printTimeline(getOStream());
