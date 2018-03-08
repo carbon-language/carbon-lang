@@ -277,7 +277,7 @@ TEST_F(MemoryBufferTest, writeThroughFile) {
     // Write some data.  It should be mapped readwrite, so that upon completion
     // the original file contents are modified.
     WriteThroughMemoryBuffer &MB = **MBOrError;
-    ASSERT_EQ(16, MB.getBufferSize());
+    ASSERT_EQ(16u, MB.getBufferSize());
     char *Start = MB.getBufferStart();
     ASSERT_EQ(MB.getBufferEnd(), MB.getBufferStart() + MB.getBufferSize());
     ::memset(Start, 'x', MB.getBufferSize());
@@ -286,7 +286,7 @@ TEST_F(MemoryBufferTest, writeThroughFile) {
   auto MBOrError = MemoryBuffer::getFile(TestPath);
   ASSERT_FALSE(MBOrError.getError());
   auto &MB = **MBOrError;
-  ASSERT_EQ(16, MB.getBufferSize());
+  ASSERT_EQ(16u, MB.getBufferSize());
   EXPECT_EQ("xxxxxxxxxxxxxxxx", MB.getBuffer());
 }
 }
