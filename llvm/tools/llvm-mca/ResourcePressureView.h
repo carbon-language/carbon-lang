@@ -101,7 +101,7 @@ public:
       unsigned Index,
       const llvm::ArrayRef<std::pair<ResourceRef, unsigned>> &Used) override;
 
-  void printView(llvm::raw_ostream &OS) const {
+  void printView(llvm::raw_ostream &OS) const override {
     unsigned Executions = Source.getNumIterations();
     printResourcePressurePerIteration(OS, Executions);
     printResourcePressurePerInstruction(OS, Executions);
