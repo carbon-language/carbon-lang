@@ -249,7 +249,7 @@ public:
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(MemoryAccess);
 
   /// \brief Get the instruction that this MemoryUse represents.
-  Instruction *getMemoryInst() const { return MemoryInst; }
+  Instruction *getMemoryInst() const { return MemoryAliasPair.getPointer(); }
 
   /// \brief Get the access that produces the memory state used by this Use.
   MemoryAccess *getDefiningAccess() const { return getOperand(0); }
@@ -264,6 +264,12 @@ public:
   inline MemoryAccess *getOptimized() const;
   inline void setOptimized(MemoryAccess *);
 
+  // Retrieve AliasResult type of the optimized access. Ideally this would be
+  // returned by the caching walker and may go away in the future.
+  Optional<AliasResult> getOptimizedAccessType() const {
+    return threeBitIntToOptionalAliasResult(MemoryAliasPair.getInt());
+  }
+
   /// \brief Reset the ID of what this MemoryUse was optimized to, causing it to
   /// be rewalked by the walker if necessary.
   /// This really should only be called by tests.
@@ -275,23 +281,45 @@ protected:
 
   MemoryUseOrDef(LLVMContext &C, MemoryAccess *DMA, unsigned Vty,
                  DeleteValueTy DeleteValue, Instruction *MI, BasicBlock *BB)
-      : MemoryAccess(C, Vty, DeleteValue, BB, 1), MemoryInst(MI) {
+      : MemoryAccess(C, Vty, DeleteValue, BB, 1),
+        MemoryAliasPair(MI, optionalAliasResultToThreeBitInt(MayAlias)) {
     setDefiningAccess(DMA);
   }
 
   // Use deleteValue() to delete a generic MemoryUseOrDef.
   ~MemoryUseOrDef() = default;
 
-  void setDefiningAccess(MemoryAccess *DMA, bool Optimized = false) {
+  void setOptimizedAccessType(Optional<AliasResult> AR) {
+    MemoryAliasPair.setInt(optionalAliasResultToThreeBitInt(AR));
+  }
+
+  void setDefiningAccess(MemoryAccess *DMA, bool Optimized = false,
+                         Optional<AliasResult> AR = MayAlias) {
     if (!Optimized) {
       setOperand(0, DMA);
       return;
     }
     setOptimized(DMA);
+    setOptimizedAccessType(AR);
   }
 
 private:
-  Instruction *MemoryInst;
+  // Pair of memory instruction and Optional<AliasResult> with optimized access.
+  PointerIntPair<Instruction *, 3, int> MemoryAliasPair;
+
+  static int optionalAliasResultToThreeBitInt(Optional<AliasResult> OAR) {
+    if (OAR == None)
+      return 4;
+    return (int)OAR.getValue();
+  }
+
+  static Optional<AliasResult> threeBitIntToOptionalAliasResult(int I) {
+    assert((I <= 4 && I >= 0) &&
+           "Invalid value for converting to an Optional<AliasResult>");
+    if (I == 4)
+      return None;
+    return (AliasResult)I;
+  }
 };
 
 template <>
