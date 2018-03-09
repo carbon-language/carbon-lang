@@ -714,9 +714,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LLDB_COMPRESSION_CFLAGS = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11]" = "-DHAVE_LIBCOMPRESSION=1";
 				LLDB_COMPRESSION_LDFLAGS = "-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11]" = "-lcompression";
 				LLDB_OS_LOG_CFLAGS = "-DLLDB_USE_OS_LOG=$(LLDB_USE_OS_LOG)";
 				LLDB_USE_OS_LOG = 0;
 				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
@@ -758,9 +756,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LLDB_COMPRESSION_CFLAGS = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11]" = "-DHAVE_LIBCOMPRESSION=1";
 				LLDB_COMPRESSION_LDFLAGS = "-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11]" = "-lcompression";
 				LLDB_OS_LOG_CFLAGS = "-DLLDB_USE_OS_LOG=$(LLDB_USE_OS_LOG)";
 				LLDB_USE_OS_LOG = 0;
 				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
@@ -800,9 +796,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LLDB_COMPRESSION_CFLAGS = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11]" = "-DHAVE_LIBCOMPRESSION=1";
 				LLDB_COMPRESSION_LDFLAGS = "-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11]" = "-lcompression";
 				LLDB_OS_LOG_CFLAGS = "-DLLDB_USE_OS_LOG=$(LLDB_USE_OS_LOG)";
 				LLDB_USE_OS_LOG = 1;
 				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
@@ -839,22 +833,12 @@
 				HEADER_SEARCH_PATHS = /System/Library/Frameworks/System.framework/PrivateHeaders;
 				INSTALL_PATH = /usr/bin;
 				"INSTALL_PATH[sdk=iphoneos*]" = /Developer/usr/bin/;
-				LLDB_COMPRESSION_CFLAGS = "";
-				"LLDB_COMPRESSION_CFLAGS[sdk=appletvos*]" = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=iphoneos*]" = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11]" = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11internal]" = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=watchos*]" = "-DHAVE_LIBCOMPRESSION=1";
-				LLDB_COMPRESSION_LDFLAGS = "";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=appletvos*]" = "-weak-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=iphoneos*]" = "-weak-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11]" = "-weak-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11internal]" = "-weak-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=watchos*]" = "-weak-lcompression";
+				LLDB_COMPRESSION_CFLAGS = "-DHAVE_LIBCOMPRESSION=1";
+				LLDB_COMPRESSION_LDFLAGS = "-lcompression";
 				LLDB_DEBUGSERVER = 1;
 				LLDB_ENERGY_CFLAGS = "";
 				"LLDB_ENERGY_CFLAGS[sdk=macosx*]" = "-DLLDB_ENERGY";
-				LLDB_ENERGY_LFLAGS = "";
+				LLDB_ENERGY_LFLAGS = "-lpmenergy -lpmsample";
 				"LLDB_ENERGY_LFLAGS[sdk=macosx*]" = "-lpmenergy -lpmsample";
 				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
 				LLDB_ZLIB_LDFLAGS = "-lz";
@@ -939,23 +923,12 @@
 				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER_DEBUG;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				INSTALL_PATH = /usr/bin;
-				LLDB_COMPRESSION_CFLAGS = "";
-				"LLDB_COMPRESSION_CFLAGS[sdk=appletvos*]" = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=iphoneos*]" = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11]" = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11internal]" = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=watchos*]" = "-DHAVE_LIBCOMPRESSION=1";
-				LLDB_COMPRESSION_LDFLAGS = "";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=appletvos*]" = "-weak-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=iphoneos*]" = "-weak-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11]" = "-weak-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11internal]" = "-weak-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=watchos*]" = "-weak-lcompression";
+				LLDB_COMPRESSION_CFLAGS = "-DHAVE_LIBCOMPRESSION=1";
+				LLDB_COMPRESSION_LDFLAGS = "-lcompression";
 				LLDB_DEBUGSERVER = 1;
 				LLDB_ENERGY_CFLAGS = "";
 				"LLDB_ENERGY_CFLAGS[sdk=macosx.internal]" = "-DLLDB_ENERGY";
-				LLDB_ENERGY_LFLAGS = "";
-				"LLDB_ENERGY_LFLAGS[sdk=macosx.internal]" = "-lpmenergy -lpmsample";
+				LLDB_ENERGY_LFLAGS = "-lpmenergy -lpmsample";
 				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
 				LLDB_ZLIB_LDFLAGS = "-lz";
 				OTHER_CFLAGS = (
@@ -1038,23 +1011,12 @@
 				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER_RELEASE;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				INSTALL_PATH = /usr/bin;
-				LLDB_COMPRESSION_CFLAGS = "";
-				"LLDB_COMPRESSION_CFLAGS[sdk=appletvos*]" = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=iphoneos*]" = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11]" = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11internal]" = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=watchos*]" = "-DHAVE_LIBCOMPRESSION=1";
-				LLDB_COMPRESSION_LDFLAGS = "";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=appletvos*]" = "-weak-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=iphoneos*]" = "-weak-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11]" = "-weak-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11internal]" = "-weak-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=watchos*]" = "-weak-lcompression";
+				LLDB_COMPRESSION_CFLAGS = "-DHAVE_LIBCOMPRESSION=1";
+				LLDB_COMPRESSION_LDFLAGS = "-lcompression";
 				LLDB_DEBUGSERVER = 1;
 				LLDB_ENERGY_CFLAGS = "";
 				"LLDB_ENERGY_CFLAGS[sdk=macosx.internal]" = "-DLLDB_ENERGY";
-				LLDB_ENERGY_LFLAGS = "";
-				"LLDB_ENERGY_LFLAGS[sdk=macosx.internal]" = "-lpmenergy -lpmsample";
+				LLDB_ENERGY_LFLAGS = "-lpmenergy -lpmsample";
 				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
 				LLDB_ZLIB_LDFLAGS = "-lz";
 				OTHER_CFLAGS = (
@@ -1154,15 +1116,12 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INSTALL_PATH = /usr/local/bin;
-				LLDB_COMPRESSION_CFLAGS = "";
-				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11]" = "-DHAVE_LIBCOMPRESSION=1";
-				LLDB_COMPRESSION_LDFLAGS = "";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11]" = "-weak-lcompression";
+				"LLDB_COMPRESSION_CFLAGS" = "-DHAVE_LIBCOMPRESSION=1";
+				"LLDB_COMPRESSION_LDFLAGS" = "-lcompression";
 				LLDB_DEBUGSERVER = 1;
 				LLDB_ENERGY_CFLAGS = "";
 				"LLDB_ENERGY_CFLAGS[sdk=macosx.internal]" = "-DLLDB_ENERGY";
-				LLDB_ENERGY_LFLAGS = "";
-				"LLDB_ENERGY_LFLAGS[sdk=macosx.internal]" = "-lpmenergy -lpmsample";
+				LLDB_ENERGY_LFLAGS = "-lpmenergy -lpmsample";
 				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
 				LLDB_ZLIB_LDFLAGS = "-lz";
 				ONLY_ACTIVE_ARCH = YES;
@@ -1190,7 +1149,7 @@
 				PRODUCT_NAME = "debugserver-nonui";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
-				SDKROOT = macosx.internal;
+				SDKROOT = macosx;
 				"SDKROOT[arch=i386]" = macosx;
 				"SDKROOT[arch=x86_64]" = macosx;
 				"SDKROOT[arch=x86_64h]" = macosx;
@@ -1229,8 +1188,7 @@
 				LLDB_DEBUGSERVER = 1;
 				LLDB_ENERGY_CFLAGS = "";
 				"LLDB_ENERGY_CFLAGS[sdk=macosx.internal]" = "-DLLDB_ENERGY";
-				LLDB_ENERGY_LFLAGS = "";
-				"LLDB_ENERGY_LFLAGS[sdk=macosx.internal]" = "-lpmenergy -lpmsample";
+				LLDB_ENERGY_LFLAGS = "-lpmenergy -lpmsample";
 				OTHER_CFLAGS = (
 					"$(LLDB_COMPRESSION_CFLAGS)",
 					"$(LLDB_ZLIB_CFLAGS)",
@@ -1261,7 +1219,7 @@
 				PRODUCT_NAME = "debugserver-nonui";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
-				SDKROOT = macosx.internal;
+				SDKROOT = macosx;
 				"SDKROOT[arch=i386]" = macosx;
 				"SDKROOT[arch=x86_64]" = macosx;
 				"SDKROOT[arch=x86_64h]" = macosx;
@@ -1297,8 +1255,7 @@
 				LLDB_DEBUGSERVER = 1;
 				LLDB_ENERGY_CFLAGS = "";
 				"LLDB_ENERGY_CFLAGS[sdk=macosx.internal]" = "-DLLDB_ENERGY";
-				LLDB_ENERGY_LFLAGS = "";
-				"LLDB_ENERGY_LFLAGS[sdk=macosx.internal]" = "-lpmenergy -lpmsample";
+				LLDB_ENERGY_LFLAGS = "-lpmenergy -lpmsample";
 				OTHER_CFLAGS = (
 					"$(LLDB_COMPRESSION_CFLAGS)",
 					"$(LLDB_ZLIB_CFLAGS)",
@@ -1332,7 +1289,7 @@
 				PRODUCT_NAME = "debugserver-nonui";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
-				SDKROOT = macosx.internal;
+				SDKROOT = macosx;
 				"SDKROOT[arch=i386]" = macosx;
 				"SDKROOT[arch=x86_64]" = macosx;
 				"SDKROOT[arch=x86_64h]" = macosx;
@@ -1398,7 +1355,7 @@
 				);
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
 				PRODUCT_NAME = "debugserver-nonui";
-				SDKROOT = macosx.internal;
+				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				"SKIP_INSTALL[sdk=iphoneos*]" = NO;
 				STRIP_INSTALLED_PRODUCT = YES;
@@ -1441,7 +1398,7 @@
 				LLDB_OS_LOG_CFLAGS = "-DLLDB_USE_OS_LOG=$(LLDB_USE_OS_LOG)";
 				LLDB_USE_OS_LOG = 0;
 				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = macosx.internal;
+				SDKROOT = macosx;
 				"SDKROOT[arch=i386]" = macosx;
 				"SDKROOT[arch=x86_64]" = macosx;
 				"SDKROOT[arch=x86_64h]" = macosx;
@@ -1474,23 +1431,12 @@
 				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER_DEBUG;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				INSTALL_PATH = /usr/bin;
-				LLDB_COMPRESSION_CFLAGS = "";
-				"LLDB_COMPRESSION_CFLAGS[sdk=appletvos*]" = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=iphoneos*]" = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11]" = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11internal]" = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=watchos*]" = "-DHAVE_LIBCOMPRESSION=1";
-				LLDB_COMPRESSION_LDFLAGS = "";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=appletvos*]" = "-weak-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=iphoneos*]" = "-weak-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11]" = "-weak-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11internal]" = "-weak-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=watchos*]" = "-weak-lcompression";
+				LLDB_COMPRESSION_CFLAGS = "-DHAVE_LIBCOMPRESSION=1";
+				LLDB_COMPRESSION_LDFLAGS = "-lcompression";
 				LLDB_DEBUGSERVER = 1;
 				LLDB_ENERGY_CFLAGS = "";
 				"LLDB_ENERGY_CFLAGS[sdk=macosx.internal]" = "-DLLDB_ENERGY";
-				LLDB_ENERGY_LFLAGS = "";
-				"LLDB_ENERGY_LFLAGS[sdk=macosx.internal]" = "-lpmenergy -lpmsample";
+				LLDB_ENERGY_LFLAGS = "-lpmenergy -lpmsample";
 				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
 				LLDB_ZLIB_LDFLAGS = "-lz";
 				OTHER_CFLAGS = (
@@ -1584,7 +1530,7 @@
 				LLDB_OS_LOG_CFLAGS = "-DLLDB_USE_OS_LOG=$(LLDB_USE_OS_LOG)";
 				LLDB_USE_OS_LOG = 0;
 				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = macosx.internal;
+				SDKROOT = macosx;
 				"SDKROOT[arch=i386]" = macosx;
 				"SDKROOT[arch=x86_64]" = macosx;
 				"SDKROOT[arch=x86_64h]" = macosx;
@@ -1617,23 +1563,12 @@
 				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER_DEBUG;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				INSTALL_PATH = /usr/bin;
-				LLDB_COMPRESSION_CFLAGS = "";
-				"LLDB_COMPRESSION_CFLAGS[sdk=appletvos*]" = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=iphoneos*]" = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11]" = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11internal]" = "-DHAVE_LIBCOMPRESSION=1";
-				"LLDB_COMPRESSION_CFLAGS[sdk=watchos*]" = "-DHAVE_LIBCOMPRESSION=1";
-				LLDB_COMPRESSION_LDFLAGS = "";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=appletvos*]" = "-weak-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=iphoneos*]" = "-weak-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11]" = "-weak-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11internal]" = "-weak-lcompression";
-				"LLDB_COMPRESSION_LDFLAGS[sdk=watchos*]" = "-weak-lcompression";
+				LLDB_COMPRESSION_CFLAGS = "-DHAVE_LIBCOMPRESSION=1";
+				LLDB_COMPRESSION_LDFLAGS = "-lcompression";
 				LLDB_DEBUGSERVER = 1;
 				LLDB_ENERGY_CFLAGS = "";
 				"LLDB_ENERGY_CFLAGS[sdk=macosx.internal]" = "-DLLDB_ENERGY";
-				LLDB_ENERGY_LFLAGS = "";
-				"LLDB_ENERGY_LFLAGS[sdk=macosx.internal]" = "-lpmenergy -lpmsample";
+				LLDB_ENERGY_LFLAGS = "-lpmenergy -lpmsample";
 				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
 				LLDB_ZLIB_LDFLAGS = "-lz";
 				OTHER_CFLAGS = (
@@ -1718,8 +1653,7 @@
 				LLDB_DEBUGSERVER = 1;
 				LLDB_ENERGY_CFLAGS = "";
 				"LLDB_ENERGY_CFLAGS[sdk=macosx.internal]" = "-DLLDB_ENERGY";
-				LLDB_ENERGY_LFLAGS = "";
-				"LLDB_ENERGY_LFLAGS[sdk=macosx.internal]" = "-lpmenergy -lpmsample";
+				LLDB_ENERGY_LFLAGS = "-lpmenergy -lpmsample";
 				OTHER_CFLAGS = (
 					"-Wparentheses",
 					"$(LLDB_ENERGY_CFLAGS)",
@@ -1748,7 +1682,7 @@
 				PRODUCT_NAME = "debugserver-nonui";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
-				SDKROOT = macosx.internal;
+				SDKROOT = macosx;
 				"SDKROOT[arch=i386]" = macosx;
 				"SDKROOT[arch=x86_64]" = macosx;
 				"SDKROOT[arch=x86_64h]" = macosx;
@@ -1806,7 +1740,7 @@
 				LLDB_OS_LOG_CFLAGS = "-DLLDB_USE_OS_LOG=$(LLDB_USE_OS_LOG)";
 				LLDB_USE_OS_LOG = 0;
 				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = macosx.internal;
+				SDKROOT = macosx;
 				"SDKROOT[arch=i386]" = macosx;
 				"SDKROOT[arch=x86_64]" = macosx;
 				"SDKROOT[arch=x86_64h]" = macosx;
@@ -1844,8 +1778,7 @@
 				LLDB_DEBUGSERVER = 1;
 				LLDB_ENERGY_CFLAGS = "";
 				"LLDB_ENERGY_CFLAGS[sdk=macosx.internal]" = "-DLLDB_ENERGY";
-				LLDB_ENERGY_LFLAGS = "";
-				"LLDB_ENERGY_LFLAGS[sdk=macosx.internal]" = "-lpmenergy -lpmsample";
+				LLDB_ENERGY_LFLAGS = "-lpmenergy -lpmsample";
 				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
 				LLDB_ZLIB_LDFLAGS = "-lz";
 				OTHER_CFLAGS = (
@@ -1939,10 +1872,7 @@
 				LLDB_OS_LOG_CFLAGS = "-DLLDB_USE_OS_LOG=$(LLDB_USE_OS_LOG)";
 				LLDB_USE_OS_LOG = 0;
 				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = macosx.internal;
-				"SDKROOT[arch=i386]" = macosx;
-				"SDKROOT[arch=x86_64]" = macosx;
-				"SDKROOT[arch=x86_64h]" = macosx;
+				SDKROOT = macosx;
 				STRIPFLAGS = "-x";
 				STRIP_STYLE = debugging;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -1978,8 +1908,7 @@
 				LLDB_DEBUGSERVER = 1;
 				LLDB_ENERGY_CFLAGS = "";
 				"LLDB_ENERGY_CFLAGS[sdk=macosx.internal]" = "-DLLDB_ENERGY";
-				LLDB_ENERGY_LFLAGS = "";
-				"LLDB_ENERGY_LFLAGS[sdk=macosx.internal]" = "-lpmenergy -lpmsample";
+				LLDB_ENERGY_LFLAGS = "-lpmenergy -lpmsample";
 				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
 				LLDB_ZLIB_LDFLAGS = "-lz";
 				OTHER_CFLAGS = (
