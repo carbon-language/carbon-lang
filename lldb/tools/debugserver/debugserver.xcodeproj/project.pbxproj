@@ -884,9 +884,6 @@
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
 				PRODUCT_NAME = debugserver;
 				SDKROOT = macosx;
-				"SDKROOT[arch=i386]" = macosx;
-				"SDKROOT[arch=x86_64]" = macosx;
-				"SDKROOT[arch=x86_64h]" = macosx;
 				SKIP_INSTALL = YES;
 				"SKIP_INSTALL[sdk=iphoneos*]" = NO;
 				STRIP_INSTALLED_PRODUCT = YES;
@@ -975,9 +972,6 @@
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
 				SDKROOT = macosx;
-				"SDKROOT[arch=i386]" = macosx;
-				"SDKROOT[arch=x86_64]" = macosx;
-				"SDKROOT[arch=x86_64h]" = macosx;
 				SKIP_INSTALL = YES;
 				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR) ../../include";
 				ZERO_LINK = NO;
@@ -1063,9 +1057,6 @@
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
 				SDKROOT = macosx;
-				"SDKROOT[arch=i386]" = macosx;
-				"SDKROOT[arch=x86_64]" = macosx;
-				"SDKROOT[arch=x86_64h]" = macosx;
 				SKIP_INSTALL = YES;
 				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR) ../../include";
 				ZERO_LINK = NO;
@@ -1145,9 +1136,6 @@
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
 				SDKROOT = macosx;
-				"SDKROOT[arch=i386]" = macosx;
-				"SDKROOT[arch=x86_64]" = macosx;
-				"SDKROOT[arch=x86_64h]" = macosx;
 				SKIP_INSTALL = YES;
 				STRIP_INSTALLED_PRODUCT = NO;
 				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR) ../../include";
@@ -1215,9 +1203,6 @@
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
 				SDKROOT = macosx;
-				"SDKROOT[arch=i386]" = macosx;
-				"SDKROOT[arch=x86_64]" = macosx;
-				"SDKROOT[arch=x86_64h]" = macosx;
 				SKIP_INSTALL = YES;
 				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR) ../../include";
 				ZERO_LINK = NO;
@@ -1285,9 +1270,6 @@
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
 				SDKROOT = macosx;
-				"SDKROOT[arch=i386]" = macosx;
-				"SDKROOT[arch=x86_64]" = macosx;
-				"SDKROOT[arch=x86_64h]" = macosx;
 				SKIP_INSTALL = YES;
 				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR) ../../include";
 				ZERO_LINK = NO;
@@ -1393,9 +1375,6 @@
 				LLDB_USE_OS_LOG = 0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
-				"SDKROOT[arch=i386]" = macosx;
-				"SDKROOT[arch=x86_64]" = macosx;
-				"SDKROOT[arch=x86_64h]" = macosx;
 				STRIP_INSTALLED_PRODUCT = NO;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_BUILDER = "$(USER)";
@@ -1481,9 +1460,6 @@
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
 				SDKROOT = macosx;
-				"SDKROOT[arch=i386]" = macosx;
-				"SDKROOT[arch=x86_64]" = macosx;
-				"SDKROOT[arch=x86_64h]" = macosx;
 				SKIP_INSTALL = YES;
 				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR) ../../include";
 				ZERO_LINK = NO;
@@ -1525,9 +1501,6 @@
 				LLDB_USE_OS_LOG = 0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
-				"SDKROOT[arch=i386]" = macosx;
-				"SDKROOT[arch=x86_64]" = macosx;
-				"SDKROOT[arch=x86_64h]" = macosx;
 				STRIP_INSTALLED_PRODUCT = NO;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_BUILDER = "$(USER)";
@@ -1612,9 +1585,6 @@
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
 				SDKROOT = macosx;
-				"SDKROOT[arch=i386]" = macosx;
-				"SDKROOT[arch=x86_64]" = macosx;
-				"SDKROOT[arch=x86_64h]" = macosx;
 				SKIP_INSTALL = YES;
 				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR) ../../include";
 				ZERO_LINK = NO;
@@ -1677,9 +1647,6 @@
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
 				SDKROOT = macosx;
-				"SDKROOT[arch=i386]" = macosx;
-				"SDKROOT[arch=x86_64]" = macosx;
-				"SDKROOT[arch=x86_64h]" = macosx;
 				SKIP_INSTALL = YES;
 				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR) ../../include";
 				ZERO_LINK = NO;
@@ -1735,9 +1702,6 @@
 				LLDB_USE_OS_LOG = 0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
-				"SDKROOT[arch=i386]" = macosx;
-				"SDKROOT[arch=x86_64]" = macosx;
-				"SDKROOT[arch=x86_64h]" = macosx;
 				STRIP_INSTALLED_PRODUCT = NO;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_BUILDER = "$(USER)";
@@ -1824,9 +1788,6 @@
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
 				SDKROOT = macosx;
-				"SDKROOT[arch=i386]" = macosx;
-				"SDKROOT[arch=x86_64]" = macosx;
-				"SDKROOT[arch=x86_64h]" = macosx;
 				SKIP_INSTALL = YES;
 				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR) ../../include";
 				ZERO_LINK = NO;
@@ -1953,9 +1914,6 @@
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
 				SDKROOT = macosx;
-				"SDKROOT[arch=i386]" = macosx;
-				"SDKROOT[arch=x86_64]" = macosx;
-				"SDKROOT[arch=x86_64h]" = macosx;
 				SKIP_INSTALL = YES;
 				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR) ../../include";
 				ZERO_LINK = NO;
