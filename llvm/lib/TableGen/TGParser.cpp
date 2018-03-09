@@ -1819,7 +1819,7 @@ Init *TGParser::ParseValue(Record *CurRec, RecTy *ItemType, IDParseMode Mode) {
                  Result->getAsString() + "'");
         return nullptr;
       }
-      Result = FieldInit::get(Result, FieldName);
+      Result = FieldInit::get(Result, FieldName)->Fold();
       Lex.Lex();  // eat field name
       break;
     }
@@ -2038,9 +2038,9 @@ Init *TGParser::ParseDeclaration(Record *CurRec,
 /// the name of the declared object or a NULL Init on error.  Return
 /// the name of the parsed initializer list through ForeachListName.
 ///
-///  ForeachDeclaration ::= ID '=' '[' ValueList ']'
 ///  ForeachDeclaration ::= ID '=' '{' RangeList '}'
 ///  ForeachDeclaration ::= ID '=' RangePiece
+///  ForeachDeclaration ::= ID '=' Value
 ///
 VarInit *TGParser::ParseForeachDeclaration(ListInit *&ForeachListValue) {
   if (Lex.getCode() != tgtok::Id) {
@@ -2062,24 +2062,6 @@ VarInit *TGParser::ParseForeachDeclaration(ListInit *&ForeachListValue) {
   SmallVector<unsigned, 16> Ranges;
 
   switch (Lex.getCode()) {
-  default: TokError("Unknown token when expecting a range list"); return nullptr;
-  case tgtok::l_square: { // '[' ValueList ']'
-    Init *List = ParseSimpleValue(nullptr);
-    ForeachListValue = dyn_cast<ListInit>(List);
-    if (!ForeachListValue) {
-      TokError("Expected a Value list");
-      return nullptr;
-    }
-    RecTy *ValueType = ForeachListValue->getType();
-    ListRecTy *ListType = dyn_cast<ListRecTy>(ValueType);
-    if (!ListType) {
-      TokError("Value list is not of list type");
-      return nullptr;
-    }
-    IterType = ListType->getElementType();
-    break;
-  }
-
   case tgtok::IntVal: { // RangePiece.
     if (ParseRangePiece(Ranges))
       return nullptr;
@@ -2094,6 +2076,21 @@ VarInit *TGParser::ParseForeachDeclaration(ListInit *&ForeachListValue) {
       return nullptr;
     }
     Lex.Lex();
+    break;
+  }
+
+  default: {
+    SMLoc ValueLoc = Lex.getLoc();
+    Init *I = ParseValue(nullptr);
+    if (!isa<ListInit>(I)) {
+      std::string Type;
+      if (TypedInit *TI = dyn_cast<TypedInit>(I))
+        Type = (Twine("' of type '") + TI->getType()->getAsString()).str();
+      Error(ValueLoc, "expected a list, got '" + I->getAsString() + Type + "'");
+      return nullptr;
+    }
+    ForeachListValue = dyn_cast<ListInit>(I);
+    IterType = ForeachListValue->getElementType();
     break;
   }
   }

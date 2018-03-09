@@ -1633,16 +1633,17 @@ Init *FieldInit::getBit(unsigned Bit) const {
 
 Init *FieldInit::resolveReferences(Resolver &R) const {
   Init *NewRec = Rec->resolveReferences(R);
-
-  if (DefInit *DI = dyn_cast<DefInit>(NewRec)) {
-    Init *FieldVal = DI->getDef()->getValue(FieldName)->getValue();
-    Init *BVR = FieldVal->resolveReferences(R);
-    if (BVR->isComplete())
-      return BVR;
-  }
-
   if (NewRec != Rec)
-    return FieldInit::get(NewRec, FieldName);
+    return FieldInit::get(NewRec, FieldName)->Fold();
+  return const_cast<FieldInit *>(this);
+}
+
+Init *FieldInit::Fold() const {
+  if (DefInit *DI = dyn_cast<DefInit>(Rec)) {
+    Init *FieldVal = DI->getDef()->getValue(FieldName)->getValue();
+    if (FieldVal->isComplete())
+      return FieldVal;
+  }
   return const_cast<FieldInit *>(this);
 }
 

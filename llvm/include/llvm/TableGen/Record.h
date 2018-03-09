@@ -1203,6 +1203,7 @@ public:
   Init *getBit(unsigned Bit) const override;
 
   Init *resolveReferences(Resolver &R) const override;
+  Init *Fold() const;
 
   std::string getAsString() const override {
     return Rec->getAsString() + "." + FieldName->getValue().str();

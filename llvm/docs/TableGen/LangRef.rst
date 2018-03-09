@@ -360,12 +360,16 @@ precede any ``class``'s that appear.
 -----------
 
 .. productionlist::
-   Foreach: "foreach" `Declaration` "in" "{" `Object`* "}"
-          :| "foreach" `Declaration` "in" `Object`
+   Foreach: "foreach" `ForeachDeclaration` "in" "{" `Object`* "}"
+          :| "foreach" `ForeachDeclaration` "in" `Object`
+   ForeachDeclaration: ID "=" ( "{" `RangeList` "}" | `RangePiece` | `Value` )
 
 The value assigned to the variable in the declaration is iterated over and
 the object or object list is reevaluated with the variable set at each
 iterated value.
+
+Note that the productions involving RangeList and RangePiece have precedence
+over the more generic value parsing based on the first token.
 
 Top-Level ``let``
 -----------------
