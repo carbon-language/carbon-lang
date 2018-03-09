@@ -9,6 +9,7 @@
 
 #include "lld/Common/Driver.h"
 #include "Config.h"
+#include "InputChunks.h"
 #include "InputGlobal.h"
 #include "MarkLive.h"
 #include "SymbolTable.h"
@@ -295,9 +296,11 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
     StackPointer->Live = true;
 
     static WasmSignature NullSignature = {{}, WASM_TYPE_NORESULT};
+
     // Add synthetic symbols before any others
     WasmSym::CallCtors = Symtab->addSyntheticFunction(
-        "__wasm_call_ctors", &NullSignature, WASM_SYMBOL_VISIBILITY_HIDDEN);
+        "__wasm_call_ctors", WASM_SYMBOL_VISIBILITY_HIDDEN,
+        make<SyntheticFunction>(NullSignature, "__wasm_call_ctors"));
     WasmSym::StackPointer = Symtab->addSyntheticGlobal(
         "__stack_pointer", WASM_SYMBOL_VISIBILITY_HIDDEN, StackPointer);
     WasmSym::HeapBase = Symtab->addSyntheticDataSymbol("__heap_base", 0);
