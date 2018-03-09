@@ -3094,8 +3094,7 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
       // Emit a testl or testw.
       SDNode *NewNode = CurDAG->getMachineNode(Op, dl, MVT::i32, Reg, Imm);
       // Replace CMP with TEST.
-      CurDAG->ReplaceAllUsesWith(Node, NewNode);
-      CurDAG->RemoveDeadNode(Node);
+      ReplaceNode(Node, NewNode);
       return;
     }
     break;

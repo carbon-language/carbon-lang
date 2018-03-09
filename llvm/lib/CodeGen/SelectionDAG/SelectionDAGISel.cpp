@@ -960,6 +960,59 @@ public:
 
 } // end anonymous namespace
 
+// This function is used to enforce the topological node id property
+// property leveraged during Instruction selection. Before selection all
+// nodes are given a non-negative id such that all nodes have a larger id than
+// their operands. As this holds transitively we can prune checks that a node N
+// is a predecessor of M another by not recursively checking through M's
+// operands if N's ID is larger than M's ID. This is significantly improves
+// performance of for various legality checks (e.g. IsLegalToFold /
+// UpdateChains).
+
+// However, when we fuse multiple nodes into a single node
+// during selection we may induce a predecessor relationship between inputs and
+// outputs of distinct nodes being merged violating the topological property.
+// Should a fused node have a successor which has yet to be selected, our
+// legality checks would be incorrect. To avoid this we mark all unselected
+// sucessor nodes, i.e. id != -1 as invalid for pruning by bit-negating (x =>
+// (-(x+1))) the ids and modify our pruning check to ignore negative Ids of M.
+// We use bit-negation to more clearly enforce that node id -1 can only be
+// achieved by selected nodes). As the conversion is reversable the original Id,
+// topological pruning can still be leveraged when looking for unselected nodes.
+// This method is call internally in all ISel replacement calls.
+void SelectionDAGISel::EnforceNodeIdInvariant(SDNode *Node) {
+  SmallVector<SDNode *, 4> OpNodes;
+  SmallVector<SDNode *, 4> Nodes;
+  SmallPtrSet<const SDNode *, 32> Visited;
+  OpNodes.push_back(Node);
+
+  while (!OpNodes.empty()) {
+    SDNode *N = OpNodes.pop_back_val();
+    for (const SDValue &Op : N->op_values()) {
+      if (Op->getNodeId() == -1 && Visited.insert(Op.getNode()).second)
+        OpNodes.push_back(Op.getNode());
+    }
+    Nodes.push_back(N);
+  }
+
+  Visited.clear();
+  while (!Nodes.empty()) {
+    SDNode *N = Nodes.pop_back_val();
+
+    // Don't repeat work.
+    if (!Visited.insert(N).second)
+      continue;
+    for (auto *U : N->uses()) {
+      auto UId = U->getNodeId();
+      if (UId > 0) {
+        int InvalidatedUId = -UId + 1;
+        U->setNodeId(InvalidatedUId);
+        Nodes.push_back(U);
+      }
+    }
+  }
+}
+
 void SelectionDAGISel::DoInstructionSelection() {
   DEBUG(dbgs() << "===== Instruction selection begins: "
                << printMBBReference(*FuncInfo->MBB) << " '"
@@ -994,6 +1047,33 @@ void SelectionDAGISel::DoInstructionSelection() {
       // makes it theoretically possible to disable the DAGCombiner.
       if (Node->use_empty())
         continue;
+
+#ifndef NDEBUG
+      SmallVector<SDNode *, 4> Nodes;
+      Nodes.push_back(Node);
+
+      while (!Nodes.empty()) {
+        auto N = Nodes.pop_back_val();
+        if (Node->getOpcode() == ISD::TokenFactor || Node->getNodeId() < 0)
+          continue;
+        for (const SDValue &Op : N->op_values()) {
+          if (Op->getOpcode() == ISD::TokenFactor)
+            Nodes.push_back(Op.getNode());
+          else {
+            // We rely on topological ordering of node ids for checking for
+            // cycles when fusing nodes during selection. All unselected nodes
+            // successors of an already selected node should have a negative id.
+            // This assertion will catch such cases. If this assertion triggers
+            // it is likely you using DAG-level Value/Node replacement functions
+            // (versus equivalent ISEL replacement) in backend-specific
+            // selections. See comment in EnforceNodeIdInvariant for more
+            // details.
+            assert(Op->getNodeId() != -1 &&
+                   "Node has already selected predecessor node");
+          }
+        }
+      }
+#endif
 
       // When we are using non-default rounding modes or FP exception behavior
       // FP operations are represented by StrictFP pseudo-operations.  They
@@ -2184,7 +2264,7 @@ static bool findNonImmUse(SDNode *Use, SDNode* Def, SDNode *ImmedUse,
     WorkList.pop_back();
     // NodeId topological order of TokenFactors is not guaranteed. Do not skip.
     if (Use->getOpcode() != ISD::TokenFactor &&
-        Use->getNodeId() < Def->getNodeId() && Use->getNodeId() != -1)
+        Use->getNodeId() < Def->getNodeId() && Use->getNodeId() > 0)
       continue;
 
     // Don't revisit nodes if we already scanned it and didn't fail, we know we
@@ -2391,7 +2471,7 @@ void SelectionDAGISel::UpdateChains(
                          static_cast<SDNode *>(nullptr));
           });
       if (ChainNode->getOpcode() != ISD::TokenFactor)
-        CurDAG->ReplaceAllUsesOfValueWith(ChainVal, InputChain);
+        ReplaceUses(ChainVal, InputChain);
 
       // If the node became dead and we haven't already seen it, delete it.
       if (ChainNode != NodeToMatch && ChainNode->use_empty() &&
@@ -2637,8 +2717,8 @@ MorphNode(SDNode *Node, unsigned TargetOpc, SDVTList VTList,
   // Move the glue if needed.
   if ((EmitNodeInfo & OPFL_GlueOutput) && OldGlueResultNo != -1 &&
       (unsigned)OldGlueResultNo != ResNumResults-1)
-    CurDAG->ReplaceAllUsesOfValueWith(SDValue(Node, OldGlueResultNo),
-                                      SDValue(Res, ResNumResults-1));
+    ReplaceUses(SDValue(Node, OldGlueResultNo),
+                SDValue(Res, ResNumResults - 1));
 
   if ((EmitNodeInfo & OPFL_GlueOutput) != 0)
     --ResNumResults;
@@ -2646,14 +2726,15 @@ MorphNode(SDNode *Node, unsigned TargetOpc, SDVTList VTList,
   // Move the chain reference if needed.
   if ((EmitNodeInfo & OPFL_Chain) && OldChainResultNo != -1 &&
       (unsigned)OldChainResultNo != ResNumResults-1)
-    CurDAG->ReplaceAllUsesOfValueWith(SDValue(Node, OldChainResultNo),
-                                      SDValue(Res, ResNumResults-1));
+    ReplaceUses(SDValue(Node, OldChainResultNo),
+                SDValue(Res, ResNumResults - 1));
 
   // Otherwise, no replacement happened because the node already exists. Replace
   // Uses of the old node with the new one.
   if (Res != Node) {
-    CurDAG->ReplaceAllUsesWith(Node, Res);
-    CurDAG->RemoveDeadNode(Node);
+    ReplaceNode(Node, Res);
+  } else {
+    EnforceNodeIdInvariant(Res);
   }
 
   return Res;
@@ -2970,8 +3051,7 @@ void SelectionDAGISel::SelectCodeCommon(SDNode *NodeToMatch,
     return;
   case ISD::AssertSext:
   case ISD::AssertZext:
-    CurDAG->ReplaceAllUsesOfValueWith(SDValue(NodeToMatch, 0),
-                                      NodeToMatch->getOperand(0));
+    ReplaceUses(SDValue(NodeToMatch, 0), NodeToMatch->getOperand(0));
     CurDAG->RemoveDeadNode(NodeToMatch);
     return;
   case ISD::INLINEASM:
@@ -3729,7 +3809,7 @@ void SelectionDAGISel::SelectCodeCommon(SDNode *NodeToMatch,
                 NodeToMatch->getValueType(i).getSizeInBits() ==
                     Res.getValueSizeInBits()) &&
                "invalid replacement");
-        CurDAG->ReplaceAllUsesOfValueWith(SDValue(NodeToMatch, i), Res);
+        ReplaceUses(SDValue(NodeToMatch, i), Res);
       }
 
       // Update chain uses.
@@ -3742,8 +3822,8 @@ void SelectionDAGISel::SelectCodeCommon(SDNode *NodeToMatch,
       if (NodeToMatch->getValueType(NodeToMatch->getNumValues() - 1) ==
               MVT::Glue &&
           InputGlue.getNode())
-        CurDAG->ReplaceAllUsesOfValueWith(
-            SDValue(NodeToMatch, NodeToMatch->getNumValues() - 1), InputGlue);
+        ReplaceUses(SDValue(NodeToMatch, NodeToMatch->getNumValues() - 1),
+                    InputGlue);
 
       assert(NodeToMatch->use_empty() &&
              "Didn't replace all uses of the node?");
