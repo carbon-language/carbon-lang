@@ -77,7 +77,6 @@ class TGParser {
     ParseValueMode,   // We are parsing a value we expect to look up.
     ParseNameMode,    // We are parsing a name of an object that does not yet
                       // exist.
-    ParseForeachMode  // We are parsing a foreach init.
   };
 
 public:

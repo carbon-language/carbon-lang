@@ -1761,7 +1761,7 @@ Init *TGParser::ParseValue(Record *CurRec, RecTy *ItemType, IDParseMode Mode) {
     switch (Lex.getCode()) {
     default: return Result;
     case tgtok::l_brace: {
-      if (Mode == ParseNameMode || Mode == ParseForeachMode)
+      if (Mode == ParseNameMode)
         // This is the beginning of the object body.
         return Result;
 
@@ -2064,7 +2064,7 @@ VarInit *TGParser::ParseForeachDeclaration(ListInit *&ForeachListValue) {
   switch (Lex.getCode()) {
   default: TokError("Unknown token when expecting a range list"); return nullptr;
   case tgtok::l_square: { // '[' ValueList ']'
-    Init *List = ParseSimpleValue(nullptr, nullptr, ParseForeachMode);
+    Init *List = ParseSimpleValue(nullptr);
     ForeachListValue = dyn_cast<ListInit>(List);
     if (!ForeachListValue) {
       TokError("Expected a Value list");
