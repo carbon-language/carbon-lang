@@ -116,7 +116,8 @@ TableGen's top-level production consists of "objects".
 
 .. productionlist::
    TableGenFile: `Object`*
-   Object: `Class` | `Def` | `Defm` | `Let` | `MultiClass` | `Foreach`
+   Object: `Class` | `Def` | `Defm` | `Defset` | `Let` | `MultiClass` |
+           `Foreach`
 
 ``class``\es
 ------------
@@ -355,6 +356,21 @@ a ``foreach``.
 
 Note that in the :token:`BaseClassList`, all of the ``multiclass``'s must
 precede any ``class``'s that appear.
+
+``defset``
+----------
+.. productionlist::
+   Defset: "defset" `Type` `TokIdentifier` "=" "{" `Object`* "}"
+
+All records defined inside the braces via ``def`` and ``defm`` are collected
+in a globally accessible list of the given name (in addition to being added
+to the global collection of records as usual). Anonymous records created inside
+initializier expressions using the ``Class<args...>`` syntax are never collected
+in a defset.
+
+The given type must be ``list<A>``, where ``A`` is some class. It is an error
+to define a record (via ``def`` or ``defm``) inside the braces which doesn't
+derive from ``A``.
 
 ``foreach``
 -----------

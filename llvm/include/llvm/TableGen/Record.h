@@ -1612,6 +1612,7 @@ class RecordKeeper {
   using RecordMap = std::map<std::string, std::unique_ptr<Record>>;
   RecordMap Classes, Defs;
   FoldingSet<RecordRecTy> RecordTypePool;
+  std::map<std::string, Init *> ExtraGlobals;
   unsigned AnonCounter = 0;
 
 public:
@@ -1628,6 +1629,13 @@ public:
     return I == Defs.end() ? nullptr : I->second.get();
   }
 
+  Init *getGlobal(StringRef Name) const {
+    if (Record *R = getDef(Name))
+      return R->getDefInit();
+    auto It = ExtraGlobals.find(Name);
+    return It == ExtraGlobals.end() ? nullptr : It->second;
+  }
+
   void addClass(std::unique_ptr<Record> R) {
     bool Ins = Classes.insert(std::make_pair(R->getName(),
                                              std::move(R))).second;
@@ -1640,6 +1648,13 @@ public:
                                           std::move(R))).second;
     (void)Ins;
     assert(Ins && "Record already exists");
+  }
+
+  void addExtraGlobal(StringRef Name, Init *I) {
+    bool Ins = ExtraGlobals.insert(std::make_pair(Name, I)).second;
+    (void)Ins;
+    assert(!getDef(Name));
+    assert(Ins && "Global already exists");
   }
 
   Init *getNewAnonymousName();
