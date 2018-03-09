@@ -13,13 +13,12 @@ define  void @g() local_unnamed_addr #0 {
 ; CHECK-LABEL: g:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    movq {{.*}}(%rip), %rax
-; CHECK-NEXT:    movl {{.*}}(%rip), %ecx
-; CHECK-NEXT:    xorl %edx, %edx
-; CHECK-NEXT:    incl %ecx
-; CHECK-NEXT:    setne %dl
-; CHECK-NEXT:    addl 4(%rax), %edx
+; CHECK-NEXT:    movl 4(%rax), %eax
+; CHECK-NEXT:    xorl %ecx, %ecx
+; CHECK-NEXT:    incl {{.*}}(%rip)
+; CHECK-NEXT:    setne %cl
+; CHECK-NEXT:    addl %eax, %ecx
 ; CHECK-NEXT:    movl %ecx, {{.*}}(%rip)
-; CHECK-NEXT:    movl %edx, {{.*}}(%rip)
 ; CHECK-NEXT:    retq
 entry:
   %0 = load %struct.anon*, %struct.anon** @d, align 8
