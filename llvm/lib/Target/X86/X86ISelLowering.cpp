@@ -8020,9 +8020,10 @@ SDValue createVariablePermute(MVT VT, SDValue SrcVec, SDValue IndicesVec,
     uint64_t IndexOffset = 0;
 
     // If we're scaling a smaller permute op, then we need to repeat the
-    // indices, scaling and offsetting them as well. e.g. v4i32 -> v16i8 (Scale
-    // = 4) IndexScale = v4i32 Splat(4 << 24 | 4 << 16 | 4 << 8 | 4) indexOffset
-    // = v4i32 Splat(3 << 24 | 2 << 16 | 1 << 8 | 0)
+    // indices, scaling and offsetting them as well.
+    // e.g. v4i32 -> v16i8 (Scale = 4)
+    // IndexScale = v4i32 Splat(4 << 24 | 4 << 16 | 4 << 8 | 4)
+    // IndexOffset = v4i32 Splat(3 << 24 | 2 << 16 | 1 << 8 | 0)
     for (uint64_t i = 0; i != Scale; ++i) {
       IndexScale |= Scale << (i * ShuffleBits);
       IndexOffset |= i << (i * ShuffleBits);
