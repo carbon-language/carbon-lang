@@ -467,6 +467,7 @@ tgtok::TokKind TGLexer::LexExclaim() {
     StringSwitch<tgtok::TokKind>(StringRef(Start, CurPtr - Start))
     .Case("eq", tgtok::XEq)
     .Case("if", tgtok::XIf)
+    .Case("isa", tgtok::XIsA)
     .Case("head", tgtok::XHead)
     .Case("tail", tgtok::XTail)
     .Case("size", tgtok::XSize)

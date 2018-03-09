@@ -936,6 +936,33 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
     return (UnOpInit::get(Code, LHS, Type))->Fold(CurRec, CurMultiClass);
   }
 
+  case tgtok::XIsA: {
+    // Value ::= !isa '<' Type '>' '(' Value ')'
+    Lex.Lex(); // eat the operation
+
+    RecTy *Type = ParseOperatorType();
+    if (!Type)
+      return nullptr;
+
+    if (Lex.getCode() != tgtok::l_paren) {
+      TokError("expected '(' after type of !isa");
+      return nullptr;
+    }
+    Lex.Lex(); // eat the '('
+
+    Init *LHS = ParseValue(CurRec);
+    if (!LHS)
+      return nullptr;
+
+    if (Lex.getCode() != tgtok::r_paren) {
+      TokError("expected ')' in !isa");
+      return nullptr;
+    }
+    Lex.Lex(); // eat the ')'
+
+    return (IsAOpInit::get(Type, LHS))->Fold();
+  }
+
   case tgtok::XConcat:
   case tgtok::XADD:
   case tgtok::XAND:
@@ -1696,6 +1723,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
   case tgtok::XSize:
   case tgtok::XEmpty:
   case tgtok::XCast:  // Value ::= !unop '(' Value ')'
+  case tgtok::XIsA:
   case tgtok::XConcat:
   case tgtok::XADD:
   case tgtok::XAND:

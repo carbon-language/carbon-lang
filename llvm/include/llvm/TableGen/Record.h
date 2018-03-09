@@ -317,6 +317,7 @@ protected:
     IK_UnOpInit,
     IK_LastOpInit,
     IK_FoldOpInit,
+    IK_IsAOpInit,
     IK_StringInit,
     IK_VarInit,
     IK_VarListElementInit,
@@ -941,6 +942,39 @@ public:
   // Fold - If possible, fold this to a simpler init.  Return this if not
   // possible to fold.
   Init *Fold(Record *CurRec) const;
+
+  bool isComplete() const override { return false; }
+
+  Init *resolveReferences(Resolver &R) const override;
+
+  Init *getBit(unsigned Bit) const override;
+
+  std::string getAsString() const override;
+};
+
+/// !isa<type>(expr) - Dynamically determine the type of an expression.
+class IsAOpInit : public TypedInit, public FoldingSetNode {
+private:
+  RecTy *CheckType;
+  Init *Expr;
+
+  IsAOpInit(RecTy *CheckType, Init *Expr)
+      : TypedInit(IK_IsAOpInit, IntRecTy::get()), CheckType(CheckType),
+        Expr(Expr) {}
+
+public:
+  IsAOpInit(const IsAOpInit &) = delete;
+  IsAOpInit &operator=(const IsAOpInit &) = delete;
+
+  static bool classof(const Init *I) { return I->getKind() == IK_IsAOpInit; }
+
+  static IsAOpInit *get(RecTy *CheckType, Init *Expr);
+
+  void Profile(FoldingSetNodeID &ID) const;
+
+  // Fold - If possible, fold this to a simpler init.  Return this if not
+  // possible to fold.
+  Init *Fold() const;
 
   bool isComplete() const override { return false; }
 

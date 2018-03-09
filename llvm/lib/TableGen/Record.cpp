@@ -1231,6 +1231,68 @@ std::string FoldOpInit::getAsString() const {
       .str();
 }
 
+static void ProfileIsAOpInit(FoldingSetNodeID &ID, RecTy *CheckType,
+                             Init *Expr) {
+  ID.AddPointer(CheckType);
+  ID.AddPointer(Expr);
+}
+
+IsAOpInit *IsAOpInit::get(RecTy *CheckType, Init *Expr) {
+  static FoldingSet<IsAOpInit> ThePool;
+
+  FoldingSetNodeID ID;
+  ProfileIsAOpInit(ID, CheckType, Expr);
+
+  void *IP = nullptr;
+  if (IsAOpInit *I = ThePool.FindNodeOrInsertPos(ID, IP))
+    return I;
+
+  IsAOpInit *I = new (Allocator) IsAOpInit(CheckType, Expr);
+  ThePool.InsertNode(I, IP);
+  return I;
+}
+
+void IsAOpInit::Profile(FoldingSetNodeID &ID) const {
+  ProfileIsAOpInit(ID, CheckType, Expr);
+}
+
+Init *IsAOpInit::Fold() const {
+  if (TypedInit *TI = dyn_cast<TypedInit>(Expr)) {
+    // Is the expression type known to be (a subclass of) the desired type?
+    if (TI->getType()->typeIsConvertibleTo(CheckType))
+      return IntInit::get(1);
+
+    if (isa<RecordRecTy>(CheckType)) {
+      // If the target type is not a subclass of the expression type, or if
+      // the expression has fully resolved to a record, we know that it can't
+      // be of the required type.
+      if (!CheckType->typeIsConvertibleTo(TI->getType()) || isa<DefInit>(Expr))
+        return IntInit::get(0);
+    } else {
+      // We treat non-record types as not castable.
+      return IntInit::get(0);
+    }
+  }
+  return const_cast<IsAOpInit *>(this);
+}
+
+Init *IsAOpInit::resolveReferences(Resolver &R) const {
+  Init *NewExpr = Expr->resolveReferences(R);
+  if (Expr != NewExpr)
+    return get(CheckType, NewExpr)->Fold();
+  return const_cast<IsAOpInit *>(this);
+}
+
+Init *IsAOpInit::getBit(unsigned Bit) const {
+  return VarBitInit::get(const_cast<IsAOpInit *>(this), Bit);
+}
+
+std::string IsAOpInit::getAsString() const {
+  return (Twine("!isa<") + CheckType->getAsString() + ">(" +
+          Expr->getAsString() + ")")
+      .str();
+}
+
 RecTy *TypedInit::getFieldType(StringInit *FieldName) const {
   if (RecordRecTy *RecordType = dyn_cast<RecordRecTy>(getType())) {
     for (Record *Rec : RecordType->getClasses()) {
