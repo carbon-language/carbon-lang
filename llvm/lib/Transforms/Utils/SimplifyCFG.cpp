@@ -1254,23 +1254,23 @@ static bool HoistThenElseCodeToIf(BranchInst *BI,
   BasicBlock::iterator BB2_Itr = BB2->begin();
 
   Instruction *I1 = &*BB1_Itr++, *I2 = &*BB2_Itr++;
+  // Skip debug info if it is not identical.
+  DbgInfoIntrinsic *DBI1 = dyn_cast<DbgInfoIntrinsic>(I1);
+  DbgInfoIntrinsic *DBI2 = dyn_cast<DbgInfoIntrinsic>(I2);
+  if (!DBI1 || !DBI2 || !DBI1->isIdenticalToWhenDefined(DBI2)) {
+    while (isa<DbgInfoIntrinsic>(I1))
+      I1 = &*BB1_Itr++;
+    while (isa<DbgInfoIntrinsic>(I2))
+      I2 = &*BB2_Itr++;
+  }
+  if (isa<PHINode>(I1) || !I1->isIdenticalToWhenDefined(I2) ||
+      (isa<InvokeInst>(I1) && !isSafeToHoistInvoke(BB1, BB2, I1, I2)))
+    return false;
+
   BasicBlock *BIParent = BI->getParent();
 
   bool Changed = false;
-  for (;;) {
-    // Move over debug info from both sides unchanged.
-    while (isa<DbgInfoIntrinsic>(I1)) {
-      BIParent->getInstList().splice(BI->getIterator(), BB1->getInstList(), I1);
-      I1 = &*BB1_Itr++;
-    }
-    while (isa<DbgInfoIntrinsic>(I2)) {
-      BIParent->getInstList().splice(BI->getIterator(), BB2->getInstList(), I2);
-      I2 = &*BB2_Itr++;
-    }
-
-    if (isa<PHINode>(I1) || !I1->isIdenticalToWhenDefined(I2))
-      return Changed;
-
+  do {
     // If we are hoisting the terminator instruction, don't move one (making a
     // broken BB), instead clone it, and remove BI.
     if (isa<TerminatorInst>(I1))
@@ -1318,7 +1318,18 @@ static bool HoistThenElseCodeToIf(BranchInst *BI,
 
     I1 = &*BB1_Itr++;
     I2 = &*BB2_Itr++;
-  }
+    // Skip debug info if it is not identical.
+    DbgInfoIntrinsic *DBI1 = dyn_cast<DbgInfoIntrinsic>(I1);
+    DbgInfoIntrinsic *DBI2 = dyn_cast<DbgInfoIntrinsic>(I2);
+    if (!DBI1 || !DBI2 || !DBI1->isIdenticalToWhenDefined(DBI2)) {
+      while (isa<DbgInfoIntrinsic>(I1))
+        I1 = &*BB1_Itr++;
+      while (isa<DbgInfoIntrinsic>(I2))
+        I2 = &*BB2_Itr++;
+    }
+  } while (I1->isIdenticalToWhenDefined(I2));
+
+  return true;
 
 HoistTerminator:
   // It may not be possible to hoist an invoke.
