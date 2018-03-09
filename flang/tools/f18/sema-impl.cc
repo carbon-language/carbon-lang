@@ -7,12 +7,14 @@
 
 #include "flang/Sema/Scope.h"
 #include "flang/Sema/StatementMap.h"
+#include "flang/Sema/ParseTreeDump.h"
 
 #include <vector>
 #include <map>
 #include <stack>
 #include <functional>
 #include <iomanip>
+#include <cstring>
 
 namespace psr = Fortran::parser ;
 namespace sm  = Fortran::semantics ;
@@ -773,6 +775,7 @@ using SMap = sm::StatementMap;
 
 namespace Fortran::parser { 
 
+
 class Pass1 : public LabelTableStack 
 {
   
@@ -782,8 +785,8 @@ public:
     current_label_(-1) ,
     current_smap_(0)
   {
-    system_scope_  = new Scope(Scope::SK_SYSTEM, nullptr, nullptr ) ; 
-    unit_scope_    = new Scope(Scope::SK_GLOBAL, system_scope_, nullptr) ;
+    system_scope_  = new Scope(Scope::Kind::SK_SYSTEM, nullptr, nullptr ) ; 
+    unit_scope_    = new Scope(Scope::Kind::SK_GLOBAL, system_scope_, nullptr) ;
     current_scope_ = nullptr ;
   }   
 
@@ -799,7 +802,7 @@ public:
   Scope * current_scope_ ; 
   SMap * current_smap_ ;
 
-  std::map<SMap::Index, const sm::Identifier *> construct_name_ ;
+  std::map<SMap::Index, sm::Identifier> construct_name_ ;
 
   // Provide all label-DO statements that are still open.
   // The key is the LabelDoStmt index
@@ -826,7 +829,7 @@ public:
   } 
 
   void LeaveScope(Scope::Kind k) {
-    assert( current_scope_->getKind() == k ) ; 
+    assert( current_scope_->kind() == k ) ; 
     TRACE("Leaving Scope " << current_scope_->toString() );
     current_scope_ = current_scope_->getParentScope() ; 
   }  
@@ -901,25 +904,24 @@ public:
   //
   // Should operate with Symbol instead of Identifier
   //
-  const sm::Identifier * GetConstructName(SMap::Index stmt) {
+  sm::OptIdentifier GetConstructName(SMap::Index stmt) {
     auto it = construct_name_.find(stmt);
     if ( it == construct_name_.end() ) {
-      // Hummm... not sure because in order to handle EXIT and CYCLE
-      // we will have to check the name of all parent constructs.           
-      INTERNAL_ERROR; 
-      return nullptr; 
+      return std::nullopt ; 
     }
     return it->second;
   }
 
   // 
   void 
-  SetConstructName(SMap::Index stmt, const sm::Identifier *name) {
-    construct_name_[stmt] = name;
+  SetConstructName(SMap::Index stmt, sm::OptIdentifier name) {
+    if (name) {
+      construct_name_.insert_or_assign(stmt, *name);
+    }
   }
 
   void 
-  CheckStatementName( SMap::Index part_or_end, const sm::Identifier *found, bool required) {
+  CheckStatementName( SMap::Index part_or_end, sm::OptIdentifier found, bool required) {
     
     auto & smap = GetStatementMap() ;
 
@@ -929,13 +931,13 @@ public:
     SMap::Index start = smap.StartOfConstruct(part_or_end); 
     assert( smap.GetGroup(start) == StmtGroup::Start );
 
-    const sm::Identifier * expect = GetConstructName(start);
+    sm::OptIdentifier  expect = GetConstructName(start);
    
     // TODO: Get the location from part_or_end
     const char * text = StmtClassText( smap.GetClass(part_or_end) ) ;
     if ( expect ) {      
       if ( found ) {
-        if ( found != expect ) {
+        if ( *found != *expect ) {
           FAIL("In statement #" << part_or_end 
                << ": Unexpected name '" << found->name() << "' in " << text
                << "' (expected '" << expect->name() << "') ");
@@ -1264,13 +1266,15 @@ public:
 
   template <typename T> bool Pre(const T &x) { 
     if ( ENV("TRACE_FALLBACK")  )  
-      TRACE( "*** fallback " << __PRETTY_FUNCTION__  ) ; 
+      TRACE( "*** fallback Pre(" << sm::GetTypeName(x) << ")" )  ;
+    
+    //  TRACE( "*** fallback " << __PRETTY_FUNCTION__  ) ; 
     return true ;
   }
   
   template <typename T> void Post(const T &) { 
-    if ( ENV("TRACE_FALLBACK") )  
-      TRACE( "*** fallback " << __PRETTY_FUNCTION__  ) ; 
+  //  if ( ENV("TRACE_FALLBACK") )  
+  //    TRACE( "*** fallback " << __PRETTY_FUNCTION__  ) ; 
   }
   
   // fallback for std::variant
@@ -1399,29 +1403,27 @@ public:
 
 
     sm::ProgramSymbol * symbol{0};
-    const ProgramStmt    * program_stmt = GetOptValue( std::get<x.PROG>(x.t) ) ;
+    const ProgramStmt * program_stmt = GetOptValue( std::get<x.PROG>(x.t) ) ;
 
-    const sm::Identifier * program_ident{0};
+    sm::OptIdentifier program_ident;
  
     if ( program_stmt ) {
-      const std::string & name = program_stmt->v ;
-      TRACE("program name = " << name ) ; 
-      program_ident = sm::Identifier::get(name) ;
-      symbol = new sm::ProgramSymbol( current_scope_, program_ident ) ;
+      program_ident = sm::Identifier::make(program_stmt->v) ;
+      symbol = new sm::ProgramSymbol( current_scope_, *program_ident ) ;
       TraceStatementInfo( std::get<x.PROG>(x.t) ) ;
     }
 
     // TODO: Should we create a symbol when there is no PROGRAM statement? 
     
     // Install the scope 
-    sema.scope_provider = EnterScope( new Scope(Scope::SK_PROGRAM, current_scope_, symbol) )  ; 
+    sema.scope_provider = EnterScope( new Scope(Scope::Kind::SK_PROGRAM, current_scope_, symbol) )  ; 
 
     // Install the label table
     sema.label_table = PushLabelTable( new LabelTable ) ;
     
     // Check the name consistancy
     // const std::string * end_name = GetOptValue(end_stmt.v) ;
-    //    const sm::Identifier * end_ident = end_name ? sm::Identifier::get(*end_name) : nullptr ;
+    //    sm::Identifier end_ident = end_name ? sm::Identifier::get(*end_name) : nullptr ;
 
     // CheckStatementName(program_ident,end_ident,"program",false) ;
 
@@ -1432,7 +1434,7 @@ public:
     // } else if ( program_ident ) {
     //   FAIL("Unexpected end program name '" << end_ident->name() << "'");
     // }
-    
+
     return true ; 
   }
 
@@ -1440,7 +1442,7 @@ public:
     auto &sema = getSema(x); 
     GetLabelTable().dump() ; 
     PopLabelTable(sema.label_table)  ;     
-    LeaveScope(Scope::SK_PROGRAM)  ;     
+    LeaveScope(Scope::Kind::SK_PROGRAM)  ;     
     TRACE_CALL() ;
   }
 
@@ -1454,22 +1456,22 @@ public:
     // const EndFunctionStmt & end_stmt      = GetValue(std::get<x.END>(x.t)) ; 
 
     const std::string &function_name = std::get<1>(function_stmt.t) ; 
-    const sm::Identifier *function_ident = sm::Identifier::get(function_name) ;
+    sm::Identifier function_ident = sm::Identifier::make(function_name) ;
 
     // TODO: lookup for name conflict 
     sm::Symbol *lookup ;
-    if ( current_scope_->getKind() == Scope::SK_GLOBAL ) {
+    if ( current_scope_->kind() == Scope::Kind::SK_GLOBAL ) {
       lookup = current_scope_->LookupProgramUnit(function_ident) ;
-      if (lookup) FAIL("A unit '" << function_ident->name() << "' is already declared") ;
+      if (lookup) FAIL("A unit '" << function_ident.name() << "' is already declared") ;
     } else {
       lookup = current_scope_->LookupLocal(function_ident) ;
       // TODO: There are a few cases, a function redeclaration is not necessarily a problem.
       //       A typical example is a PRIVATE or PUBLIC statement in a module
-      if (lookup) FAIL("A unit '" << function_ident->name() << "' is already declared") ;
+      if (lookup) FAIL("A unit '" << function_ident.name() << "' is already declared") ;
     }
    
     auto symbol = new sm::FunctionSymbol( current_scope_, function_ident ) ;
-    sema.scope_provider = EnterScope( new Scope(Scope::SK_FUNCTION, current_scope_, symbol) )  ; 
+    sema.scope_provider = EnterScope( new Scope(Scope::Kind::SK_FUNCTION, current_scope_, symbol) )  ; 
 
     // Install the label table
     sema.label_table = PushLabelTable( new LabelTable ) ;
@@ -1478,7 +1480,7 @@ public:
 
     // Check the end function name 
     //const std::string * end_name = GetOptValue(end_stmt.v) ;
-    //    const sm::Identifier * end_ident = end_name ? sm::Identifier::get(*end_name) : nullptr ;
+    //    sm::Identifier end_ident = end_name ? sm::Identifier::make(*end_name) : nullptr ;
 
     // CheckStatementName(function_ident,end_ident,"function",false) ;
 
@@ -1490,7 +1492,7 @@ public:
     auto &sema = getSema(x); 
     GetLabelTable().dump() ; 
     PopLabelTable(sema.label_table)  ;     
-    LeaveScope(Scope::SK_FUNCTION)  ;     
+    LeaveScope(Scope::Kind::SK_FUNCTION)  ;     
   }
 
   //  ========== SubroutineSubprogram  ===========
@@ -1503,22 +1505,22 @@ public:
     // const EndSubroutineStmt & end_stmt      = GetValue(std::get<x.END>(x.t)) ; 
 
     const std::string &subroutine_name = std::get<1>(subroutine_stmt.t) ; 
-    const sm::Identifier *subroutine_ident = sm::Identifier::get(subroutine_name) ;
+    sm::Identifier subroutine_ident = sm::Identifier::make(subroutine_name) ;
 
     // TODO: lookup for name conflict 
     sm::Symbol *lookup ;
-    if ( current_scope_->getKind() == Scope::SK_GLOBAL ) {
+    if ( current_scope_->kind() == Scope::Kind::SK_GLOBAL ) {
       lookup = current_scope_->LookupProgramUnit(subroutine_ident) ;
-      if (lookup) FAIL("A unit '" << subroutine_ident->name() << "' is already declared") ;
+      if (lookup) FAIL("A unit '" << subroutine_ident.name() << "' is already declared") ;
     } else {
       lookup = current_scope_->LookupLocal(subroutine_ident) ;
       // TODO: There are a few cases, a subroutine redeclaration is not necessarily a problem.
       //       A typical example is a PRIVATE or PUBLIC statement in a module
-      if (lookup) FAIL("A unit '" << subroutine_ident->name() << "' is already declared") ;
+      if (lookup) FAIL("A unit '" << subroutine_ident.name() << "' is already declared") ;
     }
    
     auto symbol = new sm::SubroutineSymbol( current_scope_, subroutine_ident ) ;
-    sema.scope_provider = EnterScope( new Scope(Scope::SK_SUBROUTINE, current_scope_, symbol) )  ; 
+    sema.scope_provider = EnterScope( new Scope(Scope::Kind::SK_SUBROUTINE, current_scope_, symbol) )  ; 
 
     // Install the label table
     sema.label_table = PushLabelTable( new LabelTable ) ;
@@ -1527,7 +1529,7 @@ public:
 
     // Check the end subroutine name 
     //  const std::string * end_name = GetOptValue(end_stmt.v) ;
-    // const sm::Identifier * end_ident = end_name ? sm::Identifier::get(*end_name) : nullptr ;
+    // sm::Identifier end_ident = end_name ? sm::Identifier::make(*end_name) : nullptr ;
 
     //  CheckStatementName(subroutine_ident,end_ident,"subroutine",false) ;
     return true ; 
@@ -1540,7 +1542,7 @@ public:
     PopLabelTable(sema.label_table)  ;  
     if ( ! opened_label_do_.empty() ) 
       INTERNAL_ERROR;
-    LeaveScope(Scope::SK_SUBROUTINE)  ; 
+    LeaveScope(Scope::Kind::SK_SUBROUTINE)  ; 
   }
 
 
@@ -1554,22 +1556,22 @@ public:
     // const EndModuleStmt & end_stmt      = GetValue(std::get<x.END>(x.t)) ; 
 
     const std::string &module_name = module_stmt.v ; 
-    const sm::Identifier *module_ident = sm::Identifier::get(module_name) ;
+    sm::Identifier module_ident = sm::Identifier::make(module_name) ;
 
     // TODO: lookup for name conflict 
     sm::Symbol *lookup ;
-    if ( current_scope_->getKind() == Scope::SK_GLOBAL ) {
+    if ( current_scope_->kind() == Scope::Kind::SK_GLOBAL ) {
       lookup = current_scope_->LookupProgramUnit(module_ident) ;
-      if (lookup) FAIL("A unit '" << module_ident->name() << "' is already declared") ;
+      if (lookup) FAIL("A unit '" << module_ident.name() << "' is already declared") ;
     } else {
       lookup = current_scope_->LookupLocal(module_ident) ;
       // TODO: There are a few cases, a module redeclaration is not necessarily a problem.
       //       A typical example is a PRIVATE or PUBLIC statement in a module
-      if (lookup) FAIL("A unit '" << module_ident->name() << "' is already declared") ;
+      if (lookup) FAIL("A unit '" << module_ident.name() << "' is already declared") ;
     }
    
     auto symbol = new sm::ModuleSymbol( current_scope_, module_ident ) ;
-    sema.scope_provider = EnterScope( new Scope(Scope::SK_MODULE, current_scope_, symbol) )  ; 
+    sema.scope_provider = EnterScope( new Scope(Scope::Kind::SK_MODULE, current_scope_, symbol) )  ; 
 
     // Install the label table
     sema.label_table = PushLabelTable( new LabelTable ) ;
@@ -1578,7 +1580,7 @@ public:
 
     // Check the end module name 
     //    const std::string * end_name = GetOptValue(end_stmt.v) ;
-    // const sm::Identifier * end_ident = end_name ? sm::Identifier::get(*end_name) : nullptr ;
+    // sm::Identifier end_ident = end_name ? sm::Identifier::make(*end_name) : nullptr ;
 
     // CheckStatementName(module_ident,end_ident,"module",false) ;
 
@@ -1590,7 +1592,7 @@ public:
     auto &sema = getSema(x); 
     GetLabelTable().dump() ; 
     PopLabelTable(sema.label_table)  ;     
-    LeaveScope(Scope::SK_MODULE)  ;     
+    LeaveScope(Scope::Kind::SK_MODULE)  ;     
   }
 
 
@@ -1626,7 +1628,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::DerivedType);
 
-    auto name = sm::Identifier::get(std::get<1>(x.t));
+    auto name = sm::Identifier::make(std::get<1>(x.t));
     SetConstructName(sema.stmt_index, name);
 
     return true ; 
@@ -1642,7 +1644,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::EndType);
 
-    auto name = sm::Identifier::get(x.v) ;
+    auto name = sm::Identifier::make(x.v) ;
     CheckStatementName(sema.stmt_index, name, false); 
 
     return true ; 
@@ -1658,7 +1660,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::Module);     
 
-    auto name = sm::Identifier::get(x.v);
+    auto name = sm::Identifier::make(x.v);
     SetConstructName(sema.stmt_index, name);
 
     return true ; 
@@ -1674,7 +1676,7 @@ public:
     TRACE_CALL() ;
      auto &sema = InitStmt(x, StmtClass::EndModule); 
 
-    auto name = sm::Identifier::get(x.v);
+    auto name = sm::Identifier::make(x.v);
     CheckStatementName(sema.stmt_index, name, false); 
 
     return true ; 
@@ -1690,7 +1692,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::Subroutine);
  
-    auto name = sm::Identifier::get(std::get<1>(x.t));
+    auto name = sm::Identifier::make(std::get<1>(x.t));
     SetConstructName(sema.stmt_index, name);
 
     return true ; 
@@ -1706,7 +1708,7 @@ public:
     TRACE_CALL() ;
     auto &sema =  InitStmt(x, StmtClass::EndSubroutine); 
 
-    auto name = sm::Identifier::get(x.v);
+    auto name = sm::Identifier::make(x.v);
     CheckStatementName(sema.stmt_index, name, false); 
     return true ; 
   }
@@ -1717,7 +1719,7 @@ public:
     TRACE_CALL() ;
     auto &sema =  InitStmt(x, StmtClass::Function); 
 
-    auto name = sm::Identifier::get(std::get<1>(x.t));
+    auto name = sm::Identifier::make(std::get<1>(x.t));
     SetConstructName(sema.stmt_index, name);
 
     return true ; 
@@ -1733,7 +1735,7 @@ public:
     TRACE_CALL() ;
     auto &sema =  InitStmt(x, StmtClass::EndFunction);
     
-    auto name = sm::Identifier::get(x.v);
+    auto name = sm::Identifier::make(x.v);
     CheckStatementName(sema.stmt_index, name, false); 
 
     return true ; 
@@ -1797,6 +1799,8 @@ public:
   bool Pre(const AssignmentStmt &x) { 
     TRACE_CALL() ;
     InitStmt(x, StmtClass::Assignment); 
+    
+
     return true ; 
   }
 
@@ -1810,9 +1814,10 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::Program); 
     
-    auto name = sm::Identifier::get(x.v);
+    auto name = sm::Identifier::make(x.v);
     SetConstructName(sema.stmt_index, name);
-   
+
+       
     return true ; 
   }
 
@@ -1826,7 +1831,7 @@ public:
     TRACE_CALL() ;
     auto &sema =InitStmt(x, StmtClass::EndProgram);
 
-    auto name = sm::Identifier::get(x.v);
+    auto name = sm::Identifier::make(x.v);
     CheckStatementName(sema.stmt_index, name, false); 
 
     return true ; 
@@ -2127,7 +2132,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::Block);
     
-    auto name = sm::Identifier::get(x.v);
+    auto name = sm::Identifier::make(x.v);
     SetConstructName(sema.stmt_index, name);
     
     return true ; 
@@ -2144,7 +2149,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::EndBlock);
 
-    auto name = sm::Identifier::get(x.v);
+    auto name = sm::Identifier::make(x.v);
     CheckStatementName(sema.stmt_index, name, true); 
 
     return true ; 
@@ -2161,7 +2166,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::ForallConstruct);
     
-    auto name = sm::Identifier::get(std::get<0>(x.t));
+    auto name = sm::Identifier::make(std::get<0>(x.t));
     SetConstructName(sema.stmt_index, name);
     
     return true ; 
@@ -2178,7 +2183,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::EndForall);
 
-    auto name = sm::Identifier::get(x.v);
+    auto name = sm::Identifier::make(x.v);
     CheckStatementName(sema.stmt_index, name, true); 
 
     return true ; 
@@ -2196,7 +2201,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::Associate);
     
-    auto name = sm::Identifier::get(std::get<0>(x.t));
+    auto name = sm::Identifier::make(std::get<0>(x.t));
     SetConstructName(sema.stmt_index, name);
     
     return true ; 
@@ -2213,7 +2218,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::EndAssociate);
 
-    auto name = sm::Identifier::get(x.v);
+    auto name = sm::Identifier::make(x.v);
     CheckStatementName(sema.stmt_index, name, true); 
 
     return true ; 
@@ -2229,7 +2234,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::ChangeTeam);
     
-    auto name = sm::Identifier::get(std::get<0>(x.t));
+    auto name = sm::Identifier::make(std::get<0>(x.t));
     SetConstructName(sema.stmt_index, name);
     
     return true ; 
@@ -2245,7 +2250,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::EndChangeTeam);
 
-    auto name = sm::Identifier::get(std::get<1>(x.t));
+    auto name = sm::Identifier::make(std::get<1>(x.t));
     CheckStatementName(sema.stmt_index, name, true); 
 
     return true ; 
@@ -2261,7 +2266,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::Critical);
     
-    auto name = sm::Identifier::get(std::get<0>(x.t));
+    auto name = sm::Identifier::make(std::get<0>(x.t));
     SetConstructName(sema.stmt_index, name);
     
     return true ; 
@@ -2277,7 +2282,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::EndCritical);
 
-    auto name = sm::Identifier::get(x.v) ;
+    auto name = sm::Identifier::make(x.v) ;
     CheckStatementName(sema.stmt_index, name, true); 
 
     return true ; 
@@ -2357,7 +2362,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::IfThen);
 
-    auto name = sm::Identifier::get( std::get<0>(x.t) );
+    auto name = sm::Identifier::make( std::get<0>(x.t) );
     SetConstructName(sema.stmt_index, name);
   
     return true ; 
@@ -2373,7 +2378,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::ElseIf);
 
-    auto name = sm::Identifier::get( std::get<1>(x.t) );
+    auto name = sm::Identifier::make( std::get<1>(x.t) );
     CheckStatementName(sema.stmt_index, name, false); 
     
     return true ; 
@@ -2389,7 +2394,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::Else);
 
-    auto name = sm::Identifier::get(x.v);
+    auto name = sm::Identifier::make(x.v);
     CheckStatementName(sema.stmt_index, name, false); 
     
     return true ; 
@@ -2405,7 +2410,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::EndIf);
 
-    auto name = sm::Identifier::get(x.v);
+    auto name = sm::Identifier::make(x.v);
     CheckStatementName(sema.stmt_index, name, true); 
 
     return true ; 
@@ -2421,7 +2426,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::NonLabelDo);
 
-    auto name = sm::Identifier::get( std::get<0>(x.t) );
+    auto name = sm::Identifier::make( std::get<0>(x.t) );
     SetConstructName(sema.stmt_index, name);
 
     // Specialize from StmtClass::LabelDo to StmtClass::NonLabelDoWhile or
@@ -2457,7 +2462,7 @@ public:
     }
 
     // And also record the construct name 
-    auto name = sm::Identifier::get( std::get<0>(x.t) );
+    auto name = sm::Identifier::make( std::get<0>(x.t) );
     SetConstructName(sema.stmt_index, name);
 
     // Specialize from StmtClass::LabelDo to StmtClass::LabelDoWhile or
@@ -2477,7 +2482,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::EndDo); 
 
-    auto name = sm::Identifier::get(x.v);
+    auto name = sm::Identifier::make(x.v);
     CheckStatementName(sema.stmt_index, name, true); 
 
     return true ; 
@@ -2507,7 +2512,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::SelectCase);
 
-    auto name = sm::Identifier::get(std::get<0>(x.t));
+    auto name = sm::Identifier::make(std::get<0>(x.t));
     SetConstructName(sema.stmt_index, name);    
     
     return true ; 
@@ -2536,7 +2541,7 @@ public:
 #if 1
         // Method 1: Manually visit the construct elements
         // smap.VisistConstruct( sema.stmt_index,
-        smap.VisistConstructRev( sema.stmt_index,
+        smap.VisitConstructRev( sema.stmt_index,
                               [&]( SMap::Index at ) -> bool 
                               {
                                 if ( smap.GetClass(at) == StmtClass::CaseDefault ) {
@@ -2563,7 +2568,7 @@ public:
       }
     
     // Check the construct name 
-    auto name = sm::Identifier::get(std::get<1>(x.t));
+    auto name = sm::Identifier::make(std::get<1>(x.t));
     CheckStatementName(sema.stmt_index, name, false); 
 
     return true ; 
@@ -2581,7 +2586,7 @@ public:
     auto &sema = InitStmt(x, StmtClass::EndSelect);
 
     // Check the construct name 
-    auto name = sm::Identifier::get(x.v);
+    auto name = sm::Identifier::make(x.v);
     CheckStatementName(sema.stmt_index, name, true); 
 
     return true ; 
@@ -2597,7 +2602,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::SelectRank);
 
-    auto name = sm::Identifier::get(std::get<0>(x.t));
+    auto name = sm::Identifier::make(std::get<0>(x.t));
     SetConstructName(sema.stmt_index, name);    
 
     return true ; 
@@ -2670,7 +2675,7 @@ public:
 
     
     // Check the construct name 
-    auto name = sm::Identifier::get(std::get<1>(x.t));
+    auto name = sm::Identifier::make(std::get<1>(x.t));
     CheckStatementName(sema.stmt_index, name, false); 
 
 
@@ -2687,7 +2692,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::SelectType);
 
-    auto name = sm::Identifier::get(std::get<0>(x.t));
+    auto name = sm::Identifier::make(std::get<0>(x.t));
     SetConstructName(sema.stmt_index, name);    
 
     return true ; 
@@ -2756,7 +2761,7 @@ public:
       }
 
     // Check the construct name.
-    auto name = sm::Identifier::get(std::get<1>(x.t));
+    auto name = sm::Identifier::make(std::get<1>(x.t));
     CheckStatementName(sema.stmt_index, name, false); 
 
 
@@ -2959,7 +2964,7 @@ public:
     auto & smap = GetStatementMap() ;
 
     // the name of the construct we are looking for (can be null)
-    const sm::Identifier * target_name = sm::Identifier::get(x.v) ; 
+    sm::OptIdentifier target_name = sm::Identifier::make(x.v) ; 
 
     // Reminder: Unlike in EXIT, the target of a CYCLE statement is always 
     // a DO so the target resolution are similar but not identical.
@@ -3082,7 +3087,7 @@ public:
     auto & smap = GetStatementMap() ;
 
     // the name of the construct we are looking for (can be null)
-    const sm::Identifier * target_name = sm::Identifier::get(x.v) ; 
+    sm::OptIdentifier target_name = sm::Identifier::make(x.v) ; 
 
     // Remark: I am currently search the target construct by 
     // only considering its identifer but this is actually incorrect
@@ -3520,6 +3525,7 @@ public:
   bool Pre(const AssignStmt &x) { 
     TRACE_CALL() ;
     InitStmt(x, StmtClass::Assign);
+    
     return true ; 
   }
 
@@ -3622,7 +3628,9 @@ void DoSemanticAnalysis( const psr::Program &all)
   psr::Pass1 pass1 ;
   for (const psr::ProgramUnit &unit : all.v) {
     TRACE("===========================================================================================================");
-    pass1.run(unit) ;
+    psr::DumpTree(unit);
+    TRACE("===========================================================================================================");
+    pass1.run(unit) ; 
   } 
 }
 

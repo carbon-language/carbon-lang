@@ -8,8 +8,8 @@
 
 namespace Fortran::semantics {
 
-Symbol::Symbol(ClassId cid, Scope *owner, const Identifier *name)
-  : cid_(cid), owner_(owner), name_(name) {
+Symbol::Symbol(ClassId cid, Scope *owner, Identifier ident)
+  : cid_(cid), owner_(owner), ident_(ident) {
   owner->add(this);
 }
 

@@ -17,16 +17,18 @@
 namespace Fortran::semantics {
 
 StatementMap::Entry &StatementMap::Get(Index index) {
-  if (!((1 <= index) && (index <= Size()))) {
-    FAIL("Illegal Stmt index " << index << " (expect 1.." << Size() << ")");
+  if (!(( First() <= index) && (index <= Last()))) {
+    FAIL("Illegal Stmt index " << index << " (expect " 
+         << First() << " .." << Last() << ")");
     exit(1);
   }
   return entries_[index - 1];
 }
 
 const StatementMap::Entry &StatementMap::Get(Index index) const {
-  if (!((1 <= index) && (index <= Size()))) {
-    FAIL("Illegal Stmt index " << index << " (expect 1.." << Size() << ")");
+  if (!((First() <= index) && (index <= Last()))) {
+    FAIL("Illegal Stmt index " << index << " (expect " 
+         << First() << ".." << Last() << ")");
     exit(1);
   }
   return entries_[index - 1];
@@ -44,7 +46,7 @@ StatementMap::Index StatementMap::Add(StmtClass sclass, int label) {
   self.prev_in_construct = None;
   self.next_in_construct = None;
 
-  Index self_index = Size() + 1;
+  Index self_index = Last() + 1;
 
   if (Size() == 0) {
     // Special case of the first entry.
@@ -272,7 +274,7 @@ void StatementMap::Specialize( Index index, StmtClass oldc, StmtClass newc) {
 }
 
 void StatementMap::DumpFlat(std::ostream &out, bool verbose) const {
-  for (Index i = 1; i <= Size(); i++) {
+  for (Index i = First() ; i <= Last(); i++) {
     out << std::setw(4) << std::right << i << ": ";
     DumpStmt(out, i, verbose);
   }
@@ -560,7 +562,7 @@ StatementMap::Index StatementMap::LastOfConstruct(
 // Visit all the statements that compose a construct.
 //
 // 'stmt' shall be a construct component (so in group Start, Part or End)
-void StatementMap::VisistConstruct(
+void StatementMap::VisitConstruct(
     StatementMap::Index stmt, std::function<bool(Index)> action) const {
   Index start = StartOfConstruct(stmt);
   for (Index at = start; at != None; at = NextInConstruct(at)) {
@@ -572,7 +574,7 @@ void StatementMap::VisistConstruct(
 //
 // 'stmt' shall be a construct component (so in group Start, Part or End)
 //
-void StatementMap::VisistConstructRev(
+void StatementMap::VisitConstructRev(
     Index stmt, std::function<bool(Index)> action) const {
   // Reminder: Using LastOfConstruct instead of EndOfConstruct
   //           because the visitor shall usable while constructing

@@ -30,7 +30,7 @@ class Scope;
 //
 class Scope {
 public:
-  enum Kind {
+  enum class Kind {
     SK_SYSTEM,  // the unique scope associated to the system (and providing
                 // intrinsic procedures)
     SK_GLOBAL,  // the unique global scope containing all units
@@ -56,7 +56,7 @@ private:
   Kind kind_;
 
   //
-  // For most ranks, id contains a unique identifier that is increased
+  // For most ranks, id contains a district identifier that is increased
   // each time a new Scope is created.
   //
   // The System and Global scope respectively have 0 and 1
@@ -100,7 +100,7 @@ private:
     Scope *module;
     // All identifiers to exclude when doing a lookup
     // in that module
-    std::vector<Identifier *> exclude;
+    std::vector<Identifier> exclude;
   };
 
   //
@@ -111,11 +111,8 @@ private:
 
   Scope *parent_scope_;
 
-  // The host scope is the scope that is searched last. 9
-  //
-  //
-  //
-  Scope *host_scope_;  // The host scope
+  // The host scope is the scope that is searched last.   
+  Scope *host_scope_;  
 
   std::list<Scope *> use_;  // Scopes for the modules that are entirely used
   std::list<Scope *>
@@ -174,7 +171,7 @@ private:
   std::vector<Symbol *> owned_;
 
 public:
-  Kind getKind() const { return kind_; }
+  Kind kind() const { return kind_; }
 
   const Scope *getParentScope() const { return parent_scope_; }
   Scope *getParentScope() { return parent_scope_; }
@@ -187,8 +184,8 @@ public:
   //
   // The Global scope is the scope that is immediately below the System scope.
   //
-  // It contains the symbols for the Program unit (PROGRAM, MODULE, FUNCTION,
-  // SUBROUTINE and BLOCKDATA)
+  // It contains the symbols for the Program unit (PROGRAM, MODULE, SUBMODULE,
+  // FUNCTION, SUBROUTINE and BLOCKDATA)
   //
   // However, that scope is not standard in the sense that it requires a
   // dedicated lookup to find its symbols.
@@ -201,32 +198,32 @@ public:
   const Scope *getGlobalScope() const;
 
   // Look for a symbol locally and in the host scope (if any)
-  Symbol *Lookup(const Identifier *name);
-  const Symbol *Lookup(const Identifier *name) const;
+  Symbol *Lookup(Identifier name);
+  const Symbol *Lookup(Identifier name) const;
 
   // Look for a symbol locally (do not explore the host scope).
   //
-  Symbol *LookupLocal(const Identifier *name);
-  const Symbol *LookupLocal(const Identifier *name) const;
+  Symbol *LookupLocal(Identifier name);
+  const Symbol *LookupLocal(Identifier name) const;
 
   //
   // Lookup for a Program Unit by name
   //
-  Symbol *LookupProgramUnit(const Identifier *name);
-  const Symbol *LookupProgramUnit(const Identifier *name) const;
+  Symbol *LookupProgramUnit(Identifier name);
+  const Symbol *LookupProgramUnit(Identifier name) const;
 
   //
   // Lookup for a known module.
   //
   // The result is either null or a scope of kind SK_USE_MODULE.
   //
-  Symbol *LookupModule(const Identifier *name);
-  const Symbol *LookupModule(const Identifier *name) const;
+  Symbol *LookupModule(Identifier name);
+  const Symbol *LookupModule(Identifier name) const;
 
   //
+  // Provide the distinct id associated to each scope 
   //
-  //
-  int getId() const;
+  int id() const;
 
   //
   // Add a symbol to the scope.
@@ -243,4 +240,4 @@ public:
 
 }  // namespace Fortran::semantics
 
-#endif
+#endif // FLANG_SEMA_SCOPE_H

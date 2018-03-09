@@ -29,11 +29,11 @@ public:
 private:
   ClassId cid_;
   Scope *owner_;  // The scope that owns this symbol
-  const Identifier *name_;  // The local name of that symbol
+  Identifier ident_;  // The local name of that symbol
 private:
   TypeSpec *type_ = nullptr;  // The type associated to that symbol
 public:
-  Symbol(ClassId cid, Scope *owner, const Identifier *name);
+  Symbol(ClassId cid, Scope *owner, Identifier name);
 
 public:
   // For now, provide some toXXXX() member to perform the dynamic cast.
@@ -53,11 +53,11 @@ public:
 public:
   Scope *owner() { return owner_; }
 
-  const Identifier *name() { return name_; }
+  Identifier name() { return ident_; }
 
-  bool Match(const Identifier *ident) { return ident == name_; }
+  bool Match(Identifier ident) { return ident == ident_; }
 
-  std::string toString() const { return name_->name(); }
+  std::string toString() const { return ident_.name(); }
 };
 
 //
@@ -74,7 +74,7 @@ public:
 //
 class TemporarySymbol : public Symbol {
 public:
-  TemporarySymbol(Scope *owner, const Identifier *name)
+  TemporarySymbol(Scope *owner, Identifier name)
     : Symbol(TemporarySymbolId, owner, name) {}
 
 private:
@@ -90,7 +90,7 @@ private:
 //
 class ModuleSymbol : public Symbol {
 public:
-  ModuleSymbol(Scope *owner, const Identifier *name)
+  ModuleSymbol(Scope *owner, Identifier name)
     : Symbol(ProgramSymbolId, owner, name) {}
 
 private:
@@ -101,7 +101,7 @@ private:
 //
 class ProgramSymbol : public Symbol {
 public:
-  ProgramSymbol(Scope *owner, const Identifier *name)
+  ProgramSymbol(Scope *owner, Identifier name)
     : Symbol(ProgramSymbolId, owner, name) {}
 
 private:
@@ -112,7 +112,7 @@ private:
 //
 class BlockDataSymbol : public Symbol {
 public:
-  BlockDataSymbol(Scope *owner, const Identifier *name)
+  BlockDataSymbol(Scope *owner, Identifier name)
     : Symbol(BlockDataSymbolId, owner, name) {}
 
 private:
@@ -123,14 +123,14 @@ private:
 //
 class ParameterSymbol : public Symbol {
 public:
-  ParameterSymbol(Scope *owner, const Identifier *name)
+  ParameterSymbol(Scope *owner, Identifier name)
     : Symbol(ParameterSymbolId, owner, name) {}
 };
 
 // A symbol representing an EXTERNAL function.
 class ExternalSymbol : public Symbol {
 public:
-  ExternalSymbol(Scope *owner, const Identifier *name)
+  ExternalSymbol(Scope *owner, Identifier name)
     : Symbol(ExternalSymbolId, owner, name) {}
 };
 
@@ -144,14 +144,14 @@ public:
 //
 class VariableSymbol : public Symbol {
 public:
-  VariableSymbol(Scope *owner, const Identifier *name)
+  VariableSymbol(Scope *owner, Identifier name)
     : Symbol(VariableSymbolId, owner, name) {}
 };
 
 // A symbol representing a dummy argument.
 class DummyArgumentSymbol : public Symbol {
 public:
-  DummyArgumentSymbol(Scope *owner, const Identifier *name)
+  DummyArgumentSymbol(Scope *owner, Identifier name)
     : Symbol(DummyArgumentSymbolId, owner, name) {}
 };
 
@@ -164,12 +164,12 @@ public:
 //
 class CommonSymbol : public Symbol {
 public:
-  CommonSymbol(Scope *owner, const Identifier *name)
+  CommonSymbol(Scope *owner, Identifier name)
     : Symbol(CommonSymbolId, owner, name) {}
 
 private:
   // The content of the common section.
-  std::vector<const Identifier *> content_;
+  std::vector<Identifier > content_;
 };
 
 //
@@ -181,7 +181,7 @@ private:
 //
 class SubroutineSymbol : public Symbol {
 public:
-  SubroutineSymbol(Scope *owner, const Identifier *name)
+  SubroutineSymbol(Scope *owner, Identifier name)
     : Symbol(SubroutineSymbolId, owner, name) {}
 
 private:
@@ -191,7 +191,7 @@ private:
 
 class FunctionSymbol : public Symbol {
 public:
-  FunctionSymbol(Scope *owner, const Identifier *name)
+  FunctionSymbol(Scope *owner, Identifier name)
     : Symbol(FunctionSymbolId, owner, name) {}
 
 private:
@@ -204,7 +204,7 @@ private:
 // A null name is allowed to represent an unnamed interface.
 class InterfaceSymbol : public Symbol {
 public:
-  InterfaceSymbol(Scope *owner, const Identifier *name)
+  InterfaceSymbol(Scope *owner, Identifier name)
     : Symbol(InterfaceSymbolId, owner, name) {}
 
 private:
@@ -215,7 +215,7 @@ private:
 // automatically or via an 'import' statement.
 class ImportedSymbol : public Symbol {
 public:
-  ImportedSymbol(Scope *owner, const Identifier *name)
+  ImportedSymbol(Scope *owner, Identifier name)
     : Symbol(ImportedSymbolId, owner, name) {}
 
 private:
@@ -240,7 +240,7 @@ private:
 //
 class SubSymbol : public Symbol {
 public:
-  SubSymbol(Scope *owner, const Identifier *name)
+  SubSymbol(Scope *owner, Identifier name)
     : Symbol(SubSymbolId, owner, name) {}
 
 private:
@@ -258,7 +258,7 @@ private:
 //
 class UsedSymbol : public Symbol {
 public:
-  UsedSymbol(Scope *owner, const Identifier *name)
+  UsedSymbol(Scope *owner, Identifier name)
     : Symbol(UsedSymbolId, owner, name) {}
 
 private:
@@ -272,7 +272,7 @@ private:
 //
 class DerivedTypeSymbol : public Symbol {
 public:
-  DerivedTypeSymbol(Scope *owner, const Identifier *name)
+  DerivedTypeSymbol(Scope *owner, Identifier name)
     : Symbol(DerivedTypeSymbolId, owner, name) {}
 
 private:
@@ -284,7 +284,7 @@ private:
 //
 class MemberSymbol : public Symbol {
 public:
-  MemberSymbol(Scope *owner, const Identifier *name)
+  MemberSymbol(Scope *owner, Identifier name)
     : Symbol(MemberSymbolId, owner, name) {}
 
 private:
@@ -295,7 +295,7 @@ private:
 //
 class NamelistSymbol : public Symbol {
 public:
-  NamelistSymbol(Scope *owner, const Identifier *name)
+  NamelistSymbol(Scope *owner, Identifier name)
     : Symbol(NamelistSymbolId, owner, name) {}
 
 private:
@@ -307,7 +307,7 @@ private:
 //
 class ConstructSymbol : public Symbol {
 public:
-  ConstructSymbol(Scope *owner, const Identifier *name)
+  ConstructSymbol(Scope *owner, Identifier name)
     : Symbol(ConstructSymbolId, owner, name) {}
 
 private:

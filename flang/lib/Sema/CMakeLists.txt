@@ -4,6 +4,7 @@ add_library( FlangSemantics
   Scope.cc
   Symbol.cc
   StatementMap.cc
+  ParseTreeDump.cc
   Type.cc   # ../semantics/type.cc
   Attr.cc   #  ../semantics/attr.cc
 )

@@ -10,7 +10,7 @@ namespace Fortran::semantics {
 
 //
 // A StatementMap describes the relations between statements in a program unit
-// and also hold information that are common each statement (label, provenance,
+// and also hold information that are common to each statement (label, provenance,
 // ...)
 //
 // In the parse-tree each struct representing a statement (see Stmt.def)
@@ -34,7 +34,7 @@ namespace Fortran::semantics {
 // the 'parent' of each statement in that body.
 //
 // The mapping of Fortran statements to the 4 groups Single, Start,
-// Part, and End shall be obvious.
+// Part, and End should be obvious.
 //
 // For instance, consider the following piece of code
 //
@@ -69,12 +69,12 @@ namespace Fortran::semantics {
 // The '>', '+' and '>' are used to mark the Start, Part and End statements.
 //
 // In that dump, we see that:
-//  - The DO construct is composed of statements 10 and 21
-//  - The IF construct is composed of statements 12, 15, 17 and 19
-//  - The body of statement 10 is composed of statements 11, 12, and 20
-//  - The body of statement 12 is composed of statements 13 and 14
-//  - The body of statement 15 is composed of statement 16
-//  - The body of statement 17 is composed of statement 18
+//  - The DO construct is comprised of statements 10 and 21
+//  - The IF construct is comprised of statements 12, 15, 17 and 19
+//  - The body of statement 10 is comprised of statements 11, 12, and 20
+//  - The body of statement 12 is comprised of statements 13 and 14
+//  - The body of statement 15 is comprised of statement 16
+//  - The body of statement 17 is comprised of statement 18
 //
 // For the few Fortran constructs that do not provide an explicit 'End'
 // statement, a dummy entry will be provided in the map. For instance,
@@ -93,7 +93,7 @@ class StatementMap {
 public:
   typedef int Index;  // should become an opaque type.
 
-  static const Index None = 0;
+  static constexpr Index None = 0;
 
 private:
   struct Entry {
@@ -155,7 +155,6 @@ public:
 
   StmtGroup GetGroup(Index index) const { return Get(index).group; }
 
-
   // Provide the numerical label associated to that statement or 0.
   // Be aware that labels are not necessarily unique and so cannot 
   // be used to identify a statement within the whole map.
@@ -185,7 +184,7 @@ public:
   Index FirstInBody(Index index) const;
   Index LastInBody(Index index) const;
 
-  // Functionnally equivalent to LastInBody(PreviousPartOfConstruct(index))
+  // Functionally equivalent to LastInBody(PreviousPartOfConstruct(index))
   Index LastInPreviousBody(Index index) const;
   Index FindPrevInConstruct(Index index, StmtClass sclass) const;
 
@@ -214,13 +213,13 @@ public:
   // Visit all the statements that compose a construct.
   //
   // 'stmt' shall be a construct component (so in group Start, Part or End)
-  void VisistConstruct(Index stmt, std::function<bool(Index)> action) const;
+  void VisitConstruct(Index stmt, std::function<bool(Index)> action) const;
 
   // Visit all the statements that compose a construct in reverse order.
   //
   // 'stmt' shall be a construct component (so in group Start, Part or End)
   //
-  void VisistConstructRev(Index stmt, std::function<bool(Index)> action) const;
+  void VisitConstructRev(Index stmt, std::function<bool(Index)> action) const;
 };
 
 }  // namespace Fortran::semantics
