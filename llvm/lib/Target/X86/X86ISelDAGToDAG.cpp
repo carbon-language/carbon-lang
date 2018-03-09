@@ -2109,27 +2109,56 @@ static bool isFusableLoadOpStorePattern(StoreSDNode *StoreNode,
       LoadNode->getOffset() != StoreNode->getOffset())
     return false;
 
-  // Check if the chain is produced by the load or is a TokenFactor with
-  // the load output chain as an operand. Return InputChain by reference.
+  bool FoundLoad = false;
+  SmallVector<SDValue, 4> ChainOps;
+  SmallVector<const SDNode *, 4> LoopWorklist;
+  SmallPtrSet<const SDNode *, 16> Visited;
+  const unsigned int Max = 1024;
+
+  //  Visualization of Load-Op-Store fusion:
+  // -------------------------
+  // Legend:
+  //    *-lines = Chain operand dependencies.
+  //    |-lines = Normal operand dependencies.
+  //    Dependencies flow down and right. n-suffix references multiple nodes.
+  //
+  //        C                        Xn  C
+  //        *                         *  *
+  //        *                          * *
+  //  Xn  A-LD    Yn                    TF         Yn
+  //   *    * \   |                       *        |
+  //    *   *  \  |                        *       |
+  //     *  *   \ |             =>       A--LD_OP_ST
+  //      * *    \|                                 \
+  //       TF    OP                                  \
+  //         *   | \                                  Zn
+  //          *  |  \
+  //         A-ST    Zn
+  //
+
+  // This merge induced dependences from: #1: Xn -> LD, OP, Zn
+  //                                      #2: Yn -> LD
+  //                                      #3: ST -> Zn
+
+  // Ensure the transform is safe by checking for the dual
+  // dependencies to make sure we do not induce a loop.
+
+  // As LD is a predecessor to both OP and ST we can do this by checking:
+  //  a). if LD is a predecessor to a member of Xn or Yn.
+  //  b). if a Zn is a predecessor to ST.
+
+  // However, (b) can only occur through being a chain predecessor to
+  // ST, which is the same as Zn being a member or predecessor of Xn,
+  // which is a subset of LD being a predecessor of Xn. So it's
+  // subsumed by check (a).
+
   SDValue Chain = StoreNode->getChain();
 
+  // Gather X elements in ChainOps.
   if (Chain == Load.getValue(1)) {
-    InputChain = LoadNode->getChain();
-    return true;
-  }
-
-  if (Chain.getOpcode() == ISD::TokenFactor) {
-    // Fusing Load-Op-Store requires predecessors of store must also
-    // be predecessors of the load. This addition may cause a loop. We
-    // can check this by doing a search for Load in the new
-    // dependencies. As this can be expensive, heuristically prune
-    // this search by visiting the uses and make sure they all have
-    // smaller node id than the load.
-
-    bool FoundLoad = false;
-    SmallVector<SDValue, 4> ChainOps;
-    SmallVector<const SDNode *, 4> LoopWorklist;
-    SmallPtrSet<const SDNode *, 16> Visited;
+    FoundLoad = true;
+    ChainOps.push_back(Load.getOperand(0));
+  } else if (Chain.getOpcode() == ISD::TokenFactor) {
     for (unsigned i = 0, e = Chain.getNumOperands(); i != e; ++i) {
       SDValue Op = Chain.getOperand(i);
       if (Op == Load.getValue(1)) {
@@ -2141,31 +2170,25 @@ static bool isFusableLoadOpStorePattern(StoreSDNode *StoreNode,
       LoopWorklist.push_back(Op.getNode());
       ChainOps.push_back(Op);
     }
-
-    if (!FoundLoad)
-      return false;
-
-    // If Loop Worklist is not empty. Check if we would make a loop.
-    if (!LoopWorklist.empty()) {
-      const unsigned int Max = 8192;
-      // if Load is predecessor to potentially loop inducing chain
-      // dependencies.
-      if (SDNode::hasPredecessorHelper(Load.getNode(), Visited, LoopWorklist,
-                                       Max, true))
-        return false;
-      // Fail conservatively if we ended loop search early.
-      if (Visited.size() >= Max)
-        return false;
-    }
-
-    // Make a new TokenFactor with all the other input chains except
-    // for the load.
-    InputChain =
-        CurDAG->getNode(ISD::TokenFactor, SDLoc(Chain), MVT::Other, ChainOps);
-    return true;
   }
-  return false;
-}
+
+  if (!FoundLoad)
+    return false;
+
+  // Worklist is currently Xn. Add Yn to worklist.
+  for (SDValue Op : StoredVal->ops())
+    if (Op.getNode() != LoadNode)
+      LoopWorklist.push_back(Op.getNode());
+
+  // Check (a) if Load is a predecessor to Xn + Yn
+  if (SDNode::hasPredecessorHelper(Load.getNode(), Visited, LoopWorklist, Max,
+                                   true))
+    return false;
+
+  InputChain =
+      CurDAG->getNode(ISD::TokenFactor, SDLoc(Chain), MVT::Other, ChainOps);
+  return true;
+  }
 
 // Change a chain of {load; op; store} of the same value into a simple op
 // through memory of that value, if the uses of the modified value and its
