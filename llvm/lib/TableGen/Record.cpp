@@ -1850,11 +1850,19 @@ void Record::resolveReferences(Resolver &R, const RecordVal *SkipVal) {
       continue;
     if (Init *V = Value.getValue()) {
       Init *VR = V->resolveReferences(R);
-      if (Value.setValue(VR))
-        PrintFatalError(getLoc(), "Invalid value is found when setting '" +
+      if (Value.setValue(VR)) {
+        std::string Type;
+        if (TypedInit *VRT = dyn_cast<TypedInit>(VR))
+          Type =
+              (Twine("of type '") + VRT->getType()->getAsString() + "' ").str();
+        PrintFatalError(getLoc(), Twine("Invalid value ") + Type +
+                                      "is found when setting '" +
                                       Value.getNameInitAsString() +
+                                      " of type '" +
+                                      Value.getType()->getAsString() +
                                       "' after resolving references: " +
                                       VR->getAsUnquotedString() + "\n");
+      }
     }
   }
   Init *OldName = getNameInit();
@@ -1984,8 +1992,10 @@ int64_t Record::getValueAsInt(StringRef FieldName) const {
 
   if (IntInit *II = dyn_cast<IntInit>(R->getValue()))
     return II->getValue();
-  PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
-    FieldName + "' does not have an int initializer!");
+  PrintFatalError(getLoc(), Twine("Record `") + getName() + "', field `" +
+                                FieldName +
+                                "' does not have an int initializer: " +
+                                R->getValue()->getAsString());
 }
 
 std::vector<int64_t>
@@ -1996,8 +2006,10 @@ Record::getValueAsListOfInts(StringRef FieldName) const {
     if (IntInit *II = dyn_cast<IntInit>(I))
       Ints.push_back(II->getValue());
     else
-      PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
-        FieldName + "' does not have a list of ints initializer!");
+      PrintFatalError(getLoc(),
+                      Twine("Record `") + getName() + "', field `" + FieldName +
+                          "' does not have a list of ints initializer: " +
+                          I->getAsString());
   }
   return Ints;
 }
@@ -2010,8 +2022,10 @@ Record::getValueAsListOfStrings(StringRef FieldName) const {
     if (StringInit *SI = dyn_cast<StringInit>(I))
       Strings.push_back(SI->getValue());
     else
-      PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
-        FieldName + "' does not have a list of strings initializer!");
+      PrintFatalError(getLoc(),
+                      Twine("Record `") + getName() + "', field `" + FieldName +
+                          "' does not have a list of strings initializer: " +
+                          I->getAsString());
   }
   return Strings;
 }
