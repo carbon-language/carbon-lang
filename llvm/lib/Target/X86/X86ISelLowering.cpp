@@ -7963,6 +7963,8 @@ SDValue createVariablePermute(MVT VT, SDValue SrcVec, SDValue IndicesVec,
   case MVT::v2f64:
   case MVT::v2i64:
     if (Subtarget.hasAVX()) {
+      // VPERMILPD selects using bit#1 of the index vector, so scale IndicesVec.
+      IndicesVec = DAG.getNode(ISD::ADD, DL, IndicesVT, IndicesVec, IndicesVec);
       Opcode = X86ISD::VPERMILPV;
       ShuffleVT = MVT::v2f64;
     }
