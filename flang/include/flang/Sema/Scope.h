@@ -13,8 +13,6 @@ namespace Fortran::semantics {
 
 class Scope;
 
-// =======================================================
-
 //
 // Describe a scope (or a symbol table)
 //
