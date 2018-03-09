@@ -13,6 +13,7 @@
 #include "BinaryBasicBlock.h"
 #include "BinaryFunction.h"
 #include "DataReader.h"
+#include "MCPlusBuilder.h"
 #include "llvm/ADT/edit_distance.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
@@ -668,7 +669,7 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
     }
   }
 
-  auto Type = BC.MIA->analyzeIndirectBranch(Instruction,
+  auto Type = BC.MIB->analyzeIndirectBranch(Instruction,
                                             Begin,
                                             End,
                                             PtrSize,
@@ -686,7 +687,7 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
     IndexRegNum = 0;
 
   if (BC.TheTriple->getArch() == llvm::Triple::aarch64) {
-    const auto *Sym = BC.MIA->getTargetSymbol(*PCRelBaseInstr, 1);
+    const auto *Sym = BC.MIB->getTargetSymbol(*PCRelBaseInstr, 1);
     assert (Sym && "Symbol extraction failed");
     if (auto *BD = BC.getBinaryDataByName(Sym->getName())) {
       PCRelAddr = BD->getAddress();
@@ -710,7 +711,7 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
     // function (for example, if the indirect jump lives in the last basic
     // block of the function, it will create a reference to the next function).
     // This replaces a symbol reference with an immediate.
-    BC.MIA->replaceMemOperandDisp(*PCRelBaseInstr,
+    BC.MIB->replaceMemOperandDisp(*PCRelBaseInstr,
                                   MCOperand::createImm(PCRelAddr - InstrAddr));
     // FIXME: Disable full jump table processing for AArch64 until we have a
     // proper way of determining the jump table limits.
@@ -722,7 +723,7 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
   if (DispExpr) {
     const MCSymbol *TargetSym;
     uint64_t TargetOffset;
-    std::tie(TargetSym, TargetOffset) = BC.MIA->getTargetSymbolInfo(DispExpr);
+    std::tie(TargetSym, TargetOffset) = BC.MIB->getTargetSymbolInfo(DispExpr);
     auto *BD = BC.getBinaryDataByName(TargetSym->getName());
     assert(BD && "global symbol needs a value");
     ArrayStart = BD->getAddress() + TargetOffset;
@@ -773,9 +774,9 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
         LI = Result.first;
       }
 
-      BC.MIA->replaceMemOperandDisp(const_cast<MCInst &>(*MemLocInstr),
+      BC.MIB->replaceMemOperandDisp(const_cast<MCInst &>(*MemLocInstr),
                                     LI->second, BC.Ctx.get());
-      BC.MIA->setJumpTable(BC.Ctx.get(), Instruction, ArrayStart, IndexRegNum);
+      BC.MIB->setJumpTable(BC.Ctx.get(), Instruction, ArrayStart, IndexRegNum);
 
       JTSites.emplace_back(Offset, ArrayStart);
 
@@ -870,9 +871,9 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
                  << " in function " << *this << " with "
                  << JTOffsetCandidates.size() << " entries.\n");
     JumpTables.emplace(ArrayStart, JT.release());
-    BC.MIA->replaceMemOperandDisp(const_cast<MCInst &>(*MemLocInstr),
+    BC.MIB->replaceMemOperandDisp(const_cast<MCInst &>(*MemLocInstr),
                                   JTStartLabel, BC.Ctx.get());
-    BC.MIA->setJumpTable(BC.Ctx.get(), Instruction, ArrayStart, IndexRegNum);
+    BC.MIB->setJumpTable(BC.Ctx.get(), Instruction, ArrayStart, IndexRegNum);
 
     JTSites.emplace_back(Offset, ArrayStart);
 
@@ -919,7 +920,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
          "function size does not match raw data size");
 
   auto &Ctx = BC.Ctx;
-  auto &MIA = BC.MIA;
+  auto &MIB = BC.MIB;
 
   DWARFUnitLineTable ULT = getDWARFUnitLineTable();
 
@@ -935,7 +936,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     uint64_t TargetAddress{0};
     uint64_t TargetOffset{0};
     MCSymbol *TargetSymbol{nullptr};
-    if (!MIA->evaluateMemOperandTarget(Instruction, TargetAddress, Address,
+    if (!MIB->evaluateMemOperandTarget(Instruction, TargetAddress, Address,
                                        Size)) {
       errs() << "BOLT-ERROR: PC-relative operand can't be evaluated:\n";
       BC.InstPrinter->printInst(&Instruction, errs(), "", *BC.STI);
@@ -985,7 +986,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     // without its supporting relocation.
     if (!TargetSymbol && Section && Section->isText() &&
         (BC.TheTriple->getArch() != llvm::Triple::aarch64 ||
-         !BC.MIA->isADRP(Instruction))) {
+         !BC.MIB->isADRP(Instruction))) {
       if (containsAddress(TargetAddress, /*UseMaxSize=*/
                           BC.TheTriple->getArch() == llvm::Triple::aarch64)) {
         if (TargetAddress != getAddress()) {
@@ -1022,8 +1023,8 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       auto *Offset = MCConstantExpr::create(TargetOffset, *BC.Ctx);
       Expr = MCBinaryExpr::createAdd(Expr, Offset, *BC.Ctx);
     }
-    MIA->replaceMemOperandDisp(
-        Instruction, MCOperand::createExpr(BC.MIA->getTargetExprFor(
+    MIB->replaceMemOperandDisp(
+        Instruction, MCOperand::createExpr(BC.MIB->getTargetExprFor(
                          Instruction,
                          Expr,
                          *BC.Ctx, 0)));
@@ -1080,7 +1081,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     }
 
     // Cannot process functions with AVX-512 instructions.
-    if (MIA->hasEVEXEncoding(Instruction)) {
+    if (MIB->hasEVEXEncoding(Instruction)) {
       if (opts::Verbosity >= 1) {
         errs() << "BOLT-WARNING: function " << *this << " uses instruction"
                " encoded with EVEX (AVX-512) at offset 0x"
@@ -1113,7 +1114,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             << " for instruction at offset 0x"
             << Twine::utohexstr(Offset) << '\n');
       int64_t Value = Relocation.Value;
-      const auto Result = BC.MIA->replaceImmWithSymbol(Instruction,
+      const auto Result = BC.MIB->replaceImmWithSymbol(Instruction,
                                                        Relocation.Symbol,
                                                        Relocation.Addend,
                                                        Ctx.get(),
@@ -1135,11 +1136,11 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     }
 
     // Convert instruction to a shorter version that could be relaxed if needed.
-    MIA->shortenInstruction(Instruction);
+    MIB->shortenInstruction(Instruction);
 
-    if (MIA->isBranch(Instruction) || MIA->isCall(Instruction)) {
+    if (MIB->isBranch(Instruction) || MIB->isCall(Instruction)) {
       uint64_t TargetAddress = 0;
-      if (MIA->evaluateBranch(Instruction,
+      if (MIB->evaluateBranch(Instruction,
                               AbsoluteInstrAddr,
                               Size,
                               TargetAddress)) {
@@ -1148,8 +1149,8 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         //
         // If the target *is* the function address it could be either a branch
         // or a recursive call.
-        bool IsCall = MIA->isCall(Instruction);
-        const bool IsCondBranch = MIA->isConditionalBranch(Instruction);
+        bool IsCall = MIB->isCall(Instruction);
+        const bool IsCondBranch = MIB->isConditionalBranch(Instruction);
         MCSymbol *TargetSymbol = nullptr;
 
         if (IsCall && containsAddress(TargetAddress)) {
@@ -1177,7 +1178,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                            << Twine::utohexstr(AbsoluteInstrAddr)
                            << " in function " << *this
                            << " : replacing with nop.\n");
-              BC.MIA->createNoop(Instruction);
+              BC.MIB->createNoop(Instruction);
               if (IsCondBranch) {
                 // Register branch offset for profile validation.
                 IgnoredBranches.emplace_back(Offset, Offset + Size);
@@ -1193,14 +1194,14 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                      << ". Code size will be increased.\n";
             }
 
-            assert(!MIA->isTailCall(Instruction) &&
+            assert(!MIB->isTailCall(Instruction) &&
                    "synthetic tail call instruction found");
 
             // This is a call regardless of the opcode.
             // Assign proper opcode for tail calls, so that they could be
             // treated as calls.
             if (!IsCall) {
-              if (!MIA->convertJmpToTailCall(Instruction, BC.Ctx.get())) {
+              if (!MIB->convertJmpToTailCall(Instruction, BC.Ctx.get())) {
                 assert(IsCondBranch && "unknown tail call instruction");
                 if (opts::Verbosity >= 2) {
                   errs() << "BOLT-WARNING: conditional tail call detected in "
@@ -1261,16 +1262,16 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           // Add taken branch info.
           TakenBranches.emplace_back(Offset, TargetAddress - getAddress());
         }
-        BC.MIA->replaceBranchTarget(Instruction, TargetSymbol, &*Ctx);
+        BC.MIB->replaceBranchTarget(Instruction, TargetSymbol, &*Ctx);
 
         // Mark CTC.
         if (IsCondBranch && IsCall) {
-          MIA->setConditionalTailCall(Instruction, TargetAddress);
+          MIB->setConditionalTailCall(Instruction, TargetAddress);
         }
       } else {
         // Could not evaluate branch. Should be an indirect call or an
         // indirect branch. Bail out on the latter case.
-        if (MIA->isIndirectBranch(Instruction)) {
+        if (MIB->isIndirectBranch(Instruction)) {
           auto Result = processIndirectBranch(Instruction, Size, Offset);
           switch (Result) {
           default:
@@ -1278,7 +1279,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           case IndirectBranchType::POSSIBLE_TAIL_CALL:
             {
               auto Result =
-                MIA->convertJmpToTailCall(Instruction, BC.Ctx.get());
+                MIB->convertJmpToTailCall(Instruction, BC.Ctx.get());
               (void)Result;
               assert(Result);
             }
@@ -1295,7 +1296,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           };
         }
         // Indirect call. We only need to fix it if the operand is RIP-relative
-        if (IsSimple && MIA->hasPCRelOperand(Instruction)) {
+        if (IsSimple && MIB->hasPCRelOperand(Instruction)) {
           if (!handlePCRelOperand(Instruction, AbsoluteInstrAddr, Size)) {
             errs() << "BOLT-ERROR: cannot handle PC-relative operand at 0x"
                    << Twine::utohexstr(AbsoluteInstrAddr)
@@ -1307,7 +1308,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         }
       }
     } else {
-      if (MIA->hasPCRelOperand(Instruction) && !UsedReloc) {
+      if (MIB->hasPCRelOperand(Instruction) && !UsedReloc) {
         if (!handlePCRelOperand(Instruction, AbsoluteInstrAddr, Size)) {
           errs() << "BOLT-ERROR: cannot handle PC-relative operand at 0x"
                  << Twine::utohexstr(AbsoluteInstrAddr)
@@ -1327,11 +1328,11 @@ add_instruction:
 
     // Record offset of the instruction for profile matching.
     if (BC.keepOffsetForInstruction(Instruction)) {
-      MIA->addAnnotation(Ctx.get(), Instruction, "Offset", Offset);
+      MIB->addAnnotation(Ctx.get(), Instruction, "Offset", Offset);
     }
 
     if (MemData && !emptyRange(MemData->getMemInfoRange(Offset))) {
-      MIA->addAnnotation(Ctx.get(), Instruction, "MemDataOffset", Offset);
+      MIB->addAnnotation(Ctx.get(), Instruction, "MemDataOffset", Offset);
     }
 
     addInstruction(Offset, std::move(Instruction));
@@ -1408,19 +1409,19 @@ void BinaryFunction::postProcessJumpTables() {
 bool BinaryFunction::postProcessIndirectBranches() {
   for (auto *BB : layout()) {
     for (auto &Instr : *BB) {
-      if (!BC.MIA->isIndirectBranch(Instr))
+      if (!BC.MIB->isIndirectBranch(Instr))
         continue;
 
       // If there's an indirect branch in a single-block function -
       // it must be a tail call.
       if (layout_size() == 1) {
-        BC.MIA->convertJmpToTailCall(Instr, BC.Ctx.get());
+        BC.MIB->convertJmpToTailCall(Instr, BC.Ctx.get());
         return true;
       }
 
       // Validate the tail call or jump table assumptions.
-      if (BC.MIA->isTailCall(Instr) || BC.MIA->getJumpTable(Instr)) {
-        if (BC.MIA->getMemoryOperandNo(Instr) != -1) {
+      if (BC.MIB->isTailCall(Instr) || BC.MIB->getJumpTable(Instr)) {
+        if (BC.MIB->getMemoryOperandNo(Instr) != -1) {
           // We have validated memory contents addressed by the jump
           // instruction already.
           continue;
@@ -1441,7 +1442,7 @@ bool BinaryFunction::postProcessIndirectBranches() {
         if (PrevInstr == BB->rend()) {
           if (opts::Verbosity >= 2) {
             outs() << "BOLT-INFO: rejected potential "
-                       << (BC.MIA->isTailCall(Instr) ? "indirect tail call"
+                       << (BC.MIB->isTailCall(Instr) ? "indirect tail call"
                                                      : "jump table")
                        << " in function " << *this
                        << " because the jump-on register was not defined in "
@@ -1452,9 +1453,9 @@ bool BinaryFunction::postProcessIndirectBranches() {
           return false;
         }
         // In case of PIC jump table we need to do more checks.
-        if (BC.MIA->isMoveMem2Reg(*PrevInstr))
+        if (BC.MIB->isMoveMem2Reg(*PrevInstr))
           continue;
-        assert(BC.MIA->isADD64rr(*PrevInstr) && "add instruction expected");
+        assert(BC.MIB->isADD64rr(*PrevInstr) && "add instruction expected");
         auto R2 = PrevInstr->getOperand(2).getReg();
         // Make sure both regs are set in the same basic block prior to ADD.
         bool IsR1Set = false;
@@ -1478,7 +1479,7 @@ bool BinaryFunction::postProcessIndirectBranches() {
       // what it is and conservatively reject the function's CFG.
       bool IsEpilogue = false;
       for (const auto &Instr : *BB) {
-        if (BC.MIA->isLeave(Instr) || BC.MIA->isPop(Instr)) {
+        if (BC.MIB->isLeave(Instr) || BC.MIB->isPop(Instr)) {
           IsEpilogue = true;
           break;
         }
@@ -1493,7 +1494,7 @@ bool BinaryFunction::postProcessIndirectBranches() {
         }
         return false;
       }
-      BC.MIA->convertJmpToTailCall(Instr, BC.Ctx.get());
+      BC.MIB->convertJmpToTailCall(Instr, BC.Ctx.get());
     }
   }
   return true;
@@ -1510,12 +1511,12 @@ void BinaryFunction::recomputeLandingPads() {
   for (auto *BB : BasicBlocks) {
     std::unordered_set<const BinaryBasicBlock *> BBLandingPads;
     for (auto &Instr : *BB) {
-      if (!BC.MIA->isInvoke(Instr))
+      if (!BC.MIB->isInvoke(Instr))
         continue;
 
       const MCSymbol *LPLabel;
       uint64_t Action;
-      std::tie(LPLabel, Action) = BC.MIA->getEHInfo(Instr);
+      std::tie(LPLabel, Action) = BC.MIB->getEHInfo(Instr);
       if (!LPLabel)
         continue;
 
@@ -1532,7 +1533,7 @@ void BinaryFunction::recomputeLandingPads() {
 bool BinaryFunction::buildCFG() {
   NamedRegionTimer T("buildcfg", "Build CFG", TimerGroupName, TimerGroupDesc,
                      opts::TimeBuild);
-  auto &MIA = BC.MIA;
+  auto &MIB = BC.MIB;
 
   if (!isSimple()) {
     assert(!BC.HasRelocations &&
@@ -1581,8 +1582,8 @@ bool BinaryFunction::buildCFG() {
   auto updateOffset = [&](uint64_t Offset) {
     assert(PrevBB && PrevBB != InsertBB && "invalid previous block");
     auto *PrevInstr = PrevBB->getLastNonPseudoInstr();
-    if (PrevInstr && !MIA->hasAnnotation(*PrevInstr, "Offset"))
-      MIA->addAnnotation(BC.Ctx.get(), *PrevInstr, "Offset", Offset);
+    if (PrevInstr && !MIB->hasAnnotation(*PrevInstr, "Offset"))
+      MIB->addAnnotation(BC.Ctx.get(), *PrevInstr, "Offset", Offset);
   };
 
   for (auto I = Instructions.begin(), E = Instructions.end(); I != E; ++I) {
@@ -1603,7 +1604,7 @@ bool BinaryFunction::buildCFG() {
     // Ignore nops. We use nops to derive alignment of the next basic block.
     // It will not always work, as some blocks are naturally aligned, but
     // it's just part of heuristic for block alignment.
-    if (MIA->isNoop(Instr) && !PreserveNops) {
+    if (MIB->isNoop(Instr) && !PreserveNops) {
       IsLastInstrNop = true;
       continue;
     }
@@ -1614,9 +1615,9 @@ bool BinaryFunction::buildCFG() {
       assert(PrevBB && "no previous basic block for a fall through");
       auto *PrevInstr = PrevBB->getLastNonPseudoInstr();
       assert(PrevInstr && "no previous instruction for a fall through");
-      if (MIA->isUnconditionalBranch(Instr) &&
-          !MIA->isUnconditionalBranch(*PrevInstr) &&
-          !MIA->getConditionalTailCall(*PrevInstr)) {
+      if (MIB->isUnconditionalBranch(Instr) &&
+          !MIB->isUnconditionalBranch(*PrevInstr) &&
+          !MIB->getConditionalTailCall(*PrevInstr)) {
         // Temporarily restore inserter basic block.
         InsertBB = PrevBB;
       } else {
@@ -1631,8 +1632,8 @@ bool BinaryFunction::buildCFG() {
       addCFIPlaceholders(0, InsertBB);
     }
 
-    const auto IsBlockEnd = MIA->isTerminator(Instr);
-    IsLastInstrNop = MIA->isNoop(Instr);
+    const auto IsBlockEnd = MIB->isTerminator(Instr);
+    IsLastInstrNop = MIB->isNoop(Instr);
     LastInstrOffset = Offset;
     InsertBB->addInstruction(std::move(Instr));
 
@@ -1702,10 +1703,10 @@ bool BinaryFunction::buildCFG() {
       //
       // Conditional tail call is a special case since we don't add a taken
       // branch successor for it.
-      IsPrevFT = !MIA->isTerminator(*LastInstr) ||
-                 MIA->getConditionalTailCall(*LastInstr);
+      IsPrevFT = !MIB->isTerminator(*LastInstr) ||
+                 MIB->getConditionalTailCall(*LastInstr);
     } else if (BB->succ_size() == 1) {
-      IsPrevFT = MIA->isConditionalBranch(*LastInstr);
+      IsPrevFT = MIB->isConditionalBranch(*LastInstr);
     } else {
       IsPrevFT = false;
     }
@@ -1784,7 +1785,7 @@ void BinaryFunction::postProcessCFG() {
   // Remove "Offset" annotations.
   for (auto *BB : layout())
     for (auto &Inst : *BB)
-      BC.MIA->removeAnnotation(Inst, "Offset");
+      BC.MIB->removeAnnotation(Inst, "Offset");
 
   assert((!isSimple() || validateCFG())
          && "Invalid CFG detected after post-processing CFG");
@@ -1868,7 +1869,7 @@ void BinaryFunction::removeConditionalTailCalls() {
     if (!CTCInstr)
       continue;
 
-    auto TargetAddressOrNone = BC.MIA->getConditionalTailCall(*CTCInstr);
+    auto TargetAddressOrNone = BC.MIB->getConditionalTailCall(*CTCInstr);
     if (!TargetAddressOrNone)
       continue;
 
@@ -1879,24 +1880,24 @@ void BinaryFunction::removeConditionalTailCalls() {
     uint64_t CTCMispredCount = BinaryBasicBlock::COUNT_NO_PROFILE;
     if (hasValidProfile()) {
       CTCTakenCount =
-        BC.MIA->getAnnotationWithDefault<uint64_t>(*CTCInstr, "CTCTakenCount");
+        BC.MIB->getAnnotationWithDefault<uint64_t>(*CTCInstr, "CTCTakenCount");
       CTCMispredCount =
-        BC.MIA->getAnnotationWithDefault<uint64_t>(*CTCInstr,
+        BC.MIB->getAnnotationWithDefault<uint64_t>(*CTCInstr,
                                                    "CTCMispredCount");
     }
 
     // Assert that the tail call does not throw.
     const MCSymbol *LP;
     uint64_t Action;
-    std::tie(LP, Action) = BC.MIA->getEHInfo(*CTCInstr);
+    std::tie(LP, Action) = BC.MIB->getEHInfo(*CTCInstr);
     assert(!LP && "found tail call with associated landing pad");
 
     // Create a basic block with an unconditional tail call instruction using
     // the same destination.
-    const auto *CTCTargetLabel = BC.MIA->getTargetSymbol(*CTCInstr);
+    const auto *CTCTargetLabel = BC.MIB->getTargetSymbol(*CTCInstr);
     assert(CTCTargetLabel && "symbol expected for conditional tail call");
     MCInst TailCallInstr;
-    BC.MIA->createTailCall(TailCallInstr, CTCTargetLabel, BC.Ctx.get());
+    BC.MIB->createTailCall(TailCallInstr, CTCTargetLabel, BC.Ctx.get());
     auto TailCallBB = createBasicBlock(BinaryBasicBlock::INVALID_OFFSET,
                                        BC.Ctx->createTempSymbol("TC", true));
     TailCallBB->addInstruction(TailCallInstr);
@@ -1908,9 +1909,9 @@ void BinaryFunction::removeConditionalTailCalls() {
     // Add execution count for the block.
     TailCallBB->setExecutionCount(CTCTakenCount);
 
-    BC.MIA->convertTailCallToJmp(*CTCInstr);
+    BC.MIB->convertTailCallToJmp(*CTCInstr);
 
-    BC.MIA->replaceBranchTarget(*CTCInstr, TailCallBB->getLabel(),
+    BC.MIB->replaceBranchTarget(*CTCInstr, TailCallBB->getLabel(),
                                 BC.Ctx.get());
 
     // Add basic block to the list that will be added to the end.
@@ -1920,7 +1921,7 @@ void BinaryFunction::removeConditionalTailCalls() {
     BB.swapConditionalSuccessors();
 
     // This branch is no longer a conditional tail call.
-    BC.MIA->unsetConditionalTailCall(*CTCInstr);
+    BC.MIB->unsetConditionalTailCall(*CTCInstr);
   }
 
   insertBasicBlocks(std::prev(end()),
@@ -2079,7 +2080,7 @@ bool BinaryFunction::fixCFIState() {
       int32_t OldState = BB->getCFIState();
       // Remember state at function entry point (our reference state).
       auto InsertIt = FDEStartBB->begin();
-      while (InsertIt != FDEStartBB->end() && BC.MIA->isCFI(*InsertIt))
+      while (InsertIt != FDEStartBB->end() && BC.MIB->isCFI(*InsertIt))
         ++InsertIt;
       addCFIPseudo(FDEStartBB, InsertIt, FrameInstructions.size());
       FrameInstructions.emplace_back(
@@ -2106,7 +2107,7 @@ bool BinaryFunction::fixCFIState() {
         }
       }
       auto Pos = BB->begin();
-      while (Pos != BB->end() && BC.MIA->isCFI(*Pos)) {
+      while (Pos != BB->end() && BC.MIB->isCFI(*Pos)) {
         auto CFI = getCFIFor(*Pos);
         if (CFI->getOperation() == MCCFIInstruction::OpRememberState)
           ++StackOffset;
@@ -2171,14 +2172,14 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {
     for (auto I = BB->begin(), E = BB->end(); I != E; ++I) {
       auto &Instr = *I;
       // Handle pseudo instructions.
-      if (BC.MIA->isEHLabel(Instr)) {
-        const auto *Label = BC.MIA->getTargetSymbol(Instr);
+      if (BC.MIB->isEHLabel(Instr)) {
+        const auto *Label = BC.MIB->getTargetSymbol(Instr);
         assert(Instr.getNumOperands() == 1 && Label &&
                "bad EH_LABEL instruction");
         Streamer.EmitLabel(const_cast<MCSymbol *>(Label));
         continue;
       }
-      if (BC.MIA->isCFI(Instr)) {
+      if (BC.MIB->isCFI(Instr)) {
         Streamer.EmitCFIInstruction(*getCFIFor(Instr));
         continue;
       }
@@ -2187,8 +2188,8 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {
       }
 
       // Emit GNU_args_size CFIs as necessary.
-      if (usesGnuArgsSize() && BC.MIA->isInvoke(Instr)) {
-        auto NewGnuArgsSize = BC.MIA->getGnuArgsSize(Instr);
+      if (usesGnuArgsSize() && BC.MIB->isInvoke(Instr)) {
+        auto NewGnuArgsSize = BC.MIB->getGnuArgsSize(Instr);
         assert(NewGnuArgsSize >= 0 && "expected non-negative GNU_args_size");
         if (NewGnuArgsSize != CurrentGnuArgsSize) {
           CurrentGnuArgsSize = NewGnuArgsSize;
@@ -2267,7 +2268,7 @@ void BinaryFunction::setTrapOnEntry() {
 
   for (const auto EntryOffset : EntryOffsets) {
     MCInst TrapInstr;
-    BC.MIA->createTrap(TrapInstr);
+    BC.MIB->createTrap(TrapInstr);
     addInstruction(EntryOffset, std::move(TrapInstr));
   }
 
@@ -2420,11 +2421,11 @@ void BinaryFunction::duplicateConstantIslands() {
           ++OpNum;
           continue;
         }
-        const auto *Symbol = BC.MIA->getTargetSymbol(Inst, OpNum);
+        const auto *Symbol = BC.MIB->getTargetSymbol(Inst, OpNum);
         auto ISym = ColdIslandSymbols.find(Symbol);
         if (ISym == ColdIslandSymbols.end())
           continue;
-        Operand = MCOperand::createExpr(BC.MIA->getTargetExprFor(
+        Operand = MCOperand::createExpr(BC.MIB->getTargetExprFor(
             Inst,
             MCSymbolRefExpr::create(ISym->second, MCSymbolRefExpr::VK_None,
                                     *BC.Ctx),
@@ -2524,7 +2525,7 @@ void BinaryFunction::dumpGraph(raw_ostream& OS) const {
                                            UncondBranch);
 
     const auto *LastInstr = BB->getLastNonPseudoInstr();
-    const bool IsJumpTable = LastInstr && BC.MIA->getJumpTable(*LastInstr);
+    const bool IsJumpTable = LastInstr && BC.MIB->getJumpTable(*LastInstr);
 
     auto BI = BB->branch_info_begin();
     for (auto *Succ : BB->successors()) {
@@ -2662,7 +2663,7 @@ bool BinaryFunction::validateCFG() const {
 }
 
 void BinaryFunction::fixBranches() {
-  auto &MIA = BC.MIA;
+  auto &MIB = BC.MIB;
   auto *Ctx = BC.Ctx.get();
 
   for (unsigned I = 0, E = BasicBlocksLayout.size(); I != E; ++I) {
@@ -2698,19 +2699,19 @@ void BinaryFunction::fixBranches() {
       const auto *TSuccessor = BB->getConditionalSuccessor(true);
       const auto *FSuccessor = BB->getConditionalSuccessor(false);
       if (NextBB && NextBB == TSuccessor &&
-          !BC.MIA->hasAnnotation(*CondBranch, "DoNotChangeTarget")) {
+          !BC.MIB->hasAnnotation(*CondBranch, "DoNotChangeTarget")) {
         std::swap(TSuccessor, FSuccessor);
-        MIA->reverseBranchCondition(*CondBranch, TSuccessor->getLabel(), Ctx);
+        MIB->reverseBranchCondition(*CondBranch, TSuccessor->getLabel(), Ctx);
         BB->swapConditionalSuccessors();
       } else {
-        MIA->replaceBranchTarget(*CondBranch, TSuccessor->getLabel(), Ctx);
+        MIB->replaceBranchTarget(*CondBranch, TSuccessor->getLabel(), Ctx);
       }
       if (TSuccessor == FSuccessor) {
         BB->removeDuplicateConditionalSuccessor(CondBranch);
       }
       if (!NextBB ||
           ((NextBB != TSuccessor ||
-            BC.MIA->hasAnnotation(*CondBranch, "DoNotChangeTarget")) &&
+            BC.MIB->hasAnnotation(*CondBranch, "DoNotChangeTarget")) &&
            NextBB != FSuccessor)) {
         BB->addBranchInstruction(FSuccessor);
       }
@@ -2737,7 +2738,7 @@ void BinaryFunction::propagateGnuArgsSizeInfo() {
   for (auto BB : BasicBlocks) {
     for (auto II = BB->begin(); II != BB->end(); ) {
       auto &Instr = *II;
-      if (BC.MIA->isCFI(Instr)) {
+      if (BC.MIB->isCFI(Instr)) {
         auto CFI = getCFIFor(Instr);
         if (CFI->getOperation() == MCCFIInstruction::OpGnuArgsSize) {
           CurrentGnuArgsSize = CFI->getOffset();
@@ -2747,9 +2748,9 @@ void BinaryFunction::propagateGnuArgsSizeInfo() {
           II = BB->erasePseudoInstruction(II);
           continue;
         }
-      } else if (BC.MIA->isInvoke(Instr)) {
+      } else if (BC.MIB->isInvoke(Instr)) {
         // Add the value of GNU_args_size as an extra operand to invokes.
-        BC.MIA->addGnuArgsSize(Instr, CurrentGnuArgsSize);
+        BC.MIB->addGnuArgsSize(Instr, CurrentGnuArgsSize);
       }
       ++II;
     }
@@ -2763,7 +2764,7 @@ void BinaryFunction::postProcessBranches() {
     auto LastInstrRI = BB->getLastNonPseudo();
     if (BB->succ_size() == 1) {
       if (LastInstrRI != BB->rend() &&
-          BC.MIA->isConditionalBranch(*LastInstrRI)) {
+          BC.MIB->isConditionalBranch(*LastInstrRI)) {
         // __builtin_unreachable() could create a conditional branch that
         // falls-through into the next function - hence the block will have only
         // one valid successor. Such behaviour is undefined and thus we remove
@@ -2784,12 +2785,12 @@ void BinaryFunction::postProcessBranches() {
                      << BB->getName() << " in function " << *this << '\n');
         continue;
       }
-      if (!BC.MIA->isTerminator(*LastInstrRI) &&
-          !BC.MIA->isCall(*LastInstrRI)) {
+      if (!BC.MIB->isTerminator(*LastInstrRI) &&
+          !BC.MIB->isCall(*LastInstrRI)) {
         DEBUG(dbgs() << "BOLT-DEBUG: adding return to basic block "
                      << BB->getName() << " in function " << *this << '\n');
         MCInst ReturnInstr;
-        BC.MIA->createReturn(ReturnInstr);
+        BC.MIB->createReturn(ReturnInstr);
         BB->addInstruction(ReturnInstr);
       }
     }
@@ -2867,7 +2868,7 @@ BinaryFunction::BasicBlockOrderType BinaryFunction::dfs() const {
     MCInst *UncondBranch = nullptr;
     if (BB->analyzeBranch(TBB, FBB, CondBranch, UncondBranch) &&
         CondBranch && BB->succ_size() == 2) {
-      if (BC.MIA->getCanonicalBranchOpcode(CondBranch->getOpcode()) ==
+      if (BC.MIB->getCanonicalBranchOpcode(CondBranch->getOpcode()) ==
           CondBranch->getOpcode()) {
         Stack.push(BB->getConditionalSuccessor(true));
         Stack.push(BB->getConditionalSuccessor(false));
@@ -3005,7 +3006,7 @@ bool BinaryFunction::isIdenticalWith(const BinaryFunction &OtherBF,
     // is ignored for CFG purposes.
     auto *TrailingInstr = (I != E ? &(*I)
                                   : (OtherI != OtherE ? &(*OtherI) : 0));
-    if (TrailingInstr && !BC.MIA->isUnconditionalBranch(*TrailingInstr)) {
+    if (TrailingInstr && !BC.MIB->isUnconditionalBranch(*TrailingInstr)) {
       return false;
     }
 
@@ -3097,7 +3098,7 @@ std::size_t BinaryFunction::hash(bool Recompute, bool UseDFS) const {
       // Ignore unconditional jumps since we check CFG consistency by processing
       // basic blocks in order and do not rely on branches to be in-sync with
       // CFG. Note that we still use condition code of conditional jumps.
-      if (BC.MIA->isUnconditionalBranch(Inst))
+      if (BC.MIB->isUnconditionalBranch(Inst))
         continue;
 
       if (Opcode == 0) {
@@ -3206,9 +3207,9 @@ bool BinaryFunction::replaceJumpTableEntryIn(BinaryBasicBlock *BB,
                                              BinaryBasicBlock *OldDest,
                                              BinaryBasicBlock *NewDest) {
   auto *Instr = BB->getLastNonPseudoInstr();
-  if (!Instr || !BC.MIA->isIndirectBranch(*Instr))
+  if (!Instr || !BC.MIB->isIndirectBranch(*Instr))
     return false;
-  auto JTAddress = BC.MIA->getJumpTable(*Instr);
+  auto JTAddress = BC.MIB->getJumpTable(*Instr);
   assert(JTAddress && "Invalid jump table address");
   auto *JT = getJumpTableContainingAddress(JTAddress);
   assert(JT && "No jump table structure for this indirect branch");
@@ -3585,7 +3586,7 @@ MCInst *BinaryFunction::getInstructionAtOffset(uint64_t Offset) {
 
     for (auto &Inst : *BB) {
       constexpr auto InvalidOffset = std::numeric_limits<uint64_t>::max();
-      if (Offset == BC.MIA->getAnnotationWithDefault<uint64_t>(Inst, "Offset",
+      if (Offset == BC.MIB->getAnnotationWithDefault<uint64_t>(Inst, "Offset",
                                                                InvalidOffset))
         return &Inst;
     }
@@ -3773,23 +3774,23 @@ DynoStats BinaryFunction::getDynoStats() const {
 
     // Count the number of calls by iterating through all instructions.
     for (const auto &Instr : *BB) {
-      if (BC.MIA->isStore(Instr)) {
+      if (BC.MIB->isStore(Instr)) {
         Stats[DynoStats::STORES] += BBExecutionCount;
       }
-      if (BC.MIA->isLoad(Instr)) {
+      if (BC.MIB->isLoad(Instr)) {
         Stats[DynoStats::LOADS] += BBExecutionCount;
       }
-      if (!BC.MIA->isCall(Instr))
+      if (!BC.MIB->isCall(Instr))
         continue;
       uint64_t CallFreq = BBExecutionCount;
-      if (BC.MIA->getConditionalTailCall(Instr)) {
+      if (BC.MIB->getConditionalTailCall(Instr)) {
         CallFreq =
-          BC.MIA->getAnnotationWithDefault<uint64_t>(Instr, "CTCTakenCount");
+          BC.MIB->getAnnotationWithDefault<uint64_t>(Instr, "CTCTakenCount");
       }
       Stats[DynoStats::FUNCTION_CALLS] += CallFreq;
-      if (BC.MIA->isIndirectCall(Instr)) {
+      if (BC.MIB->isIndirectCall(Instr)) {
         Stats[DynoStats::INDIRECT_CALLS] += CallFreq;
-      } else if (const auto *CallSymbol = BC.MIA->getTargetSymbol(Instr)) {
+      } else if (const auto *CallSymbol = BC.MIB->getTargetSymbol(Instr)) {
         const auto *BF = BC.getFunctionForSymbol(CallSymbol);
         if (BF && BF->isPLTFunction()) {
           Stats[DynoStats::PLT_CALLS] += CallFreq;
@@ -3806,7 +3807,7 @@ DynoStats BinaryFunction::getDynoStats() const {
 
     // Jump tables.
     const auto *LastInstr = BB->getLastNonPseudoInstr();
-    if (BC.MIA->getJumpTable(*LastInstr)) {
+    if (BC.MIB->getJumpTable(*LastInstr)) {
       Stats[DynoStats::JUMP_TABLE_BRANCHES] += BBExecutionCount;
       DEBUG(
         static uint64_t MostFrequentJT;
@@ -3840,7 +3841,7 @@ DynoStats BinaryFunction::getDynoStats() const {
     }
 
     // CTCs
-    if (BC.MIA->getConditionalTailCall(*CondBranch)) {
+    if (BC.MIB->getConditionalTailCall(*CondBranch)) {
       if (BB->branch_info_begin() != BB->branch_info_end())
         Stats[DynoStats::UNCOND_BRANCHES] += BB->branch_info_begin()->Count;
       continue;

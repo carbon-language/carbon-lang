@@ -32,7 +32,6 @@
 #include "llvm/MC/MCDisassembler/MCDisassembler.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCInst.h"
-#include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Object/ObjectFile.h"
@@ -433,8 +432,8 @@ private:
     // NB: there's no need to compare jump table indirect jump instructions
     //     separately as jump tables are handled by comparing corresponding
     //     symbols.
-    const auto EHInfoA = BC.MIA->getEHInfo(InstA);
-    const auto EHInfoB = BC.MIA->getEHInfo(InstB);
+    const auto EHInfoA = BC.MIB->getEHInfo(InstA);
+    const auto EHInfoB = BC.MIB->getEHInfo(InstB);
 
     // Action indices should match.
     if (EHInfoA.second != EHInfoB.second)
@@ -928,8 +927,8 @@ public:
   /// that is in \p BB. Return nullptr if none exists
   BinaryBasicBlock *getLandingPadBBFor(const BinaryBasicBlock &BB,
                                        const MCInst &InvokeInst) {
-    assert(BC.MIA->isInvoke(InvokeInst) && "must be invoke instruction");
-    MCLandingPad LP = BC.MIA->getEHInfo(InvokeInst);
+    assert(BC.MIB->isInvoke(InvokeInst) && "must be invoke instruction");
+    MCLandingPad LP = BC.MIB->getEHInfo(InvokeInst);
     if (LP.first) {
       auto *LBB = BB.getLandingPad(LP.first);
       assert (LBB && "Landing pad should be defined");
@@ -1259,12 +1258,12 @@ public:
   }
 
   const JumpTable *getJumpTable(const MCInst &Inst) const {
-    const auto Address = BC.MIA->getJumpTable(Inst);
+    const auto Address = BC.MIB->getJumpTable(Inst);
     return getJumpTableContainingAddress(Address);
   }
 
   JumpTable *getJumpTable(const MCInst &Inst) {
-    const auto Address = BC.MIA->getJumpTable(Inst);
+    const auto Address = BC.MIB->getJumpTable(Inst);
     return getJumpTableContainingAddress(Address);
   }
 
@@ -1498,7 +1497,7 @@ public:
     }
 
     --I;
-    while (I != Instructions.begin() && BC.MIA->isNoop(I->second)) {
+    while (I != Instructions.begin() && BC.MIB->isNoop(I->second)) {
       Offset = I->first;
       --I;
     }
@@ -1522,13 +1521,13 @@ public:
                                           BinaryBasicBlock::iterator Pos,
                                           uint32_t Offset) {
     MCInst CFIPseudo;
-    BC.MIA->createCFI(CFIPseudo, Offset);
+    BC.MIB->createCFI(CFIPseudo, Offset);
     return BB->insertPseudoInstr(Pos, CFIPseudo);
   }
 
   /// Retrieve the MCCFIInstruction object associated with a CFI pseudo.
   MCCFIInstruction* getCFIFor(const MCInst &Instr) {
-    if (!BC.MIA->isCFI(Instr))
+    if (!BC.MIB->isCFI(Instr))
       return nullptr;
     uint32_t Offset = Instr.getOperand(0).getImm();
     assert(Offset < FrameInstructions.size() && "Invalid CFI offset");
@@ -1536,7 +1535,7 @@ public:
   }
 
   const MCCFIInstruction* getCFIFor(const MCInst &Instr) const {
-    if (!BC.MIA->isCFI(Instr))
+    if (!BC.MIB->isCFI(Instr))
       return nullptr;
     uint32_t Offset = Instr.getOperand(0).getImm();
     assert(Offset < FrameInstructions.size() && "Invalid CFI offset");

@@ -38,8 +38,8 @@ namespace bolt {
 
 void RegReAssign::swap(BinaryContext &BC, BinaryFunction &Function, MCPhysReg A,
                       MCPhysReg B) {
-  const BitVector &AliasA = BC.MIA->getAliases(A, false);
-  const BitVector &AliasB = BC.MIA->getAliases(B, false);
+  const BitVector &AliasA = BC.MIB->getAliases(A, false);
+  const BitVector &AliasB = BC.MIB->getAliases(B, false);
 
   // Regular instructions
   for (auto &BB : Function) {
@@ -51,14 +51,14 @@ void RegReAssign::swap(BinaryContext &BC, BinaryFunction &Function, MCPhysReg A,
 
         auto Reg = Operand.getReg();
         if (AliasA.test(Reg)) {
-          Operand.setReg(BC.MIA->getAliasSized(B, BC.MIA->getRegSize(Reg)));
+          Operand.setReg(BC.MIB->getAliasSized(B, BC.MIB->getRegSize(Reg)));
           --StaticBytesSaved;
           DynBytesSaved -= BB.getKnownExecutionCount();
           continue;
         }
         if (!AliasB.test(Reg))
           continue;
-        Operand.setReg(BC.MIA->getAliasSized(A, BC.MIA->getRegSize(Reg)));
+        Operand.setReg(BC.MIB->getAliasSized(A, BC.MIB->getRegSize(Reg)));
         ++StaticBytesSaved;
         DynBytesSaved += BB.getKnownExecutionCount();
       }
@@ -69,7 +69,7 @@ void RegReAssign::swap(BinaryContext &BC, BinaryFunction &Function, MCPhysReg A,
   DenseSet<const MCCFIInstruction *> Changed;
   for (auto &BB : Function) {
     for (auto &Inst : BB) {
-      if (!BC.MIA->isCFI(Inst))
+      if (!BC.MIB->isCFI(Inst))
         continue;
       auto *CFI = Function.getCFIFor(Inst);
       if (Changed.count(CFI))
@@ -82,10 +82,10 @@ void RegReAssign::swap(BinaryContext &BC, BinaryFunction &Function, MCPhysReg A,
         const MCPhysReg Reg2 = BC.MRI->getLLVMRegNum(CFIReg2, /*isEH=*/false);
         if (AliasA.test(Reg2)) {
           CFI->setRegister2(BC.MRI->getDwarfRegNum(
-              BC.MIA->getAliasSized(B, BC.MIA->getRegSize(Reg2)), false));
+              BC.MIB->getAliasSized(B, BC.MIB->getRegSize(Reg2)), false));
         } else if (AliasB.test(Reg2)) {
           CFI->setRegister2(BC.MRI->getDwarfRegNum(
-              BC.MIA->getAliasSized(A, BC.MIA->getRegSize(Reg2)), false));
+              BC.MIB->getAliasSized(A, BC.MIB->getRegSize(Reg2)), false));
         }
       }
       // Fall-through
@@ -102,10 +102,10 @@ void RegReAssign::swap(BinaryContext &BC, BinaryFunction &Function, MCPhysReg A,
         const MCPhysReg Reg = BC.MRI->getLLVMRegNum(CFIReg, /*isEH=*/false);
         if (AliasA.test(Reg)) {
           CFI->setRegister(BC.MRI->getDwarfRegNum(
-              BC.MIA->getAliasSized(B, BC.MIA->getRegSize(Reg)), false));
+              BC.MIB->getAliasSized(B, BC.MIB->getRegSize(Reg)), false));
         } else if (AliasB.test(Reg)) {
           CFI->setRegister(BC.MRI->getDwarfRegNum(
-              BC.MIA->getAliasSized(A, BC.MIA->getRegSize(Reg)), false));
+              BC.MIB->getAliasSized(A, BC.MIB->getRegSize(Reg)), false));
         }
         break;
       }
@@ -122,14 +122,14 @@ void RegReAssign::rankRegisters(BinaryContext &BC, BinaryFunction &Function) {
 
   for (auto &BB : Function) {
     for (auto &Inst : BB) {
-      const bool CannotUseREX = BC.MIA->cannotUseREX(Inst);
+      const bool CannotUseREX = BC.MIB->cannotUseREX(Inst);
       const auto &Desc = BC.MII->get(Inst.getOpcode());
 
       // Disallow substituitions involving regs in implicit uses lists
       const auto *ImplicitUses = Desc.getImplicitUses();
       while (ImplicitUses && *ImplicitUses) {
         const size_t RegEC =
-            BC.MIA->getAliases(*ImplicitUses, false).find_first();
+            BC.MIB->getAliases(*ImplicitUses, false).find_first();
         RegScore[RegEC] =
             std::numeric_limits<decltype(RegScore)::value_type>::min();
         ++ImplicitUses;
@@ -139,7 +139,7 @@ void RegReAssign::rankRegisters(BinaryContext &BC, BinaryFunction &Function) {
       const auto *ImplicitDefs = Desc.getImplicitDefs();
       while (ImplicitDefs && *ImplicitDefs) {
         const size_t RegEC =
-            BC.MIA->getAliases(*ImplicitDefs, false).find_first();
+            BC.MIB->getAliases(*ImplicitDefs, false).find_first();
         RegScore[RegEC] =
             std::numeric_limits<decltype(RegScore)::value_type>::min();
         ++ImplicitDefs;
@@ -154,7 +154,7 @@ void RegReAssign::rankRegisters(BinaryContext &BC, BinaryFunction &Function) {
           continue;
 
         auto Reg = Operand.getReg();
-        size_t RegEC = BC.MIA->getAliases(Reg, false).find_first();
+        size_t RegEC = BC.MIB->getAliases(Reg, false).find_first();
         if (RegEC == 0)
           continue;
 
@@ -166,7 +166,7 @@ void RegReAssign::rankRegisters(BinaryContext &BC, BinaryFunction &Function) {
         }
 
         // Unsupported substitution, cannot swap BH with R* regs, bail
-        if (BC.MIA->isUpper8BitReg(Reg) && ClassicCSR.test(Reg)) {
+        if (BC.MIB->isUpper8BitReg(Reg) && ClassicCSR.test(Reg)) {
           RegScore[RegEC] =
               std::numeric_limits<decltype(RegScore)::value_type>::min();
           continue;
@@ -238,9 +238,9 @@ void RegReAssign::aggressivePassOverFunction(BinaryContext &BC,
           ProgramPoint::getFirstPointAt(BB));
   }
   // Mark frame pointer alive because of CFI
-  AliveAtStart |= BC.MIA->getAliases(BC.MIA->getFramePointer(), false);
+  AliveAtStart |= BC.MIB->getAliases(BC.MIB->getFramePointer(), false);
   // Never touch return registers
-  BC.MIA->getDefaultLiveOut(AliveAtStart);
+  BC.MIB->getDefaultLiveOut(AliveAtStart);
 
   // Try swapping more profitable options first
   auto Begin = RankedRegs.begin();
@@ -266,7 +266,7 @@ void RegReAssign::aggressivePassOverFunction(BinaryContext &BC,
     }
 
     BitVector AnyAliasAlive = AliveAtStart;
-    AnyAliasAlive &= BC.MIA->getAliases(ClassicReg);
+    AnyAliasAlive &= BC.MIB->getAliases(ClassicReg);
     if (AnyAliasAlive.any()) {
       DEBUG(dbgs() << " Bailed on " << BC.MRI->getName(ClassicReg) << " with "
                    << BC.MRI->getName(ExtReg)
@@ -275,7 +275,7 @@ void RegReAssign::aggressivePassOverFunction(BinaryContext &BC,
       continue;
     }
     AnyAliasAlive = AliveAtStart;
-    AnyAliasAlive &= BC.MIA->getAliases(ExtReg);
+    AnyAliasAlive &= BC.MIB->getAliases(ExtReg);
     if (AnyAliasAlive.any()) {
       DEBUG(dbgs() << " Bailed on " << BC.MRI->getName(ClassicReg) << " with "
                    << BC.MRI->getName(ExtReg)
@@ -342,7 +342,7 @@ void RegReAssign::setupAggressivePass(BinaryContext &BC,
   RA.reset(new RegAnalysis(BC, BFs, *CG));
 
   GPRegs = BitVector(BC.MRI->getNumRegs(), false);
-  BC.MIA->getGPRegs(GPRegs);
+  BC.MIB->getGPRegs(GPRegs);
 }
 
 void RegReAssign::setupConservativePass(
@@ -353,14 +353,14 @@ void RegReAssign::setupConservativePass(
   ClassicCSR = BitVector(BC.MRI->getNumRegs(), false);
   ExtendedCSR = BitVector(BC.MRI->getNumRegs(), false);
   // Never consider the frame pointer
-  BC.MIA->getClassicGPRegs(ClassicRegs);
+  BC.MIB->getClassicGPRegs(ClassicRegs);
   ClassicRegs.flip();
-  ClassicRegs |= BC.MIA->getAliases(BC.MIA->getFramePointer(), false);
+  ClassicRegs |= BC.MIB->getAliases(BC.MIB->getFramePointer(), false);
   ClassicRegs.flip();
-  BC.MIA->getCalleeSavedRegs(CalleeSaved);
+  BC.MIB->getCalleeSavedRegs(CalleeSaved);
   ClassicCSR |= ClassicRegs;
   ClassicCSR &= CalleeSaved;
-  BC.MIA->getClassicGPRegs(ClassicRegs);
+  BC.MIB->getClassicGPRegs(ClassicRegs);
   ExtendedCSR |= ClassicRegs;
   ExtendedCSR.flip();
   ExtendedCSR &= CalleeSaved;

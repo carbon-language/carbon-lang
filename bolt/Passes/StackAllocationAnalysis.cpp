@@ -24,11 +24,11 @@ void StackAllocationAnalysis::preflight() {
   for (auto &BB : this->Func) {
     for (auto &Inst : BB) {
       MCPhysReg From, To;
-      if (!BC.MIA->isPush(Inst) && (!BC.MIA->isRegToRegMove(Inst, From, To) ||
-                                    To != BC.MIA->getStackPointer() ||
-                                    From != BC.MIA->getFramePointer()) &&
+      if (!BC.MIB->isPush(Inst) && (!BC.MIB->isRegToRegMove(Inst, From, To) ||
+                                    To != BC.MIB->getStackPointer() ||
+                                    From != BC.MIB->getFramePointer()) &&
           !BC.MII->get(Inst.getOpcode())
-               .hasDefOfPhysReg(Inst, BC.MIA->getStackPointer(), *BC.MRI))
+               .hasDefOfPhysReg(Inst, BC.MIB->getStackPointer(), *BC.MRI))
         continue;
       this->Expressions.push_back(&Inst);
       this->ExprToIdx[&Inst] = this->NumInstrs++;
@@ -94,13 +94,13 @@ void StackAllocationAnalysis::doConfluenceWithLP(BitVector &StateOut,
 
 BitVector StackAllocationAnalysis::computeNext(const MCInst &Point,
                                                const BitVector &Cur) {
-  const auto &MIA = BC.MIA;
+  const auto &MIB = BC.MIB;
   BitVector Next = Cur;
-  if (int Sz = MIA->getPopSize(Point)) {
+  if (int Sz = MIB->getPopSize(Point)) {
     Next = doKill(Point, Next, Sz);
     return Next;
   }
-  if (MIA->isPush(Point)) {
+  if (MIB->isPush(Point)) {
     Next.set(this->ExprToIdx[&Point]);
     return Next;
   }
@@ -108,9 +108,9 @@ BitVector StackAllocationAnalysis::computeNext(const MCInst &Point,
   MCPhysReg From, To;
   int64_t SPOffset, FPOffset;
   std::tie(SPOffset, FPOffset) = *SPT.getStateBefore(Point);
-  if (MIA->isRegToRegMove(Point, From, To) && To == MIA->getStackPointer() &&
-      From == MIA->getFramePointer()) {
-    if (MIA->isLeave(Point))
+  if (MIB->isRegToRegMove(Point, From, To) && To == MIB->getStackPointer() &&
+      From == MIB->getFramePointer()) {
+    if (MIB->isLeave(Point))
       FPOffset += 8;
     if (SPOffset < FPOffset) {
       Next = doKill(Point, Next, FPOffset - SPOffset);
@@ -122,19 +122,19 @@ BitVector StackAllocationAnalysis::computeNext(const MCInst &Point,
     }
   }
   if (BC.MII->get(Point.getOpcode())
-          .hasDefOfPhysReg(Point, MIA->getStackPointer(), *BC.MRI)) {
+          .hasDefOfPhysReg(Point, MIB->getStackPointer(), *BC.MRI)) {
     std::pair<MCPhysReg, int64_t> SP;
     if (SPOffset != SPT.EMPTY && SPOffset != SPT.SUPERPOSITION)
-      SP = std::make_pair(MIA->getStackPointer(), SPOffset);
+      SP = std::make_pair(MIB->getStackPointer(), SPOffset);
     else
       SP = std::make_pair(0, 0);
     std::pair<MCPhysReg, int64_t> FP;
     if (FPOffset != SPT.EMPTY && FPOffset != SPT.SUPERPOSITION)
-      FP = std::make_pair(MIA->getFramePointer(), FPOffset);
+      FP = std::make_pair(MIB->getFramePointer(), FPOffset);
     else
       FP = std::make_pair(0, 0);
     int64_t Output;
-    if (!MIA->evaluateSimple(Point, Output, SP, FP))
+    if (!MIB->evaluateSimple(Point, Output, SP, FP))
       return Next;
 
     if (SPOffset < Output) {

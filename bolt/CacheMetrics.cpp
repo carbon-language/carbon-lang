@@ -147,11 +147,11 @@ extractFunctionCalls(const std::vector<BinaryFunction *> &BinaryFunctions) {
     for (auto BB : SrcFunction->layout()) {
       // Find call instructions and extract target symbols from each one
       for (auto &Inst : *BB) {
-        if (!BC.MIA->isCall(Inst))
+        if (!BC.MIB->isCall(Inst))
           continue;
 
         // Call info
-        const MCSymbol* DstSym = BC.MIA->getTargetSymbol(Inst);
+        const MCSymbol* DstSym = BC.MIB->getTargetSymbol(Inst);
         auto Count = BB->getKnownExecutionCount();
         // Ignore calls w/o information
         if (DstSym == nullptr || Count == 0)

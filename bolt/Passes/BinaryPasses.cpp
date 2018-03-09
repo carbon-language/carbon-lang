@@ -250,9 +250,9 @@ void OptimizeBodylessFunctions::analyze(
   const auto *FirstInstr = BF.front().getFirstNonPseudoInstr();
   if (!FirstInstr)
     return;
-  if (!BC.MIA->isTailCall(*FirstInstr))
+  if (!BC.MIB->isTailCall(*FirstInstr))
     return;
-  const auto *TargetSymbol = BC.MIA->getTargetSymbol(*FirstInstr);
+  const auto *TargetSymbol = BC.MIB->getTargetSymbol(*FirstInstr);
   if (!TargetSymbol)
     return;
   const auto *Function = BC.getFunctionForSymbol(TargetSymbol);
@@ -266,9 +266,9 @@ void OptimizeBodylessFunctions::optimizeCalls(BinaryFunction &BF,
                                               BinaryContext &BC) {
   for (auto *BB : BF.layout()) {
     for (auto &Inst : *BB) {
-      if (!BC.MIA->isCall(Inst))
+      if (!BC.MIB->isCall(Inst))
         continue;
-      const auto *OriginalTarget = BC.MIA->getTargetSymbol(Inst);
+      const auto *OriginalTarget = BC.MIB->getTargetSymbol(Inst);
       if (!OriginalTarget)
         continue;
       const auto *Target = OriginalTarget;
@@ -288,7 +288,7 @@ void OptimizeBodylessFunctions::optimizeCalls(BinaryFunction &BF,
                    << ": replacing call to " << OriginalTarget->getName()
                    << " by call to " << Target->getName()
                    << " while folding " << CallSites << " call sites\n");
-      BC.MIA->replaceBranchTarget(Inst, Target, BC.Ctx.get());
+      BC.MIB->replaceBranchTarget(Inst, Target, BC.Ctx.get());
 
       NumOptimizedCallSites += CallSites;
       if (BB->hasProfile()) {
@@ -528,7 +528,7 @@ void ReorderBasicBlocks::splitFunction(BinaryFunction &BF) const {
       // that the block never throws, it is safe to move the block to
       // decrease the size of the function.
       for (auto &Instr : *BB) {
-        if (BF.getBinaryContext().MIA->isInvoke(Instr)) {
+        if (BF.getBinaryContext().MIB->isInvoke(Instr)) {
           BB->setCanOutline(false);
           break;
         }
@@ -624,7 +624,7 @@ void StripAnnotations::runOnFunctions(
 
     for (auto &BB : Function) {
       for (auto &Inst : BB) {
-        BC.MIA->removeAllAnnotations(Inst);
+        BC.MIB->removeAllAnnotations(Inst);
       }
     }
   }
@@ -677,11 +677,11 @@ uint64_t fixDoubleJumps(BinaryContext &BC,
         assert((CondBranch || (!CondBranch && Pred->succ_size() == 1)) &&
                "Predecessor block has inconsistent number of successors");
         if (CondBranch &&
-            BC.MIA->getTargetSymbol(*CondBranch) == BB.getLabel()) {
-          BC.MIA->replaceBranchTarget(*CondBranch, Succ->getLabel(), Ctx);
+            BC.MIB->getTargetSymbol(*CondBranch) == BB.getLabel()) {
+          BC.MIB->replaceBranchTarget(*CondBranch, Succ->getLabel(), Ctx);
         } else if (UncondBranch &&
-                   BC.MIA->getTargetSymbol(*UncondBranch) == BB.getLabel()) {
-          BC.MIA->replaceBranchTarget(*UncondBranch, Succ->getLabel(), Ctx);
+                   BC.MIB->getTargetSymbol(*UncondBranch) == BB.getLabel()) {
+          BC.MIB->replaceBranchTarget(*UncondBranch, Succ->getLabel(), Ctx);
         } else if (!UncondBranch) {
           assert(Function.getBasicBlockAfter(Pred, false) != Succ &&
                  "Don't add an explicit jump to a fallthrough block.");
@@ -691,8 +691,8 @@ uint64_t fixDoubleJumps(BinaryContext &BC,
         // Succ will be null in the tail call case.  In this case we
         // need to explicitly add a tail call instruction.
         auto *Branch = Pred->getLastNonPseudoInstr();
-        if (Branch && BC.MIA->isUnconditionalBranch(*Branch)) {
-          assert(BC.MIA->getTargetSymbol(*Branch) == BB.getLabel());
+        if (Branch && BC.MIB->isUnconditionalBranch(*Branch)) {
+          assert(BC.MIB->getTargetSymbol(*Branch) == BB.getLabel());
           Pred->removeSuccessor(&BB);
           Pred->eraseInstruction(Branch);
           Pred->addTailCallInstruction(SuccSym);
@@ -714,16 +714,16 @@ uint64_t fixDoubleJumps(BinaryContext &BC,
       continue;
 
     auto *Inst = BB.getFirstNonPseudoInstr();
-    const bool IsTailCall = BC.MIA->isTailCall(*Inst);
+    const bool IsTailCall = BC.MIB->isTailCall(*Inst);
 
-    if (!BC.MIA->isUnconditionalBranch(*Inst) && !IsTailCall)
+    if (!BC.MIB->isUnconditionalBranch(*Inst) && !IsTailCall)
       continue;
 
     // If we operate after SCTC make sure it's not a conditional tail call.
-    if (IsTailCall && BC.MIA->isConditionalBranch(*Inst))
+    if (IsTailCall && BC.MIB->isConditionalBranch(*Inst))
       continue;
 
-    const auto *SuccSym = BC.MIA->getTargetSymbol(*Inst);
+    const auto *SuccSym = BC.MIB->getTargetSymbol(*Inst);
     auto *Succ = BB.getSuccessor();
 
     if (((!Succ || &BB == Succ) && !IsTailCall) || (IsTailCall && !SuccSym))
@@ -799,7 +799,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
   BF.updateLayoutIndices();
   BF.markUnreachable();
 
-  auto &MIA = BC.MIA;
+  auto &MIB = BC.MIB;
   uint64_t NumLocalCTCCandidates = 0;
   uint64_t NumLocalCTCs = 0;
   uint64_t LocalCTCTakenCount = 0;
@@ -820,10 +820,10 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
       continue;
 
     auto *Instr = BB->getFirstNonPseudoInstr();
-    if (!MIA->isTailCall(*Instr) || BC.MIA->isConditionalBranch(*Instr))
+    if (!MIB->isTailCall(*Instr) || BC.MIB->isConditionalBranch(*Instr))
       continue;
 
-    auto *CalleeSymbol = MIA->getTargetSymbol(*Instr);
+    auto *CalleeSymbol = MIB->getTargetSymbol(*Instr);
     if (!CalleeSymbol)
       continue;
 
@@ -876,7 +876,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
       bool BranchForStats;
       if (CondSucc != BB) {
         // Patch the new target address into the conditional branch.
-        MIA->reverseBranchCondition(*CondBranch, CalleeSymbol, BC.Ctx.get());
+        MIB->reverseBranchCondition(*CondBranch, CalleeSymbol, BC.Ctx.get());
         // Since we reversed the condition on the branch we need to change
         // the target for the unconditional branch or add a unconditional
         // branch to the old target.  This has to be done manually since
@@ -885,7 +885,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
         BranchForStats = false;
       } else {
         // Change destination of the conditional branch.
-        MIA->replaceBranchTarget(*CondBranch, CalleeSymbol, BC.Ctx.get());
+        MIB->replaceBranchTarget(*CondBranch, CalleeSymbol, BC.Ctx.get());
         BranchForStats = true;
       }
       const auto Count = PredBB->getBranchInfo(BranchForStats).Count;
@@ -893,11 +893,11 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
         Count == BinaryBasicBlock::COUNT_NO_PROFILE ? 0 : Count;
 
       // Annotate it, so "isCall" returns true for this jcc
-      MIA->setConditionalTailCall(*CondBranch);
+      MIB->setConditionalTailCall(*CondBranch);
       // Add info abount the conditional tail call frequency, otherwise this
       // info will be lost when we delete the associated BranchInfo entry
-      BC.MIA->removeAnnotation(*CondBranch, "CTCTakenCount");
-      BC.MIA->addAnnotation(BC.Ctx.get(), *CondBranch, "CTCTakenCount",
+      BC.MIB->removeAnnotation(*CondBranch, "CTCTakenCount");
+      BC.MIB->addAnnotation(BC.Ctx.get(), *CondBranch, "CTCTakenCount",
                             CTCTakenFreq);
 
       // Remove the unused successor which may be eliminated later
@@ -948,12 +948,12 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
       if (HasFallthrough)
         PredBB->eraseInstruction(UncondBranch);
       else
-        MIA->replaceBranchTarget(*UncondBranch,
+        MIB->replaceBranchTarget(*UncondBranch,
                                  CondSucc->getLabel(),
                                  BC.Ctx.get());
     } else if (!HasFallthrough) {
       MCInst Branch;
-      MIA->createUncondBranch(Branch, CondSucc->getLabel(), BC.Ctx.get());
+      MIB->createUncondBranch(Branch, CondSucc->getLabel(), BC.Ctx.get());
       PredBB->addInstruction(Branch);
     }
   }
@@ -1018,7 +1018,7 @@ uint64_t Peepholes::shortenInstructions(BinaryContext &BC,
       if (opts::Verbosity > 1) {
         DebugInst = Inst;
       }
-      if (BC.MIA->shortenInstruction(Inst)) {
+      if (BC.MIB->shortenInstruction(Inst)) {
         if (opts::Verbosity > 1) {
           outs() << "BOLT-INFO: peephole, shortening:\n"
                  << "BOLT-INFO:    ";
@@ -1037,9 +1037,9 @@ void Peepholes::addTailcallTraps(BinaryContext &BC,
                                  BinaryFunction &Function) {
   for (auto &BB : Function) {
     auto *Inst = BB.getLastNonPseudoInstr();
-    if (Inst && BC.MIA->isTailCall(*Inst) && BC.MIA->isIndirectBranch(*Inst)) {
+    if (Inst && BC.MIB->isTailCall(*Inst) && BC.MIB->isIndirectBranch(*Inst)) {
       MCInst Trap;
-      if (BC.MIA->createTrap(Trap)) {
+      if (BC.MIB->createTrap(Trap)) {
         BB.addInstruction(Trap);
         ++TailCallTraps;
       }
@@ -1112,7 +1112,7 @@ void Peepholes::runOnFunctions(BinaryContext &BC,
 
 bool SimplifyRODataLoads::simplifyRODataLoads(
     BinaryContext &BC, BinaryFunction &BF) {
-  auto &MIA = BC.MIA;
+  auto &MIB = BC.MIB;
 
   uint64_t NumLocalLoadsSimplified = 0;
   uint64_t NumDynamicLocalLoadsSimplified = 0;
@@ -1131,9 +1131,9 @@ bool SimplifyRODataLoads::simplifyRODataLoads(
       // Try to statically evaluate the target memory address;
       uint64_t TargetAddress;
 
-      if (MIA->hasPCRelOperand(Inst)) {
+      if (MIB->hasPCRelOperand(Inst)) {
         // Try to find the symbol that corresponds to the PC-relative operand.
-        auto DispOpI = MIA->getMemOperandDisp(Inst);
+        auto DispOpI = MIB->getMemOperandDisp(Inst);
         assert(DispOpI != Inst.end() && "expected PC-relative displacement");
         assert(DispOpI->isExpr() &&
               "found PC-relative with non-symbolic displacement");
@@ -1143,7 +1143,7 @@ bool SimplifyRODataLoads::simplifyRODataLoads(
         uint64_t DisplOffset;
 
         std::tie(DisplSymbol, DisplOffset) =
-          BC.MIA->getTargetSymbolInfo(DispOpI->getExpr());
+          BC.MIB->getTargetSymbolInfo(DispOpI->getExpr());
 
         if (!DisplSymbol)
           continue;
@@ -1154,7 +1154,7 @@ bool SimplifyRODataLoads::simplifyRODataLoads(
         if (!BD)
           continue;
         TargetAddress = BD->getAddress() + DisplOffset;
-      } else if (!MIA->evaluateMemOperandTarget(Inst, TargetAddress)) {
+      } else if (!MIB->evaluateMemOperandTarget(Inst, TargetAddress)) {
         continue;
       }
 
@@ -1174,7 +1174,7 @@ bool SimplifyRODataLoads::simplifyRODataLoads(
       if (BB->hasProfile())
         NumDynamicLocalLoadsFound += BB->getExecutionCount();
 
-      if (MIA->replaceMemOperandWithImm(Inst, ConstantData, Offset)) {
+      if (MIB->replaceMemOperandWithImm(Inst, ConstantData, Offset)) {
         ++NumLocalLoadsSimplified;
         if (BB->hasProfile())
           NumDynamicLocalLoadsSimplified += BB->getExecutionCount();
@@ -1547,7 +1547,7 @@ void InstructionLowering::runOnFunctions(
   for (auto &BFI : BFs) {
     for (auto &BB : BFI.second) {
       for (auto &Instruction : BB) {
-        BC.MIA->lowerTailCall(Instruction);
+        BC.MIB->lowerTailCall(Instruction);
       }
     }
   }
@@ -1563,8 +1563,8 @@ void StripRepRet::runOnFunctions(
     for (auto &BB : BFI.second) {
       auto LastInstRIter = BB.getLastNonPseudo();
       if (LastInstRIter == BB.rend() ||
-          !BC.MIA->isReturn(*LastInstRIter) ||
-          !BC.MIA->deleteREPPrefix(*LastInstRIter))
+          !BC.MIB->isReturn(*LastInstRIter) ||
+          !BC.MIB->deleteREPPrefix(*LastInstRIter))
         continue;
 
       NumPrefixesRemoved += BB.getKnownExecutionCount();

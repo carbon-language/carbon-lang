@@ -111,7 +111,7 @@ ProfileReader::parseFunctionProfile(BinaryFunction &BF,
         ++MismatchedCalls;
         continue;
       }
-      if (!BC.MIA->isCall(*Instr) && !BC.MIA->isIndirectBranch(*Instr)) {
+      if (!BC.MIB->isCall(*Instr) && !BC.MIB->isIndirectBranch(*Instr)) {
         if (opts::Verbosity >= 2)
           errs() << "BOLT-WARNING: expected call at offset " << YamlCSI.Offset
                  << " in block " << BB.getName() << '\n';
@@ -120,22 +120,22 @@ ProfileReader::parseFunctionProfile(BinaryFunction &BF,
       }
 
       auto setAnnotation = [&](StringRef Name, uint64_t Count) {
-        if (BC.MIA->hasAnnotation(*Instr, Name)) {
+        if (BC.MIB->hasAnnotation(*Instr, Name)) {
           if (opts::Verbosity >= 1)
             errs() << "BOLT-WARNING: ignoring duplicate " << Name
                    << " info for offset 0x" << Twine::utohexstr(YamlCSI.Offset)
                    << " in function " << BF << '\n';
           return;
         }
-        BC.MIA->addAnnotation(BC.Ctx.get(), *Instr, Name, Count);
+        BC.MIB->addAnnotation(BC.Ctx.get(), *Instr, Name, Count);
       };
 
-      if (BC.MIA->isIndirectCall(*Instr) || BC.MIA->isIndirectBranch(*Instr)) {
+      if (BC.MIB->isIndirectCall(*Instr) || BC.MIB->isIndirectBranch(*Instr)) {
         IndirectCallSiteProfile &CSP =
-          BC.MIA->getOrCreateAnnotationAs<IndirectCallSiteProfile>(BC.Ctx.get(),
+          BC.MIB->getOrCreateAnnotationAs<IndirectCallSiteProfile>(BC.Ctx.get(),
               *Instr, "CallProfile");
         CSP.emplace_back(IsFunction, Name, YamlCSI.Count, YamlCSI.Mispreds);
-      } else if (BC.MIA->getConditionalTailCall(*Instr)) {
+      } else if (BC.MIB->getConditionalTailCall(*Instr)) {
         setAnnotation("CTCTakenCount", YamlCSI.Count);
         setAnnotation("CTCMispredCount", YamlCSI.Mispreds);
       } else {

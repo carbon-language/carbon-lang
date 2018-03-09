@@ -233,7 +233,7 @@ protected:
   }
 
   StateTy &getOrCreateStateAt(MCInst &Point) {
-    return BC.MIA->getOrCreateAnnotationAs<StateTy>(
+    return BC.MIB->getOrCreateAnnotationAs<StateTy>(
         BC.Ctx.get(), Point, derived().getAnnotationName(), StatePrinterTy(BC));
   }
 
@@ -275,7 +275,7 @@ public:
   /// Track the state at the end (start) of each MCInst in this function if
   /// the direction of the dataflow is forward (backward).
   ErrorOr<const StateTy &> getStateAt(const MCInst &Point) const {
-    return BC.MIA->tryGetAnnotationAs<StateTy>(
+    return BC.MIB->tryGetAnnotationAs<StateTy>(
         Point, const_derived().getAnnotationName());
   }
 
@@ -304,7 +304,7 @@ public:
   void cleanAnnotations() {
     for (auto &BB : Func) {
       for (auto &Inst : BB) {
-        BC.MIA->removeAnnotation(Inst, derived().getAnnotationName());
+        BC.MIB->removeAnnotation(Inst, derived().getAnnotationName());
       }
     }
   }
@@ -358,7 +358,7 @@ public:
       StateTy StateAtEntry = getOrCreateStateAt(*BB);
       if (BB->isLandingPad()) {
         doForAllSuccsOrPreds(*BB, [&](ProgramPoint P) {
-          if (P.isInst() && BC.MIA->isInvoke(*P.getInst()))
+          if (P.isInst() && BC.MIB->isInvoke(*P.getInst()))
             derived().doConfluenceWithLP(StateAtEntry, *getStateAt(P),
                                          *P.getInst());
           else
@@ -388,7 +388,7 @@ public:
       auto doNext = [&] (MCInst &Inst, const BinaryBasicBlock &BB) {
         StateTy CurState = derived().computeNext(Inst, *PrevState);
 
-        if (Backward && BC.MIA->isInvoke(Inst)) {
+        if (Backward && BC.MIB->isInvoke(Inst)) {
           auto *LBB = Func.getLandingPadBBFor(BB, Inst);
           if (LBB) {
             auto First = LBB->begin();

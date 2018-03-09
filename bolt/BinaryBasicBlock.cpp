@@ -66,7 +66,7 @@ bool BinaryBasicBlock::validateSuccessorInvariants() {
     // Note: for now we assume that successors do not reference labels from
     // any overlapping jump tables.  We only look at the entries for the jump
     // table that is referenced at the last instruction.
-    const auto Range = JT->getEntriesForAddress(BC.MIA->getJumpTable(*Inst));
+    const auto Range = JT->getEntriesForAddress(BC.MIB->getJumpTable(*Inst));
     const std::vector<const MCSymbol *> Entries(&JT->Entries[Range.first],
                                                 &JT->Entries[Range.second]);
     std::set<const MCSymbol *> UniqueSyms(Entries.begin(), Entries.end());
@@ -108,7 +108,7 @@ bool BinaryBasicBlock::validateSuccessorInvariants() {
         break;
       case 1: {
         const bool HasCondBlock = CondBranch &&
-          Function->getBasicBlockForLabel(BC.MIA->getTargetSymbol(*CondBranch));
+          Function->getBasicBlockForLabel(BC.MIB->getTargetSymbol(*CondBranch));
         Valid = !CondBranch || !HasCondBlock;
         break;
       }
@@ -128,7 +128,7 @@ bool BinaryBasicBlock::validateSuccessorInvariants() {
            << getName() << "\n";
     if (JT) {
       errs() << "Jump Table instruction addr = 0x"
-             << Twine::utohexstr(BC.MIA->getJumpTable(*Inst)) << "\n";
+             << Twine::utohexstr(BC.MIB->getJumpTable(*Inst)) << "\n";
       JT->print(errs());
     }
     getFunction()->dump();
@@ -188,7 +188,7 @@ int32_t BinaryBasicBlock::getCFIStateAtInstr(const MCInst *Instr) const {
       InstrSeen = (&*RII == Instr);
       continue;
     }
-    if (Function->getBinaryContext().MIA->isCFI(*RII)) {
+    if (Function->getBinaryContext().MIB->isCFI(*RII)) {
       LastCFI = &*RII;
       break;
     }
@@ -322,8 +322,8 @@ bool BinaryBasicBlock::analyzeBranch(const MCSymbol *&TBB,
                                      const MCSymbol *&FBB,
                                      MCInst *&CondBranch,
                                      MCInst *&UncondBranch) {
-  auto &MIA = Function->getBinaryContext().MIA;
-  return MIA->analyzeBranch(Instructions.begin(),
+  auto &MIB = Function->getBinaryContext().MIB;
+  return MIB->analyzeBranch(Instructions.begin(),
                             Instructions.end(),
                             TBB,
                             FBB,
@@ -343,7 +343,7 @@ MCInst *BinaryBasicBlock::getTerminatorBefore(MCInst *Pos) {
       ++Itr;
       continue;
     }
-    if (BC.MIA->isTerminator(*Itr))
+    if (BC.MIB->isTerminator(*Itr))
       FirstTerminator = &*Itr;
     ++Itr;
   }
@@ -356,7 +356,7 @@ bool BinaryBasicBlock::hasTerminatorAfter(MCInst *Pos) {
   while (Itr != rend()) {
     if (&*Itr == Pos)
       return false;
-    if (BC.MIA->isTerminator(*Itr))
+    if (BC.MIB->isTerminator(*Itr))
       return true;
     ++Itr;
   }
@@ -376,14 +376,14 @@ void BinaryBasicBlock::addBranchInstruction(const BinaryBasicBlock *Successor) {
   assert(isSuccessor(Successor));
   auto &BC = Function->getBinaryContext();
   MCInst NewInst;
-  BC.MIA->createUncondBranch(NewInst, Successor->getLabel(), BC.Ctx.get());
+  BC.MIB->createUncondBranch(NewInst, Successor->getLabel(), BC.Ctx.get());
   Instructions.emplace_back(std::move(NewInst));
 }
 
 void BinaryBasicBlock::addTailCallInstruction(const MCSymbol *Target) {
   auto &BC = Function->getBinaryContext();
   MCInst NewInst;
-  BC.MIA->createTailCall(NewInst, Target, BC.Ctx.get());
+  BC.MIB->createTailCall(NewInst, Target, BC.Ctx.get());
   Instructions.emplace_back(std::move(NewInst));
 }
 
@@ -391,7 +391,7 @@ uint32_t BinaryBasicBlock::getNumCalls() const {
   uint32_t N{0};
   auto &BC = Function->getBinaryContext();
   for (auto &Instr : Instructions) {
-    if (BC.MIA->isCall(Instr))
+    if (BC.MIB->isCall(Instr))
       ++N;
   }
   return N;

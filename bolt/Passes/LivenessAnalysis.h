@@ -44,7 +44,7 @@ public:
 
   bool isAlive(ProgramPoint PP, MCPhysReg Reg) const {
     BitVector BV = (*this->getStateAt(PP));
-    const BitVector &RegAliases = BC.MIA->getAliases(Reg);
+    const BitVector &RegAliases = BC.MIB->getAliases(Reg);
     BV &= RegAliases;
     return BV.any();
   }
@@ -61,10 +61,10 @@ public:
     BitVector BV = *this->getStateAt(P);
     BV.flip();
     BitVector GPRegs(NumRegs, false);
-    this->BC.MIA->getGPRegs(GPRegs, /*IncludeAlias=*/false);
+    this->BC.MIB->getGPRegs(GPRegs, /*IncludeAlias=*/false);
     // Ignore the register used for frame pointer even if it is not alive (it
     // may be used by CFI which is not represented in our dataflow).
-    auto FP = BC.MIA->getAliases(BC.MIA->getFramePointer());
+    auto FP = BC.MIB->getAliases(BC.MIB->getFramePointer());
     FP.flip();
     BV &= GPRegs;
     BV &= FP;
@@ -85,11 +85,11 @@ protected:
     if (BB.succ_size() == 0) {
       BitVector State(NumRegs, false);
       if (opts::AssumeABI) {
-        BC.MIA->getDefaultLiveOut(State);
-        BC.MIA->getCalleeSavedRegs(State);
+        BC.MIB->getDefaultLiveOut(State);
+        BC.MIB->getCalleeSavedRegs(State);
       } else {
         State.set();
-        State.reset(BC.MIA->getFlagsReg());
+        State.reset(BC.MIB->getFlagsReg());
       }
       return State;
     }
@@ -106,11 +106,11 @@ protected:
 
   BitVector computeNext(const MCInst &Point, const BitVector &Cur) {
     BitVector Next = Cur;
-    bool IsCall = this->BC.MIA->isCall(Point);
+    bool IsCall = this->BC.MIB->isCall(Point);
     // Kill
     auto Written = BitVector(NumRegs, false);
     if (!IsCall) {
-      this->BC.MIA->getWrittenRegs(Point, Written);
+      this->BC.MIB->getWrittenRegs(Point, Written);
     } else {
       RA.getInstClobberList(Point, Written);
       // When clobber list is conservative, it is clobbering all/most registers,
@@ -119,12 +119,12 @@ protected:
       // because we don't really know what's going on.
       if (RA.isConservative(Written)) {
         Written.reset();
-        BC.MIA->getDefaultLiveOut(Written);
+        BC.MIB->getDefaultLiveOut(Written);
         // If ABI is respected, everything except CSRs should be dead after a
         // call
         if (opts::AssumeABI) {
           auto CSR = BitVector(NumRegs, false);
-          BC.MIA->getCalleeSavedRegs(CSR);
+          BC.MIB->getCalleeSavedRegs(CSR);
           CSR.flip();
           Written |= CSR;
         }
@@ -133,36 +133,36 @@ protected:
     Written.flip();
     Next &= Written;
     // Gen
-    if (!this->BC.MIA->isCFI(Point)) {
-      if (BC.MIA->isCleanRegXOR(Point))
+    if (!this->BC.MIB->isCFI(Point)) {
+      if (BC.MIB->isCleanRegXOR(Point))
         return Next;
 
       auto Used = BitVector(NumRegs, false);
       if (IsCall) {
         RA.getInstUsedRegsList(Point, Used, /*GetClobbers*/true);
         if (RA.isConservative(Used)) {
-          Used = BC.MIA->getRegsUsedAsParams();
-          BC.MIA->getDefaultLiveOut(Used);
+          Used = BC.MIB->getRegsUsedAsParams();
+          BC.MIB->getDefaultLiveOut(Used);
         }
       }
       const auto InstInfo = BC.MII->get(Point.getOpcode());
       for (unsigned I = 0, E = Point.getNumOperands(); I != E; ++I) {
         if (!Point.getOperand(I).isReg() || I < InstInfo.getNumDefs())
           continue;
-        Used |= BC.MIA->getAliases(Point.getOperand(I).getReg(),
+        Used |= BC.MIB->getAliases(Point.getOperand(I).getReg(),
                                    /*OnlySmaller=*/false);
       }
       for (auto
              I = InstInfo.getImplicitUses(),
              E = InstInfo.getImplicitUses() + InstInfo.getNumImplicitUses();
            I != E; ++I) {
-        Used |= BC.MIA->getAliases(*I, false);
+        Used |= BC.MIB->getAliases(*I, false);
       }
       if (IsCall &&
-          (!BC.MIA->isTailCall(Point) || !BC.MIA->isConditionalBranch(Point))) {
+          (!BC.MIB->isTailCall(Point) || !BC.MIB->isConditionalBranch(Point))) {
         // Never gen FLAGS from a non-conditional call... this is overly
         // conservative
-        Used.reset(BC.MIA->getFlagsReg());
+        Used.reset(BC.MIB->getFlagsReg());
       }
       Next |= Used;
     }

@@ -82,16 +82,16 @@ protected:
   }
 
   int computeNextSP(const MCInst &Point, int SPVal, int FPVal) {
-    const auto &MIA = this->BC.MIA;
+    const auto &MIB = this->BC.MIB;
 
-    if (int Sz = MIA->getPushSize(Point)) {
+    if (int Sz = MIB->getPushSize(Point)) {
       if (SPVal == EMPTY || SPVal == SUPERPOSITION)
         return SPVal;
 
       return SPVal - Sz;
     }
 
-    if (int Sz = MIA->getPopSize(Point)) {
+    if (int Sz = MIB->getPopSize(Point)) {
       if (SPVal == EMPTY || SPVal == SUPERPOSITION)
         return SPVal;
 
@@ -99,31 +99,31 @@ protected:
     }
 
     MCPhysReg From, To;
-    if (MIA->isRegToRegMove(Point, From, To) && To == MIA->getStackPointer() &&
-        From == MIA->getFramePointer()) {
+    if (MIB->isRegToRegMove(Point, From, To) && To == MIB->getStackPointer() &&
+        From == MIB->getFramePointer()) {
       if (FPVal == EMPTY || FPVal == SUPERPOSITION)
         return FPVal;
 
-      if (MIA->isLeave(Point))
+      if (MIB->isLeave(Point))
         return FPVal + 8;
       else
         return FPVal;
     }
 
     if (this->BC.MII->get(Point.getOpcode())
-            .hasDefOfPhysReg(Point, MIA->getStackPointer(), *this->BC.MRI)) {
+            .hasDefOfPhysReg(Point, MIB->getStackPointer(), *this->BC.MRI)) {
       std::pair<MCPhysReg, int64_t> SP;
       if (SPVal != EMPTY && SPVal != SUPERPOSITION)
-        SP = std::make_pair(MIA->getStackPointer(), SPVal);
+        SP = std::make_pair(MIB->getStackPointer(), SPVal);
       else
         SP = std::make_pair(0, 0);
       std::pair<MCPhysReg, int64_t> FP;
       if (FPVal != EMPTY && FPVal != SUPERPOSITION)
-        FP = std::make_pair(MIA->getFramePointer(), FPVal);
+        FP = std::make_pair(MIB->getFramePointer(), FPVal);
       else
         FP = std::make_pair(0, 0);
       int64_t Output;
-      if (!MIA->evaluateSimple(Point, Output, SP, FP)) {
+      if (!MIB->evaluateSimple(Point, Output, SP, FP)) {
         if (SPVal == EMPTY && FPVal == EMPTY)
           return SPVal;
         return SUPERPOSITION;
@@ -136,36 +136,36 @@ protected:
   }
 
   int computeNextFP(const MCInst &Point, int SPVal, int FPVal) {
-    const auto &MIA = this->BC.MIA;
+    const auto &MIB = this->BC.MIB;
 
     MCPhysReg From, To;
-    if (MIA->isRegToRegMove(Point, From, To) && To == MIA->getFramePointer() &&
-        From == MIA->getStackPointer()) {
+    if (MIB->isRegToRegMove(Point, From, To) && To == MIB->getFramePointer() &&
+        From == MIB->getStackPointer()) {
       HasFramePointer = true;
       return SPVal;
     }
 
     if (this->BC.MII->get(Point.getOpcode())
-            .hasDefOfPhysReg(Point, MIA->getFramePointer(), *this->BC.MRI)) {
+            .hasDefOfPhysReg(Point, MIB->getFramePointer(), *this->BC.MRI)) {
       std::pair<MCPhysReg, int64_t> FP;
       if (FPVal != EMPTY && FPVal != SUPERPOSITION)
-        FP = std::make_pair(MIA->getFramePointer(), FPVal);
+        FP = std::make_pair(MIB->getFramePointer(), FPVal);
       else
         FP = std::make_pair(0, 0);
       std::pair<MCPhysReg, int64_t> SP;
       if (SPVal != EMPTY && SPVal != SUPERPOSITION)
-        SP = std::make_pair(MIA->getStackPointer(), SPVal);
+        SP = std::make_pair(MIB->getStackPointer(), SPVal);
       else
         SP = std::make_pair(0, 0);
       int64_t Output;
-      if (!MIA->evaluateSimple(Point, Output, SP, FP)) {
+      if (!MIB->evaluateSimple(Point, Output, SP, FP)) {
         if (SPVal == EMPTY && FPVal == EMPTY)
           return FPVal;
         return SUPERPOSITION;
       }
 
       if (!HasFramePointer) {
-        if (MIA->escapesVariable(Point, false)) {
+        if (MIB->escapesVariable(Point, false)) {
           HasFramePointer = true;
         }
       }

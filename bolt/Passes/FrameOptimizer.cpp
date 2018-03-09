@@ -104,7 +104,7 @@ void FrameOptimizerPass::removeUnnecessaryLoads(const RegAnalysis &RA,
         if (FIEX->StackOffset != FIEY->StackOffset || FIEX->Size != FIEY->Size)
           continue;
         // TODO: Change push/pops to stack adjustment instruction
-        if (BC.MIA->isPop(Inst))
+        if (BC.MIB->isPop(Inst))
           continue;
 
         ++NumRedundantLoads;
@@ -116,14 +116,14 @@ void FrameOptimizerPass::removeUnnecessaryLoads(const RegAnalysis &RA,
         DEBUG(dbgs() << "@BB: " << BB.getName() << "\n");
         // Replace load
         if (FIEY->IsStoreFromReg) {
-          if (!BC.MIA->replaceMemOperandWithReg(Inst, FIEY->RegOrImm)) {
+          if (!BC.MIB->replaceMemOperandWithReg(Inst, FIEY->RegOrImm)) {
             DEBUG(dbgs() << "FAILED to change operand to a reg\n");
             break;
           }
           ++NumLoadsChangedToReg;
-          BC.MIA->removeAnnotation(Inst, "FrameAccessEntry");
+          BC.MIB->removeAnnotation(Inst, "FrameAccessEntry");
           DEBUG(dbgs() << "Changed operand to a reg\n");
-          if (BC.MIA->isRedundantMove(Inst)) {
+          if (BC.MIB->isRedundantMove(Inst)) {
             ++NumLoadsDeleted;
             DEBUG(dbgs() << "Created a redundant move\n");
             // Delete it!
@@ -133,11 +133,11 @@ void FrameOptimizerPass::removeUnnecessaryLoads(const RegAnalysis &RA,
           char Buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
           support::ulittle64_t::ref(Buf + 0) = FIEY->RegOrImm;
           DEBUG(dbgs() << "Changing operand to an imm... ");
-          if (!BC.MIA->replaceMemOperandWithImm(Inst, StringRef(Buf, 8), 0)) {
+          if (!BC.MIB->replaceMemOperandWithImm(Inst, StringRef(Buf, 8), 0)) {
             DEBUG(dbgs() << "FAILED\n");
           } else {
             ++NumLoadsChangedToImm;
-            BC.MIA->removeAnnotation(Inst, "FrameAccessEntry");
+            BC.MIB->removeAnnotation(Inst, "FrameAccessEntry");
             DEBUG(dbgs() << "Ok\n");
           }
         }
@@ -197,7 +197,7 @@ void FrameOptimizerPass::removeUnusedStores(const FrameAnalysis &FA,
         continue;
       }
       // TODO: Change push/pops to stack adjustment instruction
-      if (BC.MIA->isPush(Inst))
+      if (BC.MIB->isPush(Inst))
         continue;
 
       ++NumRedundantStores;

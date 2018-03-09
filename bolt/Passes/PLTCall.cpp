@@ -65,15 +65,15 @@ void PLTCall::runOnFunctions(
         continue;
 
       for (auto &Instr : *BB) {
-        if (!BC.MIA->isCall(Instr))
+        if (!BC.MIB->isCall(Instr))
           continue;
-        const auto *CallSymbol = BC.MIA->getTargetSymbol(Instr);
+        const auto *CallSymbol = BC.MIB->getTargetSymbol(Instr);
         if (!CallSymbol)
           continue;
         const auto *CalleeBF = BC.getFunctionForSymbol(CallSymbol);
         if (!CalleeBF || !CalleeBF->isPLTFunction())
           continue;
-        BC.MIA->convertCallToIndirectCall(Instr,
+        BC.MIB->convertCallToIndirectCall(Instr,
                                           CalleeBF->getPLTSymbol(),
                                           BC.Ctx.get());
         ++NumCallsOptimized;

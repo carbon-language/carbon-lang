@@ -17,6 +17,7 @@
 #include "BinaryData.h"
 #include "BinarySection.h"
 #include "DebugData.h"
+#include "MCPlusBuilder.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/DebugInfo/DWARF/DWARFCompileUnit.h"
@@ -222,6 +223,8 @@ public:
 
   std::unique_ptr<const MCInstrAnalysis> MIA;
 
+  std::unique_ptr<const MCPlusBuilder> MIB;
+
   std::unique_ptr<const MCRegisterInfo> MRI;
 
   std::unique_ptr<MCDisassembler> DisAsm;
@@ -270,6 +273,7 @@ public:
                 std::unique_ptr<const MCSubtargetInfo> STI,
                 std::unique_ptr<MCInstPrinter> InstPrinter,
                 std::unique_ptr<const MCInstrAnalysis> MIA,
+                std::unique_ptr<const MCPlusBuilder> MIB,
                 std::unique_ptr<const MCRegisterInfo> MRI,
                 std::unique_ptr<MCDisassembler> DisAsm,
                 DataReader &DR) :
@@ -285,6 +289,7 @@ public:
       STI(std::move(STI)),
       InstPrinter(std::move(InstPrinter)),
       MIA(std::move(MIA)),
+      MIB(std::move(MIB)),
       MRI(std::move(MRI)),
       DisAsm(std::move(DisAsm)),
       DR(DR) {
@@ -612,7 +617,7 @@ public:
       SmallString<256> Code;
       SmallVector<MCFixup, 4> Fixups;
       raw_svector_ostream VecOS(Code);
-      if (MIA->isCFI(*Beg) || MIA->isEHLabel(*Beg)) {
+      if (MIB->isCFI(*Beg) || MIB->isEHLabel(*Beg)) {
         ++Beg;
         continue;
       }
@@ -637,8 +642,8 @@ public:
   /// Return true if instruction \p Inst requires an offset for further
   /// processing (e.g. assigning a profile).
   bool keepOffsetForInstruction(const MCInst &Inst) const {
-    if (MIA->isCall(Inst) || MIA->isBranch(Inst) || MIA->isReturn(Inst) ||
-        MIA->isPrefix(Inst) || MIA->isIndirectBranch(Inst)) {
+    if (MIB->isCall(Inst) || MIB->isBranch(Inst) || MIB->isReturn(Inst) ||
+        MIB->isPrefix(Inst) || MIB->isIndirectBranch(Inst)) {
       return true;
     }
     return false;

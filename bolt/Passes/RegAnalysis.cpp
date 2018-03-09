@@ -93,7 +93,7 @@ void RegAnalysis::beConservative(BitVector &Result) const {
     Result.set();
   } else {
     BitVector BV(BC.MRI->getNumRegs(), false);
-    BC.MIA->getCalleeSavedRegs(BV);
+    BC.MIB->getCalleeSavedRegs(BV);
     BV.flip();
     Result |= BV;
   }
@@ -104,7 +104,7 @@ bool RegAnalysis::isConservative(BitVector &Vec) const {
     return Vec.all();
   } else {
     BitVector BV(BC.MRI->getNumRegs(), false);
-    BC.MIA->getCalleeSavedRegs(BV);
+    BC.MIB->getCalleeSavedRegs(BV);
     BV |= Vec;
     return BV.all();
   }
@@ -112,15 +112,15 @@ bool RegAnalysis::isConservative(BitVector &Vec) const {
 
 void RegAnalysis::getInstUsedRegsList(const MCInst &Inst, BitVector &RegSet,
                                       bool GetClobbers) const {
-  if (!BC.MIA->isCall(Inst)) {
+  if (!BC.MIB->isCall(Inst)) {
     if (GetClobbers)
-      BC.MIA->getClobberedRegs(Inst, RegSet);
+      BC.MIB->getClobberedRegs(Inst, RegSet);
     else
-      BC.MIA->getUsedRegs(Inst, RegSet);
+      BC.MIB->getUsedRegs(Inst, RegSet);
     return;
   }
 
-  const auto *TargetSymbol = BC.MIA->getTargetSymbol(Inst);
+  const auto *TargetSymbol = BC.MIB->getTargetSymbol(Inst);
   // If indirect call, we know nothing
   if (TargetSymbol == nullptr) {
     beConservative(RegSet);

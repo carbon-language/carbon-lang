@@ -59,18 +59,18 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
     YamlBB.ExecCount = BB->getKnownExecutionCount();
 
     for (const auto &Instr : *BB) {
-      if (!BC.MIA->isCall(Instr) && !BC.MIA->isIndirectBranch(Instr))
+      if (!BC.MIB->isCall(Instr) && !BC.MIB->isIndirectBranch(Instr))
         continue;
 
       yaml::bolt::CallSiteInfo CSI;
-      auto Offset = BC.MIA->tryGetAnnotationAs<uint64_t>(Instr, "Offset");
+      auto Offset = BC.MIB->tryGetAnnotationAs<uint64_t>(Instr, "Offset");
       if (!Offset || Offset.get() < BB->getInputOffset())
         continue;
       CSI.Offset = Offset.get() - BB->getInputOffset();
 
-      if (BC.MIA->isIndirectCall(Instr) || BC.MIA->isIndirectBranch(Instr)) {
+      if (BC.MIB->isIndirectCall(Instr) || BC.MIB->isIndirectBranch(Instr)) {
         auto ICSP =
-          BC.MIA->tryGetAnnotationAs<IndirectCallSiteProfile>(Instr,
+          BC.MIB->tryGetAnnotationAs<IndirectCallSiteProfile>(Instr,
                                                               "CallProfile");
         if (!ICSP)
           continue;
@@ -92,25 +92,25 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
           YamlBB.CallSites.push_back(CSI);
         }
       } else { // direct call or a tail call
-        const auto *CalleeSymbol = BC.MIA->getTargetSymbol(Instr);
+        const auto *CalleeSymbol = BC.MIB->getTargetSymbol(Instr);
         const auto Callee = BC.getFunctionForSymbol(CalleeSymbol);
         if (Callee) {
           CSI.DestId = Callee->getFunctionNumber();;
           CSI.EntryDiscriminator = Callee->getEntryForSymbol(CalleeSymbol);
         }
 
-        if (BC.MIA->getConditionalTailCall(Instr)) {
+        if (BC.MIB->getConditionalTailCall(Instr)) {
           auto CTCCount =
-            BC.MIA->tryGetAnnotationAs<uint64_t>(Instr, "CTCTakenCount");
+            BC.MIB->tryGetAnnotationAs<uint64_t>(Instr, "CTCTakenCount");
           if (CTCCount) {
             CSI.Count = *CTCCount;
             auto CTCMispreds =
-              BC.MIA->tryGetAnnotationAs<uint64_t>(Instr, "CTCMispredCount");
+              BC.MIB->tryGetAnnotationAs<uint64_t>(Instr, "CTCMispredCount");
             if (CTCMispreds)
               CSI.Mispreds = *CTCMispreds;
           }
         } else {
-          auto Count = BC.MIA->tryGetAnnotationAs<uint64_t>(Instr, "Count");
+          auto Count = BC.MIB->tryGetAnnotationAs<uint64_t>(Instr, "Count");
           if (Count)
             CSI.Count = *Count;
         }

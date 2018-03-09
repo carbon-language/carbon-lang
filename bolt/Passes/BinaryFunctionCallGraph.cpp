@@ -171,12 +171,12 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
     // If there is no profiling data the count will be COUNT_NO_PROFILE.
     auto getCallInfo = [&](const BinaryBasicBlock *BB, const MCInst &Inst) {
       std::vector<std::pair<const MCSymbol *, uint64_t>> Counts;
-      const auto *DstSym = BC.MIA->getTargetSymbol(Inst);
+      const auto *DstSym = BC.MIB->getTargetSymbol(Inst);
 
       // If this is an indirect call use perf data directly.
-      if (!DstSym && BC.MIA->hasAnnotation(Inst, "CallProfile")) {
+      if (!DstSym && BC.MIB->hasAnnotation(Inst, "CallProfile")) {
         const auto &ICSP =
-          BC.MIA->getAnnotationAs<IndirectCallSiteProfile>(Inst, "CallProfile");
+          BC.MIB->getAnnotationAs<IndirectCallSiteProfile>(Inst, "CallProfile");
         for (const auto &CSI : ICSP) {
           if (!CSI.IsFunction)
             continue;
@@ -241,7 +241,7 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
 
         for (auto &Inst : *BB) {
           // Find call instructions and extract target symbols from each one.
-          if (BC.MIA->isCall(Inst)) {
+          if (BC.MIB->isCall(Inst)) {
             const auto CallInfo = getCallInfo(BB, Inst);
 
             if (!CallInfo.empty()) {

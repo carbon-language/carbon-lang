@@ -74,7 +74,7 @@ public:
   /// Retrieves the value of the callee-saved register that is saved by this
   /// instruction or 0 if this is not a CSR save instruction.
   uint16_t getSavedReg(const MCInst &Inst) {
-    auto Val = BC.MIA->tryGetAnnotationAs<decltype(FrameIndexEntry::RegOrImm)>(
+    auto Val = BC.MIB->tryGetAnnotationAs<decltype(FrameIndexEntry::RegOrImm)>(
         Inst, getSaveTag());
     if (Val)
       return *Val;
@@ -84,7 +84,7 @@ public:
   /// Retrieves the value of the callee-saved register that is restored by this
   /// instruction or 0 if this is not a CSR restore instruction.
   uint16_t getRestoredReg(const MCInst &Inst) {
-    auto Val = BC.MIA->tryGetAnnotationAs<decltype(FrameIndexEntry::RegOrImm)>(
+    auto Val = BC.MIB->tryGetAnnotationAs<decltype(FrameIndexEntry::RegOrImm)>(
         Inst, getRestoreTag());
     if (Val)
       return *Val;
@@ -191,9 +191,9 @@ public:
   ~StackLayoutModifier() {
     for (auto &BB : BF) {
       for (auto &Inst : BB) {
-        BC.MIA->removeAnnotation(Inst, getTodoTagName());
-        BC.MIA->removeAnnotation(Inst, getSlotTagName());
-        BC.MIA->removeAnnotation(Inst, getOffsetCFIRegTagName());
+        BC.MIB->removeAnnotation(Inst, getTodoTagName());
+        BC.MIB->removeAnnotation(Inst, getSlotTagName());
+        BC.MIB->removeAnnotation(Inst, getOffsetCFIRegTagName());
       }
     }
   }
@@ -202,7 +202,7 @@ public:
   /// instruction or 0 if this is not a CSR restore instruction.
   uint16_t getOffsetCFIReg(const MCInst &Inst) {
     auto Val =
-        BC.MIA->tryGetAnnotationAs<uint16_t>(Inst, getOffsetCFIRegTagName());
+        BC.MIB->tryGetAnnotationAs<uint16_t>(Inst, getOffsetCFIRegTagName());
     if (Val)
       return *Val;
     return 0;
@@ -326,7 +326,7 @@ private:
   template <typename ...T>
   void scheduleChange(ProgramPoint PP, T&& ...Item) {
     if (PP.isInst()) {
-      auto &WList = BC.MIA->getOrCreateAnnotationAs<std::vector<WorklistItem>>(
+      auto &WList = BC.MIB->getOrCreateAnnotationAs<std::vector<WorklistItem>>(
           BC.Ctx.get(), *PP.getInst(), getAnnotationName());
       WList.emplace_back(std::forward<T>(Item)...);
       return;
@@ -343,7 +343,7 @@ private:
       assert (BB->succ_size() == 1);
       BB = *BB->succ_begin();
     }
-    auto &WList = BC.MIA->getOrCreateAnnotationAs<std::vector<WorklistItem>>(
+    auto &WList = BC.MIB->getOrCreateAnnotationAs<std::vector<WorklistItem>>(
       BC.Ctx.get(), *BB->begin(), getAnnotationName());
     WList.emplace_back(std::forward<T>(Item)...);
   }
@@ -470,7 +470,7 @@ public:
   ~ShrinkWrapping() {
     for (auto &BB : BF) {
       for (auto &Inst : BB) {
-        BC.MIA->removeAnnotation(Inst, getAnnotationName());
+        BC.MIB->removeAnnotation(Inst, getAnnotationName());
       }
     }
   }

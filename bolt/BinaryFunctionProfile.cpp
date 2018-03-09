@@ -112,7 +112,7 @@ bool BinaryFunction::recordTrace(
     auto *PrevBB = BasicBlocksLayout[FromBB->getIndex() - 1];
     if (PrevBB->getSuccessor(FromBB->getLabel())) {
       const auto *Instr = PrevBB->getLastNonPseudoInstr();
-      if (Instr && BC.MIA->isCall(*Instr)) {
+      if (Instr && BC.MIB->isCall(*Instr)) {
         FromBB = PrevBB;
       } else {
         DEBUG(dbgs() << "invalid incoming LBR (no call): " << FirstLBR << '\n');
@@ -156,7 +156,7 @@ bool BinaryFunction::recordTrace(
         const auto *Instr = BB->getLastNonPseudoInstr();
         uint64_t Offset{0};
         if (Instr) {
-          Offset = BC.MIA->getAnnotationWithDefault<uint64_t>(*Instr, "Offset");
+          Offset = BC.MIB->getAnnotationWithDefault<uint64_t>(*Instr, "Offset");
         } else {
           Offset = BB->getOffset();
         }
@@ -186,7 +186,7 @@ bool BinaryFunction::recordBranch(uint64_t From, uint64_t To,
     if (!opts::CompatMode)
       return true;
     auto *Instr = getInstructionAtOffset(0);
-    if (Instr && BC.MIA->isCall(*Instr))
+    if (Instr && BC.MIB->isCall(*Instr))
       return true;
     return false;
   }
@@ -211,10 +211,10 @@ bool BinaryFunction::recordBranch(uint64_t From, uint64_t To,
     const auto *LastInstr = ToBB->getLastNonPseudoInstr();
     if (LastInstr) {
       const auto LastInstrOffset =
-        BC.MIA->getAnnotationWithDefault<uint64_t>(*LastInstr, "Offset");
+        BC.MIB->getAnnotationWithDefault<uint64_t>(*LastInstr, "Offset");
 
       // With old .fdata we are getting FT branches for "jcc,jmp" sequences.
-      if (To == LastInstrOffset && BC.MIA->isUnconditionalBranch(*LastInstr)) {
+      if (To == LastInstrOffset && BC.MIB->isUnconditionalBranch(*LastInstr)) {
         return true;
       }
 
@@ -249,8 +249,8 @@ bool BinaryFunction::recordBranch(uint64_t From, uint64_t To,
 
   if (!FromBB->getSuccessor(ToBB->getLabel())) {
     // Check if this is a recursive call or a return from a recursive call.
-    if (ToBB->isEntryPoint() && (BC.MIA->isCall(*FromInstruction) ||
-                                 BC.MIA->isIndirectBranch(*FromInstruction))) {
+    if (ToBB->isEntryPoint() && (BC.MIB->isCall(*FromInstruction) ||
+                                 BC.MIB->isIndirectBranch(*FromInstruction))) {
       // Execution count is already accounted for.
       return true;
     }
@@ -371,7 +371,7 @@ void BinaryFunction::postProcessProfile() {
     const auto *LastInstr = BB->getLastNonPseudoInstr();
     if (!LastInstr)
       continue;
-    const auto JTAddress = BC.MIA->getJumpTable(*LastInstr);
+    const auto JTAddress = BC.MIB->getJumpTable(*LastInstr);
     if (!JTAddress)
       continue;
     auto *JT = getJumpTableContainingAddress(JTAddress);
@@ -492,27 +492,27 @@ void BinaryFunction::convertBranchData() {
 
     auto *Instr = getInstructionAtOffset(BI.From.Offset);
     if (!Instr ||
-        (!BC.MIA->isCall(*Instr) && !BC.MIA->isIndirectBranch(*Instr)))
+        (!BC.MIB->isCall(*Instr) && !BC.MIB->isIndirectBranch(*Instr)))
       continue;
 
     auto setOrUpdateAnnotation = [&](StringRef Name, uint64_t Count) {
-      if (opts::Verbosity >= 1 && BC.MIA->hasAnnotation(*Instr, Name)) {
+      if (opts::Verbosity >= 1 && BC.MIB->hasAnnotation(*Instr, Name)) {
         errs() << "BOLT-WARNING: duplicate " << Name << " info for offset 0x"
                << Twine::utohexstr(BI.From.Offset)
                << " in function " << *this << '\n';
       }
-      auto &Value = BC.MIA->getOrCreateAnnotationAs<uint64_t>(BC.Ctx.get(),
+      auto &Value = BC.MIB->getOrCreateAnnotationAs<uint64_t>(BC.Ctx.get(),
                                                               *Instr, Name);
       Value += Count;
     };
 
-    if (BC.MIA->isIndirectCall(*Instr) || BC.MIA->isIndirectBranch(*Instr)) {
+    if (BC.MIB->isIndirectCall(*Instr) || BC.MIB->isIndirectBranch(*Instr)) {
       IndirectCallSiteProfile &CSP =
-        BC.MIA->getOrCreateAnnotationAs<IndirectCallSiteProfile>(BC.Ctx.get(),
+        BC.MIB->getOrCreateAnnotationAs<IndirectCallSiteProfile>(BC.Ctx.get(),
             *Instr, "CallProfile");
       CSP.emplace_back(BI.To.IsSymbol, BI.To.Name, BI.Branches,
                        BI.Mispreds);
-    } else if (BC.MIA->getConditionalTailCall(*Instr)) {
+    } else if (BC.MIB->getConditionalTailCall(*Instr)) {
       setOrUpdateAnnotation("CTCTakenCount", BI.Branches);
       setOrUpdateAnnotation("CTCMispredCount", BI.Mispreds);
     } else {
@@ -659,9 +659,9 @@ void BinaryFunction::inferFallThroughCounts() {
     // Get taken count of conditional tail call if the block ends with one.
     uint64_t CTCTakenCount = 0;
     const auto CTCInstr = BB->getLastNonPseudoInstr();
-    if (CTCInstr && BC.MIA->getConditionalTailCall(*CTCInstr)) {
+    if (CTCInstr && BC.MIB->getConditionalTailCall(*CTCInstr)) {
       CTCTakenCount =
-        BC.MIA->getAnnotationWithDefault<uint64_t>(*CTCInstr, "CTCTakenCount");
+        BC.MIB->getAnnotationWithDefault<uint64_t>(*CTCInstr, "CTCTakenCount");
     }
 
     // Calculate frequency of throws from this node according to LBR data
@@ -696,8 +696,8 @@ void BinaryFunction::inferFallThroughCounts() {
       // Skip if the last instruction is an unconditional jump.
       const auto *LastInstr = BB->getLastNonPseudoInstr();
       if (LastInstr &&
-          (BC.MIA->isUnconditionalBranch(*LastInstr) ||
-           BC.MIA->isIndirectBranch(*LastInstr)))
+          (BC.MIB->isUnconditionalBranch(*LastInstr) ||
+           BC.MIB->isIndirectBranch(*LastInstr)))
         continue;
       // If there is an FT it will be the last successor.
       auto &SuccBI = *BB->branch_info_rbegin();
@@ -832,12 +832,12 @@ float BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
       // by regular branch instructions and we need isBranch() here.
       auto *Instr = getInstructionAtOffset(BI.From.Offset);
       // If it's a prefix - skip it.
-      if (Instr && BC.MIA->isPrefix(*Instr))
+      if (Instr && BC.MIB->isPrefix(*Instr))
         Instr = getInstructionAtOffset(BI.From.Offset + 1);
       if (Instr &&
-          (BC.MIA->isCall(*Instr) ||
-           BC.MIA->isBranch(*Instr) ||
-           BC.MIA->isReturn(*Instr))) {
+          (BC.MIB->isCall(*Instr) ||
+           BC.MIB->isBranch(*Instr) ||
+           BC.MIB->isReturn(*Instr))) {
         IsValid = true;
       }
     }

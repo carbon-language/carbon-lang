@@ -169,7 +169,7 @@ IndirectCallPromotion::getCallTargets(
     if (!opts::ICPJumpTablesByTarget && JT->Type == JumpTable::JTT_PIC)
       return Targets;
     const Location From(BF.getSymbol());
-    const auto Range = JT->getEntriesForAddress(BC.MIA->getJumpTable(Inst));
+    const auto Range = JT->getEntriesForAddress(BC.MIB->getJumpTable(Inst));
     assert(JT->Counts.empty() || JT->Counts.size() >= Range.second);
     JumpTable::JumpInfo DefaultJI;
     const auto *JI = JT->Counts.empty() ? &DefaultJI : &JT->Counts[Range.first];
@@ -233,7 +233,7 @@ IndirectCallPromotion::getCallTargets(
       return Targets;
     }
     auto ICSP =
-      BC.MIA->tryGetAnnotationAs<IndirectCallSiteProfile>(Inst, "CallProfile");
+      BC.MIB->tryGetAnnotationAs<IndirectCallSiteProfile>(Inst, "CallProfile");
     if (ICSP) {
       for (const auto &CSP : ICSP.get()) {
         Callsite Site(BF, CSP);
@@ -308,7 +308,7 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(
   int64_t DispValue;
   const MCExpr *DispExpr;
   MutableArrayRef<MCInst> Insts(&BB->front(), &CallInst);
-  const auto Type = BC.MIA->analyzeIndirectBranch(
+  const auto Type = BC.MIB->analyzeIndirectBranch(
       CallInst, Insts.begin(), Insts.end(), BC.AsmInfo->getCodePointerSize(),
       MemLocInstr, BaseReg, IndexReg, DispValue, DispExpr, PCRelBaseOut);
 
@@ -341,7 +341,7 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(
   ++TotalIndexBasedCandidates;
 
   // Try to get value profiling data for the method load instruction.
-  auto DataOffset = BC.MIA->tryGetAnnotationAs<uint64_t>(*MemLocInstr,
+  auto DataOffset = BC.MIB->tryGetAnnotationAs<uint64_t>(*MemLocInstr,
                                                          "MemDataOffset");
 
   if (!DataOffset) {
@@ -451,7 +451,7 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(
       }
     });
 
-  BC.MIA->getOrCreateAnnotationAs<uint16_t>(BC.Ctx.get(),
+  BC.MIB->getOrCreateAnnotationAs<uint16_t>(BC.Ctx.get(),
                                             CallInst,
                                             "JTIndexReg") = IndexReg;
 
@@ -561,7 +561,7 @@ IndirectCallPromotion::maybeGetVtableAddrs(
     return MethodInfoType();
 
   MutableArrayRef<MCInst> Insts(&BB->front(), &Inst + 1);
-  if (!BC.MIA->analyzeVirtualMethodCall(Insts.begin(),
+  if (!BC.MIB->analyzeVirtualMethodCall(Insts.begin(),
                                         Insts.end(),
                                         MethodFetchInsns,
                                         VtableReg,
@@ -588,7 +588,7 @@ IndirectCallPromotion::maybeGetVtableAddrs(
   );
 
   // Try to get value profiling data for the method load instruction.
-  auto DataOffset = BC.MIA->tryGetAnnotationAs<uint64_t>(*MethodFetchInsns.back(),
+  auto DataOffset = BC.MIB->tryGetAnnotationAs<uint64_t>(*MethodFetchInsns.back(),
                                                          "MemDataOffset");
 
   if (!DataOffset) {
@@ -667,12 +667,12 @@ IndirectCallPromotion::rewriteCall(
    BinaryFunction &Function,
    BinaryBasicBlock *IndCallBlock,
    const MCInst &CallInst,
-   MCInstrAnalysis::ICPdata &&ICPcode,
+   MCPlusBuilder::ICPdata &&ICPcode,
    const std::vector<MCInst *> &MethodFetchInsns
 ) const {
   // Create new basic blocks with correct code in each one first.
   std::vector<std::unique_ptr<BinaryBasicBlock>> NewBBs;
-  const bool IsTailCallOrJT = (BC.MIA->isTailCall(CallInst) ||
+  const bool IsTailCallOrJT = (BC.MIB->isTailCall(CallInst) ||
                                Function.getJumpTable(CallInst));
 
   // Move instructions from the tail of the original call block
@@ -709,8 +709,8 @@ IndirectCallPromotion::rewriteCall(
     assert(Sym);
     auto TBB = Function.createBasicBlock(0, Sym);
     for (auto &Inst : Insts) { // sanitize new instructions.
-      if (BC.MIA->isCall(Inst))
-        BC.MIA->removeAnnotation(Inst, "CallProfile");
+      if (BC.MIB->isCall(Inst))
+        BC.MIB->removeAnnotation(Inst, "CallProfile");
     }
     TBB->addInstructions(Insts.begin(), Insts.end());
     NewBBs.emplace_back(std::move(TBB));
@@ -942,7 +942,7 @@ IndirectCallPromotion::canPromoteCallsite(const BinaryBasicBlock *BB,
 
   if (opts::ICPTopCallsites > 0) {
     auto &BC = BB->getFunction()->getBinaryContext();
-    if (BC.MIA->hasAnnotation(Inst, "DoICP")) {
+    if (BC.MIB->hasAnnotation(Inst, "DoICP")) {
       computeStats(TrialN);
       return TrialN;
     }
@@ -1060,7 +1060,7 @@ IndirectCallPromotion::printCallsiteInfo(const BinaryBasicBlock *BB,
                                          const size_t N,
                                          uint64_t NumCalls) const {
   auto &BC = BB->getFunction()->getBinaryContext();
-  const bool IsTailCall = BC.MIA->isTailCall(Inst);
+  const bool IsTailCall = BC.MIB->isTailCall(Inst);
   const bool IsJumpTable = BB->getFunction()->getJumpTable(Inst);
   const auto InstIdx = &Inst - &(*BB->begin());
 
@@ -1132,7 +1132,7 @@ void IndirectCallPromotion::runOnFunctions(
           bool PrintBB = false;
           for (auto &Inst : BB) {
             if (auto Mem =
-                  BC.MIA->tryGetAnnotationAs<uint64_t>(Inst, "MemDataOffset")) {
+                  BC.MIB->tryGetAnnotationAs<uint64_t>(Inst, "MemDataOffset")) {
               for (auto &MI : MemData->getMemInfoRange(Mem.get())) {
                 if (MI.Addr.IsSymbol) {
                   PrintBB = true;
@@ -1185,9 +1185,9 @@ void IndirectCallPromotion::runOnFunctions(
         for (auto &Inst : BB) {
           const bool IsJumpTable = Function.getJumpTable(Inst);
           const bool HasIndirectCallProfile =
-            BC.MIA->hasAnnotation(Inst, "CallProfile");
-          const bool IsDirectCall = (BC.MIA->isCall(Inst) &&
-                                     BC.MIA->getTargetSymbol(Inst, 0));
+            BC.MIB->hasAnnotation(Inst, "CallProfile");
+          const bool IsDirectCall = (BC.MIB->isCall(Inst) &&
+                                     BC.MIB->getTargetSymbol(Inst, 0));
 
           if (!IsDirectCall &&
               ((HasIndirectCallProfile && !IsJumpTable && OptimizeCalls) ||
@@ -1225,7 +1225,7 @@ void IndirectCallPromotion::runOnFunctions(
     // Mark sites to optimize with "DoICP" annotation.
     for (size_t I = 0; I < Num; ++I) {
       auto *Inst = IndirectCalls[I].second;
-      BC.MIA->addAnnotation(BC.Ctx.get(), *Inst, "DoICP", true);
+      BC.MIB->addAnnotation(BC.Ctx.get(), *Inst, "DoICP", true);
     }
   }
 
@@ -1263,12 +1263,12 @@ void IndirectCallPromotion::runOnFunctions(
       for (unsigned Idx = 0; Idx < BB->size(); ++Idx) {
         auto &Inst = BB->getInstructionAtIndex(Idx);
         const auto InstIdx = &Inst - &(*BB->begin());
-        const bool IsTailCall = BC.MIA->isTailCall(Inst);
+        const bool IsTailCall = BC.MIB->isTailCall(Inst);
         const bool HasIndirectCallProfile =
-          BC.MIA->hasAnnotation(Inst, "CallProfile");
+          BC.MIB->hasAnnotation(Inst, "CallProfile");
         const bool IsJumpTable = Function.getJumpTable(Inst);
 
-        if (BC.MIA->isCall(Inst)) {
+        if (BC.MIB->isCall(Inst)) {
           TotalCalls += BB->getKnownExecutionCount();
         }
 
@@ -1277,10 +1277,10 @@ void IndirectCallPromotion::runOnFunctions(
           continue;
 
         // Ignore direct calls.
-        if (BC.MIA->isCall(Inst) && BC.MIA->getTargetSymbol(Inst, 0))
+        if (BC.MIB->isCall(Inst) && BC.MIB->getTargetSymbol(Inst, 0))
           continue;
 
-        assert((BC.MIA->isCall(Inst) || BC.MIA->isIndirectBranch(Inst))
+        assert((BC.MIB->isCall(Inst) || BC.MIB->isIndirectBranch(Inst))
                && "expected a call or an indirect jump instruction");
 
         if (IsJumpTable)
@@ -1304,7 +1304,7 @@ void IndirectCallPromotion::runOnFunctions(
         // promoting because we will clobber FLAGS.
         if (IsJumpTable) {
           auto State = Info.getLivenessAnalysis().getStateBefore(Inst);
-          if (!State || (State && (*State)[BC.MIA->getFlagsReg()])) {
+          if (!State || (State && (*State)[BC.MIB->getFlagsReg()])) {
             if (opts::Verbosity >= 1) {
               outs() << "BOLT-INFO: ICP failed in " << Function << " @ "
                      << InstIdx << " in " << BB->getName()
@@ -1372,11 +1372,11 @@ void IndirectCallPromotion::runOnFunctions(
         // Generate new promoted call code for this callsite.
         auto ICPcode =
             (IsJumpTable && !opts::ICPJumpTablesByTarget)
-                ? BC.MIA->jumpTablePromotion(Inst,
+                ? BC.MIB->jumpTablePromotion(Inst,
                                              SymTargets,
                                              MethodInfo.second,
                                              BC.Ctx.get())
-                : BC.MIA->indirectCallPromotion(
+                : BC.MIB->indirectCallPromotion(
                       Inst, SymTargets, MethodInfo.first, MethodInfo.second,
                       opts::ICPOldCodeSequence, BC.Ctx.get());
 

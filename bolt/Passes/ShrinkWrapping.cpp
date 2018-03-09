@@ -101,7 +101,7 @@ void CalleeSavedAnalysis::analyzeSaves() {
         CalleeSaved.set(FIE->RegOrImm);
         SaveFIEByReg[FIE->RegOrImm] = &*FIE;
         SavingCost[FIE->RegOrImm] += InsnToBB[&Inst]->getKnownExecutionCount();
-        BC.MIA->addAnnotation(BC.Ctx.get(), Inst, getSaveTag(), FIE->RegOrImm);
+        BC.MIB->addAnnotation(BC.Ctx.get(), Inst, getSaveTag(), FIE->RegOrImm);
         OffsetsByReg[FIE->RegOrImm] = FIE->StackOffset;
         DEBUG(dbgs() << "Logging new candidate for Callee-Saved Reg: "
                      << FIE->RegOrImm << "\n");
@@ -152,7 +152,7 @@ void CalleeSavedAnalysis::analyzeRestores() {
                      << "\n");
         if (LoadFIEByReg[FIE->RegOrImm] == nullptr)
           LoadFIEByReg[FIE->RegOrImm] = &*FIE;
-        BC.MIA->addAnnotation(BC.Ctx.get(), Inst, getRestoreTag(),
+        BC.MIB->addAnnotation(BC.Ctx.get(), Inst, getRestoreTag(),
                               FIE->RegOrImm);
         HasRestores.set(FIE->RegOrImm);
       }
@@ -186,8 +186,8 @@ std::vector<MCInst *> CalleeSavedAnalysis::getRestoresByReg(uint16_t Reg) {
 CalleeSavedAnalysis::~CalleeSavedAnalysis() {
   for (auto &BB : BF) {
     for (auto &Inst : BB) {
-      BC.MIA->removeAnnotation(Inst, getSaveTag());
-      BC.MIA->removeAnnotation(Inst, getRestoreTag());
+      BC.MIB->removeAnnotation(Inst, getSaveTag());
+      BC.MIB->removeAnnotation(Inst, getRestoreTag());
     }
   }
 }
@@ -229,7 +229,7 @@ bool StackLayoutModifier::blacklistAllInConflictWith(int64_t Offset,
 void StackLayoutModifier::checkFramePointerInitialization(MCInst &Point) {
   auto &SPT = Info.getStackPointerTracking();
   if (!BC.MII->get(Point.getOpcode())
-           .hasDefOfPhysReg(Point, BC.MIA->getFramePointer(), *BC.MRI))
+           .hasDefOfPhysReg(Point, BC.MIB->getFramePointer(), *BC.MRI))
     return;
 
   int SPVal, FPVal;
@@ -237,18 +237,18 @@ void StackLayoutModifier::checkFramePointerInitialization(MCInst &Point) {
   std::pair<MCPhysReg, int64_t> FP;
 
   if (FPVal != SPT.EMPTY && FPVal != SPT.SUPERPOSITION)
-    FP = std::make_pair(BC.MIA->getFramePointer(), FPVal);
+    FP = std::make_pair(BC.MIB->getFramePointer(), FPVal);
   else
     FP = std::make_pair(0, 0);
   std::pair<MCPhysReg, int64_t> SP;
 
   if (SPVal != SPT.EMPTY && SPVal != SPT.SUPERPOSITION)
-    SP = std::make_pair(BC.MIA->getStackPointer(), SPVal);
+    SP = std::make_pair(BC.MIB->getStackPointer(), SPVal);
   else
     SP = std::make_pair(0, 0);
 
   int64_t Output;
-  if (!BC.MIA->evaluateSimple(Point, Output, SP, FP))
+  if (!BC.MIB->evaluateSimple(Point, Output, SP, FP))
     return;
 
   // Not your regular frame pointer initialization... bail
@@ -259,7 +259,7 @@ void StackLayoutModifier::checkFramePointerInitialization(MCInst &Point) {
 void StackLayoutModifier::checkStackPointerRestore(MCInst &Point) {
   auto &SPT = Info.getStackPointerTracking();
   if (!BC.MII->get(Point.getOpcode())
-      .hasDefOfPhysReg(Point, BC.MIA->getStackPointer(), *BC.MRI))
+      .hasDefOfPhysReg(Point, BC.MIB->getStackPointer(), *BC.MRI))
     return;
   // Check if the definition of SP comes from FP -- in this case, this
   // value may need to be updated depending on our stack layout changes
@@ -270,7 +270,7 @@ void StackLayoutModifier::checkStackPointerRestore(MCInst &Point) {
     auto &Operand = Point.getOperand(I);
     if (!Operand.isReg())
       continue;
-    if (Operand.getReg() == BC.MIA->getFramePointer()) {
+    if (Operand.getReg() == BC.MIB->getFramePointer()) {
       UsesFP = true;
       break;
     }
@@ -284,18 +284,18 @@ void StackLayoutModifier::checkStackPointerRestore(MCInst &Point) {
   std::pair<MCPhysReg, int64_t> FP;
 
   if (FPVal != SPT.EMPTY && FPVal != SPT.SUPERPOSITION)
-    FP = std::make_pair(BC.MIA->getFramePointer(), FPVal);
+    FP = std::make_pair(BC.MIB->getFramePointer(), FPVal);
   else
     FP = std::make_pair(0, 0);
   std::pair<MCPhysReg, int64_t> SP;
 
   if (SPVal != SPT.EMPTY && SPVal != SPT.SUPERPOSITION)
-    SP = std::make_pair(BC.MIA->getStackPointer(), SPVal);
+    SP = std::make_pair(BC.MIB->getStackPointer(), SPVal);
   else
     SP = std::make_pair(0, 0);
 
   int64_t Output;
-  if (!BC.MIA->evaluateSimple(Point, Output, SP, FP))
+  if (!BC.MIB->evaluateSimple(Point, Output, SP, FP))
     return;
 
   // If the value is the same of FP, no need to adjust it
@@ -310,7 +310,7 @@ void StackLayoutModifier::checkStackPointerRestore(MCInst &Point) {
 
   // We are restoring SP to an old value based on FP. Mark it as a stack
   // access to be fixed later.
-  BC.MIA->addAnnotation(BC.Ctx.get(), Point, getSlotTagName(), Output);
+  BC.MIB->addAnnotation(BC.Ctx.get(), Point, getSlotTagName(), Output);
 }
 
 void StackLayoutModifier::classifyStackAccesses() {
@@ -353,7 +353,7 @@ void StackLayoutModifier::classifyStackAccesses() {
       // We are free to go. Add it as available stack slot which we know how
       // to move it.
       AvailableRegions[FIEX->StackOffset] = FIEX->Size;
-      BC.MIA->addAnnotation(BC.Ctx.get(), Inst, getSlotTagName(),
+      BC.MIB->addAnnotation(BC.Ctx.get(), Inst, getSlotTagName(),
                             FIEX->StackOffset);
       RegionToRegMap[FIEX->StackOffset].insert(FIEX->RegOrImm);
       RegToRegionMap[FIEX->RegOrImm].insert(FIEX->StackOffset);
@@ -370,8 +370,8 @@ void StackLayoutModifier::classifyCFIs() {
 
   auto recordAccess = [&](MCInst *Inst, int64_t Offset) {
     const uint16_t Reg = BC.MRI->getLLVMRegNum(CfaReg, /*isEH=*/false);
-    if (Reg == BC.MIA->getStackPointer() || Reg == BC.MIA->getFramePointer()) {
-      BC.MIA->addAnnotation(BC.Ctx.get(), *Inst, getSlotTagName(), Offset);
+    if (Reg == BC.MIB->getStackPointer() || Reg == BC.MIB->getFramePointer()) {
+      BC.MIB->addAnnotation(BC.Ctx.get(), *Inst, getSlotTagName(), Offset);
       DEBUG(dbgs() << "Recording CFI " << Offset << "\n");
     } else {
       IsSimple = false;
@@ -381,7 +381,7 @@ void StackLayoutModifier::classifyCFIs() {
 
   for (auto &BB : BF.layout()) {
     for (auto &Inst : *BB) {
-      if (!BC.MIA->isCFI(Inst))
+      if (!BC.MIB->isCFI(Inst))
         continue;
       auto *CFI = BF.getCFIFor(Inst);
       switch (CFI->getOperation()) {
@@ -398,12 +398,12 @@ void StackLayoutModifier::classifyCFIs() {
         break;
       case MCCFIInstruction::OpOffset:
         recordAccess(&Inst, CFI->getOffset());
-        BC.MIA->addAnnotation(BC.Ctx.get(), Inst, getOffsetCFIRegTagName(),
+        BC.MIB->addAnnotation(BC.Ctx.get(), Inst, getOffsetCFIRegTagName(),
                               BC.MRI->getLLVMRegNum(CFI->getRegister(),
                                                     /*isEH=*/false));
         break;
       case MCCFIInstruction::OpSameValue:
-        BC.MIA->addAnnotation(BC.Ctx.get(), Inst, getOffsetCFIRegTagName(),
+        BC.MIB->addAnnotation(BC.Ctx.get(), Inst, getOffsetCFIRegTagName(),
                               BC.MRI->getLLVMRegNum(CFI->getRegister(),
                                                     /*isEH=*/false));
         break;
@@ -431,13 +431,13 @@ void StackLayoutModifier::classifyCFIs() {
 
 void StackLayoutModifier::scheduleChange(
     MCInst &Inst, StackLayoutModifier::WorklistItem Item) {
-  auto &WList = BC.MIA->getOrCreateAnnotationAs<std::vector<WorklistItem>>(
+  auto &WList = BC.MIB->getOrCreateAnnotationAs<std::vector<WorklistItem>>(
       BC.Ctx.get(), Inst, getTodoTagName());
   WList.push_back(Item);
 }
 
 bool StackLayoutModifier::canCollapseRegion(MCInst *DeletedPush) {
-  if (!IsSimple || !BC.MIA->isPush(*DeletedPush))
+  if (!IsSimple || !BC.MIB->isPush(*DeletedPush))
     return false;
 
   auto FIE = FA.getFIEFor(*DeletedPush);
@@ -482,10 +482,10 @@ bool StackLayoutModifier::collapseRegion(MCInst *Alloc, int64_t RegionAddr,
 
   for (auto &BB : BF) {
     for (auto &Inst : BB) {
-      if (!BC.MIA->hasAnnotation(Inst, getSlotTagName()))
+      if (!BC.MIB->hasAnnotation(Inst, getSlotTagName()))
         continue;
       auto Slot =
-          BC.MIA->getAnnotationAs<decltype(FrameIndexEntry::StackOffset)>(
+          BC.MIB->getAnnotationAs<decltype(FrameIndexEntry::StackOffset)>(
               Inst, getSlotTagName());
       if (!AvailableRegions.count(Slot))
         continue;
@@ -493,7 +493,7 @@ bool StackLayoutModifier::collapseRegion(MCInst *Alloc, int64_t RegionAddr,
       if (!(*SAA.getStateBefore(Inst))[SAA.ExprToIdx[Alloc]])
         continue;
 
-      if (BC.MIA->isCFI(Inst)) {
+      if (BC.MIB->isCFI(Inst)) {
         if (Slot > RegionAddr)
           continue;
         scheduleChange(Inst, WorklistItem(WorklistItem::AdjustCFI, RegionSz));
@@ -510,18 +510,18 @@ bool StackLayoutModifier::collapseRegion(MCInst *Alloc, int64_t RegionAddr,
       }
 
       if (Slot == RegionAddr) {
-        BC.MIA->addAnnotation(BC.Ctx.get(), Inst, "AccessesDeletedPos", 0U);
+        BC.MIB->addAnnotation(BC.Ctx.get(), Inst, "AccessesDeletedPos", 0U);
         continue;
       }
-      if (BC.MIA->isPush(Inst) || BC.MIA->isPop(Inst)) {
+      if (BC.MIB->isPush(Inst) || BC.MIB->isPop(Inst)) {
         continue;
       }
 
 
-      if (FIE->StackPtrReg == BC.MIA->getStackPointer() && Slot < RegionAddr)
+      if (FIE->StackPtrReg == BC.MIB->getStackPointer() && Slot < RegionAddr)
         continue;
 
-      if (FIE->StackPtrReg == BC.MIA->getFramePointer() && Slot > RegionAddr)
+      if (FIE->StackPtrReg == BC.MIB->getFramePointer() && Slot > RegionAddr)
         continue;
 
       scheduleChange(
@@ -536,9 +536,9 @@ bool StackLayoutModifier::collapseRegion(MCInst *Alloc, int64_t RegionAddr,
 void StackLayoutModifier::setOffsetForCollapsedAccesses(int64_t NewOffset) {
   for (auto &BB : BF) {
     for (auto &Inst : BB) {
-      if (!BC.MIA->hasAnnotation(Inst, "AccessesDeletedPos"))
+      if (!BC.MIB->hasAnnotation(Inst, "AccessesDeletedPos"))
         continue;
-      BC.MIA->removeAnnotation(Inst, "AccessesDeletedPos");
+      BC.MIB->removeAnnotation(Inst, "AccessesDeletedPos");
       scheduleChange(
           Inst, WorklistItem(WorklistItem::AdjustLoadStoreOffset, NewOffset));
     }
@@ -583,10 +583,10 @@ bool StackLayoutModifier::insertRegion(ProgramPoint P, int64_t RegionSz) {
 
   for (auto &BB : BF) {
     for (auto &Inst : BB) {
-      if (!BC.MIA->hasAnnotation(Inst, getSlotTagName()))
+      if (!BC.MIB->hasAnnotation(Inst, getSlotTagName()))
         continue;
       auto Slot =
-          BC.MIA->getAnnotationAs<decltype(FrameIndexEntry::StackOffset)>(
+          BC.MIB->getAnnotationAs<decltype(FrameIndexEntry::StackOffset)>(
               Inst, getSlotTagName());
       if (!AvailableRegions.count(Slot))
         continue;
@@ -594,7 +594,7 @@ bool StackLayoutModifier::insertRegion(ProgramPoint P, int64_t RegionSz) {
       if (!(DA.doesADominateB(P, Inst)))
         continue;
 
-      if (BC.MIA->isCFI(Inst)) {
+      if (BC.MIB->isCFI(Inst)) {
         if (Slot >= RegionAddr)
           continue;
         scheduleChange(Inst, WorklistItem(WorklistItem::AdjustCFI, -RegionSz));
@@ -609,11 +609,11 @@ bool StackLayoutModifier::insertRegion(ProgramPoint P, int64_t RegionSz) {
         continue;
       }
 
-      if (FIE->StackPtrReg == BC.MIA->getStackPointer() && Slot < RegionAddr)
+      if (FIE->StackPtrReg == BC.MIB->getStackPointer() && Slot < RegionAddr)
         continue;
-      if (FIE->StackPtrReg == BC.MIA->getFramePointer() && Slot >= RegionAddr)
+      if (FIE->StackPtrReg == BC.MIB->getFramePointer() && Slot >= RegionAddr)
         continue;
-      if (BC.MIA->isPush(Inst) || BC.MIA->isPop(Inst))
+      if (BC.MIB->isPush(Inst) || BC.MIB->isPop(Inst))
         continue;
       scheduleChange(
           Inst, WorklistItem(WorklistItem::AdjustLoadStoreOffset, -RegionSz));
@@ -629,13 +629,13 @@ void StackLayoutModifier::performChanges() {
   for (auto &BB : BF) {
     for (auto I = BB.rbegin(), E = BB.rend(); I != E; ++I) {
       auto &Inst = *I;
-      if (BC.MIA->hasAnnotation(Inst, "AccessesDeletedPos")) {
-        assert(BC.MIA->isPop(Inst) || BC.MIA->isPush(Inst));
-        BC.MIA->removeAnnotation(Inst, "AccessesDeletedPos");
+      if (BC.MIB->hasAnnotation(Inst, "AccessesDeletedPos")) {
+        assert(BC.MIB->isPop(Inst) || BC.MIB->isPush(Inst));
+        BC.MIB->removeAnnotation(Inst, "AccessesDeletedPos");
       }
-      if (!BC.MIA->hasAnnotation(Inst, getTodoTagName()))
+      if (!BC.MIB->hasAnnotation(Inst, getTodoTagName()))
         continue;
-      auto &WList = BC.MIA->getAnnotationAs<std::vector<WorklistItem>>(
+      auto &WList = BC.MIB->getAnnotationAs<std::vector<WorklistItem>>(
           Inst, getTodoTagName());
       int64_t Adjustment = 0;
       WorklistItem::ActionType AdjustmentType = WorklistItem::None;
@@ -653,7 +653,7 @@ void StackLayoutModifier::performChanges() {
       if (!Adjustment)
         continue;
       if (AdjustmentType != WorklistItem::AdjustLoadStoreOffset) {
-        assert(BC.MIA->isCFI(Inst));
+        assert(BC.MIB->isCFI(Inst));
         uint32_t CFINum = Inst.getOperand(0).getImm();
         if (ModifiedCFIIndices.count(CFINum))
           continue;
@@ -675,23 +675,23 @@ void StackLayoutModifier::performChanges() {
       bool IsStoreFromReg{false};
       uint8_t Size{0};
       bool Success{false};
-      Success = BC.MIA->isStackAccess(Inst, IsLoad, IsStore, IsStoreFromReg,
+      Success = BC.MIB->isStackAccess(Inst, IsLoad, IsStore, IsStoreFromReg,
                                       Reg, SrcImm, StackPtrReg, StackOffset,
                                       Size, IsSimple, IsIndexed);
       if (!Success) {
         // SP update based on FP value
-        Success = BC.MIA->addToImm(Inst, Adjustment, &*BC.Ctx);
+        Success = BC.MIB->addToImm(Inst, Adjustment, &*BC.Ctx);
         assert(Success);
         continue;
       }
       assert(Success && IsSimple && !IsIndexed && (!IsStore || IsStoreFromReg));
-      if (StackPtrReg != BC.MIA->getFramePointer())
+      if (StackPtrReg != BC.MIB->getFramePointer())
         Adjustment = -Adjustment;
       if (IsLoad)
-        Success = BC.MIA->createRestoreFromStack(
+        Success = BC.MIB->createRestoreFromStack(
             Inst, StackPtrReg, StackOffset + Adjustment, Reg, Size);
       else if (IsStore)
-        Success = BC.MIA->createSaveToStack(
+        Success = BC.MIB->createSaveToStack(
             Inst, StackPtrReg, StackOffset + Adjustment, Reg, Size);
       DEBUG({
         dbgs() << "Adjusted instruction: ";
@@ -720,13 +720,13 @@ void ShrinkWrapping::classifyCSRUses() {
                                      BitVector(DA.NumInstrs, false));
 
   const BitVector &FPAliases =
-      BC.MIA->getAliases(BC.MIA->getFramePointer());
+      BC.MIB->getAliases(BC.MIB->getFramePointer());
   for (auto &BB : BF) {
     for (auto &Inst : BB) {
-      if (BC.MIA->isCFI(Inst))
+      if (BC.MIB->isCFI(Inst))
         continue;
       auto BV = BitVector(BC.MRI->getNumRegs(), false);
-      BC.MIA->getTouchedRegs(Inst, BV);
+      BC.MIB->getTouchedRegs(Inst, BV);
       BV &= CSA.CalleeSaved;
       for (int I = BV.find_first(); I != -1; I = BV.find_next(I)) {
         if (I == 0)
@@ -734,7 +734,7 @@ void ShrinkWrapping::classifyCSRUses() {
         if (CSA.getSavedReg(Inst) != I && CSA.getRestoredReg(Inst) != I)
           UsesByReg[I].set(DA.ExprToIdx[&Inst]);
       }
-      if (!SPT.HasFramePointer || !BC.MIA->isCall(Inst))
+      if (!SPT.HasFramePointer || !BC.MIB->isCall(Inst))
         continue;
       BV = CSA.CalleeSaved;
       BV &= FPAliases;
@@ -746,7 +746,7 @@ void ShrinkWrapping::classifyCSRUses() {
 }
 
 void ShrinkWrapping::pruneUnwantedCSRs() {
-  BitVector ParamRegs = BC.MIA->getRegsUsedAsParams();
+  BitVector ParamRegs = BC.MIB->getRegsUsedAsParams();
   for (unsigned I = 0, E = BC.MRI->getNumRegs(); I != E; ++I) {
     if (!CSA.CalleeSaved[I])
       continue;
@@ -936,7 +936,7 @@ void ShrinkWrapping::splitFrontierCritEdges(
       // and not BBs).
       if (NewBB->empty()) {
         MCInst NewInst;
-        BC.MIA->createNoop(NewInst);
+        BC.MIB->createNoop(NewInst);
         NewBB->addInstruction(std::move(NewInst));
         scheduleChange(&*NewBB->begin(), WorklistItem(WorklistItem::Erase, 0));
       }
@@ -963,7 +963,7 @@ ShrinkWrapping::doRestorePlacement(MCInst *BestPosSave, unsigned CSR,
   Frontier = DA.getDominanceFrontierFor(*BestPosSave);
   for (auto &PP : Frontier) {
     bool HasCritEdges{false};
-    if (PP.isInst() && BC.MIA->isTerminator(*PP.getInst()) &&
+    if (PP.isInst() && BC.MIB->isTerminator(*PP.getInst()) &&
         doesInstUsesCSR(*PP.getInst(), CSR)) {
       CannotPlace = true;
     }
@@ -973,7 +973,7 @@ ShrinkWrapping::doRestorePlacement(MCInst *BestPosSave, unsigned CSR,
     auto &Dests = CritEdgesTo.back();
     // Check for invoke instructions at the dominance frontier, which indicates
     // the landing pad is not dominated.
-    if (PP.isInst() && BC.MIA->isInvoke(*PP.getInst())) {
+    if (PP.isInst() && BC.MIB->isInvoke(*PP.getInst())) {
       DEBUG(dbgs() << "Bailing on restore placement to avoid LP splitting\n");
       Frontier.clear();
       return Frontier;
@@ -1100,7 +1100,7 @@ void ShrinkWrapping::scheduleOldSaveRestoresRemoval(unsigned CSR,
     std::vector<MCInst *> CFIs;
     for (auto I = BB->rbegin(), E = BB->rend(); I != E; ++I) {
       auto &Inst = *I;
-      if (BC.MIA->isCFI(Inst)) {
+      if (BC.MIB->isCFI(Inst)) {
         // Delete all offset CFIs related to this CSR
         if (SLM.getOffsetCFIReg(Inst) == CSR) {
           HasDeletedOffsetCFIs[CSR] = true;
@@ -1154,11 +1154,11 @@ void ShrinkWrapping::scheduleOldSaveRestoresRemoval(unsigned CSR,
 }
 
 bool ShrinkWrapping::doesInstUsesCSR(const MCInst &Inst, uint16_t CSR) {
-  if (BC.MIA->isCFI(Inst) || CSA.getSavedReg(Inst) == CSR ||
+  if (BC.MIB->isCFI(Inst) || CSA.getSavedReg(Inst) == CSR ||
       CSA.getRestoredReg(Inst) == CSR)
     return false;
   BitVector BV = BitVector(BC.MRI->getNumRegs(), false);
-  BC.MIA->getTouchedRegs(Inst, BV);
+  BC.MIB->getTouchedRegs(Inst, BV);
   return BV[CSR];
 }
 
@@ -1274,11 +1274,11 @@ void ShrinkWrapping::moveSaveRestores() {
       }
       for (auto I = BB.rbegin(), E = BB.rend(); I != E; ++I) {
         auto &Inst = *I;
-        auto TodoList = BC.MIA->tryGetAnnotationAs<std::vector<WorklistItem>>(
+        auto TodoList = BC.MIB->tryGetAnnotationAs<std::vector<WorklistItem>>(
             Inst, getAnnotationName());
         if (!TodoList)
           continue;
-        bool isCFI = BC.MIA->isCFI(Inst);
+        bool isCFI = BC.MIB->isCFI(Inst);
         for (auto &Item : *TodoList) {
           if (Item.Action == WorklistItem::InsertPushOrPop)
             Item.Action = WorklistItem::InsertLoadOrStore;
@@ -1388,13 +1388,13 @@ protected:
                    std::pair<int, int> &Res) {
     for (const auto &Item : TodoItems) {
       if (Item.Action == ShrinkWrapping::WorklistItem::Erase &&
-          BC.MIA->isPush(Point)) {
-        Res.first += BC.MIA->getPushSize(Point);
+          BC.MIB->isPush(Point)) {
+        Res.first += BC.MIB->getPushSize(Point);
         continue;
       }
       if (Item.Action == ShrinkWrapping::WorklistItem::Erase &&
-          BC.MIA->isPop(Point)) {
-        Res.first -= BC.MIA->getPopSize(Point);
+          BC.MIB->isPop(Point)) {
+        Res.first -= BC.MIB->getPopSize(Point);
         continue;
       }
       if (Item.Action == ShrinkWrapping::WorklistItem::InsertPushOrPop &&
@@ -1419,7 +1419,7 @@ protected:
         Res.first == StackPointerTracking::EMPTY)
       return Res;
     auto TodoItems =
-        BC.MIA->tryGetAnnotationAs<std::vector<ShrinkWrapping::WorklistItem>>(
+        BC.MIB->tryGetAnnotationAs<std::vector<ShrinkWrapping::WorklistItem>>(
             Point, ShrinkWrapping::getAnnotationName());
     if (TodoItems)
       compNextAux(Point, *TodoItems, Res);
@@ -1469,7 +1469,7 @@ void ShrinkWrapping::insertUpdatedCFI(unsigned CSR, int SPValPush,
       bool IsSimple{false};
       bool IsStoreFromReg{false};
       uint8_t Size{0};
-      if (!BC.MIA->isStackAccess(*InstIter, IsLoad, IsStore, IsStoreFromReg,
+      if (!BC.MIB->isStackAccess(*InstIter, IsLoad, IsStore, IsStoreFromReg,
                                  Reg, SrcImm, StackPtrReg, StackOffset,
                                  Size, IsSimple, IsIndexed))
         continue;
@@ -1535,11 +1535,11 @@ void ShrinkWrapping::insertUpdatedCFI(unsigned CSR, int SPValPush,
 void ShrinkWrapping::rebuildCFIForSP() {
   for (auto &BB : BF) {
     for (auto &Inst : BB) {
-      if (!BC.MIA->isCFI(Inst))
+      if (!BC.MIB->isCFI(Inst))
         continue;
       auto *CFI = BF.getCFIFor(Inst);
       if (CFI->getOperation() == MCCFIInstruction::OpDefCfaOffset)
-        BC.MIA->addAnnotation(BC.Ctx.get(), Inst, "DeleteMe", 0U);
+        BC.MIB->addAnnotation(BC.Ctx.get(), Inst, "DeleteMe", 0U);
     }
   }
 
@@ -1580,7 +1580,7 @@ void ShrinkWrapping::rebuildCFIForSP() {
 
   for (auto &BB : BF)
     for (auto I = BB.rbegin(), E = BB.rend(); I != E; ++I)
-      if (BC.MIA->hasAnnotation(*I, "DeleteMe"))
+      if (BC.MIB->hasAnnotation(*I, "DeleteMe"))
         BB.eraseInstruction(&*I);
 }
 
@@ -1591,14 +1591,14 @@ MCInst ShrinkWrapping::createStackAccess(int SPVal, int FPVal,
   if (SPVal != StackPointerTracking::SUPERPOSITION &&
       SPVal != StackPointerTracking::EMPTY) {
     if (FIE.IsLoad) {
-      if (!BC.MIA->createRestoreFromStack(NewInst, BC.MIA->getStackPointer(),
+      if (!BC.MIB->createRestoreFromStack(NewInst, BC.MIB->getStackPointer(),
                                           FIE.StackOffset - SPVal, FIE.RegOrImm,
                                           FIE.Size)) {
         errs() << "createRestoreFromStack: not supported on this platform\n";
         abort();
       }
     } else {
-      if (!BC.MIA->createSaveToStack(NewInst, BC.MIA->getStackPointer(),
+      if (!BC.MIB->createSaveToStack(NewInst, BC.MIB->getStackPointer(),
                                      FIE.StackOffset - SPVal, FIE.RegOrImm,
                                      FIE.Size)) {
         errs() << "createSaveToStack: not supported on this platform\n";
@@ -1606,21 +1606,21 @@ MCInst ShrinkWrapping::createStackAccess(int SPVal, int FPVal,
       }
     }
     if (CreatePushOrPop)
-      BC.MIA->changeToPushOrPop(NewInst);
+      BC.MIB->changeToPushOrPop(NewInst);
     return NewInst;
   }
   assert(FPVal != StackPointerTracking::SUPERPOSITION &&
          FPVal != StackPointerTracking::EMPTY);
 
   if (FIE.IsLoad) {
-    if (!BC.MIA->createRestoreFromStack(NewInst, BC.MIA->getFramePointer(),
+    if (!BC.MIB->createRestoreFromStack(NewInst, BC.MIB->getFramePointer(),
                                         FIE.StackOffset - FPVal, FIE.RegOrImm,
                                         FIE.Size)) {
       errs() << "createRestoreFromStack: not supported on this platform\n";
       abort();
     }
   } else {
-    if (!BC.MIA->createSaveToStack(NewInst, BC.MIA->getFramePointer(),
+    if (!BC.MIB->createSaveToStack(NewInst, BC.MIB->getFramePointer(),
                                    FIE.StackOffset - FPVal, FIE.RegOrImm,
                                    FIE.Size)) {
       errs() << "createSaveToStack: not supported on this platform\n";
@@ -1802,7 +1802,7 @@ bool ShrinkWrapping::processInsertions() {
     // Process insertions before some inst.
     for (auto I = BB.begin(); I != BB.end(); ++I) {
       auto &Inst = *I;
-      auto TodoList = BC.MIA->tryGetAnnotationAs<std::vector<WorklistItem>>(
+      auto TodoList = BC.MIB->tryGetAnnotationAs<std::vector<WorklistItem>>(
           Inst, getAnnotationName());
       if (!TodoList)
         continue;
@@ -1835,7 +1835,7 @@ void ShrinkWrapping::processDeletions() {
   for (auto &BB : BF) {
     for (auto I = BB.rbegin(), E = BB.rend(); I != E; ++I) {
       auto &Inst = *I;
-      auto TodoList = BC.MIA->tryGetAnnotationAs<std::vector<WorklistItem>>(
+      auto TodoList = BC.MIB->tryGetAnnotationAs<std::vector<WorklistItem>>(
           Inst, getAnnotationName());
       if (!TodoList)
         continue;
@@ -1847,13 +1847,13 @@ void ShrinkWrapping::processDeletions() {
 
         if (Item.Action == WorklistItem::ChangeToAdjustment) {
           // Is flag reg alive across this func?
-          bool DontClobberFlags = LA.isAlive(&Inst, BC.MIA->getFlagsReg());
-          if (auto Sz = BC.MIA->getPushSize(Inst)) {
-            BC.MIA->createStackPointerIncrement(Inst, Sz, DontClobberFlags);
+          bool DontClobberFlags = LA.isAlive(&Inst, BC.MIB->getFlagsReg());
+          if (auto Sz = BC.MIB->getPushSize(Inst)) {
+            BC.MIB->createStackPointerIncrement(Inst, Sz, DontClobberFlags);
             continue;
           }
-          if (auto Sz = BC.MIA->getPopSize(Inst)) {
-            BC.MIA->createStackPointerDecrement(Inst, Sz, DontClobberFlags);
+          if (auto Sz = BC.MIB->getPopSize(Inst)) {
+            BC.MIB->createStackPointerDecrement(Inst, Sz, DontClobberFlags);
             continue;
           }
         }

@@ -48,14 +48,14 @@ void StokeInfo::checkInstr(const BinaryContext &BC, const BinaryFunction &BF,
         continue;
       }
       // skip function with exception handling yet
-      if (BC.MIA->isEHLabel(It) || BC.MIA->isInvoke(It) || BC.MIA->hasEHInfo(It)) {
+      if (BC.MIB->isEHLabel(It) || BC.MIB->isInvoke(It) || BC.MIB->hasEHInfo(It)) {
         FuncInfo.Omitted = true;
         return;
       }
       // check if this function contains call instruction
-      if (BC.MIA->isCall(It)) {
+      if (BC.MIB->isCall(It)) {
         FuncInfo.HasCall = true;
-        const auto *TargetSymbol = BC.MIA->getTargetSymbol(It);
+        const auto *TargetSymbol = BC.MIB->getTargetSymbol(It);
         // if it is an indirect call, skip
         if (TargetSymbol == nullptr) {
           FuncInfo.Omitted = true;
@@ -64,12 +64,12 @@ void StokeInfo::checkInstr(const BinaryContext &BC, const BinaryFunction &BF,
       }
       // check if this function modify stack or heap
       // TODO: more accurate analysis
-      auto IsPush = BC.MIA->isPush(It);
-      auto IsRipAddr = BC.MIA->hasPCRelOperand(It);
+      auto IsPush = BC.MIB->isPush(It);
+      auto IsRipAddr = BC.MIB->hasPCRelOperand(It);
       if (IsPush) {
         FuncInfo.StackOut = true;
       }
-      if (BC.MIA->isStore(It) && !IsPush && !IsRipAddr) {
+      if (BC.MIB->isStore(It) && !IsPush && !IsRipAddr) {
         FuncInfo.HeapOut = true;
       }
       if (IsRipAddr) {
@@ -165,8 +165,8 @@ void StokeInfo::runOnFunctions(
   DefaultDefInMask.resize(NumRegs, false);
   DefaultLiveOutMask.resize(NumRegs, false);
 
-  BC.MIA->getDefaultDefIn(DefaultDefInMask);
-  BC.MIA->getDefaultLiveOut(DefaultLiveOutMask);
+  BC.MIB->getDefaultDefIn(DefaultDefInMask);
+  BC.MIB->getDefaultLiveOut(DefaultLiveOutMask);
 
   getRegNameFromBitVec(BC, DefaultDefInMask);
   getRegNameFromBitVec(BC, DefaultLiveOutMask);

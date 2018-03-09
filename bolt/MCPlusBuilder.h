@@ -1,0 +1,1347 @@
+//===--- MCPlusBuilder.h - main interface for MCPlus-level instructions ---===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// Create/analyze/modify instructions at MC+ level.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef LLVM_TOOLS_LLVM_BOLT_MCPLUSBUILDER_H
+#define LLVM_TOOLS_LLVM_BOLT_MCPLUSBUILDER_H
+
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/Optional.h"
+#include "llvm/MC/MCAnnotation.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstrAnalysis.h"
+#include "llvm/MC/MCInstrDesc.h"
+#include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCSymbol.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/ErrorOr.h"
+#include "llvm/Support/StringPool.h"
+#include <cassert>
+#include <cstdint>
+#include <set>
+#include <unordered_set>
+#include <system_error>
+#include <map>
+
+namespace llvm {
+namespace bolt {
+
+/// Different types of indirect branches encountered during disassembly.
+enum class IndirectBranchType : char {
+  UNKNOWN = 0,              /// Unable to determine type.
+  POSSIBLE_TAIL_CALL,       /// Possibly a tail call.
+  POSSIBLE_JUMP_TABLE,      /// Possibly a switch/jump table.
+  POSSIBLE_PIC_JUMP_TABLE,  /// Possibly a jump table for PIC.
+  POSSIBLE_GOTO             /// Possibly a gcc's computed goto.
+};
+
+class MCPlusBuilder {
+protected:
+  const MCInstrAnalysis *Analysis;
+  const MCInstrInfo *Info;
+  const MCRegisterInfo *RegInfo;
+
+  /// Hash a PooledStringPtr.  It's ok to use the address since all these
+  /// strings are interned.
+  struct HashPooledStringPtr {
+    size_t operator()(const PooledStringPtr &Str) const {
+      return reinterpret_cast<size_t>(Str.begin());
+    }
+  };
+
+  // This map holds onto strings in the StringPool and non-trivial
+  // MCAnnotations.  Instances of the MCAnnotation class can't hold Strings
+  // or non-trivial annotation values since they may contain memory that is
+  // not managed by MCContext.
+  mutable std::unordered_set<PooledStringPtr,
+                             HashPooledStringPtr> AnnotationNameRefs;
+  mutable StringPool AnnotationNames;
+
+  // Record all the annotations with non-trivial type.  To prevent leaks, these
+  // will need destructors called when the annotation is removed or when all
+  // annotations are destroyed.
+  mutable std::unordered_set<MCAnnotation*> AnnotationPool;
+
+public:
+  class InstructionIterator
+    : public std::iterator<std::bidirectional_iterator_tag, MCInst> {
+  public:
+    class Impl {
+    public:
+      virtual Impl *Copy() const = 0;
+      virtual void Next() = 0;
+      virtual void Prev() = 0;
+      virtual MCInst &Deref() = 0;
+      virtual bool Compare(const Impl &Other) const = 0;
+      virtual ~Impl() { }
+    };
+
+    template <typename T>
+    class SeqImpl : public Impl {
+    public:
+      virtual Impl *Copy() const override {
+        return new SeqImpl(Itr);
+      }
+      virtual void Next() override { ++Itr; }
+      virtual void Prev() override { --Itr; }
+      virtual MCInst &Deref() override {
+        return const_cast<MCInst &>(*Itr);
+      }
+      virtual bool Compare(const Impl &Other) const override {
+        // assumes that Other is same underlying type
+        return Itr == static_cast<const SeqImpl<T>&>(Other).Itr;
+      }
+      explicit SeqImpl(T &&Itr) : Itr(std::move(Itr)) { }
+      explicit SeqImpl(const T &Itr) : Itr(Itr) { }
+    private:
+      T Itr;
+    };
+
+    template <typename T>
+    class MapImpl : public Impl {
+    public:
+      virtual Impl *Copy() const override {
+        return new MapImpl(Itr);
+      }
+      virtual void Next() override { ++Itr; }
+      virtual void Prev() override { --Itr; }
+      virtual MCInst &Deref() override {
+        return const_cast<MCInst &>(Itr->second);
+      }
+      virtual bool Compare(const Impl &Other) const override {
+        // assumes that Other is same underlying type
+        return Itr == static_cast<const MapImpl<T>&>(Other).Itr;
+      }
+      explicit MapImpl(T &&Itr) : Itr(std::move(Itr)) { }
+      explicit MapImpl(const T &Itr) : Itr(Itr) { }
+    private:
+      T Itr;
+    };
+
+    InstructionIterator &operator++() {
+      Itr->Next();
+      return *this;
+    }
+    InstructionIterator &operator--() {
+      Itr->Prev();
+      return *this;
+    }
+    InstructionIterator operator++(int) {
+      std::unique_ptr<Impl> Tmp(Itr->Copy());
+      Itr->Next();
+      return InstructionIterator(std::move(Tmp));
+    }
+    InstructionIterator operator--(int) {
+      std::unique_ptr<Impl> Tmp(Itr->Copy());
+      Itr->Prev();
+      return InstructionIterator(std::move(Tmp));
+    }
+    bool operator==(const InstructionIterator& Other) const {
+      return Itr->Compare(*Other.Itr);
+    }
+    bool operator!=(const InstructionIterator& Other) const {
+      return !Itr->Compare(*Other.Itr);
+    }
+    MCInst& operator*() { return Itr->Deref(); }
+    MCInst* operator->() { return &Itr->Deref(); }
+
+    InstructionIterator &operator=(InstructionIterator &&Other) {
+      Itr = std::move(Other.Itr);
+      return *this;
+    }
+    InstructionIterator &operator=(const InstructionIterator &Other) {
+      if (this != &Other)
+        Itr.reset(Other.Itr->Copy());
+      return *this;
+    }
+    InstructionIterator() { }
+    InstructionIterator(const InstructionIterator &Other)
+      : Itr(Other.Itr->Copy()) { }
+    InstructionIterator(InstructionIterator &&Other)
+      : Itr(std::move(Other.Itr)) { }
+    explicit InstructionIterator(std::unique_ptr<Impl> Itr)
+      : Itr(std::move(Itr)) { }
+
+    InstructionIterator(std::vector<MCInst>::iterator Itr)
+      : Itr(new SeqImpl<std::vector<MCInst>::iterator>(Itr)) { }
+
+    template <typename T>
+    InstructionIterator(T *Itr)
+      : Itr(new SeqImpl<T *>(Itr)) { }
+
+    InstructionIterator(ArrayRef<MCInst>::iterator Itr)
+      : Itr(new SeqImpl<ArrayRef<MCInst>::iterator>(Itr)) { }
+
+    InstructionIterator(MutableArrayRef<MCInst>::iterator Itr)
+      : Itr(new SeqImpl<MutableArrayRef<MCInst>::iterator>(Itr)) { }
+
+    // TODO: it would be nice to templatize this on the key type.
+    InstructionIterator(std::map<uint32_t, MCInst>::iterator Itr)
+      : Itr(new MapImpl<std::map<uint32_t, MCInst>::iterator>(Itr)) { }
+  private:
+    std::unique_ptr<Impl> Itr;
+  };
+
+public:
+  MCPlusBuilder(const MCInstrAnalysis *Analysis, const MCInstrInfo *Info,
+                    const MCRegisterInfo *RegInfo)
+    : Analysis(Analysis), Info(Info), RegInfo(RegInfo) {}
+
+  virtual ~MCPlusBuilder() {
+    AnnotationNameRefs.clear();
+    for (auto *Annotation : AnnotationPool) {
+      Annotation->~MCAnnotation();
+    }
+  }
+
+  virtual bool isBranch(const MCInst &Inst) const {
+    return Analysis->isBranch(Inst);
+  }
+
+  virtual bool isConditionalBranch(const MCInst &Inst) const {
+    return Analysis->isConditionalBranch(Inst);
+  }
+
+  virtual bool isUnconditionalBranch(const MCInst &Inst) const {
+    return Analysis->isUnconditionalBranch(Inst);
+  }
+
+  virtual bool isIndirectBranch(const MCInst &Inst) const {
+    return Analysis->isIndirectBranch(Inst);
+  }
+
+  virtual bool isIndirectCall(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual bool isCall(const MCInst &Inst) const {
+    return Analysis->isCall(Inst) || isTailCall(Inst);
+  }
+
+  virtual bool isReturn(const MCInst &Inst) const {
+    return Analysis->isReturn(Inst);
+  }
+
+  virtual bool isTerminator(const MCInst &Inst) const {
+    return Analysis->isTerminator(Inst);
+  }
+
+  virtual bool isNoop(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual bool isPrefix(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual bool deleteREPPrefix(MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual bool isEHLabel(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual bool isPop(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Return the width, in bytes, of the memory access performed by \p Inst, if
+  /// this is a pop instruction. Return zero otherwise.
+  virtual int getPopSize(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return 0;
+  }
+
+  virtual bool isPush(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Return the width, in bytes, of the memory access performed by \p Inst, if
+  /// this is a push instruction. Return zero otherwise.
+  virtual int getPushSize(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return 0;
+  }
+
+  virtual bool isADD64rr(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual bool isSUB(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual bool isLEA64r(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual bool isMOVSX64rm32(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual bool isLeave(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual bool isEnter(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual bool isADRP(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual bool isMoveMem2Reg(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual bool isLoad(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual bool isStore(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual bool isCleanRegXOR(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Interface and basic functionality of a MCInstMatcher. The idea is to make
+  /// it easy to match one or more MCInsts against a tree-like pattern and
+  /// extract the fragment operands. Example:
+  ///
+  ///   auto IndJmpMatcher =
+  ///       matchIndJmp(matchAdd(matchAnyOperand(), matchAnyOperand()));
+  ///   if (!IndJmpMatcher->match(...))
+  ///     return false;
+  ///
+  /// This matches an indirect jump whose target register is defined by an
+  /// add to form the target address. Matchers should also allow extraction
+  /// of operands, for example:
+  ///
+  ///   uint64_t Scale;
+  ///   auto IndJmpMatcher = BC.MIA->matchIndJmp(
+  ///       BC.MIA->matchAnyOperand(), BC.MIA->matchImm(Scale),
+  ///       BC.MIA->matchReg(), BC.MIA->matchAnyOperand());
+  ///   if (!IndJmpMatcher->match(...))
+  ///     return false;
+  ///
+  /// Here we are interesting in extracting the scale immediate in an indirect
+  /// jump fragment.
+  ///
+  struct MCInstMatcher {
+    MutableArrayRef<MCInst> InstrWindow;
+    MutableArrayRef<MCInst>::iterator CurInst;
+    virtual ~MCInstMatcher() {}
+
+    /// Returns true if the pattern is matched. Needs MCRegisterInfo and
+    /// MCInstrAnalysis for analysis. InstrWindow contains an array
+    /// where the last instruction is always the instruction to start matching
+    /// against a fragment, potentially matching more instructions before it.
+    /// If OpNum is greater than 0, we will not match against the last
+    /// instruction itself but against an operand of the last instruction given
+    /// by the index OpNum. If this operand is a register, we will immediately
+    /// look for a previous instruction defining this register and match against
+    /// it instead. This parent member function contains common bookkeeping
+    /// required to implement this behavior.
+    virtual bool match(const MCRegisterInfo &MRI, const MCPlusBuilder &MIA,
+                       MutableArrayRef<MCInst> InInstrWindow, int OpNum) {
+      InstrWindow = InInstrWindow;
+      CurInst = InstrWindow.end();
+
+      if (!next())
+        return false;
+
+      if (OpNum < 0)
+        return true;
+
+      if (static_cast<unsigned int>(OpNum) >= CurInst->getNumOperands())
+        return false;
+
+      const auto &Op = CurInst->getOperand(OpNum);
+      if (!Op.isReg())
+        return true;
+
+      MCPhysReg Reg = Op.getReg();
+      while (next()) {
+        const auto &InstrDesc = MIA.Info->get(CurInst->getOpcode());
+        if (InstrDesc.hasDefOfPhysReg(*CurInst, Reg, MRI)) {
+          InstrWindow = InstrWindow.slice(0, CurInst - InstrWindow.begin() + 1);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    /// If successfully matched, calling this function will add an annotation
+    /// to all instructions that were matched. This is used to easily tag
+    /// instructions for deletion and implement match-and-replace operations.
+    virtual void annotate(const MCPlusBuilder &MIA, MCContext &Ctx,
+                          StringRef Annotation) {}
+
+    /// Moves internal instruction iterator to the next instruction, walking
+    /// backwards for pattern matching (effectively the previous instruction in
+    /// regular order).
+    bool next() {
+      if (CurInst == InstrWindow.begin())
+        return false;
+      --CurInst;
+      return true;
+    }
+  };
+
+  /// Matches any operand
+  struct AnyOperandMatcher : MCInstMatcher {
+    MCOperand &Op;
+    AnyOperandMatcher(MCOperand &Op) : Op(Op) {}
+
+    bool match(const MCRegisterInfo &MRI, const MCPlusBuilder &MIA,
+               MutableArrayRef<MCInst> InInstrWindow, int OpNum) override {
+      auto I = InInstrWindow.end();
+      if (I == InInstrWindow.begin())
+        return false;
+      --I;
+      if (OpNum < 0 || static_cast<unsigned int>(OpNum) >= I->getNumOperands())
+        return false;
+      Op = I->getOperand(OpNum);
+      return true;
+    }
+
+  };
+
+  /// Matches operands that are immediates
+  struct ImmMatcher : MCInstMatcher {
+    uint64_t &Imm;
+    ImmMatcher(uint64_t &Imm) : Imm(Imm) {}
+
+    bool match(const MCRegisterInfo &MRI, const MCPlusBuilder &MIA,
+               MutableArrayRef<MCInst> InInstrWindow, int OpNum) override {
+      if (!MCInstMatcher::match(MRI, MIA, InInstrWindow, OpNum))
+        return false;
+
+      if (OpNum < 0)
+        return false;
+      const auto &Op = CurInst->getOperand(OpNum);
+      if (!Op.isImm())
+        return false;
+      Imm = Op.getImm();
+      return true;
+    }
+  };
+
+  /// Matches operands that are MCSymbols
+  struct SymbolMatcher : MCInstMatcher {
+    const MCSymbol *&Sym;
+    SymbolMatcher(const MCSymbol *&Sym) : Sym(Sym) {}
+
+    bool match(const MCRegisterInfo &MRI, const MCPlusBuilder &MIA,
+               MutableArrayRef<MCInst> InInstrWindow, int OpNum) override {
+      if (!MCInstMatcher::match(MRI, MIA, InInstrWindow, OpNum))
+        return false;
+
+      if (OpNum < 0)
+        return false;
+      Sym = MIA.getTargetSymbol(*CurInst, OpNum);
+      return Sym != nullptr;
+    }
+  };
+
+  /// Matches operands that are registers
+  struct RegMatcher : MCInstMatcher {
+    MCPhysReg &Reg;
+    RegMatcher(MCPhysReg &Reg) : Reg(Reg) {}
+
+    bool match(const MCRegisterInfo &MRI, const MCPlusBuilder &MIA,
+               MutableArrayRef<MCInst> InInstrWindow, int OpNum) override {
+      auto I = InInstrWindow.end();
+      if (I == InInstrWindow.begin())
+        return false;
+      --I;
+      if (OpNum < 0 || static_cast<unsigned int>(OpNum) >= I->getNumOperands())
+        return false;
+      const auto &Op = I->getOperand(OpNum);
+      if (!Op.isReg())
+        return false;
+      Reg = Op.getReg();
+      return true;
+    }
+  };
+
+  std::unique_ptr<MCInstMatcher> matchAnyOperand(MCOperand &Op) const {
+    return std::unique_ptr<MCInstMatcher>(new AnyOperandMatcher(Op));
+  }
+
+  std::unique_ptr<MCInstMatcher> matchAnyOperand() const {
+    static MCOperand Unused;
+    return std::unique_ptr<MCInstMatcher>(new AnyOperandMatcher(Unused));
+  }
+
+  std::unique_ptr<MCInstMatcher> matchReg(MCPhysReg &Reg) const {
+    return std::unique_ptr<MCInstMatcher>(new RegMatcher(Reg));
+  }
+
+  std::unique_ptr<MCInstMatcher> matchReg() const {
+    static MCPhysReg Unused;
+    return std::unique_ptr<MCInstMatcher>(new RegMatcher(Unused));
+  }
+
+  std::unique_ptr<MCInstMatcher> matchImm(uint64_t &Imm) const {
+    return std::unique_ptr<MCInstMatcher>(new ImmMatcher(Imm));
+  }
+
+  std::unique_ptr<MCInstMatcher> matchImm() const {
+    static uint64_t Unused;
+    return std::unique_ptr<MCInstMatcher>(new ImmMatcher(Unused));
+  }
+
+  std::unique_ptr<MCInstMatcher> matchSymbol(const MCSymbol *&Sym) const {
+    return std::unique_ptr<MCInstMatcher>(new SymbolMatcher(Sym));
+  }
+
+  std::unique_ptr<MCInstMatcher> matchSymbol() const {
+    static const MCSymbol* Unused;
+    return std::unique_ptr<MCInstMatcher>(new SymbolMatcher(Unused));
+  }
+
+  virtual std::unique_ptr<MCInstMatcher>
+  matchIndJmp(std::unique_ptr<MCInstMatcher> Target) const {
+    llvm_unreachable("not implemented");
+    return nullptr;
+  }
+
+  virtual std::unique_ptr<MCInstMatcher>
+  matchIndJmp(std::unique_ptr<MCInstMatcher> Base,
+              std::unique_ptr<MCInstMatcher> Scale,
+              std::unique_ptr<MCInstMatcher> Index,
+              std::unique_ptr<MCInstMatcher> Offset) const {
+    llvm_unreachable("not implemented");
+    return nullptr;
+  }
+
+  virtual std::unique_ptr<MCInstMatcher>
+  matchAdd(std::unique_ptr<MCInstMatcher> A,
+           std::unique_ptr<MCInstMatcher> B) const {
+    llvm_unreachable("not implemented");
+    return nullptr;
+  }
+
+  virtual std::unique_ptr<MCInstMatcher>
+  matchLoadAddr(std::unique_ptr<MCInstMatcher> Target) const {
+    llvm_unreachable("not implemented");
+    return nullptr;
+  }
+
+  virtual std::unique_ptr<MCInstMatcher>
+  matchLoad(std::unique_ptr<MCInstMatcher> Base,
+            std::unique_ptr<MCInstMatcher> Scale,
+            std::unique_ptr<MCInstMatcher> Index,
+            std::unique_ptr<MCInstMatcher> Offset) const {
+    llvm_unreachable("not implemented");
+    return nullptr;
+  }
+
+  /// \brief Given a branch instruction try to get the address the branch
+  /// targets. Return true on success, and the address in Target.
+  virtual bool
+  evaluateBranch(const MCInst &Inst, uint64_t Addr, uint64_t Size,
+                 uint64_t &Target) const;
+
+  /// Return true if one of the operands of the \p Inst instruction uses
+  /// PC-relative addressing.
+  /// Note that PC-relative branches do not fall into this category.
+  virtual bool hasPCRelOperand(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Return a number of the operand representing a memory.
+  /// Return -1 if the instruction doesn't have an explicit memory field.
+  virtual int getMemoryOperandNo(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return -1;
+  }
+
+  /// Return true if the instruction is encoded using EVEX (AVX-512).
+  virtual bool hasEVEXEncoding(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Given an instruction with (compound) memory operand, evaluate and return
+  /// the corresponding values. Note that the operand could be in any position,
+  /// but there is an assumption there's only one compound memory operand.
+  /// Return true upon success, return false if the instruction does not have
+  /// a memory operand.
+  ///
+  /// Since a Displacement field could be either an immediate or an expression,
+  /// the function sets either \p DispImm or \p DispExpr value.
+  virtual bool evaluateX86MemoryOperand(const MCInst &Inst,
+                                        unsigned *BaseRegNum,
+                                        int64_t *ScaleImm,
+                                        unsigned *IndexRegNum,
+                                        int64_t *DispImm,
+                                        unsigned *SegmentRegNum,
+                                        const MCExpr **DispExpr = nullptr) const
+  {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Given an instruction with memory addressing attempt to statically compute
+  /// the address being accessed. Return true on success, and the address in
+  /// \p Target.
+  ///
+  /// For RIP-relative addressing the caller is required to pass instruction
+  /// \p Address and \p Size.
+  virtual bool evaluateMemOperandTarget(const MCInst &Inst,
+                                        uint64_t &Target,
+                                        uint64_t Address = 0,
+                                        uint64_t Size = 0) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Return operand iterator pointing to displacement in the compound memory
+  /// operand if such exists. Return Inst.end() otherwise.
+  virtual MCInst::iterator getMemOperandDisp(MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return Inst.end();
+  }
+
+  /// Analyze \p Inst and return true if this instruction accesses \p Size
+  /// bytes of the stack frame at position \p StackOffset. \p IsLoad and
+  /// \p IsStore are set accordingly. If both are set, it means it is a
+  /// instruction that reads and updates the same memory location. \p Reg is set
+  /// to the source register in case of a store or destination register in case
+  /// of a load. If the store does not use a source register, \p SrcImm will
+  /// contain the source immediate and \p IsStoreFromReg will be set to false.
+  /// \p Simple is false if the instruction is not fully understood by
+  /// companion functions "replaceMemOperandWithImm" or
+  /// "replaceMemOperandWithReg".
+  virtual bool isStackAccess(const MCInst &Inst, bool &IsLoad, bool &IsStore,
+                             bool &IsStoreFromReg, MCPhysReg &Reg,
+                             int32_t &SrcImm, uint16_t &StackPtrReg,
+                             int64_t &StackOffset, uint8_t &Size,
+                             bool &IsSimple, bool &IsIndexed) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Convert a stack accessing load/store instruction in \p Inst to a PUSH
+  /// or POP saving/restoring the source/dest reg in \p Inst. The original
+  /// stack offset in \p Inst is ignored.
+  virtual void changeToPushOrPop(MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+  }
+
+  /// Identify stack adjustment instructions -- those that change the stack
+  /// pointer by adding or subtracting an immediate.
+  virtual bool isStackAdjustment(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Use \p Input1 or Input2 as the current value for the input register and
+  /// put in \p Output the changes incurred by executing \p Inst. Return false
+  /// if it was not possible to perform the evaluation.
+  virtual bool evaluateSimple(const MCInst &Inst, int64_t &Output,
+                              std::pair<MCPhysReg, int64_t> Input1,
+                              std::pair<MCPhysReg, int64_t> Input2) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual bool isRegToRegMove(const MCInst &Inst, MCPhysReg &From,
+                              MCPhysReg &To) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual MCPhysReg getStackPointer() const {
+    llvm_unreachable("not implemented");
+    return 0;
+  }
+
+  virtual MCPhysReg getFramePointer() const {
+    llvm_unreachable("not implemented");
+    return 0;
+  }
+
+  virtual MCPhysReg getFlagsReg() const {
+    llvm_unreachable("not implemented");
+    return 0;
+  }
+
+  /// Return true if \p Inst is a instruction that copies either the frame
+  /// pointer or the stack pointer to another general purpose register or
+  /// writes it to a memory location.
+  virtual bool escapesVariable(const MCInst &Inst, bool HasFramePointer) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Replace an immediate operand in the instruction \p Inst with a reference
+  /// of the passed \p Symbol plus \p Addend. If the instruction does not have
+  /// an immediate operand or has more than one - then return false. Otherwise
+  /// return true.
+  virtual bool replaceImmWithSymbol(MCInst &Inst, MCSymbol *Symbol,
+                                    int64_t Addend, MCContext *Ctx,
+                                    int64_t &Value, uint64_t RelType) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Add \p NewImm to the current immediate operand of \p Inst. If it is a
+  /// memory accessing instruction, this immediate is the memory address
+  /// displacement. Otherwise, the target operand is the first immediate
+  /// operand found in \p Inst. Return false if no imm operand found.
+  virtual bool addToImm(MCInst &Inst, int64_t &Amt, MCContext *Ctx) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Replace the compound memory operand of Inst with an immediate operand.
+  /// The value of the immediate operand is computed by reading the \p
+  /// ConstantData array starting from \p offset and assuming little-endianess.
+  /// Return true on success. The given instruction is modified in place.
+  virtual bool replaceMemOperandWithImm(MCInst &Inst, StringRef ConstantData,
+                                        uint32_t Offset) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Same as replaceMemOperandWithImm, but for registers.
+  virtual bool replaceMemOperandWithReg(MCInst &Inst, MCPhysReg RegNum) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Return true if a move instruction moves a register to itself.
+  virtual bool isRedundantMove(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Return true if the instruction is a tail call.
+  virtual bool isTailCall(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Return true if the instruction is a call with an exception handling info.
+  virtual bool isInvoke(const MCInst &Inst) const {
+    return isCall(Inst) && hasEHInfo(Inst);
+  }
+
+  /// Return true if \p Inst is an instruction that potentially traps when
+  /// working with addresses not aligned to the size of the operand.
+  virtual bool requiresAlignedAddress(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Return true if this instruction has handler and action info.
+  bool hasEHInfo(const MCInst &Inst) const;
+
+  /// Return handler and action info for invoke instruction.
+  MCLandingPad getEHInfo(const MCInst &Inst) const;
+
+  // Add handler and action info for call instruction.
+  void addEHInfo(MCInst &Inst, const MCLandingPad &LP, MCContext *Ctx) const;
+
+  /// Return non-negative GNU_args_size associated with the instruction
+  /// or -1 if there's no associated info.
+  int64_t getGnuArgsSize(const MCInst &Inst) const;
+
+  /// Return MCSymbol that represents a target of this instruction at a given
+  /// operand number \p OpNum. If there's no symbol associated with
+  /// the operand - return nullptr.
+  virtual const MCSymbol *getTargetSymbol(const MCInst &Inst,
+                                          unsigned OpNum = 0) const {
+    llvm_unreachable("not implemented");
+    return nullptr;
+  }
+
+  /// Return MCSymbol extracted from a target expression
+  virtual const MCSymbol *getTargetSymbol(const MCExpr *Expr) const {
+    return &Expr->getSymbol();
+  }
+
+  /// Return MCSymbol/offset extracted from a target expression
+  virtual std::pair<const MCSymbol *, uint64_t>
+  getTargetSymbolInfo(const MCExpr *Expr) const {
+    if (auto *SymExpr = dyn_cast<MCSymbolRefExpr>(Expr)) {
+      return std::make_pair(&SymExpr->getSymbol(), 0);
+    } else if (auto *BinExpr = dyn_cast<MCBinaryExpr>(Expr)) {
+      const auto *SymExpr = dyn_cast<MCSymbolRefExpr>(BinExpr->getLHS());
+      const auto *ConstExpr = dyn_cast<MCConstantExpr>(BinExpr->getRHS());
+      if (BinExpr->getOpcode() == MCBinaryExpr::Add && SymExpr && ConstExpr) {
+        return std::make_pair(&SymExpr->getSymbol(), ConstExpr->getValue());
+      }
+    }
+    return std::make_pair(nullptr, 0);
+  }
+
+  /// Add the value of GNU_args_size to Inst if it already has EH info.
+  void addGnuArgsSize(MCInst &Inst, int64_t GnuArgsSize) const;
+
+  /// Return jump table addressed by this instruction.
+  uint64_t getJumpTable(const MCInst &Inst) const;
+
+  /// Set jump table addressed by this instruction.
+  bool setJumpTable(MCContext *Ctx, MCInst &Inst, uint64_t Value,
+                    uint16_t IndexReg) const;
+
+  /// Return destination of conditional tail call instruction if \p Inst is one.
+  Optional<uint64_t> getConditionalTailCall(const MCInst &Inst) const;
+
+  /// Mark the \p Instruction as a conditional tail call, and set its
+  /// destination address if it is known. If \p Instruction was already marked,
+  /// update its destination with \p Dest.
+  bool setConditionalTailCall(MCInst &Inst, uint64_t Dest = 0) const;
+
+  /// If \p Inst was marked as a conditional tail call convert it to a regular
+  /// branch. Return true if the instruction was converted.
+  bool unsetConditionalTailCall(MCInst &Inst) const;
+
+  /// Replace displacement in compound memory operand with given \p Operand.
+  virtual bool replaceMemOperandDisp(MCInst &Inst, MCOperand Operand) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Return the MCExpr used for absolute references in this target
+  virtual const MCExpr *getTargetExprFor(MCInst &Inst, const MCExpr *Expr,
+                                         MCContext &Ctx,
+                                         uint64_t RelType) const {
+    return Expr;
+  }
+
+  /// Return a BitVector marking all sub or super registers of \p Reg, including
+  /// itself.
+  virtual const BitVector &getAliases(MCPhysReg Reg,
+                                      bool OnlySmaller = false) const;
+
+  /// Change \p Regs setting all registers used to pass parameters according
+  /// to the host abi. Do nothing if not implemented.
+  virtual BitVector getRegsUsedAsParams() const {
+    llvm_unreachable("not implemented");
+    return BitVector();
+  }
+
+  /// Change \p Regs setting all registers used as callee-saved according
+  /// to the host abi. Do nothing if not implemented.
+  virtual void getCalleeSavedRegs(BitVector &Regs) const {
+    llvm_unreachable("not implemented");
+  }
+
+  /// Get the default def_in and live_out registers for the function
+  /// Currently only used for the Stoke optimzation
+  virtual void getDefaultDefIn(BitVector &Regs) const {
+    llvm_unreachable("not implemented");
+  }
+
+  /// Similar to getDefaultDefIn
+  virtual void getDefaultLiveOut(BitVector &Regs) const {
+    llvm_unreachable("not implemented");
+  }
+
+  /// Change \p Regs with a bitmask with all general purpose regs
+  virtual void getGPRegs(BitVector &Regs, bool IncludeAlias = true) const {
+    llvm_unreachable("not implemented");
+  }
+
+  /// Change \p Regs with a bitmask with all general purpose regs that can be
+  /// encoded without extra prefix bytes. For x86 only.
+  virtual void getClassicGPRegs(BitVector &Regs) const {
+    llvm_unreachable("not implemented");
+  }
+
+  /// Return the register width in bytes (1, 2, 4 or 8)
+  virtual uint8_t getRegSize(MCPhysReg Reg) const;
+
+  /// For aliased registers, return an alias of \p Reg that has the width of
+  /// \p Size bytes
+  virtual MCPhysReg getAliasSized(MCPhysReg Reg, uint8_t Size) const {
+    llvm_unreachable("not implemented");
+    return 0;
+  }
+
+  /// For X86, return whether this register is an upper 8-bit register, such as
+  /// AH, BH, etc.
+  virtual bool isUpper8BitReg(MCPhysReg Reg) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// For X86, return whether this instruction has special constraints that
+  /// prevents it from encoding registers that require a REX prefix.
+  virtual bool cannotUseREX(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Modifies the set \p Regs by adding registers \p Inst may rewrite. Caller
+  /// is responsible for passing a valid BitVector with the size equivalent to
+  /// the number of registers in the target.
+  /// Since this function is called many times during clobber analysis, it
+  /// expects the caller to manage BitVector creation to avoid extra overhead.
+  virtual void getClobberedRegs(const MCInst &Inst, BitVector &Regs) const;
+
+  /// Set of all registers touched by this instruction, including implicit uses
+  /// and defs.
+  virtual void getTouchedRegs(const MCInst &Inst, BitVector &Regs) const;
+
+  /// Set of all registers being written to by this instruction -- includes
+  /// aliases but only if they are strictly smaller than the actual reg
+  virtual void getWrittenRegs(const MCInst &Inst, BitVector &Regs) const;
+
+  /// Set of all registers being read by this instruction -- includes aliases
+  /// but only if they are strictly smaller than the actual reg
+  virtual void getUsedRegs(const MCInst &Inst, BitVector &Regs) const;
+
+  /// Replace displacement in compound memory operand with given \p Label.
+  bool replaceMemOperandDisp(MCInst &Inst, const MCSymbol *Label,
+                             MCContext *Ctx) const {
+    return replaceMemOperandDisp(
+        Inst, MCOperand::createExpr(MCSymbolRefExpr::create(Label, *Ctx)));
+  }
+
+  /// Returns how many bits we have in this instruction to encode a PC-rel
+  /// imm.
+  virtual int getPCRelEncodingSize(MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return 0;
+  }
+
+  /// Replace instruction opcode to be a tail call instead of jump.
+  virtual bool convertJmpToTailCall(MCInst &Inst, MCContext *Ctx) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Perform any additional actions to transform a (conditional) tail call
+  /// into a (conditional) jump. Assume the target was already replaced with
+  /// a local one, so the default is to do nothing more.
+  virtual bool convertTailCallToJmp(MCInst &Inst) const {
+    return true;
+  }
+
+  /// Replace instruction opcode to be a regural call instead of tail call.
+  virtual bool convertTailCallToCall(MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Modify a direct call instruction \p Inst with an indirect call taking
+  /// a destination from a memory location pointed by \p TargetLocation symbol.
+  virtual bool convertCallToIndirectCall(MCInst &Inst,
+                                         const MCSymbol *TargetLocation,
+                                         MCContext *Ctx) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Replace instruction with a shorter version that could be relaxed later
+  /// if needed.
+  virtual bool shortenInstruction(MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Lower a tail call instruction \p Inst if required by target.
+  virtual bool lowerTailCall(MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Receives a list of MCInst of the basic block to analyze and interpret the
+  /// terminators of this basic block. TBB must be initialized with the original
+  /// fall-through for this BB.
+  virtual bool analyzeBranch(InstructionIterator Begin,
+                             InstructionIterator End,
+                             const MCSymbol *&TBB,
+                             const MCSymbol *&FBB,
+                             MCInst *&CondBranch,
+                             MCInst *&UncondBranch) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Analyze \p Instruction to try and determine what type of indirect branch
+  /// it is.  It is assumed that \p Instruction passes isIndirectBranch().
+  /// \p BB is an array of instructions immediately preceding \p Instruction.
+  /// If \p Instruction can be successfully analyzed, the output parameters
+  /// will be set to the different components of the branch.  \p MemLocInstr
+  /// is the instruction that loads up the indirect function pointer.  It may
+  /// or may not be same as \p Instruction.
+  virtual IndirectBranchType analyzeIndirectBranch(
+     MCInst &Instruction,
+     InstructionIterator Begin,
+     InstructionIterator End,
+     const unsigned PtrSize,
+     MCInst *&MemLocInstr,
+     unsigned &BaseRegNum,
+     unsigned &IndexRegNum,
+     int64_t &DispValue,
+     const MCExpr *&DispExpr,
+     MCInst *&PCRelBaseOut
+  ) const {
+    llvm_unreachable("not implemented");
+    return IndirectBranchType::UNKNOWN;
+  }
+
+  virtual bool
+  analyzeVirtualMethodCall(InstructionIterator Begin,
+                           InstructionIterator End,
+                           std::vector<MCInst *> &MethodFetchInsns,
+                           unsigned &VtableRegNum,
+                           unsigned &BaseRegNum,
+                           uint64_t &MethodOffset) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual void createLongJmp(std::vector<MCInst> &Seq, const MCSymbol *Target,
+                             MCContext *Ctx) const {
+    assert(0 && "not implemented");
+  }
+
+  virtual void createShortJmp(std::vector<MCInst> &Seq, const MCSymbol *Target,
+                              MCContext *Ctx) const {
+    assert(0 && "not implemented");
+  }
+
+  virtual int getShortJmpEncodingSize() const {
+    assert(0 && "not implemented");
+    return 0;
+  }
+
+  virtual int getUncondBranchEncodingSize() const {
+    assert(0 && "not implemented");
+    return 0;
+  }
+
+  /// Create a no-op instruction.
+  virtual bool createNoop(MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Create a return instruction.
+  virtual bool createReturn(MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Creates a new unconditional branch instruction in Inst and set its operand
+  /// to TBB.
+  ///
+  /// Returns true on success.
+  virtual bool createUncondBranch(MCInst &Inst, const MCSymbol *TBB,
+                                  MCContext *Ctx) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Creates a new tail call instruction in Inst and sets its operand to
+  /// Target.
+  ///
+  /// Returns true on success.
+  virtual bool createTailCall(MCInst &Inst, const MCSymbol *Target,
+                              MCContext *Ctx) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Creates a trap instruction in Inst.
+  ///
+  /// Returns true on success.
+  virtual bool createTrap(MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Creates an instruction to bump the stack pointer just like a call.
+  virtual bool createStackPointerIncrement(MCInst &Inst, int Size = 8,
+                                           bool NoFlagsClobber = false) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Creates an instruction to move the stack pointer just like a ret.
+  virtual bool createStackPointerDecrement(MCInst &Inst, int Size = 8,
+                                           bool NoFlagsClobber = false) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Create a store instruction using \p StackReg as the base register
+  /// and \p Offset as the displacement.
+  virtual bool createSaveToStack(MCInst &Inst, const MCPhysReg &StackReg,
+                                 int Offset, const MCPhysReg &SrcReg,
+                                 int Size) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual bool createLoad(MCInst &Inst, const MCPhysReg &BaseReg, int Scale,
+                          const MCPhysReg &IndexReg, int Offset,
+                          const MCPhysReg &DstReg, int Size) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Create a fragment of code (sequence of instructions) that load a 32-bit
+  /// address from memory, zero-extends it to 64 and jump to it (indirect jump).
+  virtual bool
+  createIJmp32Frag(SmallVectorImpl<MCInst> &Insts, const MCOperand &BaseReg,
+                   const MCOperand &Scale, const MCOperand &IndexReg,
+                   const MCOperand &Offset, const MCOperand &TmpReg) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Create a load instruction using \p StackReg as the base register
+  /// and \p Offset as the displacement.
+  virtual bool createRestoreFromStack(MCInst &Inst, const MCPhysReg &StackReg,
+                                      int Offset, const MCPhysReg &DstReg,
+                                      int Size) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Creates a call frame pseudo instruction. A single operand identifies which
+  /// MCCFIInstruction this MCInst is referring to.
+  ///
+  /// Returns true on success.
+  virtual bool createCFI(MCInst &Inst, int64_t Offset) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Returns true if instruction is a call frame pseudo instruction.
+  virtual bool isCFI(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Reverses the branch condition in Inst and update its taken target to TBB.
+  ///
+  /// Returns true on success.
+  virtual bool reverseBranchCondition(MCInst &Inst, const MCSymbol *TBB,
+                                      MCContext *Ctx) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Return canonical branch opcode for a reversible branch opcode. For every
+  /// opposite branch opcode pair Op <-> OpR this function returns one of the
+  /// opcodes which is considered a canonical.
+  virtual unsigned getCanonicalBranchOpcode(unsigned BranchOpcode) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Sets the taken target of the branch instruction to Target.
+  ///
+  /// Returns true on success.
+  virtual bool replaceBranchTarget(MCInst &Inst, const MCSymbol *TBB,
+                                   MCContext *Ctx) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual bool createEHLabel(MCInst &Inst, const MCSymbol *Label,
+                             MCContext *Ctx) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Store an annotation value on an MCInst.  This assumes the annotation
+  /// is not already present.
+  template <typename ValueType,
+            typename PrintType = MCAnnotationPrinter<ValueType>>
+  const ValueType &addAnnotation(MCContext *Ctx,
+                                 MCInst &Inst,
+                                 StringRef Name,
+                                 const ValueType &Val,
+                                 const PrintType &Print = PrintType()) const {
+    assert(!hasAnnotation(Inst, Name));
+    auto PooledName = AnnotationNames.intern(Name);
+    AnnotationNameRefs.insert(PooledName);
+    auto A = createSimpleAnnotation(*Ctx, *PooledName, Val, Print);
+    if (!std::is_trivial<ValueType>::value) {
+      AnnotationPool.insert(A);
+    }
+    Inst.addOperand(MCOperand::createAnnotation(A));
+    using AnnotationType = const MCSimpleAnnotation<ValueType,PrintType> *;
+    auto &Op = Inst.getOperand(Inst.getNumOperands() - 1);
+    return static_cast<AnnotationType>(Op.getAnnotation())->getValue();
+  }
+
+  /// Remove Annotation associated with Name.
+  /// Return true if the annotation were removed, false if the
+  /// annotation were not present.
+  bool removeAnnotation(MCInst &Inst, StringRef Name) const;
+
+  /// Remove all annotations from Inst.
+  void removeAllAnnotations(MCInst &Inst) const;
+
+  /// Rename annotation from Before to After.  Return false if
+  /// the annotation does not exist.
+  bool renameAnnotation(MCInst &Inst, StringRef Before, StringRef After) const;
+
+  /// Check if the specified annotation exists on this instruction.
+  bool hasAnnotation(const MCInst &Inst, StringRef Name) const;
+
+  /// Get an annotation.  Assumes that the annotation exists.
+  /// Use hasAnnotation() if the annotation may not exist.
+  const MCAnnotation *getAnnotation(const MCInst &Inst, StringRef Name) const;
+
+  /// Get an annotation as a specific value.  Assumes that the annotation exist.
+  /// Use hasAnnotation() if the annotation may not exist.
+  template <typename ValueType>
+  const ValueType &getAnnotationAs(const MCInst &Inst, StringRef Name) const {
+    const auto *Annotation = getAnnotation(Inst, Name);
+    assert(Annotation->isa(Name));
+    using AnnotationType = const MCSimpleAnnotation<ValueType> *;
+    return static_cast<AnnotationType>(Annotation)->getValue();
+  }
+
+  /// Get an annotation as a specific value. If the annotation does not exist,
+  /// return the \p DefaultValue.
+  template <typename ValueType> const ValueType &
+  getAnnotationWithDefault(const MCInst &Inst, StringRef Name,
+                           const ValueType &DefaultValue = ValueType()) const {
+    if (!hasAnnotation(Inst, Name))
+      return DefaultValue;
+    return getAnnotationAs<ValueType>(Inst, Name);
+  }
+
+  /// Get an annotation as a specific value, but if the annotation does not
+  /// exist, return errc::result_out_of_range.
+  template <typename ValueType>
+  ErrorOr<const ValueType &> tryGetAnnotationAs(const MCInst &Inst,
+                                                StringRef Name) const {
+    if (!hasAnnotation(Inst, Name))
+      return make_error_code(std::errc::result_out_of_range);
+    return getAnnotationAs<ValueType>(Inst, Name);
+  }
+
+  template <typename ValueType>
+  ErrorOr<ValueType &> tryGetAnnotationAs(MCInst &Inst,
+                                          StringRef Name) const {
+    if (!hasAnnotation(Inst, Name))
+      return make_error_code(std::errc::result_out_of_range);
+    return const_cast<ValueType &>(getAnnotationAs<ValueType>(Inst, Name));
+  }
+
+  /// Get an annotation as a specific value, but if the annotation does not
+  /// exist, create a new annotation with the default constructor for that type.
+  /// Return a non-const ref so caller can freely modify its contents
+  /// afterwards.
+  template <typename ValueType,
+            typename PrintType = MCAnnotationPrinter<ValueType>> ValueType&
+  getOrCreateAnnotationAs(MCContext *Ctx,
+                          MCInst &Inst,
+                          StringRef Name,
+                          const PrintType &Print = PrintType()) const {
+    auto Val = tryGetAnnotationAs<ValueType>((const MCInst &)Inst, Name);
+    if (!Val) {
+      Val = addAnnotation(Ctx, Inst, Name, ValueType(), Print);
+    }
+    return const_cast<ValueType&>(*Val);
+  }
+
+  /// Apply a function to each annotation attached to the given instruction.
+  template <typename Fn>
+  void forEachAnnotation(const MCInst &Inst, Fn &&Func) const {
+    for (unsigned I = 0; I < Inst.getNumOperands(); ++I) {
+      const auto& Op = Inst.getOperand(I);
+      if (Op.isAnnotation()) {
+        Func(Op.getAnnotation());
+      }
+    }
+  }
+
+  /// This method takes an indirect call instruction and splits it up into an
+  /// equivalent set of instructions that use direct calls for target
+  /// symbols/addresses that are contained in the Targets vector.  This is done
+  /// by guarding each direct call with a compare instruction to verify that
+  /// the target is correct.
+  /// If the VtableAddrs vector is not empty, the call will have the extra
+  /// load of the method pointer from the vtable eliminated.  When non-empty
+  /// the VtableAddrs vector must be the same size as Targets and include the
+  /// address of a vtable for each corresponding method call in Targets.  The
+  /// MethodFetchInsns vector holds instructions that are used to load the
+  /// correct method for the cold call case.
+  ///
+  /// The return value is a vector of code snippets (essentially basic blocks).
+  /// There is a symbol associated with each snippet except for the first.
+  /// If the original call is not a tail call, the last snippet will have an
+  /// empty vector of instructions.  The label is meant to indicate the basic
+  /// block where all previous snippets are joined, i.e. the instructions that
+  /// would immediate follow the original call.
+  using ICPdata = std::vector<std::pair<MCSymbol*, std::vector<MCInst>>>;
+  virtual ICPdata indirectCallPromotion(
+    const MCInst &CallInst,
+    const std::vector<std::pair<MCSymbol *,uint64_t>>& Targets,
+    const std::vector<uint64_t> &VtableAddrs,
+    const std::vector<MCInst *> &MethodFetchInsns,
+    const bool MinimizeCodeSize,
+    MCContext *Ctx
+  ) const {
+    llvm_unreachable("not implemented");
+    return ICPdata();
+  }
+
+  virtual ICPdata jumpTablePromotion(
+    const MCInst &IJmpInst,
+    const std::vector<std::pair<MCSymbol *,uint64_t>>& Targets,
+    const std::vector<MCInst *> &TargetFetchInsns,
+    MCContext *Ctx
+  ) const {
+    llvm_unreachable("not implemented");
+    return ICPdata();
+  }
+
+};
+
+} // namespace bolt
+} // namespace llvm
+
+#endif

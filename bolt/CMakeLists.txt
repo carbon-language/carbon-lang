@@ -1,5 +1,6 @@
 add_subdirectory(merge-fdata)
 add_subdirectory(Passes)
+add_subdirectory(Target)
 
 # Get the current git revision for BOLT.
 function(get_version ofn)
@@ -47,6 +48,8 @@ add_public_gen_version_target(GenBoltRevision)
 set(LLVM_LINK_COMPONENTS
   ${LLVM_TARGETS_TO_BUILD}
   BOLTPasses
+  BOLTTargetAArch64
+  BOLTTargetX86
   CodeGen
   Core
   DebugInfoDWARF
@@ -75,6 +78,7 @@ add_llvm_tool(llvm-bolt
   DWARFRewriter.cpp
   Exceptions.cpp
   JumpTable.cpp
+  MCPlusBuilder.cpp
   ProfileReader.cpp
   ProfileWriter.cpp
   Relocation.cpp

@@ -34,7 +34,7 @@ createNewStub(const BinaryContext &BC, BinaryFunction &Func,
   auto *StubSym = BC.Ctx->createTempSymbol("Stub", true);
   auto StubBB = Func.createBasicBlock(0, StubSym);
   std::vector<MCInst> Seq;
-  BC.MIA->createLongJmp(Seq, TgtSym, BC.Ctx.get());
+  BC.MIB->createLongJmp(Seq, TgtSym, BC.Ctx.get());
   StubBB->addInstructions(Seq.begin(), Seq.end());
   StubBB->setExecutionCount(0);
   return std::make_pair(std::move(StubBB), StubSym);
@@ -43,7 +43,7 @@ createNewStub(const BinaryContext &BC, BinaryFunction &Func,
 void shrinkStubToShortJmp(const BinaryContext &BC, BinaryBasicBlock &StubBB,
                           const MCSymbol *Tgt) {
   std::vector<MCInst> Seq;
-  BC.MIA->createShortJmp(Seq, Tgt, BC.Ctx.get());
+  BC.MIB->createShortJmp(Seq, Tgt, BC.Ctx.get());
   StubBB.clear();
   StubBB.addInstructions(Seq.begin(), Seq.end());
 }
@@ -51,9 +51,9 @@ void shrinkStubToShortJmp(const BinaryContext &BC, BinaryBasicBlock &StubBB,
 void shrinkStubToSingleInst(const BinaryContext &BC, BinaryBasicBlock &StubBB,
                             const MCSymbol *Tgt, bool TgtIsFunc) {
   MCInst Inst;
-  BC.MIA->createUncondBranch(Inst, Tgt, BC.Ctx.get());
+  BC.MIB->createUncondBranch(Inst, Tgt, BC.Ctx.get());
   if (TgtIsFunc)
-    BC.MIA->convertJmpToTailCall(Inst, BC.Ctx.get());
+    BC.MIB->convertJmpToTailCall(Inst, BC.Ctx.get());
   StubBB.clear();
   StubBB.addInstruction(Inst);
 }
@@ -77,7 +77,7 @@ LongJmpPass::replaceTargetWithStub(const BinaryContext &BC,
                                    BinaryFunction &Func, BinaryBasicBlock &BB,
                                    MCInst &Inst) {
   std::unique_ptr<BinaryBasicBlock> NewBB;
-  auto TgtSym = BC.MIA->getTargetSymbol(Inst);
+  auto TgtSym = BC.MIB->getTargetSymbol(Inst);
   assert (TgtSym && "getTargetSymbol failed");
 
   BinaryBasicBlock::BinaryBranchInfo BI{0, 0};
@@ -87,14 +87,14 @@ LongJmpPass::replaceTargetWithStub(const BinaryContext &BC,
   if (TgtBB && TgtBB->isCold() == BB.isCold()) {
     // Suppose we have half the available space to account for increase in the
     // function size due to extra blocks being inserted (conservative estimate)
-    auto BitsAvail = BC.MIA->getPCRelEncodingSize(Inst) - 2;
+    auto BitsAvail = BC.MIB->getPCRelEncodingSize(Inst) - 2;
     uint64_t Mask = ~((1ULL << BitsAvail) - 1);
     if (!(Func.getMaxSize() & Mask))
       return nullptr;
     // This is a special case for fixBranches, which is usually free to swap
     // targets when a block has two successors. The other successor may not
     // fit in this instruction as well.
-    BC.MIA->addAnnotation(BC.Ctx.get(), Inst, "DoNotChangeTarget", true);
+    BC.MIB->addAnnotation(BC.Ctx.get(), Inst, "DoNotChangeTarget", true);
   }
 
   BinaryBasicBlock *StubBB =
@@ -128,7 +128,7 @@ LongJmpPass::replaceTargetWithStub(const BinaryContext &BC,
       StubBB->setEntryPoint(true);
     }
   }
-  BC.MIA->replaceBranchTarget(Inst, StubSymbol, BC.Ctx.get());
+  BC.MIB->replaceBranchTarget(Inst, StubSymbol, BC.Ctx.get());
   ++StubRefCount[StubBB];
   StubBits[StubBB] = BC.AsmInfo->getCodePointerSize() * 8;
 
@@ -145,8 +145,8 @@ LongJmpPass::replaceTargetWithStub(const BinaryContext &BC,
 namespace {
 
 bool shouldInsertStub(const BinaryContext &BC, const MCInst &Inst) {
-  return (BC.MIA->isBranch(Inst) || BC.MIA->isCall(Inst)) &&
-         !BC.MIA->isIndirectBranch(Inst) && !BC.MIA->isIndirectCall(Inst);
+  return (BC.MIB->isBranch(Inst) || BC.MIB->isCall(Inst)) &&
+         !BC.MIB->isIndirectBranch(Inst) && !BC.MIB->isIndirectCall(Inst);
 }
 
 }
@@ -166,8 +166,8 @@ void LongJmpPass::insertStubs(const BinaryContext &BC, BinaryFunction &Func) {
       // Insert stubs close to the patched BB if call, but far away from the
       // hot path if a branch, since this branch target is the cold region.
       BinaryBasicBlock *InsertionPoint = &BB;
-      if (!BC.MIA->isCall(Inst) && Frontier && !BB.isCold()) {
-        auto BitsAvail = BC.MIA->getPCRelEncodingSize(Inst) - 2;
+      if (!BC.MIB->isCall(Inst) && Frontier && !BB.isCold()) {
+        auto BitsAvail = BC.MIB->getPCRelEncodingSize(Inst) - 2;
         uint64_t Mask = ~((1ULL << BitsAvail) - 1);
         if (!(Func.getMaxSize() & Mask))
           InsertionPoint = Frontier;
@@ -314,7 +314,7 @@ void LongJmpPass::removeStubRef(const BinaryContext &BC,
                                 BinaryBasicBlock *StubBB,
                                 const MCSymbol *Target,
                                 BinaryBasicBlock *TgtBB) {
-  BC.MIA->replaceBranchTarget(Inst, Target, BC.Ctx.get());
+  BC.MIB->replaceBranchTarget(Inst, Target, BC.Ctx.get());
 
   --StubRefCount[StubBB];
   assert(StubRefCount[StubBB] >= 0 && "Ref count is lost");
@@ -336,7 +336,7 @@ void LongJmpPass::removeStubRef(const BinaryContext &BC,
 
 bool LongJmpPass::usesStub(const BinaryContext &BC, const BinaryFunction &Func,
                            const MCInst &Inst) const {
-  auto TgtSym = BC.MIA->getTargetSymbol(Inst);
+  auto TgtSym = BC.MIB->getTargetSymbol(Inst);
   auto *TgtBB = Func.getBasicBlockForLabel(TgtSym);
   auto Iter = Stubs.find(&Func);
   if (Iter != Stubs.end())
@@ -383,33 +383,33 @@ bool LongJmpPass::removeOrShrinkStubs(const BinaryContext &BC,
 
       // Compute DoNotChangeTarget annotation, when fixBranches cannot swap
       // targets
-      if (BC.MIA->isConditionalBranch(Inst) && BB.succ_size() == 2) {
+      if (BC.MIB->isConditionalBranch(Inst) && BB.succ_size() == 2) {
         auto *SuccBB = BB.getConditionalSuccessor(false);
         bool IsStub = false;
         auto Iter = Stubs.find(&Func);
         if (Iter != Stubs.end())
           IsStub = Iter->second.count(SuccBB);
         auto *RealTargetSym =
-            IsStub ? BC.MIA->getTargetSymbol(*SuccBB->begin()) : nullptr;
+            IsStub ? BC.MIB->getTargetSymbol(*SuccBB->begin()) : nullptr;
         if (IsStub)
           SuccBB = Func.getBasicBlockForLabel(RealTargetSym);
         uint64_t Offset = getSymbolAddress(BC, RealTargetSym, SuccBB);
-        auto BitsAvail = BC.MIA->getPCRelEncodingSize(Inst) - 1;
+        auto BitsAvail = BC.MIB->getPCRelEncodingSize(Inst) - 1;
         uint64_t Mask = ~((1ULL << BitsAvail) - 1);
         if ((Offset & Mask) &&
-            !BC.MIA->hasAnnotation(Inst, "DoNotChangeTarget")) {
-          BC.MIA->addAnnotation(BC.Ctx.get(), Inst, "DoNotChangeTarget", true);
+            !BC.MIB->hasAnnotation(Inst, "DoNotChangeTarget")) {
+          BC.MIB->addAnnotation(BC.Ctx.get(), Inst, "DoNotChangeTarget", true);
         } else if ((!(Offset & Mask)) &&
-                   BC.MIA->hasAnnotation(Inst, "DoNotChangeTarget")) {
-          BC.MIA->removeAnnotation(Inst, "DoNotChangeTarget");
+                   BC.MIB->hasAnnotation(Inst, "DoNotChangeTarget")) {
+          BC.MIB->removeAnnotation(Inst, "DoNotChangeTarget");
         }
       }
 
-      auto StubSym = BC.MIA->getTargetSymbol(Inst);
+      auto StubSym = BC.MIB->getTargetSymbol(Inst);
       auto *StubBB = Func.getBasicBlockForLabel(StubSym);
-      auto *RealTargetSym = BC.MIA->getTargetSymbol(*StubBB->begin());
+      auto *RealTargetSym = BC.MIB->getTargetSymbol(*StubBB->begin());
       auto *TgtBB = Func.getBasicBlockForLabel(RealTargetSym);
-      auto BitsAvail = BC.MIA->getPCRelEncodingSize(Inst) - 1;
+      auto BitsAvail = BC.MIB->getPCRelEncodingSize(Inst) - 1;
       uint64_t Mask = ~((1ULL << BitsAvail) - 1);
       uint64_t Offset = getSymbolAddress(BC, RealTargetSym, TgtBB);
       if (DotAddress > Offset)
@@ -425,8 +425,8 @@ bool LongJmpPass::removeOrShrinkStubs(const BinaryContext &BC,
     }
   }
 
-  auto RangeShortJmp = BC.MIA->getShortJmpEncodingSize();
-  auto RangeSingleInstr = BC.MIA->getUncondBranchEncodingSize();
+  auto RangeShortJmp = BC.MIB->getShortJmpEncodingSize();
+  auto RangeSingleInstr = BC.MIB->getUncondBranchEncodingSize();
   uint64_t ShortJmpMask = ~((1ULL << RangeShortJmp) - 1);
   uint64_t SingleInstrMask = ~((1ULL << (RangeSingleInstr - 1)) - 1);
   // Shrink stubs from 64 to 32 or 28 bit whenever possible
@@ -440,7 +440,7 @@ bool LongJmpPass::removeOrShrinkStubs(const BinaryContext &BC,
       continue;
 
     // Attempt to tight to short jmp
-    auto *RealTargetSym = BC.MIA->getTargetSymbol(*BB.begin());
+    auto *RealTargetSym = BC.MIB->getTargetSymbol(*BB.begin());
     auto *TgtBB = Func.getBasicBlockForLabel(RealTargetSym);
     uint64_t DotAddress = BBAddresses[&BB];
     uint64_t TgtAddress = getSymbolAddress(BC, RealTargetSym, TgtBB);

@@ -236,13 +236,13 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
     assert(II != IE && "exception range not pointing to an instruction");
     do {
       auto &Instruction = II->second;
-      if (BC.MIA->isCall(Instruction) &&
-          !BC.MIA->getConditionalTailCall(Instruction)) {
-        assert(!BC.MIA->isInvoke(Instruction) &&
+      if (BC.MIB->isCall(Instruction) &&
+          !BC.MIB->getConditionalTailCall(Instruction)) {
+        assert(!BC.MIB->isInvoke(Instruction) &&
                "overlapping exception ranges detected");
         // Add extra operands to a call instruction making it an invoke from
         // now on.
-        BC.MIA->addEHInfo(Instruction,
+        BC.MIB->addEHInfo(Instruction,
                           MCLandingPad(LPSymbol, ActionEntry),
                           BC.Ctx.get());
       }
@@ -408,11 +408,11 @@ void BinaryFunction::updateEHRanges() {
     for (auto II = BB->begin(); II != BB->end(); ++II) {
       auto Instr = *II;
 
-      if (!BC.MIA->isCall(Instr))
+      if (!BC.MIB->isCall(Instr))
         continue;
 
       // Instruction can throw an exception that should be handled.
-      const bool Throws = BC.MIA->isInvoke(Instr);
+      const bool Throws = BC.MIB->isInvoke(Instr);
 
       // Ignore the call if it's a continuation of a no-throw gap.
       if (!Throws && !StartRange)
@@ -421,7 +421,7 @@ void BinaryFunction::updateEHRanges() {
       // Extract exception handling information from the instruction.
       const MCSymbol *LP = nullptr;
       uint64_t Action = 0;
-      std::tie(LP, Action) = BC.MIA->getEHInfo(Instr);
+      std::tie(LP, Action) = BC.MIB->getEHInfo(Instr);
 
       // No action if the exception handler has not changed.
       if (Throws &&
@@ -433,7 +433,7 @@ void BinaryFunction::updateEHRanges() {
       // Same symbol is used for the beginning and the end of the range.
       const MCSymbol *EHSymbol = BC.Ctx->createTempSymbol("EH", true);
       MCInst EHLabel;
-      BC.MIA->createEHLabel(EHLabel, EHSymbol, BC.Ctx.get());
+      BC.MIB->createEHLabel(EHLabel, EHSymbol, BC.Ctx.get());
       II = std::next(BB->insertPseudoInstr(II, EHLabel));
 
       // At this point we could be in one of the following states:

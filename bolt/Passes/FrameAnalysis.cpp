@@ -107,7 +107,7 @@ class FrameAccessAnalysis {
     MCPhysReg Reg{0};
     int64_t StackOffset{0};
     bool IsIndexed{false};
-    if (!BC.MIA->isStackAccess(Inst, FIE.IsLoad, FIE.IsStore, FIE.IsStoreFromReg,
+    if (!BC.MIB->isStackAccess(Inst, FIE.IsLoad, FIE.IsStore, FIE.IsStoreFromReg,
                                Reg, SrcImm, FIE.StackPtrReg, StackOffset, FIE.Size,
                                FIE.IsSimple, IsIndexed)) {
       return true;
@@ -126,11 +126,11 @@ class FrameAccessAnalysis {
     if (FIE.IsLoad || FIE.IsStoreFromReg)
       FIE.RegOrImm = Reg;
 
-    if (FIE.StackPtrReg == BC.MIA->getStackPointer() && SPOffset != SPT.EMPTY &&
+    if (FIE.StackPtrReg == BC.MIB->getStackPointer() && SPOffset != SPT.EMPTY &&
         SPOffset != SPT.SUPERPOSITION) {
       DEBUG(dbgs() << "Adding access via SP while CFA reg is another one\n");
       FIE.StackOffset = SPOffset + StackOffset;
-    } else if (FIE.StackPtrReg == BC.MIA->getFramePointer() &&
+    } else if (FIE.StackPtrReg == BC.MIB->getFramePointer() &&
                FPOffset != SPT.EMPTY && FPOffset != SPT.SUPERPOSITION) {
       DEBUG(dbgs() << "Adding access via FP while CFA reg is another one\n");
       FIE.StackOffset = FPOffset + StackOffset;
@@ -171,7 +171,7 @@ public:
     Prev = &Inst;
     // Use CFI information to keep track of which register is being used to
     // access the frame
-    if (BC.MIA->isCFI(Inst)) {
+    if (BC.MIB->isCFI(Inst)) {
       const auto *CFI = BF.getCFIFor(Inst);
       switch (CFI->getOperation()) {
       case MCCFIInstruction::OpDefCfa:
@@ -206,7 +206,7 @@ public:
       return true;
     }
 
-    if (BC.MIA->escapesVariable(Inst, SPT.HasFramePointer)) {
+    if (BC.MIB->escapesVariable(Inst, SPT.HasFramePointer)) {
       DEBUG(dbgs() << "Leaked stack address, giving up on this function.\n");
       DEBUG(dbgs() << "Blame insn: ");
       DEBUG(Inst.dump());
@@ -228,10 +228,10 @@ void FrameAnalysis::addArgAccessesFor(MCInst &Inst, ArgAccesses &&AA) {
   }
   if (AA.AssumeEverything) {
     // Index 0 in ArgAccessesVector represents an "assumeeverything" entry
-    BC.MIA->addAnnotation(BC.Ctx.get(), Inst, "ArgAccessEntry", 0U);
+    BC.MIB->addAnnotation(BC.Ctx.get(), Inst, "ArgAccessEntry", 0U);
     return;
   }
-  BC.MIA->addAnnotation(BC.Ctx.get(), Inst, "ArgAccessEntry",
+  BC.MIB->addAnnotation(BC.Ctx.get(), Inst, "ArgAccessEntry",
                         (unsigned)ArgAccessesVector.size());
   ArgAccessesVector.emplace_back(std::move(AA));
 }
@@ -250,13 +250,13 @@ void FrameAnalysis::addArgInStackAccessFor(MCInst &Inst,
 }
 
 void FrameAnalysis::addFIEFor(MCInst &Inst, const FrameIndexEntry &FIE) {
-  BC.MIA->addAnnotation(BC.Ctx.get(), Inst, "FrameAccessEntry",
+  BC.MIB->addAnnotation(BC.Ctx.get(), Inst, "FrameAccessEntry",
                         (unsigned)FIEVector.size());
   FIEVector.emplace_back(FIE);
 }
 
 ErrorOr<ArgAccesses &> FrameAnalysis::getArgAccessesFor(const MCInst &Inst) {
-  if (auto Idx = BC.MIA->tryGetAnnotationAs<unsigned>(Inst, "ArgAccessEntry")) {
+  if (auto Idx = BC.MIB->tryGetAnnotationAs<unsigned>(Inst, "ArgAccessEntry")) {
     assert(ArgAccessesVector.size() > *Idx && "Out of bounds");
     return ArgAccessesVector[*Idx];
   }
@@ -265,7 +265,7 @@ ErrorOr<ArgAccesses &> FrameAnalysis::getArgAccessesFor(const MCInst &Inst) {
 
 ErrorOr<const ArgAccesses &>
 FrameAnalysis::getArgAccessesFor(const MCInst &Inst) const {
-  if (auto Idx = BC.MIA->tryGetAnnotationAs<unsigned>(Inst, "ArgAccessEntry")) {
+  if (auto Idx = BC.MIB->tryGetAnnotationAs<unsigned>(Inst, "ArgAccessEntry")) {
     assert(ArgAccessesVector.size() > *Idx && "Out of bounds");
     return ArgAccessesVector[*Idx];
   }
@@ -275,7 +275,7 @@ FrameAnalysis::getArgAccessesFor(const MCInst &Inst) const {
 ErrorOr<const FrameIndexEntry &>
 FrameAnalysis::getFIEFor(const MCInst &Inst) const {
   if (auto Idx =
-          BC.MIA->tryGetAnnotationAs<unsigned>(Inst, "FrameAccessEntry")) {
+          BC.MIB->tryGetAnnotationAs<unsigned>(Inst, "FrameAccessEntry")) {
     assert(FIEVector.size() > *Idx && "Out of bounds");
     return FIEVector[*Idx];
   }
@@ -309,11 +309,11 @@ void FrameAnalysis::traverseCG(BinaryFunctionCallGraph &CG) {
 
 bool FrameAnalysis::updateArgsTouchedFor(const BinaryFunction &BF, MCInst &Inst,
                                          int CurOffset) {
-  if (!BC.MIA->isCall(Inst))
+  if (!BC.MIB->isCall(Inst))
     return false;
 
   std::set<int64_t> Res;
-  const auto *TargetSymbol = BC.MIA->getTargetSymbol(Inst);
+  const auto *TargetSymbol = BC.MIB->getTargetSymbol(Inst);
   // If indirect call, we conservatively assume it accesses all stack positions
   if (TargetSymbol == nullptr) {
     addArgAccessesFor(Inst, ArgAccesses(/*AssumeEverything=*/true));
@@ -339,7 +339,7 @@ bool FrameAnalysis::updateArgsTouchedFor(const BinaryFunction &BF, MCInst &Inst,
   auto Iter = ArgsTouchedMap.find(Function);
 
   bool Changed = false;
-  if (BC.MIA->isTailCall(Inst) && Iter != ArgsTouchedMap.end()) {
+  if (BC.MIB->isTailCall(Inst) && Iter != ArgsTouchedMap.end()) {
     // Ignore checking CurOffset because we can't always reliably determine the
     // offset specially after an epilogue, where tailcalls happen. It should be
     // -8.
@@ -442,7 +442,7 @@ bool FrameAnalysis::computeArgsAccessed(BinaryFunction &BF) {
 
   for (auto &BB : BF) {
     for (auto &Inst : BB) {
-      if (BC.MIA->requiresAlignedAddress(Inst)) {
+      if (BC.MIB->requiresAlignedAddress(Inst)) {
         FunctionsRequireAlignment.insert(&BF);
         return true;
       }
@@ -488,8 +488,8 @@ void FrameAnalysis::cleanAnnotations() {
   for (auto &I : BFs) {
     for (auto &BB : I.second) {
       for (auto &Inst : BB) {
-        BC.MIA->removeAnnotation(Inst, "ArgAccessEntry");
-        BC.MIA->removeAnnotation(Inst, "FrameAccessEntry");
+        BC.MIB->removeAnnotation(Inst, "ArgAccessEntry");
+        BC.MIB->removeAnnotation(Inst, "FrameAccessEntry");
       }
     }
   }

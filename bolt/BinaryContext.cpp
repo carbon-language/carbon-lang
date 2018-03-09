@@ -658,12 +658,12 @@ void BinaryContext::printInstruction(raw_ostream &OS,
                                      bool PrintMCInst,
                                      bool PrintMemData,
                                      bool PrintRelocations) const {
-  if (MIA->isEHLabel(Instruction)) {
-    OS << "  EH_LABEL: " << *MIA->getTargetSymbol(Instruction) << '\n';
+  if (MIB->isEHLabel(Instruction)) {
+    OS << "  EH_LABEL: " << *MIB->getTargetSymbol(Instruction) << '\n';
     return;
   }
   OS << format("    %08" PRIx64 ": ", Offset);
-  if (MIA->isCFI(Instruction)) {
+  if (MIB->isCFI(Instruction)) {
     uint32_t Offset = Instruction.getOperand(0).getImm();
     OS << "\t!CFI\t$" << Offset << "\t; ";
     if (Function)
@@ -672,31 +672,31 @@ void BinaryContext::printInstruction(raw_ostream &OS,
     return;
   }
   InstPrinter->printInst(&Instruction, OS, "", *STI);
-  if (MIA->isCall(Instruction)) {
-    if (MIA->isTailCall(Instruction))
+  if (MIB->isCall(Instruction)) {
+    if (MIB->isTailCall(Instruction))
       OS << " # TAILCALL ";
-    if (MIA->isInvoke(Instruction)) {
+    if (MIB->isInvoke(Instruction)) {
       const MCSymbol *LP;
       uint64_t Action;
-      std::tie(LP, Action) = MIA->getEHInfo(Instruction);
+      std::tie(LP, Action) = MIB->getEHInfo(Instruction);
       OS << " # handler: ";
       if (LP)
         OS << *LP;
       else
         OS << '0';
       OS << "; action: " << Action;
-      auto GnuArgsSize = MIA->getGnuArgsSize(Instruction);
+      auto GnuArgsSize = MIB->getGnuArgsSize(Instruction);
       if (GnuArgsSize >= 0)
         OS << "; GNU_args_size = " << GnuArgsSize;
     }
   }
-  if (MIA->isIndirectBranch(Instruction)) {
-    if (auto JTAddress = MIA->getJumpTable(Instruction)) {
+  if (MIB->isIndirectBranch(Instruction)) {
+    if (auto JTAddress = MIB->getJumpTable(Instruction)) {
       OS << " # JUMPTABLE @0x" << Twine::utohexstr(JTAddress);
     }
   }
 
-  MIA->forEachAnnotation(
+  MIB->forEachAnnotation(
     Instruction,
     [&OS](const MCAnnotation *Annotation) {
       OS << " # " << Annotation->getName() << ": ";
@@ -726,7 +726,7 @@ void BinaryContext::printInstruction(raw_ostream &OS,
   if ((opts::PrintMemData || PrintMemData) && Function) {
     const auto *MD = Function->getMemData();
     const auto MemDataOffset =
-      MIA->tryGetAnnotationAs<uint64_t>(Instruction, "MemDataOffset");
+      MIB->tryGetAnnotationAs<uint64_t>(Instruction, "MemDataOffset");
     if (MD && MemDataOffset) {
       bool DidPrint = false;
       for (auto &MI : MD->getMemInfoRange(MemDataOffset.get())) {

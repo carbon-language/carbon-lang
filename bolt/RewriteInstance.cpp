@@ -18,6 +18,7 @@
 #include "DataAggregator.h"
 #include "DataReader.h"
 #include "Exceptions.h"
+#include "MCPlusBuilder.h"
 #include "ProfileReader.h"
 #include "ProfileWriter.h"
 #include "RewriteInstance.h"
@@ -442,6 +443,28 @@ size_t padFunction(const BinaryFunction &Function) {
 
 } // namespace opts
 
+extern MCPlusBuilder * createX86MCPlusBuilder(const MCInstrAnalysis *,
+                                              const MCInstrInfo *,
+                                              const MCRegisterInfo *);
+extern MCPlusBuilder * createAArch64MCPlusBuilder(const MCInstrAnalysis *,
+                                                  const MCInstrInfo *,
+                                                  const MCRegisterInfo *);
+namespace {
+
+MCPlusBuilder *createMCPlusBuilder(const Triple::ArchType Arch,
+    const MCInstrAnalysis *Analysis, const MCInstrInfo *Info,
+    const MCRegisterInfo *RegInfo) {
+  if (Arch == Triple::x86_64) {
+    return createX86MCPlusBuilder(Analysis, Info, RegInfo);
+  } else if (Arch == Triple::aarch64) {
+    return createAArch64MCPlusBuilder(Analysis, Info, RegInfo);
+  } else {
+    llvm_unreachable("architecture unsupport by MCPlusBuilder");
+  }
+}
+
+}
+
 constexpr const char *RewriteInstance::SectionsToOverwrite[];
 
 const std::string RewriteInstance::OrgSecPrefix = ".bolt.org";
@@ -645,9 +668,18 @@ createBinaryContext(ELFObjectFileBase *File, DataReader &DR,
   }
 
   std::unique_ptr<const MCInstrAnalysis> MIA(
-     TheTarget->createMCInstrAnalysis(MII.get(), MRI.get()));
+     TheTarget->createMCInstrAnalysis(MII.get()));
   if (!MIA) {
     errs() << "BOLT-ERROR: failed to create instruction analysis for target"
+           << TripleName << "\n";
+    return nullptr;
+  }
+
+
+  std::unique_ptr<const MCPlusBuilder> MIB(
+    createMCPlusBuilder(Arch, MIA.get(), MII.get(), MRI.get()));
+  if (!MIB) {
+    errs() << "BOLT-ERROR: failed to create instruction builder for target"
            << TripleName << "\n";
     return nullptr;
   }
@@ -684,6 +716,7 @@ createBinaryContext(ELFObjectFileBase *File, DataReader &DR,
                                        std::move(STI),
                                        std::move(InstructionPrinter),
                                        std::move(MIA),
+                                       std::move(MIB),
                                        std::move(MRI),
                                        std::move(DisAsm),
                                        DR);
@@ -1465,11 +1498,11 @@ void RewriteInstance::disassemblePLT() {
       exit(1);
     }
 
-    if (!BC->MIA->isIndirectBranch(Instruction))
+    if (!BC->MIB->isIndirectBranch(Instruction))
       continue;
 
     uint64_t TargetAddress;
-    if (!BC->MIA->evaluateMemOperandTarget(Instruction,
+    if (!BC->MIB->evaluateMemOperandTarget(Instruction,
                                            TargetAddress,
                                            InstrAddr,
                                            InstrSize)) {

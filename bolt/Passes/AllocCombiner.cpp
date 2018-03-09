@@ -18,24 +18,24 @@ namespace {
 
 bool getStackAdjustmentSize(const BinaryContext &BC, const MCInst &Inst,
                             int64_t &Adjustment) {
-  return BC.MIA->evaluateSimple(Inst, Adjustment,
-                                std::make_pair(BC.MIA->getStackPointer(), 0LL),
+  return BC.MIB->evaluateSimple(Inst, Adjustment,
+                                std::make_pair(BC.MIB->getStackPointer(), 0LL),
                                 std::make_pair(0, 0LL));
 }
 
 bool isIndifferentToSP(const MCInst &Inst, const BinaryContext &BC) {
-  if (BC.MIA->isCFI(Inst))
+  if (BC.MIB->isCFI(Inst))
     return true;
 
   const auto II = BC.MII->get(Inst.getOpcode());
-  if (BC.MIA->isTerminator(Inst) ||
-      II.hasImplicitDefOfPhysReg(BC.MIA->getStackPointer(), BC.MRI.get()) ||
-      II.hasImplicitUseOfPhysReg(BC.MIA->getStackPointer()))
+  if (BC.MIB->isTerminator(Inst) ||
+      II.hasImplicitDefOfPhysReg(BC.MIB->getStackPointer(), BC.MRI.get()) ||
+      II.hasImplicitUseOfPhysReg(BC.MIB->getStackPointer()))
     return false;
 
   for (int I = 0, E = Inst.getNumOperands(); I != E; ++I) {
     const auto &Operand = Inst.getOperand(I);
-    if (Operand.isReg() && Operand.getReg() == BC.MIA->getStackPointer()) {
+    if (Operand.isReg() && Operand.getReg() == BC.MIB->getStackPointer()) {
       return false;
     }
   }
@@ -68,8 +68,8 @@ void AllocCombinerPass::combineAdjustments(BinaryContext &BC,
         continue; // Skip updating Prev
 
       int64_t Adjustment{0LL};
-      if (!Prev || !BC.MIA->isStackAdjustment(Inst) ||
-          !BC.MIA->isStackAdjustment(*Prev) ||
+      if (!Prev || !BC.MIB->isStackAdjustment(Inst) ||
+          !BC.MIB->isStackAdjustment(*Prev) ||
           !getStackAdjustmentSize(BC, *Prev, Adjustment)) {
         Prev = &Inst;
         continue;
@@ -82,10 +82,10 @@ void AllocCombinerPass::combineAdjustments(BinaryContext &BC,
         dbgs() << "Adjustment: " << Adjustment << "\n";
       });
 
-      if (BC.MIA->isSUB(Inst))
+      if (BC.MIB->isSUB(Inst))
         Adjustment = -Adjustment;
 
-      BC.MIA->addToImm(Inst, Adjustment, BC.Ctx.get());
+      BC.MIB->addToImm(Inst, Adjustment, BC.Ctx.get());
 
       DEBUG({
         dbgs() << "After adjustment:\n";

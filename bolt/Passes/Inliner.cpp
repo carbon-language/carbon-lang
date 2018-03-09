@@ -54,8 +54,8 @@ void InlineSmallFunctions::findInliningCandidates(
     if (BB.size() > 0 &&
         BB.getNumNonPseudos() <= kMaxInstructions &&
         BB.lp_empty() &&
-        BC.MIA->isReturn(LastInstruction) &&
-        !BC.MIA->isTailCall(LastInstruction)) {
+        BC.MIB->isReturn(LastInstruction) &&
+        !BC.MIB->isTailCall(LastInstruction)) {
       InliningCandidates.insert(&Function);
     }
   }
@@ -90,7 +90,7 @@ void InlineSmallFunctions::findInliningCandidatesAggressive(
     bool FoundCFI = false;
     for (const auto BB : Function.layout()) {
       for (const auto &Inst : *BB) {
-        if (BC.MIA->isEHLabel(Inst) || BC.MIA->isCFI(Inst)) {
+        if (BC.MIB->isEHLabel(Inst) || BC.MIB->isCFI(Inst)) {
           FoundCFI = true;
           break;
         }
@@ -122,8 +122,8 @@ void InlineSmallFunctions::inlineCall(
     BinaryBasicBlock &BB,
     MCInst *CallInst,
     const BinaryBasicBlock &InlinedFunctionBB) {
-  assert(BC.MIA->isCall(*CallInst) && "Can only inline a call.");
-  assert(BC.MIA->isReturn(*InlinedFunctionBB.rbegin()) &&
+  assert(BC.MIB->isCall(*CallInst) && "Can only inline a call.");
+  assert(BC.MIB->isReturn(*InlinedFunctionBB.rbegin()) &&
          "Inlined function should end with a return.");
 
   std::vector<MCInst> InlinedInstance;
@@ -133,16 +133,16 @@ void InlineSmallFunctions::inlineCall(
   // Move stack like 'call' would if needed.
   if (ShouldAdjustStack) {
     MCInst StackInc;
-    BC.MIA->createStackPointerIncrement(StackInc);
+    BC.MIB->createStackPointerIncrement(StackInc);
     InlinedInstance.push_back(StackInc);
   }
 
   for (auto Instruction : InlinedFunctionBB) {
-    if (BC.MIA->isReturn(Instruction)) {
+    if (BC.MIB->isReturn(Instruction)) {
       break;
     }
-    if (!BC.MIA->isEHLabel(Instruction) &&
-        !BC.MIA->isCFI(Instruction)) {
+    if (!BC.MIB->isEHLabel(Instruction) &&
+        !BC.MIB->isCFI(Instruction)) {
       InlinedInstance.push_back(Instruction);
     }
   }
@@ -150,7 +150,7 @@ void InlineSmallFunctions::inlineCall(
   // Move stack pointer like 'ret' would.
   if (ShouldAdjustStack) {
     MCInst StackDec;
-    BC.MIA->createStackPointerDecrement(StackDec);
+    BC.MIB->createStackPointerDecrement(StackDec);
     InlinedInstance.push_back(StackDec);
   }
 
@@ -166,7 +166,7 @@ InlineSmallFunctions::inlineCall(
     const BinaryFunction &InlinedFunction) {
   // Get the instruction to be replaced with inlined code.
   MCInst &CallInst = CallerBB->getInstructionAtIndex(CallInstIndex);
-  assert(BC.MIA->isCall(CallInst) && "Can only inline a call.");
+  assert(BC.MIB->isCall(CallInst) && "Can only inline a call.");
 
   // Point in the function after the inlined code.
   BinaryBasicBlock *AfterInlinedBB = nullptr;
@@ -174,7 +174,7 @@ InlineSmallFunctions::inlineCall(
 
   // In case of a tail call we should not remove any ret instructions from the
   // inlined instance.
-  bool IsTailCall = BC.MIA->isTailCall(CallInst);
+  bool IsTailCall = BC.MIB->isTailCall(CallInst);
 
   // The first block of the function to be inlined can be merged with the caller
   // basic block. This cannot happen if there are jumps to the first block.
@@ -223,30 +223,30 @@ InlineSmallFunctions::inlineCall(
     // Copy instructions into the inlined instance.
     for (auto Instruction : *InlinedFunctionBB) {
       if (!IsTailCall &&
-          BC.MIA->isReturn(Instruction) &&
-          !BC.MIA->isTailCall(Instruction)) {
+          BC.MIB->isReturn(Instruction) &&
+          !BC.MIB->isTailCall(Instruction)) {
         // Skip returns when the caller does a normal call as opposed to a tail
         // call.
         IsExitingBlock = true;
         continue;
       }
       if (!IsTailCall &&
-          BC.MIA->isTailCall(Instruction)) {
+          BC.MIB->isTailCall(Instruction)) {
         // Convert tail calls to normal calls when the caller does a normal
         // call.
-        if (!BC.MIA->convertTailCallToCall(Instruction))
+        if (!BC.MIB->convertTailCallToCall(Instruction))
            assert(false && "unexpected tail call opcode found");
         IsExitingBlock = true;
       }
-      if (BC.MIA->isBranch(Instruction) &&
-          !BC.MIA->isIndirectBranch(Instruction)) {
+      if (BC.MIB->isBranch(Instruction) &&
+          !BC.MIB->isIndirectBranch(Instruction)) {
         // Convert the branch targets in the branch instructions that will be
         // added to the inlined instance.
         const MCSymbol *OldTargetLabel = nullptr;
         const MCSymbol *OldFTLabel = nullptr;
         MCInst *CondBranch = nullptr;
         MCInst *UncondBranch = nullptr;
-        const bool Result = BC.MIA->analyzeBranch(&Instruction,
+        const bool Result = BC.MIB->analyzeBranch(&Instruction,
                                                   &Instruction + 1,
                                                   OldTargetLabel,
                                                   OldFTLabel, CondBranch,
@@ -263,12 +263,12 @@ InlineSmallFunctions::inlineCall(
           }
         }
         assert(NewTargetLabel);
-        BC.MIA->replaceBranchTarget(Instruction, NewTargetLabel, BC.Ctx.get());
+        BC.MIB->replaceBranchTarget(Instruction, NewTargetLabel, BC.Ctx.get());
       }
       // TODO; Currently we simply ignore CFI instructions but we need to
       // address them for correctness.
-      if (!BC.MIA->isEHLabel(Instruction) &&
-          !BC.MIA->isCFI(Instruction)) {
+      if (!BC.MIB->isEHLabel(Instruction) &&
+          !BC.MIB->isCFI(Instruction)) {
         InlinedInstanceBB->addInstruction(std::move(Instruction));
       }
     }
@@ -433,7 +433,7 @@ bool InlineSmallFunctions::inlineCallsInFunction(
   for (auto BB : Blocks) {
     for (auto InstIt = BB->begin(), End = BB->end(); InstIt != End; ++InstIt) {
       auto &Inst = *InstIt;
-      if (BC.MIA->isCall(Inst)) {
+      if (BC.MIB->isCall(Inst)) {
         TotalDynamicCalls += BB->getExecutionCount();
       }
     }
@@ -447,11 +447,11 @@ bool InlineSmallFunctions::inlineCallsInFunction(
 
     for (auto InstIt = BB->begin(), End = BB->end(); InstIt != End; ) {
       auto &Inst = *InstIt;
-      if (BC.MIA->isCall(Inst) &&
-          !BC.MIA->isTailCall(Inst) &&
+      if (BC.MIB->isCall(Inst) &&
+          !BC.MIB->isTailCall(Inst) &&
           Inst.getNumPrimeOperands() == 1 &&
           Inst.getOperand(0).isExpr()) {
-        const auto *TargetSymbol = BC.MIA->getTargetSymbol(Inst);
+        const auto *TargetSymbol = BC.MIB->getTargetSymbol(Inst);
         assert(TargetSymbol && "target symbol expected for direct call");
         const auto *TargetFunction = BC.getFunctionForSymbol(TargetSymbol);
         if (TargetFunction) {
@@ -499,7 +499,7 @@ bool InlineSmallFunctions::inlineCallsInFunctionAggressive(
   for (auto BB : Blocks) {
     for (auto InstIt = BB->begin(), End = BB->end(); InstIt != End; ++InstIt) {
       auto &Inst = *InstIt;
-      if (BC.MIA->isCall(Inst)) {
+      if (BC.MIB->isCall(Inst)) {
         TotalDynamicCalls += BB->getExecutionCount();
       }
     }
@@ -514,11 +514,11 @@ bool InlineSmallFunctions::inlineCallsInFunctionAggressive(
     unsigned InstIndex = 0;
     for (auto InstIt = BB->begin(); InstIt != BB->end(); ) {
       auto &Inst = *InstIt;
-      if (BC.MIA->isCall(Inst) &&
+      if (BC.MIB->isCall(Inst) &&
           Inst.getNumPrimeOperands() == 1 &&
           Inst.getOperand(0).isExpr()) {
-        assert(!BC.MIA->isInvoke(Inst));
-        const auto *TargetSymbol = BC.MIA->getTargetSymbol(Inst);
+        assert(!BC.MIB->isInvoke(Inst));
+        const auto *TargetSymbol = BC.MIB->getTargetSymbol(Inst);
         assert(TargetSymbol && "target symbol expected for direct call");
         const auto *TargetFunction = BC.getFunctionForSymbol(TargetSymbol);
         if (TargetFunction) {

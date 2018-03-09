@@ -60,11 +60,11 @@ void JTFootprintReduction::checkOpportunities(BinaryContext &BC,
 
       uint64_t Scale;
       // Try a standard indirect jump matcher
-      auto IndJmpMatcher = BC.MIA->matchIndJmp(
-          BC.MIA->matchAnyOperand(), BC.MIA->matchImm(Scale),
-          BC.MIA->matchReg(), BC.MIA->matchAnyOperand());
+      auto IndJmpMatcher = BC.MIB->matchIndJmp(
+          BC.MIB->matchAnyOperand(), BC.MIB->matchImm(Scale),
+          BC.MIB->matchReg(), BC.MIB->matchAnyOperand());
       if (!opts::JTFootprintOnlyPIC &&
-          IndJmpMatcher->match(*BC.MRI, *BC.MIA,
+          IndJmpMatcher->match(*BC.MRI, *BC.MIB,
                                MutableArrayRef<MCInst>(&*BB.begin(), &Inst + 1),
                                -1) &&
           Scale == 8) {
@@ -86,19 +86,19 @@ void JTFootprintReduction::checkOpportunities(BinaryContext &BC,
       MCPhysReg BaseReg1;
       MCPhysReg BaseReg2;
       uint64_t Offset;
-      auto PICIndJmpMatcher = BC.MIA->matchIndJmp(BC.MIA->matchAdd(
-          BC.MIA->matchReg(BaseReg1),
-          BC.MIA->matchLoad(BC.MIA->matchReg(BaseReg2), BC.MIA->matchImm(Scale),
-                            BC.MIA->matchReg(), BC.MIA->matchImm(Offset))));
-      auto PICBaseAddrMatcher = BC.MIA->matchIndJmp(
-          BC.MIA->matchAdd(BC.MIA->matchLoadAddr(BC.MIA->matchSymbol()),
-                           BC.MIA->matchAnyOperand()));
+      auto PICIndJmpMatcher = BC.MIB->matchIndJmp(BC.MIB->matchAdd(
+          BC.MIB->matchReg(BaseReg1),
+          BC.MIB->matchLoad(BC.MIB->matchReg(BaseReg2), BC.MIB->matchImm(Scale),
+                            BC.MIB->matchReg(), BC.MIB->matchImm(Offset))));
+      auto PICBaseAddrMatcher = BC.MIB->matchIndJmp(
+          BC.MIB->matchAdd(BC.MIB->matchLoadAddr(BC.MIB->matchSymbol()),
+                           BC.MIB->matchAnyOperand()));
       if (!PICIndJmpMatcher->match(
-              *BC.MRI, *BC.MIA,
+              *BC.MRI, *BC.MIB,
               MutableArrayRef<MCInst>(&*BB.begin(), &Inst + 1), -1) ||
           Scale != 4 || BaseReg1 != BaseReg2 || Offset != 0 ||
           !PICBaseAddrMatcher->match(
-              *BC.MRI, *BC.MIA,
+              *BC.MRI, *BC.MIB,
               MutableArrayRef<MCInst>(&*BB.begin(), &Inst + 1), -1)) {
         BlacklistedJTs.insert(JumpTable);
         ++IndJmpsDenied;
@@ -133,10 +133,10 @@ bool JTFootprintReduction::tryOptimizeNonPIC(
   uint64_t Scale;
   MCPhysReg Index;
   MCOperand Offset;
-  auto IndJmpMatcher = BC.MIA->matchIndJmp(
-      BC.MIA->matchAnyOperand(Base), BC.MIA->matchImm(Scale),
-      BC.MIA->matchReg(Index), BC.MIA->matchAnyOperand(Offset));
-  if (!IndJmpMatcher->match(*BC.MRI, *BC.MIA,
+  auto IndJmpMatcher = BC.MIB->matchIndJmp(
+      BC.MIB->matchAnyOperand(Base), BC.MIB->matchImm(Scale),
+      BC.MIB->matchReg(Index), BC.MIB->matchAnyOperand(Offset));
+  if (!IndJmpMatcher->match(*BC.MRI, *BC.MIB,
                             MutableArrayRef<MCInst>(&*BB.begin(), &Inst + 1),
                             -1)) {
     return false;
@@ -145,7 +145,7 @@ bool JTFootprintReduction::tryOptimizeNonPIC(
   assert(Scale == 8 && "Wrong scale");
 
   Scale = 4;
-  IndJmpMatcher->annotate(*BC.MIA, *BC.Ctx.get(), "DeleteMe");
+  IndJmpMatcher->annotate(*BC.MIB, *BC.Ctx.get(), "DeleteMe");
 
   auto &LA = Info.getLivenessAnalysis();
   MCPhysReg Reg = LA.scavengeRegAfter(&Inst);
@@ -153,9 +153,9 @@ bool JTFootprintReduction::tryOptimizeNonPIC(
   auto RegOp = MCOperand::createReg(Reg);
   SmallVector<MCInst, 4> NewFrag;
 
-  BC.MIA->createIJmp32Frag(NewFrag, Base, MCOperand::createImm(Scale),
+  BC.MIB->createIJmp32Frag(NewFrag, Base, MCOperand::createImm(Scale),
                            MCOperand::createReg(Index), Offset, RegOp);
-  BC.MIA->setJumpTable(BC.Ctx.get(), NewFrag.back(), JTAddr, Index);
+  BC.MIB->setJumpTable(BC.Ctx.get(), NewFrag.back(), JTAddr, Index);
 
   JumpTable->OutputEntrySize = 4;
 
@@ -171,11 +171,11 @@ bool JTFootprintReduction::tryOptimizePIC(
   MCPhysReg Index;
   MCOperand Offset;
   MCOperand JumpTableRef;
-  auto PICIndJmpMatcher = BC.MIA->matchIndJmp(BC.MIA->matchAdd(
-      BC.MIA->matchLoadAddr(BC.MIA->matchAnyOperand(JumpTableRef)),
-      BC.MIA->matchLoad(BC.MIA->matchReg(BaseReg), BC.MIA->matchImm(Scale),
-                        BC.MIA->matchReg(Index), BC.MIA->matchAnyOperand())));
-  if (!PICIndJmpMatcher->match(*BC.MRI, *BC.MIA,
+  auto PICIndJmpMatcher = BC.MIB->matchIndJmp(BC.MIB->matchAdd(
+      BC.MIB->matchLoadAddr(BC.MIB->matchAnyOperand(JumpTableRef)),
+      BC.MIB->matchLoad(BC.MIB->matchReg(BaseReg), BC.MIB->matchImm(Scale),
+                        BC.MIB->matchReg(Index), BC.MIB->matchAnyOperand())));
+  if (!PICIndJmpMatcher->match(*BC.MRI, *BC.MIB,
                                MutableArrayRef<MCInst>(&*BB.begin(), &Inst + 1),
                                -1)) {
     return false;
@@ -183,15 +183,15 @@ bool JTFootprintReduction::tryOptimizePIC(
 
   assert(Scale == 4 && "Wrong scale");
 
-  PICIndJmpMatcher->annotate(*BC.MIA, *BC.Ctx.get(), "DeleteMe");
+  PICIndJmpMatcher->annotate(*BC.MIB, *BC.Ctx.get(), "DeleteMe");
 
   auto RegOp = MCOperand::createReg(BaseReg);
   SmallVector<MCInst, 4> NewFrag;
 
-  BC.MIA->createIJmp32Frag(NewFrag, MCOperand::createReg(0),
+  BC.MIB->createIJmp32Frag(NewFrag, MCOperand::createReg(0),
                            MCOperand::createImm(Scale),
                            MCOperand::createReg(Index), JumpTableRef, RegOp);
-  BC.MIA->setJumpTable(BC.Ctx.get(), NewFrag.back(), JTAddr, Index);
+  BC.MIB->setJumpTable(BC.Ctx.get(), NewFrag.back(), JTAddr, Index);
 
   JumpTable->OutputEntrySize = 4;
   // DePICify
@@ -209,7 +209,7 @@ void JTFootprintReduction::optimizeFunction(BinaryContext &BC,
       continue;
 
     MCInst &IndJmp = *BB.getLastNonPseudo();
-    uint64_t JTAddr = BC.MIA->getJumpTable(IndJmp);
+    uint64_t JTAddr = BC.MIB->getJumpTable(IndJmp);
 
     if (!JTAddr)
       continue;
@@ -232,7 +232,7 @@ void JTFootprintReduction::optimizeFunction(BinaryContext &BC,
 
   for (auto &BB : Function) {
     for (auto I = BB.rbegin(), E = BB.rend(); I != E; ++I) {
-      if (BC.MIA->hasAnnotation(*I, "DeleteMe"))
+      if (BC.MIB->hasAnnotation(*I, "DeleteMe"))
         BB.eraseInstruction(&*I);
     }
   }
