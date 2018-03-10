@@ -3,8 +3,7 @@
 
 define float @fadd_undef_op0(float %x) {
 ; CHECK-LABEL: @fadd_undef_op0(
-; CHECK-NEXT:    [[R:%.*]] = fadd float undef, [[X:%.*]]
-; CHECK-NEXT:    ret float [[R]]
+; CHECK-NEXT:    ret float 0x7FF8000000000000
 ;
   %r = fadd float undef, %x
   ret float %r
@@ -12,8 +11,7 @@ define float @fadd_undef_op0(float %x) {
 
 define float @fadd_undef_op1(float %x) {
 ; CHECK-LABEL: @fadd_undef_op1(
-; CHECK-NEXT:    [[R:%.*]] = fadd float [[X:%.*]], undef
-; CHECK-NEXT:    ret float [[R]]
+; CHECK-NEXT:    ret float 0x7FF8000000000000
 ;
   %r = fadd float %x, undef
   ret float %r
@@ -21,8 +19,7 @@ define float @fadd_undef_op1(float %x) {
 
 define float @fsub_undef_op0(float %x) {
 ; CHECK-LABEL: @fsub_undef_op0(
-; CHECK-NEXT:    [[R:%.*]] = fsub float undef, [[X:%.*]]
-; CHECK-NEXT:    ret float [[R]]
+; CHECK-NEXT:    ret float 0x7FF8000000000000
 ;
   %r = fsub float undef, %x
   ret float %r
@@ -30,8 +27,7 @@ define float @fsub_undef_op0(float %x) {
 
 define float @fsub_undef_op1(float %x) {
 ; CHECK-LABEL: @fsub_undef_op1(
-; CHECK-NEXT:    [[R:%.*]] = fsub float [[X:%.*]], undef
-; CHECK-NEXT:    ret float [[R]]
+; CHECK-NEXT:    ret float 0x7FF8000000000000
 ;
   %r = fsub float %x, undef
   ret float %r
@@ -39,8 +35,7 @@ define float @fsub_undef_op1(float %x) {
 
 define float @fmul_undef_op0(float %x) {
 ; CHECK-LABEL: @fmul_undef_op0(
-; CHECK-NEXT:    [[R:%.*]] = fmul float undef, [[X:%.*]]
-; CHECK-NEXT:    ret float [[R]]
+; CHECK-NEXT:    ret float 0x7FF8000000000000
 ;
   %r = fmul float undef, %x
   ret float %r
@@ -48,8 +43,7 @@ define float @fmul_undef_op0(float %x) {
 
 define float @fmul_undef_op1(float %x) {
 ; CHECK-LABEL: @fmul_undef_op1(
-; CHECK-NEXT:    [[R:%.*]] = fmul float [[X:%.*]], undef
-; CHECK-NEXT:    ret float [[R]]
+; CHECK-NEXT:    ret float 0x7FF8000000000000
 ;
   %r = fmul float %x, undef
   ret float %r
@@ -57,7 +51,7 @@ define float @fmul_undef_op1(float %x) {
 
 define float @fdiv_undef_op0(float %x) {
 ; CHECK-LABEL: @fdiv_undef_op0(
-; CHECK-NEXT:    ret float undef
+; CHECK-NEXT:    ret float 0x7FF8000000000000
 ;
   %r = fdiv float undef, %x
   ret float %r
@@ -65,7 +59,7 @@ define float @fdiv_undef_op0(float %x) {
 
 define float @fdiv_undef_op1(float %x) {
 ; CHECK-LABEL: @fdiv_undef_op1(
-; CHECK-NEXT:    ret float undef
+; CHECK-NEXT:    ret float 0x7FF8000000000000
 ;
   %r = fdiv float %x, undef
   ret float %r
@@ -73,7 +67,7 @@ define float @fdiv_undef_op1(float %x) {
 
 define float @frem_undef_op0(float %x) {
 ; CHECK-LABEL: @frem_undef_op0(
-; CHECK-NEXT:    ret float undef
+; CHECK-NEXT:    ret float 0x7FF8000000000000
 ;
   %r = frem float undef, %x
   ret float %r
@@ -81,7 +75,7 @@ define float @frem_undef_op0(float %x) {
 
 define float @frem_undef_op1(float %x) {
 ; CHECK-LABEL: @frem_undef_op1(
-; CHECK-NEXT:    ret float undef
+; CHECK-NEXT:    ret float 0x7FF8000000000000
 ;
   %r = frem float %x, undef
   ret float %r
@@ -91,8 +85,7 @@ define float @frem_undef_op1(float %x) {
 
 define float @fadd_undef_op0_nnan(float %x) {
 ; CHECK-LABEL: @fadd_undef_op0_nnan(
-; CHECK-NEXT:    [[R:%.*]] = fadd nnan float undef, [[X:%.*]]
-; CHECK-NEXT:    ret float [[R]]
+; CHECK-NEXT:    ret float 0x7FF8000000000000
 ;
   %r = fadd nnan float undef, %x
   ret float %r
@@ -100,8 +93,7 @@ define float @fadd_undef_op0_nnan(float %x) {
 
 define float @fadd_undef_op1_fast(float %x) {
 ; CHECK-LABEL: @fadd_undef_op1_fast(
-; CHECK-NEXT:    [[R:%.*]] = fadd fast float [[X:%.*]], undef
-; CHECK-NEXT:    ret float [[R]]
+; CHECK-NEXT:    ret float 0x7FF8000000000000
 ;
   %r = fadd fast float %x, undef
   ret float %r
@@ -109,8 +101,7 @@ define float @fadd_undef_op1_fast(float %x) {
 
 define float @fsub_undef_op0_fast(float %x) {
 ; CHECK-LABEL: @fsub_undef_op0_fast(
-; CHECK-NEXT:    [[R:%.*]] = fsub fast float undef, [[X:%.*]]
-; CHECK-NEXT:    ret float [[R]]
+; CHECK-NEXT:    ret float 0x7FF8000000000000
 ;
   %r = fsub fast float undef, %x
   ret float %r
@@ -118,8 +109,7 @@ define float @fsub_undef_op0_fast(float %x) {
 
 define float @fsub_undef_op1_nnan(float %x) {
 ; CHECK-LABEL: @fsub_undef_op1_nnan(
-; CHECK-NEXT:    [[R:%.*]] = fsub nnan float [[X:%.*]], undef
-; CHECK-NEXT:    ret float [[R]]
+; CHECK-NEXT:    ret float 0x7FF8000000000000
 ;
   %r = fsub nnan float %x, undef
   ret float %r
@@ -127,8 +117,7 @@ define float @fsub_undef_op1_nnan(float %x) {
 
 define float @fmul_undef_op0_nnan(float %x) {
 ; CHECK-LABEL: @fmul_undef_op0_nnan(
-; CHECK-NEXT:    [[R:%.*]] = fmul nnan float undef, [[X:%.*]]
-; CHECK-NEXT:    ret float [[R]]
+; CHECK-NEXT:    ret float 0x7FF8000000000000
 ;
   %r = fmul nnan float undef, %x
   ret float %r
@@ -136,8 +125,7 @@ define float @fmul_undef_op0_nnan(float %x) {
 
 define float @fmul_undef_op1_fast(float %x) {
 ; CHECK-LABEL: @fmul_undef_op1_fast(
-; CHECK-NEXT:    [[R:%.*]] = fmul fast float [[X:%.*]], undef
-; CHECK-NEXT:    ret float [[R]]
+; CHECK-NEXT:    ret float 0x7FF8000000000000
 ;
   %r = fmul fast float %x, undef
   ret float %r
@@ -145,7 +133,7 @@ define float @fmul_undef_op1_fast(float %x) {
 
 define float @fdiv_undef_op0_fast(float %x) {
 ; CHECK-LABEL: @fdiv_undef_op0_fast(
-; CHECK-NEXT:    ret float undef
+; CHECK-NEXT:    ret float 0x7FF8000000000000
 ;
   %r = fdiv fast float undef, %x
   ret float %r
@@ -153,7 +141,7 @@ define float @fdiv_undef_op0_fast(float %x) {
 
 define float @fdiv_undef_op1_nnan(float %x) {
 ; CHECK-LABEL: @fdiv_undef_op1_nnan(
-; CHECK-NEXT:    ret float undef
+; CHECK-NEXT:    ret float 0x7FF8000000000000
 ;
   %r = fdiv nnan float %x, undef
   ret float %r
@@ -161,7 +149,7 @@ define float @fdiv_undef_op1_nnan(float %x) {
 
 define float @frem_undef_op0_nnan(float %x) {
 ; CHECK-LABEL: @frem_undef_op0_nnan(
-; CHECK-NEXT:    ret float undef
+; CHECK-NEXT:    ret float 0x7FF8000000000000
 ;
   %r = frem nnan float undef, %x
   ret float %r
@@ -169,7 +157,7 @@ define float @frem_undef_op0_nnan(float %x) {
 
 define float @frem_undef_op1_fast(float %x) {
 ; CHECK-LABEL: @frem_undef_op1_fast(
-; CHECK-NEXT:    ret float undef
+; CHECK-NEXT:    ret float 0x7FF8000000000000
 ;
   %r = frem fast float %x, undef
   ret float %r

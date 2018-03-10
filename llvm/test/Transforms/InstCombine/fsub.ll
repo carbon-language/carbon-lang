@@ -27,23 +27,3 @@ define double @test2(double %x, double %y) nounwind {
   ret double %t2
 }
 
-define float @fsub_undef(float %val) {
-; CHECK-LABEL: @fsub_undef(
-; CHECK-NEXT:    [[SUB:%.*]] = fsub float [[VAL:%.*]], undef
-; CHECK-NEXT:    ret float [[SUB]]
-;
-  %sub = fsub float %val, undef
-  ret float %sub
-}
-
-; XXX - Why doesn't this fold to undef?
-
-define float @fsub_fast_undef(float %val) {
-; CHECK-LABEL: @fsub_fast_undef(
-; CHECK-NEXT:    [[SUB:%.*]] = fsub fast float [[VAL:%.*]], undef
-; CHECK-NEXT:    ret float [[SUB]]
-;
-  %sub = fsub fast float %val, undef
-  ret float %sub
-}
-
