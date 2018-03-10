@@ -47,31 +47,3 @@ define float @fsub_fast_undef(float %val) {
   ret float %sub
 }
 
-define float @fneg_undef(float %val) {
-; CHECK-LABEL: @fneg_undef(
-; CHECK-NEXT:    ret float fsub (float -0.000000e+00, float undef)
-;
-  %sub = fsub float -0.0, undef
-  ret float %sub
-}
-
-define float @fneg_fast_undef(float %val) {
-; CHECK-LABEL: @fneg_fast_undef(
-; CHECK-NEXT:    ret float fsub (float -0.000000e+00, float undef)
-;
-  %sub = fsub fast float -0.0, undef
-  ret float %sub
-}
-
-; This folds to a constant expression, which produced 0 instructions
-; contrary to the expected one for negation.
-
-define float @inconsistent_numbers_fsub_undef(float %val) {
-; CHECK-LABEL: @inconsistent_numbers_fsub_undef(
-; CHECK-NEXT:    ret float fsub (float -0.000000e+00, float undef)
-;
-  %sub0 = fsub fast float %val, undef
-  %sub1 = fsub fast float %sub0, %val
-  ret float %sub1
-}
-
