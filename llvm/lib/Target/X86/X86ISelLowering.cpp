@@ -8010,6 +8010,14 @@ SDValue createVariablePermute(MVT VT, SDValue SrcVec, SDValue IndicesVec,
   case MVT::v16i16:
     if (Subtarget.hasVLX() && Subtarget.hasBWI())
       Opcode = X86ISD::VPERMV;
+    else if (Subtarget.hasXOP()) {
+      // Scale to v32i8 and perform as v32i8.
+      IndicesVec = ScaleIndices(IndicesVec, 2);
+      return DAG.getBitcast(
+          VT, createVariablePermute(
+                  MVT::v32i8, DAG.getBitcast(MVT::v32i8, SrcVec),
+                  DAG.getBitcast(MVT::v32i8, IndicesVec), DL, DAG, Subtarget));
+    }
     break;
   case MVT::v8f32:
   case MVT::v8i32:
