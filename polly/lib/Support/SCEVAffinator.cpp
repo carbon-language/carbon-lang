@@ -15,6 +15,7 @@
 #include "polly/Options.h"
 #include "polly/ScopInfo.h"
 #include "polly/Support/GICHelper.h"
+#include "polly/Support/ISLOperators.h"
 #include "polly/Support/SCEVValidator.h"
 #include "polly/Support/ScopHelper.h"
 #include "isl/aff.h"
@@ -162,7 +163,8 @@ isl::pw_aff SCEVAffinator::addModuloSemantic(isl::pw_aff PWA,
   isl::set Domain = PWA.domain();
   isl::pw_aff AddPW =
       isl::manage(getWidthExpValOnDomain(Width - 1, Domain.take()));
-  return PWA.add(AddPW).mod(ModVal).sub(AddPW);
+
+  return ((PWA + AddPW) % ModVal) - AddPW;
 }
 
 bool SCEVAffinator::hasNSWAddRecForLoop(Loop *L) const {
