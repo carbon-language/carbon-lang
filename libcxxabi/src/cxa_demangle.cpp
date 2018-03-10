@@ -1345,7 +1345,7 @@ public:
       : Node(KStructuredBindingName), Bindings(Bindings_) {}
 
   void printLeft(OutputStream &S) const override {
-    S += "'structured-binding'[";
+    S += '[';
     Bindings.printWithComma(S);
     S += ']';
   }
