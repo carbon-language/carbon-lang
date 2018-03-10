@@ -8023,12 +8023,33 @@ SDValue createVariablePermute(MVT VT, SDValue SrcVec, SDValue IndicesVec,
   case MVT::v8i32:
     if (Subtarget.hasAVX2())
       Opcode = X86ISD::VPERMV;
+    else if (Subtarget.hasXOP()) {
+      SrcVec = DAG.getBitcast(MVT::v8f32, SrcVec);
+      SDValue LoLo = DAG.getVectorShuffle(MVT::v8f32, DL, SrcVec, SrcVec,
+                                          {0, 1, 2, 3, 0, 1, 2, 3});
+      SDValue HiHi = DAG.getVectorShuffle(MVT::v8f32, DL, SrcVec, SrcVec,
+                                          {4, 5, 6, 7, 4, 5, 6, 7});
+      return DAG.getBitcast(VT, DAG.getNode(X86ISD::VPERMIL2, DL, MVT::v8f32,
+                                            LoLo, HiHi, IndicesVec,
+                                            DAG.getConstant(0, DL, MVT::i8)));
+    }
     break;
   case MVT::v4i64:
   case MVT::v4f64:
     if (Subtarget.hasVLX())
       Opcode = X86ISD::VPERMV;
-    else if (Subtarget.hasAVX2()) {
+    else if (Subtarget.hasXOP()) {
+      SrcVec = DAG.getBitcast(MVT::v4f64, SrcVec);
+      SDValue LoLo =
+          DAG.getVectorShuffle(MVT::v4f64, DL, SrcVec, SrcVec, {0, 1, 0, 1});
+      SDValue HiHi =
+          DAG.getVectorShuffle(MVT::v4f64, DL, SrcVec, SrcVec, {2, 3, 2, 3});
+      // VPERMIL2PD selects with bit#1 of the index vector, so scale IndicesVec.
+      IndicesVec = DAG.getNode(ISD::ADD, DL, IndicesVT, IndicesVec, IndicesVec);
+      return DAG.getBitcast(VT, DAG.getNode(X86ISD::VPERMIL2, DL, MVT::v4f64,
+                                            LoLo, HiHi, IndicesVec,
+                                            DAG.getConstant(0, DL, MVT::i8)));
+    } else if (Subtarget.hasAVX2()) {
       Opcode = X86ISD::VPERMV;
       ShuffleVT = MVT::v8f32;
     }
