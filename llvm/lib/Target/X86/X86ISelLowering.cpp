@@ -7934,6 +7934,30 @@ SDValue createVariablePermute(MVT VT, SDValue SrcVec, SDValue IndicesVec,
         DAG.getNode(ISD::INSERT_SUBVECTOR, SDLoc(SrcVec), VT, DAG.getUNDEF(VT),
                     SrcVec, DAG.getIntPtrConstant(0, SDLoc(SrcVec)));
 
+  auto ScaleIndices = [&DAG](SDValue Idx, uint64_t Scale) {
+    assert(isPowerOf2_64(Scale) && "Illegal variable permute shuffle scale");
+    EVT SrcVT = Idx.getValueType();
+    unsigned NumDstBits = SrcVT.getScalarSizeInBits() / Scale;
+    uint64_t IndexScale = 0;
+    uint64_t IndexOffset = 0;
+
+    // If we're scaling a smaller permute op, then we need to repeat the
+    // indices, scaling and offsetting them as well.
+    // e.g. v4i32 -> v16i8 (Scale = 4)
+    // IndexScale = v4i32 Splat(4 << 24 | 4 << 16 | 4 << 8 | 4)
+    // IndexOffset = v4i32 Splat(3 << 24 | 2 << 16 | 1 << 8 | 0)
+    for (uint64_t i = 0; i != Scale; ++i) {
+      IndexScale |= Scale << (i * NumDstBits);
+      IndexOffset |= i << (i * NumDstBits);
+    }
+
+    Idx = DAG.getNode(ISD::MUL, SDLoc(Idx), SrcVT, Idx,
+                      DAG.getConstant(IndexScale, SDLoc(Idx), SrcVT));
+    Idx = DAG.getNode(ISD::ADD, SDLoc(Idx), SrcVT, Idx,
+                      DAG.getConstant(IndexOffset, SDLoc(Idx), SrcVT));
+    return Idx;
+  };
+
   unsigned Opcode = 0;
   switch (VT.SimpleTy) {
   default:
@@ -8025,29 +8049,8 @@ SDValue createVariablePermute(MVT VT, SDValue SrcVec, SDValue IndicesVec,
          "Illegal variable permute shuffle type");
 
   uint64_t Scale = VT.getScalarSizeInBits() / ShuffleVT.getScalarSizeInBits();
-  if (Scale > 1) {
-    assert(isPowerOf2_64(Scale) && "Illegal variable permute shuffle scale");
-    unsigned ShuffleBits = ShuffleVT.getScalarSizeInBits();
-    uint64_t IndexScale = 0;
-    uint64_t IndexOffset = 0;
-
-    // If we're scaling a smaller permute op, then we need to repeat the
-    // indices, scaling and offsetting them as well.
-    // e.g. v4i32 -> v16i8 (Scale = 4)
-    // IndexScale = v4i32 Splat(4 << 24 | 4 << 16 | 4 << 8 | 4)
-    // IndexOffset = v4i32 Splat(3 << 24 | 2 << 16 | 1 << 8 | 0)
-    for (uint64_t i = 0; i != Scale; ++i) {
-      IndexScale |= Scale << (i * ShuffleBits);
-      IndexOffset |= i << (i * ShuffleBits);
-    }
-
-    IndicesVec =
-        DAG.getNode(ISD::MUL, SDLoc(IndicesVec), IndicesVT, IndicesVec,
-                    DAG.getConstant(IndexScale, SDLoc(IndicesVec), IndicesVT));
-    IndicesVec =
-        DAG.getNode(ISD::ADD, SDLoc(IndicesVec), IndicesVT, IndicesVec,
-                    DAG.getConstant(IndexOffset, SDLoc(IndicesVec), IndicesVT));
-  }
+  if (Scale > 1)
+    IndicesVec = ScaleIndices(IndicesVec, Scale);
 
   EVT ShuffleIdxVT = EVT(ShuffleVT).changeVectorElementTypeToInteger();
   IndicesVec = DAG.getBitcast(ShuffleIdxVT, IndicesVec);
