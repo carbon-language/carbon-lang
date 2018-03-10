@@ -118,9 +118,18 @@ void BackendStatistics::printDispatchStalls(raw_ostream &OS, unsigned RATStalls,
 void BackendStatistics::printSchedulerUsage(
     raw_ostream &OS, const MCSchedModel &SM,
     const ArrayRef<BufferUsageEntry> &Usage) const {
+ 
   std::string Buffer;
   raw_string_ostream TempStream(Buffer);
   TempStream << "\n\nScheduler's queue usage:\n";
+  // Early exit if no buffered resources were consumed.
+  if (Usage.empty()) {
+    TempStream << "No scheduler resources used.\n";
+    TempStream.flush();
+    OS << Buffer;
+    return;
+  }
+
   for (unsigned I = 0, E = SM.getNumProcResourceKinds(); I < E; ++I) {
     const MCProcResourceDesc &ProcResource = *SM.getProcResource(I);
     if (!ProcResource.BufferSize)
