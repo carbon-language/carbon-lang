@@ -7972,6 +7972,16 @@ SDValue createVariablePermute(MVT VT, SDValue SrcVec, SDValue IndicesVec,
   case MVT::v32i8:
     if (Subtarget.hasVLX() && Subtarget.hasVBMI())
       Opcode = X86ISD::VPERMV;
+    else if (Subtarget.hasXOP()) {
+      SDValue LoSrc = extract128BitVector(SrcVec, 0, DAG, DL);
+      SDValue HiSrc = extract128BitVector(SrcVec, 16, DAG, DL);
+      SDValue LoIdx = extract128BitVector(IndicesVec, 0, DAG, DL);
+      SDValue HiIdx = extract128BitVector(IndicesVec, 16, DAG, DL);
+      return DAG.getNode(
+          ISD::CONCAT_VECTORS, DL, VT,
+          DAG.getNode(X86ISD::VPPERM, DL, MVT::v16i8, LoSrc, HiSrc, LoIdx),
+          DAG.getNode(X86ISD::VPPERM, DL, MVT::v16i8, LoSrc, HiSrc, HiIdx));
+    }
     break;
   case MVT::v16i16:
     if (Subtarget.hasVLX() && Subtarget.hasBWI())
