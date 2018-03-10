@@ -121,14 +121,13 @@ void BackendStatistics::printSchedulerUsage(
   std::string Buffer;
   raw_string_ostream TempStream(Buffer);
   TempStream << "\n\nScheduler's queue usage:\n";
-  const ArrayRef<uint64_t> ResourceMasks = B.getProcResourceMasks();
   for (unsigned I = 0, E = SM.getNumProcResourceKinds(); I < E; ++I) {
     const MCProcResourceDesc &ProcResource = *SM.getProcResource(I);
     if (!ProcResource.BufferSize)
       continue;
 
     for (const BufferUsageEntry &Entry : Usage)
-      if (ResourceMasks[I] == Entry.first)
+      if (I == Entry.first)
         TempStream << ProcResource.Name << ",  " << Entry.second << '/'
                    << ProcResource.BufferSize << '\n';
   }
