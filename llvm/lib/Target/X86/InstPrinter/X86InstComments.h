@@ -25,8 +25,10 @@ namespace llvm {
   };
 
   class MCInst;
+  class MCInstrInfo;
   class raw_ostream;
   bool EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
+                              const MCInstrInfo &MCII,
                               const char *(*getRegName)(unsigned));
 }
 
