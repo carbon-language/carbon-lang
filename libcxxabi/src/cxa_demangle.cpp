@@ -4324,6 +4324,8 @@ bool Db::parseCallOffset() {
 //                                     # No <type>
 //                ::= TW <object name> # Thread-local wrapper
 //                ::= TH <object name> # Thread-local initialization
+//                ::= GR <object name> _             # First temporary
+//                ::= GR <object name> <seq-id> _    # Subsequent temporaries
 //      extension ::= TC <first type> <number> _ <second type> # construction vtable for second-in-first
 //      extension ::= GR <object name> # reference temporary for object
 Node *Db::parseSpecialName() {
@@ -4428,10 +4430,16 @@ Node *Db::parseSpecialName() {
       return make<SpecialName>("guard variable for ", Name);
     }
     // GR <object name> # reference temporary for object
+    // GR <object name> _             # First temporary
+    // GR <object name> <seq-id> _    # Subsequent temporaries
     case 'R': {
       First += 2;
       Node *Name = parseName();
       if (Name == nullptr)
+        return nullptr;
+      size_t Count;
+      bool ParsedSeqId = !parseSeqId(&Count);
+      if (!consumeIf('_') && ParsedSeqId)
         return nullptr;
       return make<SpecialName>("reference temporary for ", Name);
     }
