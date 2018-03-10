@@ -164,7 +164,7 @@ isl::pw_aff SCEVAffinator::addModuloSemantic(isl::pw_aff PWA,
   isl::pw_aff AddPW =
       isl::manage(getWidthExpValOnDomain(Width - 1, Domain.take()));
 
-  return ((PWA + AddPW) % ModVal) - AddPW;
+  return PWA.add(AddPW).mod(ModVal).sub(AddPW);
 }
 
 bool SCEVAffinator::hasNSWAddRecForLoop(Loop *L) const {
