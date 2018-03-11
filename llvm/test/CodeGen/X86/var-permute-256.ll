@@ -66,28 +66,18 @@ define <4 x i64> @var_shuffle_v4i64(<4 x i64> %v, <4 x i64> %indices) nounwind {
 ;
 ; AVX512F-LABEL: var_shuffle_v4i64:
 ; AVX512F:       # %bb.0:
-; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [2,2,2,2]
-; AVX512F-NEXT:    vpmuludq %ymm2, %ymm1, %ymm2
-; AVX512F-NEXT:    vpsrlq $32, %ymm1, %ymm3
-; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm4 = [8589934594,8589934594,8589934594,8589934594]
-; AVX512F-NEXT:    vpmuludq %ymm4, %ymm3, %ymm3
-; AVX512F-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
-; AVX512F-NEXT:    vpsllq $32, %ymm2, %ymm2
-; AVX512F-NEXT:    vpmuludq %ymm4, %ymm1, %ymm1
-; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm3 = [4294967296,4294967296,4294967296,4294967296]
-; AVX512F-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
-; AVX512F-NEXT:    vpaddq %ymm2, %ymm1, %ymm1
-; AVX512F-NEXT:    vpermd %ymm0, %ymm1, %ymm0
+; AVX512F-NEXT:    # kill: def $ymm1 killed $ymm1 def $zmm1
+; AVX512F-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
+; AVX512F-NEXT:    vpermpd %zmm0, %zmm1, %zmm0
+; AVX512F-NEXT:    # kill: def $ymm0 killed $ymm0 killed $zmm0
 ; AVX512F-NEXT:    retq
 ;
 ; AVX512DQ-LABEL: var_shuffle_v4i64:
 ; AVX512DQ:       # %bb.0:
 ; AVX512DQ-NEXT:    # kill: def $ymm1 killed $ymm1 def $zmm1
-; AVX512DQ-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [8589934594,8589934594,8589934594,8589934594]
-; AVX512DQ-NEXT:    vpmullq %zmm2, %zmm1, %zmm1
-; AVX512DQ-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [4294967296,4294967296,4294967296,4294967296]
-; AVX512DQ-NEXT:    vpaddq %ymm2, %ymm1, %ymm1
-; AVX512DQ-NEXT:    vpermd %ymm0, %ymm1, %ymm0
+; AVX512DQ-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
+; AVX512DQ-NEXT:    vpermpd %zmm0, %zmm1, %zmm0
+; AVX512DQ-NEXT:    # kill: def $ymm0 killed $ymm0 killed $zmm0
 ; AVX512DQ-NEXT:    retq
 ;
 ; AVX512VL-LABEL: var_shuffle_v4i64:
@@ -1377,28 +1367,18 @@ define <4 x double> @var_shuffle_v4f64(<4 x double> %v, <4 x i64> %indices) noun
 ;
 ; AVX512F-LABEL: var_shuffle_v4f64:
 ; AVX512F:       # %bb.0:
-; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [2,2,2,2]
-; AVX512F-NEXT:    vpmuludq %ymm2, %ymm1, %ymm2
-; AVX512F-NEXT:    vpsrlq $32, %ymm1, %ymm3
-; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm4 = [8589934594,8589934594,8589934594,8589934594]
-; AVX512F-NEXT:    vpmuludq %ymm4, %ymm3, %ymm3
-; AVX512F-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
-; AVX512F-NEXT:    vpsllq $32, %ymm2, %ymm2
-; AVX512F-NEXT:    vpmuludq %ymm4, %ymm1, %ymm1
-; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm3 = [4294967296,4294967296,4294967296,4294967296]
-; AVX512F-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
-; AVX512F-NEXT:    vpaddq %ymm2, %ymm1, %ymm1
-; AVX512F-NEXT:    vpermd %ymm0, %ymm1, %ymm0
+; AVX512F-NEXT:    # kill: def $ymm1 killed $ymm1 def $zmm1
+; AVX512F-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
+; AVX512F-NEXT:    vpermpd %zmm0, %zmm1, %zmm0
+; AVX512F-NEXT:    # kill: def $ymm0 killed $ymm0 killed $zmm0
 ; AVX512F-NEXT:    retq
 ;
 ; AVX512DQ-LABEL: var_shuffle_v4f64:
 ; AVX512DQ:       # %bb.0:
 ; AVX512DQ-NEXT:    # kill: def $ymm1 killed $ymm1 def $zmm1
-; AVX512DQ-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [8589934594,8589934594,8589934594,8589934594]
-; AVX512DQ-NEXT:    vpmullq %zmm2, %zmm1, %zmm1
-; AVX512DQ-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [4294967296,4294967296,4294967296,4294967296]
-; AVX512DQ-NEXT:    vpaddq %ymm2, %ymm1, %ymm1
-; AVX512DQ-NEXT:    vpermd %ymm0, %ymm1, %ymm0
+; AVX512DQ-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
+; AVX512DQ-NEXT:    vpermpd %zmm0, %zmm1, %zmm0
+; AVX512DQ-NEXT:    # kill: def $ymm0 killed $ymm0 killed $zmm0
 ; AVX512DQ-NEXT:    retq
 ;
 ; AVX512VL-LABEL: var_shuffle_v4f64:
@@ -1558,30 +1538,18 @@ define <4 x i64> @var_shuffle_v4i64_from_v2i64(<2 x i64> %v, <4 x i64> %indices)
 ;
 ; AVX512F-LABEL: var_shuffle_v4i64_from_v2i64:
 ; AVX512F:       # %bb.0:
-; AVX512F-NEXT:    # kill: def $xmm0 killed $xmm0 def $ymm0
-; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [2,2,2,2]
-; AVX512F-NEXT:    vpmuludq %ymm2, %ymm1, %ymm2
-; AVX512F-NEXT:    vpsrlq $32, %ymm1, %ymm3
-; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm4 = [8589934594,8589934594,8589934594,8589934594]
-; AVX512F-NEXT:    vpmuludq %ymm4, %ymm3, %ymm3
-; AVX512F-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
-; AVX512F-NEXT:    vpsllq $32, %ymm2, %ymm2
-; AVX512F-NEXT:    vpmuludq %ymm4, %ymm1, %ymm1
-; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm3 = [4294967296,4294967296,4294967296,4294967296]
-; AVX512F-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
-; AVX512F-NEXT:    vpaddq %ymm2, %ymm1, %ymm1
-; AVX512F-NEXT:    vpermd %ymm0, %ymm1, %ymm0
+; AVX512F-NEXT:    # kill: def $ymm1 killed $ymm1 def $zmm1
+; AVX512F-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
+; AVX512F-NEXT:    vpermpd %zmm0, %zmm1, %zmm0
+; AVX512F-NEXT:    # kill: def $ymm0 killed $ymm0 killed $zmm0
 ; AVX512F-NEXT:    retq
 ;
 ; AVX512DQ-LABEL: var_shuffle_v4i64_from_v2i64:
 ; AVX512DQ:       # %bb.0:
 ; AVX512DQ-NEXT:    # kill: def $ymm1 killed $ymm1 def $zmm1
-; AVX512DQ-NEXT:    # kill: def $xmm0 killed $xmm0 def $ymm0
-; AVX512DQ-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [8589934594,8589934594,8589934594,8589934594]
-; AVX512DQ-NEXT:    vpmullq %zmm2, %zmm1, %zmm1
-; AVX512DQ-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [4294967296,4294967296,4294967296,4294967296]
-; AVX512DQ-NEXT:    vpaddq %ymm2, %ymm1, %ymm1
-; AVX512DQ-NEXT:    vpermd %ymm0, %ymm1, %ymm0
+; AVX512DQ-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
+; AVX512DQ-NEXT:    vpermpd %zmm0, %zmm1, %zmm0
+; AVX512DQ-NEXT:    # kill: def $ymm0 killed $ymm0 killed $zmm0
 ; AVX512DQ-NEXT:    retq
 ;
 ; AVX512VL-LABEL: var_shuffle_v4i64_from_v2i64:
@@ -2806,30 +2774,18 @@ define <4 x double> @var_shuffle_v4f64_from_v2f64(<2 x double> %v, <4 x i64> %in
 ;
 ; AVX512F-LABEL: var_shuffle_v4f64_from_v2f64:
 ; AVX512F:       # %bb.0:
-; AVX512F-NEXT:    # kill: def $xmm0 killed $xmm0 def $ymm0
-; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [2,2,2,2]
-; AVX512F-NEXT:    vpmuludq %ymm2, %ymm1, %ymm2
-; AVX512F-NEXT:    vpsrlq $32, %ymm1, %ymm3
-; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm4 = [8589934594,8589934594,8589934594,8589934594]
-; AVX512F-NEXT:    vpmuludq %ymm4, %ymm3, %ymm3
-; AVX512F-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
-; AVX512F-NEXT:    vpsllq $32, %ymm2, %ymm2
-; AVX512F-NEXT:    vpmuludq %ymm4, %ymm1, %ymm1
-; AVX512F-NEXT:    vpbroadcastq {{.*#+}} ymm3 = [4294967296,4294967296,4294967296,4294967296]
-; AVX512F-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
-; AVX512F-NEXT:    vpaddq %ymm2, %ymm1, %ymm1
-; AVX512F-NEXT:    vpermd %ymm0, %ymm1, %ymm0
+; AVX512F-NEXT:    # kill: def $ymm1 killed $ymm1 def $zmm1
+; AVX512F-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
+; AVX512F-NEXT:    vpermpd %zmm0, %zmm1, %zmm0
+; AVX512F-NEXT:    # kill: def $ymm0 killed $ymm0 killed $zmm0
 ; AVX512F-NEXT:    retq
 ;
 ; AVX512DQ-LABEL: var_shuffle_v4f64_from_v2f64:
 ; AVX512DQ:       # %bb.0:
 ; AVX512DQ-NEXT:    # kill: def $ymm1 killed $ymm1 def $zmm1
-; AVX512DQ-NEXT:    # kill: def $xmm0 killed $xmm0 def $ymm0
-; AVX512DQ-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [8589934594,8589934594,8589934594,8589934594]
-; AVX512DQ-NEXT:    vpmullq %zmm2, %zmm1, %zmm1
-; AVX512DQ-NEXT:    vpbroadcastq {{.*#+}} ymm2 = [4294967296,4294967296,4294967296,4294967296]
-; AVX512DQ-NEXT:    vpaddq %ymm2, %ymm1, %ymm1
-; AVX512DQ-NEXT:    vpermd %ymm0, %ymm1, %ymm0
+; AVX512DQ-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
+; AVX512DQ-NEXT:    vpermpd %zmm0, %zmm1, %zmm0
+; AVX512DQ-NEXT:    # kill: def $ymm0 killed $ymm0 killed $zmm0
 ; AVX512DQ-NEXT:    retq
 ;
 ; AVX512VL-LABEL: var_shuffle_v4f64_from_v2f64:
