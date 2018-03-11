@@ -8035,15 +8035,24 @@ SDValue createVariablePermute(MVT VT, SDValue SrcVec, SDValue IndicesVec,
   case MVT::v8i32:
     if (Subtarget.hasAVX2())
       Opcode = X86ISD::VPERMV;
-    else if (Subtarget.hasXOP()) {
+    else if (Subtarget.hasAVX()) {
       SrcVec = DAG.getBitcast(MVT::v8f32, SrcVec);
       SDValue LoLo = DAG.getVectorShuffle(MVT::v8f32, DL, SrcVec, SrcVec,
                                           {0, 1, 2, 3, 0, 1, 2, 3});
       SDValue HiHi = DAG.getVectorShuffle(MVT::v8f32, DL, SrcVec, SrcVec,
                                           {4, 5, 6, 7, 4, 5, 6, 7});
-      return DAG.getBitcast(VT, DAG.getNode(X86ISD::VPERMIL2, DL, MVT::v8f32,
-                                            LoLo, HiHi, IndicesVec,
-                                            DAG.getConstant(0, DL, MVT::i8)));
+      if (Subtarget.hasXOP())
+        return DAG.getBitcast(VT, DAG.getNode(X86ISD::VPERMIL2, DL, MVT::v8f32,
+                                              LoLo, HiHi, IndicesVec,
+                                              DAG.getConstant(0, DL, MVT::i8)));
+      // Permute Lo and Hi and then select based on index range.
+      // This works as VPERMILPS only uses index bits[0:1] to permute elements.
+      SDValue Res = DAG.getSelectCC(
+          DL, IndicesVec, DAG.getConstant(3, DL, MVT::v8i32),
+          DAG.getNode(X86ISD::VPERMILPV, DL, MVT::v8f32, HiHi, IndicesVec),
+          DAG.getNode(X86ISD::VPERMILPV, DL, MVT::v8f32, LoLo, IndicesVec),
+          ISD::CondCode::SETGT);
+      return DAG.getBitcast(VT, Res);
     }
     break;
   case MVT::v4i64:
@@ -8060,7 +8069,7 @@ SDValue createVariablePermute(MVT VT, SDValue SrcVec, SDValue IndicesVec,
         return extract256BitVector(Res, 0, DAG, DL);
       }
       Opcode = X86ISD::VPERMV;
-    } else if (Subtarget.hasXOP()) {
+    } else if (Subtarget.hasAVX()) {
       SrcVec = DAG.getBitcast(MVT::v4f64, SrcVec);
       SDValue LoLo =
           DAG.getVectorShuffle(MVT::v4f64, DL, SrcVec, SrcVec, {0, 1, 0, 1});
@@ -8068,12 +8077,18 @@ SDValue createVariablePermute(MVT VT, SDValue SrcVec, SDValue IndicesVec,
           DAG.getVectorShuffle(MVT::v4f64, DL, SrcVec, SrcVec, {2, 3, 2, 3});
       // VPERMIL2PD selects with bit#1 of the index vector, so scale IndicesVec.
       IndicesVec = DAG.getNode(ISD::ADD, DL, IndicesVT, IndicesVec, IndicesVec);
-      return DAG.getBitcast(VT, DAG.getNode(X86ISD::VPERMIL2, DL, MVT::v4f64,
-                                            LoLo, HiHi, IndicesVec,
-                                            DAG.getConstant(0, DL, MVT::i8)));
-    } else if (Subtarget.hasAVX2()) {
-      Opcode = X86ISD::VPERMV;
-      ShuffleVT = MVT::v8f32;
+      if (Subtarget.hasXOP())
+        return DAG.getBitcast(VT, DAG.getNode(X86ISD::VPERMIL2, DL, MVT::v4f64,
+                                              LoLo, HiHi, IndicesVec,
+                                              DAG.getConstant(0, DL, MVT::i8)));
+      // Permute Lo and Hi and then select based on index range.
+      // This works as VPERMILPD only uses index bit[1] to permute elements.
+      SDValue Res = DAG.getSelectCC(
+          DL, IndicesVec, DAG.getConstant(2, DL, MVT::v4i64),
+          DAG.getNode(X86ISD::VPERMILPV, DL, MVT::v4f64, HiHi, IndicesVec),
+          DAG.getNode(X86ISD::VPERMILPV, DL, MVT::v4f64, LoLo, IndicesVec),
+          ISD::CondCode::SETGT);
+      return DAG.getBitcast(VT, Res);
     }
     break;
   case MVT::v64i8:
