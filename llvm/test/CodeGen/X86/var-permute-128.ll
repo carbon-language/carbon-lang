@@ -4,10 +4,11 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+xop | FileCheck %s --check-prefixes=AVX,AVXNOVLBW,XOP
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx | FileCheck %s --check-prefixes=AVX,AVXNOVLBW,AVX1
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx2 | FileCheck %s --check-prefixes=AVX,AVXNOVLBW,AVX2
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx512f | FileCheck %s --check-prefixes=AVX,AVX512,AVXNOVLBW,AVX512F
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx512f,+avx512vl | FileCheck %s --check-prefixes=AVX,AVX512,AVXNOVLBW,AVX512VL
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx512bw,+avx512vl | FileCheck %s --check-prefixes=AVX,AVX512,AVX512VLBW
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx512bw,+avx512vl,+avx512vbmi | FileCheck %s --check-prefixes=AVX,AVX512,AVX512VLBW,VBMI
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx512f | FileCheck %s --check-prefixes=AVX,AVXNOVLBW,AVX512,AVX512F
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx512bw | FileCheck %s --check-prefixes=AVX,AVXNOVLBW,AVX512,AVX512BW
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx512vbmi | FileCheck %s --check-prefixes=AVX,AVXNOVLBW,AVX512,VBMI
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx512bw,+avx512vl | FileCheck %s --check-prefixes=AVX,AVX512VL,AVX512VLBW
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx512bw,+avx512vl,+avx512vbmi | FileCheck %s --check-prefixes=AVX,AVX512VL,VLVBMI
 
 define <2 x i64> @var_shuffle_v2i64(<2 x i64> %v, <2 x i64> %indices) nounwind {
 ; SSSE3-LABEL: var_shuffle_v2i64:
@@ -104,10 +105,10 @@ define <8 x i16> @var_shuffle_v8i16(<8 x i16> %v, <8 x i16> %indices) nounwind {
 ; AVXNOVLBW-NEXT:    vpshufb %xmm1, %xmm0, %xmm0
 ; AVXNOVLBW-NEXT:    retq
 ;
-; AVX512VLBW-LABEL: var_shuffle_v8i16:
-; AVX512VLBW:       # %bb.0:
-; AVX512VLBW-NEXT:    vpermw %xmm0, %xmm1, %xmm0
-; AVX512VLBW-NEXT:    retq
+; AVX512VL-LABEL: var_shuffle_v8i16:
+; AVX512VL:       # %bb.0:
+; AVX512VL-NEXT:    vpermw %xmm0, %xmm1, %xmm0
+; AVX512VL-NEXT:    retq
   %index0 = extractelement <8 x i16> %indices, i32 0
   %index1 = extractelement <8 x i16> %indices, i32 1
   %index2 = extractelement <8 x i16> %indices, i32 2
@@ -597,41 +598,40 @@ define <16 x i8> @var_shuffle_v16i8_from_v32i8_v16i8(<32 x i8> %v, <16 x i8> %in
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
 ;
-; AVX512F-LABEL: var_shuffle_v16i8_from_v32i8_v16i8:
-; AVX512F:       # %bb.0:
-; AVX512F-NEXT:    # kill: def $xmm1 killed $xmm1 def $ymm1
-; AVX512F-NEXT:    vinserti128 $1, %xmm0, %ymm0, %ymm2
-; AVX512F-NEXT:    vpshufb %ymm1, %ymm2, %ymm2
-; AVX512F-NEXT:    vextracti128 $1, %ymm0, %xmm3
-; AVX512F-NEXT:    vpblendd {{.*#+}} ymm0 = ymm3[0,1,2,3],ymm0[4,5,6,7]
-; AVX512F-NEXT:    vpshufb %ymm1, %ymm0, %ymm0
-; AVX512F-NEXT:    vpcmpgtb {{.*}}(%rip), %ymm1, %ymm1
-; AVX512F-NEXT:    vpblendvb %ymm1, %ymm0, %ymm2, %ymm0
-; AVX512F-NEXT:    # kill: def $xmm0 killed $xmm0 killed $ymm0
-; AVX512F-NEXT:    vzeroupper
-; AVX512F-NEXT:    retq
+; AVX512-LABEL: var_shuffle_v16i8_from_v32i8_v16i8:
+; AVX512:       # %bb.0:
+; AVX512-NEXT:    # kill: def $xmm1 killed $xmm1 def $ymm1
+; AVX512-NEXT:    vinserti128 $1, %xmm0, %ymm0, %ymm2
+; AVX512-NEXT:    vpshufb %ymm1, %ymm2, %ymm2
+; AVX512-NEXT:    vextracti128 $1, %ymm0, %xmm3
+; AVX512-NEXT:    vpblendd {{.*#+}} ymm0 = ymm3[0,1,2,3],ymm0[4,5,6,7]
+; AVX512-NEXT:    vpshufb %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpcmpgtb {{.*}}(%rip), %ymm1, %ymm1
+; AVX512-NEXT:    vpblendvb %ymm1, %ymm0, %ymm2, %ymm0
+; AVX512-NEXT:    # kill: def $xmm0 killed $xmm0 killed $ymm0
+; AVX512-NEXT:    vzeroupper
+; AVX512-NEXT:    retq
 ;
-; AVX512VL-LABEL: var_shuffle_v16i8_from_v32i8_v16i8:
-; AVX512VL:       # %bb.0:
-; AVX512VL-NEXT:    # kill: def $xmm1 killed $xmm1 def $ymm1
-; AVX512VL-NEXT:    vinserti128 $1, %xmm0, %ymm0, %ymm2
-; AVX512VL-NEXT:    vpshufb %ymm1, %ymm2, %ymm2
-; AVX512VL-NEXT:    vextracti128 $1, %ymm0, %xmm3
-; AVX512VL-NEXT:    vpblendd {{.*#+}} ymm0 = ymm3[0,1,2,3],ymm0[4,5,6,7]
-; AVX512VL-NEXT:    vpshufb %ymm1, %ymm0, %ymm0
-; AVX512VL-NEXT:    vpcmpgtb {{.*}}(%rip), %ymm1, %ymm1
-; AVX512VL-NEXT:    vpblendvb %ymm1, %ymm0, %ymm2, %ymm0
-; AVX512VL-NEXT:    # kill: def $xmm0 killed $xmm0 killed $ymm0
-; AVX512VL-NEXT:    vzeroupper
-; AVX512VL-NEXT:    retq
+; AVX512VLBW-LABEL: var_shuffle_v16i8_from_v32i8_v16i8:
+; AVX512VLBW:       # %bb.0:
+; AVX512VLBW-NEXT:    # kill: def $xmm1 killed $xmm1 def $ymm1
+; AVX512VLBW-NEXT:    vinserti128 $1, %xmm0, %ymm0, %ymm2
+; AVX512VLBW-NEXT:    vpshufb %ymm1, %ymm2, %ymm2
+; AVX512VLBW-NEXT:    vextracti128 $1, %ymm0, %xmm3
+; AVX512VLBW-NEXT:    vpblendd {{.*#+}} ymm0 = ymm3[0,1,2,3],ymm0[4,5,6,7]
+; AVX512VLBW-NEXT:    vpcmpgtb {{.*}}(%rip), %ymm1, %k1
+; AVX512VLBW-NEXT:    vpshufb %ymm1, %ymm0, %ymm2 {%k1}
+; AVX512VLBW-NEXT:    vmovdqa %xmm2, %xmm0
+; AVX512VLBW-NEXT:    vzeroupper
+; AVX512VLBW-NEXT:    retq
 ;
-; VBMI-LABEL: var_shuffle_v16i8_from_v32i8_v16i8:
-; VBMI:       # %bb.0:
-; VBMI-NEXT:    # kill: def $xmm1 killed $xmm1 def $ymm1
-; VBMI-NEXT:    vpermb %ymm0, %ymm1, %ymm0
-; VBMI-NEXT:    # kill: def $xmm0 killed $xmm0 killed $ymm0
-; VBMI-NEXT:    vzeroupper
-; VBMI-NEXT:    retq
+; VLVBMI-LABEL: var_shuffle_v16i8_from_v32i8_v16i8:
+; VLVBMI:       # %bb.0:
+; VLVBMI-NEXT:    # kill: def $xmm1 killed $xmm1 def $ymm1
+; VLVBMI-NEXT:    vpermb %ymm0, %ymm1, %ymm0
+; VLVBMI-NEXT:    # kill: def $xmm0 killed $xmm0 killed $ymm0
+; VLVBMI-NEXT:    vzeroupper
+; VLVBMI-NEXT:    retq
   %index0 = extractelement <16 x i8> %indices, i32 0
   %index1 = extractelement <16 x i8> %indices, i32 1
   %index2 = extractelement <16 x i8> %indices, i32 2
