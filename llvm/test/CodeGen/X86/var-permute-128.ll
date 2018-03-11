@@ -566,66 +566,72 @@ define <16 x i8> @var_shuffle_v16i8_from_v32i8_v16i8(<32 x i8> %v, <16 x i8> %in
 ; SSE41-NEXT:    popq %rbp
 ; SSE41-NEXT:    retq
 ;
-; AVX-LABEL: var_shuffle_v16i8_from_v32i8_v16i8:
-; AVX:       # %bb.0:
-; AVX-NEXT:    pushq %rbp
-; AVX-NEXT:    movq %rsp, %rbp
-; AVX-NEXT:    andq $-32, %rsp
-; AVX-NEXT:    subq $64, %rsp
-; AVX-NEXT:    vpextrb $0, %xmm1, %eax
-; AVX-NEXT:    vmovaps %ymm0, (%rsp)
-; AVX-NEXT:    andl $31, %eax
-; AVX-NEXT:    movzbl (%rsp,%rax), %eax
-; AVX-NEXT:    vmovd %eax, %xmm0
-; AVX-NEXT:    vpextrb $1, %xmm1, %eax
-; AVX-NEXT:    andl $31, %eax
-; AVX-NEXT:    vpinsrb $1, (%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $2, %xmm1, %eax
-; AVX-NEXT:    andl $31, %eax
-; AVX-NEXT:    vpinsrb $2, (%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $3, %xmm1, %eax
-; AVX-NEXT:    andl $31, %eax
-; AVX-NEXT:    vpinsrb $3, (%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $4, %xmm1, %eax
-; AVX-NEXT:    andl $31, %eax
-; AVX-NEXT:    vpinsrb $4, (%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $5, %xmm1, %eax
-; AVX-NEXT:    andl $31, %eax
-; AVX-NEXT:    vpinsrb $5, (%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $6, %xmm1, %eax
-; AVX-NEXT:    andl $31, %eax
-; AVX-NEXT:    vpinsrb $6, (%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $7, %xmm1, %eax
-; AVX-NEXT:    andl $31, %eax
-; AVX-NEXT:    vpinsrb $7, (%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $8, %xmm1, %eax
-; AVX-NEXT:    andl $31, %eax
-; AVX-NEXT:    vpinsrb $8, (%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $9, %xmm1, %eax
-; AVX-NEXT:    andl $31, %eax
-; AVX-NEXT:    vpinsrb $9, (%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $10, %xmm1, %eax
-; AVX-NEXT:    andl $31, %eax
-; AVX-NEXT:    vpinsrb $10, (%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $11, %xmm1, %eax
-; AVX-NEXT:    andl $31, %eax
-; AVX-NEXT:    vpinsrb $11, (%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $12, %xmm1, %eax
-; AVX-NEXT:    andl $31, %eax
-; AVX-NEXT:    vpinsrb $12, (%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $13, %xmm1, %eax
-; AVX-NEXT:    andl $31, %eax
-; AVX-NEXT:    vpinsrb $13, (%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $14, %xmm1, %eax
-; AVX-NEXT:    andl $31, %eax
-; AVX-NEXT:    vpinsrb $14, (%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    vpextrb $15, %xmm1, %eax
-; AVX-NEXT:    andl $31, %eax
-; AVX-NEXT:    vpinsrb $15, (%rsp,%rax), %xmm0, %xmm0
-; AVX-NEXT:    movq %rbp, %rsp
-; AVX-NEXT:    popq %rbp
-; AVX-NEXT:    vzeroupper
-; AVX-NEXT:    retq
+; XOP-LABEL: var_shuffle_v16i8_from_v32i8_v16i8:
+; XOP:       # %bb.0:
+; XOP-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; XOP-NEXT:    vpperm %xmm1, %xmm2, %xmm0, %xmm0
+; XOP-NEXT:    vzeroupper
+; XOP-NEXT:    retq
+;
+; AVX1-LABEL: var_shuffle_v16i8_from_v32i8_v16i8:
+; AVX1:       # %bb.0:
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; AVX1-NEXT:    vpshufb %xmm1, %xmm2, %xmm2
+; AVX1-NEXT:    vpshufb %xmm1, %xmm0, %xmm0
+; AVX1-NEXT:    vpcmpgtb {{.*}}(%rip), %xmm1, %xmm1
+; AVX1-NEXT:    vpblendvb %xmm1, %xmm2, %xmm0, %xmm0
+; AVX1-NEXT:    vzeroupper
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: var_shuffle_v16i8_from_v32i8_v16i8:
+; AVX2:       # %bb.0:
+; AVX2-NEXT:    # kill: def $xmm1 killed $xmm1 def $ymm1
+; AVX2-NEXT:    vinserti128 $1, %xmm0, %ymm0, %ymm2
+; AVX2-NEXT:    vpshufb %ymm1, %ymm2, %ymm2
+; AVX2-NEXT:    vextracti128 $1, %ymm0, %xmm3
+; AVX2-NEXT:    vpblendd {{.*#+}} ymm0 = ymm3[0,1,2,3],ymm0[4,5,6,7]
+; AVX2-NEXT:    vpshufb %ymm1, %ymm0, %ymm0
+; AVX2-NEXT:    vpcmpgtb {{.*}}(%rip), %ymm1, %ymm1
+; AVX2-NEXT:    vpblendvb %ymm1, %ymm0, %ymm2, %ymm0
+; AVX2-NEXT:    # kill: def $xmm0 killed $xmm0 killed $ymm0
+; AVX2-NEXT:    vzeroupper
+; AVX2-NEXT:    retq
+;
+; AVX512F-LABEL: var_shuffle_v16i8_from_v32i8_v16i8:
+; AVX512F:       # %bb.0:
+; AVX512F-NEXT:    # kill: def $xmm1 killed $xmm1 def $ymm1
+; AVX512F-NEXT:    vinserti128 $1, %xmm0, %ymm0, %ymm2
+; AVX512F-NEXT:    vpshufb %ymm1, %ymm2, %ymm2
+; AVX512F-NEXT:    vextracti128 $1, %ymm0, %xmm3
+; AVX512F-NEXT:    vpblendd {{.*#+}} ymm0 = ymm3[0,1,2,3],ymm0[4,5,6,7]
+; AVX512F-NEXT:    vpshufb %ymm1, %ymm0, %ymm0
+; AVX512F-NEXT:    vpcmpgtb {{.*}}(%rip), %ymm1, %ymm1
+; AVX512F-NEXT:    vpblendvb %ymm1, %ymm0, %ymm2, %ymm0
+; AVX512F-NEXT:    # kill: def $xmm0 killed $xmm0 killed $ymm0
+; AVX512F-NEXT:    vzeroupper
+; AVX512F-NEXT:    retq
+;
+; AVX512VL-LABEL: var_shuffle_v16i8_from_v32i8_v16i8:
+; AVX512VL:       # %bb.0:
+; AVX512VL-NEXT:    # kill: def $xmm1 killed $xmm1 def $ymm1
+; AVX512VL-NEXT:    vinserti128 $1, %xmm0, %ymm0, %ymm2
+; AVX512VL-NEXT:    vpshufb %ymm1, %ymm2, %ymm2
+; AVX512VL-NEXT:    vextracti128 $1, %ymm0, %xmm3
+; AVX512VL-NEXT:    vpblendd {{.*#+}} ymm0 = ymm3[0,1,2,3],ymm0[4,5,6,7]
+; AVX512VL-NEXT:    vpshufb %ymm1, %ymm0, %ymm0
+; AVX512VL-NEXT:    vpcmpgtb {{.*}}(%rip), %ymm1, %ymm1
+; AVX512VL-NEXT:    vpblendvb %ymm1, %ymm0, %ymm2, %ymm0
+; AVX512VL-NEXT:    # kill: def $xmm0 killed $xmm0 killed $ymm0
+; AVX512VL-NEXT:    vzeroupper
+; AVX512VL-NEXT:    retq
+;
+; VBMI-LABEL: var_shuffle_v16i8_from_v32i8_v16i8:
+; VBMI:       # %bb.0:
+; VBMI-NEXT:    # kill: def $xmm1 killed $xmm1 def $ymm1
+; VBMI-NEXT:    vpermb %ymm0, %ymm1, %ymm0
+; VBMI-NEXT:    # kill: def $xmm0 killed $xmm0 killed $ymm0
+; VBMI-NEXT:    vzeroupper
+; VBMI-NEXT:    retq
   %index0 = extractelement <16 x i8> %indices, i32 0
   %index1 = extractelement <16 x i8> %indices, i32 1
   %index2 = extractelement <16 x i8> %indices, i32 2

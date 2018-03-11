@@ -1655,29 +1655,40 @@ entry:
 }
 
 define <4 x i32> @var_shuffle_v4i32_from_v8i32(<8 x i32> %v, <4 x i32> %indices) unnamed_addr nounwind {
-; AVX-LABEL: var_shuffle_v4i32_from_v8i32:
-; AVX:       # %bb.0: # %entry
-; AVX-NEXT:    pushq %rbp
-; AVX-NEXT:    movq %rsp, %rbp
-; AVX-NEXT:    andq $-32, %rsp
-; AVX-NEXT:    subq $64, %rsp
-; AVX-NEXT:    vmovd %xmm1, %eax
-; AVX-NEXT:    vmovaps %ymm0, (%rsp)
-; AVX-NEXT:    andl $7, %eax
-; AVX-NEXT:    vpextrd $1, %xmm1, %ecx
-; AVX-NEXT:    andl $7, %ecx
-; AVX-NEXT:    vpextrd $2, %xmm1, %edx
-; AVX-NEXT:    andl $7, %edx
-; AVX-NEXT:    vpextrd $3, %xmm1, %esi
-; AVX-NEXT:    andl $7, %esi
-; AVX-NEXT:    vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX-NEXT:    vpinsrd $1, (%rsp,%rcx,4), %xmm0, %xmm0
-; AVX-NEXT:    vpinsrd $2, (%rsp,%rdx,4), %xmm0, %xmm0
-; AVX-NEXT:    vpinsrd $3, (%rsp,%rsi,4), %xmm0, %xmm0
-; AVX-NEXT:    movq %rbp, %rsp
-; AVX-NEXT:    popq %rbp
-; AVX-NEXT:    vzeroupper
-; AVX-NEXT:    retq
+; XOP-LABEL: var_shuffle_v4i32_from_v8i32:
+; XOP:       # %bb.0: # %entry
+; XOP-NEXT:    # kill: def $xmm1 killed $xmm1 def $ymm1
+; XOP-NEXT:    vperm2f128 {{.*#+}} ymm2 = ymm0[2,3,2,3]
+; XOP-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; XOP-NEXT:    vpermil2ps $0, %ymm1, %ymm2, %ymm0, %ymm0
+; XOP-NEXT:    # kill: def $xmm0 killed $xmm0 killed $ymm0
+; XOP-NEXT:    vzeroupper
+; XOP-NEXT:    retq
+;
+; AVX1-LABEL: var_shuffle_v4i32_from_v8i32:
+; AVX1:       # %bb.0: # %entry
+; AVX1-NEXT:    # kill: def $xmm1 killed $xmm1 def $ymm1
+; AVX1-NEXT:    vperm2f128 {{.*#+}} ymm2 = ymm0[2,3,2,3]
+; AVX1-NEXT:    vpermilps %ymm1, %ymm2, %ymm2
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; AVX1-NEXT:    vpermilps %ymm1, %ymm0, %ymm0
+; AVX1-NEXT:    vmovdqa {{.*#+}} ymm3 = [3,3,3,3,3,3,3,3]
+; AVX1-NEXT:    vextractf128 $1, %ymm3, %xmm4
+; AVX1-NEXT:    vpcmpgtd %xmm4, %xmm0, %xmm4
+; AVX1-NEXT:    vpcmpgtd %xmm3, %xmm1, %xmm1
+; AVX1-NEXT:    vinsertf128 $1, %xmm4, %ymm1, %ymm1
+; AVX1-NEXT:    vblendvps %ymm1, %ymm2, %ymm0, %ymm0
+; AVX1-NEXT:    # kill: def $xmm0 killed $xmm0 killed $ymm0
+; AVX1-NEXT:    vzeroupper
+; AVX1-NEXT:    retq
+;
+; INT256-LABEL: var_shuffle_v4i32_from_v8i32:
+; INT256:       # %bb.0: # %entry
+; INT256-NEXT:    # kill: def $xmm1 killed $xmm1 def $ymm1
+; INT256-NEXT:    vpermps %ymm0, %ymm1, %ymm0
+; INT256-NEXT:    # kill: def $xmm0 killed $xmm0 killed $ymm0
+; INT256-NEXT:    vzeroupper
+; INT256-NEXT:    retq
 entry:
   %tmp1 = extractelement <4 x i32> %indices, i32 0
   %vecext2.8 = extractelement <8 x i32> %v, i32 %tmp1

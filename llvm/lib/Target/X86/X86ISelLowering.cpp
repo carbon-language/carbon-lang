@@ -7941,6 +7941,7 @@ SDValue createVariablePermute(MVT VT, SDValue SrcVec, SDValue IndicesVec,
   MVT ShuffleVT = VT;
   EVT IndicesVT = EVT(VT).changeVectorElementTypeToInteger();
   unsigned NumElts = VT.getVectorNumElements();
+  unsigned SizeInBits = VT.getSizeInBits();
 
   // Adjust IndicesVec to match VT size.
   assert(IndicesVec.getValueType().getVectorNumElements() >= NumElts &&
@@ -7950,11 +7951,24 @@ SDValue createVariablePermute(MVT VT, SDValue SrcVec, SDValue IndicesVec,
                                   NumElts * VT.getScalarSizeInBits());
   IndicesVec = DAG.getZExtOrTrunc(IndicesVec, SDLoc(IndicesVec), IndicesVT);
 
-  // Adjust SrcVec to match VT type.
-  if (SrcVec.getValueSizeInBits() > VT.getSizeInBits())
-    return SDValue();
-  else if (SrcVec.getValueSizeInBits() < VT.getSizeInBits())
-    SrcVec = widenSubVector(VT, SrcVec, false, Subtarget, DAG, SDLoc(SrcVec));
+  // Handle SrcVec that don't match VT type.
+  if (SrcVec.getValueSizeInBits() != SizeInBits) {
+    if ((SrcVec.getValueSizeInBits() % SizeInBits) == 0) {
+      // Handle larger SrcVec by treating it as a larger permute.
+      unsigned Scale = SrcVec.getValueSizeInBits() / SizeInBits;
+      VT = MVT::getVectorVT(VT.getScalarType(), Scale * NumElts);
+      IndicesVT = EVT(VT).changeVectorElementTypeToInteger();
+      IndicesVec = widenSubVector(IndicesVT.getSimpleVT(), IndicesVec, false,
+                                  Subtarget, DAG, SDLoc(IndicesVec));
+      return extractSubVector(
+          createVariablePermute(VT, SrcVec, IndicesVec, DL, DAG, Subtarget), 0,
+          DAG, DL, SizeInBits);
+    } else if (SrcVec.getValueSizeInBits() < SizeInBits) {
+      // Widen smaller SrcVec to match VT.
+      SrcVec = widenSubVector(VT, SrcVec, false, Subtarget, DAG, SDLoc(SrcVec));
+    } else
+      return SDValue();
+  }
 
   auto ScaleIndices = [&DAG](SDValue Idx, uint64_t Scale) {
     assert(isPowerOf2_64(Scale) && "Illegal variable permute shuffle scale");
