@@ -30991,6 +30991,79 @@ static SDValue combineCastedMaskArithmetic(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+static SDValue createMMXBuildVector(SDValue N, SelectionDAG &DAG,
+                                    const X86Subtarget &Subtarget) {
+  SDLoc DL(N);
+  unsigned NumElts = N.getNumOperands();
+
+  auto *BV = cast<BuildVectorSDNode>(N);
+  SDValue Splat = BV->getSplatValue();
+
+  // Build MMX element from integer GPR or SSE float values.
+  auto CreateMMXElement = [&](SDValue V) {
+    if (V.isUndef())
+      return DAG.getUNDEF(MVT::x86mmx);
+    if (V.getValueType().isFloatingPoint()) {
+      if (Subtarget.hasSSE1() && !isa<ConstantFPSDNode>(V)) {
+        V = DAG.getNode(ISD::SCALAR_TO_VECTOR, DL, MVT::v4f32, V);
+        V = DAG.getBitcast(MVT::v2i64, V);
+        return DAG.getNode(X86ISD::MOVDQ2Q, DL, MVT::x86mmx, V);
+      }
+      V = DAG.getBitcast(MVT::i32, V);
+    } else {
+      V = DAG.getAnyExtOrTrunc(V, DL, MVT::i32);
+    }
+    return DAG.getNode(X86ISD::MMX_MOVW2D, DL, MVT::x86mmx, V);
+  };
+
+  // Convert build vector ops to MMX data in the bottom elements.
+  SmallVector<SDValue, 8> Ops;
+
+  // Broadcast - use (PUNPCKL+)PSHUFW to broadcast single element.
+  if (Splat) {
+    if (Splat.isUndef())
+      return DAG.getUNDEF(MVT::x86mmx);
+
+    Splat = CreateMMXElement(Splat);
+
+    if (Subtarget.hasSSE1()) {
+      // Unpack v8i8 to splat i8 elements to lowest 16-bits.
+      if (NumElts == 8)
+        Splat = DAG.getNode(
+            ISD::INTRINSIC_WO_CHAIN, DL, MVT::x86mmx,
+            DAG.getConstant(Intrinsic::x86_mmx_punpcklbw, DL, MVT::i32), Splat,
+            Splat);
+
+      // Use PSHUFW to repeat 16-bit elements.
+      unsigned ShufMask = (NumElts > 2 ? 0 : 0x44);
+      return DAG.getNode(
+          ISD::INTRINSIC_WO_CHAIN, DL, MVT::x86mmx,
+          DAG.getConstant(Intrinsic::x86_sse_pshuf_w, DL, MVT::i32), Splat,
+          DAG.getConstant(ShufMask, DL, MVT::i8));
+    }
+    Ops.append(NumElts, Splat);
+  } else {
+    for (unsigned i = 0; i != NumElts; ++i)
+      Ops.push_back(CreateMMXElement(N.getOperand(i)));
+  }
+
+  // Use tree of PUNPCKLs to build up general MMX vector.
+  while (Ops.size() > 1) {
+    unsigned NumOps = Ops.size();
+    unsigned IntrinOp =
+        (NumOps == 2 ? Intrinsic::x86_mmx_punpckldq
+                     : (NumOps == 4 ? Intrinsic::x86_mmx_punpcklwd
+                                    : Intrinsic::x86_mmx_punpcklbw));
+    SDValue Intrin = DAG.getConstant(IntrinOp, DL, MVT::i32);
+    for (unsigned i = 0; i != NumOps; i += 2)
+      Ops[i / 2] = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, MVT::x86mmx, Intrin,
+                               Ops[i], Ops[i + 1]);
+    Ops.resize(NumOps / 2);
+  }
+
+  return Ops[0];
+}
+
 static SDValue combineBitcast(SDNode *N, SelectionDAG &DAG,
                               TargetLowering::DAGCombinerInfo &DCI,
                               const X86Subtarget &Subtarget) {
@@ -31070,6 +31143,14 @@ static SDValue combineBitcast(SDNode *N, SelectionDAG &DAG,
         return DAG.getNode(X86ISD::MMX_MOVW2D, dl, VT, N00);
       }
     }
+
+    // Detect bitcasts of 64-bit build vectors and convert to a
+    // MMX UNPCK/PSHUFW which takes MMX type inputs with the value in the
+    // lowest element.
+    if (N0.getOpcode() == ISD::BUILD_VECTOR &&
+        (SrcVT == MVT::v2f32 || SrcVT == MVT::v2i32 || SrcVT == MVT::v4i16 ||
+         SrcVT == MVT::v8i8))
+      return createMMXBuildVector(N0, DAG, Subtarget);
 
     // Detect bitcasts between element or subvector extraction to x86mmx.
     if ((N0.getOpcode() == ISD::EXTRACT_VECTOR_ELT ||
