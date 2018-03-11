@@ -5148,8 +5148,8 @@ template <typename F>
 SDValue SplitBinaryOpsAndApply(SelectionDAG &DAG, const X86Subtarget &Subtarget,
                                const SDLoc &DL, EVT VT, SDValue Op0,
                                SDValue Op1, F Builder) {
-  return SplitOpsAndApply(DAG, Subtarget, DL, VT, makeArrayRef({Op0, Op1}),
-                          Builder);
+  SDValue Ops[] = {Op0, Op1};
+  return SplitOpsAndApply(DAG, Subtarget, DL, VT, makeArrayRef(Ops), Builder);
 }
 
 // Return true if the instruction zeroes the unused upper part of the
