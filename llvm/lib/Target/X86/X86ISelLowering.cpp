@@ -8027,6 +8027,26 @@ SDValue createVariablePermute(MVT VT, SDValue SrcVec, SDValue IndicesVec,
           ISD::CONCAT_VECTORS, DL, VT,
           DAG.getNode(X86ISD::VPPERM, DL, MVT::v16i8, LoSrc, HiSrc, LoIdx),
           DAG.getNode(X86ISD::VPPERM, DL, MVT::v16i8, LoSrc, HiSrc, HiIdx));
+    } else if (Subtarget.hasAVX()) {
+      SDValue Lo = extract128BitVector(SrcVec, 0, DAG, DL);
+      SDValue Hi = extract128BitVector(SrcVec, 16, DAG, DL);
+      SDValue LoLo = DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, Lo, Lo);
+      SDValue HiHi = DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, Hi, Hi);
+      auto PSHUFBBuilder = [](SelectionDAG &DAG, const SDLoc &DL,
+                              ArrayRef<SDValue> Ops) {
+        // Permute Lo and Hi and then select based on index range.
+        // This works as SHUFB uses bits[3:0] to permute elements and we don't
+        // care about the bit[7] as its just an index vector.
+        SDValue Idx = Ops[2];
+        EVT VT = Idx.getValueType();
+        return DAG.getSelectCC(DL, Idx, DAG.getConstant(15, DL, VT),
+                               DAG.getNode(X86ISD::PSHUFB, DL, VT, Ops[1], Idx),
+                               DAG.getNode(X86ISD::PSHUFB, DL, VT, Ops[0], Idx),
+                               ISD::CondCode::SETGT);
+      };
+      SDValue Ops[] = {LoLo, HiHi, IndicesVec};
+      return SplitOpsAndApply(DAG, Subtarget, DL, MVT::v32i8, Ops,
+                              PSHUFBBuilder);
     }
     break;
   case MVT::v16i16:
