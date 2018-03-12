@@ -329,52 +329,16 @@ def : WriteRes<WritePCmpEStrILd, [JLAGU, JFPU1, JLAGU, JFPU01,JFPU1, JFPU0]> {
 // AES Instructions.
 ////////////////////////////////////////////////////////////////////////////////
 
-def : WriteRes<WriteAESDecEnc, [JFPU01, JVIMUL]> {
-  let Latency = 3;
-  let ResourceCycles = [1, 1];
-}
-def : WriteRes<WriteAESDecEncLd, [JFPU01, JLAGU, JVIMUL]> {
-  let Latency = 8;
-  let ResourceCycles = [1, 1, 1];
-}
-
-def : WriteRes<WriteAESIMC, [JVIMUL]> {
-  let Latency = 2;
-  let ResourceCycles = [1];
-}
-def : WriteRes<WriteAESIMCLd, [JLAGU, JVIMUL]> {
-  let Latency = 7;
-  let ResourceCycles = [1, 1];
-}
-
-def : WriteRes<WriteAESKeyGen, [JVIMUL]> {
-  let Latency = 2;
-  let ResourceCycles = [1];
-}
-def : WriteRes<WriteAESKeyGenLd, [JLAGU, JVIMUL]> {
-  let Latency = 7;
-  let ResourceCycles = [1, 1];
-}
+defm : JWriteResFpuPair<WriteAESIMC,    JVIMUL, 2>;
+defm : JWriteResFpuPair<WriteAESKeyGen, JVIMUL, 2>;
+defm : JWriteResFpuPair<WriteAESDecEnc, JVIMUL, 3>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Horizontal add/sub  instructions.
 ////////////////////////////////////////////////////////////////////////////////
 
-def : WriteRes<WriteFHAdd, [JFPU0]> {
-  let Latency = 3;
-}
-
-def : WriteRes<WriteFHAddLd, [JLAGU, JFPU0]> {
-  let Latency = 8;
-}
-
-def : WriteRes<WritePHAdd, [JFPU01]> {
-  let ResourceCycles = [1];
-}
-def : WriteRes<WritePHAddLd, [JLAGU, JFPU01 ]> {
-  let Latency = 6;
-  let ResourceCycles = [1, 1];
-}
+defm : JWriteResFpuPair<WriteFHAdd,   JFPU0,  3>;
+defm : JWriteResFpuPair<WritePHAdd,   JFPU01, 1>;
 
 def WriteFHAddY: SchedWriteRes<[JFPU0]> {
   let Latency = 3;
@@ -392,14 +356,7 @@ def : InstRW<[WriteFHAddYLd], (instrs VHADDPDYrm, VHADDPSYrm, VHSUBPDYrm, VHSUBP
 // Carry-less multiplication instructions.
 ////////////////////////////////////////////////////////////////////////////////
 
-def : WriteRes<WriteCLMul, [JVIMUL]> {
-  let Latency = 2;
-  let ResourceCycles = [1];
-}
-def : WriteRes<WriteCLMulLd, [JLAGU, JVIMUL]> {
-  let Latency = 7;
-  let ResourceCycles = [1, 1];
-}
+defm : JWriteResFpuPair<WriteCLMul,   JVIMUL, 2>;
 
 // FIXME: pipe for system/microcode?
 def : WriteRes<WriteSystem,     [JAny]> { let Latency = 100; }
