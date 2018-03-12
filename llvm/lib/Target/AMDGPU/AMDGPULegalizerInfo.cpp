@@ -107,6 +107,17 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const SISubtarget &ST,
   setAction({G_LOAD, 1, S64}, Legal);
   setAction({G_STORE, 1, S64}, Legal);
 
+  for (unsigned Op : {G_EXTRACT_VECTOR_ELT, G_INSERT_VECTOR_ELT}) {
+    getActionDefinitionsBuilder(Op)
+      .legalIf([=](const LegalityQuery &Query) {
+          const LLT &VecTy = Query.Types[1];
+          const LLT &IdxTy = Query.Types[2];
+          return VecTy.getSizeInBits() % 32 == 0 &&
+            VecTy.getSizeInBits() <= 512 &&
+            IdxTy.getSizeInBits() == 32;
+        });
+  }
+
   // FIXME: Doesn't handle extract of illegal sizes.
   getActionDefinitionsBuilder(G_EXTRACT)
     .unsupportedIf([=](const LegalityQuery &Query) {
