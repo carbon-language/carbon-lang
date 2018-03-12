@@ -106,9 +106,9 @@ uint32_t ObjFile::calcNewValue(const WasmRelocation &Reloc) const {
   case R_WEBASSEMBLY_TYPE_INDEX_LEB:
     return TypeMap[Reloc.Index];
   case R_WEBASSEMBLY_FUNCTION_INDEX_LEB:
-    return getFunctionSymbol(Reloc.Index)->getOutputIndex();
+    return getFunctionSymbol(Reloc.Index)->getFunctionIndex();
   case R_WEBASSEMBLY_GLOBAL_INDEX_LEB:
-    return getGlobalSymbol(Reloc.Index)->getOutputIndex();
+    return getGlobalSymbol(Reloc.Index)->getGlobalIndex();
   default:
     llvm_unreachable("unknown relocation type");
   }
