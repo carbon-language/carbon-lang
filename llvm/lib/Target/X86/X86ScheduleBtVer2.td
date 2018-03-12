@@ -211,18 +211,18 @@ defm : JWriteResFpuPair<WriteFBlend,     JFPU01,  1>;
 defm : JWriteResFpuPair<WriteFVarBlend,  JFPU01,  2, 4, 3>;
 defm : JWriteResFpuPair<WriteFShuffle256, JFPU01, 1>;
 
-def : WriteRes<WriteFSqrt, [JFPU1, JLAGU, JFPM]> {
+def : WriteRes<WriteFSqrt, [JFPU1, JFPM]> {
   let Latency = 21;
-  let ResourceCycles = [1, 1, 21];
+  let ResourceCycles = [1, 21];
 }
 def : WriteRes<WriteFSqrtLd, [JFPU1, JLAGU, JFPM]> {
   let Latency = 26;
   let ResourceCycles = [1, 1, 21];
 }
 
-def : WriteRes<WriteFDiv, [JFPU1, JLAGU, JFPM]> {
+def : WriteRes<WriteFDiv, [JFPU1, JFPM]> {
   let Latency = 19;
-  let ResourceCycles = [1, 1, 19];
+  let ResourceCycles = [1, 19];
 }
 def : WriteRes<WriteFDivLd, [JFPU1, JLAGU, JFPM]> {
   let Latency = 24;
