@@ -75,8 +75,8 @@ def : ReadAdvance<ReadAfterLd, 3>;
 // This multiclass defines the resource usage for variants with and without
 // folded loads.
 multiclass JWriteResIntPair<X86FoldableSchedWrite SchedRW,
-                          ProcResourceKind ExePort,
-                          int Lat> {
+                            ProcResourceKind ExePort,
+                            int Lat> {
   // Register variant is using a single cycle on ExePort.
   def : WriteRes<SchedRW, [ExePort]> { let Latency = Lat; }
 
@@ -88,15 +88,21 @@ multiclass JWriteResIntPair<X86FoldableSchedWrite SchedRW,
 }
 
 multiclass JWriteResFpuPair<X86FoldableSchedWrite SchedRW,
-                          ProcResourceKind ExePort,
-                          int Lat> {
+                            ProcResourceKind ExePort,
+                            int Lat, int Res = 1, int UOps = 1> {
   // Register variant is using a single cycle on ExePort.
-  def : WriteRes<SchedRW, [ExePort]> { let Latency = Lat; }
+  def : WriteRes<SchedRW, [ExePort]> {
+    let Latency = Lat;
+    let ResourceCycles = [Res];
+    let NumMicroOps = UOps;
+  }
 
   // Memory variant also uses a cycle on JLAGU and adds 5 cycles to the
   // latency.
   def : WriteRes<SchedRW.Folded, [JLAGU, ExePort]> {
      let Latency = !add(Lat, 5);
+     let ResourceCycles = [1, Res];
+     let NumMicroOps = UOps;
   }
 }
 
@@ -202,6 +208,7 @@ defm : JWriteResFpuPair<WriteFRcp,        JFPU1,  2>;
 defm : JWriteResFpuPair<WriteFRsqrt,      JFPU1,  2>;
 defm : JWriteResFpuPair<WriteFShuffle,   JFPU01,  1>;
 defm : JWriteResFpuPair<WriteFBlend,     JFPU01,  1>;
+defm : JWriteResFpuPair<WriteFVarBlend,  JFPU01,  2, 4, 3>;
 defm : JWriteResFpuPair<WriteFShuffle256, JFPU01, 1>;
 
 def : WriteRes<WriteFSqrt, [JFPU1, JLAGU, JFPM]> {
@@ -227,52 +234,20 @@ defm : JWriteResFpuPair<WriteCvtF2I,    JFPU1,  3>; // Float -> Integer.
 defm : JWriteResFpuPair<WriteCvtI2F,    JFPU1,  3>; // Integer -> Float.
 defm : JWriteResFpuPair<WriteCvtF2F,    JFPU1,  3>; // Float -> Float size conversion.
 
-def : WriteRes<WriteFVarBlend, [JFPU01]> {
-  let Latency = 2;
-  let ResourceCycles = [4];
-  let NumMicroOps = 3;
-}
-def : WriteRes<WriteFVarBlendLd, [JLAGU, JFPU01]> {
-  let Latency = 7;
-  let ResourceCycles = [1, 4];
-  let NumMicroOps = 3;
-}
-
+////////////////////////////////////////////////////////////////////////////////
 // Vector integer operations.
-defm : JWriteResFpuPair<WriteVecALU,   JFPU01,  1>;
-defm : JWriteResFpuPair<WriteVecShift, JFPU01,  1>;
-defm : JWriteResFpuPair<WriteVecIMul,  JFPU0,   2>;
-defm : JWriteResFpuPair<WriteShuffle,  JFPU01,  1>;
-defm : JWriteResFpuPair<WriteBlend,    JFPU01,  1>;
-defm : JWriteResFpuPair<WriteVecLogic, JFPU01,  1>;
-defm : JWriteResFpuPair<WriteShuffle256, JFPU01, 1>;
+////////////////////////////////////////////////////////////////////////////////
 
-def : WriteRes<WriteVarBlend, [JFPU01]> {
-  let Latency = 2;
-  let ResourceCycles = [4];
-  let NumMicroOps = 3;
-}
-def : WriteRes<WriteVarBlendLd, [JLAGU, JFPU01]> {
-  let Latency = 7;
-  let ResourceCycles = [1, 4];
-  let NumMicroOps = 3;
-}
-
-// FIXME: why do we need to define AVX2 resource on CPU that doesn't have AVX2?
-def : WriteRes<WriteVarVecShift, [JFPU01]> {}
-def : WriteRes<WriteVarVecShiftLd, [JLAGU, JFPU01]> {
-  let Latency = 6;
-  let ResourceCycles = [1, 2];
-}
-
-def : WriteRes<WriteMPSAD, [JFPU0]> {
-  let Latency = 3;
-  let ResourceCycles = [2];
-}
-def : WriteRes<WriteMPSADLd, [JLAGU, JFPU0]> {
-  let Latency = 8;
-  let ResourceCycles = [1, 2];
-}
+defm : JWriteResFpuPair<WriteVecALU,      JFPU01, 1>;
+defm : JWriteResFpuPair<WriteVecShift,    JFPU01, 1>;
+defm : JWriteResFpuPair<WriteVecIMul,     JFPU0,  2>;
+defm : JWriteResFpuPair<WriteMPSAD,       JFPU0,  3, 2>;
+defm : JWriteResFpuPair<WriteShuffle,     JFPU01, 1>;
+defm : JWriteResFpuPair<WriteBlend,       JFPU01, 1>;
+defm : JWriteResFpuPair<WriteVarBlend,    JFPU01, 2, 4, 3>;
+defm : JWriteResFpuPair<WriteVecLogic,    JFPU01, 1>;
+defm : JWriteResFpuPair<WriteShuffle256,  JFPU01, 1>;
+defm : JWriteResFpuPair<WriteVarVecShift, JFPU01, 1>; // NOTE: Doesn't exist on Jaguar.
 
 ////////////////////////////////////////////////////////////////////////////////
 // String instructions.
@@ -598,14 +573,12 @@ def : InstRW<[WriteVMOVNTPYSt], (instrs VMOVNTDQYmr, VMOVNTPDYmr, VMOVNTPSYmr)>;
 def WriteFCmp: SchedWriteRes<[JFPU0]> {
   let Latency = 2;
 }
-
 def : InstRW<[WriteFCmp], (instregex "(V)?M(AX|IN)(P|S)(D|S)rr",
                                      "(V)?CMPP(S|D)rri", "(V)?CMPS(S|D)rr")>;
 
 def WriteFCmpLd: SchedWriteRes<[JLAGU, JFPU0]> {
   let Latency = 7;
 }
-
 def : InstRW<[WriteFCmpLd], (instregex "(V)?M(AX|IN)(P|S)(D|S)rm",
                                        "(V)?CMPP(S|D)rmi", "(V)?CMPS(S|D)rm")>;
 
