@@ -12128,6 +12128,22 @@ TEST_F(FormatTest, GuessLanguageWithCpp11AttributeSpecifiers) {
   EXPECT_EQ(FormatStyle::LK_Cpp, guessLanguage("foo.h", "[[foo::bar, ...]]"));
 }
 
+TEST_F(FormatTest, GuessLanguageWithCaret) {
+  EXPECT_EQ(FormatStyle::LK_Cpp, guessLanguage("foo.h", "FOO(^);"));
+  EXPECT_EQ(FormatStyle::LK_Cpp, guessLanguage("foo.h", "FOO(^, Bar);"));
+  EXPECT_EQ(FormatStyle::LK_ObjC,
+            guessLanguage("foo.h", "int(^)(char, float);"));
+  EXPECT_EQ(FormatStyle::LK_ObjC,
+            guessLanguage("foo.h", "int(^foo)(char, float);"));
+  EXPECT_EQ(FormatStyle::LK_ObjC,
+            guessLanguage("foo.h", "int(^foo[10])(char, float);"));
+  EXPECT_EQ(FormatStyle::LK_ObjC,
+            guessLanguage("foo.h", "int(^foo[kNumEntries])(char, float);"));
+  EXPECT_EQ(
+      FormatStyle::LK_ObjC,
+      guessLanguage("foo.h", "int(^foo[(kNumEntries + 10)])(char, float);"));
+}
+
 } // end namespace
 } // end namespace format
 } // end namespace clang

@@ -141,10 +141,7 @@ private:
         Contexts.size() == 2 && Contexts[0].ColonIsForRangeExpr;
 
     bool StartsObjCMethodExpr = false;
-    if (CurrentToken->is(tok::caret)) {
-      // (^ can start a block type.
-      Left->Type = TT_ObjCBlockLParen;
-    } else if (FormatToken *MaybeSel = Left->Previous) {
+    if (FormatToken *MaybeSel = Left->Previous) {
       // @selector( starts a selector.
       if (MaybeSel->isObjCAtKeyword(tok::objc_selector) && MaybeSel->Previous &&
           MaybeSel->Previous->is(tok::at)) {
@@ -210,8 +207,16 @@ private:
       Left->Type = TT_ObjCMethodExpr;
     }
 
+    // MightBeFunctionType and ProbablyFunctionType are used for
+    // function pointer and reference types as well as Objective-C
+    // block types:
+    //
+    // void (*FunctionPointer)(void);
+    // void (&FunctionReference)(void);
+    // void (^ObjCBlock)(void);
     bool MightBeFunctionType = !Contexts[Contexts.size() - 2].IsExpression;
-    bool ProbablyFunctionType = CurrentToken->isOneOf(tok::star, tok::amp);
+    bool ProbablyFunctionType =
+        CurrentToken->isOneOf(tok::star, tok::amp, tok::caret);
     bool HasMultipleLines = false;
     bool HasMultipleParametersOnALine = false;
     bool MightBeObjCForRangeLoop =
@@ -248,7 +253,8 @@ private:
         if (MightBeFunctionType && ProbablyFunctionType && CurrentToken->Next &&
             (CurrentToken->Next->is(tok::l_paren) ||
              (CurrentToken->Next->is(tok::l_square) && Line.MustBeDeclaration)))
-          Left->Type = TT_FunctionTypeLParen;
+          Left->Type = Left->Next->is(tok::caret) ? TT_ObjCBlockLParen
+                                                  : TT_FunctionTypeLParen;
         Left->MatchingParen = CurrentToken;
         CurrentToken->MatchingParen = Left;
 
