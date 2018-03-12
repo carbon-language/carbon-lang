@@ -7999,13 +7999,13 @@ SDValue createVariablePermute(MVT VT, SDValue SrcVec, SDValue IndicesVec,
   default:
     break;
   case MVT::v16i8:
-    if (Subtarget.hasSSE3())
+    if (Subtarget.hasSSSE3())
       Opcode = X86ISD::PSHUFB;
     break;
   case MVT::v8i16:
     if (Subtarget.hasVLX() && Subtarget.hasBWI())
       Opcode = X86ISD::VPERMV;
-    else if (Subtarget.hasSSE3()) {
+    else if (Subtarget.hasSSSE3()) {
       Opcode = X86ISD::PSHUFB;
       ShuffleVT = MVT::v16i8;
     }
@@ -8015,7 +8015,7 @@ SDValue createVariablePermute(MVT VT, SDValue SrcVec, SDValue IndicesVec,
     if (Subtarget.hasAVX()) {
       Opcode = X86ISD::VPERMILPV;
       ShuffleVT = MVT::v4f32;
-    } else if (Subtarget.hasSSE3()) {
+    } else if (Subtarget.hasSSSE3()) {
       Opcode = X86ISD::PSHUFB;
       ShuffleVT = MVT::v16i8;
     }
