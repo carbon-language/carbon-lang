@@ -1,6 +1,7 @@
 ; RUN: llc -march=hexagon -enable-pipeliner -stats \
 ; RUN:     -pipeliner-prune-loop-carried=false -fp-contract=fast \
 ; RUN:     -o /dev/null < %s 2>&1 | FileCheck %s --check-prefix=STATS
+; REQUIRES: asserts
 
 ; That that we do not pipeline this loop. The recurrence is too large. If
 ; we pipeline this example, that means we're not checking the complete
