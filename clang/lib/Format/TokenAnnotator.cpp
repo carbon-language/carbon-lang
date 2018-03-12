@@ -328,13 +328,40 @@ private:
     return false;
   }
 
+  bool isCpp11AttributeSpecifier(const FormatToken &Tok) {
+    if (!Style.isCpp() || !Tok.startsSequence(tok::l_square, tok::l_square))
+      return false;
+    const FormatToken *AttrTok = Tok.Next->Next;
+    if (!AttrTok)
+      return false;
+    // C++17 '[[using ns: foo, bar(baz, blech)]]'
+    // We assume nobody will name an ObjC variable 'using'.
+    if (AttrTok->startsSequence(tok::kw_using, tok::identifier, tok::colon))
+      return true;
+    if (AttrTok->isNot(tok::identifier))
+      return false;
+    while (AttrTok && !AttrTok->startsSequence(tok::r_square, tok::r_square)) {
+      // ObjC message send. We assume nobody will use : in a C++11 attribute
+      // specifier parameter, although this is technically valid:
+      // [[foo(:)]]
+      if (AttrTok->is(tok::colon) ||
+          AttrTok->startsSequence(tok::identifier, tok::identifier))
+        return false;
+      if (AttrTok->is(tok::ellipsis))
+        return true;
+      AttrTok = AttrTok->Next;
+    }
+    return AttrTok && AttrTok->startsSequence(tok::r_square, tok::r_square);
+  }
+
   bool parseSquare() {
     if (!CurrentToken)
       return false;
 
     // A '[' could be an index subscript (after an identifier or after
     // ')' or ']'), it could be the start of an Objective-C method
-    // expression, or it could the start of an Objective-C array literal.
+    // expression, it could the start of an Objective-C array literal,
+    // or it could be a C++ attribute specifier [[foo::bar]].
     FormatToken *Left = CurrentToken->Previous;
     Left->ParentBracket = Contexts.back().ContextKind;
     FormatToken *Parent = Left->getPreviousNonComment();
@@ -347,8 +374,11 @@ private:
         (Contexts.back().CanBeExpression || Contexts.back().IsExpression ||
          Contexts.back().InTemplateArgument);
 
+    bool IsCpp11AttributeSpecifier = isCpp11AttributeSpecifier(*Left) ||
+                                     Contexts.back().InCpp11AttributeSpecifier;
+
     bool StartsObjCMethodExpr =
-        !CppArrayTemplates && Style.isCpp() &&
+        !CppArrayTemplates && Style.isCpp() && !IsCpp11AttributeSpecifier &&
         Contexts.back().CanBeExpression && Left->isNot(TT_LambdaLSquare) &&
         CurrentToken->isNot(tok::l_brace) &&
         (!Parent ||
@@ -365,6 +395,8 @@ private:
     } else if (Left->is(TT_Unknown)) {
       if (StartsObjCMethodExpr) {
         Left->Type = TT_ObjCMethodExpr;
+      } else if (IsCpp11AttributeSpecifier) {
+        Left->Type = TT_AttributeSquare;
       } else if (Style.Language == FormatStyle::LK_JavaScript && Parent &&
                  Contexts.back().ContextKind == tok::l_brace &&
                  Parent->isOneOf(tok::l_brace, tok::comma)) {
@@ -432,11 +464,14 @@ private:
       Contexts.back().IsExpression = false;
 
     Contexts.back().ColonIsObjCMethodExpr = StartsObjCMethodExpr;
+    Contexts.back().InCpp11AttributeSpecifier = IsCpp11AttributeSpecifier;
 
     while (CurrentToken) {
       if (CurrentToken->is(tok::r_square)) {
-        if (CurrentToken->Next && CurrentToken->Next->is(tok::l_paren) &&
-            Left->is(TT_ObjCMethodExpr)) {
+        if (IsCpp11AttributeSpecifier)
+          CurrentToken->Type = TT_AttributeSquare;
+        else if (CurrentToken->Next && CurrentToken->Next->is(tok::l_paren) &&
+                 Left->is(TT_ObjCMethodExpr)) {
           // An ObjC method call is rarely followed by an open parenthesis.
           // FIXME: Do we incorrectly label ":" with this?
           StartsObjCMethodExpr = false;
@@ -466,8 +501,14 @@ private:
       if (CurrentToken->isOneOf(tok::r_paren, tok::r_brace))
         return false;
       if (CurrentToken->is(tok::colon)) {
-        if (Left->isOneOf(TT_ArraySubscriptLSquare,
-                          TT_DesignatedInitializerLSquare)) {
+        if (IsCpp11AttributeSpecifier &&
+            CurrentToken->endsSequence(tok::colon, tok::identifier,
+                                       tok::kw_using)) {
+          // Remember that this is a [[using ns: foo]] C++ attribute, so we
+          // don't add a space before the colon (unlike other colons).
+          CurrentToken->Type = TT_AttributeColon;
+        } else if (Left->isOneOf(TT_ArraySubscriptLSquare,
+                                 TT_DesignatedInitializerLSquare)) {
           Left->Type = TT_ObjCMethodExpr;
           StartsObjCMethodExpr = true;
           // ParameterCount might have been set to 1 before expression was
@@ -1088,6 +1129,7 @@ private:
     bool InInheritanceList = false;
     bool CaretFound = false;
     bool IsForEachMacro = false;
+    bool InCpp11AttributeSpecifier = false;
   };
 
   /// \brief Puts a new \c Context onto the stack \c Contexts for the lifetime
@@ -2124,7 +2166,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
       return 35;
     if (!Right.isOneOf(TT_ObjCMethodExpr, TT_LambdaLSquare,
                        TT_ArrayInitializerLSquare,
-                       TT_DesignatedInitializerLSquare))
+                       TT_DesignatedInitializerLSquare, TT_AttributeSquare))
       return 500;
   }
 
@@ -2375,11 +2417,12 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
                                                      Style)) ||
             (Style.SpacesInSquareBrackets &&
              Right.MatchingParen->isOneOf(TT_ArraySubscriptLSquare,
-                                          TT_StructuredBindingLSquare)));
+                                          TT_StructuredBindingLSquare)) ||
+            Right.MatchingParen->is(TT_AttributeParen));
   if (Right.is(tok::l_square) &&
       !Right.isOneOf(TT_ObjCMethodExpr, TT_LambdaLSquare,
                      TT_DesignatedInitializerLSquare,
-                     TT_StructuredBindingLSquare) &&
+                     TT_StructuredBindingLSquare, TT_AttributeSquare) &&
       !Left.isOneOf(tok::numeric_constant, TT_DictLiteral))
     return false;
   if (Left.is(tok::l_brace) && Right.is(tok::r_brace))
@@ -2391,7 +2434,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
   if (Left.is(TT_BlockComment))
     return !Left.TokenText.endswith("=*/");
   if (Right.is(tok::l_paren)) {
-    if (Left.is(tok::r_paren) && Left.is(TT_AttributeParen))
+    if ((Left.is(tok::r_paren) && Left.is(TT_AttributeParen)) ||
+        (Left.is(tok::r_square) && Left.is(TT_AttributeSquare)))
       return true;
     return Line.Type == LT_ObjCDecl || Left.is(tok::semi) ||
            (Style.SpaceBeforeParens != FormatStyle::SBPO_Never &&
@@ -2602,6 +2646,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
       return false;
     if (Right.is(TT_DictLiteral))
       return Style.SpacesInContainerLiterals;
+    if (Right.is(TT_AttributeColon))
+      return false;
     return true;
   }
   if (Left.is(TT_UnaryOperator))
@@ -2963,7 +3009,8 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     return !Right.isOneOf(tok::l_brace, tok::semi, tok::equal, tok::l_paren,
                           tok::less, tok::coloncolon);
 
-  if (Right.is(tok::kw___attribute))
+  if (Right.is(tok::kw___attribute) ||
+      (Right.is(tok::l_square) && Right.is(TT_AttributeSquare)))
     return true;
 
   if (Left.is(tok::identifier) && Right.is(tok::string_literal))
@@ -3004,6 +3051,9 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
       (Style.BreakBeforeBinaryOperators == FormatStyle::BOS_None ||
        Left.getPrecedence() == prec::Assignment))
     return true;
+  if ((Left.is(TT_AttributeSquare) && Right.is(tok::l_square)) ||
+      (Left.is(tok::r_square) && Right.is(TT_AttributeSquare)))
+    return false;
   return Left.isOneOf(tok::comma, tok::coloncolon, tok::semi, tok::l_brace,
                       tok::kw_class, tok::kw_struct, tok::comment) ||
          Right.isMemberAccess() ||
