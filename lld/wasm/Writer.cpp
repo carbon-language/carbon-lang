@@ -657,12 +657,11 @@ void Writer::calculateImports() {
       continue;
 
     DEBUG(dbgs() << "import: " << Sym->getName() << "\n");
-    Sym->setOutputIndex(ImportedSymbols.size());
     ImportedSymbols.emplace_back(Sym);
     if (isa<FunctionSymbol>(Sym))
-      ++NumImportedFunctions;
+      Sym->setOutputIndex(NumImportedFunctions++);
     else
-      ++NumImportedGlobals;
+      Sym->setOutputIndex(NumImportedGlobals++);
   }
 }
 
