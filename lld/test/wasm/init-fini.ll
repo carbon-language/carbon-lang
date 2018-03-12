@@ -52,50 +52,56 @@ entry:
 ; CHECK-NEXT:       - Offset:
 ; CHECK-NEXT:           Opcode:          I32_CONST
 ; CHECK-NEXT:           Value:           1
-; CHECK-NEXT:         Functions:       [ 6, 8, 12, 14, 16 ]
-
-; CHECK:              Body:            100010011007100A100D100A100F10001009100A10110B
+; CHECK-NEXT:         Functions:       [ 7, 9, 13, 15, 17 ]
+; CHECK-NEXT:   - Type:            CODE
+; CHECK-NEXT:     Functions:
+; CHECK-NEXT:       - Index:           0
+; CHECK-NEXT:         Locals:
+; CHECK-NEXT:         Body:            100110021008100B100E100B10101001100A100B10120B
+; CHECK:            - Index:           18
+; CHECK-NEXT:         Locals:
+; CHECK-NEXT:         Body:            024041858080800041004180888080001085808080000D000F0B00000B
 ; CHECK-NEXT:   - Type:            CUSTOM
 ; CHECK-NEXT:     Name:            name
 ; CHECK-NEXT:     FunctionNames:
 ; CHECK-NEXT:       - Index:           0
-; CHECK-NEXT:         Name:            func1
-; CHECK-NEXT:       - Index:           1
-; CHECK-NEXT:         Name:            func2
-; CHECK-NEXT:       - Index:           2
-; CHECK-NEXT:         Name:            func3
-; CHECK-NEXT:       - Index:           3
-; CHECK-NEXT:         Name:            func4
-; CHECK-NEXT:       - Index:           4
-; CHECK-NEXT:         Name:            __cxa_atexit
-; CHECK-NEXT:       - Index:           5
-; CHECK-NEXT:         Name:            _start
-; CHECK-NEXT:       - Index:           6
-; CHECK-NEXT:         Name:            .Lcall_dtors.101
-; CHECK-NEXT:       - Index:           7
-; CHECK-NEXT:         Name:            .Lregister_call_dtors.101
-; CHECK-NEXT:       - Index:           8
-; CHECK-NEXT:         Name:            .Lcall_dtors.1001
-; CHECK-NEXT:       - Index:           9
-; CHECK-NEXT:         Name:            .Lregister_call_dtors.1001
-; CHECK-NEXT:       - Index:           10
-; CHECK-NEXT:         Name:            myctor
-; CHECK-NEXT:       - Index:           11
-; CHECK-NEXT:         Name:            mydtor
-; CHECK-NEXT:       - Index:           12
-; CHECK-NEXT:         Name:            .Lcall_dtors.101
-; CHECK-NEXT:       - Index:           13
-; CHECK-NEXT:         Name:            .Lregister_call_dtors.101
-; CHECK-NEXT:       - Index:           14
-; CHECK-NEXT:         Name:            .Lcall_dtors.202
-; CHECK-NEXT:       - Index:           15
-; CHECK-NEXT:         Name:            .Lregister_call_dtors.202
-; CHECK-NEXT:       - Index:           16
-; CHECK-NEXT:         Name:            .Lcall_dtors.2002
-; CHECK-NEXT:       - Index:           17
-; CHECK-NEXT:         Name:            .Lregister_call_dtors.2002
-; CHECK-NEXT:       - Index:           18
 ; CHECK-NEXT:         Name:            __wasm_call_ctors
+; CHECK-NEXT:       - Index:           1
+; CHECK-NEXT:         Name:            func1
+; CHECK-NEXT:       - Index:           2
+; CHECK-NEXT:         Name:            func2
+; CHECK-NEXT:       - Index:           3
+; CHECK-NEXT:         Name:            func3
+; CHECK-NEXT:       - Index:           4
+; CHECK-NEXT:         Name:            func4
+; CHECK-NEXT:       - Index:           5
+; CHECK-NEXT:         Name:            __cxa_atexit
+; CHECK-NEXT:       - Index:           6
+; CHECK-NEXT:         Name:            _start
+; CHECK-NEXT:       - Index:           7
+; CHECK-NEXT:         Name:            .Lcall_dtors.101
+; CHECK-NEXT:       - Index:           8
+; CHECK-NEXT:         Name:            .Lregister_call_dtors.101
+; CHECK-NEXT:       - Index:           9
+; CHECK-NEXT:         Name:            .Lcall_dtors.1001
+; CHECK-NEXT:       - Index:           10
+; CHECK-NEXT:         Name:            .Lregister_call_dtors.1001
+; CHECK-NEXT:       - Index:           11
+; CHECK-NEXT:         Name:            myctor
+; CHECK-NEXT:       - Index:           12
+; CHECK-NEXT:         Name:            mydtor
+; CHECK-NEXT:       - Index:           13
+; CHECK-NEXT:         Name:            .Lcall_dtors.101
+; CHECK-NEXT:       - Index:           14
+; CHECK-NEXT:         Name:            .Lregister_call_dtors.101
+; CHECK-NEXT:       - Index:           15
+; CHECK-NEXT:         Name:            .Lcall_dtors.202
+; CHECK-NEXT:       - Index:           16
+; CHECK-NEXT:         Name:            .Lregister_call_dtors.202
+; CHECK-NEXT:       - Index:           17
+; CHECK-NEXT:         Name:            .Lcall_dtors.2002
+; CHECK-NEXT:       - Index:           18
+; CHECK-NEXT:         Name:            .Lregister_call_dtors.2002
 ; CHECK-NEXT: ...
 
 
