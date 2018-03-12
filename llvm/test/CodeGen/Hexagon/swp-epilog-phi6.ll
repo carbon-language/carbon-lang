@@ -1,4 +1,5 @@
 ; RUN: llc -march=hexagon -O2 -debug-only=pipeliner < %s -o - 2>&1 > /dev/null | FileCheck %s
+; REQUIRES: asserts
 
 ; Test that the phi in the first epilog block is getter the correct
 ; value from the kernel block. In this bug, the phi was using the value

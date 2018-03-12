@@ -1,4 +1,5 @@
 ; RUN: llc -march=hexagon -debug-only=pipeliner < %s -o - 2>&1 | FileCheck %s
+; REQUIRES: asserts
 
 ; Test that there is a chain edge between two dependent Phis.
 ; The pipeliner tries to remove chains between unrelated Phis, but
