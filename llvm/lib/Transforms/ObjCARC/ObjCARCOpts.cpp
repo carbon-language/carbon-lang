@@ -687,15 +687,12 @@ void ObjCARCOpt::OptimizeAutoreleaseRVCall(Function &F,
 
 namespace {
 Instruction *
-CloneCallInstForBB(Instruction &I, BasicBlock &BB,
+CloneCallInstForBB(CallInst &CI, BasicBlock &BB,
                    DenseMap<BasicBlock *, ColorVector> &BlockColors) {
-  auto *CI = dyn_cast<CallInst>(&I);
-  assert(CI && "CloneCallInst must receive a CallInst");
-
   SmallVector<OperandBundleDef, 1> OpBundles;
-  for (unsigned I = 0, E = CI->getNumOperandBundles(); I != E; ++I) {
-    auto Bundle = CI->getOperandBundleAt(I);
-    // funclets will be reassociated in the future
+  for (unsigned I = 0, E = CI.getNumOperandBundles(); I != E; ++I) {
+    auto Bundle = CI.getOperandBundleAt(I);
+    // Funclets will be reassociated in the future.
     if (Bundle.getTagID() == LLVMContext::OB_funclet)
       continue;
     OpBundles.emplace_back(Bundle);
@@ -709,7 +706,7 @@ CloneCallInstForBB(Instruction &I, BasicBlock &BB,
       OpBundles.emplace_back("funclet", EHPad);
   }
 
-  return CallInst::Create(CI, OpBundles);
+  return CallInst::Create(&CI, OpBundles);
 }
 }
 
