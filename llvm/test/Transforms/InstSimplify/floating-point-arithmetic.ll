@@ -3,8 +3,7 @@
 
 define <2 x float> @fsub_negzero_vec_undef_elts(<2 x float> %x) {
 ; CHECK-LABEL: @fsub_negzero_vec_undef_elts(
-; CHECK-NEXT:    [[R:%.*]] = fsub nsz <2 x float> [[X:%.*]], <float undef, float -0.000000e+00>
-; CHECK-NEXT:    ret <2 x float> [[R]]
+; CHECK-NEXT:    ret <2 x float> [[X:%.*]]
 ;
   %r = fsub nsz <2 x float> %x, <float undef, float -0.0>
   ret <2 x float> %r
@@ -31,9 +30,7 @@ define <2 x float> @fsub_-0_-0_x_vec(<2 x float> %a) {
 
 define <2 x float> @fsub_-0_-0_x_vec_undef_elts(<2 x float> %a) {
 ; CHECK-LABEL: @fsub_-0_-0_x_vec_undef_elts(
-; CHECK-NEXT:    [[T1:%.*]] = fsub <2 x float> <float undef, float -0.000000e+00>, [[A:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = fsub <2 x float> <float -0.000000e+00, float undef>, [[T1]]
-; CHECK-NEXT:    ret <2 x float> [[RET]]
+; CHECK-NEXT:    ret <2 x float> [[A:%.*]]
 ;
   %t1 = fsub <2 x float> <float undef, float -0.0>, %a
   %ret = fsub <2 x float> <float -0.0, float undef>, %t1
@@ -84,8 +81,7 @@ define float @fadd_x_n0(float %a) {
 
 define <2 x float> @fadd_x_n0_vec_undef_elt(<2 x float> %a) {
 ; CHECK-LABEL: @fadd_x_n0_vec_undef_elt(
-; CHECK-NEXT:    [[RET:%.*]] = fadd <2 x float> [[A:%.*]], <float -0.000000e+00, float undef>
-; CHECK-NEXT:    ret <2 x float> [[RET]]
+; CHECK-NEXT:    ret <2 x float> [[A:%.*]]
 ;
   %ret = fadd <2 x float> %a, <float -0.0, float undef>
   ret <2 x float> %ret
