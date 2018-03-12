@@ -864,7 +864,7 @@ private:
                            unsigned& RegNum, unsigned& RegWidth,
                            unsigned *DwordRegIndex);
   void cvtMubufImpl(MCInst &Inst, const OperandVector &Operands,
-                    bool IsAtomic, bool IsAtomicReturn);
+                    bool IsAtomic, bool IsAtomicReturn, bool IsLds = false);
   void cvtDSImpl(MCInst &Inst, const OperandVector &Operands,
                  bool IsGdsHardcoded);
 
@@ -1093,6 +1093,7 @@ public:
   void cvtMubuf(MCInst &Inst, const OperandVector &Operands) { cvtMubufImpl(Inst, Operands, false, false); }
   void cvtMubufAtomic(MCInst &Inst, const OperandVector &Operands) { cvtMubufImpl(Inst, Operands, true, false); }
   void cvtMubufAtomicReturn(MCInst &Inst, const OperandVector &Operands) { cvtMubufImpl(Inst, Operands, true, true); }
+  void cvtMubufLds(MCInst &Inst, const OperandVector &Operands) { cvtMubufImpl(Inst, Operands, false, false, true); }
   void cvtMtbuf(MCInst &Inst, const OperandVector &Operands);
 
   AMDGPUOperand::Ptr defaultGLC() const;
@@ -4106,7 +4107,10 @@ AMDGPUOperand::Ptr AMDGPUAsmParser::defaultTFE() const {
 
 void AMDGPUAsmParser::cvtMubufImpl(MCInst &Inst,
                                const OperandVector &Operands,
-                               bool IsAtomic, bool IsAtomicReturn) {
+                               bool IsAtomic,
+                               bool IsAtomicReturn,
+                               bool IsLds) {
+  bool IsLdsOpcode = IsLds;
   bool HasLdsModifier = false;
   OptionalImmIndexMap OptionalIdx;
   assert(IsAtomicReturn ? IsAtomic : true);
@@ -4146,10 +4150,11 @@ void AMDGPUAsmParser::cvtMubufImpl(MCInst &Inst,
   // optional modifiers and llvm asm matcher regards this 'lds'
   // modifier as an optional one. As a result, an lds version
   // of opcode may be selected even if it has no 'lds' modifier.
-  if (!HasLdsModifier) {
+  if (IsLdsOpcode && !HasLdsModifier) {
     int NoLdsOpcode = AMDGPU::getMUBUFNoLdsInst(Inst.getOpcode());
     if (NoLdsOpcode != -1) { // Got lds version - correct it.
       Inst.setOpcode(NoLdsOpcode);
+      IsLdsOpcode = false;
     }
   }
 
@@ -4165,7 +4170,7 @@ void AMDGPUAsmParser::cvtMubufImpl(MCInst &Inst,
   }
   addOptionalImmOperand(Inst, Operands, OptionalIdx, AMDGPUOperand::ImmTySLC);
 
-  if (!HasLdsModifier) { // tfe is not legal with lds opcodes
+  if (!IsLdsOpcode) { // tfe is not legal with lds opcodes
     addOptionalImmOperand(Inst, Operands, OptionalIdx, AMDGPUOperand::ImmTyTFE);
   }
 }
