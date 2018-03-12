@@ -119,5 +119,32 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const SISubtarget &ST,
                (Ty1.getSizeInBits() % 32 == 0);
       });
 
+  // Merge/Unmerge
+  for (unsigned Op : {G_MERGE_VALUES, G_UNMERGE_VALUES}) {
+    unsigned BigTyIdx = Op == G_MERGE_VALUES ? 0 : 1;
+    unsigned LitTyIdx = Op == G_MERGE_VALUES ? 1 : 0;
+
+    getActionDefinitionsBuilder(Op)
+      .legalIf([=](const LegalityQuery &Query) {
+          const LLT &BigTy = Query.Types[BigTyIdx];
+          const LLT &LitTy = Query.Types[LitTyIdx];
+          return BigTy.getSizeInBits() % 32 == 0 &&
+                 LitTy.getSizeInBits() % 32 == 0 &&
+                 BigTy.getSizeInBits() <= 512;
+        })
+      // Any vectors left are the wrong size. Scalarize them.
+      .fewerElementsIf([](const LegalityQuery &Query) { return true; },
+                       [](const LegalityQuery &Query) {
+                         return std::make_pair(
+                           0, Query.Types[0].getElementType());
+                       })
+      .fewerElementsIf([](const LegalityQuery &Query) { return true; },
+                       [](const LegalityQuery &Query) {
+                         return std::make_pair(
+                           1, Query.Types[1].getElementType());
+                       });
+
+  }
+
   computeTables();
 }
