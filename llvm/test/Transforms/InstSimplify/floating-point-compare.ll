@@ -356,8 +356,7 @@ define <2 x i1> @orderedCompareWithNaNVector(<2 x double> %A) {
 
 define <2 x i1> @orderedCompareWithNaNVector_undef_elt(<2 x double> %A) {
 ; CHECK-LABEL: @orderedCompareWithNaNVector_undef_elt(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp olt <2 x double> [[A:%.*]], <double 0xFFFFFFFFFFFFFFFF, double undef>
-; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+; CHECK-NEXT:    ret <2 x i1> zeroinitializer
 ;
   %cmp = fcmp olt <2 x double> %A, <double 0xFFFFFFFFFFFFFFFF, double undef>
   ret <2 x i1> %cmp
@@ -365,8 +364,7 @@ define <2 x i1> @orderedCompareWithNaNVector_undef_elt(<2 x double> %A) {
 
 define <2 x i1> @unorderedCompareWithNaNVector_undef_elt(<2 x double> %A) {
 ; CHECK-LABEL: @unorderedCompareWithNaNVector_undef_elt(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ult <2 x double> [[A:%.*]], <double undef, double 0xFFFFFFFFFFFFFFFF>
-; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+; CHECK-NEXT:    ret <2 x i1> <i1 true, i1 true>
 ;
   %cmp = fcmp ult <2 x double> %A, <double undef, double 0xFFFFFFFFFFFFFFFF>
   ret <2 x i1> %cmp
