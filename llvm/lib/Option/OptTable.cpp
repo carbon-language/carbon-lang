@@ -540,9 +540,7 @@ void OptTable::PrintHelp(raw_ostream &OS, const char *Name, const char *Title,
   using helpmap_ty = std::map<std::string, std::vector<OptionInfo>>;
   helpmap_ty GroupedOptionHelp;
 
-  for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
-    unsigned Id = i + 1;
-
+  for (unsigned Id = 1, e = getNumOptions() + 1; Id != e; ++Id) {
     // FIXME: Split out option groups.
     if (getOptionKind(Id) == Option::GroupClass)
       continue;
