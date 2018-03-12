@@ -806,7 +806,7 @@ static void parseOrderFile(StringRef Arg) {
 
     if (Set.count(S) == 0) {
       if (Config->WarnMissingOrderSymbol)
-        warn("/order:" + Arg + ": missing symbol: " + S);
+        warn("/order:" + Arg + ": missing symbol: " + S + " [LNK4037]");
     }
     else
       Config->Order[S] = INT_MIN + Config->Order.size();
