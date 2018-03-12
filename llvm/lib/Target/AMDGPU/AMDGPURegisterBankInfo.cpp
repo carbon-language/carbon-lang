@@ -317,6 +317,18 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     OpdsMapping[2] = nullptr;
     break;
   }
+  case AMDGPU::G_MERGE_VALUES: {
+    unsigned Bank = isSALUMapping(MI) ?
+      AMDGPU::SGPRRegBankID : AMDGPU::VGPRRegBankID;
+    unsigned DstSize = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
+    unsigned SrcSize = MRI.getType(MI.getOperand(1).getReg()).getSizeInBits();
+
+    OpdsMapping[0] = AMDGPU::getValueMapping(Bank, DstSize);
+    // Op1 and Dst should use the same register bank.
+    for (unsigned i = 1, e = MI.getNumOperands(); i != e; ++i)
+      OpdsMapping[i] = AMDGPU::getValueMapping(Bank, SrcSize);
+    break;
+  }
   case AMDGPU::G_BITCAST: {
     unsigned Size = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
     unsigned BankID = getRegBankID(MI.getOperand(1).getReg(), MRI, *TRI);
