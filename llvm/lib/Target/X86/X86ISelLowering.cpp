@@ -22532,13 +22532,17 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget &Subtarget,
   //
   //  Hi = psllqi(AloBhi + AhiBlo, 32);
   //  return AloBlo + Hi;
+  KnownBits AKnown, BKnown;
+  DAG.computeKnownBits(A, AKnown);
+  DAG.computeKnownBits(B, BKnown);
+
   APInt LowerBitsMask = APInt::getLowBitsSet(64, 32);
-  bool ALoIsZero = DAG.MaskedValueIsZero(A, LowerBitsMask);
-  bool BLoIsZero = DAG.MaskedValueIsZero(B, LowerBitsMask);
+  bool ALoIsZero = LowerBitsMask.isSubsetOf(AKnown.Zero);
+  bool BLoIsZero = LowerBitsMask.isSubsetOf(BKnown.Zero);
 
   APInt UpperBitsMask = APInt::getHighBitsSet(64, 32);
-  bool AHiIsZero = DAG.MaskedValueIsZero(A, UpperBitsMask);
-  bool BHiIsZero = DAG.MaskedValueIsZero(B, UpperBitsMask);
+  bool AHiIsZero = UpperBitsMask.isSubsetOf(AKnown.Zero);
+  bool BHiIsZero = UpperBitsMask.isSubsetOf(BKnown.Zero);
 
   // If DQI is supported we can use MULLQ, but MULUDQ is still better if the
   // the high bits are known to be zero.
