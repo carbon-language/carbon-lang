@@ -35,6 +35,11 @@
 ;   else
 ;     return c;
 ; }
+;
+; int *inc_p (int *p, unsigned a)
+; {
+;   return p + a;
+; }
 
 ; Function Attrs: norecurse nounwind readnone
 define dso_local i64 @select_u(i32 %a, i32 %b, i64 %c, i64 %d) local_unnamed_addr #0 {
@@ -89,3 +94,14 @@ entry:
 }
 
 declare dso_local i64 @bar(...) local_unnamed_addr #1
+
+; Function Attrs: norecurse nounwind readnone
+define dso_local i32* @inc_p(i32* readnone %p, i32 %a) local_unnamed_addr #0 {
+; CHECK-LABEL: inc_p:
+entry:
+  %idx.ext = zext i32 %a to i64
+; CHECK-NOT: r{{[0-9]+}} <<= 32
+; CHECK-NOT: r{{[0-9]+}} >>= 32
+  %add.ptr = getelementptr inbounds i32, i32* %p, i64 %idx.ext
+  ret i32* %add.ptr
+}
