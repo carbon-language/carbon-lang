@@ -8,6 +8,14 @@
 ;     return d;
 ; }
 ;
+; long long select_u_2(unsigned a, unsigned long long b, long long c, long long d)
+; {
+;   if (a > b)
+;     return c;
+;   else
+;     return d;
+; }
+;
 ; long long select_s(signed a, signed b, long long c, long long d)
 ; {
 ;   if (a > b)
@@ -37,6 +45,18 @@ entry:
 ; CHECK-NOT: r{{[0-9]+}} <<= 32
 ; CHECK-NOT: r{{[0-9]+}} >>= 32
 ; CHECK: if r{{[0-9]+}} {{<|>}} r{{[0-9]+}} goto
+  ret i64 %c.d
+}
+
+; Function Attrs: norecurse nounwind readnone
+define dso_local i64 @select_u_2(i32 %a, i64 %b, i64 %c, i64 %d) local_unnamed_addr #0 {
+; CHECK-LABEL: select_u_2:
+entry:
+  %conv = zext i32 %a to i64
+; CHECK-NOT: r{{[0-9]+}} <<= 32
+; CHECK-NOT: r{{[0-9]+}} >>= 32
+  %cmp = icmp ugt i64 %conv, %b
+  %c.d = select i1 %cmp, i64 %c, i64 %d
   ret i64 %c.d
 }
 

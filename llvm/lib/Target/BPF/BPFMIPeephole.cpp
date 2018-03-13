@@ -156,12 +156,10 @@ bool BPFMIPeephole::eliminateCmpPromotionSeq(void) {
       case BPF::JNE_rr:
         Reg = MI.getOperand(1).getReg();
         Mov = getInsnDefZExtSubReg(Reg);
-        if (!Mov)
-          break;
-
-	updateInsnSeq(MBB, MI, Reg);
-	Eliminated = true;
-
+        if (Mov) {
+          updateInsnSeq(MBB, MI, Reg);
+          Eliminated = true;
+        }
         // Fallthrough
       case BPF::JUGT_ri:
       case BPF::JUGE_ri:
