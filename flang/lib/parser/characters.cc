@@ -5,7 +5,7 @@ namespace parser {
 
 std::optional<int> UTF8CharacterBytes(const char *p) {
   if ((*p & 0x80) == 0) {
-    return 1;
+    return {1};
   }
   if ((*p & 0xf8) == 0xf0) {
     if ((p[1] & 0xc0) == 0x80 && (p[2] & 0xc0) == 0x80 &&

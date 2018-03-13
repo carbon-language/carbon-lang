@@ -1633,15 +1633,15 @@ public:
   }
   bool Pre(const EndProgramStmt &x) {  // R1403
     Outdent(), Put("END PROGRAM"), Walk(" ", x.v);
-    return true;
+    return false;
   }
   bool Pre(const ModuleStmt &) {  // R1405
     Put("MODULE "), Indent();
     return true;
   }
-  bool Pre(const EndModuleStmt &) {  // R1406
-    Outdent(), Put("END MODULE");
-    return true;
+  bool Pre(const EndModuleStmt &x) {  // R1406
+    Outdent(), Put("END MODULE"), Walk(" ", x.v);
+    return false;
   }
   bool Pre(const UseStmt &x) {  // R1409
     Put("USE"), Walk(", ", x.nature), Put(" :: "), Walk(x.moduleName);
@@ -1667,9 +1667,9 @@ public:
     Walk(std::get<Name>(x.t)), Walk(":", std::get<std::optional<Name>>(x.t));
     return false;
   }
-  bool Pre(const EndSubmoduleStmt &) {  // R1419
-    Outdent(), Put("END SUBMODULE");
-    return true;
+  bool Pre(const EndSubmoduleStmt &x) {  // R1419
+    Outdent(), Put("END SUBMODULE"), Walk(" ", x.v);
+    return false;
   }
   bool Pre(const BlockDataStmt &x) {  // R1421
     Put("BLOCK DATA"), Walk(" ", x.v), Indent();
