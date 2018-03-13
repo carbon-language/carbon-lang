@@ -4347,17 +4347,6 @@ bool DwarfLinker::link(const DebugMap &Map) {
   return Options.NoOutput ? true : Streamer->finish(Map);
 }
 
-void warn(const Twine &Warning, const Twine &Context) {
-  errs() << Twine("while processing ") + Context + ":\n";
-  errs() << Twine("warning: ") + Warning + "\n";
-}
-
-bool error(const Twine &Error, const Twine &Context) {
-  errs() << Twine("while processing ") + Context + ":\n";
-  errs() << Twine("error: ") + Error + "\n";
-  return false;
-}
-
 bool linkDwarf(raw_fd_ostream &OutFile, const DebugMap &DM,
                const LinkOptions &Options) {
   DwarfLinker Linker(OutFile, Options);
