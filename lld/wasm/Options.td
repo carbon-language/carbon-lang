@@ -11,12 +11,21 @@ multiclass Eq<string name> {
   def _eq: Joined<["--", "-"], name # "=">, Alias<!cast<Separate>(NAME)>;
 }
 
+multiclass B<string name, string help1, string help2> {
+  def NAME: Flag<["--", "-"], name>, HelpText<help1>;
+  def no_ # NAME: Flag<["--", "-"], "no-" # name>, HelpText<help2>;
+}
+
 // The follow flags are shared with the ELF linker
 def color_diagnostics: F<"color-diagnostics">,
   HelpText<"Use colors in diagnostics">;
 
 def color_diagnostics_eq: J<"color-diagnostics=">,
   HelpText<"Use colors in diagnostics">;
+
+defm demangle: B<"demangle",
+    "Demangle symbol names",
+    "Do not demangle symbol names">;
 
 def entry: S<"entry">, MetaVarName<"<entry>">,
   HelpText<"Name of entry point symbol">;
