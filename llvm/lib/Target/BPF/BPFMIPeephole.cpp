@@ -79,6 +79,9 @@ bool BPFMIPeephole::isMovFrom32Def(MachineInstr *MovMI)
 {
   MachineInstr *DefInsn = MRI->getVRegDef(MovMI->getOperand(1).getReg());
 
+  DEBUG(dbgs() << "  Def of Mov Src:");
+  DEBUG(DefInsn->dump());
+
   if (!DefInsn)
     return false;
 
@@ -108,6 +111,8 @@ bool BPFMIPeephole::isMovFrom32Def(MachineInstr *MovMI)
        return false;
   }
 
+  DEBUG(dbgs() << "  One ZExt elim sequence identified.\n");
+
   return true;
 }
 
@@ -134,11 +139,17 @@ bool BPFMIPeephole::eliminateZExtSeq(void) {
         unsigned ShfReg = MI.getOperand(1).getReg();
         MachineInstr *SllMI = MRI->getVRegDef(ShfReg);
 
+        DEBUG(dbgs() << "Starting SRL found:");
+        DEBUG(MI.dump());
+
         if (!SllMI ||
             SllMI->isPHI() ||
             SllMI->getOpcode() != BPF::SLL_ri ||
             SllMI->getOperand(2).getImm() != 32)
           continue;
+
+        DEBUG(dbgs() << "  SLL found:");
+        DEBUG(SllMI->dump());
 
         MachineInstr *MovMI = MRI->getVRegDef(SllMI->getOperand(1).getReg());
         if (!MovMI ||
@@ -146,9 +157,14 @@ bool BPFMIPeephole::eliminateZExtSeq(void) {
             MovMI->getOpcode() != BPF::MOV_32_64)
           continue;
 
+        DEBUG(dbgs() << "  Type cast Mov found:");
+        DEBUG(MovMI->dump());
+
         unsigned SubReg = MovMI->getOperand(1).getReg();
-        if (!isMovFrom32Def(MovMI))
+        if (!isMovFrom32Def(MovMI)) {
+          DEBUG(dbgs() << "  One ZExt elim sequence failed qualifying elim.\n");
           continue;
+        }
 
         BuildMI(MBB, MI, MI.getDebugLoc(), TII->get(BPF::SUBREG_TO_REG), DstReg)
           .addImm(0).addReg(SubReg).addImm(BPF::sub_32);
@@ -223,6 +239,8 @@ bool BPFMIPreEmitPeephole::eliminateRedundantMov(void) {
     for (MachineInstr &MI : MBB) {
       // If the previous instruction was marked for elimination, remove it now.
       if (ToErase) {
+        DEBUG(dbgs() << "  Redundant Mov Eliminated:");
+        DEBUG(ToErase->dump());
         ToErase->eraseFromParent();
         ToErase = nullptr;
       }
