@@ -96,6 +96,24 @@ MachineInstr *BPFMIPeephole::getInsnDefZExtSubReg(unsigned Reg) const {
       Insn->getOpcode() != BPF::MOV_32_64)
     return nullptr;
 
+  Insn = MRI->getVRegDef(Insn->getOperand(1).getReg());
+  if (!Insn || Insn->isPHI())
+    return nullptr;
+
+  if (Insn->getOpcode() == BPF::COPY) {
+    MachineOperand &opnd = Insn->getOperand(1);
+
+    if (!opnd.isReg())
+      return nullptr;
+
+    unsigned Reg = opnd.getReg();
+    if ((TargetRegisterInfo::isVirtualRegister(Reg) &&
+         MRI->getRegClass(Reg) == &BPF::GPRRegClass) ||
+        (TargetRegisterInfo::isPhysicalRegister(Reg) &&
+         BPF::GPRRegClass.contains(Reg)))
+      return nullptr;
+  }
+
   return Insn;
 }
 
