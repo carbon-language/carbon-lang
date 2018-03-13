@@ -1,6 +1,6 @@
 ; Make sure that absolute source dir is detected correctly regardless of the platform.
 ; REQUIRES: object-emission
-; RUN: %llc_dwarf -filetype=obj -o %t < %s
+; RUN: %llc_dwarf -O0 -filetype=obj -o %t < %s
 ; RUN: llvm-nm -radix=o %t | grep posix_absolute_func > %t.posix_absolute_func
 ; RUN: llvm-nm -radix=o %t | grep posix_relative_func > %t.posix_relative_func
 ; RUN: llvm-nm -radix=o %t | grep win_func > %t.win_func
