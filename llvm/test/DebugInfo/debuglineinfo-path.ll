@@ -1,13 +1,9 @@
 ; Make sure that absolute source dir is detected correctly regardless of the platform.
-; XFAIL: *
 ; REQUIRES: object-emission
 ; RUN: %llc_dwarf -filetype=obj -o %t < %s
-; RUN: echo -n 0x > %t.posix_relative_func
-; RUN: echo -n 0x > %t.posix_absolute_func
-; RUN: echo -n 0x > %t.win_func
-; RUN: llvm-nm %t | grep posix_absolute_func >> %t.posix_absolute_func
-; RUN: llvm-nm %t | grep posix_relative_func >> %t.posix_relative_func
-; RUN: llvm-nm %t | grep win_func  >> %t.win_func
+; RUN: llvm-nm -radix=o %t | grep posix_absolute_func > %t.posix_absolute_func
+; RUN: llvm-nm -radix=o %t | grep posix_relative_func > %t.posix_relative_func
+; RUN: llvm-nm -radix=o %t | grep win_func > %t.win_func
 ; RUN: llvm-symbolizer --functions=linkage --inlining --demangle=false --obj %t < %t.posix_absolute_func | FileCheck %s --check-prefix=POSIX_A
 ; RUN: llvm-symbolizer --functions=linkage --inlining --demangle=false --obj %t < %t.posix_relative_func | FileCheck %s --check-prefix=POSIX_R
 ; RUN: llvm-symbolizer --functions=linkage --inlining --demangle=false --obj %t < %t.win_func | FileCheck %s --check-prefix=WIN
