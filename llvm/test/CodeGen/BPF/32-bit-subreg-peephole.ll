@@ -21,6 +21,8 @@ define dso_local i64 @select_u(i32 %a, i32 %b, i64 %c, i64 %d) local_unnamed_add
 entry:
   %cmp = icmp ugt i32 %a, %b
   %c.d = select i1 %cmp, i64 %c, i64 %d
+; CHECK-NOT: r{{[0-9]+}} <<= 32
+; CHECK-NOT: r{{[0-9]+}} >>= 32
 ; CHECK: if r{{[0-9]+}} {{<|>}} r{{[0-9]+}} goto
   ret i64 %c.d
 }
@@ -31,6 +33,8 @@ define dso_local i64 @select_s(i32 %a, i32 %b, i64 %c, i64 %d) local_unnamed_add
 entry:
   %cmp = icmp sgt i32 %a, %b
   %c.d = select i1 %cmp, i64 %c, i64 %d
+; CHECK: r{{[0-9]+}} <<= 32
+; CHECK-NEXT: r{{[0-9]+}} s>>= 32
 ; CHECK: if r{{[0-9]+}} s{{<|>}} r{{[0-9]+}} goto
   ret i64 %c.d
 }
