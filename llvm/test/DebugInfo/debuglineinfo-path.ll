@@ -1,4 +1,5 @@
 ; Make sure that absolute source dir is detected correctly regardless of the platform.
+; XFAIL: *
 ; REQUIRES: object-emission
 ; RUN: %llc_dwarf -filetype=obj -o %t < %s
 ; RUN: echo -n 0x > %t.posix_relative_func
