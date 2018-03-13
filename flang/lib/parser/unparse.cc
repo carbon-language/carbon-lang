@@ -435,6 +435,18 @@ public:
     Put(' '), Walk(std::get<std::list<EntityDecl>>(x.t), ", ");
     return false;
   }
+  bool Pre(const AttrSpec &x) {  // R802
+    std::visit(visitors{[&](const CoarraySpec &y) { Put("CODIMENSION["); },
+                   [&](const ArraySpec &y) { Put("DIMENSION("); },
+                   [&](const auto &) {}},
+        x.u);
+    return true;
+  }
+  void Post(const AttrSpec &x) {
+    std::visit(visitors{[&](const CoarraySpec &y) { Put(']'); },
+                   [&](const ArraySpec &y) { Put(')'); }, [&](const auto &) {}},
+        x.u);
+  }
   bool Pre(const EntityDecl &x) {  // R803
     Walk(std::get<ObjectName>(x.t));
     Walk("(", std::get<std::optional<ArraySpec>>(x.t), ")");

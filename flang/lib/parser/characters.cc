@@ -58,11 +58,11 @@ std::optional<size_t> CountCharacters(
   const char *limit{p + bytes};
   while (p < limit) {
     ++chars;
-    if (std::optional<int> cb{cbf(p)}) {
-      p += *cb;
-    } else {
+    std::optional<int> cb{cbf(p)};
+    if (!cb.has_value()) {
       return {};
     }
+    p += *cb;
   }
   return {chars};
 }
