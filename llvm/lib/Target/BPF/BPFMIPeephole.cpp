@@ -10,12 +10,15 @@
 // This pass performs peephole optimizations to cleanup ugly code sequences at
 // MachineInstruction layer.
 //
-// Currently, the only optimization in this pass is to eliminate type promotion
-// sequences, those zero extend 32-bit subregisters to 64-bit registers, if the
-// compiler could prove the subregisters is defined by 32-bit operations in
-// which case the upper half of the underlying 64-bit registers were zeroed
-// implicitly.
+// Currently, there are two optimizations implemented:
+//  - One pre-RA MachineSSA pass to eliminate type promotion sequences, those
+//    zero extend 32-bit subregisters to 64-bit registers, if the compiler
+//    could prove the subregisters is defined by 32-bit operations in which
+//    case the upper half of the underlying 64-bit registers were zeroed
+//    implicitly.
 //
+//  - One post-RA PreEmit pass to do final cleanup on some redundant
+//    instructions generated due to bad RA on subregister.
 //===----------------------------------------------------------------------===//
 
 #include "BPF.h"
@@ -69,7 +72,7 @@ void BPFMIPeephole::initialize(MachineFunction &MFParm) {
   MF = &MFParm;
   MRI = &MF->getRegInfo();
   TII = MF->getSubtarget<BPFSubtarget>().getInstrInfo();
-  DEBUG(dbgs() << "*** BPF MI peephole pass ***\n\n");
+  DEBUG(dbgs() << "*** BPF MachineSSA peephole pass ***\n\n");
 }
 
 bool BPFMIPeephole::isMovFrom32Def(MachineInstr *MovMI)
@@ -166,8 +169,97 @@ bool BPFMIPeephole::eliminateZExtSeq(void) {
 
 } // end default namespace
 
-INITIALIZE_PASS(BPFMIPeephole, DEBUG_TYPE, "BPF MI Peephole Optimization",
-                false, false)
+INITIALIZE_PASS(BPFMIPeephole, DEBUG_TYPE,
+                "BPF MachineSSA Peephole Optimization", false, false)
 
 char BPFMIPeephole::ID = 0;
 FunctionPass* llvm::createBPFMIPeepholePass() { return new BPFMIPeephole(); }
+
+STATISTIC(RedundantMovElemNum, "Number of redundant moves eliminated");
+
+namespace {
+
+struct BPFMIPreEmitPeephole : public MachineFunctionPass {
+
+  static char ID;
+  MachineFunction *MF;
+  const TargetRegisterInfo *TRI;
+
+  BPFMIPreEmitPeephole() : MachineFunctionPass(ID) {
+    initializeBPFMIPreEmitPeepholePass(*PassRegistry::getPassRegistry());
+  }
+
+private:
+  // Initialize class variables.
+  void initialize(MachineFunction &MFParm);
+
+  bool eliminateRedundantMov(void);
+
+public:
+
+  // Main entry point for this pass.
+  bool runOnMachineFunction(MachineFunction &MF) override {
+    if (skipFunction(MF.getFunction()))
+      return false;
+
+    initialize(MF);
+
+    return eliminateRedundantMov();
+  }
+};
+
+// Initialize class variables.
+void BPFMIPreEmitPeephole::initialize(MachineFunction &MFParm) {
+  MF = &MFParm;
+  TRI = MF->getSubtarget<BPFSubtarget>().getRegisterInfo();
+  DEBUG(dbgs() << "*** BPF PreEmit peephole pass ***\n\n");
+}
+
+bool BPFMIPreEmitPeephole::eliminateRedundantMov(void) {
+  MachineInstr* ToErase = nullptr;
+  bool Eliminated = false;
+
+  for (MachineBasicBlock &MBB : *MF) {
+    for (MachineInstr &MI : MBB) {
+      // If the previous instruction was marked for elimination, remove it now.
+      if (ToErase) {
+        ToErase->eraseFromParent();
+        ToErase = nullptr;
+      }
+
+      // Eliminate identical move:
+      //
+      //   MOV rA, rA
+      //
+      // This is particularly possible to happen when sub-register support
+      // enabled. The special type cast insn MOV_32_64 involves different
+      // register class on src (i32) and dst (i64), RA could generate useless
+      // instruction due to this.
+      if (MI.getOpcode() == BPF::MOV_32_64) {
+        unsigned dst = MI.getOperand(0).getReg();
+        unsigned dst_sub = TRI->getSubReg(dst, BPF::sub_32);
+        unsigned src = MI.getOperand(1).getReg();
+
+        if (dst_sub != src)
+          continue;
+
+        ToErase = &MI;
+        RedundantMovElemNum++;
+        Eliminated = true;
+      }
+    }
+  }
+
+  return Eliminated;
+}
+
+} // end default namespace
+
+INITIALIZE_PASS(BPFMIPreEmitPeephole, "bpf-mi-pemit-peephole",
+                "BPF PreEmit Peephole Optimization", false, false)
+
+char BPFMIPreEmitPeephole::ID = 0;
+FunctionPass* llvm::createBPFMIPreEmitPeepholePass()
+{
+  return new BPFMIPreEmitPeephole();
+}
