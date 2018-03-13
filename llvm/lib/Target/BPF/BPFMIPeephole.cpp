@@ -76,8 +76,22 @@ bool BPFMIPeephole::isMovFrom32Def(MachineInstr *MovMI)
 {
   MachineInstr *DefInsn = MRI->getVRegDef(MovMI->getOperand(1).getReg());
 
-  if (!DefInsn || DefInsn->isPHI())
+  if (!DefInsn)
     return false;
+
+  if (DefInsn->isPHI()) {
+    for (unsigned i = 1, e = DefInsn->getNumOperands(); i < e; i += 2) {
+      MachineOperand &opnd = DefInsn->getOperand(i);
+
+      if (!opnd.isReg())
+        return false;
+
+      MachineInstr *PhiDef = MRI->getVRegDef(opnd.getReg());
+      // quick check on PHI incoming definitions.
+      if (!PhiDef || PhiDef->isPHI() || PhiDef->getOpcode() == BPF::COPY)
+        return false;
+    }
+  }
 
   if (DefInsn->getOpcode() == BPF::COPY) {
     MachineOperand &opnd = DefInsn->getOperand(1);
@@ -129,10 +143,10 @@ bool BPFMIPeephole::eliminateZExtSeq(void) {
             MovMI->getOpcode() != BPF::MOV_32_64)
           continue;
 
+        unsigned SubReg = MovMI->getOperand(1).getReg();
         if (!isMovFrom32Def(MovMI))
           continue;
 
-        unsigned SubReg = MovMI->getOperand(1).getReg();
         BuildMI(MBB, MI, MI.getDebugLoc(), TII->get(BPF::SUBREG_TO_REG), DstReg)
           .addImm(0).addReg(SubReg).addImm(BPF::sub_32);
 
