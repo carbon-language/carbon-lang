@@ -86,7 +86,7 @@ public:
     const auto It = Instructions.find(Index);
     assert(It != Instructions.end() && "no running instructions with index");
     assert(It->second);
-    return *Instructions.find(Index)->second;
+    return *It->second;
   }
   void eraseInstruction(unsigned Index) { Instructions.erase(Index); }
   unsigned getNumCycles() const { return Cycles; }
