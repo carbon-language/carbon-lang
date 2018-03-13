@@ -69,7 +69,8 @@ raw_ostream &operator<<(raw_ostream &OS, const FrameIndexEntry &FIE) {
     OS << "-" << Twine::utohexstr(-FIE.StackOffset);
   else
     OS << "+" << Twine::utohexstr(FIE.StackOffset);
-  OS << ", Size: " << FIE.Size << ", IsSimple: " << FIE.IsSimple << ">";
+  OS << ", Size: " << static_cast<int>(FIE.Size)
+     << ", IsSimple: " << FIE.IsSimple << ">";
   return OS;
 }
 

@@ -93,7 +93,8 @@ bool StackReachingUses::doesXKillsY(const MCInst *X, const MCInst *Y) {
   auto FIEX = FA.getFIEFor(*X);
   auto FIEY = FA.getFIEFor(*Y);
   if (FIEX && FIEY) {
-    if (FIEX->IsStore == true && FIEY->IsLoad == true &&
+    if (FIEX->IsSimple == true && FIEY->IsSimple == true &&
+        FIEX->IsStore == true && FIEY->IsLoad == true &&
         FIEX->StackOffset <= FIEY->StackOffset &&
         FIEX->StackOffset + FIEX->Size >= FIEY->StackOffset + FIEY->Size)
       return true;
