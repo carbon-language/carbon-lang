@@ -36,7 +36,8 @@ bool Parsing::Prescan(const std::string &path, Options options) {
       .set_enableOldDebugLines(options.enableOldDebugLines);
   ProvenanceRange range{
       allSources_.AddIncludedFile(*sourceFile, ProvenanceRange{})};
-  if ((anyFatalError_ = !prescanner.Prescan(range))) {
+  anyFatalError_ = !prescanner.Prescan(range);
+  if (anyFatalError_) {
     return false;
   }
 

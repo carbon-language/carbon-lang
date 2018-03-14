@@ -217,9 +217,9 @@ public:
     Put("EXTENDS("), Walk(x.v), Put(')');
     return false;
   }
-  void Post(const EndTypeStmt &) {  // R730
-    Outdent();
-    Put("END TYPE");
+  bool Pre(const EndTypeStmt &x) {  // R730
+    Outdent(), Put("END TYPE"), Walk(" ", x.v);
+    return false;
   }
   bool Pre(const SequenceStmt &x) {  // R731
     Put("SEQUENCE");
@@ -409,6 +409,11 @@ public:
   template<typename A> bool Pre(const LoopBounds<A> &x) {
     Walk(x.name), Put('='), Walk(x.lower), Put(','), Walk(x.upper);
     Walk(",", x.step);
+    return false;
+  }
+  bool Pre(const AcImpliedDo &x) {  // R774
+    Put('('), Walk(std::get<std::list<AcValue>>(x.t), ", ");
+    Put(", "), Walk(std::get<AcImpliedDoControl>(x.t)), Put(')');
     return false;
   }
   bool Pre(const AcImpliedDoControl &x) {  // R775

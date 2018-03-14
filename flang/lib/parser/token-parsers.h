@@ -195,7 +195,8 @@ struct CharLiteralChar {
       for (int j = (ch > 3 ? 1 : 2); j-- > 0;) {
         static constexpr auto octalDigit = attempt(CharPredicateGuardParser{
             IsOctalDigit, "expected octal digit"_en_US});
-        if ((och = octalDigit.Parse(state)).has_value()) {
+        och = octalDigit.Parse(state);
+        if (och.has_value()) {
           ch = 8 * ch + *och - '0';
         }
       }
@@ -204,7 +205,8 @@ struct CharLiteralChar {
       for (int j = 0; j++ < 2;) {
         static constexpr auto hexDigit = attempt(CharPredicateGuardParser{
             IsHexadecimalDigit, "expected hexadecimal digit"_en_US});
-        if ((och = hexDigit.Parse(state)).has_value()) {
+        och = hexDigit.Parse(state);
+        if (och.has_value()) {
           ch = 16 * ch + HexadecimalDigitValue(*och);
         }
       }

@@ -385,7 +385,7 @@ public:
     if (std::optional<paType> first{parser_.Parse(state)}) {
       resultType result;
       result.emplace_back(std::move(*first));
-      if ((state->GetLocation() > start)) {
+      if (state->GetLocation() > start) {
         result.splice(result.end(), *many(parser_).Parse(state));
       }
       return {std::move(result)};
