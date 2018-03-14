@@ -85,6 +85,9 @@ an `if` that doesn't have a following `else`.
 Don't waste space on the screen with needless blank lines or elaborate block
 commentary (lines of dashes, boxes of asterisks, &c.).  Write code so as to be
 easily read and understood with a minimum of scrolling.
+
+Avoid using assignments in controlling expressions of `if()` &c., even with
+the idiom of wrapping them with extra parentheses.
 ### C++ language
 Use *C++17*, unless some compiler to which we must be portable lacks a feature
 you are considering.

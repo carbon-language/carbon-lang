@@ -379,19 +379,19 @@ struct HollerithLiteral {
       int bytes{1};
       const char *p{state->GetLocation()};
       if (state->encoding() == Encoding::EUC_JP) {
-        if (std::optional<int> chBytes{EUC_JPCharacterBytes(p)}) {
-          bytes = *chBytes;
-        } else {
+        std::optional<int> chBytes{EUC_JPCharacterBytes(p)};
+        if (!chBytes.has_value()) {
           state->PutMessage(at, "bad EUC_JP characters in Hollerith"_en_US);
           return {};
         }
+        bytes = *chBytes;
       } else if (state->encoding() == Encoding::UTF8) {
-        if (std::optional<int> chBytes{UTF8CharacterBytes(p)}) {
-          bytes = *chBytes;
-        } else {
+        std::optional<int> chBytes{UTF8CharacterBytes(p)};
+        if (!chBytes.has_value()) {
           state->PutMessage(at, "bad UTF-8 characters in Hollerith"_en_US);
           return {};
         }
+        bytes = *chBytes;
       }
       if (bytes == 1) {
         std::optional<char> ch{nextChar.Parse(state)};
