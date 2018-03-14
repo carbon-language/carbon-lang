@@ -165,6 +165,24 @@ supported include:
     remaining elements in the list may be arbitrary other values, including
     nested ```dag``' values.
 
+``!con(a, b, ...)``
+    Concatenate two or more DAG nodes. Their operations must equal.
+
+    Example: !con((op a1:$name1, a2:$name2), (op b1:$name3)) results in
+    the DAG node (op a1:$name1, a2:$name2, b1:$name3).
+
+``!dag(op, children, names)``
+    Generate a DAG node programmatically. 'children' and 'names' must be lists
+    of equal length or unset ('?'). 'names' must be a 'list<string>'.
+
+    Due to limitations of the type system, 'children' must be a list of items
+    of a common type. In practice, this means that they should either have the
+    same type or be records with a common superclass. Mixing dag and non-dag
+    items is not possible.
+
+    Example: !dag(op, [a1, a2], ["name1", "name2"]) results in
+    (op a1:$name1, a2:$name2).
+
 ``!listconcat(a, b, ...)``
     A list value that is the result of concatenating the 'a' and 'b' lists.
     The lists must have the same element type.

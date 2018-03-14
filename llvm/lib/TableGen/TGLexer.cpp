@@ -473,6 +473,7 @@ tgtok::TokKind TGLexer::LexExclaim() {
     .Case("tail", tgtok::XTail)
     .Case("size", tgtok::XSize)
     .Case("con", tgtok::XConcat)
+    .Case("dag", tgtok::XDag)
     .Case("add", tgtok::XADD)
     .Case("and", tgtok::XAND)
     .Case("or", tgtok::XOR)

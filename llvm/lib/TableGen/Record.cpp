@@ -1114,6 +1114,30 @@ Init *TernOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
     }
     break;
   }
+
+  case DAG: {
+    ListInit *MHSl = dyn_cast<ListInit>(MHS);
+    ListInit *RHSl = dyn_cast<ListInit>(RHS);
+    bool MHSok = MHSl || isa<UnsetInit>(MHS);
+    bool RHSok = RHSl || isa<UnsetInit>(RHS);
+
+    if (isa<UnsetInit>(MHS) && isa<UnsetInit>(RHS))
+      break; // Typically prevented by the parser, but might happen with template args
+
+    if (MHSok && RHSok && (!MHSl || !RHSl || MHSl->size() == RHSl->size())) {
+      SmallVector<std::pair<Init *, StringInit *>, 8> Children;
+      unsigned Size = MHSl ? MHSl->size() : RHSl->size();
+      for (unsigned i = 0; i != Size; ++i) {
+        Init *Node = MHSl ? MHSl->getElement(i) : UnsetInit::get();
+        Init *Name = RHSl ? RHSl->getElement(i) : UnsetInit::get();
+        if (!isa<StringInit>(Name) && !isa<UnsetInit>(Name))
+          return const_cast<TernOpInit *>(this);
+        Children.emplace_back(Node, dyn_cast<StringInit>(Name));
+      }
+      return DagInit::get(LHS, nullptr, Children);
+    }
+    break;
+  }
   }
 
   return const_cast<TernOpInit *>(this);
@@ -1155,6 +1179,7 @@ std::string TernOpInit::getAsString() const {
   case SUBST: Result = "!subst"; break;
   case FOREACH: Result = "!foreach"; break;
   case IF: Result = "!if"; break;
+  case DAG: Result = "!dag"; break;
   }
   return Result + "(" + LHS->getAsString() + ", " + MHS->getAsString() + ", " +
          RHS->getAsString() + ")";

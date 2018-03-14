@@ -856,7 +856,7 @@ public:
 /// !op (X, Y, Z) - Combine two inits.
 class TernOpInit : public OpInit, public FoldingSetNode {
 public:
-  enum TernaryOp : uint8_t { SUBST, FOREACH, IF };
+  enum TernaryOp : uint8_t { SUBST, FOREACH, IF, DAG };
 
 private:
   Init *LHS, *MHS, *RHS;

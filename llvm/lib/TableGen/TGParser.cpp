@@ -1159,6 +1159,7 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
                ->Fold(CurRec, CurMultiClass);
   }
 
+  case tgtok::XDag:
   case tgtok::XIf:
   case tgtok::XSubst: {  // Value ::= !ternop '(' Value ',' Value ',' Value ')'
     TernOpInit::TernaryOp Code;
@@ -1168,6 +1169,11 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
     Lex.Lex();  // eat the operation
     switch (LexCode) {
     default: llvm_unreachable("Unhandled code!");
+    case tgtok::XDag:
+      Code = TernOpInit::DAG;
+      Type = DagRecTy::get();
+      ItemType = nullptr;
+      break;
     case tgtok::XIf:
       Code = TernOpInit::IF;
       break;
@@ -1190,6 +1196,7 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
     }
     Lex.Lex();  // eat the ','
 
+    SMLoc MHSLoc = Lex.getLoc();
     Init *MHS = ParseValue(CurRec, ItemType);
     if (!MHS)
       return nullptr;
@@ -1200,6 +1207,7 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
     }
     Lex.Lex();  // eat the ','
 
+    SMLoc RHSLoc = Lex.getLoc();
     Init *RHS = ParseValue(CurRec, ItemType);
     if (!RHS)
       return nullptr;
@@ -1212,6 +1220,36 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
 
     switch (LexCode) {
     default: llvm_unreachable("Unhandled code!");
+    case tgtok::XDag: {
+      TypedInit *MHSt = dyn_cast<TypedInit>(MHS);
+      if (!MHSt && !isa<UnsetInit>(MHS)) {
+        Error(MHSLoc, "could not determine type of the child list in !dag");
+        return nullptr;
+      }
+      if (MHSt && !isa<ListRecTy>(MHSt->getType())) {
+        Error(MHSLoc, Twine("expected list of children, got type '") +
+                          MHSt->getType()->getAsString() + "'");
+        return nullptr;
+      }
+
+      TypedInit *RHSt = dyn_cast<TypedInit>(RHS);
+      if (!RHSt && !isa<UnsetInit>(RHS)) {
+        Error(RHSLoc, "could not determine type of the name list in !dag");
+        return nullptr;
+      }
+      if (RHSt && StringRecTy::get()->getListTy() != RHSt->getType()) {
+        Error(RHSLoc, Twine("expected list<string>, got type '") +
+                          RHSt->getType()->getAsString() + "'");
+        return nullptr;
+      }
+
+      if (!MHSt && !RHSt) {
+        Error(MHSLoc,
+              "cannot have both unset children and unset names in !dag");
+        return nullptr;
+      }
+      break;
+    }
     case tgtok::XIf: {
       RecTy *MHSTy = nullptr;
       RecTy *RHSTy = nullptr;
@@ -1728,6 +1766,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
   case tgtok::XCast:  // Value ::= !unop '(' Value ')'
   case tgtok::XIsA:
   case tgtok::XConcat:
+  case tgtok::XDag:
   case tgtok::XADD:
   case tgtok::XAND:
   case tgtok::XOR:
