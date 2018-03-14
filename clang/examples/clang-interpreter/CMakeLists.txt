@@ -42,7 +42,7 @@ function(clang_enable_exceptions TARGET)
   # of how LLVM is being built.
   if (NOT LLVM_REQUIRES_EH AND NOT LLVM_REQUIRES_RTTI)
     if (MSVC)
-      # /EHs to allow throwing rom extern "C"
+      # /EHs to allow throwing from extern "C"
       set(excptnExceptions_ON "/D _HAS_EXCEPTIONS=1 /EHs /wd4714")
       set(excptnExceptions_OFF "/D _HAS_EXCEPTIONS=0 /EHs-c-")
       set(excptnRTTI_ON "/GR")
@@ -68,14 +68,14 @@ function(clang_enable_exceptions TARGET)
 
     # Strip the exception & rtti flags from the target
     get_property(addedFlags TARGET ${TARGET} PROPERTY COMPILE_FLAGS)
-    string(REGEX REPLACE ${excptnEHRTTIRegEx} "" editedFlags ${addedFlags})
-    string(REPLACE ${excptnRTTI_OFF} "" editedFlags ${editedFlags})
-    set_property(TARGET ${TARGET} PROPERTY COMPILE_FLAGS ${editedFlags})
+    string(REGEX REPLACE ${excptnEHRTTIRegEx} "" editedFlags "${addedFlags}")
+    string(REPLACE ${excptnRTTI_OFF} "" editedFlags "${editedFlags}")
+    set_property(TARGET ${TARGET} PROPERTY COMPILE_FLAGS "${editedFlags}")
 
     get_property(addedFlags TARGET ${TARGET} PROPERTY COMPILE_DEFINITIONS)
-    string(REGEX REPLACE ${excptnEHRTTIRegEx} "" editedFlags ${addedFlags})
-    string(REPLACE ${excptnRTTI_OFF} "" editedFlags ${editedFlags})
-    set_property(TARGET ${TARGET} PROPERTY COMPILE_DEFINITIONS ${editedFlags})
+    string(REGEX REPLACE ${excptnEHRTTIRegEx} "" editedFlags "${addedFlags}")
+    string(REPLACE ${excptnRTTI_OFF} "" editedFlags "${editedFlags}")
+    set_property(TARGET ${TARGET} PROPERTY COMPILE_DEFINITIONS "${editedFlags}")
 
     # Re-add the exception & rtti flags from LLVM
     set_property(SOURCE main.cpp APPEND_STRING PROPERTY COMPILE_FLAGS
