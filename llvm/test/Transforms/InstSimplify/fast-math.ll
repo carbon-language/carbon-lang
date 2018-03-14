@@ -18,6 +18,15 @@ define float @mul_zero_2(float %a) {
   ret float %b
 }
 
+define <2 x float> @mul_zero_nsz_nnan_vec_undef(<2 x float> %a) {
+; CHECK-LABEL: @mul_zero_nsz_nnan_vec_undef(
+; CHECK-NEXT:    [[B:%.*]] = fmul nnan nsz <2 x float> [[A:%.*]], <float 0.000000e+00, float undef>
+; CHECK-NEXT:    ret <2 x float> [[B]]
+;
+  %b = fmul nsz nnan <2 x float> %a, <float 0.0, float undef>
+  ret <2 x float> %b
+}
+
 ;; x * 0 =/=> 0 when there could be nans or -0
 define float @no_mul_zero_1(float %a) {
 ; CHECK-LABEL: @no_mul_zero_1(
@@ -64,6 +73,17 @@ define <2 x float> @fadd_fnegx_commute_vec(<2 x float> %x) {
 ; CHECK-NEXT:    ret <2 x float> zeroinitializer
 ;
   %negx = fsub <2 x float> <float -0.0, float -0.0>, %x
+  %r = fadd nnan <2 x float> %x, %negx
+  ret <2 x float> %r
+}
+
+define <2 x float> @fadd_fnegx_commute_vec_undef(<2 x float> %x) {
+; CHECK-LABEL: @fadd_fnegx_commute_vec_undef(
+; CHECK-NEXT:    [[NEGX:%.*]] = fsub <2 x float> <float undef, float -0.000000e+00>, [[X:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = fadd nnan <2 x float> [[X]], [[NEGX]]
+; CHECK-NEXT:    ret <2 x float> [[R]]
+;
+  %negx = fsub <2 x float> <float undef, float -0.0>, %x
   %r = fadd nnan <2 x float> %x, %negx
   ret <2 x float> %r
 }
@@ -159,6 +179,28 @@ define float @fsub_0_0_x(float %a) {
   ret float %ret
 }
 
+define <2 x float> @fsub_0_0_x_vec_undef1(<2 x float> %a) {
+; CHECK-LABEL: @fsub_0_0_x_vec_undef1(
+; CHECK-NEXT:    [[T1:%.*]] = fsub <2 x float> <float 0.000000e+00, float undef>, [[A:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = fsub nsz <2 x float> zeroinitializer, [[T1]]
+; CHECK-NEXT:    ret <2 x float> [[RET]]
+;
+  %t1 = fsub <2 x float> <float 0.0, float undef>, %a
+  %ret = fsub nsz <2 x float> zeroinitializer, %t1
+  ret <2 x float> %ret
+}
+
+define <2 x float> @fsub_0_0_x_vec_undef2(<2 x float> %a) {
+; CHECK-LABEL: @fsub_0_0_x_vec_undef2(
+; CHECK-NEXT:    [[T1:%.*]] = fsub <2 x float> zeroinitializer, [[A:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = fsub nsz <2 x float> <float undef, float -0.000000e+00>, [[T1]]
+; CHECK-NEXT:    ret <2 x float> [[RET]]
+;
+  %t1 = fsub <2 x float> zeroinitializer, %a
+  %ret = fsub nsz <2 x float> <float undef, float -0.0>, %t1
+  ret <2 x float> %ret
+}
+
 ; fadd nsz X, 0 ==> X
 define float @nofold_fadd_x_0(float %a) {
 ; CHECK-LABEL: @nofold_fadd_x_0(
@@ -175,13 +217,56 @@ define float @nofold_fadd_x_0(float %a) {
 }
 
 ; fdiv nsz nnan 0, X ==> 0
-define double @fdiv_zero_by_x(double %X) {
+; 0 / X -> 0
+
+define double @fdiv_zero_by_x(double %x) {
 ; CHECK-LABEL: @fdiv_zero_by_x(
 ; CHECK-NEXT:    ret double 0.000000e+00
 ;
-; 0 / X -> 0
-  %r = fdiv nnan nsz double 0.0, %X
+  %r = fdiv nnan nsz double 0.0, %x
   ret double %r
+}
+
+define <2 x double> @fdiv_zero_by_x_vec_undef(<2 x double> %x) {
+; CHECK-LABEL: @fdiv_zero_by_x_vec_undef(
+; CHECK-NEXT:    [[R:%.*]] = fdiv nnan nsz <2 x double> <double 0.000000e+00, double undef>, [[X:%.*]]
+; CHECK-NEXT:    ret <2 x double> [[R]]
+;
+  %r = fdiv nnan nsz <2 x double> <double 0.0, double undef>, %x
+  ret <2 x double> %r
+}
+
+; 0 % X -> 0
+; nsz is not necessary - frem result always has the sign of the dividend
+
+define double @frem_zero_by_x(double %x) {
+; CHECK-LABEL: @frem_zero_by_x(
+; CHECK-NEXT:    [[R:%.*]] = frem nnan double 0.000000e+00, [[X:%.*]]
+; CHECK-NEXT:    ret double [[R]]
+;
+  %r = frem nnan double 0.0, %x
+  ret double %r
+}
+
+; -0 % X -> -0
+; nsz is not necessary - frem result always has the sign of the dividend
+
+define double @frem_negzero_by_x(double %x) {
+; CHECK-LABEL: @frem_negzero_by_x(
+; CHECK-NEXT:    [[R:%.*]] = frem nnan double -0.000000e+00, [[X:%.*]]
+; CHECK-NEXT:    ret double [[R]]
+;
+  %r = frem nnan double -0.0, %x
+  ret double %r
+}
+
+define <2 x double> @frem_negzero_by_x_vec_undef(<2 x double> %x) {
+; CHECK-LABEL: @frem_negzero_by_x_vec_undef(
+; CHECK-NEXT:    [[R:%.*]] = frem nnan <2 x double> <double undef, double -0.000000e+00>, [[X:%.*]]
+; CHECK-NEXT:    ret <2 x double> [[R]]
+;
+  %r = frem nnan <2 x double> <double undef, double -0.0>, %x
+  ret <2 x double> %r
 }
 
 define float @fdiv_self(float %f) {
