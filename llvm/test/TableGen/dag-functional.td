@@ -40,7 +40,13 @@
 // CHECK:   dag d1 = (ops 1, ?:$name1, 2, 3);
 // CHECK: }
 
-def ops;
+// CHECK: def E0 {
+// CHECK:   dag ret = (ops 1, 2);
+// CHECK: }
+
+class Ops;
+
+def ops : Ops;
 
 class Node<int val, string name> {
   int Val = val;
@@ -101,3 +107,10 @@ def C0 : C<[1, 2], ["a", "b"]>;
 def D {
   dag d1 = !con((ops 1), (ops $name1), (ops), (ops 2, 3));
 }
+
+class E<Ops op> {
+  // Allow concatenation of DAG nodes with operators from template arguments.
+  dag ret = !con((op 1), (op 2));
+}
+
+def E0 : E<ops>;
