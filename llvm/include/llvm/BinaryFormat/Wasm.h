@@ -101,7 +101,7 @@ struct WasmFunction {
   uint32_t CodeSectionOffset;
   uint32_t Size;
   StringRef Name; // from the "linking" or "names" section
-  StringRef Comdat; // from the "comdat info" section
+  uint32_t Comdat; // from the "comdat info" section
 };
 
 struct WasmDataSegment {
@@ -111,7 +111,7 @@ struct WasmDataSegment {
   StringRef Name;
   uint32_t Alignment;
   uint32_t Flags;
-  StringRef Comdat; // from the "comdat info" section
+  uint32_t Comdat; // from the "comdat info" section
 };
 
 struct WasmElemSegment {
@@ -160,6 +160,7 @@ struct WasmFunctionName {
 
 struct WasmLinkingData {
   std::vector<WasmInitFunc> InitFunctions;
+  std::vector<StringRef> Comdats;
   std::vector<WasmSymbolInfo> SymbolTable;
 };
 
