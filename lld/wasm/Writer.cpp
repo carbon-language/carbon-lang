@@ -117,6 +117,7 @@ private:
 
   uint64_t FileSize = 0;
   uint32_t NumMemoryPages = 0;
+  uint32_t MaxMemoryPages = 0;
 
   std::vector<const WasmSignature *> Types;
   DenseMap<WasmSignature, int32_t, WasmSignatureDenseMapInfo> TypeIndices;
@@ -163,6 +164,10 @@ void Writer::createImportSection() {
     Import.Kind = WASM_EXTERNAL_MEMORY;
     Import.Memory.Flags = 0;
     Import.Memory.Initial = NumMemoryPages;
+    if (MaxMemoryPages != 0) {
+      Import.Memory.Flags |= WASM_LIMITS_FLAG_HAS_MAX;
+      Import.Memory.Maximum = MaxMemoryPages;
+    }
     writeImport(OS, Import);
   }
 
@@ -209,9 +214,12 @@ void Writer::createMemorySection() {
   SyntheticSection *Section = createSyntheticSection(WASM_SEC_MEMORY);
   raw_ostream &OS = Section->getStream();
 
+  bool HasMax = MaxMemoryPages != 0;
   writeUleb128(OS, 1, "memory count");
-  writeUleb128(OS, 0, "memory limits flags");
+  writeUleb128(OS, HasMax ? WASM_LIMITS_FLAG_HAS_MAX : 0, "memory limits flags");
   writeUleb128(OS, NumMemoryPages, "initial pages");
+  if (HasMax)
+    writeUleb128(OS, MaxMemoryPages, "max pages");
 }
 
 void Writer::createGlobalSection() {
@@ -599,9 +607,26 @@ void Writer::layoutMemory() {
     log("mem: heap base   = " + Twine(MemoryPtr));
   }
 
+  if (Config->InitialMemory != 0) {
+    if (Config->InitialMemory != alignTo(Config->InitialMemory, WasmPageSize))
+      error("initial memory must be " + Twine(WasmPageSize) + "-byte aligned");
+    if (MemoryPtr > Config->InitialMemory)
+      error("initial memory too small, " + Twine(MemoryPtr) + " bytes needed");
+    else
+      MemoryPtr = Config->InitialMemory;
+  }
   uint32_t MemSize = alignTo(MemoryPtr, WasmPageSize);
   NumMemoryPages = MemSize / WasmPageSize;
   log("mem: total pages = " + Twine(NumMemoryPages));
+
+  if (Config->MaxMemory != 0) {
+    if (Config->MaxMemory != alignTo(Config->MaxMemory, WasmPageSize))
+      error("maximum memory must be " + Twine(WasmPageSize) + "-byte aligned");
+    if (MemoryPtr > Config->MaxMemory)
+      error("maximum memory too small, " + Twine(MemoryPtr) + " bytes needed");
+    MaxMemoryPages = Config->MaxMemory / WasmPageSize;
+    log("mem: max pages   = " + Twine(MaxMemoryPages));
+  }
 }
 
 SyntheticSection *Writer::createSyntheticSection(uint32_t Type,
