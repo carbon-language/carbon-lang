@@ -888,8 +888,8 @@ TYPE_CONTEXT_PARSER("derived type definition"_en_US,
 //        type-param-name-list )]
 TYPE_CONTEXT_PARSER("TYPE statement"_en_US,
     construct<DerivedTypeStmt>{}(
-        "TYPE" >> optionalBeforeColons(nonemptyList(Parser<TypeAttrSpec>{})),
-        name, defaulted(parenthesized(nonemptyList(name)))))
+        "TYPE" >> optionalListBeforeColons(Parser<TypeAttrSpec>{}), name,
+        defaulted(parenthesized(nonemptyList(name)))))
 
 // R728 type-attr-spec ->
 //        ABSTRACT | access-spec | BIND(C) | EXTENDS ( parent-type-name )
@@ -935,7 +935,7 @@ TYPE_PARSER(
 //        declaration-type-spec [[, component-attr-spec-list] ::]
 //        component-decl-list
 TYPE_PARSER(construct<DataComponentDefStmt>{}(declarationTypeSpec,
-    optionalBeforeColons(nonemptyList(Parser<ComponentAttrSpec>{})),
+    optionalListBeforeColons(Parser<ComponentAttrSpec>{}),
     nonemptyList(Parser<ComponentDecl>{})))
 
 // R738 component-attr-spec ->
@@ -1033,7 +1033,7 @@ TYPE_CONTEXT_PARSER("type bound PROCEDURE statement"_en_US,
                  nonemptyList(name))) ||
             construct<TypeBoundProcedureStmt>{}(
                 construct<TypeBoundProcedureStmt::WithoutInterface>{}(
-                    optionalBeforeColons(nonemptyList(Parser<BindAttr>{})),
+                    optionalListBeforeColons(Parser<BindAttr>{}),
                     nonemptyList(Parser<TypeBoundProcDecl>{})))))
 
 // R750 type-bound-proc-decl -> binding-name [=> procedure-name]
@@ -1155,7 +1155,7 @@ TYPE_PARSER(construct<AcImpliedDoControl>{}(
 // R801 type-declaration-stmt ->
 //        declaration-type-spec [[, attr-spec]... ::] entity-decl-list
 TYPE_PARSER(construct<TypeDeclarationStmt>{}(declarationTypeSpec,
-                optionalBeforeColons(nonemptyList(Parser<AttrSpec>{})),
+                optionalListBeforeColons(Parser<AttrSpec>{}),
                 nonemptyList(entityDecl)) ||
     // PGI-only extension: don't require the colons
     // TODO: The standard requires the colons if the entity
@@ -3292,11 +3292,10 @@ constexpr auto moduleNature = "INTRINSIC" >>
 // R1409 use-stmt ->
 //         USE [[, module-nature] ::] module-name [, rename-list] |
 //         USE [[, module-nature] ::] module-name , ONLY : [only-list]
-TYPE_PARSER(
-    "USE" >> (construct<UseStmt>{}(optionalBeforeColons(maybe(moduleNature)),
-                  name, ", ONLY :" >> optionalList(Parser<Only>{})) ||
-                 construct<UseStmt>{}(optionalBeforeColons(maybe(moduleNature)),
-                     name, defaulted("," >> nonemptyList(Parser<Rename>{})))))
+TYPE_PARSER(construct<UseStmt>{}("USE" >> optionalBeforeColons(moduleNature),
+                name, ", ONLY :" >> optionalList(Parser<Only>{})) ||
+    construct<UseStmt>{}("USE" >> optionalBeforeColons(moduleNature), name,
+        defaulted("," >> nonemptyList(Parser<Rename>{}))))
 
 // R1411 rename ->
 //         local-name => use-name |
@@ -3423,7 +3422,7 @@ TYPE_PARSER("EXTERNAL" >> maybe("::"_tok) >>
 //         proc-decl-list
 TYPE_PARSER("PROCEDURE" >>
     construct<ProcedureDeclarationStmt>{}(parenthesized(maybe(procInterface)),
-        optionalBeforeColons(nonemptyList(Parser<ProcAttrSpec>{})),
+        optionalListBeforeColons(Parser<ProcAttrSpec>{}),
         nonemptyList(procDecl)))
 
 // R1513 proc-interface -> interface-name | declaration-type-spec

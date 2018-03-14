@@ -137,7 +137,8 @@ std::string Compile(std::string path, Fortran::parser::Options options,
     MeasureParseTree(parsing.parseTree());
   }
   if (driver.dumpUnparse) {
-    Unparse(std::cout, parsing.parseTree(), driver.encoding);
+    Unparse(std::cout, parsing.parseTree(), driver.encoding,
+            true /*capitalize*/);
     return {};
   }
 

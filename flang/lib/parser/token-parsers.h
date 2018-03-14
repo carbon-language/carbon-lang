@@ -461,8 +461,13 @@ template<char goal> struct SkipTo {
 //   [[, xyz] ::]     is  optionalBeforeColons(xyz)
 //   [[, xyz]... ::]  is  optionalBeforeColons(nonemptyList(xyz))
 template<typename PA> inline constexpr auto optionalBeforeColons(const PA &p) {
-  return "," >> p / "::" || "::" >> construct<typename PA::resultType>{} ||
-      !","_tok >> construct<typename PA::resultType>{};
+  return "," >> construct<std::optional<typename PA::resultType>>{}(p) / "::" ||
+      ("::"_tok || !","_tok) >> defaulted(cut >> maybe(p));
+}
+template<typename PA>
+inline constexpr auto optionalListBeforeColons(const PA &p) {
+  return "," >> nonemptyList(p) / "::" ||
+      ("::"_tok || !","_tok) >> defaulted(cut >> nonemptyList(p));
 }
 }  // namespace parser
 }  // namespace Fortran
