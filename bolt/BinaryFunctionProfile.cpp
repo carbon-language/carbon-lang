@@ -33,14 +33,6 @@ extern cl::opt<unsigned> Verbosity;
 extern cl::opt<IndirectCallPromotionType> IndirectCallPromotion;
 extern cl::opt<JumpTableSupportLevel> JumpTables;
 
-static cl::opt<bool>
-CompatMode("prof-compat-mode",
-  cl::desc("maintain bug-level compatibility with old profile"),
-  cl::init(true),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltOptCategory));
-
 static cl::opt<MCFCostFunction>
 DoMCF("mcf",
   cl::desc("solve a min cost flow problem on the CFG to fix edge counts "
@@ -144,24 +136,19 @@ bool BinaryFunction::recordTrace(
       return false;
     }
 
-    // To keep backwards compatibility we skip recording fall-throughs that
-    // are not a result of a conditional jump.
-    if (!opts::CompatMode ||
-        (BB->succ_size() == 2 &&
-         BB->getConditionalSuccessor(false) == NextBB)) {
-      auto &BI = BB->getBranchInfo(*NextBB);
-      BI.Count += Count;
+   // Record fall-through jumps
+    auto &BI = BB->getBranchInfo(*NextBB);
+    BI.Count += Count;
 
-      if (Branches) {
-        const auto *Instr = BB->getLastNonPseudoInstr();
-        uint64_t Offset{0};
-        if (Instr) {
-          Offset = BC.MIB->getAnnotationWithDefault<uint64_t>(*Instr, "Offset");
-        } else {
-          Offset = BB->getOffset();
-        }
-        Branches->emplace_back(std::make_pair(Offset, NextBB->getOffset()));
+    if (Branches) {
+      const auto *Instr = BB->getLastNonPseudoInstr();
+      uint64_t Offset{0};
+      if (Instr) {
+        Offset = BC.MIA->getAnnotationWithDefault<uint64_t>(*Instr, "Offset");
+      } else {
+        Offset = BB->getOffset();
       }
+      Branches->emplace_back(std::make_pair(Offset, NextBB->getOffset()));
     }
 
     BB = NextBB;
@@ -180,15 +167,9 @@ bool BinaryFunction::recordBranch(uint64_t From, uint64_t To,
     return false;
   }
 
-  // Could be bad LBR data. Ignore, or report as a bad profile for backwards
-  // compatibility.
+  // Could be bad LBR data; ignore the branch.
   if (From == To) {
-    if (!opts::CompatMode)
-      return true;
-    auto *Instr = getInstructionAtOffset(0);
-    if (Instr && BC.MIB->isCall(*Instr))
-      return true;
-    return false;
+    return true;
   }
 
   if (FromBB->succ_size() == 0) {
@@ -319,21 +300,6 @@ void BinaryFunction::postProcessProfile() {
 
   if (!HasLBRProfile)
     return;
-
-  // Bug compatibility with previous version - double accounting for conditional
-  // jump into a fall-through block.
-  if (opts::CompatMode) {
-    for (auto *BB : BasicBlocks) {
-      if (BB->succ_size() == 2 &&
-          BB->getConditionalSuccessor(false) ==
-            BB->getConditionalSuccessor(true)) {
-        auto &TakenBI = *BB->branch_info_begin();
-        auto &FallThroughBI = *BB->branch_info_rbegin();
-        FallThroughBI.Count = TakenBI.Count;
-        FallThroughBI.MispredictedCount = 0;
-      }
-    }
-  }
 
   // Pre-sort branch data.
   if (BranchData)
