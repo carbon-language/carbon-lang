@@ -46,50 +46,47 @@ define float @no_mul_zero_3(float %a) {
   ret float %b
 }
 
-; FIXME: -X + X --> 0.0 (with nnan on the fadd)
+; -X + X --> 0.0 (with nnan on the fadd)
 
 define float @fadd_fnegx(float %x) {
 ; CHECK-LABEL: @fadd_fnegx(
-; CHECK-NEXT:    [[NEGX:%.*]] = fsub float -0.000000e+00, [[X:%.*]]
-; CHECK-NEXT:    [[R:%.*]] = fadd nnan float [[NEGX]], [[X]]
-; CHECK-NEXT:    ret float [[R]]
+; CHECK-NEXT:    ret float 0.000000e+00
 ;
   %negx = fsub float -0.0, %x
   %r = fadd nnan float %negx, %x
   ret float %r
 }
 
-; FIXME: X + -X --> 0.0 (with nnan on the fadd)
+; X + -X --> 0.0 (with nnan on the fadd)
 
 define <2 x float> @fadd_fnegx_commute_vec(<2 x float> %x) {
 ; CHECK-LABEL: @fadd_fnegx_commute_vec(
-; CHECK-NEXT:    [[NEGX:%.*]] = fsub <2 x float> <float -0.000000e+00, float -0.000000e+00>, [[X:%.*]]
-; CHECK-NEXT:    [[R:%.*]] = fadd nnan <2 x float> [[X]], [[NEGX]]
-; CHECK-NEXT:    ret <2 x float> [[R]]
+; CHECK-NEXT:    ret <2 x float> zeroinitializer
 ;
   %negx = fsub <2 x float> <float -0.0, float -0.0>, %x
   %r = fadd nnan <2 x float> %x, %negx
   ret <2 x float> %r
 }
 
-; FIXME: Could be NaN.
 ; https://bugs.llvm.org/show_bug.cgi?id=26958
 ; https://bugs.llvm.org/show_bug.cgi?id=27151
 
 define float @fadd_fneg_nan(float %x) {
 ; CHECK-LABEL: @fadd_fneg_nan(
-; CHECK-NEXT:    ret float 0.000000e+00
+; CHECK-NEXT:    [[T:%.*]] = fsub nnan float -0.000000e+00, [[X:%.*]]
+; CHECK-NEXT:    [[COULD_BE_NAN:%.*]] = fadd ninf float [[T]], [[X]]
+; CHECK-NEXT:    ret float [[COULD_BE_NAN]]
 ;
   %t = fsub nnan float -0.0, %x
   %could_be_nan = fadd ninf float %t, %x
   ret float %could_be_nan
 }
 
-; FIXME: Could be NaN.
-
 define float @fadd_fneg_nan_commute(float %x) {
 ; CHECK-LABEL: @fadd_fneg_nan_commute(
-; CHECK-NEXT:    ret float 0.000000e+00
+; CHECK-NEXT:    [[T:%.*]] = fsub nnan ninf float -0.000000e+00, [[X:%.*]]
+; CHECK-NEXT:    [[COULD_BE_NAN:%.*]] = fadd float [[X]], [[T]]
+; CHECK-NEXT:    ret float [[COULD_BE_NAN]]
 ;
   %t = fsub nnan ninf float -0.0, %x
   %could_be_nan = fadd float %x, %t
@@ -118,15 +115,12 @@ define <2 x float> @fadd_fsub_nnan_ninf_commute_vec(<2 x float> %x) {
   ret <2 x float> %zero
 }
 
-; FIXME: Do fold this.
 ; 'ninf' is not required because 'nnan' allows us to assume
-; that X is not INF/-INF (adding opposite INFs would be NaN).
+; that X is not INF or -INF (adding opposite INFs would be NaN).
 
 define float @fadd_fsub_nnan(float %x) {
 ; CHECK-LABEL: @fadd_fsub_nnan(
-; CHECK-NEXT:    [[SUB:%.*]] = fsub float 0.000000e+00, [[X:%.*]]
-; CHECK-NEXT:    [[ZERO:%.*]] = fadd nnan float [[SUB]], [[X]]
-; CHECK-NEXT:    ret float [[ZERO]]
+; CHECK-NEXT:    ret float 0.000000e+00
 ;
   %sub = fsub float 0.0, %x
   %zero = fadd nnan float %sub, %x
