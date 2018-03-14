@@ -2707,13 +2707,15 @@ void RewriteInstance::emitFunctions() {
         // Get memory manager
         return EFMM;
       },
+      // Loaded notifier
       [&](orc::RTDyldObjectLinkingLayerBase::ObjHandleT Handle,
           const orc::RTDyldObjectLinkingLayer::ObjectPtr &Obj,
           const RuntimeDyld::LoadedObjectInfo &) {
-        // On NotifyLoaded...
         // Assign addresses to all sections.
         mapFileSections(Handle);
-
+      },
+      // Finalized notifier
+      [&](orc::RTDyldObjectLinkingLayerBase::ObjHandleT Handle) {
         // Update output addresses based on the new section map and
         // layout.
         updateOutputValues(FinalLayout);
