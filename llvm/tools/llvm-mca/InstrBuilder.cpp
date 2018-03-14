@@ -424,7 +424,6 @@ Instruction *InstrBuilder::createInstruction(const MCSubtargetInfo &STI,
   Instruction *NewIS = new Instruction(D);
 
   // Populate Reads first.
-  const MCSchedModel &SM = STI.getSchedModel();
   for (const ReadDescriptor &RD : D.Reads) {
     int RegID = -1;
     if (RD.OpIndex != -1) {
