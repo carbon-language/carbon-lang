@@ -66,7 +66,7 @@
 # DECORATED-MINGW-EXPORTS: Name: stdcall@8
 # DECORATED-MINGW-EXPORTS: Name: vectorcall@@8
 
-# RUN: lld-link -lldmingw -kill-at -entry:dllmain -dll -def:%t.deco-mingw.def %t.obj -out:%t.dll -implib:%t.lib
+# RUN: lld-link -lldmingw -kill-at -entry:dllmain -dll -def:%t.def %t.obj -out:%t.dll -implib:%t.lib
 # RUN: llvm-readobj %t.lib | FileCheck -check-prefix MINGW-KILL-AT-IMPLIB %s
 # RUN: llvm-readobj -coff-exports %t.dll | FileCheck -check-prefix MINGW-KILL-AT-EXPORTS %s
 
