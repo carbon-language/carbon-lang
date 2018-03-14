@@ -106,13 +106,14 @@ SCRUB_IR_COMMENT_RE = re.compile(r'\s*;.*')
 
 # Match things that look at identifiers, but only if they are followed by
 # spaces, commas, paren, or end of the string
-IR_VALUE_RE = re.compile(r'(\s+)%([\w\.]+?)([,\s\(\)]|\Z)')
+IR_VALUE_RE = re.compile(r'(\s+)%([\w\.\-]+?)([,\s\(\)]|\Z)')
 
 # Create a FileCheck variable name based on an IR name.
 def get_value_name(var):
   if var.isdigit():
     var = 'TMP' + var
   var = var.replace('.', '_')
+  var = var.replace('-', '_')
   return var.upper()
 
 
