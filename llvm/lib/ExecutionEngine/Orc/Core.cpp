@@ -362,7 +362,7 @@ Expected<SymbolMap> lookup(const std::vector<VSO *> &VSOs, SymbolNameSet Names,
       PromisedResult.set_value(std::move(*Result));
     else {
       ResolutionError = Result.takeError();
-      PromisedResult.set_value({});
+      PromisedResult.set_value(SymbolMap());
     }
   };
   auto OnReady = [&](Error Err) {
