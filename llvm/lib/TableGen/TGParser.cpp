@@ -3143,8 +3143,16 @@ bool TGParser::ParseObject(MultiClass *MC) {
     if (MC)
       return TokError("defset is not allowed inside multiclass");
     return ParseDefset();
-  case tgtok::Class: return ParseClass();
-  case tgtok::MultiClass: return ParseMultiClass();
+  case tgtok::Class:
+    if (MC)
+      return TokError("class is not allowed inside multiclass");
+    if (!Loops.empty())
+      return TokError("class is not allowed inside foreach loop");
+    return ParseClass();
+  case tgtok::MultiClass:
+    if (!Loops.empty())
+      return TokError("multiclass is not allowed inside foreach loop");
+    return ParseMultiClass();
   }
 }
 
