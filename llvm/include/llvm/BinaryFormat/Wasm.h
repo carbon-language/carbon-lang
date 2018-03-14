@@ -267,6 +267,23 @@ enum : unsigned {
 
 #undef WASM_RELOC
 
+// Useful comparison operators
+inline bool operator==(const WasmSignature &LHS, const WasmSignature &RHS) {
+  return LHS.ReturnType == RHS.ReturnType && LHS.ParamTypes == RHS.ParamTypes;
+}
+
+inline bool operator!=(const WasmSignature &LHS, const WasmSignature &RHS) {
+  return !(LHS == RHS);
+}
+
+inline bool operator==(const WasmGlobalType &LHS, const WasmGlobalType &RHS) {
+  return LHS.Type == RHS.Type && LHS.Mutable == RHS.Mutable;
+}
+
+inline bool operator!=(const WasmGlobalType &LHS, const WasmGlobalType &RHS) {
+  return !(LHS == RHS);
+}
+
 } // end namespace wasm
 } // end namespace llvm
 
