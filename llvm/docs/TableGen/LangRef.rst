@@ -99,7 +99,8 @@ wide variety of meanings:
                :!add    !shl     !sra     !srl       !and
                :!or     !empty   !subst   !foreach   !strconcat
                :!cast   !listconcat       !size      !foldl
-               :!isa    !dag
+               :!isa    !dag     !le      !lt        !ge
+               :!gt     !ne
 
 
 Syntax

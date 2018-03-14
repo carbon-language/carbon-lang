@@ -803,7 +803,7 @@ public:
 class BinOpInit : public OpInit, public FoldingSetNode {
 public:
   enum BinaryOp : uint8_t { ADD, AND, OR, SHL, SRA, SRL, LISTCONCAT,
-                            STRCONCAT, CONCAT, EQ };
+                            STRCONCAT, CONCAT, EQ, NE, LE, LT, GE, GT };
 
 private:
   Init *LHS, *RHS;

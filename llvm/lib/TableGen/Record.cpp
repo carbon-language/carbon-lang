@@ -898,23 +898,43 @@ Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
       return ConcatStringInits(LHSs, RHSs);
     break;
   }
-  case EQ: {
+  case EQ:
+  case NE:
+  case LE:
+  case LT:
+  case GE:
+  case GT: {
     // try to fold eq comparison for 'bit' and 'int', otherwise fallback
     // to string objects.
     IntInit *L =
-      dyn_cast_or_null<IntInit>(LHS->convertInitializerTo(IntRecTy::get()));
+        dyn_cast_or_null<IntInit>(LHS->convertInitializerTo(IntRecTy::get()));
     IntInit *R =
-      dyn_cast_or_null<IntInit>(RHS->convertInitializerTo(IntRecTy::get()));
+        dyn_cast_or_null<IntInit>(RHS->convertInitializerTo(IntRecTy::get()));
 
-    if (L && R)
-      return IntInit::get(L->getValue() == R->getValue());
+    if (L && R) {
+      bool Result;
+      switch (getOpcode()) {
+      case EQ: Result = L->getValue() == R->getValue(); break;
+      case NE: Result = L->getValue() != R->getValue(); break;
+      case LE: Result = L->getValue() <= R->getValue(); break;
+      case LT: Result = L->getValue() < R->getValue(); break;
+      case GE: Result = L->getValue() >= R->getValue(); break;
+      case GT: Result = L->getValue() > R->getValue(); break;
+      default: llvm_unreachable("unhandled comparison");
+      }
+      return BitInit::get(Result);
+    }
 
-    StringInit *LHSs = dyn_cast<StringInit>(LHS);
-    StringInit *RHSs = dyn_cast<StringInit>(RHS);
+    if (getOpcode() == EQ || getOpcode() == NE) {
+      StringInit *LHSs = dyn_cast<StringInit>(LHS);
+      StringInit *RHSs = dyn_cast<StringInit>(RHS);
 
-    // Make sure we've resolved
-    if (LHSs && RHSs)
-      return IntInit::get(LHSs->getValue() == RHSs->getValue());
+      // Make sure we've resolved
+      if (LHSs && RHSs) {
+        bool Equal = LHSs->getValue() == RHSs->getValue();
+        return BitInit::get(getOpcode() == EQ ? Equal : !Equal);
+      }
+    }
 
     break;
   }
@@ -969,6 +989,11 @@ std::string BinOpInit::getAsString() const {
   case SRA: Result = "!sra"; break;
   case SRL: Result = "!srl"; break;
   case EQ: Result = "!eq"; break;
+  case NE: Result = "!ne"; break;
+  case LE: Result = "!le"; break;
+  case LT: Result = "!lt"; break;
+  case GE: Result = "!ge"; break;
+  case GT: Result = "!gt"; break;
   case LISTCONCAT: Result = "!listconcat"; break;
   case STRCONCAT: Result = "!strconcat"; break;
   }

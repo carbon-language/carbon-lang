@@ -974,6 +974,11 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
   case tgtok::XSRL:
   case tgtok::XSHL:
   case tgtok::XEq:
+  case tgtok::XNe:
+  case tgtok::XLe:
+  case tgtok::XLt:
+  case tgtok::XGe:
+  case tgtok::XGt:
   case tgtok::XListConcat:
   case tgtok::XStrConcat: {  // Value ::= !binop '(' Value ',' Value ')'
     tgtok::TokKind OpTok = Lex.getCode();
@@ -991,6 +996,11 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
     case tgtok::XSRL:    Code = BinOpInit::SRL; break;
     case tgtok::XSHL:    Code = BinOpInit::SHL; break;
     case tgtok::XEq:     Code = BinOpInit::EQ; break;
+    case tgtok::XNe:     Code = BinOpInit::NE; break;
+    case tgtok::XLe:     Code = BinOpInit::LE; break;
+    case tgtok::XLt:     Code = BinOpInit::LT; break;
+    case tgtok::XGe:     Code = BinOpInit::GE; break;
+    case tgtok::XGt:     Code = BinOpInit::GT; break;
     case tgtok::XListConcat: Code = BinOpInit::LISTCONCAT; break;
     case tgtok::XStrConcat: Code = BinOpInit::STRCONCAT; break;
     }
@@ -1014,8 +1024,16 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
       ArgType = IntRecTy::get();
       break;
     case tgtok::XEq:
+    case tgtok::XNe:
       Type = BitRecTy::get();
-      // ArgType for Eq is not known at this point
+      // ArgType for Eq / Ne is not known at this point
+      break;
+    case tgtok::XLe:
+    case tgtok::XLt:
+    case tgtok::XGe:
+    case tgtok::XGt:
+      Type = BitRecTy::get();
+      ArgType = IntRecTy::get();
       break;
     case tgtok::XListConcat:
       // We don't know the list type until we parse the first argument
@@ -1061,6 +1079,7 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
           }
           break;
         case BinOpInit::EQ:
+        case BinOpInit::NE:
           if (!ArgType->typeIsConvertibleTo(IntRecTy::get()) &&
               !ArgType->typeIsConvertibleTo(StringRecTy::get())) {
             Error(InitLoc, Twine("expected int, bits, or string; got value of "
@@ -1834,6 +1853,11 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
   case tgtok::XSRL:
   case tgtok::XSHL:
   case tgtok::XEq:
+  case tgtok::XNe:
+  case tgtok::XLe:
+  case tgtok::XLt:
+  case tgtok::XGe:
+  case tgtok::XGt:
   case tgtok::XListConcat:
   case tgtok::XStrConcat:   // Value ::= !binop '(' Value ',' Value ')'
   case tgtok::XIf:

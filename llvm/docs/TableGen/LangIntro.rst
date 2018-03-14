@@ -267,6 +267,13 @@ supported include:
     on string, int and bit objects.  Use !cast<string> to compare other types of
     objects.
 
+``!ne(a,b)``
+    The negation of ``!eq(a,b)``.
+
+``!le(a,b), !lt(a,b), !ge(a,b), !gt(a,b)``
+    (Signed) comparison of integer values that returns bit 1 or 0 depending on
+    the result of the comparison.
+
 ``!shl(a,b)`` ``!srl(a,b)`` ``!sra(a,b)``
     The usual shift operators. Operations are on 64-bit integers, the result
     is undefined for shift counts outside [0, 63].
