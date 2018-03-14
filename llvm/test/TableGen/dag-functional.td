@@ -36,6 +36,10 @@
 // CHECK:   dag ret2 = (ops 1, 2);
 // CHECK: }
 
+// CHECK: def D {
+// CHECK:   dag d1 = (ops 1, ?:$name1, 2, 3);
+// CHECK: }
+
 def ops;
 
 class Node<int val, string name> {
@@ -93,3 +97,7 @@ class C<list<int> nodes, list<string> names> {
 }
 
 def C0 : C<[1, 2], ["a", "b"]>;
+
+def D {
+  dag d1 = !con((ops 1), (ops $name1), (ops), (ops 2, 3));
+}

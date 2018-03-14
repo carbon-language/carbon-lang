@@ -267,8 +267,12 @@ supported include:
     on string, int and bit objects.  Use !cast<string> to compare other types of
     objects.
 
-``!shl(a,b)`` ``!srl(a,b)`` ``!sra(a,b)`` ``!add(a,b)`` ``!and(a,b)``
-    The usual binary and arithmetic operators.
+``!shl(a,b)`` ``!srl(a,b)`` ``!sra(a,b)``
+    The usual shift operators. Operations are on 64-bit integers, the result
+    is undefined for shift counts outside [0, 63].
+
+``!add(a,b,...)`` ``!and(a,b,...)`` ``!or(a,b,...)``
+    The usual arithmetic and binary operators.
 
 Note that all of the values have rules specifying how they convert to values
 for different types.  These rules allow you to assign a value like "``7``"
