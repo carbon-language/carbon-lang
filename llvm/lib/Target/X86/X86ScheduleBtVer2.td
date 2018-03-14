@@ -76,14 +76,20 @@ def : ReadAdvance<ReadAfterLd, 3>;
 // folded loads.
 multiclass JWriteResIntPair<X86FoldableSchedWrite SchedRW,
                             ProcResourceKind ExePort,
-                            int Lat> {
+                            int Lat, int Res = 1, int UOps = 1> {
   // Register variant is using a single cycle on ExePort.
-  def : WriteRes<SchedRW, [ExePort]> { let Latency = Lat; }
+  def : WriteRes<SchedRW, [ExePort]> {
+    let Latency = Lat;
+    let ResourceCycles = [Res];
+    let NumMicroOps = UOps;
+  }
 
   // Memory variant also uses a cycle on JLAGU and adds 3 cycles to the
   // latency.
   def : WriteRes<SchedRW.Folded, [JLAGU, ExePort]> {
     let Latency = !add(Lat, 3);
+    let ResourceCycles = [1, Res];
+    let NumMicroOps = UOps;
   }
 }
 
