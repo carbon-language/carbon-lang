@@ -1200,7 +1200,7 @@ JITEvaluatedSymbol RuntimeDyld::getSymbol(StringRef Name) const {
 
 std::map<StringRef, JITEvaluatedSymbol> RuntimeDyld::getSymbolTable() const {
   if (!Dyld)
-    return {};
+    return std::map<StringRef, JITEvaluatedSymbol>();
   return Dyld->getSymbolTable();
 }
 
