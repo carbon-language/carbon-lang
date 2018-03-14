@@ -514,8 +514,6 @@ define void @f3() #0 {
 ; 686-O0-NEXT:    movl %ecx, %edi
 ; 686-O0-NEXT:    xorl %esi, %edi
 ; 686-O0-NEXT:    andl %edi, %eax
-; 686-O0-NEXT:    movb %al, %dl
-; 686-O0-NEXT:    movzbl %dl, %eax
 ; 686-O0-NEXT:    orl %eax, %ecx
 ; 686-O0-NEXT:    movl %ecx, (%esp)
 ; 686-O0-NEXT:    movl $0, {{[0-9]+}}(%esp)
@@ -545,9 +543,8 @@ define void @f3() #0 {
 ; 686-NEXT:    movl var_16, %edx
 ; 686-NEXT:    xorl %ecx, %edx
 ; 686-NEXT:    andl %eax, %edx
-; 686-NEXT:    movzbl %dl, %eax
-; 686-NEXT:    orl %ecx, %eax
-; 686-NEXT:    movl %eax, (%esp)
+; 686-NEXT:    orl %ecx, %edx
+; 686-NEXT:    movl %edx, (%esp)
 ; 686-NEXT:    movl $0, {{[0-9]+}}(%esp)
 ; 686-NEXT:    movl %ecx, var_46
 ; 686-NEXT:    movl %ebp, %esp
