@@ -64,6 +64,7 @@ struct DriverOptions {
   bool forcedForm{false};  // -Mfixed or -Mfree appeared
   std::vector<std::string> searchPath;  // -I path
   Fortran::parser::Encoding encoding{Fortran::parser::Encoding::UTF8};
+  bool parseOnly{false};
   bool dumpProvenance{false};
   bool dumpCookedChars{false};
   bool dumpUnparse{false};
@@ -143,6 +144,9 @@ std::string Compile(std::string path, Fortran::parser::Options options,
   }
 
   parsing.messages().Emit(std::cerr, driver.prefix);
+  if (driver.parseOnly) {
+    return {};
+  }
 
   std::string relo;
   bool deleteReloAfterLink{false};
@@ -265,6 +269,8 @@ int main(int argc, char *const argv[]) {
       options.fixedFormColumns = 132;
     } else if (arg == "-Mbackslash") {
       options.enableBackslashEscapes = false;
+    } else if (arg == "-Mnobackslash") {
+      options.enableBackslashEscapes = true;
     } else if (arg == "-Mstandard") {
       options.isStrictlyStandard = true;
     } else if (arg == "-ed") {
@@ -277,11 +283,30 @@ int main(int argc, char *const argv[]) {
       driver.measureTree = true;
     } else if (arg == "-funparse") {
       driver.dumpUnparse = true;
+    } else if (arg == "-fparse-only") {
+      driver.parseOnly = true;
     } else if (arg == "-c") {
       driver.compileOnly = true;
     } else if (arg == "-o") {
       driver.outputPath = args.front();
       args.pop_front();
+    } else if (arg == "-help" || arg == "--help" || arg == "-?") {
+      std::cerr << "f18 options:\n"
+        << "  -Mfixed | -Mfree     force the source form\n"
+        << "  -Mextend             132-column fixed form\n"
+        << "  -M[no]backslash      disable[enable] \\escapes in literals\n"
+        << "  -Mstandard           enable conformance warnings\n"
+        << "  -Mx,125,4            set bit 2 in xflag[125] (Kanji)\n"
+        << "  -ed                  enable fixed form D lines\n"
+        << "  -E                   prescan & preprocess only\n"
+        << "  -fparse-only         parse only, no output except messages\n"
+        << "  -funparse            parse & reformat only, no code generation\n"
+        << "  -fdebug-measure-parse-tree\n"
+        << "  -fdebug-dump-provenance\n"
+        << "  -v, -c, -o, -I       have their usual meanings\n"
+        << "  -help                print this again\n"
+        << "Other options are passed through to the compiler.\n";
+      return EXIT_SUCCESS;
     } else {
       driver.pgf90Args.push_back(arg);
       if (arg == "-v") {

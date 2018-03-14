@@ -214,10 +214,7 @@ public:
     Word("ABSTRACT");
     return false;
   }
-  bool Pre(const TypeAttrSpec::BindC &x) {
-    Word("BIND(C)");
-    return false;
-  }
+  void Post(const TypeAttrSpec::BindC &) { Word("BIND(C)"); }
   bool Pre(const TypeAttrSpec::Extends &x) {
     Word("EXTENDS("), Walk(x.v), Put(')');
     return false;
@@ -276,14 +273,14 @@ public:
   bool Pre(const ComponentAttrSpec &x) {
     std::visit(visitors{[&](const CoarraySpec &) { Word("CODIMENSION["); },
                    [&](const ComponentArraySpec &) { Word("DIMENSION("); },
-                   [&](const auto &) {}},
+                   [](const auto &) {}},
         x.u);
     return true;
   }
   void Post(const ComponentAttrSpec &x) {
-    std::visit(visitors{[&](const CoarraySpec &) { Put(']'); },
-                   [&](const ComponentArraySpec &) { Put(')'); },
-                   [&](const auto &) {}},
+    std::visit(
+        visitors{[&](const CoarraySpec &) { Put(']'); },
+            [&](const ComponentArraySpec &) { Put(')'); }, [](const auto &) {}},
         x.u);
   }
   bool Pre(const ComponentDecl &x) {  // R739
@@ -354,8 +351,9 @@ public:
   }
   void Post(const BindAttr::Deferred &) { Word("DEFERRED"); }  // R752
   void Post(const BindAttr::Non_Overridable &) { Word("NON_OVERRIDABLE"); }
-  void Post(const FinalProcedureStmt &) {  // R753
+  bool Pre(const FinalProcedureStmt &) {  // R753
     Word("FINAL :: ");
+    return true;
   }
   bool Pre(const DerivedTypeSpec &x) {  // R754
     Walk(std::get<Name>(x.t));
@@ -449,13 +447,13 @@ public:
   bool Pre(const AttrSpec &x) {  // R802
     std::visit(visitors{[&](const CoarraySpec &y) { Word("CODIMENSION["); },
                    [&](const ArraySpec &y) { Word("DIMENSION("); },
-                   [&](const auto &) {}},
+                   [](const auto &) {}},
         x.u);
     return true;
   }
   void Post(const AttrSpec &x) {
     std::visit(visitors{[&](const CoarraySpec &y) { Put(']'); },
-                   [&](const ArraySpec &y) { Put(')'); }, [&](const auto &) {}},
+                   [&](const ArraySpec &y) { Put(')'); }, [](const auto &) {}},
         x.u);
   }
   bool Pre(const EntityDecl &x) {  // R803
@@ -1682,7 +1680,8 @@ public:
   bool Pre(const Rename &x) {  // R1411
     std::visit(visitors{[&](const Rename::Names &y) { Walk(y.t, " => "); },
                    [&](const Rename::Operators &y) {
-                     Put('.'), Walk(y.t, ". => ."), Put('.');
+                     Word("OPERATOR(."), Walk(y.t, ".) => OPERATOR(."),
+                         Put(".)");
                    }},
         x.u);
     return false;
@@ -1731,24 +1730,29 @@ public:
     return false;
   }
   bool Pre(const GenericSpec &x) {  // R1508, R1509
-    std::visit(visitors{[&](const GenericSpec::Assignment &) {
-                          Word("ASSIGNMENT(=)");
-                        },
-                   [&](const GenericSpec::ReadFormatted &) {
-                     Word("READ(FORMATTED)");
-                   },
-                   [&](const GenericSpec::ReadUnformatted &) {
-                     Word("READ(UNFORMATTED)");
-                   },
-                   [&](const GenericSpec::WriteFormatted &) {
-                     Word("WRITE(FORMATTED)");
-                   },
-                   [&](const GenericSpec::WriteUnformatted &) {
-                     Word("WRITE(UNFORMATTED)");
-                   },
-                   [&](const auto &y) {}},
+    std::visit(
+        visitors{[&](const DefinedOperator &x) { Word("OPERATOR("); },
+            [&](const GenericSpec::Assignment &) { Word("ASSIGNMENT(=)"); },
+            [&](const GenericSpec::ReadFormatted &) {
+              Word("READ(FORMATTED)");
+            },
+            [&](const GenericSpec::ReadUnformatted &) {
+              Word("READ(UNFORMATTED)");
+            },
+            [&](const GenericSpec::WriteFormatted &) {
+              Word("WRITE(FORMATTED)");
+            },
+            [&](const GenericSpec::WriteUnformatted &) {
+              Word("WRITE(UNFORMATTED)");
+            },
+            [](const auto &) {}},
         x.u);
     return true;
+  }
+  void Post(const GenericSpec &x) {
+    std::visit(visitors{[&](const DefinedOperator &x) { Put(')'); },
+                   [](const auto &) {}},
+        x.u);
   }
   bool Pre(const GenericStmt &x) {  // R1510
     Word("GENERIC"), Walk(", ", std::get<std::optional<AccessSpec>>(x.t));
@@ -1802,6 +1806,12 @@ public:
     Put('*');
     return true;
   }
+  void Post(const PrefixSpec::Elemental) { Word("ELEMENTAL"); }  // R1527
+  void Post(const PrefixSpec::Impure) { Word("IMPURE"); }
+  void Post(const PrefixSpec::Module) { Word("MODULE"); }
+  void Post(const PrefixSpec::Non_Recursive) { Word("NON_RECURSIVE"); }
+  void Post(const PrefixSpec::Pure) { Word("PURE"); }
+  void Post(const PrefixSpec::Recursive) { Word("RECURSIVE"); }
   bool Pre(const FunctionStmt &x) {  // R1530
     Walk("", std::get<std::list<PrefixSpec>>(x.t), " ", " ");
     Word("FUNCTION "), Walk(std::get<Name>(x.t)), Put(" (");
@@ -1825,8 +1835,14 @@ public:
   bool Pre(const SubroutineStmt &x) {  // R1535
     Walk("", std::get<std::list<PrefixSpec>>(x.t), " ", " ");
     Word("SUBROUTINE "), Walk(std::get<Name>(x.t));
-    Walk(" (", std::get<std::list<DummyArg>>(x.t), ", ", ")");
-    Walk(" ", std::get<std::optional<LanguageBindingSpec>>(x.t));
+    const auto &args = std::get<std::list<DummyArg>>(x.t);
+    const auto &bind = std::get<std::optional<LanguageBindingSpec>>(x.t);
+    if (args.empty()) {
+      Walk(" () ", bind);
+    } else {
+      Walk(" (", args, ", ", ")");
+      Walk(" ", bind);
+    }
     Indent();
     return false;
   }
