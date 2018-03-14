@@ -125,7 +125,7 @@ OrcMCJITReplacement::runFunction(Function *F,
 }
 
 void OrcMCJITReplacement::runStaticConstructorsDestructors(bool isDtors) {
-  for (auto &M : Modules)
+  for (auto &M : LocalModules)
     ExecutionEngine::runStaticConstructorsDestructors(*M, isDtors);
 }
 

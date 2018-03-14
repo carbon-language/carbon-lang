@@ -54,7 +54,6 @@ class ObjectCache;
 namespace orc {
 
 class OrcMCJITReplacement : public ExecutionEngine {
-
   // OrcMCJITReplacement needs to do a little extra book-keeping to ensure that
   // Orc's automatic finalization doesn't kick in earlier than MCJIT clients are
   // expecting - see finalizeMemory.
@@ -236,10 +235,7 @@ public:
               return ObjectLayerT::Resources{this->MemMgr, this->Resolver};
             },
             NotifyObjectLoaded, NotifyFinalized),
-        CompileLayer(ObjectLayer, SimpleCompiler(*this->TM),
-                     [this](VModuleKey K, std::unique_ptr<Module> M) {
-                       Modules.push_back(std::move(M));
-                     }),
+        CompileLayer(ObjectLayer, SimpleCompiler(*this->TM)),
         LazyEmitLayer(CompileLayer) {}
 
   static void Register() {
@@ -254,7 +250,16 @@ public:
     } else {
       assert(M->getDataLayout() == getDataLayout() && "DataLayout Mismatch");
     }
-    cantFail(LazyEmitLayer.addModule(ES.allocateVModule(), std::move(M)));
+    auto *MPtr = M.release();
+    ShouldDelete[MPtr] = true;
+    auto Deleter = [this](Module *Mod) {
+      auto I = ShouldDelete.find(Mod);
+      if (I != ShouldDelete.end() && I->second)
+        delete Mod;
+    };
+    LocalModules.push_back(std::shared_ptr<Module>(MPtr, std::move(Deleter)));
+    cantFail(
+        LazyEmitLayer.addModule(ES.allocateVModule(), LocalModules.back()));
   }
 
   void addObjectFile(std::unique_ptr<object::ObjectFile> O) override {
@@ -274,14 +279,14 @@ public:
   }
   
   bool removeModule(Module *M) override {
-    auto I = Modules.begin();
-    for (auto E = Modules.end(); I != E; ++I)
-      if (I->get() == M)
-        break;
-    if (I == Modules.end())
-      return false;
-    Modules.erase(I);
-    return true;
+    for (auto I = LocalModules.begin(), E = LocalModules.end(); I != E; ++I) {
+      if (I->get() == M) {
+        ShouldDelete[M] = false;
+        LocalModules.erase(I);
+        return true;
+      }
+    }
+    return false;
   }
 
   uint64_t getSymbolAddress(StringRef Name) {
@@ -433,6 +438,7 @@ private:
   // delete blocks in LocalModules refer to the ShouldDelete map, so
   // LocalModules needs to be destructed before ShouldDelete.
   std::map<Module*, bool> ShouldDelete;
+  std::vector<std::shared_ptr<Module>> LocalModules;
 
   NotifyObjectLoadedT NotifyObjectLoaded;
   NotifyFinalizedT NotifyFinalized;

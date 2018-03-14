@@ -138,7 +138,7 @@ private:
 
   struct LogicalDylib {
     struct SourceModuleEntry {
-      std::unique_ptr<Module> SourceMod;
+      std::shared_ptr<Module> SourceMod;
       std::set<Function*> StubsToClone;
     };
 
@@ -153,7 +153,7 @@ private:
           StubsMgr(std::move(StubsMgr)) {}
 
     SourceModuleHandle
-    addSourceModule(std::unique_ptr<Module> M) {
+    addSourceModule(std::shared_ptr<Module> M) {
       SourceModuleHandle H = SourceModules.size();
       SourceModules.push_back(SourceModuleEntry());
       SourceModules.back().SourceMod = std::move(M);
@@ -232,7 +232,7 @@ public:
   }
 
   /// @brief Add a module to the compile-on-demand layer.
-  Error addModule(VModuleKey K, std::unique_ptr<Module> M) {
+  Error addModule(VModuleKey K, std::shared_ptr<Module> M) {
 
     assert(!LogicalDylibs.count(K) && "VModuleKey K already in use");
     auto I = LogicalDylibs.insert(
@@ -244,7 +244,7 @@ public:
   }
 
   /// @brief Add extra modules to an existing logical module.
-  Error addExtraModule(VModuleKey K, std::unique_ptr<Module> M) {
+  Error addExtraModule(VModuleKey K, std::shared_ptr<Module> M) {
     return addLogicalModule(LogicalDylibs[K], std::move(M));
   }
 
@@ -311,7 +311,7 @@ public:
 
 private:
 
-  Error addLogicalModule(LogicalDylib &LD, std::unique_ptr<Module> SrcMPtr) {
+  Error addLogicalModule(LogicalDylib &LD, std::shared_ptr<Module> SrcMPtr) {
 
     // Rename all static functions / globals to $static.X :
     // This will unique the names across all modules in the logical dylib,
