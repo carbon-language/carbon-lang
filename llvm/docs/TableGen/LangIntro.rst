@@ -178,10 +178,10 @@ supported include:
     Due to limitations of the type system, 'children' must be a list of items
     of a common type. In practice, this means that they should either have the
     same type or be records with a common superclass. Mixing dag and non-dag
-    items is not possible.
+    items is not possible. However, '?' can be used.
 
-    Example: !dag(op, [a1, a2], ["name1", "name2"]) results in
-    (op a1:$name1, a2:$name2).
+    Example: !dag(op, [a1, a2, ?], ["name1", "name2", "name3"]) results in
+    (op a1:$name1, a2:$name2, ?:$name3).
 
 ``!listconcat(a, b, ...)``
     A list value that is the result of concatenating the 'a' and 'b' lists.

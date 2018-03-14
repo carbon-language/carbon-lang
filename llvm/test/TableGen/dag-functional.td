@@ -8,7 +8,7 @@
 // CHECK: }
 
 // CHECK: def A1 {
-// CHECK:   dag ret = (ops 1:$a, 2:$b);
+// CHECK:   dag ret = (ops ?:$a, 1:$b, 2);
 // CHECK: }
 
 // CHECK: def A2 {
@@ -70,7 +70,7 @@ class B<list<Node> nodes> {
 }
 
 def A0 : Aint<[], []>;
-def A1 : Aint<[1, 2], ["a", "b"]>;
+def A1 : Aint<[?, 1, 2], ["a", "b", ?]>;
 
 def A2 : Adag<[(ops $name), (ops 1), (ops "foo")], ["a", "b", "c"]>;
 

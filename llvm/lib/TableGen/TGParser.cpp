@@ -1676,18 +1676,16 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
     RecTy *EltTy = nullptr;
     for (Init *V : Vals) {
       TypedInit *TArg = dyn_cast<TypedInit>(V);
-      if (!TArg) {
-        TokError("Untyped list element");
-        return nullptr;
-      }
-      if (EltTy) {
-        EltTy = resolveTypes(EltTy, TArg->getType());
-        if (!EltTy) {
-          TokError("Incompatible types in list elements");
-          return nullptr;
+      if (TArg) {
+        if (EltTy) {
+          EltTy = resolveTypes(EltTy, TArg->getType());
+          if (!EltTy) {
+            TokError("Incompatible types in list elements");
+            return nullptr;
+          }
+        } else {
+          EltTy = TArg->getType();
         }
-      } else {
-        EltTy = TArg->getType();
       }
     }
 
