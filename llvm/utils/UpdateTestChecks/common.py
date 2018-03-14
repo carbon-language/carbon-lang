@@ -155,12 +155,13 @@ def genericize_check_lines(lines):
   return lines
 
 
-def add_ir_checks(output_lines, prefix_list, func_dict, func_name, opt_basename):
+def add_ir_checks(output_lines, comment_marker, prefix_list, func_dict, func_name):
   # Label format is based on IR string.
-  check_label_format = "; %s-LABEL: @%s("
+  check_label_format = '{} %s-LABEL: @%s('.format(comment_marker)
 
   printed_prefixes = []
-  for checkprefixes, _ in prefix_list:
+  for p in prefix_list:
+    checkprefixes = p[0]
     for checkprefix in checkprefixes:
       if checkprefix in printed_prefixes:
         break
@@ -200,13 +201,15 @@ def add_ir_checks(output_lines, prefix_list, func_dict, func_name, opt_basename)
 
         # Skip blank lines instead of checking them.
         if is_blank_line == True:
-          output_lines.append('; %s:       %s' % (checkprefix, func_line))
+          output_lines.append('{} {}:       {}'.format(
+              comment_marker, checkprefix, func_line))
         else:
-          output_lines.append('; %s-NEXT:  %s' % (checkprefix, func_line))
+          output_lines.append('{} {}-NEXT:  {}'.format(
+              comment_marker, checkprefix, func_line))
         is_blank_line = False
 
       # Add space between different check prefixes and also before the first
       # line of code in the test function.
-      output_lines.append(';')
+      output_lines.append(comment_marker)
       break
   return output_lines
