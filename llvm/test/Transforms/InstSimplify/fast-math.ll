@@ -46,41 +46,91 @@ define float @no_mul_zero_3(float %a) {
   ret float %b
 }
 
-; fadd [nnan ninf] X, (fsub [nnan ninf] 0, X) ==> 0
-;   where nnan and ninf have to occur at least once somewhere in this
-;   expression
-define float @fadd_fsub_0(float %a) {
-; CHECK-LABEL: @fadd_fsub_0(
-; CHECK-NEXT:    [[NOFOLD:%.*]] = fsub float 0.000000e+00, [[A:%.*]]
-; CHECK-NEXT:    [[NO_ZERO:%.*]] = fadd nnan float [[NOFOLD]], [[A]]
-; CHECK-NEXT:    ret float [[NO_ZERO]]
+; FIXME: -X + X --> 0.0 (with nnan on the fadd)
+
+define float @fadd_fnegx(float %x) {
+; CHECK-LABEL: @fadd_fnegx(
+; CHECK-NEXT:    [[NEGX:%.*]] = fsub float -0.000000e+00, [[X:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = fadd nnan float [[NEGX]], [[X]]
+; CHECK-NEXT:    ret float [[R]]
 ;
-; X + -X ==> 0
-  %t1 = fsub nnan ninf float 0.0, %a
-  %zero1 = fadd nnan ninf float %t1, %a
+  %negx = fsub float -0.0, %x
+  %r = fadd nnan float %negx, %x
+  ret float %r
+}
 
-  %t2 = fsub nnan float 0.0, %a
-  %zero2 = fadd ninf float %t2, %a
+; FIXME: X + -X --> 0.0 (with nnan on the fadd)
 
-  %t3 = fsub nnan ninf float 0.0, %a
-  %zero3 = fadd float %t3, %a
+define <2 x float> @fadd_fnegx_commute_vec(<2 x float> %x) {
+; CHECK-LABEL: @fadd_fnegx_commute_vec(
+; CHECK-NEXT:    [[NEGX:%.*]] = fsub <2 x float> <float -0.000000e+00, float -0.000000e+00>, [[X:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = fadd nnan <2 x float> [[X]], [[NEGX]]
+; CHECK-NEXT:    ret <2 x float> [[R]]
+;
+  %negx = fsub <2 x float> <float -0.0, float -0.0>, %x
+  %r = fadd nnan <2 x float> %x, %negx
+  ret <2 x float> %r
+}
 
-  %t4 = fsub float 0.0, %a
-  %zero4 = fadd nnan ninf float %t4, %a
+; FIXME: Could be NaN.
+; https://bugs.llvm.org/show_bug.cgi?id=26958
+; https://bugs.llvm.org/show_bug.cgi?id=27151
 
-; Dont fold this
-  %nofold = fsub float 0.0, %a
-  %no_zero = fadd nnan float %nofold, %a
+define float @fadd_fneg_nan(float %x) {
+; CHECK-LABEL: @fadd_fneg_nan(
+; CHECK-NEXT:    ret float 0.000000e+00
+;
+  %t = fsub nnan float -0.0, %x
+  %could_be_nan = fadd ninf float %t, %x
+  ret float %could_be_nan
+}
 
-; Coalesce the folded zeros
-  %zero5 = fadd float %zero1, %zero2
-  %zero6 = fadd float %zero3, %zero4
-  %zero7 = fadd float %zero5, %zero6
+; FIXME: Could be NaN.
 
-; Should get folded
-  %ret = fadd nsz float %no_zero, %zero7
+define float @fadd_fneg_nan_commute(float %x) {
+; CHECK-LABEL: @fadd_fneg_nan_commute(
+; CHECK-NEXT:    ret float 0.000000e+00
+;
+  %t = fsub nnan ninf float -0.0, %x
+  %could_be_nan = fadd float %x, %t
+  ret float %could_be_nan
+}
 
-  ret float %ret
+; X + (0.0 - X) --> 0.0 (with nnan on the fadd)
+
+define float @fadd_fsub_nnan_ninf(float %x) {
+; CHECK-LABEL: @fadd_fsub_nnan_ninf(
+; CHECK-NEXT:    ret float 0.000000e+00
+;
+  %sub = fsub float 0.0, %x
+  %zero = fadd nnan ninf float %x, %sub
+  ret float %zero
+}
+
+; (0.0 - X) + X --> 0.0 (with nnan on the fadd)
+
+define <2 x float> @fadd_fsub_nnan_ninf_commute_vec(<2 x float> %x) {
+; CHECK-LABEL: @fadd_fsub_nnan_ninf_commute_vec(
+; CHECK-NEXT:    ret <2 x float> zeroinitializer
+;
+  %sub = fsub <2 x float> zeroinitializer, %x
+  %zero = fadd nnan ninf <2 x float> %sub, %x
+  ret <2 x float> %zero
+}
+
+; FIXME: Do fold this.
+; 'ninf' is not required because 'nnan' allows us to assume
+; that X is not INF/-INF (adding opposite INFs would be NaN).
+
+define float @fadd_fsub_nnan(float %x) {
+; CHECK-LABEL: @fadd_fsub_nnan(
+; CHECK-NEXT:    [[SUB:%.*]] = fsub float 0.000000e+00, [[X:%.*]]
+; CHECK-NEXT:    [[ZERO:%.*]] = fadd nnan float [[SUB]], [[X]]
+; CHECK-NEXT:    ret float [[ZERO]]
+;
+  %sub = fsub float 0.0, %x
+  %zero = fadd nnan float %sub, %x
+  ret float %zero
 }
 
 ; fsub nnan x, x ==> 0.0
