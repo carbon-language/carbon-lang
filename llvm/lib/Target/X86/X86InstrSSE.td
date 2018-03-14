@@ -7482,7 +7482,8 @@ class avx2_broadcast_rr<bits<8> opc, string OpcodeStr, RegisterClass RC,
 
 let ExeDomain = SSEPackedSingle, Predicates = [HasAVX, NoVLX] in {
   def VBROADCASTSSrm  : avx_broadcast_rm<0x18, "vbroadcastss", VR128,
-                                             f32mem, v4f32, loadf32, WriteLoad>;
+                                             f32mem, v4f32, loadf32,
+                                             WriteFShuffleLd>;
   def VBROADCASTSSYrm : avx_broadcast_rm<0x18, "vbroadcastss", VR256,
                                              f32mem, v8f32, loadf32,
                                              WriteFShuffleLd>, VEX_L;
@@ -7518,7 +7519,7 @@ let mayLoad = 1, hasSideEffects = 0, Predicates = [HasAVX2] in
 def VBROADCASTI128 : AVX8I<0x5A, MRMSrcMem, (outs VR256:$dst),
                            (ins i128mem:$src),
                            "vbroadcasti128\t{$src, $dst|$dst, $src}", []>,
-                           Sched<[WriteLoad]>, VEX, VEX_L;
+                           Sched<[WriteShuffleLd]>, VEX, VEX_L;
 
 let mayLoad = 1, hasSideEffects = 0, Predicates = [HasAVX],
     ExeDomain = SSEPackedSingle in
@@ -7974,7 +7975,7 @@ multiclass avx2_broadcast<bits<8> opc, string OpcodeStr,
                   !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                   [(set VR128:$dst,
                    (OpVT128 (X86VBroadcast (ld_frag addr:$src))))]>,
-                  Sched<[WriteLoad]>, VEX;
+                  Sched<[WriteShuffleLd]>, VEX;
     def Yrr : AVX28I<opc, MRMSrcReg, (outs VR256:$dst), (ins VR128:$src),
                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                    [(set VR256:$dst,
@@ -7984,7 +7985,7 @@ multiclass avx2_broadcast<bits<8> opc, string OpcodeStr,
                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                    [(set VR256:$dst,
                     (OpVT256 (X86VBroadcast (ld_frag addr:$src))))]>,
-                   Sched<[WriteLoad]>, VEX, VEX_L;
+                   Sched<[WriteShuffleLd]>, VEX, VEX_L;
 
     // Provide aliases for broadcast from the same register class that
     // automatically does the extract.

@@ -859,7 +859,7 @@ define <4 x float> @test_broadcastss(float *%a0) {
 ;
 ; BTVER2-LABEL: test_broadcastss:
 ; BTVER2:       # %bb.0:
-; BTVER2-NEXT:    vbroadcastss (%rdi), %xmm0 # sched: [5:1.00]
+; BTVER2-NEXT:    vbroadcastss (%rdi), %xmm0 # sched: [6:1.00]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;
 ; ZNVER1-LABEL: test_broadcastss:
