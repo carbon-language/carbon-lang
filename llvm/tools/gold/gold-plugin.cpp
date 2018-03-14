@@ -384,7 +384,7 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
       // required version, this should be changed to:
       // get_wrap_symbols = tv->tv_u.tv_get_wrap_symbols;
       get_wrap_symbols =
-          (ld_plugin_get_wrap_symbols)tv->tv_u.tv_register_new_input;
+          (ld_plugin_get_wrap_symbols)tv->tv_u.tv_message;
       break;
     default:
       break;
