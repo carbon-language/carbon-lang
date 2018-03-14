@@ -2690,7 +2690,7 @@ define <4 x double> @test_movddup(<4 x double> %a0, <4 x double> *%a1) {
 ;
 ; BTVER2-LABEL: test_movddup:
 ; BTVER2:       # %bb.0:
-; BTVER2-NEXT:    vmovddup {{.*#+}} ymm1 = mem[0,0,2,2] sched: [5:1.00]
+; BTVER2-NEXT:    vmovddup {{.*#+}} ymm1 = mem[0,0,2,2] sched: [6:1.00]
 ; BTVER2-NEXT:    vmovddup {{.*#+}} ymm0 = ymm0[0,0,2,2] sched: [1:0.50]
 ; BTVER2-NEXT:    vaddpd %ymm1, %ymm0, %ymm0 # sched: [3:2.00]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
@@ -3030,7 +3030,7 @@ define <8 x float> @test_movshdup(<8 x float> %a0, <8 x float> *%a1) {
 ;
 ; BTVER2-LABEL: test_movshdup:
 ; BTVER2:       # %bb.0:
-; BTVER2-NEXT:    vmovshdup {{.*#+}} ymm1 = mem[1,1,3,3,5,5,7,7] sched: [5:1.00]
+; BTVER2-NEXT:    vmovshdup {{.*#+}} ymm1 = mem[1,1,3,3,5,5,7,7] sched: [6:1.00]
 ; BTVER2-NEXT:    vmovshdup {{.*#+}} ymm0 = ymm0[1,1,3,3,5,5,7,7] sched: [1:0.50]
 ; BTVER2-NEXT:    vaddps %ymm1, %ymm0, %ymm0 # sched: [3:2.00]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
@@ -3093,7 +3093,7 @@ define <8 x float> @test_movsldup(<8 x float> %a0, <8 x float> *%a1) {
 ;
 ; BTVER2-LABEL: test_movsldup:
 ; BTVER2:       # %bb.0:
-; BTVER2-NEXT:    vmovsldup {{.*#+}} ymm1 = mem[0,0,2,2,4,4,6,6] sched: [5:1.00]
+; BTVER2-NEXT:    vmovsldup {{.*#+}} ymm1 = mem[0,0,2,2,4,4,6,6] sched: [6:1.00]
 ; BTVER2-NEXT:    vmovsldup {{.*#+}} ymm0 = ymm0[0,0,2,2,4,4,6,6] sched: [1:0.50]
 ; BTVER2-NEXT:    vaddps %ymm1, %ymm0, %ymm0 # sched: [3:2.00]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]

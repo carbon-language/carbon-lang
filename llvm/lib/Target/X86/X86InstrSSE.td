@@ -4708,6 +4708,7 @@ let AddedComplexity = 20 in {
 //===---------------------------------------------------------------------===//
 // SSE3 - Replicate Single FP - MOVSHDUP and MOVSLDUP
 //===---------------------------------------------------------------------===//
+
 multiclass sse3_replicate_sfp<bits<8> op, SDNode OpNode, string OpcodeStr,
                               ValueType vt, RegisterClass RC, PatFrag mem_frag,
                               X86MemOperand x86memop> {
@@ -4718,7 +4719,7 @@ def rr : S3SI<op, MRMSrcReg, (outs RC:$dst), (ins RC:$src),
 def rm : S3SI<op, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                       [(set RC:$dst, (OpNode (mem_frag addr:$src)))],
-                      IIC_SSE_MOV_LH>, Sched<[WriteLoad]>;
+                      IIC_SSE_MOV_LH>, Sched<[WriteFShuffleLd]>;
 }
 
 let Predicates = [HasAVX, NoVLX] in {
@@ -4786,10 +4787,10 @@ def rm  : S3DI<0x12, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
                     [(set VR128:$dst,
                       (v2f64 (X86Movddup
                               (scalar_to_vector (loadf64 addr:$src)))))],
-                              IIC_SSE_MOV_LH>, Sched<[WriteLoad]>;
+                              IIC_SSE_MOV_LH>, Sched<[WriteFShuffleLd]>;
 }
 
-// FIXME: Merge with above classe when there're patterns for the ymm version
+// FIXME: Merge with above classes when there are patterns for the ymm version
 multiclass sse3_replicate_dfp_y<string OpcodeStr> {
 def rr  : S3DI<0x12, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
@@ -4799,7 +4800,7 @@ def rm  : S3DI<0x12, MRMSrcMem, (outs VR256:$dst), (ins f256mem:$src),
                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                     [(set VR256:$dst,
                       (v4f64 (X86Movddup (loadv4f64 addr:$src))))]>,
-                    Sched<[WriteLoad]>;
+                    Sched<[WriteFShuffleLd]>;
 }
 
 let Predicates = [HasAVX, NoVLX] in {
