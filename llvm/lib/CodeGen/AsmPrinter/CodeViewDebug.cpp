@@ -470,7 +470,7 @@ void CodeViewDebug::endModule() {
   // Emit per-function debug information.
   for (auto &P : FnDebugInfo)
     if (!P.first->isDeclarationForLinker())
-      emitDebugInfoForFunction(P.first, P.second);
+      emitDebugInfoForFunction(P.first, *P.second);
 
   // Emit global variable debug information.
   setCurrentSubprogram(nullptr);
@@ -1162,8 +1162,9 @@ void CodeViewDebug::collectVariableInfo(const DISubprogram *SP) {
 
 void CodeViewDebug::beginFunctionImpl(const MachineFunction *MF) {
   const Function &GV = MF->getFunction();
-  assert(FnDebugInfo.count(&GV) == false);
-  CurFn = &FnDebugInfo[&GV];
+  auto Insertion = FnDebugInfo.insert({&GV, llvm::make_unique<FunctionInfo>()});
+  assert(!Insertion.second && "emitting function twice");
+  CurFn = Insertion.first->second.get();
   CurFn->FuncId = NextFuncId++;
   CurFn->Begin = Asm->getFunctionBegin();
 
@@ -2365,7 +2366,7 @@ void CodeViewDebug::emitLocalVariable(const LocalVariable &Var) {
 void CodeViewDebug::endFunctionImpl(const MachineFunction *MF) {
   const Function &GV = MF->getFunction();
   assert(FnDebugInfo.count(&GV));
-  assert(CurFn == &FnDebugInfo[&GV]);
+  assert(CurFn == FnDebugInfo[&GV].get());
 
   collectVariableInfo(GV.getSubprogram());
 

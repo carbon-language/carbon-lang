@@ -110,6 +110,11 @@ class LLVM_LIBRARY_VISIBILITY CodeViewDebug : public DebugHandlerBase {
   // For each function, store a vector of labels to its instructions, as well as
   // to the end of the function.
   struct FunctionInfo {
+    FunctionInfo() = default;
+
+    // Uncopyable.
+    FunctionInfo(const FunctionInfo &FI) = delete;
+
     /// Map from inlined call site to inlined instructions and child inlined
     /// call sites. Listed in program order.
     std::unordered_map<const DILocation *, InlineSite> InlineSites;
@@ -159,7 +164,7 @@ class LLVM_LIBRARY_VISIBILITY CodeViewDebug : public DebugHandlerBase {
 
   /// Remember some debug info about each function. Keep it in a stable order to
   /// emit at the end of the TU.
-  MapVector<const Function *, FunctionInfo> FnDebugInfo;
+  MapVector<const Function *, std::unique_ptr<FunctionInfo>> FnDebugInfo;
 
   /// Map from full file path to .cv_file id. Full paths are built from DIFiles
   /// and are stored in FileToFilepathMap;
