@@ -4175,8 +4175,8 @@ static Value *SimplifyFAddInst(Value *Op0, Value *Op1, FastMathFlags FMF,
   // X = -0.0: ( 0.0 - (-0.0)) + (-0.0) == ( 0.0) + (-0.0) == 0.0
   // X =  0.0: (-0.0 - ( 0.0)) + ( 0.0) == (-0.0) + ( 0.0) == 0.0
   // X =  0.0: ( 0.0 - ( 0.0)) + ( 0.0) == ( 0.0) + ( 0.0) == 0.0
-  if (FMF.noNaNs() && (match(Op0, m_FSub(m_AnyZero(), m_Specific(Op1))) ||
-                       match(Op1, m_FSub(m_AnyZero(), m_Specific(Op0)))))
+  if (FMF.noNaNs() && (match(Op0, m_FSub(m_AnyZeroFP(), m_Specific(Op1))) ||
+                       match(Op1, m_FSub(m_AnyZeroFP(), m_Specific(Op0)))))
     return ConstantFP::getNullValue(Op0->getType());
 
   return nullptr;
@@ -4207,8 +4207,8 @@ static Value *SimplifyFSubInst(Value *Op0, Value *Op1, FastMathFlags FMF,
     return X;
 
   // fsub 0.0, (fsub 0.0, X) ==> X if signed zeros are ignored.
-  if (FMF.noSignedZeros() && match(Op0, m_AnyZero()) &&
-      match(Op1, m_FSub(m_AnyZero(), m_Value(X))))
+  if (FMF.noSignedZeros() && match(Op0, m_AnyZeroFP()) &&
+      match(Op1, m_FSub(m_AnyZeroFP(), m_Value(X))))
     return X;
 
   // fsub nnan x, x ==> 0.0
@@ -4232,8 +4232,8 @@ static Value *SimplifyFMulInst(Value *Op0, Value *Op1, FastMathFlags FMF,
     return Op0;
 
   // fmul nnan nsz X, 0 ==> 0
-  if (FMF.noNaNs() && FMF.noSignedZeros() && match(Op1, m_AnyZero()))
-    return Op1;
+  if (FMF.noNaNs() && FMF.noSignedZeros() && match(Op1, m_AnyZeroFP()))
+    return ConstantFP::getNullValue(Op0->getType());
 
   // sqrt(X) * sqrt(X) --> X
   Value *X;
@@ -4275,8 +4275,8 @@ static Value *SimplifyFDivInst(Value *Op0, Value *Op1, FastMathFlags FMF,
   // 0 / X -> 0
   // Requires that NaNs are off (X could be zero) and signed zeroes are
   // ignored (X could be positive or negative, so the output sign is unknown).
-  if (FMF.noNaNs() && FMF.noSignedZeros() && match(Op0, m_AnyZero()))
-    return Op0;
+  if (FMF.noNaNs() && FMF.noSignedZeros() && match(Op0, m_AnyZeroFP()))
+    return ConstantFP::getNullValue(Op0->getType());
 
   if (FMF.noNaNs()) {
     // X / X -> 1.0 is legal when NaNs are ignored.
