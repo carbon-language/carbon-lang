@@ -30482,10 +30482,12 @@ static bool isAddSubOrSubAdd(SDNode *N, const X86Subtarget &Subtarget,
 
   // We require the first shuffle operand to be the ExpectedOpcode node,
   // and the second to be the NextExpectedOpcode node.
-  if (V1.getOpcode() == NextExpectedOpcode && V2.getOpcode() == ExpectedOpcode) {
+  if (V1.getOpcode() == NextExpectedOpcode &&
+      V2.getOpcode() == ExpectedOpcode) {
     ShuffleVectorSDNode::commuteMask(Mask);
     std::swap(V1, V2);
-  } else if (V1.getOpcode() != ExpectedOpcode || V2.getOpcode() != NextExpectedOpcode)
+  } else if (V1.getOpcode() != ExpectedOpcode ||
+             V2.getOpcode() != NextExpectedOpcode)
     return false;
 
   // If there are other uses of these operations we can't fold them.
