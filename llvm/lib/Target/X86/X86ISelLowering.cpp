@@ -7515,9 +7515,7 @@ static bool isAddSubOrSubAdd(const BuildVectorSDNode *BV,
                              bool matchSubAdd) {
 
   MVT VT = BV->getSimpleValueType(0);
-  if ((!Subtarget.hasSSE3() || (VT != MVT::v4f32 && VT != MVT::v2f64)) &&
-      (!Subtarget.hasAVX() || (VT != MVT::v8f32 && VT != MVT::v4f64)) &&
-      (!Subtarget.hasAVX512() || (VT != MVT::v16f32 && VT != MVT::v8f64)))
+  if (!Subtarget.hasSSE3() || !VT.isFloatingPoint())
     return false;
 
   unsigned NumElts = VT.getVectorNumElements();
@@ -30456,13 +30454,13 @@ static SDValue combineTargetShuffle(SDValue N, SelectionDAG &DAG,
 /// by this operation to try to flow through the rest of the combiner
 /// the fact that they're unused.
 static bool isAddSubOrSubAdd(SDNode *N, const X86Subtarget &Subtarget,
-                             SDValue &Opnd0, SDValue &Opnd1,
+                             SelectionDAG &DAG, SDValue &Opnd0, SDValue &Opnd1,
                              bool matchSubAdd) {
 
   EVT VT = N->getValueType(0);
-  if ((!Subtarget.hasSSE3() || (VT != MVT::v4f32 && VT != MVT::v2f64)) &&
-      (!Subtarget.hasAVX() || (VT != MVT::v8f32 && VT != MVT::v4f64)) &&
-      (!Subtarget.useAVX512Regs() || (VT != MVT::v16f32 && VT != MVT::v8f64)))
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  if (!Subtarget.hasSSE3() || !TLI.isTypeLegal(VT) ||
+      !VT.getSimpleVT().isFloatingPoint())
     return false;
 
   // We only handle target-independent shuffles.
@@ -30521,7 +30519,7 @@ static SDValue combineShuffleToAddSubOrFMAddSub(SDNode *N,
                                                 const X86Subtarget &Subtarget,
                                                 SelectionDAG &DAG) {
   SDValue Opnd0, Opnd1;
-  if (!isAddSubOrSubAdd(N, Subtarget, Opnd0, Opnd1, /*matchSubAdd*/false))
+  if (!isAddSubOrSubAdd(N, Subtarget, DAG, Opnd0, Opnd1, /*matchSubAdd*/false))
     return SDValue();
 
   MVT VT = N->getSimpleValueType(0);
@@ -30547,7 +30545,7 @@ static SDValue combineShuffleToFMSubAdd(SDNode *N,
                                         const X86Subtarget &Subtarget,
                                         SelectionDAG &DAG) {
   SDValue Opnd0, Opnd1;
-  if (!isAddSubOrSubAdd(N, Subtarget, Opnd0, Opnd1, /*matchSubAdd*/true))
+  if (!isAddSubOrSubAdd(N, Subtarget, DAG, Opnd0, Opnd1, /*matchSubAdd*/true))
     return SDValue();
 
   MVT VT = N->getSimpleValueType(0);
