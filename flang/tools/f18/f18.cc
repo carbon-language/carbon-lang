@@ -231,12 +231,14 @@ int main(int argc, char *const argv[]) {
 
   Fortran::parser::Options options;
   std::vector<std::string> sources, relocatables;
+  bool anyFiles{false};
 
   while (!args.empty()) {
     std::string arg{std::move(args.front())};
     args.pop_front();
     if (arg.empty()) {
     } else if (arg.at(0) != '-') {
+      anyFiles = true;
       auto dot = arg.rfind(".");
       if (dot == std::string::npos) {
         driver.pgf90Args.push_back(arg);
@@ -247,6 +249,8 @@ int main(int argc, char *const argv[]) {
             suffix == "cuf" || suffix == "CUF" ||
             suffix == "f18" || suffix == "F18") {
           sources.push_back(arg);
+        } else if (suffix == "o" || suffix == "a") {
+          relocatables.push_back(arg);
         } else {
           driver.pgf90Args.push_back(arg);
         }
@@ -296,7 +300,7 @@ int main(int argc, char *const argv[]) {
         << "  -Mextend             132-column fixed form\n"
         << "  -M[no]backslash      disable[enable] \\escapes in literals\n"
         << "  -Mstandard           enable conformance warnings\n"
-        << "  -Mx,125,4            set bit 2 in xflag[125] (Kanji)\n"
+        << "  -Mx,125,4            set bit 2 in xflag[125] (all Kanji mode)\n"
         << "  -ed                  enable fixed form D lines\n"
         << "  -E                   prescan & preprocess only\n"
         << "  -fparse-only         parse only, no output except messages\n"
@@ -324,7 +328,7 @@ int main(int argc, char *const argv[]) {
   }
   driver.encoding = options.encoding;
 
-  if (sources.empty()) {
+  if (!anyFiles) {
     driver.measureTree = true;
     driver.dumpUnparse = true;
     Compile("-", options, driver);
