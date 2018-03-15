@@ -30494,10 +30494,18 @@ static bool isAddSubOrSubAdd(SDNode *N, const X86Subtarget &Subtarget,
 
   // Ensure that both operations have the same operands. Note that we can
   // commute the FADD operands.
-  SDValue LHS = V1->getOperand(0), RHS = V1->getOperand(1);
-  if ((V2->getOperand(0) != LHS || V2->getOperand(1) != RHS) &&
-      (V2->getOperand(0) != RHS || V2->getOperand(1) != LHS))
-    return false;
+  SDValue LHS, RHS;
+  if (ExpectedOpcode == ISD::FSUB) {
+    LHS = V1->getOperand(0); RHS = V1->getOperand(1);
+    if ((V2->getOperand(0) != LHS || V2->getOperand(1) != RHS) &&
+        (V2->getOperand(0) != RHS || V2->getOperand(1) != LHS))
+      return false;
+  } else {
+    LHS = V2->getOperand(0); RHS = V2->getOperand(1);
+    if ((V1->getOperand(0) != LHS || V1->getOperand(1) != RHS) &&
+        (V1->getOperand(0) != RHS || V1->getOperand(1) != LHS))
+      return false;
+  }
 
   // We're looking for blends between FADD and FSUB nodes. We insist on these
   // nodes being lined up in a specific expected pattern.
