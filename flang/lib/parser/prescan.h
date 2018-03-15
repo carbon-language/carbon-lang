@@ -109,7 +109,6 @@ private:
   const char *FixedFormContinuationLine();
   bool FixedFormContinuation();
   bool FreeFormContinuation();
-  void PayNewlineDebt(Provenance);
 
   Messages *messages_;
   CookedSource *cooked_;
@@ -125,7 +124,6 @@ private:
   bool preventHollerith_{false};
 
   bool anyFatalErrors_{false};
-  int newlineDebt_{0};  // newline characters consumed but not yet emitted
   bool inCharLiteral_{false};
   bool inPreprocessorDirective_{false};
   bool inFixedForm_{false};

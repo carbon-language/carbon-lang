@@ -54,10 +54,8 @@ bool Prescanner::Prescan(ProvenanceRange range) {
     if (preprocessor_->MacroReplacement(tokens, *this, &preprocessed)) {
       preprocessed.PutNextTokenChar('\n', newlineProvenance);
       preprocessed.CloseToken();
-      if (IsFixedFormCommentLine(preprocessed.data()) ||
-          IsFreeFormComment(preprocessed.data())) {
-        ++newlineDebt_;
-      } else {
+      if (!IsFixedFormCommentLine(preprocessed.data()) &&
+          !IsFreeFormComment(preprocessed.data())) {
         preprocessed.pop_back();  // clip the newline added above
         preprocessed.Emit(cooked_);
       }
@@ -66,8 +64,7 @@ bool Prescanner::Prescan(ProvenanceRange range) {
       tokens.Emit(cooked_);
     }
     tokens.clear();
-    ++newlineDebt_;
-    PayNewlineDebt(newlineProvenance);
+    cooked_->Put('\n', newlineProvenance);
   }
   return !anyFatalErrors_;
 }
@@ -154,7 +151,6 @@ void Prescanner::NextChar() {
     }
     while (*at_ == '\\' && at_ + 2 < limit_ && at_[1] == '\n') {
       BeginSourceLineAndAdvance();
-      ++newlineDebt_;
     }
   } else {
     if ((inFixedForm_ && column_ > fixedFormColumnLimit_ &&
@@ -521,7 +517,6 @@ bool Prescanner::CommentLines() {
   while (lineStart_ < limit_) {
     if (IsFixedFormCommentLine(lineStart_) || IsFreeFormComment(lineStart_)) {
       NextLine();
-      ++newlineDebt_;
       any = true;
     } else {
       break;
@@ -543,7 +538,6 @@ bool Prescanner::CommentLinesAndPreprocessorDirectives() {
     } else {
       break;
     }
-    ++newlineDebt_;
     any = true;
   }
   return any;
@@ -586,7 +580,6 @@ bool Prescanner::FixedFormContinuation() {
   }
   BeginSourceLine(cont);
   column_ = 7;
-  ++newlineDebt_;
   NextLine();
   return true;
 }
@@ -630,15 +623,8 @@ bool Prescanner::FreeFormContinuation() {
   at_ = p;
   column_ = column;
   tabInCurrentLine_ = false;
-  ++newlineDebt_;
   NextLine();
   return true;
-}
-
-void Prescanner::PayNewlineDebt(Provenance p) {
-  for (; newlineDebt_ > 0; --newlineDebt_) {
-    cooked_->Put('\n', p);
-  }
 }
 }  // namespace parser
 }  // namespace Fortran
