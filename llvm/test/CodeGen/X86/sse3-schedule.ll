@@ -566,7 +566,7 @@ define <2 x double> @test_movddup(<2 x double> %a0, <2 x double> *%a1) {
 ; SLM-NEXT:    movddup {{.*#+}} xmm1 = mem[0,0] sched: [4:1.00]
 ; SLM-NEXT:    movddup {{.*#+}} xmm0 = xmm0[0,0] sched: [1:1.00]
 ; SLM-NEXT:    subpd %xmm0, %xmm1 # sched: [3:1.00]
-; SLM-NEXT:    movapd %xmm1, %xmm0 # sched: [1:1.00]
+; SLM-NEXT:    movapd %xmm1, %xmm0 # sched: [1:0.50]
 ; SLM-NEXT:    retq # sched: [4:1.00]
 ;
 ; SANDY-LABEL: test_movddup:
@@ -645,7 +645,7 @@ define <4 x float> @test_movshdup(<4 x float> %a0, <4 x float> *%a1) {
 ; SLM-NEXT:    movshdup {{.*#+}} xmm1 = mem[1,1,3,3] sched: [4:1.00]
 ; SLM-NEXT:    movshdup {{.*#+}} xmm0 = xmm0[1,1,3,3] sched: [1:1.00]
 ; SLM-NEXT:    addps %xmm0, %xmm1 # sched: [3:1.00]
-; SLM-NEXT:    movaps %xmm1, %xmm0 # sched: [1:1.00]
+; SLM-NEXT:    movaps %xmm1, %xmm0 # sched: [1:0.50]
 ; SLM-NEXT:    retq # sched: [4:1.00]
 ;
 ; SANDY-LABEL: test_movshdup:
@@ -724,7 +724,7 @@ define <4 x float> @test_movsldup(<4 x float> %a0, <4 x float> *%a1) {
 ; SLM-NEXT:    movsldup {{.*#+}} xmm1 = mem[0,0,2,2] sched: [4:1.00]
 ; SLM-NEXT:    movsldup {{.*#+}} xmm0 = xmm0[0,0,2,2] sched: [1:1.00]
 ; SLM-NEXT:    addps %xmm0, %xmm1 # sched: [3:1.00]
-; SLM-NEXT:    movaps %xmm1, %xmm0 # sched: [1:1.00]
+; SLM-NEXT:    movaps %xmm1, %xmm0 # sched: [1:0.50]
 ; SLM-NEXT:    retq # sched: [4:1.00]
 ;
 ; SANDY-LABEL: test_movsldup:

@@ -214,7 +214,6 @@ def: InstRW<[JWriteSHLDm],(instrs SHLD16mri8, SHLD32mri8, SHLD64mri8,
 
 ////////////////////////////////////////////////////////////////////////////////
 // Loads, stores, and moves, not folded with other operations.
-// FIXME: Split x86 and SSE load/store/moves
 ////////////////////////////////////////////////////////////////////////////////
 
 def : WriteRes<WriteLoad,  [JLAGU]> { let Latency = 5; }
@@ -255,6 +254,10 @@ def : WriteRes<WriteNop, []>;
 // FIXME: SS vs PS latencies
 ////////////////////////////////////////////////////////////////////////////////
 
+def  : WriteRes<WriteFLoad,                [JLAGU]> { let Latency = 5; }
+def  : WriteRes<WriteFStore,               [JSAGU]>;
+def  : WriteRes<WriteFMove,               [JFPU01]>;
+
 defm : JWriteResFpuPair<WriteFAdd,         [JFPU0],  3>;
 defm : JWriteResFpuPair<WriteFMul,         [JFPU1],  2>;
 defm : JWriteResFpuPair<WriteFMA,          [JFPU1],  2>; // NOTE: Doesn't exist on Jaguar.
@@ -279,6 +282,10 @@ defm : JWriteResFpuPair<WriteCvtF2F,       [JFPU1], 3>; // Float -> Float size c
 ////////////////////////////////////////////////////////////////////////////////
 // Vector integer operations.
 ////////////////////////////////////////////////////////////////////////////////
+
+def  : WriteRes<WriteVecLoad,              [JLAGU]> { let Latency = 5; }
+def  : WriteRes<WriteVecStore,             [JSAGU]>;
+def  : WriteRes<WriteVecMove,             [JFPU01]>;
 
 defm : JWriteResFpuPair<WriteVecALU,      [JFPU01], 1>;
 defm : JWriteResFpuPair<WriteVecShift,    [JFPU01], 1>;
