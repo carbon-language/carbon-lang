@@ -13,6 +13,8 @@
 #include "llvm/ADT/SparseBitVector.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/DebugInfo/PDB/Native/RawError.h"
+#include "llvm/Support/BinaryStreamReader.h"
+#include "llvm/Support/BinaryStreamWriter.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
 #include <cstdint>
