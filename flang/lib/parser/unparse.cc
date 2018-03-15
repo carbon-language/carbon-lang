@@ -332,13 +332,13 @@ public:
   }
   bool Pre(const TypeBoundProcedureStmt::WithoutInterface &x) {  // R749
     Word("PROCEDURE"), Walk(", ", x.attributes, ", ");
-    Put(" :: "), Walk(x.declarations);
+    Put(" :: "), Walk(x.declarations, ", ");
     return false;
   }
   bool Pre(const TypeBoundProcedureStmt::WithInterface &x) {
     Word("PROCEDURE("), Walk(x.interfaceName), Put("), ");
     Walk(x.attributes);
-    Put(" :: "), Walk(x.bindingNames);
+    Put(" :: "), Walk(x.bindingNames, ", ");
     return false;
   }
   bool Pre(const TypeBoundProcDecl &x) {  // R750
@@ -433,15 +433,13 @@ public:
     const auto &attrs = std::get<std::list<AttrSpec>>(x.t);
     const auto &decls = std::get<std::list<EntityDecl>>(x.t);
     Walk(dts), Walk(", ", attrs, ", ");
-    if (!attrs.empty() ||
-        (!std::holds_alternative<DeclarationTypeSpec::Record>(dts.u) &&
-            std::none_of(decls.begin(), decls.end(), [](const EntityDecl &d) {
-              const auto &init = std::get<std::optional<Initialization>>(d.t);
-              return init.has_value() &&
-                  std::holds_alternative<std::list<Indirection<DataStmtValue>>>(
-                      init->u);
-            }))) {
-      Put(" ::");
+    if (!std::holds_alternative<DeclarationTypeSpec::Record>(dts.u) &&
+        (!attrs.empty() ||
+         !std::holds_alternative<IntrinsicTypeSpec>(dts.u) ||
+         std::any_of(decls.begin(), decls.end(), [](const EntityDecl &d) {
+           return std::get<std::optional<Initialization>>(d.t).has_value();
+         }))) {
+      Put(" ::");  // N.B. don't emit some needless ::, pgf90 can crash on them
     }
     Put(' '), Walk(std::get<std::list<EntityDecl>>(x.t), ", ");
     return false;
@@ -637,7 +635,7 @@ public:
     return false;
   }
   bool Pre(const PointerStmt &x) {  // R853
-    Word("POINTER :: "), Walk(x.v, ", ");
+    Word("POINTER"), Walk(x.v, ", ");
     return false;
   }
   bool Pre(const ProtectedStmt &x) {  // R855
@@ -690,12 +688,11 @@ public:
     Word("IMPORT");
     switch (x.kind) {
     case ImportStmt::Kind::Default:
-      Put(" :: ");
-      Walk(x.names);
+      Walk(" :: ", x.names, ", ");
       break;
     case ImportStmt::Kind::Only:
       Put(", "), Word("ONLY: ");
-      Walk(x.names);
+      Walk(x.names, ", ");
       break;
     case ImportStmt::Kind::None: Word(", NONE"); break;
     case ImportStmt::Kind::All: Word(", ALL"); break;
@@ -1365,6 +1362,7 @@ public:
       if (x.format) {
         Put(", "), Walk(x.format);
       }
+      Walk(", ", x.controls, ", ");
       Put(')');
     } else if (x.format) {
       Walk(x.format);
@@ -1372,7 +1370,7 @@ public:
         Put(", ");
       }
     } else {
-      Put('('), Walk(x.controls), Put(')');
+      Put('('), Walk(x.controls, ", "), Put(')');
     }
     Walk(" ", x.items, ", ");
     return false;
@@ -1384,9 +1382,9 @@ public:
       if (x.format) {
         Put(", "), Walk(x.format);
       }
-      Walk(", ", x.controls);
+      Walk(", ", x.controls, ", ");
     } else {
-      Walk(x.controls);
+      Walk(x.controls, ", ");
     }
     Put(')'), Walk(" ", x.items, ", ");
     return false;
