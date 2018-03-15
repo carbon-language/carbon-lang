@@ -110,6 +110,10 @@ def M3BranchLinkFastPred : SchedPredicate<[{MI->getOpcode() == AArch64::BLR &&
                                             MI->getOperand(0).isReg() &&
                                             MI->getOperand(0).getReg() != AArch64::LR}]>;
 def M3ResetFastPred      : SchedPredicate<[{TII->isExynosResetFast(*MI)}]>;
+def M3RotateFastPred     : SchedPredicate<[{(MI->getOpcode() == AArch64::EXTRWrri ||
+                                             MI->getOpcode() == AArch64::EXTRXrri) &&
+                                            MI->getOperand(0).isReg() && MI->getOperand(1).isReg() &&
+                                            MI->getOperand(0).getReg() == MI->getOperand(1).getReg()}]>;
 def M3ShiftLeftFastPred  : SchedPredicate<[{TII->isExynosShiftLeftFast(*MI)}]>;
 
 //===----------------------------------------------------------------------===//
@@ -135,6 +139,8 @@ def M3WriteC1 : SchedWriteRes<[M3UnitC]>   { let Latency = 1; }
 def M3WriteC2 : SchedWriteRes<[M3UnitC]>   { let Latency = 2; }
 def M3WriteAX : SchedWriteVariant<[SchedVar<M3ResetFastPred,     [M3WriteZ0]>,
                                    SchedVar<M3ShiftLeftFastPred, [M3WriteA1]>,
+                                   SchedVar<NoSchedPred,         [M3WriteAA]>]>;
+def M3WriteAY : SchedWriteVariant<[SchedVar<M3RotateFastPred,    [M3WriteA1]>,
                                    SchedVar<NoSchedPred,         [M3WriteAA]>]>;
 
 def M3WriteB1 : SchedWriteRes<[M3UnitB]> { let Latency = 1; }
@@ -500,6 +506,7 @@ def : InstRW<[M3WriteZ0], (instregex "^MOV[NZ][WX]i")>;
 // Divide and multiply instructions.
 
 // Miscellaneous instructions.
+def : InstRW<[M3WriteAY], (instregex "^EXTR[WX]rri")>;
 
 // Load instructions.
 def : InstRW<[M3WriteLD,
