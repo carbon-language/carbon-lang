@@ -357,15 +357,11 @@ public:
     int MatchingId = -1;
     bool IsAtomic = false;
 
-    // TODO: Remove this flag.  It would be strictly stronger to add a record
-    // to the AvailableInvariant table when passing the invariant load instead.
-    bool IsInvariant = false;
-
     LoadValue() = default;
     LoadValue(Instruction *Inst, unsigned Generation, unsigned MatchingId,
-              bool IsAtomic, bool IsInvariant)
+              bool IsAtomic)
         : DefInst(Inst), Generation(Generation), MatchingId(MatchingId),
-          IsAtomic(IsAtomic), IsInvariant(IsInvariant) {}
+          IsAtomic(IsAtomic) {}
   };
 
   using LoadMapAllocator =
@@ -889,6 +885,14 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
         ++CurrentGeneration;
       }
 
+      if (MemInst.isInvariantLoad()) {
+        // If we pass an invariant load, we know that memory location is
+        // indefinitely constant from the moment of first dereferenceability.
+        // We conservatively treat the invariant_load as that moment.
+        auto MemLoc = MemoryLocation::get(Inst);
+        AvailableInvariants.insert(MemLoc, CurrentGeneration);
+      }
+
       // If we have an available version of this load, and if it is the right
       // generation or the load is known to be from an invariant location,
       // replace this instruction.
@@ -903,8 +907,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
           !MemInst.isVolatile() && MemInst.isUnordered() &&
           // We can't replace an atomic load with one which isn't also atomic.
           InVal.IsAtomic >= MemInst.isAtomic() &&
-          (InVal.IsInvariant ||
-           isOperatingOnInvariantMemAt(Inst, InVal.Generation) ||
+          (isOperatingOnInvariantMemAt(Inst, InVal.Generation) ||
            isSameMemGeneration(InVal.Generation, CurrentGeneration,
                                InVal.DefInst, Inst))) {
         Value *Op = getOrCreateResult(InVal.DefInst, Inst->getType());
@@ -925,7 +928,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       AvailableLoads.insert(
           MemInst.getPointerOperand(),
           LoadValue(Inst, CurrentGeneration, MemInst.getMatchingId(),
-                    MemInst.isAtomic(), MemInst.isInvariantLoad()));
+                    MemInst.isAtomic()));
       LastStore = nullptr;
       continue;
     }
@@ -1050,7 +1053,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
         AvailableLoads.insert(
             MemInst.getPointerOperand(),
             LoadValue(Inst, CurrentGeneration, MemInst.getMatchingId(),
-                      MemInst.isAtomic(), /*IsInvariant=*/false));
+                      MemInst.isAtomic()));
 
         // Remember that this was the last unordered store we saw for DSE. We
         // don't yet handle DSE on ordered or volatile stores since we don't
