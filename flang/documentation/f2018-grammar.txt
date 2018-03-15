@@ -114,7 +114,8 @@ R722 length-selector -> ( [LEN =] type-param-value ) | * char-length [,]
 R723 char-length -> ( type-param-value ) | digit-string
 R724 char-literal-constant ->
        [kind-param _] ' [rep-char]... ' | [kind-param _] " [rep-char]... "
-R725 logical-literal-constant -> .TRUE. | .FALSE.  @ | .T. | .F.
+R725 logical-literal-constant ->
+       .TRUE. [_ kind-param] | .FALSE. [_ kind-param] @ | .T. | .F.
 R726 derived-type-def ->
        derived-type-stmt [type-param-def-stmt]... [private-or-sequence]...
        [component-part] [type-bound-procedure-part] end-type-stmt

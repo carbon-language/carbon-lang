@@ -862,13 +862,15 @@ constexpr auto rawHollerithLiteral = deprecated(HollerithLiteral{});
 TYPE_CONTEXT_PARSER("Hollerith"_en_US,
     construct<HollerithLiteralConstant>{}(rawHollerithLiteral))
 
-// R725 logical-literal-constant -> .TRUE. | .FALSE.
+// R725 logical-literal-constant ->
+//        .TRUE. [_ kind-param] | .FALSE. [_ kind-param]
 // Also accept .T. and .F. as extensions.
-TYPE_PARSER(".TRUE." >> construct<LogicalLiteralConstant>{}(pure(true)) ||
-    ".FALSE." >> construct<LogicalLiteralConstant>{}(pure(false)) ||
-    // PGI/Cray extensions
-    extension(".T."_tok >> construct<LogicalLiteralConstant>{}(pure(true))) ||
-    extension(".F."_tok >> construct<LogicalLiteralConstant>{}(pure(false))))
+TYPE_PARSER(construct<LogicalLiteralConstant>{}(
+                (".TRUE."_tok || extension(".T."_tok)) >> pure(true),
+                maybe(underscore >> kindParam)) ||
+    construct<LogicalLiteralConstant>{}(
+        (".FALSE."_tok || extension(".F."_tok)) >> pure(false),
+        maybe(underscore >> kindParam)))
 
 // R726 derived-type-def ->
 //        derived-type-stmt [type-param-def-stmt]...

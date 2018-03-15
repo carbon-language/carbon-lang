@@ -202,7 +202,8 @@ public:
     return true;
   }
   bool Pre(const LogicalLiteralConstant &x) {  // R725
-    Put(x.v ? ".TRUE." : ".FALSE.");
+    Put(std::get<bool>(x.t) ? ".TRUE." : ".FALSE.");
+    Walk("_", std::get<std::optional<KindParam>>(x.t));
     return false;
   }
   bool Pre(const DerivedTypeStmt &x) {  // R727
@@ -855,10 +856,6 @@ public:
   }
   bool Pre(const Expr::PercentLoc &x) {
     Word("%LOC("), Walk(x.v), Put(')');
-    return false;
-  }
-  bool Pre(const Expr::DefinedUnary &x) {
-    Put('.'), Walk(x.t, ". ");
     return false;
   }
   bool Pre(const Expr::Power &x) {

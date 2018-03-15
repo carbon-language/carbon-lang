@@ -754,8 +754,12 @@ struct HollerithLiteralConstant {
   std::string GetString() const { return v; }
 };
 
-// R725 logical-literal-constant -> .TRUE. | .FALSE.
-WRAPPER_CLASS(LogicalLiteralConstant, bool);
+// R725 logical-literal-constant ->
+//        .TRUE. [_ kind-param] | .FALSE. [_ kind-param]
+struct LogicalLiteralConstant {
+  TUPLE_CLASS_BOILERPLATE(LogicalLiteralConstant);
+  std::tuple<bool, std::optional<KindParam>> t;
+};
 
 // R764 boz-literal-constant -> binary-constant | octal-constant | hex-constant
 // R765 binary-constant -> B ' digit [digit]... ' | B " digit [digit]... "
