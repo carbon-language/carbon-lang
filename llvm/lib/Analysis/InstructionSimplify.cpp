@@ -4315,11 +4315,17 @@ static Value *SimplifyFRemInst(Value *Op0, Value *Op1, FastMathFlags FMF,
   if (isa<UndefValue>(Op0) || isa<UndefValue>(Op1))
     return ConstantFP::getNaN(Op0->getType());
 
-  // 0 % X -> 0
-  // Requires that NaNs are off (X could be zero) and signed zeroes are
-  // ignored (X could be positive or negative, so the output sign is unknown).
-  if (FMF.noNaNs() && FMF.noSignedZeros() && match(Op0, m_AnyZero()))
-    return Op0;
+  // Unlike fdiv, the result of frem always matches the sign of the dividend.
+  // The constant match may include undef elements in a vector, so return a full
+  // zero constant as the result.
+  if (FMF.noNaNs()) {
+    // 0 % X -> 0
+    if (match(Op0, m_Zero()))
+      return ConstantFP::getNullValue(Op0->getType());
+    // -0 % X -> -0
+    if (match(Op0, m_NegZero()))
+      return ConstantFP::getNegativeZero(Op0->getType());
+  }
 
   return nullptr;
 }

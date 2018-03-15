@@ -241,8 +241,7 @@ define <2 x double> @fdiv_zero_by_x_vec_undef(<2 x double> %x) {
 
 define double @frem_zero_by_x(double %x) {
 ; CHECK-LABEL: @frem_zero_by_x(
-; CHECK-NEXT:    [[R:%.*]] = frem nnan double 0.000000e+00, [[X:%.*]]
-; CHECK-NEXT:    ret double [[R]]
+; CHECK-NEXT:    ret double 0.000000e+00
 ;
   %r = frem nnan double 0.0, %x
   ret double %r
@@ -253,8 +252,7 @@ define double @frem_zero_by_x(double %x) {
 
 define double @frem_negzero_by_x(double %x) {
 ; CHECK-LABEL: @frem_negzero_by_x(
-; CHECK-NEXT:    [[R:%.*]] = frem nnan double -0.000000e+00, [[X:%.*]]
-; CHECK-NEXT:    ret double [[R]]
+; CHECK-NEXT:    ret double -0.000000e+00
 ;
   %r = frem nnan double -0.0, %x
   ret double %r
@@ -262,8 +260,7 @@ define double @frem_negzero_by_x(double %x) {
 
 define <2 x double> @frem_negzero_by_x_vec_undef(<2 x double> %x) {
 ; CHECK-LABEL: @frem_negzero_by_x_vec_undef(
-; CHECK-NEXT:    [[R:%.*]] = frem nnan <2 x double> <double undef, double -0.000000e+00>, [[X:%.*]]
-; CHECK-NEXT:    ret <2 x double> [[R]]
+; CHECK-NEXT:    ret <2 x double> <double -0.000000e+00, double -0.000000e+00>
 ;
   %r = frem nnan <2 x double> <double undef, double -0.0>, %x
   ret <2 x double> %r
