@@ -342,16 +342,7 @@ EXTERN void __kmpc_data_sharing_init_stack() {
 
   DataSharingState.SlotPtr[WID] = RootS;
   DataSharingState.TailPtr[WID] = RootS;
-
-  // Initialize the stack pointer to be equal to the end of
-  // the shared memory slot. This way we ensure that the global
-  // version of the stack will be used.
-  // TODO: remove this:
-  DataSharingState.StackPtr[WID] = RootS->DataEnd;
-
-  // TODO: When the use of shared memory is enabled we will have to
-  // initialize this with the start of the Data region like so:
-  // DataSharingState.StackPtr[WID] = (void *)&RootS->Data[0];
+  DataSharingState.StackPtr[WID] = (void *)&RootS->Data[0];
 
   // We initialize the list of references to arguments here.
   omptarget_nvptx_globalArgs.Init();
@@ -368,11 +359,6 @@ EXTERN void __kmpc_data_sharing_init_stack() {
 // Called by: master, TODO: call by workers
 EXTERN void* __kmpc_data_sharing_push_stack(size_t DataSize,
     int16_t UseSharedMemory) {
-  // TODO: Add shared memory support. For now, use global memory only for
-  // storing the data sharing slots so ignore the pre-allocated
-  // shared memory slot.
-
-  // Use global memory for storing the stack.
   if (IsMasterThread()) {
     unsigned WID = getWarpId();
 
