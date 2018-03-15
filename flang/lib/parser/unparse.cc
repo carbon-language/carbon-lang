@@ -436,7 +436,10 @@ public:
     if (!std::holds_alternative<DeclarationTypeSpec::Record>(dts.u) &&
         std::none_of(decls.begin(), decls.end(),
             [](const EntityDecl &d) {
-              return std::get<std::optional<Initialization>>(d.t).has_value();
+              const auto &init = std::get<std::optional<Initialization>>(d.t);
+              return init.has_value() &&
+                  std::holds_alternative<std::list<Indirection<DataStmtValue>>>(
+                      init->u);
             }) &&
         (!attrs.empty() || !std::holds_alternative<IntrinsicTypeSpec>(dts.u) ||
             std::any_of(decls.begin(), decls.end(), [](const EntityDecl &d) {
