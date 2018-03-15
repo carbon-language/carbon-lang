@@ -112,8 +112,8 @@ def M3BranchLinkFastPred : SchedPredicate<[{MI->getOpcode() == AArch64::BLR &&
 def M3ResetFastPred      : SchedPredicate<[{TII->isExynosResetFast(*MI)}]>;
 def M3RotateFastPred     : SchedPredicate<[{(MI->getOpcode() == AArch64::EXTRWrri ||
                                              MI->getOpcode() == AArch64::EXTRXrri) &&
-                                            MI->getOperand(0).isReg() && MI->getOperand(1).isReg() &&
-                                            MI->getOperand(0).getReg() == MI->getOperand(1).getReg()}]>;
+                                            MI->getOperand(1).isReg() && MI->getOperand(2).isReg() &&
+                                            MI->getOperand(1).getReg() == MI->getOperand(2).getReg()}]>;
 def M3ShiftLeftFastPred  : SchedPredicate<[{TII->isExynosShiftLeftFast(*MI)}]>;
 
 //===----------------------------------------------------------------------===//
