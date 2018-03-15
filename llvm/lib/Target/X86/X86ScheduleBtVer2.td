@@ -38,9 +38,6 @@ def JSAGU : ProcResource<1>; // Integer Pipe3: SAGU (also handles 3-operand LEA)
 def JFPU0 : ProcResource<1>; // Vector/FPU Pipe0: VALU0/VIMUL/FPA
 def JFPU1 : ProcResource<1>; // Vector/FPU Pipe1: VALU1/STC/FPM
 
-// Any pipe - FIXME we need this until we can discriminate between int/fpu load/store/moves properly
-def JAny : ProcResGroup<[JALU0, JALU1, JLAGU, JSAGU, JFPU0, JFPU1]>;
-
 // Integer Pipe Scheduler
 def JALU01 : ProcResGroup<[JALU0, JALU1]> {
   let BufferSize=20;
@@ -239,11 +236,10 @@ defm : JWriteResIntPair<WriteJump,  JALU01, 1>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Special case scheduling classes.
-// FIXME: pipe for system/microcode?
 ////////////////////////////////////////////////////////////////////////////////
 
-def : WriteRes<WriteSystem,     [JAny]> { let Latency = 100; }
-def : WriteRes<WriteMicrocoded, [JAny]> { let Latency = 100; }
+def : WriteRes<WriteSystem,     [JALU01]> { let Latency = 100; }
+def : WriteRes<WriteMicrocoded, [JALU01]> { let Latency = 100; }
 def : WriteRes<WriteFence,  [JSAGU]>;
 def : WriteRes<WriteNop, []>;
 

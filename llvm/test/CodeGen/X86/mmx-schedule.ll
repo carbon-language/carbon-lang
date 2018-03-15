@@ -566,7 +566,7 @@ define void @test_emms() optsize {
 ;
 ; BTVER2-LABEL: test_emms:
 ; BTVER2:       # %bb.0:
-; BTVER2-NEXT:    emms # sched: [100:0.17]
+; BTVER2-NEXT:    emms # sched: [100:0.50]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;
 ; ZNVER1-LABEL: test_emms:
