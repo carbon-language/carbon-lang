@@ -29,6 +29,9 @@ class BinaryStreamWriter;
 
 namespace pdb {
 
+Error readSparseBitVector(BinaryStreamReader &Stream, SparseBitVector<> &V);
+Error writeSparseBitVector(BinaryStreamWriter &Writer, SparseBitVector<> &Vec);
+
 template <typename ValueT, typename TraitsT> class HashTable;
 
 template <typename ValueT, typename TraitsT>
@@ -316,9 +319,6 @@ private:
     assert(size() == S);
   }
 };
-
-Error readSparseBitVector(BinaryStreamReader &Stream, SparseBitVector<> &V);
-Error writeSparseBitVector(BinaryStreamWriter &Writer, SparseBitVector<> &Vec);
 
 } // end namespace pdb
 
