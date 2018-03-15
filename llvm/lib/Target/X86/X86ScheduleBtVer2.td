@@ -308,9 +308,9 @@ defm : JWriteResFpuPair<WritePCmpEStrM, [JFPU1, JLAGU, JFPU01, JFPU1, JFPU0], 14
 // AES Instructions.
 ////////////////////////////////////////////////////////////////////////////////
 
-defm : JWriteResFpuPair<WriteAESIMC,    [JVIMUL], 2>;
-defm : JWriteResFpuPair<WriteAESKeyGen, [JVIMUL], 2>;
-defm : JWriteResFpuPair<WriteAESDecEnc, [JVIMUL], 3>;
+defm : JWriteResFpuPair<WriteAESIMC,      [JFPU0, JVIMUL], 2>;
+defm : JWriteResFpuPair<WriteAESKeyGen,   [JFPU0, JVIMUL], 2>;
+defm : JWriteResFpuPair<WriteAESDecEnc,   [JFPU0, JVIMUL], 3>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Horizontal add/sub  instructions.
@@ -335,7 +335,7 @@ def : InstRW<[JWriteFHAddYLd], (instrs VHADDPDYrm, VHADDPSYrm, VHSUBPDYrm, VHSUB
 // Carry-less multiplication instructions.
 ////////////////////////////////////////////////////////////////////////////////
 
-defm : JWriteResFpuPair<WriteCLMul,     [JVIMUL], 2>;
+defm : JWriteResFpuPair<WriteCLMul,       [JFPU0, JVIMUL], 2>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // SSE4.1 instructions.
