@@ -799,7 +799,7 @@ public:
   bool Pre(const AllocOpt &x) {  // R928, R931
     std::visit(visitors{[&](const AllocOpt::Mold &) { Word("MOLD="); },
                    [&](const AllocOpt::Source &) { Word("SOURCE="); },
-                   [&](const StatOrErrmsg &y) { Pre(y); }},
+                   [](const StatOrErrmsg &) {}},
         x.u);
     return true;
   }
@@ -1262,7 +1262,7 @@ public:
   }
   bool Pre(const EventWaitStmt::EventWaitSpec &x) {  // R1173, R1174
     std::visit(visitors{[&](const ScalarIntExpr &x) { Word("UNTIL_COUNT="); },
-                   [&](const StatOrErrmsg &y) { Pre(y); }},
+                   [](const StatOrErrmsg &) {}},
         x.u);
     return true;
   }
@@ -1281,7 +1281,7 @@ public:
   }
   bool Pre(const FormTeamStmt::FormTeamSpec &x) {  // R1176, R1177
     std::visit(visitors{[&](const ScalarIntExpr &x) { Word("NEW_INDEX="); },
-                   [&](const StatOrErrmsg &y) { Pre(y); }},
+                   [](const StatOrErrmsg &) {}},
         x.u);
     return true;
   }
@@ -1294,7 +1294,7 @@ public:
   bool Pre(const LockStmt::LockStat &x) {  // R1179
     std::visit(
         visitors{[&](const ScalarLogicalVariable &) { Word("ACQUIRED_LOCK="); },
-            [&](const StatOrErrmsg &y) { Pre(y); }},
+            [](const StatOrErrmsg &y) {}},
         x.u);
     return true;
   }
