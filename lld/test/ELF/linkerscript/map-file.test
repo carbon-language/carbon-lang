@@ -1,7 +1,6 @@
 # REQUIRES: x86
 
-# RUN: echo ".section .foo.1,\"a\"" > %t.s
-# RUN: echo ".quad 1" >> %t.s
+# RUN: echo '.section .foo.1, "a"; .quad 1' > %t.s
 # RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %t.s -o %t.o
 
 # RUN: ld.lld -o %t %t.o -Map=%t.map --script %s
