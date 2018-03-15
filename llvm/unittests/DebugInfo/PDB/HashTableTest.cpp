@@ -195,10 +195,8 @@ TEST(HashTableTest, NamedStreamMap) {
 
 namespace {
 struct FooBar {
-  std::string S;
   uint32_t X;
   uint32_t Y;
-  double Z;
 };
 
 } // namespace
@@ -236,10 +234,8 @@ TEST(HashTableTest, NonTrivialValueType) {
   uint32_t Cap = Table.capacity();
   for (uint32_t I = 0; I < Cap; ++I) {
     FooBar F;
-    F.S = utostr(I);
     F.X = I;
     F.Y = I + 1;
-    F.Z = static_cast<double>(I + 2);
     Table.set_as(utostr(I), F);
   }
 
