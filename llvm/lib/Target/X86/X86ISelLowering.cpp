@@ -30499,7 +30499,7 @@ static SDValue combineShuffleToAddSubOrFMAddSub(SDNode *N,
   if (!isAddSubOrSubAdd(N, Subtarget, Opnd0, Opnd1))
     return SDValue();
 
-  EVT VT = N->getValueType(0);
+  MVT VT = N->getSimpleValueType(0);
   SDLoc DL(N);
 
   // Try to generate X86ISD::FMADDSUB node here.
@@ -30525,7 +30525,7 @@ static SDValue combineShuffleToFMSubAdd(SDNode *N,
   if (!isAddSubOrSubAdd(N, Subtarget, Opnd0, Opnd1, true))
     return SDValue();
 
-  EVT VT = N->getValueType(0);
+  MVT VT = N->getSimpleValueType(0);
   SDLoc DL(N);
 
   // Try to generate X86ISD::FMSUBADD node here.
