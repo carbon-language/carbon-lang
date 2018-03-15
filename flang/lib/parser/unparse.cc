@@ -434,11 +434,14 @@ public:
     const auto &decls = std::get<std::list<EntityDecl>>(x.t);
     Walk(dts), Walk(", ", attrs, ", ");
     if (!std::holds_alternative<DeclarationTypeSpec::Record>(dts.u) &&
-        (!attrs.empty() ||
-         !std::holds_alternative<IntrinsicTypeSpec>(dts.u) ||
-         std::any_of(decls.begin(), decls.end(), [](const EntityDecl &d) {
-           return std::get<std::optional<Initialization>>(d.t).has_value();
-         }))) {
+        std::none_of(decls.begin(), decls.end(),
+            [](const EntityDecl &d) {
+              return std::get<std::optional<Initialization>>(d.t).has_value();
+            }) &&
+        (!attrs.empty() || !std::holds_alternative<IntrinsicTypeSpec>(dts.u) ||
+            std::any_of(decls.begin(), decls.end(), [](const EntityDecl &d) {
+              return std::get<std::optional<Initialization>>(d.t).has_value();
+            }))) {
       Put(" ::");  // N.B. don't emit some needless ::, pgf90 can crash on them
     }
     Put(' '), Walk(std::get<std::list<EntityDecl>>(x.t), ", ");
@@ -687,9 +690,7 @@ public:
   bool Pre(const ImportStmt &x) {  // R867
     Word("IMPORT");
     switch (x.kind) {
-    case ImportStmt::Kind::Default:
-      Walk(" :: ", x.names, ", ");
-      break;
+    case ImportStmt::Kind::Default: Walk(" :: ", x.names, ", "); break;
     case ImportStmt::Kind::Only:
       Put(", "), Word("ONLY: ");
       Walk(x.names, ", ");
