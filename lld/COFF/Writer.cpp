@@ -426,6 +426,9 @@ void Writer::createSections() {
 void Writer::createMiscChunks() {
   OutputSection *RData = createSection(".rdata");
 
+  for (auto &P : MergeChunk::Instances)
+    RData->addChunk(P.second);
+
   // Create thunks for locally-dllimported symbols.
   if (!Symtab->LocalImportChunks.empty()) {
     for (Chunk *C : Symtab->LocalImportChunks)
@@ -665,6 +668,7 @@ void Writer::assignAddresses() {
       VirtualSize = alignTo(VirtualSize, C->Alignment);
       C->setRVA(RVA + VirtualSize);
       C->OutputSectionOff = VirtualSize;
+      C->finalizeContents();
       VirtualSize += C->getSize();
       if (C->hasData())
         RawSize = alignTo(VirtualSize, SectorSize);
