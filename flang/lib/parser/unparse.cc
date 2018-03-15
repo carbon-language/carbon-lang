@@ -74,7 +74,9 @@ public:
     case DefinedOperator::IntrinsicOperator::GE: Put(">="); break;
     case DefinedOperator::IntrinsicOperator::GT: Put('>'); break;
     default:
+      Put('.');
       PutEnum(static_cast<int>(x), DefinedOperator::IntrinsicOperatorAsString);
+      Put('.');
     }
     return false;
   }
@@ -351,9 +353,9 @@ public:
   }
   void Post(const BindAttr::Deferred &) { Word("DEFERRED"); }  // R752
   void Post(const BindAttr::Non_Overridable &) { Word("NON_OVERRIDABLE"); }
-  bool Pre(const FinalProcedureStmt &) {  // R753
-    Word("FINAL :: ");
-    return true;
+  bool Pre(const FinalProcedureStmt &x) {  // R753
+    Word("FINAL :: "), Walk(x.v, ", ");
+    return false;
   }
   bool Pre(const DerivedTypeSpec &x) {  // R754
     Walk(std::get<Name>(x.t));
@@ -376,12 +378,12 @@ public:
     return false;
   }
   bool Pre(const EnumDefStmt &) {  // R760
-    Word("ENUM "), Word("BIND(C)"), Indent();
+    Word("ENUM, BIND(C)"), Indent();
     return false;
   }
-  bool Pre(const EnumeratorDefStmt &) {  // R761
-    Word("ENUMERATOR :: ");
-    return true;
+  bool Pre(const EnumeratorDefStmt &x) {  // R761
+    Word("ENUMERATOR :: "), Walk(x.v, ", ");
+    return false;
   }
   bool Pre(const Enumerator &x) {  // R762
     Walk(std::get<NamedConstant>(x.t));
@@ -389,8 +391,7 @@ public:
     return false;
   }
   void Post(const EndEnumStmt &) {  // R763
-    Outdent();
-    Word("END ENUM");
+    Outdent(), Word("END ENUM");
   }
   bool Pre(const BOZLiteralConstant &x) {  // R764 - R767
     Put("Z'");
@@ -776,7 +777,7 @@ public:
     Walk(",", std::get<std::list<ImageSelectorSpec>>(x.t), ","), Put(']');
     return false;
   }
-  bool Pre(const ImageSelectorSpec::Stat &) {
+  bool Pre(const ImageSelectorSpec::Stat &) {  // R926
     Word("STAT=");
     return true;
   }
@@ -798,7 +799,7 @@ public:
   bool Pre(const AllocOpt &x) {  // R928, R931
     std::visit(visitors{[&](const AllocOpt::Mold &) { Word("MOLD="); },
                    [&](const AllocOpt::Source &) { Word("SOURCE="); },
-                   [&](const StatOrErrmsg &y) {}},
+                   [&](const StatOrErrmsg &y) { Pre(y); }},
         x.u);
     return true;
   }
@@ -1260,9 +1261,8 @@ public:
     return false;
   }
   bool Pre(const EventWaitStmt::EventWaitSpec &x) {  // R1173, R1174
-    std::visit(
-        visitors{[&](const ScalarIntExpr &x) { Word("UNTIL_COUNT="), Walk(x); },
-            [&](const StatOrErrmsg &y) {}},
+    std::visit(visitors{[&](const ScalarIntExpr &x) { Word("UNTIL_COUNT="); },
+                   [&](const StatOrErrmsg &y) { Pre(y); }},
         x.u);
     return true;
   }
@@ -1280,9 +1280,8 @@ public:
     return false;
   }
   bool Pre(const FormTeamStmt::FormTeamSpec &x) {  // R1176, R1177
-    std::visit(
-        visitors{[&](const ScalarIntExpr &x) { Word("NEW_INDEX="), Walk(x); },
-            [&](const StatOrErrmsg &y) {}},
+    std::visit(visitors{[&](const ScalarIntExpr &x) { Word("NEW_INDEX="); },
+                   [&](const StatOrErrmsg &y) { Pre(y); }},
         x.u);
     return true;
   }
@@ -1293,10 +1292,9 @@ public:
     return false;
   }
   bool Pre(const LockStmt::LockStat &x) {  // R1179
-    std::visit(visitors{[&](const ScalarLogicalVariable &x) {
-                          Word("ACQUIRED_LOCK="), Walk(x);
-                        },
-                   [&](const StatOrErrmsg &y) {}},
+    std::visit(
+        visitors{[&](const ScalarLogicalVariable &) { Word("ACQUIRED_LOCK="); },
+            [&](const StatOrErrmsg &y) { Pre(y); }},
         x.u);
     return true;
   }
@@ -1786,7 +1784,7 @@ public:
   }
   bool Pre(const CallStmt &x) {  // R1521
     Word("CALL "), Walk(std::get<ProcedureDesignator>(x.v.t));
-    Walk(" (", std::get<std::list<ActualArgSpec>>(x.v.t), ", ", ")");
+    Walk("(", std::get<std::list<ActualArgSpec>>(x.v.t), ", ", ")");
     return false;
   }
   bool Pre(const ActualArgSpec &x) {  // R1523
@@ -1814,7 +1812,7 @@ public:
   void Post(const PrefixSpec::Recursive) { Word("RECURSIVE"); }
   bool Pre(const FunctionStmt &x) {  // R1530
     Walk("", std::get<std::list<PrefixSpec>>(x.t), " ", " ");
-    Word("FUNCTION "), Walk(std::get<Name>(x.t)), Put(" (");
+    Word("FUNCTION "), Walk(std::get<Name>(x.t)), Put("(");
     Walk(std::get<std::list<Name>>(x.t), ", "), Put(')');
     Walk(" ", std::get<std::optional<Suffix>>(x.t)), Indent();
     return false;
@@ -1860,7 +1858,7 @@ public:
   }
   bool Pre(const EntryStmt &x) {  // R1541
     Word("ENTRY "), Walk(std::get<Name>(x.t));
-    Walk(" (", std::get<std::list<DummyArg>>(x.t), ", ", ")");
+    Walk("(", std::get<std::list<DummyArg>>(x.t), ", ", ")");
     Walk(" ", std::get<std::optional<Suffix>>(x.t));
     return false;
   }

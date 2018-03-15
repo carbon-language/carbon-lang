@@ -3380,12 +3380,12 @@ TYPE_CONTEXT_PARSER("interface body"_en_US,
 constexpr auto specificProcedure = name;
 
 // R1506 procedure-stmt -> [MODULE] PROCEDURE [::] specific-procedure-list
-TYPE_PARSER("MODULE PROCEDURE" >>
-        construct<ProcedureStmt>{}(pure(ProcedureStmt::Kind::ModuleProcedure),
-            maybe("::"_tok) >> nonemptyList(specificProcedure)) ||
-    "PROCEDURE" >>
-        construct<ProcedureStmt>{}(pure(ProcedureStmt::Kind::Procedure),
-            maybe("::"_tok) >> nonemptyList(specificProcedure)))
+TYPE_PARSER(construct<ProcedureStmt>{}("MODULE PROCEDURE" >>
+                    pure(ProcedureStmt::Kind::ModuleProcedure),
+                maybe("::"_tok) >> nonemptyList(specificProcedure)) ||
+    construct<ProcedureStmt>{}(
+        "PROCEDURE" >> pure(ProcedureStmt::Kind::Procedure),
+        maybe("::"_tok) >> nonemptyList(specificProcedure)))
 
 // R1508 generic-spec ->
 //         generic-name | OPERATOR ( defined-operator ) |
