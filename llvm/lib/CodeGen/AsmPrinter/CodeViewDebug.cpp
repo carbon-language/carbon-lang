@@ -1163,7 +1163,7 @@ void CodeViewDebug::collectVariableInfo(const DISubprogram *SP) {
 void CodeViewDebug::beginFunctionImpl(const MachineFunction *MF) {
   const Function &GV = MF->getFunction();
   auto Insertion = FnDebugInfo.insert({&GV, llvm::make_unique<FunctionInfo>()});
-  assert(!Insertion.second && "emitting function twice");
+  assert(Insertion.second && "function already has info");
   CurFn = Insertion.first->second.get();
   CurFn->FuncId = NextFuncId++;
   CurFn->Begin = Asm->getFunctionBegin();
