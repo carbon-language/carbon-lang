@@ -2488,6 +2488,8 @@ static void setLimitsForBinOp(BinaryOperator &BO, APInt &Lower, APInt &Upper) {
 
 static Value *simplifyICmpWithConstant(CmpInst::Predicate Pred, Value *LHS,
                                        Value *RHS) {
+  Type *ITy = GetCompareTy(RHS); // The return type.
+
   const APInt *C;
   if (!match(RHS, m_APInt(C)))
     return nullptr;
@@ -2495,9 +2497,9 @@ static Value *simplifyICmpWithConstant(CmpInst::Predicate Pred, Value *LHS,
   // Rule out tautological comparisons (eg., ult 0 or uge 0).
   ConstantRange RHS_CR = ConstantRange::makeExactICmpRegion(Pred, *C);
   if (RHS_CR.isEmptySet())
-    return ConstantInt::getFalse(GetCompareTy(RHS));
+    return ConstantInt::getFalse(ITy);
   if (RHS_CR.isFullSet())
-    return ConstantInt::getTrue(GetCompareTy(RHS));
+    return ConstantInt::getTrue(ITy);
 
   // Find the range of possible values for binary operators.
   unsigned Width = C->getBitWidth();
@@ -2515,9 +2517,9 @@ static Value *simplifyICmpWithConstant(CmpInst::Predicate Pred, Value *LHS,
 
   if (!LHS_CR.isFullSet()) {
     if (RHS_CR.contains(LHS_CR))
-      return ConstantInt::getTrue(GetCompareTy(RHS));
+      return ConstantInt::getTrue(ITy);
     if (RHS_CR.inverse().contains(LHS_CR))
-      return ConstantInt::getFalse(GetCompareTy(RHS));
+      return ConstantInt::getFalse(ITy);
   }
 
   return nullptr;
