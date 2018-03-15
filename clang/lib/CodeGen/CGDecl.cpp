@@ -285,8 +285,11 @@ llvm::Constant *CodeGenModule::getOrCreateStaticVarDecl(
     // never defer them.
     assert(isa<ObjCMethodDecl>(DC) && "unexpected parent code decl");
   }
-  if (GD.getDecl())
+  if (GD.getDecl()) {
+    // Disable emission of the parent function for the OpenMP device codegen.
+    CGOpenMPRuntime::DisableAutoDeclareTargetRAII NoDeclTarget(*this);
     (void)GetAddrOfGlobal(GD);
+  }
 
   return Addr;
 }
