@@ -135,3 +135,24 @@ define void @test_scope_start_without_load(i32* %p) {
   call void @clobber_and_use(i32 %v3)
   ret void
 }
+
+; If we already have an invariant scope, don't want to start a new one
+; with a potentially greater generation.  This hides the earlier invariant
+; load
+define void @test_scope_restart(i32* %p) {
+; CHECK-LABEL: @test_scope_restart
+; CHECK:   %v1 = load i32, i32* %p
+; CHECK:   call void @clobber_and_use(i32 %v1)
+; CHECK:   %add = add i32 %v1, %v1
+; CHECK:   call void @clobber_and_use(i32 %add)
+; CHECK:   call void @clobber_and_use(i32 %v1)
+; CHECK:   ret void
+  %v1 = load i32, i32* %p, !invariant.load !{}
+  call void @clobber_and_use(i32 %v1)
+  %v2 = load i32, i32* %p, !invariant.load !{}
+  %add = add i32 %v1, %v2
+  call void @clobber_and_use(i32 %add)
+  %v3 = load i32, i32* %p
+  call void @clobber_and_use(i32 %v3)
+  ret void
+}

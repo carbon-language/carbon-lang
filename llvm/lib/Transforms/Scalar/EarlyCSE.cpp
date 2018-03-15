@@ -799,7 +799,9 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
         continue;
       auto *CI = cast<CallInst>(Inst);
       MemoryLocation MemLoc = MemoryLocation::getForArgument(CI, 1, TLI);
-      AvailableInvariants.insert(MemLoc, CurrentGeneration);
+      // Don't start a scope if we already have a better one pushed
+      if (!AvailableInvariants.count(MemLoc))
+        AvailableInvariants.insert(MemLoc, CurrentGeneration);
       continue;
     }
 
@@ -888,9 +890,12 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       if (MemInst.isInvariantLoad()) {
         // If we pass an invariant load, we know that memory location is
         // indefinitely constant from the moment of first dereferenceability.
-        // We conservatively treat the invariant_load as that moment.
+        // We conservatively treat the invariant_load as that moment.  If we
+        // pass a invariant load after already establishing a scope, don't
+        // restart it since we want to preserve the earliest point seen.
         auto MemLoc = MemoryLocation::get(Inst);
-        AvailableInvariants.insert(MemLoc, CurrentGeneration);
+        if (!AvailableInvariants.count(MemLoc))
+          AvailableInvariants.insert(MemLoc, CurrentGeneration);
       }
 
       // If we have an available version of this load, and if it is the right
