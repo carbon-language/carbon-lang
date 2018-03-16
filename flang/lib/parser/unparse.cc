@@ -1494,6 +1494,14 @@ public:
     Word("REWIND ("), Walk(x.v, ", "), Put(')');
     return false;
   }
+  bool Pre(const PositionOrFlushSpec &x) {  // R1227 & R1229
+    std::visit(visitors{[&](const FileUnitNumber &) { Word("UNIT="); },
+                   [&](const MsgVariable &) { Word("IOMSG="); },
+                   [&](const StatVariable &) { Word("IOSTAT="); },
+                   [&](const ErrLabel &) { Word("ERR="); }},
+        x.u);
+    return true;
+  }
   bool Pre(const FlushStmt &x) {  // R1228
     Word("FLUSH ("), Walk(x.v, ", "), Put(')');
     return false;
@@ -1782,8 +1790,16 @@ public:
     return false;
   }
   bool Pre(const CallStmt &x) {  // R1521
-    Word("CALL "), Walk(std::get<ProcedureDesignator>(x.v.t));
-    Walk("(", std::get<std::list<ActualArgSpec>>(x.v.t), ", ", ")");
+    const auto &pd = std::get<ProcedureDesignator>(x.v.t);
+    const auto &args = std::get<std::list<ActualArgSpec>>(x.v.t);
+    Word("CALL "), Walk(pd);
+    if (args.empty()) {
+      if (std::holds_alternative<ProcComponentRef>(pd.u)) {
+        Put("()");  // pgf90 crashes on CALL to tbp without parentheses
+      }
+    } else {
+      Walk("(", args, ", ", ")");
+    }
     return false;
   }
   bool Pre(const ActualArgSpec &x) {  // R1523
