@@ -76,8 +76,8 @@ bool __regcall operator ==(const test_class&, const test_class&){ --x; return fa
 test_class __regcall operator""_test_class (unsigned long long) { ++x; return test_class{};}
 // CHECK-LIN64-DAG: define x86_regcallcc void @_Zli11_test_classy(%class.test_class* noalias sret %agg.result, i64)
 // CHECK-LIN32-DAG: define x86_regcallcc void @_Zli11_test_classy(%class.test_class* inreg noalias sret %agg.result, i64)
-// CHECK-WIN64-DAG: \01??__K_test_class@@Yw?AVtest_class@@_K@Z"
-// CHECK-WIN32-DAG: \01??__K_test_class@@Yw?AVtest_class@@_K@Z"
+// CHECK-WIN64-DAG: ??__K_test_class@@Yw?AVtest_class@@_K@Z"
+// CHECK-WIN32-DAG: ??__K_test_class@@Yw?AVtest_class@@_K@Z"
 
 template<typename T>
 void __regcall freeTempFunc(T i){}
