@@ -2,7 +2,7 @@
 ; RUN: llc < %s -mtriple=aarch64--linux-gnu | FileCheck %s --check-prefix=CODE
 
 ; COST-LABEL: add.i8.v8i8
-; COST:       Found an estimated cost of 27 for instruction: %r = call i8 @llvm.experimental.vector.reduce.add.i8.v8i8(<8 x i8> %v)
+; COST:       Found an estimated cost of 1 for instruction: %r = call i8 @llvm.experimental.vector.reduce.add.i8.v8i8(<8 x i8> %v)
 ; CODE-LABEL: add.i8.v8i8
 ; CODE:       addv b0, v0.8b
 define i8 @add.i8.v8i8(<8 x i8> %v) {
@@ -11,7 +11,7 @@ define i8 @add.i8.v8i8(<8 x i8> %v) {
 }
 
 ; COST-LABEL: add.i8.v16i8
-; COST:       Found an estimated cost of 53 for instruction: %r = call i8 @llvm.experimental.vector.reduce.add.i8.v16i8(<16 x i8> %v)
+; COST:       Found an estimated cost of 1 for instruction: %r = call i8 @llvm.experimental.vector.reduce.add.i8.v16i8(<16 x i8> %v)
 ; CODE-LABEL: add.i8.v16i8
 ; CODE:       addv b0, v0.16b
 define i8 @add.i8.v16i8(<16 x i8> %v) {
@@ -20,7 +20,7 @@ define i8 @add.i8.v16i8(<16 x i8> %v) {
 }
 
 ; COST-LABEL: add.i16.v4i16
-; COST:       Found an estimated cost of 13 for instruction: %r = call i16 @llvm.experimental.vector.reduce.add.i16.v4i16(<4 x i16> %v)
+; COST:       Found an estimated cost of 1 for instruction: %r = call i16 @llvm.experimental.vector.reduce.add.i16.v4i16(<4 x i16> %v)
 ; CODE-LABEL: add.i16.v4i16
 ; CODE:       addv h0, v0.4h
 define i16 @add.i16.v4i16(<4 x i16> %v) {
@@ -29,7 +29,7 @@ define i16 @add.i16.v4i16(<4 x i16> %v) {
 }
 
 ; COST-LABEL: add.i16.v8i16
-; COST:       Found an estimated cost of 27 for instruction: %r = call i16 @llvm.experimental.vector.reduce.add.i16.v8i16(<8 x i16> %v)
+; COST:       Found an estimated cost of 1 for instruction: %r = call i16 @llvm.experimental.vector.reduce.add.i16.v8i16(<8 x i16> %v)
 ; CODE-LABEL: add.i16.v8i16
 ; CODE:       addv h0, v0.8h
 define i16 @add.i16.v8i16(<8 x i16> %v) {
@@ -38,7 +38,7 @@ define i16 @add.i16.v8i16(<8 x i16> %v) {
 }
 
 ; COST-LABEL: add.i32.v4i32
-; COST:       Found an estimated cost of 13 for instruction: %r = call i32 @llvm.experimental.vector.reduce.add.i32.v4i32(<4 x i32> %v)
+; COST:       Found an estimated cost of 1 for instruction: %r = call i32 @llvm.experimental.vector.reduce.add.i32.v4i32(<4 x i32> %v)
 ; CODE-LABEL: add.i32.v4i32
 ; CODE:       addv s0, v0.4s
 define i32 @add.i32.v4i32(<4 x i32> %v) {
