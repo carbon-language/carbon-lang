@@ -7,10 +7,13 @@
 // state in static data.
 
 #include <cinttypes>
+#include <set>
+#include <string>
 #include <unordered_set>
 
 namespace Fortran {
 namespace parser {
+
 class UserState {
 public:
   using Label = std::uint64_t;
@@ -32,9 +35,18 @@ public:
     }
   }
 
+  void NoteDefinedOperator(const std::string &opr) {
+    definedOperators_.insert(opr);
+  }
+  bool IsDefinedOperator(const std::string &opr) const {
+    return definedOperators_.find(opr) != definedOperators_.end();
+  }
+
 private:
   std::unordered_set<Label> doLabels_;
   int nonlabelDoConstructNestingDepth_{0};
+
+  std::set<std::string> definedOperators_;
 };
 }  // namespace parser
 }  // namespace Fortran

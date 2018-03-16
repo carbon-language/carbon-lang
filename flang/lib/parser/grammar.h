@@ -297,8 +297,9 @@ constexpr auto namedIntrinsicOperator = ".LT." >>
     ".AND." >> pure(DefinedOperator::IntrinsicOperator::AND) ||
     ".OR." >> pure(DefinedOperator::IntrinsicOperator::OR) ||
     ".EQV." >> pure(DefinedOperator::IntrinsicOperator::EQV) ||
-    ".NEQV." >> pure(DefinedOperator::IntrinsicOperator::NEQV);
-// Cray and ifort also have .XOR.; Cray has .N./.A./.O./.X. abbreviations
+    ".NEQV." >> pure(DefinedOperator::IntrinsicOperator::NEQV) ||
+    extension(".XOR." >> pure(DefinedOperator::IntrinsicOperator::XOR));
+// TODO: .N./.A./.O./.X. abbreviations?
 
 constexpr auto intrinsicOperator = "**" >>
         pure(DefinedOperator::IntrinsicOperator::Power) ||
@@ -604,7 +605,7 @@ constexpr auto nonDigitIdCharacter = letter || otherIdCharacter;
 static inline Name listToString(std::list<char> &&chlist) {
   Name result;
   for (auto ch : chlist) {
-    result += ch;
+    result += ToLowerCaseLetter(ch);
   }
   return result;
 }
@@ -1656,13 +1657,35 @@ TYPE_PARSER(construct<CharLiteralConstantSubstring>{}(
 TYPE_PARSER(construct<SubstringRange>{}(
     maybe(scalarIntExpr), ":" >> maybe(scalarIntExpr)))
 
+// R1003 defined-unary-op -> . letter [letter]... .
+// R1023 defined-binary-op -> . letter [letter]... .
+// R1414 local-defined-operator -> defined-unary-op | defined-binary-op
+// R1415 use-defined-operator -> defined-unary-op | defined-binary-op
+TYPE_PARSER(construct<DefinedOpName>{}(applyFunction(listToString,
+    spaces >> CharMatch<'.'>{} >> some(letter) / CharMatch<'.'>{})))
+
 // R911 data-ref -> part-ref [% part-ref]...
 // R914 coindexed-named-object -> data-ref
 // R917 array-element -> data-ref
+constexpr struct DefinedOperatorName {
+  using resultType = Success;
+  static std::optional<Success> Parse(ParseState *state) {
+    if (std::optional<DefinedOpName> n{definedOpName.Parse(state)}) {
+      if (const auto *user = state->userState()) {
+        if (user->IsDefinedOperator(n->v)) {
+          return {Success{}};
+        }
+      }
+    }
+    return {};
+  }
+} definedOperatorName;
+
 constexpr auto percentOrDot = "%"_tok ||
     // legacy VAX extension for RECORD field access
     // TODO: this clashes with user-defined operators in modern Fortran!
-    extension(!namedIntrinsicOperator >> "."_tok);
+    // This work-around is incomplete; it can't see into modules.
+    extension(!namedIntrinsicOperator >> !definedOperatorName >> "."_tok);
 
 template<>
 std::optional<DataReference> Parser<DataReference>::Parse(ParseState *state) {
@@ -1838,13 +1861,6 @@ constexpr auto level1Expr = construct<Expr>{}(construct<Expr::DefinedUnary>{}(
     extension(
         "+" >> construct<Expr>{}(construct<Expr::UnaryPlus>{}(primary))) ||
     extension("-" >> construct<Expr>{}(construct<Expr::Negate>{}(primary)));
-
-// R1003 defined-unary-op -> . letter [letter]... .
-// R1023 defined-binary-op -> . letter [letter]... .
-// R1414 local-defined-operator -> defined-unary-op | defined-binary-op
-// R1415 use-defined-operator -> defined-unary-op | defined-binary-op
-TYPE_PARSER(construct<DefinedOpName>{}(applyFunction(listToString,
-    spaces >> CharMatch<'.'>{} >> some(letter) / CharMatch<'.'>{})))
 
 // R1004 mult-operand -> level-1-expr [power-op mult-operand]
 // R1007 power-op -> **
@@ -2068,6 +2084,7 @@ static constexpr struct EquivOperand {
 // R1017 level-5-expr -> [level-5-expr equiv-op] equiv-operand
 // R1021 equiv-op -> .EQV. | .NEQV.
 // Logical equivalence is left-associative.
+// Extension: .XOR. as synonym for .NEQV. (TODO: is this the right precedence?)
 constexpr struct Level5Expr {
   using resultType = Expr;
   constexpr Level5Expr() {}
@@ -2080,10 +2097,13 @@ constexpr struct Level5Expr {
           neqv{[&result](Expr &&right) {
             return Expr{
                 Expr::NEQV(std::move(result).value(), std::move(right))};
+          }},
+          logicalXor{[&result](Expr &&right) {
+            return Expr{Expr::XOR(std::move(result).value(), std::move(right))};
           }};
       auto more = ".EQV." >> applyLambda(eqv, equivOperand) ||
-          ".NEQV." >> applyLambda(neqv, equivOperand);
-      // TODO: possible extensions: Cray has .XOR./.X.; ifort has .XOR.; PGI no
+          ".NEQV." >> applyLambda(neqv, equivOperand) ||
+          extension(".XOR." >> applyLambda(logicalXor, equivOperand));
       while (std::optional<Expr> next{attempt(more).Parse(state)}) {
         result = std::move(next);
       }
@@ -3303,9 +3323,9 @@ TYPE_PARSER(construct<UseStmt>{}("USE" >> optionalBeforeColons(moduleNature),
 //         local-name => use-name |
 //         OPERATOR ( local-defined-operator ) =>
 //           OPERATOR ( use-defined-operator )
-TYPE_PARSER("OPERATOR (" >>
-        construct<Rename>{}(construct<Rename::Operators>{}(
-            definedOpName / ") => OPERATOR (", definedOpName / ")")) ||
+TYPE_PARSER(construct<Rename>{}("OPERATOR (" >>
+                construct<Rename::Operators>{}(
+                    definedOpName / ") => OPERATOR (", definedOpName / ")")) ||
     construct<Rename>{}(construct<Rename::Names>{}(name, "=>" >> name)))
 
 // R1412 only -> generic-spec | only-use-name | rename
@@ -3395,18 +3415,34 @@ TYPE_PARSER(construct<ProcedureStmt>{}("MODULE PROCEDURE" >>
 // R1509 defined-io-generic-spec ->
 //         READ ( FORMATTED ) | READ ( UNFORMATTED ) |
 //         WRITE ( FORMATTED ) | WRITE ( UNFORMATTED )
-TYPE_PARSER("OPERATOR" >>
-        parenthesized(construct<GenericSpec>{}(Parser<DefinedOperator>{})) ||
-    "ASSIGNMENT ( = )" >>
-        construct<GenericSpec>{}(construct<GenericSpec::Assignment>{}) ||
-    "READ ( FORMATTED )" >>
-        construct<GenericSpec>{}(construct<GenericSpec::ReadFormatted>{}) ||
-    "READ ( UNFORMATTED )" >>
-        construct<GenericSpec>{}(construct<GenericSpec::ReadUnformatted>{}) ||
-    "WRITE ( FORMATTED )" >>
-        construct<GenericSpec>{}(construct<GenericSpec::WriteFormatted>{}) ||
-    "WRITE ( UNFORMATTED )" >>
-        construct<GenericSpec>{}(construct<GenericSpec::WriteUnformatted>{}) ||
+constexpr struct NoteOperatorDefinition {
+  using resultType = DefinedOperator;
+  static std::optional<DefinedOperator> Parse(ParseState *state) {
+    static constexpr auto definedOperator = Parser<DefinedOperator>{};
+    std::optional<DefinedOperator> op{definedOperator.Parse(state)};
+    if (op.has_value()) {
+      if (auto ustate = state->userState()) {
+        if (const auto *name = std::get_if<DefinedOpName>(&op->u)) {
+          ustate->NoteDefinedOperator(name->v);
+        }
+      }
+    }
+    return op;
+  }
+} noteOperatorDefinition;
+
+TYPE_PARSER(construct<GenericSpec>{}(
+                "OPERATOR" >> parenthesized(noteOperatorDefinition)) ||
+    construct<GenericSpec>{}(
+        "ASSIGNMENT ( = )" >> construct<GenericSpec::Assignment>{}) ||
+    construct<GenericSpec>{}(
+        "READ ( FORMATTED )" >> construct<GenericSpec::ReadFormatted>{}) ||
+    construct<GenericSpec>{}(
+        "READ ( UNFORMATTED )" >> construct<GenericSpec::ReadUnformatted>{}) ||
+    construct<GenericSpec>{}(
+        "WRITE ( FORMATTED )" >> construct<GenericSpec::WriteFormatted>{}) ||
+    construct<GenericSpec>{}("WRITE ( UNFORMATTED )" >>
+        construct<GenericSpec::WriteUnformatted>{}) ||
     construct<GenericSpec>{}(name))
 
 // R1510 generic-stmt ->

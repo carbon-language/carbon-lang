@@ -10,10 +10,6 @@
 namespace Fortran {
 namespace parser {
 
-void Parsing::PushSearchPathDirectory(std::string path) {
-  allSources_.PushSearchPathDirectory(path);
-}
-
 bool Parsing::Prescan(const std::string &path, Options options) {
   options_ = options;
 
@@ -27,7 +23,18 @@ bool Parsing::Prescan(const std::string &path, Options options) {
     return false;
   }
 
+  for (const auto &path : options.searchDirectories) {
+    allSources_.PushSearchPathDirectory(path);
+  }
+
   Preprocessor preprocessor{&allSources_};
+  for (const auto &predef : options.predefinitions) {
+    if (predef.second.has_value()) {
+      preprocessor.Define(predef.first, *predef.second);
+    } else {
+      preprocessor.Undefine(predef.first);
+    }
+  }
   Prescanner prescanner{&messages_, &cooked_, &preprocessor};
   prescanner.set_fixedForm(options.isFixedForm)
       .set_fixedFormColumnLimit(options.fixedFormColumns)

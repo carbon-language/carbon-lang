@@ -923,6 +923,10 @@ public:
     Walk(x.t, ".NEQV.");
     return false;
   }
+  bool Pre(const Expr::XOR &x) {
+    Walk(x.t, ".XOR.");
+    return false;
+  }
   bool Pre(const Expr::ComplexConstructor &x) {
     Put('('), Walk(x.t, ","), Put(')');
     return false;

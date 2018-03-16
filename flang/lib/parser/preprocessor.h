@@ -56,6 +56,9 @@ class Preprocessor {
 public:
   explicit Preprocessor(AllSources *);
 
+  void Define(std::string macro, std::string value);
+  void Undefine(std::string macro);
+
   // When the input contains macros to be replaced, the new token sequence
   // is appended to the output and the returned value is true.  When
   // no macro replacement is necessary, the output is unmodified and the
@@ -63,8 +66,8 @@ public:
   bool MacroReplacement(
       const TokenSequence &, const Prescanner &, TokenSequence *);
 
-  // Implements a preprocessor directive; returns true when no fatal error.
-  bool Directive(const TokenSequence &, Prescanner *);
+  // Implements a preprocessor directive.
+  void Directive(const TokenSequence &, Prescanner *);
 
 private:
   enum class IsElseActive { No, Yes };
@@ -73,7 +76,7 @@ private:
   ContiguousChars SaveTokenAsName(const ContiguousChars &);
   bool IsNameDefined(const ContiguousChars &);
   TokenSequence ReplaceMacros(const TokenSequence &, const Prescanner &);
-  bool SkipDisabledConditionalCode(
+  void SkipDisabledConditionalCode(
       const std::string &, IsElseActive, Prescanner *);
   bool IsIfPredicateTrue(
       const TokenSequence &expr, size_t first, size_t exprTokens, Prescanner *);

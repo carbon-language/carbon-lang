@@ -26,6 +26,8 @@ public:
   Prescanner(Messages *, CookedSource *, Preprocessor *);
   Prescanner(const Prescanner &);
 
+  bool anyFatalErrors() const { return anyFatalErrors_; }
+  void set_anyFatalErrors() { anyFatalErrors_ = true; }
   Messages *messages() const { return messages_; }
 
   Prescanner &set_fixedForm(bool yes) {
@@ -52,8 +54,10 @@ public:
   bool Prescan(ProvenanceRange);
 
   // Callbacks for use by Preprocessor.
-  std::optional<TokenSequence> NextTokenizedLine();
+  std::optional<TokenSequence> NextTokenizedLine(bool isPreprocessorDirective);
   Provenance GetCurrentProvenance() const { return GetProvenance(at_); }
+  Message &Error(MessageFixedText);
+  Message &Error(MessageFormattedText &&);
   Message &Complain(MessageFixedText);
   Message &Complain(MessageFormattedText &&);
 
@@ -122,7 +126,6 @@ private:
   const char *lineStart_{nullptr};  // next line to process; <= limit_
   bool tabInCurrentLine_{false};
   bool preventHollerith_{false};
-
   bool anyFatalErrors_{false};
   bool inCharLiteral_{false};
   bool inPreprocessorDirective_{false};

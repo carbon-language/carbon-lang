@@ -69,20 +69,31 @@ bool Prescanner::Prescan(ProvenanceRange range) {
   return !anyFatalErrors_;
 }
 
-std::optional<TokenSequence> Prescanner::NextTokenizedLine() {
+std::optional<TokenSequence> Prescanner::NextTokenizedLine(
+    bool isPreprocessorDirective) {
   if (lineStart_ >= limit_) {
     return {};
   }
-  bool wasInPreprocessorDirective{inPreprocessorDirective_};
   auto saveAt = at_;
-  inPreprocessorDirective_ = true;
+  inPreprocessorDirective_ =
+      isPreprocessorDirective || IsPreprocessorDirectiveLine(lineStart_);
   BeginSourceLineAndAdvance();
   TokenSequence tokens;
   while (NextToken(&tokens)) {
   }
-  inPreprocessorDirective_ = wasInPreprocessorDirective;
+  inPreprocessorDirective_ = false;
   at_ = saveAt;
   return {std::move(tokens)};
+}
+
+Message &Prescanner::Error(MessageFixedText text) {
+  anyFatalErrors_ = true;
+  return Complain(text);
+}
+
+Message &Prescanner::Error(MessageFormattedText &&text) {
+  anyFatalErrors_ = true;
+  return Complain(std::move(text));
 }
 
 Message &Prescanner::Complain(MessageFixedText text) {
@@ -228,7 +239,7 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
     } else if (IsLetter(*at_)) {
       // Handles FORMAT(3I9HHOLLERITH) by skipping over the first I so that
       // we don't misrecognize I9HOLLERITH as an identifier in the next case.
-      EmitCharAndAdvance(tokens, ToLowerCaseLetter(*at_));
+      EmitCharAndAdvance(tokens, *at_);
     }
     preventHollerith_ = false;
   } else if (*at_ == '.') {
@@ -242,8 +253,7 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
     }
     preventHollerith_ = false;
   } else if (IsLegalInIdentifier(*at_)) {
-    while (IsLegalInIdentifier(
-        EmitCharAndAdvance(tokens, ToLowerCaseLetter(*at_)))) {
+    while (IsLegalInIdentifier(EmitCharAndAdvance(tokens, *at_))) {
     }
     if (*at_ == '\'' || *at_ == '"') {
       QuotedCharacterLiteral(tokens);
@@ -291,8 +301,7 @@ bool Prescanner::ExponentAndKind(TokenSequence *tokens) {
     EmitCharAndAdvance(tokens, *at_);
   }
   if (*at_ == '_') {
-    while (IsLegalInIdentifier(
-        EmitCharAndAdvance(tokens, ToLowerCaseLetter(*at_)))) {
+    while (IsLegalInIdentifier(EmitCharAndAdvance(tokens, *at_))) {
     }
   }
   return true;
@@ -314,6 +323,7 @@ void Prescanner::QuotedCharacterLiteral(TokenSequence *tokens) {
     if (*at_ == '\n') {
       messages_->Put(
           {GetProvenance(start), "incomplete character literal"_en_US});
+      anyFatalErrors_ = true;
       break;
     }
     NextChar();
@@ -363,6 +373,7 @@ void Prescanner::Hollerith(TokenSequence *tokens, int count) {
   if (*at_ == '\n') {
     messages_->Put(
         {GetProvenance(start), "incomplete Hollerith literal"_en_US});
+    anyFatalErrors_ = true;
   } else {
     NextChar();
   }
@@ -463,8 +474,7 @@ bool Prescanner::IncludeLine(const char *p) {
     path += *p;
   }
   if (*p != quote) {
-    messages_->Put({GetProvenance(p), "malformed path name string"_en_US});
-    anyFatalErrors_ = true;
+    Error("malformed path name string"_en_US);
     return true;
   }
   for (++p; *p == ' ' || *p == '\t'; ++p) {
@@ -499,7 +509,7 @@ bool Prescanner::IncludeLine(const char *p) {
 
 bool Prescanner::IsPreprocessorDirectiveLine(const char *start) {
   const char *p{start};
-  if (p >= limit_ || inPreprocessorDirective_) {
+  if (p >= limit_) {
     return false;
   }
   for (; *p == ' '; ++p) {
@@ -532,8 +542,8 @@ bool Prescanner::CommentLinesAndPreprocessorDirectives() {
         IncludeLine(lineStart_)) {
       NextLine();
     } else if (IsPreprocessorDirectiveLine(lineStart_)) {
-      if (std::optional<TokenSequence> tokens{NextTokenizedLine()}) {
-        anyFatalErrors_ |= !preprocessor_->Directive(*tokens, this);
+      if (std::optional<TokenSequence> tokens{NextTokenizedLine(true)}) {
+        preprocessor_->Directive(*tokens, this);
       }
     } else {
       break;

@@ -5,7 +5,11 @@
 #include "message.h"
 #include "parse-tree.h"
 #include "provenance.h"
+#include <optional>
 #include <ostream>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace Fortran {
 namespace parser {
@@ -13,12 +17,16 @@ namespace parser {
 struct Options {
   Options() {}
 
+  using Predefinition = std::pair<std::string, std::optional<std::string>>;
+
   bool isFixedForm{false};
   int fixedFormColumns{72};
   bool enableBackslashEscapes{true};
   bool enableOldDebugLines{false};
   bool isStrictlyStandard{false};
   Encoding encoding{Encoding::UTF8};
+  std::vector<std::string> searchDirectories;
+  std::vector<Predefinition> predefinitions;
 };
 
 class Parsing {
@@ -30,7 +38,6 @@ public:
   Messages &messages() { return messages_; }
   Program &parseTree() { return *parseTree_; }
 
-  void PushSearchPathDirectory(std::string);
   bool Prescan(const std::string &path, Options);
   void DumpCookedChars(std::ostream &) const;
   void DumpProvenance(std::ostream &) const;
