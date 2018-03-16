@@ -1937,6 +1937,8 @@ class AtomicNoRet <string noRetOp, bit isRet> {
 // Interpolation opcodes
 //===----------------------------------------------------------------------===//
 
+class VINTRPDstOperand <RegisterClass rc> : RegisterOperand <rc, "printVINTRPDst">;
+
 class VINTRP_Pseudo <string opName, dag outs, dag ins, list<dag> pattern> :
   VINTRPCommon <outs, ins, "", pattern>,
   SIMCInstr<opName, SIEncodingFamily.NONE> {
