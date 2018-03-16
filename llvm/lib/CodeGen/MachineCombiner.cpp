@@ -407,8 +407,8 @@ bool MachineCombiner::preservesResourceLen(
 /// \returns true when new instruction sequence should be generated
 /// independent if it lengthens critical path or not
 bool MachineCombiner::doSubstitute(unsigned NewSize, unsigned OldSize) {
-  if (OptSize && (NewSize < OldSize))
-    return true;
+  if (OptSize)                   // First of all check OptSize option
+    return (NewSize < OldSize);  // Only substitute if new size < old size
   if (!TSchedModel.hasInstrSchedModelOrItineraries())
     return true;
   return false;
@@ -588,7 +588,7 @@ bool MachineCombiner::combineInstructions(MachineBasicBlock *MBB) {
         // Eagerly stop after the first pattern fires.
         Changed = true;
         break;
-      } else {
+      } else if (!OptSize || (NewInstCount <= OldInstCount)) {
         // For big basic blocks, we only compute the full trace the first time
         // we hit this. We do not invalidate the trace, but instead update the
         // instruction depths incrementally.
