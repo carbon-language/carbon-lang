@@ -69,14 +69,10 @@ bool Prescanner::Prescan(ProvenanceRange range) {
   return !anyFatalErrors_;
 }
 
-std::optional<TokenSequence> Prescanner::NextTokenizedLine(
-    bool isPreprocessorDirective) {
-  if (lineStart_ >= limit_) {
-    return {};
-  }
+TokenSequence Prescanner::TokenizePreprocessorDirective() {
+  CHECK(lineStart_ < limit_ && !inPreprocessorDirective_);
   auto saveAt = at_;
-  inPreprocessorDirective_ =
-      isPreprocessorDirective || IsPreprocessorDirectiveLine(lineStart_);
+  inPreprocessorDirective_ = true;
   BeginSourceLineAndAdvance();
   TokenSequence tokens;
   while (NextToken(&tokens)) {
@@ -321,9 +317,11 @@ void Prescanner::QuotedCharacterLiteral(TokenSequence *tokens) {
     while (PadOutCharacterLiteral(tokens)) {
     }
     if (*at_ == '\n') {
-      messages_->Put(
-          {GetProvenance(start), "incomplete character literal"_en_US});
-      anyFatalErrors_ = true;
+      if (!inPreprocessorDirective_) {
+        messages_->Put(
+            {GetProvenance(start), "incomplete character literal"_en_US});
+        anyFatalErrors_ = true;
+      }
       break;
     }
     NextChar();
@@ -371,9 +369,11 @@ void Prescanner::Hollerith(TokenSequence *tokens, int count) {
     }
   }
   if (*at_ == '\n') {
-    messages_->Put(
-        {GetProvenance(start), "incomplete Hollerith literal"_en_US});
-    anyFatalErrors_ = true;
+    if (!inPreprocessorDirective_) {
+      messages_->Put(
+          {GetProvenance(start), "incomplete Hollerith literal"_en_US});
+      anyFatalErrors_ = true;
+    }
   } else {
     NextChar();
   }
@@ -507,7 +507,7 @@ bool Prescanner::IncludeLine(const char *p) {
   return true;
 }
 
-bool Prescanner::IsPreprocessorDirectiveLine(const char *start) {
+bool Prescanner::IsPreprocessorDirectiveLine(const char *start) const {
   const char *p{start};
   if (p >= limit_) {
     return false;
@@ -520,6 +520,10 @@ bool Prescanner::IsPreprocessorDirectiveLine(const char *start) {
   for (; *p == ' ' || *p == '\t'; ++p) {
   }
   return *p == '#';
+}
+
+bool Prescanner::IsNextLinePreprocessorDirective() const {
+  return IsPreprocessorDirectiveLine(lineStart_);
 }
 
 bool Prescanner::CommentLines() {
@@ -542,7 +546,8 @@ bool Prescanner::CommentLinesAndPreprocessorDirectives() {
         IncludeLine(lineStart_)) {
       NextLine();
     } else if (IsPreprocessorDirectiveLine(lineStart_)) {
-      if (std::optional<TokenSequence> tokens{NextTokenizedLine(true)}) {
+      if (std::optional<TokenSequence> tokens{
+              TokenizePreprocessorDirective()}) {
         preprocessor_->Directive(*tokens, this);
       }
     } else {

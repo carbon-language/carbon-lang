@@ -52,9 +52,12 @@ public:
   }
 
   bool Prescan(ProvenanceRange);
+  void NextLine();
 
   // Callbacks for use by Preprocessor.
-  std::optional<TokenSequence> NextTokenizedLine(bool isPreprocessorDirective);
+  bool IsAtEnd() const { return lineStart_ >= limit_; }
+  bool IsNextLinePreprocessorDirective() const;
+  TokenSequence TokenizePreprocessorDirective();
   Provenance GetCurrentProvenance() const { return GetProvenance(at_); }
   Message &Error(MessageFixedText);
   Message &Error(MessageFormattedText &&);
@@ -95,7 +98,6 @@ private:
     return *at_;
   }
 
-  void NextLine();
   void LabelField(TokenSequence *);
   void NextChar();
   void SkipSpaces();
@@ -109,7 +111,7 @@ private:
   bool IsFixedFormCommentLine(const char *);
   bool IsFreeFormComment(const char *);
   bool IncludeLine(const char *);
-  bool IsPreprocessorDirectiveLine(const char *);
+  bool IsPreprocessorDirectiveLine(const char *) const;
   const char *FixedFormContinuationLine();
   bool FixedFormContinuation();
   bool FreeFormContinuation();

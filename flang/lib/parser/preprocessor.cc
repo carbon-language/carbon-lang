@@ -564,12 +564,12 @@ static std::string GetDirectiveName(const TokenSequence &line, size_t *rest) {
   size_t j{SkipBlanks(line, 0, tokens)};
   if (j == tokens || line[j].ToString() != "#") {
     *rest = tokens;
-    return {};
+    return "";
   }
   j = SkipBlanks(line, j + 1, tokens);
   if (j == tokens) {
     *rest = tokens;
-    return {};
+    return "";
   }
   *rest = SkipBlanks(line, j + 1, tokens);
   return ToLowerCaseLetters(line[j].ToString());
@@ -578,10 +578,14 @@ static std::string GetDirectiveName(const TokenSequence &line, size_t *rest) {
 void Preprocessor::SkipDisabledConditionalCode(const std::string &dirName,
     IsElseActive isElseActive, Prescanner *prescanner) {
   int nesting{0};
-  while (
-      std::optional<TokenSequence> line{prescanner->NextTokenizedLine(false)}) {
+  while (!prescanner->IsAtEnd()) {
+    if (!prescanner->IsNextLinePreprocessorDirective()) {
+      prescanner->NextLine();
+      continue;
+    }
+    TokenSequence line{prescanner->TokenizePreprocessorDirective()};
     size_t rest{0};
-    std::string dn{GetDirectiveName(*line, &rest)};
+    std::string dn{GetDirectiveName(line, &rest)};
     if (dn == "ifdef" || dn == "ifndef" || dn == "if") {
       ++nesting;
     } else if (dn == "endif") {
@@ -594,7 +598,7 @@ void Preprocessor::SkipDisabledConditionalCode(const std::string &dirName,
         return;
       }
       if (dn == "elif" &&
-          IsIfPredicateTrue(*line, rest, line->size() - rest, prescanner)) {
+          IsIfPredicateTrue(line, rest, line.size() - rest, prescanner)) {
         ifStack_.push(CanDeadElseAppear::Yes);
         return;
       }
