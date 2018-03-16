@@ -364,9 +364,8 @@ void BinaryContext::fixBinaryDataHoles() {
     uint64_t EndAddress = Section.getAddress();
 
     while (Itr != End) {
-      auto Gap = Itr->second->getAddress() - EndAddress;
-      if (Gap > 0) {
-        assert(EndAddress < Itr->second->getAddress());
+      if (Itr->second->getAddress() > EndAddress) {
+        auto Gap = Itr->second->getAddress() - EndAddress;
         Holes.push_back(std::make_pair(EndAddress, Gap));
       }
       EndAddress = Itr->second->getEndAddress();
