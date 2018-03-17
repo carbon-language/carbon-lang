@@ -32,6 +32,8 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const SISubtarget &ST,
     return LLT::pointer(AS, TM.getPointerSizeInBits(AS));
   };
 
+  auto AMDGPUAS = ST.getAMDGPUAS();
+
   const LLT S1 = LLT::scalar(1);
   const LLT V2S16 = LLT::vector(2, 16);
 
@@ -40,7 +42,17 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const SISubtarget &ST,
 
   const LLT GlobalPtr = GetAddrSpacePtr(AMDGPUAS::GLOBAL_ADDRESS);
   const LLT ConstantPtr = GetAddrSpacePtr(AMDGPUAS::CONSTANT_ADDRESS);
+  const LLT LocalPtr = GetAddrSpacePtr(AMDGPUAS::LOCAL_ADDRESS);
+  const LLT FlatPtr = GetAddrSpacePtr(AMDGPUAS.FLAT_ADDRESS);
+  const LLT PrivatePtr = GetAddrSpacePtr(AMDGPUAS.PRIVATE_ADDRESS);
 
+  const LLT AddrSpaces[] = {
+    GlobalPtr,
+    ConstantPtr,
+    LocalPtr,
+    FlatPtr,
+    PrivatePtr
+  };
 
   setAction({G_ADD, S32}, Legal);
   setAction({G_MUL, S32}, Legal);
@@ -84,9 +96,11 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const SISubtarget &ST,
   setAction({G_FPTOUI, S32}, Legal);
   setAction({G_FPTOUI, 1, S32}, Legal);
 
-  setAction({G_GEP, GlobalPtr}, Legal);
-  setAction({G_GEP, ConstantPtr}, Legal);
-  setAction({G_GEP, 1, S64}, Legal);
+  for (LLT PtrTy : AddrSpaces) {
+    LLT IdxTy = LLT::scalar(PtrTy.getSizeInBits());
+    setAction({G_GEP, PtrTy}, Legal);
+    setAction({G_GEP, 1, IdxTy}, Legal);
+  }
 
   setAction({G_ICMP, S1}, Legal);
   setAction({G_ICMP, 1, S32}, Legal);
