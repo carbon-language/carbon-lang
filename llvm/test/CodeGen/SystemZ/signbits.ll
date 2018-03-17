@@ -2,6 +2,7 @@
 ; DAGCombiner so that it knows that %sel0 is already sign extended.
 ;
 ; RUN: llc -mtriple=s390x-linux-gnu -mcpu=z13 -debug-only=isel < %s 2>&1 | FileCheck %s
+; REQUIRES: asserts
 
 %0 = type <{ %1*, i16, [6 x i8] }>
 %1 = type { i32 (...)** }
