@@ -66,18 +66,15 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const SISubtarget &ST,
   setAction({G_BITCAST, S32}, Legal);
   setAction({G_BITCAST, 1, V2S16}, Legal);
 
+  getActionDefinitionsBuilder(G_FCONSTANT)
+    .legalFor({S32, S64});
+  getActionDefinitionsBuilder({G_IMPLICIT_DEF, G_CONSTANT})
+    .legalFor({S1, S32, S64});
+
   // FIXME: i1 operands to intrinsics should always be legal, but other i1
   // values may not be legal.  We need to figure out how to distinguish
   // between these two scenarios.
   setAction({G_CONSTANT, S1}, Legal);
-  setAction({G_CONSTANT, S32}, Legal);
-  setAction({G_CONSTANT, S64}, Legal);
-
-  setAction({G_FCONSTANT, S32}, Legal);
-  setAction({G_FCONSTANT, S64}, Legal);
-
-  setAction({G_IMPLICIT_DEF, S32}, Legal);
-  setAction({G_IMPLICIT_DEF, S64}, Legal);
 
   setAction({G_FADD, S32}, Legal);
 
