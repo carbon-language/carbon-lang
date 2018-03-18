@@ -478,8 +478,8 @@ def : InstRW<[JWriteFLogicLd], (instrs ORPDrm, ORPSrm, VORPDrm, VORPSrm,
                                        ANDPDrm, ANDPSrm, VANDPDrm, VANDPSrm,
                                        ANDNPDrm, ANDNPSrm, VANDNPDrm, VANDNPSrm)>;
 
-def JWriteFLogicY: SchedWriteRes<[JFPU01]> {
-  let ResourceCycles = [2];
+def JWriteFLogicY: SchedWriteRes<[JFPU01, JFPX]> {
+  let ResourceCycles = [2, 2];
   let NumMicroOps = 2;
 }
 def : InstRW<[JWriteFLogicY], (instrs VORPDYrr, VORPSYrr,
@@ -487,9 +487,9 @@ def : InstRW<[JWriteFLogicY], (instrs VORPDYrr, VORPSYrr,
                                       VANDPDYrr, VANDPSYrr,
                                       VANDNPDYrr, VANDNPSYrr)>;
 
-def JWriteFLogicYLd: SchedWriteRes<[JLAGU, JFPU01]> {
+def JWriteFLogicYLd: SchedWriteRes<[JLAGU, JFPU01, JFPX]> {
   let Latency = 6;
-  let ResourceCycles = [1, 2];
+  let ResourceCycles = [1, 2, 2];
   let NumMicroOps = 3;
 }
 def : InstRW<[JWriteFLogicYLd], (instrs VORPDYrm, VORPSYrm,
