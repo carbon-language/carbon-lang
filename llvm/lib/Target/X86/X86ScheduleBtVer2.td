@@ -416,45 +416,45 @@ def : InstRW<[JWriteINSERTQ], (instrs INSERTQ, INSERTQI)>;
 // F16C instructions.
 ////////////////////////////////////////////////////////////////////////////////
 
-def JWriteCVT3: SchedWriteRes<[JFPU1]> {
+def JWriteCVT3: SchedWriteRes<[JFPU1, JSTC]> {
   let Latency = 3;
 }
 def : InstRW<[JWriteCVT3], (instrs VCVTPS2PHrr, VCVTPH2PSrr)>;
 
-def JWriteCVT3St: SchedWriteRes<[JFPU1, JSAGU]> {
+def JWriteCVT3St: SchedWriteRes<[JFPU1, JSTC, JSAGU]> {
   let Latency = 3;
 }
 def : InstRW<[JWriteCVT3St], (instrs VCVTPS2PHmr)>;
 
-def JWriteCVT3Ld: SchedWriteRes<[JLAGU, JFPU1]> {
+def JWriteCVT3Ld: SchedWriteRes<[JLAGU, JFPU1, JSTC]> {
   let Latency = 8;
 }
 def : InstRW<[JWriteCVT3Ld], (instrs VCVTPH2PSrm)>;
 
-def JWriteCVTPS2PHY: SchedWriteRes<[JFPU1, JFPU01]> {
+def JWriteCVTPS2PHY: SchedWriteRes<[JFPU1, JSTC, JFPX]> {
   let Latency = 6;
-  let ResourceCycles = [2, 2];
+  let ResourceCycles = [2, 2, 2];
   let NumMicroOps = 3;
 }
 def : InstRW<[JWriteCVTPS2PHY], (instrs VCVTPS2PHYrr)>;
 
-def JWriteCVTPS2PHYSt: SchedWriteRes<[JFPU1, JFPU01, JSAGU]> {
+def JWriteCVTPS2PHYSt: SchedWriteRes<[JFPU1, JSTC, JFPX, JSAGU]> {
   let Latency = 11;
-  let ResourceCycles = [2, 2, 1];
+  let ResourceCycles = [2, 2, 2, 1];
   let NumMicroOps = 3;
 }
 def : InstRW<[JWriteCVTPS2PHYSt], (instrs VCVTPS2PHYmr)>;
 
-def JWriteCVTPH2PSY: SchedWriteRes<[JFPU1]> {
+def JWriteCVTPH2PSY: SchedWriteRes<[JFPU1, JSTC]> {
   let Latency = 3;
-  let ResourceCycles = [2];
+  let ResourceCycles = [2, 2];
   let NumMicroOps = 2;
 }
 def : InstRW<[JWriteCVTPH2PSY], (instrs VCVTPH2PSYrr)>;
 
-def JWriteCVTPH2PSYLd: SchedWriteRes<[JLAGU, JFPU1]> {
+def JWriteCVTPH2PSYLd: SchedWriteRes<[JLAGU, JFPU1, JSTC]> {
   let Latency = 8;
-  let ResourceCycles = [1, 2];
+  let ResourceCycles = [1, 2, 2];
   let NumMicroOps = 2;
 }
 def : InstRW<[JWriteCVTPH2PSYLd], (instrs VCVTPH2PSYrm)>;
