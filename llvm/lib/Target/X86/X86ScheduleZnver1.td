@@ -476,12 +476,11 @@ def : InstRW<[WriteMicrocoded], (instregex "INTO")>;
 
 // LOOP.
 def ZnWriteLOOP : SchedWriteRes<[ZnALU03]>;
-def : InstRW<[ZnWriteLOOP], (instregex "LOOP")>;
+def : InstRW<[ZnWriteLOOP], (instrs LOOP)>;
 
 // LOOP(N)E, LOOP(N)Z
 def ZnWriteLOOPE : SchedWriteRes<[ZnALU03]>;
-def : InstRW<[ZnWriteLOOPE], (instregex "LOOPE", "LOOPNE",
-                              "LOOPZ", "LOOPNZ")>;
+def : InstRW<[ZnWriteLOOPE], (instrs LOOPE, LOOPNE)>;
 
 // CALL.
 // r.
@@ -854,10 +853,10 @@ def : InstRW<[ZnWriteFPU0Lat1], (instregex "TST_F")>;
 def : InstRW<[ZnWriteFPU3Lat1], (instregex "FXAM")>;
 
 // FPREM.
-def : InstRW<[WriteMicrocoded], (instregex "FPREM")>;
+def : InstRW<[WriteMicrocoded], (instrs FPREM)>;
 
 // FPREM1.
-def : InstRW<[WriteMicrocoded], (instregex "FPREM1")>;
+def : InstRW<[WriteMicrocoded], (instrs FPREM1)>;
 
 // FRNDINT.
 def : InstRW<[WriteMicrocoded], (instregex "FRNDINT")>;
