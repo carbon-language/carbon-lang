@@ -403,15 +403,13 @@ def : InstRW<[JWriteDPPDLd], (instrs DPPDrmi, VDPPDrmi)>;
 // SSE4A instructions.
 ////////////////////////////////////////////////////////////////////////////////
 
-def JWriteEXTRQ: SchedWriteRes<[JFPU01]> {
-  let Latency = 1;
-  let ResourceCycles = [1];
+def JWriteEXTRQ: SchedWriteRes<[JFPU01, JVALU]> {
 }
 def : InstRW<[JWriteEXTRQ], (instrs EXTRQ, EXTRQI)>;
 
-def JWriteINSERTQ: SchedWriteRes<[JFPU01]> {
+def JWriteINSERTQ: SchedWriteRes<[JFPU01, JVALU]> {
   let Latency = 2;
-  let ResourceCycles = [4];
+  let ResourceCycles = [1, 4];
 }
 def : InstRW<[JWriteINSERTQ], (instrs INSERTQ, INSERTQI)>;
 
