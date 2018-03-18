@@ -136,7 +136,6 @@ def : WriteRes<WriteLEA, [JALU01]>;
 
 // FIXME: Why do bitcounts use WriteIMul?
 def JWriteLZCNT : SchedWriteRes<[JALU01]> {
-  let Latency = 1;
 }
 def JWriteLZCNTLd : SchedWriteRes<[JLAGU, JALU01]> {
   let Latency = 4;
@@ -373,28 +372,28 @@ defm : JWriteResFpuPair<WriteCLMul,       [JFPU0, JVIMUL], 2>;
 
 def JWriteDPPS: SchedWriteRes<[JFPU0, JFPU1]> {
   let Latency = 11;
-  let ResourceCycles = [3,3];
+  let ResourceCycles = [3, 3];
   let NumMicroOps = 5;
 }
 def : InstRW<[JWriteDPPS], (instrs DPPSrri, VDPPSrri)>;
 
 def JWriteDPPSLd: SchedWriteRes<[JLAGU, JFPU0, JFPU1]> {
   let Latency = 16;
-  let ResourceCycles = [1,3,3];
+  let ResourceCycles = [1, 3, 3];
   let NumMicroOps = 6;
 }
 def : InstRW<[JWriteDPPSLd], (instrs DPPSrmi, VDPPSrmi)>;
 
 def JWriteDPPD: SchedWriteRes<[JFPU0, JFPU1]> {
   let Latency = 9;
-  let ResourceCycles = [3,3];
+  let ResourceCycles = [3, 3];
   let NumMicroOps = 3;
 }
 def : InstRW<[JWriteDPPD], (instrs DPPDrri, VDPPDrri)>;
 
 def JWriteDPPDLd: SchedWriteRes<[JLAGU, JFPU0, JFPU1]> {
   let Latency = 14;
-  let ResourceCycles = [1,3,3];
+  let ResourceCycles = [1, 3, 3];
   let NumMicroOps = 3;
 }
 def : InstRW<[JWriteDPPDLd], (instrs DPPDrmi, VDPPDrmi)>;
@@ -424,26 +423,24 @@ def : InstRW<[JWriteCVT3], (instrs VCVTPS2PHrr, VCVTPH2PSrr)>;
 
 def JWriteCVT3St: SchedWriteRes<[JFPU1, JSAGU]> {
   let Latency = 3;
-  let ResourceCycles = [1, 1];
 }
 def : InstRW<[JWriteCVT3St], (instrs VCVTPS2PHmr)>;
 
 def JWriteCVT3Ld: SchedWriteRes<[JLAGU, JFPU1]> {
   let Latency = 8;
-  let ResourceCycles = [1, 1];
 }
 def : InstRW<[JWriteCVT3Ld], (instrs VCVTPH2PSrm)>;
 
 def JWriteCVTPS2PHY: SchedWriteRes<[JFPU1, JFPU01]> {
   let Latency = 6;
-  let ResourceCycles = [2,2];
+  let ResourceCycles = [2, 2];
   let NumMicroOps = 3;
 }
 def : InstRW<[JWriteCVTPS2PHY], (instrs VCVTPS2PHYrr)>;
 
 def JWriteCVTPS2PHYSt: SchedWriteRes<[JFPU1, JFPU01, JSAGU]> {
   let Latency = 11;
-  let ResourceCycles = [2,2,1];
+  let ResourceCycles = [2, 2, 1];
   let NumMicroOps = 3;
 }
 def : InstRW<[JWriteCVTPS2PHYSt], (instrs VCVTPS2PHYmr)>;
@@ -457,7 +454,7 @@ def : InstRW<[JWriteCVTPH2PSY], (instrs VCVTPH2PSYrr)>;
 
 def JWriteCVTPH2PSYLd: SchedWriteRes<[JLAGU, JFPU1]> {
   let Latency = 8;
-  let ResourceCycles = [1,2];
+  let ResourceCycles = [1, 2];
   let NumMicroOps = 2;
 }
 def : InstRW<[JWriteCVTPH2PSYLd], (instrs VCVTPH2PSYrm)>;
