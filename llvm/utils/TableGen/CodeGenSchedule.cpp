@@ -746,7 +746,7 @@ void CodeGenSchedModels::createInstRWClass(Record *InstRWDef) {
   if (InstDefs->empty())
     PrintFatalError(InstRWDef->getLoc(), "No matching instruction opcodes");
 
-  for (Record *InstDef : make_range(InstDefs->begin(), InstDefs->end())) {
+  for (Record *InstDef : *InstDefs) {
     InstClassMapTy::const_iterator Pos = InstrClassMap.find(InstDef);
     if (Pos == InstrClassMap.end())
       PrintFatalError(InstDef->getLoc(), "No sched class for instruction.");
@@ -774,7 +774,7 @@ void CodeGenSchedModels::createInstRWClass(Record *InstRWDef) {
       if (!RWDefs.empty()) {
         const RecVec *OrigInstDefs = Sets.expand(RWDefs[0]);
         unsigned OrigNumInstrs = 0;
-        for (Record *OIDef : make_range(OrigInstDefs->begin(), OrigInstDefs->end())) {
+        for (Record *OIDef : *OrigInstDefs) {
           if (InstrClassMap[OIDef] == OldSCIdx)
             ++OrigNumInstrs;
         }
