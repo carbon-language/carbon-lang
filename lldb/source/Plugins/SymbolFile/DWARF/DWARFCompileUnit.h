@@ -12,13 +12,11 @@
 
 #include "DWARFUnit.h"
 
-typedef std::shared_ptr<DWARFCompileUnit> DWARFCompileUnitSP;
-
 class DWARFCompileUnit : public DWARFUnit {
   friend class DWARFUnit;
 
 public:
-  static DWARFCompileUnitSP Extract(SymbolFileDWARF *dwarf2Data,
+  static DWARFUnitSP Extract(SymbolFileDWARF *dwarf2Data,
       lldb::offset_t *offset_ptr);
 
   size_t ExtractDIEsIfNeeded(bool cu_die_only);

@@ -154,7 +154,7 @@ DWARFUnit::GetDIE(dw_offset_t die_offset) {
           Data().m_die_array.begin(), end, die_offset, CompareDIEOffset);
       if (pos != end) {
         if (die_offset == (*pos).GetOffset())
-          return DWARFDIE(&Data(), &(*pos));
+          return DWARFDIE(this, &(*pos));
       }
     } else {
       // Don't specify the compile unit offset as we don't know it because the
@@ -364,7 +364,7 @@ void DWARFUnit::IndexPrivate(
 
     DWARFFormValue specification_die_form;
     const size_t num_attributes =
-        die.GetAttributes(&dwarf_cu->Data(), fixed_form_sizes, attributes);
+        die.GetAttributes(dwarf_cu, fixed_form_sizes, attributes);
     if (num_attributes > 0) {
       for (uint32_t i = 0; i < num_attributes; ++i) {
         dw_attr_t attr = attributes.AttributeAtIndex(i);

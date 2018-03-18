@@ -40,9 +40,10 @@ extern int g_verbose;
 DWARFCompileUnit::DWARFCompileUnit(SymbolFileDWARF *dwarf2Data)
     : m_dwarf2Data(dwarf2Data) {}
 
-DWARFCompileUnitSP DWARFCompileUnit::Extract(SymbolFileDWARF *dwarf2Data,
+DWARFUnitSP DWARFCompileUnit::Extract(SymbolFileDWARF *dwarf2Data,
     lldb::offset_t *offset_ptr) {
-  DWARFCompileUnitSP cu_sp(new DWARFCompileUnit(dwarf2Data));
+  // std::make_shared would require the ctor to be public.
+  std::shared_ptr<DWARFCompileUnit> cu_sp(new DWARFCompileUnit(dwarf2Data));
   // Out of memory?
   if (cu_sp.get() == NULL)
     return nullptr;
@@ -249,7 +250,7 @@ size_t DWARFCompileUnit::ExtractDIEsIfNeeded(bool cu_die_only) {
   if (!m_dwo_symbol_file)
     return m_die_array.size();
 
-  DWARFCompileUnit *dwo_cu = m_dwo_symbol_file->GetCompileUnit();
+  DWARFUnit *dwo_cu = m_dwo_symbol_file->GetCompileUnit();
   size_t dwo_die_count = dwo_cu->ExtractDIEsIfNeeded(cu_die_only);
   return m_die_array.size() + dwo_die_count -
          1; // We have 2 CU die, but we want to count it only as one
@@ -265,7 +266,7 @@ void DWARFCompileUnit::AddCompileUnitDIE(DWARFDebugInfoEntry &die) {
   if (!dwo_symbol_file)
     return;
 
-  DWARFCompileUnit *dwo_cu = dwo_symbol_file->GetCompileUnit();
+  DWARFUnit *dwo_cu = dwo_symbol_file->GetCompileUnit();
   if (!dwo_cu)
     return; // Can't fetch the compile unit from the dwo file.
 
@@ -466,7 +467,7 @@ const DWARFDebugAranges &DWARFCompileUnit::GetFunctionAranges() {
                                           m_func_aranges_ap.get());
 
     if (m_dwo_symbol_file) {
-      DWARFCompileUnit *dwo_cu = m_dwo_symbol_file->GetCompileUnit();
+      DWARFUnit *dwo_cu = m_dwo_symbol_file->GetCompileUnit();
       const DWARFDebugInfoEntry *dwo_die = dwo_cu->DIEPtr();
       if (dwo_die)
         dwo_die->BuildFunctionAddressRangeTable(m_dwo_symbol_file.get(), dwo_cu,

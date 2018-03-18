@@ -31,6 +31,8 @@ enum DWARFProducer {
 };
 
 class DWARFUnit {
+  friend class DWARFCompileUnit;
+
 public:
   virtual ~DWARFUnit();
 
