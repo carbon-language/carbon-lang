@@ -468,25 +468,39 @@ def : InstRW<[JWriteCVTPH2PSYLd], (instrs VCVTPH2PSYrm)>;
 // AVX instructions.
 ////////////////////////////////////////////////////////////////////////////////
 
-def JWriteLogicY: SchedWriteRes<[JFPU01]> {
-  let Latency = 1;
+def JWriteFLogic: SchedWriteRes<[JFPU01, JFPX]> {
+}
+def : InstRW<[JWriteFLogic], (instrs ORPDrr, ORPSrr, VORPDrr, VORPSrr,
+                                     XORPDrr, XORPSrr, VXORPDrr, VXORPSrr,
+                                     ANDPDrr, ANDPSrr, VANDPDrr, VANDPSrr,
+                                     ANDNPDrr, ANDNPSrr, VANDNPDrr, VANDNPSrr)>;
+
+def JWriteFLogicLd: SchedWriteRes<[JLAGU, JFPU01, JFPX]> {
+  let Latency = 6;
+}
+def : InstRW<[JWriteFLogicLd], (instrs ORPDrm, ORPSrm, VORPDrm, VORPSrm,
+                                       XORPDrm, XORPSrm, VXORPDrm, VXORPSrm,
+                                       ANDPDrm, ANDPSrm, VANDPDrm, VANDPSrm,
+                                       ANDNPDrm, ANDNPSrm, VANDNPDrm, VANDNPSrm)>;
+
+def JWriteFLogicY: SchedWriteRes<[JFPU01]> {
   let ResourceCycles = [2];
   let NumMicroOps = 2;
 }
-def : InstRW<[JWriteLogicY], (instrs VORPDYrr, VORPSYrr,
-                                     VXORPDYrr, VXORPSYrr,
-                                     VANDPDYrr, VANDPSYrr,
-                                     VANDNPDYrr, VANDNPSYrr)>;
+def : InstRW<[JWriteFLogicY], (instrs VORPDYrr, VORPSYrr,
+                                      VXORPDYrr, VXORPSYrr,
+                                      VANDPDYrr, VANDPSYrr,
+                                      VANDNPDYrr, VANDNPSYrr)>;
 
-def JWriteLogicYLd: SchedWriteRes<[JLAGU, JFPU01]> {
+def JWriteFLogicYLd: SchedWriteRes<[JLAGU, JFPU01]> {
   let Latency = 6;
   let ResourceCycles = [1, 2];
   let NumMicroOps = 3;
 }
-def : InstRW<[JWriteLogicYLd], (instrs VORPDYrm, VORPSYrm,
-                                       VXORPDYrm, VXORPSYrm,
-                                       VANDPDYrm, VANDPSYrm,
-                                       VANDNPDYrm, VANDNPSYrm)>;
+def : InstRW<[JWriteFLogicYLd], (instrs VORPDYrm, VORPSYrm,
+                                        VXORPDYrm, VXORPSYrm,
+                                        VANDPDYrm, VANDPSYrm,
+                                        VANDNPDYrm, VANDNPSYrm)>;
 
 def JWriteVDPPSY: SchedWriteRes<[JFPU1, JFPU0]> {
   let Latency = 12;

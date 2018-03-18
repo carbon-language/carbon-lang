@@ -399,10 +399,10 @@ xorpd       (%rax), %xmm2
 # CHECK-NEXT:  -      -      -     1.00    -     1.00    -     1.00    -      -      -      -      -      -     	addsd	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -     1.00    -     1.00    -      -      -      -      -      -      -      -     	addsubpd	%xmm0, %xmm2
 # CHECK-NEXT:  -      -      -     1.00    -     1.00    -     1.00    -      -      -      -      -      -     	addsubpd	(%rax), %xmm2
-# CHECK-NEXT:  -      -      -      -      -     1.00    -      -      -      -      -      -     1.00    -     	andnpd	%xmm0, %xmm2
-# CHECK-NEXT:  -      -      -      -      -     0.01   0.99   1.00    -      -      -     1.00    -      -     	andnpd	(%rax), %xmm2
-# CHECK-NEXT:  -      -      -      -      -     0.01   0.99    -      -      -      -      -     1.00    -     	andpd	%xmm0, %xmm2
-# CHECK-NEXT:  -      -      -      -      -     1.00    -     1.00    -      -      -     1.00    -      -     	andpd	(%rax), %xmm2
+# CHECK-NEXT:  -      -      -     0.99   0.01   1.00    -      -      -      -      -      -      -      -     	andnpd	%xmm0, %xmm2
+# CHECK-NEXT:  -      -      -     0.99   0.01   0.01   0.99   1.00    -      -      -      -      -      -     	andnpd	(%rax), %xmm2
+# CHECK-NEXT:  -      -      -     1.00    -     0.01   0.99    -      -      -      -      -      -      -     	andpd	%xmm0, %xmm2
+# CHECK-NEXT:  -      -      -     0.99   0.01   1.00    -     1.00    -      -      -      -      -      -     	andpd	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -      -     1.00    -      -      -      -      -      -      -      -     	cmppd	$0, %xmm0, %xmm2
 # CHECK-NEXT:  -      -      -      -      -     1.00    -     1.00    -      -      -      -      -      -     	cmppd	$0, (%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -      -     1.00    -      -      -      -      -      -      -      -     	cmpsd	$0, %xmm0, %xmm2
@@ -489,8 +489,8 @@ xorpd       (%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -     2.00   1.00    -      -      -      -      -      -     	mulpd	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -     2.00    -      -      -      -      -      -      -     	mulsd	%xmm0, %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -     2.00   1.00    -      -      -      -      -      -     	mulsd	(%rax), %xmm2
-# CHECK-NEXT:  -      -      -      -      -     1.00    -      -      -      -      -      -     1.00    -     	orpd	%xmm0, %xmm2
-# CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -      -     1.00    -      -     	orpd	(%rax), %xmm2
+# CHECK-NEXT:  -      -      -     1.00    -     1.00    -      -      -      -      -      -      -      -     	orpd	%xmm0, %xmm2
+# CHECK-NEXT:  -      -      -      -     1.00    -     1.00   1.00    -      -      -      -      -      -     	orpd	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -      -      -      -     1.00    -     	pabsb	%xmm0, %xmm2
 # CHECK-NEXT:  -      -      -      -      -     1.00    -     1.00    -      -      -      -     1.00    -     	pabsb	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -      -     1.00    -      -      -      -      -     1.00    -      -     	pabsd	%xmm0, %xmm2
@@ -645,5 +645,5 @@ xorpd       (%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -     1.00    -     1.00   1.00    -      -      -      -      -      -     	unpckhpd	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -     1.00    -     1.00    -      -      -      -      -      -      -      -     	unpcklpd	%xmm0, %xmm2
 # CHECK-NEXT:  -      -      -      -     1.00    -     1.00   1.00    -      -      -      -      -      -     	unpcklpd	(%rax), %xmm2
-# CHECK-NEXT:  -      -      -      -      -     1.00    -      -      -      -      -      -     1.00    -     	xorpd	%xmm0, %xmm2
-# CHECK-NEXT:  -      -      -      -      -     0.99   0.01   1.00    -      -      -     1.00    -      -     	xorpd	(%rax), %xmm2
+# CHECK-NEXT:  -      -      -     0.01   0.99   1.00    -      -      -      -      -      -      -      -     	xorpd	%xmm0, %xmm2
+# CHECK-NEXT:  -      -      -      -     1.00   0.99   0.01   1.00    -      -      -      -      -      -     	xorpd	(%rax), %xmm2
