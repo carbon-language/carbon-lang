@@ -433,19 +433,52 @@ public:
     const auto &attrs = std::get<std::list<AttrSpec>>(x.t);
     const auto &decls = std::get<std::list<EntityDecl>>(x.t);
     Walk(dts), Walk(", ", attrs, ", ");
-    if (!std::holds_alternative<DeclarationTypeSpec::Record>(dts.u) &&
-        std::none_of(decls.begin(), decls.end(),
-            [](const EntityDecl &d) {
-              const auto &init = std::get<std::optional<Initialization>>(d.t);
-              return init.has_value() &&
-                  std::holds_alternative<std::list<Indirection<DataStmtValue>>>(
-                      init->u);
-            }) &&
-        (!attrs.empty() || !std::holds_alternative<IntrinsicTypeSpec>(dts.u) ||
-            std::any_of(decls.begin(), decls.end(), [](const EntityDecl &d) {
-              return std::get<std::optional<Initialization>>(d.t).has_value();
-            }))) {
-      Put(" ::");  // N.B. don't emit some needless ::, pgf90 can crash on them
+
+    static const auto isInitializerOldStyle = [](const Initialization &i) {
+      return std::holds_alternative<std::list<Indirection<DataStmtValue>>>(i.u);
+    };
+    static const auto hasAssignmentInitializer = [](const EntityDecl &d) {
+      // Does a declaration have a new-style =x initializer?
+      const auto &init = std::get<std::optional<Initialization>>(d.t);
+      return init.has_value() && !isInitializerOldStyle(*init);
+    };
+    static const auto hasSlashDelimitedInitializer = [](const EntityDecl &d) {
+      // Does a declaration have an old-style /x/ initializer?
+      const auto &init = std::get<std::optional<Initialization>>(d.t);
+      return init.has_value() && isInitializerOldStyle(*init);
+    };
+    const auto useDoubledColons = [&]() {
+      bool isRecord{std::holds_alternative<DeclarationTypeSpec::Record>(dts.u)};
+      if (!attrs.empty()) {
+        // Attributes after the type require :: before the entities.
+        CHECK(!isRecord);
+        return true;
+      }
+      if (std::any_of(decls.begin(), decls.end(), hasAssignmentInitializer)) {
+        // Always use :: with new style standard initializers (=x),
+        // since the standard requires them to appear (even in free form,
+        // where mandatory spaces already disambiguate INTEGER J=666).
+        CHECK(!isRecord);
+        return true;
+      }
+      if (isRecord) {
+        // Never put :: in a legacy extension RECORD// statement.
+        return false;
+      }
+      // The :: is optional for this declaration.  Avoid usage that can
+      // crash the pgf90 compiler.
+      if (std::any_of(
+              decls.begin(), decls.end(), hasSlashDelimitedInitializer)) {
+        // Don't use :: when a declaration uses legacy DATA-statement-like
+        // /x/ initialization.
+        return false;
+      }
+      // Don't use :: with intrinsic types.  Otherwise, use it.
+      return !std::holds_alternative<IntrinsicTypeSpec>(dts.u);
+    };
+
+    if (useDoubledColons()) {
+      Put(" ::");
     }
     Put(' '), Walk(std::get<std::list<EntityDecl>>(x.t), ", ");
     return false;
