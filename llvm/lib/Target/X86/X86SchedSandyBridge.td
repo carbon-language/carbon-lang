@@ -305,7 +305,7 @@ def: InstRW<[SBWriteResGroup2], (instregex "FNOP")>;
 def: InstRW<[SBWriteResGroup2], (instregex "INSERTPSrr")>;
 def: InstRW<[SBWriteResGroup2], (instregex "J(A|AE|B|BE|E|G|GE|L|LE|NE|NO|NP|NS|O|P|S)_1")>;
 def: InstRW<[SBWriteResGroup2], (instregex "J(A|AE|B|BE|E|G|GE|L|LE|NE|NO|NP|NS|O|P|S)_4")>;
-def: InstRW<[SBWriteResGroup2], (instregex "JMP64r")>;
+def: InstRW<[SBWriteResGroup2], (instregex "JMP(16|32|64)r")>;
 def: InstRW<[SBWriteResGroup2], (instregex "JMP_1")>;
 def: InstRW<[SBWriteResGroup2], (instregex "JMP_4")>;
 def: InstRW<[SBWriteResGroup2], (instregex "LD_Frr")>;
