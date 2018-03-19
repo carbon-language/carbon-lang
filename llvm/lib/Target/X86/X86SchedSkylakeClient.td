@@ -822,7 +822,7 @@ def: InstRW<[SKLWriteResGroup10], (instregex "DEC(8|16|32|64)r")>;
 def: InstRW<[SKLWriteResGroup10], (instregex "INC(8|16|32|64)r")>;
 def: InstRW<[SKLWriteResGroup10], (instregex "LAHF")>;
 def: InstRW<[SKLWriteResGroup10], (instregex "MOV(8|16|32|64)rr")>;
-def: InstRW<[SKLWriteResGroup10], (instregex "MOV8ri")>;
+def: InstRW<[SKLWriteResGroup10], (instregex "MOV(8|16|32|64)ri")>;
 def: InstRW<[SKLWriteResGroup10], (instregex "MOVSX(16|32|64)rr16")>;
 def: InstRW<[SKLWriteResGroup10], (instregex "MOVSX(16|32|64)rr32")>;
 def: InstRW<[SKLWriteResGroup10], (instregex "MOVSX(16|32|64)rr8")>;

@@ -626,7 +626,7 @@ def: InstRW<[SBWriteResGroup6], (instregex "INC(8|16|32|64)r")>;
 def: InstRW<[SBWriteResGroup6], (instregex "MMX_MOVD64from64rr")>;
 def: InstRW<[SBWriteResGroup6], (instregex "MMX_MOVQ2DQrr")>;
 def: InstRW<[SBWriteResGroup6], (instregex "MOV(8|16|32|64)rr")>;
-def: InstRW<[SBWriteResGroup6], (instregex "MOV8ri")>;
+def: InstRW<[SBWriteResGroup6], (instregex "MOV(8|16|32|64)ri")>;
 def: InstRW<[SBWriteResGroup6], (instregex "MOVDQArr")>;
 def: InstRW<[SBWriteResGroup6], (instregex "MOVDQUrr")>;
 def: InstRW<[SBWriteResGroup6], (instregex "MOVPQI2QIrr")>;

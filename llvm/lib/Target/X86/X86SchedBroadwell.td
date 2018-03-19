@@ -816,7 +816,7 @@ def: InstRW<[BWWriteResGroup9], (instregex "DEC(8|16|32|64)r")>;
 def: InstRW<[BWWriteResGroup9], (instregex "INC(8|16|32|64)r")>;
 def: InstRW<[BWWriteResGroup9], (instregex "LAHF")>;
 def: InstRW<[BWWriteResGroup9], (instregex "MOV(8|16|32|64)rr")>;
-def: InstRW<[BWWriteResGroup9], (instregex "MOV8ri")>;
+def: InstRW<[BWWriteResGroup9], (instregex "MOV(8|16|32|64)ri")>;
 def: InstRW<[BWWriteResGroup9], (instregex "MOVSX(16|32|64)rr16")>;
 def: InstRW<[BWWriteResGroup9], (instregex "MOVSX(16|32|64)rr32")>;
 def: InstRW<[BWWriteResGroup9], (instregex "MOVSX(16|32|64)rr8")>;
