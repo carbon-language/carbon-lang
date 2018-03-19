@@ -866,6 +866,20 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     }
   }
 
+  /// \brief Helper function to insert a warning at IRB's current insert point.
+  void insertWarningFn(IRBuilder<> &IRB, Value *Origin) {
+    if (!Origin)
+      Origin = (Value *)IRB.getInt32(0);
+    if (MS.TrackOrigins) {
+      IRB.CreateStore(Origin, MS.OriginTLS);
+    }
+    IRB.CreateCall(MS.WarningFn, {});
+    IRB.CreateCall(MS.EmptyAsm, {});
+    // FIXME: Insert UnreachableInst if !MS.Recover?
+    // This may invalidate some of the following checks and needs to be done
+    // at the very end.
+  }
+
   void materializeOneCheck(Instruction *OrigIns, Value *Shadow, Value *Origin,
                            bool AsCall) {
     IRBuilder<> IRB(OrigIns);
@@ -876,15 +890,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     Constant *ConstantShadow = dyn_cast_or_null<Constant>(ConvertedShadow);
     if (ConstantShadow) {
       if (ClCheckConstantShadow && !ConstantShadow->isZeroValue()) {
-        if (MS.TrackOrigins) {
-          IRB.CreateStore(Origin ? (Value *)Origin : (Value *)IRB.getInt32(0),
-                          MS.OriginTLS);
-        }
-        IRB.CreateCall(MS.WarningFn, {});
-        IRB.CreateCall(MS.EmptyAsm, {});
-        // FIXME: Insert UnreachableInst if !MS.Recover?
-        // This may invalidate some of the following checks and needs to be done
-        // at the very end.
+        insertWarningFn(IRB, Origin);
       }
       return;
     }
@@ -908,12 +914,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
           /* Unreachable */ !MS.Recover, MS.ColdCallWeights);
 
       IRB.SetInsertPoint(CheckTerm);
-      if (MS.TrackOrigins) {
-        IRB.CreateStore(Origin ? (Value *)Origin : (Value *)IRB.getInt32(0),
-                        MS.OriginTLS);
-      }
-      IRB.CreateCall(MS.WarningFn, {});
-      IRB.CreateCall(MS.EmptyAsm, {});
+      insertWarningFn(IRB, Origin);
       DEBUG(dbgs() << "  CHECK: " << *Cmp << "\n");
     }
   }
