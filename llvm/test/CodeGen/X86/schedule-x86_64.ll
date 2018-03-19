@@ -7279,7 +7279,7 @@ define void @test_jecxz_jrcxz() optsize {
 ; ZNVER1:       # %bb.0:
 ; ZNVER1-NEXT:    #APP
 ; ZNVER1-NEXT:  JXTGT:
-; ZNVER1-NEXT:    jecxz JXTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jecxz JXTGT # sched: [1:0.50]
 ; ZNVER1-NEXT:    jrcxz JXTGT # sched: [1:0.50]
 ; ZNVER1-NEXT:    #NO_APP
 ; ZNVER1-NEXT:    retq # sched: [1:0.50]

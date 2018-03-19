@@ -474,7 +474,7 @@ def : InstRW<[ZnWriteDiv64], (instregex "DIV64r", "IDIV64r")>;
 
 // J(E|R)CXZ.
 def ZnWriteJCXZ : SchedWriteRes<[ZnALU03]>;
-def : InstRW<[ZnWriteJCXZ], (instregex "JCXZ", "JECXZ_(32|64)", "JRCXZ")>;
+def : InstRW<[ZnWriteJCXZ], (instrs JCXZ, JECXZ, JRCXZ)>;
 
 // INTO
 def : InstRW<[WriteMicrocoded], (instregex "INTO")>;

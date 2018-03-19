@@ -1348,7 +1348,7 @@ define void @test_jcxz_jecxz() optsize {
 ; ZNVER1-NEXT:    #APP
 ; ZNVER1-NEXT:  JXTGT:
 ; ZNVER1-NEXT:    jcxz JXTGT # sched: [1:0.50]
-; ZNVER1-NEXT:    jecxz JXTGT # sched: [1:0.25]
+; ZNVER1-NEXT:    jecxz JXTGT # sched: [1:0.50]
 ; ZNVER1-NEXT:    #NO_APP
 ; ZNVER1-NEXT:    retl # sched: [1:0.50]
   call void asm sideeffect "JXTGT: \0A\09 jcxz JXTGT \0A\09 jecxz JXTGT", ""()
