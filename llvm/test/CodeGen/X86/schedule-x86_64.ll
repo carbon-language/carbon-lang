@@ -8389,13 +8389,13 @@ define void @test_nop(i16 %a0, i32 %a1, i64 %a2, i16 *%p0, i32 *%p1, i64 *%p2) o
 ; BTVER2-LABEL: test_nop:
 ; BTVER2:       # %bb.0:
 ; BTVER2-NEXT:    #APP
-; BTVER2-NEXT:    nop # sched: [1:?]
-; BTVER2-NEXT:    nopw %di # sched: [1:?]
-; BTVER2-NEXT:    nopw (%rcx) # sched: [1:?]
-; BTVER2-NEXT:    nopl %esi # sched: [1:?]
-; BTVER2-NEXT:    nopl (%r8) # sched: [1:?]
-; BTVER2-NEXT:    nopq %rdx # sched: [1:?]
-; BTVER2-NEXT:    nopq (%r9) # sched: [1:?]
+; BTVER2-NEXT:    nop # sched: [1:0.50]
+; BTVER2-NEXT:    nopw %di # sched: [1:0.50]
+; BTVER2-NEXT:    nopw (%rcx) # sched: [1:0.50]
+; BTVER2-NEXT:    nopl %esi # sched: [1:0.50]
+; BTVER2-NEXT:    nopl (%r8) # sched: [1:0.50]
+; BTVER2-NEXT:    nopq %rdx # sched: [1:0.50]
+; BTVER2-NEXT:    nopq (%r9) # sched: [1:0.50]
 ; BTVER2-NEXT:    #NO_APP
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;
@@ -9500,7 +9500,7 @@ define void @test_pause() optsize {
 ; BTVER2-LABEL: test_pause:
 ; BTVER2:       # %bb.0:
 ; BTVER2-NEXT:    #APP
-; BTVER2-NEXT:    pause # sched: [1:?]
+; BTVER2-NEXT:    pause # sched: [1:0.50]
 ; BTVER2-NEXT:    #NO_APP
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;
