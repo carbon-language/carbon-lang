@@ -608,7 +608,7 @@ void CGOpenMPRuntimeNVPTX::emitGenericEntryHeader(CodeGenFunction &CGF,
   Bld.CreateCondBr(IsWorker, WorkerBB, MasterCheckBB);
 
   CGF.EmitBlock(WorkerBB);
-  emitOutlinedFunctionCall(CGF, WST.Loc, WST.WorkerFn);
+  emitCall(CGF, WST.Loc, WST.WorkerFn);
   CGF.EmitBranch(EST.ExitBB);
 
   CGF.EmitBlock(MasterCheckBB);
@@ -831,10 +831,9 @@ void CGOpenMPRuntimeNVPTX::emitWorkerLoop(CodeGenFunction &CGF,
     // Insert call to work function via shared wrapper. The shared
     // wrapper takes two arguments:
     //   - the parallelism level;
-    //   - the master thread ID;
-    emitOutlinedFunctionCall(CGF, WST.Loc, W,
-                             {Bld.getInt16(/*ParallelLevel=*/0),
-                              getMasterThreadID(CGF)});
+    //   - the thread ID;
+    emitCall(CGF, WST.Loc, W,
+             {Bld.getInt16(/*ParallelLevel=*/0), getThreadID(CGF, WST.Loc)});
 
     // Go to end of parallel region.
     CGF.EmitBranch(TerminateBB);
@@ -1316,12 +1315,12 @@ void CGOpenMPRuntimeNVPTX::emitTeamsCall(CodeGenFunction &CGF,
   if (!CGF.HaveInsertPoint())
     return;
 
-  Address ZeroAddr =
-      CGF.CreateTempAlloca(CGF.Int32Ty, CharUnits::fromQuantity(4),
-                           /*Name*/ ".zero.addr");
+  Address ZeroAddr = CGF.CreateMemTemp(
+      CGF.getContext().getIntTypeForBitwidth(/*DestWidth=*/32, /*Signed=*/1),
+      /*Name*/ ".zero.addr");
   CGF.InitTempAlloca(ZeroAddr, CGF.Builder.getInt32(/*C*/ 0));
   llvm::SmallVector<llvm::Value *, 16> OutlinedFnArgs;
-  OutlinedFnArgs.push_back(ZeroAddr.getPointer());
+  OutlinedFnArgs.push_back(emitThreadIDAddress(CGF, Loc).getPointer());
   OutlinedFnArgs.push_back(ZeroAddr.getPointer());
   OutlinedFnArgs.append(CapturedVars.begin(), CapturedVars.end());
   emitOutlinedFunctionCall(CGF, Loc, OutlinedFn, OutlinedFnArgs);
@@ -1350,7 +1349,7 @@ void CGOpenMPRuntimeNVPTX::emitGenericParallelCall(
   // Force inline this outlined function at its call site.
   Fn->setLinkage(llvm::GlobalValue::InternalLinkage);
 
-  auto &&L0ParallelGen = [this, WFn, &CapturedVars](CodeGenFunction &CGF,
+  auto &&L0ParallelGen = [this, WFn, CapturedVars](CodeGenFunction &CGF,
                                                     PrePostActionTy &) {
     CGBuilderTy &Bld = CGF.Builder;
 
@@ -1420,17 +1419,20 @@ void CGOpenMPRuntimeNVPTX::emitGenericParallelCall(
   auto *ThreadID = getThreadID(CGF, Loc);
   llvm::Value *Args[] = {RTLoc, ThreadID};
 
-  auto &&SeqGen = [this, Fn, &CapturedVars, &Args, Loc](CodeGenFunction &CGF,
-                                                        PrePostActionTy &) {
-    auto &&CodeGen = [this, Fn, &CapturedVars, Loc](CodeGenFunction &CGF,
-                                                    PrePostActionTy &Action) {
+  auto &&SeqGen = [this, Fn, CapturedVars, Args, Loc](CodeGenFunction &CGF,
+                                                      PrePostActionTy &) {
+    auto &&CodeGen = [this, Fn, CapturedVars, Loc](CodeGenFunction &CGF,
+                                                   PrePostActionTy &Action) {
       Action.Enter(CGF);
 
       llvm::SmallVector<llvm::Value *, 16> OutlinedFnArgs;
-      OutlinedFnArgs.push_back(
-          llvm::ConstantPointerNull::get(CGM.Int32Ty->getPointerTo()));
-      OutlinedFnArgs.push_back(
-          llvm::ConstantPointerNull::get(CGM.Int32Ty->getPointerTo()));
+      Address ZeroAddr =
+          CGF.CreateMemTemp(CGF.getContext().getIntTypeForBitwidth(
+                                /*DestWidth=*/32, /*Signed=*/1),
+                            ".zero.addr");
+      CGF.InitTempAlloca(ZeroAddr, CGF.Builder.getInt32(/*C*/ 0));
+      OutlinedFnArgs.push_back(emitThreadIDAddress(CGF, Loc).getPointer());
+      OutlinedFnArgs.push_back(ZeroAddr.getPointer());
       OutlinedFnArgs.append(CapturedVars.begin(), CapturedVars.end());
       emitOutlinedFunctionCall(CGF, Loc, Fn, OutlinedFnArgs);
     };
@@ -1468,7 +1470,7 @@ void CGOpenMPRuntimeNVPTX::emitSpmdParallelCall(
       CGF.getContext().getIntTypeForBitwidth(/*DestWidth=*/32, /*Signed=*/1),
       ".zero.addr");
   CGF.InitTempAlloca(ZeroAddr, CGF.Builder.getInt32(/*C*/ 0));
-  OutlinedFnArgs.push_back(ZeroAddr.getPointer());
+  OutlinedFnArgs.push_back(emitThreadIDAddress(CGF, Loc).getPointer());
   OutlinedFnArgs.push_back(ZeroAddr.getPointer());
   OutlinedFnArgs.append(CapturedVars.begin(), CapturedVars.end());
   emitOutlinedFunctionCall(CGF, Loc, OutlinedFn, OutlinedFnArgs);
@@ -2873,14 +2875,15 @@ llvm::Function *CGOpenMPRuntimeNVPTX::createParallelDataSharingWrapper(
   const auto *RD = CS.getCapturedRecordDecl();
   auto CurField = RD->field_begin();
 
+  Address ZeroAddr = CGF.CreateMemTemp(
+      CGF.getContext().getIntTypeForBitwidth(/*DestWidth=*/32, /*Signed=*/1),
+      /*Name*/ ".zero.addr");
+  CGF.InitTempAlloca(ZeroAddr, CGF.Builder.getInt32(/*C*/ 0));
   // Get the array of arguments.
   SmallVector<llvm::Value *, 8> Args;
 
-  // TODO: suppport SIMD and pass actual values
-  Args.emplace_back(
-      llvm::ConstantPointerNull::get(CGM.Int32Ty->getPointerTo()));
-  Args.emplace_back(
-      llvm::ConstantPointerNull::get(CGM.Int32Ty->getPointerTo()));
+  Args.emplace_back(CGF.GetAddrOfLocalVar(&WrapperArg).getPointer());
+  Args.emplace_back(ZeroAddr.getPointer());
 
   CGBuilderTy &Bld = CGF.Builder;
   auto CI = CS.capture_begin();
