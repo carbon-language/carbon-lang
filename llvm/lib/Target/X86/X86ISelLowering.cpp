@@ -22655,13 +22655,14 @@ static SDValue LowerMULH(SDValue Op, const X86Subtarget &Subtarget,
   assert(VT == MVT::v16i8 &&
          "Pre-AVX2 support only supports v16i8 multiplication");
   MVT ExVT = MVT::v8i16;
-  unsigned ExSSE41 = (ISD::MULHU == Opcode ? X86ISD::VZEXT : X86ISD::VSEXT);
+  unsigned ExSSE41 = ISD::MULHU == Opcode ? ISD::ZERO_EXTEND_VECTOR_INREG
+                                          : ISD::SIGN_EXTEND_VECTOR_INREG;
 
   // Extract the lo parts and zero/sign extend to i16.
   SDValue ALo, BLo;
   if (Subtarget.hasSSE41()) {
-    ALo = getExtendInVec(ExSSE41, dl, ExVT, A, DAG);
-    BLo = getExtendInVec(ExSSE41, dl, ExVT, B, DAG);
+    ALo = DAG.getNode(ExSSE41, dl, ExVT, A);
+    BLo = DAG.getNode(ExSSE41, dl, ExVT, B);
   } else {
     const int ShufMask[] = {-1, 0, -1, 1, -1, 2, -1, 3,
                             -1, 4, -1, 5, -1, 6, -1, 7};
@@ -22680,8 +22681,8 @@ static SDValue LowerMULH(SDValue Op, const X86Subtarget &Subtarget,
                             -1, -1, -1, -1, -1, -1, -1, -1};
     AHi = DAG.getVectorShuffle(VT, dl, A, A, ShufMask);
     BHi = DAG.getVectorShuffle(VT, dl, B, B, ShufMask);
-    AHi = getExtendInVec(ExSSE41, dl, ExVT, AHi, DAG);
-    BHi = getExtendInVec(ExSSE41, dl, ExVT, BHi, DAG);
+    AHi = DAG.getNode(ExSSE41, dl, ExVT, AHi);
+    BHi = DAG.getNode(ExSSE41, dl, ExVT, BHi);
   } else {
     const int ShufMask[] = {-1, 8,  -1, 9,  -1, 10, -1, 11,
                             -1, 12, -1, 13, -1, 14, -1, 15};
