@@ -1,6 +1,6 @@
 ; RUN: llc -O2 -march=hexagon < %s | FileCheck %s
-; Test that we do not exceed #u5 in memops.
-; CHECK-NOT: memh(r2+#0) -= #32
+; Test that we do generate max #u5 in memops.
+; CHECK: memh(r{{[0-9]+}}+#0) -= #31
 
 @g0 = unnamed_addr global i16 -32, align 2
 
@@ -22,7 +22,7 @@ define i32 @f1() {
 b0:
   %v0 = load i16, i16* @g0, align 2, !tbaa !4
   %v1 = zext i16 %v0 to i32
-  %v2 = add nuw nsw i32 %v1, 65504
+  %v2 = add nuw nsw i32 %v1, 65505
   %v3 = trunc i32 %v2 to i16
   store i16 %v3, i16* @g0, align 2, !tbaa !4
   tail call fastcc void @f0()
