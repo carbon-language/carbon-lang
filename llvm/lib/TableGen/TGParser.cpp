@@ -1943,7 +1943,7 @@ Init *TGParser::ParseValue(Record *CurRec, RecTy *ItemType, IDParseMode Mode) {
                  Result->getAsString() + "'");
         return nullptr;
       }
-      Result = FieldInit::get(Result, FieldName)->Fold();
+      Result = FieldInit::get(Result, FieldName)->Fold(CurRec);
       Lex.Lex();  // eat field name
       break;
     }

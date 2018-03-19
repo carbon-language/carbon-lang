@@ -1684,13 +1684,19 @@ Init *FieldInit::getBit(unsigned Bit) const {
 Init *FieldInit::resolveReferences(Resolver &R) const {
   Init *NewRec = Rec->resolveReferences(R);
   if (NewRec != Rec)
-    return FieldInit::get(NewRec, FieldName)->Fold();
+    return FieldInit::get(NewRec, FieldName)->Fold(R.getCurrentRecord());
   return const_cast<FieldInit *>(this);
 }
 
-Init *FieldInit::Fold() const {
+Init *FieldInit::Fold(Record *CurRec) const {
   if (DefInit *DI = dyn_cast<DefInit>(Rec)) {
-    Init *FieldVal = DI->getDef()->getValue(FieldName)->getValue();
+    Record *Def = DI->getDef();
+    if (Def == CurRec)
+      PrintFatalError(CurRec->getLoc(),
+                      Twine("Attempting to access field '") +
+                      FieldName->getAsUnquotedString() + "' of '" +
+                      Rec->getAsString() + "' is a forbidden self-reference");
+    Init *FieldVal = Def->getValue(FieldName)->getValue();
     if (FieldVal->isComplete())
       return FieldVal;
   }
