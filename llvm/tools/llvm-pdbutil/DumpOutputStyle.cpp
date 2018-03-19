@@ -90,6 +90,12 @@ Error DumpOutputStyle::dump() {
     P.NewLine();
   }
 
+  if (opts::dump::DumpNamedStreams) {
+    if (auto EC = dumpNamedStreams())
+      return EC;
+    P.NewLine();
+  }
+
   if (opts::dump::DumpStringTable) {
     if (auto EC = dumpStringTable())
       return EC;
@@ -906,6 +912,29 @@ Error DumpOutputStyle::dumpStringTableFromObj() {
                        Str);
         }
       });
+  return Error::success();
+}
+
+Error DumpOutputStyle::dumpNamedStreams() {
+  printHeader(P, "Named Streams");
+  AutoIndent Indent(P, 2);
+
+  if (File.isObj()) {
+    P.formatLine("Dumping Named Streams is only supported for PDB files.");
+    return Error::success();
+  }
+  ExitOnError Err("Invalid PDB File: ");
+
+  auto &IS = Err(File.pdb().getPDBInfoStream());
+  const NamedStreamMap &NS = IS.getNamedStreams();
+  for (const auto &Entry : NS.entries()) {
+    P.printLine(Entry.getKey());
+    AutoIndent Indent2(P, 2);
+    P.formatLine("Index: {0}", Entry.getValue());
+    P.formatLine("Size in bytes: {0}",
+                 File.pdb().getStreamByteSize(Entry.getValue()));
+  }
+
   return Error::success();
 }
 
