@@ -788,7 +788,7 @@ public:
 
   // Fold - If possible, fold this to a simpler init.  Return this if not
   // possible to fold.
-  Init *Fold(Record *CurRec) const;
+  Init *Fold(Record *CurRec, bool IsFinal = false) const;
 
   Init *resolveReferences(Resolver &R) const override;
 
@@ -1497,6 +1497,9 @@ public:
 
   /// If there are any field references that refer to fields
   /// that have been filled in, we can propagate the values now.
+  ///
+  /// This is a final resolve: any error messages, e.g. due to undefined
+  /// !cast references, are generated now.
   void resolveReferences();
 
   /// Apply the resolver to the name of the record as well as to the
@@ -1786,6 +1789,7 @@ Init *QualifyName(Record &CurRec, MultiClass *CurMultiClass,
 /// Init::resolveReferences.
 class Resolver {
   Record *CurRec;
+  bool IsFinal = false;
 
 public:
   explicit Resolver(Record *CurRec) : CurRec(CurRec) {}
@@ -1801,6 +1805,13 @@ public:
   // result in a ? (UnsetInit). This behavior is used to represent instruction
   // encodings by keeping references to unset variables within a record.
   virtual bool keepUnsetBits() const { return false; }
+
+  // Whether this is the final resolve step before adding a record to the
+  // RecordKeeper. Error reporting during resolve and related constant folding
+  // should only happen when this is true.
+  bool isFinal() const { return IsFinal; }
+
+  void setFinal(bool Final) { IsFinal = Final; }
 };
 
 /// Resolve arbitrary mappings.
@@ -1861,7 +1872,10 @@ class ShadowResolver final : public Resolver {
   DenseSet<Init *> Shadowed;
 
 public:
-  explicit ShadowResolver(Resolver &R) : Resolver(R.getCurrentRecord()), R(R) {}
+  explicit ShadowResolver(Resolver &R)
+      : Resolver(R.getCurrentRecord()), R(R) {
+    setFinal(R.isFinal());
+  }
 
   void addShadow(Init *Key) { Shadowed.insert(Key); }
 

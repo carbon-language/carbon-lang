@@ -194,7 +194,7 @@ void RecordRecTy::Profile(FoldingSetNodeID &ID) const {
 
 std::string RecordRecTy::getAsString() const {
   if (NumClasses == 1)
-    return getClasses()[0]->getName();
+    return getClasses()[0]->getNameInitAsString();
 
   std::string Str = "{";
   bool First = true;
@@ -202,7 +202,7 @@ std::string RecordRecTy::getAsString() const {
     if (!First)
       Str += ", ";
     First = false;
-    Str += R->getName();
+    Str += R->getNameInitAsString();
   }
   Str += "}";
   return Str;
@@ -700,7 +700,7 @@ void UnOpInit::Profile(FoldingSetNodeID &ID) const {
   ProfileUnOpInit(ID, getOpcode(), getOperand(), getType());
 }
 
-Init *UnOpInit::Fold(Record *CurRec) const {
+Init *UnOpInit::Fold(Record *CurRec, bool IsFinal) const {
   switch (getOpcode()) {
   case CAST:
     if (isa<StringRecTy>(getType())) {
@@ -715,12 +715,34 @@ Init *UnOpInit::Fold(Record *CurRec) const {
     } else if (isa<RecordRecTy>(getType())) {
       if (StringInit *Name = dyn_cast<StringInit>(LHS)) {
         assert(CurRec && "NULL pointer");
-        if (Record *D = (CurRec->getRecords()).getDef(Name->getValue()))
-          return DefInit::get(D);
+        Record *D;
 
-        PrintFatalError(CurRec->getLoc(),
-                        Twine("Undefined reference to record: '") +
-                        Name->getValue() + "'\n");
+        // Self-references are allowed, but their resolution is delayed until
+        // the final resolve to ensure that we get the correct type for them.
+        if (Name == CurRec->getNameInit()) {
+          if (!IsFinal)
+            break;
+          D = CurRec;
+        } else {
+          D = CurRec->getRecords().getDef(Name->getValue());
+          if (!D) {
+            if (IsFinal)
+              PrintFatalError(CurRec->getLoc(),
+                              Twine("Undefined reference to record: '") +
+                              Name->getValue() + "'\n");
+            break;
+          }
+        }
+
+        DefInit *DI = DefInit::get(D);
+        if (!DI->getType()->typeIsA(getType())) {
+          PrintFatalError(CurRec->getLoc(),
+                          Twine("Expected type '") +
+                          getType()->getAsString() + "', got '" +
+                          DI->getType()->getAsString() + "' in: " +
+                          getAsString() + "\n");
+        }
+        return DI;
       }
     }
 
@@ -762,9 +784,9 @@ Init *UnOpInit::Fold(Record *CurRec) const {
 Init *UnOpInit::resolveReferences(Resolver &R) const {
   Init *lhs = LHS->resolveReferences(R);
 
-  if (LHS != lhs)
+  if (LHS != lhs || (R.isFinal() && getOpcode() == CAST))
     return (UnOpInit::get(getOpcode(), lhs, getType()))
-        ->Fold(R.getCurrentRecord());
+        ->Fold(R.getCurrentRecord(), R.isFinal());
   return const_cast<UnOpInit *>(this);
 }
 
@@ -1904,6 +1926,7 @@ void Record::resolveReferences(Resolver &R, const RecordVal *SkipVal) {
 
 void Record::resolveReferences() {
   RecordResolver R(*this);
+  R.setFinal(true);
   resolveReferences(R);
 }
 

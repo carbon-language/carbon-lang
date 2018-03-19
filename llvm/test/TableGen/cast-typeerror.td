@@ -10,5 +10,5 @@ class C<string name> {
   B b = !cast<B>(name);
 }
 
-// CHECK: error: Invalid value of type 'A' is found when setting 'b' of type 'B'
+// CHECK: error: Expected type 'B', got 'A' in: !cast<B>("A0")
 def Test : C<"A0">;

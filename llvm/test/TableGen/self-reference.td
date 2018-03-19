@@ -16,6 +16,14 @@
 // CHECK:   dag q = (ops C0);
 // CHECK: }
 
+// CHECK: def D0 {
+// CHECK:   D d = D0;
+// CHECK: }
+
+// CHECK: def E0 {
+// CHECK:   E e = E0;
+// CHECK: }
+
 def ops;
 
 class A<dag d> {
@@ -42,3 +50,26 @@ class C<string self> {
 }
 
 def C0 : C<"C0">;
+
+// Explore some unused corner cases.
+//
+// A self-reference within a class may seem icky, but it unavoidably falls out
+// orthogonally of having forward class declarations and late resolve of self
+// references.
+class D<string self> {
+  D d = !cast<D>(self);
+}
+
+def D0 : D<"D0">;
+
+class E<E x> {
+  E e = x;
+}
+
+// Putting the !cast directly in the def should work as well: we shouldn't
+// depend on implementation details of when exactly the record is looked up.
+//
+// Note the difference between !cast<E>("E0") and plain E0: the latter wouldn't
+// work here because E0 does not yet have E as a superclass while the template
+// arguments are being parsed.
+def E0 : E<!cast<E>("E0")>;
