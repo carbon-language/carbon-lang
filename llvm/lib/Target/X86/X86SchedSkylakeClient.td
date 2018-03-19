@@ -1941,15 +1941,11 @@ def: InstRW<[SKLWriteResGroup74], (instregex "ADCX(32|64)rm")>;
 def: InstRW<[SKLWriteResGroup74], (instregex "ADOX(32|64)rm")>;
 def: InstRW<[SKLWriteResGroup74], (instregex "BT(16|32|64)mi8")>;
 def: InstRW<[SKLWriteResGroup74], (instregex "CMOV(AE|B|E|G|GE|L|LE|NE|NO|NP|NS|O|P|S)(16|32|64)rm")>;
-def: InstRW<[SKLWriteResGroup74], (instregex "RORX32mi")>;
-def: InstRW<[SKLWriteResGroup74], (instregex "RORX64mi")>;
-def: InstRW<[SKLWriteResGroup74], (instregex "SARX32rm")>;
-def: InstRW<[SKLWriteResGroup74], (instregex "SARX64rm")>;
+def: InstRW<[SKLWriteResGroup74], (instregex "RORX(32|64)mi")>;
+def: InstRW<[SKLWriteResGroup74], (instregex "SARX(32|64)rm")>;
 def: InstRW<[SKLWriteResGroup74], (instregex "SBB(8|16|32|64)rm")>;
-def: InstRW<[SKLWriteResGroup74], (instregex "SHLX32rm")>;
-def: InstRW<[SKLWriteResGroup74], (instregex "SHLX64rm")>;
-def: InstRW<[SKLWriteResGroup74], (instregex "SHRX32rm")>;
-def: InstRW<[SKLWriteResGroup74], (instregex "SHRX64rm")>;
+def: InstRW<[SKLWriteResGroup74], (instregex "SHLX(32|64)rm")>;
+def: InstRW<[SKLWriteResGroup74], (instregex "SHRX(32|64)rm")>;
 
 def SKLWriteResGroup75 : SchedWriteRes<[SKLPort23,SKLPort15]> {
   let Latency = 6;

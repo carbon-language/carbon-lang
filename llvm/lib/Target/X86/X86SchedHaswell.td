@@ -1608,14 +1608,10 @@ def HWWriteResGroup15 : SchedWriteRes<[HWPort23,HWPort06]> {
   let ResourceCycles = [1,1];
 }
 def: InstRW<[HWWriteResGroup15], (instregex "BT(16|32|64)mi8")>;
-def: InstRW<[HWWriteResGroup15], (instregex "RORX32mi")>;
-def: InstRW<[HWWriteResGroup15], (instregex "RORX64mi")>;
-def: InstRW<[HWWriteResGroup15], (instregex "SARX32rm")>;
-def: InstRW<[HWWriteResGroup15], (instregex "SARX64rm")>;
-def: InstRW<[HWWriteResGroup15], (instregex "SHLX32rm")>;
-def: InstRW<[HWWriteResGroup15], (instregex "SHLX64rm")>;
-def: InstRW<[HWWriteResGroup15], (instregex "SHRX32rm")>;
-def: InstRW<[HWWriteResGroup15], (instregex "SHRX64rm")>;
+def: InstRW<[HWWriteResGroup15], (instregex "RORX(32|64)mi")>;
+def: InstRW<[HWWriteResGroup15], (instregex "SARX(32|64)rm")>;
+def: InstRW<[HWWriteResGroup15], (instregex "SHLX(32|64)rm")>;
+def: InstRW<[HWWriteResGroup15], (instregex "SHRX(32|64)rm")>;
 
 def HWWriteResGroup16 : SchedWriteRes<[HWPort23,HWPort15]> {
   let Latency = 6;
