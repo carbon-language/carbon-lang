@@ -1887,7 +1887,7 @@ void Record::resolveReferences(Resolver &R, const RecordVal *SkipVal) {
         PrintFatalError(getLoc(), Twine("Invalid value ") + Type +
                                       "is found when setting '" +
                                       Value.getNameInitAsString() +
-                                      " of type '" +
+                                      "' of type '" +
                                       Value.getType()->getAsString() +
                                       "' after resolving references: " +
                                       VR->getAsUnquotedString() + "\n");
