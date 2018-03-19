@@ -1961,7 +1961,14 @@ Init *TGParser::ParseValue(Record *CurRec, RecTy *ItemType, IDParseMode Mode) {
       }
 
       if (LHS->getType() != StringRecTy::get()) {
-        LHS = UnOpInit::get(UnOpInit::CAST, LHS, StringRecTy::get());
+        LHS = dyn_cast<TypedInit>(
+            UnOpInit::get(UnOpInit::CAST, LHS, StringRecTy::get())
+                ->Fold(CurRec));
+        if (!LHS) {
+          Error(PasteLoc, Twine("can't cast '") + LHS->getAsString() +
+                              "' to string");
+          return nullptr;
+        }
       }
 
       TypedInit *RHS = nullptr;
@@ -1988,7 +1995,14 @@ Init *TGParser::ParseValue(Record *CurRec, RecTy *ItemType, IDParseMode Mode) {
         }
 
         if (RHS->getType() != StringRecTy::get()) {
-          RHS = UnOpInit::get(UnOpInit::CAST, RHS, StringRecTy::get());
+          RHS = dyn_cast<TypedInit>(
+              UnOpInit::get(UnOpInit::CAST, RHS, StringRecTy::get())
+                  ->Fold(CurRec));
+          if (!RHS) {
+            Error(PasteLoc, Twine("can't cast '") + RHS->getAsString() +
+                                "' to string");
+            return nullptr;
+          }
         }
 
         break;

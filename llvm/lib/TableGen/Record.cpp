@@ -765,7 +765,7 @@ Init *UnOpInit::resolveReferences(Resolver &R) const {
   if (LHS != lhs)
     return (UnOpInit::get(getOpcode(), lhs, getType()))
         ->Fold(R.getCurrentRecord());
-  return Fold(R.getCurrentRecord());
+  return const_cast<UnOpInit *>(this);
 }
 
 std::string UnOpInit::getAsString() const {
@@ -948,7 +948,7 @@ Init *BinOpInit::resolveReferences(Resolver &R) const {
   if (LHS != lhs || RHS != rhs)
     return (BinOpInit::get(getOpcode(), lhs, rhs, getType()))
         ->Fold(R.getCurrentRecord());
-  return Fold(R.getCurrentRecord());
+  return const_cast<BinOpInit *>(this);
 }
 
 std::string BinOpInit::getAsString() const {
@@ -1173,7 +1173,7 @@ Init *TernOpInit::resolveReferences(Resolver &R) const {
   if (LHS != lhs || MHS != mhs || RHS != rhs)
     return (TernOpInit::get(getOpcode(), lhs, mhs, rhs, getType()))
         ->Fold(R.getCurrentRecord());
-  return Fold(R.getCurrentRecord());
+  return const_cast<TernOpInit *>(this);
 }
 
 std::string TernOpInit::getAsString() const {
