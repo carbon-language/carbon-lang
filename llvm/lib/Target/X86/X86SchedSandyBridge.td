@@ -1010,8 +1010,6 @@ def SBWriteResGroup25 : SchedWriteRes<[SBPort015]> {
   let ResourceCycles = [3];
 }
 def: InstRW<[SBWriteResGroup25], (instregex "LEAVE64")>;
-def: InstRW<[SBWriteResGroup25], (instregex "OUT32rr")>;
-def: InstRW<[SBWriteResGroup25], (instregex "OUT8rr")>;
 def: InstRW<[SBWriteResGroup25], (instregex "XADD(8|16|32|64)rr")>;
 
 def SBWriteResGroup25_2 : SchedWriteRes<[SBPort5,SBPort05]> {
@@ -1091,8 +1089,6 @@ def SBWriteResGroup29_2 : SchedWriteRes<[SBPort5,SBPort015]> {
   let NumMicroOps = 4;
   let ResourceCycles = [1,3];
 }
-def: InstRW<[SBWriteResGroup29_2], (instregex "OUT32ir")>;
-def: InstRW<[SBWriteResGroup29_2], (instregex "OUT8ir")>;
 def: InstRW<[SBWriteResGroup29_2], (instregex "PAUSE")>;
 
 def SBWriteResGroup29_3 : SchedWriteRes<[SBPort05,SBPort015]> {

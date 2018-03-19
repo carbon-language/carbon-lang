@@ -9226,12 +9226,12 @@ define void @test_out() optsize {
 ; GENERIC-LABEL: test_out:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    #APP
-; GENERIC-NEXT:    outb %al, $7 # sched: [4:1.33]
+; GENERIC-NEXT:    outb %al, $7 # sched: [100:0.33]
 ; GENERIC-NEXT:    outw %ax, $7 # sched: [100:0.33]
-; GENERIC-NEXT:    outl %eax, $7 # sched: [4:1.33]
-; GENERIC-NEXT:    outb %al, %dx # sched: [3:1.00]
+; GENERIC-NEXT:    outl %eax, $7 # sched: [100:0.33]
+; GENERIC-NEXT:    outb %al, %dx # sched: [100:0.33]
 ; GENERIC-NEXT:    outw %ax, %dx # sched: [100:0.33]
-; GENERIC-NEXT:    outl %eax, %dx # sched: [3:1.00]
+; GENERIC-NEXT:    outl %eax, %dx # sched: [100:0.33]
 ; GENERIC-NEXT:    #NO_APP
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
@@ -9262,12 +9262,12 @@ define void @test_out() optsize {
 ; SANDY-LABEL: test_out:
 ; SANDY:       # %bb.0:
 ; SANDY-NEXT:    #APP
-; SANDY-NEXT:    outb %al, $7 # sched: [4:1.33]
+; SANDY-NEXT:    outb %al, $7 # sched: [100:0.33]
 ; SANDY-NEXT:    outw %ax, $7 # sched: [100:0.33]
-; SANDY-NEXT:    outl %eax, $7 # sched: [4:1.33]
-; SANDY-NEXT:    outb %al, %dx # sched: [3:1.00]
+; SANDY-NEXT:    outl %eax, $7 # sched: [100:0.33]
+; SANDY-NEXT:    outb %al, %dx # sched: [100:0.33]
 ; SANDY-NEXT:    outw %ax, %dx # sched: [100:0.33]
-; SANDY-NEXT:    outl %eax, %dx # sched: [3:1.00]
+; SANDY-NEXT:    outl %eax, %dx # sched: [100:0.33]
 ; SANDY-NEXT:    #NO_APP
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
