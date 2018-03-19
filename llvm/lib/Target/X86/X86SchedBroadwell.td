@@ -599,6 +599,7 @@ def BWWriteResGroup6 : SchedWriteRes<[BWPort06]> {
   let ResourceCycles = [1];
 }
 def: InstRW<[BWWriteResGroup6], (instregex "ADC(16|32|64)ri")>;
+def: InstRW<[BWWriteResGroup6], (instregex "ADC(16|32|64)i")>;
 def: InstRW<[BWWriteResGroup6], (instregex "ADC(8|16|32|64)rr")>;
 def: InstRW<[BWWriteResGroup6], (instregex "ADCX(32|64)rr")>;
 def: InstRW<[BWWriteResGroup6], (instregex "ADOX(32|64)rr")>;
@@ -622,6 +623,7 @@ def: InstRW<[BWWriteResGroup6], (instregex "SAR(8|16|32|64)r1")>;
 def: InstRW<[BWWriteResGroup6], (instregex "SAR(8|16|32|64)ri")>;
 def: InstRW<[BWWriteResGroup6], (instregex "SARX(32|64)rr")>;
 def: InstRW<[BWWriteResGroup6], (instregex "SBB(16|32|64)ri")>;
+def: InstRW<[BWWriteResGroup6], (instregex "SBB(16|32|64)i")>;
 def: InstRW<[BWWriteResGroup6], (instregex "SBB(8|16|32|64)rr")>;
 def: InstRW<[BWWriteResGroup6], (instregex "SET(AE|B|E|G|GE|L|LE|NE|NO|NP|NS|O|P|S)r")>;
 def: InstRW<[BWWriteResGroup6], (instregex "SHL(8|16|32|64)r1")>;
@@ -853,16 +855,16 @@ def BWWriteResGroup9 : SchedWriteRes<[BWPort0156]> {
 }
 def: InstRW<[BWWriteResGroup9], (instregex "ADD(8|16|32|64)ri")>;
 def: InstRW<[BWWriteResGroup9], (instregex "ADD(8|16|32|64)rr")>;
-def: InstRW<[BWWriteResGroup9], (instregex "ADD8i8")>;
+def: InstRW<[BWWriteResGroup9], (instregex "ADD(8|16|32|64)i")>;
 def: InstRW<[BWWriteResGroup9], (instregex "AND(8|16|32|64)ri")>;
 def: InstRW<[BWWriteResGroup9], (instregex "AND(8|16|32|64)rr")>;
-def: InstRW<[BWWriteResGroup9], (instregex "AND8i8")>;
+def: InstRW<[BWWriteResGroup9], (instregex "AND(8|16|32|64)i")>;
 def: InstRW<[BWWriteResGroup9], (instregex "CBW")>;
 def: InstRW<[BWWriteResGroup9], (instregex "CLC")>;
 def: InstRW<[BWWriteResGroup9], (instregex "CMC")>;
 def: InstRW<[BWWriteResGroup9], (instregex "CMP(8|16|32|64)ri")>;
 def: InstRW<[BWWriteResGroup9], (instregex "CMP(8|16|32|64)rr")>;
-def: InstRW<[BWWriteResGroup9], (instregex "CMP8i8")>;
+def: InstRW<[BWWriteResGroup9], (instregex "CMP(8|16|32|64)i")>;
 def: InstRW<[BWWriteResGroup9], (instrs CWDE)>;
 def: InstRW<[BWWriteResGroup9], (instregex "DEC(8|16|32|64)r")>;
 def: InstRW<[BWWriteResGroup9], (instregex "INC(8|16|32|64)r")>;
@@ -879,7 +881,7 @@ def: InstRW<[BWWriteResGroup9], (instregex "NOOP")>;
 def: InstRW<[BWWriteResGroup9], (instregex "NOT(8|16|32|64)r")>;
 def: InstRW<[BWWriteResGroup9], (instregex "OR(8|16|32|64)ri")>;
 def: InstRW<[BWWriteResGroup9], (instregex "OR(8|16|32|64)rr")>;
-def: InstRW<[BWWriteResGroup9], (instregex "OR8i8")>;
+def: InstRW<[BWWriteResGroup9], (instregex "OR(8|16|32|64)i")>;
 def: InstRW<[BWWriteResGroup9], (instregex "SAHF")>;
 def: InstRW<[BWWriteResGroup9], (instregex "SGDT64m")>;
 def: InstRW<[BWWriteResGroup9], (instregex "SIDT64m")>;
@@ -889,7 +891,7 @@ def: InstRW<[BWWriteResGroup9], (instregex "STC")>;
 def: InstRW<[BWWriteResGroup9], (instregex "STRm")>;
 def: InstRW<[BWWriteResGroup9], (instregex "SUB(8|16|32|64)ri")>;
 def: InstRW<[BWWriteResGroup9], (instregex "SUB(8|16|32|64)rr")>;
-def: InstRW<[BWWriteResGroup9], (instregex "SUB8i8")>;
+def: InstRW<[BWWriteResGroup9], (instregex "SUB(8|16|32|64)i")>;
 def: InstRW<[BWWriteResGroup9], (instregex "SYSCALL")>;
 def: InstRW<[BWWriteResGroup9], (instregex "TEST(8|16|32|64)rr")>;
 def: InstRW<[BWWriteResGroup9], (instregex "TEST8i8")>;
@@ -897,7 +899,7 @@ def: InstRW<[BWWriteResGroup9], (instregex "TEST8ri")>;
 def: InstRW<[BWWriteResGroup9], (instregex "XCHG(16|32|64)rr")>;
 def: InstRW<[BWWriteResGroup9], (instregex "XOR(8|16|32|64)ri")>;
 def: InstRW<[BWWriteResGroup9], (instregex "XOR(8|16|32|64)rr")>;
-def: InstRW<[BWWriteResGroup9], (instregex "XOR8i8")>;
+def: InstRW<[BWWriteResGroup9], (instregex "XOR(8|16|32|64)i")>;
 
 def BWWriteResGroup10 : SchedWriteRes<[BWPort4,BWPort237]> {
   let Latency = 1;

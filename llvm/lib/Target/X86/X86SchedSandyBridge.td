@@ -654,15 +654,15 @@ def SBWriteResGroup6 : SchedWriteRes<[SBPort015]> {
 }
 def: InstRW<[SBWriteResGroup6], (instregex "ADD(8|16|32|64)ri")>;
 def: InstRW<[SBWriteResGroup6], (instregex "ADD(8|16|32|64)rr")>;
-def: InstRW<[SBWriteResGroup6], (instregex "ADD8i8")>;
+def: InstRW<[SBWriteResGroup6], (instregex "ADD(8|16|32|64)i")>;
 def: InstRW<[SBWriteResGroup6], (instregex "AND(8|16|32|64)ri")>;
 def: InstRW<[SBWriteResGroup6], (instregex "AND(8|16|32|64)rr")>;
-def: InstRW<[SBWriteResGroup6], (instregex "AND8i8")>;
+def: InstRW<[SBWriteResGroup6], (instregex "AND(8|16|32|64)i")>;
 def: InstRW<[SBWriteResGroup6], (instregex "CBW")>;
 def: InstRW<[SBWriteResGroup6], (instregex "CMC")>;
 def: InstRW<[SBWriteResGroup6], (instregex "CMP(8|16|32|64)ri")>;
 def: InstRW<[SBWriteResGroup6], (instregex "CMP(8|16|32|64)rr")>;
-def: InstRW<[SBWriteResGroup6], (instregex "CMP8i8")>;
+def: InstRW<[SBWriteResGroup6], (instregex "CMP(8|16|32|64)i")>;
 def: InstRW<[SBWriteResGroup6], (instrs CWDE)>;
 def: InstRW<[SBWriteResGroup6], (instregex "DEC(8|16|32|64)r")>;
 def: InstRW<[SBWriteResGroup6], (instregex "INC(8|16|32|64)r")>;
@@ -682,7 +682,7 @@ def: InstRW<[SBWriteResGroup6], (instregex "NEG(8|16|32|64)r")>;
 def: InstRW<[SBWriteResGroup6], (instregex "NOT(8|16|32|64)r")>;
 def: InstRW<[SBWriteResGroup6], (instregex "OR(8|16|32|64)ri")>;
 def: InstRW<[SBWriteResGroup6], (instregex "OR(8|16|32|64)rr")>;
-def: InstRW<[SBWriteResGroup6], (instregex "OR8i8")>;
+def: InstRW<[SBWriteResGroup6], (instregex "OR(8|16|32|64)i")>;
 def: InstRW<[SBWriteResGroup6], (instregex "PANDNrr")>;
 def: InstRW<[SBWriteResGroup6], (instregex "PANDrr")>;
 def: InstRW<[SBWriteResGroup6], (instregex "PORrr")>;
@@ -690,7 +690,7 @@ def: InstRW<[SBWriteResGroup6], (instregex "PXORrr")>;
 def: InstRW<[SBWriteResGroup6], (instregex "STC")>;
 def: InstRW<[SBWriteResGroup6], (instregex "SUB(8|16|32|64)ri")>;
 def: InstRW<[SBWriteResGroup6], (instregex "SUB(8|16|32|64)rr")>;
-def: InstRW<[SBWriteResGroup6], (instregex "SUB8i8")>;
+def: InstRW<[SBWriteResGroup6], (instregex "SUB(8|16|32|64)i")>;
 def: InstRW<[SBWriteResGroup6], (instregex "TEST(8|16|32|64)rr")>;
 def: InstRW<[SBWriteResGroup6], (instregex "TEST8i8")>;
 def: InstRW<[SBWriteResGroup6], (instregex "TEST8ri")>;
@@ -702,7 +702,7 @@ def: InstRW<[SBWriteResGroup6], (instregex "VPORrr")>;
 def: InstRW<[SBWriteResGroup6], (instregex "VPXORrr")>;
 def: InstRW<[SBWriteResGroup6], (instregex "XOR(8|16|32|64)ri")>;
 def: InstRW<[SBWriteResGroup6], (instregex "XOR(8|16|32|64)rr")>;
-def: InstRW<[SBWriteResGroup6], (instregex "XOR8i8")>;
+def: InstRW<[SBWriteResGroup6], (instregex "XOR(8|16|32|64)i")>;
 
 def SBWriteResGroup7 : SchedWriteRes<[SBPort0]> {
   let Latency = 2;
@@ -845,9 +845,11 @@ def SBWriteResGroup19 : SchedWriteRes<[SBPort05,SBPort015]> {
 }
 def: InstRW<[SBWriteResGroup19], (instregex "ADC(8|16|32|64)ri")>;
 def: InstRW<[SBWriteResGroup19], (instregex "ADC(8|16|32|64)rr")>;
+def: InstRW<[SBWriteResGroup19], (instregex "ADC(8|16|32|64)i")>;
 def: InstRW<[SBWriteResGroup19], (instregex "CMOV(AE|B|E|G|GE|L|LE|NE|NO|NP|NS|O|P|S)(16|32|64)rr")>;
 def: InstRW<[SBWriteResGroup19], (instregex "SBB(8|16|32|64)ri")>;
 def: InstRW<[SBWriteResGroup19], (instregex "SBB(8|16|32|64)rr")>;
+def: InstRW<[SBWriteResGroup19], (instregex "SBB(8|16|32|64)i")>;
 def: InstRW<[SBWriteResGroup19], (instregex "SHLD(16|32|64)rri8")>;
 def: InstRW<[SBWriteResGroup19], (instregex "SHRD(16|32|64)rri8")>;
 
@@ -1050,11 +1052,9 @@ def SBWriteResGroup25 : SchedWriteRes<[SBPort015]> {
   let NumMicroOps = 3;
   let ResourceCycles = [3];
 }
-def: InstRW<[SBWriteResGroup25], (instregex "ADC8i8")>;
 def: InstRW<[SBWriteResGroup25], (instregex "LEAVE64")>;
 def: InstRW<[SBWriteResGroup25], (instregex "OUT32rr")>;
 def: InstRW<[SBWriteResGroup25], (instregex "OUT8rr")>;
-def: InstRW<[SBWriteResGroup25], (instregex "SBB8i8")>;
 def: InstRW<[SBWriteResGroup25], (instregex "XADD(16|32|64)rr")>;
 def: InstRW<[SBWriteResGroup25], (instregex "XADD8rr")>;
 
