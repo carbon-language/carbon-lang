@@ -1055,8 +1055,7 @@ def SBWriteResGroup25 : SchedWriteRes<[SBPort015]> {
 def: InstRW<[SBWriteResGroup25], (instregex "LEAVE64")>;
 def: InstRW<[SBWriteResGroup25], (instregex "OUT32rr")>;
 def: InstRW<[SBWriteResGroup25], (instregex "OUT8rr")>;
-def: InstRW<[SBWriteResGroup25], (instregex "XADD(16|32|64)rr")>;
-def: InstRW<[SBWriteResGroup25], (instregex "XADD8rr")>;
+def: InstRW<[SBWriteResGroup25], (instregex "XADD(8|16|32|64)rr")>;
 
 def SBWriteResGroup25_2 : SchedWriteRes<[SBPort5,SBPort05]> {
   let Latency = 3;

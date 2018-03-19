@@ -2105,8 +2105,7 @@ def SKXWriteResGroup36 : SchedWriteRes<[SKXPort0156]> {
   let NumMicroOps = 3;
   let ResourceCycles = [3];
 }
-def: InstRW<[SKXWriteResGroup36], (instregex "XADD(16|32|64)rr")>;
-def: InstRW<[SKXWriteResGroup36], (instregex "XADD8rr")>;
+def: InstRW<[SKXWriteResGroup36], (instregex "XADD(8|16|32|64)rr")>;
 def: InstRW<[SKXWriteResGroup36], (instregex "XCHG8rr")>;
 
 def SKXWriteResGroup37 : SchedWriteRes<[SKXPort0,SKXPort5]> {
