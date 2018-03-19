@@ -13956,6 +13956,20 @@ ARMTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const 
   SDValue Chain = Op.getOperand(0);
   SDValue Size  = Op.getOperand(1);
 
+  if (DAG.getMachineFunction().getFunction().hasFnAttribute(
+          "no-stack-arg-probe")) {
+    unsigned Align = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue();
+    SDValue SP = DAG.getCopyFromReg(Chain, DL, ARM::SP, MVT::i32);
+    Chain = SP.getValue(1);
+    SP = DAG.getNode(ISD::SUB, DL, MVT::i32, SP, Size);
+    if (Align)
+      SP = DAG.getNode(ISD::AND, DL, MVT::i32, SP.getValue(0),
+                       DAG.getConstant(-(uint64_t)Align, DL, MVT::i32));
+    Chain = DAG.getCopyToReg(Chain, DL, ARM::SP, SP);
+    SDValue Ops[2] = { SP, Chain };
+    return DAG.getMergeValues(Ops, DL);
+  }
+
   SDValue Words = DAG.getNode(ISD::SRL, DL, MVT::i32, Size,
                               DAG.getConstant(2, DL, MVT::i32));
 
