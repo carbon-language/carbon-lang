@@ -5640,7 +5640,7 @@ define void @test_imul_16(i16 %a0, i16* %a1) optsize {
 ; ATOM-LABEL: test_imul_16:
 ; ATOM:       # %bb.0:
 ; ATOM-NEXT:    #APP
-; ATOM-NEXT:    imulw %di # sched: [6:3.00]
+; ATOM-NEXT:    imulw %di # sched: [7:3.50]
 ; ATOM-NEXT:    imulw (%rsi) # sched: [8:4.00]
 ; ATOM-NEXT:    imulw %di, %di # sched: [6:3.00]
 ; ATOM-NEXT:    imulw (%rsi), %di # sched: [7:3.50]
@@ -5803,7 +5803,7 @@ define void @test_imul_32(i32 %a0, i32* %a1) optsize {
 ; ATOM-LABEL: test_imul_32:
 ; ATOM:       # %bb.0:
 ; ATOM-NEXT:    #APP
-; ATOM-NEXT:    imull %edi # sched: [5:5.00]
+; ATOM-NEXT:    imull %edi # sched: [6:3.00]
 ; ATOM-NEXT:    imull (%rsi) # sched: [7:3.50]
 ; ATOM-NEXT:    imull %edi, %edi # sched: [5:5.00]
 ; ATOM-NEXT:    imull (%rsi), %edi # sched: [5:5.00]
