@@ -742,10 +742,6 @@ public:
   virtual unsigned getNumOperands() const = 0;
   virtual Init *getOperand(unsigned i) const = 0;
 
-  // Fold - If possible, fold this to a simpler init.  Return this if not
-  // possible to fold.
-  virtual Init *Fold(Record *CurRec) const = 0;
-
   Init *getBit(unsigned Bit) const override;
 };
 
@@ -792,7 +788,7 @@ public:
 
   // Fold - If possible, fold this to a simpler init.  Return this if not
   // possible to fold.
-  Init *Fold(Record *CurRec) const override;
+  Init *Fold(Record *CurRec) const;
 
   Init *resolveReferences(Resolver &R) const override;
 
@@ -847,7 +843,7 @@ public:
 
   // Fold - If possible, fold this to a simpler init.  Return this if not
   // possible to fold.
-  Init *Fold(Record *CurRec) const override;
+  Init *Fold(Record *CurRec) const;
 
   Init *resolveReferences(Resolver &R) const override;
 
@@ -905,7 +901,7 @@ public:
 
   // Fold - If possible, fold this to a simpler init.  Return this if not
   // possible to fold.
-  Init *Fold(Record *CurRec) const override;
+  Init *Fold(Record *CurRec) const;
 
   bool isComplete() const override {
     return LHS->isComplete() && MHS->isComplete() && RHS->isComplete();
