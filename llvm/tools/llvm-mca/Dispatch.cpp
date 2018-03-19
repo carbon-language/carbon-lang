@@ -385,7 +385,7 @@ unsigned DispatchUnit::dispatch(unsigned IID, Instruction *NewInst,
   NewInst->setRCUTokenID(RCUTokenID);
   notifyInstructionDispatched(IID);
 
-  SC->scheduleInstruction(IID, NewInst);
+  SC->scheduleInstruction(IID, *NewInst);
   return RCUTokenID;
 }
 
