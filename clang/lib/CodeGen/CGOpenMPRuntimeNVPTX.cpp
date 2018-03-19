@@ -1419,8 +1419,8 @@ void CGOpenMPRuntimeNVPTX::emitGenericParallelCall(
   auto *ThreadID = getThreadID(CGF, Loc);
   llvm::Value *Args[] = {RTLoc, ThreadID};
 
-  auto &&SeqGen = [this, Fn, CapturedVars, Args, Loc](CodeGenFunction &CGF,
-                                                      PrePostActionTy &) {
+  auto &&SeqGen = [this, Fn, CapturedVars, &Args, Loc](CodeGenFunction &CGF,
+                                                       PrePostActionTy &) {
     auto &&CodeGen = [this, Fn, CapturedVars, Loc](CodeGenFunction &CGF,
                                                    PrePostActionTy &Action) {
       Action.Enter(CGF);
