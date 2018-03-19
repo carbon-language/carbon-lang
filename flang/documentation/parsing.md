@@ -79,6 +79,8 @@ language that implements a reasonable facsimile of the C language
 preprocessor that is fully aware of Fortran's source forms, line
 continuation mechanisms, case insensitivity, &c.
 
+The preprocessor is always run.  There's no good reason not to.
+
 The content of the cooked character stream is available and is useful
 for debugging, being as it is a value being forwarded from the first major
 pass to the second.
@@ -86,7 +88,8 @@ pass to the second.
 Source Provenance
 -----------------
 The prescanner constructs a chronicle of every file that
-is read by the parser, viz. the original source file and all that it
+is read by the parser, viz. the original source file and all
+others that it
 directly or indirectly includes.  One copy of the content of each of
 these files is mapped or read into the address space of the parser.
 Memory mapping is used initially, but files with DOS line breaks or
@@ -116,28 +119,27 @@ Message texts, and snprintf-like formatting strings for constructing
 messages, are instantiated in the various components of the parser
 with C++ user defined character literals tagged with `_en_US`
 (signifying the dialect of English used in the United States) so that
-they may be easily identified, localized, and mapped.
+they may be easily identified for localization.
 As described above, messages are associated with source code positions
 by means of provenance values.
 
 The Parse Tree
 --------------
-Each of the many numbered requirement productions in the standard Fortran
+Each of the ca. 450 numbered requirement productions in the standard Fortran
 language grammar, as well as the productions implied by legacy extensions
 and preserved obsolescent features, maps to a distinct class in the
 parse tree so as to maximize the efficacy of static type checking
 by the C++ compiler.
 
-A transcription of the Fortran grammar appears, with production requirement
-numbers, in the commentary before these class definitions, so that one
+A transcription of the Fortran grammar appears with production requirement
+numbers in the commentary before these class definitions, so that one
 may easily refer to the standard (or to the parse tree definitions while
 reading that document).
 
-There are three paradigms that collectively implement most of the
-parse tree classes:
+Three paradigms collectively implement most of the parse tree classes:
 * wrappers, in which a single data member `v` has been encapsulated
   in a new type
-* tuples, in which several values of arbitrary type have been
+* tuples, in which several values of arbitrary types have been
   encapsulated in a single data member `t` whose type is an instance
   of `std::tuple<>`
 * discriminated unions, in which one value whose type is a dynamic selection
@@ -145,9 +147,10 @@ parse tree classes:
   is an instance of `std::variant<>`
 
 The use of these patterns is a design convenience, and exceptions to them
-are common where it makes better sense to do so.
+are common where it makes better sense to write custom definitions.
 
-Parse tree entities should be viewed as values, not objects.
+Parse tree entities should be viewed as values, not objects, and their
+addresses should not be abused for purposes of identification.
 They are assembled with C++ move semantics during parse tree construction.
 Their default and copy constructors are deliberately deleted in their
 declarations.
@@ -190,4 +193,5 @@ This formatter is not really a classical "pretty printer", but is
 more of a data structure dump whose output is suitable for compilation
 by another compiler.
 It can also be useful for testing the parser, as a reparse of an
-unparsed parse tree should be identical to the original.
+unparsed parse tree should be an identity function apart from
+source provenance.
