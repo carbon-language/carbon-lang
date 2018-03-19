@@ -1094,7 +1094,8 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   Value *getShadowPtrForArgument(Value *A, IRBuilder<> &IRB,
                                  int ArgOffset) {
     Value *Base = IRB.CreatePointerCast(MS.ParamTLS, MS.IntptrTy);
-    Base = IRB.CreateAdd(Base, ConstantInt::get(MS.IntptrTy, ArgOffset));
+    if (ArgOffset)
+      Base = IRB.CreateAdd(Base, ConstantInt::get(MS.IntptrTy, ArgOffset));
     return IRB.CreateIntToPtr(Base, PointerType::get(getShadowTy(A), 0),
                               "_msarg");
   }
@@ -1104,7 +1105,8 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
                                  int ArgOffset) {
     if (!MS.TrackOrigins) return nullptr;
     Value *Base = IRB.CreatePointerCast(MS.ParamOriginTLS, MS.IntptrTy);
-    Base = IRB.CreateAdd(Base, ConstantInt::get(MS.IntptrTy, ArgOffset));
+    if (ArgOffset)
+      Base = IRB.CreateAdd(Base, ConstantInt::get(MS.IntptrTy, ArgOffset));
     return IRB.CreateIntToPtr(Base, PointerType::get(MS.OriginTy, 0),
                               "_msarg_o");
   }
