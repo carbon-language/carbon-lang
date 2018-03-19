@@ -410,7 +410,7 @@ public:
   template <typename ScalarTy> static Type *getScalarTy(LLVMContext &C) {
     int noOfBits = sizeof(ScalarTy) * CHAR_BIT;
     if (std::is_integral<ScalarTy>::value) {
-      return Type::getIntNTy(C, noOfBits);
+      return (Type*) Type::getIntNTy(C, noOfBits);
     } else if (std::is_floating_point<ScalarTy>::value) {
       switch (noOfBits) {
       case 32:
