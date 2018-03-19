@@ -1994,9 +1994,7 @@ Init *TGParser::ParseValue(Record *CurRec, RecTy *ItemType, IDParseMode Mode) {
         break;
       }
 
-      Result =
-          BinOpInit::get(BinOpInit::STRCONCAT, LHS, RHS, StringRecTy::get())
-              ->Fold(CurRec);
+      Result = BinOpInit::getStrConcat(LHS, RHS);
       break;
     }
   }
@@ -2831,12 +2829,10 @@ Record *TGParser::InstantiateMulticlassDef(MultiClass &MC, Record *DefProto,
   if (DefNameString) {
     // We have a fully expanded string so there are no operators to
     // resolve.  We should concatenate the given prefix and name.
-    DefName = BinOpInit::get(
-                  BinOpInit::STRCONCAT,
-                  UnOpInit::get(UnOpInit::CAST, DefmPrefix, StringRecTy::get())
-                      ->Fold(DefProto),
-                  DefName, StringRecTy::get())
-                  ->Fold(DefProto);
+    DefName = BinOpInit::getStrConcat(
+        UnOpInit::get(UnOpInit::CAST, DefmPrefix, StringRecTy::get())
+            ->Fold(DefProto),
+        DefName);
   }
 
   // Make a trail of SMLocs from the multiclass instantiations.

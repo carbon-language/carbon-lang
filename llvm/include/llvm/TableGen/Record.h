@@ -821,6 +821,7 @@ public:
 
   static BinOpInit *get(BinaryOp opc, Init *lhs, Init *rhs,
                         RecTy *Type);
+  static Init *getStrConcat(Init *lhs, Init *rhs);
 
   void Profile(FoldingSetNodeID &ID) const;
 

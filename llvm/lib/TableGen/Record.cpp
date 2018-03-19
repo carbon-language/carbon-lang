@@ -816,6 +816,14 @@ static StringInit *ConcatStringInits(const StringInit *I0,
   return StringInit::get(Concat);
 }
 
+Init *BinOpInit::getStrConcat(Init *I0, Init *I1) {
+  // Shortcut for the common case of concatenating two strings.
+  if (const StringInit *I0s = dyn_cast<StringInit>(I0))
+    if (const StringInit *I1s = dyn_cast<StringInit>(I1))
+      return ConcatStringInits(I0s, I1s);
+  return BinOpInit::get(BinOpInit::STRCONCAT, I0, I1, StringRecTy::get());
+}
+
 Init *BinOpInit::Fold(Record *CurRec) const {
   switch (getOpcode()) {
   case CONCAT: {
@@ -2148,22 +2156,15 @@ RecordKeeper::getAllDerivedDefinitions(StringRef ClassName) const {
   return Defs;
 }
 
-static Init *GetStrConcat(Init *I0, Init *I1) {
-  // Shortcut for the common case of concatenating two strings.
-  if (const StringInit *I0s = dyn_cast<StringInit>(I0))
-    if (const StringInit *I1s = dyn_cast<StringInit>(I1))
-      return ConcatStringInits(I0s, I1s);
-  return BinOpInit::get(BinOpInit::STRCONCAT, I0, I1, StringRecTy::get());
-}
-
 Init *llvm::QualifyName(Record &CurRec, MultiClass *CurMultiClass,
                         Init *Name, StringRef Scoper) {
-  Init *NewName = GetStrConcat(CurRec.getNameInit(), StringInit::get(Scoper));
-  NewName = GetStrConcat(NewName, Name);
+  Init *NewName =
+      BinOpInit::getStrConcat(CurRec.getNameInit(), StringInit::get(Scoper));
+  NewName = BinOpInit::getStrConcat(NewName, Name);
   if (CurMultiClass && Scoper != "::") {
-    Init *Prefix = GetStrConcat(CurMultiClass->Rec.getNameInit(),
-                                StringInit::get("::"));
-    NewName = GetStrConcat(Prefix, NewName);
+    Init *Prefix = BinOpInit::getStrConcat(CurMultiClass->Rec.getNameInit(),
+                                           StringInit::get("::"));
+    NewName = BinOpInit::getStrConcat(Prefix, NewName);
   }
 
   if (BinOpInit *BinOp = dyn_cast<BinOpInit>(NewName))
