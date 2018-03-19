@@ -77,7 +77,7 @@ private:
   bool IsNameDefined(const ContiguousChars &);
   TokenSequence ReplaceMacros(const TokenSequence &, const Prescanner &);
   void SkipDisabledConditionalCode(
-      const std::string &, IsElseActive, Prescanner *);
+      const std::string &, IsElseActive, Prescanner *, Provenance);
   bool IsIfPredicateTrue(
       const TokenSequence &expr, size_t first, size_t exprTokens, Prescanner *);
 

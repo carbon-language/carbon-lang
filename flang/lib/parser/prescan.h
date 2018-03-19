@@ -59,10 +59,13 @@ public:
   bool IsNextLinePreprocessorDirective() const;
   TokenSequence TokenizePreprocessorDirective();
   Provenance GetCurrentProvenance() const { return GetProvenance(at_); }
-  Message &Error(MessageFixedText);
-  Message &Error(MessageFormattedText &&);
-  Message &Complain(MessageFixedText);
-  Message &Complain(MessageFormattedText &&);
+
+  Message &Error(Message &&);
+  Message &Error(MessageFixedText, Provenance);
+  Message &Error(MessageFormattedText &&, Provenance);
+  Message &Complain(Message &&);
+  Message &Complain(MessageFixedText, Provenance);
+  Message &Complain(MessageFormattedText &&, Provenance);
 
 private:
   void BeginSourceLine(const char *at) {

@@ -42,6 +42,9 @@ public:
   Provenance(Provenance &&that) = default;
   Provenance &operator=(const Provenance &that) = default;
   Provenance &operator=(Provenance &&that) = default;
+
+  size_t offset() const { return offset_; }
+
   Provenance operator+(ptrdiff_t n) const {
     CHECK(n > -static_cast<ptrdiff_t>(offset_));
     return {offset_ + static_cast<size_t>(n)};
@@ -55,7 +58,6 @@ public:
   bool operator<=(Provenance that) const { return !(that < *this); }
   bool operator==(Provenance that) const { return offset_ == that.offset_; }
   bool operator!=(Provenance that) const { return !(*this == that); }
-  size_t offset() const { return offset_; }
 
 private:
   size_t offset_{0};
