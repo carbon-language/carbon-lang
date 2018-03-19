@@ -2397,14 +2397,21 @@ let AddedComplexity = 400, Predicates = [HasP9Vector] in {
   // Quad-Precision Scalar Floating-Point Arithmetic Instructions:
 
   // Add/Divide/Multiply/Subtract
-  def XSADDQP   : X_VT5_VA5_VB5   <63,   4, "xsaddqp" , []>;
+  let isCommutable = 1 in {
+  def XSADDQP   : X_VT5_VA5_VB5   <63,   4, "xsaddqp",
+                                   [(set f128:$vT, (fadd f128:$vA, f128:$vB))]>;
   def XSADDQPO  : X_VT5_VA5_VB5_Ro<63,   4, "xsaddqpo", []>;
-  def XSDIVQP   : X_VT5_VA5_VB5   <63, 548, "xsdivqp" , []>;
-  def XSDIVQPO  : X_VT5_VA5_VB5_Ro<63, 548, "xsdivqpo", []>;
-  def XSMULQP   : X_VT5_VA5_VB5   <63,  36, "xsmulqp" , []>;
+  def XSMULQP   : X_VT5_VA5_VB5   <63,  36, "xsmulqp",
+                                   [(set f128:$vT, (fmul f128:$vA, f128:$vB))]>;
   def XSMULQPO  : X_VT5_VA5_VB5_Ro<63,  36, "xsmulqpo", []>;
-  def XSSUBQP   : X_VT5_VA5_VB5   <63, 516, "xssubqp" , []>;
+  }
+
+  def XSSUBQP   : X_VT5_VA5_VB5   <63, 516, "xssubqp" ,
+                                   [(set f128:$vT, (fsub f128:$vA, f128:$vB))]>;
   def XSSUBQPO  : X_VT5_VA5_VB5_Ro<63, 516, "xssubqpo", []>;
+  def XSDIVQP   : X_VT5_VA5_VB5   <63, 548, "xsdivqp",
+                                   [(set f128:$vT, (fdiv f128:$vA, f128:$vB))]>;
+  def XSDIVQPO  : X_VT5_VA5_VB5_Ro<63, 548, "xsdivqpo", []>;
 
   // Square-Root
   def XSSQRTQP  : X_VT5_XO5_VB5   <63, 27, 804, "xssqrtqp" , []>;
@@ -2865,12 +2872,16 @@ let AddedComplexity = 400, Predicates = [HasP9Vector] in {
   def : Pat<(v4f32 (quadwOffsetLoad iqaddr:$src)), (LXV memrix16:$src)>;
   def : Pat<(v2i64 (quadwOffsetLoad iqaddr:$src)), (LXV memrix16:$src)>;
   def : Pat<(v2f64 (quadwOffsetLoad iqaddr:$src)), (LXV memrix16:$src)>;
+  def : Pat<(f128  (quadwOffsetLoad iqaddr:$src)),
+            (COPY_TO_REGCLASS (LXV memrix16:$src), VRRC)>;
   def : Pat<(v4i32 (int_ppc_vsx_lxvw4x iqaddr:$src)), (LXV memrix16:$src)>;
   def : Pat<(v2f64 (int_ppc_vsx_lxvd2x iqaddr:$src)), (LXV memrix16:$src)>;
 
   def : Pat<(quadwOffsetStore v4f32:$rS, iqaddr:$dst), (STXV $rS, memrix16:$dst)>;
   def : Pat<(quadwOffsetStore v4i32:$rS, iqaddr:$dst), (STXV $rS, memrix16:$dst)>;
   def : Pat<(quadwOffsetStore v2f64:$rS, iqaddr:$dst), (STXV $rS, memrix16:$dst)>;
+  def : Pat<(quadwOffsetStore  f128:$rS, iqaddr:$dst),
+            (STXV (COPY_TO_REGCLASS $rS, VSRC), memrix16:$dst)>;
   def : Pat<(quadwOffsetStore v2i64:$rS, iqaddr:$dst), (STXV $rS, memrix16:$dst)>;
   def : Pat<(int_ppc_vsx_stxvw4x v4i32:$rS, iqaddr:$dst),
             (STXV $rS, memrix16:$dst)>;
@@ -2884,6 +2895,10 @@ let AddedComplexity = 400, Predicates = [HasP9Vector] in {
   def : Pat<(v4i32 (nonQuadwOffsetLoad xoaddr:$src)), (LXVX xoaddr:$src)>;
   def : Pat<(v4i32 (int_ppc_vsx_lxvw4x xoaddr:$src)), (LXVX xoaddr:$src)>;
   def : Pat<(v2f64 (int_ppc_vsx_lxvd2x xoaddr:$src)), (LXVX xoaddr:$src)>;
+  def : Pat<(f128  (nonQuadwOffsetLoad xoaddr:$src)),
+            (COPY_TO_REGCLASS (LXVX xoaddr:$src), VRRC)>;
+  def : Pat<(nonQuadwOffsetStore f128:$rS, xoaddr:$dst),
+            (STXVX (COPY_TO_REGCLASS $rS, VSRC), xoaddr:$dst)>;
   def : Pat<(nonQuadwOffsetStore v2f64:$rS, xoaddr:$dst),
             (STXVX $rS, xoaddr:$dst)>;
   def : Pat<(nonQuadwOffsetStore v2i64:$rS, xoaddr:$dst),
