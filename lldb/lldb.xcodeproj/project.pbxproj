@@ -774,8 +774,6 @@
 		6D99A3631BBC2F3200979793 /* ArmUnwindInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D99A3621BBC2F3200979793 /* ArmUnwindInfo.cpp */; };
 		6D9AB3DD1BB2B74E003F2289 /* TypeMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D9AB3DC1BB2B74E003F2289 /* TypeMap.cpp */; };
 		6DEC6F391BD66D750091ABA6 /* TaskPool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6DEC6F381BD66D750091ABA6 /* TaskPool.cpp */; };
-		7F2AAA5A20601BE000A422D8 /* DWARFUnit.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 7F2AAA5820601BDF00A422D8 /* DWARFUnit.h */; };
-		7F2AAA5B20601BE000A422D8 /* DWARFUnit.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 7F2AAA5920601BE000A422D8 /* DWARFUnit.cpp */; };
 		7F94D7182040A13A006EE3EA /* CleanUpTest.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 7F94D7172040A13A006EE3EA /* CleanUpTest.cpp */; };
 		8C26C4261C3EA5F90031DF7C /* TSanRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8C26C4241C3EA4340031DF7C /* TSanRuntime.cpp */; };
 		8C2D6A53197A1EAF006989C9 /* MemoryHistory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8C2D6A52197A1EAF006989C9 /* MemoryHistory.cpp */; };
@@ -1023,6 +1021,7 @@
 		AFDBC36E204663AF00B9C8F2 /* EmulateInstructionPPC64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFDBC36C204663AF00B9C8F2 /* EmulateInstructionPPC64.cpp */; };
 		AFDCDBCB19DD0F42005EA55E /* SBExecutionContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 940B02F419DC96CB00AD0F52 /* SBExecutionContext.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		AFDFDFD119E34D3400EAE509 /* ConnectionFileDescriptorPosix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFDFDFD019E34D3400EAE509 /* ConnectionFileDescriptorPosix.cpp */; };
+		AFE228832060699D0042D0C8 /* DWARFUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7F2AAA5920601BE000A422D8 /* DWARFUnit.cpp */; };
 		AFEC3362194A8ABA00FF05C6 /* StructuredData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFEC3361194A8ABA00FF05C6 /* StructuredData.cpp */; };
 		AFEC5FD81D94F9380076A480 /* Testx86AssemblyInspectionEngine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFEC5FD51D94F9380076A480 /* Testx86AssemblyInspectionEngine.cpp */; };
 		AFF87C87150FF669000E1742 /* com.apple.debugserver.plist in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFF87C86150FF669000E1742 /* com.apple.debugserver.plist */; };
@@ -1249,9 +1248,7 @@
 			dstPath = "$(DEVELOPER_INSTALL_DIR)/usr/share/man/man1";
 			dstSubfolderSpec = 0;
 			files = (
-				7F2AAA5A20601BE000A422D8 /* DWARFUnit.h in CopyFiles */,
 				7F94D7182040A13A006EE3EA /* CleanUpTest.cpp in CopyFiles */,
-				7F2AAA5B20601BE000A422D8 /* DWARFUnit.cpp in CopyFiles */,
 				AF90106515AB7D3600FF120D /* lldb.1 in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
@@ -3881,8 +3878,6 @@
 		260C89B210F57C5600BB2B04 /* DWARF */ = {
 			isa = PBXGroup;
 			children = (
-				7F2AAA5920601BE000A422D8 /* DWARFUnit.cpp */,
-				7F2AAA5820601BDF00A422D8 /* DWARFUnit.h */,
 				6D95DC031B9DC06F000E318A /* DIERef.h */,
 				6D95DC041B9DC06F000E318A /* SymbolFileDWARFDwo.h */,
 				6D95DBFD1B9DC057000E318A /* DIERef.cpp */,
@@ -3935,6 +3930,8 @@
 				260C89D210F57C5600BB2B04 /* DWARFDIECollection.h */,
 				260C89D310F57C5600BB2B04 /* DWARFFormValue.cpp */,
 				260C89D410F57C5600BB2B04 /* DWARFFormValue.h */,
+				7F2AAA5920601BE000A422D8 /* DWARFUnit.cpp */,
+				7F2AAA5820601BDF00A422D8 /* DWARFUnit.h */,
 				26A0DA4D140F721D006DA411 /* HashedNameToDIE.h */,
 				26109B3B1155D70100CC3529 /* LogChannelDWARF.cpp */,
 				26109B3C1155D70100CC3529 /* LogChannelDWARF.h */,
@@ -7726,6 +7723,7 @@
 				268900A013353E4200698AC0 /* ProcessGDBRemoteLog.cpp in Sources */,
 				AF9FF1F71FAA79FE00474976 /* LibCxxQueue.cpp in Sources */,
 				268900A113353E4200698AC0 /* ThreadGDBRemote.cpp in Sources */,
+				AFE228832060699D0042D0C8 /* DWARFUnit.cpp in Sources */,
 				AEEA34051AC88A7400AB639D /* TypeSystem.cpp in Sources */,
 				AF1729D6182C907200E0AB97 /* HistoryThread.cpp in Sources */,
 				268900AF13353E5000698AC0 /* UnwindLLDB.cpp in Sources */,
