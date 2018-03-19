@@ -71,3 +71,79 @@ entry:
 ; CHECK stxvx
 ; CHECK-NEXT blr
 }
+
+define void @qpSqrt(fp128* nocapture readonly %a, fp128* nocapture %res) {
+entry:
+  %0 = load fp128, fp128* %a, align 16
+  %1 = tail call fp128 @llvm.sqrt.f128(fp128 %0)
+  store fp128 %1, fp128* %res, align 16
+  ret void
+
+; CHECK-LABEL: qpSqrt
+; CHECK-NOT bl sqrtl
+; CHECK xssqrtqp
+; CHECK stxv
+; CHECK blr
+}
+declare fp128 @llvm.sqrt.f128(fp128 %Val)
+
+define void @qpCpsgn(fp128* nocapture readonly %a, fp128* nocapture readonly %b,
+                     fp128* nocapture %res) {
+entry:
+  %0 = load fp128, fp128* %a, align 16
+  %1 = load fp128, fp128* %b, align 16
+  %2 = tail call fp128 @llvm.copysign.f128(fp128 %0, fp128 %1)
+  store fp128 %2, fp128* %res, align 16
+  ret void
+
+; CHECK-LABEL: qpSqrt
+; CHECK-NOT rldimi
+; CHECK xscpsgnqp
+; CHECK stxv
+; CHECK blr
+}
+declare fp128 @llvm.copysign.f128(fp128 %Mag, fp128 %Sgn)
+
+define void @qpAbs(fp128* nocapture readonly %a, fp128* nocapture %res) {
+entry:
+  %0 = load fp128, fp128* %a, align 16
+  %1 = tail call fp128 @llvm.fabs.f128(fp128 %0)
+  store fp128 %1, fp128* %res, align 16
+  ret void
+
+; CHECK-LABEL: qpAbs
+; CHECK-NOT clrldi
+; CHECK xsabsqp
+; CHECK stxv
+; CHECK blr
+}
+declare fp128 @llvm.fabs.f128(fp128 %Val)
+
+define void @qpNAbs(fp128* nocapture readonly %a, fp128* nocapture %res) {
+entry:
+  %0 = load fp128, fp128* %a, align 16
+  %1 = tail call fp128 @llvm.fabs.f128(fp128 %0)
+  %neg = fsub fp128 0xL00000000000000008000000000000000, %1
+  store fp128 %neg, fp128* %res, align 16
+  ret void
+
+; CHECK-LABEL: qpNAbs
+; CHECK-NOT bl __subtf3
+; CHECK xsnabsqp
+; CHECK stxv
+; CHECK blr
+}
+
+define void @qpNeg(fp128* nocapture readonly %a, fp128* nocapture %res) {
+entry:
+  %0 = load fp128, fp128* %a, align 16
+  %sub = fsub fp128 0xL00000000000000008000000000000000, %0
+  store fp128 %sub, fp128* %res, align 16
+  ret void
+
+; CHECK-LABEL: qpNeg
+; CHECK-NOT bl __subtf3
+; CHECK xsnegqp
+; CHECK stxv
+; CHECK blr
+}

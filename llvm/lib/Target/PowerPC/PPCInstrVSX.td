@@ -2386,12 +2386,17 @@ let AddedComplexity = 400, Predicates = [HasP9Vector] in {
   // Quad-Precision Scalar Move Instructions:
 
   // Copy Sign
-  def XSCPSGNQP : X_VT5_VA5_VB5<63, 100, "xscpsgnqp", []>;
+  def XSCPSGNQP : X_VT5_VA5_VB5<63, 100, "xscpsgnqp",
+                                [(set f128:$vT,
+                                      (fcopysign f128:$vB, f128:$vA))]>;
 
   // Absolute/Negative-Absolute/Negate
-  def XSABSQP   : X_VT5_XO5_VB5<63,  0, 804, "xsabsqp" , []>;
-  def XSNABSQP  : X_VT5_XO5_VB5<63,  8, 804, "xsnabsqp", []>;
-  def XSNEGQP   : X_VT5_XO5_VB5<63, 16, 804, "xsnegqp" , []>;
+  def XSABSQP   : X_VT5_XO5_VB5<63,  0, 804, "xsabsqp",
+                                [(set f128:$vT, (fabs f128:$vB))]>;
+  def XSNABSQP  : X_VT5_XO5_VB5<63,  8, 804, "xsnabsqp",
+                                [(set f128:$vT, (fneg (fabs f128:$vB)))]>;
+  def XSNEGQP   : X_VT5_XO5_VB5<63, 16, 804, "xsnegqp",
+                                [(set f128:$vT, (fneg f128:$vB))]>;
 
   //===--------------------------------------------------------------------===//
   // Quad-Precision Scalar Floating-Point Arithmetic Instructions:
@@ -2414,7 +2419,8 @@ let AddedComplexity = 400, Predicates = [HasP9Vector] in {
   def XSDIVQPO  : X_VT5_VA5_VB5_Ro<63, 548, "xsdivqpo", []>;
 
   // Square-Root
-  def XSSQRTQP  : X_VT5_XO5_VB5   <63, 27, 804, "xssqrtqp" , []>;
+  def XSSQRTQP  : X_VT5_XO5_VB5   <63, 27, 804, "xssqrtqp",
+                                   [(set f128:$vT, (fsqrt f128:$vB))]>;
   def XSSQRTQPO : X_VT5_XO5_VB5_Ro<63, 27, 804, "xssqrtqpo", []>;
 
   // (Negative) Multiply-{Add/Subtract}
