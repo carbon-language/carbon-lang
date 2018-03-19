@@ -379,8 +379,6 @@ public:
     Resource.clearReserved();
   }
 
-  void reserveDispatchHazardResources(const llvm::ArrayRef<uint64_t> Buffers);
-
   // Returns true if all resources are in-order, and there is at least one
   // resource which is a dispatch hazard (BufferSize = 0).
   bool mustIssueImmediately(const InstrDesc &Desc);
