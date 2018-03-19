@@ -7198,7 +7198,7 @@ define void @test_jecxz_jrcxz() optsize {
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    #APP
 ; GENERIC-NEXT:  JXTGT:
-; GENERIC-NEXT:    jecxz JXTGT # sched: [1:1.00]
+; GENERIC-NEXT:    jecxz JXTGT # sched: [2:1.00]
 ; GENERIC-NEXT:    jrcxz JXTGT # sched: [2:1.00]
 ; GENERIC-NEXT:    #NO_APP
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
@@ -7225,7 +7225,7 @@ define void @test_jecxz_jrcxz() optsize {
 ; SANDY:       # %bb.0:
 ; SANDY-NEXT:    #APP
 ; SANDY-NEXT:  JXTGT:
-; SANDY-NEXT:    jecxz JXTGT # sched: [1:1.00]
+; SANDY-NEXT:    jecxz JXTGT # sched: [2:1.00]
 ; SANDY-NEXT:    jrcxz JXTGT # sched: [2:1.00]
 ; SANDY-NEXT:    #NO_APP
 ; SANDY-NEXT:    retq # sched: [1:1.00]
@@ -7234,7 +7234,7 @@ define void @test_jecxz_jrcxz() optsize {
 ; HASWELL:       # %bb.0:
 ; HASWELL-NEXT:    #APP
 ; HASWELL-NEXT:  JXTGT:
-; HASWELL-NEXT:    jecxz JXTGT # sched: [1:0.50]
+; HASWELL-NEXT:    jecxz JXTGT # sched: [2:0.50]
 ; HASWELL-NEXT:    jrcxz JXTGT # sched: [2:0.50]
 ; HASWELL-NEXT:    #NO_APP
 ; HASWELL-NEXT:    retq # sched: [7:1.00]
@@ -7243,7 +7243,7 @@ define void @test_jecxz_jrcxz() optsize {
 ; BROADWELL:       # %bb.0:
 ; BROADWELL-NEXT:    #APP
 ; BROADWELL-NEXT:  JXTGT:
-; BROADWELL-NEXT:    jecxz JXTGT # sched: [1:0.50]
+; BROADWELL-NEXT:    jecxz JXTGT # sched: [2:0.50]
 ; BROADWELL-NEXT:    jrcxz JXTGT # sched: [2:0.50]
 ; BROADWELL-NEXT:    #NO_APP
 ; BROADWELL-NEXT:    retq # sched: [7:1.00]
@@ -7252,7 +7252,7 @@ define void @test_jecxz_jrcxz() optsize {
 ; SKYLAKE:       # %bb.0:
 ; SKYLAKE-NEXT:    #APP
 ; SKYLAKE-NEXT:  JXTGT:
-; SKYLAKE-NEXT:    jecxz JXTGT # sched: [1:0.50]
+; SKYLAKE-NEXT:    jecxz JXTGT # sched: [2:0.50]
 ; SKYLAKE-NEXT:    jrcxz JXTGT # sched: [2:0.50]
 ; SKYLAKE-NEXT:    #NO_APP
 ; SKYLAKE-NEXT:    retq # sched: [7:1.00]
@@ -7261,7 +7261,7 @@ define void @test_jecxz_jrcxz() optsize {
 ; SKX:       # %bb.0:
 ; SKX-NEXT:    #APP
 ; SKX-NEXT:  JXTGT:
-; SKX-NEXT:    jecxz JXTGT # sched: [1:0.50]
+; SKX-NEXT:    jecxz JXTGT # sched: [2:0.50]
 ; SKX-NEXT:    jrcxz JXTGT # sched: [2:0.50]
 ; SKX-NEXT:    #NO_APP
 ; SKX-NEXT:    retq # sched: [7:1.00]

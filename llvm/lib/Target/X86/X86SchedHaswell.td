@@ -2036,7 +2036,7 @@ def: InstRW<[HWWriteResGroup35], (instregex "ADC(8|16|32|64)rr")>;
 def: InstRW<[HWWriteResGroup35], (instregex "ADC(8|16|32|64)i")>;
 def: InstRW<[HWWriteResGroup35], (instregex "CMOV(AE|B|E|G|GE|L|LE|NE|NO|NP|NS|O|P|S)(16|32|64)rr")>;
 def: InstRW<[HWWriteResGroup35], (instrs CWD)>;
-def: InstRW<[HWWriteResGroup35], (instregex "JRCXZ")>;
+def: InstRW<[HWWriteResGroup35], (instrs JCXZ, JECXZ, JRCXZ)>;
 def: InstRW<[HWWriteResGroup35], (instregex "SBB(8|16|32|64)ri")>;
 def: InstRW<[HWWriteResGroup35], (instregex "SBB(8|16|32|64)rr")>;
 def: InstRW<[HWWriteResGroup35], (instregex "SBB(8|16|32|64)i")>;

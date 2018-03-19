@@ -1079,7 +1079,7 @@ def SKLWriteResGroup23 : SchedWriteRes<[SKLPort06,SKLPort0156]> {
 def: InstRW<[SKLWriteResGroup23], (instregex "ADC8i8")>;
 def: InstRW<[SKLWriteResGroup23], (instregex "ADC8ri")>;
 def: InstRW<[SKLWriteResGroup23], (instrs CWD)>;
-def: InstRW<[SKLWriteResGroup23], (instregex "JRCXZ")>;
+def: InstRW<[SKLWriteResGroup23], (instrs JCXZ, JECXZ, JRCXZ)>;
 def: InstRW<[SKLWriteResGroup23], (instregex "SBB8i8")>;
 def: InstRW<[SKLWriteResGroup23], (instregex "SBB8ri")>;
 

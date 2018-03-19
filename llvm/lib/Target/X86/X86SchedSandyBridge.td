@@ -792,7 +792,7 @@ def SBWriteResGroup18 : SchedWriteRes<[SBPort5,SBPort015]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[SBWriteResGroup18], (instregex "JRCXZ")>;
+def: InstRW<[SBWriteResGroup18], (instrs JCXZ, JECXZ, JRCXZ)>;
 def: InstRW<[SBWriteResGroup18], (instregex "MMX_MOVDQ2Qrr")>;
 
 def SBWriteResGroup19 : SchedWriteRes<[SBPort05,SBPort015]> {

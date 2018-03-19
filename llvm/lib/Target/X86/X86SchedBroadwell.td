@@ -1043,7 +1043,7 @@ def: InstRW<[BWWriteResGroup20], (instregex "ADC8i8")>;
 def: InstRW<[BWWriteResGroup20], (instregex "ADC8ri")>;
 def: InstRW<[BWWriteResGroup20], (instregex "CMOV(A|BE)(16|32|64)rr")>;
 def: InstRW<[BWWriteResGroup20], (instrs CWD)>;
-def: InstRW<[BWWriteResGroup20], (instregex "JRCXZ")>;
+def: InstRW<[BWWriteResGroup20], (instrs JCXZ, JECXZ, JRCXZ)>;
 def: InstRW<[BWWriteResGroup20], (instregex "SBB8i8")>;
 def: InstRW<[BWWriteResGroup20], (instregex "SBB8ri")>;
 def: InstRW<[BWWriteResGroup20], (instregex "SET(A|BE)r")>;
