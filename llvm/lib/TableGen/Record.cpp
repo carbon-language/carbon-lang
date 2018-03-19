@@ -700,7 +700,7 @@ void UnOpInit::Profile(FoldingSetNodeID &ID) const {
   ProfileUnOpInit(ID, getOpcode(), getOperand(), getType());
 }
 
-Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
+Init *UnOpInit::Fold(Record *CurRec) const {
   switch (getOpcode()) {
   case CAST:
     if (isa<StringRecTy>(getType())) {
@@ -714,48 +714,13 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
         return StringInit::get(LHSi->getAsString());
     } else if (isa<RecordRecTy>(getType())) {
       if (StringInit *Name = dyn_cast<StringInit>(LHS)) {
-        // From TGParser::ParseIDValue
-        if (CurRec) {
-          if (const RecordVal *RV = CurRec->getValue(Name)) {
-            if (RV->getType() != getType())
-              PrintFatalError("type mismatch in cast");
-            return VarInit::get(Name, RV->getType());
-          }
-
-          Init *TemplateArgName = QualifyName(*CurRec, CurMultiClass, Name,
-                                              ":");
-
-          if (CurRec->isTemplateArg(TemplateArgName)) {
-            const RecordVal *RV = CurRec->getValue(TemplateArgName);
-            assert(RV && "Template arg doesn't exist??");
-
-            if (RV->getType() != getType())
-              PrintFatalError("type mismatch in cast");
-
-            return VarInit::get(TemplateArgName, RV->getType());
-          }
-        }
-
-        if (CurMultiClass) {
-          Init *MCName = QualifyName(CurMultiClass->Rec, CurMultiClass, Name,
-                                     "::");
-
-          if (CurMultiClass->Rec.isTemplateArg(MCName)) {
-            const RecordVal *RV = CurMultiClass->Rec.getValue(MCName);
-            assert(RV && "Template arg doesn't exist??");
-
-            if (RV->getType() != getType())
-              PrintFatalError("type mismatch in cast");
-
-            return VarInit::get(MCName, RV->getType());
-          }
-        }
         assert(CurRec && "NULL pointer");
         if (Record *D = (CurRec->getRecords()).getDef(Name->getValue()))
           return DefInit::get(D);
 
         PrintFatalError(CurRec->getLoc(),
-                        "Undefined reference:'" + Name->getValue() + "'\n");
+                        Twine("Undefined reference to record: '") +
+                        Name->getValue() + "'\n");
       }
     }
 
@@ -799,8 +764,8 @@ Init *UnOpInit::resolveReferences(Resolver &R) const {
 
   if (LHS != lhs)
     return (UnOpInit::get(getOpcode(), lhs, getType()))
-        ->Fold(R.getCurrentRecord(), nullptr);
-  return Fold(R.getCurrentRecord(), nullptr);
+        ->Fold(R.getCurrentRecord());
+  return Fold(R.getCurrentRecord());
 }
 
 std::string UnOpInit::getAsString() const {
@@ -851,7 +816,7 @@ static StringInit *ConcatStringInits(const StringInit *I0,
   return StringInit::get(Concat);
 }
 
-Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
+Init *BinOpInit::Fold(Record *CurRec) const {
   switch (getOpcode()) {
   case CONCAT: {
     DagInit *LHSs = dyn_cast<DagInit>(LHS);
@@ -974,8 +939,8 @@ Init *BinOpInit::resolveReferences(Resolver &R) const {
 
   if (LHS != lhs || RHS != rhs)
     return (BinOpInit::get(getOpcode(), lhs, rhs, getType()))
-        ->Fold(R.getCurrentRecord(), nullptr);
-  return Fold(R.getCurrentRecord(), nullptr);
+        ->Fold(R.getCurrentRecord());
+  return Fold(R.getCurrentRecord());
 }
 
 std::string BinOpInit::getAsString() const {
@@ -1084,7 +1049,7 @@ static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
   return nullptr;
 }
 
-Init *TernOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
+Init *TernOpInit::Fold(Record *CurRec) const {
   switch (getOpcode()) {
   case SUBST: {
     DefInit *LHSd = dyn_cast<DefInit>(LHS);
@@ -1199,8 +1164,8 @@ Init *TernOpInit::resolveReferences(Resolver &R) const {
 
   if (LHS != lhs || MHS != mhs || RHS != rhs)
     return (TernOpInit::get(getOpcode(), lhs, mhs, rhs, getType()))
-        ->Fold(R.getCurrentRecord(), nullptr);
-  return Fold(R.getCurrentRecord(), nullptr);
+        ->Fold(R.getCurrentRecord());
+  return Fold(R.getCurrentRecord());
 }
 
 std::string TernOpInit::getAsString() const {
@@ -1401,7 +1366,7 @@ Init *TypedInit::getCastTo(RecTy *Ty) const {
     return nullptr;
 
   return UnOpInit::get(UnOpInit::CAST, const_cast<TypedInit *>(this), Ty)
-             ->Fold(nullptr, nullptr);
+      ->Fold(nullptr);
 }
 
 Init *TypedInit::convertInitListSlice(ArrayRef<unsigned> Elements) const {
@@ -2202,7 +2167,7 @@ Init *llvm::QualifyName(Record &CurRec, MultiClass *CurMultiClass,
   }
 
   if (BinOpInit *BinOp = dyn_cast<BinOpInit>(NewName))
-    NewName = BinOp->Fold(&CurRec, CurMultiClass);
+    NewName = BinOp->Fold(&CurRec);
   return NewName;
 }
 

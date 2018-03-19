@@ -936,7 +936,7 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
       return nullptr;
     }
     Lex.Lex();  // eat the ')'
-    return (UnOpInit::get(Code, LHS, Type))->Fold(CurRec, CurMultiClass);
+    return (UnOpInit::get(Code, LHS, Type))->Fold(CurRec);
   }
 
   case tgtok::XIsA: {
@@ -1124,15 +1124,14 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
         Code == BinOpInit::AND || Code == BinOpInit::OR) {
       while (InitList.size() > 2) {
         Init *RHS = InitList.pop_back_val();
-        RHS = (BinOpInit::get(Code, InitList.back(), RHS, Type))
-                           ->Fold(CurRec, CurMultiClass);
+        RHS = (BinOpInit::get(Code, InitList.back(), RHS, Type))->Fold(CurRec);
         InitList.back() = RHS;
       }
     }
 
     if (InitList.size() == 2)
       return (BinOpInit::get(Code, InitList[0], InitList[1], Type))
-        ->Fold(CurRec, CurMultiClass);
+          ->Fold(CurRec);
 
     Error(OpLoc, "expected two operands to operator");
     return nullptr;
@@ -1237,7 +1236,7 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
     }
 
     return (TernOpInit::get(TernOpInit::FOREACH, LHS, MHS, RHS, OutType))
-               ->Fold(CurRec, CurMultiClass);
+        ->Fold(CurRec);
   }
 
   case tgtok::XDag:
@@ -1378,8 +1377,7 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
       break;
     }
     }
-    return (TernOpInit::get(Code, LHS, MHS, RHS, Type))->Fold(CurRec,
-                                                             CurMultiClass);
+    return (TernOpInit::get(Code, LHS, MHS, RHS, Type))->Fold(CurRec);
   }
 
   case tgtok::XFoldl: {
@@ -1996,8 +1994,9 @@ Init *TGParser::ParseValue(Record *CurRec, RecTy *ItemType, IDParseMode Mode) {
         break;
       }
 
-      Result = BinOpInit::get(BinOpInit::STRCONCAT, LHS, RHS,
-                              StringRecTy::get())->Fold(CurRec, CurMultiClass);
+      Result =
+          BinOpInit::get(BinOpInit::STRCONCAT, LHS, RHS, StringRecTy::get())
+              ->Fold(CurRec);
       break;
     }
   }
@@ -2832,11 +2831,12 @@ Record *TGParser::InstantiateMulticlassDef(MultiClass &MC, Record *DefProto,
   if (DefNameString) {
     // We have a fully expanded string so there are no operators to
     // resolve.  We should concatenate the given prefix and name.
-    DefName =
-      BinOpInit::get(BinOpInit::STRCONCAT,
-                     UnOpInit::get(UnOpInit::CAST, DefmPrefix,
-                                   StringRecTy::get())->Fold(DefProto, &MC),
-                     DefName, StringRecTy::get())->Fold(DefProto, &MC);
+    DefName = BinOpInit::get(
+                  BinOpInit::STRCONCAT,
+                  UnOpInit::get(UnOpInit::CAST, DefmPrefix, StringRecTy::get())
+                      ->Fold(DefProto),
+                  DefName, StringRecTy::get())
+                  ->Fold(DefProto);
   }
 
   // Make a trail of SMLocs from the multiclass instantiations.

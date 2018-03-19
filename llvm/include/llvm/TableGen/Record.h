@@ -744,7 +744,7 @@ public:
 
   // Fold - If possible, fold this to a simpler init.  Return this if not
   // possible to fold.
-  virtual Init *Fold(Record *CurRec, MultiClass *CurMultiClass) const = 0;
+  virtual Init *Fold(Record *CurRec) const = 0;
 
   Init *getBit(unsigned Bit) const override;
 };
@@ -792,7 +792,7 @@ public:
 
   // Fold - If possible, fold this to a simpler init.  Return this if not
   // possible to fold.
-  Init *Fold(Record *CurRec, MultiClass *CurMultiClass) const override;
+  Init *Fold(Record *CurRec) const override;
 
   Init *resolveReferences(Resolver &R) const override;
 
@@ -846,7 +846,7 @@ public:
 
   // Fold - If possible, fold this to a simpler init.  Return this if not
   // possible to fold.
-  Init *Fold(Record *CurRec, MultiClass *CurMultiClass) const override;
+  Init *Fold(Record *CurRec) const override;
 
   Init *resolveReferences(Resolver &R) const override;
 
@@ -904,7 +904,7 @@ public:
 
   // Fold - If possible, fold this to a simpler init.  Return this if not
   // possible to fold.
-  Init *Fold(Record *CurRec, MultiClass *CurMultiClass) const override;
+  Init *Fold(Record *CurRec) const override;
 
   bool isComplete() const override {
     return LHS->isComplete() && MHS->isComplete() && RHS->isComplete();
