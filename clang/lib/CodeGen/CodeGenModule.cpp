@@ -2629,6 +2629,7 @@ CodeGenModule::CreateRuntimeFunction(llvm::FunctionType *FTy, StringRef Name,
           F->setLinkage(llvm::GlobalValue::ExternalLinkage);
         }
       }
+      setDSOLocal(F);
     }
   }
 
