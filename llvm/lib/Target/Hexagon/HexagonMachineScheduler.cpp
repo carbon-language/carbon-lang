@@ -466,6 +466,10 @@ void ConvergingVLIWScheduler::VLIWSchedBoundary::removeReady(SUnit *SU) {
   }
 }
 
+static unsigned getWeakLeft(const SUnit *SU, bool IsTop) {
+  return (IsTop) ? SU->WeakPredsLeft : SU->WeakSuccsLeft;
+}
+
 /// If this queue only has one ready candidate, return it. As a side effect,
 /// advance the cycle until at least one node is ready. If multiple instructions
 /// are ready, return NULL.
@@ -473,11 +477,15 @@ SUnit *ConvergingVLIWScheduler::VLIWSchedBoundary::pickOnlyChoice() {
   if (CheckPending)
     releasePending();
 
-  for (unsigned i = 0;
-       Available.empty() ||
-         (Available.size() == 1 &&
-          !ResourceModel->isResourceAvailable(*Available.begin(), isTop()));
-       ++i) {
+  auto AdvanceCycle = [this]() {
+    if (Available.empty())
+      return true;
+    if (Available.size() == 1 && Pending.size() > 0)
+      return !ResourceModel->isResourceAvailable(*Available.begin(), isTop()) ||
+        getWeakLeft(*Available.begin(), isTop()) != 0;
+    return false;
+  };
+  for (unsigned i = 0; AdvanceCycle(); ++i) {
     assert(i <= (HazardRec->getMaxLookAhead() + MaxMinLatency) &&
            "permanent hazard"); (void)i;
     ResourceModel->reserveResources(nullptr, isTop());
@@ -627,10 +635,6 @@ int ConvergingVLIWScheduler::pressureChange(const SUnit *SU, bool isBotUp) {
       return (isBotUp ? P.getUnitInc() : -P.getUnitInc());
   }
   return 0;
-}
-
-static unsigned getWeakLeft(const SUnit *SU, bool IsTop) {
-  return (IsTop) ? SU->WeakPredsLeft : SU->WeakSuccsLeft;
 }
 
 // Constants used to denote relative importance of
