@@ -1921,6 +1921,7 @@ ConstantAddress CodeGenModule::GetAddrOfUuidDescriptor(
       /*isConstant=*/true, llvm::GlobalValue::LinkOnceODRLinkage, Init, Name);
   if (supportsCOMDAT())
     GV->setComdat(TheModule.getOrInsertComdat(GV->getName()));
+  setDSOLocal(GV);
   return ConstantAddress(GV, Alignment);
 }
 
