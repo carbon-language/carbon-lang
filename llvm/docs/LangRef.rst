@@ -2319,7 +2319,7 @@ operations may be speculated freely without any other fast-math relaxations
 to the floating-point model.
 
 Code that requires different behavior than this should use the
-:ref:`Constrained Floating-Point Intrinsics <_constrainedfp>`.
+:ref:`Constrained Floating-Point Intrinsics <constrainedfp>`.
 
 .. _fastmath:
 
@@ -6441,8 +6441,8 @@ Semantics:
 """"""""""
 
 The value produced is the floating-point sum of the two operands.
-This instruction is assumed to execute in the default :ref`floating-point
-environment <_floatenv>`. 
+This instruction is assumed to execute in the default :ref:`floating-point
+environment <floatenv>`. 
 This instruction can also take any number of :ref:`fast-math
 flags <fastmath>`, which are optimization hints to enable otherwise
 unsafe floating-point optimizations:
@@ -6538,8 +6538,8 @@ Semantics:
 """"""""""
 
 The value produced is the floating-point difference of the two operands.
-This instruction is assumed to execute in the default :ref`floating-point
-environment <_floatenv>`. 
+This instruction is assumed to execute in the default :ref:`floating-point
+environment <floatenv>`. 
 This instruction can also take any number of :ref:`fast-math
 flags <fastmath>`, which are optimization hints to enable otherwise
 unsafe floating-point optimizations:
@@ -6633,8 +6633,8 @@ Semantics:
 """"""""""
 
 The value produced is the floating-point product of the two operands.
-This instruction is assumed to execute in the default :ref`floating-point
-environment <_floatenv>`. 
+This instruction is assumed to execute in the default :ref:`floating-point
+environment <floatenv>`. 
 This instruction can also take any number of :ref:`fast-math
 flags <fastmath>`, which are optimization hints to enable otherwise
 unsafe floating-point optimizations:
@@ -6767,8 +6767,8 @@ Semantics:
 """"""""""
 
 The value produced is the floating-point quotient of the two operands.
-This instruction is assumed to execute in the default :ref`floating-point
-environment <_floatenv>`. 
+This instruction is assumed to execute in the default :ref:`floating-point
+environment <floatenv>`. 
 This instruction can also take any number of :ref:`fast-math
 flags <fastmath>`, which are optimization hints to enable otherwise
 unsafe floating-point optimizations:
@@ -6913,8 +6913,8 @@ The value produced is the floating-point remainder of the two operands.
 This is the same output as a libm '``fmod``' function, but without any
 possibility of setting ``errno``. The remainder has the same sign as the 
 dividend.
-This instruction is assumed to execute in the default :ref`floating-point
-environment <_floatenv>`. 
+This instruction is assumed to execute in the default :ref:`floating-point
+environment <floatenv>`. 
 This instruction can also take any number of :ref:`fast-math
 flags <fastmath>`, which are optimization hints to enable otherwise
 unsafe floating-point optimizations:
