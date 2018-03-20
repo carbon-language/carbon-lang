@@ -88,9 +88,14 @@ exit:
 ; FIXME: handled by loop safety info, test it
 define i1 @nothrow_loop(i32* noalias %p, i32 %high) {
 ; CHECK-LABEL: @nothrow_loop(
-; CHECK-LABEL:       loop:
+; CHECK-LABEL:  loop:
 ; CHECK:         %iv = phi i32 [ 0, %entry ], [ %iv.next, %next ] ; (mustexec in: loop)
 ; CHECK:          br label %next ; (mustexec in: loop)
+; CHECK-LABEL: next:
+; CHECK:          %v = load i32, i32* %p ; (mustexec in: loop)
+; CHECK:          %iv.next = add nuw nsw i32 %iv, 1 ; (mustexec in: loop)
+; CHECK:          %exit.test = icmp slt i32 %iv, %high ; (mustexec in: loop)
+; CHECK:          br i1 %exit.test, label %exit, label %loop ; (mustexec in: loop)
 ; CHECK-NOT: mustexec
 
 entry:

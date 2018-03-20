@@ -185,11 +185,13 @@ FunctionPass *llvm::createMustExecutePrinter() {
 }
 
 bool isMustExecuteIn(const Instruction &I, Loop *L, DominatorTree *DT) {
-  // TODO: move loop specific code to analysis
-  //LoopSafetyInfo LSI;
-  //computeLoopSafetyInfo(&LSI, L);
-  //return isGuaranteedToExecute(I, DT, L, &LSI);
-  return isGuaranteedToExecuteForEveryIteration(&I, L);
+  // TODO: merge these two routines.  For the moment, we display the best
+  // result obtained by *either* implementation.  This is a bit unfair since no
+  // caller actually gets the full power at the moment.
+  LoopSafetyInfo LSI;
+  computeLoopSafetyInfo(&LSI, L);
+  return isGuaranteedToExecute(I, DT, L, &LSI) ||
+    isGuaranteedToExecuteForEveryIteration(&I, L);
 }
 
 /// \brief An assembly annotator class to print must execute information in

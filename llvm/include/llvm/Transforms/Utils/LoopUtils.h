@@ -40,7 +40,6 @@ class BasicBlock;
 class DataLayout;
 class Loop;
 class LoopInfo;
-class LoopSafetyInfo;
 class OptimizationRemarkEmitter;
 class PredicatedScalarEvolution;
 class PredIteratorCache;
