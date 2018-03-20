@@ -676,7 +676,7 @@ createBinaryContext(ELFObjectFileBase *File, DataReader &DR,
   }
 
 
-  std::unique_ptr<const MCPlusBuilder> MIB(
+  std::unique_ptr<MCPlusBuilder> MIB(
     createMCPlusBuilder(Arch, MIA.get(), MII.get(), MRI.get()));
   if (!MIB) {
     errs() << "BOLT-ERROR: failed to create instruction builder for target"
@@ -4182,10 +4182,10 @@ void RewriteInstance::rewriteFile() {
     if (!Section.isFinalized() || Section.isLocal())
       continue;
     if (opts::Verbosity >= 1) {
-      outs() << "BOLT: writing new section " << Section.getName() << '\n';
-      outs() << " data at 0x" << Twine::utohexstr(Section.getAllocAddress()) << '\n';
-      outs() << " of size " << Section.getOutputSize() << '\n';
-      outs() << " at offset " << Section.getFileOffset() << '\n';
+      outs() << "BOLT: writing new section " << Section.getName()
+             << "\n data at 0x" << Twine::utohexstr(Section.getAllocAddress())
+             << "\n of size " << Section.getOutputSize()
+             << "\n at offset " << Section.getFileOffset() << '\n';
     }
     OS.pwrite(reinterpret_cast<const char*>(Section.getOutputData()),
               Section.getOutputSize(),

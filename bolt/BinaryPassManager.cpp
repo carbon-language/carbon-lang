@@ -450,7 +450,7 @@ void BinaryFunctionPassManager::runAllPasses(
   Manager.registerPass(
     llvm::make_unique<InstructionLowering>(PrintAfterLowering));
 
-  Manager.registerPass(llvm::make_unique<StripAnnotations>(NeverPrint));
+  Manager.registerPass(llvm::make_unique<LowerAnnotations>(NeverPrint));
 
   Manager.runPasses();
 }

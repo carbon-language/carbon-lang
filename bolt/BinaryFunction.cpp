@@ -765,10 +765,11 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
       // Get or create a new label for the table.
       auto LI = JT->Labels.find(JTOffset);
       if (LI == JT->Labels.end()) {
-        auto *JTStartLabel = BC.registerNameAtAddress(generateJumpTableName(ArrayStart),
-                                                      ArrayStart,
-                                                      0,
-                                                      JT->EntrySize);
+        auto *JTStartLabel =
+          BC.registerNameAtAddress(generateJumpTableName(ArrayStart),
+                                   ArrayStart,
+                                   0,
+                                   JT->EntrySize);
         auto Result = JT->Labels.emplace(JTOffset, JTStartLabel);
         assert(Result.second && "error adding jump table label");
         LI = Result.first;
@@ -776,7 +777,7 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
 
       BC.MIB->replaceMemOperandDisp(const_cast<MCInst &>(*MemLocInstr),
                                     LI->second, BC.Ctx.get());
-      BC.MIB->setJumpTable(BC.Ctx.get(), Instruction, ArrayStart, IndexRegNum);
+      BC.MIB->setJumpTable(Instruction, ArrayStart, IndexRegNum);
 
       JTSites.emplace_back(Offset, ArrayStart);
 
@@ -873,7 +874,7 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
     JumpTables.emplace(ArrayStart, JT.release());
     BC.MIB->replaceMemOperandDisp(const_cast<MCInst &>(*MemLocInstr),
                                   JTStartLabel, BC.Ctx.get());
-    BC.MIB->setJumpTable(BC.Ctx.get(), Instruction, ArrayStart, IndexRegNum);
+    BC.MIB->setJumpTable(Instruction, ArrayStart, IndexRegNum);
 
     JTSites.emplace_back(Offset, ArrayStart);
 
@@ -1328,11 +1329,11 @@ add_instruction:
 
     // Record offset of the instruction for profile matching.
     if (BC.keepOffsetForInstruction(Instruction)) {
-      MIB->addAnnotation(Ctx.get(), Instruction, "Offset", Offset);
+      MIB->addAnnotation(Instruction, "Offset", Offset);
     }
 
     if (MemData && !emptyRange(MemData->getMemInfoRange(Offset))) {
-      MIB->addAnnotation(Ctx.get(), Instruction, "MemDataOffset", Offset);
+      MIB->addAnnotation(Instruction, "MemDataOffset", Offset);
     }
 
     addInstruction(Offset, std::move(Instruction));
@@ -1514,13 +1515,11 @@ void BinaryFunction::recomputeLandingPads() {
       if (!BC.MIB->isInvoke(Instr))
         continue;
 
-      const MCSymbol *LPLabel;
-      uint64_t Action;
-      std::tie(LPLabel, Action) = BC.MIB->getEHInfo(Instr);
-      if (!LPLabel)
+      const auto EHInfo = BC.MIB->getEHInfo(Instr);
+      if (!EHInfo || !EHInfo->first)
         continue;
 
-      auto *LPBlock = getBasicBlockForLabel(LPLabel);
+      auto *LPBlock = getBasicBlockForLabel(EHInfo->first);
       if (!BBLandingPads.count(LPBlock)) {
         BBLandingPads.insert(LPBlock);
         BB->LandingPads.emplace_back(LPBlock);
@@ -1583,7 +1582,7 @@ bool BinaryFunction::buildCFG() {
     assert(PrevBB && PrevBB != InsertBB && "invalid previous block");
     auto *PrevInstr = PrevBB->getLastNonPseudoInstr();
     if (PrevInstr && !MIB->hasAnnotation(*PrevInstr, "Offset"))
-      MIB->addAnnotation(BC.Ctx.get(), *PrevInstr, "Offset", Offset);
+      MIB->addAnnotation(*PrevInstr, "Offset", Offset);
   };
 
   for (auto I = Instructions.begin(), E = Instructions.end(); I != E; ++I) {
@@ -1887,10 +1886,8 @@ void BinaryFunction::removeConditionalTailCalls() {
     }
 
     // Assert that the tail call does not throw.
-    const MCSymbol *LP;
-    uint64_t Action;
-    std::tie(LP, Action) = BC.MIB->getEHInfo(*CTCInstr);
-    assert(!LP && "found tail call with associated landing pad");
+    assert(!BC.MIB->getEHInfo(*CTCInstr) &&
+           "found tail call with associated landing pad");
 
     // Create a basic block with an unconditional tail call instruction using
     // the same destination.
@@ -2159,7 +2156,6 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {
   if (EmitColdPart && hasConstantIsland())
     duplicateConstantIslands();
 
-  int64_t CurrentGnuArgsSize = 0;
   for (auto BB : layout()) {
     if (EmitColdPart != BB->isCold())
       continue;
@@ -2185,16 +2181,6 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {
       }
       if (opts::UpdateDebugSections && UnitLineTable.first) {
         LastLocSeen = emitLineInfo(Instr.getLoc(), LastLocSeen);
-      }
-
-      // Emit GNU_args_size CFIs as necessary.
-      if (usesGnuArgsSize() && BC.MIB->isInvoke(Instr)) {
-        auto NewGnuArgsSize = BC.MIB->getGnuArgsSize(Instr);
-        assert(NewGnuArgsSize >= 0 && "expected non-negative GNU_args_size");
-        if (NewGnuArgsSize != CurrentGnuArgsSize) {
-          CurrentGnuArgsSize = NewGnuArgsSize;
-          Streamer.EmitCFIGnuArgsSize(CurrentGnuArgsSize);
-        }
       }
 
       Streamer.EmitInstruction(Instr, *BC.STI);

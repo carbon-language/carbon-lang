@@ -327,7 +327,7 @@ private:
   void scheduleChange(ProgramPoint PP, T&& ...Item) {
     if (PP.isInst()) {
       auto &WList = BC.MIB->getOrCreateAnnotationAs<std::vector<WorklistItem>>(
-          BC.Ctx.get(), *PP.getInst(), getAnnotationName());
+          *PP.getInst(), getAnnotationName());
       WList.emplace_back(std::forward<T>(Item)...);
       return;
     }
@@ -344,7 +344,7 @@ private:
       BB = *BB->succ_begin();
     }
     auto &WList = BC.MIB->getOrCreateAnnotationAs<std::vector<WorklistItem>>(
-      BC.Ctx.get(), *BB->begin(), getAnnotationName());
+      *BB->begin(), getAnnotationName());
     WList.emplace_back(std::forward<T>(Item)...);
   }
 

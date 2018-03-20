@@ -11,6 +11,7 @@
 
 #include "DataflowAnalysis.h"
 #include "DataflowInfoManager.h"
+#include "MCPlus.h"
 #include "RegReAssign.h"
 #include <numeric>
 
@@ -44,7 +45,7 @@ void RegReAssign::swap(BinaryContext &BC, BinaryFunction &Function, MCPhysReg A,
   // Regular instructions
   for (auto &BB : Function) {
     for (auto &Inst : BB) {
-      for (int I = 0, E = Inst.getNumPrimeOperands(); I != E; ++I) {
+      for (int I = 0, E = MCPlus::getNumPrimeOperands(Inst); I != E; ++I) {
         auto &Operand = Inst.getOperand(I);
         if (!Operand.isReg())
           continue;
@@ -145,7 +146,7 @@ void RegReAssign::rankRegisters(BinaryContext &BC, BinaryFunction &Function) {
         ++ImplicitDefs;
       }
 
-      for (int I = 0, E = Inst.getNumPrimeOperands(); I != E; ++I) {
+      for (int I = 0, E = MCPlus::getNumPrimeOperands(Inst); I != E; ++I) {
         const auto &Operand = Inst.getOperand(I);
         if (!Operand.isReg())
           continue;

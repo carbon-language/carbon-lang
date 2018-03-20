@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "MCPlus.h"
 #include "MCPlusBuilder.h"
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInst.h"
@@ -24,197 +25,192 @@
 
 using namespace llvm;
 using namespace bolt;
+using namespace MCPlus;
 
-bool MCPlusBuilder::evaluateBranch(const MCInst &Inst, uint64_t Addr,
-                                   uint64_t Size, uint64_t &Target) const {
-  return Analysis->evaluateBranch(Inst, Addr, Size, Target);
+
+Optional<MCLandingPad> MCPlusBuilder::getEHInfo(const MCInst &Inst) const {
+  if (!isCall(Inst))
+    return NoneType();
+  auto LPSym = getAnnotationOpValue(Inst, MCAnnotation::kEHLandingPad);
+  if (!LPSym)
+    return NoneType();
+  auto Action = getAnnotationOpValue(Inst, MCAnnotation::kEHAction);
+  if (!Action)
+    return NoneType();
+
+  return std::make_pair(reinterpret_cast<const MCSymbol *>(*LPSym),
+                        static_cast<uint64_t>(*Action));
 }
 
-namespace {
-
-const MCLandingPad *findLandingPad(const MCInst &Inst) {
-  for (unsigned I = Inst.getNumOperands(); I > 0; --I) {
-    const auto &Op = Inst.getOperand(I - 1);
-    if (Op.isLandingPad()) {
-      return Op.getLandingPad();
-    }
-  }
-  return nullptr;
-}
-
-}
-
-bool MCPlusBuilder::hasEHInfo(const MCInst &Inst) const {
-  return findLandingPad(Inst) != nullptr;
-}
-
-MCLandingPad MCPlusBuilder::getEHInfo(const MCInst &Inst) const {
-  const MCSymbol *LPSym = nullptr;
-  uint64_t Action = 0;
+void MCPlusBuilder::addEHInfo(MCInst &Inst, const MCLandingPad &LP) {
   if (isCall(Inst)) {
-    if (auto LP = findLandingPad(Inst)) {
-      std::tie(LPSym, Action) = *LP;
-    }
-  }
-
-  return std::make_pair(LPSym, Action);
-}
-
-// Add handler and action info for call instruction.
-void MCPlusBuilder::addEHInfo(MCInst &Inst,
-                                const MCLandingPad &LP,
-                                MCContext *Ctx) const {
-  if (isCall(Inst)) {
-    assert(!hasEHInfo(Inst));
-    Inst.addOperand(
-      MCOperand::createLandingPad(new (*Ctx) MCLandingPad(LP)));
+    assert(!getEHInfo(Inst));
+    setAnnotationOpValue(Inst, MCAnnotation::kEHLandingPad,
+                         reinterpret_cast<int64_t>(LP.first));
+    setAnnotationOpValue(Inst, MCAnnotation::kEHAction,
+                         static_cast<int64_t>(LP.second));
   }
 }
 
 int64_t MCPlusBuilder::getGnuArgsSize(const MCInst &Inst) const {
-  for (unsigned I = Inst.getNumOperands(); I > 0; --I) {
-    const auto &Op = Inst.getOperand(I - 1);
-    if (Op.isGnuArgsSize()) {
-      return Op.getGnuArgsSize();
-    }
-  }
-  return -1LL;
+  auto Value = getAnnotationOpValue(Inst, MCAnnotation::kGnuArgsSize);
+  if (!Value)
+    return -1LL;
+  return *Value;
 }
 
-void MCPlusBuilder::addGnuArgsSize(MCInst &Inst, int64_t GnuArgsSize) const {
+void MCPlusBuilder::addGnuArgsSize(MCInst &Inst, int64_t GnuArgsSize) {
   assert(GnuArgsSize >= 0 && "cannot set GNU_args_size to negative value");
   assert(getGnuArgsSize(Inst) == -1LL && "GNU_args_size already set");
   assert(isInvoke(Inst) && "GNU_args_size can only be set for invoke");
 
-  Inst.addOperand(MCOperand::createGnuArgsSize(GnuArgsSize));
+  setAnnotationOpValue(Inst, MCAnnotation::kGnuArgsSize, GnuArgsSize);
 }
 
 uint64_t MCPlusBuilder::getJumpTable(const MCInst &Inst) const {
-  for (unsigned I = Inst.getNumOperands(); I > 0; --I) {
-    const auto &Op = Inst.getOperand(I - 1);
-    if (Op.isJumpTable()) {
-      return Op.getJumpTable();
-    }
-  }
-  return 0;
+  auto Value = getAnnotationOpValue(Inst, MCAnnotation::kJumpTable);
+  if (!Value)
+    return 0;
+  return *Value;
 }
 
-bool MCPlusBuilder::setJumpTable(MCContext *Ctx, MCInst &Inst, uint64_t Value,
-                                   uint16_t IndexReg) const {
+bool MCPlusBuilder::setJumpTable(MCInst &Inst, uint64_t Value,
+                                 uint16_t IndexReg) {
   if (!isIndirectBranch(Inst))
     return false;
   assert(getJumpTable(Inst) == 0 && "jump table already set");
-  Inst.addOperand(MCOperand::createJumpTable(Value));
-  addAnnotation<>(Ctx, Inst, "JTIndexReg", IndexReg);
+  setAnnotationOpValue(Inst, MCAnnotation::kJumpTable, Value);
+  addAnnotation<>(Inst, "JTIndexReg", IndexReg);
   return true;
 }
 
 Optional<uint64_t>
 MCPlusBuilder::getConditionalTailCall(const MCInst &Inst) const {
-  for (unsigned I = Inst.getNumOperands(); I > 0; --I) {
-    const auto &Op = Inst.getOperand(I - 1);
-    if (Op.isConditionalTailCall()) {
-      return Op.getConditionalTailCall();
-    }
-  }
-  return NoneType();
+  auto Value = getAnnotationOpValue(Inst, MCAnnotation::kConditionalTailCall);
+  if (!Value)
+    return NoneType();
+  return static_cast<uint64_t>(*Value);
 }
 
 bool
-MCPlusBuilder::setConditionalTailCall(MCInst &Inst, uint64_t Dest) const {
+MCPlusBuilder::setConditionalTailCall(MCInst &Inst, uint64_t Dest) {
   if (!isConditionalBranch(Inst))
     return false;
 
-  for (unsigned I = Inst.getNumOperands(); I > 0; --I) {
-    auto &Op = Inst.getOperand(I - 1);
-    if (Op.isConditionalTailCall()) {
-      Op.setConditionalTailCall(Dest);
-      return true;
-    }
-  }
-
-  Inst.addOperand(MCOperand::createConditionalTailCall(Dest));
+  setAnnotationOpValue(Inst, MCAnnotation::kConditionalTailCall, Dest);
   return true;
 }
 
-bool MCPlusBuilder::unsetConditionalTailCall(MCInst &Inst) const {
-  for (auto OpI = Inst.begin(), OpE = Inst.end(); OpI != OpE; ++OpI) {
-    if (OpI->isConditionalTailCall()) {
-      Inst.erase(OpI);
-      return true;
-    }
-  }
-
-  return false;
-}
-
-namespace {
-
-unsigned findAnnotationIndex(const MCInst &Inst, StringRef Name) {
-  for (unsigned I = Inst.getNumOperands(); I > 0; --I) {
-    const auto& Op = Inst.getOperand(I - 1);
-    if (Op.isAnnotation() && Op.getAnnotation()->getName() == Name) {
-      return I - 1;
-    }
-  }
-  return Inst.getNumOperands();
-}
-
+bool MCPlusBuilder::unsetConditionalTailCall(MCInst &Inst) {
+  if (!getConditionalTailCall(Inst))
+    return false;
+  setAnnotationOpValue(Inst, MCAnnotation::kConditionalTailCall, INVALID_VALUE);
+  return true;
 }
 
 bool MCPlusBuilder::hasAnnotation(const MCInst &Inst, StringRef Name) const {
-  return findAnnotationIndex(Inst, Name) < Inst.getNumOperands();
-}
-
-bool MCPlusBuilder::removeAnnotation(MCInst &Inst, StringRef Name) const {
-  const auto Idx = findAnnotationIndex(Inst, Name);
-  if (Idx < Inst.getNumOperands()) {
-    auto *Annotation = Inst.getOperand(Idx).getAnnotation();
-    auto Itr = AnnotationPool.find(Annotation);
-    if (Itr != AnnotationPool.end()) {
-      AnnotationPool.erase(Itr);
-      Annotation->~MCAnnotation();
-    }
-    Inst.erase(Inst.begin() + Idx);
-    return true;
-  }
-  return false;
-}
-
-void MCPlusBuilder::removeAllAnnotations(MCInst &Inst) const {
-  for (auto Idx = Inst.getNumOperands(); Idx > 0; --Idx) {
-    auto &Op = Inst.getOperand(Idx - 1);
-    if (Op.isAnnotation()) {
-      auto *Annotation = Op.getAnnotation();
-      auto Itr = AnnotationPool.find(Annotation);
-      if (Itr != AnnotationPool.end()) {
-        AnnotationPool.erase(Itr);
-        Annotation->~MCAnnotation();
-      }
-      Inst.erase(Inst.begin() + Idx - 1);
-    }
-  }
-}
-
-bool MCPlusBuilder::renameAnnotation(MCInst &Inst,
-                                       StringRef Before,
-                                       StringRef After) const {
-  const auto Idx = findAnnotationIndex(Inst, Before);
-  if (Idx >= Inst.getNumOperands()) {
+  const auto *AnnotationInst = getAnnotationInst(Inst);
+  if (!AnnotationInst)
     return false;
-  }
-  auto *Annotation = Inst.getOperand(Idx).getAnnotation();
-  auto PooledName = AnnotationNames.intern(After);
-  AnnotationNameRefs.insert(PooledName);
-  Annotation->setName(*PooledName);
+
+  auto AI = AnnotationNameIndexMap.find(Name);
+  if (AI == AnnotationNameIndexMap.end())
+    return false;
+
+  if (AI->second + 1 > AnnotationInst->getNumOperands())
+    return false;
+
+  const auto Value = AnnotationInst->getOperand(AI->second).getImm();
+  if (Value == INVALID_VALUE)
+    return false;
+
   return true;
 }
 
 const MCAnnotation *
 MCPlusBuilder::getAnnotation(const MCInst &Inst, StringRef Name) const {
-  const auto Idx = findAnnotationIndex(Inst, Name);
-  assert(Idx < Inst.getNumOperands());
-  return Inst.getOperand(Idx).getAnnotation();
+  const auto Idx = getAnnotationIndex(Name);
+  if (!Idx)
+    return nullptr;
+
+  auto Value = getAnnotationOpValue(Inst, *Idx);
+  if (!Value)
+    return nullptr;
+  return reinterpret_cast<MCAnnotation *>(*Value);
+}
+
+bool MCPlusBuilder::removeAnnotation(MCInst &Inst, StringRef Name) {
+  auto *AnnotationInst = getAnnotationInst(Inst);
+  if (!AnnotationInst)
+    return false;
+
+  const auto Idx = getAnnotationIndex(Name);
+  if (!Idx || *Idx >= AnnotationInst->getNumOperands())
+    return false;
+
+  auto &Op = AnnotationInst->getOperand(*Idx);
+  assert(Op.isImm());
+  if (Op.getImm() == INVALID_VALUE)
+    return false;
+
+  auto *Annotation = reinterpret_cast<MCAnnotation *>(Op.getImm());
+  auto Itr = AnnotationPool.find(Annotation);
+  if (Itr != AnnotationPool.end()) {
+    AnnotationPool.erase(Itr);
+    Annotation->~MCAnnotation();
+  }
+
+  AnnotationInst->getOperand(*Idx).setImm(INVALID_VALUE);
+
+  return true;
+}
+
+void MCPlusBuilder::removeAllAnnotations(MCInst &Inst) {
+  auto *AnnotationInst = getAnnotationInst(Inst);
+  if (!AnnotationInst)
+    return;
+
+  for (unsigned I = AnnotationInst->getNumOperands() - 1;
+       I >= MCAnnotation::kGeneric; --I) {
+    const auto &Op = AnnotationInst->getOperand(I);
+    assert(Op.isImm());
+    if (Op.getImm() == INVALID_VALUE)
+      continue;
+    auto *Annotation = reinterpret_cast<MCAnnotation *>(Op.getImm());
+    auto Itr = AnnotationPool.find(Annotation);
+    if (Itr != AnnotationPool.end()) {
+      AnnotationPool.erase(Itr);
+      Annotation->~MCAnnotation();
+    }
+  }
+
+  // Clear all attached MC+ info since it's no longer used.
+  Inst.erase(std::prev(Inst.end()));
+}
+
+void
+MCPlusBuilder::printAnnotations(const MCInst &Inst, raw_ostream &OS) const {
+  const auto *AnnotationInst = getAnnotationInst(Inst);
+  if (!AnnotationInst)
+    return;
+
+  for (unsigned I = MCAnnotation::kGeneric;
+       I < AnnotationInst->getNumOperands(); ++I) {
+    const auto &Op = AnnotationInst->getOperand(I);
+    assert(Op.isImm());
+    if (Op.getImm() == INVALID_VALUE)
+      continue;
+    const auto *Annotation =
+        reinterpret_cast<const MCAnnotation *>(Op.getImm());
+    OS << " # " << AnnotationNames[I - MCAnnotation::kGeneric]
+       << ": ";
+    Annotation->print(OS);
+  }
+}
+
+bool MCPlusBuilder::evaluateBranch(const MCInst &Inst, uint64_t Addr,
+                                   uint64_t Size, uint64_t &Target) const {
+  return Analysis->evaluateBranch(Inst, Addr, Size, Target);
 }
 
 void MCPlusBuilder::getClobberedRegs(const MCInst &Inst,

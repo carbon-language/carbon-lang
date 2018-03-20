@@ -48,7 +48,7 @@ void StokeInfo::checkInstr(const BinaryContext &BC, const BinaryFunction &BF,
         continue;
       }
       // skip function with exception handling yet
-      if (BC.MIB->isEHLabel(It) || BC.MIB->isInvoke(It) || BC.MIB->hasEHInfo(It)) {
+      if (BC.MIB->isEHLabel(It) || BC.MIB->isInvoke(It)) {
         FuncInfo.Omitted = true;
         return;
       }

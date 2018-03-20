@@ -23,6 +23,7 @@
 #include "DataReader.h"
 #include "DebugData.h"
 #include "JumpTable.h"
+#include "MCPlus.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/iterator.h"
@@ -426,7 +427,7 @@ private:
     //
     //    * instructions with landing pads
     //
-    // Most of the common cases should be handled by MCInst::equals()
+    // Most of the common cases should be handled by MCPlus::equals()
     // that compares regular instruction operands.
     //
     // NB: there's no need to compare jump table indirect jump instructions
@@ -435,23 +436,33 @@ private:
     const auto EHInfoA = BC.MIB->getEHInfo(InstA);
     const auto EHInfoB = BC.MIB->getEHInfo(InstB);
 
-    // Action indices should match.
-    if (EHInfoA.second != EHInfoB.second)
-      return false;
-
-    if (!EHInfoA.first != !EHInfoB.first)
-      return false;
-
-    if (EHInfoA.first && EHInfoB.first) {
-      const auto *LPA = BBA.getLandingPad(EHInfoA.first);
-      const auto *LPB = BBB.getLandingPad(EHInfoB.first);
-      assert(LPA && LPB && "cannot locate landing pad(s)");
-
-      if (LPA->getLayoutIndex() != LPB->getLayoutIndex())
+    if (EHInfoA || EHInfoB) {
+      if (!EHInfoA && (EHInfoB->first || EHInfoB->second))
         return false;
+
+      if (!EHInfoB && (EHInfoA->first || EHInfoA->second))
+        return false;
+
+      if (EHInfoA && EHInfoB) {
+        // Action indices should match.
+        if (EHInfoA->second != EHInfoB->second)
+          return false;
+
+        if (!EHInfoA->first != !EHInfoB->first)
+          return false;
+
+        if (EHInfoA->first && EHInfoB->first) {
+          const auto *LPA = BBA.getLandingPad(EHInfoA->first);
+          const auto *LPB = BBB.getLandingPad(EHInfoB->first);
+          assert(LPA && LPB && "cannot locate landing pad(s)");
+
+          if (LPA->getLayoutIndex() != LPB->getLayoutIndex())
+            return false;
+        }
+      }
     }
 
-    return InstA.equals(InstB, Comp);
+    return MCPlus::equals(InstA, InstB, Comp);
   }
 
   /// Recompute landing pad information for the function and all its blocks.
@@ -928,9 +939,9 @@ public:
   BinaryBasicBlock *getLandingPadBBFor(const BinaryBasicBlock &BB,
                                        const MCInst &InvokeInst) {
     assert(BC.MIB->isInvoke(InvokeInst) && "must be invoke instruction");
-    MCLandingPad LP = BC.MIB->getEHInfo(InvokeInst);
-    if (LP.first) {
-      auto *LBB = BB.getLandingPad(LP.first);
+    const auto LP = BC.MIB->getEHInfo(InvokeInst);
+    if (LP && LP->first) {
+      auto *LBB = BB.getLandingPad(LP->first);
       assert (LBB && "Landing pad should be defined");
       return LBB;
     }
@@ -2371,14 +2382,6 @@ template <> struct GraphTraits<Inverse<const bolt::BinaryFunction *>> :
   public GraphTraits<Inverse<const bolt::BinaryBasicBlock *>> {
   static NodeRef getEntryNode(Inverse<const bolt::BinaryFunction *> G) {
     return *G.Graph->layout_begin();
-  }
-};
-
-template <>
-class MCAnnotationPrinter<bolt::IndirectCallSiteProfile> {
-public:
-  void print(raw_ostream &OS, const bolt::IndirectCallSiteProfile &ICSP) const {
-    OS << ICSP;
   }
 };
 

@@ -234,7 +234,7 @@ protected:
 
   StateTy &getOrCreateStateAt(MCInst &Point) {
     return BC.MIB->getOrCreateAnnotationAs<StateTy>(
-        BC.Ctx.get(), Point, derived().getAnnotationName(), StatePrinterTy(BC));
+        Point, derived().getAnnotationName());
   }
 
   StateTy &getOrCreateStateAt(ProgramPoint Point) {

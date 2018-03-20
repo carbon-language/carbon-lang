@@ -94,7 +94,7 @@ LongJmpPass::replaceTargetWithStub(const BinaryContext &BC,
     // This is a special case for fixBranches, which is usually free to swap
     // targets when a block has two successors. The other successor may not
     // fit in this instruction as well.
-    BC.MIB->addAnnotation(BC.Ctx.get(), Inst, "DoNotChangeTarget", true);
+    BC.MIB->addAnnotation(Inst, "DoNotChangeTarget", true);
   }
 
   BinaryBasicBlock *StubBB =
@@ -398,7 +398,7 @@ bool LongJmpPass::removeOrShrinkStubs(const BinaryContext &BC,
         uint64_t Mask = ~((1ULL << BitsAvail) - 1);
         if ((Offset & Mask) &&
             !BC.MIB->hasAnnotation(Inst, "DoNotChangeTarget")) {
-          BC.MIB->addAnnotation(BC.Ctx.get(), Inst, "DoNotChangeTarget", true);
+          BC.MIB->addAnnotation(Inst, "DoNotChangeTarget", true);
         } else if ((!(Offset & Mask)) &&
                    BC.MIB->hasAnnotation(Inst, "DoNotChangeTarget")) {
           BC.MIB->removeAnnotation(Inst, "DoNotChangeTarget");

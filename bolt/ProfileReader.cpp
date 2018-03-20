@@ -127,12 +127,12 @@ ProfileReader::parseFunctionProfile(BinaryFunction &BF,
                    << " in function " << BF << '\n';
           return;
         }
-        BC.MIB->addAnnotation(BC.Ctx.get(), *Instr, Name, Count);
+        BC.MIB->addAnnotation(*Instr, Name, Count);
       };
 
       if (BC.MIB->isIndirectCall(*Instr) || BC.MIB->isIndirectBranch(*Instr)) {
         IndirectCallSiteProfile &CSP =
-          BC.MIB->getOrCreateAnnotationAs<IndirectCallSiteProfile>(BC.Ctx.get(),
+          BC.MIB->getOrCreateAnnotationAs<IndirectCallSiteProfile>(
               *Instr, "CallProfile");
         CSP.emplace_back(IsFunction, Name, YamlCSI.Count, YamlCSI.Mispreds);
       } else if (BC.MIB->getConditionalTailCall(*Instr)) {

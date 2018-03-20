@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "MCPlus.h"
 #include "MCPlusBuilder.h"
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCCodeEmitter.h"
@@ -162,19 +163,6 @@ public:
     return isLDRB(Inst) || isLDRH(Inst) || isLDRW(Inst) || isLDRX(Inst);
   }
 
-  bool isEHLabel(const MCInst &Inst) const override {
-    return Inst.getOpcode() == AArch64::EH_LABEL;
-  }
-
-  bool createEHLabel(MCInst &Inst, const MCSymbol *Label,
-                     MCContext *Ctx) const override {
-    Inst.setOpcode(AArch64::EH_LABEL);
-    Inst.clear();
-    Inst.addOperand(MCOperand::createExpr(
-        MCSymbolRefExpr::create(Label, MCSymbolRefExpr::VK_None, *Ctx)));
-    return true;
-  }
-
   bool isLoadFromStack(const MCInst &Inst) const {
     if (!isLoad(Inst))
       return false;
@@ -291,7 +279,8 @@ public:
   bool replaceMemOperandDisp(MCInst &Inst, MCOperand Operand) const override {
     MCInst::iterator OI = Inst.begin();
     if (isADR(Inst)) {
-      assert(Inst.getNumPrimeOperands() >= 2 && "Unexpected number of operands");
+      assert(MCPlus::getNumPrimeOperands(Inst) >= 2 &&
+             "Unexpected number of operands");
       ++OI;
     } else {
       const auto MCII = Info->get(Inst.getOpcode());
@@ -376,12 +365,14 @@ public:
     size_t OpNum = 0;
 
     if (isConditionalBranch(Inst)) {
-      assert(Inst.getNumPrimeOperands() >= 2 && "Invalid number of operands");
+      assert(MCPlus::getNumPrimeOperands(Inst) >= 2 &&
+             "Invalid number of operands");
       OpNum = 1;
     }
 
     if (isTB(Inst)) {
-      assert(Inst.getNumPrimeOperands() >= 3 && "Invalid number of operands");
+      assert(MCPlus::getNumPrimeOperands(Inst) >= 3 &&
+             "Invalid number of operands");
       OpNum = 2;
     }
 
@@ -401,16 +392,19 @@ public:
                            MCContext *Ctx) const override {
     assert((isCall(Inst) || isBranch(Inst)) && !isIndirectBranch(Inst) &&
            "Invalid instruction");
-    assert(Inst.getNumPrimeOperands() >= 1 && "Invalid number of operands");
+    assert(MCPlus::getNumPrimeOperands(Inst) >= 1 &&
+           "Invalid number of operands");
     MCInst::iterator OI = Inst.begin();
 
     if (isConditionalBranch(Inst)) {
-      assert(Inst.getNumPrimeOperands() >= 2 && "Invalid number of operands");
+      assert(MCPlus::getNumPrimeOperands(Inst) >= 2 &&
+             "Invalid number of operands");
       ++OI;
     }
 
     if (isTB(Inst)) {
-      assert(Inst.getNumPrimeOperands() >= 3 && "Invalid number of operands");
+      assert(MCPlus::getNumPrimeOperands(Inst) >= 3 &&
+             "Invalid number of operands");
       OI = Inst.begin() + 2;
     }
 
@@ -651,19 +645,6 @@ public:
     }
   }
 
-  bool createCFI(MCInst &Inst, int64_t Offset) const override {
-    Inst.clear();
-    Inst.setOpcode(AArch64::CFI_INSTRUCTION);
-    Inst.addOperand(MCOperand::createImm(Offset));
-    return true;
-  }
-
-  bool isCFI(const MCInst &Inst) const override {
-    if (Inst.getOpcode() == AArch64::CFI_INSTRUCTION)
-      return true;
-    return false;
-  }
-
   bool reverseBranchCondition(MCInst &Inst, const MCSymbol *TBB,
                               MCContext *Ctx) const override {
     if (isTB(Inst) || isCB(Inst)) {
@@ -719,45 +700,32 @@ public:
   }
 
   bool createTailCall(MCInst &Inst, const MCSymbol *Target,
-                      MCContext *Ctx) const override {
+                      MCContext *Ctx) override {
     Inst.setOpcode(AArch64::B);
     Inst.addOperand(MCOperand::createExpr(getTargetExprFor(
         Inst, MCSymbolRefExpr::create(Target, MCSymbolRefExpr::VK_None, *Ctx),
         *Ctx, 0)));
-    addAnnotation(Ctx, Inst, "TC", true);
+    addAnnotation(Inst, "TC", true);
     return true;
   }
 
-  bool convertJmpToTailCall(MCInst &Inst, MCContext *Ctx) const override {
-    addAnnotation(Ctx, Inst, "TC", true);
+  bool convertJmpToTailCall(MCInst &Inst, MCContext *Ctx) override {
+    addAnnotation(Inst, "TC", true);
     return true;
   }
 
-  bool convertTailCallToJmp(MCInst &Inst) const override {
+  bool convertTailCallToJmp(MCInst &Inst) override {
     removeAnnotation(Inst, "TC");
     removeAnnotation(Inst, "Offset");
-    if (getConditionalTailCall(Inst)) {
-      for (auto I = Inst.begin(), E = Inst.end(); I != E; ++I) {
-        if (I->isConditionalTailCall()) {
-          Inst.erase(I);
-          return true;
-        }
-      }
-    }
+    if (getConditionalTailCall(Inst))
+      unsetConditionalTailCall(Inst);
     return true;
   }
 
-  bool lowerTailCall(MCInst &Inst) const override {
+  bool lowerTailCall(MCInst &Inst) override {
     removeAnnotation(Inst, "TC");
-    if (getConditionalTailCall(Inst)) {
-      for (auto I = Inst.begin(), E = Inst.end(); I != E; ++I) {
-        if (I->isConditionalTailCall()) {
-          Inst.erase(I);
-          return true;
-        }
-      }
-      llvm_unreachable("Tail call operand not found");
-    }
+    if (getConditionalTailCall(Inst))
+      unsetConditionalTailCall(Inst);
     return true;
   }
 

@@ -686,15 +686,14 @@ void BinaryContext::printInstruction(raw_ostream &OS,
     if (MIB->isTailCall(Instruction))
       OS << " # TAILCALL ";
     if (MIB->isInvoke(Instruction)) {
-      const MCSymbol *LP;
-      uint64_t Action;
-      std::tie(LP, Action) = MIB->getEHInfo(Instruction);
-      OS << " # handler: ";
-      if (LP)
-        OS << *LP;
-      else
-        OS << '0';
-      OS << "; action: " << Action;
+      if (const auto EHInfo = MIB->getEHInfo(Instruction)) {
+        OS << " # handler: ";
+        if (EHInfo->first)
+          OS << *EHInfo->first;
+        else
+          OS << '0';
+        OS << "; action: " << EHInfo->second;
+      }
       auto GnuArgsSize = MIB->getGnuArgsSize(Instruction);
       if (GnuArgsSize >= 0)
         OS << "; GNU_args_size = " << GnuArgsSize;
@@ -706,13 +705,7 @@ void BinaryContext::printInstruction(raw_ostream &OS,
     }
   }
 
-  MIB->forEachAnnotation(
-    Instruction,
-    [&OS](const MCAnnotation *Annotation) {
-      OS << " # " << Annotation->getName() << ": ";
-      Annotation->print(OS);
-    }
-  );
+  MIB->printAnnotations(Instruction, OS);
 
   const DWARFDebugLine::LineTable *LineTable =
     Function && opts::PrintDebugInfo ? Function->getDWARFUnitLineTable().second

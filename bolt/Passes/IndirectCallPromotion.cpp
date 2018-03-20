@@ -451,9 +451,7 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(
       }
     });
 
-  BC.MIB->getOrCreateAnnotationAs<uint16_t>(BC.Ctx.get(),
-                                            CallInst,
-                                            "JTIndexReg") = IndexReg;
+  BC.MIB->getOrCreateAnnotationAs<uint16_t>(CallInst, "JTIndexReg") = IndexReg;
 
   TargetFetchInst = MemLocInstr;
 
@@ -1225,7 +1223,7 @@ void IndirectCallPromotion::runOnFunctions(
     // Mark sites to optimize with "DoICP" annotation.
     for (size_t I = 0; I < Num; ++I) {
       auto *Inst = IndirectCalls[I].second;
-      BC.MIB->addAnnotation(BC.Ctx.get(), *Inst, "DoICP", true);
+      BC.MIB->addAnnotation(*Inst, "DoICP", true);
     }
   }
 

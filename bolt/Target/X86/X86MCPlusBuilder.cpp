@@ -255,10 +255,6 @@ public:
            Inst.getOpcode() == X86::UD2B || Inst.getOpcode() == X86::TRAP;
   }
 
-  bool isEHLabel(const MCInst &Inst) const override {
-    return Inst.getOpcode() == X86::EH_LABEL;
-  }
-
   bool isIndirectCall(const MCInst &Inst) const override {
     return isCall(Inst) &&
            ((getMemoryOperandNo(Inst) != -1) || Inst.getOperand(0).isReg());
@@ -444,7 +440,7 @@ public:
         : Base(std::move(Base)), Scale(std::move(Scale)),
           Index(std::move(Index)), Offset(std::move(Offset)) {}
 
-    bool match(const MCRegisterInfo &MRI, const MCPlusBuilder &MIB,
+    bool match(const MCRegisterInfo &MRI, MCPlusBuilder &MIB,
                MutableArrayRef<MCInst> InInstrWindow, int OpNum) override {
       if (!MCInstMatcher::match(MRI, MIB, InInstrWindow, OpNum))
         return false;
@@ -469,13 +465,12 @@ public:
       return true;
     }
 
-    void annotate(const MCPlusBuilder &MIB, MCContext &Ctx,
-                  StringRef Annotation) override {
-      MIB.addAnnotation(&Ctx, *CurInst, Annotation, true);
-      Base->annotate(MIB, Ctx, Annotation);
-      Scale->annotate(MIB, Ctx, Annotation);
-      Index->annotate(MIB, Ctx, Annotation);
-      Offset->annotate(MIB, Ctx, Annotation);
+    void annotate(MCPlusBuilder &MIB, StringRef Annotation) override {
+      MIB.addAnnotation(*CurInst, Annotation, true);
+      Base->annotate(MIB, Annotation);
+      Scale->annotate(MIB, Annotation);
+      Index->annotate(MIB, Annotation);
+      Offset->annotate(MIB, Annotation);
     }
   };
 
@@ -495,7 +490,7 @@ public:
     IndJmpMatcherFrag2(std::unique_ptr<MCInstMatcher> Reg)
         : Reg(std::move(Reg)) {}
 
-    bool match(const MCRegisterInfo &MRI, const MCPlusBuilder &MIB,
+    bool match(const MCRegisterInfo &MRI, MCPlusBuilder &MIB,
                MutableArrayRef<MCInst> InInstrWindow, int OpNum) override {
       if (!MCInstMatcher::match(MRI, MIB, InInstrWindow, OpNum))
         return false;
@@ -506,10 +501,9 @@ public:
       return Reg->match(MRI, MIB, this->InstrWindow, 0);
     }
 
-    void annotate(const MCPlusBuilder &MIB, MCContext &Ctx,
-                  StringRef Annotation) override {
-      MIB.addAnnotation(&Ctx, *CurInst, Annotation, true);
-      Reg->annotate(MIB, Ctx, Annotation);
+    void annotate(MCPlusBuilder &MIB, StringRef Annotation) override {
+      MIB.addAnnotation(*CurInst, Annotation, true);
+      Reg->annotate(MIB, Annotation);
     }
   };
 
@@ -532,7 +526,7 @@ public:
         : Base(std::move(Base)), Scale(std::move(Scale)),
           Index(std::move(Index)), Offset(std::move(Offset)) {}
 
-    bool match(const MCRegisterInfo &MRI, const MCPlusBuilder &MIB,
+    bool match(const MCRegisterInfo &MRI, MCPlusBuilder &MIB,
                MutableArrayRef<MCInst> InInstrWindow, int OpNum) override {
       if (!MCInstMatcher::match(MRI, MIB, InInstrWindow, OpNum))
         return false;
@@ -558,13 +552,12 @@ public:
       return true;
     }
 
-    void annotate(const MCPlusBuilder &MIB, MCContext &Ctx,
-                  StringRef Annotation) override {
-      MIB.addAnnotation(&Ctx, *CurInst, Annotation, true);
-      Base->annotate(MIB, Ctx, Annotation);
-      Scale->annotate(MIB, Ctx, Annotation);
-      Index->annotate(MIB, Ctx, Annotation);
-      Offset->annotate(MIB, Ctx, Annotation);
+    void annotate(MCPlusBuilder &MIB, StringRef Annotation) override {
+      MIB.addAnnotation(*CurInst, Annotation, true);
+      Base->annotate(MIB, Annotation);
+      Scale->annotate(MIB, Annotation);
+      Index->annotate(MIB, Annotation);
+      Offset->annotate(MIB, Annotation);
     }
   };
 
@@ -586,7 +579,7 @@ public:
                std::unique_ptr<MCInstMatcher> B)
         : A(std::move(A)), B(std::move(B)) {}
 
-    bool match(const MCRegisterInfo &MRI, const MCPlusBuilder &MIB,
+    bool match(const MCRegisterInfo &MRI, MCPlusBuilder &MIB,
                MutableArrayRef<MCInst> InInstrWindow, int OpNum) override {
       if (!MCInstMatcher::match(MRI, MIB, InInstrWindow, OpNum))
         return false;
@@ -611,11 +604,10 @@ public:
       return false;
     }
 
-    void annotate(const MCPlusBuilder &MIB, MCContext &Ctx,
-                  StringRef Annotation) override {
-      MIB.addAnnotation(&Ctx, *CurInst, Annotation, true);
-      A->annotate(MIB, Ctx, Annotation);
-      B->annotate(MIB, Ctx, Annotation);
+    void annotate(MCPlusBuilder &MIB, StringRef Annotation) override {
+      MIB.addAnnotation(*CurInst, Annotation, true);
+      A->annotate(MIB, Annotation);
+      B->annotate(MIB, Annotation);
     }
   };
 
@@ -632,7 +624,7 @@ public:
     LEAMatcher(std::unique_ptr<MCInstMatcher> Target)
         : Target(std::move(Target)) {}
 
-    bool match(const MCRegisterInfo &MRI, const MCPlusBuilder &MIB,
+    bool match(const MCRegisterInfo &MRI, MCPlusBuilder &MIB,
                MutableArrayRef<MCInst> InInstrWindow, int OpNum) override {
       if (!MCInstMatcher::match(MRI, MIB, InInstrWindow, OpNum))
         return false;
@@ -651,10 +643,9 @@ public:
       return Target->match(MRI, MIB, this->InstrWindow, 1 + X86::AddrDisp);
     }
 
-    void annotate(const MCPlusBuilder &MIB, MCContext &Ctx,
-                  StringRef Annotation) override {
-      MIB.addAnnotation(&Ctx, *CurInst, Annotation, true);
-      Target->annotate(MIB, Ctx, Annotation);
+    void annotate(MCPlusBuilder &MIB, StringRef Annotation) override {
+      MIB.addAnnotation(*CurInst, Annotation, true);
+      Target->annotate(MIB, Annotation);
     }
   };
 
@@ -700,7 +691,7 @@ public:
       return false;
     unsigned MemOpOffset = static_cast<unsigned>(MemOpNo);
 
-    if (MemOpOffset + X86::AddrSegmentReg >= Inst.getNumPrimeOperands())
+    if (MemOpOffset + X86::AddrSegmentReg >= MCPlus::getNumPrimeOperands(Inst))
       return false;
 
     auto &Base  =   Inst.getOperand(MemOpOffset + X86::AddrBaseReg);
@@ -1007,7 +998,7 @@ public:
       case X86::MOVZX32rm8:
       case X86::MOVZX32rr8:
       case X86::TEST8ri:
-        for (int I = 0, E = Inst.getNumPrimeOperands(); I != E; ++I) {
+        for (int I = 0, E = MCPlus::getNumPrimeOperands(Inst); I != E; ++I) {
           const auto &Operand = Inst.getOperand(I);
           if (!Operand.isReg())
             continue;
@@ -1380,7 +1371,7 @@ public:
     // We use this to detect LEA (has memop but does not access mem)
     bool AccessMem = MCII.mayLoad() || MCII.mayStore();
     bool DoesLeak = false;
-    for (int I = 0, E = Inst.getNumPrimeOperands(); I != E; ++I) {
+    for (int I = 0, E = MCPlus::getNumPrimeOperands(Inst); I != E; ++I) {
       // Ignore if SP/BP is used to derefence memory -- that's fine
       if (MemOpNo != -1 && !IsPush && AccessMem && I >= MemOpNo &&
           I <= MemOpNo + 5)
@@ -1425,7 +1416,8 @@ public:
     if (MemOpNo != -1) {
       ImmOpNo = MemOpNo + X86::AddrDisp;
     } else {
-      for (unsigned Index = 0; Index < Inst.getNumPrimeOperands(); ++Index) {
+      for (unsigned Index = 0;
+           Index < MCPlus::getNumPrimeOperands(Inst); ++Index) {
         if (Inst.getOperand(Index).isImm()) {
           ImmOpNo = Index;
         }
@@ -1704,7 +1696,7 @@ public:
     return false;
   }
 
-  bool convertJmpToTailCall(MCInst &Inst, MCContext *) const override {
+  bool convertJmpToTailCall(MCInst &Inst, MCContext *) override {
     int NewOpcode;
     switch (Inst.getOpcode()) {
     default:
@@ -1788,9 +1780,9 @@ public:
     if (isBranch(Inst)) {
       NewOpcode = getShortBranchOpcode(OldOpcode);
     } else if (OldOpcode == X86::MOV64ri) {
-      if (Inst.getOperand(Inst.getNumPrimeOperands() - 1).isImm()) {
+      if (Inst.getOperand(MCPlus::getNumPrimeOperands(Inst) - 1).isImm()) {
         const auto Imm =
-          Inst.getOperand(Inst.getNumPrimeOperands() - 1).getImm();
+          Inst.getOperand(MCPlus::getNumPrimeOperands(Inst) - 1).getImm();
         if (int64_t(Imm) == int64_t(int32_t(Imm))) {
           NewOpcode = X86::MOV64ri32;
         }
@@ -1799,8 +1791,9 @@ public:
       // If it's arithmetic instruction check if signed operand fits in 1 byte.
       const auto ShortOpcode = getShortArithOpcode(OldOpcode);
       if (ShortOpcode != OldOpcode &&
-          Inst.getOperand(Inst.getNumPrimeOperands() - 1).isImm()) {
-        auto Imm = Inst.getOperand(Inst.getNumPrimeOperands() - 1).getImm();
+          Inst.getOperand(MCPlus::getNumPrimeOperands(Inst) - 1).isImm()) {
+        auto Imm =
+            Inst.getOperand(MCPlus::getNumPrimeOperands(Inst) - 1).getImm();
         if (int64_t(Imm) == int64_t(int8_t(Imm))) {
           NewOpcode = ShortOpcode;
         }
@@ -1814,7 +1807,7 @@ public:
     return true;
   }
 
-  bool lowerTailCall(MCInst &Inst) const override {
+  bool lowerTailCall(MCInst &Inst) override {
     if (Inst.getOpcode() == X86::TAILJMPd) {
       Inst.setOpcode(X86::JMP_1);
       return true;
@@ -1824,7 +1817,7 @@ public:
 
   const MCSymbol *getTargetSymbol(const MCInst &Inst,
                                   unsigned OpNum = 0) const override {
-    if (OpNum >= Inst.getNumPrimeOperands())
+    if (OpNum >= MCPlus::getNumPrimeOperands(Inst))
       return nullptr;
 
     auto &Op = Inst.getOperand(OpNum);
@@ -2078,7 +2071,7 @@ public:
     // in case of indirect tail call, or a jump table.
     MCInst *MemLocInstr = nullptr;
 
-    if (Instruction.getNumPrimeOperands() == 1) {
+    if (MCPlus::getNumPrimeOperands(Instruction) == 1) {
       // If the indirect jump is on register - try to detect if the
       // register value is loaded from a memory location.
       assert(Instruction.getOperand(0).isReg() && "register operand expected");
@@ -2416,7 +2409,8 @@ public:
                             uint64_t RelType) const override {
     unsigned ImmOpNo = -1U;
 
-    for (unsigned Index = 0; Index < Inst.getNumPrimeOperands(); ++Index) {
+    for (unsigned Index = 0;
+         Index < MCPlus::getNumPrimeOperands(Inst); ++Index) {
       if (Inst.getOperand(Index).isImm()) {
         ImmOpNo = Index;
         // TODO: this is a bit hacky.  It finds the correct operand by
@@ -2458,7 +2452,7 @@ public:
   }
 
   bool createTailCall(MCInst &Inst, const MCSymbol *Target,
-                      MCContext *Ctx) const override {
+                      MCContext *Ctx) override {
     Inst.setOpcode(X86::TAILJMPd);
     Inst.addOperand(MCOperand::createExpr(
         MCSymbolRefExpr::create(Target, MCSymbolRefExpr::VK_None, *Ctx)));
@@ -2469,19 +2463,6 @@ public:
     Inst.clear();
     Inst.setOpcode(X86::TRAP);
     return true;
-  }
-
-  bool createCFI(MCInst &Inst, int64_t Offset) const override {
-    Inst.clear();
-    Inst.setOpcode(X86::CFI_INSTRUCTION);
-    Inst.addOperand(MCOperand::createImm(Offset));
-    return true;
-  }
-
-  bool isCFI(const MCInst &Inst) const override {
-    if (Inst.getOpcode() == X86::CFI_INSTRUCTION)
-      return true;
-    return false;
   }
 
   bool reverseBranchCondition(MCInst &Inst, const MCSymbol *TBB,
@@ -2565,15 +2546,6 @@ public:
     return true;
   }
 
-  bool createEHLabel(MCInst &Inst, const MCSymbol *Label,
-                     MCContext *Ctx) const override {
-    Inst.setOpcode(X86::EH_LABEL);
-    Inst.clear();
-    Inst.addOperand(MCOperand::createExpr(
-        MCSymbolRefExpr::create(Label, MCSymbolRefExpr::VK_None, *Ctx)));
-    return true;
-  }
-
   ICPdata indirectCallPromotion(
     const MCInst &CallInst,
     const std::vector<std::pair<MCSymbol *,uint64_t>>& Targets,
@@ -2581,7 +2553,7 @@ public:
     const std::vector<MCInst *> &MethodFetchInsns,
     const bool MinimizeCodeSize,
     MCContext *Ctx
-  ) const override {
+  ) override {
     const bool IsTailCall = isTailCall(CallInst);
     const bool IsJumpTable = getJumpTable(CallInst) != 0;
     ICPdata Results;
@@ -2603,7 +2575,7 @@ public:
     if (MinimizeCodeSize && !LoadElim) {
       std::set<unsigned> UsedRegs;
 
-      for (unsigned int i = 0; i < CallInst.getNumPrimeOperands(); ++i) {
+      for (unsigned int i = 0; i < MCPlus::getNumPrimeOperands(CallInst); ++i) {
         const auto &Op = CallInst.getOperand(i);
         if (Op.isReg()) {
           UsedRegs.insert(Op.getReg());
@@ -2672,7 +2644,7 @@ public:
         for (unsigned i = 0;
              i < Info->get(CallInst.getOpcode()).getNumOperands();
              ++i) {
-          if (!CallInst.getOperand(i).isJumpTable())
+          if (!CallInst.getOperand(i).isInst())
             Compare.addOperand(CallInst.getOperand(i));
         }
       } else {
@@ -2692,7 +2664,7 @@ public:
         for (unsigned i = 0;
              i < Info->get(CallInst.getOpcode()).getNumOperands();
              ++i) {
-          if (!CallInst.getOperand(i).isJumpTable())
+          if (!CallInst.getOperand(i).isInst())
             Compare.addOperand(CallInst.getOperand(i));
         }
 
@@ -2765,8 +2737,11 @@ public:
         }
 
         if (isInvoke(CallInst) && !isInvoke(CallOrJmp)) {
-          // Copy over any EH or GNU args size information from the original call.
-          addEHInfo(CallOrJmp, getEHInfo(CallInst), Ctx);
+          // Copy over any EH or GNU args size information from the original
+          // call.
+          auto EHInfo = getEHInfo(CallInst);
+          if (EHInfo)
+            addEHInfo(CallOrJmp, *EHInfo);
           auto GnuArgsSize = getGnuArgsSize(CallInst);
           if (GnuArgsSize >= 0)
             addGnuArgsSize(CallOrJmp, GnuArgsSize);

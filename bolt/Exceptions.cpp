@@ -243,8 +243,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
         // Add extra operands to a call instruction making it an invoke from
         // now on.
         BC.MIB->addEHInfo(Instruction,
-                          MCLandingPad(LPSymbol, ActionEntry),
-                          BC.Ctx.get());
+                          MCPlus::MCLandingPad(LPSymbol, ActionEntry));
       }
       ++II;
     } while (II != IE && II->first < Start + Length);
@@ -406,13 +405,11 @@ void BinaryFunction::updateEHRanges() {
     }
 
     for (auto II = BB->begin(); II != BB->end(); ++II) {
-      auto Instr = *II;
-
-      if (!BC.MIB->isCall(Instr))
+      if (!BC.MIB->isCall(*II))
         continue;
 
       // Instruction can throw an exception that should be handled.
-      const bool Throws = BC.MIB->isInvoke(Instr);
+      const bool Throws = BC.MIB->isInvoke(*II);
 
       // Ignore the call if it's a continuation of a no-throw gap.
       if (!Throws && !StartRange)
@@ -421,7 +418,8 @@ void BinaryFunction::updateEHRanges() {
       // Extract exception handling information from the instruction.
       const MCSymbol *LP = nullptr;
       uint64_t Action = 0;
-      std::tie(LP, Action) = BC.MIB->getEHInfo(Instr);
+      if (const auto EHInfo = BC.MIB->getEHInfo(*II))
+        std::tie(LP, Action) = *EHInfo;
 
       // No action if the exception handler has not changed.
       if (Throws &&

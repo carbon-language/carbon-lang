@@ -83,12 +83,9 @@ void StackAllocationAnalysis::doConfluenceWithLP(BitVector &StateOut,
                                                  const BitVector &StateIn,
                                                  const MCInst &Invoke) {
   BitVector NewIn = StateIn;
-  for (const auto &Operand : Invoke) {
-    if (Operand.isGnuArgsSize()) {
-      auto ArgsSize = Operand.getGnuArgsSize();
-      NewIn = doKill(Invoke, NewIn, ArgsSize);
-    }
-  }
+  const auto GnuArgsSize = BC.MIB->getGnuArgsSize(Invoke);
+  if (GnuArgsSize >= 0)
+    NewIn = doKill(Invoke, NewIn, GnuArgsSize);
   StateOut |= NewIn;
 }
 

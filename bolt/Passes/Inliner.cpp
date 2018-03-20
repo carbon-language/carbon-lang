@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Inliner.h"
+#include "MCPlus.h"
 #include "llvm/Support/Options.h"
 
 #define DEBUG_TYPE "bolt-inliner"
@@ -449,7 +450,7 @@ bool InlineSmallFunctions::inlineCallsInFunction(
       auto &Inst = *InstIt;
       if (BC.MIB->isCall(Inst) &&
           !BC.MIB->isTailCall(Inst) &&
-          Inst.getNumPrimeOperands() == 1 &&
+          MCPlus::getNumPrimeOperands(Inst) == 1 &&
           Inst.getOperand(0).isExpr()) {
         const auto *TargetSymbol = BC.MIB->getTargetSymbol(Inst);
         assert(TargetSymbol && "target symbol expected for direct call");
@@ -515,7 +516,7 @@ bool InlineSmallFunctions::inlineCallsInFunctionAggressive(
     for (auto InstIt = BB->begin(); InstIt != BB->end(); ) {
       auto &Inst = *InstIt;
       if (BC.MIB->isCall(Inst) &&
-          Inst.getNumPrimeOperands() == 1 &&
+          MCPlus::getNumPrimeOperands(Inst) == 1 &&
           Inst.getOperand(0).isExpr()) {
         assert(!BC.MIB->isInvoke(Inst));
         const auto *TargetSymbol = BC.MIB->getTargetSymbol(Inst);

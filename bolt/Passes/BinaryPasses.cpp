@@ -614,20 +614,42 @@ void FinalizeFunctions::runOnFunctions(
   }
 }
 
-void StripAnnotations::runOnFunctions(
-  BinaryContext &BC,
-  std::map<uint64_t, BinaryFunction> &BFs,
-  std::set<uint64_t> &
-) {
+void LowerAnnotations::runOnFunctions(
+    BinaryContext &BC,
+    std::map<uint64_t, BinaryFunction> &BFs,
+    std::set<uint64_t> &) {
   for (auto &It : BFs) {
-    auto &Function = It.second;
+    auto &BF = It.second;
+    int64_t CurrentGnuArgsSize = 0;
 
-    for (auto &BB : Function) {
-      for (auto &Inst : BB) {
-        BC.MIB->removeAllAnnotations(Inst);
+    // Have we crossed hot/cold border for split functions?
+    bool SeenCold = false;
+
+    for (auto *BB : BF.layout()) {
+      if (BB->isCold() && !SeenCold) {
+        SeenCold = true;
+        CurrentGnuArgsSize = 0;
+      }
+
+      for (auto II = BB->begin(); II != BB->end(); ++II) {
+        // Convert GnuArgsSize annotations into CFIs.
+        if (BF.usesGnuArgsSize() && BC.MIB->isInvoke(*II)) {
+          const auto NewGnuArgsSize = BC.MIB->getGnuArgsSize(*II);
+          assert(NewGnuArgsSize >= 0 && "expected non-negative GNU_args_size");
+          if (NewGnuArgsSize != CurrentGnuArgsSize) {
+            auto InsertII = BF.addCFIInstruction(BB, II,
+                MCCFIInstruction::createGnuArgsSize(nullptr, NewGnuArgsSize));
+            CurrentGnuArgsSize = NewGnuArgsSize;
+            II = std::next(InsertII);
+          }
+        }
+        BC.MIB->removeAllAnnotations(*II);
       }
     }
   }
+
+  // Release all memory taken by annotations.
+  BC.MIB->freeAnnotations();
 }
 
 namespace {
@@ -896,9 +918,9 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
       MIB->setConditionalTailCall(*CondBranch);
       // Add info abount the conditional tail call frequency, otherwise this
       // info will be lost when we delete the associated BranchInfo entry
-      BC.MIB->removeAnnotation(*CondBranch, "CTCTakenCount");
-      BC.MIB->addAnnotation(BC.Ctx.get(), *CondBranch, "CTCTakenCount",
-                            CTCTakenFreq);
+      auto &CTCAnnotation = BC.MIB->getOrCreateAnnotationAs<uint64_t>(
+          *CondBranch, "CTCTakenCount");
+      CTCAnnotation = CTCTakenFreq;
 
       // Remove the unused successor which may be eliminated later
       // if there are no other users.

@@ -9,6 +9,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "MCPlus.h"
 #include "ShrinkWrapping.h"
 #include <numeric>
 
@@ -101,7 +102,7 @@ void CalleeSavedAnalysis::analyzeSaves() {
         CalleeSaved.set(FIE->RegOrImm);
         SaveFIEByReg[FIE->RegOrImm] = &*FIE;
         SavingCost[FIE->RegOrImm] += InsnToBB[&Inst]->getKnownExecutionCount();
-        BC.MIB->addAnnotation(BC.Ctx.get(), Inst, getSaveTag(), FIE->RegOrImm);
+        BC.MIB->addAnnotation(Inst, getSaveTag(), FIE->RegOrImm);
         OffsetsByReg[FIE->RegOrImm] = FIE->StackOffset;
         DEBUG(dbgs() << "Logging new candidate for Callee-Saved Reg: "
                      << FIE->RegOrImm << "\n");
@@ -152,8 +153,7 @@ void CalleeSavedAnalysis::analyzeRestores() {
                      << "\n");
         if (LoadFIEByReg[FIE->RegOrImm] == nullptr)
           LoadFIEByReg[FIE->RegOrImm] = &*FIE;
-        BC.MIB->addAnnotation(BC.Ctx.get(), Inst, getRestoreTag(),
-                              FIE->RegOrImm);
+        BC.MIB->addAnnotation(Inst, getRestoreTag(), FIE->RegOrImm);
         HasRestores.set(FIE->RegOrImm);
       }
       Prev = &Inst;
@@ -266,7 +266,8 @@ void StackLayoutModifier::checkStackPointerRestore(MCInst &Point) {
   const auto InstInfo = BC.MII->get(Point.getOpcode());
   auto NumDefs = InstInfo.getNumDefs();
   bool UsesFP{false};
-  for (unsigned I = NumDefs, E = Point.getNumPrimeOperands(); I < E; ++I) {
+  for (unsigned I = NumDefs, E = MCPlus::getNumPrimeOperands(Point);
+       I < E; ++I) {
     auto &Operand = Point.getOperand(I);
     if (!Operand.isReg())
       continue;
@@ -310,7 +311,7 @@ void StackLayoutModifier::checkStackPointerRestore(MCInst &Point) {
 
   // We are restoring SP to an old value based on FP. Mark it as a stack
   // access to be fixed later.
-  BC.MIB->addAnnotation(BC.Ctx.get(), Point, getSlotTagName(), Output);
+  BC.MIB->addAnnotation(Point, getSlotTagName(), Output);
 }
 
 void StackLayoutModifier::classifyStackAccesses() {
@@ -353,8 +354,7 @@ void StackLayoutModifier::classifyStackAccesses() {
       // We are free to go. Add it as available stack slot which we know how
       // to move it.
       AvailableRegions[FIEX->StackOffset] = FIEX->Size;
-      BC.MIB->addAnnotation(BC.Ctx.get(), Inst, getSlotTagName(),
-                            FIEX->StackOffset);
+      BC.MIB->addAnnotation(Inst, getSlotTagName(), FIEX->StackOffset);
       RegionToRegMap[FIEX->StackOffset].insert(FIEX->RegOrImm);
       RegToRegionMap[FIEX->RegOrImm].insert(FIEX->StackOffset);
       DEBUG(dbgs() << "Adding region " << FIEX->StackOffset << " size "
@@ -371,7 +371,7 @@ void StackLayoutModifier::classifyCFIs() {
   auto recordAccess = [&](MCInst *Inst, int64_t Offset) {
     const uint16_t Reg = BC.MRI->getLLVMRegNum(CfaReg, /*isEH=*/false);
     if (Reg == BC.MIB->getStackPointer() || Reg == BC.MIB->getFramePointer()) {
-      BC.MIB->addAnnotation(BC.Ctx.get(), *Inst, getSlotTagName(), Offset);
+      BC.MIB->addAnnotation(*Inst, getSlotTagName(), Offset);
       DEBUG(dbgs() << "Recording CFI " << Offset << "\n");
     } else {
       IsSimple = false;
@@ -398,12 +398,12 @@ void StackLayoutModifier::classifyCFIs() {
         break;
       case MCCFIInstruction::OpOffset:
         recordAccess(&Inst, CFI->getOffset());
-        BC.MIB->addAnnotation(BC.Ctx.get(), Inst, getOffsetCFIRegTagName(),
+        BC.MIB->addAnnotation(Inst, getOffsetCFIRegTagName(),
                               BC.MRI->getLLVMRegNum(CFI->getRegister(),
                                                     /*isEH=*/false));
         break;
       case MCCFIInstruction::OpSameValue:
-        BC.MIB->addAnnotation(BC.Ctx.get(), Inst, getOffsetCFIRegTagName(),
+        BC.MIB->addAnnotation(Inst, getOffsetCFIRegTagName(),
                               BC.MRI->getLLVMRegNum(CFI->getRegister(),
                                                     /*isEH=*/false));
         break;
@@ -432,7 +432,7 @@ void StackLayoutModifier::classifyCFIs() {
 void StackLayoutModifier::scheduleChange(
     MCInst &Inst, StackLayoutModifier::WorklistItem Item) {
   auto &WList = BC.MIB->getOrCreateAnnotationAs<std::vector<WorklistItem>>(
-      BC.Ctx.get(), Inst, getTodoTagName());
+      Inst, getTodoTagName());
   WList.push_back(Item);
 }
 
@@ -510,7 +510,7 @@ bool StackLayoutModifier::collapseRegion(MCInst *Alloc, int64_t RegionAddr,
       }
 
       if (Slot == RegionAddr) {
-        BC.MIB->addAnnotation(BC.Ctx.get(), Inst, "AccessesDeletedPos", 0U);
+        BC.MIB->addAnnotation(Inst, "AccessesDeletedPos", 0U);
         continue;
       }
       if (BC.MIB->isPush(Inst) || BC.MIB->isPop(Inst)) {
@@ -1332,8 +1332,8 @@ bool isIdenticalSplitEdgeBB(const BinaryBasicBlock &A,
   while (I != E && OtherI != OtherE) {
     if (I->getOpcode() != OtherI->getOpcode())
       return false;
-    if (!I->equals(*OtherI,
-                   [](const MCSymbol *A, const MCSymbol *B) { return true; }))
+    if (!MCPlus::equals(*I, *OtherI,
+          [](const MCSymbol *A, const MCSymbol *B) { return true; }))
       return false;
     ++I;
     ++OtherI;
@@ -1539,7 +1539,7 @@ void ShrinkWrapping::rebuildCFIForSP() {
         continue;
       auto *CFI = BF.getCFIFor(Inst);
       if (CFI->getOperation() == MCCFIInstruction::OpDefCfaOffset)
-        BC.MIB->addAnnotation(BC.Ctx.get(), Inst, "DeleteMe", 0U);
+        BC.MIB->addAnnotation(Inst, "DeleteMe", 0U);
     }
   }
 

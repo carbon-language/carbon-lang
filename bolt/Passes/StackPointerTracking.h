@@ -69,13 +69,10 @@ protected:
                           const std::pair<int, int> &StateIn,
                           const MCInst &Invoke) {
     int SPVal = StateIn.first;
-    for (const auto &Operand : Invoke) {
-      if (Operand.isGnuArgsSize()) {
-        auto ArgsSize = Operand.getGnuArgsSize();
-        if (SPVal != EMPTY && SPVal != SUPERPOSITION) {
-          SPVal += ArgsSize;
-        }
-      }
+    if (SPVal != EMPTY && SPVal != SUPERPOSITION) {
+      const auto GnuArgsSize = this->BC.MIB->getGnuArgsSize(Invoke);
+      if (GnuArgsSize > 0)
+        SPVal += GnuArgsSize;
     }
     doConfluenceSingleReg(StateOut.first, SPVal);
     doConfluenceSingleReg(StateOut.second, StateIn.second);

@@ -145,7 +145,7 @@ bool JTFootprintReduction::tryOptimizeNonPIC(
   assert(Scale == 8 && "Wrong scale");
 
   Scale = 4;
-  IndJmpMatcher->annotate(*BC.MIB, *BC.Ctx.get(), "DeleteMe");
+  IndJmpMatcher->annotate(*BC.MIB, "DeleteMe");
 
   auto &LA = Info.getLivenessAnalysis();
   MCPhysReg Reg = LA.scavengeRegAfter(&Inst);
@@ -155,7 +155,7 @@ bool JTFootprintReduction::tryOptimizeNonPIC(
 
   BC.MIB->createIJmp32Frag(NewFrag, Base, MCOperand::createImm(Scale),
                            MCOperand::createReg(Index), Offset, RegOp);
-  BC.MIB->setJumpTable(BC.Ctx.get(), NewFrag.back(), JTAddr, Index);
+  BC.MIB->setJumpTable(NewFrag.back(), JTAddr, Index);
 
   JumpTable->OutputEntrySize = 4;
 
@@ -183,7 +183,7 @@ bool JTFootprintReduction::tryOptimizePIC(
 
   assert(Scale == 4 && "Wrong scale");
 
-  PICIndJmpMatcher->annotate(*BC.MIB, *BC.Ctx.get(), "DeleteMe");
+  PICIndJmpMatcher->annotate(*BC.MIB, "DeleteMe");
 
   auto RegOp = MCOperand::createReg(BaseReg);
   SmallVector<MCInst, 4> NewFrag;
@@ -191,7 +191,7 @@ bool JTFootprintReduction::tryOptimizePIC(
   BC.MIB->createIJmp32Frag(NewFrag, MCOperand::createReg(0),
                            MCOperand::createImm(Scale),
                            MCOperand::createReg(Index), JumpTableRef, RegOp);
-  BC.MIB->setJumpTable(BC.Ctx.get(), NewFrag.back(), JTAddr, Index);
+  BC.MIB->setJumpTable(NewFrag.back(), JTAddr, Index);
 
   JumpTable->OutputEntrySize = 4;
   // DePICify

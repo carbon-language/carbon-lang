@@ -19,8 +19,10 @@ void doForAllPreds(const BinaryContext &BC, const BinaryBasicBlock &BB,
     return;
   for (auto Thrower : BB.throwers()) {
     for (auto &Inst : *Thrower) {
-      if (!BC.MIB->isInvoke(Inst) ||
-          BC.MIB->getEHInfo(Inst).first != BB.getLabel())
+      if (!BC.MIB->isInvoke(Inst))
+        continue;
+      const auto EHInfo = BC.MIB->getEHInfo(Inst);
+      if (!EHInfo || EHInfo->first != BB.getLabel())
         continue;
       Task(ProgramPoint(&Inst));
     }

@@ -503,14 +503,13 @@ void BinaryFunction::convertBranchData() {
                << Twine::utohexstr(BI.From.Offset)
                << " in function " << *this << '\n';
       }
-      auto &Value = BC.MIB->getOrCreateAnnotationAs<uint64_t>(BC.Ctx.get(),
-                                                              *Instr, Name);
+      auto &Value = BC.MIB->getOrCreateAnnotationAs<uint64_t>(*Instr, Name);
       Value += Count;
     };
 
     if (BC.MIB->isIndirectCall(*Instr) || BC.MIB->isIndirectBranch(*Instr)) {
       IndirectCallSiteProfile &CSP =
-        BC.MIB->getOrCreateAnnotationAs<IndirectCallSiteProfile>(BC.Ctx.get(),
+        BC.MIB->getOrCreateAnnotationAs<IndirectCallSiteProfile>(
             *Instr, "CallProfile");
       CSP.emplace_back(BI.To.IsSymbol, BI.To.Name, BI.Branches,
                        BI.Mispreds);

@@ -228,10 +228,10 @@ void FrameAnalysis::addArgAccessesFor(MCInst &Inst, ArgAccesses &&AA) {
   }
   if (AA.AssumeEverything) {
     // Index 0 in ArgAccessesVector represents an "assumeeverything" entry
-    BC.MIB->addAnnotation(BC.Ctx.get(), Inst, "ArgAccessEntry", 0U);
+    BC.MIB->addAnnotation(Inst, "ArgAccessEntry", 0U);
     return;
   }
-  BC.MIB->addAnnotation(BC.Ctx.get(), Inst, "ArgAccessEntry",
+  BC.MIB->addAnnotation(Inst, "ArgAccessEntry",
                         (unsigned)ArgAccessesVector.size());
   ArgAccessesVector.emplace_back(std::move(AA));
 }
@@ -250,7 +250,7 @@ void FrameAnalysis::addArgInStackAccessFor(MCInst &Inst,
 }
 
 void FrameAnalysis::addFIEFor(MCInst &Inst, const FrameIndexEntry &FIE) {
-  BC.MIB->addAnnotation(BC.Ctx.get(), Inst, "FrameAccessEntry",
+  BC.MIB->addAnnotation(Inst, "FrameAccessEntry",
                         (unsigned)FIEVector.size());
   FIEVector.emplace_back(FIE);
 }

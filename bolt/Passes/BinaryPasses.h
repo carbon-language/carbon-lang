@@ -227,14 +227,14 @@ class FinalizeFunctions : public BinaryFunctionPass {
                       std::set<uint64_t> &LargeFunctions) override;
 };
 
-/// Strip all BOLT-related annotations before LLVM code emission
-class StripAnnotations : public BinaryFunctionPass {
+/// Convert and remove all BOLT-related annotations before LLVM code emission.
+class LowerAnnotations : public BinaryFunctionPass {
  public:
-  explicit StripAnnotations(const cl::opt<bool> &PrintPass)
+  explicit LowerAnnotations(const cl::opt<bool> &PrintPass)
     : BinaryFunctionPass(PrintPass) { }
 
   const char *getName() const override {
-    return "strip-annotations";
+    return "lower-annotations";
   }
   void runOnFunctions(BinaryContext &BC,
                       std::map<uint64_t, BinaryFunction> &BFs,

@@ -223,7 +223,7 @@ public:
 
   std::unique_ptr<const MCInstrAnalysis> MIA;
 
-  std::unique_ptr<const MCPlusBuilder> MIB;
+  std::unique_ptr<MCPlusBuilder> MIB;
 
   std::unique_ptr<const MCRegisterInfo> MRI;
 
@@ -273,7 +273,7 @@ public:
                 std::unique_ptr<const MCSubtargetInfo> STI,
                 std::unique_ptr<MCInstPrinter> InstPrinter,
                 std::unique_ptr<const MCInstrAnalysis> MIA,
-                std::unique_ptr<const MCPlusBuilder> MIB,
+                std::unique_ptr<MCPlusBuilder> MIB,
                 std::unique_ptr<const MCRegisterInfo> MRI,
                 std::unique_ptr<MCDisassembler> DisAsm,
                 DataReader &DR) :

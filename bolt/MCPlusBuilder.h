@@ -14,27 +14,30 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_MCPLUSBUILDER_H
 #define LLVM_TOOLS_LLVM_BOLT_MCPLUSBUILDER_H
 
+#include "MCPlus.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/Optional.h"
-#include "llvm/MC/MCAnnotation.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/StringPool.h"
 #include <cassert>
 #include <cstdint>
-#include <set>
-#include <unordered_set>
-#include <system_error>
 #include <map>
+#include <set>
+#include <system_error>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace llvm {
 namespace bolt {
@@ -49,6 +52,66 @@ enum class IndirectBranchType : char {
 };
 
 class MCPlusBuilder {
+private:
+
+  /// Annotation value allocator.
+  BumpPtrAllocator Allocator;
+
+  /// Annotation instruction allocator.
+  SpecificBumpPtrAllocator<MCInst> MCInstAllocator;
+
+  /// Record all the annotations with non-trivial type.  To prevent leaks, these
+  /// will need destructors called when the annotation is removed or when all
+  /// annotations are destroyed.
+  std::unordered_set<MCPlus::MCAnnotation*> AnnotationPool;
+
+  static constexpr int64_t INVALID_VALUE = -1LL;
+
+  MCInst *getAnnotationInst(const MCInst &Inst) const {
+    if (Inst.getNumOperands() == 0)
+      return nullptr;
+
+    const auto &LastOp = Inst.getOperand(Inst.getNumOperands() - 1);
+    if (!LastOp.isInst())
+      return nullptr;
+
+    auto *AnnotationInst = const_cast<MCInst *>(LastOp.getInst());
+    assert(AnnotationInst->getOpcode() == TargetOpcode::ANNOTATION_LABEL);
+
+    return AnnotationInst;
+  }
+
+  void setAnnotationOpValue(MCInst &Inst, unsigned Index, int64_t Value) {
+    auto *AnnotationInst = getAnnotationInst(Inst);
+    if (!AnnotationInst) {
+      AnnotationInst = new (MCInstAllocator.Allocate()) MCInst();
+      AnnotationInst->setOpcode(TargetOpcode::ANNOTATION_LABEL);
+      Inst.addOperand(MCOperand::createInst(AnnotationInst));
+    }
+
+    // Make sure the instruction has enough operands.
+    for (auto OpNum = AnnotationInst->getNumOperands(); OpNum <= Index; ++OpNum)
+      AnnotationInst->addOperand(MCOperand::createImm(INVALID_VALUE));
+
+    AnnotationInst->getOperand(Index).setImm(Value);
+  }
+
+  Optional<int64_t>
+  getAnnotationOpValue(const MCInst &Inst, unsigned Index) const {
+    const auto *AnnotationInst = getAnnotationInst(Inst);
+    if (!AnnotationInst)
+      return NoneType();
+
+    if (Index + 1 > AnnotationInst->getNumOperands())
+      return NoneType();
+
+    const auto Value = AnnotationInst->getOperand(Index).getImm();
+    if (Value == INVALID_VALUE)
+      return NoneType();
+
+    return Value;
+  }
+
 protected:
   const MCInstrAnalysis *Analysis;
   const MCInstrInfo *Info;
@@ -62,18 +125,47 @@ protected:
     }
   };
 
-  // This map holds onto strings in the StringPool and non-trivial
-  // MCAnnotations.  Instances of the MCAnnotation class can't hold Strings
-  // or non-trivial annotation values since they may contain memory that is
-  // not managed by MCContext.
-  mutable std::unordered_set<PooledStringPtr,
-                             HashPooledStringPtr> AnnotationNameRefs;
-  mutable StringPool AnnotationNames;
+  /// Map annotation name into an operand index.
+  std::unordered_map<std::string, uint64_t> AnnotationNameIndexMap;
 
-  // Record all the annotations with non-trivial type.  To prevent leaks, these
-  // will need destructors called when the annotation is removed or when all
-  // annotations are destroyed.
-  mutable std::unordered_set<MCAnnotation*> AnnotationPool;
+  /// Names of non-standard annotations.
+  SmallVector<std::string, 8> AnnotationNames;
+
+private:
+
+  Optional<unsigned> getAnnotationIndex(StringRef Name) const {
+    auto AI = AnnotationNameIndexMap.find(Name);
+    if (AI != AnnotationNameIndexMap.end())
+      return AI->second;
+    return NoneType();
+  }
+
+  unsigned getOrCreateAnnotationIndex(StringRef Name) {
+    auto AI = AnnotationNameIndexMap.find(Name);
+    if (AI != AnnotationNameIndexMap.end())
+      return AI->second;
+
+    auto Index = AnnotationNameIndexMap.size() + MCPlus::MCAnnotation::kGeneric;
+    AnnotationNameIndexMap.insert(std::make_pair(Name, Index));
+    AnnotationNames.push_back(Name);
+
+    return Index;
+  }
+
+  std::string getAnnotationName(unsigned Index) {
+    if (Index < MCPlus::MCAnnotation::kGeneric)
+      return "standard annotation";
+
+    if (Index > MCPlus::MCAnnotation::kGeneric + AnnotationNames.size() - 1)
+      return "invalid annotation";
+
+    return AnnotationNames[Index - MCPlus::MCAnnotation::kGeneric];
+  }
+
+  /// Get an annotation.  Assumes that the annotation exists.
+  /// Use hasAnnotation() if the annotation may not exist.
+  const MCPlus::MCAnnotation *
+  getAnnotation(const MCInst &Inst, StringRef Name) const;
 
 public:
   class InstructionIterator
@@ -197,14 +289,21 @@ public:
 
 public:
   MCPlusBuilder(const MCInstrAnalysis *Analysis, const MCInstrInfo *Info,
-                    const MCRegisterInfo *RegInfo)
+                const MCRegisterInfo *RegInfo)
     : Analysis(Analysis), Info(Info), RegInfo(RegInfo) {}
 
   virtual ~MCPlusBuilder() {
-    AnnotationNameRefs.clear();
+    freeAnnotations();
+  }
+
+  /// Free all memory allocated for annotations.
+  void freeAnnotations() {
     for (auto *Annotation : AnnotationPool) {
       Annotation->~MCAnnotation();
     }
+    AnnotationPool.clear();
+    Allocator.Reset();
+    MCInstAllocator.DestroyAll();
   }
 
   virtual bool isBranch(const MCInst &Inst) const {
@@ -256,8 +355,7 @@ public:
   }
 
   virtual bool isEHLabel(const MCInst &Inst) const {
-    llvm_unreachable("not implemented");
-    return false;
+    return Inst.getOpcode() == TargetOpcode::EH_LABEL;
   }
 
   virtual bool isPop(const MCInst &Inst) const {
@@ -377,7 +475,7 @@ public:
     /// look for a previous instruction defining this register and match against
     /// it instead. This parent member function contains common bookkeeping
     /// required to implement this behavior.
-    virtual bool match(const MCRegisterInfo &MRI, const MCPlusBuilder &MIA,
+    virtual bool match(const MCRegisterInfo &MRI, MCPlusBuilder &MIA,
                        MutableArrayRef<MCInst> InInstrWindow, int OpNum) {
       InstrWindow = InInstrWindow;
       CurInst = InstrWindow.end();
@@ -409,8 +507,7 @@ public:
     /// If successfully matched, calling this function will add an annotation
     /// to all instructions that were matched. This is used to easily tag
     /// instructions for deletion and implement match-and-replace operations.
-    virtual void annotate(const MCPlusBuilder &MIA, MCContext &Ctx,
-                          StringRef Annotation) {}
+    virtual void annotate(MCPlusBuilder &MIA, StringRef Annotation) {}
 
     /// Moves internal instruction iterator to the next instruction, walking
     /// backwards for pattern matching (effectively the previous instruction in
@@ -428,7 +525,7 @@ public:
     MCOperand &Op;
     AnyOperandMatcher(MCOperand &Op) : Op(Op) {}
 
-    bool match(const MCRegisterInfo &MRI, const MCPlusBuilder &MIA,
+    bool match(const MCRegisterInfo &MRI, MCPlusBuilder &MIA,
                MutableArrayRef<MCInst> InInstrWindow, int OpNum) override {
       auto I = InInstrWindow.end();
       if (I == InInstrWindow.begin())
@@ -447,7 +544,7 @@ public:
     uint64_t &Imm;
     ImmMatcher(uint64_t &Imm) : Imm(Imm) {}
 
-    bool match(const MCRegisterInfo &MRI, const MCPlusBuilder &MIA,
+    bool match(const MCRegisterInfo &MRI, MCPlusBuilder &MIA,
                MutableArrayRef<MCInst> InInstrWindow, int OpNum) override {
       if (!MCInstMatcher::match(MRI, MIA, InInstrWindow, OpNum))
         return false;
@@ -467,7 +564,7 @@ public:
     const MCSymbol *&Sym;
     SymbolMatcher(const MCSymbol *&Sym) : Sym(Sym) {}
 
-    bool match(const MCRegisterInfo &MRI, const MCPlusBuilder &MIA,
+    bool match(const MCRegisterInfo &MRI, MCPlusBuilder &MIA,
                MutableArrayRef<MCInst> InInstrWindow, int OpNum) override {
       if (!MCInstMatcher::match(MRI, MIA, InInstrWindow, OpNum))
         return false;
@@ -484,7 +581,7 @@ public:
     MCPhysReg &Reg;
     RegMatcher(MCPhysReg &Reg) : Reg(Reg) {}
 
-    bool match(const MCRegisterInfo &MRI, const MCPlusBuilder &MIA,
+    bool match(const MCRegisterInfo &MRI, MCPlusBuilder &MIA,
                MutableArrayRef<MCInst> InInstrWindow, int OpNum) override {
       auto I = InInstrWindow.end();
       if (I == InInstrWindow.begin())
@@ -763,7 +860,7 @@ public:
 
   /// Return true if the instruction is a call with an exception handling info.
   virtual bool isInvoke(const MCInst &Inst) const {
-    return isCall(Inst) && hasEHInfo(Inst);
+    return isCall(Inst) && getEHInfo(Inst);
   }
 
   /// Return true if \p Inst is an instruction that potentially traps when
@@ -773,18 +870,37 @@ public:
     return false;
   }
 
-  /// Return true if this instruction has handler and action info.
-  bool hasEHInfo(const MCInst &Inst) const;
-
-  /// Return handler and action info for invoke instruction.
-  MCLandingPad getEHInfo(const MCInst &Inst) const;
+  /// Return handler and action info for invoke instruction if present.
+  Optional<MCPlus::MCLandingPad> getEHInfo(const MCInst &Inst) const;
 
   // Add handler and action info for call instruction.
-  void addEHInfo(MCInst &Inst, const MCLandingPad &LP, MCContext *Ctx) const;
+  void addEHInfo(MCInst &Inst, const MCPlus::MCLandingPad &LP);
 
   /// Return non-negative GNU_args_size associated with the instruction
   /// or -1 if there's no associated info.
   int64_t getGnuArgsSize(const MCInst &Inst) const;
+
+  /// Add the value of GNU_args_size to Inst if it already has EH info.
+  void addGnuArgsSize(MCInst &Inst, int64_t GnuArgsSize);
+
+  /// Return jump table addressed by this instruction.
+  uint64_t getJumpTable(const MCInst &Inst) const;
+
+  /// Set jump table addressed by this instruction.
+  bool setJumpTable(MCInst &Inst, uint64_t Value,
+                    uint16_t IndexReg);
+
+  /// Return destination of conditional tail call instruction if \p Inst is one.
+  Optional<uint64_t> getConditionalTailCall(const MCInst &Inst) const;
+
+  /// Mark the \p Instruction as a conditional tail call, and set its
+  /// destination address if it is known. If \p Instruction was already marked,
+  /// update its destination with \p Dest.
+  bool setConditionalTailCall(MCInst &Inst, uint64_t Dest = 0);
+
+  /// If \p Inst was marked as a conditional tail call convert it to a regular
+  /// branch. Return true if the instruction was converted.
+  bool unsetConditionalTailCall(MCInst &Inst);
 
   /// Return MCSymbol that represents a target of this instruction at a given
   /// operand number \p OpNum. If there's no symbol associated with
@@ -814,28 +930,6 @@ public:
     }
     return std::make_pair(nullptr, 0);
   }
-
-  /// Add the value of GNU_args_size to Inst if it already has EH info.
-  void addGnuArgsSize(MCInst &Inst, int64_t GnuArgsSize) const;
-
-  /// Return jump table addressed by this instruction.
-  uint64_t getJumpTable(const MCInst &Inst) const;
-
-  /// Set jump table addressed by this instruction.
-  bool setJumpTable(MCContext *Ctx, MCInst &Inst, uint64_t Value,
-                    uint16_t IndexReg) const;
-
-  /// Return destination of conditional tail call instruction if \p Inst is one.
-  Optional<uint64_t> getConditionalTailCall(const MCInst &Inst) const;
-
-  /// Mark the \p Instruction as a conditional tail call, and set its
-  /// destination address if it is known. If \p Instruction was already marked,
-  /// update its destination with \p Dest.
-  bool setConditionalTailCall(MCInst &Inst, uint64_t Dest = 0) const;
-
-  /// If \p Inst was marked as a conditional tail call convert it to a regular
-  /// branch. Return true if the instruction was converted.
-  bool unsetConditionalTailCall(MCInst &Inst) const;
 
   /// Replace displacement in compound memory operand with given \p Operand.
   virtual bool replaceMemOperandDisp(MCInst &Inst, MCOperand Operand) const {
@@ -948,7 +1042,7 @@ public:
   }
 
   /// Replace instruction opcode to be a tail call instead of jump.
-  virtual bool convertJmpToTailCall(MCInst &Inst, MCContext *Ctx) const {
+  virtual bool convertJmpToTailCall(MCInst &Inst, MCContext *Ctx) {
     llvm_unreachable("not implemented");
     return false;
   }
@@ -956,7 +1050,7 @@ public:
   /// Perform any additional actions to transform a (conditional) tail call
   /// into a (conditional) jump. Assume the target was already replaced with
   /// a local one, so the default is to do nothing more.
-  virtual bool convertTailCallToJmp(MCInst &Inst) const {
+  virtual bool convertTailCallToJmp(MCInst &Inst) {
     return true;
   }
 
@@ -983,7 +1077,7 @@ public:
   }
 
   /// Lower a tail call instruction \p Inst if required by target.
-  virtual bool lowerTailCall(MCInst &Inst) const {
+  virtual bool lowerTailCall(MCInst &Inst) {
     llvm_unreachable("not implemented");
     return false;
   }
@@ -1082,7 +1176,7 @@ public:
   ///
   /// Returns true on success.
   virtual bool createTailCall(MCInst &Inst, const MCSymbol *Target,
-                              MCContext *Ctx) const {
+                              MCContext *Ctx) {
     llvm_unreachable("not implemented");
     return false;
   }
@@ -1149,14 +1243,15 @@ public:
   ///
   /// Returns true on success.
   virtual bool createCFI(MCInst &Inst, int64_t Offset) const {
-    llvm_unreachable("not implemented");
-    return false;
+    Inst.clear();
+    Inst.setOpcode(TargetOpcode::CFI_INSTRUCTION);
+    Inst.addOperand(MCOperand::createImm(Offset));
+    return true;
   }
 
   /// Returns true if instruction is a call frame pseudo instruction.
   virtual bool isCFI(const MCInst &Inst) const {
-    llvm_unreachable("not implemented");
-    return false;
+    return Inst.getOpcode() == TargetOpcode::CFI_INSTRUCTION;
   }
 
   /// Reverses the branch condition in Inst and update its taken target to TBB.
@@ -1187,70 +1282,64 @@ public:
 
   virtual bool createEHLabel(MCInst &Inst, const MCSymbol *Label,
                              MCContext *Ctx) const {
-    llvm_unreachable("not implemented");
-    return false;
+    Inst.setOpcode(TargetOpcode::EH_LABEL);
+    Inst.clear();
+    Inst.addOperand(MCOperand::createExpr(
+        MCSymbolRefExpr::create(Label, MCSymbolRefExpr::VK_None, *Ctx)));
+    return true;
   }
 
   /// Store an annotation value on an MCInst.  This assumes the annotation
   /// is not already present.
-  template <typename ValueType,
-            typename PrintType = MCAnnotationPrinter<ValueType>>
-  const ValueType &addAnnotation(MCContext *Ctx,
-                                 MCInst &Inst,
+  template <typename ValueType>
+  const ValueType &addAnnotation(MCInst &Inst,
                                  StringRef Name,
-                                 const ValueType &Val,
-                                 const PrintType &Print = PrintType()) const {
+                                 const ValueType &Val) {
     assert(!hasAnnotation(Inst, Name));
-    auto PooledName = AnnotationNames.intern(Name);
-    AnnotationNameRefs.insert(PooledName);
-    auto A = createSimpleAnnotation(*Ctx, *PooledName, Val, Print);
+    auto *A = new (Allocator) MCPlus::MCSimpleAnnotation<ValueType>(Val);
     if (!std::is_trivial<ValueType>::value) {
       AnnotationPool.insert(A);
     }
-    Inst.addOperand(MCOperand::createAnnotation(A));
-    using AnnotationType = const MCSimpleAnnotation<ValueType,PrintType> *;
-    auto &Op = Inst.getOperand(Inst.getNumOperands() - 1);
-    return static_cast<AnnotationType>(Op.getAnnotation())->getValue();
+    setAnnotationOpValue(Inst, getOrCreateAnnotationIndex(Name),
+                         reinterpret_cast<int64_t>(A));
+    return A->getValue();
   }
 
-  /// Remove Annotation associated with Name.
-  /// Return true if the annotation were removed, false if the
-  /// annotation were not present.
-  bool removeAnnotation(MCInst &Inst, StringRef Name) const;
-
-  /// Remove all annotations from Inst.
-  void removeAllAnnotations(MCInst &Inst) const;
-
-  /// Rename annotation from Before to After.  Return false if
-  /// the annotation does not exist.
-  bool renameAnnotation(MCInst &Inst, StringRef Before, StringRef After) const;
-
-  /// Check if the specified annotation exists on this instruction.
-  bool hasAnnotation(const MCInst &Inst, StringRef Name) const;
-
-  /// Get an annotation.  Assumes that the annotation exists.
-  /// Use hasAnnotation() if the annotation may not exist.
-  const MCAnnotation *getAnnotation(const MCInst &Inst, StringRef Name) const;
+  /// Get an annotation as a specific value, but if the annotation does not
+  /// exist, create a new annotation with the default constructor for that type.
+  /// Return a non-const ref so caller can freely modify its contents
+  /// afterwards.
+  template <typename ValueType>
+  ValueType& getOrCreateAnnotationAs(MCInst &Inst, StringRef Name) {
+    auto Val = tryGetAnnotationAs<ValueType>((const MCInst &)Inst, Name);
+    if (!Val) {
+      Val = addAnnotation(Inst, Name, ValueType());
+    }
+    return const_cast<ValueType&>(*Val);
+  }
 
   /// Get an annotation as a specific value.  Assumes that the annotation exist.
   /// Use hasAnnotation() if the annotation may not exist.
   template <typename ValueType>
   const ValueType &getAnnotationAs(const MCInst &Inst, StringRef Name) const {
     const auto *Annotation = getAnnotation(Inst, Name);
-    assert(Annotation->isa(Name));
-    using AnnotationType = const MCSimpleAnnotation<ValueType> *;
-    return static_cast<AnnotationType>(Annotation)->getValue();
+    assert(Annotation);
+    return static_cast<const MCPlus::MCSimpleAnnotation<ValueType> *>
+      (Annotation)->getValue();
   }
 
   /// Get an annotation as a specific value. If the annotation does not exist,
   /// return the \p DefaultValue.
   template <typename ValueType> const ValueType &
   getAnnotationWithDefault(const MCInst &Inst, StringRef Name,
-                           const ValueType &DefaultValue = ValueType()) const {
+                           const ValueType &DefaultValue = ValueType()) {
     if (!hasAnnotation(Inst, Name))
       return DefaultValue;
     return getAnnotationAs<ValueType>(Inst, Name);
   }
+
+  /// Check if the specified annotation exists on this instruction.
+  bool hasAnnotation(const MCInst &Inst, StringRef Name) const;
 
   /// Get an annotation as a specific value, but if the annotation does not
   /// exist, return errc::result_out_of_range.
@@ -1270,33 +1359,17 @@ public:
     return const_cast<ValueType &>(getAnnotationAs<ValueType>(Inst, Name));
   }
 
-  /// Get an annotation as a specific value, but if the annotation does not
-  /// exist, create a new annotation with the default constructor for that type.
-  /// Return a non-const ref so caller can freely modify its contents
-  /// afterwards.
-  template <typename ValueType,
-            typename PrintType = MCAnnotationPrinter<ValueType>> ValueType&
-  getOrCreateAnnotationAs(MCContext *Ctx,
-                          MCInst &Inst,
-                          StringRef Name,
-                          const PrintType &Print = PrintType()) const {
-    auto Val = tryGetAnnotationAs<ValueType>((const MCInst &)Inst, Name);
-    if (!Val) {
-      Val = addAnnotation(Ctx, Inst, Name, ValueType(), Print);
-    }
-    return const_cast<ValueType&>(*Val);
-  }
+  /// Print each annotation attached to \p Inst.
+  void printAnnotations(const MCInst &Inst, raw_ostream &OS) const;
 
-  /// Apply a function to each annotation attached to the given instruction.
-  template <typename Fn>
-  void forEachAnnotation(const MCInst &Inst, Fn &&Func) const {
-    for (unsigned I = 0; I < Inst.getNumOperands(); ++I) {
-      const auto& Op = Inst.getOperand(I);
-      if (Op.isAnnotation()) {
-        Func(Op.getAnnotation());
-      }
-    }
-  }
+  /// Remove annotation associated with \p Name.
+  ///
+  /// Return true if the annotation was removed, false if the the annotation
+  /// was not present.
+  bool removeAnnotation(MCInst &Inst, StringRef Name);
+
+  /// Remove all meta-data annotations from Inst.
+  void removeAllAnnotations(MCInst &Inst);
 
   /// This method takes an indirect call instruction and splits it up into an
   /// equivalent set of instructions that use direct calls for target
@@ -1324,7 +1397,7 @@ public:
     const std::vector<MCInst *> &MethodFetchInsns,
     const bool MinimizeCodeSize,
     MCContext *Ctx
-  ) const {
+  ) {
     llvm_unreachable("not implemented");
     return ICPdata();
   }
