@@ -142,6 +142,7 @@ extern llvm::cl::opt<bool> DumpLines;
 extern llvm::cl::opt<bool> DumpInlineeLines;
 extern llvm::cl::opt<bool> DumpXmi;
 extern llvm::cl::opt<bool> DumpXme;
+extern llvm::cl::opt<bool> DumpNamedStreams;
 extern llvm::cl::opt<bool> DumpStringTable;
 extern llvm::cl::opt<bool> DumpTypes;
 extern llvm::cl::opt<bool> DumpTypeData;
