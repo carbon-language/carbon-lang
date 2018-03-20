@@ -1398,8 +1398,7 @@ static void inferFromTransitions(ArrayRef<PredTransition> LastTransitions,
            PI = I->PredTerm.begin(), PE = I->PredTerm.end(); PI != PE; ++PI) {
       Preds.push_back(PI->Predicate);
     }
-    RecIter PredsEnd = std::unique(Preds.begin(), Preds.end());
-    Preds.resize(PredsEnd - Preds.begin());
+    Preds.erase(std::unique(Preds.begin(), Preds.end()), Preds.end());
     SCTrans.PredTerm = Preds;
     SchedModels.getSchedClass(FromClassIdx).Transitions.push_back(SCTrans);
   }
