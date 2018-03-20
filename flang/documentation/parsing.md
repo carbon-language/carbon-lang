@@ -51,6 +51,9 @@ by a CookedSource class instance, in which:
 * preprocessing directives have been implemented
 * preprocessing macro invocations have been expanded
 * legacy `D` lines in fixed form source have been omitted or included
+* except for the payload in character literals, Hollerith constants,
+  and character and Hollerith edit descriptors, all letters have been
+  normalized to lower case
 
 Lines in the cooked character stream can be of arbitrary length.
 

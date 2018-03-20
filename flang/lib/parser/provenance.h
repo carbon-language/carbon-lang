@@ -3,7 +3,9 @@
 
 #include "char-buffer.h"
 #include "idioms.h"
+#include "interval.h"
 #include "source.h"
+#include <cstddef>
 #include <map>
 #include <memory>
 #include <ostream>
@@ -37,20 +39,20 @@ namespace parser {
 class Provenance {
 public:
   Provenance() {}
-  Provenance(size_t offset) : offset_{offset} { CHECK(offset > 0); }
+  Provenance(std::size_t offset) : offset_{offset} { CHECK(offset > 0); }
   Provenance(const Provenance &that) = default;
   Provenance(Provenance &&that) = default;
   Provenance &operator=(const Provenance &that) = default;
   Provenance &operator=(Provenance &&that) = default;
 
-  size_t offset() const { return offset_; }
+  std::size_t offset() const { return offset_; }
 
   Provenance operator+(ptrdiff_t n) const {
     CHECK(n > -static_cast<ptrdiff_t>(offset_));
-    return {offset_ + static_cast<size_t>(n)};
+    return {offset_ + static_cast<std::size_t>(n)};
   }
-  Provenance operator+(size_t n) const { return {offset_ + n}; }
-  size_t operator-(Provenance that) const {
+  Provenance operator+(std::size_t n) const { return {offset_ + n}; }
+  std::size_t operator-(Provenance that) const {
     CHECK(that <= *this);
     return offset_ - that.offset_;
   }
@@ -60,63 +62,7 @@ public:
   bool operator!=(Provenance that) const { return !(*this == that); }
 
 private:
-  size_t offset_{0};
-};
-
-template<typename A> class Interval {
-public:
-  using type = A;
-  Interval() {}
-  Interval(const A &s, size_t n) : start_{s}, size_{n} {}
-  Interval(A &&s, size_t n) : start_{std::move(s)}, size_{n} {}
-  Interval(const Interval &) = default;
-  Interval(Interval &&) = default;
-  Interval &operator=(const Interval &) = default;
-  Interval &operator=(Interval &&) = default;
-
-  bool operator==(const Interval &that) const {
-    return start_ == that.start_ && size_ == that.size_;
-  }
-
-  const A &start() const { return start_; }
-  size_t size() const { return size_; }
-  bool empty() const { return size_ == 0; }
-
-  bool Contains(const A &x) const { return start_ <= x && x < start_ + size_; }
-  bool Contains(const Interval &that) const {
-    return Contains(that.start_) && Contains(that.start_ + (that.size_ - 1));
-  }
-  bool ImmediatelyPrecedes(const Interval &that) const {
-    return NextAfter() == that.start_;
-  }
-  bool AnnexIfPredecessor(const Interval &that) {
-    if (ImmediatelyPrecedes(that)) {
-      size_ += that.size_;
-      return true;
-    }
-    return false;
-  }
-
-  size_t MemberOffset(const A &x) const {
-    CHECK(Contains(x));
-    return x - start_;
-  }
-  A OffsetMember(size_t n) const {
-    CHECK(n < size_);
-    return start_ + n;
-  }
-
-  A Last() const { return start_ + (size_ - 1); }
-  A NextAfter() const { return start_ + size_; }
-  Interval Prefix(size_t n) const { return {start_, std::min(size_, n)}; }
-  Interval Suffix(size_t n) const {
-    CHECK(n <= size_);
-    return {start_ + n, size_ - n};
-  }
-
-private:
-  A start_;
-  size_t size_{0};
+  std::size_t offset_{0};
 };
 
 using ProvenanceRange = Interval<Provenance>;
@@ -128,18 +74,18 @@ using ProvenanceRange = Interval<Provenance>;
 class OffsetToProvenanceMappings {
 public:
   OffsetToProvenanceMappings() {}
-  size_t size() const;
+  std::size_t size() const;
   void clear();
   void shrink_to_fit() { provenanceMap_.shrink_to_fit(); }
   void Put(ProvenanceRange);
   void Put(const OffsetToProvenanceMappings &);
-  ProvenanceRange Map(size_t at) const;
-  void RemoveLastBytes(size_t);
+  ProvenanceRange Map(std::size_t at) const;
+  void RemoveLastBytes(std::size_t);
   void Dump(std::ostream &) const;
 
 private:
   struct ContiguousProvenanceMapping {
-    size_t start;
+    std::size_t start;
     ProvenanceRange range;
   };
 
@@ -151,7 +97,7 @@ public:
   AllSources();
   ~AllSources();
 
-  size_t size() const { return range_.size(); }
+  std::size_t size() const { return range_.size(); }
   const char &operator[](Provenance) const;
 
   void PushSearchPathDirectory(std::string);
@@ -170,12 +116,13 @@ public:
   }
   void Identify(std::ostream &, Provenance, const std::string &prefix,
       bool echoSourceLine = false) const;
-  const SourceFile *GetSourceFile(Provenance, size_t *offset = nullptr) const;
+  const SourceFile *GetSourceFile(
+      Provenance, std::size_t *offset = nullptr) const;
   ProvenanceRange GetContiguousRangeAround(ProvenanceRange) const;
   std::string GetPath(Provenance) const;  // __FILE__
   int GetLineNumber(Provenance) const;  // __LINE__
   Provenance CompilerInsertionProvenance(char ch);
-  Provenance CompilerInsertionProvenance(const char *, size_t);
+  Provenance CompilerInsertionProvenance(const char *, std::size_t);
   void Dump(std::ostream &) const;
 
 private:
@@ -202,7 +149,7 @@ private:
         const std::string &expansion);
     Origin(ProvenanceRange, const std::string &);
 
-    const char &operator[](size_t) const;
+    const char &operator[](std::size_t) const;
 
     std::variant<Inclusion, Macro, CompilerInsertion> u;
     ProvenanceRange covers, replaces;
@@ -221,16 +168,16 @@ class CookedSource {
 public:
   explicit CookedSource(AllSources *sources) : allSources_{sources} {}
 
-  size_t size() const { return data_.size(); }
-  const char &operator[](size_t n) const { return data_[n]; }
-  const char &at(size_t n) const { return data_.at(n); }
+  std::size_t size() const { return data_.size(); }
+  const char &operator[](std::size_t n) const { return data_[n]; }
+  const char &at(std::size_t n) const { return data_.at(n); }
 
   AllSources *allSources() const { return allSources_; }
 
   ProvenanceRange GetProvenance(const char *) const;
   void Identify(std::ostream &, const char *) const;
 
-  void Put(const char *data, size_t bytes) { buffer_.Put(data, bytes); }
+  void Put(const char *data, std::size_t bytes) { buffer_.Put(data, bytes); }
   void Put(char ch) { buffer_.Put(&ch, 1); }
   void Put(char ch, Provenance p) {
     buffer_.Put(&ch, 1);

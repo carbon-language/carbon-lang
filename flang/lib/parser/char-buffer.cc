@@ -1,12 +1,13 @@
 #include "char-buffer.h"
 #include "idioms.h"
 #include <algorithm>
+#include <cstddef>
 #include <cstring>
 
 namespace Fortran {
 namespace parser {
 
-char *CharBuffer::FreeSpace(size_t *n) {
+char *CharBuffer::FreeSpace(std::size_t *n) {
   int offset{LastBlockOffset()};
   if (blocks_.empty()) {
     blocks_.emplace_front();
@@ -20,16 +21,16 @@ char *CharBuffer::FreeSpace(size_t *n) {
   return last_->data + offset;
 }
 
-void CharBuffer::Claim(size_t n) {
+void CharBuffer::Claim(std::size_t n) {
   if (n > 0) {
     bytes_ += n;
     lastBlockEmpty_ = false;
   }
 }
 
-void CharBuffer::Put(const char *data, size_t n) {
-  size_t chunk;
-  for (size_t at{0}; at < n; at += chunk) {
+void CharBuffer::Put(const char *data, std::size_t n) {
+  std::size_t chunk;
+  for (std::size_t at{0}; at < n; at += chunk) {
     char *to{FreeSpace(&chunk)};
     chunk = std::min(n - at, chunk);
     Claim(chunk);

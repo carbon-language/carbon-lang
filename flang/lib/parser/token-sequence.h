@@ -2,62 +2,16 @@
 #define FORTRAN_PARSER_TOKEN_SEQUENCE_H_
 
 // A buffer class capable of holding a contiguous sequence of characters
-// that have been partitioned into preprocessing tokens.
+// that has been partitioned into preprocessing tokens, along with their
+// associated provenances.
 
+#include "char-block.h"
 #include "provenance.h"
+#include <cstddef>
 #include <cstring>
 #include <string>
 #include <utility>
 #include <vector>
-
-namespace Fortran {
-namespace parser {
-
-// Just a const char pointer with an associated length; does not presume
-// to own the referenced data.  Used to describe buffered tokens and hash
-// table keys.
-class ContiguousChars {
-public:
-  ContiguousChars() {}
-  ContiguousChars(const char *x, size_t n) : interval_{x, n} {}
-  ContiguousChars(const std::string &s) : interval_{s.data(), s.size()} {}
-  ContiguousChars(const ContiguousChars &that) = default;
-  ContiguousChars &operator=(const ContiguousChars &that) = default;
-
-  bool empty() const { return interval_.empty(); }
-  size_t size() const { return interval_.size(); }
-  const char &operator[](size_t j) const { return interval_.start()[j]; }
-
-  bool IsBlank() const;
-  std::string ToString() const {
-    return std::string{interval_.start(), interval_.size()};
-  }
-
-private:
-  Interval<const char *> interval_{nullptr, 0};
-};
-}  // namespace parser
-}  // namespace Fortran
-
-// Specializations to enable std::unordered_map<ContiguousChars, ...>
-template<> struct std::hash<Fortran::parser::ContiguousChars> {
-  size_t operator()(const Fortran::parser::ContiguousChars &x) const {
-    size_t hash{0}, bytes{x.size()};
-    for (size_t j{0}; j < bytes; ++j) {
-      hash = (hash * 31) ^ x[j];
-    }
-    return hash;
-  }
-};
-
-template<> struct std::equal_to<Fortran::parser::ContiguousChars> {
-  bool operator()(const Fortran::parser::ContiguousChars &x,
-      const Fortran::parser::ContiguousChars &y) const {
-    return x.size() == y.size() &&
-        std::memcmp(static_cast<const void *>(&x[0]),
-            static_cast<const void *>(&y[0]), x.size()) == 0;
-  }
-};
 
 namespace Fortran {
 namespace parser {
@@ -68,7 +22,8 @@ class TokenSequence {
 public:
   TokenSequence() {}
   TokenSequence(const TokenSequence &that) { Put(that); }
-  TokenSequence(const TokenSequence &that, size_t at, size_t count = 1) {
+  TokenSequence(
+      const TokenSequence &that, std::size_t at, std::size_t count = 1) {
     Put(that, at, count);
   }
   TokenSequence(TokenSequence &&that)
@@ -89,12 +44,12 @@ public:
     return *this;
   }
 
-  ContiguousChars operator[](size_t token) const {
+  CharBlock operator[](std::size_t token) const {
     return {&char_[start_[token]], TokenBytes(token)};
   }
 
   bool empty() const { return start_.empty(); }
-  size_t size() const { return start_.size(); }
+  std::size_t size() const { return start_.size(); }
   const char *data() const { return &char_[0]; }
   void clear();
   void pop_back();
@@ -117,28 +72,30 @@ public:
 
   void Put(const TokenSequence &);
   void Put(const TokenSequence &, ProvenanceRange);
-  void Put(const TokenSequence &, size_t at, size_t tokens = 1);
-  void Put(const char *, size_t, Provenance);
-  void Put(const ContiguousChars &, Provenance);
+  void Put(const TokenSequence &, std::size_t at, std::size_t tokens = 1);
+  void Put(const char *, std::size_t, Provenance);
+  void Put(const CharBlock &, Provenance);
   void Put(const std::string &, Provenance);
   void Put(const std::stringstream &, Provenance);
-  void Emit(CookedSource *) const;
   std::string ToString() const;
-  Provenance GetTokenProvenance(size_t token, size_t offset = 0) const;
+  Provenance GetTokenProvenance(
+      std::size_t token, std::size_t offset = 0) const;
   ProvenanceRange GetTokenProvenanceRange(
-      size_t token, size_t offset = 0) const;
+      std::size_t token, std::size_t offset = 0) const;
   ProvenanceRange GetIntervalProvenanceRange(
-      size_t token, size_t tokens = 1) const;
+      std::size_t token, std::size_t tokens = 1) const;
   ProvenanceRange GetProvenanceRange() const;
 
+  void EmitLowerCase(CookedSource *) const;
+
 private:
-  size_t TokenBytes(size_t token) const {
+  std::size_t TokenBytes(std::size_t token) const {
     return (token + 1 >= start_.size() ? char_.size() : start_[token + 1]) -
         start_[token];
   }
 
-  std::vector<size_t> start_;
-  size_t nextStart_{0};
+  std::vector<std::size_t> start_;
+  std::size_t nextStart_{0};
   std::vector<char> char_;
   OffsetToProvenanceMappings provenances_;
 };

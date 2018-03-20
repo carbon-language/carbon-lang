@@ -11,6 +11,7 @@
 #include "idioms.h"
 #include "message.h"
 #include "provenance.h"
+#include <cstddef>
 #include <cstring>
 #include <list>
 #include <memory>
@@ -53,7 +54,7 @@ public:
   }
 
   void swap(ParseState &that) {
-    constexpr size_t bytes{sizeof *this};
+    constexpr std::size_t bytes{sizeof *this};
     char buffer[bytes];
     std::memcpy(buffer, this, bytes);
     std::memcpy(this, &that, bytes);

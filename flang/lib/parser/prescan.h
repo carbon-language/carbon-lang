@@ -12,8 +12,10 @@
 #include "message.h"
 #include "provenance.h"
 #include "token-sequence.h"
+#include <bitset>
 #include <optional>
 #include <string>
+#include <unordered_set>
 
 namespace Fortran {
 namespace parser {
@@ -50,6 +52,8 @@ public:
     fixedFormColumnLimit_ = limit;
     return *this;
   }
+
+  Prescanner &AddCompilerDirectiveSentinel(const std::string &);
 
   bool Prescan(ProvenanceRange);
   void NextLine();
@@ -110,14 +114,17 @@ private:
   void Hollerith(TokenSequence *, int);
   bool PadOutCharacterLiteral(TokenSequence *);
   bool CommentLines();
-  bool CommentLinesAndPreprocessorDirectives();
-  bool IsFixedFormCommentLine(const char *);
-  bool IsFreeFormComment(const char *);
+  bool CommentLinesAndPreprocessorDirectives(char *sentinel);
+  bool IsFixedFormCommentLine(const char *) const;
+  bool IsFreeFormComment(const char *) const;
   bool IncludeLine(const char *);
   bool IsPreprocessorDirectiveLine(const char *) const;
   const char *FixedFormContinuationLine();
   bool FixedFormContinuation();
   bool FreeFormContinuation();
+  bool IsFixedFormCompilerDirectiveLine(const char *, char *sentinel) const;
+  bool IsFreeFormCompilerDirectiveLine(const char *, char *sentinel) const;
+  bool IsCompilerDirectiveSentinel(const char *) const;
 
   Messages *messages_;
   CookedSource *cooked_;
@@ -146,6 +153,12 @@ private:
       cooked_->allSources()->CompilerInsertionProvenance('\\')};
   ProvenanceRange sixSpaceProvenance_{
       cooked_->allSources()->AddCompilerInsertion("      "s)};
+
+  // To avoid probing the set of active compiler directive sentinel strings
+  // on every comment line, they're checked first with a cheap Bloom filter.
+  static const int prime1{1019}, prime2{1021};
+  std::bitset<prime2> compilerDirectiveBloomFilter_;  // 128 bytes
+  std::unordered_set<std::string> compilerDirectiveSentinels_;
 };
 }  // namespace parser
 }  // namespace Fortran

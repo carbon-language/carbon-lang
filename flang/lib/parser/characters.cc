@@ -1,4 +1,6 @@
 #include "characters.h"
+#include <cstddef>
+#include <optional>
 
 namespace Fortran {
 namespace parser {
@@ -52,9 +54,9 @@ std::optional<int> EUC_JPCharacterBytes(const char *p) {
   return {};
 }
 
-std::optional<size_t> CountCharacters(
-    const char *p, size_t bytes, std::optional<int> (*cbf)(const char *)) {
-  size_t chars{0};
+std::optional<std::size_t> CountCharacters(
+    const char *p, std::size_t bytes, std::optional<int> (*cbf)(const char *)) {
+  std::size_t chars{0};
   const char *limit{p + bytes};
   while (p < limit) {
     ++chars;

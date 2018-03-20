@@ -5,6 +5,7 @@
 // conversions here to avoid dependences upon <cctype> and
 // also to accomodate Fortran tokenization.
 
+#include <cstddef>
 #include <optional>
 #include <string>
 
@@ -160,8 +161,8 @@ void EmitQuotedChar(char ch, const NORMAL &emit, const INSERTED &insert,
 
 std::optional<int> UTF8CharacterBytes(const char *);
 std::optional<int> EUC_JPCharacterBytes(const char *);
-std::optional<size_t> CountCharacters(
-    const char *, size_t bytes, std::optional<int> (*)(const char *));
+std::optional<std::size_t> CountCharacters(
+    const char *, std::size_t bytes, std::optional<int> (*)(const char *));
 }  // namespace parser
 }  // namespace Fortran
 #endif  // FORTRAN_PARSER_CHARACTERS_H_

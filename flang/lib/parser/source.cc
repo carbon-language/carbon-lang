@@ -3,6 +3,7 @@
 #include "idioms.h"
 #include <algorithm>
 #include <cerrno>
+#include <cstddef>
 #include <cstring>
 #include <fcntl.h>
 #include <memory>
@@ -19,13 +20,14 @@ namespace parser {
 
 SourceFile::~SourceFile() { Close(); }
 
-static std::vector<size_t> FindLineStarts(const char *source, size_t bytes) {
+static std::vector<std::size_t> FindLineStarts(
+    const char *source, std::size_t bytes) {
   if (bytes == 0) {
     return {};
   }
   CHECK(source[bytes - 1] == '\n' && "missing ultimate newline");
-  std::vector<size_t> result;
-  size_t at{0};
+  std::vector<std::size_t> result;
+  std::size_t at{0};
   do {
     result.push_back(at);
     const void *vp{static_cast<const void *>(&source[at])};
@@ -87,7 +89,7 @@ bool SourceFile::Open(std::string path, std::stringstream *error) {
 
   // Try to map the the source file into the process' address space.
   if (S_ISREG(statbuf.st_mode)) {
-    bytes_ = static_cast<size_t>(statbuf.st_size);
+    bytes_ = static_cast<std::size_t>(statbuf.st_size);
     if (bytes_ > 0) {
       void *vp = mmap(0, bytes_, PROT_READ, MAP_SHARED, fileDescriptor_, 0);
       if (vp != MAP_FAILED) {
@@ -110,7 +112,7 @@ bool SourceFile::Open(std::string path, std::stringstream *error) {
   // contiguous block.
   CharBuffer buffer;
   while (true) {
-    size_t count;
+    std::size_t count;
     char *to{buffer.FreeSpace(&count)};
     ssize_t got{read(fileDescriptor_, to, count)};
     if (got < 0) {
@@ -164,14 +166,14 @@ void SourceFile::Close() {
   path_.clear();
 }
 
-std::pair<int, int> SourceFile::FindOffsetLineAndColumn(size_t at) const {
+std::pair<int, int> SourceFile::FindOffsetLineAndColumn(std::size_t at) const {
   CHECK(at < bytes_);
   if (lineStart_.empty()) {
     return {1, static_cast<int>(at + 1)};
   }
-  size_t low{0}, count{lineStart_.size()};
+  std::size_t low{0}, count{lineStart_.size()};
   while (count > 1) {
-    size_t mid{low + (count >> 1)};
+    std::size_t mid{low + (count >> 1)};
     if (lineStart_[mid] > at) {
       count = mid - low;
     } else {

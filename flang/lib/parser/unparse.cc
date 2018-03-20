@@ -8,6 +8,8 @@
 #include "parse-tree-visitor.h"
 #include "parse-tree.h"
 #include <algorithm>
+#include <cinttypes>
+#include <cstddef>
 
 namespace Fortran {
 namespace parser {
@@ -58,6 +60,11 @@ public:
 
   void Post(const ProgramUnit &x) {  // R502, R503
     out_ << '\n';  // blank line after each ProgramUnit
+  }
+
+  bool Pre(const Name &x) {  // R603
+    Put(x.source.ToString());
+    return false;
   }
   bool Pre(const DefinedOperator::IntrinsicOperator &x) {  // R608
     switch (x) {
@@ -150,8 +157,7 @@ public:
     return false;
   }
   bool Pre(const RealLiteralConstant &x) {  // R714, R715
-    Put(x.intPart), Put('.'), Put(x.fraction), Walk(x.exponent);
-    Walk("_", x.kind);
+    Put(x.real.source.ToString()), Walk("_", x.kind);
     return false;
   }
   bool Pre(const ComplexLiteralConstant &x) {  // R718 - R720
@@ -190,7 +196,7 @@ public:
     return false;
   }
   bool Pre(const HollerithLiteralConstant &x) {
-    std::optional<size_t> chars{CountCharacters(x.v.data(), x.v.size(),
+    std::optional<std::size_t> chars{CountCharacters(x.v.data(), x.v.size(),
         encoding_ == Encoding::EUC_JP ? EUC_JPCharacterBytes
                                       : UTF8CharacterBytes)};
     if (chars.has_value()) {
@@ -208,7 +214,7 @@ public:
   }
   bool Pre(const DerivedTypeStmt &x) {  // R727
     Word("TYPE"), Walk(", ", std::get<std::list<TypeAttrSpec>>(x.t), ", ");
-    Put(" :: "), Put(std::get<Name>(x.t));
+    Put(" :: "), Walk(std::get<Name>(x.t));
     Walk("(", std::get<std::list<Name>>(x.t), ", ", ")");
     Indent();
     return false;
@@ -237,7 +243,7 @@ public:
     return false;
   }
   bool Pre(const TypeParamDecl &x) {  // R733
-    Put(std::get<Name>(x.t));
+    Walk(std::get<Name>(x.t));
     Walk("=", std::get<std::optional<ScalarIntConstantExpr>>(x.t));
     return false;
   }
@@ -720,7 +726,11 @@ public:
     return false;
   }
   bool Pre(const LetterSpec &x) {  // R865
-    Put(std::get<char>(x.t)), Walk("-", std::get<std::optional<char>>(x.t));
+    Put(*std::get<const char *>(x.t));
+    auto second = std::get<std::optional<const char *>>(x.t);
+    if (second.has_value()) {
+      Put('-'), Put(**second);
+    }
     return false;
   }
   bool Pre(const ImportStmt &x) {  // R867
@@ -742,7 +752,7 @@ public:
     return false;
   }
   bool Pre(const NamelistStmt::Group &x) {
-    Put('/'), Put(std::get<Name>(x.t)), Put('/');
+    Put('/'), Walk(std::get<Name>(x.t)), Put('/');
     Walk(std::get<std::list<Name>>(x.t), ", ");
     return false;
   }
@@ -971,7 +981,7 @@ public:
     return false;
   }
   bool Pre(const DefinedOpName &x) {  // R1003, R1023, R1414, & R1415
-    Put('.'), Put(x.v), Put('.');
+    Put('.'), Walk(x.v), Put('.');
     return false;
   }
   bool Pre(const AssignmentStmt &x) {  // R1032
@@ -2058,7 +2068,7 @@ private:
   }
 
   // Traverse a std::tuple<>, with an optional separator.
-  template<size_t J = 0, typename T>
+  template<std::size_t J = 0, typename T>
   void WalkTupleElements(const T &tuple, const char *separator) {
     if constexpr (J < std::tuple_size_v<T>) {
       if (J > 0) {

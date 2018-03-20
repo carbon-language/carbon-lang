@@ -9,6 +9,8 @@
 // run-time I/O support library have been isolated into a distinct header file
 // (viz., format-specification.h).
 
+#include "char-block.h"
+#include "characters.h"
 #include "format-specification.h"
 #include "idioms.h"
 #include "indirection.h"
@@ -39,13 +41,18 @@ CLASS_TRAIT(UnionTrait);
 CLASS_TRAIT(TupleTrait);
 
 // Most non-template classes in this file use these default definitions
-// for their move constructor and move assignment operator=.
-#define BOILERPLATE(classname) \
+// for their move constructor and move assignment operator=, and disable
+// their copy constructor and copy assignment operator=.
+#define COPY_AND_ASSIGN_BOILERPLATE(classname) \
   classname(classname &&) = default; \
   classname &operator=(classname &&) = default; \
-  classname() = delete; \
   classname(const classname &) = delete; \
   classname &operator=(const classname &) = delete
+
+// Almost all classes in this file have no default constructor.
+#define BOILERPLATE(classname) \
+  COPY_AND_ASSIGN_BOILERPLATE(classname); \
+  classname() = delete
 
 // Empty classes are often used below as alternatives in std::variant<>
 // discriminated unions.
@@ -229,8 +236,10 @@ struct AssignStmt;
 struct AssignedGotoStmt;
 struct PauseStmt;
 
+// Cooked character stream locations
+using Location = const char *;
+
 // Implicit definitions of the Standard
-using Keyword = std::string;
 
 // R403 scalar-xyz -> xyz
 // These template class wrappers correspond to the Standard's modifiers
@@ -290,10 +299,10 @@ using Label = std::uint64_t;  // validated later, must be in [1..99999]
 // A wrapper for xzy-stmt productions that are statements, so that
 // source provenances and labels have a uniform representation.
 template<typename A> struct Statement {
-  Statement(Provenance &&at, std::optional<long> &&lab, bool &&accept, A &&s)
-    : provenance(at), label(std::move(lab)), isLabelInAcceptableField{accept},
+  Statement(std::optional<long> &&lab, bool &&accept, A &&s)
+    : label(std::move(lab)), isLabelInAcceptableField{accept},
       statement(std::move(s)) {}
-  Provenance provenance;
+  CharBlock source;
   std::optional<Label> label;
   bool isLabelInAcceptableField{true};
   A statement;
@@ -479,7 +488,15 @@ struct ProgramUnit {
 WRAPPER_CLASS(Program, std::list<ProgramUnit>);
 
 // R603 name -> letter [alphanumeric-character]...
-using Name = std::string;
+struct Name {
+  Name() {}
+  COPY_AND_ASSIGN_BOILERPLATE(Name);
+  CharBlock source;
+  // TODO: pointer to symbol table entity
+};
+
+// R516 keyword -> name
+WRAPPER_CLASS(Keyword, Name);
 
 // R606 named-constant -> name
 WRAPPER_CLASS(NamedConstant, Name);
@@ -671,6 +688,7 @@ struct KindParam {
 // R707 signed-int-literal-constant -> [sign] int-literal-constant
 struct SignedIntLiteralConstant {
   TUPLE_CLASS_BOILERPLATE(SignedIntLiteralConstant);
+  CharBlock source;
   std::tuple<std::int64_t, std::optional<KindParam>> t;
 };
 
@@ -684,27 +702,21 @@ struct IntLiteralConstant {
 // R712 sign -> + | -
 enum class Sign { Positive, Negative };
 
-// R717 exponent -> signed-digit-string
-struct ExponentPart {
-  TUPLE_CLASS_BOILERPLATE(ExponentPart);
-  std::tuple<char, std::int64_t> t;
-};
-
 // R714 real-literal-constant ->
 //        significand [exponent-letter exponent] [_ kind-param] |
 //        digit-string exponent-letter exponent [_ kind-param]
 // R715 significand -> digit-string . [digit-string] | . digit-string
+// R717 exponent -> signed-digit-string
 struct RealLiteralConstant {
   BOILERPLATE(RealLiteralConstant);
-  RealLiteralConstant(std::list<char> &&, std::list<char> &&,
-      std::optional<ExponentPart> &&, std::optional<KindParam> &&);
-  RealLiteralConstant(std::list<char> &&, std::optional<ExponentPart> &&,
-      std::optional<KindParam> &&);
-  RealLiteralConstant(
-      std::list<char> &&, ExponentPart &&, std::optional<KindParam> &&);
-  std::string intPart;
-  std::string fraction;
-  std::optional<ExponentPart> exponent;
+  struct Real {
+    COPY_AND_ASSIGN_BOILERPLATE(Real);
+    Real() {}
+    CharBlock source;
+  };
+  RealLiteralConstant(Real &&r, std::optional<KindParam> &&k)
+    : real{std::move(r)}, kind{std::move(k)} {}
+  Real real;
   std::optional<KindParam> kind;
 };
 
@@ -1436,7 +1448,7 @@ WRAPPER_CLASS(VolatileStmt, std::list<ObjectName>);
 // R865 letter-spec -> letter [- letter]
 struct LetterSpec {
   TUPLE_CLASS_BOILERPLATE(LetterSpec);
-  std::tuple<char, std::optional<char>> t;
+  std::tuple<Location, std::optional<Location>> t;
 };
 
 // R864 implicit-spec -> declaration-type-spec ( letter-spec-list )

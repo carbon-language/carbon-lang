@@ -44,7 +44,7 @@ public:
   }
 
   bool Pre(const parser::TypeAttrSpec::Extends &x) {
-    builder_->extends(x.v);
+    builder_->extends(x.v.source.ToString());
     return false;
   }
   bool Pre(const parser::AccessSpec &x) {
@@ -165,7 +165,7 @@ public:
   void Post(const parser::ProcDecl &x) {
     const auto &name = std::get<parser::Name>(x.t);
     //TODO: std::get<std::optional<ProcPointerInit>>(x.t)
-    builder_->procComponent(ProcComponentDef(ProcDecl(name), *attrs_));
+    builder_->procComponent(ProcComponentDef(ProcDecl(name.source.ToString()), *attrs_));
   }
 
   bool Pre(const parser::DataComponentDefStmt &x) {
@@ -192,7 +192,7 @@ public:
         ? *arraySpec_
         : attrArraySpec_ ? *attrArraySpec_ : ComponentArraySpec{};
     builder_->dataComponent(
-        DataComponentDef(*declTypeSpec_, name, *attrs_, arraySpec));
+        DataComponentDef(*declTypeSpec_, name.source.ToString(), *attrs_, arraySpec));
     arraySpec_.reset();
   }
 
@@ -289,7 +289,7 @@ public:
     return true;
   }
   void Post(const parser::DerivedTypeStmt &x) {
-    builder_->name(std::get<Name>(x.t));
+    builder_->name(std::get<parser::Name>(x.t).source.ToString());
     builder_->attrs(*attrs_);
     attrs_.release();
   }

@@ -8,6 +8,7 @@
 #include "characters.h"
 #include "idioms.h"
 #include "provenance.h"
+#include <cstddef>
 #include <cstring>
 #include <functional>
 #include <limits>
@@ -18,51 +19,65 @@
 namespace Fortran {
 namespace parser {
 
-class CharPredicateGuardParser {
+class CharPredicateGuard {
 public:
-  using resultType = char;
-  constexpr CharPredicateGuardParser(
-      const CharPredicateGuardParser &) = default;
-  constexpr CharPredicateGuardParser(bool (*f)(char), MessageFixedText t)
-    : predicate_{f}, text_{t} {}
-  std::optional<char> Parse(ParseState *state) const {
-    auto at = state->GetLocation();
-    if (std::optional<char> result{nextChar.Parse(state)}) {
-      if (predicate_(*result)) {
-        return result;
+  using resultType = const char *;
+  constexpr CharPredicateGuard(const CharPredicateGuard &) = default;
+  constexpr CharPredicateGuard(bool (*f)(char), MessageFixedText m)
+    : predicate_{f}, messageText_{m} {}
+  std::optional<const char *> Parse(ParseState *state) const {
+    const char *at{state->GetLocation()};
+    if (!state->IsAtEnd()) {
+      if (predicate_(*at)) {
+        state->UncheckedAdvance();
+        return {at};
       }
     }
-    state->PutMessage(at, text_);
+    state->PutMessage(at, messageText_);
     return {};
   }
 
 private:
   bool (*const predicate_)(char);
-  const MessageFixedText text_;
+  const MessageFixedText messageText_;
 };
 
-constexpr CharPredicateGuardParser digit{
-    IsDecimalDigit, "expected digit"_en_US};
+constexpr auto letter = CharPredicateGuard{IsLetter, "expected letter"_en_US};
+constexpr auto digit =
+    CharPredicateGuard{IsDecimalDigit, "expected digit"_en_US};
 
-constexpr auto letter = applyFunction(ToLowerCaseLetter,
-    CharPredicateGuardParser{IsLetter, "expected letter"_en_US});
-
-template<char good> class CharMatch {
+// "x"_ch matches one instance of the character 'x' without skipping any
+// spaces before or after.  The parser returns the location of the character
+// on success.
+class AnyOfChar {
 public:
-  using resultType = char;
-  constexpr CharMatch() {}
-  static std::optional<char> Parse(ParseState *state) {
-    auto at = state->GetLocation();
-    std::optional<char> result{nextChar.Parse(state)};
-    if (result && *result != good) {
-      result.reset();
+  using resultType = const char *;
+  constexpr AnyOfChar(const AnyOfChar &) = default;
+  constexpr AnyOfChar(const char *chars, std::size_t n)
+    : chars_{chars}, bytes_{n} {}
+  std::optional<const char *> Parse(ParseState *state) const {
+    const char *at{state->GetLocation()};
+    if (!state->IsAtEnd()) {
+      const char *p{chars_};
+      for (std::size_t j{0}; j < bytes_ && *p != '\0'; ++j, ++p) {
+        if (*at == *p) {
+          state->UncheckedAdvance();
+          return {at};
+        }
+      }
     }
-    if (!result) {
-      state->PutMessage(at, MessageExpectedText{good});
-    }
-    return {result};
+    state->PutMessage(at, MessageExpectedText{chars_, bytes_});
+    return {};
   }
+
+private:
+  const char *const chars_;
+  const std::size_t bytes_{std::numeric_limits<std::size_t>::max()};
 };
+
+constexpr AnyOfChar operator""_ch(const char str[], std::size_t n) {
+  return AnyOfChar{str, n};
+}
 
 // Skips over spaces.  Always succeeds.
 constexpr struct Spaces {
@@ -70,7 +85,7 @@ constexpr struct Spaces {
   constexpr Spaces() {}
   static std::optional<Success> Parse(ParseState *state) {
     while (std::optional<char> ch{state->PeekAtNextChar()}) {
-      if (ch != ' ' && ch != '\t') {
+      if (ch != ' ') {
         break;
       }
       state->UncheckedAdvance();
@@ -83,37 +98,41 @@ class TokenStringMatch {
 public:
   using resultType = Success;
   constexpr TokenStringMatch(const TokenStringMatch &) = default;
-  constexpr TokenStringMatch(const char *str, size_t n)
+  constexpr TokenStringMatch(const char *str, std::size_t n)
     : str_{str}, bytes_{n} {}
   constexpr TokenStringMatch(const char *str) : str_{str} {}
   std::optional<Success> Parse(ParseState *state) const {
-    auto at = state->GetLocation();
     spaces.Parse(state);
+    const char *start{state->GetLocation()};
     const char *p{str_};
-    std::optional<char> ch;  // initially empty
-    for (size_t j{0}; j < bytes_ && *p != '\0'; ++j, ++p) {
+    std::optional<const char *> at;  // initially empty
+    for (std::size_t j{0}; j < bytes_ && *p != '\0'; ++j, ++p) {
       const auto spaceSkipping{*p == ' '};
       if (spaceSkipping) {
         if (j + 1 == bytes_ || p[1] == ' ' || p[1] == '\0') {
           continue;  // redundant; ignore
         }
       }
-      if (!ch.has_value() && !(ch = nextChar.Parse(state))) {
-        return {};
+      if (!at.has_value()) {
+        at = nextCh.Parse(state);
+        if (!at.has_value()) {
+          return {};
+        }
       }
       if (spaceSkipping) {
-        // medial space: 0 or more spaces/tabs accepted, none required
+        // medial space: space accepted, none required
         // TODO: designate and enforce free-form mandatory white space
-        while (*ch == ' ' || *ch == '\t') {
-          if (!(ch = nextChar.Parse(state))) {
+        if (**at == ' ') {
+          at = nextCh.Parse(state);
+          if (!at.has_value()) {
             return {};
           }
         }
-        // ch remains full for next iteration
-      } else if (IsSameApartFromCase(*ch, *p)) {
-        ch.reset();
+        // 'at' remains full for next iteration
+      } else if (**at == ToLowerCaseLetter(*p)) {
+        at.reset();
       } else {
-        state->PutMessage(at, MessageExpectedText{str_, bytes_});
+        state->PutMessage(start, MessageExpectedText{str_, bytes_});
         return {};
       }
     }
@@ -122,10 +141,10 @@ public:
 
 private:
   const char *const str_;
-  const size_t bytes_{std::numeric_limits<size_t>::max()};
+  const std::size_t bytes_{std::numeric_limits<std::size_t>::max()};
 };
 
-constexpr TokenStringMatch operator""_tok(const char str[], size_t n) {
+constexpr TokenStringMatch operator""_tok(const char str[], std::size_t n) {
   return TokenStringMatch{str, n};
 }
 
@@ -167,11 +186,11 @@ struct CharLiteralChar {
   using resultType = Result;
   static std::optional<Result> Parse(ParseState *state) {
     auto at = state->GetLocation();
-    std::optional<char> och{nextChar.Parse(state)};
+    std::optional<const char *> och{nextCh.Parse(state)};
     if (!och.has_value()) {
       return {};
     }
-    char ch{*och};
+    char ch{**och};
     if (ch == '\n') {
       state->PutMessage(at, "unclosed character constant"_en_US);
       return {};
@@ -179,10 +198,10 @@ struct CharLiteralChar {
     if (ch != '\\') {
       return {Result::Bare(ch)};
     }
-    if (!(och = nextChar.Parse(state)).has_value()) {
+    if (!(och = nextCh.Parse(state)).has_value()) {
       return {};
     }
-    ch = *och;
+    ch = **och;
     if (ch == '\n') {
       state->PutMessage(at, "unclosed character constant"_en_US);
       return {};
@@ -193,21 +212,25 @@ struct CharLiteralChar {
     if (IsOctalDigit(ch)) {
       ch -= '0';
       for (int j = (ch > 3 ? 1 : 2); j-- > 0;) {
-        static constexpr auto octalDigit = attempt(CharPredicateGuardParser{
-            IsOctalDigit, "expected octal digit"_en_US});
+        static constexpr auto octalDigit =
+            CharPredicateGuard{IsOctalDigit, "expected octal digit"_en_US};
         och = octalDigit.Parse(state);
         if (och.has_value()) {
-          ch = 8 * ch + *och - '0';
+          ch = 8 * ch + **och - '0';
+        } else {
+          break;
         }
       }
     } else if (ch == 'x' || ch == 'X') {
       ch = 0;
       for (int j = 0; j++ < 2;) {
-        static constexpr auto hexDigit = attempt(CharPredicateGuardParser{
-            IsHexadecimalDigit, "expected hexadecimal digit"_en_US});
+        static constexpr auto hexDigit = CharPredicateGuard{
+            IsHexadecimalDigit, "expected hexadecimal digit"_en_US};
         och = hexDigit.Parse(state);
         if (och.has_value()) {
-          ch = 16 * ch + HexadecimalDigitValue(*och);
+          ch = 16 * ch + HexadecimalDigitValue(**och);
+        } else {
+          break;
         }
       }
     } else {
@@ -222,9 +245,10 @@ template<char quote> struct CharLiteral {
   static std::optional<std::string> Parse(ParseState *state) {
     std::string str;
     static constexpr auto nextch = attempt(CharLiteralChar{});
+    static char q{quote};
     while (std::optional<CharLiteralChar::Result> ch{nextch.Parse(state)}) {
       if (ch->ch == quote && !ch->wasEscaped) {
-        static constexpr auto doubled = attempt(CharMatch<quote>{});
+        static constexpr auto doubled = attempt(AnyOfChar{&q, 1});
         if (!doubled.Parse(state).has_value()) {
           return {str};
         }
@@ -254,60 +278,64 @@ struct BOZLiteral {
   static std::optional<std::uint64_t> Parse(ParseState *state) {
     std::optional<int> shift;
     auto baseChar = [&shift](char ch) -> bool {
-      switch (toupper(ch)) {
-      case 'B': shift = 1; return true;
-      case 'O': shift = 3; return true;
-      case 'Z': shift = 4; return true;
-      case 'X': shift = 4; return true;
+      switch (ch) {
+      case 'b': shift = 1; return true;
+      case 'o': shift = 3; return true;
+      case 'z': shift = 4; return true;
+      case 'x': shift = 4; return true;
       default: return false;
       }
     };
 
     spaces.Parse(state);
-    auto ch = nextChar.Parse(state);
-    if (!ch) {
+    const char *start{state->GetLocation()};
+    std::optional<const char *> at{nextCh.Parse(state)};
+    if (!at.has_value()) {
       return {};
     }
-    if (toupper(*ch) == 'X' && !IsNonstandardUsageOk(state)) {
+    if (**at == 'x' && !IsNonstandardUsageOk(state)) {
       return {};
     }
-    if (baseChar(*ch) && !(ch = nextChar.Parse(state))) {
-      return {};
+    if (baseChar(**at)) {
+      at = nextCh.Parse(state);
+      if (!at.has_value()) {
+        return {};
+      }
     }
 
-    char quote = *ch;
+    char quote = **at;
     if (quote != '\'' && quote != '"') {
       return {};
     }
 
-    auto at = state->GetLocation();
     std::string content;
     while (true) {
-      if (!(ch = nextChar.Parse(state))) {
+      at = nextCh.Parse(state);
+      if (!at.has_value()) {
         return {};
       }
-      if (*ch == quote) {
+      if (**at == quote) {
         break;
       }
-      if (*ch == ' ') {
+      if (**at == ' ') {
         continue;
       }
-      if (!IsHexadecimalDigit(*ch)) {
+      if (!IsHexadecimalDigit(**at)) {
         return {};
       }
-      content += *ch;
+      content += **at;
     }
 
     if (!shift) {
       // extension: base allowed to appear as suffix, too
-      if (!IsNonstandardUsageOk(state) || !(ch = nextChar.Parse(state)) ||
-          !baseChar(*ch)) {
+      if (!IsNonstandardUsageOk(state) || !(at = nextCh.Parse(state)) ||
+          !baseChar(**at)) {
         return {};
       }
     }
 
     if (content.empty()) {
-      state->PutMessage(at, "no digit in BOZ literal"_en_US);
+      state->PutMessage(start, "no digit in BOZ literal"_en_US);
       return {};
     }
 
@@ -315,13 +343,13 @@ struct BOZLiteral {
     for (auto digit : content) {
       digit = HexadecimalDigitValue(digit);
       if ((digit >> *shift) > 0) {
-        state->PutMessage(at, "bad digit in BOZ literal"_en_US);
+        state->PutMessage(start, "bad digit in BOZ literal"_en_US);
         return {};
       }
       std::uint64_t was{value};
       value <<= *shift;
       if ((value >> *shift) != was) {
-        state->PutMessage(at, "excessive digits in BOZ literal"_en_US);
+        state->PutMessage(start, "excessive digits in BOZ literal"_en_US);
         return {};
       }
       value |= digit;
@@ -335,26 +363,25 @@ struct DigitString {
   using resultType = std::uint64_t;
   static std::optional<std::uint64_t> Parse(ParseState *state) {
     static constexpr auto getDigit = attempt(digit);
-    auto at = state->GetLocation();
-    std::optional<char> firstDigit{getDigit.Parse(state)};
-    if (!firstDigit) {
+    std::optional<const char *> firstDigit{getDigit.Parse(state)};
+    if (!firstDigit.has_value()) {
       return {};
     }
-    std::uint64_t value = *firstDigit - '0';
+    std::uint64_t value = **firstDigit - '0';
     bool overflow{false};
     while (auto nextDigit{getDigit.Parse(state)}) {
       if (value > std::numeric_limits<std::uint64_t>::max() / 10) {
         overflow = true;
       }
       value *= 10;
-      int digitValue = *nextDigit - '0';
+      int digitValue = **nextDigit - '0';
       if (value > std::numeric_limits<std::uint64_t>::max() - digitValue) {
         overflow = true;
       }
       value += digitValue;
     }
     if (overflow) {
-      state->PutMessage(at, "overflow in decimal literal"_en_US);
+      state->PutMessage(*firstDigit, "overflow in decimal literal"_en_US);
     }
     return {value};
   }
@@ -365,13 +392,13 @@ struct HollerithLiteral {
   using resultType = std::string;
   static std::optional<std::string> Parse(ParseState *state) {
     spaces.Parse(state);
-    auto at = state->GetLocation();
+    const char *start{state->GetLocation()};
     std::optional<std::uint64_t> charCount{DigitString{}.Parse(state)};
     if (!charCount || *charCount < 1) {
       return {};
     }
-    std::optional<char> h{letter.Parse(state)};
-    if (!h || (*h != 'h' && *h != 'H')) {
+    std::optional<const char *> h{letter.Parse(state)};
+    if (!h || **h != 'h') {
       return {};
     }
     std::string content;
@@ -381,32 +408,32 @@ struct HollerithLiteral {
       if (state->encoding() == Encoding::EUC_JP) {
         std::optional<int> chBytes{EUC_JPCharacterBytes(p)};
         if (!chBytes.has_value()) {
-          state->PutMessage(at, "bad EUC_JP characters in Hollerith"_en_US);
+          state->PutMessage(start, "bad EUC_JP characters in Hollerith"_en_US);
           return {};
         }
         bytes = *chBytes;
       } else if (state->encoding() == Encoding::UTF8) {
         std::optional<int> chBytes{UTF8CharacterBytes(p)};
         if (!chBytes.has_value()) {
-          state->PutMessage(at, "bad UTF-8 characters in Hollerith"_en_US);
+          state->PutMessage(start, "bad UTF-8 characters in Hollerith"_en_US);
           return {};
         }
         bytes = *chBytes;
       }
       if (bytes == 1) {
-        std::optional<char> ch{nextChar.Parse(state)};
-        if (!ch.has_value() || !isprint(*ch)) {
+        std::optional<const char *> at{nextCh.Parse(state)};
+        if (!at.has_value() || !isprint(**at)) {
           state->PutMessage(
-              at, "insufficient or bad characters in Hollerith"_en_US);
+              start, "insufficient or bad characters in Hollerith"_en_US);
           return {};
         }
-        content += *ch;
+        content += **at;
       } else {
         // Multi-byte character
         while (bytes-- > 0) {
-          std::optional<char> byte{nextChar.Parse(state)};
+          std::optional<const char *> byte{nextCh.Parse(state)};
           CHECK(byte.has_value());
-          content += *byte;
+          content += **byte;
         }
       }
     }

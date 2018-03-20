@@ -5,6 +5,7 @@
 #include "preprocessor.h"
 #include "source.h"
 #include "token-sequence.h"
+#include <cstddef>
 #include <cstring>
 #include <sstream>
 #include <utility>
@@ -23,13 +24,15 @@ Prescanner::Prescanner(const Prescanner &that)
     fixedFormColumnLimit_{that.fixedFormColumnLimit_},
     enableOldDebugLines_{that.enableOldDebugLines_},
     enableBackslashEscapesInCharLiterals_{
-        that.enableBackslashEscapesInCharLiterals_} {}
+        that.enableBackslashEscapesInCharLiterals_},
+    compilerDirectiveBloomFilter_{that.compilerDirectiveBloomFilter_},
+    compilerDirectiveSentinels_{that.compilerDirectiveSentinels_} {}
 
 bool Prescanner::Prescan(ProvenanceRange range) {
   AllSources *allSources{cooked_->allSources()};
   ProvenanceRange around{allSources->GetContiguousRangeAround(range)};
   startProvenance_ = range.start();
-  size_t offset{0};
+  std::size_t offset{0};
   const SourceFile *source{
       allSources->GetSourceFile(startProvenance_, &offset)};
   CHECK(source != nullptr);
@@ -39,7 +42,9 @@ bool Prescanner::Prescan(ProvenanceRange range) {
   BeginSourceLine(lineStart_);
   TokenSequence tokens, preprocessed;
   while (lineStart_ < limit_) {
-    if (CommentLinesAndPreprocessorDirectives() && lineStart_ >= limit_) {
+    char sentinel[8];
+    if (CommentLinesAndPreprocessorDirectives(sentinel) &&
+        lineStart_ >= limit_) {
       break;
     }
     BeginSourceLineAndAdvance();
@@ -54,14 +59,17 @@ bool Prescanner::Prescan(ProvenanceRange range) {
     if (preprocessor_->MacroReplacement(tokens, *this, &preprocessed)) {
       preprocessed.PutNextTokenChar('\n', newlineProvenance);
       preprocessed.CloseToken();
-      if (!IsFixedFormCommentLine(preprocessed.data()) &&
-          !IsFreeFormComment(preprocessed.data())) {
+      const char *ppd{preprocessed.data()};
+      if (IsFixedFormCompilerDirectiveLine(ppd, sentinel) ||
+          IsFreeFormCompilerDirectiveLine(ppd, sentinel) ||
+          !(IsFixedFormCommentLine(ppd) ||
+            IsFreeFormComment(ppd))) {
         preprocessed.pop_back();  // clip the newline added above
-        preprocessed.Emit(cooked_);
+        preprocessed.EmitLowerCase(cooked_);
       }
       preprocessed.clear();
     } else {
-      tokens.Emit(cooked_);
+      tokens.EmitLowerCase(cooked_);
     }
     tokens.clear();
     cooked_->Put('\n', newlineProvenance);
@@ -205,7 +213,8 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
   if (inFixedForm_) {
     SkipSpaces();
   } else if (*at_ == ' ' || *at_ == '\t') {
-    // Compress white space into a single character.
+    // Compress white space into a single space character.
+    // Discard white space at the end of a line.
     const auto theSpace = at_;
     NextChar();
     SkipSpaces();
@@ -411,7 +420,7 @@ bool Prescanner::PadOutCharacterLiteral(TokenSequence *tokens) {
   return false;
 }
 
-bool Prescanner::IsFixedFormCommentLine(const char *start) {
+bool Prescanner::IsFixedFormCommentLine(const char *start) const {
   if (start >= limit_ || !inFixedForm_) {
     return false;
   }
@@ -445,7 +454,7 @@ bool Prescanner::IsFixedFormCommentLine(const char *start) {
   return *p == '\n';
 }
 
-bool Prescanner::IsFreeFormComment(const char *p) {
+bool Prescanner::IsFreeFormComment(const char *p) const {
   if (p >= limit_ || inFixedForm_) {
     return false;
   }
@@ -510,7 +519,11 @@ bool Prescanner::IncludeLine(const char *p) {
         provenance);
     return true;
   }
-  ProvenanceRange includeLineRange{provenance, static_cast<size_t>(p - start)};
+  if (included->bytes() == 0) {
+    return true;
+  }
+  ProvenanceRange includeLineRange{
+      provenance, static_cast<std::size_t>(p - start)};
   ProvenanceRange fileRange{
       allSources->AddIncludedFile(*included, includeLineRange)};
   anyFatalErrors_ |= !Prescanner{*this}.Prescan(fileRange);
@@ -538,20 +551,28 @@ bool Prescanner::IsNextLinePreprocessorDirective() const {
 
 bool Prescanner::CommentLines() {
   bool any{false};
+  char sentinel[8];
   while (lineStart_ < limit_) {
-    if (IsFixedFormCommentLine(lineStart_) || IsFreeFormComment(lineStart_)) {
-      NextLine();
-      any = true;
-    } else {
+    if (IsFixedFormCompilerDirectiveLine(lineStart_, sentinel) ||
+        IsFreeFormCompilerDirectiveLine(lineStart_, sentinel) ||
+        !(IsFixedFormCommentLine(lineStart_) ||
+          IsFreeFormComment(lineStart_))) {
       break;
     }
+    NextLine();
+    any = true;
   }
   return any;
 }
 
-bool Prescanner::CommentLinesAndPreprocessorDirectives() {
+bool Prescanner::CommentLinesAndPreprocessorDirectives(char *sentinel) {
   bool any{false};
+  *sentinel = '\0';
   while (lineStart_ < limit_) {
+    if (IsFixedFormCompilerDirectiveLine(lineStart_, sentinel) ||
+        IsFreeFormCompilerDirectiveLine(lineStart_, sentinel)) {
+      break;
+    }
     if (IsFixedFormCommentLine(lineStart_) || IsFreeFormComment(lineStart_) ||
         IncludeLine(lineStart_)) {
       NextLine();
@@ -650,6 +671,87 @@ bool Prescanner::FreeFormContinuation() {
   tabInCurrentLine_ = false;
   NextLine();
   return true;
+}
+
+bool Prescanner::IsFixedFormCompilerDirectiveLine(const char *start,
+                                                  char *sentinel) const {
+  *sentinel = '\0';
+  if (start >= limit_ || !inFixedForm_) {
+    return false;
+  }
+  const char *p{start};
+  char c1{*p};
+  if (!(c1 == '*' || c1 == 'C' || c1 == 'c' || c1 == '!')) {
+    return false;
+  }
+  char *sp{sentinel};
+  ++p;
+  for (int col{2}; col < 6; ++col) {
+    char ch{*++p};
+    if (ch == '\n' || ch == '\t') {
+      return false;
+    }
+    if (ch != ' ') {
+      *sp++ = ToLowerCaseLetter(ch);
+    }
+  }
+  if (*p != ' ' && *p != '0') {
+    return false;  // continuation card for directive
+  }
+  *sp = '\0';
+  return IsCompilerDirectiveSentinel(sentinel);
+}
+
+bool Prescanner::IsFreeFormCompilerDirectiveLine(const char *start,
+                                                 char *sentinel) const {
+  *sentinel = '\0';
+  if (start >= limit_ || inFixedForm_) {
+    return false;
+  }
+  const char *p{start};
+  while (*p == ' ' || *p == '\t') {
+    ++p;
+  }
+  if (*p++ != '!') {
+    return false;
+  }
+  for (int j{0}; j < 5; ++p, ++j) {
+    if (*p == '\n' || *p == '&') {
+      break;
+    }
+    if (*p == ' ' || *p == '\t') {
+      if (j == 0) {
+        break;
+      }
+      sentinel[j] = '\0';
+      return IsCompilerDirectiveSentinel(sentinel);
+    }
+    sentinel[j] = ToLowerCaseLetter(*p);
+  }
+  return false;
+}
+
+Prescanner &Prescanner::AddCompilerDirectiveSentinel(const std::string &dir) {
+  std::uint64_t packed{0};
+  for (char ch : dir) {
+    packed = (packed << 8) | (ToLowerCaseLetter(ch) & 0xff);
+  }
+  compilerDirectiveBloomFilter_.set(packed % prime1);
+  compilerDirectiveBloomFilter_.set(packed % prime2);
+  compilerDirectiveSentinels_.insert(dir);
+  return *this;
+}
+
+bool Prescanner::IsCompilerDirectiveSentinel(const char *s) const {
+  std::uint64_t packed{0};
+  std::size_t n{0};
+  for (; s[n] != '\0'; ++n) {
+    packed = (packed << 8) | (s[n] & 0xff);
+  }
+  return n > 0 && compilerDirectiveBloomFilter_.test(packed % prime1) &&
+      compilerDirectiveBloomFilter_.test(packed % prime2) &&
+      compilerDirectiveSentinels_.find(std::string(s, n)) !=
+      compilerDirectiveSentinels_.end();
 }
 }  // namespace parser
 }  // namespace Fortran

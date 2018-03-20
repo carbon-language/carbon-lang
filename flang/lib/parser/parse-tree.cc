@@ -6,33 +6,6 @@
 namespace Fortran {
 namespace parser {
 
-// R714 real-literal-constant
-// R715 significand
-static std::string charListToString(std::list<char> &&cs) {
-  std::string result;
-  for (auto ch : cs) {
-    result += ch;
-  }
-  return result;
-}
-
-RealLiteralConstant::RealLiteralConstant(std::list<char> &&i,
-    std::list<char> &&f, std::optional<ExponentPart> &&expo,
-    std::optional<KindParam> &&k)
-  : intPart{charListToString(std::move(i))}, fraction{charListToString(
-                                                 std::move(f))},
-    exponent(std::move(expo)), kind(std::move(k)) {}
-
-RealLiteralConstant::RealLiteralConstant(std::list<char> &&f,
-    std::optional<ExponentPart> &&expo, std::optional<KindParam> &&k)
-  : fraction{charListToString(std::move(f))}, exponent(std::move(expo)),
-    kind(std::move(k)) {}
-
-RealLiteralConstant::RealLiteralConstant(
-    std::list<char> &&i, ExponentPart &&expo, std::optional<KindParam> &&k)
-  : intPart{charListToString(std::move(i))}, exponent(std::move(expo)),
-    kind(std::move(k)) {}
-
 // R867
 ImportStmt::ImportStmt(Kind &&k, std::list<Name> &&n)
   : kind{k}, names(std::move(n)) {
@@ -67,7 +40,7 @@ ProcedureDesignator Designator::ConvertToProcedureDesignator() {
           },
           [](Substring &) -> ProcedureDesignator {
             CHECK(!"can't get here");
-            return {Name{""}};
+            return {Name{}};
           }},
       u);
 }
@@ -158,7 +131,7 @@ ActualArg SectionSubscript::ConvertToActualArgument() {
                         },
                         [](SubscriptTriplet &) -> ActualArg {
                           CHECK(!"can't happen");
-                          return {Name{"bad"}};
+                          return {Name{}};
                         }},
       u);
 }

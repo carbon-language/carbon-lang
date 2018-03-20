@@ -78,7 +78,6 @@ constexpr Parser<SignedIntLiteralConstant> signedIntLiteralConstant;  // R707
 constexpr Parser<IntLiteralConstant> intLiteralConstant;  // R708
 constexpr Parser<KindParam> kindParam;  // R709
 constexpr Parser<RealLiteralConstant> realLiteralConstant;  // R714
-constexpr Parser<ExponentPart> exponentPart;  // R717
 constexpr Parser<CharLength> charLength;  // R723
 constexpr Parser<CharLiteralConstant> charLiteralConstant;  // R724
 constexpr Parser<Initialization> initialization;  // R743 & R805
@@ -179,15 +178,15 @@ template<typename PA>
 using statementConstructor = construct<Statement<typename PA::resultType>>;
 
 template<typename PA> inline constexpr auto unterminatedStatement(const PA &p) {
-  return skipMany("\n"_tok) >> statementConstructor<PA>{}(getProvenance,
-                                   maybe(label), isLabelOk, spaces >> p);
+  return skipMany("\n"_tok) >>
+      sourced(statementConstructor<PA>{}(maybe(label), isLabelOk, spaces >> p));
 }
 
-constexpr auto endOfLine = CharMatch<'\n'>{} / skipMany("\n"_tok) ||
-    fail<char>("expected end of line"_en_US);
+constexpr auto endOfLine = "\n"_ch / skipMany("\n"_tok) ||
+    fail<const char *>("expected end of line"_en_US);
 
 constexpr auto endOfStmt = spaces >>
-    (CharMatch<';'>{} / skipMany(";"_tok) / maybe(endOfLine) || endOfLine);
+    (";"_ch / skipMany(";"_tok) / maybe(endOfLine) || endOfLine);
 
 template<typename PA> inline constexpr auto statement(const PA &p) {
   return unterminatedStatement(p) / endOfStmt;
@@ -273,9 +272,6 @@ TYPE_PARSER(
     construct<OtherSpecificationStmt>{}(indirect(Parser<EquivalenceStmt>{})) ||
     construct<OtherSpecificationStmt>{}(indirect(Parser<BasedPointerStmt>{})))
 
-// R516 keyword -> name
-constexpr auto keyword = name;
-
 // R604 constant ->  literal-constant | named-constant
 // Used only via R607 int-constant and R845 data-stmt-constant.
 TYPE_PARSER(construct<ConstantValue>{}(literalConstant) ||
@@ -298,8 +294,11 @@ constexpr auto namedIntrinsicOperator = ".LT." >>
     ".OR." >> pure(DefinedOperator::IntrinsicOperator::OR) ||
     ".EQV." >> pure(DefinedOperator::IntrinsicOperator::EQV) ||
     ".NEQV." >> pure(DefinedOperator::IntrinsicOperator::NEQV) ||
-    extension(".XOR." >> pure(DefinedOperator::IntrinsicOperator::XOR));
-// TODO: .N./.A./.O./.X. abbreviations?
+    extension(".XOR." >> pure(DefinedOperator::IntrinsicOperator::XOR) ||
+        ".N." >> pure(DefinedOperator::IntrinsicOperator::NOT) ||
+        ".A." >> pure(DefinedOperator::IntrinsicOperator::AND) ||
+        ".O." >> pure(DefinedOperator::IntrinsicOperator::OR) ||
+        ".X." >> pure(DefinedOperator::IntrinsicOperator::XOR));
 
 constexpr auto intrinsicOperator = "**" >>
         pure(DefinedOperator::IntrinsicOperator::Power) ||
@@ -588,33 +587,21 @@ constexpr auto executionPart =
     inContext("execution part"_en_US, many(executionPartConstruct));
 
 // R602 underscore -> _
-constexpr CharMatch<'_'> underscore;
+constexpr auto underscore = "_"_ch;
 
+// R516 keyword -> name
 // R601 alphanumeric-character -> letter | digit | underscore
+// R603 name -> letter [alphanumeric-character]...
 // N.B. Don't accept an underscore if it is immediately followed by a
 // quotation mark, so that kindParameter_"character literal" is parsed properly.
-constexpr auto otherIdCharacter =
-    underscore / !(CharMatch<'\''>{} || CharMatch<'"'>{}) ||
-    extension(
-        CharMatch<'$'>{} ||  // PGI/ifort (and Cray/gfortran, but not first)
-        CharMatch<'@'>{});  // Cray
-
-constexpr auto nonDigitIdCharacter = letter || otherIdCharacter;
-
-// R603 name -> letter [alphanumeric-character]...
-static inline Name listToString(std::list<char> &&chlist) {
-  Name result;
-  for (auto ch : chlist) {
-    result += ToLowerCaseLetter(ch);
-  }
-  return result;
-}
-
-constexpr auto rawName = applyFunction(listToString,
-    applyFunction(prepend<char>, nonDigitIdCharacter,
-        many(nonDigitIdCharacter || digit)));
-
-TYPE_PARSER(spaces >> rawName)
+// PGI and ifort accept '$' in identifiers, even as the initial character.
+// Cray and gfortran accept '$', but not as the first character.
+// Cray accepts '@' as well.
+constexpr auto otherIdChar = underscore / !"'\""_ch || extension("$@"_ch);
+constexpr auto nonDigitIdChar = letter || otherIdChar;
+constexpr auto rawName = nonDigitIdChar >> many(nonDigitIdChar || digit);
+TYPE_PARSER(spaces >> sourced(attempt(rawName) >> construct<Name>{}))
+constexpr auto keyword = construct<Keyword>{}(name);
 
 // R605 literal-constant ->
 //        int-literal-constant | real-literal-constant |
@@ -716,7 +703,8 @@ TYPE_PARSER(construct<KindSelector>{}(
     extension(construct<KindSelector>{}(
         construct<KindSelector::StarSize>{}("*" >> digitString))))
 
-// R707 signed-int-literal-constant -> [sign] int-literal-constant
+// R710 signed-digit-string -> [sign] digit-string
+// N.B. Not a complete token -- no spaces are skipped.
 static inline std::int64_t negate(std::uint64_t &&n) {
   return -n;  // TODO: check for overflow
 }
@@ -725,11 +713,13 @@ static inline std::int64_t castToSigned(std::uint64_t &&n) {
   return n;  // TODO: check for overflow
 }
 
-TYPE_PARSER(spaces >>
-    construct<SignedIntLiteralConstant>{}(
-        CharMatch<'-'>{} >> applyFunction(negate, digitString) ||
-            maybe(CharMatch<'+'>{}) >> applyFunction(castToSigned, digitString),
-        maybe(underscore >> kindParam)))
+constexpr auto signedDigitString = "-"_ch >>
+        applyFunction(negate, digitString) ||
+    maybe("+"_ch) >> applyFunction(castToSigned, digitString);
+
+// R707 signed-int-literal-constant -> [sign] int-literal-constant
+TYPE_PARSER(spaces >> sourced(construct<SignedIntLiteralConstant>{}(
+                          signedDigitString, maybe(underscore >> kindParam))))
 
 // R708 int-literal-constant -> digit-string [_ kind-param]
 TYPE_PARSER(construct<IntLiteralConstant>{}(
@@ -739,16 +729,10 @@ TYPE_PARSER(construct<IntLiteralConstant>{}(
 TYPE_PARSER(construct<KindParam>{}(digitString) ||
     construct<KindParam>{}(scalar(integer(constant(name)))))
 
-// R710 signed-digit-string -> [sign] digit-string
-// N.B. Not a complete token -- no spaces are skipped.
-constexpr auto signedDigitString = CharMatch<'-'>{} >>
-        applyFunction(negate, digitString) ||
-    maybe(CharMatch<'+'>{}) >> digitString;
-
 // R712 sign -> + | -
 // Not a complete token.
-constexpr auto sign = CharMatch<'+'>{} >> pure(Sign::Positive) ||
-    CharMatch<'-'>{} >> pure(Sign::Negative);
+constexpr auto sign = "+"_ch >> pure(Sign::Positive) ||
+    "-"_ch >> pure(Sign::Negative);
 
 // R713 signed-real-literal-constant -> [sign] real-literal-constant
 constexpr auto signedRealLiteralConstant = spaces >>
@@ -758,37 +742,23 @@ constexpr auto signedRealLiteralConstant = spaces >>
 //        significand [exponent-letter exponent] [_ kind-param] |
 //        digit-string exponent-letter exponent [_ kind-param]
 // R715 significand -> digit-string . [digit-string] | . digit-string
-// N.B. Preceding spaces are not skipped.
-TYPE_CONTEXT_PARSER("REAL literal constant"_en_US,
-    construct<RealLiteralConstant>{}(some(digit),
-        CharMatch<'.'>{} >>
-            !(some(letter) >> CharMatch<'.'>{}) >>  // don't misinterpret 1.AND.
-            many(digit),
-        maybe(exponentPart), maybe(underscore >> kindParam)) ||
-        construct<RealLiteralConstant>{}(CharMatch<'.'>{} >> some(digit),
-            maybe(exponentPart), maybe(underscore >> kindParam)) ||
-        construct<RealLiteralConstant>{}(
-            some(digit), exponentPart, maybe(underscore >> kindParam)))
-
 // R716 exponent-letter -> E | D
 // Extension: Q
-// Not a complete token.
-inline constexpr bool isEorD(char ch) {
-  ch = ToLowerCaseLetter(ch);
-  return ch == 'e' || ch == 'd';
-}
-
-inline constexpr bool isQ(char ch) { return ToLowerCaseLetter(ch) == 'q'; }
-
-constexpr CharPredicateGuardParser exponentEorD{
-    isEorD, "expected exponent letter"_en_US};
-constexpr CharPredicateGuardParser exponentQ{
-    isQ, "expected exponent letter"_en_US};
-
 // R717 exponent -> signed-digit-string
-// Not a complete token.
-TYPE_PARSER(construct<ExponentPart>{}(
-    extension(exponentQ) || exponentEorD, signedDigitString))
+// N.B. Preceding spaces are not skipped.
+constexpr auto exponentPart =
+    ("ed"_ch || extension("q"_ch)) >> signedDigitString;
+
+TYPE_CONTEXT_PARSER("REAL literal constant"_en_US,
+    construct<RealLiteralConstant>{}(
+        sourced(
+            (digitString >> "."_ch >>
+                    !(some(letter) >> "."_ch /* don't misinterpret 1.AND. */) >>
+                    maybe(digitString) >> maybe(exponentPart) >> ok ||
+                "."_ch >> digitString >> maybe(exponentPart) >> ok ||
+                digitString >> exponentPart >> ok) >>
+            construct<RealLiteralConstant::Real>{}),
+        maybe(underscore >> kindParam)))
 
 // R718 complex-literal-constant -> ( real-part , imag-part )
 TYPE_CONTEXT_PARSER("COMPLEX literal constant"_en_US,
@@ -844,8 +814,7 @@ TYPE_PARSER(construct<CharLength>{}(parenthesized(typeParamValue)) ||
 // N.B. charLiteralConstantWithoutKind does not skip preceding spaces.
 // N.B. the parsing of "name" takes care to not consume the '_'.
 constexpr auto charLiteralConstantWithoutKind =
-    CharMatch<'\''>{} >> CharLiteral<'\''>{} ||
-    CharMatch<'"'>{} >> CharLiteral<'"'>{};
+    "'"_ch >> CharLiteral<'\''>{} || "\""_ch >> CharLiteral<'"'>{};
 
 TYPE_CONTEXT_PARSER("CHARACTER literal constant"_en_US,
     construct<CharLiteralConstant>{}(
@@ -1161,7 +1130,7 @@ TYPE_PARSER(construct<TypeDeclarationStmt>{}(declarationTypeSpec,
                 optionalListBeforeColons(Parser<AttrSpec>{}),
                 nonemptyList(entityDecl)) ||
     // PGI-only extension: don't require the colons
-    // TODO: The standard requires the colons if the entity
+    // N.B.: The standard requires the colons if the entity
     // declarations contain initializers.
     extension(construct<TypeDeclarationStmt>{}(declarationTypeSpec,
         defaulted("," >> nonemptyList(Parser<AttrSpec>{})),
@@ -1205,7 +1174,7 @@ TYPE_PARSER(construct<EntityDecl>{}(objectName, maybe(arraySpec),
     maybe(coarraySpec), maybe("*" >> charLength), maybe(initialization)))
 
 // R806 null-init -> function-reference
-// TODO: confirm that NULL still intrinsic
+// TODO: confirm in semantics that NULL still intrinsic in this scope
 TYPE_PARSER("NULL ( )" >> construct<NullInit>{})
 
 // R807 access-spec -> PUBLIC | PRIVATE
@@ -1503,8 +1472,8 @@ TYPE_PARSER(construct<ImplicitSpec>{}(declarationTypeSpec,
 
 // R865 letter-spec -> letter [- letter]
 TYPE_PARSER(spaces >> (construct<LetterSpec>{}(letter, maybe("-" >> letter)) ||
-                          construct<LetterSpec>{}(extension(otherIdCharacter),
-                              construct<std::optional<char>>{})))
+                          construct<LetterSpec>{}(otherIdChar,
+                              construct<std::optional<const char *>>{})))
 
 // R867 import-stmt ->
 //        IMPORT [[::] import-name-list] |
@@ -1661,8 +1630,10 @@ TYPE_PARSER(construct<SubstringRange>{}(
 // R1023 defined-binary-op -> . letter [letter]... .
 // R1414 local-defined-operator -> defined-unary-op | defined-binary-op
 // R1415 use-defined-operator -> defined-unary-op | defined-binary-op
-TYPE_PARSER(construct<DefinedOpName>{}(applyFunction(listToString,
-    spaces >> CharMatch<'.'>{} >> some(letter) / CharMatch<'.'>{})))
+// N.B. The name of the operator is captured without the periods around it.
+TYPE_PARSER(spaces >> "."_ch >>
+    construct<DefinedOpName>{}(sourced(some(letter) >> construct<Name>{})) /
+        "."_ch)
 
 // R911 data-ref -> part-ref [% part-ref]...
 // R914 coindexed-named-object -> data-ref
@@ -1672,7 +1643,7 @@ constexpr struct DefinedOperatorName {
   static std::optional<Success> Parse(ParseState *state) {
     if (std::optional<DefinedOpName> n{definedOpName.Parse(state)}) {
       if (const auto *user = state->userState()) {
-        if (user->IsDefinedOperator(n->v)) {
+        if (user->IsDefinedOperator(n->v.source)) {
           return {Success{}};
         }
       }
@@ -2084,7 +2055,7 @@ static constexpr struct EquivOperand {
 // R1017 level-5-expr -> [level-5-expr equiv-op] equiv-operand
 // R1021 equiv-op -> .EQV. | .NEQV.
 // Logical equivalence is left-associative.
-// Extension: .XOR. as synonym for .NEQV. (TODO: is this the right precedence?)
+// Extension: .XOR. as synonym for .NEQV.
 constexpr struct Level5Expr {
   using resultType = Expr;
   constexpr Level5Expr() {}
@@ -3423,7 +3394,7 @@ constexpr struct NoteOperatorDefinition {
     if (op.has_value()) {
       if (auto ustate = state->userState()) {
         if (const auto *name = std::get_if<DefinedOpName>(&op->u)) {
-          ustate->NoteDefinedOperator(name->v);
+          ustate->NoteDefinedOperator(name->v.source);
         }
       }
     }
@@ -3726,7 +3697,7 @@ TYPE_CONTEXT_PARSER("PAUSE statement"_en_US,
 //   R1221 dtv-type-spec -> TYPE ( derived-type-spec ) |
 //           CLASS ( derived-type-spec )
 //
-// There requirement productions are defined and used, but need not be
+// These requirement productions are defined and used, but need not be
 // defined independently here in this file:
 //   R771 lbracket -> [
 //   R772 rbracket -> ]

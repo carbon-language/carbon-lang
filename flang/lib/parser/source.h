@@ -5,6 +5,7 @@
 //  - Line ending markers are converted to single newline characters
 //  - A newline character is added to the last line of the file if one is needed
 
+#include <cstddef>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -23,13 +24,13 @@ public:
   ~SourceFile();
   std::string path() const { return path_; }
   const char *content() const { return content_; }
-  size_t bytes() const { return bytes_; }
-  size_t lines() const { return lineStart_.size(); }
+  std::size_t bytes() const { return bytes_; }
+  std::size_t lines() const { return lineStart_.size(); }
 
   bool Open(std::string path, std::stringstream *error);
   void Close();
-  std::pair<int, int> FindOffsetLineAndColumn(size_t) const;
-  size_t GetLineStartOffset(int lineNumber) const {
+  std::pair<int, int> FindOffsetLineAndColumn(std::size_t) const;
+  std::size_t GetLineStartOffset(int lineNumber) const {
     return lineStart_.at(lineNumber - 1);
   }
 
@@ -38,8 +39,8 @@ private:
   int fileDescriptor_{-1};
   bool isMemoryMapped_{false};
   const char *content_{nullptr};
-  size_t bytes_{0};
-  std::vector<size_t> lineStart_;
+  std::size_t bytes_{0};
+  std::vector<std::size_t> lineStart_;
 };
 }  // namespace parser
 }  // namespace Fortran
