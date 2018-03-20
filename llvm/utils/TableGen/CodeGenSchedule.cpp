@@ -1420,8 +1420,7 @@ void CodeGenSchedModels::inferFromRW(ArrayRef<unsigned> OperWrites,
     unsigned Idx = LastTransitions[0].WriteSequences.size();
     LastTransitions[0].WriteSequences.resize(Idx + 1);
     SmallVectorImpl<unsigned> &Seq = LastTransitions[0].WriteSequences[Idx];
-    for (IdxIter WI = WriteSeq.begin(), WE = WriteSeq.end(); WI != WE; ++WI)
-      Seq.push_back(*WI);
+    Seq.append(WriteSeq.begin(), WriteSeq.end());
     DEBUG(dbgs() << "("; dumpIdxVec(Seq); dbgs() << ") ");
   }
   DEBUG(dbgs() << " Reads: ");
@@ -1431,8 +1430,7 @@ void CodeGenSchedModels::inferFromRW(ArrayRef<unsigned> OperWrites,
     unsigned Idx = LastTransitions[0].ReadSequences.size();
     LastTransitions[0].ReadSequences.resize(Idx + 1);
     SmallVectorImpl<unsigned> &Seq = LastTransitions[0].ReadSequences[Idx];
-    for (IdxIter RI = ReadSeq.begin(), RE = ReadSeq.end(); RI != RE; ++RI)
-      Seq.push_back(*RI);
+    Seq.append(ReadSeq.begin(), ReadSeq.end());
     DEBUG(dbgs() << "("; dumpIdxVec(Seq); dbgs() << ") ");
   }
   DEBUG(dbgs() << '\n');
