@@ -473,7 +473,11 @@ SUnit *ConvergingVLIWScheduler::VLIWSchedBoundary::pickOnlyChoice() {
   if (CheckPending)
     releasePending();
 
-  for (unsigned i = 0; Available.empty(); ++i) {
+  for (unsigned i = 0;
+       Available.empty() ||
+         (Available.size() == 1 &&
+          !ResourceModel->isResourceAvailable(*Available.begin(), isTop()));
+       ++i) {
     assert(i <= (HazardRec->getMaxLookAhead() + MaxMinLatency) &&
            "permanent hazard"); (void)i;
     ResourceModel->reserveResources(nullptr, isTop());
@@ -623,6 +627,10 @@ int ConvergingVLIWScheduler::pressureChange(const SUnit *SU, bool isBotUp) {
       return (isBotUp ? P.getUnitInc() : -P.getUnitInc());
   }
   return 0;
+}
+
+static unsigned getWeakLeft(const SUnit *SU, bool IsTop) {
+  return (IsTop) ? SU->WeakPredsLeft : SU->WeakSuccsLeft;
 }
 
 // Constants used to denote relative importance of
@@ -782,7 +790,7 @@ int ConvergingVLIWScheduler::SchedulingCost(ReadyQueue &Q, SUnit *SU,
 
   // Give preference to a zero latency instruction if the dependent
   // instruction is in the current packet.
-  if (Q.getID() == TopQID) {
+  if (Q.getID() == TopQID && getWeakLeft(SU, true) == 0) {
     for (const SDep &PI : SU->Preds) {
       if (!PI.getSUnit()->getInstr()->isPseudo() && PI.isAssignedRegDep() &&
           PI.getLatency() == 0 &&
@@ -791,7 +799,7 @@ int ConvergingVLIWScheduler::SchedulingCost(ReadyQueue &Q, SUnit *SU,
         DEBUG(if (verbose) dbgs() << "Z|");
       }
     }
-  } else {
+  } else if (Q.getID() == BotQID && getWeakLeft(SU, false) == 0) {
     for (const SDep &SI : SU->Succs) {
       if (!SI.getSUnit()->getInstr()->isPseudo() && SI.isAssignedRegDep() &&
           SI.getLatency() == 0 &&
