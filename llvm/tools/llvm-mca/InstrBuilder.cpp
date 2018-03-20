@@ -357,8 +357,7 @@ static void populateReads(InstrDesc &ID, const MCInst &MCI,
   }
 }
 
-void InstrBuilder::createInstrDescImpl(const MCSubtargetInfo &STI,
-                                       const MCInst &MCI) {
+void InstrBuilder::createInstrDescImpl(const MCInst &MCI) {
   assert(STI.getSchedModel().hasInstrSchedModel() &&
          "Itineraries are not yet supported!");
 
@@ -410,17 +409,15 @@ void InstrBuilder::createInstrDescImpl(const MCSubtargetInfo &STI,
   Descriptors[Opcode] = std::unique_ptr<const InstrDesc>(ID);
 }
 
-const InstrDesc &InstrBuilder::getOrCreateInstrDesc(const MCSubtargetInfo &STI,
-                                                    const MCInst &MCI) {
+const InstrDesc &InstrBuilder::getOrCreateInstrDesc(const MCInst &MCI) {
   auto it = Descriptors.find(MCI.getOpcode());
   if (it == Descriptors.end())
-    createInstrDescImpl(STI, MCI);
+    createInstrDescImpl(MCI);
   return *Descriptors[MCI.getOpcode()].get();
 }
 
-Instruction *InstrBuilder::createInstruction(const MCSubtargetInfo &STI,
-                                             unsigned Idx, const MCInst &MCI) {
-  const InstrDesc &D = getOrCreateInstrDesc(STI, MCI);
+Instruction *InstrBuilder::createInstruction(unsigned Idx, const MCInst &MCI) {
+  const InstrDesc &D = getOrCreateInstrDesc(MCI);
   Instruction *NewIS = new Instruction(D);
 
   // Populate Reads first.
@@ -446,7 +443,7 @@ Instruction *InstrBuilder::createInstruction(const MCSubtargetInfo &STI,
     assert(RegID > 0 && "Invalid register ID found!");
     ReadState *NewRDS = new ReadState(RD, RegID);
     NewIS->getUses().emplace_back(std::unique_ptr<ReadState>(NewRDS));
- }
+  }
 
   // Now populate writes.
   for (const WriteDescriptor &WD : D.Writes) {
