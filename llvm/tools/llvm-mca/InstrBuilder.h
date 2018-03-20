@@ -53,7 +53,8 @@ public:
 
   const InstrDesc &getOrCreateInstrDesc(const llvm::MCInst &MCI);
 
-  Instruction *createInstruction(unsigned Idx, const llvm::MCInst &MCI);
+  std::unique_ptr<Instruction> createInstruction(unsigned Idx,
+                                                 const llvm::MCInst &MCI);
 };
 } // namespace mca
 
