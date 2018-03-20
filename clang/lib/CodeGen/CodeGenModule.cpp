@@ -123,7 +123,6 @@ CodeGenModule::CodeGenModule(ASTContext &C, const HeaderSearchOptions &HSO,
   ASTAllocaAddressSpace = getTargetCodeGenInfo().getASTAllocaAddressSpace();
 
   RuntimeCC = getTargetCodeGenInfo().getABIInfo().getRuntimeCC();
-  BuiltinCC = getTargetCodeGenInfo().getABIInfo().getBuiltinCC();
 
   if (LangOpts.ObjC1)
     createObjCRuntime();
@@ -2646,7 +2645,7 @@ CodeGenModule::CreateBuiltinFunction(llvm::FunctionType *FTy, StringRef Name,
                               /*DontDefer=*/false, /*IsThunk=*/false, ExtraAttrs);
   if (auto *F = dyn_cast<llvm::Function>(C))
     if (F->empty())
-      F->setCallingConv(getBuiltinCC());
+      F->setCallingConv(getRuntimeCC());
   return C;
 }
 
