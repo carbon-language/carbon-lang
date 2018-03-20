@@ -291,7 +291,7 @@ void ConvergingVLIWScheduler::initialize(ScheduleDAGMI *dag) {
   for (unsigned i = 0, e = MaxPressure.size(); i < e; ++i) {
     unsigned Limit = DAG->getRegClassInfo()->getRegPressureSetLimit(i);
     HighPressureSets[i] =
-      (((float) MaxPressure[i] / (float) Limit) > RPThreshold);
+      ((float) MaxPressure[i] > ((float) Limit * RPThreshold));
   }
 
   assert((!ForceTopDown || !ForceBottomUp) &&
