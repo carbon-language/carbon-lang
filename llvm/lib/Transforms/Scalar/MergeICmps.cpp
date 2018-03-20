@@ -411,6 +411,7 @@ bool BCECmpChain::simplify(const TargetLibraryInfo *const TLI) {
       BasicBlock *NEntryBB = BasicBlock::Create(Entry->getContext(), "",
                                                 Entry->getParent(), Entry);
       BranchInst::Create(Entry, NEntryBB);
+      break;
     }
   }
 
