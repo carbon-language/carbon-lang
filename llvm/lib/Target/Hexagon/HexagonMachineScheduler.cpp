@@ -153,9 +153,10 @@ bool VLIWResourceModel::reserveResources(SUnit *SU, bool IsTop) {
     TotalPackets++;
     return false;
   }
-  // If this SU does not fit in the packet
+  // If this SU does not fit in the packet or the packet is now full
   // start a new one.
-  if (!isResourceAvailable(SU, IsTop)) {
+  if (!isResourceAvailable(SU, IsTop) ||
+      Packet.size() >= SchedModel->getIssueWidth()) {
     ResourcesModel->clearResources();
     Packet.clear();
     TotalPackets++;
@@ -188,15 +189,6 @@ bool VLIWResourceModel::reserveResources(SUnit *SU, bool IsTop) {
     DEBUG(Packet[i]->getInstr()->dump());
   }
 #endif
-
-  // If packet is now full, reset the state so in the next cycle
-  // we start fresh.
-  if (Packet.size() >= SchedModel->getIssueWidth()) {
-    ResourcesModel->clearResources();
-    Packet.clear();
-    TotalPackets++;
-    startNewCycle = true;
-  }
 
   return startNewCycle;
 }
@@ -1100,10 +1092,10 @@ SUnit *ConvergingVLIWScheduler::pickNode(bool &IsTopNode) {
 /// does.
 void ConvergingVLIWScheduler::schedNode(SUnit *SU, bool IsTopNode) {
   if (IsTopNode) {
-    SU->TopReadyCycle = Top.CurrCycle;
     Top.bumpNode(SU);
+    SU->TopReadyCycle = Top.CurrCycle;
   } else {
-    SU->BotReadyCycle = Bot.CurrCycle;
     Bot.bumpNode(SU);
+    SU->BotReadyCycle = Bot.CurrCycle;
   }
 }
