@@ -1439,11 +1439,8 @@ void CodeGenSchedModels::inferFromRW(ArrayRef<unsigned> OperWrites,
   // Iterate until no variant writes remain.
   while (hasVariant(LastTransitions, *this)) {
     PredTransitions Transitions(*this);
-    for (std::vector<PredTransition>::const_iterator
-           I = LastTransitions.begin(), E = LastTransitions.end();
-         I != E; ++I) {
-      Transitions.substituteVariants(*I);
-    }
+    for (const PredTransition &Trans : LastTransitions)
+      Transitions.substituteVariants(Trans);
     DEBUG(Transitions.dump());
     LastTransitions.swap(Transitions.TransVec);
   }
