@@ -698,6 +698,7 @@ def SBWriteResGroup10 : SchedWriteRes<[SBPort15]> {
   let NumMicroOps = 2;
   let ResourceCycles = [2];
 }
+def: InstRW<[SBWriteResGroup10], (instregex "PBLENDVBrr0")>;
 def: InstRW<[SBWriteResGroup10], (instregex "VPBLENDVBrr")>;
 
 def SBWriteResGroup11 : SchedWriteRes<[SBPort015]> {
@@ -1917,7 +1918,7 @@ def SBWriteResGroup76 : SchedWriteRes<[SBPort23,SBPort15]> {
   let NumMicroOps = 3;
   let ResourceCycles = [1,2];
 }
-def: InstRW<[SBWriteResGroup76], (instregex "PBLENDVBrr0")>;
+def: InstRW<[SBWriteResGroup76], (instregex "PBLENDVBrm0")>;
 def: InstRW<[SBWriteResGroup76], (instregex "VPBLENDVBrm")>;
 
 def SBWriteResGroup77 : SchedWriteRes<[SBPort0,SBPort1,SBPort23]> {
