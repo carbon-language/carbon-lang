@@ -1371,21 +1371,15 @@ static void inferFromTransitions(ArrayRef<PredTransition> LastTransitions,
   for (ArrayRef<PredTransition>::iterator
          I = LastTransitions.begin(), E = LastTransitions.end(); I != E; ++I) {
     IdxVec OperWritesVariant;
-    for (SmallVectorImpl<SmallVector<unsigned,4>>::const_iterator
-           WSI = I->WriteSequences.begin(), WSE = I->WriteSequences.end();
-         WSI != WSE; ++WSI) {
-      // Create a new write representing the expanded sequence.
-      OperWritesVariant.push_back(
-        SchedModels.findOrInsertRW(*WSI, /*IsRead=*/false));
-    }
+    transform(I->WriteSequences, std::back_inserter(OperWritesVariant),
+              [&SchedModels](ArrayRef<unsigned> WS) {
+                return SchedModels.findOrInsertRW(WS, /*IsRead=*/false);
+              });
     IdxVec OperReadsVariant;
-    for (SmallVectorImpl<SmallVector<unsigned,4>>::const_iterator
-           RSI = I->ReadSequences.begin(), RSE = I->ReadSequences.end();
-         RSI != RSE; ++RSI) {
-      // Create a new read representing the expanded sequence.
-      OperReadsVariant.push_back(
-        SchedModels.findOrInsertRW(*RSI, /*IsRead=*/true));
-    }
+    transform(I->ReadSequences, std::back_inserter(OperReadsVariant),
+              [&SchedModels](ArrayRef<unsigned> RS) {
+                return SchedModels.findOrInsertRW(RS, /*IsRead=*/true);
+              });
     IdxVec ProcIndices(I->ProcIndices.begin(), I->ProcIndices.end());
     CodeGenSchedTransition SCTrans;
     SCTrans.ToClassIdx =
@@ -1394,10 +1388,10 @@ static void inferFromTransitions(ArrayRef<PredTransition> LastTransitions,
     SCTrans.ProcIndices = ProcIndices;
     // The final PredTerm is unique set of predicates guarding the transition.
     RecVec Preds;
-    for (SmallVectorImpl<PredCheck>::const_iterator
-           PI = I->PredTerm.begin(), PE = I->PredTerm.end(); PI != PE; ++PI) {
-      Preds.push_back(PI->Predicate);
-    }
+    transform(I->PredTerm, std::back_inserter(Preds),
+              [](const PredCheck &P) {
+                return P.Predicate;
+              });
     Preds.erase(std::unique(Preds.begin(), Preds.end()), Preds.end());
     SCTrans.PredTerm = Preds;
     SchedModels.getSchedClass(FromClassIdx).Transitions.push_back(SCTrans);
