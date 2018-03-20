@@ -377,6 +377,8 @@ void ReorderBasicBlocks::runOnFunctions(
   if (opts::ReorderBlocks == ReorderBasicBlocks::LT_NONE)
     return;
 
+  IsAArch64 = BC.isAArch64();
+
   uint64_t ModifiedFuncCount = 0;
   for (auto &It : BFs) {
     auto &Function = It.second;
@@ -518,6 +520,13 @@ void ReorderBasicBlocks::splitFunction(BinaryFunction &BF) const {
       BB->setCanOutline(false);
       continue;
     }
+    // Do not split extra entry points in aarch64. They can be referred by
+    // using ADRs and when this happens, these blocks cannot be placed far
+    // away due to the limited range in ADR instruction.
+    if (IsAArch64 && BB->isEntryPoint()) {
+      BB->setCanOutline(false);
+      continue;
+    }
     if (BF.hasEHRanges() && !opts::SplitEH) {
       // We cannot move landing pads (or rather entry points for landing
       // pads).
@@ -577,8 +586,7 @@ void FixupBranches::runOnFunctions(
   for (auto &It : BFs) {
     auto &Function = It.second;
     if (BC.HasRelocations || shouldOptimize(Function)) {
-      if (BC.TheTriple->getArch() == llvm::Triple::aarch64 &&
-          !Function.isSimple())
+      if (BC.isAArch64() && !Function.isSimple())
         continue;
       Function.fixBranches();
     }

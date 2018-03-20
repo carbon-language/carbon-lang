@@ -368,8 +368,7 @@ bool LongJmpPass::removeOrShrinkStubs(const BinaryContext &BC,
                                       BinaryFunction &Func) {
   bool Modified{false};
 
-  assert(BC.TheTriple->getArch() == llvm::Triple::aarch64 &&
-         "Unsupported arch");
+  assert(BC.isAArch64() && "Unsupported arch");
   constexpr auto InsnSize = 4; // AArch64
   // Remove unnecessary stubs for branch targets we know we can fit in the
   // instruction

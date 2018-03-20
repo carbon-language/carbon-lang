@@ -1800,7 +1800,7 @@ public:
   /// Detects whether \p Address is inside a data region in this function
   /// (constant islands).
   bool isInConstantIsland(uint64_t Address) const {
-    if (Address <= getAddress())
+    if (Address < getAddress())
       return false;
 
     auto Offset = Address - getAddress();

@@ -185,6 +185,8 @@ private:
   /// executed BBs. The cold part is moved to a new BinaryFunction.
   void splitFunction(BinaryFunction &Function) const;
 
+  bool IsAArch64{false};
+
 public:
   explicit ReorderBasicBlocks(const cl::opt<bool> &PrintPass)
     : BinaryFunctionPass(PrintPass) { }

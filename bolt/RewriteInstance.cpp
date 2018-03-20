@@ -962,7 +962,7 @@ void RewriteInstance::run() {
   }
 
   // Flip unsupported flags in AArch64 mode
-  if (BC->TheTriple->getArch() == llvm::Triple::aarch64) {
+  if (BC->isAArch64()) {
     if (opts::BoostMacroops) {
       opts::BoostMacroops = false;
       outs() << "BOLT-INFO: disabling -boost-macroops for AArch64\n";
@@ -1112,7 +1112,7 @@ void RewriteInstance::discoverFileObjects() {
   // For aarch64, the ABI defines mapping symbols so we identify data in the
   // code section (see IHI0056B). $d identifies data contents.
   auto MarkersBegin = SortedFileSymbols.end();
-  if (BC->TheTriple->getArch() == llvm::Triple::aarch64) {
+  if (BC->isAArch64()) {
     MarkersBegin = std::stable_partition(
         SortedFileSymbols.begin(), SortedFileSymbols.end(),
         [](const SymbolRef &Symbol) {
@@ -1813,7 +1813,7 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
   if (!Relocation::isSupported(Rel.getType()))
     return false;
 
-  const bool IsAArch64 = BC->TheTriple->getArch() == llvm::Triple::aarch64;
+  const bool IsAArch64 = BC->isAArch64();
   const bool IsFromCode = RelocatedSection.isText();
 
   // For value extraction.
@@ -1920,7 +1920,7 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
         SymbolName != "__hot_end" &&
         truncateToSize(ExtractedValue, RelSize) !=
           truncateToSize(SymbolAddress + Addend - PCRelOffset, RelSize)) {
-      auto Section = Symbol.getSection();
+      auto Section = cantFail(Symbol.getSection());
       SmallString<16> TypeName;
       Rel.getTypeName(TypeName);
       dbgs() << "BOLT-DEBUG: Mismatch between extracted value and relocation "
@@ -1935,7 +1935,7 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
              << "; symbol address = 0x" << Twine::utohexstr(SymbolAddress)
              << "; orig symbol address = 0x"
              << Twine::utohexstr(cantFail(Symbol.getAddress()))
-             << "; symbol section = " << getSectionName(**Section)
+             << "; symbol section = " << getSectionName(*Section)
              << "; addend = 0x" << Twine::utohexstr(Addend)
              << "; original addend = 0x"
              << Twine::utohexstr(getRelocationAddend(InputFile, Rel))
@@ -1984,7 +1984,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     return;
   }
 
-  const bool IsAArch64 = BC->TheTriple->getArch() == llvm::Triple::aarch64;
+  const bool IsAArch64 = BC->isAArch64();
   const bool IsFromCode = RelocatedSection.isText();
 
   auto printRelocationInfo = [&](const RelocationRef &Rel,
@@ -2114,11 +2114,11 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
       if (RefFunctionOffset) {
         ReferencedSymbol =
           ReferencedBF->getOrCreateLocalLabel(Address, /*CreatePastEnd*/ true);
-        SymbolAddress = Address;
-        Addend = 0;
       } else {
         ReferencedSymbol = ReferencedBF->getSymbol();
       }
+      SymbolAddress = Address;
+      Addend = 0;
     } else {
       if (RefSection && RefSection->isText() && SymbolAddress) {
         // This can happen e.g. with PIC-style jump tables.
@@ -2126,11 +2126,28 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
                         "relocation against code\n");
       }
 
+      // In AArch64 there are zero reasons to keep a reference to the
+      // "original" symbol plus addend. The original symbol is probably just a
+      // section symbol. If we are here, this means we are probably accessing
+      // data, so it is imperative to keep the original address.
+      if (IsAArch64) {
+        SymbolName = ("SYMBOLat0x" + Twine::utohexstr(Address)).str();
+        SymbolAddress = Address;
+        Addend = 0;
+      }
+
       if (auto *BD = BC->getBinaryDataContainingAddress(SymbolAddress)) {
-        assert(cantFail(Rel.getSymbol()->getType()) == SymbolRef::ST_Debug ||
+        // Note: this assertion is trying to check sanity of BinaryData objects
+        // but AArch64 has inferred and incomplete object locations coming from
+        // GOT/TLS or any other non-trivial relocation (that requires creation
+        // of sections and whose symbol address is not really what should be
+        // encoded in the instruction). So we essentially disabled this check
+        // for AArch64 and live with bogus names for objects.
+        assert(IsAArch64 ||
+               cantFail(Rel.getSymbol()->getType()) == SymbolRef::ST_Debug ||
                BD->nameStartsWith(SymbolName) ||
                BD->nameStartsWith("PG" + SymbolName) ||
-               (BD->nameStartsWith("ANONYMOUS") &&
+               ((BD->nameStartsWith("ANONYMOUS")) &&
                 (BD->getSectionName().startswith(".plt") ||
                  BD->getSectionName().endswith(".plt"))));
         ReferencedSymbol = BD->getSymbol();
@@ -2141,19 +2158,25 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
         auto Symbol = *Rel.getSymbol();
         // These are mostly local data symbols but undefined symbols
         // in relocation sections can get through here too, from .plt.
-        assert(cantFail(Symbol.getType()) == SymbolRef::ST_Debug ||
+        assert(IsAArch64 ||
+               cantFail(Symbol.getType()) == SymbolRef::ST_Debug ||
                BC->getSectionForAddress(SymbolAddress)
                    ->getName()
                    .startswith(".plt"));
-        const uint64_t SymbolSize = ELFSymbolRef(Symbol).getSize();
-        const uint64_t SymbolAlignment = Symbol.getAlignment();
+        const uint64_t SymbolSize =
+            IsAArch64 ? 0 : ELFSymbolRef(Symbol).getSize();
+        const uint64_t SymbolAlignment = IsAArch64 ? 1 : Symbol.getAlignment();
 
         if (cantFail(Symbol.getType()) != SymbolRef::ST_Debug) {
           std::string Name;
-          if (Symbol.getFlags() & SymbolRef::SF_Global)
+          if (Symbol.getFlags() & SymbolRef::SF_Global) {
             Name = SymbolName;
-          else // TODO: add PG prefix?
-            Name = uniquifyName(*BC, SymbolName + "/");
+          } else {
+            Name = uniquifyName(*BC, StringRef(SymbolName).startswith(
+                                         BC->AsmInfo->getPrivateGlobalPrefix())
+                                         ? "PG" + SymbolName + "/"
+                                         : SymbolName + "/");
+          }
           ReferencedSymbol = BC->registerNameAtAddress(Name,
                                                        SymbolAddress,
                                                        SymbolSize,

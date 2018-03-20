@@ -441,7 +441,7 @@ void BinaryFunctionPassManager::runAllPasses(
   // Thighten branches according to offset differences between branch and
   // targets. No extra instructions after this pass, otherwise we may have
   // relocations out of range and crash during linking.
-  if (BC.TheTriple->getArch() == llvm::Triple::aarch64)
+  if (BC.isAArch64())
     Manager.registerPass(llvm::make_unique<LongJmpPass>(PrintLongJmp));
 
   // This pass turns tail calls into jumps which makes them invisible to

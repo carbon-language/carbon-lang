@@ -404,6 +404,11 @@ public:
     return false;
   }
 
+  virtual bool isADR(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
   virtual bool isMoveMem2Reg(const MCInst &Inst) const {
     llvm_unreachable("not implemented");
     return false;

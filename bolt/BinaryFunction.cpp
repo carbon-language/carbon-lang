@@ -657,7 +657,7 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
   auto Begin = Instructions.begin();
   auto End = Instructions.end();
 
-  if (BC.TheTriple->getArch() == llvm::Triple::aarch64) {
+  if (BC.isAArch64()) {
     PreserveNops = BC.HasRelocations;
     // Start at the last label as an approximation of the current basic block.
     // This is a heuristic, since the full set of labels have yet to be
@@ -688,7 +688,7 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
   if (MemLocInstr != &Instruction)
     IndexRegNum = 0;
 
-  if (BC.TheTriple->getArch() == llvm::Triple::aarch64) {
+  if (BC.isAArch64()) {
     const auto *Sym = BC.MIB->getTargetSymbol(*PCRelBaseInstr, 1);
     assert (Sym && "Symbol extraction failed");
     if (auto *BD = BC.getBinaryDataByName(Sym->getName())) {
@@ -730,7 +730,7 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
     assert(BD && "global symbol needs a value");
     ArrayStart = BD->getAddress() + TargetOffset;
     BaseRegNum = 0;
-    if (BC.TheTriple->getArch() == llvm::Triple::aarch64) {
+    if (BC.isAArch64()) {
       ArrayStart &= ~0xFFFULL;
       ArrayStart += DispValue & 0xFFFULL;
     }
@@ -817,7 +817,7 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
                  << " is referencing address 0x"
                  << Twine::utohexstr(Section->getAddress() + ValueOffset));
     // Extract the value and increment the offset.
-    if (BC.TheTriple->getArch() == llvm::Triple::aarch64) {
+    if (BC.isAArch64()) {
       Value = PCRelAddr + DE.getSigned(&ValueOffset, EntrySize);
     } else if (Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE) {
       Value = ArrayStart + DE.getSigned(&ValueOffset, 4);
@@ -955,7 +955,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       }
     }
 
-    if (BC.TheTriple->getArch() == llvm::Triple::aarch64) {
+    if (BC.isAArch64()) {
       // Check if this is an access to a constant island and create bookkeeping
       // to keep track of it and emit it later as part of this function
       if (MCSymbol *IslandSym = getOrCreateIslandAccess(TargetAddress).first) {
@@ -988,10 +988,9 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     // after reading relocations. ADRP contents now are not really meaningful
     // without its supporting relocation.
     if (!TargetSymbol && Section && Section->isText() &&
-        (BC.TheTriple->getArch() != llvm::Triple::aarch64 ||
-         !BC.MIB->isADRP(Instruction))) {
+        (!BC.isAArch64() || !BC.MIB->isADRP(Instruction))) {
       if (containsAddress(TargetAddress, /*UseMaxSize=*/
-                          BC.TheTriple->getArch() == llvm::Triple::aarch64)) {
+                          BC.isAArch64())) {
         if (TargetAddress != getAddress()) {
           // The address could potentially escape. Mark it as another entry
           // point into the function.
@@ -1128,24 +1127,23 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       // For aarch, if we replaced an immediate with a symbol from a
       // relocation, we mark it so we do not try to further process a
       // pc-relative operand. All we need is the symbol.
-      if (BC.TheTriple->getArch() == llvm::Triple::aarch64)
+      if (BC.isAArch64())
         UsedReloc = true;
 
       // Make sure we replaced the correct immediate (instruction
       // can have multiple immediate operands).
-      assert((BC.TheTriple->getArch() == llvm::Triple::aarch64 ||
+      assert((BC.isAArch64() ||
               static_cast<uint64_t>(Value) == Relocation.Value) &&
              "immediate value mismatch in function");
     }
 
-    // Convert instruction to a shorter version that could be relaxed if needed.
+    // Convert instruction to a shorter version that could be relaxed if
+    // needed.
     MIB->shortenInstruction(Instruction);
 
     if (MIB->isBranch(Instruction) || MIB->isCall(Instruction)) {
       uint64_t TargetAddress = 0;
-      if (MIB->evaluateBranch(Instruction,
-                              AbsoluteInstrAddr,
-                              Size,
+      if (MIB->evaluateBranch(Instruction, AbsoluteInstrAddr, Size,
                               TargetAddress)) {
         // Check if the target is within the same function. Otherwise it's
         // a call, possibly a tail call.
@@ -1163,8 +1161,8 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           } else {
             // Possibly an old-style PIC code
             errs() << "BOLT-WARNING: internal call detected at 0x"
-                   << Twine::utohexstr(AbsoluteInstrAddr)
-                   << " in function " << *this << ". Skipping.\n";
+                   << Twine::utohexstr(AbsoluteInstrAddr) << " in function "
+                   << *this << ". Skipping.\n";
             IsSimple = false;
           }
         }
@@ -1192,9 +1190,8 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             if (opts::Verbosity >= 2 && !IsCall && Size == 2 &&
                 !BC.HasRelocations) {
               errs() << "BOLT-WARNING: relaxed tail call detected at 0x"
-                     << Twine::utohexstr(AbsoluteInstrAddr)
-                     << " in function " << *this
-                     << ". Code size will be increased.\n";
+                     << Twine::utohexstr(AbsoluteInstrAddr) << " in function "
+                     << *this << ". Code size will be increased.\n";
             }
 
             assert(!MIB->isTailCall(Instruction) &&
@@ -1215,14 +1212,12 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
               IsCall = true;
             }
 
-            TargetSymbol = BC.getOrCreateGlobalSymbol(TargetAddress,
-                                                      0,
-                                                      0,
-                                                      "FUNCat");
+            TargetSymbol =
+                BC.getOrCreateGlobalSymbol(TargetAddress, 0, 0, "FUNCat");
             if (TargetAddress == 0) {
-              // We actually see calls to address 0 in presence of weak symbols
-              // originating from libraries. This code is never meant to be
-              // executed.
+              // We actually see calls to address 0 in presence of weak
+              // symbols originating from libraries. This code is never meant
+              // to be executed.
               if (opts::Verbosity >= 2) {
                 outs() << "BOLT-INFO: Function " << *this
                        << " has a call to address zero.\n";
@@ -1234,22 +1229,21 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
               // code without re-assembly.
               size_t RelSize = (Size < 5) ? 1 : 4;
               auto RelOffset = Offset + Size - RelSize;
-              if (BC.TheTriple->getArch() == llvm::Triple::aarch64) {
+              if (BC.isAArch64()) {
                 RelSize = 0;
                 RelOffset = Offset;
               }
               auto RI = MoveRelocations.find(RelOffset);
               if (RI == MoveRelocations.end()) {
-                uint64_t RelType = (RelSize == 1) ? ELF::R_X86_64_PC8
-                                                  : ELF::R_X86_64_PC32;
-                if (BC.TheTriple->getArch() == llvm::Triple::aarch64)
+                uint64_t RelType =
+                    (RelSize == 1) ? ELF::R_X86_64_PC8 : ELF::R_X86_64_PC32;
+                if (BC.isAArch64())
                   RelType = ELF::R_AARCH64_CALL26;
                 DEBUG(dbgs() << "BOLT-DEBUG: creating relocation for static"
                              << " function call to " << TargetSymbol->getName()
-                             << " at offset 0x"
-                             << Twine::utohexstr(RelOffset)
-                             << " with size " << RelSize
-                             << " for function " << *this << '\n');
+                             << " at offset 0x" << Twine::utohexstr(RelOffset)
+                             << " with size " << RelSize << " for function "
+                             << *this << '\n');
                 addRelocation(getAddress() + RelOffset, TargetSymbol, RelType,
                               -RelSize, 0);
               }
@@ -1279,14 +1273,11 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           switch (Result) {
           default:
             llvm_unreachable("unexpected result");
-          case IndirectBranchType::POSSIBLE_TAIL_CALL:
-            {
-              auto Result =
-                MIB->convertJmpToTailCall(Instruction, BC.Ctx.get());
-              (void)Result;
-              assert(Result);
-            }
-            break;
+          case IndirectBranchType::POSSIBLE_TAIL_CALL: {
+            auto Result = MIB->convertJmpToTailCall(Instruction, BC.Ctx.get());
+            (void)Result;
+            assert(Result);
+          } break;
           case IndirectBranchType::POSSIBLE_JUMP_TABLE:
           case IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE:
             if (opts::JumpTables == JTS_NONE)
@@ -2346,11 +2337,15 @@ void BinaryFunction::emitConstantIslands(
             DEBUG(dbgs() << "BOLT-DEBUG: emitted label "
                          << IS->second->getName() << " at offset 0x"
                          << Twine::utohexstr(IS->first) << '\n');
-            Streamer.EmitLabel(IS->second);
+            if (IS->second->isUndefined())
+              Streamer.EmitLabel(IS->second);
+            else
+              assert(hasName(IS->second->getName()));
           } else {
             DEBUG(dbgs() << "BOLT-DEBUG: emitted label "
                          << ColdIslandSymbols[IS->second]->getName() << '\n');
-            Streamer.EmitLabel(ColdIslandSymbols[IS->second]);
+            if (ColdIslandSymbols[IS->second]->isUndefined())
+              Streamer.EmitLabel(ColdIslandSymbols[IS->second]);
           }
         } else {
           if (!EmitColdPart) {
@@ -3270,7 +3265,7 @@ bool BinaryFunction::isDataMarker(const SymbolRef &Symbol,
                                   uint64_t SymbolSize) const {
   // For aarch64, the ABI defines mapping symbols so we identify data in the
   // code section (see IHI0056B). $d identifies a symbol starting data contents.
-  if (BC.TheTriple->getArch() == llvm::Triple::aarch64 && Symbol.getType() &&
+  if (BC.isAArch64() && Symbol.getType() &&
       cantFail(Symbol.getType()) == SymbolRef::ST_Unknown && SymbolSize == 0 &&
       Symbol.getName() && cantFail(Symbol.getName()) == "$d")
     return true;
@@ -3282,7 +3277,7 @@ bool BinaryFunction::isCodeMarker(const SymbolRef &Symbol,
   // For aarch64, the ABI defines mapping symbols so we identify data in the
   // code section (see IHI0056B). $x identifies a symbol starting code or the
   // end of a data chunk inside code.
-  if (BC.TheTriple->getArch() == llvm::Triple::aarch64 && Symbol.getType() &&
+  if (BC.isAArch64() && Symbol.getType() &&
       cantFail(Symbol.getType()) == SymbolRef::ST_Unknown && SymbolSize == 0 &&
       Symbol.getName() && cantFail(Symbol.getName()) == "$x")
     return true;

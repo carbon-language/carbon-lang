@@ -300,6 +300,10 @@ public:
 
   std::unique_ptr<MCObjectWriter> createObjectWriter(raw_pwrite_stream &OS);
 
+  bool isAArch64() const {
+    return TheTriple->getArch() == llvm::Triple::aarch64;
+  }
+
   /// Iterate over all BinaryData.
   iterator_range<binary_data_const_iterator> getBinaryData() const {
     return make_range(BinaryDataMap.begin(), BinaryDataMap.end());

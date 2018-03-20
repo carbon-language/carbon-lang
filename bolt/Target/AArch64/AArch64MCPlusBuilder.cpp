@@ -58,9 +58,8 @@ public:
     return Inst.getOpcode() == AArch64::ADRP;
   }
 
-  bool isADR(const MCInst &Inst) const {
-    return (Inst.getOpcode() == AArch64::ADR ||
-            Inst.getOpcode() == AArch64::ADRP);
+  bool isADR(const MCInst &Inst) const override {
+    return Inst.getOpcode() == AArch64::ADR;
   }
 
   bool isTB(const MCInst &Inst) const {
@@ -198,7 +197,7 @@ public:
   }
 
   bool hasPCRelOperand(const MCInst &Inst) const override {
-    if (isADR(Inst))
+    if (isADR(Inst) || isADRP(Inst))
       return true;
 
     // Look for literal addressing mode (see C1-143 ARM DDI 0487B.a)
@@ -212,7 +211,7 @@ public:
 
   bool evaluateADR(const MCInst &Inst, int64_t &Imm,
                    const MCExpr **DispExpr) const {
-    assert(isADR(Inst) && "Not an ADR instruction");
+    assert((isADR(Inst) || isADRP(Inst)) && "Not an ADR instruction");
 
     auto &Label = Inst.getOperand(1);
     if (!Label.isImm()) {
@@ -234,7 +233,7 @@ public:
                                     int64_t &DispImm,
                                     const MCExpr **DispExpr = nullptr)
                                                                 const {
-    if (isADR(Inst))
+    if (isADR(Inst) || isADRP(Inst))
       return evaluateADR(Inst, DispImm, DispExpr);
 
     // Literal addressing mode
@@ -278,7 +277,7 @@ public:
 
   bool replaceMemOperandDisp(MCInst &Inst, MCOperand Operand) const override {
     MCInst::iterator OI = Inst.begin();
-    if (isADR(Inst)) {
+    if (isADR(Inst) || isADRP(Inst)) {
       assert(MCPlus::getNumPrimeOperands(Inst) >= 2 &&
              "Unexpected number of operands");
       ++OI;
@@ -745,10 +744,6 @@ public:
     return false;
   }
 
-  bool isInvoke(const MCInst &Inst) const override {
-    return false;
-  }
-
   bool analyzeBranch(InstructionIterator Begin,
                      InstructionIterator End,
                      const MCSymbol *&TBB,
@@ -971,4 +966,3 @@ MCPlusBuilder *createAArch64MCPlusBuilder(const MCInstrAnalysis *Analysis,
                                           const MCRegisterInfo *RegInfo) {
   return new AArch64MCPlusBuilder(Analysis, Info, RegInfo);
 }
-
