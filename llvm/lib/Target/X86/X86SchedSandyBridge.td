@@ -1457,6 +1457,8 @@ def: InstRW<[SBWriteResGroup52], (instregex "LODSL")>;
 def: InstRW<[SBWriteResGroup52], (instregex "LODSQ")>;
 def: InstRW<[SBWriteResGroup52], (instregex "OR(8|16|32|64)rm")>;
 def: InstRW<[SBWriteResGroup52], (instregex "SUB(8|16|32|64)rm")>;
+def: InstRW<[SBWriteResGroup52], (instregex "TEST(8|16|32|64)mr")>;
+def: InstRW<[SBWriteResGroup52], (instregex "TEST(8|16|32|64)mi")>;
 def: InstRW<[SBWriteResGroup52], (instregex "XOR(8|16|32|64)rm")>;
 
 def SBWriteResGroup53 : SchedWriteRes<[SBPort4,SBPort23]> {
@@ -1844,8 +1846,6 @@ def: InstRW<[SBWriteResGroup70], (instregex "OR(8|16|32|64)mi")>;
 def: InstRW<[SBWriteResGroup70], (instregex "OR(8|16|32|64)mr")>;
 def: InstRW<[SBWriteResGroup70], (instregex "SUB(8|16|32|64)mi")>;
 def: InstRW<[SBWriteResGroup70], (instregex "SUB(8|16|32|64)mr")>;
-def: InstRW<[SBWriteResGroup70], (instregex "TEST(8|16|32|64)mr")>;
-def: InstRW<[SBWriteResGroup70], (instregex "TEST8mi")>;
 def: InstRW<[SBWriteResGroup70], (instregex "XOR(8|16|32|64)mi")>;
 def: InstRW<[SBWriteResGroup70], (instregex "XOR(8|16|32|64)mr")>;
 
