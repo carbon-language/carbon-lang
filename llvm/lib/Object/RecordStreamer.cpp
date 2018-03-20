@@ -149,6 +149,7 @@ void RecordStreamer::flushSymverDirectives() {
   for (auto &Symver : SymverAliasMap) {
     const MCSymbol *Aliasee = Symver.first;
     MCSymbolAttr Attr = MCSA_Invalid;
+    bool IsDefined = false;
 
     // First check if the aliasee binding was recorded in the asm.
     RecordStreamer::State state = getSymbolState(Aliasee);
@@ -165,26 +166,52 @@ void RecordStreamer::flushSymverDirectives() {
       break;
     }
 
-    // If we don't have a symbol attribute from assembly, then check if
-    // the aliasee was defined in the IR.
-    if (Attr == MCSA_Invalid) {
-      const auto *GV = M.getNamedValue(Aliasee->getName());
+    switch (state) {
+    case RecordStreamer::Defined:
+    case RecordStreamer::DefinedGlobal:
+    case RecordStreamer::DefinedWeak:
+      IsDefined = true;
+      break;
+    case RecordStreamer::NeverSeen:
+    case RecordStreamer::Global:
+    case RecordStreamer::Used:
+    case RecordStreamer::UndefinedWeak:
+      break;
+    }
+
+    if (Attr == MCSA_Invalid || !IsDefined) {
+      const GlobalValue *GV = M.getNamedValue(Aliasee->getName());
       if (!GV) {
         auto MI = MangledNameMap.find(Aliasee->getName());
         if (MI != MangledNameMap.end())
           GV = MI->second;
       }
       if (GV) {
-        if (GV->hasExternalLinkage())
-          Attr = MCSA_Global;
-        else if (GV->hasLocalLinkage())
-          Attr = MCSA_Local;
-        else if (GV->isWeakForLinker())
-          Attr = MCSA_Weak;
+        // If we don't have a symbol attribute from assembly, then check if
+        // the aliasee was defined in the IR.
+        if (Attr == MCSA_Invalid) {
+          if (GV->hasExternalLinkage())
+            Attr = MCSA_Global;
+          else if (GV->hasLocalLinkage())
+            Attr = MCSA_Local;
+          else if (GV->isWeakForLinker())
+            Attr = MCSA_Weak;
+        }
+        IsDefined = IsDefined || !GV->isDeclarationForLinker();
       }
     }
+
     // Set the detected binding on each alias with this aliasee.
     for (auto AliasName : Symver.second) {
+      std::pair<StringRef, StringRef> Split = AliasName.split("@@@");
+      SmallString<128> NewName;
+      if (!Split.second.empty() && !Split.second.startswith("@")) {
+        // Special processing for "@@@" according
+        // https://sourceware.org/binutils/docs/as/Symver.html
+        const char *Separator = IsDefined ? "@@" : "@";
+        AliasName =
+            (Split.first + Separator + Split.second).toStringRef(NewName);
+      }
       MCSymbol *Alias = getContext().getOrCreateSymbol(AliasName);
       // TODO: Handle "@@@". Depending on SymbolAttribute value it needs to be
       // converted into @ or @@.
