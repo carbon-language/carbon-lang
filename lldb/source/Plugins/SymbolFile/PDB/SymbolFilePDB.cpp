@@ -742,23 +742,11 @@ bool SymbolFilePDB::ResolveFunction(const llvm::pdb::PDBSymbolFunc &pdb_func,
                                     bool include_inlines,
                                     lldb_private::SymbolContextList &sc_list) {
   lldb_private::SymbolContext sc;
-  auto file_vm_addr = pdb_func.getVirtualAddress();
-  if (file_vm_addr == LLDB_INVALID_ADDRESS)
-    return false;
-
-  Address so_addr(file_vm_addr);
-  sc.comp_unit = GetCompileUnitContainsAddress(so_addr).get();
+  sc.comp_unit = ParseCompileUnitForUID(pdb_func.getCompilandId()).get();
   if (!sc.comp_unit)
     return false;
   sc.module_sp = sc.comp_unit->GetModule();
-  auto symbol_up =
-      m_session_up->findSymbolByAddress(file_vm_addr, PDB_SymType::Function);
-  if (!symbol_up)
-    return false;
-
-  auto *func = llvm::dyn_cast<PDBSymbolFunc>(symbol_up.get());
-  assert(func);
-  sc.function = ParseCompileUnitFunctionForPDBFunc(*func, sc);
+  sc.function = ParseCompileUnitFunctionForPDBFunc(pdb_func, sc);
   if (!sc.function)
     return false;
 
