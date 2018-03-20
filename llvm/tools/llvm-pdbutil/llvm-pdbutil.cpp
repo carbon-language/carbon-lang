@@ -534,10 +534,6 @@ cl::opt<bool> JustMyCode("jmc", cl::Optional,
                          cl::cat(FileOptions), cl::sub(DumpSubcommand));
 
 // MISCELLANEOUS OPTIONS
-cl::opt<bool> DumpNamedStreams("named-streams",
-                               cl::desc("dump PDB named stream table"),
-                               cl::cat(MiscOptions), cl::sub(DumpSubcommand));
-
 cl::opt<bool> DumpStringTable("string-table", cl::desc("dump PDB String Table"),
                               cl::cat(MiscOptions), cl::sub(DumpSubcommand));
 

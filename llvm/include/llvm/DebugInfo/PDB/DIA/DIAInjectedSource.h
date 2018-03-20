@@ -19,7 +19,8 @@ class DIASession;
 
 class DIAInjectedSource : public IPDBInjectedSource {
 public:
-  explicit DIAInjectedSource(CComPtr<IDiaInjectedSource> DiaSourceFile);
+  explicit DIAInjectedSource(const DIASession &Session,
+                             CComPtr<IDiaInjectedSource> DiaSourceFile);
 
   uint32_t getCrc32() const override;
   uint64_t getCodeByteSize() const override;
@@ -30,6 +31,7 @@ public:
   std::string getCode() const override;
 
 private:
+  const DIASession &Session;
   CComPtr<IDiaInjectedSource> SourceFile;
 };
 } // namespace pdb
