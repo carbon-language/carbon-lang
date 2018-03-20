@@ -1444,7 +1444,11 @@ void CGOpenMPRuntimeNVPTX::emitGenericParallelCall(
       for (llvm::Value *V : CapturedVars) {
         Address Dst = Bld.CreateConstInBoundsGEP(
             SharedArgListAddress, Idx, CGF.getPointerSize());
-        llvm::Value *PtrV = Bld.CreateBitCast(V, CGF.VoidPtrTy);
+        llvm::Value * PtrV;
+        if (V->getType()->isIntegerTy())
+          PtrV = Bld.CreateIntToPtr(V, CGF.VoidPtrTy);
+        else
+          PtrV = Bld.CreatePointerBitCastOrAddrSpaceCast(V, CGF.VoidPtrTy);
         CGF.EmitStoreOfScalar(PtrV, Dst, /*Volatile=*/false,
                               Ctx.getPointerType(Ctx.VoidPtrTy));
         ++Idx;
@@ -2963,22 +2967,56 @@ llvm::Function *CGOpenMPRuntimeNVPTX::createParallelDataSharingWrapper(
 
   // Retrieve the shared variables from the list of references returned
   // by the runtime. Pass the variables to the outlined function.
+  Address SharedArgListAddress = Address::invalid();
+  if (CS.capture_size() > 0 ||
+      isOpenMPLoopBoundSharingDirective(D.getDirectiveKind())) {
+    SharedArgListAddress = CGF.EmitLoadOfPointer(
+        GlobalArgs, CGF.getContext()
+                        .getPointerType(CGF.getContext().getPointerType(
+                            CGF.getContext().VoidPtrTy))
+                        .castAs<PointerType>());
+  }
+  unsigned Idx = 0;
+  if (isOpenMPLoopBoundSharingDirective(D.getDirectiveKind())) {
+    Address Src = Bld.CreateConstInBoundsGEP(SharedArgListAddress, Idx,
+                                             CGF.getPointerSize());
+    Address TypedAddress = Bld.CreatePointerBitCastOrAddrSpaceCast(
+        Src, CGF.SizeTy->getPointerTo());
+    llvm::Value *LB = CGF.EmitLoadOfScalar(
+        TypedAddress,
+        /*Volatile=*/false,
+        CGF.getContext().getPointerType(CGF.getContext().getSizeType()),
+        cast<OMPLoopDirective>(D).getLowerBoundVariable()->getExprLoc());
+    Args.emplace_back(LB);
+    ++Idx;
+    Src = Bld.CreateConstInBoundsGEP(SharedArgListAddress, Idx,
+                                     CGF.getPointerSize());
+    TypedAddress = Bld.CreatePointerBitCastOrAddrSpaceCast(
+        Src, CGF.SizeTy->getPointerTo());
+    llvm::Value *UB = CGF.EmitLoadOfScalar(
+        TypedAddress,
+        /*Volatile=*/false,
+        CGF.getContext().getPointerType(CGF.getContext().getSizeType()),
+        cast<OMPLoopDirective>(D).getUpperBoundVariable()->getExprLoc());
+    Args.emplace_back(UB);
+    ++Idx;
+  }
   if (CS.capture_size() > 0) {
     ASTContext &CGFContext = CGF.getContext();
-    Address SharedArgListAddress = CGF.EmitLoadOfPointer(GlobalArgs,
-        CGFContext
-            .getPointerType(CGFContext.getPointerType(CGFContext.VoidPtrTy))
-            .castAs<PointerType>());
     for (unsigned I = 0, E = CS.capture_size(); I < E; ++I, ++CI, ++CurField) {
       QualType ElemTy = CurField->getType();
-      Address Src = Bld.CreateConstInBoundsGEP(
-          SharedArgListAddress, I, CGF.getPointerSize());
-      Address TypedAddress = Bld.CreateBitCast(
+      Address Src = Bld.CreateConstInBoundsGEP(SharedArgListAddress, I + Idx,
+                                               CGF.getPointerSize());
+      Address TypedAddress = Bld.CreatePointerBitCastOrAddrSpaceCast(
           Src, CGF.ConvertTypeForMem(CGFContext.getPointerType(ElemTy)));
       llvm::Value *Arg = CGF.EmitLoadOfScalar(TypedAddress,
                                               /*Volatile=*/false,
                                               CGFContext.getPointerType(ElemTy),
                                               CI->getLocation());
+      if (CI->capturesVariableByCopy()) {
+        Arg = castValueToType(CGF, Arg, ElemTy, CGFContext.getUIntPtrType(),
+                              CI->getLocation());
+      }
       Args.emplace_back(Arg);
     }
   }
