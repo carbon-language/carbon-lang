@@ -759,11 +759,10 @@ void CodeGenSchedModels::createInstRWClass(Record *InstRWDef) {
       const RecVec &RWDefs = SchedClasses[OldSCIdx].InstRWs;
       if (!RWDefs.empty()) {
         const RecVec *OrigInstDefs = Sets.expand(RWDefs[0]);
-        unsigned OrigNumInstrs = 0;
-        for (Record *OIDef : *OrigInstDefs) {
-          if (InstrClassMap[OIDef] == OldSCIdx)
-            ++OrigNumInstrs;
-        }
+        unsigned OrigNumInstrs =
+          count_if(*OrigInstDefs, [&](Record *OIDef) {
+                     return InstrClassMap[OIDef] == OldSCIdx;
+                   });
         if (OrigNumInstrs == InstDefs.size()) {
           assert(SchedClasses[OldSCIdx].ProcIndices[0] == 0 &&
                  "expected a generic SchedClass");
