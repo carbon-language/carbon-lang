@@ -804,22 +804,21 @@ void CodeGenSchedModels::createInstRWClass(Record *InstRWDef) {
     // Note that InstDefs may be a smaller list than InstRWDef's "Instrs".
     Record *RWModelDef = InstRWDef->getValueAsDef("SchedModel");
     SmallSet<unsigned, 4> RemappedClassIDs;
-    for (ArrayRef<Record*>::const_iterator
-           II = InstDefs.begin(), IE = InstDefs.end(); II != IE; ++II) {
-      unsigned OldSCIdx = InstrClassMap[*II];
+    for (Record *InstDef : InstDefs) {
+      unsigned OldSCIdx = InstrClassMap[InstDef];
       if (OldSCIdx && RemappedClassIDs.insert(OldSCIdx).second) {
-        for (RecIter RI = SchedClasses[OldSCIdx].InstRWs.begin(),
-               RE = SchedClasses[OldSCIdx].InstRWs.end(); RI != RE; ++RI) {
-          if ((*RI)->getValueAsDef("SchedModel") == RWModelDef) {
-            PrintFatalError(InstRWDef->getLoc(), "Overlapping InstRW def " +
-                          (*II)->getName() + " also matches " +
-                          (*RI)->getValue("Instrs")->getValue()->getAsString());
+        for (Record *OldRWDef : SchedClasses[OldSCIdx].InstRWs) {
+          if (OldRWDef->getValueAsDef("SchedModel") == RWModelDef) {
+            PrintFatalError(OldRWDef->getLoc(), "Overlapping InstRW def " +
+                       InstDef->getName() + " also matches " +
+                       OldRWDef->getValue("Instrs")->getValue()->getAsString());
           }
-          assert(*RI != InstRWDef && "SchedClass has duplicate InstRW def");
-          SC.InstRWs.push_back(*RI);
+          assert(OldRWDef != InstRWDef &&
+                 "SchedClass has duplicate InstRW def");
+          SC.InstRWs.push_back(OldRWDef);
         }
       }
-      InstrClassMap[*II] = SCIdx;
+      InstrClassMap[InstDef] = SCIdx;
     }
     SC.InstRWs.push_back(InstRWDef);
   }
