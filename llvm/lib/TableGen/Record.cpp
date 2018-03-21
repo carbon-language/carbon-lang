@@ -634,13 +634,8 @@ Init *ListInit::resolveReferences(Resolver &R) const {
   bool Changed = false;
 
   for (Init *CurElt : getValues()) {
-    Init *E;
-
-    do {
-      E = CurElt;
-      CurElt = CurElt->resolveReferences(R);
-      Changed |= E != CurElt;
-    } while (E != CurElt);
+    Init *E = CurElt->resolveReferences(R);
+    Changed |= E != CurElt;
     Resolved.push_back(E);
   }
 
