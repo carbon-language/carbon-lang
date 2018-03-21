@@ -594,7 +594,7 @@ void CodeGenSchedModels::collectSchedClasses() {
   dbgs() << "\n+++ ITINERARIES and/or MACHINE MODELS (collectSchedClasses) +++\n";
   for (const CodeGenInstruction *Inst : Target.getInstructionsByEnumValue()) {
     StringRef InstName = Inst->TheDef->getName();
-    unsigned SCIdx = InstrClassMap.lookup(Inst->TheDef);
+    unsigned SCIdx = getSchedClassIdx(*Inst);
     if (!SCIdx) {
       if (!Inst->hasNoSchedulingInfo)
         dbgs() << "No machine model for " << Inst->TheDef->getName() << '\n';
