@@ -10,8 +10,8 @@
 ; CHECK-NEXT: Pass Arguments:
 ; CHECK-NEXT: Target Library Information
 ; CHECK-NEXT: Target Transform Information
-; CHECK-NEXT: Target Pass Configuration
-; CHECK-NEXT: Assumption Cache Tracker
+;             Target Pass Configuration
+; CHECK:      Assumption Cache Tracker
 ; CHECK-NEXT: Profile summary info
 ; CHECK-NEXT:   ModulePass Manager
 ; CHECK-NEXT:     Force set function attributes
