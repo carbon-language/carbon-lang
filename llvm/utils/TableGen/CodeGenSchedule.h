@@ -336,7 +336,7 @@ public:
     return const_cast<CodeGenSchedModels&>(*this).getSchedRW(Def);
   }
 
-  unsigned getSchedRWIdx(Record *Def, bool IsRead, unsigned After = 0) const;
+  unsigned getSchedRWIdx(Record *Def, bool IsRead) const;
 
   // Return true if the given write record is referenced by a ReadAdvance.
   bool hasReadOfWrite(Record *WriteDef) const;

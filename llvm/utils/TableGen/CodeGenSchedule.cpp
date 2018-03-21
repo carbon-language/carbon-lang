@@ -405,11 +405,9 @@ std::string CodeGenSchedModels::genRWName(ArrayRef<unsigned> Seq, bool IsRead) {
   return Name;
 }
 
-unsigned CodeGenSchedModels::getSchedRWIdx(Record *Def, bool IsRead,
-                                           unsigned After) const {
+unsigned CodeGenSchedModels::getSchedRWIdx(Record *Def, bool IsRead) const {
   const std::vector<CodeGenSchedRW> &RWVec = IsRead ? SchedReads : SchedWrites;
-  assert(After < RWVec.size() && "start position out of bounds");
-  for (std::vector<CodeGenSchedRW>::const_iterator I = RWVec.begin() + After,
+  for (std::vector<CodeGenSchedRW>::const_iterator I = RWVec.begin(),
          E = RWVec.end(); I != E; ++I) {
     if (I->TheDef == Def)
       return I - RWVec.begin();
