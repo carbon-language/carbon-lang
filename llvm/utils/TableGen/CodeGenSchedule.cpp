@@ -652,12 +652,9 @@ void CodeGenSchedModels::collectSchedClasses() {
 unsigned CodeGenSchedModels::findSchedClassIdx(Record *ItinClassDef,
                                                ArrayRef<unsigned> Writes,
                                                ArrayRef<unsigned> Reads) const {
-  for (SchedClassIter I = schedClassBegin(), E = schedClassEnd(); I != E; ++I) {
-    if (I->ItinClassDef == ItinClassDef && makeArrayRef(I->Writes) == Writes &&
-        makeArrayRef(I->Reads) == Reads) {
+  for (SchedClassIter I = schedClassBegin(), E = schedClassEnd(); I != E; ++I)
+    if (I->isKeyEqual(ItinClassDef, Writes, Reads))
       return I - schedClassBegin();
-    }
-  }
   return 0;
 }
 
