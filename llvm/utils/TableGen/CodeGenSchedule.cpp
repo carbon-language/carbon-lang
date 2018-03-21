@@ -805,7 +805,6 @@ void CodeGenSchedModels::createInstRWClass(Record *InstRWDef) {
     Record *RWModelDef = InstRWDef->getValueAsDef("SchedModel");
     SmallSet<unsigned, 4> RemappedClassIDs;
     for (Record *InstDef : InstDefs) {
-      unsigned OldSCIdx = InstrClassMap[InstDef];
       if (OldSCIdx && RemappedClassIDs.insert(OldSCIdx).second) {
         for (Record *OldRWDef : SchedClasses[OldSCIdx].InstRWs) {
           if (OldRWDef->getValueAsDef("SchedModel") == RWModelDef) {
