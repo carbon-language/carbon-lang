@@ -1,6 +1,6 @@
-=============================
+==========================
 User Guide for X86 Backend
-=============================
+==========================
 
 .. contents::
    :local:
@@ -14,7 +14,7 @@ The X86 backend provides ISA code generation for X86 CPUs. It lives in the
 LLVM
 ====
 
-.. _x86-processors
+.. _x86-processors:
 
 Processors
 ----------
