@@ -15,6 +15,7 @@
 #include "CodeGenSchedule.h"
 #include "CodeGenInstruction.h"
 #include "CodeGenTarget.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
@@ -743,7 +744,7 @@ void CodeGenSchedModels::createInstRWClass(Record *InstRWDef) {
   // intersects with an existing class via a previous InstRWDef. Instrs that do
   // not intersect with an existing class refer back to their former class as
   // determined from ItinDef or SchedRW.
-  SmallVector<std::pair<unsigned, SmallVector<Record *, 8>>, 4> ClassInstrs;
+  SmallMapVector<unsigned, SmallVector<Record *, 8>, 4> ClassInstrs;
   // Sort Instrs into sets.
   const RecVec *InstDefs = Sets.expand(InstRWDef);
   if (InstDefs->empty())
@@ -754,22 +755,13 @@ void CodeGenSchedModels::createInstRWClass(Record *InstRWDef) {
     if (Pos == InstrClassMap.end())
       PrintFatalError(InstDef->getLoc(), "No sched class for instruction.");
     unsigned SCIdx = Pos->second;
-    unsigned CIdx = 0, CEnd = ClassInstrs.size();
-    for (; CIdx != CEnd; ++CIdx) {
-      if (ClassInstrs[CIdx].first == SCIdx)
-        break;
-    }
-    if (CIdx == CEnd) {
-      ClassInstrs.resize(CEnd + 1);
-      ClassInstrs[CIdx].first = SCIdx;
-    }
-    ClassInstrs[CIdx].second.push_back(InstDef);
+    ClassInstrs[SCIdx].push_back(InstDef);
   }
   // For each set of Instrs, create a new class if necessary, and map or remap
   // the Instrs to it.
-  for (unsigned CIdx = 0, CEnd = ClassInstrs.size(); CIdx != CEnd; ++CIdx) {
-    unsigned OldSCIdx = ClassInstrs[CIdx].first;
-    ArrayRef<Record*> InstDefs = ClassInstrs[CIdx].second;
+  for (auto &Entry : ClassInstrs) {
+    unsigned OldSCIdx = Entry.first;
+    ArrayRef<Record*> InstDefs = Entry.second;
     // If the all instrs in the current class are accounted for, then leave
     // them mapped to their old class.
     if (OldSCIdx) {
