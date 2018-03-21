@@ -19,6 +19,8 @@ __device__ static unsigned getNumThreads() { return blockDim.x; }
 __device__ static unsigned getThreadId() { return threadIdx.x; }
 // Warp ID in the CUDA block
 __device__ static unsigned getWarpId() { return threadIdx.x / WARPSIZE; }
+// Lane ID in the CUDA warp.
+__device__ static unsigned getLaneId() { return threadIdx.x % WARPSIZE; }
 
 // The CUDA thread ID of the master thread.
 __device__ static unsigned getMasterThreadId() {
@@ -359,26 +361,36 @@ EXTERN void __kmpc_data_sharing_init_stack() {
 // Called by: master, TODO: call by workers
 EXTERN void* __kmpc_data_sharing_push_stack(size_t DataSize,
     int16_t UseSharedMemory) {
-  if (IsMasterThread()) {
-    unsigned WID = getWarpId();
+  // Frame pointer must be visible to all workers in the same warp.
+  unsigned WID = getWarpId();
+  void *&FrameP = DataSharingState.FramePtr[WID];
 
+  // Only warp active master threads manage the stack.
+  if (IsWarpMasterActiveThread()) {
     // SlotP will point to either the shared memory slot or an existing
     // global memory slot.
     __kmpc_data_sharing_slot *&SlotP = DataSharingState.SlotPtr[WID];
     __kmpc_data_sharing_slot *&TailSlotP = DataSharingState.TailPtr[WID];
     void *&StackP = DataSharingState.StackPtr[WID];
-    void *FrameP = 0;
+
+    // Compute the total memory footprint of the requested data.
+    // The master thread requires a stack only for itself. A worker
+    // thread (which at this point is a warp master) will require
+    // space for the variables of each thread in the warp,
+    // i.e. one DataSize chunk per warp lane.
+    // TODO: change WARPSIZE to the number of active threads in the warp.
+    size_t PushSize = IsMasterThread() ? DataSize : WARPSIZE * DataSize;
 
     // Check if we have room for the data in the current slot.
     const uintptr_t StartAddress = (uintptr_t)StackP;
     const uintptr_t EndAddress = (uintptr_t)SlotP->DataEnd;
-    const uintptr_t RequestedEndAddress = StartAddress + (uintptr_t)DataSize;
+    const uintptr_t RequestedEndAddress = StartAddress + (uintptr_t)PushSize;
 
     // If we requested more data than there is room for in the rest
     // of the slot then we need to either re-use the next slot, if one exists,
     // or create a new slot.
     if (EndAddress < RequestedEndAddress) {
-      size_t NewSize = DataSize;
+      size_t NewSize = PushSize;
 
       // The new or reused slot for holding the data being pushed.
       __kmpc_data_sharing_slot *NewSlot = 0;
@@ -411,11 +423,11 @@ EXTERN void* __kmpc_data_sharing_push_stack(size_t DataSize,
       }
 
       if (!NewSlot) {
-        // Allocate at least the default size.
-        // TODO: generalize this for workers which need a larger data slot
-        // i.e. using DS_Worker_Warp_Slot_Size.
-        if (DS_Slot_Size > DataSize)
-          NewSize = DS_Slot_Size;
+        // Allocate at least the default size for each type of slot.
+        size_t DefaultSlotSize =
+            IsMasterThread() ? DS_Slot_Size : DS_Worker_Warp_Slot_Size;
+        if (DefaultSlotSize > NewSize)
+          NewSize = DefaultSlotSize;
         NewSlot = (__kmpc_data_sharing_slot *)malloc(
             sizeof(__kmpc_data_sharing_slot) + NewSize);
         NewSlot->Next = 0;
@@ -433,7 +445,7 @@ EXTERN void* __kmpc_data_sharing_push_stack(size_t DataSize,
       // The current slot becomes the new slot.
       SlotP = NewSlot;
       // The stack pointer always points to the next free stack frame.
-      StackP = &NewSlot->Data[DataSize];
+      StackP = &NewSlot->Data[PushSize];
       // The frame pointer always points to the beginning of the frame.
       FrameP = &NewSlot->Data[0];
     } else {
@@ -443,16 +455,14 @@ EXTERN void* __kmpc_data_sharing_push_stack(size_t DataSize,
       // Reset stack pointer to the requested address.
       StackP = (void *)RequestedEndAddress;
     }
-
-    return FrameP;
   }
 
-  // TODO: add memory fence here when this function can be called by
-  // worker threads also. For now, this function is only called by the
-  // master thread of each team.
+  __threadfence_block();
 
-  // TODO: implement sharing across workers.
-  return 0;
+  // Compute the start address of the frame of each thread in the warp.
+  uintptr_t FrameStartAddress = (uintptr_t)FrameP;
+  FrameStartAddress += (uintptr_t) (getLaneId() * DataSize);
+  return (void *)FrameStartAddress;
 }
 
 // Pop the stack and free any memory which can be reclaimed.
@@ -461,11 +471,14 @@ EXTERN void* __kmpc_data_sharing_push_stack(size_t DataSize,
 // reclaim all outstanding global memory slots since it is
 // likely we have reached the end of the kernel.
 EXTERN void __kmpc_data_sharing_pop_stack(void *FrameStart) {
-  if (IsMasterThread()) {
+  if (IsWarpMasterActiveThread()) {
     unsigned WID = getWarpId();
 
     __kmpc_data_sharing_slot *&SlotP = DataSharingState.SlotPtr[WID];
     void *&StackP = DataSharingState.StackPtr[WID];
+
+    // Pop current frame from slot.
+    StackP = FrameStart;
 
     // If we try to pop the last frame of the current slot we need to
     // move to the previous slot if there is one.
@@ -486,27 +499,16 @@ EXTERN void __kmpc_data_sharing_pop_stack(void *FrameStart) {
       // de-allocate any existing global memory slots.
       if (!SlotP->Prev) {
         __kmpc_data_sharing_slot *Tail = DataSharingState.TailPtr[WID];
-
-        while(Tail && Tail->Prev) {
+        while(Tail->Prev) {
           Tail = Tail->Prev;
           free(Tail->Next);
-          Tail->Next=0;
         }
+        Tail->Next=0;
       }
-    } else {
-      // This is not the last frame popped from this slot.
-      // Reset StackP
-      StackP = FrameStart;
     }
-
-    return;
   }
 
-  // TODO: add memory fence here when this function can be called by
-  // worker threads also. For now, this function is only called by the
-  // master thread of each team.
-
-  // TODO: implement sharing across workers.
+  __threadfence_block();
 }
 
 // Begin a data sharing context. Maintain a list of references to shared
