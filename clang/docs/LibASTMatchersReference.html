@@ -4353,7 +4353,7 @@ with hasAnyArgument(...)
 
 For ObjectiveC, given
   @interface I - (void) f:(int) y; @end
-  void foo(I *i) { [i f:12] }
+  void foo(I *i) { [i f:12]; }
 objcMessageExpr(hasAnyArgument(integerLiteral(equals(12))))
   matches [i f:12]
 </pre></td></tr>
@@ -4706,7 +4706,7 @@ with hasAnyArgument(...)
 
 For ObjectiveC, given
   @interface I - (void) f:(int) y; @end
-  void foo(I *i) { [i f:12] }
+  void foo(I *i) { [i f:12]; }
 objcMessageExpr(hasAnyArgument(integerLiteral(equals(12))))
   matches [i f:12]
 </pre></td></tr>
@@ -5659,7 +5659,7 @@ with hasAnyArgument(...)
 
 For ObjectiveC, given
   @interface I - (void) f:(int) y; @end
-  void foo(I *i) { [i f:12] }
+  void foo(I *i) { [i f:12]; }
 objcMessageExpr(hasAnyArgument(integerLiteral(equals(12))))
   matches [i f:12]
 </pre></td></tr>
