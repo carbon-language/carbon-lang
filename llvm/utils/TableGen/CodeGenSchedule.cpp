@@ -431,10 +431,8 @@ bool CodeGenSchedModels::hasReadOfWrite(Record *WriteDef) const {
   return false;
 }
 
-namespace llvm {
-
-void splitSchedReadWrites(const RecVec &RWDefs,
-                          RecVec &WriteDefs, RecVec &ReadDefs) {
+static void splitSchedReadWrites(const RecVec &RWDefs,
+                                 RecVec &WriteDefs, RecVec &ReadDefs) {
   for (Record *RWDef : RWDefs) {
     if (RWDef->isSubClassOf("SchedWrite"))
       WriteDefs.push_back(RWDef);
@@ -444,8 +442,6 @@ void splitSchedReadWrites(const RecVec &RWDefs,
     }
   }
 }
-
-} // end namespace llvm
 
 // Split the SchedReadWrites defs and call findRWs for each list.
 void CodeGenSchedModels::findRWs(const RecVec &RWDefs,
