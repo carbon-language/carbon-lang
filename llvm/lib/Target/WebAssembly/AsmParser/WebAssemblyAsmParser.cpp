@@ -32,10 +32,6 @@ using namespace llvm;
 
 #define DEBUG_TYPE "wasm-asm-parser"
 
-// TODO: TableGen generates this register name matcher, but it is not used
-// anywhere. Mark it with the "unused" attribute to suppress warnings.
-static unsigned LLVM_ATTRIBUTE_UNUSED MatchRegisterName(StringRef Name);
-
 namespace {
 
 // We store register types as SimpleValueType to retain SIMD layout
