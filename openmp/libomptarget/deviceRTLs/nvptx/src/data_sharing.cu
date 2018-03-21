@@ -346,9 +346,14 @@ EXTERN void __kmpc_data_sharing_init_stack() {
         &omptarget_nvptx_threadPrivateContext->TeamContext();
     __kmpc_data_sharing_slot *RootS = teamDescr->RootS(WID, IsMasterThread());
 
-    DataSharingState.SlotPtr[WID] = RootS;
-    DataSharingState.TailPtr[WID] = RootS;
-    DataSharingState.StackPtr[WID] = (void *)&RootS->Data[0];
+    // If a valid address has been returned then proceed with the initalization.
+    // Otherwise the initialization of the slot has already happened in a
+    // previous call to this function.
+    if (RootS) {
+      DataSharingState.SlotPtr[WID] = RootS;
+      DataSharingState.TailPtr[WID] = RootS;
+      DataSharingState.StackPtr[WID] = (void *)&RootS->Data[0];
+    }
   }
 
   // Currently we only support the sharing of variables between master and
