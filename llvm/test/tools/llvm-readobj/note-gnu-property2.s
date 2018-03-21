@@ -5,8 +5,7 @@
 // CHECK:      Displaying notes found at file offset 0x00000040 with length 0x00000014:
 // CHECK-NEXT:   Owner                 Data size       Description
 // CHECK-NEXT:   GNU                   0x00000004      NT_GNU_PROPERTY_TYPE_0 (property note)
-// CHECK-NEXT:     Properties:
-// CHECK-NEXT:     <corrupted GNU_PROPERTY_TYPE_0>
+// CHECK-NEXT:     Properties:  <corrupted GNU_PROPERTY_TYPE_0>
 
 // Section below is broken, check we report that.
 
