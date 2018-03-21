@@ -487,7 +487,8 @@ public:
     AddrToMD5Map.push_back(std::make_pair(Addr, MD5Val));
   }
 
-  AddrHashMap &getAddrHashMap() { return AddrToMD5Map; }
+  /// Return a function's hash, or 0, if the function isn't in this SymTab.
+  uint64_t getFunctionHashFromAddress(uint64_t Address);
 
   /// Return function's PGO name from the function name's symbol
   /// address in the object file. If an error occurs, return
@@ -643,8 +644,6 @@ struct InstrProfRecord {
     return *this;
   }
 
-  using ValueMapType = std::vector<std::pair<uint64_t, uint64_t>>;
-
   /// Return the number of value profile kinds with non-zero number
   /// of profile sites.
   inline uint32_t getNumValueKinds() const;
@@ -678,7 +677,7 @@ struct InstrProfRecord {
   /// Add ValueData for ValueKind at value Site.
   void addValueData(uint32_t ValueKind, uint32_t Site,
                     InstrProfValueData *VData, uint32_t N,
-                    ValueMapType *ValueMap);
+                    InstrProfSymtab *SymTab);
 
   /// Merge the counts in \p Other into this one.
   /// Optionally scale merged counts by \p Weight.
@@ -752,7 +751,7 @@ private:
 
   // Map indirect call target name hash to name string.
   uint64_t remapValue(uint64_t Value, uint32_t ValueKind,
-                      ValueMapType *HashKeys);
+                      InstrProfSymtab *SymTab);
 
   // Merge Value Profile data from Src record to this record for ValueKind.
   // Scale merged value counts by \p Weight.

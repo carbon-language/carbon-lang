@@ -438,7 +438,7 @@ Error RawInstrProfReader<IntPtrT>::readValueProfilingData(
   // Note that besides deserialization, this also performs the conversion for
   // indirect call targets.  The function pointers from the raw profile are
   // remapped into function name hashes.
-  VDataPtrOrErr.get()->deserializeTo(Record, &Symtab->getAddrHashMap());
+  VDataPtrOrErr.get()->deserializeTo(Record, Symtab.get());
   CurValueDataSize = VDataPtrOrErr.get()->getSize();
   return success();
 }

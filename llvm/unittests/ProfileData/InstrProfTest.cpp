@@ -770,7 +770,7 @@ TEST_P(MaybeSparseInstrProfTest, value_prof_data_read_write_mapping) {
   Symtab.mapAddress(uint64_t(callee4), 0x4000ULL);
   // Missing mapping for callee5
 
-  VPData->deserializeTo(Record, &Symtab.getAddrHashMap());
+  VPData->deserializeTo(Record, &Symtab);
 
   // Now read data from Record and sanity check the data
   ASSERT_EQ(5U, Record.getNumValueSites(IPVK_IndirectCallTarget));

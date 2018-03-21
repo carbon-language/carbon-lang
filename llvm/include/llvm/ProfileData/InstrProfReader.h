@@ -199,8 +199,6 @@ private:
   uint32_t ValueKindLast;
   uint32_t CurValueDataSize;
 
-  InstrProfRecord::ValueMapType FunctionPtrToNameMap;
-
 public:
   RawInstrProfReader(std::unique_ptr<MemoryBuffer> DataBuffer)
       : DataBuffer(std::move(DataBuffer)) {}
