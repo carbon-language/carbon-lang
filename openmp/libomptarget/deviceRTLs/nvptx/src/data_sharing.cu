@@ -88,7 +88,7 @@ __kmpc_initialize_data_sharing_environment(__kmpc_data_sharing_slot *rootS,
 
   omptarget_nvptx_TeamDescr *teamDescr =
       &omptarget_nvptx_threadPrivateContext->TeamContext();
-  __kmpc_data_sharing_slot *RootS = teamDescr->RootS(WID);
+  __kmpc_data_sharing_slot *RootS = teamDescr->RootS(WID, IsMasterThread());
 
   DataSharingState.SlotPtr[WID] = RootS;
   DataSharingState.StackPtr[WID] = (void *)&RootS->Data[0];
@@ -337,17 +337,27 @@ EXTERN void __kmpc_data_sharing_init_stack() {
   // This function initializes the stack pointer with the pointer to the
   // statically allocated shared memory slots. The size of a shared memory
   // slot is pre-determined to be 256 bytes.
-  unsigned WID = getWarpId();
-  omptarget_nvptx_TeamDescr *teamDescr =
-      &omptarget_nvptx_threadPrivateContext->TeamContext();
-  __kmpc_data_sharing_slot *RootS = teamDescr->RootS(WID);
 
-  DataSharingState.SlotPtr[WID] = RootS;
-  DataSharingState.TailPtr[WID] = RootS;
-  DataSharingState.StackPtr[WID] = (void *)&RootS->Data[0];
+  // Initialize the data sharing structures. This section should only be
+  // executed by the warp active master threads.
+  if (IsWarpMasterActiveThread()) {
+    unsigned WID = getWarpId();
+    omptarget_nvptx_TeamDescr *teamDescr =
+        &omptarget_nvptx_threadPrivateContext->TeamContext();
+    __kmpc_data_sharing_slot *RootS = teamDescr->RootS(WID, IsMasterThread());
 
-  // We initialize the list of references to arguments here.
-  omptarget_nvptx_globalArgs.Init();
+    DataSharingState.SlotPtr[WID] = RootS;
+    DataSharingState.TailPtr[WID] = RootS;
+    DataSharingState.StackPtr[WID] = (void *)&RootS->Data[0];
+  }
+
+  // Currently we only support the sharing of variables between master and
+  // workers. The list of references to shared variables exists only for
+  // the master thread.
+  if (IsMasterThread()) {
+    // Initialize the list of references to arguments.
+    omptarget_nvptx_globalArgs.Init();
+  }
 }
 
 // Called at the time of the kernel initialization. This is used to initilize

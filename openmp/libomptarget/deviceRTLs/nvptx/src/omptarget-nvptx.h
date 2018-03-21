@@ -259,10 +259,10 @@ public:
   // init
   INLINE void InitTeamDescr();
 
-  INLINE __kmpc_data_sharing_slot *RootS(int wid) {
+  INLINE __kmpc_data_sharing_slot *RootS(int wid, bool IsMasterThread) {
     // If this is invoked by the master thread of the master warp then intialize
     // it with a smaller slot.
-    if (wid == WARPSIZE - 1) {
+    if (IsMasterThread) {
       // Initialize the pointer to the end of the slot given the size of the
       // data section. DataEnd is non-inclusive.
       master_rootS[0].DataEnd = &master_rootS[0].Data[0] + DS_Slot_Size;
