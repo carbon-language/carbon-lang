@@ -130,7 +130,7 @@ uint32_t SymbolFilePDB::CalculateAbilities() {
       }
     }
   }
-  if (!m_session_up.get())
+  if (!m_session_up)
     return 0;
 
   auto enum_tables_up = m_session_up->getEnumTables();
@@ -507,7 +507,7 @@ lldb_private::Type *SymbolFilePDB::ResolveTypeUID(lldb::user_id_t type_uid) {
     return nullptr;
 
   lldb::TypeSP result = pdb->CreateLLDBTypeFromPDBType(*pdb_type);
-  if (result.get()) {
+  if (result) {
     m_types.insert(std::make_pair(type_uid, result));
     auto type_list = GetTypeList();
     if (type_list)
@@ -637,7 +637,7 @@ uint32_t SymbolFilePDB::ResolveSymbolContext(
 
       SymbolContext sc;
       auto cu = ParseCompileUnitForUID(compiland->getSymIndexId());
-      if (!cu.get())
+      if (!cu)
         continue;
       sc.comp_unit = cu.get();
       sc.module_sp = cu->GetModule();
@@ -1132,7 +1132,7 @@ size_t SymbolFilePDB::GetTypes(lldb_private::SymbolContextScope *sc_scope,
   } else {
     for (uint32_t cu_idx = 0; cu_idx < GetNumCompileUnits(); ++cu_idx) {
       auto cu_sp = ParseCompileUnitAtIndex(cu_idx);
-      if (cu_sp.get()) {
+      if (cu_sp) {
         if (auto compiland_up = GetPDBCompilandByUID(cu_sp->GetID()))
           GetTypesForPDBSymbol(*compiland_up, type_mask, type_collection);
       }
