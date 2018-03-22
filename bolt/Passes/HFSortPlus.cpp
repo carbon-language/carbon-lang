@@ -451,6 +451,8 @@ private:
   /// Initialize the set of active clusters, function id to cluster mapping,
   /// total number of samples and function addresses.
   std::vector<Cluster *> initializeClusters() {
+    outs() << "BOLT-INFO: running hfsort+ for " << Cg.numNodes() << " functions\n";
+    
     ITLBPageSize = opts::ITLBPageSize;
     ITLBEntries = opts::ITLBEntries;
 

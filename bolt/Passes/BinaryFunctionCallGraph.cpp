@@ -149,6 +149,9 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
           if (IgnoreRecursiveCalls)
             return false;
         }
+        if (Filter(*DstFunc)) {
+          return false;
+        }
         const auto DstId = lookupNode(DstFunc);
         const bool IsValidCount = Count != COUNT_NO_PROFILE;
         const auto AdjCount = UseEdgeCounts && IsValidCount ? Count : 1;

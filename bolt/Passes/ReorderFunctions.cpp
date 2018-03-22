@@ -291,7 +291,11 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC,
     Cg = buildCallGraph(BC,
                         BFs,
                         [this](const BinaryFunction &BF) {
-                          return !shouldOptimize(BF) || !BF.hasProfile();
+                          if (!BF.hasProfile())
+                            return true;
+                          if (BF.getState() != BinaryFunction::State::CFG)
+                            return true;
+                          return false;
                         },
                         opts::CgFromPerfData,
                         false, // IncludeColdCalls

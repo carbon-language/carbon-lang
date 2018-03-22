@@ -610,7 +610,7 @@ void CachePlusReorderAlgorithm::reorderBasicBlocks(
   }
 
   // Do not change layout of functions w/o profile information
-  if (NumHotBlocks == 0) {
+  if (NumHotBlocks == 0 || BF.layout_size() <= 1) {
     for (auto BB : BF.layout()) {
       Order.push_back(BB);
     }

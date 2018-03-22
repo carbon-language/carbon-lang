@@ -62,9 +62,17 @@ FixFuncCounts("fix-func-counts",
   cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
+FixBlockCounts("fix-block-counts",
+  cl::desc("adjust block counts based on outgoing branch counts"),
+  cl::init(true),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
 InferFallThroughs("infer-fall-throughs",
   cl::desc("infer execution count for fall-through blocks"),
-  cl::init(true),
+  cl::init(false),
   cl::ZeroOrMore,
   cl::Hidden,
   cl::cat(BoltOptCategory));
@@ -144,7 +152,7 @@ bool BinaryFunction::recordTrace(
       const auto *Instr = BB->getLastNonPseudoInstr();
       uint64_t Offset{0};
       if (Instr) {
-        Offset = BC.MIA->getAnnotationWithDefault<uint64_t>(*Instr, "Offset");
+        Offset = BC.MIB->getAnnotationWithDefault<uint64_t>(*Instr, "Offset");
       } else {
         Offset = BB->getOffset();
       }
@@ -326,6 +334,34 @@ void BinaryFunction::postProcessProfile() {
           Succ != BasicBlocks.front())
         Succ->setExecutionCount(Succ->getExecutionCount() + SuccBIIter->Count);
       ++SuccBIIter;
+    }
+  }
+
+  if (opts::FixBlockCounts) {
+    for (auto *BB : BasicBlocks) {
+      // Make sure that execution count of a block is at least the branch count
+      // of an incoming/outgoing jump.
+      auto SuccBIIter = BB->branch_info_begin();
+      for (auto Succ : BB->successors()) {
+        auto Count = SuccBIIter->Count;
+        if (Count != BinaryBasicBlock::COUNT_NO_PROFILE && Count > 0) {
+          Succ->setExecutionCount(std::max(Succ->getExecutionCount(), Count));
+          BB->setExecutionCount(std::max(BB->getExecutionCount(), Count));
+        }
+        ++SuccBIIter;
+      }
+      // Make sure that execution count of a block is at least the number of
+      // function calls from the block.
+      for (auto &Inst : *BB) {
+        // Ignore non-call instruction
+        if (!BC.MIA->isCall(Inst))
+          continue;
+
+        auto CountAnnt = BC.MIB->tryGetAnnotationAs<uint64_t>(Inst, "Count");
+        if (CountAnnt) {
+          BB->setExecutionCount(std::max(BB->getExecutionCount(), *CountAnnt));
+        }
+      }
     }
   }
 
