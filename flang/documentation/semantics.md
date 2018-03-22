@@ -42,8 +42,7 @@ _N.B. We need to define the semantics of the LOC intrinsic_
 
 #### Step 1. Process the top-level declaration, e.g. a subroutine
 1. Create a new scope
-1. Add the name of the program unit to the scope
-  1. Except for functions without a result clause
+1. Add the name of the program unit to the scope except for functions without a result clause
 1. Add the result variable to the scope
 1. Add the names of the dummy arguments to the scope
 
@@ -52,11 +51,12 @@ Implementation note:  When a program make an illegal forward reference, we shoul
 #### Step 2.  Process the specification part
 1. Setup implicit rules
 1. Process imports, uses, and host association
-  - Host association logically happens here; can be deferred until referenced?
 1. Add the names of the internal and module procedures
 1. Process declaration constructs in a single pass
 1. Apply implicit rules to undefined locals, dummy arguments and the function result
 1. Create new scopes for derived type, structure, union
+
+Host association logically happens at step 2; perhaps host association can be deferred until the symbol is referenced?
 
 At this point, all names in the specification part of the parse tree reference a symbol.
 
