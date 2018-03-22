@@ -110,11 +110,9 @@ public:
   int getCyclesLeft() const { return CyclesLeft; }
   unsigned getWriteResourceID() const { return WD.SClassOrWriteResourceID; }
   unsigned getRegisterID() const { return RegisterID; }
-  void setRegisterID(unsigned ID) { RegisterID = ID; }
 
   void addUser(ReadState *Use, int ReadAdvance);
   bool fullyUpdatesSuperRegs() const { return WD.FullyUpdatesSuperRegs; }
-  bool isWrittenBack() const { return CyclesLeft == 0; }
 
   // On every cycle, update CyclesLeft and notify dependent users.
   void cycleEvent();
@@ -291,21 +289,15 @@ public:
   unsigned getRCUTokenID() const { return RCUTokenID; }
   int getCyclesLeft() const { return CyclesLeft; }
   void setCyclesLeft(int Cycles) { CyclesLeft = Cycles; }
-  void setRCUTokenID(unsigned TokenID) { RCUTokenID = TokenID; }
 
-  // Transition to the dispatch stage.
-  // No definition is updated because the instruction is not "executing".
-  void dispatch();
+  // Transition to the dispatch stage, and assign a RCUToken to this
+  // instruction. The RCUToken is used to track the completion of every
+  // register write performed by this instruction.
+  void dispatch(unsigned RCUTokenID);
 
   // Instruction issued. Transition to the IS_EXECUTING state, and update
   // all the definitions.
   void execute();
-
-  void forceExecuted() {
-    assert((Stage == IS_INVALID && isZeroLatency()) ||
-           (Stage == IS_READY && Desc.MaxLatency == 0));
-    Stage = IS_EXECUTED;
-  }
 
   bool isDispatched() const { return Stage == IS_AVAILABLE; }
   bool isReady() const { return Stage == IS_READY; }

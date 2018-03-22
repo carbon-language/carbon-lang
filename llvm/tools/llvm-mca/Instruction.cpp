@@ -92,10 +92,12 @@ void WriteState::dump() const {
 }
 #endif
 
-void Instruction::dispatch() {
+void Instruction::dispatch(unsigned RCUToken) {
   assert(Stage == IS_INVALID);
   Stage = IS_AVAILABLE;
+  RCUTokenID = RCUToken;
 
+  // Check if input operands are already available.
   if (std::all_of(Uses.begin(), Uses.end(),
                   [](const UniqueUse &Use) { return Use->isReady(); }))
     Stage = IS_READY;
@@ -104,8 +106,14 @@ void Instruction::dispatch() {
 void Instruction::execute() {
   assert(Stage == IS_READY);
   Stage = IS_EXECUTING;
+
+  // Set the cycles left before the write-back stage.
+  setCyclesLeft(Desc.MaxLatency);
+
   for (UniqueDef &Def : Defs)
     Def->onInstructionIssued();
+
+  // Transition to the "executed" stage if this is a zero-latency instruction.
   if (!CyclesLeft)
     Stage = IS_EXECUTED;
 }
