@@ -2692,7 +2692,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
             Style.Standard == FormatStyle::LS_Cpp03) ||
            !(Left.isOneOf(tok::l_paren, tok::r_paren, tok::l_square,
                           tok::kw___super, TT_TemplateCloser,
-                          TT_TemplateOpener));
+                          TT_TemplateOpener)) ||
+           (Left.is(tok ::l_paren) && Style.SpacesInParentheses);
   if ((Left.is(TT_TemplateOpener)) != (Right.is(TT_TemplateCloser)))
     return Style.SpacesInAngles;
   // Space before TT_StructuredBindingLSquare.
