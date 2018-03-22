@@ -557,39 +557,39 @@ def JWriteFDivYLd: SchedWriteRes<[JLAGU, JFPU1, JFPM]> {
 }
 def : InstRW<[JWriteFDivYLd, ReadAfterLd], (instrs VDIVPDYrm, VDIVPSYrm)>;
 
-def JWriteVMULYPD: SchedWriteRes<[JFPU1]> {
+def JWriteVMULYPD: SchedWriteRes<[JFPU1, JFPM]> {
   let Latency = 4;
-  let ResourceCycles = [4];
+  let ResourceCycles = [1, 4];
 }
 def : InstRW<[JWriteVMULYPD], (instrs VMULPDYrr)>;
 
-def JWriteVMULYPDLd: SchedWriteRes<[JLAGU, JFPU1]> {
+def JWriteVMULYPDLd: SchedWriteRes<[JLAGU, JFPU1, JFPM]> {
   let Latency = 9;
-  let ResourceCycles = [1, 4];
+  let ResourceCycles = [1, 1, 4];
 }
 def : InstRW<[JWriteVMULYPDLd, ReadAfterLd], (instrs VMULPDYrm)>;
 
-def JWriteVMULYPS: SchedWriteRes<[JFPU1]> {
+def JWriteVMULYPS: SchedWriteRes<[JFPU1, JFPM]> {
   let Latency = 2;
-  let ResourceCycles = [2];
+  let ResourceCycles = [1, 2];
 }
 def : InstRW<[JWriteVMULYPS], (instrs VMULPSYrr, VRCPPSYr, VRSQRTPSYr)>;
 
-def JWriteVMULYPSLd: SchedWriteRes<[JLAGU, JFPU1]> {
+def JWriteVMULYPSLd: SchedWriteRes<[JLAGU, JFPU1, JFPM]> {
   let Latency = 7;
-  let ResourceCycles = [1, 2];
+  let ResourceCycles = [1, 1, 2];
 }
 def : InstRW<[JWriteVMULYPSLd, ReadAfterLd], (instrs VMULPSYrm, VRCPPSYm, VRSQRTPSYm)>;
 
-def JWriteVMULPD: SchedWriteRes<[JFPU1]> {
+def JWriteVMULPD: SchedWriteRes<[JFPU1, JFPM]> {
   let Latency = 4;
-  let ResourceCycles = [2];
+  let ResourceCycles = [1, 2];
 }
 def : InstRW<[JWriteVMULPD], (instrs MULPDrr, MULSDrr, VMULPDrr, VMULSDrr)>;
 
-def JWriteVMULPDLd: SchedWriteRes<[JLAGU, JFPU1]> {
+def JWriteVMULPDLd: SchedWriteRes<[JLAGU, JFPU1, JFPM]> {
   let Latency = 9;
-  let ResourceCycles = [1, 2];
+  let ResourceCycles = [1, 1, 2];
 }
 def : InstRW<[JWriteVMULPDLd], (instrs MULPDrm, MULSDrm, VMULPDrm, VMULSDrm)>;
 
