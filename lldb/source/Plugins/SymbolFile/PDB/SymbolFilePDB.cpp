@@ -19,14 +19,15 @@
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/SymbolVendor.h"
-#include "lldb/Symbol/TypeMap.h"
 #include "lldb/Symbol/TypeList.h"
+#include "lldb/Symbol/TypeMap.h"
 #include "lldb/Utility/RegularExpression.h"
 
 #include "llvm/DebugInfo/PDB/GenericError.h"
 #include "llvm/DebugInfo/PDB/IPDBDataStream.h"
 #include "llvm/DebugInfo/PDB/IPDBEnumChildren.h"
 #include "llvm/DebugInfo/PDB/IPDBLineNumber.h"
+#include "llvm/DebugInfo/PDB/IPDBSectionContrib.h"
 #include "llvm/DebugInfo/PDB/IPDBSourceFile.h"
 #include "llvm/DebugInfo/PDB/IPDBTable.h"
 #include "llvm/DebugInfo/PDB/PDBSymbol.h"
@@ -264,7 +265,7 @@ lldb_private::Function *SymbolFilePDB::ParseCompileUnitFunctionForPDBFunc(
   lldbassert(sc.comp_unit && sc.module_sp.get());
 
   auto file_vm_addr = pdb_func.getVirtualAddress();
-  if (file_vm_addr == LLDB_INVALID_ADDRESS)
+  if (file_vm_addr == LLDB_INVALID_ADDRESS || file_vm_addr == 0)
     return nullptr;
 
   auto func_length = pdb_func.getLength();
@@ -677,7 +678,7 @@ uint32_t SymbolFilePDB::ResolveSymbolContext(
 
             auto file_vm_addr =
                 sc.line_entry.range.GetBaseAddress().GetFileAddress();
-            if (file_vm_addr == LLDB_INVALID_ADDRESS)
+            if (file_vm_addr == LLDB_INVALID_ADDRESS || file_vm_addr == 0)
               continue;
 
             auto symbol_up = m_session_up->findSymbolByAddress(
@@ -1341,24 +1342,26 @@ void SymbolFilePDB::BuildSupportFileIdToSupportFileIndexMap(
 }
 
 lldb::CompUnitSP SymbolFilePDB::GetCompileUnitContainsAddress(
-     const lldb_private::Address &so_addr) {
+    const lldb_private::Address &so_addr) {
   lldb::addr_t file_vm_addr = so_addr.GetFileAddress();
-  if (file_vm_addr == LLDB_INVALID_ADDRESS)
+  if (file_vm_addr == LLDB_INVALID_ADDRESS || file_vm_addr == 0)
     return nullptr;
 
-  auto lines_up =
-      m_session_up->findLineNumbersByAddress(file_vm_addr, /*Length=*/200);
-  if (!lines_up)
-    return nullptr;
-
-  auto first_line_up = lines_up->getNext();
-  if (!first_line_up)
-    return nullptr;
-  auto compiland_up = GetPDBCompilandByUID(first_line_up->getCompilandId());
-  if (compiland_up) {
-    return ParseCompileUnitForUID(compiland_up->getSymIndexId());
+  // If it is a PDB function's vm addr, this is the first sure bet.
+  if (auto lines =
+          m_session_up->findLineNumbersByAddress(file_vm_addr, /*Length=*/1)) {
+    if (auto first_line = lines->getNext())
+      return ParseCompileUnitForUID(first_line->getCompilandId());
   }
 
+  // Otherwise we resort to section contributions.
+  if (auto sec_contribs = m_session_up->getSectionContribs()) {
+    while (auto section = sec_contribs->getNext()) {
+      auto va = section->getVirtualAddress();
+      if (file_vm_addr >= va && file_vm_addr < va + section->getLength())
+        return ParseCompileUnitForUID(section->getCompilandId());
+    }
+  }
   return nullptr;
 }
 
