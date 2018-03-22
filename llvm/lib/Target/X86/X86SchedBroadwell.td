@@ -243,7 +243,7 @@ def : WriteRes<WriteAESKeyGenLd, [BWPort0, BWPort5, BWPort23, BWPort015]> {
 }
 
 // Carry-less multiplication instructions.
-defm : BWWriteResPair<WriteCLMul,  [BWPort0, BWPort5], 7, [2, 1]>;
+defm : BWWriteResPair<WriteCLMul,  [BWPort0], 5>;
 
 // Catch-all for expensive system instructions.
 def : WriteRes<WriteSystem,     [BWPort0156]> { let Latency = 100; } // def WriteSystem : SchedWrite;
@@ -1518,7 +1518,6 @@ def: InstRW<[BWWriteResGroup47], (instregex "MMX_PMADDUBSWrr",
                                             "MUL_FPrST0",
                                             "MUL_FST0r",
                                             "MUL_FrST0",
-                                            "PCLMULQDQrr",
                                             "PCMPGTQrr",
                                             "PHMINPOSUWrr",
                                             "PMADDUBSWrr",
@@ -1534,7 +1533,6 @@ def: InstRW<[BWWriteResGroup47], (instregex "MMX_PMADDUBSWrr",
                                             "RCPSSr",
                                             "RSQRTPSr",
                                             "RSQRTSSr",
-                                            "VPCLMULQDQrr",
                                             "VPCMPGTQYrr",
                                             "VPCMPGTQrr",
                                             "VPHMINPOSUWrr",
@@ -2812,7 +2810,6 @@ def: InstRW<[BWWriteResGroup115], (instregex "MMX_PMADDUBSWrm",
                                              "MMX_PMULLWirm",
                                              "MMX_PMULUDQirm",
                                              "MMX_PSADBWirm",
-                                             "PCLMULQDQrm",
                                              "PCMPGTQrm",
                                              "PHMINPOSUWrm",
                                              "PMADDUBSWrm",
@@ -2828,7 +2825,6 @@ def: InstRW<[BWWriteResGroup115], (instregex "MMX_PMADDUBSWrm",
                                              "RCPSSm",
                                              "RSQRTPSm",
                                              "RSQRTSSm",
-                                             "VPCLMULQDQrm",
                                              "VPCMPGTQrm",
                                              "VPHMINPOSUWrm",
                                              "VPMADDUBSWrm",

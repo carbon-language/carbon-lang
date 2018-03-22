@@ -246,13 +246,15 @@ def : WriteRes<WriteAESKeyGenLd, [SKLPort0, SKLPort5, SKLPort23, SKLPort015]> {
 }
 
 // Carry-less multiplication instructions.
-def : WriteRes<WriteCLMul, [SKLPort0, SKLPort5]> {
-  let Latency = 7;
-  let ResourceCycles = [2, 1];
+def : WriteRes<WriteCLMul, [SKLPort5]> {
+  let Latency = 6;
+  let NumMicroOps = 1;
+  let ResourceCycles = [1];
 }
-def : WriteRes<WriteCLMulLd, [SKLPort0, SKLPort5, SKLPort23]> {
-  let Latency = 7;
-  let ResourceCycles = [2, 1, 1];
+def : WriteRes<WriteCLMulLd, [SKLPort5, SKLPort23]> {
+  let Latency = 12;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1,1];
 }
 
 // Catch-all for expensive system instructions.
@@ -1703,13 +1705,6 @@ def SKLWriteResGroup65 : SchedWriteRes<[SKLPort4,SKLPort237,SKLPort0156]> {
 def: InstRW<[SKLWriteResGroup65], (instregex "PUSHF16",
                                              "PUSHF64")>;
 
-def SKLWriteResGroup66 : SchedWriteRes<[SKLPort5]> {
-  let Latency = 6;
-  let NumMicroOps = 1;
-  let ResourceCycles = [1];
-}
-def: InstRW<[SKLWriteResGroup66], (instregex "(V?)PCLMULQDQrr")>;
-
 def SKLWriteResGroup67 : SchedWriteRes<[SKLPort23]> {
   let Latency = 6;
   let NumMicroOps = 1;
@@ -3139,13 +3134,6 @@ def SKLWriteResGroup157 : SchedWriteRes<[SKLPort0]> {
 def: InstRW<[SKLWriteResGroup157], (instregex "VSQRTPSYr",
                                               "VSQRTPSr",
                                               "VSQRTSSr")>;
-
-def SKLWriteResGroup158 : SchedWriteRes<[SKLPort5,SKLPort23]> {
-  let Latency = 12;
-  let NumMicroOps = 2;
-  let ResourceCycles = [1,1];
-}
-def: InstRW<[SKLWriteResGroup158], (instregex "(V?)PCLMULQDQrm")>;
 
 def SKLWriteResGroup159 : SchedWriteRes<[SKLPort5,SKLPort01,SKLPort23]> {
   let Latency = 12;

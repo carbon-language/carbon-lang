@@ -243,12 +243,14 @@ def : WriteRes<WriteAESKeyGenLd, [HWPort0,HWPort5,HWPort23,HWPort015]> {
 
 // Carry-less multiplication instructions.
 def : WriteRes<WriteCLMul, [HWPort0, HWPort5]> {
-  let Latency = 7;
-  let ResourceCycles = [2, 1];
+  let Latency = 11;
+  let NumMicroOps = 3;
+  let ResourceCycles = [2,1];
 }
 def : WriteRes<WriteCLMulLd, [HWPort0, HWPort5, HWPort23]> {
-  let Latency = 7;
-  let ResourceCycles = [2, 1, 1];
+  let Latency = 17;
+  let NumMicroOps = 4;
+  let ResourceCycles = [2,1,1];
 }
 
 def : WriteRes<WriteSystem,     [HWPort0156]> { let Latency = 100; }
@@ -2947,13 +2949,6 @@ def HWWriteResGroup123 : SchedWriteRes<[HWPort0]> {
 def: InstRW<[HWWriteResGroup123], (instregex "(V?)PCMPISTRIrr",
                                              "(V?)PCMPISTRM128rr")>;
 
-def HWWriteResGroup124 : SchedWriteRes<[HWPort0,HWPort5]> {
-  let Latency = 11;
-  let NumMicroOps = 3;
-  let ResourceCycles = [2,1];
-}
-def: InstRW<[HWWriteResGroup124], (instregex "(V?)PCLMULQDQrr")>;
-
 def HWWriteResGroup125 : SchedWriteRes<[HWPort0,HWPort015]> {
   let Latency = 11;
   let NumMicroOps = 3;
@@ -2969,13 +2964,6 @@ def HWWriteResGroup126 : SchedWriteRes<[HWPort0,HWPort23]> {
 }
 def: InstRW<[HWWriteResGroup126], (instregex "(V?)PCMPISTRIrm",
                                              "(V?)PCMPISTRM128rm")>;
-
-def HWWriteResGroup127 : SchedWriteRes<[HWPort0,HWPort5,HWPort23]> {
-  let Latency = 17;
-  let NumMicroOps = 4;
-  let ResourceCycles = [2,1,1];
-}
-def: InstRW<[HWWriteResGroup127], (instregex "(V?)PCLMULQDQrm")>;
 
 def HWWriteResGroup128 : SchedWriteRes<[HWPort0,HWPort23,HWPort015]> {
   let Latency = 18;
