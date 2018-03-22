@@ -11,6 +11,7 @@
 #include "llvm/DebugInfo/PDB/DIA/DIAEnumDebugStreams.h"
 #include "llvm/DebugInfo/PDB/DIA/DIAEnumInjectedSources.h"
 #include "llvm/DebugInfo/PDB/DIA/DIAEnumLineNumbers.h"
+#include "llvm/DebugInfo/PDB/DIA/DIAEnumSectionContribs.h"
 #include "llvm/DebugInfo/PDB/DIA/DIAEnumSourceFiles.h"
 #include "llvm/DebugInfo/PDB/DIA/DIAEnumTables.h"
 #include "llvm/DebugInfo/PDB/DIA/DIAError.h"
@@ -355,4 +356,14 @@ DIASession::getInjectedSources() const {
     return nullptr;
 
   return llvm::make_unique<DIAEnumInjectedSources>(*this, Files);
+}
+
+std::unique_ptr<IPDBEnumSectionContribs>
+DIASession::getSectionContribs() const {
+  CComPtr<IDiaEnumSectionContribs> Sections =
+      getTableEnumerator<IDiaEnumSectionContribs>(*Session);
+  if (!Sections)
+    return nullptr;
+
+  return llvm::make_unique<DIAEnumSectionContribs>(*this, Sections);
 }
