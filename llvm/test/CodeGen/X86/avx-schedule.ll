@@ -4132,8 +4132,8 @@ define <4 x double> @test_roundpd(<4 x double> %a0, <4 x double> *%a1) {
 ;
 ; ZNVER1-LABEL: test_roundpd:
 ; ZNVER1:       # %bb.0:
-; ZNVER1-NEXT:    vroundpd $7, (%rdi), %ymm1 # sched: [11:1.00]
-; ZNVER1-NEXT:    vroundpd $7, %ymm0, %ymm0 # sched: [4:1.00]
+; ZNVER1-NEXT:    vroundpd $7, (%rdi), %ymm1 # sched: [10:1.00]
+; ZNVER1-NEXT:    vroundpd $7, %ymm0, %ymm0 # sched: [3:1.00]
 ; ZNVER1-NEXT:    vaddpd %ymm1, %ymm0, %ymm0 # sched: [3:1.00]
 ; ZNVER1-NEXT:    retq # sched: [1:0.50]
   %1 = call <4 x double> @llvm.x86.avx.round.pd.256(<4 x double> %a0, i32 7)
@@ -4196,8 +4196,8 @@ define <8 x float> @test_roundps(<8 x float> %a0, <8 x float> *%a1) {
 ;
 ; ZNVER1-LABEL: test_roundps:
 ; ZNVER1:       # %bb.0:
-; ZNVER1-NEXT:    vroundps $7, (%rdi), %ymm1 # sched: [11:1.00]
-; ZNVER1-NEXT:    vroundps $7, %ymm0, %ymm0 # sched: [4:1.00]
+; ZNVER1-NEXT:    vroundps $7, (%rdi), %ymm1 # sched: [10:1.00]
+; ZNVER1-NEXT:    vroundps $7, %ymm0, %ymm0 # sched: [3:1.00]
 ; ZNVER1-NEXT:    vaddps %ymm1, %ymm0, %ymm0 # sched: [3:1.00]
 ; ZNVER1-NEXT:    retq # sched: [1:0.50]
   %1 = call <8 x float> @llvm.x86.avx.round.ps.256(<8 x float> %a0, i32 7)
