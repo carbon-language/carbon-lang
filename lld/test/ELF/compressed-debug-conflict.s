@@ -43,7 +43,7 @@ main:
 .Lbegin0:
 	.short	4                       # DWARF version number
 	.long	.debug_abbrev           # Offset Into Abbrev. Section
-	.byte	8                       # Address Size (in bytes)
+	.byte	4                       # Address Size (in bytes)
 	.byte	1                       # Abbrev [1] 0xb:0x1f DW_TAG_compile_unit
 	.long	.debug_line             # DW_AT_stmt_list
 .Lend0:
