@@ -210,29 +210,35 @@ def : WriteRes<WritePCmpEStrILd, [HWPort0, HWPort16, HWPort5, HWPort23]> {
 // AES Instructions.
 def : WriteRes<WriteAESDecEnc, [HWPort5]> {
   let Latency = 7;
+  let NumMicroOps = 1;
   let ResourceCycles = [1];
 }
 def : WriteRes<WriteAESDecEncLd, [HWPort5, HWPort23]> {
-  let Latency = 7;
-  let ResourceCycles = [1, 1];
+  let Latency = 13;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1,1];
 }
 
 def : WriteRes<WriteAESIMC, [HWPort5]> {
   let Latency = 14;
+  let NumMicroOps = 2;
   let ResourceCycles = [2];
 }
 def : WriteRes<WriteAESIMCLd, [HWPort5, HWPort23]> {
-  let Latency = 14;
-  let ResourceCycles = [2, 1];
+  let Latency = 20;
+  let NumMicroOps = 3;
+  let ResourceCycles = [2,1];
 }
 
-def : WriteRes<WriteAESKeyGen, [HWPort0, HWPort5]> {
-  let Latency = 10;
-  let ResourceCycles = [2, 8];
+def : WriteRes<WriteAESKeyGen, [HWPort0,HWPort5,HWPort015]> {
+  let Latency = 29;
+  let NumMicroOps = 11;
+  let ResourceCycles = [2,7,2];
 }
-def : WriteRes<WriteAESKeyGenLd, [HWPort0, HWPort5, HWPort23]> {
-  let Latency = 10;
-  let ResourceCycles = [2, 7, 1];
+def : WriteRes<WriteAESKeyGenLd, [HWPort0,HWPort5,HWPort23,HWPort015]> {
+  let Latency = 34;
+  let NumMicroOps = 11;
+  let ResourceCycles = [2,7,1,1];
 }
 
 // Carry-less multiplication instructions.
@@ -2833,26 +2839,6 @@ def HWWriteResGroup109 : SchedWriteRes<[HWPort1,HWPort23,HWPort237,HWPort06,HWPo
 def: InstRW<[HWWriteResGroup109], (instregex "SHLD(16|32|64)mrCL",
                                              "SHRD(16|32|64)mrCL")>;
 
-def HWWriteResGroup110 : SchedWriteRes<[HWPort5]> {
-  let Latency = 7;
-  let NumMicroOps = 1;
-  let ResourceCycles = [1];
-}
-def: InstRW<[HWWriteResGroup110], (instregex "VAESDECLASTrr",
-                                             "VAESDECrr",
-                                             "VAESENCLASTrr",
-                                             "VAESENCrr")>;
-
-def HWWriteResGroup111 : SchedWriteRes<[HWPort5,HWPort23]> {
-  let Latency = 13;
-  let NumMicroOps = 2;
-  let ResourceCycles = [1,1];
-}
-def: InstRW<[HWWriteResGroup111], (instregex "(V?)AESDECLASTrm",
-                                             "(V?)AESDECrm",
-                                             "(V?)AESENCLASTrm",
-                                             "(V?)AESENCrm")>;
-
 def HWWriteResGroup112 : SchedWriteRes<[HWPort0,HWPort5]> {
   let Latency = 7;
   let NumMicroOps = 3;
@@ -3065,13 +3051,6 @@ def: InstRW<[HWWriteResGroup136], (instregex "DIVPDrr",
                                              "VSQRTPSr",
                                              "VSQRTSSr")>;
 
-def HWWriteResGroup137 : SchedWriteRes<[HWPort5]> {
-  let Latency = 14;
-  let NumMicroOps = 2;
-  let ResourceCycles = [2];
-}
-def: InstRW<[HWWriteResGroup137], (instregex "(V?)AESIMCrr")>;
-
 def HWWriteResGroup138 : SchedWriteRes<[HWPort0,HWPort23]> {
   let Latency = 20;
   let NumMicroOps = 2;
@@ -3079,13 +3058,6 @@ def HWWriteResGroup138 : SchedWriteRes<[HWPort0,HWPort23]> {
 }
 def: InstRW<[HWWriteResGroup138], (instregex "DIVPDrm",
                                              "VSQRTPSm")>;
-
-def HWWriteResGroup139 : SchedWriteRes<[HWPort5,HWPort23]> {
-  let Latency = 20;
-  let NumMicroOps = 3;
-  let ResourceCycles = [2,1];
-}
-def: InstRW<[HWWriteResGroup139], (instregex "(V?)AESIMCrm")>;
 
 def HWWriteResGroup140 : SchedWriteRes<[HWPort0,HWPort1,HWPort5]> {
   let Latency = 14;
@@ -3311,20 +3283,6 @@ def HWWriteResGroup166 : SchedWriteRes<[HWPort0,HWPort1,HWPort23]> {
 }
 def: InstRW<[HWWriteResGroup166], (instregex "DIV_FI16m",
                                              "DIV_FI32m")>;
-
-def HWWriteResGroup167 : SchedWriteRes<[HWPort0,HWPort5,HWPort23,HWPort015]> {
-  let Latency = 34;
-  let NumMicroOps = 11;
-  let ResourceCycles = [2,7,1,1];
-}
-def: InstRW<[HWWriteResGroup167], (instregex "(V?)AESKEYGENASSIST128rm")>;
-
-def HWWriteResGroup168 : SchedWriteRes<[HWPort0,HWPort5,HWPort015]> {
-  let Latency = 29;
-  let NumMicroOps = 11;
-  let ResourceCycles = [2,7,2];
-}
-def: InstRW<[HWWriteResGroup168], (instregex "(V?)AESKEYGENASSIST128rr")>;
 
 def HWWriteResGroup170 : SchedWriteRes<[HWPort5,HWPort6,HWPort23,HWPort06,HWPort0156]> {
   let Latency = 35;

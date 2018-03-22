@@ -212,29 +212,37 @@ def : WriteRes<WritePCmpEStrILd, [SKXPort0, SKXPort16, SKXPort5, SKXPort23]> {
 }
 
 // AES instructions.
-def : WriteRes<WriteAESDecEnc, [SKXPort5]> { // Decryption, encryption.
-  let Latency = 7;
+def : WriteRes<WriteAESDecEnc, [SKXPort0]> { // Decryption, encryption.
+  let Latency = 4;
+  let NumMicroOps = 1;
   let ResourceCycles = [1];
 }
-def : WriteRes<WriteAESDecEncLd, [SKXPort5, SKXPort23]> {
-  let Latency = 7;
-  let ResourceCycles = [1, 1];
+def : WriteRes<WriteAESDecEncLd, [SKXPort0, SKXPort23]> {
+  let Latency = 10;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1,1];
 }
-def : WriteRes<WriteAESIMC, [SKXPort5]> { // InvMixColumn.
-  let Latency = 14;
+
+def : WriteRes<WriteAESIMC, [SKXPort0]> { // InvMixColumn.
+  let Latency = 8;
+  let NumMicroOps = 2;
   let ResourceCycles = [2];
 }
-def : WriteRes<WriteAESIMCLd, [SKXPort5, SKXPort23]> {
+def : WriteRes<WriteAESIMCLd, [SKXPort0, SKXPort23]> {
   let Latency = 14;
-  let ResourceCycles = [2, 1];
+  let NumMicroOps = 3;
+  let ResourceCycles = [2,1];
 }
-def : WriteRes<WriteAESKeyGen, [SKXPort0, SKXPort5]> { // Key Generation.
-  let Latency = 10;
-  let ResourceCycles = [2, 8];
+
+def : WriteRes<WriteAESKeyGen, [SKXPort0,SKXPort5,SKXPort015]> { // Key Generation.
+  let Latency = 20;
+  let NumMicroOps = 11;
+  let ResourceCycles = [3,6,2];
 }
-def : WriteRes<WriteAESKeyGenLd, [SKXPort0, SKXPort5, SKXPort23]> {
-  let Latency = 10;
-  let ResourceCycles = [2, 7, 1];
+def : WriteRes<WriteAESKeyGenLd, [SKXPort0,SKXPort5,SKXPort23,SKXPort015]> {
+  let Latency = 25;
+  let NumMicroOps = 11;
+  let ResourceCycles = [3,6,1,1];
 }
 
 // Carry-less multiplication instructions.
@@ -2179,11 +2187,7 @@ def SKXWriteResGroup49 : SchedWriteRes<[SKXPort0]> {
   let NumMicroOps = 1;
   let ResourceCycles = [1];
 }
-def: InstRW<[SKXWriteResGroup49], (instregex "AESDECLASTrr",
-                                             "AESDECrr",
-                                             "AESENCLASTrr",
-                                             "AESENCrr",
-                                             "MMX_PMADDUBSWrr",
+def: InstRW<[SKXWriteResGroup49], (instregex "MMX_PMADDUBSWrr",
                                              "MMX_PMADDWDirr",
                                              "MMX_PMULHRSWrr",
                                              "MMX_PMULHUWirr",
@@ -2197,10 +2201,6 @@ def: InstRW<[SKXWriteResGroup49], (instregex "AESDECLASTrr",
                                              "RCPSSr",
                                              "RSQRTPSr",
                                              "RSQRTSSr",
-                                             "VAESDECLASTrr",
-                                             "VAESDECrr",
-                                             "VAESENCLASTrr",
-                                             "VAESENCrr",
                                              "VRCP14PDZ128r(b?)(k?)(z?)",
                                              "VRCP14PDZ256r(b?)(k?)(z?)",
                                              "VRCP14PSZ128r(b?)(k?)(z?)",
@@ -3852,13 +3852,6 @@ def SKXWriteResGroup114 : SchedWriteRes<[SKXPort0,SKXPort4,SKXPort5,SKXPort237,S
 }
 def: InstRW<[SKXWriteResGroup114], (instrs VSCATTERDPSZmr)>;
 
-def SKXWriteResGroup115 : SchedWriteRes<[SKXPort0]> {
-  let Latency = 8;
-  let NumMicroOps = 2;
-  let ResourceCycles = [2];
-}
-def: InstRW<[SKXWriteResGroup115], (instregex "(V?)AESIMCrr")>;
-
 def SKXWriteResGroup116 : SchedWriteRes<[SKXPort015]> {
   let Latency = 8;
   let NumMicroOps = 2;
@@ -4702,16 +4695,8 @@ def SKXWriteResGroup147 : SchedWriteRes<[SKXPort0,SKXPort23]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[SKXWriteResGroup147], (instregex "AESDECLASTrm",
-                                              "AESDECrm",
-                                              "AESENCLASTrm",
-                                              "AESENCrm",
-                                              "RCPPSm",
+def: InstRW<[SKXWriteResGroup147], (instregex "RCPPSm",
                                               "RSQRTPSm",
-                                              "VAESDECLASTrm",
-                                              "VAESDECrm",
-                                              "VAESENCLASTrm",
-                                              "VAESENCrm",
                                               "VRCP14PDZ128m(b?)(k?)(z?)",
                                               "VRCP14PSZ128m(b?)(k?)(z?)",
                                               "VRCP14SDrm(b?)(k?)(z?)",
@@ -5509,13 +5494,6 @@ def: InstRW<[SKXWriteResGroup184], (instregex "DIVPDrr",
                                               "VDIVSDZrr(b?)(_Int)?(k?)(z?)",
                                               "VDIVSDrr")>;
 
-def SKXWriteResGroup185 : SchedWriteRes<[SKXPort0,SKXPort23]> {
-  let Latency = 14;
-  let NumMicroOps = 3;
-  let ResourceCycles = [2,1];
-}
-def: InstRW<[SKXWriteResGroup185], (instregex "(V?)AESIMCrm")>;
-
 def SKXWriteResGroup186 : SchedWriteRes<[SKXPort23,SKXPort015]> {
   let Latency = 14;
   let NumMicroOps = 3;
@@ -5844,13 +5822,6 @@ def SKXWriteResGroup220 : SchedWriteRes<[SKXPort5,SKXPort6,SKXPort0156]> {
 }
 def: InstRW<[SKXWriteResGroup220], (instregex "MWAITrr")>;
 
-def SKXWriteResGroup221 : SchedWriteRes<[SKXPort0,SKXPort5,SKXPort015]> {
-  let Latency = 20;
-  let NumMicroOps = 11;
-  let ResourceCycles = [3,6,2];
-}
-def: InstRW<[SKXWriteResGroup221], (instregex "(V?)AESKEYGENASSIST128rr")>;
-
 def SKXWriteResGroup222 : SchedWriteRes<[SKXPort0,SKXPort23]> {
   let Latency = 21;
   let NumMicroOps = 2;
@@ -6006,13 +5977,6 @@ def SKXWriteResGroup235 : SchedWriteRes<[SKXPort0,SKXPort5,SKXPort23,SKXPort015,
   let ResourceCycles = [4,3,1,1,1];
 }
 def: InstRW<[SKXWriteResGroup235], (instregex "(V?)PCMPESTRM128rm")>;
-
-def SKXWriteResGroup236 : SchedWriteRes<[SKXPort0,SKXPort5,SKXPort23,SKXPort015]> {
-  let Latency = 25;
-  let NumMicroOps = 11;
-  let ResourceCycles = [3,6,1,1];
-}
-def: InstRW<[SKXWriteResGroup236], (instregex "(V?)AESKEYGENASSIST128rm")>;
 
 def SKXWriteResGroup237 : SchedWriteRes<[SKXPort0,SKXPort23,SKXPort015]> {
   let Latency = 26;

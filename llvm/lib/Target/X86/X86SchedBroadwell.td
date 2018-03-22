@@ -211,27 +211,35 @@ def : WriteRes<WritePCmpEStrILd, [BWPort0, BWPort16, BWPort5, BWPort23]> {
 // AES instructions.
 def : WriteRes<WriteAESDecEnc, [BWPort5]> { // Decryption, encryption.
   let Latency = 7;
+  let NumMicroOps = 1;
   let ResourceCycles = [1];
 }
 def : WriteRes<WriteAESDecEncLd, [BWPort5, BWPort23]> {
-  let Latency = 7;
-  let ResourceCycles = [1, 1];
+  let Latency = 12;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1,1];
 }
+
 def : WriteRes<WriteAESIMC, [BWPort5]> { // InvMixColumn.
   let Latency = 14;
+  let NumMicroOps = 2;
   let ResourceCycles = [2];
 }
 def : WriteRes<WriteAESIMCLd, [BWPort5, BWPort23]> {
-  let Latency = 14;
-  let ResourceCycles = [2, 1];
+  let Latency = 19;
+  let NumMicroOps = 3;
+  let ResourceCycles = [2,1];
 }
-def : WriteRes<WriteAESKeyGen, [BWPort0, BWPort5]> { // Key Generation.
-  let Latency = 10;
-  let ResourceCycles = [2, 8];
+
+def : WriteRes<WriteAESKeyGen, [BWPort0, BWPort5, BWPort015]> { // Key Generation.
+  let Latency = 29;
+  let NumMicroOps = 11;
+  let ResourceCycles = [2,7,2];
 }
-def : WriteRes<WriteAESKeyGenLd, [BWPort0, BWPort5, BWPort23]> {
-  let Latency = 10;
-  let ResourceCycles = [2, 7, 1];
+def : WriteRes<WriteAESKeyGenLd, [BWPort0, BWPort5, BWPort23, BWPort015]> {
+  let Latency = 33;
+  let NumMicroOps = 11;
+  let ResourceCycles = [2,7,1,1];
 }
 
 // Carry-less multiplication instructions.
@@ -2148,20 +2156,6 @@ def BWWriteResGroup71 : SchedWriteRes<[BWPort6,BWPort0156]> {
 }
 def: InstRW<[BWWriteResGroup71], (instregex "STD")>;
 
-def BWWriteResGroup72 : SchedWriteRes<[BWPort5]> {
-  let Latency = 7;
-  let NumMicroOps = 1;
-  let ResourceCycles = [1];
-}
-def: InstRW<[BWWriteResGroup72], (instregex "AESDECLASTrr",
-                                            "AESDECrr",
-                                            "AESENCLASTrr",
-                                            "AESENCrr",
-                                            "VAESDECLASTrr",
-                                            "VAESDECrr",
-                                            "VAESENCLASTrr",
-                                            "VAESENCrr")>;
-
 def BWWriteResGroup73 : SchedWriteRes<[BWPort0,BWPort23]> {
   let Latency = 7;
   let NumMicroOps = 2;
@@ -3021,20 +3015,6 @@ def BWWriteResGroup133 : SchedWriteRes<[BWPort06,BWPort0156]> {
 def: InstRW<[BWWriteResGroup133], (instrs LOOPE)>;
 def: InstRW<[BWWriteResGroup133], (instrs LOOPNE)>;
 
-def BWWriteResGroup134 : SchedWriteRes<[BWPort5,BWPort23]> {
-  let Latency = 12;
-  let NumMicroOps = 2;
-  let ResourceCycles = [1,1];
-}
-def: InstRW<[BWWriteResGroup134], (instregex "AESDECLASTrm",
-                                             "AESDECrm",
-                                             "AESENCLASTrm",
-                                             "AESENCrm",
-                                             "VAESDECLASTrm",
-                                             "VAESDECrm",
-                                             "VAESENCLASTrm",
-                                             "VAESENCrm")>;
-
 def BWWriteResGroup135 : SchedWriteRes<[BWPort1,BWPort23]> {
   let Latency = 12;
   let NumMicroOps = 3;
@@ -3082,13 +3062,6 @@ def: InstRW<[BWWriteResGroup139], (instregex "DIVPDrr",
                                              "VDIVSDrr",
                                              "VSQRTPSr",
                                              "VSQRTSSr")>;
-
-def BWWriteResGroup140 : SchedWriteRes<[BWPort5]> {
-  let Latency = 14;
-  let NumMicroOps = 2;
-  let ResourceCycles = [2];
-}
-def: InstRW<[BWWriteResGroup140], (instregex "(V?)AESIMCrr")>;
 
 def BWWriteResGroup141 : SchedWriteRes<[BWPort0,BWPort1,BWPort23]> {
   let Latency = 14;
@@ -3251,13 +3224,6 @@ def: InstRW<[BWWriteResGroup161], (instregex "DIVPDrm",
                                              "VDIVSDrm",
                                              "VSQRTPSm",
                                              "VSQRTSSm")>;
-
-def BWWriteResGroup162 : SchedWriteRes<[BWPort5,BWPort23]> {
-  let Latency = 19;
-  let NumMicroOps = 3;
-  let ResourceCycles = [2,1];
-}
-def: InstRW<[BWWriteResGroup162], (instregex "(V?)AESIMCrm")>;
 
 def BWWriteResGroup163 : SchedWriteRes<[BWPort0,BWPort1,BWPort5,BWPort23]> {
   let Latency = 19;
@@ -3470,13 +3436,6 @@ def BWWriteResGroup183_7 : SchedWriteRes<[BWPort4, BWPort5, BWPort23, BWPort0156
 }
 def: InstRW<[BWWriteResGroup183_7], (instrs VGATHERQPSrm)>;
 
-def BWWriteResGroup184 : SchedWriteRes<[BWPort0,BWPort5,BWPort015]> {
-  let Latency = 29;
-  let NumMicroOps = 11;
-  let ResourceCycles = [2,7,2];
-}
-def: InstRW<[BWWriteResGroup184], (instregex "(V?)AESKEYGENASSIST128rr")>;
-
 def BWWriteResGroup185 : SchedWriteRes<[BWPort4,BWPort6,BWPort23,BWPort237,BWPort0156]> {
   let Latency = 29;
   let NumMicroOps = 27;
@@ -3497,13 +3456,6 @@ def BWWriteResGroup187 : SchedWriteRes<[BWPort01,BWPort15,BWPort015,BWPort0156]>
   let ResourceCycles = [8,1,21,1];
 }
 def: InstRW<[BWWriteResGroup187], (instregex "MMX_EMMS")>;
-
-def BWWriteResGroup188 : SchedWriteRes<[BWPort0,BWPort5,BWPort23,BWPort015]> {
-  let Latency = 33;
-  let NumMicroOps = 11;
-  let ResourceCycles = [2,7,1,1];
-}
-def: InstRW<[BWWriteResGroup188], (instregex "(V?)AESKEYGENASSIST128rm")>;
 
 def BWWriteResGroup189 : SchedWriteRes<[BWPort0,BWPort015]> {
   let Latency = 34;
