@@ -2830,10 +2830,10 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
   if (Style.BreakBeforeInheritanceComma && Right.is(TT_InheritanceComma))
     return true;
   if (Right.is(tok::string_literal) && Right.TokenText.startswith("R\""))
-    // Raw string literals are special wrt. line breaks. The author has made a
-    // deliberate choice and might have aligned the contents of the string
-    // literal accordingly. Thus, we try keep existing line breaks.
-    return Right.NewlinesBefore > 0;
+    // Multiline raw string literals are special wrt. line breaks. The author
+    // has made a deliberate choice and might have aligned the contents of the
+    // string literal accordingly. Thus, we try keep existing line breaks.
+    return Right.IsMultiline && Right.NewlinesBefore > 0;
   if ((Right.Previous->is(tok::l_brace) ||
        (Right.Previous->is(tok::less) && Right.Previous->Previous &&
         Right.Previous->Previous->is(tok::equal))) &&
