@@ -276,12 +276,6 @@ class Instruction {
   // One entry per each implicit and explicit register use.
   VecUses Uses;
 
-  // This instruction has already been dispatched, and all operands are ready.
-  void setReady() {
-    assert(Stage == IS_AVAILABLE);
-    Stage = IS_READY;
-  }
-
 public:
   Instruction(const InstrDesc &D)
       : Desc(D), Stage(IS_INVALID), CyclesLeft(-1) {}
@@ -301,10 +295,7 @@ public:
 
   // Transition to the dispatch stage.
   // No definition is updated because the instruction is not "executing".
-  void dispatch() {
-    assert(Stage == IS_INVALID);
-    Stage = IS_AVAILABLE;
-  }
+  void dispatch();
 
   // Instruction issued. Transition to the IS_EXECUTING state, and update
   // all the definitions.
@@ -316,17 +307,14 @@ public:
     Stage = IS_EXECUTED;
   }
 
-  // Checks if operands are available. If all operands area ready,
-  // then this forces a transition from IS_AVAILABLE to IS_READY.
-  bool isReady();
-
   bool isDispatched() const { return Stage == IS_AVAILABLE; }
+  bool isReady() const { return Stage == IS_READY; }
   bool isExecuting() const { return Stage == IS_EXECUTING; }
   bool isExecuted() const { return Stage == IS_EXECUTED; }
   bool isZeroLatency() const;
 
   void retire() {
-    assert(Stage == IS_EXECUTED);
+    assert(isExecuted() && "Instruction is in an invalid state!");
     Stage = IS_RETIRED;
   }
 

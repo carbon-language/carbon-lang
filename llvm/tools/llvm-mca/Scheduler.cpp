@@ -352,14 +352,16 @@ void Scheduler::issueInstruction(Instruction &IS, unsigned InstrIndex) {
   // This updates the internal state of each write.
   IS.execute();
 
+  notifyInstructionIssued(InstrIndex, UsedResources);
   if (D.MaxLatency) {
+    assert(IS.isExecuting() && "A zero latency instruction?");
     IssuedQueue[InstrIndex] = &IS;
-    notifyInstructionIssued(InstrIndex, UsedResources);
-  } else {
-    // A zero latency instruction which reads and/or updates registers.
-    notifyInstructionIssued(InstrIndex, UsedResources);
-    notifyInstructionExecuted(InstrIndex);
+    return;
   }
+
+  // A zero latency instruction which reads and/or updates registers.
+  assert(IS.isExecuted() && "Instruction still executing!");
+  notifyInstructionExecuted(InstrIndex);
 }
 
 void Scheduler::issue() {
