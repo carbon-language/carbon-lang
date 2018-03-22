@@ -275,11 +275,6 @@ def Write2P0156_P23 : SchedWriteRes<[HWPort0156, HWPort23]> {
   let ResourceCycles = [2, 1];
 }
 
-def Write5P0156 : SchedWriteRes<[HWPort0156]> {
-  let NumMicroOps = 5;
-  let ResourceCycles = [5];
-}
-
 // Starting with P1.
 def WriteP1 : SchedWriteRes<[HWPort1]>;
 
