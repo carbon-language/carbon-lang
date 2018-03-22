@@ -173,42 +173,53 @@ defm : SKLWriteResPair<WriteCvtI2F, [SKLPort1], 4>; // Integer -> Float.
 defm : SKLWriteResPair<WriteCvtF2F, [SKLPort1], 3>; // Float -> Float size conversion.
 
 // Strings instructions.
+
 // Packed Compare Implicit Length Strings, Return Mask
-// String instructions.
 def : WriteRes<WritePCmpIStrM, [SKLPort0]> {
   let Latency = 10;
+  let NumMicroOps = 3;
   let ResourceCycles = [3];
 }
 def : WriteRes<WritePCmpIStrMLd, [SKLPort0, SKLPort23]> {
-  let Latency = 10;
-  let ResourceCycles = [3, 1];
-} 
-// Packed Compare Explicit Length Strings, Return Mask
-def : WriteRes<WritePCmpEStrM, [SKLPort0, SKLPort16, SKLPort5]> {
-  let Latency = 10;
-  let ResourceCycles = [3, 2, 4];
+  let Latency = 16;
+  let NumMicroOps = 4;
+  let ResourceCycles = [3,1];
 }
-def : WriteRes<WritePCmpEStrMLd, [SKLPort05, SKLPort16, SKLPort23]> {
-  let Latency = 10;
-  let ResourceCycles = [6, 2, 1];
-} 
-  // Packed Compare Implicit Length Strings, Return Index
+
+// Packed Compare Explicit Length Strings, Return Mask
+def : WriteRes<WritePCmpEStrM, [SKLPort0, SKLPort5, SKLPort015, SKLPort0156]> {
+  let Latency = 19;
+  let NumMicroOps = 9;
+  let ResourceCycles = [4,3,1,1];
+}
+def : WriteRes<WritePCmpEStrMLd, [SKLPort0, SKLPort5,SKLPort23, SKLPort015, SKLPort0156]> {
+  let Latency = 25;
+  let NumMicroOps = 10;
+  let ResourceCycles = [4,3,1,1,1];
+}
+
+// Packed Compare Implicit Length Strings, Return Index
 def : WriteRes<WritePCmpIStrI, [SKLPort0]> {
-  let Latency = 11;
+  let Latency = 10;
+  let NumMicroOps = 3;
   let ResourceCycles = [3];
 }
 def : WriteRes<WritePCmpIStrILd, [SKLPort0, SKLPort23]> {
-  let Latency = 11;
-  let ResourceCycles = [3, 1];
-}     
-// Packed Compare Explicit Length Strings, Return Index
-def : WriteRes<WritePCmpEStrI, [SKLPort05, SKLPort16]> {
-  let Latency = 11;
-  let ResourceCycles = [6, 2];
+  let Latency = 16;
+  let NumMicroOps = 4;
+  let ResourceCycles = [3,1];
 }
-def : WriteRes<WritePCmpEStrILd, [SKLPort0, SKLPort16, SKLPort5, SKLPort23]> {
-  let Latency = 11;
-  let ResourceCycles = [3, 2, 2, 1];
+
+// Packed Compare Explicit Length Strings, Return Index
+def : WriteRes<WritePCmpEStrI, [SKLPort0, SKLPort5, SKLPort0156]> {
+  let Latency = 18;
+  let NumMicroOps = 8;
+  let ResourceCycles = [4,3,1];
+}
+def : WriteRes<WritePCmpEStrILd, [SKLPort0, SKLPort5, SKLPort23, SKLPort0156]> {
+  let Latency = 24;
+  let NumMicroOps = 9;
+  let ResourceCycles = [4,3,1,1];
 }
 
 // AES instructions.
@@ -2916,14 +2927,6 @@ def: InstRW<[SKLWriteResGroup135], (instregex "CMPPDrmi",
                                               "VPMULLWrm",
                                               "VPMULUDQrm")>;
 
-def SKLWriteResGroup136 : SchedWriteRes<[SKLPort0]> {
-  let Latency = 10;
-  let NumMicroOps = 3;
-  let ResourceCycles = [3];
-}
-def: InstRW<[SKLWriteResGroup136], (instregex "(V?)PCMPISTRIrr",
-                                              "(V?)PCMPISTRM128rr")>;
-
 def SKLWriteResGroup137 : SchedWriteRes<[SKLPort5,SKLPort23]> {
   let Latency = 10;
   let NumMicroOps = 3;
@@ -3286,14 +3289,6 @@ def SKLWriteResGroup175 : SchedWriteRes<[SKLPort0,SKLPort23]> {
 }
 def: InstRW<[SKLWriteResGroup175], (instregex "(V?)DIVSSrm")>;
 
-def SKLWriteResGroup176 : SchedWriteRes<[SKLPort0,SKLPort23]> {
-  let Latency = 16;
-  let NumMicroOps = 4;
-  let ResourceCycles = [3,1];
-}
-def: InstRW<[SKLWriteResGroup176], (instregex "(V?)PCMPISTRIrm",
-                                              "(V?)PCMPISTRM128rm")>;
-
 def SKLWriteResGroup177 : SchedWriteRes<[SKLPort4,SKLPort23,SKLPort237,SKLPort06,SKLPort15,SKLPort0156]> {
   let Latency = 16;
   let NumMicroOps = 14;
@@ -3341,13 +3336,6 @@ def: InstRW<[SKLWriteResGroup182], (instregex "SQRTSSm",
                                               "VDIVPSYrm",
                                               "VSQRTPSm")>;
 
-def SKLWriteResGroup183 : SchedWriteRes<[SKLPort0,SKLPort5,SKLPort0156]> {
-  let Latency = 18;
-  let NumMicroOps = 8;
-  let ResourceCycles = [4,3,1];
-}
-def: InstRW<[SKLWriteResGroup183], (instregex "(V?)PCMPESTRIrr")>;
-
 def SKLWriteResGroup184 : SchedWriteRes<[SKLPort5,SKLPort6,SKLPort06,SKLPort0156]> {
   let Latency = 18;
   let NumMicroOps = 8;
@@ -3378,13 +3366,6 @@ def SKLWriteResGroup187 : SchedWriteRes<[SKLPort5,SKLPort23,SKLPort015]> {
   let ResourceCycles = [1,1,3];
 }
 def: InstRW<[SKLWriteResGroup187], (instregex "(V?)DPPSrmi")>;
-
-def SKLWriteResGroup188 : SchedWriteRes<[SKLPort0,SKLPort5,SKLPort015,SKLPort0156]> {
-  let Latency = 19;
-  let NumMicroOps = 9;
-  let ResourceCycles = [4,3,1,1];
-}
-def: InstRW<[SKLWriteResGroup188], (instregex "(V?)PCMPESTRM128rr")>;
 
 def SKLWriteResGroup189 : SchedWriteRes<[SKLPort0]> {
   let Latency = 20;
@@ -3491,13 +3472,6 @@ def SKLWriteResGroup199 : SchedWriteRes<[SKLPort0,SKLPort23]> {
 }
 def: InstRW<[SKLWriteResGroup199], (instregex "VSQRTPDm")>;
 
-def SKLWriteResGroup200 : SchedWriteRes<[SKLPort0,SKLPort5,SKLPort23,SKLPort0156]> {
-  let Latency = 24;
-  let NumMicroOps = 9;
-  let ResourceCycles = [4,3,1,1];
-}
-def: InstRW<[SKLWriteResGroup200], (instregex "(V?)PCMPESTRIrm")>;
-
 def SKLWriteResGroup201 : SchedWriteRes<[SKLPort0,SKLPort23]> {
   let Latency = 25;
   let NumMicroOps = 2;
@@ -3513,13 +3487,6 @@ def SKLWriteResGroup202 : SchedWriteRes<[SKLPort0,SKLPort5,SKLPort23]> {
 }
 def: InstRW<[SKLWriteResGroup202], (instregex "DIV_FI16m",
                                               "DIV_FI32m")>;
-
-def SKLWriteResGroup203 : SchedWriteRes<[SKLPort0,SKLPort5,SKLPort23,SKLPort015,SKLPort0156]> {
-  let Latency = 25;
-  let NumMicroOps = 10;
-  let ResourceCycles = [4,3,1,1,1];
-}
-def: InstRW<[SKLWriteResGroup203], (instregex "(V?)PCMPESTRM128rm")>;
 
 def SKLWriteResGroup205 : SchedWriteRes<[SKLPort0,SKLPort23]> {
   let Latency = 26;
