@@ -43,7 +43,7 @@ _N.B. We need to define the semantics of the LOC intrinsic_
 #### Step 1. Process the top-level declaration, e.g. a subroutine
 1. Create a new scope
 1. Add the name of the program unit to the scope
-  - Except for functions without a result clause
+  1. Except for functions without a result clause
 1. Add the result variable to the scope
 1. Add the names of the dummy arguments to the scope
 
@@ -55,19 +55,22 @@ Implementation note:  When a program make an illegal forward reference, we shoul
   - Host association logically happens here; can be deferred until referenced?
 1. Add the names of the internal and module procedures
 1. Process declaration constructs in a single pass
-  - We think we can process declaration constructs in a single pass because:
-    - Is it not legal to reference an internal procedure.
-    - Is it not  legal to reference not-yet-defined parameters, constants, etc.
-    - Is it not possible to inquire about a type parameter or array bound for an object that is not yet defined
-    - So, no other forward definitions, so yes, we can do in a single pass
-1. Do we ever need to apply implicit rules in the specification section?  TBD:
-  - `integer(kind = kind(x)) :: y ! does implicit rule apply to ‘x’`?
-  - `integer, parameter :: z = rank(x) ! use implicit rule to get ‘0’`?
-  - What if (i) and (ii) are legal & x’s type is subsequently declared?
 1. Apply implicit rules to undefined locals, dummy arguments and the function result
 1. Create new scopes for derived type, structure, union
 
-At this point, All names in the specification part of the parse tree reference a symbol
+At this point, all names in the specification part of the parse tree reference a symbol.
+
+We  can process declaration constructs in a single pass because:
+- Is it not legal to reference an internal procedure.
+- Is it not  legal to reference not-yet-defined parameters, constants, etc.
+- Is it not possible to inquire about a type parameter or array bound for an object that is not yet defined
+- So, no other forward definitions, so yes, we can do in a single pass
+
+Do we ever need to apply implicit rules in the specification section?
+1. `integer(kind = kind(x)) :: y ! does implicit rule apply to ‘x’`?
+1. `integer, parameter :: z = rank(x) ! use implicit rule to get ‘0’`?
+
+What if (1) and (2) are legal & x’s type is subsequently declared?
 
 #### Step 3. Resolve statement functions vs array assignments
 1. Rewrite and move array assignments to execution part
@@ -102,29 +105,27 @@ References to derived types members are not resolved until semantics
 No semantic checking or resolving of types (except for implicit declarations) has happened yet.
 
 #### Step 5. Perform Step 1..4 on each internal procedure
-1. Side effect is that they get a proper interface in the parent scope
-1. Why now?  Return types for functions, e.g
-  - `a = f(a, b, c) % x + 1`
-  - Need to know the return type and types of arguments
+- Side effect is that each internal procedure gets a proper interface in the parent scope
+- We do this now because we need to know the return and argument types for functions, e.g. `a = f(a, b, c) % x + 1`
 
 #### Step 6. Tree Disambiguation
 
 At this point, or during Step 3 (TBD), the tree can be rewritten to be unambiguous.
-1. Structure vs operator a.b.c.d
-1. Array references vs function calls
-1. Statement functions vs array assignment (In Step 3)
-1. READ/WRITE stmts where the arguments do not have keywords
+- Structure vs operator a.b.c.d
+- Array references vs function calls
+- Statement functions vs array assignment (In Step 3)
+- READ/WRITE stmts where the arguments do not have keywords
   - WRITE (6, X)  ….
   - That X might be a namelist group or an internal variable
   - Need to know the names of the namelist groups to disambiguate it
-1. Others….? TBD
+- Others….? TBD
 
 Resolution of parse tree ambiguity (statement function definition, function vs. array)
 
 #### Step 7. Do enough semantic processing to generate .mod files
-1. Fully resolve derived types
-1. Combine and check declarations of all entities within a given scope; resolve their type, rank, shape, and other attributes.
-1. Constant evaluation is required at this point.
+- Fully resolve derived types
+- Combine and check declarations of all entities within a given scope; resolve their type, rank, shape, and other attributes.
+- Constant evaluation is required at this point.
 
 Why do Step 7 before the rest of semantic checking? The sooner we can generate mod file the sooner we can read ‘em; you can test a lot of Fortran programs as soon as you can read mod files.
 
@@ -149,5 +150,5 @@ An incomplete and unordered list of requirements for semantic analysis:
 TBD
 
 ### Constant Expression Evaluation
-1. Scalars
-1. Array intrinsics
+- Scalars
+- Array intrinsics
