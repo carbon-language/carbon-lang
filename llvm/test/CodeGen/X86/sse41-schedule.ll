@@ -583,8 +583,8 @@ declare <2 x i64> @llvm.x86.sse41.movntdqa(i8*) nounwind readnone
 define <8 x i16> @test_mpsadbw(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> *%a2) {
 ; GENERIC-LABEL: test_mpsadbw:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    mpsadbw $7, %xmm1, %xmm0 # sched: [5:1.00]
-; GENERIC-NEXT:    mpsadbw $7, (%rdi), %xmm0 # sched: [11:1.00]
+; GENERIC-NEXT:    mpsadbw $7, %xmm1, %xmm0 # sched: [7:1.00]
+; GENERIC-NEXT:    mpsadbw $7, (%rdi), %xmm0 # sched: [13:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SLM-LABEL: test_mpsadbw:
@@ -595,8 +595,8 @@ define <8 x i16> @test_mpsadbw(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> *%a2) {
 ;
 ; SANDY-LABEL: test_mpsadbw:
 ; SANDY:       # %bb.0:
-; SANDY-NEXT:    vmpsadbw $7, %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
-; SANDY-NEXT:    vmpsadbw $7, (%rdi), %xmm0, %xmm0 # sched: [11:1.00]
+; SANDY-NEXT:    vmpsadbw $7, %xmm1, %xmm0, %xmm0 # sched: [7:1.00]
+; SANDY-NEXT:    vmpsadbw $7, (%rdi), %xmm0, %xmm0 # sched: [13:1.00]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_mpsadbw:
@@ -2761,8 +2761,8 @@ define <2 x i64> @test_pmovzxwq(<8 x i16> %a0, <2 x i16> *%a1) {
 define <2 x i64> @test_pmuldq(<4 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) {
 ; GENERIC-LABEL: test_pmuldq:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    pmuldq %xmm1, %xmm0 # sched: [3:1.00]
-; GENERIC-NEXT:    pmuldq (%rdi), %xmm0 # sched: [9:1.00]
+; GENERIC-NEXT:    pmuldq %xmm1, %xmm0 # sched: [5:1.00]
+; GENERIC-NEXT:    pmuldq (%rdi), %xmm0 # sched: [11:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SLM-LABEL: test_pmuldq:
@@ -2773,8 +2773,8 @@ define <2 x i64> @test_pmuldq(<4 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) {
 ;
 ; SANDY-LABEL: test_pmuldq:
 ; SANDY:       # %bb.0:
-; SANDY-NEXT:    vpmuldq %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; SANDY-NEXT:    vpmuldq (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
+; SANDY-NEXT:    vpmuldq %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; SANDY-NEXT:    vpmuldq (%rdi), %xmm0, %xmm0 # sched: [11:1.00]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_pmuldq:
@@ -2823,8 +2823,8 @@ declare <2 x i64> @llvm.x86.sse41.pmuldq(<4 x i32>, <4 x i32>) nounwind readnone
 define <4 x i32> @test_pmulld(<4 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) {
 ; GENERIC-LABEL: test_pmulld:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    pmulld %xmm1, %xmm0 # sched: [3:1.00]
-; GENERIC-NEXT:    pmulld (%rdi), %xmm0 # sched: [9:1.00]
+; GENERIC-NEXT:    pmulld %xmm1, %xmm0 # sched: [5:1.00]
+; GENERIC-NEXT:    pmulld (%rdi), %xmm0 # sched: [11:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SLM-LABEL: test_pmulld:
@@ -2835,8 +2835,8 @@ define <4 x i32> @test_pmulld(<4 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) {
 ;
 ; SANDY-LABEL: test_pmulld:
 ; SANDY:       # %bb.0:
-; SANDY-NEXT:    vpmulld %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; SANDY-NEXT:    vpmulld (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
+; SANDY-NEXT:    vpmulld %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; SANDY-NEXT:    vpmulld (%rdi), %xmm0, %xmm0 # sched: [11:1.00]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_pmulld:

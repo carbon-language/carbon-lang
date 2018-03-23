@@ -5618,8 +5618,8 @@ define <8 x i16> @test_pinsrw(<8 x i16> %a0, i16 %a1, i16 *%a2) {
 define <4 x i32> @test_pmaddwd(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ; GENERIC-LABEL: test_pmaddwd:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    pmaddwd %xmm1, %xmm0 # sched: [3:1.00]
-; GENERIC-NEXT:    pmaddwd (%rdi), %xmm0 # sched: [9:1.00]
+; GENERIC-NEXT:    pmaddwd %xmm1, %xmm0 # sched: [5:1.00]
+; GENERIC-NEXT:    pmaddwd (%rdi), %xmm0 # sched: [11:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; ATOM-LABEL: test_pmaddwd:
@@ -5636,8 +5636,8 @@ define <4 x i32> @test_pmaddwd(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; SANDY-LABEL: test_pmaddwd:
 ; SANDY:       # %bb.0:
-; SANDY-NEXT:    vpmaddwd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; SANDY-NEXT:    vpmaddwd (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
+; SANDY-NEXT:    vpmaddwd %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; SANDY-NEXT:    vpmaddwd (%rdi), %xmm0, %xmm0 # sched: [11:1.00]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_pmaddwd:
@@ -6027,8 +6027,8 @@ declare i32 @llvm.x86.sse2.pmovmskb.128(<16 x i8>) nounwind readnone
 define <8 x i16> @test_pmulhuw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ; GENERIC-LABEL: test_pmulhuw:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    pmulhuw %xmm1, %xmm0 # sched: [3:1.00]
-; GENERIC-NEXT:    pmulhuw (%rdi), %xmm0 # sched: [9:1.00]
+; GENERIC-NEXT:    pmulhuw %xmm1, %xmm0 # sched: [5:1.00]
+; GENERIC-NEXT:    pmulhuw (%rdi), %xmm0 # sched: [11:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; ATOM-LABEL: test_pmulhuw:
@@ -6045,8 +6045,8 @@ define <8 x i16> @test_pmulhuw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; SANDY-LABEL: test_pmulhuw:
 ; SANDY:       # %bb.0:
-; SANDY-NEXT:    vpmulhuw %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; SANDY-NEXT:    vpmulhuw (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
+; SANDY-NEXT:    vpmulhuw %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; SANDY-NEXT:    vpmulhuw (%rdi), %xmm0, %xmm0 # sched: [11:1.00]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_pmulhuw:
@@ -6094,8 +6094,8 @@ declare <8 x i16> @llvm.x86.sse2.pmulhu.w(<8 x i16>, <8 x i16>) nounwind readnon
 define <8 x i16> @test_pmulhw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ; GENERIC-LABEL: test_pmulhw:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    pmulhw %xmm1, %xmm0 # sched: [3:1.00]
-; GENERIC-NEXT:    pmulhw (%rdi), %xmm0 # sched: [9:1.00]
+; GENERIC-NEXT:    pmulhw %xmm1, %xmm0 # sched: [5:1.00]
+; GENERIC-NEXT:    pmulhw (%rdi), %xmm0 # sched: [11:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; ATOM-LABEL: test_pmulhw:
@@ -6112,8 +6112,8 @@ define <8 x i16> @test_pmulhw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; SANDY-LABEL: test_pmulhw:
 ; SANDY:       # %bb.0:
-; SANDY-NEXT:    vpmulhw %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; SANDY-NEXT:    vpmulhw (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
+; SANDY-NEXT:    vpmulhw %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; SANDY-NEXT:    vpmulhw (%rdi), %xmm0, %xmm0 # sched: [11:1.00]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_pmulhw:
@@ -6161,8 +6161,8 @@ declare <8 x i16> @llvm.x86.sse2.pmulh.w(<8 x i16>, <8 x i16>) nounwind readnone
 define <8 x i16> @test_pmullw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ; GENERIC-LABEL: test_pmullw:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    pmullw %xmm1, %xmm0 # sched: [3:1.00]
-; GENERIC-NEXT:    pmullw (%rdi), %xmm0 # sched: [9:1.00]
+; GENERIC-NEXT:    pmullw %xmm1, %xmm0 # sched: [5:1.00]
+; GENERIC-NEXT:    pmullw (%rdi), %xmm0 # sched: [11:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; ATOM-LABEL: test_pmullw:
@@ -6179,8 +6179,8 @@ define <8 x i16> @test_pmullw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; SANDY-LABEL: test_pmullw:
 ; SANDY:       # %bb.0:
-; SANDY-NEXT:    vpmullw %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; SANDY-NEXT:    vpmullw (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
+; SANDY-NEXT:    vpmullw %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; SANDY-NEXT:    vpmullw (%rdi), %xmm0, %xmm0 # sched: [11:1.00]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_pmullw:
@@ -6227,8 +6227,8 @@ define <8 x i16> @test_pmullw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 define <2 x i64> @test_pmuludq(<4 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) {
 ; GENERIC-LABEL: test_pmuludq:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    pmuludq %xmm1, %xmm0 # sched: [3:1.00]
-; GENERIC-NEXT:    pmuludq (%rdi), %xmm0 # sched: [9:1.00]
+; GENERIC-NEXT:    pmuludq %xmm1, %xmm0 # sched: [5:1.00]
+; GENERIC-NEXT:    pmuludq (%rdi), %xmm0 # sched: [11:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; ATOM-LABEL: test_pmuludq:
@@ -6245,8 +6245,8 @@ define <2 x i64> @test_pmuludq(<4 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) {
 ;
 ; SANDY-LABEL: test_pmuludq:
 ; SANDY:       # %bb.0:
-; SANDY-NEXT:    vpmuludq %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; SANDY-NEXT:    vpmuludq (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
+; SANDY-NEXT:    vpmuludq %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; SANDY-NEXT:    vpmuludq (%rdi), %xmm0, %xmm0 # sched: [11:1.00]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_pmuludq:
@@ -6372,8 +6372,8 @@ define <2 x i64> @test_por(<2 x i64> %a0, <2 x i64> %a1, <2 x i64> *%a2) {
 define <2 x i64> @test_psadbw(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> *%a2) {
 ; GENERIC-LABEL: test_psadbw:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    psadbw %xmm1, %xmm0 # sched: [3:1.00]
-; GENERIC-NEXT:    psadbw (%rdi), %xmm0 # sched: [9:1.00]
+; GENERIC-NEXT:    psadbw %xmm1, %xmm0 # sched: [5:1.00]
+; GENERIC-NEXT:    psadbw (%rdi), %xmm0 # sched: [11:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; ATOM-LABEL: test_psadbw:
@@ -6394,8 +6394,8 @@ define <2 x i64> @test_psadbw(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> *%a2) {
 ;
 ; SANDY-LABEL: test_psadbw:
 ; SANDY:       # %bb.0:
-; SANDY-NEXT:    vpsadbw %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; SANDY-NEXT:    vpsadbw (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
+; SANDY-NEXT:    vpsadbw %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; SANDY-NEXT:    vpsadbw (%rdi), %xmm0, %xmm0 # sched: [11:1.00]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_psadbw:
