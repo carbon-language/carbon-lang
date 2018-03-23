@@ -191,6 +191,7 @@ namespace {
     bool isProfitable(const FlowPattern &FP) const;
     bool isPredicableStore(const MachineInstr *MI) const;
     bool isSafeToSpeculate(const MachineInstr *MI) const;
+    bool isPredicate(unsigned R) const;
 
     unsigned getCondStoreOpcode(unsigned Opc, bool IfTrue) const;
     void predicateInstr(MachineBasicBlock *ToB, MachineBasicBlock::iterator At,
@@ -387,13 +388,8 @@ bool HexagonEarlyIfConversion::isValidCandidate(const MachineBasicBlock *B)
       unsigned R = MO.getReg();
       if (!TargetRegisterInfo::isVirtualRegister(R))
         continue;
-      switch (MRI->getRegClass(R)->getID()) {
-        case Hexagon::PredRegsRegClassID:
-        case Hexagon::HvxQRRegClassID:
-          break;
-        default:
-          continue;
-      }
+      if (!isPredicate(R))
+        continue;
       for (auto U = MRI->use_begin(R); U != MRI->use_end(); ++U)
         if (U->getParent()->isPHI())
           return false;
@@ -443,8 +439,7 @@ bool HexagonEarlyIfConversion::isValid(const FlowPattern &FP) const {
       if (usesUndefVReg(&MI))
         return false;
       unsigned DefR = MI.getOperand(0).getReg();
-      const TargetRegisterClass *RC = MRI->getRegClass(DefR);
-      if (RC == &Hexagon::PredRegsRegClass)
+      if (isPredicate(DefR))
         return false;
     }
   }
@@ -680,8 +675,16 @@ bool HexagonEarlyIfConversion::isSafeToSpeculate(const MachineInstr *MI)
     return false;
   if (MI->hasUnmodeledSideEffects())
     return false;
+  if (MI->getOpcode() == TargetOpcode::LIFETIME_END)
+    return false;
 
   return true;
+}
+
+bool HexagonEarlyIfConversion::isPredicate(unsigned R) const {
+  const TargetRegisterClass *RC = MRI->getRegClass(R);
+  return RC == &Hexagon::PredRegsRegClass ||
+         RC == &Hexagon::HvxQRRegClass;
 }
 
 unsigned HexagonEarlyIfConversion::getCondStoreOpcode(unsigned Opc,
