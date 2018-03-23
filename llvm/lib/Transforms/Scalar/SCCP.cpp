@@ -69,6 +69,8 @@ STATISTIC(NumDeadBlocks , "Number of basic blocks unreachable");
 STATISTIC(IPNumInstRemoved, "Number of instructions removed by IPSCCP");
 STATISTIC(IPNumArgsElimed ,"Number of arguments constant propagated by IPSCCP");
 STATISTIC(IPNumGlobalConst, "Number of globals found to be constant by IPSCCP");
+STATISTIC(IPNumRangeInfoUsed, "Number of times constant range info was used by"
+                              "IPSCCP");
 
 namespace {
 
@@ -1037,26 +1039,15 @@ void SCCPSolver::visitBinaryOperator(Instruction &I) {
 
 // Handle ICmpInst instruction.
 void SCCPSolver::visitCmpInst(CmpInst &I) {
+  LatticeVal V1State = getValueState(I.getOperand(0));
+  LatticeVal V2State = getValueState(I.getOperand(1));
+
   LatticeVal &IV = ValueState[&I];
   if (IV.isOverdefined()) return;
 
-  Value *Op1 = I.getOperand(0);
-  Value *Op2 = I.getOperand(1);
-
-  // For parameters, use ParamState which includes constant range info if
-  // available.
-  auto V1Param = ParamState.find(Op1);
-  ValueLatticeElement V1State = (V1Param != ParamState.end())
-                                    ? V1Param->second
-                                    : getValueState(Op1).toValueLattice();
-
-  auto V2Param = ParamState.find(Op2);
-  ValueLatticeElement V2State = V2Param != ParamState.end()
-                                    ? V2Param->second
-                                    : getValueState(Op2).toValueLattice();
-
-  Constant *C = V1State.getCompare(I.getPredicate(), I.getType(), V2State);
-  if (C) {
+  if (V1State.isConstant() && V2State.isConstant()) {
+    Constant *C = ConstantExpr::getCompare(
+        I.getPredicate(), V1State.getConstant(), V2State.getConstant());
     if (isa<UndefValue>(C))
       return;
     return markConstant(IV, &I, C);
@@ -1625,6 +1616,45 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
   return false;
 }
 
+static bool tryToReplaceWithConstantRange(SCCPSolver &Solver, Value *V) {
+  bool Changed = false;
+
+  // Currently we only use range information for integer values.
+  if (!V->getType()->isIntegerTy())
+    return false;
+
+  const ValueLatticeElement &IV = Solver.getLatticeValueFor(V);
+  if (!IV.isConstantRange())
+    return false;
+
+  for (auto UI = V->uses().begin(), E = V->uses().end(); UI != E;) {
+    const Use &U = *UI++;
+    auto *Icmp = dyn_cast<ICmpInst>(U.getUser());
+    if (!Icmp || !Solver.isBlockExecutable(Icmp->getParent()))
+      continue;
+
+    auto getIcmpLatticeValue = [&](Value *Op) {
+      if (auto *C = dyn_cast<Constant>(Op))
+        return ValueLatticeElement::get(C);
+      return Solver.getLatticeValueFor(Op);
+    };
+
+    ValueLatticeElement A = getIcmpLatticeValue(Icmp->getOperand(0));
+    ValueLatticeElement B = getIcmpLatticeValue(Icmp->getOperand(1));
+
+    Constant *C = A.getCompare(Icmp->getPredicate(), Icmp->getType(), B);
+    if (C) {
+      Icmp->replaceAllUsesWith(C);
+      DEBUG(dbgs() << "Replacing " << *Icmp << " with " << *C
+                   << ", because of range information " << A << " " << B
+                   << "\n");
+      Icmp->eraseFromParent();
+      Changed = true;
+    }
+  }
+  return Changed;
+}
+
 static bool tryToReplaceWithConstant(SCCPSolver &Solver, Value *V) {
   Constant *Const = nullptr;
   if (V->getType()->isStructTy()) {
@@ -1893,6 +1923,9 @@ bool llvm::runIPSCCP(Module &M, const DataLayout &DL,
           ++IPNumArgsElimed;
           continue;
         }
+
+        if (!AI->use_empty() && tryToReplaceWithConstantRange(Solver, &*AI))
+          ++IPNumRangeInfoUsed;
       }
 
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
