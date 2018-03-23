@@ -192,7 +192,7 @@ xorps       (%rax), %xmm2
 # CHECK-NEXT:  -      -      -     1.00    -     1.00    -      -      -      -      -      -      -      -     	minss	%xmm0, %xmm2
 # CHECK-NEXT:  -      -      -     1.00    -     1.00    -     1.00    -      -      -      -      -      -     	minss	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -     1.00    -     0.99   0.01    -      -      -      -      -      -      -     	movaps	%xmm0, %xmm2
-# CHECK-NEXT:  -      -      -     1.00    -      -     1.00    -      -     1.00    -      -      -      -     	movaps	%xmm0, (%rax)
+# CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -     1.00   1.00    -      -      -     	movaps	%xmm0, (%rax)
 # CHECK-NEXT:  -      -      -      -     1.00    -     1.00   1.00    -      -      -      -      -      -     	movaps	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -     1.00    -     1.00    -      -      -      -      -      -      -      -     	movhlps	%xmm0, %xmm2
 # CHECK-NEXT:  -      -      -      -     1.00    -     1.00    -      -      -      -      -      -      -     	movlhps	%xmm0, %xmm2
@@ -206,7 +206,7 @@ xorps       (%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -      -      -      -     1.00    -      -      -      -     	movss	%xmm0, (%rax)
 # CHECK-NEXT:  -      -      -      -      -      -      -     1.00    -      -      -      -      -      -     	movss	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -     1.00    -     1.00    -      -      -      -      -      -      -      -     	movups	%xmm0, %xmm2
-# CHECK-NEXT:  -      -      -     1.00    -     1.00    -      -      -     1.00    -      -      -      -     	movups	%xmm0, (%rax)
+# CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -     1.00   1.00    -      -      -     	movups	%xmm0, (%rax)
 # CHECK-NEXT:  -      -      -      -     1.00    -     1.00   1.00    -      -      -      -      -      -     	movups	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -     1.00    -     1.00    -      -      -      -      -      -      -     	mulps	%xmm0, %xmm2
 # CHECK-NEXT:  -      -      -      -     1.00    -     1.00   1.00    -      -      -      -      -      -     	mulps	(%rax), %xmm2

@@ -298,7 +298,7 @@ def : WriteRes<WriteNop, [JALU01]> { let Latency = 1; }
 ////////////////////////////////////////////////////////////////////////////////
 
 def  : WriteRes<WriteFLoad,        [JLAGU, JFPU01, JFPX]> { let Latency = 5; }
-def  : WriteRes<WriteFStore,       [JSAGU, JFPU01, JFPX]>;
+def  : WriteRes<WriteFStore,        [JSAGU, JFPU1, JSTC]>;
 def  : WriteRes<WriteFMove,               [JFPU01, JFPX]>;
 
 defm : JWriteResFpuPair<WriteFAdd,         [JFPU0, JFPA],  3>;
@@ -327,7 +327,7 @@ defm : JWriteResFpuPair<WriteCvtF2F,       [JFPU1, JSTC], 3>; // Float -> Float 
 ////////////////////////////////////////////////////////////////////////////////
 
 def  : WriteRes<WriteVecLoad,      [JLAGU, JFPU01, JVALU]> { let Latency = 5; }
-def  : WriteRes<WriteVecStore,     [JSAGU, JFPU01, JVALU]>;
+def  : WriteRes<WriteVecStore,       [JSAGU, JFPU1, JSTC]>;
 def  : WriteRes<WriteVecMove,             [JFPU01, JVALU]>;
 
 defm : JWriteResFpuPair<WriteVecALU,      [JFPU01, JVALU], 1>;
