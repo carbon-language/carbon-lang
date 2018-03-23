@@ -82,7 +82,7 @@ public:
     case DefinedOperator::IntrinsicOperator::GT: Put('>'); break;
     default:
       Put('.');
-      PutEnum(static_cast<int>(x), DefinedOperator::IntrinsicOperatorAsString);
+      Word(DefinedOperator::EnumToString(x));
       Put('.');
     }
     return false;
@@ -1994,22 +1994,22 @@ public:
     return false;
   }
 
-#define WALK_NESTED_ENUM(ENUMTYPE) \
-  bool Pre(const ENUMTYPE &x) { \
-    PutEnum(static_cast<int>(x), ENUMTYPE##AsString); \
+#define WALK_NESTED_ENUM(CLASS, ENUM) \
+  bool Pre(const CLASS::ENUM &x) { \
+    Word(CLASS::EnumToString(x)); \
     return false; \
   }
-  WALK_NESTED_ENUM(AccessSpec::Kind)  // R807
-  WALK_NESTED_ENUM(TypeParamDefStmt::KindOrLen)  // R734
-  WALK_NESTED_ENUM(IntentSpec::Intent)  // R826
-  WALK_NESTED_ENUM(ImplicitStmt::ImplicitNoneNameSpec)  // R866
-  WALK_NESTED_ENUM(ConnectSpec::CharExpr::Kind)  // R1205
-  WALK_NESTED_ENUM(IoControlSpec::CharExpr::Kind)
-  WALK_NESTED_ENUM(InquireSpec::CharVar::Kind)
-  WALK_NESTED_ENUM(InquireSpec::IntVar::Kind)
-  WALK_NESTED_ENUM(InquireSpec::LogVar::Kind)
-  WALK_NESTED_ENUM(ProcedureStmt::Kind)  // R1506
-  WALK_NESTED_ENUM(UseStmt::ModuleNature)  // R1410
+  WALK_NESTED_ENUM(AccessSpec, Kind)  // R807
+  WALK_NESTED_ENUM(TypeParamDefStmt, KindOrLen)  // R734
+  WALK_NESTED_ENUM(IntentSpec, Intent)  // R826
+  WALK_NESTED_ENUM(ImplicitStmt, ImplicitNoneNameSpec)  // R866
+  WALK_NESTED_ENUM(ConnectSpec::CharExpr, Kind)  // R1205
+  WALK_NESTED_ENUM(IoControlSpec::CharExpr, Kind)
+  WALK_NESTED_ENUM(InquireSpec::CharVar, Kind)
+  WALK_NESTED_ENUM(InquireSpec::IntVar, Kind)
+  WALK_NESTED_ENUM(InquireSpec::LogVar, Kind)
+  WALK_NESTED_ENUM(ProcedureStmt, Kind)  // R1506
+  WALK_NESTED_ENUM(UseStmt, ModuleNature)  // R1410
 #undef WALK_NESTED_ENUM
 
   void Done() const { CHECK(indent_ == 0); }
@@ -2020,8 +2020,8 @@ private:
   void Put(const std::string &);
   void PutKeywordLetter(char);
   void PutQuoted(const std::string &);
-  void PutEnum(int, const char *);
   void Word(const char *);
+  void Word(const std::string &);
   void Indent() { indent_ += indentationAmount_; }
   void Outdent() {
     CHECK(indent_ >= indentationAmount_);
@@ -2144,25 +2144,14 @@ void UnparseVisitor::PutQuoted(const std::string &str) {
   Put('"');
 }
 
-void UnparseVisitor::PutEnum(int n, const char *enumNames) {
-  const char *p{enumNames};
-  for (; n > 0; --n, ++p) {
-    for (; *p && *p != ','; ++p) {
-    }
-  }
-  while (*p == ' ') {
-    ++p;
-  }
-  CHECK(*p != '\0');
-  for (; *p && *p != ' ' && *p != ','; ++p) {
-    PutKeywordLetter(*p);
-  }
-}
-
 void UnparseVisitor::Word(const char *str) {
   for (; *str != '\0'; ++str) {
     PutKeywordLetter(*str);
   }
+}
+
+void UnparseVisitor::Word(const std::string &str) {
+  Word(str.c_str());
 }
 
 void Unparse(std::ostream &out, const Program &program, Encoding encoding,

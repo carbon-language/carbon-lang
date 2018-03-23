@@ -102,6 +102,16 @@ template<typename A> struct BadType : std::false_type {};
     } \
   } \
   template<typename A> constexpr bool T { class_trait_ns_##T::trait_value<A>() }
+
+// Define enum class NAME with the given enumerators, and also a
+// static function EnumToString that maps enumerators to std::string.
+std::string EnumIndexToString(int index, const char *names);
+#define ENUM_CLASS(NAME, ...) \
+  enum class NAME { __VA_ARGS__ }; \
+  static inline std::string EnumToString(NAME e) \
+    { return Fortran::parser::EnumIndexToString( \
+        static_cast<int>(e), #__VA_ARGS__); }
+
 }  // namespace parser
 }  // namespace Fortran
 #endif  // FORTRAN_PARSER_IDIOMS_H_
