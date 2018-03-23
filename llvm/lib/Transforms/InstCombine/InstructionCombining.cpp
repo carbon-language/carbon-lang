@@ -1976,19 +1976,17 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   /// into a gep of the original struct.  This is important for SROA and alias
   /// analysis of unions.  If "A" is also a bitcast, wait for A/X to be merged.
   if (BitCastInst *BCI = dyn_cast<BitCastInst>(PtrOp)) {
-    Value *Operand = BCI->getOperand(0);
-    PointerType *OpType = cast<PointerType>(Operand->getType());
+    Value *SrcOp = BCI->getOperand(0);
+    PointerType *SrcType = cast<PointerType>(BCI->getSrcTy());
     unsigned OffsetBits = DL.getIndexTypeSizeInBits(GEP.getType());
     APInt Offset(OffsetBits, 0);
-    if (!isa<BitCastInst>(Operand) &&
-        GEP.accumulateConstantOffset(DL, Offset)) {
-
+    if (!isa<BitCastInst>(SrcOp) && GEP.accumulateConstantOffset(DL, Offset)) {
       // If this GEP instruction doesn't move the pointer, just replace the GEP
       // with a bitcast of the real input to the dest type.
       if (!Offset) {
         // If the bitcast is of an allocation, and the allocation will be
         // converted to match the type of the cast, don't touch this.
-        if (isa<AllocaInst>(Operand) || isAllocationFn(Operand, &TLI)) {
+        if (isa<AllocaInst>(SrcOp) || isAllocationFn(SrcOp, &TLI)) {
           // See if the bitcast simplifies, if so, don't nuke this GEP yet.
           if (Instruction *I = visitBitCast(*BCI)) {
             if (I != BCI) {
@@ -2000,20 +1998,20 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           }
         }
 
-        if (Operand->getType()->getPointerAddressSpace() != GEP.getAddressSpace())
-          return new AddrSpaceCastInst(Operand, GEP.getType());
-        return new BitCastInst(Operand, GEP.getType());
+        if (SrcType->getPointerAddressSpace() != GEP.getAddressSpace())
+          return new AddrSpaceCastInst(SrcOp, GEP.getType());
+        return new BitCastInst(SrcOp, GEP.getType());
       }
 
       // Otherwise, if the offset is non-zero, we need to find out if there is a
       // field at Offset in 'A's type.  If so, we can pull the cast through the
       // GEP.
       SmallVector<Value*, 8> NewIndices;
-      if (FindElementAtOffset(OpType, Offset.getSExtValue(), NewIndices)) {
+      if (FindElementAtOffset(SrcType, Offset.getSExtValue(), NewIndices)) {
         Value *NGEP =
             GEP.isInBounds()
-                ? Builder.CreateInBoundsGEP(nullptr, Operand, NewIndices)
-                : Builder.CreateGEP(nullptr, Operand, NewIndices);
+                ? Builder.CreateInBoundsGEP(nullptr, SrcOp, NewIndices)
+                : Builder.CreateGEP(nullptr, SrcOp, NewIndices);
 
         if (NGEP->getType() == GEP.getType())
           return replaceInstUsesWith(GEP, NGEP);
