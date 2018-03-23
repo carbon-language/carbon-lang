@@ -56,7 +56,6 @@ inline LLVMCodeModel wrap(CodeModel::Model Model) {
   }
   llvm_unreachable("Bad CodeModel!");
 }
-
-} // end llvm namespace
+} // namespace llvm
 
 #endif
