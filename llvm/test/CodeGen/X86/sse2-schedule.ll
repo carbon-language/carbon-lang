@@ -5987,7 +5987,7 @@ define i32 @test_pmovmskb(<16 x i8> %a0) {
 ;
 ; SANDY-LABEL: test_pmovmskb:
 ; SANDY:       # %bb.0:
-; SANDY-NEXT:    vpmovmskb %xmm0, %eax # sched: [1:1.00]
+; SANDY-NEXT:    vpmovmskb %xmm0, %eax # sched: [2:1.00]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_pmovmskb:

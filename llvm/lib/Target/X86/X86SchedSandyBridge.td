@@ -258,8 +258,7 @@ def SBWriteResGroup0 : SchedWriteRes<[SBPort0]> {
   let NumMicroOps = 1;
   let ResourceCycles = [1];
 }
-def: InstRW<[SBWriteResGroup0], (instregex "VPMOVMSKBrr",
-                                           "(V?)CVTSS2SDrr",
+def: InstRW<[SBWriteResGroup0], (instregex "(V?)CVTSS2SDrr",
                                            "(V?)PSLLDri",
                                            "(V?)PSLLQri",
                                            "(V?)PSLLWri",
@@ -551,7 +550,7 @@ def SBWriteResGroup7 : SchedWriteRes<[SBPort0]> {
   let NumMicroOps = 1;
   let ResourceCycles = [1];
 }
-def: InstRW<[SBWriteResGroup7], (instregex "PMOVMSKBrr",
+def: InstRW<[SBWriteResGroup7], (instregex "(V?)PMOVMSKBrr",
                                            "VMOVMSKPDYrr",
                                            "(V?)MOVMSKPDrr",
                                            "VMOVMSKPSYrr",
