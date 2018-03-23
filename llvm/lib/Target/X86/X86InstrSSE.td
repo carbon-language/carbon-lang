@@ -6407,7 +6407,7 @@ let Predicates = [HasAVX, NoVLX] in
                                  VEX_4V, VEX_WIG;
 let Predicates = [HasAVX] in
   defm VPCMPEQQ : SS48I_binop_rm<0x29, "vpcmpeqq", X86pcmpeq, v2i64, VR128,
-                                 loadv2i64, i128mem, 0, SSE_INTALU_ITINS_P>,
+                                 loadv2i64, i128mem, 0, SSE_INTALUQ_ITINS_P>,
                                  VEX_4V, VEX_WIG;
 
 let Predicates = [HasAVX2, NoVLX] in
@@ -6416,7 +6416,7 @@ let Predicates = [HasAVX2, NoVLX] in
                                   VEX_4V, VEX_L, VEX_WIG;
 let Predicates = [HasAVX2] in
   defm VPCMPEQQY : SS48I_binop_rm<0x29, "vpcmpeqq", X86pcmpeq, v4i64, VR256,
-                                  loadv4i64, i256mem, 0, SSE_INTALU_ITINS_P>,
+                                  loadv4i64, i256mem, 0, SSE_INTALUQ_ITINS_P>,
                                   VEX_4V, VEX_L, VEX_WIG;
 
 let Constraints = "$src1 = $dst" in {
