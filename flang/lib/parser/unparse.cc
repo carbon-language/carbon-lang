@@ -63,7 +63,7 @@ public:
   }
 
   bool Pre(const Name &x) {  // R603
-    Put(x.source.ToString());
+    Put(x.ToString());
     return false;
   }
   bool Pre(const DefinedOperator::IntrinsicOperator &x) {  // R608

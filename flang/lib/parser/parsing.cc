@@ -46,8 +46,8 @@ bool Parsing::Prescan(const std::string &path, Options options) {
       .set_fixedFormColumnLimit(options.fixedFormColumns)
       .set_encoding(options.encoding)
       .set_enableBackslashEscapesInCharLiterals(options.enableBackslashEscapes)
-      .set_enableOldDebugLines(options.enableOldDebugLines)
-      .AddCompilerDirectiveSentinel("dir$");
+      .set_enableOldDebugLines(options.enableOldDebugLines);
+// TODO in development      .AddCompilerDirectiveSentinel("dir$");
   ProvenanceRange range{
       allSources_.AddIncludedFile(*sourceFile, ProvenanceRange{})};
   anyFatalError_ = !prescanner.Prescan(range);
