@@ -765,26 +765,26 @@ def : InstRW<[JWriteVMOVMSK], (instrs MOVMSKPDrr, VMOVMSKPDrr, VMOVMSKPDYrr,
 // operation which moves the floating point result to the integer unit. During this
 // additional cycle the floating point unit execution resources are not occupied
 // and ALU0 in the integer unit is occupied instead.
-def JWriteVTESTY: SchedWriteRes<[JFPU01, JFPU0]> {
+def JWriteVTESTY: SchedWriteRes<[JFPU01, JFPX, JFPA]> {
   let Latency = 4;
-  let ResourceCycles = [2, 2];
+  let ResourceCycles = [1, 2, 2];
   let NumMicroOps = 3;
 }
 def : InstRW<[JWriteVTESTY], (instrs VPTESTYrr, VTESTPDYrr, VTESTPSYrr)>;
 
-def JWriteVTESTYLd: SchedWriteRes<[JLAGU, JFPU01, JFPU0]> {
+def JWriteVTESTYLd: SchedWriteRes<[JLAGU, JFPU01, JFPX, JFPA]> {
   let Latency = 9;
-  let ResourceCycles = [1, 2, 2];
+  let ResourceCycles = [1, 1, 2, 2];
   let NumMicroOps = 3;
 }
 def : InstRW<[JWriteVTESTYLd], (instrs VPTESTYrm, VTESTPDYrm, VTESTPSYrm)>;
 
-def JWriteVTEST: SchedWriteRes<[JFPU0]> {
+def JWriteVTEST: SchedWriteRes<[JFPU0, JFPA]> {
   let Latency = 3;
 }
 def : InstRW<[JWriteVTEST], (instrs PTESTrr, VPTESTrr, VTESTPDrr, VTESTPSrr)>;
 
-def JWriteVTESTLd: SchedWriteRes<[JLAGU, JFPU0]> {
+def JWriteVTESTLd: SchedWriteRes<[JLAGU, JFPU0, JFPA]> {
   let Latency = 8;
 }
 def : InstRW<[JWriteVTESTLd], (instrs PTESTrm, VPTESTrm, VTESTPDrm, VTESTPSrm)>;
