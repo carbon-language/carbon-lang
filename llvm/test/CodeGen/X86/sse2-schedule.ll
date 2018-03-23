@@ -5538,7 +5538,7 @@ define i16 @test_pextrw(<8 x i16> %a0) {
 ;
 ; ZNVER1-LABEL: test_pextrw:
 ; ZNVER1:       # %bb.0:
-; ZNVER1-NEXT:    vpextrw $6, %xmm0, %eax # sched: [1:0.25]
+; ZNVER1-NEXT:    vpextrw $6, %xmm0, %eax # sched: [2:2.00]
 ; ZNVER1-NEXT:    # kill: def $ax killed $ax killed $eax
 ; ZNVER1-NEXT:    retq # sched: [1:0.50]
   %1 = extractelement <8 x i16> %a0, i32 6

@@ -954,8 +954,8 @@ define i32 @test_pextrb(<16 x i8> %a0, i8 *%a1) {
 ;
 ; ZNVER1-LABEL: test_pextrb:
 ; ZNVER1:       # %bb.0:
-; ZNVER1-NEXT:    vpextrb $3, %xmm0, %eax # sched: [1:0.25]
-; ZNVER1-NEXT:    vpextrb $1, %xmm0, (%rdi) # sched: [8:1.00]
+; ZNVER1-NEXT:    vpextrb $3, %xmm0, %eax # sched: [2:2.00]
+; ZNVER1-NEXT:    vpextrb $1, %xmm0, (%rdi) # sched: [5:3.00]
 ; ZNVER1-NEXT:    retq # sched: [1:0.50]
   %1 = extractelement <16 x i8> %a0, i32 3
   %2 = extractelement <16 x i8> %a0, i32 1
@@ -1024,8 +1024,8 @@ define i32 @test_pextrd(<4 x i32> %a0, i32 *%a1) {
 ; ZNVER1-LABEL: test_pextrd:
 ; ZNVER1:       # %bb.0:
 ; ZNVER1-NEXT:    vpaddd %xmm0, %xmm0, %xmm0 # sched: [1:0.25]
-; ZNVER1-NEXT:    vpextrd $3, %xmm0, %eax # sched: [1:0.25]
-; ZNVER1-NEXT:    vpextrd $1, %xmm0, (%rdi) # sched: [8:1.00]
+; ZNVER1-NEXT:    vpextrd $3, %xmm0, %eax # sched: [2:2.00]
+; ZNVER1-NEXT:    vpextrd $1, %xmm0, (%rdi) # sched: [5:3.00]
 ; ZNVER1-NEXT:    retq # sched: [1:0.50]
   %1 = add <4 x i32> %a0, %a0
   %2 = extractelement <4 x i32> %1, i32 3
@@ -1085,8 +1085,8 @@ define i64 @test_pextrq(<2 x i64> %a0, <2 x i64> %a1, i64 *%a2) {
 ;
 ; ZNVER1-LABEL: test_pextrq:
 ; ZNVER1:       # %bb.0:
-; ZNVER1-NEXT:    vpextrq $1, %xmm0, %rax # sched: [1:0.25]
-; ZNVER1-NEXT:    vpextrq $1, %xmm0, (%rdi) # sched: [8:1.00]
+; ZNVER1-NEXT:    vpextrq $1, %xmm0, %rax # sched: [2:2.00]
+; ZNVER1-NEXT:    vpextrq $1, %xmm0, (%rdi) # sched: [5:3.00]
 ; ZNVER1-NEXT:    retq # sched: [1:0.50]
   %1 = extractelement <2 x i64> %a0, i32 1
   %2 = extractelement <2 x i64> %a0, i32 1
@@ -1145,8 +1145,8 @@ define i32 @test_pextrw(<8 x i16> %a0, i16 *%a1) {
 ;
 ; ZNVER1-LABEL: test_pextrw:
 ; ZNVER1:       # %bb.0:
-; ZNVER1-NEXT:    vpextrw $3, %xmm0, %eax # sched: [1:0.25]
-; ZNVER1-NEXT:    vpextrw $1, %xmm0, (%rdi) # sched: [8:1.00]
+; ZNVER1-NEXT:    vpextrw $3, %xmm0, %eax # sched: [2:2.00]
+; ZNVER1-NEXT:    vpextrw $1, %xmm0, (%rdi) # sched: [5:3.00]
 ; ZNVER1-NEXT:    retq # sched: [1:0.50]
   %1 = extractelement <8 x i16> %a0, i32 3
   %2 = extractelement <8 x i16> %a0, i32 1
