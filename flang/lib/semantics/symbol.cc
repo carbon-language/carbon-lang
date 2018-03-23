@@ -3,8 +3,7 @@
 #include "scope.h"
 #include <memory>
 
-namespace Fortran {
-namespace semantics {
+namespace Fortran::semantics {
 
 std::ostream &operator<<(std::ostream &os, const Symbol &sym) {
   os << sym.name();
@@ -32,7 +31,6 @@ std::ostream &operator<<(std::ostream &os, const Symbol &sym) {
           [&](const EntityDetails &x) {
             os << " Entity";
             if (x.type()) {
-              // os << ' ' << *x.type();
               os << " type: " << *x.type();
             }
           },
@@ -41,5 +39,4 @@ std::ostream &operator<<(std::ostream &os, const Symbol &sym) {
   return os;
 }
 
-}  // namespace semantics
-}  // namespace Fortran
+}  // namespace Fortran::semantics

@@ -2,12 +2,10 @@
 #define FORTRAN_SEMANTICS_SYMBOL_H_
 
 #include "type.h"
-#include <memory>
 #include <functional>
+#include <memory>
 
-
-namespace Fortran {
-namespace semantics {
+namespace Fortran::semantics {
 
 /// A Symbol consists of common information (name, owner, and attributes)
 /// and details information specific to the kind of symbol, represented by the
@@ -29,7 +27,8 @@ class SubprogramDetails {
 public:
   SubprogramDetails(const std::list<Name> &dummyNames)
     : isFunction_{false}, dummyNames_{dummyNames} {}
-  SubprogramDetails(const std::list<Name> &dummyNames, const std::optional<Name> &resultName)
+  SubprogramDetails(
+      const std::list<Name> &dummyNames, const std::optional<Name> &resultName)
     : isFunction_{true}, dummyNames_{dummyNames}, resultName_{resultName} {}
 
   bool isFunction() const { return isFunction_; }
@@ -56,17 +55,16 @@ private:
   friend std::ostream &operator<<(std::ostream &, const EntityDetails &);
 };
 
-class UnknownDetails {
-};
+class UnknownDetails {};
 
 class Symbol {
 public:
-  //TODO: more kinds of details
-  using Details = std::variant<UnknownDetails, MainProgramDetails, ModuleDetails,
-      SubprogramDetails, EntityDetails>;
+  // TODO: more kinds of details
+  using Details = std::variant<UnknownDetails, MainProgramDetails,
+      ModuleDetails, SubprogramDetails, EntityDetails>;
 
-  Symbol(
-      const Scope &owner, const Name &name, const Attrs &attrs, Details &&details)
+  Symbol(const Scope &owner, const Name &name, const Attrs &attrs,
+      Details &&details)
     : owner_{owner}, name_{name}, attrs_{attrs}, details_{std::move(details)} {}
   const Scope &owner() const { return owner_; }
   const Name &name() const { return name_; }
@@ -107,6 +105,5 @@ private:
   friend std::ostream &operator<<(std::ostream &, const Symbol &);
 };
 
-}
-}
+}  // namespace Fortran::semantics
 #endif  // FORTRAN_SEMANTICS_SYMBOL_H_

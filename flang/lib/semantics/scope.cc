@@ -2,8 +2,7 @@
 #include "symbol.h"
 #include <memory>
 
-namespace Fortran {
-namespace semantics {
+namespace Fortran::semantics {
 
 const Scope Scope::systemScope{Scope::systemScope, Scope::Kind::System};
 Scope Scope::globalScope{Scope::systemScope, Scope::Kind::Global};
@@ -46,5 +45,4 @@ std::ostream &operator<<(std::ostream &os, const Scope &scope) {
   return os;
 }
 
-}  // namespace semantics
-}  // namespace Fortran
+}  // namespace Fortran::semantics

@@ -2,16 +2,14 @@
 #define FORTRAN_SEMANTICS_SCOPE_H_
 
 #include "../parser/idioms.h"
+#include "../parser/parse-tree.h"
 #include "attr.h"
 #include "symbol.h"
 #include <list>
 #include <map>
 #include <string>
 
-namespace Fortran {
-namespace semantics {
-
-using Name = std::string;
+namespace Fortran::semantics {
 
 class Scope {
 public:
@@ -40,33 +38,39 @@ public:
 
   /// If there is a symbol with this name already in the scope, return it.
   /// Otherwise make a new one and return that.
-  Symbol &GetOrMakeSymbol(const Name &name);
+  Symbol &GetOrMakeSymbol(const parser::Name &name);
 
   /// Make a Symbol with unknown details.
-  Symbol &MakeSymbol(const Name &name, const Attrs &attrs = Attrs::EMPTY);
+  Symbol &MakeSymbol(
+      const parser::Name &name, const Attrs &attrs = Attrs::EMPTY);
 
   /// Make a Symbol with provided details.
-  template<typename D> Symbol &MakeSymbol(const Name &name, D &&details) {
+  template<typename D>
+  Symbol &MakeSymbol(const parser::Name &name, D &&details) {
     const auto &result =
         symbols_.try_emplace(name, *this, name, Attrs::EMPTY, details);
     return result.first->second;
   }
   template<typename D>
-  Symbol &MakeSymbol(const Name &name, const Attrs &attrs, D &&details) {
+  Symbol &MakeSymbol(
+      const parser::Name &name, const Attrs &attrs, D &&details) {
     const auto &result =
         symbols_.try_emplace(name, *this, name, attrs, details);
     return result.first->second;
+  }
+
+  void EraseSymbol(const parser::Name &name) {
+    symbols_.erase(name);
   }
 
 private:
   const Scope &parent_;
   const Kind kind_;
   std::list<Scope> children_;
-  std::map<Name, Symbol> symbols_;
+  std::map<parser::Name, Symbol> symbols_;
 
   friend std::ostream &operator<<(std::ostream &, const Scope &);
 };
 
-}  // namespace semantics
-}  // namespace Fortran
+}  // namespace Fortran::semantics
 #endif  // FORTRAN_SEMANTICS_SCOPE_H_

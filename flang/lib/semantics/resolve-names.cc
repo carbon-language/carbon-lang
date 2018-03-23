@@ -10,9 +10,7 @@
 #include <memory>
 #include <stack>
 
-// namespace Fortran::semantics {
-namespace Fortran {
-namespace semantics {
+namespace Fortran::semantics {
 
 // Provide Post methods to collect attributes into a member variable.
 class AttrsVisitor {
@@ -126,6 +124,16 @@ public:
   void PushScope(Scope &scope) { scopes_.push(&scope); }
   void PopScope() { scopes_.pop(); }
 
+  // Helpers to make a Symbol in the current scope
+  template<typename D>
+  Symbol &MakeSymbol(const Name &name, D &&details) {
+    return CurrScope().MakeSymbol(name, details);
+  }
+  template<typename D>
+  Symbol &MakeSymbol(const Name &name, const Attrs &attrs, D &&details) {
+    return CurrScope().MakeSymbol(name, attrs, details);
+  }
+
   // Default action for a parse tree node is to visit children.
   template<typename T> bool Pre(const T &x) { return true; }
   template<typename T> void Post(const T &) {}
@@ -149,13 +157,15 @@ public:
       symbol.set_details(EntityDetails());
     } else if (EntityDetails *details = symbol.detailsIf<EntityDetails>()) {
       if (details->type().has_value()) {
-        std::cerr << "ERROR: symbol already has a type declared\n";
+        std::cerr << "ERROR: symbol already has a type declared: " << name
+                  << "\n";
       } else {
         details->set_type(*declTypeSpec_);
       }
     } else {
       std::cerr
-          << "ERROR: symbol already declared, can't appear in entity-decl\n";
+          << "ERROR: symbol already declared, can't appear in entity-decl: "
+          << name << "\n";
     }
   }
 
@@ -173,34 +183,57 @@ public:
     return true;
   }
 
+  bool Pre(const parser::SubroutineStmt &stmt) {
+    beginAttrs();
+    return true;
+  }
+
+  // Common Post() for functions and subroutines.
+  void PostSubprogram(
+      const parser::Name &name, const std::list<parser::Name> &dummyNames) {
+    const auto attrs = endAttrs();
+    MakeSymbol(name, attrs, SubprogramDetails(dummyNames));
+    Scope &subpScope = CurrScope().MakeScope(Scope::Kind::Subprogram);
+    PushScope(subpScope);
+    for (const auto &dummyName : dummyNames) {
+      MakeSymbol(dummyName, EntityDetails(true));
+    }
+  }
+
+  void Post(const parser::SubroutineStmt &stmt) {
+    const auto &subrName = std::get<parser::Name>(stmt.t);
+    std::list<parser::Name> dummyNames;
+    const auto &dummyArgs = std::get<std::list<parser::DummyArg>>(stmt.t);
+    for (const parser::DummyArg &dummyArg : dummyArgs) {
+      const parser::Name *dummyName = std::get_if<parser::Name>(&dummyArg.u);
+      CHECK(dummyName != nullptr && "TODO: alternate return indicator");
+      dummyNames.push_back(*dummyName);
+    }
+    PostSubprogram(subrName, dummyNames);
+    MakeSymbol(subrName, SubprogramDetails(dummyNames));
+  }
+
   bool Pre(const parser::FunctionStmt &stmt) {
     beginAttrs();
     beginDeclTypeSpec();
     CHECK(!funcResultName_);
     return true;
   }
+  // TODO: MakeSymbol function
   void Post(const parser::FunctionStmt &stmt) {
     const auto &funcName = std::get<parser::Name>(stmt.t);
     const auto &dummyNames = std::get<std::list<parser::Name>>(stmt.t);
-    const auto attrs = endAttrs();
-    CurrScope().MakeSymbol(
-        funcName, attrs, SubprogramDetails(dummyNames, funcResultName_));
-    Scope &funcScope = CurrScope().MakeScope(Scope::Kind::Subprogram);
-    PushScope(funcScope);
-    // add dummies and function result to function scope
-    for (const auto &dummyName : dummyNames) {
-      funcScope.MakeSymbol(dummyName, EntityDetails(true));
-    }
+    PostSubprogram(funcName, dummyNames);
+    // add function result to function scope
     EntityDetails funcResultDetails;
     if (declTypeSpec_) {
       funcResultDetails.set_type(*declTypeSpec_);
     }
     const auto &resultName = funcResultName_ ? *funcResultName_ : funcName;
-    funcScope.MakeSymbol(resultName, funcResultDetails);
+    MakeSymbol(resultName, funcResultDetails);
     if (resultName != funcName) {
       // add symbol for function to its scope; name can't be reused
-      funcScope.MakeSymbol(
-          funcName, SubprogramDetails(dummyNames, funcResultName_));
+      MakeSymbol(funcName, SubprogramDetails(dummyNames, funcResultName_));
     }
     endDeclTypeSpec();
     funcResultName_ = std::nullopt;
@@ -223,5 +256,4 @@ void ResolveNames(const parser::Program &program) {
   parser::Walk(program, visitor);
 }
 
-}  // namespace semantics
-}  // namespace Fortran
+}
