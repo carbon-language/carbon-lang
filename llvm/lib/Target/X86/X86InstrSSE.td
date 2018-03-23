@@ -4834,11 +4834,12 @@ let SchedRW = [WriteVecLoad] in {
 let Predicates = [HasAVX] in {
   def VLDDQUrm : S3DI<0xF0, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                    "vlddqu\t{$src, $dst|$dst, $src}",
-                   [(set VR128:$dst, (int_x86_sse3_ldu_dq addr:$src))]>, VEX, VEX_WIG;
+                   [(set VR128:$dst, (int_x86_sse3_ldu_dq addr:$src))],
+                   IIC_SSE_LDDQU>, VEX, VEX_WIG;
   def VLDDQUYrm : S3DI<0xF0, MRMSrcMem, (outs VR256:$dst), (ins i256mem:$src),
                    "vlddqu\t{$src, $dst|$dst, $src}",
-                   [(set VR256:$dst, (int_x86_avx_ldu_dq_256 addr:$src))]>,
-                   VEX, VEX_L, VEX_WIG;
+                   [(set VR256:$dst, (int_x86_avx_ldu_dq_256 addr:$src))],
+                   IIC_SSE_LDDQU>, VEX, VEX_L, VEX_WIG;
 } // Predicates
 def LDDQUrm : S3DI<0xF0, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                    "lddqu\t{$src, $dst|$dst, $src}",
