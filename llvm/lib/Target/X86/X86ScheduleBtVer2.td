@@ -398,7 +398,7 @@ def : InstRW<[JWriteDPPS], (instrs DPPSrri, VDPPSrri)>;
 def JWriteDPPSLd: SchedWriteRes<[JLAGU, JFPU0, JFPU1]> {
   let Latency = 16;
   let ResourceCycles = [1, 3, 3];
-  let NumMicroOps = 6;
+  let NumMicroOps = 5;
 }
 def : InstRW<[JWriteDPPSLd], (instrs DPPSrmi, VDPPSrmi)>;
 
@@ -508,7 +508,7 @@ def : InstRW<[JWriteFLogicY], (instrs VORPDYrr, VORPSYrr,
 def JWriteFLogicYLd: SchedWriteRes<[JLAGU, JFPU01, JFPX]> {
   let Latency = 6;
   let ResourceCycles = [1, 2, 2];
-  let NumMicroOps = 3;
+  let NumMicroOps = 2;
 }
 def : InstRW<[JWriteFLogicYLd], (instrs VORPDYrm, VORPSYrm,
                                         VXORPDYrm, VXORPSYrm,
@@ -525,7 +525,7 @@ def : InstRW<[JWriteVDPPSY], (instrs VDPPSYrri)>;
 def JWriteVDPPSYLd: SchedWriteRes<[JLAGU, JFPU1, JFPU0]> {
   let Latency = 17;
   let ResourceCycles = [1, 6, 6];
-  let NumMicroOps = 11;
+  let NumMicroOps = 10;
 }
 def : InstRW<[JWriteVDPPSYLd, ReadAfterLd], (instrs VDPPSYrmi)>;
 

@@ -168,18 +168,18 @@ roundss     $1, (%rax), %xmm2
 # CHECK-NEXT:  -      -      -     0.99   0.01   0.99   0.01    -      -      -      -      -      -      -     	blendps	$11, %xmm0, %xmm2
 # CHECK-NEXT:  -      -      -     0.01   0.99   0.01   0.99   1.00    -      -      -      -      -      -     	blendps	$11, (%rax), %xmm2
 # CHECK-NEXT:  -      -      -     3.94   0.06   0.99   0.01    -      -      -      -      -      -      -     	blendvpd	%xmm0, %xmm0, %xmm2
-# CHECK-NEXT:  -      -      -     0.06   3.94   0.01   0.99   1.00    -      -      -      -      -      -     	blendvpd	%xmm0, (%rax), %xmm2
-# CHECK-NEXT:  -      -      -     0.06   3.94   1.00    -      -      -      -      -      -      -      -     	blendvps	%xmm0, %xmm0, %xmm2
-# CHECK-NEXT:  -      -      -     3.94   0.06   0.01   0.99   1.00    -      -      -      -      -      -     	blendvps	%xmm0, (%rax), %xmm2
+# CHECK-NEXT:  -      -      -     0.06   3.94   1.00    -     1.00    -      -      -      -      -      -     	blendvpd	%xmm0, (%rax), %xmm2
+# CHECK-NEXT:  -      -      -     4.00    -     0.99   0.01    -      -      -      -      -      -      -     	blendvps	%xmm0, %xmm0, %xmm2
+# CHECK-NEXT:  -      -      -      -     4.00   0.01   0.99   1.00    -      -      -      -      -      -     	blendvps	%xmm0, (%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -      -     3.00   3.00    -      -      -      -      -      -      -     	dppd	$22, %xmm0, %xmm2
 # CHECK-NEXT:  -      -      -      -      -     3.00   3.00   1.00    -      -      -      -      -      -     	dppd	$22, (%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -      -     3.00   3.00    -      -      -      -      -      -      -     	dpps	$22, %xmm0, %xmm2
 # CHECK-NEXT:  -      -      -      -      -     3.00   3.00   1.00    -      -      -      -      -      -     	dpps	$22, (%rax), %xmm2
-# CHECK-NEXT:  -      -      -     0.99   0.01   0.99   0.01    -      -      -      -      -      -      -     	extractps	$1, %xmm0, %ecx
-# CHECK-NEXT:  -      -      -     0.01   0.99    -     1.00   1.00    -     1.00    -      -      -      -     	extractps	$1, %xmm0, (%rax)
-# CHECK-NEXT:  -      -      -     0.99   0.01   1.00    -      -      -      -      -      -      -      -     	insertps	$1, %xmm0, %xmm2
-# CHECK-NEXT:  -      -      -     0.01   0.99    -     1.00   1.00    -      -      -      -      -      -     	insertps	$1, (%rax), %xmm2
-# CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -      -     0.99   0.01    -     	movntdqa	(%rax), %xmm2
+# CHECK-NEXT:  -      -      -      -     1.00    -     1.00    -      -      -      -      -      -      -     	extractps	$1, %xmm0, %ecx
+# CHECK-NEXT:  -      -      -     1.00    -     1.00    -     1.00    -     1.00    -      -      -      -     	extractps	$1, %xmm0, (%rax)
+# CHECK-NEXT:  -      -      -      -     1.00    -     1.00    -      -      -      -      -      -      -     	insertps	$1, %xmm0, %xmm2
+# CHECK-NEXT:  -      -      -     1.00    -     1.00    -     1.00    -      -      -      -      -      -     	insertps	$1, (%rax), %xmm2
+# CHECK-NEXT:  -      -      -      -      -     0.01   0.99   1.00    -      -      -     0.99   0.01    -     	movntdqa	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -      -     1.00    -      -      -      -      -      -      -     2.00   	mpsadbw	$1, %xmm0, %xmm2
 # CHECK-NEXT:  -      -      -      -      -     1.00    -     1.00    -      -      -      -      -     2.00   	mpsadbw	$1, (%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -      -      -     0.99   0.01    -     	packusdw	%xmm0, %xmm2
@@ -211,10 +211,10 @@ roundss     $1, (%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -      -      -     1.00    -     	pmaxsd	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -      -     1.00    -      -      -      -      -     1.00    -      -     	pmaxud	%xmm0, %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -      -      -     1.00    -     	pmaxud	(%rax), %xmm2
-# CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -      -      -      -     1.00    -     	pmaxuw	%xmm0, %xmm2
-# CHECK-NEXT:  -      -      -      -      -     1.00    -     1.00    -      -      -     1.00    -      -     	pmaxuw	(%rax), %xmm2
-# CHECK-NEXT:  -      -      -      -      -     1.00    -      -      -      -      -      -     1.00    -     	pminsb	%xmm0, %xmm2
-# CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -      -     1.00    -      -     	pminsb	(%rax), %xmm2
+# CHECK-NEXT:  -      -      -      -      -     1.00    -      -      -      -      -     1.00    -      -     	pmaxuw	%xmm0, %xmm2
+# CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -      -      -     1.00    -     	pmaxuw	(%rax), %xmm2
+# CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -      -      -     1.00    -      -     	pminsb	%xmm0, %xmm2
+# CHECK-NEXT:  -      -      -      -      -     1.00    -     1.00    -      -      -      -     1.00    -     	pminsb	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -      -     1.00    -      -      -      -      -      -     1.00    -     	pminsd	%xmm0, %xmm2
 # CHECK-NEXT:  -      -      -      -      -     1.00    -     1.00    -      -      -      -     1.00    -     	pminsd	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -      -     1.00    -      -      -      -      -      -     1.00    -     	pminud	%xmm0, %xmm2
@@ -224,12 +224,12 @@ roundss     $1, (%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -      -     1.00    -      -      -      -      -     1.00    -      -     	pmovsxbd	%xmm0, %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -      -      -     1.00    -     	pmovsxbd	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -      -     1.00    -      -      -      -      -     1.00    -      -     	pmovsxbq	%xmm0, %xmm2
-# CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -      -     1.00    -      -     	pmovsxbq	(%rax), %xmm2
-# CHECK-NEXT:  -      -      -      -      -     1.00    -      -      -      -      -      -     1.00    -     	pmovsxbw	%xmm0, %xmm2
-# CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -      -     1.00    -      -     	pmovsxbw	(%rax), %xmm2
-# CHECK-NEXT:  -      -      -      -      -     1.00    -      -      -      -      -      -     1.00    -     	pmovsxdq	%xmm0, %xmm2
-# CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -      -     1.00    -      -     	pmovsxdq	(%rax), %xmm2
-# CHECK-NEXT:  -      -      -      -      -     1.00    -      -      -      -      -      -     1.00    -     	pmovsxwd	%xmm0, %xmm2
+# CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -      -      -     1.00    -     	pmovsxbq	(%rax), %xmm2
+# CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -      -      -     1.00    -      -     	pmovsxbw	%xmm0, %xmm2
+# CHECK-NEXT:  -      -      -      -      -     1.00    -     1.00    -      -      -      -     1.00    -     	pmovsxbw	(%rax), %xmm2
+# CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -      -      -     1.00    -      -     	pmovsxdq	%xmm0, %xmm2
+# CHECK-NEXT:  -      -      -      -      -     1.00    -     1.00    -      -      -      -     1.00    -     	pmovsxdq	(%rax), %xmm2
+# CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -      -      -     1.00    -      -     	pmovsxwd	%xmm0, %xmm2
 # CHECK-NEXT:  -      -      -      -      -     1.00    -     1.00    -      -      -      -     1.00    -     	pmovsxwd	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -      -      -     1.00    -      -     	pmovsxwq	%xmm0, %xmm2
 # CHECK-NEXT:  -      -      -      -      -     1.00    -     1.00    -      -      -      -     1.00    -     	pmovsxwq	(%rax), %xmm2
