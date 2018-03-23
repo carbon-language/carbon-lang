@@ -1268,8 +1268,6 @@
 			dstPath = "$(DEVELOPER_INSTALL_DIR)/usr/share/man/man1";
 			dstSubfolderSpec = 0;
 			files = (
-				6B88947A2065AE5D002E5C59 /* CommandObjectStats.cpp in CopyFiles */,
-				7F94D7182040A13A006EE3EA /* CleanUpTest.cpp in CopyFiles */,
 				AF90106515AB7D3600FF120D /* lldb.1 in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
