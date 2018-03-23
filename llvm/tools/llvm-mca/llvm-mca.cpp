@@ -321,8 +321,12 @@ int main(int argc, char **argv) {
   if (DispatchWidth)
     Width = DispatchWidth;
 
+  // Create an instruction builder.
+  std::unique_ptr<mca::InstrBuilder> IB =
+      llvm::make_unique<mca::InstrBuilder>(*STI, *MCII);
+
   std::unique_ptr<mca::Backend> B = llvm::make_unique<mca::Backend>(
-      *STI, *MCII, *MRI, *S, Width, RegisterFileSize, MaxRetirePerCycle,
+      *STI, *MRI, *IB, *S, Width, RegisterFileSize, MaxRetirePerCycle,
       LoadQueueSize, StoreQueueSize, AssumeNoAlias);
 
   std::unique_ptr<mca::BackendPrinter> Printer =
