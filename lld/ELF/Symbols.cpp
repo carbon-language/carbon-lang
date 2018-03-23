@@ -56,7 +56,6 @@ static uint64_t getSymVA(const Symbol &Sym, int64_t &Addend) {
     if (!IS)
       return D.Value;
 
-    IS = IS->Repl;
     uint64_t Offset = D.Value;
 
     // An object in an SHF_MERGE section might be referenced via a
