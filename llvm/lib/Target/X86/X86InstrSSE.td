@@ -5696,7 +5696,7 @@ defm PEXTRQ      : SS41I_extract64<0x16, "pextrq">, REX_W;
 /// SS41I_extractf32 - SSE 4.1 extract 32 bits fp value to int reg or memory
 /// destination
 multiclass SS41I_extractf32<bits<8> opc, string OpcodeStr,
-                            OpndItins itins = DEFAULT_ITINS> {
+                            OpndItins itins = SSE_EXTRACT_ITINS> {
   def rr : SS4AIi8<opc, MRMDestReg, (outs GR32orGR64:$dst),
                  (ins VR128:$src1, u8imm:$src2),
                  !strconcat(OpcodeStr,
@@ -5716,7 +5716,7 @@ multiclass SS41I_extractf32<bits<8> opc, string OpcodeStr,
 let ExeDomain = SSEPackedSingle in {
   let Predicates = [UseAVX] in
     defm VEXTRACTPS : SS41I_extractf32<0x17, "vextractps">, VEX, VEX_WIG;
-  defm EXTRACTPS   : SS41I_extractf32<0x17, "extractps", SSE_EXTRACT_ITINS>;
+  defm EXTRACTPS   : SS41I_extractf32<0x17, "extractps">;
 }
 
 // Also match an EXTRACTPS store when the store is done as f32 instead of i32.
