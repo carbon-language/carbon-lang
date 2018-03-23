@@ -153,7 +153,7 @@ uint64_t Symbol::getSize() const {
 OutputSection *Symbol::getOutputSection() const {
   if (auto *S = dyn_cast<Defined>(this)) {
     if (auto *Sec = S->Section)
-      return Sec->Repl->getOutputSection();
+      return Sec->getOutputSection();
     return nullptr;
   }
 
