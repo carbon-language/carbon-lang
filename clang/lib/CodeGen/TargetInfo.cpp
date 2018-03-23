@@ -7664,7 +7664,7 @@ void AMDGPUTargetCodeGenInfo::setTargetAttributes(
 
   if (M.getLangOpts().OpenCL && FD->hasAttr<OpenCLKernelAttr>() &&
       (M.getTriple().getOS() == llvm::Triple::AMDHSA))
-    F->addFnAttr("amdgpu-implicitarg-num-bytes", "32");
+    F->addFnAttr("amdgpu-implicitarg-num-bytes", "48");
 
   const auto *FlatWGS = FD->getAttr<AMDGPUFlatWorkGroupSizeAttr>();
   if (ReqdWGS || FlatWGS) {
