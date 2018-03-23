@@ -38,28 +38,28 @@ public:
 
   /// If there is a symbol with this name already in the scope, return it.
   /// Otherwise make a new one and return that.
-  Symbol &GetOrMakeSymbol(const parser::Name &name);
+  Symbol &GetOrMakeSymbol(const Name &name);
 
   /// Make a Symbol with unknown details.
   Symbol &MakeSymbol(
-      const parser::Name &name, const Attrs &attrs = Attrs::EMPTY);
+      const Name &name, const Attrs &attrs = Attrs::EMPTY);
 
   /// Make a Symbol with provided details.
   template<typename D>
-  Symbol &MakeSymbol(const parser::Name &name, D &&details) {
+  Symbol &MakeSymbol(const Name &name, D &&details) {
     const auto &result =
         symbols_.try_emplace(name, *this, name, Attrs::EMPTY, details);
     return result.first->second;
   }
   template<typename D>
   Symbol &MakeSymbol(
-      const parser::Name &name, const Attrs &attrs, D &&details) {
+      const Name &name, const Attrs &attrs, D &&details) {
     const auto &result =
         symbols_.try_emplace(name, *this, name, attrs, details);
     return result.first->second;
   }
 
-  void EraseSymbol(const parser::Name &name) {
+  void EraseSymbol(const Name &name) {
     symbols_.erase(name);
   }
 
@@ -67,7 +67,7 @@ private:
   const Scope &parent_;
   const Kind kind_;
   std::list<Scope> children_;
-  std::map<parser::Name, Symbol> symbols_;
+  std::map<Name, Symbol> symbols_;
 
   friend std::ostream &operator<<(std::ostream &, const Scope &);
 };

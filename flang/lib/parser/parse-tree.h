@@ -491,6 +491,7 @@ WRAPPER_CLASS(Program, std::list<ProgramUnit>);
 struct Name {
   Name() {}
   COPY_AND_ASSIGN_BOILERPLATE(Name);
+  std::string ToString() const { return source.ToString(); }
   CharBlock source;
   // TODO: pointer to symbol table entity
 };

@@ -152,20 +152,20 @@ public:
     // TODO: may be under StructureStmt
     const auto &name = std::get<parser::ObjectName>(x.t);
     // TODO: optional ArraySpec, CoarraySpec, CharLength, Initialization
-    Symbol &symbol = CurrScope().GetOrMakeSymbol(name);
+    Symbol &symbol = CurrScope().GetOrMakeSymbol(name.ToString());
     if (symbol.has<UnknownDetails>()) {
       symbol.set_details(EntityDetails());
     } else if (EntityDetails *details = symbol.detailsIf<EntityDetails>()) {
       if (details->type().has_value()) {
-        std::cerr << "ERROR: symbol already has a type declared: " << name
-                  << "\n";
+        std::cerr << "ERROR: symbol already has a type declared: "
+            << name.ToString() << "\n";
       } else {
         details->set_type(*declTypeSpec_);
       }
     } else {
       std::cerr
           << "ERROR: symbol already declared, can't appear in entity-decl: "
-          << name << "\n";
+          << name.ToString() << "\n";
     }
   }
 
@@ -179,7 +179,10 @@ public:
     PopScope();
   }
   bool Pre(const parser::Suffix &suffix) {
-    funcResultName_ = suffix.resultName;
+    if (suffix.resultName.has_value()) {
+      funcResultName_ =
+          std::make_optional(suffix.resultName->ToString());
+    }
     return true;
   }
 
@@ -190,7 +193,7 @@ public:
 
   // Common Post() for functions and subroutines.
   void PostSubprogram(
-      const parser::Name &name, const std::list<parser::Name> &dummyNames) {
+      const Name &name, const std::list<Name> &dummyNames) {
     const auto attrs = endAttrs();
     MakeSymbol(name, attrs, SubprogramDetails(dummyNames));
     Scope &subpScope = CurrScope().MakeScope(Scope::Kind::Subprogram);
@@ -201,13 +204,13 @@ public:
   }
 
   void Post(const parser::SubroutineStmt &stmt) {
-    const auto &subrName = std::get<parser::Name>(stmt.t);
-    std::list<parser::Name> dummyNames;
+    Name subrName = std::get<parser::Name>(stmt.t).ToString();
+    std::list<Name> dummyNames;
     const auto &dummyArgs = std::get<std::list<parser::DummyArg>>(stmt.t);
     for (const parser::DummyArg &dummyArg : dummyArgs) {
       const parser::Name *dummyName = std::get_if<parser::Name>(&dummyArg.u);
       CHECK(dummyName != nullptr && "TODO: alternate return indicator");
-      dummyNames.push_back(*dummyName);
+      dummyNames.push_back(dummyName->ToString());
     }
     PostSubprogram(subrName, dummyNames);
     MakeSymbol(subrName, SubprogramDetails(dummyNames));
@@ -221,8 +224,11 @@ public:
   }
   // TODO: MakeSymbol function
   void Post(const parser::FunctionStmt &stmt) {
-    const auto &funcName = std::get<parser::Name>(stmt.t);
-    const auto &dummyNames = std::get<std::list<parser::Name>>(stmt.t);
+    Name funcName = std::get<parser::Name>(stmt.t).ToString();
+    std::list<Name> dummyNames;
+    for (const auto &dummy : std::get<std::list<parser::Name>>(stmt.t)) {
+      dummyNames.push_back(dummy.ToString());
+    }
     PostSubprogram(funcName, dummyNames);
     // add function result to function scope
     EntityDetails funcResultDetails;
@@ -248,12 +254,11 @@ public:
 private:
   // Stack of containing scopes; memory referenced is owned by parent scopes
   std::stack<Scope *, std::list<Scope *>> scopes_;
-  std::optional<parser::Name> funcResultName_;
+  std::optional<Name> funcResultName_;
 };
 
 void ResolveNames(const parser::Program &program) {
   ResolveNamesVisitor visitor;
   parser::Walk(program, visitor);
 }
-
-}
+}  // namespace Fortran::semantics
