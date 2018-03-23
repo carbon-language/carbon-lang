@@ -3801,10 +3801,14 @@ When the language is OpenCL the following differences occur:
      Position Byte Byte      Description
               Size Alignment
      ======== ==== ========= ===========================================
-     0        8    8         OpenCL Global Offset X
-     1        8    8         OpenCL Global Offset Y
-     2        8    8         OpenCL Global Offset Z
-     3        8    8         OpenCL printf buffer
+     1        8    8         OpenCL Global Offset X
+     2        8    8         OpenCL Global Offset Y
+     3        8    8         OpenCL Global Offset Z
+     4        8    8         OpenCL address of printf buffer
+     5        8    8         OpenCL address of virtual queue used by
+                             enqueue_kernel.
+     6        8    8         OpenCL address of AqlWrap struct used by
+                             enqueue_kernel.
      ======== ==== ========= ===========================================
 
 .. _amdgpu-hcc:

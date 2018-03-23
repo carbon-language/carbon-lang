@@ -46,7 +46,7 @@ define amdgpu_kernel void @test_implicit_alignment(i32 addrspace(1)* %out, <2 x 
 }
 
 ; ALL-LABEL: {{^}}opencl_test_implicit_alignment
-; HSA: kernarg_segment_byte_size = 48
+; HSA: kernarg_segment_byte_size = 64
 ; OS-MESA3D: kernarg_segment_byte_size = 28
 ; OS-UNKNOWN: s_load_dword [[VAL:s[0-9]+]], s[{{[0-9]+:[0-9]+}}], 0xc
 ; HSA: s_load_dword [[VAL:s[0-9]+]], s[{{[0-9]+:[0-9]+}}], 0x4
@@ -79,4 +79,4 @@ declare i8 addrspace(4)* @llvm.amdgcn.implicitarg.ptr() #0
 
 attributes #0 = { nounwind readnone }
 attributes #1 = { nounwind }
-attributes #2 = { nounwind "amdgpu-implicitarg-num-bytes"="32" }
+attributes #2 = { nounwind "amdgpu-implicitarg-num-bytes"="48" }
