@@ -15,10 +15,16 @@ enum class Attr {
   ASYNCHRONOUS,
   BIND_C,
   CONTIGUOUS,
+  DEFERRED,
+  ELEMENTAL,
   EXTERNAL,
+  IMPURE,
   INTENT_IN,
   INTENT_OUT,
   INTRINSIC,
+  MODULE,
+  NON_OVERRIDABLE,
+  NON_RECURSIVE,
   NOPASS,
   OPTIONAL,
   PARAMETER,
@@ -27,6 +33,8 @@ enum class Attr {
   PRIVATE,
   PROTECTED,
   PUBLIC,
+  PURE,
+  RECURSIVE,
   SAVE,
   TARGET,
   VALUE,
@@ -36,6 +44,7 @@ enum class Attr {
 // Set of attributes
 class Attrs {
 public:
+  static const Attrs EMPTY;
   Attrs() : bits_{0} {}
   Attrs(std::initializer_list<Attr> attrs);
   bool empty() const { return bits_ == 0; }

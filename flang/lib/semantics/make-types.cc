@@ -317,8 +317,8 @@ private:
 };
 
 void MakeTypes(std::ostream &out, const parser::Program &program) {
-  MakeTypesVisitor visitor{out};
-  parser::Walk(program, visitor);
+  void ResolveNames(const parser::Program &program);
+  ResolveNames(program);
 }
 
 static KindParamValue GetKindParamValue(

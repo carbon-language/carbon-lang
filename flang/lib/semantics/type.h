@@ -136,9 +136,9 @@ private:
       const DerivedTypeSpec *derivedTypeSpec = nullptr)
     : category_{category}, intrinsicTypeSpec_{intrinsicTypeSpec},
       derivedTypeSpec_{derivedTypeSpec} {}
-  const Category category_;
-  const IntrinsicTypeSpec *const intrinsicTypeSpec_;
-  const DerivedTypeSpec *const derivedTypeSpec_;
+  Category category_;
+  const IntrinsicTypeSpec *intrinsicTypeSpec_;
+  const DerivedTypeSpec *derivedTypeSpec_;
   friend std::ostream &operator<<(std::ostream &, const DeclTypeSpec &);
 };
 

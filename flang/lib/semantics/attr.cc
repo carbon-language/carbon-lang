@@ -11,12 +11,18 @@ static const char *attrToString[] = {
     [toInt(Attr::ABSTRACT)] = "ABSTRACT",
     [toInt(Attr::ALLOCATABLE)] = "ALLOCATABLE",
     [toInt(Attr::ASYNCHRONOUS)] = "ASYNCHRONOUS",
-    [toInt(Attr::BIND_C)] = "BIND(C)",
+    [toInt(Attr::BIND_C)] = "BIND_C",
     [toInt(Attr::CONTIGUOUS)] = "CONTIGUOUS",
+    [toInt(Attr::DEFERRED)] = "DEFERRED",
+    [toInt(Attr::ELEMENTAL)] = "ELEMENTAL",
     [toInt(Attr::EXTERNAL)] = "EXTERNAL",
+    [toInt(Attr::IMPURE)] = "IMPURE",
     [toInt(Attr::INTENT_IN)] = "INTENT_IN",
     [toInt(Attr::INTENT_OUT)] = "INTENT_OUT",
     [toInt(Attr::INTRINSIC)] = "INTRINSIC",
+    [toInt(Attr::MODULE)] = "MODULE",
+    [toInt(Attr::NON_OVERRIDABLE)] = "NON_OVERRIDABLE",
+    [toInt(Attr::NON_RECURSIVE)] = "NON_RECURSIVE",
     [toInt(Attr::NOPASS)] = "NOPASS",
     [toInt(Attr::OPTIONAL)] = "OPTIONAL",
     [toInt(Attr::PARAMETER)] = "PARAMETER",
@@ -25,11 +31,15 @@ static const char *attrToString[] = {
     [toInt(Attr::PRIVATE)] = "PRIVATE",
     [toInt(Attr::PROTECTED)] = "PROTECTED",
     [toInt(Attr::PUBLIC)] = "PUBLIC",
+    [toInt(Attr::PURE)] = "PURE",
+    [toInt(Attr::RECURSIVE)] = "RECURSIVE",
     [toInt(Attr::SAVE)] = "SAVE",
     [toInt(Attr::TARGET)] = "TARGET",
     [toInt(Attr::VALUE)] = "VALUE",
     [toInt(Attr::VOLATILE)] = "VOLATILE",
 };
+
+const Attrs Attrs::EMPTY;
 
 Attrs::Attrs(std::initializer_list<Attr> attrs) {
   bits_ = 0;
