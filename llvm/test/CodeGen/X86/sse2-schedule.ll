@@ -6424,14 +6424,14 @@ define <2 x i64> @test_psadbw(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> *%a2) {
 ;
 ; BTVER2-LABEL: test_psadbw:
 ; BTVER2:       # %bb.0:
-; BTVER2-NEXT:    vpsadbw %xmm1, %xmm0, %xmm0 # sched: [2:1.00]
-; BTVER2-NEXT:    vpsadbw (%rdi), %xmm0, %xmm0 # sched: [7:1.00]
+; BTVER2-NEXT:    vpsadbw %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BTVER2-NEXT:    vpsadbw (%rdi), %xmm0, %xmm0 # sched: [6:1.00]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;
 ; ZNVER1-LABEL: test_psadbw:
 ; ZNVER1:       # %bb.0:
-; ZNVER1-NEXT:    vpsadbw %xmm1, %xmm0, %xmm0 # sched: [4:1.00]
-; ZNVER1-NEXT:    vpsadbw (%rdi), %xmm0, %xmm0 # sched: [11:1.00]
+; ZNVER1-NEXT:    vpsadbw %xmm1, %xmm0, %xmm0 # sched: [1:0.25]
+; ZNVER1-NEXT:    vpsadbw (%rdi), %xmm0, %xmm0 # sched: [8:0.50]
 ; ZNVER1-NEXT:    retq # sched: [1:0.50]
   %1 = call <2 x i64> @llvm.x86.sse2.psad.bw(<16 x i8> %a0, <16 x i8> %a1)
   %2 = bitcast <2 x i64> %1 to <16 x i8>
