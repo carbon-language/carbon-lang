@@ -343,13 +343,13 @@ defm : JWriteResFpuPair<WriteVarVecShift, [JFPU01, JVALU], 1>; // NOTE: Doesn't 
 
 ////////////////////////////////////////////////////////////////////////////////
 // SSE42 String instructions.
-// FIXME: approximate latencies + pipe dependencies
+// FIXME: Latency+i
 ////////////////////////////////////////////////////////////////////////////////
 
-defm : JWriteResFpuPair<WritePCmpIStrI, [JFPU1, JFPU0], 7, [2, 2], 3>;
-defm : JWriteResFpuPair<WritePCmpIStrM, [JFPU1, JFPU0], 8, [2, 2], 3>;
-defm : JWriteResFpuPair<WritePCmpEStrI, [JFPU1, JLAGU, JFPU01, JFPU1, JFPU0], 14, [5, 5, 5, 5, 5], 9>;
-defm : JWriteResFpuPair<WritePCmpEStrM, [JFPU1, JLAGU, JFPU01, JFPU1, JFPU0], 14, [5, 5, 5, 5, 5], 9>;
+defm : JWriteResFpuPair<WritePCmpIStrI, [JFPU1, JVALU1, JFPA], 7, [1, 2, 1], 3>;
+defm : JWriteResFpuPair<WritePCmpIStrM, [JFPU1, JVALU1, JFPA], 8, [1, 2, 1], 3>;
+defm : JWriteResFpuPair<WritePCmpEStrI, [JFPU1, JSAGU, JLAGU, JVALU, JVALU1, JFPA], 14, [1, 2, 2, 6, 4, 1], 9>;
+defm : JWriteResFpuPair<WritePCmpEStrM, [JFPU1, JSAGU, JLAGU, JVALU, JVALU1, JFPA], 14, [1, 2, 2, 6, 4, 1], 9>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // AES Instructions.
