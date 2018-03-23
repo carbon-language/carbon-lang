@@ -765,7 +765,6 @@
 		4CF52AF8142829390051E832 /* SBFileSpecList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CF52AF7142829390051E832 /* SBFileSpecList.cpp */; };
 		54067BF11DF2041B00749AA5 /* UBSanRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 54067BEC1DF2034B00749AA5 /* UBSanRuntime.cpp */; };
 		6B74D89B200696BB0074051B /* Environment.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 22DC561920064C9600A7E9E8 /* Environment.cpp */; };
-		6B8894792065AE5D002E5C59 /* CommandObjectStats.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6B8894772065AE5C002E5C59 /* CommandObjectStats.h */; };
 		6B88947A2065AE5D002E5C59 /* CommandObjectStats.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6B8894782065AE5C002E5C59 /* CommandObjectStats.cpp */; };
 		6D0F61431C80AAAE00A4ECEE /* JavaASTContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D0F61411C80AAAA00A4ECEE /* JavaASTContext.cpp */; };
 		6D0F61481C80AAD600A4ECEE /* DWARFASTParserJava.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D0F61441C80AACF00A4ECEE /* DWARFASTParserJava.cpp */; };
@@ -1018,6 +1017,7 @@
 		AF9FF1F71FAA79FE00474976 /* LibCxxQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF9FF1F61FAA79FE00474976 /* LibCxxQueue.cpp */; };
 		AFAFD80A1E57E1B90017A14F /* ModuleCacheTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFAFD8091E57E1B90017A14F /* ModuleCacheTest.cpp */; };
 		AFB3D2801AC262AB003B4B30 /* MICmdCmdGdbShow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFB3D27E1AC262AB003B4B30 /* MICmdCmdGdbShow.cpp */; };
+		AFB6B9ED2065BBE90047661E /* CommandObjectStats.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6B8894782065AE5C002E5C59 /* CommandObjectStats.cpp */; };
 		AFC234091AF85CE100CDE8B6 /* CommandObjectLanguage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFC234061AF85CE000CDE8B6 /* CommandObjectLanguage.cpp */; };
 		AFC2DCE71E6E2ED000283714 /* FastDemangle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFC2DCE61E6E2ED000283714 /* FastDemangle.cpp */; };
 		AFC2DCE91E6E2F2C00283714 /* Baton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFC2DCE81E6E2F2C00283714 /* Baton.cpp */; };
@@ -1269,7 +1269,6 @@
 			dstSubfolderSpec = 0;
 			files = (
 				6B88947A2065AE5D002E5C59 /* CommandObjectStats.cpp in CopyFiles */,
-				6B8894792065AE5D002E5C59 /* CommandObjectStats.h in CopyFiles */,
 				7F94D7182040A13A006EE3EA /* CleanUpTest.cpp in CopyFiles */,
 				AF90106515AB7D3600FF120D /* lldb.1 in CopyFiles */,
 			);
@@ -5171,8 +5170,6 @@
 		26BC7D0D10F1B71D00F91463 /* Commands */ = {
 			isa = PBXGroup;
 			children = (
-				6B8894782065AE5C002E5C59 /* CommandObjectStats.cpp */,
-				6B8894772065AE5C002E5C59 /* CommandObjectStats.h */,
 				4CA9637A11B6E99A00780E28 /* CommandObjectApropos.h */,
 				4CA9637911B6E99A00780E28 /* CommandObjectApropos.cpp */,
 				26BC7D1410F1B76300F91463 /* CommandObjectBreakpoint.h */,
@@ -5215,6 +5212,8 @@
 				26BC7E4010F1B84700F91463 /* CommandObjectSettings.cpp */,
 				26BC7D2910F1B76300F91463 /* CommandObjectSource.h */,
 				26BC7E4210F1B84700F91463 /* CommandObjectSource.cpp */,
+				6B8894782065AE5C002E5C59 /* CommandObjectStats.cpp */,
+				6B8894772065AE5C002E5C59 /* CommandObjectStats.h */,
 				269416AE119A024800FF2715 /* CommandObjectTarget.h */,
 				269416AD119A024800FF2715 /* CommandObjectTarget.cpp */,
 				26BC7D2D10F1B76300F91463 /* CommandObjectThread.h */,
@@ -8042,6 +8041,7 @@
 				B2462247141AD37D00F3D409 /* OptionGroupWatchpoint.cpp in Sources */,
 				94B638631B8FB7F1004FE1E4 /* ObjCPlusPlusLanguage.cpp in Sources */,
 				49DEF1251CD7C6DF006A7C7D /* BlockPointer.cpp in Sources */,
+				AFB6B9ED2065BBE90047661E /* CommandObjectStats.cpp in Sources */,
 				49A71FE7141FFA5C00D59478 /* IRInterpreter.cpp in Sources */,
 				23DDF226196C3EE600BB8417 /* CommandOptionValidators.cpp in Sources */,
 				B207C4931429607D00F36E4E /* CommandObjectWatchpoint.cpp in Sources */,
