@@ -754,10 +754,12 @@ def : InstRW<[JWriteVMaskMovYSt], (instrs VMASKMOVPDYmr, VMASKMOVPSYmr)>;
 // operation which moves the floating point result to the integer unit. During this
 // additional cycle the floating point unit execution resources are not occupied
 // and ALU0 in the integer unit is occupied instead.
-def JWriteVMOVMSK: SchedWriteRes<[JFPU0]> {
+def JWriteVMOVMSK: SchedWriteRes<[JFPU0, JFPA]> {
   let Latency = 3;
 }
-def : InstRW<[JWriteVMOVMSK], (instrs VMOVMSKPDrr, VMOVMSKPDYrr, VMOVMSKPSrr, VMOVMSKPSYrr)>;
+def : InstRW<[JWriteVMOVMSK], (instrs MOVMSKPDrr, VMOVMSKPDrr, VMOVMSKPDYrr,
+                                      MOVMSKPSrr, VMOVMSKPSrr, VMOVMSKPSYrr,
+                                      PMOVMSKBrr, VPMOVMSKBrr)>;
 
 // TODO: In fact we have latency '3+i'. The +i represents an additional 1 cycle transfer
 // operation which moves the floating point result to the integer unit. During this

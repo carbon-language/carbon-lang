@@ -200,7 +200,7 @@ xorps       (%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -     1.00    -     1.00   1.00    -      -      -      -      -      -     	movhps	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -      -      -      -     1.00    -      -      -      -     	movlps	%xmm0, (%rax)
 # CHECK-NEXT:  -      -      -     1.00    -     1.00    -     1.00    -      -      -      -      -      -     	movlps	(%rax), %xmm2
-# CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -      -      -     0.50   0.50    -     	movmskps	%xmm0, %ecx
+# CHECK-NEXT:  -      -      -     1.00    -     1.00    -      -      -      -      -      -      -      -     	movmskps	%xmm0, %ecx
 # CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -     1.00   1.00    -      -      -     	movntps	%xmm0, (%rax)
 # CHECK-NEXT:  -      -      -     1.00    -     1.00    -      -      -      -      -      -      -      -     	movss	%xmm0, %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -      -      -      -     1.00    -      -      -      -     	movss	%xmm0, (%rax)
@@ -214,8 +214,8 @@ xorps       (%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -     1.00    -     1.00   1.00    -      -      -      -      -      -     	mulss	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -     1.00    -      -     1.00    -      -      -      -      -      -      -     	orps	%xmm0, %xmm2
 # CHECK-NEXT:  -      -      -     1.00    -     1.00    -     1.00    -      -      -      -      -      -     	orps	(%rax), %xmm2
-# CHECK-NEXT:  -      -      -      -      -     1.00    -      -      -      -      -     0.50   0.50    -     	pinsrw	$1, %eax, %xmm1
-# CHECK-NEXT:  -      -      -      -      -     1.00    -     1.00    -      -      -     0.50   0.50    -     	pinsrw	$1, (%rax), %xmm1
+# CHECK-NEXT:  -      -      -      -      -     1.00    -      -      -      -      -      -     1.00    -     	pinsrw	$1, %eax, %xmm1
+# CHECK-NEXT:  -      -      -      -      -     1.00    -     1.00    -      -      -     1.00    -      -     	pinsrw	$1, (%rax), %xmm1
 # CHECK-NEXT:  -      -      -      -     1.00    -     1.00    -      -      -      -      -      -      -     	rcpps	%xmm0, %xmm2
 # CHECK-NEXT:  -      -      -      -     1.00    -     1.00   1.00    -      -      -      -      -      -     	rcpps	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -     1.00    -     1.00    -      -      -      -      -      -      -     	rcpss	%xmm0, %xmm2
