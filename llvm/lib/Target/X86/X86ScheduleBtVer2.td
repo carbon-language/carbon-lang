@@ -388,30 +388,30 @@ defm : JWriteResFpuPair<WriteCLMul,       [JFPU0, JVIMUL], 2>;
 // SSE4.1 instructions.
 ////////////////////////////////////////////////////////////////////////////////
 
-def JWriteDPPS: SchedWriteRes<[JFPU0, JFPU1]> {
+def JWriteDPPS: SchedWriteRes<[JFPU1, JFPM, JFPA]> {
   let Latency = 11;
-  let ResourceCycles = [3, 3];
+  let ResourceCycles = [1, 3, 3];
   let NumMicroOps = 5;
 }
 def : InstRW<[JWriteDPPS], (instrs DPPSrri, VDPPSrri)>;
 
-def JWriteDPPSLd: SchedWriteRes<[JLAGU, JFPU0, JFPU1]> {
+def JWriteDPPSLd: SchedWriteRes<[JLAGU, JFPU1, JFPM, JFPA]> {
   let Latency = 16;
-  let ResourceCycles = [1, 3, 3];
+  let ResourceCycles = [1, 1, 3, 3];
   let NumMicroOps = 5;
 }
 def : InstRW<[JWriteDPPSLd], (instrs DPPSrmi, VDPPSrmi)>;
 
-def JWriteDPPD: SchedWriteRes<[JFPU0, JFPU1]> {
+def JWriteDPPD: SchedWriteRes<[JFPU1, JFPM, JFPA]> {
   let Latency = 9;
-  let ResourceCycles = [3, 3];
+  let ResourceCycles = [1, 3, 3];
   let NumMicroOps = 3;
 }
 def : InstRW<[JWriteDPPD], (instrs DPPDrri, VDPPDrri)>;
 
-def JWriteDPPDLd: SchedWriteRes<[JLAGU, JFPU0, JFPU1]> {
+def JWriteDPPDLd: SchedWriteRes<[JLAGU, JFPU1, JFPM, JFPA]> {
   let Latency = 14;
-  let ResourceCycles = [1, 3, 3];
+  let ResourceCycles = [1, 1, 3, 3];
   let NumMicroOps = 3;
 }
 def : InstRW<[JWriteDPPDLd], (instrs DPPDrmi, VDPPDrmi)>;
@@ -515,16 +515,16 @@ def : InstRW<[JWriteFLogicYLd], (instrs VORPDYrm, VORPSYrm,
                                         VANDPDYrm, VANDPSYrm,
                                         VANDNPDYrm, VANDNPSYrm)>;
 
-def JWriteVDPPSY: SchedWriteRes<[JFPU1, JFPU0]> {
+def JWriteVDPPSY: SchedWriteRes<[JFPU1, JFPM, JFPA]> {
   let Latency = 12;
-  let ResourceCycles = [6, 6];
+  let ResourceCycles = [1, 6, 6];
   let NumMicroOps = 10;
 }
 def : InstRW<[JWriteVDPPSY], (instrs VDPPSYrri)>;
 
-def JWriteVDPPSYLd: SchedWriteRes<[JLAGU, JFPU1, JFPU0]> {
+def JWriteVDPPSYLd: SchedWriteRes<[JLAGU, JFPU1, JFPM, JFPA]> {
   let Latency = 17;
-  let ResourceCycles = [1, 6, 6];
+  let ResourceCycles = [1, 1, 6, 6];
   let NumMicroOps = 10;
 }
 def : InstRW<[JWriteVDPPSYLd, ReadAfterLd], (instrs VDPPSYrmi)>;
