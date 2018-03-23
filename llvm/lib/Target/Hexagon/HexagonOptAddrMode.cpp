@@ -396,8 +396,8 @@ bool HexagonOptAddrMode::processAddUses(NodeAddr<StmtNode *> AddSN,
 
     NodeAddr<StmtNode *> OwnerN = UseN.Addr->getOwner(*DFG);
     MachineInstr *UseMI = OwnerN.Addr->getCode();
-    unsigned BBNum = UseMI->getParent()->getNumber();
-    DEBUG(dbgs() << "\t\t[MI <BB#" << BBNum << ">]: " << *UseMI << "\n");
+    DEBUG(dbgs() << "\t\t[MI <BB#" << UseMI->getParent()->getNumber()
+                 << ">]: " << *UseMI << "\n");
     Changed |= updateAddUses(AddMI, UseMI);
   }
 
