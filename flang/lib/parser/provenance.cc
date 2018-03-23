@@ -33,7 +33,7 @@ void OffsetToProvenanceMappings::Put(const OffsetToProvenanceMappings &that) {
 }
 
 ProvenanceRange OffsetToProvenanceMappings::Map(std::size_t at) const {
-  CHECK(!provenanceMap_.empty());
+  //  CHECK(!provenanceMap_.empty());
   std::size_t low{0}, count{provenanceMap_.size()};
   while (count > 1) {
     std::size_t mid{low + (count >> 1)};
@@ -273,8 +273,7 @@ ProvenanceRange CookedSource::GetProvenance(const char *at) const {
 
 void CookedSource::Marshal() {
   CHECK(provenanceMap_.size() == buffer_.size());
-  provenanceMap_.Put(
-      allSources_->AddCompilerInsertion("(after end of source)"));
+  provenanceMap_.Put(allSources_.AddCompilerInsertion("(after end of source)"));
   data_.resize(buffer_.size());
   char *p{&data_[0]};
   for (char ch : buffer_) {
@@ -328,7 +327,7 @@ void AllSources::Dump(std::ostream &o) const {
 
 void CookedSource::Dump(std::ostream &o) const {
   o << "CookedSource:\n";
-  allSources_->Dump(o);
+  allSources_.Dump(o);
   o << "CookedSource::provenanceMap_:\n";
   provenanceMap_.Dump(o);
 }

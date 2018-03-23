@@ -243,7 +243,8 @@ struct EntryStmt;  // R1541
 struct ReturnStmt;  // R1542
 struct StmtFunctionStmt;  // R1544
 
-// Extension and deprecated statements
+// Directives, extensions, and deprecated statements
+struct CompilerDirective;
 struct BasedPointerStmt;
 struct StructureDef;
 struct ArithmeticIfStmt;
@@ -314,12 +315,10 @@ using Label = std::uint64_t;  // validated later, must be in [1..99999]
 // A wrapper for xzy-stmt productions that are statements, so that
 // source provenances and labels have a uniform representation.
 template<typename A> struct Statement {
-  Statement(std::optional<long> &&lab, bool &&accept, A &&s)
-    : label(std::move(lab)), isLabelInAcceptableField{accept},
-      statement(std::move(s)) {}
+  Statement(std::optional<long> &&lab, A &&s)
+    : label(std::move(lab)), statement(std::move(s)) {}
   CharBlock source;
   std::optional<Label> label;
-  bool isLabelInAcceptableField{true};
   A statement;
 };
 
@@ -361,7 +360,8 @@ struct SpecificationConstruct {
       Statement<Indirection<OldParameterStmt>>,
       Statement<Indirection<ProcedureDeclarationStmt>>,
       Statement<OtherSpecificationStmt>,
-      Statement<Indirection<TypeDeclarationStmt>>, Indirection<StructureDef>>
+      Statement<Indirection<TypeDeclarationStmt>>, Indirection<StructureDef>,
+      Indirection<CompilerDirective>>
       u;
 };
 
@@ -470,7 +470,8 @@ struct ExecutableConstruct {
       Statement<Indirection<LabelDoStmt>>, Statement<Indirection<EndDoStmt>>,
       Indirection<DoConstruct>, Indirection<IfConstruct>,
       Indirection<SelectRankConstruct>, Indirection<SelectTypeConstruct>,
-      Indirection<WhereConstruct>, Indirection<ForallConstruct>>
+      Indirection<WhereConstruct>, Indirection<ForallConstruct>,
+      Indirection<CompilerDirective>>
       u;
 };
 
@@ -3119,6 +3120,20 @@ WRAPPER_CLASS(ReturnStmt, std::optional<ScalarIntExpr>);
 struct StmtFunctionStmt {
   TUPLE_CLASS_BOILERPLATE(StmtFunctionStmt);
   std::tuple<Name, std::list<Name>, Scalar<Expr>> t;
+};
+
+// Compiler directives
+// !DIR$ IVDEP
+// !DIR$ IGNORE_TKR [ [(tkr...)] name ]...
+struct CompilerDirective {
+  UNION_CLASS_BOILERPLATE(CompilerDirective);
+  struct IgnoreTKR {
+    TUPLE_CLASS_BOILERPLATE(IgnoreTKR);
+    std::tuple<std::list<const char *>, Name> t;
+  };
+  EMPTY_CLASS(IVDEP);
+  CharBlock source;
+  std::variant<std::list<IgnoreTKR>, IVDEP> u;
 };
 
 // Legacy extensions

@@ -43,12 +43,12 @@ These objects and functions are (or return) the fundamental parsers:
   given message as a side effect.  The template parameter is the type of
   the value that the parser never returns.
 * `cut` is a trivial parser that always fails silently.
-* `guard(pred)` returns a parser that succeeds if and only if the predicate
-  expression evaluates to true.
 * `nextCh` consumes the next character and returns its location,
   and fails at EOF.
 * `"xyz"_ch` succeeds if the next character consumed matches any of those
-  in the string (ignoring case), and returns its location.
+  in the string and returns its location.  Be advised that the source
+  will have been normalized to lower case (miniscule) letters outside
+  character and Hollerith literals and edit descriptors before parsing.
 
 ### Combinators
 These functions and operators combine existing parsers to generate new parsers.
@@ -108,12 +108,6 @@ collect the values that they return.
   and other function objects.
 * `applyMem(mf, p1, p2, ...)` is the same thing, but invokes a member
   function of the result of the first parser for updates in place.
-
-### Non-Advancing State Inquiries and Updates
-These are non-advancing state inquiry and update parsers:
-
-* `getColumn` returns the 1-based column position.
-* `inFixedForm` succeeds in fixed form Fortran source.
 
 ### Token Parsers
 Last, we have these basic parsers on which the actual grammar of the Fortran

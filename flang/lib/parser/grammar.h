@@ -148,6 +148,7 @@ constexpr Parser<DummyArg> dummyArg;  // R1536
 constexpr Parser<EndSubroutineStmt> endSubroutineStmt;  // R1537
 constexpr Parser<EntryStmt> entryStmt;  // R1541
 constexpr Parser<ContainsStmt> containsStmt;  // R1543
+constexpr Parser<CompilerDirective> compilerDirective;
 
 // For a parser p, indirect(p) returns a parser that builds an indirect
 // reference to p's return type.
@@ -166,23 +167,15 @@ constexpr auto digitString = DigitString{};
 // R611 label -> digit [digit]...
 constexpr auto label = spaces >> digitString;
 
-static inline bool isColumnOkForFixedFormLabel(int &&column) {
-  return column < 6;
-}
-
-constexpr auto isLabelOk = inFixedForm >>
-        applyFunction(isColumnOkForFixedFormLabel, getColumn) ||
-    pure(true);
-
 template<typename PA>
 using statementConstructor = construct<Statement<typename PA::resultType>>;
 
 template<typename PA> inline constexpr auto unterminatedStatement(const PA &p) {
-  return skipMany("\n"_tok) >>
-      sourced(statementConstructor<PA>{}(maybe(label), isLabelOk, spaces >> p));
+  return skipEmptyLines >>
+      sourced(statementConstructor<PA>{}(maybe(label), spaces >> p));
 }
 
-constexpr auto endOfLine = "\n"_ch / skipMany("\n"_tok) ||
+constexpr auto endOfLine = "\n"_ch / skipEmptyLines ||
     fail<const char *>("expected end of line"_en_US);
 
 constexpr auto endOfStmt = spaces >>
@@ -192,7 +185,7 @@ template<typename PA> inline constexpr auto statement(const PA &p) {
   return unterminatedStatement(p) / endOfStmt;
 }
 
-constexpr auto ignoredStatementPrefix = skipMany("\n"_tok) >>
+constexpr auto ignoredStatementPrefix = skipEmptyLines >>
     maybe(label) >> spaces;
 
 // Error recovery within statements: skip to the end of the line,
@@ -241,7 +234,8 @@ TYPE_CONTEXT_PARSER("specification construct"_en_US,
             statement(Parser<OtherSpecificationStmt>{})) ||
         construct<SpecificationConstruct>{}(
             statement(indirect(typeDeclarationStmt))) ||
-        construct<SpecificationConstruct>{}(indirect(Parser<StructureDef>{})))
+        construct<SpecificationConstruct>{}(indirect(Parser<StructureDef>{})) ||
+        construct<SpecificationConstruct>{}(indirect(compilerDirective)))
 
 // R513 other-specification-stmt ->
 //        access-stmt | allocatable-stmt | asynchronous-stmt | bind-stmt |
@@ -393,7 +387,7 @@ struct StartNewSubprogram {
 TYPE_PARSER(
     construct<Program>{}(
         // statements consume only trailing noise; consume leading noise here.
-        skipMany("\n"_tok) >>
+        skipEmptyLines >>
         some(startNewSubprogram >> Parser<ProgramUnit>{} / endOfLine)) /
     consumedAllInput)
 
@@ -555,7 +549,8 @@ constexpr auto executableConstruct =
     construct<ExecutableConstruct>{}(indirect(Parser<SelectRankConstruct>{})) ||
     construct<ExecutableConstruct>{}(indirect(Parser<SelectTypeConstruct>{})) ||
     construct<ExecutableConstruct>{}(indirect(whereConstruct)) ||
-    construct<ExecutableConstruct>{}(indirect(forallConstruct));
+    construct<ExecutableConstruct>{}(indirect(forallConstruct)) ||
+    construct<ExecutableConstruct>{}(indirect(compilerDirective));
 
 // R510 execution-part-construct ->
 //        executable-construct | format-stmt | entry-stmt | data-stmt
@@ -3643,7 +3638,19 @@ TYPE_PARSER("CONTAINS" >> construct<ContainsStmt>{})
 TYPE_PARSER(construct<StmtFunctionStmt>{}(
     name, parenthesized(optionalList(name)), "=" >> scalar(expr)))
 
-// Extension and deprecated statements
+// Directives, extensions, and deprecated statements
+// !DIR$ IVDEP
+// !DIR$ IGNORE_TKR [ [(tkr...)] name ]...
+constexpr auto beginDirective = skipEmptyLines >> spaces >> "!"_ch;
+constexpr auto endDirective = spaces >> endOfLine;
+constexpr auto ivdep = "DIR$ IVDEP" >> construct<CompilerDirective::IVDEP>{};
+constexpr auto ignore_tkr = "DIR$ IGNORE_TKR" >>
+    optionalList(construct<CompilerDirective::IgnoreTKR>{}(
+        defaulted(parenthesized(some("tkr"_ch))), name));
+TYPE_PARSER(beginDirective >> sourced(construct<CompilerDirective>{}(ivdep) ||
+                                  construct<CompilerDirective>{}(ignore_tkr)) /
+        endDirective)
+
 TYPE_PARSER(
     extension(construct<BasedPointerStmt>{}("POINTER (" >> objectName / ",",
         objectName, maybe(Parser<ArraySpec>{}) / ")")))

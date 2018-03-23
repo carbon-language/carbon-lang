@@ -1180,26 +1180,6 @@ template<bool pass> struct FixedParser {
 constexpr FixedParser<true> ok;
 constexpr FixedParser<false> cut;
 
-// guard(bool) returns a parser that succeeds iff its dynamic argument
-// value is true.  The state is preserved.
-class GuardParser {
-public:
-  using resultType = Success;
-  constexpr GuardParser(const GuardParser &) = default;
-  constexpr GuardParser(bool ok) : ok_{ok} {}
-  constexpr std::optional<Success> Parse(ParseState *) const {
-    if (ok_) {
-      return {Success{}};
-    }
-    return {};
-  }
-
-private:
-  const bool ok_;
-};
-
-inline constexpr auto guard(bool truth) { return GuardParser(truth); }
-
 // nextCh is a parser that succeeds if the parsing state is not
 // at the end of its input, returning the next character location and
 // advancing the parse when it does so.
@@ -1309,25 +1289,6 @@ constexpr struct GetUserState {
     return {state->userState()};
   }
 } getUserState;
-
-constexpr struct InFixedForm {
-  using resultType = Success;
-  constexpr InFixedForm() {}
-  static std::optional<Success> Parse(ParseState *state) {
-    if (state->inFixedForm()) {
-      return {Success{}};
-    }
-    return {};
-  }
-} inFixedForm;
-
-constexpr struct GetColumn {
-  using resultType = int;
-  constexpr GetColumn() {}
-  static std::optional<int> Parse(ParseState *state) {
-    return {state->column()};
-  }
-} getColumn;
 }  // namespace parser
 }  // namespace Fortran
 #endif  // FORTRAN_PARSER_BASIC_PARSERS_H_

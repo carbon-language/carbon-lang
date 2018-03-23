@@ -50,9 +50,13 @@ MessageFixedText MessageExpectedText::AsMessageFixedText() const {
 }
 
 Provenance Message::Emit(
-    std::ostream &o, const AllSources &sources, bool echoSourceLine) const {
-  if (!context_ || context_->Emit(o, sources, false) != provenance_) {
-    sources.Identify(o, provenance_, "", echoSourceLine);
+    std::ostream &o, const CookedSource &cooked, bool echoSourceLine) const {
+  Provenance provenance{provenance_};
+  if (cookedSourceLocation_ != nullptr) {
+    provenance = cooked.GetProvenance(cookedSourceLocation_).start();
+  }
+  if (!context_ || context_->Emit(o, cooked, false) != provenance) {
+    cooked.allSources().Identify(o, provenance, "", echoSourceLine);
   }
   o << "   ";
   if (string_.empty()) {
@@ -71,10 +75,11 @@ Provenance Message::Emit(
     o << string_;
   }
   o << '\n';
-  return provenance_;
+  return provenance;
 }
 
-void Messages::Emit(std::ostream &o, const char *prefix) const {
+void Messages::Emit(
+    std::ostream &o, const char *prefix, bool echoSourceLines) const {
   for (const auto &msg : messages_) {
     if (prefix) {
       o << prefix;
@@ -82,7 +87,7 @@ void Messages::Emit(std::ostream &o, const char *prefix) const {
     if (msg.context()) {
       o << "In the context ";
     }
-    msg.Emit(o, allSources_);
+    msg.Emit(o, cooked_, echoSourceLines);
   }
 }
 }  // namespace parser

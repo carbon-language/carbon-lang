@@ -1941,7 +1941,30 @@ public:
     return false;
   }
 
-  // Extensions and deprecated constructs
+  // Directives, extensions, and deprecated constructs
+  bool Pre(const CompilerDirective &x) {
+    std::visit(
+        visitors{[&](const std::list<CompilerDirective::IgnoreTKR> &tkr) {
+                   Word("!DIR$ IGNORE_TKR");
+                   Walk(" ", tkr, ", ");
+                 },
+            [&](const CompilerDirective::IVDEP &) { Word("!DIR$ IVDEP\n"); }},
+        x.u);
+    Put('\n');
+    return false;
+  }
+  bool Pre(const CompilerDirective::IgnoreTKR &x) {
+    const auto &list = std::get<std::list<const char *>>(x.t);
+    if (!list.empty()) {
+      Put("(");
+      for (const char *tkr : list) {
+        Put(*tkr);
+      }
+      Put(") ");
+    }
+    Walk(std::get<Name>(x.t));
+    return false;
+  }
   bool Pre(const BasedPointerStmt &x) {
     Word("POINTER ("), Walk(std::get<0>(x.t)), Put(", ");
     Walk(std::get<1>(x.t));
@@ -2150,9 +2173,7 @@ void UnparseVisitor::Word(const char *str) {
   }
 }
 
-void UnparseVisitor::Word(const std::string &str) {
-  Word(str.c_str());
-}
+void UnparseVisitor::Word(const std::string &str) { Word(str.c_str()); }
 
 void Unparse(std::ostream &out, const Program &program, Encoding encoding,
     bool capitalizeKeywords) {

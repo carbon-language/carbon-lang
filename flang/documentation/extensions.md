@@ -47,6 +47,7 @@ Extensions and legacy features deliberately not supported
 * Allocatable `COMMON`
 * Expressions in formats
 * `ACCEPT` as synonym for `READ *`
+* `TYPE` as synonym for `PRINT`
 * `ARRAY` as synonym for `DIMENSION`
 * `VIRTUAL` as synonym for `DIMENSION`
 * `ENCODE` and `DECODE` as synonyms for internal I/O

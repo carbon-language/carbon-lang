@@ -51,8 +51,8 @@ public:
 private:
   Options options_;
   AllSources allSources_;
-  Messages messages_{allSources_};
-  CookedSource cooked_{&allSources_};
+  CookedSource cooked_{allSources_};
+  Messages messages_{cooked_};
   bool anyFatalError_{false};
   bool consumedWholeFile_{false};
   Provenance finalRestingPlace_;

@@ -34,10 +34,10 @@ int main(int argc, char *const argv[]) {
 
   ProvenanceRange range{allSources.AddIncludedFile(
       *sourceFile, ProvenanceRange{})};
-  Messages messages{allSources};
-  CookedSource cooked{&allSources};
-  Preprocessor preprocessor{&allSources};
-  bool prescanOk{Prescanner{&messages, &cooked, &preprocessor}.Prescan(range)};
+  CookedSource cooked{allSources};
+  Messages messages{cooked};
+  Preprocessor preprocessor{allSources};
+  bool prescanOk{Prescanner{messages, cooked, preprocessor}.Prescan(range)};
   messages.Emit(std::cerr);
   if (!prescanOk) {
     return EXIT_FAILURE;

@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <optional>
 #include <tuple>
+#include <utility>
 #include <variant>
 
 /// Parse tree visitor
@@ -65,6 +66,13 @@ void Walk(const std::variant<A...> &x, V &visitor) {
   if (visitor.Pre(x)) {
     std::visit([&](const auto &y) { Walk(y, visitor); }, x);
     visitor.Post(x);
+  }
+}
+template<typename A, typename B, typename V>
+void Walk(const std::pair<A, B> &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.first, visitor);
+    Walk(x.second, visitor);
   }
 }
 

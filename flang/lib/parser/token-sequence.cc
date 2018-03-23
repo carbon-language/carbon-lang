@@ -40,8 +40,9 @@ void TokenSequence::Put(const TokenSequence &that) {
 
 void TokenSequence::Put(const TokenSequence &that, ProvenanceRange range) {
   std::size_t offset{0};
-  for (std::size_t j{0}; j < that.size(); ++j) {
-    CharBlock tok{that[j]};
+  std::size_t tokens{that.SizeInTokens()};
+  for (std::size_t j{0}; j < tokens; ++j) {
+    CharBlock tok{that.TokenAt(j)};
     Put(tok, range.OffsetMember(offset));
     offset += tok.size();
   }
@@ -53,12 +54,12 @@ void TokenSequence::Put(
   ProvenanceRange provenance;
   std::size_t offset{0};
   for (; tokens-- > 0; ++at) {
-    CharBlock tok{that[at]};
+    CharBlock tok{that.TokenAt(at)};
     std::size_t tokBytes{tok.size()};
     for (std::size_t j{0}; j < tokBytes; ++j) {
       if (offset == provenance.size()) {
-        offset = 0;
         provenance = that.provenances_.Map(that.start_[at] + j);
+        offset = 0;
       }
       PutNextTokenChar(tok[j], provenance.OffsetMember(offset++));
     }
@@ -86,55 +87,53 @@ void TokenSequence::Put(const std::stringstream &ss, Provenance provenance) {
   Put(ss.str(), provenance);
 }
 
-void TokenSequence::EmitLowerCase(CookedSource *cooked) const {
+TokenSequence &TokenSequence::ToLowerCase() {
   std::size_t tokens{start_.size()};
   std::size_t chars{char_.size()};
   std::size_t atToken{0};
   for (std::size_t j{0}; j < chars;) {
     std::size_t nextStart{atToken + 1 < tokens ? start_[++atToken] : chars};
-    const char *p{&char_[j]}, *limit{&char_[nextStart]};
+    char *p{&char_[j]}, *limit{&char_[nextStart]};
     j = nextStart;
     if (IsDecimalDigit(*p)) {
       while (p < limit && IsDecimalDigit(*p)) {
-        cooked->Put(*p++);
+        ++p;
       }
       if (p < limit && (*p == 'h' || *p == 'H')) {
         // Hollerith
-        cooked->Put('h');
-        cooked->Put(p + 1, limit - (p + 1));
+        *p = 'h';
       } else {
         // exponent
-        while (p < limit) {
-          cooked->Put(ToLowerCaseLetter(*p++));
+        for (; p < limit; ++p) {
+          *p = ToLowerCaseLetter(*p);
         }
       }
     } else if (limit[-1] == '\'' || limit[-1] == '"') {
       if (*p == limit[-1]) {
         // Character literal without prefix
-        cooked->Put(p, limit - p);
       } else if (p[1] == limit[-1]) {
         // BOZX-prefixed constant
-        while (p < limit) {
-          cooked->Put(ToLowerCaseLetter(*p++));
+        for (; p < limit; ++p) {
+          *p = ToLowerCaseLetter(*p);
         }
       } else {
         // Kanji NC'...' character literal or literal with kind-param prefix.
-        while (*p != limit[-1]) {
-          cooked->Put(ToLowerCaseLetter(*p++));
+        for (; *p != limit[-1]; ++p) {
+          *p = ToLowerCaseLetter(*p);
         }
-        cooked->Put(p, limit - p);
       }
     } else {
-      while (p < limit) {
-        cooked->Put(ToLowerCaseLetter(*p++));
+      for (; p < limit; ++p) {
+        *p = ToLowerCaseLetter(*p);
       }
     }
   }
-  cooked->PutProvenanceMappings(provenances_);
+  return *this;
 }
 
-std::string TokenSequence::ToString() const {
-  return {&char_[0], char_.size()};
+void TokenSequence::Emit(CookedSource *cooked) const {
+  cooked->Put(&char_[0], char_.size());
+  cooked->PutProvenanceMappings(provenances_);
 }
 
 Provenance TokenSequence::GetTokenProvenance(

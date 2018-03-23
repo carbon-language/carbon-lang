@@ -28,22 +28,21 @@ public:
   // TODO: Add a constructor for parsing a normalized module file.
   ParseState(const CookedSource &cooked)
     : cooked_{cooked}, p_{&cooked[0]}, limit_{p_ + cooked.size()},
-      messages_{*cooked.allSources()} {}
+      messages_{cooked} {}
   ParseState(const ParseState &that)
     : cooked_{that.cooked_}, p_{that.p_}, limit_{that.limit_},
-      column_{that.column_}, messages_{*that.cooked_.allSources()},
-      userState_{that.userState_}, inFixedForm_{that.inFixedForm_},
-      encoding_{that.encoding_}, strictConformance_{that.strictConformance_},
+      messages_{that.cooked_}, userState_{that.userState_},
+      inFixedForm_{that.inFixedForm_}, encoding_{that.encoding_},
+      strictConformance_{that.strictConformance_},
       warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
       warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
       anyErrorRecovery_{that.anyErrorRecovery_},
       anyConformanceViolation_{that.anyConformanceViolation_} {}
   ParseState(ParseState &&that)
     : cooked_{that.cooked_}, p_{that.p_}, limit_{that.limit_},
-      column_{that.column_}, messages_{std::move(that.messages_)},
-      context_{std::move(that.context_)}, userState_{that.userState_},
-      inFixedForm_{that.inFixedForm_}, encoding_{that.encoding_},
-      strictConformance_{that.strictConformance_},
+      messages_{std::move(that.messages_)}, context_{std::move(that.context_)},
+      userState_{that.userState_}, inFixedForm_{that.inFixedForm_},
+      encoding_{that.encoding_}, strictConformance_{that.strictConformance_},
       warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
       warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
       anyErrorRecovery_{that.anyErrorRecovery_},
@@ -62,7 +61,6 @@ public:
   }
 
   const CookedSource &cooked() const { return cooked_; }
-  int column() const { return column_; }
   Messages *messages() { return &messages_; }
 
   bool anyErrorRecovery() const { return anyErrorRecovery_; }
@@ -134,34 +132,23 @@ public:
   Message &PutMessage(MessageExpectedText &&t) {
     return PutMessage(p_, std::move(t));
   }
+
   Message &PutMessage(const char *at, MessageFixedText t) {
-    return PutMessage(GetProvenance(at), t);
-  }
-  Message &PutMessage(const char *at, MessageFormattedText &&t) {
-    return PutMessage(GetProvenance(at), std::move(t));
-  }
-  Message &PutMessage(const char *at, MessageExpectedText &&t) {
-    return PutMessage(GetProvenance(at), std::move(t));
-  }
-  Message &PutMessage(Provenance at, MessageFixedText t) {
     return messages_.Put(Message{at, t, context_});
   }
-  Message &PutMessage(Provenance at, MessageFormattedText &&t) {
+  Message &PutMessage(const char *at, MessageFormattedText &&t) {
     return messages_.Put(Message{at, std::move(t), context_});
   }
-  Message &PutMessage(Provenance at, MessageExpectedText &&t) {
+  Message &PutMessage(const char *at, MessageExpectedText &&t) {
     return messages_.Put(Message{at, std::move(t), context_});
   }
 
   bool IsAtEnd() const { return p_ >= limit_; }
 
-  char UncheckedAdvance() {
-    ++column_;
-    char ch{*p_++};
-    if (ch == '\n') {
-      column_ = 1;
-    }
-    return ch;
+  char UncheckedAdvance(std::size_t n = 1) {
+    char result{*p_};
+    p_ += n;
+    return result;
   }
 
   std::optional<char> GetNextChar() {
@@ -182,7 +169,6 @@ private:
   // Text remaining to be parsed
   const CookedSource &cooked_;
   const char *p_{nullptr}, *limit_{nullptr};
-  int column_{1};
 
   // Accumulated messages and current nested context.
   Messages messages_;

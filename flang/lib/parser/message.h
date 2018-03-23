@@ -73,6 +73,10 @@ class Message {
 public:
   Message() {}
   Message(const Message &) = default;
+  Message(Message &&) = default;
+  Message &operator=(const Message &that) = default;
+  Message &operator=(Message &&that) = default;
+
   Message(Provenance p, MessageFixedText t, MessageContext c = nullptr)
     : provenance_{p}, text_{t}, context_{c} {}
   Message(Provenance p, MessageFormattedText &&s, MessageContext c = nullptr)
@@ -80,22 +84,35 @@ public:
   Message(Provenance p, MessageExpectedText t, MessageContext c = nullptr)
     : provenance_{p}, text_{t.AsMessageFixedText()},
       isExpectedText_{true}, context_{c} {}
-  Message(Message &&) = default;
-  Message &operator=(const Message &that) = default;
-  Message &operator=(Message &&that) = default;
+
+  Message(const char *csl, MessageFixedText t, MessageContext c = nullptr)
+    : cookedSourceLocation_{csl}, text_{t}, context_{c} {}
+  Message(const char *csl, MessageFormattedText &&s, MessageContext c = nullptr)
+    : cookedSourceLocation_{csl}, string_{s.MoveString()}, context_{c} {}
+  Message(const char *csl, MessageExpectedText t, MessageContext c = nullptr)
+    : cookedSourceLocation_{csl}, text_{t.AsMessageFixedText()},
+      isExpectedText_{true}, context_{c} {}
 
   bool operator<(const Message &that) const {
-    return provenance_ < that.provenance_;
+    if (cookedSourceLocation_ != nullptr) {
+      return cookedSourceLocation_ < that.cookedSourceLocation_;
+    } else if (that.cookedSourceLocation_ != nullptr) {
+      return false;
+    } else {
+      return provenance_ < that.provenance_;
+    }
   }
 
   Provenance provenance() const { return provenance_; }
+  const char *cookedSourceLocation() const { return cookedSourceLocation_; }
   MessageContext context() const { return context_; }
 
   Provenance Emit(
-      std::ostream &, const AllSources &, bool echoSourceLine = true) const;
+      std::ostream &, const CookedSource &, bool echoSourceLine = true) const;
 
 private:
   Provenance provenance_;
+  const char *cookedSourceLocation_{nullptr};
   MessageFixedText text_;
   bool isExpectedText_{false};  // implies "expected '%s'"_en_US
   std::string string_;
@@ -109,9 +126,9 @@ public:
   using iterator = list_type::iterator;
   using const_iterator = list_type::const_iterator;
 
-  explicit Messages(const AllSources &sources) : allSources_{sources} {}
+  explicit Messages(const CookedSource &cooked) : cooked_{cooked} {}
   Messages(Messages &&that)
-    : allSources_{that.allSources_}, messages_{std::move(that.messages_)},
+    : cooked_{that.cooked_}, messages_{std::move(that.messages_)},
       last_{that.last_} {}
   Messages &operator=(Messages &&that) {
     swap(that);
@@ -130,10 +147,18 @@ public:
   const_iterator cbegin() const { return messages_.cbegin(); }
   const_iterator cend() const { return messages_.cend(); }
 
-  const AllSources &allSources() const { return allSources_; }
+  const CookedSource &cooked() const { return cooked_; }
+
+  bool IsValidLocation(const Message &m) {
+    if (auto p{m.cookedSourceLocation()}) {
+      return cooked_.IsValid(p);
+    } else {
+      return cooked_.IsValid(m.provenance());
+    }
+  }
 
   Message &Put(Message &&m) {
-    CHECK(allSources_.IsValid(m.provenance()));
+    CHECK(IsValidLocation(m));
     if (messages_.empty()) {
       messages_.emplace_front(std::move(m));
       last_ = messages_.begin();
@@ -154,10 +179,11 @@ public:
     }
   }
 
-  void Emit(std::ostream &, const char *prefix = nullptr) const;
+  void Emit(std::ostream &, const char *prefix = nullptr,
+      bool echoSourceLines = true) const;
 
 private:
-  const AllSources &allSources_;
+  const CookedSource &cooked_;
   list_type messages_;
   iterator last_;  // valid iff messages_ nonempty
 };

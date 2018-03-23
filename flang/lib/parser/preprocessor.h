@@ -28,7 +28,7 @@ public:
   Definition(const TokenSequence &, std::size_t firstToken, std::size_t tokens);
   Definition(const std::vector<std::string> &argNames, const TokenSequence &,
       std::size_t firstToken, std::size_t tokens, bool isVariadic = false);
-  Definition(const std::string &predefined, AllSources *);
+  Definition(const std::string &predefined, AllSources &);
 
   bool isFunctionLike() const { return isFunctionLike_; }
   std::size_t argumentCount() const { return argumentCount_; }
@@ -39,7 +39,7 @@ public:
 
   bool set_isDisabled(bool disable);
 
-  TokenSequence Apply(const std::vector<TokenSequence> &args, AllSources *);
+  TokenSequence Apply(const std::vector<TokenSequence> &args, AllSources &);
 
 private:
   static TokenSequence Tokenize(const std::vector<std::string> &argNames,
@@ -56,17 +56,13 @@ private:
 // Preprocessing state
 class Preprocessor {
 public:
-  explicit Preprocessor(AllSources *);
+  explicit Preprocessor(AllSources &);
 
   void Define(std::string macro, std::string value);
   void Undefine(std::string macro);
 
-  // When the input contains macros to be replaced, the new token sequence
-  // is appended to the output and the returned value is true.  When
-  // no macro replacement is necessary, the output is unmodified and the
-  // return value is false.
-  bool MacroReplacement(
-      const TokenSequence &, const Prescanner &, TokenSequence *);
+  std::optional<TokenSequence> MacroReplacement(
+      const TokenSequence &, const Prescanner &);
 
   // Implements a preprocessor directive.
   void Directive(const TokenSequence &, Prescanner *);
@@ -83,7 +79,7 @@ private:
   bool IsIfPredicateTrue(const TokenSequence &expr, std::size_t first,
       std::size_t exprTokens, Prescanner *);
 
-  AllSources *allSources_;
+  AllSources &allSources_;
   std::list<std::string> names_;
   std::unordered_map<CharBlock, Definition> definitions_;
   std::stack<CanDeadElseAppear> ifStack_;

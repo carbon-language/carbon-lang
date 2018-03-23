@@ -496,6 +496,27 @@ inline constexpr auto optionalListBeforeColons(const PA &p) {
   return "," >> nonemptyList(p) / "::" ||
       ("::"_tok || !","_tok) >> defaulted(cut >> nonemptyList(p));
 }
+
+// Compiler directives can switch the parser between fixed and free form.
+constexpr struct FormDirectivesAndEmptyLines {
+  using resultType = Success;
+  static std::optional<Success> Parse(ParseState *state) {
+    while (!state->IsAtEnd()) {
+      const char *at{state->GetLocation()};
+      static const char fixed[] = "!dir$ fixed\n", free[] = "!dir$ free\n";
+      if (*at == '\n') {
+        state->UncheckedAdvance();
+      } else if (std::memcmp(at, fixed, sizeof fixed - 1) == 0) {
+        state->set_inFixedForm(true).UncheckedAdvance(sizeof fixed - 1);
+      } else if (std::memcmp(at, free, sizeof free - 1) == 0) {
+        state->set_inFixedForm(false).UncheckedAdvance(sizeof free - 1);
+      } else {
+        break;
+      }
+    }
+    return {Success{}};
+  }
+} skipEmptyLines;
 }  // namespace parser
 }  // namespace Fortran
 #endif  // FORTRAN_PARSER_TOKEN_PARSERS_H_

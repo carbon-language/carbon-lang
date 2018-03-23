@@ -28,10 +28,10 @@ Definition::Definition(const std::vector<std::string> &argNames,
     argumentCount_(argNames.size()), isVariadic_{isVariadic},
     replacement_{Tokenize(argNames, repl, firstToken, tokens)} {}
 
-Definition::Definition(const std::string &predefined, AllSources *sources)
-  : isPredefined_{true},
-    replacement_{
-        predefined, sources->AddCompilerInsertion(predefined).start()} {}
+Definition::Definition(const std::string &predefined, AllSources &sources)
+  : isPredefined_{true}, replacement_{predefined,
+                             sources.AddCompilerInsertion(predefined).start()} {
+}
 
 bool Definition::set_isDisabled(bool disable) {
   bool was{isDisabled_};
@@ -53,7 +53,7 @@ TokenSequence Definition::Tokenize(const std::vector<std::string> &argNames,
   }
   TokenSequence result;
   for (std::size_t j{0}; j < tokens; ++j) {
-    CharBlock tok{token[firstToken + j]};
+    CharBlock tok{token.TokenAt(firstToken + j)};
     if (IsLegalIdentifierStart(tok)) {
       auto it = args.find(tok.ToString());
       if (it != args.end()) {
@@ -67,8 +67,8 @@ TokenSequence Definition::Tokenize(const std::vector<std::string> &argNames,
 }
 
 static std::size_t AfterLastNonBlank(const TokenSequence &tokens) {
-  for (std::size_t j{tokens.size()}; j > 0; --j) {
-    if (!tokens[j - 1].IsBlank()) {
+  for (std::size_t j{tokens.SizeInTokens()}; j > 0; --j) {
+    if (!tokens.TokenAt(j - 1).IsBlank()) {
       return j;
     }
   }
@@ -76,12 +76,12 @@ static std::size_t AfterLastNonBlank(const TokenSequence &tokens) {
 }
 
 static TokenSequence Stringify(
-    const TokenSequence &tokens, AllSources *allSources) {
+    const TokenSequence &tokens, AllSources &allSources) {
   TokenSequence result;
-  Provenance quoteProvenance{allSources->CompilerInsertionProvenance('"')};
+  Provenance quoteProvenance{allSources.CompilerInsertionProvenance('"')};
   result.PutNextTokenChar('"', quoteProvenance);
-  for (std::size_t j{0}; j < tokens.size(); ++j) {
-    const CharBlock &token{tokens[j]};
+  for (std::size_t j{0}; j < tokens.SizeInTokens(); ++j) {
+    const CharBlock &token{tokens.TokenAt(j)};
     std::size_t bytes{token.size()};
     for (std::size_t k{0}; k < bytes; ++k) {
       char ch{token[k]};
@@ -98,14 +98,14 @@ static TokenSequence Stringify(
 }
 
 TokenSequence Definition::Apply(
-    const std::vector<TokenSequence> &args, AllSources *allSources) {
+    const std::vector<TokenSequence> &args, AllSources &allSources) {
   TokenSequence result;
   bool pasting{false};
   bool skipping{false};
   int parenthesesNesting{0};
-  std::size_t tokens{replacement_.size()};
+  std::size_t tokens{replacement_.SizeInTokens()};
   for (std::size_t j{0}; j < tokens; ++j) {
-    const CharBlock &token{replacement_[j]};
+    const CharBlock &token{replacement_.TokenAt(j)};
     std::size_t bytes{token.size()};
     if (skipping) {
       if (bytes == 1) {
@@ -124,16 +124,16 @@ TokenSequence Definition::Apply(
       }
       std::size_t afterLastNonBlank{AfterLastNonBlank(result)};
       if (afterLastNonBlank > 0 &&
-          result[afterLastNonBlank - 1].ToString() == "#") {
+          result.TokenAt(afterLastNonBlank - 1).ToString() == "#") {
         // stringifying
-        while (result.size() >= afterLastNonBlank) {
+        while (result.SizeInTokens() >= afterLastNonBlank) {
           result.pop_back();
         }
         result.Put(Stringify(args[index], allSources));
       } else {
-        std::size_t argTokens{args[index].size()};
+        std::size_t argTokens{args[index].SizeInTokens()};
         for (std::size_t k{0}; k < argTokens; ++k) {
-          if (!pasting || !args[index][k].IsBlank()) {
+          if (!pasting || !args[index].TokenAt(k).IsBlank()) {
             result.Put(args[index], k);
             pasting = false;
           }
@@ -142,7 +142,8 @@ TokenSequence Definition::Apply(
     } else if (bytes == 2 && token[0] == '#' && token[1] == '#') {
       // Token pasting operator in body (not expanded argument); discard any
       // immediately preceding white space, then reopen the last token.
-      while (!result.empty() && result[result.size() - 1].IsBlank()) {
+      while (!result.empty() &&
+          result.TokenAt(result.SizeInTokens() - 1).IsBlank()) {
         result.pop_back();
       }
       if (!result.empty()) {
@@ -153,7 +154,7 @@ TokenSequence Definition::Apply(
       // Delete whitespace immediately following ## in the body.
     } else if (bytes == 11 && isVariadic_ &&
         token.ToString() == "__VA_ARGs__") {
-      Provenance commaProvenance{allSources->CompilerInsertionProvenance(',')};
+      Provenance commaProvenance{allSources.CompilerInsertionProvenance(',')};
       for (std::size_t k{argumentCount_}; k < args.size(); ++k) {
         if (k > argumentCount_) {
           result.Put(","s, commaProvenance);
@@ -161,7 +162,7 @@ TokenSequence Definition::Apply(
         result.Put(args[k]);
       }
     } else if (bytes == 10 && isVariadic_ && token.ToString() == "__VA_OPT__" &&
-        j + 2 < tokens && replacement_[j + 1].ToString() == "(" &&
+        j + 2 < tokens && replacement_.TokenAt(j + 1).ToString() == "(" &&
         parenthesesNesting == 0) {
       parenthesesNesting = 1;
       skipping = args.size() == argumentCount_;
@@ -187,7 +188,7 @@ static std::string FormatTime(const std::time_t &now, const char *format) {
       std::strftime(buffer, sizeof buffer, format, std::localtime(&now))};
 }
 
-Preprocessor::Preprocessor(AllSources *allSources) : allSources_{allSources} {
+Preprocessor::Preprocessor(AllSources &allSources) : allSources_{allSources} {
   // Capture current local date & time once now to avoid having the values
   // of __DATE__ or __TIME__ change during compilation.
   std::time_t now;
@@ -209,55 +210,55 @@ void Preprocessor::Define(std::string macro, std::string value) {
 
 void Preprocessor::Undefine(std::string macro) { definitions_.erase(macro); }
 
-bool Preprocessor::MacroReplacement(const TokenSequence &input,
-    const Prescanner &prescanner, TokenSequence *result) {
+std::optional<TokenSequence> Preprocessor::MacroReplacement(
+    const TokenSequence &input, const Prescanner &prescanner) {
   // Do quick scan for any use of a defined name.
-  std::size_t tokens{input.size()};
+  std::size_t tokens{input.SizeInTokens()};
   std::size_t j;
   for (j = 0; j < tokens; ++j) {
-    std::size_t bytes{input[j].size()};
-    if (bytes > 0 && IsLegalIdentifierStart(input[j][0]) &&
-        IsNameDefined(input[j])) {
+    CharBlock token{input.TokenAt(j)};
+    if (!token.empty() && IsLegalIdentifierStart(token[0]) &&
+        IsNameDefined(token)) {
       break;
     }
   }
   if (j == tokens) {
-    return false;  // contains nothing that would be replaced
+    return {};  // input contains nothing that would be replaced
   }
-  result->Put(input, 0, j);
+  TokenSequence result{input, 0, j};
   for (; j < tokens; ++j) {
-    const CharBlock &token{input[j]};
+    const CharBlock &token{input.TokenAt(j)};
     if (token.IsBlank() || !IsLegalIdentifierStart(token[0])) {
-      result->Put(input, j);
+      result.Put(input, j);
       continue;
     }
     auto it = definitions_.find(token);
     if (it == definitions_.end()) {
-      result->Put(input, j);
+      result.Put(input, j);
       continue;
     }
     Definition &def{it->second};
     if (def.isDisabled()) {
-      result->Put(input, j);
+      result.Put(input, j);
       continue;
     }
     if (!def.isFunctionLike()) {
       if (def.isPredefined()) {
-        std::string name{def.replacement()[0].ToString()};
+        std::string name{def.replacement().TokenAt(0).ToString()};
         std::string repl;
         if (name == "__FILE__") {
           repl = "\""s +
-              allSources_->GetPath(prescanner.GetCurrentProvenance()) + '"';
+              allSources_.GetPath(prescanner.GetCurrentProvenance()) + '"';
         } else if (name == "__LINE__") {
           std::stringstream ss;
-          ss << allSources_->GetLineNumber(prescanner.GetCurrentProvenance());
+          ss << allSources_.GetLineNumber(prescanner.GetCurrentProvenance());
           repl = ss.str();
         }
         if (!repl.empty()) {
-          ProvenanceRange insert{allSources_->AddCompilerInsertion(repl)};
-          ProvenanceRange call{allSources_->AddMacroCall(
+          ProvenanceRange insert{allSources_.AddCompilerInsertion(repl)};
+          ProvenanceRange call{allSources_.AddMacroCall(
               insert, input.GetTokenProvenanceRange(j), repl)};
-          result->Put(repl, call.start());
+          result.Put(repl, call.start());
           continue;
         }
       }
@@ -268,8 +269,8 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
         ProvenanceRange from{def.replacement().GetProvenanceRange()};
         ProvenanceRange use{input.GetTokenProvenanceRange(j)};
         ProvenanceRange newRange{
-            allSources_->AddMacroCall(from, use, replaced.ToString())};
-        result->Put(replaced, newRange);
+            allSources_.AddMacroCall(from, use, replaced.ToString())};
+        result.Put(replaced, newRange);
       }
       continue;
     }
@@ -278,20 +279,21 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
     std::size_t k{j};
     bool leftParen{false};
     while (++k < tokens) {
-      const CharBlock &lookAhead{input[k]};
+      const CharBlock &lookAhead{input.TokenAt(k)};
       if (!lookAhead.IsBlank() && lookAhead[0] != '\n') {
         leftParen = lookAhead[0] == '(' && lookAhead.size() == 1;
         break;
       }
     }
     if (!leftParen) {
-      result->Put(input, j);
+      result.Put(input, j);
       continue;
     }
     std::vector<std::size_t> argStart{++k};
     for (int nesting{0}; k < tokens; ++k) {
-      if (input[k].size() == 1) {
-        char ch{input[k][0]};
+      CharBlock token{input.TokenAt(k)};
+      if (token.size() == 1) {
+        char ch{token[0]};
         if (ch == '(') {
           ++nesting;
         } else if (ch == ')') {
@@ -306,7 +308,7 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
     }
     if (k >= tokens || argStart.size() < def.argumentCount() ||
         (argStart.size() > def.argumentCount() && !def.isVariadic())) {
-      result->Put(input, j);
+      result.Put(input, j);
       continue;
     }
     std::vector<TokenSequence> args;
@@ -324,24 +326,26 @@ bool Preprocessor::MacroReplacement(const TokenSequence &input,
       ProvenanceRange from{def.replacement().GetProvenanceRange()};
       ProvenanceRange use{input.GetIntervalProvenanceRange(j, k - j)};
       ProvenanceRange newRange{
-          allSources_->AddMacroCall(from, use, replaced.ToString())};
-      result->Put(replaced, newRange);
+          allSources_.AddMacroCall(from, use, replaced.ToString())};
+      result.Put(replaced, newRange);
     }
     j = k;  // advance to the terminal ')'
   }
-  return true;
+  return {result};
 }
 
 TokenSequence Preprocessor::ReplaceMacros(
     const TokenSequence &tokens, const Prescanner &prescanner) {
-  TokenSequence repl;
-  return MacroReplacement(tokens, prescanner, &repl) ? repl : tokens;
+  if (std::optional<TokenSequence> repl{MacroReplacement(tokens, prescanner)}) {
+    return std::move(*repl);
+  }
+  return tokens;
 }
 
 static std::size_t SkipBlanks(
     const TokenSequence &tokens, std::size_t at, std::size_t lastToken) {
   for (; at < lastToken; ++at) {
-    if (!tokens[at].IsBlank()) {
+    if (!tokens.TokenAt(at).IsBlank()) {
       break;
     }
   }
@@ -359,12 +363,12 @@ static TokenSequence StripBlanks(
 }
 
 void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
-  std::size_t tokens{dir.size()};
+  std::size_t tokens{dir.SizeInTokens()};
   std::size_t j{SkipBlanks(dir, 0, tokens)};
   if (j == tokens) {
     return;
   }
-  if (dir[j].ToString() != "#") {
+  if (dir.TokenAt(j).ToString() != "#") {
     prescanner->Error("missing '#'"_en_US, dir.GetTokenProvenance(j));
     return;
   }
@@ -372,15 +376,15 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
   if (j == tokens) {
     return;
   }
-  if (IsDecimalDigit(dir[j][0]) || dir[j][0] == '"') {
+  if (IsDecimalDigit(dir.TokenAt(j)[0]) || dir.TokenAt(j)[0] == '"') {
     return;  // TODO: treat as #line
   }
   std::size_t dirOffset{j};
-  std::string dirName{ToLowerCaseLetters(dir[dirOffset].ToString())};
+  std::string dirName{ToLowerCaseLetters(dir.TokenAt(dirOffset).ToString())};
   j = SkipBlanks(dir, j + 1, tokens);
   CharBlock nameToken;
-  if (j < tokens && IsLegalIdentifierStart(dir[j][0])) {
-    nameToken = dir[j];
+  if (j < tokens && IsLegalIdentifierStart(dir.TokenAt(j)[0])) {
+    nameToken = dir.TokenAt(j);
   }
   if (dirName == "line") {
     // TODO: implement #line
@@ -392,13 +396,14 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
     }
     nameToken = SaveTokenAsName(nameToken);
     definitions_.erase(nameToken);
-    if (++j < tokens && dir[j].size() == 1 && dir[j][0] == '(') {
+    if (++j < tokens && dir.TokenAt(j).size() == 1 &&
+        dir.TokenAt(j)[0] == '(') {
       j = SkipBlanks(dir, j + 1, tokens);
       std::vector<std::string> argName;
       bool isVariadic{false};
-      if (dir[j].ToString() != ")") {
+      if (dir.TokenAt(j).ToString() != ")") {
         while (true) {
-          std::string an{dir[j].ToString()};
+          std::string an{dir.TokenAt(j).ToString()};
           if (an == "...") {
             isVariadic = true;
           } else {
@@ -416,7 +421,7 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
                 dir.GetTokenProvenance(tokens - 1));
             return;
           }
-          std::string punc{dir[j].ToString()};
+          std::string punc{dir.TokenAt(j).ToString()};
           if (punc == ")") {
             break;
           }
@@ -542,8 +547,8 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
       return;
     }
     std::string include;
-    if (dir[j].ToString() == "<") {
-      if (dir[tokens - 1].ToString() != ">") {
+    if (dir.TokenAt(j).ToString() == "<") {
+      if (dir.TokenAt(tokens - 1).ToString() != ">") {
         prescanner->Error("#include: expected '>' at end of directive"_en_US,
             dir.GetTokenProvenance(tokens - 1));
         return;
@@ -551,7 +556,7 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
       TokenSequence braced{dir, j + 1, tokens - j - 2};
       include = ReplaceMacros(braced, *prescanner).ToString();
     } else if (j + 1 == tokens &&
-        (include = dir[j].ToString()).substr(0, 1) == "\"" &&
+        (include = dir.TokenAt(j).ToString()).substr(0, 1) == "\"" &&
         include.substr(include.size() - 1, 1) == "\"") {
       include = include.substr(1, include.size() - 2);
     } else {
@@ -565,7 +570,7 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
       return;
     }
     std::stringstream error;
-    const SourceFile *included{allSources_->Open(include, &error)};
+    const SourceFile *included{allSources_.Open(include, &error)};
     if (included == nullptr) {
       prescanner->Error(
           MessageFormattedText("#include: %s"_en_US, error.str().data()),
@@ -576,7 +581,7 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
       return;
     }
     ProvenanceRange fileRange{
-        allSources_->AddIncludedFile(*included, dir.GetProvenanceRange())};
+        allSources_.AddIncludedFile(*included, dir.GetProvenanceRange())};
     if (!Prescanner{*prescanner}.Prescan(fileRange)) {
       prescanner->set_anyFatalErrors();
     }
@@ -599,9 +604,9 @@ bool Preprocessor::IsNameDefined(const CharBlock &token) {
 
 static std::string GetDirectiveName(
     const TokenSequence &line, std::size_t *rest) {
-  std::size_t tokens{line.size()};
+  std::size_t tokens{line.SizeInTokens()};
   std::size_t j{SkipBlanks(line, 0, tokens)};
-  if (j == tokens || line[j].ToString() != "#") {
+  if (j == tokens || line.TokenAt(j).ToString() != "#") {
     *rest = tokens;
     return "";
   }
@@ -611,7 +616,7 @@ static std::string GetDirectiveName(
     return "";
   }
   *rest = SkipBlanks(line, j + 1, tokens);
-  return ToLowerCaseLetters(line[j].ToString());
+  return ToLowerCaseLetters(line.TokenAt(j).ToString());
 }
 
 void Preprocessor::SkipDisabledConditionalCode(const std::string &dirName,
@@ -637,7 +642,8 @@ void Preprocessor::SkipDisabledConditionalCode(const std::string &dirName,
         return;
       }
       if (dn == "elif" &&
-          IsIfPredicateTrue(line, rest, line.size() - rest, prescanner)) {
+          IsIfPredicateTrue(
+              line, rest, line.SizeInTokens() - rest, prescanner)) {
         ifStack_.push(CanDeadElseAppear::Yes);
         return;
       }
@@ -743,7 +749,7 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
     opNameMap[","] = COMMA;
   }
 
-  std::size_t tokens{token.size()};
+  std::size_t tokens{token.SizeInTokens()};
   if (*atToken >= tokens) {
     *error = Message{
         token.GetTokenProvenance(tokens - 1), "incomplete expression"_en_US};
@@ -752,7 +758,7 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
 
   // Parse and evaluate a primary or a unary operator and its operand.
   std::size_t opAt{*atToken};
-  std::string t{token[opAt].ToString()};
+  std::string t{token.TokenAt(opAt).ToString()};
   enum Operator op;
   std::int64_t left{0};
   if (t == "(") {
@@ -776,8 +782,8 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
   } else if (t == "-") {
     op = UMINUS;
   } else if (t == "." && *atToken + 2 < tokens &&
-      ToLowerCaseLetters(token[*atToken + 1].ToString()) == "not" &&
-      token[*atToken + 2].ToString() == ".") {
+      ToLowerCaseLetters(token.TokenAt(*atToken + 1).ToString()) == "not" &&
+      token.TokenAt(*atToken + 2).ToString() == ".") {
     op = NOT;
     *atToken += 2;
   } else {
@@ -803,7 +809,7 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
     }
     switch (op) {
     case PARENS:
-      if (*atToken < tokens && token[*atToken].ToString() == ")") {
+      if (*atToken < tokens && token.TokenAt(*atToken).ToString() == ")") {
         ++*atToken;
       } else {
         *error = Message{token.GetTokenProvenance(tokens - 1),
@@ -825,10 +831,10 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
 
   // Parse and evaluate a binary operator and its second operand, if present.
   int advance{1};
-  t = token[*atToken].ToString();
+  t = token.TokenAt(*atToken).ToString();
   if (t == "." && *atToken + 2 < tokens &&
-      token[*atToken + 2].ToString() == ".") {
-    t += ToLowerCaseLetters(token[*atToken + 1].ToString()) + '.';
+      token.TokenAt(*atToken + 2).ToString() == ".") {
+    t += ToLowerCaseLetters(token.TokenAt(*atToken + 1).ToString()) + '.';
     advance = 3;
   }
   auto it = opNameMap.find(t);
@@ -931,7 +937,7 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
   case EQV: return -(!left == !right);
   case NEQV: return -(!left != !right);
   case SELECT:
-    if (*atToken >= tokens || token[*atToken].ToString() != ":") {
+    if (*atToken >= tokens || token.TokenAt(*atToken).ToString() != ":") {
       *error = Message{token.GetTokenProvenance(opAt),
           "':' required in selection expression"_en_US};
       return left;
@@ -951,32 +957,34 @@ bool Preprocessor::IsIfPredicateTrue(const TokenSequence &expr,
     std::size_t first, std::size_t exprTokens, Prescanner *prescanner) {
   TokenSequence expr1{StripBlanks(expr, first, first + exprTokens)};
   TokenSequence expr2;
-  for (std::size_t j{0}; j < expr1.size(); ++j) {
-    if (ToLowerCaseLetters(expr1[j].ToString()) == "defined") {
+  for (std::size_t j{0}; j < expr1.SizeInTokens(); ++j) {
+    if (ToLowerCaseLetters(expr1.TokenAt(j).ToString()) == "defined") {
       CharBlock name;
-      if (j + 3 < expr1.size() && expr1[j + 1].ToString() == "(" &&
-          expr1[j + 3].ToString() == ")") {
-        name = expr1[j + 2];
+      if (j + 3 < expr1.SizeInTokens() &&
+          expr1.TokenAt(j + 1).ToString() == "(" &&
+          expr1.TokenAt(j + 3).ToString() == ")") {
+        name = expr1.TokenAt(j + 2);
         j += 3;
-      } else if (j + 1 < expr1.size() && IsLegalIdentifierStart(expr1[j + 1])) {
-        name = expr1[j++];
+      } else if (j + 1 < expr1.SizeInTokens() &&
+          IsLegalIdentifierStart(expr1.TokenAt(j + 1))) {
+        name = expr1.TokenAt(j++);
       }
       if (!name.empty()) {
         char truth{IsNameDefined(name) ? '1' : '0'};
-        expr2.Put(&truth, 1, allSources_->CompilerInsertionProvenance(truth));
+        expr2.Put(&truth, 1, allSources_.CompilerInsertionProvenance(truth));
         continue;
       }
     }
     expr2.Put(expr1, j);
   }
   TokenSequence expr3{ReplaceMacros(expr2, *prescanner)};
-  TokenSequence expr4{StripBlanks(expr3, 0, expr3.size())};
+  TokenSequence expr4{StripBlanks(expr3, 0, expr3.SizeInTokens())};
   std::size_t atToken{0};
   std::optional<Message> error;
   bool result{ExpressionValue(expr4, 0, &atToken, &error) != 0};
   if (error.has_value()) {
     prescanner->Error(std::move(*error));
-  } else if (atToken < expr4.size()) {
+  } else if (atToken < expr4.SizeInTokens()) {
     prescanner->Error(atToken == 0 ? "could not parse any expression"_en_US
                                    : "excess characters after expression"_en_US,
         expr4.GetTokenProvenance(atToken));
