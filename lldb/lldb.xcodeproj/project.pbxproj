@@ -379,7 +379,6 @@
 		2689000F13353DB600698AC0 /* StoppointLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E1710F1B83100F91463 /* StoppointLocation.cpp */; };
 		2689001113353DB600698AC0 /* Watchpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E1810F1B83100F91463 /* Watchpoint.cpp */; };
 		2689001213353DDE00698AC0 /* CommandObjectApropos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CA9637911B6E99A00780E28 /* CommandObjectApropos.cpp */; };
-		2689001313353DDE00698AC0 /* CommandObjectArgs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 499F381F11A5B3F300F5CE02 /* CommandObjectArgs.cpp */; };
 		2689001413353DDE00698AC0 /* CommandObjectBreakpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E2D10F1B84700F91463 /* CommandObjectBreakpoint.cpp */; };
 		2689001513353DDE00698AC0 /* CommandObjectBreakpointCommand.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A42976211861AA600FE05CD /* CommandObjectBreakpointCommand.cpp */; };
 		2689001613353DDE00698AC0 /* CommandObjectCommands.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C5DBBC611E3FEC60035160F /* CommandObjectCommands.cpp */; };
@@ -2510,8 +2509,6 @@
 		4987FB1C1F30EC6000E5C17D /* SBProcessInfo.i */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBProcessInfo.i; sourceTree = "<group>"; };
 		4987FB1E1F30EC7E00E5C17D /* SBProcessInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBProcessInfo.cpp; path = source/API/SBProcessInfo.cpp; sourceTree = "<group>"; };
 		4987FB201F30EC9900E5C17D /* SBProcessInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBProcessInfo.h; path = include/lldb/API/SBProcessInfo.h; sourceTree = "<group>"; };
-		499F381E11A5B3F300F5CE02 /* CommandObjectArgs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectArgs.h; path = source/Commands/CommandObjectArgs.h; sourceTree = "<group>"; };
-		499F381F11A5B3F300F5CE02 /* CommandObjectArgs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectArgs.cpp; path = source/Commands/CommandObjectArgs.cpp; sourceTree = "<group>"; };
 		49A1CAC11430E21D00306AC9 /* ExpressionSourceCode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExpressionSourceCode.h; path = include/lldb/Expression/ExpressionSourceCode.h; sourceTree = "<group>"; };
 		49A1CAC31430E8BD00306AC9 /* ExpressionSourceCode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ExpressionSourceCode.cpp; path = source/Expression/ExpressionSourceCode.cpp; sourceTree = "<group>"; };
 		49A8A39F11D568A300AD3B68 /* ASTResultSynthesizer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTResultSynthesizer.cpp; path = ExpressionParser/Clang/ASTResultSynthesizer.cpp; sourceTree = "<group>"; };
@@ -5170,8 +5167,6 @@
 			children = (
 				4CA9637A11B6E99A00780E28 /* CommandObjectApropos.h */,
 				4CA9637911B6E99A00780E28 /* CommandObjectApropos.cpp */,
-				499F381E11A5B3F300F5CE02 /* CommandObjectArgs.h */,
-				499F381F11A5B3F300F5CE02 /* CommandObjectArgs.cpp */,
 				26BC7D1410F1B76300F91463 /* CommandObjectBreakpoint.h */,
 				26BC7E2D10F1B84700F91463 /* CommandObjectBreakpoint.cpp */,
 				9A42976111861A9F00FE05CD /* CommandObjectBreakpointCommand.h */,
@@ -7529,7 +7524,6 @@
 				AE44FB4C1BB4BB540033EB62 /* GoFormatterFunctions.cpp in Sources */,
 				8C3BD9961EF45DA50016C343 /* MainThreadCheckerRuntime.cpp in Sources */,
 				23042D121976CA1D00621B2C /* PlatformKalimba.cpp in Sources */,
-				2689001313353DDE00698AC0 /* CommandObjectArgs.cpp in Sources */,
 				2689001413353DDE00698AC0 /* CommandObjectBreakpoint.cpp in Sources */,
 				2689001513353DDE00698AC0 /* CommandObjectBreakpointCommand.cpp in Sources */,
 				2689001613353DDE00698AC0 /* CommandObjectCommands.cpp in Sources */,
