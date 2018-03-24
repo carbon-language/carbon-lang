@@ -702,79 +702,64 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
   case X86Local::MRM_##from:
 
   llvm::Optional<OpcodeType> opcodeType;
-
-  ModRMFilter*  filter      = nullptr;
-  uint8_t       opcodeToSet = 0;
-
   switch (OpMap) {
   default: llvm_unreachable("Invalid map!");
-  case X86Local::OB:
-  case X86Local::TB:
-  case X86Local::T8:
-  case X86Local::TA:
-  case X86Local::XOP8:
-  case X86Local::XOP9:
-  case X86Local::XOPA:
-  case X86Local::ThreeDNow:
-    switch (OpMap) {
-    default: llvm_unreachable("Unexpected map!");
-    case X86Local::OB:        opcodeType = ONEBYTE;      break;
-    case X86Local::TB:        opcodeType = TWOBYTE;      break;
-    case X86Local::T8:        opcodeType = THREEBYTE_38; break;
-    case X86Local::TA:        opcodeType = THREEBYTE_3A; break;
-    case X86Local::XOP8:      opcodeType = XOP8_MAP;     break;
-    case X86Local::XOP9:      opcodeType = XOP9_MAP;     break;
-    case X86Local::XOPA:      opcodeType = XOPA_MAP;     break;
-    case X86Local::ThreeDNow: opcodeType = TWOBYTE;      break;
-    }
+  case X86Local::OB:        opcodeType = ONEBYTE;      break;
+  case X86Local::TB:        opcodeType = TWOBYTE;      break;
+  case X86Local::T8:        opcodeType = THREEBYTE_38; break;
+  case X86Local::TA:        opcodeType = THREEBYTE_3A; break;
+  case X86Local::XOP8:      opcodeType = XOP8_MAP;     break;
+  case X86Local::XOP9:      opcodeType = XOP9_MAP;     break;
+  case X86Local::XOPA:      opcodeType = XOPA_MAP;     break;
+  case X86Local::ThreeDNow: opcodeType = TWOBYTE;      break;
+  }
 
-    switch (Form) {
-    default: llvm_unreachable("Invalid form!");
-    case X86Local::Pseudo: llvm_unreachable("Pseudo should not be emitted!");
-    case X86Local::RawFrm:
-    case X86Local::AddRegFrm:
-    case X86Local::RawFrmMemOffs:
-    case X86Local::RawFrmSrc:
-    case X86Local::RawFrmDst:
-    case X86Local::RawFrmDstSrc:
-    case X86Local::RawFrmImm8:
-    case X86Local::RawFrmImm16:
-      filter = new DumbFilter();
-      break;
-    case X86Local::MRMDestReg:
-    case X86Local::MRMSrcReg:
-    case X86Local::MRMSrcReg4VOp3:
-    case X86Local::MRMSrcRegOp4:
-    case X86Local::MRMXr:
-      filter = new ModFilter(true);
-      break;
-    case X86Local::MRMDestMem:
-    case X86Local::MRMSrcMem:
-    case X86Local::MRMSrcMem4VOp3:
-    case X86Local::MRMSrcMemOp4:
-    case X86Local::MRMXm:
-      filter = new ModFilter(false);
-      break;
-    case X86Local::MRM0r:      case X86Local::MRM1r:
-    case X86Local::MRM2r:      case X86Local::MRM3r:
-    case X86Local::MRM4r:      case X86Local::MRM5r:
-    case X86Local::MRM6r:      case X86Local::MRM7r:
-      filter = new ExtendedFilter(true, Form - X86Local::MRM0r);
-      break;
-    case X86Local::MRM0m:      case X86Local::MRM1m:
-    case X86Local::MRM2m:      case X86Local::MRM3m:
-    case X86Local::MRM4m:      case X86Local::MRM5m:
-    case X86Local::MRM6m:      case X86Local::MRM7m:
-      filter = new ExtendedFilter(false, Form - X86Local::MRM0m);
-      break;
-    X86_INSTR_MRM_MAPPING
-      filter = new ExactFilter(0xC0 + Form - X86Local::MRM_C0);   \
-      break;
-    } // switch (Form)
-
-    opcodeToSet = Opcode;
+  ModRMFilter *filter = nullptr;
+  switch (Form) {
+  default: llvm_unreachable("Invalid form!");
+  case X86Local::Pseudo: llvm_unreachable("Pseudo should not be emitted!");
+  case X86Local::RawFrm:
+  case X86Local::AddRegFrm:
+  case X86Local::RawFrmMemOffs:
+  case X86Local::RawFrmSrc:
+  case X86Local::RawFrmDst:
+  case X86Local::RawFrmDstSrc:
+  case X86Local::RawFrmImm8:
+  case X86Local::RawFrmImm16:
+    filter = new DumbFilter();
     break;
-  } // switch (OpMap)
+  case X86Local::MRMDestReg:
+  case X86Local::MRMSrcReg:
+  case X86Local::MRMSrcReg4VOp3:
+  case X86Local::MRMSrcRegOp4:
+  case X86Local::MRMXr:
+    filter = new ModFilter(true);
+    break;
+  case X86Local::MRMDestMem:
+  case X86Local::MRMSrcMem:
+  case X86Local::MRMSrcMem4VOp3:
+  case X86Local::MRMSrcMemOp4:
+  case X86Local::MRMXm:
+    filter = new ModFilter(false);
+    break;
+  case X86Local::MRM0r: case X86Local::MRM1r:
+  case X86Local::MRM2r: case X86Local::MRM3r:
+  case X86Local::MRM4r: case X86Local::MRM5r:
+  case X86Local::MRM6r: case X86Local::MRM7r:
+    filter = new ExtendedFilter(true, Form - X86Local::MRM0r);
+    break;
+  case X86Local::MRM0m: case X86Local::MRM1m:
+  case X86Local::MRM2m: case X86Local::MRM3m:
+  case X86Local::MRM4m: case X86Local::MRM5m:
+  case X86Local::MRM6m: case X86Local::MRM7m:
+    filter = new ExtendedFilter(false, Form - X86Local::MRM0m);
+    break;
+  X86_INSTR_MRM_MAPPING
+    filter = new ExactFilter(0xC0 + Form - X86Local::MRM_C0);   \
+    break;
+  } // switch (Form)
+
+  uint8_t opcodeToSet = Opcode;
 
   unsigned AddressSize = 0;
   switch (AdSize) {
