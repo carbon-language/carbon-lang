@@ -90,7 +90,6 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   HasEVEX_K          = Rec->getValueAsBit("hasEVEX_K");
   HasEVEX_KZ         = Rec->getValueAsBit("hasEVEX_Z");
   HasEVEX_B          = Rec->getValueAsBit("hasEVEX_B");
-  Has3DNow0F0FOpcode = Rec->getValueAsBit("has3DNow0F0FOpcode");
   IsCodeGenOnly      = Rec->getValueAsBit("isCodeGenOnly");
   ForceDisassemble   = Rec->getValueAsBit("ForceDisassemble");
   CD8_Scale          = byteFromRec(Rec, "CD8_Scale");
@@ -289,7 +288,7 @@ InstructionContext RecognizableInstr::insnContext() const {
       errs() << "Instruction does not use a prefix: " << Name << "\n";
       llvm_unreachable("Invalid prefix");
     }
-  } else if (Has3DNow0F0FOpcode) {
+  } else if (OpMap == X86Local::ThreeDNow) {
     insnContext = IC_3DNOW;
   } else if (Is64Bit || HasREX_WPrefix || AdSize == X86Local::AdSize64) {
     if (HasREX_WPrefix && (OpSize == X86Local::OpSize16 || OpPrefix == X86Local::PD))
@@ -716,15 +715,17 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
   case X86Local::XOP8:
   case X86Local::XOP9:
   case X86Local::XOPA:
+  case X86Local::ThreeDNow:
     switch (OpMap) {
     default: llvm_unreachable("Unexpected map!");
-    case X86Local::OB:   opcodeType = ONEBYTE;      break;
-    case X86Local::TB:   opcodeType = TWOBYTE;      break;
-    case X86Local::T8:   opcodeType = THREEBYTE_38; break;
-    case X86Local::TA:   opcodeType = THREEBYTE_3A; break;
-    case X86Local::XOP8: opcodeType = XOP8_MAP;     break;
-    case X86Local::XOP9: opcodeType = XOP9_MAP;     break;
-    case X86Local::XOPA: opcodeType = XOPA_MAP;     break;
+    case X86Local::OB:        opcodeType = ONEBYTE;      break;
+    case X86Local::TB:        opcodeType = TWOBYTE;      break;
+    case X86Local::T8:        opcodeType = THREEBYTE_38; break;
+    case X86Local::TA:        opcodeType = THREEBYTE_3A; break;
+    case X86Local::XOP8:      opcodeType = XOP8_MAP;     break;
+    case X86Local::XOP9:      opcodeType = XOP9_MAP;     break;
+    case X86Local::XOPA:      opcodeType = XOPA_MAP;     break;
+    case X86Local::ThreeDNow: opcodeType = TWOBYTE;      break;
     }
 
     switch (Form) {
