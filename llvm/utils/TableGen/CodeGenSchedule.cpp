@@ -1370,8 +1370,9 @@ static void inferFromTransitions(ArrayRef<PredTransition> LastTransitions,
                 return P.Predicate;
               });
     Preds.erase(std::unique(Preds.begin(), Preds.end()), Preds.end());
-    SCTrans.PredTerm = Preds;
-    SchedModels.getSchedClass(FromClassIdx).Transitions.push_back(SCTrans);
+    SCTrans.PredTerm = std::move(Preds);
+    SchedModels.getSchedClass(FromClassIdx)
+        .Transitions.push_back(std::move(SCTrans));
   }
 }
 
