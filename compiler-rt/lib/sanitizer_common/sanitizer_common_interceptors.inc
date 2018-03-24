@@ -6856,8 +6856,8 @@ INTERCEPTOR(SIZE_T, strlcpy, char *dst, char *src, SIZE_T size) {
   COMMON_INTERCEPTOR_ENTER(ctx, strlcpy, dst, src, size);
   if (src) {
     // Keep strnlen as macro argument, as macro may ignore it.
-    COMMON_INTERCEPTOR_READ_STRING(ctx, src,
-      Min(REAL(strnlen)(src, size), size - 1) + 1);
+    COMMON_INTERCEPTOR_READ_STRING(
+        ctx, src, Min(internal_strnlen(src, size), size - 1) + 1);
   }
   res = REAL(strlcpy)(dst, src, size);
   COMMON_INTERCEPTOR_COPY_STRING(ctx, dst, src, REAL(strlen)(dst) + 1);
@@ -6870,7 +6870,7 @@ INTERCEPTOR(SIZE_T, strlcat, char *dst, char *src, SIZE_T size) {
   COMMON_INTERCEPTOR_ENTER(ctx, strlcat, dst, src, size);
   // src is checked in the strlcpy() interceptor
   if (dst) {
-    len = REAL(strnlen)(dst, size);
+    len = internal_strnlen(dst, size);
     COMMON_INTERCEPTOR_READ_STRING(ctx, dst, Min(len, size - 1) + 1);
   }
   // Reuse the rest of the code in the strlcpy() interceptor
