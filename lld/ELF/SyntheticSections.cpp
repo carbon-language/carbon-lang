@@ -2329,8 +2329,7 @@ VersionNeedSection<ELFT>::VersionNeedSection()
 template <class ELFT>
 void VersionNeedSection<ELFT>::addSymbol(SharedSymbol *SS) {
   SharedFile<ELFT> &File = SS->getFile<ELFT>();
-  const typename ELFT::Verdef *Ver = File.Verdefs[SS->VerdefIndex];
-  if (!Ver) {
+  if (SS->VerdefIndex == VER_NDX_GLOBAL) {
     SS->VersionId = VER_NDX_GLOBAL;
     return;
   }
@@ -2340,7 +2339,9 @@ void VersionNeedSection<ELFT>::addSymbol(SharedSymbol *SS) {
   // for the soname.
   if (File.VerdefMap.empty())
     Needed.push_back({&File, InX::DynStrTab->addString(File.SoName)});
+  const typename ELFT::Verdef *Ver = File.Verdefs[SS->VerdefIndex];
   typename SharedFile<ELFT>::NeededVer &NV = File.VerdefMap[Ver];
+
   // If we don't already know that we need an Elf_Vernaux for this Elf_Verdef,
   // prepare to create one by allocating a version identifier and creating a
   // dynstr entry for the version name.
