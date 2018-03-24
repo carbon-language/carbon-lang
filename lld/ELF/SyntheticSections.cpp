@@ -1016,8 +1016,7 @@ void DynamicSection<ELFT>::addInt(int32_t Tag, uint64_t Val) {
 
 template <class ELFT>
 void DynamicSection<ELFT>::addInSec(int32_t Tag, InputSection *Sec) {
-  Entries.push_back(
-      {Tag, [=] { return Sec->getParent()->Addr + Sec->OutSecOff; }});
+  Entries.push_back({Tag, [=] { return Sec->getVA(0); }});
 }
 
 template <class ELFT>
@@ -1194,7 +1193,7 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
 }
 
 uint64_t DynamicReloc::getOffset() const {
-  return InputSec->getOutputSection()->Addr + InputSec->getOffset(OffsetInSec);
+  return InputSec->getVA(OffsetInSec);
 }
 
 int64_t DynamicReloc::computeAddend() const {
@@ -2145,8 +2144,7 @@ void GdbIndexSection::writeTo(uint8_t *Buf) {
   // Write the address area.
   for (GdbIndexChunk &D : Chunks) {
     for (GdbIndexChunk::AddressEntry &E : D.AddressAreas) {
-      uint64_t BaseAddr =
-          E.Section->getParent()->Addr + E.Section->getOffset(0);
+      uint64_t BaseAddr = E.Section->getVA(0);
       write64le(Buf, BaseAddr + E.LowAddress);
       write64le(Buf + 8, BaseAddr + E.HighAddress);
       write32le(Buf + 16, E.CuIndex);
@@ -2590,8 +2588,7 @@ ARMExidxSentinelSection::ARMExidxSentinelSection()
 // address described by any other table entry.
 void ARMExidxSentinelSection::writeTo(uint8_t *Buf) {
   assert(Highest);
-  uint64_t S =
-      Highest->getParent()->Addr + Highest->getOffset(Highest->getSize());
+  uint64_t S = Highest->getVA(Highest->getSize());
   uint64_t P = getVA();
   Target->relocateOne(Buf, R_ARM_PREL31, S - P);
   write32le(Buf + 4, 1);
