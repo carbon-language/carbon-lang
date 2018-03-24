@@ -288,8 +288,6 @@ InstructionContext RecognizableInstr::insnContext() const {
       errs() << "Instruction does not use a prefix: " << Name << "\n";
       llvm_unreachable("Invalid prefix");
     }
-  } else if (OpMap == X86Local::ThreeDNow) {
-    insnContext = IC_3DNOW;
   } else if (Is64Bit || HasREX_WPrefix || AdSize == X86Local::AdSize64) {
     if (HasREX_WPrefix && (OpSize == X86Local::OpSize16 || OpPrefix == X86Local::PD))
       insnContext = IC_64BIT_REXW_OPSIZE;
@@ -685,14 +683,14 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
   llvm::Optional<OpcodeType> opcodeType;
   switch (OpMap) {
   default: llvm_unreachable("Invalid map!");
-  case X86Local::OB:        opcodeType = ONEBYTE;      break;
-  case X86Local::TB:        opcodeType = TWOBYTE;      break;
-  case X86Local::T8:        opcodeType = THREEBYTE_38; break;
-  case X86Local::TA:        opcodeType = THREEBYTE_3A; break;
-  case X86Local::XOP8:      opcodeType = XOP8_MAP;     break;
-  case X86Local::XOP9:      opcodeType = XOP9_MAP;     break;
-  case X86Local::XOPA:      opcodeType = XOPA_MAP;     break;
-  case X86Local::ThreeDNow: opcodeType = TWOBYTE;      break;
+  case X86Local::OB:        opcodeType = ONEBYTE;       break;
+  case X86Local::TB:        opcodeType = TWOBYTE;       break;
+  case X86Local::T8:        opcodeType = THREEBYTE_38;  break;
+  case X86Local::TA:        opcodeType = THREEBYTE_3A;  break;
+  case X86Local::XOP8:      opcodeType = XOP8_MAP;      break;
+  case X86Local::XOP9:      opcodeType = XOP9_MAP;      break;
+  case X86Local::XOPA:      opcodeType = XOPA_MAP;      break;
+  case X86Local::ThreeDNow: opcodeType = THREEDNOW_MAP; break;
   }
 
   std::unique_ptr<ModRMFilter> filter;
