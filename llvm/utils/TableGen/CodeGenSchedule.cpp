@@ -710,7 +710,7 @@ unsigned CodeGenSchedModels::addSchedClass(Record *ItinClassDef,
                    SchedClasses[Idx].ProcIndices.end(),
                    ProcIndices.begin(), ProcIndices.end(),
                    std::back_inserter(PI));
-    SchedClasses[Idx].ProcIndices.swap(PI);
+    SchedClasses[Idx].ProcIndices = std::move(PI);
     return Idx;
   }
   Idx = SchedClasses.size();
