@@ -1357,12 +1357,11 @@ static void inferFromTransitions(ArrayRef<PredTransition> LastTransitions,
               [&SchedModels](ArrayRef<unsigned> RS) {
                 return SchedModels.findOrInsertRW(RS, /*IsRead=*/true);
               });
-    IdxVec ProcIndices(I->ProcIndices.begin(), I->ProcIndices.end());
     CodeGenSchedTransition SCTrans;
     SCTrans.ToClassIdx =
       SchedModels.addSchedClass(/*ItinClassDef=*/nullptr, OperWritesVariant,
-                                OperReadsVariant, ProcIndices);
-    SCTrans.ProcIndices = ProcIndices;
+                                OperReadsVariant, I->ProcIndices);
+    SCTrans.ProcIndices.assign(I->ProcIndices.begin(), I->ProcIndices.end());
     // The final PredTerm is unique set of predicates guarding the transition.
     RecVec Preds;
     transform(I->PredTerm, std::back_inserter(Preds),
