@@ -387,9 +387,9 @@ void CodeGenSchedModels::collectSchedRW() {
     RecVec RWDefs = Records.getAllDerivedDefinitions("SchedReadWrite");
     for (Record *RWDef : RWDefs) {
       if (!getSchedRWIdx(RWDef, RWDef->isSubClassOf("SchedRead"))) {
-        const std::string &Name = RWDef->getName();
+        StringRef Name = RWDef->getName();
         if (Name != "NoWrite" && Name != "ReadDefault")
-          dbgs() << "Unused SchedReadWrite " << RWDef->getName() << '\n';
+          dbgs() << "Unused SchedReadWrite " << Name << '\n';
       }
     });
 }
