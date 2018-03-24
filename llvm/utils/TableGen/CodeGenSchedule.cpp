@@ -939,8 +939,7 @@ void CodeGenSchedModels::inferFromItinClass(Record *ItinClassDef,
       HasMatch = true;
       IdxVec Writes, Reads;
       findRWs((*II)->getValueAsListOfDefs("OperandReadWrites"), Writes, Reads);
-      IdxVec ProcIndices(1, PIdx);
-      inferFromRW(Writes, Reads, FromClassIdx, ProcIndices);
+      inferFromRW(Writes, Reads, FromClassIdx, PIdx);
     }
   }
 }
@@ -963,8 +962,7 @@ void CodeGenSchedModels::inferFromInstRWs(unsigned SCIdx) {
     IdxVec Writes, Reads;
     findRWs(Rec->getValueAsListOfDefs("OperandReadWrites"), Writes, Reads);
     unsigned PIdx = getProcModel(Rec->getValueAsDef("SchedModel")).Index;
-    IdxVec ProcIndices(1, PIdx);
-    inferFromRW(Writes, Reads, SCIdx, ProcIndices); // May mutate SchedClasses.
+    inferFromRW(Writes, Reads, SCIdx, PIdx); // May mutate SchedClasses.
   }
 }
 
@@ -1498,11 +1496,11 @@ void CodeGenSchedModels::collectProcResources() {
         for (RecIter RWI = SCI->InstRWs.begin(), RWE = SCI->InstRWs.end();
              RWI != RWE; ++RWI) {
           Record *RWModelDef = (*RWI)->getValueAsDef("SchedModel");
-          IdxVec ProcIndices(1, getProcModel(RWModelDef).Index);
+          unsigned PIdx = getProcModel(RWModelDef).Index;
           IdxVec Writes, Reads;
           findRWs((*RWI)->getValueAsListOfDefs("OperandReadWrites"),
                   Writes, Reads);
-          collectRWResources(Writes, Reads, ProcIndices);
+          collectRWResources(Writes, Reads, PIdx);
         }
       }
       collectRWResources(SCI->Writes, SCI->Reads, SCI->ProcIndices);
@@ -1659,8 +1657,7 @@ void CodeGenSchedModels::collectItinProcResources(Record *ItinClassDef) {
       HasMatch = true;
       IdxVec Writes, Reads;
       findRWs((*II)->getValueAsListOfDefs("OperandReadWrites"), Writes, Reads);
-      IdxVec ProcIndices(1, PIdx);
-      collectRWResources(Writes, Reads, ProcIndices);
+      collectRWResources(Writes, Reads, PIdx);
     }
   }
 }
