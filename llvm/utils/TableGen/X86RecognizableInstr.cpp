@@ -695,7 +695,7 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
   case X86Local::ThreeDNow: opcodeType = TWOBYTE;      break;
   }
 
-  ModRMFilter *filter = nullptr;
+  std::unique_ptr<ModRMFilter> filter;
   switch (Form) {
   default: llvm_unreachable("Invalid form!");
   case X86Local::Pseudo: llvm_unreachable("Pseudo should not be emitted!");
@@ -707,36 +707,36 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
   case X86Local::RawFrmDstSrc:
   case X86Local::RawFrmImm8:
   case X86Local::RawFrmImm16:
-    filter = new DumbFilter();
+    filter = llvm::make_unique<DumbFilter>();
     break;
   case X86Local::MRMDestReg:
   case X86Local::MRMSrcReg:
   case X86Local::MRMSrcReg4VOp3:
   case X86Local::MRMSrcRegOp4:
   case X86Local::MRMXr:
-    filter = new ModFilter(true);
+    filter = llvm::make_unique<ModFilter>(true);
     break;
   case X86Local::MRMDestMem:
   case X86Local::MRMSrcMem:
   case X86Local::MRMSrcMem4VOp3:
   case X86Local::MRMSrcMemOp4:
   case X86Local::MRMXm:
-    filter = new ModFilter(false);
+    filter = llvm::make_unique<ModFilter>(false);
     break;
   case X86Local::MRM0r: case X86Local::MRM1r:
   case X86Local::MRM2r: case X86Local::MRM3r:
   case X86Local::MRM4r: case X86Local::MRM5r:
   case X86Local::MRM6r: case X86Local::MRM7r:
-    filter = new ExtendedFilter(true, Form - X86Local::MRM0r);
+    filter = llvm::make_unique<ExtendedFilter>(true, Form - X86Local::MRM0r);
     break;
   case X86Local::MRM0m: case X86Local::MRM1m:
   case X86Local::MRM2m: case X86Local::MRM3m:
   case X86Local::MRM4m: case X86Local::MRM5m:
   case X86Local::MRM6m: case X86Local::MRM7m:
-    filter = new ExtendedFilter(false, Form - X86Local::MRM0m);
+    filter = llvm::make_unique<ExtendedFilter>(false, Form - X86Local::MRM0m);
     break;
   X86_INSTR_MRM_MAPPING
-    filter = new ExactFilter(0xC0 + Form - X86Local::MRM_C0);   \
+    filter = llvm::make_unique<ExactFilter>(0xC0 + Form - X86Local::MRM_C0);
     break;
   } // switch (Form)
 
@@ -770,8 +770,6 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
                           Is32Bit, OpPrefix == 0, IgnoresVEX_L || EncodeRC,
                           VEX_WPrefix == X86Local::VEX_WIG, AddressSize);
   }
-
-  delete filter;
 
 #undef MAP
 }

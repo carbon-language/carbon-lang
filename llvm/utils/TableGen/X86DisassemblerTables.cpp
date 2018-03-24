@@ -644,21 +644,13 @@ static const char* stringForDecisionType(ModRMDecisionType dt) {
 }
 
 DisassemblerTables::DisassemblerTables() {
-  unsigned i;
-
-  for (i = 0; i < array_lengthof(Tables); i++) {
-    Tables[i] = new ContextDecision;
-    memset(Tables[i], 0, sizeof(ContextDecision));
-  }
+  for (unsigned i = 0; i < array_lengthof(Tables); i++)
+    Tables[i] = llvm::make_unique<ContextDecision>();
 
   HasConflicts = false;
 }
 
 DisassemblerTables::~DisassemblerTables() {
-  unsigned i;
-
-  for (i = 0; i < array_lengthof(Tables); i++)
-    delete Tables[i];
 }
 
 void DisassemblerTables::emitModRMDecision(raw_ostream &o1, raw_ostream &o2,
