@@ -9,7 +9,6 @@
 
 // FIXME: (possibly) incomplete list of features that clang mangles that this
 // file does not yet support:
-//   - enable_if attribute
 //   - C++ modules TS
 //   - All C++14 and C++17 features
 
@@ -160,6 +159,7 @@ public:
     KElaboratedTypeSpefType,
     KNameType,
     KAbiTagAttr,
+    KEnableIfAttr,
     KObjCProtoName,
     KPointerType,
     KLValueReferenceType,
@@ -475,6 +475,19 @@ public:
     S += "[abi:";
     S += Tag;
     S += "]";
+  }
+};
+
+class EnableIfAttr : public Node {
+  NodeArray Conditions;
+public:
+  EnableIfAttr(NodeArray Conditions_)
+      : Node(KEnableIfAttr), Conditions(Conditions_) {}
+
+  void printLeft(OutputStream &S) const override {
+    S += " [enable_if:";
+    Conditions.printWithComma(S);
+    S += ']';
   }
 };
 
@@ -804,17 +817,18 @@ class FunctionEncoding final : public Node {
   const Node *Ret;
   const Node *Name;
   NodeArray Params;
+  Node *Attrs;
   Qualifiers CVQuals;
   FunctionRefQual RefQual;
 
 public:
   FunctionEncoding(Node *Ret_, Node *Name_, NodeArray Params_,
-                   Qualifiers CVQuals_, FunctionRefQual RefQual_)
+                   Node *Attrs_, Qualifiers CVQuals_, FunctionRefQual RefQual_)
       : Node(KFunctionEncoding, NoParameterPack,
              /*RHSComponentCache=*/Cache::Yes, /*ArrayCache=*/Cache::No,
              /*FunctionCache=*/Cache::Yes),
-        Ret(Ret_), Name(Name_), Params(Params_), CVQuals(CVQuals_),
-        RefQual(RefQual_) {
+        Ret(Ret_), Name(Name_), Params(Params_), Attrs(Attrs_),
+        CVQuals(CVQuals_), RefQual(RefQual_) {
     for (Node *P : Params)
       ParameterPackSize = std::min(ParameterPackSize, P->ParameterPackSize);
     if (Ret)
@@ -853,6 +867,9 @@ public:
       S += " &";
     else if (RefQual == FrefQualRValue)
       S += " &&";
+
+    if (Attrs != nullptr)
+      Attrs->print(S);
   }
 };
 
@@ -4472,6 +4489,18 @@ Node *Db::parseEncoding() {
 
   TagTemplates = false;
 
+  Node *Attrs = nullptr;
+  if (consumeIf("Ua9enable_ifI")) {
+    size_t BeforeArgs = Names.size();
+    while (!consumeIf('E')) {
+      Node *Arg = parseTemplateArg();
+      if (Arg == nullptr)
+        return nullptr;
+      Names.push_back(Arg);
+    }
+    Attrs = make<EnableIfAttr>(popTrailingNodeArray(BeforeArgs));
+  }
+
   Node *ReturnType = nullptr;
   if (!NameInfo.CtorDtorConversion && NameInfo.EndsWithTemplateArgs) {
     ReturnType = parseType();
@@ -4481,7 +4510,7 @@ Node *Db::parseEncoding() {
 
   if (consumeIf('v'))
     return make<FunctionEncoding>(ReturnType, Name, NodeArray(),
-                                  NameInfo.CVQualifiers,
+                                  Attrs, NameInfo.CVQualifiers,
                                   NameInfo.ReferenceQualifier);
 
   size_t ParamsBegin = Names.size();
@@ -4494,7 +4523,7 @@ Node *Db::parseEncoding() {
 
   return make<FunctionEncoding>(ReturnType, Name,
                                 popTrailingNodeArray(ParamsBegin),
-                                NameInfo.CVQualifiers,
+                                Attrs, NameInfo.CVQualifiers,
                                 NameInfo.ReferenceQualifier);
 }
 
