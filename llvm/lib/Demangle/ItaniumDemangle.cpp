@@ -182,6 +182,7 @@ public:
     KTemplateArgumentPack,
     KParameterPackExpansion,
     KTemplateArgs,
+    KForwardTemplateReference,
     KNameWithTemplateArgs,
     KGlobalQualifiedName,
     KStdQualifiedName,
@@ -1083,6 +1084,29 @@ public:
   }
 };
 
+struct ForwardTemplateReference : Node {
+  size_t Index;
+  Node *Ref = nullptr;
+
+  ForwardTemplateReference(size_t Index_)
+      : Node(KForwardTemplateReference, Cache::Unknown, Cache::Unknown,
+             Cache::Unknown),
+        Index(Index_) {}
+
+  bool hasRHSComponentSlow(OutputStream &S) const override {
+    return Ref->hasRHSComponent(S);
+  }
+  bool hasArraySlow(OutputStream &S) const override {
+    return Ref->hasArray(S);
+  }
+  bool hasFunctionSlow(OutputStream &S) const override {
+    return Ref->hasFunction(S);
+  }
+
+  void printLeft(OutputStream &S) const override { Ref->printLeft(S); }
+  void printRight(OutputStream &S) const override { Ref->printRight(S); }
+};
+
 class NameWithTemplateArgs final : public Node {
   // name<template_args>
   Node *Name;
@@ -1916,10 +1940,12 @@ struct Db {
   // stored on the stack.
   PODSmallVector<Node *, 8> TemplateParams;
 
-  unsigned EncodingDepth = 0;
-  bool TagTemplates = true;
-  bool FixForwardReferences = false;
+  // Set of unresolved forward <template-param> references. These can occur in a
+  // conversion operator's type, and are resolved in the enclosing <encoding>.
+  PODSmallVector<ForwardTemplateReference *, 4> ForwardTemplateRefs;
+
   bool TryToParseTemplateArgs = true;
+  bool PermitForwardTemplateReferences = false;
   bool ParsingLambdaParams = false;
 
   BumpPointerAllocator ASTAllocator;
@@ -1981,7 +2007,7 @@ struct Db {
   bool parseSeqId(size_t *Out);
   Node *parseSubstitution();
   Node *parseTemplateParam();
-  Node *parseTemplateArgs();
+  Node *parseTemplateArgs(bool TagTemplates = false);
   Node *parseTemplateArg();
 
   /// Parse the <expr> production.
@@ -2017,7 +2043,24 @@ struct Db {
     bool EndsWithTemplateArgs = false;
     Qualifiers CVQualifiers = QualNone;
     FunctionRefQual ReferenceQualifier = FrefQualNone;
+    size_t ForwardTemplateRefsBegin;
+
+    NameState(Db *Enclosing)
+        : ForwardTemplateRefsBegin(Enclosing->ForwardTemplateRefs.size()) {}
   };
+
+  bool resolveForwardTemplateRefs(NameState &State) {
+    size_t I = State.ForwardTemplateRefsBegin;
+    size_t E = ForwardTemplateRefs.size();
+    for (; I < E; ++I) {
+      size_t Idx = ForwardTemplateRefs[I]->Index;
+      if (Idx >= TemplateParams.size())
+        return true;
+      ForwardTemplateRefs[I]->Ref = TemplateParams[Idx];
+    }
+    ForwardTemplateRefs.dropBack(State.ForwardTemplateRefsBegin);
+    return false;
+  }
 
   /// Parse the <name> production>
   Node *parseName(NameState *State = nullptr);
@@ -2067,7 +2110,7 @@ Node *Db::parseName(NameState *State) {
       return nullptr;
     if (look() != 'I')
       return nullptr;
-    Node *TA = parseTemplateArgs();
+    Node *TA = parseTemplateArgs(State != nullptr);
     if (TA == nullptr)
       return nullptr;
     if (State) State->EndsWithTemplateArgs = true;
@@ -2080,7 +2123,7 @@ Node *Db::parseName(NameState *State) {
   //        ::= <unscoped-template-name> <template-args>
   if (look() == 'I') {
     Subs.push_back(N);
-    Node *TA = parseTemplateArgs();
+    Node *TA = parseTemplateArgs(State != nullptr);
     if (TA == nullptr)
       return nullptr;
     if (State) State->EndsWithTemplateArgs = true;
@@ -2294,9 +2337,15 @@ Node *Db::parseOperatorName(NameState *State) {
       return make<NameType>("operator~");
     //                   ::= cv <type>    # (cast)
     case 'v': {
-      SwapAndRestore<bool> SaveTemplate(TryToParseTemplateArgs, false);
       First += 2;
-      Node *Ty = parseType();
+      SwapAndRestore<bool> SaveTemplate(TryToParseTemplateArgs, false);
+      // If we're parsing an encoding, State != nullptr and the conversion
+      // operators' <type> could have a <template-param> that refers to some
+      // <template-arg>s further ahead in the mangled name.
+      SwapAndRestore<bool> SavePermit(PermitForwardTemplateReferences,
+                                      PermitForwardTemplateReferences ||
+                                          State != nullptr);
+      Node* Ty = parseType();
       if (Ty == nullptr)
         return nullptr;
       if (State) State->CtorDtorConversion = true;
@@ -2520,7 +2569,7 @@ Node *Db::parseCtorDtorName(Node *&SoFar, NameState *State) {
     ++First;
     if (State) State->CtorDtorConversion = true;
     if (IsInherited) {
-      if (parseName() == nullptr)
+      if (parseName(State) == nullptr)
         return nullptr;
     }
     return make<CtorDtorName>(SoFar, false);
@@ -2590,7 +2639,7 @@ Node *Db::parseNestedName(NameState *State) {
 
     //          ::= <template-prefix> <template-args>
     if (look() == 'I') {
-      Node *TA = parseTemplateArgs();
+      Node *TA = parseTemplateArgs(State != nullptr);
       if (TA == nullptr || SoFar == nullptr)
         return nullptr;
       SoFar = make<NameWithTemplateArgs>(SoFar, TA);
@@ -4361,15 +4410,6 @@ Node *Db::parseSpecialName() {
 //            ::= <data name>
 //            ::= <special-name>
 Node *Db::parseEncoding() {
-  // Always "tag" templates (insert them into Db::TemplateParams) unless we're
-  // doing a second parse to resolve a forward template reference, in which case
-  // we only tag templates if EncodingDepth > 1.
-  // FIXME: This is kinda broken; it would be better to make a forward reference
-  // and patch it all in one pass.
-  SwapAndRestore<bool> SaveTagTemplates(TagTemplates,
-                                        TagTemplates || EncodingDepth);
-  SwapAndRestore<unsigned> SaveEncodingDepth(EncodingDepth, EncodingDepth + 1);
-
   if (look() == 'G' || look() == 'T')
     return parseSpecialName();
 
@@ -4380,12 +4420,16 @@ Node *Db::parseEncoding() {
     return numLeft() == 0 || look() == 'E' || look() == '.' || look() == '_';
   };
 
-  NameState NameInfo;
+  NameState NameInfo(this);
   Node *Name = parseName(&NameInfo);
-  if (Name == nullptr || IsEndOfEncoding())
-    return Name;
+  if (Name == nullptr)
+    return nullptr;
 
-  TagTemplates = false;
+  if (resolveForwardTemplateRefs(NameInfo))
+    return nullptr;
+
+  if (IsEndOfEncoding())
+    return Name;
 
   Node *Attrs = nullptr;
   if (consumeIf("Ua9enable_ifI")) {
@@ -4593,10 +4637,16 @@ Node *Db::parseTemplateParam() {
   if (ParsingLambdaParams)
     return make<NameType>("auto");
 
-  if (Index >= TemplateParams.size()) {
-    FixForwardReferences = true;
-    return make<NameType>("FORWARD_REFERENCE");
+  // If we're in a context where this <template-param> refers to a
+  // <template-arg> further ahead in the mangled name (currently just conversion
+  // operator types), then we should only look it up in the right context.
+  if (PermitForwardTemplateReferences) {
+    ForwardTemplateRefs.push_back(make<ForwardTemplateReference>(Index));
+    return ForwardTemplateRefs.back();
   }
+
+  if (Index >= TemplateParams.size())
+    return nullptr;
   return TemplateParams[Index];
 }
 
@@ -4645,7 +4695,7 @@ Node *Db::parseTemplateArg() {
 
 // <template-args> ::= I <template-arg>* E
 //     extension, the abi says <template-arg>+
-Node *Db::parseTemplateArgs() {
+Node *Db::parseTemplateArgs(bool TagTemplates) {
   if (!consumeIf('I'))
     return nullptr;
 
@@ -4781,20 +4831,9 @@ char *llvm::itaniumDemangle(const char *MangledName, char *Buf,
   if (AST == nullptr)
     InternalStatus = invalid_mangled_name;
 
-  if (InternalStatus == success && Parser.FixForwardReferences &&
-      !Parser.TemplateParams.empty()) {
-    Parser.FixForwardReferences = false;
-    Parser.TagTemplates = false;
-    Parser.Names.clear();
-    Parser.Subs.clear();
-    Parser.First = MangledName;
-    Parser.Last = MangledName + MangledNameLength;
-    AST = Parser.parse();
-    if (AST == nullptr || Parser.FixForwardReferences)
-      InternalStatus = invalid_mangled_name;
-  }
-
   if (InternalStatus == success) {
+    assert(Parser.ForwardTemplateRefs.empty());
+
     if (Buf == nullptr) {
       BufSize = 1024;
       Buf = static_cast<char*>(std::malloc(BufSize));
