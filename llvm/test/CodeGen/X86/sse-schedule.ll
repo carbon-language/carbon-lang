@@ -3449,7 +3449,7 @@ define <4 x float> @test_movss_reg(<4 x float> %a0, <4 x float> %a1) {
 ;
 ; SKYLAKE-SSE-LABEL: test_movss_reg:
 ; SKYLAKE-SSE:       # %bb.0:
-; SKYLAKE-SSE-NEXT:    movss {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3] sched: [1:0.33]
+; SKYLAKE-SSE-NEXT:    movss {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3] sched: [1:1.00]
 ; SKYLAKE-SSE-NEXT:    retq # sched: [7:1.00]
 ;
 ; SKYLAKE-LABEL: test_movss_reg:
@@ -3459,7 +3459,7 @@ define <4 x float> @test_movss_reg(<4 x float> %a0, <4 x float> %a1) {
 ;
 ; SKX-SSE-LABEL: test_movss_reg:
 ; SKX-SSE:       # %bb.0:
-; SKX-SSE-NEXT:    movss {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3] sched: [1:0.33]
+; SKX-SSE-NEXT:    movss {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3] sched: [1:1.00]
 ; SKX-SSE-NEXT:    retq # sched: [7:1.00]
 ;
 ; SKX-LABEL: test_movss_reg:
