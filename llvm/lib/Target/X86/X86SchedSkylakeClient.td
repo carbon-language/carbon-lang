@@ -589,7 +589,7 @@ def: InstRW<[SKLWriteResGroup9], (instregex "(V?)ANDNPD(Y?)rr",
                                             "(V?)PSUBQ(Y?)rr",
                                             "(V?)PSUBW(Y?)rr",
                                             "(V?)PXOR(Y?)rr",
-                                            "(V?)XORPD(Y?)rr"
+                                            "(V?)XORPD(Y?)rr",
                                             "(V?)XORPS(Y?)rr")>;
 
 def SKLWriteResGroup10 : SchedWriteRes<[SKLPort0156]> {
