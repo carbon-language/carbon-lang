@@ -61,6 +61,8 @@ def SKXPort015 : ProcResGroup<[SKXPort0, SKXPort1, SKXPort5]>;
 def SKXPort056 : ProcResGroup<[SKXPort0, SKXPort5, SKXPort6]>;
 def SKXPort0156: ProcResGroup<[SKXPort0, SKXPort1, SKXPort5, SKXPort6]>;
 
+def SKXDivider : ProcResource<1>; // Integer division issued on port 0.
+
 // 60 Entry Unified Scheduler
 def SKXPortAny : ProcResGroup<[SKXPort0, SKXPort1, SKXPort2, SKXPort3, SKXPort4,
                               SKXPort5, SKXPort6, SKXPort7]> {
@@ -103,17 +105,9 @@ def : WriteRes<WriteRMW, [SKXPort4]>;
 // Arithmetic.
 defm : SKXWriteResPair<WriteALU,   [SKXPort0156], 1>; // Simple integer ALU op.
 defm : SKXWriteResPair<WriteIMul,  [SKXPort1],   3>; // Integer multiplication.
-def : WriteRes<WriteIMulH, []> { let Latency = 3; } // Integer multiplication, high part.
-def SKXDivider : ProcResource<1>; // Integer division issued on port 0.
-def : WriteRes<WriteIDiv, [SKXPort0, SKXDivider]> { // Integer division.
-  let Latency = 25;
-  let ResourceCycles = [1, 10];
-}
-def : WriteRes<WriteIDivLd, [SKXPort23, SKXPort0, SKXDivider]> {
-  let Latency = 29;
-  let ResourceCycles = [1, 1, 10];
-}
+defm : SKXWriteResPair<WriteIDiv, [SKXPort0, SKXDivider], 25, [1,10], 1, 4>; // Integer division.
 
+def : WriteRes<WriteIMulH, []> { let Latency = 3; } // Integer multiplication, high part.
 def : WriteRes<WriteLEA, [SKXPort15]>; // LEA instructions can't fold loads.
 
 // Integer shifts and rotates.
