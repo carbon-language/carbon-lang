@@ -223,11 +223,6 @@ def SSE_PACK : OpndItins<
   IIC_SSE_PACK, IIC_SSE_PACK
 >;
 
-let Sched = WriteMPSAD in
-def DEFAULT_ITINS_MPSADSCHED :  OpndItins<
-  IIC_ALU_NONMEM, IIC_ALU_MEM
->;
-
 let Sched = WriteVarBlend in
 def DEFAULT_ITINS_VARBLENDSCHED :  OpndItins<
   IIC_ALU_NONMEM, IIC_ALU_MEM
@@ -6501,7 +6496,7 @@ let Predicates = [HasAVX] in {
   let isCommutable = 0 in {
     defm VMPSADBW : SS41I_binop_rmi_int<0x42, "vmpsadbw", int_x86_sse41_mpsadbw,
                                         VR128, loadv2i64, i128mem, 0,
-                                        DEFAULT_ITINS_MPSADSCHED>, VEX_4V, VEX_WIG;
+                                        SSE_MPSADBW_ITINS>, VEX_4V, VEX_WIG;
   }
 
   let ExeDomain = SSEPackedSingle in
@@ -6522,7 +6517,7 @@ let Predicates = [HasAVX2] in {
   let isCommutable = 0 in {
   defm VMPSADBWY : SS41I_binop_rmi_int<0x42, "vmpsadbw", int_x86_avx2_mpsadbw,
                                   VR256, loadv4i64, i256mem, 0,
-                                  DEFAULT_ITINS_MPSADSCHED>, VEX_4V, VEX_L, VEX_WIG;
+                                  SSE_MPSADBW_ITINS>, VEX_4V, VEX_L, VEX_WIG;
   }
 }
 
