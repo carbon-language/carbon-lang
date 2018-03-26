@@ -2470,6 +2470,7 @@ let AddedComplexity = 400, Predicates = [HasP9Vector] in {
 
   // Convert DP -> QP
   def XSCVDPQP  : X_VT5_XO5_VB5_TyVB<63, 22, 836, "xscvdpqp", vfrc, []>;
+  def : Pat<(f128 (fpextend f64:$src)), (f128 (XSCVDPQP $src))>;
 
   // Round & Convert QP -> DP (dword[1] is set to zero)
   def XSCVQPDP  : X_VT5_XO5_VB5   <63, 20, 836, "xscvqpdp" , []>;
