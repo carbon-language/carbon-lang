@@ -2647,7 +2647,6 @@ void SwingSchedulerDAG::generateExistingPhis(
     unsigned NumPhis = std::min(NumStages, MaxPhis);
 
     unsigned NewReg = 0;
-
     unsigned AccessStage = (LoopValStage != -1) ? LoopValStage : StageScheduled;
     // In the epilog, we may need to look back one stage to get the correct
     // Phi name because the epilog and prolog blocks execute the same stage.
@@ -3560,6 +3559,19 @@ bool SwingSchedulerDAG::isLoopCarriedDep(SUnit *Source, const SDep &Dep,
     return true;
 
   if (BaseRegS != BaseRegD)
+    return true;
+
+  // Check that the base register is incremented by a constant value for each
+  // iteration.
+  MachineInstr *Def = MRI.getVRegDef(BaseRegS);
+  if (!Def || !Def->isPHI())
+    return true;
+  unsigned InitVal = 0;
+  unsigned LoopVal = 0;
+  getPhiRegs(*Def, BB, InitVal, LoopVal);
+  MachineInstr *LoopDef = MRI.getVRegDef(LoopVal);
+  int D = 0;
+  if (!LoopDef || !TII->getIncrementValue(*LoopDef, D))
     return true;
 
   uint64_t AccessSizeS = (*SI->memoperands_begin())->getSize();
