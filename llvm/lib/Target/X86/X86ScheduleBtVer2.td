@@ -695,16 +695,20 @@ def JWriteShuffleY: SchedWriteRes<[JFPU01, JFPX]> {
   let ResourceCycles = [2, 2];
   let NumMicroOps = 2;
 }
-def : InstRW<[JWriteShuffleY], (instrs VMOVDDUPYrr, VMOVSHDUPYrr, VMOVSLDUPYrr,
-                                       VPERMILPDYri, VPERMILPSYri, VSHUFPDYrri, VSHUFPSYrri)>;
+def : InstRW<[JWriteShuffleY], (instrs VBLENDPDYrri, VBLENDPSYrri,
+                                       VMOVDDUPYrr, VMOVSHDUPYrr, VMOVSLDUPYrr,
+                                       VPERMILPDYri, VPERMILPSYri, VSHUFPDYrri, VSHUFPSYrri,
+                                       VUNPCKHPDYrr, VUNPCKHPSYrr, VUNPCKLPDYrr, VUNPCKLPSYrr)>;
 
 def JWriteShuffleYLd: SchedWriteRes<[JLAGU, JFPU01, JFPX]> {
   let Latency = 6;
   let ResourceCycles = [2, 2, 2];
   let NumMicroOps = 2;
 }
-def : InstRW<[JWriteShuffleYLd, ReadAfterLd], (instrs VMOVDDUPYrm, VMOVSHDUPYrm, VMOVSLDUPYrm,
-                                                      VPERMILPDYmi, VPERMILPSYmi, VSHUFPDYrmi, VSHUFPSYrmi)>;
+def : InstRW<[JWriteShuffleYLd, ReadAfterLd], (instrs VBLENDPDYrmi, VBLENDPSYrmi,
+                                                      VMOVDDUPYrm, VMOVSHDUPYrm, VMOVSLDUPYrm,
+                                                      VPERMILPDYmi, VPERMILPSYmi, VSHUFPDYrmi, VSHUFPSYrmi,
+                                                      VUNPCKHPDYrm, VUNPCKHPSYrm, VUNPCKLPDYrm, VUNPCKLPSYrm)>;
 
 def JWriteVBROADCASTYLd: SchedWriteRes<[JLAGU, JFPU01, JFPX]> {
   let Latency = 6;
