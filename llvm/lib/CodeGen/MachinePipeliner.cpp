@@ -348,15 +348,7 @@ public:
     return Source->getInstr()->isPHI() || Dep.getSUnit()->getInstr()->isPHI();
   }
 
-  /// Return true if the dependence is an order dependence between non-Phis.
-  static bool isOrder(SUnit *Source, const SDep &Dep) {
-    if (Dep.getKind() != SDep::Order)
-      return false;
-    return (!Source->getInstr()->isPHI() &&
-            !Dep.getSUnit()->getInstr()->isPHI());
-  }
-
-  bool isLoopCarriedOrder(SUnit *Source, const SDep &Dep, bool isSucc = true);
+  bool isLoopCarriedDep(SUnit *Source, const SDep &Dep, bool isSucc = true);
 
   /// The distance function, which indicates that operation V of iteration I
   /// depends on operations U of iteration I-distance.
@@ -1486,10 +1478,23 @@ static void swapAntiDependences(std::vector<SUnit> &SUnits) {
 void SwingSchedulerDAG::Circuits::createAdjacencyStructure(
     SwingSchedulerDAG *DAG) {
   BitVector Added(SUnits.size());
+  DenseMap<int, int> OutputDeps;
   for (int i = 0, e = SUnits.size(); i != e; ++i) {
     Added.reset();
     // Add any successor to the adjacency matrix and exclude duplicates.
     for (auto &SI : SUnits[i].Succs) {
+      // Only create a back-edge on the first and last nodes of a dependence
+      // chain. This records any chains and adds them later.
+      if (SI.getKind() == SDep::Output) {
+        int N = SI.getSUnit()->NodeNum;
+        int BackEdge = i;
+        auto Dep = OutputDeps.find(BackEdge);
+        if (Dep != OutputDeps.end()) {
+          BackEdge = Dep->second;
+          OutputDeps.erase(Dep);
+        }
+        OutputDeps[N] = BackEdge;
+      }
       // Do not process a boundary node and a back-edge is processed only
       // if it goes to a Phi.
       if (SI.getSUnit()->isBoundaryNode() ||
@@ -1505,7 +1510,7 @@ void SwingSchedulerDAG::Circuits::createAdjacencyStructure(
     // adjacency matrix.
     for (auto &PI : SUnits[i].Preds) {
       if (!SUnits[i].getInstr()->mayStore() ||
-          !DAG->isLoopCarriedOrder(&SUnits[i], PI, false))
+          !DAG->isLoopCarriedDep(&SUnits[i], PI, false))
         continue;
       if (PI.getKind() == SDep::Order && PI.getSUnit()->getInstr()->mayLoad()) {
         int N = PI.getSUnit()->NodeNum;
@@ -1516,6 +1521,12 @@ void SwingSchedulerDAG::Circuits::createAdjacencyStructure(
       }
     }
   }
+  // Add back-eges in the adjacency matrix for the output dependences.
+  for (auto &OD : OutputDeps)
+    if (!Added.test(OD.second)) {
+      AdjK[OD.first].push_back(OD.second);
+      Added.set(OD.second);
+    }
 }
 
 /// Identify an elementary circuit in the dependence graph starting at the
@@ -3493,15 +3504,19 @@ void SwingSchedulerDAG::applyInstrChange(MachineInstr *MI,
   }
 }
 
-/// Return true for an order dependence that is loop carried potentially.
-/// An order dependence is loop carried if the destination defines a value
-/// that may be used by the source in a subsequent iteration.
-bool SwingSchedulerDAG::isLoopCarriedOrder(SUnit *Source, const SDep &Dep,
-                                           bool isSucc) {
-  if (!isOrder(Source, Dep) || Dep.isArtificial())
+/// Return true for an order or output dependence that is loop carried
+/// potentially. A dependence is loop carried if the destination defines a valu
+/// that may be used or defined by the source in a subsequent iteration.
+bool SwingSchedulerDAG::isLoopCarriedDep(SUnit *Source, const SDep &Dep,
+                                         bool isSucc) {
+  if ((Dep.getKind() != SDep::Order && Dep.getKind() != SDep::Output) ||
+      Dep.isArtificial())
     return false;
 
   if (!SwpPruneLoopCarried)
+    return true;
+
+  if (Dep.getKind() == SDep::Output)
     return true;
 
   MachineInstr *SI = Source->getInstr();
@@ -3621,7 +3636,7 @@ int SMSchedule::earliestCycleInChain(const SDep &Dep) {
       continue;
     EarlyCycle = std::min(EarlyCycle, it->second);
     for (const auto &PI : PrevSU->Preds)
-      if (SwingSchedulerDAG::isOrder(PrevSU, PI))
+      if (PI.getKind() == SDep::Order || Dep.getKind() == SDep::Output)
         Worklist.push_back(PI);
     Visited.insert(PrevSU);
   }
@@ -3644,7 +3659,7 @@ int SMSchedule::latestCycleInChain(const SDep &Dep) {
       continue;
     LateCycle = std::max(LateCycle, it->second);
     for (const auto &SI : SuccSU->Succs)
-      if (SwingSchedulerDAG::isOrder(SuccSU, SI))
+      if (SI.getKind() == SDep::Order || Dep.getKind() == SDep::Output)
         Worklist.push_back(SI);
     Visited.insert(SuccSU);
   }
@@ -3684,7 +3699,7 @@ void SMSchedule::computeStart(SUnit *SU, int *MaxEarlyStart, int *MinLateStart,
             int EarlyStart = cycle + Dep.getLatency() -
                              DAG->getDistance(Dep.getSUnit(), SU, Dep) * II;
             *MaxEarlyStart = std::max(*MaxEarlyStart, EarlyStart);
-            if (DAG->isLoopCarriedOrder(SU, Dep, false)) {
+            if (DAG->isLoopCarriedDep(SU, Dep, false)) {
               int End = earliestCycleInChain(Dep) + (II - 1);
               *MinEnd = std::min(*MinEnd, End);
             }
@@ -3708,7 +3723,7 @@ void SMSchedule::computeStart(SUnit *SU, int *MaxEarlyStart, int *MinLateStart,
             int LateStart = cycle - Dep.getLatency() +
                             DAG->getDistance(SU, Dep.getSUnit(), Dep) * II;
             *MinLateStart = std::min(*MinLateStart, LateStart);
-            if (DAG->isLoopCarriedOrder(SU, Dep)) {
+            if (DAG->isLoopCarriedDep(SU, Dep)) {
               int Start = latestCycleInChain(Dep) + 1 - II;
               *MaxStart = std::max(*MaxStart, Start);
             }
@@ -3788,40 +3803,23 @@ bool SMSchedule::orderDependence(SwingSchedulerDAG *SSD, SUnit *SU,
     }
     // Check for order dependences between instructions. Make sure the source
     // is ordered before the destination.
-    for (auto &S : SU->Succs)
-      if (S.getKind() == SDep::Order) {
-        if (S.getSUnit() == *I && stageScheduled(*I) == StageInst1) {
-          OrderBeforeUse = true;
+    for (auto &S : SU->Succs) {
+      if (S.getSUnit() != *I)
+        continue;
+      if (S.getKind() == SDep::Order && stageScheduled(*I) == StageInst1) {
+        OrderBeforeUse = true;
+        if (Pos < MoveUse)
           MoveUse = Pos;
-        }
-      } else if (TargetRegisterInfo::isPhysicalRegister(S.getReg())) {
-        if (cycleScheduled(SU) != cycleScheduled(S.getSUnit())) {
-          if (S.isAssignedRegDep()) {
-            OrderAfterDef = true;
-            MoveDef = Pos;
-          }
-        } else {
-          OrderBeforeUse = true;
-          MoveUse = Pos;
-        }
       }
-    for (auto &P : SU->Preds)
-      if (P.getKind() == SDep::Order) {
-        if (P.getSUnit() == *I && stageScheduled(*I) == StageInst1) {
-          OrderAfterDef = true;
-          MoveDef = Pos;
-        }
-      } else if (TargetRegisterInfo::isPhysicalRegister(P.getReg())) {
-        if (cycleScheduled(SU) != cycleScheduled(P.getSUnit())) {
-          if (P.isAssignedRegDep()) {
-            OrderBeforeUse = true;
-            MoveUse = Pos;
-          }
-        } else {
-          OrderAfterDef = true;
-          MoveDef = Pos;
-        }
+    }
+    for (auto &P : SU->Preds) {
+      if (P.getSUnit() != *I)
+        continue;
+      if (P.getKind() == SDep::Order && stageScheduled(*I) == StageInst1) {
+        OrderAfterDef = true;
+        MoveDef = Pos;
       }
+    }
   }
 
   // A circular dependence.
