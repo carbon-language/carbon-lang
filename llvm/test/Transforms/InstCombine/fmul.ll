@@ -495,14 +495,11 @@ define float @fmul_fadd_fmul_distribute(float %x) {
   ret float %t3
 }
 
-; FIXME: More instructions than we started with.
-
 define float @fmul_fadd_distribute_extra_use(float %x) {
 ; CHECK-LABEL: @fmul_fadd_distribute_extra_use(
 ; CHECK-NEXT:    [[T1:%.*]] = fmul float [[X:%.*]], 6.000000e+00
 ; CHECK-NEXT:    [[T2:%.*]] = fadd float [[T1]], 2.000000e+00
-; CHECK-NEXT:    [[TMP1:%.*]] = fmul fast float [[X]], 3.000000e+01
-; CHECK-NEXT:    [[T3:%.*]] = fadd fast float [[TMP1]], 1.000000e+01
+; CHECK-NEXT:    [[T3:%.*]] = fmul fast float [[T2]], 5.000000e+00
 ; CHECK-NEXT:    call void @use_f32(float [[T2]])
 ; CHECK-NEXT:    ret float [[T3]]
 ;
@@ -559,14 +556,11 @@ define float @fmul_fsub_fmul_distribute(float %x) {
   ret float %t3
 }
 
-; FIXME: More instructions than we started with.
-
 define float @fmul_fsub_fmul_distribute_extra_use(float %x) {
 ; CHECK-LABEL: @fmul_fsub_fmul_distribute_extra_use(
 ; CHECK-NEXT:    [[T1:%.*]] = fmul float [[X:%.*]], 6.000000e+00
 ; CHECK-NEXT:    [[T2:%.*]] = fsub float 2.000000e+00, [[T1]]
-; CHECK-NEXT:    [[TMP1:%.*]] = fmul fast float [[X]], 3.000000e+01
-; CHECK-NEXT:    [[T3:%.*]] = fsub fast float 1.000000e+01, [[TMP1]]
+; CHECK-NEXT:    [[T3:%.*]] = fmul fast float [[T2]], 5.000000e+00
 ; CHECK-NEXT:    call void @use_f32(float [[T2]])
 ; CHECK-NEXT:    ret float [[T3]]
 ;
@@ -591,14 +585,11 @@ define float @fmul_fsub_fmul_distribute2(float %x) {
   ret float %t3
 }
 
-; FIXME: More instructions than we started with.
-
 define float @fmul_fsub_fmul_distribute2_extra_use(float %x) {
 ; CHECK-LABEL: @fmul_fsub_fmul_distribute2_extra_use(
 ; CHECK-NEXT:    [[T1:%.*]] = fmul float [[X:%.*]], 6.000000e+00
 ; CHECK-NEXT:    [[T2:%.*]] = fsub float 2.000000e+00, [[T1]]
-; CHECK-NEXT:    [[TMP1:%.*]] = fmul fast float [[X]], 3.000000e+01
-; CHECK-NEXT:    [[T3:%.*]] = fsub fast float 1.000000e+01, [[TMP1]]
+; CHECK-NEXT:    [[T3:%.*]] = fmul fast float [[T2]], 5.000000e+00
 ; CHECK-NEXT:    call void @use_f32(float [[T2]])
 ; CHECK-NEXT:    ret float [[T3]]
 ;

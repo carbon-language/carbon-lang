@@ -581,7 +581,7 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
     // X * C, C/X, X/C, where C is a constant.
     // (MDC +/- C1) * C => (MDC * C) +/- (C1 * C)
     Instruction *FAddSub = dyn_cast<Instruction>(Op0);
-    if (FAddSub &&
+    if (FAddSub && FAddSub->hasOneUse() &&
         (FAddSub->getOpcode() == Instruction::FAdd ||
          FAddSub->getOpcode() == Instruction::FSub)) {
       Value *Opnd0 = FAddSub->getOperand(0);
