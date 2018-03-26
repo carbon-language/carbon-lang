@@ -1051,6 +1051,13 @@ static void getUnderlyingObjects(MachineInstr *MI,
   if (!MM->getValue())
     return;
   GetUnderlyingObjects(const_cast<Value *>(MM->getValue()), Objs, DL);
+  for (Value *V : Objs) {
+    if (!isIdentifiedObject(V)) {
+      Objs.clear();
+      return;
+    }
+    Objs.push_back(V);
+  }
 }
 
 /// Add a chain edge between a load and store if the store can be an
@@ -1059,6 +1066,8 @@ static void getUnderlyingObjects(MachineInstr *MI,
 /// but that code doesn't create loop carried dependences.
 void SwingSchedulerDAG::addLoopCarriedDependences(AliasAnalysis *AA) {
   MapVector<Value *, SmallVector<SUnit *, 4>> PendingLoads;
+  Value *UnknownValue =
+    UndefValue::get(Type::getVoidTy(MF.getFunction().getContext()));
   for (auto &SU : SUnits) {
     MachineInstr &MI = *SU.getInstr();
     if (isDependenceBarrier(MI, AA))
@@ -1066,6 +1075,8 @@ void SwingSchedulerDAG::addLoopCarriedDependences(AliasAnalysis *AA) {
     else if (MI.mayLoad()) {
       SmallVector<Value *, 4> Objs;
       getUnderlyingObjects(&MI, Objs, MF.getDataLayout());
+      if (Objs.empty())
+        Objs.push_back(UnknownValue);
       for (auto V : Objs) {
         SmallVector<SUnit *, 4> &SUs = PendingLoads[V];
         SUs.push_back(&SU);
@@ -1073,6 +1084,8 @@ void SwingSchedulerDAG::addLoopCarriedDependences(AliasAnalysis *AA) {
     } else if (MI.mayStore()) {
       SmallVector<Value *, 4> Objs;
       getUnderlyingObjects(&MI, Objs, MF.getDataLayout());
+      if (Objs.empty())
+        Objs.push_back(UnknownValue);
       for (auto V : Objs) {
         MapVector<Value *, SmallVector<SUnit *, 4>>::iterator I =
             PendingLoads.find(V);
@@ -1087,20 +1100,16 @@ void SwingSchedulerDAG::addLoopCarriedDependences(AliasAnalysis *AA) {
           // offset, then mark the dependence as loop carried potentially.
           unsigned BaseReg1, BaseReg2;
           int64_t Offset1, Offset2;
-          if (!TII->getMemOpBaseRegImmOfs(LdMI, BaseReg1, Offset1, TRI) ||
-              !TII->getMemOpBaseRegImmOfs(MI, BaseReg2, Offset2, TRI)) {
-            SDep Dep(Load, SDep::Barrier);
-            Dep.setLatency(1);
-            SU.addPred(Dep);
-            continue;            
-          }
-          if (BaseReg1 == BaseReg2 && (int)Offset1 < (int)Offset2) {
-            assert(TII->areMemAccessesTriviallyDisjoint(LdMI, MI, AA) &&
-                   "What happened to the chain edge?");
-            SDep Dep(Load, SDep::Barrier);
-            Dep.setLatency(1);
-            SU.addPred(Dep);
-            continue;
+          if (TII->getMemOpBaseRegImmOfs(LdMI, BaseReg1, Offset1, TRI) &&
+              TII->getMemOpBaseRegImmOfs(MI, BaseReg2, Offset2, TRI)) {
+            if (BaseReg1 == BaseReg2 && (int)Offset1 < (int)Offset2) {
+              assert(TII->areMemAccessesTriviallyDisjoint(LdMI, MI, AA) &&
+                     "What happened to the chain edge?");
+              SDep Dep(Load, SDep::Barrier);
+              Dep.setLatency(1);
+              SU.addPred(Dep);
+              continue;
+            }
           }
           // Second, the more expensive check that uses alias analysis on the
           // base registers. If they alias, and the load offset is less than
