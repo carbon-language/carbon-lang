@@ -124,6 +124,14 @@ option specifies "``-``", then the output will also be sent to standard output.
   Limit the number of cycles in the timeline view. By default, the number of
   cycles is set to 80.
 
+.. option:: -instruction-tables
+
+  Prints resource pressure information based on the static information
+  available from the processor model. This differs from the resource pressure
+  view because it doesn't require that the code is simulated. It instead prints
+  the theoretical uniform distribution of resource pressure for every
+  instruction in sequence.
+
 
 EXIT STATUS
 -----------

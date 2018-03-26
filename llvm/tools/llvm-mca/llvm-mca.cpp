@@ -24,6 +24,7 @@
 #include "BackendPrinter.h"
 #include "BackendStatistics.h"
 #include "InstructionInfoView.h"
+#include "InstructionTables.h"
 #include "ResourcePressureView.h"
 #include "SummaryView.h"
 #include "TimelineView.h"
@@ -121,8 +122,14 @@ static cl::opt<bool> AssumeNoAlias(
 
 static cl::opt<unsigned>
     LoadQueueSize("lqueue", cl::desc("Size of the load queue"), cl::init(0));
+
 static cl::opt<unsigned>
     StoreQueueSize("squeue", cl::desc("Size of the store queue"), cl::init(0));
+
+static cl::opt<bool>
+    PrintInstructionTables("instruction-tables",
+                           cl::desc("Print instruction tables"),
+                           cl::init(false));
 
 static const Target *getTarget(const char *ProgName) {
   TripleName = Triple::normalize(TripleName);
@@ -260,8 +267,9 @@ int main(int argc, char **argv) {
   MOFI.InitMCObjectFileInfo(TheTriple, /* PIC= */ false, Ctx);
 
   std::unique_ptr<buffer_ostream> BOS;
+
   std::unique_ptr<mca::SourceMgr> S =
-      llvm::make_unique<mca::SourceMgr>(Iterations);
+      llvm::make_unique<mca::SourceMgr>(PrintInstructionTables ? 1 : Iterations);
   MCStreamerWrapper Str(Ctx, S->getSequence());
 
   std::unique_ptr<MCInstrInfo> MCII(TheTarget->createMCInstrInfo());
@@ -325,6 +333,18 @@ int main(int argc, char **argv) {
   // Create an instruction builder.
   std::unique_ptr<mca::InstrBuilder> IB =
       llvm::make_unique<mca::InstrBuilder>(*STI, *MCII);
+
+  if (PrintInstructionTables) {
+    mca::InstructionTables IT(STI->getSchedModel(), *IB, *S);
+    mca::ResourcePressureView RPV(*STI, *IP, *S);
+    mca::InstructionInfoView IIV(*STI, *MCII, *S, *IP);
+    IT.addEventListener(&IIV);
+    IT.addEventListener(&RPV);
+    IT.run();
+    RPV.printView(TOF->os());
+    TOF->keep();
+    return 0;
+  }
 
   std::unique_ptr<mca::Backend> B = llvm::make_unique<mca::Backend>(
       *STI, *MRI, *IB, *S, Width, RegisterFileSize, MaxRetirePerCycle,
