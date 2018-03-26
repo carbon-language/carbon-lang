@@ -2723,7 +2723,8 @@ void SwingSchedulerDAG::generateExistingPhis(
         int LVNumStages = Schedule.getStagesForPhi(LoopVal);
         int StageDiff = (StageScheduled - LoopValStage);
         LVNumStages -= StageDiff;
-        if (LVNumStages > (int)np) {
+        // Make sure the loop value Phi has been processed already.
+        if (LVNumStages > (int)np && VRMap[CurStageNum].count(LoopVal)) {
           NewReg = PhiOp2;
           unsigned ReuseStage = CurStageNum;
           if (Schedule.isLoopCarried(this, *PhiInst))
