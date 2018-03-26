@@ -514,8 +514,8 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
         return BinaryOperator::CreateFDivFMF(X, C1DivC, &I);
     }
 
-    // 'fadd C, X' and 'fsub X, C' are canonicalized to these patterns, so we do
-    // not need to match those. Distributing the multiply may allow further
+    // We do not need to match 'fadd C, X' and 'fsub X, C' because they are
+    // canonicalized to 'fadd X, C'. Distributing the multiply may allow further
     // folds and (X * C) + C2 is 'fma'.
     if (match(Op0, m_OneUse(m_FAdd(m_Value(X), m_Constant(C1))))) {
       // (X + C1) * C --> (X * C) + (C * C1)
