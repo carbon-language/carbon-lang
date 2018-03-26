@@ -2730,7 +2730,7 @@ void SwingSchedulerDAG::generateExistingPhis(
       // references another Phi, and the other Phi is scheduled in an
       // earlier stage. We can try to reuse an existing Phi up until the last
       // stage of the current Phi.
-      if (LoopDefIsPhi && (int)PrologStage >= StageScheduled) {
+      if (LoopDefIsPhi && (int)(PrologStage - np) >= StageScheduled) {
         int LVNumStages = Schedule.getStagesForPhi(LoopVal);
         int StageDiff = (StageScheduled - LoopValStage);
         LVNumStages -= StageDiff;
@@ -2742,8 +2742,8 @@ void SwingSchedulerDAG::generateExistingPhis(
             ReuseStage -= LVNumStages;
           // Check if the Phi to reuse has been generated yet. If not, then
           // there is nothing to reuse.
-          if (VRMap[ReuseStage].count(LoopVal)) {
-            NewReg = VRMap[ReuseStage][LoopVal];
+          if (VRMap[ReuseStage - np].count(LoopVal)) {
+            NewReg = VRMap[ReuseStage - np][LoopVal];
 
             rewriteScheduledInstr(NewBB, Schedule, InstrMap, CurStageNum, np,
                                   &*BBI, Def, NewReg);
