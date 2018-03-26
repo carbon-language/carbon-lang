@@ -5340,30 +5340,25 @@ multiclass SS41I_pmovx_rrrm<bits<8> opc, string OpcodeStr, X86MemOperand MemOp,
 
 multiclass SS41I_pmovx_rm_all<bits<8> opc, string OpcodeStr,
                           X86MemOperand MemOp, X86MemOperand MemYOp,
-                          OpndItins SSEItins, OpndItins AVXItins,
-                          OpndItins AVX2Itins, Predicate prd> {
-  defm NAME : SS41I_pmovx_rrrm<opc, OpcodeStr, MemOp, VR128, VR128, SSEItins>;
+                          OpndItins itins, Predicate prd> {
+  defm NAME : SS41I_pmovx_rrrm<opc, OpcodeStr, MemOp, VR128, VR128, itins>;
   let Predicates = [HasAVX, prd] in
     defm V#NAME   : SS41I_pmovx_rrrm<opc, !strconcat("v", OpcodeStr), MemOp,
-                                     VR128, VR128, AVXItins>, VEX, VEX_WIG;
+                                     VR128, VR128, itins>, VEX, VEX_WIG;
   let Predicates = [HasAVX2, prd] in
     defm V#NAME#Y : SS41I_pmovx_rrrm<opc, !strconcat("v", OpcodeStr), MemYOp,
-                                     VR256, VR128, AVX2Itins>, VEX, VEX_L, VEX_WIG;
+                                     VR256, VR128, itins>, VEX, VEX_L, VEX_WIG;
 }
 
 multiclass SS41I_pmovx_rm<bits<8> opc, string OpcodeStr, X86MemOperand MemOp,
                           X86MemOperand MemYOp, Predicate prd> {
   defm PMOVSX#NAME : SS41I_pmovx_rm_all<opc, !strconcat("pmovsx", OpcodeStr),
                                         MemOp, MemYOp,
-                                        SSE_INTALU_ITINS_SHUFF_P,
-                                        DEFAULT_ITINS_SHUFFLESCHED,
-                                        DEFAULT_ITINS_SHUFFLESCHED, prd>;
+                                        SSE_INTALU_ITINS_SHUFF_P, prd>;
   defm PMOVZX#NAME : SS41I_pmovx_rm_all<!add(opc, 0x10),
                                         !strconcat("pmovzx", OpcodeStr),
                                         MemOp, MemYOp,
-                                        SSE_INTALU_ITINS_SHUFF_P,
-                                        DEFAULT_ITINS_SHUFFLESCHED,
-                                        DEFAULT_ITINS_SHUFFLESCHED, prd>;
+                                        SSE_INTALU_ITINS_SHUFF_P, prd>;
 }
 
 defm BW : SS41I_pmovx_rm<0x20, "bw", i64mem, i128mem, NoVLX_Or_NoBWI>;
