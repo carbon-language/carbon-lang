@@ -134,27 +134,11 @@ def  : WriteRes<WriteIMulH, [JALU1]> {
 // FIXME: SAGU 3-operand LEA
 def : WriteRes<WriteLEA, [JALU01]>;
 
-// FIXME: Why do bitcounts use WriteIMul?
-def JWriteLZCNT : SchedWriteRes<[JALU01]> {
-}
-def JWriteLZCNTLd : SchedWriteRes<[JLAGU, JALU01]> {
-  let Latency = 4;
-}
-def : InstRW<[JWriteLZCNT], (instrs LZCNT16rr, LZCNT32rr, LZCNT64rr,
-                                    POPCNT16rr, POPCNT32rr, POPCNT64rr)>;
-def : InstRW<[JWriteLZCNTLd], (instrs LZCNT16rm, LZCNT32rm, LZCNT64rm,
-                                    POPCNT16rm, POPCNT32rm, POPCNT64rm)>;
-
-def JWriteTZCNT : SchedWriteRes<[JALU01]> {
-  let Latency = 2;
-  let ResourceCycles = [2];
-}
-def JWriteTZCNTLd : SchedWriteRes<[JLAGU, JALU01]> {
-  let Latency = 5;
-  let ResourceCycles = [1, 2];
-}
-def : InstRW<[JWriteTZCNT], (instrs TZCNT16rr, TZCNT32rr, TZCNT64rr)>;
-def : InstRW<[JWriteTZCNTLd], (instrs TZCNT16rm, TZCNT32rm, TZCNT64rm)>;
+// Bit counts.
+defm : JWriteResIntPair<WriteBitScan, [JALU01], 5, [4], 8>;
+defm : JWriteResIntPair<WritePOPCNT,  [JALU01], 1>;
+defm : JWriteResIntPair<WriteLZCNT,   [JALU01], 1>;
+defm : JWriteResIntPair<WriteTZCNT,   [JALU01], 2, [2]>;
 
 def JWriteIMul64 : SchedWriteRes<[JALU1, JMul]> {
   let Latency = 6;
