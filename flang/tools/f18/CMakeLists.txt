@@ -23,11 +23,10 @@ target_link_libraries( test-type
 
 add_executable( test-sema  
   test-sema.cc
-  sema-impl.cc
 )
 
 target_link_libraries( test-sema
-  FlangParser
+  FortranParser
   FlangSemantics
   )
 

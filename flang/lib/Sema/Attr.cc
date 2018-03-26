@@ -1,2 +1,0 @@
-
-#include "../semantics/attr.cc"

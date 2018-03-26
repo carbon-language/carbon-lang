@@ -4,25 +4,43 @@
 #include "../../lib/parser/indirection.h"
 #include "../../lib/parser/parse-tree-visitor.h"
 #include "../../lib/parser/parse-tree.h"
+#include "../../lib/parser/parse-state.h"
 
-#include "../../lib/parser/scope.h"
-#include "flang/Sema/StatementMap.h"
-#include "flang/Sema/ParseTreeDump.h"
+#include "scope.h"
+#include "StatementMap.h"
+#include "ParseTreeDump.h"
+#include "LabelTable.h"
+#include "SemanticData.h"
+#include "GetValue.h"
 
-#include <vector>
-#include <map>
-#include <stack>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
+#include <cstddef>
+
 #include <functional>
 #include <iomanip>
-#include <cstring>
+#include <iostream>
+#include <list>
+#include <map>
+#include <optional>
+#include <sstream>
+#include <stack>
+#include <string>
+#include <type_traits>
+#include <vector>
 
 namespace psr = Fortran::parser ;
 namespace sm  = Fortran::semantics ;
 
 using sm::StmtClass;
 using sm::StmtGroup;
+using sm::GetSema;
+using sm::InitSema;
+using sm::Scope ;
+using sm::LabelTable ;
+using sm::LabelTableStack ;
 
-#include "GetValue.h"
 
 #define TODO  do { std::cerr << "NOT YET IMPLEMENTED " << __FILE__ << ":" << __LINE__ << "\n" ; exit(1) ; } while(0)
 #define CONSUME(x) do { (void)x ; } while(0) 
@@ -46,55 +64,8 @@ bool ENV(const char *name) {
   return ( getenv(name) &&  !( getenv(name)[0] == '0' || getenv(name)[0] == 'n') );
 }
 
-// Initialize the pointer used to attach semantic information to each parser-tree node
-//
-// Ideally, the function should be called once at the begining of the corresponding Pre() 
-// member in Pass1. However, in case a forward reference to the Semantic<> data would be
-// required, no error will occur when setting strict=false.
-//
-template <typename T>  sm::Semantic<T> & InitSema(const T &node, bool strict=true) { 
-
-  // Do not use the default implementation!
-  // If the following assert fails, then a DECLARE_SEMANTIC is missing above 
-  assert(sm::Semantic<T>::IS_DECLARED);
-
-  if (node.s) {
-    if (strict) 
-      FAIL( "Duplicate call of " << __PRETTY_FUNCTION__ ) ;
-    else
-      return *(node.s); 
-  }
-  auto s = new sm::Semantic<T>( const_cast<T*>(&node) ) ;
-  const_cast<T&>(node).s = s; 
-  return *s ; 
-} 
-
-// Retreive the semantic information attached to a parser-tree node
-template <typename T> sm::Semantic<T> & getSema(const T &node) { 
-
-  // Do not use the default implementation!
-  // If the following assert fails, then a DECLARE_SEMANTIC is missing above 
-  assert(sm::Semantic<T>::IS_DECLARED); 
-
-  assert(node.s) ;
-  return *(node.s) ;
-} 
-
-
-#if 1
-#include <type_traits>
-#include <iostream>
-#include <cstdlib>
-#include <iostream>
-#include <list>
-#include <optional>
-#include <sstream>
-#include <string>
-#include <stddef.h>
-
-// A simple convenient function to remove 'const' without having to 
-// make the type explicit (which can be anonoying since combined 
-// types can be quite long in the parse-tree)
+// A simple helper to remove 'const' without having to make the type explicit (which can be 
+// annoying since combined types can be quite long in the parse-tree)
 //
 // For example.
 //   Using std::const_cast: 
@@ -102,688 +73,25 @@ template <typename T> sm::Semantic<T> & getSema(const T &node) {
 //   Using unconst:
 //      auto &uses = unconst(const_uses);
 //
-static inline template <typename T> T& unconst(const T&x) { 
-  return std::const_cast<T&>(x) ;
+template <typename T> static inline T & unconst(const T&x) {
+  return const_cast<T&>(x) ;
 }
 
 
-namespace Fortran::semantics 
-{
-
-using namespace Fortran::parser  ;
-
-template <typename ParserClass> 
-Semantic<ParserClass> &
-sema(ParserClass *node) 
-{
-  if ( node->s == NULL ) {
-   node->s = new Semantic<ParserClass>(node) ; 
-  }
-  return *(node->s); 
-} 
-
-template <typename P, typename T>  P * vget( T & x ) {  
-  return std::get_if<P>(x.u) ;
-}
-
-
-template <typename P, typename T>  P * vget_i( T & x ) {
-  if ( auto v = std::get_if<Indirection<P>>(&x.u) ) {
-    return &(**v) ;
-  } else {
-    return nullptr ; 
-  }   
-}
-
-  
-
-// Each statement label is in one of those groups    
-enum class LabelGroup
-{
-  BranchTarget, ///< A label a possible branch target
-  Format,       ///< A label on a FORMAT statement
-  Other         ///< A label on another statement  
-};
-
-  
-//
-// Hold all the labels of a Program Unit 
-//
-// This is going to a integrated into the Scope/SymbolTable
-// once we have it implemented. For now, I am just simulating
-// scopes with LabelTable and LabelTableStack
-//
-class LabelTable 
-{
-private:
-  
-  struct Entry {
-    // TODO: what to put here
-    Provenance loc; 
-  }; 
-
-  std::map<int,Entry> entries_ ;
-  
-public:
-  
-  void add( int label , Provenance loc ) 
-  { 
-    if (label<1 || label>99999) return ; // Hoops! 
-    auto &entry = entries_[label] ;
-    entry.loc = loc ; 
-  }
-
-  bool find(int label, Provenance &loc)
-  {
-    
-    auto it = entries_.find(label);
-    if( it != entries_.end()) {
-      Entry & entry{it->second}; 
-      loc = entry.loc; 
-      return true; 
+static void dump(LabelTable &labels) 
+{    
+#if 1
+  TRACE( "==== Label Table ====");
+  for ( int i=1 ; i<=99999 ;i++) {
+    psr::Provenance p;
+    if ( labels.find(i,p) ) {
+      TRACE( "  #" << i << " at " << p.offset() ) ;
     }
-    return false;
   }
+  TRACE( "=====================");
+#endif
+}
 
-  void dump() 
-  {    
-    TRACE( "==== Label Table ====");
-    for ( int i=1 ; i<=99999 ;i++) {
-      Provenance p;
-      if ( find(i,p) ) {
-        TRACE( "  #" << i << " at " << p.offset() ) ;
-      }
-    }
-    TRACE( "=====================");
-  }
-
-
-
-}; // of class LabelTable
-
-
-class LabelTableStack {
-private:
-  std::stack<LabelTable*> stack ; 
-public:
-  LabelTable *PushLabelTable( LabelTable *table ) 
-  {
-    assert(table!=NULL);
-    stack.push(table);
-    return table; 
-  }
-
-  void PopLabelTable( LabelTable *table ) 
-  {
-    assert( !stack.empty() ) ;
-    assert( stack.top() == table ) ;
-    stack.pop(); 
-  }
-
-  LabelTable & GetLabelTable() {
-    assert( !stack.empty() ) ;
-    return *stack.top() ;
-  }
-  
-  bool NoLabelTable() {
-    return stack.empty() ; 
-  }
-
-}; // of class LabelTableStack
-
-
-//////////////////////////////////////////////////////////////////
-// 
-// Declare here the members of the Semantic<> information that will 
-// be attached to each parse-tree class. The default is an empty struct.
-//
-// Here are a few common fields 
-//  
-//     Scope *scope_provider=0 ;     // For each node providing a new scope
-//     int stmt_label=0 ;            // For each node that consumes a label
-//
-//////////////////////////////////////////////////////////////////
-
-
-#define DEFINE_SEMANTIC(Class) \
-  template <> struct Semantic<psr::Class> { \
-    Semantic<psr::Class>(psr::Class *node) {} \
-    enum {IS_DECLARED=1};
-  
-#define END_SEMANTIC \
-  }
-
-//  Some fields that need to be defined for all statements
-#define SEMANTIC_STMT_FIELDS \
-   int stmt_index=0 
-
-DEFINE_SEMANTIC(ProgramUnit)
-  sm::StatementMap *statement_map=0 ;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(MainProgram)
-  Scope *scope_provider=0 ; 
-  LabelTable *label_table=0 ; 
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(SubroutineSubprogram)
-  Scope *scope_provider=0 ; 
-  LabelTable *label_table=0 ; 
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(FunctionSubprogram)
-  Scope *scope_provider=0 ; 
-  LabelTable *label_table=0 ; 
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(Module)
-  Scope *scope_provider=0 ; 
-  LabelTable *label_table=0 ; 
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(DerivedTypeDef)
-  // WARNING: there is also a sm::DerivedTypeDef defined in types.h 
-  Scope *scope_provider=0 ;
-END_SEMANTIC;
-
-
-DEFINE_SEMANTIC(AssignmentStmt)
-  SEMANTIC_STMT_FIELDS; 
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(DataStmt)
-  SEMANTIC_STMT_FIELDS; 
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(FunctionStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(SubroutineStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(ModuleStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-  
-DEFINE_SEMANTIC(EndModuleStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-  
-DEFINE_SEMANTIC(StmtFunctionStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(EndFunctionStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(EndSubroutineStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(TypeDeclarationStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(DerivedTypeStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(EndTypeStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(PrintStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(UseStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(ProgramStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(EndProgramStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(ImplicitStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(AccessStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(AllocatableStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(AsynchronousStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(BindStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(CodimensionStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(ContiguousStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(ContainsStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(DimensionStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(ExternalStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(IntentStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(IntrinsicStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(NamelistStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(OptionalStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(PointerStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(ProtectedStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(SaveStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(TargetStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(ValueStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(VolatileStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(CommonStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(EquivalenceStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(BasedPointerStmt) // extension
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(GenericStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(ParameterStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(EnumDef)
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(EnumDefStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(EndEnumStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(InterfaceStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(EndInterfaceStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(IfThenStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(ElseIfStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-  
-DEFINE_SEMANTIC(ElseStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-  
-DEFINE_SEMANTIC(EndIfStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(IfStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(SelectCaseStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(CaseStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(EndSelectStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(SelectRankStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(SelectRankCaseStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(SelectTypeStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(ProcedureDeclarationStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(StructureStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(StructureDef::EndStructureStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(FormatStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(EntryStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(ImportStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(AllocateStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(BackspaceStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(CallStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(CloseStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(ContinueStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(DeallocateStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(EndfileStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(EventPostStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(EventWaitStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(CycleStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(ExitStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(FailImageStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(FlushStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(FormTeamStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(GotoStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(InquireStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(LockStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(NullifyStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(OpenStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(PointerAssignmentStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(ReadStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(ReturnStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(RewindStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(StopStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(SyncAllStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(SyncImagesStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(SyncMemoryStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(SyncTeamStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(UnlockStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(WaitStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(WhereStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(WriteStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(ComputedGotoStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(ForallStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
- 
-DEFINE_SEMANTIC(ForallConstructStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(EndForallStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
- 
-DEFINE_SEMANTIC(RedimensionStmt) // extension
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(ArithmeticIfStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(AssignStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(AssignedGotoStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(PauseStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(PrivateStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(TypeBoundProcedureStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(TypeBoundGenericStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(FinalProcedureStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(ComponentDefStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(EnumeratorDefStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(TypeGuardStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(NonLabelDoStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(LabelDoStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(EndDoStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(BlockStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(EndBlockStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(AssociateStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(EndAssociateStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-
-DEFINE_SEMANTIC(ChangeTeamStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(EndChangeTeamStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(CriticalStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-DEFINE_SEMANTIC(EndCriticalStmt)
-  SEMANTIC_STMT_FIELDS;
-END_SEMANTIC;
-
-} // of namespace Fortran::semantics
-
-
-
-//////////////////////////////////////////////////////////////////
-
-using sm::Scope ;
-using sm::LabelTable ;
-using sm::LabelTableStack ;
 
 using SMap = sm::StatementMap;
 
@@ -795,12 +103,13 @@ class Pass1 : public LabelTableStack
   
 public:
   
-  Pass1() :
+  Pass1(psr::ParseState &pstate) :
+    pstate_(pstate), 
     current_label_(-1) ,
     current_smap_(0)
   {
-    system_scope_  = new Scope(Scope::Kind::SK_SYSTEM, nullptr, nullptr ) ; 
-    unit_scope_    = new Scope(Scope::Kind::SK_GLOBAL, system_scope_, nullptr) ;
+    system_scope_  = &Scope::systemScope;
+    unit_scope_    = &Scope::globalScope;
     current_scope_ = nullptr ;
   }   
 
@@ -809,14 +118,15 @@ public:
   // Remark: Ideally those fields shall not be directly accessible.
   //         Make them private in a base class? 
   
+  psr::ParseState &pstate_ ;
   int current_label_; // hold the value of a statement label until it get consumed (-1 means none) 
   Provenance current_label_loc_; 
-  Scope * system_scope_ ; 
+  const Scope * system_scope_ ; 
   Scope * unit_scope_; 
   Scope * current_scope_ ; 
   SMap * current_smap_ ;
 
-  std::map<SMap::Index, sm::Identifier> construct_name_ ;
+  std::map<SMap::Index, sm::Name> construct_name_ ;
 
   // Provide all label-DO statements that are still open.
   // The key is the LabelDoStmt index
@@ -834,22 +144,21 @@ public:
 
 public:
   
-  Scope *EnterScope(Scope *s) { 
-    assert(s) ; 
-    assert(s->getParentScope() == current_scope_ ) ;
-    current_scope_ = s ; 
-    TRACE("Entering Scope " << s->toString() );    
-    return s;
+  Scope * EnterScope(Scope &s) { 
+    assert( &s.parent() == current_scope_ ) ;
+    current_scope_ = &s ; 
+    return &s;
   } 
 
   void LeaveScope(Scope::Kind k) {
     assert( current_scope_->kind() == k ) ; 
-    TRACE("Leaving Scope " << current_scope_->toString() );
-    current_scope_ = current_scope_->getParentScope() ; 
-  }  
+    current_scope_ = const_cast<Scope*>(&current_scope_->parent()) ; 
+  }
 
-public:
-  
+  Provenance GetProvenance(const CharBlock &source) {
+    return pstate_.GetProvenance(source.begin()) ;
+  }
+
   // Trace the location and label of any x with an accessible Statement<> in its type.
   template <typename T> void TraceStatementInfo(const T &x) { 
     auto & s = GetStatementValue(x) ;
@@ -916,9 +225,9 @@ public:
   
 
   //
-  // Should operate with Symbol instead of Identifier
+  // TODO: Should operate with Symbol instead of Name
   //
-  sm::OptIdentifier GetConstructName(SMap::Index stmt) {
+  std::optional<sm::Name> GetConstructName(SMap::Index stmt) {
     auto it = construct_name_.find(stmt);
     if ( it == construct_name_.end() ) {
       return std::nullopt ; 
@@ -928,14 +237,20 @@ public:
 
   // 
   void 
-  SetConstructName(SMap::Index stmt, sm::OptIdentifier name) {
+  SetConstructName(SMap::Index stmt, const psr::Name &name) {
+    construct_name_.insert_or_assign(stmt, name.ToString() );
+  }
+
+  // 
+  void 
+  SetConstructName(SMap::Index stmt, const std::optional<psr::Name>& name) {
     if (name) {
-      construct_name_.insert_or_assign(stmt, *name);
+      SetConstructName(stmt,*name) ;
     }
   }
 
   void 
-  CheckStatementName( SMap::Index part_or_end, sm::OptIdentifier found, bool required) {
+  CheckStatementName( SMap::Index part_or_end, const std::optional<psr::Name> &found, bool required) {
     
     auto & smap = GetStatementMap() ;
 
@@ -945,24 +260,26 @@ public:
     SMap::Index start = smap.StartOfConstruct(part_or_end); 
     assert( smap.GetGroup(start) == StmtGroup::Start );
 
-    sm::OptIdentifier  expect = GetConstructName(start);
+    
+
+    std::optional<sm::Name> expect = GetConstructName(start);
    
     // TODO: Get the location from part_or_end
     const char * text = StmtClassText( smap.GetClass(part_or_end) ) ;
     if ( expect ) {      
       if ( found ) {
-        if ( *found != *expect ) {
+        if ( found->ToString() != *expect ) {
           FAIL("In statement #" << part_or_end 
-               << ": Unexpected name '" << found->name() << "' in " << text
-               << "' (expected '" << expect->name() << "') ");
+               << ": Unexpected name '" << found->ToString() << "' in " << text
+               << "' (expected '" << *expect << "') ");
         } 
       } else if ( required) {
         FAIL("In statement #" << part_or_end 
-             << ": Missing name '" << expect->name() << "' in " << text);
+             << ": Missing name '" << *expect << "' in " << text);
       }
     } else if ( found ) {
       FAIL("In statement #" << part_or_end 
-           << ": Unexpected name '" << found->name() << "' in " << text << "' (none expected) ");
+           << ": Unexpected name '" << found->ToString() << "' in " << text << "' (none expected) ");
     }
   }
 
@@ -1345,14 +662,15 @@ public:
 
     // Each and every label must be consumed by a statement.
     if ( current_label_ != -1 ) {
-      TRACE("*** Label " << current_label_ << " (" << current_label_loc_.offset() << ") was not consumed in " << __PRETTY_FUNCTION__ );
+      TRACE("*** Label " << current_label_ << " (" << current_label_loc_.offset() 
+            << ") was not consumed in " << __PRETTY_FUNCTION__ );
     }
 
     // Store the label for the next statement.
     // The value 0 indicates not label but zero shall be consumed like any other
     // label. 
     current_label_ = 0 ; 
-    current_label_loc_ = x.provenance ;
+    current_label_loc_ = GetProvenance(x.source) ;
     if ( x.label.has_value() ) {
       //
       // TODO: The parser stores the label in a std::uint64_t but does not report overflow
@@ -1365,7 +683,7 @@ public:
       if ( 1 <= x.label.value() && x.label.value() <= 99999 ) {
         current_label_ = x.label.value() ; 
       } else {
-        FAIL( "##### Illegal label value " << x.label.value() << " at @" << x.provenance.offset() ) ;
+        FAIL( "##### Illegal label value " << x.label.value() << " at @" << current_label_loc_.offset() ) ;
       }
     } 
     return true ; 
@@ -1376,7 +694,8 @@ public:
     // Check that the label was consumed
     // Each Statement shall be associated to a class acting as a statement 
     if ( current_label_!=-1 )  {
-      TRACE("*** Label " << current_label_ << " (" << current_label_loc_.offset() << ") was not consumed in " << __PRETTY_FUNCTION__ );
+      TRACE("*** Label " << current_label_ << " (" << current_label_loc_.offset() 
+            << ") was not consumed in " << __PRETTY_FUNCTION__ );
       current_label_=-1 ;
     }
   }
@@ -1407,7 +726,10 @@ public:
     GetStatementMap().Dump(std::cerr,1,true);
     current_smap_ = 0;
 
+#if 0 
     // #### rewrite StmtFunctionStmt into AssignmentStmt
+    // #### This is an experiment.
+    // #### Currently not working
     
     const SpecificationPart & specif_part = std::get<SpecificationPart>(x.t) ;
     auto &const_decl_list = std::get< std::list<DeclarationConstruct> >(specif_part.t);   
@@ -1461,18 +783,19 @@ public:
       auto & arglist  = unconst(func_stmt.args());
       auto & rhs      = GetValue(unconst(func_stmt.expr()));               
                                  
-      psr::DataReference base(???);
+      psr::DataReference base(...);
       std::list<SectionSubscript> sslist;
       for ( Name &index : arglist ){
         // SectionSubscript -> Expr -> Designator -> DataReference -> Name = index
-        SectionSubscript ss(???);
+        SectionSubscript ss(...);
         sslist.push_back(ss); 
       }
       psr::ArrayElement elem(base,sslist);
       ExecutionPartConstruct(ExecutableConstruct(StatementActionStmt(
       decl_list.pop_back() ;
     }
-       
+#endif
+
     ClearConstructNames() ;    
   }
 
@@ -1482,48 +805,22 @@ public:
     TRACE_CALL() ;
     auto &sema = InitSema(x); 
 
+    // const ProgramStmt * program_stmt = GetOptValue( std::get<x.PROG>(x.t) ) ;
 
-    sm::ProgramSymbol * symbol{0};
-    const ProgramStmt * program_stmt = GetOptValue( std::get<x.PROG>(x.t) ) ;
-
-    sm::OptIdentifier program_ident;
- 
-    if ( program_stmt ) {
-      program_ident = sm::Identifier::make(program_stmt->v) ;
-      symbol = new sm::ProgramSymbol( current_scope_, *program_ident ) ;
-      TraceStatementInfo( std::get<x.PROG>(x.t) ) ;
-    }
-
-    // TODO: Should we create a symbol when there is no PROGRAM statement? 
-    
     // Install the scope 
-    sema.scope_provider = EnterScope( new Scope(Scope::Kind::SK_PROGRAM, current_scope_, symbol) )  ; 
+    sema.scope_provider = EnterScope( current_scope_->MakeScope(Scope::Kind::MainProgram) )  ; 
 
     // Install the label table
     sema.label_table = PushLabelTable( new LabelTable ) ;
-    
-    // Check the name consistancy
-    // const std::string * end_name = GetOptValue(end_stmt.v) ;
-    //    sm::Identifier end_ident = end_name ? sm::Identifier::get(*end_name) : nullptr ;
-
-    // CheckStatementName(program_ident,end_ident,"program",false) ;
-
-    // if ( program_ident ) { 
-    //   if ( end_ident && program_ident != end_ident ) {
-    //     FAIL("Unexpected end program name '" << end_ident->name() << "' (expected '" << program_ident->name() << "') ");
-    //   }
-    // } else if ( program_ident ) {
-    //   FAIL("Unexpected end program name '" << end_ident->name() << "'");
-    // }
 
     return true ; 
   }
 
   void Post(const MainProgram &x) { 
-    auto &sema = getSema(x); 
-    GetLabelTable().dump() ; 
+    auto &sema = GetSema(x); 
+    dump(GetLabelTable()) ; 
     PopLabelTable(sema.label_table)  ;     
-    LeaveScope(Scope::Kind::SK_PROGRAM)  ;     
+    LeaveScope(Scope::Kind::MainProgram)  ;     
     TRACE_CALL() ;
   }
 
@@ -1533,47 +830,23 @@ public:
     TRACE_CALL() ;
     auto &sema = InitSema(x); 
 
-    const FunctionStmt    & function_stmt = GetValue(std::get<x.FUNC>(x.t)) ; 
+    // const FunctionStmt    & function_stmt = GetValue(std::get<x.FUNC>(x.t)) ; 
     // const EndFunctionStmt & end_stmt      = GetValue(std::get<x.END>(x.t)) ; 
 
-    const std::string &function_name = std::get<1>(function_stmt.t) ; 
-    sm::Identifier function_ident = sm::Identifier::make(function_name) ;
-
-    // TODO: lookup for name conflict 
-    sm::Symbol *lookup ;
-    if ( current_scope_->kind() == Scope::Kind::SK_GLOBAL ) {
-      lookup = current_scope_->LookupProgramUnit(function_ident) ;
-      if (lookup) FAIL("A unit '" << function_ident.name() << "' is already declared") ;
-    } else {
-      lookup = current_scope_->LookupLocal(function_ident) ;
-      // TODO: There are a few cases, a function redeclaration is not necessarily a problem.
-      //       A typical example is a PRIVATE or PUBLIC statement in a module
-      if (lookup) FAIL("A unit '" << function_ident.name() << "' is already declared") ;
-    }
-   
-    auto symbol = new sm::FunctionSymbol( current_scope_, function_ident ) ;
-    sema.scope_provider = EnterScope( new Scope(Scope::Kind::SK_FUNCTION, current_scope_, symbol) )  ; 
+    sema.scope_provider = EnterScope( current_scope_->MakeScope(Scope::Kind::Subprogram) )  ; 
 
     // Install the label table
     sema.label_table = PushLabelTable( new LabelTable ) ;
-
-    TraceStatementInfo( std::get<x.FUNC>(x.t) ) ;
-
-    // Check the end function name 
-    //const std::string * end_name = GetOptValue(end_stmt.v) ;
-    //    sm::Identifier end_ident = end_name ? sm::Identifier::make(*end_name) : nullptr ;
-
-    // CheckStatementName(function_ident,end_ident,"function",false) ;
 
     return true ; 
   }
 
   void Post(const FunctionSubprogram &x) { 
     TRACE_CALL() ;
-    auto &sema = getSema(x); 
-    GetLabelTable().dump() ; 
+    auto &sema = GetSema(x); 
+    dump(GetLabelTable()) ; 
     PopLabelTable(sema.label_table)  ;     
-    LeaveScope(Scope::Kind::SK_FUNCTION)  ;     
+    LeaveScope(Scope::Kind::Subprogram);
   }
 
   //  ========== SubroutineSubprogram  ===========
@@ -1582,48 +855,25 @@ public:
     TRACE_CALL() ;
     auto &sema = InitSema(x); 
 
-    const SubroutineStmt    & subroutine_stmt = GetValue(std::get<x.SUBR>(x.t)) ; 
+    // const SubroutineStmt    & subroutine_stmt = GetValue(std::get<x.SUBR>(x.t)) ; 
     // const EndSubroutineStmt & end_stmt      = GetValue(std::get<x.END>(x.t)) ; 
 
-    const std::string &subroutine_name = std::get<1>(subroutine_stmt.t) ; 
-    sm::Identifier subroutine_ident = sm::Identifier::make(subroutine_name) ;
-
-    // TODO: lookup for name conflict 
-    sm::Symbol *lookup ;
-    if ( current_scope_->kind() == Scope::Kind::SK_GLOBAL ) {
-      lookup = current_scope_->LookupProgramUnit(subroutine_ident) ;
-      if (lookup) FAIL("A unit '" << subroutine_ident.name() << "' is already declared") ;
-    } else {
-      lookup = current_scope_->LookupLocal(subroutine_ident) ;
-      // TODO: There are a few cases, a subroutine redeclaration is not necessarily a problem.
-      //       A typical example is a PRIVATE or PUBLIC statement in a module
-      if (lookup) FAIL("A unit '" << subroutine_ident.name() << "' is already declared") ;
-    }
-   
-    auto symbol = new sm::SubroutineSymbol( current_scope_, subroutine_ident ) ;
-    sema.scope_provider = EnterScope( new Scope(Scope::Kind::SK_SUBROUTINE, current_scope_, symbol) )  ; 
+    sema.scope_provider = EnterScope( current_scope_->MakeScope(Scope::Kind::Subprogram) )  ; 
 
     // Install the label table
     sema.label_table = PushLabelTable( new LabelTable ) ;
 
-    TraceStatementInfo( std::get<x.SUBR>(x.t) ) ;
-
-    // Check the end subroutine name 
-    //  const std::string * end_name = GetOptValue(end_stmt.v) ;
-    // sm::Identifier end_ident = end_name ? sm::Identifier::make(*end_name) : nullptr ;
-
-    //  CheckStatementName(subroutine_ident,end_ident,"subroutine",false) ;
     return true ; 
   }
 
   void Post(const SubroutineSubprogram &x) { 
     TRACE_CALL() ;
-    auto &sema = getSema(x); 
-    GetLabelTable().dump() ; 
+    auto &sema = GetSema(x); 
+    dump(GetLabelTable()) ; 
     PopLabelTable(sema.label_table)  ;  
     if ( ! opened_label_do_.empty() ) 
       INTERNAL_ERROR;
-    LeaveScope(Scope::Kind::SK_SUBROUTINE)  ; 
+    LeaveScope(Scope::Kind::Subprogram)  ; 
   }
 
 
@@ -1633,47 +883,23 @@ public:
     TRACE_CALL() ;
     auto &sema = InitSema(x); 
 
-    const ModuleStmt    & module_stmt = GetValue(std::get<x.MOD>(x.t)) ; 
-    // const EndModuleStmt & end_stmt      = GetValue(std::get<x.END>(x.t)) ; 
+    // const ModuleStmt    & module_stmt = GetValue(std::get<x.MOD>(x.t)) ; 
+    // const EndModuleStmt & end_stmt    = GetValue(std::get<x.END>(x.t)) ; 
 
-    const std::string &module_name = module_stmt.v ; 
-    sm::Identifier module_ident = sm::Identifier::make(module_name) ;
-
-    // TODO: lookup for name conflict 
-    sm::Symbol *lookup ;
-    if ( current_scope_->kind() == Scope::Kind::SK_GLOBAL ) {
-      lookup = current_scope_->LookupProgramUnit(module_ident) ;
-      if (lookup) FAIL("A unit '" << module_ident.name() << "' is already declared") ;
-    } else {
-      lookup = current_scope_->LookupLocal(module_ident) ;
-      // TODO: There are a few cases, a module redeclaration is not necessarily a problem.
-      //       A typical example is a PRIVATE or PUBLIC statement in a module
-      if (lookup) FAIL("A unit '" << module_ident.name() << "' is already declared") ;
-    }
-   
-    auto symbol = new sm::ModuleSymbol( current_scope_, module_ident ) ;
-    sema.scope_provider = EnterScope( new Scope(Scope::Kind::SK_MODULE, current_scope_, symbol) )  ; 
+    sema.scope_provider = EnterScope( current_scope_->MakeScope(Scope::Kind::Module) )  ; 
 
     // Install the label table
     sema.label_table = PushLabelTable( new LabelTable ) ;
-
-    TraceStatementInfo( std::get<x.MOD>(x.t) ) ;
-
-    // Check the end module name 
-    //    const std::string * end_name = GetOptValue(end_stmt.v) ;
-    // sm::Identifier end_ident = end_name ? sm::Identifier::make(*end_name) : nullptr ;
-
-    // CheckStatementName(module_ident,end_ident,"module",false) ;
 
     return true ; 
   }
 
   void Post(const Module &x) { 
     TRACE_CALL() ;
-    auto &sema = getSema(x); 
-    GetLabelTable().dump() ; 
+    auto &sema = GetSema(x); 
+    dump(GetLabelTable()) ; 
     PopLabelTable(sema.label_table)  ;     
-    LeaveScope(Scope::Kind::SK_MODULE)  ;     
+    LeaveScope(Scope::Kind::Module)  ;     
   }
 
 
@@ -1709,7 +935,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::DerivedType);
 
-    auto name = sm::Identifier::make(std::get<1>(x.t));
+    auto &name = std::get<1>(x.t);
     SetConstructName(sema.stmt_index, name);
 
     return true ; 
@@ -1725,7 +951,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::EndType);
 
-    auto name = sm::Identifier::make(x.v) ;
+    auto &name = x.v ;
     CheckStatementName(sema.stmt_index, name, false); 
 
     return true ; 
@@ -1741,7 +967,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::Module);     
 
-    auto name = sm::Identifier::make(x.v);
+    auto &name = x.v;
     SetConstructName(sema.stmt_index, name);
 
     return true ; 
@@ -1757,7 +983,7 @@ public:
     TRACE_CALL() ;
      auto &sema = InitStmt(x, StmtClass::EndModule); 
 
-    auto name = sm::Identifier::make(x.v);
+    auto &name = x.v;
     CheckStatementName(sema.stmt_index, name, false); 
 
     return true ; 
@@ -1773,7 +999,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::Subroutine);
  
-    auto name = sm::Identifier::make(std::get<1>(x.t));
+    auto &name = std::get<psr::Name>(x.t);
     SetConstructName(sema.stmt_index, name);
 
     return true ; 
@@ -1789,7 +1015,7 @@ public:
     TRACE_CALL() ;
     auto &sema =  InitStmt(x, StmtClass::EndSubroutine); 
 
-    auto name = sm::Identifier::make(x.v);
+    auto &name = x.v;
     CheckStatementName(sema.stmt_index, name, false); 
     return true ; 
   }
@@ -1800,7 +1026,7 @@ public:
     TRACE_CALL() ;
     auto &sema =  InitStmt(x, StmtClass::Function); 
 
-    auto name = sm::Identifier::make(std::get<1>(x.t));
+    auto &name = std::get<psr::Name>(x.t);
     SetConstructName(sema.stmt_index, name);
 
     return true ; 
@@ -1816,7 +1042,7 @@ public:
     TRACE_CALL() ;
     auto &sema =  InitStmt(x, StmtClass::EndFunction);
     
-    auto name = sm::Identifier::make(x.v);
+    auto &name = x.v;
     CheckStatementName(sema.stmt_index, name, false); 
 
     return true ; 
@@ -1895,7 +1121,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::Program); 
     
-    auto name = sm::Identifier::make(x.v);
+    auto &name = x.v;
     SetConstructName(sema.stmt_index, name);
 
        
@@ -1912,7 +1138,7 @@ public:
     TRACE_CALL() ;
     auto &sema =InitStmt(x, StmtClass::EndProgram);
 
-    auto name = sm::Identifier::make(x.v);
+    auto &name = x.v;
     CheckStatementName(sema.stmt_index, name, false); 
 
     return true ; 
@@ -2213,7 +1439,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::Block);
     
-    auto name = sm::Identifier::make(x.v);
+    auto &name = x.v;
     SetConstructName(sema.stmt_index, name);
     
     return true ; 
@@ -2230,7 +1456,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::EndBlock);
 
-    auto name = sm::Identifier::make(x.v);
+    auto &name = x.v;
     CheckStatementName(sema.stmt_index, name, true); 
 
     return true ; 
@@ -2247,7 +1473,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::ForallConstruct);
     
-    auto name = sm::Identifier::make(std::get<0>(x.t));
+    auto &name = std::get<0>(x.t);
     SetConstructName(sema.stmt_index, name);
     
     return true ; 
@@ -2264,7 +1490,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::EndForall);
 
-    auto name = sm::Identifier::make(x.v);
+    auto &name = x.v;
     CheckStatementName(sema.stmt_index, name, true); 
 
     return true ; 
@@ -2282,7 +1508,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::Associate);
     
-    auto name = sm::Identifier::make(std::get<0>(x.t));
+    auto &name = std::get<0>(x.t);
     SetConstructName(sema.stmt_index, name);
     
     return true ; 
@@ -2299,7 +1525,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::EndAssociate);
 
-    auto name = sm::Identifier::make(x.v);
+    auto &name = x.v;
     CheckStatementName(sema.stmt_index, name, true); 
 
     return true ; 
@@ -2315,7 +1541,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::ChangeTeam);
     
-    auto name = sm::Identifier::make(std::get<0>(x.t));
+    auto &name = std::get<0>(x.t);
     SetConstructName(sema.stmt_index, name);
     
     return true ; 
@@ -2331,7 +1557,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::EndChangeTeam);
 
-    auto name = sm::Identifier::make(std::get<1>(x.t));
+    auto &name = std::get<1>(x.t);
     CheckStatementName(sema.stmt_index, name, true); 
 
     return true ; 
@@ -2347,7 +1573,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::Critical);
     
-    auto name = sm::Identifier::make(std::get<0>(x.t));
+    auto &name = std::get<0>(x.t);
     SetConstructName(sema.stmt_index, name);
     
     return true ; 
@@ -2363,7 +1589,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::EndCritical);
 
-    auto name = sm::Identifier::make(x.v) ;
+    auto &name = x.v ;
     CheckStatementName(sema.stmt_index, name, true); 
 
     return true ; 
@@ -2443,7 +1669,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::IfThen);
 
-    auto name = sm::Identifier::make( std::get<0>(x.t) );
+    auto &name = std::get<0>(x.t) ;
     SetConstructName(sema.stmt_index, name);
   
     return true ; 
@@ -2459,7 +1685,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::ElseIf);
 
-    auto name = sm::Identifier::make( std::get<1>(x.t) );
+    auto &name = std::get<1>(x.t);
     CheckStatementName(sema.stmt_index, name, false); 
     
     return true ; 
@@ -2475,7 +1701,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::Else);
 
-    auto name = sm::Identifier::make(x.v);
+    auto &name = x.v;
     CheckStatementName(sema.stmt_index, name, false); 
     
     return true ; 
@@ -2491,7 +1717,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::EndIf);
 
-    auto name = sm::Identifier::make(x.v);
+    auto &name = x.v;
     CheckStatementName(sema.stmt_index, name, true); 
 
     return true ; 
@@ -2507,7 +1733,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::NonLabelDo);
 
-    auto name = sm::Identifier::make( std::get<0>(x.t) );
+    auto &name = std::get<0>(x.t);
     SetConstructName(sema.stmt_index, name);
 
     // Specialize from StmtClass::LabelDo to StmtClass::NonLabelDoWhile or
@@ -2527,7 +1753,7 @@ public:
     TRACE_CALL() ;
     InitStmt(x, StmtClass::LabelDo);
     
-    auto &sema = getSema(x);
+    auto &sema = GetSema(x);
     // auto &smap = GetStatementMap() ;
 
     int end_label = int(std::get<1>(x.t)) ; 
@@ -2543,7 +1769,7 @@ public:
     }
 
     // And also record the construct name 
-    auto name = sm::Identifier::make( std::get<0>(x.t) );
+    auto &name = std::get<0>(x.t) ;
     SetConstructName(sema.stmt_index, name);
 
     // Specialize from StmtClass::LabelDo to StmtClass::LabelDoWhile or
@@ -2563,7 +1789,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::EndDo); 
 
-    auto name = sm::Identifier::make(x.v);
+    auto &name = x.v;
     CheckStatementName(sema.stmt_index, name, true); 
 
     return true ; 
@@ -2593,7 +1819,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::SelectCase);
 
-    auto name = sm::Identifier::make(std::get<0>(x.t));
+    auto &name = std::get<0>(x.t);
     SetConstructName(sema.stmt_index, name);    
     
     return true ; 
@@ -2609,7 +1835,7 @@ public:
     TRACE_CALL() ;
     InitStmt(x, StmtClass::Case);
     
-    auto &sema = getSema(x);
+    auto &sema = GetSema(x);
     auto &smap = GetStatementMap() ;
     
     // Detect and specialize CASE into CASE DEFAULT 
@@ -2649,7 +1875,7 @@ public:
       }
     
     // Check the construct name 
-    auto name = sm::Identifier::make(std::get<1>(x.t));
+    auto &name = std::get<1>(x.t);
     CheckStatementName(sema.stmt_index, name, false); 
 
     return true ; 
@@ -2667,7 +1893,7 @@ public:
     auto &sema = InitStmt(x, StmtClass::EndSelect);
 
     // Check the construct name 
-    auto name = sm::Identifier::make(x.v);
+    auto &name = x.v;
     CheckStatementName(sema.stmt_index, name, true); 
 
     return true ; 
@@ -2683,7 +1909,7 @@ public:
     TRACE_CALL() ;
     auto & sema = InitStmt(x, StmtClass::SelectRank);
 
-    auto name = sm::Identifier::make(std::get<0>(x.t));
+    auto &name = std::get<0>(x.t);
     SetConstructName(sema.stmt_index, name);    
 
     return true ; 
@@ -2699,7 +1925,7 @@ public:
     TRACE_CALL() ;
     InitStmt(x, StmtClass::SelectRankCase);  
 
-    auto &sema = getSema(x);
+    auto &sema = GetSema(x);
     auto &smap = GetStatementMap() ;
     
     // Detect and specialize to StmtClass::SelectRankDefault 
@@ -2756,7 +1982,7 @@ public:
 
     
     // Check the construct name 
-    auto name = sm::Identifier::make(std::get<1>(x.t));
+    auto &name = std::get<1>(x.t);
     CheckStatementName(sema.stmt_index, name, false); 
 
 
@@ -2773,7 +1999,7 @@ public:
     TRACE_CALL() ;
     auto &sema = InitStmt(x, StmtClass::SelectType);
 
-    auto name = sm::Identifier::make(std::get<0>(x.t));
+    auto &name = std::get<0>(x.t);
     SetConstructName(sema.stmt_index, name);    
 
     return true ; 
@@ -2796,7 +2022,7 @@ public:
   bool Pre(const TypeGuardStmt &x) { 
     TRACE_CALL() ;
     InitStmt(x, StmtClass::TypeGuard);
-    auto &sema = getSema(x);
+    auto &sema = GetSema(x);
     auto &smap = GetStatementMap() ;
     
     // Provide the proper specialization:
@@ -2842,7 +2068,7 @@ public:
       }
 
     // Check the construct name.
-    auto name = sm::Identifier::make(std::get<1>(x.t));
+    auto &name = std::get<1>(x.t);
     CheckStatementName(sema.stmt_index, name, false); 
 
 
@@ -3044,8 +2270,11 @@ public:
     
     auto & smap = GetStatementMap() ;
 
-    // the name of the construct we are looking for (can be null)
-    sm::OptIdentifier target_name = sm::Identifier::make(x.v) ; 
+    // the optional name of the construct we are looking for. 
+    std::optional<sm::Name> target_name ;
+    if (x.v) {
+      target_name = x.v->ToString();
+    }
 
     // Reminder: Unlike in EXIT, the target of a CYCLE statement is always 
     // a DO so the target resolution are similar but not identical.
@@ -3142,7 +2371,7 @@ public:
 
     if ( target_do == SMap::None ) {
       if ( target_name ) {
-        FAIL("No construct named '" << target_name->name() << "' found arount CYCLE statement" ) ;
+        FAIL("No construct named '" << *target_name << "' found arount CYCLE statement" ) ;
       } else {
         FAIL("No loop found arount CYCLE statement" ) ;
       }
@@ -3168,7 +2397,9 @@ public:
     auto & smap = GetStatementMap() ;
 
     // the name of the construct we are looking for (can be null)
-    sm::OptIdentifier target_name = sm::Identifier::make(x.v) ; 
+    std::optional<sm::Name> target_name;
+    if (x.v) 
+      target_name = x.v->ToString(); 
 
     // Remark: I am currently search the target construct by 
     // only considering its identifer but this is actually incorrect
@@ -3282,7 +2513,7 @@ public:
 
     if ( target_construct == SMap::None ) {
       if ( target_name ) {
-        FAIL("No construct named '" << target_name->name() << "' found arount EXIT statement" ) ;
+        FAIL("No construct named '" << *target_name << "' found arount EXIT statement" ) ;
       } else {
         FAIL("No loop found arount EXIT statement" ) ;
       }
@@ -3589,18 +2820,6 @@ public:
     GetStatementMap().Add( StmtClass::DummyEndForall, 0); 
   }
 
-  // =========== RedimensionStmt =========== 
-
-  bool Pre(const RedimensionStmt &x) { 
-    TRACE_CALL() ;
-    InitStmt(x, StmtClass::Redimension);
-    return true ; 
-  }
-
-  void Post(const RedimensionStmt &x) { 
-    TRACE_CALL() ;
-  }
-
   // =========== ArithmeticIfStmt =========== 
 
   bool Pre(const ArithmeticIfStmt &x) { 
@@ -3716,9 +2935,9 @@ public:
 }  // of namespace Fortran::parser 
 
 
-void DoSemanticAnalysis( const psr::Program &all) 
+void DoSemanticAnalysis( psr::ParseState & pstate,const psr::Program &all) 
 { 
-  psr::Pass1 pass1 ;
+  psr::Pass1 pass1(pstate) ;
   for (const psr::ProgramUnit &unit : all.v) {
     TRACE("===========================================================================================================");
     psr::DumpTree(unit);
@@ -3727,4 +2946,3 @@ void DoSemanticAnalysis( const psr::Program &all)
   } 
 }
 
-#endif

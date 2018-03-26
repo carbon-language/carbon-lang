@@ -1,11 +1,11 @@
 #ifndef FLANG_SEMA_PARSE_TREE_DUMP_H
 #define FLANG_SEMA_PARSE_TREE_DUMP_H
 
-#include "../../../lib/parser/format-specification.h"
-#include "../../../lib/parser/idioms.h"
-#include "../../../lib/parser/indirection.h"
-#include "../../../lib/parser/parse-tree-visitor.h"
-#include "../../../lib/parser/parse-tree.h"
+#include "../parser/format-specification.h"
+#include "../parser/idioms.h"
+#include "../parser/indirection.h"
+#include "../parser/parse-tree-visitor.h"
+#include "../parser/parse-tree.h"
 
 
 #include <string>

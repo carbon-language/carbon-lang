@@ -1,3 +1,3 @@
 
 add_subdirectory(parser)
-add_subdirectory(Sema)
+add_subdirectory(semantics)

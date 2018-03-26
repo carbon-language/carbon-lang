@@ -6,4 +6,7 @@ add_library(FlangSemantics
   scope.cc
   symbol.cc
   type.cc
+  ParseTreeDump.cc
+  StatementMap.cc
+  pass1.cc
 )

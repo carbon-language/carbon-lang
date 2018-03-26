@@ -1,7 +1,7 @@
 #ifndef FLANG_SEMA_STATEMENT_MAP_H
 #define FLANG_SEMA_STATEMENT_MAP_H
 
-#include "flang/Sema/Stmt.h"
+#include "Stmt.h"
 #include <functional>
 #include <map>
 #include <vector>

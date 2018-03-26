@@ -1,4 +1,4 @@
-#include "flang/Sema/ParseTreeDump.h"
+#include "ParseTreeDump.h"
 
 #include <string>
 #include <cstring>

@@ -1,7 +1,7 @@
-#ifndef FLANG_SEMA_STMT_H
-#define FLANG_SEMA_STMT_H
+#ifndef FLANG_SEMA_STMT_H_
+#define FLANG_SEMA_STMT_H_
 
-#include "../../../lib/parser/parse-tree.h"
+#include "../parser/parse-tree.h"
 #include <variant>
 
 namespace Fortran::semantics {
@@ -23,7 +23,7 @@ constexpr StmtGroup StmtClassToGroup(StmtClass sc) {
 #define DECLARE_STMT(Name, Class, Group, Text) \
     case StmtClass::Name: return StmtGroup::Group; 
 
-#include "flang/Sema/Stmt.def"
+#include "Stmt.def"
   }
   // Hummm... should not happen but cannot add error or assert
   // in constexpr expression.
@@ -35,7 +35,7 @@ constexpr const char *StmtClassName(StmtClass sc) {
 #define DECLARE_STMT(Name, Class, Group, Text) \
   case StmtClass::Name: return #Name;
 
-#include "flang/Sema/Stmt.def"
+#include "Stmt.def"
   }
   return "????";
 }
@@ -45,21 +45,11 @@ constexpr const char *StmtClassText(StmtClass sc) {
 #define DECLARE_STMT(Name, Class, Group, Text) \
   case StmtClass::Name: return Text; 
 
-#include "flang/Sema/Stmt.def"
+#include "Stmt.def"
   }
   return "????";
 }
 
-// AnyStmt is a std::variant<> of const pointers to all possible statement
-// classes.
-// typedef std::variant<
-//#define DECLARE_DUMMY_STMT(Name,Group,Text)
-//#define DECLARE_PARSER_STMT_ALT(Name,Class,Group,Text)
-//#define DECLARE_PARSER_STMT(Name,Class,Group,Text) , const
-//Fortran::parser::Class * #define DECLARE_FIRST_STMT(Name,Class,Group,Text)
-//const Fortran::parser::Class * #include "flang/Sema/Stmt.def"
-//  > AnyStmt ;
-
 }  // end of namespace Fortran::semantics
 
-#endif // of FLANG_SEMA_STMT_H
+#endif // of FLANG_SEMA_STMT_H_

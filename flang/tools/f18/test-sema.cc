@@ -22,7 +22,7 @@
 using namespace Fortran;
 using namespace parser;
 
-extern void DoSemanticAnalysis(const Program &);
+extern void DoSemanticAnalysis(ParseState &, const Program &);
 
 //static void visitProgramUnit(const ProgramUnit &unit);
 
@@ -67,6 +67,6 @@ int main(int argc, char *const argv[]) {
     state.messages()->Emit(std::cerr);
     return EXIT_FAILURE;
   }
-  DoSemanticAnalysis(*result) ;
+  DoSemanticAnalysis(state,*result) ;
   return EXIT_SUCCESS;
 }

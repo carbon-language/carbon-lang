@@ -1,5 +1,5 @@
 
-#include "flang/Sema/StatementMap.h"
+#include "StatementMap.h"
 
 #include <cassert>
 #include <cstdlib>
