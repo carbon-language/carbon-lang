@@ -128,6 +128,10 @@ option specifies "``-``", then the output will also be sent to standard output.
 
   Enable the resource pressure view. This is enabled by default.
 
+.. option:: -instruction-info
+
+  Enable the instruction info view. This is enabled by default.
+
 .. option:: -instruction-tables
 
   Prints resource pressure information based on the static information

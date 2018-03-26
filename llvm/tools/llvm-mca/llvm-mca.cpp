@@ -131,6 +131,11 @@ static cl::opt<bool>
                            cl::desc("Print instruction tables"),
                            cl::init(false));
 
+static cl::opt<bool>
+    PrintInstructionInfoView("instruction-info",
+                             cl::desc("Print the instruction info view"),
+                             cl::init(true));
+
 static const Target *getTarget(const char *ProgName) {
   TripleName = Triple::normalize(TripleName);
   if (TripleName.empty())
@@ -336,9 +341,13 @@ int main(int argc, char **argv) {
 
   if (PrintInstructionTables) {
     mca::InstructionTables IT(STI->getSchedModel(), *IB, *S);
+
+    if (PrintInstructionInfoView) {
+      mca::InstructionInfoView IIV(*STI, *MCII, *S, *IP);
+      IT.addEventListener(&IIV);
+    }
+
     mca::ResourcePressureView RPV(*STI, *IP, *S);
-    mca::InstructionInfoView IIV(*STI, *MCII, *S, *IP);
-    IT.addEventListener(&IIV);
     IT.addEventListener(&RPV);
     IT.run();
     RPV.printView(TOF->os());
@@ -355,8 +364,9 @@ int main(int argc, char **argv) {
 
   Printer->addView(llvm::make_unique<mca::SummaryView>(*S, Width));
 
-  Printer->addView(
-      llvm::make_unique<mca::InstructionInfoView>(*STI, *MCII, *S, *IP));
+  if (PrintInstructionInfoView)
+    Printer->addView(
+        llvm::make_unique<mca::InstructionInfoView>(*STI, *MCII, *S, *IP));
 
   if (PrintModeVerbose)
     Printer->addView(llvm::make_unique<mca::BackendStatistics>(*STI));
