@@ -322,6 +322,18 @@ defm : JWriteResFpuPair<WriteCvtF2I,       [JFPU1, JSTC], 3>; // Float -> Intege
 defm : JWriteResFpuPair<WriteCvtI2F,       [JFPU1, JSTC], 3>; // Integer -> Float.
 defm : JWriteResFpuPair<WriteCvtF2F,       [JFPU1, JSTC], 3>; // Float -> Float size conversion.
 
+def JWriteCVTSI2F : SchedWriteRes<[JFPU1, JSTC, JFPA, JALU0]> {
+  let Latency = 7;
+  let NumMicroOps = 2;
+}
+def : InstRW<[JWriteCVTSI2F], (instregex "(V)?CVT(T?)S(D|S)2SI(64)?rr")>;
+
+def JWriteCVTSI2FLd : SchedWriteRes<[JLAGU, JFPU1, JSTC, JFPA, JALU0]> {
+  let Latency = 12;
+  let NumMicroOps = 2;
+}
+def : InstRW<[JWriteCVTSI2FLd], (instregex "(V)?CVT(T?)S(D|S)2SI(64)?rm")>;
+
 ////////////////////////////////////////////////////////////////////////////////
 // Vector integer operations.
 ////////////////////////////////////////////////////////////////////////////////

@@ -1946,15 +1946,15 @@ define i32 @test_cvtsd2si(double %a0, double *%a1) {
 ;
 ; BTVER2-SSE-LABEL: test_cvtsd2si:
 ; BTVER2-SSE:       # %bb.0:
-; BTVER2-SSE-NEXT:    cvtsd2si (%rdi), %eax # sched: [8:1.00]
-; BTVER2-SSE-NEXT:    cvtsd2si %xmm0, %ecx # sched: [3:1.00]
+; BTVER2-SSE-NEXT:    cvtsd2si (%rdi), %eax # sched: [12:1.00]
+; BTVER2-SSE-NEXT:    cvtsd2si %xmm0, %ecx # sched: [7:1.00]
 ; BTVER2-SSE-NEXT:    addl %ecx, %eax # sched: [1:0.50]
 ; BTVER2-SSE-NEXT:    retq # sched: [4:1.00]
 ;
 ; BTVER2-LABEL: test_cvtsd2si:
 ; BTVER2:       # %bb.0:
-; BTVER2-NEXT:    vcvtsd2si (%rdi), %eax # sched: [8:1.00]
-; BTVER2-NEXT:    vcvtsd2si %xmm0, %ecx # sched: [3:1.00]
+; BTVER2-NEXT:    vcvtsd2si (%rdi), %eax # sched: [12:1.00]
+; BTVER2-NEXT:    vcvtsd2si %xmm0, %ecx # sched: [7:1.00]
 ; BTVER2-NEXT:    addl %ecx, %eax # sched: [1:0.50]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;
@@ -2075,15 +2075,15 @@ define i64 @test_cvtsd2siq(double %a0, double *%a1) {
 ;
 ; BTVER2-SSE-LABEL: test_cvtsd2siq:
 ; BTVER2-SSE:       # %bb.0:
-; BTVER2-SSE-NEXT:    cvtsd2si (%rdi), %rax # sched: [8:1.00]
-; BTVER2-SSE-NEXT:    cvtsd2si %xmm0, %rcx # sched: [3:1.00]
+; BTVER2-SSE-NEXT:    cvtsd2si (%rdi), %rax # sched: [12:1.00]
+; BTVER2-SSE-NEXT:    cvtsd2si %xmm0, %rcx # sched: [7:1.00]
 ; BTVER2-SSE-NEXT:    addq %rcx, %rax # sched: [1:0.50]
 ; BTVER2-SSE-NEXT:    retq # sched: [4:1.00]
 ;
 ; BTVER2-LABEL: test_cvtsd2siq:
 ; BTVER2:       # %bb.0:
-; BTVER2-NEXT:    vcvtsd2si (%rdi), %rax # sched: [8:1.00]
-; BTVER2-NEXT:    vcvtsd2si %xmm0, %rcx # sched: [3:1.00]
+; BTVER2-NEXT:    vcvtsd2si (%rdi), %rax # sched: [12:1.00]
+; BTVER2-NEXT:    vcvtsd2si %xmm0, %rcx # sched: [7:1.00]
 ; BTVER2-NEXT:    addq %rcx, %rax # sched: [1:0.50]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;
@@ -3003,15 +3003,15 @@ define i32 @test_cvttsd2si(double %a0, double *%a1) {
 ;
 ; BTVER2-SSE-LABEL: test_cvttsd2si:
 ; BTVER2-SSE:       # %bb.0:
-; BTVER2-SSE-NEXT:    cvttsd2si (%rdi), %eax # sched: [8:1.00]
-; BTVER2-SSE-NEXT:    cvttsd2si %xmm0, %ecx # sched: [3:1.00]
+; BTVER2-SSE-NEXT:    cvttsd2si (%rdi), %eax # sched: [12:1.00]
+; BTVER2-SSE-NEXT:    cvttsd2si %xmm0, %ecx # sched: [7:1.00]
 ; BTVER2-SSE-NEXT:    addl %ecx, %eax # sched: [1:0.50]
 ; BTVER2-SSE-NEXT:    retq # sched: [4:1.00]
 ;
 ; BTVER2-LABEL: test_cvttsd2si:
 ; BTVER2:       # %bb.0:
-; BTVER2-NEXT:    vcvttsd2si (%rdi), %eax # sched: [8:1.00]
-; BTVER2-NEXT:    vcvttsd2si %xmm0, %ecx # sched: [3:1.00]
+; BTVER2-NEXT:    vcvttsd2si (%rdi), %eax # sched: [12:1.00]
+; BTVER2-NEXT:    vcvttsd2si %xmm0, %ecx # sched: [7:1.00]
 ; BTVER2-NEXT:    addl %ecx, %eax # sched: [1:0.50]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;
@@ -3129,15 +3129,15 @@ define i64 @test_cvttsd2siq(double %a0, double *%a1) {
 ;
 ; BTVER2-SSE-LABEL: test_cvttsd2siq:
 ; BTVER2-SSE:       # %bb.0:
-; BTVER2-SSE-NEXT:    cvttsd2si (%rdi), %rax # sched: [8:1.00]
-; BTVER2-SSE-NEXT:    cvttsd2si %xmm0, %rcx # sched: [3:1.00]
+; BTVER2-SSE-NEXT:    cvttsd2si (%rdi), %rax # sched: [12:1.00]
+; BTVER2-SSE-NEXT:    cvttsd2si %xmm0, %rcx # sched: [7:1.00]
 ; BTVER2-SSE-NEXT:    addq %rcx, %rax # sched: [1:0.50]
 ; BTVER2-SSE-NEXT:    retq # sched: [4:1.00]
 ;
 ; BTVER2-LABEL: test_cvttsd2siq:
 ; BTVER2:       # %bb.0:
-; BTVER2-NEXT:    vcvttsd2si (%rdi), %rax # sched: [8:1.00]
-; BTVER2-NEXT:    vcvttsd2si %xmm0, %rcx # sched: [3:1.00]
+; BTVER2-NEXT:    vcvttsd2si (%rdi), %rax # sched: [12:1.00]
+; BTVER2-NEXT:    vcvttsd2si %xmm0, %rcx # sched: [7:1.00]
 ; BTVER2-NEXT:    addq %rcx, %rax # sched: [1:0.50]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;

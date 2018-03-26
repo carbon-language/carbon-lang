@@ -162,14 +162,14 @@ xorps       (%rax), %xmm2
 # CHECK-NEXT:  1      3     1.00                    	cvtsi2ssq	%rcx, %xmm2
 # CHECK-NEXT:  1      8     1.00    *               	cvtsi2ssl	(%rax), %xmm2
 # CHECK-NEXT:  1      8     1.00    *               	cvtsi2ssl	(%rax), %xmm2
-# CHECK-NEXT:  1      3     1.00                    	cvtss2si	%xmm0, %ecx
-# CHECK-NEXT:  1      3     1.00                    	cvtss2si	%xmm0, %rcx
-# CHECK-NEXT:  1      8     1.00    *               	cvtss2si	(%rax), %ecx
-# CHECK-NEXT:  1      8     1.00    *               	cvtss2si	(%rax), %rcx
-# CHECK-NEXT:  1      3     1.00                    	cvttss2si	%xmm0, %ecx
-# CHECK-NEXT:  1      3     1.00                    	cvttss2si	%xmm0, %rcx
-# CHECK-NEXT:  1      8     1.00    *               	cvttss2si	(%rax), %ecx
-# CHECK-NEXT:  1      8     1.00    *               	cvttss2si	(%rax), %rcx
+# CHECK-NEXT:  2      7     1.00                    	cvtss2si	%xmm0, %ecx
+# CHECK-NEXT:  2      7     1.00                    	cvtss2si	%xmm0, %rcx
+# CHECK-NEXT:  2      12    1.00    *               	cvtss2si	(%rax), %ecx
+# CHECK-NEXT:  2      12    1.00    *               	cvtss2si	(%rax), %rcx
+# CHECK-NEXT:  2      7     1.00                    	cvttss2si	%xmm0, %ecx
+# CHECK-NEXT:  2      7     1.00                    	cvttss2si	%xmm0, %rcx
+# CHECK-NEXT:  2      12    1.00    *               	cvttss2si	(%rax), %ecx
+# CHECK-NEXT:  2      12    1.00    *               	cvttss2si	(%rax), %rcx
 # CHECK-NEXT:  1      19    19.00                   	divps	%xmm0, %xmm2
 # CHECK-NEXT:  1      24    19.00   *               	divps	(%rax), %xmm2
 # CHECK-NEXT:  1      19    19.00                   	divss	%xmm0, %xmm2
@@ -274,14 +274,14 @@ xorps       (%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -      -     1.00    -      -      -     	cvtsi2ssq	%rcx, %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -     1.00    -      -      -     	cvtsi2ssl	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -     1.00    -      -      -     	cvtsi2ssl	(%rax), %xmm2
-# CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -      -     1.00    -      -      -     	cvtss2si	%xmm0, %ecx
-# CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -      -     1.00    -      -      -     	cvtss2si	%xmm0, %rcx
-# CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -     1.00    -      -      -     	cvtss2si	(%rax), %ecx
-# CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -     1.00    -      -      -     	cvtss2si	(%rax), %rcx
-# CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -      -     1.00    -      -      -     	cvttss2si	%xmm0, %ecx
-# CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -      -     1.00    -      -      -     	cvttss2si	%xmm0, %rcx
-# CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -     1.00    -      -      -     	cvttss2si	(%rax), %ecx
-# CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -     1.00    -      -      -     	cvttss2si	(%rax), %rcx
+# CHECK-NEXT: 1.00    -      -     1.00    -      -     1.00    -      -      -     1.00    -      -      -     	cvtss2si	%xmm0, %ecx
+# CHECK-NEXT: 1.00    -      -     1.00    -      -     1.00    -      -      -     1.00    -      -      -     	cvtss2si	%xmm0, %rcx
+# CHECK-NEXT: 1.00    -      -     1.00    -      -     1.00   1.00    -      -     1.00    -      -      -     	cvtss2si	(%rax), %ecx
+# CHECK-NEXT: 1.00    -      -     1.00    -      -     1.00   1.00    -      -     1.00    -      -      -     	cvtss2si	(%rax), %rcx
+# CHECK-NEXT: 1.00    -      -     1.00    -      -     1.00    -      -      -     1.00    -      -      -     	cvttss2si	%xmm0, %ecx
+# CHECK-NEXT: 1.00    -      -     1.00    -      -     1.00    -      -      -     1.00    -      -      -     	cvttss2si	%xmm0, %rcx
+# CHECK-NEXT: 1.00    -      -     1.00    -      -     1.00   1.00    -      -     1.00    -      -      -     	cvttss2si	(%rax), %ecx
+# CHECK-NEXT: 1.00    -      -     1.00    -      -     1.00   1.00    -      -     1.00    -      -      -     	cvttss2si	(%rax), %rcx
 # CHECK-NEXT:  -      -      -      -     19.00   -     1.00    -      -      -      -      -      -      -     	divps	%xmm0, %xmm2
 # CHECK-NEXT:  -      -      -      -     19.00   -     1.00   1.00    -      -      -      -      -      -     	divps	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -     19.00   -     1.00    -      -      -      -      -      -      -     	divss	%xmm0, %xmm2
