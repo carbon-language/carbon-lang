@@ -185,6 +185,16 @@ NativeSession::getSymbolById(uint32_t SymbolId) const {
              : nullptr;
 }
 
+bool NativeSession::addressForVA(uint64_t VA, uint32_t &Section,
+                                 uint32_t &Offset) const {
+  return false;
+}
+
+bool NativeSession::addressForRVA(uint32_t VA, uint32_t &Section,
+                                  uint32_t &Offset) const {
+  return false;
+}
+
 std::unique_ptr<PDBSymbol>
 NativeSession::findSymbolByAddress(uint64_t Address, PDB_SymType Type) const {
   return nullptr;

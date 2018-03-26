@@ -166,6 +166,28 @@ std::unique_ptr<PDBSymbolExe> DIASession::getGlobalScope() {
   return ExeSymbol;
 }
 
+bool DIASession::addressForVA(uint64_t VA, uint32_t &Section,
+                              uint32_t &Offset) const {
+  DWORD ArgSection, ArgOffset = 0;
+  if (S_OK == Session->addressForVA(VA, &ArgSection, &ArgOffset)) {
+    Section = static_cast<uint32_t>(ArgSection);
+    Offset = static_cast<uint32_t>(ArgOffset);
+    return true;
+  }
+  return false;
+}
+
+bool DIASession::addressForRVA(uint32_t RVA, uint32_t &Section,
+                               uint32_t &Offset) const {
+  DWORD ArgSection, ArgOffset = 0;
+  if (S_OK == Session->addressForRVA(RVA, &ArgSection, &ArgOffset)) {
+    Section = static_cast<uint32_t>(ArgSection);
+    Offset = static_cast<uint32_t>(ArgOffset);
+    return true;
+  }
+  return false;
+}
+
 std::unique_ptr<PDBSymbol> DIASession::getSymbolById(uint32_t SymbolId) const {
   CComPtr<IDiaSymbol> LocatedSymbol;
   if (S_OK != Session->symbolById(SymbolId, &LocatedSymbol))
