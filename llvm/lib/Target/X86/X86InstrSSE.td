@@ -2016,23 +2016,25 @@ let hasSideEffects = 0, mayLoad = 1 in
 def VCVTDQ2PDrm  : S2SI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
                         "vcvtdq2pd\t{$src, $dst|$dst, $src}",
                         [(set VR128:$dst,
-                          (v2f64 (X86VSintToFP (bc_v4i32 (loadv2i64 addr:$src)))))]>,
-                        VEX, Sched<[WriteCvtI2FLd]>, VEX_WIG;
+                          (v2f64 (X86VSintToFP (bc_v4i32 (loadv2i64 addr:$src)))))],
+                        IIC_SSE_CVT_PD_RM>, VEX, Sched<[WriteCvtI2FLd]>, VEX_WIG;
 def VCVTDQ2PDrr  : S2SI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                         "vcvtdq2pd\t{$src, $dst|$dst, $src}",
                         [(set VR128:$dst,
-                          (v2f64 (X86VSintToFP (v4i32 VR128:$src))))]>,
-                        VEX, Sched<[WriteCvtI2F]>, VEX_WIG;
+                          (v2f64 (X86VSintToFP (v4i32 VR128:$src))))],
+                        IIC_SSE_CVT_PD_RR>, VEX, Sched<[WriteCvtI2F]>, VEX_WIG;
 def VCVTDQ2PDYrm  : S2SI<0xE6, MRMSrcMem, (outs VR256:$dst), (ins i128mem:$src),
                          "vcvtdq2pd\t{$src, $dst|$dst, $src}",
                          [(set VR256:$dst,
-                           (v4f64 (sint_to_fp (bc_v4i32 (loadv2i64 addr:$src)))))]>,
-                         VEX, VEX_L, Sched<[WriteCvtI2FLd]>, VEX_WIG;
+                           (v4f64 (sint_to_fp (bc_v4i32 (loadv2i64 addr:$src)))))],
+                         IIC_SSE_CVT_PD_RM>, VEX, VEX_L, Sched<[WriteCvtI2FLd]>,
+                         VEX_WIG;
 def VCVTDQ2PDYrr  : S2SI<0xE6, MRMSrcReg, (outs VR256:$dst), (ins VR128:$src),
                          "vcvtdq2pd\t{$src, $dst|$dst, $src}",
                          [(set VR256:$dst,
-                           (v4f64 (sint_to_fp (v4i32 VR128:$src))))]>,
-                         VEX, VEX_L, Sched<[WriteCvtI2F]>, VEX_WIG;
+                           (v4f64 (sint_to_fp (v4i32 VR128:$src))))],
+                         IIC_SSE_CVT_PD_RR>, VEX, VEX_L, Sched<[WriteCvtI2F]>,
+                         VEX_WIG;
 }
 
 let hasSideEffects = 0, mayLoad = 1 in
