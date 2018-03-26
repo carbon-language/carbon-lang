@@ -702,7 +702,7 @@ public:
 
   bool isValidSchedule(SwingSchedulerDAG *SSD);
   void finalizeSchedule(SwingSchedulerDAG *SSD);
-  bool orderDependence(SwingSchedulerDAG *SSD, SUnit *SU,
+  void orderDependence(SwingSchedulerDAG *SSD, SUnit *SU,
                        std::deque<SUnit *> &Insts);
   bool isLoopCarried(SwingSchedulerDAG *SSD, MachineInstr &Phi);
   bool isLoopCarriedDefOfUse(SwingSchedulerDAG *SSD, MachineInstr *Inst,
@@ -3745,7 +3745,7 @@ void SMSchedule::computeStart(SUnit *SU, int *MaxEarlyStart, int *MinLateStart,
 /// Order the instructions within a cycle so that the definitions occur
 /// before the uses. Returns true if the instruction is added to the start
 /// of the list, or false if added to the end.
-bool SMSchedule::orderDependence(SwingSchedulerDAG *SSD, SUnit *SU,
+void SMSchedule::orderDependence(SwingSchedulerDAG *SSD, SUnit *SU,
                                  std::deque<SUnit *> &Insts) {
   MachineInstr *MI = SU->getInstr();
   bool OrderBeforeUse = false;
@@ -3758,13 +3758,11 @@ bool SMSchedule::orderDependence(SwingSchedulerDAG *SSD, SUnit *SU,
   unsigned Pos = 0;
   for (std::deque<SUnit *>::iterator I = Insts.begin(), E = Insts.end(); I != E;
        ++I, ++Pos) {
-    // Relative order of Phis does not matter.
-    if (MI->isPHI() && (*I)->getInstr()->isPHI())
-      continue;
     for (unsigned i = 0, e = MI->getNumOperands(); i < e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
       if (!MO.isReg() || !TargetRegisterInfo::isVirtualRegister(MO.getReg()))
         continue;
+
       unsigned Reg = MO.getReg();
       unsigned BasePos, OffsetPos;
       if (ST.getInstrInfo()->getBaseAndOffsetPosition(*MI, BasePos, OffsetPos))
@@ -3776,7 +3774,8 @@ bool SMSchedule::orderDependence(SwingSchedulerDAG *SSD, SUnit *SU,
           (*I)->getInstr()->readsWritesVirtualRegister(Reg);
       if (MO.isDef() && Reads && stageScheduled(*I) <= StageInst1) {
         OrderBeforeUse = true;
-        MoveUse = Pos;
+        if (MoveUse == 0)
+          MoveUse = Pos;
       } else if (MO.isDef() && Reads && stageScheduled(*I) > StageInst1) {
         // Add the instruction after the scheduled instruction.
         OrderAfterDef = true;
@@ -3784,14 +3783,16 @@ bool SMSchedule::orderDependence(SwingSchedulerDAG *SSD, SUnit *SU,
       } else if (MO.isUse() && Writes && stageScheduled(*I) == StageInst1) {
         if (cycleScheduled(*I) == cycleScheduled(SU) && !(*I)->isSucc(SU)) {
           OrderBeforeUse = true;
-          MoveUse = Pos;
+          if (MoveUse == 0)
+            MoveUse = Pos;
         } else {
           OrderAfterDef = true;
           MoveDef = Pos;
         }
       } else if (MO.isUse() && Writes && stageScheduled(*I) > StageInst1) {
         OrderBeforeUse = true;
-        MoveUse = Pos;
+        if (MoveUse == 0)
+          MoveUse = Pos;
         if (MoveUse != 0) {
           OrderAfterDef = true;
           MoveDef = Pos - 1;
@@ -3799,11 +3800,14 @@ bool SMSchedule::orderDependence(SwingSchedulerDAG *SSD, SUnit *SU,
       } else if (MO.isUse() && Writes && stageScheduled(*I) < StageInst1) {
         // Add the instruction before the scheduled instruction.
         OrderBeforeUse = true;
-        MoveUse = Pos;
+        if (MoveUse == 0)
+          MoveUse = Pos;
       } else if (MO.isUse() && stageScheduled(*I) == StageInst1 &&
                  isLoopCarriedDefOfUse(SSD, (*I)->getInstr(), MO)) {
-        OrderBeforeDef = true;
-        MoveUse = Pos;
+        if (MoveUse == 0) {
+          OrderBeforeDef = true;
+          MoveUse = Pos;
+        }
       }
     }
     // Check for order dependences between instructions. Make sure the source
@@ -3848,16 +3852,10 @@ bool SMSchedule::orderDependence(SwingSchedulerDAG *SSD, SUnit *SU,
       Insts.erase(Insts.begin() + MoveDef);
       Insts.erase(Insts.begin() + MoveUse);
     }
-    if (orderDependence(SSD, UseSU, Insts)) {
-      Insts.push_front(SU);
-      orderDependence(SSD, DefSU, Insts);
-      return true;
-    }
-    Insts.pop_back();
-    Insts.push_back(SU);
-    Insts.push_back(UseSU);
+    orderDependence(SSD, UseSU, Insts);
+    orderDependence(SSD, SU, Insts);
     orderDependence(SSD, DefSU, Insts);
-    return false;
+    return;
   }
   // Put the new instruction first if there is a use in the list. Otherwise,
   // put it at the end of the list.
@@ -3865,7 +3863,6 @@ bool SMSchedule::orderDependence(SwingSchedulerDAG *SSD, SUnit *SU,
     Insts.push_front(SU);
   else
     Insts.push_back(SU);
-  return OrderBeforeUse;
 }
 
 /// Return true if the scheduled Phi has a loop carried operand.
@@ -4151,22 +4148,20 @@ void SMSchedule::finalizeSchedule(SwingSchedulerDAG *SSD) {
   // generated code.
   for (int Cycle = getFirstCycle(), E = getFinalCycle(); Cycle <= E; ++Cycle) {
     std::deque<SUnit *> &cycleInstrs = ScheduledInstrs[Cycle];
-    std::deque<SUnit *> newOrderZC;
-    // Put the zero-cost, pseudo instructions at the start of the cycle.
+    std::deque<SUnit *> newOrderPhi;
     for (unsigned i = 0, e = cycleInstrs.size(); i < e; ++i) {
       SUnit *SU = cycleInstrs[i];
-      if (ST.getInstrInfo()->isZeroCost(SU->getInstr()->getOpcode()))
-        orderDependence(SSD, SU, newOrderZC);
+      if (SU->getInstr()->isPHI())
+        newOrderPhi.push_back(SU);
     }
     std::deque<SUnit *> newOrderI;
-    // Then, add the regular instructions back.
     for (unsigned i = 0, e = cycleInstrs.size(); i < e; ++i) {
       SUnit *SU = cycleInstrs[i];
-      if (!ST.getInstrInfo()->isZeroCost(SU->getInstr()->getOpcode()))
+      if (!SU->getInstr()->isPHI())
         orderDependence(SSD, SU, newOrderI);
     }
     // Replace the old order with the new order.
-    cycleInstrs.swap(newOrderZC);
+    cycleInstrs.swap(newOrderPhi);
     cycleInstrs.insert(cycleInstrs.end(), newOrderI.begin(), newOrderI.end());
     SSD->fixupRegisterOverlaps(cycleInstrs);
   }
