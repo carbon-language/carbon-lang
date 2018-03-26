@@ -273,8 +273,8 @@ int main(int argc, char **argv) {
 
   std::unique_ptr<buffer_ostream> BOS;
 
-  std::unique_ptr<mca::SourceMgr> S =
-      llvm::make_unique<mca::SourceMgr>(PrintInstructionTables ? 1 : Iterations);
+  std::unique_ptr<mca::SourceMgr> S = llvm::make_unique<mca::SourceMgr>(
+      PrintInstructionTables ? 1 : Iterations);
   MCStreamerWrapper Str(Ctx, S->getSequence());
 
   std::unique_ptr<MCInstrInfo> MCII(TheTarget->createMCInstrInfo());
@@ -343,14 +343,13 @@ int main(int argc, char **argv) {
     mca::InstructionTables IT(STI->getSchedModel(), *IB, *S);
 
     if (PrintInstructionInfoView) {
-      mca::InstructionInfoView IIV(*STI, *MCII, *S, *IP);
-      IT.addEventListener(&IIV);
+      IT.addView(
+          llvm::make_unique<mca::InstructionInfoView>(*STI, *MCII, *S, *IP));
     }
 
-    mca::ResourcePressureView RPV(*STI, *IP, *S);
-    IT.addEventListener(&RPV);
+    IT.addView(llvm::make_unique<mca::ResourcePressureView>(*STI, *IP, *S));
     IT.run();
-    RPV.printView(TOF->os());
+    IT.printReport(TOF->os());
     TOF->keep();
     return 0;
   }

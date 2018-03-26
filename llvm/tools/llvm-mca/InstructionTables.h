@@ -17,9 +17,10 @@
 #ifndef LLVM_TOOLS_LLVM_MCA_INSTRUCTIONTABLES_H
 #define LLVM_TOOLS_LLVM_MCA_INSTRUCTIONTABLES_H
 
-#include "HWEventListener.h"
+#include "View.h"
 #include "InstrBuilder.h"
 #include "SourceMgr.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/MCSchedule.h"
 
 namespace mca {
@@ -28,19 +29,20 @@ class InstructionTables {
   const llvm::MCSchedModel &SM;
   InstrBuilder &IB;
   SourceMgr &S;
-  std::set<HWEventListener *> Listeners;
+  llvm::SmallVector<std::unique_ptr<View>, 8> Views;
 
 public:
   InstructionTables(const llvm::MCSchedModel &Model, InstrBuilder &Builder,
                     SourceMgr &Source)
       : SM(Model), IB(Builder), S(Source) {}
 
-  void addEventListener(HWEventListener *Listener) {
-    if (Listener)
-      Listeners.insert(Listener);
+  void addView(std::unique_ptr<View> V) {
+    Views.emplace_back(std::move(V));
   }
 
   void run();
+  
+  void printReport(llvm::raw_ostream &OS) const;
 };
 } // namespace mca
 

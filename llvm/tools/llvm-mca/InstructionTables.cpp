@@ -69,12 +69,17 @@ void InstructionTables::run() {
       }
     }
 
-    // Now send a fake instruction issued event to all the listeners.
+    // Now send a fake instruction issued event to all the views.
     HWInstructionIssuedEvent Event(IR.first, UsedResources);
-    for (HWEventListener *Listener : Listeners)
+    for (std::unique_ptr<View> &Listener : Views)
       Listener->onInstructionEvent(Event);
     S.updateNext();
   }
+}
+
+void InstructionTables::printReport(llvm::raw_ostream &OS) const {
+  for (const std::unique_ptr<View> &V : Views)
+    V->printView(OS);
 }
 
 } // namespace mca
