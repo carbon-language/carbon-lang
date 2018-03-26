@@ -5,7 +5,7 @@
 #include "../../lib/parser/parse-tree-visitor.h"
 #include "../../lib/parser/parse-tree.h"
 
-#include "flang/Sema/Scope.h"
+#include "../../lib/parser/scope.h"
 #include "flang/Sema/StatementMap.h"
 #include "flang/Sema/ParseTreeDump.h"
 
