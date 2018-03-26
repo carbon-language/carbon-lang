@@ -322,7 +322,7 @@ public:
   int getMOV(SUnit *Node) { return getALAP(Node) - getASAP(Node); }
 
   /// The depth, in the dependence graph, for a node.
-  int getDepth(SUnit *Node) { return Node->getDepth(); }
+  unsigned getDepth(SUnit *Node) { return Node->getDepth(); }
 
   /// The maximum unweighted length of a path from an arbitrary node to the
   /// given node in which each edge has latency 0
@@ -331,7 +331,7 @@ public:
   }
 
   /// The height, in the dependence graph, for a node.
-  int getHeight(SUnit *Node) { return Node->getHeight(); }
+  unsigned getHeight(SUnit *Node) { return Node->getHeight(); }
 
   /// The maximum unweighted length of a path from the given node to an
   /// arbitrary node in which each edge has latency 0
@@ -460,7 +460,7 @@ class NodeSet {
   bool HasRecurrence = false;
   unsigned RecMII = 0;
   int MaxMOV = 0;
-  int MaxDepth = 0;
+  unsigned MaxDepth = 0;
   unsigned Colocate = 0;
   SUnit *ExceedPressure = nullptr;
   unsigned Latency = 0;
@@ -516,6 +516,8 @@ public:
   }
 
   unsigned getLatency() { return Latency; }
+
+  unsigned getMaxDepth() { return MaxDepth; }
 
   void clear() {
     Nodes.clear();
@@ -1917,25 +1919,23 @@ void SwingSchedulerDAG::colocateNodeSets(NodeSetType &NodeSets) {
 
 /// Check if the existing node-sets are profitable. If not, then ignore the
 /// recurrent node-sets, and attempt to schedule all nodes together. This is
-/// a heuristic. If the MII is large and there is a non-recurrent node with
-/// a large depth compared to the MII, then it's best to try and schedule
-/// all instruction together instead of starting with the recurrent node-sets.
+/// a heuristic. If the MII is large and all the recurrent node-sets are small,
+/// then it's best to try to schedule all instructions together instead of
+/// starting with the recurrent node-sets.
 void SwingSchedulerDAG::checkNodeSets(NodeSetType &NodeSets) {
   // Look for loops with a large MII.
-  if (MII <= 20)
+  if (MII < 17)
     return;
   // Check if the node-set contains only a simple add recurrence.
-  for (auto &NS : NodeSets)
-    if (NS.size() > 2)
+  for (auto &NS : NodeSets) {
+    if (NS.getRecMII() > 2)
       return;
-  // If the depth of any instruction is significantly larger than the MII, then
-  // ignore the recurrent node-sets and treat all instructions equally.
-  for (auto &SU : SUnits)
-    if (SU.getDepth() > MII * 1.5) {
-      NodeSets.clear();
-      DEBUG(dbgs() << "Clear recurrence node-sets\n");
+    if (NS.getMaxDepth() > MII)
       return;
-    }
+  }
+  NodeSets.clear();
+  DEBUG(dbgs() << "Clear recurrence node-sets\n");
+  return;
 }
 
 /// Add the nodes that do not belong to a recurrence set into groups
@@ -2192,8 +2192,6 @@ void SwingSchedulerDAG::computeNodeOrder(NodeSetType &NodeSets) {
             if (Nodes.count(I.getSUnit()) == 0)
               continue;
             if (NodeOrder.count(I.getSUnit()) != 0)
-              continue;
-            if (I.getKind() == SDep::Anti)
               continue;
             R.insert(I.getSUnit());
           }
