@@ -2489,7 +2489,9 @@ void SwingSchedulerDAG::generateEpilog(SMSchedule &Schedule, unsigned LastStage,
           continue;
         MachineInstr *In = &BBI;
         if (Schedule.isScheduledAtStage(getSUnit(In), StageNum)) {
-          MachineInstr *NewMI = cloneInstr(In, EpilogStage - LastStage, 0);
+          // Instructions with memoperands in the epilog are updated with
+          // conservative values.
+          MachineInstr *NewMI = cloneInstr(In, UINT_MAX, 0);
           updateInstruction(NewMI, i == 1, EpilogStage, 0, Schedule, VRMap);
           NewBB->push_back(NewMI);
           InstrMap[NewMI] = In;
@@ -3157,7 +3159,7 @@ void SwingSchedulerDAG::updateMemOperands(MachineInstr &NewMI,
       continue;
     }
     unsigned Delta;
-    if (computeDelta(OldMI, Delta)) {
+    if (Num != UINT_MAX && computeDelta(OldMI, Delta)) {
       int64_t AdjOffset = Delta * Num;
       NewMemRefs[Refs++] =
           MF.getMachineMemOperand(MMO, AdjOffset, MMO->getSize());
