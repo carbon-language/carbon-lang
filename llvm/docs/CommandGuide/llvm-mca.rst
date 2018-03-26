@@ -124,6 +124,10 @@ option specifies "``-``", then the output will also be sent to standard output.
   Limit the number of cycles in the timeline view. By default, the number of
   cycles is set to 80.
 
+.. option:: -resource-pressure
+
+  Enable the resource pressure view. This is enabled by default.
+
 .. option:: -instruction-tables
 
   Prints resource pressure information based on the static information
