@@ -1138,8 +1138,8 @@ vzeroupper
 # CHECK-NEXT: 1.00    -      -     1.00    -      -     1.00    -      -      -     1.00    -      -      -     	vcvtsd2si	%xmm0, %rcx
 # CHECK-NEXT: 1.00    -      -     1.00    -      -     1.00   1.00    -      -     1.00    -      -      -     	vcvtsd2si	(%rax), %ecx
 # CHECK-NEXT: 1.00    -      -     1.00    -      -     1.00   1.00    -      -     1.00    -      -      -     	vcvtsd2si	(%rax), %rcx
-# CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -      -     1.00    -      -      -     	vcvtsd2ss	%xmm0, %xmm1, %xmm2
-# CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -     1.00    -      -      -     	vcvtsd2ss	(%rax), %xmm1, %xmm2
+# CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -      -     2.00    -      -      -     	vcvtsd2ss	%xmm0, %xmm1, %xmm2
+# CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -     2.00    -      -      -     	vcvtsd2ss	(%rax), %xmm1, %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -      -     1.00    -      -      -     	vcvtsi2sdl	%ecx, %xmm0, %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -      -     1.00    -      -      -     	vcvtsi2sdq	%rcx, %xmm0, %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -     1.00    -      -      -     	vcvtsi2sdl	(%rax), %xmm0, %xmm2
@@ -1148,8 +1148,8 @@ vzeroupper
 # CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -      -     1.00    -      -      -     	vcvtsi2ssq	%rcx, %xmm0, %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -     1.00    -      -      -     	vcvtsi2ssl	(%rax), %xmm0, %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -     1.00    -      -      -     	vcvtsi2ssq	(%rax), %xmm0, %xmm2
-# CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -      -     1.00    -      -      -     	vcvtss2sd	%xmm0, %xmm1, %xmm2
-# CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -     1.00    -      -      -     	vcvtss2sd	(%rax), %xmm1, %xmm2
+# CHECK-NEXT:  -      -      -      -      -      -     1.00    -      -      -     2.00    -      -      -     	vcvtss2sd	%xmm0, %xmm1, %xmm2
+# CHECK-NEXT:  -      -      -      -      -      -     1.00   1.00    -      -     2.00    -      -      -     	vcvtss2sd	(%rax), %xmm1, %xmm2
 # CHECK-NEXT: 1.00    -      -     1.00    -      -     1.00    -      -      -     1.00    -      -      -     	vcvtss2si	%xmm0, %ecx
 # CHECK-NEXT: 1.00    -      -     1.00    -      -     1.00    -      -      -     1.00    -      -      -     	vcvtss2si	%xmm0, %rcx
 # CHECK-NEXT: 1.00    -      -     1.00    -      -     1.00   1.00    -      -     1.00    -      -      -     	vcvtss2si	(%rax), %ecx

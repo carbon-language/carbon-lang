@@ -2218,17 +2218,17 @@ define float @test_cvtsd2ss(double %a0, double *%a1) {
 ;
 ; BTVER2-SSE-LABEL: test_cvtsd2ss:
 ; BTVER2-SSE:       # %bb.0:
-; BTVER2-SSE-NEXT:    cvtsd2ss %xmm0, %xmm1 # sched: [3:1.00]
+; BTVER2-SSE-NEXT:    cvtsd2ss %xmm0, %xmm1 # sched: [7:2.00]
 ; BTVER2-SSE-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero sched: [5:1.00]
-; BTVER2-SSE-NEXT:    cvtsd2ss %xmm0, %xmm0 # sched: [3:1.00]
+; BTVER2-SSE-NEXT:    cvtsd2ss %xmm0, %xmm0 # sched: [7:2.00]
 ; BTVER2-SSE-NEXT:    addss %xmm1, %xmm0 # sched: [3:1.00]
 ; BTVER2-SSE-NEXT:    retq # sched: [4:1.00]
 ;
 ; BTVER2-LABEL: test_cvtsd2ss:
 ; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    vcvtsd2ss %xmm0, %xmm0, %xmm0 # sched: [7:2.00]
 ; BTVER2-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero sched: [5:1.00]
-; BTVER2-NEXT:    vcvtsd2ss %xmm0, %xmm0, %xmm0 # sched: [3:1.00]
-; BTVER2-NEXT:    vcvtsd2ss %xmm1, %xmm1, %xmm1 # sched: [3:1.00]
+; BTVER2-NEXT:    vcvtsd2ss %xmm1, %xmm1, %xmm1 # sched: [7:2.00]
 ; BTVER2-NEXT:    vaddss %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;
@@ -2616,17 +2616,17 @@ define double @test_cvtss2sd(float %a0, float *%a1) {
 ;
 ; BTVER2-SSE-LABEL: test_cvtss2sd:
 ; BTVER2-SSE:       # %bb.0:
-; BTVER2-SSE-NEXT:    cvtss2sd %xmm0, %xmm1 # sched: [3:1.00]
+; BTVER2-SSE-NEXT:    cvtss2sd %xmm0, %xmm1 # sched: [7:2.00]
 ; BTVER2-SSE-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero sched: [5:1.00]
-; BTVER2-SSE-NEXT:    cvtss2sd %xmm0, %xmm0 # sched: [3:1.00]
+; BTVER2-SSE-NEXT:    cvtss2sd %xmm0, %xmm0 # sched: [7:2.00]
 ; BTVER2-SSE-NEXT:    addsd %xmm1, %xmm0 # sched: [3:1.00]
 ; BTVER2-SSE-NEXT:    retq # sched: [4:1.00]
 ;
 ; BTVER2-LABEL: test_cvtss2sd:
 ; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    vcvtss2sd %xmm0, %xmm0, %xmm0 # sched: [7:2.00]
 ; BTVER2-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero sched: [5:1.00]
-; BTVER2-NEXT:    vcvtss2sd %xmm0, %xmm0, %xmm0 # sched: [3:1.00]
-; BTVER2-NEXT:    vcvtss2sd %xmm1, %xmm1, %xmm1 # sched: [3:1.00]
+; BTVER2-NEXT:    vcvtss2sd %xmm1, %xmm1, %xmm1 # sched: [7:2.00]
 ; BTVER2-NEXT:    vaddsd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;
