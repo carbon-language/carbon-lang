@@ -2629,16 +2629,13 @@ void SwingSchedulerDAG::generateExistingPhis(
         VRMap[CurStageNum][Def] = VRMap[CurStageNum][LoopVal];
     }
     // Adjust the number of Phis needed depending on the number of prologs left,
-    // and the distance from where the Phi is first scheduled.
-    unsigned NumPhis = NumStages;
-    if (!InKernel && (int)PrologStage < LoopValStage)
-      // The NumPhis is the maximum number of new Phis needed during the steady
-      // state. If the Phi has not been scheduled in current prolog, then we
-      // need to generate less Phis.
-      NumPhis = std::max((int)NumPhis - (int)(LoopValStage - PrologStage), 1);
-    // The number of Phis cannot exceed the number of prolog stages. Each
-    // stage can potentially define two values.
-    NumPhis = std::min(NumPhis, PrologStage + 2);
+    // and the distance from where the Phi is first scheduled. The number of
+    // Phis cannot exceed the number of prolog stages. Each stage can
+    // potentially define two values.
+    unsigned MaxPhis = PrologStage + 2;
+    if (!InKernel && (int)PrologStage <= LoopValStage)
+      MaxPhis = std::max((int)MaxPhis - (int)LoopValStage, 1);
+    unsigned NumPhis = std::min(NumStages, MaxPhis);
 
     unsigned NewReg = 0;
 
