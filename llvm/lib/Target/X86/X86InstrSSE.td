@@ -3149,11 +3149,11 @@ multiclass sse_fp_unop_s<bits<8> opc, string OpcodeStr, RegisterClass RC,
   let isCodeGenOnly = 1, Constraints = "$src1 = $dst", ExeDomain = d in {
   def r_Int : I<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
               !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-            []>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
+            [], itins.rr>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
   let mayLoad = 1 in
   def m_Int : I<opc, MRMSrcMem, (outs VR128:$dst), (ins VR128:$src1, intmemop:$src2),
               !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-            []>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
+            [], itins.rm>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
   }
   }
 

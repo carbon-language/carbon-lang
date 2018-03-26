@@ -14281,8 +14281,8 @@ define <2 x double> @test_sqrtsd(<2 x double> %a0, <2 x double> *%a1) {
 ; ATOM-LABEL: test_sqrtsd:
 ; ATOM:       # %bb.0:
 ; ATOM-NEXT:    movapd (%rdi), %xmm1 # sched: [1:1.00]
-; ATOM-NEXT:    sqrtsd %xmm0, %xmm0 # sched: [0:?]
-; ATOM-NEXT:    sqrtsd %xmm1, %xmm1 # sched: [0:?]
+; ATOM-NEXT:    sqrtsd %xmm0, %xmm0 # sched: [62:31.00]
+; ATOM-NEXT:    sqrtsd %xmm1, %xmm1 # sched: [62:31.00]
 ; ATOM-NEXT:    addpd %xmm1, %xmm0 # sched: [6:3.00]
 ; ATOM-NEXT:    retq # sched: [79:39.50]
 ;

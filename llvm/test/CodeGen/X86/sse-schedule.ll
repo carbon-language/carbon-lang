@@ -4264,8 +4264,8 @@ define <4 x float> @test_rcpss(float %a0, float *%a1) {
 ; ATOM-LABEL: test_rcpss:
 ; ATOM:       # %bb.0:
 ; ATOM-NEXT:    movss {{.*#+}} xmm1 = mem[0],zero,zero,zero sched: [1:1.00]
-; ATOM-NEXT:    rcpss %xmm0, %xmm0 # sched: [0:?]
-; ATOM-NEXT:    rcpss %xmm1, %xmm1 # sched: [0:?]
+; ATOM-NEXT:    rcpss %xmm0, %xmm0 # sched: [4:4.00]
+; ATOM-NEXT:    rcpss %xmm1, %xmm1 # sched: [4:4.00]
 ; ATOM-NEXT:    addps %xmm1, %xmm0 # sched: [5:5.00]
 ; ATOM-NEXT:    retq # sched: [79:39.50]
 ;
@@ -4541,8 +4541,8 @@ define <4 x float> @test_rsqrtss(float %a0, float *%a1) {
 ; ATOM-LABEL: test_rsqrtss:
 ; ATOM:       # %bb.0:
 ; ATOM-NEXT:    movss {{.*#+}} xmm1 = mem[0],zero,zero,zero sched: [1:1.00]
-; ATOM-NEXT:    rsqrtss %xmm0, %xmm0 # sched: [0:?]
-; ATOM-NEXT:    rsqrtss %xmm1, %xmm1 # sched: [0:?]
+; ATOM-NEXT:    rsqrtss %xmm0, %xmm0 # sched: [4:4.00]
+; ATOM-NEXT:    rsqrtss %xmm1, %xmm1 # sched: [4:4.00]
 ; ATOM-NEXT:    addps %xmm1, %xmm0 # sched: [5:5.00]
 ; ATOM-NEXT:    retq # sched: [79:39.50]
 ;
@@ -5039,8 +5039,8 @@ define <4 x float> @test_sqrtss(<4 x float> %a0, <4 x float> *%a1) {
 ; ATOM-LABEL: test_sqrtss:
 ; ATOM:       # %bb.0:
 ; ATOM-NEXT:    movaps (%rdi), %xmm1 # sched: [1:1.00]
-; ATOM-NEXT:    sqrtss %xmm0, %xmm0 # sched: [0:?]
-; ATOM-NEXT:    sqrtss %xmm1, %xmm1 # sched: [0:?]
+; ATOM-NEXT:    sqrtss %xmm0, %xmm0 # sched: [34:17.00]
+; ATOM-NEXT:    sqrtss %xmm1, %xmm1 # sched: [34:17.00]
 ; ATOM-NEXT:    addps %xmm1, %xmm0 # sched: [5:5.00]
 ; ATOM-NEXT:    retq # sched: [79:39.50]
 ;
