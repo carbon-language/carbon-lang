@@ -647,6 +647,16 @@ def JWriteVMOVNTPYSt: SchedWriteRes<[JFPU1, JSTC, JSAGU]> {
 }
 def : InstRW<[JWriteVMOVNTPYSt], (instrs VMOVNTDQYmr, VMOVNTPDYmr, VMOVNTPSYmr)>;
 
+def JWriteFComi : SchedWriteRes<[JFPU0, JFPA, JALU0]> {
+  let Latency = 3;
+}
+def : InstRW<[JWriteFComi], (instregex "(V)?(U)?COMIS(D|S)rr")>;
+
+def JWriteFComiLd : SchedWriteRes<[JLAGU, JFPU0, JFPA, JALU0]> {
+  let Latency = 8;
+}
+def : InstRW<[JWriteFComiLd], (instregex "(V)?(U)?COMIS(D|S)rm")>;
+
 def JWriteFCmp: SchedWriteRes<[JFPU0, JFPA]> {
   let Latency = 2;
 }
