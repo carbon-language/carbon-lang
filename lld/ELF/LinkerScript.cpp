@@ -386,9 +386,9 @@ LinkerScript::computeInputSections(const InputSectionDescription *Cmd) {
       // which are common because they are in the default bfd script.
       // We do not ignore SHT_REL[A] linker-synthesized sections here because
       // want to support scripts that do custom layout for them.
-      if (!isa<SyntheticSection>(Sec) &&
-          (Sec->Type == SHT_REL || Sec->Type == SHT_RELA))
-        continue;
+      if (auto *IS = dyn_cast<InputSection>(Sec))
+        if (IS->getRelocatedSection())
+          continue;
 
       std::string Filename = getFilename(Sec->File);
       if (!Cmd->FilePat.match(Filename) ||
