@@ -3454,10 +3454,15 @@ bool SwingSchedulerDAG::canUseLastOffsetValue(MachineInstr *MI,
   if (!TII->getBaseAndOffsetPosition(*PrevDef, BasePos1, OffsetPos1))
     return false;
 
-  // Make sure offset values are both positive or both negative.
+  // Make sure that the instructions do not access the same memory location in
+  // the next iteration.
   int64_t LoadOffset = MI->getOperand(OffsetPosLd).getImm();
   int64_t StoreOffset = PrevDef->getOperand(OffsetPos1).getImm();
-  if ((LoadOffset >= 0) != (StoreOffset >= 0))
+  MachineInstr *NewMI = MF.CloneMachineInstr(MI);
+  NewMI->getOperand(OffsetPosLd).setImm(LoadOffset + StoreOffset);
+  bool Disjoint = TII->areMemAccessesTriviallyDisjoint(*NewMI, *PrevDef);
+  MF.DeleteMachineInstr(NewMI);
+  if (!Disjoint)
     return false;
 
   // Set the return value once we determine that we return true.
