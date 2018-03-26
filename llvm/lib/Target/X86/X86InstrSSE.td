@@ -175,7 +175,7 @@ def SSE_DPPD_ITINS : OpndItins<
 >;
 
 def SSE_DPPS_ITINS : OpndItins<
-  IIC_SSE_DPPS_RR, IIC_SSE_DPPD_RM
+  IIC_SSE_DPPS_RR, IIC_SSE_DPPS_RM
 >;
 
 def DEFAULT_ITINS : OpndItins<
@@ -6503,7 +6503,7 @@ let Predicates = [HasAVX] in {
   let ExeDomain = SSEPackedDouble in
   defm VDPPD : SS41I_binop_rmi_int<0x41, "vdppd", int_x86_sse41_dppd,
                                    VR128, loadv2f64, f128mem, 0,
-                                   SSE_DPPS_ITINS>, VEX_4V, VEX_WIG;
+                                   SSE_DPPD_ITINS>, VEX_4V, VEX_WIG;
   let ExeDomain = SSEPackedSingle in
   defm VDPPSY : SS41I_binop_rmi_int<0x40, "vdpps", int_x86_avx_dp_ps_256,
                                     VR256, loadv8f32, i256mem, 0,
