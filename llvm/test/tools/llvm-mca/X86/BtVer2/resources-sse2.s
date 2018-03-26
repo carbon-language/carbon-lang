@@ -632,10 +632,10 @@ xorpd       (%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -      -     0.50   0.50   1.00    -      -      -     0.50   0.50    -     	pxor	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -     0.50   0.50   0.50   0.50    -      -      -      -      -      -      -     	shufpd	$1, %xmm0, %xmm2
 # CHECK-NEXT:  -      -      -     0.50   0.50   0.50   0.50   1.00    -      -      -      -      -      -     	shufpd	$1, (%rax), %xmm2
-# CHECK-NEXT:  -      -      -      -     21.00   -     1.00    -      -      -      -      -      -      -     	sqrtpd	%xmm0, %xmm2
-# CHECK-NEXT:  -      -      -      -     21.00   -     1.00   1.00    -      -      -      -      -      -     	sqrtpd	(%rax), %xmm2
-# CHECK-NEXT:  -      -      -      -     21.00   -     1.00    -      -      -      -      -      -      -     	sqrtsd	%xmm0, %xmm2
-# CHECK-NEXT:  -      -      -      -     21.00   -     1.00   1.00    -      -      -      -      -      -     	sqrtsd	(%rax), %xmm2
+# CHECK-NEXT:  -      -      -      -     27.00   -     1.00    -      -      -      -      -      -      -     	sqrtpd	%xmm0, %xmm2
+# CHECK-NEXT:  -      -      -      -     27.00   -     1.00   1.00    -      -      -      -      -      -     	sqrtpd	(%rax), %xmm2
+# CHECK-NEXT:  -      -      -      -     27.00   -     1.00    -      -      -      -      -      -      -     	sqrtsd	%xmm0, %xmm2
+# CHECK-NEXT:  -      -      -      -     27.00   -     1.00   1.00    -      -      -      -      -      -     	sqrtsd	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -     1.00    -     1.00    -      -      -      -      -      -      -      -     	subpd	%xmm0, %xmm2
 # CHECK-NEXT:  -      -      -     1.00    -     1.00    -     1.00    -      -      -      -      -      -     	subpd	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -     1.00    -     1.00    -      -      -      -      -      -      -      -     	subsd	%xmm0, %xmm2

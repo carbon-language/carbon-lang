@@ -789,6 +789,22 @@ def JWriteVTESTLd: SchedWriteRes<[JLAGU, JFPU0, JFPA]> {
 }
 def : InstRW<[JWriteVTESTLd], (instrs PTESTrm, VPTESTrm, VTESTPDrm, VTESTPSrm)>;
 
+def JWriteVSQRTPD: SchedWriteRes<[JFPU1, JFPM]> {
+  let Latency = 27;
+  let ResourceCycles = [1, 27];
+}
+def : InstRW<[JWriteVSQRTPD], (instrs SQRTPDr, VSQRTPDr,
+                                      SQRTSDr, VSQRTSDr,
+                                      SQRTSDr_Int, VSQRTSDr_Int)>;
+
+def JWriteVSQRTPDLd: SchedWriteRes<[JLAGU, JFPU1, JFPM]> {
+  let Latency = 32;
+  let ResourceCycles = [1, 1, 27];
+}
+def : InstRW<[JWriteVSQRTPDLd], (instrs SQRTPDm, VSQRTPDm,
+                                        SQRTSDm, VSQRTSDm,
+                                        SQRTSDm_Int, VSQRTSDm_Int)>;
+
 def JWriteVSQRTYPD: SchedWriteRes<[JFPU1, JFPM]> {
   let Latency = 54;
   let ResourceCycles = [2, 54];

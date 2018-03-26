@@ -1637,16 +1637,16 @@ vzeroupper
 # CHECK-NEXT:  -      -      -     0.50   0.50   0.50   0.50   1.00    -      -      -      -      -      -     	vshufps	$1, (%rax), %xmm1, %xmm2
 # CHECK-NEXT:  -      -      -     1.00   1.00   1.00   1.00    -      -      -      -      -      -      -     	vshufps	$1, %ymm0, %ymm1, %ymm2
 # CHECK-NEXT:  -      -      -     1.00   1.00   1.00   1.00   2.00    -      -      -      -      -      -     	vshufps	$1, (%rax), %ymm1, %ymm2
-# CHECK-NEXT:  -      -      -      -     21.00   -     1.00    -      -      -      -      -      -      -     	vsqrtpd	%xmm0, %xmm2
-# CHECK-NEXT:  -      -      -      -     21.00   -     1.00   1.00    -      -      -      -      -      -     	vsqrtpd	(%rax), %xmm2
+# CHECK-NEXT:  -      -      -      -     27.00   -     1.00    -      -      -      -      -      -      -     	vsqrtpd	%xmm0, %xmm2
+# CHECK-NEXT:  -      -      -      -     27.00   -     1.00   1.00    -      -      -      -      -      -     	vsqrtpd	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -     54.00   -     2.00    -      -      -      -      -      -      -     	vsqrtpd	%ymm0, %ymm2
 # CHECK-NEXT:  -      -      -      -     54.00   -     2.00   2.00    -      -      -      -      -      -     	vsqrtpd	(%rax), %ymm2
 # CHECK-NEXT:  -      -      -      -     21.00   -     1.00    -      -      -      -      -      -      -     	vsqrtps	%xmm0, %xmm2
 # CHECK-NEXT:  -      -      -      -     21.00   -     1.00   1.00    -      -      -      -      -      -     	vsqrtps	(%rax), %xmm2
 # CHECK-NEXT:  -      -      -      -     42.00   -     2.00    -      -      -      -      -      -      -     	vsqrtps	%ymm0, %ymm2
 # CHECK-NEXT:  -      -      -      -     42.00   -     2.00   2.00    -      -      -      -      -      -     	vsqrtps	(%rax), %ymm2
-# CHECK-NEXT:  -      -      -      -     21.00   -     1.00    -      -      -      -      -      -      -     	vsqrtsd	%xmm0, %xmm1, %xmm2
-# CHECK-NEXT:  -      -      -      -     21.00   -     1.00   1.00    -      -      -      -      -      -     	vsqrtsd	(%rax), %xmm1, %xmm2
+# CHECK-NEXT:  -      -      -      -     27.00   -     1.00    -      -      -      -      -      -      -     	vsqrtsd	%xmm0, %xmm1, %xmm2
+# CHECK-NEXT:  -      -      -      -     27.00   -     1.00   1.00    -      -      -      -      -      -     	vsqrtsd	(%rax), %xmm1, %xmm2
 # CHECK-NEXT:  -      -      -      -     21.00   -     1.00    -      -      -      -      -      -      -     	vsqrtss	%xmm0, %xmm1, %xmm2
 # CHECK-NEXT:  -      -      -      -     21.00   -     1.00   1.00    -      -      -      -      -      -     	vsqrtss	(%rax), %xmm1, %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -      -      -      -     1.00    -      -      -      -     	vstmxcsr	(%rax)
