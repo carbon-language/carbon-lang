@@ -2934,6 +2934,13 @@ void SwingSchedulerDAG::removeDeadInstructions(MachineBasicBlock *KernelBB,
         if (!MOI->isReg() || !MOI->isDef())
           continue;
         unsigned reg = MOI->getReg();
+        // Assume physical registers are used, unless they are marked dead.
+        if (TargetRegisterInfo::isPhysicalRegister(reg)) {
+          used = !MOI->isDead();
+          if (used)
+            break;
+          continue;
+        }
         unsigned realUses = 0;
         for (MachineRegisterInfo::use_iterator UI = MRI.use_begin(reg),
                                                EI = MRI.use_end();
@@ -3650,7 +3657,7 @@ static SUnit *multipleIterations(SUnit *SU, SwingSchedulerDAG *DAG) {
   for (auto &P : SU->Preds)
     if (DAG->isBackedge(SU, P) && P.getSUnit()->getInstr()->isPHI())
       for (auto &S : P.getSUnit()->Succs)
-        if (S.getKind() == SDep::Order && S.getSUnit()->getInstr()->isPHI())
+        if (S.getKind() == SDep::Data && S.getSUnit()->getInstr()->isPHI())
           return P.getSUnit();
   return nullptr;
 }
