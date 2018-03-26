@@ -4272,8 +4272,8 @@ define <4 x float> @test_rcpss(float %a0, float *%a1) {
 ; SLM-LABEL: test_rcpss:
 ; SLM:       # %bb.0:
 ; SLM-NEXT:    movss {{.*#+}} xmm1 = mem[0],zero,zero,zero sched: [3:1.00]
-; SLM-NEXT:    rcpss %xmm0, %xmm0 # sched: [8:1.00]
-; SLM-NEXT:    rcpss %xmm1, %xmm1 # sched: [8:1.00]
+; SLM-NEXT:    rcpss %xmm0, %xmm0 # sched: [5:1.00]
+; SLM-NEXT:    rcpss %xmm1, %xmm1 # sched: [5:1.00]
 ; SLM-NEXT:    addps %xmm1, %xmm0 # sched: [3:1.00]
 ; SLM-NEXT:    retq # sched: [4:1.00]
 ;
@@ -4360,32 +4360,32 @@ define <4 x float> @test_rcpss(float %a0, float *%a1) {
 ; BTVER2-SSE-LABEL: test_rcpss:
 ; BTVER2-SSE:       # %bb.0:
 ; BTVER2-SSE-NEXT:    movss {{.*#+}} xmm1 = mem[0],zero,zero,zero sched: [5:1.00]
-; BTVER2-SSE-NEXT:    rcpss %xmm0, %xmm0 # sched: [7:1.00]
-; BTVER2-SSE-NEXT:    rcpss %xmm1, %xmm1 # sched: [7:1.00]
+; BTVER2-SSE-NEXT:    rcpss %xmm0, %xmm0 # sched: [2:1.00]
+; BTVER2-SSE-NEXT:    rcpss %xmm1, %xmm1 # sched: [2:1.00]
 ; BTVER2-SSE-NEXT:    addps %xmm1, %xmm0 # sched: [3:1.00]
 ; BTVER2-SSE-NEXT:    retq # sched: [4:1.00]
 ;
 ; BTVER2-LABEL: test_rcpss:
 ; BTVER2:       # %bb.0:
 ; BTVER2-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero sched: [5:1.00]
-; BTVER2-NEXT:    vrcpss %xmm0, %xmm0, %xmm0 # sched: [7:1.00]
-; BTVER2-NEXT:    vrcpss %xmm1, %xmm1, %xmm1 # sched: [7:1.00]
+; BTVER2-NEXT:    vrcpss %xmm0, %xmm0, %xmm0 # sched: [2:1.00]
+; BTVER2-NEXT:    vrcpss %xmm1, %xmm1, %xmm1 # sched: [2:1.00]
 ; BTVER2-NEXT:    vaddps %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;
 ; ZNVER1-SSE-LABEL: test_rcpss:
 ; ZNVER1-SSE:       # %bb.0:
 ; ZNVER1-SSE-NEXT:    movss {{.*#+}} xmm1 = mem[0],zero,zero,zero sched: [8:0.50]
-; ZNVER1-SSE-NEXT:    rcpss %xmm0, %xmm0 # sched: [12:0.50]
-; ZNVER1-SSE-NEXT:    rcpss %xmm1, %xmm1 # sched: [12:0.50]
+; ZNVER1-SSE-NEXT:    rcpss %xmm0, %xmm0 # sched: [5:0.50]
+; ZNVER1-SSE-NEXT:    rcpss %xmm1, %xmm1 # sched: [5:0.50]
 ; ZNVER1-SSE-NEXT:    addps %xmm1, %xmm0 # sched: [3:1.00]
 ; ZNVER1-SSE-NEXT:    retq # sched: [1:0.50]
 ;
 ; ZNVER1-LABEL: test_rcpss:
 ; ZNVER1:       # %bb.0:
 ; ZNVER1-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero sched: [8:0.50]
-; ZNVER1-NEXT:    vrcpss %xmm0, %xmm0, %xmm0 # sched: [12:0.50]
-; ZNVER1-NEXT:    vrcpss %xmm1, %xmm1, %xmm1 # sched: [12:0.50]
+; ZNVER1-NEXT:    vrcpss %xmm0, %xmm0, %xmm0 # sched: [5:0.50]
+; ZNVER1-NEXT:    vrcpss %xmm1, %xmm1, %xmm1 # sched: [5:0.50]
 ; ZNVER1-NEXT:    vaddps %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
 ; ZNVER1-NEXT:    retq # sched: [1:0.50]
   %1 = insertelement <4 x float> undef, float %a0, i32 0
@@ -4549,8 +4549,8 @@ define <4 x float> @test_rsqrtss(float %a0, float *%a1) {
 ; SLM-LABEL: test_rsqrtss:
 ; SLM:       # %bb.0:
 ; SLM-NEXT:    movss {{.*#+}} xmm1 = mem[0],zero,zero,zero sched: [3:1.00]
-; SLM-NEXT:    rsqrtss %xmm0, %xmm0 # sched: [8:1.00]
-; SLM-NEXT:    rsqrtss %xmm1, %xmm1 # sched: [8:1.00]
+; SLM-NEXT:    rsqrtss %xmm0, %xmm0 # sched: [5:1.00]
+; SLM-NEXT:    rsqrtss %xmm1, %xmm1 # sched: [5:1.00]
 ; SLM-NEXT:    addps %xmm1, %xmm0 # sched: [3:1.00]
 ; SLM-NEXT:    retq # sched: [4:1.00]
 ;
@@ -4637,16 +4637,16 @@ define <4 x float> @test_rsqrtss(float %a0, float *%a1) {
 ; BTVER2-SSE-LABEL: test_rsqrtss:
 ; BTVER2-SSE:       # %bb.0:
 ; BTVER2-SSE-NEXT:    movss {{.*#+}} xmm1 = mem[0],zero,zero,zero sched: [5:1.00]
-; BTVER2-SSE-NEXT:    rsqrtss %xmm0, %xmm0 # sched: [7:1.00]
-; BTVER2-SSE-NEXT:    rsqrtss %xmm1, %xmm1 # sched: [7:1.00]
+; BTVER2-SSE-NEXT:    rsqrtss %xmm0, %xmm0 # sched: [2:1.00]
+; BTVER2-SSE-NEXT:    rsqrtss %xmm1, %xmm1 # sched: [2:1.00]
 ; BTVER2-SSE-NEXT:    addps %xmm1, %xmm0 # sched: [3:1.00]
 ; BTVER2-SSE-NEXT:    retq # sched: [4:1.00]
 ;
 ; BTVER2-LABEL: test_rsqrtss:
 ; BTVER2:       # %bb.0:
 ; BTVER2-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero sched: [5:1.00]
-; BTVER2-NEXT:    vrsqrtss %xmm0, %xmm0, %xmm0 # sched: [7:1.00]
-; BTVER2-NEXT:    vrsqrtss %xmm1, %xmm1, %xmm1 # sched: [7:1.00]
+; BTVER2-NEXT:    vrsqrtss %xmm0, %xmm0, %xmm0 # sched: [2:1.00]
+; BTVER2-NEXT:    vrsqrtss %xmm1, %xmm1, %xmm1 # sched: [2:1.00]
 ; BTVER2-NEXT:    vaddps %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;
@@ -5047,8 +5047,8 @@ define <4 x float> @test_sqrtss(<4 x float> %a0, <4 x float> *%a1) {
 ; SLM-LABEL: test_sqrtss:
 ; SLM:       # %bb.0:
 ; SLM-NEXT:    movaps (%rdi), %xmm1 # sched: [3:1.00]
-; SLM-NEXT:    sqrtss %xmm0, %xmm0 # sched: [18:1.00]
-; SLM-NEXT:    sqrtss %xmm1, %xmm1 # sched: [18:1.00]
+; SLM-NEXT:    sqrtss %xmm0, %xmm0 # sched: [15:1.00]
+; SLM-NEXT:    sqrtss %xmm1, %xmm1 # sched: [15:1.00]
 ; SLM-NEXT:    addps %xmm1, %xmm0 # sched: [3:1.00]
 ; SLM-NEXT:    retq # sched: [4:1.00]
 ;
@@ -5135,32 +5135,32 @@ define <4 x float> @test_sqrtss(<4 x float> %a0, <4 x float> *%a1) {
 ; BTVER2-SSE-LABEL: test_sqrtss:
 ; BTVER2-SSE:       # %bb.0:
 ; BTVER2-SSE-NEXT:    movaps (%rdi), %xmm1 # sched: [5:1.00]
-; BTVER2-SSE-NEXT:    sqrtss %xmm0, %xmm0 # sched: [26:21.00]
-; BTVER2-SSE-NEXT:    sqrtss %xmm1, %xmm1 # sched: [26:21.00]
+; BTVER2-SSE-NEXT:    sqrtss %xmm0, %xmm0 # sched: [21:21.00]
+; BTVER2-SSE-NEXT:    sqrtss %xmm1, %xmm1 # sched: [21:21.00]
 ; BTVER2-SSE-NEXT:    addps %xmm1, %xmm0 # sched: [3:1.00]
 ; BTVER2-SSE-NEXT:    retq # sched: [4:1.00]
 ;
 ; BTVER2-LABEL: test_sqrtss:
 ; BTVER2:       # %bb.0:
 ; BTVER2-NEXT:    vmovaps (%rdi), %xmm1 # sched: [5:1.00]
-; BTVER2-NEXT:    vsqrtss %xmm0, %xmm0, %xmm0 # sched: [26:21.00]
-; BTVER2-NEXT:    vsqrtss %xmm1, %xmm1, %xmm1 # sched: [26:21.00]
+; BTVER2-NEXT:    vsqrtss %xmm0, %xmm0, %xmm0 # sched: [21:21.00]
+; BTVER2-NEXT:    vsqrtss %xmm1, %xmm1, %xmm1 # sched: [21:21.00]
 ; BTVER2-NEXT:    vaddps %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;
 ; ZNVER1-SSE-LABEL: test_sqrtss:
 ; ZNVER1-SSE:       # %bb.0:
 ; ZNVER1-SSE-NEXT:    movaps (%rdi), %xmm1 # sched: [8:0.50]
-; ZNVER1-SSE-NEXT:    sqrtss %xmm0, %xmm0 # sched: [27:1.00]
-; ZNVER1-SSE-NEXT:    sqrtss %xmm1, %xmm1 # sched: [27:1.00]
+; ZNVER1-SSE-NEXT:    sqrtss %xmm0, %xmm0 # sched: [20:1.00]
+; ZNVER1-SSE-NEXT:    sqrtss %xmm1, %xmm1 # sched: [20:1.00]
 ; ZNVER1-SSE-NEXT:    addps %xmm1, %xmm0 # sched: [3:1.00]
 ; ZNVER1-SSE-NEXT:    retq # sched: [1:0.50]
 ;
 ; ZNVER1-LABEL: test_sqrtss:
 ; ZNVER1:       # %bb.0:
 ; ZNVER1-NEXT:    vmovaps (%rdi), %xmm1 # sched: [8:0.50]
-; ZNVER1-NEXT:    vsqrtss %xmm0, %xmm0, %xmm0 # sched: [27:1.00]
-; ZNVER1-NEXT:    vsqrtss %xmm1, %xmm1, %xmm1 # sched: [27:1.00]
+; ZNVER1-NEXT:    vsqrtss %xmm0, %xmm0, %xmm0 # sched: [20:1.00]
+; ZNVER1-NEXT:    vsqrtss %xmm1, %xmm1, %xmm1 # sched: [20:1.00]
 ; ZNVER1-NEXT:    vaddps %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
 ; ZNVER1-NEXT:    retq # sched: [1:0.50]
   %1 = call <4 x float> @llvm.x86.sse.sqrt.ss(<4 x float> %a0)
