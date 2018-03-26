@@ -2040,12 +2040,12 @@ def CVTDQ2PDrm  : S2SI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
                        "cvtdq2pd\t{$src, $dst|$dst, $src}",
                        [(set VR128:$dst,
                          (v2f64 (X86VSintToFP (bc_v4i32 (loadv2i64 addr:$src)))))],
-                       IIC_SSE_CVT_PD_RR>, Sched<[WriteCvtI2FLd]>;
+                       IIC_SSE_CVT_PD_RM>, Sched<[WriteCvtI2FLd]>;
 def CVTDQ2PDrr  : S2SI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                        "cvtdq2pd\t{$src, $dst|$dst, $src}",
                        [(set VR128:$dst,
                          (v2f64 (X86VSintToFP (v4i32 VR128:$src))))],
-                       IIC_SSE_CVT_PD_RM>, Sched<[WriteCvtI2F]>;
+                       IIC_SSE_CVT_PD_RR>, Sched<[WriteCvtI2F]>;
 
 // AVX register conversion intrinsics
 let Predicates = [HasAVX, NoVLX] in {

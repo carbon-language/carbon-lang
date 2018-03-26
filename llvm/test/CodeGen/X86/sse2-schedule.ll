@@ -1090,9 +1090,10 @@ define <2 x double> @test_cvtdq2pd(<4 x i32> %a0, <4 x i32> *%a1) {
 ;
 ; ATOM-LABEL: test_cvtdq2pd:
 ; ATOM:       # %bb.0:
-; ATOM-NEXT:    cvtdq2pd %xmm0, %xmm1 # sched: [8:4.00]
-; ATOM-NEXT:    cvtdq2pd (%rdi), %xmm0 # sched: [7:3.50]
-; ATOM-NEXT:    addpd %xmm1, %xmm0 # sched: [6:3.00]
+; ATOM-NEXT:    cvtdq2pd (%rdi), %xmm1 # sched: [8:4.00]
+; ATOM-NEXT:    cvtdq2pd %xmm0, %xmm0 # sched: [7:3.50]
+; ATOM-NEXT:    addpd %xmm0, %xmm1 # sched: [6:3.00]
+; ATOM-NEXT:    movapd %xmm1, %xmm0 # sched: [1:0.50]
 ; ATOM-NEXT:    retq # sched: [79:39.50]
 ;
 ; SLM-LABEL: test_cvtdq2pd:
