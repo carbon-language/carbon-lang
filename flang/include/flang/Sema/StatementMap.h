@@ -8,6 +8,7 @@
 
 namespace Fortran::semantics {
 
+
 //
 // A StatementMap describes the relations between statements in a program unit
 // and also hold information that are common to each statement (label, provenance,
@@ -92,16 +93,16 @@ namespace Fortran::semantics {
 class StatementMap {
 public:
   typedef int Index;  // should become an opaque type.
-
+  
   static constexpr Index None = 0;
-
+  
 private:
   struct Entry {
     StmtClass sclass;
     StmtGroup group;
-
+    
     int label;      // The label associated to the statement (1..99999) or 0
-
+    
     // Relations to other statements.
     Index parent;
     Index prev_in_body;
@@ -109,14 +110,14 @@ private:
     Index prev_in_construct;
     Index next_in_construct;
   };
-
+  
   std::vector<Entry> entries_;
 
   std::map<Index, int> label_do_map_;
 
-private:
-  Entry &Get(Index index);
-  const Entry &Get(Index index) const;
+  
+  Entry &at(Index index);
+  const Entry &at(Index index) const;
 
 public:
   // Add a statement to the map.
@@ -151,16 +152,16 @@ public:
   //
   void Specialize(Index index, StmtClass oldclass, StmtClass newclass);
 
-  StmtClass GetClass(Index index) const { return Get(index).sclass; }
+  StmtClass GetClass(Index index) const { return at(index).sclass; }
 
-  StmtGroup GetGroup(Index index) const { return Get(index).group; }
+  StmtGroup GetGroup(Index index) const { return at(index).group; }
 
   // Provide the numerical label associated to that statement or 0.
   // Be aware that labels are not necessarily unique and so cannot 
   // be used to identify a statement within the whole map.
-  int GetLabel(Index index) const { return Get(index).label; }
+  int GetLabel(Index index) const { return at(index).label; }
 
-  Index GetParent(Index index) const { return Get(index).parent; }
+  Index GetParent(Index index) const { return at(index).parent; }
 
 
   // Dump all the statements in the map in sequence so without
@@ -169,25 +170,25 @@ public:
   void DumpFlat(std::ostream &out, bool verbose = true) const;
 
   void DumpBody(std::ostream &out, Index index, bool rec = true, int level = 0,
-      bool verbose = false) const;
+                bool verbose = false) const;
   void DumpStmt(std::ostream &out, Index index, bool verbose = false) const;
   void Dump(std::ostream &out, Index index, bool rec = true, int level = 0,
-      bool verbose = false) const;
-
+            bool verbose = false) const;
+  
   void CheckIndex(Index index) const;
-
+  
   Index Next(Index index) const;
   Index Prev(Index index) const;
-
+  
   bool EmptyBody(Index index) const;
-
+  
   Index FirstInBody(Index index) const;
   Index LastInBody(Index index) const;
-
+  
   // Functionally equivalent to LastInBody(PreviousPartOfConstruct(index))
   Index LastInPreviousBody(Index index) const;
   Index FindPrevInConstruct(Index index, StmtClass sclass) const;
-
+  
   Index FindNextInConstruct(Index index, StmtClass sclass) const;
 
   Index PrevInConstruct(Index index) const;
@@ -224,4 +225,4 @@ public:
 
 }  // namespace Fortran::semantics
 
-#endif
+#endif // of FLANG_SEMA_STATEMENT_MAP_H

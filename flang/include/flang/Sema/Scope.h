@@ -238,4 +238,4 @@ public:
 
 }  // namespace Fortran::semantics
 
-#endif // FLANG_SEMA_SCOPE_H
+#endif // of FLANG_SEMA_SCOPE_H

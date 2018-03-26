@@ -16,7 +16,7 @@
 
 namespace Fortran::semantics {
 
-StatementMap::Entry &StatementMap::Get(Index index) {
+StatementMap::Entry &StatementMap::at(Index index) {
   if (!(( First() <= index) && (index <= Last()))) {
     FAIL("Illegal Stmt index " << index << " (expect " 
          << First() << " .." << Last() << ")");
@@ -25,7 +25,7 @@ StatementMap::Entry &StatementMap::Get(Index index) {
   return entries_[index - 1];
 }
 
-const StatementMap::Entry &StatementMap::Get(Index index) const {
+const StatementMap::Entry &StatementMap::at(Index index) const {
   if (!((First() <= index) && (index <= Last()))) {
     FAIL("Illegal Stmt index " << index << " (expect " 
          << First() << ".." << Last() << ")");
@@ -55,7 +55,7 @@ StatementMap::Index StatementMap::Add(StmtClass sclass, int label) {
   }
 
   Index prev_index = self_index - 1;
-  auto prev_group = Get(prev_index).group;
+  auto prev_group = at(prev_index).group;
   if (prev_group == StmtGroup::End) {
     // When inserting after a closed construct, do as if
     // that was after a single statement
@@ -63,7 +63,7 @@ StatementMap::Index StatementMap::Add(StmtClass sclass, int label) {
     prev_group = StmtGroup::Single;
   }
 
-  Entry &prev = Get(prev_index);
+  Entry &prev = at(prev_index);
 
   if (self.group == StmtGroup::Single || self.group == StmtGroup::Start) {
     if (prev_group == StmtGroup::Start || prev_group == StmtGroup::Part) {
@@ -90,7 +90,7 @@ StatementMap::Index StatementMap::Add(StmtClass sclass, int label) {
         DumpFlat(std::cerr);
       }
       assert(prev.parent != None);
-      Get(prev.parent).next_in_construct = self_index;
+      at(prev.parent).next_in_construct = self_index;
       self.prev_in_construct = prev.parent;
     } else {
       INTERNAL_ERROR;
@@ -124,9 +124,9 @@ StatementMap::Index StatementMap::Add(StmtClass sclass, int label) {
 void StatementMap::AssertNextInConstruct(Index prev_index) const {
 
   if (prev_index == None) return;  
-  auto &prev = Get(prev_index);
+  auto &prev = at(prev_index);
   if (prev.next_in_construct == None) return;
-  auto &next = Get(prev.next_in_construct);
+  auto &next = at(prev.next_in_construct);
 
 
 #define ORDER(A, B) (prev.sclass == StmtClass::A && next.sclass == StmtClass::B)
@@ -238,7 +238,7 @@ int StatementMap::Size() const { return entries_.size(); }
 //
 //
 void StatementMap::Specialize( Index index, StmtClass oldc, StmtClass newc) {
-  Entry &self = Get(index);
+  Entry &self = at(index);
   
   if (self.sclass != oldc) {
     INTERNAL_ERROR;
@@ -289,7 +289,7 @@ void StatementMap::DumpBody(
 
 void StatementMap::DumpStmt(
     std::ostream &out, Index index, bool verbose) const {
-  const auto &stmt = Get(index);
+  const auto &stmt = at(index);
 
   switch (stmt.group) {
   case StmtGroup::Single: out << "| "; break;
@@ -316,7 +316,7 @@ void StatementMap::DumpStmt(
 void StatementMap::Dump(
     std::ostream &out, Index index, bool rec, int level, bool verbose) const {
   while (index != None) {
-    const auto &stmt = Get(index);
+    const auto &stmt = at(index);
     out << std::setw(4) << std::right << index << ": ";
 
     for (int i = 0; i < level; i++)
@@ -339,7 +339,7 @@ void StatementMap::CheckIndex(Index index) const {
 }
 
 StatementMap::Index StatementMap::Next(Index index) const {
-  auto &e = Get(index);
+  auto &e = at(index);
   if (e.group == StmtGroup::Single) {
     return e.next_in_body;
   } else if (e.group == StmtGroup::Start) {
@@ -351,7 +351,7 @@ StatementMap::Index StatementMap::Next(Index index) const {
 }
 
 StatementMap::Index StatementMap::Prev(Index index) const {
-  auto &e = Get(index);
+  auto &e = at(index);
   if (e.group == StmtGroup::Single) {
     return e.prev_in_body;
   } else if (e.group == StmtGroup::Start) {
@@ -363,7 +363,7 @@ StatementMap::Index StatementMap::Prev(Index index) const {
 }
 
 bool StatementMap::EmptyBody(Index index) const {
-  auto &e = Get(index);
+  auto &e = at(index);
   if (e.group == StmtGroup::Start) {
     if (e.next_in_construct == None) {
       // The body construction is not finished yet
@@ -386,7 +386,7 @@ bool StatementMap::EmptyBody(Index index) const {
 }
 
 StatementMap::Index StatementMap::FirstInBody(StatementMap::Index index) const {
-  auto &e = Get(index);
+  auto &e = at(index);
   if (e.group == StmtGroup::Start) {
     if (e.next_in_construct == index + 1)
       return None;  // an empty body
@@ -405,7 +405,7 @@ StatementMap::Index StatementMap::FirstInBody(StatementMap::Index index) const {
 
 StatementMap::Index StatementMap::LastInBody(StatementMap::Index index) const {
   CheckIndex(index);
-  auto &stmt = Get(index);
+  auto &stmt = at(index);
   if (stmt.group == StmtGroup::Start) {
     if (stmt.next_in_construct == index + 1) {
       return None;  //  empty body
@@ -435,9 +435,9 @@ StatementMap::Index StatementMap::LastInBody(StatementMap::Index index) const {
 // Functionnally equivalent to LastInBody(PreviousPartOfConstruct(index))
 StatementMap::Index StatementMap::LastInPreviousBody(
     StatementMap::Index index) const {
-  auto &stmt = Get(index);
+  auto &stmt = at(index);
   if (stmt.group == StmtGroup::Part || stmt.group == StmtGroup::End) {
-    auto &prev = Get(index - 1);
+    auto &prev = at(index - 1);
     if (prev.group == StmtGroup::Single) {
       return index - 1;
     } else if (prev.group == StmtGroup::End) {
@@ -461,7 +461,7 @@ StatementMap::Index StatementMap::FindPrevInConstruct(
   while (true) {
     index = PrevInConstruct(index);
     if (index == None) return None;
-    if (Get(index).sclass == sclass) return index;
+    if (at(index).sclass == sclass) return index;
   }
 }
 
@@ -470,13 +470,13 @@ StatementMap::Index StatementMap::FindNextInConstruct(
   while (true) {
     index = NextInConstruct(index);
     if (index == None) return None;
-    if (Get(index).sclass == sclass) return index;
+    if (at(index).sclass == sclass) return index;
   }
 }
 
 StatementMap::Index StatementMap::PrevInConstruct(
     StatementMap::Index index) const {
-  auto &stmt = Get(index);
+  auto &stmt = at(index);
   if (stmt.group == StmtGroup::Start) {
     return None;
   } else if (stmt.group == StmtGroup::Part) {
@@ -491,7 +491,7 @@ StatementMap::Index StatementMap::PrevInConstruct(
 
 StatementMap::Index StatementMap::NextInConstruct(
     StatementMap::Index index) const {
-  auto &stmt = Get(index);
+  auto &stmt = at(index);
   if (stmt.group == StmtGroup::Start) {
     return stmt.next_in_construct;
   } else if (stmt.group == StmtGroup::Part) {
@@ -508,7 +508,7 @@ StatementMap::Index StatementMap::NextInConstruct(
 // any of its component.
 StatementMap::Index StatementMap::StartOfConstruct(
     StatementMap::Index index) const {
-  auto &stmt = Get(index);
+  auto &stmt = at(index);
   if (stmt.group == StmtGroup::Start) {
     return index;
   } else if (stmt.group == StmtGroup::Part || stmt.group == StmtGroup::End) {
@@ -524,7 +524,7 @@ StatementMap::Index StatementMap::StartOfConstruct(
 StatementMap::Index StatementMap::EndOfConstruct(
     StatementMap::Index index) const {
   while (true) {
-    auto &stmt = Get(index);
+    auto &stmt = at(index);
     if (stmt.group == StmtGroup::Start || stmt.group == StmtGroup::Part) {
       index = stmt.next_in_construct;
     } else if (stmt.group == StmtGroup::End) {
@@ -545,7 +545,7 @@ StatementMap::Index StatementMap::EndOfConstruct(
 StatementMap::Index StatementMap::LastOfConstruct(
     StatementMap::Index index) const {
   while (true) {
-    auto &stmt = Get(index);
+    auto &stmt = at(index);
     if (stmt.group == StmtGroup::Start || stmt.group == StmtGroup::Part) {
       if (stmt.next_in_construct == None)
         return index;  // end of an incomplete construct
@@ -590,7 +590,7 @@ void StatementMap::VisitConstructRev(
 
 // // Set the label required to close a LabelDo
 // void StatementMap::SetLabelDoLabel(Index do_stmt, int label) {
-//   assert(Get(do_stmt).sclass == StmtClass::LabelDo);
+//   assert(at(do_stmt).sclass == StmtClass::LabelDo);
 //   assert(label != 0);
 //   label_do_map_[do_stmt] = label;
 // }

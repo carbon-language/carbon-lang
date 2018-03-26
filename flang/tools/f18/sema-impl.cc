@@ -92,6 +92,20 @@ template <typename T> sm::Semantic<T> & getSema(const T &node) {
 #include <string>
 #include <stddef.h>
 
+// A simple convenient function to remove 'const' without having to 
+// make the type explicit (which can be anonoying since combined 
+// types can be quite long in the parse-tree)
+//
+// For example.
+//   Using std::const_cast: 
+//      auto &uses = std::const_cast<std::list<Statement<Indirection<UseStmt>>>&>(const_use_list);
+//   Using unconst:
+//      auto &uses = unconst(const_uses);
+//
+static inline template <typename T> T& unconst(const T&x) { 
+  return std::const_cast<T&>(x) ;
+}
+
 
 namespace Fortran::semantics 
 {
@@ -1366,8 +1380,9 @@ public:
       current_label_=-1 ;
     }
   }
+
   
-  //  ========== ProgramUnit  ===========
+  // ========== ProgramUnit  ===========
 
   bool Pre(const ProgramUnit &x) { 
     TRACE_CALL() ;
@@ -1387,11 +1402,77 @@ public:
   void Post(const ProgramUnit &x) {
     TRACE_CALL() ;
     std::cerr << "DUMP STMT " << GetStatementMap().Size() << "\n";
-    //    GetStatementMap().DumpFlat(std::cerr);
-    //std::cerr << "========================\n";
+    //  GetStatementMap().DumpFlat(std::cerr);
+    //  std::cerr << "========================\n";
     GetStatementMap().Dump(std::cerr,1,true);
     current_smap_ = 0;
 
+    // #### rewrite StmtFunctionStmt into AssignmentStmt
+    
+    const SpecificationPart & specif_part = std::get<SpecificationPart>(x.t) ;
+    auto &const_decl_list = std::get< std::list<DeclarationConstruct> >(specif_part.t);   
+    // Reminder: ExecutionPart = std::list<ExecutionPartConstruct>
+    auto &const_exec_list = std::get< std::list<ExecutionPartConstruct> >(x.t);  
+
+    // We are going to move elements from decl_list to exec_list so get rid of the const.
+    auto &decl_list = unconst(const_decl_list);
+    auto &exec_part = unconst(const_exec_part);
+    
+    // The goal is to remove some StmtFunctionStmt at the end of decl_list
+    // and to insert them in the same order at the begining of excl_part
+    //
+    // for instance:
+    // 
+    //  - Before:
+    //       ! decl_list contains 4 elements 
+    //       integer,intent(in) :: i,n
+    //       integer :: a,b(n),c(n)
+    //       b(i) = i*10     ! StmtFunctionStmt
+    //       c(i) = i*i      ! StmtFunctionStmt        
+    //       ! exec_part contains 1 element
+    //       print *, "hello" , b(1), c(1)
+    //
+    //  - After:
+    //       ! decl_list contains 2 elements 
+    //       integer,intent(in) :: i,n
+    //       integer :: a, b(n), c(n)
+    //       ! exec_part contains 3 element
+    //       b(i) = i*10
+    //       c(i) = i*i              
+    //       print *, "hello" , b(1), c(1)
+    // 
+
+    // For the purpose of that experiment, convert all StmtFunctionStmt 
+    // found at the end of decl_list.
+    // The final code shall be more selective. 
+    
+    // A stupid alias for readability purpose
+    typedef Statement<Indirection<StmtFunctionStmt>>> StmtFunctionStmt_type;
+
+    while (true) {
+      if (decl_list.empty())
+        break ;
+      DeclarationConstruct &last = decl_list.back() ; 
+      if ( ! std::holds_alternative<StmtFunctionStmt_type>(last.v) )
+        break ;
+      auto & func_stmt = GetValue( std::get<StmtFunctionStmt_type>(last.v) ) ;
+      
+      auto & funcname = unconst(func_stmt.name());
+      auto & arglist  = unconst(func_stmt.args());
+      auto & rhs      = GetValue(unconst(func_stmt.expr()));               
+                                 
+      psr::DataReference base(???);
+      std::list<SectionSubscript> sslist;
+      for ( Name &index : arglist ){
+        // SectionSubscript -> Expr -> Designator -> DataReference -> Name = index
+        SectionSubscript ss(???);
+        sslist.push_back(ss); 
+      }
+      psr::ArrayElement elem(base,sslist);
+      ExecutionPartConstruct(ExecutableConstruct(StatementActionStmt(
+      decl_list.pop_back() ;
+    }
+       
     ClearConstructNames() ;    
   }
 
@@ -3362,6 +3443,18 @@ public:
     TRACE_CALL() ;
   }
 
+  // =========== StmtFunctionStmt =========== 
+
+  bool Pre(const StmtFunctionStmt &x) { 
+    TRACE_CALL() ;
+    InitStmt(x, StmtClass::Rewind);
+    return true ; 
+  }
+
+  void Post(const StmtFunctionStmt &x) {     
+    TRACE_CALL() ;
+  }
+  
   // =========== StopStmt =========== 
 
   bool Pre(const StopStmt &x) { 

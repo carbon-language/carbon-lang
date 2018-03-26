@@ -62,4 +62,4 @@ constexpr const char *StmtClassText(StmtClass sc) {
 
 }  // end of namespace Fortran::semantics
 
-#endif
+#endif // of FLANG_SEMA_STMT_H

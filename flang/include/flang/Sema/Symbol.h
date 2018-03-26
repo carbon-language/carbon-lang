@@ -317,4 +317,4 @@ private:
 
 // NOTE:  Support for EQUIVALENCE ...
 
-#endif
+#endif // of FLANG_SEMA_SYMBOL_H
