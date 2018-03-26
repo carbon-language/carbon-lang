@@ -245,6 +245,15 @@ DIASession::findLineNumbersByAddress(uint64_t Address, uint32_t Length) const {
 }
 
 std::unique_ptr<IPDBEnumLineNumbers>
+DIASession::findLineNumbersByRVA(uint32_t RVA, uint32_t Length) const {
+  CComPtr<IDiaEnumLineNumbers> LineNumbers;
+  if (S_OK != Session->findLinesByRVA(RVA, Length, &LineNumbers))
+    return nullptr;
+
+  return llvm::make_unique<DIAEnumLineNumbers>(LineNumbers);
+}
+
+std::unique_ptr<IPDBEnumLineNumbers>
 DIASession::findLineNumbersBySectOffset(uint32_t Section, uint32_t Offset,
                                         uint32_t Length) const {
   CComPtr<IDiaEnumLineNumbers> LineNumbers;

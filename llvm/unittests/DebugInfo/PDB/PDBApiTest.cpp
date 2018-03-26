@@ -97,6 +97,10 @@ class MockSession : public IPDBSession {
     return nullptr;
   }
   std::unique_ptr<IPDBEnumLineNumbers>
+  findLineNumbersByRVA(uint32_t RVA, uint32_t Length) const override {
+    return nullptr;
+  }
+  std::unique_ptr<IPDBEnumLineNumbers>
   findLineNumbersBySectOffset(uint32_t Section, uint32_t Offset,
                               uint32_t Length) const override {
     return nullptr;

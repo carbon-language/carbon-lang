@@ -51,6 +51,8 @@ public:
   virtual std::unique_ptr<IPDBEnumLineNumbers>
   findLineNumbersByAddress(uint64_t Address, uint32_t Length) const = 0;
   virtual std::unique_ptr<IPDBEnumLineNumbers>
+  findLineNumbersByRVA(uint32_t RVA, uint32_t Length) const = 0;
+  virtual std::unique_ptr<IPDBEnumLineNumbers>
   findLineNumbersBySectOffset(uint32_t Section, uint32_t Offset,
                               uint32_t Length) const = 0;
 

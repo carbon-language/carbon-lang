@@ -213,6 +213,11 @@ NativeSession::findLineNumbersByAddress(uint64_t Address,
 }
 
 std::unique_ptr<IPDBEnumLineNumbers>
+NativeSession::findLineNumbersByRVA(uint32_t RVA, uint32_t Length) const {
+  return nullptr;
+}
+
+std::unique_ptr<IPDBEnumLineNumbers>
 NativeSession::findLineNumbersBySectOffset(uint32_t Section, uint32_t Offset,
                                            uint32_t Length) const {
   return nullptr;
