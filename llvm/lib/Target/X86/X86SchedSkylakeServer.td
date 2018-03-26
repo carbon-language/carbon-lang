@@ -5624,7 +5624,8 @@ def: InstRW<[SKXWriteResGroup201], (instregex "DIVPSrm",
                                               "VDIVPSZ128rm(b?)(k?)(z?)",
                                               "VDIVPSrm",
                                               "VDIVSSZrm(_Int)?(k?)(z?)",
-                                              "VSQRTSSm")>;
+                                              "VSQRTSSm",
+                                              "VSQRTSSZm(_Int)?(k?)(z?)")>;
 
 def SKXWriteResGroup202 : SchedWriteRes<[SKXPort0,SKXPort1,SKXPort5,SKXPort6,SKXPort05,SKXPort0156]> {
   let Latency = 17;
@@ -5656,8 +5657,7 @@ def: InstRW<[SKXWriteResGroup204], (instregex "SQRTPSm",
                                               "VDIVPSYrm",
                                               "VDIVPSZ256rm(b?)(k?)(z?)",
                                               "VSQRTPSZ128m(b?)(k?)(z?)",
-                                              "VSQRTPSm",
-                                              "VSQRTSSZm(_Int)?(k?)(z?)")>;
+                                              "VSQRTPSm")>;
 
 def SKXWriteResGroup205 : SchedWriteRes<[SKXPort23,SKXPort015]> {
   let Latency = 18;

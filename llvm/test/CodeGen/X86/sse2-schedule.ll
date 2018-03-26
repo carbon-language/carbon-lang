@@ -3194,8 +3194,8 @@ define <2 x double> @test_divpd(<2 x double> %a0, <2 x double> %a1, <2 x double>
 ;
 ; HASWELL-SSE-LABEL: test_divpd:
 ; HASWELL-SSE:       # %bb.0:
-; HASWELL-SSE-NEXT:    divpd %xmm1, %xmm0 # sched: [14:1.00]
-; HASWELL-SSE-NEXT:    divpd (%rdi), %xmm0 # sched: [20:1.00]
+; HASWELL-SSE-NEXT:    divpd %xmm1, %xmm0 # sched: [20:1.00]
+; HASWELL-SSE-NEXT:    divpd (%rdi), %xmm0 # sched: [26:1.00]
 ; HASWELL-SSE-NEXT:    retq # sched: [7:1.00]
 ;
 ; HASWELL-LABEL: test_divpd:
@@ -3302,8 +3302,8 @@ define double @test_divsd(double %a0, double %a1, double *%a2) {
 ;
 ; HASWELL-SSE-LABEL: test_divsd:
 ; HASWELL-SSE:       # %bb.0:
-; HASWELL-SSE-NEXT:    divsd %xmm1, %xmm0 # sched: [14:1.00]
-; HASWELL-SSE-NEXT:    divsd (%rdi), %xmm0 # sched: [19:1.00]
+; HASWELL-SSE-NEXT:    divsd %xmm1, %xmm0 # sched: [20:1.00]
+; HASWELL-SSE-NEXT:    divsd (%rdi), %xmm0 # sched: [25:1.00]
 ; HASWELL-SSE-NEXT:    retq # sched: [7:1.00]
 ;
 ; HASWELL-LABEL: test_divsd:
@@ -14142,8 +14142,8 @@ define <2 x double> @test_shufpd(<2 x double> %a0, <2 x double> %a1, <2 x double
 define <2 x double> @test_sqrtpd(<2 x double> %a0, <2 x double> *%a1) {
 ; GENERIC-LABEL: test_sqrtpd:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    sqrtpd %xmm0, %xmm1 # sched: [22:1.00]
-; GENERIC-NEXT:    sqrtpd (%rdi), %xmm0 # sched: [28:1.00]
+; GENERIC-NEXT:    sqrtpd %xmm0, %xmm1 # sched: [21:1.00]
+; GENERIC-NEXT:    sqrtpd (%rdi), %xmm0 # sched: [27:1.00]
 ; GENERIC-NEXT:    addpd %xmm1, %xmm0 # sched: [3:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
@@ -14164,50 +14164,50 @@ define <2 x double> @test_sqrtpd(<2 x double> %a0, <2 x double> *%a1) {
 ;
 ; SANDY-SSE-LABEL: test_sqrtpd:
 ; SANDY-SSE:       # %bb.0:
-; SANDY-SSE-NEXT:    sqrtpd %xmm0, %xmm1 # sched: [22:1.00]
-; SANDY-SSE-NEXT:    sqrtpd (%rdi), %xmm0 # sched: [28:1.00]
+; SANDY-SSE-NEXT:    sqrtpd %xmm0, %xmm1 # sched: [21:1.00]
+; SANDY-SSE-NEXT:    sqrtpd (%rdi), %xmm0 # sched: [27:1.00]
 ; SANDY-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [3:1.00]
 ; SANDY-SSE-NEXT:    retq # sched: [1:1.00]
 ;
 ; SANDY-LABEL: test_sqrtpd:
 ; SANDY:       # %bb.0:
-; SANDY-NEXT:    vsqrtpd %xmm0, %xmm0 # sched: [22:1.00]
-; SANDY-NEXT:    vsqrtpd (%rdi), %xmm1 # sched: [28:1.00]
+; SANDY-NEXT:    vsqrtpd %xmm0, %xmm0 # sched: [21:1.00]
+; SANDY-NEXT:    vsqrtpd (%rdi), %xmm1 # sched: [27:1.00]
 ; SANDY-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-SSE-LABEL: test_sqrtpd:
 ; HASWELL-SSE:       # %bb.0:
-; HASWELL-SSE-NEXT:    sqrtpd %xmm0, %xmm1 # sched: [20:1.00]
-; HASWELL-SSE-NEXT:    sqrtpd (%rdi), %xmm0 # sched: [26:1.00]
+; HASWELL-SSE-NEXT:    sqrtpd %xmm0, %xmm1 # sched: [16:1.00]
+; HASWELL-SSE-NEXT:    sqrtpd (%rdi), %xmm0 # sched: [22:1.00]
 ; HASWELL-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [3:1.00]
 ; HASWELL-SSE-NEXT:    retq # sched: [7:1.00]
 ;
 ; HASWELL-LABEL: test_sqrtpd:
 ; HASWELL:       # %bb.0:
-; HASWELL-NEXT:    vsqrtpd %xmm0, %xmm0 # sched: [21:1.00]
-; HASWELL-NEXT:    vsqrtpd (%rdi), %xmm1 # sched: [27:1.00]
+; HASWELL-NEXT:    vsqrtpd %xmm0, %xmm0 # sched: [16:1.00]
+; HASWELL-NEXT:    vsqrtpd (%rdi), %xmm1 # sched: [22:1.00]
 ; HASWELL-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
 ; HASWELL-NEXT:    retq # sched: [7:1.00]
 ;
 ; BROADWELL-SSE-LABEL: test_sqrtpd:
 ; BROADWELL-SSE:       # %bb.0:
-; BROADWELL-SSE-NEXT:    sqrtpd %xmm0, %xmm1 # sched: [20:1.00]
-; BROADWELL-SSE-NEXT:    sqrtpd (%rdi), %xmm0 # sched: [25:1.00]
+; BROADWELL-SSE-NEXT:    sqrtpd %xmm0, %xmm1 # sched: [16:1.00]
+; BROADWELL-SSE-NEXT:    sqrtpd (%rdi), %xmm0 # sched: [21:1.00]
 ; BROADWELL-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [3:1.00]
 ; BROADWELL-SSE-NEXT:    retq # sched: [7:1.00]
 ;
 ; BROADWELL-LABEL: test_sqrtpd:
 ; BROADWELL:       # %bb.0:
-; BROADWELL-NEXT:    vsqrtpd %xmm0, %xmm0 # sched: [21:1.00]
-; BROADWELL-NEXT:    vsqrtpd (%rdi), %xmm1 # sched: [26:1.00]
+; BROADWELL-NEXT:    vsqrtpd %xmm0, %xmm0 # sched: [16:1.00]
+; BROADWELL-NEXT:    vsqrtpd (%rdi), %xmm1 # sched: [21:1.00]
 ; BROADWELL-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
 ; BROADWELL-NEXT:    retq # sched: [7:1.00]
 ;
 ; SKYLAKE-SSE-LABEL: test_sqrtpd:
 ; SKYLAKE-SSE:       # %bb.0:
-; SKYLAKE-SSE-NEXT:    sqrtpd %xmm0, %xmm1 # sched: [20:1.00]
-; SKYLAKE-SSE-NEXT:    sqrtpd (%rdi), %xmm0 # sched: [26:1.00]
+; SKYLAKE-SSE-NEXT:    sqrtpd %xmm0, %xmm1 # sched: [18:1.00]
+; SKYLAKE-SSE-NEXT:    sqrtpd (%rdi), %xmm0 # sched: [24:1.00]
 ; SKYLAKE-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [4:0.50]
 ; SKYLAKE-SSE-NEXT:    retq # sched: [7:1.00]
 ;
@@ -14272,9 +14272,9 @@ declare <2 x double> @llvm.x86.sse2.sqrt.pd(<2 x double>) nounwind readnone
 define <2 x double> @test_sqrtsd(<2 x double> %a0, <2 x double> *%a1) {
 ; GENERIC-LABEL: test_sqrtsd:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    sqrtsd %xmm0, %xmm0 # sched: [22:1.00]
+; GENERIC-NEXT:    sqrtsd %xmm0, %xmm0 # sched: [21:1.00]
 ; GENERIC-NEXT:    movapd (%rdi), %xmm1 # sched: [6:0.50]
-; GENERIC-NEXT:    sqrtsd %xmm1, %xmm1 # sched: [22:1.00]
+; GENERIC-NEXT:    sqrtsd %xmm1, %xmm1 # sched: [21:1.00]
 ; GENERIC-NEXT:    addpd %xmm1, %xmm0 # sched: [3:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
@@ -14296,9 +14296,9 @@ define <2 x double> @test_sqrtsd(<2 x double> %a0, <2 x double> *%a1) {
 ;
 ; SANDY-SSE-LABEL: test_sqrtsd:
 ; SANDY-SSE:       # %bb.0:
-; SANDY-SSE-NEXT:    sqrtsd %xmm0, %xmm0 # sched: [22:1.00]
+; SANDY-SSE-NEXT:    sqrtsd %xmm0, %xmm0 # sched: [21:1.00]
 ; SANDY-SSE-NEXT:    movapd (%rdi), %xmm1 # sched: [6:0.50]
-; SANDY-SSE-NEXT:    sqrtsd %xmm1, %xmm1 # sched: [22:1.00]
+; SANDY-SSE-NEXT:    sqrtsd %xmm1, %xmm1 # sched: [21:1.00]
 ; SANDY-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [3:1.00]
 ; SANDY-SSE-NEXT:    retq # sched: [1:1.00]
 ;
@@ -14312,41 +14312,41 @@ define <2 x double> @test_sqrtsd(<2 x double> %a0, <2 x double> *%a1) {
 ;
 ; HASWELL-SSE-LABEL: test_sqrtsd:
 ; HASWELL-SSE:       # %bb.0:
-; HASWELL-SSE-NEXT:    sqrtsd %xmm0, %xmm0 # sched: [20:1.00]
+; HASWELL-SSE-NEXT:    sqrtsd %xmm0, %xmm0 # sched: [16:1.00]
 ; HASWELL-SSE-NEXT:    movapd (%rdi), %xmm1 # sched: [6:0.50]
-; HASWELL-SSE-NEXT:    sqrtsd %xmm1, %xmm1 # sched: [20:1.00]
+; HASWELL-SSE-NEXT:    sqrtsd %xmm1, %xmm1 # sched: [16:1.00]
 ; HASWELL-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [3:1.00]
 ; HASWELL-SSE-NEXT:    retq # sched: [7:1.00]
 ;
 ; HASWELL-LABEL: test_sqrtsd:
 ; HASWELL:       # %bb.0:
-; HASWELL-NEXT:    vsqrtsd %xmm0, %xmm0, %xmm0 # sched: [21:1.00]
+; HASWELL-NEXT:    vsqrtsd %xmm0, %xmm0, %xmm0 # sched: [16:1.00]
 ; HASWELL-NEXT:    vmovapd (%rdi), %xmm1 # sched: [6:0.50]
-; HASWELL-NEXT:    vsqrtsd %xmm1, %xmm1, %xmm1 # sched: [21:1.00]
+; HASWELL-NEXT:    vsqrtsd %xmm1, %xmm1, %xmm1 # sched: [16:1.00]
 ; HASWELL-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
 ; HASWELL-NEXT:    retq # sched: [7:1.00]
 ;
 ; BROADWELL-SSE-LABEL: test_sqrtsd:
 ; BROADWELL-SSE:       # %bb.0:
-; BROADWELL-SSE-NEXT:    sqrtsd %xmm0, %xmm0 # sched: [20:1.00]
+; BROADWELL-SSE-NEXT:    sqrtsd %xmm0, %xmm0 # sched: [16:1.00]
 ; BROADWELL-SSE-NEXT:    movapd (%rdi), %xmm1 # sched: [5:0.50]
-; BROADWELL-SSE-NEXT:    sqrtsd %xmm1, %xmm1 # sched: [20:1.00]
+; BROADWELL-SSE-NEXT:    sqrtsd %xmm1, %xmm1 # sched: [16:1.00]
 ; BROADWELL-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [3:1.00]
 ; BROADWELL-SSE-NEXT:    retq # sched: [7:1.00]
 ;
 ; BROADWELL-LABEL: test_sqrtsd:
 ; BROADWELL:       # %bb.0:
-; BROADWELL-NEXT:    vsqrtsd %xmm0, %xmm0, %xmm0 # sched: [21:1.00]
+; BROADWELL-NEXT:    vsqrtsd %xmm0, %xmm0, %xmm0 # sched: [16:1.00]
 ; BROADWELL-NEXT:    vmovapd (%rdi), %xmm1 # sched: [5:0.50]
-; BROADWELL-NEXT:    vsqrtsd %xmm1, %xmm1, %xmm1 # sched: [21:1.00]
+; BROADWELL-NEXT:    vsqrtsd %xmm1, %xmm1, %xmm1 # sched: [16:1.00]
 ; BROADWELL-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
 ; BROADWELL-NEXT:    retq # sched: [7:1.00]
 ;
 ; SKYLAKE-SSE-LABEL: test_sqrtsd:
 ; SKYLAKE-SSE:       # %bb.0:
-; SKYLAKE-SSE-NEXT:    sqrtsd %xmm0, %xmm0 # sched: [20:1.00]
+; SKYLAKE-SSE-NEXT:    sqrtsd %xmm0, %xmm0 # sched: [18:1.00]
 ; SKYLAKE-SSE-NEXT:    movapd (%rdi), %xmm1 # sched: [6:0.50]
-; SKYLAKE-SSE-NEXT:    sqrtsd %xmm1, %xmm1 # sched: [20:1.00]
+; SKYLAKE-SSE-NEXT:    sqrtsd %xmm1, %xmm1 # sched: [18:1.00]
 ; SKYLAKE-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [4:0.50]
 ; SKYLAKE-SSE-NEXT:    retq # sched: [7:1.00]
 ;
