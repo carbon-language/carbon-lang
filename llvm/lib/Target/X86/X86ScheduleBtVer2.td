@@ -336,17 +336,30 @@ def JWriteCVTF2FLd : SchedWriteRes<[JLAGU, JFPU1, JSTC]> {
 }
 def : InstRW<[JWriteCVTF2FLd], (instregex "(V)?CVTS(D|S)2S(D|S)rm")>;
 
-def JWriteCVTSI2F : SchedWriteRes<[JFPU1, JSTC, JFPA, JALU0]> {
+def JWriteCVTF2SI : SchedWriteRes<[JFPU1, JSTC, JFPA, JALU0]> {
   let Latency = 7;
   let NumMicroOps = 2;
 }
-def : InstRW<[JWriteCVTSI2F], (instregex "(V)?CVT(T?)S(D|S)2SI(64)?rr")>;
+def : InstRW<[JWriteCVTF2SI], (instregex "(V)?CVT(T?)S(D|S)2SI(64)?rr")>;
 
-def JWriteCVTSI2FLd : SchedWriteRes<[JLAGU, JFPU1, JSTC, JFPA, JALU0]> {
+def JWriteCVTF2SILd : SchedWriteRes<[JLAGU, JFPU1, JSTC, JFPA, JALU0]> {
   let Latency = 12;
   let NumMicroOps = 2;
 }
-def : InstRW<[JWriteCVTSI2FLd], (instregex "(V)?CVT(T?)S(D|S)2SI(64)?rm")>;
+def : InstRW<[JWriteCVTF2SILd], (instregex "(V)?CVT(T?)S(D|S)2SI(64)?rm")>;
+
+// FIXME: f+3 ST,LD+STC latency
+def JWriteCVTSI2F : SchedWriteRes<[JFPU1, JSTC]> {
+  let Latency = 9;
+  let NumMicroOps = 2;
+}
+def : InstRW<[JWriteCVTSI2F], (instregex "(V)?CVTSI(64)?2S(D|S)rr")>;
+
+def JWriteCVTSI2FLd : SchedWriteRes<[JLAGU, JFPU1, JSTC]> {
+  let Latency = 14;
+  let NumMicroOps = 2;
+}
+def : InstRW<[JWriteCVTSI2FLd], (instregex "(V)?CVTSI(64)?2S(D|S)rm")>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Vector integer operations.

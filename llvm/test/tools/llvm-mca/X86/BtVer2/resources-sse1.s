@@ -158,10 +158,10 @@ xorps       (%rax), %xmm2
 # CHECK-NEXT:  1      7     1.00    *               	cmpss	$0, (%rax), %xmm2
 # CHECK-NEXT:  1      3     1.00                    	comiss	%xmm0, %xmm1
 # CHECK-NEXT:  1      8     1.00    *               	comiss	(%rax), %xmm1
-# CHECK-NEXT:  1      3     1.00                    	cvtsi2ssl	%ecx, %xmm2
-# CHECK-NEXT:  1      3     1.00                    	cvtsi2ssq	%rcx, %xmm2
-# CHECK-NEXT:  1      8     1.00    *               	cvtsi2ssl	(%rax), %xmm2
-# CHECK-NEXT:  1      8     1.00    *               	cvtsi2ssl	(%rax), %xmm2
+# CHECK-NEXT:  2      9     1.00                    	cvtsi2ssl	%ecx, %xmm2
+# CHECK-NEXT:  2      9     1.00                    	cvtsi2ssq	%rcx, %xmm2
+# CHECK-NEXT:  2      14    1.00    *               	cvtsi2ssl	(%rax), %xmm2
+# CHECK-NEXT:  2      14    1.00    *               	cvtsi2ssl	(%rax), %xmm2
 # CHECK-NEXT:  2      7     1.00                    	cvtss2si	%xmm0, %ecx
 # CHECK-NEXT:  2      7     1.00                    	cvtss2si	%xmm0, %rcx
 # CHECK-NEXT:  2      12    1.00    *               	cvtss2si	(%rax), %ecx
