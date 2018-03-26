@@ -515,6 +515,8 @@ public:
     }
   }
 
+  unsigned getLatency() { return Latency; }
+
   void clear() {
     Nodes.clear();
     RecMII = 0;
@@ -1432,7 +1434,7 @@ unsigned SwingSchedulerDAG::calculateRecMII(NodeSetType &NodeSets) {
     if (Nodes.empty())
       continue;
 
-    unsigned Delay = Nodes.size() - 1;
+    unsigned Delay = Nodes.getLatency();
     unsigned Distance = 1;
 
     // ii = ceil(delay / distance)
@@ -2095,7 +2097,8 @@ void SwingSchedulerDAG::computeNodeOrder(NodeSetType &NodeSets) {
       // Find the node with the highest ASAP.
       SUnit *maxASAP = nullptr;
       for (SUnit *SU : Nodes) {
-        if (maxASAP == nullptr || getASAP(SU) >= getASAP(maxASAP))
+        if (maxASAP == nullptr || getASAP(SU) > getASAP(maxASAP) ||
+            (getASAP(SU) == getASAP(maxASAP) && SU->NodeNum > maxASAP->NodeNum))
           maxASAP = SU;
       }
       R.insert(maxASAP);
@@ -2106,7 +2109,7 @@ void SwingSchedulerDAG::computeNodeOrder(NodeSetType &NodeSets) {
     while (!R.empty()) {
       if (Order == TopDown) {
         // Choose the node with the maximum height.  If more than one, choose
-        // the node with the maximum ZeroLatencyHeight. If still more than one,
+        // the node wiTH the maximum ZeroLatencyHeight. If still more than one,
         // choose the node with the lowest MOV.
         while (!R.empty()) {
           SUnit *maxHeight = nullptr;
@@ -3721,7 +3724,7 @@ void SMSchedule::computeStart(SUnit *SU, int *MaxEarlyStart, int *MinLateStart,
             !SU->isPred(I))
           *MinLateStart = std::min(*MinLateStart, cycle);
       }
-      for (unsigned i = 0, e = (unsigned)SU->Succs.size(); i != e; ++i)
+      for (unsigned i = 0, e = (unsigned)SU->Succs.size(); i != e; ++i) {
         if (SU->Succs[i].getSUnit() == I) {
           const SDep &Dep = SU->Succs[i];
           if (!DAG->isBackedge(SU, Dep)) {
@@ -3738,6 +3741,7 @@ void SMSchedule::computeStart(SUnit *SU, int *MaxEarlyStart, int *MinLateStart,
             *MaxEarlyStart = std::max(*MaxEarlyStart, EarlyStart);
           }
         }
+      }
     }
   }
 }
