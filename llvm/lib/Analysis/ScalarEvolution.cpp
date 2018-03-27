@@ -6648,13 +6648,11 @@ void ScalarEvolution::forgetValue(Value *V) {
 }
 
 /// Get the exact loop backedge taken count considering all loop exits. A
-/// computable result can only be returned for loops with a single exit.
-/// Returning the minimum taken count among all exits is incorrect because one
-/// of the loop's exit limit's may have been skipped. howFarToZero assumes that
-/// the limit of each loop test is never skipped. This is a valid assumption as
-/// long as the loop exits via that test. For precise results, it is the
-/// caller's responsibility to specify the relevant loop exit using
-/// getExact(ExitingBlock, SE).
+/// computable result can only be returned for loops with all exiting blocks
+/// dominating the latch. howFarToZero assumes that the limit of each loop test
+/// is never skipped. This is a valid assumption as long as the loop exits via
+/// that test. For precise results, it is the caller's responsibility to specify
+/// the relevant loop exiting block using getExact(ExitingBlock, SE).
 const SCEV *
 ScalarEvolution::BackedgeTakenInfo::getExact(const Loop *L, ScalarEvolution *SE,
                                              SCEVUnionPredicate *Preds) const {
@@ -6664,16 +6662,17 @@ ScalarEvolution::BackedgeTakenInfo::getExact(const Loop *L, ScalarEvolution *SE,
 
   const SCEV *BECount = nullptr;
   const BasicBlock *Latch = L->getLoopLatch();
-  // All exits we have collected must dominate the only latch.
+  // All exiting blocks we have collected must dominate the only backedge.
   if (!Latch)
     return SE->getCouldNotCompute();
 
-  // All exits we have gathered dominate loop's latch, so exact trip count is
-  // simply a minimum out of all these calculated exit counts.
+  // All exiting blocks we have gathered dominate loop's latch, so exact trip
+  // count is simply a minimum out of all these calculated exit counts.
   for (auto &ENT : ExitNotTaken) {
-    assert(ENT.ExactNotTaken != SE->getCouldNotCompute() && "bad exit SCEV");
+    assert(ENT.ExactNotTaken != SE->getCouldNotCompute() && "Bad exit SCEV!");
     assert(SE->DT.dominates(ENT.ExitingBlock, Latch) &&
-           "We should only have known counts for exits that dominate latch!");
+           "We should only have known counts for exiting blocks that dominate "
+           "latch!");
 
     if (!BECount)
       BECount = ENT.ExactNotTaken;
