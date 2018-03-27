@@ -2122,11 +2122,9 @@ void DwarfDebug::emitDebugAbbrevDWO() {
 
 void DwarfDebug::emitDebugLineDWO() {
   assert(useSplitDwarf() && "No split dwarf?");
-  if (!HasSplitTypeUnits)
-    return;
-  Asm->OutStreamer->SwitchSection(
+  SplitTypeUnitFileTable.Emit(
+      *Asm->OutStreamer, MCDwarfLineTableParams(),
       Asm->getObjFileLowering().getDwarfLineDWOSection());
-  SplitTypeUnitFileTable.Emit(*Asm->OutStreamer, MCDwarfLineTableParams());
 }
 
 void DwarfDebug::emitStringOffsetsTableHeaderDWO() {
@@ -2200,8 +2198,9 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
   if (useSplitDwarf())
     NewTU.setSection(Asm->getObjFileLowering().getDwarfTypesDWOSection());
   else {
-    CU.applyStmtList(UnitDie);
     NewTU.setSection(Asm->getObjFileLowering().getDwarfTypesSection(Signature));
+    // Non-split type units reuse the compile unit's line table.
+    CU.applyStmtList(UnitDie);
   }
 
   // Add DW_AT_str_offsets_base to the type unit DIE, but not for split type
@@ -2239,7 +2238,6 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
       InfoHolder.computeSizeAndOffsetsForUnit(TU.first.get());
       InfoHolder.emitUnit(TU.first.get(), useSplitDwarf());
     }
-    HasSplitTypeUnits = useSplitDwarf();
   }
   CU.addDIETypeSignature(RefDie, Signature);
 }

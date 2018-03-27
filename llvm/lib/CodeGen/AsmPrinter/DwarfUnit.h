@@ -367,6 +367,7 @@ class DwarfTypeUnit final : public DwarfUnit {
   const DIE *Ty;
   DwarfCompileUnit &CU;
   MCDwarfDwoLineTable *SplitLineTable;
+  bool UsedLineTable = false;
 
   unsigned getOrCreateSourceID(const DIFile *File) override;
   bool isDwoUnit() const override;

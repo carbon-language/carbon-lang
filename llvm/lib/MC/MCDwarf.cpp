@@ -257,9 +257,12 @@ void MCDwarfLineTable::Emit(MCObjectStreamer *MCOS,
     LineStr->emitSection(MCOS);
 }
 
-void MCDwarfDwoLineTable::Emit(MCStreamer &MCOS,
-                               MCDwarfLineTableParams Params) const {
+void MCDwarfDwoLineTable::Emit(MCStreamer &MCOS, MCDwarfLineTableParams Params,
+                               MCSection *Section) const {
+  if (Header.MCDwarfFiles.empty())
+    return;
   Optional<MCDwarfLineStr> NoLineStr(None);
+  MCOS.SwitchSection(Section);
   MCOS.EmitLabel(Header.Emit(&MCOS, Params, None, NoLineStr).second);
 }
 

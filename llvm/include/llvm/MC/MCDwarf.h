@@ -250,7 +250,8 @@ public:
     return cantFail(Header.tryGetFile(Directory, FileName, Checksum, Source));
   }
 
-  void Emit(MCStreamer &MCOS, MCDwarfLineTableParams Params) const;
+  void Emit(MCStreamer &MCOS, MCDwarfLineTableParams Params,
+            MCSection *Section) const;
 };
 
 class MCDwarfLineTable {
