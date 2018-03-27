@@ -6413,11 +6413,11 @@ const SCEV *ScalarEvolution::getExitCount(const Loop *L,
 const SCEV *
 ScalarEvolution::getPredicatedBackedgeTakenCount(const Loop *L,
                                                  SCEVUnionPredicate &Preds) {
-  return getPredicatedBackedgeTakenInfo(L).getExact(this, &Preds);
+  return getPredicatedBackedgeTakenInfo(L).getExact(L, this, &Preds);
 }
 
 const SCEV *ScalarEvolution::getBackedgeTakenCount(const Loop *L) {
-  return getBackedgeTakenInfo(L).getExact(this);
+  return getBackedgeTakenInfo(L).getExact(L, this);
 }
 
 /// Similar to getBackedgeTakenCount, except return the least SCEV value that is
@@ -6474,8 +6474,8 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
   // must be cleared in this scope.
   BackedgeTakenInfo Result = computeBackedgeTakenCount(L);
 
-  if (Result.getExact(this) != getCouldNotCompute()) {
-    assert(isLoopInvariant(Result.getExact(this), L) &&
+  if (Result.getExact(L, this) != getCouldNotCompute()) {
+    assert(isLoopInvariant(Result.getExact(L, this), L) &&
            isLoopInvariant(Result.getMax(this), L) &&
            "Computed backedge-taken count isn't loop invariant for loop!");
     ++NumTripCountsComputed;
@@ -6656,20 +6656,30 @@ void ScalarEvolution::forgetValue(Value *V) {
 /// caller's responsibility to specify the relevant loop exit using
 /// getExact(ExitingBlock, SE).
 const SCEV *
-ScalarEvolution::BackedgeTakenInfo::getExact(ScalarEvolution *SE,
+ScalarEvolution::BackedgeTakenInfo::getExact(const Loop *L, ScalarEvolution *SE,
                                              SCEVUnionPredicate *Preds) const {
   // If any exits were not computable, the loop is not computable.
   if (!isComplete() || ExitNotTaken.empty())
     return SE->getCouldNotCompute();
 
   const SCEV *BECount = nullptr;
+  const BasicBlock *Latch = L->getLoopLatch();
+  // All exits we have collected must dominate the only latch.
+  if (!Latch)
+    return SE->getCouldNotCompute();
+
+  // All exits we have gathered dominate loop's latch, so exact trip count is
+  // simply a minimum out of all these calculated exit counts.
   for (auto &ENT : ExitNotTaken) {
     assert(ENT.ExactNotTaken != SE->getCouldNotCompute() && "bad exit SCEV");
+    assert(SE->DT.dominates(ENT.ExitingBlock, Latch) &&
+           "We should only have known counts for exits that dominate latch!");
 
     if (!BECount)
       BECount = ENT.ExactNotTaken;
     else if (BECount != ENT.ExactNotTaken)
-      return SE->getCouldNotCompute();
+      BECount = SE->getUMinFromMismatchedTypes(BECount, ENT.ExactNotTaken);
+
     if (Preds && !ENT.hasAlwaysTruePredicate())
       Preds->add(ENT.Predicate.get());
 
