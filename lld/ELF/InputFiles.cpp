@@ -547,20 +547,18 @@ InputSectionBase *ObjFile<ELFT>::createInputSection(const Elf_Shdr &Sec) {
       this->Sections[Sec.sh_info] = Target;
     }
 
-    size_t NumRelocations;
     if (Sec.sh_type == SHT_RELA) {
       ArrayRef<Elf_Rela> Rels = CHECK(this->getObj().relas(&Sec), this);
       Target->FirstRelocation = Rels.begin();
-      NumRelocations = Rels.size();
+      Target->NumRelocations = Rels.size();
       Target->AreRelocsRela = true;
     } else {
       ArrayRef<Elf_Rel> Rels = CHECK(this->getObj().rels(&Sec), this);
       Target->FirstRelocation = Rels.begin();
-      NumRelocations = Rels.size();
+      Target->NumRelocations = Rels.size();
       Target->AreRelocsRela = false;
     }
-    assert(isUInt<31>(NumRelocations));
-    Target->NumRelocations = NumRelocations;
+    assert(isUInt<31>(Target->NumRelocations));
 
     // Relocation sections processed by the linker are usually removed
     // from the output, so returning `nullptr` for the normal case.
