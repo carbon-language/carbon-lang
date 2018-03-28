@@ -61,6 +61,10 @@ public:
       // If we found a TargetMachine, check that it's one that Orc supports.
       const Triple& TT = TM->getTargetTriple();
 
+      // Bail out for windows platforms. We do not support these yet.
+      if (TT.isOSWindows())
+        return;
+
       // Target can JIT?
       SupportsJIT = TM->getTarget().hasJIT();
       // Use ability to create callback manager to detect whether Orc
