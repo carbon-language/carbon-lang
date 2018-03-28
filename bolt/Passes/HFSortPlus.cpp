@@ -91,10 +91,6 @@ bool compareClusters(const Cluster *C1, const Cluster *C2) {
   if (D1 != D2)
     return D1 > D2;
   // making sure the sorting is deterministic
-  if (C1->size() != C2->size())
-    return C1->size() < C2->size();
-  if (C1->samples() != C2->samples())
-    return C1->samples() > C2->samples();
   return C1->target(0) < C2->target(0);
 }
 
@@ -161,8 +157,6 @@ public:
   double missProbability(double PageSamples) const {
     double P = PageSamples / TotalSamples;
     double X = ITLBEntries;
-    // avoiding precision issues for small values
-    if (P < 0.0001) return (1.0 - X * P + X * (X - 1.0) * P * P / 2.0);
     return pow(1.0 - P, X);
   }
 
@@ -452,7 +446,7 @@ private:
   /// total number of samples and function addresses.
   std::vector<Cluster *> initializeClusters() {
     outs() << "BOLT-INFO: running hfsort+ for " << Cg.numNodes() << " functions\n";
-    
+
     ITLBPageSize = opts::ITLBPageSize;
     ITLBEntries = opts::ITLBEntries;
 

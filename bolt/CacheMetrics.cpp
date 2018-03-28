@@ -27,28 +27,28 @@ FallthroughWeight("fallthrough-weight",
 cl::opt<double>
 ForwardWeight("forward-weight",
   cl::desc("The weight of forward jumps for ExtTSP metric"),
-  cl::init(0.4),
+  cl::init(0.1),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
 cl::opt<double>
 BackwardWeight("backward-weight",
   cl::desc("The weight of backward jumps for ExtTSP metric"),
-  cl::init(0.4),
+  cl::init(0.1),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
 cl::opt<unsigned>
 ForwardDistance("forward-distance",
   cl::desc("The maximum distance (in bytes) of forward jumps for ExtTSP metric"),
-  cl::init(768),
+  cl::init(1024),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
 cl::opt<unsigned>
 BackwardDistance("backward-distance",
   cl::desc("The maximum distance (in bytes) of backward jumps for ExtTSP metric"),
-  cl::init(192),
+  cl::init(640),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -274,55 +274,68 @@ double CacheMetrics::extTSPScore(uint64_t SrcAddr,
   return 0;
 }
 
-void CacheMetrics::printAll(
-  const std::vector<BinaryFunction *> &BinaryFunctions) {
-
+void CacheMetrics::printAll(const std::vector<BinaryFunction *> &BFs) {
+  // Stats related to hot-cold code splitting
   size_t NumFunctions = 0;
+  size_t NumProfiledFunctions = 0;
   size_t NumHotFunctions = 0;
   size_t NumBlocks = 0;
   size_t NumHotBlocks = 0;
 
-  for (auto BF : BinaryFunctions) {
+  size_t TotalCodeMinAddr = std::numeric_limits<size_t>::max();
+  size_t TotalCodeMaxAddr = 0;
+  size_t HotCodeMinAddr = std::numeric_limits<size_t>::max();
+  size_t HotCodeMaxAddr = 0;
+
+  for (auto BF : BFs) {
     NumFunctions++;
-    if (BF->getKnownExecutionCount() > 0)
+    if (BF->hasProfile())
+      NumProfiledFunctions++;
+    if (BF->hasValidIndex())
       NumHotFunctions++;
     for (auto BB : BF->layout()) {
       NumBlocks++;
-      if (BB->getKnownExecutionCount() > 0)
+      size_t BBAddrMin = BB->getOutputAddressRange().first;
+      size_t BBAddrMax = BB->getOutputAddressRange().second;
+      TotalCodeMinAddr = std::min(TotalCodeMinAddr, BBAddrMin);
+      TotalCodeMaxAddr = std::max(TotalCodeMaxAddr, BBAddrMax);
+      if (BF->hasValidIndex() && !BB->isCold()) {
         NumHotBlocks++;
+        HotCodeMinAddr = std::min(HotCodeMinAddr, BBAddrMin);
+        HotCodeMaxAddr = std::max(HotCodeMaxAddr, BBAddrMax);
+      }
     }
   }
 
   outs() << format("  There are %zu functions;", NumFunctions)
-         << format(" %zu (%.2lf%%) have positive execution count\n",
-                   NumHotFunctions, 100.0 * NumHotFunctions / NumFunctions);
+         << format(" %zu (%.2lf%%) are in the hot section,",
+                   NumHotFunctions, 100.0 * NumHotFunctions / NumFunctions)
+         << format(" %zu (%.2lf%%) have profile\n",
+                   NumProfiledFunctions, 100.0 * NumProfiledFunctions / NumFunctions);
   outs() << format("  There are %zu basic blocks;", NumBlocks)
-         << format(" %zu (%.2lf%%) have positive execution count\n",
+         << format(" %zu (%.2lf%%) are in the hot section\n",
                   NumHotBlocks, 100.0 * NumHotBlocks / NumBlocks);
 
+  assert(TotalCodeMinAddr < TotalCodeMaxAddr && "incorrect output addresses");
+  size_t HotCodeSize = HotCodeMaxAddr - HotCodeMinAddr;
+  size_t TotalCodeSize = TotalCodeMaxAddr - TotalCodeMinAddr;
+
+  size_t HugePage2MB = 2 << 20;
+  outs() << format("  Hot code takes %.2lf%% of binary (%zu bytes out of %zu, %.2lf huge pages)\n",
+                   100.0 * HotCodeSize / TotalCodeSize, HotCodeSize, TotalCodeSize,
+                   double(HotCodeSize) / HugePage2MB);
+
+  // Stats related to expected cache performance
   std::unordered_map<BinaryBasicBlock *, uint64_t> BBAddr;
   std::unordered_map<BinaryBasicBlock *, uint64_t> BBSize;
-  extractBasicBlockInfo(BinaryFunctions, BBAddr, BBSize);
-
-  size_t TotalCodeSize = 0;
-  size_t HotCodeSize = 0;
-  for (auto Pair : BBSize) {
-    TotalCodeSize += Pair.second;
-    auto BB = Pair.first;
-    if (!BB->isCold() && BB->getFunction()->hasValidIndex())
-      HotCodeSize += Pair.second;
-  }
-  outs() << format("  Hot code takes %.2lf%% of binary (%zu bytes out of %zu)\n",
-                   100.0 * HotCodeSize / TotalCodeSize, HotCodeSize, TotalCodeSize);
+  extractBasicBlockInfo(BFs, BBAddr, BBSize);
 
   outs() << "  Expected i-TLB cache hit ratio: "
-         << format("%.2lf%%\n", expectedCacheHitRatio(BinaryFunctions,
-                                                      BBAddr,
-                                                      BBSize));
+         << format("%.2lf%%\n", expectedCacheHitRatio(BFs, BBAddr, BBSize));
 
   outs() << "  TSP score: "
-         << format("%.0lf\n", calcTSPScore(BinaryFunctions, BBAddr, BBSize));
+         << format("%.0lf\n", calcTSPScore(BFs, BBAddr, BBSize));
 
   outs() << "  ExtTSP score: "
-         << format("%.0lf\n", calcExtTSPScore(BinaryFunctions, BBAddr, BBSize));
+         << format("%.0lf\n", calcExtTSPScore(BFs, BBAddr, BBSize));
 }

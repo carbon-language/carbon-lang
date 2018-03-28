@@ -157,7 +157,7 @@ private:
 
 /// Deterministically compare clusters by their density in decreasing order
 bool compareClusters(const Cluster *C1, const Cluster *C2) {
-  // original entry point to the front
+  // Original entry point to the front
   if (C1->isEntryPoint())
     return true;
   if (C2->isEntryPoint())
@@ -167,6 +167,7 @@ bool compareClusters(const Cluster *C1, const Cluster *C2) {
   const double D2 = C2->density();
   if (D1 != D2)
     return D1 > D2;
+
   // Making the order deterministic
   return C1->id() < C2->id();
 }
@@ -179,6 +180,7 @@ bool compareClusterPairs(const Cluster *A1, const Cluster *B1,
   if (Samples1 != Samples2)
     return Samples1 < Samples2;
 
+  // Making the order deterministic
   if (A1 != A2)
     return A1->id() < A2->id();
   return B1->id() < B2->id();
@@ -372,6 +374,14 @@ private:
     FallthroughPred = std::vector<BinaryBasicBlock *>(BF.size(), nullptr);
     // Find fallthroughs based on edge weights
     for (auto BB : BF.layout()) {
+      if (BB->succ_size() == 1 &&
+          BB->getSuccessor()->pred_size() == 1 &&
+          BB->getSuccessor()->getLayoutIndex() != 0) {
+        FallthroughSucc[BB->getLayoutIndex()] = BB->getSuccessor();
+        FallthroughPred[BB->getSuccessor()->getLayoutIndex()] = BB;
+        continue;
+      }
+
       if (OutWeight[BB->getLayoutIndex()] == 0)
         continue;
       for (auto Edge : OutEdges[BB->getLayoutIndex()]) {
@@ -544,7 +554,6 @@ private:
   /// adjacency information, and the corresponding cache.
   void mergeClusters(Cluster *Into, Cluster *From, size_t MergeType) {
     assert(Into != From && "Cluster cannot be merged with itself");
-    assert(!Into->isCold() && !From->isCold() && "Merging cold clusters");
 
     // Merge the blocks of clusters
     auto MergedBlocks = mergeBlocks(Into->blocks(), From->blocks(), MergeType);
