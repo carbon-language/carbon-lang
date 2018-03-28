@@ -62,7 +62,8 @@ public:
       const Triple& TT = TM->getTargetTriple();
 
       // Bail out for windows platforms. We do not support these yet.
-      if (TT.isOSWindows())
+      if ((TT.getArch() != Triple::x86_64 && TT.getArch() != Triple::x86) ||
+           TT.isOSWindows())
         return;
 
       // Target can JIT?
