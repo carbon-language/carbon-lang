@@ -1,8 +1,5 @@
 # REQUIRES: python-psutil
-#
-# rdar://problem/38774530
-# UNSUPPORTED: darwin
-#
+
 # PR33944
 # XFAIL: windows
 
