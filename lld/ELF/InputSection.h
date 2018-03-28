@@ -251,7 +251,9 @@ public:
 
   // Returns the SectionPiece at a given input section offset.
   SectionPiece *getSectionPiece(uint64_t Offset);
-  const SectionPiece *getSectionPiece(uint64_t Offset) const;
+  const SectionPiece *getSectionPiece(uint64_t Offset) const {
+    return const_cast<MergeInputSection *>(this)->getSectionPiece(Offset);
+  }
 
   SyntheticSection *getParent() const;
 

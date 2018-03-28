@@ -925,12 +925,6 @@ void MergeInputSection::splitIntoPieces() {
       getSectionPiece(Off)->Live = true;
 }
 
-// Do binary search to get a section piece at a given input offset.
-SectionPiece *MergeInputSection::getSectionPiece(uint64_t Offset) {
-  auto *This = static_cast<const MergeInputSection *>(this);
-  return const_cast<SectionPiece *>(This->getSectionPiece(Offset));
-}
-
 template <class It, class T, class Compare>
 static It fastUpperBound(It First, It Last, const T &Value, Compare Comp) {
   size_t Size = std::distance(First, Last);
@@ -944,7 +938,8 @@ static It fastUpperBound(It First, It Last, const T &Value, Compare Comp) {
   return Comp(Value, *First) ? First : First + 1;
 }
 
-const SectionPiece *MergeInputSection::getSectionPiece(uint64_t Offset) const {
+// Do binary search to get a section piece at a given input offset.
+SectionPiece *MergeInputSection::getSectionPiece(uint64_t Offset) {
   if (Data.size() <= Offset)
     fatal(toString(this) + ": entry is past the end of the section");
 
