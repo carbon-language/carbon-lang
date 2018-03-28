@@ -4,6 +4,9 @@
 
 // UNSUPPORTED: android
 
+// FIXME(alekseyshl): Fix this test under GCC.
+// REQUIRES: Clang
+
 #include <stdio.h>
 #include <stdlib.h>
 
