@@ -921,7 +921,7 @@ void MergeInputSection::splitIntoPieces() {
     splitNonStrings(Data, Entsize);
 
   if (Config->GcSections && (Flags & SHF_ALLOC))
-    for (uint64_t Off : LiveOffsets)
+    for (uint32_t Off : LiveOffsets)
       getSectionPiece(Off)->Live = true;
 }
 

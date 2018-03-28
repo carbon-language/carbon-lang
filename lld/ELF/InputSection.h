@@ -262,7 +262,7 @@ private:
   mutable llvm::DenseMap<uint32_t, uint32_t> OffsetMap;
   mutable llvm::once_flag InitOffsetMap;
 
-  llvm::DenseSet<uint64_t> LiveOffsets;
+  llvm::DenseSet<uint32_t> LiveOffsets;
 };
 
 struct EhSectionPiece {
