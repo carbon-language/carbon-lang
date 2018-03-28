@@ -958,13 +958,6 @@ uint64_t MergeInputSection::getOffset(uint64_t Offset) const {
   if (!Live)
     return 0;
 
-  // Initialize OffsetMap lazily.
-  llvm::call_once(InitOffsetMap, [&] {
-    OffsetMap.reserve(Pieces.size());
-    for (size_t I = 0; I < Pieces.size(); ++I)
-      OffsetMap[Pieces[I].InputOff] = I;
-  });
-
   // Find a string starting at a given offset.
   auto It = OffsetMap.find(Offset);
   if (It != OffsetMap.end())
@@ -978,6 +971,12 @@ uint64_t MergeInputSection::getOffset(uint64_t Offset) const {
 
   uint64_t Addend = Offset - Piece.InputOff;
   return Piece.OutputOff + Addend;
+}
+
+void MergeInputSection::initOffsetMap() {
+  OffsetMap.reserve(Pieces.size());
+  for (size_t I = 0; I < Pieces.size(); ++I)
+    OffsetMap[Pieces[I].InputOff] = I;
 }
 
 template InputSection::InputSection(ObjFile<ELF32LE> &, const ELF32LE::Shdr &,

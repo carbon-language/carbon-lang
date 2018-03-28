@@ -18,8 +18,6 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Object/ELF.h"
-#include "llvm/Support/Threading.h"
-#include <mutex>
 
 namespace lld {
 namespace elf {
@@ -256,13 +254,13 @@ public:
   }
 
   SyntheticSection *getParent() const;
+  void initOffsetMap();
 
 private:
   void splitStrings(ArrayRef<uint8_t> A, size_t Size);
   void splitNonStrings(ArrayRef<uint8_t> A, size_t Size);
 
-  mutable llvm::DenseMap<uint32_t, uint32_t> OffsetMap;
-  mutable llvm::once_flag InitOffsetMap;
+  llvm::DenseMap<uint32_t, uint32_t> OffsetMap;
 
   llvm::DenseSet<uint32_t> LiveOffsets;
 };
