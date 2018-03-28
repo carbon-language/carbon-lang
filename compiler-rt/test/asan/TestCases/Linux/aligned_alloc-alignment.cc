@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+extern void *aligned_alloc (size_t alignment, size_t size);
+
 int main() {
   void *p = aligned_alloc(17, 100);
   // CHECK: ERROR: AddressSanitizer: invalid allocation alignment: 17
