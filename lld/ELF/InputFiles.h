@@ -165,6 +165,7 @@ public:
   static bool classof(const InputFile *F) { return F->kind() == Base::ObjKind; }
 
   ArrayRef<Symbol *> getLocalSymbols();
+  ArrayRef<Symbol *> getGlobalSymbols();
 
   ObjFile(MemoryBufferRef M, StringRef ArchiveName);
   void parse(llvm::DenseSet<llvm::CachedHashStringRef> &ComdatGroups);

@@ -265,6 +265,10 @@ template <class ELFT> ArrayRef<Symbol *> ObjFile<ELFT>::getLocalSymbols() {
   return makeArrayRef(this->Symbols).slice(1, this->FirstNonLocal - 1);
 }
 
+template <class ELFT> ArrayRef<Symbol *> ObjFile<ELFT>::getGlobalSymbols() {
+  return makeArrayRef(this->Symbols).slice(this->FirstNonLocal);
+}
+
 template <class ELFT>
 void ObjFile<ELFT>::parse(DenseSet<CachedHashStringRef> &ComdatGroups) {
   // Read section and symbol tables.
