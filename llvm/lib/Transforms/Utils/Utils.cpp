@@ -46,10 +46,6 @@ void LLVMInitializeTransformUtils(LLVMPassRegistryRef R) {
   initializeTransformUtils(*unwrap(R));
 }
 
-void LLVMAddLoopSimplifyCFGPass(LLVMPassManagerRef PM) {
-  unwrap(PM)->add(createLoopSimplifyCFGPass());
-}
-
 void LLVMAddLowerSwitchPass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createLowerSwitchPass());
 }

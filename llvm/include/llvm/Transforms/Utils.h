@@ -112,13 +112,6 @@ extern char &LoopSimplifyID;
 
 //===----------------------------------------------------------------------===//
 //
-// LoopSimplifyCFG - This pass performs basic CFG simplification on loops,
-// primarily to help other loop passes.
-//
-Pass *createLoopSimplifyCFGPass();
-
-//===----------------------------------------------------------------------===//
-//
 // InstructionSimplifier - Remove redundant instructions.
 //
 FunctionPass *createInstructionSimplifierPass();
