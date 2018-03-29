@@ -4,7 +4,7 @@
 #include "../../lib/parser/indirection.h"
 #include "../../lib/parser/parse-tree-visitor.h"
 #include "../../lib/parser/parse-tree.h"
-#include "../../lib/parser/parse-state.h"
+#include "../../lib/parser/provenance.h"
 
 #include "scope.h"
 #include "StatementMap.h"
@@ -103,8 +103,8 @@ class Pass1 : public LabelTableStack
   
 public:
   
-  Pass1(psr::ParseState &pstate) :
-    pstate_(pstate), 
+  Pass1(const psr::CookedSource &source) :
+    source_(source), 
     current_label_(-1) ,
     current_smap_(0)
   {
@@ -118,7 +118,7 @@ public:
   // Remark: Ideally those fields shall not be directly accessible.
   //         Make them private in a base class? 
   
-  psr::ParseState &pstate_ ;
+  const psr::CookedSource &source_ ;
   int current_label_; // hold the value of a statement label until it get consumed (-1 means none) 
   Provenance current_label_loc_; 
   const Scope * system_scope_ ; 
@@ -156,7 +156,7 @@ public:
   }
 
   Provenance GetProvenance(const CharBlock &source) {
-    return pstate_.GetProvenance(source.begin()) ;
+    return source_.GetProvenance(source.begin()).start() ;
   }
 
   // Trace the location and label of any x with an accessible Statement<> in its type.
@@ -2935,9 +2935,9 @@ public:
 }  // of namespace Fortran::parser 
 
 
-void DoSemanticAnalysis( psr::ParseState & pstate,const psr::Program &all) 
+void DoSemanticAnalysis( const psr::CookedSource & source,const psr::Program &all) 
 { 
-  psr::Pass1 pass1(pstate) ;
+  psr::Pass1 pass1(source) ;
   for (const psr::ProgramUnit &unit : all.v) {
     TRACE("===========================================================================================================");
     psr::DumpTree(unit);

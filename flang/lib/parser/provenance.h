@@ -180,7 +180,6 @@ public:
   bool IsValid(Provenance p) const { return allSources_.IsValid(p); }
 
   ProvenanceRange GetProvenance(const char *) const;
-  void Identify(std::ostream &, const char *) const;
 
   void Put(const char *data, std::size_t bytes) { buffer_.Put(data, bytes); }
   void Put(char ch) { buffer_.Put(&ch, 1); }

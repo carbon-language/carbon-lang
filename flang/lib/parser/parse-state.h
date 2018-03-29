@@ -27,11 +27,10 @@ class ParseState {
 public:
   // TODO: Add a constructor for parsing a normalized module file.
   ParseState(const CookedSource &cooked)
-    : cooked_{cooked}, p_{&cooked[0]}, limit_{p_ + cooked.size()},
-      messages_{cooked} {}
+    : p_{&cooked[0]}, limit_{p_ + cooked.size()}, messages_{cooked} {}
   ParseState(const ParseState &that)
-    : cooked_{that.cooked_}, p_{that.p_}, limit_{that.limit_},
-      messages_{that.cooked_}, userState_{that.userState_},
+    : p_{that.p_}, limit_{that.limit_},
+      messages_{that.messages_.cooked()}, userState_{that.userState_},
       inFixedForm_{that.inFixedForm_}, encoding_{that.encoding_},
       strictConformance_{that.strictConformance_},
       warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
@@ -39,7 +38,7 @@ public:
       anyErrorRecovery_{that.anyErrorRecovery_},
       anyConformanceViolation_{that.anyConformanceViolation_} {}
   ParseState(ParseState &&that)
-    : cooked_{that.cooked_}, p_{that.p_}, limit_{that.limit_},
+    : p_{that.p_}, limit_{that.limit_},
       messages_{std::move(that.messages_)}, context_{std::move(that.context_)},
       userState_{that.userState_}, inFixedForm_{that.inFixedForm_},
       encoding_{that.encoding_}, strictConformance_{that.strictConformance_},
@@ -60,7 +59,6 @@ public:
     std::memcpy(&that, buffer, bytes);
   }
 
-  const CookedSource &cooked() const { return cooked_; }
   Messages *messages() { return &messages_; }
 
   bool anyErrorRecovery() const { return anyErrorRecovery_; }
@@ -109,13 +107,9 @@ public:
   }
 
   const char *GetLocation() const { return p_; }
-  Provenance GetProvenance(const char *at) const {
-    return cooked_.GetProvenance(at).start();
-  }
-  Provenance GetProvenance() const { return GetProvenance(p_); }
 
   MessageContext &PushContext(MessageFixedText text) {
-    context_ = std::make_shared<Message>(GetProvenance(), text, context_);
+    context_ = std::make_shared<Message>(p_, text, context_);
     return context_;
   }
 
@@ -167,7 +161,6 @@ public:
 
 private:
   // Text remaining to be parsed
-  const CookedSource &cooked_;
   const char *p_{nullptr}, *limit_{nullptr};
 
   // Accumulated messages and current nested context.

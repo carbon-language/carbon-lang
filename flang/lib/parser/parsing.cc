@@ -91,7 +91,7 @@ bool Parsing::Parse() {
     || (options_.isStrictlyStandard && parseState.anyConformanceViolation());
 #endif
   consumedWholeFile_ = parseState.IsAtEnd();
-  finalRestingPlace_ = parseState.GetProvenance();
+  finalRestingPlace_ = parseState.GetLocation();
   messages_.Annex(parseState.messages());
   return parseTree_.has_value() && !anyFatalError_;
 }
