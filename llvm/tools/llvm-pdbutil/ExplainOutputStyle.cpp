@@ -96,22 +96,24 @@ bool ExplainOutputStyle::explainBlockStatus() {
   return !IsFree;
 }
 
+#define endof(Class, Field) (offsetof(Class, Field) + sizeof(Class::Field))
+
 void ExplainOutputStyle::explainSuperBlockOffset() {
-  P.formatLine("This corresponds to offset {0} of MSF super block, ",
+  P.formatLine("This corresponds to offset {0} of the MSF super block, ",
                OffsetInBlock);
-  if (OffsetInBlock < sizeof(msf::Magic))
+  if (OffsetInBlock < endof(SuperBlock, MagicBytes))
     P.printLine("which is part of the MSF file magic.");
-  else if (OffsetInBlock < offsetof(SuperBlock, BlockSize))
+  else if (OffsetInBlock < endof(SuperBlock, BlockSize))
     P.printLine("which contains the block size of the file.");
-  else if (OffsetInBlock < offsetof(SuperBlock, FreeBlockMapBlock))
+  else if (OffsetInBlock < endof(SuperBlock, FreeBlockMapBlock))
     P.printLine("which contains the index of the FPM block (e.g. 1 or 2).");
-  else if (OffsetInBlock < offsetof(SuperBlock, NumBlocks))
+  else if (OffsetInBlock < endof(SuperBlock, NumBlocks))
     P.printLine("which contains the number of blocks in the file.");
-  else if (OffsetInBlock < offsetof(SuperBlock, NumDirectoryBytes))
+  else if (OffsetInBlock < endof(SuperBlock, NumDirectoryBytes))
     P.printLine("which contains the number of bytes in the stream directory.");
-  else if (OffsetInBlock < offsetof(SuperBlock, Unknown1))
+  else if (OffsetInBlock < endof(SuperBlock, Unknown1))
     P.printLine("whose purpose is unknown.");
-  else if (OffsetInBlock < offsetof(SuperBlock, BlockMapAddr))
+  else if (OffsetInBlock < endof(SuperBlock, BlockMapAddr))
     P.printLine("which contains the file offset of the block map.");
   else {
     assert(OffsetInBlock > sizeof(SuperBlock));

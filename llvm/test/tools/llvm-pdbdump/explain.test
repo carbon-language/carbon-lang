@@ -33,17 +33,17 @@
 
 ZERO:      Block:Offset = 0:0000.
 ZERO-NEXT: Address is in block 0 (allocated).
-ZERO-NEXT:   This corresponds to offset 0 of MSF super block,
+ZERO-NEXT:   This corresponds to offset 0 of the MSF super block,
 ZERO-NEXT:   which is part of the MSF file magic.
 
 FORTY:      Block:Offset = 0:0028.
 FORTY-NEXT: Address is in block 0 (allocated).
-FORTY-NEXT:   This corresponds to offset 40 of MSF super block,
-FORTY-NEXT:   which contains the number of bytes in the stream directory.
+FORTY-NEXT:   This corresponds to offset 40 of the MSF super block,
+FORTY-NEXT:   which contains the number of blocks in the file.
 
 SIXTY:      Block:Offset = 0:003C.
 SIXTY-NEXT: Address is in block 0 (allocated).
-SIXTY-NEXT:   This corresponds to offset 60 of MSF super block,
+SIXTY-NEXT:   This corresponds to offset 60 of the MSF super block,
 SIXTY-NEXT:   which is outside the range of valid data for the super block.
 
 FPM1:      Block:Offset = 1:0000.
