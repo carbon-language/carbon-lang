@@ -114,13 +114,16 @@ Last, we have these basic parsers on which the actual grammar of the Fortran
 is built.  All of the following parsers consume characters acquired from
 `nextCh`.
 
-* `spaces` always succeeds after consuming any spaces or tabs
+* `space` always succeeds after consuming any spaces
+* `spaceCheck` always succeeds after consuming any spaces, and can emit
+  a warning if there was no space in free form code before a character
+  that could continue a name or keyword
 * `digit` matches one cooked decimal digit (0-9)
 * `letter` matches one cooked letter (A-Z)
 * `"..."_tok` match the content of the string, skipping spaces before and
-  after, and with multiple spaces accepted for any internal space.
-  (Note that the `_tok` suffix is optional when the parser appears before
-  the combinator `>>` or after `/`.)
+  after.  Internal spaces are optional matches; `~` denotes a space that
+  is not optional in free form.  The `_tok` suffix is optional when the
+  parser appears before the combinator `>>` or after `/`.
 * `parenthesized(p)` is shorthand for `"(" >> p / ")"`.
 * `bracketed(p)` is shorthand for `"[" >> p / "]"`.
 * `nonEmptyListOf(p)` matches a comma-separated list of one or more
