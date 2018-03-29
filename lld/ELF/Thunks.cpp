@@ -64,46 +64,99 @@ public:
   void addSymbols(ThunkSection &IS) override;
 };
 
+// Base class for ARM thunks.
+//
+// An ARM thunk may be either short or long. A short thunk is simply a branch
+// (B) instruction, and it may be used to call ARM functions when the distance
+// from the thunk to the target is less than 32MB. Long thunks can branch to any
+// virtual address and can switch between ARM and Thumb, and they are
+// implemented in the derived classes. This class tries to create a short thunk
+// if the target is in range, otherwise it creates a long thunk.
+class ARMThunk : public Thunk {
+public:
+  ARMThunk(Symbol &Dest) : Thunk(Dest) {}
+
+  bool mayUseShortThunk();
+  uint32_t size() override { return mayUseShortThunk() ? 4 : sizeLong(); }
+  void writeTo(uint8_t *Buf) override;
+  bool isCompatibleWith(RelType Type) const override;
+
+  // Returns the size of a long thunk.
+  virtual uint32_t sizeLong() = 0;
+
+  // Writes a long thunk to Buf.
+  virtual void writeLong(uint8_t *Buf) = 0;
+
+private:
+  // This field tracks whether all previously considered layouts would allow
+  // this thunk to be short. If we have ever needed a long thunk, we always
+  // create a long thunk, even if the thunk may be short given the current
+  // distance to the target. We do this because transitioning from long to short
+  // can create layout oscillations in certain corner cases which would prevent
+  // the layout from converging.
+  bool MayUseShortThunk = true;
+};
+
+// Base class for Thumb-2 thunks.
+//
+// This class is similar to ARMThunk, but it uses the Thumb-2 B.W instruction
+// which has a range of 16MB.
+class ThumbThunk : public Thunk {
+public:
+  ThumbThunk(Symbol &Dest) : Thunk(Dest) { Alignment = 2; }
+
+  bool mayUseShortThunk();
+  uint32_t size() override { return mayUseShortThunk() ? 4 : sizeLong(); }
+  void writeTo(uint8_t *Buf) override;
+  bool isCompatibleWith(RelType Type) const override;
+
+  // Returns the size of a long thunk.
+  virtual uint32_t sizeLong() = 0;
+
+  // Writes a long thunk to Buf.
+  virtual void writeLong(uint8_t *Buf) = 0;
+
+private:
+  // See comment in ARMThunk above.
+  bool MayUseShortThunk = true;
+};
+
 // Specific ARM Thunk implementations. The naming convention is:
 // Source State, TargetState, Target Requirement, ABS or PI, Range
-class ARMV7ABSLongThunk final : public Thunk {
+class ARMV7ABSLongThunk final : public ARMThunk {
 public:
-  ARMV7ABSLongThunk(Symbol &Dest) : Thunk(Dest) {}
+  ARMV7ABSLongThunk(Symbol &Dest) : ARMThunk(Dest) {}
 
-  uint32_t size() override { return 12; }
-  void writeTo(uint8_t *Buf) override;
+  uint32_t sizeLong() override { return 12; }
+  void writeLong(uint8_t *Buf) override;
   void addSymbols(ThunkSection &IS) override;
-  bool isCompatibleWith(RelType Type) const override;
 };
 
-class ARMV7PILongThunk final : public Thunk {
+class ARMV7PILongThunk final : public ARMThunk {
 public:
-  ARMV7PILongThunk(Symbol &Dest) : Thunk(Dest) {}
+  ARMV7PILongThunk(Symbol &Dest) : ARMThunk(Dest) {}
 
-  uint32_t size() override { return 16; }
-  void writeTo(uint8_t *Buf) override;
+  uint32_t sizeLong() override { return 16; }
+  void writeLong(uint8_t *Buf) override;
   void addSymbols(ThunkSection &IS) override;
-  bool isCompatibleWith(RelType Type) const override;
 };
 
-class ThumbV7ABSLongThunk final : public Thunk {
+class ThumbV7ABSLongThunk final : public ThumbThunk {
 public:
-  ThumbV7ABSLongThunk(Symbol &Dest) : Thunk(Dest) { Alignment = 2; }
+  ThumbV7ABSLongThunk(Symbol &Dest) : ThumbThunk(Dest) {}
 
-  uint32_t size() override { return 10; }
-  void writeTo(uint8_t *Buf) override;
+  uint32_t sizeLong() override { return 10; }
+  void writeLong(uint8_t *Buf) override;
   void addSymbols(ThunkSection &IS) override;
-  bool isCompatibleWith(RelType Type) const override;
 };
 
-class ThumbV7PILongThunk final : public Thunk {
+class ThumbV7PILongThunk final : public ThumbThunk {
 public:
-  ThumbV7PILongThunk(Symbol &Dest) : Thunk(Dest) { Alignment = 2; }
+  ThumbV7PILongThunk(Symbol &Dest) : ThumbThunk(Dest) {}
 
-  uint32_t size() override { return 12; }
-  void writeTo(uint8_t *Buf) override;
+  uint32_t sizeLong() override { return 12; }
+  void writeLong(uint8_t *Buf) override;
   void addSymbols(ThunkSection &IS) override;
-  bool isCompatibleWith(RelType Type) const override;
 };
 
 // MIPS LA25 thunk
@@ -211,7 +264,81 @@ static uint64_t getARMThunkDestVA(const Symbol &S) {
   return SignExtend64<32>(V);
 }
 
-void ARMV7ABSLongThunk::writeTo(uint8_t *Buf) {
+// This function returns true if the target is not Thumb and is within 2^26, and
+// it has not previously returned false (see comment for MayUseShortThunk).
+bool ARMThunk::mayUseShortThunk() {
+  if (!MayUseShortThunk)
+    return false;
+  uint64_t S = getARMThunkDestVA(Destination);
+  if (S & 1) {
+    MayUseShortThunk = false;
+    return false;
+  }
+  uint64_t P = getThunkTargetSym()->getVA();
+  int64_t Offset = S - P - 8;
+  MayUseShortThunk = llvm::isInt<26>(Offset);
+  return MayUseShortThunk;
+}
+
+void ARMThunk::writeTo(uint8_t *Buf) {
+  if (!mayUseShortThunk()) {
+    writeLong(Buf);
+    return;
+  }
+
+  uint64_t S = getARMThunkDestVA(Destination);
+  uint64_t P = getThunkTargetSym()->getVA();
+  int64_t Offset = S - P - 8;
+  const uint8_t Data[] = {
+    0x00, 0x00, 0x00, 0xea, // b S
+  };
+  memcpy(Buf, Data, sizeof(Data));
+  Target->relocateOne(Buf, R_ARM_JUMP24, Offset);
+}
+
+bool ARMThunk::isCompatibleWith(RelType Type) const {
+  // Thumb branch relocations can't use BLX
+  return Type != R_ARM_THM_JUMP19 && Type != R_ARM_THM_JUMP24;
+}
+
+// This function returns true if the target is Thumb and is within 2^25, and
+// it has not previously returned false (see comment for MayUseShortThunk).
+bool ThumbThunk::mayUseShortThunk() {
+  if (!MayUseShortThunk)
+    return false;
+  uint64_t S = getARMThunkDestVA(Destination);
+  if ((S & 1) == 0) {
+    MayUseShortThunk = false;
+    return false;
+  }
+  uint64_t P = getThunkTargetSym()->getVA() & ~1;
+  int64_t Offset = S - P - 4;
+  MayUseShortThunk = llvm::isInt<25>(Offset);
+  return MayUseShortThunk;
+}
+
+void ThumbThunk::writeTo(uint8_t *Buf) {
+  if (!mayUseShortThunk()) {
+    writeLong(Buf);
+    return;
+  }
+
+  uint64_t S = getARMThunkDestVA(Destination);
+  uint64_t P = getThunkTargetSym()->getVA();
+  int64_t Offset = S - P - 4;
+  const uint8_t Data[] = {
+      0x00, 0xf0, 0x00, 0xb0, // b.w S
+  };
+  memcpy(Buf, Data, sizeof(Data));
+  Target->relocateOne(Buf, R_ARM_THM_JUMP24, Offset);
+}
+
+bool ThumbThunk::isCompatibleWith(RelType Type) const {
+  // ARM branch relocations can't use BLX
+  return Type != R_ARM_JUMP24 && Type != R_ARM_PC24 && Type != R_ARM_PLT32;
+}
+
+void ARMV7ABSLongThunk::writeLong(uint8_t *Buf) {
   const uint8_t Data[] = {
       0x00, 0xc0, 0x00, 0xe3, // movw         ip,:lower16:S
       0x00, 0xc0, 0x40, 0xe3, // movt         ip,:upper16:S
@@ -229,12 +356,7 @@ void ARMV7ABSLongThunk::addSymbols(ThunkSection &IS) {
   addSymbol("$a", STT_NOTYPE, 0, IS);
 }
 
-bool ARMV7ABSLongThunk::isCompatibleWith(RelType Type) const {
-  // Thumb branch relocations can't use BLX
-  return Type != R_ARM_THM_JUMP19 && Type != R_ARM_THM_JUMP24;
-}
-
-void ThumbV7ABSLongThunk::writeTo(uint8_t *Buf) {
+void ThumbV7ABSLongThunk::writeLong(uint8_t *Buf) {
   const uint8_t Data[] = {
       0x40, 0xf2, 0x00, 0x0c, // movw         ip, :lower16:S
       0xc0, 0xf2, 0x00, 0x0c, // movt         ip, :upper16:S
@@ -252,12 +374,7 @@ void ThumbV7ABSLongThunk::addSymbols(ThunkSection &IS) {
   addSymbol("$t", STT_NOTYPE, 0, IS);
 }
 
-bool ThumbV7ABSLongThunk::isCompatibleWith(RelType Type) const {
-  // ARM branch relocations can't use BLX
-  return Type != R_ARM_JUMP24 && Type != R_ARM_PC24 && Type != R_ARM_PLT32;
-}
-
-void ARMV7PILongThunk::writeTo(uint8_t *Buf) {
+void ARMV7PILongThunk::writeLong(uint8_t *Buf) {
   const uint8_t Data[] = {
       0xf0, 0xcf, 0x0f, 0xe3, // P:  movw ip,:lower16:S - (P + (L1-P) + 8)
       0x00, 0xc0, 0x40, 0xe3, //     movt ip,:upper16:S - (P + (L1-P) + 8)
@@ -278,12 +395,7 @@ void ARMV7PILongThunk::addSymbols(ThunkSection &IS) {
   addSymbol("$a", STT_NOTYPE, 0, IS);
 }
 
-bool ARMV7PILongThunk::isCompatibleWith(RelType Type) const {
-  // Thumb branch relocations can't use BLX
-  return Type != R_ARM_THM_JUMP19 && Type != R_ARM_THM_JUMP24;
-}
-
-void ThumbV7PILongThunk::writeTo(uint8_t *Buf) {
+void ThumbV7PILongThunk::writeLong(uint8_t *Buf) {
   const uint8_t Data[] = {
       0x4f, 0xf6, 0xf4, 0x7c, // P:  movw ip,:lower16:S - (P + (L1-P) + 4)
       0xc0, 0xf2, 0x00, 0x0c, //     movt ip,:upper16:S - (P + (L1-P) + 4)
@@ -302,11 +414,6 @@ void ThumbV7PILongThunk::addSymbols(ThunkSection &IS) {
   addSymbol(Saver.save("__ThumbV7PILongThunk_" + Destination.getName()),
             STT_FUNC, 1, IS);
   addSymbol("$t", STT_NOTYPE, 0, IS);
-}
-
-bool ThumbV7PILongThunk::isCompatibleWith(RelType Type) const {
-  // ARM branch relocations can't use BLX
-  return Type != R_ARM_JUMP24 && Type != R_ARM_PC24 && Type != R_ARM_PLT32;
 }
 
 // Write MIPS LA25 thunk code to call PIC function from the non-PIC one.
