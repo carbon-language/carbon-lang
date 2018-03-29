@@ -2341,7 +2341,7 @@ let hasSideEffects = 0 in {
   let mayLoad = 1 in
   def rm : I<0xF3, MemMRM, (outs RC:$dst), (ins x86memop:$src),
              !strconcat(mnemonic, "\t{$src, $dst|$dst, $src}"),
-             [], IIC_UNARY_MEM>, T8PS, VEX_4V, Sched<[WriteALULd, ReadAfterLd]>;
+             [], IIC_UNARY_MEM>, T8PS, VEX_4V, Sched<[WriteALULd]>;
 }
 }
 
@@ -2540,7 +2540,7 @@ multiclass tbm_ternary_imm_intr<bits<8> opc, RegisterClass RC, string OpcodeStr,
                 !strconcat(OpcodeStr,
                            "\t{$cntl, $src1, $dst|$dst, $src1, $cntl}"),
                 [(set RC:$dst, (Int (ld_frag addr:$src1), immoperator:$cntl))],
-           IIC_BIN_MEM>, XOP, XOPA, Sched<[WriteALULd, ReadAfterLd]>;
+           IIC_BIN_MEM>, XOP, XOPA, Sched<[WriteALULd]>;
 }
 
 defm BEXTRI32 : tbm_ternary_imm_intr<0x10, GR32, "bextr{l}", i32mem, loadi32,
@@ -2560,7 +2560,7 @@ let hasSideEffects = 0 in {
   let mayLoad = 1 in
   def rm : I<opc,  FormMem, (outs RC:$dst), (ins x86memop:$src),
              !strconcat(OpcodeStr,"\t{$src, $dst|$dst, $src}"),
-             [], IIC_BIN_MEM>, XOP_4V, XOP9, Sched<[WriteALULd, ReadAfterLd]>;
+             [], IIC_BIN_MEM>, XOP_4V, XOP9, Sched<[WriteALULd]>;
 }
 }
 

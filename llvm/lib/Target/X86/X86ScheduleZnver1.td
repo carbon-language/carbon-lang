@@ -566,7 +566,7 @@ def : InstRW<[ZnWriteBTRSCm], (instregex "BT(R|S|C)(16|32|64)m(r|i8)")>;
 // r,r.
 def : InstRW<[ZnWriteALULat2], (instregex "BLS(I|MSK|R)(32|64)rr")>;
 // r,m.
-def : InstRW<[ZnWriteALULat2Ld, ReadAfterLd], (instregex "BLS(I|MSK|R)(32|64)rm")>;
+def : InstRW<[ZnWriteALULat2Ld], (instregex "BLS(I|MSK|R)(32|64)rm")>;
 
 // CLD STD.
 def : InstRW<[WriteALU], (instregex "STD", "CLD")>;
