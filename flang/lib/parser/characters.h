@@ -14,7 +14,7 @@ namespace parser {
 
 enum class Encoding { UTF8, EUC_JP };
 
-static constexpr bool IsUpperCaseLetter(char ch) {
+static inline constexpr bool IsUpperCaseLetter(char ch) {
   if constexpr ('A' == static_cast<char>(0xc1)) {
     // EBCDIC
     return (ch >= 'A' && ch <= 'I') || (ch >= 'J' && ch <= 'R') ||
@@ -24,7 +24,7 @@ static constexpr bool IsUpperCaseLetter(char ch) {
   }
 }
 
-static constexpr bool IsLowerCaseLetter(char ch) {
+static inline constexpr bool IsLowerCaseLetter(char ch) {
   if constexpr ('a' == static_cast<char>(0x81)) {
     // EBCDIC
     return (ch >= 'a' && ch <= 'i') || (ch >= 'j' && ch <= 'r') ||
@@ -34,32 +34,36 @@ static constexpr bool IsLowerCaseLetter(char ch) {
   }
 }
 
-static constexpr bool IsLetter(char ch) {
+static inline constexpr bool IsLetter(char ch) {
   return IsUpperCaseLetter(ch) || IsLowerCaseLetter(ch);
 }
 
-static constexpr bool IsDecimalDigit(char ch) { return ch >= '0' && ch <= '9'; }
+static inline constexpr bool IsDecimalDigit(char ch) {
+  return ch >= '0' && ch <= '9';
+}
 
-static constexpr bool IsHexadecimalDigit(char ch) {
+static inline constexpr bool IsHexadecimalDigit(char ch) {
   return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') ||
       (ch >= 'a' && ch <= 'f');
 }
 
-static constexpr bool IsOctalDigit(char ch) { return ch >= '0' && ch <= '7'; }
+static inline constexpr bool IsOctalDigit(char ch) {
+  return ch >= '0' && ch <= '7';
+}
 
-static constexpr bool IsLegalIdentifierStart(char ch) {
+static inline constexpr bool IsLegalIdentifierStart(char ch) {
   return IsLetter(ch) || ch == '_' || ch == '@' || ch == '$';
 }
 
-static constexpr bool IsLegalInIdentifier(char ch) {
+static inline constexpr bool IsLegalInIdentifier(char ch) {
   return IsLegalIdentifierStart(ch) || IsDecimalDigit(ch);
 }
 
-static constexpr char ToLowerCaseLetter(char ch) {
+static inline constexpr char ToLowerCaseLetter(char ch) {
   return IsUpperCaseLetter(ch) ? ch - 'A' + 'a' : ch;
 }
 
-static constexpr char ToLowerCaseLetter(char &&ch) {
+static inline constexpr char ToLowerCaseLetter(char &&ch) {
   return IsUpperCaseLetter(ch) ? ch - 'A' + 'a' : ch;
 }
 
@@ -71,11 +75,11 @@ static inline std::string ToLowerCaseLetters(const std::string &str) {
   return lowered;
 }
 
-static constexpr char ToUpperCaseLetter(char ch) {
+static inline constexpr char ToUpperCaseLetter(char ch) {
   return IsLowerCaseLetter(ch) ? ch - 'a' + 'A' : ch;
 }
 
-static constexpr char ToUpperCaseLetter(char &&ch) {
+static inline constexpr char ToUpperCaseLetter(char &&ch) {
   return IsLowerCaseLetter(ch) ? ch - 'a' + 'A' : ch;
 }
 
@@ -87,13 +91,13 @@ static inline std::string ToUpperCaseLetters(const std::string &str) {
   return raised;
 }
 
-static constexpr bool IsSameApartFromCase(char x, char y) {
+static inline constexpr bool IsSameApartFromCase(char x, char y) {
   return ToLowerCaseLetter(x) == ToLowerCaseLetter(y);
 }
 
-static constexpr char DecimalDigitValue(char ch) { return ch - '0'; }
+static inline constexpr char DecimalDigitValue(char ch) { return ch - '0'; }
 
-static constexpr char HexadecimalDigitValue(char ch) {
+static inline constexpr char HexadecimalDigitValue(char ch) {
   return IsUpperCaseLetter(ch)
       ? ch - 'A' + 10
       : IsLowerCaseLetter(ch) ? ch - 'a' + 10 : DecimalDigitValue(ch);
