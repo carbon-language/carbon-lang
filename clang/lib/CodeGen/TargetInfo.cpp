@@ -431,6 +431,10 @@ unsigned TargetCodeGenInfo::getOpenCLKernelCallingConv() const {
   return llvm::CallingConv::SPIR_KERNEL;
 }
 
+unsigned TargetCodeGenInfo::getCUDAKernelCallingConv() const {
+  return llvm::CallingConv::C;
+}
+
 llvm::Constant *TargetCodeGenInfo::getNullPointer(const CodeGen::CodeGenModule &CGM,
     llvm::PointerType *T, QualType QT) const {
   return llvm::ConstantPointerNull::get(T);
@@ -7635,6 +7639,7 @@ public:
   void setTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
                            CodeGen::CodeGenModule &M) const override;
   unsigned getOpenCLKernelCallingConv() const override;
+  unsigned getCUDAKernelCallingConv() const override;
 
   llvm::Constant *getNullPointer(const CodeGen::CodeGenModule &CGM,
       llvm::PointerType *T, QualType QT) const override;
@@ -7719,6 +7724,10 @@ void AMDGPUTargetCodeGenInfo::setTargetAttributes(
 }
 
 unsigned AMDGPUTargetCodeGenInfo::getOpenCLKernelCallingConv() const {
+  return llvm::CallingConv::AMDGPU_KERNEL;
+}
+
+unsigned AMDGPUTargetCodeGenInfo::getCUDAKernelCallingConv() const {
   return llvm::CallingConv::AMDGPU_KERNEL;
 }
 
