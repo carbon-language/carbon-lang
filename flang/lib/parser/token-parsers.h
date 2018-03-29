@@ -46,8 +46,8 @@ constexpr auto letter = CharPredicateGuard{IsLetter, "expected letter"_en_US};
 constexpr auto digit =
     CharPredicateGuard{IsDecimalDigit, "expected digit"_en_US};
 
-// "x"_ch matches one instance of the character 'x' without skipping any
-// space before or after.  The parser returns the location of the character
+// "xyz"_ch matches one instance of the characters x, y, or z without skipping
+// any spaces before or after.  The parser returns the location of the character
 // on success.
 class AnyOfChar {
 public:
@@ -60,7 +60,7 @@ public:
     if (!state->IsAtEnd()) {
       const char *p{chars_};
       for (std::size_t j{0}; j < bytes_ && *p != '\0'; ++j, ++p) {
-        if (*at == *p) {
+        if (*at == ToLowerCaseLetter(*p)) {
           state->UncheckedAdvance();
           return {at};
         }
