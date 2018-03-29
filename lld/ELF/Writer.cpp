@@ -1976,40 +1976,23 @@ struct SectionOffset {
 
 // Check whether sections overlap for a specific address range (file offsets,
 // load and virtual adresses).
-//
-// This is a helper function called by Writer::checkSectionOverlap().
 static void checkOverlap(StringRef Name, std::vector<SectionOffset> &Sections) {
-  // Instead of comparing every OutputSection with every other output section
-  // we sort the sections by address (file offset or load/virtual address). This
-  // way we find all overlapping sections but only need one comparision with the
-  // next section in the common non-overlapping case. The only time we end up
-  // doing more than one iteration of the following nested loop is if there are
-  // overlapping sections.
   std::sort(Sections.begin(), Sections.end(),
             [=](const SectionOffset &A, const SectionOffset &B) {
               return A.Offset < B.Offset;
             });
 
-  // Since the sections are sorted by start address we only need to check
-  // whether the other sections starts before the end of Sec. If this is
-  // not the case we can break out of this loop since all following sections
-  // will also start after the end of Sec.
-  for (size_t I = 0; I < Sections.size(); ++I) {
-    OutputSection *Sec = Sections[I].Sec;
-    uint64_t Start = Sections[I].Offset;
-
-    for (size_t J = I + 1; J < Sections.size(); ++J) {
-      OutputSection *Other = Sections[J].Sec;
-      uint64_t OtherStart = Sections[J].Offset;
-      if (Start + Sec->Size <= OtherStart)
-        break;
-
-      errorOrWarn("section " + Sec->Name + " " + Name +
-                  " range overlaps with " + Other->Name + "\n>>> " + Sec->Name +
-                  " range is " + rangeToString(Start, Sec->Size) + "\n>>> " +
-                  Other->Name + " range is " +
-                  rangeToString(OtherStart, Other->Size));
-    }
+  // Finding overlap is easy given a vector is sorted by start position.
+  // If an element starts before the end of the previous element, they overlap.
+  for (size_t I = 1, End = Sections.size(); I < End; ++I) {
+    SectionOffset A = Sections[I - 1];
+    SectionOffset B = Sections[I];
+    if (B.Offset < A.Offset + A.Sec->Size)
+      errorOrWarn(
+          "section " + A.Sec->Name + " " + Name + " range overlaps with " +
+          B.Sec->Name + "\n>>> " + A.Sec->Name + " range is " +
+          rangeToString(A.Offset, A.Sec->Size) + "\n>>> " + B.Sec->Name +
+          " range is " + rangeToString(B.Offset, B.Sec->Size));
   }
 }
 
