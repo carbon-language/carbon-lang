@@ -103,23 +103,45 @@ void ExplainOutputStyle::explainSuperBlockOffset() {
                OffsetInBlock);
   if (OffsetInBlock < endof(SuperBlock, MagicBytes))
     P.printLine("which is part of the MSF file magic.");
-  else if (OffsetInBlock < endof(SuperBlock, BlockSize))
+  else if (OffsetInBlock < endof(SuperBlock, BlockSize)) {
     P.printLine("which contains the block size of the file.");
-  else if (OffsetInBlock < endof(SuperBlock, FreeBlockMapBlock))
+    P.formatLine("The current value is {0}.",
+                 uint32_t(File.getMsfLayout().SB->BlockSize));
+  } else if (OffsetInBlock < endof(SuperBlock, FreeBlockMapBlock)) {
     P.printLine("which contains the index of the FPM block (e.g. 1 or 2).");
-  else if (OffsetInBlock < endof(SuperBlock, NumBlocks))
+    P.formatLine("The current value is {0}.",
+                 uint32_t(File.getMsfLayout().SB->FreeBlockMapBlock));
+  } else if (OffsetInBlock < endof(SuperBlock, NumBlocks)) {
     P.printLine("which contains the number of blocks in the file.");
-  else if (OffsetInBlock < endof(SuperBlock, NumDirectoryBytes))
+    P.formatLine("The current value is {0}.",
+                 uint32_t(File.getMsfLayout().SB->NumBlocks));
+  } else if (OffsetInBlock < endof(SuperBlock, NumDirectoryBytes)) {
     P.printLine("which contains the number of bytes in the stream directory.");
-  else if (OffsetInBlock < endof(SuperBlock, Unknown1))
+    P.formatLine("The current value is {0}.",
+                 uint32_t(File.getMsfLayout().SB->NumDirectoryBytes));
+  } else if (OffsetInBlock < endof(SuperBlock, Unknown1)) {
     P.printLine("whose purpose is unknown.");
-  else if (OffsetInBlock < endof(SuperBlock, BlockMapAddr))
+    P.formatLine("The current value is {0}.",
+                 uint32_t(File.getMsfLayout().SB->Unknown1));
+  } else if (OffsetInBlock < endof(SuperBlock, BlockMapAddr)) {
     P.printLine("which contains the file offset of the block map.");
-  else {
+    P.formatLine("The current value is {0}.",
+                 uint32_t(File.getMsfLayout().SB->BlockMapAddr));
+  } else {
     assert(OffsetInBlock > sizeof(SuperBlock));
     P.printLine(
         "which is outside the range of valid data for the super block.");
   }
+}
+
+static std::string toBinaryString(uint8_t Byte) {
+  char Result[9] = {0};
+  for (int I = 0; I < 8; ++I) {
+    char C = (Byte & 1) ? '1' : '0';
+    Result[I] = C;
+    Byte >>= 1;
+  }
+  return std::string(Result);
 }
 
 void ExplainOutputStyle::explainFpmBlockOffset() {
@@ -143,6 +165,10 @@ void ExplainOutputStyle::explainFpmBlockOffset() {
 
   P.formatLine("Address describes the allocation status of blocks [{0},{1})",
                DescribedBlockStart, DescribedBlockStart + 8);
+  ArrayRef<uint8_t> Bytes;
+  cantFail(File.getMsfBuffer().readBytes(FileOffset, 1, Bytes));
+  P.formatLine("Status = {0} (Note: 0 = allocated, 1 = free)",
+               toBinaryString(Bytes[0]));
 }
 
 void ExplainOutputStyle::explainBlockMapOffset() {
