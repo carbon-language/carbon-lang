@@ -1,5 +1,6 @@
 Debug
 Release
+MinSizeRel
 tags
 ./f18
 *.o
