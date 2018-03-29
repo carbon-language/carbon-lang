@@ -4677,9 +4677,7 @@ static void EmitGlobalDeclMetadata(CodeGenModule &CGM,
 /// to such functions with an unmangled name from inline assembly within the
 /// same translation unit.
 void CodeGenModule::EmitStaticExternCAliases() {
-  // Don't do anything if we're generating CUDA device code -- the NVPTX
-  // assembly target doesn't support aliases.
-  if (Context.getTargetInfo().getTriple().isNVPTX())
+  if (!getTargetCodeGenInfo().shouldEmitStaticExternCAliases())
     return;
   for (auto &I : StaticExternCValues) {
     IdentifierInfo *Name = I.first;

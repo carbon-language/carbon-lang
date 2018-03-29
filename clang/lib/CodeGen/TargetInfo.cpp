@@ -6154,6 +6154,7 @@ public:
 
   void setTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
                            CodeGen::CodeGenModule &M) const override;
+  bool shouldEmitStaticExternCAliases() const override;
 
 private:
   // Adds a NamedMDNode with F, Name, and Operand as operands, and adds the
@@ -6274,6 +6275,10 @@ void NVPTXTargetCodeGenInfo::addNVVMMetadata(llvm::Function *F, StringRef Name,
           llvm::ConstantInt::get(llvm::Type::getInt32Ty(Ctx), Operand))};
   // Append metadata to nvvm.annotations
   MD->addOperand(llvm::MDNode::get(Ctx, MDVals));
+}
+
+bool NVPTXTargetCodeGenInfo::shouldEmitStaticExternCAliases() const {
+  return false;
 }
 }
 
@@ -7646,6 +7651,7 @@ public:
   createEnqueuedBlockKernel(CodeGenFunction &CGF,
                             llvm::Function *BlockInvokeFunc,
                             llvm::Value *BlockLiteral) const override;
+  bool shouldEmitStaticExternCAliases() const override;
 };
 }
 
@@ -7775,6 +7781,10 @@ AMDGPUTargetCodeGenInfo::getLLVMSyncScopeID(SyncScope S,
     Name = "subgroup";
   }
   return C.getOrInsertSyncScopeID(Name);
+}
+
+bool AMDGPUTargetCodeGenInfo::shouldEmitStaticExternCAliases() const {
+  return false;
 }
 
 //===----------------------------------------------------------------------===//

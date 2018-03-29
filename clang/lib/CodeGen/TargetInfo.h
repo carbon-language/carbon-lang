@@ -296,6 +296,11 @@ public:
   createEnqueuedBlockKernel(CodeGenFunction &CGF,
                             llvm::Function *BlockInvokeFunc,
                             llvm::Value *BlockLiteral) const;
+
+  /// \return true if the target supports alias from the unmangled name to the
+  /// mangled name of functions declared within an extern "C" region and marked
+  /// as 'used', and having internal linkage.
+  virtual bool shouldEmitStaticExternCAliases() const { return true; }
 };
 
 } // namespace CodeGen
