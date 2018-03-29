@@ -45,8 +45,8 @@ public:
 
   void Identify(std::ostream &o, const char *at, const std::string &prefix,
       bool echoSourceLine = false) const {
-    allSources_.Identify(o, cooked_.GetProvenance(at).start(),
-                         prefix, echoSourceLine);
+    allSources_.Identify(
+        o, cooked_.GetProvenance(at).start(), prefix, echoSourceLine);
   }
 
 private:

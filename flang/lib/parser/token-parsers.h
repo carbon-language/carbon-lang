@@ -85,7 +85,7 @@ constexpr struct Spaces {
   constexpr Spaces() {}
   static std::optional<Success> Parse(ParseState *state) {
     while (std::optional<char> ch{state->PeekAtNextChar()}) {
-      if (ch != ' ') {
+      if (*ch != ' ') {
         break;
       }
       state->UncheckedAdvance();
@@ -93,6 +93,23 @@ constexpr struct Spaces {
     return {Success{}};
   }
 } spaces;
+
+// Warn about a missing space that must be present in free form.
+// Always succeeds.
+constexpr struct SpaceCheck {
+  using resultType = Success;
+  constexpr SpaceCheck() {}
+  static std::optional<Success> Parse(ParseState *state) {
+    if (!state->inFixedForm()) {
+      if (std::optional<char> ch{state->PeekAtNextChar()}) {
+        if (IsLegalInIdentifier(*ch)) {
+          state->PutMessage("expected space"_en_US);
+        }
+      }
+    }
+    return {Success{}};
+  }
+} spaceCheck;
 
 class TokenStringMatch {
 public:

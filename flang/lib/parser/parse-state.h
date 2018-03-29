@@ -29,19 +29,18 @@ public:
   ParseState(const CookedSource &cooked)
     : p_{&cooked[0]}, limit_{p_ + cooked.size()}, messages_{cooked} {}
   ParseState(const ParseState &that)
-    : p_{that.p_}, limit_{that.limit_},
-      messages_{that.messages_.cooked()}, userState_{that.userState_},
-      inFixedForm_{that.inFixedForm_}, encoding_{that.encoding_},
-      strictConformance_{that.strictConformance_},
+    : p_{that.p_}, limit_{that.limit_}, messages_{that.messages_.cooked()},
+      userState_{that.userState_}, inFixedForm_{that.inFixedForm_},
+      encoding_{that.encoding_}, strictConformance_{that.strictConformance_},
       warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
       warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
       anyErrorRecovery_{that.anyErrorRecovery_},
       anyConformanceViolation_{that.anyConformanceViolation_} {}
   ParseState(ParseState &&that)
-    : p_{that.p_}, limit_{that.limit_},
-      messages_{std::move(that.messages_)}, context_{std::move(that.context_)},
-      userState_{that.userState_}, inFixedForm_{that.inFixedForm_},
-      encoding_{that.encoding_}, strictConformance_{that.strictConformance_},
+    : p_{that.p_}, limit_{that.limit_}, messages_{std::move(that.messages_)},
+      context_{std::move(that.context_)}, userState_{that.userState_},
+      inFixedForm_{that.inFixedForm_}, encoding_{that.encoding_},
+      strictConformance_{that.strictConformance_},
       warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
       warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
       anyErrorRecovery_{that.anyErrorRecovery_},

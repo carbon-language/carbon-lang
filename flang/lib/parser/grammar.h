@@ -165,7 +165,7 @@ constexpr auto digitString = DigitString{};
 // end-of-statement markers.
 
 // R611 label -> digit [digit]...
-constexpr auto label = spaces >> digitString;
+constexpr auto label = spaces >> digitString / spaceCheck;
 
 template<typename PA>
 using statementConstructor = construct<Statement<typename PA::resultType>>;
