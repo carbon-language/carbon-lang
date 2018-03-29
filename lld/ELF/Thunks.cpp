@@ -141,6 +141,19 @@ public:
 
 } // end anonymous namespace
 
+Defined *Thunk::addSymbol(StringRef Name, uint8_t Type, uint64_t Value,
+                          InputSectionBase &Section) {
+  Defined *D = addSyntheticLocal(Name, Type, Value, /*Size=*/0, Section);
+  Syms.push_back(D);
+  return D;
+}
+
+void Thunk::setOffset(uint64_t NewOffset) {
+  for (Defined *D : Syms)
+    D->Value = D->Value - Offset + NewOffset;
+  Offset = NewOffset;
+}
+
 // AArch64 long range Thunks
 
 static uint64_t getAArch64ThunkDestVA(const Symbol &S) {
@@ -161,11 +174,10 @@ void AArch64ABSLongThunk::writeTo(uint8_t *Buf) {
 }
 
 void AArch64ABSLongThunk::addSymbols(ThunkSection &IS) {
-  ThunkSym = addSyntheticLocal(
-      Saver.save("__AArch64AbsLongThunk_" + Destination.getName()), STT_FUNC,
-      Offset, size(), IS);
-  addSyntheticLocal("$x", STT_NOTYPE, Offset, 0, IS);
-  addSyntheticLocal("$d", STT_NOTYPE, Offset + 8, 0, IS);
+  addSymbol(Saver.save("__AArch64AbsLongThunk_" + Destination.getName()),
+            STT_FUNC, 0, IS);
+  addSymbol("$x", STT_NOTYPE, 0, IS);
+  addSymbol("$d", STT_NOTYPE, 8, IS);
 }
 
 // This Thunk has a maximum range of 4Gb, this is sufficient for all programs
@@ -180,19 +192,17 @@ void AArch64ADRPThunk::writeTo(uint8_t *Buf) {
       0x00, 0x02, 0x1f, 0xd6, // br   x16
   };
   uint64_t S = getAArch64ThunkDestVA(Destination);
-  uint64_t P = ThunkSym->getVA();
+  uint64_t P = getThunkTargetSym()->getVA();
   memcpy(Buf, Data, sizeof(Data));
   Target->relocateOne(Buf, R_AARCH64_ADR_PREL_PG_HI21,
                       getAArch64Page(S) - getAArch64Page(P));
   Target->relocateOne(Buf + 4, R_AARCH64_ADD_ABS_LO12_NC, S);
 }
 
-void AArch64ADRPThunk::addSymbols(ThunkSection &IS)
-{
-  ThunkSym = addSyntheticLocal(
-      Saver.save("__AArch64ADRPThunk_" + Destination.getName()), STT_FUNC,
-      Offset, size(), IS);
-  addSyntheticLocal("$x", STT_NOTYPE, Offset, 0, IS);
+void AArch64ADRPThunk::addSymbols(ThunkSection &IS) {
+  addSymbol(Saver.save("__AArch64ADRPThunk_" + Destination.getName()), STT_FUNC,
+            0, IS);
+  addSymbol("$x", STT_NOTYPE, 0, IS);
 }
 
 // ARM Target Thunks
@@ -214,10 +224,9 @@ void ARMV7ABSLongThunk::writeTo(uint8_t *Buf) {
 }
 
 void ARMV7ABSLongThunk::addSymbols(ThunkSection &IS) {
-  ThunkSym = addSyntheticLocal(
-      Saver.save("__ARMv7ABSLongThunk_" + Destination.getName()), STT_FUNC,
-      Offset, size(), IS);
-  addSyntheticLocal("$a", STT_NOTYPE, Offset, 0, IS);
+  addSymbol(Saver.save("__ARMv7ABSLongThunk_" + Destination.getName()),
+            STT_FUNC, 0, IS);
+  addSymbol("$a", STT_NOTYPE, 0, IS);
 }
 
 bool ARMV7ABSLongThunk::isCompatibleWith(RelType Type) const {
@@ -238,10 +247,9 @@ void ThumbV7ABSLongThunk::writeTo(uint8_t *Buf) {
 }
 
 void ThumbV7ABSLongThunk::addSymbols(ThunkSection &IS) {
-  ThunkSym = addSyntheticLocal(
-      Saver.save("__Thumbv7ABSLongThunk_" + Destination.getName()), STT_FUNC,
-      Offset | 0x1, size(), IS);
-  addSyntheticLocal("$t", STT_NOTYPE, Offset, 0, IS);
+  addSymbol(Saver.save("__Thumbv7ABSLongThunk_" + Destination.getName()),
+            STT_FUNC, 1, IS);
+  addSymbol("$t", STT_NOTYPE, 0, IS);
 }
 
 bool ThumbV7ABSLongThunk::isCompatibleWith(RelType Type) const {
@@ -257,7 +265,7 @@ void ARMV7PILongThunk::writeTo(uint8_t *Buf) {
       0x1c, 0xff, 0x2f, 0xe1, //     bx r12
   };
   uint64_t S = getARMThunkDestVA(Destination);
-  uint64_t P = ThunkSym->getVA();
+  uint64_t P = getThunkTargetSym()->getVA();
   uint64_t Offset = S - P - 16;
   memcpy(Buf, Data, sizeof(Data));
   Target->relocateOne(Buf, R_ARM_MOVW_PREL_NC, Offset);
@@ -265,10 +273,9 @@ void ARMV7PILongThunk::writeTo(uint8_t *Buf) {
 }
 
 void ARMV7PILongThunk::addSymbols(ThunkSection &IS) {
-  ThunkSym = addSyntheticLocal(
-      Saver.save("__ARMV7PILongThunk_" + Destination.getName()), STT_FUNC,
-      Offset, size(), IS);
-  addSyntheticLocal("$a", STT_NOTYPE, Offset, 0, IS);
+  addSymbol(Saver.save("__ARMV7PILongThunk_" + Destination.getName()), STT_FUNC,
+            0, IS);
+  addSymbol("$a", STT_NOTYPE, 0, IS);
 }
 
 bool ARMV7PILongThunk::isCompatibleWith(RelType Type) const {
@@ -284,7 +291,7 @@ void ThumbV7PILongThunk::writeTo(uint8_t *Buf) {
       0x60, 0x47,             //     bx   r12
   };
   uint64_t S = getARMThunkDestVA(Destination);
-  uint64_t P = ThunkSym->getVA() & ~0x1;
+  uint64_t P = getThunkTargetSym()->getVA() & ~0x1;
   uint64_t Offset = S - P - 12;
   memcpy(Buf, Data, sizeof(Data));
   Target->relocateOne(Buf, R_ARM_THM_MOVW_PREL_NC, Offset);
@@ -292,10 +299,9 @@ void ThumbV7PILongThunk::writeTo(uint8_t *Buf) {
 }
 
 void ThumbV7PILongThunk::addSymbols(ThunkSection &IS) {
-  ThunkSym = addSyntheticLocal(
-      Saver.save("__ThumbV7PILongThunk_" + Destination.getName()), STT_FUNC,
-      Offset | 0x1, size(), IS);
-  addSyntheticLocal("$t", STT_NOTYPE, Offset, 0, IS);
+  addSymbol(Saver.save("__ThumbV7PILongThunk_" + Destination.getName()),
+            STT_FUNC, 1, IS);
+  addSymbol("$t", STT_NOTYPE, 0, IS);
 }
 
 bool ThumbV7PILongThunk::isCompatibleWith(RelType Type) const {
@@ -315,9 +321,8 @@ void MipsThunk::writeTo(uint8_t *Buf) {
 }
 
 void MipsThunk::addSymbols(ThunkSection &IS) {
-  ThunkSym =
-      addSyntheticLocal(Saver.save("__LA25Thunk_" + Destination.getName()),
-                        STT_FUNC, Offset, size(), IS);
+  addSymbol(Saver.save("__LA25Thunk_" + Destination.getName()), STT_FUNC, 0,
+            IS);
 }
 
 InputSection *MipsThunk::getTargetInputSection() const {
@@ -339,10 +344,9 @@ void MicroMipsThunk::writeTo(uint8_t *Buf) {
 }
 
 void MicroMipsThunk::addSymbols(ThunkSection &IS) {
-  ThunkSym =
-      addSyntheticLocal(Saver.save("__microLA25Thunk_" + Destination.getName()),
-                        STT_FUNC, Offset, size(), IS);
-  ThunkSym->StOther |= STO_MIPS_MICROMIPS;
+  Defined *D = addSymbol(
+      Saver.save("__microLA25Thunk_" + Destination.getName()), STT_FUNC, 0, IS);
+  D->StOther |= STO_MIPS_MICROMIPS;
 }
 
 InputSection *MicroMipsThunk::getTargetInputSection() const {
@@ -354,7 +358,7 @@ InputSection *MicroMipsThunk::getTargetInputSection() const {
 // to call PIC function from the non-PIC one.
 void MicroMipsR6Thunk::writeTo(uint8_t *Buf) {
   uint64_t S = Destination.getVA() | 1;
-  uint64_t P = ThunkSym->getVA();
+  uint64_t P = getThunkTargetSym()->getVA();
   write16(Buf, 0x1320);       // lui   $25, %hi(func)
   write16(Buf + 4, 0x3339);   // addiu $25, $25, %lo(func)
   write16(Buf + 8, 0x9400);   // bc    func
@@ -364,10 +368,9 @@ void MicroMipsR6Thunk::writeTo(uint8_t *Buf) {
 }
 
 void MicroMipsR6Thunk::addSymbols(ThunkSection &IS) {
-  ThunkSym =
-      addSyntheticLocal(Saver.save("__microLA25Thunk_" + Destination.getName()),
-                        STT_FUNC, Offset, size(), IS);
-  ThunkSym->StOther |= STO_MIPS_MICROMIPS;
+  Defined *D = addSymbol(
+      Saver.save("__microLA25Thunk_" + Destination.getName()), STT_FUNC, 0, IS);
+  D->StOther |= STO_MIPS_MICROMIPS;
 }
 
 InputSection *MicroMipsR6Thunk::getTargetInputSection() const {
