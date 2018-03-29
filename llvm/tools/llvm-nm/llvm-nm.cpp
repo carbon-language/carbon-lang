@@ -1591,7 +1591,7 @@ dumpSymbolNamesFromObject(SymbolicFile &Obj, bool printName,
       // Trying adding symbol from the function starts table and LC_MAIN entry
       // point.
       SmallVector<uint64_t, 8> FoundFns;
-      int64_t lc_main_offset = -1;
+      uint64_t lc_main_offset = UINT64_MAX;
       for (const auto &Command : MachO->load_commands()) {
         if (Command.C.cmd == MachO::LC_FUNCTION_STARTS) {
           // We found a function starts segment, parse the addresses for 
@@ -1653,7 +1653,7 @@ dumpSymbolNamesFromObject(SymbolicFile &Obj, bool printName,
           F.NDesc = 0;
           F.IndirectName = StringRef();
           SymbolList.push_back(F);
-          if (FoundFns[f] == (uint64_t)lc_main_offset)
+          if (FoundFns[f] == lc_main_offset)
             FOS << "<redacted LC_MAIN>";
           else
             FOS << "<redacted function " << f << ">";
