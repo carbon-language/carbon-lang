@@ -143,15 +143,7 @@ void ExplainOutputStyle::explainFpmBlockOffset() {
                DescribedBlockStart, DescribedBlockStart + 8);
 }
 
-static bool offsetIsInBlock(const PDBFile &File, uint64_t Offset,
-                            uint32_t Block) {
-  uint64_t BlockOffset = uint64_t(Block) * File.getBlockSize();
-  uint64_t BlockOffset1 = BlockOffset + File.getBlockSize();
-  return (Offset >= BlockOffset && Offset < BlockOffset1);
-}
-
 void ExplainOutputStyle::explainBlockMapOffset() {
-  assert(offsetIsInBlock(File, FileOffset, File.getBlockMapIndex()));
   uint64_t BlockMapOffset = File.getBlockMapOffset();
   uint32_t OffsetInBlock = FileOffset - BlockMapOffset;
   P.formatLine("Address is at offset {0} of the directory block list",
