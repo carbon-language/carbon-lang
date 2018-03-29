@@ -3,7 +3,7 @@
 // RUN: %env_asan_opts=allocator_may_return_null=1 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-NULL
 
 // FIXME(alekseyshl): #0 frame does not look as expected on ppc64be, fix it.
-// UNSUPPORTED: android,powerpc64be
+// UNSUPPORTED: android,powerpc64
 
 #include <stdio.h>
 #include <stdlib.h>
