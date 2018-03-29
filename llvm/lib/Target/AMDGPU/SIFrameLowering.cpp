@@ -551,8 +551,6 @@ void SIFrameLowering::emitPrologue(MachineFunction &MF,
   if (NeedsRealignment) {
     assert(NeedFP);
     const unsigned Alignment = MFI.getMaxAlignment();
-    const unsigned ZeroLowBits = countTrailingZeros(Alignment);
-    assert(ZeroLowBits > 1);
 
     RoundedSize += Alignment;
 
