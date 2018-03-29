@@ -2002,7 +2002,7 @@ static void checkOverlap(StringRef Name, std::vector<SectionOffset> &Sections) {
       OutputSection *Other = Sections[J].Sec;
       uint64_t OtherStart = Sections[J].Offset;
       if (Start + Sec->Size <= OtherStart)
-        continue;
+        break;
 
       errorOrWarn("section " + Sec->Name + " " + Name +
                   " range overlaps with " + Other->Name + "\n>>> " + Sec->Name +
