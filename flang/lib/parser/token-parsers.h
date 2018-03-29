@@ -47,7 +47,7 @@ constexpr auto digit =
     CharPredicateGuard{IsDecimalDigit, "expected digit"_en_US};
 
 // "x"_ch matches one instance of the character 'x' without skipping any
-// spaces before or after.  The parser returns the location of the character
+// space before or after.  The parser returns the location of the character
 // on success.
 class AnyOfChar {
 public:
@@ -79,10 +79,10 @@ constexpr AnyOfChar operator""_ch(const char str[], std::size_t n) {
   return AnyOfChar{str, n};
 }
 
-// Skips over spaces.  Always succeeds.
-constexpr struct Spaces {
+// Skips over optional spaces.  Always succeeds.
+constexpr struct Space {
   using resultType = Success;
-  constexpr Spaces() {}
+  constexpr Space() {}
   static std::optional<Success> Parse(ParseState *state) {
     while (std::optional<char> ch{state->PeekAtNextChar()}) {
       if (*ch != ' ') {
@@ -92,25 +92,45 @@ constexpr struct Spaces {
     }
     return {Success{}};
   }
-} spaces;
+} space;
 
-// Warn about a missing space that must be present in free form.
-// Always succeeds.
+// Skips a space that in free from requires a warning if it precedes a
+// character that could begin an identifier or keyword.  Always succeeds.
+static inline void MissingSpace(ParseState *state) {
+  if (!state->inFixedForm()) {
+    state->set_anyConformanceViolation();
+    if (state->warnOnNonstandardUsage()) {
+      state->PutMessage("expected space"_en_US);
+    }
+  }
+}
+
 constexpr struct SpaceCheck {
   using resultType = Success;
   constexpr SpaceCheck() {}
   static std::optional<Success> Parse(ParseState *state) {
-    if (!state->inFixedForm()) {
-      if (std::optional<char> ch{state->PeekAtNextChar()}) {
-        if (IsLegalInIdentifier(*ch)) {
-          state->PutMessage("expected space"_en_US);
-        }
+    if (std::optional<char> ch{state->PeekAtNextChar()}) {
+      if (*ch == ' ') {
+        state->UncheckedAdvance();
+        return space.Parse(state);
+      }
+      if (IsLegalInIdentifier(*ch)) {
+        MissingSpace(state);
       }
     }
     return {Success{}};
   }
 } spaceCheck;
 
+// Matches a token string.  Spaces in the token string denote where
+// an optional space may appear in the source; the character '~' in
+// a token string denotes a space that, if missing in free form,
+// elicits a warning.  Spaces before and after the token are also
+// skipped.
+//
+// Token strings appear in the grammar as C++ user-defined literals
+// like "BIND ( C )"_tok.  The _tok suffix is not required before
+// the sequencing operator >> or after the sequencing operator /.
 class TokenStringMatch {
 public:
   using resultType = Success;
@@ -119,14 +139,14 @@ public:
     : str_{str}, bytes_{n} {}
   constexpr TokenStringMatch(const char *str) : str_{str} {}
   std::optional<Success> Parse(ParseState *state) const {
-    spaces.Parse(state);
+    space.Parse(state);
     const char *start{state->GetLocation()};
     const char *p{str_};
     std::optional<const char *> at;  // initially empty
     for (std::size_t j{0}; j < bytes_ && *p != '\0'; ++j, ++p) {
-      const auto spaceSkipping{*p == ' '};
+      const auto spaceSkipping{*p == ' ' || *p == '~'};
       if (spaceSkipping) {
-        if (j + 1 == bytes_ || p[1] == ' ' || p[1] == '\0') {
+        if (j + 1 == bytes_ || p[1] == ' ' || p[1] == '~' || p[1] == '\0') {
           continue;  // redundant; ignore
         }
       }
@@ -137,13 +157,14 @@ public:
         }
       }
       if (spaceSkipping) {
-        // medial space: space accepted, none required
-        // TODO: designate and enforce free-form mandatory white space
         if (**at == ' ') {
           at = nextCh.Parse(state);
           if (!at.has_value()) {
             return {};
           }
+        } else if (*p == '~') {
+          // This space is notionally required in free form.
+          MissingSpace(state);
         }
         // 'at' remains full for next iteration
       } else if (**at == ToLowerCaseLetter(*p)) {
@@ -153,7 +174,10 @@ public:
         return {};
       }
     }
-    return spaces.Parse(state);
+    if (IsLegalInIdentifier(p[-1])) {
+      return spaceCheck.Parse(state);
+    }
+    return space.Parse(state);
   }
 
 private:
@@ -304,7 +328,7 @@ struct BOZLiteral {
       }
     };
 
-    spaces.Parse(state);
+    space.Parse(state);
     const char *start{state->GetLocation()};
     std::optional<const char *> at{nextCh.Parse(state)};
     if (!at.has_value()) {
@@ -349,6 +373,7 @@ struct BOZLiteral {
           !baseChar(**at)) {
         return {};
       }
+      spaceCheck.Parse(state);
     }
 
     if (content.empty()) {
@@ -408,7 +433,7 @@ struct DigitString {
 struct HollerithLiteral {
   using resultType = std::string;
   static std::optional<std::string> Parse(ParseState *state) {
-    spaces.Parse(state);
+    space.Parse(state);
     const char *start{state->GetLocation()};
     std::optional<std::uint64_t> charCount{DigitString{}.Parse(state)};
     if (!charCount || *charCount < 1) {

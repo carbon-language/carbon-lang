@@ -62,6 +62,7 @@ struct DriverOptions {
   bool compileOnly{false};  // -c
   std::string outputPath;  // -o path
   bool forcedForm{false};  // -Mfixed or -Mfree appeared
+  bool warningsAreErrors{false};  // -Werror
   Fortran::parser::Encoding encoding{Fortran::parser::Encoding::UTF8};
   bool parseOnly{false};
   bool dumpProvenance{false};
@@ -171,6 +172,10 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
   }
 
   parsing.messages().Emit(std::cerr, driver.prefix);
+  if (driver.warningsAreErrors &&
+      !parsing.messages().empty()) {
+    exit(EXIT_FAILURE);
+  }
   if (driver.parseOnly) {
     return {};
   }
@@ -292,6 +297,8 @@ int main(int argc, char *const argv[]) {
       options.enableBackslashEscapes = true;
     } else if (arg == "-Mstandard") {
       options.isStrictlyStandard = true;
+    } else if (arg == "-Werror") {
+      driver.warningsAreErrors = true;
     } else if (arg == "-ed") {
       options.enableOldDebugLines = true;
     } else if (arg == "-E") {
@@ -326,6 +333,7 @@ int main(int argc, char *const argv[]) {
         << "  -M[no]backslash      disable[enable] \\escapes in literals\n"
         << "  -Mstandard           enable conformance warnings\n"
         << "  -Mx,125,4            set bit 2 in xflag[125] (all Kanji mode)\n"
+        << "  -Werror              treat warnings as errors\n"
         << "  -ed                  enable fixed form D lines\n"
         << "  -E                   prescan & preprocess only\n"
         << "  -fparse-only         parse only, no output except messages\n"

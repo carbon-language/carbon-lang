@@ -140,6 +140,7 @@ public:
     std::swap(last_, that.last_);
   }
 
+  bool empty() const { return messages_.empty(); }
   iterator begin() { return messages_.begin(); }
   iterator end() { return messages_.end(); }
   const_iterator begin() const { return messages_.cbegin(); }

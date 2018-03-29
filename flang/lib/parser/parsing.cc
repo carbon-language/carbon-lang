@@ -86,10 +86,6 @@ bool Parsing::Parse() {
       .set_userState(&userState);
   parseTree_ = program.Parse(&parseState);
   anyFatalError_ = parseState.anyErrorRecovery();
-#if 0  // pgf90 -Mstandard enables warnings only, they aren't fatal.
-    // TODO: -Werror
-    || (options_.isStrictlyStandard && parseState.anyConformanceViolation());
-#endif
   consumedWholeFile_ = parseState.IsAtEnd();
   finalRestingPlace_ = parseState.GetLocation();
   messages_.Annex(parseState.messages());
