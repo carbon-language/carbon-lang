@@ -962,6 +962,9 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
       DynamicBaseArg->getOption().getID() == OPT_dynamicbase_no)
     Config->DynamicBase = false;
 
+  // MSDN claims "/FIXED:NO is the default setting for a DLL, and /FIXED is the
+  // default setting for any other project type.", but link.exe defaults to
+  // /FIXED:NO for exe outputs as well. Match behavior, not docs.
   bool Fixed = Args.hasFlag(OPT_fixed, OPT_fixed_no, false);
   if (Fixed) {
     if (DynamicBaseArg &&
