@@ -339,15 +339,16 @@ static void explainSubstreamOffset(LinePrinter &P, uint32_t OffsetInStream,
                                    const SubstreamRangeT &Substreams) {
   uint32_t SubOffset = OffsetInStream;
   for (const auto &Entry : Substreams) {
-    if (Entry.Size == 0)
+    if (Entry.Size <= 0)
       continue;
-    if (SubOffset < Entry.Size) {
-      P.formatLine("address is at offset {0}/{1} of the {2}.", SubOffset,
-                   Entry.Size, Entry.Label);
+    uint32_t S = static_cast<uint32_t>(Entry.Size);
+    if (SubOffset < S) {
+      P.formatLine("address is at offset {0}/{1} of the {2}.", SubOffset, S,
+                   Entry.Label);
       Entry.Explain(P, Stream, SubOffset);
       return;
     }
-    SubOffset -= Entry.Size;
+    SubOffset -= S;
   }
 }
 
@@ -360,22 +361,23 @@ void ExplainOutputStyle::explainDbiStream(uint32_t StreamIdx,
   assert(Header != nullptr);
 
   struct SubstreamInfo {
-    uint32_t Size;
+    int32_t Size;
     StringRef Label;
     void (*Explain)(LinePrinter &, DbiStream &, uint32_t);
   } Substreams[] = {
       {sizeof(DbiStreamHeader), "DBI Stream Header", explainDbiHeaderOffset},
-      {Header->ModiSubstreamSize, "Module Info Substream",
+      {int32_t(Header->ModiSubstreamSize), "Module Info Substream",
        explainDbiModiSubstreamOffset},
-      {Header->SecContrSubstreamSize, "Section Contribution Substream",
+      {int32_t(Header->SecContrSubstreamSize), "Section Contribution Substream",
        dontExplain<DbiStream>},
-      {Header->SectionMapSize, "Section Map", dontExplain<DbiStream>},
-      {Header->FileInfoSize, "File Info Substream", dontExplain<DbiStream>},
-      {Header->TypeServerSize, "Type Server Map Substream",
+      {int32_t(Header->SectionMapSize), "Section Map", dontExplain<DbiStream>},
+      {int32_t(Header->FileInfoSize), "File Info Substream",
        dontExplain<DbiStream>},
-      {Header->ECSubstreamSize, "Edit & Continue Substream",
+      {int32_t(Header->TypeServerSize), "Type Server Map Substream",
        dontExplain<DbiStream>},
-      {Header->OptionalDbgHdrSize, "Optional Debug Stream Array",
+      {int32_t(Header->ECSubstreamSize), "Edit & Continue Substream",
+       dontExplain<DbiStream>},
+      {int32_t(Header->OptionalDbgHdrSize), "Optional Debug Stream Array",
        dontExplain<DbiStream>},
   };
 
