@@ -714,16 +714,14 @@ constexpr auto signedDigitString = "-"_ch >>
 
 // R707 signed-int-literal-constant -> [sign] int-literal-constant
 TYPE_PARSER(space >> sourced(construct<SignedIntLiteralConstant>{}(
-                         signedDigitString, maybe(underscore >> kindParam))) /
-        spaceCheck)
+                         signedDigitString, maybe(underscore >> kindParam))))
 
 // R708 int-literal-constant -> digit-string [_ kind-param]
 TYPE_PARSER(construct<IntLiteralConstant>{}(
-                space >> digitString, maybe(underscore >> kindParam)) /
-    spaceCheck)
+    space >> digitString, maybe(underscore >> kindParam)))
 
 // R709 kind-param -> digit-string | scalar-int-constant-name
-TYPE_PARSER(construct<KindParam>{}(digitString / spaceCheck) ||
+TYPE_PARSER(construct<KindParam>{}(digitString) ||
     construct<KindParam>{}(scalar(integer(constant(name)))))
 
 // R712 sign -> + | -
@@ -755,8 +753,7 @@ TYPE_CONTEXT_PARSER("REAL literal constant"_en_US,
                 "."_ch >> digitString >> maybe(exponentPart) >> ok ||
                 digitString >> exponentPart >> ok) >>
             construct<RealLiteralConstant::Real>{}),
-        maybe(underscore >> kindParam)) /
-        spaceCheck)
+        maybe(underscore >> kindParam)))
 
 // R718 complex-literal-constant -> ( real-part , imag-part )
 TYPE_CONTEXT_PARSER("COMPLEX literal constant"_en_US,
