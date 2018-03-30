@@ -19,7 +19,7 @@ public:
   void NewSubprogram() {
     doLabels_.clear();
     nonlabelDoConstructNestingDepth_ = 0;
-    structureComponents_.clear();
+    oldStructureComponents_.clear();
   }
 
   using Label = std::uint64_t;
@@ -37,17 +37,17 @@ public:
     }
   }
 
-  void NoteStructureComponent(const CharBlock &name) {
-    structureComponents_.insert(name);
+  void NoteOldStructureComponent(const CharBlock &name) {
+    oldStructureComponents_.insert(name);
   }
-  bool IsStructureComponent(const CharBlock &name) const {
-    return structureComponents_.find(name) != structureComponents_.end();
+  bool IsOldStructureComponent(const CharBlock &name) const {
+    return oldStructureComponents_.find(name) != oldStructureComponents_.end();
   }
 
 private:
   std::unordered_set<Label> doLabels_;
   int nonlabelDoConstructNestingDepth_{0};
-  std::set<CharBlock> structureComponents_;
+  std::set<CharBlock> oldStructureComponents_;
 };
 }  // namespace parser
 }  // namespace Fortran

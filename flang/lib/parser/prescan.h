@@ -52,6 +52,10 @@ public:
     fixedFormColumnLimit_ = limit;
     return *this;
   }
+  Prescanner &set_warnOnNonstandardUsage(bool yes) {
+    warnOnNonstandardUsage_ = yes;
+    return *this;
+  }
 
   Prescanner &AddCompilerDirectiveSentinel(const std::string &);
 
@@ -155,6 +159,7 @@ private:
   Encoding encoding_{Encoding::UTF8};
   bool enableOldDebugLines_{false};
   bool enableBackslashEscapesInCharLiterals_{true};
+  bool warnOnNonstandardUsage_{false};
   int delimiterNesting_{0};
 
   Provenance startProvenance_;

@@ -1638,7 +1638,7 @@ constexpr struct StructureComponentName {
   static std::optional<Name> Parse(ParseState *state) {
     if (std::optional<Name> n{name.Parse(state)}) {
       if (const auto *user = state->userState()) {
-        if (user->IsStructureComponent(n->source)) {
+        if (user->IsOldStructureComponent(n->source)) {
           return n;
         }
       }
@@ -3453,7 +3453,7 @@ std::optional<FunctionReference> Parser<FunctionReference>::Parse(
       return {std::move(**funcref)};
     }
     Designator *desig{&*std::get<Indirection<Designator>>(var->u)};
-    if (std::optional<Call> call{desig->ConvertToCall()}) {
+    if (std::optional<Call> call{desig->ConvertToCall(state->userState())}) {
       if (!std::get<std::list<ActualArgSpec>>(call.value().t).empty()) {
         // Parsed a designator that ended with a nonempty list of subscripts
         // that have all been converted to actual arguments.
@@ -3478,7 +3478,7 @@ template<> std::optional<CallStmt> Parser<CallStmt>::Parse(ParseState *state) {
       return {CallStmt{std::move((*funcref)->v)}};
     }
     Designator *desig{&*std::get<Indirection<Designator>>(var->u)};
-    if (std::optional<Call> call{desig->ConvertToCall()}) {
+    if (std::optional<Call> call{desig->ConvertToCall(state->userState())}) {
       return {CallStmt{std::move(call.value())}};
     }
   }
@@ -3647,7 +3647,7 @@ constexpr struct StructureComponents {
     if (defs.has_value()) {
       if (auto ustate = state->userState()) {
         for (const auto &decl : std::get<std::list<ComponentDecl>>(defs->t)) {
-          ustate->NoteStructureComponent(std::get<Name>(decl.t).source);
+          ustate->NoteOldStructureComponent(std::get<Name>(decl.t).source);
         }
       }
     }

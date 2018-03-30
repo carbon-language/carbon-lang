@@ -25,6 +25,7 @@ Prescanner::Prescanner(const Prescanner &that)
     enableOldDebugLines_{that.enableOldDebugLines_},
     enableBackslashEscapesInCharLiterals_{
         that.enableBackslashEscapesInCharLiterals_},
+    warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
     compilerDirectiveBloomFilter_{that.compilerDirectiveBloomFilter_},
     compilerDirectiveSentinels_{that.compilerDirectiveSentinels_} {}
 
@@ -670,7 +671,11 @@ const char *Prescanner::FixedFormContinuationLine() {
   }
   // Normal case: not in a compiler directive.
   if (*p == '&') {
-    return p + 1;  // extension; TODO: emit warning with -Mstandard
+    // Extension: '&' as continuation marker
+    if (warnOnNonstandardUsage_) {
+      Complain("nonstandard usage"_en_US, GetProvenance(p));
+    }
+    return p + 1;
   }
   if (*p == '\t' && p[1] >= '1' && p[1] <= '9') {
     tabInCurrentLine_ = true;
