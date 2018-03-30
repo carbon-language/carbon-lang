@@ -2755,7 +2755,7 @@ void BinaryFunction::postProcessBranches() {
         // falls-through into the next function - hence the block will have only
         // one valid successor. Such behaviour is undefined and thus we remove
         // the conditional branch while leaving a valid successor.
-        BB->eraseInstruction(std::next(LastInstrRI.base()));
+        BB->eraseInstruction(std::prev(LastInstrRI.base()));
         DEBUG(dbgs() << "BOLT-DEBUG: erasing conditional branch in "
                      << BB->getName() << " in function " << *this << '\n');
       }
