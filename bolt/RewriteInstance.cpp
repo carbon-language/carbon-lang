@@ -463,6 +463,10 @@ MCPlusBuilder *createMCPlusBuilder(const Triple::ArchType Arch,
   }
 }
 
+int64_t truncateToSize(int64_t Value, unsigned Bytes) {
+  return Value & ((uint64_t) (int64_t) -1 >> (64 - Bytes * 8));
+}
+
 }
 
 constexpr const char *RewriteInstance::SectionsToOverwrite[];
@@ -1760,7 +1764,7 @@ void RewriteInstance::readSpecialSections() {
   EHFrame = BC->DwCtx->getEHFrame();
   if (opts::DumpEHFrame) {
     outs() << "BOLT-INFO: Dumping original binary .eh_frame\n";
-    EHFrame->dump(outs(), NoneType());
+    EHFrame->dump(outs(), &*BC->MRI, NoneType());
   }
   CFIRdWrt.reset(new CFIReaderWriter(*EHFrame));
 }
@@ -1904,7 +1908,9 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
                << "; address = 0x" << Twine::utohexstr(SymbolAddress + Addend)
                << '\n';
       }
-      assert(ExtractedValue == SymbolAddress + Addend && "value mismatch");
+      assert(truncateToSize(ExtractedValue, RelSize) ==
+               truncateToSize(SymbolAddress + Addend, RelSize) &&
+             "value mismatch");
     }
   }
 
@@ -1912,7 +1918,8 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
     if (!Relocation::isTLS(Rel.getType()) &&
         SymbolName != "__hot_start" &&
         SymbolName != "__hot_end" &&
-        ExtractedValue != SymbolAddress + Addend - PCRelOffset) {
+        truncateToSize(ExtractedValue, RelSize) !=
+          truncateToSize(SymbolAddress + Addend - PCRelOffset, RelSize)) {
       auto Section = Symbol.getSection();
       SmallString<16> TypeName;
       Rel.getTypeName(TypeName);
@@ -1939,7 +1946,8 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
           Relocation::isTLS(Rel.getType()) ||
           SymbolName == "__hot_start" ||
           SymbolName == "__hot_end" ||
-          ExtractedValue == SymbolAddress + Addend - PCRelOffset) &&
+          truncateToSize(ExtractedValue, RelSize) ==
+            truncateToSize(SymbolAddress + Addend - PCRelOffset, RelSize)) &&
          "extracted relocation value should match relocation components");
 
   return true;
@@ -2718,51 +2726,48 @@ void RewriteInstance::emitFunctions() {
       object::ObjectFile::createObjectFile(ObjectMemBuffer->getMemBufferRef()),
       "error creating in-memory object");
 
-  auto Resolver = orc::createLambdaResolver(
-          [&](const std::string &Name) -> JITSymbol {
-            DEBUG(dbgs() << "BOLT: looking for " << Name << "\n");
-            if (auto *I = BC->getBinaryDataByName(Name))
-              return JITSymbol(I->getAddress(), JITSymbolFlags());
-            return JITSymbol(nullptr);
-          },
-          [](const std::string &S) {
-            DEBUG(dbgs() << "BOLT: resolving " << S << "\n");
-            return nullptr;
-          }
-      );
+  auto Resolver = orc::createLegacyLookupResolver(
+      [&](const std::string &Name) -> JITSymbol {
+        DEBUG(dbgs() << "BOLT: looking for " << Name << "\n");
+        if (auto *I = BC->getBinaryDataByName(Name))
+          return JITSymbol(I->getAddress(), JITSymbolFlags());
+        return JITSymbol(nullptr);
+      },
+      [](Error Err) { cantFail(std::move(Err), "lookup failed"); });
   Resolver->setAllowsZeroSymbols(true);
 
   MCAsmLayout FinalLayout(
         static_cast<MCObjectStreamer *>(Streamer.get())->getAssembler());
 
+  SSP.reset(new decltype(SSP)::element_type());
+  ES.reset(new decltype(ES)::element_type(*SSP));
   OLT.reset(new decltype(OLT)::element_type(
-      [this]() {
+      *ES,
+      [this, &Resolver](orc::VModuleKey Key) {
+        orc::RTDyldObjectLinkingLayer::Resources R;
+        R.MemMgr = EFMM;
+        R.Resolver = Resolver;
         // Get memory manager
-        return EFMM;
+        return R;
       },
       // Loaded notifier
-      [&](orc::RTDyldObjectLinkingLayerBase::ObjHandleT Handle,
-          const orc::RTDyldObjectLinkingLayer::ObjectPtr &Obj,
+      [&](orc::VModuleKey Key, const object::ObjectFile &Obj,
           const RuntimeDyld::LoadedObjectInfo &) {
         // Assign addresses to all sections.
-        mapFileSections(Handle);
+        mapFileSections(Key);
       },
       // Finalized notifier
-      [&](orc::RTDyldObjectLinkingLayerBase::ObjHandleT Handle) {
+      [&](orc::VModuleKey Key) {
         // Update output addresses based on the new section map and
         // layout.
         updateOutputValues(FinalLayout);
       }));
 
   OLT->setProcessAllSections(true);
-  auto ObjectsHandle = cantFail(
-      OLT->addObject(std::unique_ptr<OwningBinary<object::ObjectFile>>(
-                        new OwningBinary<object::ObjectFile>(
-                            std::move(Obj), std::move(ObjectMemBuffer))),
-                     std::move(Resolver)),
-      "failed in addObject()");
+  auto K = ES->allocateVModule();
+  cantFail(OLT->addObject(K, std::move(ObjectMemBuffer)));
 
-  cantFail(OLT->emitAndFinalize(ObjectsHandle));
+  cantFail(OLT->emitAndFinalize(K));
 
   if (opts::PrintCacheMetrics) {
     outs() << "BOLT-INFO: cache metrics after emitting functions:\n";
@@ -2773,8 +2778,7 @@ void RewriteInstance::emitFunctions() {
     TempOut->keep();
 }
 
-void RewriteInstance::mapFileSections(
-    orc::RTDyldObjectLinkingLayer::ObjHandleT &ObjectsHandle) {
+void RewriteInstance::mapFileSections(orc::VModuleKey Key) {
   NewTextSectionStartAddress = NextAvailableAddress;
   if (BC->HasRelocations) {
     auto TextSection = BC->getUniqueSectionByName(".text");
@@ -2812,8 +2816,7 @@ void RewriteInstance::mapFileSections(
                  << Twine::utohexstr(TextSection->getAllocAddress())
                  << " to 0x" << Twine::utohexstr(NewTextSectionStartAddress)
                  << '\n');
-    OLT->mapSectionAddress(ObjectsHandle,
-                           TextSection->getSectionID(),
+    OLT->mapSectionAddress(Key, TextSection->getSectionID(),
                            NewTextSectionStartAddress);
   } else {
     for (auto &BFI : BinaryFunctions) {
@@ -2828,8 +2831,7 @@ void RewriteInstance::mapFileSections(
                    << Twine::utohexstr(FuncSection->getAllocAddress())
                    << " to 0x" << Twine::utohexstr(Function.getAddress())
                    << '\n');
-      OLT->mapSectionAddress(ObjectsHandle,
-                             FuncSection->getSectionID(),
+      OLT->mapSectionAddress(Key, FuncSection->getSectionID(),
                              Function.getAddress());
       Function.setImageAddress(FuncSection->getAllocAddress());
       Function.setImageSize(FuncSection->getOutputSize());
@@ -2849,7 +2851,7 @@ void RewriteInstance::mapFileSections(
           DEBUG(dbgs() << "BOLT-DEBUG: mapping " << Section->getName()
                        << " to 0x" << Twine::utohexstr(JT->getAddress())
                        << '\n');
-          OLT->mapSectionAddress(ObjectsHandle, Section->getSectionID(),
+          OLT->mapSectionAddress(Key, Section->getSectionID(),
                                  JT->getAddress());
         }
       }
@@ -2882,8 +2884,7 @@ void RewriteInstance::mapFileSections(
                    << Twine::utohexstr(ColdPart.getAddress())
                    << " with size "
                    << Twine::utohexstr(ColdPart.getImageSize()) << '\n');
-      OLT->mapSectionAddress(ObjectsHandle,
-                             ColdSection->getSectionID(),
+      OLT->mapSectionAddress(Key, ColdSection->getSectionID(),
                              ColdPart.getAddress());
 
       NextAvailableAddress += ColdPart.getImageSize();
@@ -2927,9 +2928,7 @@ void RewriteInstance::mapFileSections(
                  << ") to 0x" << Twine::utohexstr(NextAvailableAddress)
                  << '\n');
 
-    OLT->mapSectionAddress(ObjectsHandle,
-                           Section->getSectionID(),
-                           NextAvailableAddress);
+    OLT->mapSectionAddress(Key, Section->getSectionID(), NextAvailableAddress);
     Section->setFileAddress(NextAvailableAddress);
     Section->setFileOffset(getFileOffsetForAddress(NextAvailableAddress));
 
@@ -2960,8 +2959,7 @@ void RewriteInstance::mapFileSections(
                  << ") to 0x" << Twine::utohexstr(Section.getAddress())
                  << '\n');
 
-    OLT->mapSectionAddress(ObjectsHandle,
-                           OrgSection->getSectionID(),
+    OLT->mapSectionAddress(Key, OrgSection->getSectionID(),
                            Section.getAddress());
 
     OrgSection->setFileAddress(Section.getAddress());
@@ -4240,7 +4238,7 @@ void RewriteInstance::rewriteFile() {
       auto DwCtx = DWARFContext::create(*E);
       const auto &EHFrame = DwCtx->getEHFrame();
       outs() << "BOLT-INFO: Dumping rewritten .eh_frame\n";
-      EHFrame->dump(outs(), NoneType());
+      EHFrame->dump(outs(), &*BC->MRI, NoneType());
     }
   }
 }
