@@ -121,9 +121,11 @@ is built.  All of the following parsers consume characters acquired from
 * `digit` matches one cooked decimal digit (0-9)
 * `letter` matches one cooked letter (A-Z)
 * `"..."_tok` match the content of the string, skipping spaces before and
-  after.  Internal spaces are optional matches; `~` denotes a space that
-  is not optional in free form.  The `_tok` suffix is optional when the
-  parser appears before the combinator `>>` or after `/`.
+  after.  Internal spaces are optional matches.  The `_tok` suffix is
+  optional when the parser appears before the combinator `>>` or after
+  the combinator `/`.
+* `"..."_sptok` is a string match in which the spaces are required in
+   free form source.
 * `parenthesized(p)` is shorthand for `"(" >> p / ")"`.
 * `bracketed(p)` is shorthand for `"[" >> p / "]"`.
 * `nonEmptyListOf(p)` matches a comma-separated list of one or more

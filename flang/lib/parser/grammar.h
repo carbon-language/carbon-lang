@@ -461,7 +461,7 @@ constexpr auto actionStmt = construct<ActionStmt>{}(
     construct<ActionStmt>{}(indirect(Parser<EventPostStmt>{})) ||
     construct<ActionStmt>{}(indirect(Parser<EventWaitStmt>{})) ||
     construct<ActionStmt>{}(indirect(Parser<ExitStmt>{})) ||
-    "FAIL~IMAGE" >> construct<ActionStmt>{}(construct<FailImageStmt>{}) ||
+    "FAIL IMAGE"_sptok >> construct<ActionStmt>{}(construct<FailImageStmt>{}) ||
     construct<ActionStmt>{}(indirect(Parser<FlushStmt>{})) ||
     construct<ActionStmt>{}(indirect(Parser<FormTeamStmt>{})) ||
     construct<ActionStmt>{}(indirect(Parser<GotoStmt>{})) ||
@@ -742,7 +742,7 @@ constexpr auto signedRealLiteralConstant = space >>
 // R716 exponent-letter -> E | D
 // Extension: Q
 // R717 exponent -> signed-digit-string
-// N.B. Preceding space are not skipped.
+// N.B. Preceding space is not skipped.
 constexpr auto exponentPart =
     ("ed"_ch || extension("q"_ch)) >> signedDigitString;
 
@@ -2274,7 +2274,7 @@ TYPE_CONTEXT_PARSER("CHANGE TEAM construct"_en_US,
 //         ( team-variable [, coarray-association-list] [, sync-stat-list] )
 TYPE_CONTEXT_PARSER("CHANGE TEAM statement"_en_US,
     construct<ChangeTeamStmt>{}(maybe(name / ":"),
-        "CHANGE~TEAM (" >> teamVariable,
+        "CHANGE TEAM"_sptok >> "("_tok >> teamVariable,
         defaulted("," >> nonemptyList(Parser<CoarrayAssociation>{})),
         defaulted("," >> nonemptyList(statOrErrmsg))) /
         ")")
@@ -2351,7 +2351,7 @@ TYPE_PARSER(construct<ConcurrentControl>{}(name / "=", scalarIntExpr / ":",
 TYPE_PARSER(
     "LOCAL" >> construct<LocalitySpec>{}(construct<LocalitySpec::Local>{}(
                    parenthesized(nonemptyList(name)))) ||
-    "LOCAL~INIT" >>
+    "LOCAL INIT"_sptok >>
         construct<LocalitySpec>{}(construct<LocalitySpec::LocalInit>{}(
             parenthesized(nonemptyList(name)))) ||
     "SHARED" >> construct<LocalitySpec>{}(construct<LocalitySpec::Shared>{}(
@@ -2473,7 +2473,7 @@ TYPE_CONTEXT_PARSER("SELECT RANK construct"_en_US,
 //         ( [associate-name =>] selector )
 TYPE_CONTEXT_PARSER("SELECT RANK statement"_en_US,
     construct<SelectRankStmt>{}(maybe(name / ":"),
-        "SELECT~RANK (" >> maybe(name / "=>"), selector / ")"))
+        "SELECT RANK"_sptok >> "("_tok >> maybe(name / "=>"), selector / ")"))
 
 // R1150 select-rank-case-stmt ->
 //         RANK ( scalar-int-constant-expr ) [select-construct-name] |
@@ -2507,10 +2507,10 @@ TYPE_CONTEXT_PARSER("SELECT TYPE statement"_en_US,
 //         CLASS IS ( derived-type-spec ) [select-construct-name] |
 //         CLASS DEFAULT [select-construct-name]
 TYPE_CONTEXT_PARSER("type guard statement"_en_US,
-    construct<TypeGuardStmt>{}("TYPE~IS" >>
+    construct<TypeGuardStmt>{}("TYPE IS"_sptok >>
                 parenthesized(construct<TypeGuardStmt::Guard>{}(typeSpec)) ||
-            "CLASS~IS" >> parenthesized(construct<TypeGuardStmt::Guard>{}(
-                              derivedTypeSpec)) ||
+            "CLASS IS"_sptok >> parenthesized(construct<TypeGuardStmt::Guard>{}(
+                                    derivedTypeSpec)) ||
             "CLASS" >> construct<TypeGuardStmt::Guard>{}(defaultKeyword),
         maybe(name)))
 
@@ -2532,7 +2532,7 @@ TYPE_CONTEXT_PARSER("computed GOTO statement"_en_US,
 //         ERROR STOP [stop-code] [, QUIET = scalar-logical-expr]
 TYPE_CONTEXT_PARSER("STOP statement"_en_US,
     construct<StopStmt>{}("STOP" >> pure(StopStmt::Kind::Stop) ||
-            "ERROR~STOP" >> pure(StopStmt::Kind::ErrorStop),
+            "ERROR STOP"_sptok >> pure(StopStmt::Kind::ErrorStop),
         maybe(Parser<StopCode>{}), maybe(", QUIET =" >> scalarLogicalExpr)))
 
 // R1162 stop-code -> scalar-default-char-expr | scalar-int-expr
@@ -2541,37 +2541,38 @@ TYPE_PARSER(construct<StopCode>{}(scalarDefaultCharExpr) ||
 
 // R1164 sync-all-stmt -> SYNC ALL [( [sync-stat-list] )]
 TYPE_CONTEXT_PARSER("SYNC ALL statement"_en_US,
-    "SYNC~ALL" >> construct<SyncAllStmt>{}(
-                      defaulted(parenthesized(optionalList(statOrErrmsg)))))
+    "SYNC ALL"_sptok >> construct<SyncAllStmt>{}(defaulted(
+                            parenthesized(optionalList(statOrErrmsg)))))
 
 // R1166 sync-images-stmt -> SYNC IMAGES ( image-set [, sync-stat-list] )
 // R1167 image-set -> int-expr | *
 TYPE_CONTEXT_PARSER("SYNC IMAGES statement"_en_US,
-    "SYNC~IMAGES" >> parenthesized(construct<SyncImagesStmt>{}(
-                         construct<SyncImagesStmt::ImageSet>{}(intExpr) ||
-                             construct<SyncImagesStmt::ImageSet>{}(star),
-                         defaulted("," >> nonemptyList(statOrErrmsg)))))
+    "SYNC IMAGES"_sptok >> parenthesized(construct<SyncImagesStmt>{}(
+                               construct<SyncImagesStmt::ImageSet>{}(intExpr) ||
+                                   construct<SyncImagesStmt::ImageSet>{}(star),
+                               defaulted("," >> nonemptyList(statOrErrmsg)))))
 
 // R1168 sync-memory-stmt -> SYNC MEMORY [( [sync-stat-list] )]
 TYPE_CONTEXT_PARSER("SYNC MEMORY statement"_en_US,
-    "SYNC~MEMORY" >> construct<SyncMemoryStmt>{}(
-                         defaulted(parenthesized(optionalList(statOrErrmsg)))))
+    "SYNC MEMORY"_sptok >> construct<SyncMemoryStmt>{}(defaulted(
+                               parenthesized(optionalList(statOrErrmsg)))))
 
 // R1169 sync-team-stmt -> SYNC TEAM ( team-variable [, sync-stat-list] )
 TYPE_CONTEXT_PARSER("SYNC TEAM statement"_en_US,
-    "SYNC~TEAM" >> parenthesized(construct<SyncTeamStmt>{}(teamVariable,
-                       defaulted("," >> nonemptyList(statOrErrmsg)))))
+    "SYNC TEAM"_sptok >> parenthesized(construct<SyncTeamStmt>{}(teamVariable,
+                             defaulted("," >> nonemptyList(statOrErrmsg)))))
 
 // R1170 event-post-stmt -> EVENT POST ( event-variable [, sync-stat-list] )
 // R1171 event-variable -> scalar-variable
 TYPE_CONTEXT_PARSER("EVENT POST statement"_en_US,
-    "EVENT~POST" >> parenthesized(construct<EventPostStmt>{}(scalar(variable),
-                        defaulted("," >> nonemptyList(statOrErrmsg)))))
+    "EVENT POST"_sptok >>
+        parenthesized(construct<EventPostStmt>{}(
+            scalar(variable), defaulted("," >> nonemptyList(statOrErrmsg)))))
 
 // R1172 event-wait-stmt ->
 //         EVENT WAIT ( event-variable [, event-wait-spec-list] )
 TYPE_CONTEXT_PARSER("EVENT WAIT statement"_en_US,
-    "EVENT~WAIT" >>
+    "EVENT WAIT"_sptok >>
         parenthesized(construct<EventWaitStmt>{}(scalar(variable),
             defaulted(
                 "," >> nonemptyList(Parser<EventWaitStmt::EventWaitSpec>{})))))
@@ -2587,7 +2588,7 @@ TYPE_PARSER(construct<EventWaitStmt::EventWaitSpec>{}(untilSpec) ||
 //         FORM TEAM ( team-number , team-variable [, form-team-spec-list] )
 // R1176 team-number -> scalar-int-expr
 TYPE_CONTEXT_PARSER("FORM TEAM statement"_en_US,
-    "FORM~TEAM" >>
+    "FORM TEAM"_sptok >>
         parenthesized(construct<FormTeamStmt>{}(scalarIntExpr,
             "," >> teamVariable,
             defaulted(
@@ -3353,7 +3354,8 @@ TYPE_PARSER(construct<InterfaceSpecification>{}(Parser<InterfaceBody>{}) ||
 
 // R1503 interface-stmt -> INTERFACE [generic-spec] | ABSTRACT INTERFACE
 TYPE_PARSER("INTERFACE" >> construct<InterfaceStmt>{}(maybe(genericSpec)) ||
-    "ABSTRACT~INTERFACE" >> construct<InterfaceStmt>{}(construct<Abstract>{}))
+    "ABSTRACT INTERFACE"_sptok >>
+        construct<InterfaceStmt>{}(construct<Abstract>{}))
 
 // R1504 end-interface-stmt -> END INTERFACE [generic-spec]
 TYPE_PARSER(
@@ -3374,7 +3376,7 @@ TYPE_CONTEXT_PARSER("interface body"_en_US,
 constexpr auto specificProcedure = name;
 
 // R1506 procedure-stmt -> [MODULE] PROCEDURE [::] specific-procedure-list
-TYPE_PARSER(construct<ProcedureStmt>{}("MODULE~PROCEDURE" >>
+TYPE_PARSER(construct<ProcedureStmt>{}("MODULE PROCEDURE"_sptok >>
                     pure(ProcedureStmt::Kind::ModuleProcedure),
                 maybe("::"_tok) >> nonemptyList(specificProcedure)) ||
     construct<ProcedureStmt>{}(
@@ -3618,7 +3620,7 @@ TYPE_CONTEXT_PARSER("separate module subprogram"_en_US,
 
 // R1539 mp-subprogram-stmt -> MODULE PROCEDURE procedure-name
 TYPE_CONTEXT_PARSER("MODULE PROCEDURE statement"_en_US,
-    construct<MpSubprogramStmt>{}("MODULE~PROCEDURE" >> name))
+    construct<MpSubprogramStmt>{}("MODULE PROCEDURE"_sptok >> name))
 
 // R1540 end-mp-subprogram-stmt -> END [PROCEDURE [procedure-name]]
 TYPE_CONTEXT_PARSER("END PROCEDURE statement"_en_US,
