@@ -311,7 +311,7 @@ void StackLayoutModifier::checkStackPointerRestore(MCInst &Point) {
 
   // We are restoring SP to an old value based on FP. Mark it as a stack
   // access to be fixed later.
-  BC.MIB->addAnnotation(Point, getSlotTagName(), Output);
+  BC.MIB->addAnnotation(Point, getSlotTag(), Output);
 }
 
 void StackLayoutModifier::classifyStackAccesses() {
@@ -354,7 +354,7 @@ void StackLayoutModifier::classifyStackAccesses() {
       // We are free to go. Add it as available stack slot which we know how
       // to move it.
       AvailableRegions[FIEX->StackOffset] = FIEX->Size;
-      BC.MIB->addAnnotation(Inst, getSlotTagName(), FIEX->StackOffset);
+      BC.MIB->addAnnotation(Inst, getSlotTag(), FIEX->StackOffset);
       RegionToRegMap[FIEX->StackOffset].insert(FIEX->RegOrImm);
       RegToRegionMap[FIEX->RegOrImm].insert(FIEX->StackOffset);
       DEBUG(dbgs() << "Adding region " << FIEX->StackOffset << " size "
@@ -371,7 +371,7 @@ void StackLayoutModifier::classifyCFIs() {
   auto recordAccess = [&](MCInst *Inst, int64_t Offset) {
     const uint16_t Reg = BC.MRI->getLLVMRegNum(CfaReg, /*isEH=*/false);
     if (Reg == BC.MIB->getStackPointer() || Reg == BC.MIB->getFramePointer()) {
-      BC.MIB->addAnnotation(*Inst, getSlotTagName(), Offset);
+      BC.MIB->addAnnotation(*Inst, getSlotTag(), Offset);
       DEBUG(dbgs() << "Recording CFI " << Offset << "\n");
     } else {
       IsSimple = false;
@@ -398,12 +398,12 @@ void StackLayoutModifier::classifyCFIs() {
         break;
       case MCCFIInstruction::OpOffset:
         recordAccess(&Inst, CFI->getOffset());
-        BC.MIB->addAnnotation(Inst, getOffsetCFIRegTagName(),
+        BC.MIB->addAnnotation(Inst, getOffsetCFIRegTag(),
                               BC.MRI->getLLVMRegNum(CFI->getRegister(),
                                                     /*isEH=*/false));
         break;
       case MCCFIInstruction::OpSameValue:
-        BC.MIB->addAnnotation(Inst, getOffsetCFIRegTagName(),
+        BC.MIB->addAnnotation(Inst, getOffsetCFIRegTag(),
                               BC.MRI->getLLVMRegNum(CFI->getRegister(),
                                                     /*isEH=*/false));
         break;
@@ -432,7 +432,7 @@ void StackLayoutModifier::classifyCFIs() {
 void StackLayoutModifier::scheduleChange(
     MCInst &Inst, StackLayoutModifier::WorklistItem Item) {
   auto &WList = BC.MIB->getOrCreateAnnotationAs<std::vector<WorklistItem>>(
-      Inst, getTodoTagName());
+      Inst, getTodoTag());
   WList.push_back(Item);
 }
 
@@ -482,11 +482,11 @@ bool StackLayoutModifier::collapseRegion(MCInst *Alloc, int64_t RegionAddr,
 
   for (auto &BB : BF) {
     for (auto &Inst : BB) {
-      if (!BC.MIB->hasAnnotation(Inst, getSlotTagName()))
+      if (!BC.MIB->hasAnnotation(Inst, getSlotTag()))
         continue;
       auto Slot =
           BC.MIB->getAnnotationAs<decltype(FrameIndexEntry::StackOffset)>(
-              Inst, getSlotTagName());
+              Inst, getSlotTag());
       if (!AvailableRegions.count(Slot))
         continue;
       // We need to ensure this access is affected by the deleted push
@@ -583,11 +583,11 @@ bool StackLayoutModifier::insertRegion(ProgramPoint P, int64_t RegionSz) {
 
   for (auto &BB : BF) {
     for (auto &Inst : BB) {
-      if (!BC.MIB->hasAnnotation(Inst, getSlotTagName()))
+      if (!BC.MIB->hasAnnotation(Inst, getSlotTag()))
         continue;
       auto Slot =
           BC.MIB->getAnnotationAs<decltype(FrameIndexEntry::StackOffset)>(
-              Inst, getSlotTagName());
+              Inst, getSlotTag());
       if (!AvailableRegions.count(Slot))
         continue;
 
@@ -633,10 +633,10 @@ void StackLayoutModifier::performChanges() {
         assert(BC.MIB->isPop(Inst) || BC.MIB->isPush(Inst));
         BC.MIB->removeAnnotation(Inst, "AccessesDeletedPos");
       }
-      if (!BC.MIB->hasAnnotation(Inst, getTodoTagName()))
+      if (!BC.MIB->hasAnnotation(Inst, getTodoTag()))
         continue;
       auto &WList = BC.MIB->getAnnotationAs<std::vector<WorklistItem>>(
-          Inst, getTodoTagName());
+          Inst, getTodoTag());
       int64_t Adjustment = 0;
       WorklistItem::ActionType AdjustmentType = WorklistItem::None;
       for (auto &WI : WList) {
@@ -1275,7 +1275,7 @@ void ShrinkWrapping::moveSaveRestores() {
       for (auto I = BB.rbegin(), E = BB.rend(); I != E; ++I) {
         auto &Inst = *I;
         auto TodoList = BC.MIB->tryGetAnnotationAs<std::vector<WorklistItem>>(
-            Inst, getAnnotationName());
+            Inst, getAnnotationIndex());
         if (!TodoList)
           continue;
         bool isCFI = BC.MIB->isCFI(Inst);
@@ -1381,6 +1381,8 @@ class PredictiveStackPointerTracking
                                 std::pair<int, int>>;
   decltype(ShrinkWrapping::Todo) &TodoMap;
   DataflowInfoManager &Info;
+
+  Optional<unsigned> AnnotationIndex;
 
 protected:
   void compNextAux(const MCInst &Point,
@@ -1803,7 +1805,7 @@ bool ShrinkWrapping::processInsertions() {
     for (auto I = BB.begin(); I != BB.end(); ++I) {
       auto &Inst = *I;
       auto TodoList = BC.MIB->tryGetAnnotationAs<std::vector<WorklistItem>>(
-          Inst, getAnnotationName());
+          Inst, getAnnotationIndex());
       if (!TodoList)
         continue;
       Changes = true;
@@ -1833,10 +1835,10 @@ bool ShrinkWrapping::processInsertions() {
 void ShrinkWrapping::processDeletions() {
   auto &LA = Info.getLivenessAnalysis();
   for (auto &BB : BF) {
-    for (auto I = BB.rbegin(), E = BB.rend(); I != E; ++I) {
-      auto &Inst = *I;
+    for (auto II = BB.begin(); II != BB.end(); ++II) {
+      auto &Inst = *II;
       auto TodoList = BC.MIB->tryGetAnnotationAs<std::vector<WorklistItem>>(
-          Inst, getAnnotationName());
+          Inst, getAnnotationIndex());
       if (!TodoList)
         continue;
       // Process all deletions
@@ -1860,9 +1862,9 @@ void ShrinkWrapping::processDeletions() {
 
         DEBUG({
           dbgs() << "Erasing: ";
-          Inst.dump();
+          BC.printInstruction(dbgs(), Inst);
         });
-        BB.eraseInstruction(&Inst);
+        II = std::prev(BB.eraseInstruction(II));
         break;
       }
     }

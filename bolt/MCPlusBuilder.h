@@ -18,6 +18,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/Optional.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -36,7 +37,6 @@
 #include <map>
 #include <set>
 #include <system_error>
-#include <unordered_map>
 #include <unordered_set>
 
 namespace llvm {
@@ -53,19 +53,37 @@ enum class IndirectBranchType : char {
 
 class MCPlusBuilder {
 private:
+  /// Annotation instruction allocator.
+  SpecificBumpPtrAllocator<MCInst> MCInstAllocator;
 
   /// Annotation value allocator.
   BumpPtrAllocator Allocator;
-
-  /// Annotation instruction allocator.
-  SpecificBumpPtrAllocator<MCInst> MCInstAllocator;
 
   /// Record all the annotations with non-trivial type.  To prevent leaks, these
   /// will need destructors called when the annotation is removed or when all
   /// annotations are destroyed.
   std::unordered_set<MCPlus::MCAnnotation*> AnnotationPool;
 
-  static constexpr int64_t INVALID_VALUE = -1LL;
+  /// We encode Index and Value into a 64-bit immediate operand value.
+  static int64_t encodeAnnotationImm(unsigned Index, int64_t Value) {
+    assert(Index < 256 && "annotation index max value exceeded");
+    assert((Value == (Value << 8) >> 8) && "annotation value out of range");
+
+    Value &= 0xffffffffffffff;
+    Value |= (int64_t)Index << 56;
+
+    return Value;
+  }
+
+  /// Extract annotation index from immediate operand value.
+  static unsigned extractAnnotationIndex(int64_t ImmValue) {
+    return ImmValue >> 56;
+  }
+
+  /// Extract annotation value from immediate operand value.
+  static int64_t extractAnnotationValue(int64_t ImmValue) {
+    return (ImmValue << 8) >> 8;
+  }
 
   MCInst *getAnnotationInst(const MCInst &Inst) const {
     if (Inst.getNumOperands() == 0)
@@ -89,11 +107,16 @@ private:
       Inst.addOperand(MCOperand::createInst(AnnotationInst));
     }
 
-    // Make sure the instruction has enough operands.
-    for (auto OpNum = AnnotationInst->getNumOperands(); OpNum <= Index; ++OpNum)
-      AnnotationInst->addOperand(MCOperand::createImm(INVALID_VALUE));
+    const auto AnnotationValue = encodeAnnotationImm(Index, Value);
+    for (int I = AnnotationInst->getNumOperands() - 1; I >= 0; --I) {
+      auto ImmValue = AnnotationInst->getOperand(I).getImm();
+      if (extractAnnotationIndex(ImmValue) == Index) {
+        AnnotationInst->getOperand(I).setImm(AnnotationValue);
+        return;
+      }
+    }
 
-    AnnotationInst->getOperand(Index).setImm(Value);
+    AnnotationInst->addOperand(MCOperand::createImm(AnnotationValue));
   }
 
   Optional<int64_t>
@@ -102,14 +125,14 @@ private:
     if (!AnnotationInst)
       return NoneType();
 
-    if (Index + 1 > AnnotationInst->getNumOperands())
-      return NoneType();
+    for (int I = AnnotationInst->getNumOperands() - 1; I >= 0; --I) {
+      auto ImmValue = AnnotationInst->getOperand(I).getImm();
+      if (extractAnnotationIndex(ImmValue) == Index) {
+        return extractAnnotationValue(ImmValue);
+      }
+    }
 
-    const auto Value = AnnotationInst->getOperand(Index).getImm();
-    if (Value == INVALID_VALUE)
-      return NoneType();
-
-    return Value;
+    return NoneType();
   }
 
 protected:
@@ -125,47 +148,11 @@ protected:
     }
   };
 
-  /// Map annotation name into an operand index.
-  std::unordered_map<std::string, uint64_t> AnnotationNameIndexMap;
+  /// Map annotation name into an annotation index.
+  StringMap<uint64_t> AnnotationNameIndexMap;
 
   /// Names of non-standard annotations.
   SmallVector<std::string, 8> AnnotationNames;
-
-private:
-
-  Optional<unsigned> getAnnotationIndex(StringRef Name) const {
-    auto AI = AnnotationNameIndexMap.find(Name);
-    if (AI != AnnotationNameIndexMap.end())
-      return AI->second;
-    return NoneType();
-  }
-
-  unsigned getOrCreateAnnotationIndex(StringRef Name) {
-    auto AI = AnnotationNameIndexMap.find(Name);
-    if (AI != AnnotationNameIndexMap.end())
-      return AI->second;
-
-    auto Index = AnnotationNameIndexMap.size() + MCPlus::MCAnnotation::kGeneric;
-    AnnotationNameIndexMap.insert(std::make_pair(Name, Index));
-    AnnotationNames.push_back(Name);
-
-    return Index;
-  }
-
-  std::string getAnnotationName(unsigned Index) {
-    if (Index < MCPlus::MCAnnotation::kGeneric)
-      return "standard annotation";
-
-    if (Index > MCPlus::MCAnnotation::kGeneric + AnnotationNames.size() - 1)
-      return "invalid annotation";
-
-    return AnnotationNames[Index - MCPlus::MCAnnotation::kGeneric];
-  }
-
-  /// Get an annotation.  Assumes that the annotation exists.
-  /// Use hasAnnotation() if the annotation may not exist.
-  const MCPlus::MCAnnotation *
-  getAnnotation(const MCInst &Inst, StringRef Name) const;
 
 public:
   class InstructionIterator
@@ -302,8 +289,8 @@ public:
       Annotation->~MCAnnotation();
     }
     AnnotationPool.clear();
-    Allocator.Reset();
     MCInstAllocator.DestroyAll();
+    Allocator.Reset();
   }
 
   virtual bool isBranch(const MCInst &Inst) const {
@@ -1292,20 +1279,64 @@ public:
     return true;
   }
 
+
+  /// Return annotation index matching the \p Name.
+  Optional<unsigned> getAnnotationIndex(StringRef Name) const {
+    auto AI = AnnotationNameIndexMap.find(Name);
+    if (AI != AnnotationNameIndexMap.end())
+      return AI->second;
+    return NoneType();
+  }
+
+  /// Return annotation index matching the \p Name. Create a new index if the
+  /// \p Name wasn't registered previously.
+  unsigned getOrCreateAnnotationIndex(StringRef Name) {
+    auto AI = AnnotationNameIndexMap.find(Name);
+    if (AI != AnnotationNameIndexMap.end())
+      return AI->second;
+
+    const auto Index =
+        AnnotationNameIndexMap.size() + MCPlus::MCAnnotation::kGeneric;
+    AnnotationNameIndexMap.insert(std::make_pair(Name, Index));
+    AnnotationNames.push_back(Name);
+    return Index;
+  }
+
+  /// Store an annotation value on an MCInst.  This assumes the annotation
+  /// is not already present.
+  template <typename ValueType>
+  const ValueType &addAnnotation(MCInst &Inst,
+                                 unsigned Index,
+                                 const ValueType &Val) {
+    assert(!hasAnnotation(Inst, Index));
+    auto *A = new (Allocator) MCPlus::MCSimpleAnnotation<ValueType>(Val);
+    if (!std::is_trivial<ValueType>::value) {
+      AnnotationPool.insert(A);
+    }
+    setAnnotationOpValue(Inst, Index, reinterpret_cast<int64_t>(A));
+    return A->getValue();
+  }
+
   /// Store an annotation value on an MCInst.  This assumes the annotation
   /// is not already present.
   template <typename ValueType>
   const ValueType &addAnnotation(MCInst &Inst,
                                  StringRef Name,
                                  const ValueType &Val) {
-    assert(!hasAnnotation(Inst, Name));
-    auto *A = new (Allocator) MCPlus::MCSimpleAnnotation<ValueType>(Val);
-    if (!std::is_trivial<ValueType>::value) {
-      AnnotationPool.insert(A);
-    }
-    setAnnotationOpValue(Inst, getOrCreateAnnotationIndex(Name),
-                         reinterpret_cast<int64_t>(A));
-    return A->getValue();
+    return addAnnotation(Inst, getOrCreateAnnotationIndex(Name), Val);
+  }
+
+  /// Get an annotation as a specific value, but if the annotation does not
+  /// exist, create a new annotation with the default constructor for that type.
+  /// Return a non-const ref so caller can freely modify its contents
+  /// afterwards.
+  template <typename ValueType>
+  ValueType& getOrCreateAnnotationAs(MCInst &Inst, unsigned Index) {
+    auto Val =
+      tryGetAnnotationAs<ValueType>(const_cast<const MCInst &>(Inst), Index);
+    if (!Val)
+      Val = addAnnotation(Inst, Index, ValueType());
+    return const_cast<ValueType&>(*Val);
   }
 
   /// Get an annotation as a specific value, but if the annotation does not
@@ -1314,21 +1345,37 @@ public:
   /// afterwards.
   template <typename ValueType>
   ValueType& getOrCreateAnnotationAs(MCInst &Inst, StringRef Name) {
-    auto Val = tryGetAnnotationAs<ValueType>((const MCInst &)Inst, Name);
-    if (!Val) {
-      Val = addAnnotation(Inst, Name, ValueType());
-    }
-    return const_cast<ValueType&>(*Val);
+    const auto Index = getOrCreateAnnotationIndex(Name);
+    return getOrCreateAnnotationAs<ValueType>(Inst, Index);
   }
 
-  /// Get an annotation as a specific value.  Assumes that the annotation exist.
+  /// Get an annotation as a specific value.  Assumes that the annotation exists.
+  /// Use hasAnnotation() if the annotation may not exist.
+  template <typename ValueType>
+  const ValueType &getAnnotationAs(const MCInst &Inst, unsigned Index) const {
+    auto Value = getAnnotationOpValue(Inst, Index);
+    assert(Value && "annotation should exist");
+    return reinterpret_cast<const MCPlus::MCSimpleAnnotation<ValueType> *>
+      (*Value)->getValue();
+  }
+
+  /// Get an annotation as a specific value.  Assumes that the annotation exists.
   /// Use hasAnnotation() if the annotation may not exist.
   template <typename ValueType>
   const ValueType &getAnnotationAs(const MCInst &Inst, StringRef Name) const {
-    const auto *Annotation = getAnnotation(Inst, Name);
-    assert(Annotation);
-    return static_cast<const MCPlus::MCSimpleAnnotation<ValueType> *>
-      (Annotation)->getValue();
+    const auto Index = getAnnotationIndex(Name);
+    assert(Index && "annotation should exist");
+    return getAnnotationAs<ValueType>(Inst, *Index);
+  }
+
+  /// Get an annotation as a specific value. If the annotation does not exist,
+  /// return the \p DefaultValue.
+  template <typename ValueType> const ValueType &
+  getAnnotationWithDefault(const MCInst &Inst, unsigned Index,
+                           const ValueType &DefaultValue = ValueType()) {
+    if (!hasAnnotation(Inst, Index))
+      return DefaultValue;
+    return getAnnotationAs<ValueType>(Inst, Index);
   }
 
   /// Get an annotation as a specific value. If the annotation does not exist,
@@ -1336,40 +1383,76 @@ public:
   template <typename ValueType> const ValueType &
   getAnnotationWithDefault(const MCInst &Inst, StringRef Name,
                            const ValueType &DefaultValue = ValueType()) {
-    if (!hasAnnotation(Inst, Name))
-      return DefaultValue;
-    return getAnnotationAs<ValueType>(Inst, Name);
+    const auto Index = getOrCreateAnnotationIndex(Name);
+    return getAnnotationWithDefault<ValueType>(Inst, Index, DefaultValue);
   }
 
   /// Check if the specified annotation exists on this instruction.
-  bool hasAnnotation(const MCInst &Inst, StringRef Name) const;
+  bool hasAnnotation(const MCInst &Inst, unsigned Index) const;
+
+  /// Check if an annotation with a specified \p Name exists on \p Inst.
+  bool hasAnnotation(const MCInst &Inst, StringRef Name) const {
+    const auto Index = getAnnotationIndex(Name);
+    if (!Index)
+      return false;
+    return hasAnnotation(Inst, *Index);
+  }
+
+  /// Get an annotation as a specific value, but if the annotation does not
+  /// exist, return errc::result_out_of_range.
+  template <typename ValueType>
+  ErrorOr<const ValueType &> tryGetAnnotationAs(const MCInst &Inst,
+                                                unsigned Index) const {
+    if (!hasAnnotation(Inst, Index))
+      return make_error_code(std::errc::result_out_of_range);
+    return getAnnotationAs<ValueType>(Inst, Index);
+  }
 
   /// Get an annotation as a specific value, but if the annotation does not
   /// exist, return errc::result_out_of_range.
   template <typename ValueType>
   ErrorOr<const ValueType &> tryGetAnnotationAs(const MCInst &Inst,
                                                 StringRef Name) const {
-    if (!hasAnnotation(Inst, Name))
+    const auto Index = getAnnotationIndex(Name);
+    if (!Index)
       return make_error_code(std::errc::result_out_of_range);
-    return getAnnotationAs<ValueType>(Inst, Name);
+    return tryGetAnnotationAs<ValueType>(Inst, *Index);
   }
 
   template <typename ValueType>
-  ErrorOr<ValueType &> tryGetAnnotationAs(MCInst &Inst,
-                                          StringRef Name) const {
-    if (!hasAnnotation(Inst, Name))
+  ErrorOr<ValueType &> tryGetAnnotationAs(MCInst &Inst, unsigned Index) const {
+    if (!hasAnnotation(Inst, Index))
       return make_error_code(std::errc::result_out_of_range);
-    return const_cast<ValueType &>(getAnnotationAs<ValueType>(Inst, Name));
+    return const_cast<ValueType &>(getAnnotationAs<ValueType>(Inst, Index));
+  }
+
+  template <typename ValueType>
+  ErrorOr<ValueType &> tryGetAnnotationAs(MCInst &Inst, StringRef Name) const {
+    const auto Index = getAnnotationIndex(Name);
+    if (!Index)
+      return make_error_code(std::errc::result_out_of_range);
+    return tryGetAnnotationAs<ValueType>(Inst, *Index);
   }
 
   /// Print each annotation attached to \p Inst.
   void printAnnotations(const MCInst &Inst, raw_ostream &OS) const;
 
+  /// Remove annotation with a given \p Index.
+  ///
+  /// Return true if the annotation was removed, false if the annotation
+  /// was not present.
+  bool removeAnnotation(MCInst &Inst, unsigned Index);
+
   /// Remove annotation associated with \p Name.
   ///
-  /// Return true if the annotation was removed, false if the the annotation
+  /// Return true if the annotation was removed, false if the annotation
   /// was not present.
-  bool removeAnnotation(MCInst &Inst, StringRef Name);
+  bool removeAnnotation(MCInst &Inst, StringRef Name) {
+    const auto Index = getAnnotationIndex(Name);
+    if (!Index)
+      return false;
+    return removeAnnotation(Inst, *Index);
+  }
 
   /// Remove all meta-data annotations from Inst.
   void removeAllAnnotations(MCInst &Inst);

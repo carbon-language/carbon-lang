@@ -27,6 +27,8 @@ class CalleeSavedAnalysis {
   const BinaryContext &BC;
   BinaryFunction &BF;
   DataflowInfoManager &Info;
+  Optional<unsigned> SaveTagIndex;
+  Optional<unsigned> RestoreTagIndex;
 
   /// Compute all stores of callee-saved regs. Those are the ones that stores a
   /// register whose definition is not local.
@@ -39,11 +41,26 @@ class CalleeSavedAnalysis {
 
   /// Returns the identifying string used to annotate instructions with metadata
   /// for this analysis. These are deleted in the destructor.
-  static StringRef getSaveTag() {
+  static StringRef getSaveTagName() {
     return StringRef("CSA-SavedReg");
   }
-  static StringRef getRestoreTag() {
+
+  unsigned getSaveTag() {
+    if (SaveTagIndex)
+      return *SaveTagIndex;
+    SaveTagIndex = BC.MIB->getOrCreateAnnotationIndex(getSaveTagName());
+    return *SaveTagIndex;
+  }
+
+  static StringRef getRestoreTagName() {
     return StringRef("CSA-RestoredReg");
+  }
+
+  unsigned getRestoreTag() {
+    if (RestoreTagIndex)
+      return *RestoreTagIndex;
+    RestoreTagIndex = BC.MIB->getOrCreateAnnotationIndex(getRestoreTagName());
+    return *RestoreTagIndex;
   }
 
 public:
@@ -125,6 +142,10 @@ class StackLayoutModifier {
 
   bool IsInitialized{false};
 
+  Optional<unsigned> TodoTagIndex;
+  Optional<unsigned> SlotTagIndex;
+  Optional<unsigned> OffsetCFIRegTagIndex;
+
 public:
   // Keep a worklist of operations to perform on the function to perform
   // the requested layout modifications via collapseRegion()/insertRegion().
@@ -173,6 +194,29 @@ private:
   /// Used to keep track of modifications to the function that will later be
   /// performed by performChanges();
   void scheduleChange(MCInst &Inst, WorklistItem Item);
+
+  unsigned getTodoTag() {
+    if (TodoTagIndex)
+      return *TodoTagIndex;
+    TodoTagIndex = BC.MIB->getOrCreateAnnotationIndex(getTodoTagName());
+    return *TodoTagIndex;
+  }
+
+  unsigned getSlotTag() {
+    if (SlotTagIndex)
+      return *SlotTagIndex;
+    SlotTagIndex = BC.MIB->getOrCreateAnnotationIndex(getSlotTagName());
+    return *SlotTagIndex;
+  }
+
+  unsigned getOffsetCFIRegTag() {
+    if (OffsetCFIRegTagIndex)
+      return *OffsetCFIRegTagIndex;
+    OffsetCFIRegTagIndex =
+      BC.MIB->getOrCreateAnnotationIndex(getOffsetCFIRegTagName());
+    return *OffsetCFIRegTagIndex;
+  }
+
   static StringRef getTodoTagName() {
     return StringRef("SLM-TodoTag");
   }
@@ -191,9 +235,9 @@ public:
   ~StackLayoutModifier() {
     for (auto &BB : BF) {
       for (auto &Inst : BB) {
-        BC.MIB->removeAnnotation(Inst, getTodoTagName());
-        BC.MIB->removeAnnotation(Inst, getSlotTagName());
-        BC.MIB->removeAnnotation(Inst, getOffsetCFIRegTagName());
+        BC.MIB->removeAnnotation(Inst, getTodoTag());
+        BC.MIB->removeAnnotation(Inst, getSlotTag());
+        BC.MIB->removeAnnotation(Inst, getOffsetCFIRegTag());
       }
     }
   }
@@ -202,7 +246,7 @@ public:
   /// instruction or 0 if this is not a CSR restore instruction.
   uint16_t getOffsetCFIReg(const MCInst &Inst) {
     auto Val =
-        BC.MIB->tryGetAnnotationAs<uint16_t>(Inst, getOffsetCFIRegTagName());
+        BC.MIB->tryGetAnnotationAs<uint16_t>(Inst, getOffsetCFIRegTag());
     if (Val)
       return *Val;
     return 0;
@@ -270,6 +314,8 @@ class ShrinkWrapping {
   static uint64_t SpillsMovedRegularMode;
   static uint64_t SpillsMovedPushPopMode;
 
+  Optional<unsigned> AnnotationIndex;
+
   /// Allow our custom worklist-sensitive analysis
   /// PredictiveStackPointerTracking to access WorklistItem
 public:
@@ -301,6 +347,14 @@ public:
   static StringRef getAnnotationName() {
     return StringRef("ShrinkWrap-Todo");
   }
+
+  unsigned getAnnotationIndex() {
+    if (AnnotationIndex)
+      return *AnnotationIndex;
+    AnnotationIndex = BC.MIB->getOrCreateAnnotationIndex(getAnnotationName());
+    return *AnnotationIndex;
+  }
+
 private:
   using BBIterTy = BinaryBasicBlock::iterator;
 
@@ -327,7 +381,7 @@ private:
   void scheduleChange(ProgramPoint PP, T&& ...Item) {
     if (PP.isInst()) {
       auto &WList = BC.MIB->getOrCreateAnnotationAs<std::vector<WorklistItem>>(
-          *PP.getInst(), getAnnotationName());
+          *PP.getInst(), getAnnotationIndex());
       WList.emplace_back(std::forward<T>(Item)...);
       return;
     }
@@ -344,7 +398,7 @@ private:
       BB = *BB->succ_begin();
     }
     auto &WList = BC.MIB->getOrCreateAnnotationAs<std::vector<WorklistItem>>(
-      *BB->begin(), getAnnotationName());
+      *BB->begin(), getAnnotationIndex());
     WList.emplace_back(std::forward<T>(Item)...);
   }
 
@@ -470,7 +524,7 @@ public:
   ~ShrinkWrapping() {
     for (auto &BB : BF) {
       for (auto &Inst : BB) {
-        BC.MIB->removeAnnotation(Inst, getAnnotationName());
+        BC.MIB->removeAnnotation(Inst, getAnnotationIndex());
       }
     }
   }

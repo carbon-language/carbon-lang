@@ -986,10 +986,10 @@ public:
       case X86::MOV8mr_NOREX:
       case X86::MOV8rm_NOREX:
       case X86::MOV8rr_NOREX:
-      case X86::MOVSX32_NOREXrm8:
-      case X86::MOVSX32_NOREXrr8:
-      case X86::MOVZX32_NOREXrm8:
-      case X86::MOVZX32_NOREXrr8:
+      case X86::MOVSX32rm8_NOREX:
+      case X86::MOVSX32rr8_NOREX:
+      case X86::MOVZX32rm8_NOREX:
+      case X86::MOVZX32rr8_NOREX:
       case X86::MOV8mr:
       case X86::MOV8rm:
       case X86::MOV8rr:
@@ -2548,7 +2548,7 @@ public:
 
   ICPdata indirectCallPromotion(
     const MCInst &CallInst,
-    const std::vector<std::pair<MCSymbol *,uint64_t>>& Targets,
+    const std::vector<std::pair<MCSymbol *,uint64_t>> &Targets,
     const std::vector<uint64_t> &VtableAddrs,
     const std::vector<MCInst *> &MethodFetchInsns,
     const bool MinimizeCodeSize,
@@ -2590,10 +2590,10 @@ public:
         return Results;
     }
 
-    const auto jumpToMergeBlock = [&](std::vector<MCInst> *NewCall) {
+    const auto jumpToMergeBlock = [&](std::vector<MCInst> &NewCall) {
       assert(MergeBlock);
-      NewCall->push_back(CallInst);
-      MCInst& Merge = NewCall->back();
+      NewCall.push_back(CallInst);
+      MCInst &Merge = NewCall.back();
       Merge.clear();
       createUncondBranch(Merge, MergeBlock, Ctx);
     };
@@ -2605,7 +2605,7 @@ public:
       if (MinimizeCodeSize && !LoadElim) {
         // Load the call target into FuncAddrReg.
         NewCall->push_back(CallInst);  // Copy CallInst in order to get SMLoc
-        MCInst& Target = NewCall->back();
+        MCInst &Target = NewCall->back();
         Target.clear();
         Target.setOpcode(X86::MOV64ri32);
         Target.addOperand(MCOperand::createReg(FuncAddrReg));
@@ -2627,7 +2627,7 @@ public:
 
         // Compare current call target to a specific address.
         NewCall->push_back(CallInst);
-        MCInst& Compare = NewCall->back();
+        MCInst &Compare = NewCall->back();
         Compare.clear();
         if (CallInst.getOpcode() == X86::CALL64r ||
             CallInst.getOpcode() == X86::JMP64r ||
@@ -2650,7 +2650,7 @@ public:
       } else {
         // Compare current call target to a specific address.
         NewCall->push_back(CallInst);
-        MCInst& Compare = NewCall->back();
+        MCInst &Compare = NewCall->back();
         Compare.clear();
         if (CallInst.getOpcode() == X86::CALL64r ||
             CallInst.getOpcode() == X86::JMP64r ||
@@ -2690,7 +2690,7 @@ public:
       NewCall->push_back(CallInst);
 
       if (IsJumpTable) {
-        MCInst& Je = NewCall->back();
+        MCInst &Je = NewCall->back();
 
         // Jump to next compare if target addresses don't match.
         Je.clear();
@@ -2705,7 +2705,7 @@ public:
         }
         assert(!isInvoke(CallInst));
       } else {
-        MCInst& Jne = NewCall->back();
+        MCInst &Jne = NewCall->back();
 
         // Jump to next compare if target addresses don't match.
         Jne.clear();
@@ -2755,7 +2755,7 @@ public:
             MergeBlock = Ctx->createTempSymbol();
           } else {
             // Insert jump to the merge block if we are not doing a fallthrough.
-            jumpToMergeBlock(NewCall);
+            jumpToMergeBlock(*NewCall);
           }
         }
       }
@@ -2763,7 +2763,7 @@ public:
 
     // Cold call block.
     Results.push_back(std::make_pair(NextTarget, std::vector<MCInst>()));
-    std::vector<MCInst>& NewCall = Results.back().second;
+    std::vector<MCInst> &NewCall = Results.back().second;
     for (auto *Inst : MethodFetchInsns) {
       if (Inst != &CallInst)
         NewCall.push_back(*Inst);
@@ -2772,7 +2772,7 @@ public:
 
     // Jump to merge block from cold call block
     if (!IsTailCall && !IsJumpTable) {
-      jumpToMergeBlock(&NewCall);
+      jumpToMergeBlock(NewCall);
 
       // Record merge block
       Results.push_back(std::make_pair(MergeBlock, std::vector<MCInst>()));
@@ -2783,7 +2783,7 @@ public:
 
   ICPdata jumpTablePromotion(
     const MCInst &IJmpInst,
-    const std::vector<std::pair<MCSymbol *,uint64_t>>& Targets,
+    const std::vector<std::pair<MCSymbol *,uint64_t>> &Targets,
     const std::vector<MCInst *> &TargetFetchInsns,
     MCContext *Ctx
   ) const override {
@@ -2831,7 +2831,7 @@ public:
 
     // Cold call block.
     Results.push_back(std::make_pair(NextTarget, std::vector<MCInst>()));
-    std::vector<MCInst>& CurBB = Results.back().second;
+    std::vector<MCInst> &CurBB = Results.back().second;
     for (auto *Inst : TargetFetchInsns) {
       if (Inst != &IJmpInst)
         CurBB.push_back(*Inst);
@@ -2850,4 +2850,3 @@ MCPlusBuilder *createX86MCPlusBuilder(const MCInstrAnalysis *Analysis,
                                       const MCRegisterInfo *RegInfo) {
   return new X86MCPlusBuilder(Analysis, Info, RegInfo);
 }
-

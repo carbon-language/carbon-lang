@@ -27,7 +27,6 @@ using namespace llvm;
 using namespace bolt;
 using namespace MCPlus;
 
-
 Optional<MCLandingPad> MCPlusBuilder::getEHInfo(const MCInst &Inst) const {
   if (!isCall(Inst))
     return NoneType();
@@ -104,65 +103,39 @@ MCPlusBuilder::setConditionalTailCall(MCInst &Inst, uint64_t Dest) {
 bool MCPlusBuilder::unsetConditionalTailCall(MCInst &Inst) {
   if (!getConditionalTailCall(Inst))
     return false;
-  setAnnotationOpValue(Inst, MCAnnotation::kConditionalTailCall, INVALID_VALUE);
+  removeAnnotation(Inst, MCAnnotation::kConditionalTailCall);
   return true;
 }
 
-bool MCPlusBuilder::hasAnnotation(const MCInst &Inst, StringRef Name) const {
+bool MCPlusBuilder::hasAnnotation(const MCInst &Inst, unsigned Index) const {
   const auto *AnnotationInst = getAnnotationInst(Inst);
   if (!AnnotationInst)
     return false;
 
-  auto AI = AnnotationNameIndexMap.find(Name);
-  if (AI == AnnotationNameIndexMap.end())
-    return false;
-
-  if (AI->second + 1 > AnnotationInst->getNumOperands())
-    return false;
-
-  const auto Value = AnnotationInst->getOperand(AI->second).getImm();
-  if (Value == INVALID_VALUE)
-    return false;
-
-  return true;
+  return (bool)getAnnotationOpValue(Inst, Index);
 }
 
-const MCAnnotation *
-MCPlusBuilder::getAnnotation(const MCInst &Inst, StringRef Name) const {
-  const auto Idx = getAnnotationIndex(Name);
-  if (!Idx)
-    return nullptr;
-
-  auto Value = getAnnotationOpValue(Inst, *Idx);
-  if (!Value)
-    return nullptr;
-  return reinterpret_cast<MCAnnotation *>(*Value);
-}
-
-bool MCPlusBuilder::removeAnnotation(MCInst &Inst, StringRef Name) {
+bool MCPlusBuilder::removeAnnotation(MCInst &Inst, unsigned Index) {
   auto *AnnotationInst = getAnnotationInst(Inst);
   if (!AnnotationInst)
     return false;
 
-  const auto Idx = getAnnotationIndex(Name);
-  if (!Idx || *Idx >= AnnotationInst->getNumOperands())
-    return false;
-
-  auto &Op = AnnotationInst->getOperand(*Idx);
-  assert(Op.isImm());
-  if (Op.getImm() == INVALID_VALUE)
-    return false;
-
-  auto *Annotation = reinterpret_cast<MCAnnotation *>(Op.getImm());
-  auto Itr = AnnotationPool.find(Annotation);
-  if (Itr != AnnotationPool.end()) {
-    AnnotationPool.erase(Itr);
-    Annotation->~MCAnnotation();
+  for (int I = AnnotationInst->getNumOperands() - 1; I >= 0; --I) {
+    auto ImmValue = AnnotationInst->getOperand(I).getImm();
+    if (extractAnnotationIndex(ImmValue) == Index) {
+      AnnotationInst->erase(AnnotationInst->begin() + I);
+      auto *Annotation =
+        reinterpret_cast<MCAnnotation *>(extractAnnotationValue(ImmValue));
+      auto Itr = AnnotationPool.find(Annotation);
+      if (Itr != AnnotationPool.end()) {
+        AnnotationPool.erase(Itr);
+        Annotation->~MCAnnotation();
+      }
+      return true;
+    }
   }
 
-  AnnotationInst->getOperand(*Idx).setImm(INVALID_VALUE);
-
-  return true;
+  return false;
 }
 
 void MCPlusBuilder::removeAllAnnotations(MCInst &Inst) {
@@ -170,13 +143,11 @@ void MCPlusBuilder::removeAllAnnotations(MCInst &Inst) {
   if (!AnnotationInst)
     return;
 
-  for (unsigned I = AnnotationInst->getNumOperands() - 1;
-       I >= MCAnnotation::kGeneric; --I) {
-    const auto &Op = AnnotationInst->getOperand(I);
-    assert(Op.isImm());
-    if (Op.getImm() == INVALID_VALUE)
-      continue;
-    auto *Annotation = reinterpret_cast<MCAnnotation *>(Op.getImm());
+  for (int I = AnnotationInst->getNumOperands() - 1; I >= 0; --I) {
+    auto ImmValue = AnnotationInst->getOperand(I).getImm();
+    AnnotationInst->erase(std::prev(AnnotationInst->end()));
+    auto *Annotation =
+      reinterpret_cast<MCAnnotation *>(extractAnnotationValue(ImmValue));
     auto Itr = AnnotationPool.find(Annotation);
     if (Itr != AnnotationPool.end()) {
       AnnotationPool.erase(Itr);
@@ -194,17 +165,17 @@ MCPlusBuilder::printAnnotations(const MCInst &Inst, raw_ostream &OS) const {
   if (!AnnotationInst)
     return;
 
-  for (unsigned I = MCAnnotation::kGeneric;
-       I < AnnotationInst->getNumOperands(); ++I) {
-    const auto &Op = AnnotationInst->getOperand(I);
-    assert(Op.isImm());
-    if (Op.getImm() == INVALID_VALUE)
-      continue;
+  for (unsigned I = 0; I < AnnotationInst->getNumOperands(); ++I) {
+    const auto Imm = AnnotationInst->getOperand(I).getImm();
+    const auto Index = extractAnnotationIndex(Imm);
+    const auto Value = extractAnnotationValue(Imm);
     const auto *Annotation =
-        reinterpret_cast<const MCAnnotation *>(Op.getImm());
-    OS << " # " << AnnotationNames[I - MCAnnotation::kGeneric]
-       << ": ";
-    Annotation->print(OS);
+        reinterpret_cast<const MCAnnotation *>(Value);
+    if (Index >= MCAnnotation::kGeneric) {
+      OS << " # " << AnnotationNames[Index - MCAnnotation::kGeneric]
+         << ": ";
+      Annotation->print(OS);
+    }
   }
 }
 

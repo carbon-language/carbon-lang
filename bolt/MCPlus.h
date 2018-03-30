@@ -26,7 +26,7 @@ namespace MCPlus {
 /// pad and the uint64_t represents the action.
 using MCLandingPad = std::pair<const MCSymbol *, uint64_t>;
 
-/// An extension to MCInst is provided via an extra operand of type Inst with
+/// An extension to MCInst is provided via an extra operand of type MCInst with
 /// ANNOTATION_LABEL opcode (i.e. we are tying an annotation instruction to an
 /// existing one). The annotation instruction contains a list of Immediate
 /// operands. Each operand either contains a value, or is a pointer to
@@ -39,11 +39,17 @@ using MCLandingPad = std::pair<const MCSymbol *, uint64_t>;
 /// correctness of the program. Debugging information, and profile information
 /// belong to the second group.
 ///
-/// For the first group, we use a reserved operand number/index. Operands in
-/// the first groups store a value of an annotation.
+/// Note: some optimization/transformation passes could use generic annotations
+///       inside the pass and remove these annotations after the pass. In this
+///       case, the internal state saved with annotations could affect the
+///       correctness.
 ///
-/// Annotations in the second group are addressed by name, and their respective
-/// operands store a pointer to an instance of MCAnnotation class.
+/// For the first group, we use a reserved annotation index. Operands in
+/// the first groups store a value of an annotation in the immediate field
+/// of their corresponding operand.
+///
+/// Annotations in the second group could be addressed either by name, or by
+/// by and index which could be queried by providing a name.
 class MCAnnotation {
 public:
   enum Kind {

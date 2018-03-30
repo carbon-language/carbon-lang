@@ -165,6 +165,8 @@ class DataflowAnalysis {
     return *static_cast<const Derived*>(this);
   }
 
+  mutable Optional<unsigned> AnnotationIndex;
+
 protected:
   const BinaryContext &BC;
   /// Reference to the function being analysed
@@ -227,6 +229,14 @@ protected:
     return StringRef("");
   }
 
+  unsigned getAnnotationIndex() const {
+    if (AnnotationIndex)
+      return *AnnotationIndex;
+    AnnotationIndex =
+      BC.MIB->getOrCreateAnnotationIndex(const_derived().getAnnotationName());
+    return *AnnotationIndex;
+  }
+
   /// Private getter methods accessing state in a read-write fashion
   StateTy &getOrCreateStateAt(const BinaryBasicBlock &BB) {
     return StateAtBBEntry[&BB];
@@ -234,7 +244,7 @@ protected:
 
   StateTy &getOrCreateStateAt(MCInst &Point) {
     return BC.MIB->getOrCreateAnnotationAs<StateTy>(
-        Point, derived().getAnnotationName());
+        Point, derived().getAnnotationIndex());
   }
 
   StateTy &getOrCreateStateAt(ProgramPoint Point) {
@@ -276,7 +286,7 @@ public:
   /// the direction of the dataflow is forward (backward).
   ErrorOr<const StateTy &> getStateAt(const MCInst &Point) const {
     return BC.MIB->tryGetAnnotationAs<StateTy>(
-        Point, const_derived().getAnnotationName());
+        Point, const_derived().getAnnotationIndex());
   }
 
   /// Return the out set (in set) of a given program point if the direction of
@@ -304,7 +314,7 @@ public:
   void cleanAnnotations() {
     for (auto &BB : Func) {
       for (auto &Inst : BB) {
-        BC.MIB->removeAnnotation(Inst, derived().getAnnotationName());
+        BC.MIB->removeAnnotation(Inst, derived().getAnnotationIndex());
       }
     }
   }

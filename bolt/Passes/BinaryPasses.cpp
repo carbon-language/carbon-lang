@@ -1279,8 +1279,6 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC,
     BF.hash(/*Recompute=*/true, /*UseDFS=*/UseDFS);
 
     CongruentBuckets[&BF].emplace(&BF);
-
-    dbgs() << BF.getPrintName() << " : " << BF.getKnownExecutionCount() << "\n";
   }
 
   // We repeat the pass until no new modifications happen.

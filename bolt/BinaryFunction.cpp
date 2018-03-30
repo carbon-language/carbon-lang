@@ -329,11 +329,10 @@ std::pair<unsigned, uint64_t> BinaryFunction::eraseInvalidBBs() {
   unsigned Count = 0;
   uint64_t Bytes = 0;
   for (auto *BB : layout()) {
-    assert((!BB->isEntryPoint() || BB->isValid()) &&
-           "all entry blocks must be valid");
     if (BB->isValid()) {
       NewLayout.push_back(BB);
     } else {
+      assert(!BB->isEntryPoint() && "all entry blocks must be valid");
       ++Count;
       Bytes += BC.computeCodeSize(BB->begin(), BB->end());
     }
