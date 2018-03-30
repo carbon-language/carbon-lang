@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <cinttypes>
 #include <cstddef>
+#include <set>
 
 namespace Fortran {
 namespace parser {
@@ -804,7 +805,14 @@ public:
     return false;
   }
   bool Pre(const StructureComponent &x) {  // R913
-    Walk(x.base), Put(percentOrDot_), Walk(x.component);
+    Walk(x.base);
+    if (structureComponents_.find(x.component.source) !=
+        structureComponents_.end()) {
+      Put('.');
+    } else {
+      Put('%');
+    }
+    Walk(x.component);
     return false;
   }
   bool Pre(const ArrayElement &x) {  // R917
@@ -1007,8 +1015,7 @@ public:
     return false;
   }
   bool Pre(const ProcComponentRef &x) {  // R1039
-    Walk(std::get<Scalar<Variable>>(x.t)), Put(percentOrDot_);
-    Walk(std::get<Name>(x.t));
+    Walk(std::get<Scalar<Variable>>(x.t)), Put('%'), Walk(std::get<Name>(x.t));
     return false;
   }
   bool Pre(const WhereStmt &x) {  // R1041, R1045, R1046
@@ -1710,7 +1717,8 @@ public:
     return true;
   }
   bool Pre(const EndProgramStmt &x) {  // R1403
-    Outdent(), Word("END PROGRAM"), Walk(" ", x.v);
+    Word("END PROGRAM"), Walk(" ", x.v);
+    EndSubprogram();
     return false;
   }
   bool Pre(const ModuleStmt &) {  // R1405
@@ -1889,7 +1897,8 @@ public:
     return false;
   }
   bool Pre(const EndFunctionStmt &x) {  // R1533
-    Outdent(), Word("END FUNCTION"), Walk(" ", x.v);
+    Word("END FUNCTION"), Walk(" ", x.v);
+    EndSubprogram();
     return false;
   }
   bool Pre(const SubroutineStmt &x) {  // R1535
@@ -1907,7 +1916,8 @@ public:
     return false;
   }
   bool Pre(const EndSubroutineStmt &x) {  // R1537
-    Outdent(), Word("END SUBROUTINE"), Walk(" ", x.v);
+    Word("END SUBROUTINE"), Walk(" ", x.v);
+    EndSubprogram();
     return false;
   }
   bool Pre(const MpSubprogramStmt &) {  // R1539
@@ -1915,7 +1925,8 @@ public:
     return true;
   }
   bool Pre(const EndMpSubprogramStmt &x) {  // R1540
-    Outdent(), Word("END PROCEDURE"), Walk(" ", x.v);
+    Word("END PROCEDURE"), Walk(" ", x.v);
+    EndSubprogram();
     return false;
   }
   bool Pre(const EntryStmt &x) {  // R1541
@@ -1971,6 +1982,14 @@ public:
     Walk("(", std::get<std::optional<ArraySpec>>(x.t), ")"), Put(')');
     return false;
   }
+  void Post(const StructureField &x) {
+    if (const auto *def = std::get_if<Statement<DataComponentDefStmt>>(&x.u)) {
+      for (const auto &decl :
+          std::get<std::list<ComponentDecl>>(def->statement.t)) {
+        structureComponents_.insert(std::get<Name>(decl.t).source);
+      }
+    }
+  }
   bool Pre(const StructureStmt &x) {
     Word("STRUCTURE ");
     if (std::get<bool>(x.t)) {  // slashes around name
@@ -1981,7 +2000,6 @@ public:
       Walk(std::get<Name>(x.t));
     }
     Indent();
-    percentOrDot_ = '.';  // TODO: this is so lame
     return false;
   }
   void Post(const Union::UnionStmt &) { Word("UNION"), Indent(); }
@@ -2106,12 +2124,17 @@ private:
     WalkTupleElements(tuple, separator);
   }
 
+  void EndSubprogram() {
+    Outdent();
+    structureComponents_.clear();
+  }
+
   std::ostream &out_;
   int indent_{0};
   const int indentationAmount_{1};
   int column_{1};
   const int maxColumns_{80};
-  char percentOrDot_{'%'};
+  std::set<CharBlock> structureComponents_;
   Encoding encoding_{Encoding::UTF8};
   bool capitalizeKeywords_{true};
 };

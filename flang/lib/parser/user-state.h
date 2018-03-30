@@ -16,6 +16,12 @@ namespace parser {
 
 class UserState {
 public:
+  void NewSubprogram() {
+    doLabels_.clear();
+    nonlabelDoConstructNestingDepth_ = 0;
+    structureComponents_.clear();
+  }
+
   using Label = std::uint64_t;
   bool IsDoLabel(Label label) const {
     return doLabels_.find(label) != doLabels_.end();
@@ -24,11 +30,6 @@ public:
     return nonlabelDoConstructNestingDepth_ > 0;
   }
   void NewDoLabel(Label label) { doLabels_.insert(label); }
-  void NewSubprogram() {
-    doLabels_.clear();
-    nonlabelDoConstructNestingDepth_ = 0;
-    structureComponents_.clear();
-  }
   void EnterNonlabelDoConstruct() { ++nonlabelDoConstructNestingDepth_; }
   void LeaveDoConstruct() {
     if (nonlabelDoConstructNestingDepth_ > 0) {
@@ -46,7 +47,6 @@ public:
 private:
   std::unordered_set<Label> doLabels_;
   int nonlabelDoConstructNestingDepth_{0};
-
   std::set<CharBlock> structureComponents_;
 };
 }  // namespace parser

@@ -1651,16 +1651,8 @@ constexpr auto percentOrDot = "%"_tok ||
     // legacy VAX extension for RECORD field access
     extension("."_tok / lookAhead(structureComponentName));
 
-// TODO - why is this not a TYPE_PARSER?
-template<>
-std::optional<DataReference> Parser<DataReference>::Parse(ParseState *state) {
-  static constexpr auto partRefs =
-      nonemptySeparated(Parser<PartRef>{}, percentOrDot);
-  if (auto parts = partRefs.Parse(state)) {
-    return {DataReference(std::move(*parts))};
-  }
-  return {};
-}
+TYPE_PARSER(construct<DataReference>{}(
+    nonemptySeparated(Parser<PartRef>{}, percentOrDot)))
 
 // R912 part-ref -> part-name [( section-subscript-list )] [image-selector]
 TYPE_PARSER(construct<PartRef>{}(name,
@@ -3386,7 +3378,7 @@ TYPE_PARSER(construct<ProcedureStmt>{}("MODULE PROCEDURE"_sptok >>
 //         READ ( FORMATTED ) | READ ( UNFORMATTED ) |
 //         WRITE ( FORMATTED ) | WRITE ( UNFORMATTED )
 TYPE_PARSER(construct<GenericSpec>{}(
-                "OPERATOR" >> parenthesized(definedOperator)) ||
+                "OPERATOR" >> parenthesized(Parser<DefinedOperator>{})) ||
     construct<GenericSpec>{}(
         "ASSIGNMENT ( = )" >> construct<GenericSpec::Assignment>{}) ||
     construct<GenericSpec>{}(
@@ -3663,8 +3655,7 @@ constexpr struct StructureComponents {
   }
 } structureComponents;
 
-TYPE_PARSER(
-    construct<StructureField>{}(statement(structureComponents)) ||
+TYPE_PARSER(construct<StructureField>{}(statement(structureComponents)) ||
     construct<StructureField>{}(indirect(Parser<Union>{})) ||
     construct<StructureField>{}(indirect(Parser<StructureDef>{})))
 
