@@ -94,7 +94,7 @@ constexpr struct Space {
   }
 } space;
 
-// Skips a space that in free from requires a warning if it precedes a
+// Skips a space that in free form requires a warning if it precedes a
 // character that could begin an identifier or keyword.  Always succeeds.
 static inline void MissingSpace(ParseState *state) {
   if (!state->inFixedForm()) {
