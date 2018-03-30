@@ -17,7 +17,6 @@ vandps (%rdi), %xmm1, %xmm2
 
 
 # CHECK:      Timeline view:
-# CHECK-NEXT:      	          01
-# CHECK-NEXT: Index	0123456789
-# CHECK:      [0,0]	DeeeER    ..	vaddps	%xmm0, %xmm0, %xmm1
-# CHECK-NEXT: [0,1]	D===eeeeeeER	vandps	(%rdi), %xmm1, %xmm2
+# CHECK:      Index	012345678
+# CHECK:      [0,0]	DeeeER  .	vaddps	%xmm0, %xmm0, %xmm1
+# CHECK-NEXT: [0,1]	DeeeeeeER	vandps	(%rdi), %xmm1, %xmm2

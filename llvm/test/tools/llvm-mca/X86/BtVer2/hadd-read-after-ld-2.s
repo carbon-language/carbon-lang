@@ -17,7 +17,7 @@ vhaddps (%rdi), %ymm1, %ymm2
 
 
 # CHECK:      Timeline view:
-# CHECK-NEXT:      	          01
-# CHECK-NEXT: Index	0123456789  
-# CHECK:      [0,0]	DeER .    ..	vshufps	$0, %xmm0, %xmm1, %xmm1
-# CHECK-NEXT: [0,1]	D=eeeeeeeeER	vhaddps	(%rdi), %ymm1, %ymm2
+# CHECK-NEXT:      	          0
+# CHECK-NEXT: Index	0123456789 
+# CHECK:      [0,0]	DeER .    .	vshufps	$0, %xmm0, %xmm1, %xmm1
+# CHECK-NEXT: [0,1]	DeeeeeeeeER	vhaddps	(%rdi), %ymm1, %ymm2
