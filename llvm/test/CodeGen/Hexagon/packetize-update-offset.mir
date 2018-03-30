@@ -5,7 +5,7 @@
 # but then the offset would become invalid for that instruction (it has to
 # be a multiple of 4).
 
-# CHECK: S4_storeiri_io killed renamable $r0, 0, 0
+# CHECK: S4_storeiri_io killed $r0, 0, 0
 
 --- |
   define void @fred() {
