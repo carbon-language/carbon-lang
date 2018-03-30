@@ -337,15 +337,7 @@ static KindParamValue GetKindParamValue(
 }
 
 static const IntExpr *GetIntExpr(const parser::ScalarIntExpr &x) {
-  const parser::Expr &expr = *x.thing.thing;
-  if (std::holds_alternative<parser::LiteralConstant>(expr.u)) {
-    const auto &lit = std::get<parser::LiteralConstant>(expr.u);
-    if (std::holds_alternative<parser::IntLiteralConstant>(lit.u)) {
-      const auto &intLit = std::get<parser::IntLiteralConstant>(lit.u);
-      return &IntConst::Make(std::get<std::uint64_t>(intLit.t));
-    }
-  }
-  return new IntExpr();  // TODO
+  return new IntExpr(x);
 }
 
 static Bound GetBound(const parser::SpecificationExpr &x) {

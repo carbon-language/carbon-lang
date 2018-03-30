@@ -68,6 +68,7 @@ public:
     : owner_{owner}, name_{name}, attrs_{attrs}, details_{std::move(details)} {}
   const Scope &owner() const { return owner_; }
   const Name &name() const { return name_; }
+  Attrs &attrs() { return attrs_; }
   const Attrs &attrs() const { return attrs_; }
 
   // Does symbol have this type of details?
@@ -92,15 +93,15 @@ public:
 
   // Assign the details of the symbol from one of the variants.
   // Only allowed if unknown.
-  void set_details(const Details &details) {
+  void set_details(Details &&details) {
     CHECK(has<UnknownDetails>());
-    details_ = details;
-  };
+    details_.swap(details);
+  }
 
 private:
   const Scope &owner_;
   const Name name_;
-  const Attrs attrs_;
+  Attrs attrs_;
   Details details_;
   friend std::ostream &operator<<(std::ostream &, const Symbol &);
 };

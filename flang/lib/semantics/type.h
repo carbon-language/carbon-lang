@@ -2,6 +2,7 @@
 #define FORTRAN_TYPE_H_
 
 #include "../parser/idioms.h"
+#include "../parser/parse-tree.h"
 #include "attr.h"
 #include <list>
 #include <map>
@@ -42,19 +43,22 @@ using Name = std::string;
 // TODO
 class IntExpr {
 public:
-  virtual const IntExpr *Clone() const { return new IntExpr{*this}; }
+  static IntExpr MakeConst(std::uint64_t value) {
+    return IntExpr(); // TODO
+  }
+  IntExpr() {}
+  IntExpr(const parser::ScalarIntExpr &) { /*TODO*/ }
   virtual std::ostream &Output(std::ostream &o) const { return o << "IntExpr"; }
 };
 
 // TODO
-class IntConst : public IntExpr {
+class IntConst {
 public:
   static const IntConst &Make(std::uint64_t value);
-  const IntExpr *Clone() const override { return &Make(value_); }
   bool operator==(const IntConst &x) const { return value_ == x.value_; }
   bool operator!=(const IntConst &x) const { return !operator==(x); }
   bool operator<(const IntConst &x) const { return value_ < x.value_; }
-  std::ostream &Output(std::ostream &o) const override {
+  std::ostream &Output(std::ostream &o) const {
     return o << this->value_;
   }
 
@@ -62,6 +66,7 @@ private:
   static std::unordered_map<std::uint64_t, IntConst> cache;
   IntConst(std::uint64_t value) : value_{value} {}
   const std::uint64_t value_;
+  friend std::ostream &operator<<(std::ostream &, const IntConst &);
 };
 
 // The value of a kind type parameter
@@ -82,17 +87,20 @@ class Bound {
 public:
   static const Bound ASSUMED;
   static const Bound DEFERRED;
-  Bound(const IntExpr &expr) : category_{Explicit}, expr_{expr.Clone()} {}
+  Bound(const IntExpr &expr) : category_{Explicit}, expr_{expr} {}
   bool isExplicit() const { return category_ == Explicit; }
   bool isAssumed() const { return category_ == Assumed; }
   bool isDeferred() const { return category_ == Deferred; }
-  const IntExpr &getExplicit() const { return *expr_; }
+  const IntExpr &getExplicit() const {
+    CHECK(isExplicit());
+    return *expr_;
+  }
 
 private:
   enum Category { Explicit, Deferred, Assumed };
-  Bound(Category category) : category_{category}, expr_{&IntConst::Make(0)} {}
+  Bound(Category category) : category_{category}, expr_{std::nullopt} {}
   const Category category_;
-  const IntExpr *const expr_;
+  const std::optional<IntExpr> expr_;
   friend std::ostream &operator<<(std::ostream &, const Bound &);
 };
 
@@ -104,43 +112,45 @@ class DerivedTypeSpec;
 class DeclTypeSpec {
 public:
   // intrinsic-type-spec or TYPE(intrinsic-type-spec)
-  static DeclTypeSpec MakeIntrinsic(
-      const IntrinsicTypeSpec *intrinsicTypeSpec) {
-    return DeclTypeSpec{Intrinsic, intrinsicTypeSpec};
+  static DeclTypeSpec MakeIntrinsic(const IntrinsicTypeSpec &typeSpec) {
+    return DeclTypeSpec{typeSpec};
   }
   // TYPE(derived-type-spec)
-  static DeclTypeSpec MakeTypeDerivedType(
-      const DerivedTypeSpec *derivedTypeSpec) {
-    return DeclTypeSpec{TypeDerived, nullptr, derivedTypeSpec};
+  static DeclTypeSpec MakeTypeDerivedType(const DerivedTypeSpec &typeSpec) {
+    return DeclTypeSpec{TypeDerived, typeSpec};
   }
   // CLASS(derived-type-spec)
-  static DeclTypeSpec MakeClassDerivedType(
-      const DerivedTypeSpec *derivedTypeSpec) {
-    return DeclTypeSpec{ClassDerived, nullptr, derivedTypeSpec};
+  static DeclTypeSpec MakeClassDerivedType(const DerivedTypeSpec &typeSpec) {
+    return DeclTypeSpec{ClassDerived, typeSpec};
   }
   // TYPE(*)
   static DeclTypeSpec MakeTypeStar() { return DeclTypeSpec{TypeStar}; }
   // CLASS(*)
   static DeclTypeSpec MakeClassStar() { return DeclTypeSpec{ClassStar}; }
 
+  DeclTypeSpec(const DeclTypeSpec &that);
+  ~DeclTypeSpec();
   enum Category { Intrinsic, TypeDerived, ClassDerived, TypeStar, ClassStar };
   Category category() const { return category_; }
-  const IntrinsicTypeSpec *intrinsicTypeSpec() const {
-    return intrinsicTypeSpec_;
+  const IntrinsicTypeSpec &intrinsicTypeSpec() const {
+    return *intrinsicTypeSpec_;
   }
-  const DerivedTypeSpec *derivedTypeSpec() const { return derivedTypeSpec_; }
+  const DerivedTypeSpec &derivedTypeSpec() const { return *derivedTypeSpec_; }
 
 private:
-  DeclTypeSpec(Category category,
-      const IntrinsicTypeSpec *intrinsicTypeSpec = nullptr,
-      const DerivedTypeSpec *derivedTypeSpec = nullptr)
-    : category_{category}, intrinsicTypeSpec_{intrinsicTypeSpec},
-      derivedTypeSpec_{derivedTypeSpec} {}
+  DeclTypeSpec(Category category) : category_{category} {
+    CHECK(category == TypeStar || category == ClassStar);
+  }
+  DeclTypeSpec(Category category, const DerivedTypeSpec &typeSpec);
+  DeclTypeSpec(const IntrinsicTypeSpec &intrinsicTypeSpec)
+    : category_{Intrinsic}, intrinsicTypeSpec_{&intrinsicTypeSpec} {}
+
   Category category_;
-  const IntrinsicTypeSpec *intrinsicTypeSpec_;
-  const DerivedTypeSpec *derivedTypeSpec_;
+  const IntrinsicTypeSpec *intrinsicTypeSpec_{nullptr};
+  const DerivedTypeSpec *derivedTypeSpec_{nullptr};
   friend std::ostream &operator<<(std::ostream &, const DeclTypeSpec &);
 };
+
 
 // Root of the *TypeSpec hierarchy
 class TypeSpec {
@@ -194,8 +204,8 @@ private:
 // One unique instance of LogicalTypeSpec for each kind.
 class LogicalTypeSpec : public IntrinsicTypeSpec {
 public:
-  static const LogicalTypeSpec *Make();
-  static const LogicalTypeSpec *Make(KindParamValue kind);
+  static const LogicalTypeSpec &Make();
+  static const LogicalTypeSpec &Make(KindParamValue kind);
   std::ostream &Output(std::ostream &o) const override { return o << *this; }
 
 private:
@@ -208,8 +218,8 @@ private:
 // One unique instance of IntegerTypeSpec for each kind.
 class IntegerTypeSpec : public NumericTypeSpec {
 public:
-  static const IntegerTypeSpec *Make();
-  static const IntegerTypeSpec *Make(KindParamValue kind);
+  static const IntegerTypeSpec &Make();
+  static const IntegerTypeSpec &Make(KindParamValue kind);
   std::ostream &Output(std::ostream &o) const override { return o << *this; }
 
 private:
@@ -222,8 +232,8 @@ private:
 // One unique instance of RealTypeSpec for each kind.
 class RealTypeSpec : public NumericTypeSpec {
 public:
-  static const RealTypeSpec *Make();
-  static const RealTypeSpec *Make(KindParamValue kind);
+  static const RealTypeSpec &Make();
+  static const RealTypeSpec &Make(KindParamValue kind);
   std::ostream &Output(std::ostream &o) const override { return o << *this; }
 
 private:
@@ -236,8 +246,8 @@ private:
 // One unique instance of ComplexTypeSpec for each kind.
 class ComplexTypeSpec : public NumericTypeSpec {
 public:
-  static const ComplexTypeSpec *Make();
-  static const ComplexTypeSpec *Make(KindParamValue kind);
+  static const ComplexTypeSpec &Make();
+  static const ComplexTypeSpec &Make(KindParamValue kind);
   std::ostream &Output(std::ostream &o) const override { return o << *this; }
 
 private:
@@ -285,10 +295,10 @@ public:
   }
   // 1:ub
   static const ShapeSpec MakeExplicit(const Bound &ub) {
-    return MakeExplicit(IntConst::Make(1), ub);
+    return MakeExplicit(IntExpr::MakeConst(1), ub);
   }
   // 1: or lb:
-  static ShapeSpec MakeAssumed(const Bound &lb = IntConst::Make(1)) {
+  static ShapeSpec MakeAssumed(const Bound &lb = IntExpr::MakeConst(1)) {
     return ShapeSpec(lb, Bound::DEFERRED);
   }
   // :
@@ -296,7 +306,7 @@ public:
     return ShapeSpec(Bound::DEFERRED, Bound::DEFERRED);
   }
   // 1:* or lb:*
-  static ShapeSpec MakeImplied(const Bound &lb = IntConst::Make(1)) {
+  static ShapeSpec MakeImplied(const Bound &lb = IntExpr::MakeConst(1)) {
     return ShapeSpec(lb, Bound::ASSUMED);
   }
   // ..
@@ -421,20 +431,26 @@ private:
   friend class DerivedTypeDef;
 };
 
-using KindParamValues = std::map<Name, KindParamValue>;
-using LenParamValues = std::map<Name, LenParamValue>;
+using ParamValue = LenParamValue;
 
 // Instantiation of a DerivedTypeDef with kind and len parameter values
 class DerivedTypeSpec : public TypeSpec {
 public:
   std::ostream &Output(std::ostream &o) const override { return o << *this; }
+  DerivedTypeSpec(const Name &name) : name_{name} {}
+  virtual ~DerivedTypeSpec() = default;
+  DerivedTypeSpec &AddParamValue(const ParamValue &value) {
+    paramValues_.push_back(std::make_pair(std::nullopt, value));
+    return *this;
+  }
+  DerivedTypeSpec &AddParamValue(const Name &name, const ParamValue &value) {
+    paramValues_.push_back(std::make_pair(name, value));
+    return *this;
+  }
 
 private:
-  const DerivedTypeDef def_;
-  const KindParamValues kindParamValues_;
-  const LenParamValues lenParamValues_;
-  DerivedTypeSpec(DerivedTypeDef def, const KindParamValues &kindParamValues,
-      const LenParamValues &lenParamValues);
+  const Name name_;
+  std::list<std::pair<std::optional<Name>, ParamValue>> paramValues_;
   friend std::ostream &operator<<(std::ostream &, const DerivedTypeSpec &);
 };
 

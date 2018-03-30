@@ -6,31 +6,12 @@
 namespace Fortran {
 namespace semantics {
 
-// Check that values specified for param defs are valid: they must match the
-// names of the params and any def that doesn't have a default value must have a
-// value.
-template<typename V>
-static void checkParams(
-    std::string kindOrLen, TypeParamDefs defs, std::map<Name, V> values) {
-  std::set<Name> validNames{};
-  for (const TypeParamDef &def : defs) {
-    Name name = def.name();
-    validNames.insert(name);
-    if (!def.defaultValue() && values.find(name) == values.end()) {
-      parser::die("no value or default value for %s parameter '%s'",
-          kindOrLen.c_str(), name.c_str());
-    }
-  }
-  for (const auto &pair : values) {
-    Name name = pair.first;
-    if (validNames.find(name) == validNames.end()) {
-      parser::die("invalid %s parameter '%s'", kindOrLen.c_str(), name.c_str());
-    }
-  }
-}
 
 std::ostream &operator<<(std::ostream &o, const IntExpr &x) {
   return x.Output(o);
+}
+std::ostream &operator<<(std::ostream &o, const IntConst &x) {
+  return o << x.value_;
 }
 
 std::unordered_map<std::uint64_t, IntConst> IntConst::cache;
@@ -47,36 +28,36 @@ const IntConst &IntConst::Make(std::uint64_t value) {
   return it->second;
 }
 
-const LogicalTypeSpec *LogicalTypeSpec::Make() { return &helper.Make(); }
-const LogicalTypeSpec *LogicalTypeSpec::Make(KindParamValue kind) {
-  return &helper.Make(kind);
+const LogicalTypeSpec &LogicalTypeSpec::Make() { return helper.Make(); }
+const LogicalTypeSpec &LogicalTypeSpec::Make(KindParamValue kind) {
+  return helper.Make(kind);
 }
 KindedTypeHelper<LogicalTypeSpec> LogicalTypeSpec::helper{"LOGICAL", 0};
 std::ostream &operator<<(std::ostream &o, const LogicalTypeSpec &x) {
   return LogicalTypeSpec::helper.Output(o, x);
 }
 
-const IntegerTypeSpec *IntegerTypeSpec::Make() { return &helper.Make(); }
-const IntegerTypeSpec *IntegerTypeSpec::Make(KindParamValue kind) {
-  return &helper.Make(kind);
+const IntegerTypeSpec &IntegerTypeSpec::Make() { return helper.Make(); }
+const IntegerTypeSpec &IntegerTypeSpec::Make(KindParamValue kind) {
+  return helper.Make(kind);
 }
 KindedTypeHelper<IntegerTypeSpec> IntegerTypeSpec::helper{"INTEGER", 0};
 std::ostream &operator<<(std::ostream &o, const IntegerTypeSpec &x) {
   return IntegerTypeSpec::helper.Output(o, x);
 }
 
-const RealTypeSpec *RealTypeSpec::Make() { return &helper.Make(); }
-const RealTypeSpec *RealTypeSpec::Make(KindParamValue kind) {
-  return &helper.Make(kind);
+const RealTypeSpec &RealTypeSpec::Make() { return helper.Make(); }
+const RealTypeSpec &RealTypeSpec::Make(KindParamValue kind) {
+  return helper.Make(kind);
 }
 KindedTypeHelper<RealTypeSpec> RealTypeSpec::helper{"REAL", 0};
 std::ostream &operator<<(std::ostream &o, const RealTypeSpec &x) {
   return RealTypeSpec::helper.Output(o, x);
 }
 
-const ComplexTypeSpec *ComplexTypeSpec::Make() { return &helper.Make(); }
-const ComplexTypeSpec *ComplexTypeSpec::Make(KindParamValue kind) {
-  return &helper.Make(kind);
+const ComplexTypeSpec &ComplexTypeSpec::Make() { return helper.Make(); }
+const ComplexTypeSpec &ComplexTypeSpec::Make(KindParamValue kind) {
+  return helper.Make(kind);
 }
 KindedTypeHelper<ComplexTypeSpec> ComplexTypeSpec::helper{"COMPLEX", 0};
 std::ostream &operator<<(std::ostream &o, const ComplexTypeSpec &x) {
@@ -136,31 +117,19 @@ std::ostream &operator<<(std::ostream &o, const DerivedTypeDef &x) {
   return o << "END TYPE";
 }
 
-DerivedTypeSpec::DerivedTypeSpec(DerivedTypeDef def,
-    const KindParamValues &kindParamValues,
-    const LenParamValues &lenParamValues)
-  : def_{def}, kindParamValues_{kindParamValues}, lenParamValues_{
-                                                      lenParamValues} {
-  checkParams("kind", def.kindParams(), kindParamValues);
-  checkParams("len", def.lenParams(), lenParamValues);
-}
-
 std::ostream &operator<<(std::ostream &o, const DerivedTypeSpec &x) {
-  o << "TYPE(" << x.def_.name();
-  if (x.kindParamValues_.size() > 0 || x.lenParamValues_.size() > 0) {
+  o << "TYPE(" << x.name_;
+  if (!x.paramValues_.empty()) {
     o << '(';
     int n = 0;
-    for (const auto &pair : x.kindParamValues_) {
+    for (const auto &paramValue : x.paramValues_) {
       if (n++) {
         o << ", ";
       }
-      o << pair.first << '=' << pair.second;
-    }
-    for (const auto &pair : x.lenParamValues_) {
-      if (n++) {
-        o << ", ";
+      if (paramValue.first) {
+        o << *paramValue.first << '=';
       }
-      o << pair.first << '=' << pair.second;
+      o << paramValue.second;
     }
     o << ')';
   }
@@ -234,12 +203,33 @@ DataComponentDef::DataComponentDef(const DeclTypeSpec &type, const Name &name,
   }
 }
 
+// All instances of IntrinsicTypeSpec live in caches and are never deleted,
+// so the pointer to intrinsicTypeSpec will always be valid
+// derivedTypeSpec_ is dynamically allocated and owned by the DeclTypeSpec
+DeclTypeSpec::DeclTypeSpec(Category category, const DerivedTypeSpec &derivedTypeSpec)
+  : category_{category}, intrinsicTypeSpec_{nullptr},
+    derivedTypeSpec_{new DerivedTypeSpec(derivedTypeSpec)} {
+  CHECK(category == TypeDerived || category == ClassDerived);
+}
+DeclTypeSpec::DeclTypeSpec(const DeclTypeSpec &that)
+  : category_{that.category_}, intrinsicTypeSpec_{that.intrinsicTypeSpec_} {
+  if (category_ == TypeDerived || category_ == ClassDerived) {
+    derivedTypeSpec_ = new DerivedTypeSpec(*that.derivedTypeSpec_);
+  }
+}
+DeclTypeSpec::~DeclTypeSpec() {
+  if (category_ == TypeDerived || category_ == ClassDerived) {
+    delete derivedTypeSpec_;
+    derivedTypeSpec_ = nullptr;
+  }
+}
+
 std::ostream &operator<<(std::ostream &o, const DeclTypeSpec &x) {
   // TODO: need CLASS(...) instead of TYPE() for ClassDerived
   switch (x.category_) {
-  case DeclTypeSpec::Intrinsic: return x.intrinsicTypeSpec_->Output(o);
-  case DeclTypeSpec::TypeDerived: return o << *x.derivedTypeSpec_;
-  case DeclTypeSpec::ClassDerived: return o << *x.derivedTypeSpec_;
+  case DeclTypeSpec::Intrinsic: return x.intrinsicTypeSpec().Output(o);
+  case DeclTypeSpec::TypeDerived: return o << x.derivedTypeSpec();
+  case DeclTypeSpec::ClassDerived: return o << x.derivedTypeSpec();
   case DeclTypeSpec::TypeStar: return o << "TYPE(*)";
   case DeclTypeSpec::ClassStar: return o << "CLASS(*)";
   default: CRASH_NO_CASE;
@@ -322,98 +312,3 @@ DerivedTypeDefBuilder &DerivedTypeDefBuilder::sequence(bool x) {
 
 }  // namespace semantics
 }  // namespace Fortran
-
-using namespace Fortran::semantics;
-
-void testTypeSpec() {
-  const LogicalTypeSpec *l1 = LogicalTypeSpec::Make();
-  const LogicalTypeSpec *l2 = LogicalTypeSpec::Make(2);
-  std::cout << *l1 << "\n";
-  std::cout << *l2 << "\n";
-  const RealTypeSpec *r1 = RealTypeSpec::Make();
-  const RealTypeSpec *r2 = RealTypeSpec::Make(2);
-  std::cout << *r1 << "\n";
-  std::cout << *r2 << "\n";
-  const CharacterTypeSpec c1{LenParamValue::DEFERRED, 1};
-  std::cout << c1 << "\n";
-  const CharacterTypeSpec c2{IntConst::Make(10)};
-  std::cout << c2 << "\n";
-
-  const IntegerTypeSpec *i1 = IntegerTypeSpec::Make();
-  const IntegerTypeSpec *i2 = IntegerTypeSpec::Make(2);
-  TypeParamDef lenParam{"my_len", *i2};
-  TypeParamDef kindParam{"my_kind", *i1};
-
-  DerivedTypeDef def1{DerivedTypeDefBuilder("my_name")
-                          .attrs({Attr::PRIVATE, Attr::BIND_C})
-                          .lenParam(lenParam)
-                          .kindParam(kindParam)
-                          .sequence()};
-  // DerivedTypeDef def1{"my_name", {Attr::PRIVATE, Attr::BIND_C},
-  //    TypeParamDefs{lenParam}, TypeParamDefs{kindParam}, false, true};
-
-  LenParamValues lenParamValues{
-      LenParamValues::value_type{"my_len", LenParamValue::ASSUMED},
-  };
-  KindParamValues kindParamValues{
-      KindParamValues::value_type{"my_kind", KindParamValue{123}},
-  };
-  // DerivedTypeSpec dt1{def1, kindParamValues, lenParamValues};
-
-  // DerivedTypeSpec dt1{DerivedTypeSpec::Builder{"my_name2"}
-  //  .lenParamValue("my_len", LenParamValue::ASSUMED)
-  //  .attrs({Attr::BIND_C}).lenParam(lenParam)};
-  // std::cout << dt1 << "\n";
-}
-
-void testShapeSpec() {
-  const IntConst &ten{IntConst::Make(10)};
-  const ShapeSpec s1{ShapeSpec::MakeExplicit(ten)};
-  std::cout << "explicit-shape-spec: " << s1 << "\n";
-  ShapeSpec s2{ShapeSpec::MakeExplicit(IntConst::Make(2), IntConst::Make(8))};
-  std::cout << "explicit-shape-spec: " << s2 << "\n";
-
-  ShapeSpec s3{ShapeSpec::MakeAssumed()};
-  std::cout << "assumed-shape-spec:  " << s3 << "\n";
-  ShapeSpec s4{ShapeSpec::MakeAssumed(IntConst::Make(2))};
-  std::cout << "assumed-shape-spec:  " << s4 << "\n";
-
-  ShapeSpec s5{ShapeSpec::MakeDeferred()};
-  std::cout << "deferred-shape-spec: " << s5 << "\n";
-
-  ShapeSpec s6{ShapeSpec::MakeImplied(IntConst::Make(2))};
-  std::cout << "implied-shape-spec:  " << s6 << "\n";
-
-  ShapeSpec s7{ShapeSpec::MakeAssumedRank()};
-  std::cout << "assumed-rank-spec:  " << s7 << "\n";
-}
-
-void testDataComponentDef() {
-  DataComponentDef def1{
-      DeclTypeSpec::MakeClassStar(), "foo", Attrs{Attr::PUBLIC}};
-  std::cout << "data-component-def: " << def1 << "\n";
-  DataComponentDef def2{DeclTypeSpec::MakeTypeStar(), "foo", Attrs{},
-      ComponentArraySpec{ShapeSpec::MakeExplicit(IntConst::Make(10))}};
-  std::cout << "data-component-def: " << def2 << "\n";
-}
-
-void testProcComponentDef() {
-  ProcDecl decl{"foo"};
-  ProcComponentDef def1{decl, Attrs{Attr::POINTER, Attr::PUBLIC, Attr::NOPASS}};
-  std::cout << "proc-component-def: " << def1;
-  ProcComponentDef def2{decl, Attrs{Attr::POINTER}, Name{"my_interface"}};
-  std::cout << "proc-component-def: " << def2;
-  ProcComponentDef def3{
-      decl, Attrs{Attr::POINTER}, DeclTypeSpec::MakeTypeStar()};
-  std::cout << "proc-component-def: " << def3;
-}
-
-#if 0
-int main() {
-  testTypeSpec();
-  //testShapeSpec();
-  //testProcComponentDef();
-  //testDataComponentDef();
-  return 0;
-}
-#endif
