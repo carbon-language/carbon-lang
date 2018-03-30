@@ -27,6 +27,7 @@ public:
   void NewSubprogram() {
     doLabels_.clear();
     nonlabelDoConstructNestingDepth_ = 0;
+    structureComponents_.clear();
   }
   void EnterNonlabelDoConstruct() { ++nonlabelDoConstructNestingDepth_; }
   void LeaveDoConstruct() {
@@ -35,18 +36,18 @@ public:
     }
   }
 
-  void NoteDefinedOperator(const CharBlock &opr) {
-    definedOperators_.insert(opr);
+  void NoteStructureComponent(const CharBlock &name) {
+    structureComponents_.insert(name);
   }
-  bool IsDefinedOperator(const CharBlock &opr) const {
-    return definedOperators_.find(opr) != definedOperators_.end();
+  bool IsStructureComponent(const CharBlock &name) const {
+    return structureComponents_.find(name) != structureComponents_.end();
   }
 
 private:
   std::unordered_set<Label> doLabels_;
   int nonlabelDoConstructNestingDepth_{0};
 
-  std::set<CharBlock> definedOperators_;
+  std::set<CharBlock> structureComponents_;
 };
 }  // namespace parser
 }  // namespace Fortran
