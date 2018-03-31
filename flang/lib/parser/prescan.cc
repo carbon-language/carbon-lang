@@ -637,12 +637,11 @@ void Prescanner::SkipCommentLines() {
 }
 
 const char *Prescanner::FixedFormContinuationLine() {
-  const char *p{lineStart_};
-  if (p >= limit_) {
+  if (lineStart_ >= limit_) {
     return nullptr;
   }
   tabInCurrentLine_ = false;
-  char col1{*p};
+  char col1{*lineStart_};
   if (directiveSentinel_ != nullptr) {
     // Must be a continued compiler directive.
     if (col1 != '!' && col1 != '*' && col1 != 'c' && col1 != 'C') {
@@ -654,41 +653,42 @@ const char *Prescanner::FixedFormContinuationLine() {
       if (ch == '\0') {
         break;
       }
-      if (ch != ToLowerCaseLetter(p[j])) {
+      if (ch != ToLowerCaseLetter(lineStart_[j])) {
         return nullptr;
       }
     }
     for (; j < 5; ++j) {
-      if (p[j] != ' ') {
+      if (lineStart_[j] != ' ') {
         return nullptr;
       }
     }
-    char col6{p[5]};
+    char col6{lineStart_[5]};
     if (col6 != '\n' && col6 != '\t' && col6 != ' ' && col6 != '0') {
-      return p + 6;
+      return lineStart_ + 6;
     }
     return nullptr;
   }
   // Normal case: not in a compiler directive.
-  if (*p == '&') {
+  if (col1 == '&') {
     // Extension: '&' as continuation marker
     if (warnOnNonstandardUsage_) {
-      Complain("nonstandard usage"_en_US, GetProvenance(p));
+      Complain("nonstandard usage"_en_US, GetProvenance(lineStart_));
     }
-    return p + 1;
+    return lineStart_ + 1;
   }
-  if (*p == '\t' && p[1] >= '1' && p[1] <= '9') {
+  if (col1 == '\t' && lineStart_[1] >= '1' && lineStart_[1] <= '9') {
     tabInCurrentLine_ = true;
-    return p + 2;  // VAX extension
+    return lineStart_ + 2;  // VAX extension
   }
-  if (p[0] == ' ' && p[1] == ' ' && p[2] == ' ' && p[3] == ' ' && p[4] == ' ') {
-    char col6{p[5]};
+  if (col1 == ' ' && lineStart_[1] == ' ' && lineStart_[2] == ' ' &&
+      lineStart_[3] == ' ' && lineStart_[4] == ' ') {
+    char col6{lineStart_[5]};
     if (col6 != '\n' && col6 != '\t' && col6 != ' ' && col6 != '0') {
-      return p + 6;
+      return lineStart_ + 6;
     }
   }
   if (delimiterNesting_ > 0) {
-    return p;
+    return lineStart_;
   }
   return nullptr;  // not a continuation line
 }
