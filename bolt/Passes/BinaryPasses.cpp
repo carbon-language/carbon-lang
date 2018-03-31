@@ -326,7 +326,7 @@ void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
   if (Function.layout_size() > 0) {
     unsigned Count;
     uint64_t Bytes;
-    Function.markUnreachable();
+    Function.markUnreachableBlocks();
     DEBUG({
       for (auto *BB : Function.layout()) {
         if (!BB->isValid()) {
@@ -339,11 +339,13 @@ void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
     std::tie(Count, Bytes) = Function.eraseInvalidBBs();
     DeletedBlocks += Count;
     DeletedBytes += Bytes;
-    if (Count && opts::Verbosity > 0) {
+    if (Count) {
       Modified.insert(&Function);
-      outs() << "BOLT-INFO: Removed " << Count
-             << " dead basic block(s) accounting for " << Bytes
-             << " bytes in function " << Function << '\n';
+      if (opts::Verbosity > 0) {
+        outs() << "BOLT-INFO: Removed " << Count
+               << " dead basic block(s) accounting for " << Bytes
+               << " bytes in function " << Function << '\n';
+      }
     }
   }
 }
@@ -765,7 +767,6 @@ uint64_t fixDoubleJumps(BinaryContext &BC,
                        BB.isLandingPad() ||
                        BB.isEntryPoint());
         }
-        assert(Function.validateCFG());
       }
     }
   }
@@ -819,7 +820,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
                                                     BinaryFunction &BF) {
   // Need updated indices to correctly detect branch' direction.
   BF.updateLayoutIndices();
-  BF.markUnreachable();
+  BF.markUnreachableBlocks();
 
   auto &MIB = BC.MIB;
   uint64_t NumLocalCTCCandidates = 0;
@@ -986,6 +987,8 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
     const auto Stats = BF.eraseInvalidBBs();
     DeletedBlocks += Stats.first;
     DeletedBytes += Stats.second;
+
+    assert(BF.validateCFG());
   }
 
   DEBUG(dbgs() << "BOLT: created " << NumLocalCTCs
@@ -1120,6 +1123,7 @@ void Peepholes::runOnFunctions(BinaryContext &BC,
         addTailcallTraps(BC, Function);
       if (Opts & opts::PEEP_USELESS_BRANCHES)
         removeUselessCondBranches(BC, Function);
+      assert(Function.validateCFG());
     }
   }
   outs() << "BOLT-INFO: Peephole: " << NumShortened
@@ -1275,6 +1279,8 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC,
     BF.hash(/*Recompute=*/true, /*UseDFS=*/UseDFS);
 
     CongruentBuckets[&BF].emplace(&BF);
+
+    dbgs() << BF.getPrintName() << " : " << BF.getKnownExecutionCount() << "\n";
   }
 
   // We repeat the pass until no new modifications happen.

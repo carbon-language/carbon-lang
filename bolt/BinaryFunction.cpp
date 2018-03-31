@@ -294,7 +294,7 @@ BinaryFunction::getBasicBlockContainingOffset(uint64_t Offset) {
   return (Offset < BB->getOffset() + BB->getOriginalSize()) ? BB : nullptr;
 }
 
-void BinaryFunction::markUnreachable() {
+void BinaryFunction::markUnreachableBlocks() {
   std::stack<BinaryBasicBlock *> Stack;
 
   for (auto *BB : layout()) {
@@ -342,10 +342,13 @@ std::pair<unsigned, uint64_t> BinaryFunction::eraseInvalidBBs() {
 
   BasicBlockListType NewBasicBlocks;
   for (auto I = BasicBlocks.begin(), E = BasicBlocks.end(); I != E; ++I) {
-    if ((*I)->isValid()) {
-      NewBasicBlocks.push_back(*I);
+    auto *BB = *I;
+    if (BB->isValid()) {
+      NewBasicBlocks.push_back(BB);
     } else {
-      DeletedBasicBlocks.push_back(*I);
+      // Make sure the block is removed from the list of predecessors.
+      BB->removeAllSuccessors();
+      DeletedBasicBlocks.push_back(BB);
     }
   }
   BasicBlocks = std::move(NewBasicBlocks);
@@ -2601,6 +2604,33 @@ bool BinaryFunction::validateCFG() const {
 
   if (!Valid)
     return Valid;
+
+  // Make sure all blocks in CFG are valid.
+  auto validateBlock = [this](const BinaryBasicBlock *BB, StringRef Desc) {
+    if (!BB->isValid()) {
+      errs() << "BOLT-ERROR: deleted " << Desc << " " << BB->getName()
+             << " detected in:\n";
+      this->dump();
+      return false;
+    }
+    return true;
+  };
+  for (const auto *BB : BasicBlocks) {
+    if (!validateBlock(BB, "block"))
+      return false;
+    for (const auto *PredBB : BB->predecessors())
+      if (!validateBlock(PredBB, "predecessor"))
+        return false;
+    for (const auto *SuccBB: BB->successors())
+      if (!validateBlock(SuccBB, "successor"))
+        return false;
+    for (const auto *LP: BB->landing_pads())
+      if (!validateBlock(LP, "landing pad"))
+        return false;
+    for (const auto *Thrower: BB->throwers())
+      if (!validateBlock(Thrower, "thrower"))
+        return false;
+  }
 
   for (const auto *BB : BasicBlocks) {
     std::unordered_set<const BinaryBasicBlock *> BBLandingPads;

@@ -271,6 +271,14 @@ void BinaryBasicBlock::replaceSuccessor(BinaryBasicBlock *Succ,
   NewSucc->addPredecessor(this);
 }
 
+void BinaryBasicBlock::removeAllSuccessors() {
+  for (auto *SuccessorBB : successors()) {
+    SuccessorBB->removePredecessor(this);
+  }
+  Successors.clear();
+  BranchInfo.clear();
+}
+
 void BinaryBasicBlock::removeSuccessor(BinaryBasicBlock *Succ) {
   Succ->removePredecessor(this);
   auto I = succ_begin();
@@ -292,9 +300,17 @@ void BinaryBasicBlock::addPredecessor(BinaryBasicBlock *Pred) {
 }
 
 void BinaryBasicBlock::removePredecessor(BinaryBasicBlock *Pred) {
-  auto I = std::find(pred_begin(), pred_end(), Pred);
-  assert(I != pred_end() && "Pred is not a predecessor of this block!");
-  Predecessors.erase(I);
+  // Note: the predecessor could be listed multiple times.
+  bool Erased{false};
+  for (auto PredI = Predecessors.begin(); PredI != Predecessors.end(); ) {
+    if (*PredI == Pred) {
+      Erased = true;
+      PredI = Predecessors.erase(PredI);
+    } else {
+      ++PredI;
+    }
+  }
+  assert(Erased && "Pred is not a predecessor of this block!");
 }
 
 void BinaryBasicBlock::removeDuplicateConditionalSuccessor(MCInst *CondBranch) {

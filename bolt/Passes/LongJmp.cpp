@@ -328,7 +328,7 @@ void LongJmpPass::removeStubRef(const BinaryContext &BC,
 
   if (StubRefCount[StubBB] == 0) {
     // Remove the block from CFG
-    StubBB->removeSuccessors(StubBB->succ_begin(), StubBB->succ_end());
+    StubBB->removeAllSuccessors();
     StubBB->markValid(false);
     StubBB->setEntryPoint(false);
   }

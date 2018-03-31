@@ -544,13 +544,9 @@ public:
   /// list of predecessors of /p Succ and update branch info.
   void removeSuccessor(BinaryBasicBlock *Succ);
 
-  /// Remove a range of successor blocks.
-  template <typename Itr>
-  void removeSuccessors(Itr Begin, Itr End) {
-    while (Begin != End) {
-      removeSuccessor(*Begin++);
-    }
-  }
+  /// Remove all successors of the basic block, and remove the block
+  /// from respective lists of predecessors.
+  void removeAllSuccessors();
 
   /// Remove useless duplicate successors.  When the conditional
   /// successor is the same as the unconditional successor, we can

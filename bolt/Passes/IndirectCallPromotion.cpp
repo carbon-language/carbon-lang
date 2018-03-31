@@ -736,20 +736,12 @@ BinaryBasicBlock *IndirectCallPromotion::fixCFG(
   BinaryBasicBlock *MergeBlock = nullptr;
 
   auto moveSuccessors = [](BinaryBasicBlock *Old, BinaryBasicBlock *New) {
-    std::vector<BinaryBasicBlock*> OldSucc(Old->successors().begin(),
-                                           Old->successors().end());
-    std::vector<BinaryBranchInfo> BranchInfo(Old->branch_info_begin(),
-                                             Old->branch_info_end());
-
-    // Remove all successors from the old block.
-    Old->removeSuccessors(OldSucc.begin(), OldSucc.end());
-    assert(Old->succ_empty());
-
-    // Move them to the new block.
-    New->addSuccessors(OldSucc.begin(),
-                       OldSucc.end(),
-                       BranchInfo.begin(),
-                       BranchInfo.end());
+    // Copy over successors to the new block.
+    New->addSuccessors(Old->successors().begin(),
+                       Old->successors().end(),
+                       Old->branch_info_begin(),
+                       Old->branch_info_end());
+    Old->removeAllSuccessors();
 
     // Update the execution count on the new block.
     New->setExecutionCount(Old->getExecutionCount());

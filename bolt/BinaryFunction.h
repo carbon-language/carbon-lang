@@ -1367,7 +1367,7 @@ public:
 
   /// Mark all blocks that are unreachable from a root (entry point
   /// or landing pad) as invalid.
-  void markUnreachable();
+  void markUnreachableBlocks();
 
   /// Rebuilds BBs layout, ignoring dead BBs. Returns the number of removed
   /// BBs and the removed number of bytes of code.

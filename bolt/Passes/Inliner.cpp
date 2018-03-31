@@ -362,7 +362,7 @@ InlineSmallFunctions::inlineCall(
   // If the inlining cannot happen as a simple instruction insertion into
   // CallerBB, we remove the outgoing CFG edges of the caller block.
   if (InlinedInstance.size() > 1 || !CanMergeFirstInlinedBlock) {
-    CallerBB->removeSuccessors(CallerBB->succ_begin(), CallerBB->succ_end());
+    CallerBB->removeAllSuccessors();
     if (!ShouldSplitCallerBB) {
       // Update the after-inlined point.
       AfterInlinedBB = CallerFunction.getBasicBlockAfter(CallerBB);
@@ -402,7 +402,7 @@ InlineSmallFunctions::inlineCall(
             FirstBB->succ_begin(),
             FirstBB->succ_end());
       }
-      FirstBB->removeSuccessors(FirstBB->succ_begin(), FirstBB->succ_end());
+      FirstBB->removeAllSuccessors();
     }
     InlinedInstance.erase(InlinedInstance.begin());
   } else {
