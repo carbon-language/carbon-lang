@@ -17,9 +17,9 @@ class AttrsVisitor {
 public:
   void beginAttrs();
   Attrs endAttrs();
-  void Post(const parser::LanguageBindingSpec &x);
-  bool Pre(const parser::AccessSpec &x);
-  bool Pre(const parser::IntentSpec &x);
+  void Post(const parser::LanguageBindingSpec &);
+  bool Pre(const parser::AccessSpec &);
+  bool Pre(const parser::IntentSpec &);
 
 // Simple case: encountering CLASSNAME causes ATTRNAME to be set.
 #define HANDLE_ATTR_CLASS(CLASSNAME, ATTRNAME) \
@@ -53,7 +53,7 @@ public:
 #undef HANDLE_ATTR_CLASS
 
 protected:
-  std::unique_ptr<Attrs> attrs_;
+  std::optional<Attrs> attrs_;
   std::string langBindingName_{""};
 };
 
@@ -141,10 +141,11 @@ private:
 // AttrsVisitor implementation
 void AttrsVisitor::beginAttrs() {
   CHECK(!attrs_);
-  attrs_ = std::make_unique<Attrs>();
+  attrs_ = std::make_optional<Attrs>();
 }
 Attrs AttrsVisitor::endAttrs() {
-  const auto result = attrs_ ? *attrs_ : Attrs::EMPTY;
+  CHECK(attrs_);
+  Attrs result{*attrs_};
   attrs_.reset();
   return result;
 }
@@ -222,13 +223,13 @@ bool DeclTypeSpecVisitor::Pre(const parser::TypeParamValue &x) {
   return false;
 }
 
-void DeclTypeSpecVisitor::Post(const parser::DeclarationTypeSpec::Type &x) {
+void DeclTypeSpecVisitor::Post(const parser::DeclarationTypeSpec::Type &) {
   SetDeclTypeSpec(
-      DeclTypeSpec::MakeTypeDerivedType(*derivedTypeSpec_.release()));
+      DeclTypeSpec::MakeTypeDerivedType(std::move(derivedTypeSpec_)));
 }
-void DeclTypeSpecVisitor::Post(const parser::DeclarationTypeSpec::Class &x) {
+void DeclTypeSpecVisitor::Post(const parser::DeclarationTypeSpec::Class &) {
   SetDeclTypeSpec(
-      DeclTypeSpec::MakeClassDerivedType(*derivedTypeSpec_.release()));
+      DeclTypeSpec::MakeClassDerivedType(std::move(derivedTypeSpec_)));
 }
 bool DeclTypeSpecVisitor::Pre(const parser::DeclarationTypeSpec::Record &x) {
   // TODO
@@ -281,24 +282,23 @@ KindParamValue DeclTypeSpecVisitor::GetKindParamValue(
 
 void ResolveNamesVisitor::Post(const parser::EntityDecl &x) {
   // TODO: may be under StructureStmt
-  const auto &name = std::get<parser::ObjectName>(x.t);
+  const auto &name{std::get<parser::ObjectName>(x.t)};
   // TODO: optional ArraySpec, CoarraySpec, CharLength, Initialization
-  Symbol &symbol = CurrScope().GetOrMakeSymbol(name.ToString());
-  symbol.attrs().Add(*attrs_);  //TODO: check attribute consistency
+  Symbol &symbol{CurrScope().GetOrMakeSymbol(name.ToString())};
+  symbol.attrs().Add(*attrs_);  // TODO: check attribute consistency
   if (symbol.has<UnknownDetails>()) {
     symbol.set_details(EntityDetails());
   }
   if (EntityDetails *details = symbol.detailsIf<EntityDetails>()) {
     if (details->type().has_value()) {
       std::cerr << "ERROR: symbol already has a type declared: "
-          << name.ToString() << "\n";
+                << name.ToString() << "\n";
     } else {
       details->set_type(*declTypeSpec_);
     }
   } else {
-    std::cerr
-        << "ERROR: symbol already declared, can't appear in entity-decl: "
-        << name.ToString() << "\n";
+    std::cerr << "ERROR: symbol already declared, can't appear in entity-decl: "
+              << name.ToString() << "\n";
   }
 }
 

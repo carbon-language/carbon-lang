@@ -203,25 +203,28 @@ DataComponentDef::DataComponentDef(const DeclTypeSpec &type, const Name &name,
   }
 }
 
-// All instances of IntrinsicTypeSpec live in caches and are never deleted,
-// so the pointer to intrinsicTypeSpec will always be valid
-// derivedTypeSpec_ is dynamically allocated and owned by the DeclTypeSpec
-DeclTypeSpec::DeclTypeSpec(Category category, const DerivedTypeSpec &derivedTypeSpec)
-  : category_{category}, intrinsicTypeSpec_{nullptr},
-    derivedTypeSpec_{new DerivedTypeSpec(derivedTypeSpec)} {
-  CHECK(category == TypeDerived || category == ClassDerived);
-}
 DeclTypeSpec::DeclTypeSpec(const DeclTypeSpec &that)
   : category_{that.category_}, intrinsicTypeSpec_{that.intrinsicTypeSpec_} {
   if (category_ == TypeDerived || category_ == ClassDerived) {
-    derivedTypeSpec_ = new DerivedTypeSpec(*that.derivedTypeSpec_);
+    derivedTypeSpec_ =
+        std::make_unique<DerivedTypeSpec>(*that.derivedTypeSpec_);
   }
 }
-DeclTypeSpec::~DeclTypeSpec() {
+
+DeclTypeSpec &DeclTypeSpec::operator=(const DeclTypeSpec &that) {
+  category_ = that.category_;
+  intrinsicTypeSpec_ = that.intrinsicTypeSpec_;
   if (category_ == TypeDerived || category_ == ClassDerived) {
-    delete derivedTypeSpec_;
-    derivedTypeSpec_ = nullptr;
+    derivedTypeSpec_ =
+        std::make_unique<DerivedTypeSpec>(*that.derivedTypeSpec_);
   }
+  return *this;
+}
+
+DeclTypeSpec::DeclTypeSpec(Category category, std::unique_ptr<DerivedTypeSpec> &&typeSpec)
+  : category_{category}, intrinsicTypeSpec_{nullptr},
+    derivedTypeSpec_{std::move(typeSpec)} {
+  CHECK(category == TypeDerived || category == ClassDerived);
 }
 
 std::ostream &operator<<(std::ostream &o, const DeclTypeSpec &x) {

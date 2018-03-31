@@ -48,7 +48,9 @@ public:
   }
   IntExpr() {}
   IntExpr(const parser::ScalarIntExpr &) { /*TODO*/ }
-  virtual std::ostream &Output(std::ostream &o) const { return o << "IntExpr"; }
+  virtual std::ostream &Output(std::ostream & o) const {
+    return o << "IntExpr";
+  }
 };
 
 // TODO
@@ -116,20 +118,23 @@ public:
     return DeclTypeSpec{typeSpec};
   }
   // TYPE(derived-type-spec)
-  static DeclTypeSpec MakeTypeDerivedType(const DerivedTypeSpec &typeSpec) {
-    return DeclTypeSpec{TypeDerived, typeSpec};
+  static DeclTypeSpec MakeTypeDerivedType(
+      std::unique_ptr<DerivedTypeSpec> && typeSpec) {
+    return DeclTypeSpec{TypeDerived, std::move(typeSpec)};
   }
   // CLASS(derived-type-spec)
-  static DeclTypeSpec MakeClassDerivedType(const DerivedTypeSpec &typeSpec) {
-    return DeclTypeSpec{ClassDerived, typeSpec};
+  static DeclTypeSpec MakeClassDerivedType(
+      std::unique_ptr<DerivedTypeSpec> && typeSpec) {
+    return DeclTypeSpec{ClassDerived, std::move(typeSpec)};
   }
   // TYPE(*)
   static DeclTypeSpec MakeTypeStar() { return DeclTypeSpec{TypeStar}; }
   // CLASS(*)
   static DeclTypeSpec MakeClassStar() { return DeclTypeSpec{ClassStar}; }
 
-  DeclTypeSpec(const DeclTypeSpec &that);
-  ~DeclTypeSpec();
+  DeclTypeSpec(const DeclTypeSpec &);
+  DeclTypeSpec &operator=(const DeclTypeSpec &);
+
   enum Category { Intrinsic, TypeDerived, ClassDerived, TypeStar, ClassStar };
   Category category() const { return category_; }
   const IntrinsicTypeSpec &intrinsicTypeSpec() const {
@@ -141,13 +146,16 @@ private:
   DeclTypeSpec(Category category) : category_{category} {
     CHECK(category == TypeStar || category == ClassStar);
   }
-  DeclTypeSpec(Category category, const DerivedTypeSpec &typeSpec);
+  DeclTypeSpec(Category category, std::unique_ptr<DerivedTypeSpec> &&typeSpec);
   DeclTypeSpec(const IntrinsicTypeSpec &intrinsicTypeSpec)
-    : category_{Intrinsic}, intrinsicTypeSpec_{&intrinsicTypeSpec} {}
+    : category_{Intrinsic}, intrinsicTypeSpec_{&intrinsicTypeSpec} {
+    // All instances of IntrinsicTypeSpec live in caches and are never deleted,
+    // so the pointer to intrinsicTypeSpec will always be valid.
+  }
 
   Category category_;
   const IntrinsicTypeSpec *intrinsicTypeSpec_{nullptr};
-  const DerivedTypeSpec *derivedTypeSpec_{nullptr};
+  std::unique_ptr<DerivedTypeSpec> derivedTypeSpec_;
   friend std::ostream &operator<<(std::ostream &, const DeclTypeSpec &);
 };
 
