@@ -38755,10 +38755,12 @@ bool X86TargetLowering::IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const {
     SDValue N1 = Op.getOperand(1);
     // Avoid disabling potential load folding opportunities.
     if (MayFoldLoad(N1) &&
-        (!Commute || !isa<ConstantSDNode>(N0) || IsFoldableRMW(N1, Op)))
+        (!Commute || !isa<ConstantSDNode>(N0) ||
+         (Op.getOpcode() != ISD::MUL && IsFoldableRMW(N1, Op))))
       return false;
     if (MayFoldLoad(N0) &&
-        ((Commute && !isa<ConstantSDNode>(N1)) || IsFoldableRMW(N0, Op)))
+        ((Commute && !isa<ConstantSDNode>(N1)) ||
+         (Op.getOpcode() != ISD::MUL && IsFoldableRMW(N0, Op))))
       return false;
   }
   }
