@@ -57,3 +57,26 @@ entry:
   %sub = sub i16 %0, %y
   ret i16 %sub
 }
+
+define void @bat(i16* %a, i16* %x, i16 signext %y) nounwind {
+; X86-LABEL: bat:
+; X86:       # %bb.0: # %entry
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X86-NEXT:    movzwl (%ecx), %ecx
+; X86-NEXT:    subw {{[0-9]+}}(%esp), %cx
+; X86-NEXT:    movw %cx, (%eax)
+; X86-NEXT:    retl
+;
+; X64-LABEL: bat:
+; X64:       # %bb.0: # %entry
+; X64-NEXT:    movzwl (%rsi), %eax
+; X64-NEXT:    subw %dx, %ax
+; X64-NEXT:    movw %ax, (%rdi)
+; X64-NEXT:    retq
+entry:
+  %0 = load i16, i16* %x
+  %sub = sub i16 %0, %y
+  store i16 %sub, i16* %a
+  ret void
+}
