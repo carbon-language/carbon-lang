@@ -38717,14 +38717,12 @@ bool X86TargetLowering::IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const {
   if (VT != MVT::i16)
     return false;
 
-  bool Promote = false;
   bool Commute = false;
   switch (Op.getOpcode()) {
-  default: break;
+  default: return false;
   case ISD::SIGN_EXTEND:
   case ISD::ZERO_EXTEND:
   case ISD::ANY_EXTEND:
-    Promote = true;
     break;
   case ISD::SHL:
   case ISD::SRL: {
@@ -38732,7 +38730,6 @@ bool X86TargetLowering::IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const {
     // Look out for (store (shl (load), x)).
     if (MayFoldLoad(N0) && MayFoldIntoStore(Op))
       return false;
-    Promote = true;
     break;
   }
   case ISD::ADD:
@@ -38752,12 +38749,11 @@ bool X86TargetLowering::IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const {
       return false;
     if (MayFoldLoad(N1) && (!isa<ConstantSDNode>(N0) || MayFoldIntoStore(Op)))
       return false;
-    Promote = true;
   }
   }
 
   PVT = MVT::i32;
-  return Promote;
+  return true;
 }
 
 bool X86TargetLowering::
