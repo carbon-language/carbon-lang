@@ -38717,6 +38717,17 @@ bool X86TargetLowering::IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const {
   if (VT != MVT::i16)
     return false;
 
+  auto IsFoldableRMW = [](SDValue Load, SDValue Op) {
+    if (!Op.hasOneUse())
+      return false;
+    SDNode *User = *Op->use_begin();
+    if (!ISD::isNormalStore(User))
+      return false;
+    auto *Ld = cast<LoadSDNode>(Load);
+    auto *St = cast<StoreSDNode>(User);
+    return Ld->getBasePtr() == St->getBasePtr();
+  };
+
   bool Commute = false;
   switch (Op.getOpcode()) {
   default: return false;
@@ -38728,7 +38739,7 @@ bool X86TargetLowering::IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const {
   case ISD::SRL: {
     SDValue N0 = Op.getOperand(0);
     // Look out for (store (shl (load), x)).
-    if (MayFoldLoad(N0) && MayFoldIntoStore(Op))
+    if (MayFoldLoad(N0) && IsFoldableRMW(N0, Op))
       return false;
     break;
   }
@@ -38744,10 +38755,10 @@ bool X86TargetLowering::IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const {
     SDValue N1 = Op.getOperand(1);
     // Avoid disabling potential load folding opportunities.
     if (MayFoldLoad(N1) &&
-        (!Commute || !isa<ConstantSDNode>(N0) || MayFoldIntoStore(Op)))
+        (!Commute || !isa<ConstantSDNode>(N0) || IsFoldableRMW(N1, Op)))
       return false;
     if (MayFoldLoad(N0) &&
-        ((Commute && !isa<ConstantSDNode>(N1)) || MayFoldIntoStore(Op)))
+        ((Commute && !isa<ConstantSDNode>(N1)) || IsFoldableRMW(N0, Op)))
       return false;
   }
   }

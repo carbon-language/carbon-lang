@@ -71,7 +71,7 @@ define void @bat(i16* %a, i16* %x, i16 signext %y) nounwind {
 ; X64-LABEL: bat:
 ; X64:       # %bb.0: # %entry
 ; X64-NEXT:    movzwl (%rsi), %eax
-; X64-NEXT:    subw %dx, %ax
+; X64-NEXT:    subl %edx, %eax
 ; X64-NEXT:    movw %ax, (%rdi)
 ; X64-NEXT:    retq
 entry:
