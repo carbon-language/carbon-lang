@@ -38742,12 +38742,12 @@ bool X86TargetLowering::IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const {
   case ISD::SUB: {
     SDValue N0 = Op.getOperand(0);
     SDValue N1 = Op.getOperand(1);
-    if (!Commute && MayFoldLoad(N1))
-      return false;
     // Avoid disabling potential load folding opportunities.
-    if (MayFoldLoad(N0) && (!isa<ConstantSDNode>(N1) || MayFoldIntoStore(Op)))
+    if (MayFoldLoad(N1) &&
+        (!Commute || !isa<ConstantSDNode>(N0) || MayFoldIntoStore(Op)))
       return false;
-    if (MayFoldLoad(N1) && (!isa<ConstantSDNode>(N0) || MayFoldIntoStore(Op)))
+    if (MayFoldLoad(N0) &&
+        ((Commute && !isa<ConstantSDNode>(N1)) || MayFoldIntoStore(Op)))
       return false;
   }
   }

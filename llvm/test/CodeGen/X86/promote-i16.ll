@@ -49,7 +49,8 @@ define signext i16 @baz(i16* %x, i16 signext %y) nounwind {
 ; X64-LABEL: baz:
 ; X64:       # %bb.0: # %entry
 ; X64-NEXT:    movzwl (%rdi), %eax
-; X64-NEXT:    subw %si, %ax
+; X64-NEXT:    subl %esi, %eax
+; X64-NEXT:    # kill: def $ax killed $ax killed $eax
 ; X64-NEXT:    retq
 entry:
   %0 = load i16, i16* %x
