@@ -191,9 +191,6 @@
 /* Define to 1 if you have the `strerror_r' function. */
 #cmakedefine HAVE_STRERROR_R ${HAVE_STRERROR_R}
 
-/* Define to 1 if you have the `strtoll' function. */
-#cmakedefine HAVE_STRTOLL ${HAVE_STRTOLL}
-
 /* Define to 1 if you have the `sysconf' function. */
 #cmakedefine HAVE_SYSCONF ${HAVE_SYSCONF}
 
@@ -385,12 +382,6 @@
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #cmakedefine RETSIGTYPE ${RETSIGTYPE}
-
-/* Define to a function replacing strtoll */
-#cmakedefine strtoll ${strtoll}
-
-/* Define to a function implementing strtoull */
-#cmakedefine strtoull ${strtoull}
 
 /* Define to a function implementing stricmp */
 #cmakedefine stricmp ${stricmp}
