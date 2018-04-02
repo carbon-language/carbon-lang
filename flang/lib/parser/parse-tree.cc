@@ -30,7 +30,7 @@ ProcedureDesignator Designator::ConvertToProcedureDesignator() {
       visitors{
           [](ObjectName &n) -> ProcedureDesignator { return {std::move(n)}; },
           [](DataReference &dr) -> ProcedureDesignator {
-            if (Name * n{std::get_if<Name>(&dr.u)}) {
+            if (auto n = std::get_if<Name>(&dr.u)) {
               return {std::move(*n)};
             }
             StructureComponent &sc{
