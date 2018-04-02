@@ -22,11 +22,12 @@ public:
   constexpr DebugParser(const char *str, std::size_t n)
     : str_{str}, length_{n} {}
   std::optional<Success> Parse(ParseState *state) const {
+    const CookedSource &cooked{state->messages()->cooked()};
     if (auto context = state->context()) {
-      context->Emit(std::cout, *state->cooked().allSources());
+      context->Emit(std::cout, cooked);
     }
-    state->cooked().allSources()->Identify(
-        std::cout, state->GetProvenance(), "");
+    Provenance p{cooked.GetProvenance(state->GetLocation()).start()};
+    cooked.allSources().Identify(std::cout, p, "");
     std::cout << "   parser debug: " << std::string{str_, length_} << '\n';
     return {Success{}};
   }
