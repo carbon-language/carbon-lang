@@ -26,14 +26,13 @@ public:
   constexpr CharPredicateGuard(bool (*f)(char), MessageFixedText m)
     : predicate_{f}, messageText_{m} {}
   std::optional<const char *> Parse(ParseState *state) const {
-    const char *at{state->GetLocation()};
-    if (!state->IsAtEnd()) {
-      if (predicate_(*at)) {
+    if (std::optional<const char *> at{state->PeekAtNextChar()}) {
+      if (predicate_(**at)) {
         state->UncheckedAdvance();
-        return {at};
+        return at;
       }
     }
-    state->Say(at, messageText_);
+    state->Say(messageText_);
     return {};
   }
 
@@ -57,17 +56,17 @@ public:
   constexpr AnyOfChar(const char *chars, std::size_t n)
     : chars_{chars}, bytes_{n} {}
   std::optional<const char *> Parse(ParseState *state) const {
-    const char *at{state->GetLocation()};
-    if (!state->IsAtEnd()) {
+    if (std::optional<const char *> at{state->PeekAtNextChar()}) {
+      char ch{**at};
       const char *p{chars_};
       for (std::size_t j{0}; j < bytes_ && *p != '\0'; ++j, ++p) {
-        if (*at == ToLowerCaseLetter(*p)) {
+        if (ch == ToLowerCaseLetter(*p)) {
           state->UncheckedAdvance();
-          return {at};
+          return at;
         }
       }
     }
-    state->Say(at, MessageExpectedText{chars_, bytes_});
+    state->Say(MessageExpectedText{chars_, bytes_});
     return {};
   }
 
@@ -572,14 +571,13 @@ inline constexpr auto optionalListBeforeColons(const PA &p) {
 constexpr struct FormDirectivesAndEmptyLines {
   using resultType = Success;
   static std::optional<Success> Parse(ParseState *state) {
-    while (!state->IsAtEnd()) {
-      const char *at{state->GetLocation()};
+    while (std::optional<const char *> at{state->PeekAtNextChar()}) {
       static const char fixed[] = "!dir$ fixed\n", free[] = "!dir$ free\n";
-      if (*at == '\n') {
+      if (**at == '\n') {
         state->UncheckedAdvance();
-      } else if (std::memcmp(at, fixed, sizeof fixed - 1) == 0) {
+      } else if (std::memcmp(*at, fixed, sizeof fixed - 1) == 0) {
         state->set_inFixedForm(true).UncheckedAdvance(sizeof fixed - 1);
-      } else if (std::memcmp(at, free, sizeof free - 1) == 0) {
+      } else if (std::memcmp(*at, free, sizeof free - 1) == 0) {
         state->set_inFixedForm(false).UncheckedAdvance(sizeof free - 1);
       } else {
         break;
