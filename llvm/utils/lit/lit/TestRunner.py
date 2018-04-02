@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import difflib
 import errno
 import functools
+import io
 import itertools
 import getopt
 import os, signal, subprocess, sys
@@ -387,6 +388,8 @@ def executeBuiltinDiff(cmd, cmd_shenv):
             return path, sorted(child_trees)
 
     def compareTwoFiles(filepaths):
+        compare_bytes = False
+        encoding = None
         filelines = []
         for file in filepaths:
             compare_bytes = False
