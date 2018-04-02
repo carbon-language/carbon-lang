@@ -553,12 +553,12 @@ declare float @sqrtf(float) readnone
 define float @sqrtA(float %a) nounwind uwtable readnone ssp {
 ; GENERIC-LABEL: sqrtA:
 ; GENERIC:       # %bb.0: # %entry
-; GENERIC-NEXT:    vsqrtss %xmm0, %xmm0, %xmm0 # sched: [14:1.00]
+; GENERIC-NEXT:    vsqrtss %xmm0, %xmm0, %xmm0 # sched: [14:14.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: sqrtA:
 ; SKX:       # %bb.0: # %entry
-; SKX-NEXT:    vsqrtss %xmm0, %xmm0, %xmm0 # sched: [12:1.00]
+; SKX-NEXT:    vsqrtss %xmm0, %xmm0, %xmm0 # sched: [12:3.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
 entry:
   %conv1 = tail call float @sqrtf(float %a) nounwind readnone
@@ -569,12 +569,12 @@ declare double @sqrt(double) readnone
 define double @sqrtB(double %a) nounwind uwtable readnone ssp {
 ; GENERIC-LABEL: sqrtB:
 ; GENERIC:       # %bb.0: # %entry
-; GENERIC-NEXT:    vsqrtsd %xmm0, %xmm0, %xmm0 # sched: [21:1.00]
+; GENERIC-NEXT:    vsqrtsd %xmm0, %xmm0, %xmm0 # sched: [21:21.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: sqrtB:
 ; SKX:       # %bb.0: # %entry
-; SKX-NEXT:    vsqrtsd %xmm0, %xmm0, %xmm0 # sched: [18:1.00]
+; SKX-NEXT:    vsqrtsd %xmm0, %xmm0, %xmm0 # sched: [18:6.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
 entry:
   %call = tail call double @sqrt(double %a) nounwind readnone
@@ -585,12 +585,12 @@ declare float @llvm.sqrt.f32(float)
 define float @sqrtC(float %a) nounwind {
 ; GENERIC-LABEL: sqrtC:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    vsqrtss %xmm0, %xmm0, %xmm0 # sched: [14:1.00]
+; GENERIC-NEXT:    vsqrtss %xmm0, %xmm0, %xmm0 # sched: [14:14.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: sqrtC:
 ; SKX:       # %bb.0:
-; SKX-NEXT:    vsqrtss %xmm0, %xmm0, %xmm0 # sched: [12:1.00]
+; SKX-NEXT:    vsqrtss %xmm0, %xmm0, %xmm0 # sched: [12:3.00]
 ; SKX-NEXT:    retq # sched: [7:1.00]
   %b = call float @llvm.sqrt.f32(float %a)
   ret float %b
