@@ -18,7 +18,8 @@ std::string MessageFixedText::ToString() const {
   return std::string{str_, /*not in std::*/ strnlen(str_, bytes_)};
 }
 
-MessageFormattedText::MessageFormattedText(MessageFixedText text, ...) {
+MessageFormattedText::MessageFormattedText(MessageFixedText text, ...)
+  : isFatal_{text.isFatal()} {
   const char *p{text.str()};
   std::string asString;
   if (p[text.size()] != '\0') {
@@ -59,13 +60,16 @@ Provenance Message::Emit(
     cooked.allSources().Identify(o, provenance, "", echoSourceLine);
   }
   o << "   ";
+  if (isFatal_) {
+    o << "ERROR: ";
+  }
   if (string_.empty()) {
     if (isExpectedText_) {
       std::string goal{text_.ToString()};
       if (goal == "\n") {
-        o << "expected end of line"_en_US;
+        o << "expected end of line"_err_en_US;
       } else {
-        o << MessageFormattedText("expected '%s'"_en_US, goal.data())
+        o << MessageFormattedText("expected '%s'"_err_en_US, goal.data())
                  .MoveString();
       }
     } else {
@@ -89,6 +93,15 @@ void Messages::Emit(
     }
     msg.Emit(o, cooked_, echoSourceLines);
   }
+}
+
+bool Messages::AnyFatalError() const {
+  for (const auto &msg : messages_) {
+    if (msg.isFatal()) {
+      return true;
+    }
+  }
+  return false;
 }
 }  // namespace parser
 }  // namespace Fortran

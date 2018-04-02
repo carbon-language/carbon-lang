@@ -27,8 +27,8 @@ public:
       context->Emit(std::cout, cooked);
     }
     Provenance p{cooked.GetProvenance(state->GetLocation()).start()};
-    cooked.allSources().Identify(std::cout, p, "");
-    std::cout << "   parser debug: " << std::string{str_, length_} << '\n';
+    cooked.allSources().Identify(std::cout, p, "", true);
+    std::cout << "   parser debug: " << std::string{str_, length_} << "\n\n";
     return {Success{}};
   }
 

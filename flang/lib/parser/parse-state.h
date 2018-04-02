@@ -118,21 +118,17 @@ public:
     }
   }
 
-  Message &PutMessage(MessageFixedText t) { return PutMessage(p_, t); }
-  Message &PutMessage(MessageFormattedText &&t) {
-    return PutMessage(p_, std::move(t));
-  }
-  Message &PutMessage(MessageExpectedText &&t) {
-    return PutMessage(p_, std::move(t));
-  }
+  Message &Say(MessageFixedText t) { return Say(p_, t); }
+  Message &Say(MessageFormattedText &&t) { return Say(p_, std::move(t)); }
+  Message &Say(MessageExpectedText &&t) { return Say(p_, std::move(t)); }
 
-  Message &PutMessage(const char *at, MessageFixedText t) {
+  Message &Say(const char *at, MessageFixedText t) {
     return messages_.Put(Message{at, t, context_});
   }
-  Message &PutMessage(const char *at, MessageFormattedText &&t) {
+  Message &Say(const char *at, MessageFormattedText &&t) {
     return messages_.Put(Message{at, std::move(t), context_});
   }
-  Message &PutMessage(const char *at, MessageExpectedText &&t) {
+  Message &Say(const char *at, MessageExpectedText &&t) {
     return messages_.Put(Message{at, std::move(t), context_});
   }
 

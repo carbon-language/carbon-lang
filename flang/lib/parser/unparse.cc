@@ -2124,9 +2124,7 @@ private:
     WalkTupleElements(tuple, separator);
   }
 
-  void EndSubprogram() {
-    structureComponents_.clear();
-  }
+  void EndSubprogram() { structureComponents_.clear(); }
 
   std::ostream &out_;
   int indent_{0};

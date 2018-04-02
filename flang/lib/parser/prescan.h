@@ -28,8 +28,6 @@ public:
   Prescanner(Messages &, CookedSource &, Preprocessor &);
   Prescanner(const Prescanner &);
 
-  bool anyFatalErrors() const { return anyFatalErrors_; }
-  void set_anyFatalErrors() { anyFatalErrors_ = true; }
   Messages &messages() const { return messages_; }
 
   Prescanner &set_fixedForm(bool yes) {
@@ -59,7 +57,7 @@ public:
 
   Prescanner &AddCompilerDirectiveSentinel(const std::string &);
 
-  bool Prescan(ProvenanceRange);
+  void Prescan(ProvenanceRange);
   void Statement();
   void NextLine();
 
@@ -69,12 +67,9 @@ public:
   TokenSequence TokenizePreprocessorDirective();
   Provenance GetCurrentProvenance() const { return GetProvenance(at_); }
 
-  Message &Error(Message &&);
-  Message &Error(MessageFixedText, Provenance);
-  Message &Error(MessageFormattedText &&, Provenance);
-  Message &Complain(Message &&);
-  Message &Complain(MessageFixedText, Provenance);
-  Message &Complain(MessageFormattedText &&, Provenance);
+  void Say(Message &&);
+  void Say(MessageFixedText, Provenance);
+  void Say(MessageFormattedText &&, Provenance);
 
 private:
   struct LineClassification {

@@ -141,7 +141,10 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
     }
   }
   Fortran::parser::Parsing parsing;
-  if (!parsing.Prescan(path, options)) {
+  parsing.Prescan(path, options);
+  if (!parsing.messages().empty() &&
+      (driver.warningsAreErrors || parsing.messages().AnyFatalError())) {
+    std::cerr << driver.prefix << "could not scan " << path << '\n';
     parsing.messages().Emit(std::cerr, driver.prefix);
     exit(EXIT_FAILURE);
   }
@@ -153,28 +156,26 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
     parsing.DumpCookedChars(std::cout);
     return {};
   }
-  if (!parsing.Parse()) {
-    if (!parsing.consumedWholeFile()) {
-      std::cerr << "f18 FAIL; final position: ";
-      parsing.Identify(std::cerr, parsing.finalRestingPlace(), "   ");
-    }
+  parsing.Parse();
+  parsing.messages().Emit(std::cerr, driver.prefix);
+  if (!parsing.consumedWholeFile()) {
+    std::cerr << "f18 parser FAIL; final position: ";
+    parsing.Identify(std::cerr, parsing.finalRestingPlace(), "   ");
+    exit(EXIT_FAILURE);
+  }
+  if (!parsing.messages().empty() &&
+      (driver.warningsAreErrors || parsing.messages().AnyFatalError()) ||
+      !parsing.parseTree().has_value()) {
     std::cerr << driver.prefix << "could not parse " << path << '\n';
-    parsing.messages().Emit(std::cerr, driver.prefix);
     exit(EXIT_FAILURE);
   }
   if (driver.measureTree) {
-    MeasureParseTree(parsing.parseTree());
+    MeasureParseTree(*parsing.parseTree());
   }
   if (driver.dumpUnparse) {
-    Unparse(std::cout, parsing.parseTree(), driver.encoding,
+    Unparse(std::cout, *parsing.parseTree(), driver.encoding,
             true /*capitalize*/);
     return {};
-  }
-
-  parsing.messages().Emit(std::cerr, driver.prefix);
-  if (driver.warningsAreErrors &&
-      !parsing.messages().empty()) {
-    exit(EXIT_FAILURE);
   }
   if (driver.parseOnly) {
     return {};
@@ -187,7 +188,7 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
                 static_cast<unsigned long>(getpid()));
   { std::ofstream tmpSource;
     tmpSource.open(tmpSourcePath);
-    Unparse(tmpSource, parsing.parseTree(), driver.encoding);
+    Unparse(tmpSource, *parsing.parseTree(), driver.encoding);
   }
 
   if (ParentProcess()) {

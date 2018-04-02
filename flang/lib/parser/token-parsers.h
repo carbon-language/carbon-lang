@@ -33,7 +33,7 @@ public:
         return {at};
       }
     }
-    state->PutMessage(at, messageText_);
+    state->Say(at, messageText_);
     return {};
   }
 
@@ -42,9 +42,10 @@ private:
   const MessageFixedText messageText_;
 };
 
-constexpr auto letter = CharPredicateGuard{IsLetter, "expected letter"_en_US};
+constexpr auto letter =
+    CharPredicateGuard{IsLetter, "expected letter"_err_en_US};
 constexpr auto digit =
-    CharPredicateGuard{IsDecimalDigit, "expected digit"_en_US};
+    CharPredicateGuard{IsDecimalDigit, "expected digit"_err_en_US};
 
 // "xyz"_ch matches one instance of the characters x, y, or z without skipping
 // any spaces before or after.  The parser returns the location of the character
@@ -66,7 +67,7 @@ public:
         }
       }
     }
-    state->PutMessage(at, MessageExpectedText{chars_, bytes_});
+    state->Say(at, MessageExpectedText{chars_, bytes_});
     return {};
   }
 
@@ -100,7 +101,7 @@ static inline void MissingSpace(ParseState *state) {
   if (!state->inFixedForm()) {
     state->set_anyConformanceViolation();
     if (state->warnOnNonstandardUsage()) {
-      state->PutMessage("expected space"_en_US);
+      state->Say("expected space"_err_en_US);
     }
   }
 }
@@ -171,7 +172,7 @@ public:
       } else if (**at == ToLowerCaseLetter(*p)) {
         at.reset();
       } else {
-        state->PutMessage(start, MessageExpectedText{str_, bytes_});
+        state->Say(start, MessageExpectedText{str_, bytes_});
         return {};
       }
     }
@@ -241,7 +242,7 @@ struct CharLiteralChar {
     }
     char ch{**och};
     if (ch == '\n') {
-      state->PutMessage(at, "unclosed character constant"_en_US);
+      state->Say(at, "unclosed character constant"_err_en_US);
       return {};
     }
     if (ch != '\\') {
@@ -252,7 +253,7 @@ struct CharLiteralChar {
     }
     ch = **och;
     if (ch == '\n') {
-      state->PutMessage(at, "unclosed character constant"_en_US);
+      state->Say(at, "unclosed character constant"_err_en_US);
       return {};
     }
     if (std::optional<char> escChar{BackslashEscapeValue(ch)}) {
@@ -262,7 +263,7 @@ struct CharLiteralChar {
       ch -= '0';
       for (int j = (ch > 3 ? 1 : 2); j-- > 0;) {
         static constexpr auto octalDigit =
-            CharPredicateGuard{IsOctalDigit, "expected octal digit"_en_US};
+            CharPredicateGuard{IsOctalDigit, "expected octal digit"_err_en_US};
         och = octalDigit.Parse(state);
         if (och.has_value()) {
           ch = 8 * ch + **och - '0';
@@ -274,7 +275,7 @@ struct CharLiteralChar {
       ch = 0;
       for (int j = 0; j++ < 2;) {
         static constexpr auto hexDigit = CharPredicateGuard{
-            IsHexadecimalDigit, "expected hexadecimal digit"_en_US};
+            IsHexadecimalDigit, "expected hexadecimal digit"_err_en_US};
         och = hexDigit.Parse(state);
         if (och.has_value()) {
           ch = 16 * ch + HexadecimalDigitValue(**och);
@@ -283,7 +284,7 @@ struct CharLiteralChar {
         }
       }
     } else {
-      state->PutMessage(at, "bad escaped character"_en_US);
+      state->Say(at, "bad escaped character"_err_en_US);
     }
     return {Result::Escaped(ch)};
   }
@@ -314,7 +315,7 @@ static bool IsNonstandardUsageOk(ParseState *state) {
   }
   state->set_anyConformanceViolation();
   if (state->warnOnNonstandardUsage()) {
-    state->PutMessage("nonstandard usage"_en_US);
+    state->Say("nonstandard usage"_en_US);
   }
   return true;
 }
@@ -385,7 +386,7 @@ struct BOZLiteral {
     }
 
     if (content.empty()) {
-      state->PutMessage(start, "no digit in BOZ literal"_en_US);
+      state->Say(start, "no digit in BOZ literal"_err_en_US);
       return {};
     }
 
@@ -393,13 +394,13 @@ struct BOZLiteral {
     for (auto digit : content) {
       digit = HexadecimalDigitValue(digit);
       if ((digit >> *shift) > 0) {
-        state->PutMessage(start, "bad digit in BOZ literal"_en_US);
+        state->Say(start, "bad digit in BOZ literal"_err_en_US);
         return {};
       }
       std::uint64_t was{value};
       value <<= *shift;
       if ((value >> *shift) != was) {
-        state->PutMessage(start, "excessive digits in BOZ literal"_en_US);
+        state->Say(start, "excessive digits in BOZ literal"_err_en_US);
         return {};
       }
       value |= digit;
@@ -431,7 +432,7 @@ struct DigitString {
       value += digitValue;
     }
     if (overflow) {
-      state->PutMessage(*firstDigit, "overflow in decimal literal"_en_US);
+      state->Say(*firstDigit, "overflow in decimal literal"_err_en_US);
     }
     return {value};
   }
@@ -458,14 +459,14 @@ struct HollerithLiteral {
       if (state->encoding() == Encoding::EUC_JP) {
         std::optional<int> chBytes{EUC_JPCharacterBytes(p)};
         if (!chBytes.has_value()) {
-          state->PutMessage(start, "bad EUC_JP characters in Hollerith"_en_US);
+          state->Say(start, "bad EUC_JP characters in Hollerith"_err_en_US);
           return {};
         }
         bytes = *chBytes;
       } else if (state->encoding() == Encoding::UTF8) {
         std::optional<int> chBytes{UTF8CharacterBytes(p)};
         if (!chBytes.has_value()) {
-          state->PutMessage(start, "bad UTF-8 characters in Hollerith"_en_US);
+          state->Say(start, "bad UTF-8 characters in Hollerith"_err_en_US);
           return {};
         }
         bytes = *chBytes;
@@ -473,8 +474,8 @@ struct HollerithLiteral {
       if (bytes == 1) {
         std::optional<const char *> at{nextCh.Parse(state)};
         if (!at.has_value() || !isprint(**at)) {
-          state->PutMessage(
-              start, "insufficient or bad characters in Hollerith"_en_US);
+          state->Say(
+              start, "insufficient or bad characters in Hollerith"_err_en_US);
           return {};
         }
         content += **at;

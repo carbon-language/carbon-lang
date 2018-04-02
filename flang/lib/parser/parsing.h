@@ -36,12 +36,12 @@ public:
   bool consumedWholeFile() const { return consumedWholeFile_; }
   const char *finalRestingPlace() const { return finalRestingPlace_; }
   Messages &messages() { return messages_; }
-  Program &parseTree() { return *parseTree_; }
+  std::optional<Program> &parseTree() { return parseTree_; }
 
-  bool Prescan(const std::string &path, Options);
+  void Prescan(const std::string &path, Options);
   void DumpCookedChars(std::ostream &) const;
   void DumpProvenance(std::ostream &) const;
-  bool Parse();
+  void Parse();
 
   void Identify(std::ostream &o, const char *at, const std::string &prefix,
       bool echoSourceLine = false) const {
@@ -49,12 +49,13 @@ public:
         o, cooked_.GetProvenance(at).start(), prefix, echoSourceLine);
   }
 
+  static std::optional<Program> ForTesting(std::string path, std::ostream &);
+
 private:
   Options options_;
   AllSources allSources_;
   CookedSource cooked_{allSources_};
   Messages messages_{cooked_};
-  bool anyFatalError_{false};
   bool consumedWholeFile_{false};
   const char *finalRestingPlace_{nullptr};
   std::optional<Program> parseTree_;

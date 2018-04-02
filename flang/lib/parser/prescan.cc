@@ -42,7 +42,7 @@ static void NormalizeCompilerDirectiveCommentMarker(TokenSequence *dir) {
   CHECK(!"compiler directive all blank");
 }
 
-bool Prescanner::Prescan(ProvenanceRange range) {
+void Prescanner::Prescan(ProvenanceRange range) {
   AllSources &allSources{cooked_.allSources()};
   ProvenanceRange around{allSources.GetContiguousRangeAround(range)};
   startProvenance_ = range.start();
@@ -67,7 +67,6 @@ bool Prescanner::Prescan(ProvenanceRange range) {
     TokenSequence tokens{dir, allSources.AddCompilerInsertion(dir).start()};
     tokens.Emit(&cooked_);
   }
-  return !anyFatalErrors_;
 }
 
 void Prescanner::Statement() {
@@ -131,7 +130,7 @@ void Prescanner::Statement() {
       FortranInclude(ppd + ppl.payloadOffset);
       break;
     case LineClassification::Kind::PreprocessorDirective:
-      Complain("preprocessed line looks like a preprocessor directive"_en_US,
+      Say("preprocessed line looks like a preprocessor directive"_en_US,
           preprocessed->GetProvenanceRange().start());
       preprocessed->ToLowerCase().Emit(&cooked_);
       break;
@@ -169,31 +168,14 @@ TokenSequence Prescanner::TokenizePreprocessorDirective() {
   return {std::move(tokens)};
 }
 
-Message &Prescanner::Error(Message &&message) {
-  anyFatalErrors_ = true;
-  return messages_.Put(std::move(message));
+void Prescanner::Say(Message &&message) { messages_.Put(std::move(message)); }
+
+void Prescanner::Say(MessageFixedText text, Provenance p) {
+  messages_.Put({p, text});
 }
 
-Message &Prescanner::Error(MessageFixedText text, Provenance p) {
-  anyFatalErrors_ = true;
-  return messages_.Put({p, text});
-}
-
-Message &Prescanner::Error(MessageFormattedText &&text, Provenance p) {
-  anyFatalErrors_ = true;
-  return messages_.Put({p, std::move(text)});
-}
-
-Message &Prescanner::Complain(Message &&message) {
-  return messages_.Put(std::move(message));
-}
-
-Message &Prescanner::Complain(MessageFixedText text, Provenance p) {
-  return messages_.Put({p, text});
-}
-
-Message &Prescanner::Complain(MessageFormattedText &&text, Provenance p) {
-  return messages_.Put({p, std::move(text)});
+void Prescanner::Say(MessageFormattedText &&text, Provenance p) {
+  messages_.Put({p, std::move(text)});
 }
 
 void Prescanner::NextLine() {
@@ -424,7 +406,7 @@ void Prescanner::QuotedCharacterLiteral(TokenSequence *tokens) {
     }
     if (*at_ == '\n') {
       if (!inPreprocessorDirective_) {
-        Error("incomplete character literal"_en_US, GetProvenance(start));
+        Say("incomplete character literal"_err_en_US, GetProvenance(start));
       }
       break;
     }
@@ -474,7 +456,7 @@ void Prescanner::Hollerith(TokenSequence *tokens, int count) {
   }
   if (*at_ == '\n') {
     if (!inPreprocessorDirective_) {
-      Error("incomplete Hollerith literal"_en_US, GetProvenance(start));
+      Say("incomplete Hollerith literal"_err_en_US, GetProvenance(start));
     }
   } else {
     NextChar();
@@ -575,13 +557,13 @@ bool Prescanner::FortranInclude(const char *firstQuote) {
     path += *p;
   }
   if (*p != quote) {
-    Error("malformed path name string"_en_US, GetProvenance(p));
+    Say("malformed path name string"_err_en_US, GetProvenance(p));
     return true;
   }
   for (++p; *p == ' ' || *p == '\t'; ++p) {
   }
   if (*p != '\n' && *p != '!') {
-    Complain("excess characters after path name"_en_US, GetProvenance(p));
+    Say("excess characters after path name"_en_US, GetProvenance(p));
   }
   std::stringstream error;
   Provenance provenance{GetProvenance(lineStart_)};
@@ -595,7 +577,7 @@ bool Prescanner::FortranInclude(const char *firstQuote) {
     allSources.PopSearchPathDirectory();
   }
   if (included == nullptr) {
-    Error(MessageFormattedText("INCLUDE: %s"_en_US, error.str().data()),
+    Say(MessageFormattedText("INCLUDE: %s"_err_en_US, error.str().data()),
         provenance);
     return true;
   }
@@ -606,7 +588,7 @@ bool Prescanner::FortranInclude(const char *firstQuote) {
       provenance, static_cast<std::size_t>(p - lineStart_)};
   ProvenanceRange fileRange{
       allSources.AddIncludedFile(*included, includeLineRange)};
-  anyFatalErrors_ |= !Prescanner{*this}.Prescan(fileRange);
+  Prescanner{*this}.Prescan(fileRange);
   return true;
 }
 
@@ -672,7 +654,7 @@ const char *Prescanner::FixedFormContinuationLine() {
   if (col1 == '&') {
     // Extension: '&' as continuation marker
     if (warnOnNonstandardUsage_) {
-      Complain("nonstandard usage"_en_US, GetProvenance(lineStart_));
+      Say("nonstandard usage"_en_US, GetProvenance(lineStart_));
     }
     return lineStart_ + 1;
   }

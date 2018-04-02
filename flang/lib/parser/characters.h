@@ -14,7 +14,7 @@ namespace parser {
 
 enum class Encoding { UTF8, EUC_JP };
 
-static inline constexpr bool IsUpperCaseLetter(char ch) {
+inline constexpr bool IsUpperCaseLetter(char ch) {
   if constexpr ('A' == static_cast<char>(0xc1)) {
     // EBCDIC
     return (ch >= 'A' && ch <= 'I') || (ch >= 'J' && ch <= 'R') ||
@@ -24,7 +24,7 @@ static inline constexpr bool IsUpperCaseLetter(char ch) {
   }
 }
 
-static inline constexpr bool IsLowerCaseLetter(char ch) {
+inline constexpr bool IsLowerCaseLetter(char ch) {
   if constexpr ('a' == static_cast<char>(0x81)) {
     // EBCDIC
     return (ch >= 'a' && ch <= 'i') || (ch >= 'j' && ch <= 'r') ||
@@ -34,40 +34,36 @@ static inline constexpr bool IsLowerCaseLetter(char ch) {
   }
 }
 
-static inline constexpr bool IsLetter(char ch) {
+inline constexpr bool IsLetter(char ch) {
   return IsUpperCaseLetter(ch) || IsLowerCaseLetter(ch);
 }
 
-static inline constexpr bool IsDecimalDigit(char ch) {
-  return ch >= '0' && ch <= '9';
-}
+inline constexpr bool IsDecimalDigit(char ch) { return ch >= '0' && ch <= '9'; }
 
-static inline constexpr bool IsHexadecimalDigit(char ch) {
+inline constexpr bool IsHexadecimalDigit(char ch) {
   return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') ||
       (ch >= 'a' && ch <= 'f');
 }
 
-static inline constexpr bool IsOctalDigit(char ch) {
-  return ch >= '0' && ch <= '7';
-}
+inline constexpr bool IsOctalDigit(char ch) { return ch >= '0' && ch <= '7'; }
 
-static inline constexpr bool IsLegalIdentifierStart(char ch) {
+inline constexpr bool IsLegalIdentifierStart(char ch) {
   return IsLetter(ch) || ch == '_' || ch == '@' || ch == '$';
 }
 
-static inline constexpr bool IsLegalInIdentifier(char ch) {
+inline constexpr bool IsLegalInIdentifier(char ch) {
   return IsLegalIdentifierStart(ch) || IsDecimalDigit(ch);
 }
 
-static inline constexpr char ToLowerCaseLetter(char ch) {
+inline constexpr char ToLowerCaseLetter(char ch) {
   return IsUpperCaseLetter(ch) ? ch - 'A' + 'a' : ch;
 }
 
-static inline constexpr char ToLowerCaseLetter(char &&ch) {
+inline constexpr char ToLowerCaseLetter(char &&ch) {
   return IsUpperCaseLetter(ch) ? ch - 'A' + 'a' : ch;
 }
 
-static inline std::string ToLowerCaseLetters(const std::string &str) {
+inline std::string ToLowerCaseLetters(const std::string &str) {
   std::string lowered{str};
   for (char &ch : lowered) {
     ch = ToLowerCaseLetter(ch);
@@ -75,11 +71,11 @@ static inline std::string ToLowerCaseLetters(const std::string &str) {
   return lowered;
 }
 
-static inline constexpr char ToUpperCaseLetter(char ch) {
+inline constexpr char ToUpperCaseLetter(char ch) {
   return IsLowerCaseLetter(ch) ? ch - 'a' + 'A' : ch;
 }
 
-static inline constexpr char ToUpperCaseLetter(char &&ch) {
+inline constexpr char ToUpperCaseLetter(char &&ch) {
   return IsLowerCaseLetter(ch) ? ch - 'a' + 'A' : ch;
 }
 
@@ -91,19 +87,19 @@ static inline std::string ToUpperCaseLetters(const std::string &str) {
   return raised;
 }
 
-static inline constexpr bool IsSameApartFromCase(char x, char y) {
+inline constexpr bool IsSameApartFromCase(char x, char y) {
   return ToLowerCaseLetter(x) == ToLowerCaseLetter(y);
 }
 
-static inline constexpr char DecimalDigitValue(char ch) { return ch - '0'; }
+inline constexpr char DecimalDigitValue(char ch) { return ch - '0'; }
 
-static inline constexpr char HexadecimalDigitValue(char ch) {
+inline constexpr char HexadecimalDigitValue(char ch) {
   return IsUpperCaseLetter(ch)
       ? ch - 'A' + 10
       : IsLowerCaseLetter(ch) ? ch - 'a' + 10 : DecimalDigitValue(ch);
 }
 
-static constexpr std::optional<char> BackslashEscapeValue(char ch) {
+constexpr std::optional<char> BackslashEscapeValue(char ch) {
   switch (ch) {
   // case 'a': return {'\a'};  pgf90 doesn't know about \a
   case 'b': return {'\b'};
@@ -119,7 +115,7 @@ static constexpr std::optional<char> BackslashEscapeValue(char ch) {
   }
 }
 
-static constexpr std::optional<char> BackslashEscapeChar(char ch) {
+constexpr std::optional<char> BackslashEscapeChar(char ch) {
   switch (ch) {
   // case '\a': return {'a'};  pgf90 doesn't know about \a
   case '\b': return {'b'};
