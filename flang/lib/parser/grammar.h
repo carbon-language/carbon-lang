@@ -1425,7 +1425,7 @@ TYPE_PARSER("VOLATILE" >> maybe("::"_tok) >>
 // R866 implicit-name-spec -> EXTERNAL | TYPE
 constexpr auto implicitNameSpec = "EXTERNAL" >>
         pure(ImplicitStmt::ImplicitNoneNameSpec::External) ||
-    "TYPE" >> pure(ImplicitStmt::ImplicitNoneNameSpec::External);
+    "TYPE" >> pure(ImplicitStmt::ImplicitNoneNameSpec::Type);
 
 // R863 implicit-stmt ->
 //        IMPLICIT implicit-spec-list |
