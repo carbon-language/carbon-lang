@@ -12,6 +12,7 @@ import shutil
 import tempfile
 import threading
 
+import io
 try:
     from StringIO import StringIO
 except ImportError:
@@ -388,6 +389,8 @@ def executeBuiltinDiff(cmd, cmd_shenv):
     def compareTwoFiles(filepaths):
         filelines = []
         for file in filepaths:
+            compare_bytes = False
+            encoding = None
             try:
                 with open(file, 'r') as f:
                     filelines.append(f.readlines())
