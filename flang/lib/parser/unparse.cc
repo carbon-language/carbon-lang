@@ -1717,7 +1717,7 @@ public:
     return true;
   }
   bool Pre(const EndProgramStmt &x) {  // R1403
-    Word("END PROGRAM"), Walk(" ", x.v);
+    Outdent(), Word("END PROGRAM"), Walk(" ", x.v);
     EndSubprogram();
     return false;
   }
@@ -1897,7 +1897,7 @@ public:
     return false;
   }
   bool Pre(const EndFunctionStmt &x) {  // R1533
-    Word("END FUNCTION"), Walk(" ", x.v);
+    Outdent(), Word("END FUNCTION"), Walk(" ", x.v);
     EndSubprogram();
     return false;
   }
@@ -1916,7 +1916,7 @@ public:
     return false;
   }
   bool Pre(const EndSubroutineStmt &x) {  // R1537
-    Word("END SUBROUTINE"), Walk(" ", x.v);
+    Outdent(), Word("END SUBROUTINE"), Walk(" ", x.v);
     EndSubprogram();
     return false;
   }
@@ -1925,7 +1925,7 @@ public:
     return true;
   }
   bool Pre(const EndMpSubprogramStmt &x) {  // R1540
-    Word("END PROCEDURE"), Walk(" ", x.v);
+    Outdent(), Word("END PROCEDURE"), Walk(" ", x.v);
     EndSubprogram();
     return false;
   }
@@ -2125,7 +2125,6 @@ private:
   }
 
   void EndSubprogram() {
-    Outdent();
     structureComponents_.clear();
   }
 
