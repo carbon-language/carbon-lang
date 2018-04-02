@@ -4,13 +4,10 @@ if( WIN32 AND NOT CYGWIN )
 endif()
 
 include(CheckIncludeFile)
-include(CheckIncludeFileCXX)
 include(CheckLibraryExists)
 include(CheckSymbolExists)
 include(CheckFunctionExists)
 include(CheckCCompilerFlag)
-include(CheckCXXSourceCompiles)
-include(TestBigEndian)
 
 include(CheckCompilerVersion)
 include(HandleLLVMStdlib)
