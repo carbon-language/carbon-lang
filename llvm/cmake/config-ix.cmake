@@ -25,30 +25,11 @@ if( CMAKE_SYSTEM MATCHES "FreeBSD-9.2-RELEASE" AND
   list(APPEND CMAKE_REQUIRED_LIBRARIES "cxxrt")
 endif()
 
-# Helper macros and functions
-macro(add_cxx_include result files)
-  set(${result} "")
-  foreach (file_name ${files})
-     set(${result} "${${result}}#include<${file_name}>\n")
-  endforeach()
-endmacro(add_cxx_include files result)
-
-function(check_type_exists type files variable)
-  add_cxx_include(includes "${files}")
-  CHECK_CXX_SOURCE_COMPILES("
-    ${includes} ${type} typeVar;
-    int main() {
-        return 0;
-    }
-    " ${variable})
-endfunction()
-
 # include checks
 check_include_file(dirent.h HAVE_DIRENT_H)
 check_include_file(dlfcn.h HAVE_DLFCN_H)
 check_include_file(errno.h HAVE_ERRNO_H)
 check_include_file(fcntl.h HAVE_FCNTL_H)
-check_include_file(inttypes.h HAVE_INTTYPES_H)
 check_include_file(link.h HAVE_LINK_H)
 check_include_file(malloc.h HAVE_MALLOC_H)
 check_include_file(malloc/malloc.h HAVE_MALLOC_MALLOC_H)
@@ -57,7 +38,6 @@ if( NOT PURE_WINDOWS )
   check_include_file(pthread.h HAVE_PTHREAD_H)
 endif()
 check_include_file(signal.h HAVE_SIGNAL_H)
-check_include_file(stdint.h HAVE_STDINT_H)
 check_include_file(sys/dir.h HAVE_SYS_DIR_H)
 check_include_file(sys/ioctl.h HAVE_SYS_IOCTL_H)
 check_include_file(sys/mman.h HAVE_SYS_MMAN_H)
@@ -288,20 +268,6 @@ elseif(PTHREAD_IN_LIBC)
   check_library_exists(c pthread_getname_np "" HAVE_PTHREAD_GETNAME_NP)
   check_library_exists(c pthread_setname_np "" HAVE_PTHREAD_SETNAME_NP)
 endif()
-
-set(headers "sys/types.h")
-
-if (HAVE_INTTYPES_H)
-  set(headers ${headers} "inttypes.h")
-endif()
-
-if (HAVE_STDINT_H)
-  set(headers ${headers} "stdint.h")
-endif()
-
-check_type_exists(int64_t "${headers}" HAVE_INT64_T)
-check_type_exists(uint64_t "${headers}" HAVE_UINT64_T)
-check_type_exists(u_int64_t "${headers}" HAVE_U_INT64_T)
 
 # available programs checks
 function(llvm_find_program name)

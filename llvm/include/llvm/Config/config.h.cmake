@@ -89,9 +89,6 @@
 /* Define to 1 if you have the `getrusage' function. */
 #cmakedefine HAVE_GETRUSAGE ${HAVE_GETRUSAGE}
 
-/* Define to 1 if the system has the type `int64_t'. */
-#cmakedefine HAVE_INT64_T ${HAVE_INT64_T}
-
 /* Define to 1 if you have the <inttypes.h> header file. */
 #cmakedefine HAVE_INTTYPES_H ${HAVE_INTTYPES_H}
 
@@ -247,14 +244,8 @@
 /* Define to 1 if you have the <termios.h> header file. */
 #cmakedefine HAVE_TERMIOS_H ${HAVE_TERMIOS_H}
 
-/* Define to 1 if the system has the type `uint64_t'. */
-#cmakedefine HAVE_UINT64_T ${HAVE_UINT64_T}
-
 /* Define to 1 if you have the <unistd.h> header file. */
 #cmakedefine HAVE_UNISTD_H ${HAVE_UNISTD_H}
-
-/* Define to 1 if the system has the type `u_int64_t'. */
-#cmakedefine HAVE_U_INT64_T ${HAVE_U_INT64_T}
 
 /* Define to 1 if you have the <valgrind/valgrind.h> header file. */
 #cmakedefine HAVE_VALGRIND_VALGRIND_H ${HAVE_VALGRIND_VALGRIND_H}
