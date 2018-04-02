@@ -43,10 +43,6 @@
 /* Define to 1 if you have the DIA SDK installed, and to 0 if you don't. */
 #cmakedefine01 LLVM_ENABLE_DIA_SDK
 
-/* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
-   */
-#cmakedefine HAVE_DIRENT_H ${HAVE_DIRENT_H}
-
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #cmakedefine HAVE_DLFCN_H ${HAVE_DLFCN_H}
 

@@ -26,7 +26,6 @@ if( CMAKE_SYSTEM MATCHES "FreeBSD-9.2-RELEASE" AND
 endif()
 
 # include checks
-check_include_file(dirent.h HAVE_DIRENT_H)
 check_include_file(dlfcn.h HAVE_DLFCN_H)
 check_include_file(errno.h HAVE_ERRNO_H)
 check_include_file(fcntl.h HAVE_FCNTL_H)
