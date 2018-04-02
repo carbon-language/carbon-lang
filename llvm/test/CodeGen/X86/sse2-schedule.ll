@@ -3176,8 +3176,8 @@ define <2 x double> @test_divpd(<2 x double> %a0, <2 x double> %a1, <2 x double>
 ;
 ; SLM-LABEL: test_divpd:
 ; SLM:       # %bb.0:
-; SLM-NEXT:    divpd %xmm1, %xmm0 # sched: [34:34.00]
-; SLM-NEXT:    divpd (%rdi), %xmm0 # sched: [37:34.00]
+; SLM-NEXT:    divpd %xmm1, %xmm0 # sched: [69:69.00]
+; SLM-NEXT:    divpd (%rdi), %xmm0 # sched: [72:69.00]
 ; SLM-NEXT:    retq # sched: [4:1.00]
 ;
 ; SANDY-SSE-LABEL: test_divpd:
@@ -3284,8 +3284,8 @@ define double @test_divsd(double %a0, double %a1, double *%a2) {
 ;
 ; SLM-LABEL: test_divsd:
 ; SLM:       # %bb.0:
-; SLM-NEXT:    divsd %xmm1, %xmm0 # sched: [34:34.00]
-; SLM-NEXT:    divsd (%rdi), %xmm0 # sched: [37:34.00]
+; SLM-NEXT:    divsd %xmm1, %xmm0 # sched: [34:32.00]
+; SLM-NEXT:    divsd (%rdi), %xmm0 # sched: [37:32.00]
 ; SLM-NEXT:    retq # sched: [4:1.00]
 ;
 ; SANDY-SSE-LABEL: test_divsd:
@@ -14156,8 +14156,8 @@ define <2 x double> @test_sqrtpd(<2 x double> %a0, <2 x double> *%a1) {
 ;
 ; SLM-LABEL: test_sqrtpd:
 ; SLM:       # %bb.0:
-; SLM-NEXT:    sqrtpd (%rdi), %xmm1 # sched: [18:1.00]
-; SLM-NEXT:    sqrtpd %xmm0, %xmm0 # sched: [15:1.00]
+; SLM-NEXT:    sqrtpd (%rdi), %xmm1 # sched: [74:70.00]
+; SLM-NEXT:    sqrtpd %xmm0, %xmm0 # sched: [71:70.00]
 ; SLM-NEXT:    addpd %xmm0, %xmm1 # sched: [3:1.00]
 ; SLM-NEXT:    movapd %xmm1, %xmm0 # sched: [1:0.50]
 ; SLM-NEXT:    retq # sched: [4:1.00]
@@ -14289,8 +14289,8 @@ define <2 x double> @test_sqrtsd(<2 x double> %a0, <2 x double> *%a1) {
 ; SLM-LABEL: test_sqrtsd:
 ; SLM:       # %bb.0:
 ; SLM-NEXT:    movapd (%rdi), %xmm1 # sched: [3:1.00]
-; SLM-NEXT:    sqrtsd %xmm0, %xmm0 # sched: [15:1.00]
-; SLM-NEXT:    sqrtsd %xmm1, %xmm1 # sched: [15:1.00]
+; SLM-NEXT:    sqrtsd %xmm0, %xmm0 # sched: [35:35.00]
+; SLM-NEXT:    sqrtsd %xmm1, %xmm1 # sched: [35:35.00]
 ; SLM-NEXT:    addpd %xmm1, %xmm0 # sched: [3:1.00]
 ; SLM-NEXT:    retq # sched: [4:1.00]
 ;
