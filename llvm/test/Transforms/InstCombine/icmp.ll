@@ -550,8 +550,7 @@ define i1 @test36(i32 %x, i32 %y) {
 define i1 @ugt_sub(i32 %xsrc, i32 %y) {
 ; CHECK-LABEL: @ugt_sub(
 ; CHECK-NEXT:    [[X:%.*]] = udiv i32 [[XSRC:%.*]], 42
-; CHECK-NEXT:    [[SUB:%.*]] = sub i32 [[X]], [[Y:%.*]]
-; CHECK-NEXT:    [[CMP:%.*]] = icmp ugt i32 [[SUB]], [[X]]
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ult i32 [[X]], [[Y:%.*]]
 ; CHECK-NEXT:    ret i1 [[CMP]]
 ;
   %x = udiv i32 %xsrc, 42 ; thwart complexity-based canonicalization
@@ -565,8 +564,7 @@ define i1 @ugt_sub(i32 %xsrc, i32 %y) {
 define <2 x i1> @ult_sub(<2 x i8> %xsrc, <2 x i8> %y) {
 ; CHECK-LABEL: @ult_sub(
 ; CHECK-NEXT:    [[X:%.*]] = udiv <2 x i8> [[XSRC:%.*]], <i8 42, i8 -42>
-; CHECK-NEXT:    [[SUB:%.*]] = sub <2 x i8> [[X]], [[Y:%.*]]
-; CHECK-NEXT:    [[CMP:%.*]] = icmp ult <2 x i8> [[X]], [[SUB]]
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ult <2 x i8> [[X]], [[Y:%.*]]
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %x = udiv <2 x i8> %xsrc, <i8 42, i8 -42> ; thwart complexity-based canonicalization
