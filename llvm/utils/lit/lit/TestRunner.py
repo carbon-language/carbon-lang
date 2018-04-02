@@ -388,7 +388,7 @@ def executeBuiltinDiff(cmd, cmd_shenv):
     def compareTwoFiles(filepaths):
         filelines = []
         for file in filepaths:
-            with open(file, 'r') as f:
+            with io.open(file, 'r') as f:
                 filelines.append(f.readlines())
 
         exitCode = 0 
