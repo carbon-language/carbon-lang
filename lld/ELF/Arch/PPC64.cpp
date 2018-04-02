@@ -63,7 +63,7 @@ static uint16_t applyPPCHighest(uint64_t V) { return V >> 48; }
 static uint16_t applyPPCHighesta(uint64_t V) { return (V + 0x8000) >> 48; }
 
 PPC64::PPC64() {
-  PltRel = GotRel = R_PPC64_GLOB_DAT;
+  GotRel = R_PPC64_GLOB_DAT;
   RelativeRel = R_PPC64_RELATIVE;
   GotEntrySize = 8;
   GotPltEntrySize = 8;
@@ -71,8 +71,14 @@ PPC64::PPC64() {
   PltHeaderSize = 0;
   GotBaseSymInGotPlt = false;
   GotBaseSymOff = 0x8000;
-  if (Config->EKind == ELF64LEKind)
+
+  if (Config->EKind == ELF64LEKind) {
     GotHeaderEntriesNum = 1;
+    GotPltHeaderEntriesNum = 2;
+    PltRel = R_PPC64_JMP_SLOT;
+  } else {
+    PltRel = R_PPC64_GLOB_DAT;
+  }
 
   // We need 64K pages (at least under glibc/Linux, the loader won't
   // set different permissions on a finer granularity than that).

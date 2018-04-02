@@ -32,6 +32,6 @@ _start:
 // CHECK:          .plt:
 // CHECK-NEXT:            18 00 41 f8     std 2, 24(1)
 // CHECK-NEXT:            fe ff 82 3d     addis 12, 2, -2
-// CHECK-NEXT:            48 7f 8c e9     ld 12, 32584(12)
+// CHECK-NEXT:            40 7f 8c e9     ld 12, 32576(12)
 // CHECK-NEXT:            a6 03 89 7d     mtctr 12
 // CHECK:                 20 04 80 4e     bctr
