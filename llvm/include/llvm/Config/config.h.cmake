@@ -226,9 +226,6 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #cmakedefine HAVE_SYS_TYPES_H ${HAVE_SYS_TYPES_H}
 
-/* Define to 1 if you have the <sys/uio.h> header file. */
-#cmakedefine HAVE_SYS_UIO_H ${HAVE_SYS_UIO_H}
-
 /* Define if the setupterm() function is supported this platform. */
 #cmakedefine HAVE_TERMINFO ${HAVE_TERMINFO}
 
@@ -243,9 +240,6 @@
 
 /* Define to 1 if you have the <valgrind/valgrind.h> header file. */
 #cmakedefine HAVE_VALGRIND_VALGRIND_H ${HAVE_VALGRIND_VALGRIND_H}
-
-/* Define to 1 if you have the `writev' function. */
-#cmakedefine HAVE_WRITEV ${HAVE_WRITEV}
 
 /* Define to 1 if you have the <zlib.h> header file. */
 #cmakedefine HAVE_ZLIB_H ${HAVE_ZLIB_H}
