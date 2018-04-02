@@ -388,7 +388,47 @@ def executeBuiltinDiff(cmd, cmd_shenv):
     def compareTwoFiles(filepaths):
         filelines = []
         for file in filepaths:
-            with io.open(file, 'r') as f:
+            try:
+                with open(file, 'r') as f:
+                    filelines.append(f.readlines())
+            except UnicodeDecodeError:
+                try:
+                    with open(file, 'r', encoding="utf-8") as f:
+                        filelines.append(f.readlines())
+                    encoding = "utf-8"
+                except:
+                    compare_bytes = True
+
+        if compare_bytes:
+            return compareTwoBinaryFiles(filepaths)
+        else:
+            return compareTwoTextFiles(filepaths, encoding)
+
+    def compareTwoBinaryFiles(filepaths):
+        filelines = []
+        for file in filepaths:
+            with open(file, 'rb') as f:
+                filelines.append(f.readlines())
+
+        exitCode = 0 
+        if hasattr(difflib, 'diff_bytes'):
+            # python 3.5 or newer
+            diffs = difflib.diff_bytes(difflib.unified_diff, filelines[0], filelines[1], filepaths[0].encode(), filepaths[1].encode())
+            diffs = [diff.decode() for diff in diffs]
+        else:
+            # python 2.7
+            func = difflib.unified_diff if unified_diff else difflib.context_diff
+            diffs = func(filelines[0], filelines[1], filepaths[0], filepaths[1])
+
+        for diff in diffs:
+            stdout.write(diff)
+            exitCode = 1
+        return exitCode
+
+    def compareTwoTextFiles(filepaths, encoding):
+        filelines = []
+        for file in filepaths:
+            with io.open(file, 'r', encoding=encoding) as f:
                 filelines.append(f.readlines())
 
         exitCode = 0 
