@@ -163,8 +163,8 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
     parsing.Identify(std::cerr, parsing.finalRestingPlace(), "   ");
     exit(EXIT_FAILURE);
   }
-  if (!parsing.messages().empty() &&
-      (driver.warningsAreErrors || parsing.messages().AnyFatalError()) ||
+  if ((!parsing.messages().empty() &&
+       (driver.warningsAreErrors || parsing.messages().AnyFatalError())) ||
       !parsing.parseTree().has_value()) {
     std::cerr << driver.prefix << "could not parse " << path << '\n';
     exit(EXIT_FAILURE);

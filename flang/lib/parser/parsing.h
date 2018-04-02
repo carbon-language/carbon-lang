@@ -49,7 +49,7 @@ public:
         o, cooked_.GetProvenance(at).start(), prefix, echoSourceLine);
   }
 
-  static std::optional<Program> ForTesting(std::string path, std::ostream &);
+  bool ForTesting(std::string path, std::ostream &);
 
 private:
   Options options_;

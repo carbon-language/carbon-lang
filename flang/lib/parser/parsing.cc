@@ -80,27 +80,25 @@ void Parsing::Parse() {
   messages_.Annex(parseState.messages());
 }
 
-std::optional<Program> Parsing::ForTesting(
-    std::string path, std::ostream &err) {
-  Parsing parsing;
-  parsing.Prescan(path, Options{});
-  if (parsing.messages().AnyFatalError()) {
-    parsing.messages().Emit(err);
+bool Parsing::ForTesting(std::string path, std::ostream &err) {
+  Prescan(path, Options{});
+  if (messages_.AnyFatalError()) {
+    messages_.Emit(err);
     err << "could not scan " << path << '\n';
-    return {};
+    return false;
   }
-  parsing.Parse();
-  parsing.messages().Emit(err);
-  if (!parsing.consumedWholeFile()) {
+  Parse();
+  messages_.Emit(err);
+  if (!consumedWholeFile_) {
     err << "f18 parser FAIL; final position: ";
-    parsing.Identify(err, parsing.finalRestingPlace(), "   ");
-    return {};
+    Identify(err, finalRestingPlace_, "   ");
+    return false;
   }
-  if (parsing.messages().AnyFatalError()) {
+  if (messages_.AnyFatalError() || !parseTree_.has_value()) {
     err << "could not parse " << path << '\n';
-    return {};
+    return false;
   }
-  return std::move(parsing.parseTree());
+  return true;
 }
 }  // namespace parser
 }  // namespace Fortran

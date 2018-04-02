@@ -15,8 +15,9 @@ int main(int argc, char *const argv[]) {
     return EXIT_FAILURE;
   }
   std::string path{argv[1]};
-  if (std::optional<Program> parseTree{Parsing::ForTesting(path, std::cerr)}) {
-    semantics::MakeTypes(std::cout, *parseTree);
+  Parsing parsing;
+  if (parsing.ForTesting(path, std::cerr)) {
+    semantics::MakeTypes(std::cout, *parsing.parseTree());
     return EXIT_SUCCESS;
   }
   return EXIT_FAILURE;
