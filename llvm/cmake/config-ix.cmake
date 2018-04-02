@@ -434,13 +434,6 @@ else ()
   endif ()
 endif ()
 
-if( MINGW )
-  set(HAVE_LIBPSAPI 1)
-  set(HAVE_LIBSHELL32 1)
-  # TODO: Check existence of libraries.
-  #   include(CheckLibraryExists)
-endif( MINGW )
-
 if( MSVC )
   set(SHLIBEXT ".lib")
   set(stricmp "_stricmp")

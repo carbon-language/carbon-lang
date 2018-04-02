@@ -91,9 +91,6 @@
 /* Define to 1 if you have the `edit' library (-ledit). */
 #cmakedefine HAVE_LIBEDIT ${HAVE_LIBEDIT}
 
-/* Define to 1 if you have the `psapi' library (-lpsapi). */
-#cmakedefine HAVE_LIBPSAPI ${HAVE_LIBPSAPI}
-
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #cmakedefine HAVE_LIBPTHREAD ${HAVE_LIBPTHREAD}
 
@@ -102,9 +99,6 @@
 
 /* Define to 1 if you have the `pthread_setname_np' function. */
 #cmakedefine HAVE_PTHREAD_SETNAME_NP ${HAVE_PTHREAD_SETNAME_NP}
-
-/* Define to 1 if you have the `shell32' library (-lshell32). */
-#cmakedefine HAVE_LIBSHELL32 ${HAVE_LIBSHELL32}
 
 /* Define to 1 if you have the `z' library (-lz). */
 #cmakedefine HAVE_LIBZ ${HAVE_LIBZ}
