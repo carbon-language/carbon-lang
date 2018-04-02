@@ -85,8 +85,8 @@ constexpr struct Space {
   using resultType = Success;
   constexpr Space() {}
   static std::optional<Success> Parse(ParseState *state) {
-    while (std::optional<char> ch{state->PeekAtNextChar()}) {
-      if (*ch != ' ') {
+    while (std::optional<const char *> p{state->PeekAtNextChar()}) {
+      if (**p != ' ') {
         break;
       }
       state->UncheckedAdvance();
@@ -110,12 +110,13 @@ constexpr struct SpaceCheck {
   using resultType = Success;
   constexpr SpaceCheck() {}
   static std::optional<Success> Parse(ParseState *state) {
-    if (std::optional<char> ch{state->PeekAtNextChar()}) {
-      if (*ch == ' ') {
+    if (std::optional<const char *> p{state->PeekAtNextChar()}) {
+      char ch{**p};
+      if (ch == ' ') {
         state->UncheckedAdvance();
         return space.Parse(state);
       }
-      if (IsLegalInIdentifier(*ch)) {
+      if (IsLegalInIdentifier(ch)) {
         MissingSpace(state);
       }
     }
@@ -263,7 +264,7 @@ struct CharLiteralChar {
       ch -= '0';
       for (int j = (ch > 3 ? 1 : 2); j-- > 0;) {
         static constexpr auto octalDigit =
-            CharPredicateGuard{IsOctalDigit, "expected octal digit"_err_en_US};
+            CharPredicateGuard{IsOctalDigit, "expected octal digit"_en_US};
         och = octalDigit.Parse(state);
         if (och.has_value()) {
           ch = 8 * ch + **och - '0';
@@ -275,7 +276,7 @@ struct CharLiteralChar {
       ch = 0;
       for (int j = 0; j++ < 2;) {
         static constexpr auto hexDigit = CharPredicateGuard{
-            IsHexadecimalDigit, "expected hexadecimal digit"_err_en_US};
+            IsHexadecimalDigit, "expected hexadecimal digit"_en_US};
         och = hexDigit.Parse(state);
         if (och.has_value()) {
           ch = 16 * ch + HexadecimalDigitValue(**och);
@@ -284,7 +285,7 @@ struct CharLiteralChar {
         }
       }
     } else {
-      state->Say(at, "bad escaped character"_err_en_US);
+      state->Say(at, "bad escaped character"_en_US);
     }
     return {Result::Escaped(ch)};
   }
@@ -438,6 +439,25 @@ struct DigitString {
   }
 };
 
+constexpr struct SkipDigitString {
+  using resultType = Success;
+  static std::optional<Success> Parse(ParseState *state) {
+    if (std::optional<const char *> ch1{state->PeekAtNextChar()}) {
+      if (IsDecimalDigit(**ch1)) {
+        state->UncheckedAdvance();
+        while (std::optional<const char *> p{state->PeekAtNextChar()}) {
+          if (!IsDecimalDigit(**p)) {
+            break;
+          }
+          state->UncheckedAdvance();
+        }
+        return {Success{}};
+      }
+    }
+    return {};
+  }
+} skipDigitString;
+
 // Legacy feature: Hollerith literal constants
 struct HollerithLiteral {
   using resultType = std::string;
@@ -508,8 +528,8 @@ template<char goal> struct SkipPast {
   constexpr SkipPast() {}
   constexpr SkipPast(const SkipPast &) {}
   static std::optional<Success> Parse(ParseState *state) {
-    while (std::optional<char> ch{state->GetNextChar()}) {
-      if (*ch == goal) {
+    while (std::optional<const char *> p{state->GetNextChar()}) {
+      if (**p == goal) {
         return {Success{}};
       }
     }
@@ -522,8 +542,8 @@ template<char goal> struct SkipTo {
   constexpr SkipTo() {}
   constexpr SkipTo(const SkipTo &) {}
   static std::optional<Success> Parse(ParseState *state) {
-    while (std::optional<char> ch{state->PeekAtNextChar()}) {
-      if (*ch == goal) {
+    while (std::optional<const char *> p{state->PeekAtNextChar()}) {
+      if (**p == goal) {
         return {Success{}};
       }
       state->UncheckedAdvance();

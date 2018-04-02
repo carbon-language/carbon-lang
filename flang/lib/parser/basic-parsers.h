@@ -1187,13 +1187,11 @@ constexpr struct NextCh {
   using resultType = const char *;
   constexpr NextCh() {}
   std::optional<const char *> Parse(ParseState *state) const {
-    if (state->IsAtEnd()) {
-      state->Say("end of file"_err_en_US);
-      return {};
+    if (std::optional<const char *> result{state->GetNextChar()}) {
+      return std::move(result);
     }
-    const char *at{state->GetLocation()};
-    state->UncheckedAdvance();
-    return {at};
+    state->Say("end of file"_err_en_US);
+    return {};
   }
 } nextCh;
 

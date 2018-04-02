@@ -89,6 +89,7 @@ public:
   Message &operator=(const Message &that) = default;
   Message &operator=(Message &&that) = default;
 
+  // TODO: Change these to cover ranges of provenance
   Message(Provenance p, MessageFixedText t, MessageContext c = nullptr)
     : provenance_{p}, text_{t}, context_{c}, isFatal_{t.isFatal()} {}
   Message(Provenance p, MessageFormattedText &&s, MessageContext c = nullptr)

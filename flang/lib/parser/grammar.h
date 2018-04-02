@@ -747,11 +747,11 @@ constexpr auto exponentPart =
 TYPE_CONTEXT_PARSER("REAL literal constant"_en_US,
     construct<RealLiteralConstant>{}(
         sourced(
-            (digitString >> "."_ch >>
+            (skipDigitString >> "."_ch >>
                     !(some(letter) >> "."_ch /* don't misinterpret 1.AND. */) >>
-                    maybe(digitString) >> maybe(exponentPart) >> ok ||
-                "."_ch >> digitString >> maybe(exponentPart) >> ok ||
-                digitString >> exponentPart >> ok) >>
+                    maybe(skipDigitString) >> maybe(exponentPart) >> ok ||
+                "."_ch >> skipDigitString >> maybe(exponentPart) >> ok ||
+                skipDigitString >> exponentPart >> ok) >>
             construct<RealLiteralConstant::Real>{}),
         maybe(underscore >> kindParam)))
 

@@ -57,8 +57,8 @@ void Parsing::DumpCookedChars(std::ostream &out) const {
   UserState userState;
   ParseState parseState{cooked_};
   parseState.set_inFixedForm(options_.isFixedForm).set_userState(&userState);
-  while (std::optional<char> ch{parseState.GetNextChar()}) {
-    out << *ch;
+  while (std::optional<const char *> p{parseState.GetNextChar()}) {
+    out << **p;
   }
 }
 

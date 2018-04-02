@@ -134,24 +134,24 @@ public:
 
   bool IsAtEnd() const { return p_ >= limit_; }
 
-  char UncheckedAdvance(std::size_t n = 1) {
-    char result{*p_};
+  const char *UncheckedAdvance(std::size_t n = 1) {
+    const char *result{p_};
     p_ += n;
     return result;
   }
 
-  std::optional<char> GetNextChar() {
+  std::optional<const char *> GetNextChar() {
     if (p_ >= limit_) {
       return {};
     }
     return {UncheckedAdvance()};
   }
 
-  std::optional<char> PeekAtNextChar() {
+  std::optional<const char *> PeekAtNextChar() {
     if (p_ >= limit_) {
       return {};
     }
-    return {*p_};
+    return {p_};
   }
 
 private:
