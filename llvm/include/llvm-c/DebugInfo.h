@@ -433,11 +433,11 @@ LLVMDIBuilderCreateStaticMemberType(
 /**
  * Create debugging information entry for a pointer to member.
  * \param Builder      The DIBuilder.
- * \param PointeeType Type pointed to by this pointer.
- * \param Class Type for which this pointer points to members of.
- * \param SizeInBits  Size.
- * \param AlignInBits Alignment. (optional)
- * \param Flags Flags.
+ * \param PointeeType  Type pointed to by this pointer.
+ * \param ClassType    Type for which this pointer points to members of.
+ * \param SizeInBits   Size.
+ * \param AlignInBits  Alignment.
+ * \param Flags        Flags.
  */
 LLVMMetadataRef
 LLVMDIBuilderCreateMemberPointerType(LLVMDIBuilderRef Builder,
