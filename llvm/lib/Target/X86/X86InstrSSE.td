@@ -146,6 +146,7 @@ def SSE_INTMUL_ITINS_P : OpndItins<
 >;
 
 // FIXME: Merge SSE_INTSHIFT_P + SSE_INTSHIFT_ITINS_P.
+let Sched = WriteVecShift in
 def SSE_INTSHIFT_P : OpndItins<
   IIC_SSE_INTSH_P_RR, IIC_SSE_INTSH_P_RM
 >;

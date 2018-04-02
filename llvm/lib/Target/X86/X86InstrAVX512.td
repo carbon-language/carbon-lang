@@ -5697,17 +5697,22 @@ multiclass avx512_var_shift_w<bits<8> opc, string OpcodeStr,
   }
 }
 
-defm VPSLLV : avx512_var_shift_types<0x47, "vpsllv", shl, SSE_INTSHIFT_P>,
-              avx512_var_shift_w<0x12, "vpsllvw", shl, SSE_INTSHIFT_P>;
+let Sched = WriteVarVecShift in
+def AVX512_VARSHIFT_P : OpndItins<
+  IIC_SSE_INTSH_P_RR, IIC_SSE_INTSH_P_RM
+>;
 
-defm VPSRAV : avx512_var_shift_types<0x46, "vpsrav", sra, SSE_INTSHIFT_P>,
-              avx512_var_shift_w<0x11, "vpsravw", sra, SSE_INTSHIFT_P>;
+defm VPSLLV : avx512_var_shift_types<0x47, "vpsllv", shl, AVX512_VARSHIFT_P>,
+              avx512_var_shift_w<0x12, "vpsllvw", shl, AVX512_VARSHIFT_P>;
 
-defm VPSRLV : avx512_var_shift_types<0x45, "vpsrlv", srl, SSE_INTSHIFT_P>,
-              avx512_var_shift_w<0x10, "vpsrlvw", srl, SSE_INTSHIFT_P>;
+defm VPSRAV : avx512_var_shift_types<0x46, "vpsrav", sra, AVX512_VARSHIFT_P>,
+              avx512_var_shift_w<0x11, "vpsravw", sra, AVX512_VARSHIFT_P>;
 
-defm VPRORV : avx512_var_shift_types<0x14, "vprorv", rotr, SSE_INTSHIFT_P>;
-defm VPROLV : avx512_var_shift_types<0x15, "vprolv", rotl, SSE_INTSHIFT_P>;
+defm VPSRLV : avx512_var_shift_types<0x45, "vpsrlv", srl, AVX512_VARSHIFT_P>,
+              avx512_var_shift_w<0x10, "vpsrlvw", srl, AVX512_VARSHIFT_P>;
+
+defm VPRORV : avx512_var_shift_types<0x14, "vprorv", rotr, AVX512_VARSHIFT_P>;
+defm VPROLV : avx512_var_shift_types<0x15, "vprolv", rotl, AVX512_VARSHIFT_P>;
 
 defm : avx512_var_shift_lowering<avx512vl_i64_info, "VPSRAVQ", sra, [HasAVX512, NoVLX]>;
 defm : avx512_var_shift_lowering<avx512vl_i16_info, "VPSLLVW", shl, [HasBWI, NoVLX]>;
