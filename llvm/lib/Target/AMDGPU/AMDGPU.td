@@ -250,12 +250,6 @@ def FeatureScalarStores : SubtargetFeature<"scalar-stores",
   "Has store scalar memory instructions"
 >;
 
-def FeatureScalarAtomics : SubtargetFeature<"scalar-atomics",
-  "HasScalarAtomics",
-  "true",
-  "Has atomic scalar memory instructions"
->;
-
 def FeatureSDWA : SubtargetFeature<"sdwa",
   "HasSDWA",
   "true",
@@ -516,7 +510,7 @@ def FeatureGFX9 : SubtargetFeatureGeneration<"GFX9",
    FeatureFastFMAF32, FeatureDPP, FeatureIntClamp,
    FeatureSDWA, FeatureSDWAOmod, FeatureSDWAScalar, FeatureSDWASdst,
    FeatureFlatInstOffsets, FeatureFlatGlobalInsts, FeatureFlatScratchInsts,
-   FeatureAddNoCarryInsts, FeatureScalarAtomics
+   FeatureAddNoCarryInsts
   ]
 >;
 
@@ -771,9 +765,6 @@ def HasIntClamp : Predicate<"Subtarget->hasIntClamp()">,
 
 def HasMadMixInsts : Predicate<"Subtarget->hasMadMixInsts()">,
   AssemblerPredicate<"FeatureMadMixInsts">;
-
-def HasScalarAtomics : Predicate<"Subtarget->hasScalarAtomics()">,
-  AssemblerPredicate<"FeatureScalarAtomics">;
 
 def EnableLateCFGStructurize : Predicate<
   "EnableLateStructurizeCFG">;

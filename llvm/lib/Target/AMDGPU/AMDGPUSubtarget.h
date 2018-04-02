@@ -152,7 +152,6 @@ protected:
   bool HasMovrel;
   bool HasVGPRIndexMode;
   bool HasScalarStores;
-  bool HasScalarAtomics;
   bool HasInv2PiInlineImm;
   bool HasSDWA;
   bool HasSDWAOmod;
@@ -783,10 +782,6 @@ public:
 
   bool hasScalarStores() const {
     return HasScalarStores;
-  }
-
-  bool hasScalarAtomics() const {
-    return HasScalarAtomics;
   }
 
   bool hasInv2PiInlineImm() const {
