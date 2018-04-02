@@ -328,7 +328,7 @@ public:
   ///
   /// SymbolStringPools may be shared between ExecutionSessions.
   ExecutionSession(std::shared_ptr<SymbolStringPool> SSP = nullptr)
-    : SSP(std::move(SSP)) {}
+    : SSP(SSP ? std::move(SSP) : std::make_shared<SymbolStringPool>()) {}
 
   /// @brief Returns the SymbolStringPool for this ExecutionSession.
   SymbolStringPool &getSymbolStringPool() const { return *SSP; }
