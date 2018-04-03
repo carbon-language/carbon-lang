@@ -118,10 +118,11 @@ Messages
 --------
 Message texts, and snprintf-like formatting strings for constructing
 messages, are instantiated in the various components of the parser with
-C++ user defined character literals tagged with `_en_US` (signifying
-the dialect of English used in the United States) so that they may be
-easily identified for localization.  As described above, messages are
-associated with source code positions by means of provenance values.
+C++ user defined character literals tagged with `err_en_US` and `_en_US`
+(signifying fatality and language, with the default being the dialect of
+English used in the United States) so that they may be easily identified
+for localization.  As described above, messages are associated with
+source code positions by means of provenance values.
 
 The Parse Tree
 --------------
