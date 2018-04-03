@@ -314,8 +314,8 @@ Symbol *SymbolTable::addUndefined(StringRef Name, uint8_t Binding,
     // Symbols.h for the details.
     if (Binding == STB_WEAK)
       S->Type = Type;
-    else if (InputFile *F = Symtab->fetchIfLazy(S))
-      addFile<ELFT>(F);
+    else
+      fetchLazy<ELFT>(S);
   }
   return S;
 }
@@ -574,15 +574,16 @@ void SymbolTable::addLazyObject(StringRef Name, LazyObjFile &Obj) {
     addFile<ELFT>(F);
 }
 
-InputFile *SymbolTable::fetchIfLazy(Symbol *Sym) {
-  // Mark the symbol not to be eliminated by LTO
-  // even if it is a bitcode symbol.
-  Sym->IsUsedInRegularObj = true;
-  if (LazyArchive *L = dyn_cast<LazyArchive>(Sym))
-    return L->fetch();
-  if (LazyObject *L = dyn_cast<LazyObject>(Sym))
-    return cast<LazyObjFile>(L->File)->fetch();
-  return nullptr;
+template <class ELFT> void SymbolTable::fetchLazy(Symbol *Sym) {
+  if (auto *S = dyn_cast<LazyArchive>(Sym)) {
+    if (InputFile *File = S->fetch())
+      addFile<ELFT>(File);
+    return;
+  }
+
+  auto *S = cast<LazyObject>(Sym);
+  if (InputFile *File = cast<LazyObjFile>(S->File)->fetch())
+    addFile<ELFT>(File);
 }
 
 // Initialize DemangledSyms with a map from demangled symbols to symbol
