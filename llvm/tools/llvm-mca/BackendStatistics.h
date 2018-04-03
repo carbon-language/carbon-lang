@@ -57,19 +57,18 @@
 #ifndef LLVM_TOOLS_LLVM_MCA_BACKENDSTATISTICS_H
 #define LLVM_TOOLS_LLVM_MCA_BACKENDSTATISTICS_H
 
-#include "Backend.h"
 #include "View.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/raw_ostream.h"
-#include <map>
 
 namespace mca {
 
 class BackendStatistics : public View {
   const llvm::MCSubtargetInfo &STI;
 
-  using Histogram = std::map<unsigned, unsigned>;
+  using Histogram = llvm::DenseMap<unsigned, unsigned>;
   Histogram DispatchGroupSizePerCycle;
   Histogram RetiredPerCycle;
   Histogram IssuedPerCycle;
