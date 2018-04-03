@@ -153,7 +153,7 @@ TokenSequence Definition::Apply(
     } else if (pasting && token.IsBlank()) {
       // Delete whitespace immediately following ## in the body.
     } else if (bytes == 11 && isVariadic_ &&
-        token.ToString() == "__VA_ARGs__") {
+        token.ToString() == "__VA_ARGS__") {
       Provenance commaProvenance{allSources.CompilerInsertionProvenance(',')};
       for (std::size_t k{argumentCount_}; k < args.size(); ++k) {
         if (k > argumentCount_) {
