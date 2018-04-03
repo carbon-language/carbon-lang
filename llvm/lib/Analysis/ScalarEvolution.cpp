@@ -8668,11 +8668,12 @@ bool ScalarEvolution::isKnownViaInduction(ICmpInst::Predicate Pred,
               DT.dominates(L2->getHeader(), L1->getHeader())) &&
              "Domination relationship is not a linear order");
 #endif
-  
-  const Loop *MDL = *std::max_element(LoopsUsed.begin(), LoopsUsed.end(),
-                                        [&](const Loop *L1, const Loop *L2) {
-                         return DT.dominates(L1->getHeader(), L2->getHeader());
-                       });
+
+  const Loop *MDL =
+      *std::max_element(LoopsUsed.begin(), LoopsUsed.end(),
+                        [&](const Loop *L1, const Loop *L2) {
+         return DT.properlyDominates(L1->getHeader(), L2->getHeader());
+       });
 
   // Get init and post increment value for LHS.
   auto SplitLHS = SplitIntoInitAndPostInc(MDL, LHS);
