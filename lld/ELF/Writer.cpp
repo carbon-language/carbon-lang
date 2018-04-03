@@ -1092,21 +1092,23 @@ static void
 sortISDBySectionOrder(InputSectionDescription *ISD,
                       const DenseMap<const InputSectionBase *, int> &Order) {
   std::vector<InputSection *> UnorderedSections;
-  std::vector<InputSection *> OrderedSections;
+  std::vector<std::pair<InputSection *, int>> OrderedSections;
   uint64_t UnorderedSize = 0;
 
   for (InputSection *IS : ISD->Sections) {
-    if (!Order.count(IS)) {
+    auto I = Order.find(IS);
+    if (I == Order.end()) {
       UnorderedSections.push_back(IS);
       UnorderedSize += IS->getSize();
       continue;
     }
-    OrderedSections.push_back(IS);
+    OrderedSections.push_back({IS, I->second});
   }
-  std::sort(OrderedSections.begin(), OrderedSections.end(),
-            [&](InputSection *A, InputSection *B) {
-              return Order.lookup(A) < Order.lookup(B);
-            });
+  std::sort(
+      OrderedSections.begin(), OrderedSections.end(),
+      [&](std::pair<InputSection *, int> A, std::pair<InputSection *, int> B) {
+        return A.second < B.second;
+      });
 
   // Find an insertion point for the ordered section list in the unordered
   // section list. On targets with limited-range branches, this is the mid-point
@@ -1147,10 +1149,12 @@ sortISDBySectionOrder(InputSectionDescription *ISD,
 
   std::copy(UnorderedSections.begin(),
             UnorderedSections.begin() + UnorderedInsPt, ISD->Sections.begin());
-  std::copy(OrderedSections.begin(), OrderedSections.end(),
-            ISD->Sections.begin() + UnorderedInsPt);
+  std::vector<InputSection *>::iterator SectionsPos =
+      ISD->Sections.begin() + UnorderedInsPt;
+  for (std::pair<InputSection *, int> P : OrderedSections)
+    *SectionsPos++ = P.first;
   std::copy(UnorderedSections.begin() + UnorderedInsPt, UnorderedSections.end(),
-            ISD->Sections.begin() + UnorderedInsPt + OrderedSections.size());
+            SectionsPos);
 }
 
 static void sortSection(OutputSection *Sec,
