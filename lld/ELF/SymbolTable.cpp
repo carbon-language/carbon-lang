@@ -385,7 +385,11 @@ Symbol *SymbolTable::addCommon(StringRef N, uint64_t Size, uint32_t Alignment,
   bool WasInserted;
   std::tie(S, WasInserted) = insert(N, Type, getVisibility(StOther),
                                     /*CanOmitFromDynSym*/ false, &File);
+
   int Cmp = compareDefined(S, WasInserted, Binding, N);
+  if (Cmp < 0)
+    return S;
+
   if (Cmp > 0) {
     auto *Bss = make<BssSection>("COMMON", Size, Alignment);
     Bss->File = &File;
@@ -393,24 +397,25 @@ Symbol *SymbolTable::addCommon(StringRef N, uint64_t Size, uint32_t Alignment,
     InputSections.push_back(Bss);
 
     replaceSymbol<Defined>(S, &File, N, Binding, StOther, Type, 0, Size, Bss);
-  } else if (Cmp == 0) {
-    auto *D = cast<Defined>(S);
-    auto *Bss = dyn_cast_or_null<BssSection>(D->Section);
-    if (!Bss) {
-      // Non-common symbols take precedence over common symbols.
-      if (Config->WarnCommon)
-        warn("common " + S->getName() + " is overridden");
-      return S;
-    }
+    return S;
+  }
 
+  auto *D = cast<Defined>(S);
+  auto *Bss = dyn_cast_or_null<BssSection>(D->Section);
+  if (!Bss) {
+    // Non-common symbols take precedence over common symbols.
     if (Config->WarnCommon)
-      warn("multiple common of " + D->getName());
+      warn("common " + S->getName() + " is overridden");
+    return S;
+  }
 
-    Bss->Alignment = std::max(Bss->Alignment, Alignment);
-    if (Size > Bss->Size) {
-      D->File = Bss->File = &File;
-      D->Size = Bss->Size = Size;
-    }
+  if (Config->WarnCommon)
+    warn("multiple common of " + D->getName());
+
+  Bss->Alignment = std::max(Bss->Alignment, Alignment);
+  if (Size > Bss->Size) {
+    D->File = Bss->File = &File;
+    D->Size = Bss->Size = Size;
   }
   return S;
 }
