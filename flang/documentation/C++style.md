@@ -124,7 +124,7 @@ last (_pace_ the standard C library conventions for `memcpy()` & al.).
 explicitly, it should contains either a `default:;` at its end or a
 `default:` label that obviously crashes.
 #### Classes
-1. Define only POD structures with `struct`.
+1. Define POD structures with `struct`.
 1. Don't use `this->` in (non-static) member functions.
 1. Define accessor and mutator member functions (implicitly) inline in the
 class, after constructors and assignments.  Don't needlessly define

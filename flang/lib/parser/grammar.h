@@ -159,7 +159,7 @@ template<typename PA> inline constexpr auto indirect(const PA &p) {
 
 // R711 digit-string -> digit [digit]...
 // N.B. not a token -- no space is skipped
-constexpr auto digitString = DigitString{};
+constexpr DigitString digitString;
 
 // statement(p) parses Statement<P> for some statement type P that is the
 // result type of the argument parser p, while also handling labels and
@@ -707,17 +707,7 @@ TYPE_PARSER(construct<KindSelector>{}(
 
 // R710 signed-digit-string -> [sign] digit-string
 // N.B. Not a complete token -- no space is skipped.
-static inline std::int64_t negate(std::uint64_t &&n) {
-  return -n;  // TODO: check for overflow
-}
-
-static inline std::int64_t castToSigned(std::uint64_t &&n) {
-  return n;  // TODO: check for overflow
-}
-
-constexpr auto signedDigitString = "-"_ch >>
-        applyFunction(negate, digitString) ||
-    maybe("+"_ch) >> applyFunction(castToSigned, digitString);
+constexpr SignedDigitString signedDigitString;
 
 // R707 signed-int-literal-constant -> [sign] int-literal-constant
 TYPE_PARSER(space >> sourced(construct<SignedIntLiteralConstant>{}(
@@ -3081,11 +3071,7 @@ constexpr auto formatItems =
     nonemptySeparated(space >> Parser<format::FormatItem>{}, maybe(","_tok));
 
 // R1306 r -> digit-string
-static inline int castU64ToInt(std::uint64_t &&n) {
-  return n;  // TODO: check for overflow
-}
-
-constexpr auto repeat = space >> applyFunction(castU64ToInt, digitString);
+constexpr auto repeat = space >> digitString;
 
 // R1304 format-item ->
 //         [r] data-edit-desc | control-edit-desc | char-string-edit-desc |
@@ -3177,11 +3163,8 @@ TYPE_PARSER("D"_ch >> "T"_ch >>
         defaulted(parenthesized(nonemptyList(space >> signedDigitString)))))
 
 // R1314 k -> [sign] digit-string
-static inline int castS64ToInt(std::int64_t &&n) {
-  return n;  // TODO: check for overflow
-}
-constexpr auto scaleFactor = space >>
-    applyFunction(castS64ToInt, signedDigitString);
+constexpr auto count = space >> DigitStringAsPositive{};
+constexpr auto scaleFactor = count;
 
 // R1313 control-edit-desc ->
 //         position-edit-desc | [r] / | : | sign-edit-desc | k P |
@@ -3196,8 +3179,8 @@ TYPE_PARSER(construct<format::ControlEditDesc>{}("T"_ch >>
                     ("L"_ch >> pure(format::ControlEditDesc::Kind::TL) ||
                         "R"_ch >> pure(format::ControlEditDesc::Kind::TR) ||
                         pure(format::ControlEditDesc::Kind::T)),
-                repeat) ||
-    construct<format::ControlEditDesc>{}(repeat,
+                count) ||
+    construct<format::ControlEditDesc>{}(count,
         "X"_ch >> pure(format::ControlEditDesc::Kind::X) ||
             "/"_ch >> pure(format::ControlEditDesc::Kind::Slash)) ||
     construct<format::ControlEditDesc>{}(

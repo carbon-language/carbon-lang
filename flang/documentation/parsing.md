@@ -178,13 +178,15 @@ as function calls.  The semantic analysis phase of the compiler performs
 local rewrites of the parse tree once it can be disambiguated by symbols
 and types.
 
-Formally speaking, this parser is based on recursive descent with localized
-backtracking.  It is not generated as a table or code from a specification
-of the Fortran grammar; rather, it _is_ the grammar, as declaratively
-respecified in C++ constant expressions using a small collection of basic
-token recognition objects and a library of "parser combinator" template
-functions that compose them to form more complicated recognizers and
-their correspondences to the construction of parse tree values.
+Formally speaking, this parser is based on recursive descent with
+localized backtracking (specifically, it will not backtrack into a
+successful reduction to try its other alternatives).  It is not generated
+as a table or code from a specification of the Fortran grammar; rather, it
+_is_ the grammar, as declaratively respecified in C++ constant expressions
+using a small collection of basic token recognition objects and a library
+of "parser combinator" template functions that compose them to form more
+complicated recognizers and their correspondences to the construction
+of parse tree values.
 
 Unparsing
 ---------

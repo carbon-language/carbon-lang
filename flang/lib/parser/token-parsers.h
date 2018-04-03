@@ -457,6 +457,49 @@ constexpr struct SkipDigitString {
   }
 } skipDigitString;
 
+struct DigitStringAsPositive {
+  using resultType = std::int64_t;
+  static std::optional<std::int64_t> Parse(ParseState *state) {
+    Location at{state->GetLocation()};
+    std::optional<std::uint64_t> x{DigitString{}.Parse(state)};
+    if (!x.has_value()) {
+      return {};
+    }
+    if (*x > std::numeric_limits<std::int64_t>::max()) {
+      state->Say(at, "overflow in positive decimal literal"_err_en_US);
+    }
+    std::int64_t value = *x;
+    return {value};
+  }
+};
+
+struct SignedDigitString {
+  using resultType = std::int64_t;
+  static std::optional<std::int64_t> Parse(ParseState *state) {
+    std::optional<const char *> sign{state->PeekAtNextChar()};
+    if (!sign.has_value()) {
+      return {};
+    }
+    bool negate{**sign == '-'};
+    if (negate || **sign == '+') {
+      state->UncheckedAdvance();
+    }
+    std::optional<std::uint64_t> x{DigitString{}.Parse(state)};
+    if (!x.has_value()) {
+      return {};
+    }
+    std::uint64_t limit{std::numeric_limits<std::int64_t>::max()};
+    if (negate) {
+      limit = -(limit + 1);
+    }
+    if (*x > limit) {
+      state->Say(*sign, "overflow in signed decimal literal"_err_en_US);
+    }
+    std::int64_t value = *x;
+    return {negate ? -value : value};
+  }
+};
+
 // Legacy feature: Hollerith literal constants
 struct HollerithLiteral {
   using resultType = std::string;

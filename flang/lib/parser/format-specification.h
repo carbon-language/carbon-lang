@@ -91,10 +91,10 @@ struct ControlEditDesc {
   ControlEditDesc(ControlEditDesc &&) = default;
   ControlEditDesc &operator=(ControlEditDesc &&) = default;
   explicit ControlEditDesc(Kind k) : kind{k} {}
-  ControlEditDesc(Kind k, int ct) : kind{k}, count{ct} {}
-  ControlEditDesc(int ct, Kind k) : kind{k}, count{ct} {}
+  ControlEditDesc(Kind k, std::int64_t ct) : kind{k}, count{ct} {}
+  ControlEditDesc(std::int64_t ct, Kind k) : kind{k}, count{ct} {}
   Kind kind;
-  int count{1};  // r, k, or n
+  std::int64_t count{1};  // r, k, or n
 };
 
 // R1304 format-item ->
@@ -107,10 +107,10 @@ struct FormatItem {
   FormatItem(FormatItem &&) = default;
   FormatItem &operator=(FormatItem &&) = default;
   template<typename A>
-  FormatItem(std::optional<int> &&r, A &&x)
+  FormatItem(std::optional<std::uint64_t> &&r, A &&x)
     : repeatCount{std::move(r)}, u{std::move(x)} {}
   template<typename A> explicit FormatItem(A &&x) : u{std::move(x)} {}
-  std::optional<int> repeatCount;
+  std::optional<std::uint64_t> repeatCount;
   std::variant<IntrinsicTypeDataEditDesc, DerivedTypeDataEditDesc,
       ControlEditDesc, std::string, std::list<FormatItem>>
       u;
