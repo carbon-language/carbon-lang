@@ -296,19 +296,21 @@ Symbol *SymbolTable::addUndefined(StringRef Name, uint8_t Binding,
   uint8_t Visibility = getVisibility(StOther);
   std::tie(S, WasInserted) =
       insert(Name, Type, Visibility, CanOmitFromDynSym, File);
+
   // An undefined symbol with non default visibility must be satisfied
   // in the same DSO.
   if (WasInserted || (isa<SharedSymbol>(S) && Visibility != STV_DEFAULT)) {
     replaceSymbol<Undefined>(S, File, Name, Binding, StOther, Type);
     return S;
   }
+
   if (S->isShared() || S->isLazy() || (S->isUndefined() && Binding != STB_WEAK))
     S->Binding = Binding;
-  if (Binding != STB_WEAK) {
+
+  if (!Config->GcSections && Binding != STB_WEAK)
     if (auto *SS = dyn_cast<SharedSymbol>(S))
-      if (!Config->GcSections)
-        SS->getFile<ELFT>().IsNeeded = true;
-  }
+      SS->getFile<ELFT>().IsNeeded = true;
+
   if (S->isLazy()) {
     // An undefined weak will not fetch archive members. See comment on Lazy in
     // Symbols.h for the details.
