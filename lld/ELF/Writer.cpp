@@ -1985,9 +1985,8 @@ template <class ELFT> void Writer<ELFT>::assignFileOffsets() {
   // not do that. Unfortunately, there are apps in the wild, for example, Linux
   // kernel, which control segment distribution explicitly and move the counter
   // backwards, so we have to allow doing that to support linking them. We
-  // perform non-critical checks for overlaps in checkNoOverlappingSections(),
-  // but here we want to prevent file size overflows because it would crash the
-  // linker.
+  // perform non-critical checks for overlaps in checkSectionOverlap(), but here
+  // we want to prevent file size overflows because it would crash the linker.
   for (OutputSection *Sec : OutputSections) {
     if (Sec->Type == SHT_NOBITS)
       continue;
