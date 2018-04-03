@@ -42,6 +42,7 @@ private:
   bool isFatal_{false};
 };
 
+inline namespace literals {
 constexpr MessageFixedText operator""_en_US(const char str[], std::size_t n) {
   return MessageFixedText{str, n, false /* not fatal */};
 }
@@ -50,6 +51,7 @@ constexpr MessageFixedText operator""_err_en_US(
     const char str[], std::size_t n) {
   return MessageFixedText{str, n, true /* fatal */};
 }
+}  // namespace literals
 
 std::ostream &operator<<(std::ostream &, const MessageFixedText &);
 

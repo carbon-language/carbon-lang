@@ -17,6 +17,9 @@ enum class Encoding { UTF8, EUC_JP };
 inline constexpr bool IsUpperCaseLetter(char ch) {
   if constexpr ('A' == static_cast<char>(0xc1)) {
     // EBCDIC
+    // TODO: Handle EBCDIC in a more generalized character set
+    // encoding framework; don't just assume that the native
+    // C++ character set is the same as that of the Fortran source.
     return (ch >= 'A' && ch <= 'I') || (ch >= 'J' && ch <= 'R') ||
         (ch >= 'S' && ch <= 'Z');
   } else {

@@ -1717,8 +1717,7 @@ public:
     return true;
   }
   bool Pre(const EndProgramStmt &x) {  // R1403
-    Outdent(), Word("END PROGRAM"), Walk(" ", x.v);
-    EndSubprogram();
+    EndSubprogram("PROGRAM", x.v);
     return false;
   }
   bool Pre(const ModuleStmt &) {  // R1405
@@ -1726,7 +1725,7 @@ public:
     return true;
   }
   bool Pre(const EndModuleStmt &x) {  // R1406
-    Outdent(), Word("END MODULE"), Walk(" ", x.v);
+    EndSubprogram("MODULE", x.v);
     return false;
   }
   bool Pre(const UseStmt &x) {  // R1409
@@ -1755,7 +1754,7 @@ public:
     return false;
   }
   bool Pre(const EndSubmoduleStmt &x) {  // R1419
-    Outdent(), Word("END SUBMODULE"), Walk(" ", x.v);
+    EndSubprogram("SUBMODULE", x.v);
     return false;
   }
   bool Pre(const BlockDataStmt &x) {  // R1421
@@ -1763,7 +1762,7 @@ public:
     return false;
   }
   bool Pre(const EndBlockDataStmt &x) {  // R1422
-    Outdent(), Word("END BLOCK DATA"), Walk(" ", x.v);
+    EndSubprogram("BLOCK DATA", x.v);
     return false;
   }
 
@@ -1897,8 +1896,7 @@ public:
     return false;
   }
   bool Pre(const EndFunctionStmt &x) {  // R1533
-    Outdent(), Word("END FUNCTION"), Walk(" ", x.v);
-    EndSubprogram();
+    EndSubprogram("FUNCTION", x.v);
     return false;
   }
   bool Pre(const SubroutineStmt &x) {  // R1535
@@ -1916,8 +1914,7 @@ public:
     return false;
   }
   bool Pre(const EndSubroutineStmt &x) {  // R1537
-    Outdent(), Word("END SUBROUTINE"), Walk(" ", x.v);
-    EndSubprogram();
+    EndSubprogram("SUBROUTINE", x.v);
     return false;
   }
   bool Pre(const MpSubprogramStmt &) {  // R1539
@@ -1925,8 +1922,7 @@ public:
     return true;
   }
   bool Pre(const EndMpSubprogramStmt &x) {  // R1540
-    Outdent(), Word("END PROCEDURE"), Walk(" ", x.v);
-    EndSubprogram();
+    EndSubprogram("PROCEDURE", x.v);
     return false;
   }
   bool Pre(const EntryStmt &x) {  // R1541
@@ -2124,7 +2120,10 @@ private:
     WalkTupleElements(tuple, separator);
   }
 
-  void EndSubprogram() { structureComponents_.clear(); }
+  void EndSubprogram(const char *kind, const std::optional<Name> &name) {
+    Outdent(), Word("END "), Word(kind), Walk(" ", name);
+    structureComponents_.clear();
+  }
 
   std::ostream &out_;
   int indent_{0};
