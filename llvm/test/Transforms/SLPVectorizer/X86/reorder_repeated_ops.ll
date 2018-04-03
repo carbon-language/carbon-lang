@@ -14,10 +14,11 @@ define void @hoge() {
 ; CHECK-NEXT:    [[TMP0:%.*]] = insertelement <2 x i16> undef, i16 [[TMP]], i32 0
 ; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <2 x i16> [[TMP0]], i16 undef, i32 1
 ; CHECK-NEXT:    [[TMP2:%.*]] = sext <2 x i16> [[TMP1]] to <2 x i32>
-; CHECK-NEXT:    [[TMP3:%.*]] = sub nsw <2 x i32> <i32 undef, i32 63>, [[TMP2]]
+; CHECK-NEXT:    [[REORDER_SHUFFLE:%.*]] = shufflevector <2 x i32> [[TMP2]], <2 x i32> undef, <2 x i32> <i32 1, i32 0>
+; CHECK-NEXT:    [[TMP3:%.*]] = sub nsw <2 x i32> <i32 63, i32 undef>, [[REORDER_SHUFFLE]]
 ; CHECK-NEXT:    [[TMP4:%.*]] = sub <2 x i32> [[TMP3]], undef
-; CHECK-NEXT:    [[SHUFFLE8:%.*]] = shufflevector <2 x i32> [[TMP4]], <2 x i32> undef, <4 x i32> <i32 0, i32 0, i32 0, i32 1>
-; CHECK-NEXT:    [[TMP5:%.*]] = add <4 x i32> <i32 47, i32 31, i32 15, i32 undef>, [[SHUFFLE8]]
+; CHECK-NEXT:    [[SHUFFLE8:%.*]] = shufflevector <2 x i32> [[TMP4]], <2 x i32> undef, <4 x i32> <i32 0, i32 1, i32 1, i32 1>
+; CHECK-NEXT:    [[TMP5:%.*]] = add <4 x i32> <i32 undef, i32 15, i32 31, i32 47>, [[SHUFFLE8]]
 ; CHECK-NEXT:    [[TMP11:%.*]] = icmp sgt i32 undef, undef
 ; CHECK-NEXT:    [[TMP12:%.*]] = select i1 [[TMP11]], i32 undef, i32 undef
 ; CHECK-NEXT:    [[TMP14:%.*]] = icmp sgt i32 [[TMP12]], undef
