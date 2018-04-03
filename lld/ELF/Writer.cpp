@@ -2063,17 +2063,25 @@ static void checkOverlap(StringRef Name, std::vector<SectionOffset> &Sections) {
   }
 }
 
-// Check for overlapping sections
+// Check for overlapping sections and address overflows.
 //
 // In this function we check that none of the output sections have overlapping
 // file offsets. For SHF_ALLOC sections we also check that the load address
 // ranges and the virtual address ranges don't overlap
 template <class ELFT> void Writer<ELFT>::checkSectionOverlap() {
-  // First check for overlapping file offsets. In this case we need to skip
-  // any section marked as SHT_NOBITS. These sections don't actually occupy
-  // space in the file so Sec->Offset + Sec->Size can overlap with others.
-  // If --oformat binary is specified only add SHF_ALLOC sections are added to
-  // the output file so we skip any non-allocated sections in that case.
+  // First, check that section's VAs fit in available address space for target.
+  for (OutputSection *OS : OutputSections)
+    if ((OS->Addr + OS->Size < OS->Addr) ||
+        (!ELFT::Is64Bits && OS->Addr + OS->Size > UINT32_MAX))
+      errorOrWarn("section " + OS->Name + " at 0x" + utohexstr(OS->Addr) +
+                  " of size 0x" + utohexstr(OS->Size) +
+                  " exceeds available address space");
+
+  // Check for overlapping file offsets. In this case we need to skip any
+  // section marked as SHT_NOBITS. These sections don't actually occupy space in
+  // the file so Sec->Offset + Sec->Size can overlap with others. If --oformat
+  // binary is specified only add SHF_ALLOC sections are added to the output
+  // file so we skip any non-allocated sections in that case.
   std::vector<SectionOffset> FileOffs;
   for (OutputSection *Sec : OutputSections)
     if (0 < Sec->Size && Sec->Type != SHT_NOBITS &&
