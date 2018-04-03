@@ -113,6 +113,8 @@ class BackendStatistics : public View {
   // There is one entry for each register file implemented by the processor.
   llvm::SmallVector<RegisterFileUsage, 4> RegisterFiles;
 
+  void initializeRegisterFileInfo();
+
   void printRetireUnitStatistics(llvm::raw_ostream &OS) const;
   void printDispatchUnitStatistics(llvm::raw_ostream &OS) const;
   void printSchedulerStatistics(llvm::raw_ostream &OS) const;
@@ -131,10 +133,9 @@ class BackendStatistics : public View {
 public:
   BackendStatistics(const llvm::MCSubtargetInfo &sti)
       : STI(sti), NumDispatched(0), NumIssued(0), NumRetired(0), NumCycles(0),
-        HWStalls(HWStallEvent::LastGenericEvent),
-        // TODO: The view currently assumes a single register file. This will
-        // change in future.
-        RegisterFiles(1) {}
+        HWStalls(HWStallEvent::LastGenericEvent) {
+    initializeRegisterFileInfo();
+  }
 
   void onInstructionEvent(const HWInstructionEvent &Event) override;
 
