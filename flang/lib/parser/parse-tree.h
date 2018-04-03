@@ -385,7 +385,7 @@ struct DeclarationConstruct {
   UNION_CLASS_BOILERPLATE(DeclarationConstruct);
   std::variant<SpecificationConstruct, Statement<Indirection<DataStmt>>,
       Statement<Indirection<FormatStmt>>, Statement<Indirection<EntryStmt>>,
-      Statement<Indirection<StmtFunctionStmt>>>
+      Statement<Indirection<StmtFunctionStmt>>, ErrorRecovery>
       u;
 };
 

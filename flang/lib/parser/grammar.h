@@ -65,6 +65,7 @@ constexpr Parser<DeclarationConstruct> declarationConstruct;  //  R507
 constexpr Parser<SpecificationConstruct> specificationConstruct;  //  R508
 constexpr Parser<ExecutionPartConstruct> executionPartConstruct;  //  R510
 constexpr Parser<InternalSubprogramPart> internalSubprogramPart;  //  R511
+constexpr Parser<ActionStmt> actionStmt;  // R515
 constexpr Parser<Name> name;  // R603
 constexpr Parser<LiteralConstant> literalConstant;  // R605
 constexpr Parser<NamedConstant> namedConstant;  // R606
@@ -185,8 +186,8 @@ template<typename PA> inline constexpr auto statement(const PA &p) {
   return unterminatedStatement(p) / endOfStmt;
 }
 
-constexpr auto ignoredStatementPrefix = skipEmptyLines >>
-    (label >> ok || space);
+constexpr auto ignoredStatementPrefix = skipEmptyLines >> maybe(label) >>
+    maybe(name / ":") >> space;
 
 // Error recovery within statements: skip to the end of the line,
 // but not over an END or CONTAINS statement.
@@ -206,13 +207,20 @@ constexpr auto executionPartErrorRecovery = errorRecoveryStart >> !"END"_tok >>
 // R507 declaration-construct ->
 //        specification-construct | data-stmt | format-stmt |
 //        entry-stmt | stmt-function-stmt
+constexpr auto execPartLookAhead = errorRecoveryStart /
+    (actionStmt >> ok || "ASSOCIATE ("_tok || "BLOCK"_tok || "SELECT"_tok ||
+        "CHANGE TEAM"_sptok || "CRITICAL"_tok || "DO"_tok || "IF ("_tok ||
+        "WHERE ("_tok || "FORALL ("_tok);
+constexpr auto declErrorRecovery = !execPartLookAhead >> stmtErrorRecovery;
 TYPE_CONTEXT_PARSER("declaration construct"_en_US,
-    construct<DeclarationConstruct>{}(specificationConstruct) ||
-        construct<DeclarationConstruct>{}(statement(indirect(dataStmt))) ||
-        construct<DeclarationConstruct>{}(statement(indirect(formatStmt))) ||
-        construct<DeclarationConstruct>{}(statement(indirect(entryStmt))) ||
-        construct<DeclarationConstruct>{}(
-            statement(indirect(Parser<StmtFunctionStmt>{}))))
+    recovery(construct<DeclarationConstruct>{}(specificationConstruct) ||
+            construct<DeclarationConstruct>{}(statement(indirect(dataStmt))) ||
+            construct<DeclarationConstruct>{}(
+                statement(indirect(formatStmt))) ||
+            construct<DeclarationConstruct>{}(statement(indirect(entryStmt))) ||
+            construct<DeclarationConstruct>{}(
+                statement(indirect(Parser<StmtFunctionStmt>{}))),
+        construct<DeclarationConstruct>{}(declErrorRecovery)))
 
 // R508 specification-construct ->
 //        derived-type-def | enum-def | generic-stmt | interface-block |
@@ -448,8 +456,7 @@ TYPE_CONTEXT_PARSER("internal subprogram part"_en_US,
 //        wait-stmt | where-stmt | write-stmt | computed-goto-stmt | forall-stmt
 // R1159 continue-stmt -> CONTINUE
 // R1163 fail-image-stmt -> FAIL IMAGE
-constexpr auto actionStmt = construct<ActionStmt>{}(
-                                indirect(Parser<AllocateStmt>{})) ||
+TYPE_PARSER(construct<ActionStmt>{}(indirect(Parser<AllocateStmt>{})) ||
     construct<ActionStmt>{}(indirect(assignmentStmt)) ||
     construct<ActionStmt>{}(indirect(Parser<BackspaceStmt>{})) ||
     construct<ActionStmt>{}(indirect(Parser<CallStmt>{})) ||
@@ -490,7 +497,7 @@ constexpr auto actionStmt = construct<ActionStmt>{}(
     construct<ActionStmt>{}(indirect(Parser<ArithmeticIfStmt>{})) ||
     construct<ActionStmt>{}(indirect(Parser<AssignStmt>{})) ||
     construct<ActionStmt>{}(indirect(Parser<AssignedGotoStmt>{})) ||
-    construct<ActionStmt>{}(indirect(Parser<PauseStmt>{}));
+    construct<ActionStmt>{}(indirect(Parser<PauseStmt>{})))
 
 // Fortran allows the statement with the corresponding label at the end of
 // a do-construct that begins with an old-style label-do-stmt to be a
@@ -3623,8 +3630,9 @@ TYPE_PARSER("CONTAINS" >> construct<ContainsStmt>{})
 
 // R1544 stmt-function-stmt ->
 //         function-name ( [dummy-arg-name-list] ) = scalar-expr
-TYPE_PARSER(construct<StmtFunctionStmt>{}(
-    name, parenthesized(optionalList(name)), "=" >> scalar(expr)))
+TYPE_CONTEXT_PARSER("statement function definition"_en_US,
+    construct<StmtFunctionStmt>{}(
+        name, parenthesized(optionalList(name)), "=" >> scalar(expr)))
 
 // Directives, extensions, and deprecated statements
 // !DIR$ IVDEP
