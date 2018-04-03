@@ -1137,24 +1137,23 @@ sortISDBySectionOrder(InputSectionDescription *ISD,
   // of the second block of cold code can call the hot code without a thunk. So
   // we effectively double the amount of code that could potentially call into
   // the hot code without a thunk.
-  size_t UnorderedInsPt = 0;
+  size_t InsPt = 0;
   if (Target->ThunkSectionSpacing && !OrderedSections.empty()) {
     uint64_t UnorderedPos = 0;
-    for (; UnorderedInsPt != UnorderedSections.size(); ++UnorderedInsPt) {
-      UnorderedPos += UnorderedSections[UnorderedInsPt]->getSize();
+    for (; InsPt != UnorderedSections.size(); ++InsPt) {
+      UnorderedPos += UnorderedSections[InsPt]->getSize();
       if (UnorderedPos > UnorderedSize / 2)
         break;
     }
   }
 
-  std::copy(UnorderedSections.begin(),
-            UnorderedSections.begin() + UnorderedInsPt, ISD->Sections.begin());
-  std::vector<InputSection *>::iterator SectionsPos =
-      ISD->Sections.begin() + UnorderedInsPt;
+  ISD->Sections.clear();
+  for (InputSection *IS : makeArrayRef(UnorderedSections).slice(0, InsPt))
+    ISD->Sections.push_back(IS);
   for (std::pair<InputSection *, int> P : OrderedSections)
-    *SectionsPos++ = P.first;
-  std::copy(UnorderedSections.begin() + UnorderedInsPt, UnorderedSections.end(),
-            SectionsPos);
+    ISD->Sections.push_back(P.first);
+  for (InputSection *IS : makeArrayRef(UnorderedSections).slice(InsPt))
+    ISD->Sections.push_back(IS);
 }
 
 static void sortSection(OutputSection *Sec,
