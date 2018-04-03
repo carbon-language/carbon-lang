@@ -612,7 +612,8 @@ public:
            const decltype(NumOpsWantToKeepOrder)::value_type &D2) {
           return D1.second < D2.second;
         });
-    if (I == NumOpsWantToKeepOrder.end() || I->getSecond() <= NumOpsWantToKeepOriginalOrder)
+    if (I == NumOpsWantToKeepOrder.end() ||
+        I->getSecond() <= NumOpsWantToKeepOriginalOrder)
       return None;
 
     return makeArrayRef(I->getFirst());
