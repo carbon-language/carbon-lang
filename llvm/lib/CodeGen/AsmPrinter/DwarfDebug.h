@@ -536,7 +536,7 @@ public:
   // Experimental DWARF5 features.
 
   /// Returns what kind (if any) of accelerator tables to emit.
-  AccelTableKind getAccelTableKind() const { return AccelTableKind; }
+  llvm::AccelTableKind getAccelTableKind() const { return AccelTableKind; }
 
   bool useAppleExtensionAttributes() const {
     return HasAppleExtensionAttributes;
