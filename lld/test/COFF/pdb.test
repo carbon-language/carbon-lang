@@ -262,29 +262,29 @@ RAW-NEXT:                 IMAGE_SCN_MEM_READ
 RAW-NEXT:   SC[.text]   | mod = 1, 0001:0016, size = 6, data crc = 2139436471, reloc crc = 0
 RAW-NEXT:                 IMAGE_SCN_CNT_CODE | IMAGE_SCN_ALIGN_16BYTES | IMAGE_SCN_MEM_EXECUTE |
 RAW-NEXT:                 IMAGE_SCN_MEM_READ
-RAW-NEXT:   SC[.rdata]  | mod = 2, 0002:0000, size = 28, data crc = 0, reloc crc = 0
+RAW-NEXT:   SC[.rdata]  | mod = 2, 0002:0000, size = {{[0-9]+}}, data crc = 0, reloc crc = 0
 RAW-NEXT:                 IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ
-RAW-NEXT:   SC[.rdata]  | mod = 2, 0002:0028, size = 93, data crc = 0, reloc crc = 0
+RAW-NEXT:   SC[.rdata]  | mod = 2, 0002:0028, size = {{[0-9]+}}, data crc = 0, reloc crc = 0
 RAW-NEXT:                 IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ
 RAW-NEXT:   SC[.pdata]  | mod = 0, 0003:0000, size = 12, data crc = 361370162, reloc crc = 0
 RAW-NEXT:                 IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_ALIGN_4BYTES | IMAGE_SCN_MEM_READ
-RAW-NEXT:   SC[???]     | mod = 0, 0004:0000, size = 8, data crc = 264583633, reloc crc = 0
+RAW-NEXT:   SC[???]     | mod = 0, 0004:0000, size = {{[0-9]+}}, data crc = 264583633, reloc crc = 0
 RAW-NEXT:                 IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_ALIGN_4BYTES | IMAGE_SCN_MEM_READ
 RAW-NOT: SC[
 RAW:                             Section Map
 RAW-NEXT: ============================================================
 
 RAW-NEXT:   Section 0000 | ovl = 0, group = 0, frame = 1, name = 65535
-RAW-NEXT:                  class = 65535, offset = 0, size = 22
+RAW-NEXT:                  class = 65535, offset = 0, size =
 RAW-NEXT:                  flags = read | execute | 32 bit addr | selector
 RAW-NEXT:   Section 0001 | ovl = 0, group = 0, frame = 2, name = 65535
-RAW-NEXT:                  class = 65535, offset = 0, size = 121
+RAW-NEXT:                  class = 65535, offset = 0, size =
 RAW-NEXT:                  flags = read | 32 bit addr | selector
 RAW-NEXT:   Section 0002 | ovl = 0, group = 0, frame = 3, name = 65535
-RAW-NEXT:                  class = 65535, offset = 0, size = 12
+RAW-NEXT:                  class = 65535, offset = 0, size =
 RAW-NEXT:                  flags = read | 32 bit addr | selector
 RAW-NEXT:   Section 0003 | ovl = 0, group = 0, frame = 4, name = 65535
-RAW-NEXT:                  class = 65535, offset = 0, size = 8
+RAW-NEXT:                  class = 65535, offset = 0, size =
 RAW-NEXT:                  flags = read | 32 bit addr | selector
 RAW-NEXT:   Section 0004 | ovl = 0, group = 0, frame = 5, name = 65535
 RAW-NEXT:                  class = 65535, offset = 0, size = 4294967295
