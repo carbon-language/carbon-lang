@@ -36,6 +36,7 @@ protected:
   }
 
   static void verifyFormat(llvm::StringRef Code, const FormatStyle &Style) {
+    EXPECT_EQ(Code.str(), format(Code, Style)) << "Expected code is not stable";
     EXPECT_EQ(Code.str(), format(test::messUp(Code), Style));
   }
 
