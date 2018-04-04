@@ -278,7 +278,7 @@ class DwarfDebug : public DebugHandlerBase {
 
   /// DWARF5 Experimental Options
   /// @{
-  AccelTableKind AccelTableKind;
+  AccelTableKind TheAccelTableKind;
   bool HasAppleExtensionAttributes;
   bool HasSplitDwarf;
 
@@ -536,7 +536,7 @@ public:
   // Experimental DWARF5 features.
 
   /// Returns what kind (if any) of accelerator tables to emit.
-  llvm::AccelTableKind getAccelTableKind() const { return AccelTableKind; }
+  AccelTableKind getAccelTableKind() const { return TheAccelTableKind; }
 
   bool useAppleExtensionAttributes() const {
     return HasAppleExtensionAttributes;

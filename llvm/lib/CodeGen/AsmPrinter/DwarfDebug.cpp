@@ -306,11 +306,11 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   // supported.
   if (AccelTables == AccelTableKind::Default) {
     if (tuneForLLDB() && A->TM.getTargetTriple().isOSBinFormatMachO())
-      AccelTableKind = AccelTableKind::Apple;
+      TheAccelTableKind = AccelTableKind::Apple;
     else
-      AccelTableKind = AccelTableKind::None;
+      TheAccelTableKind = AccelTableKind::None;
   } else
-    AccelTableKind = AccelTables;
+    TheAccelTableKind = AccelTables;
 
   UseInlineStrings = DwarfInlinedStrings == Enable;
   HasAppleExtensionAttributes = tuneForLLDB();
