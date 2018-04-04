@@ -117,7 +117,7 @@ static void fillMachineFunction(llvm::MachineFunction &MF,
   llvm::MachineBasicBlock *MBB = MF.CreateMachineBasicBlock();
   MF.push_back(MBB);
   const llvm::MCInstrInfo *MCII = MF.getTarget().getMCInstrInfo();
-  const llvm::DebugLoc DL;
+  llvm::DebugLoc DL;
   for (const llvm::MCInst &Inst : Instructions) {
     const unsigned Opcode = Inst.getOpcode();
     const llvm::MCInstrDesc &MCID = MCII->get(Opcode);
