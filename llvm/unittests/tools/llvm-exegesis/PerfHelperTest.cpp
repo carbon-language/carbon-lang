@@ -38,7 +38,7 @@ TEST(PerfHelperTest, FunctionalTest) {
   EXPECT_THAT(CallbackEventNameFullyQualifed, Not(IsEmpty()));
   pfmTerminate();
 #else
-  ASSERT_TRUE(PfmInitialize());
+  ASSERT_TRUE(pfmInitialize());
 #endif
 }
 
