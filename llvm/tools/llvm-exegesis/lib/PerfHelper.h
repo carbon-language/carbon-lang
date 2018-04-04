@@ -17,6 +17,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Config/config.h"
 #include <functional>
 #include <memory>
 
@@ -76,7 +77,9 @@ struct Counter {
   int64_t read() const; // Return the current value of the counter.
 
 private:
+#ifdef HAVE_LIBPFM
   int FileDescriptor = -1;
+#endif
 };
 
 // Helper to measure a list of PerfEvent for a particular function.

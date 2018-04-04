@@ -89,7 +89,7 @@ LatencyBenchmarkRunner::runMeasurements(const LLVMState &State,
     if (Value < MinLatency)
       MinLatency = Value;
   }
-  return {{"latency", static_cast<double>(MinLatency) / NumRepetitions}};
+  return {{"latency", static_cast<double>(MinLatency) / NumRepetitions, ""}};
 }
 
 } // namespace exegesis

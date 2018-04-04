@@ -31,7 +31,7 @@ TEST(BenchmarkResultTest, WriteToAndReadFromDisk) {
   ToDisk.LLVMTriple = "llvm_triple";
   ToDisk.NumRepetitions = 1;
   ToDisk.Measurements.push_back(BenchmarkMeasure{"a", 1, "debug a"});
-  ToDisk.Measurements.push_back(BenchmarkMeasure{"b", 2});
+  ToDisk.Measurements.push_back(BenchmarkMeasure{"b", 2, ""});
   ToDisk.Error = "error";
 
   const llvm::StringRef Filename("data.yaml");
