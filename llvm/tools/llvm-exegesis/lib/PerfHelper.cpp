@@ -113,7 +113,7 @@ int64_t Counter::read() const {
 
 #else
 
-Counter::Counter(const PerfEvent &Event) : FileDescriptor(-1) {}
+Counter::Counter(const PerfEvent &Event) {}
 
 Counter::~Counter() = default;
 
