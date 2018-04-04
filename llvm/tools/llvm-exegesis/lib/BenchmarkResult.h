@@ -38,7 +38,7 @@ struct InstructionBenchmark {
   AsmTemplate AsmTmpl;
   std::string CpuName;
   std::string LLVMTriple;
-  size_t NumRepetitions = 0;
+  int NumRepetitions = 0;
   std::vector<BenchmarkMeasure> Measurements;
   std::string Error;
 
