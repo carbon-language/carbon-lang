@@ -85,7 +85,7 @@ MATCHER_P2(EqVarAssignement, VariableIndexMatcher, AssignedRegisterMatcher,
 
 size_t returnIndexZero(const size_t UpperBound) { return 0; }
 
-TEST_F(MCInstrDescViewTest, XOR64rr) {
+TEST_F(MCInstrDescViewTest, DISABLED_XOR64rr) {
   const llvm::MCInstrDesc &InstrDesc = InstrInfo->get(llvm::X86::XOR64rr);
   const auto Vars =
       getVariables(*RegInfo, InstrDesc, llvm::BitVector(RegInfo->getNumRegs()));
@@ -145,7 +145,7 @@ TEST_F(MCInstrDescViewTest, XOR64rr) {
   EXPECT_THAT(Inst.getOperand(2), llvm::MCOperand::createReg(RAX));
 }
 
-TEST_F(MCInstrDescViewTest, AAA) {
+TEST_F(MCInstrDescViewTest, DISABLED_AAA) {
   const llvm::MCInstrDesc &InstrDesc = InstrInfo->get(llvm::X86::AAA);
   const auto Vars =
       getVariables(*RegInfo, InstrDesc, llvm::BitVector(RegInfo->getNumRegs()));
@@ -191,7 +191,7 @@ TEST_F(MCInstrDescViewTest, AAA) {
   EXPECT_THAT(Inst.getNumOperands(), 0) << "All operands are implicit";
 }
 
-TEST_F(MCInstrDescViewTest, ReservedRegisters) {
+TEST_F(MCInstrDescViewTest, DISABLED_ReservedRegisters) {
   llvm::BitVector ReservedRegisters(RegInfo->getNumRegs());
 
   const llvm::MCInstrDesc &InstrDesc = InstrInfo->get(llvm::X86::XOR64rr);

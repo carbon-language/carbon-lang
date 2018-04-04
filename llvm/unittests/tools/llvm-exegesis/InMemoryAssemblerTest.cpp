@@ -59,7 +59,7 @@ private:
   const std::string CpuName;
 };
 
-TEST_F(MachineFunctionGeneratorTest, JitFunction) {
+TEST_F(MachineFunctionGeneratorTest, DISABLED_JitFunction) {
   JitFunctionContext Context(createTargetMachine());
   JitFunction Function(std::move(Context), {});
   ASSERT_THAT(Function.getFunctionBytes().str(), ElementsAre(0xc3));
@@ -68,7 +68,7 @@ TEST_F(MachineFunctionGeneratorTest, JitFunction) {
   // Function();
 }
 
-TEST_F(MachineFunctionGeneratorTest, JitFunctionXOR32rr) {
+TEST_F(MachineFunctionGeneratorTest, DISABLED_JitFunctionXOR32rr) {
   JitFunctionContext Context(createTargetMachine());
   JitFunction Function(
       std::move(Context),
@@ -77,7 +77,7 @@ TEST_F(MachineFunctionGeneratorTest, JitFunctionXOR32rr) {
   // Function();
 }
 
-TEST_F(MachineFunctionGeneratorTest, JitFunctionMOV64ri) {
+TEST_F(MachineFunctionGeneratorTest, DISABLED_JitFunctionMOV64ri) {
   JitFunctionContext Context(createTargetMachine());
   JitFunction Function(std::move(Context),
                        {MCInstBuilder(MOV64ri32).addReg(RAX).addImm(42)});
@@ -86,7 +86,7 @@ TEST_F(MachineFunctionGeneratorTest, JitFunctionMOV64ri) {
   // Function();
 }
 
-TEST_F(MachineFunctionGeneratorTest, JitFunctionMOV32ri) {
+TEST_F(MachineFunctionGeneratorTest, DISABLED_JitFunctionMOV32ri) {
   JitFunctionContext Context(createTargetMachine());
   JitFunction Function(std::move(Context),
                        {MCInstBuilder(MOV32ri).addReg(EAX).addImm(42)});
