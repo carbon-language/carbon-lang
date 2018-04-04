@@ -84,9 +84,9 @@ In short, a Fortran preprocessor should work as if:
 4. C-style line continuations are processed in directives.
 5. C old-style comments are removed from directives.
 6. Directives are processed and macros expanded.
+   Along the way, Fortran `INCLUDE` lines and preprocessor `#include` directives
+   are expanded, and all these steps applied recursively to the introduced text.
 7. Newly visible Fortran comments are removed.
-8. Fortran `INCLUDE` lines are expanded, and all these steps applied
-   recursively to the introduced text.
 
 Last, if the preprocessor is not integrated into the Fortran compiler,
 new Fortran continuation line markers should be introduced into the final
