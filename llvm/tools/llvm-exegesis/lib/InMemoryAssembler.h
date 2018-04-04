@@ -65,7 +65,10 @@ public:
   llvm::StringRef getFunctionBytes() const { return FunctionBytes; }
 
   // Retrieves the callable function.
-  void operator()() const { ((void (*)())FunctionBytes.data())(); }
+  void operator()() const {
+    char* const FnData = const_cast<char*>(FunctionBytes.data());
+    ((void (*)())FnData)();
+  }
 
 private:
   JitFunctionContext FunctionContext;
