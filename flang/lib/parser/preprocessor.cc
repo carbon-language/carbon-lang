@@ -569,20 +569,22 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
           dir.GetTokenProvenance(dirOffset));
       return;
     }
+    if (include == "-") {
+      prescanner->Say("#include: can't include standard input"_err_en_US,
+          dir.GetTokenProvenance(dirOffset));
+      return;
+    }
     std::stringstream error;
     const SourceFile *included{allSources_.Open(include, &error)};
     if (included == nullptr) {
       prescanner->Say(
           MessageFormattedText("#include: %s"_err_en_US, error.str().data()),
           dir.GetTokenProvenance(dirOffset));
-      return;
+    } else if (included->bytes() > 0) {
+      ProvenanceRange fileRange{
+          allSources_.AddIncludedFile(*included, dir.GetProvenanceRange())};
+      Prescanner{*prescanner}.Prescan(fileRange);
     }
-    if (included->bytes() == 0) {
-      return;
-    }
-    ProvenanceRange fileRange{
-        allSources_.AddIncludedFile(*included, dir.GetProvenanceRange())};
-    Prescanner{*prescanner}.Prescan(fileRange);
   } else {
     prescanner->Say(MessageFormattedText(
                         "#%s: unknown or unimplemented directive"_err_en_US,

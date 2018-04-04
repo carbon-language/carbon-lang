@@ -132,7 +132,7 @@ private:
   bool IsFixedFormCommentLine(const char *) const;
   bool IsFreeFormComment(const char *) const;
   std::optional<std::size_t> IsIncludeLine(const char *) const;
-  bool FortranInclude(const char *quote);
+  void FortranInclude(const char *quote);
   bool IsPreprocessorDirectiveLine(const char *) const;
   const char *FixedFormContinuationLine();
   bool FixedFormContinuation();
