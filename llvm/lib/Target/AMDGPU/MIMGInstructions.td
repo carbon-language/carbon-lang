@@ -58,6 +58,8 @@ multiclass MIMG_NoSampler_Src_Helper_Helper <bits<7> op, string asm,
                             MIMG_Mask<asm#"_V1"#suffix, channels>;
   def NAME # _V2 # suffix : MIMG_NoSampler_Helper <op, asm, dst_rc, VReg_64, d16_bit>,
                             MIMG_Mask<asm#"_V2"#suffix, channels>;
+  def NAME # _V3 # suffix : MIMG_NoSampler_Helper <op, asm, dst_rc, VReg_96, d16_bit>,
+                            MIMG_Mask<asm#"_V3"#suffix, channels>;
   def NAME # _V4 # suffix : MIMG_NoSampler_Helper <op, asm, dst_rc, VReg_128, d16_bit>,
                             MIMG_Mask<asm#"_V4"#suffix, channels>;
 }
@@ -120,6 +122,8 @@ multiclass MIMG_Store_Addr_Helper_Helper <bits<7> op, string asm,
                             MIMG_Mask<asm#"_V1"#suffix, channels>;
   def NAME # _V2 # suffix : MIMG_Store_Helper <op, asm, data_rc, VReg_64, d16_bit>,
                             MIMG_Mask<asm#"_V2"#suffix, channels>;
+  def NAME # _V3 # suffix : MIMG_Store_Helper <op, asm, data_rc, VReg_96, d16_bit>,
+                            MIMG_Mask<asm#"_V3"#suffix, channels>;
   def NAME # _V4 # suffix : MIMG_Store_Helper <op, asm, data_rc, VReg_128, d16_bit>,
                             MIMG_Mask<asm#"_V4"#suffix, channels>;
 }
@@ -224,7 +228,8 @@ multiclass MIMG_Atomic_Addr_Helper_m <mimg op,
   // So only one variant can be disassembled. V1 looks the safest to decode.
   defm _V1 : MIMG_Atomic_Helper_m <op, name # "_V1", asm, asm # "_V1", data_rc, VGPR_32, is32Bit, enableDasm>;
   defm _V2 : MIMG_Atomic_Helper_m <op, name # "_V2", asm, asm # "_V2", data_rc, VReg_64, is32Bit>;
-  defm _V4 : MIMG_Atomic_Helper_m <op, name # "_V3", asm, asm # "_V3", data_rc, VReg_128, is32Bit>;
+  defm _V3 : MIMG_Atomic_Helper_m <op, name # "_V3", asm, asm # "_V3", data_rc, VReg_96, is32Bit>;
+  defm _V4 : MIMG_Atomic_Helper_m <op, name # "_V4", asm, asm # "_V4", data_rc, VReg_128, is32Bit>;
 }
 
 multiclass MIMG_Atomic <mimg op, string asm,
@@ -262,6 +267,8 @@ multiclass MIMG_Sampler_Src_Helper_Helper <bits<7> op, string asm,
                        MIMG_Mask<asm#"_V1"#suffix, channels>;
     def _V2 # suffix : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_64, wqm, d16_bit>,
                        MIMG_Mask<asm#"_V2"#suffix, channels>;
+    def _V3 # suffix : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_96, wqm, d16_bit>,
+                       MIMG_Mask<asm#"_V3"#suffix, channels>;
     def _V4 # suffix : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_128, wqm, d16_bit>,
                        MIMG_Mask<asm#"_V4"#suffix, channels>;
     def _V8 # suffix : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_256, wqm, d16_bit>,
@@ -334,6 +341,7 @@ multiclass MIMG_Gather_Src_Helper <bits<7> op, string asm,
                                     string suffix> {
   def prefix # _V1 # suffix : MIMG_Gather_Helper <op, asm, dst_rc, VGPR_32, wqm, d16_bit, "AMDGPU">;
   def prefix # _V2 # suffix : MIMG_Gather_Helper <op, asm, dst_rc, VReg_64, wqm, d16_bit>;
+  def prefix # _V3 # suffix : MIMG_Gather_Helper <op, asm, dst_rc, VReg_96, wqm, d16_bit>;
   def prefix # _V4 # suffix : MIMG_Gather_Helper <op, asm, dst_rc, VReg_128, wqm, d16_bit>;
   def prefix # _V8 # suffix : MIMG_Gather_Helper <op, asm, dst_rc, VReg_256, wqm, d16_bit>;
   def prefix # _V16 # suffix : MIMG_Gather_Helper <op, asm, dst_rc, VReg_512, wqm, d16_bit>;
