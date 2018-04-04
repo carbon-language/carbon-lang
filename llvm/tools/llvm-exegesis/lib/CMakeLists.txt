@@ -14,10 +14,13 @@ add_library(LLVMExegesis
 
 llvm_update_compile_flags(LLVMExegesis)
 llvm_map_components_to_libnames(libs
+  Analysis
   CodeGen
+  Core
   ExecutionEngine
   MC
   MCJIT
+  Object
   Support
   )
 
