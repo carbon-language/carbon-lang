@@ -486,7 +486,8 @@ public:
       if (OpNum < 0)
         return true;
 
-      if (static_cast<unsigned int>(OpNum) >= CurInst->getNumOperands())
+      if (static_cast<unsigned int>(OpNum) >=
+            MCPlus::getNumPrimeOperands(*CurInst))
         return false;
 
       const auto &Op = CurInst->getOperand(OpNum);
@@ -531,7 +532,8 @@ public:
       if (I == InInstrWindow.begin())
         return false;
       --I;
-      if (OpNum < 0 || static_cast<unsigned int>(OpNum) >= I->getNumOperands())
+      if (OpNum < 0 || static_cast<unsigned int>(OpNum) >=
+            MCPlus::getNumPrimeOperands(*I))
         return false;
       Op = I->getOperand(OpNum);
       return true;
@@ -587,7 +589,8 @@ public:
       if (I == InInstrWindow.begin())
         return false;
       --I;
-      if (OpNum < 0 || static_cast<unsigned int>(OpNum) >= I->getNumOperands())
+      if (OpNum < 0 || static_cast<unsigned int>(OpNum) >=
+            MCPlus::getNumPrimeOperands(*I))
         return false;
       const auto &Op = I->getOperand(OpNum);
       if (!Op.isReg())

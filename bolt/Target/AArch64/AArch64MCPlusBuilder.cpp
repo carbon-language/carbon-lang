@@ -168,7 +168,7 @@ public:
       return false;
     const auto InstInfo = Info->get(Inst.getOpcode());
     auto NumDefs = InstInfo.getNumDefs();
-    for (unsigned I = NumDefs, E = Inst.getNumOperands(); I < E; ++I) {
+    for (unsigned I = NumDefs, E = InstInfo.getNumOperands(); I < E; ++I) {
       auto &Operand = Inst.getOperand(I);
       if (!Operand.isReg())
         continue;
@@ -340,7 +340,7 @@ public:
 
   const MCSymbol *getTargetSymbol(const MCInst &Inst,
                                   unsigned OpNum = 0) const override {
-    if (OpNum >= Inst.getNumOperands())
+    if (OpNum >= MCPlus::getNumPrimeOperands(Inst))
       return nullptr;
 
     // Auto-select correct operand number
@@ -534,8 +534,8 @@ public:
 
     auto addInstrOperands = [&](const MCInst &Instr) {
       // Update Uses table
-      for (unsigned OpNum = 0, OpEnd = Instr.getNumOperands(); OpNum != OpEnd;
-           ++OpNum) {
+      for (unsigned OpNum = 0, OpEnd = MCPlus::getNumPrimeOperands(Instr);
+           OpNum != OpEnd; ++OpNum) {
         if (!Instr.getOperand(OpNum).isReg())
           continue;
         Uses[&Instr].push_back(RegAliasTable[Instr.getOperand(OpNum).getReg()]);
@@ -895,7 +895,8 @@ public:
                             MCContext *Ctx, int64_t &Value,
                             uint64_t RelType) const override {
     unsigned ImmOpNo = -1U;
-    for (unsigned Index = 0; Index < Inst.getNumOperands(); ++Index) {
+    for (unsigned Index = 0; Index < MCPlus::getNumPrimeOperands(Inst);
+         ++Index) {
       if (Inst.getOperand(Index).isImm()) {
         ImmOpNo = Index;
         break;
