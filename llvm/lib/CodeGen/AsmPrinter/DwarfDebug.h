@@ -192,14 +192,6 @@ struct SymbolCU {
   DwarfCompileUnit *CU;
 };
 
-/// The kind of accelerator tables we should emit.
-enum class AccelTableKind {
-  Default, ///< Platform default.
-  None,    ///< None.
-  Apple,   ///< .apple_names, .apple_namespaces, .apple_types, .apple_objc.
-  Dwarf,   ///< DWARF v5 .debug_names.
-};
-
 /// Collects and handles dwarf debug information.
 class DwarfDebug : public DebugHandlerBase {
   /// All DIEValues are allocated through this allocator.
@@ -278,7 +270,7 @@ class DwarfDebug : public DebugHandlerBase {
 
   /// DWARF5 Experimental Options
   /// @{
-  AccelTableKind AccelTableKind;
+  bool HasDwarfAccelTables;
   bool HasAppleExtensionAttributes;
   bool HasSplitDwarf;
 
@@ -310,8 +302,7 @@ class DwarfDebug : public DebugHandlerBase {
 
   AddressPool AddrPool;
 
-  /// Accelerator tables.
-  AccelTable<DWARF5AccelTableData> AccelDebugNames;
+  /// Apple accelerator tables.
   AccelTable<AppleAccelTableOffsetData> AccelNames;
   AccelTable<AppleAccelTableOffsetData> AccelObjC;
   AccelTable<AppleAccelTableOffsetData> AccelNamespace;
@@ -359,9 +350,6 @@ class DwarfDebug : public DebugHandlerBase {
   /// Emit a specified accelerator table.
   template <typename AccelTableT>
   void emitAccel(AccelTableT &Accel, MCSection *Section, StringRef TableName);
-
-  /// Emit DWARF v5 accelerator table.
-  void emitAccelDebugNames();
 
   /// Emit visible names into a hashed accelerator table section.
   void emitAccelNames();
@@ -535,8 +523,9 @@ public:
 
   // Experimental DWARF5 features.
 
-  /// Returns what kind (if any) of accelerator tables to emit.
-  llvm::AccelTableKind getAccelTableKind() const { return AccelTableKind; }
+  /// Returns whether or not to emit tables that dwarf consumers can
+  /// use to accelerate lookup.
+  bool useDwarfAccelTables() const { return HasDwarfAccelTables; }
 
   bool useAppleExtensionAttributes() const {
     return HasAppleExtensionAttributes;
@@ -601,9 +590,6 @@ public:
 
   /// Find the matching DwarfCompileUnit for the given CU DIE.
   DwarfCompileUnit *lookupCU(const DIE *Die) { return CUDieMap.lookup(Die); }
-  const DwarfCompileUnit *lookupCU(const DIE *Die) const {
-    return CUDieMap.lookup(Die);
-  }
 
   /// \defgroup DebuggerTuning Predicates to tune DWARF for a given debugger.
   ///
