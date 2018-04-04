@@ -213,7 +213,7 @@ RAW-NEXT:           IMAGE_SCN_MEM_EXECUTE
 RAW-NEXT:           IMAGE_SCN_MEM_READ
 RAW:        SECTION HEADER #2
 RAW-NEXT:    .rdata name
-RAW-NEXT:        79 virtual size
+RAW-NEXT:           virtual size
 RAW-NEXT:      2000 virtual address
 RAW-NEXT:       200 size of raw data
 RAW-NEXT:       600 file pointer to raw data
