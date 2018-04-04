@@ -1574,6 +1574,9 @@ public:
     return false;
   }
 
+  /// Returns true if the target implements the MachineOutliner.
+  virtual bool useMachineOutliner() const { return false; }
+
   /// \brief Describes the number of instructions that it will take to call and
   /// construct a frame for a given outlining candidate.
   struct MachineOutlinerInfo {
