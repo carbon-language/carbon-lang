@@ -1,13 +1,11 @@
 #include <iosfwd>
 
-namespace Fortran {
-
-namespace parser {
+namespace Fortran::parser {
 class Program;
-}
+class CookedSource;
+}  // namespace Fortran::parser
 
-namespace semantics {
-void MakeTypes(std::ostream &out, const parser::Program &program);
+namespace Fortran::semantics {
+void MakeTypes(
+    const parser::Program &program, const parser::CookedSource &cookedSource);
 }
-
-}  // namespace Fortran

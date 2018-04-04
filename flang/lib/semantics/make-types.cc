@@ -291,7 +291,7 @@ public:
   void Post(const parser::DerivedTypeStmt &x) {
     builder_->name(std::get<parser::Name>(x.t).ToString());
     builder_->attrs(*attrs_);
-    attrs_.release();
+    attrs_.reset();
   }
 
   void Post(const parser::Program &) {
@@ -315,9 +315,10 @@ private:
 
 };
 
-void MakeTypes(std::ostream &out, const parser::Program &program) {
-  void ResolveNames(const parser::Program &program);
-  ResolveNames(program);
+void MakeTypes(
+    const parser::Program &program, const parser::CookedSource &cookedSource) {
+  void ResolveNames(const parser::Program &, const parser::CookedSource &);
+  ResolveNames(program, cookedSource);
 }
 
 static KindParamValue GetKindParamValue(

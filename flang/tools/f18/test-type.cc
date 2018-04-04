@@ -2,8 +2,6 @@
 #include "../../lib/semantics/make-types.h"
 
 #include <iostream>
-#include <optional>
-#include <sstream>
 #include <string>
 
 using namespace Fortran;
@@ -15,9 +13,9 @@ int main(int argc, char *const argv[]) {
     return EXIT_FAILURE;
   }
   std::string path{argv[1]};
-  Parsing parsing;
+  parser::Parsing parsing;
   if (parsing.ForTesting(path, std::cerr)) {
-    semantics::MakeTypes(std::cout, *parsing.parseTree());
+    semantics::MakeTypes(*parsing.parseTree(), parsing.messages().cooked());
     return EXIT_SUCCESS;
   }
   return EXIT_FAILURE;
