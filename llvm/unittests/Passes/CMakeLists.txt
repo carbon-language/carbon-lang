@@ -15,4 +15,5 @@ set_target_properties(TestPlugin
   SUFFIX ".so"
   )
 
+add_dependencies(TestPlugin intrinsics_gen)
 add_dependencies(PluginsTests TestPlugin)
