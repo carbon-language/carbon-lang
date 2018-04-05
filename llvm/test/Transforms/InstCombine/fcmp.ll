@@ -68,8 +68,7 @@ define <2 x i1> @fneg_constant_swap_pred_vec(<2 x float> %x) {
 
 define <2 x i1> @fneg_constant_swap_pred_vec_undef(<2 x float> %x) {
 ; CHECK-LABEL: @fneg_constant_swap_pred_vec_undef(
-; CHECK-NEXT:    [[NEG:%.*]] = fsub <2 x float> <float undef, float -0.000000e+00>, [[X:%.*]]
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ogt <2 x float> [[NEG]], <float 1.000000e+00, float 2.000000e+00>
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp olt <2 x float> [[X:%.*]], <float -1.000000e+00, float -2.000000e+00>
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %neg = fsub <2 x float> <float undef, float -0.0>, %x
@@ -101,9 +100,7 @@ define <2 x i1> @fneg_fneg_swap_pred_vec(<2 x float> %x, <2 x float> %y) {
 
 define <2 x i1> @fneg_fneg_swap_pred_vec_undef(<2 x float> %x, <2 x float> %y) {
 ; CHECK-LABEL: @fneg_fneg_swap_pred_vec_undef(
-; CHECK-NEXT:    [[NEG1:%.*]] = fsub <2 x float> <float -0.000000e+00, float undef>, [[X:%.*]]
-; CHECK-NEXT:    [[NEG2:%.*]] = fsub <2 x float> <float undef, float -0.000000e+00>, [[Y:%.*]]
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp olt <2 x float> [[NEG1]], [[NEG2]]
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp ogt <2 x float> [[X:%.*]], [[Y:%.*]]
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %neg1 = fsub <2 x float> <float -0.0, float undef>, %x

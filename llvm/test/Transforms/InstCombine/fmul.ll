@@ -24,8 +24,7 @@ define <2 x float> @neg_constant_vec(<2 x float> %x) {
 
 define <2 x float> @neg_constant_vec_undef(<2 x float> %x) {
 ; CHECK-LABEL: @neg_constant_vec_undef(
-; CHECK-NEXT:    [[SUB:%.*]] = fsub <2 x float> <float undef, float -0.000000e+00>, [[X:%.*]]
-; CHECK-NEXT:    [[MUL:%.*]] = fmul ninf <2 x float> [[SUB]], <float 2.000000e+00, float 3.000000e+00>
+; CHECK-NEXT:    [[MUL:%.*]] = fmul ninf <2 x float> [[X:%.*]], <float -2.000000e+00, float -3.000000e+00>
 ; CHECK-NEXT:    ret <2 x float> [[MUL]]
 ;
   %sub = fsub <2 x float> <float undef, float -0.0>, %x
@@ -69,9 +68,7 @@ define <2 x float> @neg_neg_vec(<2 x float> %x, <2 x float> %y) {
 
 define <2 x float> @neg_neg_vec_undef(<2 x float> %x, <2 x float> %y) {
 ; CHECK-LABEL: @neg_neg_vec_undef(
-; CHECK-NEXT:    [[SUB1:%.*]] = fsub <2 x float> <float -0.000000e+00, float undef>, [[X:%.*]]
-; CHECK-NEXT:    [[SUB2:%.*]] = fsub <2 x float> <float undef, float -0.000000e+00>, [[Y:%.*]]
-; CHECK-NEXT:    [[MUL:%.*]] = fmul arcp <2 x float> [[SUB1]], [[SUB2]]
+; CHECK-NEXT:    [[MUL:%.*]] = fmul arcp <2 x float> [[X:%.*]], [[Y:%.*]]
 ; CHECK-NEXT:    ret <2 x float> [[MUL]]
 ;
   %sub1 = fsub <2 x float> <float -0.0, float undef>, %x
@@ -136,8 +133,8 @@ define <2 x float> @neg_sink_vec(<2 x float> %x, <2 x float> %y) {
 
 define <2 x float> @neg_sink_vec_undef(<2 x float> %x, <2 x float> %y) {
 ; CHECK-LABEL: @neg_sink_vec_undef(
-; CHECK-NEXT:    [[SUB:%.*]] = fsub <2 x float> <float undef, float -0.000000e+00>, [[X:%.*]]
-; CHECK-NEXT:    [[MUL:%.*]] = fmul <2 x float> [[SUB]], [[Y:%.*]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fmul <2 x float> [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[MUL:%.*]] = fsub <2 x float> <float -0.000000e+00, float -0.000000e+00>, [[TMP1]]
 ; CHECK-NEXT:    ret <2 x float> [[MUL]]
 ;
   %sub = fsub <2 x float> <float undef, float -0.0>, %x

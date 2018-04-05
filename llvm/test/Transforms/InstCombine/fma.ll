@@ -32,9 +32,7 @@ define <2 x float> @fma_fneg_x_fneg_y_vec(<2 x float> %x, <2 x float> %y, <2 x f
 
 define <2 x float> @fma_fneg_x_fneg_y_vec_undef(<2 x float> %x, <2 x float> %y, <2 x float> %z) {
 ; CHECK-LABEL: @fma_fneg_x_fneg_y_vec_undef(
-; CHECK-NEXT:    [[XN:%.*]] = fsub <2 x float> <float -0.000000e+00, float undef>, [[X:%.*]]
-; CHECK-NEXT:    [[YN:%.*]] = fsub <2 x float> <float undef, float -0.000000e+00>, [[Y:%.*]]
-; CHECK-NEXT:    [[FMA:%.*]] = call <2 x float> @llvm.fma.v2f32(<2 x float> [[XN]], <2 x float> [[YN]], <2 x float> [[Z:%.*]])
+; CHECK-NEXT:    [[FMA:%.*]] = call <2 x float> @llvm.fma.v2f32(<2 x float> [[X:%.*]], <2 x float> [[Y:%.*]], <2 x float> [[Z:%.*]])
 ; CHECK-NEXT:    ret <2 x float> [[FMA]]
 ;
   %xn = fsub <2 x float> <float -0.0, float undef>, %x
