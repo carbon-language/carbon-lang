@@ -49,7 +49,7 @@ define <2 x float> @constant_op1_vec(<2 x float> %x, <2 x float> %y) {
 
 define <2 x float> @constant_op1_vec_undef(<2 x float> %x, <2 x float> %y) {
 ; CHECK-LABEL: @constant_op1_vec_undef(
-; CHECK-NEXT:    [[R:%.*]] = fsub <2 x float> [[X:%.*]], <float undef, float -4.200000e+01>
+; CHECK-NEXT:    [[R:%.*]] = fadd <2 x float> [[X:%.*]], <float 0x7FF8000000000000, float 4.200000e+01>
 ; CHECK-NEXT:    ret <2 x float> [[R]]
 ;
   %r = fsub <2 x float> %x, <float undef, float -42.0>
@@ -80,8 +80,7 @@ define <2 x float> @neg_op1_vec(<2 x float> %x, <2 x float> %y) {
 
 define <2 x float> @neg_op1_vec_undef(<2 x float> %x, <2 x float> %y) {
 ; CHECK-LABEL: @neg_op1_vec_undef(
-; CHECK-NEXT:    [[NEGY:%.*]] = fsub <2 x float> <float -0.000000e+00, float undef>, [[Y:%.*]]
-; CHECK-NEXT:    [[R:%.*]] = fsub <2 x float> [[X:%.*]], [[NEGY]]
+; CHECK-NEXT:    [[R:%.*]] = fadd <2 x float> [[X:%.*]], [[Y:%.*]]
 ; CHECK-NEXT:    ret <2 x float> [[R]]
 ;
   %negy = fsub <2 x float> <float -0.0, float undef>, %y
