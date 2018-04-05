@@ -47,9 +47,9 @@ static const std::string Indent16 = "                "; // 16 spaces
 static void writeHeader(raw_ostream &OS, uint64_t VMA, uint64_t LMA,
                         uint64_t Size, uint64_t Align) {
   if (Config->Is64)
-    OS << format("%16llx %16llx %9llx %5lld ", VMA, LMA, Size, Align);
+    OS << format("%16llx %16llx %8llx %5lld ", VMA, LMA, Size, Align);
   else
-    OS << format("%8llx %8llx %9llx %5lld ", VMA, LMA, Size, Align);
+    OS << format("%8llx %8llx %8llx %5lld ", VMA, LMA, Size, Align);
 }
 
 // Returns a list of all symbols that we want to print out.
@@ -174,8 +174,8 @@ void elf::writeMapFile() {
 
   // Print out the header line.
   int W = Config->Is64 ? 16 : 8;
-  OS << right_justify("VMA", W) << ' ' << right_justify("LMA", W) << ' '
-     << right_justify("Size", 9) << " Align Out     In      Symbol\n";
+  OS << right_justify("VMA", W) << ' ' << right_justify("LMA", W)
+     << "     Size Align Out     In      Symbol\n";
 
   for (BaseCommand *Base : Script->SectionCommands) {
     if (auto *Cmd = dyn_cast<SymbolAssignment>(Base)) {
