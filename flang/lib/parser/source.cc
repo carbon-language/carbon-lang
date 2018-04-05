@@ -19,7 +19,7 @@ namespace Fortran {
 namespace parser {
 
 static constexpr bool useMMap{true};
-static constexpr int minMapFileBytes{1048576};
+static constexpr int minMapFileBytes{1};  // i.e., no minimum requirement
 static constexpr int maxMapOpenFileDescriptors{100};
 static int openFileDescriptors{0};
 
@@ -62,6 +62,27 @@ std::string LocateSourceFile(
     }
   }
   return name;
+}
+
+static std::size_t RemoveCarriageReturns(char *buffer, std::size_t bytes) {
+  std::size_t wrote{0};
+  char *p{buffer};
+  while (bytes > 0) {
+    void *vp{static_cast<void *>(p)};
+    void *crvp{std::memchr(vp, '\r', bytes)};
+    char *crcp{static_cast<char *>(crvp)};
+    if (crcp == nullptr) {
+      std::memcpy(buffer + wrote, p, bytes);
+      wrote += bytes;
+      break;
+    }
+    std::size_t chunk = crcp - p;
+    std::memcpy(buffer + wrote, p, chunk);
+    wrote += chunk;
+    p += chunk + 1;
+    bytes -= chunk + 1;
+  }
+  return wrote;
 }
 
 bool SourceFile::Open(std::string path, std::stringstream *error) {
@@ -114,25 +135,18 @@ bool SourceFile::Open(std::string path, std::stringstream *error) {
         vp = mmap(vp, bytes_, PROT_READ | PROT_WRITE, MAP_PRIVATE,
                   fileDescriptor_, 0);
         if (vp != MAP_FAILED) {
-          char *to{static_cast<char *>(vp)};
-          content_ = to;
-          for (std::size_t j{0}; j < bytes_; ++j) {
-            char ch{content_[j]};
-            if (ch != '\r') {
-              *to++ = ch;
-            }
-          }
-          if (to > content_) {
-            bytes_ = to - content_;
-            if (content_[bytes_ - 1] == '\n' ||
+          auto mutableContent = static_cast<char *>(vp);
+          bytes_ = RemoveCarriageReturns(mutableContent, bytes_);
+          if (bytes_ > 0) {
+            if (mutableContent[bytes_ - 1] == '\n' ||
                 (bytes_ & 0xfff) != 0 /* don't cross into next page */) {
-              if (content_[bytes_ - 1] != '\n') {
+              if (mutableContent[bytes_ - 1] != '\n') {
                 // Append a final newline.
-                *to++ = '\n';
-                ++bytes_;
+                mutableContent[bytes_++] = '\n';
               }
               bool isNowReadOnly{mprotect(vp, bytes_, PROT_READ) == 0};
               CHECK(isNowReadOnly);
+              content_ = mutableContent;
               isMemoryMapped_ = true;
               lineStart_ = FindLineStarts(content_, bytes_);
               return true;

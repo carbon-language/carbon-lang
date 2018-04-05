@@ -66,14 +66,14 @@ public:
       return *this;
     }
     const char &operator*() const { return block_->data[offset_]; }
-    iterator &operator++() {
+    iterator &operator++(/*++prefix*/) {
       if (++offset_ == Block::capacity) {
         ++block_;
         offset_ = 0;
       }
       return *this;
     }
-    iterator operator++(int) {
+    iterator operator++(int /*postfix++*/) {
       iterator result{*this};
       ++*this;
       return result;
