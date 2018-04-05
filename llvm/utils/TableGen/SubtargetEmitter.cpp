@@ -610,7 +610,7 @@ void SubtargetEmitter::EmitProcessorResourceSubUnits(
 
 static void EmitRetireControlUnitInfo(const CodeGenProcModel &ProcModel,
                                       raw_ostream &OS) {
-  long ReorderBufferSize = 0, MaxRetirePerCycle = 0;
+  int64_t ReorderBufferSize = 0, MaxRetirePerCycle = 0;
   if (Record *RCU = ProcModel.RetireControlUnit) {
     ReorderBufferSize =
         std::max(ReorderBufferSize, RCU->getValueAsInt("ReorderBufferSize"));
