@@ -519,6 +519,7 @@ def SKLWriteResGroup7 : SchedWriteRes<[SKLPort06]> {
   let NumMicroOps = 1;
   let ResourceCycles = [1];
 }
+def: InstRW<[SKLWriteResGroup7], (instrs CDQ, CQO)>;
 def: InstRW<[SKLWriteResGroup7], (instregex "ADC(16|32|64)ri",
                                             "ADC(16|32|64)i",
                                             "ADC(8|16|32|64)rr",
@@ -532,10 +533,8 @@ def: InstRW<[SKLWriteResGroup7], (instregex "ADC(16|32|64)ri",
                                             "BTR(16|32|64)rr",
                                             "BTS(16|32|64)ri8",
                                             "BTS(16|32|64)rr",
-                                            "CDQ",
                                             "CLAC",
                                             "CMOV(AE|B|E|G|GE|L|LE|NE|NO|NP|NS|O|P|S)(16|32|64)rr",
-                                            "CQO",
                                             "J(A|AE|B|BE|E|G|GE|L|LE|NE|NO|NP|NS|O|P|S)_1",
                                             "J(A|AE|B|BE|E|G|GE|L|LE|NE|NO|NP|NS|O|P|S)_4",
                                             "JMP_1",
@@ -609,14 +608,13 @@ def SKLWriteResGroup10 : SchedWriteRes<[SKLPort0156]> {
   let NumMicroOps = 1;
   let ResourceCycles = [1];
 }
-def: InstRW<[SKLWriteResGroup10], (instrs CWDE)>;
+def: InstRW<[SKLWriteResGroup10], (instrs CBW, CWDE, CDQE)>;
 def: InstRW<[SKLWriteResGroup10], (instregex "ADD(8|16|32|64)ri",
                                              "ADD(8|16|32|64)rr",
                                              "ADD(8|16|32|64)i",
                                              "AND(8|16|32|64)ri",
                                              "AND(8|16|32|64)rr",
                                              "AND(8|16|32|64)i",
-                                             "CBW",
                                              "CLC",
                                              "CMC",
                                              "CMP(8|16|32|64)ri",
