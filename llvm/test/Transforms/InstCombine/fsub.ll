@@ -3,14 +3,28 @@
 
 ; PR4374
 
-define float @test1(float %a, float %b) {
+define float @test1(float %x, float %y) {
 ; CHECK-LABEL: @test1(
-; CHECK-NEXT:    [[T1:%.*]] = fsub float [[A:%.*]], [[B:%.*]]
+; CHECK-NEXT:    [[T1:%.*]] = fsub float [[X:%.*]], [[Y:%.*]]
 ; CHECK-NEXT:    [[T2:%.*]] = fsub float -0.000000e+00, [[T1]]
 ; CHECK-NEXT:    ret float [[T2]]
 ;
-  %t1 = fsub float %a, %b
+  %t1 = fsub float %x, %y
   %t2 = fsub float -0.0, %t1
+  ret float %t2
+}
+
+; FIXME: Can't do anything with the test above because -0.0 - 0.0 = -0.0, but if we have nsz:
+; -(X - Y) --> Y - X
+
+define float @neg_sub(float %x, float %y) {
+; CHECK-LABEL: @neg_sub(
+; CHECK-NEXT:    [[T1:%.*]] = fsub float [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[T2:%.*]] = fsub nsz float -0.000000e+00, [[T1]]
+; CHECK-NEXT:    ret float [[T2]]
+;
+  %t1 = fsub float %x, %y
+  %t2 = fsub nsz float -0.0, %t1
   ret float %t2
 }
 
