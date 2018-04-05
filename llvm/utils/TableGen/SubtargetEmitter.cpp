@@ -614,13 +614,13 @@ static void EmitRegisterFileInfo(const CodeGenProcModel &ProcModel,
   if (NumRegisterFiles)
     OS << ProcModel.ModelName << "RegisterFiles,\n  " << (1 + NumRegisterFiles);
   else
-    OS << "nullptr,\n  0,\n  ";
+    OS << "nullptr,\n  0";
 
   OS << ", // Number of register files.\n  ";
   if (NumCostEntries)
     OS << ProcModel.ModelName << "RegisterCosts,\n  ";
   else
-    OS << "nullptr, \n";
+    OS << "nullptr,\n  ";
   OS << NumCostEntries << " // Number of register cost entries.\n";
 }
 
