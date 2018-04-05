@@ -1071,7 +1071,10 @@ bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To,
     ToData.Polymorphic = FromData.Polymorphic;
     ToData.Abstract = FromData.Abstract;
     ToData.IsStandardLayout = FromData.IsStandardLayout;
-    ToData.HasNoNonEmptyBases = FromData.HasNoNonEmptyBases;
+    ToData.IsCXX11StandardLayout = FromData.IsCXX11StandardLayout;
+    ToData.HasBasesWithFields = FromData.HasBasesWithFields;
+    ToData.HasBasesWithNonStaticDataMembers =
+        FromData.HasBasesWithNonStaticDataMembers;
     ToData.HasPrivateFields = FromData.HasPrivateFields;
     ToData.HasProtectedFields = FromData.HasProtectedFields;
     ToData.HasPublicFields = FromData.HasPublicFields;
