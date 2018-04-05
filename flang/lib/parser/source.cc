@@ -18,6 +18,11 @@
 namespace Fortran {
 namespace parser {
 
+static constexpr bool useMMap{true};
+static constexpr int minMapFileBytes{1048576};
+static constexpr int maxMapOpenFileDescriptors{100};
+static int openFileDescriptors{0};
+
 SourceFile::~SourceFile() { Close(); }
 
 static std::vector<std::size_t> FindLineStarts(
@@ -74,6 +79,7 @@ bool SourceFile::Open(std::string path, std::stringstream *error) {
       *error << "could not open " << error_path << ": " << std::strerror(errno);
       return false;
     }
+    ++openFileDescriptors;
   }
   struct stat statbuf;
   if (fstat(fileDescriptor_, &statbuf) != 0) {
@@ -87,10 +93,13 @@ bool SourceFile::Open(std::string path, std::stringstream *error) {
     return false;
   }
 
-  // Try to map the the source file into the process' address space.
-  if (S_ISREG(statbuf.st_mode)) {
+  // Try to map a large source file into the process' address space.
+  // Don't bother with small ones.  This also helps keep the number
+  // of open file descriptors from getting out of hand.
+  if (useMMap && S_ISREG(statbuf.st_mode)) {
     bytes_ = static_cast<std::size_t>(statbuf.st_size);
-    if (bytes_ > 0) {
+    if (bytes_ >= minMapFileBytes &&
+        openFileDescriptors <= maxMapOpenFileDescriptors) {
       void *vp = mmap(0, bytes_, PROT_READ, MAP_SHARED, fileDescriptor_, 0);
       if (vp != MAP_FAILED) {
         content_ = static_cast<const char *>(const_cast<const void *>(vp));
@@ -100,14 +109,42 @@ bool SourceFile::Open(std::string path, std::stringstream *error) {
           lineStart_ = FindLineStarts(content_, bytes_);
           return true;
         }
-        // The file needs normalizing.
+        // The file needs to have its line endings normalized to simple
+        // newlines.  Remap it for a private rewrite in place.
+        vp = mmap(vp, bytes_, PROT_READ | PROT_WRITE, MAP_PRIVATE,
+                  fileDescriptor_, 0);
+        if (vp != MAP_FAILED) {
+          char *to{static_cast<char *>(vp)};
+          content_ = to;
+          for (std::size_t j{0}; j < bytes_; ++j) {
+            char ch{content_[j]};
+            if (ch != '\r') {
+              *to++ = ch;
+            }
+          }
+          if (to > content_) {
+            bytes_ = to - content_;
+            if (content_[bytes_ - 1] == '\n' ||
+                (bytes_ & 0xfff) != 0 /* don't cross into next page */) {
+              if (content_[bytes_ - 1] != '\n') {
+                // Append a final newline.
+                *to++ = '\n';
+                ++bytes_;
+              }
+              bool isNowReadOnly{mprotect(vp, bytes_, PROT_READ) == 0};
+              CHECK(isNowReadOnly);
+              isMemoryMapped_ = true;
+              lineStart_ = FindLineStarts(content_, bytes_);
+              return true;
+            }
+          }
+        }
         munmap(vp, bytes_);
         content_ = nullptr;
       }
     }
   }
 
-  // Couldn't map the file, or its content needs line ending normalization.
   // Read it into an expandable buffer, then marshal its content into a single
   // contiguous block.
   CharBuffer buffer;
@@ -126,6 +163,7 @@ bool SourceFile::Open(std::string path, std::stringstream *error) {
     buffer.Claim(got);
   }
   close(fileDescriptor_);
+  --openFileDescriptors;
   fileDescriptor_ = -1;
   bytes_ = buffer.size();
   if (bytes_ == 0) {
@@ -151,7 +189,7 @@ bool SourceFile::Open(std::string path, std::stringstream *error) {
 }
 
 void SourceFile::Close() {
-  if (isMemoryMapped_) {
+  if (useMMap && isMemoryMapped_) {
     munmap(reinterpret_cast<void *>(const_cast<char *>(content_)), bytes_);
     isMemoryMapped_ = false;
   } else if (content_ != nullptr) {
@@ -161,6 +199,7 @@ void SourceFile::Close() {
   bytes_ = 0;
   if (fileDescriptor_ >= 0) {
     close(fileDescriptor_);
+    --openFileDescriptors;
     fileDescriptor_ = -1;
   }
   path_.clear();
