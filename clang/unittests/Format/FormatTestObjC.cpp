@@ -523,6 +523,23 @@ TEST_F(FormatTestObjC, FormatObjCMethodDeclarations) {
   verifyFormat("- (void)drawRectOn:(id)surface\n"
                "            ofSize:(size_t)height\n"
                "                  :(size_t)width;");
+  Style.ColumnLimit = 40;
+  // Make sure selectors with 0, 1, or more arguments are not indented
+  // when IndentWrappedFunctionNames is false.
+  Style.IndentWrappedFunctionNames = false;
+  verifyFormat("- (aaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
+               "aaaaaaaaaaaaaaaaaaaaaaaaaaaa;\n");
+  verifyFormat("- (aaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
+               "aaaaaaaaaaaaaaaaaaaaaaaaaaaa:(int)a;\n");
+  verifyFormat("- (aaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
+               "aaaaaaaaaaaaaaaaaaaaaaaaaaaa:(int)a\n"
+               "aaaaaaaaaaaaaaaaaaaaaaaaaaaa:(int)a;\n");
+  verifyFormat("- (aaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
+               " aaaaaaaaaaaaaaaaaaaaaaaaaaa:(int)a\n"
+               "aaaaaaaaaaaaaaaaaaaaaaaaaaaa:(int)a;\n");
+  verifyFormat("- (aaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
+               "aaaaaaaaaaaaaaaaaaaaaaaaaaaa:(int)a\n"
+               " aaaaaaaaaaaaaaaaaaaaaaaaaaa:(int)a;\n");
 
   // Continuation indent width should win over aligning colons if the function
   // name is long.
