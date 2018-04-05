@@ -608,6 +608,20 @@ void SubtargetEmitter::EmitProcessorResourceSubUnits(
   OS << "};\n";
 }
 
+static void EmitRetireControlUnitInfo(const CodeGenProcModel &ProcModel,
+                                      raw_ostream &OS) {
+  long ReorderBufferSize = 0, MaxRetirePerCycle = 0;
+  if (Record *RCU = ProcModel.RetireControlUnit) {
+    ReorderBufferSize =
+        std::max(ReorderBufferSize, RCU->getValueAsInt("ReorderBufferSize"));
+    MaxRetirePerCycle =
+        std::max(MaxRetirePerCycle, RCU->getValueAsInt("MaxRetirePerCycle"));
+  }
+
+  OS << ReorderBufferSize << ", // ReorderBufferSize\n  ";
+  OS << MaxRetirePerCycle << ", // MaxRetirePerCycle\n  ";
+}
+
 static void EmitRegisterFileInfo(const CodeGenProcModel &ProcModel,
                                  unsigned NumRegisterFiles,
                                  unsigned NumCostEntries, raw_ostream &OS) {
@@ -682,6 +696,9 @@ void SubtargetEmitter::EmitExtraProcessorInfo(const CodeGenProcModel &ProcModel,
   // Now generate a table for the extra processor info.
   OS << "\nstatic const llvm::MCExtraProcessorInfo " << ProcModel.ModelName
      << "ExtraInfo = {\n  ";
+
+  // Add information related to the retire control unit.
+  EmitRetireControlUnitInfo(ProcModel, OS);
 
   // Add information related to the register files (i.e. where to find register
   // file descriptors and register costs).
