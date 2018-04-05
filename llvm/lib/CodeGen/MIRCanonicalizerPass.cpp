@@ -484,7 +484,7 @@ GetVRegRenameMap(const std::vector<TypedVReg> &VRegs,
       // (especially when comparing SelectionDAG to GlobalISel generated MIR)
       // that in the other file we are just getting an incoming vreg that comes
       // from a copy from a frame index. So it's safe to skip by one.
-      unsigned LastRenameReg = NVC.incrementVirtualVReg();
+      unsigned LastRenameReg = NVC.incrementVirtualVReg(); (void)LastRenameReg;
       DEBUG(dbgs() << "Skipping rename for FI " << LastRenameReg << "\n";);
       continue;
     } else if (vreg.isCandidate()) {
@@ -500,7 +500,7 @@ GetVRegRenameMap(const std::vector<TypedVReg> &VRegs,
       FirstCandidate = false;
       continue;
     } else if (!TargetRegisterInfo::isVirtualRegister(vreg.getReg())) {
-      unsigned LastRenameReg = NVC.incrementVirtualVReg();
+      unsigned LastRenameReg = NVC.incrementVirtualVReg(); (void)LastRenameReg;
       DEBUG({
         dbgs() << "Skipping rename for Phys Reg " << LastRenameReg << "\n";
       });
