@@ -189,6 +189,7 @@ static bool rescheduleCanonically(unsigned &PseudoIdempotentInstCount,
     Instructions.push_back(&MI);
   }
 
+  std::map<MachineInstr *, std::vector<MachineInstr *>> MultiUsers;
   std::vector<MachineInstr *> PseudoIdempotentInstructions;
   std::vector<unsigned> PhysRegDefs;
   for (auto *II : Instructions) {
@@ -297,8 +298,24 @@ static bool rescheduleCanonically(unsigned &PseudoIdempotentInstCount,
       UseI->dump();
     });
 
+    MultiUsers[UseToBringDefCloserTo].push_back(Def);
     Changed = true;
     MBB->splice(UseI, MBB, DefI);
+  }
+
+  // Sort the defs for users of multiple defs lexographically.
+  for (const auto &E : MultiUsers) {
+
+    auto UseI =
+        std::find_if(MBB->instr_begin(), MBB->instr_end(),
+                     [&](MachineInstr &MI) -> bool { return &MI == E.first; });
+
+    if (UseI == MBB->instr_end())
+      continue;
+
+    DEBUG(dbgs() << "Rescheduling Multi-Use Instructions Lexographically.";);
+    Changed |= rescheduleLexographically(
+        E.second, MBB, [&]() -> MachineBasicBlock::iterator { return UseI; });
   }
 
   PseudoIdempotentInstCount = PseudoIdempotentInstructions.size();
