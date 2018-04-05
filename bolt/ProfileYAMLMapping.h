@@ -25,7 +25,7 @@ namespace bolt {
 struct CallSiteInfo {
   llvm::yaml::Hex32 Offset{0};
   uint32_t DestId{0};
-  uint32_t EntryDiscriminator{0}; // multiple entry discriminator
+  uint32_t EntryDiscriminator{0}; /// multiple entry discriminator
   uint64_t Count{0};
   uint64_t Mispreds{0};
 
@@ -34,8 +34,11 @@ struct CallSiteInfo {
            DestId == Other.DestId &&
            EntryDiscriminator == Other.EntryDiscriminator;
   }
+  bool operator!=(const CallSiteInfo &Other) const {
+    return !(*this == Other);
+  }
 };
-}
+} // end namespace bolt
 
 template <> struct MappingTraits<bolt::CallSiteInfo> {
   static void mapping(IO &YamlIO, bolt::CallSiteInfo &CSI) {
@@ -58,8 +61,11 @@ struct SuccessorInfo {
   bool operator==(const SuccessorInfo &Other) const {
     return Index == Other.Index;
   }
+  bool operator!=(const SuccessorInfo &Other) const {
+    return !(*this == Other);
+  }
 };
-}
+} // end namespace bolt
 
 template <> struct MappingTraits<bolt::SuccessorInfo> {
   static void mapping(IO &YamlIO, bolt::SuccessorInfo &SI) {
@@ -92,8 +98,11 @@ struct BinaryBasicBlockProfile {
   bool operator==(const BinaryBasicBlockProfile &Other) const {
     return Index == Other.Index;
   }
+  bool operator!=(const BinaryBasicBlockProfile &Other) const {
+    return !(*this == Other);
+  }
 };
-} // namespace bolt
+} // end namespace bolt
 
 template <> struct MappingTraits<bolt::BinaryBasicBlockProfile> {
   static void mapping(IO &YamlIO, bolt::BinaryBasicBlockProfile &BBP) {
@@ -118,10 +127,10 @@ namespace yaml {
 namespace bolt {
 struct BinaryFunctionProfile {
   std::string Name;
-  uint32_t NumBasicBlocks;
-  uint32_t Id;
-  llvm::yaml::Hex64 Hash;
-  uint64_t ExecCount;
+  uint32_t NumBasicBlocks{0};
+  uint32_t Id{0};
+  llvm::yaml::Hex64 Hash{0};
+  uint64_t ExecCount{0};
   std::vector<BinaryBasicBlockProfile> Blocks;
   bool Used{false};
 };
