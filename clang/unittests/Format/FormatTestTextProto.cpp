@@ -419,8 +419,10 @@ TEST_F(FormatTestTextProto, FormatsExtensions) {
       "}");
 }
 
-TEST_F(FormatTestTextProto, NoSpaceAfterPercent) {
+TEST_F(FormatTestTextProto, SpacesAroundPercents) {
   verifyFormat("key: %d");
+  verifyFormat("key: 0x%04x");
+  verifyFormat("key: \"%d %d\"");
 }
 
 TEST_F(FormatTestTextProto, FormatsRepeatedListInitializers) {

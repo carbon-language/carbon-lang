@@ -442,9 +442,11 @@ TEST_F(FormatTestProto, FormatsOptionsExtensions) {
                "};");
 }
 
-TEST_F(FormatTestProto, NoSpaceAfterPercent) {
+TEST_F(FormatTestProto, SpacesAroundPercents) {
   verifyFormat("option (MyProto.options) = {\n"
                "  key: %lld\n"
+               "  key: 0x%04x\n"
+               "  key: \"%d %d\"\n"
                "};");
 }
 
