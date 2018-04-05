@@ -286,8 +286,186 @@ define <3 x i32> @f_var1_vec_undef(<3 x i32>, <3 x i32>) {
 }
 
 ; ============================================================================ ;
+; Shift can be a variable, too.
+; ============================================================================ ;
+
+define i32 @f_var2(i32, i32) {
+; CHECK-LABEL: @f_var2(
+; CHECK-NEXT:    [[TMP3:%.*]] = and i32 [[TMP0:%.*]], 1
+; CHECK-NEXT:    [[TMP4:%.*]] = icmp eq i32 [[TMP3]], 0
+; CHECK-NEXT:    [[TMP5:%.*]] = lshr i32 [[TMP0]], [[TMP1:%.*]]
+; CHECK-NEXT:    [[TMP6:%.*]] = and i32 [[TMP5]], 1
+; CHECK-NEXT:    [[TMP7:%.*]] = select i1 [[TMP4]], i32 [[TMP6]], i32 1
+; CHECK-NEXT:    ret i32 [[TMP7]]
+;
+  %3 = and i32 %0, 1
+  %4 = icmp eq i32 %3, 0
+  %5 = lshr i32 %0, %1
+  %6 = and i32 %5, 1
+  %7 = select i1 %4, i32 %6, i32 1
+  ret i32 %7
+}
+
+define <2 x i32> @f_var2_splatvec(<2 x i32>, <2 x i32>) {
+; CHECK-LABEL: @f_var2_splatvec(
+; CHECK-NEXT:    [[TMP3:%.*]] = and <2 x i32> [[TMP0:%.*]], <i32 1, i32 1>
+; CHECK-NEXT:    [[TMP4:%.*]] = icmp eq <2 x i32> [[TMP3]], zeroinitializer
+; CHECK-NEXT:    [[TMP5:%.*]] = lshr <2 x i32> [[TMP0]], [[TMP1:%.*]]
+; CHECK-NEXT:    [[TMP6:%.*]] = and <2 x i32> [[TMP5]], <i32 1, i32 1>
+; CHECK-NEXT:    [[TMP7:%.*]] = select <2 x i1> [[TMP4]], <2 x i32> [[TMP6]], <2 x i32> <i32 1, i32 1>
+; CHECK-NEXT:    ret <2 x i32> [[TMP7]]
+;
+  %3 = and <2 x i32> %0, <i32 1, i32 1>
+  %4 = icmp eq <2 x i32> %3, <i32 0, i32 0>
+  %5 = lshr <2 x i32> %0, %1
+  %6 = and <2 x i32> %5, <i32 1, i32 1>
+  %7 = select <2 x i1> %4, <2 x i32> %6, <2 x i32> <i32 1, i32 1>
+  ret <2 x i32> %7
+}
+
+define <2 x i32> @f_var2_vec(<2 x i32>, <2 x i32>) {
+; CHECK-LABEL: @f_var2_vec(
+; CHECK-NEXT:    [[TMP3:%.*]] = and <2 x i32> [[TMP0:%.*]], <i32 2, i32 1>
+; CHECK-NEXT:    [[TMP4:%.*]] = icmp eq <2 x i32> [[TMP3]], zeroinitializer
+; CHECK-NEXT:    [[TMP5:%.*]] = lshr <2 x i32> [[TMP0]], [[TMP1:%.*]]
+; CHECK-NEXT:    [[TMP6:%.*]] = and <2 x i32> [[TMP5]], <i32 1, i32 1>
+; CHECK-NEXT:    [[TMP7:%.*]] = select <2 x i1> [[TMP4]], <2 x i32> [[TMP6]], <2 x i32> <i32 1, i32 1>
+; CHECK-NEXT:    ret <2 x i32> [[TMP7]]
+;
+  %3 = and <2 x i32> %0, <i32 2, i32 1> ; mask is not splat
+  %4 = icmp eq <2 x i32> %3, <i32 0, i32 0>
+  %5 = lshr <2 x i32> %0, %1
+  %6 = and <2 x i32> %5, <i32 1, i32 1>
+  %7 = select <2 x i1> %4, <2 x i32> %6, <2 x i32> <i32 1, i32 1>
+  ret <2 x i32> %7
+}
+
+define <3 x i32> @f_var2_vec_undef(<3 x i32>, <3 x i32>) {
+; CHECK-LABEL: @f_var2_vec_undef(
+; CHECK-NEXT:    [[TMP3:%.*]] = and <3 x i32> [[TMP0:%.*]], <i32 1, i32 undef, i32 1>
+; CHECK-NEXT:    [[TMP4:%.*]] = icmp eq <3 x i32> [[TMP3]], <i32 0, i32 undef, i32 0>
+; CHECK-NEXT:    [[TMP5:%.*]] = lshr <3 x i32> [[TMP0]], [[TMP1:%.*]]
+; CHECK-NEXT:    [[TMP6:%.*]] = and <3 x i32> [[TMP5]], <i32 1, i32 undef, i32 1>
+; CHECK-NEXT:    [[TMP7:%.*]] = select <3 x i1> [[TMP4]], <3 x i32> [[TMP6]], <3 x i32> <i32 1, i32 undef, i32 1>
+; CHECK-NEXT:    ret <3 x i32> [[TMP7]]
+;
+  %3 = and <3 x i32> %0, <i32 1, i32 undef, i32 1>
+  %4 = icmp eq <3 x i32> %3, <i32 0, i32 undef, i32 0>
+  %5 = lshr <3 x i32> %0, %1
+  %6 = and <3 x i32> %5, <i32 1, i32 undef, i32 1>
+  %7 = select <3 x i1> %4, <3 x i32> %6, <3 x i32> <i32 1, i32 undef, i32 1>
+  ret <3 x i32> %7
+}
+
+; ============================================================================ ;
+; The worst case: both Mask and Shift are variables
+; ============================================================================ ;
+
+define i32 @f_var3(i32, i32, i32) {
+; CHECK-LABEL: @f_var3(
+; CHECK-NEXT:    [[TMP4:%.*]] = and i32 [[TMP0:%.*]], [[TMP1:%.*]]
+; CHECK-NEXT:    [[TMP5:%.*]] = icmp eq i32 [[TMP4]], 0
+; CHECK-NEXT:    [[TMP6:%.*]] = lshr i32 [[TMP0]], [[TMP2:%.*]]
+; CHECK-NEXT:    [[TMP7:%.*]] = and i32 [[TMP6]], 1
+; CHECK-NEXT:    [[TMP8:%.*]] = select i1 [[TMP5]], i32 [[TMP7]], i32 1
+; CHECK-NEXT:    ret i32 [[TMP8]]
+;
+  %4 = and i32 %0, %1
+  %5 = icmp eq i32 %4, 0
+  %6 = lshr i32 %0, %2
+  %7 = and i32 %6, 1
+  %8 = select i1 %5, i32 %7, i32 1
+  ret i32 %8
+}
+
+define <2 x i32> @f_var3_splatvec(<2 x i32>, <2 x i32>, <2 x i32>) {
+; CHECK-LABEL: @f_var3_splatvec(
+; CHECK-NEXT:    [[TMP4:%.*]] = and <2 x i32> [[TMP0:%.*]], [[TMP1:%.*]]
+; CHECK-NEXT:    [[TMP5:%.*]] = icmp eq <2 x i32> [[TMP4]], zeroinitializer
+; CHECK-NEXT:    [[TMP6:%.*]] = lshr <2 x i32> [[TMP0]], [[TMP2:%.*]]
+; CHECK-NEXT:    [[TMP7:%.*]] = and <2 x i32> [[TMP6]], <i32 1, i32 1>
+; CHECK-NEXT:    [[TMP8:%.*]] = select <2 x i1> [[TMP5]], <2 x i32> [[TMP7]], <2 x i32> <i32 1, i32 1>
+; CHECK-NEXT:    ret <2 x i32> [[TMP8]]
+;
+  %4 = and <2 x i32> %0, %1
+  %5 = icmp eq <2 x i32> %4, <i32 0, i32 0>
+  %6 = lshr <2 x i32> %0, %2
+  %7 = and <2 x i32> %6, <i32 1, i32 1>
+  %8 = select <2 x i1> %5, <2 x i32> %7, <2 x i32> <i32 1, i32 1>
+  ret <2 x i32> %8
+}
+
+define <3 x i32> @f_var3_vec_undef(<3 x i32>, <3 x i32>, <3 x i32>) {
+; CHECK-LABEL: @f_var3_vec_undef(
+; CHECK-NEXT:    [[TMP4:%.*]] = and <3 x i32> [[TMP0:%.*]], [[TMP1:%.*]]
+; CHECK-NEXT:    [[TMP5:%.*]] = icmp eq <3 x i32> [[TMP4]], <i32 0, i32 undef, i32 0>
+; CHECK-NEXT:    [[TMP6:%.*]] = lshr <3 x i32> [[TMP0]], [[TMP2:%.*]]
+; CHECK-NEXT:    [[TMP7:%.*]] = and <3 x i32> [[TMP6]], <i32 1, i32 undef, i32 1>
+; CHECK-NEXT:    [[TMP8:%.*]] = select <3 x i1> [[TMP5]], <3 x i32> [[TMP7]], <3 x i32> <i32 1, i32 undef, i32 1>
+; CHECK-NEXT:    ret <3 x i32> [[TMP8]]
+;
+  %4 = and <3 x i32> %0, %1
+  %5 = icmp eq <3 x i32> %4, <i32 0, i32 undef, i32 0>
+  %6 = lshr <3 x i32> %0, %2
+  %7 = and <3 x i32> %6, <i32 1, i32 undef, i32 1>
+  %8 = select <3 x i1> %5, <3 x i32> %7, <3 x i32> <i32 1, i32 undef, i32 1>
+  ret <3 x i32> %8
+}
+
+; ============================================================================ ;
 ; Negative tests. Should not be folded.
 ; ============================================================================ ;
+
+; One use only.
+
+declare void @use32(i32)
+declare void @use1(i1)
+
+define i32 @n_var0_oneuse(i32, i32, i32) {
+; CHECK-LABEL: @n_var0_oneuse(
+; CHECK-NEXT:    [[TMP4:%.*]] = and i32 [[TMP0:%.*]], [[TMP1:%.*]]
+; CHECK-NEXT:    [[TMP5:%.*]] = icmp eq i32 [[TMP4]], 0
+; CHECK-NEXT:    [[TMP6:%.*]] = lshr i32 [[TMP0]], [[TMP2:%.*]]
+; CHECK-NEXT:    [[TMP7:%.*]] = and i32 [[TMP6]], 1
+; CHECK-NEXT:    [[TMP8:%.*]] = select i1 [[TMP5]], i32 [[TMP7]], i32 1
+; CHECK-NEXT:    call void @use32(i32 [[TMP4]])
+; CHECK-NEXT:    call void @use1(i1 [[TMP5]])
+; CHECK-NEXT:    call void @use32(i32 [[TMP6]])
+; CHECK-NEXT:    call void @use32(i32 [[TMP7]])
+; CHECK-NEXT:    ret i32 [[TMP8]]
+;
+  %4 = and i32 %0, %1
+  %5 = icmp eq i32 %4, 0
+  %6 = lshr i32 %0, %2
+  %7 = and i32 %6, 1
+  %8 = select i1 %5, i32 %7, i32 1
+  call void @use32(i32 %4)
+  call void @use1(i1 %5)
+  call void @use32(i32 %6)
+  call void @use32(i32 %7)
+  ret i32 %8
+}
+
+define i32 @n_var1_oneuse(i32, i32) {
+; CHECK-LABEL: @n_var1_oneuse(
+; CHECK-NEXT:    [[TMP3:%.*]] = and i32 [[TMP0:%.*]], [[TMP1:%.*]]
+; CHECK-NEXT:    [[TMP4:%.*]] = icmp eq i32 [[TMP3]], 0
+; CHECK-NEXT:    [[TMP5:%.*]] = and i32 [[TMP0]], 1
+; CHECK-NEXT:    [[TMP6:%.*]] = select i1 [[TMP4]], i32 [[TMP5]], i32 1
+; CHECK-NEXT:    call void @use32(i32 [[TMP3]])
+; CHECK-NEXT:    call void @use1(i1 [[TMP4]])
+; CHECK-NEXT:    call void @use32(i32 [[TMP5]])
+; CHECK-NEXT:    ret i32 [[TMP6]]
+;
+  %3 = and i32 %0, %1
+  %4 = icmp eq i32 %3, 0
+  %5 = and i32 %0, 1
+  %6 = select i1 %4, i32 %5, i32 1
+  call void @use32(i32 %3)
+  call void @use1(i1 %4)
+  call void @use32(i32 %5)
+  ret i32 %6
+}
 
 ; Different variables are used
 
@@ -442,23 +620,4 @@ define i32 @n8(i32) {
   %5 = and i32 %4, 1
   %6 = select i1 %3, i32 %5, i32 1
   ret i32 %6
-}
-
-; Shift not by a constant
-
-define i32 @n9(i32, i32) {
-; CHECK-LABEL: @n9(
-; CHECK-NEXT:    [[TMP3:%.*]] = and i32 [[TMP0:%.*]], 1
-; CHECK-NEXT:    [[TMP4:%.*]] = icmp eq i32 [[TMP3]], 0
-; CHECK-NEXT:    [[TMP5:%.*]] = lshr i32 [[TMP0]], [[TMP1:%.*]]
-; CHECK-NEXT:    [[TMP6:%.*]] = and i32 [[TMP5]], 1
-; CHECK-NEXT:    [[TMP7:%.*]] = select i1 [[TMP4]], i32 [[TMP6]], i32 1
-; CHECK-NEXT:    ret i32 [[TMP7]]
-;
-  %3 = and i32 %0, 1
-  %4 = icmp eq i32 %3, 0
-  %5 = lshr i32 %0, %1 ; %1, should be a constant
-  %6 = and i32 %5, 1
-  %7 = select i1 %4, i32 %6, i32 1
-  ret i32 %7
 }
