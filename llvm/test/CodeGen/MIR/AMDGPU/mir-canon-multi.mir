@@ -1,11 +1,11 @@
 # RUN: llc -o -  -march=amdgcn  -run-pass mir-canonicalizer  -x mir %s | FileCheck %s
 
-# CHECK: %1363:vgpr_32 = COPY %4354
-# CHECK: %1368:vgpr_32 = COPY %4355
-# CHECK: %1369:vgpr_32 = COPY %1372
-# CHECK: %1370:vgpr_32 = COPY %1373
-# CHECK: REG_SEQUENCE %1368, %subreg.sub0, %1363, %subreg.sub1
-# CHECK: REG_SEQUENCE %1368, %subreg.sub0, %1363, %subreg.sub1, %1369, %subreg.sub2, %1370, %subreg.sub3
+# CHECK: %namedVReg1352:vgpr_32 = COPY %namedVReg4353
+# CHECK: %namedVReg1357:vgpr_32 = COPY %namedVReg4354
+# CHECK: %namedVReg1358:vgpr_32 = COPY %namedVReg1361
+# CHECK: %namedVReg1359:vgpr_32 = COPY %namedVReg1362
+# CHECK: REG_SEQUENCE %namedVReg1357, %subreg.sub0, %namedVReg1352, %subreg.sub1
+# CHECK: REG_SEQUENCE %namedVReg1357, %subreg.sub0, %namedVReg1352, %subreg.sub1, %namedVReg1358, %subreg.sub2, %namedVReg1359, %subreg.sub3
 
 ...
 ---
