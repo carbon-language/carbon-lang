@@ -175,8 +175,20 @@ void elf::writeMapFile() {
   OS << right_justify("VMA", W) << ' ' << right_justify("LMA", 9) << ' '
      << right_justify("Size", W) << " Align Out     In      Symbol\n";
 
-  // Print out file contents.
-  for (OutputSection *OSec : OutputSections) {
+  for (BaseCommand *Base : Script->SectionCommands) {
+    if (auto *Cmd = dyn_cast<SymbolAssignment>(Base)) {
+      if (Cmd->Provide && !Cmd->Sym)
+        continue;
+      //FIXME: calculate and print LMA.
+      writeHeader(OS, Cmd->Addr, 0, Cmd->Size, 1);
+      OS << Cmd->CommandString << '\n';
+      continue;
+    }
+
+    auto *OSec = dyn_cast<OutputSection>(Base);
+    if (!OSec)
+      continue;
+
     writeHeader(OS, OSec->Addr, OSec->getLMA(), OSec->Size, OSec->Alignment);
     OS << OSec->Name << '\n';
 
@@ -206,6 +218,8 @@ void elf::writeMapFile() {
       }
 
       if (auto *Cmd = dyn_cast<SymbolAssignment>(Base)) {
+        if (Cmd->Provide && !Cmd->Sym)
+          continue;
         writeHeader(OS, Cmd->Addr, OSec->getLMA() + Cmd->Addr - OSec->getVA(0),
                     Cmd->Size, 1);
         OS << Indent8 << Cmd->CommandString << '\n';

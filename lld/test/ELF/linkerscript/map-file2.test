@@ -17,6 +17,7 @@ SECTIONS {
 }
 
 # CHECK:             VMA       LMA             Size Align Out     In      Symbol
+# CHECK-NEXT:          0         0             1000     1 . = 0x1000
 # CHECK-NEXT:       1000      1000                8     1 .aaa
 # CHECK-NEXT:       1000      1000                8     1         {{.*}}{{/|\\}}map-file2.test.tmp.o:(.aaa)
 # CHECK-NEXT:       1008      2000                8     1 .bbb
