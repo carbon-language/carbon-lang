@@ -248,7 +248,7 @@ ProcComponentDef::ProcComponentDef(ProcDecl decl, Attrs attrs,
     const std::optional<DeclTypeSpec> &typeSpec)
   : decl_{decl}, attrs_{attrs}, interfaceName_{interfaceName}, typeSpec_{
                                                                    typeSpec} {
-  CHECK(attrs_.Has(Attr::POINTER));
+  CHECK(attrs_.test(Attr::POINTER));
   attrs_.CheckValid(
       {Attr::PUBLIC, Attr::PRIVATE, Attr::NOPASS, Attr::POINTER, Attr::PASS});
   CHECK(!interfaceName || !typeSpec);  // can't both be defined
@@ -278,12 +278,12 @@ DerivedTypeDefBuilder &DerivedTypeDefBuilder::extends(const Name &x) {
 DerivedTypeDefBuilder &DerivedTypeDefBuilder::attr(const Attr &x) {
   // TODO: x.CheckValid({Attr::ABSTRACT, Attr::PUBLIC, Attr::PRIVATE,
   // Attr::BIND_C});
-  data_.attrs.Set(x);
+  data_.attrs.set(x);
   return *this;
 }
 DerivedTypeDefBuilder &DerivedTypeDefBuilder::attrs(const Attrs &x) {
   x.CheckValid({Attr::ABSTRACT, Attr::PUBLIC, Attr::PRIVATE, Attr::BIND_C});
-  data_.attrs.Add(x);
+  data_.attrs |= x;
   return *this;
 }
 DerivedTypeDefBuilder &DerivedTypeDefBuilder::lenParam(const TypeParamDef &x) {

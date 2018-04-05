@@ -49,91 +49,91 @@ public:
   }
   bool Pre(const parser::AccessSpec &x) {
     switch (x.v) {
-    case parser::AccessSpec::Kind::Public: attrs_->Set(Attr::PUBLIC); break;
-    case parser::AccessSpec::Kind::Private: attrs_->Set(Attr::PRIVATE); break;
+    case parser::AccessSpec::Kind::Public: attrs_->set(Attr::PUBLIC); break;
+    case parser::AccessSpec::Kind::Private: attrs_->set(Attr::PRIVATE); break;
     default: CRASH_NO_CASE;
     }
     return false;
   }
   bool Pre(const parser::TypeAttrSpec::BindC &x) {
-    attrs_->Set(Attr::BIND_C);
+    attrs_->set(Attr::BIND_C);
     return false;
   }
   bool Pre(const parser::Abstract &x) {
-    attrs_->Set(Attr::ABSTRACT);
+    attrs_->set(Attr::ABSTRACT);
     return false;
   }
   bool Pre(const parser::Allocatable &) {
-    attrs_->Set(Attr::ALLOCATABLE);
+    attrs_->set(Attr::ALLOCATABLE);
     return false;
   }
   bool Pre(const parser::Asynchronous &) {
-    attrs_->Set(Attr::ASYNCHRONOUS);
+    attrs_->set(Attr::ASYNCHRONOUS);
     return false;
   }
   bool Pre(const parser::Contiguous &) {
-    attrs_->Set(Attr::CONTIGUOUS);
+    attrs_->set(Attr::CONTIGUOUS);
     return false;
   }
   bool Pre(const parser::External &) {
-    attrs_->Set(Attr::EXTERNAL);
+    attrs_->set(Attr::EXTERNAL);
     return false;
   }
   bool Pre(const parser::Intrinsic &) {
-    attrs_->Set(Attr::INTRINSIC);
+    attrs_->set(Attr::INTRINSIC);
     return false;
   }
   bool Pre(const parser::NoPass &) {
-    attrs_->Set(Attr::NOPASS);
+    attrs_->set(Attr::NOPASS);
     return false;
   }
   bool Pre(const parser::Optional &) {
-    attrs_->Set(Attr::OPTIONAL);
+    attrs_->set(Attr::OPTIONAL);
     return false;
   }
   bool Pre(const parser::Parameter &) {
-    attrs_->Set(Attr::PARAMETER);
+    attrs_->set(Attr::PARAMETER);
     return false;
   }
   bool Pre(const parser::Pass &) {
-    attrs_->Set(Attr::PASS);
+    attrs_->set(Attr::PASS);
     return false;
   }
   bool Pre(const parser::Pointer &) {
-    attrs_->Set(Attr::POINTER);
+    attrs_->set(Attr::POINTER);
     return false;
   }
   bool Pre(const parser::Protected &) {
-    attrs_->Set(Attr::PROTECTED);
+    attrs_->set(Attr::PROTECTED);
     return false;
   }
   bool Pre(const parser::Save &) {
-    attrs_->Set(Attr::SAVE);
+    attrs_->set(Attr::SAVE);
     return false;
   }
   bool Pre(const parser::Target &) {
-    attrs_->Set(Attr::TARGET);
+    attrs_->set(Attr::TARGET);
     return false;
   }
   bool Pre(const parser::Value &) {
-    attrs_->Set(Attr::VALUE);
+    attrs_->set(Attr::VALUE);
     return false;
   }
   bool Pre(const parser::Volatile &) {
-    attrs_->Set(Attr::VOLATILE);
+    attrs_->set(Attr::VOLATILE);
     return false;
   }
   bool Pre(const parser::IntentSpec &x) {
     switch (x.v) {
     case parser::IntentSpec::Intent::In:
-      attrs_->Set(Attr::INTENT_IN);
+      attrs_->set(Attr::INTENT_IN);
       break;
     case parser::IntentSpec::Intent::Out:
-      attrs_->Set(Attr::INTENT_OUT);
+      attrs_->set(Attr::INTENT_OUT);
       break;
     case parser::IntentSpec::Intent::InOut:
-      attrs_->Set(Attr::INTENT_IN);
-      attrs_->Set(Attr::INTENT_OUT);
+      attrs_->set(Attr::INTENT_IN);
+      attrs_->set(Attr::INTENT_OUT);
       break;
     default: CRASH_NO_CASE;
     }

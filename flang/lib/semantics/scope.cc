@@ -21,7 +21,7 @@ Symbol &Scope::GetOrMakeSymbol(const Name &name) {
   }
 }
 
-Symbol &Scope::MakeSymbol(const Name &name, const Attrs &attrs) {
+Symbol &Scope::MakeSymbol(const Name &name, Attrs attrs) {
   return MakeSymbol(name, attrs, UnknownDetails());
 }
 

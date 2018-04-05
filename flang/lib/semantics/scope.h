@@ -42,18 +42,18 @@ public:
 
   /// Make a Symbol with unknown details.
   Symbol &MakeSymbol(
-      const Name &name, const Attrs &attrs = Attrs::EMPTY);
+      const Name &name, Attrs attrs = Attrs{});
 
   /// Make a Symbol with provided details.
   template<typename D>
   Symbol &MakeSymbol(const Name &name, D &&details) {
     const auto &result =
-        symbols_.try_emplace(name, *this, name, Attrs::EMPTY, details);
+        symbols_.try_emplace(name, *this, name, Attrs{}, details);
     return result.first->second;
   }
   template<typename D>
   Symbol &MakeSymbol(
-      const Name &name, const Attrs &attrs, D &&details) {
+      const Name &name, Attrs attrs, D &&details) {
     const auto &result =
         symbols_.try_emplace(name, *this, name, attrs, details);
     return result.first->second;
