@@ -7385,7 +7385,7 @@ define void @test_leave() optsize {
 ; GENERIC-LABEL: test_leave:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    #APP
-; GENERIC-NEXT:    leave # sched: [3:1.00]
+; GENERIC-NEXT:    leave # sched: [7:0.67]
 ; GENERIC-NEXT:    #NO_APP
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
@@ -7406,7 +7406,7 @@ define void @test_leave() optsize {
 ; SANDY-LABEL: test_leave:
 ; SANDY:       # %bb.0:
 ; SANDY-NEXT:    #APP
-; SANDY-NEXT:    leave # sched: [3:1.00]
+; SANDY-NEXT:    leave # sched: [7:0.67]
 ; SANDY-NEXT:    #NO_APP
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;

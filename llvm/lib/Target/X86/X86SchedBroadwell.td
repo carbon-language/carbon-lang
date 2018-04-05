@@ -1789,11 +1789,8 @@ def BWWriteResGroup80 : SchedWriteRes<[BWPort23,BWPort0156]> {
   let NumMicroOps = 3;
   let ResourceCycles = [1,2];
 }
-def: InstRW<[BWWriteResGroup80], (instregex "LEAVE64",
-                                            "SCASB",
-                                            "SCASL",
-                                            "SCASQ",
-                                            "SCASW")>;
+def: InstRW<[BWWriteResGroup80], (instrs LEAVE, LEAVE64,
+                                         SCASB, SCASL, SCASQ, SCASW)>;
 
 def BWWriteResGroup81 : SchedWriteRes<[BWPort0,BWPort5,BWPort23]> {
   let Latency = 7;

@@ -794,8 +794,14 @@ def SBWriteResGroup25 : SchedWriteRes<[SBPort015]> {
   let NumMicroOps = 3;
   let ResourceCycles = [3];
 }
-def: InstRW<[SBWriteResGroup25], (instregex "LEAVE64",
-                                            "XADD(8|16|32|64)rr")>;
+def: InstRW<[SBWriteResGroup25], (instrs XADD8rr, XADD16rr, XADD32rr, XADD64rr)>;
+
+def SBWriteResGroup25_1 : SchedWriteRes<[SBPort23,SBPort015]> {
+  let Latency = 7;
+  let NumMicroOps = 3;
+  let ResourceCycles = [1,2];
+}
+def: InstRW<[SBWriteResGroup25_1], (instrs LEAVE, LEAVE64)>;
 
 def SBWriteResGroup25_2 : SchedWriteRes<[SBPort5,SBPort05]> {
   let Latency = 3;

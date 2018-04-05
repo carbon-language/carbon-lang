@@ -1675,11 +1675,8 @@ def HWWriteResGroup37 : SchedWriteRes<[HWPort23,HWPort0156]> {
   let NumMicroOps = 3;
   let ResourceCycles = [1,2];
 }
-def: InstRW<[HWWriteResGroup37], (instregex "LEAVE64",
-                                            "SCASB",
-                                            "SCASL",
-                                            "SCASQ",
-                                            "SCASW")>;
+def: InstRW<[HWWriteResGroup37], (instrs LEAVE, LEAVE64,
+                                         SCASB, SCASL, SCASQ, SCASW)>;
 
 def HWWriteResGroup38 : SchedWriteRes<[HWPort0,HWPort5,HWPort23]> {
   let Latency = 8;
