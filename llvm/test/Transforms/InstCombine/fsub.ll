@@ -19,8 +19,7 @@ define float @test1(float %x, float %y) {
 
 define float @neg_sub(float %x, float %y) {
 ; CHECK-LABEL: @neg_sub(
-; CHECK-NEXT:    [[T1:%.*]] = fsub float [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[T2:%.*]] = fsub nsz float -0.000000e+00, [[T1]]
+; CHECK-NEXT:    [[T2:%.*]] = fsub nsz float [[Y:%.*]], [[X:%.*]]
 ; CHECK-NEXT:    ret float [[T2]]
 ;
   %t1 = fsub float %x, %y
