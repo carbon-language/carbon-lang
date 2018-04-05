@@ -156,7 +156,7 @@ def genericize_check_lines(lines):
   return lines
 
 
-def add_checks(output_lines, comment_marker, prefix_list, func_dict, func_name, check_label_format):
+def add_checks(output_lines, comment_marker, prefix_list, func_dict, func_name, check_label_format, is_asm):
   printed_prefixes = []
   for p in prefix_list:
     checkprefixes = p[0]
@@ -170,12 +170,20 @@ def add_checks(output_lines, comment_marker, prefix_list, func_dict, func_name, 
 
       # Add some space between different check prefixes, but not after the last
       # check line (before the test code).
-      #if len(printed_prefixes) != 0:
-      #  output_lines.append(comment_marker)
+      if is_asm == True:
+        if len(printed_prefixes) != 0:
+          output_lines.append(comment_marker)
 
       printed_prefixes.append(checkprefix)
       output_lines.append(check_label_format % (checkprefix, func_name))
       func_body = func_dict[checkprefix][func_name].splitlines()
+
+      # For ASM output, just emit the check lines.
+      if is_asm == True:
+        output_lines.append('%s %s:       %s' % (comment_marker, checkprefix, func_body[0]))
+        for func_line in func_body[1:]:
+          output_lines.append('%s %s-NEXT:  %s' % (comment_marker, checkprefix, func_line))
+        break
 
       # For IR output, change all defs to FileCheck variables, so we're immune
       # to variable naming fashions.
@@ -218,4 +226,4 @@ def add_checks(output_lines, comment_marker, prefix_list, func_dict, func_name, 
 def add_ir_checks(output_lines, comment_marker, prefix_list, func_dict, func_name):
   # Label format is based on IR string.
   check_label_format = '{} %s-LABEL: @%s('.format(comment_marker)
-  add_checks(output_lines, comment_marker, prefix_list, func_dict, func_name, check_label_format)
+  add_checks(output_lines, comment_marker, prefix_list, func_dict, func_name, check_label_format, False)
