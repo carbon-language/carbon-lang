@@ -27,12 +27,12 @@ define float @neg_sub_nsz(float %x, float %y) {
   ret float %t2
 }
 
-; FIXME: With nsz: Z - (X - Y) --> Z + (Y - X)
+; With nsz: Z - (X - Y) --> Z + (Y - X)
 
 define float @sub_sub_nsz(float %x, float %y, float %z) {
 ; CHECK-LABEL: @sub_sub_nsz(
-; CHECK-NEXT:    [[T1:%.*]] = fsub float [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[T2:%.*]] = fsub nsz float [[Z:%.*]], [[T1]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fsub nsz float [[Y:%.*]], [[X:%.*]]
+; CHECK-NEXT:    [[T2:%.*]] = fadd nsz float [[TMP1]], [[Z:%.*]]
 ; CHECK-NEXT:    ret float [[T2]]
 ;
   %t1 = fsub float %x, %y
@@ -40,12 +40,12 @@ define float @sub_sub_nsz(float %x, float %y, float %z) {
   ret float %t2
 }
 
-; FIXME: Same as above: if 'Z' is not -0.0, swap fsub operands and convert to fadd.
+; Same as above: if 'Z' is not -0.0, swap fsub operands and convert to fadd.
 
 define float @sub_sub_known_not_negzero(float %x, float %y) {
 ; CHECK-LABEL: @sub_sub_known_not_negzero(
-; CHECK-NEXT:    [[T1:%.*]] = fsub float [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[T2:%.*]] = fsub float 4.200000e+01, [[T1]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fsub float [[Y:%.*]], [[X:%.*]]
+; CHECK-NEXT:    [[T2:%.*]] = fadd float [[TMP1]], 4.200000e+01
 ; CHECK-NEXT:    ret float [[T2]]
 ;
   %t1 = fsub float %x, %y
