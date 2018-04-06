@@ -22,36 +22,43 @@ public:
     : out_{out}, indentationAmount_{indentationAmount}, encoding_{encoding},
       capitalizeKeywords_{capitalize} {}
 
-  // Default actions: just traverse the children
-  template<typename T> bool Pre(const T &x) { return true; }
+  // In nearly all cases, this code avoids defining Boolean-valued Pre()
+  // callbacks for the parse tree walking framework in favor of two void
+  // functions, Before() and Unparse(), which imply true and false return
+  // values for Pre() respectively.
+  template<typename T> void Before(const T &) {}
+  template<typename T> double Unparse(const T &);  // not void, never used
+
+  template<typename T>
+  auto Pre(const T &x) ->
+      typename std::enable_if<std::is_void_v<decltype(Unparse(x))>,
+          bool>::type {
+    // There is a local definition of Unparse() for this type.  It
+    // overrides the parse tree walker's default Walk() over the descendents.
+    Before(x);
+    Unparse(x);
+    Post(x);
+    return false;  // Walk() does not visit descendents
+  }
+  template<typename T>
+  auto Pre(const T &x) ->
+      typename std::enable_if<!std::is_void_v<decltype(Unparse(x))>,
+          bool>::type {
+    Before(x);
+    return true;  // there's no Unparse() defined here, Walk() the descendents
+  }
   template<typename T> void Post(const T &) {}
 
   // Emit simple types as-is.
-  bool Pre(const std::string &x) {
-    Put(x);
-    return false;
-  }
-  bool Pre(int x) {
-    Put(std::to_string(x));
-    return false;
-  }
-  bool Pre(std::uint64_t x) {
-    Put(std::to_string(x));
-    return false;
-  }
-  bool Pre(std::int64_t x) {
-    Put(std::to_string(x));
-    return false;
-  }
-  bool Pre(char x) {
-    Put(x);
-    return false;
-  }
+  void Unparse(const std::string &x) { Put(x); }
+  void Unparse(int x) { Put(std::to_string(x)); }
+  void Unparse(std::uint64_t x) { Put(std::to_string(x)); }
+  void Unparse(std::int64_t x) { Put(std::to_string(x)); }
+  void Unparse(char x) { Put(x); }
 
   // Statement labels and ends of lines
-  template<typename T> bool Pre(const Statement<T> &x) {
+  template<typename T> void Before(const Statement<T> &x) {
     Walk(x.label, " ");
-    return true;
   }
   template<typename T> void Post(const Statement<T> &) { Put('\n'); }
 
@@ -59,15 +66,14 @@ public:
   // ordered to correspond roughly to their order of appearance in
   // the Fortran 2018 standard (and parse-tree.h).
 
-  void Post(const ProgramUnit &x) {  // R502, R503
-    out_ << '\n';  // blank line after each ProgramUnit
+  void Unparse(const Program &x) {  // R501
+    Walk("", x.v, "\n");  // put blank lines between ProgramUnits
   }
 
-  bool Pre(const Name &x) {  // R603
+  void Unparse(const Name &x) {  // R603
     Put(x.ToString());
-    return false;
   }
-  bool Pre(const DefinedOperator::IntrinsicOperator &x) {  // R608
+  void Unparse(const DefinedOperator::IntrinsicOperator &x) {  // R608
     switch (x) {
     case DefinedOperator::IntrinsicOperator::Power: Put("**"); break;
     case DefinedOperator::IntrinsicOperator::Multiply: Put('*'); break;
@@ -81,111 +87,81 @@ public:
     case DefinedOperator::IntrinsicOperator::NE: Put("/="); break;
     case DefinedOperator::IntrinsicOperator::GE: Put(">="); break;
     case DefinedOperator::IntrinsicOperator::GT: Put('>'); break;
-    default:
-      Put('.');
-      Word(DefinedOperator::EnumToString(x));
-      Put('.');
+    default: Put('.'), Word(DefinedOperator::EnumToString(x)), Put('.');
     }
-    return false;
   }
   void Post(const Star &) { Put('*'); }  // R701 &c.
   void Post(const TypeParamValue::Deferred &) { Put(':'); }  // R701
-  bool Pre(const DeclarationTypeSpec::Type &x) {  // R703
+  void Unparse(const DeclarationTypeSpec::Type &x) {  // R703
     Word("TYPE("), Walk(x.derived), Put(')');
-    return false;
   }
-  bool Pre(const DeclarationTypeSpec::Class &x) {
+  void Unparse(const DeclarationTypeSpec::Class &x) {
     Word("CLASS("), Walk(x.derived), Put(')');
-    return false;
   }
   void Post(const DeclarationTypeSpec::ClassStar &) { Word("CLASS(*)"); }
   void Post(const DeclarationTypeSpec::TypeStar &) { Word("TYPE(*)"); }
-  bool Pre(const DeclarationTypeSpec::Record &x) {
+  void Unparse(const DeclarationTypeSpec::Record &x) {
     Word("RECORD/"), Walk(x.v), Put('/');
-    return false;
   }
-  bool Pre(const IntrinsicTypeSpec::Real &x) {  // R704
+  void Before(const IntrinsicTypeSpec::Real &x) {  // R704
     Word("REAL");
-    return true;
   }
-  bool Pre(const IntrinsicTypeSpec::Complex &x) {
-    Word("COMPLEX");
-    return true;
-  }
+  void Before(const IntrinsicTypeSpec::Complex &x) { Word("COMPLEX"); }
   void Post(const IntrinsicTypeSpec::DoublePrecision &) {
     Word("DOUBLE PRECISION");
   }
-  bool Pre(const IntrinsicTypeSpec::Character &x) {
-    Word("CHARACTER");
-    return true;
-  }
-  bool Pre(const IntrinsicTypeSpec::Logical &x) {
-    Word("LOGICAL");
-    return true;
-  }
+  void Before(const IntrinsicTypeSpec::Character &x) { Word("CHARACTER"); }
+  void Before(const IntrinsicTypeSpec::Logical &x) { Word("LOGICAL"); }
   void Post(const IntrinsicTypeSpec::DoubleComplex &) {
     Word("DOUBLE COMPLEX");
   }
-  bool Pre(const IntrinsicTypeSpec::NCharacter &x) {
-    Word("NCHARACTER");
-    return true;
-  }
-  bool Pre(const IntegerTypeSpec &x) {  // R705
+  void Before(const IntrinsicTypeSpec::NCharacter &x) { Word("NCHARACTER"); }
+  void Before(const IntegerTypeSpec &x) {  // R705
     Word("INTEGER");
-    return true;
   }
-  bool Pre(const KindSelector &x) {  // R706
+  void Unparse(const KindSelector &x) {  // R706
     std::visit(
         visitors{[&](const ScalarIntConstantExpr &y) {
                    Put('('), Word("KIND="), Walk(y), Put(')');
                  },
             [&](const KindSelector::StarSize &y) { Put('*'), Walk(y.v); }},
         x.u);
-    return false;
   }
-  bool Pre(const SignedIntLiteralConstant &x) {  // R707
+  void Unparse(const SignedIntLiteralConstant &x) {  // R707
     Walk(std::get<std::int64_t>(x.t));
     Walk("_", std::get<std::optional<KindParam>>(x.t));
-    return false;
   }
-  bool Pre(const IntLiteralConstant &x) {  // R708
+  void Unparse(const IntLiteralConstant &x) {  // R708
     Walk(std::get<std::uint64_t>(x.t));
     Walk("_", std::get<std::optional<KindParam>>(x.t));
-    return false;
   }
-  bool Pre(const Sign &x) {  // R712
+  void Unparse(const Sign &x) {  // R712
     Put(x == Sign::Negative ? '-' : '+');
-    return false;
   }
-  bool Pre(const RealLiteralConstant &x) {  // R714, R715
+  void Unparse(const RealLiteralConstant &x) {  // R714, R715
     Put(x.real.source.ToString()), Walk("_", x.kind);
-    return false;
   }
-  bool Pre(const ComplexLiteralConstant &x) {  // R718 - R720
+  void Unparse(const ComplexLiteralConstant &x) {  // R718 - R720
     Put('('), Walk(x.t, ","), Put(')');
-    return false;
   }
-  bool Pre(const CharSelector::LengthAndKind &x) {  // R721
+  void Unparse(const CharSelector::LengthAndKind &x) {  // R721
     Put('('), Word("KIND="), Walk(x.kind);
     Walk(", LEN=", x.length), Put(')');
-    return false;
   }
-  bool Pre(const LengthSelector &x) {  // R722
+  void Unparse(const LengthSelector &x) {  // R722
     std::visit(visitors{[&](const TypeParamValue &y) {
                           Put('('), Word("LEN="), Walk(y), Put(')');
                         },
                    [&](const CharLength &y) { Put('*'), Walk(y); }},
         x.u);
-    return false;
   }
-  bool Pre(const CharLength &x) {  // R723
+  void Unparse(const CharLength &x) {  // R723
     std::visit(
         visitors{[&](const TypeParamValue &y) { Put('('), Walk(y), Put(')'); },
             [&](const std::int64_t &y) { Walk(y); }},
         x.u);
-    return false;
   }
-  bool Pre(const CharLiteralConstant &x) {  // R724
+  void Unparse(const CharLiteralConstant &x) {  // R724
     if (const auto &k = std::get<std::optional<KindParam>>(x.t)) {
       if (std::holds_alternative<KindParam::Kanji>(k->u)) {
         Word("NC");
@@ -194,9 +170,8 @@ public:
       }
     }
     PutQuoted(std::get<std::string>(x.t));
-    return false;
   }
-  bool Pre(const HollerithLiteralConstant &x) {
+  void Before(const HollerithLiteralConstant &x) {
     std::optional<std::size_t> chars{CountCharacters(x.v.data(), x.v.size(),
         encoding_ == Encoding::EUC_JP ? EUC_JPCharacterBytes
                                       : UTF8CharacterBytes)};
@@ -206,49 +181,40 @@ public:
       Pre(x.v.size());
     }
     Put('H');
-    return true;
   }
-  bool Pre(const LogicalLiteralConstant &x) {  // R725
+  void Unparse(const LogicalLiteralConstant &x) {  // R725
     Put(std::get<bool>(x.t) ? ".TRUE." : ".FALSE.");
     Walk("_", std::get<std::optional<KindParam>>(x.t));
-    return false;
   }
-  bool Pre(const DerivedTypeStmt &x) {  // R727
+  void Unparse(const DerivedTypeStmt &x) {  // R727
     Word("TYPE"), Walk(", ", std::get<std::list<TypeAttrSpec>>(x.t), ", ");
     Put(" :: "), Walk(std::get<Name>(x.t));
     Walk("(", std::get<std::list<Name>>(x.t), ", ", ")");
     Indent();
-    return false;
   }
-  bool Pre(const Abstract &x) {  // R728, &c.
+  void Unparse(const Abstract &x) {  // R728, &c.
     Word("ABSTRACT");
-    return false;
   }
   void Post(const TypeAttrSpec::BindC &) { Word("BIND(C)"); }
-  bool Pre(const TypeAttrSpec::Extends &x) {
+  void Unparse(const TypeAttrSpec::Extends &x) {
     Word("EXTENDS("), Walk(x.v), Put(')');
-    return false;
   }
-  bool Pre(const EndTypeStmt &x) {  // R730
+  void Unparse(const EndTypeStmt &x) {  // R730
     Outdent(), Word("END TYPE"), Walk(" ", x.v);
-    return false;
   }
-  bool Pre(const SequenceStmt &x) {  // R731
+  void Unparse(const SequenceStmt &x) {  // R731
     Word("SEQUENCE");
-    return false;
   }
-  bool Pre(const TypeParamDefStmt &x) {  // R732
+  void Unparse(const TypeParamDefStmt &x) {  // R732
     Walk(std::get<IntegerTypeSpec>(x.t));
     Put(", "), Walk(std::get<TypeParamDefStmt::KindOrLen>(x.t));
     Put(" :: "), Walk(std::get<std::list<TypeParamDecl>>(x.t), ", ");
-    return false;
   }
-  bool Pre(const TypeParamDecl &x) {  // R733
+  void Unparse(const TypeParamDecl &x) {  // R733
     Walk(std::get<Name>(x.t));
     Walk("=", std::get<std::optional<ScalarIntConstantExpr>>(x.t));
-    return false;
   }
-  bool Pre(const DataComponentDefStmt &x) {  // R737
+  void Unparse(const DataComponentDefStmt &x) {  // R737
     const auto &dts = std::get<DeclarationTypeSpec>(x.t);
     const auto &attrs = std::get<std::list<ComponentAttrSpec>>(x.t);
     const auto &decls = std::get<std::list<ComponentDecl>>(x.t);
@@ -266,26 +232,17 @@ public:
       Put(" ::");
     }
     Put(' '), Walk(decls, ", ");
-    return false;
   }
-  bool Pre(const Allocatable &x) {  // R738
+  void Unparse(const Allocatable &x) {  // R738
     Word("ALLOCATABLE");
-    return false;
   }
-  bool Pre(const Pointer &x) {
-    Word("POINTER");
-    return false;
-  }
-  bool Pre(const Contiguous &x) {
-    Word("CONTIGUOUS");
-    return false;
-  }
-  bool Pre(const ComponentAttrSpec &x) {
+  void Unparse(const Pointer &x) { Word("POINTER"); }
+  void Unparse(const Contiguous &x) { Word("CONTIGUOUS"); }
+  void Before(const ComponentAttrSpec &x) {
     std::visit(visitors{[&](const CoarraySpec &) { Word("CODIMENSION["); },
                    [&](const ComponentArraySpec &) { Word("DIMENSION("); },
                    [](const auto &) {}},
         x.u);
-    return true;
   }
   void Post(const ComponentAttrSpec &x) {
     std::visit(
@@ -293,37 +250,30 @@ public:
             [&](const ComponentArraySpec &) { Put(')'); }, [](const auto &) {}},
         x.u);
   }
-  bool Pre(const ComponentDecl &x) {  // R739
+  void Unparse(const ComponentDecl &x) {  // R739
     Walk(std::get<ObjectName>(x.t));
     Walk("(", std::get<std::optional<ComponentArraySpec>>(x.t), ")");
     Walk("[", std::get<std::optional<CoarraySpec>>(x.t), "]");
     Walk("*", std::get<std::optional<CharLength>>(x.t));
     Walk(std::get<std::optional<Initialization>>(x.t));
-    return false;
   }
-  bool Pre(const ComponentArraySpec &x) {  // R740
+  void Unparse(const ComponentArraySpec &x) {  // R740
     std::visit(
         visitors{[&](const std::list<ExplicitShapeSpec> &y) { Walk(y, ","); },
             [&](const DeferredShapeSpecList &y) { Walk(y); }},
         x.u);
-    return false;
   }
-  bool Pre(const ProcComponentDefStmt &x) {  // R741
+  void Unparse(const ProcComponentDefStmt &x) {  // R741
     Word("PROCEDURE(");
     Walk(std::get<std::optional<ProcInterface>>(x.t)), Put(')');
     Walk(", ", std::get<std::list<ProcComponentAttrSpec>>(x.t), ", ");
     Put(" :: "), Walk(std::get<std::list<ProcDecl>>(x.t), ", ");
-    return false;
   }
-  bool Pre(const NoPass &x) {  // R742
+  void Unparse(const NoPass &x) {  // R742
     Word("NOPASS");
-    return false;
   }
-  bool Pre(const Pass &x) {
-    Word("PASS"), Walk("(", x.v, ")");
-    return false;
-  }
-  bool Pre(const Initialization &x) {  // R743 & R805
+  void Unparse(const Pass &x) { Word("PASS"), Walk("(", x.v, ")"); }
+  void Unparse(const Initialization &x) {  // R743 & R805
     std::visit(visitors{[&](const ConstantExpr &y) { Put(" = "), Walk(y); },
                    [&](const NullInit &y) { Put(" => "), Walk(y); },
                    [&](const InitialDataTarget &y) { Put(" => "), Walk(y); },
@@ -331,111 +281,90 @@ public:
                      Walk("/", y, ", ", "/");
                    }},
         x.u);
-    return false;
   }
-  bool Pre(const PrivateStmt &x) {  // R745
+  void Unparse(const PrivateStmt &x) {  // R745
     Word("PRIVATE");
-    return false;
   }
-  bool Pre(const TypeBoundProcedureStmt::WithoutInterface &x) {  // R749
+  void Unparse(const TypeBoundProcedureStmt::WithoutInterface &x) {  // R749
     Word("PROCEDURE"), Walk(", ", x.attributes, ", ");
     Put(" :: "), Walk(x.declarations, ", ");
-    return false;
   }
-  bool Pre(const TypeBoundProcedureStmt::WithInterface &x) {
+  void Unparse(const TypeBoundProcedureStmt::WithInterface &x) {
     Word("PROCEDURE("), Walk(x.interfaceName), Put("), ");
     Walk(x.attributes);
     Put(" :: "), Walk(x.bindingNames, ", ");
-    return false;
   }
-  bool Pre(const TypeBoundProcDecl &x) {  // R750
+  void Unparse(const TypeBoundProcDecl &x) {  // R750
     Walk(std::get<Name>(x.t));
     Walk(" => ", std::get<std::optional<Name>>(x.t));
-    return false;
   }
-  bool Pre(const TypeBoundGenericStmt &x) {  // R751
+  void Unparse(const TypeBoundGenericStmt &x) {  // R751
     Word("GENERIC"), Walk(", ", std::get<std::optional<AccessSpec>>(x.t));
     Put(" :: "), Walk(std::get<Indirection<GenericSpec>>(x.t));
     Put(" => "), Walk(std::get<std::list<Name>>(x.t), ", ");
-    return false;
   }
   void Post(const BindAttr::Deferred &) { Word("DEFERRED"); }  // R752
   void Post(const BindAttr::Non_Overridable &) { Word("NON_OVERRIDABLE"); }
-  bool Pre(const FinalProcedureStmt &x) {  // R753
+  void Unparse(const FinalProcedureStmt &x) {  // R753
     Word("FINAL :: "), Walk(x.v, ", ");
-    return false;
   }
-  bool Pre(const DerivedTypeSpec &x) {  // R754
+  void Unparse(const DerivedTypeSpec &x) {  // R754
     Walk(std::get<Name>(x.t));
     Walk("(", std::get<std::list<TypeParamSpec>>(x.t), ",", ")");
-    return false;
   }
-  bool Pre(const TypeParamSpec &x) {  // R755
+  void Unparse(const TypeParamSpec &x) {  // R755
     Walk(std::get<std::optional<Keyword>>(x.t), "=");
     Walk(std::get<TypeParamValue>(x.t));
-    return false;
   }
-  bool Pre(const StructureConstructor &x) {  // R756
+  void Unparse(const StructureConstructor &x) {  // R756
     Walk(std::get<DerivedTypeSpec>(x.t));
     Put('('), Walk(std::get<std::list<ComponentSpec>>(x.t), ", "), Put(')');
-    return false;
   }
-  bool Pre(const ComponentSpec &x) {  // R757
+  void Unparse(const ComponentSpec &x) {  // R757
     Walk(std::get<std::optional<Keyword>>(x.t), "=");
     Walk(std::get<ComponentDataSource>(x.t));
-    return false;
   }
-  bool Pre(const EnumDefStmt &) {  // R760
+  void Unparse(const EnumDefStmt &) {  // R760
     Word("ENUM, BIND(C)"), Indent();
-    return false;
   }
-  bool Pre(const EnumeratorDefStmt &x) {  // R761
+  void Unparse(const EnumeratorDefStmt &x) {  // R761
     Word("ENUMERATOR :: "), Walk(x.v, ", ");
-    return false;
   }
-  bool Pre(const Enumerator &x) {  // R762
+  void Unparse(const Enumerator &x) {  // R762
     Walk(std::get<NamedConstant>(x.t));
     Walk(" = ", std::get<std::optional<ScalarIntConstantExpr>>(x.t));
-    return false;
   }
   void Post(const EndEnumStmt &) {  // R763
     Outdent(), Word("END ENUM");
   }
-  bool Pre(const BOZLiteralConstant &x) {  // R764 - R767
+  void Unparse(const BOZLiteralConstant &x) {  // R764 - R767
     Put("Z'");
     out_ << std::hex << x.v << std::dec << '\'';
-    return false;
   }
-  bool Pre(const AcValue::Triplet &x) {  // R773
+  void Unparse(const AcValue::Triplet &x) {  // R773
     Walk(std::get<0>(x.t)), Put(':'), Walk(std::get<1>(x.t));
     Walk(":", std::get<std::optional<ScalarIntExpr>>(x.t));
-    return false;
   }
-  bool Pre(const ArrayConstructor &x) {  // R769
+  void Unparse(const ArrayConstructor &x) {  // R769
     Put('['), Walk(x.v), Put(']');
-    return false;
   }
-  bool Pre(const AcSpec &x) {  // R770
+  void Unparse(const AcSpec &x) {  // R770
     Walk(x.type, "::"), Walk(x.values, ", ");
-    return false;
   }
-  template<typename A> bool Pre(const LoopBounds<A> &x) {
+  template<typename A> void Unparse(const LoopBounds<A> &x) {
     Walk(x.name), Put('='), Walk(x.lower), Put(','), Walk(x.upper);
     Walk(",", x.step);
-    return false;
   }
-  bool Pre(const AcImpliedDo &x) {  // R774
+  void Unparse(const AcImpliedDo &x) {  // R774
     Put('('), Walk(std::get<std::list<AcValue>>(x.t), ", ");
     Put(", "), Walk(std::get<AcImpliedDoControl>(x.t)), Put(')');
-    return false;
   }
-  bool Pre(const AcImpliedDoControl &x) {  // R775
+  void Unparse(const AcImpliedDoControl &x) {  // R775
     Walk(std::get<std::optional<IntegerTypeSpec>>(x.t), "::");
     Walk(std::get<LoopBounds<ScalarIntExpr>>(x.t));
-    return false;
   }
 
-  bool Pre(const TypeDeclarationStmt &x) {  // R801
+  void Unparse(const TypeDeclarationStmt &x) {  // R801
     const auto &dts = std::get<DeclarationTypeSpec>(x.t);
     const auto &attrs = std::get<std::list<AttrSpec>>(x.t);
     const auto &decls = std::get<std::list<EntityDecl>>(x.t);
@@ -488,62 +417,53 @@ public:
       Put(" ::");
     }
     Put(' '), Walk(std::get<std::list<EntityDecl>>(x.t), ", ");
-    return false;
   }
-  bool Pre(const AttrSpec &x) {  // R802
+  void Before(const AttrSpec &x) {  // R802
     std::visit(visitors{[&](const CoarraySpec &y) { Word("CODIMENSION["); },
                    [&](const ArraySpec &y) { Word("DIMENSION("); },
                    [](const auto &) {}},
         x.u);
-    return true;
   }
   void Post(const AttrSpec &x) {
     std::visit(visitors{[&](const CoarraySpec &y) { Put(']'); },
                    [&](const ArraySpec &y) { Put(')'); }, [](const auto &) {}},
         x.u);
   }
-  bool Pre(const EntityDecl &x) {  // R803
+  void Unparse(const EntityDecl &x) {  // R803
     Walk(std::get<ObjectName>(x.t));
     Walk("(", std::get<std::optional<ArraySpec>>(x.t), ")");
     Walk("[", std::get<std::optional<CoarraySpec>>(x.t), "]");
     Walk("*", std::get<std::optional<CharLength>>(x.t));
     Walk(std::get<std::optional<Initialization>>(x.t));
-    return false;
   }
-  bool Pre(const NullInit &x) {  // R806
+  void Unparse(const NullInit &x) {  // R806
     Word("NULL()");
-    return false;
   }
-  bool Pre(const LanguageBindingSpec &x) {  // R808 & R1528
+  void Unparse(const LanguageBindingSpec &x) {  // R808 & R1528
     Word("BIND(C"), Walk(", NAME=", x.v), Put(')');
-    return false;
   }
-  bool Pre(const CoarraySpec &x) {  // R809
+  void Unparse(const CoarraySpec &x) {  // R809
     std::visit(visitors{[&](const DeferredCoshapeSpecList &y) { Walk(y); },
                    [&](const ExplicitCoshapeSpec &y) { Walk(y); }},
         x.u);
-    return false;
   }
-  bool Pre(const DeferredCoshapeSpecList &x) {  // R810
+  void Unparse(const DeferredCoshapeSpecList &x) {  // R810
     for (auto j = x.v; j > 0; --j) {
       Put(':');
       if (j > 1) {
         Put(',');
       }
     }
-    return false;
   }
-  bool Pre(const ExplicitCoshapeSpec &x) {  // R811
+  void Unparse(const ExplicitCoshapeSpec &x) {  // R811
     Walk(std::get<std::list<ExplicitShapeSpec>>(x.t), ",", ",");
     Walk(std::get<std::optional<SpecificationExpr>>(x.t), ":"), Put('*');
-    return false;
   }
-  bool Pre(const ExplicitShapeSpec &x) {  // R812 - R813 & R816 - R818
+  void Unparse(const ExplicitShapeSpec &x) {  // R812 - R813 & R816 - R818
     Walk(std::get<std::optional<SpecificationExpr>>(x.t), ":");
     Walk(std::get<SpecificationExpr>(x.t));
-    return false;
   }
-  bool Pre(const ArraySpec &x) {  // R815
+  void Unparse(const ArraySpec &x) {  // R815
     std::visit(
         visitors{[&](const std::list<ExplicitShapeSpec> &y) { Walk(y, ","); },
             [&](const std::list<AssumedShapeSpec> &y) { Walk(y, ","); },
@@ -552,31 +472,26 @@ public:
             [&](const ImpliedShapeSpec &y) { Walk(y); },
             [&](const AssumedRankSpec &y) { Walk(y); }},
         x.u);
-    return false;
   }
   void Post(const AssumedShapeSpec &) { Put(':'); }  // R819
-  bool Pre(const DeferredShapeSpecList &x) {  // R820
+  void Unparse(const DeferredShapeSpecList &x) {  // R820
     for (auto j = x.v; j > 0; --j) {
       Put(':');
       if (j > 1) {
         Put(',');
       }
     }
-    return false;
   }
-  bool Pre(const AssumedImpliedSpec &x) {  // R821
+  void Unparse(const AssumedImpliedSpec &x) {  // R821
     Walk(x.v, ":");
     Put('*');
-    return false;
   }
-  bool Pre(const AssumedSizeSpec &x) {  // R822
+  void Unparse(const AssumedSizeSpec &x) {  // R822
     Walk(std::get<std::list<ExplicitShapeSpec>>(x.t), ",", ",");
     Walk(std::get<AssumedImpliedSpec>(x.t));
-    return false;
   }
-  bool Pre(const ImpliedShapeSpec &x) {  // R823
+  void Unparse(const ImpliedShapeSpec &x) {  // R823
     Walk(x.v, ",");
-    return false;
   }
   void Post(const AssumedRankSpec &) { Put(".."); }  // R825
   void Post(const Asynchronous &) { Word("ASYNCHRONOUS"); }
@@ -589,129 +504,102 @@ public:
   void Post(const Target &) { Word("TARGET"); }
   void Post(const Value &) { Word("VALUE"); }
   void Post(const Volatile &) { Word("VOLATILE"); }
-  bool Pre(const IntentSpec &x) {  // R826
+  void Unparse(const IntentSpec &x) {  // R826
     Word("INTENT("), Walk(x.v), Put(")");
-    return false;
   }
-  bool Pre(const AccessStmt &x) {  // R827
+  void Unparse(const AccessStmt &x) {  // R827
     Walk(std::get<AccessSpec>(x.t));
     Walk(" :: ", std::get<std::list<AccessId>>(x.t), ", ");
-    return false;
   }
-  bool Pre(const AllocatableStmt &x) {  // R829
+  void Unparse(const AllocatableStmt &x) {  // R829
     Word("ALLOCATABLE :: "), Walk(x.v, ", ");
-    return false;
   }
-  bool Pre(const ObjectDecl &x) {  // R830 & R860
+  void Unparse(const ObjectDecl &x) {  // R830 & R860
     Walk(std::get<ObjectName>(x.t));
     Walk("(", std::get<std::optional<ArraySpec>>(x.t), ")");
     Walk("[", std::get<std::optional<CoarraySpec>>(x.t), "]");
-    return false;
   }
-  bool Pre(const AsynchronousStmt &x) {  // R831
+  void Unparse(const AsynchronousStmt &x) {  // R831
     Word("ASYNCHRONOUS :: "), Walk(x.v, ", ");
-    return false;
   }
-  bool Pre(const BindStmt &x) {  // R832
+  void Unparse(const BindStmt &x) {  // R832
     Walk(x.t, " :: ");
-    return false;
   }
-  bool Pre(const BindEntity &x) {  // R833
+  void Unparse(const BindEntity &x) {  // R833
     bool isCommon{std::get<BindEntity::Kind>(x.t) == BindEntity::Kind::Common};
     const char *slash{isCommon ? "/" : ""};
     Put(slash), Walk(std::get<Name>(x.t)), Put(slash);
-    return false;
   }
-  bool Pre(const CodimensionStmt &x) {  // R834
+  void Unparse(const CodimensionStmt &x) {  // R834
     Word("CODIMENSION :: "), Walk(x.v, ", ");
-    return false;
   }
-  bool Pre(const CodimensionDecl &x) {  // R835
+  void Unparse(const CodimensionDecl &x) {  // R835
     Walk(std::get<Name>(x.t));
     Put('['), Walk(std::get<CoarraySpec>(x.t)), Put(']');
-    return false;
   }
-  bool Pre(const ContiguousStmt &x) {  // R836
+  void Unparse(const ContiguousStmt &x) {  // R836
     Word("CONTIGUOUS :: "), Walk(x.v, ", ");
-    return false;
   }
-  bool Pre(const DataStmt &x) {  // R837
+  void Unparse(const DataStmt &x) {  // R837
     Word("DATA "), Walk(x.v, ", ");
-    return false;
   }
-  bool Pre(const DataStmtSet &x) {  // R838
+  void Unparse(const DataStmtSet &x) {  // R838
     Walk(std::get<std::list<DataStmtObject>>(x.t), ", ");
     Put('/'), Walk(std::get<std::list<DataStmtValue>>(x.t), ", "), Put('/');
-    return false;
   }
-  bool Pre(const DataImpliedDo &x) {  // R840, R842
+  void Unparse(const DataImpliedDo &x) {  // R840, R842
     Put('('), Walk(std::get<std::list<DataIDoObject>>(x.t), ", "), Put(',');
     Walk(std::get<std::optional<IntegerTypeSpec>>(x.t), "::");
     Walk(std::get<LoopBounds<ScalarIntConstantExpr>>(x.t)), Put(')');
-    return false;
   }
-  bool Pre(const DataStmtValue &x) {  // R843
+  void Unparse(const DataStmtValue &x) {  // R843
     Walk(std::get<std::optional<DataStmtRepeat>>(x.t), "*");
     Walk(std::get<DataStmtConstant>(x.t));
-    return false;
   }
-  bool Pre(const DimensionStmt &x) {  // R848
+  void Unparse(const DimensionStmt &x) {  // R848
     Word("DIMENSION :: "), Walk(x.v, ", ");
-    return false;
   }
-  bool Pre(const DimensionStmt::Declaration &x) {
+  void Unparse(const DimensionStmt::Declaration &x) {
     Walk(std::get<Name>(x.t));
     Put('('), Walk(std::get<ArraySpec>(x.t)), Put(')');
-    return false;
   }
-  bool Pre(const IntentStmt &x) {  // R849
+  void Unparse(const IntentStmt &x) {  // R849
     Walk(x.t, " :: ");
-    return false;
   }
-  bool Pre(const OptionalStmt &x) {  // R850
+  void Unparse(const OptionalStmt &x) {  // R850
     Word("OPTIONAL :: "), Walk(x.v, ", ");
-    return false;
   }
-  bool Pre(const ParameterStmt &x) {  // R851
+  void Unparse(const ParameterStmt &x) {  // R851
     Word("PARAMETER("), Walk(x.v, ", "), Put(')');
-    return false;
   }
-  bool Pre(const NamedConstantDef &x) {  // R852
+  void Unparse(const NamedConstantDef &x) {  // R852
     Walk(x.t, "=");
-    return false;
   }
-  bool Pre(const PointerStmt &x) {  // R853
+  void Unparse(const PointerStmt &x) {  // R853
     Word("POINTER"), Walk(x.v, ", ");
-    return false;
   }
-  bool Pre(const ProtectedStmt &x) {  // R855
+  void Unparse(const ProtectedStmt &x) {  // R855
     Word("PROTECTED :: "), Walk(x.v, ", ");
-    return false;
   }
-  bool Pre(const SaveStmt &x) {  // R856
+  void Unparse(const SaveStmt &x) {  // R856
     Word("SAVE"), Walk(" :: ", x.v, ", ");
-    return false;
   }
-  bool Pre(const SavedEntity &x) {  // R857, R858
+  void Unparse(const SavedEntity &x) {  // R857, R858
     bool isCommon{
         std::get<SavedEntity::Kind>(x.t) == SavedEntity::Kind::Common};
     const char *slash{isCommon ? "/" : ""};
     Put(slash), Walk(std::get<Name>(x.t)), Put(slash);
-    return false;
   }
-  bool Pre(const TargetStmt &x) {  // R859
+  void Unparse(const TargetStmt &x) {  // R859
     Word("TARGET :: "), Walk(x.v, ", ");
-    return false;
   }
-  bool Pre(const ValueStmt &x) {  // R861
+  void Unparse(const ValueStmt &x) {  // R861
     Word("VALUE :: "), Walk(x.v, ", ");
-    return false;
   }
-  bool Pre(const VolatileStmt &x) {  // R862
+  void Unparse(const VolatileStmt &x) {  // R862
     Word("VOLATILE :: "), Walk(x.v, ", ");
-    return false;
   }
-  bool Pre(const ImplicitStmt &x) {  // R863
+  void Unparse(const ImplicitStmt &x) {  // R863
     Word("IMPLICIT ");
     std::visit(
         visitors{[&](const std::list<ImplicitSpec> &y) { Walk(y, ", "); },
@@ -719,22 +607,19 @@ public:
               Word("NONE"), Walk(" (", y, ", ", ")");
             }},
         x.u);
-    return false;
   }
-  bool Pre(const ImplicitSpec &x) {  // R864
+  void Unparse(const ImplicitSpec &x) {  // R864
     Walk(std::get<DeclarationTypeSpec>(x.t));
     Put('('), Walk(std::get<std::list<LetterSpec>>(x.t), ", "), Put(')');
-    return false;
   }
-  bool Pre(const LetterSpec &x) {  // R865
+  void Unparse(const LetterSpec &x) {  // R865
     Put(*std::get<const char *>(x.t));
     auto second = std::get<std::optional<const char *>>(x.t);
     if (second.has_value()) {
       Put('-'), Put(**second);
     }
-    return false;
   }
-  bool Pre(const ImportStmt &x) {  // R867
+  void Unparse(const ImportStmt &x) {  // R867
     Word("IMPORT");
     switch (x.kind) {
     case ImportStmt::Kind::Default: Walk(" :: ", x.names, ", "); break;
@@ -746,65 +631,54 @@ public:
     case ImportStmt::Kind::All: Word(", ALL"); break;
     default: CRASH_NO_CASE;
     }
-    return false;
   }
-  bool Pre(const NamelistStmt &x) {  // R868
+  void Unparse(const NamelistStmt &x) {  // R868
     Word("NAMELIST"), Walk(x.v, ", ");
-    return false;
   }
-  bool Pre(const NamelistStmt::Group &x) {
+  void Unparse(const NamelistStmt::Group &x) {
     Put('/'), Walk(std::get<Name>(x.t)), Put('/');
     Walk(std::get<std::list<Name>>(x.t), ", ");
-    return false;
   }
-  bool Pre(const EquivalenceStmt &x) {  // R870, R871
+  void Unparse(const EquivalenceStmt &x) {  // R870, R871
     Word("EQUIVALENCE");
     const char *separator{" "};
     for (const std::list<EquivalenceObject> &y : x.v) {
       Put(separator), Put('('), Walk(y), Put(')');
       separator = ", ";
     }
-    return false;
   }
-  bool Pre(const CommonStmt &x) {  // R873
+  void Unparse(const CommonStmt &x) {  // R873
     Word("COMMON ");
     Walk("/", std::get<std::optional<std::optional<Name>>>(x.t), "/");
     Walk(std::get<std::list<CommonBlockObject>>(x.t), ", ");
     Walk(", ", std::get<std::list<CommonStmt::Block>>(x.t), ", ");
-    return false;
   }
-  bool Pre(const CommonBlockObject &x) {  // R874
+  void Unparse(const CommonBlockObject &x) {  // R874
     Walk(std::get<Name>(x.t));
     Walk("(", std::get<std::optional<ArraySpec>>(x.t), ")");
-    return false;
   }
-  bool Pre(const CommonStmt::Block &x) {
+  void Unparse(const CommonStmt::Block &x) {
     Walk("/", std::get<std::optional<Name>>(x.t), "/");
     Walk(std::get<std::list<CommonBlockObject>>(x.t));
-    return false;
   }
 
-  bool Pre(const Substring &x) {  // R908, R909
+  void Unparse(const Substring &x) {  // R908, R909
     Walk(std::get<DataReference>(x.t));
     Put('('), Walk(std::get<SubstringRange>(x.t)), Put(')');
-    return false;
   }
-  bool Pre(const CharLiteralConstantSubstring &x) {
+  void Unparse(const CharLiteralConstantSubstring &x) {
     Walk(std::get<CharLiteralConstant>(x.t));
     Put('('), Walk(std::get<SubstringRange>(x.t)), Put(')');
-    return false;
   }
-  bool Pre(const SubstringRange &x) {  // R910
+  void Unparse(const SubstringRange &x) {  // R910
     Walk(x.t, ":");
-    return false;
   }
-  bool Pre(const PartRef &x) {  // R912
+  void Unparse(const PartRef &x) {  // R912
     Walk(x.name);
     Walk("(", x.subscripts, ",", ")");
     Walk(x.imageSelector);
-    return false;
   }
-  bool Pre(const StructureComponent &x) {  // R913
+  void Unparse(const StructureComponent &x) {  // R913
     Walk(x.base);
     if (structureComponents_.find(x.component.source) !=
         structureComponents_.end()) {
@@ -813,190 +687,103 @@ public:
       Put('%');
     }
     Walk(x.component);
-    return false;
   }
-  bool Pre(const ArrayElement &x) {  // R917
+  void Unparse(const ArrayElement &x) {  // R917
     Walk(x.base);
     Put('('), Walk(x.subscripts, ","), Put(')');
-    return false;
   }
-  bool Pre(const SubscriptTriplet &x) {  // R921
+  void Unparse(const SubscriptTriplet &x) {  // R921
     Walk(std::get<0>(x.t)), Put(':'), Walk(std::get<1>(x.t));
     Walk(":", std::get<2>(x.t));
-    return false;
   }
-  bool Pre(const ImageSelector &x) {  // R924
+  void Unparse(const ImageSelector &x) {  // R924
     Put('['), Walk(std::get<std::list<Cosubscript>>(x.t), ",");
     Walk(",", std::get<std::list<ImageSelectorSpec>>(x.t), ","), Put(']');
-    return false;
   }
-  bool Pre(const ImageSelectorSpec::Stat &) {  // R926
+  void Before(const ImageSelectorSpec::Stat &) {  // R926
     Word("STAT=");
-    return true;
   }
-  bool Pre(const ImageSelectorSpec::Team &) {
-    Word("TEAM=");
-    return true;
-  }
-  bool Pre(const ImageSelectorSpec::Team_Number &) {
-    Word("TEAM_NUMBER=");
-    return true;
-  }
-  bool Pre(const AllocateStmt &x) {  // R927
+  void Before(const ImageSelectorSpec::Team &) { Word("TEAM="); }
+  void Before(const ImageSelectorSpec::Team_Number &) { Word("TEAM_NUMBER="); }
+  void Unparse(const AllocateStmt &x) {  // R927
     Word("ALLOCATE(");
     Walk(std::get<std::optional<TypeSpec>>(x.t), "::");
     Walk(std::get<std::list<Allocation>>(x.t), ", ");
     Walk(", ", std::get<std::list<AllocOpt>>(x.t), ", "), Put(')');
-    return false;
   }
-  bool Pre(const AllocOpt &x) {  // R928, R931
+  void Before(const AllocOpt &x) {  // R928, R931
     std::visit(visitors{[&](const AllocOpt::Mold &) { Word("MOLD="); },
                    [&](const AllocOpt::Source &) { Word("SOURCE="); },
                    [](const StatOrErrmsg &) {}},
         x.u);
-    return true;
   }
-  bool Pre(const Allocation &x) {  // R932
+  void Unparse(const Allocation &x) {  // R932
     Walk(std::get<AllocateObject>(x.t));
     Walk("(", std::get<std::list<AllocateShapeSpec>>(x.t), ",", ")");
     Walk("[", std::get<std::optional<AllocateCoarraySpec>>(x.t), "]");
-    return false;
   }
-  bool Pre(const AllocateShapeSpec &x) {  // R934 & R938
+  void Unparse(const AllocateShapeSpec &x) {  // R934 & R938
     Walk(std::get<std::optional<BoundExpr>>(x.t), ":");
     Walk(std::get<BoundExpr>(x.t));
-    return false;
   }
-  bool Pre(const AllocateCoarraySpec &x) {  // R937
+  void Unparse(const AllocateCoarraySpec &x) {  // R937
     Walk(std::get<std::list<AllocateCoshapeSpec>>(x.t), ",", ",");
     Walk(std::get<std::optional<BoundExpr>>(x.t), ":"), Put('*');
-    return false;
   }
-  bool Pre(const NullifyStmt &x) {  // R939
+  void Unparse(const NullifyStmt &x) {  // R939
     Word("NULLIFY("), Walk(x.v, ", "), Put(')');
-    return false;
   }
-  bool Pre(const DeallocateStmt &x) {  // R941
+  void Unparse(const DeallocateStmt &x) {  // R941
     Word("DEALLOCATE(");
     Walk(std::get<std::list<AllocateObject>>(x.t), ", ");
     Walk(", ", std::get<std::list<StatOrErrmsg>>(x.t), ", "), Put(')');
-    return false;
   }
-  bool Pre(const StatOrErrmsg &x) {  // R942 & R1165
+  void Before(const StatOrErrmsg &x) {  // R942 & R1165
     std::visit(visitors{[&](const StatVariable &) { Word("STAT="); },
                    [&](const MsgVariable &) { Word("ERRMSG="); }},
         x.u);
-    return true;
   }
 
   // R1001 - R1022
-  bool Pre(const Expr::Parentheses &x) {
-    Put('('), Walk(x.v), Put(')');
-    return false;
-  }
-  bool Pre(const Expr::UnaryPlus &x) {
-    Put("+");
-    return true;
-  }
-  bool Pre(const Expr::Negate &x) {
-    Put("-");
-    return true;
-  }
-  bool Pre(const Expr::NOT &x) {
-    Word(".NOT.");
-    return true;
-  }
-  bool Pre(const Expr::PercentLoc &x) {
+  void Unparse(const Expr::Parentheses &x) { Put('('), Walk(x.v), Put(')'); }
+  void Before(const Expr::UnaryPlus &x) { Put("+"); }
+  void Before(const Expr::Negate &x) { Put("-"); }
+  void Before(const Expr::NOT &x) { Word(".NOT."); }
+  void Unparse(const Expr::PercentLoc &x) {
     Word("%LOC("), Walk(x.v), Put(')');
-    return false;
   }
-  bool Pre(const Expr::Power &x) {
-    Walk(x.t, "**");
-    return false;
-  }
-  bool Pre(const Expr::Multiply &x) {
-    Walk(x.t, "*");
-    return false;
-  }
-  bool Pre(const Expr::Divide &x) {
-    Walk(x.t, "/");
-    return false;
-  }
-  bool Pre(const Expr::Add &x) {
-    Walk(x.t, "+");
-    return false;
-  }
-  bool Pre(const Expr::Subtract &x) {
-    Walk(x.t, "-");
-    return false;
-  }
-  bool Pre(const Expr::Concat &x) {
-    Walk(x.t, "//");
-    return false;
-  }
-  bool Pre(const Expr::LT &x) {
-    Walk(x.t, "<");
-    return false;
-  }
-  bool Pre(const Expr::LE &x) {
-    Walk(x.t, "<=");
-    return false;
-  }
-  bool Pre(const Expr::EQ &x) {
-    Walk(x.t, "==");
-    return false;
-  }
-  bool Pre(const Expr::NE &x) {
-    Walk(x.t, "/=");
-    return false;
-  }
-  bool Pre(const Expr::GE &x) {
-    Walk(x.t, ">=");
-    return false;
-  }
-  bool Pre(const Expr::GT &x) {
-    Walk(x.t, ">");
-    return false;
-  }
-  bool Pre(const Expr::AND &x) {
-    Walk(x.t, ".AND.");
-    return false;
-  }
-  bool Pre(const Expr::OR &x) {
-    Walk(x.t, ".OR.");
-    return false;
-  }
-  bool Pre(const Expr::EQV &x) {
-    Walk(x.t, ".EQV.");
-    return false;
-  }
-  bool Pre(const Expr::NEQV &x) {
-    Walk(x.t, ".NEQV.");
-    return false;
-  }
-  bool Pre(const Expr::XOR &x) {
-    Walk(x.t, ".XOR.");
-    return false;
-  }
-  bool Pre(const Expr::ComplexConstructor &x) {
+  void Unparse(const Expr::Power &x) { Walk(x.t, "**"); }
+  void Unparse(const Expr::Multiply &x) { Walk(x.t, "*"); }
+  void Unparse(const Expr::Divide &x) { Walk(x.t, "/"); }
+  void Unparse(const Expr::Add &x) { Walk(x.t, "+"); }
+  void Unparse(const Expr::Subtract &x) { Walk(x.t, "-"); }
+  void Unparse(const Expr::Concat &x) { Walk(x.t, "//"); }
+  void Unparse(const Expr::LT &x) { Walk(x.t, "<"); }
+  void Unparse(const Expr::LE &x) { Walk(x.t, "<="); }
+  void Unparse(const Expr::EQ &x) { Walk(x.t, "=="); }
+  void Unparse(const Expr::NE &x) { Walk(x.t, "/="); }
+  void Unparse(const Expr::GE &x) { Walk(x.t, ">="); }
+  void Unparse(const Expr::GT &x) { Walk(x.t, ">"); }
+  void Unparse(const Expr::AND &x) { Walk(x.t, ".AND."); }
+  void Unparse(const Expr::OR &x) { Walk(x.t, ".OR."); }
+  void Unparse(const Expr::EQV &x) { Walk(x.t, ".EQV."); }
+  void Unparse(const Expr::NEQV &x) { Walk(x.t, ".NEQV."); }
+  void Unparse(const Expr::XOR &x) { Walk(x.t, ".XOR."); }
+  void Unparse(const Expr::ComplexConstructor &x) {
     Put('('), Walk(x.t, ","), Put(')');
-    return false;
   }
-  bool Pre(const Expr::DefinedBinary &x) {
+  void Unparse(const Expr::DefinedBinary &x) {
     Walk(std::get<1>(x.t));  // left
     Walk(std::get<DefinedOpName>(x.t));
     Walk(std::get<2>(x.t));  // right
-    return false;
   }
-  bool Pre(const DefinedOpName &x) {  // R1003, R1023, R1414, & R1415
+  void Unparse(const DefinedOpName &x) {  // R1003, R1023, R1414, & R1415
     Put('.'), Walk(x.v), Put('.');
-    return false;
   }
-  bool Pre(const AssignmentStmt &x) {  // R1032
+  void Unparse(const AssignmentStmt &x) {  // R1032
     Walk(x.t, " = ");
-    return false;
   }
-  bool Pre(const PointerAssignmentStmt &x) {  // R1033, R1034, R1038
+  void Unparse(const PointerAssignmentStmt &x) {  // R1033, R1034, R1038
     Walk(std::get<Variable>(x.t));
     std::visit(
         visitors{[&](const std::list<BoundsRemapping> &y) {
@@ -1005,229 +792,185 @@ public:
             [&](const std::list<BoundsSpec> &y) { Walk("(", y, ", ", ")"); }},
         std::get<PointerAssignmentStmt::Bounds>(x.t).u);
     Put(" => "), Walk(std::get<Expr>(x.t));
-    return false;
   }
   void Post(const BoundsSpec &) {  // R1035
     Put(':');
   }
-  bool Pre(const BoundsRemapping &x) {  // R1036
+  void Unparse(const BoundsRemapping &x) {  // R1036
     Walk(x.t, ":");
-    return false;
   }
-  bool Pre(const ProcComponentRef &x) {  // R1039
+  void Unparse(const ProcComponentRef &x) {  // R1039
     Walk(std::get<Scalar<Variable>>(x.t)), Put('%'), Walk(std::get<Name>(x.t));
-    return false;
   }
-  bool Pre(const WhereStmt &x) {  // R1041, R1045, R1046
+  void Unparse(const WhereStmt &x) {  // R1041, R1045, R1046
     Word("WHERE ("), Walk(x.t, ") ");
-    return false;
   }
-  bool Pre(const WhereConstructStmt &x) {  // R1043
+  void Unparse(const WhereConstructStmt &x) {  // R1043
     Walk(std::get<std::optional<Name>>(x.t), ": ");
     Word("WHERE ("), Walk(std::get<LogicalExpr>(x.t)), Put(')');
     Indent();
-    return false;
   }
-  bool Pre(const MaskedElsewhereStmt &x) {  // R1047
+  void Unparse(const MaskedElsewhereStmt &x) {  // R1047
     Outdent();
     Word("ELSEWHERE ("), Walk(std::get<LogicalExpr>(x.t)), Put(')');
     Walk(" ", std::get<std::optional<Name>>(x.t));
     Indent();
-    return false;
   }
-  bool Pre(const ElsewhereStmt &x) {  // R1048
+  void Unparse(const ElsewhereStmt &x) {  // R1048
     Outdent(), Word("ELSEWHERE"), Walk(" ", x.v), Indent();
-    return false;
   }
-  bool Pre(const EndWhereStmt &x) {  // R1049
+  void Unparse(const EndWhereStmt &x) {  // R1049
     Outdent(), Word("END WHERE"), Walk(" ", x.v);
-    return false;
   }
-  bool Pre(const ForallConstructStmt &x) {  // R1051
+  void Unparse(const ForallConstructStmt &x) {  // R1051
     Walk(std::get<std::optional<Name>>(x.t), ": ");
     Word("FORALL"), Walk(std::get<Indirection<ConcurrentHeader>>(x.t));
     Indent();
-    return false;
   }
-  bool Pre(const EndForallStmt &x) {  // R1054
+  void Unparse(const EndForallStmt &x) {  // R1054
     Outdent(), Word("END FORALL"), Walk(" ", x.v);
-    return false;
   }
-  bool Pre(const ForallStmt &) {  // R1055
+  void Before(const ForallStmt &) {  // R1055
     Word("FORALL");
-    return true;
   }
 
-  bool Pre(const AssociateStmt &x) {  // R1103
+  void Unparse(const AssociateStmt &x) {  // R1103
     Walk(std::get<std::optional<Name>>(x.t), ": ");
     Word("ASSOCIATE (");
     Walk(std::get<std::list<Association>>(x.t), ", "), Put(')'), Indent();
-    return false;
   }
-  bool Pre(const Association &x) {  // R1104
+  void Unparse(const Association &x) {  // R1104
     Walk(x.t, " => ");
-    return false;
   }
-  bool Pre(const EndAssociateStmt &x) {  // R1106
+  void Unparse(const EndAssociateStmt &x) {  // R1106
     Outdent(), Word("END ASSOCIATE"), Walk(" ", x.v);
-    return false;
   }
-  bool Pre(const BlockStmt &x) {  // R1108
+  void Unparse(const BlockStmt &x) {  // R1108
     Walk(x.v, ": "), Word("BLOCK"), Indent();
-    return false;
   }
-  bool Pre(const EndBlockStmt &x) {  // R1110
+  void Unparse(const EndBlockStmt &x) {  // R1110
     Outdent(), Word("END BLOCK"), Walk(" ", x.v);
-    return false;
   }
-  bool Pre(const ChangeTeamStmt &x) {  // R1112
+  void Unparse(const ChangeTeamStmt &x) {  // R1112
     Walk(std::get<std::optional<Name>>(x.t), ": ");
     Word("CHANGE TEAM ("), Walk(std::get<TeamVariable>(x.t));
     Walk(", ", std::get<std::list<CoarrayAssociation>>(x.t), ", ");
     Walk(", ", std::get<std::list<StatOrErrmsg>>(x.t), ", "), Put(')');
     Indent();
-    return false;
   }
-  bool Pre(const CoarrayAssociation &x) {  // R1113
+  void Unparse(const CoarrayAssociation &x) {  // R1113
     Walk(x.t, " => ");
-    return false;
   }
-  bool Pre(const EndChangeTeamStmt &x) {  // R1114
+  void Unparse(const EndChangeTeamStmt &x) {  // R1114
     Outdent(), Word("END TEAM (");
     Walk(std::get<std::list<StatOrErrmsg>>(x.t), ", ");
     Put(')'), Walk(" ", std::get<std::optional<Name>>(x.t));
-    return false;
   }
-  bool Pre(const CriticalStmt &x) {  // R1117
+  void Unparse(const CriticalStmt &x) {  // R1117
     Walk(std::get<std::optional<Name>>(x.t), ": ");
     Word("CRITICAL ("), Walk(std::get<std::list<StatOrErrmsg>>(x.t), ", ");
     Put(')'), Indent();
-    return false;
   }
-  bool Pre(const EndCriticalStmt &x) {  // R1118
+  void Unparse(const EndCriticalStmt &x) {  // R1118
     Outdent(), Word("END CRITICAL"), Walk(" ", x.v);
-    return false;
   }
-  bool Pre(const DoConstruct &x) {  // R1119, R1120
+  void Unparse(const DoConstruct &x) {  // R1119, R1120
     Walk(std::get<Statement<NonLabelDoStmt>>(x.t));
     Indent(), Walk(std::get<Block>(x.t), ""), Outdent();
     Walk(std::get<Statement<EndDoStmt>>(x.t));
-    return false;
   }
-  bool Pre(const LabelDoStmt &x) {  // R1121
+  void Unparse(const LabelDoStmt &x) {  // R1121
     Walk(std::get<std::optional<Name>>(x.t), ": ");
     Word("DO "), Walk(std::get<Label>(x.t));
     Walk(" ", std::get<std::optional<LoopControl>>(x.t));
-    return false;
   }
-  bool Pre(const NonLabelDoStmt &x) {  // R1122
+  void Unparse(const NonLabelDoStmt &x) {  // R1122
     Walk(std::get<std::optional<Name>>(x.t), ": ");
     Word("DO "), Walk(std::get<std::optional<LoopControl>>(x.t));
-    return false;
   }
-  bool Pre(const LoopControl &x) {  // R1123
+  void Unparse(const LoopControl &x) {  // R1123
     std::visit(visitors{[&](const ScalarLogicalExpr &y) {
                           Word("WHILE ("), Walk(y), Put(')');
                         },
                    [&](const auto &y) { Walk(y); }},
         x.u);
-    return false;
   }
-  bool Pre(const ConcurrentHeader &x) {  // R1125
+  void Unparse(const ConcurrentHeader &x) {  // R1125
     Put('('), Walk(std::get<std::optional<IntegerTypeSpec>>(x.t), "::");
     Walk(std::get<std::list<ConcurrentControl>>(x.t), ", ");
     Walk(", ", std::get<std::optional<ScalarLogicalExpr>>(x.t)), Put(')');
-    return false;
   }
-  bool Pre(const ConcurrentControl &x) {  // R1126 - R1128
+  void Unparse(const ConcurrentControl &x) {  // R1126 - R1128
     Walk(std::get<Name>(x.t)), Put('='), Walk(std::get<1>(x.t));
     Put(':'), Walk(std::get<2>(x.t));
     Walk(":", std::get<std::optional<ScalarIntExpr>>(x.t));
-    return false;
   }
-  bool Pre(const LoopControl::Concurrent &x) {  // R1129
+  void Before(const LoopControl::Concurrent &x) {  // R1129
     Word("CONCURRENT");
-    return true;
   }
-  bool Pre(const LocalitySpec::Local &x) {
+  void Unparse(const LocalitySpec::Local &x) {
     Word("LOCAL("), Walk(x.v, ", "), Put(')');
-    return false;
   }
-  bool Pre(const LocalitySpec::LocalInit &x) {
+  void Unparse(const LocalitySpec::LocalInit &x) {
     Word("LOCAL INIT("), Walk(x.v, ", "), Put(')');
-    return false;
   }
-  bool Pre(const LocalitySpec::Shared &x) {
+  void Unparse(const LocalitySpec::Shared &x) {
     Word("SHARED("), Walk(x.v, ", "), Put(')');
-    return false;
   }
   void Post(const LocalitySpec::DefaultNone &x) { Word("DEFAULT(NONE)"); }
-  bool Pre(const EndDoStmt &x) {  // R1132
+  void Unparse(const EndDoStmt &x) {  // R1132
     Word("END DO"), Walk(" ", x.v);
-    return false;
   }
-  bool Pre(const CycleStmt &x) {  // R1133
+  void Unparse(const CycleStmt &x) {  // R1133
     Word("CYCLE"), Walk(" ", x.v);
-    return false;
   }
-  bool Pre(const IfThenStmt &x) {  // R1135
+  void Unparse(const IfThenStmt &x) {  // R1135
     Walk(std::get<std::optional<Name>>(x.t), ": ");
     Word("IF ("), Walk(std::get<ScalarLogicalExpr>(x.t));
     Put(") "), Word("THEN"), Indent();
-    return false;
   }
-  bool Pre(const ElseIfStmt &x) {  // R1136
+  void Unparse(const ElseIfStmt &x) {  // R1136
     Outdent(), Word("ELSE IF (");
     Walk(std::get<ScalarLogicalExpr>(x.t)), Put(") "), Word("THEN");
     Walk(" ", std::get<std::optional<Name>>(x.t)), Indent();
-    return false;
   }
-  bool Pre(const ElseStmt &x) {  // R1137
+  void Unparse(const ElseStmt &x) {  // R1137
     Outdent(), Word("ELSE"), Walk(" ", x.v), Indent();
-    return false;
   }
-  bool Pre(const EndIfStmt &x) {  // R1138
+  void Unparse(const EndIfStmt &x) {  // R1138
     Outdent(), Word("END IF"), Walk(" ", x.v);
-    return false;
   }
-  bool Pre(const IfStmt &x) {  // R1139
+  void Unparse(const IfStmt &x) {  // R1139
     Word("IF ("), Walk(x.t, ") ");
-    return false;
   }
-  bool Pre(const SelectCaseStmt &x) {  // R1141, R1144
+  void Unparse(const SelectCaseStmt &x) {  // R1141, R1144
     Walk(std::get<std::optional<Name>>(x.t), ": ");
     Word("SELECT CASE (");
     Walk(std::get<Scalar<Expr>>(x.t)), Put(')'), Indent();
-    return false;
   }
-  bool Pre(const CaseStmt &x) {  // R1142
+  void Unparse(const CaseStmt &x) {  // R1142
     Outdent(), Word("CASE "), Walk(std::get<CaseSelector>(x.t));
     Walk(" ", std::get<std::optional<Name>>(x.t)), Indent();
-    return false;
   }
-  bool Pre(const EndSelectStmt &x) {  // R1143 & R1151 & R1155
+  void Unparse(const EndSelectStmt &x) {  // R1143 & R1151 & R1155
     Outdent(), Word("END SELECT"), Walk(" ", x.v);
-    return false;
   }
-  bool Pre(const CaseSelector &x) {  // R1145
+  void Unparse(const CaseSelector &x) {  // R1145
     std::visit(visitors{[&](const std::list<CaseValueRange> &y) {
                           Put('('), Walk(y), Put(')');
                         },
                    [&](const Default &) { Word("DEFAULT"); }},
         x.u);
-    return false;
   }
-  bool Pre(const CaseValueRange::Range &x) {  // R1146
+  void Unparse(const CaseValueRange::Range &x) {  // R1146
     Walk(x.lower), Put(':'), Walk(x.upper);
-    return false;
   }
-  bool Pre(const SelectRankStmt &x) {  // R1149
+  void Unparse(const SelectRankStmt &x) {  // R1149
     Walk(std::get<0>(x.t), ": ");
     Word("SELECT RANK ("), Walk(std::get<1>(x.t), " => ");
     Walk(std::get<Selector>(x.t)), Put(')'), Indent();
-    return false;
   }
-  bool Pre(const SelectRankCaseStmt &x) {  // R1150
+  void Unparse(const SelectRankCaseStmt &x) {  // R1150
     Outdent(), Word("RANK ");
     std::visit(visitors{[&](const ScalarIntConstantExpr &y) {
                           Put('('), Walk(y), Put(')');
@@ -1236,20 +979,17 @@ public:
                    [&](const Default &) { Word("DEFAULT"); }},
         std::get<SelectRankCaseStmt::Rank>(x.t).u);
     Walk(" ", std::get<std::optional<Name>>(x.t)), Indent();
-    return false;
   }
-  bool Pre(const SelectTypeStmt &x) {  // R1153
+  void Unparse(const SelectTypeStmt &x) {  // R1153
     Walk(std::get<0>(x.t), ": ");
     Word("SELECT TYPE ("), Walk(std::get<1>(x.t), " => ");
     Walk(std::get<Selector>(x.t)), Put(')'), Indent();
-    return false;
   }
-  bool Pre(const TypeGuardStmt &x) {  // R1154
+  void Unparse(const TypeGuardStmt &x) {  // R1154
     Outdent(), Walk(std::get<TypeGuardStmt::Guard>(x.t));
     Walk(" ", std::get<std::optional<Name>>(x.t)), Indent();
-    return false;
   }
-  bool Pre(const TypeGuardStmt::Guard &x) {
+  void Unparse(const TypeGuardStmt::Guard &x) {
     std::visit(visitors{[&](const TypeSpec &y) {
                           Word("TYPE IS ("), Walk(y), Put(')');
                         },
@@ -1258,108 +998,88 @@ public:
                    },
                    [&](const Default &) { Word("CLASS DEFAULT"); }},
         x.u);
-    return false;
   }
-  bool Pre(const ExitStmt &x) {  // R1156
+  void Unparse(const ExitStmt &x) {  // R1156
     Word("EXIT"), Walk(" ", x.v);
-    return false;
   }
-  bool Pre(const GotoStmt &x) {  // R1157
+  void Before(const GotoStmt &x) {  // R1157
     Word("GO TO ");
-    return true;
   }
-  bool Pre(const ComputedGotoStmt &x) {  // R1158
+  void Unparse(const ComputedGotoStmt &x) {  // R1158
     Word("GO TO ("), Walk(x.t, "), ");
-    return false;
   }
-  bool Pre(const ContinueStmt &x) {  // R1159
+  void Unparse(const ContinueStmt &x) {  // R1159
     Word("CONTINUE");
-    return false;
   }
-  bool Pre(const StopStmt &x) {  // R1160, R1161
+  void Unparse(const StopStmt &x) {  // R1160, R1161
     if (std::get<StopStmt::Kind>(x.t) == StopStmt::Kind::ErrorStop) {
       Word("ERROR ");
     }
     Word("STOP"), Walk(" ", std::get<std::optional<StopCode>>(x.t));
     Walk(", QUIET=", std::get<std::optional<ScalarLogicalExpr>>(x.t));
-    return false;
   }
-  bool Pre(const FailImageStmt &x) {  // R1163
+  void Unparse(const FailImageStmt &x) {  // R1163
     Word("FAIL IMAGE");
-    return false;
   }
-  bool Pre(const SyncAllStmt &x) {  // R1164
+  void Unparse(const SyncAllStmt &x) {  // R1164
     Word("SYNC ALL ("), Walk(x.v, ", "), Put(')');
-    return false;
   }
-  bool Pre(const SyncImagesStmt &x) {  // R1166
+  void Unparse(const SyncImagesStmt &x) {  // R1166
     Word("SYNC IMAGES (");
     Walk(std::get<SyncImagesStmt::ImageSet>(x.t));
     Walk(", ", std::get<std::list<StatOrErrmsg>>(x.t), ", "), Put(')');
-    return false;
   }
-  bool Pre(const SyncMemoryStmt &x) {  // R1168
+  void Unparse(const SyncMemoryStmt &x) {  // R1168
     Word("SYNC MEMORY ("), Walk(x.v, ", "), Put(')');
-    return false;
   }
-  bool Pre(const SyncTeamStmt &x) {  // R1169
+  void Unparse(const SyncTeamStmt &x) {  // R1169
     Word("SYNC TEAM ("), Walk(std::get<TeamVariable>(x.t));
     Walk(", ", std::get<std::list<StatOrErrmsg>>(x.t), ", "), Put(')');
-    return false;
   }
-  bool Pre(const EventPostStmt &x) {  // R1170
+  void Unparse(const EventPostStmt &x) {  // R1170
     Word("EVENT POST ("), Walk(std::get<EventVariable>(x.t));
     Walk(", ", std::get<std::list<StatOrErrmsg>>(x.t), ", "), Put(')');
-    return false;
   }
-  bool Pre(const EventWaitStmt::EventWaitSpec &x) {  // R1173, R1174
+  void Before(const EventWaitStmt::EventWaitSpec &x) {  // R1173, R1174
     std::visit(visitors{[&](const ScalarIntExpr &x) { Word("UNTIL_COUNT="); },
                    [](const StatOrErrmsg &) {}},
         x.u);
-    return true;
   }
-  bool Pre(const EventWaitStmt &x) {  // R1170
+  void Unparse(const EventWaitStmt &x) {  // R1170
     Word("EVENT WAIT ("), Walk(std::get<EventVariable>(x.t));
     Walk(", ", std::get<std::list<EventWaitStmt::EventWaitSpec>>(x.t), ", ");
     Put(')');
-    return false;
   }
-  bool Pre(const FormTeamStmt &x) {  // R1175
+  void Unparse(const FormTeamStmt &x) {  // R1175
     Word("FORM TEAM ("), Walk(std::get<ScalarIntExpr>(x.t));
     Put(','), Walk(std::get<TeamVariable>(x.t));
     Walk(", ", std::get<std::list<FormTeamStmt::FormTeamSpec>>(x.t), ", ");
     Put(')');
-    return false;
   }
-  bool Pre(const FormTeamStmt::FormTeamSpec &x) {  // R1176, R1177
+  void Before(const FormTeamStmt::FormTeamSpec &x) {  // R1176, R1177
     std::visit(visitors{[&](const ScalarIntExpr &x) { Word("NEW_INDEX="); },
                    [](const StatOrErrmsg &) {}},
         x.u);
-    return true;
   }
-  bool Pre(const LockStmt &x) {  // R1178
+  void Unparse(const LockStmt &x) {  // R1178
     Word("LOCK ("), Walk(std::get<LockVariable>(x.t));
     Walk(", ", std::get<std::list<LockStmt::LockStat>>(x.t), ", ");
     Put(')');
-    return false;
   }
-  bool Pre(const LockStmt::LockStat &x) {  // R1179
+  void Before(const LockStmt::LockStat &x) {  // R1179
     std::visit(
         visitors{[&](const ScalarLogicalVariable &) { Word("ACQUIRED_LOCK="); },
             [](const StatOrErrmsg &y) {}},
         x.u);
-    return true;
   }
-  bool Pre(const UnlockStmt &x) {  // R1180
+  void Unparse(const UnlockStmt &x) {  // R1180
     Word("UNLOCK ("), Walk(std::get<LockVariable>(x.t));
     Walk(", ", std::get<std::list<StatOrErrmsg>>(x.t), ", ");
     Put(')');
-    return false;
   }
 
-  bool Pre(const OpenStmt &x) {  // R1204
+  void Unparse(const OpenStmt &x) {  // R1204
     Word("OPEN ("), Walk(x.v, ", "), Put(')');
-    return false;
   }
   bool Pre(const ConnectSpec &x) {  // R1205
     return std::visit(visitors{[&](const FileUnitNumber &) {
@@ -1400,20 +1120,18 @@ public:
                           }},
         x.u);
   }
-  bool Pre(const CloseStmt &x) {  // R1208
+  void Unparse(const CloseStmt &x) {  // R1208
     Word("CLOSE ("), Walk(x.v, ", "), Put(')');
-    return false;
   }
-  bool Pre(const CloseStmt::CloseSpec &x) {  // R1209
+  void Before(const CloseStmt::CloseSpec &x) {  // R1209
     std::visit(visitors{[&](const FileUnitNumber &) { Word("UNIT="); },
                    [&](const StatVariable &) { Word("IOSTAT="); },
                    [&](const MsgVariable &) { Word("IOMSG="); },
                    [&](const ErrLabel &) { Word("ERR="); },
                    [&](const StatusExpr &) { Word("STATUS="); }},
         x.u);
-    return true;
   }
-  bool Pre(const ReadStmt &x) {  // R1210
+  void Unparse(const ReadStmt &x) {  // R1210
     Word("READ ");
     if (x.iounit) {
       Put('('), Walk(x.iounit);
@@ -1431,9 +1149,8 @@ public:
       Put('('), Walk(x.controls, ", "), Put(')');
     }
     Walk(" ", x.items, ", ");
-    return false;
   }
-  bool Pre(const WriteStmt &x) {  // R1211
+  void Unparse(const WriteStmt &x) {  // R1211
     Word("WRITE (");
     if (x.iounit) {
       Walk(x.iounit);
@@ -1445,12 +1162,10 @@ public:
       Walk(x.controls, ", ");
     }
     Put(')'), Walk(" ", x.items, ", ");
-    return false;
   }
-  bool Pre(const PrintStmt &x) {  // R1212
+  void Unparse(const PrintStmt &x) {  // R1212
     Word("PRINT "), Walk(std::get<Format>(x.t));
     Walk(", ", std::get<std::list<OutputItem>>(x.t), ", ");
-    return false;
   }
   bool Pre(const IoControlSpec &x) {  // R1213
     return std::visit(visitors{[&](const IoUnit &) {
@@ -1511,21 +1226,18 @@ public:
                           }},
         x.u);
   }
-  bool Pre(const InputImpliedDo &x) {  // R1218
+  void Unparse(const InputImpliedDo &x) {  // R1218
     Put('('), Walk(std::get<std::list<InputItem>>(x.t), ", "), Put(", ");
     Walk(std::get<IoImpliedDoControl>(x.t)), Put(')');
-    return false;
   }
-  bool Pre(const OutputImpliedDo &x) {  // R1219
+  void Unparse(const OutputImpliedDo &x) {  // R1219
     Put('('), Walk(std::get<std::list<OutputItem>>(x.t), ", "), Put(", ");
     Walk(std::get<IoImpliedDoControl>(x.t)), Put(')');
-    return false;
   }
-  bool Pre(const WaitStmt &x) {  // R1222
+  void Unparse(const WaitStmt &x) {  // R1222
     Word("WAIT ("), Walk(x.v, ", "), Put(')');
-    return false;
   }
-  bool Pre(const WaitSpec &x) {  // R1223
+  void Before(const WaitSpec &x) {  // R1223
     std::visit(visitors{[&](const FileUnitNumber &) { Word("UNIT="); },
                    [&](const EndLabel &) { Word("END="); },
                    [&](const EorLabel &) { Word("EOR="); },
@@ -1534,33 +1246,27 @@ public:
                    [&](const MsgVariable &) { Word("IOMSG="); },
                    [&](const StatVariable &) { Word("IOSTAT="); }},
         x.u);
-    return true;
   }
-  bool Pre(const BackspaceStmt &x) {  // R1224
+  void Unparse(const BackspaceStmt &x) {  // R1224
     Word("BACKSPACE ("), Walk(x.v, ", "), Put(')');
-    return false;
   }
-  bool Pre(const EndfileStmt &x) {  // R1225
+  void Unparse(const EndfileStmt &x) {  // R1225
     Word("ENDFILE ("), Walk(x.v, ", "), Put(')');
-    return false;
   }
-  bool Pre(const RewindStmt &x) {  // R1226
+  void Unparse(const RewindStmt &x) {  // R1226
     Word("REWIND ("), Walk(x.v, ", "), Put(')');
-    return false;
   }
-  bool Pre(const PositionOrFlushSpec &x) {  // R1227 & R1229
+  void Before(const PositionOrFlushSpec &x) {  // R1227 & R1229
     std::visit(visitors{[&](const FileUnitNumber &) { Word("UNIT="); },
                    [&](const MsgVariable &) { Word("IOMSG="); },
                    [&](const StatVariable &) { Word("IOSTAT="); },
                    [&](const ErrLabel &) { Word("ERR="); }},
         x.u);
-    return true;
   }
-  bool Pre(const FlushStmt &x) {  // R1228
+  void Unparse(const FlushStmt &x) {  // R1228
     Word("FLUSH ("), Walk(x.v, ", "), Put(')');
-    return false;
   }
-  bool Pre(const InquireStmt &x) {  // R1230
+  void Unparse(const InquireStmt &x) {  // R1230
     Word("INQUIRE (");
     std::visit(
         visitors{[&](const InquireStmt::Iolength &y) {
@@ -1568,7 +1274,6 @@ public:
                  },
             [&](const std::list<InquireSpec> &y) { Walk(y, ", "), Put(')'); }},
         x.u);
-    return false;
   }
   bool Pre(const InquireSpec &x) {  // R1231
     return std::visit(visitors{[&](const FileUnitNumber &) {
@@ -1602,16 +1307,14 @@ public:
         x.u);
   }
 
-  bool Pre(const FormatStmt &) {  // R1301
+  void Before(const FormatStmt &) {  // R1301
     Word("FORMAT");
-    return true;
   }
-  bool Pre(const format::FormatSpecification &x) {  // R1302, R1303, R1305
+  void Unparse(const format::FormatSpecification &x) {  // R1302, R1303, R1305
     Put('('), Walk("", x.items, ",", x.unlimitedItems.empty() ? "" : ",");
     Walk("*(", x.unlimitedItems, ",", ")"), Put(')');
-    return false;
   }
-  bool Pre(const format::FormatItem &x) {  // R1304, R1306, R1321
+  void Unparse(const format::FormatItem &x) {  // R1304, R1306, R1321
     if (x.repeatCount.has_value()) {
       Walk(*x.repeatCount);
     }
@@ -1621,9 +1324,9 @@ public:
                    },
                    [&](const auto &y) { Walk(y); }},
         x.u);
-    return false;
   }
-  bool Pre(const format::IntrinsicTypeDataEditDesc &x) {  // R1307(1/2) - R1311
+  void Unparse(
+      const format::IntrinsicTypeDataEditDesc &x) {  // R1307(1/2) - R1311
     switch (x.kind) {
 #define FMT(x) \
   case format::IntrinsicTypeDataEditDesc::Kind::x: Put(#x); break
@@ -1644,17 +1347,15 @@ public:
     default: CRASH_NO_CASE;
     }
     Walk(x.width), Walk(".", x.digits), Walk("E", x.exponentWidth);
-    return false;
   }
-  bool Pre(const format::DerivedTypeDataEditDesc &x) {  // R1307(2/2), R1312
+  void Unparse(const format::DerivedTypeDataEditDesc &x) {  // R1307(2/2), R1312
     Word("DT");
     if (!x.type.empty()) {
       Put('"'), Put(x.type), Put('"');
     }
     Walk("(", x.parameters, ",", ")");
-    return false;
   }
-  bool Pre(const format::ControlEditDesc &x) {  // R1313, R1315-R1320
+  void Unparse(const format::ControlEditDesc &x) {  // R1313, R1315-R1320
     switch (x.kind) {
     case format::ControlEditDesc::Kind::T:
       Word("T");
@@ -1703,92 +1404,76 @@ public:
 #undef FMT
     default: CRASH_NO_CASE;
     }
-    return false;
   }
 
-  bool Pre(const MainProgram &x) {  // R1401
+  void Before(const MainProgram &x) {  // R1401
     if (!std::get<std::optional<Statement<ProgramStmt>>>(x.t)) {
       Indent();
     }
-    return true;
   }
-  bool Pre(const ProgramStmt &x) {  // R1402
+  void Before(const ProgramStmt &x) {  // R1402
     Word("PROGRAM "), Indent();
-    return true;
   }
-  bool Pre(const EndProgramStmt &x) {  // R1403
+  void Unparse(const EndProgramStmt &x) {  // R1403
     EndSubprogram("PROGRAM", x.v);
-    return false;
   }
-  bool Pre(const ModuleStmt &) {  // R1405
+  void Before(const ModuleStmt &) {  // R1405
     Word("MODULE "), Indent();
-    return true;
   }
-  bool Pre(const EndModuleStmt &x) {  // R1406
+  void Unparse(const EndModuleStmt &x) {  // R1406
     EndSubprogram("MODULE", x.v);
-    return false;
   }
-  bool Pre(const UseStmt &x) {  // R1409
+  void Unparse(const UseStmt &x) {  // R1409
     Word("USE"), Walk(", ", x.nature), Put(" :: "), Walk(x.moduleName);
     std::visit(
         visitors{[&](const std::list<Rename> &y) { Walk(", ", y, ", "); },
             [&](const std::list<Only> &y) { Walk(", ONLY: ", y, ", "); }},
         x.u);
-    return false;
   }
-  bool Pre(const Rename &x) {  // R1411
+  void Unparse(const Rename &x) {  // R1411
     std::visit(visitors{[&](const Rename::Names &y) { Walk(y.t, " => "); },
                    [&](const Rename::Operators &y) {
                      Word("OPERATOR(."), Walk(y.t, ".) => OPERATOR(."),
                          Put(".)");
                    }},
         x.u);
-    return false;
   }
-  bool Pre(const SubmoduleStmt &x) {  // R1417
+  void Before(const SubmoduleStmt &x) {  // R1417
     Word("SUBMODULE "), Indent();
-    return true;
   }
-  bool Pre(const ParentIdentifier &x) {  // R1418
+  void Unparse(const ParentIdentifier &x) {  // R1418
     Walk(std::get<Name>(x.t)), Walk(":", std::get<std::optional<Name>>(x.t));
-    return false;
   }
-  bool Pre(const EndSubmoduleStmt &x) {  // R1419
+  void Unparse(const EndSubmoduleStmt &x) {  // R1419
     EndSubprogram("SUBMODULE", x.v);
-    return false;
   }
-  bool Pre(const BlockDataStmt &x) {  // R1421
+  void Unparse(const BlockDataStmt &x) {  // R1421
     Word("BLOCK DATA"), Walk(" ", x.v), Indent();
-    return false;
   }
-  bool Pre(const EndBlockDataStmt &x) {  // R1422
+  void Unparse(const EndBlockDataStmt &x) {  // R1422
     EndSubprogram("BLOCK DATA", x.v);
-    return false;
   }
 
-  bool Pre(const InterfaceStmt &x) {  // R1503
+  void Unparse(const InterfaceStmt &x) {  // R1503
     std::visit(visitors{[&](const std::optional<GenericSpec> &y) {
                           Word("INTERFACE"), Walk(" ", y);
                         },
                    [&](const Abstract &) { Word("ABSTRACT INTERFACE"); }},
         x.u);
     Indent();
-    return false;
   }
-  bool Pre(const EndInterfaceStmt &x) {  // R1504
+  void Unparse(const EndInterfaceStmt &x) {  // R1504
     Outdent(), Word("END INTERFACE"), Walk(" ", x.v);
-    return false;
   }
-  bool Pre(const ProcedureStmt &x) {  // R1506
+  void Unparse(const ProcedureStmt &x) {  // R1506
     if (std::get<ProcedureStmt::Kind>(x.t) ==
         ProcedureStmt::Kind::ModuleProcedure) {
       Word("MODULE ");
     }
     Word("PROCEDURE :: ");
     Walk(std::get<std::list<Name>>(x.t), ", ");
-    return false;
   }
-  bool Pre(const GenericSpec &x) {  // R1508, R1509
+  void Before(const GenericSpec &x) {  // R1508, R1509
     std::visit(
         visitors{[&](const DefinedOperator &x) { Word("OPERATOR("); },
             [&](const GenericSpec::Assignment &) { Word("ASSIGNMENT(=)"); },
@@ -1806,44 +1491,37 @@ public:
             },
             [](const auto &) {}},
         x.u);
-    return true;
   }
   void Post(const GenericSpec &x) {
     std::visit(visitors{[&](const DefinedOperator &x) { Put(')'); },
                    [](const auto &) {}},
         x.u);
   }
-  bool Pre(const GenericStmt &x) {  // R1510
+  void Unparse(const GenericStmt &x) {  // R1510
     Word("GENERIC"), Walk(", ", std::get<std::optional<AccessSpec>>(x.t));
     Put(" :: "), Walk(std::get<GenericSpec>(x.t)), Put(" => ");
     Walk(std::get<std::list<Name>>(x.t), ", ");
-    return false;
   }
-  bool Pre(const ExternalStmt &x) {  // R1511
+  void Unparse(const ExternalStmt &x) {  // R1511
     Word("EXTERNAL :: "), Walk(x.v, ", ");
-    return false;
   }
-  bool Pre(const ProcedureDeclarationStmt &x) {  // R1512
+  void Unparse(const ProcedureDeclarationStmt &x) {  // R1512
     Word("PROCEDURE ("), Walk(std::get<std::optional<ProcInterface>>(x.t));
     Put(')'), Walk(", ", std::get<std::list<ProcAttrSpec>>(x.t), ", ");
     Put(" :: "), Walk(std::get<std::list<ProcDecl>>(x.t), ", ");
-    return false;
   }
-  bool Pre(const ProcDecl &x) {  // R1515
+  void Unparse(const ProcDecl &x) {  // R1515
     Walk(std::get<Name>(x.t));
     Walk(" => ", std::get<std::optional<ProcPointerInit>>(x.t));
-    return false;
   }
-  bool Pre(const IntrinsicStmt &x) {  // R1519
+  void Unparse(const IntrinsicStmt &x) {  // R1519
     Word("INTRINSIC :: "), Walk(x.v, ", ");
-    return false;
   }
-  bool Pre(const FunctionReference &x) {  // R1520
+  void Unparse(const FunctionReference &x) {  // R1520
     Walk(std::get<ProcedureDesignator>(x.v.t));
     Put('('), Walk(std::get<std::list<ActualArgSpec>>(x.v.t), ", "), Put(')');
-    return false;
   }
-  bool Pre(const CallStmt &x) {  // R1521
+  void Unparse(const CallStmt &x) {  // R1521
     const auto &pd = std::get<ProcedureDesignator>(x.v.t);
     const auto &args = std::get<std::list<ActualArgSpec>>(x.v.t);
     Word("CALL "), Walk(pd);
@@ -1854,24 +1532,19 @@ public:
     } else {
       Walk("(", args, ", ", ")");
     }
-    return false;
   }
-  bool Pre(const ActualArgSpec &x) {  // R1523
+  void Unparse(const ActualArgSpec &x) {  // R1523
     Walk(std::get<std::optional<Keyword>>(x.t), "=");
     Walk(std::get<ActualArg>(x.t));
-    return false;
   }
-  bool Pre(const ActualArg::PercentRef &x) {  // R1524
+  void Unparse(const ActualArg::PercentRef &x) {  // R1524
     Word("%REF("), Walk(x.v), Put(')');
-    return false;
   }
-  bool Pre(const ActualArg::PercentVal &x) {
+  void Unparse(const ActualArg::PercentVal &x) {
     Word("%VAL("), Walk(x.v), Put(')');
-    return false;
   }
-  bool Pre(const AltReturnSpec &) {  // R1525
+  void Before(const AltReturnSpec &) {  // R1525
     Put('*');
-    return true;
   }
   void Post(const PrefixSpec::Elemental) { Word("ELEMENTAL"); }  // R1527
   void Post(const PrefixSpec::Impure) { Word("IMPURE"); }
@@ -1879,27 +1552,24 @@ public:
   void Post(const PrefixSpec::Non_Recursive) { Word("NON_RECURSIVE"); }
   void Post(const PrefixSpec::Pure) { Word("PURE"); }
   void Post(const PrefixSpec::Recursive) { Word("RECURSIVE"); }
-  bool Pre(const FunctionStmt &x) {  // R1530
+  void Unparse(const FunctionStmt &x) {  // R1530
     Walk("", std::get<std::list<PrefixSpec>>(x.t), " ", " ");
     Word("FUNCTION "), Walk(std::get<Name>(x.t)), Put("(");
     Walk(std::get<std::list<Name>>(x.t), ", "), Put(')');
     Walk(" ", std::get<std::optional<Suffix>>(x.t)), Indent();
-    return false;
   }
-  bool Pre(const Suffix &x) {  // R1532
+  void Unparse(const Suffix &x) {  // R1532
     if (x.resultName) {
       Word("RESULT("), Walk(x.resultName), Put(')');
       Walk(" ", x.binding);
     } else {
       Walk(x.binding);
     }
-    return false;
   }
-  bool Pre(const EndFunctionStmt &x) {  // R1533
+  void Unparse(const EndFunctionStmt &x) {  // R1533
     EndSubprogram("FUNCTION", x.v);
-    return false;
   }
-  bool Pre(const SubroutineStmt &x) {  // R1535
+  void Unparse(const SubroutineStmt &x) {  // R1535
     Walk("", std::get<std::list<PrefixSpec>>(x.t), " ", " ");
     Word("SUBROUTINE "), Walk(std::get<Name>(x.t));
     const auto &args = std::get<std::list<DummyArg>>(x.t);
@@ -1911,45 +1581,37 @@ public:
       Walk(" ", bind);
     }
     Indent();
-    return false;
   }
-  bool Pre(const EndSubroutineStmt &x) {  // R1537
+  void Unparse(const EndSubroutineStmt &x) {  // R1537
     EndSubprogram("SUBROUTINE", x.v);
-    return false;
   }
-  bool Pre(const MpSubprogramStmt &) {  // R1539
+  void Before(const MpSubprogramStmt &) {  // R1539
     Word("MODULE PROCEDURE "), Indent();
-    return true;
   }
-  bool Pre(const EndMpSubprogramStmt &x) {  // R1540
+  void Unparse(const EndMpSubprogramStmt &x) {  // R1540
     EndSubprogram("PROCEDURE", x.v);
-    return false;
   }
-  bool Pre(const EntryStmt &x) {  // R1541
+  void Unparse(const EntryStmt &x) {  // R1541
     Word("ENTRY "), Walk(std::get<Name>(x.t));
     Walk("(", std::get<std::list<DummyArg>>(x.t), ", ", ")");
     Walk(" ", std::get<std::optional<Suffix>>(x.t));
-    return false;
   }
-  bool Pre(const ReturnStmt &x) {  // R1542
+  void Unparse(const ReturnStmt &x) {  // R1542
     Word("RETURN"), Walk(" ", x.v);
-    return false;
   }
-  bool Pre(const ContainsStmt &x) {  // R1543
+  void Unparse(const ContainsStmt &x) {  // R1543
     Outdent();
     Word("CONTAINS");
     Indent();
-    return false;
   }
-  bool Pre(const StmtFunctionStmt &x) {  // R1544
+  void Unparse(const StmtFunctionStmt &x) {  // R1544
     Walk(std::get<Name>(x.t)), Put('(');
     Walk(std::get<std::list<Name>>(x.t), ", "), Put(") = ");
     Walk(std::get<Scalar<Expr>>(x.t));
-    return false;
   }
 
   // Directives, extensions, and deprecated constructs
-  bool Pre(const CompilerDirective &x) {
+  void Unparse(const CompilerDirective &x) {
     std::visit(
         visitors{[&](const std::list<CompilerDirective::IgnoreTKR> &tkr) {
                    Word("!DIR$ IGNORE_TKR");
@@ -1958,9 +1620,8 @@ public:
             [&](const CompilerDirective::IVDEP &) { Word("!DIR$ IVDEP\n"); }},
         x.u);
     Put('\n');
-    return false;
   }
-  bool Pre(const CompilerDirective::IgnoreTKR &x) {
+  void Unparse(const CompilerDirective::IgnoreTKR &x) {
     const auto &list = std::get<std::list<const char *>>(x.t);
     if (!list.empty()) {
       Put("(");
@@ -1970,13 +1631,11 @@ public:
       Put(") ");
     }
     Walk(std::get<Name>(x.t));
-    return false;
   }
-  bool Pre(const BasedPointerStmt &x) {
+  void Unparse(const BasedPointerStmt &x) {
     Word("POINTER ("), Walk(std::get<0>(x.t)), Put(", ");
     Walk(std::get<1>(x.t));
     Walk("(", std::get<std::optional<ArraySpec>>(x.t), ")"), Put(')');
-    return false;
   }
   void Post(const StructureField &x) {
     if (const auto *def = std::get_if<Statement<DataComponentDefStmt>>(&x.u)) {
@@ -1986,7 +1645,7 @@ public:
       }
     }
   }
-  bool Pre(const StructureStmt &x) {
+  void Unparse(const StructureStmt &x) {
     Word("STRUCTURE ");
     if (std::get<bool>(x.t)) {  // slashes around name
       Put('/'), Walk(std::get<Name>(x.t)), Put('/');
@@ -1996,7 +1655,6 @@ public:
       Walk(std::get<Name>(x.t));
     }
     Indent();
-    return false;
   }
   void Post(const Union::UnionStmt &) { Word("UNION"), Indent(); }
   void Post(const Union::EndUnionStmt &) { Outdent(), Word("END UNION"); }
@@ -2005,37 +1663,27 @@ public:
   void Post(const StructureDef::EndStructureStmt &) {
     Outdent(), Word("END STRUCTURE");
   }
-  bool Pre(const OldParameterStmt &x) {
+  void Unparse(const OldParameterStmt &x) {
     Word("PARAMETER "), Walk(x.v, ", ");
-    return false;
   }
-  bool Pre(const ArithmeticIfStmt &x) {
+  void Unparse(const ArithmeticIfStmt &x) {
     Word("IF ("), Walk(std::get<Expr>(x.t)), Put(") ");
     Walk(std::get<1>(x.t)), Put(", ");
     Walk(std::get<2>(x.t)), Put(", ");
     Walk(std::get<3>(x.t));
-    return false;
   }
-  bool Pre(const AssignStmt &x) {
+  void Unparse(const AssignStmt &x) {
     Word("ASSIGN "), Walk(std::get<Label>(x.t));
     Word(" TO "), Walk(std::get<Name>(x.t));
-    return false;
   }
-  bool Pre(const AssignedGotoStmt &x) {
+  void Unparse(const AssignedGotoStmt &x) {
     Word("GO TO "), Walk(std::get<Name>(x.t));
     Walk(", (", std::get<std::list<Label>>(x.t), ", ", ")");
-    return false;
   }
-  bool Pre(const PauseStmt &x) {
-    Word("PAUSE"), Walk(" ", x.v);
-    return false;
-  }
+  void Unparse(const PauseStmt &x) { Word("PAUSE"), Walk(" ", x.v); }
 
 #define WALK_NESTED_ENUM(CLASS, ENUM) \
-  bool Pre(const CLASS::ENUM &x) { \
-    Word(CLASS::EnumToString(x)); \
-    return false; \
-  }
+  void Unparse(const CLASS::ENUM &x) { Word(CLASS::EnumToString(x)); }
   WALK_NESTED_ENUM(AccessSpec, Kind)  // R807
   WALK_NESTED_ENUM(TypeParamDefStmt, KindOrLen)  // R734
   WALK_NESTED_ENUM(IntentSpec, Intent)  // R826

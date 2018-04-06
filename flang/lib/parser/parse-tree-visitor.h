@@ -9,7 +9,7 @@
 #include <variant>
 
 /// Parse tree visitor
-/// Call Walk(x, visitor) to visit each node under x.
+/// Call Walk(x, visitor) to visit x and, by default, each node under x.
 ///
 /// visitor.Pre(x) is called before visiting x and its children are not
 /// visited if it returns false.
