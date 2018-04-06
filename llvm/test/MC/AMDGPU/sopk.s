@@ -1,7 +1,11 @@
-// RUN: llvm-mc -arch=amdgcn -show-encoding %s | FileCheck --check-prefix=GCN --check-prefix=SICI %s
-// RUN: llvm-mc -arch=amdgcn -mcpu=tahiti -show-encoding %s | FileCheck --check-prefix=GCN --check-prefix=SICI %s
-// RUN: llvm-mc -arch=amdgcn -mcpu=fiji -show-encoding %s | FileCheck --check-prefix=GCN --check-prefix=VI9 --check-prefix=VI %s
+// RUN: not llvm-mc -arch=amdgcn -show-encoding %s | FileCheck --check-prefix=GCN --check-prefix=SICI %s
+// RUN: not llvm-mc -arch=amdgcn -mcpu=tahiti -show-encoding %s | FileCheck --check-prefix=GCN --check-prefix=SICI %s
+// RUN: not llvm-mc -arch=amdgcn -mcpu=fiji -show-encoding %s | FileCheck --check-prefix=GCN --check-prefix=VI9 --check-prefix=VI %s
 // RUN: llvm-mc -arch=amdgcn -mcpu=gfx900 -show-encoding %s | FileCheck --check-prefix=GCN --check-prefix=VI9 --check-prefix=GFX9 %s
+
+// RUN: not llvm-mc -arch=amdgcn %s 2>&1 | FileCheck -check-prefix=NOSICIVI %s
+// RUN: not llvm-mc -arch=amdgcn -mcpu=tahiti %s 2>&1 | FileCheck -check-prefix=NOSICIVI -check-prefix=NOSI %s
+// RUN: not llvm-mc -arch=amdgcn -mcpu=fiji %s 2>&1 | FileCheck -check-prefix=NOSICIVI -check-prefix=NOVI %s
 
 //===----------------------------------------------------------------------===//
 // Instructions
@@ -167,3 +171,7 @@ s_setreg_imm32_b32 0x6, 0xff
 s_setreg_imm32_b32 hwreg(HW_REG_GPR_ALLOC, 1, 31), 0xff
 // SICI: s_setreg_imm32_b32 hwreg(HW_REG_GPR_ALLOC, 1, 31), 0xff ; encoding: [0x45,0xf0,0x80,0xba,0xff,0x00,0x00,0x00]
 // VI9:  s_setreg_imm32_b32 hwreg(HW_REG_GPR_ALLOC, 1, 31), 0xff ; encoding: [0x45,0xf0,0x00,0xba,0xff,0x00,0x00,0x00]
+
+s_endpgm_ordered_ps_done
+// GFX9:     s_endpgm_ordered_ps_done ; encoding: [0x00,0x00,0x9e,0xbf]
+// NOSICIVI: error: instruction not supported on this GPU

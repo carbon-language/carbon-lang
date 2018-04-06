@@ -819,6 +819,13 @@ def S_ENDPGM_SAVED : SOPP <0x0000001B, (ins), "s_endpgm_saved"> {
 }
 }
 
+let SubtargetPredicate = isGFX9 in {
+  let isBarrier = 1, isReturn = 1, simm16 = 0 in {
+    def S_ENDPGM_ORDERED_PS_DONE :
+      SOPP<0x01e, (ins), "s_endpgm_ordered_ps_done">;
+  } // End isBarrier = 1, isReturn = 1, simm16 = 0
+} // End SubtargetPredicate = isGFX9
+
 let isBranch = 1, SchedRW = [WriteBranch] in {
 def S_BRANCH : SOPP <
   0x00000002, (ins sopp_brtarget:$simm16), "s_branch $simm16",
