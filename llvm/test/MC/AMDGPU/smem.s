@@ -214,6 +214,26 @@ s_scratch_store_dwordx4 s[4:7], s[4:5], s0 glc
 // NOSICIVI: error
 
 //===----------------------------------------------------------------------===//
+// s_dcache_discard instructions
+//===----------------------------------------------------------------------===//
+
+s_dcache_discard s[2:3], s0
+// GFX9:     s_dcache_discard s[2:3], s0 ; encoding: [0x01,0x00,0xa0,0xc0,0x00,0x00,0x00,0x00]
+// NOSICIVI: error: instruction not supported on this GPU
+
+s_dcache_discard s[2:3], 0x0
+// GFX9:     s_dcache_discard s[2:3], 0x0 ; encoding: [0x01,0x00,0xa2,0xc0,0x00,0x00,0x00,0x00]
+// NOSICIVI: error: instruction not supported on this GPU
+
+s_dcache_discard_x2 s[2:3], s101
+// GFX9:     s_dcache_discard_x2 s[2:3], s101 ; encoding: [0x01,0x00,0xa4,0xc0,0x65,0x00,0x00,0x00]
+// NOSICIVI: error: instruction not supported on this GPU
+
+s_dcache_discard_x2 s[2:3], 0x0
+// GFX9:     s_dcache_discard_x2 s[2:3], 0x0 ; encoding: [0x01,0x00,0xa6,0xc0,0x00,0x00,0x00,0x00]
+// NOSICIVI: error: instruction not supported on this GPU
+
+//===----------------------------------------------------------------------===//
 // s_atomic instructions
 //===----------------------------------------------------------------------===//
 
