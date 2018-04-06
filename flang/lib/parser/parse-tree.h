@@ -2490,7 +2490,8 @@ struct ConnectSpec {
   UNION_CLASS_BOILERPLATE(ConnectSpec);
   struct CharExpr {
     ENUM_CLASS(Kind, Access, Action, Asynchronous, Blank, Decimal, Delim,
-        Encoding, Form, Pad, Position, Round, Sign, Dispose /*extension*/)
+        Encoding, Form, Pad, Position, Round, Sign,
+        /* extensions: */ Convert, Dispose)
     TUPLE_CLASS_BOILERPLATE(CharExpr);
     std::tuple<Kind, ScalarDefaultCharExpr> t;
   };

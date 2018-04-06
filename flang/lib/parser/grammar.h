@@ -1099,7 +1099,7 @@ TYPE_CONTEXT_PARSER("array constructor"_en_US,
 // R770 ac-spec -> type-spec :: | [type-spec ::] ac-value-list
 TYPE_PARSER(construct<AcSpec>{}(maybe(indirect(typeSpec) / "::"),
                 nonemptyList(Parser<AcValue>{})) ||
-    construct<AcSpec>{}(indirect(typeSpec)))
+    construct<AcSpec>{}(indirect(typeSpec) / "::"))
 
 // R773 ac-value -> expr | ac-implied-do
 TYPE_PARSER(
@@ -2689,9 +2689,11 @@ TYPE_PARSER(maybe("UNIT ="_tok) >> construct<ConnectSpec>{}(fileUnitNumber) ||
         construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
             pure(ConnectSpec::CharExpr::Kind::Sign), scalarDefaultCharExpr)) ||
     "STATUS =" >> construct<ConnectSpec>{}(statusExpr) ||
-    extension("DISPOSE =" >>
+    extension(construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
+                  "CONVERT =" >> pure(ConnectSpec::CharExpr::Kind::Convert),
+                  scalarDefaultCharExpr)) ||
         construct<ConnectSpec>{}(construct<ConnectSpec::CharExpr>{}(
-            pure(ConnectSpec::CharExpr::Kind::Dispose),
+            "DISPOSE =" >> pure(ConnectSpec::CharExpr::Kind::Dispose),
             scalarDefaultCharExpr))))
 
 // R1209 close-spec ->
@@ -2702,6 +2704,7 @@ constexpr auto closeSpec = maybe("UNIT ="_tok) >>
         construct<CloseStmt::CloseSpec>{}(fileUnitNumber) ||
     "IOSTAT =" >> construct<CloseStmt::CloseSpec>{}(statVariable) ||
     "IOMSG =" >> construct<CloseStmt::CloseSpec>{}(msgVariable) ||
+    "ERR =" >> construct<CloseStmt::CloseSpec>{}(errLabel) ||
     "STATUS =" >> construct<CloseStmt::CloseSpec>{}(statusExpr);
 
 // R1208 close-stmt -> CLOSE ( close-spec-list )

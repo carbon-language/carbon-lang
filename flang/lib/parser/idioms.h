@@ -30,7 +30,8 @@ template<typename A>
 struct is_trivially_copy_constructible<optional<list<A>>> : false_type {};
 }  // namespace std
 
-using namespace std::string_literals;  // enable "this is a std::string"s
+using namespace std::literals::string_literals;  // enable "this is a
+                                                 // std::string"s
 
 namespace Fortran {
 namespace parser {
