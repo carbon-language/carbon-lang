@@ -103,16 +103,28 @@ template<typename A> struct BadType : std::false_type {};
   } \
   template<typename A> constexpr bool T { class_trait_ns_##T::trait_value<A>() }
 
-// Define enum class NAME with the given enumerators, and also a
-// static function EnumToString that maps enumerators to std::string.
+// Define enum class NAME with the given enumerators, a static
+// function EnumToString() that maps enumerators to std::string,
+// and a constant NAME_enumSize that captures the number of items
+// in the enum class.
+
 std::string EnumIndexToString(int index, const char *names);
+
+template<typename A> struct ListItemCount {
+  constexpr ListItemCount(std::initializer_list<A> list) : value{list.size()} {}
+  const std::size_t value;
+};
+
 #define ENUM_CLASS(NAME, ...) \
   enum class NAME { __VA_ARGS__ }; \
+  static constexpr std::size_t NAME##_enumSize{[] { \
+    enum { __VA_ARGS__ }; \
+    return Fortran::parser::ListItemCount{__VA_ARGS__}.value; \
+  }()}; \
   static inline std::string EnumToString(NAME e) { \
     return Fortran::parser::EnumIndexToString( \
         static_cast<int>(e), #__VA_ARGS__); \
   }
-
 }  // namespace parser
 }  // namespace Fortran
 #endif  // FORTRAN_PARSER_IDIOMS_H_

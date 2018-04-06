@@ -18,9 +18,9 @@ ENUM_CLASS(Attr, ABSTRACT, ALLOCATABLE, ASYNCHRONOUS, BIND_C, CONTIGUOUS,
     VOLATILE)
 
 // Set of attributes
-class Attrs : public EnumSet<Attr, Attr::VOLATILE> {
+class Attrs : public EnumSet<Attr, Attr_enumSize> {
 private:
-  using enumSetType = EnumSet<Attr, Attr::VOLATILE>;
+  using enumSetType = EnumSet<Attr, Attr_enumSize>;
 public:
   using enumSetType::enumSetType;
   constexpr bool HasAny(const Attrs &x) const {

@@ -14,7 +14,12 @@ void Parsing::Prescan(const std::string &path, Options options) {
   options_ = options;
 
   std::stringstream fileError;
-  const auto *sourceFile = allSources_.Open(path, &fileError);
+  const SourceFile *sourceFile;
+  if (path == "-") {
+    sourceFile = allSources_.ReadStandardInput(&fileError);
+  } else {
+    sourceFile = allSources_.Open(path, &fileError);
+  }
   if (sourceFile == nullptr) {
     ProvenanceRange range{allSources_.AddCompilerInsertion(path)};
     MessageFormattedText msg("%s"_err_en_US, fileError.str().data());
@@ -27,6 +32,10 @@ void Parsing::Prescan(const std::string &path, Options options) {
     return;
   }
 
+  // N.B. Be sure to not push the search directory paths until the primary
+  // source file has been opened.  If foo.f is missing from the current
+  // working directory, we don't want to accidentally read another foo.f
+  // from another directory that's on the search path.
   for (const auto &path : options.searchDirectories) {
     allSources_.PushSearchPathDirectory(path);
   }

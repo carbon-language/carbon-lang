@@ -94,6 +94,14 @@ const SourceFile *AllSources::Open(std::string path, std::stringstream *error) {
   return nullptr;
 }
 
+const SourceFile *AllSources::ReadStandardInput(std::stringstream *error) {
+  std::unique_ptr<SourceFile> source{std::make_unique<SourceFile>()};
+  if (source->ReadStandardInput(error)) {
+    return ownedSourceFiles_.emplace_back(std::move(source)).get();
+  }
+  return nullptr;
+}
+
 ProvenanceRange AllSources::AddIncludedFile(
     const SourceFile &source, ProvenanceRange from, bool isModule) {
   ProvenanceRange covers{range_.NextAfter(), source.bytes()};

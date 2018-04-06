@@ -88,28 +88,33 @@ static std::size_t RemoveCarriageReturns(char *buffer, std::size_t bytes) {
 bool SourceFile::Open(std::string path, std::stringstream *error) {
   Close();
   path_ = path;
-  std::string error_path;
+  std::string errorPath{"'"s + path + "'"};
   errno = 0;
-  if (path == "-") {
-    error_path = "standard input";
-    fileDescriptor_ = 0;
-  } else {
-    error_path = "'"s + path + "'";
-    fileDescriptor_ = open(path.c_str(), O_RDONLY);
-    if (fileDescriptor_ < 0) {
-      *error << "could not open " << error_path << ": " << std::strerror(errno);
-      return false;
-    }
-    ++openFileDescriptors;
+  fileDescriptor_ = open(path.c_str(), O_RDONLY);
+  if (fileDescriptor_ < 0) {
+    *error << "could not open " << errorPath << ": " << std::strerror(errno);
+    return false;
   }
+  ++openFileDescriptors;
+  return ReadFile(errorPath, error);
+}
+
+bool SourceFile::ReadStandardInput(std::stringstream *error) {
+  Close();
+  path_ = "standard input";
+  fileDescriptor_ = 0;
+  return ReadFile(path_, error);
+}
+
+bool SourceFile::ReadFile(std::string errorPath, std::stringstream *error) {
   struct stat statbuf;
   if (fstat(fileDescriptor_, &statbuf) != 0) {
-    *error << "fstat failed on " << error_path << ": " << std::strerror(errno);
+    *error << "fstat failed on " << errorPath << ": " << std::strerror(errno);
     Close();
     return false;
   }
   if (S_ISDIR(statbuf.st_mode)) {
-    *error << error_path << " is a directory";
+    *error << errorPath << " is a directory";
     Close();
     return false;
   }
@@ -133,7 +138,7 @@ bool SourceFile::Open(std::string path, std::stringstream *error) {
         // The file needs to have its line endings normalized to simple
         // newlines.  Remap it for a private rewrite in place.
         vp = mmap(vp, bytes_, PROT_READ | PROT_WRITE, MAP_PRIVATE,
-                  fileDescriptor_, 0);
+            fileDescriptor_, 0);
         if (vp != MAP_FAILED) {
           auto mutableContent = static_cast<char *>(vp);
           bytes_ = RemoveCarriageReturns(mutableContent, bytes_);
@@ -167,7 +172,7 @@ bool SourceFile::Open(std::string path, std::stringstream *error) {
     char *to{buffer.FreeSpace(&count)};
     ssize_t got{read(fileDescriptor_, to, count)};
     if (got < 0) {
-      *error << "could not read " << error_path << ": " << std::strerror(errno);
+      *error << "could not read " << errorPath << ": " << std::strerror(errno);
       Close();
       return false;
     }
@@ -176,8 +181,10 @@ bool SourceFile::Open(std::string path, std::stringstream *error) {
     }
     buffer.Claim(got);
   }
-  close(fileDescriptor_);
-  --openFileDescriptors;
+  if (fileDescriptor_ > 0) {
+    close(fileDescriptor_);
+    --openFileDescriptors;
+  }
   fileDescriptor_ = -1;
   bytes_ = buffer.size();
   if (bytes_ == 0) {
@@ -211,11 +218,11 @@ void SourceFile::Close() {
   }
   content_ = nullptr;
   bytes_ = 0;
-  if (fileDescriptor_ >= 0) {
+  if (fileDescriptor_ > 0) {
     close(fileDescriptor_);
     --openFileDescriptors;
-    fileDescriptor_ = -1;
   }
+  fileDescriptor_ = -1;
   path_.clear();
 }
 

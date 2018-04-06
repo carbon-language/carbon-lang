@@ -103,6 +103,7 @@ public:
   void PushSearchPathDirectory(std::string);
   std::string PopSearchPathDirectory();
   const SourceFile *Open(std::string path, std::stringstream *error);
+  const SourceFile *ReadStandardInput(std::stringstream *error);
 
   ProvenanceRange AddIncludedFile(
       const SourceFile &, ProvenanceRange, bool isModule = false);

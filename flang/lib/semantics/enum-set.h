@@ -1,5 +1,5 @@
-#ifndef FORTRAN_ENUM_SET_H_
-#define FORTRAN_ENUM_SET_H_
+#ifndef FORTRAN_SEMANTICS_ENUM_SET_H_
+#define FORTRAN_SEMANTICS_ENUM_SET_H_
 
 // Implements a set of enums as a std::bitset<>.  APIs from bitset<> and set<>
 // can be used on these sets, whichever might be more clear to the user.
@@ -11,11 +11,10 @@
 namespace Fortran {
 namespace semantics {
 
-template<typename ENUM, ENUM maxval> class EnumSet {
-private:
-  static constexpr std::size_t bits_{static_cast<std::size_t>(maxval) + 1};
+template<typename ENUM, std::size_t BITS> class EnumSet {
+  static_assert(BITS > 0);
 public:
-  using bitsetType = std::bitset<bits_>;
+  using bitsetType = std::bitset<BITS>;
   using enumerationType = ENUM;
 
   constexpr EnumSet() {}
@@ -108,7 +107,7 @@ public:
 
   // N.B. std::bitset<> has size() for max_size(), but that's not the same
   // thing as std::set<>::size(), which is an element count.
-  static constexpr std::size_t max_size() { return bits_; }
+  static constexpr std::size_t max_size() { return BITS; }
   constexpr bool test(enumerationType x) const {
     return bitset_.test(static_cast<std::size_t>(x));
   }
@@ -162,10 +161,10 @@ private:
 }  // namespace semantics
 }  // namespace Fortran
 
-template<typename ENUM, ENUM maxval>
-struct std::hash<Fortran::semantics::EnumSet<ENUM, maxval>> {
-  std::size_t operator()(const Fortran::semantics::EnumSet<ENUM, maxval> &x) const {
+template<typename ENUM, std::size_t values>
+struct std::hash<Fortran::semantics::EnumSet<ENUM, values>> {
+  std::size_t operator()(const Fortran::semantics::EnumSet<ENUM, values> &x) const {
     return std::hash(x.bitset());
   }
 };
-#endif  // FORTRAN_ENUM_SET_H_
+#endif  // FORTRAN_SEMANTICS_ENUM_SET_H_

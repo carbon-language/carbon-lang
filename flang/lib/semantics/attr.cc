@@ -16,13 +16,15 @@ std::ostream &operator<<(std::ostream &o, Attr attr) {
 }
 
 std::ostream &operator<<(std::ostream &o, const Attrs &attrs) {
-  const char *comma{""};
-  std::size_t n{attrs.count()}, seen{0};
+  std::size_t n{attrs.count()};
+  std::size_t seen{0};
   for (std::size_t j{0}; seen < n; ++j) {
     Attr attr{static_cast<Attr>(j)};
     if (attrs.test(attr)) {
-      o << comma << attr;
-      comma = ", ";
+      if (seen > 0) {
+        o << ", ";
+      }
+      o << attr;
       ++seen;
     }
   }

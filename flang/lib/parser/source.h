@@ -28,6 +28,7 @@ public:
   std::size_t lines() const { return lineStart_.size(); }
 
   bool Open(std::string path, std::stringstream *error);
+  bool ReadStandardInput(std::stringstream *error);
   void Close();
   std::pair<int, int> FindOffsetLineAndColumn(std::size_t) const;
   std::size_t GetLineStartOffset(int lineNumber) const {
@@ -35,6 +36,8 @@ public:
   }
 
 private:
+  bool ReadFile(std::string errorPath, std::stringstream *error);
+
   std::string path_;
   int fileDescriptor_{-1};
   bool isMemoryMapped_{false};

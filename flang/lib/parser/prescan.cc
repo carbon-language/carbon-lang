@@ -565,10 +565,6 @@ void Prescanner::FortranInclude(const char *firstQuote) {
   if (*p != '\n' && *p != '!') {
     Say("excess characters after path name"_en_US, GetProvenance(p));
   }
-  if (path == "-") {
-    Say("cannot INCLUDE standard input"_err_en_US, GetProvenance(p));
-    return;
-  }
   std::stringstream error;
   Provenance provenance{GetProvenance(lineStart_)};
   AllSources &allSources{cooked_.allSources()};

@@ -569,11 +569,6 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
           dir.GetTokenProvenance(dirOffset));
       return;
     }
-    if (include == "-") {
-      prescanner->Say("#include: can't include standard input"_err_en_US,
-          dir.GetTokenProvenance(dirOffset));
-      return;
-    }
     std::stringstream error;
     const SourceFile *included{allSources_.Open(include, &error)};
     if (included == nullptr) {
