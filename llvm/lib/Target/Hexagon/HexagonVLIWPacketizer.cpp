@@ -1687,8 +1687,12 @@ HexagonPacketizerList::addToPacket(MachineInstr &MI) {
     PacketStalls = false;
   PacketStalls |= producesStall(MI);
 
-  if (MI.isImplicitDef())
+  if (MI.isImplicitDef()) {
+    // Add to the packet to allow subsequent instructions to be checked
+    // properly.
+    CurrentPacketMIs.push_back(&MI);
     return MII;
+  }
   assert(ResourceTracker->canReserveResources(MI));
 
   bool ExtMI = HII->isExtended(MI) || HII->isConstExtended(MI);
