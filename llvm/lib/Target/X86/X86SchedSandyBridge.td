@@ -488,50 +488,20 @@ def SBWriteResGroup6 : SchedWriteRes<[SBPort015]> {
   let ResourceCycles = [1];
 }
 def: InstRW<[SBWriteResGroup6], (instrs CBW, CWDE, CDQE)>;
-def: InstRW<[SBWriteResGroup6], (instregex "ADD(8|16|32|64)ri",
-                                           "ADD(8|16|32|64)rr",
-                                           "ADD(8|16|32|64)i",
-                                           "AND(8|16|32|64)ri",
-                                           "AND(8|16|32|64)rr",
-                                           "AND(8|16|32|64)i",
-                                           "CMC",
-                                           "CMP(8|16|32|64)ri",
-                                           "CMP(8|16|32|64)rr",
-                                           "CMP(8|16|32|64)i",
-                                           "DEC(8|16|32|64)r",
-                                           "INC(8|16|32|64)r",
+def: InstRW<[SBWriteResGroup6], (instregex "CMC",
                                            "MMX_MOVD64from64rr",
                                            "MMX_MOVQ2DQrr",
                                            "MOV(8|16|32|64)rr",
                                            "MOV(8|16|32|64)ri",
                                            "MOVDQArr",
                                            "MOVDQUrr",
-                                           "MOVSX(16|32|64)rr16",
-                                           "MOVSX(16|32|64)rr32",
-                                           "MOVSX(16|32|64)rr8",
-                                           "MOVZX(16|32|64)rr16",
-                                           "MOVZX(16|32|64)rr8",
-                                           "NEG(8|16|32|64)r",
-                                           "NOT(8|16|32|64)r",
-                                           "OR(8|16|32|64)ri",
-                                           "OR(8|16|32|64)rr",
-                                           "OR(8|16|32|64)i",
                                            "STC",
-                                           "SUB(8|16|32|64)ri",
-                                           "SUB(8|16|32|64)rr",
-                                           "SUB(8|16|32|64)i",
-                                           "TEST(8|16|32|64)rr",
-                                           "TEST(8|16|32|64)i",
-                                           "TEST(8|16|32|64)ri",
                                            "(V?)MOVPQI2QIrr",
                                            "(V?)MOVZPQILo2PQIrr",
                                            "(V?)PANDNrr",
                                            "(V?)PANDrr",
                                            "(V?)PORrr",
-                                           "(V?)PXORrr",
-                                           "XOR(8|16|32|64)ri",
-                                           "XOR(8|16|32|64)rr",
-                                           "XOR(8|16|32|64)i")>;
+                                           "(V?)PXORrr")>;
 
 def SBWriteResGroup7 : SchedWriteRes<[SBPort0]> {
   let Latency = 2;
@@ -1117,18 +1087,8 @@ def SBWriteResGroup52 : SchedWriteRes<[SBPort23,SBPort015]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[SBWriteResGroup52], (instregex "ADD(8|16|32|64)rm",
-                                            "AND(8|16|32|64)rm",
-                                            "CMP(8|16|32|64)mi",
-                                            "CMP(8|16|32|64)mr",
-                                            "CMP(8|16|32|64)rm",
-                                            "LODSL",
-                                            "LODSQ",
-                                            "OR(8|16|32|64)rm",
-                                            "SUB(8|16|32|64)rm",
-                                            "TEST(8|16|32|64)mr",
-                                            "TEST(8|16|32|64)mi",
-                                            "XOR(8|16|32|64)rm")>;
+def: InstRW<[SBWriteResGroup52], (instregex "LODSL",
+                                            "LODSQ")>;
 
 def SBWriteResGroup53 : SchedWriteRes<[SBPort4,SBPort23]> {
   let Latency = 6;
@@ -1378,26 +1338,6 @@ def: InstRW<[SBWriteResGroup69], (instregex "BTC(16|32|64)mi8",
                                             "SHL(8|16|32|64)mi",
                                             "SHR(8|16|32|64)m1",
                                             "SHR(8|16|32|64)mi")>;
-
-def SBWriteResGroup70 : SchedWriteRes<[SBPort4,SBPort23,SBPort015]> {
-  let Latency = 7;
-  let NumMicroOps = 4;
-  let ResourceCycles = [1,2,1];
-}
-def: InstRW<[SBWriteResGroup70], (instregex "ADD(8|16|32|64)mi",
-                                            "ADD(8|16|32|64)mr",
-                                            "AND(8|16|32|64)mi",
-                                            "AND(8|16|32|64)mr",
-                                            "DEC(8|16|32|64)m",
-                                            "INC(8|16|32|64)m",
-                                            "NEG(8|16|32|64)m",
-                                            "NOT(8|16|32|64)m",
-                                            "OR(8|16|32|64)mi",
-                                            "OR(8|16|32|64)mr",
-                                            "SUB(8|16|32|64)mi",
-                                            "SUB(8|16|32|64)mr",
-                                            "XOR(8|16|32|64)mi",
-                                            "XOR(8|16|32|64)mr")>;
 
 def SBWriteResGroup71 : SchedWriteRes<[SBPort0,SBPort23]> {
   let Latency = 8;
