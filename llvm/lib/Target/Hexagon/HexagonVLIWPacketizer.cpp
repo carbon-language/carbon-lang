@@ -1845,15 +1845,6 @@ bool HexagonPacketizerList::producesStall(const MachineInstr &I) {
         return true;
   }
 
-  // Check if the latency is greater than one between this instruction and any
-  // instruction in the previous packet.
-  for (auto J : OldPacketMIs) {
-    SUnit *SUJ = MIToSUnit[J];
-    for (auto &Pred : SUI->Preds)
-      if (Pred.getSUnit() == SUJ && Pred.getLatency() > 1)
-        return true;
-  }
-
   return false;
 }
 
