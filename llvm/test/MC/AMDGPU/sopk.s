@@ -175,3 +175,15 @@ s_setreg_imm32_b32 hwreg(HW_REG_GPR_ALLOC, 1, 31), 0xff
 s_endpgm_ordered_ps_done
 // GFX9:     s_endpgm_ordered_ps_done ; encoding: [0x00,0x00,0x9e,0xbf]
 // NOSICIVI: error: instruction not supported on this GPU
+
+s_call_b64 s[12:13], 12609
+// GFX9:     s_call_b64 s[12:13], 0x3141 ; encoding: [0x41,0x31,0x8c,0xba]
+// NOSICIVI: error: instruction not supported on this GPU
+
+s_call_b64 s[100:101], 12609
+// GFX9:     s_call_b64 s[100:101], 0x3141 ; encoding: [0x41,0x31,0xe4,0xba]
+// NOSICIVI: error: instruction not supported on this GPU
+
+s_call_b64 s[10:11], 49617
+// GFX9:     s_call_b64 s[10:11], 0xc1d1 ; encoding: [0xd1,0xc1,0x8a,0xba]
+// NOSICIVI: error: instruction not supported on this GPU
