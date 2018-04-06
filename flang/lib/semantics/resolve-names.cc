@@ -36,6 +36,7 @@ private:
   // map initial character of identifier to nullptr or its default type
   std::map<char, const DeclTypeSpec> map_;
   friend std::ostream &operator<<(std::ostream &, const ImplicitRules &);
+  friend void ShowImplicitRule(std::ostream &, const ImplicitRules &, char);
 };
 
 // Provide Post methods to collect attributes into a member variable.
@@ -164,12 +165,12 @@ public:
   void Post(const parser::ImplicitPart &);
 
 protected:
-  void StartScope();
-  void EndScope();
+  void PushScope();
+  void PopScope();
 
 private:
   // implicit rules in effect for current scope
-  std::unique_ptr<ImplicitRules> implicitRules_;
+  std::stack<ImplicitRules, std::list<ImplicitRules>> implicitRules_;
   // previous occurence of these kinds of statements:
   const parser::CharBlock *prevImplicit_{nullptr};
   const parser::CharBlock *prevImplicitNone_{nullptr};
@@ -193,11 +194,11 @@ public:
   Scope &CurrScope() { return *scopes_.top(); }
   void PushScope(Scope &scope) {
     scopes_.push(&scope);
-    StartScope();
+    ImplicitRulesVisitor::PushScope();
   }
   void PopScope() {
     scopes_.pop();
-    EndScope();
+    ImplicitRulesVisitor::PopScope();
   }
 
   // Default action for a parse tree node is to visit children.
@@ -238,8 +239,7 @@ private:
 
 // ImplicitRules implementation
 
-ImplicitRules::ImplicitRules(MessageHandler &messages) : messages_{messages} {
-}
+ImplicitRules::ImplicitRules(MessageHandler &messages) : messages_{messages} {}
 
 const DeclTypeSpec *ImplicitRules::GetType(char ch) const {
   auto it = map_.find(ch);
@@ -282,14 +282,20 @@ char ImplicitRules::Incr(char ch) {
 std::ostream &operator<<(std::ostream &o, const ImplicitRules &implicitRules) {
   o << "ImplicitRules:\n";
   for (char ch = 'a'; ch; ch = ImplicitRules::Incr(ch)) {
-    auto it = implicitRules.map_.find(ch);
-    if (it != implicitRules. map_.end()) {
-      o << "  " << ch << ": " << it->second << '\n';
-    }
+    ShowImplicitRule(o, implicitRules, ch);
   }
+  ShowImplicitRule(o, implicitRules, '_');
+  ShowImplicitRule(o, implicitRules, '$');
+  ShowImplicitRule(o, implicitRules, '@');
   return o;
 }
-
+void ShowImplicitRule(
+    std::ostream &o, const ImplicitRules &implicitRules, char ch) {
+  auto it = implicitRules.map_.find(ch);
+  if (it != implicitRules.map_.end()) {
+    o << "  " << ch << ": " << it->second << '\n';
+  }
+}
 
 // AttrsVisitor implementation
 
@@ -485,13 +491,13 @@ bool ImplicitRulesVisitor::Pre(const parser::LetterSpec &x) {
       return false;
     }
   }
-  implicitRules_->SetType(*declTypeSpec_.get(), loLoc, hiLoc);
+  implicitRules_.top().SetType(*declTypeSpec_.get(), loLoc, hiLoc);
   return false;
 }
 
 void ImplicitRulesVisitor::Post(const parser::ImplicitPart &) {
   if (!prevImplicitNoneType_) {
-    implicitRules_->ApplyDefaultRules();
+    implicitRules_.top().ApplyDefaultRules();
   }
 }
 
@@ -504,15 +510,15 @@ void ImplicitRulesVisitor::Post(const parser::ImplicitSpec &) {
   endDeclTypeSpec();
 }
 
-void ImplicitRulesVisitor::StartScope() {
-  implicitRules_ = std::make_unique<ImplicitRules>(*this);
+void ImplicitRulesVisitor::PushScope() {
+  implicitRules_.push(ImplicitRules(*this));
   prevImplicit_ = nullptr;
   prevImplicitNone_ = nullptr;
   prevImplicitNoneType_ = nullptr;
   prevParameterStmt_ = nullptr;
 }
 
-void ImplicitRulesVisitor::EndScope() { implicitRules_.reset(); }
+void ImplicitRulesVisitor::PopScope() { implicitRules_.pop(); }
 
 // TODO: for all of these errors, reference previous statement too
 bool ImplicitRulesVisitor::HandleImplicitNone(
