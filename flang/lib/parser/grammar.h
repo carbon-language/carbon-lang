@@ -3090,9 +3090,9 @@ TYPE_PARSER(construct<format::FormatItem>{}(
 //         ( [format-items] ) | ( [format-items ,] unlimited-format-item )
 // R1305 unlimited-format-item -> * ( format-items )
 TYPE_PARSER(parenthesized(
-    construct<format::FormatSpecification>{}(defaulted(formatItems)) ||
     construct<format::FormatSpecification>{}(
-        defaulted(formatItems / ","), "*" >> parenthesized(formatItems))))
+        defaulted(formatItems / ","), "*" >> parenthesized(formatItems)) ||
+    construct<format::FormatSpecification>{}(defaulted(formatItems))))
 // R1308 w -> digit-string
 // R1309 m -> digit-string
 // R1310 d -> digit-string
