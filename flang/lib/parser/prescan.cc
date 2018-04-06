@@ -14,6 +14,8 @@
 namespace Fortran {
 namespace parser {
 
+static constexpr int maxPrescannerNesting{100};
+
 Prescanner::Prescanner(
     Messages &messages, CookedSource &cooked, Preprocessor &preprocessor)
   : messages_{messages}, cooked_{cooked}, preprocessor_{preprocessor} {}
@@ -26,6 +28,7 @@ Prescanner::Prescanner(const Prescanner &that)
     enableBackslashEscapesInCharLiterals_{
         that.enableBackslashEscapesInCharLiterals_},
     warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
+    prescannerNesting_{that.prescannerNesting_ + 1},
     compilerDirectiveBloomFilter_{that.compilerDirectiveBloomFilter_},
     compilerDirectiveSentinels_{that.compilerDirectiveSentinels_} {}
 
@@ -53,6 +56,11 @@ void Prescanner::Prescan(ProvenanceRange range) {
   limit_ = start_ + range.size();
   lineStart_ = start_;
   const bool beganInFixedForm{inFixedForm_};
+  if (prescannerNesting_ > maxPrescannerNesting) {
+    Say("too many nested INCLUDE/#include files, possibly circular"_err_en_US,
+        GetProvenance(start_));
+    return;
+  }
   while (lineStart_ < limit_) {
     Statement();
   }

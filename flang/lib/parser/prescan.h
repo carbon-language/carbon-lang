@@ -156,6 +156,7 @@ private:
   bool enableBackslashEscapesInCharLiterals_{true};
   bool warnOnNonstandardUsage_{false};
   int delimiterNesting_{0};
+  int prescannerNesting_{0};
 
   Provenance startProvenance_;
   const char *start_{nullptr};  // beginning of current source file content
