@@ -131,7 +131,6 @@ constexpr Parser<InputImpliedDo> inputImpliedDo;  // R1218, R1219
 constexpr Parser<OutputImpliedDo> outputImpliedDo;  // R1218, R1219
 constexpr Parser<PositionOrFlushSpec> positionOrFlushSpec;  // R1227 & R1229
 constexpr Parser<FormatStmt> formatStmt;  // R1301
-constexpr Parser<EndProgramStmt> endProgramStmt;  // R1403
 constexpr Parser<InterfaceBlock> interfaceBlock;  // R1501
 constexpr Parser<GenericSpec> genericSpec;  // R1508
 constexpr Parser<ProcInterface> procInterface;  // R1513
@@ -207,11 +206,11 @@ constexpr auto executionPartErrorRecovery = errorRecoveryStart >> !"END"_tok >>
 // R507 declaration-construct ->
 //        specification-construct | data-stmt | format-stmt |
 //        entry-stmt | stmt-function-stmt
-constexpr auto execPartLookAhead = errorRecoveryStart /
-    (actionStmt >> ok || "ASSOCIATE ("_tok || "BLOCK"_tok || "SELECT"_tok ||
-        "CHANGE TEAM"_sptok || "CRITICAL"_tok || "DO"_tok || "IF ("_tok ||
-        "WHERE ("_tok || "FORALL ("_tok);
-constexpr auto declErrorRecovery = !execPartLookAhead >> stmtErrorRecovery;
+constexpr auto execPartLookAhead = actionStmt >> ok || "ASSOCIATE ("_tok ||
+    "BLOCK"_tok || "SELECT"_tok || "CHANGE TEAM"_sptok || "CRITICAL"_tok ||
+    "DO"_tok || "IF ("_tok || "WHERE ("_tok || "FORALL ("_tok;
+constexpr auto declErrorRecovery =
+    errorRecoveryStart >> !execPartLookAhead >> stmtErrorRecovery;
 TYPE_CONTEXT_PARSER("declaration construct"_en_US,
     recovery(construct<DeclarationConstruct>{}(specificationConstruct) ||
             construct<DeclarationConstruct>{}(statement(indirect(dataStmt))) ||
@@ -3226,7 +3225,7 @@ TYPE_PARSER(construct<format::ControlEditDesc>{}("T"_ch >>
 TYPE_CONTEXT_PARSER("main program"_en_US,
     construct<MainProgram>{}(maybe(statement(Parser<ProgramStmt>{})),
         specificationPart, executionPart, maybe(internalSubprogramPart),
-        unterminatedStatement(endProgramStmt)))
+        unterminatedStatement(Parser<EndProgramStmt>{})))
 
 // R1402 program-stmt -> PROGRAM program-name
 // PGI allows empty parentheses after the name.
