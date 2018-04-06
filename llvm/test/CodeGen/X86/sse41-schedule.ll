@@ -623,7 +623,7 @@ define <4 x float> @test_dpps(<4 x float> %a0, <4 x float> %a1, <4 x float> *%a2
 ; GENERIC-LABEL: test_dpps:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    dpps $7, %xmm1, %xmm0 # sched: [12:2.00]
-; GENERIC-NEXT:    dpps $7, (%rdi), %xmm0 # sched: [8:1.00]
+; GENERIC-NEXT:    dpps $7, (%rdi), %xmm0 # sched: [18:2.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SLM-LABEL: test_dpps:
@@ -635,13 +635,13 @@ define <4 x float> @test_dpps(<4 x float> %a0, <4 x float> %a1, <4 x float> *%a2
 ; SANDY-SSE-LABEL: test_dpps:
 ; SANDY-SSE:       # %bb.0:
 ; SANDY-SSE-NEXT:    dpps $7, %xmm1, %xmm0 # sched: [12:2.00]
-; SANDY-SSE-NEXT:    dpps $7, (%rdi), %xmm0 # sched: [8:1.00]
+; SANDY-SSE-NEXT:    dpps $7, (%rdi), %xmm0 # sched: [18:2.00]
 ; SANDY-SSE-NEXT:    retq # sched: [1:1.00]
 ;
 ; SANDY-LABEL: test_dpps:
 ; SANDY:       # %bb.0:
 ; SANDY-NEXT:    vdpps $7, %xmm1, %xmm0, %xmm0 # sched: [12:2.00]
-; SANDY-NEXT:    vdpps $7, (%rdi), %xmm0, %xmm0 # sched: [8:1.00]
+; SANDY-NEXT:    vdpps $7, (%rdi), %xmm0, %xmm0 # sched: [18:2.00]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-SSE-LABEL: test_dpps:

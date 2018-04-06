@@ -1954,6 +1954,20 @@ def SBWriteResGroup120 : SchedWriteRes<[SBPort0,SBPort1,SBPort5,SBPort23]> {
 }
 def: InstRW<[SBWriteResGroup120], (instregex "(V?)DPPDrmi")>;
 
+def SBWriteResGroup121 : SchedWriteRes<[SBPort0,SBPort1,SBPort5,SBPort23]> {
+  let Latency = 18;
+  let NumMicroOps = 5;
+  let ResourceCycles = [1,2,1,1];
+}
+def: InstRW<[SBWriteResGroup121], (instregex "(V?)DPPSrmi")>;
+
+def SBWriteResGroup122 : SchedWriteRes<[SBPort0,SBPort1,SBPort5,SBPort23]> {
+  let Latency = 19;
+  let NumMicroOps = 5;
+  let ResourceCycles = [1,2,1,1];
+}
+def: InstRW<[SBWriteResGroup122], (instregex "VDPPSYrmi")>;
+
 def SBWriteResGroup123 : SchedWriteRes<[SBPort0,SBPort23,SBFPDivider]> {
   let Latency = 20;
   let NumMicroOps = 2;
