@@ -63,6 +63,18 @@ class SM_Real <SM_Pseudo ps>
   bits<1> imm = !if(ps.has_offset, ps.offset_is_imm, 0);
 }
 
+class SM_Probe_Pseudo <string opName, dag ins, bit isImm>
+  : SM_Pseudo<opName, (outs), ins, " $sdata, $sbase, $offset"> {
+  let mayLoad = 0;
+  let mayStore = 0;
+  let has_glc = 0;
+  let LGKM_CNT = 0;
+  let ScalarStore = 0;
+  let hasSideEffects = 1;
+  let offset_is_imm = isImm;
+  let PseudoInstr = opName # !if(isImm, "_IMM", "_SGPR");
+}
+
 class SM_Load_Pseudo <string opName, dag outs, dag ins, string asmOps, list<dag> pattern=[]>
   : SM_Pseudo<opName, outs, ins, asmOps, pattern> {
   RegisterClass BaseClass;
@@ -159,6 +171,11 @@ class SM_Inval_Pseudo <string opName, SDPatternOperator node> : SM_Pseudo<
   let has_sdst = 0;
   let has_sbase = 0;
   let has_offset = 0;
+}
+
+multiclass SM_Pseudo_Probe<string opName, RegisterClass baseClass> {
+  def _IMM  : SM_Probe_Pseudo <opName, (ins i8imm:$sdata, baseClass:$sbase, smrd_offset_20:$offset), 1>;
+  def _SGPR : SM_Probe_Pseudo <opName, (ins i8imm:$sdata, baseClass:$sbase, SReg_32:$offset), 0>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -277,6 +294,9 @@ let SubtargetPredicate = isVI in {
 def S_DCACHE_WB     : SM_Inval_Pseudo <"s_dcache_wb", int_amdgcn_s_dcache_wb>;
 def S_DCACHE_WB_VOL : SM_Inval_Pseudo <"s_dcache_wb_vol", int_amdgcn_s_dcache_wb_vol>;
 def S_MEMREALTIME   : SM_Time_Pseudo <"s_memrealtime", int_amdgcn_s_memrealtime>;
+
+defm S_ATC_PROBE        : SM_Pseudo_Probe <"s_atc_probe", SReg_64>;
+defm S_ATC_PROBE_BUFFER : SM_Pseudo_Probe <"s_atc_probe_buffer", SReg_128>;
 } // SubtargetPredicate = isVI
 
 let SubtargetPredicate = HasFlatScratchInsts, Uses = [FLAT_SCR] in {
@@ -544,6 +564,11 @@ multiclass SM_Real_Stores_vi<bits<8> op, string ps,
   }
 }
 
+multiclass SM_Real_Probe_vi<bits<8> op, string ps> {
+  def _IMM_vi  : SMEM_Real_Store_vi <op, !cast<SM_Probe_Pseudo>(ps#_IMM)>;
+  def _SGPR_vi : SMEM_Real_Store_vi <op, !cast<SM_Probe_Pseudo>(ps#_SGPR)>;
+}
+
 defm S_LOAD_DWORD           : SM_Real_Loads_vi <0x00, "S_LOAD_DWORD">;
 defm S_LOAD_DWORDX2         : SM_Real_Loads_vi <0x01, "S_LOAD_DWORDX2">;
 defm S_LOAD_DWORDX4         : SM_Real_Loads_vi <0x02, "S_LOAD_DWORDX4">;
@@ -578,6 +603,9 @@ defm S_SCRATCH_LOAD_DWORDX4  : SM_Real_Loads_vi <0x07, "S_SCRATCH_LOAD_DWORDX4">
 defm S_SCRATCH_STORE_DWORD   : SM_Real_Stores_vi <0x15, "S_SCRATCH_STORE_DWORD">;
 defm S_SCRATCH_STORE_DWORDX2 : SM_Real_Stores_vi <0x16, "S_SCRATCH_STORE_DWORDX2">;
 defm S_SCRATCH_STORE_DWORDX4 : SM_Real_Stores_vi <0x17, "S_SCRATCH_STORE_DWORDX4">;
+
+defm S_ATC_PROBE        : SM_Real_Probe_vi <0x26, "S_ATC_PROBE">;
+defm S_ATC_PROBE_BUFFER : SM_Real_Probe_vi <0x27, "S_ATC_PROBE_BUFFER">;
 
 //===----------------------------------------------------------------------===//
 // GFX9
