@@ -30,18 +30,11 @@ public:
   void ApplyDefaultRules();
 
 private:
-  // Map 'a'-'z' to index into map_ and vice versa.
-  static const int CHARS_BEFORE_J = 9;
-  static const int CHARS_BEFORE_S = 18;
-  static const int CHARS_TOTAL = 26;
-  static int CharToIndex(char ch);
-  static char IndexToChar(int i);
+  static char Incr(char ch);
 
   MessageHandler &messages_;
-  // each type referenced in implicit specs is in types_
-  std::list<DeclTypeSpec> types_;
-  // map_ goes from char index (0-25) to nullptr or pointer to element of types_
-  std::array<const DeclTypeSpec *, CHARS_TOTAL> map_;
+  // map initial character of identifier to nullptr or its default type
+  std::map<char, const DeclTypeSpec> map_;
   friend std::ostream &operator<<(std::ostream &, const ImplicitRules &);
 };
 
@@ -152,6 +145,7 @@ private:
   const parser::CharBlock *currStmtSource_{nullptr};
 };
 
+// Visit ImplicitStmt and related parse tree nodes and updates implicit rules.
 class ImplicitRulesVisitor : public DeclTypeSpecVisitor, public MessageHandler {
 public:
   using DeclTypeSpecVisitor::Post;
@@ -245,33 +239,26 @@ private:
 // ImplicitRules implementation
 
 ImplicitRules::ImplicitRules(MessageHandler &messages) : messages_{messages} {
-  for (int i = 0; i < CHARS_TOTAL; ++i) {
-    map_[i] = nullptr;
-  }
 }
 
 const DeclTypeSpec *ImplicitRules::GetType(char ch) const {
-  int index = CharToIndex(ch);
-  return index >= 0 ? map_[index] : nullptr;
+  auto it = map_.find(ch);
+  return it != map_.end() ? &it->second : nullptr;
 }
 
 // isDefault is set when we are applying the default rules, so it is not
 // an error if the type is already set.
 void ImplicitRules::SetType(const DeclTypeSpec &type, parser::Location lo,
     parser::Location hi, bool isDefault) {
-  types_.push_back(type);
-  int loIndex = CharToIndex(*lo);
-  CHECK(loIndex >= 0 && "not a letter");
-  int hiIndex = CharToIndex(*hi);
-  CHECK(hiIndex >= 0 && "not a letter");
-  for (int i = loIndex; i <= hiIndex; ++i) {
-    if (!map_[i]) {
-      map_[i] = &types_.back();
-    } else if (!isDefault) {
+  for (char ch = *lo; ch; ch = ImplicitRules::Incr(ch)) {
+    auto res = map_.emplace(ch, type);
+    if (!res.second && !isDefault) {
       messages_.Say(parser::Message{lo,
           parser::MessageFormattedText{
-              "More than one implicit type specified for '%c'"_err_en_US,
-              IndexToChar(i)}});
+              "More than one implicit type specified for '%c'"_err_en_US, ch}});
+    }
+    if (ch == *hi) {
+      break;
     }
   }
 }
@@ -281,42 +268,24 @@ void ImplicitRules::ApplyDefaultRules() {
   SetType(DeclTypeSpec::MakeIntrinsic(RealTypeSpec::Make()), "a", "z", true);
 }
 
-// Map 'a'-'z' to 0-25, others to -1
-int ImplicitRules::CharToIndex(char ch) {
-  if (ch >= 'a' && ch <= 'i') {
-    return ch - 'a';
-  } else if (ch >= 'j' && ch <= 'r') {
-    return ch - 'j' + CHARS_BEFORE_J;
-  } else if (ch >= 's' && ch <= 'z') {
-    return ch - 's' + CHARS_BEFORE_S;
-  } else {
-    return -1;  // not a letter
-  }
-}
-
-// Map 0-25 to 'a'-'z', others to 0
-char ImplicitRules::IndexToChar(int i) {
-  if (i < 0 || i > 25) {
-    return 0;
-  } else if (i < CHARS_BEFORE_J) {
-    return i + 'a';
-  } else if (i < CHARS_BEFORE_S) {
-    return i - CHARS_BEFORE_J + 'j';
-  } else {
-    return i - CHARS_BEFORE_S + 's';
+// Return the next char after ch in a way that works for ASCII or EBCDIC.
+// Return '\0' for the char after 'z'.
+char ImplicitRules::Incr(char ch) {
+  switch (ch) {
+  case 'i': return 'j';
+  case 'r': return 's';
+  case 'z': return '\0';
+  default: return ch + 1;
   }
 }
 
 std::ostream &operator<<(std::ostream &o, const ImplicitRules &implicitRules) {
   o << "ImplicitRules:\n";
-  for (const auto &type : implicitRules.types_) {
-    o << "  " << type << ':';
-    for (int i{0}; i < ImplicitRules::CHARS_TOTAL; ++i) {
-      if (implicitRules.map_[i] == &type) {
-        o << ' ' << ImplicitRules::IndexToChar(i);
-      }
+  for (char ch = 'a'; ch; ch = ImplicitRules::Incr(ch)) {
+    auto it = implicitRules.map_.find(ch);
+    if (it != implicitRules. map_.end()) {
+      o << "  " << ch << ": " << it->second << '\n';
     }
-    o << '\n';
   }
   return o;
 }
@@ -504,8 +473,8 @@ bool ImplicitRulesVisitor::Pre(const parser::ImplicitStmt &x) {
 }
 
 bool ImplicitRulesVisitor::Pre(const parser::LetterSpec &x) {
-  auto loLoc{std::get<parser::Location>(x.t)};
-  auto hiLoc{loLoc};
+  auto loLoc = std::get<parser::Location>(x.t);
+  auto hiLoc = loLoc;
   if (auto hiLocOpt = std::get<std::optional<parser::Location>>(x.t)) {
     hiLoc = *hiLocOpt;
     if (*hiLoc < *loLoc) {
@@ -569,7 +538,7 @@ bool ImplicitRulesVisitor::HandleImplicitNone(
     for (const auto noneSpec : nameSpecs) {
       switch (noneSpec) {
       case ImplicitNoneNameSpec::External:
-        sawExternal += 1;
+        ++sawExternal;
         // TODO:
         // C894 If IMPLICIT NONE with an implicit-none-spec of EXTERNAL
         // appears within a scoping unit, the  name of an external or dummy
@@ -583,7 +552,7 @@ bool ImplicitRulesVisitor::HandleImplicitNone(
           Say("IMPLICIT NONE(TYPE) after IMPLICIT statement"_err_en_US);
           return false;
         }
-        sawType += 1;
+        ++sawType;
         break;
       default: CRASH_NO_CASE;
       }
