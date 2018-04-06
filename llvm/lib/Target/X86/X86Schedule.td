@@ -41,6 +41,7 @@ multiclass X86SchedWritePair {
 
 // Arithmetic.
 defm WriteALU  : X86SchedWritePair; // Simple integer ALU op.
+def WriteALURMW : WriteSequence<[WriteALULd, WriteRMW]>;
 defm WriteIMul : X86SchedWritePair; // Integer multiplication.
 def  WriteIMulH : SchedWrite;       // Integer multiplication, high part.
 defm WriteIDiv : X86SchedWritePair; // Integer division.

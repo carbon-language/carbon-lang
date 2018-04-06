@@ -1269,33 +1269,10 @@ def SKXWriteResGroup10 : SchedWriteRes<[SKXPort0156]> {
   let ResourceCycles = [1];
 }
 def: InstRW<[SKXWriteResGroup10], (instrs CBW, CWDE, CDQE)>;
-def: InstRW<[SKXWriteResGroup10], (instregex "ADD(8|16|32|64)ri",
-                                             "ADD(8|16|32|64)rr",
-                                             "ADD(8|16|32|64)i",
-                                             "AND(8|16|32|64)ri",
-                                             "AND(8|16|32|64)rr",
-                                             "AND(8|16|32|64)i",
-                                             "CLC",
+def: InstRW<[SKXWriteResGroup10], (instregex "CLC",
                                              "CMC",
-                                             "CMP(8|16|32|64)ri",
-                                             "CMP(8|16|32|64)rr",
-                                             "CMP(8|16|32|64)i",
-                                             "DEC(8|16|32|64)r",
-                                             "INC(8|16|32|64)r",
                                              "LAHF",
-                                             "MOV(8|16|32|64)rr",
-                                             "MOV(8|16|32|64)ri",
-                                             "MOVSX(16|32|64)rr16",
-                                             "MOVSX(16|32|64)rr32",
-                                             "MOVSX(16|32|64)rr8",
-                                             "MOVZX(16|32|64)rr16",
-                                             "MOVZX(16|32|64)rr8",
-                                             "NEG(8|16|32|64)r",
                                              "NOOP",
-                                             "NOT(8|16|32|64)r",
-                                             "OR(8|16|32|64)ri",
-                                             "OR(8|16|32|64)rr",
-                                             "OR(8|16|32|64)i",
                                              "SAHF",
                                              "SGDT64m",
                                              "SIDT64m",
@@ -1303,17 +1280,8 @@ def: InstRW<[SKXWriteResGroup10], (instregex "ADD(8|16|32|64)ri",
                                              "SMSW16m",
                                              "STC",
                                              "STRm",
-                                             "SUB(8|16|32|64)ri",
-                                             "SUB(8|16|32|64)rr",
-                                             "SUB(8|16|32|64)i",
                                              "SYSCALL",
-                                             "TEST(8|16|32|64)rr",
-                                             "TEST(8|16|32|64)i",
-                                             "TEST(8|16|32|64)ri",
-                                             "XCHG(16|32|64)rr",
-                                             "XOR(8|16|32|64)ri",
-                                             "XOR(8|16|32|64)rr",
-                                             "XOR(8|16|32|64)i")>;
+                                             "XCHG(16|32|64)rr")>;
 
 def SKXWriteResGroup11 : SchedWriteRes<[SKXPort4,SKXPort237]> {
   let Latency = 1;
@@ -3117,17 +3085,7 @@ def SKXWriteResGroup81 : SchedWriteRes<[SKXPort23,SKXPort0156]> {
   let ResourceCycles = [1,1];
 }
 def: InstRW<[SKXWriteResGroup81], (instrs POP16r, POP32r, POP64r)>;
-def: InstRW<[SKXWriteResGroup81], (instregex "ADD(8|16|32|64)rm",
-                                             "AND(8|16|32|64)rm",
-                                             "CMP(8|16|32|64)mi",
-                                             "CMP(8|16|32|64)mr",
-                                             "CMP(8|16|32|64)rm",
-                                             "OR(8|16|32|64)rm",
-                                             "POP(16|32|64)rmr",
-                                             "SUB(8|16|32|64)rm",
-                                             "TEST(8|16|32|64)mr",
-                                             "TEST(8|16|32|64)mi",
-                                             "XOR(8|16|32|64)rm")>;
+def: InstRW<[SKXWriteResGroup81], (instregex "POP(16|32|64)rmr")>;
 
 def SKXWriteResGroup82 : SchedWriteRes<[SKXPort5,SKXPort015]> {
   let Latency = 6;
@@ -3193,22 +3151,8 @@ def SKXWriteResGroup87 : SchedWriteRes<[SKXPort4,SKXPort23,SKXPort237,SKXPort015
   let NumMicroOps = 4;
   let ResourceCycles = [1,1,1,1];
 }
-def: InstRW<[SKXWriteResGroup87], (instregex "ADD(8|16|32|64)mi",
-                                             "ADD(8|16|32|64)mr",
-                                             "AND(8|16|32|64)mi",
-                                             "AND(8|16|32|64)mr",
-                                             "DEC(8|16|32|64)m",
-                                             "INC(8|16|32|64)m",
-                                             "NEG(8|16|32|64)m",
-                                             "NOT(8|16|32|64)m",
-                                             "OR(8|16|32|64)mi",
-                                             "OR(8|16|32|64)mr",
-                                             "POP(16|32|64)rmm",
-                                             "PUSH(16|32|64)rmm",
-                                             "SUB(8|16|32|64)mi",
-                                             "SUB(8|16|32|64)mr",
-                                             "XOR(8|16|32|64)mi",
-                                             "XOR(8|16|32|64)mr")>;
+def: InstRW<[SKXWriteResGroup87], (instregex "POP(16|32|64)rmm",
+                                             "PUSH(16|32|64)rmm")>;
 
 def SKXWriteResGroup88 : SchedWriteRes<[SKXPort6,SKXPort0156]> {
   let Latency = 6;
