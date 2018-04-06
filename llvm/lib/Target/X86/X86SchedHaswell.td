@@ -101,9 +101,9 @@ multiclass HWWriteResPair<X86FoldableSchedWrite SchedRW,
   }
 }
 
-// A folded store needs a cycle on port 4 for the store data, but it does not
-// need an extra port 2/3 cycle to recompute the address.
-def : WriteRes<WriteRMW, [HWPort4]>;
+// A folded store needs a cycle on port 4 for the store data, and an extra port
+// 2/3/7 cycle to recompute the address.
+def : WriteRes<WriteRMW, [HWPort237,HWPort4]>;
 
 // Store_addr on 237.
 // Store_data on 4.

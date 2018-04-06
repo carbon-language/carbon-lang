@@ -92,9 +92,9 @@ multiclass SBWriteResPair<X86FoldableSchedWrite SchedRW,
   }
 }
 
-// A folded store needs a cycle on port 4 for the store data, but it does not
-// need an extra port 2/3 cycle to recompute the address.
-def : WriteRes<WriteRMW, [SBPort4]>;
+// A folded store needs a cycle on port 4 for the store data, and an extra port
+// 2/3 cycle to recompute the address.
+def : WriteRes<WriteRMW, [SBPort23,SBPort4]>;
 
 def : WriteRes<WriteStore, [SBPort23, SBPort4]>;
 def : WriteRes<WriteLoad,  [SBPort23]> { let Latency = 5; }
