@@ -1420,16 +1420,16 @@ def SKLWriteResGroup74 : SchedWriteRes<[SKLPort23,SKLPort06]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[SKLWriteResGroup74], (instregex "ADC(8|16|32|64)rm",
-                                             "ADCX(32|64)rm",
-                                             "ADOX(32|64)rm",
-                                             "BT(16|32|64)mi8",
+def: InstRW<[SKLWriteResGroup74], (instregex "BT(16|32|64)mi8",
                                              "CMOV(AE|B|E|G|GE|L|LE|NE|NO|NP|NS|O|P|S)(16|32|64)rm",
                                              "RORX(32|64)mi",
                                              "SARX(32|64)rm",
-                                             "SBB(8|16|32|64)rm",
                                              "SHLX(32|64)rm",
                                              "SHRX(32|64)rm")>;
+def: InstRW<[SKLWriteResGroup74, ReadAfterLd], (instrs ADC8rm, ADC16rm, ADC32rm, ADC64rm,
+                                                       ADCX32rm, ADCX64rm,
+                                                       ADOX32rm, ADOX64rm,
+                                                       SBB8rm, SBB16rm, SBB32rm, SBB64rm)>;
 
 def SKLWriteResGroup75 : SchedWriteRes<[SKLPort23,SKLPort15]> {
   let Latency = 6;
@@ -2028,10 +2028,10 @@ def SKLWriteResGroup119 : SchedWriteRes<[SKLPort4,SKLPort23,SKLPort237,SKLPort06
   let ResourceCycles = [1,1,1,2,1];
 }
 def: InstRW<[SKLWriteResGroup119], (instregex "ADC(8|16|32|64)mi",
-                                              "ADC(8|16|32|64)mr",
                                               "CMPXCHG(8|16|32|64)rm",
-                                              "SBB(8|16|32|64)mi",
-                                              "SBB(8|16|32|64)mr")>;
+                                              "SBB(8|16|32|64)mi")>;
+def: InstRW<[SKLWriteResGroup119, ReadAfterLd], (instrs ADC8mr, ADC16mr, ADC32mr, ADC64mr,
+                                                        SBB8mr, SBB16mr, SBB32mr, SBB64mr)>;
 
 def SKLWriteResGroup120 : SchedWriteRes<[SKLPort0,SKLPort23]> {
   let Latency = 9;

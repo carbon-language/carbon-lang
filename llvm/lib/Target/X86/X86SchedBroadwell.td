@@ -1397,16 +1397,16 @@ def BWWriteResGroup63 : SchedWriteRes<[BWPort23,BWPort06]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[BWWriteResGroup63], (instregex "ADC(8|16|32|64)rm",
-                                            "ADCX(32|64)rm",
-                                            "ADOX(32|64)rm",
-                                            "BT(16|32|64)mi8",
+def: InstRW<[BWWriteResGroup63], (instregex "BT(16|32|64)mi8",
                                             "CMOV(AE|B|E|G|GE|L|LE|NE|NO|NP|NS|O|P|S)(16|32|64)rm",
                                             "RORX(32|64)mi",
                                             "SARX(32|64)rm",
-                                            "SBB(8|16|32|64)rm",
                                             "SHLX(32|64)rm",
                                             "SHRX(32|64)rm")>;
+def: InstRW<[BWWriteResGroup63, ReadAfterLd], (instrs ADC8rm, ADC16rm, ADC32rm, ADC64rm,
+                                                      ADCX32rm, ADCX64rm,
+                                                      ADOX32rm, ADOX64rm,
+                                                      SBB8rm, SBB16rm, SBB32rm, SBB64rm)>;
 
 def BWWriteResGroup64 : SchedWriteRes<[BWPort23,BWPort15]> {
   let Latency = 6;
@@ -1967,14 +1967,14 @@ def BWWriteResGroup100 : SchedWriteRes<[BWPort4,BWPort23,BWPort237,BWPort06,BWPo
   let ResourceCycles = [1,1,1,2,1];
 }
 def: InstRW<[BWWriteResGroup100], (instregex "ADC(8|16|32|64)mi",
-                                             "ADC(8|16|32|64)mr",
                                              "CMPXCHG(8|16|32|64)rm",
                                              "ROL(8|16|32|64)mCL",
                                              "SAR(8|16|32|64)mCL",
                                              "SBB(8|16|32|64)mi",
-                                             "SBB(8|16|32|64)mr",
                                              "SHL(8|16|32|64)mCL",
                                              "SHR(8|16|32|64)mCL")>;
+def: InstRW<[BWWriteResGroup100, ReadAfterLd], (instrs ADC8mr, ADC16mr, ADC32mr, ADC64mr,
+                                                       SBB8mr, SBB16mr, SBB32mr, SBB64mr)>;
 
 def BWWriteResGroup101 : SchedWriteRes<[BWPort1,BWPort23]> {
   let Latency = 9;
