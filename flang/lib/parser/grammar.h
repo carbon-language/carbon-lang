@@ -713,8 +713,10 @@ TYPE_PARSER(space >> sourced(construct<SignedIntLiteralConstant>{}(
                          signedDigitString, maybe(underscore >> kindParam))))
 
 // R708 int-literal-constant -> digit-string [_ kind-param]
+// The negated look-ahead for a trailing underscore prevents misrecognition
+// when the digit string is a numeric kind parameter of a character literal.
 TYPE_PARSER(construct<IntLiteralConstant>{}(
-    space >> digitString, maybe(underscore >> kindParam)))
+    space >> digitString, maybe(underscore >> kindParam) / !underscore))
 
 // R709 kind-param -> digit-string | scalar-int-constant-name
 TYPE_PARSER(construct<KindParam>{}(digitString) ||
