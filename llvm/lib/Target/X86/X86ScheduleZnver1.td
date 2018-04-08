@@ -1150,18 +1150,6 @@ def : InstRW<[ZnWritePShiftY], (instregex "(V?)PS(R|L)LDQYri")>;
 def : InstRW<[WriteMicrocoded], (instregex "VPERM2F128rr")>;
 def : InstRW<[WriteMicrocoded], (instregex "VPERM2F128rm")>;
 
-// BLENDVP S/D.
-def ZnWriteFPU01Lat3 : SchedWriteRes<[ZnFPU013]> {
-  let Latency = 3;
-}
-def ZnWriteFPU01Lat3Ld : SchedWriteRes<[ZnAGU, ZnFPU013]> {
-  let Latency = 11;
-  let NumMicroOps = 2;
-  let ResourceCycles = [1, 2];
-}
-def : InstRW<[ZnWriteFPU01Lat3], (instregex "BLENDVP(S|D)rr0")>;
-def : InstRW<[ZnWriteFPU01Lat3Ld, ReadAfterLd], (instregex "BLENDVP(S|D)rm0")>;
-
 def ZnWriteBROADCAST : SchedWriteRes<[ZnAGU, ZnFPU13]> {
   let NumMicroOps = 2;
   let Latency = 8;
