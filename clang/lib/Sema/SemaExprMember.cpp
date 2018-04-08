@@ -848,7 +848,7 @@ Sema::BuildAnonymousStructUnionMemberReference(const CXXScopeSpec &SS,
     // Build the first member access in the chain with full information.
     result =
         BuildFieldReferenceExpr(result, baseObjectIsPointer, SourceLocation(),
-                                SS, field, foundDecl, memberNameInfo)
+                                EmptySS, field, foundDecl, memberNameInfo)
             .get();
     if (!result)
       return ExprError();
