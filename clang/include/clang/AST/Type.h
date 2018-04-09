@@ -1149,6 +1149,8 @@ public:
   /// source object is placed in an uninitialized state.
   PrimitiveCopyKind isNonTrivialToPrimitiveDestructiveMove() const;
 
+  bool canPassInRegisters() const;
+
   enum DestructionKind {
     DK_none,
     DK_cxx_destructor,
