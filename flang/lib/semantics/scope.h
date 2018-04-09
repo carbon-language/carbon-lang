@@ -12,6 +12,8 @@
 namespace Fortran::semantics {
 
 class Scope {
+  using map_type = std::map<Name, Symbol>;
+
 public:
   // root of the scope tree; contains intrinsics:
   static const Scope systemScope;
@@ -36,7 +38,6 @@ public:
   /// Make a scope nested in this one
   Scope &MakeScope(Kind kind);
 
-  using map_type = std::map<Name, Symbol>;
   using size_type = map_type::size_type;
   using iterator = map_type::iterator;
   using const_iterator = map_type::const_iterator;
@@ -45,6 +46,8 @@ public:
   iterator end() { return symbols_.end(); }
   const_iterator begin() const { return symbols_.begin(); }
   const_iterator end() const { return symbols_.end(); }
+  const_iterator cbegin() const { return symbols_.cbegin(); }
+  const_iterator cend() const { return symbols_.cend(); }
 
   iterator find(const Name &name) { return symbols_.find(name); }
   const_iterator find(const Name &name) const { return symbols_.find(name); }
