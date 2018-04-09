@@ -39,6 +39,7 @@ Extensions, deletions, and legacy features supported
 * Data edit descriptors without width or other details
 * Backslash escape character sequences in quoted character literals
 * `D` lines in fixed form as comments or debug code
+* `CONVERT=` on the OPEN statement
 
 Extensions and legacy features deliberately not supported
 ---------------------------------------------------------
