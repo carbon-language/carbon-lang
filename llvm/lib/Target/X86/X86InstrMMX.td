@@ -206,15 +206,15 @@ multiclass sse12_cvt_pint<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
 
 multiclass sse12_cvt_pint_3addr<bits<8> opc, RegisterClass SrcRC,
                     RegisterClass DstRC, Intrinsic Int, X86MemOperand x86memop,
-                    PatFrag ld_frag, string asm, Domain d> {
+                    PatFrag ld_frag, string asm, OpndItins itins, Domain d> {
   def irr : MMXPI<opc, MRMSrcReg, (outs DstRC:$dst),
                   (ins DstRC:$src1, SrcRC:$src2), asm,
                   [(set DstRC:$dst, (Int DstRC:$src1, SrcRC:$src2))],
-                  NoItinerary, d>, Sched<[WriteCvtI2F]>;
+                  itins.rr, d>, Sched<[WriteCvtI2F]>;
   def irm : MMXPI<opc, MRMSrcMem, (outs DstRC:$dst),
                   (ins DstRC:$src1, x86memop:$src2), asm,
                   [(set DstRC:$dst, (Int DstRC:$src1, (ld_frag addr:$src2)))],
-                  NoItinerary, d>, Sched<[WriteCvtI2FLd]>;
+                  itins.rm, d>, Sched<[WriteCvtI2FLd]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -596,7 +596,7 @@ let Constraints = "$src1 = $dst" in {
   defm MMX_CVTPI2PS : sse12_cvt_pint_3addr<0x2A, VR64, VR128,
                          int_x86_sse_cvtpi2ps,
                          i64mem, load, "cvtpi2ps\t{$src2, $dst|$dst, $src2}",
-                          SSEPackedSingle>, PS;
+                         MMX_CVT_PS_ITINS, SSEPackedSingle>, PS;
 }
 
 // Extract / Insert

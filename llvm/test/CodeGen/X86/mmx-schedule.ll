@@ -188,8 +188,8 @@ define <4 x float> @test_cvtpi2ps(x86_mmx %a0, x86_mmx* %a1, <4 x float> %a2, <4
 ;
 ; ATOM-LABEL: test_cvtpi2ps:
 ; ATOM:       # %bb.0:
-; ATOM-NEXT:    cvtpi2ps (%rdi), %xmm1 # sched: [0:?]
-; ATOM-NEXT:    cvtpi2ps %mm0, %xmm0 # sched: [0:?]
+; ATOM-NEXT:    cvtpi2ps %mm0, %xmm0 # sched: [5:5.00]
+; ATOM-NEXT:    cvtpi2ps (%rdi), %xmm1 # sched: [5:5.00]
 ; ATOM-NEXT:    addps %xmm1, %xmm0 # sched: [5:5.00]
 ; ATOM-NEXT:    retq # sched: [79:39.50]
 ;
