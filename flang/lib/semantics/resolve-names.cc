@@ -228,12 +228,17 @@ private:
   void PostSubprogram(const Name &name, const std::list<Name> &dummyNames);
 
   // Helpers to make a Symbol in the current scope
-  template<typename D> Symbol &MakeSymbol(const Name &name, D &&details) {
-    return CurrScope().MakeSymbol(name, details);
+  template<typename D>
+  std::pair<Scope::iterator, bool> MakeSymbol(
+      const Name &name, const Attrs &attrs, D &&details) {
+    return CurrScope().try_emplace(name, attrs, details);
   }
   template<typename D>
-  Symbol &MakeSymbol(const Name &name, const Attrs &attrs, D &&details) {
-    return CurrScope().MakeSymbol(name, attrs, details);
+  std::pair<Scope::iterator, bool> MakeSymbol(const Name &name, D &&details) {
+    return MakeSymbol(name, Attrs(), details);
+  }
+  std::pair<Scope::iterator, bool> MakeSymbol(const Name &name) {
+    return CurrScope().try_emplace(name, UnknownDetails());
   }
 };
 
@@ -581,7 +586,8 @@ void ResolveNamesVisitor::Post(const parser::EntityDecl &x) {
   // TODO: may be under StructureStmt
   const auto &name{std::get<parser::ObjectName>(x.t)};
   // TODO: optional ArraySpec, CoarraySpec, CharLength, Initialization
-  Symbol &symbol{CurrScope().GetOrMakeSymbol(name.ToString())};
+
+  Symbol &symbol{MakeSymbol(name.ToString()).first->second};
   symbol.attrs() |= *attrs_;  // TODO: check attribute consistency
   if (symbol.has<UnknownDetails>()) {
     symbol.set_details(EntityDetails());

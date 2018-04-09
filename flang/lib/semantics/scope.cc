@@ -12,19 +12,6 @@ Scope &Scope::MakeScope(Kind kind) {
   return children_.back();
 }
 
-Symbol &Scope::GetOrMakeSymbol(const Name &name) {
-  const auto it = symbols_.find(name);
-  if (it != symbols_.end()) {
-    return it->second;
-  } else {
-    return MakeSymbol(name);
-  }
-}
-
-Symbol &Scope::MakeSymbol(const Name &name, Attrs attrs) {
-  return MakeSymbol(name, attrs, UnknownDetails());
-}
-
 static const char *ToString(Scope::Kind kind) {
   switch (kind) {
   case Scope::Kind::System: return "System";
