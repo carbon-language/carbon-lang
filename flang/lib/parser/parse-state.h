@@ -147,11 +147,16 @@ public:
     return {UncheckedAdvance()};
   }
 
-  std::optional<const char *> PeekAtNextChar() {
+  std::optional<const char *> PeekAtNextChar() const {
     if (p_ >= limit_) {
       return {};
     }
     return {p_};
+  }
+
+  std::size_t BytesRemaining() const {
+    std::size_t remain = limit_ - p_;
+    return remain;
   }
 
 private:

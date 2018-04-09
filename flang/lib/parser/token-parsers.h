@@ -615,13 +615,21 @@ constexpr struct FormDirectivesAndEmptyLines {
   using resultType = Success;
   static std::optional<Success> Parse(ParseState *state) {
     while (std::optional<const char *> at{state->PeekAtNextChar()}) {
-      static const char fixed[] = "!dir$ fixed\n", free[] = "!dir$ free\n";
       if (**at == '\n') {
         state->UncheckedAdvance();
-      } else if (std::memcmp(*at, fixed, sizeof fixed - 1) == 0) {
-        state->set_inFixedForm(true).UncheckedAdvance(sizeof fixed - 1);
-      } else if (std::memcmp(*at, free, sizeof free - 1) == 0) {
-        state->set_inFixedForm(false).UncheckedAdvance(sizeof free - 1);
+      } else if (**at == '!') {
+        static const char fixed[] = "!dir$ fixed\n", free[] = "!dir$ free\n";
+        static constexpr std::size_t fixedBytes{sizeof fixed - 1};
+        static constexpr std::size_t freeBytes{sizeof free - 1};
+        std::size_t remain{state->BytesRemaining()};
+        if (remain >= fixedBytes && std::memcmp(*at, fixed, fixedBytes) == 0) {
+          state->set_inFixedForm(true).UncheckedAdvance(fixedBytes);
+        } else if (remain >= freeBytes &&
+            std::memcmp(*at, free, freeBytes) == 0) {
+          state->set_inFixedForm(false).UncheckedAdvance(freeBytes);
+        } else {
+          break;
+        }
       } else {
         break;
       }
