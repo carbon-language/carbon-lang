@@ -133,7 +133,6 @@ protected:
   bool EnableLoadStoreOpt;
   bool EnableUnsafeDSOffsetFolding;
   bool EnableSIScheduler;
-  bool EnableDS128;
   bool DumpCode;
 
   // Subtarget statically properties set by tablegen
@@ -413,8 +412,8 @@ public:
 
   /// \returns If target supports ds_read/write_b128 and user enables generation
   /// of ds_read/write_b128.
-  bool useDS128() const {
-    return CIInsts && EnableDS128;
+  bool useDS128(bool UserEnable) const {
+    return CIInsts && UserEnable;
   }
 
   /// \returns If MUBUF instructions always perform range checking, even for
