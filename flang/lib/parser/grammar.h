@@ -3174,7 +3174,7 @@ TYPE_PARSER("D"_ch >> "T"_ch >>
 
 // R1314 k -> [sign] digit-string
 constexpr auto count = space >> DigitStringAsPositive{};
-constexpr auto scaleFactor = count;
+constexpr auto scaleFactor = space >> signedDigitString;
 
 // R1313 control-edit-desc ->
 //         position-edit-desc | [r] / | : | sign-edit-desc | k P |
