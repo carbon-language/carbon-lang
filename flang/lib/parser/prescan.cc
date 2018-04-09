@@ -87,9 +87,7 @@ void Prescanner::Statement() {
     NextLine();
     return;
   case LineClassification::Kind::PreprocessorDirective:
-    if (std::optional<TokenSequence> toks{TokenizePreprocessorDirective()}) {
-      preprocessor_.Directive(*toks, this);
-    }
+    preprocessor_.Directive(TokenizePreprocessorDirective(), this);
     return;
   case LineClassification::Kind::CompilerDirective:
     directiveSentinel_ = line.sentinel;
@@ -173,7 +171,7 @@ TokenSequence Prescanner::TokenizePreprocessorDirective() {
   }
   inPreprocessorDirective_ = false;
   at_ = saveAt;
-  return {std::move(tokens)};
+  return {std::move(tokens)};  // TODO: is std::move() necessary?
 }
 
 void Prescanner::Say(Message &&message) { messages_.Put(std::move(message)); }
@@ -298,7 +296,6 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
   if (*at_ == '\n') {
     return false;
   }
-
   if (*at_ == '\'' || *at_ == '"') {
     QuotedCharacterLiteral(tokens);
     preventHollerith_ = false;
@@ -355,7 +352,10 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
     if (EmitCharAndAdvance(tokens, '*') == '*') {
       EmitCharAndAdvance(tokens, '*');
     } else {
-      preventHollerith_ = true;  // ambiguity: CHARACTER*2H
+      // Subtle ambiguity:
+      //  CHARACTER*2H     declares H because *2 is a kind specifier
+      //  DATAC/N*2H  /    is repeated Hollerith
+      preventHollerith_ = !slashInCurrentLine_;
     }
   } else {
     char ch{*at_};
@@ -374,6 +374,8 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
         (ch == '=' && nch == '>')) {
       // token comprises two characters
       EmitCharAndAdvance(tokens, nch);
+    } else if (ch == '/') {
+      slashInCurrentLine_ = true;
     }
   }
   tokens->CloseToken();
@@ -612,13 +614,16 @@ bool Prescanner::IsNextLinePreprocessorDirective() const {
   return IsPreprocessorDirectiveLine(lineStart_);
 }
 
-void Prescanner::SkipCommentLines() {
+void Prescanner::SkipCommentLinesAndPreprocessorDirectives() {
   while (lineStart_ < limit_) {
     LineClassification line{ClassifyLine(lineStart_)};
-    if (line.kind != LineClassification::Kind::Comment) {
+    switch (line.kind) {
+    case LineClassification::Kind::PreprocessorDirective:
+      preprocessor_.Directive(TokenizePreprocessorDirective(), this);
       break;
+    case LineClassification::Kind::Comment: NextLine(); break;
+    default: return;
     }
-    NextLine();
   }
 }
 
@@ -684,7 +689,7 @@ bool Prescanner::FixedFormContinuation() {
   if (*at_ == '&' && inCharLiteral_) {
     return false;
   }
-  SkipCommentLines();
+  SkipCommentLinesAndPreprocessorDirectives();
   const char *cont{FixedFormContinuationLine()};
   if (cont == nullptr) {
     return false;
@@ -705,7 +710,7 @@ bool Prescanner::FreeFormContinuation() {
   if (*p != '\n' && (inCharLiteral_ || *p != '!')) {
     return false;
   }
-  SkipCommentLines();
+  SkipCommentLinesAndPreprocessorDirectives();
   p = lineStart_;
   if (p >= limit_) {
     return false;

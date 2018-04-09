@@ -92,6 +92,7 @@ private:
     at_ = at;
     column_ = 1;
     tabInCurrentLine_ = false;
+    slashInCurrentLine_ = false;
     preventHollerith_ = false;
     delimiterNesting_ = 0;
   }
@@ -128,7 +129,7 @@ private:
   void QuotedCharacterLiteral(TokenSequence *);
   void Hollerith(TokenSequence *, int);
   bool PadOutCharacterLiteral(TokenSequence *);
-  void SkipCommentLines();
+  void SkipCommentLinesAndPreprocessorDirectives();
   bool IsFixedFormCommentLine(const char *) const;
   bool IsFreeFormComment(const char *) const;
   std::optional<std::size_t> IsIncludeLine(const char *) const;
@@ -169,6 +170,7 @@ private:
   const char *at_{nullptr};  // next character to process; < lineStart_
   int column_{1};  // card image column position of next character
   bool tabInCurrentLine_{false};
+  bool slashInCurrentLine_{false};
   bool preventHollerith_{false};
   bool inCharLiteral_{false};
   bool inPreprocessorDirective_{false};
