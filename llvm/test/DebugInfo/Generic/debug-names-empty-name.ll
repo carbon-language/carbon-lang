@@ -1,5 +1,5 @@
 ; REQUIRES: object-emission
-; RUN: %llc_dwarf -accel-tables=Dwarf -filetype=obj -o %t < %s
+; RUN: %llc_dwarf -debugger-tune=lldb -accel-tables=Dwarf -filetype=obj -o %t < %s
 ; RUN: llvm-dwarfdump -find=_GLOBAL__sub_I__ %t | FileCheck --check-prefix=INFO %s
 ; RUN: llvm-dwarfdump -debug-names %t | FileCheck --check-prefix=NAMES %s
 ; RUN: llvm-dwarfdump -debug-names -verify %t | FileCheck --check-prefix=VERIFY %s
@@ -18,7 +18,7 @@
 ; Verification should succeed.
 ; VERIFY: No errors.
 
-define internal void @_GLOBAL__sub_I__() section ".text.startup" !dbg !7 {
+define internal void @_GLOBAL__sub_I__() !dbg !7 {
 entry:
   ret void
 }
