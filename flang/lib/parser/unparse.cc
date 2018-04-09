@@ -1596,8 +1596,8 @@ public:
     EndSubprogram("PROCEDURE", x.v);
   }
   void Unparse(const EntryStmt &x) {  // R1541
-    Word("ENTRY "), Walk(std::get<Name>(x.t));
-    Walk("(", std::get<std::list<DummyArg>>(x.t), ", ", ")");
+    Word("ENTRY "), Walk(std::get<Name>(x.t)), Put("(");
+    Walk(std::get<std::list<DummyArg>>(x.t), ", "), Put(")");
     Walk(" ", std::get<std::optional<Suffix>>(x.t));
   }
   void Unparse(const ReturnStmt &x) {  // R1542
