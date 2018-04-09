@@ -4856,13 +4856,15 @@ void Scop::removeAccessData(MemoryAccess *Access) {
     ValueDefAccs.erase(Access->getAccessValue());
   } else if (Access->isOriginalValueKind() && Access->isRead()) {
     auto &Uses = ValueUseAccs[Access->getScopArrayInfo()];
-    std::remove(Uses.begin(), Uses.end(), Access);
+    auto NewEnd = std::remove(Uses.begin(), Uses.end(), Access);
+    Uses.erase(NewEnd, Uses.end());
   } else if (Access->isOriginalPHIKind() && Access->isRead()) {
     PHINode *PHI = cast<PHINode>(Access->getAccessInstruction());
     PHIReadAccs.erase(PHI);
   } else if (Access->isOriginalAnyPHIKind() && Access->isWrite()) {
     auto &Incomings = PHIIncomingAccs[Access->getScopArrayInfo()];
-    std::remove(Incomings.begin(), Incomings.end(), Access);
+    auto NewEnd = std::remove(Incomings.begin(), Incomings.end(), Access);
+    Incomings.erase(NewEnd, Incomings.end());
   }
 }
 
