@@ -978,7 +978,7 @@ define <2 x i64> @test_movq2dq(x86_mmx %a0) optsize {
 ;
 ; ATOM-LABEL: test_movq2dq:
 ; ATOM:       # %bb.0:
-; ATOM-NEXT:    movq2dq %mm0, %xmm0 # sched: [0:?]
+; ATOM-NEXT:    movq2dq %mm0, %xmm0 # sched: [1:0.50]
 ; ATOM-NEXT:    retq # sched: [79:39.50]
 ;
 ; SLM-LABEL: test_movq2dq:
