@@ -1566,9 +1566,6 @@ MemoryUseOrDef *MemorySSA::createNewAccess(Instruction *I) {
   if (!Def && !Use)
     return nullptr;
 
-  assert((Def || Use) &&
-         "Trying to create a memory access with a non-memory instruction");
-
   MemoryUseOrDef *MUD;
   if (Def)
     MUD = new MemoryDef(I->getContext(), nullptr, I, I->getParent(), NextID++);
