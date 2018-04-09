@@ -24,8 +24,11 @@
 
 # CHECK: backward reference detected: foo in {{.*}}1.o refers to {{.*}}2.a
 
-# RUN: not ld.lld --fatal-warnings --end-group 2>&1 | FileCheck -check-prefix=ENDGROUP %s
-# ENDGROUP: stray --end-group
+# RUN: not ld.lld --fatal-warnings --start-group --start-group 2>&1 | FileCheck -check-prefix=START %s
+# START: nested --start-group
+
+# RUN: not ld.lld --fatal-warnings --end-group 2>&1 | FileCheck -check-prefix=END %s
+# END: stray --end-group
 
 .globl _start, foo
 _start:
