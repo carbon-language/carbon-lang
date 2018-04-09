@@ -1759,6 +1759,9 @@ void RewriteInstance::readSpecialSections() {
 
   BC->HasRelocations = HasTextRelocations &&
                        (opts::RelocationMode != cl::BOU_FALSE);
+  if (BC->HasRelocations) {
+    outs() << "BOLT-INFO: enabling relocation mode\n";
+  }
 
   // Process debug sections.
   EHFrame = BC->DwCtx->getEHFrame();
