@@ -1037,14 +1037,16 @@ TYPE_PARSER(construct<DerivedTypeSpec>{}(
 TYPE_PARSER(construct<TypeParamSpec>{}(maybe(keyword / "="), typeParamValue))
 
 // R756 structure-constructor -> derived-type-spec ( [component-spec-list] )
-TYPE_PARSER(construct<StructureConstructor>{}(derivedTypeSpec,
-                parenthesized(optionalList(Parser<ComponentSpec>{}))) ||
-    // This alternative corrects misrecognition of the component-spec-list as
-    // the type-param-spec-list in derived-type-spec.
-    construct<StructureConstructor>{}(
-        construct<DerivedTypeSpec>{}(
-            name, construct<std::list<TypeParamSpec>>{}),
-        parenthesized(optionalList(Parser<ComponentSpec>{}))))
+TYPE_PARSER((construct<StructureConstructor>{}(derivedTypeSpec,
+                 parenthesized(optionalList(Parser<ComponentSpec>{}))) ||
+                // This alternative corrects misrecognition of the
+                // component-spec-list as the type-param-spec-list in
+                // derived-type-spec.
+                construct<StructureConstructor>{}(
+                    construct<DerivedTypeSpec>{}(
+                        name, construct<std::list<TypeParamSpec>>{}),
+                    parenthesized(optionalList(Parser<ComponentSpec>{})))) /
+    !"("_tok)
 
 // R757 component-spec -> [keyword =] component-data-source
 TYPE_PARSER(construct<ComponentSpec>{}(
@@ -1175,7 +1177,7 @@ TYPE_PARSER(construct<EntityDecl>{}(objectName, maybe(arraySpec),
 
 // R806 null-init -> function-reference
 // TODO: confirm in semantics that NULL still intrinsic in this scope
-TYPE_PARSER("NULL ( )" >> construct<NullInit>{})
+TYPE_PARSER("NULL ( )" >> construct<NullInit>{} / !"("_tok)
 
 // R807 access-spec -> PUBLIC | PRIVATE
 TYPE_PARSER(
@@ -1351,14 +1353,16 @@ TYPE_PARSER(construct<DataStmtRepeat>{}(intLiteralConstant) ||
 //        scalar-constant | scalar-constant-subobject |
 //        signed-int-literal-constant | signed-real-literal-constant |
 //        null-init | initial-data-target | structure-constructor
-TYPE_PARSER(construct<DataStmtConstant>{}(Parser<StructureConstructor>{}) ||
-    construct<DataStmtConstant>{}(scalar(Parser<ConstantValue>{})) ||
+// TODO: Some structure constructors can be misrecognized as array
+// references into constant subobjects.
+TYPE_PARSER(construct<DataStmtConstant>{}(scalar(Parser<ConstantValue>{})) ||
+    construct<DataStmtConstant>{}(nullInit) ||
+    construct<DataStmtConstant>{}(Parser<StructureConstructor>{}) ||
     construct<DataStmtConstant>{}(scalar(constantSubobject)) ||
     construct<DataStmtConstant>{}(signedRealLiteralConstant) ||
     construct<DataStmtConstant>{}(signedIntLiteralConstant) ||
     extension(construct<DataStmtConstant>{}(
         Parser<SignedComplexLiteralConstant>{})) ||
-    construct<DataStmtConstant>{}(nullInit) ||
     construct<DataStmtConstant>{}(initialDataTarget))
 
 // R848 dimension-stmt ->
