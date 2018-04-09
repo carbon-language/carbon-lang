@@ -2631,6 +2631,8 @@ Node *Db::parseCtorDtorName(Node *&SoFar, NameState *State) {
 //          ::= <prefix> <data-member-prefix>
 //  extension ::= L
 //
+// <data-member-prefix> := <member source-name> [<template-args>] M
+//
 // <template-prefix> ::= <prefix> <template unqualified-name>
 //                   ::= <template-param>
 //                   ::= <substitution>
@@ -2660,6 +2662,13 @@ Node *Db::parseNestedName(NameState *State) {
 
   while (!consumeIf('E')) {
     consumeIf('L'); // extension
+
+    // <data-member-prefix> := <member source-name> [<template-args>] M
+    if (consumeIf('M')) {
+      if (SoFar == nullptr)
+        return nullptr;
+      continue;
+    }
 
     //          ::= <template-param>
     if (look() == 'T') {
