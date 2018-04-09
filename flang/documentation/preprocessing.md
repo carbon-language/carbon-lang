@@ -67,6 +67,7 @@ Judgement calls, where precedents are unclear:
   line continuation marker.
 * `#define c 1` does not allow a `c` in column 1 to be used as a label
   in fixed form, rather than as a comment line indicator.
+* IBM claims to be ISO C compliant and therefore recognizes trigraph sequences.
 
 Behavior that few compilers properly support (or none), but should:
 -------------------------------------------------------------------
