@@ -140,11 +140,11 @@ private:
 };
 
 class Messages {
-  using list_type = std::forward_list<Message>;
+  using listType = std::forward_list<Message>;
 
 public:
-  using iterator = list_type::iterator;
-  using const_iterator = list_type::const_iterator;
+  using iterator = listType::iterator;
+  using const_iterator = listType::const_iterator;
 
   explicit Messages(const CookedSource &cooked) : cooked_{cooked} {}
   Messages(Messages &&that)
@@ -207,7 +207,7 @@ public:
 
 private:
   const CookedSource &cooked_;
-  list_type messages_;
+  listType messages_;
   iterator last_;  // valid iff messages_ nonempty
 };
 }  // namespace parser
