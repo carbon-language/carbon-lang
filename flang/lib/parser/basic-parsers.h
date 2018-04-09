@@ -212,7 +212,7 @@ public:
   std::optional<resultType> Parse(ParseState *state) const {
     if (std::optional<resultType> ax{pa_.Parse(state)}) {
       if (pb_.Parse(state)) {
-        return std::move(ax);
+        return ax;
       }
     }
     return {};
@@ -1188,7 +1188,7 @@ constexpr struct NextCh {
   constexpr NextCh() {}
   std::optional<const char *> Parse(ParseState *state) const {
     if (std::optional<const char *> result{state->GetNextChar()}) {
-      return std::move(result);
+      return result;
     }
     state->Say("end of file"_err_en_US);
     return {};
