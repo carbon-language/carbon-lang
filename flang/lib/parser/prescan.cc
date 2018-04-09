@@ -171,7 +171,7 @@ TokenSequence Prescanner::TokenizePreprocessorDirective() {
   }
   inPreprocessorDirective_ = false;
   at_ = saveAt;
-  return {std::move(tokens)};  // TODO: is std::move() necessary?
+  return tokens;
 }
 
 void Prescanner::Say(Message &&message) { messages_.Put(std::move(message)); }
@@ -619,6 +619,9 @@ void Prescanner::SkipCommentLinesAndPreprocessorDirectives() {
     LineClassification line{ClassifyLine(lineStart_)};
     switch (line.kind) {
     case LineClassification::Kind::PreprocessorDirective:
+      if (inPreprocessorDirective_) {
+        return;
+      }
       preprocessor_.Directive(TokenizePreprocessorDirective(), this);
       break;
     case LineClassification::Kind::Comment: NextLine(); break;
