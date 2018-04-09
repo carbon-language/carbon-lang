@@ -1437,8 +1437,7 @@ public:
   void Unparse(const Rename &x) {  // R1411
     std::visit(visitors{[&](const Rename::Names &y) { Walk(y.t, " => "); },
                    [&](const Rename::Operators &y) {
-                     Word("OPERATOR(."), Walk(y.t, ".) => OPERATOR(."),
-                         Put(".)");
+                     Word("OPERATOR("), Walk(y.t, ") => OPERATOR("), Put(")");
                    }},
         x.u);
   }
