@@ -576,7 +576,11 @@ public:
     Walk(x.t, "=");
   }
   void Unparse(const PointerStmt &x) {  // R853
-    Word("POINTER"), Walk(x.v, ", ");
+    Word("POINTER :: "), Walk(x.v, ", ");
+  }
+  void Unparse(const PointerDecl &x) {  // R854
+    Walk(std::get<Name>(x.t));
+    Walk("(", std::get<std::optional<DeferredShapeSpecList>>(x.t), ")");
   }
   void Unparse(const ProtectedStmt &x) {  // R855
     Word("PROTECTED :: "), Walk(x.v, ", ");
