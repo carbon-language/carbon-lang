@@ -1960,5 +1960,27 @@ define <8 x i64> @test_mm512_mask_mul_epu32(i16 zeroext %__k, <8 x i64> %__A, <8
   ret <8 x i64> %tmp4
 }
 
+define <8 x double> @test_mm512_set1_epi8(i8 signext %d) nounwind {
+; X32-LABEL: test_mm512_set1_epi8:
+; X32:       # %bb.0: # %entry
+; X32-NEXT:    movb {{[0-9]+}}(%esp), %al
+; X32-NEXT:    vmovd %eax, %xmm0
+; X32-NEXT:    vpbroadcastb %xmm0, %ymm0
+; X32-NEXT:    vinserti64x4 $1, %ymm0, %zmm0, %zmm0
+; X32-NEXT:    retl
+;
+; X64-LABEL: test_mm512_set1_epi8:
+; X64:       # %bb.0: # %entry
+; X64-NEXT:    vmovd %edi, %xmm0
+; X64-NEXT:    vpbroadcastb %xmm0, %ymm0
+; X64-NEXT:    vinserti64x4 $1, %ymm0, %zmm0, %zmm0
+; X64-NEXT:    retq
+entry:
+  %vecinit.i = insertelement <64 x i8> undef, i8 %d, i32 0
+  %vecinit63.i = shufflevector <64 x i8> %vecinit.i, <64 x i8> undef, <64 x i32> zeroinitializer
+  %0 = bitcast <64 x i8> %vecinit63.i to <8 x double>
+  ret <8 x double> %0
+}
+
 !0 = !{i32 1}
 
