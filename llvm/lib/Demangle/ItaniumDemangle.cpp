@@ -153,6 +153,7 @@ public:
 class Node {
 public:
   enum Kind : unsigned char {
+    KNodeArrayNode,
     KDotSuffix,
     KVendorExtQualType,
     KQualType,
@@ -312,6 +313,14 @@ public:
 
       FirstElement = false;
     }
+  }
+};
+
+struct NodeArrayNode : Node {
+  NodeArray Array;
+  NodeArrayNode(NodeArray Array_) : Node(KNodeArrayNode), Array(Array_) {}
+  void printLeft(OutputStream &S) const override {
+    Array.printWithComma(S);
   }
 };
 
@@ -3813,6 +3822,7 @@ Node *Db::parseBracedExpr() {
 //              ::= ds <expression> <expression>                         # expr.*expr
 //              ::= sZ <template-param>                                  # size of a parameter pack
 //              ::= sZ <function-param>                                  # size of a function parameter pack
+//              ::= sP <template-arg>* E                                 # sizeof...(T), size of a captured template parameter pack from an alias template
 //              ::= sp <expression>                                      # pack expansion
 //              ::= tw <expression>                                      # throw expression
 //              ::= tr                                                   # throw with no operand (rethrow)
@@ -4213,9 +4223,22 @@ Node *Db::parseExpr() {
         Node *FP = parseFunctionParam();
         if (FP == nullptr)
           return nullptr;
-        return make<EnclosingExpr>("sizeof...", FP, ")");
+        return make<EnclosingExpr>("sizeof... (", FP, ")");
       }
       return nullptr;
+    case 'P': {
+      First += 2;
+      size_t ArgsBegin = Names.size();
+      while (!consumeIf('E')) {
+        Node *Arg = parseTemplateArg();
+        if (Arg == nullptr)
+          return nullptr;
+        Names.push_back(Arg);
+      }
+      return make<EnclosingExpr>(
+          "sizeof... (", make<NodeArrayNode>(popTrailingNodeArray(ArgsBegin)),
+          ")");
+    }
     }
     return nullptr;
   case 't':
