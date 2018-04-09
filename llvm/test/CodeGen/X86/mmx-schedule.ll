@@ -2127,8 +2127,8 @@ define i64 @test_palignr(x86_mmx %a0, x86_mmx %a1, x86_mmx* %a2) optsize {
 ;
 ; ATOM-LABEL: test_palignr:
 ; ATOM:       # %bb.0:
-; ATOM-NEXT:    palignr $1, %mm1, %mm0 # sched: [0:?]
-; ATOM-NEXT:    palignr $1, (%rdi), %mm0 # sched: [0:?]
+; ATOM-NEXT:    palignr $1, %mm1, %mm0 # sched: [1:1.00]
+; ATOM-NEXT:    palignr $1, (%rdi), %mm0 # sched: [1:1.00]
 ; ATOM-NEXT:    movq %mm0, %rax # sched: [3:3.00]
 ; ATOM-NEXT:    retq # sched: [79:39.50]
 ;

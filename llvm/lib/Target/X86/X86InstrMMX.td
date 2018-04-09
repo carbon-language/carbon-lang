@@ -183,14 +183,14 @@ multiclass ssse3_palign_mm<string asm, Intrinsic IntId> {
   def rri  : MMXSS3AI<0x0F, MRMSrcReg, (outs VR64:$dst),
       (ins VR64:$src1, VR64:$src2, u8imm:$src3),
       !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
-      [(set VR64:$dst, (IntId VR64:$src1, VR64:$src2, (i8 imm:$src3)))]>,
-      Sched<[WriteShuffle]>;
+      [(set VR64:$dst, (IntId VR64:$src1, VR64:$src2, (i8 imm:$src3)))],
+      IIC_MMX_PSHUF>, Sched<[WriteShuffle]>;
   def rmi  : MMXSS3AI<0x0F, MRMSrcMem, (outs VR64:$dst),
       (ins VR64:$src1, i64mem:$src2, u8imm:$src3),
       !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
       [(set VR64:$dst, (IntId VR64:$src1,
-                       (bitconvert (load_mmx addr:$src2)), (i8 imm:$src3)))]>,
-      Sched<[WriteShuffleLd, ReadAfterLd]>;
+                       (bitconvert (load_mmx addr:$src2)), (i8 imm:$src3)))],
+      IIC_MMX_PSHUF>, Sched<[WriteShuffleLd, ReadAfterLd]>;
 }
 
 multiclass sse12_cvt_pint<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
