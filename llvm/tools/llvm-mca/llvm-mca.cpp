@@ -191,7 +191,7 @@ public:
     // Skip spaces and tabs
     Position = Comment.find_first_not_of(" \t");
     if (Position < Comment.size())
-      Comment.drop_front(Position);
+      Comment = Comment.drop_front(Position);
     // Use the rest of the string as a descriptor for this code snippet.
     Regions.beginRegion(Comment, Loc);
   }
