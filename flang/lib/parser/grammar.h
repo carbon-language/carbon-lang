@@ -275,8 +275,10 @@ TYPE_PARSER(
 
 // R604 constant ->  literal-constant | named-constant
 // Used only via R607 int-constant and R845 data-stmt-constant.
+// The look-ahead check prevents occlusion of constant-subobject in
+// data-stmt-constant.
 TYPE_PARSER(construct<ConstantValue>{}(literalConstant) ||
-    construct<ConstantValue>{}(namedConstant))
+    construct<ConstantValue>{}(namedConstant / !"%"_tok / !"("_tok))
 
 // R608 intrinsic-operator ->
 //        power-op | mult-op | add-op | concat-op | rel-op |
@@ -1350,8 +1352,8 @@ TYPE_PARSER(construct<DataStmtRepeat>{}(intLiteralConstant) ||
 //        signed-int-literal-constant | signed-real-literal-constant |
 //        null-init | initial-data-target | structure-constructor
 TYPE_PARSER(construct<DataStmtConstant>{}(Parser<StructureConstructor>{}) ||
-    construct<DataStmtConstant>{}(scalar(constantSubobject)) ||
     construct<DataStmtConstant>{}(scalar(Parser<ConstantValue>{})) ||
+    construct<DataStmtConstant>{}(scalar(constantSubobject)) ||
     construct<DataStmtConstant>{}(signedRealLiteralConstant) ||
     construct<DataStmtConstant>{}(signedIntLiteralConstant) ||
     extension(construct<DataStmtConstant>{}(
