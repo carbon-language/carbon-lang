@@ -10,7 +10,6 @@
 // FIXME: (possibly) incomplete list of features that clang mangles that this
 // file does not yet support:
 //   - C++ modules TS
-//   - All C++14 and C++17 features
 
 #include "llvm/Demangle/Demangle.h"
 
@@ -1687,6 +1686,55 @@ public:
   }
 };
 
+struct FoldExpr : Expr {
+  Node *Pack, *Init;
+  StringView OperatorName;
+  bool IsLeftFold;
+
+  FoldExpr(bool IsLeftFold_, StringView OperatorName_, Node *Pack_, Node *Init_)
+      : Pack(Pack_), Init(Init_), OperatorName(OperatorName_),
+        IsLeftFold(IsLeftFold_) {}
+
+  void printLeft(OutputStream &S) const override {
+    auto PrintPack = [&] {
+      S += '(';
+      ParameterPackExpansion(Pack).print(S);
+      S += ')';
+    };
+
+    S += '(';
+
+    if (IsLeftFold) {
+      // init op ... op pack
+      if (Init != nullptr) {
+        Init->print(S);
+        S += ' ';
+        S += OperatorName;
+        S += ' ';
+      }
+      // ... op pack
+      S += "... ";
+      S += OperatorName;
+      S += ' ';
+      PrintPack();
+    } else { // !IsLeftFold
+      // pack op ...
+      PrintPack();
+      S += ' ';
+      S += OperatorName;
+      S += " ...";
+      // pack op ... op init
+      if (Init != nullptr) {
+        S += ' ';
+        S += OperatorName;
+        S += ' ';
+        Init->print(S);
+      }
+    }
+    S += ')';
+  }
+};
+
 class ThrowExpr : public Expr {
   const Node *Op;
 
@@ -2055,6 +2103,7 @@ struct Db {
   Node *parseNewExpr();
   Node *parseConversionExpr();
   Node *parseBracedExpr();
+  Node *parseFoldExpr();
 
   /// Parse the <type> production.
   Node *parseType();
@@ -3799,6 +3848,76 @@ Node *Db::parseBracedExpr() {
   return parseExpr();
 }
 
+// (not yet in the spec)
+// <fold-expr> ::= fL <binary-operator-name> <expression> <expression>
+//             ::= fR <binary-operator-name> <expression> <expression>
+//             ::= fl <binary-operator-name> <expression>
+//             ::= fr <binary-operator-name> <expression>
+Node *Db::parseFoldExpr() {
+  if (!consumeIf('f'))
+    return nullptr;
+
+  char FoldKind = look();
+  bool IsLeftFold, HasInitializer;
+  HasInitializer = FoldKind == 'L' || FoldKind == 'R';
+  if (FoldKind == 'l' || FoldKind == 'L')
+    IsLeftFold = true;
+  else if (FoldKind == 'r' || FoldKind == 'R')
+    IsLeftFold = false;
+  else
+    return nullptr;
+  ++First;
+
+  // FIXME: This map is duplicated in parseOperatorName and parseExpr.
+  StringView OperatorName;
+  if      (consumeIf("aa")) OperatorName = "&&";
+  else if (consumeIf("an")) OperatorName = "&";
+  else if (consumeIf("aN")) OperatorName = "&=";
+  else if (consumeIf("aS")) OperatorName = "=";
+  else if (consumeIf("cm")) OperatorName = ",";
+  else if (consumeIf("ds")) OperatorName = ".*";
+  else if (consumeIf("dv")) OperatorName = "/";
+  else if (consumeIf("dV")) OperatorName = "/=";
+  else if (consumeIf("eo")) OperatorName = "^";
+  else if (consumeIf("eO")) OperatorName = "^=";
+  else if (consumeIf("eq")) OperatorName = "==";
+  else if (consumeIf("ge")) OperatorName = ">=";
+  else if (consumeIf("gt")) OperatorName = ">";
+  else if (consumeIf("le")) OperatorName = "<=";
+  else if (consumeIf("ls")) OperatorName = "<<";
+  else if (consumeIf("lS")) OperatorName = "<<=";
+  else if (consumeIf("lt")) OperatorName = "<";
+  else if (consumeIf("mi")) OperatorName = "-";
+  else if (consumeIf("mI")) OperatorName = "-=";
+  else if (consumeIf("ml")) OperatorName = "*";
+  else if (consumeIf("mL")) OperatorName = "*=";
+  else if (consumeIf("ne")) OperatorName = "!=";
+  else if (consumeIf("oo")) OperatorName = "||";
+  else if (consumeIf("or")) OperatorName = "|";
+  else if (consumeIf("oR")) OperatorName = "|=";
+  else if (consumeIf("pl")) OperatorName = "+";
+  else if (consumeIf("pL")) OperatorName = "+=";
+  else if (consumeIf("rm")) OperatorName = "%";
+  else if (consumeIf("rM")) OperatorName = "%=";
+  else if (consumeIf("rs")) OperatorName = ">>";
+  else if (consumeIf("rS")) OperatorName = ">>=";
+  else return nullptr;
+
+  Node *Pack = parseExpr(), *Init = nullptr;
+  if (Pack == nullptr)
+    return nullptr;
+  if (HasInitializer) {
+    Init = parseExpr();
+    if (Init == nullptr)
+      return nullptr;
+  }
+
+  if (IsLeftFold && Init)
+    std::swap(Pack, Init);
+
+  return make<FoldExpr>(IsLeftFold, OperatorName, Pack, Init);
+}
+
 // <expression> ::= <unary operator-name> <expression>
 //              ::= <binary operator-name> <expression> <expression>
 //              ::= <ternary operator-name> <expression> <expression> <expression>
@@ -3853,8 +3972,12 @@ Node *Db::parseExpr() {
     return parseExprPrimary();
   case 'T':
     return parseTemplateParam();
-  case 'f':
-    return parseFunctionParam();
+  case 'f': {
+    // Disambiguate a fold expression from a <function-param>.
+    if (look(1) == 'p' || (look(1) == 'L' && std::isdigit(look(2))))
+      return parseFunctionParam();
+    return parseFoldExpr();
+  }
   case 'a':
     switch (First[1]) {
     case 'a':
