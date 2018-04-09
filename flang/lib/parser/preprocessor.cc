@@ -377,7 +377,7 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
     return;
   }
   if (IsDecimalDigit(dir.TokenAt(j)[0]) || dir.TokenAt(j)[0] == '"') {
-    return;  // TODO: treat as #line
+    return;  // treat like #line, ignore it
   }
   std::size_t dirOffset{j};
   std::string dirName{ToLowerCaseLetters(dir.TokenAt(dirOffset).ToString())};
@@ -387,7 +387,7 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
     nameToken = dir.TokenAt(j);
   }
   if (dirName == "line") {
-    // TODO: implement #line
+    // #line is ignored
   } else if (dirName == "define") {
     if (nameToken.empty()) {
       prescanner->Say("#define: missing or invalid name"_err_en_US,
