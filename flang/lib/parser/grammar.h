@@ -1350,8 +1350,8 @@ TYPE_PARSER(construct<DataStmtRepeat>{}(intLiteralConstant) ||
 //        signed-int-literal-constant | signed-real-literal-constant |
 //        null-init | initial-data-target | structure-constructor
 TYPE_PARSER(construct<DataStmtConstant>{}(Parser<StructureConstructor>{}) ||
-    construct<DataStmtConstant>{}(scalar(Parser<ConstantValue>{})) ||
     construct<DataStmtConstant>{}(scalar(constantSubobject)) ||
+    construct<DataStmtConstant>{}(scalar(Parser<ConstantValue>{})) ||
     construct<DataStmtConstant>{}(signedRealLiteralConstant) ||
     construct<DataStmtConstant>{}(signedIntLiteralConstant) ||
     extension(construct<DataStmtConstant>{}(
