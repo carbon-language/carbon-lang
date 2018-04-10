@@ -628,7 +628,7 @@ TYPE_CONTEXT_PARSER("TYPE statement"_en_US,
 TYPE_PARSER(construct<TypeAttrSpec>("ABSTRACT" >> construct<Abstract>()) ||
     construct<TypeAttrSpec>("BIND ( C )" >> construct<TypeAttrSpec::BindC>()) ||
     construct<TypeAttrSpec>(
-        "EXTENDS" >> construct<TypeAttrSpec::Extends>(parenthesized(name))) ||
+        construct<TypeAttrSpec::Extends>("EXTENDS" >> parenthesized(name))) ||
     construct<TypeAttrSpec>(accessSpec))
 
 // R729 private-or-sequence -> private-components-stmt | sequence-stmt
@@ -681,9 +681,9 @@ constexpr auto contiguous = "CONTIGUOUS" >> construct<Contiguous>();
 constexpr auto pointer = "POINTER" >> construct<Pointer>();
 TYPE_PARSER(construct<ComponentAttrSpec>(accessSpec) ||
     construct<ComponentAttrSpec>(allocatable) ||
-    "CODIMENSION" >> construct<ComponentAttrSpec>(coarraySpec) ||
+    construct<ComponentAttrSpec>("CODIMENSION" >> coarraySpec) ||
     construct<ComponentAttrSpec>(contiguous) ||
-    "DIMENSION" >> construct<ComponentAttrSpec>(Parser<ComponentArraySpec>{}) ||
+    construct<ComponentAttrSpec>("DIMENSION" >> Parser<ComponentArraySpec>{}) ||
     construct<ComponentAttrSpec>(pointer))
 
 // R739 component-decl ->
@@ -713,7 +713,7 @@ TYPE_CONTEXT_PARSER("PROCEDURE component definition statement"_en_US,
 // R742 proc-component-attr-spec ->
 //        access-spec | NOPASS | PASS [(arg-name)] | POINTER
 constexpr auto noPass = "NOPASS" >> construct<NoPass>();
-constexpr auto pass = "PASS" >> construct<Pass>(maybe(parenthesized(name)));
+constexpr auto pass = construct<Pass>("PASS" >> maybe(parenthesized(name)));
 TYPE_PARSER(construct<ProcComponentAttrSpec>(accessSpec) ||
     construct<ProcComponentAttrSpec>(noPass) ||
     construct<ProcComponentAttrSpec>(pass) ||
@@ -727,12 +727,11 @@ constexpr auto initialDataTarget = indirect(designator);
 // R805 initialization ->
 //        = constant-expr | => null-init | => initial-data-target
 // Universal extension: initialization -> / data-stmt-value-list /
-TYPE_PARSER("=>" >> construct<Initialization>(nullInit) ||
-    "=>" >> construct<Initialization>(initialDataTarget) ||
-    "=" >> construct<Initialization>(constantExpr) ||
-    extension("/" >> construct<Initialization>(
-                         nonemptyList(indirect(Parser<DataStmtValue>{}))) /
-            "/"))
+TYPE_PARSER(construct<Initialization>("=>" >> nullInit) ||
+    construct<Initialization>("=>" >> initialDataTarget) ||
+    construct<Initialization>("=" >> constantExpr) ||
+    extension(construct<Initialization>("/" >>
+                         nonemptyList(indirect(Parser<DataStmtValue>{})) / "/")))
 
 // R745 private-components-stmt -> PRIVATE
 // R747 binding-private-stmt -> PRIVATE
@@ -774,21 +773,19 @@ TYPE_PARSER(construct<TypeBoundProcDecl>(name, maybe("=>" >> name)))
 // R751 type-bound-generic-stmt ->
 //        GENERIC [, access-spec] :: generic-spec => binding-name-list
 TYPE_CONTEXT_PARSER("type bound GENERIC statement"_en_US,
-    "GENERIC" >> construct<TypeBoundGenericStmt>(maybe("," >> accessSpec),
+    construct<TypeBoundGenericStmt>("GENERIC" >> maybe("," >> accessSpec),
                      "::" >> indirect(genericSpec), "=>" >> nonemptyList(name)))
 
 // R752 bind-attr ->
 //        access-spec | DEFERRED | NON_OVERRIDABLE | NOPASS | PASS [(arg-name)]
 TYPE_PARSER(construct<BindAttr>(accessSpec) ||
-    "DEFERRED" >> construct<BindAttr>(construct<BindAttr::Deferred>()) ||
-    "NON_OVERRIDABLE" >>
-        construct<BindAttr>(construct<BindAttr::Non_Overridable>()) ||
+    construct<BindAttr>("DEFERRED" >> construct<BindAttr::Deferred>()) ||
+    construct<BindAttr>("NON_OVERRIDABLE" >> construct<BindAttr::Non_Overridable>()) ||
     construct<BindAttr>(noPass) || construct<BindAttr>(pass))
 
 // R753 final-procedure-stmt -> FINAL [::] final-subroutine-name-list
 TYPE_CONTEXT_PARSER("FINAL statement"_en_US,
-    "FINAL" >> maybe("::"_tok) >>
-        construct<FinalProcedureStmt>(nonemptyList(name)))
+    construct<FinalProcedureStmt>("FINAL" >> maybe("::"_tok) >> nonemptyList(name)))
 
 // R754 derived-type-spec -> type-name [(type-param-spec-list)]
 TYPE_PARSER(construct<DerivedTypeSpec>(
@@ -940,8 +937,8 @@ TYPE_PARSER(construct<EntityDecl>(objectName, maybe(arraySpec),
 TYPE_PARSER("NULL ( )" >> construct<NullInit>() / !"("_tok)
 
 // R807 access-spec -> PUBLIC | PRIVATE
-TYPE_PARSER("PUBLIC" >> construct<AccessSpec>(pure(AccessSpec::Kind::Public)) ||
-    "PRIVATE" >> construct<AccessSpec>(pure(AccessSpec::Kind::Private)))
+TYPE_PARSER(construct<AccessSpec>("PUBLIC" >> pure(AccessSpec::Kind::Public)) ||
+    construct<AccessSpec>("PRIVATE" >> pure(AccessSpec::Kind::Private)))
 
 // R808 language-binding-spec ->
 //        BIND ( C [, NAME = scalar-default-char-constant-expr] )
@@ -1049,7 +1046,7 @@ TYPE_PARSER(construct<BindStmt>(
 
 // R833 bind-entity -> entity-name | / common-block-name /
 TYPE_PARSER(construct<BindEntity>(pure(BindEntity::Kind::Object), name) ||
-    "/" >> construct<BindEntity>(pure(BindEntity::Kind::Common), name) / "/")
+    construct<BindEntity>("/" >> pure(BindEntity::Kind::Common), name / "/"))
 
 // R834 codimension-stmt -> CODIMENSION [::] codimension-decl-list
 TYPE_PARSER("CODIMENSION" >> maybe("::"_tok) >>
@@ -1064,8 +1061,7 @@ TYPE_PARSER("CONTIGUOUS" >> maybe("::"_tok) >>
 
 // R837 data-stmt -> DATA data-stmt-set [[,] data-stmt-set]...
 TYPE_CONTEXT_PARSER("DATA statement"_en_US,
-    "DATA" >> construct<DataStmt>(
-                  nonemptySeparated(Parser<DataStmtSet>{}, maybe(","_tok))))
+    construct<DataStmt>("DATA" >> nonemptySeparated(Parser<DataStmtSet>{}, maybe(","_tok))))
 
 // R838 data-stmt-set -> data-stmt-object-list / data-stmt-value-list /
 TYPE_PARSER(construct<DataStmtSet>(nonemptyList(Parser<DataStmtObject>{}),
@@ -1132,13 +1128,10 @@ TYPE_CONTEXT_PARSER("DIMENSION statement"_en_US,
 
 // R849 intent-stmt -> INTENT ( intent-spec ) [::] dummy-arg-name-list
 TYPE_CONTEXT_PARSER("INTENT statement"_en_US,
-    "INTENT" >>
-        construct<IntentStmt>(
-            parenthesized(intentSpec) / maybe("::"_tok), nonemptyList(name)))
+    construct<IntentStmt>("INTENT" >> parenthesized(intentSpec) / maybe("::"_tok), nonemptyList(name)))
 
 // R850 optional-stmt -> OPTIONAL [::] dummy-arg-name-list
-TYPE_PARSER("OPTIONAL" >> maybe("::"_tok) >>
-    construct<OptionalStmt>(nonemptyList(name)))
+TYPE_PARSER(construct<OptionalStmt>("OPTIONAL" >> maybe("::"_tok) >> nonemptyList(name)))
 
 // R851 parameter-stmt -> PARAMETER ( named-constant-def-list )
 // Legacy extension: omitted parentheses, no implicit typing from names
@@ -1153,8 +1146,8 @@ TYPE_CONTEXT_PARSER("old style PARAMETER statement"_en_US,
 TYPE_PARSER(construct<NamedConstantDef>(namedConstant, "=" >> constantExpr))
 
 // R853 pointer-stmt -> POINTER [::] pointer-decl-list
-TYPE_PARSER("POINTER" >> maybe("::"_tok) >>
-    construct<PointerStmt>(nonemptyList(Parser<PointerDecl>{})))
+TYPE_PARSER(
+    construct<PointerStmt>("POINTER" >> maybe("::"_tok) >> nonemptyList(Parser<PointerDecl>{})))
 
 // R854 pointer-decl ->
 //        object-name [( deferred-shape-spec-list )] | proc-entity-name
@@ -1162,30 +1155,26 @@ TYPE_PARSER(
     construct<PointerDecl>(name, maybe(parenthesized(deferredShapeSpecList))))
 
 // R855 protected-stmt -> PROTECTED [::] entity-name-list
-TYPE_PARSER("PROTECTED" >> maybe("::"_tok) >>
-    construct<ProtectedStmt>(nonemptyList(name)))
+TYPE_PARSER(construct<ProtectedStmt>("PROTECTED" >> maybe("::"_tok) >> nonemptyList(name)))
 
 // R856 save-stmt -> SAVE [[::] saved-entity-list]
-TYPE_PARSER("SAVE" >> construct<SaveStmt>(defaulted(maybe("::"_tok) >>
+TYPE_PARSER(construct<SaveStmt>("SAVE" >> defaulted(maybe("::"_tok) >>
                           nonemptyList(Parser<SavedEntity>{}))))
 
 // R857 saved-entity -> object-name | proc-pointer-name | / common-block-name /
 // R858 proc-pointer-name -> name
 // TODO: Distinguish Kind::ProcPointer and Kind::Object
 TYPE_PARSER(construct<SavedEntity>(pure(SavedEntity::Kind::Object), name) ||
-    "/" >> construct<SavedEntity>(pure(SavedEntity::Kind::Common), name) / "/")
+    construct<SavedEntity>("/" >> pure(SavedEntity::Kind::Common), name / "/"))
 
 // R859 target-stmt -> TARGET [::] target-decl-list
-TYPE_PARSER("TARGET" >> maybe("::"_tok) >>
-    construct<TargetStmt>(nonemptyList(Parser<ObjectDecl>{})))
+TYPE_PARSER(construct<TargetStmt>("TARGET" >> maybe("::"_tok) >> nonemptyList(Parser<ObjectDecl>{})))
 
 // R861 value-stmt -> VALUE [::] dummy-arg-name-list
-TYPE_PARSER(
-    "VALUE" >> maybe("::"_tok) >> construct<ValueStmt>(nonemptyList(name)))
+TYPE_PARSER(construct<ValueStmt>("VALUE" >> maybe("::"_tok) >> nonemptyList(name)))
 
 // R862 volatile-stmt -> VOLATILE [::] object-name-list
-TYPE_PARSER("VOLATILE" >> maybe("::"_tok) >>
-    construct<VolatileStmt>(nonemptyList(objectName)))
+TYPE_PARSER(construct<VolatileStmt>("VOLATILE" >> maybe("::"_tok) >> nonemptyList(objectName)))
 
 // R866 implicit-name-spec -> EXTERNAL | TYPE
 constexpr auto implicitNameSpec = "EXTERNAL" >>
@@ -1196,10 +1185,10 @@ constexpr auto implicitNameSpec = "EXTERNAL" >>
 //        IMPLICIT implicit-spec-list |
 //        IMPLICIT NONE [( [implicit-name-spec-list] )]
 TYPE_CONTEXT_PARSER("IMPLICIT statement"_en_US,
-    "IMPLICIT" >>
-        (construct<ImplicitStmt>(nonemptyList(Parser<ImplicitSpec>{})) ||
-            construct<ImplicitStmt>("NONE" >>
-                defaulted(parenthesized(optionalList(implicitNameSpec))))))
+    construct<ImplicitStmt>(
+        "IMPLICIT" >> nonemptyList(Parser<ImplicitSpec>{})) ||
+        construct<ImplicitStmt>("IMPLICIT NONE"_sptok >>
+            defaulted(parenthesized(optionalList(implicitNameSpec)))))
 
 // R864 implicit-spec -> declaration-type-spec ( letter-spec-list )
 // The variant form of declarationTypeSpec is meant to avoid misrecognition
@@ -1211,19 +1200,17 @@ TYPE_CONTEXT_PARSER("IMPLICIT statement"_en_US,
 constexpr auto noKindSelector = construct<std::optional<KindSelector>>();
 constexpr auto implicitSpecDeclarationTypeSpecRetry =
     construct<DeclarationTypeSpec>(
-        "INTEGER" >> construct<IntrinsicTypeSpec>(
-                         construct<IntegerTypeSpec>(noKindSelector)) ||
-        "REAL" >> construct<IntrinsicTypeSpec>(
-                      construct<IntrinsicTypeSpec::Real>(noKindSelector)) ||
-        "COMPLEX" >>
-            construct<IntrinsicTypeSpec>(
-                construct<IntrinsicTypeSpec::Complex>(noKindSelector)) ||
-        "CHARACTER" >> construct<IntrinsicTypeSpec>(
-                           construct<IntrinsicTypeSpec::Character>(
+        construct<IntrinsicTypeSpec>(
+            "INTEGER" >> construct<IntegerTypeSpec>(noKindSelector)) ||
+        construct<IntrinsicTypeSpec>(
+            "REAL" >> construct<IntrinsicTypeSpec::Real>(noKindSelector)) ||
+        construct<IntrinsicTypeSpec>("COMPLEX" >>
+            construct<IntrinsicTypeSpec::Complex>(noKindSelector)) ||
+        construct<IntrinsicTypeSpec>(
+            "CHARACTER" >> construct<IntrinsicTypeSpec::Character>(
                                construct<std::optional<CharSelector>>())) ||
-        "LOGICAL" >>
-            construct<IntrinsicTypeSpec>(
-                construct<IntrinsicTypeSpec::Logical>(noKindSelector)));
+        construct<IntrinsicTypeSpec>("LOGICAL" >>
+            construct<IntrinsicTypeSpec::Logical>(noKindSelector)));
 
 TYPE_PARSER(construct<ImplicitSpec>(declarationTypeSpec,
                 parenthesized(nonemptyList(Parser<LetterSpec>{}))) ||
@@ -1239,27 +1226,28 @@ TYPE_PARSER(space >> (construct<LetterSpec>(letter, maybe("-" >> letter)) ||
 //        IMPORT [[::] import-name-list] |
 //        IMPORT , ONLY : import-name-list | IMPORT , NONE | IMPORT , ALL
 TYPE_CONTEXT_PARSER("IMPORT statement"_en_US,
-    "IMPORT" >>
-        (construct<ImportStmt>(
-             ", ONLY :" >> pure(ImportStmt::Kind::Only), nonemptyList(name)) ||
-            construct<ImportStmt>(", NONE" >> pure(ImportStmt::Kind::None)) ||
-            construct<ImportStmt>(", ALL" >> pure(ImportStmt::Kind::All)) ||
-            construct<ImportStmt>(maybe("::"_tok) >> optionalList(name))))
+    construct<ImportStmt>("IMPORT , ONLY :" >> pure(ImportStmt::Kind::Only),
+        nonemptyList(name)) ||
+        construct<ImportStmt>(
+            "IMPORT , NONE" >> pure(ImportStmt::Kind::None)) ||
+        construct<ImportStmt>(
+            "IMPORT , ALL" >> pure(ImportStmt::Kind::All)) ||
+        construct<ImportStmt>(
+            "IMPORT" >> maybe("::"_tok) >> optionalList(name)))
 
 // R868 namelist-stmt ->
 //        NAMELIST / namelist-group-name / namelist-group-object-list
 //        [[,] / namelist-group-name / namelist-group-object-list]...
 // R869 namelist-group-object -> variable-name
-TYPE_PARSER("NAMELIST" >>
-    construct<NamelistStmt>(nonemptySeparated(
+TYPE_PARSER(construct<NamelistStmt>("NAMELIST" >>
+    nonemptySeparated(
         construct<NamelistStmt::Group>("/" >> name / "/", nonemptyList(name)),
         maybe(","_tok))))
 
 // R870 equivalence-stmt -> EQUIVALENCE equivalence-set-list
 // R871 equivalence-set -> ( equivalence-object , equivalence-object-list )
-TYPE_PARSER("EQUIVALENCE" >>
-    construct<EquivalenceStmt>(
-        nonemptyList(parenthesized(nonemptyList(Parser<EquivalenceObject>{})))))
+TYPE_PARSER(construct<EquivalenceStmt>("EQUIVALENCE" >>
+    nonemptyList(parenthesized(nonemptyList(Parser<EquivalenceObject>{})))))
 
 // R872 equivalence-object -> variable-name | array-element | substring
 TYPE_PARSER(construct<EquivalenceObject>(indirect(designator)))
@@ -1267,12 +1255,11 @@ TYPE_PARSER(construct<EquivalenceObject>(indirect(designator)))
 // R873 common-stmt ->
 //        COMMON [/ [common-block-name] /] common-block-object-list
 //        [[,] / [common-block-name] / common-block-object-list]...
-TYPE_PARSER(
-    "COMMON" >> construct<CommonStmt>(maybe("/" >> maybe(name) / "/"),
-                    nonemptyList(Parser<CommonBlockObject>{}),
-                    many(maybe(","_tok) >>
-                        construct<CommonStmt::Block>("/" >> maybe(name) / "/",
-                            nonemptyList(Parser<CommonBlockObject>{})))))
+TYPE_PARSER(construct<CommonStmt>("COMMON" >> maybe("/" >> maybe(name) / "/"),
+    nonemptyList(Parser<CommonBlockObject>{}),
+    many(maybe(","_tok) >>
+        construct<CommonStmt::Block>("/" >> maybe(name) / "/",
+            nonemptyList(Parser<CommonBlockObject>{})))))
 
 // R874 common-block-object -> variable-name [( array-spec )]
 TYPE_PARSER(construct<CommonBlockObject>(name, maybe(arraySpec)))
@@ -1412,30 +1399,28 @@ constexpr auto teamVariable = scalar(indirect(variable));
 // R926 image-selector-spec ->
 //        STAT = stat-variable | TEAM = team-variable |
 //        TEAM_NUMBER = scalar-int-expr
-TYPE_PARSER(
-    "STAT =" >> construct<ImageSelectorSpec>(construct<ImageSelectorSpec::Stat>(
-                    scalar(integer(indirect(variable))))) ||
-    "TEAM =" >> construct<ImageSelectorSpec>(
-                    construct<ImageSelectorSpec::Team>(teamVariable)) ||
-    "TEAM_NUMBER =" >>
-        construct<ImageSelectorSpec>(
-            construct<ImageSelectorSpec::Team_Number>(scalarIntExpr)))
+TYPE_PARSER(construct<ImageSelectorSpec>(construct<ImageSelectorSpec::Stat>(
+                "STAT =" >> scalar(integer(indirect(variable))))) ||
+    construct<ImageSelectorSpec>(
+        construct<ImageSelectorSpec::Team>("TEAM =" >> teamVariable)) ||
+    construct<ImageSelectorSpec>(construct<ImageSelectorSpec::Team_Number>(
+        "TEAM_NUMBER =" >> scalarIntExpr)))
 
 // R927 allocate-stmt ->
 //        ALLOCATE ( [type-spec ::] allocation-list [, alloc-opt-list] )
 TYPE_CONTEXT_PARSER("ALLOCATE statement"_en_US,
-    "ALLOCATE" >> parenthesized(construct<AllocateStmt>(maybe(typeSpec / "::"),
-                      nonemptyList(Parser<Allocation>{}),
-                      defaulted("," >> nonemptyList(Parser<AllocOpt>{})))))
+    construct<AllocateStmt>("ALLOCATE (" >> maybe(typeSpec / "::"),
+        nonemptyList(Parser<Allocation>{}),
+        defaulted("," >> nonemptyList(Parser<AllocOpt>{})) / ")"))
 
 // R928 alloc-opt ->
 //        ERRMSG = errmsg-variable | MOLD = source-expr |
 //        SOURCE = source-expr | STAT = stat-variable
 // R931 source-expr -> expr
-TYPE_PARSER("MOLD =" >>
-        construct<AllocOpt>(construct<AllocOpt::Mold>(indirect(expr))) ||
-    "SOURCE =" >>
-        construct<AllocOpt>(construct<AllocOpt::Source>(indirect(expr))) ||
+TYPE_PARSER(construct<AllocOpt>(
+                construct<AllocOpt::Mold>("MOLD =" >> indirect(expr))) ||
+    construct<AllocOpt>(
+        construct<AllocOpt::Source>("SOURCE =" >> indirect(expr))) ||
     construct<AllocOpt>(statOrErrmsg))
 
 // R929 stat-variable -> scalar-int-variable
@@ -1485,14 +1470,14 @@ TYPE_PARSER(construct<PointerObject>(structureComponent) ||
 // R941 deallocate-stmt ->
 //        DEALLOCATE ( allocate-object-list [, dealloc-opt-list] )
 TYPE_CONTEXT_PARSER("DEALLOCATE statement"_en_US,
-    "DEALLOCATE" >> parenthesized(construct<DeallocateStmt>(
-                        nonemptyList(Parser<AllocateObject>{}),
-                        defaulted("," >> nonemptyList(statOrErrmsg)))))
+    construct<DeallocateStmt>(
+        "DEALLOCATE (" >> nonemptyList(Parser<AllocateObject>{}),
+        defaulted("," >> nonemptyList(statOrErrmsg)) / ")"))
 
 // R942 dealloc-opt -> STAT = stat-variable | ERRMSG = errmsg-variable
 // R1165 sync-stat -> STAT = stat-variable | ERRMSG = errmsg-variable
-TYPE_PARSER("STAT =" >> construct<StatOrErrmsg>(statVariable) ||
-    "ERRMSG =" >> construct<StatOrErrmsg>(msgVariable))
+TYPE_PARSER(construct<StatOrErrmsg>("STAT =" >> statVariable) ||
+    construct<StatOrErrmsg>("ERRMSG =" >> msgVariable))
 
 // R1001 primary ->
 //         literal-constant | designator | array-constructor |
@@ -1518,8 +1503,9 @@ constexpr auto primary = instrumented("primary"_en_US,
 constexpr auto level1Expr =
     construct<Expr>(construct<Expr::DefinedUnary>(definedOpName, primary)) ||
     primary ||
-    extension("+" >> construct<Expr>(construct<Expr::UnaryPlus>(primary))) ||
-    extension("-" >> construct<Expr>(construct<Expr::Negate>(primary)));
+    extension(
+        construct<Expr>(construct<Expr::UnaryPlus>("+" >> primary))) ||
+    extension(construct<Expr>(construct<Expr::Negate>("-" >> primary)));
 
 // R1004 mult-operand -> level-1-expr [power-op mult-operand]
 // R1007 power-op -> **
@@ -1583,8 +1569,8 @@ constexpr struct Level2Expr {
   constexpr Level2Expr() {}
   static inline std::optional<Expr> Parse(ParseState &state) {
     static constexpr auto unary =
-        "+" >> construct<Expr>(construct<Expr::UnaryPlus>(addOperand)) ||
-        "-" >> construct<Expr>(construct<Expr::Negate>(addOperand)) ||
+        construct<Expr>(construct<Expr::UnaryPlus>("+" >> addOperand)) ||
+        construct<Expr>(construct<Expr::Negate>("-" >> addOperand)) ||
         addOperand;
     std::optional<Expr> result{unary.Parse(state)};
     if (result) {
@@ -1830,7 +1816,7 @@ TYPE_PARSER(construct<ProcComponentRef>(structureComponent))
 // R1045 where-assignment-stmt -> assignment-stmt
 // R1046 mask-expr -> logical-expr
 TYPE_CONTEXT_PARSER("WHERE statement"_en_US,
-    "WHERE" >> construct<WhereStmt>(parenthesized(logicalExpr), assignmentStmt))
+    construct<WhereStmt>("WHERE" >> parenthesized(logicalExpr), assignmentStmt))
 
 // R1042 where-construct ->
 //         where-construct-stmt [where-body-construct]...
@@ -1860,16 +1846,16 @@ TYPE_PARSER(construct<WhereBodyConstruct>(statement(assignmentStmt)) ||
 // R1047 masked-elsewhere-stmt ->
 //         ELSEWHERE ( mask-expr ) [where-construct-name]
 TYPE_CONTEXT_PARSER("masked ELSEWHERE statement"_en_US,
-    "ELSE WHERE" >>
-        construct<MaskedElsewhereStmt>(parenthesized(logicalExpr), maybe(name)))
+    construct<MaskedElsewhereStmt>(
+        "ELSE WHERE" >> parenthesized(logicalExpr), maybe(name)))
 
 // R1048 elsewhere-stmt -> ELSEWHERE [where-construct-name]
 TYPE_CONTEXT_PARSER("ELSEWHERE statement"_en_US,
-    "ELSE WHERE" >> construct<ElsewhereStmt>(maybe(name)))
+    construct<ElsewhereStmt>("ELSE WHERE" >> maybe(name)))
 
 // R1049 end-where-stmt -> ENDWHERE [where-construct-name]
 TYPE_CONTEXT_PARSER("END WHERE statement"_en_US,
-    "END WHERE" >> construct<EndWhereStmt>(maybe(name)))
+    construct<EndWhereStmt>("END WHERE" >> maybe(name)))
 
 // R1050 forall-construct ->
 //         forall-construct-stmt [forall-body-construct]... end-forall-stmt
@@ -1899,12 +1885,12 @@ TYPE_PARSER(construct<ForallAssignmentStmt>(assignmentStmt) ||
 
 // R1054 end-forall-stmt -> END FORALL [forall-construct-name]
 TYPE_CONTEXT_PARSER("END FORALL statement"_en_US,
-    "END FORALL" >> construct<EndForallStmt>(maybe(name)))
+    construct<EndForallStmt>("END FORALL" >> maybe(name)))
 
 // R1055 forall-stmt -> FORALL concurrent-header forall-assignment-stmt
 TYPE_CONTEXT_PARSER("FORALL statement"_en_US,
-    "FORALL" >>
-        construct<ForallStmt>(indirect(concurrentHeader), forallAssignmentStmt))
+    construct<ForallStmt>(
+        "FORALL" >> indirect(concurrentHeader), forallAssignmentStmt))
 
 // R1101 block -> [execution-part-construct]...
 constexpr auto block = many(executionPartConstruct);
@@ -1928,7 +1914,7 @@ TYPE_PARSER(construct<Selector>(variable) / lookAhead(","_tok || ")"_tok) ||
     construct<Selector>(expr))
 
 // R1106 end-associate-stmt -> END ASSOCIATE [associate-construct-name]
-TYPE_PARSER("END ASSOCIATE" >> construct<EndAssociateStmt>(maybe(name)))
+TYPE_PARSER(construct<EndAssociateStmt>("END ASSOCIATE" >> maybe(name)))
 
 // R1107 block-construct ->
 //         block-stmt [block-specification-part] block end-block-stmt
@@ -1977,9 +1963,9 @@ TYPE_PARSER(
 // R1114 end-change-team-stmt ->
 //         END TEAM [( [sync-stat-list] )] [team-construct-name]
 TYPE_CONTEXT_PARSER("END TEAM statement"_en_US,
-    "END TEAM" >>
-        construct<EndChangeTeamStmt>(
-            defaulted(parenthesized(optionalList(statOrErrmsg))), maybe(name)))
+    construct<EndChangeTeamStmt>(
+        "END TEAM" >> defaulted(parenthesized(optionalList(statOrErrmsg))),
+        maybe(name)))
 
 // R1117 critical-stmt ->
 //         [critical-construct-name :] CRITICAL [( [sync-stat-list] )]
@@ -1993,7 +1979,7 @@ TYPE_CONTEXT_PARSER("CRITICAL construct"_en_US,
         statement(Parser<EndCriticalStmt>{})))
 
 // R1118 end-critical-stmt -> END CRITICAL [critical-construct-name]
-TYPE_PARSER("END CRITICAL" >> construct<EndCriticalStmt>(maybe(name)))
+TYPE_PARSER(construct<EndCriticalStmt>("END CRITICAL" >> maybe(name)))
 
 // R1119 do-construct -> do-stmt block end-do
 // R1120 do-stmt -> nonlabel-do-stmt | label-do-stmt
@@ -2019,15 +2005,14 @@ TYPE_PARSER(construct<ConcurrentControl>(name / "=", scalarIntExpr / ":",
 // R1130 locality-spec ->
 //         LOCAL ( variable-name-list ) | LOCAL INIT ( variable-name-list ) |
 //         SHARED ( variable-name-list ) | DEFAULT ( NONE )
-TYPE_PARSER("LOCAL" >> construct<LocalitySpec>(construct<LocalitySpec::Local>(
-                           parenthesized(nonemptyList(name)))) ||
-    "LOCAL INIT"_sptok >>
-        construct<LocalitySpec>(construct<LocalitySpec::LocalInit>(
-            parenthesized(nonemptyList(name)))) ||
-    "SHARED" >> construct<LocalitySpec>(construct<LocalitySpec::Shared>(
-                    parenthesized(nonemptyList(name)))) ||
-    "DEFAULT ( NONE )" >>
-        construct<LocalitySpec>(construct<LocalitySpec::DefaultNone>()))
+TYPE_PARSER(construct<LocalitySpec>(construct<LocalitySpec::Local>(
+                "LOCAL" >> parenthesized(nonemptyList(name)))) ||
+    construct<LocalitySpec>(construct<LocalitySpec::LocalInit>(
+        "LOCAL INIT"_sptok >> parenthesized(nonemptyList(name)))) ||
+    construct<LocalitySpec>(construct<LocalitySpec::Shared>(
+        "SHARED" >> parenthesized(nonemptyList(name)))) ||
+    construct<LocalitySpec>(
+        "DEFAULT ( NONE )" >> construct<LocalitySpec::DefaultNone>()))
 
 // R1123 loop-control ->
 //         [,] do-variable = scalar-int-expr , scalar-int-expr
@@ -2038,11 +2023,11 @@ TYPE_PARSER("LOCAL" >> construct<LocalitySpec>(construct<LocalitySpec::Local>(
 TYPE_CONTEXT_PARSER("loop control"_en_US,
     maybe(","_tok) >>
         (construct<LoopControl>(loopBounds(scalarIntExpr)) ||
-            "WHILE" >>
-                construct<LoopControl>(parenthesized(scalarLogicalExpr)) ||
-            "CONCURRENT" >>
-                construct<LoopControl>(construct<LoopControl::Concurrent>(
-                    concurrentHeader, many(Parser<LocalitySpec>{})))))
+            construct<LoopControl>(
+                "WHILE" >> parenthesized(scalarLogicalExpr)) ||
+            construct<LoopControl>(construct<LoopControl::Concurrent>(
+                "CONCURRENT" >> concurrentHeader,
+                many(Parser<LocalitySpec>{})))))
 
 // R1121 label-do-stmt -> [do-construct-name :] DO label [loop-control]
 TYPE_CONTEXT_PARSER("label DO statement"_en_US,
@@ -2054,12 +2039,11 @@ TYPE_CONTEXT_PARSER("nonlabel DO statement"_en_US,
     construct<NonLabelDoStmt>(maybe(name / ":"), "DO" >> maybe(loopControl)))
 
 // R1132 end-do-stmt -> END DO [do-construct-name]
-TYPE_CONTEXT_PARSER(
-    "END DO statement"_en_US, "END DO" >> construct<EndDoStmt>(maybe(name)))
+TYPE_CONTEXT_PARSER("END DO statement"_en_US, construct<EndDoStmt>("END DO" >> maybe(name)))
 
 // R1133 cycle-stmt -> CYCLE [do-construct-name]
 TYPE_CONTEXT_PARSER(
-    "CYCLE statement"_en_US, "CYCLE" >> construct<CycleStmt>(maybe(name)))
+    "CYCLE statement"_en_US, construct<CycleStmt>("CYCLE" >> maybe(name)))
 
 // R1134 if-construct ->
 //         if-then-stmt block [else-if-stmt block]...
@@ -2085,7 +2069,7 @@ TYPE_CONTEXT_PARSER("IF construct"_en_US,
 
 // R1139 if-stmt -> IF ( scalar-logical-expr ) action-stmt
 TYPE_CONTEXT_PARSER("IF statement"_en_US,
-    "IF" >> construct<IfStmt>(parenthesized(scalarLogicalExpr), actionStmt))
+    construct<IfStmt>("IF" >> parenthesized(scalarLogicalExpr), actionStmt))
 
 // R1140 case-construct ->
 //         select-case-stmt [case-stmt block]... end-select-stmt
@@ -2103,7 +2087,7 @@ TYPE_CONTEXT_PARSER("SELECT CASE statement"_en_US,
 
 // R1142 case-stmt -> CASE case-selector [case-construct-name]
 TYPE_CONTEXT_PARSER("CASE statement"_en_US,
-    "CASE" >> construct<CaseStmt>(Parser<CaseSelector>{}, maybe(name)))
+    construct<CaseStmt>("CASE" >> Parser<CaseSelector>{}, maybe(name)))
 
 // R1143 end-select-stmt -> END SELECT [case-construct-name]
 // R1151 end-select-rank-stmt -> END SELECT [select-construct-name]
@@ -2186,16 +2170,16 @@ TYPE_CONTEXT_PARSER("type guard statement"_en_US,
 
 // R1156 exit-stmt -> EXIT [construct-name]
 TYPE_CONTEXT_PARSER(
-    "EXIT statement"_en_US, "EXIT" >> construct<ExitStmt>(maybe(name)))
+    "EXIT statement"_en_US, construct<ExitStmt>("EXIT" >> maybe(name)))
 
 // R1157 goto-stmt -> GO TO label
 TYPE_CONTEXT_PARSER(
-    "GOTO statement"_en_US, "GO TO" >> construct<GotoStmt>(label))
+    "GOTO statement"_en_US, construct<GotoStmt>("GO TO" >> label))
 
 // R1158 computed-goto-stmt -> GO TO ( label-list ) [,] scalar-int-expr
 TYPE_CONTEXT_PARSER("computed GOTO statement"_en_US,
-    "GO TO" >> construct<ComputedGotoStmt>(parenthesized(nonemptyList(label)),
-                   maybe(","_tok) >> scalarIntExpr))
+    construct<ComputedGotoStmt>("GO TO" >> parenthesized(nonemptyList(label)),
+        maybe(","_tok) >> scalarIntExpr))
 
 // R1160 stop-stmt -> STOP [stop-code] [, QUIET = scalar-logical-expr]
 // R1161 error-stop-stmt ->
@@ -2211,8 +2195,8 @@ TYPE_PARSER(construct<StopCode>(scalarDefaultCharExpr) ||
 
 // R1164 sync-all-stmt -> SYNC ALL [( [sync-stat-list] )]
 TYPE_CONTEXT_PARSER("SYNC ALL statement"_en_US,
-    "SYNC ALL"_sptok >> construct<SyncAllStmt>(defaulted(
-                            parenthesized(optionalList(statOrErrmsg)))))
+    construct<SyncAllStmt>("SYNC ALL"_sptok >>
+        defaulted(parenthesized(optionalList(statOrErrmsg)))))
 
 // R1166 sync-images-stmt -> SYNC IMAGES ( image-set [, sync-stat-list] )
 // R1167 image-set -> int-expr | *
@@ -2224,28 +2208,28 @@ TYPE_CONTEXT_PARSER("SYNC IMAGES statement"_en_US,
 
 // R1168 sync-memory-stmt -> SYNC MEMORY [( [sync-stat-list] )]
 TYPE_CONTEXT_PARSER("SYNC MEMORY statement"_en_US,
-    "SYNC MEMORY"_sptok >> construct<SyncMemoryStmt>(defaulted(
-                               parenthesized(optionalList(statOrErrmsg)))))
+    construct<SyncMemoryStmt>("SYNC MEMORY"_sptok >>
+        defaulted(parenthesized(optionalList(statOrErrmsg)))))
 
 // R1169 sync-team-stmt -> SYNC TEAM ( team-variable [, sync-stat-list] )
 TYPE_CONTEXT_PARSER("SYNC TEAM statement"_en_US,
-    "SYNC TEAM"_sptok >> parenthesized(construct<SyncTeamStmt>(teamVariable,
-                             defaulted("," >> nonemptyList(statOrErrmsg)))))
+    construct<SyncTeamStmt>("SYNC TEAM"_sptok >> "("_tok >> teamVariable,
+        defaulted("," >> nonemptyList(statOrErrmsg)) / ")"))
 
 // R1170 event-post-stmt -> EVENT POST ( event-variable [, sync-stat-list] )
 // R1171 event-variable -> scalar-variable
 TYPE_CONTEXT_PARSER("EVENT POST statement"_en_US,
-    "EVENT POST"_sptok >>
-        parenthesized(construct<EventPostStmt>(
-            scalar(variable), defaulted("," >> nonemptyList(statOrErrmsg)))))
+    construct<EventPostStmt>(
+        "EVENT POST"_sptok >> "("_tok >> scalar(variable),
+        defaulted("," >> nonemptyList(statOrErrmsg)) / ")"))
 
 // R1172 event-wait-stmt ->
 //         EVENT WAIT ( event-variable [, event-wait-spec-list] )
 TYPE_CONTEXT_PARSER("EVENT WAIT statement"_en_US,
-    "EVENT WAIT"_sptok >>
-        parenthesized(construct<EventWaitStmt>(scalar(variable),
-            defaulted(
-                "," >> nonemptyList(Parser<EventWaitStmt::EventWaitSpec>{})))))
+    construct<EventWaitStmt>(
+        "EVENT WAIT"_sptok >> "("_tok >> scalar(variable),
+        defaulted("," >> nonemptyList(Parser<EventWaitStmt::EventWaitSpec>{})) /
+            ")"))
 
 // R1174 until-spec -> UNTIL_COUNT = scalar-int-expr
 constexpr auto untilSpec = "UNTIL_COUNT =" >> scalarIntExpr;
@@ -2258,15 +2242,14 @@ TYPE_PARSER(construct<EventWaitStmt::EventWaitSpec>(untilSpec) ||
 //         FORM TEAM ( team-number , team-variable [, form-team-spec-list] )
 // R1176 team-number -> scalar-int-expr
 TYPE_CONTEXT_PARSER("FORM TEAM statement"_en_US,
-    "FORM TEAM"_sptok >>
-        parenthesized(construct<FormTeamStmt>(scalarIntExpr,
-            "," >> teamVariable,
-            defaulted(
-                "," >> nonemptyList(Parser<FormTeamStmt::FormTeamSpec>{})))))
+    construct<FormTeamStmt>("FORM TEAM"_sptok >> "("_tok >> scalarIntExpr,
+        "," >> teamVariable,
+        defaulted("," >> nonemptyList(Parser<FormTeamStmt::FormTeamSpec>{})) /
+            ")"))
 
 // R1177 form-team-spec -> NEW_INDEX = scalar-int-expr | sync-stat
 TYPE_PARSER(
-    "NEW_INDEX =" >> construct<FormTeamStmt::FormTeamSpec>(scalarIntExpr) ||
+    construct<FormTeamStmt::FormTeamSpec>("NEW_INDEX =" >> scalarIntExpr) ||
     construct<FormTeamStmt::FormTeamSpec>(statOrErrmsg))
 
 // R1181 lock-variable -> scalar-variable
@@ -2274,19 +2257,18 @@ constexpr auto lockVariable = scalar(variable);
 
 // R1178 lock-stmt -> LOCK ( lock-variable [, lock-stat-list] )
 TYPE_CONTEXT_PARSER("LOCK statement"_en_US,
-    "LOCK" >>
-        parenthesized(construct<LockStmt>(lockVariable,
-            defaulted("," >> nonemptyList(Parser<LockStmt::LockStat>{})))))
+    construct<LockStmt>("LOCK (" >> lockVariable,
+        defaulted("," >> nonemptyList(Parser<LockStmt::LockStat>{})) / ")"))
 
 // R1179 lock-stat -> ACQUIRED_LOCK = scalar-logical-variable | sync-stat
-TYPE_PARSER(
-    "ACQUIRED_LOCK =" >> construct<LockStmt::LockStat>(scalarLogicalVariable) ||
+TYPE_PARSER(construct<LockStmt::LockStat>(
+                "ACQUIRED_LOCK =" >> scalarLogicalVariable) ||
     construct<LockStmt::LockStat>(statOrErrmsg))
 
 // R1180 unlock-stmt -> UNLOCK ( lock-variable [, sync-stat-list] )
 TYPE_CONTEXT_PARSER("UNLOCK statement"_en_US,
-    "UNLOCK" >> parenthesized(construct<UnlockStmt>(lockVariable,
-                    defaulted("," >> nonemptyList(statOrErrmsg)))))
+    construct<UnlockStmt>("UNLOCK (" >> lockVariable,
+        defaulted("," >> nonemptyList(statOrErrmsg)) / ")"))
 
 // R1201 io-unit -> file-unit-number | * | internal-file-variable
 // R1203 internal-file-variable -> char-variable
@@ -2298,8 +2280,8 @@ TYPE_PARSER(construct<FileUnitNumber>(scalarIntExpr / !"="_tok))
 
 // R1204 open-stmt -> OPEN ( connect-spec-list )
 TYPE_CONTEXT_PARSER("OPEN statement"_en_US,
-    "OPEN" >>
-        parenthesized(construct<OpenStmt>(nonemptyList(Parser<ConnectSpec>{}))))
+    construct<OpenStmt>(
+        "OPEN (" >> nonemptyList(Parser<ConnectSpec>{}) / ")"))
 
 // R1206 file-name-expr -> scalar-default-char-expr
 constexpr auto fileNameExpr = scalarDefaultCharExpr;
@@ -2321,53 +2303,59 @@ constexpr auto fileNameExpr = scalarDefaultCharExpr;
 constexpr auto statusExpr = construct<StatusExpr>(scalarDefaultCharExpr);
 constexpr auto errLabel = construct<ErrLabel>(label);
 
-TYPE_PARSER(maybe("UNIT ="_tok) >> construct<ConnectSpec>(fileUnitNumber) ||
-    "ACCESS =" >> construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
-                      pure(ConnectSpec::CharExpr::Kind::Access),
-                      scalarDefaultCharExpr)) ||
-    "ACTION =" >> construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
-                      pure(ConnectSpec::CharExpr::Kind::Action),
-                      scalarDefaultCharExpr)) ||
-    "ASYNCHRONOUS =" >> construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
-                            pure(ConnectSpec::CharExpr::Kind::Asynchronous),
-                            scalarDefaultCharExpr)) ||
-    "BLANK =" >>
-        construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
-            pure(ConnectSpec::CharExpr::Kind::Blank), scalarDefaultCharExpr)) ||
-    "DECIMAL =" >> construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
-                       pure(ConnectSpec::CharExpr::Kind::Decimal),
-                       scalarDefaultCharExpr)) ||
-    "DELIM =" >>
-        construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
-            pure(ConnectSpec::CharExpr::Kind::Delim), scalarDefaultCharExpr)) ||
-    "ENCODING =" >> construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
-                        pure(ConnectSpec::CharExpr::Kind::Encoding),
-                        scalarDefaultCharExpr)) ||
-    "ERR =" >> construct<ConnectSpec>(errLabel) ||
-    "FILE =" >> construct<ConnectSpec>(fileNameExpr) ||
-    extension("NAME =" >> construct<ConnectSpec>(fileNameExpr)) ||
-    "FORM =" >>
-        construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
-            pure(ConnectSpec::CharExpr::Kind::Form), scalarDefaultCharExpr)) ||
-    "IOMSG =" >> construct<ConnectSpec>(msgVariable) ||
-    "IOSTAT =" >> construct<ConnectSpec>(statVariable) ||
-    "NEWUNIT =" >> construct<ConnectSpec>(construct<ConnectSpec::Newunit>(
-                       scalar(integer(variable)))) ||
-    "PAD =" >>
-        construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
-            pure(ConnectSpec::CharExpr::Kind::Pad), scalarDefaultCharExpr)) ||
-    "POSITION =" >> construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
-                        pure(ConnectSpec::CharExpr::Kind::Position),
-                        scalarDefaultCharExpr)) ||
-    "RECL =" >>
-        construct<ConnectSpec>(construct<ConnectSpec::Recl>(scalarIntExpr)) ||
-    "ROUND =" >>
-        construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
-            pure(ConnectSpec::CharExpr::Kind::Round), scalarDefaultCharExpr)) ||
-    "SIGN =" >>
-        construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
-            pure(ConnectSpec::CharExpr::Kind::Sign), scalarDefaultCharExpr)) ||
-    "STATUS =" >> construct<ConnectSpec>(statusExpr) ||
+TYPE_PARSER(construct<ConnectSpec>(maybe("UNIT ="_tok) >> fileUnitNumber) ||
+    construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
+        "ACCESS =" >> pure(ConnectSpec::CharExpr::Kind::Access),
+        scalarDefaultCharExpr)) ||
+    construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
+        "ACTION =" >> pure(ConnectSpec::CharExpr::Kind::Action),
+        scalarDefaultCharExpr)) ||
+    construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
+        "ASYNCHRONOUS =" >> pure(ConnectSpec::CharExpr::Kind::Asynchronous),
+        scalarDefaultCharExpr)) ||
+
+    construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
+        "BLANK =" >> pure(ConnectSpec::CharExpr::Kind::Blank),
+        scalarDefaultCharExpr)) ||
+    construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
+        "DECIMAL =" >> pure(ConnectSpec::CharExpr::Kind::Decimal),
+        scalarDefaultCharExpr)) ||
+
+    construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
+        "DELIM =" >> pure(ConnectSpec::CharExpr::Kind::Delim),
+        scalarDefaultCharExpr)) ||
+    construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
+        "ENCODING =" >> pure(ConnectSpec::CharExpr::Kind::Encoding),
+        scalarDefaultCharExpr)) ||
+    construct<ConnectSpec>("ERR =" >> errLabel) ||
+    construct<ConnectSpec>("FILE =" >> fileNameExpr) ||
+    extension(construct<ConnectSpec>("NAME =" >> fileNameExpr)) ||
+
+    construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
+        "FORM =" >> pure(ConnectSpec::CharExpr::Kind::Form),
+        scalarDefaultCharExpr)) ||
+    construct<ConnectSpec>("IOMSG =" >> msgVariable) ||
+    construct<ConnectSpec>("IOSTAT =" >> statVariable) ||
+    construct<ConnectSpec>(construct<ConnectSpec::Newunit>(
+        "NEWUNIT =" >> scalar(integer(variable)))) ||
+
+    construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
+        "PAD =" >> pure(ConnectSpec::CharExpr::Kind::Pad),
+        scalarDefaultCharExpr)) ||
+    construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
+        "POSITION =" >> pure(ConnectSpec::CharExpr::Kind::Position),
+        scalarDefaultCharExpr)) ||
+    construct<ConnectSpec>(
+        construct<ConnectSpec::Recl>("RECL =" >> scalarIntExpr)) ||
+
+    construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
+        "ROUND =" >> pure(ConnectSpec::CharExpr::Kind::Round),
+        scalarDefaultCharExpr)) ||
+
+    construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
+        "SIGN =" >> pure(ConnectSpec::CharExpr::Kind::Sign),
+        scalarDefaultCharExpr)) ||
+    construct<ConnectSpec>("STATUS =" >> statusExpr) ||
     extension(construct<ConnectSpec>(construct<ConnectSpec::CharExpr>(
                   "CONVERT =" >> pure(ConnectSpec::CharExpr::Kind::Convert),
                   scalarDefaultCharExpr)) ||
@@ -2379,16 +2367,16 @@ TYPE_PARSER(maybe("UNIT ="_tok) >> construct<ConnectSpec>(fileUnitNumber) ||
 //         [UNIT =] file-unit-number | IOSTAT = scalar-int-variable |
 //         IOMSG = iomsg-variable | ERR = label |
 //         STATUS = scalar-default-char-expr
-constexpr auto closeSpec = maybe("UNIT ="_tok) >>
-        construct<CloseStmt::CloseSpec>(fileUnitNumber) ||
-    "IOSTAT =" >> construct<CloseStmt::CloseSpec>(statVariable) ||
-    "IOMSG =" >> construct<CloseStmt::CloseSpec>(msgVariable) ||
-    "ERR =" >> construct<CloseStmt::CloseSpec>(errLabel) ||
-    "STATUS =" >> construct<CloseStmt::CloseSpec>(statusExpr);
+constexpr auto closeSpec =
+    construct<CloseStmt::CloseSpec>(maybe("UNIT ="_tok) >> fileUnitNumber) ||
+    construct<CloseStmt::CloseSpec>("IOSTAT =" >> statVariable) ||
+    construct<CloseStmt::CloseSpec>("IOMSG =" >> msgVariable) ||
+    construct<CloseStmt::CloseSpec>("ERR =" >> errLabel) ||
+    construct<CloseStmt::CloseSpec>("STATUS =" >> statusExpr);
 
 // R1208 close-stmt -> CLOSE ( close-spec-list )
 TYPE_CONTEXT_PARSER("CLOSE statement"_en_US,
-    "CLOSE" >> construct<CloseStmt>(parenthesized(nonemptyList(closeSpec))))
+    construct<CloseStmt>("CLOSE" >> parenthesized(nonemptyList(closeSpec))))
 
 // R1210 read-stmt ->
 //         READ ( io-control-spec-list ) [input-item-list] |
