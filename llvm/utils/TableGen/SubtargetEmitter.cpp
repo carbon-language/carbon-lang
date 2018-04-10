@@ -724,18 +724,20 @@ static bool EmitPfmIssueCountersTable(const CodeGenProcModel &ProcModel,
 
 static void EmitPfmCounters(const CodeGenProcModel &ProcModel,
                             const bool HasPfmIssueCounters, raw_ostream &OS) {
+  OS << "  {\n";
   // Emit the cycle counter.
   if (ProcModel.PfmCycleCounterDef)
-    OS << "  \"" << ProcModel.PfmCycleCounterDef->getValueAsString("Counter")
+    OS << "    \"" << ProcModel.PfmCycleCounterDef->getValueAsString("Counter")
        << "\",  // Cycle counter.\n";
   else
-    OS << "  nullptr,  // No cycle counter.\n";
+    OS << "    nullptr,  // No cycle counter.\n";
 
   // Emit a reference to issue counters table.
   if (HasPfmIssueCounters)
-    OS << "  " << ProcModel.ModelName << "PfmIssueCounters\n";
+    OS << "    " << ProcModel.ModelName << "PfmIssueCounters\n";
   else
-    OS << "  nullptr,  // No issue counters.\n";
+    OS << "    nullptr  // No issue counters.\n";
+  OS << "  }\n";
 }
 
 void SubtargetEmitter::EmitExtraProcessorInfo(const CodeGenProcModel &ProcModel,
