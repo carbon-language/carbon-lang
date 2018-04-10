@@ -26,22 +26,6 @@
 
 namespace lldb_private {
 
-typedef std::vector<std::tuple<std::string, int, std::string>> OptionArgVector;
-typedef std::shared_ptr<OptionArgVector> OptionArgVectorSP;
-
-struct OptionArgElement {
-  enum { eUnrecognizedArg = -1, eBareDash = -2, eBareDoubleDash = -3 };
-
-  OptionArgElement(int defs_index, int pos, int arg_pos)
-      : opt_defs_index(defs_index), opt_pos(pos), opt_arg_pos(arg_pos) {}
-
-  int opt_defs_index;
-  int opt_pos;
-  int opt_arg_pos;
-};
-
-typedef std::vector<OptionArgElement> OptionElementVector;
-
 //----------------------------------------------------------------------
 /// @class Args Args.h "lldb/Interpreter/Args.h"
 /// @brief A command line argument class.
