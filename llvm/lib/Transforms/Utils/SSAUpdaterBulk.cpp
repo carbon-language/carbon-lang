@@ -57,7 +57,7 @@ bool SSAUpdaterBulk::HasValueForBlock(unsigned Var, BasicBlock *BB) {
 Value *SSAUpdaterBulk::computeValueAt(BasicBlock *BB, RewriteInfo &R,
                                       DominatorTree *DT) {
   if (!R.Defines.count(BB)) {
-    if (PredCache.get(BB).size()) {
+    if (DT->isReachableFromEntry(BB) && PredCache.get(BB).size()) {
       BasicBlock *IDom = DT->getNode(BB)->getIDom()->getBlock();
       R.Defines[BB] = computeValueAt(IDom, R, DT);
     } else
