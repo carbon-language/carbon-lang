@@ -306,7 +306,7 @@ void BinaryFunction::postProcessProfile() {
     return;
   }
 
-  if (!HasLBRProfile)
+  if (!hasLBRProfile())
     return;
 
   // Pre-sort branch data.
@@ -428,10 +428,12 @@ void BinaryFunction::readProfile() {
     return;
 
   if (!BC.DR.hasLBR()) {
-    HasLBRProfile = false;
+    ProfileFlags = PF_SAMPLE;
     readSampleData();
     return;
   }
+
+  ProfileFlags = PF_LBR;
 
   // Possibly assign/re-assign branch profile data.
   matchProfileData();
@@ -631,10 +633,7 @@ void BinaryFunction::readSampleData() {
   }
   ExecutionCount = TotalEntryCount;
 
-  estimateEdgeCounts(BC, *this);
-
-  if (opts::DoMCF != MCF_DISABLE)
-    solveMCF(*this, opts::DoMCF);
+  estimateEdgeCounts(*this);
 }
 
 void BinaryFunction::inferFallThroughCounts() {

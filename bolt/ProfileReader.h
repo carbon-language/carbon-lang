@@ -20,6 +20,15 @@ namespace llvm {
 namespace bolt {
 
 class ProfileReader {
+private:
+
+  /// Adjustments for non-LBR profiles.
+  bool NormalizeByInsnCount{false};
+  bool NormalizeByCalls{false};
+
+  /// Binary profile in YAML format.
+  yaml::bolt::BinaryProfile YamlBP;
+
   /// Map a function ID from a YAML profile to a BinaryFunction object.
   std::vector<BinaryFunction *> YamlProfileToFunction;
 
@@ -30,9 +39,6 @@ class ProfileReader {
   /// Populate \p Function profile with the one supplied in YAML format.
   bool parseFunctionProfile(BinaryFunction &Function,
                             const yaml::bolt::BinaryFunctionProfile &YamlBF);
-
-  /// All function profiles in YAML format.
-  std::vector<yaml::bolt::BinaryFunctionProfile> YamlBFs;
 
   /// For LTO symbol resolution.
   /// Map a common LTO prefix to a list of YAML profiles matching the prefix.
@@ -60,6 +66,9 @@ class ProfileReader {
            "function already has an assigned profile");
     ProfiledFunctions.emplace(&BF);
   }
+
+  /// Check if the profile uses an event with a given \p Name.
+  bool usesEvent(StringRef Name) const;
 
 public:
   /// Read profile from a file and associate with a set of functions.

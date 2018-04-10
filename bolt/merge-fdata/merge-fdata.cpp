@@ -22,9 +22,7 @@
 #include <unordered_map>
 
 using namespace llvm;
-using namespace object;
-using namespace yaml;
-using namespace bolt;
+using namespace llvm::yaml::bolt;
 
 namespace opts {
 
@@ -83,6 +81,53 @@ static void report_error(Twine Message, StringRef CustomError) {
   exit(1);
 }
 
+void mergeProfileHeaders(BinaryProfileHeader &MergedHeader,
+                         const BinaryProfileHeader &Header) {
+  if (MergedHeader.FileName.empty()) {
+    MergedHeader.FileName = Header.FileName;
+  }
+  if (!MergedHeader.FileName.empty() &&
+      MergedHeader.FileName != Header.FileName) {
+    errs() << "WARNING: merging profile from a binary for "
+           << Header.FileName << " into a profile for binary "
+           << MergedHeader.FileName << '\n';
+  }
+  if (MergedHeader.Id.empty()) {
+    MergedHeader.Id = Header.Id;
+  }
+  if (!MergedHeader.Id.empty() && (MergedHeader.Id != Header.Id)) {
+    errs() << "WARNING: build-ids in merged profiles do not match\n";
+  }
+
+  // Cannot merge samples profile with LBR profile.
+  if (!MergedHeader.Flags) {
+    MergedHeader.Flags = Header.Flags;
+  }
+  constexpr auto Mask = llvm::bolt::BinaryFunction::PF_LBR |
+                        llvm::bolt::BinaryFunction::PF_SAMPLE;
+  if ((MergedHeader.Flags & Mask) != (Header.Flags & Mask)) {
+    errs() << "ERROR: cannot merge LBR profile with non-LBR profile\n";
+    exit(1);
+  }
+  MergedHeader.Flags = MergedHeader.Flags | Header.Flags;
+
+  if (!Header.Origin.empty()) {
+    if (MergedHeader.Origin.empty()) {
+      MergedHeader.Origin = Header.Origin;
+    } else if (MergedHeader.Origin != Header.Origin) {
+      MergedHeader.Origin += "; " + Header.Origin;
+    }
+  }
+
+  if (MergedHeader.EventNames.empty()) {
+    MergedHeader.EventNames = Header.EventNames;
+  }
+  if (MergedHeader.EventNames != Header.EventNames) {
+    errs() << "WARNING: merging profiles with different sampling events\n";
+    MergedHeader.EventNames += "," + Header.EventNames;
+  }
+}
+
 void mergeBasicBlockProfile(BinaryBasicBlockProfile &MergedBB,
                             BinaryBasicBlockProfile &&BB,
                             const BinaryFunctionProfile &BF) {
@@ -96,6 +141,9 @@ void mergeBasicBlockProfile(BinaryBasicBlockProfile &MergedBB,
 
   // Update the execution count.
   MergedBB.ExecCount += BB.ExecCount;
+
+  // Update the event count.
+  MergedBB.EventCount += BB.EventCount;
 
   // Merge calls sites.
   std::unordered_map<uint32_t, CallSiteInfo *> CSByOffset;
@@ -201,6 +249,10 @@ int main(int argc, char **argv) {
 
   ToolName = argv[0];
 
+  // Merged header.
+  BinaryProfileHeader MergedHeader;
+  MergedHeader.Version = 1;
+
   // Merged information for all functions.
   StringMap<BinaryFunctionProfile> MergedBFs;
 
@@ -208,24 +260,33 @@ int main(int argc, char **argv) {
     auto MB = MemoryBuffer::getFileOrSTDIN(InputDataFilename);
     if (std::error_code EC = MB.getError())
       report_error(InputDataFilename, EC);
+    yaml::Input YamlInput(MB.get()->getBuffer());
 
     errs() << "Merging data from " << InputDataFilename << "...\n";
 
-    std::vector<BinaryFunctionProfile> BFs;
-    yaml::Input YamlInput(MB.get()->getBuffer());
-    YamlInput >> BFs;
+    BinaryProfile BP;
+    YamlInput >> BP;
     if (YamlInput.error())
       report_error(InputDataFilename, YamlInput.error());
 
-    // Do the merge.
-    for (auto &BF : BFs) {
+    // Sanity check.
+    if (BP.Header.Version != 1) {
+      errs() << "Unable to merge data from profile using version "
+             << BP.Header.Version << '\n';
+      exit(1);
+    }
+
+    // Merge the header.
+    mergeProfileHeaders(MergedHeader, BP.Header);
+
+    // Do the function merge.
+    for (auto &BF : BP.Functions) {
       if (!MergedBFs.count(BF.Name)) {
         MergedBFs.insert(std::make_pair(BF.Name, BF));
         continue;
       }
 
       auto &MergedBF = MergedBFs.find(BF.Name)->second;
-
       mergeFunctionProfile(MergedBF, std::move(BF));
     }
   }
@@ -233,21 +294,23 @@ int main(int argc, char **argv) {
   if (!opts::SuppressMergedDataOutput) {
     yaml::Output YamlOut(outs());
 
-    std::vector<BinaryFunctionProfile> AllBFs(MergedBFs.size());
+    BinaryProfile MergedProfile;
+    MergedProfile.Header = MergedHeader;
+    MergedProfile.Functions.resize(MergedBFs.size());
     std::transform(MergedBFs.begin(),
                    MergedBFs.end(),
-                   AllBFs.begin(),
-                   [](StringMapEntry<BinaryFunctionProfile> &V) {
+                   MergedProfile.Functions.begin(),
+                   [] (StringMapEntry<BinaryFunctionProfile> &V) {
                      return V.second;
                    });
 
     // For consistency, sort functions by their IDs.
-    std::sort(AllBFs.begin(), AllBFs.end(),
+    std::sort(MergedProfile.Functions.begin(), MergedProfile.Functions.end(),
               [] (BinaryFunctionProfile &A, BinaryFunctionProfile &B) {
                 return A.Id < B.Id;
               });
 
-    YamlOut << AllBFs;
+    YamlOut << MergedProfile;
   }
 
   errs() << "Data for " << MergedBFs.size()

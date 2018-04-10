@@ -10,8 +10,6 @@
 // Interface to function in binary (machine) form. This is assembly-level
 // code representation with the control flow.
 //
-// TODO: memory management for instructions.
-//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_TOOLS_LLVM_BOLT_BINARY_FUNCTION_H
@@ -213,6 +211,14 @@ public:
     Emitted,          /// Instructions have been emitted to output.
   };
 
+  /// Types of profile the function can use. Could be a combination.
+  enum {
+    PF_NONE = 0,         /// No profile.
+    PF_LBR = 1,          /// Profile is based on last branch records.
+    PF_SAMPLE = 2,       /// Non-LBR sample-based profile.
+    PF_MEMEVENT = 4,     /// Profile has mem events.
+  };
+
   /// Settings for splitting function bodies into hot/cold partitions.
   enum SplittingType : char {
     ST_NONE = 0,      /// Do not split functions
@@ -328,8 +334,8 @@ private:
   /// Profile match ratio for BranchData.
   float ProfileMatchRatio{0.0f};
 
-  /// Indicates if function profile was collected using LBRs.
-  bool HasLBRProfile{true};
+  /// Indicates the type of profile the function is using.
+  uint16_t ProfileFlags{PF_NONE};
 
   /// For functions with mismatched profile we store all call profile
   /// information at a function level (as opposed to tying it to
@@ -1485,11 +1491,33 @@ public:
     ProfileMatchRatio = 1.0f;
   }
 
+  /// Check if the function profile used LBR.
+  bool hasLBRProfile() const {
+    return ProfileFlags & PF_LBR;
+  }
+
+  /// Set status of the function profile.
+  void setHasLBRProfile(bool Value) {
+    assert(!(ProfileFlags & PF_SAMPLE) &&
+           "cannot combine LBR and samples profile");
+    ProfileFlags |= PF_LBR;
+  }
+
+  /// Return flags describing a profile for this function.
+  uint16_t getProfileFlags() const {
+    return ProfileFlags;
+  }
+
+  /// Set profile flags for the function to \p Flags.
+  void setProfileFlags(uint16_t Flags) {
+    ProfileFlags = Flags;
+  }
+
   void addCFIInstruction(uint64_t Offset, MCCFIInstruction &&Inst) {
     assert(!Instructions.empty());
 
     // Fix CFI instructions skipping NOPs. We need to fix this because changing
-    // CFI state after a NOP, besides being wrong and innacurate,  makes it
+    // CFI state after a NOP, besides being wrong and inaccurate,  makes it
     // harder for us to recover this information, since we can create empty BBs
     // with NOPs and then reorder it away.
     // We fix this by moving the CFI instruction just before any NOPs.

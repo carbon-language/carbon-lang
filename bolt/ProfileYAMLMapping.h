@@ -14,9 +14,12 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_PROFILEYAMLMAPPING_H
 #define LLVM_TOOLS_LLVM_BOLT_PROFILEYAMLMAPPING_H
 
+#include "BinaryFunction.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/YAMLTraits.h"
 #include <vector>
+
+using llvm::bolt::BinaryFunction;
 
 namespace llvm {
 namespace yaml {
@@ -92,6 +95,7 @@ struct BinaryBasicBlockProfile {
   uint32_t NumInstructions{0};
   llvm::yaml::Hex64 Hash{0};
   uint64_t ExecCount{0};
+  uint64_t EventCount{0};
   std::vector<CallSiteInfo> CallSites;
   std::vector<SuccessorInfo> Successors;
 
@@ -109,6 +113,7 @@ template <> struct MappingTraits<bolt::BinaryBasicBlockProfile> {
     YamlIO.mapRequired("bid", BBP.Index);
     YamlIO.mapRequired("insns", BBP.NumInstructions);
     YamlIO.mapOptional("exec", BBP.ExecCount, (uint64_t)0);
+    YamlIO.mapOptional("events", BBP.EventCount, (uint64_t)0);
     YamlIO.mapOptional("calls", BBP.CallSites,
                        std::vector<bolt::CallSiteInfo>());
     YamlIO.mapOptional("succ", BBP.Successors,
@@ -134,7 +139,7 @@ struct BinaryFunctionProfile {
   std::vector<BinaryBasicBlockProfile> Blocks;
   bool Used{false};
 };
-}
+} // end namespace bolt
 
 template <> struct MappingTraits<bolt::BinaryFunctionProfile> {
   static void mapping(IO &YamlIO, bolt::BinaryFunctionProfile &BFP) {
@@ -148,9 +153,64 @@ template <> struct MappingTraits<bolt::BinaryFunctionProfile> {
   }
 };
 
+LLVM_YAML_STRONG_TYPEDEF(uint16_t, PROFILE_PF)
+
+template <>
+struct ScalarBitSetTraits<PROFILE_PF> {
+  static void bitset(IO &io, PROFILE_PF &value) {
+    io.bitSetCase(value, "lbr", BinaryFunction::PF_LBR);
+    io.bitSetCase(value, "sample", BinaryFunction::PF_SAMPLE);
+    io.bitSetCase(value, "memevent", BinaryFunction::PF_MEMEVENT);
+  }
+};
+
+namespace bolt {
+struct BinaryProfileHeader {
+  uint32_t Version{1};
+  std::string FileName;       // Name of the profiled binary.
+  std::string Id;             // BuildID.
+  PROFILE_PF Flags{BinaryFunction::PF_NONE};
+                              // Type of the profile.
+  std::string Origin;         // How the profile was obtained.
+  std::string EventNames;     // Events used for sample profile.
+};
+} // end namespace bolt
+
+template <> struct MappingTraits<bolt::BinaryProfileHeader> {
+  static void mapping(IO &YamlIO, bolt::BinaryProfileHeader &Header) {
+    YamlIO.mapRequired("profile-version", Header.Version);
+    YamlIO.mapRequired("binary-name", Header.FileName);
+    YamlIO.mapOptional("binary-build-id", Header.Id);
+    YamlIO.mapRequired("profile-flags", Header.Flags);
+    YamlIO.mapOptional("profile-origin", Header.Origin);
+    YamlIO.mapOptional("profile-events", Header.EventNames);
+  }
+};
+
 } // end namespace yaml
 } // end namespace llvm
 
-LLVM_YAML_IS_DOCUMENT_LIST_VECTOR(llvm::yaml::bolt::BinaryFunctionProfile)
+LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::bolt::BinaryFunctionProfile)
+
+namespace llvm {
+namespace yaml {
+
+namespace bolt {
+struct BinaryProfile {
+  BinaryProfileHeader Header;
+  std::vector<BinaryFunctionProfile> Functions;
+};
+}
+
+template <> struct MappingTraits<bolt::BinaryProfile> {
+  static void mapping(IO &YamlIO, bolt::BinaryProfile &BP) {
+    YamlIO.mapRequired("header", BP.Header);
+    YamlIO.mapRequired("functions", BP.Functions);
+  }
+};
+
+} // end namespace yaml
+} // end namespace llvm
+
 
 #endif

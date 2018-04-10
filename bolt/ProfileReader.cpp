@@ -11,6 +11,7 @@
 
 #include "BinaryBasicBlock.h"
 #include "BinaryFunction.h"
+#include "Passes/MCF.h"
 #include "ProfileReader.h"
 #include "ProfileYAMLMapping.h"
 #include "llvm/Support/CommandLine.h"
@@ -24,7 +25,7 @@ namespace bolt {
 
 void
 ProfileReader::buildNameMaps(std::map<uint64_t, BinaryFunction> &Functions) {
-  for (auto &YamlBF : YamlBFs) {
+  for (auto &YamlBF : YamlBP.Functions) {
     StringRef Name = YamlBF.Name;
     const auto Pos = Name.find("(*");
     if (Pos != StringRef::npos)
@@ -54,6 +55,10 @@ ProfileReader::parseFunctionProfile(BinaryFunction &BF,
   uint64_t MismatchedCalls = 0;
   uint64_t MismatchedEdges = 0;
 
+  BF.setProfileFlags(YamlBP.Header.Flags);
+
+  uint64_t FunctionExecutionCount = 0;
+
   BF.setExecutionCount(YamlBF.ExecCount);
 
   if (YamlBF.Hash != BF.hash(true, true)) {
@@ -80,6 +85,26 @@ ProfileReader::parseFunctionProfile(BinaryFunction &BF,
     }
 
     auto &BB = *DFSOrder[YamlBB.Index];
+
+    // Non-LBR profile does not have branches information and needs a special
+    // processing.
+    if (YamlBP.Header.Flags & BinaryFunction::PF_SAMPLE) {
+      if (!YamlBB.EventCount) {
+        BB.setExecutionCount(0);
+        continue;
+      }
+      auto NumSamples = YamlBB.EventCount * 1000;
+      if (NormalizeByInsnCount && BB.getNumNonPseudos()) {
+        NumSamples /= BB.getNumNonPseudos();
+      } else if (NormalizeByCalls) {
+        NumSamples /= BB.getNumCalls() + 1;
+      }
+      BB.setExecutionCount(NumSamples);
+      if (BB.isEntryPoint())
+        FunctionExecutionCount += NumSamples;
+      continue;
+    }
+
     BB.setExecutionCount(YamlBB.ExecCount);
 
     for (const auto &YamlCSI: YamlBB.CallSites) {
@@ -167,6 +192,17 @@ ProfileReader::parseFunctionProfile(BinaryFunction &BF,
     }
   }
 
+  // If basic block profile wasn't read it should be 0.
+  for (auto &BB : BF) {
+    if (BB.getExecutionCount() == BinaryBasicBlock::COUNT_NO_PROFILE)
+      BB.setExecutionCount(0);
+  }
+
+  if (YamlBP.Header.Flags & BinaryFunction::PF_SAMPLE) {
+    BF.setExecutionCount(FunctionExecutionCount);
+    estimateEdgeCounts(BF);
+  }
+
   ProfileMatched &= !MismatchedBlocks && !MismatchedCalls && !MismatchedEdges;
 
   if (ProfileMatched)
@@ -189,18 +225,33 @@ ProfileReader::readProfile(const std::string &FileName,
     errs() << "ERROR: cannot open " << FileName << ": " << EC.message() << "\n";
     return EC;
   }
-
   yaml::Input YamlInput(MB.get()->getBuffer());
-  YamlInput >> YamlBFs;
+
+  // Consume YAML file.
+  YamlInput >> YamlBP;
   if (YamlInput.error()) {
-    errs() << "BOLT-ERROR: syntax error parsing " << FileName << " : "
-           << YamlInput.error().message() << '\n';
+    errs() << "BOLT-ERROR: syntax error parsing profile in " << FileName
+           << " : " << YamlInput.error().message() << '\n';
     return YamlInput.error();
   }
 
+  // Sanity check.
+  if (YamlBP.Header.Version != 1) {
+    errs() << "BOLT-ERROR: cannot read profile : unsupported version\n";
+    return std::make_error_code(std::errc::executable_format_error);
+  }
+  if (YamlBP.Header.EventNames.find(',') != StringRef::npos) {
+    errs() << "BOLT-ERROR: multiple events in profile are not supported\n";
+    return std::make_error_code(std::errc::executable_format_error);
+  }
+
+  NormalizeByInsnCount = usesEvent("cycles") || usesEvent("instructions");
+  NormalizeByCalls = usesEvent("branches");
+
+  // Match profile to function based on a function name.
   buildNameMaps(Functions);
 
-  YamlProfileToFunction.resize(YamlBFs.size() + 1);
+  YamlProfileToFunction.resize(YamlBP.Functions.size() + 1);
 
   // We have to do 2 passes since LTO introduces an ambiguity in function
   // names. The first pass assigns profiles that match 100% by name and
@@ -210,8 +261,9 @@ ProfileReader::readProfile(const std::string &FileName,
     auto Hash = Function.hash(true, true);
     for (auto &FunctionName : Function.getNames()) {
       auto PI = ProfileNameToProfile.find(FunctionName);
-      if (PI == ProfileNameToProfile.end())
+      if (PI == ProfileNameToProfile.end()) {
         continue;
+      }
       auto &YamlBF = *PI->getValue();
       if (YamlBF.Hash == Hash) {
         matchProfileToFunction(YamlBF, Function);
@@ -267,14 +319,14 @@ ProfileReader::readProfile(const std::string &FileName,
       }
     }
   }
-  for (auto &YamlBF : YamlBFs) {
+  for (auto &YamlBF : YamlBP.Functions) {
     if (!YamlBF.Used) {
       errs() << "BOLT-WARNING: profile ignored for function "
              << YamlBF.Name << '\n';
     }
   }
 
-  for (auto &YamlBF : YamlBFs) {
+  for (auto &YamlBF : YamlBP.Functions) {
     if (YamlBF.Id >= YamlProfileToFunction.size()) {
       // Such profile was ignored.
       continue;
@@ -285,6 +337,10 @@ ProfileReader::readProfile(const std::string &FileName,
   }
 
   return YamlInput.error();
+}
+
+bool ProfileReader::usesEvent(StringRef Name) const {
+  return YamlBP.Header.EventNames.find(Name) != StringRef::npos;
 }
 
 } // end namespace bolt

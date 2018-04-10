@@ -180,8 +180,7 @@ public:
                            std::vector<const BinaryFunction *> FunctionStack);
 
   /// Map all sections to their final addresses.
-  void
-  mapFileSections(orc::RTDyldObjectLinkingLayer::ObjHandleT &ObjectsHandle);
+  void mapFileSections(orc::VModuleKey ObjectsHandle);
 
   /// Update output object's values based on the final \p Layout.
   void updateOutputValues(const MCAsmLayout &Layout);
@@ -241,10 +240,6 @@ public:
   DWARFAddressRangesVector translateModuleAddressRanges(
       const DWARFAddressRangesVector &InputRanges) const;
 
-  uint64_t getTotalScore() const {
-    return BC->TotalScore;
-  }
-
 private:
   /// Emit a single function.
   void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
@@ -253,9 +248,6 @@ private:
   /// Detect addresses and offsets available in the binary for allocating
   /// new sections.
   void discoverStorage();
-
-  /// Read binary sections and find a gnu note section with the build-id
-  Optional<std::string> getBuildID();
 
   /// Adjust function sizes and set proper maximum size values after the whole
   /// symbol table has been processed.
@@ -416,7 +408,7 @@ private:
   const int Argc;
   const char *const *Argv;
 
-  /// Holds our data aggregator in case user supplied a raw perf data file
+  /// Holds our data aggregator in case user supplied a raw perf data file.
   DataAggregator &DA;
 
   std::unique_ptr<BinaryContext> BC;
@@ -425,6 +417,9 @@ private:
   /// Memory manager for sections and segments. Used to communicate with ORC
   /// among other things.
   std::shared_ptr<ExecutableFileMemoryManager> EFMM;
+
+  std::unique_ptr<orc::SymbolStringPool> SSP;
+  std::unique_ptr<orc::ExecutionSession> ES;
 
   // Run ObjectLinkingLayer() with custom memory manager and symbol resolver.
   std::unique_ptr<orc::RTDyldObjectLinkingLayer> OLT;
@@ -530,6 +525,39 @@ private:
   uint64_t NumDataRelocations{0};
 
   friend class RewriteInstanceDiff;
+
+public:
+
+  /// Return binary context.
+  const BinaryContext &getBinaryContext() const {
+    return *BC;
+  }
+
+  /// Return total score of all functions for this instance.
+  uint64_t getTotalScore() const {
+    return BC->TotalScore;
+  }
+
+  /// Return all functions for this rewrite instance.
+  const std::map<uint64_t, BinaryFunction> &getFunctions() const {
+    return BinaryFunctions;
+  }
+
+  /// Return the name of the input file.
+  Optional<StringRef> getInputFileName() const {
+    if (InputFile)
+      return InputFile->getFileName();
+    return NoneType();
+  }
+
+  /// Read binary sections and find a gnu note section with the build-id
+  /// of the input file.
+  Optional<std::string> getBuildID() const;
+
+  /// Provide an access to the profile data aggregator.
+  const DataAggregator &getDataAggregator() const {
+    return DA;
+  }
 };
 
 } // namespace bolt

@@ -876,7 +876,7 @@ void RewriteInstance::discoverStorage() {
 }
 
 Optional<std::string>
-RewriteInstance::getBuildID() {
+RewriteInstance::getBuildID() const {
   for (auto &Section : InputFile->sections()) {
     StringRef SectionName;
     Section.getName(SectionName);
@@ -2263,7 +2263,8 @@ void RewriteInstance::processProfileData() {
 
     if (!opts::BoltProfile.empty()) {
       ProfileReader PR;
-      PR.readProfile(opts::BoltProfile, BinaryFunctions);
+      auto EC = PR.readProfile(opts::BoltProfile, BinaryFunctions);
+      check_error(EC, "cannot read profile");
 
       return;
     }
@@ -2292,7 +2293,7 @@ void RewriteInstance::processProfileData() {
 
   if (!opts::SaveProfile.empty()) {
     ProfileWriter PW(opts::SaveProfile);
-    PW.writeProfile(BinaryFunctions);
+    PW.writeProfile(*this);
   }
 }
 

@@ -644,6 +644,17 @@ public:
     }
   }
 
+  unsigned getCanonicalBranchOpcode(unsigned Opcode) const override {
+    switch (Opcode) {
+    default:
+      return Opcode;
+    case AArch64::TBNZW:    return AArch64::TBZW;
+    case AArch64::TBNZX:    return AArch64::TBZX;
+    case AArch64::CBNZW:    return AArch64::CBZW;
+    case AArch64::CBNZX:    return AArch64::CBZX;
+    }
+  }
+
   bool reverseBranchCondition(MCInst &Inst, const MCSymbol *TBB,
                               MCContext *Ctx) const override {
     if (isTB(Inst) || isCB(Inst)) {

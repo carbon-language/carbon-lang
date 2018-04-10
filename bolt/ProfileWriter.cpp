@@ -12,6 +12,7 @@
 
 #include "BinaryBasicBlock.h"
 #include "BinaryFunction.h"
+#include "DataAggregator.h"
 #include "ProfileWriter.h"
 #include "ProfileYAMLMapping.h"
 #include "llvm/ADT/STLExtras.h"
@@ -26,36 +27,39 @@
 namespace llvm {
 namespace bolt {
 
-std::error_code
-ProfileWriter::writeProfile(std::map<uint64_t, BinaryFunction> &Functions) {
-  std::error_code EC;
-  OS = make_unique<raw_fd_ostream>(FileName, EC, sys::fs::F_None);
-  if (EC) {
-    errs() << "BOLT-WARNING: " << EC.message() << " : unable to open "
-           << FileName << " for output.\n";
-    return EC;
-  }
-
-  printBinaryFunctionsProfile(Functions);
-
-  return std::error_code();
-}
-
 namespace {
 void
 convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
   auto &BC = BF.getBinaryContext();
 
+  const auto LBRProfile = BF.hasLBRProfile();
+
   YamlBF.Name = BF.getPrintName();
   YamlBF.Id = BF.getFunctionNumber();
   YamlBF.Hash = BF.hash(true, true);
-  YamlBF.ExecCount = BF.getKnownExecutionCount();
   YamlBF.NumBasicBlocks = BF.size();
+  YamlBF.ExecCount = BF.getKnownExecutionCount();
+
+  FuncSampleData *SampleDataOrErr{nullptr};
+  if (!LBRProfile) {
+    SampleDataOrErr = BC.DR.getFuncSampleData(BF.getNames());
+    if (!SampleDataOrErr)
+      return;
+  }
 
   for (const auto *BB : BF.dfs()) {
     yaml::bolt::BinaryBasicBlockProfile YamlBB;
     YamlBB.Index = BB->getLayoutIndex();
     YamlBB.NumInstructions = BB->getNumNonPseudos();
+
+    if (!LBRProfile) {
+      YamlBB.EventCount = 
+        SampleDataOrErr->getSamples(BB->getInputOffset(), BB->getEndOffset());
+      if (YamlBB.EventCount)
+        YamlBF.Blocks.emplace_back(YamlBB);
+      continue;
+    }
+
     YamlBB.ExecCount = BB->getKnownExecutionCount();
 
     for (const auto &Instr : *BB) {
@@ -121,7 +125,10 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
     }
 
     // Skip printing if there's no profile data for non-entry basic block.
-    if (YamlBB.CallSites.empty() && !BB->isEntryPoint()) {
+    // Include landing pads with non-zero execution count.
+    if (YamlBB.CallSites.empty() &&
+        !BB->isEntryPoint() &&
+        !(BB->isLandingPad() && BB->getKnownExecutionCount() != 0)) {
       uint64_t SuccessorExecCount = 0;
       for (auto &BranchInfo : BB->branch_info()) {
         SuccessorExecCount += BranchInfo.Count;
@@ -147,28 +154,78 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
 }
 } // end anonymous namespace
 
-void ProfileWriter::printBinaryFunctionProfile(const BinaryFunction &BF) {
-  yaml::bolt::BinaryFunctionProfile YamlBF;
-  convert(BF, YamlBF);
+std::error_code
+ProfileWriter::writeProfile(const RewriteInstance &RI) {
+  const auto &Functions = RI.getFunctions();
 
-  yaml::Output Out(*OS);
-  Out << YamlBF;
-}
+  std::error_code EC;
+  OS = make_unique<raw_fd_ostream>(FileName, EC, sys::fs::F_None);
+  if (EC) {
+    errs() << "BOLT-WARNING: " << EC.message() << " : unable to open "
+           << FileName << " for output.\n";
+    return EC;
+  }
 
-void ProfileWriter::printBinaryFunctionsProfile(
-    std::map<uint64_t, BinaryFunction> &BFs) {
-  std::vector<yaml::bolt::BinaryFunctionProfile> YamlBFs;
-  for (auto &BFI : BFs) {
-    const auto &BF = BFI.second;
-    if (BF.hasProfile()) {
-      yaml::bolt::BinaryFunctionProfile YamlBF;
-      convert(BF, YamlBF);
-      YamlBFs.emplace_back(YamlBF);
+  yaml::bolt::BinaryProfile BP;
+
+  // Fill out the header info.
+  BP.Header.Version = 1;
+  auto FileName = RI.getInputFileName();
+  BP.Header.FileName = FileName ? *FileName : "<unknown>";
+  auto BuildID = RI.getBuildID();
+  BP.Header.Id = BuildID ? *BuildID : "<unknown>";
+
+  if (RI.getDataAggregator().started()) {
+    BP.Header.Origin = "aggregator";
+  } else {
+    BP.Header.Origin = "conversion";
+  }
+
+  auto EventNames = RI.getDataAggregator().getEventNames();
+  if (EventNames.empty())
+    EventNames = RI.getBinaryContext().DR.getEventNames();
+  if (!EventNames.empty()) {
+    std::string Sep = "";
+    for (const auto &EventEntry : EventNames) {
+      BP.Header.EventNames += Sep + EventEntry.first().str();
+      Sep = ",";
     }
   }
 
-  yaml::Output Out(*OS);
-  Out << YamlBFs;
+  // Make sure the profile is consistent across all functions.
+  uint16_t ProfileFlags = BinaryFunction::PF_NONE;
+  for (const auto &BFI : Functions) {
+    const auto &BF = BFI.second;
+    if (BF.hasProfile() && !BF.empty()) {
+      assert(BF.getProfileFlags() != BinaryFunction::PF_NONE);
+      if (ProfileFlags == BinaryFunction::PF_NONE) {
+        ProfileFlags = BF.getProfileFlags();
+      }
+      assert(BF.getProfileFlags() == ProfileFlags &&
+             "expected consistent profile flags across all functions");
+    }
+  }
+  BP.Header.Flags = ProfileFlags;
+
+  // Add all function objects.
+  for (const auto &BFI : Functions) {
+    const auto &BF = BFI.second;
+    if (BF.hasProfile()) {
+      // In conversion mode ignore stale functions.
+      if (!BF.hasValidProfile() && !RI.getDataAggregator().started())
+        continue;
+
+      yaml::bolt::BinaryFunctionProfile YamlBF;
+      convert(BF, YamlBF);
+      BP.Functions.emplace_back(YamlBF);
+    }
+  }
+
+  // Write the profile.
+  yaml::Output Out(*OS, nullptr, 0);
+  Out << BP;
+
+  return std::error_code();
 }
 
 } // namespace bolt
