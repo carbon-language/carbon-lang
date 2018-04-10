@@ -581,15 +581,15 @@ TEST_F(TypeIndexIteratorTest, CallerSym) {
 }
 
 TEST_F(TypeIndexIteratorTest, Precomp) {
-    PrecompRecord P(TypeRecordKind::Precomp);
-    P.StartTypeIndex = TypeIndex::FirstNonSimpleIndex;
-    P.TypesCount = 100;
-    P.Signature = 0x12345678;
-    P.PrecompFilePath = "C:/precomp.obj";
+  PrecompRecord P(TypeRecordKind::Precomp);
+  P.StartTypeIndex = TypeIndex::FirstNonSimpleIndex;
+  P.TypesCount = 100;
+  P.Signature = 0x12345678;
+  P.PrecompFilePath = "C:/precomp.obj";
 
-    EndPrecompRecord EP(TypeRecordKind::EndPrecomp);
-    EP.Signature = P.Signature;
+  EndPrecompRecord EP(TypeRecordKind::EndPrecomp);
+  EP.Signature = P.Signature;
 
-    writeTypeRecords(P, EP);
-    checkTypeReferences(0);
+  writeTypeRecords(P, EP);
+  checkTypeReferences(0);
 }
