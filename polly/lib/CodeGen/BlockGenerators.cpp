@@ -558,7 +558,8 @@ void BlockGenerator::generateScalarLoads(
       continue;
 
 #ifndef NDEBUG
-    auto StmtDom = Stmt.getDomain();
+    auto StmtDom =
+        Stmt.getDomain().intersect_params(Stmt.getParent()->getContext());
     auto AccDom = MA->getAccessRelation().domain();
     assert(!StmtDom.is_subset(AccDom).is_false() &&
            "Scalar must be loaded in all statement instances");
