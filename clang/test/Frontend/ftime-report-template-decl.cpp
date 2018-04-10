@@ -137,7 +137,7 @@ void Instantiate() {
 }
 
 // CHECK:   ===== Clang Parser =====
-// CHECK:   ---User Time---   --User+System--   ---Wall Time---  --- Name ---
+// CHECK:   ---User Time---
 // CHECK:   Parse Top Level Decl
 // CHECK:   Parse Template
 // CHECK:   Parse Function Definition
