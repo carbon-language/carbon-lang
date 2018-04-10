@@ -534,7 +534,7 @@ StringRef FileManager::getCanonicalName(const DirectoryEntry *Dir) {
 
   StringRef CanonicalName(Dir->getName());
 
-  SmallString<PATH_MAX> CanonicalNameBuf;
+  SmallString<256> CanonicalNameBuf;
   if (!llvm::sys::fs::real_path(Dir->getName(), CanonicalNameBuf))
     CanonicalName = StringRef(CanonicalNameBuf).copy(CanonicalNameStorage);
 
