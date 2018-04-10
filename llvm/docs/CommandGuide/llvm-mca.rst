@@ -144,6 +144,12 @@ option specifies "``-``", then the output will also be sent to standard output.
 
   Enable register file usage statistics.
 
+.. option:: -dispatch-stats
+
+  Enable extra dispatch statistics. This view collects and analyzes instruction
+  dispatch events, as well as static/dynamic dispatch stall events. This view
+  is disabled by default.
+
 .. option:: -instruction-info
 
   Enable the instruction info view. This is enabled by default.
