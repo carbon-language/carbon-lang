@@ -2,9 +2,6 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:/Volumes/ThePlayground/Users/jingham/Work/LLDB/llvm-dot-org/lldb-working/unittests/Interpreter/TestOptionArgParser.cpp">
-   </FileRef>
-   <FileRef
       location = "group:lldb.xcodeproj">
    </FileRef>
    <FileRef
