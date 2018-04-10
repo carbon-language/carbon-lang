@@ -266,6 +266,49 @@ namespace llvm {
     }
   };
 
+  /// Common base class for all memory transfer intrinsics. Simply provides
+  /// common methods.
+  template <class BaseCL> class MemTransferBase : public BaseCL {
+  private:
+    enum { ARG_SOURCE = 1 };
+
+  public:
+    /// Return the arguments to the instruction.
+    Value *getRawSource() const {
+      return const_cast<Value *>(BaseCL::getArgOperand(ARG_SOURCE));
+    }
+    const Use &getRawSourceUse() const {
+      return BaseCL::getArgOperandUse(ARG_SOURCE);
+    }
+    Use &getRawSourceUse() { return BaseCL::getArgOperandUse(ARG_SOURCE); }
+
+    /// This is just like getRawSource, but it strips off any cast
+    /// instructions that feed it, giving the original input.  The returned
+    /// value is guaranteed to be a pointer.
+    Value *getSource() const { return getRawSource()->stripPointerCasts(); }
+
+    unsigned getSourceAddressSpace() const {
+      return cast<PointerType>(getRawSource()->getType())->getAddressSpace();
+    }
+
+    unsigned getSourceAlignment() const {
+      return BaseCL::getParamAlignment(ARG_SOURCE);
+    }
+
+    void setSource(Value *Ptr) {
+      assert(getRawSource()->getType() == Ptr->getType() &&
+             "setSource called with pointer of wrong type!");
+      BaseCL::setArgOperand(ARG_SOURCE, Ptr);
+    }
+
+    void setSourceAlignment(unsigned Align) {
+      BaseCL::removeParamAttr(ARG_SOURCE, Attribute::Alignment);
+      if (Align > 0)
+        BaseCL::addParamAttr(ARG_SOURCE, Attribute::getWithAlignment(
+                                             BaseCL::getContext(), Align));
+    }
+  };
+
   // The common base class for the atomic memset/memmove/memcpy intrinsics
   // i.e. llvm.element.unordered.atomic.memset/memcpy/memmove
   class AtomicMemIntrinsic : public MemIntrinsicBase<AtomicMemIntrinsic> {
@@ -335,44 +378,8 @@ namespace llvm {
 
   // This class wraps the atomic memcpy/memmove intrinsics
   // i.e. llvm.element.unordered.atomic.memcpy/memmove
-  class AtomicMemTransferInst : public AtomicMemIntrinsic {
-  private:
-    enum { ARG_SOURCE = 1 };
-
+  class AtomicMemTransferInst : public MemTransferBase<AtomicMemIntrinsic> {
   public:
-    /// Return the arguments to the instruction.
-    Value *getRawSource() const {
-      return const_cast<Value *>(getArgOperand(ARG_SOURCE));
-    }
-    const Use &getRawSourceUse() const { return getArgOperandUse(ARG_SOURCE); }
-    Use &getRawSourceUse() { return getArgOperandUse(ARG_SOURCE); }
-
-    /// This is just like getRawSource, but it strips off any cast
-    /// instructions that feed it, giving the original input.  The returned
-    /// value is guaranteed to be a pointer.
-    Value *getSource() const { return getRawSource()->stripPointerCasts(); }
-
-    unsigned getSourceAddressSpace() const {
-      return cast<PointerType>(getRawSource()->getType())->getAddressSpace();
-    }
-
-    unsigned getSourceAlignment() const {
-      return getParamAlignment(ARG_SOURCE);
-    }
-
-    void setSource(Value *Ptr) {
-      assert(getRawSource()->getType() == Ptr->getType() &&
-             "setSource called with pointer of wrong type!");
-      setArgOperand(ARG_SOURCE, Ptr);
-    }
-
-    void setSourceAlignment(unsigned Align) {
-      removeParamAttr(ARG_SOURCE, Attribute::Alignment);
-      if (Align > 0)
-        addParamAttr(ARG_SOURCE,
-                     Attribute::getWithAlignment(getContext(), Align));
-    }
-
     static bool classof(const IntrinsicInst *I) {
       switch (I->getIntrinsicID()) {
       case Intrinsic::memcpy_element_unordered_atomic:
@@ -467,42 +474,8 @@ namespace llvm {
   };
 
   /// This class wraps the llvm.memcpy/memmove intrinsics.
-  class MemTransferInst : public MemIntrinsic {
-  private:
-    enum { ARG_SOURCE = 1 };
-
+  class MemTransferInst : public MemTransferBase<MemIntrinsic> {
   public:
-    /// Return the arguments to the instruction.
-    Value *getRawSource() const { return const_cast<Value*>(getArgOperand(ARG_SOURCE)); }
-    const Use &getRawSourceUse() const { return getArgOperandUse(ARG_SOURCE); }
-    Use &getRawSourceUse() { return getArgOperandUse(ARG_SOURCE); }
-
-    /// This is just like getRawSource, but it strips off any cast
-    /// instructions that feed it, giving the original input.  The returned
-    /// value is guaranteed to be a pointer.
-    Value *getSource() const { return getRawSource()->stripPointerCasts(); }
-
-    unsigned getSourceAddressSpace() const {
-      return cast<PointerType>(getRawSource()->getType())->getAddressSpace();
-    }
-
-    unsigned getSourceAlignment() const {
-      return getParamAlignment(ARG_SOURCE);
-    }
-
-    void setSource(Value *Ptr) {
-      assert(getRawSource()->getType() == Ptr->getType() &&
-             "setSource called with pointer of wrong type!");
-      setArgOperand(ARG_SOURCE, Ptr);
-    }
-
-    void setSourceAlignment(unsigned Align) {
-      removeParamAttr(ARG_SOURCE, Attribute::Alignment);
-      if (Align > 0)
-        addParamAttr(ARG_SOURCE,
-                     Attribute::getWithAlignment(getContext(), Align));
-    }
-
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static bool classof(const IntrinsicInst *I) {
       return I->getIntrinsicID() == Intrinsic::memcpy ||
@@ -605,44 +578,8 @@ namespace llvm {
   // This class wraps any memcpy/memmove intrinsics
   // i.e. llvm.element.unordered.atomic.memcpy/memmove
   // and  llvm.memcpy/memmove
-  class AnyMemTransferInst : public AnyMemIntrinsic {
-  private:
-    enum { ARG_SOURCE = 1 };
-
+  class AnyMemTransferInst : public MemTransferBase<AnyMemIntrinsic> {
   public:
-    /// Return the arguments to the instruction.
-    Value *getRawSource() const {
-      return const_cast<Value *>(getArgOperand(ARG_SOURCE));
-    }
-    const Use &getRawSourceUse() const { return getArgOperandUse(ARG_SOURCE); }
-    Use &getRawSourceUse() { return getArgOperandUse(ARG_SOURCE); }
-
-    /// This is just like getRawSource, but it strips off any cast
-    /// instructions that feed it, giving the original input.  The returned
-    /// value is guaranteed to be a pointer.
-    Value *getSource() const { return getRawSource()->stripPointerCasts(); }
-
-    unsigned getSourceAddressSpace() const {
-      return cast<PointerType>(getRawSource()->getType())->getAddressSpace();
-    }
-
-    unsigned getSourceAlignment() const {
-      return getParamAlignment(ARG_SOURCE);
-    }
-
-    void setSource(Value *Ptr) {
-      assert(getRawSource()->getType() == Ptr->getType() &&
-             "setSource called with pointer of wrong type!");
-      setArgOperand(ARG_SOURCE, Ptr);
-    }
-
-    void setSourceAlignment(unsigned Align) {
-      removeParamAttr(ARG_SOURCE, Attribute::Alignment);
-      if (Align > 0)
-        addParamAttr(ARG_SOURCE,
-                     Attribute::getWithAlignment(getContext(), Align));
-    }
-
     static bool classof(const IntrinsicInst *I) {
       switch (I->getIntrinsicID()) {
       case Intrinsic::memcpy:
