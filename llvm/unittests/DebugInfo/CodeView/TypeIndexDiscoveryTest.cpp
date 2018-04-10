@@ -593,3 +593,11 @@ TEST_F(TypeIndexIteratorTest, Precomp) {
   writeTypeRecords(P, EP);
   checkTypeReferences(0);
 }
+
+// This is a test for getEncodedIntegerLength()
+TEST_F(TypeIndexIteratorTest, VariableSizeIntegers) {
+  BaseClassRecord BaseClass1(MemberAccess::Public, TypeIndex(47), (uint64_t)-1);
+  BaseClassRecord BaseClass2(MemberAccess::Public, TypeIndex(48), 1);
+  writeFieldList(BaseClass1, BaseClass2);
+  checkTypeReferences(0, TypeIndex(47), TypeIndex(48));
+}
