@@ -316,6 +316,8 @@ void NaClToolChain::addLibCxxIncludePaths(
 
   SmallString<128> P(D.Dir + "/../");
   switch (getTriple().getArch()) {
+  default:
+    break;
   case llvm::Triple::arm:
     llvm::sys::path::append(P, "arm-nacl/include/c++/v1");
     addSystemInclude(DriverArgs, CC1Args, P.str());
