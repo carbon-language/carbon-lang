@@ -41,20 +41,20 @@ assembly text:
 
 .. code-block:: c++
 
-int foo(int a, int b) {
-  __asm volatile("# LLVM-MCA-BEGIN foo");
-  a += 42;
-  __asm volatile("# LLVM-MCA-END");
-  a *= b;
-  return a;
-}
+  int foo(int a, int b) {
+    __asm volatile("# LLVM-MCA-BEGIN foo");
+    a += 42;
+    __asm volatile("# LLVM-MCA-END");
+    a *= b;
+    return a;
+  }
 
 So for example, you can compile code with clang, output assembly, and pipe it
 directly into llvm-mca for analysis:
 
 .. code-block:: bash
 
-$ clang foo.cpp -O2 -target x86_64-unknown-unknown -S -o - | llvm-mca -mcpu=btver2
+  $ clang foo.cpp -O2 -target x86_64-unknown-unknown -S -o - | llvm-mca -mcpu=btver2
 
 Multiple regions can be specified provided that they do not overlap.  A code
 region can have an optional description. If no user defined region is specified,
