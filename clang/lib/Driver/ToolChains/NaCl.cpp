@@ -334,6 +334,8 @@ void NaClToolChain::addLibCxxIncludePaths(
     llvm::sys::path::append(P, "mipsel-nacl/include/c++/v1");
     addSystemInclude(DriverArgs, CC1Args, P.str());
     break;
+  default:
+    break;
   }
 }
 
