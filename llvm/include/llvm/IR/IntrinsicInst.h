@@ -309,6 +309,28 @@ namespace llvm {
     }
   };
 
+  /// Common base class for all memset intrinsics. Simply provides
+  /// common methods.
+  template <class BaseCL> class MemSetBase : public BaseCL {
+  private:
+    enum { ARG_VALUE = 1 };
+
+  public:
+    Value *getValue() const {
+      return const_cast<Value *>(BaseCL::getArgOperand(ARG_VALUE));
+    }
+    const Use &getValueUse() const {
+      return BaseCL::getArgOperandUse(ARG_VALUE);
+    }
+    Use &getValueUse() { return BaseCL::getArgOperandUse(ARG_VALUE); }
+
+    void setValue(Value *Val) {
+      assert(getValue()->getType() == Val->getType() &&
+             "setValue called with value of wrong type!");
+      BaseCL::setArgOperand(ARG_VALUE, Val);
+    }
+  };
+
   // The common base class for the atomic memset/memmove/memcpy intrinsics
   // i.e. llvm.element.unordered.atomic.memset/memcpy/memmove
   class AtomicMemIntrinsic : public MemIntrinsicBase<AtomicMemIntrinsic> {
@@ -351,23 +373,8 @@ namespace llvm {
 
   /// This class represents atomic memset intrinsic
   // i.e. llvm.element.unordered.atomic.memset
-  class AtomicMemSetInst : public AtomicMemIntrinsic {
-  private:
-    enum { ARG_VALUE = 1 };
-
+  class AtomicMemSetInst : public MemSetBase<AtomicMemIntrinsic> {
   public:
-    Value *getValue() const {
-      return const_cast<Value *>(getArgOperand(ARG_VALUE));
-    }
-    const Use &getValueUse() const { return getArgOperandUse(ARG_VALUE); }
-    Use &getValueUse() { return getArgOperandUse(ARG_VALUE); }
-
-    void setValue(Value *Val) {
-      assert(getValue()->getType() == Val->getType() &&
-             "setValue called with value of wrong type!");
-      setArgOperand(ARG_VALUE, Val);
-    }
-
     static bool classof(const IntrinsicInst *I) {
       return I->getIntrinsicID() == Intrinsic::memset_element_unordered_atomic;
     }
@@ -451,19 +458,8 @@ namespace llvm {
   };
 
   /// This class wraps the llvm.memset intrinsic.
-  class MemSetInst : public MemIntrinsic {
+  class MemSetInst : public MemSetBase<MemIntrinsic> {
   public:
-    /// Return the arguments to the instruction.
-    Value *getValue() const { return const_cast<Value*>(getArgOperand(1)); }
-    const Use &getValueUse() const { return getArgOperandUse(1); }
-    Use &getValueUse() { return getArgOperandUse(1); }
-
-    void setValue(Value *Val) {
-      assert(getValue()->getType() == Val->getType() &&
-             "setValue called with value of wrong type!");
-      setArgOperand(1, Val);
-    }
-
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static bool classof(const IntrinsicInst *I) {
       return I->getIntrinsicID() == Intrinsic::memset;
@@ -544,23 +540,8 @@ namespace llvm {
   /// This class represents any memset intrinsic
   // i.e. llvm.element.unordered.atomic.memset
   // and  llvm.memset
-  class AnyMemSetInst : public AnyMemIntrinsic {
-  private:
-    enum { ARG_VALUE = 1 };
-
+  class AnyMemSetInst : public MemSetBase<AnyMemIntrinsic> {
   public:
-    Value *getValue() const {
-      return const_cast<Value *>(getArgOperand(ARG_VALUE));
-    }
-    const Use &getValueUse() const { return getArgOperandUse(ARG_VALUE); }
-    Use &getValueUse() { return getArgOperandUse(ARG_VALUE); }
-
-    void setValue(Value *Val) {
-      assert(getValue()->getType() == Val->getType() &&
-             "setValue called with value of wrong type!");
-      setArgOperand(ARG_VALUE, Val);
-    }
-
     static bool classof(const IntrinsicInst *I) {
       switch (I->getIntrinsicID()) {
       case Intrinsic::memset:
