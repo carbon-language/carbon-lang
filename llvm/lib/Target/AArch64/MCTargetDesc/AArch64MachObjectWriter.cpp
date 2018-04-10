@@ -305,7 +305,8 @@ void AArch64MachObjectWriter::recordRelocation(
 
     bool CanUseLocalRelocation =
         canUseLocalRelocation(Section, *Symbol, Log2Size);
-    if (Symbol->isTemporary() && (Value || !CanUseLocalRelocation)) {
+    if (Symbol->isTemporary() && Symbol->isInSection() &&
+        (Value || !CanUseLocalRelocation)) {
       const MCSection &Sec = Symbol->getSection();
       if (!Asm.getContext().getAsmInfo()->isSectionAtomizableBySymbols(Sec))
         Symbol->setUsedInReloc();
