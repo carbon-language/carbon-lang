@@ -12,7 +12,6 @@
 
 // C Includes
 // C++ Includes
-#include <list>
 #include <string>
 #include <utility>
 #include <vector>
@@ -22,7 +21,6 @@
 #include "llvm/ADT/StringRef.h"
 // Project includes
 #include "lldb/Utility/Environment.h"
-#include "lldb/Utility/Status.h"
 #include "lldb/lldb-private-types.h"
 #include "lldb/lldb-types.h"
 
@@ -342,30 +340,6 @@ public:
     const int64_t min = ~(max);
     return min <= sval64 && sval64 <= max;
   }
-
-  static lldb::addr_t StringToAddress(const ExecutionContext *exe_ctx,
-                                      llvm::StringRef s,
-                                      lldb::addr_t fail_value, Status *error);
-
-  static bool StringToBoolean(llvm::StringRef s, bool fail_value,
-                              bool *success_ptr);
-
-  static char StringToChar(llvm::StringRef s, char fail_value,
-                           bool *success_ptr);
-
-  static int64_t StringToOptionEnum(llvm::StringRef s,
-                                    OptionEnumValueElement *enum_values,
-                                    int32_t fail_value, Status &error);
-
-  static lldb::ScriptLanguage
-  StringToScriptLanguage(llvm::StringRef s, lldb::ScriptLanguage fail_value,
-                         bool *success_ptr);
-
-  // TODO: Use StringRef
-  static Status StringToFormat(const char *s, lldb::Format &format,
-                               size_t *byte_size_ptr); // If non-NULL, then a
-                                                       // byte size can precede
-                                                       // the format character
 
   static lldb::Encoding
   StringToEncoding(llvm::StringRef s,
