@@ -19,13 +19,7 @@ public:
   static const Scope systemScope;
   static Scope globalScope;  // contains program-units
 
-  enum class Kind {
-    System,
-    Global,
-    Module,
-    MainProgram,
-    Subprogram,
-  };
+  ENUM_CLASS(Kind, System, Global, Module, MainProgram, Subprogram)
 
   Scope(const Scope &parent, Kind kind) : parent_{parent}, kind_{kind} {}
 
