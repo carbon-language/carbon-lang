@@ -1,4 +1,5 @@
-//===--------------------- BackendStatistics.cpp ---------------*- C++ -*-===//
+//===--------------------- RetireControlUnitStatistics.cpp ---------------*- C++
+//-*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,24 +9,24 @@
 //===----------------------------------------------------------------------===//
 /// \file
 ///
-/// Functionalities used by the BackendPrinter to print out histograms
-/// related to number of {issue/retire} per number of cycles.
+/// This file implements the RetireControlUnitStatistics interface.
 ///
 //===----------------------------------------------------------------------===//
 
-#include "BackendStatistics.h"
+#include "RetireControlUnitStatistics.h"
 #include "llvm/Support/Format.h"
 
 using namespace llvm;
 
 namespace mca {
 
-void BackendStatistics::onInstructionEvent(const HWInstructionEvent &Event) {
+void RetireControlUnitStatistics::onInstructionEvent(
+    const HWInstructionEvent &Event) {
   if (Event.Type == HWInstructionEvent::Retired)
     ++NumRetired;
 }
 
-void BackendStatistics::printView(llvm::raw_ostream &OS) const {
+void RetireControlUnitStatistics::printView(llvm::raw_ostream &OS) const {
   std::string Buffer;
   raw_string_ostream TempStream(Buffer);
   TempStream << "\n\nRetire Control Unit - "

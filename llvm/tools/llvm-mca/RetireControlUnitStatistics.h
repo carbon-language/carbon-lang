@@ -1,4 +1,5 @@
-//===--------------------- BackendStatistics.h ------------------*- C++ -*-===//
+//===--------------------- RetireControlUnitStatistics.h ------------------*-
+//C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,8 +9,8 @@
 //===----------------------------------------------------------------------===//
 /// \file
 ///
-/// This file implements a View named BackendStatistics that knows how to
-/// collect and print a few statistics related to the retire unit.
+/// This file defines class RetireControlUnitStatistics: a view that knows how
+/// to print general statistics related to the retire control unit.
 ///
 /// Example:
 /// ========
@@ -23,19 +24,16 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_MCA_BACKENDSTATISTICS_H
-#define LLVM_TOOLS_LLVM_MCA_BACKENDSTATISTICS_H
+#ifndef LLVM_TOOLS_LLVM_MCA_RETIRECONTROLUNITSTATISTICS_H
+#define LLVM_TOOLS_LLVM_MCA_RETIRECONTROLUNITSTATISTICS_H
 
 #include "View.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 
 namespace mca {
 
-class BackendStatistics : public View {
-  const llvm::MCSubtargetInfo &STI;
-
+class RetireControlUnitStatistics : public View {
   using Histogram = llvm::DenseMap<unsigned, unsigned>;
   Histogram RetiredPerCycle;
 
@@ -47,12 +45,8 @@ class BackendStatistics : public View {
     NumRetired = 0;
   }
 
-  void printRCUStatistics(llvm::raw_ostream &OS, const Histogram &Histogram,
-                          unsigned Cycles) const;
-
 public:
-  BackendStatistics(const llvm::MCSubtargetInfo &sti)
-      : STI(sti), NumRetired(0), NumCycles(0) {}
+  RetireControlUnitStatistics() : NumRetired(0), NumCycles(0) {}
 
   void onInstructionEvent(const HWInstructionEvent &Event) override;
 
