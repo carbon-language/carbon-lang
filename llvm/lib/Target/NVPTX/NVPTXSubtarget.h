@@ -48,10 +48,6 @@ class NVPTXSubtarget : public NVPTXGenSubtargetInfo {
   // FrameLowering class because TargetFrameLowering is abstract.
   NVPTXFrameLowering FrameLowering;
 
-protected:
-  // Processor supports scoped atomic operations.
-  bool HasAtomScope;
-
 public:
   /// This constructor initializes the data members to match that
   /// of the specified module.

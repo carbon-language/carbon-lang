@@ -161,7 +161,6 @@ ArrayRef<const char *> NVPTXTargetInfo::getGCCRegNames() const {
 bool NVPTXTargetInfo::hasFeature(StringRef Feature) const {
   return llvm::StringSwitch<bool>(Feature)
       .Cases("ptx", "nvptx", true)
-      .Case("satom", GPU >= CudaArch::SM_60) // Atomics w/ scope.
       .Default(false);
 }
 

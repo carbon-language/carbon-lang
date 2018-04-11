@@ -57,7 +57,6 @@ public:
                  StringRef CPU,
                  const std::vector<std::string> &FeaturesVec) const override {
     Features[CudaArchToString(GPU)] = true;
-    Features["satom"] = GPU >= CudaArch::SM_60;
     Features["ptx" + std::to_string(PTXVersion)] = true;
     return TargetInfo::initFeatureMap(Features, Diags, CPU, FeaturesVec);
   }
