@@ -26,6 +26,7 @@ add_llvm_tool(llvm-mca
   RegisterFileStatistics.cpp
   ResourcePressureView.cpp
   Scheduler.cpp
+  SchedulerStatistics.cpp
   Support.cpp
   SummaryView.cpp
   TimelineView.cpp

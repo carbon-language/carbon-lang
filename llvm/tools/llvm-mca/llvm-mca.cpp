@@ -29,6 +29,7 @@
 #include "InstructionTables.h"
 #include "RegisterFileStatistics.h"
 #include "ResourcePressureView.h"
+#include "SchedulerStatistics.h"
 #include "SummaryView.h"
 #include "TimelineView.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -98,6 +99,11 @@ static cl::opt<bool>
     PrintDispatchStats("dispatch-stats",
                        cl::desc("Print dispatch statistics"),
                        cl::init(false));
+
+static cl::opt<bool>
+    PrintiSchedulerStats("scheduler-stats",
+                         cl::desc("Print scheduler statistics"),
+                         cl::init(false));
 
 static cl::opt<bool>
     PrintResourcePressureView("resource-pressure",
@@ -431,6 +437,9 @@ int main(int argc, char **argv) {
 
     if (PrintDispatchStats)
       Printer.addView(llvm::make_unique<mca::DispatchStatistics>(*STI));
+
+    if (PrintiSchedulerStats)
+      Printer.addView(llvm::make_unique<mca::SchedulerStatistics>(*STI));
 
     if (PrintModeVerbose)
       Printer.addView(llvm::make_unique<mca::BackendStatistics>(*STI));

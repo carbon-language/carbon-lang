@@ -139,8 +139,7 @@ option specifies "``-``", then the output will also be sent to standard output.
 .. option:: -verbose
 
   Enable verbose output. In particular, this flag enables a number of extra
-  statistics and performance counters for the dispatch logic, the reorder
-  buffer, the retire control unit and the register file.
+  statistics and performance counters for the retire control unit.
 
 .. option:: -timeline
 
@@ -169,6 +168,11 @@ option specifies "``-``", then the output will also be sent to standard output.
   Enable extra dispatch statistics. This view collects and analyzes instruction
   dispatch events, as well as static/dynamic dispatch stall events. This view
   is disabled by default.
+
+.. option:: -scheduler-stats
+
+  Enable extra scheduler statistics. This view collects and analyzes instruction
+  issue events. This view is disabled by default.
 
 .. option:: -instruction-info
 
