@@ -95,28 +95,15 @@ struct Location {
 
 typedef std::vector<std::pair<Location, Location>> BranchContext;
 
-struct BranchHistory {
-  int64_t Mispreds;
-  int64_t Branches;
-  BranchContext Context;
-
-  BranchHistory(int64_t Mispreds, int64_t Branches, BranchContext Context)
-      : Mispreds(Mispreds), Branches(Branches), Context(std::move(Context)) {}
-};
-
-typedef std::vector<BranchHistory> BranchHistories;
-
 struct BranchInfo {
   Location From;
   Location To;
   int64_t Mispreds;
   int64_t Branches;
-  BranchHistories Histories;
 
-  BranchInfo(Location From, Location To, int64_t Mispreds, int64_t Branches,
-             BranchHistories Histories)
+  BranchInfo(Location From, Location To, int64_t Mispreds, int64_t Branches)
       : From(std::move(From)), To(std::move(To)), Mispreds(Mispreds),
-        Branches(Branches), Histories(std::move(Histories)) {}
+        Branches(Branches) {}
 
   bool operator==(const BranchInfo &RHS) const {
     return From == RHS.From &&
@@ -133,8 +120,7 @@ struct BranchInfo {
     return false;
   }
 
-  /// Merges the branch and misprediction counts as well as the histories of BI
-  /// with those of this object.
+  /// Merges branch and misprediction counts of \p BI with those of this object.
   void mergeWith(const BranchInfo &BI);
 
   void print(raw_ostream &OS) const;
@@ -314,17 +300,7 @@ public:
   ///
   /// <is symbol?> <closest elf symbol or DSO name> <relative FROM address>
   /// <is symbol?> <closest elf symbol or DSO name> <relative TO address>
-  /// <number of mispredictions> <number of branches> [<number of histories>
-  /// <history entry>
-  /// <history entry>
-  /// ...]
-  ///
-  /// Each history entry follows the syntax below.
-  ///
-  /// <number of mispredictions> <number of branches> <history length>
-  /// <is symbol?> <closest elf symbol or DSO name> <relative FROM address>
-  /// <is symbol?> <closest elf symbol or DSO name> <relative TO address>
-  /// ...
+  /// <number of mispredictions> <number of branches>
   ///
   /// In <is symbol?> field we record 0 if our closest address is a DSO load
   /// address or 1 if our closest address is an ELF symbol.
@@ -334,7 +310,7 @@ public:
   ///  1 main 3fb 0 /lib/ld-2.21.so 12 4 221
   ///
   /// The example records branches from symbol main, offset 3fb, to DSO ld-2.21,
-  /// offset 12, with 4 mispredictions and 221 branches. No history is provided.
+  /// offset 12, with 4 mispredictions and 221 branches.
   ///
   ///  2 t2.c/func 11 1 globalfunc 1d 0 1775 2
   ///  0 1002 2
@@ -444,7 +420,6 @@ protected:
   ErrorOr<Location> parseMemLocation(char EndChar, bool EndNl=false) {
     return parseLocation(EndChar, EndNl, true);
   }
-  ErrorOr<BranchHistory> parseBranchHistory();
   ErrorOr<BranchInfo> parseBranchInfo();
   ErrorOr<SampleInfo> parseSampleInfo();
   ErrorOr<MemInfo> parseMemInfo();

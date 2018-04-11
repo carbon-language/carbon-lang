@@ -124,8 +124,7 @@ void FuncBranchData::bumpBranchCount(uint64_t OffsetFrom, uint64_t OffsetTo,
   auto Iter = IntraIndex[OffsetFrom].find(OffsetTo);
   if (Iter == IntraIndex[OffsetFrom].end()) {
     Data.emplace_back(Location(true, Name, OffsetFrom),
-                      Location(true, Name, OffsetTo), Mispred, 1,
-                      BranchHistories());
+                      Location(true, Name, OffsetTo), Mispred, 1);
     IntraIndex[OffsetFrom][OffsetTo] = Data.size() - 1;
     return;
   }
@@ -139,8 +138,7 @@ void FuncBranchData::bumpCallCount(uint64_t OffsetFrom, const Location &To,
                                    bool Mispred) {
   auto Iter = InterIndex[OffsetFrom].find(To);
   if (Iter == InterIndex[OffsetFrom].end()) {
-    Data.emplace_back(Location(true, Name, OffsetFrom), To, Mispred, 1,
-                      BranchHistories());
+    Data.emplace_back(Location(true, Name, OffsetFrom), To, Mispred, 1);
     InterIndex[OffsetFrom][To] = Data.size() - 1;
     return;
   }
@@ -154,8 +152,7 @@ void FuncBranchData::bumpEntryCount(const Location &From, uint64_t OffsetTo,
                                     bool Mispred) {
   auto Iter = EntryIndex[OffsetTo].find(From);
   if (Iter == EntryIndex[OffsetTo].end()) {
-    EntryData.emplace_back(From, Location(true, Name, OffsetTo), Mispred, 1,
-                           BranchHistories());
+    EntryData.emplace_back(From, Location(true, Name, OffsetTo), Mispred, 1);
     EntryIndex[OffsetTo][From] = EntryData.size() - 1;
     return;
   }
@@ -166,80 +163,8 @@ void FuncBranchData::bumpEntryCount(const Location &From, uint64_t OffsetTo,
 }
 
 void BranchInfo::mergeWith(const BranchInfo &BI) {
-
-  // Merge branch and misprediction counts.
   Branches += BI.Branches;
   Mispreds += BI.Mispreds;
-
-  // Trivial cases
-  if (BI.Histories.size() == 0)
-    return;
-
-  if (Histories.size() == 0) {
-    Histories = BI.Histories;
-    return;
-  }
-
-  // map BranchContext -> (mispreds, count), used to merge histories
-  std::map<BranchContext, std::pair<uint64_t, uint64_t>> HistMap;
-
-  // Add histories of this BranchInfo into HistMap.
-  for (const auto &H : Histories) {
-    BranchContext C;
-    for (const auto &LocPair : H.Context) {
-      C.emplace_back(LocPair);
-      const auto I = HistMap.find(C);
-      if (I == HistMap.end()) {
-        HistMap.insert(
-            std::make_pair(C, std::make_pair(H.Mispreds, H.Branches)));
-      }
-      else {
-        I->second.first += H.Mispreds;
-        I->second.second += H.Branches;
-      }
-    }
-  }
-
-  // Add histories of BI into HistMap.
-  for (const auto &H : BI.Histories) {
-    BranchContext C;
-    for (const auto &LocPair : H.Context) {
-      C.emplace_back(LocPair);
-      const auto I = HistMap.find(C);
-      if (I == HistMap.end()) {
-        HistMap.insert(
-            std::make_pair(C, std::make_pair(H.Mispreds, H.Branches)));
-      }
-      else {
-        I->second.first += H.Mispreds;
-        I->second.second += H.Branches;
-      }
-    }
-  }
-
-  // Helper function that checks whether context A is a prefix of context B.
-  auto isPrefix = [] (const BranchContext &A, const BranchContext &B) -> bool {
-    for (unsigned i = 0; i < A.size(); ++i) {
-      if (i >= B.size() || A[i] != B[i])
-        return false;
-    }
-    return true;
-  };
-
-  // Extract merged histories from HistMap. Keep only the longest history
-  // between histories that share a common prefix.
-  Histories.clear();
-  auto I = HistMap.begin(), E = HistMap.end();
-  auto NextI = I;
-  ++NextI;
-  for ( ; I != E; ++I, ++NextI) {
-    if (NextI != E && isPrefix(I->first, NextI->first))
-      continue;
-
-    Histories.emplace_back(BranchHistory(I->second.first,
-                                         I->second.second,
-                                         I->first));
-  }
 }
 
 void BranchInfo::print(raw_ostream &OS) const {
@@ -247,23 +172,7 @@ void BranchInfo::print(raw_ostream &OS) const {
      << Twine::utohexstr(From.Offset) << " "
      << To.IsSymbol << " " << To.Name << " "
      << Twine::utohexstr(To.Offset) << " "
-     << Mispreds << " " << Branches;
-
-  if (Histories.size() == 0) {
-    OS << "\n";
-    return;
-  }
-
-  OS << " " << Histories.size() << "\n";
-  for (const auto &H : Histories) {
-    OS << H.Mispreds << " " << H.Branches << " " << H.Context.size() << "\n";
-    for (const auto &C : H.Context) {
-      OS << C.first.IsSymbol << " " << C.first.Name << " "
-         << Twine::utohexstr(C.first.Offset) << " "
-         << C.second.IsSymbol << " " << C.second.Name << " "
-         << Twine::utohexstr(C.second.Offset) << "\n";
-    }
-  }
+     << Mispreds << " " << Branches << '\n';
 }
 
 ErrorOr<const BranchInfo &> FuncBranchData::getBranch(uint64_t From,
@@ -472,42 +381,6 @@ ErrorOr<Location> DataReader::parseLocation(char EndChar,
   return Location(IsSymbol, Name, Offset.get());
 }
 
-ErrorOr<BranchHistory> DataReader::parseBranchHistory() {
-  auto MRes = parseNumberField(FieldSeparator);
-  if (std::error_code EC = MRes.getError())
-    return EC;
-  int64_t NumMispreds = MRes.get();
-
-  auto BRes = parseNumberField(FieldSeparator);
-  if (std::error_code EC = BRes.getError())
-    return EC;
-  int64_t NumBranches = BRes.get();
-
-  auto LRes = parseNumberField('\n');
-  if (std::error_code EC = LRes.getError())
-    return EC;
-  int64_t ContextLength = LRes.get();
-  assert(ContextLength > 0 && "found branch context with length 0");
-
-  BranchContext Context;
-  for (unsigned i = 0; i < ContextLength; ++i) {
-    auto Res = parseLocation(FieldSeparator);
-    if (std::error_code EC = Res.getError())
-      return EC;
-    Location CtxFrom = Res.get();
-
-    Res = parseLocation('\n');
-    if (std::error_code EC = Res.getError())
-      return EC;
-    Location CtxTo = Res.get();
-
-    Context.emplace_back(std::make_pair(std::move(CtxFrom),
-                                        std::move(CtxTo)));
-  }
-
-  return BranchHistory(NumMispreds, NumBranches, std::move(Context));
-}
-
 ErrorOr<BranchInfo> DataReader::parseBranchInfo() {
   auto Res = parseLocation(FieldSeparator);
   if (std::error_code EC = Res.getError())
@@ -529,27 +402,12 @@ ErrorOr<BranchInfo> DataReader::parseBranchInfo() {
     return EC;
   int64_t NumBranches = BRes.get();
 
-  BranchHistories Histories;
-
   if (!checkAndConsumeNewLine()) {
-    auto HRes = parseNumberField('\n');
-    if (std::error_code EC = HRes.getError())
-      return EC;
-    int64_t NumHistories = HRes.get();
-    assert(NumHistories > 0 && "found branch history list with length 0");
-
-    for (unsigned i = 0; i < NumHistories; ++i) {
-      auto Res = parseBranchHistory();
-      if (std::error_code EC = Res.getError())
-        return EC;
-      BranchHistory Hist = Res.get();
-
-      Histories.emplace_back(std::move(Hist));
-    }
+    reportError("expected end of line");
+    return make_error_code(llvm::errc::io_error);
   }
 
-  return BranchInfo(std::move(From), std::move(To), NumMispreds, NumBranches,
-                    std::move(Histories));
+  return BranchInfo(std::move(From), std::move(To), NumMispreds, NumBranches);
 }
 
 ErrorOr<MemInfo> DataReader::parseMemInfo() {
@@ -567,7 +425,10 @@ ErrorOr<MemInfo> DataReader::parseMemInfo() {
   if (std::error_code EC = CountRes.getError())
     return EC;
 
-  checkAndConsumeNewLine();
+  if (!checkAndConsumeNewLine()) {
+    reportError("expected end of line");
+    return make_error_code(llvm::errc::io_error);
+  }
 
   return MemInfo(Offset, Addr, CountRes.get());
 }
@@ -893,25 +754,11 @@ void DataReader::dump() const {
     for (const auto &BI : Func.getValue().Data) {
       Diag << BI.From.Name << " " << BI.From.Offset << " " << BI.To.Name << " "
            << BI.To.Offset << " " << BI.Mispreds << " " << BI.Branches << "\n";
-      for (const auto &HI : BI.Histories) {
-        Diag << "\thistory " << HI.Mispreds << " " << HI.Branches << "\n";
-        for (const auto &CI : HI.Context) {
-          Diag << "\t" <<  CI.first.Name << " " << CI.first.Offset << " "
-                       << CI.second.Name << " " << CI.second.Offset << "\n";
-        }
-      }
     }
     Diag << Func.getKey() << " entry points:\n";
     for (const auto &BI : Func.getValue().EntryData) {
       Diag << BI.From.Name << " " << BI.From.Offset << " " << BI.To.Name << " "
            << BI.To.Offset << " " << BI.Mispreds << " " << BI.Branches << "\n";
-      for (const auto &HI : BI.Histories) {
-        Diag << "\thistory " << HI.Mispreds << " " << HI.Branches << "\n";
-        for (const auto &CI : HI.Context) {
-          Diag << "\t" <<  CI.first.Name << " " << CI.first.Offset << " "
-                       << CI.second.Name << " " << CI.second.Offset << "\n";
-        }
-      }
     }
   }
 

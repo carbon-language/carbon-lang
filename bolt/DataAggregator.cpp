@@ -97,14 +97,16 @@ bool DataAggregator::launchPerfBranchEventsNoWait() {
   if (auto Errc = sys::fs::createTemporaryFile("perf.script", "out",
                                                PerfBranchEventsOutputPath)) {
     outs() << "PERF2BOLT: Failed to create temporary file "
-           << PerfBranchEventsOutputPath << " with error " << Errc.message() << "\n";
+           << PerfBranchEventsOutputPath << " with error " << Errc.message()
+           << "\n";
     exit(1);
   }
 
   if (auto Errc = sys::fs::createTemporaryFile("perf.script", "err",
                                                PerfBranchEventsErrPath)) {
     outs() << "PERF2BOLT: Failed to create temporary file "
-           << PerfBranchEventsErrPath << " with error " << Errc.message() << "\n";
+           << PerfBranchEventsErrPath << " with error " << Errc.message()
+           << "\n";
     exit(1);
   }
   Optional<StringRef> Redirects[] = {
