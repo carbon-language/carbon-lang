@@ -6,7 +6,7 @@
 namespace Fortran::semantics {
 
 std::ostream &operator<<(std::ostream &os, const Symbol &sym) {
-  os << sym.name();
+  os << sym.name_.ToString();
   if (!sym.attrs().empty()) {
     os << ", " << sym.attrs();
   }
@@ -21,11 +21,11 @@ std::ostream &operator<<(std::ostream &os, const Symbol &sym) {
             int n = 0;
             for (const auto &dummy : x.dummyNames()) {
               if (n++ > 0) os << ", ";
-              os << dummy;
+              os << dummy.ToString();
             }
             os << ')';
             if (x.resultName()) {
-              os << " result(" << *x.resultName() << ')';
+              os << " result(" << x.resultName()->ToString() << ')';
             }
           },
           [&](const EntityDetails &x) {

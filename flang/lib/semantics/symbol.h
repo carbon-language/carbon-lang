@@ -7,6 +7,10 @@
 
 namespace Fortran::semantics {
 
+/// A SourceName is a name in the cooked character stream,
+/// i.e. a range of characters with provenance.
+using SourceName = parser::CharBlock;
+
 /// A Symbol consists of common information (name, owner, and attributes)
 /// and details information specific to the kind of symbol, represented by the
 /// *Details classes.
@@ -25,20 +29,19 @@ private:
 
 class SubprogramDetails {
 public:
-  SubprogramDetails(const std::list<Name> &dummyNames)
-    : isFunction_{false}, dummyNames_{dummyNames} {}
-  SubprogramDetails(
-      const std::list<Name> &dummyNames, const std::optional<Name> &resultName)
-    : isFunction_{true}, dummyNames_{dummyNames}, resultName_{resultName} {}
+  // Subroutine:
+  SubprogramDetails() {}
+  // Function:
+  SubprogramDetails(const SourceName &resultName) : resultName_{resultName} {}
 
-  bool isFunction() const { return isFunction_; }
-  const std::list<Name> &dummyNames() const { return dummyNames_; }
-  const std::optional<Name> &resultName() const { return resultName_; }
+  bool isFunction() const { return resultName_.has_value(); }
+  const std::list<SourceName> &dummyNames() const { return dummyNames_; }
+  const std::optional<SourceName> &resultName() const { return resultName_; }
+  void AddDummyName(const SourceName &name) { dummyNames_.push_back(name); }
 
 private:
-  bool isFunction_;
-  std::list<Name> dummyNames_;
-  std::optional<Name> resultName_;
+  std::list<SourceName> dummyNames_;
+  std::optional<SourceName> resultName_;
   friend std::ostream &operator<<(std::ostream &, const SubprogramDetails &);
 };
 
@@ -63,11 +66,12 @@ public:
   using Details = std::variant<UnknownDetails, MainProgramDetails,
       ModuleDetails, SubprogramDetails, EntityDetails>;
 
-  Symbol(const Scope &owner, const Name &name, const Attrs &attrs,
+  Symbol(const Scope &owner, const SourceName &name, const Attrs &attrs,
       Details &&details)
-    : owner_{owner}, name_{name}, attrs_{attrs}, details_{std::move(details)} {}
+    : owner_{owner}, name_{name}, attrs_{attrs},
+      details_{std::move(details)} {}
   const Scope &owner() const { return owner_; }
-  const Name &name() const { return name_; }
+  const SourceName &name() { return name_; }
   Attrs &attrs() { return attrs_; }
   const Attrs &attrs() const { return attrs_; }
 
@@ -78,6 +82,9 @@ public:
 
   // Return a non-owning pointer to details if it is type D, else nullptr.
   template<typename D> D *detailsIf() { return std::get_if<D>(&details_); }
+  template<typename D> const D *detailsIf() const {
+    return std::get_if<D>(&details_);
+  }
 
   // Return a reference to the details which must be of type D.
   template<typename D> D &details() {
@@ -100,7 +107,7 @@ public:
 
 private:
   const Scope &owner_;
-  const Name name_;
+  const SourceName name_;
   Attrs attrs_;
   Details details_;
   friend std::ostream &operator<<(std::ostream &, const Symbol &);
