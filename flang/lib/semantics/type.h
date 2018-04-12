@@ -351,7 +351,7 @@ public:
   const DeclTypeSpec &type() const { return type_; }
   const Name &name() const { return name_; }
   const Attrs &attrs() const { return attrs_; }
-  const ComponentArraySpec &shape() const { return arraySpec_; }
+  const ArraySpec &shape() const { return arraySpec_; }
 
 private:
   const DeclTypeSpec type_;
