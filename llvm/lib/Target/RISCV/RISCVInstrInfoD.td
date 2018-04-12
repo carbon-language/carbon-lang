@@ -191,6 +191,9 @@ def : InstAlias<"fneg.d $rd, $rs", (FSGNJN_D FPR64:$rd, FPR64:$rs, FPR64:$rs)>;
 // Pseudo-instructions and codegen patterns
 //===----------------------------------------------------------------------===//
 
+class PatFpr64Fpr64<SDPatternOperator OpNode, RVInstR Inst>
+    : Pat<(OpNode FPR64:$rs1, FPR64:$rs2), (Inst $rs1, $rs2)>;
+
 class PatFpr64Fpr64DynFrm<SDPatternOperator OpNode, RVInstRFrm Inst>
     : Pat<(OpNode FPR64:$rs1, FPR64:$rs2), (Inst $rs1, $rs2, 0b111)>;
 
@@ -199,6 +202,32 @@ let Predicates = [HasStdExtD] in {
 /// Float arithmetic operations
 
 def : PatFpr64Fpr64DynFrm<fadd, FADD_D>;
+def : PatFpr64Fpr64DynFrm<fsub, FSUB_D>;
+def : PatFpr64Fpr64DynFrm<fmul, FMUL_D>;
+def : PatFpr64Fpr64DynFrm<fdiv, FDIV_D>;
+
+def : Pat<(fsqrt FPR64:$rs1), (FSQRT_D FPR64:$rs1, 0b111)>;
+
+def : Pat<(fneg FPR64:$rs1), (FSGNJN_D $rs1, $rs1)>;
+def : Pat<(fabs FPR64:$rs1), (FSGNJX_D $rs1, $rs1)>;
+
+def : PatFpr64Fpr64<fcopysign, FSGNJ_D>;
+def : Pat<(fcopysign FPR64:$rs1, (fneg FPR64:$rs2)), (FSGNJN_D $rs1, $rs2)>;
+
+// The RISC-V 2.2 user-level ISA spec defines fmin and fmax as returning the
+// canonical NaN when giving a signaling NaN. This doesn't match the LLVM
+// behaviour (see https://bugs.llvm.org/show_bug.cgi?id=27363). However, the
+// draft 2.3 ISA spec changes the definition of fmin and fmax in a way that
+// matches LLVM's fminnum and fmaxnum
+// <https://github.com/riscv/riscv-isa-manual/commit/cd20cee7efd9bac7c5aa127ec3b451749d2b3cce>.
+def : PatFpr64Fpr64<fminnum, FMIN_D>;
+def : PatFpr64Fpr64<fmaxnum, FMAX_D>;
+
+/// Setcc
+
+def : PatFpr64Fpr64<setoeq, FEQ_D>;
+def : PatFpr64Fpr64<setolt, FLT_D>;
+def : PatFpr64Fpr64<setole, FLE_D>;
 
 /// Loads
 
