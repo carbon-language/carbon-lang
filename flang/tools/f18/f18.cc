@@ -7,6 +7,8 @@
 #include "../../lib/parser/parsing.h"
 #include "../../lib/parser/provenance.h"
 #include "../../lib/parser/unparse.h"
+#include "../../lib/semantics/ParseTreeDump.h"
+#include "../../lib/semantics/resolve-names.h"
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
@@ -68,6 +70,8 @@ struct DriverOptions {
   bool dumpProvenance{false};
   bool dumpCookedChars{false};
   bool dumpUnparse{false};
+  bool dumpParseTree{false};
+  bool debugResolveNames{false};
   bool measureTree{false};
   std::vector<std::string> pgf90Args;
   const char *prefix{nullptr};
@@ -171,6 +175,13 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
   }
   if (driver.measureTree) {
     MeasureParseTree(*parsing.parseTree());
+  }
+  if (driver.debugResolveNames) {
+    Fortran::semantics::ResolveNames(
+        *parsing.parseTree(), parsing.messages().cooked());
+  }
+  if (driver.dumpParseTree) {
+    Fortran::parser::DumpTree(*parsing.parseTree());
   }
   if (driver.dumpUnparse) {
     Unparse(std::cout, *parsing.parseTree(), driver.encoding,
@@ -306,6 +317,10 @@ int main(int argc, char *const argv[]) {
       driver.dumpCookedChars = true;
     } else if (arg == "-fdebug-dump-provenance") {
       driver.dumpProvenance = true;
+    } else if (arg == "-fdebug-dump-parse-tree") {
+      driver.dumpParseTree = true;
+    } else if (arg == "-fdebug-resolve-names") {
+      driver.debugResolveNames = true;
     } else if (arg == "-fdebug-measure-parse-tree") {
       driver.measureTree = true;
     } else if (arg == "-funparse") {
@@ -341,6 +356,8 @@ int main(int argc, char *const argv[]) {
         << "  -funparse            parse & reformat only, no code generation\n"
         << "  -fdebug-measure-parse-tree\n"
         << "  -fdebug-dump-provenance\n"
+        << "  -fdebug-dump-parse-tree\n"
+        << "  -fdebug-resolve-names\n"
         << "  -v -c -o -I -D -U    have their usual meanings\n"
         << "  -help                print this again\n"
         << "Other options are passed through to the compiler.\n";

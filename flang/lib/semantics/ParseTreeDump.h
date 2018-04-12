@@ -111,6 +111,8 @@ public:
     }
   }
 
+  bool Pre(const parser::Name &x) { return Pre(x.ToString()); }
+
   bool Pre(const std::string &x) { 
     if (emptyline ) {
       out_indent();

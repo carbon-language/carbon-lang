@@ -1,3 +1,4 @@
+#include "resolve-names.h"
 #include "attr.h"
 #include "scope.h"
 #include "symbol.h"
