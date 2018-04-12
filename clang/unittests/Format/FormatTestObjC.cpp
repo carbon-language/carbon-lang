@@ -334,6 +334,9 @@ TEST_F(FormatTestObjC, FormatObjCInterface) {
                "    ccccccccccccc, ccccccccccccc,\n"
                "    ccccccccccccc, ccccccccccccc> {\n"
                "}");
+  verifyFormat("@interface ccccccccccccc (ccccccccccc) <\n"
+               "    ccccccccccccc> {\n"
+               "}");
   Style.ObjCBinPackProtocolList = FormatStyle::BPS_Never;
   verifyFormat("@interface ddddddddddddd () <\n"
                "    ddddddddddddd,\n"

@@ -2272,6 +2272,13 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   if (Left.is(tok::colon) && Left.is(TT_ObjCMethodExpr))
     return Line.MightBeFunctionDecl ? 50 : 500;
 
+  // In Objective-C type declarations, avoid breaking after the category's
+  // open paren (we'll prefer breaking after the protocol list's opening
+  // angle bracket, if present).
+  if (Line.Type == LT_ObjCDecl && Left.is(tok::l_paren) && Left.Previous &&
+      Left.Previous->isOneOf(tok::identifier, tok::greater))
+    return 500;
+
   if (Left.is(tok::l_paren) && InFunctionDecl &&
       Style.AlignAfterOpenBracket != FormatStyle::BAS_DontAlign)
     return 100;
