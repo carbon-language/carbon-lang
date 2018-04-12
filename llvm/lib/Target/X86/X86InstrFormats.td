@@ -432,14 +432,12 @@ class Ii32PCRel<bits<8> o, Format f, dag outs, dag ins, string asm,
 
 // FPStack Instruction Templates:
 // FPI - Floating Point Instruction template.
-class FPI<bits<8> o, Format F, dag outs, dag ins, string asm,
-          InstrItinClass itin = NoItinerary>
-  : I<o, F, outs, ins, asm, [], itin> {}
+class FPI<bits<8> o, Format F, dag outs, dag ins, string asm>
+  : I<o, F, outs, ins, asm, []> {}
 
 // FpI_ - Floating Point Pseudo Instruction template. Not Predicated.
-class FpI_<dag outs, dag ins, FPFormat fp, list<dag> pattern,
-           InstrItinClass itin = NoItinerary>
-  : PseudoI<outs, ins, pattern, itin> {
+class FpI_<dag outs, dag ins, FPFormat fp, list<dag> pattern>
+  : PseudoI<outs, ins, pattern> {
   let FPForm = fp;
 }
 
