@@ -7678,16 +7678,18 @@ TEST_F(FormatTest, FormatForObjectiveCMethodDecls) {
 
   // When the function name has to be wrapped.
   FormatStyle Style = getLLVMStyle();
+  // ObjC ignores IndentWrappedFunctionNames when wrapping methods
+  // and always indents instead.
   Style.IndentWrappedFunctionNames = false;
   verifyFormat("- (SomeLooooooooooooooooooooongType *)\n"
-               "veryLooooooooooongName:(NSString)aaaaaaaaaaaaaa\n"
-               "           anotherName:(NSString)bbbbbbbbbbbbbb {\n"
+               "    veryLooooooooooongName:(NSString)aaaaaaaaaaaaaa\n"
+               "               anotherName:(NSString)bbbbbbbbbbbbbb {\n"
                "}",
                Style);
   Style.IndentWrappedFunctionNames = true;
   verifyFormat("- (SomeLooooooooooooooooooooongType *)\n"
-               "    veryLooooooooooongName:(NSString)aaaaaaaaaaaaaa\n"
-               "               anotherName:(NSString)bbbbbbbbbbbbbb {\n"
+               "    veryLooooooooooongName:(NSString)cccccccccccccc\n"
+               "               anotherName:(NSString)dddddddddddddd {\n"
                "}",
                Style);
 
