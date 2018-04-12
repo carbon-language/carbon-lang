@@ -170,3 +170,20 @@ define void @fsd_stack(double %a, double %b) nounwind {
   call void @notdead(i8* %3)
   ret void
 }
+
+; Test selection of store<ST4[%a], trunc to f32>, ..
+define void @fsd_trunc(float* %a, double %b) nounwind noinline optnone {
+; RV32IFD-LABEL: fsd_trunc:
+; RV32IFD:       # %bb.0:
+; RV32IFD-NEXT:    addi sp, sp, -16
+; RV32IFD-NEXT:    sw a1, 8(sp)
+; RV32IFD-NEXT:    sw a2, 12(sp)
+; RV32IFD-NEXT:    fld ft0, 8(sp)
+; RV32IFD-NEXT:    fcvt.s.d ft0, ft0
+; RV32IFD-NEXT:    fsw ft0, 0(a0)
+; RV32IFD-NEXT:    addi sp, sp, 16
+; RV32IFD-NEXT:    ret
+  %1 = fptrunc double %b to float
+  store float %1, float* %a, align 4
+  ret void
+}

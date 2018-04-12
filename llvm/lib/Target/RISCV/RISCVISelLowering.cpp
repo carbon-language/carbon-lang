@@ -125,6 +125,7 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FMINNUM, MVT::f64, Legal);
     setOperationAction(ISD::FMAXNUM, MVT::f64, Legal);
     setLoadExtAction(ISD::EXTLOAD, MVT::f64, MVT::f32, Expand);
+    setTruncStoreAction(MVT::f64, MVT::f32, Expand);
   }
 
   setOperationAction(ISD::GlobalAddress, XLenVT, Custom);

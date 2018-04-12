@@ -199,6 +199,20 @@ class PatFpr64Fpr64DynFrm<SDPatternOperator OpNode, RVInstRFrm Inst>
 
 let Predicates = [HasStdExtD] in {
 
+/// Float conversion operations
+
+// f64 -> f32, f32 -> f64
+def : Pat<(fpround FPR64:$rs1), (FCVT_S_D FPR64:$rs1, 0b111)>;
+def : Pat<(fpextend FPR32:$rs1), (FCVT_D_S FPR32:$rs1)>;
+
+// FP->[u]int. Round-to-zero must be used
+def : Pat<(fp_to_sint FPR64:$rs1), (FCVT_W_D FPR64:$rs1, 0b001)>;
+def : Pat<(fp_to_uint FPR64:$rs1), (FCVT_WU_D FPR64:$rs1, 0b001)>;
+
+// [u]int->fp
+def : Pat<(sint_to_fp GPR:$rs1), (FCVT_D_W GPR:$rs1)>;
+def : Pat<(uint_to_fp GPR:$rs1), (FCVT_D_WU GPR:$rs1)>;
+
 /// Float arithmetic operations
 
 def : PatFpr64Fpr64DynFrm<fadd, FADD_D>;
