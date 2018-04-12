@@ -585,11 +585,11 @@ multiclass vinsert_for_type<ValueType EltVT32, int Opcode128,
 // FIXME: Is there a better scheduler itinerary for VINSERTF/VINSERTI?
 let Sched = WriteFShuffle256 in
 def AVX512_VINSERTF : OpndItins<
-  IIC_SSE_SHUFP, IIC_SSE_SHUFP
+  NoItinerary, NoItinerary
 >;
 let Sched = WriteShuffle256 in
 def AVX512_VINSERTI : OpndItins<
-  IIC_SSE_PSHUF_RI, IIC_SSE_PSHUF_MI
+  NoItinerary, NoItinerary
 >;
 
 defm VINSERTF : vinsert_for_type<f32, 0x18, f64, 0x1a, AVX512_VINSERTF>;
@@ -1712,12 +1712,12 @@ defm VPBROADCASTMB2Q : avx512_mask_broadcast<0x2A, "vpbroadcastmb2q",
 
 let Sched = WriteFVarShuffle256 in
 def AVX512_PERM2_F : OpndItins<
-  IIC_SSE_SHUFP, IIC_SSE_SHUFP
+  NoItinerary, NoItinerary
 >;
 
 let Sched = WriteVarShuffle256 in
 def AVX512_PERM2_I : OpndItins<
-  IIC_SSE_PSHUF_RI, IIC_SSE_PSHUF_MI
+  NoItinerary, NoItinerary
 >;
 
 multiclass avx512_perm_i<bits<8> opc, string OpcodeStr, OpndItins itins,
@@ -1881,12 +1881,12 @@ defm VPERMT2PD : avx512_perm_t_sizes<0x7F, "vpermt2pd", AVX512_PERM2_F,
 
 let Sched = WriteFVarBlend in
 def AVX512_BLENDM : OpndItins<
-  IIC_SSE_ALU_F32P_RR, IIC_SSE_ALU_F32P_RM
+  NoItinerary, NoItinerary
 >;
 
 let Sched = WriteVarBlend in
 def AVX512_PBLENDM : OpndItins<
-  IIC_SSE_INTALU_P_RR, IIC_SSE_INTALU_P_RM
+  NoItinerary, NoItinerary
 >;
 
 multiclass avx512_blendmask<bits<8> opc, string OpcodeStr, OpndItins itins,
@@ -5689,7 +5689,7 @@ multiclass avx512_var_shift_w<bits<8> opc, string OpcodeStr,
 
 let Sched = WriteVarVecShift in
 def AVX512_VARSHIFT_P : OpndItins<
-  IIC_SSE_INTSH_P_RR, IIC_SSE_INTSH_P_RM
+  NoItinerary, NoItinerary
 >;
 
 defm VPSLLV : avx512_var_shift_types<0x47, "vpsllv", shl, AVX512_VARSHIFT_P>,
@@ -8199,12 +8199,12 @@ defm VRNDSCALESD : avx512_rndscale_scalar<0x0B, "vrndscalesd", SSE_ALU_F64S,
 
 let Sched = WriteShuffle256 in
 def AVX512_EXTEND : OpndItins<
-  IIC_SSE_PSHUF_RI, IIC_SSE_PSHUF_MI
+  NoItinerary, NoItinerary
 >;
 
 let Sched = WriteShuffle256 in
 def AVX512_TRUNCATE : OpndItins<
-  IIC_SSE_PSHUF_RI, IIC_SSE_PSHUF_MI
+  NoItinerary, NoItinerary
 >;
 
 multiclass avx512_trunc_common<bits<8> opc, string OpcodeStr, SDNode OpNode,
@@ -8939,10 +8939,10 @@ let Predicates = [HasDQI, NoBWI] in {
 // FIXME: Is there a better scheduler itinerary for VPCOMPRESS/VPEXPAND?
 let Sched = WriteVarShuffle256 in {
 def AVX512_COMPRESS : OpndItins<
-  IIC_SSE_INTALU_P_RR, IIC_SSE_INTALU_P_RM
+  NoItinerary, NoItinerary
 >;
 def AVX512_EXPAND : OpndItins<
-  IIC_SSE_INTALU_P_RR, IIC_SSE_INTALU_P_RM
+  NoItinerary, NoItinerary
 >;
 }
 
@@ -10035,7 +10035,7 @@ defm VSHUFPD: avx512_shufp<"vshufpd", avx512vl_i64_info, avx512vl_f64_info>, PD,
 
 let Sched = WriteVecShift in
 def AVX512_BYTESHIFT : OpndItins<
-  IIC_SSE_INTSHDQ_P_RI, IIC_SSE_INTSHDQ_P_RI
+  NoItinerary, NoItinerary
 >;
 
 multiclass avx512_shift_packed<bits<8> opc, SDNode OpNode, Format MRMr,
