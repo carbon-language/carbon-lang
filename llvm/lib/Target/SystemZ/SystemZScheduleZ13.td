@@ -78,17 +78,8 @@ def : WriteRes<VecDF,   [Z13_VecUnit]> { let Latency = 8; }
 def : WriteRes<VecDF2,  [Z13_VecUnit, Z13_VecUnit]> { let Latency = 9; }
 def : WriteRes<VecDFX,  [Z13_VecUnit]> { let Latency = 1; }
 def : WriteRes<VecDFX2, [Z13_VecUnit, Z13_VecUnit]> { let Latency = 2; }
-def : WriteRes<VecFPd,  [Z13_VecFPdUnit, Z13_VecFPdUnit, Z13_VecFPdUnit,
-                         Z13_VecFPdUnit, Z13_VecFPdUnit, Z13_VecFPdUnit,
-                         Z13_VecFPdUnit, Z13_VecFPdUnit, Z13_VecFPdUnit,
-                         Z13_VecFPdUnit, Z13_VecFPdUnit, Z13_VecFPdUnit,
-                         Z13_VecFPdUnit, Z13_VecFPdUnit, Z13_VecFPdUnit,
-                         Z13_VecFPdUnit, Z13_VecFPdUnit, Z13_VecFPdUnit,
-                         Z13_VecFPdUnit, Z13_VecFPdUnit, Z13_VecFPdUnit,
-                         Z13_VecFPdUnit, Z13_VecFPdUnit, Z13_VecFPdUnit,
-                         Z13_VecFPdUnit, Z13_VecFPdUnit, Z13_VecFPdUnit,
-                         Z13_VecFPdUnit, Z13_VecFPdUnit, Z13_VecFPdUnit]>
-                         { let Latency = 30; }
+def : WriteRes<VecFPd,  [Z13_VecFPdUnit]> { let Latency = 30;
+                                            let ResourceCycles = [30]; }
 def : WriteRes<VecMul,  [Z13_VecUnit]> { let Latency = 5; }
 def : WriteRes<VecStr,  [Z13_VecUnit]> { let Latency = 4; }
 def : WriteRes<VecXsPm, [Z13_VecUnit]> { let Latency = 3; }
