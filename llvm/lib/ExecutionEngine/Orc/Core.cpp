@@ -178,24 +178,24 @@ VSO::SymbolTableEntry::SymbolTableEntry(JITEvaluatedSymbol Sym)
          "This constructor is for final symbols only");
 }
 
-// VSO::SymbolTableEntry::SymbolTableEntry(SymbolTableEntry &&Other)
-//     : Flags(Other.Flags), Address(0) {
-//   if (this->Flags.isLazy())
-//     UMII = std::move(Other.UMII);
-//   else
-//     Address = Other.Address;
-// }
+VSO::SymbolTableEntry::SymbolTableEntry(SymbolTableEntry &&Other)
+    : Flags(Other.Flags), Address(0) {
+  if (this->Flags.isLazy())
+    UMII = std::move(Other.UMII);
+  else
+    Address = Other.Address;
+}
 
-// VSO::SymbolTableEntry &VSO::SymbolTableEntry::
-// operator=(SymbolTableEntry &&Other) {
-//   destroy();
-//   Flags = std::move(Other.Flags);
-//   if (Other.Flags.isLazy()) {
-//     UMII = std::move(Other.UMII);
-//   } else
-//     Address = Other.Address;
-//   return *this;
-// }
+VSO::SymbolTableEntry &VSO::SymbolTableEntry::
+operator=(SymbolTableEntry &&Other) {
+  destroy();
+  Flags = std::move(Other.Flags);
+  if (Other.Flags.isLazy()) {
+    UMII = std::move(Other.UMII);
+  } else
+    Address = Other.Address;
+  return *this;
+}
 
 VSO::SymbolTableEntry::~SymbolTableEntry() { destroy(); }
 
@@ -364,7 +364,7 @@ Error VSO::defineLazy(std::unique_ptr<MaterializationUnit> MU) {
     if (I != Symbols.end())
       I->second.replaceWith(*this, KV.first, KV.second, UMII);
     else
-      Symbols.emplace(
+      Symbols.insert(
           std::make_pair(KV.first, SymbolTableEntry(KV.second, UMII)));
   }
 

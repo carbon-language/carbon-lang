@@ -352,8 +352,8 @@ private:
     SymbolTableEntry(JITSymbolFlags SymbolFlags,
                      UnmaterializedInfoIterator UnmaterializedInfoItr);
     SymbolTableEntry(JITEvaluatedSymbol Sym);
-    //     SymbolTableEntry(SymbolTableEntry &&Other);
-    //     SymbolTableEntry &operator=(SymbolTableEntry &&Other);
+    SymbolTableEntry(SymbolTableEntry &&Other);
+    SymbolTableEntry &operator=(SymbolTableEntry &&Other);
     ~SymbolTableEntry();
 
     // Change definition due to override. Only usable prior to materialization.
