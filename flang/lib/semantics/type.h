@@ -44,13 +44,12 @@ using Name = std::string;
 class IntExpr {
 public:
   static IntExpr MakeConst(std::uint64_t value) {
-    return IntExpr(); // TODO
+    return IntExpr();  // TODO
   }
   IntExpr() {}
-  IntExpr(const parser::ScalarIntExpr &) { /*TODO*/ }
-  virtual std::ostream &Output(std::ostream & o) const {
-    return o << "IntExpr";
+  IntExpr(const parser::ScalarIntExpr &) { /*TODO*/
   }
+  virtual std::ostream &Output(std::ostream &o) const { return o << "IntExpr"; }
 };
 
 // TODO
@@ -61,9 +60,7 @@ public:
   bool operator!=(const IntConst &x) const { return !operator==(x); }
   bool operator<(const IntConst &x) const { return value_ < x.value_; }
   std::uint64_t value() const { return value_; }
-  std::ostream &Output(std::ostream &o) const {
-    return o << this->value_;
-  }
+  std::ostream &Output(std::ostream &o) const { return o << this->value_; }
 
 private:
   static std::unordered_map<std::uint64_t, IntConst> cache;
@@ -79,7 +76,7 @@ public:
   bool operator==(const KindParamValue &x) const { return value_ == x.value_; }
   bool operator!=(const KindParamValue &x) const { return !operator==(x); }
   bool operator<(const KindParamValue &x) const { return value_ < x.value_; }
-  const IntConst & value() const { return value_; }
+  const IntConst &value() const { return value_; }
 
 private:
   const IntConst &value_;
@@ -121,12 +118,12 @@ public:
   }
   // TYPE(derived-type-spec)
   static DeclTypeSpec MakeTypeDerivedType(
-      std::unique_ptr<DerivedTypeSpec> && typeSpec) {
+      std::unique_ptr<DerivedTypeSpec> &&typeSpec) {
     return DeclTypeSpec{TypeDerived, std::move(typeSpec)};
   }
   // CLASS(derived-type-spec)
   static DeclTypeSpec MakeClassDerivedType(
-      std::unique_ptr<DerivedTypeSpec> && typeSpec) {
+      std::unique_ptr<DerivedTypeSpec> &&typeSpec) {
     return DeclTypeSpec{ClassDerived, std::move(typeSpec)};
   }
   // TYPE(*)
@@ -160,7 +157,6 @@ private:
   std::unique_ptr<DerivedTypeSpec> derivedTypeSpec_;
   friend std::ostream &operator<<(std::ostream &, const DeclTypeSpec &);
 };
-
 
 // Root of the *TypeSpec hierarchy
 class TypeSpec {
@@ -272,7 +268,7 @@ public:
   static const int DefaultKind = 0;
   CharacterTypeSpec(LenParamValue len, KindParamValue kind = DefaultKind)
     : IntrinsicTypeSpec{kind}, len_{len} {}
-  const LenParamValue & len() const { return len_ ; } 
+  const LenParamValue &len() const { return len_; }
   std::ostream &Output(std::ostream &o) const override { return o << *this; }
 
 private:
@@ -327,10 +323,10 @@ public:
 
   bool isExplicit() const { return ub_.isExplicit(); }
   bool isDeferred() const { return lb_.isDeferred(); }
-  
-  const Bound & lbound() const { return lb_; }
-  const Bound & ubound() const { return ub_; }
-  
+
+  const Bound &lbound() const { return lb_; }
+  const Bound &ubound() const { return ub_; }
+
 private:
   ShapeSpec(const Bound &lb, const Bound &ub) : lb_{lb}, ub_{ub} {}
   const Bound lb_;
@@ -352,10 +348,10 @@ public:
   DataComponentDef(const DeclTypeSpec &type, const Name &name,
       const Attrs &attrs, const ComponentArraySpec &arraySpec);
 
-  const DeclTypeSpec & type() const { return type_; }
-  const Name & name() const { return name_; }
-  const Attrs & attrs() const { return attrs_; }
-  const ComponentArraySpec & shape() const { return arraySpec_; }
+  const DeclTypeSpec &type() const { return type_; }
+  const Name &name() const { return name_; }
+  const Attrs &attrs() const { return attrs_; }
+  const ComponentArraySpec &shape() const { return arraySpec_; }
 
 private:
   const DeclTypeSpec type_;
@@ -369,7 +365,8 @@ class ProcDecl {
 public:
   ProcDecl(const Name &name) : name_{name} {}
   // TODO: proc-pointer-init
-  const Name & name() const { return name_; }
+  const Name &name() const { return name_; }
+
 private:
   const Name name_;
   friend std::ostream &operator<<(std::ostream &, const ProcDecl &);
@@ -383,11 +380,11 @@ public:
     : ProcComponentDef(decl, attrs, interfaceName, std::nullopt) {}
   ProcComponentDef(ProcDecl decl, Attrs attrs, const DeclTypeSpec &typeSpec)
     : ProcComponentDef(decl, attrs, std::nullopt, typeSpec) {}
-  
-  const ProcDecl & decl() const { return decl_ ;}
-  const Attrs & attrs() const { return attrs_; }
-  const std::optional<Name> & interfaceName() const { return interfaceName_; }
-  const std::optional<DeclTypeSpec> & typeSpec() const { return typeSpec_; }
+
+  const ProcDecl &decl() const { return decl_; }
+  const Attrs &attrs() const { return attrs_; }
+  const std::optional<Name> &interfaceName() const { return interfaceName_; }
+  const std::optional<DeclTypeSpec> &typeSpec() const { return typeSpec_; }
 
 private:
   ProcComponentDef(ProcDecl decl, Attrs attrs,
@@ -407,7 +404,7 @@ class DerivedTypeDef {
 public:
   const Name &name() const { return data_.name; }
   const std::optional<Name> &extends() const { return data_.extends; }
-  const Attrs & attrs() const { return data_.attrs; }
+  const Attrs &attrs() const { return data_.attrs; }
   const TypeParamDefs &lenParams() const { return data_.lenParams; }
   const TypeParamDefs &kindParams() const { return data_.kindParams; }
   const std::list<DataComponentDef> &dataComponents() const {
@@ -463,7 +460,7 @@ using ParamValue = LenParamValue;
 class DerivedTypeSpec : public TypeSpec {
 public:
   std::ostream &Output(std::ostream &o) const override { return o << *this; }
-  DerivedTypeSpec(const Name &name) : name_{name}  {}
+  DerivedTypeSpec(const Name &name) : name_{name} {}
   virtual ~DerivedTypeSpec() = default;
   DerivedTypeSpec &AddParamValue(const ParamValue &value) {
     paramValues_.push_back(std::make_pair(std::nullopt, value));
@@ -473,15 +470,15 @@ public:
     paramValues_.push_back(std::make_pair(name, value));
     return *this;
   }
-   
-  const std::list<std::pair<std::optional<Name>, ParamValue>> & paramValues() {
+
+  const std::list<std::pair<std::optional<Name>, ParamValue>> &paramValues() {
     return paramValues_;
-  } 
-  
-  // Provide access to the derived-type definition if is known   
-  const DerivedTypeDef * definition() { 
+  }
+
+  // Provide access to the derived-type definition if is known
+  const DerivedTypeDef *definition() {
     // TODO
-    return 0; 
+    return 0;
   }
 
 private:
