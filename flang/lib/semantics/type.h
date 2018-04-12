@@ -353,6 +353,11 @@ public:
   const Attrs &attrs() const { return attrs_; }
   const ArraySpec &shape() const { return arraySpec_; }
 
+  const DeclTypeSpec & type() const { return type_; }
+  const Name & name() const { return name_; }
+  const Attrs & attrs() const { return attrs_; }
+  const ComponentArraySpec & shape() const { return arraySpec_; }
+
 private:
   const DeclTypeSpec type_;
   const Name name_;
@@ -366,7 +371,6 @@ public:
   ProcDecl(const Name &name) : name_{name} {}
   // TODO: proc-pointer-init
   const Name &name() const { return name_; }
-
 private:
   const Name name_;
   friend std::ostream &operator<<(std::ostream &, const ProcDecl &);
@@ -380,6 +384,11 @@ public:
     : ProcComponentDef(decl, attrs, interfaceName, std::nullopt) {}
   ProcComponentDef(ProcDecl decl, Attrs attrs, const DeclTypeSpec &typeSpec)
     : ProcComponentDef(decl, attrs, std::nullopt, typeSpec) {}
+  
+  const ProcDecl & decl() const { return decl_ ;}
+  const Attrs & attrs() const { return attrs_; }
+  const std::optional<Name> & interfaceName() const { return interfaceName_; }
+  const std::optional<DeclTypeSpec> & typeSpec() const { return typeSpec_; }
 
   const ProcDecl &decl() const { return decl_; }
   const Attrs &attrs() const { return attrs_; }
@@ -470,6 +479,10 @@ public:
     paramValues_.push_back(std::make_pair(name, value));
     return *this;
   }
+   
+  const std::list<std::pair<std::optional<Name>, ParamValue>> & paramValues() {
+    return paramValues_;
+  } 
 
   const std::list<std::pair<std::optional<Name>, ParamValue>> &paramValues() {
     return paramValues_;
