@@ -257,14 +257,14 @@ multiclass sse12_fp_scalar<bits<8> opc, string OpcodeStr, SDNode OpNode,
        !if(Is2Addr,
            !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (OpNode RC:$src1, RC:$src2))], itins.rr, d>,
+       [(set RC:$dst, (OpNode RC:$src1, RC:$src2))], NoItinerary, d>,
        Sched<[itins.Sched]>;
   }
   def rm : SI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
        !if(Is2Addr,
            !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (OpNode RC:$src1, (load addr:$src2)))], itins.rm, d>,
+       [(set RC:$dst, (OpNode RC:$src1, (load addr:$src2)))], NoItinerary, d>,
        Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
@@ -279,14 +279,14 @@ let isCodeGenOnly = 1, hasSideEffects = 0 in {
        !if(Is2Addr,
            !strconcat(asm, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (VT (OpNode RC:$src1, RC:$src2)))], itins.rr, d>,
+       [(set RC:$dst, (VT (OpNode RC:$src1, RC:$src2)))], NoItinerary, d>,
        Sched<[itins.Sched]>;
   let mayLoad = 1 in
   def rm_Int : SI_Int<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, memopr:$src2),
        !if(Is2Addr,
            !strconcat(asm, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (VT (OpNode RC:$src1, mem_cpat:$src2)))], itins.rm, d>,
+       [(set RC:$dst, (VT (OpNode RC:$src1, mem_cpat:$src2)))], NoItinerary, d>,
        Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 }
@@ -301,7 +301,7 @@ multiclass sse12_fp_packed<bits<8> opc, string OpcodeStr, SDNode OpNode,
        !if(Is2Addr,
            !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (vt (OpNode RC:$src1, RC:$src2)))], itins.rr, d>,
+       [(set RC:$dst, (vt (OpNode RC:$src1, RC:$src2)))], NoItinerary, d>,
        Sched<[itins.Sched]>;
   let mayLoad = 1 in
     def rm : PI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
@@ -309,7 +309,7 @@ multiclass sse12_fp_packed<bits<8> opc, string OpcodeStr, SDNode OpNode,
            !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
        [(set RC:$dst, (OpNode RC:$src1, (mem_frag addr:$src2)))],
-          itins.rm, d>,
+          NoItinerary, d>,
        Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
@@ -638,12 +638,12 @@ multiclass sse12_mov_packed<bits<8> opc, RegisterClass RC,
                             OpndItins itins> {
 let hasSideEffects = 0 in
   def rr : PI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src),
-              !strconcat(asm, "\t{$src, $dst|$dst, $src}"), [], itins.rr, d>,
+              !strconcat(asm, "\t{$src, $dst|$dst, $src}"), [], NoItinerary, d>,
            Sched<[WriteFMove]>;
 let canFoldAsLoad = 1, isReMaterializable = 1 in
   def rm : PI<opc, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
               !strconcat(asm, "\t{$src, $dst|$dst, $src}"),
-                   [(set RC:$dst, (ld_frag addr:$src))], itins.rm, d>,
+                   [(set RC:$dst, (ld_frag addr:$src))], NoItinerary, d>,
            Sched<[WriteFLoad]>;
 }
 
@@ -1190,11 +1190,11 @@ multiclass sse12_cvt_s<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
                      SDNode OpNode, X86MemOperand x86memop, PatFrag ld_frag,
                      string asm, OpndItins itins> {
   def rr : SI<opc, MRMSrcReg, (outs DstRC:$dst), (ins SrcRC:$src), asm,
-                        [(set DstRC:$dst, (OpNode SrcRC:$src))],
-                        itins.rr>, Sched<[itins.Sched]>;
+                        [(set DstRC:$dst, (OpNode SrcRC:$src))]>,
+                        Sched<[itins.Sched]>;
   def rm : SI<opc, MRMSrcMem, (outs DstRC:$dst), (ins x86memop:$src), asm,
-                        [(set DstRC:$dst, (OpNode (ld_frag addr:$src)))],
-                        itins.rm>, Sched<[itins.Sched.Folded]>;
+                        [(set DstRC:$dst, (OpNode (ld_frag addr:$src)))]>,
+                        Sched<[itins.Sched.Folded]>;
 }
 
 multiclass sse12_cvt_p<bits<8> opc, RegisterClass RC, X86MemOperand x86memop,
@@ -1203,12 +1203,12 @@ multiclass sse12_cvt_p<bits<8> opc, RegisterClass RC, X86MemOperand x86memop,
 let hasSideEffects = 0 in {
   def rr : I<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src), asm,
              [(set RC:$dst, (DstTy (sint_to_fp (SrcTy RC:$src))))],
-             itins.rr, d>, Sched<[itins.Sched]>;
+             NoItinerary, d>, Sched<[itins.Sched]>;
   let mayLoad = 1 in
   def rm : I<opc, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src), asm,
              [(set RC:$dst, (DstTy (sint_to_fp
                                     (SrcTy (bitconvert (ld_frag addr:$src))))))],
-             itins.rm, d>, Sched<[itins.Sched.Folded]>;
+             NoItinerary, d>, Sched<[itins.Sched.Folded]>;
 }
 }
 
@@ -1218,8 +1218,8 @@ multiclass sse12_vcvt_avx<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
                           X86MemOperand x86memop, string asm, OpndItins itins> {
 let hasSideEffects = 0, Predicates = [UseAVX] in {
   def rr : SI<opc, MRMSrcReg, (outs DstRC:$dst), (ins DstRC:$src1, SrcRC:$src),
-              !strconcat(asm,"\t{$src, $src1, $dst|$dst, $src1, $src}"), [],
-              itins.rr>, Sched<[itins.Sched]>;
+              !strconcat(asm,"\t{$src, $src1, $dst|$dst, $src1, $src}"), []>,
+              Sched<[itins.Sched]>;
   let mayLoad = 1 in
   def rm : SI<opc, MRMSrcMem, (outs DstRC:$dst),
               (ins DstRC:$src1, x86memop:$src),
@@ -1358,11 +1358,11 @@ multiclass sse12_cvt_sint<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
                          string asm, OpndItins itins> {
   def rr_Int : SI<opc, MRMSrcReg, (outs DstRC:$dst), (ins SrcRC:$src),
                   !strconcat(asm, "\t{$src, $dst|$dst, $src}"),
-                  [(set DstRC:$dst, (Int SrcRC:$src))], itins.rr>,
+                  [(set DstRC:$dst, (Int SrcRC:$src))]>,
                Sched<[itins.Sched]>;
   def rm_Int : SI<opc, MRMSrcMem, (outs DstRC:$dst), (ins memop:$src),
                   !strconcat(asm, "\t{$src, $dst|$dst, $src}"),
-                  [(set DstRC:$dst, (Int mem_cpat:$src))], itins.rm>,
+                  [(set DstRC:$dst, (Int mem_cpat:$src))]>,
                Sched<[itins.Sched.Folded]>;
 }
 
@@ -1374,15 +1374,15 @@ multiclass sse12_cvt_sint_3addr<bits<8> opc, RegisterClass SrcRC,
                   !if(Is2Addr,
                       !strconcat(asm, "\t{$src2, $dst|$dst, $src2}"),
                       !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-                  [(set DstRC:$dst, (Int DstRC:$src1, SrcRC:$src2))],
-                  itins.rr>, Sched<[itins.Sched]>;
+                  [(set DstRC:$dst, (Int DstRC:$src1, SrcRC:$src2))]>,
+                  Sched<[itins.Sched]>;
   def rm_Int : SI<opc, MRMSrcMem, (outs DstRC:$dst),
                   (ins DstRC:$src1, x86memop:$src2),
                   !if(Is2Addr,
                       !strconcat(asm, "\t{$src2, $dst|$dst, $src2}"),
                       !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-                  [(set DstRC:$dst, (Int DstRC:$src1, (ld_frag addr:$src2)))],
-                  itins.rm>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
+                  [(set DstRC:$dst, (Int DstRC:$src1, (ld_frag addr:$src2)))]>,
+                  Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
 let Predicates = [UseAVX] in {
@@ -2131,14 +2131,13 @@ multiclass sse12_cmp_scalar<RegisterClass RC, X86MemOperand x86memop,
   let isCommutable = 1 in
   def rr : SIi8<0xC2, MRMSrcReg,
                 (outs RC:$dst), (ins RC:$src1, RC:$src2, CC:$cc), asm,
-                [(set RC:$dst, (OpNode (VT RC:$src1), RC:$src2, imm:$cc))],
-                itins.rr>, Sched<[itins.Sched]>;
+                [(set RC:$dst, (OpNode (VT RC:$src1), RC:$src2, imm:$cc))]>,
+                Sched<[itins.Sched]>;
   def rm : SIi8<0xC2, MRMSrcMem,
                 (outs RC:$dst), (ins RC:$src1, x86memop:$src2, CC:$cc), asm,
                 [(set RC:$dst, (OpNode (VT RC:$src1),
-                                         (ld_frag addr:$src2), imm:$cc))],
-                                         itins.rm>,
-           Sched<[itins.Sched.Folded, ReadAfterLd]>;
+                                         (ld_frag addr:$src2), imm:$cc))]>,
+                Sched<[itins.Sched.Folded, ReadAfterLd]>;
 
   // Accept explicit immediate argument form instead of comparison code.
   let isAsmParserOnly = 1, hasSideEffects = 0 in {
@@ -2183,15 +2182,13 @@ multiclass sse12_cmp_scalar_int<Operand memop, Operand CC,
   def rr_Int : SIi8<0xC2, MRMSrcReg, (outs VR128:$dst),
                       (ins VR128:$src1, VR128:$src, CC:$cc), asm,
                         [(set VR128:$dst, (Int VR128:$src1,
-                                               VR128:$src, imm:$cc))],
-                                               itins.rr>,
+                                               VR128:$src, imm:$cc))]>,
            Sched<[itins.Sched]>;
 let mayLoad = 1 in
   def rm_Int : SIi8<0xC2, MRMSrcMem, (outs VR128:$dst),
                       (ins VR128:$src1, memop:$src, CC:$cc), asm,
                         [(set VR128:$dst, (Int VR128:$src1,
-                                               mem_cpat:$src, imm:$cc))],
-                                               itins.rm>,
+                                               mem_cpat:$src, imm:$cc))]>,
            Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
@@ -2227,15 +2224,13 @@ multiclass sse12_ord_cmp<bits<8> opc, RegisterClass RC, SDNode OpNode,
 let hasSideEffects = 0 in {
   def rr: SI<opc, MRMSrcReg, (outs), (ins RC:$src1, RC:$src2),
                      !strconcat(OpcodeStr, "\t{$src2, $src1|$src1, $src2}"),
-                     [(set EFLAGS, (OpNode (vt RC:$src1), RC:$src2))],
-                     itins.rr>,
+                     [(set EFLAGS, (OpNode (vt RC:$src1), RC:$src2))]>,
           Sched<[itins.Sched]>;
 let mayLoad = 1 in
   def rm: SI<opc, MRMSrcMem, (outs), (ins RC:$src1, x86memop:$src2),
                      !strconcat(OpcodeStr, "\t{$src2, $src1|$src1, $src2}"),
                      [(set EFLAGS, (OpNode (vt RC:$src1),
-                                           (ld_frag addr:$src2)))],
-                                           itins.rm>,
+                                           (ld_frag addr:$src2)))]>,
           Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 }
@@ -2247,15 +2242,13 @@ multiclass sse12_ord_cmp_int<bits<8> opc, RegisterClass RC, SDNode OpNode,
                             OpndItins itins> {
   def rr_Int: SI<opc, MRMSrcReg, (outs), (ins RC:$src1, RC:$src2),
                      !strconcat(OpcodeStr, "\t{$src2, $src1|$src1, $src2}"),
-                     [(set EFLAGS, (OpNode (vt RC:$src1), RC:$src2))],
-                     itins.rr>,
+                     [(set EFLAGS, (OpNode (vt RC:$src1), RC:$src2))]>,
           Sched<[itins.Sched]>;
 let mayLoad = 1 in
   def rm_Int: SI<opc, MRMSrcMem, (outs), (ins RC:$src1, memop:$src2),
                      !strconcat(OpcodeStr, "\t{$src2, $src1|$src1, $src2}"),
                      [(set EFLAGS, (OpNode (vt RC:$src1),
-                                           mem_cpat:$src2))],
-                                           itins.rm>,
+                                           mem_cpat:$src2))]>,
           Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
@@ -2316,24 +2309,24 @@ multiclass sse12_cmp_packed<RegisterClass RC, X86MemOperand x86memop,
   def rri : PIi8<0xC2, MRMSrcReg,
              (outs RC:$dst), (ins RC:$src1, RC:$src2, CC:$cc), asm,
              [(set RC:$dst, (VT (X86cmpp RC:$src1, RC:$src2, imm:$cc)))],
-             itins.rr, d>,
+             NoItinerary, d>,
             Sched<[WriteFAdd]>;
   def rmi : PIi8<0xC2, MRMSrcMem,
              (outs RC:$dst), (ins RC:$src1, x86memop:$src2, CC:$cc), asm,
              [(set RC:$dst,
                (VT (X86cmpp RC:$src1, (ld_frag addr:$src2), imm:$cc)))],
-             itins.rm, d>,
+             NoItinerary, d>,
             Sched<[WriteFAddLd, ReadAfterLd]>;
 
   // Accept explicit immediate argument form instead of comparison code.
   let isAsmParserOnly = 1, hasSideEffects = 0 in {
     def rri_alt : PIi8<0xC2, MRMSrcReg,
                (outs RC:$dst), (ins RC:$src1, RC:$src2, u8imm:$cc),
-               asm_alt, [], itins.rr, d>, Sched<[WriteFAdd]>;
+               asm_alt, [], NoItinerary, d>, Sched<[WriteFAdd]>;
     let mayLoad = 1 in
     def rmi_alt : PIi8<0xC2, MRMSrcMem,
                (outs RC:$dst), (ins RC:$src1, x86memop:$src2, u8imm:$cc),
-               asm_alt, [], itins.rm, d>,
+               asm_alt, [], NoItinerary, d>,
                Sched<[WriteFAddLd, ReadAfterLd]>;
   }
 }
@@ -2433,12 +2426,12 @@ multiclass sse12_shuffle<RegisterClass RC, X86MemOperand x86memop,
   def rmi : PIi8<0xC6, MRMSrcMem, (outs RC:$dst),
                    (ins RC:$src1, x86memop:$src2, u8imm:$src3), asm,
                    [(set RC:$dst, (vt (X86Shufp RC:$src1, (mem_frag addr:$src2),
-                                       (i8 imm:$src3))))], itins.rm, d>,
+                                       (i8 imm:$src3))))], NoItinerary, d>,
             Sched<[itins.Sched.Folded, ReadAfterLd]>;
   def rri : PIi8<0xC6, MRMSrcReg, (outs RC:$dst),
                  (ins RC:$src1, RC:$src2, u8imm:$src3), asm,
                  [(set RC:$dst, (vt (X86Shufp RC:$src1, RC:$src2,
-                                     (i8 imm:$src3))))], itins.rr, d>,
+                                     (i8 imm:$src3))))], NoItinerary, d>,
             Sched<[itins.Sched]>;
 }
 
@@ -2484,13 +2477,13 @@ multiclass sse12_unpack_interleave<bits<8> opc, SDNode OpNode, ValueType vt,
                 (outs RC:$dst), (ins RC:$src1, RC:$src2),
                 asm, [(set RC:$dst,
                            (vt (OpNode RC:$src1, RC:$src2)))],
-                           itins.rr, d>, Sched<[itins.Sched]>;
+                           NoItinerary, d>, Sched<[itins.Sched]>;
     def rm : PI<opc, MRMSrcMem,
                 (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
                 asm, [(set RC:$dst,
                            (vt (OpNode RC:$src1,
                                        (mem_frag addr:$src2))))],
-                                       itins.rm, d>,
+                                       NoItinerary, d>,
              Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
@@ -2603,7 +2596,7 @@ multiclass PDI_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
        !if(Is2Addr,
            !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (OpVT (OpNode RC:$src1, RC:$src2)))], itins.rr>,
+       [(set RC:$dst, (OpVT (OpNode RC:$src1, RC:$src2)))]>,
        Sched<[itins.Sched]>;
   def rm : PDI<opc, MRMSrcMem, (outs RC:$dst),
        (ins RC:$src1, x86memop:$src2),
@@ -2611,8 +2604,7 @@ multiclass PDI_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
            !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
        [(set RC:$dst, (OpVT (OpNode RC:$src1,
-                                     (bitconvert (memop_frag addr:$src2)))))],
-                                     itins.rm>,
+                                     (bitconvert (memop_frag addr:$src2)))))]>,
        Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 } // ExeDomain = SSEPackedInt
@@ -3111,23 +3103,23 @@ multiclass sse_fp_unop_s<bits<8> opc, string OpcodeStr, RegisterClass RC,
   let hasSideEffects = 0 in {
   def r : I<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1),
               !strconcat(OpcodeStr, "\t{$src1, $dst|$dst, $src1}"),
-            [(set RC:$dst, (OpNode RC:$src1))], itins.rr, d>, Sched<[itins.Sched]>,
+            [(set RC:$dst, (OpNode RC:$src1))], NoItinerary, d>, Sched<[itins.Sched]>,
             Requires<[target]>;
   let mayLoad = 1 in
   def m : I<opc, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src1),
             !strconcat(OpcodeStr, "\t{$src1, $dst|$dst, $src1}"),
-            [(set RC:$dst, (OpNode (load addr:$src1)))], itins.rm, d>,
+            [(set RC:$dst, (OpNode (load addr:$src1)))], NoItinerary, d>,
             Sched<[itins.Sched.Folded, ReadAfterLd]>,
             Requires<[target, OptForSize]>;
 
   let isCodeGenOnly = 1, Constraints = "$src1 = $dst", ExeDomain = d in {
   def r_Int : I<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-              !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-            [], itins.rr>, Sched<[itins.Sched]>;
+                !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"), []>,
+                Sched<[itins.Sched]>;
   let mayLoad = 1 in
   def m_Int : I<opc, MRMSrcMem, (outs VR128:$dst), (ins VR128:$src1, intmemop:$src2),
-              !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-            [], itins.rm>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
+                !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"), []>,
+                Sched<[itins.Sched.Folded, ReadAfterLd]>;
   }
   }
 
@@ -3160,21 +3152,21 @@ multiclass avx_fp_unop_s<bits<8> opc, string OpcodeStr, RegisterClass RC,
   let hasSideEffects = 0 in {
   def r : I<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-            [], itins.rr, d>, Sched<[itins.Sched]>;
+            [], NoItinerary, d>, Sched<[itins.Sched]>;
   let mayLoad = 1 in
   def m : I<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-            [], itins.rm, d>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
+            [], NoItinerary, d>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
   let isCodeGenOnly = 1, ExeDomain = d in {
   def r_Int : I<opc, MRMSrcReg, (outs VR128:$dst),
                 (ins VR128:$src1, VR128:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [], itins.rr>, Sched<[itins.Sched]>;
+             []>, Sched<[itins.Sched]>;
   let mayLoad = 1 in
   def m_Int : I<opc, MRMSrcMem, (outs VR128:$dst),
                 (ins VR128:$src1, intmemop:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [], itins.rm>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
+             []>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
   }
   }
 
@@ -3211,33 +3203,33 @@ let Predicates = prds in {
   def V#NAME#PSr : PSI<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                        !strconcat("v", OpcodeStr,
                                   "ps\t{$src, $dst|$dst, $src}"),
-                       [(set VR128:$dst, (v4f32 (OpNode VR128:$src)))],
-                       itins.rr>, VEX, Sched<[itins.Sched]>, VEX_WIG;
+                       [(set VR128:$dst, (v4f32 (OpNode VR128:$src)))]>,
+                       VEX, Sched<[itins.Sched]>, VEX_WIG;
   def V#NAME#PSm : PSI<opc, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                        !strconcat("v", OpcodeStr,
                                   "ps\t{$src, $dst|$dst, $src}"),
-                       [(set VR128:$dst, (OpNode (loadv4f32 addr:$src)))],
-                       itins.rm>, VEX, Sched<[itins.Sched.Folded]>, VEX_WIG;
+                       [(set VR128:$dst, (OpNode (loadv4f32 addr:$src)))]>,
+                       VEX, Sched<[itins.Sched.Folded]>, VEX_WIG;
   def V#NAME#PSYr : PSI<opc, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
                         !strconcat("v", OpcodeStr,
                                    "ps\t{$src, $dst|$dst, $src}"),
-                        [(set VR256:$dst, (v8f32 (OpNode VR256:$src)))],
-                        itins.rr>, VEX, VEX_L, Sched<[itins.Sched]>, VEX_WIG;
+                        [(set VR256:$dst, (v8f32 (OpNode VR256:$src)))]>,
+                        VEX, VEX_L, Sched<[itins.Sched]>, VEX_WIG;
   def V#NAME#PSYm : PSI<opc, MRMSrcMem, (outs VR256:$dst), (ins f256mem:$src),
                         !strconcat("v", OpcodeStr,
                                    "ps\t{$src, $dst|$dst, $src}"),
-                        [(set VR256:$dst, (OpNode (loadv8f32 addr:$src)))],
-                        itins.rm>, VEX, VEX_L, Sched<[itins.Sched.Folded]>, VEX_WIG;
+                        [(set VR256:$dst, (OpNode (loadv8f32 addr:$src)))]>,
+                        VEX, VEX_L, Sched<[itins.Sched.Folded]>, VEX_WIG;
 }
 
   def PSr : PSI<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                 !strconcat(OpcodeStr, "ps\t{$src, $dst|$dst, $src}"),
-                [(set VR128:$dst, (v4f32 (OpNode VR128:$src)))], itins.rr>,
-            Sched<[itins.Sched]>;
+                [(set VR128:$dst, (v4f32 (OpNode VR128:$src)))]>,
+                Sched<[itins.Sched]>;
   def PSm : PSI<opc, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                 !strconcat(OpcodeStr, "ps\t{$src, $dst|$dst, $src}"),
-                [(set VR128:$dst, (OpNode (memopv4f32 addr:$src)))], itins.rm>,
-            Sched<[itins.Sched.Folded]>;
+                [(set VR128:$dst, (OpNode (memopv4f32 addr:$src)))]>,
+                Sched<[itins.Sched.Folded]>;
 }
 
 /// sse2_fp_unop_p - SSE2 unops in vector forms.
@@ -3247,33 +3239,33 @@ let Predicates = [HasAVX, NoVLX] in {
   def V#NAME#PDr : PDI<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                        !strconcat("v", OpcodeStr,
                                   "pd\t{$src, $dst|$dst, $src}"),
-                       [(set VR128:$dst, (v2f64 (OpNode VR128:$src)))],
-                       itins.rr>, VEX, Sched<[itins.Sched]>, VEX_WIG;
+                       [(set VR128:$dst, (v2f64 (OpNode VR128:$src)))]>,
+                       VEX, Sched<[itins.Sched]>, VEX_WIG;
   def V#NAME#PDm : PDI<opc, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                        !strconcat("v", OpcodeStr,
                                   "pd\t{$src, $dst|$dst, $src}"),
-                       [(set VR128:$dst, (OpNode (loadv2f64 addr:$src)))],
-                       itins.rm>, VEX, Sched<[itins.Sched.Folded]>, VEX_WIG;
+                       [(set VR128:$dst, (OpNode (loadv2f64 addr:$src)))]>,
+                       VEX, Sched<[itins.Sched.Folded]>, VEX_WIG;
   def V#NAME#PDYr : PDI<opc, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
                         !strconcat("v", OpcodeStr,
                                    "pd\t{$src, $dst|$dst, $src}"),
-                        [(set VR256:$dst, (v4f64 (OpNode VR256:$src)))],
-                        itins.rr>, VEX, VEX_L, Sched<[itins.Sched]>, VEX_WIG;
+                        [(set VR256:$dst, (v4f64 (OpNode VR256:$src)))]>,
+                        VEX, VEX_L, Sched<[itins.Sched]>, VEX_WIG;
   def V#NAME#PDYm : PDI<opc, MRMSrcMem, (outs VR256:$dst), (ins f256mem:$src),
                         !strconcat("v", OpcodeStr,
                                    "pd\t{$src, $dst|$dst, $src}"),
-                        [(set VR256:$dst, (OpNode (loadv4f64 addr:$src)))],
-                        itins.rm>, VEX, VEX_L, Sched<[itins.Sched.Folded]>, VEX_WIG;
+                        [(set VR256:$dst, (OpNode (loadv4f64 addr:$src)))]>,
+                        VEX, VEX_L, Sched<[itins.Sched.Folded]>, VEX_WIG;
 }
 
   def PDr : PDI<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-              !strconcat(OpcodeStr, "pd\t{$src, $dst|$dst, $src}"),
-              [(set VR128:$dst, (v2f64 (OpNode VR128:$src)))], itins.rr>,
-            Sched<[itins.Sched]>;
+                !strconcat(OpcodeStr, "pd\t{$src, $dst|$dst, $src}"),
+                [(set VR128:$dst, (v2f64 (OpNode VR128:$src)))]>,
+                Sched<[itins.Sched]>;
   def PDm : PDI<opc, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                 !strconcat(OpcodeStr, "pd\t{$src, $dst|$dst, $src}"),
-                [(set VR128:$dst, (OpNode (memopv2f64 addr:$src)))], itins.rm>,
-            Sched<[itins.Sched.Folded]>;
+                [(set VR128:$dst, (OpNode (memopv2f64 addr:$src)))]>,
+                Sched<[itins.Sched.Folded]>;
 }
 
 multiclass sse1_fp_unop_s<bits<8> opc, string OpcodeStr, SDNode OpNode,
@@ -3672,7 +3664,7 @@ multiclass PDI_binop_rm2<bits<8> opc, string OpcodeStr, SDNode OpNode,
        !if(Is2Addr,
            !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (DstVT (OpNode (SrcVT RC:$src1), RC:$src2)))], itins.rr>,
+       [(set RC:$dst, (DstVT (OpNode (SrcVT RC:$src1), RC:$src2)))]>,
        Sched<[itins.Sched]>;
   def rm : PDI<opc, MRMSrcMem, (outs RC:$dst),
        (ins RC:$src1, x86memop:$src2),
@@ -3680,8 +3672,8 @@ multiclass PDI_binop_rm2<bits<8> opc, string OpcodeStr, SDNode OpNode,
            !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
        [(set RC:$dst, (DstVT (OpNode (SrcVT RC:$src1),
-                                     (bitconvert (memop_frag addr:$src2)))))],
-       itins.rm>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
+                                     (bitconvert (memop_frag addr:$src2)))))]>,
+       Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 } // ExeDomain = SSEPackedInt
 
@@ -3897,15 +3889,15 @@ let Predicates = [HasAVX, prd] in {
                       !strconcat("v", OpcodeStr,
                                  "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                       [(set VR128:$dst,
-                        (vt128 (OpNode VR128:$src1, (i8 imm:$src2))))],
-                      itins.rr>, VEX, Sched<[itins.Sched]>, VEX_WIG;
+                        (vt128 (OpNode VR128:$src1, (i8 imm:$src2))))]>,
+                      VEX, Sched<[itins.Sched]>, VEX_WIG;
   def V#NAME#mi : Ii8<0x70, MRMSrcMem, (outs VR128:$dst),
                       (ins i128mem:$src1, u8imm:$src2),
                       !strconcat("v", OpcodeStr,
                                  "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                      [(set VR128:$dst,
                        (vt128 (OpNode (bitconvert (loadv2i64 addr:$src1)),
-                        (i8 imm:$src2))))], itins.rm>, VEX,
+                        (i8 imm:$src2))))]>, VEX,
                   Sched<[itins.Sched.Folded]>, VEX_WIG;
 }
 
@@ -3915,15 +3907,15 @@ let Predicates = [HasAVX2, prd] in {
                        !strconcat("v", OpcodeStr,
                                   "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                        [(set VR256:$dst,
-                         (vt256 (OpNode VR256:$src1, (i8 imm:$src2))))],
-                       itins.rr>, VEX, VEX_L, Sched<[itins.Sched]>, VEX_WIG;
+                         (vt256 (OpNode VR256:$src1, (i8 imm:$src2))))]>,
+                       VEX, VEX_L, Sched<[itins.Sched]>, VEX_WIG;
   def V#NAME#Ymi : Ii8<0x70, MRMSrcMem, (outs VR256:$dst),
                        (ins i256mem:$src1, u8imm:$src2),
                        !strconcat("v", OpcodeStr,
                                   "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                       [(set VR256:$dst,
                         (vt256 (OpNode (bitconvert (loadv4i64 addr:$src1)),
-                         (i8 imm:$src2))))], itins.rm>, VEX, VEX_L,
+                         (i8 imm:$src2))))]>, VEX, VEX_L,
                    Sched<[itins.Sched.Folded]>, VEX_WIG;
 }
 
@@ -3932,17 +3924,17 @@ let Predicates = [UseSSE2] in {
                (outs VR128:$dst), (ins VR128:$src1, u8imm:$src2),
                !strconcat(OpcodeStr,
                           "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                [(set VR128:$dst,
-                  (vt128 (OpNode VR128:$src1, (i8 imm:$src2))))],
-                itins.rr>, Sched<[itins.Sched]>;
+               [(set VR128:$dst,
+                 (vt128 (OpNode VR128:$src1, (i8 imm:$src2))))]>,
+               Sched<[itins.Sched]>;
   def mi : Ii8<0x70, MRMSrcMem,
                (outs VR128:$dst), (ins i128mem:$src1, u8imm:$src2),
                !strconcat(OpcodeStr,
                           "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                [(set VR128:$dst,
-                  (vt128 (OpNode (bitconvert (memopv2i64 addr:$src1)),
-                          (i8 imm:$src2))))], itins.rm>,
-           Sched<[itins.Sched.Folded]>;
+               [(set VR128:$dst,
+                 (vt128 (OpNode (bitconvert (memopv2i64 addr:$src1)),
+                        (i8 imm:$src2))))]>,
+               Sched<[itins.Sched.Folded]>;
 }
 }
 } // ExeDomain = SSEPackedInt
@@ -3970,8 +3962,8 @@ multiclass sse2_pack<bits<8> opc, string OpcodeStr, ValueType OutVT,
                    !strconcat(OpcodeStr,
                               "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
                [(set RC:$dst,
-                     (OutVT (OpNode (ArgVT RC:$src1), RC:$src2)))],
-               itins.rr>, Sched<[itins.Sched]>;
+                     (OutVT (OpNode (ArgVT RC:$src1), RC:$src2)))]>,
+               Sched<[itins.Sched]>;
   def rm : PDI<opc, MRMSrcMem,
                (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
                !if(Is2Addr,
@@ -3980,8 +3972,8 @@ multiclass sse2_pack<bits<8> opc, string OpcodeStr, ValueType OutVT,
                               "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
                [(set RC:$dst,
                      (OutVT (OpNode (ArgVT RC:$src1),
-                                    (bitconvert (ld_frag addr:$src2)))))],
-               itins.rm>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
+                                    (bitconvert (ld_frag addr:$src2)))))]>,
+               Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
 multiclass sse4_pack<bits<8> opc, string OpcodeStr, ValueType OutVT,
@@ -3995,8 +3987,8 @@ multiclass sse4_pack<bits<8> opc, string OpcodeStr, ValueType OutVT,
                      !strconcat(OpcodeStr,
                                 "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
                  [(set RC:$dst,
-                       (OutVT (OpNode (ArgVT RC:$src1), RC:$src2)))],
-                 itins.rr>, Sched<[itins.Sched]>;
+                       (OutVT (OpNode (ArgVT RC:$src1), RC:$src2)))]>,
+                 Sched<[itins.Sched]>;
   def rm : SS48I<opc, MRMSrcMem,
                  (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
                  !if(Is2Addr,
@@ -4005,8 +3997,8 @@ multiclass sse4_pack<bits<8> opc, string OpcodeStr, ValueType OutVT,
                                 "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
                  [(set RC:$dst,
                        (OutVT (OpNode (ArgVT RC:$src1),
-                                      (bitconvert (ld_frag addr:$src2)))))],
-                 itins.rm>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
+                                      (bitconvert (ld_frag addr:$src2)))))]>,
+                 Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
 let Predicates = [HasAVX, NoVLX_Or_NoBWI] in {
@@ -4069,16 +4061,15 @@ multiclass sse2_unpack<bits<8> opc, string OpcodeStr, ValueType vt,
       !if(Is2Addr,
           !strconcat(OpcodeStr,"\t{$src2, $dst|$dst, $src2}"),
           !strconcat(OpcodeStr,"\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-      [(set RC:$dst, (vt (OpNode RC:$src1, RC:$src2)))],
-      itins.rr>, Sched<[itins.Sched]>;
+      [(set RC:$dst, (vt (OpNode RC:$src1, RC:$src2)))]>,
+      Sched<[itins.Sched]>;
   def rm : PDI<opc, MRMSrcMem,
       (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
       !if(Is2Addr,
           !strconcat(OpcodeStr,"\t{$src2, $dst|$dst, $src2}"),
           !strconcat(OpcodeStr,"\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
       [(set RC:$dst, (vt (OpNode RC:$src1,
-                                  (bitconvert (ld_frag addr:$src2)))))],
-                                               itins.rm>,
+                                  (bitconvert (ld_frag addr:$src2)))))]>,
       Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
@@ -4782,15 +4773,15 @@ multiclass sse3_addsub<string OpcodeStr, ValueType vt, RegisterClass RC,
        !if(Is2Addr,
            !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (vt (X86Addsub RC:$src1, RC:$src2)))], itins.rr>,
+       [(set RC:$dst, (vt (X86Addsub RC:$src1, RC:$src2)))]>,
        Sched<[itins.Sched]>;
   def rm : I<0xD0, MRMSrcMem,
        (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
        !if(Is2Addr,
            !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (vt (X86Addsub RC:$src1, (ld_frag addr:$src2))))],
-       itins.rr>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
+       [(set RC:$dst, (vt (X86Addsub RC:$src1, (ld_frag addr:$src2))))]>,
+       Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
 let Predicates = [HasAVX] in {
@@ -4837,15 +4828,15 @@ multiclass S3D_Int<bits<8> o, string OpcodeStr, ValueType vt, RegisterClass RC,
        !if(Is2Addr,
          !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
          !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-      [(set RC:$dst, (vt (OpNode RC:$src1, RC:$src2)))], itins.rr>,
+      [(set RC:$dst, (vt (OpNode RC:$src1, RC:$src2)))]>,
       Sched<[itins.Sched]>;
 
   def rm : S3DI<o, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
        !if(Is2Addr,
          !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
          !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-      [(set RC:$dst, (vt (OpNode RC:$src1, (ld_frag addr:$src2))))],
-        itins.rm>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
+      [(set RC:$dst, (vt (OpNode RC:$src1, (ld_frag addr:$src2))))]>,
+      Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 multiclass S3_Int<bits<8> o, string OpcodeStr, ValueType vt, RegisterClass RC,
                   X86MemOperand x86memop, SDNode OpNode, OpndItins itins,
@@ -4854,15 +4845,15 @@ multiclass S3_Int<bits<8> o, string OpcodeStr, ValueType vt, RegisterClass RC,
        !if(Is2Addr,
          !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
          !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-      [(set RC:$dst, (vt (OpNode RC:$src1, RC:$src2)))], itins.rr>,
-      Sched<[itins.Sched]>;
+      [(set RC:$dst, (vt (OpNode RC:$src1, RC:$src2)))]>,
+        Sched<[itins.Sched]>;
 
   def rm : S3I<o, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
        !if(Is2Addr,
          !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
          !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-      [(set RC:$dst, (vt (OpNode RC:$src1, (ld_frag addr:$src2))))],
-        itins.rm>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
+      [(set RC:$dst, (vt (OpNode RC:$src1, (ld_frag addr:$src2))))]>,
+        Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
 let Predicates = [HasAVX] in {
@@ -4918,15 +4909,15 @@ multiclass SS3I_unop_rm<bits<8> opc, string OpcodeStr, ValueType vt,
   def rr : SS38I<opc, MRMSrcReg, (outs VR128:$dst),
                  (ins VR128:$src),
                  !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                 [(set VR128:$dst, (vt (OpNode VR128:$src)))],
-                 itins.rr>, Sched<[itins.Sched]>;
+                 [(set VR128:$dst, (vt (OpNode VR128:$src)))]>,
+                 Sched<[itins.Sched]>;
 
   def rm : SS38I<opc, MRMSrcMem, (outs VR128:$dst),
                  (ins i128mem:$src),
                  !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                  [(set VR128:$dst,
-                   (vt (OpNode (bitconvert (ld_frag addr:$src)))))],
-                 itins.rm>, Sched<[itins.Sched.Folded]>;
+                   (vt (OpNode (bitconvert (ld_frag addr:$src)))))]>,
+                 Sched<[itins.Sched.Folded]>;
 }
 
 /// SS3I_unop_rm_int_y - Simple SSSE3 unary op whose type can be v*{i8,i16,i32}.
@@ -4935,14 +4926,14 @@ multiclass SS3I_unop_rm_y<bits<8> opc, string OpcodeStr, ValueType vt,
   def Yrr : SS38I<opc, MRMSrcReg, (outs VR256:$dst),
                   (ins VR256:$src),
                   !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                  [(set VR256:$dst, (vt (OpNode VR256:$src)))], itins.rr>,
+                  [(set VR256:$dst, (vt (OpNode VR256:$src)))]>,
                   Sched<[itins.Sched]>;
 
   def Yrm : SS38I<opc, MRMSrcMem, (outs VR256:$dst),
                   (ins i256mem:$src),
                   !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                   [(set VR256:$dst,
-                    (vt (OpNode (bitconvert (loadv4i64 addr:$src)))))], itins.rm>,
+                    (vt (OpNode (bitconvert (loadv4i64 addr:$src)))))]>,
                   Sched<[itins.Sched.Folded]>;
 }
 
@@ -5004,7 +4995,7 @@ multiclass SS3I_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
        !if(Is2Addr,
          !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
          !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (DstVT (OpNode (OpVT RC:$src1), RC:$src2)))], itins.rr>,
+       [(set RC:$dst, (DstVT (OpNode (OpVT RC:$src1), RC:$src2)))]>,
        Sched<[itins.Sched]>;
   def rm : SS38I<opc, MRMSrcMem, (outs RC:$dst),
        (ins RC:$src1, x86memop:$src2),
@@ -5013,7 +5004,7 @@ multiclass SS3I_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
          !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
        [(set RC:$dst,
          (DstVT (OpNode (OpVT RC:$src1),
-          (bitconvert (memop_frag addr:$src2)))))], itins.rm>,
+          (bitconvert (memop_frag addr:$src2)))))]>,
        Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
@@ -5027,7 +5018,7 @@ multiclass SS3I_binop_rm_int<bits<8> opc, string OpcodeStr,
        !if(Is2Addr,
          !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
          !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set VR128:$dst, (IntId128 VR128:$src1, VR128:$src2))], itins.rr>,
+       [(set VR128:$dst, (IntId128 VR128:$src1, VR128:$src2))]>,
        Sched<[itins.Sched]>;
   def rm : SS38I<opc, MRMSrcMem, (outs VR128:$dst),
        (ins VR128:$src1, i128mem:$src2),
@@ -5036,7 +5027,7 @@ multiclass SS3I_binop_rm_int<bits<8> opc, string OpcodeStr,
          !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
        [(set VR128:$dst,
          (IntId128 VR128:$src1,
-          (bitconvert (ld_frag addr:$src2))))], itins.rm>,
+          (bitconvert (ld_frag addr:$src2))))]>,
        Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
@@ -5198,8 +5189,8 @@ multiclass ssse3_palignr<string asm, ValueType VT, RegisterClass RC,
         !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
         !strconcat(asm,
                   "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
-      [(set RC:$dst, (VT (X86PAlignr RC:$src1, RC:$src2, (i8 imm:$src3))))],
-      itins.rr>, Sched<[itins.Sched]>;
+      [(set RC:$dst, (VT (X86PAlignr RC:$src1, RC:$src2, (i8 imm:$src3))))]>,
+      Sched<[itins.Sched]>;
   let mayLoad = 1 in
   def rmi : SS3AI<0x0F, MRMSrcMem, (outs RC:$dst),
       (ins RC:$src1, x86memop:$src2, u8imm:$src3),
@@ -5209,8 +5200,8 @@ multiclass ssse3_palignr<string asm, ValueType VT, RegisterClass RC,
                   "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
       [(set RC:$dst, (VT (X86PAlignr RC:$src1,
                                      (bitconvert (memop_frag addr:$src2)),
-                                     (i8 imm:$src3))))],
-      itins.rm>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
+                                     (i8 imm:$src3))))]>,
+      Sched<[itins.Sched.Folded, ReadAfterLd]>;
   }
 }
 
@@ -5260,14 +5251,12 @@ multiclass SS41I_pmovx_rrrm<bits<8> opc, string OpcodeStr, X86MemOperand MemOp,
                           RegisterClass OutRC, RegisterClass InRC,
                           OpndItins itins> {
   def rr : SS48I<opc, MRMSrcReg, (outs OutRC:$dst), (ins InRC:$src),
-                 !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                 [], itins.rr>,
+                 !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"), []>,
                  Sched<[itins.Sched]>;
 
   def rm : SS48I<opc, MRMSrcMem, (outs OutRC:$dst), (ins MemOp:$src),
-                 !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                 [],
-                 itins.rm>, Sched<[itins.Sched.Folded]>;
+                 !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"), []>,
+                 Sched<[itins.Sched.Folded]>;
 }
 
 multiclass SS41I_pmovx_rm_all<bits<8> opc, string OpcodeStr,
@@ -5616,19 +5605,19 @@ defm PEXTRQ      : SS41I_extract64<0x16, "pextrq">, REX_W;
 multiclass SS41I_extractf32<bits<8> opc, string OpcodeStr,
                             OpndItins itins = SSE_EXTRACT_ITINS> {
   def rr : SS4AIi8<opc, MRMDestReg, (outs GR32orGR64:$dst),
-                 (ins VR128:$src1, u8imm:$src2),
-                 !strconcat(OpcodeStr,
-                  "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                 [(set GR32orGR64:$dst,
-                    (extractelt (bc_v4i32 (v4f32 VR128:$src1)), imm:$src2))],
-                    itins.rr>, Sched<[WriteFBlend]>;
+                   (ins VR128:$src1, u8imm:$src2),
+                   !strconcat(OpcodeStr,
+                    "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                   [(set GR32orGR64:$dst,
+                      (extractelt (bc_v4i32 (v4f32 VR128:$src1)), imm:$src2))]>,
+                   Sched<[WriteFBlend]>;
   let SchedRW = [WriteFBlendLd, WriteRMW] in
   def mr : SS4AIi8<opc, MRMDestMem, (outs),
-                 (ins f32mem:$dst, VR128:$src1, u8imm:$src2),
-                 !strconcat(OpcodeStr,
-                  "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                 [(store (extractelt (bc_v4i32 (v4f32 VR128:$src1)), imm:$src2),
-                          addr:$dst)], itins.rm>;
+                   (ins f32mem:$dst, VR128:$src1, u8imm:$src2),
+                   !strconcat(OpcodeStr,
+                    "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                   [(store (extractelt (bc_v4i32 (v4f32 VR128:$src1)), imm:$src2),
+                            addr:$dst)]>;
 }
 
 let ExeDomain = SSEPackedSingle in {
@@ -5744,7 +5733,7 @@ multiclass SS41I_insertf32<bits<8> opc, string asm, bit Is2Addr = 1,
         !strconcat(asm,
                    "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
       [(set VR128:$dst,
-        (X86insertps VR128:$src1, VR128:$src2, imm:$src3))], itins.rr>,
+        (X86insertps VR128:$src1, VR128:$src2, imm:$src3))]>,
       Sched<[WriteFShuffle]>;
   def rm : SS4AIi8<opc, MRMSrcMem, (outs VR128:$dst),
       (ins VR128:$src1, f32mem:$src2, u8imm:$src3),
@@ -5755,7 +5744,7 @@ multiclass SS41I_insertf32<bits<8> opc, string asm, bit Is2Addr = 1,
       [(set VR128:$dst,
         (X86insertps VR128:$src1,
                    (v4f32 (scalar_to_vector (loadf32 addr:$src2))),
-                    imm:$src3))], itins.rm>,
+                    imm:$src3))]>,
       Sched<[WriteFShuffleLd, ReadAfterLd]>;
 }
 
@@ -5800,8 +5789,8 @@ multiclass sse41_fp_unop_p<bits<8> opc, string OpcodeStr,
                   (outs RC:$dst), (ins RC:$src1, i32u8imm:$src2),
                   !strconcat(OpcodeStr,
                   "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                  [(set RC:$dst, (VT (OpNode RC:$src1, imm:$src2)))],
-                  itins.rr>, Sched<[WriteFAdd]>;
+                  [(set RC:$dst, (VT (OpNode RC:$src1, imm:$src2)))]>,
+                  Sched<[WriteFAdd]>;
 
   // Vector intrinsic operation, mem
   def m : SS4AIi8<opc, MRMSrcMem,
@@ -5809,8 +5798,8 @@ multiclass sse41_fp_unop_p<bits<8> opc, string OpcodeStr,
                   !strconcat(OpcodeStr,
                   "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                   [(set RC:$dst,
-                        (VT (OpNode (mem_frag addr:$src1),imm:$src2)))],
-                  itins.rm>, Sched<[WriteFAddLd]>;
+                        (VT (OpNode (mem_frag addr:$src1),imm:$src2)))]>,
+                  Sched<[WriteFAddLd]>;
 }
 
 multiclass avx_fp_unop_rm<bits<8> opcss, bits<8> opcsd,
@@ -6225,7 +6214,7 @@ multiclass SS48I_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
        !if(Is2Addr,
            !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (OpVT (OpNode RC:$src1, RC:$src2)))], itins.rr>,
+       [(set RC:$dst, (OpVT (OpNode RC:$src1, RC:$src2)))]>,
        Sched<[itins.Sched]>;
   def rm : SS48I<opc, MRMSrcMem, (outs RC:$dst),
        (ins RC:$src1, x86memop:$src2),
@@ -6233,8 +6222,8 @@ multiclass SS48I_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
            !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
        [(set RC:$dst,
-         (OpVT (OpNode RC:$src1, (bitconvert (memop_frag addr:$src2)))))],
-       itins.rm>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
+         (OpVT (OpNode RC:$src1, (bitconvert (memop_frag addr:$src2)))))]>,
+       Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
 let Predicates = [HasAVX, NoVLX] in {
@@ -6360,7 +6349,7 @@ multiclass SS41I_binop_rmi_int<bits<8> opc, string OpcodeStr,
                 "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
             !strconcat(OpcodeStr,
                 "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
-        [(set RC:$dst, (IntId RC:$src1, RC:$src2, imm:$src3))], itins.rr>,
+        [(set RC:$dst, (IntId RC:$src1, RC:$src2, imm:$src3))]>,
         Sched<[itins.Sched]>;
   def rmi : SS4AIi8<opc, MRMSrcMem, (outs RC:$dst),
         (ins RC:$src1, x86memop:$src2, u8imm:$src3),
@@ -6371,7 +6360,7 @@ multiclass SS41I_binop_rmi_int<bits<8> opc, string OpcodeStr,
                 "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
         [(set RC:$dst,
           (IntId RC:$src1,
-           (bitconvert (memop_frag addr:$src2)), imm:$src3))], itins.rm>,
+           (bitconvert (memop_frag addr:$src2)), imm:$src3))]>,
         Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
@@ -6388,8 +6377,8 @@ multiclass SS41I_binop_rmi<bits<8> opc, string OpcodeStr, SDNode OpNode,
                 "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
             !strconcat(OpcodeStr,
                 "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
-        [(set RC:$dst, (OpVT (OpNode RC:$src1, RC:$src2, imm:$src3)))],
-        itins.rr>, Sched<[itins.Sched]>;
+        [(set RC:$dst, (OpVT (OpNode RC:$src1, RC:$src2, imm:$src3)))]>,
+        Sched<[itins.Sched]>;
   def rmi : SS4AIi8<opc, MRMSrcMem, (outs RC:$dst),
         (ins RC:$src1, x86memop:$src2, u8imm:$src3),
         !if(Is2Addr,
@@ -6399,7 +6388,7 @@ multiclass SS41I_binop_rmi<bits<8> opc, string OpcodeStr, SDNode OpNode,
                 "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
         [(set RC:$dst,
           (OpVT (OpNode RC:$src1,
-                 (bitconvert (memop_frag addr:$src2)), imm:$src3)))], itins.rm>,
+                 (bitconvert (memop_frag addr:$src2)), imm:$src3)))]>,
         Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
@@ -6478,8 +6467,8 @@ let ExeDomain = d, Constraints = !if(Is2Addr, "$src1 = $dst", "") in {
                 "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
             !strconcat(OpcodeStr,
                 "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
-        [(set RC:$dst, (OpVT (OpNode RC:$src1, RC:$src2, imm:$src3)))],
-        itins.rr>, Sched<[itins.Sched]>;
+        [(set RC:$dst, (OpVT (OpNode RC:$src1, RC:$src2, imm:$src3)))]>,
+        Sched<[itins.Sched]>;
   def rmi : SS4AIi8<opc, MRMSrcMem, (outs RC:$dst),
         (ins RC:$src1, x86memop:$src2, u8imm:$src3),
         !if(Is2Addr,
@@ -6489,7 +6478,7 @@ let ExeDomain = d, Constraints = !if(Is2Addr, "$src1 = $dst", "") in {
                 "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
         [(set RC:$dst,
           (OpVT (OpNode RC:$src1,
-                 (bitconvert (memop_frag addr:$src2)), imm:$src3)))], itins.rm>,
+                 (bitconvert (memop_frag addr:$src2)), imm:$src3)))]>,
         Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
@@ -6563,7 +6552,7 @@ multiclass SS41I_quaternary_int_avx<bits<8> opc, string OpcodeStr,
                   !strconcat(OpcodeStr,
                     "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
                   [(set RC:$dst, (IntId RC:$src1, RC:$src2, RC:$src3))],
-                  itins.rr, SSEPackedInt>, TAPD, VEX_4V,
+                  NoItinerary, SSEPackedInt>, TAPD, VEX_4V,
                 Sched<[itins.Sched]>;
 
   def rm : Ii8Reg<opc, MRMSrcMem, (outs RC:$dst),
@@ -6573,7 +6562,7 @@ multiclass SS41I_quaternary_int_avx<bits<8> opc, string OpcodeStr,
                   [(set RC:$dst,
                         (IntId RC:$src1, (bitconvert (mem_frag addr:$src2)),
                                RC:$src3))],
-                  itins.rm, SSEPackedInt>, TAPD, VEX_4V,
+                  NoItinerary, SSEPackedInt>, TAPD, VEX_4V,
                 Sched<[itins.Sched.Folded, ReadAfterLd,
                        // x86memop:$src2
                        ReadDefault, ReadDefault, ReadDefault, ReadDefault,
@@ -6700,8 +6689,8 @@ let Uses = [XMM0], Constraints = "$src1 = $dst" in {
                     (ins VR128:$src1, VR128:$src2),
                     !strconcat(OpcodeStr,
                      "\t{%xmm0, $src2, $dst|$dst, $src2, xmm0}"),
-                    [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2, XMM0))],
-                    itins.rr>, Sched<[itins.Sched]>;
+                    [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2, XMM0))]>,
+                    Sched<[itins.Sched]>;
 
     def rm0 : SS48I<opc, MRMSrcMem, (outs VR128:$dst),
                     (ins VR128:$src1, x86memop:$src2),
@@ -6709,8 +6698,8 @@ let Uses = [XMM0], Constraints = "$src1 = $dst" in {
                      "\t{%xmm0, $src2, $dst|$dst, $src2, xmm0}"),
                     [(set VR128:$dst,
                       (IntId VR128:$src1,
-                       (bitconvert (mem_frag addr:$src2)), XMM0))],
-                       itins.rm>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
+                       (bitconvert (mem_frag addr:$src2)), XMM0))]>,
+                    Sched<[itins.Sched.Folded, ReadAfterLd]>;
   }
 }
 
@@ -6815,7 +6804,7 @@ multiclass SS42I_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
        !if(Is2Addr,
            !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (OpVT (OpNode RC:$src1, RC:$src2)))], itins.rr>,
+       [(set RC:$dst, (OpVT (OpNode RC:$src1, RC:$src2)))]>,
        Sched<[itins.Sched]>;
   def rm : SS428I<opc, MRMSrcMem, (outs RC:$dst),
        (ins RC:$src1, x86memop:$src2),
@@ -6823,7 +6812,7 @@ multiclass SS42I_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
            !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
        [(set RC:$dst,
-         (OpVT (OpNode RC:$src1, (memop_frag addr:$src2))))], itins.rm>,
+         (OpVT (OpNode RC:$src1, (memop_frag addr:$src2))))]>,
        Sched<[itins.Sched.Folded, ReadAfterLd]>;
 }
 
