@@ -239,9 +239,23 @@ def : PatFpr64Fpr64<fmaxnum, FMAX_D>;
 
 /// Setcc
 
+def : PatFpr64Fpr64<seteq, FEQ_D>;
 def : PatFpr64Fpr64<setoeq, FEQ_D>;
+def : PatFpr64Fpr64<setlt, FLT_D>;
 def : PatFpr64Fpr64<setolt, FLT_D>;
+def : PatFpr64Fpr64<setle, FLE_D>;
 def : PatFpr64Fpr64<setole, FLE_D>;
+
+// Define pattern expansions for setcc operations which aren't directly
+// handled by a RISC-V instruction and aren't expanded in the SelectionDAG
+// Legalizer.
+
+def : Pat<(setuo FPR64:$rs1, FPR64:$rs2),
+          (SLTIU (AND (FEQ_D FPR64:$rs1, FPR64:$rs1),
+                      (FEQ_D FPR64:$rs2, FPR64:$rs2)),
+                 1)>;
+
+def Select_FPR64_Using_CC_GPR : SelectCC_rrirr<FPR64, GPR>;
 
 /// Loads
 

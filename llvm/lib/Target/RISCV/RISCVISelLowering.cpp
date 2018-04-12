@@ -108,13 +108,15 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::CTLZ, XLenVT, Expand);
   setOperationAction(ISD::CTPOP, XLenVT, Expand);
 
+  ISD::CondCode FPCCToExtend[] = {
+      ISD::SETOGT, ISD::SETOGE, ISD::SETONE, ISD::SETO,   ISD::SETUEQ,
+      ISD::SETUGT, ISD::SETUGE, ISD::SETULT, ISD::SETULE, ISD::SETUNE,
+      ISD::SETGT,  ISD::SETGE,  ISD::SETNE};
+
   if (Subtarget.hasStdExtF()) {
     setOperationAction(ISD::FMINNUM, MVT::f32, Legal);
     setOperationAction(ISD::FMAXNUM, MVT::f32, Legal);
-    for (auto CC :
-         {ISD::SETOGT, ISD::SETOGE, ISD::SETONE, ISD::SETO, ISD::SETUEQ,
-          ISD::SETUGT, ISD::SETUGE, ISD::SETULT, ISD::SETULE, ISD::SETUNE,
-          ISD::SETGT, ISD::SETGE, ISD::SETNE})
+    for (auto CC : FPCCToExtend)
       setCondCodeAction(CC, MVT::f32, Expand);
     setOperationAction(ISD::SELECT_CC, MVT::f32, Expand);
     setOperationAction(ISD::SELECT, MVT::f32, Custom);
@@ -124,6 +126,11 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
   if (Subtarget.hasStdExtD()) {
     setOperationAction(ISD::FMINNUM, MVT::f64, Legal);
     setOperationAction(ISD::FMAXNUM, MVT::f64, Legal);
+    for (auto CC : FPCCToExtend)
+      setCondCodeAction(CC, MVT::f64, Expand);
+    setOperationAction(ISD::SELECT_CC, MVT::f64, Expand);
+    setOperationAction(ISD::SELECT, MVT::f64, Custom);
+    setOperationAction(ISD::BR_CC, MVT::f64, Expand);
     setLoadExtAction(ISD::EXTLOAD, MVT::f64, MVT::f32, Expand);
     setTruncStoreAction(MVT::f64, MVT::f32, Expand);
   }
@@ -473,6 +480,7 @@ RISCVTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
     llvm_unreachable("Unexpected instr type to insert");
   case RISCV::Select_GPR_Using_CC_GPR:
   case RISCV::Select_FPR32_Using_CC_GPR:
+  case RISCV::Select_FPR64_Using_CC_GPR:
     break;
   case RISCV::BuildPairF64Pseudo:
     return emitBuildPairF64Pseudo(MI, BB);
