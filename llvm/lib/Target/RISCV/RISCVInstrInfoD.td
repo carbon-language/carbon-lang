@@ -13,6 +13,20 @@
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
+// RISC-V specific DAG Nodes.
+//===----------------------------------------------------------------------===//
+
+def SDT_RISCVBuildPairF64 : SDTypeProfile<1, 2, [SDTCisVT<0, f64>,
+                                                 SDTCisVT<1, i32>,
+                                                 SDTCisSameAs<1, 2>]>;
+def SDT_RISCVSplitF64     : SDTypeProfile<2, 1, [SDTCisVT<0, i32>,
+                                                 SDTCisVT<1, i32>,
+                                                 SDTCisVT<2, f64>]>;
+
+def RISCVBuildPairF64 : SDNode<"RISCVISD::BuildPairF64", SDT_RISCVBuildPairF64>;
+def RISCVSplitF64     : SDNode<"RISCVISD::SplitF64", SDT_RISCVSplitF64>;
+
+//===----------------------------------------------------------------------===//
 // Instruction Class Templates
 //===----------------------------------------------------------------------===//
 
@@ -171,4 +185,41 @@ let Predicates = [HasStdExtD] in {
 def : InstAlias<"fmv.d $rd, $rs",  (FSGNJ_D  FPR64:$rd, FPR64:$rs, FPR64:$rs)>;
 def : InstAlias<"fabs.d $rd, $rs", (FSGNJX_D FPR64:$rd, FPR64:$rs, FPR64:$rs)>;
 def : InstAlias<"fneg.d $rd, $rs", (FSGNJN_D FPR64:$rd, FPR64:$rs, FPR64:$rs)>;
+} // Predicates = [HasStdExtD]
+
+//===----------------------------------------------------------------------===//
+// Pseudo-instructions and codegen patterns
+//===----------------------------------------------------------------------===//
+
+class PatFpr64Fpr64DynFrm<SDPatternOperator OpNode, RVInstRFrm Inst>
+    : Pat<(OpNode FPR64:$rs1, FPR64:$rs2), (Inst $rs1, $rs2, 0b111)>;
+
+let Predicates = [HasStdExtD] in {
+
+/// Float arithmetic operations
+
+def : PatFpr64Fpr64DynFrm<fadd, FADD_D>;
+
+/// Loads
+
+defm : LdPat<load, FLD>;
+
+/// Stores
+
+defm : StPat<store, FSD, FPR64>;
+
+/// Pseudo-instructions needed for the soft-float ABI with RV32D
+
+// Moves two GPRs to an FPR.
+let usesCustomInserter = 1 in
+def BuildPairF64Pseudo
+    : Pseudo<(outs FPR64:$dst), (ins GPR:$src1, GPR:$src2),
+             [(set FPR64:$dst, (RISCVBuildPairF64 GPR:$src1, GPR:$src2))]>;
+
+// Moves an FPR to two GPRs.
+let usesCustomInserter = 1 in
+def SplitF64Pseudo
+    : Pseudo<(outs GPR:$dst1, GPR:$dst2), (ins FPR64:$src),
+             [(set GPR:$dst1, GPR:$dst2, (RISCVSplitF64 FPR64:$src))]>;
+
 } // Predicates = [HasStdExtD]
