@@ -2106,8 +2106,8 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
 
     // Occasionally we may see a reference past the last byte of the function
     // typically as a result of __builtin_unreachable(). Check it here.
-    auto *ReferencedBF =
-      getBinaryFunctionContainingAddress(Address, /*CheckPastEnd*/ true);
+    auto *ReferencedBF = getBinaryFunctionContainingAddress(
+        Address, /*CheckPastEnd*/ true, /*UseMaxSize*/ IsAArch64);
     uint64_t RefFunctionOffset = 0;
     MCSymbol *ReferencedSymbol = nullptr;
     if (ForceRelocation) {
@@ -3057,6 +3057,10 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
 
     // Output ranges should match the input if the body hasn't changed.
     if (!Function.isSimple() && !BC->HasRelocations)
+      continue;
+
+    // AArch64 may have functions that only contains a constant island (no code)
+    if (Function.layout_begin() == Function.layout_end())
       continue;
 
     BinaryBasicBlock *PrevBB = nullptr;

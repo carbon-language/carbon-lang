@@ -293,6 +293,18 @@ public:
     Allocator.Reset();
   }
 
+  using CompFuncTy = std::function<bool(const MCSymbol *, const MCSymbol *)>;
+
+  bool equals(const MCInst &A, const MCInst &B, CompFuncTy Comp) const;
+
+  bool equals(const MCOperand &A, const MCOperand &B,
+                      CompFuncTy Comp) const;
+
+  bool equals(const MCExpr &A, const MCExpr &B, CompFuncTy Comp) const;
+
+  virtual bool equals(const MCTargetExpr &A, const MCTargetExpr &B,
+                      CompFuncTy Comp) const;
+
   virtual bool isBranch(const MCInst &Inst) const {
     return Analysis->isBranch(Inst);
   }

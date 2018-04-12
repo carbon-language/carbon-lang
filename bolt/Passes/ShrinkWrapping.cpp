@@ -1313,7 +1313,8 @@ void ShrinkWrapping::moveSaveRestores() {
 namespace {
 /// Helper function to identify whether two basic blocks created by splitting
 /// a critical edge have the same contents.
-bool isIdenticalSplitEdgeBB(const BinaryBasicBlock &A,
+bool isIdenticalSplitEdgeBB(const BinaryContext &BC,
+                            const BinaryBasicBlock &A,
                             const BinaryBasicBlock &B) {
   if (A.succ_size() != B.succ_size())
     return false;
@@ -1332,7 +1333,7 @@ bool isIdenticalSplitEdgeBB(const BinaryBasicBlock &A,
   while (I != E && OtherI != OtherE) {
     if (I->getOpcode() != OtherI->getOpcode())
       return false;
-    if (!MCPlus::equals(*I, *OtherI,
+    if (!BC.MIB->equals(*I, *OtherI,
           [](const MCSymbol *A, const MCSymbol *B) { return true; }))
       return false;
     ++I;
@@ -1354,7 +1355,7 @@ bool ShrinkWrapping::foldIdenticalSplitEdges() {
         break;
       if (!RBB.getName().startswith(".LSplitEdge") ||
           !RBB.isValid() ||
-          !isIdenticalSplitEdgeBB(*Iter, RBB))
+          !isIdenticalSplitEdgeBB(BC, *Iter, RBB))
         continue;
       assert(RBB.pred_size() == 1 && "Invalid split edge BB");
       BinaryBasicBlock *Pred = *RBB.pred_begin();

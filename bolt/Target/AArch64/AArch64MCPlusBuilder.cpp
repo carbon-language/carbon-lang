@@ -46,6 +46,17 @@ public:
                        const MCRegisterInfo *RegInfo)
     : MCPlusBuilder(Analysis, Info, RegInfo) {}
 
+  bool equals(const MCTargetExpr &A, const MCTargetExpr &B,
+              CompFuncTy Comp) const override {
+    const auto &AArch64ExprA = cast<AArch64MCExpr>(A);
+    const auto &AArch64ExprB = cast<AArch64MCExpr>(B);
+    if (AArch64ExprA.getKind() !=  AArch64ExprB.getKind())
+      return false;
+
+    return MCPlusBuilder::equals(*AArch64ExprA.getSubExpr(),
+                                 *AArch64ExprB.getSubExpr(), Comp);
+  }
+
   bool hasEVEXEncoding(const MCInst &) const override {
     return false;
   }

@@ -902,7 +902,6 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
 
 MCSymbol *BinaryFunction::getOrCreateLocalLabel(uint64_t Address,
                                                 bool CreatePastEnd) {
-  MCSymbol *Result;
   // Check if there's already a registered label.
   auto Offset = Address - getAddress();
 
@@ -919,12 +918,16 @@ MCSymbol *BinaryFunction::getOrCreateLocalLabel(uint64_t Address,
   }
 
   auto LI = Labels.find(Offset);
-  if (LI == Labels.end()) {
-    Result = BC.Ctx->createTempSymbol();
-    Labels[Offset] = Result;
-  } else {
-    Result = LI->second;
+  if (LI != Labels.end())
+    return LI->second;
+
+  // For AArch64, check if this address is part of a constant island.
+  if (MCSymbol *IslandSym = getOrCreateIslandAccess(Address).first) {
+    return IslandSym;
   }
+
+  MCSymbol *Result = BC.Ctx->createTempSymbol();
+  Labels[Offset] = Result;
   return Result;
 }
 

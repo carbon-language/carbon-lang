@@ -475,7 +475,7 @@ private:
       }
     }
 
-    return MCPlus::equals(InstA, InstB, Comp);
+    return BC.MIB->equals(InstA, InstB, Comp);
   }
 
   /// Recompute landing pad information for the function and all its blocks.
