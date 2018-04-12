@@ -299,13 +299,13 @@ TEST_F(FormatTestObjC, FormatObjCInterface) {
                "+ (id)init;\n"
                "@end");
 
-  verifyFormat("@interface Foo <Baz : Blech> : Bar <Baz, Quux> {\n"
+  verifyFormat("@interface Foo<Baz : Blech> : Bar <Baz, Quux> {\n"
                "  int _i;\n"
                "}\n"
                "+ (id)init;\n"
                "@end");
 
-  verifyFormat("@interface Foo <Bar : Baz <Blech>> : Xyzzy <Corge> {\n"
+  verifyFormat("@interface Foo<Bar : Baz <Blech>> : Xyzzy <Corge> {\n"
                "  int _i;\n"
                "}\n"
                "+ (id)init;\n"

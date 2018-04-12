@@ -2349,9 +2349,12 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
                : Style.SpacesInParentheses;
   if (Right.isOneOf(tok::semi, tok::comma))
     return false;
-  if (Right.is(tok::less) && Line.Type == LT_ObjCDecl &&
-      Style.ObjCSpaceBeforeProtocolList)
-    return true;
+  if (Right.is(tok::less) && Line.Type == LT_ObjCDecl) {
+    bool IsLightweightGeneric =
+        Right.MatchingParen && Right.MatchingParen->Next &&
+        Right.MatchingParen->Next->is(tok::colon);
+    return !IsLightweightGeneric && Style.ObjCSpaceBeforeProtocolList;
+  }
   if (Right.is(tok::less) && Left.is(tok::kw_template))
     return Style.SpaceAfterTemplateKeyword;
   if (Left.isOneOf(tok::exclaim, tok::tilde))
