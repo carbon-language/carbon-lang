@@ -353,10 +353,10 @@ public:
   const Attrs &attrs() const { return attrs_; }
   const ArraySpec &shape() const { return arraySpec_; }
 
-  const DeclTypeSpec & type() const { return type_; }
-  const Name & name() const { return name_; }
-  const Attrs & attrs() const { return attrs_; }
-  const ComponentArraySpec & shape() const { return arraySpec_; }
+  const DeclTypeSpec &type() const { return type_; }
+  const Name &name() const { return name_; }
+  const Attrs &attrs() const { return attrs_; }
+  const ComponentArraySpec &shape() const { return arraySpec_; }
 
 private:
   const DeclTypeSpec type_;
@@ -371,6 +371,7 @@ public:
   ProcDecl(const Name &name) : name_{name} {}
   // TODO: proc-pointer-init
   const Name &name() const { return name_; }
+
 private:
   const Name name_;
   friend std::ostream &operator<<(std::ostream &, const ProcDecl &);
@@ -384,11 +385,11 @@ public:
     : ProcComponentDef(decl, attrs, interfaceName, std::nullopt) {}
   ProcComponentDef(ProcDecl decl, Attrs attrs, const DeclTypeSpec &typeSpec)
     : ProcComponentDef(decl, attrs, std::nullopt, typeSpec) {}
-  
-  const ProcDecl & decl() const { return decl_ ;}
-  const Attrs & attrs() const { return attrs_; }
-  const std::optional<Name> & interfaceName() const { return interfaceName_; }
-  const std::optional<DeclTypeSpec> & typeSpec() const { return typeSpec_; }
+
+  const ProcDecl &decl() const { return decl_; }
+  const Attrs &attrs() const { return attrs_; }
+  const std::optional<Name> &interfaceName() const { return interfaceName_; }
+  const std::optional<DeclTypeSpec> &typeSpec() const { return typeSpec_; }
 
   const ProcDecl &decl() const { return decl_; }
   const Attrs &attrs() const { return attrs_; }
@@ -469,7 +470,7 @@ using ParamValue = LenParamValue;
 class DerivedTypeSpec : public TypeSpec {
 public:
   std::ostream &Output(std::ostream &o) const override { return o << *this; }
-  DerivedTypeSpec(const Name &name) : name_{name}  {}
+  DerivedTypeSpec(const Name &name) : name_{name} {}
   virtual ~DerivedTypeSpec() = default;
   DerivedTypeSpec &AddParamValue(const ParamValue &value) {
     paramValues_.push_back(std::make_pair(std::nullopt, value));
@@ -479,15 +480,15 @@ public:
     paramValues_.push_back(std::make_pair(name, value));
     return *this;
   }
-   
-  const std::list<std::pair<std::optional<Name>, ParamValue>> & paramValues() {
+
+  const std::list<std::pair<std::optional<Name>, ParamValue>> &paramValues() {
     return paramValues_;
-  } 
-  
-  // Provide access to the derived-type definition if is known   
-  const DerivedTypeDef * definition() { 
+  }
+
+  // Provide access to the derived-type definition if is known
+  const DerivedTypeDef *definition() {
     // TODO
-    return 0; 
+    return 0;
   }
 
   const std::list<std::pair<std::optional<Name>, ParamValue>> &paramValues() {
