@@ -5,6 +5,32 @@
 
 namespace Fortran::semantics {
 
+void EntityDetails::set_type(const DeclTypeSpec &type) {
+  CHECK(!type_);
+  type_ = type;
+}
+
+void EntityDetails::set_shape(const ArraySpec &shape) {
+  CHECK(shape_.empty());
+  for (const auto &shapeSpec : shape) {
+    shape_.push_back(shapeSpec);
+  }
+}
+
+std::ostream &operator<<(std::ostream &os, const EntityDetails &x) {
+  os << "Entity";
+  if (x.type()) {
+    os << " type: " << *x.type();
+  }
+  if (!x.shape().empty()) {
+    os << " shape:";
+    for (const auto &s : x.shape()) {
+      os << ' ' << s;
+    }
+  }
+  return os;
+}
+
 std::ostream &operator<<(std::ostream &os, const Symbol &sym) {
   os << sym.name_.ToString();
   if (!sym.attrs().empty()) {
@@ -28,12 +54,7 @@ std::ostream &operator<<(std::ostream &os, const Symbol &sym) {
               os << " result(" << x.resultName()->ToString() << ')';
             }
           },
-          [&](const EntityDetails &x) {
-            os << " Entity";
-            if (x.type()) {
-              os << " type: " << *x.type();
-            }
-          },
+          [&](const EntityDetails &x) { os << ' ' << x; },
       },
       sym.details_);
   return os;

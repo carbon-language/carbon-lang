@@ -1,4 +1,4 @@
 integer :: x
-!ERROR: 'x' already has a type declared
+!ERROR: The type of 'x' has already been declared
 real :: x
 end

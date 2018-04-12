@@ -189,7 +189,7 @@ public:
     // use the array spec in the decl if present
     const auto &arraySpec = arraySpec_ && !arraySpec_->empty()
         ? *arraySpec_
-        : attrArraySpec_ ? *attrArraySpec_ : ComponentArraySpec{};
+        : attrArraySpec_ ? *attrArraySpec_ : ArraySpec{};
     builder_->dataComponent(
         DataComponentDef(*declTypeSpec_, name.ToString(), *attrs_, arraySpec));
     arraySpec_.reset();

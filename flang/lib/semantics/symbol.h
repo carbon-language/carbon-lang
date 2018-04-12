@@ -8,7 +8,7 @@
 namespace Fortran::semantics {
 
 /// A SourceName is a name in the cooked character stream,
-/// i.e. a range of characters with provenance.
+/// i.e. a range of lower-case characters with provenance.
 using SourceName = parser::CharBlock;
 
 /// A Symbol consists of common information (name, owner, and attributes)
@@ -49,12 +49,15 @@ class EntityDetails {
 public:
   EntityDetails(bool isDummy = false) : isDummy_{isDummy} {}
   const std::optional<DeclTypeSpec> &type() const { return type_; }
-  void set_type(const DeclTypeSpec &type) { type_ = type; };
+  void set_type(const DeclTypeSpec &type);
+  const ArraySpec &shape() const { return shape_; }
+  void set_shape(const ArraySpec &shape);
   bool isDummy() const { return isDummy_; }
 
 private:
   bool isDummy_;
   std::optional<DeclTypeSpec> type_;
+  ArraySpec shape_;
   friend std::ostream &operator<<(std::ostream &, const EntityDetails &);
 };
 
@@ -71,7 +74,7 @@ public:
     : owner_{owner}, name_{name}, attrs_{attrs},
       details_{std::move(details)} {}
   const Scope &owner() const { return owner_; }
-  const SourceName &name() { return name_; }
+  const SourceName &name() const { return name_; }
   Attrs &attrs() { return attrs_; }
   const Attrs &attrs() const { return attrs_; }
 

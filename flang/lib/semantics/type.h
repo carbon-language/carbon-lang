@@ -334,7 +334,7 @@ private:
   friend std::ostream &operator<<(std::ostream &, const ShapeSpec &);
 };
 
-using ComponentArraySpec = std::list<ShapeSpec>;
+using ArraySpec = std::list<ShapeSpec>;
 
 class DataComponentDef {
 public:
@@ -344,9 +344,9 @@ public:
   // TODO: component-initialization
   DataComponentDef(
       const DeclTypeSpec &type, const Name &name, const Attrs &attrs)
-    : DataComponentDef(type, name, attrs, ComponentArraySpec{}) {}
+    : DataComponentDef(type, name, attrs, ArraySpec{}) {}
   DataComponentDef(const DeclTypeSpec &type, const Name &name,
-      const Attrs &attrs, const ComponentArraySpec &arraySpec);
+      const Attrs &attrs, const ArraySpec &arraySpec);
 
   const DeclTypeSpec &type() const { return type_; }
   const Name &name() const { return name_; }
@@ -357,7 +357,7 @@ private:
   const DeclTypeSpec type_;
   const Name name_;
   const Attrs attrs_;
-  const ComponentArraySpec arraySpec_;
+  const ArraySpec arraySpec_;
   friend std::ostream &operator<<(std::ostream &, const DataComponentDef &);
 };
 

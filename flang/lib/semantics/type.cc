@@ -188,7 +188,7 @@ std::ostream &operator<<(std::ostream &o, const DataComponentDef &x) {
 }
 
 DataComponentDef::DataComponentDef(const DeclTypeSpec &type, const Name &name,
-    const Attrs &attrs, const ComponentArraySpec &arraySpec)
+    const Attrs &attrs, const ArraySpec &arraySpec)
   : type_{type}, name_{name}, attrs_{attrs}, arraySpec_{arraySpec} {
   attrs.CheckValid({Attr::PUBLIC, Attr::PRIVATE, Attr::ALLOCATABLE,
       Attr::POINTER, Attr::CONTIGUOUS});

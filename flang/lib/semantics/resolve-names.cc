@@ -48,8 +48,8 @@ private:
 // Provide Post methods to collect attributes into a member variable.
 class AttrsVisitor {
 public:
-  void beginAttrs();
-  Attrs endAttrs();
+  void BeginAttrs();
+  Attrs EndAttrs();
   void Post(const parser::LanguageBindingSpec &);
   bool Pre(const parser::AccessSpec &);
   bool Pre(const parser::IntentSpec &);
@@ -95,8 +95,8 @@ class DeclTypeSpecVisitor : public AttrsVisitor {
 public:
   using AttrsVisitor::Post;
   using AttrsVisitor::Pre;
-  void beginDeclTypeSpec();
-  void endDeclTypeSpec();
+  void BeginDeclTypeSpec();
+  void EndDeclTypeSpec();
   bool Pre(const parser::IntegerTypeSpec &);
   bool Pre(const parser::IntrinsicTypeSpec::Logical &);
   bool Pre(const parser::IntrinsicTypeSpec::Real &);
@@ -194,11 +194,97 @@ private:
   bool HandleImplicitNone(const std::list<ImplicitNoneNameSpec> &nameSpecs);
 };
 
-// Walk the parse tree and resolve names to symbols.
-class ResolveNamesVisitor : public ImplicitRulesVisitor {
+// Track array specifications. They can occur in AttrSpec, EntityDecl,
+// ObjectDecl, DimensionStmt, CommonBlockObject, or BasedPointerStmt.
+// 1. INTEGER, DIMENSION(10) :: x
+// 2. INTEGER :: x(10)
+// 3. ALLOCATABLE :: x(:)
+// 4. DIMENSION :: x(10)
+// 5. TODO: COMMON x(10)
+// 6. TODO: BasedPointerStmt
+class ArraySpecVisitor {
 public:
-  using ImplicitRulesVisitor::Post;
+  const ArraySpec &arraySpec() {
+    return !arraySpec_.empty() ? arraySpec_ : attrArraySpec_;
+  }
+
+  void BeginArraySpec() {
+    CHECK(attrArraySpec_.empty());
+  }
+  void EndArraySpec() {
+    attrArraySpec_.clear();
+  }
+  void ClearArraySpec() {
+    arraySpec_.clear();
+  }
+
+  bool Pre(const parser::ArraySpec &x) {
+    CHECK(arraySpec_.empty());
+    return true;
+  }
+  void Post(const parser::AttrSpec &) {
+    if (!arraySpec_.empty()) {
+      // Example: integer, dimension(<1>) :: x(<2>)
+      // This saves <1> in attrArraySpec_ so we can process <2> into arraySpec_
+      CHECK(attrArraySpec_.empty());
+      attrArraySpec_.splice(attrArraySpec_.cbegin(), arraySpec_);
+      CHECK(arraySpec_.empty());
+    }
+  }
+
+  bool Pre(const parser::DeferredShapeSpecList &x) {
+    for (int i = 0; i < x.v; ++i) {
+      arraySpec_.push_back(ShapeSpec::MakeDeferred());
+    }
+    return false;
+  }
+
+  bool Pre(const parser::AssumedShapeSpec &x) {
+    const auto &lb = x.v;
+    arraySpec_.push_back(
+        lb ? ShapeSpec::MakeAssumed(GetBound(*lb)) : ShapeSpec::MakeAssumed());
+    return false;
+  }
+
+  bool Pre(const parser::ExplicitShapeSpec &x) {
+    const auto &lb = std::get<std::optional<parser::SpecificationExpr>>(x.t);
+    const auto &ub = GetBound(std::get<parser::SpecificationExpr>(x.t));
+    arraySpec_.push_back(lb ? ShapeSpec::MakeExplicit(GetBound(*lb), ub)
+                            : ShapeSpec::MakeExplicit(ub));
+    return false;
+  }
+
+  bool Pre(const parser::AssumedImpliedSpec &x) {
+    const auto &lb = x.v;
+    arraySpec_.push_back(
+        lb ? ShapeSpec::MakeImplied(GetBound(*lb)) : ShapeSpec::MakeImplied());
+    return false;
+  }
+
+  bool Pre(const parser::AssumedRankSpec &) {
+    arraySpec_.push_back(ShapeSpec::MakeAssumedRank());
+    return false;
+  }
+
+private:
+  // arraySpec_ is populated by any ArraySpec
+  ArraySpec arraySpec_;
+  // When an ArraySpec is under an AttrSpec, it is moved into attrArraySpec_
+  ArraySpec attrArraySpec_;
+
+  Bound GetBound(const parser::SpecificationExpr &x) {
+    return Bound(IntExpr(x.v));
+  }
+};
+
+// Walk the parse tree and resolve names to symbols.
+class ResolveNamesVisitor : public ImplicitRulesVisitor,
+                            public ArraySpecVisitor {
+public:
   using ImplicitRulesVisitor::Pre;
+  using ImplicitRulesVisitor::Post;
+  using ArraySpecVisitor::Pre;
+  using ArraySpecVisitor::Post;
 
   ResolveNamesVisitor(parser::Messages &messages)
     : ImplicitRulesVisitor(messages) {
@@ -222,6 +308,7 @@ public:
   bool Pre(const parser::TypeDeclarationStmt &);
   void Post(const parser::TypeDeclarationStmt &);
   void Post(const parser::EntityDecl &);
+  void Post(const parser::ObjectDecl &);
   bool Pre(const parser::PrefixSpec &);
   bool Pre(const parser::AsynchronousStmt &);
   bool Pre(const parser::ContiguousStmt &);
@@ -231,8 +318,6 @@ public:
   bool Pre(const parser::ProtectedStmt &);
   bool Pre(const parser::ValueStmt &);
   bool Pre(const parser::VolatileStmt &);
-  bool Pre(const parser::AllocatableStmt &);
-  bool Pre(const parser::TargetStmt &);
   void Post(const parser::SpecificationPart &);
   void Post(const parser::EndSubroutineStmt &);
   void Post(const parser::EndFunctionStmt &);
@@ -244,6 +329,22 @@ public:
   bool Pre(const parser::MainProgram &);
   void Post(const parser::EndProgramStmt &);
   void Post(const parser::Program &);
+
+  bool Pre(const parser::AllocatableStmt &) {
+    objectDeclAttr_ = Attr::ALLOCATABLE;
+    return true;
+  }
+  void Post(const parser::AllocatableStmt &) {
+    objectDeclAttr_ = std::nullopt;
+  }
+  bool Pre(const parser::TargetStmt &x) {
+    objectDeclAttr_ = Attr::TARGET;
+    return true;
+  }
+  void Post(const parser::TargetStmt &) {
+    objectDeclAttr_ = std::nullopt;
+  }
+  void Post(const parser::DimensionStmt::Declaration &);
 
   const parser::Name *GetVariableName(const parser::DataReference &x) {
     return std::get_if<parser::Name>(&x.u);
@@ -303,6 +404,8 @@ private:
   std::stack<Scope *, std::list<Scope *>> scopes_;
   // Function result name from parser::Suffix, if any.
   const parser::Name *funcResultName_{nullptr};
+  // The attribute corresponding to the statement containing an ObjectDecl
+  std::optional<Attr> objectDeclAttr_;
 
   // Create a subprogram symbol in the current scope and push a new scope.
   void PushSubprogramScope(const parser::Name &, SubprogramDetails &);
@@ -312,7 +415,6 @@ private:
 
   // Handle a statement that sets an attribute on a list of names.
   bool HandleAttributeStmt(Attr, const std::list<parser::Name> &);
-  bool HandleAttributeStmt(Attr, const std::list<parser::ObjectDecl> &);
 
   // Helpers to make a Symbol in the current scope
   template<typename D>
@@ -340,6 +442,7 @@ private:
   Symbol &MakeSymbol(const parser::Name &name, Attrs attrs) {
     return MakeSymbol(name, attrs, UnknownDetails());
   }
+  void DeclareEntity(const parser::Name &, Attrs);
 };
 
 // ImplicitRules implementation
@@ -404,11 +507,11 @@ void ShowImplicitRule(
 
 // AttrsVisitor implementation
 
-void AttrsVisitor::beginAttrs() {
+void AttrsVisitor::BeginAttrs() {
   CHECK(!attrs_);
   attrs_ = std::make_optional<Attrs>();
 }
-Attrs AttrsVisitor::endAttrs() {
+Attrs AttrsVisitor::EndAttrs() {
   CHECK(attrs_);
   Attrs result{*attrs_};
   attrs_.reset();
@@ -443,11 +546,11 @@ bool AttrsVisitor::Pre(const parser::IntentSpec &x) {
 
 // DeclTypeSpecVisitor implementation
 
-void DeclTypeSpecVisitor::beginDeclTypeSpec() {
+void DeclTypeSpecVisitor::BeginDeclTypeSpec() {
   CHECK(!expectDeclTypeSpec_);
   expectDeclTypeSpec_ = true;
 }
-void DeclTypeSpecVisitor::endDeclTypeSpec() {
+void DeclTypeSpecVisitor::EndDeclTypeSpec() {
   CHECK(expectDeclTypeSpec_);
   expectDeclTypeSpec_ = false;
   declTypeSpec_.reset();
@@ -611,12 +714,12 @@ bool ImplicitRulesVisitor::Pre(const parser::LetterSpec &x) {
 }
 
 bool ImplicitRulesVisitor::Pre(const parser::ImplicitSpec &) {
-  beginDeclTypeSpec();
+  BeginDeclTypeSpec();
   return true;
 }
 
 void ImplicitRulesVisitor::Post(const parser::ImplicitSpec &) {
-  endDeclTypeSpec();
+  EndDeclTypeSpec();
 }
 
 void ImplicitRulesVisitor::PushScope() {
@@ -692,33 +795,21 @@ bool ImplicitRulesVisitor::HandleImplicitNone(
 void ResolveNamesVisitor::Post(const parser::EntityDecl &x) {
   // TODO: may be under StructureStmt
   const auto &name{std::get<parser::ObjectName>(x.t)};
-  // TODO: optional ArraySpec, CoarraySpec, CharLength, Initialization
-
-  Symbol &symbol{MakeSymbol(name, *attrs_)}; // TODO: check attribute consistency
-  if (symbol.has<UnknownDetails>()) {
-    symbol.set_details(EntityDetails());
-  }
-  if (EntityDetails *details = symbol.detailsIf<EntityDetails>()) {
-    if (details->type().has_value()) {
-      Say(name, "'%s' already has a type declared"_err_en_US);
-    } else {
-      details->set_type(*declTypeSpec_);
-    }
-  } else {
-    Say(name, "'%s' is already declared in this scoping unit"_err_en_US);
-    Say(symbol.name(), "Previous declaration of '%s'"_en_US);
-  }
+  // TODO: CoarraySpec, CharLength, Initialization
+  DeclareEntity(name, attrs_ ? *attrs_ : Attrs());
 }
 
 bool ResolveNamesVisitor::Pre(const parser::TypeDeclarationStmt &x) {
-  beginDeclTypeSpec();
-  beginAttrs();
+  BeginDeclTypeSpec();
+  BeginAttrs();
+  BeginArraySpec();
   return true;
 }
 
 void ResolveNamesVisitor::Post(const parser::TypeDeclarationStmt &x) {
-  endDeclTypeSpec();
-  endAttrs();
+  EndDeclTypeSpec();
+  EndAttrs();
+  EndArraySpec();
 }
 
 bool ResolveNamesVisitor::Pre(const parser::PrefixSpec &x) {
@@ -761,25 +852,43 @@ bool ResolveNamesVisitor::HandleAttributeStmt(
   return false;
 }
 
-bool ResolveNamesVisitor::Pre(const parser::AllocatableStmt &x) {
-  return HandleAttributeStmt(Attr::ALLOCATABLE, x.v);
+void ResolveNamesVisitor::Post(const parser::ObjectDecl &x) {
+  CHECK(objectDeclAttr_.has_value());
+  const auto &name = std::get<parser::ObjectName>(x.t);
+  DeclareEntity(name, Attrs{*objectDeclAttr_});
 }
-bool ResolveNamesVisitor::Pre(const parser::TargetStmt &x) {
-  return HandleAttributeStmt(Attr::TARGET, x.v);
+
+void ResolveNamesVisitor::Post(const parser::DimensionStmt::Declaration &x) {
+  const auto &name = std::get<parser::Name>(x.t);
+  DeclareEntity(name, Attrs{});
 }
-bool ResolveNamesVisitor::HandleAttributeStmt(
-    Attr attr, const std::list<parser::ObjectDecl> &decls) {
-  for (const auto &decl : decls) {
-    const auto &name = std::get<parser::ObjectName>(decl.t);
-    //TODO: std::get<std::optional<parser::ArraySpec>>(decl.t)
-    //TODO: std::get<std::optional<parser::CoarraySpec>>(decl.t)
-    const auto pair = CurrScope().try_emplace(name.source, Attrs{attr});
-    if (!pair.second) {
-      // symbol was already there: set attribute on it
-      pair.first->second.attrs().set(attr);
-    }
+
+void ResolveNamesVisitor::DeclareEntity(const parser::Name &name, Attrs attrs) {
+  Symbol &symbol{MakeSymbol(name, attrs)};  // TODO: check attribute consistency
+  if (symbol.has<UnknownDetails>()) {
+    symbol.set_details(EntityDetails());
   }
-  return false;
+  if (EntityDetails *details = symbol.detailsIf<EntityDetails>()) {
+    if (declTypeSpec_) {
+      if (details->type().has_value()) {
+        Say(name, "The type of '%s' has already been declared"_err_en_US);
+      } else {
+        details->set_type(*declTypeSpec_);
+      }
+    }
+    if (!arraySpec().empty()) {
+      if (!details->shape().empty()) {
+        Say(name,
+            "The dimensions of '%s' have already been declared"_err_en_US);
+      } else {
+        details->set_shape(arraySpec());
+      }
+      ClearArraySpec();
+    }
+  } else {
+    Say(name, "'%s' is already declared in this scoping unit"_err_en_US);
+    Say(symbol.name(), "Previous declaration of '%s'"_en_US);
+  }
 }
 
 void ResolveNamesVisitor::Post(const parser::SpecificationPart &s) {
@@ -841,12 +950,12 @@ bool ResolveNamesVisitor::Pre(const parser::Suffix &suffix) {
 }
 
 bool ResolveNamesVisitor::Pre(const parser::SubroutineStmt &stmt) {
-  beginAttrs();
+  BeginAttrs();
   return true;
 }
 bool ResolveNamesVisitor::Pre(const parser::FunctionStmt &stmt) {
-  beginAttrs();
-  beginDeclTypeSpec();
+  BeginAttrs();
+  BeginDeclTypeSpec();
   CHECK(!funcResultName_);
   return true;
 }
@@ -878,7 +987,7 @@ void ResolveNamesVisitor::Post(const parser::FunctionStmt &stmt) {
   if (declTypeSpec_) {
     funcResultDetails.set_type(*declTypeSpec_);
   }
-  endDeclTypeSpec();
+  EndDeclTypeSpec();
   if (funcResultName.source != funcName.source) {
     MakeSymbol(funcResultName, funcResultDetails);
   } else {
@@ -889,7 +998,7 @@ void ResolveNamesVisitor::Post(const parser::FunctionStmt &stmt) {
 
 void ResolveNamesVisitor::PushSubprogramScope(
     const parser::Name &name, SubprogramDetails &details) {
-  MakeSymbol(name, endAttrs(), details);
+  MakeSymbol(name, EndAttrs(), details);
   Scope &subpScope = CurrScope().MakeScope(Scope::Kind::Subprogram);
   PushScope(subpScope);
   MakeSymbol(name, details);  // can't reused this name inside subprogram
