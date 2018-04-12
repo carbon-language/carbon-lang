@@ -230,29 +230,6 @@ def IIC_BIN_NONMEM  : InstrItinClass;
 // adc/sbc
 def IIC_BIN_CARRY_MEM     : InstrItinClass;
 def IIC_BIN_CARRY_NONMEM  : InstrItinClass;
-// shift/rotate
-def IIC_SR          : InstrItinClass;
-// shift double
-def IIC_SHD16_REG_IM : InstrItinClass;
-def IIC_SHD16_REG_CL : InstrItinClass;
-def IIC_SHD16_MEM_IM : InstrItinClass;
-def IIC_SHD16_MEM_CL : InstrItinClass;
-def IIC_SHD32_REG_IM : InstrItinClass;
-def IIC_SHD32_REG_CL : InstrItinClass;
-def IIC_SHD32_MEM_IM : InstrItinClass;
-def IIC_SHD32_MEM_CL : InstrItinClass;
-def IIC_SHD64_REG_IM : InstrItinClass;
-def IIC_SHD64_REG_CL : InstrItinClass;
-def IIC_SHD64_MEM_IM : InstrItinClass;
-def IIC_SHD64_MEM_CL : InstrItinClass;
-//sign extension movs
-def IIC_MOVSX : InstrItinClass;
-def IIC_MOVSX_R16_R8 : InstrItinClass;
-def IIC_MOVSX_R16_M8 : InstrItinClass;
-//zero extension movs
-def IIC_MOVZX : InstrItinClass;
-def IIC_MOVZX_R16_R8 : InstrItinClass;
-def IIC_MOVZX_R16_M8 : InstrItinClass;
 
 // SSE scalar/parallel binary operations
 def IIC_SSE_ALU_F32S_RR : InstrItinClass;
@@ -384,7 +361,6 @@ def IIC_SSE_CVT_SS2SI64_RR : InstrItinClass;
 def IIC_SSE_CVT_SD2SI_RM : InstrItinClass;
 def IIC_SSE_CVT_SD2SI_RR : InstrItinClass;
 
-def IIC_CBW   : InstrItinClass;
 def IIC_SSE_DPPD_RR : InstrItinClass;
 def IIC_SSE_DPPD_RM : InstrItinClass;
 def IIC_SSE_DPPS_RR : InstrItinClass;
