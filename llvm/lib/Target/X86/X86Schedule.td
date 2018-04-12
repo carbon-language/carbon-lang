@@ -245,16 +245,6 @@ def IIC_SHD64_REG_IM : InstrItinClass;
 def IIC_SHD64_REG_CL : InstrItinClass;
 def IIC_SHD64_MEM_IM : InstrItinClass;
 def IIC_SHD64_MEM_CL : InstrItinClass;
-// cmov
-def IIC_CMOV16_RM : InstrItinClass;
-def IIC_CMOV16_RR : InstrItinClass;
-def IIC_CMOV32_RM : InstrItinClass;
-def IIC_CMOV32_RR : InstrItinClass;
-def IIC_CMOV64_RM : InstrItinClass;
-def IIC_CMOV64_RR : InstrItinClass;
-// set
-def IIC_SET_R : InstrItinClass;
-def IIC_SET_M : InstrItinClass;
 // jmp/jcc/jcxz
 def IIC_Jcc : InstrItinClass;
 def IIC_JCXZ : InstrItinClass;
