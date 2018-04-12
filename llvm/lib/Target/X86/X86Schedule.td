@@ -227,12 +227,6 @@ def IIC_SSE_PSHUF_MI : InstrItinClass;
 def IIC_SSE_PACK : InstrItinClass;
 def IIC_SSE_UNPCK : InstrItinClass;
 
-def IIC_SSE_MOVMSK : InstrItinClass;
-def IIC_SSE_MASKMOV : InstrItinClass;
-
-def IIC_SSE_PEXTRW : InstrItinClass;
-def IIC_SSE_PINSRW : InstrItinClass;
-
 def IIC_SSE_PABS_RR : InstrItinClass;
 def IIC_SSE_PABS_RM : InstrItinClass;
 
@@ -266,10 +260,6 @@ def IIC_SSE_MOVA_P_MR : InstrItinClass;
 def IIC_SSE_MOVU_P_RR : InstrItinClass;
 def IIC_SSE_MOVU_P_RM : InstrItinClass;
 def IIC_SSE_MOVU_P_MR : InstrItinClass;
-
-def IIC_SSE_MOVDQ : InstrItinClass;
-def IIC_SSE_MOVD_ToGP : InstrItinClass;
-def IIC_SSE_MOVQ_RR : InstrItinClass;
 
 def IIC_SSE_MOV_LH : InstrItinClass;
 
