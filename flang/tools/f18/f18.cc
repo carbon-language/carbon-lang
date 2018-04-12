@@ -2,8 +2,8 @@
 
 #include "../../lib/parser/characters.h"
 #include "../../lib/parser/message.h"
-#include "../../lib/parser/parse-tree.h"
 #include "../../lib/parser/parse-tree-visitor.h"
+#include "../../lib/parser/parse-tree.h"
 #include "../../lib/parser/parsing.h"
 #include "../../lib/parser/provenance.h"
 #include "../../lib/parser/unparse.h"
@@ -15,11 +15,11 @@
 #include <list>
 #include <memory>
 #include <optional>
-#include <string>
-#include <vector>
 #include <stdlib.h>
-#include <unistd.h>
+#include <string>
 #include <sys/wait.h>
+#include <unistd.h>
+#include <vector>
 
 static std::list<std::string> argList(int argc, char *const argv[]) {
   std::list<std::string> result;

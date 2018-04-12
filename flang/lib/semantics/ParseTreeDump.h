@@ -7,11 +7,10 @@
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
 
-
-#include <string>
 #include <cstring>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
+#include <string>
 
 namespace Fortran::semantics {
 

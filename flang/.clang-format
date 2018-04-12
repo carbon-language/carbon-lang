@@ -12,6 +12,15 @@ AlignTrailingComments: false
 ConstructorInitializerIndentWidth: 2
 SpaceAfterTemplateKeyword: false
 SpacesBeforeTrailingComments: 2
+IncludeCategories:
+  - Regex:           '^<'
+    Priority:        4
+  - Regex:           '^"(llvm|llvm-c|clang|clang-c)/'
+    Priority:        3
+  - Regex:           '^"\.\./'
+    Priority:        2
+  - Regex:           '.*'
+    Priority:        1
 ...
 
 # vim:set filetype=yaml:

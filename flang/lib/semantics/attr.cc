@@ -1,5 +1,5 @@
-#include "../parser/idioms.h"
 #include "attr.h"
+#include "../parser/idioms.h"
 #include <stddef.h>
 
 namespace Fortran {

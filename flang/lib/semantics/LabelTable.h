@@ -1,8 +1,8 @@
 #ifndef  FORTRAN_LABEL_TABLE_H_
 #define  FORTRAN_LABEL_TABLE_H_
 
-#include <stack>
 #include <cassert>
+#include <stack>
 
 namespace Fortran::semantics {
 

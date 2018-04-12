@@ -1,9 +1,9 @@
 #ifndef FORTRAN_TYPE_H_
 #define FORTRAN_TYPE_H_
 
+#include "attr.h"
 #include "../parser/idioms.h"
 #include "../parser/parse-tree.h"
-#include "attr.h"
 #include <list>
 #include <map>
 #include <memory>

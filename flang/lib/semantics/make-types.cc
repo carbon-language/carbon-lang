@@ -1,7 +1,6 @@
 #include "make-types.h"
 #include "attr.h"
 #include "type.h"
-
 #include "../parser/idioms.h"
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"

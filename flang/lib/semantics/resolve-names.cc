@@ -1,10 +1,10 @@
-#include "../parser/indirection.h"
-#include "../parser/parse-tree-visitor.h"
-#include "../parser/parse-tree.h"
 #include "attr.h"
 #include "scope.h"
 #include "symbol.h"
 #include "type.h"
+#include "../parser/indirection.h"
+#include "../parser/parse-tree-visitor.h"
+#include "../parser/parse-tree.h"
 #include <iostream>
 #include <list>
 #include <memory>

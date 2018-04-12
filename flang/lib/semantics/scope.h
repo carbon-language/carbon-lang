@@ -1,10 +1,10 @@
 #ifndef FORTRAN_SEMANTICS_SCOPE_H_
 #define FORTRAN_SEMANTICS_SCOPE_H_
 
-#include "../parser/idioms.h"
-#include "../parser/parse-tree.h"
 #include "attr.h"
 #include "symbol.h"
+#include "../parser/idioms.h"
+#include "../parser/parse-tree.h"
 #include <list>
 #include <map>
 #include <string>

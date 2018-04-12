@@ -1,8 +1,8 @@
 #ifndef FORTRAN_ATTR_H_
 #define FORTRAN_ATTR_H_
 
-#include "../parser/idioms.h"
 #include "enum-set.h"
+#include "../parser/idioms.h"
 #include <cinttypes>
 #include <iostream>
 #include <string>

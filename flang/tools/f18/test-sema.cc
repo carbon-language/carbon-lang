@@ -6,8 +6,8 @@
 #include <list>
 #include <optional>
 #include <sstream>
-#include <string>
 #include <stddef.h>
+#include <string>
 
 using namespace Fortran;
 using namespace parser;

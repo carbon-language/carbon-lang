@@ -1,6 +1,6 @@
 #include "symbol.h"
-#include "../parser/idioms.h"
 #include "scope.h"
+#include "../parser/idioms.h"
 #include <memory>
 
 namespace Fortran::semantics {
