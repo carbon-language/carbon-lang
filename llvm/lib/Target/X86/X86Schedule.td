@@ -170,66 +170,6 @@ def WriteNop : SchedWrite;
 // Instruction Itinerary classes used for X86
 def IIC_ALU_MEM     : InstrItinClass;
 def IIC_ALU_NONMEM  : InstrItinClass;
-def IIC_LEA         : InstrItinClass;
-def IIC_LEA_16      : InstrItinClass;
-def IIC_MUL8_MEM    : InstrItinClass;
-def IIC_MUL8_REG    : InstrItinClass;
-def IIC_MUL16_MEM   : InstrItinClass;
-def IIC_MUL16_REG   : InstrItinClass;
-def IIC_MUL32_MEM   : InstrItinClass;
-def IIC_MUL32_REG   : InstrItinClass;
-def IIC_MUL64_MEM   : InstrItinClass;
-def IIC_MUL64_REG   : InstrItinClass;
-// imul by al, ax, eax, tax
-def IIC_IMUL8_MEM   : InstrItinClass;
-def IIC_IMUL8_REG   : InstrItinClass;
-def IIC_IMUL16_MEM  : InstrItinClass;
-def IIC_IMUL16_REG  : InstrItinClass;
-def IIC_IMUL32_MEM  : InstrItinClass;
-def IIC_IMUL32_REG  : InstrItinClass;
-def IIC_IMUL64_MEM  : InstrItinClass;
-def IIC_IMUL64_REG  : InstrItinClass;
-// imul reg by reg|mem
-def IIC_IMUL16_RM   : InstrItinClass;
-def IIC_IMUL16_RR   : InstrItinClass;
-def IIC_IMUL32_RM   : InstrItinClass;
-def IIC_IMUL32_RR   : InstrItinClass;
-def IIC_IMUL64_RM   : InstrItinClass;
-def IIC_IMUL64_RR   : InstrItinClass;
-// imul reg = reg/mem * imm
-def IIC_IMUL16_RMI  : InstrItinClass;
-def IIC_IMUL16_RRI  : InstrItinClass;
-def IIC_IMUL32_RMI  : InstrItinClass;
-def IIC_IMUL32_RRI  : InstrItinClass;
-def IIC_IMUL64_RMI  : InstrItinClass;
-def IIC_IMUL64_RRI  : InstrItinClass;
-// div
-def IIC_DIV8_MEM    : InstrItinClass;
-def IIC_DIV8_REG    : InstrItinClass;
-def IIC_DIV16_MEM   : InstrItinClass;
-def IIC_DIV16_REG   : InstrItinClass;
-def IIC_DIV32_MEM   : InstrItinClass;
-def IIC_DIV32_REG   : InstrItinClass;
-def IIC_DIV64_MEM   : InstrItinClass;
-def IIC_DIV64_REG   : InstrItinClass;
-// idiv
-def IIC_IDIV8_MEM   : InstrItinClass;
-def IIC_IDIV8_REG   : InstrItinClass;
-def IIC_IDIV16_MEM  : InstrItinClass;
-def IIC_IDIV16_REG  : InstrItinClass;
-def IIC_IDIV32_MEM  : InstrItinClass;
-def IIC_IDIV32_REG  : InstrItinClass;
-def IIC_IDIV64_MEM  : InstrItinClass;
-def IIC_IDIV64_REG  : InstrItinClass;
-// neg/not/inc/dec
-def IIC_UNARY_REG   : InstrItinClass;
-def IIC_UNARY_MEM   : InstrItinClass;
-// add/sub/and/or/xor/sbc/cmp/test
-def IIC_BIN_MEM     : InstrItinClass;
-def IIC_BIN_NONMEM  : InstrItinClass;
-// adc/sbc
-def IIC_BIN_CARRY_MEM     : InstrItinClass;
-def IIC_BIN_CARRY_NONMEM  : InstrItinClass;
 
 // SSE scalar/parallel binary operations
 def IIC_SSE_ALU_F32S_RR : InstrItinClass;
@@ -379,7 +319,7 @@ def IIC_SSE_ROUNDPD_REG : InstrItinClass;
 def IIC_SSE_ROUNDPD_MEM : InstrItinClass;
 
 //===----------------------------------------------------------------------===//
-// Processor instruction itineraries.
+// Generic Processor Scheduler Models.
 
 // IssueWidth is analogous to the number of decode units. Core and its
 // descendents, including Nehalem and SandyBridge have 4 decoders.
