@@ -254,9 +254,6 @@ def IIC_MOVZX : InstrItinClass;
 def IIC_MOVZX_R16_R8 : InstrItinClass;
 def IIC_MOVZX_R16_M8 : InstrItinClass;
 
-def IIC_REP_MOVS : InstrItinClass;
-def IIC_REP_STOS : InstrItinClass;
-
 // SSE scalar/parallel binary operations
 def IIC_SSE_ALU_F32S_RR : InstrItinClass;
 def IIC_SSE_ALU_F32S_RM : InstrItinClass;
@@ -359,10 +356,6 @@ def IIC_SSE_MOVQ_RR : InstrItinClass;
 
 def IIC_SSE_MOV_LH : InstrItinClass;
 
-def IIC_SSE_LDDQU : InstrItinClass;
-
-def IIC_SSE_MOVNT : InstrItinClass;
-
 def IIC_SSE_PHADDSUBD_RR : InstrItinClass;
 def IIC_SSE_PHADDSUBD_RM : InstrItinClass;
 def IIC_SSE_PHADDSUBSW_RR : InstrItinClass;
@@ -391,14 +384,7 @@ def IIC_SSE_CVT_SS2SI64_RR : InstrItinClass;
 def IIC_SSE_CVT_SD2SI_RM : InstrItinClass;
 def IIC_SSE_CVT_SD2SI_RR : InstrItinClass;
 
-def IIC_AVX_ZERO : InstrItinClass;
-
-def IIC_AES   : InstrItinClass;
-def IIC_BLEND_MEM : InstrItinClass;
-def IIC_BLEND_NOMEM : InstrItinClass;
 def IIC_CBW   : InstrItinClass;
-def IIC_CRC32_REG : InstrItinClass;
-def IIC_CRC32_MEM : InstrItinClass;
 def IIC_SSE_DPPD_RR : InstrItinClass;
 def IIC_SSE_DPPD_RM : InstrItinClass;
 def IIC_SSE_DPPS_RR : InstrItinClass;
@@ -415,10 +401,6 @@ def IIC_SSE_ROUNDPS_REG : InstrItinClass;
 def IIC_SSE_ROUNDPS_MEM : InstrItinClass;
 def IIC_SSE_ROUNDPD_REG : InstrItinClass;
 def IIC_SSE_ROUNDPD_MEM : InstrItinClass;
-def IIC_SSE_POPCNT_RR : InstrItinClass;
-def IIC_SSE_POPCNT_RM : InstrItinClass;
-def IIC_SSE_PCLMULQDQ_RR : InstrItinClass;
-def IIC_SSE_PCLMULQDQ_RM : InstrItinClass;
 
 //===----------------------------------------------------------------------===//
 // Processor instruction itineraries.

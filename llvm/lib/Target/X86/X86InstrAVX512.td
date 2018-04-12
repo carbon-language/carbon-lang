@@ -4267,13 +4267,12 @@ let SchedRW = [WriteVecLoad] in {
 }
 
 multiclass avx512_movnt<bits<8> opc, string OpcodeStr, X86VectorVTInfo _,
-                        PatFrag st_frag = alignednontemporalstore,
-                        InstrItinClass itin = IIC_SSE_MOVNT> {
+                        PatFrag st_frag = alignednontemporalstore> {
   let SchedRW = [WriteVecStore], AddedComplexity = 400 in
   def mr : AVX512PI<opc, MRMDestMem, (outs), (ins _.MemOp:$dst, _.RC:$src),
                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                     [(st_frag (_.VT _.RC:$src), addr:$dst)],
-                    _.ExeDomain, itin>, EVEX, EVEX_CD8<_.EltSize, CD8VF>;
+                    _.ExeDomain>, EVEX, EVEX_CD8<_.EltSize, CD8VF>;
 }
 
 multiclass avx512_movnt_vl<bits<8> opc, string OpcodeStr,
