@@ -9845,9 +9845,9 @@ def : Pat<(vselect (v2i1 VK2WM:$mask), (v2f64 (X86VBroadcast (loadv2f64 addr:$sr
 //===----------------------------------------------------------------------===//
 
 defm VUNPCKH : avx512_fp_binop_p<0x15, "vunpckh", X86Unpckh, HasAVX512,
-                                 WriteFAdd>;
+                                 WriteFShuffle>;
 defm VUNPCKL : avx512_fp_binop_p<0x14, "vunpckl", X86Unpckl, HasAVX512,
-                                 WriteFAdd>;
+                                 WriteFShuffle>;
 
 defm VPUNPCKLBW : avx512_binop_rm_vl_b<0x60, "vpunpcklbw", X86Unpckl,
                                        WriteShuffle, HasBWI>;
