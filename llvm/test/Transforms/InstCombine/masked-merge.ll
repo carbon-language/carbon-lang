@@ -427,6 +427,33 @@ define i32 @xor_commutative6(i32 %x, i32 %y, i32 %m) {
   ret i32 %xor
 }
 
+
+define i32 @or_constmask_commutative(i32 %x, i32 %y) {
+; CHECK-LABEL: @or_constmask_commutative(
+; CHECK-NEXT:    [[AND:%.*]] = and i32 [[X:%.*]], 65280
+; CHECK-NEXT:    [[AND1:%.*]] = and i32 [[Y:%.*]], -65281
+; CHECK-NEXT:    [[OR:%.*]] = or i32 [[AND1]], [[AND]]
+; CHECK-NEXT:    ret i32 [[OR]]
+;
+  %and = and i32 %x, 65280
+  %and1 = and i32 %y, -65281
+  %or = or i32 %and1, %and ; swapped order
+  ret i32 %or
+}
+
+define i32 @xor_constmask_commutative(i32 %x, i32 %y) {
+; CHECK-LABEL: @xor_constmask_commutative(
+; CHECK-NEXT:    [[AND:%.*]] = and i32 [[X:%.*]], 65280
+; CHECK-NEXT:    [[AND1:%.*]] = and i32 [[Y:%.*]], -65281
+; CHECK-NEXT:    [[XOR1:%.*]] = or i32 [[AND1]], [[AND]]
+; CHECK-NEXT:    ret i32 [[XOR1]]
+;
+  %and = and i32 %x, 65280
+  %and1 = and i32 %y, -65281
+  %xor = xor i32 %and1, %and ; swapped order
+  ret i32 %xor
+}
+
 ; ============================================================================ ;
 ; Negative tests. Should not be folded.
 ; ============================================================================ ;
@@ -474,6 +501,44 @@ define i32 @n0_xor_oneuse(i32 %x, i32 %y, i32 %m) {
   call void @use32(i32 %and)
   call void @use32(i32 %neg)
   call void @use32(i32 %and1)
+  ret i32 %xor
+}
+
+define i32 @n0_or_constmask_oneuse(i32 %x, i32 %y) {
+; CHECK-LABEL: @n0_or_constmask_oneuse(
+; CHECK-NEXT:    [[AND:%.*]] = and i32 [[X:%.*]], 65280
+; CHECK-NEXT:    [[AND1:%.*]] = and i32 [[Y:%.*]], -65281
+; CHECK-NEXT:    [[OR:%.*]] = or i32 [[AND]], [[AND1]]
+; CHECK-NEXT:    call void @use32(i32 [[AND]])
+; CHECK-NEXT:    call void @use32(i32 [[AND1]])
+; CHECK-NEXT:    call void @use32(i32 [[OR]])
+; CHECK-NEXT:    ret i32 [[OR]]
+;
+  %and = and i32 %x, 65280
+  %and1 = and i32 %y, -65281
+  %or = or i32 %and, %and1
+  call void @use32(i32 %and)
+  call void @use32(i32 %and1)
+  call void @use32(i32 %or)
+  ret i32 %or
+}
+
+define i32 @n0_xor_constmask_oneuse(i32 %x, i32 %y) {
+; CHECK-LABEL: @n0_xor_constmask_oneuse(
+; CHECK-NEXT:    [[AND:%.*]] = and i32 [[X:%.*]], 65280
+; CHECK-NEXT:    [[AND1:%.*]] = and i32 [[Y:%.*]], -65281
+; CHECK-NEXT:    [[XOR1:%.*]] = or i32 [[AND]], [[AND1]]
+; CHECK-NEXT:    call void @use32(i32 [[AND]])
+; CHECK-NEXT:    call void @use32(i32 [[AND1]])
+; CHECK-NEXT:    call void @use32(i32 [[XOR1]])
+; CHECK-NEXT:    ret i32 [[XOR1]]
+;
+  %and = and i32 %x, 65280
+  %and1 = and i32 %y, -65281
+  %xor = xor i32 %and, %and1
+  call void @use32(i32 %and)
+  call void @use32(i32 %and1)
+  call void @use32(i32 %xor)
   ret i32 %xor
 }
 
@@ -560,11 +625,11 @@ define i32 @n3_xor_constmask_badmask(i32 %x, i32 %y) {
 ; CHECK-LABEL: @n3_xor_constmask_badmask(
 ; CHECK-NEXT:    [[AND:%.*]] = and i32 [[X:%.*]], 65280
 ; CHECK-NEXT:    [[AND1:%.*]] = and i32 [[Y:%.*]], -65280
-; CHECK-NEXT:    [[OR:%.*]] = xor i32 [[AND]], [[AND1]]
-; CHECK-NEXT:    ret i32 [[OR]]
+; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[AND]], [[AND1]]
+; CHECK-NEXT:    ret i32 [[XOR]]
 ;
   %and = and i32 %x, 65280
   %and1 = and i32 %y, -65280 ; not -65281
-  %or = xor i32 %and, %and1
-  ret i32 %or
+  %xor = xor i32 %and, %and1
+  ret i32 %xor
 }
