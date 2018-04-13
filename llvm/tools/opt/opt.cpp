@@ -726,7 +726,7 @@ int main(int argc, char **argv) {
   // a stream to write to them. Note that llc does something similar and it
   // may be worth to abstract this out in the future.
   SmallVector<char, 0> Buffer;
-  SmallVector<char, 0> CompileTwiceBuffer;
+  SmallVector<char, 0> FirstRunBuffer;
   std::unique_ptr<raw_svector_ostream> BOS;
   raw_ostream *OS = nullptr;
 
@@ -765,20 +765,20 @@ int main(int argc, char **argv) {
     // Run all passes on the original module first, so the second run processes
     // the clone to catch CloneModule bugs.
     Passes.run(*M);
-    CompileTwiceBuffer = Buffer;
+    FirstRunBuffer = Buffer;
     Buffer.clear();
 
     Passes.run(*M2);
 
     // Compare the two outputs and make sure they're the same
     assert(Out);
-    if (Buffer.size() != CompileTwiceBuffer.size() ||
-        (memcmp(Buffer.data(), CompileTwiceBuffer.data(), Buffer.size()) !=
-         0)) {
-      errs() << "Running the pass manager twice changed the output.\n"
-                "Writing the result of the second run to the specified output.\n"
-                "To generate the one-run comparison binary, just run without\n"
-                "the compile-twice option\n";
+    if (Buffer.size() != FirstRunBuffer.size() ||
+        (memcmp(Buffer.data(), FirstRunBuffer.data(), Buffer.size()) != 0)) {
+      errs()
+          << "Running the pass manager twice changed the output.\n"
+             "Writing the result of the second run to the specified output.\n"
+             "To generate the one-run comparison binary, just run without\n"
+             "the compile-twice option\n";
       Out->os() << BOS->str();
       Out->keep();
       if (OptRemarkFile)
