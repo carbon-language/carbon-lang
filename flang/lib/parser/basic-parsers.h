@@ -78,17 +78,17 @@ public:
   constexpr BacktrackingParser(const BacktrackingParser &) = default;
   constexpr BacktrackingParser(const A &parser) : parser_{parser} {}
   std::optional<resultType> Parse(ParseState *state) const {
-    Messages messages{std::move(*state->messages())};
+    Messages messages{std::move(state->messages())};
     MessageContext context{state->context()};
     ParseState backtrack{*state};
     std::optional<resultType> result{parser_.Parse(state)};
     if (result.has_value()) {
       // preserve any new messages
       messages.Annex(state->messages());
-      state->messages()->swap(messages);
+      state->messages().swap(messages);
     } else {
       state->swap(backtrack);
-      state->messages()->swap(messages);
+      state->messages().swap(messages);
       state->set_context(context);
     }
     return result;
@@ -110,9 +110,9 @@ public:
   constexpr NegatedParser(const NegatedParser &) = default;
   constexpr NegatedParser(const PA &p) : parser_{p} {}
   std::optional<Success> Parse(ParseState *state) const {
-    Messages messages{std::move(*state->messages())};
+    Messages messages{std::move(state->messages())};
     ParseState forked{*state};
-    state->messages()->swap(messages);
+    state->messages().swap(messages);
     if (parser_.Parse(&forked)) {
       return {};
     }
@@ -135,9 +135,9 @@ public:
   constexpr LookAheadParser(const LookAheadParser &) = default;
   constexpr LookAheadParser(const PA &p) : parser_{p} {}
   std::optional<Success> Parse(ParseState *state) const {
-    Messages messages{std::move(*state->messages())};
+    Messages messages{std::move(state->messages())};
     ParseState forked{*state};
-    state->messages()->swap(messages);
+    state->messages().swap(messages);
     if (parser_.Parse(&forked).has_value()) {
       return {Success{}};
     }
@@ -238,47 +238,76 @@ public:
   constexpr AlternativeParser(const AlternativeParser &) = default;
   constexpr AlternativeParser(const PA &pa, const PB &pb) : pa_{pa}, pb_{pb} {}
   std::optional<resultType> Parse(ParseState *state) const {
-    Messages messages{std::move(*state->messages())};
+    Messages messages{std::move(state->messages())};
     MessageContext context{state->context()};
     ParseState backtrack{*state};
+    int depth{state->alternativeDepth()};
+    bool deferred{state->deferMessages()};
+    if (!deferred) {
+      if (depth == 0 && state->messages().empty()) {
+        CHECK(!state->blockedMessages());
+        state->set_deferMessages(true);
+      }
+    }
+    state->set_alternativeDepth(depth + 1);
     if (std::optional<resultType> ax{pa_.Parse(state)}) {
-      // preserve any new messages
-      messages.Annex(state->messages());
-      state->messages()->swap(messages);
+      if (!deferred && state->blockedMessages()) {
+        // We deferred messages but now we need them.  Regenerate.
+        state->swap(backtrack);
+        state->messages().swap(messages);
+        state->set_context(context);
+        return pa_.Parse(state);
+      }
+      state->set_alternativeDepth(depth)
+          .set_deferMessages(deferred)
+          .set_context(context)
+          .messages().Annex(messages);
       return ax;
     }
-#if 0  // needed below if "tied" messages are to be saved
-    auto start = backtrack.GetLocation();
-#endif
-    ParseState paState{std::move(*state)};
+    ParseState backtrack2{backtrack};
     state->swap(backtrack);
-    state->set_context(context);
+    if (!deferred) {
+      if (depth == 0 && state->messages().empty()) {
+        CHECK(!state->blockedMessages());
+        state->set_deferMessages(true);
+      }
+    }
+    state->set_alternativeDepth(depth + 1);
     if (std::optional<resultType> bx{pb_.Parse(state)}) {
-      // preserve any new messages
-      messages.Annex(state->messages());
-      state->messages()->swap(messages);
+      if (!deferred && state->blockedMessages()) {
+        state->swap(backtrack2);
+        state->messages().swap(messages);
+        state->set_context(context);
+        return pb_.Parse(state);
+      }
+      state->set_alternativeDepth(depth)
+          .set_deferMessages(deferred)
+          .set_context(context)
+          .messages().Annex(messages);
       return bx;
     }
     // Both alternatives failed.  Retain the state (and messages) from the
     // alternative parse that went the furthest.
-    auto paEnd = paState.GetLocation();
-    auto pbEnd = state->GetLocation();
-    if (paEnd > pbEnd) {
-      messages.Annex(paState.messages());
-      state->swap(paState);
-    } else if (paEnd < pbEnd) {
-      messages.Annex(state->messages());
-    } else {
-      // It's a tie.
-      messages.Annex(paState.messages());
-#if 0
-      if (paEnd > start) {
-        // Both parsers consumed text; retain messages from both.
-        messages.Annex(state->messages());
+    if (backtrack.GetLocation() >= state->GetLocation()) {
+      if (!deferred && backtrack.blockedMessages()) {
+        state->swap(backtrack2);
+        state->messages().swap(messages);
+        state->set_context(context);
+        return pa_.Parse(state);
       }
-#endif
+      state->swap(backtrack);
+    } else {
+      if (!deferred && state->blockedMessages()) {
+        state->swap(backtrack2);
+        state->messages().swap(messages);
+        state->set_context(context);
+        return pb_.Parse(state);
+      }
     }
-    state->messages()->swap(messages);
+    state->set_alternativeDepth(depth)
+        .set_deferMessages(deferred)
+        .set_context(context)
+        .messages().Annex(messages);
     return {};
   }
 
@@ -312,19 +341,19 @@ public:
   constexpr RecoveryParser(const RecoveryParser &) = default;
   constexpr RecoveryParser(const PA &pa, const PB &pb) : pa_{pa}, pb_{pb} {}
   std::optional<resultType> Parse(ParseState *state) const {
-    Messages messages{std::move(*state->messages())};
+    Messages messages{std::move(state->messages())};
     MessageContext context{state->context()};
     ParseState backtrack{*state};
     std::optional<resultType> ax{pa_.Parse(state)};
     messages.Annex(state->messages());
     if (ax.has_value()) {
-      state->messages()->swap(messages);
+      state->messages().swap(messages);
       return ax;
     }
     state->swap(backtrack);
     state->set_context(context);
     std::optional<resultType> bx{pb_.Parse(state)};
-    state->messages()->swap(messages);
+    state->messages().swap(messages);
     if (bx.has_value()) {
       state->set_anyErrorRecovery();
     }

@@ -189,14 +189,14 @@ public:
     return *last_;
   }
 
-  void Annex(Messages *that) {
-    if (!that->messages_.empty()) {
+  void Annex(Messages &that) {
+    if (!that.messages_.empty()) {
       if (messages_.empty()) {
-        messages_ = std::move(that->messages_);
+        messages_ = std::move(that.messages_);
       } else {
-        messages_.splice_after(last_, that->messages_);
+        messages_.splice_after(last_, that.messages_);
       }
-      last_ = that->last_;
+      last_ = that.last_;
     }
   }
 

@@ -22,7 +22,7 @@ public:
   constexpr DebugParser(const char *str, std::size_t n)
     : str_{str}, length_{n} {}
   std::optional<Success> Parse(ParseState *state) const {
-    const CookedSource &cooked{state->messages()->cooked()};
+    const CookedSource &cooked{state->messages().cooked()};
     if (auto context = state->context()) {
       context->Emit(std::cout, cooked);
     }

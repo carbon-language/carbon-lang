@@ -35,7 +35,10 @@ public:
       warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
       warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
       anyErrorRecovery_{that.anyErrorRecovery_},
-      anyConformanceViolation_{that.anyConformanceViolation_} {}
+      anyConformanceViolation_{that.anyConformanceViolation_},
+      alternativeDepth_{that.alternativeDepth_},
+      deferMessages_{that.deferMessages_}, blockedMessages_{
+                                               that.blockedMessages_} {}
   ParseState(ParseState &&that)
     : p_{that.p_}, limit_{that.limit_}, messages_{std::move(that.messages_)},
       context_{std::move(that.context_)}, userState_{that.userState_},
@@ -44,7 +47,10 @@ public:
       warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
       warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
       anyErrorRecovery_{that.anyErrorRecovery_},
-      anyConformanceViolation_{that.anyConformanceViolation_} {}
+      anyConformanceViolation_{that.anyConformanceViolation_},
+      alternativeDepth_{that.alternativeDepth_},
+      deferMessages_{that.deferMessages_}, blockedMessages_{
+                                               that.blockedMessages_} {}
   ParseState &operator=(ParseState &&that) {
     swap(that);
     return *this;
@@ -58,7 +64,7 @@ public:
     std::memcpy(&that, buffer, bytes);
   }
 
-  Messages *messages() { return &messages_; }
+  Messages &messages() { return messages_; }
 
   bool anyErrorRecovery() const { return anyErrorRecovery_; }
   void set_anyErrorRecovery() { anyErrorRecovery_ = true; }
@@ -105,6 +111,20 @@ public:
     return *this;
   }
 
+  int alternativeDepth() const { return alternativeDepth_; }
+  ParseState &set_alternativeDepth(int d) {
+    alternativeDepth_ = d;
+    return *this;
+  }
+
+  bool deferMessages() const { return deferMessages_; }
+  ParseState &set_deferMessages(bool yes) {
+    deferMessages_ = yes;
+    return *this;
+  }
+
+  bool blockedMessages() const { return blockedMessages_; }
+
   const char *GetLocation() const { return p_; }
 
   MessageContext &PushContext(MessageFixedText text) {
@@ -118,18 +138,30 @@ public:
     }
   }
 
-  Message &Say(MessageFixedText t) { return Say(p_, t); }
-  Message &Say(MessageFormattedText &&t) { return Say(p_, std::move(t)); }
-  Message &Say(MessageExpectedText &&t) { return Say(p_, std::move(t)); }
+  void Say(MessageFixedText t) { return Say(p_, t); }
+  void Say(MessageFormattedText &&t) { return Say(p_, std::move(t)); }
+  void Say(MessageExpectedText &&t) { return Say(p_, std::move(t)); }
 
-  Message &Say(const char *at, MessageFixedText t) {
-    return messages_.Put(Message{at, t, context_});
+  void Say(const char *at, MessageFixedText t) {
+    if (deferMessages_) {
+      blockedMessages_ = true;
+    } else {
+      messages_.Put(Message{at, t, context_});
+    }
   }
-  Message &Say(const char *at, MessageFormattedText &&t) {
-    return messages_.Put(Message{at, std::move(t), context_});
+  void Say(const char *at, MessageFormattedText &&t) {
+    if (deferMessages_) {
+      blockedMessages_ = true;
+    } else {
+      messages_.Put(Message{at, std::move(t), context_});
+    }
   }
-  Message &Say(const char *at, MessageExpectedText &&t) {
-    return messages_.Put(Message{at, std::move(t), context_});
+  void Say(const char *at, MessageExpectedText &&t) {
+    if (deferMessages_) {
+      blockedMessages_ = true;
+    } else {
+      messages_.Put(Message{at, std::move(t), context_});
+    }
   }
 
   bool IsAtEnd() const { return p_ >= limit_; }
@@ -176,6 +208,9 @@ private:
   bool warnOnDeprecatedUsage_{false};
   bool anyErrorRecovery_{false};
   bool anyConformanceViolation_{false};
+  int alternativeDepth_{0};
+  bool deferMessages_{false};
+  bool blockedMessages_{false};
   // NOTE: Any additions or modifications to these data members must also be
   // reflected in the copy and move constructors defined at the top of this
   // class definition!

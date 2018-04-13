@@ -82,8 +82,10 @@ void Parsing::Parse() {
       .set_warnOnDeprecatedUsage(options_.isStrictlyStandard)
       .set_userState(&userState);
   parseTree_ = program.Parse(&parseState);
+#if 0 // pmk
   CHECK(
-      !parseState.anyErrorRecovery() || parseState.messages()->AnyFatalError());
+      !parseState.anyErrorRecovery() || parseState.messages().AnyFatalError());
+#endif
   consumedWholeFile_ = parseState.IsAtEnd();
   finalRestingPlace_ = parseState.GetLocation();
   messages_.Annex(parseState.messages());
