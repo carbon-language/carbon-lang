@@ -61,6 +61,19 @@ AlignBlocks("align-blocks",
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
+cl::opt<MacroFusionType>
+AlignMacroOpFusion("align-macro-fusion",
+  cl::desc("fix instruction alignment for macro-fusion (x86 relocation mode)"),
+  cl::init(MFT_HOT),
+  cl::values(clEnumValN(MFT_NONE, "none",
+               "do not insert alignment no-ops for macro-fusion"),
+             clEnumValN(MFT_HOT, "hot",
+               "only insert alignment no-ops on hot execution paths (default)"),
+             clEnumValN(MFT_ALL, "all",
+               "always align instructions to allow macro-fusion")),
+  cl::ZeroOrMore,
+  cl::cat(BoltRelocCategory));
+
 static cl::opt<bool>
 DotToolTipCode("dot-tooltip-code",
   cl::desc("add basic block instructions as tool tips on nodes"),
@@ -1768,6 +1781,8 @@ void BinaryFunction::postProcessCFG() {
       // Eliminate inconsistencies between branch instructions and CFG.
       postProcessBranches();
     }
+
+    calculateMacroOpFusionStats();
   }
 
   // The final cleanup of intermediate structures.
@@ -1779,8 +1794,32 @@ void BinaryFunction::postProcessCFG() {
     for (auto &Inst : *BB)
       BC.MIB->removeAnnotation(Inst, "Offset");
 
-  assert((!isSimple() || validateCFG())
-         && "Invalid CFG detected after post-processing CFG");
+  assert((!isSimple() || validateCFG()) &&
+         "invalid CFG detected after post-processing");
+}
+
+void BinaryFunction::calculateMacroOpFusionStats() {
+  if (!getBinaryContext().isX86())
+    return;
+  for (auto *BB : layout()) {
+    auto II = BB->getMacroOpFusionPair();
+    if (II == BB->end())
+      continue;
+
+    // Check offset of the second instruction.
+    // FIXME: arch-specific.
+    const auto Offset =
+      BC.MIB->getAnnotationWithDefault<uint64_t>(*std::next(II), "Offset", 0);
+    if (!Offset || (getAddress() + Offset) % 64)
+      continue;
+
+    DEBUG(dbgs() << "\nmissed macro-op fusion at address 0x"
+                 << Twine::utohexstr(getAddress() + Offset) << " in function "
+                 << *this << "; executed " << BB->getKnownExecutionCount()
+                 << " times.\n");
+    ++BC.MissedMacroFusionPairs;
+    BC.MissedMacroFusionExecCount += BB->getKnownExecutionCount();
+  }
 }
 
 void BinaryFunction::removeTagsFromProfile() {
@@ -2157,9 +2196,24 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {
       Streamer.EmitCodeAlignment(BB->getAlignment());
     Streamer.EmitLabel(BB->getLabel());
 
+    // Check if special alignment for macro-fusion is needed.
+    bool MayNeedMacroFusionAlignment =
+      (opts::AlignMacroOpFusion == MFT_ALL) ||
+      (opts::AlignMacroOpFusion == MFT_HOT &&
+       BB->getKnownExecutionCount());
+    BinaryBasicBlock::const_iterator MacroFusionPair;
+    if (MayNeedMacroFusionAlignment) {
+      MacroFusionPair = BB->getMacroOpFusionPair();
+      if (MacroFusionPair == BB->end())
+        MayNeedMacroFusionAlignment = false;
+    }
+
     SMLoc LastLocSeen;
+    // Remember if the last instruction emitted was a prefix.
+    bool LastIsPrefix = false;
     for (auto I = BB->begin(), E = BB->end(); I != E; ++I) {
       auto &Instr = *I;
+
       // Handle pseudo instructions.
       if (BC.MIB->isEHLabel(Instr)) {
         const auto *Label = BC.MIB->getTargetSymbol(Instr);
@@ -2172,11 +2226,23 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {
         Streamer.EmitCFIInstruction(*getCFIFor(Instr));
         continue;
       }
+
+      // Handle macro-fusion alignment. If we emitted a prefix as
+      // the last instruction, we should've already emitted the associated
+      // alignment hint, so don't emit it twice.
+      if (MayNeedMacroFusionAlignment && !LastIsPrefix && I == MacroFusionPair){
+        // This assumes the second instruction in the macro-op pair will get
+        // assigned to its own MCRelaxableFragment. Since all JCC instructions
+        // are relaxable, we should be safe.
+        Streamer.EmitNeverAlignCodeAtEnd(/*Alignment to avoid=*/64);
+      }
+
       if (opts::UpdateDebugSections && UnitLineTable.first) {
         LastLocSeen = emitLineInfo(Instr.getLoc(), LastLocSeen);
       }
 
       Streamer.EmitInstruction(Instr, *BC.STI);
+      LastIsPrefix = BC.MIB->isPrefix(Instr);
     }
   }
 

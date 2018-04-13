@@ -245,6 +245,10 @@ public:
   /// Total hotness score according to profiling data for this binary.
   uint64_t TotalScore{0};
 
+  /// Binary-wide stats for macro-fusion.
+  uint64_t MissedMacroFusionPairs{0};
+  uint64_t MissedMacroFusionExecCount{0};
+
   /// Track next available address for new allocatable sections. RewriteInstance
   /// sets this prior to running BOLT passes, so layout passes are aware of the
   /// final addresses functions will have.
@@ -302,6 +306,11 @@ public:
 
   bool isAArch64() const {
     return TheTriple->getArch() == llvm::Triple::aarch64;
+  }
+
+  bool isX86() const {
+    return TheTriple->getArch() == llvm::Triple::x86 ||
+           TheTriple->getArch() == llvm::Triple::x86_64;
   }
 
   /// Iterate over all BinaryData.

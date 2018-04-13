@@ -81,6 +81,7 @@ extern cl::OptionCategory BoltOptCategory;
 extern cl::OptionCategory BoltOutputCategory;
 extern cl::OptionCategory AggregatorCategory;
 
+extern cl::opt<MacroFusionType> AlignMacroOpFusion;
 extern cl::opt<JumpTableSupportLevel> JumpTables;
 
 static cl::opt<bool>
@@ -114,12 +115,6 @@ static cl::opt<std::string>
 BoltProfile("b",
   cl::desc("<bolt profile>"),
   cl::cat(BoltCategory));
-
-cl::opt<bool>
-BoostMacroops("boost-macroops",
-  cl::desc("try to boost macro-op fusions by avoiding the cache-line boundary"),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
 
 static cl::list<std::string>
 BreakFunctionNames("break-funcs",
@@ -961,21 +956,10 @@ void RewriteInstance::run() {
     return;
   }
 
-  // Flip unsupported flags in AArch64 mode
-  if (BC->isAArch64()) {
-    if (opts::BoostMacroops) {
-      opts::BoostMacroops = false;
-      outs() << "BOLT-INFO: disabling -boost-macroops for AArch64\n";
-    }
-    if (opts::RelocationMode != cl::BOU_TRUE) {
-      errs() << "BOLT-WARNING: non-relocation mode for AArch64 is not fully "
-                "supported\n";
-    }
-  }
-
   auto executeRewritePass = [&](const std::set<uint64_t> &NonSimpleFunctions) {
     discoverStorage();
     readSpecialSections();
+    adjustCommandLineOptions();
     discoverFileObjects();
     readDebugInfo();
     disassembleFunctions();
@@ -1770,6 +1754,32 @@ void RewriteInstance::readSpecialSections() {
     EHFrame->dump(outs(), &*BC->MRI, NoneType());
   }
   CFIRdWrt.reset(new CFIReaderWriter(*EHFrame));
+}
+
+void RewriteInstance::adjustCommandLineOptions() {
+  if (BC->isAArch64() && opts::RelocationMode != cl::BOU_TRUE) {
+    errs() << "BOLT-WARNING: non-relocation mode for AArch64 is not fully "
+              "supported\n";
+  }
+
+  if (opts::AlignMacroOpFusion != MFT_NONE && !BC->isX86()) {
+    outs() << "BOLT-INFO: disabling -align-macro-fusion on non-x86 platform\n";
+    opts::AlignMacroOpFusion = MFT_NONE;
+  }
+  if (opts::AlignMacroOpFusion != MFT_NONE &&
+      !BC->HasRelocations) {
+    outs() << "BOLT-INFO: disabling -align-macro-fusion in non-relocation "
+              "mode\n";
+    opts::AlignMacroOpFusion = MFT_NONE;
+  }
+  if (BC->isX86() && BC->HasRelocations &&
+      opts::AlignMacroOpFusion == MFT_HOT &&
+      !DA.started() && BC->DR.getAllFuncsData().empty() &&
+      opts::BoltProfile.empty()) {
+    outs() << "BOLT-INFO: enabling -align-macro-fusion=all since no profile "
+              "was specified\n";
+    opts::AlignMacroOpFusion = MFT_ALL;
+  }
 }
 
 namespace {

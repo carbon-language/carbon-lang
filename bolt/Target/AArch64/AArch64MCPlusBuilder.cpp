@@ -50,6 +50,10 @@ public:
     return false;
   }
 
+  bool isMacroOpFusionPair(ArrayRef<MCInst> Insts) const override {
+    return false;
+  }
+
   bool shortenInstruction(MCInst &) const override {
     return false;
   }

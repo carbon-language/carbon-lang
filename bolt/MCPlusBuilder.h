@@ -692,6 +692,13 @@ public:
     return false;
   }
 
+  /// Return true if a pair of instructions represented by \p Insts
+  /// could be fused into a single uop.
+  virtual bool isMacroOpFusionPair(ArrayRef<MCInst> Insts) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
   /// Given an instruction with (compound) memory operand, evaluate and return
   /// the corresponding values. Note that the operand could be in any position,
   /// but there is an assumption there's only one compound memory operand.
@@ -1354,7 +1361,7 @@ public:
     return getOrCreateAnnotationAs<ValueType>(Inst, Index);
   }
 
-  /// Get an annotation as a specific value.  Assumes that the annotation exists.
+  /// Get an annotation as a specific value. Assumes that the annotation exists.
   /// Use hasAnnotation() if the annotation may not exist.
   template <typename ValueType>
   const ValueType &getAnnotationAs(const MCInst &Inst, unsigned Index) const {
@@ -1364,7 +1371,7 @@ public:
       (*Value)->getValue();
   }
 
-  /// Get an annotation as a specific value.  Assumes that the annotation exists.
+  /// Get an annotation as a specific value. Assumes that the annotation exists.
   /// Use hasAnnotation() if the annotation may not exist.
   template <typename ValueType>
   const ValueType &getAnnotationAs(const MCInst &Inst, StringRef Name) const {

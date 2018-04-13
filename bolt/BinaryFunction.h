@@ -147,6 +147,13 @@ inline raw_ostream &operator<<(raw_ostream &OS, const DynoStats &Stats) {
 
 DynoStats operator+(const DynoStats &A, const DynoStats &B);
 
+/// Types of macro-fusion alignment corrections.
+enum MacroFusionType {
+  MFT_NONE,
+  MFT_HOT,
+  MFT_ALL
+};
+
 enum IndirectCallPromotionType : char {
   ICP_NONE,        /// Don't perform ICP.
   ICP_CALLS,       /// Perform ICP on indirect calls.
@@ -856,6 +863,10 @@ public:
   /// Find the loops in the CFG of the function and store information about
   /// them.
   void calculateLoopInfo();
+
+  /// Calculate missed macro-fusion opportunities and update BinaryContext
+  /// stats.
+  void calculateMacroOpFusionStats();
 
   /// Returns if loop detection has been run for this function.
   bool hasLoopInfo() const {

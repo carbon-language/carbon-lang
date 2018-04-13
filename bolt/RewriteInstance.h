@@ -137,6 +137,9 @@ public:
   /// for exception and stack unwinding information.
   void readSpecialSections();
 
+  /// Adjust supplied command-line options based on input data.
+  void adjustCommandLineOptions();
+
   /// Read relocations from a given section.
   void readRelocations(const object::SectionRef &Section);
 

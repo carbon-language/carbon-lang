@@ -51,6 +51,7 @@ namespace opts {
 extern cl::OptionCategory BoltCategory;
 extern cl::OptionCategory BoltOptCategory;
 
+extern cl::opt<bolt::MacroFusionType> AlignMacroOpFusion;
 extern cl::opt<unsigned> Verbosity;
 extern cl::opt<bolt::BinaryFunction::SplittingType> SplitFunctions;
 extern bool shouldProcess(const bolt::BinaryFunction &Function);
@@ -1570,6 +1571,25 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC,
         errs() << "  " << *Function << '\n';
     } else {
       errs() << " (use -v=1 to see the list).\n";
+    }
+  }
+
+  // Print information on missed macro-fusion opportunities seen on input.
+  if (BC.MissedMacroFusionPairs) {
+    outs() << "BOLT-INFO: the input contains "
+           << BC.MissedMacroFusionPairs << " (dynamic count : "
+           << BC.MissedMacroFusionExecCount
+           << ") missed opportunities for macro-fusion optimization";
+    switch (opts::AlignMacroOpFusion) {
+    case MFT_NONE:
+      outs() << ". Use -align-macro-fusion to fix.\n";
+      break;
+    case MFT_HOT:
+      outs() << ". Will fix instances on a hot path.\n";
+      break;
+    case MFT_ALL:
+      outs() << " that are going to be fixed\n";
+      break;
     }
   }
 }
