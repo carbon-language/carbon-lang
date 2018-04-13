@@ -39,4 +39,13 @@ TEST(Vector, Stride) {
   }
 }
 
+TEST(Vector, ResizeReduction) {
+  Vector<int> v;
+  v.PushBack(0);
+  v.PushBack(0);
+  EXPECT_EQ(v.Size(), 2u);
+  v.Resize(1);
+  EXPECT_EQ(v.Size(), 1u);
+}
+
 }  // namespace __sanitizer
