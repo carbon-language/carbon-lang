@@ -6394,3 +6394,11 @@ let TargetPrefix = "x86" in {
   def int_x86_wbnoinvd : GCCBuiltin<"__builtin_ia32_wbnoinvd">,
       Intrinsic<[], [], []>;
 }
+
+//===----------------------------------------------------------------------===//
+// Cache-line demote
+
+let TargetPrefix = "x86" in {
+  def int_x86_cldemote : GCCBuiltin<"__builtin_ia32_cldemote">,
+      Intrinsic<[], [llvm_ptr_ty], []>;
+}
