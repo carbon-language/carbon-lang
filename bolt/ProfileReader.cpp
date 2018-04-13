@@ -63,7 +63,7 @@ ProfileReader::parseFunctionProfile(BinaryFunction &BF,
 
   if (YamlBF.Hash != BF.hash(true, true)) {
     if (opts::Verbosity >= 1)
-      errs() << "BOLT-WARNING: hash mismatch\n";
+      errs() << "BOLT-WARNING: function hash mismatch\n";
     ProfileMatched = false;
   }
 
