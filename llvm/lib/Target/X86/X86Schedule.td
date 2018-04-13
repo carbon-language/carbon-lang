@@ -183,7 +183,7 @@ def WriteNop : SchedWrite;
 // latencies. Since these latencies are not used for pipeline hazards,
 // they do not need to be exact.
 //
-// The GenericX86Model contains no instruction itineraries
+// The GenericX86Model contains no instruction schedules
 // and disables PostRAScheduler.
 class GenericX86Model : SchedMachineModel {
   let IssueWidth = 4;
