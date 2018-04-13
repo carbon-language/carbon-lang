@@ -74,6 +74,7 @@ public:
   unsigned getRegisterBitWidth(bool Vector) const;
   unsigned getMinVectorRegisterBitWidth() const;
   bool shouldMaximizeVectorBandwidth(bool OptSize) const { return true; }
+  unsigned getMinimumVF(unsigned ElemWidth) const;
 
   bool supportsEfficientVectorElementLoadStore() {
     return false;

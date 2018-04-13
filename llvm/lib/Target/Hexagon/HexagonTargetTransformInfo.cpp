@@ -76,6 +76,10 @@ unsigned HexagonTTIImpl::getMinVectorRegisterBitWidth() const {
   return getST()->useHVXOps() ? getST()->getVectorLength()*8 : 0;
 }
 
+unsigned HexagonTTIImpl::getMinimumVF(unsigned ElemWidth) const {
+  return (8 * getST()->getVectorLength()) / ElemWidth;
+}
+
 unsigned HexagonTTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
       unsigned Alignment, unsigned AddressSpace, const Instruction *I) {
   if (Opcode == Instruction::Load && Src->isVectorTy()) {
