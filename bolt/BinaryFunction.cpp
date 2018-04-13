@@ -3230,9 +3230,10 @@ BinaryFunction::iterator BinaryFunction::insertBasicBlocks(
   const auto StartIndex = getIndex(&*StartBB);
   const auto NumNewBlocks = NewBBs.size();
 
-  auto RetIter = BasicBlocks.insert(BasicBlocks.begin() + StartIndex + 1,
-                                    NumNewBlocks,
-                                    nullptr);
+  BasicBlocks.insert(BasicBlocks.begin() + StartIndex + 1,
+		     NumNewBlocks,
+		     nullptr);
+  auto RetIter = BasicBlocks.begin() + StartIndex + 1;
 
   auto I = StartIndex + 1;
   for (auto &BB : NewBBs) {

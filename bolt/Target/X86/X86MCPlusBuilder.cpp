@@ -1090,8 +1090,6 @@ public:
     return true;
   }
 
-#if defined(__linux__) &&                                                      \
-    (defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
   /// Get the registers used as function parameters.
   /// This function is specific to the x86_64 abi on Linux.
   BitVector getRegsUsedAsParams() const override {
@@ -1143,17 +1141,6 @@ public:
     Regs |= getAliases(X86::XMM0);
     Regs |= getAliases(X86::XMM1);
   }
-
-#else
-  BitVector getRegsUsedAsParams() const override {
-    llvm_unreachable("not implemented");
-    return BitVector();
-  }
-
-  void getCalleeSavedRegs(BitVector &Regs) const override {
-    llvm_unreachable("not implemented");
-  }
-#endif
 
   void getGPRegs(BitVector &Regs, bool IncludeAlias) const override {
     if (IncludeAlias) {

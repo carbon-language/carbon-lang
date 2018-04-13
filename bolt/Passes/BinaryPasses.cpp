@@ -1020,6 +1020,9 @@ void SimplifyConditionalTailCalls::runOnFunctions(
   std::map<uint64_t, BinaryFunction> &BFs,
   std::set<uint64_t> &
 ) {
+  if (!BC.isX86())
+    return;
+
   for (auto &It : BFs) {
     auto &Function = It.second;
 
@@ -1118,7 +1121,7 @@ void Peepholes::runOnFunctions(BinaryContext &BC,
                     [](const char A, const opts::PeepholeOpts B) {
                       return A | B;
                     });
-  if (Opts == opts::PEEP_NONE)
+  if (Opts == opts::PEEP_NONE || !BC.isX86())
     return;
 
   for (auto &It : BFs) {

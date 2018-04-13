@@ -422,8 +422,8 @@ void BinaryFunctionPassManager::runAllPasses(
   // reordering so that it can tell whether calls are forward/backward
   // accurately.
   Manager.registerPass(
-    llvm::make_unique<SimplifyConditionalTailCalls>(PrintSCTC),
-    opts::SimplifyConditionalTailCalls);
+      llvm::make_unique<SimplifyConditionalTailCalls>(PrintSCTC),
+      opts::SimplifyConditionalTailCalls);
 
   Manager.registerPass(llvm::make_unique<AlignerPass>());
 
