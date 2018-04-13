@@ -1757,7 +1757,8 @@ void RewriteInstance::readSpecialSections() {
 }
 
 void RewriteInstance::adjustCommandLineOptions() {
-  if (BC->isAArch64() && opts::RelocationMode != cl::BOU_TRUE) {
+  if (BC->isAArch64() && opts::RelocationMode != cl::BOU_TRUE &&
+      !opts::AggregateOnly) {
     errs() << "BOLT-WARNING: non-relocation mode for AArch64 is not fully "
               "supported\n";
   }

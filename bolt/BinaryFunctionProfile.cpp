@@ -594,7 +594,7 @@ void BinaryFunction::readSampleData() {
   if (!SampleDataOrErr)
     return;
 
-  // Non-LBR mode territory
+  // Basic samples mode territory (without LBR info)
   // First step is to assign BB execution count based on samples from perf
   ProfileMatchRatio = 1.0f;
   removeTagsFromProfile();
@@ -603,7 +603,8 @@ void BinaryFunction::readSampleData() {
   bool NormalizeByCalls = BC.DR.usesEvent("branches");
   static bool NagUser{true};
   if (NagUser) {
-    outs() << "BOLT-INFO: operating with non-LBR profiling data.\n";
+    outs()
+        << "BOLT-INFO: operating with basic samples profiling data (no LBR).\n";
     if (NormalizeByInsnCount) {
       outs() << "BOLT-INFO: normalizing samples by instruction count.\n";
     } else if (NormalizeByCalls) {

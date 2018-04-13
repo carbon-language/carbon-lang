@@ -243,18 +243,18 @@ struct FuncMemData {
 /// it records the address of a perf event and the number of times samples hit
 /// this address.
 struct SampleInfo {
-  Location Address; // FIXME: Change this name to Loc
-  int64_t Occurrences; // FIXME: Variable name is horrible
+  Location Loc;
+  int64_t Hits;
 
-  SampleInfo(Location Address, int64_t Occurrences)
-      : Address(std::move(Address)), Occurrences(Occurrences) {}
+  SampleInfo(Location Loc, int64_t Hits)
+      : Loc(std::move(Loc)), Hits(Hits) {}
 
   bool operator==(const SampleInfo &RHS) const {
-    return Address == RHS.Address;
+    return Loc == RHS.Loc;
   }
 
   bool operator<(const SampleInfo &RHS) const {
-    if (Address < RHS.Address)
+    if (Loc < RHS.Loc)
       return true;
 
     return false;
@@ -278,6 +278,11 @@ struct FuncSampleData {
 
   /// Get the number of samples recorded in [Start, End)
   uint64_t getSamples(uint64_t Start, uint64_t End) const;
+
+  /// Aggregation helper
+  DenseMap<uint64_t, size_t> Index;
+
+  void bumpCount(uint64_t Offset);
 };
 
 //===----------------------------------------------------------------------===//

@@ -90,13 +90,12 @@ void FuncBranchData::appendFrom(const FuncBranchData &FBD, uint64_t Offset) {
 }
 
 void SampleInfo::mergeWith(const SampleInfo &SI) {
-  Occurrences += SI.Occurrences;
+  Hits += SI.Hits;
 }
 
 void SampleInfo::print(raw_ostream &OS) const {
-  OS << Address.IsSymbol << " " << Address.Name << " "
-     << Twine::utohexstr(Address.Offset) << " "
-     << Occurrences << "\n";
+  OS << Loc.IsSymbol << " " << Loc.Name << " " << Twine::utohexstr(Loc.Offset)
+     << " " << Hits << "\n";
 }
 
 uint64_t
@@ -104,19 +103,30 @@ FuncSampleData::getSamples(uint64_t Start, uint64_t End) const {
   assert(std::is_sorted(Data.begin(), Data.end()));
   struct Compare {
     bool operator()(const SampleInfo &SI, const uint64_t Val) const {
-      return SI.Address.Offset < Val;
+      return SI.Loc.Offset < Val;
     }
     bool operator()(const uint64_t Val, const SampleInfo &SI) const {
-      return Val < SI.Address.Offset;
+      return Val < SI.Loc.Offset;
     }
   };
   uint64_t Result{0};
   for (auto I = std::lower_bound(Data.begin(), Data.end(), Start, Compare()),
             E = std::lower_bound(Data.begin(), Data.end(), End, Compare());
        I != E; ++I) {
-    Result += I->Occurrences;
+    Result += I->Hits;
   }
   return Result;
+}
+
+void FuncSampleData::bumpCount(uint64_t Offset) {
+  auto Iter = Index.find(Offset);
+  if (Iter == Index.end()) {
+    Data.emplace_back(Location(true, Name, Offset), 1);
+    Index[Offset] = Data.size() - 1;
+    return;
+  }
+  auto &SI = Data[Iter->second];
+  ++SI.Hits;
 }
 
 void FuncBranchData::bumpBranchCount(uint64_t OffsetFrom, uint64_t OffsetTo,
@@ -525,10 +535,10 @@ std::error_code DataReader::parseInNoLBRMode() {
     SampleInfo SI = Res.get();
 
     // Ignore samples not involving known locations
-    if (!SI.Address.IsSymbol)
+    if (!SI.Loc.IsSymbol)
       continue;
 
-    auto I = GetOrCreateFuncEntry(SI.Address.Name);
+    auto I = GetOrCreateFuncEntry(SI.Loc.Name);
     I->getValue().Data.emplace_back(std::move(SI));
   }
 
@@ -769,8 +779,8 @@ void DataReader::dump() const {
   for (const auto &Func : FuncsToSamples) {
     Diag << Func.getKey() << " samples:\n";
     for (const auto &SI : Func.getValue().Data) {
-      Diag << SI.Address.Name << " " << SI.Address.Offset << " "
-           << SI.Occurrences << "\n";
+      Diag << SI.Loc.Name << " " << SI.Loc.Offset << " "
+           << SI.Hits << "\n";
     }
   }
 

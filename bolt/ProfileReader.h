@@ -22,7 +22,7 @@ namespace bolt {
 class ProfileReader {
 private:
 
-  /// Adjustments for non-LBR profiles.
+  /// Adjustments for basic samples profiles (without LBR).
   bool NormalizeByInsnCount{false};
   bool NormalizeByCalls{false};
 

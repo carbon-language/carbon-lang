@@ -86,8 +86,8 @@ ProfileReader::parseFunctionProfile(BinaryFunction &BF,
 
     auto &BB = *DFSOrder[YamlBB.Index];
 
-    // Non-LBR profile does not have branches information and needs a special
-    // processing.
+    // Basic samples profile (without LBR) does not have branches information
+    // and needs a special processing.
     if (YamlBP.Header.Flags & BinaryFunction::PF_SAMPLE) {
       if (!YamlBB.EventCount) {
         BB.setExecutionCount(0);
