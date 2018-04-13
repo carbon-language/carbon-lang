@@ -2832,7 +2832,7 @@ void CodeGenFunction::EmitOMPTaskBasedDirective(
   // Build list of dependences.
   for (const auto *C : S.getClausesOfKind<OMPDependClause>())
     for (const Expr *IRef : C->varlists())
-      Data.Dependences.push_back(std::make_pair(C->getDependencyKind(), IRef));
+      Data.Dependences.emplace_back(C->getDependencyKind(), IRef);
   auto &&CodeGen = [&Data, &S, CS, &BodyGen, &LastprivateDstsOrigs,
                     CapturedRegion](CodeGenFunction &CGF,
                                     PrePostActionTy &Action) {
@@ -3068,7 +3068,7 @@ void CodeGenFunction::EmitOMPTargetTaskBasedDirective(
   // Build list of dependences.
   for (const auto *C : S.getClausesOfKind<OMPDependClause>())
     for (const Expr *IRef : C->varlists())
-      Data.Dependences.push_back(std::make_pair(C->getDependencyKind(), IRef));
+      Data.Dependences.emplace_back(C->getDependencyKind(), IRef);
   auto &&CodeGen = [&Data, &S, CS, &BodyGen, BPVD, PVD, SVD,
                     &InputInfo](CodeGenFunction &CGF, PrePostActionTy &Action) {
     // Set proper addresses for generated private copies.
