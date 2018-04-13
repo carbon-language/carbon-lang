@@ -7,9 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
 // InstrSchedModel annotations for out-of-order CPUs.
-//
-// These annotations are independent of the itinerary classes defined below.
 
 // Instructions with folded loads need to read the memory operand immediately,
 // but other register operands don't have to be read until the load is ready.
