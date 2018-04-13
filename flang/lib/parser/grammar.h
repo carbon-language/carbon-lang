@@ -1538,67 +1538,37 @@ TYPE_PARSER(construct<CommonBlockObject>{}(name, maybe(arraySpec)))
 TYPE_PARSER(construct<Designator>{}(substring) ||
     construct<Designator>{}(dataReference))
 
-// R902 variable -> designator | function-reference
-// This production is left-recursive in the case of a function reference
-// (via procedure-designator -> proc-component-ref -> scalar-variable)
-// so it is implemented iteratively here.  When a variable is a
-// function-reference, the called function must return a pointer in order
-// to be valid as a variable, but we can't know that yet here.  So we first
-// parse a designator, and if it's not a substring, we then allow an
-// (actual-arg-spec-list), followed by zero or more "% name (a-a-s-list)".
-//
-// It is not valid Fortran to immediately invoke the result of a call to
-// a function that returns a bare pointer to a function, although that would
-// be a reasonable extension.  This restriction means that adjacent actual
-// argument lists cannot occur (e.g.*, f()()).  One must instead return a
-// pointer to a derived type instance containing a procedure pointer
-// component in order to accomplish roughly the same thing.
-//
-// Some function references with dummy arguments present will be
-// misrecognized as array element designators and need to be corrected
-// in semantic analysis.
-template<> std::optional<Variable> Parser<Variable>::Parse(ParseState *state) {
-  std::optional<Designator> desig{designator.Parse(state)};
-  if (!desig.has_value()) {
+constexpr struct OldStructureComponentName {
+  using resultType = Name;
+  static std::optional<Name> Parse(ParseState *state) {
+    if (std::optional<Name> n{name.Parse(state)}) {
+      if (const auto *user = state->userState()) {
+        if (user->IsOldStructureComponent(n->source)) {
+          return n;
+        }
+      }
+    }
     return {};
   }
-  if (!desig->EndsInBareName()) {
-    return {Variable{Indirection<Designator>{std::move(desig.value())}}};
-  }
-  static constexpr auto argList = parenthesized(optionalList(actualArgSpec));
-  static constexpr auto tryArgList = attempt(argList);
-  auto args = tryArgList.Parse(state);
-  if (!args.has_value()) {
-    return {Variable{Indirection<Designator>{std::move(desig.value())}}};
-  }
+} oldStructureComponentName;
 
-  // Create a procedure-designator from the original designator and
-  // combine it with the actual arguments as a function-reference.
-  ProcedureDesignator pd{desig.value().ConvertToProcedureDesignator()};
-  Variable var{Indirection<FunctionReference>{
-      Call{std::move(pd), std::move(args.value())}}};
+constexpr auto percentOrDot = "%"_tok ||
+    // legacy VAX extension for RECORD field access
+    extension("."_tok / lookAhead(oldStructureComponentName));
 
-  // Repeatedly accept additional function calls through components of
-  // a derived type result.
-  struct ResultComponentCall {
-    ResultComponentCall(ResultComponentCall &&) = default;
-    ResultComponentCall &operator=(ResultComponentCall &&) = default;
-    ResultComponentCall(Name &&n, std::list<ActualArgSpec> &&as)
-      : name{std::move(n)}, args(std::move(as)) {}
-    Name name;
-    std::list<ActualArgSpec> args;
-  };
-  static constexpr auto resultComponentCall =
-      attempt("%" >> construct<ResultComponentCall>{}(name, argList));
-  while (auto more = resultComponentCall.Parse(state)) {
-    var = Variable{Indirection<FunctionReference>{Call{
-        ProcedureDesignator{ProcComponentRef{
-            Scalar<Variable>{std::move(var)}, std::move(more.value().name)}},
-        std::move(more.value().args)}}};
-  }
-
-  return {std::move(var)};
-}
+// R902 variable -> designator | function-reference
+// This production appears to be left-recursive in the grammar via
+//   function-reference ->  procedure-designator -> proc-component-ref ->
+//     scalar-variable
+// and would be so if we were to allow functions to be called via procedure
+// pointer components within derived type results of other function references
+// (a reasonable extension, esp. in the case of procedure pointer components
+// that are NOPASS).  However, Fortran constrains the use of a variable in a
+// proc-component-ref to be a data-ref without coindices (C1027).
+// Some array element references will be misrecognized as function references.
+TYPE_PARSER(construct<Variable>{}(
+                indirect(functionReference / !"("_ch) / !percentOrDot) ||
+    construct<Variable>{}(indirect(designator)))
 
 // R904 logical-variable -> variable
 // Appears only as part of scalar-logical-variable.
@@ -1642,24 +1612,6 @@ TYPE_PARSER(space >> "."_ch >>
 // R911 data-ref -> part-ref [% part-ref]...
 // R914 coindexed-named-object -> data-ref
 // R917 array-element -> data-ref
-constexpr struct StructureComponentName {
-  using resultType = Name;
-  static std::optional<Name> Parse(ParseState *state) {
-    if (std::optional<Name> n{name.Parse(state)}) {
-      if (const auto *user = state->userState()) {
-        if (user->IsOldStructureComponent(n->source)) {
-          return n;
-        }
-      }
-    }
-    return {};
-  }
-} structureComponentName;
-
-constexpr auto percentOrDot = "%"_tok ||
-    // legacy VAX extension for RECORD field access
-    extension("."_tok / lookAhead(structureComponentName));
-
 TYPE_PARSER(construct<DataReference>{}(
     nonemptySeparated(Parser<PartRef>{}, percentOrDot)))
 
@@ -2128,8 +2080,8 @@ TYPE_PARSER(construct<BoundsSpec>{}(boundExpr / ":"))
 TYPE_PARSER(construct<BoundsRemapping>{}(boundExpr / ":", boundExpr))
 
 // R1039 proc-component-ref -> scalar-variable % procedure-component-name
-// N.B. Never parsed as such; instead, reconstructed as necessary from
-// parses of variable.
+// C1027 constrains the scalar-variable to be a data-ref without coindices.
+TYPE_PARSER(construct<ProcComponentRef>{}(structureComponent))
 
 // R1041 where-stmt -> WHERE ( mask-expr ) where-assignment-stmt
 // R1045 where-assignment-stmt -> assignment-stmt
@@ -3445,59 +3397,18 @@ TYPE_PARSER("INTRINSIC" >> maybe("::"_tok) >>
     construct<IntrinsicStmt>{}(nonemptyList(name)))
 
 // R1520 function-reference -> procedure-designator ( [actual-arg-spec-list] )
-// Without recourse to a symbol table, a parse of the production for
-// variable as part of a procedure-designator will overshoot and consume
-// any actual argument list, since a pointer-valued function-reference is
-// acceptable as an alternative for a variable (since Fortran 2008).
-template<>
-std::optional<FunctionReference> Parser<FunctionReference>::Parse(
-    ParseState *state) {
-  state->PushContext("function reference"_en_US);
-  std::optional<Variable> var{variable.Parse(state)};
-  if (var.has_value()) {
-    if (auto funcref = std::get_if<Indirection<FunctionReference>>(&var->u)) {
-      // The parsed variable is a function-reference, so just return it.
-      state->PopContext();
-      return {std::move(**funcref)};
-    }
-    Designator *desig{&*std::get<Indirection<Designator>>(var->u)};
-    if (std::optional<Call> call{desig->ConvertToCall(state->userState())}) {
-      if (!std::get<std::list<ActualArgSpec>>(call.value().t).empty()) {
-        // Parsed a designator that ended with a nonempty list of subscripts
-        // that have all been converted to actual arguments.
-        state->PopContext();
-        return {FunctionReference{std::move(call.value())}};
-      }
-    }
-    state->Say("expected (arguments)"_err_en_US);
-  }
-  state->PopContext();
-  return {};
-}
+TYPE_PARSER(construct<FunctionReference>{}(construct<Call>{}(
+    Parser<ProcedureDesignator>{}, parenthesized(optionalList(actualArgSpec)))))
 
 // R1521 call-stmt -> CALL procedure-designator [( [actual-arg-spec-list] )]
-template<> std::optional<CallStmt> Parser<CallStmt>::Parse(ParseState *state) {
-  static constexpr auto parser =
-      inContext("CALL statement"_en_US, "CALL" >> variable);
-  std::optional<Variable> var{parser.Parse(state)};
-  if (var.has_value()) {
-    if (auto funcref = std::get_if<Indirection<FunctionReference>>(&var->u)) {
-      state->PopContext();
-      return {CallStmt{std::move((*funcref)->v)}};
-    }
-    Designator *desig{&*std::get<Indirection<Designator>>(var->u)};
-    if (std::optional<Call> call{desig->ConvertToCall(state->userState())}) {
-      return {CallStmt{std::move(call.value())}};
-    }
-  }
-  return {};
-}
+TYPE_PARSER(construct<CallStmt>{}(
+    construct<Call>{}("CALL" >> Parser<ProcedureDesignator>{},
+        defaulted(parenthesized(optionalList(actualArgSpec))))))
 
 // R1522 procedure-designator ->
 //         procedure-name | proc-component-ref | data-ref % binding-name
-// N.B. Not implemented as an independent production; instead, instances
-// of procedure-designator must be reconstructed from portions of parses of
-// variable.
+TYPE_PARSER(construct<ProcedureDesignator>{}(Parser<ProcComponentRef>{}) ||
+    construct<ProcedureDesignator>{}(name))
 
 // R1523 actual-arg-spec -> [keyword =] actual-arg
 TYPE_PARSER(

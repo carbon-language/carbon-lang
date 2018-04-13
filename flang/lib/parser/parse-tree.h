@@ -1536,8 +1536,6 @@ using VectorSubscript = IntExpr;
 // R920 section-subscript -> subscript | subscript-triplet | vector-subscript
 struct SectionSubscript {
   UNION_CLASS_BOILERPLATE(SectionSubscript);
-  bool CanConvertToActualArgument() const;
-  ActualArg ConvertToActualArgument();
   std::variant<Subscript, SubscriptTriplet, VectorSubscript> u;
 };
 
@@ -1659,9 +1657,6 @@ struct Expr {
   explicit Expr(Designator &&);
   explicit Expr(FunctionReference &&);
 
-  std::optional<Variable> ConvertToVariable();
-  ActualArg ConvertToActualArgument();
-
   std::variant<Indirection<CharLiteralConstantSubstring>, LiteralConstant,
       Indirection<Designator>, ArrayConstructor, StructureConstructor,
       Indirection<TypeParamInquiry>, Indirection<FunctionReference>,
@@ -1716,8 +1711,6 @@ struct CharLiteralConstantSubstring {
 struct Designator {
   UNION_CLASS_BOILERPLATE(Designator);
   bool EndsInBareName() const;
-  ProcedureDesignator ConvertToProcedureDesignator();
-  std::optional<Call> ConvertToCall(const UserState *ustate = nullptr);
   std::variant<ObjectName, DataReference, Substring> u;
 };
 
@@ -1742,12 +1735,6 @@ using ScalarDefaultCharVariable = Scalar<DefaultChar<Variable>>;
 // Appears only as part of scalar-int-variable.
 using ScalarIntVariable = Scalar<Integer<Variable>>;
 
-// R1039 proc-component-ref -> scalar-variable % procedure-component-name
-struct ProcComponentRef {
-  TUPLE_CLASS_BOILERPLATE(ProcComponentRef);
-  std::tuple<Scalar<Variable>, Name> t;
-};
-
 // R913 structure-component -> data-ref
 struct StructureComponent {
   BOILERPLATE(StructureComponent);
@@ -1755,6 +1742,12 @@ struct StructureComponent {
     : base{std::move(dr)}, component(std::move(n)) {}
   DataReference base;
   Name component;
+};
+
+// R1039 proc-component-ref -> scalar-variable % procedure-component-name
+// C1027 constrains the scalar-variable to be a data-ref without coindices.
+struct ProcComponentRef {
+  WRAPPER_CLASS_BOILERPLATE(ProcComponentRef, Scalar<StructureComponent>);
 };
 
 // R914 coindexed-named-object -> data-ref

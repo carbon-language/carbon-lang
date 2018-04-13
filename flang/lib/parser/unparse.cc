@@ -803,9 +803,6 @@ public:
   void Unparse(const BoundsRemapping &x) {  // R1036
     Walk(x.t, ":");
   }
-  void Unparse(const ProcComponentRef &x) {  // R1039
-    Walk(std::get<Scalar<Variable>>(x.t)), Put('%'), Walk(std::get<Name>(x.t));
-  }
   void Unparse(const WhereStmt &x) {  // R1041, R1045, R1046
     Word("WHERE ("), Walk(x.t, ") ");
   }
