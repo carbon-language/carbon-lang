@@ -667,7 +667,7 @@ public:
   }
 
   void Unparse(const Substring &x) {  // R908, R909
-    Walk(std::get<DataReference>(x.t));
+    Walk(std::get<DataRef>(x.t));
     Put('('), Walk(std::get<SubstringRange>(x.t)), Put(')');
   }
   void Unparse(const CharLiteralConstantSubstring &x) {
@@ -788,7 +788,7 @@ public:
     Walk(x.t, " = ");
   }
   void Unparse(const PointerAssignmentStmt &x) {  // R1033, R1034, R1038
-    Walk(std::get<Variable>(x.t));
+    Walk(std::get<DataRef>(x.t));
     std::visit(
         visitors{[&](const std::list<BoundsRemapping> &y) {
                    Put('('), Walk(y), Put(')');

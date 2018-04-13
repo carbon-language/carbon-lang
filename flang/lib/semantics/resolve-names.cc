@@ -347,14 +347,14 @@ public:
   }
   void Post(const parser::DimensionStmt::Declaration &);
 
-  const parser::Name *GetVariableName(const parser::DataReference &x) {
+  const parser::Name *GetVariableName(const parser::DataRef &x) {
     return std::get_if<parser::Name>(&x.u);
   }
   const parser::Name *GetVariableName(const parser::Designator &x) {
     return std::visit(
         parser::visitors{
             [&](const parser::ObjectName &x) { return &x; },
-            [&](const parser::DataReference &x) { return GetVariableName(x); },
+            [&](const parser::DataRef &x) { return GetVariableName(x); },
             [&](const auto &) {
               return static_cast<const parser::Name *>(nullptr);
             },

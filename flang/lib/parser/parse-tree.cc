@@ -17,7 +17,7 @@ ImportStmt::ImportStmt(Kind &&k, std::list<Name> &&n)
 bool Designator::EndsInBareName() const {
   return std::visit(
       visitors{[](const ObjectName &) { return true; },
-          [](const DataReference &dr) {
+          [](const DataRef &dr) {
             return std::holds_alternative<Name>(dr.u) ||
                 std::holds_alternative<Indirection<StructureComponent>>(dr.u);
           },
@@ -26,8 +26,7 @@ bool Designator::EndsInBareName() const {
 }
 
 // R911 data-ref -> part-ref [% part-ref]...
-DataReference::DataReference(std::list<PartRef> &&prl)
-  : u{std::move(prl.front().name)} {
+DataRef::DataRef(std::list<PartRef> &&prl) : u{std::move(prl.front().name)} {
   for (bool first{true}; !prl.empty(); first = false, prl.pop_front()) {
     PartRef &pr{prl.front()};
     if (!first) {

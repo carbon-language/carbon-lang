@@ -101,7 +101,7 @@ constexpr Parser<OldParameterStmt> oldParameterStmt;
 constexpr Parser<Designator> designator;  // R901
 constexpr Parser<Variable> variable;  // R902
 constexpr Parser<Substring> substring;  // R908
-constexpr Parser<DataReference> dataReference;  // R911, R914, R917
+constexpr Parser<DataRef> dataRef;  // R911, R914, R917
 constexpr Parser<StructureComponent> structureComponent;  // R913
 constexpr Parser<StatVariable> statVariable;  // R929
 constexpr Parser<StatOrErrmsg> statOrErrmsg;  // R942 & R1165
@@ -1535,8 +1535,8 @@ TYPE_PARSER(construct<CommonBlockObject>{}(name, maybe(arraySpec)))
 //  each part is a name, maybe a (section-subscript-list), and
 //  maybe an [image-selector].
 //  If it's a substring, it ends with (substring-range).
-TYPE_PARSER(construct<Designator>{}(substring) ||
-    construct<Designator>{}(dataReference))
+TYPE_PARSER(
+    construct<Designator>{}(substring) || construct<Designator>{}(dataRef))
 
 constexpr struct OldStructureComponentName {
   using resultType = Name;
@@ -1590,8 +1590,8 @@ constexpr auto scalarIntVariable = scalar(integer(variable));
 //        scalar-variable-name | array-element | coindexed-named-object |
 //        scalar-structure-component | scalar-char-literal-constant |
 //        scalar-named-constant
-TYPE_PARSER(construct<Substring>{}(
-    dataReference, parenthesized(Parser<SubstringRange>{})))
+TYPE_PARSER(
+    construct<Substring>{}(dataRef, parenthesized(Parser<SubstringRange>{})))
 
 TYPE_PARSER(construct<CharLiteralConstantSubstring>{}(
     charLiteralConstant, parenthesized(Parser<SubstringRange>{})))
@@ -1612,8 +1612,8 @@ TYPE_PARSER(space >> "."_ch >>
 // R911 data-ref -> part-ref [% part-ref]...
 // R914 coindexed-named-object -> data-ref
 // R917 array-element -> data-ref
-TYPE_PARSER(construct<DataReference>{}(
-    nonemptySeparated(Parser<PartRef>{}, percentOrDot)))
+TYPE_PARSER(
+    construct<DataRef>{}(nonemptySeparated(Parser<PartRef>{}, percentOrDot)))
 
 // R912 part-ref -> part-name [( section-subscript-list )] [image-selector]
 TYPE_PARSER(construct<PartRef>{}(name,
@@ -1622,12 +1622,12 @@ TYPE_PARSER(construct<PartRef>{}(name,
 
 // R913 structure-component -> data-ref
 TYPE_PARSER(construct<StructureComponent>{}(
-    construct<DataReference>{}(some(Parser<PartRef>{} / percentOrDot)), name))
+    construct<DataRef>{}(some(Parser<PartRef>{} / percentOrDot)), name))
 
 // R915 complex-part-designator -> designator % RE | designator % IM
 // %RE and %IM are initially recognized as structure components.
 constexpr auto complexPartDesignator =
-    construct<ComplexPartDesignator>{}(dataReference);
+    construct<ComplexPartDesignator>{}(dataRef);
 
 // R916 type-param-inquiry -> designator % type-param-name
 // Type parameter inquiries are initially recognized as structure components.
@@ -2061,15 +2061,17 @@ TYPE_CONTEXT_PARSER("assignment statement"_en_US,
 //         proc-pointer-object => proc-target
 // R1034 data-pointer-object ->
 //         variable-name | scalar-variable % data-pointer-component-name
+//   C1022 a scalar-variable shall be a data-ref
+//   C1024 a data-pointer-object shall not be a coindexed object
 // R1038 proc-pointer-object -> proc-pointer-name | proc-component-ref
 //
 // A distinction can't be made at the time of the initial parse between
 // data-pointer-object and proc-pointer-object, or between data-target
 // and proc-target.
 TYPE_CONTEXT_PARSER("pointer assignment statement"_en_US,
-    construct<PointerAssignmentStmt>{}(variable,
+    construct<PointerAssignmentStmt>{}(dataRef,
         parenthesized(nonemptyList(Parser<BoundsRemapping>{})), "=>" >> expr) ||
-        construct<PointerAssignmentStmt>{}(variable,
+        construct<PointerAssignmentStmt>{}(dataRef,
             defaulted(parenthesized(nonemptyList(Parser<BoundsSpec>{}))),
             "=>" >> expr))
 
@@ -2080,7 +2082,7 @@ TYPE_PARSER(construct<BoundsSpec>{}(boundExpr / ":"))
 TYPE_PARSER(construct<BoundsRemapping>{}(boundExpr / ":", boundExpr))
 
 // R1039 proc-component-ref -> scalar-variable % procedure-component-name
-// C1027 constrains the scalar-variable to be a data-ref without coindices.
+//   C1027 the scalar-variable must be a data-ref without coindices.
 TYPE_PARSER(construct<ProcComponentRef>{}(structureComponent))
 
 // R1041 where-stmt -> WHERE ( mask-expr ) where-assignment-stmt

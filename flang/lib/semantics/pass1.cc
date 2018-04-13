@@ -783,10 +783,10 @@ public:
       auto & arglist  = unconst(func_stmt.args());
       auto & rhs      = GetValue(unconst(func_stmt.expr()));               
                                  
-      psr::DataReference base(...);
+      psr::DataRef base(...);
       std::list<SectionSubscript> sslist;
       for ( Name &index : arglist ){
-        // SectionSubscript -> Expr -> Designator -> DataReference -> Name = index
+        // SectionSubscript -> Expr -> Designator -> DataRef -> Name = index
         SectionSubscript ss(...);
         sslist.push_back(ss); 
       }
