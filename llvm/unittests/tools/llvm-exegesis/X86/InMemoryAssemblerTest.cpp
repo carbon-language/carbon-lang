@@ -76,7 +76,7 @@ private:
   while(0)
 
 
-TEST_F(MachineFunctionGeneratorTest, DISABLED_JitFunction) {
+TEST_F(MachineFunctionGeneratorTest, JitFunction) {
   SKIP_UNSUPPORTED_PLATFORM;
   JitFunctionContext Context(createTargetMachine());
   JitFunction Function(std::move(Context), {});
@@ -86,7 +86,7 @@ TEST_F(MachineFunctionGeneratorTest, DISABLED_JitFunction) {
   // Function();
 }
 
-TEST_F(MachineFunctionGeneratorTest, DISABLED_JitFunctionXOR32rr) {
+TEST_F(MachineFunctionGeneratorTest, JitFunctionXOR32rr) {
   SKIP_UNSUPPORTED_PLATFORM;
   JitFunctionContext Context(createTargetMachine());
   JitFunction Function(
@@ -96,7 +96,7 @@ TEST_F(MachineFunctionGeneratorTest, DISABLED_JitFunctionXOR32rr) {
   // Function();
 }
 
-TEST_F(MachineFunctionGeneratorTest, DISABLED_JitFunctionMOV64ri) {
+TEST_F(MachineFunctionGeneratorTest, JitFunctionMOV64ri) {
   SKIP_UNSUPPORTED_PLATFORM;
   JitFunctionContext Context(createTargetMachine());
   JitFunction Function(std::move(Context),
@@ -106,7 +106,7 @@ TEST_F(MachineFunctionGeneratorTest, DISABLED_JitFunctionMOV64ri) {
   // Function();
 }
 
-TEST_F(MachineFunctionGeneratorTest, DISABLED_JitFunctionMOV32ri) {
+TEST_F(MachineFunctionGeneratorTest, JitFunctionMOV32ri) {
   SKIP_UNSUPPORTED_PLATFORM;
   JitFunctionContext Context(createTargetMachine());
   JitFunction Function(std::move(Context),
