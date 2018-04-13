@@ -82,6 +82,7 @@ private:
 
   void processType(DIType *DT);
   void processSubprogram(DISubprogram *SP);
+  void processCompileUnit(DICompileUnit *CU);
   void processScope(DIScope *Scope);
   bool addCompileUnit(DICompileUnit *CU);
   bool addGlobalVariable(DIGlobalVariableExpression *DIG);

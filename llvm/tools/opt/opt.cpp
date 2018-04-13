@@ -755,20 +755,22 @@ int main(int argc, char **argv) {
   // Before executing passes, print the final values of the LLVM options.
   cl::PrintOptionValues();
 
-  // If requested, run all passes again with the same pass manager to catch
-  // bugs caused by persistent state in the passes
-  if (RunTwice) {
+  if (!RunTwice) {
+    // Now that we have all of the passes ready, run them.
+    Passes.run(*M);
+  } else {
+    // If requested, run all passes twice with the same pass manager to catch
+    // bugs caused by persistent state in the passes.
     std::unique_ptr<Module> M2(CloneModule(*M));
-    Passes.run(*M2);
+    // Run all passes on the original module first, so the second run processes
+    // the clone to catch CloneModule bugs.
+    Passes.run(*M);
     CompileTwiceBuffer = Buffer;
     Buffer.clear();
-  }
 
-  // Now that we have all of the passes ready, run them.
-  Passes.run(*M);
+    Passes.run(*M2);
 
-  // Compare the two outputs and make sure they're the same
-  if (RunTwice) {
+    // Compare the two outputs and make sure they're the same
     assert(Out);
     if (Buffer.size() != CompileTwiceBuffer.size() ||
         (memcmp(Buffer.data(), CompileTwiceBuffer.data(), Buffer.size()) !=

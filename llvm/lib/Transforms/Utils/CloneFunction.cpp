@@ -175,7 +175,7 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
 
     // Create a new basic block and copy instructions into it!
     BasicBlock *CBB = CloneBasicBlock(&BB, VMap, NameSuffix, NewFunc, CodeInfo,
-                                      SP ? &DIFinder : nullptr);
+                                      ModuleLevelChanges ? &DIFinder : nullptr);
 
     // Add basic block mapping.
     VMap[&BB] = CBB;
@@ -202,6 +202,9 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
       VMap.MD()[ISP].reset(ISP);
     }
   }
+
+  for (DICompileUnit *CU : DIFinder.compile_units())
+    VMap.MD()[CU].reset(CU);
 
   for (auto *Type : DIFinder.types()) {
     VMap.MD()[Type].reset(Type);
