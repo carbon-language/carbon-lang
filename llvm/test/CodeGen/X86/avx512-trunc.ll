@@ -775,9 +775,8 @@ define <16 x i8> @usat_trunc_db_256(<8 x i32> %x) {
 ; %res = trunc %d
 
 
-
-define void @smax_usat_trunc_wb_256_mem(<16 x i16> %i, <16 x i8>* %res) {
-; KNL-LABEL: smax_usat_trunc_wb_256_mem:
+define void @smax_usat_trunc_wb_256_mem1(<16 x i16> %i, <16 x i8>* %res) {
+; KNL-LABEL: smax_usat_trunc_wb_256_mem1:
 ; KNL:       ## %bb.0:
 ; KNL-NEXT:    vpxor %xmm1, %xmm1, %xmm1
 ; KNL-NEXT:    vpmaxsw %ymm1, %ymm0, %ymm0
@@ -787,7 +786,7 @@ define void @smax_usat_trunc_wb_256_mem(<16 x i16> %i, <16 x i8>* %res) {
 ; KNL-NEXT:    vzeroupper
 ; KNL-NEXT:    retq
 ;
-; SKX-LABEL: smax_usat_trunc_wb_256_mem:
+; SKX-LABEL: smax_usat_trunc_wb_256_mem1:
 ; SKX:       ## %bb.0:
 ; SKX-NEXT:    vpxor %xmm1, %xmm1, %xmm1
 ; SKX-NEXT:    vpmaxsw %ymm1, %ymm0, %ymm0
@@ -799,6 +798,35 @@ define void @smax_usat_trunc_wb_256_mem(<16 x i16> %i, <16 x i8>* %res) {
   %x2 = select <16 x i1> %x1, <16 x i16> %i, <16 x i16> <i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0>
   %x3 = icmp slt <16 x i16> %x2, <i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255>
   %x5 = select <16 x i1> %x3, <16 x i16> %x2, <16 x i16> <i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255>
+  %x6 = trunc <16 x i16> %x5 to <16 x i8>
+  store <16 x i8> %x6, <16 x i8>* %res, align 1
+  ret void
+}
+
+; Test for smax(smin(x, C2), C1).
+define void @smax_usat_trunc_wb_256_mem2(<16 x i16> %i, <16 x i8>* %res) {
+; KNL-LABEL: smax_usat_trunc_wb_256_mem2:
+; KNL:       ## %bb.0:
+; KNL-NEXT:    vpminsw {{.*}}(%rip), %ymm0, %ymm0
+; KNL-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; KNL-NEXT:    vpmaxsw %ymm1, %ymm0, %ymm0
+; KNL-NEXT:    vpmovsxwd %ymm0, %zmm0
+; KNL-NEXT:    vpmovdb %zmm0, (%rdi)
+; KNL-NEXT:    vzeroupper
+; KNL-NEXT:    retq
+;
+; SKX-LABEL: smax_usat_trunc_wb_256_mem2:
+; SKX:       ## %bb.0:
+; SKX-NEXT:    vpminsw {{.*}}(%rip), %ymm0, %ymm0
+; SKX-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; SKX-NEXT:    vpmaxsw %ymm1, %ymm0, %ymm0
+; SKX-NEXT:    vpmovwb %ymm0, (%rdi)
+; SKX-NEXT:    vzeroupper
+; SKX-NEXT:    retq
+  %x1 = icmp slt <16 x i16> %i, <i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255>
+  %x2 = select <16 x i1> %x1, <16 x i16> %i, <16 x i16> <i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255, i16 255>
+  %x3 = icmp sgt <16 x i16> %x2, <i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0>
+  %x5 = select <16 x i1> %x3, <16 x i16> %x2, <16 x i16> <i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0>
   %x6 = trunc <16 x i16> %x5 to <16 x i8>
   store <16 x i8> %x6, <16 x i8>* %res, align 1
   ret void
