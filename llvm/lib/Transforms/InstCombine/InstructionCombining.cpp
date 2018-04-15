@@ -487,28 +487,12 @@ static bool RightDistributesOverLeft(Instruction::BinaryOps LOp,
   if (Instruction::isCommutative(ROp))
     return LeftDistributesOverRight(ROp, LOp);
 
-  switch (LOp) {
-  default:
-    return false;
-  // (X >> Z) & (Y >> Z)  -> (X&Y) >> Z  for all shifts.
-  // (X >> Z) | (Y >> Z)  -> (X|Y) >> Z  for all shifts.
-  // (X >> Z) ^ (Y >> Z)  -> (X^Y) >> Z  for all shifts.
-  case Instruction::And:
-  case Instruction::Or:
-  case Instruction::Xor:
-    switch (ROp) {
-    default:
-      return false;
-    case Instruction::Shl:
-    case Instruction::LShr:
-    case Instruction::AShr:
-      return true;
-    }
-  }
+  // (X {&|^} Y) >> Z --> (X >> Z) {&|^} (Y >> Z) for all shifts.
+  return Instruction::isBitwiseLogicOp(LOp) && Instruction::isShift(ROp);
+
   // TODO: It would be nice to handle division, aka "(X + Y)/Z = X/Z + Y/Z",
   // but this requires knowing that the addition does not overflow and other
   // such subtleties.
-  return false;
 }
 
 /// This function returns identity value for given opcode, which can be used to
