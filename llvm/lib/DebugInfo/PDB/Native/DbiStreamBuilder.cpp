@@ -37,6 +37,14 @@ void DbiStreamBuilder::setAge(uint32_t A) { Age = A; }
 
 void DbiStreamBuilder::setBuildNumber(uint16_t B) { BuildNumber = B; }
 
+void DbiStreamBuilder::setBuildNumber(uint8_t Major, uint8_t Minor) {
+  BuildNumber = (uint16_t(Major) << DbiBuildNo::BuildMajorShift) &
+                DbiBuildNo::BuildMajorMask;
+  BuildNumber |= (uint16_t(Minor) << DbiBuildNo::BuildMinorShift) &
+                 DbiBuildNo::BuildMinorMask;
+  BuildNumber |= DbiBuildNo::NewVersionFormatMask;
+}
+
 void DbiStreamBuilder::setPdbDllVersion(uint16_t V) { PdbDllVersion = V; }
 
 void DbiStreamBuilder::setPdbDllRbld(uint16_t R) { PdbDllRbld = R; }
@@ -251,7 +259,7 @@ Error DbiStreamBuilder::finalize() {
   H->TypeServerSize = 0;
   H->SymRecordStreamIndex = SymRecordStreamIndex;
   H->PublicSymbolStreamIndex = PublicsStreamIndex;
-  H->MFCTypeServerIndex = kInvalidStreamIndex;
+  H->MFCTypeServerIndex = 0; // Not sure what this is, but link.exe writes 0.
   H->GlobalSymbolStreamIndex = GlobalsStreamIndex;
 
   Header = H;
