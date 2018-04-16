@@ -6799,16 +6799,13 @@ public:
       if (const auto *VD =
               dyn_cast_or_null<VarDecl>(I->getAssociatedDeclaration())) {
         if (llvm::Optional<OMPDeclareTargetDeclAttr::MapTypeTy> Res =
-            isDeclareTargetDeclaration(VD)) {
-          assert(*Res == OMPDeclareTargetDeclAttr::MT_Link &&
-                 "Declare target link is expected.");
-          // Avoid warning in release build.
-          (void)*Res;
-          IsLink = true;
-          BP = CGF.CGM.getOpenMPRuntime()
-                   .getAddrOfDeclareTargetLink(VD)
-                   .getPointer();
-        }
+            isDeclareTargetDeclaration(VD))
+          if (*Res == OMPDeclareTargetDeclAttr::MT_Link) {
+            IsLink = true;
+            BP = CGF.CGM.getOpenMPRuntime()
+                     .getAddrOfDeclareTargetLink(VD)
+                     .getPointer();
+          }
       }
 
       // If the variable is a pointer and is being dereferenced (i.e. is not
