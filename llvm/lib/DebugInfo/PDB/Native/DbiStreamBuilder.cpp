@@ -53,6 +53,11 @@ void DbiStreamBuilder::setFlags(uint16_t F) { Flags = F; }
 
 void DbiStreamBuilder::setMachineType(PDB_Machine M) { MachineType = M; }
 
+void DbiStreamBuilder::setMachineType(COFF::MachineTypes M) {
+  // These enums are mirrors of each other, so we can just cast the value.
+  MachineType = static_cast<pdb::PDB_Machine>(static_cast<unsigned>(M));
+}
+
 void DbiStreamBuilder::setSectionMap(ArrayRef<SecMapEntry> SecMap) {
   SectionMap = SecMap;
 }
