@@ -37,6 +37,7 @@ class SImmMulVlOperand<int Bits, int Scale> : AsmOperandClass {
 
 def SImm4MulVlOperand : SImmMulVlOperand<4,1>;
 def SImm4Scale2MulVlOperand : SImmMulVlOperand<4,2>;
+def SImm4Scale3MulVlOperand : SImmMulVlOperand<4,3>;
 
 def simm4MulVl : Operand<i64>, ImmLeaf<i64, [{ return Imm >= -8 && Imm < 8; }]> {
   let DecoderMethod = "DecodeSImm<4>";
@@ -49,6 +50,14 @@ def simm4Scale2MulVl : Operand<i64>, ImmLeaf<i64, [{
   let DecoderMethod = "DecodeSImm<4>";
   let PrintMethod = "printImmScale<2>";
   let ParserMatchClass = SImm4Scale2MulVlOperand;
+}
+
+def simm4Scale3MulVl : Operand<i64>, ImmLeaf<i64, [{
+    return (Imm >= -24 && Imm <= 21) && ((Imm % 3) == 0x0);
+  }]> {
+  let DecoderMethod = "DecodeSImm<4>";
+  let PrintMethod = "printImmScale<3>";
+  let ParserMatchClass = SImm4Scale3MulVlOperand;
 }
 
 class SVELogicalImmOperand<int Width> : AsmOperandClass {
