@@ -3415,7 +3415,7 @@ TYPE_PARSER(construct<ProcedureDesignator>{}(Parser<ProcComponentRef>{}) ||
 
 // R1523 actual-arg-spec -> [keyword =] actual-arg
 TYPE_PARSER(
-    construct<ActualArgSpec>{}(maybe(keyword / "="), Parser<ActualArg>{}))
+    construct<ActualArgSpec>{}(maybe(keyword / "=" / !"="_ch), Parser<ActualArg>{}))
 
 // R1524 actual-arg ->
 //         expr | variable | procedure-name | proc-component-ref |
