@@ -1617,7 +1617,8 @@ TYPE_PARSER(
 
 // R912 part-ref -> part-name [( section-subscript-list )] [image-selector]
 TYPE_PARSER(construct<PartRef>{}(name,
-    defaulted(parenthesized(nonemptyList(Parser<SectionSubscript>{}))),
+    defaulted(
+        parenthesized(nonemptyList(Parser<SectionSubscript>{})) / !"=>"_tok),
     maybe(Parser<ImageSelector>{})))
 
 // R913 structure-component -> data-ref
