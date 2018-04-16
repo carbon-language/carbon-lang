@@ -323,7 +323,7 @@ TEST(CoreAPIsTest, FailResolution) {
             {{Foo, JITSymbolFlags::Weak}, {Bar, JITSymbolFlags::Weak}});
       },
       [&](VSO &V) -> Error {
-        V.notifyResolutionFailed(Names);
+        V.notifyMaterializationFailed(Names);
         return Error::success();
       },
       [&](VSO &V, SymbolStringPtr Name) {
@@ -384,7 +384,7 @@ TEST(CoreAPIsTest, FailFinalization) {
         auto FooSym = JITEvaluatedSymbol(FakeFooAddr, JITSymbolFlags::Exported);
         auto BarSym = JITEvaluatedSymbol(FakeBarAddr, JITSymbolFlags::Exported);
         V.resolve(SymbolMap({{Foo, FooSym}, {Bar, BarSym}}));
-        V.notifyFinalizationFailed(Names);
+        V.notifyMaterializationFailed(Names);
         return Error::success();
       },
       [&](VSO &V, SymbolStringPtr Name) {

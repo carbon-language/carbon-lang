@@ -390,11 +390,13 @@ void VSO::resolve(const SymbolMap &SymbolValues) {
   }
 }
 
-void VSO::notifyResolutionFailed(const SymbolNameSet &Names) {
-  assert(!Names.empty() && "Failed to resolve empty set?");
+void VSO::notifyMaterializationFailed(const SymbolNameSet &Names) {
+  assert(!Names.empty() && "Failed to materialize empty set?");
 
   std::map<std::shared_ptr<AsynchronousSymbolQuery>, SymbolNameSet>
-      QueriesToFail;
+      ResolutionFailures;
+  std::map<std::shared_ptr<AsynchronousSymbolQuery>, SymbolNameSet>
+      FinalizationFailures;
 
   for (auto &S : Names) {
     auto I = Symbols.find(S);
@@ -402,17 +404,23 @@ void VSO::notifyResolutionFailed(const SymbolNameSet &Names) {
 
     auto J = MaterializingInfos.find(S);
     if (J != MaterializingInfos.end()) {
-      assert(J->second.PendingFinalization.empty() &&
-             "Failed during resolution, but queries pending finalization?");
-      for (auto &Q : J->second.PendingResolution)
-        QueriesToFail[Q].insert(S);
+      if (J->second.PendingFinalization.empty()) {
+        for (auto &Q : J->second.PendingResolution)
+          ResolutionFailures[Q].insert(S);
+      } else {
+        for (auto &Q : J->second.PendingFinalization)
+          FinalizationFailures[Q].insert(S);
+      }
       MaterializingInfos.erase(J);
     }
     Symbols.erase(I);
   }
 
-  for (auto &KV : QueriesToFail)
+  for (auto &KV : ResolutionFailures)
     KV.first->notifyFailed(make_error<FailedToResolve>(std::move(KV.second)));
+
+  for (auto &KV : FinalizationFailures)
+    KV.first->notifyFailed(make_error<FailedToFinalize>(std::move(KV.second)));
 }
 
 void VSO::finalize(const SymbolNameSet &SymbolsToFinalize) {
@@ -430,33 +438,6 @@ void VSO::finalize(const SymbolNameSet &SymbolsToFinalize) {
     }
     I->second.finalize();
   }
-}
-
-void VSO::notifyFinalizationFailed(const SymbolNameSet &Names) {
-  assert(!Names.empty() && "Failed to finalize empty set?");
-
-  std::map<std::shared_ptr<AsynchronousSymbolQuery>, SymbolNameSet>
-      QueriesToFail;
-
-  for (auto &S : Names) {
-    auto I = Symbols.find(S);
-    assert(I != Symbols.end() && "Symbol not present in this VSO");
-    assert((I->second.Flags & JITSymbolFlags::Materializing) &&
-           "Failed to finalize symbol that was not materializing");
-
-    auto J = MaterializingInfos.find(S);
-    if (J != MaterializingInfos.end()) {
-      assert(J->second.PendingResolution.empty() &&
-             "Failed during finalization, but queries pending resolution?");
-      for (auto &Q : J->second.PendingFinalization)
-        QueriesToFail[Q].insert(S);
-      MaterializingInfos.erase(J);
-    }
-    Symbols.erase(I);
-  }
-
-  for (auto &KV : QueriesToFail)
-    KV.first->notifyFailed(make_error<FailedToFinalize>(std::move(KV.second)));
 }
 
 SymbolNameSet VSO::lookupFlags(SymbolFlagsMap &Flags, SymbolNameSet Names) {

@@ -291,14 +291,11 @@ public:
   ///        mark the symbols as finalized yet.
   void resolve(const SymbolMap &SymbolValues);
 
-  /// @brief Notify the VSO that the given symbols failed to finalize.
-  void notifyResolutionFailed(const SymbolNameSet &Names);
-
   /// @brief Finalize the given symbols.
   void finalize(const SymbolNameSet &SymbolsToFinalize);
 
-  /// @brief Notify the VSO that the given symbols failed to finalize.
-  void notifyFinalizationFailed(const SymbolNameSet &Names);
+  /// @brief Notify the VSO that the given symbols failed to materialized.
+  void notifyMaterializationFailed(const SymbolNameSet &Names);
 
   /// @brief Look up the flags for the given symbols.
   ///
