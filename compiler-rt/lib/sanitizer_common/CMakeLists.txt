@@ -241,6 +241,12 @@ add_compiler_rt_object_libraries(RTSanitizerCommonLibcNoHooks
   SOURCES ${SANITIZER_LIBCDEP_SOURCES}
   CFLAGS ${SANITIZER_NO_WEAK_HOOKS_CFLAGS}
   DEFS ${SANITIZER_COMMON_DEFINITIONS})
+add_compiler_rt_object_libraries(RTSanitizerCommonSymbolizerNoHooks
+  ${OS_OPTION}
+  ARCHS ${SANITIZER_COMMON_SUPPORTED_ARCH}
+  SOURCES ${SANITIZER_SYMBOLIZER_SOURCES}
+  CFLAGS ${SANITIZER_NO_WEAK_HOOKS_CFLAGS}
+  DEFS ${SANITIZER_COMMON_DEFINITIONS})
 
 if(OS_NAME MATCHES "SunOS")
   # Solaris ld doesn't support the non-standard GNU ld extension of adding

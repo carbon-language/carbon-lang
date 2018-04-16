@@ -91,7 +91,7 @@ if(APPLE)
                   RTSanitizerCommonNoHooks
                   RTSanitizerCommonLibcNoHooks
                   RTSanitizerCommonCoverage
-                  RTSanitizerCommonSymbolizer
+                  RTSanitizerCommonSymbolizerNoHooks
                   RTInterception
       LINK_FLAGS ${WEAK_SYMBOL_LINK_FLAGS}
       PARENT_TARGET ubsan)
