@@ -310,6 +310,45 @@ static bool rescheduleCanonically(unsigned &PseudoIdempotentInstCount,
   return Changed;
 }
 
+bool propagateLocalCopies(MachineBasicBlock *MBB) {
+  bool Changed = false;
+  MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
+
+  std::vector<MachineInstr *> Copies;
+  for (MachineInstr &MI : MBB->instrs()) {
+    if (MI.isCopy())
+      Copies.push_back(&MI);
+  }
+
+  for (MachineInstr *MI : Copies) {
+
+    if (!MI->getOperand(0).isReg())
+      continue;
+    if (!MI->getOperand(1).isReg())
+      continue;
+
+    const unsigned Dst = MI->getOperand(0).getReg();
+    const unsigned Src = MI->getOperand(1).getReg();
+
+    if (!TargetRegisterInfo::isVirtualRegister(Dst))
+      continue;
+    if (!TargetRegisterInfo::isVirtualRegister(Src))
+      continue;
+    if (MRI.getRegClass(Dst) != MRI.getRegClass(Src))
+      continue;
+
+    for (auto UI = MRI.use_begin(Dst); UI != MRI.use_end(); ++UI) {
+      MachineOperand *MO = &*UI;
+      MO->setReg(Src);
+      Changed = true;
+    }
+
+    MI->eraseFromParent();
+  }
+
+  return Changed;
+}
+
 /// Here we find our candidates. What makes an interesting candidate?
 /// An candidate for a canonicalization tree root is normally any kind of
 /// instruction that causes side effects such as a store to memory or a copy to
@@ -615,6 +654,10 @@ static bool runOnBasicBlock(MachineBasicBlock *MBB,
 
   bbNames.push_back(MBB->getName());
   DEBUG(dbgs() << "\n\n NEW BASIC BLOCK: " << MBB->getName() << "\n\n";);
+
+  DEBUG(dbgs() << "MBB Before Canonical Copy Propagation:\n"; MBB->dump(););
+  Changed |= propagateLocalCopies(MBB);
+  DEBUG(dbgs() << "MBB After Canonical Copy Propagation:\n"; MBB->dump(););
 
   DEBUG(dbgs() << "MBB Before Scheduling:\n"; MBB->dump(););
   unsigned IdempotentInstCount = 0;
