@@ -639,16 +639,14 @@ Value *InstCombiner::SimplifyUsingDistributiveLaws(BinaryOperator &I) {
     // term.
     if (Op0)
       if (Value *Ident = getIdentityValue(LHSOpcode, RHS))
-        if (Value *V =
-                tryFactorization(I, LHSOpcode, A, B, RHS, Ident))
+        if (Value *V = tryFactorization(I, LHSOpcode, A, B, RHS, Ident))
           return V;
 
     // The instruction has the form "(B) op (C op' D)".  Try to factorize common
     // term.
     if (Op1)
       if (Value *Ident = getIdentityValue(RHSOpcode, LHS))
-        if (Value *V =
-                tryFactorization(I, RHSOpcode, LHS, Ident, C, D))
+        if (Value *V = tryFactorization(I, RHSOpcode, LHS, Ident, C, D))
           return V;
   }
 
