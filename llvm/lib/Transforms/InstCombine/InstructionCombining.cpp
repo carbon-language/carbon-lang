@@ -405,28 +405,23 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
 
       // Transform: "(A op C1) op (B op C2)" ==> "(A op B) op (C1 op C2)"
       // if C1 and C2 are constants.
+      Value *A, *B;
+      Constant *C1, *C2;
       if (Op0 && Op1 &&
           Op0->getOpcode() == Opcode && Op1->getOpcode() == Opcode &&
-          isa<Constant>(Op0->getOperand(1)) &&
-          isa<Constant>(Op1->getOperand(1)) &&
-          Op0->hasOneUse() && Op1->hasOneUse()) {
-        Value *A = Op0->getOperand(0);
-        Constant *C1 = cast<Constant>(Op0->getOperand(1));
-        Value *B = Op1->getOperand(0);
-        Constant *C2 = cast<Constant>(Op1->getOperand(1));
-
-        Constant *Folded = ConstantExpr::get(Opcode, C1, C2);
-        BinaryOperator *New = BinaryOperator::Create(Opcode, A, B);
-        if (isa<FPMathOperator>(New)) {
+          match(Op0, m_OneUse(m_BinOp(m_Value(A), m_Constant(C1)))) &&
+          match(Op1, m_OneUse(m_BinOp(m_Value(B), m_Constant(C2))))) {
+        BinaryOperator *NewBO = BinaryOperator::Create(Opcode, A, B);
+        if (isa<FPMathOperator>(NewBO)) {
           FastMathFlags Flags = I.getFastMathFlags();
           Flags &= Op0->getFastMathFlags();
           Flags &= Op1->getFastMathFlags();
-          New->setFastMathFlags(Flags);
+          NewBO->setFastMathFlags(Flags);
         }
-        InsertNewInstWith(New, I);
-        New->takeName(Op1);
-        I.setOperand(0, New);
-        I.setOperand(1, Folded);
+        InsertNewInstWith(NewBO, I);
+        NewBO->takeName(Op1);
+        I.setOperand(0, NewBO);
+        I.setOperand(1, ConstantExpr::get(Opcode, C1, C2));
         // Conservatively clear the optional flags, since they may not be
         // preserved by the reassociation.
         ClearSubclassDataAfterReassociation(I);
