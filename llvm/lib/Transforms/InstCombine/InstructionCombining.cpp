@@ -790,23 +790,6 @@ Value *InstCombiner::dyn_castNegVal(Value *V) const {
   return nullptr;
 }
 
-/// Given a 'fsub' instruction, return the RHS of the instruction if the LHS is
-/// a constant negative zero (which is the 'negate' form).
-Value *InstCombiner::dyn_castFNegVal(Value *V, bool IgnoreZeroSign) const {
-  if (BinaryOperator::isFNeg(V, IgnoreZeroSign))
-    return BinaryOperator::getFNegArgument(V);
-
-  // Constants can be considered to be negated values if they can be folded.
-  if (ConstantFP *C = dyn_cast<ConstantFP>(V))
-    return ConstantExpr::getFNeg(C);
-
-  if (ConstantDataVector *C = dyn_cast<ConstantDataVector>(V))
-    if (C->getType()->getElementType()->isFloatingPointTy())
-      return ConstantExpr::getFNeg(C);
-
-  return nullptr;
-}
-
 static Value *foldOperationIntoSelectOperand(Instruction &I, Value *SO,
                                              InstCombiner::BuilderTy &Builder) {
   if (auto *Cast = dyn_cast<CastInst>(&I))
