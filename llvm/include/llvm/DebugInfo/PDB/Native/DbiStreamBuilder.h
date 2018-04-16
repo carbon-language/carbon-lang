@@ -46,7 +46,6 @@ public:
   void setVersionHeader(PdbRaw_DbiVer V);
   void setAge(uint32_t A);
   void setBuildNumber(uint16_t B);
-  void setBuildNumber(uint8_t Major, uint8_t Minor);
   void setPdbDllVersion(uint16_t V);
   void setPdbDllRbld(uint16_t R);
   void setFlags(uint16_t F);
