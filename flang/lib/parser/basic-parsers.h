@@ -247,9 +247,6 @@ public:
       state->messages().swap(messages);
       return ax;
     }
-#if 0  // needed below if "tied" messages are to be saved
-    auto start = backtrack.GetLocation();
-#endif
     ParseState paState{std::move(*state)};
     state->swap(backtrack);
     state->set_context(std::move(context));
@@ -271,12 +268,6 @@ public:
     } else {
       // It's a tie.
       messages.Annex(paState.messages());
-#if 0
-      if (paEnd > start) {
-        // Both parsers consumed text; retain messages from both.
-        messages.Annex(state->messages());
-      }
-#endif
     }
     state->messages().swap(messages);
     return {};
