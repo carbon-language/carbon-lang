@@ -19,9 +19,9 @@ CHECK-NEXT:            flags = function, addr = 0001:0016
 CHECK-NEXT:       88 | S_PUB32 [size = 24] `exportfn2`
 CHECK-NEXT:            flags = function, addr = 0001:0032
 CHECK-NEXT:       32 | S_PUB32 [size = 32] `__imp_exportfn2`
-CHECK-NEXT:            flags = none, addr = 0003:0072
+CHECK-NEXT:            flags = none, addr = 0002:0240
 CHECK-NEXT:        0 | S_PUB32 [size = 32] `__imp_exportfn1`
-CHECK-NEXT:            flags = none, addr = 0003:0064
+CHECK-NEXT:            flags = none, addr = 0002:0232
 
 CHECK:                         Section Contributions
 CHECK-NEXT: ============================================================
