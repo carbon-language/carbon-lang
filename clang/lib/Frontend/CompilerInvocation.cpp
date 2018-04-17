@@ -507,7 +507,8 @@ static void setPGOUseInstrumentor(CodeGenOptions &Opts,
 
 static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
                              DiagnosticsEngine &Diags,
-                             const TargetOptions &TargetOpts) {
+                             const TargetOptions &TargetOpts,
+                             const FrontendOptions &FrontendOpts) {
   bool Success = true;
   llvm::Triple Triple = llvm::Triple(TargetOpts.Triple);
 
@@ -758,6 +759,12 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
           << A->getAsString(Args) << "-x ir";
     Opts.ThinLTOIndexFile = Args.getLastArgValue(OPT_fthinlto_index_EQ);
   }
+  if (Arg *A = Args.getLastArg(OPT_save_temps_EQ))
+    Opts.SaveTempsFilePrefix =
+        llvm::StringSwitch<std::string>(A->getValue())
+            .Case("obj", FrontendOpts.OutputFile)
+            .Default(llvm::sys::path::filename(FrontendOpts.OutputFile).str());
+
   Opts.ThinLinkBitcodeFile = Args.getLastArgValue(OPT_fthin_link_bitcode_EQ);
 
   Opts.MSVolatile = Args.hasArg(OPT_fms_volatile);
@@ -2927,7 +2934,7 @@ bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
                                       LangOpts.IsHeaderFile);
   ParseTargetArgs(Res.getTargetOpts(), Args, Diags);
   Success &= ParseCodeGenArgs(Res.getCodeGenOpts(), Args, DashX, Diags,
-                              Res.getTargetOpts());
+                              Res.getTargetOpts(), Res.getFrontendOpts());
   ParseHeaderSearchArgs(Res.getHeaderSearchOpts(), Args,
                         Res.getFileSystemOpts().WorkingDir);
   if (DashX.getFormat() == InputKind::Precompiled ||

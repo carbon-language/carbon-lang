@@ -3267,6 +3267,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     Args.AddLastArg(CmdArgs, options::OPT_fthinlto_index_EQ);
   }
 
+  if (const Arg *A = Args.getLastArg(options::OPT_save_temps_EQ))
+    Args.AddLastArg(CmdArgs, options::OPT_save_temps_EQ);
+
   // Embed-bitcode option.
   if (C.getDriver().embedBitcodeInObject() && !C.getDriver().isUsingLTO() &&
       (isa<BackendJobAction>(JA) || isa<AssembleJobAction>(JA))) {
