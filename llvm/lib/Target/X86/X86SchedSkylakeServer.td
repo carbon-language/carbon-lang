@@ -182,6 +182,7 @@ defm : SKXWriteResPair<WriteVarShuffle,  [SKXPort5],  1>; // Vector variable shu
 defm : SKXWriteResPair<WriteBlend,  [SKXPort15],  1>; // Vector blends.
 defm : SKXWriteResPair<WriteVarBlend,  [SKXPort5], 2, [2]>; // Vector variable blends.
 defm : SKXWriteResPair<WriteMPSAD,  [SKXPort0, SKXPort5], 6, [1, 2]>; // Vector MPSAD.
+defm : SKXWriteResPair<WritePSADBW, [SKXPort5], 3>; // Vector PSADBW.
 
 // Vector bitwise operations.
 // These are often used on both floating point and integer vectors.
@@ -1683,9 +1684,7 @@ def: InstRW<[SKXWriteResGroup32], (instregex "ADD_FPrST0",
                                              "KUNPCKBWrr",
                                              "KUNPCKDQrr",
                                              "KUNPCKWDrr",
-                                             "MMX_PSADBWirr",
                                              "PCMPGTQrr",
-                                             "PSADBWrr",
                                              "SUBR_FPrST0",
                                              "SUBR_FST0r",
                                              "SUBR_FrST0",
@@ -1901,11 +1900,7 @@ def: InstRW<[SKXWriteResGroup32], (instregex "ADD_FPrST0",
                                              "VPMOVZXWQZ128rr",
                                              "VPMOVZXWQZ256rr",
                                              "VPMOVZXWQZrr",
-                                             "VPSADBWYrr",
-                                             "VPSADBWZ128rr",
-                                             "VPSADBWZ256rr",
-                                             "VPSADBWZrr",
-                                             "VPSADBWrr",
+                                             "VPSADBWZrr", // TODO: 512-bit ops require ports 0/1 to be joined.
                                              "VPTESTMBZ128rr",
                                              "VPTESTMBZ256rr",
                                              "VPTESTMBZrr",

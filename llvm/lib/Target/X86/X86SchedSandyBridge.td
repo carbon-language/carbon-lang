@@ -169,6 +169,7 @@ defm : SBWriteResPair<WriteVarShuffle,  [SBPort15], 1>;
 defm : SBWriteResPair<WriteBlend,   [SBPort15], 1>;
 defm : SBWriteResPair<WriteVarBlend, [SBPort1, SBPort5], 2>;
 defm : SBWriteResPair<WriteMPSAD, [SBPort0, SBPort15], 5, [1,2], 3>;
+defm : SBWriteResPair<WritePSADBW,  [SBPort0], 5>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Horizontal add/sub  instructions.
@@ -616,9 +617,7 @@ def: InstRW<[SBWriteResGroup20], (instregex "MMX_PMADDUBSWrr",
                                             "MMX_PMULHUWirr",
                                             "MMX_PMULHWirr",
                                             "MMX_PMULLWirr",
-                                            "MMX_PMULUDQirr",
-                                            "MMX_PSADBWirr",
-                                            "(V?)PSADBWrr")>;
+                                            "MMX_PMULUDQirr")>;
 
 def SBWriteResGroup21 : SchedWriteRes<[SBPort1]> {
   let Latency = 3;
