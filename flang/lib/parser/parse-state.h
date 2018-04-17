@@ -126,13 +126,13 @@ public:
   void Say(MessageExpectedText &&t) { return Say(p_, std::move(t)); }
 
   void Say(const char *at, MessageFixedText t) {
-    messages_.Put(Message{at, t, context_.get()});
+    messages_.Say(at, t, context_.get());
   }
   void Say(const char *at, MessageFormattedText &&t) {
-    messages_.Put(Message{at, std::move(t), context_.get()});
+    messages_.Say(at, std::move(t), context_.get());
   }
   void Say(const char *at, MessageExpectedText &&t) {
-    messages_.Put(Message{at, std::move(t), context_.get()});
+    messages_.Say(at, std::move(t), context_.get());
   }
 
   bool IsAtEnd() const { return p_ >= limit_; }

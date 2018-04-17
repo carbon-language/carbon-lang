@@ -29,15 +29,16 @@ public:
   CountedReference(const CountedReference &c) : p_{c.p_} { Take(); }
   CountedReference(CountedReference &&c) : p_{c.p_} { c.p_ = nullptr; }
   CountedReference &operator=(const CountedReference &c) {
+    c.Take();
     Drop();
     p_ = c.p_;
-    Take();
     return *this;
   }
   CountedReference &operator=(CountedReference &&c) {
-    Drop();
-    p_ = c.p_;
+    A *p{c.p_};
     c.p_ = nullptr;
+    Drop();
+    p_ = p;
     return *this;
   }
   ~CountedReference() { Drop(); }
@@ -47,7 +48,7 @@ public:
   type *operator->() const { return p_; }
 
 private:
-  void Take() {
+  void Take() const {
     if (p_) {
       p_->TakeReference();
     }

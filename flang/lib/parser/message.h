@@ -12,6 +12,7 @@
 #include <optional>
 #include <ostream>
 #include <string>
+#include <utility>
 
 namespace Fortran {
 namespace parser {
@@ -179,24 +180,18 @@ public:
     }
   }
 
-  Message &Put(Message &&m) {
-    CHECK(IsValidLocation(m));
-    if (messages_.empty()) {
-      messages_.emplace_front(std::move(m));
-      last_ = messages_.begin();
-    } else {
-      last_ = messages_.emplace_after(last_, std::move(m));
-    }
-    return *last_;
+  void Put(Message &&m) {
+//    CHECK(IsValidLocation(m));
+    last_ = messages_.emplace_after(last_, std::move(m));
+  }
+
+  template<typename... A> void Say(A &&... args) {
+    last_ = messages_.emplace_after(last_, std::forward<A>(args)...);
   }
 
   void Annex(Messages &that) {
     if (!that.messages_.empty()) {
-      if (messages_.empty()) {
-        messages_ = std::move(that.messages_);
-      } else {
-        messages_.splice_after(last_, that.messages_);
-      }
+      messages_.splice_after(last_, that.messages_);
       last_ = that.last_;
     }
   }
@@ -209,7 +204,7 @@ public:
 private:
   const CookedSource &cooked_;
   listType messages_;
-  iterator last_;  // valid iff messages_ nonempty
+  iterator last_{messages_.before_begin()};
 };
 }  // namespace parser
 }  // namespace Fortran
