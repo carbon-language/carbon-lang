@@ -16,10 +16,6 @@ template<typename A> class Indirection {
 public:
   using element_type = A;
   Indirection() = delete;
-  Indirection(A *&p) : p_{p} {
-    CHECK(p_ && "assigning null pointer to Indirection");
-    p = nullptr;
-  }
   Indirection(A *&&p) : p_{p} {
     CHECK(p_ && "assigning null pointer to Indirection");
     p = nullptr;

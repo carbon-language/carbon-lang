@@ -6,9 +6,9 @@
 
 #include "idioms.h"
 #include "provenance.h"
+#include "reference-counted.h"
 #include <cstddef>
 #include <forward_list>
-#include <memory>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -80,34 +80,31 @@ private:
   std::size_t bytes_{1};
 };
 
-class Message;
-using MessageContext = std::shared_ptr<Message>;
 
-class Message {
+class Message : public ReferenceCounted<Message> {
 public:
+  using Context = CountedReference<Message>;
+
   Message() {}
-  Message(const Message &) = default;
   Message(Message &&) = default;
-  Message &operator=(const Message &that) = default;
   Message &operator=(Message &&that) = default;
 
   // TODO: Change these to cover ranges of provenance
-  Message(Provenance p, MessageFixedText t, MessageContext c = nullptr)
+  Message(Provenance p, MessageFixedText t, Message *c = nullptr)
     : provenance_{p}, text_{t}, context_{c}, isFatal_{t.isFatal()} {}
-  Message(Provenance p, MessageFormattedText &&s, MessageContext c = nullptr)
-    : provenance_{p}, string_{s.MoveString()}, context_{c}, isFatal_{
-                                                                s.isFatal()} {}
-  Message(Provenance p, MessageExpectedText t, MessageContext c = nullptr)
+  Message(Provenance p, MessageFormattedText &&s, Message *c = nullptr)
+    : provenance_{p}, string_{s.MoveString()}, context_{c},
+      isFatal_{s.isFatal()} {}
+  Message(Provenance p, MessageExpectedText t, Message *c = nullptr)
     : provenance_{p}, text_{t.AsMessageFixedText()},
       isExpectedText_{true}, context_{c}, isFatal_{true} {}
 
-  Message(const char *csl, MessageFixedText t, MessageContext c = nullptr)
-    : cookedSourceLocation_{csl}, text_{t}, context_{c}, isFatal_{t.isFatal()} {
-  }
-  Message(const char *csl, MessageFormattedText &&s, MessageContext c = nullptr)
+  Message(const char *csl, MessageFixedText t, Message *c = nullptr)
+    : cookedSourceLocation_{csl}, text_{t}, context_{c}, isFatal_{t.isFatal()} {}
+  Message(const char *csl, MessageFormattedText &&s, Message *c = nullptr)
     : cookedSourceLocation_{csl}, string_{s.MoveString()}, context_{c},
       isFatal_{s.isFatal()} {}
-  Message(const char *csl, MessageExpectedText t, MessageContext c = nullptr)
+  Message(const char *csl, MessageExpectedText t, Message *c = nullptr)
     : cookedSourceLocation_{csl}, text_{t.AsMessageFixedText()},
       isExpectedText_{true}, context_{c}, isFatal_{true} {}
 
@@ -123,11 +120,14 @@ public:
 
   Provenance provenance() const { return provenance_; }
   const char *cookedSourceLocation() const { return cookedSourceLocation_; }
-  MessageContext context() const { return context_; }
+  Context context() const { return context_; }
   bool isFatal() const { return isFatal_; }
 
   Provenance Emit(
       std::ostream &, const CookedSource &, bool echoSourceLine = true) const;
+
+  void TakeReference() { ++refCount_; }
+  void DropReference() { if (--refCount_ == 0) { delete this; } }
 
 private:
   Provenance provenance_;
@@ -135,8 +135,9 @@ private:
   MessageFixedText text_;
   bool isExpectedText_{false};  // implies "expected '%s'"_err_en_US
   std::string string_;
-  MessageContext context_;
+  Context context_;
   bool isFatal_{false};
+  int refCount_{0};
 };
 
 class Messages {

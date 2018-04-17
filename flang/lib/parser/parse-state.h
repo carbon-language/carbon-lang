@@ -35,10 +35,7 @@ public:
       warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
       warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
       anyErrorRecovery_{that.anyErrorRecovery_},
-      anyConformanceViolation_{that.anyConformanceViolation_},
-      alternativeDepth_{that.alternativeDepth_},
-      deferMessages_{that.deferMessages_}, blockedMessages_{
-                                               that.blockedMessages_} {}
+      anyConformanceViolation_{that.anyConformanceViolation_} {}
   ParseState(ParseState &&that)
     : p_{that.p_}, limit_{that.limit_}, messages_{std::move(that.messages_)},
       context_{std::move(that.context_)}, userState_{that.userState_},
@@ -47,10 +44,7 @@ public:
       warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
       warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
       anyErrorRecovery_{that.anyErrorRecovery_},
-      anyConformanceViolation_{that.anyConformanceViolation_},
-      alternativeDepth_{that.alternativeDepth_},
-      deferMessages_{that.deferMessages_}, blockedMessages_{
-                                               that.blockedMessages_} {}
+      anyConformanceViolation_{that.anyConformanceViolation_} {}
   ParseState &operator=(ParseState &&that) {
     swap(that);
     return *this;
@@ -75,9 +69,13 @@ public:
   UserState *userState() const { return userState_; }
   void set_userState(UserState *u) { userState_ = u; }
 
-  MessageContext context() const { return context_; }
-  ParseState &set_context(MessageContext c) {
+  Message::Context context() const { return context_; }
+  ParseState &set_context(const Message::Context &c) {
     context_ = c;
+    return *this;
+  }
+  ParseState &set_context(Message::Context &&c) {
+    context_ = std::move(c);
     return *this;
   }
 
@@ -111,25 +109,10 @@ public:
     return *this;
   }
 
-  int alternativeDepth() const { return alternativeDepth_; }
-  ParseState &set_alternativeDepth(int d) {
-    alternativeDepth_ = d;
-    return *this;
-  }
-
-  bool deferMessages() const { return deferMessages_; }
-  ParseState &set_deferMessages(bool yes) {
-    deferMessages_ = yes;
-    return *this;
-  }
-
-  bool blockedMessages() const { return blockedMessages_; }
-
   const char *GetLocation() const { return p_; }
 
-  MessageContext &PushContext(MessageFixedText text) {
-    context_ = std::make_shared<Message>(p_, text, context_);
-    return context_;
+  void PushContext(MessageFixedText text) {
+    context_ = Message::Context{new Message{p_, text, context_.get()}};
   }
 
   void PopContext() {
@@ -143,25 +126,13 @@ public:
   void Say(MessageExpectedText &&t) { return Say(p_, std::move(t)); }
 
   void Say(const char *at, MessageFixedText t) {
-    if (deferMessages_) {
-      blockedMessages_ = true;
-    } else {
-      messages_.Put(Message{at, t, context_});
-    }
+    messages_.Put(Message{at, t, context_.get()});
   }
   void Say(const char *at, MessageFormattedText &&t) {
-    if (deferMessages_) {
-      blockedMessages_ = true;
-    } else {
-      messages_.Put(Message{at, std::move(t), context_});
-    }
+    messages_.Put(Message{at, std::move(t), context_.get()});
   }
   void Say(const char *at, MessageExpectedText &&t) {
-    if (deferMessages_) {
-      blockedMessages_ = true;
-    } else {
-      messages_.Put(Message{at, std::move(t), context_});
-    }
+    messages_.Put(Message{at, std::move(t), context_.get()});
   }
 
   bool IsAtEnd() const { return p_ >= limit_; }
@@ -197,7 +168,7 @@ private:
 
   // Accumulated messages and current nested context.
   Messages messages_;
-  MessageContext context_;
+  Message::Context context_;
 
   UserState *userState_{nullptr};
 
@@ -208,9 +179,6 @@ private:
   bool warnOnDeprecatedUsage_{false};
   bool anyErrorRecovery_{false};
   bool anyConformanceViolation_{false};
-  int alternativeDepth_{0};
-  bool deferMessages_{false};
-  bool blockedMessages_{false};
   // NOTE: Any additions or modifications to these data members must also be
   // reflected in the copy and move constructors defined at the top of this
   // class definition!
