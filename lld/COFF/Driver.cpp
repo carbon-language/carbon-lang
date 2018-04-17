@@ -936,6 +936,8 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   if (ShouldCreatePDB) {
     if (auto *Arg = Args.getLastArg(OPT_pdb))
       Config->PDBPath = Arg->getValue();
+    if (auto *Arg = Args.getLastArg(OPT_pdbaltpath))
+      Config->PDBAltPath = Arg->getValue();
     if (Args.hasArg(OPT_natvis))
       Config->NatvisFiles = Args.getAllArgValues(OPT_natvis);
   }
@@ -1301,10 +1303,19 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
         getOutputPath((*Args.filtered(OPT_INPUT).begin())->getValue());
   }
 
-  // Put the PDB next to the image if no /pdb flag was passed.
-  if (ShouldCreatePDB && Config->PDBPath.empty()) {
-    Config->PDBPath = Config->OutputFile;
-    sys::path::replace_extension(Config->PDBPath, ".pdb");
+  if (ShouldCreatePDB) {
+    // Put the PDB next to the image if no /pdb flag was passed.
+    if (Config->PDBPath.empty()) {
+      Config->PDBPath = Config->OutputFile;
+      sys::path::replace_extension(Config->PDBPath, ".pdb");
+    }
+
+    // The embedded PDB path should be the absolute path to the PDB if no
+    // /pdbaltpath flag was passed.
+    if (Config->PDBAltPath.empty()) {
+      Config->PDBAltPath = Config->PDBPath;
+      sys::fs::make_absolute(Config->PDBAltPath);
+    }
   }
 
   // Set default image base if /base is not given.
