@@ -180,8 +180,9 @@ public:
   }
 
 protected:
-  void PushScope(bool copyImplicitRules);
+  void PushScope();
   void PopScope();
+  void CopyImplicitRules();  // copy from parent into this scope
 
 private:
   // implicit rules in effect for current scope
@@ -287,9 +288,9 @@ public:
   }
 
   Scope &CurrScope() { return *scopes_.top(); }
-  void PushScope(Scope &scope, bool copyImplicitRules = false) {
+  void PushScope(Scope &scope) {
     scopes_.push(&scope);
-    ImplicitRulesVisitor::PushScope(copyImplicitRules);
+    ImplicitRulesVisitor::PushScope();
   }
   void PopScope() {
     scopes_.pop();
@@ -399,8 +400,7 @@ private:
   std::optional<Attr> objectDeclAttr_;
 
   // Create a subprogram symbol in the current scope and push a new scope.
-  Symbol &PushSubprogramScope(
-      const parser::Name &, bool copyImplicitRules = false);
+  Symbol &PushSubprogramScope(const parser::Name &);
 
   // On leaving a scope, add implicit types if appropriate.
   void ApplyImplicitRules();
@@ -721,13 +721,17 @@ void ImplicitRulesVisitor::Post(const parser::ImplicitSpec &) {
   EndDeclTypeSpec();
 }
 
-void ImplicitRulesVisitor::PushScope(bool copyImplicitRules) {
-  implicitRules_.push(copyImplicitRules ? ImplicitRules(implicitRules_.top())
-                                        : ImplicitRules(*this));
+void ImplicitRulesVisitor::PushScope() {
+  implicitRules_.push(ImplicitRules(*this));
   prevImplicit_ = nullptr;
   prevImplicitNone_ = nullptr;
   prevImplicitNoneType_ = nullptr;
   prevParameterStmt_ = nullptr;
+}
+
+void ImplicitRulesVisitor::CopyImplicitRules() {
+  implicitRules_.pop();
+  implicitRules_.push(ImplicitRules(implicitRules_.top()));
 }
 
 void ImplicitRulesVisitor::PopScope() { implicitRules_.pop(); }
@@ -970,7 +974,8 @@ bool ResolveNamesVisitor::Pre(const parser::StmtFunctionStmt &x) {
     }
   }
   BeginAttrs();  // no attrs to collect, but PushSubprogramScope expects this
-  auto &symbol = PushSubprogramScope(name, /*copyImplicitRules=*/true);
+  auto &symbol = PushSubprogramScope(name);
+  CopyImplicitRules();
   if (occurrence) {
     symbol.add_occurrence(*occurrence);
   }
@@ -1052,13 +1057,12 @@ void ResolveNamesVisitor::Post(const parser::FunctionStmt &stmt) {
   details.set_result(MakeSymbol(*funcResultName, funcResultDetails));
 }
 
-Symbol &ResolveNamesVisitor::PushSubprogramScope(
-    const parser::Name &name, bool copyImplicitRules) {
+Symbol &ResolveNamesVisitor::PushSubprogramScope(const parser::Name &name) {
   auto &symbol = MakeSymbol(name, EndAttrs(), SubprogramDetails());
   Scope &subpScope = CurrScope().MakeScope(Scope::Kind::Subprogram);
-  PushScope(subpScope, copyImplicitRules);
+  PushScope(subpScope);
   auto &details = symbol.details<SubprogramDetails>();
-  // can't reused this name inside subprogram:
+  // can't reuse this name inside subprogram:
   MakeSymbol(name, SubprogramDetails(details));
   return symbol;
 }
