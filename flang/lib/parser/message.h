@@ -127,9 +127,6 @@ public:
   Provenance Emit(
       std::ostream &, const CookedSource &, bool echoSourceLine = true) const;
 
-  void TakeReference() { ++refCount_; }
-  void DropReference() { if (--refCount_ == 0) { delete this; } }
-
 private:
   Provenance provenance_;
   const char *cookedSourceLocation_{nullptr};
@@ -138,7 +135,6 @@ private:
   std::string string_;
   Context context_;
   bool isFatal_{false};
-  int refCount_{0};
 };
 
 class Messages {
@@ -150,16 +146,21 @@ public:
 
   explicit Messages(const CookedSource &cooked) : cooked_{cooked} {}
   Messages(Messages &&that)
-    : cooked_{that.cooked_}, messages_{std::move(that.messages_)},
-      last_{that.last_} {}
-  Messages &operator=(Messages &&that) {
-    swap(that);
-    return *this;
+    : cooked_{that.cooked_}, messages_{std::move(that.messages_)} {
+    if (!messages_.empty()) {
+      last_ = that.last_;
+      that.last_ = that.messages_.before_begin();
+    }
   }
-
-  void swap(Messages &that) {
-    messages_.swap(that.messages_);
-    std::swap(last_, that.last_);
+  Messages &operator=(Messages &&that) {
+    messages_ = std::move(that.messages_);
+    if (messages_.empty()) {
+      last_ = messages_.before_begin();
+    } else {
+      last_ = that.last_;
+      that.last_ = that.messages_.before_begin();
+    }
+    return *this;
   }
 
   bool empty() const { return messages_.empty(); }
@@ -181,7 +182,7 @@ public:
   }
 
   void Put(Message &&m) {
-//    CHECK(IsValidLocation(m));
+    CHECK(IsValidLocation(m));
     last_ = messages_.emplace_after(last_, std::move(m));
   }
 
@@ -193,6 +194,7 @@ public:
     if (!that.messages_.empty()) {
       messages_.splice_after(last_, that.messages_);
       last_ = that.last_;
+      that.last_ = that.messages_.before_begin();
     }
   }
 

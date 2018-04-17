@@ -85,10 +85,10 @@ public:
     if (result.has_value()) {
       // preserve any new messages
       messages.Annex(state->messages());
-      state->messages().swap(messages);
+      state->messages() = std::move(messages);
     } else {
-      state->swap(backtrack);
-      state->messages().swap(messages);
+      *state = std::move(backtrack);
+      state->messages() = std::move(messages);
       state->set_context(std::move(context));
     }
     return result;
@@ -112,7 +112,7 @@ public:
   std::optional<Success> Parse(ParseState *state) const {
     Messages messages{std::move(state->messages())};
     ParseState forked{*state};
-    state->messages().swap(messages);
+    state->messages() = std::move(messages);
     if (parser_.Parse(&forked)) {
       return {};
     }
@@ -137,7 +137,7 @@ public:
   std::optional<Success> Parse(ParseState *state) const {
     Messages messages{std::move(state->messages())};
     ParseState forked{*state};
-    state->messages().swap(messages);
+    state->messages() = std::move(messages);
     if (parser_.Parse(&forked).has_value()) {
       return {Success{}};
     }
@@ -244,16 +244,16 @@ public:
     if (std::optional<resultType> ax{pa_.Parse(state)}) {
       // preserve any new messages
       messages.Annex(state->messages());
-      state->messages().swap(messages);
+      state->messages() = std::move(messages);
       return ax;
     }
     ParseState paState{std::move(*state)};
-    state->swap(backtrack);
+    *state = std::move(backtrack);
     state->set_context(std::move(context));
     if (std::optional<resultType> bx{pb_.Parse(state)}) {
       // preserve any new messages
       messages.Annex(state->messages());
-      state->messages().swap(messages);
+      state->messages() = std::move(messages);
       return bx;
     }
     // Both alternatives failed.  Retain the state (and messages) from the
@@ -262,14 +262,14 @@ public:
     auto pbEnd = state->GetLocation();
     if (paEnd > pbEnd) {
       messages.Annex(paState.messages());
-      state->swap(paState);
+      *state = std::move(paState);
     } else if (paEnd < pbEnd) {
       messages.Annex(state->messages());
     } else {
       // It's a tie.
       messages.Annex(paState.messages());
     }
-    state->messages().swap(messages);
+    state->messages() = std::move(messages);
     return {};
   }
 
@@ -306,17 +306,37 @@ public:
     Messages messages{std::move(state->messages())};
     Message::Context context{state->context()};
     ParseState backtrack{*state};
+    bool originallyDeferred{state->deferMessages()};
+#if 0
+    state->set_deferMessages(true);
+#endif
     std::optional<resultType> ax{pa_.Parse(state)};
-    messages.Annex(state->messages());
+#if 0
+    if (!originallyDeferred && state->anyDeferredMessages()) {
+      CHECK(state->messages().empty());
+      *state = backtrack;
+      state->set_context(context);
+      ax = pa_.Parse(state);
+      CHECK(!state->messages().empty());
+    }
+#endif
     if (ax.has_value()) {
-      state->messages().swap(messages);
+      messages.Annex(state->messages());
+      state->messages() = std::move(messages);
+      state->set_context(std::move(context));
+      state->set_deferMessages(originallyDeferred);
       return ax;
     }
-    state->swap(backtrack);
-    state->set_context(std::move(context));
+    Messages paMessages{std::move(state->messages())};
+    *state = std::move(backtrack);
+    state->set_deferMessages(true);
     std::optional<resultType> bx{pb_.Parse(state)};
-    state->messages().swap(messages);
+    CHECK(state->messages().empty());
+    state->messages() = std::move(messages);
+    state->set_context(std::move(context));
+    state->set_deferMessages(originallyDeferred);
     if (bx.has_value()) {
+      state->messages().Annex(paMessages);
       state->set_anyErrorRecovery();
     }
     return bx;
