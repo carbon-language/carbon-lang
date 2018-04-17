@@ -83,7 +83,6 @@ public:
     ParseState backtrack{*state};
     std::optional<resultType> result{parser_.Parse(state)};
     if (result.has_value()) {
-      // preserve any new messages
       messages.Annex(state->messages());
       state->messages() = std::move(messages);
     } else {
@@ -110,9 +109,8 @@ public:
   constexpr NegatedParser(const NegatedParser &) = default;
   constexpr NegatedParser(const PA &p) : parser_{p} {}
   std::optional<Success> Parse(ParseState *state) const {
-    Messages messages{std::move(state->messages())};
     ParseState forked{*state};
-    state->messages() = std::move(messages);
+    forked.set_deferMessages(true);
     if (parser_.Parse(&forked)) {
       return {};
     }
@@ -135,9 +133,8 @@ public:
   constexpr LookAheadParser(const LookAheadParser &) = default;
   constexpr LookAheadParser(const PA &p) : parser_{p} {}
   std::optional<Success> Parse(ParseState *state) const {
-    Messages messages{std::move(state->messages())};
     ParseState forked{*state};
-    state->messages() = std::move(messages);
+    forked.set_deferMessages(true);
     if (parser_.Parse(&forked).has_value()) {
       return {Success{}};
     }
@@ -242,7 +239,6 @@ public:
     Message::Context context{state->context()};
     ParseState backtrack{*state};
     if (std::optional<resultType> ax{pa_.Parse(state)}) {
-      // preserve any new messages
       messages.Annex(state->messages());
       state->messages() = std::move(messages);
       return ax;
@@ -251,7 +247,6 @@ public:
     *state = std::move(backtrack);
     state->set_context(std::move(context));
     if (std::optional<resultType> bx{pb_.Parse(state)}) {
-      // preserve any new messages
       messages.Annex(state->messages());
       state->messages() = std::move(messages);
       return bx;
