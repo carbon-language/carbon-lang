@@ -81,7 +81,6 @@ private:
   std::size_t bytes_{1};
 };
 
-
 class Message : public ReferenceCounted<Message> {
 public:
   using Context = CountedReference<Message>;
@@ -94,14 +93,15 @@ public:
   Message(Provenance p, MessageFixedText t, Message *c = nullptr)
     : provenance_{p}, text_{t}, context_{c}, isFatal_{t.isFatal()} {}
   Message(Provenance p, MessageFormattedText &&s, Message *c = nullptr)
-    : provenance_{p}, string_{s.MoveString()}, context_{c},
-      isFatal_{s.isFatal()} {}
+    : provenance_{p}, string_{s.MoveString()}, context_{c}, isFatal_{
+                                                                s.isFatal()} {}
   Message(Provenance p, MessageExpectedText t, Message *c = nullptr)
     : provenance_{p}, text_{t.AsMessageFixedText()},
       isExpectedText_{true}, context_{c}, isFatal_{true} {}
 
   Message(const char *csl, MessageFixedText t, Message *c = nullptr)
-    : cookedSourceLocation_{csl}, text_{t}, context_{c}, isFatal_{t.isFatal()} {}
+    : cookedSourceLocation_{csl}, text_{t}, context_{c}, isFatal_{t.isFatal()} {
+  }
   Message(const char *csl, MessageFormattedText &&s, Message *c = nullptr)
     : cookedSourceLocation_{csl}, string_{s.MoveString()}, context_{c},
       isFatal_{s.isFatal()} {}

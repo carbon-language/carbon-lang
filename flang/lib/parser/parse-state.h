@@ -46,8 +46,8 @@ public:
       warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
       anyErrorRecovery_{that.anyErrorRecovery_},
       anyConformanceViolation_{that.anyConformanceViolation_},
-      deferMessages_{that.deferMessages_},
-      anyDeferredMessages_{that.anyDeferredMessages_} {}
+      deferMessages_{that.deferMessages_}, anyDeferredMessages_{
+                                               that.anyDeferredMessages_} {}
   ParseState &operator=(const ParseState &that) {
     p_ = that.p_, limit_ = that.limit_;
     userState_ = that.userState_, inFixedForm_ = that.inFixedForm_;

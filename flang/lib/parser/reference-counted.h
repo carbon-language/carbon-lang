@@ -14,9 +14,10 @@ public:
   void TakeReference() { ++references_; }
   void DropReference() {
     if (--references_ == 0) {
-      delete static_cast<A*>(this);
+      delete static_cast<A *>(this);
     }
   }
+
 private:
   int references_{0};
 };
