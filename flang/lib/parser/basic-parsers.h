@@ -79,7 +79,6 @@ public:
   constexpr BacktrackingParser(const A &parser) : parser_{parser} {}
   std::optional<resultType> Parse(ParseState *state) const {
     Messages messages{std::move(state->messages())};
-    Message::Context context{state->context()};
     ParseState backtrack{*state};
     std::optional<resultType> result{parser_.Parse(state)};
     if (result.has_value()) {
@@ -88,7 +87,6 @@ public:
     } else {
       *state = std::move(backtrack);
       state->messages() = std::move(messages);
-      state->set_context(std::move(context));
     }
     return result;
   }
@@ -236,7 +234,6 @@ public:
   constexpr AlternativeParser(const PA &pa, const PB &pb) : pa_{pa}, pb_{pb} {}
   std::optional<resultType> Parse(ParseState *state) const {
     Messages messages{std::move(state->messages())};
-    Message::Context context{state->context()};
     ParseState backtrack{*state};
     if (std::optional<resultType> ax{pa_.Parse(state)}) {
       messages.Annex(state->messages());
@@ -245,7 +242,6 @@ public:
     }
     ParseState paState{std::move(*state)};
     *state = std::move(backtrack);
-    state->set_context(std::move(context));
     if (std::optional<resultType> bx{pb_.Parse(state)}) {
       messages.Annex(state->messages());
       state->messages() = std::move(messages);
@@ -298,40 +294,32 @@ public:
   constexpr RecoveryParser(const RecoveryParser &) = default;
   constexpr RecoveryParser(const PA &pa, const PB &pb) : pa_{pa}, pb_{pb} {}
   std::optional<resultType> Parse(ParseState *state) const {
-    Messages messages{std::move(state->messages())};
-    Message::Context context{state->context()};
-    ParseState backtrack{*state};
     bool originallyDeferred{state->deferMessages()};
-#if 0
-    state->set_deferMessages(true);
-#endif
-    std::optional<resultType> ax{pa_.Parse(state)};
-#if 0
-    if (!originallyDeferred && state->anyDeferredMessages()) {
-      CHECK(state->messages().empty());
+    ParseState backtrack{*state};
+    if (!originallyDeferred && state->messages().empty() &&
+        !state->anyErrorRecovery()) {
+      state->set_deferMessages(true);
+      if (std::optional<resultType> ax{pa_.Parse(state)}) {
+        if (!state->anyDeferredMessages() && !state->anyErrorRecovery()) {
+          state->set_deferMessages(false);
+          return ax;
+        }
+      }
       *state = backtrack;
-      state->set_context(context);
-      ax = pa_.Parse(state);
-      CHECK(!state->messages().empty());
     }
-#endif
-    if (ax.has_value()) {
+    Messages messages{std::move(state->messages())};
+    if (std::optional<resultType> ax{pa_.Parse(state)}) {
       messages.Annex(state->messages());
       state->messages() = std::move(messages);
-      state->set_context(std::move(context));
-      state->set_deferMessages(originallyDeferred);
       return ax;
     }
-    Messages paMessages{std::move(state->messages())};
+    messages.Annex(state->messages());
     *state = std::move(backtrack);
     state->set_deferMessages(true);
     std::optional<resultType> bx{pb_.Parse(state)};
-    CHECK(state->messages().empty());
     state->messages() = std::move(messages);
-    state->set_context(std::move(context));
     state->set_deferMessages(originallyDeferred);
     if (bx.has_value()) {
-      state->messages().Annex(paMessages);
       state->set_anyErrorRecovery();
     }
     return bx;
