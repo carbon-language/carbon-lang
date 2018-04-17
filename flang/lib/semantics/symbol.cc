@@ -17,6 +17,20 @@ void EntityDetails::set_shape(const ArraySpec &shape) {
   }
 }
 
+// The name of the kind of details for this symbol.
+// This is primarily for debugging.
+const std::string Symbol::GetDetailsName() const {
+  return std::visit(
+      parser::visitors{
+          [&](const UnknownDetails &x) { return "Unknown"; },
+          [&](const MainProgramDetails &x) { return "MainProgram"; },
+          [&](const ModuleDetails &x) { return "Module"; },
+          [&](const SubprogramDetails &x) { return "Subprogram"; },
+          [&](const EntityDetails &x) { return "Entity"; },
+      },
+      details_);
+}
+
 std::ostream &operator<<(std::ostream &os, const EntityDetails &x) {
   os << "Entity";
   if (x.type()) {
@@ -31,8 +45,17 @@ std::ostream &operator<<(std::ostream &os, const EntityDetails &x) {
   return os;
 }
 
+static std::ostream &DumpType(std::ostream &os, const Symbol &symbol) {
+  if (const auto *details = symbol.detailsIf<EntityDetails>()) {
+    if (details->type()) {
+      os << *details->type() << ' ';
+    }
+  }
+  return os;
+}
+
 std::ostream &operator<<(std::ostream &os, const Symbol &sym) {
-  os << sym.name_.ToString();
+  os << sym.name().ToString();
   if (!sym.attrs().empty()) {
     os << ", " << sym.attrs();
   }
@@ -45,13 +68,16 @@ std::ostream &operator<<(std::ostream &os, const Symbol &sym) {
           [&](const SubprogramDetails &x) {
             os << " Subprogram (";
             int n = 0;
-            for (const auto &dummy : x.dummyNames()) {
+            for (const auto &dummy : x.dummyArgs()) {
               if (n++ > 0) os << ", ";
-              os << dummy.ToString();
+              DumpType(os, *dummy);
+              os << dummy->name().ToString();
             }
             os << ')';
-            if (x.resultName()) {
-              os << " result(" << x.resultName()->ToString() << ')';
+            if (x.isFunction()) {
+              os << " result(";
+              DumpType(os, x.result());
+              os << x.result().name().ToString() << ')';
             }
           },
           [&](const EntityDetails &x) { os << ' ' << x; },

@@ -16,6 +16,7 @@ using SourceName = parser::CharBlock;
 /// *Details classes.
 
 class Scope;
+class Symbol;
 
 class ModuleDetails {
 public:
@@ -29,19 +30,22 @@ private:
 
 class SubprogramDetails {
 public:
-  // Subroutine:
   SubprogramDetails() {}
-  // Function:
-  SubprogramDetails(const SourceName &resultName) : resultName_{resultName} {}
+  SubprogramDetails(const SubprogramDetails &that)
+    : dummyArgs_{that.dummyArgs_}, result_{that.result_} {}
 
-  bool isFunction() const { return resultName_.has_value(); }
-  const std::list<SourceName> &dummyNames() const { return dummyNames_; }
-  const std::optional<SourceName> &resultName() const { return resultName_; }
-  void AddDummyName(const SourceName &name) { dummyNames_.push_back(name); }
+  bool isFunction() const { return result_.has_value(); }
+  const Symbol &result() const { CHECK(isFunction()); return **result_; }
+  void set_result(Symbol &result) {
+    CHECK(!result_.has_value());
+    result_ = &result;
+  }
+  const std::list<Symbol *> &dummyArgs() const { return dummyArgs_; }
+  void add_dummyArg(Symbol &symbol) { dummyArgs_.push_back(&symbol); }
 
 private:
-  std::list<SourceName> dummyNames_;
-  std::optional<SourceName> resultName_;
+  std::list<Symbol *> dummyArgs_;
+  std::optional<Symbol *> result_;
   friend std::ostream &operator<<(std::ostream &, const SubprogramDetails &);
 };
 
@@ -53,6 +57,7 @@ public:
   const ArraySpec &shape() const { return shape_; }
   void set_shape(const ArraySpec &shape);
   bool isDummy() const { return isDummy_; }
+  bool isArray() const { return !shape_.empty(); }
 
 private:
   bool isDummy_;
@@ -71,10 +76,11 @@ public:
 
   Symbol(const Scope &owner, const SourceName &name, const Attrs &attrs,
       Details &&details)
-    : owner_{owner}, name_{name}, attrs_{attrs},
-      details_{std::move(details)} {}
+    : owner_{owner}, attrs_{attrs}, details_{std::move(details)} {
+      add_occurrence(name);
+    }
   const Scope &owner() const { return owner_; }
-  const SourceName &name() const { return name_; }
+  const SourceName &name() const { return occurrences_.front(); }
   Attrs &attrs() { return attrs_; }
   const Attrs &attrs() const { return attrs_; }
 
@@ -91,14 +97,15 @@ public:
 
   // Return a reference to the details which must be of type D.
   template<typename D> D &details() {
-    auto p = detailsIf<D>();
-    CHECK(p && "unexpected type");
-    return *p;
+    return const_cast<D &>(static_cast<const Symbol *>(this)->details<D>());
   }
   template<typename D> const D &details() const {
-    const auto p = detailsIf<D>();
-    CHECK(p && "unexpected type");
-    return *p;
+    if (const auto p = detailsIf<D>()) {
+      return *p;
+    } else {
+      Fortran::parser::die("unexpected %s details at %s(%d)",
+          GetDetailsName().c_str(), __FILE__, __LINE__);
+    }
   }
 
   // Assign the details of the symbol from one of the variants.
@@ -108,11 +115,20 @@ public:
     details_.swap(details);
   }
 
+  const std::list<SourceName> &occurrences() const {
+    return occurrences_;
+  }
+  void add_occurrence(const SourceName &name) {
+    occurrences_.push_back(name);
+  }
+
 private:
   const Scope &owner_;
-  const SourceName name_;
+  std::list<SourceName> occurrences_;
   Attrs attrs_;
   Details details_;
+
+  const std::string GetDetailsName() const;
   friend std::ostream &operator<<(std::ostream &, const Symbol &);
 };
 

@@ -180,7 +180,7 @@ public:
   }
 
 protected:
-  void PushScope();
+  void PushScope(bool copyImplicitRules);
   void PopScope();
 
 private:
@@ -209,15 +209,9 @@ public:
     return !arraySpec_.empty() ? arraySpec_ : attrArraySpec_;
   }
 
-  void BeginArraySpec() {
-    CHECK(attrArraySpec_.empty());
-  }
-  void EndArraySpec() {
-    attrArraySpec_.clear();
-  }
-  void ClearArraySpec() {
-    arraySpec_.clear();
-  }
+  void BeginArraySpec() { CHECK(attrArraySpec_.empty()); }
+  void EndArraySpec() { attrArraySpec_.clear(); }
+  void ClearArraySpec() { arraySpec_.clear(); }
 
   bool Pre(const parser::ArraySpec &x) {
     CHECK(arraySpec_.empty());
@@ -282,10 +276,10 @@ private:
 class ResolveNamesVisitor : public ImplicitRulesVisitor,
                             public ArraySpecVisitor {
 public:
-  using ImplicitRulesVisitor::Pre;
-  using ImplicitRulesVisitor::Post;
-  using ArraySpecVisitor::Pre;
   using ArraySpecVisitor::Post;
+  using ArraySpecVisitor::Pre;
+  using ImplicitRulesVisitor::Post;
+  using ImplicitRulesVisitor::Pre;
 
   ResolveNamesVisitor(parser::Messages &messages)
     : ImplicitRulesVisitor(messages) {
@@ -293,9 +287,9 @@ public:
   }
 
   Scope &CurrScope() { return *scopes_.top(); }
-  void PushScope(Scope &scope) {
+  void PushScope(Scope &scope, bool copyImplicitRules = false) {
     scopes_.push(&scope);
-    ImplicitRulesVisitor::PushScope();
+    ImplicitRulesVisitor::PushScope(copyImplicitRules);
   }
   void PopScope() {
     scopes_.pop();
@@ -320,13 +314,15 @@ public:
   bool Pre(const parser::ValueStmt &);
   bool Pre(const parser::VolatileStmt &);
   void Post(const parser::SpecificationPart &);
-  void Post(const parser::EndSubroutineStmt &);
-  void Post(const parser::EndFunctionStmt &);
   bool Pre(const parser::Suffix &);
+  bool Pre(const parser::StmtFunctionStmt &);
+  void Post(const parser::StmtFunctionStmt &);
   bool Pre(const parser::SubroutineStmt &);
   void Post(const parser::SubroutineStmt &);
+  void Post(const parser::EndSubroutineStmt &);
   bool Pre(const parser::FunctionStmt &);
   void Post(const parser::FunctionStmt &);
+  void Post(const parser::EndFunctionStmt &);
   bool Pre(const parser::MainProgram &);
   void Post(const parser::EndProgramStmt &);
   void Post(const parser::Program &);
@@ -335,16 +331,12 @@ public:
     objectDeclAttr_ = Attr::ALLOCATABLE;
     return true;
   }
-  void Post(const parser::AllocatableStmt &) {
-    objectDeclAttr_ = std::nullopt;
-  }
+  void Post(const parser::AllocatableStmt &) { objectDeclAttr_ = std::nullopt; }
   bool Pre(const parser::TargetStmt &x) {
     objectDeclAttr_ = Attr::TARGET;
     return true;
   }
-  void Post(const parser::TargetStmt &) {
-    objectDeclAttr_ = std::nullopt;
-  }
+  void Post(const parser::TargetStmt &) { objectDeclAttr_ = std::nullopt; }
   void Post(const parser::DimensionStmt::Declaration &);
 
   const parser::Name *GetVariableName(const parser::DataRef &x) {
@@ -378,9 +370,7 @@ public:
     }
   }
 
-  void Post(const parser::Expr &x) {
-    CheckImplicitSymbol(GetVariableName(x));
-  }
+  void Post(const parser::Expr &x) { CheckImplicitSymbol(GetVariableName(x)); }
   void Post(const parser::Variable &x) {
     CheckImplicitSymbol(GetVariableName(x));
   }
@@ -409,7 +399,8 @@ private:
   std::optional<Attr> objectDeclAttr_;
 
   // Create a subprogram symbol in the current scope and push a new scope.
-  void PushSubprogramScope(const parser::Name &, SubprogramDetails &);
+  Symbol &PushSubprogramScope(
+      const parser::Name &, bool copyImplicitRules = false);
 
   // On leaving a scope, add implicit types if appropriate.
   void ApplyImplicitRules();
@@ -421,20 +412,27 @@ private:
   template<typename D>
   Symbol &MakeSymbol(
       const parser::Name &name, const Attrs &attrs, D &&details) {
-    const auto pair = CurrScope().try_emplace(name.source, attrs, details);
-    Symbol &symbol = pair.first->second;
-    if (!pair.second) {
+    const auto &it = CurrScope().find(name.source);
+    auto &symbol = it->second;
+    if (it == CurrScope().end()) {
+      const auto pair = CurrScope().try_emplace(name.source, attrs, details);
+      CHECK(pair.second);  // name was not found, so must be able to add
+      return pair.first->second;
+    } else if (symbol.has<UnknownDetails>()) {
+      // update the existing symbol
       symbol.attrs() |= attrs;
-      if (!std::is_same<UnknownDetails, D>::value) {
-        if (symbol.has<UnknownDetails>()) {
-          symbol.set_details(details);
-        } else {
-          Say(name, "'%s' is already declared in this scoping unit"_err_en_US);
-          Say(symbol.name(), "Previous declaration of '%s'"_en_US);
-        }
-      }
+      symbol.set_details(details);
+      return symbol;
+    } else if (std::is_same<UnknownDetails, D>::value) {
+      symbol.attrs() |= attrs;
+      return symbol;
+    } else {
+      Say(name, "'%s' is already declared in this scoping unit"_err_en_US);
+      Say(symbol.name(), "Previous declaration of '%s'"_en_US);
+      // replace the old symbols with a new one with correct details
+      CurrScope().erase(symbol.name());
+      return MakeSymbol(name, attrs, details);
     }
-    return symbol;
   }
   template<typename D>
   Symbol &MakeSymbol(const parser::Name &name, D &&details) {
@@ -723,8 +721,9 @@ void ImplicitRulesVisitor::Post(const parser::ImplicitSpec &) {
   EndDeclTypeSpec();
 }
 
-void ImplicitRulesVisitor::PushScope() {
-  implicitRules_.push(ImplicitRules(*this));
+void ImplicitRulesVisitor::PushScope(bool copyImplicitRules) {
+  implicitRules_.push(copyImplicitRules ? ImplicitRules(implicitRules_.top())
+                                        : ImplicitRules(*this));
   prevImplicit_ = nullptr;
   prevImplicitNone_ = nullptr;
   prevImplicitNoneType_ = nullptr;
@@ -950,6 +949,60 @@ bool ResolveNamesVisitor::Pre(const parser::Suffix &suffix) {
   return true;
 }
 
+bool ResolveNamesVisitor::Pre(const parser::StmtFunctionStmt &x) {
+  const auto &name = std::get<parser::Name>(x.t);
+  std::optional<SourceName> occurrence;
+  std::optional<DeclTypeSpec> resultType;
+  // Look up name: provides return type or tells us if it's an array
+  auto it = CurrScope().find(name.source);
+  if (it != CurrScope().end()) {
+    Symbol &symbol{it->second};
+    if (auto *details = symbol.detailsIf<EntityDetails>()) {
+      if (details->isArray()) {
+        // not a stmt-func at all but an array; do nothing
+        symbol.add_occurrence(name.source);
+        return true;
+      }
+      // TODO: check that attrs are compatible with stmt func
+      resultType = details->type();
+      occurrence = symbol.name();
+      CurrScope().erase(symbol.name());
+    }
+  }
+  BeginAttrs();  // no attrs to collect, but PushSubprogramScope expects this
+  auto &symbol = PushSubprogramScope(name, /*copyImplicitRules=*/true);
+  if (occurrence) {
+    symbol.add_occurrence(*occurrence);
+  }
+  auto &details = symbol.details<SubprogramDetails>();
+  for (const auto &dummyName : std::get<std::list<parser::Name>>(x.t)) {
+    EntityDetails dummyDetails{true};
+    auto it = CurrScope().parent().find(dummyName.source);
+    if (it != CurrScope().parent().end()) {
+      if (auto *d = it->second.detailsIf<EntityDetails>()) {
+        if (d->type()) {
+          dummyDetails.set_type(*d->type());
+        }
+      }
+    }
+    details.add_dummyArg(MakeSymbol(dummyName, std::move(dummyDetails)));
+  }
+  CurrScope().erase(name.source);  // added by PushSubprogramScope
+  EntityDetails resultDetails;
+  if (resultType) {
+    resultDetails.set_type(*resultType);
+  }
+  details.set_result(MakeSymbol(name, resultDetails));
+  return true;
+}
+
+void ResolveNamesVisitor::Post(const parser::StmtFunctionStmt &x) {
+  ApplyImplicitRules();
+  std::cout << "End of stmt func scope\n";
+  std::cout << CurrScope();
+  PopScope();
+}
+
 bool ResolveNamesVisitor::Pre(const parser::SubroutineStmt &stmt) {
   BeginAttrs();
   return true;
@@ -963,25 +1016,23 @@ bool ResolveNamesVisitor::Pre(const parser::FunctionStmt &stmt) {
 
 void ResolveNamesVisitor::Post(const parser::SubroutineStmt &stmt) {
   const auto &subrName = std::get<parser::Name>(stmt.t);
-  SubprogramDetails details;
-  PushSubprogramScope(subrName, details);
+  auto &symbol = PushSubprogramScope(subrName);
+  auto &details = symbol.details<SubprogramDetails>();
   for (const auto &dummyArg : std::get<std::list<parser::DummyArg>>(stmt.t)) {
     const parser::Name *dummyName = std::get_if<parser::Name>(&dummyArg.u);
     CHECK(dummyName != nullptr && "TODO: alternate return indicator");
-    MakeSymbol(*dummyName, EntityDetails(true));
-    details.AddDummyName(dummyName->source);
+    Symbol &dummy{MakeSymbol(*dummyName, EntityDetails(true))};
+    details.add_dummyArg(dummy);
   }
 }
 
 void ResolveNamesVisitor::Post(const parser::FunctionStmt &stmt) {
   const auto &funcName = std::get<parser::Name>(stmt.t);
-  const auto &funcResultName = funcResultName_ ? *funcResultName_ : funcName;
-  funcResultName_ = nullptr;
-  SubprogramDetails details(funcResultName.source);
-  PushSubprogramScope(funcName, details);
+  auto &symbol = PushSubprogramScope(funcName);
+  auto &details = symbol.details<SubprogramDetails>();
   for (const auto &dummyName : std::get<std::list<parser::Name>>(stmt.t)) {
-    MakeSymbol(dummyName, EntityDetails(true));
-    details.AddDummyName(dummyName.source);
+    Symbol &dummy{MakeSymbol(dummyName, EntityDetails(true))};
+    details.add_dummyArg(dummy);
   }
   // add function result to function scope
   EntityDetails funcResultDetails;
@@ -989,20 +1040,27 @@ void ResolveNamesVisitor::Post(const parser::FunctionStmt &stmt) {
     funcResultDetails.set_type(*declTypeSpec_);
   }
   EndDeclTypeSpec();
-  if (funcResultName.source != funcName.source) {
-    MakeSymbol(funcResultName, funcResultDetails);
+
+  const parser::Name *funcResultName;
+  if (funcResultName_ && funcResultName_->source != funcName.source) {
+    funcResultName = funcResultName_;
+    funcResultName_ = nullptr;
   } else {
     CurrScope().erase(funcName.source);  // was added by PushSubprogramScope
-    MakeSymbol(funcName, funcResultDetails);
+    funcResultName = &funcName;
   }
+  details.set_result(MakeSymbol(*funcResultName, funcResultDetails));
 }
 
-void ResolveNamesVisitor::PushSubprogramScope(
-    const parser::Name &name, SubprogramDetails &details) {
-  MakeSymbol(name, EndAttrs(), details);
+Symbol &ResolveNamesVisitor::PushSubprogramScope(
+    const parser::Name &name, bool copyImplicitRules) {
+  auto &symbol = MakeSymbol(name, EndAttrs(), SubprogramDetails());
   Scope &subpScope = CurrScope().MakeScope(Scope::Kind::Subprogram);
-  PushScope(subpScope);
-  MakeSymbol(name, details);  // can't reused this name inside subprogram
+  PushScope(subpScope, copyImplicitRules);
+  auto &details = symbol.details<SubprogramDetails>();
+  // can't reused this name inside subprogram:
+  MakeSymbol(name, SubprogramDetails(details));
+  return symbol;
 }
 
 bool ResolveNamesVisitor::Pre(const parser::MainProgram &x) {
