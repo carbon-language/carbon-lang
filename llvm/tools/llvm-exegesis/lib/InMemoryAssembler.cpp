@@ -206,7 +206,7 @@ JitFunction::JitFunction(JitFunctionContext &&Context,
   ExecEngine.reset(
       llvm::EngineBuilder(std::move(FunctionContext.Module))
           .setErrorStr(&Error)
-          .setMCPU(FunctionContext.TM->getTargetCPU())
+          .setMCPU(TM->getTargetCPU())
           .setEngineKind(llvm::EngineKind::JIT)
           .setMCJITMemoryManager(
               llvm::make_unique<TrackingSectionMemoryManager>(&CodeSize))
