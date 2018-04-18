@@ -137,6 +137,7 @@ public:
   }
   bool isFatal() const { return isFatal_; }
 
+  void Incorporate(Message &);
   std::string ToString() const;
   Provenance Emit(
       std::ostream &, const CookedSource &, bool echoSourceLine = true) const;
@@ -215,6 +216,8 @@ public:
       that.last_ = that.messages_.before_begin();
     }
   }
+
+  void Incorporate(Messages &);
 
   void Emit(std::ostream &, const char *prefix = nullptr,
       bool echoSourceLines = true) const;

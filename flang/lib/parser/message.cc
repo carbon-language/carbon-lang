@@ -36,6 +36,14 @@ MessageFormattedText::MessageFormattedText(MessageFixedText text, ...)
   string_ = buffer;
 }
 
+void Message::Incorporate(Message &that) {
+  if (provenance_ == that.provenance_ &&
+      cookedSourceLocation_ == that.cookedSourceLocation_ &&
+      expected_ != emptySetOfChars) {
+    expected_ |= that.expected_;
+  }
+}
+
 std::string Message::ToString() const {
   std::string s{string_};
   bool isExpected{isExpected_};
@@ -48,13 +56,28 @@ std::string Message::ToString() const {
         s = std::string{fixedText_};  // NUL-terminated
       }
     } else {
-      s = SetOfCharsToString(expected_);
-      if (!IsSingleton(expected_)) {
-        return MessageFormattedText("expected one of '%s'"_err_en_US, s)
-            .MoveString();
+      SetOfChars expect{expected_};
+      if (IsCharInSet(expect, '\n')) {
+        expect -= SingletonChar('\n');
+        if (expect == emptySetOfChars) {
+          return "expected end of line"_err_en_US.ToString();
+        } else {
+          s = SetOfCharsToString(expect);
+          if (IsSingleton(expect)) {
+            return MessageFormattedText(
+                "expected end of line or '%s'"_err_en_US, s.data())
+                .MoveString();
+          } else {
+            return MessageFormattedText(
+                "expected end of line or one of '%s'"_err_en_US, s.data())
+                .MoveString();
+          }
+        }
       }
-      if (expected_ == SingletonChar('\n')) {
-        return "expected end of line"_err_en_US.ToString();
+      s = SetOfCharsToString(expect);
+      if (!IsSingleton(expect)) {
+        return MessageFormattedText("expected one of '%s'"_err_en_US, s.data())
+            .MoveString();
       }
       isExpected = true;
     }
@@ -81,6 +104,14 @@ Provenance Message::Emit(
   }
   o << ToString() << '\n';
   return provenance;
+}
+
+void Messages::Incorporate(Messages &that) {
+  if (messages_.empty()) {
+    *this = std::move(that);
+  } else if (!that.messages_.empty()) {
+    last_->Incorporate(*that.last_);
+  }
 }
 
 void Messages::Emit(

@@ -258,6 +258,7 @@ public:
       messages.Annex(state->messages());
     } else {
       // It's a tie.
+      paState.messages().Incorporate(state->messages());
       messages.Annex(paState.messages());
     }
     state->messages() = std::move(messages);
