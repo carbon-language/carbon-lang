@@ -40,7 +40,7 @@ public:
   }
 
 private:
-  SetOfChars set_;
+  const SetOfChars set_;
 };
 
 constexpr AnyOfChars operator""_ch(const char str[], std::size_t n) {

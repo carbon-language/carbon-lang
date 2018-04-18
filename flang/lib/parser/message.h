@@ -87,7 +87,7 @@ public:
 private:
   const char *str_{nullptr};
   std::size_t bytes_{0};
-  SetOfChars set_{emptySetOfChars};
+  SetOfChars set_;
 };
 
 class Message : public ReferenceCounted<Message> {
@@ -149,7 +149,7 @@ private:
   std::size_t fixedBytes_{0};
   bool isExpected_{false};
   std::string string_;
-  SetOfChars expected_{emptySetOfChars};
+  SetOfChars expected_;
   Context context_;
   bool isFatal_{false};
 };

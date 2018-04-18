@@ -12,9 +12,18 @@
 namespace Fortran {
 namespace parser {
 
-using SetOfChars = std::uint64_t;
+struct SetOfChars {
+  constexpr SetOfChars() {}
+  constexpr SetOfChars(std::uint64_t b) : bits_{b} {}
+  constexpr SetOfChars(const SetOfChars &) = default;
+  constexpr SetOfChars(SetOfChars &&) = default;
+  constexpr SetOfChars &operator=(const SetOfChars &) = default;
+  constexpr SetOfChars &operator=(SetOfChars &&) = default;
+  std::string ToString() const;
+  std::uint64_t bits_{0};
+};
 
-static constexpr char SixBitEncoding(char c) {
+static constexpr std::uint64_t EncodeChar(char c) {
   if (c <= 32 /*space*/) {
     // map control characters, incl. LF (newline), to '?'
     c = '?';
@@ -25,52 +34,25 @@ static constexpr char SixBitEncoding(char c) {
     // map lower-case letters to upper-case
     c -= 32;
   }
-  // range is now [32..95]; reduce to [0..63]
-  return c - 32;
+  // range is now [32..95]; reduce to [0..63] and use as a shift count
+  return static_cast<std::uint64_t>(1) << (c - 32);
 }
 
-static constexpr char SixBitDecoding(char c) {
-  c += 32;
-  if (c == '?') {
-    return '\n';
-  }
-  return c;
-}
-
-static constexpr SetOfChars SingletonChar(char c) {
-  return static_cast<SetOfChars>(1) << SixBitEncoding(c);
-}
+static constexpr SetOfChars SingletonChar(char c) { return {EncodeChar(c)}; }
 
 static constexpr SetOfChars CharsToSet(const char str[], std::size_t n = 256) {
-  SetOfChars chars{0};
+  SetOfChars chars;
   for (std::size_t j{0}; j < n; ++j) {
     if (str[j] == '\0') {
       break;
     }
-    chars |= SingletonChar(str[j]);
+    chars.bits_ |= EncodeChar(str[j]);
   }
   return chars;
 }
 
-static const SetOfChars emptySetOfChars{0};
-static const SetOfChars fullSetOfChars{~static_cast<SetOfChars>(0)};
-static const SetOfChars setOfLetters{
-    CharsToSet("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")};
-static const SetOfChars setOfDecimalDigits{CharsToSet("0123456789")};
-static const SetOfChars setOfIdentifierStarts{setOfLetters | CharsToSet("_@$")};
-static const SetOfChars setOfIdentifierChars{
-    setOfIdentifierStarts | setOfDecimalDigits};
-
-// sanity check
-static_assert(setOfLetters == 0x7fffffe00000000);
-static_assert(setOfDecimalDigits == 0x3ff0000);
-
 static inline constexpr bool IsCharInSet(SetOfChars set, char c) {
-  return (set & SingletonChar(c)) != 0;
-}
-
-static inline constexpr bool IsSingleton(SetOfChars set) {
-  return (set & (set - 1)) == emptySetOfChars;
+  return (set.bits_ & EncodeChar(c)) != 0;
 }
 
 std::string SetOfCharsToString(SetOfChars);

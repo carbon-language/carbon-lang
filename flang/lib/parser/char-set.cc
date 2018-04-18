@@ -3,11 +3,12 @@
 namespace Fortran {
 namespace parser {
 
-std::string SetOfCharsToString(SetOfChars set) {
+std::string SetOfChars::ToString() const {
   std::string result;
+  std::uint64_t set{bits_};
   for (char ch{' '}; set != 0; ++ch) {
     if (IsCharInSet(set, ch)) {
-      set -= SingletonChar(ch);
+      set -= EncodeChar(ch);
       result += ch;
     }
   }

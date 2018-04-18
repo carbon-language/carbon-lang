@@ -39,8 +39,8 @@ MessageFormattedText::MessageFormattedText(MessageFixedText text, ...)
 void Message::Incorporate(Message &that) {
   if (provenance_ == that.provenance_ &&
       cookedSourceLocation_ == that.cookedSourceLocation_ &&
-      expected_ != emptySetOfChars) {
-    expected_ |= that.expected_;
+      expected_.bits_ != 0) {
+    expected_.bits_ |= that.expected_.bits_;
   }
 }
 
@@ -58,12 +58,12 @@ std::string Message::ToString() const {
     } else {
       SetOfChars expect{expected_};
       if (IsCharInSet(expect, '\n')) {
-        expect -= SingletonChar('\n');
-        if (expect == emptySetOfChars) {
+        expect.bits_ &= ~SingletonChar('\n').bits_;
+        if (expect.bits_ == 0) {
           return "expected end of line"_err_en_US.ToString();
         } else {
-          s = SetOfCharsToString(expect);
-          if (IsSingleton(expect)) {
+          s = expect.ToString();
+          if (s.size() == 1) {
             return MessageFormattedText(
                 "expected end of line or '%s'"_err_en_US, s.data())
                 .MoveString();
@@ -74,8 +74,8 @@ std::string Message::ToString() const {
           }
         }
       }
-      s = SetOfCharsToString(expect);
-      if (!IsSingleton(expect)) {
+      s = expect.ToString();
+      if (s.size() != 1) {
         return MessageFormattedText("expected one of '%s'"_err_en_US, s.data())
             .MoveString();
       }
