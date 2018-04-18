@@ -8,7 +8,7 @@ std::string SetOfChars::ToString() const {
   std::uint64_t set{bits_};
   for (char ch{' '}; set != 0; ++ch) {
     if (IsCharInSet(set, ch)) {
-      set -= EncodeChar(ch);
+      set -= SetOfChars{ch}.bits_;
       result += ch;
     }
   }

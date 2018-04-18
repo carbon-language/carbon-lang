@@ -77,7 +77,7 @@ public:
     }
   }
   MessageExpectedText(MessageExpectedText &&) = default;
-  explicit MessageExpectedText(char ch) : set_{SingletonChar(ch)} {}
+  explicit MessageExpectedText(char ch) : set_{ch} {}
   explicit MessageExpectedText(SetOfChars set) : set_{set} {}
 
   const char *str() const { return str_; }

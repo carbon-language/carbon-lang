@@ -44,7 +44,7 @@ private:
 };
 
 constexpr AnyOfChars operator""_ch(const char str[], std::size_t n) {
-  return AnyOfChars{CharsToSet(str, n)};
+  return AnyOfChars{SetOfChars(str, n)};
 }
 
 constexpr auto letter = "abcdefghijklmnopqrstuvwxyz"_ch;
@@ -266,8 +266,7 @@ template<char quote> struct CharLiteral {
     static constexpr auto nextch = attempt(CharLiteralChar{});
     while (std::optional<CharLiteralChar::Result> ch{nextch.Parse(state)}) {
       if (ch->ch == quote && !ch->wasEscaped) {
-        static constexpr auto doubled =
-            attempt(AnyOfChars{SingletonChar(quote)});
+        static constexpr auto doubled = attempt(AnyOfChars{SetOfChars{quote}});
         if (!doubled.Parse(state).has_value()) {
           return {str};
         }

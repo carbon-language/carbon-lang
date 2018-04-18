@@ -58,7 +58,7 @@ std::string Message::ToString() const {
     } else {
       SetOfChars expect{expected_};
       if (IsCharInSet(expect, '\n')) {
-        expect.bits_ &= ~SingletonChar('\n').bits_;
+        expect.bits_ &= ~SetOfChars{'\n'}.bits_;
         if (expect.bits_ == 0) {
           return "expected end of line"_err_en_US.ToString();
         } else {
