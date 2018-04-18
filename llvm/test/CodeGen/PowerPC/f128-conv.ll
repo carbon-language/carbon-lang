@@ -6,6 +6,8 @@
 @umem = global [5 x i64] [i64 560, i64 100, i64 34, i64 2, i64 5], align 8
 @swMem = global [5 x i32] [i32 5, i32 2, i32 3, i32 4, i32 0], align 4
 @uwMem = global [5 x i32] [i32 5, i32 2, i32 3, i32 4, i32 0], align 4
+@uhwMem = local_unnamed_addr global [5 x i16] [i16 5, i16 2, i16 3, i16 4, i16 0], align 2
+@ubMem = local_unnamed_addr global [5 x i8] c"\05\02\03\04\00", align 1
 
 ; Function Attrs: norecurse nounwind
 define void @sdwConv2qp(fp128* nocapture %a, i64 %b) {
@@ -294,6 +296,145 @@ entry:
 ; CHECK: addi [[REG:[0-9]+]], 4, 3
 ; CHECK-NEXT: lxsiwzx [[REG1:[0-9]+]], 0, [[REG]]
 ; CHECK-NEXT: xscvudqp [[CONV:[0-9]+]], [[REG1]]
+; CHECK-NEXT: stxv [[CONV]], 0(3)
+; CHECK-NEXT: blr
+}
+
+; Function Attrs: norecurse nounwind
+define void @uhwConv2qp(fp128* nocapture %a, i16 zeroext %b) {
+entry:
+  %conv = uitofp i16 %b to fp128
+  store fp128 %conv, fp128* %a, align 16
+  ret void
+
+
+; CHECK-LABEL: uhwConv2qp
+; CHECK: mtvsrwz [[REG:[0-9]+]], 4
+; CHECK-NEXT: xscvudqp [[CONV:[0-9]+]], [[REG]]
+; CHECK-NEXT: stxv [[CONV]], 0(3)
+; CHECK-NEXT: blr
+}
+
+; Function Attrs: norecurse nounwind
+define void @uhwConv2qp_02(fp128* nocapture %a, i16* nocapture readonly %b) {
+entry:
+  %0 = load i16, i16* %b, align 2
+  %conv = uitofp i16 %0 to fp128
+  store fp128 %conv, fp128* %a, align 16
+  ret void
+
+; CHECK-LABEL: uhwConv2qp_02
+; CHECK: lxsihzx [[REG:[0-9]+]], 0, 4
+; CHECK-NEXT: xscvudqp [[CONV:[0-9]+]], [[REG]]
+; CHECK-NEXT: stxv [[CONV]], 0(3)
+; CHECK-NEXT: blr
+}
+
+; Function Attrs: norecurse nounwind
+define void @uhwConv2qp_03(fp128* nocapture %a) {
+entry:
+  %0 = load i16, i16* getelementptr inbounds
+                        ([5 x i16], [5 x i16]* @uhwMem, i64 0, i64 3), align 2
+  %conv = uitofp i16 %0 to fp128
+  store fp128 %conv, fp128* %a, align 16
+  ret void
+
+; CHECK-LABEL: uhwConv2qp_03
+; CHECK: addis [[REG0:[0-9]+]], 2, .LC4@toc@ha
+; CHECK: ld [[REG0]], .LC4@toc@l([[REG0]])
+; CHECK: addi [[REG0]], [[REG0]], 6
+; CHECK: lxsihzx [[REG:[0-9]+]], 0, [[REG0]]
+; CHECK-NEXT: xscvudqp [[CONV:[0-9]+]], [[REG]]
+; CHECK-NEXT: stxv [[CONV]], 0(3)
+; CHECK-NEXT: blr
+}
+
+; Function Attrs: norecurse nounwind
+define void @uhwConv2qp_04(fp128* nocapture %a, i16 zeroext %b,
+                           i16* nocapture readonly %c) {
+entry:
+  %conv = zext i16 %b to i32
+  %0 = load i16, i16* %c, align 2
+  %conv1 = zext i16 %0 to i32
+  %add = add nuw nsw i32 %conv1, %conv
+  %conv2 = sitofp i32 %add to fp128
+  store fp128 %conv2, fp128* %a, align 16
+  ret void
+
+; CHECK-LABEL: uhwConv2qp_04
+; CHECK: lhz [[REG0:[0-9]+]], 0(5)
+; CHECK: add 4, [[REG0]], 4
+; CHECK: mtvsrwa [[REG:[0-9]+]], 4
+; CHECK-NEXT: xscvsdqp [[CONV:[0-9]+]], [[REG]]
+; CHECK-NEXT: stxv [[CONV]], 0(3)
+; CHECK-NEXT: blr
+}
+
+; Function Attrs: norecurse nounwind
+define void @ubConv2qp(fp128* nocapture %a, i8 zeroext %b) {
+entry:
+  %conv = uitofp i8 %b to fp128
+  store fp128 %conv, fp128* %a, align 16
+  ret void
+
+; CHECK-LABEL: ubConv2qp
+; CHECK: mtvsrwz [[REG:[0-9]+]], 4
+; CHECK-NEXT: xscvudqp [[CONV:[0-9]+]], [[REG]]
+; CHECK-NEXT: stxv [[CONV]], 0(3)
+; CHECK-NEXT: blr
+}
+
+; Function Attrs: norecurse nounwind
+define void @ubConv2qp_02(fp128* nocapture %a, i8* nocapture readonly %b) {
+entry:
+  %0 = load i8, i8* %b, align 1
+  %conv = uitofp i8 %0 to fp128
+  store fp128 %conv, fp128* %a, align 16
+  ret void
+
+; CHECK-LABEL: ubConv2qp_02
+; CHECK: lxsibzx [[REG:[0-9]+]], 0, 4
+; CHECK-NEXT: xscvudqp [[CONV:[0-9]+]], [[REG]]
+; CHECK-NEXT: stxv [[CONV]], 0(3)
+; CHECK-NEXT: blr
+}
+
+; Function Attrs: norecurse nounwind
+define void @ubConv2qp_03(fp128* nocapture %a) {
+entry:
+  %0 = load i8, i8* getelementptr inbounds 
+                      ([5 x i8], [5 x i8]* @ubMem, i64 0, i64 2), align 1
+  %conv = uitofp i8 %0 to fp128
+  store fp128 %conv, fp128* %a, align 16
+  ret void
+
+; CHECK-LABEL: ubConv2qp_03
+; CHECK: addis [[REG0:[0-9]+]], 2, .LC5@toc@ha
+; CHECK: ld [[REG0]], .LC5@toc@l([[REG0]])
+; CHECK: addi [[REG0]], [[REG0]], 2
+; CHECK: lxsibzx [[REG:[0-9]+]], 0, [[REG0]]
+; CHECK-NEXT: xscvudqp [[CONV:[0-9]+]], [[REG]]
+; CHECK-NEXT: stxv [[CONV]], 0(3)
+; CHECK-NEXT: blr
+}
+
+; Function Attrs: norecurse nounwind
+define void @ubConv2qp_04(fp128* nocapture %a, i8 zeroext %b,
+                          i8* nocapture readonly %c) {
+entry:
+  %conv = zext i8 %b to i32
+  %0 = load i8, i8* %c, align 1
+  %conv1 = zext i8 %0 to i32
+  %add = add nuw nsw i32 %conv1, %conv
+  %conv2 = sitofp i32 %add to fp128
+  store fp128 %conv2, fp128* %a, align 16
+  ret void
+
+; CHECK-LABEL: ubConv2qp_04
+; CHECK: lbz [[REG0:[0-9]+]], 0(5)
+; CHECK: add 4, [[REG0]], 4
+; CHECK: mtvsrwa [[REG:[0-9]+]], 4
+; CHECK-NEXT: xscvsdqp [[CONV:[0-9]+]], [[REG]]
 ; CHECK-NEXT: stxv [[CONV]], 0(3)
 ; CHECK-NEXT: blr
 }

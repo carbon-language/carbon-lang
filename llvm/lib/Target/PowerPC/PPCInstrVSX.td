@@ -3142,6 +3142,14 @@ let AddedComplexity = 400, Predicates = [HasP9Vector] in {
   def : Pat<(f128 (uint_to_fp (i64 (load ixaddr:$src)))),
             (f128 (XSCVUDQP (LXSD ixaddr:$src)))>;
 
+  // Convert Unsigned HWord in memory -> QP
+  def : Pat<(f128 (uint_to_fp ScalarLoads.ZELi16)),
+            (f128 (XSCVUDQP (LXSIHZX xaddr:$src)))>;
+
+  // Convert Unsigned Byte in memory -> QP
+  def : Pat<(f128 (uint_to_fp ScalarLoads.ZELi8)),
+            (f128 (XSCVUDQP (LXSIBZX xoaddr:$src)))>;
+
 } // end HasP9Vector, AddedComplexity
 
 let Predicates = [HasP9Vector] in {
