@@ -11991,6 +11991,7 @@ static bool checkMapConflicts(
                "Map clause expression with no components!");
         assert(StackComponents.back().getAssociatedDeclaration() == VD &&
                "Map clause expression with unexpected base!");
+        (void)VD;
 
         // The whole expression in the stack.
         const Expr *RE = StackComponents.front().getAssociatedExpression();
