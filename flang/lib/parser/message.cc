@@ -1,4 +1,5 @@
 #include "message.h"
+#include "char-set.h"
 #include <cstdarg>
 #include <cstddef>
 #include <cstdio>
@@ -35,19 +36,32 @@ MessageFormattedText::MessageFormattedText(MessageFixedText text, ...)
   string_ = buffer;
 }
 
-MessageFixedText MessageExpectedText::AsMessageFixedText() const {
-  if (str_ != nullptr) {
-    return {str_, bytes_};
-  }
-  static char chars[256];
-  if (chars[1] == '\0') {
-    // one-time initialization of array used for permanant single-byte string
-    // pointers
-    for (std::size_t j{0}; j < sizeof chars; ++j) {
-      chars[j] = j;
+std::string Message::ToString() const {
+  std::string s{string_};
+  bool isExpected{isExpected_};
+  if (string_.empty()) {
+    if (fixedText_ != nullptr) {
+      if (fixedBytes_ > 0) {
+        s = std::string{fixedText_, fixedBytes_};
+      } else {
+        s = std::string{fixedText_};  // NUL-terminated
+      }
+    } else {
+      s = SetOfCharsToString(expected_);
+      if (!IsSingleton(expected_)) {
+        return MessageFormattedText("expected one of '%s'"_err_en_US, s)
+            .MoveString();
+      }
+      if (expected_ == SingletonChar('\n')) {
+        return "expected end of line"_err_en_US.ToString();
+      }
+      isExpected = true;
     }
   }
-  return {&chars[static_cast<unsigned char>(singleton_)], 1};
+  if (isExpected) {
+    return MessageFormattedText("expected '%s'"_err_en_US, s).MoveString();
+  }
+  return s;
 }
 
 Provenance Message::Emit(
@@ -63,22 +77,7 @@ Provenance Message::Emit(
   if (isFatal_) {
     o << "ERROR: ";
   }
-  if (string_.empty()) {
-    if (isExpectedText_) {
-      std::string goal{text_.ToString()};
-      if (goal == "\n") {
-        o << "expected end of line"_err_en_US;
-      } else {
-        o << MessageFormattedText("expected '%s'"_err_en_US, goal.data())
-                 .MoveString();
-      }
-    } else {
-      o << text_;
-    }
-  } else {
-    o << string_;
-  }
-  o << '\n';
+  o << ToString() << '\n';
   return provenance;
 }
 

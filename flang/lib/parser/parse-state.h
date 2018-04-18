@@ -130,7 +130,9 @@ public:
   const char *GetLocation() const { return p_; }
 
   void PushContext(MessageFixedText text) {
-    context_ = Message::Context{new Message{p_, text, context_.get()}};
+    auto m = new Message{p_, text};
+    m->set_context(context_.get());
+    context_ = Message::Context{m};
   }
 
   void PopContext() {
@@ -147,21 +149,21 @@ public:
     if (deferMessages_) {
       anyDeferredMessages_ = true;
     } else {
-      messages_.Say(at, t, context_.get());
+      messages_.Say(at, t).set_context(context_.get());
     }
   }
   void Say(const char *at, MessageFormattedText &&t) {
     if (deferMessages_) {
       anyDeferredMessages_ = true;
     } else {
-      messages_.Say(at, std::move(t), context_.get());
+      messages_.Say(at, std::move(t)).set_context(context_.get());
     }
   }
   void Say(const char *at, MessageExpectedText &&t) {
     if (deferMessages_) {
       anyDeferredMessages_ = true;
     } else {
-      messages_.Say(at, std::move(t), context_.get());
+      messages_.Say(at, std::move(t)).set_context(context_.get());
     }
   }
 

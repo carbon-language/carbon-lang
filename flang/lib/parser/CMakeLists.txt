@@ -1,5 +1,6 @@
 add_library(FortranParser
   char-buffer.cc
+  char-set.cc
   characters.cc
   idioms.cc
   message.cc

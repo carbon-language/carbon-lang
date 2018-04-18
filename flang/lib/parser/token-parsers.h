@@ -5,6 +5,7 @@
 // the prescanned character stream and recognize context-sensitive tokens.
 
 #include "basic-parsers.h"
+#include "char-set.h"
 #include "characters.h"
 #include "idioms.h"
 #include "provenance.h"
@@ -19,65 +20,35 @@
 namespace Fortran {
 namespace parser {
 
-class CharPredicateGuard {
+// "xyz"_ch matches one instance of the characters x, y, or z without skipping
+// any spaces before or after.  The parser returns the location of the character
+// on success.
+class AnyOfChars {
 public:
   using resultType = const char *;
-  constexpr CharPredicateGuard(const CharPredicateGuard &) = default;
-  constexpr CharPredicateGuard(bool (*f)(char), MessageFixedText m)
-    : predicate_{f}, messageText_{m} {}
+  constexpr AnyOfChars(const AnyOfChars &) = default;
+  constexpr AnyOfChars(SetOfChars set) : set_{set} {}
   std::optional<const char *> Parse(ParseState *state) const {
     if (std::optional<const char *> at{state->PeekAtNextChar()}) {
-      if (predicate_(**at)) {
+      if (IsCharInSet(set_, **at)) {
         state->UncheckedAdvance();
         return at;
       }
     }
-    state->Say(messageText_);
+    state->Say(MessageExpectedText{set_});
     return {};
   }
 
 private:
-  bool (*const predicate_)(char);
-  const MessageFixedText messageText_;
+  SetOfChars set_;
 };
 
-constexpr auto letter =
-    CharPredicateGuard{IsLetter, "expected letter"_err_en_US};
-constexpr auto digit =
-    CharPredicateGuard{IsDecimalDigit, "expected digit"_err_en_US};
-
-// "xyz"_ch matches one instance of the characters x, y, or z without skipping
-// any spaces before or after.  The parser returns the location of the character
-// on success.
-class AnyOfChar {
-public:
-  using resultType = const char *;
-  constexpr AnyOfChar(const AnyOfChar &) = default;
-  constexpr AnyOfChar(const char *chars, std::size_t n)
-    : chars_{chars}, bytes_{n} {}
-  std::optional<const char *> Parse(ParseState *state) const {
-    if (std::optional<const char *> at{state->PeekAtNextChar()}) {
-      char ch{**at};
-      const char *p{chars_};
-      for (std::size_t j{0}; j < bytes_ && *p != '\0'; ++j, ++p) {
-        if (ch == ToLowerCaseLetter(*p)) {
-          state->UncheckedAdvance();
-          return at;
-        }
-      }
-    }
-    state->Say(MessageExpectedText{chars_, bytes_});
-    return {};
-  }
-
-private:
-  const char *const chars_;
-  const std::size_t bytes_{std::numeric_limits<std::size_t>::max()};
-};
-
-constexpr AnyOfChar operator""_ch(const char str[], std::size_t n) {
-  return AnyOfChar{str, n};
+constexpr AnyOfChars operator""_ch(const char str[], std::size_t n) {
+  return AnyOfChars{CharsToSet(str, n)};
 }
+
+constexpr auto letter = "abcdefghijklmnopqrstuvwxyz"_ch;
+constexpr auto digit = "0123456789"_ch;
 
 // Skips over optional spaces.  Always succeeds.
 constexpr struct Space {
@@ -262,8 +233,7 @@ struct CharLiteralChar {
     if (IsOctalDigit(ch)) {
       ch -= '0';
       for (int j = (ch > 3 ? 1 : 2); j-- > 0;) {
-        static constexpr auto octalDigit =
-            CharPredicateGuard{IsOctalDigit, "expected octal digit"_en_US};
+        static constexpr auto octalDigit = "01234567"_ch;
         och = octalDigit.Parse(state);
         if (och.has_value()) {
           ch = 8 * ch + **och - '0';
@@ -274,8 +244,7 @@ struct CharLiteralChar {
     } else if (ch == 'x' || ch == 'X') {
       ch = 0;
       for (int j = 0; j++ < 2;) {
-        static constexpr auto hexDigit = CharPredicateGuard{
-            IsHexadecimalDigit, "expected hexadecimal digit"_en_US};
+        static constexpr auto hexDigit = "0123456789abcdefABCDEF"_ch;
         och = hexDigit.Parse(state);
         if (och.has_value()) {
           ch = 16 * ch + HexadecimalDigitValue(**och);
@@ -295,10 +264,10 @@ template<char quote> struct CharLiteral {
   static std::optional<std::string> Parse(ParseState *state) {
     std::string str;
     static constexpr auto nextch = attempt(CharLiteralChar{});
-    static char q{quote};
     while (std::optional<CharLiteralChar::Result> ch{nextch.Parse(state)}) {
       if (ch->ch == quote && !ch->wasEscaped) {
-        static constexpr auto doubled = attempt(AnyOfChar{&q, 1});
+        static constexpr auto doubled =
+            attempt(AnyOfChars{SingletonChar(quote)});
         if (!doubled.Parse(state).has_value()) {
           return {str};
         }
@@ -510,8 +479,9 @@ struct HollerithLiteral {
     if (!charCount || *charCount < 1) {
       return {};
     }
-    std::optional<const char *> h{letter.Parse(state)};
-    if (!h || **h != 'h') {
+    static const auto letterH = "h"_ch;
+    std::optional<const char *> h{letterH.Parse(state)};
+    if (!h.has_value()) {
       return {};
     }
     std::string content;

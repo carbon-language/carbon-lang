@@ -4,10 +4,12 @@
 // Defines a representation for sequences of compiler messages.
 // Supports nested contextualization.
 
+#include "char-set.h"
 #include "idioms.h"
 #include "provenance.h"
 #include "reference-counted.h"
 #include <cstddef>
+#include <cstring>
 #include <forward_list>
 #include <optional>
 #include <ostream>
@@ -54,8 +56,6 @@ constexpr MessageFixedText operator""_err_en_US(
 }
 }  // namespace literals
 
-std::ostream &operator<<(std::ostream &, const MessageFixedText &);
-
 class MessageFormattedText {
 public:
   MessageFormattedText(MessageFixedText, ...);
@@ -72,13 +72,19 @@ private:
 class MessageExpectedText {
 public:
   MessageExpectedText(const char *s, std::size_t n) : str_{s}, bytes_{n} {}
-  explicit MessageExpectedText(char ch) : singleton_{ch} {}
-  MessageFixedText AsMessageFixedText() const;
+  explicit MessageExpectedText(const char *s)
+    : str_{s}, bytes_{std::strlen(s)} {}
+  explicit MessageExpectedText(char ch) : set_{SingletonChar(ch)} {}
+  explicit MessageExpectedText(SetOfChars set) : set_{set} {}
+
+  const char *str() const { return str_; }
+  std::size_t size() const { return bytes_; }
+  SetOfChars set() const { return set_; }
 
 private:
   const char *str_{nullptr};
-  char singleton_;
-  std::size_t bytes_{1};
+  std::size_t bytes_{0};
+  SetOfChars set_{emptySetOfChars};
 };
 
 class Message : public ReferenceCounted<Message> {
@@ -90,24 +96,24 @@ public:
   Message &operator=(Message &&that) = default;
 
   // TODO: Change these to cover ranges of provenance
-  Message(Provenance p, MessageFixedText t, Message *c = nullptr)
-    : provenance_{p}, text_{t}, context_{c}, isFatal_{t.isFatal()} {}
-  Message(Provenance p, MessageFormattedText &&s, Message *c = nullptr)
-    : provenance_{p}, string_{s.MoveString()}, context_{c}, isFatal_{
-                                                                s.isFatal()} {}
-  Message(Provenance p, MessageExpectedText t, Message *c = nullptr)
-    : provenance_{p}, text_{t.AsMessageFixedText()},
-      isExpectedText_{true}, context_{c}, isFatal_{true} {}
+  Message(Provenance p, MessageFixedText t)
+    : provenance_{p}, fixedText_{t.str()},
+      fixedBytes_{t.size()}, isFatal_{t.isFatal()} {}
+  Message(Provenance p, MessageFormattedText &&s)
+    : provenance_{p}, string_{s.MoveString()}, isFatal_{s.isFatal()} {}
+  Message(Provenance p, MessageExpectedText t)
+    : provenance_{p}, fixedText_{t.str()}, fixedBytes_{t.size()},
+      isExpected_{true}, expected_{t.set()}, isFatal_{true} {}
 
-  Message(const char *csl, MessageFixedText t, Message *c = nullptr)
-    : cookedSourceLocation_{csl}, text_{t}, context_{c}, isFatal_{t.isFatal()} {
-  }
-  Message(const char *csl, MessageFormattedText &&s, Message *c = nullptr)
-    : cookedSourceLocation_{csl}, string_{s.MoveString()}, context_{c},
-      isFatal_{s.isFatal()} {}
-  Message(const char *csl, MessageExpectedText t, Message *c = nullptr)
-    : cookedSourceLocation_{csl}, text_{t.AsMessageFixedText()},
-      isExpectedText_{true}, context_{c}, isFatal_{true} {}
+  Message(const char *csl, MessageFixedText t)
+    : cookedSourceLocation_{csl}, fixedText_{t.str()},
+      fixedBytes_{t.size()}, isFatal_{t.isFatal()} {}
+  Message(const char *csl, MessageFormattedText &&s)
+    : cookedSourceLocation_{csl}, string_{s.MoveString()}, isFatal_{
+                                                               s.isFatal()} {}
+  Message(const char *csl, MessageExpectedText t)
+    : cookedSourceLocation_{csl}, fixedText_{t.str()}, fixedBytes_{t.size()},
+      isExpected_{true}, expected_{t.set()}, isFatal_{true} {}
 
   bool operator<(const Message &that) const {
     if (cookedSourceLocation_ != nullptr) {
@@ -122,17 +128,24 @@ public:
   Provenance provenance() const { return provenance_; }
   const char *cookedSourceLocation() const { return cookedSourceLocation_; }
   Context context() const { return context_; }
+  Message &set_context(Message *c) {
+    context_ = c;
+    return *this;
+  }
   bool isFatal() const { return isFatal_; }
 
+  std::string ToString() const;
   Provenance Emit(
       std::ostream &, const CookedSource &, bool echoSourceLine = true) const;
 
 private:
   Provenance provenance_;
   const char *cookedSourceLocation_{nullptr};
-  MessageFixedText text_;
-  bool isExpectedText_{false};  // implies "expected '%s'"_err_en_US
+  const char *fixedText_{nullptr};
+  std::size_t fixedBytes_{0};
+  bool isExpected_{false};
   std::string string_;
+  SetOfChars expected_{emptySetOfChars};
   Context context_;
   bool isFatal_{false};
 };
@@ -181,13 +194,15 @@ public:
     }
   }
 
-  void Put(Message &&m) {
+  Message &Put(Message &&m) {
     CHECK(IsValidLocation(m));
     last_ = messages_.emplace_after(last_, std::move(m));
+    return *last_;
   }
 
-  template<typename... A> void Say(A &&... args) {
+  template<typename... A> Message &Say(A &&... args) {
     last_ = messages_.emplace_after(last_, std::forward<A>(args)...);
+    return *last_;
   }
 
   void Annex(Messages &that) {
