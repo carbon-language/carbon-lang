@@ -781,6 +781,11 @@ extern kmp_nested_proc_bind_t __kmp_nested_proc_bind;
 #if KMP_AFFINITY_SUPPORTED
 #define KMP_PLACE_ALL (-1)
 #define KMP_PLACE_UNDEFINED (-2)
+// Is KMP_AFFINITY is being used instead of OMP_PROC_BIND/OMP_PLACES?
+#define KMP_AFFINITY_NON_PROC_BIND                                             \
+  ((__kmp_nested_proc_bind.bind_types[0] == proc_bind_false ||                 \
+    __kmp_nested_proc_bind.bind_types[0] == proc_bind_intel) &&                \
+   (__kmp_affinity_num_masks > 0 || __kmp_affinity_type == affinity_balanced))
 #endif /* KMP_AFFINITY_SUPPORTED */
 
 extern int __kmp_affinity_num_places;
