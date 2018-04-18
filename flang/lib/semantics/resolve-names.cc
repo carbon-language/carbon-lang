@@ -399,7 +399,7 @@ private:
   const parser::Name *funcResultName_{nullptr};
   // The attribute corresponding to the statement containing an ObjectDecl
   std::optional<Attr> objectDeclAttr_;
-  // Set when we a statement function that is really an array assignment
+  // Set when we see a stmt function that is really an array element assignment
   bool badStmtFuncFound_{false};
 
   // Create a subprogram symbol in the current scope and push a new scope.

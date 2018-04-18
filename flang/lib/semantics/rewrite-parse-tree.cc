@@ -12,7 +12,7 @@ namespace Fortran::semantics {
 using symbolMap = std::map<const SourceName, Symbol *>;
 
 /// Walk the parse tree and add symbols from the symbolMap in Name nodes.
-/// Convert mis-identified statement functions to array assignments.
+/// Convert mis-identified statement functions to array element assignments.
 class RewriteMutator {
 public:
   RewriteMutator(const symbolMap &symbols) : symbols_{symbols} {}
@@ -53,7 +53,7 @@ public:
   bool Pre(parser::ExecutionPart &x) {
     auto origFirst = x.v.begin();  // insert each elem before origFirst
     for (stmtFuncType &sf : stmtFuncsToConvert) {
-      x.v.insert(origFirst, std::move(ConvertToAssignment(sf)));
+      x.v.insert(origFirst, ConvertToAssignment(sf));
     }
     stmtFuncsToConvert.clear();
     return true;
@@ -64,7 +64,7 @@ private:
   std::list<stmtFuncType> stmtFuncsToConvert;
 
   // Convert a statement function statement to an ExecutionPartConstruct
-  // containing an array assignment statement.
+  // containing an array element assignment statement.
   static parser::ExecutionPartConstruct ConvertToAssignment(stmtFuncType &x) {
     parser::StmtFunctionStmt &sf{*x.statement};
     auto &funcName = std::get<parser::Name>(sf.t);
