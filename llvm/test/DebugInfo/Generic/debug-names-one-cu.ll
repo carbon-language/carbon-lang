@@ -3,6 +3,10 @@
 ; RUN: llvm-dwarfdump -debug-names %t | FileCheck %s
 ; RUN: llvm-dwarfdump -debug-names -verify %t | FileCheck --check-prefix=VERIFY %s
 
+; Now try the same with split dwarf.
+; RUN: %llc_dwarf -split-dwarf-file=foo.dwo -accel-tables=Dwarf -filetype=obj -o %t < %s
+; RUN: llvm-dwarfdump -debug-names %t | FileCheck %s
+
 ; Check the header
 ; CHECK: CU count: 1
 ; CHECK: Local TU count: 0

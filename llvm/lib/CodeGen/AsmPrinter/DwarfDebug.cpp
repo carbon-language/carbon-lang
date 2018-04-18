@@ -2267,6 +2267,13 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
   CU.addDIETypeSignature(RefDie, Signature);
 }
 
+void DwarfDebug::addAccelDebugName(StringRef Name, const DIE &Die) {
+  assert(getAccelTableKind() == AccelTableKind::Dwarf);
+
+  DwarfFile &Holder = useSplitDwarf() ? SkeletonHolder : InfoHolder;
+  AccelDebugNames.addName(Holder.getStringPool().getEntry(*Asm, Name), Die);
+}
+
 // Accelerator table mutators - add each name along with its companion
 // DIE to the proper table while ensuring that the name that we're going
 // to reference is in the string table. We do this since the names we
@@ -2277,8 +2284,7 @@ void DwarfDebug::addAccelName(StringRef Name, const DIE &Die) {
     AccelNames.addName(InfoHolder.getStringPool().getEntry(*Asm, Name), &Die);
     break;
   case AccelTableKind::Dwarf:
-    AccelDebugNames.addName(InfoHolder.getStringPool().getEntry(*Asm, Name),
-                            Die);
+    addAccelDebugName(Name, Die);
     break;
   case AccelTableKind::None:
     return;
@@ -2300,8 +2306,7 @@ void DwarfDebug::addAccelNamespace(StringRef Name, const DIE &Die) {
                            &Die);
     break;
   case AccelTableKind::Dwarf:
-    AccelDebugNames.addName(InfoHolder.getStringPool().getEntry(*Asm, Name),
-                            Die);
+    addAccelDebugName(Name, Die);
     break;
   case AccelTableKind::None:
     return;
@@ -2316,8 +2321,7 @@ void DwarfDebug::addAccelType(StringRef Name, const DIE &Die, char Flags) {
     AccelTypes.addName(InfoHolder.getStringPool().getEntry(*Asm, Name), &Die);
     break;
   case AccelTableKind::Dwarf:
-    AccelDebugNames.addName(InfoHolder.getStringPool().getEntry(*Asm, Name),
-                            Die);
+    addAccelDebugName(Name, Die);
     break;
   case AccelTableKind::None:
     return;
