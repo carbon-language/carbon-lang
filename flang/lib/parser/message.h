@@ -71,9 +71,12 @@ private:
 // on a constant text.
 class MessageExpectedText {
 public:
-  MessageExpectedText(const char *s, std::size_t n) : str_{s}, bytes_{n} {}
-  explicit MessageExpectedText(const char *s)
-    : str_{s}, bytes_{std::strlen(s)} {}
+  MessageExpectedText(const char *s, std::size_t n) : str_{s}, bytes_{n} {
+    if (n == std::numeric_limits<std::size_t>::max()) {
+      bytes_ = std::strlen(s);
+    }
+  }
+  MessageExpectedText(MessageExpectedText &&) = default;
   explicit MessageExpectedText(char ch) : set_{SingletonChar(ch)} {}
   explicit MessageExpectedText(SetOfChars set) : set_{set} {}
 

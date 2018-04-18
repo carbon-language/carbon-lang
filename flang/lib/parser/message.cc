@@ -41,8 +41,9 @@ std::string Message::ToString() const {
   bool isExpected{isExpected_};
   if (string_.empty()) {
     if (fixedText_ != nullptr) {
-      if (fixedBytes_ > 0) {
-        s = std::string{fixedText_, fixedBytes_};
+      if (fixedBytes_ > 0 &&
+          fixedBytes_ < std::numeric_limits<std::size_t>::max()) {
+        s = std::string(fixedText_, fixedBytes_);
       } else {
         s = std::string{fixedText_};  // NUL-terminated
       }
@@ -59,7 +60,8 @@ std::string Message::ToString() const {
     }
   }
   if (isExpected) {
-    return MessageFormattedText("expected '%s'"_err_en_US, s).MoveString();
+    return MessageFormattedText("expected '%s'"_err_en_US, s.data())
+        .MoveString();
   }
   return s;
 }
