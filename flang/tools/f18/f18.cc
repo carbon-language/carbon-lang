@@ -71,6 +71,7 @@ struct DriverOptions {
   bool dumpCookedChars{false};
   bool dumpUnparse{false};
   bool dumpParseTree{false};
+  bool dumpSymbols{false};
   bool debugResolveNames{false};
   bool measureTree{false};
   std::vector<std::string> pgf90Args;
@@ -176,9 +177,12 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
   if (driver.measureTree) {
     MeasureParseTree(*parsing.parseTree());
   }
-  if (driver.debugResolveNames) {
+  if (driver.debugResolveNames || driver.dumpSymbols) {
     Fortran::semantics::ResolveNames(
         *parsing.parseTree(), parsing.messages().cooked());
+    if (driver.dumpSymbols) {
+      Fortran::semantics::DumpSymbols(std::cout);
+    }
   }
   if (driver.dumpParseTree) {
     Fortran::parser::DumpTree(*parsing.parseTree());
@@ -319,6 +323,8 @@ int main(int argc, char *const argv[]) {
       driver.dumpProvenance = true;
     } else if (arg == "-fdebug-dump-parse-tree") {
       driver.dumpParseTree = true;
+    } else if (arg == "-fdebug-dump-symbols") {
+      driver.dumpSymbols = true;
     } else if (arg == "-fdebug-resolve-names") {
       driver.debugResolveNames = true;
     } else if (arg == "-fdebug-measure-parse-tree") {

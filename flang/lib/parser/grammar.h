@@ -63,6 +63,7 @@ constexpr Parser<SpecificationPart> specificationPart;  //  R504
 constexpr Parser<ImplicitPart> implicitPart;  //  R505
 constexpr Parser<DeclarationConstruct> declarationConstruct;  //  R507
 constexpr Parser<SpecificationConstruct> specificationConstruct;  //  R508
+constexpr Parser<ExecutionPart> executionPart;  //  R509
 constexpr Parser<ExecutionPartConstruct> executionPartConstruct;  //  R510
 constexpr Parser<InternalSubprogramPart> internalSubprogramPart;  //  R511
 constexpr Parser<ActionStmt> actionStmt;  // R515
@@ -586,8 +587,8 @@ TYPE_CONTEXT_PARSER("execution part construct"_en_US,
         construct<ExecutionPartConstruct>{}(executionPartErrorRecovery)))
 
 // R509 execution-part -> executable-construct [execution-part-construct]...
-constexpr auto executionPart =
-    inContext("execution part"_en_US, many(executionPartConstruct));
+TYPE_CONTEXT_PARSER("execution part"_en_US,
+    construct<ExecutionPart>{}(many(executionPartConstruct)))
 
 // R602 underscore -> _
 constexpr auto underscore = "_"_ch;

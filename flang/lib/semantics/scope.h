@@ -21,16 +21,18 @@ public:
 
   ENUM_CLASS(Kind, System, Global, Module, MainProgram, Subprogram)
 
-  Scope(const Scope &parent, Kind kind) : parent_{parent}, kind_{kind} {}
+  Scope(const Scope &parent, Kind kind, const Symbol *symbol)
+    : parent_{parent}, kind_{kind}, symbol_{symbol} {}
 
   const Scope &parent() const {
     CHECK(kind_ != Kind::System);
     return parent_;
   }
   Kind kind() const { return kind_; }
+  const Symbol *symbol() const { return symbol_; }
 
   /// Make a scope nested in this one
-  Scope &MakeScope(Kind kind);
+  Scope &MakeScope(Kind kind, const Symbol *symbol = nullptr);
 
   using size_type = mapType::size_type;
   using iterator = mapType::iterator;
@@ -67,9 +69,13 @@ public:
     return symbols_.try_emplace(name, *this, name, attrs, details);
   }
 
+  std::list<Scope> &children() { return children_; }
+  const std::list<Scope> &children() const { return children_; }
+
 private:
   const Scope &parent_;
   const Kind kind_;
+  const Symbol *const symbol_;
   std::list<Scope> children_;
   mapType symbols_;
 

@@ -4,11 +4,11 @@
 
 namespace Fortran::semantics {
 
-const Scope Scope::systemScope{Scope::systemScope, Scope::Kind::System};
-Scope Scope::globalScope{Scope::systemScope, Scope::Kind::Global};
+const Scope Scope::systemScope{Scope::systemScope, Scope::Kind::System, nullptr};
+Scope Scope::globalScope{Scope::systemScope, Scope::Kind::Global, nullptr};
 
-Scope &Scope::MakeScope(Kind kind) {
-  children_.emplace_back(*this, kind);
+Scope &Scope::MakeScope(Kind kind, const Symbol *symbol) {
+  children_.emplace_back(*this, kind, symbol);
   return children_.back();
 }
 

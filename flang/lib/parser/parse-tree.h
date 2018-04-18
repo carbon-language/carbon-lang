@@ -55,6 +55,7 @@ CLASS_TRAIT(TupleTrait);
 
 namespace Fortran {
 namespace semantics {
+class Symbol;
 template<typename T> struct Semantic {
   Semantic(T *) {}
 };
@@ -486,7 +487,7 @@ struct ExecutionPartConstruct {
 };
 
 // R509 execution-part -> executable-construct [execution-part-construct]...
-using ExecutionPart = std::list<ExecutionPartConstruct>;
+WRAPPER_CLASS(ExecutionPart, std::list<ExecutionPartConstruct>);
 
 // R502 program-unit ->
 //        main-program | external-subprogram | module | submodule | block-data
@@ -509,7 +510,7 @@ struct Name {
   COPY_AND_ASSIGN_BOILERPLATE(Name);
   std::string ToString() const { return source.ToString(); }
   CharBlock source;
-  // TODO: pointer to symbol table entity
+  semantics::Symbol *symbol{nullptr};
 };
 
 // R516 keyword -> name

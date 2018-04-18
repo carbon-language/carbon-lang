@@ -1,12 +1,12 @@
 #ifndef FLANG_SEMA_PARSE_TREE_DUMP_H
 #define FLANG_SEMA_PARSE_TREE_DUMP_H
 
+#include "symbol.h"
 #include "../parser/format-specification.h"
 #include "../parser/idioms.h"
 #include "../parser/indirection.h"
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
-
 #include <cstring>
 #include <iomanip>
 #include <iostream>
@@ -111,17 +111,32 @@ public:
     }
   }
 
-  bool Pre(const parser::Name &x) { return Pre(x.ToString()); }
+  bool PutName(const std::string &name, const semantics::Symbol *symbol) {
+    if (emptyline) {
+      out_indent();
+      emptyline = false;
+    }
+    if (symbol) {
+      out << "symbol = " << *symbol;
+    } else {
+      out << "Name = '" << name << '\'';
+    }
+    out << '\n';
+    indent++;
+    emptyline = true;
+    return true;
+  }
+
+  bool Pre(const parser::Name &x) {
+    return PutName(x.ToString(), x.symbol);
+  }
+
+  void Post(const parser::Name &) { 
+    indent--;
+  }
 
   bool Pre(const std::string &x) { 
-    if (emptyline ) {
-      out_indent();
-      emptyline = false ;
-    }    
-    out << "Name = '" << x << "'\n";
-    indent++ ;
-    emptyline = true ;    
-    return true ;
+    return PutName(x, nullptr);
   }
   
   void Post(const std::string &x) { 

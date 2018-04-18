@@ -1,4 +1,5 @@
 #include "resolve-names.h"
+#include "rewrite-parse-tree.h"
 #include "attr.h"
 #include "scope.h"
 #include "symbol.h"
@@ -6,7 +7,7 @@
 #include "../parser/indirection.h"
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
-#include <iostream>
+#include <ostream>
 #include <list>
 #include <memory>
 #include <stack>
@@ -398,6 +399,8 @@ private:
   const parser::Name *funcResultName_{nullptr};
   // The attribute corresponding to the statement containing an ObjectDecl
   std::optional<Attr> objectDeclAttr_;
+  // Set when we a statement function that is really an array assignment
+  bool badStmtFuncFound_{false};
 
   // Create a subprogram symbol in the current scope and push a new scope.
   Symbol &PushSubprogramScope(const parser::Name &);
@@ -896,6 +899,7 @@ void ResolveNamesVisitor::DeclareEntity(const parser::Name &name, Attrs attrs) {
 }
 
 void ResolveNamesVisitor::Post(const parser::SpecificationPart &s) {
+  badStmtFuncFound_ = false;
   if (isImplicitNoneType()) {
     // Check that every name referenced has an explicit type
     for (const auto &pair : CurrScope()) {
@@ -914,15 +918,11 @@ void ResolveNamesVisitor::Post(const parser::SpecificationPart &s) {
 
 void ResolveNamesVisitor::Post(const parser::EndSubroutineStmt &subp) {
   ApplyImplicitRules();
-  std::cout << "End of subroutine scope\n";
-  std::cout << CurrScope();
   PopScope();
 }
 
 void ResolveNamesVisitor::Post(const parser::EndFunctionStmt &subp) {
   ApplyImplicitRules();
-  std::cout << "End of function scope\n";
-  std::cout << CurrScope();
   PopScope();
 }
 
@@ -965,6 +965,7 @@ bool ResolveNamesVisitor::Pre(const parser::StmtFunctionStmt &x) {
       if (details->isArray()) {
         // not a stmt-func at all but an array; do nothing
         symbol.add_occurrence(name.source);
+        badStmtFuncFound_ = true;
         return true;
       }
       // TODO: check that attrs are compatible with stmt func
@@ -972,6 +973,10 @@ bool ResolveNamesVisitor::Pre(const parser::StmtFunctionStmt &x) {
       occurrence = symbol.name();
       CurrScope().erase(symbol.name());
     }
+  }
+  if (badStmtFuncFound_) {
+    Say(name, "'%s' has not been declared as an array"_err_en_US);
+    return true;
   }
   BeginAttrs();  // no attrs to collect, but PushSubprogramScope expects this
   auto &symbol = PushSubprogramScope(name);
@@ -1002,9 +1007,10 @@ bool ResolveNamesVisitor::Pre(const parser::StmtFunctionStmt &x) {
 }
 
 void ResolveNamesVisitor::Post(const parser::StmtFunctionStmt &x) {
+  if (badStmtFuncFound_) {
+    return;  // This wasn't really a stmt function so no scope was created
+  }
   ApplyImplicitRules();
-  std::cout << "End of stmt func scope\n";
-  std::cout << CurrScope();
   PopScope();
 }
 
@@ -1059,7 +1065,7 @@ void ResolveNamesVisitor::Post(const parser::FunctionStmt &stmt) {
 
 Symbol &ResolveNamesVisitor::PushSubprogramScope(const parser::Name &name) {
   auto &symbol = MakeSymbol(name, EndAttrs(), SubprogramDetails());
-  Scope &subpScope = CurrScope().MakeScope(Scope::Kind::Subprogram);
+  Scope &subpScope = CurrScope().MakeScope(Scope::Kind::Subprogram, &symbol);
   PushScope(subpScope);
   auto &details = symbol.details<SubprogramDetails>();
   // can't reuse this name inside subprogram:
@@ -1080,8 +1086,6 @@ bool ResolveNamesVisitor::Pre(const parser::MainProgram &x) {
 
 void ResolveNamesVisitor::Post(const parser::EndProgramStmt &) {
   ApplyImplicitRules();
-  std::cout << "End of program scope\n";
-  std::cout << CurrScope();
   PopScope();
 }
 
@@ -1092,11 +1096,43 @@ void ResolveNamesVisitor::Post(const parser::Program &) {
 }
 
 void ResolveNames(
-    const parser::Program &program, const parser::CookedSource &cookedSource) {
+    parser::Program &program, const parser::CookedSource &cookedSource) {
   parser::Messages messages{cookedSource};
   ResolveNamesVisitor visitor{messages};
   parser::Walk(program, visitor);
-  messages.Emit(std::cerr);
+  if (!messages.empty()) {
+    messages.Emit(std::cerr);
+    return;
+  }
+  RewriteParseTree(program);
+}
+
+static void PutIndent(std::ostream &os, int indent) {
+  for (int i = 0; i < indent; ++i) {
+    os << "  ";
+  }
+}
+
+static void DumpSymbols(std::ostream &os, const Scope &scope, int indent = 0) {
+  PutIndent(os, indent);
+  os << Scope::EnumToString(scope.kind()) << " scope:";
+  if (const auto *symbol = scope.symbol()) {
+    os << ' ' << symbol->name().ToString();
+  }
+  os << '\n';
+  ++indent;
+  for (const auto &symbol : scope) {
+    PutIndent(os, indent);
+    os << symbol.second << "\n";
+  }
+  for (const auto &child : scope.children()) {
+    DumpSymbols(os, child, indent);
+  }
+  --indent;
+}
+
+void DumpSymbols(std::ostream &os) {
+  DumpSymbols(os, Scope::globalScope);
 }
 
 }  // namespace Fortran::semantics

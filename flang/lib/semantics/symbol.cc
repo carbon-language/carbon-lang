@@ -32,7 +32,6 @@ const std::string Symbol::GetDetailsName() const {
 }
 
 std::ostream &operator<<(std::ostream &os, const EntityDetails &x) {
-  os << "Entity";
   if (x.type()) {
     os << " type: " << *x.type();
   }
@@ -59,14 +58,14 @@ std::ostream &operator<<(std::ostream &os, const Symbol &sym) {
   if (!sym.attrs().empty()) {
     os << ", " << sym.attrs();
   }
-  os << ": ";
+  os << ": " << sym.GetDetailsName();
   std::visit(
       parser::visitors{
-          [&](const UnknownDetails &x) { os << " Unknown"; },
-          [&](const MainProgramDetails &x) { os << " MainProgram"; },
-          [&](const ModuleDetails &x) { os << " Module"; },
+          [&](const UnknownDetails &x) {},
+          [&](const MainProgramDetails &x) {},
+          [&](const ModuleDetails &x) {},
           [&](const SubprogramDetails &x) {
-            os << " Subprogram (";
+            os << " (";
             int n = 0;
             for (const auto &dummy : x.dummyArgs()) {
               if (n++ > 0) os << ", ";
@@ -80,7 +79,7 @@ std::ostream &operator<<(std::ostream &os, const Symbol &sym) {
               os << x.result().name().ToString() << ')';
             }
           },
-          [&](const EntityDetails &x) { os << ' ' << x; },
+          [&](const EntityDetails &x) { os << x; },
       },
       sym.details_);
   return os;
