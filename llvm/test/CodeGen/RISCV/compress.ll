@@ -150,20 +150,16 @@ define i32 @neg_i32() nounwind {
   ret i32 -559038737
 }
 
-; TODO: c.mv is unnecessary.
 define i32 @pos_i32_hi20_only() nounwind {
 ; RV32IC-LABEL: pos_i32_hi20_only:
 ; RV32IC:       c.lui a0, 16
-; RV32IC:       c.mv a0, a0
 ; RV32IC-NEXT:  c.jr ra
   ret i32 65536
 }
 
-; TODO: c.mv is unnecessary.
 define i32 @neg_i32_hi20_only() nounwind {
 ; RV32IC-LABEL: neg_i32_hi20_only:
 ; RV32IC:       c.lui a0, 1048560
-; RV32IC:       c.mv a0, a0
 ; RV32IC-NEXT:  c.jr ra
   ret i32 -65536
 }
