@@ -2,7 +2,7 @@
 #include "scope.h"
 #include "symbol.h"
 #include "../parser/indirection.h"
-#include "../parser/parse-tree-mutator.h"
+#include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
 #include <list>
 

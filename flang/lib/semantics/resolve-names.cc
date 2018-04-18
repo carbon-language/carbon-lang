@@ -1099,7 +1099,7 @@ void ResolveNames(
     parser::Program &program, const parser::CookedSource &cookedSource) {
   parser::Messages messages{cookedSource};
   ResolveNamesVisitor visitor{messages};
-  parser::Walk(program, visitor);
+  parser::Walk(static_cast<const parser::Program &>(program), visitor);
   if (!messages.empty()) {
     messages.Emit(std::cerr);
     return;
