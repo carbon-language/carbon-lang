@@ -2261,8 +2261,16 @@ struct kmp_taskdata { /* aligned during dynamic allocation       */
 #if OMP_45_ENABLED
   kmp_task_team_t *td_task_team;
   kmp_int32 td_size_alloc; // The size of task structure, including shareds etc.
+#if defined(KMP_GOMP_COMPAT)
+  // 4 or 8 byte integers for the loop bounds in GOMP_taskloop
+  kmp_int32 td_size_loop_bounds;
+#endif
 #endif // OMP_45_ENABLED
   kmp_taskdata_t *td_last_tied; // keep tied task for task scheduling constraint
+#if defined(KMP_GOMP_COMPAT) && OMP_45_ENABLED
+  // GOMP sends in a copy function for copy constructors
+  void (*td_copy_func)(void *, void *);
+#endif
 #if OMPT_SUPPORT
   ompt_task_info_t ompt_task_info;
 #endif
