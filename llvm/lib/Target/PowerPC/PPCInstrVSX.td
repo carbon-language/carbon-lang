@@ -2514,10 +2514,19 @@ let AddedComplexity = 400, Predicates = [HasP9Vector] in {
   def XSCVSDQP  : X_VT5_XO5_VB5_TyVB<63, 10, 836, "xscvsdqp", vfrc, []>;
   def : Pat<(f128 (sint_to_fp i64:$src)),
             (f128 (XSCVSDQP (COPY_TO_REGCLASS $src, VFRC)))>;
-
   def XSCVUDQP  : X_VT5_XO5_VB5_TyVB<63,  2, 836, "xscvudqp", vfrc, []>;
   def : Pat<(f128 (uint_to_fp i64:$src)),
             (f128 (XSCVUDQP (COPY_TO_REGCLASS $src, VFRC)))>;
+
+  // Convert (Un)Signed Word -> QP
+  def : Pat<(f128 (sint_to_fp i32:$src)),
+            (f128 (XSCVSDQP (MTVSRWA $src)))>;
+  def : Pat<(f128 (sint_to_fp (i32 (load xoaddr:$src)))),
+            (f128 (XSCVSDQP (LIWAX xoaddr:$src)))>;
+  def : Pat<(f128 (uint_to_fp i32:$src)),
+            (f128 (XSCVUDQP (MTVSRWZ $src)))>;
+  def : Pat<(f128 (uint_to_fp (i32 (load xoaddr:$src)))),
+            (f128 (XSCVUDQP (LIWZX xoaddr:$src)))>;
 
   let UseVSXReg = 1 in {
   //===--------------------------------------------------------------------===//
