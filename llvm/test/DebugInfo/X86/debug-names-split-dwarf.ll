@@ -1,7 +1,9 @@
 ; REQUIRES: object-emission
-; RUN: %llc_dwarf -accel-tables=Dwarf -filetype=obj -o %t < %s
-; RUN: llvm-dwarfdump -debug-names %t | FileCheck %s
-; RUN: llvm-dwarfdump -debug-names -verify %t | FileCheck --check-prefix=VERIFY %s
+
+; Verify that DWARF v5 accelerator tables work with split-dwarf.
+; RUN: %llc_dwarf -mtriple x86_64-pc-linux -split-dwarf-file=foo.dwo \
+; RUN:   -accel-tables=Dwarf -filetype=obj -o %t < %s
+; RUN: llvm-dwarfdump -debug-names - <%t | FileCheck %s
 
 ; Check the header
 ; CHECK: CU count: 1
@@ -19,8 +21,6 @@
 ; CHECK-NEXT: Abbrev: [[ABBREV]]
 ; CHECK-NEXT: Tag: DW_TAG_variable
 ; CHECK-NEXT: DW_IDX_die_offset: 0x{{[0-9a-f]*}}
-
-; VERIFY: No errors.
 
 @foobar = common dso_local global i8* null, align 8, !dbg !0
 
