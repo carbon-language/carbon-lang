@@ -689,11 +689,13 @@ def: InstRW<[SBWriteResGroup24], (instregex "MMX_PH(ADD|SUB)(D|SW|W)rr",
                                             "(V?)PHSUBWrr")>;
 
 def SBWriteResGroup25 : SchedWriteRes<[SBPort015]> {
-  let Latency = 3;
+  let Latency = 2;
   let NumMicroOps = 3;
   let ResourceCycles = [3];
 }
-def: InstRW<[SBWriteResGroup25], (instrs XADD8rr, XADD16rr, XADD32rr, XADD64rr)>;
+def: InstRW<[SBWriteResGroup25], (instrs XADD8rr, XADD16rr, XADD32rr, XADD64rr,
+                                         XCHG8rr, XCHG16rr, XCHG32rr, XCHG64rr,
+                                         XCHG16ar, XCHG32ar, XCHG64ar)>;
 
 def SBWriteResGroup25_1 : SchedWriteRes<[SBPort23,SBPort015]> {
   let Latency = 7;

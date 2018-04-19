@@ -948,8 +948,7 @@ def: InstRW<[HWWriteResGroup10], (instregex "CLC",
                                             "SMSW16m",
                                             "STC",
                                             "STRm",
-                                            "SYSCALL",
-                                            "XCHG(16|32|64)rr")>;
+                                            "SYSCALL")>;
 
 def HWWriteResGroup11 : SchedWriteRes<[HWPort0,HWPort23]> {
   let Latency = 6;
@@ -1814,12 +1813,13 @@ def: InstRW<[HWWriteResGroup53_1], (instregex "VPMOVSXBWYrm",
                                               "VPMOVZXWDYrm")>;
 
 def HWWriteResGroup54 : SchedWriteRes<[HWPort0156]> {
-  let Latency = 3;
+  let Latency = 2;
   let NumMicroOps = 3;
   let ResourceCycles = [3];
 }
-def: InstRW<[HWWriteResGroup54], (instregex "XADD(8|16|32|64)rr",
-                                            "XCHG8rr")>;
+def: InstRW<[HWWriteResGroup54], (instrs XADD8rr, XADD16rr, XADD32rr, XADD64rr,
+                                         XCHG8rr, XCHG16rr, XCHG32rr, XCHG64rr,
+                                         XCHG16ar, XCHG32ar, XCHG64ar)>;
 
 def HWWriteResGroup55 : SchedWriteRes<[HWPort0,HWPort5]> {
   let Latency = 3;

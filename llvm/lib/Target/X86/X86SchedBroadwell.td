@@ -581,8 +581,7 @@ def: InstRW<[BWWriteResGroup9], (instregex "LAHF", // TODO: This doesnt match Ag
                                            "SLDT64m",
                                            "SMSW16m",
                                            "STRm",
-                                           "SYSCALL",
-                                           "XCHG(16|32|64)rr")>; // FIXME: This isn't 1 uop, probably should match XCHG8rr.
+                                           "SYSCALL")>;
 
 def BWWriteResGroup10 : SchedWriteRes<[BWPort4,BWPort237]> {
   let Latency = 1;
@@ -849,12 +848,13 @@ def: InstRW<[BWWriteResGroup29], (instregex "(V?)MULPD(Y?)rr",
                                             "(V?)MULSSrr")>;
 
 def BWWriteResGroup30 : SchedWriteRes<[BWPort0156]> {
-  let Latency = 3;
+  let Latency = 2;
   let NumMicroOps = 3;
   let ResourceCycles = [3];
 }
-def: InstRW<[BWWriteResGroup30], (instregex "XADD(8|16|32|64)rr",
-                                            "XCHG8rr")>;
+def: InstRW<[BWWriteResGroup30], (instrs XADD8rr, XADD16rr, XADD32rr, XADD64rr,
+                                         XCHG8rr, XCHG16rr, XCHG32rr, XCHG64rr,
+                                         XCHG16ar, XCHG32ar, XCHG64ar)>;
 
 def BWWriteResGroup31 : SchedWriteRes<[BWPort0,BWPort5]> {
   let Latency = 3;
