@@ -229,9 +229,9 @@ public:
       LiveOffsets.insert(Offset);
   }
 
-  // Translate an offset in the input section to an offset
-  // in the output section.
-  uint64_t getOffset(uint64_t Offset) const;
+  // Translate an offset in the input section to an offset in the parent
+  // MergeSyntheticSection.
+  uint64_t getParentOffset(uint64_t Offset) const;
 
   // Splittable sections are handled as a sequence of data
   // rather than a single large blob of data.

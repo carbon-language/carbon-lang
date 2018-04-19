@@ -156,8 +156,9 @@ uint64_t SectionBase::getOffset(uint64_t Offset) const {
   case Merge:
     const MergeInputSection *MS = cast<MergeInputSection>(this);
     if (InputSection *IS = MS->getParent())
-      return cast<InputSection>(IS->Repl)->OutSecOff + MS->getOffset(Offset);
-    return MS->getOffset(Offset);
+      return cast<InputSection>(IS->Repl)->OutSecOff +
+             MS->getParentOffset(Offset);
+    return MS->getParentOffset(Offset);
   }
   llvm_unreachable("invalid section kind");
 }
@@ -972,7 +973,7 @@ SectionPiece *MergeInputSection::getSectionPiece(uint64_t Offset) {
 // Returns the offset in an output section for a given input offset.
 // Because contents of a mergeable section is not contiguous in output,
 // it is not just an addition to a base output offset.
-uint64_t MergeInputSection::getOffset(uint64_t Offset) const {
+uint64_t MergeInputSection::getParentOffset(uint64_t Offset) const {
   // Find a string starting at a given offset.
   auto It = OffsetMap.find(Offset);
   if (It != OffsetMap.end())
