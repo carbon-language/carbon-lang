@@ -710,10 +710,11 @@ void InputSectionBase::relocateAlloc(uint8_t *Buf, uint8_t *BufEnd) {
   const unsigned Bits = Config->Wordsize * 8;
 
   for (const Relocation &Rel : Relocations) {
-    uint8_t *BufLoc = Buf + getOffset(Rel.Offset);
+    uint64_t Offset = getOffset(Rel.Offset);
+    uint8_t *BufLoc = Buf + Offset;
     RelType Type = Rel.Type;
 
-    uint64_t AddrLoc = getVA(Rel.Offset);
+    uint64_t AddrLoc = getOutputSection()->Addr + Offset;
     RelExpr Expr = Rel.Expr;
     uint64_t TargetVA = SignExtend64(
         getRelocTargetVA(Type, Rel.Addend, AddrLoc, *Rel.Sym, Expr), Bits);
