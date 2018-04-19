@@ -46,5 +46,24 @@ DataRef::DataRef(std::list<PartRef> &&prl) : u{std::move(prl.front().name)} {
 Expr::Expr(Designator &&x) : u{Indirection<Designator>(std::move(x))} {}
 Expr::Expr(FunctionReference &&x)
   : u{Indirection<FunctionReference>(std::move(x))} {}
+
+// R1544 stmt-function-stmt
+// Convert this stmt-function-stmt to an array element assignment statement.
+Statement<ActionStmt> StmtFunctionStmt::ConvertToAssignment() {
+  auto &funcName = std::get<Name>(t);
+  auto &funcArgs = std::get<std::list<Name>>(t);
+  auto &funcExpr = std::get<Scalar<Expr>>(t).thing;
+  ArrayElement arrayElement{funcName, std::list<SectionSubscript>{}};
+  for (Name &arg : funcArgs) {
+    arrayElement.subscripts.push_back(SectionSubscript{
+        Scalar{Integer{Indirection{Expr{Indirection{Designator{arg}}}}}}});
+  }
+  auto &&variable = Variable{
+      Indirection{Designator{DataRef{Indirection{std::move(arrayElement)}}}}};
+  return Statement{std::nullopt,
+      ActionStmt{Indirection{
+          AssignmentStmt{std::move(variable), std::move(funcExpr)}}}};
+}
+
 }  // namespace parser
 }  // namespace Fortran

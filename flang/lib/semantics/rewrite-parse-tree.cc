@@ -53,7 +53,10 @@ public:
   bool Pre(parser::ExecutionPart &x) {
     auto origFirst = x.v.begin();  // insert each elem before origFirst
     for (stmtFuncType &sf : stmtFuncsToConvert) {
-      x.v.insert(origFirst, ConvertToAssignment(sf));
+      auto &&stmt = sf.statement->ConvertToAssignment();
+      stmt.source = sf.source;
+      x.v.insert(origFirst,
+          parser::ExecutionPartConstruct{parser::ExecutableConstruct{stmt}});
     }
     stmtFuncsToConvert.clear();
     return true;
@@ -62,29 +65,6 @@ public:
 private:
   const symbolMap &symbols_;
   std::list<stmtFuncType> stmtFuncsToConvert;
-
-  // Convert a statement function statement to an ExecutionPartConstruct
-  // containing an array element assignment statement.
-  static parser::ExecutionPartConstruct ConvertToAssignment(stmtFuncType &x) {
-    parser::StmtFunctionStmt &sf{*x.statement};
-    auto &funcName = std::get<parser::Name>(sf.t);
-    auto &funcArgs = std::get<std::list<parser::Name>>(sf.t);
-    auto &funcExpr = std::get<parser::Scalar<parser::Expr>>(sf.t).thing;
-    parser::ArrayElement arrayElement{
-        funcName, std::list<parser::SectionSubscript>{}};
-    for (parser::Name &arg : funcArgs) {
-      arrayElement.subscripts.push_back(parser::SectionSubscript{
-          parser::Scalar{parser::Integer{parser::Indirection{
-              parser::Expr{parser::Indirection{parser::Designator{arg}}}}}}});
-    }
-    auto &&variable = parser::Variable{parser::Indirection{parser::Designator{
-        parser::DataRef{parser::Indirection{std::move(arrayElement)}}}}};
-    auto &&stmt = parser::Statement{std::nullopt,
-        parser::ActionStmt{parser::Indirection{
-            parser::AssignmentStmt{std::move(variable), std::move(funcExpr)}}}};
-    stmt.source = x.source;
-    return parser::ExecutionPartConstruct{parser::ExecutableConstruct{stmt}};
-  }
 };
 
 static void CollectSymbols(Scope &scope, symbolMap &symbols) {

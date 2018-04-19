@@ -3114,6 +3114,7 @@ WRAPPER_CLASS(ReturnStmt, std::optional<ScalarIntExpr>);
 struct StmtFunctionStmt {
   TUPLE_CLASS_BOILERPLATE(StmtFunctionStmt);
   std::tuple<Name, std::list<Name>, Scalar<Expr>> t;
+  Statement<ActionStmt> ConvertToAssignment();
 };
 
 // Compiler directives
