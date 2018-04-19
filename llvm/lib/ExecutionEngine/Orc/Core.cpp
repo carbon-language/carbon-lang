@@ -410,8 +410,8 @@ Error VSO::defineLazy(std::unique_ptr<MaterializationUnit> MU) {
   for (auto &KV : UMII->Symbols) {
     auto I = Symbols.find(KV.first);
 
-    assert(I == Symbols.end() ||
-           !I->second.Flags.isMaterializing() &&
+    assert((I == Symbols.end() ||
+            !I->second.Flags.isMaterializing()) &&
                "Attempt to replace materializing symbol definition");
 
     auto LinkageResult = compareLinkage(
