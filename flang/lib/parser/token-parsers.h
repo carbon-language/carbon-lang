@@ -67,7 +67,7 @@ constexpr struct Space {
 
 // Skips a space that in free form requires a warning if it precedes a
 // character that could begin an identifier or keyword.  Always succeeds.
-static inline void MissingSpace(ParseState *state) {
+inline void MissingSpace(ParseState *state) {
   if (!state->inFixedForm()) {
     state->set_anyConformanceViolation();
     if (state->warnOnNonstandardUsage()) {
@@ -156,7 +156,7 @@ public:
 
 private:
   const char *const str_;
-  const std::size_t bytes_{std::numeric_limits<std::size_t>::max()};
+  const std::size_t bytes_{std::string::npos};
   const bool mandatoryFreeFormSpace_;
 };
 

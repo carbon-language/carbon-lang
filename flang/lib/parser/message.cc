@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
+#include <string>
 
 namespace Fortran {
 namespace parser {
@@ -49,8 +50,7 @@ std::string Message::ToString() const {
   bool isExpected{isExpected_};
   if (string_.empty()) {
     if (fixedText_ != nullptr) {
-      if (fixedBytes_ > 0 &&
-          fixedBytes_ < std::numeric_limits<std::size_t>::max()) {
+      if (fixedBytes_ > 0 && fixedBytes_ < std::string::npos) {
         s = std::string(fixedText_, fixedBytes_);
       } else {
         s = std::string{fixedText_};  // NUL-terminated

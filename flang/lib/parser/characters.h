@@ -4,6 +4,7 @@
 // Define some character classification predicates and
 // conversions here to avoid dependences upon <cctype> and
 // also to accomodate Fortran tokenization.
+// TODO: EBCDIC?
 
 #include <cstddef>
 #include <optional>
@@ -15,26 +16,11 @@ namespace parser {
 enum class Encoding { UTF8, EUC_JP };
 
 inline constexpr bool IsUpperCaseLetter(char ch) {
-  if constexpr ('A' == static_cast<char>(0xc1)) {
-    // EBCDIC
-    // TODO: Handle EBCDIC in a more generalized character set
-    // encoding framework; don't just assume that the native
-    // C++ character set is the same as that of the Fortran source.
-    return (ch >= 'A' && ch <= 'I') || (ch >= 'J' && ch <= 'R') ||
-        (ch >= 'S' && ch <= 'Z');
-  } else {
-    return ch >= 'A' && ch <= 'Z';
-  }
+  return ch >= 'A' && ch <= 'Z';
 }
 
 inline constexpr bool IsLowerCaseLetter(char ch) {
-  if constexpr ('a' == static_cast<char>(0x81)) {
-    // EBCDIC
-    return (ch >= 'a' && ch <= 'i') || (ch >= 'j' && ch <= 'r') ||
-        (ch >= 's' && ch <= 'z');
-  } else {
-    return ch >= 'a' && ch <= 'z';
-  }
+  return ch >= 'a' && ch <= 'z';
 }
 
 inline constexpr bool IsLetter(char ch) {
@@ -82,7 +68,7 @@ inline constexpr char ToUpperCaseLetter(char &&ch) {
   return IsLowerCaseLetter(ch) ? ch - 'a' + 'A' : ch;
 }
 
-static inline std::string ToUpperCaseLetters(const std::string &str) {
+inline std::string ToUpperCaseLetters(const std::string &str) {
   std::string raised{str};
   for (char &ch : raised) {
     ch = ToUpperCaseLetter(ch);
@@ -102,7 +88,7 @@ inline constexpr char HexadecimalDigitValue(char ch) {
       : IsLowerCaseLetter(ch) ? ch - 'a' + 10 : DecimalDigitValue(ch);
 }
 
-constexpr std::optional<char> BackslashEscapeValue(char ch) {
+inline constexpr std::optional<char> BackslashEscapeValue(char ch) {
   switch (ch) {
   // case 'a': return {'\a'};  pgf90 doesn't know about \a
   case 'b': return {'\b'};
@@ -118,7 +104,7 @@ constexpr std::optional<char> BackslashEscapeValue(char ch) {
   }
 }
 
-constexpr std::optional<char> BackslashEscapeChar(char ch) {
+inline constexpr std::optional<char> BackslashEscapeChar(char ch) {
   switch (ch) {
   // case '\a': return {'a'};  pgf90 doesn't know about \a
   case '\b': return {'b'};

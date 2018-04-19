@@ -23,6 +23,7 @@ struct SetOfChars {
     // character literals.  We repurpose '?' and '^' for newline and unknown
     // characters (resp.), leaving the others alone in case this code might
     // be useful in preprocssing.
+    // TODO: EBCDIC?
     if (c == '\n') {
       // map newline to '?'
       c = '?';

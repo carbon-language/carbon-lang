@@ -72,7 +72,7 @@ private:
 class MessageExpectedText {
 public:
   MessageExpectedText(const char *s, std::size_t n) : str_{s}, bytes_{n} {
-    if (n == std::numeric_limits<std::size_t>::max()) {
+    if (n == std::string::npos) {
       bytes_ = std::strlen(s);
     }
   }
