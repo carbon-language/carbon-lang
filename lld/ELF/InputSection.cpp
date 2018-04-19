@@ -710,7 +710,9 @@ void InputSectionBase::relocateAlloc(uint8_t *Buf, uint8_t *BufEnd) {
   const unsigned Bits = Config->Wordsize * 8;
 
   for (const Relocation &Rel : Relocations) {
-    uint64_t Offset = getOffset(Rel.Offset);
+    uint64_t Offset = Rel.Offset;
+    if (auto *Sec = dyn_cast<InputSection>(this))
+      Offset += Sec->OutSecOff;
     uint8_t *BufLoc = Buf + Offset;
     RelType Type = Rel.Type;
 
