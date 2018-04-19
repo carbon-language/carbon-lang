@@ -3,6 +3,7 @@ add_library(FortranParser
   char-set.cc
   characters.cc
   idioms.cc
+  instrumented-parser.cc
   message.cc
   parse-tree.cc
   parsing.cc

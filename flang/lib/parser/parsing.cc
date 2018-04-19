@@ -1,5 +1,6 @@
 #include "parsing.h"
 #include "grammar.h"
+#include "instrumented-parser.h"
 #include "message.h"
 #include "preprocessor.h"
 #include "prescan.h"
@@ -73,8 +74,13 @@ void Parsing::DumpCookedChars(std::ostream &out) const {
 
 void Parsing::DumpProvenance(std::ostream &out) const { cooked_.Dump(out); }
 
+void Parsing::DumpParsingLog(std::ostream &out) const { log_.Dump(out); }
+
 void Parsing::Parse() {
   UserState userState;
+  if (options_.instrumentedParse) {
+    userState.set_log(&log_);
+  }
   ParseState parseState{cooked_};
   parseState.set_inFixedForm(options_.isFixedForm)
       .set_encoding(options_.encoding)

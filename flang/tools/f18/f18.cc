@@ -162,6 +162,10 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
     return {};
   }
   parsing.Parse();
+  if (options.instrumentedParse) {
+    parsing.DumpParsingLog(std::cout);
+    return {};
+  }
   parsing.messages().Emit(std::cerr, driver.prefix);
   if (!parsing.consumedWholeFile()) {
     std::cerr << "f18 parser FAIL; final position: ";
@@ -329,6 +333,8 @@ int main(int argc, char *const argv[]) {
       driver.debugResolveNames = true;
     } else if (arg == "-fdebug-measure-parse-tree") {
       driver.measureTree = true;
+    } else if (arg == "-fdebug-instrumented-parse") {
+      options.instrumentedParse = true;
     } else if (arg == "-funparse") {
       driver.dumpUnparse = true;
     } else if (arg == "-fparse-only") {
@@ -364,6 +370,7 @@ int main(int argc, char *const argv[]) {
         << "  -fdebug-dump-provenance\n"
         << "  -fdebug-dump-parse-tree\n"
         << "  -fdebug-resolve-names\n"
+        << "  -fdebug-instrumented-parse\n"
         << "  -v -c -o -I -D -U    have their usual meanings\n"
         << "  -help                print this again\n"
         << "Other options are passed through to the compiler.\n";

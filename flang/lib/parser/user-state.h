@@ -14,8 +14,13 @@
 namespace Fortran {
 namespace parser {
 
+class ParsingLog;
+
 class UserState {
 public:
+  ParsingLog *log() const { return log_; }
+  void set_log(ParsingLog *log) { log_ = log; }
+
   void NewSubprogram() {
     doLabels_.clear();
     nonlabelDoConstructNestingDepth_ = 0;
@@ -48,6 +53,7 @@ private:
   std::unordered_set<Label> doLabels_;
   int nonlabelDoConstructNestingDepth_{0};
   std::set<CharBlock> oldStructureComponents_;
+  ParsingLog *log_{nullptr};
 };
 }  // namespace parser
 }  // namespace Fortran

@@ -34,7 +34,7 @@ public:
 
 private:
   const char *const str_;
-  std::size_t length_;
+  const std::size_t length_;
 };
 
 constexpr DebugParser operator""_debug(const char str[], std::size_t n) {

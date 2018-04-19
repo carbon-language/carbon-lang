@@ -44,15 +44,12 @@ template<typename A> struct Parser {
   template<> \
   inline std::optional<typename decltype(pexpr)::resultType> \
   Parser<typename decltype(pexpr)::resultType>::Parse(ParseState *state) { \
-    return (pexpr).Parse(state); \
+    static const auto parser = (pexpr); \
+    return parser.Parse(state); \
   }
 
 #define TYPE_CONTEXT_PARSER(contextText, pexpr) \
-  template<> \
-  inline std::optional<typename decltype(pexpr)::resultType> \
-  Parser<typename decltype(pexpr)::resultType>::Parse(ParseState *state) { \
-    return inContext((contextText), (pexpr)).Parse(state); \
-  }
+  TYPE_PARSER(instrumented((contextText), inContext((contextText), (pexpr))))
 
 // Some specializations of Parser<> are used multiple times, or are
 // of some special importance, so we instantiate them once here and

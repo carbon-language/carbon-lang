@@ -2,6 +2,7 @@
 #define FORTRAN_PARSER_PARSING_H_
 
 #include "characters.h"
+#include "instrumented-parser.h"
 #include "message.h"
 #include "parse-tree.h"
 #include "provenance.h"
@@ -27,6 +28,7 @@ struct Options {
   Encoding encoding{Encoding::UTF8};
   std::vector<std::string> searchDirectories;
   std::vector<Predefinition> predefinitions;
+  bool instrumentedParse{false};
 };
 
 class Parsing {
@@ -41,6 +43,7 @@ public:
   void Prescan(const std::string &path, Options);
   void DumpCookedChars(std::ostream &) const;
   void DumpProvenance(std::ostream &) const;
+  void DumpParsingLog(std::ostream &) const;
   void Parse();
 
   void Identify(std::ostream &o, const char *at, const std::string &prefix,
@@ -59,6 +62,7 @@ private:
   bool consumedWholeFile_{false};
   const char *finalRestingPlace_{nullptr};
   std::optional<Program> parseTree_;
+  ParsingLog log_;
 };
 }  // namespace parser
 }  // namespace Fortran
