@@ -30,7 +30,7 @@ public:
   constexpr AnyOfChars(SetOfChars set) : set_{set} {}
   std::optional<const char *> Parse(ParseState *state) const {
     if (std::optional<const char *> at{state->PeekAtNextChar()}) {
-      if (IsCharInSet(set_, **at)) {
+      if (set_.Has(**at)) {
         state->UncheckedAdvance();
         return at;
       }

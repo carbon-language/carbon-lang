@@ -39,8 +39,8 @@ MessageFormattedText::MessageFormattedText(MessageFixedText text, ...)
 void Message::Incorporate(Message &that) {
   if (provenance_ == that.provenance_ &&
       cookedSourceLocation_ == that.cookedSourceLocation_ &&
-      expected_.bits_ != 0) {
-    expected_.bits_ |= that.expected_.bits_;
+      !expected_.empty()) {
+    expected_ = expected_.Union(that.expected_);
   }
 }
 
@@ -57,9 +57,9 @@ std::string Message::ToString() const {
       }
     } else {
       SetOfChars expect{expected_};
-      if (IsCharInSet(expect, '\n')) {
-        expect.bits_ &= ~SetOfChars{'\n'}.bits_;
-        if (expect.bits_ == 0) {
+      if (expect.Has('\n')) {
+        expect = expect.Difference('\n');
+        if (expect.empty()) {
           return "expected end of line"_err_en_US.ToString();
         } else {
           s = expect.ToString();
