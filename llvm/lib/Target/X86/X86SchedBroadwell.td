@@ -1087,15 +1087,6 @@ def: InstRW<[BWWriteResGroup47], (instregex "MMX_PMADDUBSWrr",
                                             "(V?)RSQRTPSr",
                                             "(V?)RSQRTSSr")>;
 
-def BWWriteResGroup48 : SchedWriteRes<[BWPort01]> {
-  let Latency = 5;
-  let NumMicroOps = 1;
-  let ResourceCycles = [1];
-}
-def: InstRW<[BWWriteResGroup48],
-            (instregex "VF(N)?M(ADD|SUB|ADDSUB|SUBADD)(132|213|231)P(D|S)(Y)?r",
-                       "VF(N)?M(ADD|SUB)(132|213|231)S(D|S)r")>;
-
 def BWWriteResGroup49 : SchedWriteRes<[BWPort23]> {
   let Latency = 5;
   let NumMicroOps = 1;

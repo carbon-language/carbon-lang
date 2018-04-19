@@ -2295,9 +2295,7 @@ def HWWriteResGroup90 : SchedWriteRes<[HWPort01]> {
 def: InstRW<[HWWriteResGroup90], (instregex "(V?)MULPD(Y?)rr",
                                             "(V?)MULPS(Y?)rr",
                                             "(V?)MULSDrr",
-                                            "(V?)MULSSrr",
-                                            "VF(N)?M(ADD|SUB|ADDSUB|SUBADD)(132|213|231)P(D|S)(Y)?r",
-                                            "VF(N)?M(ADD|SUB)(132|213|231)S(D|S)r")>;
+                                            "(V?)MULSSrr")>;
 
 def HWWriteResGroup91 : SchedWriteRes<[HWPort0,HWPort23]> {
   let Latency = 10;

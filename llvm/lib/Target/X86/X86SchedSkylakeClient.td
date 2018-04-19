@@ -1078,10 +1078,6 @@ def: InstRW<[SKLWriteResGroup48], (instregex "(V?)ADDPD(Y?)rr",
                                              "(V?)SUBPS(Y?)rr",
                                              "(V?)SUBSDrr",
                                              "(V?)SUBSSrr")>;
-def: InstRW<[SKLWriteResGroup48],
-            (instregex
-             "VF(N)?M(ADD|SUB|ADDSUB|SUBADD)(132|213|231)P(D|S)(Y)?r",
-             "VF(N)?M(ADD|SUB)(132|213|231)S(D|S)r")>;
 
 def SKLWriteResGroup50 : SchedWriteRes<[SKLPort5]> {
   let Latency = 4;
