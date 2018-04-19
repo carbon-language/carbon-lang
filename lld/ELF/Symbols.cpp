@@ -57,6 +57,8 @@ static uint64_t getSymVA(const Symbol &Sym, int64_t &Addend) {
     if (!IS)
       return D.Value;
 
+    IS = IS->Repl;
+
     uint64_t Offset = D.Value;
 
     // An object in an SHF_MERGE section might be referenced via a
@@ -151,7 +153,7 @@ uint64_t Symbol::getSize() const {
 OutputSection *Symbol::getOutputSection() const {
   if (auto *S = dyn_cast<Defined>(this)) {
     if (auto *Sec = S->Section)
-      return Sec->getOutputSection();
+      return Sec->Repl->getOutputSection();
     return nullptr;
   }
 
