@@ -1533,7 +1533,7 @@ TYPE_PARSER(construct<CommonBlockObject>{}(name, maybe(arraySpec)))
 //  each part is a name, maybe a (section-subscript-list), and
 //  maybe an [image-selector].
 //  If it's a substring, it ends with (substring-range).
-TYPE_PARSER(
+TYPE_CONTEXT_PARSER("designator"_en_US,
     construct<Designator>{}(substring) || construct<Designator>{}(dataRef))
 
 constexpr struct OldStructureComponentName {
@@ -1564,9 +1564,10 @@ constexpr auto percentOrDot = "%"_tok ||
 // that are NOPASS).  However, Fortran constrains the use of a variable in a
 // proc-component-ref to be a data-ref without coindices (C1027).
 // Some array element references will be misrecognized as function references.
-TYPE_PARSER(construct<Variable>{}(
-                indirect(functionReference / !"("_ch) / !percentOrDot) ||
-    construct<Variable>{}(indirect(designator)))
+TYPE_CONTEXT_PARSER("variable"_en_US,
+    construct<Variable>{}(
+        indirect(functionReference / !"("_ch) / !percentOrDot) ||
+        construct<Variable>{}(indirect(designator)))
 
 // R904 logical-variable -> variable
 // Appears only as part of scalar-logical-variable.
@@ -1755,20 +1756,21 @@ TYPE_PARSER("STAT =" >> construct<StatOrErrmsg>{}(statVariable) ||
 //         literal-constant | designator | array-constructor |
 //         structure-constructor | function-reference | type-param-inquiry |
 //         type-param-name | ( expr )
-constexpr auto primary =
+constexpr auto primary = instrumented("primary"_en_US,
     construct<Expr>{}(indirect(Parser<CharLiteralConstantSubstring>{})) ||
-    construct<Expr>{}(literalConstant) ||
-    construct<Expr>{}(construct<Expr::Parentheses>{}(parenthesized(expr))) ||
-    construct<Expr>{}(indirect(functionReference) / !"("_tok) ||
-    construct<Expr>{}(designator / !"("_tok) ||
-    construct<Expr>{}(Parser<StructureConstructor>{}) ||
-    construct<Expr>{}(Parser<ArrayConstructor>{}) ||
-    construct<Expr>{}(indirect(Parser<TypeParamInquiry>{})) ||  // occulted
-    // PGI/XLF extension: COMPLEX constructor (x,y)
-    extension(construct<Expr>{}(parenthesized(
-        construct<Expr::ComplexConstructor>{}(expr, "," >> expr)))) ||
-    extension(construct<Expr>{}("%LOC" >>
-        parenthesized(construct<Expr::PercentLoc>{}(indirect(variable)))));
+        construct<Expr>{}(literalConstant) ||
+        construct<Expr>{}(
+            construct<Expr::Parentheses>{}(parenthesized(expr))) ||
+        construct<Expr>{}(indirect(functionReference) / !"("_tok) ||
+        construct<Expr>{}(designator / !"("_tok) ||
+        construct<Expr>{}(Parser<StructureConstructor>{}) ||
+        construct<Expr>{}(Parser<ArrayConstructor>{}) ||
+        construct<Expr>{}(indirect(Parser<TypeParamInquiry>{})) ||  // occulted
+        // PGI/XLF extension: COMPLEX constructor (x,y)
+        extension(construct<Expr>{}(parenthesized(
+            construct<Expr::ComplexConstructor>{}(expr, "," >> expr)))) ||
+        extension(construct<Expr>{}("%LOC" >>
+            parenthesized(construct<Expr::PercentLoc>{}(indirect(variable))))));
 
 // R1002 level-1-expr -> [defined-unary-op] primary
 // TODO: Reasonable extension: permit multiple defined-unary-ops
@@ -3398,8 +3400,10 @@ TYPE_PARSER("INTRINSIC" >> maybe("::"_tok) >>
     construct<IntrinsicStmt>{}(nonemptyList(name)))
 
 // R1520 function-reference -> procedure-designator ( [actual-arg-spec-list] )
-TYPE_PARSER(construct<FunctionReference>{}(construct<Call>{}(
-    Parser<ProcedureDesignator>{}, parenthesized(optionalList(actualArgSpec)))))
+TYPE_CONTEXT_PARSER("function reference"_en_US,
+    construct<FunctionReference>{}(
+        construct<Call>{}(Parser<ProcedureDesignator>{},
+            parenthesized(optionalList(actualArgSpec)))))
 
 // R1521 call-stmt -> CALL procedure-designator [( [actual-arg-spec-list] )]
 TYPE_PARSER(construct<CallStmt>{}(

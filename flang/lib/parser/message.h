@@ -95,7 +95,9 @@ public:
   using Context = CountedReference<Message>;
 
   Message() {}
+  Message(const Message &) = default;
   Message(Message &&) = default;
+  Message &operator=(const Message &that) = default;
   Message &operator=(Message &&that) = default;
 
   // TODO: Change these to cover ranges of provenance
@@ -161,9 +163,8 @@ public:
   using iterator = listType::iterator;
   using const_iterator = listType::const_iterator;
 
-  explicit Messages(const CookedSource &cooked) : cooked_{cooked} {}
-  Messages(Messages &&that)
-    : cooked_{that.cooked_}, messages_{std::move(that.messages_)} {
+  Messages() {}
+  Messages(Messages &&that) : messages_{std::move(that.messages_)} {
     if (!messages_.empty()) {
       last_ = that.last_;
       that.last_ = that.messages_.before_begin();
@@ -188,18 +189,7 @@ public:
   const_iterator cbegin() const { return messages_.cbegin(); }
   const_iterator cend() const { return messages_.cend(); }
 
-  const CookedSource &cooked() const { return cooked_; }
-
-  bool IsValidLocation(const Message &m) {
-    if (auto p{m.cookedSourceLocation()}) {
-      return cooked_.IsValid(p);
-    } else {
-      return cooked_.IsValid(m.provenance());
-    }
-  }
-
   Message &Put(Message &&m) {
-    CHECK(IsValidLocation(m));
     last_ = messages_.emplace_after(last_, std::move(m));
     return *last_;
   }
@@ -218,14 +208,14 @@ public:
   }
 
   void Incorporate(Messages &);
+  void Copy(const Messages &);
 
-  void Emit(std::ostream &, const char *prefix = nullptr,
-      bool echoSourceLines = true) const;
+  void Emit(std::ostream &, const CookedSource &cooked,
+      const char *prefix = nullptr, bool echoSourceLines = true) const;
 
   bool AnyFatalError() const;
 
 private:
-  const CookedSource &cooked_;
   listType messages_;
   iterator last_{messages_.before_begin()};
 };

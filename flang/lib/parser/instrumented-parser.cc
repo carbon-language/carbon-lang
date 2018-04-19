@@ -1,5 +1,6 @@
 #include "instrumented-parser.h"
 #include "message.h"
+#include "provenance.h"
 #include <map>
 #include <ostream>
 
@@ -12,21 +13,42 @@ bool operator<(const MessageFixedText &x, const MessageFixedText &y) {
   return x.str() < y.str();
 }
 
-void ParsingLog::Note(const char *at, const MessageFixedText &tag, bool pass) {
+bool ParsingLog::Fails(
+    const char *at, const MessageFixedText &tag, Messages &messages) {
   std::size_t offset = reinterpret_cast<std::size_t>(at);
-  if (pass) {
-    ++perPos_[offset].perTag[tag].passes;
+  auto posIter = perPos_.find(offset);
+  if (posIter == perPos_.end()) {
+    return false;
+  }
+  auto tagIter = posIter->second.perTag.find(tag);
+  if (tagIter == posIter->second.perTag.end()) {
+    return false;
+  }
+  auto &entry = tagIter->second;
+  ++entry.count;
+  messages.Copy(entry.messages);
+  return !entry.pass;
+}
+
+void ParsingLog::Note(const char *at, const MessageFixedText &tag, bool pass,
+    const Messages &messages) {
+  std::size_t offset = reinterpret_cast<std::size_t>(at);
+  auto &entry = perPos_[offset].perTag[tag];
+  if (++entry.count == 1) {
+    entry.pass = pass;
+    entry.messages.Copy(messages);
   } else {
-    ++perPos_[offset].perTag[tag].failures;
+    CHECK(entry.pass == pass);
   }
 }
 
-void ParsingLog::Dump(std::ostream &o) const {
+void ParsingLog::Dump(std::ostream &o, const CookedSource &cooked) const {
   for (const auto &posLog : perPos_) {
-    o << "at offset " << posLog.first << ":\n";
+    const char *at{reinterpret_cast<const char *>(posLog.first)};
     for (const auto &tagLog : posLog.second.perTag) {
-      o << "  " << tagLog.first.ToString() << ' ' << tagLog.second.passes
-        << ", " << tagLog.second.failures << '\n';
+      Message{at, tagLog.first}.Emit(o, cooked, true);
+      o << "  " << (tagLog.second.pass ? "pass" : "fail") << " "
+        << tagLog.second.count << '\n';
     }
   }
 }

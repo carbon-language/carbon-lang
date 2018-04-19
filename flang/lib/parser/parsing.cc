@@ -74,11 +74,13 @@ void Parsing::DumpCookedChars(std::ostream &out) const {
 
 void Parsing::DumpProvenance(std::ostream &out) const { cooked_.Dump(out); }
 
-void Parsing::DumpParsingLog(std::ostream &out) const { log_.Dump(out); }
+void Parsing::DumpParsingLog(std::ostream &out) const {
+  log_.Dump(out, cooked_);
+}
 
 void Parsing::Parse() {
   UserState userState;
-  if (options_.instrumentedParse) {
+  if (options_.instrumentedParse || true /*pmk*/) {
     userState.set_log(&log_);
   }
   ParseState parseState{cooked_};
@@ -98,12 +100,12 @@ void Parsing::Parse() {
 bool Parsing::ForTesting(std::string path, std::ostream &err) {
   Prescan(path, Options{});
   if (messages_.AnyFatalError()) {
-    messages_.Emit(err);
+    messages_.Emit(err, cooked_);
     err << "could not scan " << path << '\n';
     return false;
   }
   Parse();
-  messages_.Emit(err);
+  messages_.Emit(err, cooked_);
   if (!consumedWholeFile_) {
     err << "f18 parser FAIL; final position: ";
     Identify(err, finalRestingPlace_, "   ");

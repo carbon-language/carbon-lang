@@ -20,16 +20,16 @@ struct SetOfChars {
     // This is basically the old DECSIX encoding, which maps the
     // 7-bit ASCII codes [32..95] to [0..63].  Only '#', '&', '?', '\', and '^'
     // in that range are unused in Fortran after preprocessing outside
-    // character literals.  We repurpose '?' and '^' for newline and unknown
+    // character literals.  We repurpose '^' and '?' for newline and unknown
     // characters (resp.), leaving the others alone in case this code might
     // be useful in preprocssing.
     // TODO: EBCDIC?
     if (c == '\n') {
-      // map newline to '?'
-      c = '?';
-    } else if (c < 32 || c >= 127) {
-      // map other control characters, DEL, and 8-bit characters to '^'
+      // map newline to '^'
       c = '^';
+    } else if (c < 32 || c >= 127) {
+      // map other control characters, DEL, and 8-bit characters to '?'
+      c = '?';
     } else if (c >= 96) {
       // map lower-case letters to upper-case
       c -= 32;

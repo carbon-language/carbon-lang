@@ -24,7 +24,7 @@ int main(int argc, char *const argv[]) {
   std::string path{argv[1]};
   Parsing parsing;
   if (parsing.ForTesting(path, std::cerr)) {
-    DoSemanticAnalysis(parsing.messages().cooked(), *parsing.parseTree());
+    DoSemanticAnalysis(parsing.cooked(), *parsing.parseTree());
     return EXIT_SUCCESS;
   }
   return EXIT_FAILURE;

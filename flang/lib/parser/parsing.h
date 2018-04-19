@@ -37,6 +37,7 @@ public:
 
   bool consumedWholeFile() const { return consumedWholeFile_; }
   const char *finalRestingPlace() const { return finalRestingPlace_; }
+  CookedSource &cooked() { return cooked_; }
   Messages &messages() { return messages_; }
   std::optional<Program> &parseTree() { return parseTree_; }
 
@@ -58,7 +59,7 @@ private:
   Options options_;
   AllSources allSources_;
   CookedSource cooked_{allSources_};
-  Messages messages_{cooked_};
+  Messages messages_;
   bool consumedWholeFile_{false};
   const char *finalRestingPlace_{nullptr};
   std::optional<Program> parseTree_;

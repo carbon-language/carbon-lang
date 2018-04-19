@@ -1097,11 +1097,11 @@ void ResolveNamesVisitor::Post(const parser::Program &) {
 
 void ResolveNames(
     parser::Program &program, const parser::CookedSource &cookedSource) {
-  parser::Messages messages{cookedSource};
+  parser::Messages messages;
   ResolveNamesVisitor visitor{messages};
   parser::Walk(static_cast<const parser::Program &>(program), visitor);
   if (!messages.empty()) {
-    messages.Emit(std::cerr);
+    messages.Emit(std::cerr, cookedSource);
     return;
   }
   RewriteParseTree(program);
